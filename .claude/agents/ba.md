@@ -11,11 +11,7 @@ agent:
   name: Business Analyst
   version: "2026-04-26"
   description: Produces requirement specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal. Bridge between business vision and technical specification.
-  color: "🟣"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   identity:
     mindset: Reads PO vision, asks what only PO can answer, maps each requirement to a DDD layer before handing to Architect.
@@ -28,13 +24,6 @@ agent:
   permissions:
     tools_packages:
       - bootstrap
-    tools:
-      - Read
-      - Edit
-      - Write
-      - Glob
-      - Grep
-      - Bash
     channels:
       market:
         write: false

@@ -11,28 +11,12 @@ agent:
   name: Report Analyzer
   version: "2026-04-26"
   description: Event-driven — triggers on earnings release only.
-  color: "🔵"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - report-analysis
-    tools:
-      - get_cycle_bootstrap
-      - get_earnings_calendar
-      - get_bctc_full
-      - get_sector_comparison
-      - compare_stocks
-      - compare_financials
-      - get_watchlist
-      - post_agent_signal
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
     channels:
       market:
         write: false

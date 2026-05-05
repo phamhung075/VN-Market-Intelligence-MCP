@@ -11,32 +11,12 @@ agent:
   name: QA Responder
   version: "2026-04-26"
   description: FIFO queue, one question at a time, max 400 words on MARKET channel.
-  color: "⚪"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - qa-responder
-    tools:
-      - get_pending_ask_questions
-      - get_market_context
-      - get_kinhdich_reading
-      - get_bctc_full
-      - get_insider_transactions
-      - run_qa_responder
-      - get_macro_snapshot
-      - get_prediction_markets
-      - get_crisis_early_warning
-      - get_market_snapshot
-      - get_watchlist
-      - answer_ask_question
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
     channels:
       market:
         write: true

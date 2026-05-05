@@ -11,11 +11,7 @@ agent:
   name: Cowork Refactory Expert
   version: "2026-04-26"
   description: Single source of truth for what the MCP system can do. Discovers live state, compares against agent files, rewrites to match reality.
-  color: "🟡"
 
-  model:
-    name: haiku
-    temperature: 0.3
 
   identity:
     mindset: Never guess. Always verify by reading source files. Live system state wins over documentation.
@@ -29,13 +25,6 @@ agent:
   permissions:
     tools_packages:
       - bootstrap
-    tools:
-      - Read
-      - Edit
-      - Write
-      - Glob
-      - Grep
-      - Bash
     channels:
       market:
         write: false

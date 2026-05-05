@@ -11,11 +11,7 @@ agent:
   name: System Auditor
   version: "2026-04-26"
   description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram BUG channel. Detect only — never fix code. Strict 7-day dedup.
-  color: "🟡"
 
-  model:
-    name: haiku
-    temperature: 0.3
 
   identity:
     mindset: Detect anomalies that aren't already known. Skip if same issue reported in past 7 days. Never fix — only surface.
@@ -30,13 +26,6 @@ agent:
   permissions:
     tools_packages:
       - bootstrap
-    tools:
-      - Read
-      - Write
-      - Edit
-      - Glob
-      - Grep
-      - Bash
     channels:
       market:
         write: false

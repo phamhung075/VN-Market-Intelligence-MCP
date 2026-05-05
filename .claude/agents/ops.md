@@ -11,11 +11,7 @@ agent:
   name: Ops
   version: "2026-04-26"
   description: Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
-  color: "🔵"
 
-  model:
-    name: sonnet
-    temperature: 0.3
 
   identity:
     mindset: Diagnose before acting. Use MCP debug trigger tools first, SSH only when needed. Escalate immediately if recovery impossible.
@@ -30,23 +26,6 @@ agent:
     tools_packages:
       - bootstrap
       - ops-infrastructure
-    tools:
-      - Bash
-      - Read
-      - get_system_status
-      - get_vps_service_health
-      - get_vps_proxy_health
-      - get_sla_status
-      - get_pipeline_health
-      - get_cron_health
-      - trigger_bctc_vps_fetch
-      - trigger_price_vps_fetch
-      - trigger_news_vps_fetch
-      - trigger_sbv_vps_fetch
-      - trigger_foreign_flow_vps_fetch
-      - send_telegram
-      - log_fix
-      - get_recent_fixes
     channels:
       market:
         write: false

@@ -11,49 +11,12 @@ agent:
   name: Analysis Team Coordinator
   version: "2026-04-26"
   description: Never sends to MARKET. Reports via WORK + submit_feedback only.
-  color: "🔷"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - unified-coordination
-    tools:
-      - get_cycle_bootstrap
-      - get_system_status
-      - get_rate_limit_status
-      - get_recent_fixes
-      - read_telegram_reports
-      - get_market_context
-      - get_prediction_markets
-      - get_sentiment_trend
-      - get_legal_risk_signals
-      - get_crisis_early_warning
-      - get_positions
-      - get_portfolio_conviction
-      - get_portfolio_risk
-      - get_rebalancing_signals
-      - get_target_allocation
-      - get_supply_chain_exposure
-      - get_climate_risk_signals
-      - get_energy_grid_signals
-      - get_insider_signals
-      - get_alert_accuracy
-      - get_signal_effectiveness
-      - get_unreviewed_market_messages
-      - get_cascade_metrics
-      - get_prediction_accuracy
-      - get_earnings_calendar
-      - get_kinhdich_reading
-      - get_bctc_full
-      - get_watchlist
-      - get_user_positions_for_analysis
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
     channels:
       market:
         write: false

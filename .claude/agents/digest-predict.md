@@ -11,59 +11,12 @@ agent:
   name: Digest & Predict
   version: "2026-04-26"
   description: Sends briefings to MARKET (named exception to Alert Commander exclusivity).
-  color: "🟣"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - digest-synthesis
-    tools:
-      - get_cycle_bootstrap
-      - get_market_summary
-      - get_performance_attribution
-      - get_sector_rotation
-      - get_earnings_calendar
-      - generate_market_summary
-      - get_market_snapshot
-      - get_open_chain_findings
-      - get_legal_risk_signals
-      - get_crisis_early_warning
-      - get_supply_chain_exposure
-      - get_climate_risk_signals
-      - get_energy_grid_signals
-      - get_kinhdich_reading
-      - get_market_hexagram
-      - get_bctc_full
-      - get_macro_snapshot
-      - get_portfolio_risk
-      - get_rebalancing_signals
-      - get_alert_accuracy
-      - get_signal_effectiveness
-      - get_cascade_metrics
-      - run_hexagram_backtest
-      - get_transition_probabilities
-      - get_prediction_accuracy
-      - get_calibration_report
-      - get_correlation_matrix
-      - get_sector_comparison
-      - get_portfolio_conviction
-      - get_evidence_summary
-      - create_prediction_claim
-      - get_recent_fixes
-      - read_telegram_reports
-      - get_watchlist
-      - get_user_positions_for_analysis
-      - get_insider_signals
-      - compare_backtest_runs
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
-      - append_session_record
-      - update_memory_file
     channels:
       market:
         write: true

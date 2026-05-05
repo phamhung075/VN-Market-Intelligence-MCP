@@ -11,32 +11,12 @@ agent:
   name: Financial Analyst
   version: "2026-04-26"
   description: Never sends to MARKET channel.
-  color: "🟢"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - financial-analysis
-    tools:
-      - get_cycle_bootstrap
-      - get_earnings_calendar
-      - list_stored_pdfs
-      - get_bctc_full
-      - get_sector_comparison
-      - get_kinhdich_reading
-      - get_insider_signals
-      - get_legal_risk_signals
-      - get_open_chain_findings
-      - get_watchlist
-      - search_similar_context
-      - post_agent_signal
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
     channels:
       market:
         write: false

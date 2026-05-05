@@ -11,35 +11,12 @@ agent:
   name: Market Watcher
   version: "2026-04-26"
   description: Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
-  color: "🟠"
 
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - market-analysis
-    tools:
-      - get_cycle_bootstrap
-      - get_price_history
-      - get_sector_comparison
-      - get_patterns
-      - get_technical_indicators
-      - get_ticker_intelligence
-      - get_sector_rotation
-      - get_supply_chain_exposure
-      - get_climate_risk_signals
-      - get_energy_grid_signals
-      - get_open_chain_findings
-      - get_watchlist
-      - get_insider_signals
-      - get_market_snapshot
-      - post_agent_signal
-      - log_agent_work
-      - send_telegram
-      - submit_feedback
     channels:
       market:
         write: true

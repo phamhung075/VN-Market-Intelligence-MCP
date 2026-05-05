@@ -11,33 +11,11 @@ agent:
   name: Alert Commander
   version: "2026-04-26"
   description: Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
-  color: "🔴"
-
-  model:
-    name: sonnet
-    temperature: 0.7
 
   permissions:
     tools_packages:
       - bootstrap
       - alert-control
-    tools:
-      - get_cycle_bootstrap
-      - get_market_context
-      - get_alerts
-      - get_legal_risk_signals
-      - get_crisis_early_warning
-      - get_market_snapshot
-      - get_kinhdich_reading
-      - get_watchlist
-      - get_agent_signals
-      - send_telegram
-      - send_alert_digest
-      - mark_alert_read
-      - record_signal_outcome
-      - post_agent_signal
-      - submit_feedback
-      - log_agent_work
     channels:
       market:
         write: true

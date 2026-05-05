@@ -11,11 +11,7 @@ agent:
   name: Claude Manager Helper
   version: "2026-04-26"
   description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. 10-pass audit. Token-efficient (early exit if no changes).
-  color: "🟢"
 
-  model:
-    name: haiku
-    temperature: 0.3
 
   identity:
     mindset: Check git diff first — if no changes, exit immediately. Run only the passes relevant to changed file groups.
@@ -32,13 +28,6 @@ agent:
   permissions:
     tools_packages:
       - bootstrap
-    tools:
-      - Read
-      - Write
-      - Edit
-      - Glob
-      - Grep
-      - Bash
     channels:
       market:
         write: false
