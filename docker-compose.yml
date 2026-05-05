@@ -1,31 +1,6 @@
 version: '3.9'
 services:
-  nginx:
-    image: nginx:1.27-alpine
-    ports:
-    - 80:80
-    - 443:443
-    volumes:
-    - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-    - mcp-server
-    - api-gateway
-    restart: unless-stopped
-    healthcheck:
-      test:
-      - CMD
-      - wget
-      - -qO-
-      - http://localhost/health
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    labels:
-      app: vn-market-intelligence
-      service: nginx
-      description: Reverse proxy and load balancer (ports 80, 443)
+  # nginx removed - Cloudflare Tunnel handles routing directly to services
   mcp-server:
     build:
       context: .
@@ -38,7 +13,7 @@ services:
     - ./mcp.config.json:/app/mcp.config.json:ro
     - ./reports:/app/reports
     - ./docs/agent-memory:/app/docs/agent-memory
-    - ~/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
+    - /Users/admin/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
@@ -50,6 +25,7 @@ services:
       VPS_SSH_USER: root
       VPS_SSH_KEY_PATH: /run/secrets/vps_ssh_key
       PORT: '3000'
+      CLOUDFLARE_PATH_PREFIX: /vn-market
     env_file:
     - .env
     restart: unless-stopped
@@ -257,24 +233,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run vn-market-mcp
-    volumes:
-    - ~/.cloudflared/config.yml:/root/.cloudflared/config.yml:ro
-    - ~/.cloudflared/vn-market-mcp.json:/root/.cloudflared/vn-market-mcp.json:ro
-    environment:
-      TUNNEL_LOGFILE: /var/log/cloudflared.log
-      TUNNEL_LOGLEVEL: debug
-      TUNNEL_CRED_FILE: /root/.cloudflared/vn-market-mcp.json
-    restart: unless-stopped
-    labels:
-      app: vn-market-intelligence
-      service: cloudflared
-      description: Cloudflare Tunnel connector for /vn-market and /gateway routes
-    depends_on:
-    - nginx
+  # cloudflared disabled - use macOS daemon instead (no container conflicts)
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   command: tunnel run c4bcc391-b030-4b50-a61b-c454fc86c8c3 for /vn-market and /gateway routes
 volumes:
   market_data:
     driver: local
-

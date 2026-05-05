@@ -33,6 +33,7 @@ export class SseSessionManager {
   constructor(
     private readonly createServer: McpServerFactory,
     private readonly log: Logger,
+    private readonly pathPrefix: string = "", // Cloudflare path prefix (e.g. "/vn-market")
   ) {}
 
   /**
@@ -45,7 +46,9 @@ export class SseSessionManager {
   async handleSse(req: IncomingMessage, res: ServerResponse): Promise<void> {
     this.log.info("[SseSessionManager] New SSE connection");
 
-    const transport = new SSEServerTransport("/messages", res);
+    // Include pathPrefix in the endpoint so clients can find the POST endpoint through Cloudflare
+    const endpoint = `${this.pathPrefix}/messages`;
+    const transport = new SSEServerTransport(endpoint, res);
     const sessionId = transport.sessionId;
 
     this.sessions.set(sessionId, transport);

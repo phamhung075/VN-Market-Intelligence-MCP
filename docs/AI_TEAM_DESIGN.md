@@ -70,7 +70,9 @@ Cost optimization: exit immediately if no reports | FIX NOW before SPRINT TASK |
 
 ## MCP Server
 
-Tool count → `docs/data/tool-registry.json`. 9 Docker microservices (TypeScript/Bun + Python/FastAPI). Shared SQLite database. Telegram Bot API. Cloudflare tunnel for public access. VPS proxy in Vietnam for geo-blocked sources.
+9 Docker microservices (TypeScript/Bun + Python/FastAPI). Shared SQLite database. Telegram Bot API. VPS proxy in Vietnam for geo-blocked sources.
 
-Scheduled jobs → `.claude/knowledge/cron-jobs.md`
-Tool list → `.claude/knowledge/mcp-tools.md`
+- Tool count → `docs/data/tool-registry.json`
+- Scheduled jobs → `.claude/knowledge/cron-jobs.md`
+- Tool list → `.claude/knowledge/mcp-tools.md`
+- **Cloudflare Tunnel + SSE Setup** → `docs/CLOUDFLARE_MCP_INTEGRATION.md` (path prefix routing, streaming config)

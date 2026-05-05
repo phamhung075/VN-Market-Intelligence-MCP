@@ -1,8 +1,9 @@
 {
   "mcpServers": {
     "vn-market": {
+      "url": "https://zenmidi.com/vn-market/sse",
       "type": "sse",
-      "url": "http://localhost:3000/sse"
+      "env": {}
     }
   }
 }

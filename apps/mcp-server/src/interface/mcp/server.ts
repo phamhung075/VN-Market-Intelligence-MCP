@@ -44,6 +44,21 @@ import { handlePushPrices } from "./routes/pushPricesHandler.js";
 import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
 
+/**
+ * Cloudflare Routing — Path Prefix Stripping Middleware
+ * Handles Cloudflare routing: zenmidi.com/vn-market/* → localhost:3000/*
+ * Strips /vn-market prefix from incoming requests so route handlers work correctly
+ * for both production (with prefix) and local dev (without prefix)
+ */
+function stripCloudflarePathPrefix(pathname: string): string {
+  const prefix = "/vn-market";
+  if (pathname.startsWith(prefix + "/") || pathname === prefix) {
+    return pathname === prefix ? "/" : pathname.slice(prefix.length) || "/";
+  }
+  return pathname;
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,7 +142,7 @@ export async function createBunServer(
 ): Promise<BunServerInstance> {
   const cfg = loadConfig();
   const port = options.port ?? cfg.port;
-  const host = options.host ?? "127.0.0.1";
+  const host = options.host ?? cfg.host ?? "0.0.0.0";
   const log = createLogger(cfg.logLevel);
 
   // ── McpServer factory — one instance per SSE session ────────────────────
@@ -171,7 +186,11 @@ export async function createBunServer(
   const db = getDb();
 
   // ── Session manager handles SSE + message routing ──────────────────────
-  const sessions = new SseSessionManager(createMcpServerInstance, log);
+  // Detect path prefix for Cloudflare Tunnel (e.g., "/vn-market")
+  // When behind Cloudflare, the SSE endpoint response must include the full path
+  // so clients POST to the correct address through the tunnel
+  const pathPrefix = process.env.CLOUDFLARE_PATH_PREFIX || "";
+  const sessions = new SseSessionManager(createMcpServerInstance, log, pathPrefix);
 
   // ── Streamable HTTP: stateless mode (one server+transport per request) ──
 
@@ -181,7 +200,9 @@ export async function createBunServer(
     res: ServerResponse,
   ): Promise<void> {
     const url = new URL(req.url ?? "/", `http://${host}`);
-    const pathname = url.pathname;
+    // Strip Cloudflare path prefix if present (/vn-market/api/* → /api/*)
+    // Falls through if no prefix (local dev routes work unchanged)
+    const pathname = stripCloudflarePathPrefix(url.pathname);
     const method = req.method ?? "GET";
 
     // CORS — allow Claude Desktop and web clients
@@ -205,24 +226,13 @@ export async function createBunServer(
       res.setHeader("Cache-Control", "no-cache, no-transform");
       res.setHeader("X-Accel-Buffering", "no");
 
-      // Parse body for POST/PUT/DELETE
-      let parsedBody: unknown = undefined;
-      if (method === "POST" || method === "PUT" || method === "DELETE") {
-        const chunks: Buffer[] = [];
-        for await (const chunk of req) {
-          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-        }
-        const raw = Buffer.concat(chunks).toString("utf-8");
-        if (raw.length > 0) {
-          try { parsedBody = JSON.parse(raw); } catch { /* leave undefined */ }
-        }
-      }
       // Stateless: create fresh server + transport per request
+      // The SDK's handleRequest will read the body itself, so we don't pre-parse
       const reqTransport = new StreamableHTTPServerTransport({});
       const reqMcp = createMcpServerInstance();
       await reqMcp.connect(reqTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
       try {
-        await reqTransport.handleRequest(req, res, parsedBody);
+        await reqTransport.handleRequest(req, res);
       } finally {
         // Explicit cleanup prevents memory leak on long-running servers
         await reqTransport.close().catch(() => {});
@@ -233,10 +243,14 @@ export async function createBunServer(
 
     // ── GET /sse ──────────────────────────────────────────────────────────
     if (method === "GET" && pathname === "/sse") {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Transfer-Encoding", "chunked");
       await sessions.handleSse(req, res);
       return;
     }
-
     // ── POST /messages ────────────────────────────────────────────────────
     if (method === "POST" && pathname === "/messages") {
       const sessionId = url.searchParams.get("sessionId");

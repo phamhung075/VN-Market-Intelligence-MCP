@@ -108,18 +108,17 @@ docker-compose logs -f      # Live logs
 docker-compose logs mcp-server --tail 50  # MCP logs only
 ```
 
-### Step 4: Start Cloudflare Tunnel
+### Step 4: Cloudflare Tunnel Configuration
 
-```bash
-source .env
-cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TOKEN"
-```
+The Cloudflare Tunnel runs as a macOS daemon and routes `/vn-market/*` requests to localhost:3000.
 
-Public URL: `https://zenmidi.com/mcp`
+**Public URL:** `https://zenmidi.com/vn-market/sse`
+
+Configuration is stored in `~/.cloudflared/config.yml`. For detailed setup including path prefix handling and streaming timeouts, see: **`docs/CLOUDFLARE_MCP_INTEGRATION.md`**
 
 ### Step 5: Create 7 Analysis Agents in Claude Cowork
 
-MCP connector URL: `https://zenmidi.com/mcp`
+MCP connector URL: `https://zenmidi.com/vn-market/sse`
 
 | # | Agent Name | Schedule | File to Copy |
 |---|-----------|----------|-------------|
