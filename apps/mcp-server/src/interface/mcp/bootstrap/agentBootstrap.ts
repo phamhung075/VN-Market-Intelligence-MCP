@@ -70,6 +70,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "log_agent_work",
   ],
   market_watcher: [
+    "get_cycle_bootstrap",
     "get_agent_signals",
     "get_market_context",
     "get_market_snapshot",
@@ -96,8 +97,13 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_foreign_flow",
     "record_evidence_fragment",
     "log_agent_work",
+    "get_macro_snapshot",
+    "get_technical_indicators",
+    "get_ticker_intelligence",
+    "send_telegram",
   ],
   alert_commander: [
+    "get_cycle_bootstrap",
     "get_agent_signals",
     "get_system_status",
     "get_market_context",
@@ -117,6 +123,8 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_legal_risk_signals",
     "get_crisis_early_warning",
     "get_cron_health",
+    "get_macro_snapshot",
+    "get_market_snapshot",
   ],
   digest_predict: [
     "get_cycle_bootstrap",
