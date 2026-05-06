@@ -350,7 +350,12 @@ export async function sendTelegramBug(
  * Deletes a message from the BUG channel by message_id.
  * Used to clean up resolved bug reports.
  *
- * @returns true if deleted, false on failure.
+ * Parses the Telegram API JSON response body and checks `body.ok`
+ * (not just the HTTP status code) so that HTTP-200 errors from Telegram
+ * (e.g. "message to delete not found", "bot is not an admin") are correctly
+ * reported as failures.
+ *
+ * @returns true if Telegram confirmed deletion, false on any failure.
  */
 export async function deleteTelegramBug(
   messageId: number,
@@ -363,16 +368,48 @@ export async function deleteTelegramBug(
 
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
   const url = `https://api.telegram.org/bot${botToken}/deleteMessage`;
-  const body = JSON.stringify({ chat_id: bugChatId, message_id: messageId });
+  const reqBody = JSON.stringify({ chat_id: bugChatId, message_id: messageId });
 
   try {
     const response = await fetchFn(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body,
+      body: reqBody,
     });
-    return response.ok;
-  } catch {
+
+    // Parse the Telegram API response body — HTTP status alone is not sufficient.
+    // Telegram can return HTTP 200 with {"ok":false,"error_code":400,...}.
+    let parsed: { ok: boolean; description?: string } | null = null;
+    try {
+      parsed = (await response.json()) as { ok: boolean; description?: string };
+    } catch {
+      // If we cannot parse JSON, fall back to HTTP status
+      if (!response.ok) {
+        log.warn("[telegram] deleteTelegramBug: non-OK HTTP status, no JSON body", {
+          status: response.status,
+          messageId,
+          chatId: bugChatId,
+        });
+        return false;
+      }
+      return true;
+    }
+
+    if (!parsed.ok) {
+      log.warn("[telegram] deleteTelegramBug: Telegram API returned ok=false", {
+        description: parsed.description ?? "unknown",
+        messageId,
+        chatId: bugChatId,
+      });
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    log.warn("[telegram] deleteTelegramBug: fetch threw", {
+      error: err instanceof Error ? err.message : String(err),
+      messageId,
+    });
     return false;
   }
 }
