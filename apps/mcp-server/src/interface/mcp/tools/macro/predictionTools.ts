@@ -119,8 +119,7 @@ export function formatPredictionAccuracy(
   if (rows.length === 0) {
     return (
       `Không có dữ liệu kết quả tín hiệu dự báo trong ${days} ngày qua.\n` +
-      `(Việc xác thực kết quả được chạy hàng tuần — hãy thử lại sau.)\n` +
-      `Gọi lệnh run_prediction_outcome_check để chạy thủ công.`
+      `(Việc xác thực kết quả được chạy tự động hàng tuần vào Chủ nhật 08:00 UTC.)`
     );
   }
 
@@ -254,6 +253,10 @@ export function registerPredictionTools(server: McpServer): void {
         // consistent lexicographic ordering against stored ISO strings.
         const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
+        // Report 2768-2770: exclude stale seed/test markets (fetched_at > 30d old)
+        // that have never been updated — they produce misleading signals.
+        const staleCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
         const rows = db
           .prepare(
             `SELECT pm.*,
@@ -265,12 +268,13 @@ export function registerPredictionTools(server: McpServer): void {
                ON ps.market_id = pm.id
                AND ps.detected_at >= $cutoff
              WHERE (pm.end_date IS NULL OR pm.end_date = '' OR pm.end_date >= $now)
+               AND pm.fetched_at >= $staleCutoff
              GROUP BY pm.id
              ${havingClause}
              ORDER BY pm.fetched_at DESC
              LIMIT $limit`,
           )
-          .all({ $cutoff: cutoff, $now: nowIso, $limit: limit }) as PredictionMarketRow[];
+          .all({ $cutoff: cutoff, $now: nowIso, $staleCutoff: staleCutoff, $limit: limit }) as PredictionMarketRow[];
 
         // Count total signal rows within the last hour (for the signalCount meta-field)
         const signalCountRow = db

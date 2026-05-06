@@ -12,7 +12,7 @@ Run causal cascade engine on a news headline to predict affected stocks and doma
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `headline` | string | Yes | — | News headline to analyze (e.g. 'Oil prices surge 10% on supply shock') |
+| `newsText` | string | Yes | — | Event or news headline to analyze, Vietnamese or English (e.g. 'Oil prices surge 10% on supply shock') |
 | `source` | string | No | user | Source of the headline ('cafef', 'reuters', 'user', etc.) |
 | `stocks` | array | No | [] | Optional pre-selected stocks to override cascade detection |
 
