@@ -26,7 +26,7 @@ outcome: APPROVED
 ### 3. MCP Health Check
 ```
 GET http://localhost:3000/health
-{"status":"ok","name":"vn-market-intelligence-mcp","version":"1.0.0","toolCount":112,"sessions":2,"uptime":122.88}
+{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":112,"sessions":2,"uptime":122.88}
 ```
 - status: ok
 - toolCount: 112 (matches expected)

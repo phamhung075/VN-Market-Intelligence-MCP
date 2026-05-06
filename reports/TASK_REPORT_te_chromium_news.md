@@ -30,7 +30,7 @@ outcome: APPROVED
 - [x] Graceful failure: returns [] on total failure, never throws
 
 ## Live Fetch Test
-Environment: Docker container vn-market-intelligence-mcp-mcp-server-1 (Chromium 147, Bun 1.3.13, Debian trixie)
+Environment: Docker container vn-market-mcp-server-1 (Chromium 147, Bun 1.3.13, Debian trixie)
 
 Full Chromium navigation to tradingeconomics.com/vietnam/news fails with
 TargetCloseError: Protocol error (Runtime.callFunctionOn): Target closed at page.content().

@@ -48,7 +48,7 @@ runBctcReparseJob
 
 ```bash
 # Find stale rows
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3; conn = sqlite3.connect('/app/data/market.db')
 cur = conn.cursor()
 cur.execute(\"SELECT id, detail FROM agent_feedback WHERE agent='data-auditor' AND status='new' AND title LIKE '[AUDIT] stranded_bctc_pdf%'\")
@@ -73,27 +73,27 @@ for r in cur.fetchall(): print(r[0], r[1][:120])
 
 ```bash
 # 1. PDFs on disk
-docker exec vn-market-intelligence-mcp-mcp-server-1 ls /app/data/pdfs/
+docker exec vn-market-mcp-server-1 ls /app/data/pdfs/
 
 # 2. Blocking feedback rows
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3; conn = sqlite3.connect('/app/data/market.db'); cur = conn.cursor()
 cur.execute(\"SELECT id, detail FROM agent_feedback WHERE agent='data-auditor' AND status='new' AND title LIKE '[AUDIT] stranded_bctc_pdf%'\")
 for r in cur.fetchall(): print(r)
 "
 
 # 3. OCR available
-docker exec vn-market-intelligence-mcp-mcp-server-1 which pdftoppm
+docker exec vn-market-mcp-server-1 which pdftoppm
 
 # 4. Extracted reports
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3; conn = sqlite3.connect('/app/data/market.db'); cur = conn.cursor()
 cur.execute('SELECT action_code, period_type, period_year, extraction_method FROM financial_reports ORDER BY rowid DESC LIMIT 10')
 for r in cur.fetchall(): print(r)
 "
 
 # 5. Manually trigger reparse
-docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e "
+docker exec vn-market-mcp-server-1 bun -e "
 const { runBctcReparseJob } = await import('./src/scheduler/financial-reports/bctcReparseJob.js');
 const r = await runBctcReparseJob();
 console.log(JSON.stringify(r));

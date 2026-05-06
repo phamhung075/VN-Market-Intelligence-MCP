@@ -65,7 +65,7 @@ Remaining 8 rows (BSR, DGC, DIG, FPT, HPG, SHB, VCB Q4-2025, VCB Q1-2025) all ha
 Run inside the mcp-server container to confirm clean state:
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e "
+docker exec vn-market-mcp-server-1 bun -e "
 import { Database } from 'bun:sqlite';
 const db = new Database('/app/data/market.db', { readonly: true });
 const r1 = db.query(\"SELECT COUNT(*) as cnt FROM bctc_vps_queue WHERE source_url LIKE '%/test%'\").get();

@@ -151,12 +151,14 @@ export function registerTelegramReportTools(server: McpServer): void {
           };
         }
 
+        // Return single-line JSON to avoid JSON-RPC parsing issues with pretty-printed escapes
         const serialized = rows.map(serializeReport);
+        const jsonString = JSON.stringify(serialized);
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(serialized, null, 2),
+              text: jsonString,
             },
           ],
         };

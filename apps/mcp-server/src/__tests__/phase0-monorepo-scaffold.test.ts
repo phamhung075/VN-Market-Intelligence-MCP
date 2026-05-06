@@ -32,7 +32,7 @@ describe("Phase 0 — Monorepo Scaffold: mcp-server workspace", () => {
     const pkgPath = join(WORKSPACE_ROOT, "package.json");
     expect(existsSync(pkgPath)).toBe(true);
     const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as Record<string, unknown>;
-    expect(pkg["name"]).toBe("vn-market-intelligence-mcp");
+    expect(pkg["name"]).toBe("vn-market");
   });
 
   it("apps/mcp-server/tsconfig.json exists", () => {

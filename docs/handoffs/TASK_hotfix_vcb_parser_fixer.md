@@ -72,7 +72,7 @@ After fix:
 2. Run full suite — must stay >= 8025
 3. Re-trigger reparse:
    ```
-   docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e \
+   docker exec vn-market-mcp-server-1 bun -e \
      "const m = await import('./src/scheduler/financial-reports/bctcReparseJob.js'); await m.runBctcReparseJob();"
    ```
    (Delete the bad VCB 2025-Q1 row first so disk-scan picks it up — or QA will handle this.)

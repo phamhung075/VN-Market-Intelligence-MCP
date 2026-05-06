@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "vn-market-intelligence-mcp",
+      "name": "vn-market",
       "dependencies": {
         "@huggingface/transformers": "^3.0.0",
         "@lancedb/lancedb": "^0.12.0",

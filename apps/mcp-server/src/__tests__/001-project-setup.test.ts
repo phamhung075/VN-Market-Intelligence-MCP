@@ -96,7 +96,7 @@ describe("Task 001 — Project setup & DDD folder structure", () => {
   it("package.json has name field", () => {
     const raw = readFileSync(join(ROOT, "package.json"), "utf-8");
     const pkg = JSON.parse(raw) as Record<string, unknown>;
-    expect(pkg["name"]).toBe("vn-market-intelligence-mcp");
+    expect(pkg["name"]).toBe("vn-market");
   });
 
   it("package.json has scripts.check field (bun tsc --noEmit)", () => {

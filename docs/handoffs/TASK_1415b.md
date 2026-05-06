@@ -379,7 +379,7 @@ After the developer implements this fix:
 
 ### Reparse command (after fix deployed to container):
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e \
+docker exec vn-market-mcp-server-1 bun -e \
   "const m = await import('./src/scheduler/financial-reports/bctcReparseJob.js'); await m.runBctcReparseJob();"
 ```
 

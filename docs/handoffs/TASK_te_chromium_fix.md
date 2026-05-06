@@ -69,10 +69,10 @@ All 10 test cases pass. The test file mocks `deps.scrape` so no real browser is 
 ## Docker Verification
 
 ```
-docker exec vn-market-intelligence-mcp-mcp-server-1 which chromium
+docker exec vn-market-mcp-server-1 which chromium
 → /usr/bin/chromium
 
-docker exec vn-market-intelligence-mcp-mcp-server-1 chromium --version
+docker exec vn-market-mcp-server-1 chromium --version
 → Chromium 147.0.7727.116 built on Debian GNU/Linux 13 (trixie)
 
 Container status: Up (healthy)

@@ -21,7 +21,7 @@ MCP tools (`get_vps_service_health`, `get_pipeline_health`) do NOT surface extra
 ## Step 1 — PDFs on disk?
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 ls /app/data/pdfs/
+docker exec vn-market-mcp-server-1 ls /app/data/pdfs/
 ```
 
 - Files present → extraction stage failed (go to Step 2)
@@ -32,7 +32,7 @@ docker exec vn-market-intelligence-mcp-mcp-server-1 ls /app/data/pdfs/
 ## Step 2 — Stale feedback rows blocking extraction?
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3; conn = sqlite3.connect('/app/data/market.db'); cur = conn.cursor()
 cur.execute(\"SELECT id, detail FROM agent_feedback WHERE agent='data-auditor' AND status='new' AND title LIKE '[AUDIT] stranded_bctc_pdf%'\")
 for r in cur.fetchall(): print(r[0], r[1][:120])
@@ -43,7 +43,7 @@ If rows contain `/Users/admin/...` (HOST path) → stale pre-Docker rows blockin
 
 Fix — update to container path or delete if PDF absent:
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3, json, os
 conn = sqlite3.connect('/app/data/market.db'); cur = conn.cursor()
 # For each stale row: update filePath to /app/data/pdfs/<filename>
@@ -58,10 +58,10 @@ conn.commit()
 ## Step 3 — OCR available?
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 which pdftoppm
+docker exec vn-market-mcp-server-1 which pdftoppm
 ```
 
-Missing → `docker exec vn-market-intelligence-mcp-mcp-server-1 apt-get install -y poppler-utils`
+Missing → `docker exec vn-market-mcp-server-1 apt-get install -y poppler-utils`
 
 Note: `isOcrAvailable()` is cached at process startup. After install, restart container:
 ```bash
@@ -73,7 +73,7 @@ docker-compose restart mcp-server
 ## Step 4 — Manually trigger reparse
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e "
+docker exec vn-market-mcp-server-1 bun -e "
 const { runBctcReparseJob } = await import('./src/scheduler/financial-reports/bctcReparseJob.js');
 const r = await runBctcReparseJob();
 console.log(JSON.stringify(r));
@@ -87,7 +87,7 @@ Expected: `{"examined":N,"resolved":N,"failed":0,...}`
 ## Step 5 — Verify reports stored
 
 ```bash
-docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+docker exec vn-market-mcp-server-1 python3 -c "
 import sqlite3; conn = sqlite3.connect('/app/data/market.db'); cur = conn.cursor()
 cur.execute('SELECT action_code, period_type, period_year, extraction_method FROM financial_reports ORDER BY rowid DESC LIMIT 10')
 for r in cur.fetchall(): print(r)

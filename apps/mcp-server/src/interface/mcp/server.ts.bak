@@ -263,7 +263,7 @@ export async function createBunServer(
       res.end(
         JSON.stringify({
           status: "ok",
-          name: "vn-market-intelligence-mcp",
+          name: "vn-market",
           version: "1.0.0",
           toolCount,
           sessions: sessions.sessionCount,
