@@ -29,7 +29,12 @@ for (const subdir of [
   "reports",
   "exports",
 ]) {
-  fs.mkdirSync(path.join(DATA_ROOT, subdir), { recursive: true });
+  const target = path.join(DATA_ROOT, subdir);
+  try {
+    fs.mkdirSync(target, { recursive: true });
+  } catch {
+    // Tolerate EEXIST (symlink) and ENOENT (symlink target subdirs managed externally)
+  }
 }
 
 Bun.env["DB_PATH"] = ":memory:";

@@ -40,6 +40,7 @@ import { runFranceSummary } from './briefings/franceSummaryJob.js'
 import { runAlertScanParallel } from './alerts/alertScanParallelJob.js'
 import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
 import { runSignalOutcomeJobCron } from './alerts/signalOutcomeJob.js'
+import { runAlertOutcomeJobCron } from './alerts/alertOutcomeJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
@@ -501,6 +502,12 @@ export function startScheduler() {
   // Resolves agent_signals with outcome='fired' or NULL after VN market close.
   // Compares entry price vs resolution price; marks confirmed or false_positive.
   cron.schedule(CRONS.signalOutcomeJob, () => { runSignalOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
+
+  // 08:45 UTC Mon-Fri — Alert outcome resolver — task 1847d-C
+  // Scores fired alerts WHERE outcome IS NULL using market_prices_history.
+  // 15 min after signalOutcomeJob to avoid DB write contention.
+  // BLK-3: sends Telegram WORK digest for position-danger HITs.
+  cron.schedule(CRONS.alertOutcomeJob, () => { runAlertOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
 
   // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
   // Shifted from 16:00 → 15:00 UTC so aggregation runs 30 min before eveningSummary (15:30 UTC).

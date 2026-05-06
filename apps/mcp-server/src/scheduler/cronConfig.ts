@@ -116,4 +116,7 @@ export const CRONS = {
   integrityCheck:            Bun.env.CRON_DB_INTEGRITY_CHECK                 ?? '0 2 * * 0',
   /** Market earning yield (Báu Phase 2): daily 09:30 UTC (16:30 VN) weekdays — task 1426a */
   marketEarningYield:        Bun.env.CRON_MARKET_EARNING_YIELD               ?? '30 9 * * 1-5',
+  /** alertOutcomeJob — daily alert outcome resolver at 08:45 UTC weekdays (task 1847d-C)
+   *  15 min after signalOutcomeJob (08:30 UTC) to avoid DB write contention. */
+  alertOutcomeJob:           Bun.env.CRON_ALERT_OUTCOME_JOB                  ?? '45 8 * * 1-5',
 }
