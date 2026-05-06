@@ -215,9 +215,18 @@ async function defaultPollNews(): Promise<PollNewsResult> {
   // "step A failed — pollNews error" entries in system_logs and rows_written=0
   // on every scheduled tick (task 1228).
   //
-  // Fix: stub ALL five RSS sources. The scheduled intelligenceCycleJob pollNews
+  // Fix: stub ALL news sources. The scheduled intelligenceCycleJob pollNews
   // call is now a no-op fetcher; all real ingestion happens via the VPS push path
   // in server.ts. This eliminates startup errors and noise in cron_job_runs.
+  //
+  // Task 1843: teChromiumNews (added in Task 1799) was missing from this stub
+  // list. Every 15-minute intelligence cycle tick was launching a real
+  // Playwright/Chromium browser process, causing:
+  //   - Repeated ~2-second retries (cold-start retry in pollNews)
+  //   - Runaway alert entries (1,227 across 255 minute-windows in 2 days)
+  //   - CPU/memory waste from orphaned Playwright processes
+  // VPS vn-news-fetch.service handles all news sources including Trading
+  // Economics; no local fetcher should run from the scheduled cycle.
   return pollNews({
     fetchers: {
       cafef:            async () => [],
@@ -225,6 +234,7 @@ async function defaultPollNews(): Promise<PollNewsResult> {
       vneconomy:        async () => [],
       reuters:          async () => [],  // Task 1228: VPS handles Reuters too
       tradingeconomics: async () => [],  // Task 1228: VPS handles TE too
+      teChromiumNews:   async () => [],  // Task 1843: VPS handles TE Chromium news too
     },
   });
 }
