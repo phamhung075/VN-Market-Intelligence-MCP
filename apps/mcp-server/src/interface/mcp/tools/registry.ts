@@ -26,7 +26,7 @@ import { registerPredictionTools } from "./macro/predictionTools.js";
 import { registerPriceHistoryTools } from "./market-data/priceHistoryTools.js";
 import { registerPositionTools } from "./portfolio/positionTools.js";
 import { registerPortfolioRiskTool } from "./portfolio/portfolioRiskTool.js";
-import { registerAlertAccuracyTool } from "./alerts/alertAccuracy.js";
+import { registerAlertAccuracyTool, registerMarkAlertOutcomeTool } from "./alerts/alertAccuracy.js";
 import { registerSectorRotationTools } from "./sector/sectorRotationTools.js";
 import { registerEarningsCalendarTools } from "./financial-reports/earningsCalendarTools.js";
 import { registerAlertDigestTools } from "./alerts/alertDigestTools.js";
@@ -119,6 +119,7 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerPositionTools,
   registerPortfolioRiskTool,
   registerAlertAccuracyTool,
+  registerMarkAlertOutcomeTool,
   registerSectorRotationTools,
   registerEarningsCalendarTools,
   registerAlertDigestTools,

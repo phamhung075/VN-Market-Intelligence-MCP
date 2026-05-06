@@ -3,7 +3,7 @@
  * Public API: alert firing, accuracy, digests, mutes, custom rules, health checks
  */
 export { registerAlertTools } from "./alerts.js";
-export { registerAlertAccuracyTool } from "./alertAccuracy.js";
+export { registerAlertAccuracyTool, registerMarkAlertOutcomeTool } from "./alertAccuracy.js";
 export { registerAlertCheckTools } from "./alertCheckTools.js";
 export { registerAlertDigestTools } from "./alertDigestTools.js";
 export { registerAlertMuteTools } from "./alertMuteTools.js";
