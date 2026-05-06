@@ -80,3 +80,41 @@
   Anomalies: 2 (>2.0σ) | Volume spikes: 2 | Chain confirms: 4
   Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Status: BLOCKING_ERROR (signal post)
 
+---
+
+## Cycle 19:44 UTC (Off-Hours)
+
+**Market Status:** CLOSED (last snapshot 2026-05-06 08:32 UTC)  
+**Time since last trade:** 11h 12m
+
+### Regime (Unchanged)
+- **Global Liquidity:** NEUTRAL (σ threshold 2.0)
+- **Carry Regime:** FII_OUTFLOW_RISK (VND 5% vs Fed 5.33%)
+- **US 10Y:** 4.36% NEUTRAL
+- **DXY:** 98.00 USD STABLE
+- **Macro anomaly:** Brent Crude 101.49 (-3σ vs 110.57 avg) — CRITICAL
+
+### Analysis Summary
+- **Stocks monitored:** 26 (price data frozen at 08:32)
+- **Anomalies detected:** 2 (HCM 2.78σ, POW 2.1σ) — consistent with prior 18:46 analysis
+- **Volume spikes:** 2 (HCM 173x vs prior day, POW 33x vs prior day)
+- **Chain findings:** 0 (market closed, 15-min window empty)
+- **Sector rotation:** Securities sector strongest (+4.76% 1d), Utilities +2.46%
+
+### Supply Chain & Infrastructure
+- **BDI:** 1,400 (stable)
+- **Supply chain:** No disruptions detected
+- **Climate risk:** May heat waves expected (IDC/KBC/GEG watchlist, not in portfolio)
+- **Energy grid:** Normal (hydro 70%, renewables 22%, peak demand 53%)
+
+### Signal Status
+**ISSUE PERSISTS:** `post_agent_signal` schema validation error
+- Attempted payload: `{move_sigma, move_pct, price_change_pct, regime, adjusted_threshold, fx_pressure, pe_compression_risk}`
+- Error: Missing required field `root` (schema undefined in TECH_1293_ROOTCAUSE.md)
+- Impact: No signals posted to downstream agents since 18:46
+
+### Status
+[Market Watcher] 19:44 UTC — 26 stocks monitored (frozen 08:32)
+  Analysis: Complete | Anomalies: 2 (HCM, POW) | Carry regime: FII_OUTFLOW_RISK | Next: off-hours 23:44 UTC (4h)
+  Infra issue: `post_agent_signal` blocking; manual escalation recommended
+
