@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -80,8 +87,8 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ```typescript
 // Step 0: Bootstrap
 const bootstrap = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cycle_bootstrap",
-  input={ agent_name: "news-scout" }
+  server: "vn-market", tool: "get_cycle_bootstrap",
+  arguments: { agent_name: "news-scout" }
 );
 
 if (bootstrap.market_context?.trading_window === "closed") {
@@ -95,8 +102,8 @@ if (bootstrap.market_context?.trading_window === "closed") {
 ```typescript
 // Fetch VN news for watchlist
 const newsAnalysis = await mcp__claude_ai_gateway__call_tool(
-  tool_name="fetch_and_analyze",
-  input={}
+  server: "vn-market", tool: "fetch_and_analyze",
+  arguments: {}
 );
 
 // newsAnalysis contains:
@@ -110,8 +117,8 @@ const newsAnalysis = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // When we find news about VCB governance issue
 const chain = await mcp__claude_ai_gateway__call_tool(
-  tool_name="run_impact_chain",
-  input={
+  server: "vn-market", tool: "run_impact_chain",
+  arguments: {
     ticker: "VCB",
     event: "Board member resignation amid dispute",
     impact_score: 8.5
@@ -129,8 +136,8 @@ const chain = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Find similar past events to validate signal
 const similar = await mcp__claude_ai_gateway__call_tool(
-  tool_name="search_similar_context",
-  input={
+  server: "vn-market", tool: "search_similar_context",
+  arguments: {
     query: "board member resignation governance",
     context: {
       ticker: "VCB",
@@ -152,8 +159,8 @@ if (similar.matches.length > 0) {
 // Post urgent breaking news signal
 // Required finding_data fields: headline, source, severity
 await mcp__claude_ai_gateway__call_tool(
-  tool_name="post_agent_signal",
-  input={
+  server: "vn-market", tool: "post_agent_signal",
+  arguments: {
     from_agent: "news-scout",
     to_agent: "alert-commander",
     signal_type: "urgent_news",

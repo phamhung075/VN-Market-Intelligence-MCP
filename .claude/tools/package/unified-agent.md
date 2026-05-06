@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -107,14 +114,14 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ```typescript
 // Step 0: Bootstrap
 const bootstrap = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cycle_bootstrap",
-  input={ agent_name: "unified-agent" }
+  server: "vn-market", tool: "get_cycle_bootstrap",
+  arguments: { agent_name: "unified-agent" }
 );
 
 // Check system health
 const systemStatus = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_system_status",
-  input={}
+  server: "vn-market", tool: "get_system_status",
+  arguments: {}
 );
 
 if (systemStatus.any_critical_errors) {
@@ -128,18 +135,18 @@ if (systemStatus.any_critical_errors) {
 ```typescript
 // Get market overview
 const market = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_market_context",
-  input={}
+  server: "vn-market", tool: "get_market_context",
+  arguments: {}
 );
 
 const sentiment = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_sentiment_trend",
-  input={}
+  server: "vn-market", tool: "get_sentiment_trend",
+  arguments: {}
 );
 
 const predictions = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_prediction_markets",
-  input={}
+  server: "vn-market", tool: "get_prediction_markets",
+  arguments: {}
 );
 
 // Synthesize into coherent market picture
@@ -150,23 +157,23 @@ const predictions = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Get full portfolio picture
 const positions = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_positions",
-  input={}
+  server: "vn-market", tool: "get_positions",
+  arguments: {}
 );
 
 const conviction = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_portfolio_conviction",
-  input={}
+  server: "vn-market", tool: "get_portfolio_conviction",
+  arguments: {}
 );
 
 const risk = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_portfolio_risk",
-  input={}
+  server: "vn-market", tool: "get_portfolio_risk",
+  arguments: {}
 );
 
 const rebalancing = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_rebalancing_signals",
-  input={}
+  server: "vn-market", tool: "get_rebalancing_signals",
+  arguments: {}
 );
 
 // Determine if rebalance needed
@@ -180,18 +187,18 @@ if (risk.var_95 > 0.15) {
 ```typescript
 // Monitor cascade effectiveness
 const cascadeMetrics = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cascade_metrics",
-  input={}
+  server: "vn-market", tool: "get_cascade_metrics",
+  arguments: {}
 );
 
 const alertAccuracy = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_alert_accuracy",
-  input={}
+  server: "vn-market", tool: "get_alert_accuracy",
+  arguments: {}
 );
 
 const signalEffectiveness = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_signal_effectiveness",
-  input={}
+  server: "vn-market", tool: "get_signal_effectiveness",
+  arguments: {}
 );
 
 // Identify which agents are performing well and which need review
@@ -202,13 +209,13 @@ const signalEffectiveness = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Check for new intelligence
 const telegramReports = await mcp__claude_ai_gateway__call_tool(
-  tool_name="read_telegram_reports",
-  input={}
+  server: "vn-market", tool: "read_telegram_reports",
+  arguments: {}
 );
 
 const unreviewed = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_unreviewed_market_messages",
-  input={}
+  server: "vn-market", tool: "get_unreviewed_market_messages",
+  arguments: {}
 );
 
 // Process and act on critical messages

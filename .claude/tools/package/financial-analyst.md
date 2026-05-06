@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -85,8 +92,8 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ```typescript
 // Step 0: Bootstrap
 const bootstrap = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cycle_bootstrap",
-  input={ agent_name: "financial-analyst" }
+  server: "vn-market", tool: "get_cycle_bootstrap",
+  arguments: { agent_name: "financial-analyst" }
 );
 
 // Check if BCTC pipeline is healthy
@@ -101,8 +108,8 @@ if (bootstrap.system_status?.bctc_vps_status !== "operational") {
 ```typescript
 // Comprehensive financial snapshot
 const bctcData = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_bctc_full",
-  input={
+  server: "vn-market", tool: "get_bctc_full",
+  arguments: {
     ticker: "VCB",
     period: "Q1"
   }
@@ -120,8 +127,8 @@ const bctcData = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Get all upcoming deadlines
 const calendar = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_earnings_calendar",
-  input={}
+  server: "vn-market", tool: "get_earnings_calendar",
+  arguments: {}
 );
 
 // calendar contains watchlist tickers with:
@@ -135,8 +142,8 @@ const calendar = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Compare metrics with peers
 const comparison = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_sector_comparison",
-  input={
+  server: "vn-market", tool: "get_sector_comparison",
+  arguments: {
     ticker: "VCB",
     metric: "ROE"
   }
@@ -153,15 +160,15 @@ if (comparison.ticker_rank === 1) {
 ```typescript
 // Alert Commander found price anomaly - validate with BCTC
 const bctc = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_bctc_full",
-  input={ ticker: "ACB" }
+  server: "vn-market", tool: "get_bctc_full",
+  arguments: { ticker: "ACB" }
 );
 
 if (bctc.comparison.YoY_growth > 0.20 && bctc.sentiment_trend.slope > 0) {
   // Fundamental support for price move
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="post_agent_signal",
-    input={
+    server: "vn-market", tool: "post_agent_signal",
+    arguments: {
       signal_type: "fundamental_validation",
       payload: {
         ticker: "ACB",
@@ -183,8 +190,8 @@ if (bctc.comparison.YoY_growth > 0.20 && bctc.sentiment_trend.slope > 0) {
 ```typescript
 // Find similar BCTC transitions to validate signal
 const similar = await mcp__claude_ai_gateway__call_tool(
-  tool_name="search_similar_context",
-  input={
+  server: "vn-market", tool: "search_similar_context",
+  arguments: {
     query: "sharp revenue increase with margin compression",
     context: {
       ticker: "FPT",

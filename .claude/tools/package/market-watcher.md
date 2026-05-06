@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -93,8 +100,8 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ```typescript
 // Step 0: Bootstrap
 const bootstrap = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cycle_bootstrap",
-  input={ agent_name: "market-watcher" }
+  server: "vn-market", tool: "get_cycle_bootstrap",
+  arguments: { agent_name: "market-watcher" }
 );
 
 if (bootstrap.market_context?.trading_window === "closed") {
@@ -108,8 +115,8 @@ if (bootstrap.market_context?.trading_window === "closed") {
 ```typescript
 // Fetch price data for watchlist
 const priceData = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_price_history",
-  input={
+  server: "vn-market", tool: "get_price_history",
+  arguments: {
     tickers: ["VCB", "ACB", "FPT"],
     days: 60
   }
@@ -124,8 +131,8 @@ const priceData = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Identify chart patterns
 const patterns = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_patterns",
-  input={ ticker: "VCB" }
+  server: "vn-market", tool: "get_patterns",
+  arguments: { ticker: "VCB" }
 );
 
 // patterns contains:
@@ -139,8 +146,8 @@ const patterns = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Get full technical picture
 const indicators = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_technical_indicators",
-  input={ ticker: "FPT" }
+  server: "vn-market", tool: "get_technical_indicators",
+  arguments: { ticker: "FPT" }
 );
 
 // indicators contains:
@@ -154,8 +161,8 @@ const indicators = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Track relative sector performance
 const rotation = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_sector_rotation",
-  input={}
+  server: "vn-market", tool: "get_sector_rotation",
+  arguments: {}
 );
 
 // rotation contains:
@@ -170,15 +177,15 @@ const rotation = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Check for unusual moves
 const intelligence = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_ticker_intelligence",
-  input={ ticker: "VCB" }
+  server: "vn-market", tool: "get_ticker_intelligence",
+  arguments: { ticker: "VCB" }
 );
 
 if (intelligence.today_move_zscore > 2.0) {
   // Significant price move detected
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="post_agent_signal",
-    input={
+    server: "vn-market", tool: "post_agent_signal",
+    arguments: {
       signal_type: "price_anomaly",
       payload: {
         ticker: "VCB",
@@ -198,18 +205,18 @@ if (intelligence.today_move_zscore > 2.0) {
 ```typescript
 // Check macro risks
 const supplyChainRisk = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_supply_chain_exposure",
-  input={}
+  server: "vn-market", tool: "get_supply_chain_exposure",
+  arguments: {}
 );
 
 const climateRisk = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_climate_risk_signals",
-  input={}
+  server: "vn-market", tool: "get_climate_risk_signals",
+  arguments: {}
 );
 
 const energyRisk = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_energy_grid_signals",
-  input={}
+  server: "vn-market", tool: "get_energy_grid_signals",
+  arguments: {}
 );
 
 // Synthesize risks for macro outlook

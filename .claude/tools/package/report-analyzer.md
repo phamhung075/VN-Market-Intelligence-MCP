@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -81,8 +88,8 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ```typescript
 // Step 0: Bootstrap
 const bootstrap = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cycle_bootstrap",
-  input={ agent_name: "report-analyzer" }
+  server: "vn-market", tool: "get_cycle_bootstrap",
+  arguments: { agent_name: "report-analyzer" }
 );
 
 if (bootstrap.system_status?.bctc_vps_status !== "operational") {
@@ -96,8 +103,8 @@ if (bootstrap.system_status?.bctc_vps_status !== "operational") {
 ```typescript
 // Fetch all filing deadlines
 const calendar = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_earnings_calendar",
-  input={}
+  server: "vn-market", tool: "get_earnings_calendar",
+  arguments: {}
 );
 
 // calendar contains all watchlist stocks with:
@@ -118,8 +125,8 @@ const urgent = calendar.tickers.filter(t =>
 ```typescript
 // Get comprehensive financial snapshot
 const bctc = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_bctc_full",
-  input={
+  server: "vn-market", tool: "get_bctc_full",
+  arguments: {
     ticker: "VCB",
     period: "Q1"
   }
@@ -137,8 +144,8 @@ const bctc = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Compare multiple competitors
 const comparison = await mcp__claude_ai_gateway__call_tool(
-  tool_name="compare_stocks",
-  input={
+  server: "vn-market", tool: "compare_stocks",
+  arguments: {
     tickers: ["VCB", "ACB", "CTG"],
     metrics: ["ROE", "Net Profit Margin", "P/E Ratio"]
   }
@@ -155,8 +162,8 @@ const comparison = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Deep dive into financial position
 const detailed = await mcp__claude_ai_gateway__call_tool(
-  tool_name="compare_financials",
-  input={
+  server: "vn-market", tool: "compare_financials",
+  arguments: {
     ticker: "VCB",
     comparison_type: "peers"
   }
@@ -176,8 +183,8 @@ const detailed = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Understand sector dynamics
 const sector = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_sector_comparison",
-  input={
+  server: "vn-market", tool: "get_sector_comparison",
+  arguments: {
     metric: "ROE"
   }
 );
@@ -194,21 +201,21 @@ const sector = await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // Full analysis workflow
 const watchlist = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_watchlist",
-  input={}
+  server: "vn-market", tool: "get_watchlist",
+  arguments: {}
 );
 
 const results = [];
 
 for (const ticker of watchlist.tickers) {
   const bctc = await mcp__claude_ai_gateway__call_tool(
-    tool_name="get_bctc_full",
-    input={ ticker: ticker.code }
+    server: "vn-market", tool: "get_bctc_full",
+    arguments: { ticker: ticker.code }
   );
 
   const peers = await mcp__claude_ai_gateway__call_tool(
-    tool_name="compare_financials",
-    input={
+    server: "vn-market", tool: "compare_financials",
+    arguments: {
       ticker: ticker.code,
       comparison_type: "peers"
     }
@@ -227,8 +234,8 @@ for (const ticker of watchlist.tickers) {
 
 // Log summary
 await mcp__claude_ai_gateway__call_tool(
-  tool_name="log_agent_work",
-  input={
+  server: "vn-market", tool: "log_agent_work",
+  arguments: {
     action: "comprehensive_report_analysis",
     context: {
       tickers_analyzed: results.length,
@@ -245,8 +252,8 @@ await mcp__claude_ai_gateway__call_tool(
 // When report analysis reveals important finding
 if (someSignificantFinding) {
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="post_agent_signal",
-    input={
+    server: "vn-market", tool: "post_agent_signal",
+    arguments: {
       signal_type: "fundamental_validation",
       payload: {
         ticker: "FPT",

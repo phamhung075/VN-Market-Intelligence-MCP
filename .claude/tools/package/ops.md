@@ -6,11 +6,18 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
 ```
+
+⚠️ **Wrong** → ~~`tool_name`~~ use `tool` | ~~`input`~~ use `arguments` | ~~`vnmarket-mcp`~~ use `"vn-market"`
 
 For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
 
@@ -124,22 +131,22 @@ Local MCP Server (PULL-based)
 
 ```typescript
 const health = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_vps_service_health",
-  input={}
+  server: "vn-market", tool: "get_vps_service_health",
+  arguments: {}
 );
 
 if (health.status === "unreachable") {
   // Check proxy tunnel
   const proxyHealth = await mcp__claude_ai_gateway__call_tool(
-    tool_name="get_vps_proxy_health",
-    input={}
+    server: "vn-market", tool: "get_vps_proxy_health",
+    arguments: {}
   );
 
   if (proxyHealth.tunnel_status === "disconnected") {
     // Tunnel down - report to user
     await mcp__claude_ai_gateway__call_tool(
-      tool_name="send_telegram",
-      input={
+      server: "vn-market", tool: "send_telegram",
+      arguments: {
         message: "VPS proxy tunnel disconnected. Manual SSH reconnect required.",
         channel: "bug"
       }
@@ -152,22 +159,22 @@ if (health.status === "unreachable") {
 
 ```typescript
 const pipeline = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_pipeline_health",
-  input={}
+  server: "vn-market", tool: "get_pipeline_health",
+  arguments: {}
 );
 
 if (pipeline.bctc_status === "stalled") {
   // Check VPS
   const vpsHealth = await mcp__claude_ai_gateway__call_tool(
-    tool_name="get_vps_service_health",
-    input={}
+    server: "vn-market", tool: "get_vps_service_health",
+    arguments: {}
   );
 
   if (vpsHealth.status === "healthy") {
     // VPS OK - try manual trigger
     await mcp__claude_ai_gateway__call_tool(
-      tool_name="trigger_bctc_vps_fetch",
-      input={}
+      server: "vn-market", tool: "trigger_bctc_vps_fetch",
+      arguments: {}
     );
   }
 }
@@ -177,15 +184,15 @@ if (pipeline.bctc_status === "stalled") {
 
 ```typescript
 const cronHealth = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cron_health",
-  input={}
+  server: "vn-market", tool: "get_cron_health",
+  arguments: {}
 );
 
 if (cronHealth.any_stuck_jobs) {
   // Log the issue
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="log_fix",
-    input={
+    server: "vn-market", tool: "log_fix",
+    arguments: {
       issue: "Scheduler job stuck in running state for >1hour",
       fix: "Docker container will auto-restart on next scheduled job trigger",
       severity: "high"
@@ -194,8 +201,8 @@ if (cronHealth.any_stuck_jobs) {
 
   // Send notification
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="send_telegram",
-    input={
+    server: "vn-market", tool: "send_telegram",
+    arguments: {
       message: `Stuck jobs detected. Services will restart on next cron cycle.`,
       channel: "work"
     }
@@ -212,16 +219,16 @@ if (cronHealth.any_stuck_jobs) {
 ```typescript
 // Step 0: System health check
 const systemStatus = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_system_status",
-  input={}
+  server: "vn-market", tool: "get_system_status",
+  arguments: {}
 );
 
 if (systemStatus.critical_errors?.length > 0) {
   // Log errors and exit - this is a blocking issue
   for (const error of systemStatus.critical_errors) {
     await mcp__claude_ai_gateway__call_tool(
-      tool_name="send_telegram",
-      input={
+      server: "vn-market", tool: "send_telegram",
+      arguments: {
         message: `CRITICAL: ${error.service} - ${error.message}`,
         channel: "bug"
       }
@@ -236,23 +243,23 @@ if (systemStatus.critical_errors?.length > 0) {
 ```typescript
 // Comprehensive system diagnostic
 const systemStatus = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_system_status",
-  input={}
+  server: "vn-market", tool: "get_system_status",
+  arguments: {}
 );
 
 const slaStatus = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_sla_status",
-  input={}
+  server: "vn-market", tool: "get_sla_status",
+  arguments: {}
 );
 
 const pipelineHealth = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_pipeline_health",
-  input={}
+  server: "vn-market", tool: "get_pipeline_health",
+  arguments: {}
 );
 
 const cronHealth = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_cron_health",
-  input={}
+  server: "vn-market", tool: "get_cron_health",
+  arguments: {}
 );
 
 // Aggregate into report
@@ -267,8 +274,8 @@ const report = {
 
 // Send summary to work channel
 await mcp__claude_ai_gateway__call_tool(
-  tool_name="send_telegram",
-  input={
+  server: "vn-market", tool: "send_telegram",
+  arguments: {
     message: `Daily Health: ${report.db_status}, ${report.sources_operational} sources OK, ${report.sla_compliance}% SLA`,
     channel: "work"
   }
@@ -280,31 +287,31 @@ await mcp__claude_ai_gateway__call_tool(
 ```typescript
 // When cowork agents request fresh data
 const vpsHealth = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_vps_service_health",
-  input={}
+  server: "vn-market", tool: "get_vps_service_health",
+  arguments: {}
 );
 
 if (vpsHealth.status === "healthy") {
   // Trigger BCTC fetch for specific tickers
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="trigger_bctc_vps_fetch",
-    input={
+    server: "vn-market", tool: "trigger_bctc_vps_fetch",
+    arguments: {
       tickers: ["VCB", "ACB", "FPT"]
     }
   );
 
   // Trigger price update
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="trigger_price_vps_fetch",
-    input={
+    server: "vn-market", tool: "trigger_price_vps_fetch",
+    arguments: {
       tickers: ["VCB", "ACB", "FPT"]
     }
   );
 
   // Wait for completion and notify
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="send_telegram",
-    input={
+    server: "vn-market", tool: "send_telegram",
+    arguments: {
       message: "Data refresh triggered for VCB, ACB, FPT",
       channel: "work"
     }
@@ -317,23 +324,23 @@ if (vpsHealth.status === "healthy") {
 ```typescript
 // If a specific service is unresponsive
 const pipelineHealth = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_pipeline_health",
-  input={}
+  server: "vn-market", tool: "get_pipeline_health",
+  arguments: {}
 );
 
 if (pipelineHealth.price_status === "unhealthy") {
   // Attempt graceful restart
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="restart_vps_service",
-    input={
+    server: "vn-market", tool: "restart_vps_service",
+    arguments: {
       service: "price"
     }
   );
 
   // Log the action
   await mcp__claude_ai_gateway__call_tool(
-    tool_name="log_fix",
-    input={
+    server: "vn-market", tool: "log_fix",
+    arguments: {
       issue: "Price service unresponsive",
       fix: "Restarted price VPS service",
       severity: "high"
@@ -347,8 +354,8 @@ if (pipelineHealth.price_status === "unhealthy") {
 ```typescript
 // Check if an issue was already fixed recently
 const recentFixes = await mcp__claude_ai_gateway__call_tool(
-  tool_name="get_recent_fixes",
-  input={ limit: 20 }
+  server: "vn-market", tool: "get_recent_fixes",
+  arguments: { limit: 20 }
 );
 
 // Check if current error matches any recent fix
