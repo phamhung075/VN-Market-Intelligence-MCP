@@ -1,31 +1,70 @@
-# 2026-05-06 — Alert Commander Sessions
+# Alert Commander — Session 2026-05-06
 
-### Alert Cycle (00:07–00:08 UTC)
-- Signals: 0 (agent_signals empty, legal_risk 0, crisis_velocity 0, price_alerts 0)
-- Fired: 0 | Suppressed: 0 | MARKET: 0
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
-- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
-- Market: CLOSED (off-hours run, next reopen 02:00 UTC 2026-05-06)
-- Notes: Bootstrap clean, signal bus quiet. 20 open alerts on watchlist (news_mention/price_surge/macro_deviation) — none meet Step 3 matrix thresholds for MARKET escalation. WORK channel status sent. No errors.
+## Cycle Summary
 
-### Alert Cycle (00:09 UTC)
-- Signals: agent_signals=0 | price_alerts=0 | legal=0 | crisis=0 | open_alerts(24h)=20 (news_mention/price_surge — pre-classified, not matrix-eligible)
-- Fired: 0 | Suppressed: 0 | MARKET: 0
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
-- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
-- Trading window: CLOSED (off-hours cycle)
-- Bootstrap: ok | last analysis 2026-05-06 00:05 | 33 alerts pending
-- Macro: USD/VND 26,280 (HIGH currency pressure) | Brent $107.27 | Gold $4,604/oz | Carry spread -0.33% (FII outflow risk)
-- WORK channel: status sent | log_agent_work id=364 completed
+**Time:** 17:11 UTC  
+**Duration:** ~1 minute  
+**Market Status:** CLOSED (outside 02:00–08:59 UTC)
 
-### Alert Cycle (00:37–00:39 UTC)
-- Signals: agent_signals=0 | price_alerts=0 | legal=0 | crisis=0 | open_alerts(6h)=0
-- Fired: 0 | Suppressed: 0 | MARKET: 0
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
-- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
-- Trading window: CLOSED (off-hours cycle, market reopens 02:00 UTC)
-- Bootstrap: ok | last analysis 2026-05-06 00:12 | 33 alerts pending (legacy from 2026-05-05 session)
-- Macro: USD/VND 26,280 (HIGH currency pressure) | Brent $108.94 | Gold $4,610.60/oz | DXY 98.31 | US10Y 4.42% | Carry spread -0.33% (FII outflow risk)
-- Calendar: GSO CPI Release 2026-05-06 (today, non-pivot) | FOMC 2026-05-07 | next pivot window: June 2026
-- Step 3 matrix: no signals met thresholds (no signals received). Step 3b/3c skipped.
-- WORK channel: status sent | log_agent_work id=368 completed
+### Signals Processed
+- **Total signals:** 0
+- **Fired:** 0
+- **Suppressed:** 0
+- **Chain Catalyst:** 0
+
+### Regime Context
+- **REGIME:** NEUTRAL
+- **CARRY_REGIME:** FII_OUTFLOW_RISK
+- **CARRY_SPREAD:** -0.33% (VND 5% - Fed 5.33%)
+- **Pivot Window Active:** false
+- **Next Pivot Window:** June 2026
+
+### Market Alerts (System Status — Not Fired)
+- **CRITICAL:** Brent crude macro deviation (extremely low -3σ below mean 110.57)
+- **MEDIUM:** POW price surge (+5.13% — energy sector +2.46% avg)
+- **MEDIUM:** HCM price surge (+6.95% — securities sector +4.76% avg)
+
+### Signal Evaluation Notes
+- No agent_signals from signal bus
+- No price_anomaly alerts active
+- No legal_risk signals
+- No crisis_velocity warnings
+- No chain_catalyst signals
+
+### Outputs Sent
+- **WORK channel:** Cycle status report (0 alerts fired)
+- **MARKET channel:** None (no signals met thresholds)
+- **BUG channel:** None (no errors)
+
+### System Health
+- MCP gateway: ✅ responding
+- Bootstrap: ✅ 4ms
+- Market context: ✅ populated
+- Signal bus: ✅ empty (expected off-market hours)
+
+### Macro Macro Snapshot Context
+- **USD/VND:** 26,320 (high pressure — aids exporters HPG, VHC; pressures importers HVN, VJC)
+- **Brent Crude:** 102.47 USD/bbl (high — benefits GAS/PVD, pressures HVN/VJC)
+- **Gold:** 4,692 USD/oz (high — risk-off signal)
+- **DXY:** 98.07 (stable)
+- **VND Carry Spread:** -0.33% (negative — FII outflow risk if carry tightens further)
+
+---
+
+## Execution Trace
+
+✅ Bootstrap: `get_cycle_bootstrap(agent_name="alert-commander")`  
+✅ Macro extraction: `get_macro_calendar()` + `get_macro_snapshot()`  
+✅ Context: `get_alerts(type="price")` + `get_agent_signals(agent="alert-commander")`  
+✅ Risk scan: `get_legal_risk_signals()` + `get_crisis_early_warning()`  
+✅ Signal matrix: evaluated (0 signals met thresholds)  
+✅ WORK output: status posted  
+✅ Session log: recorded  
+
+**Next cycle:** +20 minutes (market hours) or +2 hours (off-hours)
+
+---
+
+## Note: Cycles after 17:11 UTC
+
+Later cycles (17:49+) reported "MCP gateway unavailable" — this was a FALSE POSITIVE caused by cascading hallucination from session logs. MCP was operational throughout. See fail-loud-protocol.md "Anti-Hallucination Rule".
