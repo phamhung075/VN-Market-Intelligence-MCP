@@ -52,12 +52,14 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ## Signal Types Emitted
 
-| Signal | To | When | Confidence |
-|--------|----|----|-----------|
-| `urgent_news` | Market Watcher | Impact >= 8 | 0.75+ |
-| `legal_risk` | Alert Commander | Prosecution/tax penalty | 0.85+ |
-| `crisis_velocity` | Alert Commander | 5x mention spike | 0.90+ |
-| `chain_catalyst` | All Agents | Watchlist impact >= 7 | 0.80+ |
+| Signal Type | To Agent | When | Confidence | Required `finding_data` Fields |
+|-------------|----------|------|------------|------|
+| `urgent_news` | alert-commander | Breaking news, impact >= 8 | 0.75+ | `headline` (string), `source` (string), `severity` (low\|medium\|high\|critical) |
+| `chain_catalyst` | all | Watchlist impact >= 7, multi-agent trigger | 0.80+ | `event_type`, `direction`, `confidence`, `affected_stocks[]`, `affected_sectors[]`, `headline`, `source` |
+| `price_confirmation` | market-watcher | Price move validates catalyst | 0.85+ | `price_change_pct`, `volume_ratio`, `confirms_direction`, `fully_priced`, `confidence` |
+| `cross_validate` | analyst | Multi-source validation | 0.70+ | `direction` (bullish\|bearish\|neutral), `confidence`, `summary` |
+
+**Important:** All required fields in `finding_data` must be present. Missing any required field will cause validation rejection with detailed error message.
 
 ---
 
@@ -144,25 +146,36 @@ if (similar.matches.length > 0) {
 }
 ```
 
-### Posting Legal Risk Signal
+### Posting Urgent News Signal
 
 ```typescript
-// Post critical legal risk signal
+// Post urgent breaking news signal
+// Required finding_data fields: headline, source, severity
 await mcp__claude_ai_gateway__call_tool(
   tool_name="post_agent_signal",
   input={
-    signal_type: "legal_risk",
+    from_agent: "news-scout",
+    to_agent: "alert-commander",
+    signal_type: "urgent_news",
+    stock_code: "VNM",
     payload: {
-      ticker: "FPT",
-      risk_type: "tax_penalty",
-      source: "news_article",
-      estimated_impact: "10-15% price decline",
-      article_url: "..."
+      title: "Emergency news",
+      detail: "Central bank announces rate policy",
+      impact_score: 8.5
     },
-    confidence: 0.88
+    finding_data: {
+      headline: "Central bank emergency rate decision",
+      source: "sbv_official",
+      severity: "critical",
+      catalyst_stock_code: "VNM",
+      catalyst_direction: "bullish"
+    },
+    ttl_minutes: 120
   }
 );
 ```
+
+**Note:** The `severity` field is **required** and must be one of: `"low" | "medium" | "high" | "critical"`. Missing or invalid severity values will reject the signal with validation error.
 
 ---
 
