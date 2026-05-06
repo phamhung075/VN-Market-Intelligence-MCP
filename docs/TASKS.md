@@ -26,6 +26,12 @@
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| 1848a | FIX: get_price_history param rename actionCode → code — all agents/flows use `code`, Zod schema was mismatched. 1 file. | HIGH | FIX | developer | — | 2026-05-06 |
+| 1848b | CLEAN: delete 3 stale worktree branches from 1847d execution | LOW | CLEAN | developer | — | 2026-05-06 |
+| 1847d | SPRINT-M: Alert accuracy feedback loop — alertOutcomeScorer (pure domain), alertOutcomeJob (08:45 UTC cron), schema migration (3 cols), get_alert_accuracy upgrade (2-path), mark_alert_outcome tool. 14 files, 31 new tests. | MEDIUM | FEATURE | dev-alert-engine+dev-mcp-server | docs/handoffs/ARCH_1847d.md | 2026-05-06 |
+| 1847a | DOC-FIX: post_agent_signal stale example — wrong finding_data field names in market-watcher.md | HIGH | BUG | developer | — | 2026-05-06 |
+| 1847b | DOC-FIX: Channel routing — market-watcher MARKET channel rule contradicts batch4_eod_only | HIGH | BUG | developer | — | 2026-05-06 |
+| 1847c | UNBLOCK: Cloudflare tunnel routing gap — VPS push scripts wrong path prefix. Fixed SSH. News restored (208 items/cycle). | CRITICAL | UNBLOCK | ops | — | 2026-05-06 |
 | ARCH-1846 | DESIGN: Architecture for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) + IBacktestResultRepository.deleteRun(). BLK-1 Option C (equity curve recompute on demand), BLK-2 new backtestLifecycleTools.ts, BLK-3 leave get_backtest_run as-is. 6-file change plan, 19-test plan, 7-item risk register. | HIGH | DESIGN | architect | docs/handoffs/ARCH_1846.md | 2026-05-03 |
 | BA-1846 | SPEC: Requirements spec for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) MCP tools; deleteRun() interface extension. 3 blockers: BLK-1 equity curve storage, BLK-2 file split, BLK-3 UUID consistency. | HIGH | SPEC | ba | docs/REQ_1846.md | 2026-05-03 |
 | 1846a | CLEAN: commit orphan session/report/skill files accumulated since Sprint 1845; advance project-stats.json to Sprint 1846 baseline (currentSprint=1846, toolCount=125) | HIGH | CLEAN | developer | — | 2026-05-03 |
@@ -113,6 +119,7 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1847d-A | INFRA: Schema migration + alertStore methods — 3 new columns (outcome, outcome_at, outcome_detail) on alerts table + readPendingOutcomeAlerts() + writeAlertOutcome() store fns. 2 files, 5 tests. **BLOCKS: 1847d-B, 1847d-C, 1847d-D**. | MEDIUM | SPRINT-M | dev-alert-engine | docs/handoffs/TASK_1847d-A.md | 2026-05-06 |
 
 ---
 
