@@ -592,7 +592,7 @@ export function registerMacroTools(server: McpServer): void {
               .query<{ value: number }, []>(
                 `SELECT value FROM tracked_indicators
                  WHERE indicator = 'market_earning_yield' AND source = 'bau_phase2'
-                 ORDER BY fetched_at DESC LIMIT 1`,
+                 ORDER BY extracted_at DESC LIMIT 1`,
               )
               .get();
 
@@ -600,13 +600,13 @@ export function registerMacroTools(server: McpServer): void {
               .query<{ value: number }, []>(
                 `SELECT value FROM tracked_indicators
                  WHERE indicator = 'market_median_pe' AND source = 'bau_phase2'
-                 ORDER BY fetched_at DESC LIMIT 1`,
+                 ORDER BY extracted_at DESC LIMIT 1`,
               )
               .get();
 
             const sbvRow = db
               .query<{ max_deposit_rate_pct: number }, []>(
-                `SELECT max_deposit_rate_pct FROM sbv_rates ORDER BY effective_date DESC LIMIT 1`,
+                `SELECT max_deposit_rate_pct FROM sbv_rates ORDER BY fetched_at DESC LIMIT 1`,
               )
               .get();
 

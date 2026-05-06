@@ -26,7 +26,7 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
   insertAnalysis: async () => {},
 }));
 
-import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
+import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 import {
   formatDinhGia,
   type DinhGiaInputs,
@@ -306,5 +306,56 @@ describe("Task 1426c — get_macro_snapshot Dinh Gia integration", () => {
     expect(text).toContain("[Dinh Gia — Asset Valuation]");
     expect(text).toContain("unavailable");
     expect(text).not.toContain("CHEAP");
+  });
+
+  it("DG-I-08: DB schema drift guard — tracked_indicators queries use extracted_at (not fetched_at)", async () => {
+    // This test verifies the fix for Telegram report 2746: no such column fetched_at
+    const db = getDb();
+
+    // Insert test data into tracked_indicators using the correct column
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO tracked_indicators (indicator, value, source, extracted_at)
+       VALUES (?, ?, ?, ?)`
+    ).run("market_earning_yield", 7.5, "bau_phase2", now);
+
+    db.prepare(
+      `INSERT INTO tracked_indicators (indicator, value, source, extracted_at)
+       VALUES (?, ?, ?, ?)`
+    ).run("market_median_pe", 14.2, "bau_phase2", now);
+
+    // Query should work using extracted_at (not fetched_at)
+    const eyRow = db
+      .query<{ value: number }, []>(
+        `SELECT value FROM tracked_indicators
+         WHERE indicator = 'market_earning_yield' AND source = 'bau_phase2'
+         ORDER BY extracted_at DESC LIMIT 1`
+      )
+      .get();
+
+    expect(eyRow).toBeDefined();
+    expect(eyRow?.value).toBe(7.5);
+  });
+
+  it("DG-I-09: DB schema drift guard — sbv_rates queries use fetched_at (not effective_date)", async () => {
+    // This test verifies the fix for Telegram report 2746: no such column effective_date
+    const db = getDb();
+
+    // Insert test data into sbv_rates
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO sbv_rates (source, max_deposit_rate_pct, fetched_at)
+       VALUES (?, ?, ?)`
+    ).run("sbv_api", 5.25, now);
+
+    // Query should work using fetched_at (not effective_date)
+    const sbvRow = db
+      .query<{ max_deposit_rate_pct: number }, []>(
+        `SELECT max_deposit_rate_pct FROM sbv_rates ORDER BY fetched_at DESC LIMIT 1`
+      )
+      .get();
+
+    expect(sbvRow).toBeDefined();
+    expect(sbvRow?.max_deposit_rate_pct).toBe(5.25);
   });
 });
