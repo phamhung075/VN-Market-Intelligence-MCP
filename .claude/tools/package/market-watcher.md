@@ -87,8 +87,8 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 | Channel | Write | Rules |
 |---------|-------|-------|
-| **market** | ✅ | Market observations, technical signals |
-| **work** | ✅ | Cycle completion |
+| **market** | ✅ | EOD summary only (16:00 UTC batch4). NEVER for cycle alerts, anomaly observations, or tech errors. |
+| **work** | ✅ | Cycle completion status only |
 | **bug** | ✅ | Errors only |
 
 ---
@@ -182,21 +182,24 @@ const intelligence = await mcp__claude_ai_gateway__call_tool(
 );
 
 if (intelligence.today_move_zscore > 2.0) {
-  // Significant price move detected
-  await mcp__claude_ai_gateway__call_tool(
+  await mcp__claude_ai_gateway__call_tool({
     server: "vn-market", tool: "post_agent_signal",
     arguments: {
+      from_agent: "market-watcher",
+      to_agent: "alert-commander",
       signal_type: "price_anomaly",
-      payload: {
-        ticker: "VCB",
-        move_zscore: intelligence.today_move_zscore,
-        magnitude: intelligence.today_move_pct,
-        volume_confirmation: intelligence.volume_zscore,
-        volatility_context: intelligence.current_iv
-      },
-      confidence: 0.88
+      stock_code: "VCB",
+      payload: { title: "VCB anomaly >2σ", detail: "...", impact_score: 7 },
+      ttl_minutes: 120,
+      chain_depth: 0,
+      finding_data: {
+        move_pct: intelligence.today_move_pct,
+        move_sigma: intelligence.today_move_zscore,
+        ref_price: 90000,
+        window_days: 30
+      }
     }
-  );
+  });
 }
 ```
 
