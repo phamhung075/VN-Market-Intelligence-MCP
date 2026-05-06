@@ -10,7 +10,40 @@ Bootstrap (market context 24h, system status, agent signals)
 
 ---
 
+## Error Boundary
+
+If ANY tool call fails after 1 retry:
+1. `send_telegram(channel="bug", message="[news-scout] Step N failed: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
+3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = fetch news → analyze → post signals → log. Blocked = report + EXIT.
+
+---
+
+## How to Call Tools
+
+ALL tools use the MCP gateway. Every tool call in this flow means:
+
+```
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "<tool_name>",
+  arguments: { ... }
+)
+```
+
+If any tool call fails → read error message → apply fail-loud protocol (`.claude/knowledge/fail-loud-protocol.md`).
+
+---
+
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `news-scout`)
+
+```
+call_tool(server="vn-market", tool="get_cycle_bootstrap", arguments={ "agent_name": "news-scout" })
+```
+
+If bootstrap fails or `market_context` missing → send BUG → STOP.
 
 **0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
 Parse `get_macro_snapshot` text block already in bootstrap:
@@ -18,22 +51,50 @@ Parse `get_macro_snapshot` text block already in bootstrap:
 REGIME      = "Global Liquidity: X"       → TIGHTENING | EASING | NEUTRAL
 CARRY_REGIME = "VND Carry Spread" line    → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
 ```
-If `get_macro_snapshot` not in bootstrap context → call it once now.
+If `get_macro_snapshot` not in bootstrap context → call it once:
+```
+call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+```
 
-**1. Fetch** `fetch_and_analyze(source_urls, query)` — 226 items/15min via VPS proxy
-Filter duplicates → extract title/source/published_date/content
+**1. Fetch news**
 
-**1b. Historical context** `search_similar_context(query=<main_news_theme>, k=3)`
-- Call once per high-impact item (impactScore ≥ 6) before scoring
-- Use the article title or main theme as query (e.g. "VCB lợi nhuận quý 1")
+```
+call_tool(server="vn-market", tool="fetch_and_analyze", arguments={})
+```
+
+Returns: `fetched_articles[]`, `impact_by_ticker`, `alerts[]`
+Filter duplicates → extract title/source/published_date/content.
+
+**1b. Historical context** — call once per high-impact item (impactScore ≥ 6):
+
+```
+call_tool(server="vn-market", tool="search_similar_context", arguments={
+  "query": "<article title or main theme>",
+  "limit": 3
+})
+```
+
 - If results returned: prepend to analysis context — "N similar past events: <title> (<date>), ..."
 - If no results (LanceDB empty): skip, continue without historical context
 - Non-fatal: if tool errors, log and continue
 
 **2. Sentiment + impact**
-- Score: -1.0 (bearish) to +1.0 (bullish)
-- `run_impact_chain(news_item, catalyst_type)` — global → country → sector → watchlist
-- `get_watchlist()` — cross-ref extracted tickers
+
+Score each article: -1.0 (bearish) to +1.0 (bullish).
+
+For watchlist hits, trace impact chain:
+```
+call_tool(server="vn-market", tool="run_impact_chain", arguments={
+  "ticker": "<TICKER>",
+  "event": "<headline summary>",
+  "impact_score": 8
+})
+```
+
+Get watchlist for cross-referencing tickers:
+```
+call_tool(server="vn-market", tool="get_watchlist", arguments={})
+```
 
 PMI leading indicator detection:
 - Extract Vietnam Manufacturing PMI value from news (S&P Global, published 2nd–3rd of each month)
@@ -54,9 +115,9 @@ Apply regime multiplier to `impact_score` before posting:
 
 **3. Signals**
 
-Watchlist hit (breaking news) → `post_agent_signal`:
-```json
-{
+Watchlist hit (breaking news) → post signal:
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
   "from_agent": "news-scout",
   "to_agent": "alert-commander",
   "signal_type": "urgent_news",
@@ -73,15 +134,15 @@ Watchlist hit (breaking news) → `post_agent_signal`:
     "hot_money_risk": false,
     "cpi_pressure_risk": false
   }
-}
+})
 ```
 
-Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
+Crisis / macro catalyst (triggers enrichment chain):
 <!-- regime is read from bootstrap macro snapshot by alert-commander, not from signal finding_data.
      ChainCatalystFindingDataSchema is strict (no .passthrough()) — extra fields are silently stripped.
      Include regime context in payload.detail instead. -->
-```json
-{
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
   "from_agent": "news-scout",
   "to_agent": "all",
   "signal_type": "chain_catalyst",
@@ -100,30 +161,52 @@ Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
     "hot_money_risk": false,
     "gdp_warning_signal": false
   }
-}
+})
 ```
 
-**4. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
+**4. Session log**
+
+```
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "action": "news-scout-cycle",
+  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" }
+})
+```
+
+Append to `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
 ```
 ### Cycle (HH:MM–HH:MM)
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 ```
 
-**5. WORK**:
+**5. WORK channel**
+
 ```
-[News Scout] HH:MM UTC — N signals analyzed
-  Fired: X (catalysts) | Suppressed: Y | Next: TIME
+call_tool(server="vn-market", tool="send_telegram", arguments={
+  "message": "[News Scout] HH:MM UTC — N signals analyzed\n  Fired: X (catalysts) | Suppressed: Y | Next: TIME",
+  "channel": "work"
+})
 ```
 
-**6. BUG on error**:
-Before sending to BUG channel: `get_recent_fixes(limit=20)` — if issue already fixed (matching title/module in recent fixes) → **skip, do not re-report**.
+**6. BUG on error**
+
+Before sending to BUG: check recent fixes to avoid duplicate reports.
 ```
-[News Scout] ⚠️ SEVERITY
-  Issue: ... | Impact: ... | Status: Retrying/Blocked
+call_tool(server="vn-market", tool="get_recent_fixes", arguments={ "limit": 20 })
 ```
+If issue already fixed (matching title/module in recent fixes) → **skip, do not re-report**.
+
+```
+call_tool(server="vn-market", tool="send_telegram", arguments={
+  "message": "[News Scout] ⚠️ SEVERITY\n  Issue: ... | Impact: ... | Status: Retrying/Blocked",
+  "channel": "bug"
+})
+```
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ## Batch 2 Sentiment Log (05:00 UTC daily)
-Per ticker `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+Per ticker from `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
 **Sector**: {domain} | **Exchange**: {exchange}

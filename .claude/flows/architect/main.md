@@ -57,6 +57,8 @@ Rule: existing interface covers need → extend, never duplicate.
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `architect`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 **5.** Update docs/TASKS.md status → return:
 ```
 ## RETURN

@@ -2,6 +2,8 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
 ## Input
 Telegram MARKET channel unreviewed messages + server live data
 
@@ -123,3 +125,7 @@ DONE: Market group analysis complete — N tasks created from message quality re
 NEXT: [continue pipeline or idle]
 PIPELINE: continue | complete
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/po.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

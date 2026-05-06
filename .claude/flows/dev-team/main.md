@@ -8,6 +8,16 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
+## Step 0: Pipeline Resume — Check `docs/pipeline-state.json`
+
+- If `status == "in_progress"` AND `nextAgent` present AND `updatedAt < 24h` → spawn `nextAgent` immediately. Skip Step 1.
+- If `status == "in_progress"` AND `updatedAt >= 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.
+- If `"idle"` or missing → fall through to Step 1.
+
+**Session Gate:** PO cannot self-initiate if TASKS.md empty AND no Telegram reports. `send_telegram(work, "Dev loop idle.")` → EXIT.
+
+---
+
 ## Step 1: PO Triage
 
 Launch `po`. Triage inputs:
@@ -126,6 +136,8 @@ if ctx > 25%:
 After compact, resume from Step 1 using the Resume Protocol in smart-compact-protocol.md.
 
 **If ctx ≤ 25%:** skip — proceed directly to Step 1.
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ---
 

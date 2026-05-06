@@ -50,6 +50,8 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `fixer`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 Update docs/TASKS.md → return:
 ```
 ## RETURN

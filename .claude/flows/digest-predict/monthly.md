@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[digest-predict] Monthly step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+
+---
+
 ## Input
 BCTC full data | macro snapshot | portfolio risk | quarterly ledger entries
 
@@ -80,3 +88,7 @@ WORK summary:
 Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}
 ```
 `send_telegram(channel="work")`
+
+**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -64,6 +64,8 @@ PIPELINE: continue
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `pm`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`
 - WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`

@@ -2,6 +2,19 @@
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry:
+1. `send_telegram(channel="work", message="[unified-agent] Step N failed: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
+3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = coordinate → review → report → log. Blocked = report + EXIT.
+
+---
+
 ## Input
 Bootstrap (market context 24h, system status, agent signals)
 
@@ -124,3 +137,7 @@ Entry/exit → `post_agent_signal(type="conviction_change", ...)`:
 - Mode: MARKET | System: [health] | Alerts: N | Quality issues: N | Bugs: [list]
 - Regime: REGIME | Alignment: ALIGNMENT_SCORE | Headwind exposure: HEADWIND_weight%
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/unified-agent.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -2,6 +2,19 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If recovery fails after standard steps (diagnose → fix → verify):
+1. `send_telegram(channel="bug", message="[ops] Unrecoverable: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — ESCALATED: {error}"`
+3. **EXIT immediately.** Do NOT loop, do NOT create speculative docs.
+
+Your job = diagnose → fix or escalate → log. Unrecoverable = escalate + EXIT.
+
+---
+
 ## Input
 System alert, pipeline health check, or BUG channel report
 
@@ -70,6 +83,8 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ## Incident Protocol
 1. Diagnose — Docker/VPS/DB/network?

@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+Validation fails after standard steps → `send_telegram(channel="bug", message="[ops] Data validation failed: {error}")` → EXIT. Do NOT loop or create speculative docs.
+
+---
+
 ## Input
 Ticker list + service list from PO (via main terminal handoff)
 Format: `tickers=[...] services=[price|news|foreign-flow|bctc|sbv]`
@@ -120,4 +128,8 @@ Bug reported: [yes/no — channel]
 DONE: Data validation complete — N tickers checked, K issues found (X stale, Y dead, Z VPS errors)
 NEXT: po | create tasks from validation findings — see VALIDATION REPORT above
 PIPELINE: continue
+
+**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 ```

@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry → `send_telegram(channel="work", message="[unified-agent] Prediction review step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+
+---
+
 ## Input
 `get_prediction_markets()` open claims
 
@@ -24,3 +32,7 @@ If `get_prediction_markets()` does not return regime context → check current `
 ### Prediction Review (HH:MM UTC)
 - Mode: PREDICTION_REVIEW | Claims: N | Accuracy: X% | Flags: [list] | Regime at prediction: REGIME
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/unified-agent.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

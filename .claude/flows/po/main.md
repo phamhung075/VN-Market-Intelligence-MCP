@@ -2,6 +2,8 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
 ## Input
 docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
 
@@ -142,3 +144,5 @@ Read `docs/REQ_NNN.md` — matches vision? AC clear? blockers answerable?
 Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output)
 - **Approve** → update docs/TASKS.md + `docs/SPRINT_GOAL.md` → return `PIPELINE: complete`
 - **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

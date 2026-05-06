@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+Recovery fails after standard steps → `send_telegram(channel="bug", message="[ops] VPS unrecoverable: {error}")` → EXIT. Do NOT loop or create speculative docs.
+
+---
+
 ## Input
 VPS unreachable, systemd service failed, geo-blocked fetch not running
 
@@ -35,3 +43,7 @@ Trigger: <what ran> | Queue: <pending/skipped/done>
 Success: <tickers> | Failed: <ticker: reason>
 Root cause: <diagnosis> | Fix: <recommendation>
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

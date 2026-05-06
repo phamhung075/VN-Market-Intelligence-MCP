@@ -72,6 +72,8 @@ REPEAT per acceptance criterion
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `developer`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 **Update docs/TASKS.md**: In Progress → Review → return:
 ```
 ## RETURN

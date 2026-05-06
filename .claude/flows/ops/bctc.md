@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+Recovery fails after standard steps → `send_telegram(channel="bug", message="[ops] BCTC unrecoverable: {error}")` → EXIT. Do NOT loop or create speculative docs.
+
+---
+
 Triggered when: BCTC extraction suspected broken, `get_bctc_full` returns empty, `list_stored_pdfs` shows no data, or BUG report about BCTC pipeline.
 
 Full runbook: `.claude/knowledge/bctc-extraction-runbook.md`
@@ -99,3 +107,7 @@ for r in cur.fetchall(): print(r)
 ## False Positive: `url=MISSING` in bctc_vps_queue
 
 `url=MISSING` rows are from the OLD push-based flow and are irrelevant. Pull-based rows have `source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'`. Do not trigger `enrich-bctc-urls.sh` based on this.
+
+**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -34,3 +34,8 @@ Proactively connect to:
 - Two-team fit (Analysis vs Dev)
 - Sprint/task workflow implications
 - Tool + cron count impact (`docs/data/project-stats.json`)
+
+**End-of-cycle notebook write**
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `idea-forge`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+Recovery fails after standard steps → `send_telegram(channel="bug", message="[ops] DB unrecoverable: {error}")` → EXIT. Do NOT loop or create speculative docs.
+
+---
+
 ## Input
 SQLite WAL overflow, integrity check failure, slow queries, DB corruption suspicion
 
@@ -18,3 +26,7 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 
 If `integrity_check` returns anything other than `ok` → escalate immediately (data loss risk).
 If WAL > 50MB → trigger Docker restart to force WAL checkpoint before escalating.
+
+**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

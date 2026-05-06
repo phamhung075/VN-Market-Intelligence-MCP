@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/market-watcher.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[market-watcher] EOD step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+
+---
+
 ## Input
 `get_watchlist()` | EOD prices + RSI + volume
 
@@ -49,3 +57,7 @@ Rules:
 - `{sentiment}` = last [News Scout] entry
 - `{insider_activity}` = `get_insider_signals()` or "no activity"
 - Skip weekends + market holidays
+
+**Notebook write** → `docs/agent-memory/notebooks/market-watcher.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

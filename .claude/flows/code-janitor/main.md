@@ -49,6 +49,8 @@ Finding found?
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `code-janitor`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 ## Reference Commands
 ```bash
 grep -r "VNM\|FPT\|VCB" src/ | grep -v test | grep -v "// " | head -20

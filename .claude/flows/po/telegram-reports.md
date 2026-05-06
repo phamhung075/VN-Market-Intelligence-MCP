@@ -2,6 +2,8 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
 ## Input
 `read_telegram_reports(status="new")` — user requests, bug reports, feature ideas
 
@@ -120,3 +122,7 @@ DONE: Telegram reports processed — N tasks created, K flagged for architect re
 NEXT: [next agent per pipeline] | [continue sprint work]
 PIPELINE: continue
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/po.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

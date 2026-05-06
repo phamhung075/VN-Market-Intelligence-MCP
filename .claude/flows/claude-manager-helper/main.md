@@ -87,3 +87,8 @@ Pass 7 Dedup:      OK | SKIPPED | N extracted
 Pass 8 Telegram:   OK | SKIPPED | N fixed | N → architect
 Pass 9 Tool-Agent: OK | SKIPPED | N → architect
 ```
+
+**End-of-cycle notebook write**
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `claude-manager-helper`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

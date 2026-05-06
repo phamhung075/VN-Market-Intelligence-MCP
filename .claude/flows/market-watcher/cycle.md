@@ -2,7 +2,19 @@
 
 **Tools:** `.claude/tools/package/market-watcher.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
 > Thresholds → `watch_thresholds` in YAML.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry:
+1. `send_telegram(channel="bug", message="[market-watcher] Step N failed: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
+3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = prices → anomalies → signals → log. Blocked = report + EXIT.
+
+---
 
 ## Input
 Bootstrap (market context 24h, agent signals) | watchlist prices
@@ -84,3 +96,5 @@ Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent 
 [Market Watcher] ⚠️ SEVERITY
   Issue: ... | Impact: ... | Status: Retrying/Blocked
 ```
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

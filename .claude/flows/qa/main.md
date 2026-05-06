@@ -92,5 +92,7 @@ PIPELINE: continue
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `qa`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

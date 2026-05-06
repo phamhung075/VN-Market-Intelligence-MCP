@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[digest-predict] Weekly step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+
+---
+
 ## Input
 Weekly market data | agent signals | prediction accuracy | system feedback
 
@@ -37,7 +45,7 @@ Include:
 - `run_hexagram_backtest(days=7)` prediction accuracy
 - `get_transition_probabilities(hexagram_number)` key stocks
 - `get_prediction_accuracy(days=7)` claim resolution rate
-- `get_calibration_report()` status
+- Calibration: skip — already sent by server `calibrationReportJob` (Sun 13:00 UTC → MARKET + WORK)
 - All domain tools: legal/policy/bond/contracts/credit/insider/supply chain/climate/energy/crisis/pharma
 
 ## System Improvement (every Sunday)
@@ -52,3 +60,7 @@ Tổng feedback: {N} từ {agents}
 
 `send_telegram(channel="market")`
 `send_telegram(channel="work", "[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
+
+**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

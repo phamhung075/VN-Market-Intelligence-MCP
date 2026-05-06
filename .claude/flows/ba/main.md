@@ -49,6 +49,8 @@ feature priority | VN term translation | data source availability | historical v
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ba`)
 
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
 PO approves → BA Done → update docs/TASKS.md status → return:
 ```
 ## RETURN

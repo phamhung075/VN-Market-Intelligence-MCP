@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+Recovery fails after standard steps → `send_telegram(channel="bug", message="[ops] Cloudflare tunnel unrecoverable: {error}")` → EXIT. Do NOT loop or create speculative docs.
+
+---
+
 ## Input
 Claude Desktop cannot connect to MCP server via Cloudflare Tunnel URL with path prefix. SSE opens but POST fails. Reports: "cannot connect on cloudflare" or MCP health unavailable.
 
@@ -195,3 +203,7 @@ After successful recovery, append to `docs/agent-memory/notebooks/ops.md`:
 - Validation: MCP Inspector ✅
 - Time to resolution: [minutes]
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

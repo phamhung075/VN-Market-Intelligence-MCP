@@ -54,3 +54,8 @@ Key patterns:
 - Watchlist checks before alerting
 - Fail-loud on knowledge Read failures
 ```
+
+**End-of-cycle notebook write**
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `cowork-refactory-expert`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

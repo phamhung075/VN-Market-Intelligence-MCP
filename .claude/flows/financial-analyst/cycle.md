@@ -2,6 +2,19 @@
 
 **Tools:** `.claude/tools/package/financial-analyst.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry:
+1. `send_telegram(channel="bug", message="[financial-analyst] Step N failed: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
+3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = BCTC → analyze → signals → log. Blocked = report + EXIT.
+
+---
+
 ## Input
 Bootstrap (market context 24h, earnings calendar, stored PDFs)
 
@@ -89,6 +102,8 @@ Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent 
 [Financial Analyst] ⚠️ SEVERITY
   Issue: ... | Impact: stocks | Status: Retrying/Blocked
 ```
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ## Deadline Watch
 7 days before + missing → flag in session log

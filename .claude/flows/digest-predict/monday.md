@@ -2,6 +2,14 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[digest-predict] Monday step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+
+---
+
 ## Input
 `get_calibration_report()` | watchlist evidence summaries
 
@@ -65,3 +73,7 @@ Horizon:
 
 **P-8. WORK**: `send_telegram(channel="work", "[digest-predict] Monday claims: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 `DAMPENING_ACTIVE` → append "Self-correction: confidence -10%."
+
+**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

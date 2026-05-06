@@ -2,6 +2,8 @@
 
 **Tools:** `.claude/tools/package/market-analyst.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
 ## Input
 User question, news event, ticker, or morning routine trigger
 
@@ -68,6 +70,8 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `market-analyst`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ## Session Log
 `docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md`:

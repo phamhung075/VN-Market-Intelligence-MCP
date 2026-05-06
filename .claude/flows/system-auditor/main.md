@@ -2,6 +2,8 @@
 
 **Tools:** `.claude/tools/package/system-auditor.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
 ## Input
 Git diff (last 24h), CLAUDE.md, docs/TASKS.md, memory/MEMORY.md
 
@@ -67,6 +69,8 @@ Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
 
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `system-auditor`)
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | cron not running | prod table 0 rows expected > 0

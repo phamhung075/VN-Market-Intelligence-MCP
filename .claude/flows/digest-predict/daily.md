@@ -2,6 +2,19 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+
+## Error Boundary
+
+If ANY tool call fails after 1 retry:
+1. `send_telegram(channel="bug", message="[digest-predict] Step N failed: {one-line error}")`
+2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
+3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = digest → predict → send → log. Blocked = report + EXIT.
+
+---
+
 ## Input
 Bootstrap | market summary | chain findings | Kinh Dich readings
 
@@ -84,3 +97,7 @@ New issues → `submit_feedback(agent="digest-predict")`. Zero → exit silently
 [Digest & Predict] HH:MM UTC — DAILY digest sent
   Stocks: N | Chains: X complete, Y partial, Z failed | Predictions: N (Mon) | Nhân Hòa: {score}/5 | Next: TIME
 ```
+
+**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
