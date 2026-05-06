@@ -178,7 +178,7 @@ export function registerPriceHistoryTools(
     "Get price history for a stock over N days. Returns daily OHLCV data with min/max/avg/return stats. " +
       "Queries the daily_ohlcv table which holds permanent daily candles (not the 24h-pruned intraday ticks).",
     {
-      actionCode: z
+      code: z
         .string()
         .describe("Stock ticker code (e.g. 'VCB', 'FPT', 'VNM')"),
       days: z.coerce
@@ -187,9 +187,9 @@ export function registerPriceHistoryTools(
         .default(7)
         .describe("Number of days to look back (default 7, max 90)"),
     },
-    async ({ actionCode, days }) => {
+    async ({ code: rawCode, days }) => {
       const lookbackDays = Math.min(Math.max(1, days ?? 7), 90);
-      const code = actionCode.toUpperCase().trim();
+      const code = rawCode.toUpperCase().trim();
 
       try {
         // ── Resolve DB instance ─────────────────────────────────────────────
