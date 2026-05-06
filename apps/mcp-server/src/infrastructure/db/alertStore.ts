@@ -202,6 +202,88 @@ export function markAlertNotified(alertId: string, db: Database = getDb()): void
   db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alertId);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1847d-A — Outcome scoring store methods
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Valid outcome values for alert scoring */
+export type AlertOutcome = "HIT" | "MISS" | "UNKNOWN";
+
+/** Minimal shape for outcome-pending alerts */
+export interface PendingOutcomeAlert {
+  id: string;
+  triggered_at: string;
+  severity: string;
+  signals_json: string | null;
+  affected_actions_json: string | null;
+  alert_type: string | null;
+}
+
+/**
+ * Read alerts that have no outcome scored yet (outcome IS NULL).
+ * Used by the outcome-scoring job and by `get_alert_accuracy` fallback path.
+ *
+ * @param windowDays - Only look back this many days (default: 30)
+ * @param db         - SQLite Database connection (defaults to singleton)
+ * @returns Array of alerts without outcomes, oldest-first
+ */
+export function readPendingOutcomeAlerts(
+  windowDays = 30,
+  db: Database = getDb(),
+): PendingOutcomeAlert[] {
+  const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();
+  return db
+    .prepare<PendingOutcomeAlert, [string]>(
+      `SELECT id, triggered_at, severity, signals_json, affected_actions_json,
+              NULL as alert_type
+       FROM alerts
+       WHERE outcome IS NULL
+         AND triggered_at >= ?
+       ORDER BY triggered_at ASC`,
+    )
+    .all(since);
+}
+
+/**
+ * Write an outcome to a single alert row.
+ *
+ * Idempotent via UPDATE — calling twice with the same values is safe.
+ * Returns false (already-scored) when outcome column is already non-null
+ * with a DIFFERENT value, but still writes — caller decides policy.
+ *
+ * @param alertId - The alert `id` to update
+ * @param outcome - 'HIT' | 'MISS' | 'UNKNOWN'
+ * @param detail  - Optional free-text explanation
+ * @param db      - SQLite Database connection (defaults to singleton)
+ * @returns `{ found: true, alreadyScored: boolean }` or `{ found: false }`
+ */
+export function writeAlertOutcome(
+  alertId: string,
+  outcome: AlertOutcome,
+  detail?: string,
+  db: Database = getDb(),
+): { found: boolean; alreadyScored: boolean } {
+  const existing = db
+    .prepare<{ outcome: string | null }, [string]>(
+      "SELECT outcome FROM alerts WHERE id = ? LIMIT 1",
+    )
+    .get(alertId);
+
+  if (!existing) return { found: false, alreadyScored: false };
+
+  const alreadyScored = existing.outcome !== null;
+
+  db.prepare(
+    `UPDATE alerts
+     SET outcome        = ?,
+         outcome_at     = datetime('now'),
+         outcome_detail = ?
+     WHERE id = ?`,
+  ).run(outcome, detail ?? null, alertId);
+
+  return { found: true, alreadyScored };
+}
+
 /**
  * Returns true when the alert with `alertId` already exists in the DB AND has
  * `notified_telegram = 1`. Use this in push-prices and similar inline send

@@ -33,6 +33,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { writeAlertOutcome } from "../../../../infrastructure/db/alertStore.js";
+import type { AlertOutcome } from "../../../../infrastructure/db/alertStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -49,6 +51,10 @@ interface AlertRow {
   severity: string;
   signals_json: string | null;
   affected_actions_json: string | null;
+  // Task 1847d-A: outcome columns (NULL when not yet scored)
+  outcome: string | null;
+  outcome_at: string | null;
+  outcome_detail: string | null;
 }
 
 interface PriceRow {
@@ -234,9 +240,26 @@ function scoreAlert(
 // Output formatter
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Structured accuracy report (task 1847d-D) */
+export interface AccuracyReport {
+  /** Human-readable text report */
+  text: string;
+  /** HIT/MISS/UNKNOWN counts grouped by primary signal type */
+  summary_by_type: Record<string, { hit: number; miss: number; unknown: number }>;
+  /** Percentage (0-100) of alerts in the window that have a non-null outcome */
+  scored_pct: number;
+  total: number;
+  hits: number;
+  misses: number;
+  unknowns: number;
+}
+
 /**
  * Format accuracy report from pre-scored alert rows.
- * Exported for testability (task 1411).
+ * Exported for testability (task 1411, updated task 1847d-D).
+ *
+ * Path 1 (fast): when `outcome` column is non-null → use it directly.
+ * Path 2 (fallback): when `outcome` IS NULL → on-the-fly price comparison.
  *
  * @param rows   - AlertRow array (empty → no-data message)
  * @param days   - Lookback window echoed in header
@@ -246,16 +269,28 @@ export function formatAccuracyReport(
   rows: AlertRow[],
   days: number,
   filter?: string,
-): string {
+): AccuracyReport {
+  const emptyReport = (msg: string): AccuracyReport => ({
+    text: msg,
+    summary_by_type: {},
+    scored_pct: 0,
+    total: 0,
+    hits: 0,
+    misses: 0,
+    unknowns: 0,
+  });
+
   if (rows.length === 0) {
     const filterSuffix = filter ? ` cho ${filter}` : "";
-    return `Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`;
+    return emptyReport(`Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`);
   }
 
   let totalAlerts = 0;
   let hits = 0;
   let misses = 0;
   let unknowns = 0;
+  // Track how many rows have a pre-scored outcome column
+  let scoredFromDb = 0;
   const signalBreakdown = new Map<string, { hit: number; miss: number; unknown: number }>();
   const stockBreakdown = new Map<string, { hit: number; miss: number; unknown: number }>();
 
@@ -265,8 +300,18 @@ export function formatAccuracyReport(
     if (!code) continue;
     if (filter && code !== filter) continue;
 
-    const predictedDir = alertPredictedDirection(signalTypes);
-    const result = scoreAlert(predictedDir, row.triggered_at, code);
+    let result: AccuracyResult;
+
+    // ── Path 1: use pre-scored outcome column when available ──────────────
+    if (row.outcome !== null && row.outcome !== undefined) {
+      const o = row.outcome.toUpperCase();
+      result = (o === "HIT" || o === "MISS") ? (o as AccuracyResult) : "UNKNOWN";
+      scoredFromDb++;
+    } else {
+      // ── Path 2: on-the-fly price comparison (backward compat) ─────────
+      const predictedDir = alertPredictedDirection(signalTypes);
+      result = scoreAlert(predictedDir, row.triggered_at, code);
+    }
 
     totalAlerts++;
     if (result === "HIT") hits++;
@@ -289,7 +334,7 @@ export function formatAccuracyReport(
 
   if (totalAlerts === 0) {
     const filterSuffix = filter ? ` cho ${filter}` : "";
-    return `Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`;
+    return emptyReport(`Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`);
   }
 
   const hitPct = Math.round((hits / totalAlerts) * 100);
@@ -353,7 +398,25 @@ export function formatAccuracyReport(
     }
   }
 
-  return lines.join("\n");
+  // scored_pct: fraction of rows in the window with non-null outcome column
+  const scored_pct =
+    rows.length > 0 ? Math.round((scoredFromDb / rows.length) * 100) : 0;
+
+  // summary_by_type: convert signalBreakdown map to plain object
+  const summary_by_type: Record<string, { hit: number; miss: number; unknown: number }> = {};
+  for (const [sigType, counts] of signalBreakdown.entries()) {
+    summary_by_type[sigType] = counts;
+  }
+
+  return {
+    text: lines.join("\n"),
+    summary_by_type,
+    scored_pct,
+    total: totalAlerts,
+    hits,
+    misses,
+    unknowns,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -393,8 +456,10 @@ export function registerAlertAccuracyTool(server: McpServer): void {
         const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
         // Build query with optional stock filter
+        // Task 1847d-D: include outcome columns for Path 1 (fast) scoring
         let query = `
-          SELECT id, triggered_at, severity, signals_json, affected_actions_json
+          SELECT id, triggered_at, severity, signals_json, affected_actions_json,
+                 outcome, outcome_at, outcome_detail
           FROM alerts
           WHERE triggered_at >= ?
         `;
@@ -411,11 +476,11 @@ export function registerAlertAccuracyTool(server: McpServer): void {
           .prepare(query)
           .all(...queryParams) as AlertRow[];
 
-        // ── Score each alert ───────────────────────────────────────────────
-        const text = formatAccuracyReport(alertRows, days, actionCode);
+        // ── Score each alert (2-path: DB column or on-the-fly) ────────────
+        const report = formatAccuracyReport(alertRows, days, actionCode);
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }],
         };
       } catch (err) {
         console.error("[get_alert_accuracy] Error:", err);
@@ -424,6 +489,112 @@ export function registerAlertAccuracyTool(server: McpServer): void {
             {
               type: "text" as const,
               text: `Lỗi khi tính toán độ chính xác: ${(err as Error).message}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+}
+
+/**
+ * Register the `mark_alert_outcome` MCP tool on the given server instance.
+ *
+ * Allows Alert Commander (or any caller) to manually record the outcome of an
+ * alert as HIT, MISS, or UNKNOWN.  Validates alert existence before writing.
+ *
+ * @param server - The McpServer instance to register the tool on.
+ */
+export function registerMarkAlertOutcomeTool(server: McpServer): void {
+  server.tool(
+    "mark_alert_outcome",
+    "Manually record the outcome of an alert as HIT, MISS, or UNKNOWN. " +
+      "Used by Alert Commander after verifying whether the predicted direction materialised.",
+    {
+      alert_id: z.string().describe("The ID of the alert to score"),
+      outcome: z
+        .enum(["HIT", "MISS", "UNKNOWN"])
+        .describe("Outcome of the alert: HIT (correct), MISS (wrong), UNKNOWN"),
+      detail: z
+        .string()
+        .optional()
+        .describe("Optional explanation, e.g. 'Price dropped 3.2% next day'"),
+    },
+    async ({ alert_id, outcome, detail }) => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        // Explicit outcome validation (defense-in-depth beyond Zod)
+        const validOutcomes: AlertOutcome[] = ["HIT", "MISS", "UNKNOWN"];
+        if (!validOutcomes.includes(outcome as AlertOutcome)) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  success: false,
+                  error: `Invalid outcome value: "${outcome}". Must be HIT, MISS, or UNKNOWN.`,
+                }),
+              },
+            ],
+          };
+        }
+
+        // Validate alert exists
+        const existing = db
+          .prepare<{ id: string; outcome: string | null }, [string]>(
+            "SELECT id, outcome FROM alerts WHERE id = ? LIMIT 1",
+          )
+          .get(alert_id);
+
+        if (!existing) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  success: false,
+                  error: `Alert ID not found: ${alert_id}`,
+                }),
+              },
+            ],
+          };
+        }
+
+        const result = writeAlertOutcome(
+          alert_id,
+          outcome as AlertOutcome,
+          detail,
+          db,
+        );
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                success: true,
+                alert_id,
+                outcome,
+                already_scored: result.alreadyScored,
+                message: result.alreadyScored
+                  ? `Alert was already scored — outcome updated to ${outcome}`
+                  : `Outcome recorded: ${outcome}`,
+              }),
+            },
+          ],
+        };
+      } catch (err) {
+        console.error("[mark_alert_outcome] Error:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                success: false,
+                error: (err as Error).message,
+              }),
             },
           ],
         };
