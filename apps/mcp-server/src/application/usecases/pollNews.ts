@@ -787,7 +787,10 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         return db.prepare(
           `SELECT MAX(started_at) AS ts FROM cron_job_runs WHERE job_name = 'pollNews_all_sources_dark'`,
         ).get() as { ts: string | null } | undefined;
-      } catch { return undefined; }
+      } catch (e) {
+        logger.warn("[pollNews] cooldown SELECT failed — DB schema drift?", { error: String(e) });
+        return undefined;
+      }
     })();
     const dbLastMs = dbRow?.ts ? new Date(dbRow.ts).getTime() : 0;
     const lastSentMs = Math.max(_lastAllDarkAlertAt, dbLastMs);
@@ -804,7 +807,9 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         db.prepare(
           `INSERT INTO cron_job_runs (job_name, started_at, status) VALUES ('pollNews_all_sources_dark', ?, 'success')`,
         ).run(nowIso);
-      } catch { /* best-effort — table may not exist in legacy DBs */ }
+      } catch (e) {
+        logger.warn("[pollNews] cooldown INSERT failed — cooldown will not persist across restart", { error: String(e) });
+      }
       const darkMsg =
         "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
         `Sources checked: ${Object.keys(resolvedFetchers).join(", ")} ` +

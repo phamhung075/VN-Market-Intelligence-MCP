@@ -145,6 +145,46 @@ describe("Task 1793 — pollNews cooldown persists across restart simulation", (
     expect(bugAlerts.length).toBe(1);
   });
 
+  it("(e) DB errors are logged as warn — not silently swallowed", async () => {
+    // Broken DB: cron_job_runs has wrong columns → SELECT and INSERT both throw.
+    // The fix must log a warn instead of catch {} with no output.
+    const db = new Database(":memory:");
+    db.exec(`CREATE TABLE IF NOT EXISTS rag_analyses (
+      id TEXT PRIMARY KEY, created_at TEXT, level TEXT, source_url TEXT,
+      source_title TEXT, source_type TEXT, published_at TEXT, sentiment TEXT,
+      impact_score REAL, impact_direction TEXT, confidence REAL,
+      time_horizon TEXT, summary TEXT, reasoning TEXT,
+      affected_countries TEXT, affected_domains TEXT, affected_actions TEXT,
+      parent_ids TEXT, tags TEXT, embedding_text TEXT
+    )`);
+    db.exec(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY, domain TEXT, exchange TEXT)`);
+    // Create cron_job_runs with WRONG columns — no started_at, no status
+    db.exec(`CREATE TABLE IF NOT EXISTS cron_job_runs (job_name TEXT PRIMARY KEY, bogus INTEGER)`);
+
+    const warnLines: string[] = [];
+    const origLog = console.log;
+    console.log = (line: string) => {
+      try { const parsed = JSON.parse(line); if (parsed.level === "warn") warnLines.push(line); } catch { /* ignore */ }
+    };
+
+    try {
+      await pollNews({
+        db,
+        fetchers: allEmptyFetchers,
+        onAllSourcesDark: async () => {},
+        nowMs: () => Date.now(),
+      });
+    } finally {
+      console.log = origLog;
+    }
+
+    // Both the SELECT and INSERT failures must have been logged as warn
+    const hasSelectWarn = warnLines.some((l) => l.includes("pollNews") && l.includes("cooldown") && l.includes("SELECT"));
+    const hasInsertWarn = warnLines.some((l) => l.includes("pollNews") && l.includes("cooldown") && l.includes("INSERT"));
+    expect(hasSelectWarn).toBe(true);
+    expect(hasInsertWarn).toBe(true);
+  });
+
   it("(d) DB-backed timestamp uses nowMs clock, not SQLite wall clock", async () => {
     // This test verifies the fix: the stored timestamp must match the nowMs
     // value used in the cooldown comparison. If the INSERT used strftime('now')
