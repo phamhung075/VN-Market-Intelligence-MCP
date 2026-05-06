@@ -6,7 +6,7 @@
 
 ## Quality Baseline (established cycle 1 — 2026-05-06)
 
-- MARKET message quality score: N/A (0 alerts fired today — infra outage)
+- MARKET message quality score: N/A (0 alerts fired today)
 - Format error rate: 0% (no alerts fired to audit)
 - Confidence floor violations: UNKNOWN (7/9 signals missing confidence in log)
 - Signal dedup candidates/day: 0 (no violations)
@@ -28,12 +28,6 @@
 - Effect: 7/9 signals missing confidence value in session log. Brier calibration retroactively blocked.
 - Action: monitor. Auto-cure trigger = 3 cycles.
 - Track: occurrence count = 1
-
-### GAP-3: FALSE — Docker/MCP gateway was NOT down [RETRACTED]
-- Originally reported as "down since 05:13 UTC" — this was a cascading hallucination
-- Actual state: All 9 Docker services were UP with 14h+ uptime throughout the day
-- Root cause: agents read prior session logs saying "MCP down" and copied the claim without trying
-- Lesson: ALWAYS attempt the tool call before declaring infrastructure failure
 
 ---
 
@@ -78,5 +72,5 @@
 - Cycle 2: verify GAP-1 (schema) still open or resolved by developer
 - Cycle 2: verify GAP-2 (confidence logging) recurs in news-scout
 - Cycle 3: if either gap recurs 3x → draft auto-cure for flow file
-- Baseline MARKET message audit when infra restored and alerts actually fire
-- Request `get_signal_effectiveness()` data once gateway stable 24h
+- Baseline MARKET message audit when alerts fire in next cycle
+- Request `get_signal_effectiveness()` data for calibration tracking

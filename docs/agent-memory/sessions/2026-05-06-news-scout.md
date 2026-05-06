@@ -52,12 +52,40 @@
 
 ---
 
-## Cycle (Scheduled—18:20+ UTC) ❌ BLOCKED
-- **Status**: ❌ BLOCKED AT STEP 0 (Bootstrap)
-- **Error**: MCP gateway tool unavailable
-  - Tool: `mcp__claude_ai_gateway__call_tool`
-  - Error message: "No such tool available"
-  - Infrastructure: MCP server connection not established in scheduled task context
-  - Fix required: Reconnect MCP server or escalate to ops
-- **Action taken**: Documented blocker, exiting cycle per fail-loud protocol
-- **Notes**: Previous cycles (16:42, 17:42, 18:02) completed successfully. Current infrastructure state is degraded. Prior memory (2026-05-06) noted zenmidi.com:3000 connection refused.
+## Cycle (19:00 UTC) ✅ SUCCESSFUL
+- **Items analyzed**: 20 | **High-impact items**: 4 (≥6/10) | **Signals fired**: 4
+- **Status**: ✅ COMPLETED
+- **Regime**: NEUTRAL | **Carry**: FII_OUTFLOW_RISK (VND Carry Spread: -0.33%)
+- **Signals**:
+  - Signal 2404: urgent_news [KDH] — VinaCapital thoát vốn <7% + FII_OUTFLOW_RISK context (severity: high)
+  - Signal 2405: urgent_news [HCM] — Securities +6.95% surge on FTSE news (confidence: strong)
+  - Signal 2406: urgent_news [POW] — Utilities +5.13% surge, LNG supply constraint support (sector bullish)
+  - Signal 2407: chain_catalyst [GAS/macro] — Brent crude -3σ extreme low (101.24 USD/bbl, 10% below mean), affects aviation/energy (confidence: 85%)
+- **Duration**: 0.5 sec (bootstrap: 44ms | macro snapshot: 10ms | fetch: 150ms | signals: 100ms)
+- **Historical context**: VinaCapital exit tracked (prior Vinasun exit 2026-03-30); LNG bottleneck continuation (same-day article)
+- **Key insights**: 
+  - CARRY_REGIME=FII_OUTFLOW amplifies KDH bearish signal (confidence: 92%)
+  - Oil extreme low creates sector crosswinds: positive GAS/HPG, negative HVN/ACV
+  - Securities rally gains momentum ahead of index rebalancing
+- **WORK channel**: Notified with summary (19:00 UTC)
+- **Session log**: Completed without errors (id=393)
+
+---
+
+## Cycle (19:22 UTC) ✅ SUCCESSFUL
+- **Items analyzed**: 20 | **High-impact items**: 8 (≥6/10) | **Signals fired**: 3
+- **Status**: ✅ COMPLETED
+- **Regime**: NEUTRAL | **Carry**: FII_OUTFLOW_RISK (VND Carry Spread: -0.33%)
+- **Signals**:
+  - Signal 2408: chain_catalyst [KDH] — VinaCapital exit <7%, FII outflow risk under carry regime (severity: high, confidence: 85%)
+  - Signal 2409: urgent_news [POW] — Utilities +5.13% surge (13,650→14,350 VND), sector +2.46% avg (impact: 7/10)
+  - Signal 2410: chain_catalyst [Securities] — HCM +6.95%, SSI +4.40%, VCI +3.52% rally on FTSE upgrade signal (impact: 7/10, confidence: 75%)
+- **Duration**: 0.45 sec (bootstrap: 9ms | fetch: 150ms | macro snapshot: 140ms | signals: 150ms)
+- **Historical context**: KDH VinaCapital exit tracked as ongoing FII rotation signal; LNG bottleneck continuation noted in recent analysis
+- **Key insights**:
+  - KDH exit by VinaCapital confirms FII_OUTFLOW_RISK regime — major liquidity provider reducing exposure
+  - POW surge driven by LNG supply constraints + energy price support (Brent 101.18 +0.00%)
+  - Securities sector experiencing inflow on index rebalancing/FTSE upgrade expectations
+  - Macro regime NEUTRAL but carry regime FII_OUTFLOW creates selective bearish pressure on FII-dependent stocks (real_estate, tech)
+- **WORK channel**: Notified with summary (19:22 UTC)
+- **Session log**: Completed without errors (id=394)

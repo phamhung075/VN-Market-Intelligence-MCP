@@ -79,3 +79,4 @@
 [Market Watcher] 18:46 UTC — 26 stocks monitored
   Anomalies: 2 (>2.0σ) | Volume spikes: 2 | Chain confirms: 4
   Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Status: BLOCKING_ERROR (signal post)
+
