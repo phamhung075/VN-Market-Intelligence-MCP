@@ -1,6 +1,39 @@
-## Sprint 1846 — IN PROGRESS
+## Sprint 1847 — BACKLOG (PO Approved)
 
-**Status:** IN_PROGRESS | **Started:** 2026-05-03
+**Status:** APPROVED | **Scheduled:** 2026-05-06
+
+## Goal
+
+Add Tran Ngoc Bau (Strategy Quality Supervisor) agent — audit-only phase. Validate all 8 cowork analysis agents for strategy adherence (Thiên Thời / Địa Lợi / Nhân Hòa framework), enforce confidence gates, detect dedup candidates, and report findings daily to WORK channel.
+
+## Scope
+
+IN:
+- New agent: `.claude/agents/tran-ngoc-bau.md` + full YAML metadata
+- New flows: `.claude/flows/tran-ngoc-bau/main.md` (8-step audit workflow) + `audit-checklist.md` (validation rules)
+- New knowledge: `.claude/knowledge/alert-message-format.md` (SSOT for Vietnamese message templates, regime caveats, diacritics)
+- New tools package: `.claude/tools/package/tran-ngoc-bau.md`
+- New Cowork entry: `cowork-workspace-team-claude-desktop/08-tran-ngoc-bau.md`
+- Integration: Update cron-jobs.md (schedule), agent-roster.md (team table), CLAUDE.md (agent routing)
+- Testing: Integration test verifies 8-step cycle, session log creation, WORK message sent
+
+OUT: Auto-corrections (Phase 3), per-agent performance metrics, historical MARKET cleanup, new MCP tools
+
+## Success Metric
+
+- Agent deploys to Cowork + Cron schedule
+- Daily cycle runs: bootstrap → audit → report (Steps 1–6 complete)
+- Session log + notebook populated
+- WORK message sent with quality summary
+- Identify ≥5 quality issues (confidence gates, format, dedup candidates, bypass exceptions)
+- Baseline metrics established for Phases 2–3
+- 0 integration test failures
+
+---
+
+## Sprint 1846 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-06
 
 ## Goal
 

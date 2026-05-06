@@ -4,36 +4,15 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ---
 
-## Prerequisites — Must Be True Before Any Agent Runs
+## Init
 
-### 1. Pipeline Resume — Check `docs/pipeline-state.json`
-
-- If `status == "in_progress"` AND `nextAgent` present AND `updatedAt < 24h` → spawn `nextAgent` immediately. No user prompt.
-- If `status == "in_progress"` AND `updatedAt >= 24h` → stale crash, reset to `"idle"`.
-- If `"idle"` or missing → fall through to session gate.
-
-**Session Gate:** PO cannot self-initiate if TASKS.md empty AND no Telegram reports. Ask user for goal.
-
-### 2. BCTC Pipeline Must Be Operational for Financial Analysis
-
-Before any agent analyzes financial data (BCTC quarterly reports), verify:
-
-```
-VPS (Vietnam — Vinahost)
-  └─ downloads BCTC PDFs from geo-blocked VN sources
-       └─ sends to MCP server
-            └─ PDF → text extraction (pdf-parse + OCR)
-                 └─ text available to agents via get_bctc_full() MCP tool
-```
-
-**Check health before spawning financial agents:**
-- `ops` → `get_vps_service_health()` — VPS reachable and fetching
-- `ops` → `list_stored_pdfs()` — PDFs present for target tickers
-- If broken → spawn `ops` to fix VPS pipeline before analysis proceeds
+1. Load `MEMORY.md` index (not all memory files — read individual files on demand)
+2. Load docs on demand: `docs/TASKS.md`, `docs/data/project-stats.json`, etc. — only when needed
+3. MCP tools: use `mcp__claude_ai_gateway__call_tool` exclusively — never import domain code directly
 
 ---
 
-## Switch — User Request → Agent
+## Agent Routing — User Request → Agent
 
 Spawn the matching agent. Never do the work yourself.
 
@@ -49,23 +28,48 @@ Spawn the matching agent. Never do the work yourself.
 | DRY / hardcoded values | `code-janitor` |
 | update cowork agents | `cowork-refactory-expert` |
 | organize / cleanup | `claude-manager-helper` |
-
-Agent defines who receives next. Full routing rules → `/dispatch`
-
----
-
-## Agent Chaining Protocol
-
-Full protocol → `.claude/knowledge/agent-chaining-protocol.md`
+| quality / strategy audit | `tran-ngoc-bau` |
 
 ---
 
-## Interdiction — Never Ask the User to Act
+## Main Terminal = Agent Switch
 
-**Never ask the user to run commands, restart services, SSH to servers, or perform any technical action.** Always spawn the appropriate agent instead (`ops`, `developer`, `qa`, etc.). The user is configuration admin only — they set goals, they do not execute tasks. If an action requires capabilities beyond available MCP tools, spawn `ops` to exhaust all automated options first and report the precise blocker, not a request for the user to intervene.
+Main terminal is permanent switch. Sub-agents cannot spawn each other.
+
+Protocol: `.claude/knowledge/agent-chaining-protocol.md`
+
+```
+main terminal
+  ├─ spawn agent A → read return
+  ├─ spawn agent B with A's context → read return
+  └─ until PIPELINE: complete → idle
+```
 
 ---
 
-## Lazy-Load — Memory & Tools on Demand
+## Communication Defaults
 
-Load context only as needed: MEMORY.md index (not all 30+ memory files), agent-specific tool specs (not full 130+ catalog), agent docs (active rotation only). Full rules → `.claude/knowledge/lazy-load-protocol.md`. **Goal: keep working context under 100k tokens.**
+All agent communication uses:
+- **Caveman mode** (ultra): `.claude/skills/caveman/SKILL.md` — ~75% token reduction
+- **Token economy**: `.claude/skills/token-economy/SKILL.md` — writing optimization
+
+---
+
+## Flows
+
+Agents follow their flow files. Dev-team cron: `.claude/flows/dev-team/main.md`
+
+---
+
+## Interdiction
+
+Never ask user to run commands, restart services, or perform technical actions. Spawn `ops`, `developer`, `qa` instead. User is config admin only.
+
+---
+
+## Lazy Load
+
+Load context only as needed. Goal: working context under 100k tokens.
+- MEMORY.md index only (read individual files on demand)
+- Agent docs: active rotation only
+- MCP tools: `call_tool` through gateway, never full catalog

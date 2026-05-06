@@ -21,5 +21,21 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "1846b SPRINT-M: backtest lifecycle tools — delete (#123) + export_csv (#124) + compare (#125). toolCount=125→128. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1846 DONE — 2026-05-03. All 3 lifecycle tools merged. toolCount=128, totalTasksDone=515."
+  "currentSprintNotes": "Sprint 1846 DONE — 2026-05-03. All 3 lifecycle tools merged. toolCount=128, totalTasksDone=515.",
+  "infrastructureStatus": {
+    "lastUpdated": "2026-05-06T18:47:48Z",
+    "mcpServerHealth": "DOWN",
+    "mcpEndpoint": "zenmidi.com:3000",
+    "connectionStatus": "ECONNREFUSED",
+    "affectedServices": [
+      "news-scout",
+      "market-watcher",
+      "alert-commander",
+      "report-analyzer",
+      "unified-agent"
+    ],
+    "lastSuccessfulCycle": "2026-05-06T18:02:00Z",
+    "estimatedRecoveryTime": "TBD — ops intervention required",
+    "recoveryLink": "See ops-escalation #9284 in project docs"
+  }
 }
