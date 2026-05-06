@@ -3,7 +3,7 @@ name: architect
 color: blue
 description: Architect. Technical blueprint design, brownfield analysis, DDD risk review.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: haiku
+model: sonnet
 ---
 
 agent:

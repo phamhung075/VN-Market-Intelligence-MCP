@@ -3,7 +3,7 @@ name: developer
 color: green
 description: Developer. One atomic task at a time, TDD strict, DDD always, dedicated branch.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: haiku
+model: sonnet
 ---
 
 agent:

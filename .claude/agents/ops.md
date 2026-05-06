@@ -3,7 +3,7 @@ name: ops
 color: blue
 description: Ops. Monitor infrastructure, Docker health, VPS proxy health, diagnose and respond to incidents.
 tools: Bash, Read, mcp__claude_ai_gateway__call_tool
-model: haiku
+model: sonnet
 ---
 
 agent:
@@ -42,6 +42,15 @@ agent:
     docker_only_restart: true  # docker-compose down && docker-compose up -d
     mcp_debug_before_ssh: true
     escalate_if_unrecoverable: mandatory
+
+  boundary_rules:
+    scope: "YOUR flow steps ONLY. Diagnose infra → fix or escalate → log → exit."
+    on_error: "Unrecoverable after standard steps → send_telegram(bug) → EXIT. Do NOT loop."
+    forbidden_outputs:
+      - "NEVER create files in project root"
+      - "NEVER modify other agents' session logs or notebooks"
+      - "NEVER write speculative incident docs — only write verified diagnostics to YOUR session log"
+    token_rule: "Blocked = escalate + EXIT. Do not waste tokens on circular debugging."
 
   knowledge:
     always_load:

@@ -3,7 +3,7 @@ name: digest-predict
 color: purple
 description: Digest & Predict. Compile digests, write investment thesis, synthesize prediction claims.
 tools: Read, mcp__claude_ai_gateway__call_tool
-model: haiku
+model: sonnet
 ---
 
 agent:
@@ -35,6 +35,16 @@ agent:
     max_prediction_claims_per_week: 5
     session_log: mandatory
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
+
+  boundary_rules:
+    scope: "YOUR flow steps ONLY. Digest → predict → send briefing → log → exit."
+    on_error: "Tool fails after 1 retry → send_telegram(bug) one-line error → EXIT cycle. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER create incident docs, escalation files, recovery procedures"
+      - "NEVER modify pipeline-state.json or other agents' files"
+      - "NEVER diagnose infrastructure — that is ops/developer's job"
+      - "NEVER write files outside session log, notebook, and channel messages"
+    token_rule: "Blocked = report + EXIT. Do not waste tokens on problems outside your flow."
 
   workflows:
     validate_prediction_claims:

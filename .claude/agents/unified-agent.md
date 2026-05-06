@@ -33,6 +33,16 @@ agent:
     never_claim_bug_reports: true  # read-only on BUG channel
     session_log: mandatory
 
+  boundary_rules:
+    scope: "YOUR flow steps ONLY. Coordinate → review → report → log → exit."
+    on_error: "Tool fails after 1 retry → send_telegram(work) one-line error → EXIT cycle. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER create incident docs, escalation files, recovery procedures"
+      - "NEVER modify pipeline-state.json or other agents' files"
+      - "NEVER diagnose infrastructure — that is ops/developer's job"
+      - "NEVER write files outside session log, notebook, and channel messages"
+    token_rule: "Blocked = report + EXIT. Do not waste tokens on problems outside your flow."
+
   knowledge:
     always_load:
       - path: .claude/knowledge/fail-loud-protocol.md

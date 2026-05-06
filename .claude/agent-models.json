@@ -6,6 +6,7 @@
         "news-scout": "haiku",
         "financial-analyst": "haiku",
         "market-watcher": "haiku",
+        "report-analyzer": "haiku",
         "alert-commander": "haiku",
         "digest-predict": "haiku",
         "qa-responder": "haiku",
@@ -32,6 +33,7 @@
         "news-scout": "haiku",
         "financial-analyst": "haiku",
         "market-watcher": "haiku",
+        "report-analyzer": "haiku",
         "alert-commander": "sonnet",
         "digest-predict": "sonnet",
         "qa-responder": "haiku",
@@ -58,6 +60,7 @@
         "news-scout": "sonnet",
         "financial-analyst": "sonnet",
         "market-watcher": "sonnet",
+        "report-analyzer": "sonnet",
         "alert-commander": "sonnet",
         "digest-predict": "sonnet",
         "qa-responder": "sonnet",
@@ -79,5 +82,5 @@
       }
     }
   },
-  "current_mode": "eco"
+  "current_mode": "normal"
 }
