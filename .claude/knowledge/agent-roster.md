@@ -14,6 +14,7 @@
 | 5 | Alert Commander | `05-alert-commander.md` | ONLY agent → MARKET channel | 10 min (market) / 30 min (off) |
 | 6 | Digest & Predict | `06-digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
 | 7 | QA Responder | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
+| 8 | Tran Ngoc Bau | `08-tran-ngoc-bau.md` | Strategy supervisor, quality audit, auto-cure | Daily 20:00 VN |
 
 Coordinator: `cowork-workspace-team-claude-desktop/unified-agent.md`
 

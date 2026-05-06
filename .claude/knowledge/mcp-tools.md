@@ -16,9 +16,34 @@
 
 **Key change:** All cowork agents now use `mcp__claude_ai_gateway__call_tool` gateway (single permission) instead of individual `mcp__vn-market__*` tool list.
 
-Usage pattern:
-```python
-mcp__claude_ai_gateway__call_tool(tool_name="get_cycle_bootstrap", input={"agent_name": "alert-commander"})
+### MCP Gateway — Correct Call Signature
+
+```
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",        ← REQUIRED, exact name
+  tool: "<tool_name>",        ← e.g. "get_cycle_bootstrap"
+  arguments: { ... }          ← tool-specific params
+)
+```
+
+| Param | Type | Value |
+|-------|------|-------|
+| `server` | string | **`"vn-market"`** — the only MCP server. NOT `vnmarket-mcp`, NOT `vn_market`, NOT `vnmarket`. |
+| `tool` | string | Tool name from `.claude/tools/list/<tool>.md` |
+| `arguments` | object | Tool input params (see tool doc for schema) |
+
+**Common mistakes:**
+- ~~`tool_name`~~ → `tool`
+- ~~`input`~~ → `arguments`
+- ~~`vnmarket-mcp`~~ / ~~`vnmarket`~~ → `"vn-market"`
+
+Example:
+```
+mcp__claude_ai_gateway__call_tool(
+  server: "vn-market",
+  tool: "get_cycle_bootstrap",
+  arguments: { "agent_name": "alert-commander" }
+)
 ```
 
 ---
