@@ -19,6 +19,17 @@ export * from "./alertGenerator.js";
 export * from "./alertGrouper.js";
 export * from "./alertMuteChecker.js";
 export * from "./alertPolicyChecker.js";
+// alertOutcomeScorer: PricePoint collides with volatilityCalculator — export functions + non-colliding types only
+export {
+  classifyAlertType,
+  scoreAlertOutcome,
+} from "./alertOutcomeScorer.js";
+export type {
+  AlertOutcome,
+  AlertClass,
+  AlertClassification,
+  OutcomeResult,
+} from "./alertOutcomeScorer.js";
 
 // --- Financial extractors ---
 export * from "./financial-reports/balanceSheetExtractor.js";
