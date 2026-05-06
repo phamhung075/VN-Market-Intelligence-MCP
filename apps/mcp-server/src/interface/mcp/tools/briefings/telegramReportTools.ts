@@ -186,7 +186,7 @@ export function registerTelegramReportTools(server: McpServer): void {
         .number()
         .int()
         .min(1)
-        .describe("Primary key cua ban ghi telegram_reports can xu ly"),
+        .describe("Primary key của bản ghi telegram_reports cần xử lý"),
       delete_telegram_message: z
         .boolean()
         .optional()
