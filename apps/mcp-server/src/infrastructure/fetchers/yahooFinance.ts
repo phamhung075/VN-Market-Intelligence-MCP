@@ -47,19 +47,23 @@ const YAHOO_API_BASE =
   Bun.env["YAHOO_FINANCE_API_URL"] ??
   "https://query1.finance.yahoo.com/v8/finance/chart";
 
-/** The 13 commodity/index symbols fetched on every call. */
+/** The 12 commodity/index symbols fetched on every call.
+ *  NOTE: CNHVND=X (CNH/VND) removed — ticker returns 404 on Yahoo Finance
+ *  and is not a valid symbol. cnyVndRate is always stored as 0.
+ *  Alternative: derive via USDCNH + USDVND cross if needed in future.
+ */
 const SYMBOLS = {
   // existing
   brent:  "BZ=F",
   gold:   "GC=F",
   usdVnd: "USDVND=X",
-  // new (FR-1) — 9 global risk-off symbols
+  // new (FR-1) — 8 global risk-off symbols
   vix:      "^VIX",       // CBOE Volatility Index (fear gauge)
   sp500:    "^GSPC",      // S&P 500 index
   shanghai: "000001.SS",  // Shanghai Composite — 15-min delay on Yahoo free tier
   hangSeng: "^HSI",       // Hang Seng index
   dxy:      "DX-Y.NYB",  // US Dollar Index (NYB venue; 0 stored if unresolvable)
-  cnyVnd:   "CNHVND=X",  // CNH/VND offshore rate (low liquidity)
+  // cnyVnd removed: "CNHVND=X" is not a valid Yahoo Finance ticker (404)
   copper:   "HG=F",       // Copper futures (USD/lb)
   silver:   "SI=F",       // Silver futures (USD/oz)
   jpyVnd:   "JPYVND=X",  // JPY/VND exchange rate
@@ -258,11 +262,12 @@ export async function fetchYahooFinancePrices(
     apiBase,
   });
 
-  // Fetch all 13 symbols concurrently (FR-3 + Task 1423a)
+  // Fetch all 12 symbols concurrently (FR-3 + Task 1423a)
+  // cnyVnd (CNHVND=X) omitted — not a valid Yahoo ticker, always returns 404
   const [
     brentResult, goldResult, usdVndResult,
     vixResult, sp500Result, shanghaiResult, hangSengResult,
-    dxyResult, cnyVndResult, copperResult, silverResult, jpyVndResult,
+    dxyResult, copperResult, silverResult, jpyVndResult,
     us10yResult,
   ] = await Promise.allSettled([
     fetchSymbolPrice(SYMBOLS.brent,    client, apiBase),
@@ -273,7 +278,6 @@ export async function fetchYahooFinancePrices(
     fetchSymbolPrice(SYMBOLS.shanghai, client, apiBase),
     fetchSymbolPrice(SYMBOLS.hangSeng, client, apiBase),
     fetchSymbolPrice(SYMBOLS.dxy,      client, apiBase),
-    fetchSymbolPrice(SYMBOLS.cnyVnd,   client, apiBase),
     fetchSymbolPrice(SYMBOLS.copper,   client, apiBase),
     fetchSymbolPrice(SYMBOLS.silver,   client, apiBase),
     fetchSymbolPrice(SYMBOLS.jpyVnd,   client, apiBase),
@@ -305,8 +309,9 @@ export async function fetchYahooFinancePrices(
     hangSengResult.status === "fulfilled" && hangSengResult.value !== null ? hangSengResult.value : 0;
   const dxy =
     dxyResult.status === "fulfilled" && dxyResult.value !== null ? dxyResult.value : 0;
-  const cnyVndRate =
-    cnyVndResult.status === "fulfilled" && cnyVndResult.value !== null ? cnyVndResult.value : 0;
+  // cnyVndRate: CNHVND=X is not a valid Yahoo ticker (404 on every sync).
+  // Field kept in CommoditySnapshot and DB schema for compatibility; always 0.
+  const cnyVndRate = 0;
   const copperUSD =
     copperResult.status === "fulfilled" && copperResult.value !== null ? copperResult.value : 0;
   const silverUSDPerOz =
@@ -316,14 +321,15 @@ export async function fetchYahooFinancePrices(
   const us10yYield =
     us10yResult.status === "fulfilled" && us10yResult.value !== null ? us10yResult.value : 0;
 
-  // Return null ONLY when ALL 13 fields are 0 (FR-3 business rule + Task 1423a)
+  // Return null ONLY when ALL 12 fetched fields are 0 (FR-3 business rule + Task 1423a)
+  // cnyVndRate is excluded from this check — it is always 0 (ticker removed)
   if (
     brentCrudeUSD === 0 && goldUSDPerOz === 0 && usdVndRate === 0 &&
     vix === 0 && sp500 === 0 && shanghaiComp === 0 && hangSeng === 0 &&
-    dxy === 0 && cnyVndRate === 0 && copperUSD === 0 && silverUSDPerOz === 0 &&
+    dxy === 0 && copperUSD === 0 && silverUSDPerOz === 0 &&
     jpyVndRate === 0 && us10yYield === 0
   ) {
-    logger.warn("[yahooFinance] all 13 symbols returned 0 — no data parsed", { apiBase });
+    logger.warn("[yahooFinance] all 12 symbols returned 0 — no data parsed", { apiBase });
     return null;
   }
 

@@ -127,7 +127,7 @@ const ALL_12_CLIENT = symbolAwareClient({
   "000001.SS":   buildYahooJsonResponse(3320.0),   // no encoding needed
   "%5EHSI":      buildYahooJsonResponse(17800.0),  // ^HSI encoded
   "DX-Y.NYB":    buildYahooJsonResponse(104.2),
-  "CNHVND%3DX":  buildYahooJsonResponse(3510.0),
+  // CNHVND=X removed — not a valid Yahoo ticker (404 noise on every sync)
   "HG%3DF":      buildYahooJsonResponse(4.65),     // HG=F encoded
   "SI%3DF":      buildYahooJsonResponse(29.1),     // SI=F encoded
   "JPYVND%3DX":  buildYahooJsonResponse(165.0),
@@ -154,7 +154,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     expect(result!.shanghaiComp).toBeCloseTo(3320.0, 0);
     expect(result!.hangSeng).toBeCloseTo(17800.0, 0);
     expect(result!.dxy).toBeCloseTo(104.2, 1);
-    expect(result!.cnyVndRate).toBeCloseTo(3510.0, 0);
+    expect(result!.cnyVndRate).toBe(0); // CNHVND=X removed — always 0
     expect(result!.copperUSD).toBeCloseTo(4.65, 2);
     expect(result!.silverUSDPerOz).toBeCloseTo(29.1, 1);
     expect(result!.jpyVndRate).toBeCloseTo(165.0, 0);
@@ -166,7 +166,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     const snap: CommoditySnapshot = {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
-      dxy: 104.2, cnyVndRate: 3510.0, copperUSD: 4.65, silverUSDPerOz: 29.1,
+      dxy: 104.2, cnyVndRate: 0, copperUSD: 4.65, silverUSDPerOz: 29.1,
       jpyVndRate: 165.0, us10yYield: 0, fetchedAt: "2026-04-19T08:00:00.000Z",
     };
 
@@ -182,7 +182,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     expect(row!["shanghai_comp"]).toBeCloseTo(3320.0, 0);
     expect(row!["hang_seng"]).toBeCloseTo(17800.0, 0);
     expect(row!["dxy"]).toBeCloseTo(104.2, 1);
-    expect(row!["cny_vnd_rate"]).toBeCloseTo(3510.0, 0);
+    expect(row!["cny_vnd_rate"]).toBe(0); // CNHVND=X removed — always 0
     expect(row!["copper_usd"]).toBeCloseTo(4.65, 2);
     expect(row!["silver_usd_per_oz"]).toBeCloseTo(29.1, 1);
     expect(row!["jpy_vnd_rate"]).toBeCloseTo(165.0, 0);
@@ -209,7 +209,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
       "%5EGSPC":     buildYahooJsonResponse(5300.0),
       "000001.SS":   buildYahooJsonResponse(3320.0),
       "%5EHSI":      buildYahooJsonResponse(17800.0),
-      "CNHVND%3DX":  buildYahooJsonResponse(3510.0),
+      // CNHVND=X removed — not a valid Yahoo ticker
       "HG%3DF":      buildYahooJsonResponse(4.65),
       "SI%3DF":      buildYahooJsonResponse(29.1),
     });

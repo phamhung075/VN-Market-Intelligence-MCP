@@ -103,7 +103,7 @@ function makeTestDb(): Database {
   return db;
 }
 
-/** All-13 mock client including ^TNX */
+/** All-12 mock client including ^TNX (CNHVND=X removed — invalid ticker) */
 const ALL_13_CLIENT = symbolAwareClient({
   "BZ%3DF":      buildYahooJsonResponse(82.5),
   "GC%3DF":      buildYahooJsonResponse(2341.8),
@@ -113,7 +113,7 @@ const ALL_13_CLIENT = symbolAwareClient({
   "000001.SS":   buildYahooJsonResponse(3320.0),
   "%5EHSI":      buildYahooJsonResponse(17800.0),
   "DX-Y.NYB":    buildYahooJsonResponse(104.2),
-  "CNHVND%3DX":  buildYahooJsonResponse(3510.0),
+  // CNHVND=X removed — not a valid Yahoo ticker (404 on every sync)
   "HG%3DF":      buildYahooJsonResponse(4.65),
   "SI%3DF":      buildYahooJsonResponse(29.1),
   "JPYVND%3DX":  buildYahooJsonResponse(165.0),
@@ -152,7 +152,7 @@ describe("Task 1423a — US10Y yield symbol (^TNX)", () => {
     const snap: CommoditySnapshot = {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
-      dxy: 104.2, cnyVndRate: 3510.0, copperUSD: 4.65, silverUSDPerOz: 29.1,
+      dxy: 104.2, cnyVndRate: 0, copperUSD: 4.65, silverUSDPerOz: 29.1,
       jpyVndRate: 165.0, us10yYield: 4.35,
       fetchedAt: "2026-04-29T08:00:00.000Z",
     };
@@ -181,7 +181,7 @@ describe("Task 1423a — US10Y yield symbol (^TNX)", () => {
       "000001.SS":   buildYahooJsonResponse(3320.0),
       "%5EHSI":      buildYahooJsonResponse(17800.0),
       "DX-Y.NYB":    buildYahooJsonResponse(104.2),
-      "CNHVND%3DX":  buildYahooJsonResponse(3510.0),
+      // CNHVND=X removed — not a valid Yahoo ticker
       "HG%3DF":      buildYahooJsonResponse(4.65),
       "SI%3DF":      buildYahooJsonResponse(29.1),
       "JPYVND%3DX":  buildYahooJsonResponse(165.0),
@@ -195,8 +195,8 @@ describe("Task 1423a — US10Y yield symbol (^TNX)", () => {
     expect(result!.vix).toBeCloseTo(18.5, 1);
   });
 
-  // T-5: all 13 symbols fail → null
-  it("T-5: all 13 symbols fail → fetchYahooFinancePrices returns null", async () => {
+  // T-5: all 12 symbols fail → null
+  it("T-5: all 12 symbols fail → fetchYahooFinancePrices returns null", async () => {
     const failAll = symbolAwareClient({ default: new Error("Network down") });
     const result = await fetchYahooFinancePrices(failAll);
     expect(result).toBeNull();
