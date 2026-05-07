@@ -312,38 +312,37 @@ describe("computeAllIndicators", () => {
 function buildInMemoryDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE market_prices_history (
-      code       TEXT NOT NULL,
-      price      REAL NOT NULL,
-      volume     REAL NOT NULL,
-      fetched_at TEXT NOT NULL,
-      exchange   TEXT DEFAULT 'HOSE',
-      PRIMARY KEY (code, fetched_at)
+    CREATE TABLE daily_ohlcv (
+      code   TEXT NOT NULL,
+      date   TEXT NOT NULL,
+      open   REAL NOT NULL,
+      high   REAL NOT NULL,
+      low    REAL NOT NULL,
+      close  REAL NOT NULL,
+      volume REAL NOT NULL,
+      PRIMARY KEY (code, date)
     );
-    CREATE INDEX idx_mph_code_fetched
-      ON market_prices_history(code, fetched_at DESC);
+    CREATE INDEX idx_ohlcv_code_date
+      ON daily_ohlcv(code, date DESC);
   `);
   return db;
 }
 
 /**
- * Seed `n` daily rows for `code` using `datetime('now', '-N days')` style
- * timestamps so the parameterized query `datetime('now', ? || ' days')` picks
- * them up correctly.  Prices rise linearly from 90000.
+ * Seed `n` daily OHLCV rows for `code`.
+ * Task 1850a: migrated from market_prices_history to daily_ohlcv.
+ * Prices rise linearly from 90000.
  */
 function seedDailyRows(db: Database, code: string, n: number): void {
   const ins = db.prepare(
-    "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at, exchange) VALUES (?, ?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   for (let i = n - 1; i >= 0; i--) {
-    // One row per day, price rises with index
     const price = 90000 + (n - 1 - i) * 100;
-    // Use a fixed recent past date so the query window always catches them
     const daysAgo = i;
-    // Produce ISO datetime via JS — go back `daysAgo` days from today
     const d = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-    const fetched_at = d.toISOString().replace("T", " ").slice(0, 19);
-    ins.run(code, price, 1_000_000, fetched_at, "HOSE");
+    const dateStr = d.toISOString().slice(0, 10);
+    ins.run(code, dateStr, price - 50, price + 50, price - 100, price, 1_000_000);
   }
 }
 
@@ -388,7 +387,7 @@ describe("MCP handler integration", () => {
   it("formats output with all 4 indicator blocks when DB has 55+ rows", async () => {
     seedDailyRows(db, "VCB", 55);
     const result = await callTool(server, "get_technical_indicators", {
-      actionCode: "VCB",
+      code: "VCB",
       days: 60,
     });
     const text = result.content[0]!.text;
@@ -427,7 +426,7 @@ describe("MCP handler integration", () => {
   it("returns insufficient-data message for 10-row DB (below 35 minimum)", async () => {
     seedDailyRows(db, "HPG", 10);
     const result = await callTool(server, "get_technical_indicators", {
-      actionCode: "HPG",
+      code: "HPG",
       days: 60,
     });
     const text = result.content[0]!.text;
@@ -443,7 +442,7 @@ describe("MCP handler integration", () => {
   it("ticker is uppercased automatically", async () => {
     seedDailyRows(db, "FPT", 40);
     const result = await callTool(server, "get_technical_indicators", {
-      actionCode: "fpt",
+      code: "fpt",
       days: 60,
     });
     const text = result.content[0]!.text;
@@ -453,7 +452,7 @@ describe("MCP handler integration", () => {
   it("returns no-data message when ticker not found in DB", async () => {
     // DB is empty for UNKNOWN
     const result = await callTool(server, "get_technical_indicators", {
-      actionCode: "UNKNOWN",
+      code: "UNKNOWN",
       days: 60,
     });
     const text = result.content[0]!.text;
@@ -466,7 +465,7 @@ describe("MCP handler integration", () => {
     // 55 strictly rising rows → MACD histogram should be positive (bullish)
     seedDailyRows(db, "VNM", 55);
     const result = await callTool(server, "get_technical_indicators", {
-      actionCode: "VNM",
+      code: "VNM",
       days: 60,
     });
     const text = result.content[0]!.text;

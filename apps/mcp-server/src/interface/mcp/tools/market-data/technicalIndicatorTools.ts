@@ -298,19 +298,18 @@ export function registerTechnicalIndicatorTools(
           db = getDb();
         }
 
-        // ── Parameterized query: one AVG price row per calendar day ──────────
-        // Parameter binding: [code, "-60 days"] format required by SQLite datetime()
-        const interval = `-${lookbackDays} days`;
+        // ── Query daily_ohlcv (permanent daily candles, not 24h-pruned ticks) ─
+        // Task 1850a: migrated from market_prices_history → daily_ohlcv
+        // (same fix as Task 1804c for get_price_history)
         const rows = db
-          .query<CandleRow, [string, string]>(
-            `SELECT date(fetched_at) AS day, AVG(price) AS close_price
-               FROM market_prices_history
+          .query<CandleRow, [string, number]>(
+            `SELECT date AS day, close AS close_price
+               FROM daily_ohlcv
               WHERE code = ?
-                AND fetched_at >= datetime('now', ?)
-              GROUP BY date(fetched_at)
-              ORDER BY day ASC`,
+                AND date >= date('now', '-' || ? || ' days')
+              ORDER BY date ASC`,
           )
-          .all(code, interval);
+          .all(code, lookbackDays);
 
         // ── Map to DailyCandle ────────────────────────────────────────────────
         const candles: DailyCandle[] = rows.map((r) => ({
