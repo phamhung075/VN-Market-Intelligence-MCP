@@ -10,7 +10,6 @@
 |---------|-------|----------|------|-------|---------|------------|
 | 1850c | FIX: HSG price inconsistency — bootstrap vs history change_pct diverge (-21.63% vs +2.04%). Check priceHistoryService formula consistency. 1-2 files. | MEDIUM | FIX | developer | — | — |
 | 1850e | CLEAN: cascade rule gap — chemicals/petrochemicals domain missing from alert cascade map. 1 file. | LOW | CLEAN | code-janitor | — | — |
-| 1850d | CLEAN: DBC domain classification — Dabaco (DBC) incorrectly tagged as tech; should be agro/food sector. 1 file. | LOW | CLEAN | code-janitor | — | — |
 
 ---
 
@@ -39,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1850d | CLEAN: DBC domain classification — add Dabaco to agriculture sector in stock-classification.json. 2 files + 1 test. | LOW | CLEAN | code-janitor | 2026-05-07 |
 | 1851a | FIX: post_agent_signal schema reconciliation — align market-watcher cycle.md + tools package with actual MCP schema (from_agent, to_agent, signal_type, payload). 2 files. | HIGH | FIX | developer | 2026-05-07 |
 | 1851b | FIX: run_impact_chain + post_agent_signal params — news-scout cycle.md (newsText not ticker/event) + tools package. Absorbs 1850b. 3 files. | HIGH | FIX | developer | 2026-05-07 |
 | 1851c | FIX: get_price_history actionCode→code — already fixed in prior sprint (commit 0d514018). Stale report closed. | MEDIUM | FIX | — | 2026-05-07 |
