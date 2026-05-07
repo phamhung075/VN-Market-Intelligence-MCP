@@ -18,6 +18,9 @@ import {
   markProcessed,
   getReport as getReportById,
   deleteOldReports,
+  markResolved,
+  listUnresolvedReports,
+  listResolvedReports,
 } from "../infrastructure/db/telegramReportStore.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
@@ -337,5 +340,105 @@ describe("Task 1361 — deleteOldReports (purge path)", () => {
     // With a 1-hour cutoff, the 2h-old row should be deleted
     const removed = deleteOldReports(db, 1);
     expect(removed).toBe(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Resolution tracking (Task 1849a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Task 1849a — markResolved / listUnresolvedReports / listResolvedReports", () => {
+  let db: Database;
+
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
+
+  it("markResolved() sets resolution + resolved_at atomically", () => {
+    const id = insertReport(db, "Bug to fix", "dev-team", 0, "high");
+    const before = getReportById(db, id)!;
+    expect(before.resolution).toBe("none");
+    expect(before.resolved_at).toBeNull();
+
+    markResolved(db, id, "fixed");
+
+    const after = getReportById(db, id)!;
+    expect(after.resolution).toBe("fixed");
+    expect(typeof after.resolved_at).toBe("string");
+    expect(after.resolved_at!.length).toBeGreaterThan(0);
+  });
+
+  it("markResolved() accepts a custom resolvedAt timestamp", () => {
+    const id = insertReport(db, "Wontfix report", "dev-team", 0, "normal");
+    const ts = "2026-05-07T10:00:00.000Z";
+    markResolved(db, id, "wontfix", ts);
+
+    const row = getReportById(db, id)!;
+    expect(row.resolution).toBe("wontfix");
+    expect(row.resolved_at).toBe(ts);
+  });
+
+  it("markResolved() with unknown id is idempotent (no error)", () => {
+    expect(() => markResolved(db, 99999, "fixed")).not.toThrow();
+  });
+
+  it("listUnresolvedReports() excludes fixed/wontfix/duplicate rows", () => {
+    const id1 = insertReport(db, "Open bug", "agent", 0, "high");
+    const id2 = insertReport(db, "Fixed bug", "agent", 0, "normal");
+    const id3 = insertReport(db, "Wontfix bug", "agent", 0, "normal");
+    const id4 = insertReport(db, "Duplicate bug", "agent", 0, "normal");
+    markResolved(db, id2, "fixed");
+    markResolved(db, id3, "wontfix");
+    markResolved(db, id4, "duplicate");
+
+    const rows = listUnresolvedReports(db);
+    const ids = rows.map((r) => r.id);
+    expect(ids).toContain(id1);
+    expect(ids).not.toContain(id2);
+    expect(ids).not.toContain(id3);
+    expect(ids).not.toContain(id4);
+  });
+
+  it("listUnresolvedReports() includes monitoring + none rows", () => {
+    const id1 = insertReport(db, "None-status bug", "agent", 0, "normal");
+    const id2 = insertReport(db, "Monitoring bug", "agent", 0, "normal");
+    markResolved(db, id2, "monitoring");
+
+    const rows = listUnresolvedReports(db);
+    const ids = rows.map((r) => r.id);
+    expect(ids).toContain(id1);
+    expect(ids).toContain(id2);
+  });
+
+  it("listUnresolvedReports() excludes status=processed rows", () => {
+    const id1 = insertReport(db, "New open bug", "agent", 0, "normal");
+    const id2 = insertReport(db, "Processed bug", "agent", 0, "normal");
+    markProcessed(db, id2);
+
+    const rows = listUnresolvedReports(db);
+    const ids = rows.map((r) => r.id);
+    expect(ids).toContain(id1);
+    expect(ids).not.toContain(id2);
+  });
+
+  it("listResolvedReports() returns only fixed/wontfix/duplicate rows", () => {
+    const id1 = insertReport(db, "Open bug", "agent", 0, "normal");
+    const id2 = insertReport(db, "Fixed bug", "agent", 0, "normal");
+    const id3 = insertReport(db, "Wontfix bug", "agent", 0, "normal");
+    markResolved(db, id2, "fixed");
+    markResolved(db, id3, "wontfix");
+
+    const rows = listResolvedReports(db);
+    const ids = rows.map((r) => r.id);
+    expect(ids).not.toContain(id1);
+    expect(ids).toContain(id2);
+    expect(ids).toContain(id3);
+  });
+
+  it("listResolvedReports() respects optional limit parameter", () => {
+    for (let i = 0; i < 5; i++) {
+      const id = insertReport(db, `Bug ${i}`, "agent", 0, "normal");
+      markResolved(db, id, "fixed");
+    }
+    const rows = listResolvedReports(db, 3);
+    expect(rows).toHaveLength(3);
   });
 });

@@ -1,7 +1,7 @@
 # Dev Team — Cron Orchestration Flow
 
 ## Input
-`read_telegram_reports(status="new")` | docs/TASKS.md | git log (last 30 commits) | `git branch` (stale branch audit)
+`read_telegram_reports(status="new")` | Unresolved reports: `WHERE resolution NOT IN ('fixed','wontfix','duplicate') AND status='processed'` | docs/TASKS.md | git log (last 30 commits) | `git branch` (stale branch audit)
 
 ## Output
 Tasks executed → docs/TASKS.md updated → WORK notified
@@ -22,6 +22,7 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 Launch `po`. Triage inputs:
 - `read_telegram_reports(status="new")`
+- Unresolved reports: `listUnresolvedReports()` → `WHERE resolution NOT IN ('fixed','wontfix','duplicate') AND status='processed'`
 - docs/TASKS.md
 - `git log --oneline -30`
 - `git branch` — list all branches; flag any non-main branch as a **CLEAN** task if it has 0 unmerged commits (`git log main..<branch> --oneline` returns empty) or is a stale worktree branch
@@ -30,7 +31,8 @@ Return EXACTLY ONE of:
 
 `NOTHING` → `send_telegram(work, "Dev loop idle.")` → EXIT
 
-`BATCH([{type, id, title, desc, size?, files, baseline_pass}])`
+`BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
+- `zone`: optional service name (e.g. `"stock-price"`, `"alert-engine"`) — drives agent routing in Step 3
 
 - **FIX**: ≤10 lines ≤3 files no new types — skip planning
 - **SPRINT-S**: ≤30 lines ≤5 files 1 domain
@@ -56,7 +58,7 @@ Return EXACTLY ONE of:
 3. Spawn `pm` → read return → Step 3
    - L only: after last merge → spawn `architect` post-merge review
 
-**UNBLOCK** → spawn `{route_to}` → read return → `send_telegram(work, "Unblocked: [brief]")` → EXIT
+**UNBLOCK** → spawn `{route_to}` (use `dev-*` agent if zone-specific, else generic) → read return → `send_telegram(work, "Unblocked: [brief]")` → EXIT
 
 **CLEAN** → spawn `qa` with branch list → qa runs:
 ```
@@ -82,10 +84,25 @@ Tier 2: tasks that depend on Tier 1 → spawn after Tier 1 Done
 Tier 3: tasks that depend on Tier 2 → etc.
 ```
 
+**Agent routing — pick the right developer:**
+```
+Route by zone:
+  apps/mcp-server/        → dev-mcp-server
+  apps/api-gateway/       → dev-api-gateway
+  apps/stock-price/       → dev-stock-price
+  apps/technical-analysis/→ dev-technical-analysis
+  apps/macro-indicators/  → dev-macro-indicators
+  apps/kinh-dich-service/ → dev-kinh-dich
+  apps/alert-engine/      → dev-alert-engine
+  apps/pdf-extractor/     → dev-pdf-extractor
+  apps/rag-service/       → dev-rag-service
+  cross-service or root/  → developer (generic)
+```
+
 **Per tier — main terminal spawns all independent tasks together:**
 ```
-# Example: Tier 1 has task A and task B (no shared files, no deps)
-→ ONE message: Agent(developer, task A) + Agent(developer, task B)
+# Example: Tier 1 has task A (stock-price) and task B (alert-engine)
+→ ONE message: Agent(dev-stock-price, task A) + Agent(dev-alert-engine, task B)
 → Read both returns
 
 # QA for completed tasks — also parallel if different branches:
@@ -111,9 +128,45 @@ Tier 3: tasks that depend on Tier 2 → etc.
 
 After all tasks Done:
 1. `git branch` — any non-main branches remain? → add CLEAN batch → Step 1.
-2. `read_telegram_reports(status="new")` — new reports (not yet actioned)? → Step 1.
-3. Mark all actioned reports processed: `process_telegram_report(id)` for each handled report.
-4. Nothing → `send_telegram(work, "Dev loop idle.")` → EXIT
+
+2. **Check new reports:**
+   ```
+   new = read_telegram_reports(status="new")
+   if new.length > 0:
+     send_telegram(work, f"Found {new.length} new report(s)")
+     → Step 1 (retriage)
+   ```
+
+3. **Check unresolved (non-terminal) reports:**
+   ```
+   unresolved = listUnresolvedReports()  # resolution NOT IN (fixed, wontfix, duplicate) AND status != processed
+   non_monitoring = [r for r in unresolved if r.resolution != "monitoring"]
+
+   if non_monitoring.length > 0:
+     send_telegram(work, f"Found {non_monitoring.length} unresolved report(s)")
+     → Step 1 (escalation)
+   ```
+
+4. **Monitoring-only guard (C-6):** If `listUnresolvedReports()` returns ONLY monitoring reports (resolution="monitoring"), do NOT re-trigger Step 1.
+   ```
+   monitoring_only = [r for r in unresolved if r.resolution == "monitoring"]
+   if monitoring_only.length > 0:
+     send_telegram(work, f"{monitoring_only.length} report(s) in monitoring — no action needed.")
+     # Do NOT re-enter Step 1 — proceed to archive + exit
+   ```
+   This prevents infinite cron loops from perpetually-unresolved reports.
+
+5. **Archive resolved reports** (fixed / wontfix / duplicate only):
+   ```
+   for each report with resolution IN (fixed, wontfix, duplicate):
+     process_telegram_report(id, delete_telegram_message=true)
+   ```
+   Resolution guide:
+   - Fixed after code change → `process_telegram_report(id, resolution="fixed")`
+   - Transient/informational → `process_telegram_report(id, resolution="wontfix")`
+   - Deferred for observation → `process_telegram_report(id, resolution="monitoring")`
+
+6. Nothing remaining → `send_telegram(work, "Dev loop idle.")` → EXIT
 
 ---
 

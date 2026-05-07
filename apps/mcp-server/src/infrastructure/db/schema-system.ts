@@ -265,6 +265,10 @@ export function initSystemTables(db: Database): void {
   // Task 231 — ownership lock columns
   try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT`); } catch {}
   try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_at TEXT`); } catch {}
+  // Task 1849a — resolution tracking columns
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN resolution TEXT NOT NULL DEFAULT 'none'`); } catch {}
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN resolved_at TEXT`); } catch {}
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_resolution ON telegram_reports(status, resolution)`);
 
   // ── VPS Push Log ──────────────────────────────────────────────────────────
   db.exec(`
