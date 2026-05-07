@@ -1,7 +1,7 @@
 {
   "_maintained_by": "market-analyst / PO",
   "_trigger": "watchlist change, sector reclassification, trade exposure update",
-  "lastUpdated": "2026-04-30",
+  "lastUpdated": "2026-05-07",
   "watchlist": [
     { "ticker": "VNM", "company": "Vinamilk", "sector": "Agriculture / Dairy", "exchange": "HOSE", "warning": null },
     { "ticker": "FPT", "company": "FPT Corp", "sector": "Tech / IT outsourcing", "exchange": "HOSE", "warning": null },
@@ -34,7 +34,8 @@
     { "ticker": "VJC", "company": "VietJet Air", "sector": "Aviation / Low-cost carrier", "exchange": "HOSE", "warning": null },
     { "ticker": "GEX", "company": "Gelex Group", "sector": "Utilities / Electrical equipment", "exchange": "HOSE", "warning": null },
     { "ticker": "BSR", "company": "Binh Son Refinery", "sector": "Oil & gas / Refinery", "exchange": "UPCOM", "warning": null },
-    { "ticker": "DAG", "company": "Da Nang Rubber Group", "sector": "Machinery / Industrial", "exchange": "HOSE", "warning": null }
+    { "ticker": "DAG", "company": "Da Nang Rubber Group", "sector": "Machinery / Industrial", "exchange": "HOSE", "warning": null },
+    { "ticker": "DBC", "company": "Dabaco", "sector": "Agriculture / Livestock / Feed", "exchange": "HOSE", "warning": null }
   ],
   "tradeExposure": {
     "VNM": { "Vietnam": 82, "Middle East": 8, "ASEAN": 5, "US": 3, "China": 2 },
@@ -67,7 +68,8 @@
     "DGC":  { "Vietnam": 50, "Japan": 25, "ASEAN": 15, "EU": 10 },
     "VJC":  { "Vietnam": 60, "ASEAN": 30, "China": 10 },
     "GEX":  { "Vietnam": 82, "ASEAN": 12, "EU": 6 },
-    "BSR":  { "Vietnam": 80, "ASEAN": 15, "China": 5 }
+    "BSR":  { "Vietnam": 80, "ASEAN": 15, "China": 5 },
+    "DBC":  { "Vietnam": 65, "ASEAN": 25, "China": 5, "US": 3, "EU": 2 }
   },
   "reverseMap": [
     { "event": "Middle East tension", "stocks": ["VNM (8% dairy exports)", "HPG (indirect shipping/oil costs)", "BSR (refinery crude cost)", "VJC (jet fuel cost)"] },
@@ -115,6 +117,7 @@
     "VJC": { "sector": "Aviation / Low-cost carrier", "peers": ["HVN", "BAV"] },
     "GEX": { "sector": "Utilities / Electrical equipment", "peers": ["REE", "PC1", "GEG"] },
     "BSR": { "sector": "Oil & gas / Refinery", "peers": ["PLX", "OIL", "PVS"] },
-    "VEA": { "sector": "Automotive", "peers": ["HAX", "CTF", "TMT"] }
+    "VEA": { "sector": "Automotive", "peers": ["HAX", "CTF", "TMT"] },
+    "DBC": { "sector": "Agriculture / Livestock", "peers": ["DPM", "VHC", "ANV"] }
   }
 }

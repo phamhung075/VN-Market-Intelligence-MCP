@@ -107,8 +107,8 @@ describe("Task 1347b — stock-classification.json full coverage", () => {
     }
   });
 
-  it("lastUpdated is 2026-04-30 after the update", () => {
-    expect(data.lastUpdated).toBe("2026-04-30");
+  it("lastUpdated is 2026-05-07 after the update", () => {
+    expect(data.lastUpdated).toBe("2026-05-07");
   });
 
   it("each watchlist entry has ticker, company, sector, exchange fields", () => {

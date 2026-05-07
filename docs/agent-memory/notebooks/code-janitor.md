@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-02 (scan 2, 09:00 VN)
+## Last updated: 2026-05-07 (scan 3, CLEAN task 1850d)
 
 ## State summary
 
@@ -16,6 +16,7 @@
 | JANITOR-014 | detectUnitMultiplier + LOOKAHEAD_LINES + extractNumber — extracted to extractorHelpers.ts | c77dde79 / 830a4962 |
 | JANITOR-016 | Private parseVnNumber copies in sscInsider.ts + muasamcong.ts | 6e2cca53 |
 | JANITOR-021 | BROWSER_FETCH_TIMEOUT_MS (30000) inlined 4x in discoverBctcPdfUrlBrowser.ts | b33d6856 |
+| JANITOR-022 | DBC domain classification: added to agriculture sector in stock-classification.json | TBD |
 
 ### Open backlog
 
