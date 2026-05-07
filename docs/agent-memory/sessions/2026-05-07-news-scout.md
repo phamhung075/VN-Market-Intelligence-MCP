@@ -137,3 +137,89 @@ If ANY tool call fails after 1 retry:
 - **Articles Processed**: 20
 - **Regime**: NEUTRAL | **Carry**: FII_OUTFLOW_RISK
 - **Exit**: SUCCESS
+
+---
+
+## Cycle 4: 16:20 UTC ✅ SUCCESS
+
+**Market Context**: Off-hours (post close, evening Asia-Pacific)
+**Items Analyzed**: 20 fetched articles
+**High-Impact Findings**: 3
+
+### Key Catalysts Fired
+
+| Signal | Type | Stock | Impact | Confidence | Status |
+|--------|------|-------|--------|------------|--------|
+| 2552 | urgent_news | VHM | 9/10 | 73% | ✅ Posted to alert-commander |
+| 2553 | urgent_news | FPT | 6/10 | 82% | ✅ Posted to alert-commander |
+| 2554 | chain_catalyst | VCB,BID,CTG,ACB | 8/10 | 75% | ✅ Posted to all (Gold+FII Risk) |
+
+### Regime Assessment
+- **Global Regime**: NEUTRAL (Global Liquidity: NEUTRAL)
+- **Carry Regime**: FII_OUTFLOW_RISK (VND Carry Spread: -0.33%)
+- **Key Macro**: Brent 99.64/bbl (near $100, positive for GAS) | Gold 4726.60 USD/oz | USD/VND 26,260
+- **Inflation**: 8% | **VNIndex**: 1874.8
+
+### Watchlist Impact Summary
+- **Bullish (Real Estate)**: VHM +6.95% — Vingroup group strength, VN-Index new high (1900 points)
+- **Neutral**: FPT dividend announcement (5% cash + stock warrant) — corporate action, tech sector mixed (FPT in spotlight but with FII selling)
+- **Risk Signal**: Gold spike + FII outflow risk → pressure on banking/BVH sectors despite VN-Index strength
+
+### Processing Summary
+- **Articles Fetched**: 20
+- **High-Impact Items** (score ≥ 6): 10 articles identified
+- **Historical Context**: Gold fund dynamics tracked (5 similar events identified via search_similar_context)
+- **Impact Chains**: 2 chains executed
+  - VHM real estate surge → 31 watchlist stocks affected (majority UP signal 6-7/10)
+  - FPT dividend neutral (4/10 impact with tech sector risks)
+
+### Session Metadata
+- **Session ID**: 459
+- **Signals Fired**: 3 (2 urgent_news + 1 chain_catalyst)
+- **Articles Processed**: 20
+- **Regime**: NEUTRAL | **Carry**: FII_OUTFLOW_RISK
+- **Historical Context**: Gold fund patterns tied to market depth analysis
+- **Exit**: SUCCESS
+- **Duration**: ~2 min
+
+---
+
+## Cycle 5: 20:22 UTC ✅ SUCCESS
+
+**Market Context**: Off-hours (post close, evening)
+**Items Analyzed**: 20 fetched articles
+**High-Impact Findings**: 2
+
+### Key Catalysts Fired
+
+| Signal | Type | Stock | Impact | Confidence | Status |
+|--------|------|-------|--------|------------|--------|
+| 2566 | urgent_news | FPT | 4/10 | 50% | ✅ Posted to alert-commander |
+| 2567 | chain_catalyst | VCB,BID | 7/10 | 95% | ✅ Posted to all (Gold Risk-Off) |
+
+### Regime Assessment
+- **Global Regime**: NEUTRAL (Global Liquidity: NEUTRAL)
+- **Carry Regime**: FII_OUTFLOW_RISK (VND Carry Spread: -0.33%)
+- **Key Macro**: Brent 100.49 USD/bbl | Gold 4721.9 USD/oz (+2.02σ high alert) | USD/VND 26,260
+- **Inflation**: 8% | **VNIndex**: 1874.8
+
+### Watchlist Impact Summary
+- **FPT Neutral**: FPTS dividend chốt quyền (5% cash + stock dividend) — corporate action, not urgent
+- **Risk Signal**: Gold elevated + FII outflow risk → bearish signal for banking sector (VCB, BID)
+
+### Processing Summary
+- **Articles Fetched**: 20
+- **High-Impact Items** (score ≥ 6): 5 articles scored
+- **Historical Context**: Gold fund selling/buying pattern (5 similar events from past 90 days)
+- **Impact Chains**: 2 chains executed
+  - FPT dividend: neutral 4/10 impact on tech sector
+  - Gold spike: bullish 7/10, but bearish macro signal due to risk-off + FII_OUTFLOW_RISK carry regime
+
+### Session Metadata
+- **Session ID**: 465
+- **Signals Fired**: 2 (1 urgent_news + 1 chain_catalyst)
+- **Articles Processed**: 20
+- **Regime**: NEUTRAL | **Carry**: FII_OUTFLOW_RISK
+- **Exit**: SUCCESS
+- **Duration**: ~1 min
+- **Timestamp**: 2026-05-07T20:22:00Z

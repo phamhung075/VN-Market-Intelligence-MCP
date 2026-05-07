@@ -78,3 +78,18 @@
 - Auto-cures: 0
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Overall: NEEDS_ATTENTION
+
+### Quality Audit (cycle 10 — 18:23 UTC)
+- MARKET messages: 1 checked, 1 issue (msg#2130 = market-watcher bug report in MARKET channel, routing violation GAP-3 count 3/3)
+- Agent sessions: 18 files reviewed. New since cycle 9: market-watcher 3 more BLOCKED (14:38, 15:38, 16:38 EOD), alert-commander BLOCKED (18:02), PO triage (6 tasks), daily-summary, EOD blocker report.
+- Signals: 0 in 24h (expired). Signal effectiveness: news-scout only (chain_catalyst 1/0/0, urgent_news 4/0/0). price_anomaly data gone from 7d window.
+- Alert accuracy (7d): 120 alerts, 0% hit, 4% miss, 96% unknown (GAP-5 unchanged)
+- Source health: 10/13 OK. Reuters + TE x2 stopped (12 consecutive errors — reset after system restart)
+- σ threshold: all ✅ READY (358+ points)
+- System: UP, 0 circuits, uptime 2h33m (restarted since cycle 9), DB 102.48 MB. Brent $100.70 (rebounded from $96.39). Gold $4,717.80 (declined from $4,763).
+- GAP-3: 3/3 → AUTO-CURE APPLIED (added routing guard to market-watcher/cycle.md)
+- GAP-10: 3/3 → THRESHOLD (3 session overwrites today)
+- 5 gaps at threshold: GAP-5, GAP-7, GAP-8, GAP-9, GAP-10 (NEW)
+- Auto-cures: 1 (GAP-3 routing guard)
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Overall: NEEDS_ATTENTION
