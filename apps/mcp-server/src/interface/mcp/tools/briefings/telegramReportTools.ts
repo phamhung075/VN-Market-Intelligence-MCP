@@ -24,36 +24,14 @@ import {
   listNewReportsUnclaimed,
   getReport,
   markProcessed,
+  markResolved,
   claimReport,
+  serializeReport,
   type TelegramReport,
 } from "../../../../infrastructure/db/telegramReportStore.js";
 import { deleteTelegramBug } from "../../../../infrastructure/notifiers/telegram.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Convert a Unix timestamp (seconds) to an ISO 8601 date string.
- */
-function toIsoString(unixSeconds: number): string {
-  return new Date(unixSeconds * 1000).toISOString();
-}
-
-/**
- * Serialize a TelegramReport row with created_at as ISO string.
- */
-function serializeReport(row: TelegramReport): Record<string, unknown> {
-  return {
-    id: row.id,
-    message_id: row.message_id,
-    text: row.text,
-    from_agent: row.from_agent,
-    priority: row.priority,
-    status: row.status,
-    created_at: toIsoString(row.created_at),
-  };
-}
+// serializeReport and toIsoString are imported from telegramReportStore (Task 1849b)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Error formatter (exported for testability — task 1411)
@@ -180,13 +158,24 @@ export function registerTelegramReportTools(server: McpServer): void {
   server.tool(
     "process_telegram_report",
     "Đánh dấu một báo cáo là đã xử lý và tùy chọn xóa tin nhắn Telegram tương ứng " +
-      "khỏi kênh Report Channel để giữ kênh sạch sẽ.",
+      "khỏi kênh Report Channel để giữ kênh sạch sẽ. " +
+      "Tham số 'resolution' cho phép ghi lại cách vấn đề được giải quyết: " +
+      "'fixed' (đã sửa), 'wontfix' (không sửa), 'duplicate' (trùng lặp), " +
+      "'monitoring' (đang theo dõi), hoặc 'none' (mặc định, không đổi).",
     {
       id: z.coerce
         .number()
         .int()
         .min(1)
         .describe("Primary key của bản ghi telegram_reports cần xử lý"),
+      resolution: z
+        .enum(["none", "fixed", "wontfix", "duplicate", "monitoring"])
+        .optional()
+        .default("none")
+        .describe(
+          "Cách vấn đề được giải quyết: 'fixed', 'wontfix', 'duplicate', 'monitoring', hoặc 'none' (mặc định). " +
+            "Khi khác 'none', sẽ ghi thêm resolved_at timestamp.",
+        ),
       delete_telegram_message: z
         .boolean()
         .optional()
@@ -195,12 +184,13 @@ export function registerTelegramReportTools(server: McpServer): void {
           "Xóa tin nhắn Telegram trong kênh Report Channel sau khi xử lý (mặc định: true)",
         ),
     },
-    async ({ id, delete_telegram_message }) => {
+    async ({ id, resolution, delete_telegram_message }) => {
       try {
         await initDatabase();
         const db = getDb();
 
         const shouldDelete = delete_telegram_message ?? true;
+        const resolvedResolution = resolution ?? "none";
 
         // Step 1: look up the row
         const row = getReport(db, id);
@@ -215,7 +205,17 @@ export function registerTelegramReportTools(server: McpServer): void {
           };
         }
 
-        // Step 2: optionally delete from Telegram
+        // Step 2: record resolution if provided (non-none)
+        if (resolvedResolution !== "none") {
+          try {
+            markResolved(db, id, resolvedResolution, new Date().toISOString());
+          } catch (resolveErr) {
+            console.error("[process_telegram_report] markResolved failed:", resolveErr);
+            // Log but do not break tool execution (AC-3 error handling)
+          }
+        }
+
+        // Step 3: optionally delete from Telegram
         let telegramDeleted = false;
         if (row.message_id > 0 && shouldDelete) {
           try {
@@ -226,18 +226,21 @@ export function registerTelegramReportTools(server: McpServer): void {
           }
         }
 
-        // Step 3: mark as processed in SQLite
+        // Step 4: mark as processed in SQLite
         markProcessed(db, id);
 
-        // Step 4: return confirmation
+        // Step 5: return confirmation
+        const resolutionSuffix =
+          resolvedResolution !== "none" ? ` Resolution: ${resolvedResolution}.` : "";
+
         let text: string;
         if (row.message_id > 0 && shouldDelete) {
-          text = `Report ${id} marked as processed. Telegram message ${row.message_id} deleted.`;
+          text = `Report ${id} marked as processed.${resolutionSuffix} Telegram message ${row.message_id} deleted.`;
           if (!telegramDeleted) {
             text += " (Telegram deletion may have failed — row is still marked processed.)";
           }
         } else {
-          text = `Report ${id} marked as processed. Telegram deletion skipped.`;
+          text = `Report ${id} marked as processed.${resolutionSuffix} Telegram deletion skipped.`;
         }
 
         return {

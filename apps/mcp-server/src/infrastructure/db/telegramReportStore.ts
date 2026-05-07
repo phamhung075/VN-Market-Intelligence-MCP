@@ -25,6 +25,9 @@ export type ReportPriority = "critical" | "high" | "normal" | "monitor";
 /** Status of a report row. */
 export type ReportStatus = "new" | "processed";
 
+/** Resolution state of a report row (Task 1849a). */
+export type ResolutionStatus = "none" | "fixed" | "wontfix" | "duplicate" | "monitoring";
+
 /** A row from the `telegram_reports` table. */
 export interface TelegramReport {
   id: number;
@@ -36,6 +39,8 @@ export interface TelegramReport {
   created_at: number;
   claimed_by: string | null;
   claimed_at: string | null;
+  resolution: ResolutionStatus;
+  resolved_at: string | null;
 }
 
 /** Result returned by {@link claimReport}. */
@@ -97,7 +102,8 @@ export function insertReport(
 export function listNewReports(db: Database): TelegramReport[] {
   return db
     .query<TelegramReport, []>(
-      `SELECT id, message_id, text, from_agent, priority, status, created_at
+      `SELECT id, message_id, text, from_agent, priority, status,
+              created_at, claimed_by, claimed_at, resolution, resolved_at
        FROM telegram_reports
        WHERE status = 'new'
        ORDER BY created_at ASC`,
@@ -114,7 +120,8 @@ export function listNewReports(db: Database): TelegramReport[] {
 export function listAllReports(db: Database, limit = 50): TelegramReport[] {
   return db
     .query<TelegramReport, [number]>(
-      `SELECT id, message_id, text, from_agent, priority, status, created_at
+      `SELECT id, message_id, text, from_agent, priority, status,
+              created_at, claimed_by, claimed_at, resolution, resolved_at
        FROM telegram_reports
        ORDER BY created_at ASC
        LIMIT ?`,
@@ -133,7 +140,8 @@ export function getReport(db: Database, id: number): TelegramReport | null {
   return (
     db
       .query<TelegramReport, [number]>(
-        `SELECT id, message_id, text, from_agent, priority, status, created_at
+        `SELECT id, message_id, text, from_agent, priority, status,
+                created_at, claimed_by, claimed_at, resolution, resolved_at
          FROM telegram_reports WHERE id = ?`,
       )
       .get(id) ?? null
@@ -263,12 +271,131 @@ export function isDuplicateReport(
 export function listNewReportsUnclaimed(db: Database): TelegramReport[] {
   return db
     .query<TelegramReport, []>(
-      `SELECT id, message_id, text, from_agent, priority, status, created_at, claimed_by, claimed_at
+      `SELECT id, message_id, text, from_agent, priority, status,
+              created_at, claimed_by, claimed_at, resolution, resolved_at
        FROM telegram_reports
        WHERE status = 'new' AND claimed_by IS NULL
        ORDER BY created_at ASC`,
     )
     .all();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resolution tracking helpers (Task 1849a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Atomically sets the resolution and resolved_at timestamp on a report row.
+ *
+ * Idempotent — calling twice with the same id is safe (no error if row missing).
+ *
+ * @param db         - SQLite database instance
+ * @param id         - Primary key of the row to resolve
+ * @param resolution - Resolution status (one of the 5 allowed values)
+ * @param resolvedAt - ISO-8601 timestamp (defaults to current time)
+ */
+export function markResolved(
+  db: Database,
+  id: number,
+  resolution: ResolutionStatus,
+  resolvedAt?: string,
+): void {
+  db.prepare(
+    `UPDATE telegram_reports SET resolution = ?, resolved_at = ? WHERE id = ?`,
+  ).run(resolution, resolvedAt ?? new Date().toISOString(), id);
+}
+
+/**
+ * Returns all reports that are not yet terminally resolved.
+ *
+ * Includes rows with resolution = 'none' or 'monitoring'.
+ * Excludes rows with status = 'processed' (already handled).
+ * Ordered by created_at ASC (oldest first).
+ *
+ * @param db - SQLite database instance
+ */
+export function listUnresolvedReports(db: Database): TelegramReport[] {
+  return db
+    .query<TelegramReport, []>(
+      `SELECT id, message_id, text, from_agent, priority, status,
+              created_at, claimed_by, claimed_at, resolution, resolved_at
+       FROM telegram_reports
+       WHERE resolution NOT IN ('fixed', 'wontfix', 'duplicate')
+         AND status != 'processed'
+       ORDER BY created_at ASC`,
+    )
+    .all();
+}
+
+/**
+ * Returns all reports that have been terminally resolved.
+ *
+ * Includes rows with resolution IN ('fixed', 'wontfix', 'duplicate').
+ * Useful for audit and archival queries.
+ *
+ * @param db    - SQLite database instance
+ * @param limit - Optional max rows to return (default: no limit)
+ */
+export function listResolvedReports(db: Database, limit?: number): TelegramReport[] {
+  if (limit !== undefined) {
+    return db
+      .query<TelegramReport, [number]>(
+        `SELECT id, message_id, text, from_agent, priority, status,
+                created_at, claimed_by, claimed_at, resolution, resolved_at
+         FROM telegram_reports
+         WHERE resolution IN ('fixed', 'wontfix', 'duplicate')
+         ORDER BY resolved_at DESC
+         LIMIT ?`,
+      )
+      .all(limit);
+  }
+  return db
+    .query<TelegramReport, []>(
+      `SELECT id, message_id, text, from_agent, priority, status,
+              created_at, claimed_by, claimed_at, resolution, resolved_at
+       FROM telegram_reports
+       WHERE resolution IN ('fixed', 'wontfix', 'duplicate')
+       ORDER BY resolved_at DESC`,
+    )
+    .all();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Serialization helpers (Task 1849b — C-2 constraint)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Convert a Unix timestamp (seconds) to an ISO 8601 date string.
+ */
+function toIsoString(unixSeconds: number): string {
+  return new Date(unixSeconds * 1000).toISOString();
+}
+
+/**
+ * Serialize a TelegramReport row for MCP tool output.
+ *
+ * Includes all 11 fields (C-2 constraint):
+ *   id, message_id, text, from_agent, priority, status,
+ *   created_at (as ISO string), claimed_by, claimed_at,
+ *   resolution, resolved_at
+ *
+ * @param row - A TelegramReport row from the database
+ * @returns   Plain object suitable for JSON.stringify
+ */
+export function serializeReport(row: TelegramReport): Record<string, unknown> {
+  return {
+    id: row.id,
+    message_id: row.message_id,
+    text: row.text,
+    from_agent: row.from_agent,
+    priority: row.priority,
+    status: row.status,
+    created_at: toIsoString(row.created_at),
+    claimed_by: row.claimed_by ?? null,
+    claimed_at: row.claimed_at ?? null,
+    resolution: row.resolution ?? "none",
+    resolved_at: row.resolved_at ?? null,
+  };
 }
 
 /**
