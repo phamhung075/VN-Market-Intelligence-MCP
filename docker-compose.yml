@@ -13,6 +13,7 @@ services:
     - ./mcp.config.json:/app/mcp.config.json:ro
     - ./reports:/app/reports
     - ./docs/agent-memory:/app/docs/agent-memory
+    - ./docs/data:/app/docs/data:ro
     - /Users/admin/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     environment:
       NODE_ENV: production

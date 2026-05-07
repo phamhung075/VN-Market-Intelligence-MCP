@@ -2,8 +2,6 @@
  * Task 1351b — vpsProxyWatchdogJob gap-fill tests
  *
  * Covers paths not exercised by 313-vps-proxy-watchdog.test.ts:
- *   - Reuters staleness detection (Task 1345a)
- *   - TradingEconomics staleness detection (Task 1345a)
  *   - Restored path (stale → fresh transition)
  *   - notify throws → "notify-failed"
  *   - _resetWatchdogStaleFlag resets lastWasStale independently
@@ -16,8 +14,6 @@ import {
   runVpsProxyWatchdog,
   _resetWatchdogCooldown,
   _resetWatchdogStaleFlag,
-  REUTERS_STALE_MS,
-  TE_STALE_MS,
 } from "../scheduler/vpsProxyWatchdogJob.js";
 
 // Market-hours instant (Monday 03:00 UTC)
@@ -40,8 +36,6 @@ function freshReaders(now: Date) {
     readNews: fresh(now),
     readOhlcv: tsAgo(now, 0), // OHLCV stale threshold is 26h — age 0 is always fresh
     readForeignFlow: fresh(now),
-    readReuters: fresh(now),
-    readTe: fresh(now),
   };
 }
 
@@ -49,89 +43,6 @@ describe("Task 1351b — vpsProxyWatchdogJob gap tests", () => {
   beforeEach(() => {
     _resetWatchdogCooldown();
     _resetWatchdogStaleFlag();
-  });
-
-  // ---------------------------------------------------------------------------
-  describe("Reuters staleness (Task 1345a)", () => {
-    it("Reuters stale (age > 90 min), all others fresh → alert-sent, message contains vn-reuters-fetch", async () => {
-      let capturedMsg = "";
-      const result = await runVpsProxyWatchdog({
-        now: MARKET_NOW,
-        notify: async (msg) => {
-          capturedMsg = msg;
-          return true;
-        },
-        ...freshReaders(MARKET_NOW),
-        readReuters: tsAgo(MARKET_NOW, REUTERS_STALE_MS + 1),
-      });
-      expect(result).toBe("alert-sent");
-      expect(capturedMsg).toContain("vn-reuters-fetch");
-    });
-
-    it("Reuters fresh (age < 90 min) → ok, notify not called", async () => {
-      let notifyCalled = false;
-      const result = await runVpsProxyWatchdog({
-        now: MARKET_NOW,
-        notify: async () => {
-          notifyCalled = true;
-          return true;
-        },
-        ...freshReaders(MARKET_NOW),
-        readReuters: tsAgo(MARKET_NOW, REUTERS_STALE_MS - 60_000),
-      });
-      expect(result).toBe("ok");
-      expect(notifyCalled).toBe(false);
-    });
-
-    it("Reuters null (never pushed, fresh deploy) → treated as stale → alert-sent, message contains 'no data since boot'", async () => {
-      let capturedMsg = "";
-      const result = await runVpsProxyWatchdog({
-        now: MARKET_NOW,
-        notify: async (msg) => {
-          capturedMsg = msg;
-          return true;
-        },
-        ...freshReaders(MARKET_NOW),
-        readReuters: () => null,
-      });
-      expect(result).toBe("alert-sent");
-      expect(capturedMsg).toContain("no data since boot");
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  describe("TradingEconomics staleness (Task 1345a)", () => {
-    it("TE stale (age > 90 min), all others fresh → alert-sent, message contains vn-tradingeconomics-fetch", async () => {
-      let capturedMsg = "";
-      const result = await runVpsProxyWatchdog({
-        now: MARKET_NOW,
-        notify: async (msg) => {
-          capturedMsg = msg;
-          return true;
-        },
-        ...freshReaders(MARKET_NOW),
-        readTe: tsAgo(MARKET_NOW, TE_STALE_MS + 1),
-      });
-      expect(result).toBe("alert-sent");
-      expect(capturedMsg).toContain("vn-tradingeconomics-fetch");
-    });
-
-    it("Both Reuters and TE stale → single alert lists both services", async () => {
-      let capturedMsg = "";
-      const result = await runVpsProxyWatchdog({
-        now: MARKET_NOW,
-        notify: async (msg) => {
-          capturedMsg = msg;
-          return true;
-        },
-        ...freshReaders(MARKET_NOW),
-        readReuters: tsAgo(MARKET_NOW, REUTERS_STALE_MS + 1),
-        readTe: tsAgo(MARKET_NOW, TE_STALE_MS + 1),
-      });
-      expect(result).toBe("alert-sent");
-      expect(capturedMsg).toContain("vn-reuters-fetch");
-      expect(capturedMsg).toContain("vn-tradingeconomics-fetch");
-    });
   });
 
   // ---------------------------------------------------------------------------

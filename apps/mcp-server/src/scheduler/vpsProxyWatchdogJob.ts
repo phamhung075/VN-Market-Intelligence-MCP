@@ -40,19 +40,6 @@ import { logger } from "../infrastructure/logger.js";
  * alerting — avoids false alarms on brief lulls or VPS reboot. */
 const STALE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
 
-/**
- * Reuters VPS push runs hourly. 90 min allows one missed cycle before
- * the watchdog fires — avoids false alarms on a single skipped push.
- * Task 1345a.
- */
-export const REUTERS_STALE_MS = 90 * 60 * 1000; // 90 minutes
-
-/**
- * TradingEconomics VPS push runs hourly. Same 90 min margin as Reuters.
- * Task 1345a.
- */
-export const TE_STALE_MS = 90 * 60 * 1000; // 90 minutes
-
 /** Minimum wait between two stale-alerts during the same outage. */
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -115,56 +102,6 @@ export function readLatestNewsTimestamp(): Date | null {
     const row = db
       .query<{ ts: string | null }, []>(
         "SELECT MAX(created_at) AS ts FROM rag_analyses",
-      )
-      .get();
-    if (!row?.ts) return null;
-    const d = new Date(row.ts);
-    return isNaN(d.getTime()) ? null : d;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Most recent `rag_analyses.created_at` for source='reuters' as a Date,
- * or null if no reuters rows exist.
- *
- * The vn-reuters-fetch.service pushes items with source_type='reuters'.
- * This reader detects when that service last successfully pushed data.
- * Exported for tests and for injection into runVpsProxyWatchdog.
- * Task 1345a.
- */
-export function readLatestReutersTimestamp(): Date | null {
-  try {
-    const db = getDb();
-    const row = db
-      .query<{ ts: string | null }, []>(
-        "SELECT MAX(created_at) AS ts FROM rag_analyses WHERE source_type = 'reuters'",
-      )
-      .get();
-    if (!row?.ts) return null;
-    const d = new Date(row.ts);
-    return isNaN(d.getTime()) ? null : d;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Most recent `rag_analyses.created_at` for source='tradingeconomics' as a Date,
- * or null if no tradingeconomics rows exist.
- *
- * The vn-tradingeconomics-fetch.service pushes items with source_type='tradingeconomics'.
- * This reader detects when that service last successfully pushed data.
- * Exported for tests and for injection into runVpsProxyWatchdog.
- * Task 1345a.
- */
-export function readLatestTeTimestamp(): Date | null {
-  try {
-    const db = getDb();
-    const row = db
-      .query<{ ts: string | null }, []>(
-        "SELECT MAX(created_at) AS ts FROM rag_analyses WHERE source_type = 'tradingeconomics'",
       )
       .get();
     if (!row?.ts) return null;
@@ -239,10 +176,7 @@ export async function runVpsProxyWatchdog(
     readNews?:        () => Date | null;
     readOhlcv?:       () => Date | null;
     readForeignFlow?: () => Date | null;
-    /** Injected reader for last Reuters push timestamp. Task 1345a. */
-    readReuters?:     () => Date | null;
-    /** Injected reader for last TradingEconomics push timestamp. Task 1345a. */
-    readTe?:          () => Date | null;
+
   } = {},
 ): Promise<string> {
   const now = options.now ?? new Date();
@@ -257,15 +191,10 @@ export async function runVpsProxyWatchdog(
   const newsReader        = options.readNews        ?? readLatestNewsTimestamp;
   const ohlcvReader       = options.readOhlcv       ?? readLatestOhlcvTimestamp;
   const foreignFlowReader = options.readForeignFlow ?? readLatestForeignFlowTimestamp;
-  const reutersReader     = options.readReuters     ?? readLatestReutersTimestamp;
-  const teReader          = options.readTe          ?? readLatestTeTimestamp;
-
   const latestPrice       = priceReader();
   const latestNews        = newsReader();
   const latestOhlcv       = ohlcvReader();
   const latestForeignFlow = foreignFlowReader();
-  const latestReuters     = reutersReader();
-  const latestTe          = teReader();
 
   const priceAgeMs       = latestPrice       ? now.getTime() - latestPrice.getTime()       : Infinity;
   const newsAgeMs        = latestNews        ? now.getTime() - latestNews.getTime()        : Infinity;
@@ -273,8 +202,6 @@ export async function runVpsProxyWatchdog(
   const ohlcvAgeMs       = latestOhlcv       ? now.getTime() - latestOhlcv.getTime()       : Infinity;
   // null = service has never written data (e.g. fresh deploy or empty DB) — treat as stale (Infinity), not fresh
   const foreignFlowAgeMs = latestForeignFlow ? now.getTime() - latestForeignFlow.getTime() : Infinity;
-  const reutersAgeMs     = latestReuters     ? now.getTime() - latestReuters.getTime()     : Infinity;
-  const teAgeMs          = latestTe          ? now.getTime() - latestTe.getTime()          : Infinity;
 
   const NEWS_STALE_MS         = STALE_THRESHOLD_MS;           // 45 min
   const OHLCV_STALE_MS        = 26 * 60 * 60 * 1000;         // 26 hours
@@ -312,23 +239,6 @@ export async function runVpsProxyWatchdog(
       ageMin: isFinite(foreignFlowAgeMs) ? Math.round(foreignFlowAgeMs / 60_000) : -1,
     });
   }
-  // Task 1345a: Reuters staleness detection (90 min threshold)
-  if (reutersAgeMs >= REUTERS_STALE_MS) {
-    stale.push({
-      service: "vn-reuters-fetch",
-      latestStr: latestReuters ? latestReuters.toISOString() : "never",
-      ageMin: isFinite(reutersAgeMs) ? Math.round(reutersAgeMs / 60_000) : -1,
-    });
-  }
-  // Task 1345a: TradingEconomics staleness detection (90 min threshold)
-  if (teAgeMs >= TE_STALE_MS) {
-    stale.push({
-      service: "vn-tradingeconomics-fetch",
-      latestStr: latestTe ? latestTe.toISOString() : "never",
-      ageMin: isFinite(teAgeMs) ? Math.round(teAgeMs / 60_000) : -1,
-    });
-  }
-
   if (stale.length === 0) {
     if (lastWasStale) {
       lastWasStale = false;
@@ -363,16 +273,16 @@ export async function runVpsProxyWatchdog(
     `\n` +
     `Operator action:\n` +
     `  ssh root@$VINAHOST_IP\n` +
+    `  systemctl status vn-price-fetch\n` +
+    `  systemctl status vn-bctc-fetch\n` +
     `  systemctl status vn-news-fetch\n` +
-    `  systemctl status vn-price-fetch (OHLCV)\n` +
+    `  systemctl status vn-sbv-fetch\n` +
     `  systemctl status vn-foreign-flow\n` +
-    `  systemctl status vn-reuters-fetch\n` +
-    `  systemctl status vn-tradingeconomics-fetch\n` +
-    `  journalctl -u vn-news-fetch -n 30\n` +
     `  journalctl -u vn-price-fetch -n 30\n` +
+    `  journalctl -u vn-bctc-fetch -n 30\n` +
+    `  journalctl -u vn-news-fetch -n 30\n` +
+    `  journalctl -u vn-sbv-fetch -n 30\n` +
     `  journalctl -u vn-foreign-flow -n 30\n` +
-    `  journalctl -u vn-reuters-fetch -n 30\n` +
-    `  journalctl -u vn-tradingeconomics-fetch -n 30\n` +
     `\n` +
     `If units are broken, redeploy: ./deploy-vinahost.sh`;
 
