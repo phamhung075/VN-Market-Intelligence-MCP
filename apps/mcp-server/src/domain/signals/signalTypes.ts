@@ -188,6 +188,20 @@ export interface UrgentNewsFindingData {
 
   /** Optional: estimated hours from catalyst event to observable price movement. */
   time_to_price_move?: number;
+
+  /**
+   * Optional: confidence in the news assessment, range [0.0, 1.0].
+   * Used by regime-based threshold enforcement in post_agent_signal.
+   * Under NEUTRAL regime: requires >= 0.60. BULL: >= 0.50. BEAR: >= 0.40.
+   */
+  confidence?: number;
+
+  /**
+   * Optional: market regime at signal time — NEUTRAL | BULL | BEAR.
+   * Used with `confidence` to enforce regime-based posting thresholds.
+   * Absent or unknown values are treated as NEUTRAL (strictest threshold).
+   */
+  regime?: "NEUTRAL" | "BULL" | "BEAR";
 }
 
 export const UrgentNewsFindingDataSchema = z.object({
@@ -197,6 +211,8 @@ export const UrgentNewsFindingDataSchema = z.object({
   catalyst_stock_code: z.string().min(2).optional(),
   catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
   time_to_price_move: z.number().min(0).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  regime: z.enum(["NEUTRAL", "BULL", "BEAR"]).optional(),
 });
 
 // ── CrossValidateFindingData ───────────────────────────────────────────────────

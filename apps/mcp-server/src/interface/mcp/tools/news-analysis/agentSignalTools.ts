@@ -31,6 +31,7 @@ import {
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
 import { logSignalRejection } from "../../../../infrastructure/db/signalRejectionStore.js";
+import { checkRegimeConfidenceThreshold } from "../../../../domain/services/regimeConfidenceThreshold.js";
 import {
   ChainCatalystFindingDataSchema,
   PriceConfirmationFindingDataSchema,
@@ -220,6 +221,53 @@ export function registerAgentSignalTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text: `Error: ${errorMsg} [LOGGED FOR ANALYSIS]`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // H3: Regime-based confidence threshold for urgent_news signals.
+        // Enforced AFTER schema validation, BEFORE DB write.
+        // Extracts confidence and regime from finding_data when present.
+        const findingDataRecord = args.finding_data ?? {};
+        const regimeCheck = checkRegimeConfidenceThreshold({
+          signal_type: args.signal_type,
+          confidence:
+            typeof findingDataRecord["confidence"] === "number"
+              ? (findingDataRecord["confidence"] as number)
+              : undefined,
+          regime:
+            typeof findingDataRecord["regime"] === "string"
+              ? (findingDataRecord["regime"] as string)
+              : undefined,
+        });
+
+        if (!regimeCheck.pass) {
+          const regimeFail = regimeCheck as {
+            pass: false;
+            reason: string;
+            threshold: number;
+            actual: number;
+            regime: string;
+          };
+
+          // Log rejection to audit table
+          logSignalRejection(db, {
+            from_agent: args.from_agent || "unknown",
+            signal_type: args.signal_type,
+            ...(args.stock_code !== undefined ? { stock_code: args.stock_code } : {}),
+            reason: regimeFail.reason,
+            payload_preview: JSON.stringify(findingDataRecord).slice(0, 200),
+          });
+
+          console.warn(`[agentSignalTools] Regime threshold blocked: ${regimeFail.reason}`);
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error: ${regimeFail.reason} [REGIME_THRESHOLD_BLOCK]`,
               },
             ],
             isError: true,
