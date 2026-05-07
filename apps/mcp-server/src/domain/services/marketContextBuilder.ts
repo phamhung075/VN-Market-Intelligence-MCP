@@ -175,11 +175,13 @@ export function buildWatchlistSection(db: Database): string {
 
   let staleCount = 0;
   for (const r of rows) {
-    const priceStr = formatPriceChange(r.price ?? null, r.change_pct ?? null);
+    const stale = isPriceStale(r.price_updated);
+    // Task 1850c: suppress change_pct for stale rows — prior-session % is misleading
+    const priceStr = formatPriceChange(r.price ?? null, stale ? null : (r.change_pct ?? null));
     const updatedStr = r.price_updated
       ? r.price_updated.slice(0, 16).replace("T", " ")
       : "no price data";
-    const staleFlag = isPriceStale(r.price_updated) ? " [STALE]" : "";
+    const staleFlag = stale ? " [STALE]" : "";
     if (staleFlag) staleCount++;
     lines.push(
       `${r.code.padEnd(6)} [${r.exchange}] ${r.domain.padEnd(14)} ${priceStr}  (as of ${updatedStr})${staleFlag}`,
