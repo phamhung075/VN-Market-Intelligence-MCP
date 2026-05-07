@@ -34,7 +34,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `fetch_and_analyze` | Fetch VN news from geo-blocked sources + analyze impact | `watchlist?: string[], keywords?: string[]` |
-| `run_impact_chain` | Trace news impact through supply chain and related stocks | `ticker: string, event: string, impact_score: number` |
+| `run_impact_chain` | Trace news impact through supply chain and related stocks | `newsText: string, includeWatchlist?: boolean` |
 | `search_similar_context` | Find historical news with similar patterns/catalysts | `query: string, context: object, limit?: number` |
 
 ### Market Intelligence
@@ -46,7 +46,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `post_agent_signal` | Post signal to inter-agent bus | `signal_type: string, payload: object, confidence: number` |
+| `post_agent_signal` | Post signal to inter-agent bus | `from_agent: string, to_agent: string, signal_type: string, payload: object` |
 
 ### Logging & Feedback
 | Tool | Purpose | Key Params |
@@ -119,9 +119,8 @@ const newsAnalysis = await mcp__claude_ai_gateway__call_tool(
 const chain = await mcp__claude_ai_gateway__call_tool(
   server: "vn-market", tool: "run_impact_chain",
   arguments: {
-    ticker: "VCB",
-    event: "Board member resignation amid dispute",
-    impact_score: 8.5
+    newsText: "VCB board member resignation amid dispute — governance risk",
+    includeWatchlist: true
   }
 );
 

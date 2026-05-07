@@ -70,6 +70,16 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │
+├── docs/AGENT_CREATION_GUIDE.md (agent creation index — always loaded by agent-father)
+│   ├── docs/guides/guide-zones.md (Sections 2-3: Two-Zone Folder Design + Per-Agent File Map)
+│   ├── docs/guides/guide-lazy-load.md (Section 4: Lazy-Load Protocol + Token Economy)
+│   ├── docs/guides/guide-agent-definition.md (Section 5: Agent Definition YAML — all subsections)
+│   ├── docs/guides/guide-flows.md (Section 6: Flow File Templates — cowork + dev)
+│   ├── docs/guides/guide-agent-ops.md (Sections 7-12: Notebook, Cross-Team, Reports, Maintenance, Registry, Responsibility)
+│   ├── docs/guides/guide-error-signals.md (Sections 13-14: Error Boundary + Signal Bus)
+│   ├── docs/guides/guide-skills-registration.md (Sections 15-16: Skills Catalog + Registration Checklist)
+│   └── docs/guides/guide-quality.md (Section 18: Autonomous Quality Patterns — 6-layer stack)
+│
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
 │
 ├── docs/data/project-stats.json (sprint number, counts — volatile, root-level stats)
@@ -107,6 +117,7 @@ CLAUDE.md (root — always loaded)
 | `.claude/knowledge/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
 | `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
 | `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
+| `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
 
 ## Archived Structure (Reference — for future reorganization)
 

@@ -63,7 +63,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `post_agent_signal` | Post signal to inter-agent bus | `signal_type: string, payload: object, confidence: number` |
+| `post_agent_signal` | Post signal to inter-agent bus | `from_agent: string, to_agent: string, signal_type: string, payload: object` |
 
 ### Logging & Feedback
 | Tool | Purpose | Key Params |

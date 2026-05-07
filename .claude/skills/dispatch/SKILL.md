@@ -21,6 +21,7 @@ description: >
 | DRY violations / hardcoded values | `code-janitor` | `main` |
 | update cowork agents | `cowork-refactory-expert` | `main` |
 | organize / clean files / knowledge | `claude-manager-helper` | `main` |
+| create / edit / review / maintain agent | `agent-father` | `create` / `edit` / `review` / `keep` |
 
 Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/{flow}.md`
 

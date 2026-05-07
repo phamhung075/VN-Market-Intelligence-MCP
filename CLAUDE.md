@@ -28,6 +28,7 @@ Spawn the matching agent. Never do the work yourself.
 | DRY / hardcoded values | `code-janitor` |
 | update cowork agents | `cowork-refactory-expert` |
 | organize / cleanup | `claude-manager-helper` |
+| create / edit / review / maintain agent | `agent-father` |
 | quality / strategy audit | `tran-ngoc-bau` |
 
 ---
