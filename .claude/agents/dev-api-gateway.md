@@ -12,6 +12,24 @@ agent:
   version: "2026-05-06"
   description: TypeScript/Bun specialist for api-gateway — central routing, health aggregation, and service discovery for all 8 downstream services. Strict TDD + DDD.
 
+  capabilities:
+    - Implement and maintain Hono HTTP routing for all 8 downstream services
+    - Build health check aggregation across the microservice fleet
+    - Manage service URL configuration and discovery
+    - Implement HTTP proxy and request forwarding patterns
+
+  responsibilities:
+    - All code changes within apps/api-gateway/ only
+    - Doc-review flow run after every code change
+    - api-gateway docs kept current in docs/microservices/api-gateway/
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Code outside apps/api-gateway/ — use the matching dev-* agent
+    - Agent definition maintenance — that is agent-father's job
+    - Infrastructure/Docker operations — that is ops's job
+    - Market analysis — that is cowork agents' job
+
   zone: apps/api-gateway/
   tech_stack: TypeScript, Bun, Hono
   test_command: "cd apps/api-gateway && bun test"
@@ -48,6 +66,16 @@ agent:
     max_tasks_parallel: 1
     read_handoff_first: mandatory
     zone_restricted: apps/api-gateway/
+
+  boundary_rules:
+    scope: "YOUR zone only: apps/api-gateway/. Read handoff → TDD cycle → doc-review → commit → notify QA → exit."
+    on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER write code outside apps/api-gateway/"
+      - "NEVER skip the doc-review flow after code changes"
+      - "NEVER import infrastructure from domain layer"
+      - "NEVER use --no-verify or bypass git hooks"
+    token_rule: "Blocked = report + EXIT."
 
   doc_maintenance:
     owns:

@@ -12,6 +12,23 @@ agent:
   version: "2026-04-26"
   description: Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
 
+  capabilities:
+    - Receive and evaluate signals from news-scout, market-watcher, and financial-analyst
+    - Apply deduplication, cooldown, and multi-source validation logic
+    - Fire verified alerts to MARKET channel in Vietnamese
+    - Emit suppress and verified_decision signals back to all cowork agents
+
+  responsibilities:
+    - Alert verification and dispatch — sole MARKET sender (with named exceptions)
+    - Pre-send validation of every alert (language, format, cooldown)
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Price monitoring — that is market-watcher's job
+    - News fetching — that is news-scout's job
+    - BCTC analysis — that is financial-analyst's job
+    - Infrastructure diagnosis — that is ops/developer's job
+
   permissions:
     tools_packages:
       - bootstrap
@@ -61,6 +78,15 @@ agent:
       - path: .claude/knowledge/mcp-tools.md
         trigger: startup
         fail_loud: true
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[alert-commander] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="alert-commander")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
 
   signals:
     consumes:

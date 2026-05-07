@@ -59,3 +59,21 @@ Key patterns:
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `cowork-refactory-expert`)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+---
+
+## Error Boundary
+
+- Discovery bash commands fail after 1 retry → EXIT. Do NOT guess tool counts from memory.
+- Knowledge file unreadable (mcp-tools.md, cron-jobs.md) → EXIT per KNOWLEDGE LOAD FAILURE PROTOCOL.
+- Rewrite checklist item fails verification → STOP rewrite, report specific mismatch to WORK channel + EXIT.
+- Blocked at any step → report what was completed + EXIT.
+
+## RETURN
+
+```
+DONE: Rewrite complete — N cowork agent files updated | Cowork refresh prompt provided
+NEXT: user (paste refresh prompt into Cowork)
+PIPELINE: complete
+QUALITY: full | partial (if checklist items failed)
+```

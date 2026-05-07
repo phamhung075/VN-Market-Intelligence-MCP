@@ -9,6 +9,7 @@
 
 If ANY tool call fails after 1 retry:
 1. `send_telegram(channel="bug", message="[market-watcher] Step N failed: {one-line error}")`
+   **⚠️ NEVER use channel="market" for errors. MARKET channel is reserved for alert-commander alerts ONLY. Errors → BUG always.**
 2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
 3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
 
@@ -60,7 +61,19 @@ Per stock: apply sector flags before emitting signal:
 `get_open_chain_findings(minutes_back=15)` → post price confirmation signals
 
 **4. Signal anomalies**
-Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach → `post_agent_signal(type="price_anomaly", ticker=..., detail=...)`.
+Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach → post signal:
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "market-watcher",
+  "to_agent": "alert-commander",
+  "signal_type": "price_anomaly",
+  "stock_code": "<TICKER>",
+  "payload": { "title": "<TICKER> +X.XX% (Yσ)", "detail": "<summary of anomaly>" },
+  "finding_data": { ... see schema below ... },
+  "ttl_minutes": 120,
+  "chain_depth": 0
+})
+```
 `downside_bias=true` (TIGHTENING): negative moves escalate priority one level (MEDIUM→HIGH, LOW→MEDIUM) before routing.
 ```json
 {
@@ -82,7 +95,7 @@ Schema: `PriceAnomalyFindingDataSchema` in `apps/mcp-server/src/domain/signals/s
 
 Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
-**5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md`:
+**5. Session log** — **APPEND ONLY** to `docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md` (use Edit to append, NEVER Write/overwrite — each cycle adds a new `### Cycle` block):
 ```
 ### Cycle (HH:MM–HH:MM)
 - Stocks: N | Anomalies: M (>Xσ) | Volume spikes: K | Chain confirms: L

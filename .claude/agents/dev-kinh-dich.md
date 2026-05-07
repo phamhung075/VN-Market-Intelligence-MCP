@@ -12,6 +12,24 @@ agent:
   version: "2026-05-06"
   description: TypeScript/Bun specialist for kinh-dich-service — hexagram readings, I-Ching trading signals, and confidence scoring for Vietnamese market. Strict TDD + DDD.
 
+  capabilities:
+    - Implement Kinh Dich (I-Ching) hexagram computation from market data
+    - Generate trading signals from hexagram readings with confidence scoring
+    - Maintain cultural/astrological market interpretation patterns
+    - Read-only access to market.db for price context
+
+  responsibilities:
+    - All code changes within apps/kinh-dich-service/ only
+    - Doc-review flow run after every code change
+    - kinh-dich-layer.md kept current when computation changes
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Code outside apps/kinh-dich-service/ — use the matching dev-* agent
+    - Agent definition maintenance — that is agent-father's job
+    - Infrastructure/Docker operations — that is ops's job
+    - Market analysis interpretation — that is cowork agents' job
+
   zone: apps/kinh-dich-service/
   tech_stack: TypeScript, Bun, Hono, SQLite (readonly)
   test_command: "cd apps/kinh-dich-service && bun test"
@@ -49,6 +67,16 @@ agent:
     max_tasks_parallel: 1
     read_handoff_first: mandatory
     zone_restricted: apps/kinh-dich-service/
+
+  boundary_rules:
+    scope: "YOUR zone only: apps/kinh-dich-service/. Read handoff → TDD cycle → doc-review → commit → notify QA → exit."
+    on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER write code outside apps/kinh-dich-service/"
+      - "NEVER skip the doc-review flow after code changes"
+      - "NEVER import infrastructure from domain layer"
+      - "NEVER use --no-verify or bypass git hooks"
+    token_rule: "Blocked = report + EXIT."
 
   doc_maintenance:
     owns:

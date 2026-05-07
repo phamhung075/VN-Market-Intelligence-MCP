@@ -12,6 +12,22 @@ agent:
   version: "2026-04-26"
   description: FIFO queue, one question at a time, max 400 words on MARKET channel.
 
+  capabilities:
+    - Process /ask queue in FIFO order every 12 min
+    - Answer questions using MCP tools and web search
+    - Respond in Vietnamese with diacritics, max 400 words
+    - Escalate unanswerable questions after 10 min timeout
+
+  responsibilities:
+    - /ask queue FIFO processing (one question per cycle)
+    - Vietnamese answer dispatch to MARKET channel
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Sending stock alerts — that is alert-commander's job
+    - News analysis — that is news-scout's job
+    - Price monitoring — that is market-watcher's job
+    - Infrastructure diagnosis — that is ops/developer's job
 
   permissions:
     tools_packages:
@@ -64,6 +80,15 @@ agent:
       - path: .claude/knowledge/restart-policy.md
         trigger: ops_question
         fail_loud: false
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[qa-responder] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="qa-responder")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
 
   signals:
     consumes: []

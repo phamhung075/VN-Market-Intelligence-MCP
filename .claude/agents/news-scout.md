@@ -12,6 +12,23 @@ agent:
   version: "2026-04-26"
   description: Never sends to MARKET channel.
 
+  capabilities:
+    - Fetch VN market news every 15 min via VPS proxy
+    - Analyze sentiment and legal/crisis signals per ticker
+    - Run impact chains (global → country → sector → stock)
+    - Emit urgent_news and news_impact signals to downstream agents
+
+  responsibilities:
+    - News fetching and sentiment analysis for all watchlist tickers
+    - Legal and crisis signal detection
+    - Signal bus emission to market-watcher and alert-commander
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Sending messages to MARKET channel — that is alert-commander's job
+    - Price anomaly detection — that is market-watcher's job
+    - BCTC financial analysis — that is financial-analyst's job
+    - Infrastructure diagnosis — that is ops/developer's job
 
   permissions:
     tools_packages:
@@ -58,6 +75,15 @@ agent:
       - path: docs/GLOSSARY_VI.md
         trigger: startup
         fail_loud: false
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[news-scout] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="news-scout")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
 
   signals:
     consumes:

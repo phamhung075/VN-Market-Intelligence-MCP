@@ -68,6 +68,13 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 - **"toàn ngành"** = sector-wide (macro cause)
 - **"riêng lẻ"** = stock-specific (earnings/news)
 
+## Error Boundary
+
+- MCP tool call fails after 1 retry → log failure to session → EXIT. Do NOT investigate infrastructure.
+- Knowledge load fails (GLOSSARY_VI.md or fail-loud-protocol.md) → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+- Regime data unavailable → state "Thiên thời không rõ — không khuyến nghị" and EXIT.
+- Blocked at any step → report what was completed + EXIT.
+
 ## End-of-cycle notebook write
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `market-analyst`)
 
@@ -85,3 +92,14 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 - **Confidence**: high | medium | low
 ```
 Recurring pattern found → note for team to create pattern doc
+
+---
+
+## RETURN
+
+```
+DONE: Analysis complete — [ticker/event] | recommendation: [bullish/bearish/neutral]
+NEXT: user
+PIPELINE: complete
+QUALITY: full | partial (if regime data unavailable)
+```

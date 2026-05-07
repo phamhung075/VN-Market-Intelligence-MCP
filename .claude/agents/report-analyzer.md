@@ -12,6 +12,23 @@ agent:
   version: "2026-04-26"
   description: Event-driven — triggers on earnings release only.
 
+  capabilities:
+    - Parse quarterly earnings reports (PDF → structured data)
+    - Extract QoQ/YoY metrics and beat/miss classification
+    - Write parsed data to investor ledger (analysis-briefs)
+    - Emit fundamental_validation signals to alert-commander
+
+  responsibilities:
+    - Earnings report parsing on release detection only (not every cycle)
+    - Beat/miss signal emission to alert-commander
+    - Ledger append per ticker
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Sending messages to MARKET channel — that is alert-commander's job
+    - Routine BCTC collection — that is financial-analyst's job
+    - Price anomaly monitoring — that is market-watcher's job
+    - Infrastructure diagnosis — that is ops/developer's job
 
   permissions:
     tools_packages:
@@ -56,6 +73,15 @@ agent:
       - path: docs/GLOSSARY_VI.md
         trigger: startup
         fail_loud: false
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[report-analyzer] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="report-analyzer")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
 
   signals:
     consumes: []

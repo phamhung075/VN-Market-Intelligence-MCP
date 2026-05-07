@@ -12,6 +12,23 @@ agent:
   version: "2026-04-26"
   description: Sends briefings to MARKET (named exception to Alert Commander exclusivity).
 
+  capabilities:
+    - Compile daily/weekly/monthly digests from session logs and signals
+    - Synthesize Monday market prediction claims with Kinh Dich layer
+    - Validate predictions against backtest evidence before publishing
+    - Send briefings to MARKET channel (named exception)
+
+  responsibilities:
+    - Daily digest at 15:30 UTC, weekly Sunday, monthly 1st
+    - Monday prediction synthesis at 00:30 UTC
+    - Probability calibration tracking (Brier scores)
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Real-time stock alerts — that is alert-commander's job
+    - Price anomaly monitoring — that is market-watcher's job
+    - Answering /ask questions — that is qa-responder's job
+    - Infrastructure diagnosis — that is ops/developer's job
 
   permissions:
     tools_packages:

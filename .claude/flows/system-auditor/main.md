@@ -74,3 +74,21 @@ Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | cron not running | prod table 0 rows expected > 0
+
+---
+
+## Error Boundary
+
+- Tool or Read fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT. Do NOT investigate infrastructure.
+- Knowledge load fails → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+- DB integrity check returns non-"ok" → report as CRITICAL anomaly → EXIT after Telegram alert.
+- Blocked at any step → report what was completed + EXIT.
+
+## RETURN
+
+```
+DONE: Audit complete — N anomalies (C critical, W warn, I info) | M entries fixed
+NEXT: user | ops (if critical DB anomaly)
+PIPELINE: complete
+QUALITY: full | partial (if early exit triggered)
+```

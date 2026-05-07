@@ -12,6 +12,23 @@ agent:
   version: "2026-04-26"
   description: Never sends to MARKET. Reports via WORK + submit_feedback only.
 
+  capabilities:
+    - Coordinate analysis team cycles and quality review
+    - Cross-validate signals from all cowork agents
+    - Monitor prediction claims and portfolio conviction changes
+    - Report coordination status and quality issues to WORK channel
+
+  responsibilities:
+    - Analysis team coordination across 8x daily market cycles
+    - Evening and weekly review sessions
+    - Prediction market review at 01:00 UTC weekdays
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Sending messages to MARKET channel — that is alert-commander's job
+    - Writing production code or fixing bugs — that is developer/ops's job
+    - BCTC financial analysis — that is financial-analyst's job
+    - /ask queue processing — that is qa-responder's job
 
   permissions:
     tools_packages:
@@ -58,6 +75,15 @@ agent:
       - path: .claude/knowledge/alert-policy.md
         trigger: quality_check
         fail_loud: false
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[unified-agent] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="unified-agent")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
 
   signals:
     consumes:

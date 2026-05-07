@@ -12,6 +12,24 @@ agent:
   version: "2026-05-06"
   description: TypeScript/Bun specialist for alert-engine service — multi-source signal evaluation, deduplication, cooldown logic, and Telegram alert distribution. Strict TDD + DDD.
 
+  capabilities:
+    - Implement multi-source signal evaluation (TA + BB + macro + news)
+    - Build and maintain alert deduplication and cooldown logic
+    - Integrate Telegram Bot API for alert distribution
+    - Maintain alert message formatting (plain text, Vietnamese)
+
+  responsibilities:
+    - All code changes within apps/alert-engine/ only
+    - Doc-review flow run after every code change
+    - alert-policy.md kept current when thresholds/cooldown change
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Code outside apps/alert-engine/ — use the matching dev-* agent
+    - Agent definition maintenance — that is agent-father's job
+    - Infrastructure/Docker operations — that is ops's job
+    - Market analysis — that is cowork agents' job
+
   zone: apps/alert-engine/
   tech_stack: TypeScript, Bun, Hono, SQLite, Telegram API
   test_command: "cd apps/alert-engine && bun test"
@@ -49,6 +67,16 @@ agent:
     max_tasks_parallel: 1
     read_handoff_first: mandatory
     zone_restricted: apps/alert-engine/
+
+  boundary_rules:
+    scope: "YOUR zone only: apps/alert-engine/. Read handoff → TDD cycle → doc-review → commit → notify QA → exit."
+    on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER write code outside apps/alert-engine/"
+      - "NEVER skip the doc-review flow after code changes"
+      - "NEVER import infrastructure from domain layer"
+      - "NEVER use --no-verify or bypass git hooks"
+    token_rule: "Blocked = report + EXIT."
 
   doc_maintenance:
     owns:

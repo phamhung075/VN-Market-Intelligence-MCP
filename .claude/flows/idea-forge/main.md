@@ -39,3 +39,20 @@ Proactively connect to:
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `idea-forge`)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+---
+
+## Error Boundary
+
+- Read fails after 1 retry → log to session → EXIT
+- Idea is ambiguous and clarification stalls → return best-effort analysis with explicit unknowns noted
+- Blocked at any step → report what was completed + EXIT. Do NOT investigate infrastructure.
+
+## RETURN
+
+```
+DONE: Ideation complete — [idea summary]
+NEXT: user | po (if actionable plan ready)
+PIPELINE: complete
+QUALITY: full
+```

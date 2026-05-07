@@ -12,6 +12,24 @@ agent:
   version: "2026-05-06"
   description: TypeScript/Bun specialist for stock-price service — 3-tier price fallback (VPS → exchange APIs → cache), price aggregation, HOSE/HNX/UPCOM data. Strict TDD + DDD.
 
+  capabilities:
+    - Implement 3-tier price fetcher (VPS bridge → exchange APIs → local cache)
+    - Aggregate and normalize HOSE/HNX/UPCOM price data
+    - Maintain HTTP client for VPS bridge communication
+    - Write to stock_price.db (Tier 3 cache) and post to mcp-server via HTTP
+
+  responsibilities:
+    - All code changes within apps/stock-price/ only
+    - Doc-review flow run after every code change
+    - stock-price docs kept current in docs/microservices/stock-price/
+    - Session log + notebook append every cycle
+
+  not_my_job:
+    - Code outside apps/stock-price/ — use the matching dev-* agent
+    - Agent definition maintenance — that is agent-father's job
+    - Infrastructure/Docker operations — that is ops's job
+    - Market analysis — that is cowork agents' job
+
   zone: apps/stock-price/
   tech_stack: TypeScript, Bun, Hono, SQLite
   test_command: "cd apps/stock-price && bun test"
@@ -49,6 +67,16 @@ agent:
     max_tasks_parallel: 1
     read_handoff_first: mandatory
     zone_restricted: apps/stock-price/
+
+  boundary_rules:
+    scope: "YOUR zone only: apps/stock-price/. Read handoff → TDD cycle → doc-review → commit → notify QA → exit."
+    on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
+    forbidden_outputs:
+      - "NEVER write code outside apps/stock-price/"
+      - "NEVER skip the doc-review flow after code changes"
+      - "NEVER import infrastructure from domain layer"
+      - "NEVER use --no-verify or bypass git hooks"
+    token_rule: "Blocked = report + EXIT."
 
   doc_maintenance:
     owns:

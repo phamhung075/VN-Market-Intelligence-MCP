@@ -92,3 +92,22 @@ Pass 9 Tool-Agent: OK | SKIPPED | N → architect
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `claude-manager-helper`)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+---
+
+## Error Boundary
+
+- Tool or Read fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT. Do NOT investigate infrastructure.
+- Knowledge load fails (fail-loud-protocol.md or tree-map.md) → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+- Critical misalignment found (Passes 8-9) → escalate to architect via subagent spawn BEFORE auto-fixing.
+- No git changes detected → EXIT immediately (early exit rule).
+- Blocked at any step → report what was completed + EXIT.
+
+## RETURN
+
+```
+DONE: 10-pass audit complete — N passes run | M auto-fixes applied | K escalated to architect
+NEXT: user | architect (if critical issues escalated)
+PIPELINE: complete
+QUALITY: full | partial (if passes skipped due to no changes)
+```

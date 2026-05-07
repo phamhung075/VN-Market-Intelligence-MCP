@@ -85,9 +85,8 @@ Score each article: -1.0 (bearish) to +1.0 (bullish).
 For watchlist hits, trace impact chain:
 ```
 call_tool(server="vn-market", tool="run_impact_chain", arguments={
-  "ticker": "<TICKER>",
-  "event": "<headline summary>",
-  "impact_score": 8
+  "newsText": "<headline summary — Vietnamese or English>",
+  "includeWatchlist": true
 })
 ```
 

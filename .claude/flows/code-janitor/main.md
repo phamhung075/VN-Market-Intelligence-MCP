@@ -51,6 +51,24 @@ Finding found?
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
+## Error Boundary
+
+- Tool fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT.
+- Knowledge load fails (fail-loud-protocol.md or janitor-procedures.md) → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+- No duplication found → EXIT immediately (no report needed).
+- Multi-file fix attempted directly → STOP, create backlog task instead.
+
+## RETURN
+
+```
+DONE: Scan complete — N findings | M shipped | K backlog tasks created
+NEXT: user | pm (if backlog tasks created)
+PIPELINE: complete
+QUALITY: full | partial (if knowledge load failed)
+```
+
+---
+
 ## Reference Commands
 ```bash
 grep -r "VNM\|FPT\|VCB" src/ | grep -v test | grep -v "// " | head -20
