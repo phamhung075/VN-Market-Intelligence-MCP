@@ -270,7 +270,7 @@ export function registerTechnicalIndicatorTools(
       "friendly plain-text report with a TANG/GIAM/TRUNG TINH conclusion block. " +
       "Reads from the local market_prices_history table — no new data fetches.",
     {
-      actionCode: z
+      code: z
         .string()
         .min(1)
         .max(10)
@@ -284,9 +284,9 @@ export function registerTechnicalIndicatorTools(
         .default(60)
         .describe("Look-back days (default 60, min 35 for MACD)"),
     },
-    async ({ actionCode, days }) => {
+    async ({ code: rawCode, days }) => {
       const lookbackDays = days ?? 60;
-      const code = actionCode.toUpperCase().trim();
+      const code = rawCode.toUpperCase().trim();
 
       try {
         // ── Resolve DB instance ───────────────────────────────────────────────
