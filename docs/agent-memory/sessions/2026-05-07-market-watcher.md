@@ -94,3 +94,51 @@
 **Session Status:** Halted per error boundary  
 
 **Recommendation:** Escalate to ops team for infrastructure triage
+
+---
+
+## Cycle 20:39 UTC — Off-Hours Run ✅ COMPLETED
+
+**STATUS:** SUCCESS
+
+**Execution:**
+- Bootstrap: ✅ OK (16ms)
+- Macro snapshot: ✅ OK 
+- Price analysis: ✅ 2 anomalies detected
+- Chain findings: 0 (off-hours)
+- Signals posted: 2 (alert-commander routed)
+
+**Regime Detection:**
+- Global Liquidity: NEUTRAL (sigma_threshold=2.0σ)
+- VND Carry: FII_OUTFLOW_RISK (spread -0.33%)
+- US 10Y: NEUTRAL (4.39%)
+- DXY: USD STABLE (98.18)
+
+**Anomalies Detected (>2.0σ):**
+1. **VHM +6.95% (2.07σ)** [real_estate]
+   - Sector context: -0.90% (strong outperformance)
+   - Valuation: PE 12.6 discount (-35% vs sector)
+   - Fundamentals: ROE 19% (vs sector 6.3%)
+   - Signal ID: 2568 | TTL: 120m
+   
+2. **GAS -4.04% (2.25σ)** [oil_gas]
+   - Sector context: -3.43% (slight underperformance)
+   - Macro: Brent $101.99 (positive for energy)
+   - Fundamentals: ROE 18% (vs sector 9.6%)
+   - Currency pressure: USD/VND 26,260 (high, FX headwind)
+   - Signal ID: 2569 | TTL: 120m
+
+**Sector Summary:**
+- Oil/Gas: -3.43% (down) | Banking: -0.90% (down) | Real Estate: -0.13% (mixed: VHM +7%, NVL -3.5%)
+- Stable: Steel (+0.61%), Logistics (+1.15%), Utilities (+0.17%)
+- Tech: -0.41% | Securities: -0.76%
+
+**Open Alerts:** 20 (mostly sector-wide moves, news mentions)
+
+**Supply Chain:** Stable (BDI 1,400, no disruptions detected)
+
+**Cycle Metrics:**
+- Watchlist: 32 stocks
+- Anomalies: 2 | Volume spikes: 1 (DHG 2.7x) | Chain confirms: 0
+- Execution time: ~250ms
+- Next cycle: 00:39 UTC (4h interval)
