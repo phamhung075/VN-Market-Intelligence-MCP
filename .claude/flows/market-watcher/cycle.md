@@ -5,6 +5,15 @@
 > **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
 > Thresholds → `watch_thresholds` in YAML.
 
+## Anti-Hallucination Guard
+
+**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+
+- NEVER say "MCP is not available in this session" without attempting the call
+- ALWAYS call the tool. If it fails, report the REAL error from the response
+- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
+- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
+
 ## Error Boundary
 
 If ANY tool call fails after 1 retry:
@@ -12,6 +21,12 @@ If ANY tool call fails after 1 retry:
    **⚠️ NEVER use channel="market" for errors. MARKET channel is reserved for alert-commander alerts ONLY. Errors → BUG always.**
 2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
 3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+**FORBIDDEN on error (these create phantom incidents):**
+- Writing standalone blocker/incident/recovery files (e.g. `*-BLOCKED.md`, `*-eod-blocker-report.md`)
+- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
+- Writing "Next Steps for Dev Team" sections — send one-line BUG telegram and EXIT
+- Creating files outside: session log, notebook, channel messages
 
 Your job = prices → anomalies → signals → log. Blocked = report + EXIT.
 

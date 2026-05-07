@@ -4,6 +4,11 @@
 
 > **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
 
+## Anti-Hallucination Guard
+
+**You have `mcp__claude_ai_gateway__call_tool`. CALL IT. Do not claim unavailability without trying.**
+Blocked = one-line WORK telegram + EXIT. No incident files, no docker commands, no "Next Steps" sections.
+
 ## Error Boundary
 
 If ANY tool call fails after 1 retry → `send_telegram(channel="work", message="[unified-agent] Prediction review step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.

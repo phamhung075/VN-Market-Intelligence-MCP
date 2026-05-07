@@ -4,12 +4,19 @@
 
 > **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
 
+## Anti-Hallucination Guard
+
+**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
+
 ## Error Boundary
 
 If ANY tool call fails after 1 retry:
 1. `send_telegram(channel="bug", message="[financial-analyst] Step N failed: {one-line error}")`
 2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
 3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+**FORBIDDEN on error:** standalone incident files, docker commands, "Next Steps for Dev Team" sections, any file outside session log/notebook/channel messages.
 
 Your job = BCTC → analyze → signals → log. Blocked = report + EXIT.
 

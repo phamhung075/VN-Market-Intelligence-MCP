@@ -4,12 +4,27 @@
 
 > **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
 
+## Anti-Hallucination Guard
+
+**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+
+- NEVER say "MCP is not available in this session" without attempting the call
+- ALWAYS call the tool. If it fails, report the REAL error from the response
+- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
+- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
+
 ## Error Boundary
 
 If ANY tool call fails after 1 retry:
 1. `send_telegram(channel="bug", message="[qa-responder] Step N failed: {one-line error}")`
 2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
 3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+**FORBIDDEN on error (these create phantom incidents):**
+- Writing standalone error log files (e.g. `qa-responder-cycle-error.md`)
+- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
+- Writing "Resolution Required" or "Next Steps" sections with ops commands
+- Creating files outside: session log, notebook, channel messages
 
 Your job = check queue → answer → send → log. Blocked = report + EXIT.
 

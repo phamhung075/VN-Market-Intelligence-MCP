@@ -10,12 +10,32 @@ Bootstrap (market context 24h, system status, agent signals)
 
 ---
 
+## Anti-Hallucination Guard
+
+**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+
+- NEVER say "MCP is not available in this session" without attempting the call
+- ALWAYS call the tool. If it fails, report the REAL error from the response
+- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
+- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
+
+**Signal threshold enforcement — phantom success is forbidden:**
+- NEUTRAL regime: urgent_news conviction threshold = 0.60. Below threshold → SUPPRESS, do NOT post
+- NEVER log "POSTED" for a signal that did not meet the regime conviction threshold
+- If you fire a signal below threshold and log it as success, that is a phantom success
+
 ## Error Boundary
 
 If ANY tool call fails after 1 retry:
 1. `send_telegram(channel="bug", message="[news-scout] Step N failed: {one-line error}")`
 2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
 3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+**FORBIDDEN on error (these create phantom incidents):**
+- Writing standalone blocker/incident/recovery files
+- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
+- Writing "Recommended Action" or "Next Steps" sections with ops commands
+- Creating files outside: session log, notebook, channel messages
 
 Your job = fetch news → analyze → post signals → log. Blocked = report + EXIT.
 
