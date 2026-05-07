@@ -231,7 +231,11 @@ export const CrossValidateFindingDataSchema = z.object({
  *
  * Describes a statistically significant price move (in sigma units) that
  * exceeds the rolling standard-deviation threshold for the stock's regime.
- * All 4 fields are required and validated at parse time.
+ *
+ * Required: move_pct, move_sigma
+ * Optional: ref_price, window_days (may not be available at signal time),
+ *           plus any additional context fields (regime, fx_pressure, etc.)
+ *           passed by market-watcher are accepted via passthrough.
  */
 export interface PriceAnomalyFindingData {
   /** Raw price move as a percentage (positive = up, negative = down). */
@@ -240,19 +244,39 @@ export interface PriceAnomalyFindingData {
   /** Move expressed in standard-deviation (sigma) units relative to rolling window. */
   move_sigma: number;
 
-  /** Reference price used for the sigma calculation (VND, million scale). */
-  ref_price: number;
+  /** Reference price used for the sigma calculation (VND, million scale). Optional. */
+  ref_price?: number;
 
-  /** Rolling window in trading days used for the sigma calculation (must be >= 1). */
-  window_days: number;
+  /** Rolling window in trading days used for the sigma calculation (must be >= 1). Optional. */
+  window_days?: number;
+
+  /** Signed percentage value — same as move_pct, kept for legacy compatibility. Optional. */
+  price_change_pct?: number;
+
+  /** Macro regime at signal time: TIGHTENING | EASING | NEUTRAL. Optional. */
+  regime?: string;
+
+  /** Adaptive sigma threshold string, e.g. "1.5σ". Optional. */
+  adjusted_threshold?: string;
+
+  /** Whether the stock had FX pressure at signal time. Optional. */
+  fx_pressure?: boolean;
+
+  /** Whether the stock had PE compression risk at signal time. Optional. */
+  pe_compression_risk?: boolean;
 }
 
 export const PriceAnomalyFindingDataSchema = z.object({
   move_pct: z.number(),
   move_sigma: z.number(),
-  ref_price: z.number(),
-  window_days: z.number().int().positive(),
-});
+  ref_price: z.number().optional(),
+  window_days: z.number().int().positive().optional(),
+  price_change_pct: z.number().optional(),
+  regime: z.string().optional(),
+  adjusted_threshold: z.string().optional(),
+  fx_pressure: z.boolean().optional(),
+  pe_compression_risk: z.boolean().optional(),
+}).passthrough();
 export type PriceAnomalyFindingDataInferred = z.infer<typeof PriceAnomalyFindingDataSchema>;
 
 // ── Index exports ──────────────────────────────────────────────────────────────
