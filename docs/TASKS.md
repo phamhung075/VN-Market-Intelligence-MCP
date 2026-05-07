@@ -8,6 +8,9 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1850c | FIX: HSG price inconsistency — bootstrap vs history change_pct diverge (-21.63% vs +2.04%). Check priceHistoryService formula consistency. 1-2 files. | MEDIUM | FIX | developer | — | — |
+| 1850e | CLEAN: cascade rule gap — chemicals/petrochemicals domain missing from alert cascade map. 1 file. | LOW | CLEAN | code-janitor | — | — |
+| 1850d | CLEAN: DBC domain classification — Dabaco (DBC) incorrectly tagged as tech; should be agro/food sector. 1 file. | LOW | CLEAN | code-janitor | — | — |
 
 ---
 
@@ -15,10 +18,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1849a | SPRINT-S: Schema migration + store functions — ALTER TABLE resolution + resolved_at columns on telegram_reports, compound index on (status, resolution), markResolved() + listUnresolvedReports() + listResolvedReports() store functions, all SELECT statements fixed to project all 10 columns. 2 files, 5 new tests. **BLOCKS: 1849c**. | MEDIUM | SPRINT-S | dev-mcp-server | docs/handoffs/TASK_1849a.md | — |
-| 1849b | SPRINT-S: MCP tool + serializeReport upgrade — process_telegram_report(id, resolution?, delete_telegram_message?) Zod schema with 5-value enum (none/fixed/wontfix/duplicate/monitoring), markResolved() call, serializeReport() extended to include resolution + resolved_at + claimed_by + claimed_at (C-2 SELECT gap fix). 1 file, 3 new tests, backward-compatible. **BLOCKS: 1849c**. | MEDIUM | SPRINT-S | dev-mcp-server | docs/handoffs/TASK_1849b.md | — |
-| 1849c | SPRINT-S: Dev-team flow Step 4 update — split unresolved query: read new (status=new), read claimed+monitoring (resolution NOT IN fixed/wontfix/duplicate), guard Step 4 to prevent infinite monitoring loop (C-6: no Step 1 re-trigger if only monitoring), archive fixed/wontfix/duplicate reports only. 1 file (~30 lines). | MEDIUM | SPRINT-S | developer | docs/handoffs/TASK_1849c.md | 1849a, 1849b |
-| 1849d | SPRINT-S: Tests + regression — extend 226-telegram-report-store.test.ts with markResolved() atomicity, listUnresolvedReports() filters, MCP tool resolution param, backward-compat (no resolution → 'none'), serializeReport() output. Run bun test; baseline ≥8804 pass, 0 fail. | MEDIUM | SPRINT-S | dev-mcp-server | — | 1849a |
 
 ---
 
@@ -38,6 +37,19 @@
 
 ## Done
 
-Tasks completed in current sprint are archived to `docs/TASKS_ARCHIVE.md`.
+| Task ID | Title | Priority | Type | Owner | Completed |
+|---------|-------|----------|------|-------|-----------|
+| 1851a | FIX: post_agent_signal schema reconciliation — align market-watcher cycle.md + tools package with actual MCP schema (from_agent, to_agent, signal_type, payload). 2 files. | HIGH | FIX | developer | 2026-05-07 |
+| 1851b | FIX: run_impact_chain + post_agent_signal params — news-scout cycle.md (newsText not ticker/event) + tools package. Absorbs 1850b. 3 files. | HIGH | FIX | developer | 2026-05-07 |
+| 1851c | FIX: get_price_history actionCode→code — already fixed in prior sprint (commit 0d514018). Stale report closed. | MEDIUM | FIX | — | 2026-05-07 |
+| 1851d | FIX: market-watcher session append-only — explicit APPEND instruction in cycle.md Step 5 (GAP-10). 1 file. | MEDIUM | FIX | developer | 2026-05-07 |
+| 1850g | FIX: PriceAnomalyFindingDataSchema — ref_price/window_days optional, added passthrough + market-watcher fields. 2 files + 17 tests. | MEDIUM | FIX | dev-mcp-server | 2026-05-07 |
+| 1850a | FIX: vnstock-sync storeShareholders Array.isArray + null-code guards. 1 file + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-07 |
+| 1850f | FIX: Polymarket t163-mkt-* test fixtures excluded from prod + staleness tightened 30d→7d. 1 file + 7 tests. | HIGH | FIX | dev-mcp-server | 2026-05-07 |
+| 1849a | SPRINT-S: Schema migration + store functions — resolution tracking on telegram_reports. 2 files, 5 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-07 |
+| 1849b | SPRINT-S: MCP tool + serializeReport upgrade — process_telegram_report resolution param. 1 file, 3 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-07 |
+| 1849c | SPRINT-S: Dev-team flow Step 4 update — monitoring loop guard (C-6). 1 file. | MEDIUM | SPRINT-S | developer | 2026-05-07 |
+| 1849d | SPRINT-S: Tests + regression — telegram report resolution tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-07 |
+| 1850-GAP9 | FIX: get_technical_indicators migrated from market_prices_history to daily_ohlcv. 1 file + 34 tests. | HIGH | FIX | dev-mcp-server | 2026-05-07 |
 
 ---

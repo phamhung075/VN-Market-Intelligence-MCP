@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": 1848,
+  "currentSprint": 1851,
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-07T07:07:00.000Z",
+  "updatedAt": "2026-05-07T19:15:00.000Z",
   "updatedBy": "dev-team-cron",
-  "lastCompleted": "Cycle 2026-05-07: Docker restart deployed param rename fixes (0d514018+3d2ab2c7). 11 reports processed (schema mismatch, transient MCP, BCTC low-confidence). Pipeline idle."
+  "lastCompleted": "Sprint 1851: 4 FIX — post_agent_signal schema (market-watcher+news-scout), run_impact_chain params (newsText), session append-only (GAP-10). 10 reports triaged (5 fixed, 3 monitoring, 2 wontfix)."
 }
