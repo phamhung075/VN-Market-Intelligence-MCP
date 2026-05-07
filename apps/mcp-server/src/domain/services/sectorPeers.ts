@@ -180,8 +180,11 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "TRA", exchange: "HOSE" },
     { code: "OPC", exchange: "HOSE" },
   ],
+  chemicals: [
+    { code: "DGC", exchange: "HOSE" },  // Duc Giang Chemicals — yellow phosphorus, petrochemicals
+    { code: "GVR", exchange: "HOSE" },  // Gem Trading — rubber & petrochemical products
+  ],
   other: [
-    { code: "DGC", exchange: "HOSE" },  // Duc Giang Chemicals — no chemicals DomainType
   ],
 };
 
@@ -206,6 +209,7 @@ export const SECTOR_NAME_VI: Record<DomainType, string> = {
   energy: "Năng lượng tái tạo",
   machinery: "Máy móc / Công nghiệp",
   pharmaceutical: "Dược phẩm (mở rộng)",
+  chemicals: "Hóa chất & Đạo thải",
   other: "Khác",
 };
 

@@ -73,7 +73,8 @@
       "construction":  ["HHV", "CTD", "VCG", "HBC", "FCN", "HUT"],
       "energy":        ["GEG", "REE", "PC1", "BCG"],
       "pharmaceutical":["DHG", "IMP", "DMC", "DBD", "PME", "TRA", "OPC"],
-      "other":         ["DGC"]
+      "chemicals":     ["DGC"],
+      "other":         []
     },
     "globalIndices": {
       "SP500":      "^GSPC",

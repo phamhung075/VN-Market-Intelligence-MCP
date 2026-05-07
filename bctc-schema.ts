@@ -43,6 +43,7 @@ export type DomainType =
   | 'construction'     // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
   | 'energy'           // GEG, REE, PC1 — renewable energy projects (task 250)
   | 'machinery'        // DAG — Da Nang Rubber Group, industrial machinery (task 1796f)
+  | 'chemicals'        // DGC — Duc Giang Chemicals, petrochemicals (task 1850e)
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════
