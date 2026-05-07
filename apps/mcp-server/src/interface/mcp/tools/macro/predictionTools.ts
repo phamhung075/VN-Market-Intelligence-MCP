@@ -253,9 +253,11 @@ export function registerPredictionTools(server: McpServer): void {
         // consistent lexicographic ordering against stored ISO strings.
         const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-        // Report 2768-2770: exclude stale seed/test markets (fetched_at > 30d old)
-        // that have never been updated — they produce misleading signals.
-        const staleCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        // Report 2768-2770: exclude stale markets (fetched_at > 7d old) and
+        // t___-mkt-* test fixture IDs (e.g. t163-mkt-001 from schema tests).
+        // Staleness tightened from 30d → 7d so fixtures with 2026-04-01 dates
+        // (36d old) are excluded even if the ID filter is somehow bypassed.
+        const staleCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
         const rows = db
           .prepare(
@@ -269,6 +271,7 @@ export function registerPredictionTools(server: McpServer): void {
                AND ps.detected_at >= $cutoff
              WHERE (pm.end_date IS NULL OR pm.end_date = '' OR pm.end_date >= $now)
                AND pm.fetched_at >= $staleCutoff
+               AND pm.id NOT LIKE 't___-mkt-%'
              GROUP BY pm.id
              ${havingClause}
              ORDER BY pm.fetched_at DESC
