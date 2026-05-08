@@ -113,6 +113,12 @@ export interface DailyDashboard {
   agents: Record<string, AgentCycleSummary>;
   /** Signal quality metrics block, or null when signal data unavailable. Added by Task 1854c. */
   signals: SignalMetrics | null;
+  /**
+   * Sum of estimated_tokens values from all cycle blocks across today's session logs.
+   * Each cycle entry is written by the session log writer as step_count x 500.
+   * Added by Task 1854i.
+   */
+  daily_token_estimate: number;
 }
 
 /** Input bag for aggregateDailyDashboard (all injectable for tests). */
@@ -285,6 +291,40 @@ export function parseAgentCycles(content: string): AgentCycleSummary {
 }
 
 /**
+ * Sums all `estimated_tokens: N` values found in today's session log files.
+ *
+ * Each cycle block written by the session log writer includes a line of the form:
+ *   `- estimated_tokens: 6000`
+ * (step_count x 500, per Task 1854h).
+ *
+ * Pure function — no I/O.
+ *
+ * @param files - Map of filename → content (same shape as sessionFiles in DashboardAggregateInput)
+ * @param date  - ISO date string "YYYY-MM-DD" — only files prefixed with this date are scanned
+ * @returns Total estimated tokens across all matching session log files
+ */
+export function sumSessionTokens(
+  files: Record<string, string>,
+  date: string,
+): number {
+  let total = 0;
+  const tokenRe = /estimated_tokens:\s*(\d+)/g;
+
+  for (const [filename, content] of Object.entries(files)) {
+    if (!filename.startsWith(date + "-") || !filename.endsWith(".md")) continue;
+
+    let match: RegExpExecArray | null;
+    while ((match = tokenRe.exec(content)) !== null) {
+      total += parseInt(match[1], 10);
+    }
+    // Reset lastIndex for reuse across loop iterations
+    tokenRe.lastIndex = 0;
+  }
+
+  return total;
+}
+
+/**
  * Compute signal quality metrics from pre-loaded effectiveness rows and
  * alert accuracy report.
  *
@@ -380,6 +420,9 @@ export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDa
     ? computeSignalMetrics(signalData)
     : null;
 
+  // Sum estimated_tokens from all cycle blocks in today's session logs (Task 1854i).
+  const daily_token_estimate = sumSessionTokens(sessionFiles, date);
+
   return {
     date,
     sprint: stats.currentSprint,
@@ -397,6 +440,7 @@ export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDa
     sessions,
     agents,
     signals,
+    daily_token_estimate,
   };
 }
 
