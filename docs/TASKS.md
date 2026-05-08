@@ -38,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1856a | FIX: vnstock_events NOT NULL constraint — storeEvents Array.isArray + null-code filter. 1 file + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-08 |
 | 1855a | FIX: suppress false pollNews all-sources-dark alert when VPS push pipeline is healthy. 2 files + 6 tests. | HIGH | FIX | developer | 2026-05-08 |
 | 1850d | CLEAN: DBC domain classification — add Dabaco to agriculture sector in stock-classification.json. 2 files + 1 test. | LOW | CLEAN | code-janitor | 2026-05-07 |
 | 1851a | FIX: post_agent_signal schema reconciliation — align market-watcher cycle.md + tools package with actual MCP schema (from_agent, to_agent, signal_type, payload). 2 files. | HIGH | FIX | developer | 2026-05-07 |
