@@ -19,7 +19,7 @@
 import { describe, test, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry, MacroContext } from "../domain/services/cascadeEngine.js";
-import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
+import type { AnalysisEntry, AnalysisLevel } from "../domain/services/newsNormalizer.js";
 import type { DomainType } from "../../bctc-schema.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -29,7 +29,7 @@ import type { DomainType } from "../../bctc-schema.js";
 function makeEntry(overrides: Partial<AnalysisEntry> = {}): AnalysisEntry {
   return {
     id: `test-${Date.now()}`,
-    level: "macro",
+    level: "global" as AnalysisLevel,
     sourceTitle: overrides.sourceTitle || "Test News",
     sourceUrl: "https://example.com",
     sourceType: "news",
@@ -159,7 +159,7 @@ describe("Task 1850e — Chemicals/Petrochemicals Cascade Rules", () => {
 
   test("TC-4: Fertilizer price cap regulation triggers chemicals BEARISH", () => {
     const entry = makeEntry({
-      level: "policy",
+      level: "country" as AnalysisLevel,
       sourceTitle: "Government caps fertilizer prices to protect farmers",
       summary: "Regulation limits profit margins on essential chemical products. Giá trần phân bón tiêu cực.",
       sentiment: "bearish",
@@ -183,7 +183,7 @@ describe("Task 1850e — Chemicals/Petrochemicals Cascade Rules", () => {
 
   test("TC-5: Chemical export support policy triggers BULLISH", () => {
     const entry = makeEntry({
-      level: "policy",
+      level: "country" as AnalysisLevel,
       sourceTitle: "Vietnam promotes chemical/petrochemical exports to Asia",
       summary: "Trade agreements expand market access. Hỗ trợ xuất khẩu hóa chất.",
       sentiment: "bullish",
@@ -207,7 +207,7 @@ describe("Task 1850e — Chemicals/Petrochemicals Cascade Rules", () => {
 
   test("TC-6: Environmental compliance rules trigger chemicals BEARISH", () => {
     const entry = makeEntry({
-      level: "policy",
+      level: "country" as AnalysisLevel,
       sourceTitle: "EPA tightens chemical emissions standards across Vietnam",
       summary: "Environmental rules increase compliance costs. Quy định môi trường hóa chất.",
       sentiment: "bearish",
@@ -231,7 +231,7 @@ describe("Task 1850e — Chemicals/Petrochemicals Cascade Rules", () => {
 
   test("TC-7: Chemical supply chain disruption triggers BEARISH", () => {
     const entry = makeEntry({
-      level: "news",
+      level: "global" as AnalysisLevel,
       sourceTitle: "Refinery shutdown disrupts chemical feedstock supply in Asia",
       summary: "Key supplier outage tightens chemical supply chains. Cắt nguồn cung hóa chất.",
       sentiment: "bearish",

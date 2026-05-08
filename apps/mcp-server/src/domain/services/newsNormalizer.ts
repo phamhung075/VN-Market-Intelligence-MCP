@@ -405,6 +405,15 @@ const DOMAIN_KEYWORD_MAP: Record<DomainType, string[]> = {
     "đấu thầu thuốc",
     "vaccine distributor",
   ],
+  chemicals: [
+    "hóa chất",
+    "phân bón",
+    "dầu thô",
+    "petrochemical",
+    "chemical",
+    "dgc",
+    "dpm",
+  ],
   other: [],
 };
 
