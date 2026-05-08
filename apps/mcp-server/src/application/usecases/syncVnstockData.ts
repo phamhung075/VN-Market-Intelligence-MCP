@@ -44,9 +44,50 @@ import {
   markFetched,
 } from "../../infrastructure/db/vnstockStore.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { getDb } from "../../infrastructure/db/schema.js";
 
 // Inter-request delay to stay well within 60 req/min
 const DELAY_MS = 1500;
+
+// ---------------------------------------------------------------------------
+// Injectable deps — WAL checkpoint between stock iterations (Task 1857a)
+// ---------------------------------------------------------------------------
+
+/**
+ * Injectable deps for syncVnstockData.
+ * Allows unit tests to verify checkpoint behaviour without a real DB.
+ */
+export interface SyncVnstockDeps {
+  /**
+   * Sync a single stock — defaults to the internal `syncStock()`.
+   * Returns number of API calls made.
+   */
+  syncStockFn: (code: string) => Promise<number>;
+  /**
+   * WAL checkpoint called after each stock that made at least 1 API call.
+   * PASSIVE mode: non-blocking — readers never stall.
+   * Errors are swallowed (best-effort); sync continues regardless.
+   */
+  walCheckpointFn: () => Promise<void>;
+}
+
+/**
+ * Default WAL checkpoint — PASSIVE mode.
+ * PASSIVE: SQLite writes as many WAL frames as possible without waiting for
+ * active readers to finish. Never blocks. Safe to call mid-sync.
+ */
+async function defaultWalCheckpoint(): Promise<void> {
+  try {
+    const db = getDb();
+    db.exec("PRAGMA wal_checkpoint(PASSIVE)");
+    logger.debug("[vnstock-sync] WAL checkpoint (PASSIVE) after stock iteration");
+  } catch (err) {
+    // Best-effort — checkpoint failure must never crash the sync loop
+    logger.warn("[vnstock-sync] WAL checkpoint failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Circuit breaker — exported for unit tests
@@ -358,20 +399,41 @@ export async function syncStockLight(code: string): Promise<number> {
  * Sync vnstock data for all watchlist stocks.
  * Lazy: only fetches stale data. Safe for rate limits.
  *
+ * WAL checkpoint (PASSIVE) is called after each stock that made at least
+ * 1 API call. This prevents unbounded WAL growth (16MB+) when syncing
+ * many tickers sequentially — fixes WAL bloat that locked BCTC reads.
+ *
  * @param codes - Stock codes to sync
+ * @param deps  - Optional injectable deps (for testing checkpoint behaviour)
  * @returns Total API calls made
  */
-export async function syncVnstockData(codes: string[]): Promise<number> {
+export async function syncVnstockData(
+  codes: string[],
+  deps?: Partial<SyncVnstockDeps>,
+): Promise<number> {
   if (codes.length === 0) return 0;
+
+  const _syncStock = deps?.syncStockFn ?? syncStock;
+  const _walCheckpoint = deps?.walCheckpointFn ?? defaultWalCheckpoint;
 
   let totalCalls = 0;
 
   for (const code of codes) {
     try {
-      const calls = await syncStock(code);
+      const calls = await _syncStock(code);
       totalCalls += calls;
       if (calls > 0) {
         logger.info("[vnstock-sync] synced stock", { code, apiCalls: calls });
+        // Flush WAL after each stock that wrote data — prevents unbounded WAL growth
+        try {
+          await _walCheckpoint();
+        } catch (cpErr) {
+          // Best-effort: checkpoint errors must never abort the sync loop
+          logger.warn("[vnstock-sync] WAL checkpoint error (non-fatal)", {
+            code,
+            error: cpErr instanceof Error ? cpErr.message : String(cpErr),
+          });
+        }
       } else {
         logger.debug("[vnstock-sync] all fresh, skipped", { code });
       }
