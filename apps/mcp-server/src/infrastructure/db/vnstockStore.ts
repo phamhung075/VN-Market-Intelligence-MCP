@@ -739,6 +739,24 @@ export function upsertForeignFlow(
 // ---------------------------------------------------------------------------
 
 export function storeEvents(code: string, events: VnstockEvent[]): void {
+  // Guard: ensure events is actually an array (not null, undefined, or other type)
+  if (!events || !Array.isArray(events)) {
+    logger.warn(
+      `[vnstock-store] storeEvents: events is not an array for ticker ${code}`,
+      { code, eventsType: typeof events, isArray: Array.isArray(events) }
+    );
+    markFetched(code, "events");
+    return;
+  }
+  // Guard: skip rows where code is null/undefined/empty — prevents NOT NULL constraint failure
+  const valid = events.filter((ev) => !!ev.code);
+  const dropped = events.length - valid.length;
+  if (dropped > 0) {
+    logger.warn(
+      `[vnstock-store] storeEvents: dropped ${dropped} row(s) with null/empty code for ticker ${code}`,
+      { code, dropped }
+    );
+  }
   const db = getDb();
   const now = new Date().toISOString();
   const stmt = db.prepare(
@@ -747,7 +765,7 @@ export function storeEvents(code: string, events: VnstockEvent[]): void {
      VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const insertAll = db.transaction(() => {
-    for (const ev of events) {
+    for (const ev of valid) {
       stmt.run(ev.code, ev.eventName, ev.eventDate, ev.eventType, ev.description, now);
     }
   });
