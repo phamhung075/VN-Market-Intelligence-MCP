@@ -1,10 +1,10 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-06 | **Sprint:** 1847
+**Last updated:** 2026-05-08 | **Sprint:** 1855
 
 ## Last session summary
 
-QA validation of two hotfixes (857e4e63 + 52e401cf). Fix #1: news-scout signal schema documentation (docs-only, blocks reports 2740+2752). Fix #2: macro tool DB schema drift (3 column name corrections + 2 guard tests, blocks report 2746). Signal tests: 394p/0f. Macro tests: 155p/0f. tsc: 0 errors. DDD: clean. Both APPROVED for merge. Report: apps/mcp-server/reports/QA_VALIDATION_REPORT.md.
+Task 1855a — suppress false pollNews all-sources-dark alert when VPS push is healthy. 6/6 new tests pass. Full suite 8984p/11f — 11 failures identical to main baseline. tsc 0 errors on changed files. DDD PASS. Security PASS. APPROVED + merged to main. Branch deleted. Report: apps/mcp-server/reports/TASK_REPORT_1855a.md.
 
 ## Known patterns / preferences
 
