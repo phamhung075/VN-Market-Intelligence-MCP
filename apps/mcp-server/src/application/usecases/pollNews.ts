@@ -50,9 +50,9 @@ const VPS_NEWS_STALE_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Minimum interval between "all sources dark" Telegram bug alerts.
- * One alert per 4-hour window — prevents alert flood during sustained outage.
+ * One alert per 24-hour window — prevents alert spam during sustained VPS push gaps.
  */
-const ALL_DARK_ALERT_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+const ALL_DARK_ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 /** Module-level dedup timer for all-sources-dark alert. */
 let _lastAllDarkAlertAt = 0;
