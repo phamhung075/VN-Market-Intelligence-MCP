@@ -58,6 +58,22 @@ export function logVpsPush(entry: VpsPushLogEntry, db?: Database): void {
   );
 }
 
+/**
+ * Insert a push log entry — never throws.
+ *
+ * Drop-in replacement for logVpsPush in HTTP route handlers where a DB write
+ * failure must not propagate to the caller or pollute the outer try-catch.
+ * Errors are logged to stderr for visibility without crashing the request.
+ */
+export function safeLogVpsPush(entry: VpsPushLogEntry, db?: Database): void {
+  try {
+    logVpsPush(entry, db);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[vpsPushLogStore] safeLogVpsPush failed — entry dropped:", err);
+  }
+}
+
 export interface VpsServiceHealth {
   service: string;
   lastPushAt: string | null;
