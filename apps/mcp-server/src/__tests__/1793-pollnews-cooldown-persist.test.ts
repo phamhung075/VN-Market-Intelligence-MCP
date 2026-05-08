@@ -1,5 +1,5 @@
 /**
- * Task 1793 — pollNews all-sources-dark 4h cooldown persists across restarts
+ * Task 1793 — pollNews all-sources-dark 24h cooldown persists across restarts
  *
  * Bug: `_lastAllDarkAlertAt` is module-level and resets to 0 on container
  * restart. The DB-backed guard must carry the cooldown across restarts.
@@ -8,7 +8,7 @@
  * but the cooldown comparison used the injected `nowMs` (test fake clock).
  * This mismatch made the DB row invisible to the cooldown check when `nowMs`
  * returned a future fake timestamp, because `dbLastMs` was real-clock (~0 diff
- * from real now) but `now` was fake-future — so `now - dbLastMs` was >> 4h
+ * from real now) but `now` was fake-future — so `now - dbLastMs` was >> 24h
  * and the second alert fired anyway.
  *
  * Fix: INSERT stores `nowMs()` (or `Date.now()` in production) as the
@@ -16,8 +16,8 @@
  * the same clock source.
  *
  * Tests:
- *   (a) Restart simulation with future nowMs — second call within 4h suppressed
- *   (b) Restart simulation with future nowMs — second call after 4h fires again
+ *   (a) Restart simulation with future nowMs — second call within 24h suppressed
+ *   (b) Restart simulation with future nowMs — second call after 24h fires again
  *   (c) INSERT failure does NOT crash pollNews (best-effort guard)
  *   (d) Production path (no nowMs injection) — DB row persists and suppresses
  */
@@ -27,7 +27,7 @@ import { Database } from "bun:sqlite";
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { initDatabase } from "../infrastructure/db/schema.js";
 
-const ALL_DARK_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+const ALL_DARK_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function makeDb(): Database {
   const db = new Database(":memory:");
@@ -43,12 +43,12 @@ const allEmptyFetchers = {
   tradingeconomics: async () => [],
 };
 
-describe("Task 1793 — pollNews cooldown persists across restart simulation", () => {
+describe("Task 1793 — pollNews 24h cooldown persists across restart simulation", () => {
   beforeEach(() => {
     _resetAllDarkAlert();
   });
 
-  it("(a) restart simulation with future nowMs — second call within 4h suppressed", async () => {
+  it("(a) restart simulation with future nowMs — second call within 24h suppressed", async () => {
     const db = makeDb();
     const bugAlerts: string[] = [];
     const onAllSourcesDark = async (msg: string) => {
@@ -70,7 +70,7 @@ describe("Task 1793 — pollNews cooldown persists across restart simulation", (
     // Simulate process restart: module-level var cleared
     _resetAllDarkAlert();
 
-    // Second call at T=baseNow+30min — DB row must suppress the alert
+    // Second call at T=baseNow+30min (within 24h) — DB row must suppress the alert
     await pollNews({
       db,
       fetchers: allEmptyFetchers,
@@ -81,7 +81,7 @@ describe("Task 1793 — pollNews cooldown persists across restart simulation", (
     expect(bugAlerts.length).toBe(1);
   });
 
-  it("(b) restart simulation with future nowMs — second call after 4h fires again", async () => {
+  it("(b) restart simulation with future nowMs — second call after 24h fires again", async () => {
     const db = makeDb();
     const bugAlerts: string[] = [];
     const onAllSourcesDark = async (msg: string) => {
@@ -102,7 +102,7 @@ describe("Task 1793 — pollNews cooldown persists across restart simulation", (
     // Simulate restart
     _resetAllDarkAlert();
 
-    // Second call at T=baseNow+4h+1min — past cooldown window, must fire again
+    // Second call at T=baseNow+24h+1min — past cooldown window, must fire again
     await pollNews({
       db,
       fetchers: allEmptyFetchers,
@@ -211,9 +211,9 @@ describe("Task 1793 — pollNews cooldown persists across restart simulation", (
     // Simulate restart — clears module-level var
     _resetAllDarkAlert();
 
-    // Second call 1 minute later (still within 4h).
+    // Second call 1 minute later (still within 24h).
     // If INSERT stored real clock instead of farFutureNow, dbLastMs would be
-    // ~365 days behind farFutureNow+1min → now-dbLastMs >> 4h → alert fires → BUG
+    // ~365 days behind farFutureNow+1min → now-dbLastMs >> 24h → alert fires → BUG
     await pollNews({
       db,
       fetchers: allEmptyFetchers,

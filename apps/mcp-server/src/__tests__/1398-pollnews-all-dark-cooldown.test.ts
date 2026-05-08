@@ -2,8 +2,8 @@
  * Task 1398 — pollNews all-sources-dark DB-backed cooldown
  *
  * Tests:
- *   (a) Second invocation within 4h cooldown → alert suppressed (no second send)
- *   (b) Second invocation after 4h cooldown → alert fires again
+ *   (a) Second invocation within 24h cooldown → alert suppressed (no second send)
+ *   (b) Second invocation after 24h cooldown → alert fires again
  *
  * Existing test-7 in 1345a-reuters-fallback.test.ts covers the base case
  * (first call fires, second immediate call does not). These two tests add the
@@ -16,7 +16,7 @@ import { Database } from "bun:sqlite";
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { initDatabase } from "../infrastructure/db/schema.js";
 
-const ALL_DARK_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+const ALL_DARK_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function makeDb(): Database {
   const db = new Database(":memory:");
@@ -39,7 +39,7 @@ describe("Task 1398 — pollNews all-sources-dark DB-backed cooldown", () => {
     _resetAllDarkAlert();
   });
 
-  it("(a) second invocation within 4h cooldown → alert suppressed", async () => {
+  it("(a) second invocation within 24h cooldown → alert suppressed", async () => {
     const db = makeDb();
     const bugAlerts: string[] = [];
     const onAllSourcesDark = async (msg: string) => { bugAlerts.push(msg); };
@@ -55,7 +55,7 @@ describe("Task 1398 — pollNews all-sources-dark DB-backed cooldown", () => {
     });
     expect(bugAlerts.length).toBe(1);
 
-    // Second call at T+30min (within 4h window) — module var reset but DB row exists
+    // Second call at T+30min (within 24h window) — module var reset but DB row exists
     _resetAllDarkAlert(); // simulate process restart (clears module-level var)
     await pollNews({
       db,
@@ -66,7 +66,7 @@ describe("Task 1398 — pollNews all-sources-dark DB-backed cooldown", () => {
     expect(bugAlerts.length).toBe(1); // still 1 — suppressed by DB cooldown
   });
 
-  it("(b) second invocation after 4h cooldown → alert fires again", async () => {
+  it("(b) second invocation after 24h cooldown → alert fires again", async () => {
     const db = makeDb();
     const bugAlerts: string[] = [];
     const onAllSourcesDark = async (msg: string) => { bugAlerts.push(msg); };
@@ -82,7 +82,7 @@ describe("Task 1398 — pollNews all-sources-dark DB-backed cooldown", () => {
     });
     expect(bugAlerts.length).toBe(1);
 
-    // Second call at T+4h+1min (past 4h window) — fires again
+    // Second call at T+24h+1min (past 24h window) — fires again
     _resetAllDarkAlert(); // simulate process restart
     await pollNews({
       db,
