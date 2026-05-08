@@ -119,4 +119,6 @@ export const CRONS = {
   /** alertOutcomeJob — daily alert outcome resolver at 08:45 UTC weekdays (task 1847d-C)
    *  15 min after signalOutcomeJob (08:30 UTC) to avoid DB write contention. */
   alertOutcomeJob:           Bun.env.CRON_ALERT_OUTCOME_JOB                  ?? '45 8 * * 1-5',
+  /** Daily dashboard aggregation: 23:30 GMT+7 every day (after evening summary + periodic summary) — task 1854a */
+  dailyDashboard:            Bun.env.CRON_DAILY_DASHBOARD                    ?? '30 23 * * *',
 }

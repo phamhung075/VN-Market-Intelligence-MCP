@@ -53,6 +53,7 @@ import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJo
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
+import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { CRONS } from './cronConfig.js'
@@ -646,6 +647,18 @@ export function startScheduler() {
       await runMarketEarningYieldJob()
     })
   }, { timezone: 'UTC' })
+
+  // 23:30 GMT+7 daily — Daily dashboard aggregation — task 1854a
+  // Reads session logs + TASKS.md + project-stats.json and writes
+  // docs/data/daily-dashboard.json for observability and sprint tracking.
+  // Fires after evening summary (22:30) and periodic summary (22:30) are done.
+  cron.schedule(CRONS.dailyDashboard, async () => {
+    await jobRunRepo.wrapRun('dailyDashboardJob', async () => {
+      const result = await runDailyDashboardJob()
+      log(`[daily-dashboard] written — date=${result.date} sessions=${result.sessionCount} tasksDone=${result.tasksDone}`)
+      return { rowsWritten: result.sessionCount }
+    })
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
 }
