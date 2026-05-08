@@ -2094,6 +2094,155 @@ export const SECTOR_RULES: SectorRule[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // CHEMICALS_RULES (Task 1850e)
+  // Chemicals/petrochemicals sector cascade rules (DGC, DPM)
+  // Upstream: crude oil, natural gas prices
+  // Downstream: fertilizer, plastic supply chains
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Crude oil price spike → chemicals input cost increase (BEARISH) ────────
+  {
+    keywords: [
+      "giá dầu tăng",
+      "oil price rise",
+      "crude oil up",
+      "giá dầu tăng mạnh",
+      "crude oil surge",
+      "oil rally",
+      "dầu tăng giá",
+    ],
+    domain: "chemicals",
+    direction: "down",
+    confidence: 0.75,
+    title: "Giá dầu tăng — tăng chi phí nguyên liệu hóa chất (input cost pressure)",
+  },
+
+  // ── Crude oil price fall → chemicals input cost decrease (BULLISH) ────────
+  {
+    keywords: [
+      "giá dầu giảm",
+      "oil price fall",
+      "crude oil down",
+      "oil crash",
+      "oil slump",
+      "dầu lao dốc",
+      "crude oil decline",
+      "oil tumble",
+      "oil drop",
+    ],
+    domain: "chemicals",
+    direction: "up",
+    confidence: 0.75,
+    title: "Giá dầu giảm — giảm chi phí nguyên liệu, tích cực cho hóa chất (cost relief)",
+  },
+
+  // ── Natural gas price surge → fertilizer cost increase (BEARISH) ──────────
+  {
+    keywords: [
+      "giá khí đốt tăng",
+      "natural gas price rise",
+      "gas price spike",
+      "khí đốt tăng giá",
+      "natural gas surge",
+      "gas rally",
+      "giá gas tăng",
+    ],
+    domain: "chemicals",
+    direction: "down",
+    confidence: 0.72,
+    title: "Giá khí đốt tăng — tăng chi phí phân bón & hóa chất (feedstock pressure)",
+  },
+
+  // ── Fertilizer price ceiling → margin compression (BEARISH) ───────────────
+  {
+    keywords: [
+      "giá trần phân bón",
+      "trần giá phân bón",
+      "điều chỉnh giá phân bón",
+      "fertilizer price cap",
+      "phân bón giá trần",
+      "hạn giá phân bón",
+      "price regulation fertilizer",
+    ],
+    domain: "chemicals",
+    direction: "down",
+    confidence: 0.78,
+    title: "Quy định giá trần phân bón — tiêu cực cho biên lợi nhuận hóa chất",
+  },
+
+  // ── Environmental regulation → compliance cost (BEARISH) ─────────────────
+  {
+    keywords: [
+      "quy định môi trường hóa chất",
+      "chemical emissions regulation",
+      "environmental compliance",
+      "quy định phát thải hóa chất",
+      "tiêu chuẩn môi trường",
+      "environmental standard",
+      "pollution control chemical",
+      "tiêu chuẩn phát thải",
+    ],
+    domain: "chemicals",
+    direction: "down",
+    confidence: 0.70,
+    title: "Quy định môi trường — tăng chi phí tuân thủ hóa chất (compliance cost)",
+  },
+
+  // ── Supply chain disruption → supply crunch (BEARISH) ────────────────────
+  {
+    keywords: [
+      "cắt nguồn cung hóa chất",
+      "chemical supply disruption",
+      "refinery shutdown",
+      "nguồn cung hóa chất bị gián đoạn",
+      "production halt",
+      "supply chain disruption",
+      "cung cấp hóa chất bị đình trệ",
+      "feedstock shortage",
+    ],
+    domain: "chemicals",
+    direction: "down",
+    confidence: 0.73,
+    title: "Gián đoạn chuỗi cung hóa chất — áp lực cung ứng tiêu cực (supply crunch)",
+  },
+
+  // ── Export support policy → demand boost (BULLISH) ───────────────────────
+  {
+    keywords: [
+      "hỗ trợ xuất khẩu hóa chất",
+      "chemical export support",
+      "export promotion chemical",
+      "xuất khẩu hóa chất tăng",
+      "thỏa thuận thương mại hóa chất",
+      "trade agreement chemical",
+      "expand chemical exports",
+      "hóa chất thị trường",
+    ],
+    domain: "chemicals",
+    direction: "up",
+    confidence: 0.72,
+    title: "Hỗ trợ xuất khẩu hóa chất — tích cực cho nhu cầu & doanh thu (export boost)",
+  },
+
+  // ── Petrochemical project approval → expansion benefit (BULLISH) ─────────
+  {
+    keywords: [
+      "dự án dầu khí mới",
+      "petrochemical project approval",
+      "new refinery",
+      "chấp thuận dự án hóa dầu",
+      "expansion plan chemical",
+      "petrochemical facility",
+      "dự án lọc dầu",
+      "capacity expansion",
+    ],
+    domain: "chemicals",
+    direction: "up",
+    confidence: 0.71,
+    title: "Phê duyệt dự án hóa dầu/khí — tích cực cho tăng trưởng dài hạn (capex benefit)",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Task 1223 — VNDiamond index exclusion → ETF forced selling (BEARISH)
   // When a stock is excluded from VNDiamond, passive ETFs tracking that index
   // are forced to sell, creating systematic downward price pressure.
