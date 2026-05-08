@@ -37,7 +37,24 @@ Coordinator: `cowork-workspace-team-claude-desktop/unified-agent.md`
 | Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene | Sonnet |
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
 | Agent Father | `agent-father.md` | Creates, edits, reviews, maintains all agents per AGENT_CREATION_GUIDE.md | Sonnet |
+| Report Analyzer | `report-analyzer.md` | Parse quarterly earnings reports, extract QoQ/YoY metrics for investor ledger | Sonnet |
 | Semble Search | `.claude/skills/semble-search/SKILL.md` | Code search decision guide: when to use Semble vs Grep/Glob/Read | N/A (skill, not agent) |
+
+## Microservice Dev Agents (Claude Code CLI — zone-scoped)
+
+All share flow: `.claude/flows/developer/microservice-main.md`
+
+| Agent | File | Zone | Model |
+|-------|------|------|-------|
+| Dev MCP Server | `dev-mcp-server.md` | `apps/mcp-server/` | Sonnet |
+| Dev API Gateway | `dev-api-gateway.md` | `apps/api-gateway/` | Sonnet |
+| Dev Stock Price | `dev-stock-price.md` | `apps/stock-price/` | Sonnet |
+| Dev Technical Analysis | `dev-technical-analysis.md` | `apps/technical-analysis/` | Sonnet |
+| Dev Macro Indicators | `dev-macro-indicators.md` | `apps/macro-indicators/` | Sonnet |
+| Dev Kinh Dich | `dev-kinh-dich.md` | `apps/kinh-dich-service/` | Sonnet |
+| Dev Alert Engine | `dev-alert-engine.md` | `apps/alert-engine/` | Sonnet |
+| Dev PDF Extractor | `dev-pdf-extractor.md` | `apps/pdf-extractor/` | Sonnet |
+| Dev RAG Service | `dev-rag-service.md` | `apps/rag-service/` | Sonnet |
 
 **Semble tools:** `developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor` all carry `mcp__semble__search` + `mcp__semble__find_related` in their tool lists.
 

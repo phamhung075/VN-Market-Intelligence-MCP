@@ -8,6 +8,17 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
+## Error Boundary
+
+If any spawned agent returns `PIPELINE: blocked` or a file read/write fails:
+1. Log to session: `"[dev-team] Step N blocked: {one-line error}"`
+2. `send_telegram(work, "[dev-team] Step N blocked: {one-line error}")`
+3. EXIT immediately. Do NOT attempt to continue the current tier.
+
+Your job = orchestrate the dev loop. Blocked = report + EXIT.
+
+---
+
 ## Step 0: Pipeline Resume — Check `docs/pipeline-state.json`
 
 - If `status == "in_progress"` AND `nextAgent` present AND `updatedAt < 24h` → spawn `nextAgent` immediately. Skip Step 1.
