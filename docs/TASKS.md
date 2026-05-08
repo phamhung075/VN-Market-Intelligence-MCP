@@ -8,8 +8,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1850c | FIX: HSG price inconsistency — bootstrap vs history change_pct diverge (-21.63% vs +2.04%). Check priceHistoryService formula consistency. 1-2 files. | MEDIUM | FIX | developer | — | — |
-| 1850e | CLEAN: cascade rule gap — chemicals/petrochemicals domain missing from alert cascade map. 1 file. | LOW | CLEAN | code-janitor | — | — |
 
 ---
 
@@ -38,6 +36,11 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1858c | FIX: logVpsPush() silent failure — safeLogVpsPush wrapper, 6 call sites replaced, 5 tests. | HIGH | FIX | developer | 2026-05-08 |
+| 1858a | FIX: pollNews all-dark cooldown 4h→24h — reduces alert spam during sustained VPS push gaps. 3 files. | HIGH | FIX | developer | 2026-05-08 |
+| 1857a | FIX: vnstock-sync WAL checkpoint (PASSIVE) between stock iterations. Prevents WAL bloat + DB lock. 1 file + 4 tests. | HIGH | FIX | developer | 2026-05-08 |
+| 1850c | FIX: HSG price inconsistency — stale change_pct suppressed in bootstrap when >24h old. Already merged (2aa46a56). | MEDIUM | FIX | developer | 2026-05-08 |
+| 1850e | CLEAN: cascade rule gap — chemicals/petrochemicals domain added to alert cascade map. 3 files + 9 tests. | LOW | CLEAN | code-janitor | 2026-05-08 |
 | 1856a | FIX: vnstock_events NOT NULL constraint — storeEvents Array.isArray + null-code filter. 1 file + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-08 |
 | 1855a | FIX: suppress false pollNews all-sources-dark alert when VPS push pipeline is healthy. 2 files + 6 tests. | HIGH | FIX | developer | 2026-05-08 |
 | 1850d | CLEAN: DBC domain classification — add Dabaco to agriculture sector in stock-classification.json. 2 files + 1 test. | LOW | CLEAN | code-janitor | 2026-05-07 |
