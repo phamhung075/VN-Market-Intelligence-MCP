@@ -21,3 +21,11 @@
 
 #### Decision
 All fixes were safe/structural (no logic changes). No CRITICAL findings. Ecosystem in healthy state post-fix.
+
+### Keep (maintenance) — manual trigger
+- Trigger: manual (user invoked main.md which does not exist — defaulted to keep flow)
+- Agents scanned: 34
+- Auto-fixes: 2 (dev-team/main.md Error Boundary, roster 10 unregistered agents)
+- Escalations: 0
+- Orphans: 4 found (2 LOW intentional: main.md, WORK.md notebooks; 1 LOW intentional: dev-team flow dir; 0 CRITICAL)
+- Lesson: dev-team/main.md was missing Error Boundary — orchestration flows need it too, not just sub-agent flows. Microservice dev-* agents were not in roster — new agents added post-last-review need explicit roster registration check.
