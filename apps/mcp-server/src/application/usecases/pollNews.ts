@@ -41,6 +41,14 @@ import { globalSourceTracker, _resetGlobalSourceTracker } from "../../interface/
 const REUTERS_STALE_MS = 90 * 60 * 1000;
 
 /**
+ * VPS news push freshness window. The VPS push pipeline delivers news every ~15 min.
+ * If the last push is within 2 hours, the scheduled job returning [] is expected
+ * behaviour (fetchers intentionally stubbed — Tasks 1228 + 1843), not an outage.
+ * Task 1855a.
+ */
+const VPS_NEWS_STALE_MS = 2 * 60 * 60 * 1000;
+
+/**
  * Minimum interval between "all sources dark" Telegram bug alerts.
  * One alert per 4-hour window — prevents alert flood during sustained outage.
  */
@@ -143,6 +151,14 @@ export interface PollNewsOptions {
   watchlist?: WatchlistEntry[];
   /** Last Reuters VPS push timestamp — activates newsapi fallback if stale >90 min. Task 1345a. */
   reutersLastPushTs?: Date | null;
+  /**
+   * Last timestamp when the VPS push pipeline delivered news items (service = "news").
+   * When provided and within VPS_NEWS_STALE_MS (2h), the all-sources-dark alert is
+   * suppressed: scheduled fetchers returning [] is expected behaviour because the VPS
+   * push pipeline is the primary ingestion path (Tasks 1228 + 1843 intentionally stub
+   * all local fetchers). Task 1855a.
+   */
+  vpsNewsLastPushTs?: Date | null;
   /** All-sources-dark alert callback (injectable for tests). Task 1345a. */
   onAllSourcesDark?: (message: string) => Promise<void>;
   /** Clock override for testing the 4h cooldown boundary. Task 1398. */
@@ -779,7 +795,17 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   // Task 1832b: only fire when at least one source is expected to be functional
   // (activeSourceCount > 0). If all sources are CB-open or disabled, the zero
   // result is expected behaviour — not an outage.
-  if (allItems.length === 0 && activeSourceCount > 0) {
+  // Task 1855a: suppress alert when VPS push pipeline recently delivered news.
+  // The scheduled job fetchers are intentionally stubbed (Tasks 1228 + 1843) so
+  // they always return []. If the VPS push delivered items within VPS_NEWS_STALE_MS
+  // (2h), a 0-item scheduled cycle is expected — not a real outage.
+  const vpsNewsPushTs = options.vpsNewsLastPushTs ?? null;
+  const vpsNewsAgeMs = vpsNewsPushTs
+    ? (options.nowMs?.() ?? Date.now()) - vpsNewsPushTs.getTime()
+    : Infinity;
+  const vpsPushIsHealthy = vpsNewsAgeMs < VPS_NEWS_STALE_MS;
+
+  if (allItems.length === 0 && activeSourceCount > 0 && !vpsPushIsHealthy) {
     const now = options.nowMs?.() ?? Date.now();
     // DB-backed last-sent: read MAX(started_at) for the cooldown key
     const dbRow = (() => {
