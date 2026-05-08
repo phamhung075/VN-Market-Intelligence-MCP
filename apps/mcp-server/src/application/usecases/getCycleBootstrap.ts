@@ -23,6 +23,7 @@ export const VALID_AGENT_NAMES = [
   "digest-predict",
   "qa-responder",
   "unified-agent",
+  "report-analyzer",
 ] as const;
 
 export type ValidAgentName = (typeof VALID_AGENT_NAMES)[number];
