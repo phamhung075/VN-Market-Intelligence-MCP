@@ -227,6 +227,23 @@ async function defaultPollNews(): Promise<PollNewsResult> {
   //   - CPU/memory waste from orphaned Playwright processes
   // VPS vn-news-fetch.service handles all news sources including Trading
   // Economics; no local fetcher should run from the scheduled cycle.
+
+  // Task 1855a: read VPS news push health to suppress false all-sources-dark
+  // alerts. Since all local fetchers are stubbed, a 0-item scheduled cycle is
+  // expected when the VPS push pipeline is healthy (last push within 2h).
+  // If the DB query fails for any reason, pass null → alert fires (safe default).
+  let vpsNewsLastPushTs: Date | null = null;
+  try {
+    const { getDb } = await import("../../infrastructure/db/schema.js");
+    const db = getDb();
+    const row = db.prepare(
+      `SELECT MAX(pushed_at) AS ts FROM vps_push_log WHERE service = 'news' AND status = 'ok'`,
+    ).get() as { ts: string | null } | undefined;
+    if (row?.ts) vpsNewsLastPushTs = new Date(row.ts);
+  } catch {
+    // DB unavailable or table missing — fall through with null (conservative: alert fires)
+  }
+
   return pollNews({
     fetchers: {
       cafef:            async () => [],
@@ -236,6 +253,7 @@ async function defaultPollNews(): Promise<PollNewsResult> {
       tradingeconomics: async () => [],  // Task 1228: VPS handles TE too
       teChromiumNews:   async () => [],  // Task 1843: VPS handles TE Chromium news too
     },
+    vpsNewsLastPushTs,  // Task 1855a: suppress false alert when VPS push is healthy
   });
 }
 
