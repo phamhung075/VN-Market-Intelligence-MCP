@@ -32,7 +32,7 @@ import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
-import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
+import { safeLogVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { ensurePoisonedQueueCleanup } from "./server-startup.js";
 export {
@@ -389,7 +389,7 @@ export async function createBunServer(
       for await (const chunk of req) body += chunk;
       try {
         if (!body.trim()) {
-          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          safeLogVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Empty request body" }, db);
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Empty request body" }));
           return;
@@ -454,12 +454,12 @@ export async function createBunServer(
           }
         });
 
-        logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
+        safeLogVpsPush({ service: "news", itemsCount: items.length, status: "ok" }, db);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, received: items.length }));
       } catch (err) {
         log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
-        logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
+        safeLogVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) }, db);
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
@@ -480,7 +480,7 @@ export async function createBunServer(
       for await (const chunk of req) body += chunk;
       try {
         if (!body.trim()) {
-          logVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          safeLogVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: "Empty request body" }, db);
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Empty request body" }));
           return;
@@ -520,13 +520,13 @@ export async function createBunServer(
           usdVnd: finalSnapshot.usdVndOfficial,
           fetchedAt: finalSnapshot.fetchedAt,
         });
-        logVpsPush({ service: "sbv", itemsCount: 1, status: "ok" });
+        safeLogVpsPush({ service: "sbv", itemsCount: 1, status: "ok" }, db);
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, usdVnd: finalSnapshot.usdVndOfficial }));
       } catch (err) {
         log.error("[push-sbv-rates] error", { error: err instanceof Error ? err.message : String(err) });
-        logVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
+        safeLogVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) }, db);
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
@@ -772,7 +772,7 @@ export async function createBunServer(
         writeFileSync(pdfPath, pdfBuffer);
 
         log.info("[push-bctc-pdf] PDF saved", { actionCode, periodYear, periodQuarter, filename, bytes: pdfBuffer.length });
-        logVpsPush({ service: "bctc", itemsCount: 1, status: "ok" });
+        safeLogVpsPush({ service: "bctc", itemsCount: 1, status: "ok" }, db);
 
         // Update queue status
         db.prepare(
