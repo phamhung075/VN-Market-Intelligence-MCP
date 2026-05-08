@@ -15,6 +15,15 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+import {
+  getSignalEffectiveness,
+  type SignalEffectiveness,
+} from "../../infrastructure/db/agentSignalStore.js";
+import {
+  formatAccuracyReport,
+  type AccuracyReport,
+} from "../../interface/mcp/tools/alerts/alertAccuracy.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -44,11 +53,44 @@ export interface SessionLogEntry {
   status: "success" | "blocked" | "unknown";
 }
 
+/** Per-agent cycle metrics parsed from a session log file. */
+export interface AgentCycleSummary {
+  /** Total number of cycles found in the log. */
+  cycleCount: number;
+  /** Number of BLOCKED cycles. */
+  blockedCount: number;
+  /** Sum of anomaly counts across all cycles. */
+  anomalyCount: number;
+}
+
 /** Task counts parsed from TASKS.md. */
 export interface TaskCounts {
   done: number;
   inProgress: number;
   backlog: number;
+}
+
+/**
+ * Pre-loaded signal data injected into DashboardAggregateInput.
+ * Both fields come from DB queries in the production entry point.
+ */
+export interface DashboardSignalData {
+  /** Rows from getSignalEffectiveness({ days: 7 }) */
+  effectiveness: SignalEffectiveness[];
+  /** Report from formatAccuracyReport for the last 7 days */
+  alertAccuracy: Pick<AccuracyReport, "total" | "hits" | "misses" | "unknowns" | "text" | "summary_by_type" | "scored_pct">;
+}
+
+/** Aggregated signal quality metrics written to the signals{} block. */
+export interface SignalMetrics {
+  /** Hit rate over the last 7 days: hits / (hits + misses). Null when no scored alerts. */
+  hit_rate_7d: number | null;
+  /** False positive ratio: fp / (confirmed + fp) across all signal groups. Null when no data. */
+  false_positive_7d: number | null;
+  /** Mean precision across signal groups that have confirmed+fp > 0. Null when no data. */
+  cascade_accuracy: number | null;
+  /** Total signal count summed across all effectiveness groups. */
+  total_signals_7d: number;
 }
 
 /** Full daily dashboard output written to daily-dashboard.json. */
@@ -67,6 +109,10 @@ export interface DailyDashboard {
     infrastructureLastUpdated: string;
   };
   sessions: SessionLogEntry[];
+  /** Per-agent cycle metrics, keyed by agent id. Added by Task 1854b. */
+  agents: Record<string, AgentCycleSummary>;
+  /** Signal quality metrics block, or null when signal data unavailable. Added by Task 1854c. */
+  signals: SignalMetrics | null;
 }
 
 /** Input bag for aggregateDailyDashboard (all injectable for tests). */
@@ -76,6 +122,8 @@ export interface DashboardAggregateInput {
   /** Map of filename → file content for session log files. */
   sessionFiles: Record<string, string>;
   tasksMd: string;
+  /** Optional pre-loaded signal data. Omit to skip signals block (signals → null). */
+  signalData?: DashboardSignalData;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +217,136 @@ export function parseTaskCounts(content: string): TaskCounts {
   return { done, inProgress, backlog };
 }
 
+/**
+ * Parses a single agent session log file for cycle metrics.
+ *
+ * Handles two cycle header formats found in production logs:
+ *   1. Strict:  `### Cycle (HH:MM–HH:MM)` (developer-style)
+ *   2. Loose :  `## Cycle HH:MM UTC` / `## Cycle N: HH:MM UTC` / `## Cycle Bootstrap (...)`
+ *
+ * Within each cycle block the function looks for:
+ *   - STATUS lines to determine blocked vs success
+ *   - Anomaly count patterns: "Anomalies: N", "Anomalies Detected: N"
+ *
+ * @param content - Full text of a session log file
+ * @returns AgentCycleSummary
+ */
+export function parseAgentCycles(content: string): AgentCycleSummary {
+  if (!content) return { cycleCount: 0, blockedCount: 0, anomalyCount: 0 };
+
+  // Matches cycle header lines (both strict ### and loose ## forms).
+  const cycleHeaderRe = /^#{2,3}\s+Cycle\b/im;
+
+  // Split content into per-cycle blocks by locating all cycle header positions.
+  const lines = content.split("\n");
+  const cycleStartIndices: number[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (cycleHeaderRe.test(lines[i])) {
+      cycleStartIndices.push(i);
+    }
+  }
+
+  if (cycleStartIndices.length === 0) {
+    return { cycleCount: 0, blockedCount: 0, anomalyCount: 0 };
+  }
+
+  let blockedCount = 0;
+  let anomalyCount = 0;
+
+  for (let ci = 0; ci < cycleStartIndices.length; ci++) {
+    const startLine = cycleStartIndices[ci];
+    const endLine =
+      ci + 1 < cycleStartIndices.length ? cycleStartIndices[ci + 1] : lines.length;
+
+    const block = lines.slice(startLine, endLine).join("\n");
+
+    // Determine blocked status for this cycle block.
+    if (
+      /STATUS:\*\*\s*BLOCKED/i.test(block) ||
+      /STATUS:\s*BLOCKED/i.test(block) ||
+      /EXIT\s+CODE:\s*BLOCKED/i.test(block)
+    ) {
+      blockedCount++;
+    }
+
+    // Extract anomaly count: "Anomalies: N", "Anomalies Detected: N", "anomalies: N |"
+    const anomalyMatch = block.match(/[Aa]nomal(?:ies|y)(?:\s+[Dd]etected)?:\s*(\d+)/);
+    if (anomalyMatch) {
+      anomalyCount += parseInt(anomalyMatch[1], 10);
+    }
+  }
+
+  return {
+    cycleCount: cycleStartIndices.length,
+    blockedCount,
+    anomalyCount,
+  };
+}
+
+/**
+ * Compute signal quality metrics from pre-loaded effectiveness rows and
+ * alert accuracy report.
+ *
+ * Pure function — no I/O. Designed for injection in tests.
+ *
+ * Metrics produced:
+ *   hit_rate_7d       — alert hit rate: hits / (hits + misses). Null when no scored alerts.
+ *   false_positive_7d — FP ratio: total_fp / (total_confirmed + total_fp). Null when no data.
+ *   cascade_accuracy  — mean precision across groups with confirmed+fp > 0. Null when no data.
+ *   total_signals_7d  — sum of all signal counts across effectiveness groups.
+ *
+ * @param data - DashboardSignalData with effectiveness rows and alert accuracy report
+ * @returns SignalMetrics
+ */
+export function computeSignalMetrics(data: DashboardSignalData): SignalMetrics {
+  const { effectiveness, alertAccuracy } = data;
+
+  // ── hit_rate_7d ─────────────────────────────────────────────────────────────
+  const scoreable = alertAccuracy.hits + alertAccuracy.misses;
+  const hit_rate_7d =
+    scoreable > 0
+      ? Math.round((alertAccuracy.hits / scoreable) * 100) / 100
+      : null;
+
+  // ── false_positive_7d ───────────────────────────────────────────────────────
+  let totalConfirmed = 0;
+  let totalFp = 0;
+  let totalSignals = 0;
+
+  for (const row of effectiveness) {
+    totalConfirmed += row.confirmed;
+    totalFp += row.false_positive;
+    totalSignals += row.total;
+  }
+
+  const fpDenom = totalConfirmed + totalFp;
+  const false_positive_7d =
+    fpDenom > 0
+      ? Math.round((totalFp / fpDenom) * 100) / 100
+      : null;
+
+  // ── cascade_accuracy ────────────────────────────────────────────────────────
+  // Mean precision across groups that have a non-null precision value.
+  const precisionValues = effectiveness
+    .filter((r) => r.precision !== null)
+    .map((r) => r.precision as number);
+
+  const cascade_accuracy =
+    precisionValues.length > 0
+      ? Math.round(
+          (precisionValues.reduce((sum, p) => sum + p, 0) / precisionValues.length) * 100,
+        ) / 100
+      : null;
+
+  return {
+    hit_rate_7d,
+    false_positive_7d,
+    cascade_accuracy,
+    total_signals_7d: totalSignals,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Core aggregation (pure, injectable)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,12 +360,25 @@ export function parseTaskCounts(content: string): TaskCounts {
  * @returns DailyDashboard
  */
 export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDashboard {
-  const { date, stats, sessionFiles, tasksMd } = input;
+  const { date, stats, sessionFiles, tasksMd, signalData } = input;
 
   const sessions = parseSessionLogs(sessionFiles, date);
   const tasks = parseTaskCounts(tasksMd);
 
   const infra = stats.infrastructureStatus;
+
+  // Build agents{} block: parse cycle metrics for each session file matching today.
+  const agents: Record<string, AgentCycleSummary> = {};
+  for (const [filename, content] of Object.entries(sessionFiles)) {
+    if (!filename.startsWith(date + "-") || !filename.endsWith(".md")) continue;
+    const agentId = filename.slice(date.length + 1, -".md".length);
+    agents[agentId] = parseAgentCycles(content);
+  }
+
+  // Build signals{} block when signal data is provided.
+  const signals: SignalMetrics | null = signalData
+    ? computeSignalMetrics(signalData)
+    : null;
 
   return {
     date,
@@ -204,6 +395,8 @@ export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDa
       infrastructureLastUpdated: infra?.lastUpdated ?? "",
     },
     sessions,
+    agents,
+    signals,
   };
 }
 
@@ -293,10 +486,56 @@ export interface DailyDashboardJobResult {
 }
 
 /**
+ * Loads signal metrics from the live database.
+ *
+ * Calls getSignalEffectiveness and formatAccuracyReport directly —
+ * no MCP round-trip. Returns null on any DB error (non-fatal for the job).
+ *
+ * @param days - Lookback window in days (default 7)
+ * @returns DashboardSignalData or null on failure
+ */
+async function loadSignalData(days = 7): Promise<DashboardSignalData | null> {
+  try {
+    await initDatabase();
+    const db = getDb();
+
+    const effectiveness = getSignalEffectiveness(db, { days });
+
+    const since = new Date(Date.now() - days * 86_400_000).toISOString();
+    type AlertRow = {
+      id: string;
+      triggered_at: string;
+      severity: string;
+      signals_json: string | null;
+      affected_actions_json: string | null;
+      outcome: string | null;
+      outcome_at: string | null;
+      outcome_detail: string | null;
+    };
+    const alertRows = db
+      .prepare<AlertRow, [string]>(
+        `SELECT id, triggered_at, severity, signals_json, affected_actions_json,
+                outcome, outcome_at, outcome_detail
+         FROM alerts
+         WHERE triggered_at >= ?
+         ORDER BY triggered_at DESC`,
+      )
+      .all(since) as AlertRow[];
+
+    const alertAccuracy = formatAccuracyReport(alertRows, days);
+
+    return { effectiveness, alertAccuracy };
+  } catch (err) {
+    console.warn("[dailyDashboardJob] loadSignalData failed (non-fatal):", err);
+    return null;
+  }
+}
+
+/**
  * Runs the daily dashboard aggregation job.
  *
- * Reads project-stats.json, session logs, and TASKS.md then writes
- * docs/data/daily-dashboard.json.
+ * Reads project-stats.json, session logs, TASKS.md, and signal metrics
+ * then writes docs/data/daily-dashboard.json.
  *
  * @param dateOverride - Optional ISO date override (defaults to today in GMT+7)
  * @returns DailyDashboardJobResult
@@ -314,8 +553,9 @@ export async function runDailyDashboardJob(
   const stats = loadProjectStats();
   const sessionFiles = loadSessionFiles(date);
   const tasksMd = loadTasksMd();
+  const signalData = await loadSignalData(7);
 
-  const dashboard = aggregateDailyDashboard({ date, stats, sessionFiles, tasksMd });
+  const dashboard = aggregateDailyDashboard({ date, stats, sessionFiles, tasksMd, signalData: signalData ?? undefined });
 
   writeDashboard(dashboard);
 
