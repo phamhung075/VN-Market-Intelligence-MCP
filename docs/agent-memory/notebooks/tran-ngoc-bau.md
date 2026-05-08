@@ -1,6 +1,6 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-07 (cycle 11 — hallucination audit + Kinh Dich deep analysis) | Cycles completed: 11
+**Last updated:** 2026-05-08 (cycle 16 — 14:32 UTC) | Cycles completed: 16
 
 ---
 
@@ -187,18 +187,19 @@ Instead of binary GOOD/BLOCKED, assign hexagram to each agent each cycle:
 - Hexagram 3 Chun (Difficulty): agent functional but struggling with obstacles
 - Hexagram 5 Xu (Waiting): agent intentionally paused, waiting for dependency
 
-Current cycle hexagram assessment:
+Current cycle hexagram assessment (cycle 16):
 | Agent | Hexagram | State |
 |-------|----------|-------|
 | PO | 1 (Qian) | Full creative power |
 | Developer | 2 (Kun) | Pure execution |
-| news-scout | 50 (Ding) | Nourishing transformation |
-| Alert Commander 07h | 21 (Shi He) | Biting through, effective |
-| Alert Commander 18h | 5 (Xu) | Waiting/blocked |
-| market-watcher | 29 (Kham doubled = Abysmal) | Danger doubled. MCP blocked = falling into pit with no escape. |
-| unified-agent | 59 (Huan) | Dispersed — regime inconsistency |
-| Financial Analyst | 5 (Xu) | Waiting for VPS data |
-| Tran Ngoc Bau | 52 (Gen doubled = Mountain) | Keeping still. Correct. Holding the gate. |
+| news-scout | 50 (Ding) | Nourishing transformation — 4 clean cycles, 8 signals, conviction thresholds enforced |
+| alert-commander | 21 (Shi He) | Biting through — 9 cycles, banking chain_catalyst CRITICAL fired at 78% conviction |
+| market-watcher | 3 (Chun — Difficulty) | Recovering from CASCADE. Off-hours sub-2σ drift. Functional but struggling |
+| unified-agent | 11 (Tai — Peace) | Inner stable, outer calm. 2 GREEN cycles. Off-schedule BLOCKED = minor |
+| financial-analyst | 5 (Xu — Waiting) | Waiting for BCTC filings. 30/31 overdue |
+| report-analyzer | 48 (Jing — Well) | Well rope broken — enum mismatch blocks access to data |
+| qa-responder | 2 (Kun) | Pure execution — empty queue, faithful protocol |
+| Tran Ngoc Bau | 52 (Gen doubled = Mountain) | Keeping still. Holding the gate |
 
 **Application 2: Systemic imbalance detection via trigram count**
 
@@ -324,14 +325,13 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 
 ---
 
-## Quality Baseline (cycle 10 — 2026-05-07)
+## Quality Baseline (cycle 16 — 2026-05-08)
 
-- MARKET message quality score: 1 message in DB (msg#2130 = routing violation, auto-cured)
-- Format error rate: N/A (no alert-commander alerts in DB this cycle)
-- Signal effectiveness: price_anomaly data EXPIRED from 7d window (was 22/11/3 100%). news-scout: chain_catalyst 1/0/0, urgent_news 4/0/0
-- Alert accuracy (7d): 0% hit, 96% unknown — feedback loop still broken
-- Agent methodology compliance: 18 session files reviewed, 6+ agents BLOCKED today
-- Auto-cures applied: 1 (GAP-3 routing guard)
+- Signal effectiveness (7d): price_anomaly 11/2/3 (100% precision!), chain_catalyst 6/1/0, urgent_news 22/0/0, fundamental_validation 3/0/0
+- Alert accuracy (7d): 7% hit (9/132), 9% miss (12), 84% unknown (111). price_drop 44% (7/16), price_surge 40% (2/5)
+- Agent methodology compliance: 8 agents reviewed, 2 TRANSITION, 3 STRAIN, 2 HEALTHY, 1 NO DATA
+- Auto-cures applied: 0 this cycle (3 total across cycles 10-11)
+- New observation: market-watcher off-hours methodology drift (sub-2σ signals posted as PRICE_ANOMALY)
 
 ---
 
@@ -358,19 +358,18 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 - Cycle 10: 10/13 OK. Reuters + TE x2 still stopped (12 consecutive errors — counter reset after system restart)
 - Track: 3 sources permanently broken
 
-### GAP-5: Alert accuracy feedback loop broken [HIGH — THRESHOLD]
+### GAP-5: Alert accuracy feedback loop broken [HIGH — SIGNIFICANTLY IMPROVING]
 - First seen: 2026-05-06
-- 7d: 0% hit, 96% unknown — UNCHANGED across 5+ cycles
-- Track: occurrence count = 3+ → **THRESHOLD — developer must fix outcome tracking**
+- 7d: 7% hit (9/132), 9% miss, 84% unknown. price_drop 44%, price_surge 40%
+- Track: **SIGNIFICANTLY IMPROVING** — from 0% (cycle 10) → 2% (cycle 13) → 7% (cycle 15-16). Developer must still fix automated verdict workflow.
 
 ### GAP-6: sigma threshold data drop [RESOLVED]
 - Resolved cycle 6. All stocks 358+ points READY.
 
-### GAP-7: Regime extraction non-deterministic [HIGH — THRESHOLD]
+### GAP-7: Regime extraction non-deterministic [HIGH — RECOVERING]
 - First seen: 2026-05-07 cycle 6
-- Cycle 10: no new regime data (all agents BLOCKED or no new extraction)
-- Three different regimes extracted by different agents on same day: NEUTRAL, EASING, TIGHTENING
-- Track: **3/3 → THRESHOLD. Developer must investigate macro_snapshot regime logic.**
+- Cycle 16: NEUTRAL consistent across ALL 5 active agents (news-scout, market-watcher, alert-commander, unified-agent, financial-analyst). No divergence detected.
+- Track: **RECOVERING** — consistent since cycle 13. Was 3 different regimes on same day. Monitor for regression.
 
 ### GAP-8: Sandbox/cron agents lack MCP access [HIGH — THRESHOLD]
 - First seen: 2026-05-07 cycle 6
@@ -383,10 +382,10 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 - Cycle 10: macro snapshot returned successfully (no Dinh Gia section in output — still omitted)
 - Track: **3/3 → THRESHOLD. Developer must fix DB schema.**
 
-### GAP-10: market-watcher session file overwritten [HIGH — THRESHOLD]
+### GAP-10: market-watcher session file overwritten [RESOLVED ✅]
 - First seen: 2026-05-07 cycle 8
-- Cycle 10: confirmed 3 overwrites today (14:38→15:38→16:38). Prior content lost.
-- Track: **occurrence count = 3/3 → THRESHOLD. Developer must fix append-only logging.**
+- Cycle 16: session has 12 entries, all correctly appended. No overwrites since cycle 12.
+- Track: **RESOLVED ✅**
 
 ---
 
@@ -394,58 +393,58 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 
 | Pattern | First seen | Count | Trigger at | Status |
 |---------|-----------|-------|-----------|--------|
-| post_agent_signal schema error | 2026-05-06 | 2 | 3 | worsening |
+| post_agent_signal schema error | 2026-05-06 | 2 | 3 | watching |
 | confidence missing in news-scout | 2026-05-06 | 1 | 3 | likely resolved |
-| **non-alert msg in MARKET channel** | **2026-05-06** | **3** | **3** | **AUTO-CURED cycle 10** |
-| **alert accuracy feedback loop** | **2026-05-06** | **3+** | **3** | **THRESHOLD — needs dev fix** |
-| **regime extraction inconsistency** | **2026-05-07** | **3** | **3** | **THRESHOLD — needs dev fix** |
-| **sandbox MCP access failure** | **2026-05-07** | **3+** | **3** | **THRESHOLD — needs architect** |
+| **non-alert msg in MARKET channel** | **2026-05-06** | **3** | **3** | **AUTO-CURED cycle 10** ✅ |
+| **alert accuracy feedback loop** | **2026-05-06** | **3+** | **3** | **SIGNIFICANTLY IMPROVING** (7%) |
+| **regime extraction inconsistency** | **2026-05-07** | **3** | **3** | **RECOVERING** (consistent NEUTRAL) |
+| **sandbox MCP access failure** | **2026-05-07** | **3+** | **3** | **OSCILLATING** — needs architect |
 | **Dinh Gia DB schema error** | **2026-05-07** | **3** | **3** | **THRESHOLD — needs dev fix** |
-| **market-watcher session overwrite** | **2026-05-07** | **3** | **3** | **THRESHOLD — needs dev fix** |
+| **market-watcher session overwrite** | **2026-05-07** | **3** | **3** | **RESOLVED** ✅ |
+| report-analyzer enum mismatch | 2026-05-08 | 2 | 3 | GAP-11 — needs dev fix |
+| vnstock-sync NOT NULL | 2026-05-08 | 1 | 3 | GAP-12 — watching |
+| market-watcher sub-2σ off-hours drift | 2026-05-08 | 1 | 3 | NEW — watching |
+| vnstock RATE_LIMITED (VPB/DLC) | 2026-05-08 | 1 | 3 | NEW — watching |
 
 ---
 
-## Agent Reliability Scores (cycle 10 — 2026-05-07)
+## Agent Reliability Scores (cycle 16 — 2026-05-08)
 
 | Agent | Methodology | Format | Regime | Overall |
 |-------|-------------|--------|--------|---------|
-| news-scout | GOOD | GOOD | GOOD (NEUTRAL consistent) | GOOD |
-| news-scout-cycle | GOOD | GOOD | GOOD | GOOD |
-| market-watcher | BLOCKED (5x today) | — | — | NO DATA |
-| alert-commander | GOOD (07:02 cycle) | GOOD | GOOD | GOOD |
-| alert-commander-18h | BLOCKED | — | — | NO DATA |
-| unified-agent | NEEDS ATTENTION (regime) | GOOD | MIXED | NEEDS ATTENTION |
-| unified-agent-BLOCKED | BLOCKED | — | — | NO DATA |
-| unified-agent-cycle | BLOCKED | — | — | NO DATA |
-| report-analyzer | BLOCKED | — | — | NO DATA |
-| qa-responder | GOOD | N/A (empty queue) | N/A | GOOD |
-| developer | GOOD | N/A | N/A | GOOD (active fixes) |
-| PO | GOOD | N/A | N/A | GOOD (triage completed) |
+| news-scout | GOOD (conviction threshold enforced) | GOOD | GOOD (NEUTRAL consistent) | GOOD |
+| market-watcher | NEEDS ATTENTION (sub-2σ off-hours drift) | GOOD | GOOD (NEUTRAL) | NEEDS ATTENTION |
+| alert-commander | EXCELLENT (9 cycles, sophisticated reasoning) | EXCELLENT (5-section) | EXCELLENT (carry regime analysis) | EXCELLENT |
+| unified-agent | GOOD (2 GREEN cycles) | GOOD | GOOD (NEUTRAL) | GOOD |
+| financial-analyst | GOOD (3 fundamental_validation) | GOOD | GOOD | GOOD |
+| report-analyzer | BLOCKED (enum GAP-11) | — | — | BLOCKED |
+| digest-predict | NO DATA | — | — | NO DATA |
+| qa-responder | GOOD (empty queue, proper protocol) | N/A | N/A | GOOD |
 
 ---
 
 ## Calibration Tracking
 
-| Signal Type | Period | Count | Fired | Confirmed | Precision |
-|------------|--------|-------|-------|-----------|-----------|
-| price_anomaly | 7d | EXPIRED | — | — | was 100% |
-| chain_catalyst | 7d | 1 | 0 | 0 | N/A |
-| urgent_news | 7d | 4 | 0 | 0 | N/A |
-| fundamental_validation | 7d | 0 | 0 | 0 | N/A |
+| Signal Type | Period | Count | Fired | Confirmed | False+ | Precision |
+|------------|--------|-------|-------|-----------|--------|-----------|
+| price_anomaly | 7d | 11 | 2 | 3 | 0 | 100% ✅ |
+| chain_catalyst | 7d | 6 | 1 | 0 | 0 | N/A |
+| urgent_news | 7d | 22 | 0 | 0 | 0 | N/A |
+| fundamental_validation | 7d | 3 | 0 | 0 | 0 | N/A |
 
-Note: price_anomaly data expired from 7d window. market-watcher BLOCKED = no new signals.
+Note: price_anomaly rebuilt to 100% precision. chain_catalyst first firing at 11:03 (banking decline). urgent_news zero-fire = high suppression bar (NEUTRAL 0.60 threshold).
 
 ---
 
 ## Macro Trend Tracking
 
-| Indicator | Cycle 8 | Cycle 9 | Cycle 10 | Trend |
-|-----------|---------|---------|----------|-------|
-| Brent crude | $99.03 | $96.39 | $100.70 | REBOUNDED |
-| Gold | — | $4,763 | $4,717.80 | DECLINING |
-| DXY | — | — | 98.08 (STABLE) | NEW |
-| USD/VND | — | — | 26,260 (HIGH) | PRESSURE |
-| VN-Index | 1,909.01 | 1,909.01 | — (CLOSED) | STABLE |
+| Indicator | Cycle 14 | Cycle 15 | Cycle 16 | Trend |
+|-----------|----------|----------|----------|-------|
+| Brent crude | $100.65 | $100.54 | $101.32 | REBOUNDING ↑ |
+| Gold | $4,735 | $4,728.70 | $4,735.60 | ELEVATED (stable) |
+| DXY | 98.12 | 97.92 | 97.92 | STABLE (slight decline) |
+| USD/VND | 26,260 | 26,260 | 26,305 | RISING ↑ (new high) |
+| VN-Index | — | — | 1,909 | STABLE |
 
 ---
 
@@ -468,14 +467,17 @@ Note: price_anomaly data expired from 7d window. market-watcher BLOCKED = no new
 
 ## Next Actions
 
-- **5 gaps at THRESHOLD** — all require developer/architect intervention:
-  - GAP-5: alert outcome tracking (developer)
-  - GAP-7: regime extraction non-deterministic (developer)
-  - GAP-8: sandbox MCP access (architect) — root cause of H1
+- **3 gaps at THRESHOLD** requiring developer/architect intervention:
+  - GAP-8: sandbox MCP access OSCILLATING (architect) — root cause of agent BLOCKED cycles
   - GAP-9: Dinh Gia DB schema `fetched_at` column (developer)
-  - GAP-10: market-watcher session overwrite — append-only logging (developer)
-- GAP-1: post_agent_signal schema error at 2/3 — worsened, watch closely
-- GAP-3: AUTO-CURED — monitor for recurrence in next cycles
-- H1/H2/H3: flow-level fixes applied — monitor next cycles for recurrence
-- Signal effectiveness degrading — price_anomaly data expired, market-watcher must resume to rebuild
-- System restarted (uptime 2h33m) — RSS error counters reset but underlying issues remain
+  - GAP-11: report-analyzer enum mismatch — 2/3, approaching threshold (developer)
+- **2 gaps IMPROVING** — continue monitoring:
+  - GAP-5: alert accuracy 7% and rising. price_drop 44%, price_surge 40%. Developer must still fix automated verdict workflow
+  - GAP-7: regime NEUTRAL consistent across all agents. Monitor for regression
+- **2 gaps RESOLVED**: GAP-6 (σ data), GAP-10 (session overwrite)
+- **New observations** (1/3, watching):
+  - market-watcher off-hours methodology drift (sub-2σ signals posted as PRICE_ANOMALY)
+  - vnstock RATE_LIMITED (VPB/DLC) — may be transient batch pressure
+- H1/H2/H3 hallucination patterns: NO RECURRENCE since flow fixes applied (cycles 12-16). Confirmed cured.
+- price_anomaly rebuilt to 100% precision (3/3 confirmed) — signal effectiveness healthy
+- USD/VND rising to 26,305 — watch for FII acceleration and aviation/import sector pressure
