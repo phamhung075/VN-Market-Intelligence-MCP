@@ -487,3 +487,45 @@ export function deleteOldReports(db: Database, olderThanHours = 48): number {
     .run(cutoff);
   return result.changes;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Monitoring report auto-expiry (Task 1860c)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Age threshold in hours after which a monitoring report is considered stale.
+ * Reports with `resolution = 'monitoring'` and `resolved_at` older than this
+ * value are transitioned to `'wontfix'` so the existing archive logic picks
+ * them up automatically.
+ */
+export const MONITORING_EXPIRY_HOURS = 72;
+
+/**
+ * Transitions stale `monitoring` reports to `wontfix`.
+ *
+ * A report qualifies when ALL of:
+ *   - `resolution = 'monitoring'`
+ *   - `resolved_at < NOW() - {@link MONITORING_EXPIRY_HOURS} hours`
+ *
+ * Rows are updated in a single SQL statement — no row-by-row iteration.
+ * The function is idempotent: a second call on the same rows returns 0.
+ *
+ * @param db - SQLite database instance
+ * @returns  Number of rows transitioned from 'monitoring' to 'wontfix'
+ */
+export function expireMonitoringReports(db: Database): number {
+  const cutoffIso = new Date(
+    Date.now() - MONITORING_EXPIRY_HOURS * 3600 * 1000,
+  ).toISOString();
+
+  const result = db
+    .prepare(
+      `UPDATE telegram_reports
+       SET resolution = 'wontfix'
+       WHERE resolution = 'monitoring'
+         AND resolved_at < ?`,
+    )
+    .run(cutoffIso);
+
+  return result.changes;
+}

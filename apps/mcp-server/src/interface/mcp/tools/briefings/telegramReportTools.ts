@@ -27,6 +27,8 @@ import {
   markResolved,
   claimReport,
   serializeReport,
+  expireMonitoringReports,
+  MONITORING_EXPIRY_HOURS,
   type TelegramReport,
 } from "../../../../infrastructure/db/telegramReportStore.js";
 import { deleteTelegramBug } from "../../../../infrastructure/notifiers/telegram.js";
@@ -332,6 +334,47 @@ export function registerTelegramReportTools(server: McpServer): void {
             {
               type: "text" as const,
               text: formatReportError("claim", id, err instanceof Error ? err.message : String(err)),
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── expire_monitoring_reports ─────────────────────────────────────────────
+  server.tool(
+    "expire_monitoring_reports",
+    `Chuyển các báo cáo 'monitoring' cũ hơn ${MONITORING_EXPIRY_HOURS} giờ sang trạng thái 'wontfix' ` +
+      "để logic lưu trữ hiện có có thể dọn dẹp chúng. " +
+      "Trả về số lượng báo cáo đã được chuyển đổi. " +
+      "Gọi hàm này định kỳ để tránh tích lũy báo cáo monitoring không hồi kết.",
+    {},
+    async () => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        const expired = expireMonitoringReports(db);
+
+        const text =
+          expired === 0
+            ? "Không có báo cáo monitoring nào cần hết hạn."
+            : `Đã chuyển ${expired} báo cáo monitoring → wontfix (cũ hơn ${MONITORING_EXPIRY_HOURS}h).`;
+
+        return {
+          content: [{ type: "text" as const, text }],
+        };
+      } catch (err) {
+        console.error("[expire_monitoring_reports] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: formatReportError(
+                "hết hạn monitoring",
+                0,
+                err instanceof Error ? err.message : String(err),
+              ),
             },
           ],
         };
