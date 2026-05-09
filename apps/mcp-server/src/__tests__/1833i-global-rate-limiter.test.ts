@@ -7,8 +7,8 @@ import { describe, it, expect } from "bun:test";
 import { VnstockRateLimiter, GLOBAL_RATE_LIMIT_RPM } from "../infrastructure/fetchers/vnstockBridge.js";
 
 describe("Task 1833i — VnstockRateLimiter", () => {
-  it("exports GLOBAL_RATE_LIMIT_RPM = 50", () => {
-    expect(GLOBAL_RATE_LIMIT_RPM).toBe(50);
+  it("exports GLOBAL_RATE_LIMIT_RPM = 80 (Task 1862a: increased from 50 to handle 30-ticker scans)", () => {
+    expect(GLOBAL_RATE_LIMIT_RPM).toBe(80);
   });
 
   it("resolves up to rpm calls immediately (within budget)", async () => {

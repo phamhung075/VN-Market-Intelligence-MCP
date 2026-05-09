@@ -46,8 +46,18 @@ import {
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 
-// Inter-request delay to stay well within 60 req/min
-const DELAY_MS = 1500;
+/**
+ * Inter-request delay between consecutive vnstock endpoint calls within a single ticker.
+ *
+ * Rationale (Task 1862a): With 30 watchlist tickers × 6 stale endpoints each = 180 calls/cycle.
+ * At 2500ms spacing, the sequential stream peaks at 60_000/2500 = 24 calls/min — well within
+ * the GLOBAL_RATE_LIMIT_RPM=80 ceiling in vnstockBridge.ts.
+ * Previously 1500ms → allowed ~40 calls/min, which combined with backoff retries exhausted
+ * the 50-slot window and caused 10+ tickers to receive RATE_LIMITED responses.
+ *
+ * Exported for unit tests (Task 1862a).
+ */
+export const SYNC_DELAY_MS = 2500;
 
 // ---------------------------------------------------------------------------
 // Injectable deps — WAL checkpoint between stock iterations (Task 1857a)
@@ -244,7 +254,7 @@ async function syncStock(code: string): Promise<number> {
         recordFailure(_globalCbState, code, "financials");
       }
       calls++;
-      await sleep(DELAY_MS);
+      await sleep(SYNC_DELAY_MS);
     }
   }
 
@@ -262,7 +272,7 @@ async function syncStock(code: string): Promise<number> {
         recordFailure(_globalCbState, code, "balance_sheet");
       }
       calls++;
-      await sleep(DELAY_MS);
+      await sleep(SYNC_DELAY_MS);
     }
   }
 
@@ -280,7 +290,7 @@ async function syncStock(code: string): Promise<number> {
         recordFailure(_globalCbState, code, "cash_flow");
       }
       calls++;
-      await sleep(DELAY_MS);
+      await sleep(SYNC_DELAY_MS);
     }
   }
 
@@ -298,7 +308,7 @@ async function syncStock(code: string): Promise<number> {
         recordFailure(_globalCbState, code, "trading_stats");
       }
       calls++;
-      await sleep(DELAY_MS);
+      await sleep(SYNC_DELAY_MS);
     }
   }
 
@@ -328,7 +338,7 @@ async function syncStock(code: string): Promise<number> {
       markFetched(code, "officers"); // back off even on empty/timeout
     }
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   // Shareholders (24h staleness)
@@ -337,7 +347,7 @@ async function syncStock(code: string): Promise<number> {
     if (holders.length > 0) storeShareholders(code, holders);
     else markFetched(code, "shareholders"); // back off even on empty/timeout
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   // Corporate events (7-day staleness — events don't change often)
@@ -348,7 +358,7 @@ async function syncStock(code: string): Promise<number> {
     if (events.length > 0) storeEvents(code, events);
     else markFetched(code, "events"); // back off 7d even on empty/timeout
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   return calls;
@@ -373,7 +383,7 @@ export async function syncStockLight(code: string): Promise<number> {
     if (stats) storeTradingStats(stats);
     else markFetched(code, "trading_stats");
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   if (isStale(code, "financials", 1440)) {
@@ -381,7 +391,7 @@ export async function syncStockLight(code: string): Promise<number> {
     if (fin) storeFinancials(fin);
     else markFetched(code, "financials");
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   if (isStale(code, "balance_sheet", 1440)) {
@@ -389,7 +399,7 @@ export async function syncStockLight(code: string): Promise<number> {
     if (bs) storeBalanceSheet(bs);
     else markFetched(code, "balance_sheet");
     calls++;
-    await sleep(DELAY_MS);
+    await sleep(SYNC_DELAY_MS);
   }
 
   return calls;
