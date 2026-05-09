@@ -1,56 +1,46 @@
 # PO Notebook
 
-## Last updated: 2026-05-03 (Sprint 1846 kickoff)
+## Last updated: 2026-05-09 (Sprint 1860 kickoff)
 
-## Current sprint: 1846
+## Current sprint: 1860
 
 ### State at session start
 
-- Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=514, toolCount=125
-- Sprint 1845 DONE: 1845a CLEAN + 1845b ENOENT fix + 1845c tool-registry sync + 1845d DRY
-- pipeline-state.json: idle at session start → updated to in_progress for Sprint 1846
-- UPGRADE_PLAN.md: all 10 Tier 1+2+3 items DONE. U-5 gated until 2026-05-10.
+- Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=515, toolCount=128
+- Sprint 1858 DONE: 1858a pollNews cooldown + 1858c safeLogVpsPush wrapper
+- pipeline-state.json: idle at session start -> updated to in_progress for Sprint 1860
+- MCP infra: DOWN per project-stats.json (ECONNREFUSED since 2026-05-06)
 
-### Channel audit (2026-05-03 session)
+### Channel audit (2026-05-09 session)
 
-Evaluated via 2026-05-04 session logs (Telegram MCP not directly accessible):
-- MARKET: clean — signals 2206-2214 fired correctly, HSG corporate action identified, GAS surge alerted, VN-Index 1860 note. No N/A in signal data. 4 tickers missing price data (BDI/DLC/SIS/JSH) — pre-existing data gap.
-- WORK: alert commander cycle status sent each cycle. Suppression logic correct (chain_catalyst 50% conf suppressed at NEUTRAL 75% threshold). No channel routing errors.
-- BUG: zero escalations.
-Result: CLEAN
+- MARKET: not audited (MCP infra DOWN)
+- WORK: Sprint 1858 completed cleanly
+- BUG: flooded with stale processed reports still visible in Telegram. Root cause: 3 bugs identified (see session log)
+Result: BUG channel unusable — Sprint 1860 targets this
 
-### Sprint 1846 decision
+### Sprint 1860 decision
 
-UPGRADE_PLAN exhausted (U-5 gated). Backlog was empty. Identified product gap in backtesting feature:
+BUG channel hygiene. 3 root causes making the channel unusable:
 
-**Missing CRUD operations after 4 sprints building the engine:**
-1. No way to delete stale runs — table grows unbounded, no `deleteRun()` in interface
-2. No CSV export — `get_backtest_run` returns raw JSON; analysis agents need tabular trade data
-3. No strategy comparison — analyst must call `run_backtest` 3x and mentally diff; a compare tool closes this
+1. **Telegram deletion silent failure** — process_telegram_report marks row processed even when delete fails. FIX 1860a.
+2. **Monitoring reports accumulate forever** — no expiry, C-6 guard blocks cleanup. SPRINT-S 1860c + 1860d.
+3. **No dedup at submission** — agents file identical reports every cycle. FIX 1860b.
 
-Sprint scope: 1846a CLEAN + BA-1846 spec (3 tools: #123/#124/#125) + UPGRADE_PLAN Tier 4
+5 tasks total: 2 FIX (high priority, recurring bugs) + 3 SPRINT-S (medium).
+
+Dependency chain: 1860a+1860b (parallel, no deps) -> 1860c -> 1860d (depends c) + 1860e (depends a)
 
 ### Test baseline tracking
 
 | Sprint | Pass | Fail | Date |
 |--------|------|------|------|
-| 1843 close | 8804 | 1 (intentional) | 2026-05-03 |
-| 1844 close | 8804 | 1 (intentional) | 2026-05-04 |
-| 1845 close | 8804 | 1 (intentional) | 2026-05-03 |
-| 1846 target | 8804+N | <=1 (1331a only) | — |
+| 1846 close | 8804 | 1 (intentional) | 2026-05-03 |
+| 1858 close | 8804 | 1 (intentional) | 2026-05-08 |
+| 1860 target | 8804+N | <=1 (1331a only) | — |
 
 ### Patterns observed
 
-- Every sprint accumulates orphan session/report files → CLEAN task is structural, not optional. Consider whether agent flows should auto-commit at cycle end.
-- Backtesting feature gap (delete/export/compare) was visible immediately after Sprint 1844 retrieval tools landed. Pattern: retrieval without lifecycle management is incomplete.
-- 4 watchlist tickers (BDI, DLC, SIS, JSH/VDC) persistently missing price data. Pre-existing. Not a code bug — these may be delisted or low-liquidity. Flag for watchlist audit post-U-5.
-- UPGRADE_PLAN.md needs a Tier 4 "Post-Plan" section. Plan reads as complete with no forward vision — adds cognitive overhead for PO to re-derive scope from scratch each sprint.
-
-### U-5 gate reminder
-
-Do NOT plan U-5 before 2026-05-10. First Monday prediction cycle ran 2026-05-04: 4 claims filed (BID bullish 5d, FPT bearish 10d, VIC bullish 20d, GAS bullish 20d). Check get_calibration_report() on 2026-05-10 — if >= 5 outcomes recorded, U-5 is unblocked.
-
-### toolCount projection
-
-- Current: 125 (tools #120-122 in backtesting)
-- Sprint 1846 target: 128 (add #123 delete_backtest_run, #124 export_backtest_run_csv, #125 compare_backtest_runs)
+- BUG channel pollution is a systemic issue: silent failures + no dedup + no expiry = exponential noise growth. All 3 must be fixed together or the channel remains unusable.
+- submit_feedback is called from error boundaries in 5+ agent flows (unified-agent market/prediction/weekly/daily-review, digest-predict). Each fires every cycle on persistent issues. Dedup at DB level is the only scalable fix.
+- Monitoring resolution was added in Sprint 1849 but without a cleanup path — design oversight. The C-6 guard correctly prevents infinite triage loops but also prevents any garbage collection.
+- MCP infra has been DOWN since 2026-05-06. This is a separate issue (ops intervention required per project-stats.json). Not blocking Sprint 1860 which is code-level fixes.
