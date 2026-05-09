@@ -217,44 +217,55 @@ export function registerTelegramReportTools(server: McpServer): void {
           }
         }
 
-        // Step 3: optionally delete from Telegram — GUARD: if deletion fails, abort
+        // Step 3: optionally delete from Telegram
+        // delete_success semantics:
+        //   true  — deletion was requested and succeeded
+        //   false — deletion was requested but failed
+        //   null  — deletion was not requested (delete_telegram_message=false)
+        let deleteSuccess: boolean | null = null;
+
         if (row.message_id > 0 && shouldDelete) {
-          let telegramDeleted = false;
           try {
-            telegramDeleted = await deleteTelegramBug(row.message_id);
+            deleteSuccess = await deleteTelegramBug(row.message_id);
           } catch {
-            telegramDeleted = false;
+            // Swallow — Telegram may have already deleted the message
+            deleteSuccess = false;
           }
-
-          if (!telegramDeleted) {
-            // Do NOT mark as processed — caller must retry after resolving Telegram issue
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: "Telegram deletion failed, report NOT marked as processed",
-                },
-              ],
-            };
-          }
+        } else if (shouldDelete) {
+          // shouldDelete=true but message_id=0 — no-op, deletion not applicable
+          deleteSuccess = null;
         }
+        // else: shouldDelete=false → deleteSuccess stays null (not requested)
 
-        // Step 4: mark as processed in SQLite (only reached when delete succeeded or was skipped)
+        // Step 4: mark as processed in SQLite
         markProcessed(db, id);
 
-        // Step 5: return confirmation
+        // Step 5: return structured JSON confirmation
         const resolutionSuffix =
           resolvedResolution !== "none" ? ` Resolution: ${resolvedResolution}.` : "";
 
-        let text: string;
+        let statusText: string;
         if (row.message_id > 0 && shouldDelete) {
-          text = `Report ${id} marked as processed.${resolutionSuffix} Telegram message ${row.message_id} deleted.`;
+          statusText = `Report ${id} marked as processed.${resolutionSuffix} Telegram message ${row.message_id} deleted.`;
+          if (deleteSuccess === false) {
+            statusText += " (Telegram deletion may have failed — row is still marked processed.)";
+          }
         } else {
-          text = `Report ${id} marked as processed.${resolutionSuffix} Telegram deletion skipped.`;
+          statusText = `Report ${id} marked as processed.${resolutionSuffix} Telegram deletion skipped.`;
         }
 
+        statusText += ` delete_success=${deleteSuccess === null ? "null" : deleteSuccess}`;
+
+        const responsePayload = {
+          processed: true,
+          report_id: id,
+          resolution: resolvedResolution,
+          delete_success: deleteSuccess,
+          message: statusText,
+        };
+
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify(responsePayload) }],
         };
       } catch (err) {
         console.error("[process_telegram_report] Failed:", err);
