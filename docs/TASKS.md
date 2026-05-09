@@ -16,7 +16,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1860d | SPRINT-S: dev-team Step 4.5 archive — extend archive loop to include expired monitoring reports (resolution=monitoring + age>72h). | MEDIUM | SPRINT-S | developer | — | 1860c |
-| 1860e | SPRINT-S: process_telegram_report return delete_success field — callers can distinguish DB-processed vs Telegram-deleted. | MEDIUM | SPRINT-S | dev-mcp-server | — | 1860a |
 
 ---
 
@@ -38,6 +37,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1860e | SPRINT-S: process_telegram_report delete_success field — structured JSON response, delete_success true/false/null. 2 files + 13 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-09 |
 | 1860c | SPRINT-S: monitoring report auto-expiry — expireMonitoringReports() 72h TTL, expire_monitoring_reports MCP tool. 3 files + 15 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-09 |
 | 1860b | FIX: submit_feedback dedup — insertReportDeduped(), 4h window, same from_agent + 50-char prefix. 3 files + 9 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
 | 1860a | FIX: process_telegram_report delete guard — markProcessed blocked on Telegram failure. 2 files + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
