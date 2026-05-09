@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -99,7 +99,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "market-watcher" }
 );
@@ -114,7 +114,7 @@ if (bootstrap.market_context?.trading_window === "closed") {
 
 ```typescript
 // Fetch price data for watchlist
-const priceData = await mcp__claude_ai_gateway__call_tool(
+const priceData = await call_tool(
   server: "vn-market", tool: "get_price_history",
   arguments: {
     tickers: ["VCB", "ACB", "FPT"],
@@ -130,7 +130,7 @@ const priceData = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Identify chart patterns
-const patterns = await mcp__claude_ai_gateway__call_tool(
+const patterns = await call_tool(
   server: "vn-market", tool: "get_patterns",
   arguments: { ticker: "VCB" }
 );
@@ -145,7 +145,7 @@ const patterns = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Get full technical picture
-const indicators = await mcp__claude_ai_gateway__call_tool(
+const indicators = await call_tool(
   server: "vn-market", tool: "get_technical_indicators",
   arguments: { ticker: "FPT" }
 );
@@ -160,7 +160,7 @@ const indicators = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Track relative sector performance
-const rotation = await mcp__claude_ai_gateway__call_tool(
+const rotation = await call_tool(
   server: "vn-market", tool: "get_sector_rotation",
   arguments: {}
 );
@@ -176,13 +176,13 @@ const rotation = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Check for unusual moves
-const intelligence = await mcp__claude_ai_gateway__call_tool(
+const intelligence = await call_tool(
   server: "vn-market", tool: "get_ticker_intelligence",
   arguments: { ticker: "VCB" }
 );
 
 if (intelligence.today_move_zscore > 2.0) {
-  await mcp__claude_ai_gateway__call_tool({
+  await call_tool({
     server: "vn-market", tool: "post_agent_signal",
     arguments: {
       from_agent: "market-watcher",
@@ -207,17 +207,17 @@ if (intelligence.today_move_zscore > 2.0) {
 
 ```typescript
 // Check macro risks
-const supplyChainRisk = await mcp__claude_ai_gateway__call_tool(
+const supplyChainRisk = await call_tool(
   server: "vn-market", tool: "get_supply_chain_exposure",
   arguments: {}
 );
 
-const climateRisk = await mcp__claude_ai_gateway__call_tool(
+const climateRisk = await call_tool(
   server: "vn-market", tool: "get_climate_risk_signals",
   arguments: {}
 );
 
-const energyRisk = await mcp__claude_ai_gateway__call_tool(
+const energyRisk = await call_tool(
   server: "vn-market", tool: "get_energy_grid_signals",
   arguments: {}
 );

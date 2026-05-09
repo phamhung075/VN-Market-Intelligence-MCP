@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -103,7 +103,7 @@ QA Responder handles user questions about:
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "qa-responder" }
 );
@@ -117,7 +117,7 @@ if (bootstrap.market_context?.trading_window === "closed") {
 
 ```typescript
 // Execute full QA cycle
-const result = await mcp__claude_ai_gateway__call_tool(
+const result = await call_tool(
   server: "vn-market", tool: "run_qa_responder",
   arguments: {}
 );
@@ -132,7 +132,7 @@ const result = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Fetch pending questions
-const pending = await mcp__claude_ai_gateway__call_tool(
+const pending = await call_tool(
   server: "vn-market", tool: "get_pending_ask_questions",
   arguments: {}
 );
@@ -143,7 +143,7 @@ for (const question of pending.questions) {
 
   // Route question to appropriate analysis
   if (question.category === "stock_analysis") {
-    const bctc = await mcp__claude_ai_gateway__call_tool(
+    const bctc = await call_tool(
       server: "vn-market", tool: "get_bctc_full",
       arguments: { ticker: question.ticker }
     );
@@ -156,7 +156,7 @@ for (const question of pending.questions) {
   }
 
   else if (question.category === "market") {
-    const market = await mcp__claude_ai_gateway__call_tool(
+    const market = await call_tool(
       server: "vn-market", tool: "get_market_snapshot",
       arguments: {}
     );
@@ -165,7 +165,7 @@ for (const question of pending.questions) {
   }
 
   // Send answer
-  await mcp__claude_ai_gateway__call_tool(
+  await call_tool(
     server: "vn-market", tool: "answer_ask_question",
     arguments: {
       question_id: question.id,
@@ -182,7 +182,7 @@ for (const question of pending.questions) {
 // User asks: "What's VCB's latest financial situation?"
 const question = pending.questions[0]; // VCB analysis
 
-const bctc = await mcp__claude_ai_gateway__call_tool(
+const bctc = await call_tool(
   server: "vn-market", tool: "get_bctc_full",
   arguments: {
     ticker: "VCB",
@@ -190,12 +190,12 @@ const bctc = await mcp__claude_ai_gateway__call_tool(
   }
 );
 
-const insider = await mcp__claude_ai_gateway__call_tool(
+const insider = await call_tool(
   server: "vn-market", tool: "get_insider_transactions",
   arguments: {}
 );
 
-const kinhdich = await mcp__claude_ai_gateway__call_tool(
+const kinhdich = await call_tool(
   server: "vn-market", tool: "get_kinhdich_reading",
   arguments: { ticker: "VCB" }
 );
@@ -207,7 +207,7 @@ const answer = `VCB Q1 2026 Financial Summary:
 - Insider Activity: ${insider.recent_count} transactions
 - Market Hexagram: ${kinhdich.hexagram_id} (${kinhdich.meaning})`;
 
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "answer_ask_question",
   arguments: {
     question_id: question.id,
@@ -226,7 +226,7 @@ await mcp__claude_ai_gateway__call_tool(
 const question = pending.questions[0];
 const answer = `Based on current market conditions, a portfolio rebalance may be advisable. Please check the latest rebalancing signals in the market channel for specific recommendations.`;
 
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "answer_ask_question",
   arguments: {
     question_id: question.id,
@@ -240,12 +240,12 @@ await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // User asks: "What's the market outlook?"
-const macro = await mcp__claude_ai_gateway__call_tool(
+const macro = await call_tool(
   server: "vn-market", tool: "get_macro_snapshot",
   arguments: {}
 );
 
-const predictions = await mcp__claude_ai_gateway__call_tool(
+const predictions = await call_tool(
   server: "vn-market", tool: "get_prediction_markets",
   arguments: {}
 );
@@ -255,7 +255,7 @@ const answer = `Market Outlook:
 - Prediction Accuracy: ${predictions.overall_accuracy}%
 - Current Theme: Based on Kinh Dich hexagram readings`;
 
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "answer_ask_question",
   arguments: {
     question_id: question.id,

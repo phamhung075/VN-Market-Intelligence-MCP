@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -113,13 +113,13 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "unified-agent" }
 );
 
 // Check system health
-const systemStatus = await mcp__claude_ai_gateway__call_tool(
+const systemStatus = await call_tool(
   server: "vn-market", tool: "get_system_status",
   arguments: {}
 );
@@ -134,17 +134,17 @@ if (systemStatus.any_critical_errors) {
 
 ```typescript
 // Get market overview
-const market = await mcp__claude_ai_gateway__call_tool(
+const market = await call_tool(
   server: "vn-market", tool: "get_market_context",
   arguments: {}
 );
 
-const sentiment = await mcp__claude_ai_gateway__call_tool(
+const sentiment = await call_tool(
   server: "vn-market", tool: "get_sentiment_trend",
   arguments: {}
 );
 
-const predictions = await mcp__claude_ai_gateway__call_tool(
+const predictions = await call_tool(
   server: "vn-market", tool: "get_prediction_markets",
   arguments: {}
 );
@@ -156,22 +156,22 @@ const predictions = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Get full portfolio picture
-const positions = await mcp__claude_ai_gateway__call_tool(
+const positions = await call_tool(
   server: "vn-market", tool: "get_positions",
   arguments: {}
 );
 
-const conviction = await mcp__claude_ai_gateway__call_tool(
+const conviction = await call_tool(
   server: "vn-market", tool: "get_portfolio_conviction",
   arguments: {}
 );
 
-const risk = await mcp__claude_ai_gateway__call_tool(
+const risk = await call_tool(
   server: "vn-market", tool: "get_portfolio_risk",
   arguments: {}
 );
 
-const rebalancing = await mcp__claude_ai_gateway__call_tool(
+const rebalancing = await call_tool(
   server: "vn-market", tool: "get_rebalancing_signals",
   arguments: {}
 );
@@ -186,17 +186,17 @@ if (risk.var_95 > 0.15) {
 
 ```typescript
 // Monitor cascade effectiveness
-const cascadeMetrics = await mcp__claude_ai_gateway__call_tool(
+const cascadeMetrics = await call_tool(
   server: "vn-market", tool: "get_cascade_metrics",
   arguments: {}
 );
 
-const alertAccuracy = await mcp__claude_ai_gateway__call_tool(
+const alertAccuracy = await call_tool(
   server: "vn-market", tool: "get_alert_accuracy",
   arguments: {}
 );
 
-const signalEffectiveness = await mcp__claude_ai_gateway__call_tool(
+const signalEffectiveness = await call_tool(
   server: "vn-market", tool: "get_signal_effectiveness",
   arguments: {}
 );
@@ -208,12 +208,12 @@ const signalEffectiveness = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Check for new intelligence
-const telegramReports = await mcp__claude_ai_gateway__call_tool(
+const telegramReports = await call_tool(
   server: "vn-market", tool: "read_telegram_reports",
   arguments: {}
 );
 
-const unreviewed = await mcp__claude_ai_gateway__call_tool(
+const unreviewed = await call_tool(
   server: "vn-market", tool: "get_unreviewed_market_messages",
   arguments: {}
 );

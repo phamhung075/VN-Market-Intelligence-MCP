@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -84,7 +84,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap in parallel
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "alert-commander" }
 );
@@ -102,7 +102,7 @@ if (bootstrap.market_context?.trading_window === "closed") {
 
 ```typescript
 // Get high-risk alerts
-const alerts = await mcp__claude_ai_gateway__call_tool(
+const alerts = await call_tool(
   server: "vn-market", tool: "get_alerts",
   arguments: { type: "risk" }
 );
@@ -113,7 +113,7 @@ for (const alert of alerts) {
 }
 
 // Send batch digest
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "send_alert_digest",
   arguments: {
     alerts: filteredAlerts,
@@ -122,7 +122,7 @@ await mcp__claude_ai_gateway__call_tool(
 );
 
 // Record outcomes
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "record_signal_outcome",
   arguments: {
     signal_id: alert.signal_id,
@@ -135,7 +135,7 @@ await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Alert Commander receives "cross_validate" from Financial Analyst
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "post_agent_signal",
   arguments: {
     signal_type: "verified_chain",

@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -86,7 +86,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "news-scout" }
 );
@@ -101,7 +101,7 @@ if (bootstrap.market_context?.trading_window === "closed") {
 
 ```typescript
 // Fetch VN news for watchlist
-const newsAnalysis = await mcp__claude_ai_gateway__call_tool(
+const newsAnalysis = await call_tool(
   server: "vn-market", tool: "fetch_and_analyze",
   arguments: {}
 );
@@ -116,7 +116,7 @@ const newsAnalysis = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // When we find news about VCB governance issue
-const chain = await mcp__claude_ai_gateway__call_tool(
+const chain = await call_tool(
   server: "vn-market", tool: "run_impact_chain",
   arguments: {
     newsText: "VCB board member resignation amid dispute — governance risk",
@@ -134,7 +134,7 @@ const chain = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Find similar past events to validate signal
-const similar = await mcp__claude_ai_gateway__call_tool(
+const similar = await call_tool(
   server: "vn-market", tool: "search_similar_context",
   arguments: {
     query: "board member resignation governance",
@@ -157,7 +157,7 @@ if (similar.matches.length > 0) {
 ```typescript
 // Post urgent breaking news signal
 // Required finding_data fields: headline, source, severity
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "post_agent_signal",
   arguments: {
     from_agent: "news-scout",

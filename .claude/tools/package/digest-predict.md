@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -138,7 +138,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "digest-predict" }
 );
@@ -153,18 +153,18 @@ if (bootstrap.system_status?.any_critical_errors) {
 
 ```typescript
 // Get comprehensive market summary
-const summary = await mcp__claude_ai_gateway__call_tool(
+const summary = await call_tool(
   server: "vn-market", tool: "get_market_summary",
   arguments: {}
 );
 
-const generated = await mcp__claude_ai_gateway__call_tool(
+const generated = await call_tool(
   server: "vn-market", tool: "generate_market_summary",
   arguments: { period: "daily" }
 );
 
 // Send to market channel
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "send_telegram",
   arguments: {
     message: generated.summary_text,
@@ -177,7 +177,7 @@ await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Test strategy accuracy
-const backtest = await mcp__claude_ai_gateway__call_tool(
+const backtest = await call_tool(
   server: "vn-market", tool: "run_hexagram_backtest",
   arguments: {
     strategy: "kinh-dich-high-confidence",
@@ -196,7 +196,7 @@ const backtest = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Record prediction for tracking accuracy
-const market_hex = await mcp__claude_ai_gateway__call_tool(
+const market_hex = await call_tool(
   server: "vn-market", tool: "get_market_hexagram",
   arguments: {}
 );
@@ -204,7 +204,7 @@ const market_hex = await mcp__claude_ai_gateway__call_tool(
 if (market_hex.hexagram_id === 11) {
   // Hexagram 11: Peace/Prosperity
   // Make directional prediction
-  await mcp__claude_ai_gateway__call_tool(
+  await call_tool(
     server: "vn-market", tool: "create_prediction_claim",
     arguments: {
       ticker: "^VNINDEX",
@@ -219,24 +219,24 @@ if (market_hex.hexagram_id === 11) {
 
 ```typescript
 // Full portfolio assessment
-const conviction = await mcp__claude_ai_gateway__call_tool(
+const conviction = await call_tool(
   server: "vn-market", tool: "get_portfolio_conviction",
   arguments: {}
 );
 
-const risk = await mcp__claude_ai_gateway__call_tool(
+const risk = await call_tool(
   server: "vn-market", tool: "get_portfolio_risk",
   arguments: {}
 );
 
-const rebalance = await mcp__claude_ai_gateway__call_tool(
+const rebalance = await call_tool(
   server: "vn-market", tool: "get_rebalancing_signals",
   arguments: {}
 );
 
 // Determine if portfolio needs adjustment
 if (rebalance.actions.length > 0) {
-  await mcp__claude_ai_gateway__call_tool(
+  await call_tool(
     server: "vn-market", tool: "send_telegram",
     arguments: {
       message: `Portfolio rebalance recommended:\n${rebalance.actions.map(a => a.description).join('\n')}`,
@@ -250,7 +250,7 @@ if (rebalance.actions.length > 0) {
 
 ```typescript
 // Compare strategy performance
-const comparison = await mcp__claude_ai_gateway__call_tool(
+const comparison = await call_tool(
   server: "vn-market", tool: "compare_backtest_runs",
   arguments: {
     run_ids: ["run_uuid_1", "run_uuid_2"]
@@ -267,7 +267,7 @@ const comparison = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Verify prediction confidence is well-calibrated
-const calibration = await mcp__claude_ai_gateway__call_tool(
+const calibration = await call_tool(
   server: "vn-market", tool: "get_calibration_report",
   arguments: {}
 );
@@ -282,7 +282,7 @@ if (calibration.overconfident) {
 
 ```typescript
 // Record key findings for persistence
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "append_session_record",
   arguments: {
     content: "Daily digest complete. Market hexagram: 11 (Peace). Sentiment +0.68. Backtest accuracy: 62.5%. Rebalance recommended for 2 positions."
@@ -290,7 +290,7 @@ await mcp__claude_ai_gateway__call_tool(
 );
 
 // Update strategic memory
-await mcp__claude_ai_gateway__call_tool(
+await call_tool(
   server: "vn-market", tool: "update_memory_file",
   arguments: {
     file_key: "digest_memory",

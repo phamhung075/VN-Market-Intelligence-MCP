@@ -6,11 +6,11 @@
 
 ## How to Invoke Tools
 
-All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway.
+All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").
 Server name: **`vn-market`** (exact, no variants).
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
@@ -91,7 +91,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ```typescript
 // Step 0: Bootstrap
-const bootstrap = await mcp__claude_ai_gateway__call_tool(
+const bootstrap = await call_tool(
   server: "vn-market", tool: "get_cycle_bootstrap",
   arguments: { agent_name: "financial-analyst" }
 );
@@ -107,7 +107,7 @@ if (bootstrap.system_status?.bctc_vps_status !== "operational") {
 
 ```typescript
 // Comprehensive financial snapshot
-const bctcData = await mcp__claude_ai_gateway__call_tool(
+const bctcData = await call_tool(
   server: "vn-market", tool: "get_bctc_full",
   arguments: {
     ticker: "VCB",
@@ -126,7 +126,7 @@ const bctcData = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Get all upcoming deadlines
-const calendar = await mcp__claude_ai_gateway__call_tool(
+const calendar = await call_tool(
   server: "vn-market", tool: "get_earnings_calendar",
   arguments: {}
 );
@@ -141,7 +141,7 @@ const calendar = await mcp__claude_ai_gateway__call_tool(
 
 ```typescript
 // Compare metrics with peers
-const comparison = await mcp__claude_ai_gateway__call_tool(
+const comparison = await call_tool(
   server: "vn-market", tool: "get_sector_comparison",
   arguments: {
     ticker: "VCB",
@@ -159,14 +159,14 @@ if (comparison.ticker_rank === 1) {
 
 ```typescript
 // Alert Commander found price anomaly - validate with BCTC
-const bctc = await mcp__claude_ai_gateway__call_tool(
+const bctc = await call_tool(
   server: "vn-market", tool: "get_bctc_full",
   arguments: { ticker: "ACB" }
 );
 
 if (bctc.comparison.YoY_growth > 0.20 && bctc.sentiment_trend.slope > 0) {
   // Fundamental support for price move
-  await mcp__claude_ai_gateway__call_tool(
+  await call_tool(
     server: "vn-market", tool: "post_agent_signal",
     arguments: {
       signal_type: "fundamental_validation",
@@ -189,7 +189,7 @@ if (bctc.comparison.YoY_growth > 0.20 && bctc.sentiment_trend.slope > 0) {
 
 ```typescript
 // Find similar BCTC transitions to validate signal
-const similar = await mcp__claude_ai_gateway__call_tool(
+const similar = await call_tool(
   server: "vn-market", tool: "search_similar_context",
   arguments: {
     query: "sharp revenue increase with margin compression",
