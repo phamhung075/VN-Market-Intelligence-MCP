@@ -15,6 +15,11 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1860a | FIX: process_telegram_report must fail if Telegram deletion fails — do NOT mark processed when deleteTelegramBug returns false. | HIGH | FIX | dev-mcp-server | — | — |
+| 1860b | FIX: submit_feedback dedup — insertReport must reject duplicate (same from_agent + title substring) within 4h window. | HIGH | FIX | dev-mcp-server | — | — |
+| 1860c | SPRINT-S: monitoring report auto-expiry — add expireMonitoringReports() store function, 72h TTL, dev-team Step 4 calls it before scan. | MEDIUM | SPRINT-S | dev-mcp-server | — | — |
+| 1860d | SPRINT-S: dev-team Step 4.5 archive — extend archive loop to include expired monitoring reports (resolution=monitoring + age>72h). | MEDIUM | SPRINT-S | developer | — | 1860c |
+| 1860e | SPRINT-S: process_telegram_report return delete_success field — callers can distinguish DB-processed vs Telegram-deleted. | MEDIUM | SPRINT-S | dev-mcp-server | — | 1860a |
 
 ---
 
