@@ -107,27 +107,45 @@ export function registerFeedbackTools(server: McpServer): void {
       try {
         const now = new Date().toISOString();
 
+        // ── Task 1860b: dedup check before Telegram send ──────────────────
+        const { insertReportDeduped } = await import("../../../../infrastructure/db/telegramReportStore.js");
+        const { getDb } = await import("../../../../infrastructure/db/index.js");
+        const db = getDb();
+
+        const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
+        const recipient = to.startsWith("@") ? to : `@${to}`;
+        const headerFooter = [
+          `${emoji} [${priority.toUpperCase()}] ${recipient}`,
+          `📋 ${category}`,
+          `From: ${agent}`,
+          `${title}`,
+          `🕐 ${now.slice(0, 16).replace("T", " ")} UTC`,
+        ].join("\n");
+
+        const detailMaxChars = Math.max(1000, 4096 - headerFooter.length - 100);
+        const msg = [
+          headerFooter,
+          detail ? `\n${detail.slice(0, detailMaxChars)}` : "",
+        ].filter(Boolean).join("\n");
+
+        // Use msg as the dedup key (first 50 chars of full message)
+        const dedupResult = insertReportDeduped(db, msg, agent, 0, "normal");
+        if (!dedupResult.inserted) {
+          logger.info("[feedback] suppressed duplicate", {
+            agent, category, title, suppressedBy: dedupResult.suppressedBy,
+          });
+          return {
+            content: [{
+              type: "text" as const,
+              text: `Duplicate report suppressed (existing report #${dedupResult.suppressedBy} from ${dedupResult.suppressedAt})`,
+            }],
+          };
+        }
+
         // Send to BUG channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) — single source of truth
         let msgId = 0;
         try {
           const { sendTelegramBug } = await import("../../../../infrastructure/notifiers/telegram.js");
-          const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
-          const recipient = to.startsWith("@") ? to : `@${to}`;
-          // Telegram max message length: 4096 chars
-          // Reserve ~200 chars for header/footer, use remaining for detail
-          const headerFooter = [
-            `${emoji} [${priority.toUpperCase()}] ${recipient}`,
-            `📋 ${category}`,
-            `From: ${agent}`,
-            `${title}`,
-            `🕐 ${now.slice(0, 16).replace("T", " ")} UTC`,
-          ].join("\n");
-
-          const detailMaxChars = Math.max(1000, 4096 - headerFooter.length - 100);
-          const msg = [
-            headerFooter,
-            detail ? `\n${detail.slice(0, detailMaxChars)}` : "",
-          ].filter(Boolean).join("\n");
           // Bug 1317: retry once with 2s delay on transient Telegram API failures.
           msgId = await retryOnTransient(() => sendTelegramBug(msg), 1, 2000);
         } catch { /* best-effort after retry */ }
