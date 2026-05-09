@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-09 (scan 6, CLEAN — JANITOR-023 status updated to shipped)
+## Last updated: 2026-05-09 (scan 7 — JANITOR-024 shipped)
 
 ## State summary
 
@@ -18,6 +18,7 @@
 | JANITOR-021 | BROWSER_FETCH_TIMEOUT_MS (30000) inlined 4x in discoverBctcPdfUrlBrowser.ts | b33d6856 |
 | JANITOR-022 | DBC domain classification: added to agriculture sector in stock-classification.json | TBD |
 | JANITOR-023 | CLAUDE_BIN extracted to agentConstants.ts, imported by smartCompactSpawner.ts + qaResponderSpawner.ts | b836f129 |
+| JANITOR-024 | DEDUP_WINDOW_SECONDS inlined in isDuplicateReport default parameter | dd2e6b82 |
 
 ### Open backlog
 

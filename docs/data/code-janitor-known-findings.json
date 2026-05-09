@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-05-08T22:16:00Z",
-  "last_run": "2026-05-09T00:00:00Z",
+  "scan_date": "2026-05-09T12:15:00Z",
+  "last_run": "2026-05-09T12:15:00Z",
   "findings": [
     {
       "fingerprint": "check-3:infrastructure/agents:CLAUDE_BIN-duplicated",
@@ -106,6 +106,17 @@
     }
   ],
   "fixed_findings": [
+    {
+      "fingerprint": "check-3:infrastructure/db/telegramReportStore.ts:DEDUP_WINDOW_SECONDS",
+      "severity": "LOW",
+      "category": "Magic number repeated in function default parameter (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/db/telegramReportStore.ts",
+      "detail": "DEDUP_WINDOW_SECONDS constant defined at line 219 (4*3600), but isDuplicateReport() function at line 318 used hardcoded 4*3600 as default parameter. Now uses DEDUP_WINDOW_SECONDS constant. Single edit point restored.",
+      "fix_type": "refactor",
+      "fix_commit": "dd2e6b82",
+      "fixed_at": "2026-05-09T12:15:00Z",
+      "fix_notes": "JANITOR-024. Single-file change. 7 tests pass (1215-bug-report-dedup.test.ts). TSC clean. Shipped directly."
+    },
     {
       "fingerprint": "check-3:infrastructure/agents/smartCompactSpawner.ts:MAX_TURN_CHARS",
       "severity": "LOW",
@@ -247,38 +258,38 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 2,
-      "scope": "diff HEAD~15..HEAD (2 production TS files: macroIndicatorFetcher.ts, smartCompactSpawner.ts)",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files: telegramReportStore.ts, telegramReportTools.ts, feedbackTools.ts)",
       "findings": 0,
-      "notes": "No Record<string,> keyed on ticker symbols. No sector/exchange/display-name classification maps in either file. Clean."
+      "notes": "No Record<string,> keyed on ticker symbols. No sector/exchange/display-name classification maps. Clean."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 2,
-      "scope": "diff HEAD~15..HEAD (2 production TS files)",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
       "findings": 0,
-      "notes": "No uppercase ticker literals in macroIndicatorFetcher.ts or smartCompactSpawner.ts. Clean."
+      "notes": "No uppercase ticker literals. Clean."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 2,
-      "scope": "diff HEAD~15..HEAD (2 production TS files)",
-      "findings": 2,
-      "notes": "JANITOR-022 shipped: 500 (MAX_TURN_CHARS) and 60 (MAX_TURNS) extracted to named constants in smartCompactSpawner.ts. Commit f34852b0. JANITOR-023 proposed: CLAUDE_BIN duplicated in smartCompactSpawner.ts and qaResponderSpawner.ts — two-file change, backlog task added."
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
+      "findings": 1,
+      "notes": "JANITOR-024 shipped: DEDUP_WINDOW_SECONDS (4*3600) inlined in isDuplicateReport default parameter. Now uses constant. Commit dd2e6b82."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 2,
-      "scope": "diff HEAD~15..HEAD (2 production TS files)",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
       "findings": 0,
-      "notes": "Zero CREATE TABLE or inline DDL in macroIndicatorFetcher.ts or smartCompactSpawner.ts. Clean."
+      "notes": "Zero CREATE TABLE or inline DDL. All DDL in schema.ts canonical source. Clean."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 2,
-      "scope": "diff HEAD~15..HEAD (2 production TS files)",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
       "findings": 0,
-      "notes": "macroIndicatorFetcher.ts line 148: `Bun.env.GSO_VPS_ENDPOINT ?? 'https://www.gso.gov.vn/'` — no GSO key in mcp.config.json; env-var fallback is the only definition. Not a config drift. Clean."
+      "notes": "No hardcoded config fallbacks discovered. ??: patterns are error handling, not config drift. Clean."
     }
   }
 }
