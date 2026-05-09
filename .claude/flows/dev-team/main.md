@@ -137,6 +137,19 @@ Route by zone:
 
 ## Step 4: Scan
 
+### Step 4.0: Expire stale monitoring reports
+
+Before anything else in Step 4, call `expire_monitoring_reports` via MCP gateway:
+
+```
+result = expire_monitoring_reports()
+log to session: "[dev-team] Expired {result.expired} monitoring reports (>72h)"
+```
+
+This flips stale monitoring reports (resolution="monitoring", age >72h) to "wontfix" so the archive loop below can pick them up in Step 4 sub-step 5.
+
+---
+
 After all tasks Done:
 1. `git branch` — any non-main branches remain? → add CLEAN batch → Step 1.
 
