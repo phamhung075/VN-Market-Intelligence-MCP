@@ -190,7 +190,7 @@ export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckRes
 // Global rate limiter — 50 RPM sliding window (Task 1833i)
 // ---------------------------------------------------------------------------
 
-export const GLOBAL_RATE_LIMIT_RPM = 50;
+export const GLOBAL_RATE_LIMIT_RPM = 80;
 
 /**
  * Sliding-window rate limiter.
