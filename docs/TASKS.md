@@ -15,7 +15,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1860b | FIX: submit_feedback dedup — insertReport must reject duplicate (same from_agent + title substring) within 4h window. | HIGH | FIX | dev-mcp-server | — | — |
 | 1860c | SPRINT-S: monitoring report auto-expiry — add expireMonitoringReports() store function, 72h TTL, dev-team Step 4 calls it before scan. | MEDIUM | SPRINT-S | dev-mcp-server | — | — |
 | 1860d | SPRINT-S: dev-team Step 4.5 archive — extend archive loop to include expired monitoring reports (resolution=monitoring + age>72h). | MEDIUM | SPRINT-S | developer | — | 1860c |
 | 1860e | SPRINT-S: process_telegram_report return delete_success field — callers can distinguish DB-processed vs Telegram-deleted. | MEDIUM | SPRINT-S | dev-mcp-server | — | 1860a |
@@ -40,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1860b | FIX: submit_feedback dedup — insertReportDeduped(), 4h window, same from_agent + 50-char prefix. 3 files + 9 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
 | 1860a | FIX: process_telegram_report delete guard — markProcessed blocked on Telegram failure. 2 files + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
 | 1858c | FIX: logVpsPush() silent failure — safeLogVpsPush wrapper, 6 call sites replaced, 5 tests. | HIGH | FIX | developer | 2026-05-08 |
 | 1858a | FIX: pollNews all-dark cooldown 4h→24h — reduces alert spam during sustained VPS push gaps. 3 files. | HIGH | FIX | developer | 2026-05-08 |
