@@ -92,3 +92,19 @@
 - fx_pressure: [] | pe_risk: []
 - **Anomaly**: BID +3.79% (2.53σ | signal_id=2675, posted to alert-commander)
 - **Note**: Market CLOSED (Saturday 07:38 UTC). Prices from 2026-05-08 08:59 UTC. No new intraday moves. BID re-confirmed as anomaly. Chain findings: 0 (market closed). Next: 08:00 UTC (+20min schedule)
+
+### Cycle (08:38–08:39 UTC) — BLOCKED
+- Status: BLOCKED at step 0 (bootstrap)
+- Error: `mcp__claude_ai_gateway__call_tool` unavailable in scheduled-task session
+- Retried: Yes (2 attempts, both failed)
+- Action: Logged block → EXIT
+
+### Cycle (09:12 UTC) — MARKET CLOSED (POST-CLOSE)
+- Stocks: 26 (with price data) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- fx_pressure: [] | pe_risk: []
+- **Status**: MCP RECOVERED. Market CLOSED (off-hours, post-trading window). All prices stale from 2026-05-08 08:59 UTC.
+- **Alert pending**: HCM (news_mention, MEDIUM priority, posted 05:52 UTC) — 1 open alert → alert-commander
+- **Macro**: Brent $101.29, Gold $1,675, VNIndex 1,909, USD/VND 26,117 (stale)
+- **System health**: OK (bootstrap latency: 4ms, sub-calls healthy)
+- **Decision**: No price anomalies to post (market closed = no fresh intraday data). Existing HCM alert remains pending. Next cycle: 16:00 UTC EOD (`.claude/flows/market-watcher/eod.md`)

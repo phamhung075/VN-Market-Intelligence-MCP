@@ -48,6 +48,18 @@
 - Signal matrix: All conviction scores below regime threshold (base: verified_chain≥0.80, urgent_news≥0.60, chain_catalyst≥0.75)
 - Agent signals pipeline: empty
 - Legal/Crisis warnings: none detected
+
+### Alert Cycle (09:02–09:03 UTC)
+- Signals: urgent_news=2 | verified_chain=0 | chain_catalyst=0 | price_anomaly=0 | legal_risk=0 | crisis_velocity=0
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Market window: CLOSED (off-hours, outside 02:00–08:59 UTC)
+- Suppressed signals: VIC (urgent_news 50% < threshold 60%), HCM (urgent_news 50% < threshold 60%)
+- Price validation: No price_anomaly override available for either signal
+- Legal/Crisis warnings: none detected
+- System status: OK | MCP online (6ms bootstrap time)
+- Status: GREEN ✓
 - Price anomalies: none detected
 - Status: GREEN ✓ | Infrastructure restored
 
@@ -92,3 +104,28 @@
 - Price validation override: checked BID — no price_anomaly signals in last 120min matching move_sigma≥4.0 + impact≥6
 - Legal/Crisis warnings: none detected
 - Status: GREEN ✓ | 1 signal below conviction threshold, suppressed
+
+### Alert Cycle (08:02–08:02 UTC)
+- Signals: verified_chain=0 | urgent_news=1 | chain_catalyst=0 | price_anomaly=1 | legal_risk=0 | crisis_velocity=0 | total=2
+- Fired: 1 | Suppressed: 1 | MARKET: 1
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Market window: CLOSED (outside 02:00–08:59 UTC)
+- Fired alerts: BID (price_anomaly +3.79% 2.5σ outperformance — banking strength, sector avg +0.47%, BID ROE 18.8% > median 16.7%) → CRITICAL
+- Suppressed alerts: FPT (urgent_news conf 50 < threshold 60, no price override available)
+- Legal/Crisis warnings: none detected
+- Status: GREEN ✓ | BID fired (valid price anomaly), FPT below threshold
+
+### Alert Cycle (10:02–10:02 UTC)
+- Signals: verified_chain=0 | urgent_news=3 | chain_catalyst=0 | price_anomaly=0 | legal_risk=0 | crisis_velocity=0 | total=3
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Market window: CLOSED (outside 02:00–08:59 UTC)
+- Suppressed signals:
+  - VIC (urgent_news 50% < threshold 60%); Kinh Dịch Tiệm (HOLD 100%)
+  - SSI (urgent_news 50% < threshold 60%); corporate action ESOP neutral
+  - FPT (urgent_news 50% < threshold 60%); bearish tech decline but insufficient impact (score 5 < 6)
+- Price validation: no price_anomaly overrides (no move_sigma ≥ 4.0)
+- Legal/Crisis warnings: none detected
+- Status: GREEN ✓ | All signals below conviction threshold

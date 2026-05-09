@@ -315,7 +315,7 @@ export function extractCategoryFromText(text: string): string | null {
 export function isDuplicateReport(
   db: Database,
   text: string,
-  cooldownSeconds: number = 4 * 3600,
+  cooldownSeconds: number = DEDUP_WINDOW_SECONDS,
 ): boolean {
   const category = extractCategoryFromText(text);
   if (!category) return false;

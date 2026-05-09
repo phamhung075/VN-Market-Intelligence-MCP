@@ -76,3 +76,31 @@
 - Macro context: Brent stable (101.29 USD/bbl), Gold high (4730.7 USD/oz), USD/VND pressure (26,305), FII carry spread -33bp (outflow risk)
 - Key insight: FPT -40T market cap YTD despite sector recovery — isolated weakness vs VIC real estate strength
 - Carry regime note: FII_OUTFLOW_RISK multiplies urgency of hot_money_risk signals (FPT hit, VIC real_estate attraction)
+
+## Cycle (08:19–08:21 UTC)
+- Items: 20 | Impacts: 3 | Signals: [urgent_news × 2] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Fired: VIC (impact 8/10 bullish, conviction 0.82, signal#2677), HCM (impact 5/10 neutral tourism, conviction 0.84, signal#2678)
+- Suppressed: 1 item (HPG 54% confidence < 0.60 conviction threshold)
+- Watchlist hits: VIC real_estate group growth opportunity, HCM securities tourism revenue upside
+
+**Notes:**
+- MCP infra operational (bootstrap, fetch_and_analyze, impact_chain, post_agent_signal all responsive)
+- Market closed (trading window 02:00–08:59 UTC, now 08:19 UTC)
+- Conviction filtering in effect: NEUTRAL regime threshold 0.60
+- Macro context: Brent stable (101.29), Gold high (4730.7), USD/VND pressure (26,305), carry risk -33bp
+- Historical context: VIC cluster continuation from 07:14 cycle, HCM alert pre-flagged at 05:52 UTC
+- Signal synthesis: 2 signals meet conviction floor (82%, 84%), both watchlist hits in growth opportunity sectors
+
+## Cycle (09:20–09:21 UTC)
+- Items: 20 | Impacts: 3 | Signals: [urgent_news × 3] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Fired: VIC (impact 9/10 bullish, conviction 0.88, signal#2681), SSI (impact 5/10 neutral, conviction 0.84, signal#2682), FPT (impact 5/10 neutral/bearish, conviction 0.84, signal#2683)
+- Suppressed: 0 items (all watchlist hits above 0.60 conviction threshold)
+- Watchlist hits: VIC real_estate analyst upgrade, SSI securities ESOP action, FPT tech sector weakness
+
+**Notes:**
+- MCP infra operational (bootstrap, fetch_and_analyze, impact_chain, post_agent_signal all successful)
+- Market closed (trading window 02:00–08:59 UTC, now 09:20 UTC — off-hours run)
+- Conviction filtering in effect: NEUTRAL regime threshold 0.60
+- Macro context: Brent stable (101.29), Gold high (4730.7), USD/VND pressure (26,305), carry risk -33bp (FII_OUTFLOW_RISK)
+- Historical context: No similar events found (LanceDB empty) — treating as novel signals
+- Signal synthesis: 3 signals fire (all above threshold). VIC bullish strength consistent with 08:19/07:14 cycles. FPT weakness reinforces tech sector underperformance vs VIC real_estate.
