@@ -15,7 +15,10 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1860d | SPRINT-S: dev-team Step 4.5 archive — extend archive loop to include expired monitoring reports (resolution=monitoring + age>72h). | MEDIUM | SPRINT-S | developer | — | 1860c |
+| 1862a | FIX-CRITICAL: vnstock rate limiter tuning — 10+ tickers RATE_LIMITED (VPB/DLC/GAS/VIC/VHM/MBB/JSH/NKG/ACB/SIS) across finance/balance_sheet/cash_flow/stats. 6 consecutive cycles expanding. Investigate global 50 RPM limit (Sprint 1833i), add per-endpoint backoff or reduce batch concurrency. | CRITICAL | FIX | developer | ba | — |
+| 1862b | FIX-HIGH: report-analyzer agent enum mismatch — agent cannot bootstrap, "not in MCP agent enum". Add report-analyzer to MCP agent enum registry. TNB GAP-11 (2/3). | HIGH | FIX | dev-mcp-server | — | — |
+| 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. Architect investigation needed: why do Cowork scheduled tasks lose MCP access? TNB GAP-8. | HIGH | FIX | architect | — | — |
+| 1862d | FIX-DEPLOY: vnstock_events NOT NULL constraint (JSH) — 1856a fix merged (f8482cb3) but JSH still failing. Confirm deploy gap: rebuild container (docker compose up -d --build). TNB GAP-12 (2/3). | MEDIUM | FIX | ops | — | — |
 
 ---
 
@@ -37,6 +40,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1860d | SPRINT-S: dev-team flow Step 4.0 — expire_monitoring_reports before Step 4 archive scan. Doc-only. | MEDIUM | SPRINT-S | developer | 2026-05-09 |
 | 1860e | SPRINT-S: process_telegram_report delete_success field — structured JSON response, delete_success true/false/null. 2 files + 13 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-09 |
 | 1860c | SPRINT-S: monitoring report auto-expiry — expireMonitoringReports() 72h TTL, expire_monitoring_reports MCP tool. 3 files + 15 tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-09 |
 | 1860b | FIX: submit_feedback dedup — insertReportDeduped(), 4h window, same from_agent + 50-char prefix. 3 files + 9 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
