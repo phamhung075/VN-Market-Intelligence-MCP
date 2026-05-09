@@ -23,7 +23,7 @@ User must manually fix the config before the next cycle.
 **NEVER assume MCP is down based on session logs, memory, or prior cycle failures.**
 
 ```
-ALWAYS attempt the actual mcp__claude_ai_gateway__call_tool() call.
+ALWAYS attempt the actual call_tool() call via the MCP gateway.
 If it fails → report the REAL error.
 If it succeeds → proceed normally.
 ```

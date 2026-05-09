@@ -14,12 +14,12 @@
 | **`.claude/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
 | **`.claude/agents/<agent>.md`** | Agent definition | Agent spawning: always read first |
 
-**Key change:** All cowork agents now use `mcp__claude_ai_gateway__call_tool` gateway (single permission) instead of individual `mcp__vn-market__*` tool list.
+**Key change:** All cowork agents now use the MCP gateway `call_tool` (server="vn-market") instead of individual tool permissions.
 
 ### MCP Gateway — Correct Call Signature
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",        ← REQUIRED, exact name
   tool: "<tool_name>",        ← e.g. "get_cycle_bootstrap"
   arguments: { ... }          ← tool-specific params
@@ -39,7 +39,7 @@ mcp__claude_ai_gateway__call_tool(
 
 Example:
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "get_cycle_bootstrap",
   arguments: { "agent_name": "alert-commander" }

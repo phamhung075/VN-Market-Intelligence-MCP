@@ -8,7 +8,7 @@ description: >
 
 ## Anti-Hallucination — MANDATORY before Step 0
 
-**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT.**
+**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT.**
 
 ```
 RULE: ALWAYS attempt the actual call. Never skip based on session log, memory, or prior cycle state.

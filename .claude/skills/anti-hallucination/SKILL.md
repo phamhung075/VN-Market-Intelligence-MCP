@@ -8,10 +8,10 @@ description: >
 
 ## Anti-Hallucination Rule
 
-**You HAVE access to `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT.**
+**You HAVE MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT.**
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
