@@ -1,34 +1,44 @@
 # PO Notebook
 
-## Last updated: 2026-05-09 (Sprint 1860 kickoff)
+## Last updated: 2026-05-09 (Sprint 1862 cycle 4)
 
-## Current sprint: 1860
+## Current sprint: 1862
 
 ### State at session start
 
 - Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=515, toolCount=128
-- Sprint 1858 DONE: 1858a pollNews cooldown + 1858c safeLogVpsPush wrapper
-- pipeline-state.json: idle at session start -> updated to in_progress for Sprint 1860
-- MCP infra: DOWN per project-stats.json (ECONNREFUSED since 2026-05-06)
+- Sprint 1860 DONE (5/5 tasks shipped)
+- Sprint 1862 active: 9 tasks total, 4 DONE, 5 Todo, 0 In Progress
+- MCP infra: recovered at 03:01 UTC (project-stats.json stale — still shows DOWN, task 1862i)
 
-### Channel audit (2026-05-09 session)
+### Sprint 1862 — TNB audit cycles 21 + 22 + agent-father cycle 3
 
-- MARKET: not audited (MCP infra DOWN)
-- WORK: Sprint 1858 completed cleanly
-- BUG: flooded with stale processed reports still visible in Telegram. Root cause: 3 bugs identified (see session log)
-Result: BUG channel unusable — Sprint 1860 targets this
+| Task | Severity | Issue | Root cause | Owner | Status |
+|------|----------|-------|------------|-------|--------|
+| 1862a | CRITICAL | vnstock 10+ tickers RATE_LIMITED | Global 50 RPM limit insufficient | developer | DONE |
+| 1862b | HIGH | report-analyzer cannot bootstrap | Not in MCP agent enum | dev-mcp-server | DONE |
+| 1862c | HIGH | Cowork scheduled-tasks lose MCP access | Unknown — needs architect investigation | architect | Todo |
+| 1862d | MEDIUM | JSH NOT NULL constraint on vnstock_events | Deploy gap — fix merged, container rebuilt | ops | DONE |
+| 1862e | HIGH | 7 dev-team flows missing Error Boundary | Pre-standardization flows | agent-father | DONE |
+| 1862f | HIGH | Reuters/TE RSS errors regression 13→42 (3.2x) | Circuit breaker reset + no backoff | developer | Todo |
+| 1862g | MEDIUM | news-scout VIC 6+ cycle signal repetition | No time-window dedup for same-ticker+direction | developer | Todo |
+| 1862h | LOW | Hardcoded 112 tool count in knowledge files | Manual count never updated after sprints | developer | Todo |
+| 1862i | LOW | project-stats.json stale infra status | No auto-update on MCP recovery | ops | Todo |
 
-### Sprint 1860 decision
+### Key decisions
 
-BUG channel hygiene. 3 root causes making the channel unusable:
+- 1862f is highest priority remaining — Reuters/TE 3.2x regression is data pipeline degradation affecting news quality
+- 1862g is important but lower urgency — signal repetition is noise, not data loss
+- 1862h and 1862i are quick wins — can be batched
+- 1862c needs architect — cannot be solved by developer alone (Cowork MCP provisioning is infrastructure design)
 
-1. **Telegram deletion silent failure** — process_telegram_report marks row processed even when delete fails. FIX 1860a.
-2. **Monitoring reports accumulate forever** — no expiry, C-6 guard blocks cleanup. SPRINT-S 1860c + 1860d.
-3. **No dedup at submission** — agents file identical reports every cycle. FIX 1860b.
+### Patterns observed
 
-5 tasks total: 2 FIX (high priority, recurring bugs) + 3 SPRINT-S (medium).
-
-Dependency chain: 1860a+1860b (parallel, no deps) -> 1860c -> 1860d (depends c) + 1860e (depends a)
+- vnstock rate limiting was escalating but 1862a fix (RPM 50→80) deployed. Monitor next TNB cycles.
+- Reuters/TE errors are volatile — spike after system restarts, unclear if circuit breaker resets properly
+- Cowork MCP access (GAP-8) systemic — 9 blocked events today across 4 agents. Structural gap.
+- news-scout signal repetition: VIC bullish fired 6+ consecutive cycles. Conviction filter passes each time because news articles are technically different, but user sees repeated noise.
+- Knowledge file drift: hardcoded counts go stale within 2-3 sprints. Need pointer pattern.
 
 ### Test baseline tracking
 
@@ -36,11 +46,5 @@ Dependency chain: 1860a+1860b (parallel, no deps) -> 1860c -> 1860d (depends c) 
 |--------|------|------|------|
 | 1846 close | 8804 | 1 (intentional) | 2026-05-03 |
 | 1858 close | 8804 | 1 (intentional) | 2026-05-08 |
-| 1860 target | 8804+N | <=1 (1331a only) | — |
-
-### Patterns observed
-
-- BUG channel pollution is a systemic issue: silent failures + no dedup + no expiry = exponential noise growth. All 3 must be fixed together or the channel remains unusable.
-- submit_feedback is called from error boundaries in 5+ agent flows (unified-agent market/prediction/weekly/daily-review, digest-predict). Each fires every cycle on persistent issues. Dedup at DB level is the only scalable fix.
-- Monitoring resolution was added in Sprint 1849 but without a cleanup path — design oversight. The C-6 guard correctly prevents infinite triage loops but also prevents any garbage collection.
-- MCP infra has been DOWN since 2026-05-06. This is a separate issue (ops intervention required per project-stats.json). Not blocking Sprint 1860 which is code-level fixes.
+| 1860 close | 8804+N | <=1 | 2026-05-09 |
+| 1862 target | 8804+N | <=1 (1331a only) | — |

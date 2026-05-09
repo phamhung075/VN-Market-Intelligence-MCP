@@ -12,6 +12,16 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 
 ---
 
+## Error Boundary
+
+If any file read, write, or tool call fails after 1 retry:
+1. Append to session log: `"[po] BLOCKED at step N: {one-line error}"`
+2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = audit channels → plan sprint → approve specs → log. Blocked = log + EXIT.
+
+---
+
 **Pre-check — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first

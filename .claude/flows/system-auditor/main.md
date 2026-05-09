@@ -93,7 +93,15 @@ If audit found anomalies, stale entries, broken pointers, DB issues, or config d
    - Suggested fix category: `fix` | `refactor` | `chore`
    - Affected area: file path or system component
 
-2. RETURN with `NEXT: po` and findings in context so PO can create sprint tasks.
+2. **Spawn PO agent** with prompt:
+   ```
+   run .claude/flows/po/main.md
+
+   ## System Auditor Findings (cycle N)
+   {paste findings table here}
+
+   Create sprint tasks for these issues. Prioritize by severity.
+   ```
 
 Skip this step ONLY if audit found zero anomalies and all checks passed.
 
@@ -101,7 +109,7 @@ Skip this step ONLY if audit found zero anomalies and all checks passed.
 
 ```
 DONE: Audit complete — N anomalies (C critical, W warn, I info) | M entries fixed
-NEXT: user (if clean) | ops (if critical DB anomaly) | po (if issues found — pass findings for task planning)
+NEXT: po (spawned with findings) | user (if clean) | ops (if critical DB anomaly)
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered)
 ```

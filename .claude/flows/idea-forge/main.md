@@ -48,11 +48,27 @@ Proactively connect to:
 - Idea is ambiguous and clarification stalls → return best-effort analysis with explicit unknowns noted
 - Blocked at any step → report what was completed + EXIT. Do NOT investigate infrastructure.
 
+## PO handoff (if actionable)
+
+If ideation produced an actionable plan ready for implementation:
+
+**Spawn PO agent** with prompt:
+```
+run .claude/flows/po/main.md
+
+## Idea Forge — Actionable Proposal
+{paste idea summary + implementation plan here}
+
+Evaluate and create sprint tasks if approved.
+```
+
+Skip if ideas are exploratory only (no clear implementation path).
+
 ## RETURN
 
 ```
 DONE: Ideation complete — [idea summary]
-NEXT: user | po (if actionable plan ready)
+NEXT: po (spawned with plan) | user (if exploratory only)
 PIPELINE: complete
 QUALITY: full
 ```

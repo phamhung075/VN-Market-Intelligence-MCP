@@ -10,6 +10,16 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 
 ---
 
+## Error Boundary
+
+If any file read, write, or tool call fails after 1 retry:
+1. Append to session log: `"[pm] BLOCKED at step N: {one-line error}"`
+2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = plan tasks → create handoffs → monitor pipeline → log. Blocked = log + EXIT.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `pm`)

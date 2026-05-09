@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-05-09T12:15:00Z",
-  "last_run": "2026-05-09T12:15:00Z",
+  "scan_date": "2026-05-09T14:28:00Z",
+  "last_run": "2026-05-09T14:28:00Z",
   "findings": [
     {
       "fingerprint": "check-3:infrastructure/agents:CLAUDE_BIN-duplicated",
@@ -256,6 +256,16 @@
     }
   ],
   "scan_checks": {
+    "scan-9": {
+      "scan_date": "2026-05-09T14:28:00Z",
+      "scope": "diff HEAD~15..HEAD (6 production TS files + test changes)",
+      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
+      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
+      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "isDuplicateReport() correctly uses DEDUP_WINDOW_SECONDS. New constants properly extracted (Tasks 1860b, 1860c). Staleness thresholds in syncVnstockData are business rules, not duplication." },
+      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
+      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "New constants DEDUP_WINDOW_SECONDS and MONITORING_EXPIRY_HOURS properly centralized. Clean." },
+      "summary": "All 5 checks pass. 0 new violations. JANITOR-024 (shipped in prior cycle) verified improved. Ready for next cycle."
+    },
     "check-1-duplicate-classification-maps": {
       "status": "complete",
       "items_scanned": 3,

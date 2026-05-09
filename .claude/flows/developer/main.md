@@ -10,6 +10,16 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 ---
 
+## Error Boundary
+
+If any file read, write, build, or test command fails after 1 retry:
+1. Append to session log: `"[developer] BLOCKED at step N: {one-line error}"`
+2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
+
+Your job = implement → test → commit → log. Blocked = log + EXIT.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `developer`)

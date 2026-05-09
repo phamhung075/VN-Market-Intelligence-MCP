@@ -124,9 +124,25 @@ VPS_ERROR: [service — reason]
 Fixes attempted: [list]
 Bug reported: [yes/no — channel]
 
+## PO handoff if validation found issues
+
+If validation found stale/dead tickers or VPS errors that need task tracking:
+
+**Spawn PO agent** with prompt:
+```
+run .claude/flows/po/main.md
+
+## Ops Data Validation Findings
+{paste VALIDATION REPORT here}
+
+Create sprint tasks for these issues. Prioritize by severity.
+```
+
+Skip if zero issues found.
+
 ## RETURN
 DONE: Data validation complete — N tickers checked, K issues found (X stale, Y dead, Z VPS errors)
-NEXT: po | create tasks from validation findings — see VALIDATION REPORT above
+NEXT: po (spawned with findings) | user (if clean)
 PIPELINE: continue
 
 **Notebook write** → `docs/agent-memory/notebooks/ops.md`

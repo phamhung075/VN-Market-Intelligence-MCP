@@ -14,6 +14,9 @@ Sentiment baseline established.
 ### 2026-04-27
 RAM/Chip price strength forecast positive for margin expansion + 48T VND cash deployment strategy | YoY: No prior sentiment data (new entry)
 
+### 2026-05-09
+NEUTRAL Shark fund 28T VND holding announcement — significant institutional stake signal | YoY: Sustained positive positioning from Apr 27
+
 ## [Market Watcher] Price, Volume, Technicals
 
 ### 2026-04-27

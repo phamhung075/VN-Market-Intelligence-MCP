@@ -175,7 +175,15 @@ If maintenance found escalations, broken agents, missing critical sections, stru
    - Suggested fix category: `fix` | `chore` | `refactor`
    - Affected area: agent name, flow path, or knowledge file
 
-2. RETURN with `NEXT: po` and findings in context so PO can create sprint tasks.
+2. **Spawn PO agent** with prompt:
+   ```
+   run .claude/flows/po/main.md
+
+   ## Agent-Father Maintenance Findings (cycle N)
+   {paste findings table here}
+
+   Create sprint tasks for these issues. Prioritize by severity.
+   ```
 
 Skip this step ONLY if zero escalations and all checks passed.
 
@@ -183,7 +191,7 @@ Skip this step ONLY if zero escalations and all checks passed.
 
 ```
 DONE: Maintenance sweep — N agents, M auto-fixes, K escalations
-NEXT: user (if clean) | po (if issues found — pass findings for task planning)
+NEXT: po (spawned with findings) | user (if clean)
 PIPELINE: complete
 QUALITY: full | partial
 ```

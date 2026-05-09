@@ -139,22 +139,30 @@ Append `docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md`:
 
 ## Step 9 — PO handoff if findings require dev work
 
+Skip this step ONLY if audit found zero issues (Overall: GOOD, no auto-cures needed, no mismatches).
+
 If audit found code/system issues that need fixing (methodology gaps, flow bugs, signal logic errors, data mismatches, threshold violations, missing checks):
 
-1. Compile a findings summary for PO with:
+1. Compile a findings summary with:
    - Each issue: what's wrong, which agent/file/module, severity, evidence
    - Suggested fix category: `fix` | `refactor` | `feat`
    - Affected area: agent name, flow path, or source code path
 
-2. RETURN with `NEXT: po` and the findings in context so PO can create sprint tasks.
+2. **Spawn PO agent** with prompt:
+   ```
+   run .claude/flows/po/main.md
 
-Skip this step ONLY if audit found zero issues (Overall: GOOD, no auto-cures needed, no mismatches).
+   ## TNB Audit Findings (cycle N)
+   {paste findings table here}
+
+   Create sprint tasks for these issues. Prioritize by severity.
+   ```
 
 ## RETURN
 
 ```
 DONE: Quality audit — N MARKET msgs, M agent sessions, K auto-cures | Overall: GOOD|NEEDS_ATTENTION|CRITICAL
-NEXT: user (if GOOD) | po (if issues found — pass findings for task planning)
+NEXT: po (spawned with findings) | user (if GOOD — no issues)
 PIPELINE: complete
 QUALITY: full | partial
 ```

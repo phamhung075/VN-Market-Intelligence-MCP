@@ -1,6 +1,6 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-09 (cycle 20 — 06:35 UTC) | Cycles completed: 20
+**Last updated:** 2026-05-09 (cycle 23 — 18:40 UTC) | Cycles completed: 23
 
 ---
 
@@ -404,23 +404,27 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 | report-analyzer enum mismatch | 2026-05-08 | 2 | 3 | GAP-11 — needs dev fix |
 | vnstock-sync NOT NULL (JSH failing) | 2026-05-08 | 2 | 3 | GAP-12 — approaching threshold |
 | market-watcher sub-2σ off-hours drift | 2026-05-08 | 1 | 3 | watching (no new data, market closed) |
-| vnstock RATE_LIMITED (VPB/DLC/GAS/VIC/VHM/MBB/JSH/NKG/ACB) | 2026-05-08 | 5 | 3 | **THRESHOLD — needs rate limiter tuning** |
+| vnstock RATE_LIMITED (VPB/DLC/GAS/VIC/VHM/MBB/JSH/NKG/ACB/SIS/CTG/EIB/VRE) | 2026-05-08 | 8 | 3 | **THRESHOLD — 1862a DONE but still expanding** |
 
 ---
 
-## Agent Reliability Scores (cycle 20 — 2026-05-09)
+## Agent Reliability Scores (cycle 23 — 2026-05-09)
 
 | Agent | Methodology | Format | Regime | Overall |
 |-------|-------------|--------|--------|---------|
-| news-scout | EXCELLENT (conviction enforced) | GOOD | GOOD (NEUTRAL consistent) | EXCELLENT |
-| market-watcher | GOOD (recovered, stable 2 cycles) | GOOD | GOOD (NEUTRAL) | GOOD |
-| alert-commander | EXCELLENT (steady) | EXCELLENT (5-section) | EXCELLENT (carry regime analysis) | EXCELLENT |
-| unified-agent | GOOD (RECOVERED at 03:01, prediction review OK) | GOOD | GOOD | GOOD |
-| financial-analyst | GOOD (VCB+FPT analyzed, BCTC crisis flagged) | GOOD | GOOD | GOOD |
-| report-analyzer | BLOCKED (enum GAP-11) | — | — | BLOCKED |
+| news-scout | EXCELLENT (15+ cycles, VIC/NVL/HPG/DHG/GEG signals, conviction filtering) | GOOD | GOOD (NEUTRAL) | EXCELLENT |
+| market-watcher | FAIR (5 BLOCKED Cowork, GAP-8 systemic, off-hours monitor OK) | GOOD | GOOD (NEUTRAL) | FAIR |
+| alert-commander | EXCELLENT (19 cycles, 2 fired BID, 5 held for Monday, correct suppression) | EXCELLENT | EXCELLENT | EXCELLENT |
+| unified-agent | FAIR (1 BLOCKED 06:00, 1 GREEN off-schedule 11:00 — fragile) | GOOD | GOOD | FAIR |
+| financial-analyst | GOOD (VCB+FPT analyzed, no new cycle since 01:15) | GOOD | GOOD | GOOD |
+| report-analyzer | BLOCKED (enum GAP-11, 1862b DONE but awaiting deploy) | — | — | BLOCKED |
 | digest-predict | NO DATA | — | — | NO DATA |
-| qa-responder | GOOD (operational) | N/A | N/A | GOOD |
-| ops | GOOD (Sprint 1858 stable, 6h24m uptime) | GOOD | N/A | GOOD |
+| qa-responder | GOOD (continuous 12-min cycles, queue empty) | N/A | N/A | GOOD |
+| ops | GOOD (Sprint 1862d DONE, 10h51m uptime stable) | GOOD | N/A | GOOD |
+| PO | EXCELLENT (Sprint 1860 DONE 5/5, Sprint 1862 4/9 DONE) | GOOD | N/A | EXCELLENT |
+| architect | GOOD (1862c root cause found — SSE asymmetry) | GOOD | N/A | GOOD |
+| agent-father | GOOD (keep cycle 3, 1862e DONE) | GOOD | N/A | GOOD |
+| system-auditor | GOOD (3 anomalies found) | GOOD | N/A | GOOD |
 
 ---
 
@@ -428,23 +432,22 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 
 | Signal Type | Period | Count | Fired | Confirmed | False+ | Precision |
 |------------|--------|-------|-------|-----------|--------|-----------|
-| price_anomaly | 7d | 2 | 2 | 0 | 0 | N/A |
 | chain_catalyst | 7d | 1 | 0 | 0 | 0 | N/A |
-| urgent_news | 7d | 14 | 0 | 0 | 0 | N/A |
+| urgent_news | 7d | 3 | 0 | 0 | 0 | N/A |
 
-Note: urgent_news 11→14 (+3 new). price_anomaly stable at 2. Rolling window continues.
+Note: Dramatic 7d rolling window decay — urgent_news 20→3, price_anomaly 4→0. Older signals purged from window. Only HPG+STB shark fund signals remain active.
 
 ---
 
 ## Macro Trend Tracking
 
-| Indicator | Cycle 18 | Cycle 19 | Cycle 20 | Trend |
+| Indicator | Cycle 21 | Cycle 22 | Cycle 23 | Trend |
 |-----------|----------|----------|----------|-------|
-| Brent crude | $100.49 | $100.49 | $101.29 | RISING ↑ (+0.8%) |
-| Gold | $4,723.70 | $4,723.70 | $4,730.70 | RISING ↑ (+0.1%) |
+| Brent crude | $101.29 | $101.29 | $101.29 | FLAT |
+| Gold | $4,730.70 | $4,730.70 | $4,730.70 | FLAT |
 | DXY | 97.84 | 97.84 | 97.84 | STABLE |
 | USD/VND | 26,305 | 26,305 | 26,305 | FLAT |
-| VN-Index | 1,909 | 1,909 | 1,909 | FLAT (market closed) |
+| VN-Index | 1,909 | 1,909 | 1,909 | FLAT (weekend) |
 
 ---
 
@@ -467,20 +470,19 @@ Note: urgent_news 11→14 (+3 new). price_anomaly stable at 2. Rolling window co
 
 ## Next Actions
 
-- **3 gaps at THRESHOLD** requiring developer/architect intervention:
-  - GAP-8: sandbox MCP access — PARTIALLY RESOLVED (unified-agent recovered in CLI at 03:01, Cowork status TBD)
+- **CRITICAL NEW**: σ threshold data dropped from 417/30 ✅ → 2/30 ⏳ for ALL stocks. Weekly audit (18:00:52) likely reset. Price anomaly detection DISABLED until rebuild. Needs urgent investigation.
+- **4 gaps at THRESHOLD** requiring developer/architect intervention:
+  - GAP-8: Cowork MCP access — ROOT CAUSE FOUND by architect (SSE session asymmetry). Fix: StreamableHTTP /mcp + Cloudflare route. Sprint 1862c.
   - GAP-9: Dinh Gia DB schema `fetched_at` column (developer)
-  - vnstock RATE_LIMITED — 5/3 THRESHOLD. 9+ tickers (VPB/DLC/GAS/VIC/VHM/MBB/JSH/NKG/ACB). Accelerating. Critical priority.
-- **GAP-11**: report-analyzer enum mismatch — 2/3 (developer)
+  - vnstock RATE_LIMITED — 8/3 THRESHOLD. 13+ tickers (adding EIB+VRE to prior 11). Sprint 1862a DONE but still expanding — fix may be insufficient or not deployed.
+  - GAP-4: Reuters/TE errors 42→49 (+7 in 1.5h). Sprint 1862f (HIGH). Accelerating.
+- **GAP-11**: report-analyzer — Sprint 1862b DONE but awaiting deploy
 - **2 gaps IMPROVING** — continue monitoring:
-  - GAP-5: alert accuracy 6% (9/139). price_drop 44%, price_surge 40%. Slight dilution from new unknowns.
+  - GAP-5: alert accuracy 7%→9% (12/138). price_drop 50%, price_surge 80%. IMPROVING.
   - GAP-7: regime NEUTRAL consistent across all agents
-- **2 gaps RESOLVED**: GAP-6 (σ data), GAP-10 (session overwrite)
-- **Approaching threshold** (2/3):
-  - GAP-12: vnstock-sync NOT NULL — JSH failing (2/3)
-- **GAP-4 worsening**: Reuters/TE errors 11→30. CafeF/VnEconomy/VnExpress degraded (1 error each).
-- BCTC 30/31 stocks OVERDUE (8-24 days). Only VCB submitted.
-- WAL growing: 12.08 MB (+0.6 MB/4h). Checkpoint alert active.
-- H1/H2/H3 hallucination patterns: NO RECURRENCE since flow fixes (cycles 12-20). Confirmed cured.
-- Sprint 1858 stable: 6h24m uptime, all 9 services healthy.
-- Commodities reversing: Brent +0.8% ($101.29), Gold +0.1% ($4730.70). USD/VND flat.
+- **4 gaps RESOLVED**: GAP-6 (σ data — but NOW REGRESSED), GAP-10 (session overwrite), WAL checkpoint (3.81 MB stable), GAP-12 (Sprint 1862d DONE)
+- BCTC 30/31 stocks OVERDUE.
+- **Sprint velocity**: 1860 DONE (5/5). 1862 active: 4/9 DONE, 5 Todo. 1862e (Error Boundary) DONE by agent-father.
+- System uptime stable: 10h51m. DB 110.57 MB. WAL 3.81 MB.
+- H1/H2/H3 hallucination patterns: NO RECURRENCE since flow fixes (cycles 12-23). Confirmed cured.
+- Commodities flat. USD/VND flat. All macro NEUTRAL.

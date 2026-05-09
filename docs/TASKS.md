@@ -16,8 +16,10 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. Architect investigation needed: why do Cowork scheduled tasks lose MCP access? TNB GAP-8. | HIGH | FIX | architect | — | — |
-| 1862d | FIX-DEPLOY: vnstock_events NOT NULL constraint (JSH) — 1856a fix merged (f8482cb3) but JSH still failing. Confirm deploy gap: rebuild container (docker compose up -d --build). TNB GAP-12 (2/3). | MEDIUM | FIX | ops | — | — |
-| 1862e | CHORE: Add Error Boundary to 7 pre-standardization dev-team flows — architect, ba, developer, fixer, pm, po, qa. All missing Section 6.2 Error Boundary. Agent-father cycle 3 finding. | HIGH | CHORE | agent-father | — | — |
+| 1862f | FIX-HIGH: Reuters/TE RSS errors regression — 13→42 errors (3.2x jump since TNB cycle 21). GAP-4 significantly worsening while Vietnamese sources OK. Investigate circuit breaker reset behavior and add retry backoff or source failover. | HIGH | FIX | developer | — | — |
+| 1862g | FIX-MEDIUM: news-scout VIC bullish signal repetition — 6+ consecutive cycles (07:14-11:20 UTC) firing same-ticker same-direction urgent_news. Add time-window dedup for same-ticker+same-direction signals (e.g. 4h suppression window). | MEDIUM | FIX | developer | — | — |
+| 1862h | CHORE-LOW: Hardcoded tool/job counts in knowledge files — restart-policy.md and ops-incident-response.md show 112 tools (actual 128). Replace with pointer to project-stats.json or dynamic health check. | LOW | CHORE | developer | — | — |
+| 1862i | CHORE-LOW: project-stats.json stale infrastructure status — still shows mcpServerHealth DOWN despite recovery at 03:01 UTC. Update infrastructureStatus to reflect current state. | LOW | CHORE | ops | — | — |
 
 ---
 
@@ -39,6 +41,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1862e | CHORE: Add Error Boundary to 7 pre-standardization dev-team flows — architect, ba, developer, fixer, pm, po, qa. All missing Section 6.2 Error Boundary. Agent-father cycle 3 finding. | HIGH | CHORE | agent-father | 2026-05-09 |
+| 1862d | FIX-DEPLOY: vnstock_events NOT NULL — verified deployed, JSH working. No action needed. | MEDIUM | FIX | ops | 2026-05-09 |
 | 1862b | FIX-HIGH: report-analyzer enum mismatch — added report_analyzer to SKILL_MANIFEST (13 tools). 2 files + 5 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
 | 1862a | FIX-CRITICAL: vnstock rate limiter tuning — GLOBAL_RATE_LIMIT_RPM 50→80, SYNC_DELAY_MS 1500→2500ms. 2 files + 5 tests. | CRITICAL | FIX | developer | 2026-05-09 |
 | 1860d | SPRINT-S: dev-team flow Step 4.0 — expire_monitoring_reports before Step 4 archive scan. Doc-only. | MEDIUM | SPRINT-S | developer | 2026-05-09 |

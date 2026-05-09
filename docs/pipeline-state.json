@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
-  "currentSprint": 1860,
+  "status": "idle",
+  "currentSprint": 1862,
   "activeTaskId": null,
-  "nextAgent": "ba",
-  "nextPrompt": "Sprint 1860: BUG channel hygiene — 5 tasks (2 FIX + 3 SPRINT-S). See docs/TASKS.md for full breakdown.",
-  "updatedAt": "2026-05-09T10:00:00.000Z",
-  "updatedBy": "po",
-  "lastCompleted": "Sprint 1858: 2 FIX — pollNews cooldown 4h→24h (1858a) + logVpsPush silent failure fixed with safeLogVpsPush wrapper (1858c)."
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-09T19:07:00.000Z",
+  "updatedBy": "dev-team-cron",
+  "lastCompleted": "Sprint 1862: 4 tasks. 1862a: vnstock rate limiter RPM 50→80, delay 1500→2500ms. 1862b: report-analyzer SKILL_MANIFEST enum added. 1862c: Cowork MCP access investigation (config fix recommended). 1862d: vnstock_events deploy verified OK."
 }
