@@ -9,6 +9,7 @@
 ## [News Scout] Headlines & Sentiment
 
 2026-05-01 | **BULLISH** Ông Trump chúc mừng đối tác vừa bắt tay FPT — US political endorsement of VN tech company | YoY: No prior data
+2026-05-09 | **BEARISH** FPT hits new low, market cap loss 40T VND YTD — significant deterioration after prior bullish signal | YoY: Reversal from May 1 bullish
 
 ## [Market Watcher] Price, Volume, Technicals
 - Last price: 75.500 (+1.48%) as of 2026-05-01 05:34
