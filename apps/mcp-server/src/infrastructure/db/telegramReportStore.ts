@@ -207,6 +207,80 @@ export function claimReport(db: Database, id: number, claimant: string): ClaimRe
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// submit_feedback deduplication (Task 1860b)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Suppression window for submit_feedback dedup checks (seconds).
+ *
+ * Identical reports from the same agent within this window are suppressed.
+ * Default: 4 hours (14 400 seconds).
+ */
+export const DEDUP_WINDOW_SECONDS = 4 * 3600;
+
+/** Result returned by {@link insertReportDeduped}. */
+export interface InsertReportDedupedResult {
+  /** True when the row was actually inserted. */
+  inserted: boolean;
+  /** Row id of the new insert (only present when inserted = true). */
+  id?: number;
+  /** Id of the existing report that caused suppression (inserted = false). */
+  suppressedBy?: number;
+  /** ISO-8601 created_at of the suppressing report (inserted = false). */
+  suppressedAt?: string;
+}
+
+/**
+ * Inserts a report row, but first checks for a duplicate within
+ * {@link DEDUP_WINDOW_SECONDS}.
+ *
+ * Duplicate criteria (ALL must match):
+ *   - Same `from_agent`
+ *   - First 50 characters of `text` are identical
+ *   - Existing row was created within the last 4 hours
+ *
+ * @param db       - SQLite database instance
+ * @param text     - Full message text (title + body)
+ * @param fromAgent - Sender label (e.g. "news-scout")
+ * @param messageId - Telegram message_id (0 if not yet sent)
+ * @param priority  - Urgency level (default "normal")
+ * @returns        Result object with inserted flag and suppression details
+ */
+export function insertReportDeduped(
+  db: Database,
+  text: string,
+  fromAgent: string = "unknown",
+  messageId: number = 0,
+  priority: ReportPriority = "normal",
+): InsertReportDedupedResult {
+  const titleKey = text.slice(0, 50);
+  const cutoff = Math.floor(Date.now() / 1000) - DEDUP_WINDOW_SECONDS;
+
+  const existing = db
+    .query<{ id: number; created_at: number }, [string, string, number]>(
+      `SELECT id, created_at
+       FROM telegram_reports
+       WHERE from_agent = ?
+         AND substr(text, 1, 50) = ?
+         AND created_at >= ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+    )
+    .get(fromAgent, titleKey, cutoff);
+
+  if (existing !== null) {
+    return {
+      inserted: false,
+      suppressedBy: existing.id,
+      suppressedAt: new Date(existing.created_at * 1000).toISOString(),
+    };
+  }
+
+  const id = insertReport(db, text, fromAgent, messageId, priority);
+  return { inserted: true, id };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Deduplication helpers (Task 1215)
 // ─────────────────────────────────────────────────────────────────────────────
 
