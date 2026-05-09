@@ -2,16 +2,16 @@
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Anti-Hallucination Guard
 
-**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
 Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
 
 ## Error Boundary
 
-If ANY tool call fails after 1 retry → `send_telegram(channel="work", message="[unified-agent] Daily review step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+If ANY tool call fails after 1 retry → `send_telegram(channel="work", message="[unified-agent] Daily review step N failed: {error}")` → `submit_feedback(severity="warning", title="[unified-agent] Daily review step N failed", agent="unified-agent")` → EXIT immediately. Do NOT investigate or write incident docs.
 
 **FORBIDDEN on error:** standalone blocker files, docker commands, "Next Steps for Dev Team" sections, any file outside session log/notebook/channel messages.
 

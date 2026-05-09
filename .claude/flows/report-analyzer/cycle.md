@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/report-analyzer.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 > Event-driven: only runs when new earnings detected.
 
 ## Error Boundary

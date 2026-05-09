@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Input
 docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
@@ -35,12 +35,32 @@ For each message, scan for these failure signals:
 | **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in session log, spawn `claude-manager-helper` if pattern is recurring |
 | **Cowork doing wrong thing** | Agent reports completing work that contradicts the sprint goal or doesn't match what was asked | Open correction task → `ba` for re-spec |
 | **Silent period** | A channel has had 0 messages in >2h during market hours | Flag as potential pipeline failure → `ops` |
+| **Strategy error** | Agent applies wrong methodology, incorrect thresholds, flawed logic (e.g. bullish signal during bearish regime, wrong sector classification, inverted comparison) | Open fix task → `developer` |
+| **Logic error** | Calculation wrong, condition inverted, comparison backward, data aggregation incorrect | Open fix task → `developer` |
+| **UX / display issue** | Bad formatting, missing Vietnamese diacritics, truncated text, unreadable numbers, ugly layout, missing context in alert | Open UX task → `developer` |
+| **Incomplete information** | Alert missing key data user needs (no %, no direction, no comparison period, no context) | Open UX task → `developer` |
 
 **Evaluate from the user's perspective:**
 - Would the user understand this message?
 - Does the output reflect what was actually asked?
 - Are signals actionable or just noise?
 - Are agents reporting progress on the right tasks?
+- Is the strategy/logic sound? (not just error-free, but *correct*)
+- Would the user find this message *useful*? (not just valid but actually helpful)
+
+### Step 0-a2 — Chat group review
+
+```
+read_telegram_reports(channel="market-group", limit=10)
+```
+
+Scan user messages for:
+- Complaints about message quality, formatting, or missing details
+- Questions that reveal the alerts are confusing or incomplete
+- Requests for features or changes (implicit or explicit)
+- User pointing out wrong data, bad analysis, or misleading signals
+
+Each finding → task in TASKS.md with category `ux` or `bug`.
 
 ### Step 0-b — Cross-check issues against fix history (MANDATORY if any issue found)
 
@@ -94,16 +114,18 @@ Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEA
 Before doing anything, check:
 1. docs/TASKS.md — any pending/in-progress tasks? → handle those first
 2. `read_telegram_reports(status="new")` — any user requests? → handle those first
-3. Both empty → **cannot self-initiate** → return:
+3. Channel audit (Step 0) found issues? → self-initiate sprint from those findings
+4. All empty AND channels clean → return:
 ```
 ## RETURN
-DONE: No tasks and no user requests found
+DONE: No tasks, no user requests, channels clean
 NEXT: user | provide session goal or priority to initiate next sprint
 PIPELINE: idle
 ```
-Main terminal will ask the user for input before re-spawning PO.
 
-## Self-Initiating Sprint (only when user provides session goal)
+**PO CAN self-initiate** when channel audit found bugs, strategy errors, UX issues, or logic problems — these are the sprint backlog.
+
+## Self-Initiating Sprint
 
 **1.** Assess: `docs/data/project-stats.json` (counts) | last 2 task reports | user session goal
 

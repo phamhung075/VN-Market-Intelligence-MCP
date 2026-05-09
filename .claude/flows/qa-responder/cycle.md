@@ -2,11 +2,11 @@
 
 **Tools:** `.claude/tools/package/qa-responder.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Anti-Hallucination Guard
 
-**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
 
 - NEVER say "MCP is not available in this session" without attempting the call
 - ALWAYS call the tool. If it fails, report the REAL error from the response

@@ -2,11 +2,11 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Anti-Hallucination Guard
 
-**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
 Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
 
 ## Error Boundary

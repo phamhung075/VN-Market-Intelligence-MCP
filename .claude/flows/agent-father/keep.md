@@ -166,11 +166,24 @@ Report count of stale logs per agent. Do NOT delete — information only.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
+## Step 7 — PO handoff if findings require dev work
+
+If maintenance found escalations, broken agents, missing critical sections, structural issues, or orphans needing attention:
+
+1. Compile findings summary for PO with:
+   - Each issue: what's wrong, which agent/file, severity, guide reference
+   - Suggested fix category: `fix` | `chore` | `refactor`
+   - Affected area: agent name, flow path, or knowledge file
+
+2. RETURN with `NEXT: po` and findings in context so PO can create sprint tasks.
+
+Skip this step ONLY if zero escalations and all checks passed.
+
 ## RETURN
 
 ```
 DONE: Maintenance sweep — N agents, M auto-fixes, K escalations
-NEXT: user | address escalations if any
+NEXT: user (if clean) | po (if issues found — pass findings for task planning)
 PIPELINE: complete
 QUALITY: full | partial
 ```

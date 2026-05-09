@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/market-analyst.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Input
 User question, news event, ticker, or morning routine trigger

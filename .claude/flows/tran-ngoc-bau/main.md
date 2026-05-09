@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/tran-ngoc-bau.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Error Boundary
 
@@ -136,3 +136,25 @@ Append `docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md`:
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `tran-ngoc-bau`)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+## Step 9 — PO handoff if findings require dev work
+
+If audit found code/system issues that need fixing (methodology gaps, flow bugs, signal logic errors, data mismatches, threshold violations, missing checks):
+
+1. Compile a findings summary for PO with:
+   - Each issue: what's wrong, which agent/file/module, severity, evidence
+   - Suggested fix category: `fix` | `refactor` | `feat`
+   - Affected area: agent name, flow path, or source code path
+
+2. RETURN with `NEXT: po` and the findings in context so PO can create sprint tasks.
+
+Skip this step ONLY if audit found zero issues (Overall: GOOD, no auto-cures needed, no mismatches).
+
+## RETURN
+
+```
+DONE: Quality audit — N MARKET msgs, M agent sessions, K auto-cures | Overall: GOOD|NEEDS_ATTENTION|CRITICAL
+NEXT: user (if GOOD) | po (if issues found — pass findings for task planning)
+PIPELINE: complete
+QUALITY: full | partial
+```

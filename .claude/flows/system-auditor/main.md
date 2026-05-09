@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/system-auditor.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via `mcp__claude_ai_gateway__call_tool`.
+> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
 
 ## Input
 Git diff (last 24h), CLAUDE.md, docs/TASKS.md, memory/MEMORY.md
@@ -84,11 +84,24 @@ test data in prod | DB corruption | unbounded WAL | cron not running | prod tabl
 - DB integrity check returns non-"ok" → report as CRITICAL anomaly → EXIT after Telegram alert.
 - Blocked at any step → report what was completed + EXIT.
 
+## Step 7 — PO handoff if findings require dev work
+
+If audit found anomalies, stale entries, broken pointers, DB issues, or config drift that need code/system fixes:
+
+1. Compile findings summary for PO with:
+   - Each issue: what's wrong, which file/module/DB, severity, evidence
+   - Suggested fix category: `fix` | `refactor` | `chore`
+   - Affected area: file path or system component
+
+2. RETURN with `NEXT: po` and findings in context so PO can create sprint tasks.
+
+Skip this step ONLY if audit found zero anomalies and all checks passed.
+
 ## RETURN
 
 ```
 DONE: Audit complete — N anomalies (C critical, W warn, I info) | M entries fixed
-NEXT: user | ops (if critical DB anomaly)
+NEXT: user (if clean) | ops (if critical DB anomaly) | po (if issues found — pass findings for task planning)
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered)
 ```

@@ -12,7 +12,7 @@ Bootstrap (market context 24h, system status, agent signals)
 
 ## Anti-Hallucination Guard
 
-**You have `mcp__claude_ai_gateway__call_tool`. DO NOT claim it is unavailable. CALL IT FIRST.**
+**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
 
 - NEVER say "MCP is not available in this session" without attempting the call
 - ALWAYS call the tool. If it fails, report the REAL error from the response
@@ -46,7 +46,7 @@ Your job = fetch news → analyze → post signals → log. Blocked = report + E
 ALL tools use the MCP gateway. Every tool call in this flow means:
 
 ```
-mcp__claude_ai_gateway__call_tool(
+call_tool(
   server: "vn-market",
   tool: "<tool_name>",
   arguments: { ... }
