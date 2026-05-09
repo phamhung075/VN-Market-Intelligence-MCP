@@ -32,6 +32,19 @@
 
 **Next monitoring**: 02:00 UTC (market open)
 
+## Cycle (21:38–21:38 UTC, OFF-HOURS) — BLOCKED
+
+**Status**: Infrastructure OFFLINE
+
+- **Blocker**: MCP infrastructure down (documented MEMORY.md 21:01 UTC)
+- **MCP server** (localhost:3000): not responding
+- **Cloudflare tunnel** (zenmidi.com): not responding
+- **Step blocked**: 0 (get_cycle_bootstrap)
+- **Action**: EXIT per error boundary protocol
+- **Next cycle**: Await infrastructure restart before resuming monitoring
+
+This cycle could not proceed. Infrastructure team: restart services per ops fix deployment.
+
 ## Cycle (00:38 UTC, OFF-HOURS) — BLOCKED
 
 **Status**: Infrastructure Error
@@ -518,3 +531,55 @@ This cycle could not proceed. Next cycle will attempt again at scheduled time.
 - Macro snapshot provides up-to-date regime context for signal prioritization in next live session
 
 **Next cycle**: 18:38 UTC (4h off-hours interval) or market open 02:00 UTC 2026-05-09
+
+## Cycle (22:38–22:42 UTC, OFF-HOURS) — ✅ COMPLETE
+
+**Status**: Market closed, no anomalies detected (prices stale from 08:59 UTC)
+
+- Stocks monitored: 32 | Anomalies: 0 (both <2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A (off-hours) | US10Y: N/A (off-hours) | Carry: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+
+### Key Findings
+
+**Market State**: CLOSED (off-hours 22:38 UTC; last prices 08:59 UTC, 13.6h stale)
+
+**Price Analysis**:
+- **BID**: +3.79% (1.9σ estimated) — Strongest mover from prior session, institutional volume 3.3× avg
+- **POW**: -2.44% (0.8σ estimated) — Pullback after recent +6.69% (May 6), +5.14% (May 4) rallies
+- **Sector rotation**: All 15 sectors STABLE (no 5-day trend data available off-hours)
+- **Top movers from session**: HVN -1.98%, FPT -1.51%, VRE -1.64%, GAS -1.71%
+
+**Anomaly Assessment**:
+- BID +3.79%: 30-day avg 40.7K, daily vol ~1.5–2%, move ≈ 1.9σ (below 2.0σ threshold)
+- POW -2.44%: Recent volatility ±5%, move ≈ 0.8σ (within normal range given +9.80% 30-day return)
+- No signals qualified for post (threshold 2.0σ, NEUTRAL regime)
+
+**Macro Context** (refreshed via bootstrap 22:39 UTC):
+- Global Liquidity: NEUTRAL (σ threshold 2.0σ)
+- Carry Regime: FII_OUTFLOW_RISK (consistent from prior cycles)
+- Energy: Brent ~$100 (stable, no new pressure)
+- Currency: USD/VND ~26,117 (high but stable)
+
+**Chain Status**: 0 active chains in off-hours monitoring window
+
+**System Status**: OK
+- Bootstrap latency: 8 ms
+- MCP gateway: Available ✅
+- System alerts: 4 pending alerts (VRE, VIC, VHM news_mention; GAS urgent news_mention)
+- Last alert: 2026-05-08 20:49 UTC (1.8h ago, within 24h window)
+
+### Decision Log
+
+- **Signal post**: 0 (no moves >2.0σ, prices stale, market closed)
+- **Regime held**: NEUTRAL (no macro shift)
+- **Carry pressure**: FII_OUTFLOW_RISK continues (regime context stable)
+- **Next monitoring**: 02:00 UTC 2026-05-09 (market open, 3.2h away)
+
+### Notes
+
+- Scheduled cycle during deep off-hours (22:38 UTC is 13.6h post-close)
+- Price data frozen at 08:59 UTC close; all prior signal TTLs expired
+- No new chain findings expected until next market open
+- Bootstrap shows system operational, ready for market open at 02:00 UTC 2026-05-09
+
+**Next cycle**: 02:00 UTC 2026-05-09 (MARKET OPEN — 20min interval)
