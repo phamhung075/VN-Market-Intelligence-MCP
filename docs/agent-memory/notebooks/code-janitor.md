@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-07 (scan 3, CLEAN task 1850e)
+## Last updated: 2026-05-09 (scan 6, CLEAN — JANITOR-023 status updated to shipped)
 
 ## State summary
 
@@ -17,7 +17,7 @@
 | JANITOR-016 | Private parseVnNumber copies in sscInsider.ts + muasamcong.ts | 6e2cca53 |
 | JANITOR-021 | BROWSER_FETCH_TIMEOUT_MS (30000) inlined 4x in discoverBctcPdfUrlBrowser.ts | b33d6856 |
 | JANITOR-022 | DBC domain classification: added to agriculture sector in stock-classification.json | TBD |
-| JANITOR-023 | Added chemicals domain: DGC (Duc Giang) + GVR moved from other; updated bctc-schema.ts, sectorPeers.ts, mcp.config.json | TBD |
+| JANITOR-023 | CLAUDE_BIN extracted to agentConstants.ts, imported by smartCompactSpawner.ts + qaResponderSpawner.ts | b836f129 |
 
 ### Open backlog
 
