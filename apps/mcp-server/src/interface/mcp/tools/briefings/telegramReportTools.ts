@@ -215,18 +215,29 @@ export function registerTelegramReportTools(server: McpServer): void {
           }
         }
 
-        // Step 3: optionally delete from Telegram
-        let telegramDeleted = false;
+        // Step 3: optionally delete from Telegram — GUARD: if deletion fails, abort
         if (row.message_id > 0 && shouldDelete) {
+          let telegramDeleted = false;
           try {
             telegramDeleted = await deleteTelegramBug(row.message_id);
           } catch {
-            // Swallow — Telegram may have already deleted the message
             telegramDeleted = false;
+          }
+
+          if (!telegramDeleted) {
+            // Do NOT mark as processed — caller must retry after resolving Telegram issue
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Telegram deletion failed, report NOT marked as processed",
+                },
+              ],
+            };
           }
         }
 
-        // Step 4: mark as processed in SQLite
+        // Step 4: mark as processed in SQLite (only reached when delete succeeded or was skipped)
         markProcessed(db, id);
 
         // Step 5: return confirmation
@@ -236,9 +247,6 @@ export function registerTelegramReportTools(server: McpServer): void {
         let text: string;
         if (row.message_id > 0 && shouldDelete) {
           text = `Report ${id} marked as processed.${resolutionSuffix} Telegram message ${row.message_id} deleted.`;
-          if (!telegramDeleted) {
-            text += " (Telegram deletion may have failed — row is still marked processed.)";
-          }
         } else {
           text = `Report ${id} marked as processed.${resolutionSuffix} Telegram deletion skipped.`;
         }
