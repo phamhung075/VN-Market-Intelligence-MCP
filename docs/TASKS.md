@@ -15,7 +15,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1860a | FIX: process_telegram_report must fail if Telegram deletion fails — do NOT mark processed when deleteTelegramBug returns false. | HIGH | FIX | dev-mcp-server | — | — |
 | 1860b | FIX: submit_feedback dedup — insertReport must reject duplicate (same from_agent + title substring) within 4h window. | HIGH | FIX | dev-mcp-server | — | — |
 | 1860c | SPRINT-S: monitoring report auto-expiry — add expireMonitoringReports() store function, 72h TTL, dev-team Step 4 calls it before scan. | MEDIUM | SPRINT-S | dev-mcp-server | — | — |
 | 1860d | SPRINT-S: dev-team Step 4.5 archive — extend archive loop to include expired monitoring reports (resolution=monitoring + age>72h). | MEDIUM | SPRINT-S | developer | — | 1860c |
@@ -41,6 +40,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1860a | FIX: process_telegram_report delete guard — markProcessed blocked on Telegram failure. 2 files + 11 tests. | HIGH | FIX | dev-mcp-server | 2026-05-09 |
 | 1858c | FIX: logVpsPush() silent failure — safeLogVpsPush wrapper, 6 call sites replaced, 5 tests. | HIGH | FIX | developer | 2026-05-08 |
 | 1858a | FIX: pollNews all-dark cooldown 4h→24h — reduces alert spam during sustained VPS push gaps. 3 files. | HIGH | FIX | developer | 2026-05-08 |
 | 1857a | FIX: vnstock-sync WAL checkpoint (PASSIVE) between stock iterations. Prevents WAL bloat + DB lock. 1 file + 4 tests. | HIGH | FIX | developer | 2026-05-08 |
