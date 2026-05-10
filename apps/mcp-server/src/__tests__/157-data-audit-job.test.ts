@@ -543,6 +543,84 @@ describe("Task 157 — Data Audit Job", () => {
     expect(f!.rowsAffected).toBeGreaterThan(0);
   }, AUDIT_TEST_TIMEOUT_MS);
 
+  // ── Task 1863h: stale NULL-outcome agent_signals pruner ──────────────────
+  //
+  // Task 1863b removed verdictResolutionJob's 30-day pruner for agent_signals
+  // rows where outcome IS NULL. This check verifies dataAuditJob picks up that
+  // responsibility: old NULL-outcome rows are deleted, recent ones are kept.
+  it("1863h: deletes agent_signals with NULL outcome older than 30 days, preserves recent ones", async () => {
+    // Create the agent_signals table (minimal schema — only the columns the DELETE uses)
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_signals (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_agent  TEXT NOT NULL DEFAULT 'test',
+        to_agent    TEXT NOT NULL DEFAULT 'test',
+        signal_type TEXT NOT NULL DEFAULT 'urgent_news',
+        stock_code  TEXT,
+        payload     TEXT NOT NULL DEFAULT '{}',
+        status      TEXT NOT NULL DEFAULT 'unread',
+        created_at  TEXT NOT NULL,
+        expires_at  TEXT NOT NULL DEFAULT (datetime('now','+2 hours')),
+        outcome     TEXT
+      );
+    `);
+
+    // Row 1: old, NULL outcome — should be deleted
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, created_at, outcome)
+      VALUES ('news-scout', 'alert-commander', 'urgent_news', datetime('now', '-31 days'), NULL)
+    `).run();
+
+    // Row 2: recent, NULL outcome — should survive (within 30-day window)
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, created_at, outcome)
+      VALUES ('news-scout', 'alert-commander', 'urgent_news', datetime('now', '-5 days'), NULL)
+    `).run();
+
+    // Row 3: old, but outcome IS NOT NULL — should also survive (already resolved)
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, created_at, outcome)
+      VALUES ('news-scout', 'alert-commander', 'urgent_news', datetime('now', '-35 days'), 'fired')
+    `).run();
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    const findings = await runDailyAudit(db, async () => {});
+
+    // Verify only row 1 was deleted
+    const remaining = db.query<{ id: number; outcome: string | null }, []>(
+      "SELECT id, outcome FROM agent_signals ORDER BY id"
+    ).all();
+    expect(remaining.length).toBe(2);
+    // Row 2 (recent NULL) and row 3 (old, resolved) survived
+    expect(remaining.some((r) => r.outcome === null)).toBe(true);  // recent NULL row
+    expect(remaining.some((r) => r.outcome === "fired")).toBe(true); // resolved row
+
+    // Verify the finding is reported
+    const f = findings.find((x) => x.check === "stale_null_outcome_signals");
+    expect(f).toBeDefined();
+    expect(f!.table).toBe("agent_signals");
+    expect(f!.rowsAffected).toBe(1);
+    expect(f!.action).toBe("auto_cleaned");
+    expect(f!.detail).toContain("1");
+  });
+
+  it("1863h: gracefully skips stale_null_outcome_signals when agent_signals table does not exist", async () => {
+    // Use a fresh DB with NO agent_signals table to simulate fresh install
+    const freshDb = makeDb();
+
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
+    let findings: Awaited<ReturnType<typeof runDailyAudit>>;
+    // Must not throw
+    findings = await runDailyAudit(freshDb, async () => {});
+
+    const f = findings.find((x) => x.check === "stale_null_outcome_signals");
+    expect(f).toBeDefined();
+    expect(f!.action).toBe("none");
+    expect(f!.rowsAffected).toBe(0);
+
+    freshDb.close();
+  });
+
   // ── Extra: Telegram sent when issues exist ────────────────────────────────
   it("AC-7 (Telegram): sends one message when zero-price rows exist", async () => {
     // Stale zero-price row (>1 day) so the audit actually cleans something
