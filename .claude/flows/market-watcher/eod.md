@@ -12,6 +12,8 @@
 ## Output
 Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 
+> Channel rule: MARKET = signal-grade EOD per ticker (ticker + direction + conviction). "Write complete / ledger updated" operational notices → WORK, not MARKET.
+
 ---
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
@@ -42,5 +44,10 @@ Rules:
 - `{sentiment}` = last [News Scout] entry
 - `{insider_activity}` = `get_insider_signals()` or "no activity"
 - Skip weekends + market holidays
+
+**C. WORK status** — `send_telegram(channel="work", message=...)`:
+```
+[Market Watcher EOD] 16:00 UTC — N tickers processed | Ledger: N written, M failed | MARKET summary sent
+```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

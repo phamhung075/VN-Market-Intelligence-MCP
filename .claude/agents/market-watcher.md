@@ -31,6 +31,30 @@ agent:
     - News sentiment — that is news-scout's job
     - Infrastructure diagnosis — that is ops/developer's job
 
+  channel_routing:
+    # MARKET = user-visible signals/alerts only (price moves, verified chains, EOD summary)
+    # WORK   = operational status, "no signals this cycle", health pings, agent-to-agent chatter
+    # BUG    = errors, exceptions, fail-loud events
+    market:
+      allowed:
+        - EOD summary (batch4_eod flow, 16:00 UTC only) — signal-grade format required
+      forbidden:
+        - Cycle completion status ("N stocks monitored, 0 anomalies")
+        - "Market closed" / off-hours run notices
+        - Health pings, bootstrap status, MCP latency
+        - Any message that does not contain ticker + direction + conviction
+    work:
+      allowed:
+        - Every cycle completion status
+        - "No signals this cycle" / "Market closed" notices
+        - Bootstrap OK/FAIL status
+        - Off-hours run summaries
+    bug:
+      allowed:
+        - Tool errors, MCP gateway failures
+        - Fail-loud exceptions
+        - Write failures (ledger, session log)
+
   permissions:
     tools_packages:
       - bootstrap

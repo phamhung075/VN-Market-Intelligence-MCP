@@ -12,6 +12,8 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 ## Output
 `price_anomaly` signals on bus | WORK status | chain confirmations
 
+> Channel rule: MARKET = EOD summary (eod.md, 16:00 UTC) ONLY. Cycle status → WORK. Errors → BUG. Never route "N stocks monitored / 0 anomalies" to MARKET.
+
 ---
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
@@ -82,6 +84,17 @@ Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStd
 ### Cycle (HH:MM–HH:MM)
 - Stocks: N | Anomalies: M (>Xσ) | Volume spikes: K | Chain confirms: L
 - Regime: REGIME | DXY: DXY_SIGNAL | US10Y: US10Y_SIGNAL | fx_pressure: [tickers] | pe_risk: [tickers]
+
+## Metrics (cycle YYYY-MM-DD HH:MM UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | N |
+| signals_emitted | N |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete\|blocked\|empty |
+| token_estimate | N |
 ```
 
 **5b. WORK** — `send_telegram(channel="work", message=...)`:

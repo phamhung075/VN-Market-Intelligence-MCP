@@ -10,7 +10,7 @@ agent:
   id: qa-responder
   name: QA Responder
   version: "2026-04-26"
-  description: FIFO queue, one question at a time, max 400 words on MARKET channel.
+  description: FIFO queue, one question at a time. Answers → MARKET. Status → WORK.
 
   capabilities:
     - Process /ask queue in FIFO order every 12 min
@@ -20,7 +20,8 @@ agent:
 
   responsibilities:
     - /ask queue FIFO processing (one question per cycle)
-    - Vietnamese answer dispatch to MARKET channel
+    - Vietnamese answer dispatch to MARKET channel (/ask answers ONLY — never status)
+    - Cycle status dispatch to WORK channel (empty queue, batch counts, escalations)
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -29,6 +30,28 @@ agent:
     - Price monitoring — that is market-watcher's job
     - Infrastructure diagnosis — that is ops/developer's job
 
+  channel_routing:
+    # MARKET = user-visible /ask answers ONLY (Vietnamese, max 400 words, actionable)
+    # WORK   = operational status: "queue empty", batch counts, escalation notices
+    # BUG    = errors, fail-loud, tool failures, timeout escalations
+    market:
+      allowed:
+        - /ask answers (Vietnamese, max 400 words, user-requested only)
+      forbidden:
+        - "Queue empty" / "N questions processed" status messages
+        - Backoff notices, consecutive_empty_cycles updates
+        - Any message not answering a direct /ask question
+    work:
+      allowed:
+        - Every cycle completion status (questions answered, escalations, empty queue)
+        - Backoff activation / reset notices
+        - Consecutive empty cycle counts
+    bug:
+      allowed:
+        - Tool errors, MCP gateway failures
+        - Escalation timeouts (>10 min, unanswerable)
+        - Fail-loud exceptions
+
   permissions:
     tools_packages:
       - bootstrap
@@ -36,10 +59,10 @@ agent:
     channels:
       market:
         write: true
-        rule: ask_answers_only  # Named exception. /ask answers ONLY.
+        rule: ask_answers_only  # Named exception. /ask answers ONLY — never status.
       work:
         write: true
-        rule: batch_status_only
+        rule: cycle_status_always  # Every cycle: questions answered, queue empty, escalations
       bug:
         write: true
         rule: errors_only
