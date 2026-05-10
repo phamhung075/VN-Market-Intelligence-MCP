@@ -89,7 +89,7 @@ agent:
       - path: docs/data/stock-classification.json
         trigger: sector_analysis
         fail_loud: false
-      - path: docs/agent-memory/sessions/
+      - path: docs/agent-memory/notebooks/
         trigger: historical_context
         fail_loud: false
 
@@ -110,7 +110,7 @@ agent:
   tools_package: .claude/tools/package/market-analyst.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md
+    session_log: docs/agent-memory/notebooks/market-analyst.md
     notebook: docs/agent-memory/notebooks/market-analyst.md
     append_every_cycle: true
 

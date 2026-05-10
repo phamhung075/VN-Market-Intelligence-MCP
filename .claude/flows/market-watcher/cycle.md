@@ -79,14 +79,14 @@ Schema: `PriceAnomalyFindingDataSchema` in `apps/mcp-server/src/domain/signals/s
 
 Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
-**5. Session log** — **APPEND ONLY** to `docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md` (use Edit to append, NEVER Write/overwrite — each cycle adds a new `### Cycle` block):
+**5. Notebook commit** — append to `docs/agent-memory/notebooks/market-watcher.md` (APPEND ONLY — each cycle adds a new `### Cycle` block):
 
 > Invariant: timestamp = current UTC, never future, never speculative.
 
-### Session log timestamp guard
-- Use ONLY the actual current UTC time when stamping session log entries
+### Notebook timestamp guard
+- Use ONLY the actual current UTC time when stamping notebook entries
 - NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
-- If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log
+- If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing
 ```
 ### Cycle (HH:MM–HH:MM)
 - Stocks: N | Anomalies: M (>Xσ) | Volume spikes: K | Chain confirms: L
@@ -102,6 +102,10 @@ Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStd
 | market_alerts_fired | 0 |
 | exit_status | complete\|blocked\|empty |
 | token_estimate | N |
+```
+```bash
+git add docs/agent-memory/notebooks/market-watcher.md
+git commit -m "chore(memory/market-watcher): notebook YYYY-MM-DD"
 ```
 
 **5b. WORK** — `send_telegram(channel="work", message=...)`:

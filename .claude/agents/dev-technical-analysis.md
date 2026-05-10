@@ -125,7 +125,7 @@ agent:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-technical-analysis.md
+    session_log: docs/agent-memory/notebooks/dev-technical-analysis.md
     notebook: docs/agent-memory/notebooks/dev-technical-analysis.md
     append_every_cycle: true
 

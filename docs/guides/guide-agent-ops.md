@@ -38,9 +38,9 @@ One line per lesson. Format: `LESSON: <context> — <fact> -> <action>`
 Each lesson links to where the detail lives.
 
 - LESSON: get_technical_indicators — returns empty for IPO < 30 days -> skip, don't retry
-  -> detail: docs/agent-memory/sessions/2026-05-07-market-watcher.md @ Cycle 04:15
+  -> detail: docs/agent-memory/notebooks/market-watcher.md @ Cycle 2026-05-07
 - LESSON: VPS proxy timeout at 08:30 UTC = market close surge -> retry after 60s
-  -> detail: docs/agent-memory/sessions/2026-05-06-news-scout.md @ Cycle 08:30
+  -> detail: docs/agent-memory/notebooks/news-scout.md @ Cycle 2026-05-06
 - LESSON: alert-commander needs finding_data.source -> always include in urgent_news
   -> related: docs/agent-memory/notebooks/alert-commander.md @ Lessons
 - LESSON: DDD repository.findByTicker() returns null not undefined -> null-check
@@ -189,9 +189,9 @@ document_registry:
       type: notebook
 
   dynamic:                                   # Created during work
-    - pattern: docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md
-      type: session-log
-      lifecycle: one-per-day, append-only
+    - pattern: docs/agent-memory/notebooks/<agent-id>.md
+      type: notebook
+      lifecycle: persistent, append-per-cycle
     - pattern: docs/analysis-briefs/{TICKER}.md
       type: ledger
       lifecycle: persistent, append own section

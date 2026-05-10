@@ -149,7 +149,7 @@ agent:
 
   memory:
     notebook: docs/agent-memory/notebooks/agent-father.md
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-agent-father.md
+    session_log: docs/agent-memory/notebooks/agent-father.md
     append_every_cycle: true
 
   inter_agent:

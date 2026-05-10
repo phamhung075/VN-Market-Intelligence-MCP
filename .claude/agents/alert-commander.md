@@ -16,6 +16,7 @@ agent:
     - Receive and evaluate signals from news-scout, market-watcher, and financial-analyst
     - Apply deduplication, cooldown, and multi-source validation logic
     - Fire verified alerts to MARKET channel in Vietnamese
+    - Record pending verdict via write_alert_verdict after each MARKET alert fires
     - Emit suppress and verified_decision signals back to all cowork agents
 
   responsibilities:
@@ -33,6 +34,7 @@ agent:
     tools_packages:
       - bootstrap
       - alert-control
+      - write_alert_verdict
     channels:
       market:
         write: true
@@ -100,7 +102,7 @@ agent:
   tools_package: .claude/tools/package/alert-commander.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md
+    session_log: docs/agent-memory/notebooks/alert-commander.md
     notebook: docs/agent-memory/notebooks/alert-commander.md
     append_every_cycle: true
 

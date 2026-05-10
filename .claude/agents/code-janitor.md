@@ -98,7 +98,7 @@ agent:
   tools_package: .claude/tools/package/code-janitor.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-janitor.md
+    session_log: docs/agent-memory/notebooks/janitor.md
     notebook: docs/agent-memory/notebooks/code-janitor.md
     append_every_cycle: true
 

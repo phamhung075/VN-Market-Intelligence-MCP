@@ -26,10 +26,14 @@ Verification log | escalation if digest missing
 
 **2. BUG channel observe** `read_telegram_reports(status="new", unclaimed_only=false)` — flag any Sunday bugs to session log. DO NOT claim or re-file.
 
-**Session log** `docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/unified-agent.md`:
 ```
 ### Weekly Verification (HH:MM UTC)
 - Mode: WEEKLY_VERIFY | Digest sent: [yes/no] | Sunday bugs: [list]
+```
+```bash
+git add docs/agent-memory/notebooks/unified-agent.md
+git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

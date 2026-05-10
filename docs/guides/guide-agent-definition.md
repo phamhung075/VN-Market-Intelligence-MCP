@@ -144,7 +144,6 @@ constraints:
     # Zone B: autonomous files this agent owns (no user approval needed)
     owns_autonomous:
       - docs/agent-memory/notebooks/<agent-id>.md
-      - docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md
 
     # Zone C: shared files this agent can append to (own section only)
     appends:
@@ -182,9 +181,9 @@ Every file the agent creates or owns must be registered here. This prevents phan
 
     # Dynamic files (created during work, pattern-based)
     dynamic:
-      - pattern: docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md
-        type: session-log
-        lifecycle: one-per-day, append-only
+      - pattern: docs/agent-memory/notebooks/<agent-id>.md
+        type: notebook
+        lifecycle: persistent, append-per-cycle
       - pattern: docs/analysis-briefs/{TICKER}.md
         type: ledger
         lifecycle: persistent, append own section
@@ -339,7 +338,6 @@ Documents signal bus connections — who triggers this agent and who it triggers
 ```yaml
   memory:
     notebook: docs/agent-memory/notebooks/<agent-id>.md
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md
     append_every_cycle: true
     # Notebooks to read for cross-team context (L3 lazy-load) [PLANNED]
     reads_notebooks:

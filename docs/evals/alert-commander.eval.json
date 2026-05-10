@@ -519,7 +519,7 @@
     {
       "id": "AC-11",
       "name": "Session log format — required fields present",
-      "description": "Session log entry appended to docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md must include all required fields.",
+      "description": "Notebook entry appended to docs/agent-memory/notebooks/alert-commander.md must include all required fields.",
       "mock_inputs": {
         "cycle_data": {
           "start_utc": "09:00",
@@ -551,7 +551,7 @@
         }
       },
       "assertions": [
-        "session log file path: docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md",
+        "notebook file path: docs/agent-memory/notebooks/alert-commander.md",
         "heading must be '### Alert Cycle (HH:MM–HH:MM UTC)'",
         "all 8 required fields must be present",
         "ChainCatalyst line must list event_types",

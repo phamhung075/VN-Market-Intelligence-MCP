@@ -177,7 +177,7 @@ If any check fails → log which check failed → attempt fix → if still faili
 
 ---
 
-**Session log** → append to `docs/agent-memory/sessions/YYYY-MM-DD-agent-father.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/agent-father.md`:
 ```
 ### Create (<agent_name>) HH:MM
 - Type: <agent_type>
@@ -185,6 +185,10 @@ If any check fails → log which check failed → attempt fix → if still faili
 - Registration: roster + CLAUDE.md + dispatch
 - Validation: N/7 passed
 - Decision: <why this type/model/color was chosen>
+```
+```bash
+git add docs/agent-memory/notebooks/agent-father.md
+git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 ```
 
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`

@@ -97,7 +97,7 @@ agent:
   tools_package: .claude/tools/package/po.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-po.md
+    session_log: docs/agent-memory/notebooks/po.md
     notebook: docs/agent-memory/notebooks/po.md
     append_every_cycle: true
 

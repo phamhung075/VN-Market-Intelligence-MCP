@@ -1,14 +1,13 @@
 ---
 name: session-log-cowork
 description: >
-  End-of-cycle session log write for cowork agents (market-watcher, financial-analyst,
-  report-analyzer, news-scout, alert-commander). Appends structured log entry to
-  dated session file.
+  End-of-cycle memory write for cowork agents. Appends structured cycle summary
+  to the agent's notebook and commits it.
 ---
 
-## Session log (end of cycle)
+## End-of-cycle memory write
 
-Write to `$PROJECT_ROOT/docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md`:
+Append cycle summary to `$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md`:
 
 ```markdown
 ## Cycle — HH:MM UTC
@@ -22,6 +21,13 @@ Write to `$PROJECT_ROOT/docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md`:
 
 `estimated_tokens` heuristic: count the number of MCP tool calls made in the cycle, multiply by 500 (baseline cost per tool call). Example: 6 tool calls → `estimated_tokens: 3000`. Use 0 if cycle was blocked before any tool call.
 
-Append — do not overwrite.
+Append — do not overwrite. Then commit:
+
+```bash
+git add docs/agent-memory/notebooks/<agent-id>.md
+git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
+```
+
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 > Requires `$PROJECT_ROOT` set by skill: `.claude/skills/project-root/SKILL.md`

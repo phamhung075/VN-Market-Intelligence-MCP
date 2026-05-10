@@ -122,7 +122,7 @@ agent:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-api-gateway.md
+    session_log: docs/agent-memory/notebooks/dev-api-gateway.md
     notebook: docs/agent-memory/notebooks/dev-api-gateway.md
     append_every_cycle: true
 

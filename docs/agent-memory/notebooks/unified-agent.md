@@ -30,3 +30,18 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - 2844: price_drop precision 50% (8/16 < 60% threshold) — 2nd consecutive cycle
 
 **Exit:** COMPLETE | Escalation: NONE | Next cycle hint: monitor BID Monday open.
+
+### Daily Review (21:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: news STALE 2.5h (>2h limit, feedback submitted LOW) | prices STALE 60h (expected: weekend/closed)
+- System: OK | Circuit breakers: all green | Rate-limit warns: vnstock BID/VDC (transient)
+- Sources blocked: Reuters RSS, TradingEconomics (10 consecutive errors, known)
+- Alerts 24h: 7 sent, 1 HIGH/CRITICAL, 0 unnotified
+- News 24h: 10 articles — bullish bias (VN-Index targeting 2000, gold up)
+- Bugs (new): 4
+  - 2841: FPT 2025-Q4 BCTC low confidence (0.10) — OCR corruption suspicion
+  - 2842: VNM 2025-Q4 BCTC low confidence (0.00) — OCR corruption (pre-existing)
+  - 2843: get_system_status EOF — stale bug, system now OK (live probe passed)
+  - 2844: price_drop precision 50% (8/16 < 60%) — 3rd cycle flagged
+- Pending feedback: 24 items | Open high/critical warnings: 18
+- Telegram WORK: summary sent ✅ | BUG channel: send failed (known: TELEGRAM_REPORT_BUG_CHANNEL_ID issue)
+**Exit:** COMPLETE | Next: weekly flow Sun 23:30 UTC

@@ -1,20 +1,20 @@
 ---
 name: append-session-record
 description: >
-  Call append_session_record MCP tool to persist session state before handoff.
-  Used by developer, fixer, code-janitor, digest-predict before returning control.
+  DEPRECATED — use cowork-end-cycle skill instead.
+  Session records are now written to per-agent notebooks via notebook commit pattern.
 ---
 
-## Append session record (before RETURN)
+> **DEPRECATED.** This skill is superseded by the notebook-commit pattern.
+> Redirect to: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-```
-append_session_record(
-  agent_name="<agent-id>",
-  task_name="Task NNN: <title>",
-  finding="<what was discovered>",
-  fix="<what was implemented>",      # optional
-  status="<Ready for QA | Complete | Blocked>"
-)
+Append cycle summary to `docs/agent-memory/notebooks/<agent-id>.md` and commit:
+
+```bash
+git add docs/agent-memory/notebooks/<agent-id>.md
+git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
 ```
 
-Call this **before** writing the RETURN block. Failure is non-fatal — log a warning and continue.
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
+Failure is non-fatal — log a warning and continue.

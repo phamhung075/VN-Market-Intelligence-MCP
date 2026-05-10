@@ -97,7 +97,7 @@ agent:
   tools_package: .claude/tools/package/news-scout.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md
+    session_log: docs/agent-memory/notebooks/news-scout.md
     notebook: docs/agent-memory/notebooks/news-scout.md
     append_every_cycle: true
 

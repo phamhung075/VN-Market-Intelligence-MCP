@@ -103,7 +103,7 @@ agent:
   tools_package: .claude/tools/package/system-auditor.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-auditor.md
+    session_log: docs/agent-memory/notebooks/auditor.md
     notebook: docs/agent-memory/notebooks/system-auditor.md
     append_every_cycle: true
 

@@ -23,10 +23,14 @@ Accuracy flags | session log
 
 If `get_prediction_markets()` does not return regime context → check current `get_macro_snapshot()` regime as proxy.
 
-**Session log** `docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/unified-agent.md`:
 ```
 ### Prediction Review (HH:MM UTC)
 - Mode: PREDICTION_REVIEW | Claims: N | Accuracy: X% | Flags: [list] | Regime at prediction: REGIME
+```
+```bash
+git add docs/agent-memory/notebooks/unified-agent.md
+git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

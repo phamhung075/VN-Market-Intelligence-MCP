@@ -164,11 +164,15 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-Append to `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
+Append to `docs/agent-memory/notebooks/news-scout.md`:
 ```
 ### Cycle (HH:MM–HH:MM)
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 - Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
+```
+```bash
+git add docs/agent-memory/notebooks/news-scout.md
+git commit -m "chore(memory/news-scout): notebook YYYY-MM-DD"
 ```
 
 **5. WORK channel**

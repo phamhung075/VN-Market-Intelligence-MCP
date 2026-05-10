@@ -99,7 +99,7 @@ agent:
   tools_package: .claude/tools/package/ba.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-ba.md
+    session_log: docs/agent-memory/notebooks/ba.md
     notebook: docs/agent-memory/notebooks/ba.md
     append_every_cycle: true
 

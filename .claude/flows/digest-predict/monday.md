@@ -64,8 +64,15 @@ Horizon:
 ```
 `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
 
-**P-6. Session log**
-`append_session_record(agent_name="digest-predict", task_name="Monday Predictions", finding="Calibration: [status], delta: [value]. Claims: [N]. Dampening: [yes/no].", status="Complete")`
+**P-6. Notebook commit** — append to `docs/agent-memory/notebooks/digest-predict.md`:
+```
+### Monday Predictions (HH:MM UTC)
+- Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
+```
+```bash
+git add docs/agent-memory/notebooks/digest-predict.md
+git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD"
+```
 
 **P-7.** `log_agent_work(summary="Created {N} claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`
 

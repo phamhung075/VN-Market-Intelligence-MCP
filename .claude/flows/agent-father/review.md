@@ -133,13 +133,17 @@ Order recommendations by:
 
 ---
 
-**Session log** → append to `docs/agent-memory/sessions/YYYY-MM-DD-agent-father.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/agent-father.md`:
 ```
 ### Review (<target>) HH:MM
 - Agents: N reviewed / M total
 - Findings: C critical, H high, M medium, L low
 - Cross-agent: N issues
 - Decision: <which agents need immediate attention>
+```
+```bash
+git add docs/agent-memory/notebooks/agent-father.md
+git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 ```
 
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`

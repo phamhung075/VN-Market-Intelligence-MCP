@@ -51,10 +51,14 @@ Append `docs/analysis-briefs/{TICKER}.md` [Report Analyzer]:
 ```
 Partial data → `N/A` | write fails → BUG channel immediately
 
-**5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-report-analyzer.md`:
+**5. Notebook commit** — append to `docs/agent-memory/notebooks/report-analyzer.md`:
 ```
 ### Analysis Cycle (HH:MM–HH:MM)
 - Earnings: N tickers | Processed: [list] | Signals: M fundamental_validation
+```
+```bash
+git add docs/agent-memory/notebooks/report-analyzer.md
+git commit -m "chore(memory/report-analyzer): notebook YYYY-MM-DD"
 ```
 
 **5b. WORK** — `send_telegram(channel="work", message=...)`:

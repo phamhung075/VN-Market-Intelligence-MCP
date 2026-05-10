@@ -99,7 +99,7 @@ Review this cycle. Log WHY each signal was fired/suppressed. Extract lessons:
 
 One line per lesson. Link to detail: `-> detail: <session-log-path> @ Cycle HH:MM`
 
-**N-2. Session log** (append to `docs/agent-memory/sessions/YYYY-MM-DD-<agent-id>.md`)
+**N-2. Notebook commit** (append to `docs/agent-memory/notebooks/<agent-id>.md`)
 ```markdown
 ### Cycle (HH:MM-HH:MM)
 - <Key metrics>

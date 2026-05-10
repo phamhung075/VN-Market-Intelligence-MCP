@@ -98,10 +98,10 @@ Then construct all paths from `$PROJECT_ROOT`:
 
 ```
 # WRONG — resolves against current CWD
-docs/agent-memory/sessions/2026-05-03-developer.md
+docs/agent-memory/notebooks/developer.md
 
 # CORRECT — absolute path derived from git root
-$PROJECT_ROOT/docs/agent-memory/sessions/2026-05-03-developer.md
+$PROJECT_ROOT/docs/agent-memory/notebooks/developer.md
 ```
 
 This applies to ALL file writes: session logs, handoffs, pipeline-state.json, task reports, notebooks, TASKS.md, etc.
