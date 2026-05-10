@@ -121,4 +121,8 @@ export const CRONS = {
   alertOutcomeJob:           Bun.env.CRON_ALERT_OUTCOME_JOB                  ?? '45 8 * * 1-5',
   /** Daily dashboard aggregation: 23:30 GMT+7 every day (after evening summary + periodic summary) — task 1854a */
   dailyDashboard:            Bun.env.CRON_DAILY_DASHBOARD                    ?? '30 23 * * *',
+  /** verdictResolutionJob — hourly alert verdict resolver (task 1863b, Sprint 1867)
+   *  Minute=7 (not 0) to avoid pile-up with cronHealthAlert/weatherCheck/imfIndicatorPoller
+   *  and other jobs that cluster at minute=0 every hour. Architect amendment 2026-05-10. */
+  verdictResolutionJob:      Bun.env.CRON_VERDICT_RESOLUTION                 ?? '7 * * * *',
 }

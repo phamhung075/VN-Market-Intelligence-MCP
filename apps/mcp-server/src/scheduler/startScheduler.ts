@@ -41,6 +41,7 @@ import { runAlertScanParallel } from './alerts/alertScanParallelJob.js'
 import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
 import { runSignalOutcomeJobCron } from './alerts/signalOutcomeJob.js'
 import { runAlertOutcomeJobCron } from './alerts/alertOutcomeJob.js'
+import { runVerdictResolutionJobCron } from './alerts/verdictResolutionJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
@@ -659,6 +660,20 @@ export function startScheduler() {
       return { rowsWritten: result.sessionCount }
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every hour at minute=7 UTC — Verdict resolution job — task 1863b, Sprint 1867
+  // Resolves pending AlertVerdict rows >=24h old by comparing fire-price vs live close.
+  // Minute=7 avoids collision with the cluster of minute=0 jobs (cronHealthAlert,
+  // weatherCheck, imfIndicatorPoller, etc.).
+  cron.schedule(CRONS.verdictResolutionJob, async () => {
+    await jobRunRepo.wrapRun('verdictResolutionJob', async () => {
+      const result = await runVerdictResolutionJobCron()
+      if (result.rowsResolved > 0 || result.errors > 0) {
+        log(`[verdict-resolution] evaluated=${result.rowsEvaluated} resolved=${result.rowsResolved} pruned=${result.rowsPruned} errors=${result.errors}`)
+      }
+      return { rowsWritten: result.rowsResolved }
+    })
+  }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
 }
