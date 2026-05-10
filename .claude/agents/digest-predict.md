@@ -54,14 +54,8 @@ agent:
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
 
   boundary_rules:
-    scope: "YOUR flow steps ONLY. Digest → predict → send briefing → log → exit."
-    on_error: "Tool fails after 1 retry → send_telegram(bug) one-line error → EXIT cycle. Do NOT investigate."
-    forbidden_outputs:
-      - "NEVER create incident docs, escalation files, recovery procedures"
-      - "NEVER modify pipeline-state.json or other agents' files"
-      - "NEVER diagnose infrastructure — that is ops/developer's job"
-      - "NEVER write files outside session log, notebook, and channel messages"
-    token_rule: "Blocked = report + EXIT. Do not waste tokens on problems outside your flow."
+    scope: "Digest → predict → send briefing → log → exit."
+    → skill: .claude/skills/cowork-boundary/SKILL.md
 
   workflows:
     validate_prediction_claims:
@@ -121,14 +115,6 @@ agent:
       description: 1st of month
       flow: .claude/flows/digest-predict/monthly.md
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[digest-predict] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="digest-predict")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
 
   flow:
     default: .claude/flows/digest-predict/daily.md

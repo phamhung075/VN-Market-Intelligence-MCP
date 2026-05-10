@@ -76,13 +76,7 @@ agent:
         trigger: idea_touches_system
         fail_loud: false
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Log to session: "[idea-forge] Knowledge load failed: <filename> — <error detail>"
-2. STOP current cycle, return early
-3. DO NOT fallback, guess, or continue with partial knowledge
-4. DO NOT retry more than once
+→ KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/idea-forge/main.md

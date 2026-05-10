@@ -119,14 +119,7 @@ agent:
         trigger: dispatch_registration
         fail_loud: false
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `docs/AGENT_CREATION_GUIDE.md` or `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Log to session: `"[agent-father] Knowledge load failed: <filename> — <error detail>"`
-2. STOP current flow, return early
-3. DO NOT fallback, guess, or continue with partial knowledge
-4. DO NOT retry more than once
-5. RETURN with `PIPELINE: blocked` and `QUALITY: degraded`
+→ KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/agent-father/create.md

@@ -93,13 +93,7 @@ agent:
         trigger: historical_context
         fail_loud: false
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY log to session: "[market-analyst] Knowledge load failed: <filename> — <error detail>"
-2. STOP current cycle, return early
-3. DO NOT fallback, guess, or continue with partial knowledge
-4. DO NOT retry more than once
+→ KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/market-analyst/main.md

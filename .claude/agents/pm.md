@@ -87,14 +87,7 @@ agent:
       - "NEVER diagnose infrastructure — that is ops/developer's job"
     token_rule: "Blocked = report + EXIT."
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[pm] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="pm")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
+→ KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/pm/main.md

@@ -53,14 +53,8 @@ agent:
     web_search: allowed
 
   boundary_rules:
-    scope: "YOUR flow steps ONLY. Check queue → answer question → send → log → exit."
-    on_error: "Tool fails after 1 retry → send_telegram(bug) one-line error → EXIT cycle. Do NOT investigate."
-    forbidden_outputs:
-      - "NEVER create incident docs, escalation files, recovery procedures"
-      - "NEVER modify pipeline-state.json or other agents' files"
-      - "NEVER diagnose infrastructure — that is ops/developer's job"
-      - "NEVER write files outside session log, notebook, and channel messages"
-    token_rule: "Blocked = report + EXIT. Do not waste tokens on problems outside your flow."
+    scope: "Check queue → answer question → send → log → exit."
+    → skill: .claude/skills/cowork-boundary/SKILL.md
 
   knowledge:
     always_load:
@@ -81,14 +75,6 @@ agent:
         trigger: ops_question
         fail_loud: false
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[qa-responder] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="qa-responder")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
 
   signals:
     consumes: []

@@ -51,14 +51,8 @@ agent:
     batch4_entry: earnings_dates_only  # NOT every cycle
 
   boundary_rules:
-    scope: "YOUR flow steps ONLY. Earnings → parse → signals → log → exit."
-    on_error: "Tool fails after 1 retry → send_telegram(bug) one-line error → EXIT cycle. Do NOT investigate."
-    forbidden_outputs:
-      - "NEVER create incident docs, escalation files, recovery procedures"
-      - "NEVER modify pipeline-state.json or other agents' files"
-      - "NEVER diagnose infrastructure — that is ops/developer's job"
-      - "NEVER write files outside session log, notebook, analysis-briefs, and channel messages"
-    token_rule: "Blocked = report + EXIT. Do not waste tokens on problems outside your flow."
+    scope: "Earnings → parse → signals → log → exit."
+    → skill: .claude/skills/cowork-boundary/SKILL.md
 
   knowledge:
     always_load:
@@ -74,14 +68,6 @@ agent:
         trigger: startup
         fail_loud: false
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[report-analyzer] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="report-analyzer")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
 
   signals:
     consumes: []

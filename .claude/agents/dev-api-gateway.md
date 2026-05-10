@@ -108,14 +108,7 @@ agent:
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[dev-api-gateway] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="dev-api-gateway")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
+→ KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/developer/microservice-main.md
