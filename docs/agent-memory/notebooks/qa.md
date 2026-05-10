@@ -25,7 +25,19 @@ Task 1862f — RSS retry backoff on CircuitBreaker. 10/10 tests pass. Full suite
 
 ## Carry-over for next session
 
-- Sprint 1862 active. 1862f + 1862g APPROVED and merged.
+- Sprint 1862 active. 1862f + 1862g + 1862j APPROVED and merged. 1863a-RECONCILE APPROVED and merged.
 - Pre-existing failure set: 15 failures (178-price-history x7, 1549-watchdog-news-staleness x1, plus others). Stable baseline.
 - Pre-existing TSC errors: regimeConfidenceThreshold.ts + dailyDashboardJob.ts + 1854b/H3 test files + 1557/1567 watchdog tests — do NOT flag as regressions.
 - Remaining Todo: 1862c (Cowork MCP access — architect), 1862h (hardcoded counts — developer), 1862i (project-stats stale — ops).
+
+---
+
+## Recent session — 2026-05-10 (multiple tasks)
+
+**1862j — sigma dedup safeguard:** 5/5 tests pass. Full suite: 8945 pass (102 worktree ENOENT noise). tsc branch EXIT:0. DDD PASS. Security PASS. APPROVED + merged.
+
+**1862f — RSS retry backoff:** 10/10 pass. Full suite: 9069/15 (all pre-existing). DDD PASS. Circuit breaker logic verified (base→double→cap→reset). APPROVED + merged.
+
+**1862g — urgent_news 4h dedup:** 10/10 pass. Full suite 9137, 0 failures (Bun OOM crash = known bug). DDD PASS. APPROVED + merged.
+
+**1863a-RECONCILE — alertVerdictStore file-store layer:** 19/19 pass. tsc EXIT:0 all phases. DDD PASS (infrastructure/fileStore). ACs 1-12 verified. APPROVED + merged. Report: reports/TASK_REPORT_1863a.md.
