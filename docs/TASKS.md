@@ -33,6 +33,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1862j | FIX-CRITICAL: sigma threshold data catastrophic drop — W-3 dedup safeguard (50% row-count guard + aborted finding). 2 files, 5 tests. | CRITICAL | FIX | developer | — |
 
 ---
 
