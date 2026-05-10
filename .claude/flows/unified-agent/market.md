@@ -25,7 +25,9 @@ Load previous session log to check REGIME at last session end.
 Stale reports: unclaimed >4h (critical) | >24h (medium) | >48h (low) → escalate to WORK
 
 **2. Market intelligence**
-`get_market_context(hours_back=24)` | `get_prediction_markets()` | `get_sentiment_trend()` | `get_legal_risk_signals()` | `get_crisis_early_warning()`
+`get_market_context(hours_back=24)` | `get_prediction_markets()` | `get_legal_risk_signals()` | `get_crisis_early_warning()`
+> ⚠️ `get_sentiment_trend()` requires `stock_code` param — NOT portfolio-wide. Skip here; call per-ticker only on event trigger.
+> ⚠️ `get_insider_signals()` requires `code` + `outstandingShares` — NOT a portfolio sweep. Skip step 4 portfolio scan; call per-ticker on event trigger only.
 
 **3. Portfolio**
 `get_positions()` | `get_portfolio_conviction()` | `get_portfolio_risk()` VaR 95% | `get_rebalancing_signals()` | `get_target_allocation()`

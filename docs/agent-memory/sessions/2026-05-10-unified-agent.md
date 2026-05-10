@@ -49,3 +49,53 @@
 - BID +3.79% anomaly flagged (kinhdich: Khôn/Buy signal)
 - No urgent_news signals above 0.60 threshold since last cycle
 - Macro regime: NEUTRAL (stable DXY, slight risk-off via elevated gold/currency pressure)
+
+---
+
+## Cycle — 16:01 UTC
+
+- **cycle_date**: 2026-05-10
+- **mode**: WEEKLY_VERIFY (Sun 16:00 UTC trigger)
+- **findings**:
+  - digest-predict weekly not yet detected in MARKET channel as of 16:01 UTC (calibration-report at 13:00 is separate; digest-predict due ~16:00 UTC)
+  - Escalation NOT triggered — current time (16:01) < 17:00 threshold; digest-predict may still be running
+  - Sunday BUG channel: 0 new reports
+- **actions**: observe-only; no escalation, no signals posted
+- **next_cycle_hint**: If digest-predict weekly still absent at next cycle (>17:00 UTC), escalate via submit_feedback
+- **estimated_tokens**: 1000
+
+## Cycle — 17:01 UTC
+
+- **cycle_date**: 2026-05-10
+- **findings**:
+  - System: ok | Market: CLOSED (weekend, prices stale from Fri close — expected)
+  - 3 LOW alerts pending (FPT/ACB/HPG — news_mention, same article re: foreign net sell 4,300B VND)
+  - VN-Index 1,909 — analysts expect test of 1,925 resistance Monday 11/5
+  - Gold: bullish sentiment (world + domestic), Brent crude 101.29 USD
+  - No new Telegram BUG reports
+- **actions**: Daily summary sent to WORK channel
+- **next_cycle_hint**: Monday 02:00 UTC market open — watch VN-Index 1,925 resistance test; foreign net sell trend vs domestic demand
+- **estimated_tokens**: 3000
+
+## Cycle — 18:05 UTC
+
+- **cycle_date**: 2026-05-10
+- **mode**: MARKET (Mon 01:00 UTC+7 trigger)
+- **findings**:
+  - System: OK, 16 CBs clear, rate limits ready; vnstock RATE_LIMITED GVR/VRE (WARN, self-recovering); TradingEconomics/Reuters down (known)
+  - REGIME: NEUTRAL (unchanged from last session; no DXY/US10Y data available — TradingEconomics source down)
+  - Market CLOSED pre-open Mon 11/5; prices stale from Fri 08/5 close (expected)
+  - 4 open alerts: 1 HIGH GAS (Hormuz reopening / oil bearish + gold bullish context), 3 LOW FPT/ACB/HPG (foreign net-sell 4,300B VND week)
+  - VN-Index 1909; analysts bullish targeting 2000; foreign net-sell pressure ongoing
+  - Portfolio: FPT only, -10.5% unrealised (-42M VND); VaR 95% = -1.5% (within threshold); conviction MODERATE 0.55 → recommendation GIẢM BỚT
+  - No rebalancing signals (no target allocation set)
+  - FII type: UNKNOWN (no foreign_flow data available)
+  - Legal risk: none | Crisis warning: none | Supply chain: stable | Energy: normal
+  - Quality: price_drop 50%, price_surge 80% (94% unscored — volume_spike/news_mention not scored)
+  - No REGIME_TRANSITION (NEUTRAL → NEUTRAL)
+- **actions**:
+  - WORK telegram sent: cycle summary
+  - No BUG escalation (no new issues vs recent fixes)
+  - No conviction shifts ≥0.3; no MARKET channel posts
+- **next_cycle_hint**: Mon 02:00 UTC — market opens; watch VN-Index 1925 resistance test; foreign net-sell vs domestic demand; FPT conviction trend at market open
+- **estimated_tokens**: 9000
