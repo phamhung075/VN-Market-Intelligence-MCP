@@ -25,7 +25,7 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 
 ## Carry-over for next session
 
-- Sprint 1867 active. 1863a + 1863b + 1863e RECONCILE APPROVED and merged. 1863c/d/f/g/h pending.
+- Sprint 1867 active. 1863a + 1863b + 1863c + 1863e RECONCILE APPROVED and merged. 1863d/f/g/h pending.
 - Pre-existing failure set: 16 failures (178 x7, pre-existing). Stable baseline.
 - Pre-existing TSC errors: 0 (tsc clean on main).
 - Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
@@ -44,3 +44,5 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 **1863a-RECONCILE — alertVerdictStore file-store layer:** 19/19 pass. tsc EXIT:0 all phases. DDD PASS (infrastructure/fileStore). ACs 1-12 verified. APPROVED + merged. Report: reports/TASK_REPORT_1863a.md.
 
 **1863b-RECONCILE — verdictResolutionJob scheduler swap:** 14/14 pass. Full suite 9259/16 (16 pre-existing = same as main). tsc 0 errors. DDD PASS (scheduler imports infrastructure only). Security PASS. All 12 ACs verified. 1863f deleted, all 10 scenario families ported to 1863b + 2 new (batch, idempotency). Cherry-picked 43910535 onto main (branch had extra unrelated flow doc commit). APPROVED + merged. Report: reports/TASK_REPORT_1863b.md.
+
+**1863c-RECONCILE — Tier 3 cron wiring:** Full suite 9132/15 (15 fail, 1 fewer than prior baseline of 16 — no regression). tsc 0 new errors (identical pre-existing set confirmed on main). 8/8 ACs verified: cronConfig.ts L127 has verdictResolutionJob at minute=7; collision-avoidance comment present; Bun.env.CRON_VERDICT_RESOLUTION unique; startScheduler.ts L44 import correct; L668-676 schedule uses jobRunRepo.wrapRun; no duplicate import/schedule. Extra checks: no other cron at minute=7 or :37; env var unique; key unique. DDD PASS (cronConfig zero imports; startScheduler imports scheduler layer only). Security PASS (Bun.env, no secrets). Commit 84eeb7a4 cherry-picked onto main as 34acef31. APPROVED + merged. Report: reports/TASK_REPORT_1863c.md.
