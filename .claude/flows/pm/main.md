@@ -19,7 +19,7 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `pm`)
 
 **1. Read context**
-docs/TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/notebooks/pm.md`
+docs/TASKS.md (task numbering) | Architect proposal | recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
 
 **2. Atomic tasks** — each must be: single file/fn group | clear AC | ~2h agent work | deps explicit
 
@@ -66,13 +66,6 @@ PIPELINE: continue
 **4.** Set task status → `in_progress` when developer picks up
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-
-**Commit notebook**:
-```bash
-git add docs/agent-memory/notebooks/pm.md
-git commit -m "chore(memory/pm): notebook YYYY-MM-DD"
-```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`

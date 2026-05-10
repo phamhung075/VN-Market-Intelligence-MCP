@@ -70,7 +70,9 @@ REPEAT per acceptance criterion
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
-**Commit notebook** (before QA):
+**Notebook commit** (before QA):
+Append task summary to `docs/agent-memory/notebooks/developer.md` — task name, findings, status.
+Then:
 ```bash
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"

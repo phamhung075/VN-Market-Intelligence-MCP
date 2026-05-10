@@ -7,10 +7,10 @@
 ---
 
 ## Input
-Telegram MARKET messages, agent notebooks, agent flows, full MCP data access
+Telegram MARKET messages, agent session logs, agent flows, full MCP data access
 
 ## Output
-Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Notebook commit
+Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Session log
 
 ---
 
@@ -61,7 +61,7 @@ Log: `"[Verify] [TICKER] claim={X} actual={Y} → MATCH|MISMATCH"`
 ```
 Glob: docs/agent-memory/notebooks/*.md
 ```
-For each agent notebook (check the latest appended entry — today's date or most recent):
+For each agent notebook (check the latest appended cycle entry — today's date or most recent):
 - Did agent extract REGIME at bootstrap? (check for "REGIME" keyword in log)
 - Did agent apply regime thresholds? (check for threshold values)
 - Did agent attach regime caveat to MARKET output?
@@ -118,17 +118,17 @@ If severity >= critical (data mismatch, price stale >5%, DB down):
 
 **Step 8 — Notebook commit**
 `log_agent_work(action="quality_audit", context={...})`
-Update `docs/agent-memory/notebooks/tran-ngoc-bau.md` — append audit cycle entry:
+Append to `docs/agent-memory/notebooks/tran-ngoc-bau.md`:
 ```
 ### Quality Audit (HH:MM–HH:MM UTC)
 - MARKET messages: N checked, M issues
-- Agent sessions: N reviewed, M gaps
+- Agent notebooks: N reviewed, M gaps
 - Signals: N total, dedup={X}, low_conf={Y}
 - Auto-cures: N applied
 - Regime: REGIME | Carry: CARRY_REGIME
 - Overall: GOOD|NEEDS_ATTENTION|CRITICAL
 ```
-Then commit:
+Then:
 ```bash
 git add docs/agent-memory/notebooks/tran-ngoc-bau.md
 git commit -m "chore(memory/tran-ngoc-bau): notebook YYYY-MM-DD"

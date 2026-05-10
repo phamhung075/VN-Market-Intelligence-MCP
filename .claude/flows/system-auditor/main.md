@@ -60,13 +60,13 @@ Location: [file/table/process] | Details: [wrong] | Impact: [why] | Root cause: 
 ```
 severity ≥ warn → `send_telegram(channel="bug")`
 
-Update `docs/agent-memory/notebooks/system-auditor.md` — append audit entry:
+Append to `docs/agent-memory/notebooks/system-auditor.md`:
 ```
 ### Audit Run (HH:MM–HH:MM)
 - Memory: N stale cleaned | Knowledge: N fixed | Anomalies: N new, M known
 - DB: [result] | Status: OK | escalated
 ```
-Then commit:
+Then:
 ```bash
 git add docs/agent-memory/notebooks/system-auditor.md
 git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD"

@@ -74,7 +74,7 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Notebook Commit (end of cycle)
-Update `docs/agent-memory/notebooks/market-analyst.md` — append analysis entry:
+Append to `docs/agent-memory/notebooks/market-analyst.md`:
 ```markdown
 ### Analysis: [Ticker or Event] (HH:MM–HH:MM)
 - **Type**: stock | news impact | sector comparison
@@ -86,7 +86,7 @@ Update `docs/agent-memory/notebooks/market-analyst.md` — append analysis entry
 ```
 Recurring pattern found → note for team to create pattern doc
 
-Then commit:
+Then:
 ```bash
 git add docs/agent-memory/notebooks/market-analyst.md
 git commit -m "chore(memory/market-analyst): notebook YYYY-MM-DD"

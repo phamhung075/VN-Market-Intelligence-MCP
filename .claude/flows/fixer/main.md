@@ -49,7 +49,8 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 - **Verification:** bun test PASS, tsc clean ✓
 ```
 
-**Commit notebook**:
+**Notebook commit**: append task summary to `docs/agent-memory/notebooks/fixer.md` — task name, fix applied, status.
+Then:
 ```bash
 git add docs/agent-memory/notebooks/fixer.md
 git commit -m "chore(memory/fixer): notebook YYYY-MM-DD"

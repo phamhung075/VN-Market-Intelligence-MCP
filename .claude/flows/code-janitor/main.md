@@ -36,17 +36,17 @@ Finding found?
 `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 
 ## Memory + State (every scan)
-- Notebook: update `docs/agent-memory/notebooks/code-janitor.md` — append scan summary:
+- Notebook commit — append to `docs/agent-memory/notebooks/code-janitor.md`:
 ```
 ### Scan NNN (HH:MM–HH:MM)
 - Checks: [which] | Findings: N new, M recurrent | Action: shipped X | backlog Y | clean
 ```
-  Then commit:
-  ```bash
-  git add docs/agent-memory/notebooks/code-janitor.md
-  git commit -m "chore(memory/code-janitor): notebook YYYY-MM-DD"
-  ```
-  Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Then:
+```bash
+git add docs/agent-memory/notebooks/code-janitor.md
+git commit -m "chore(memory/code-janitor): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 - State: `docs/data/code-janitor-known-findings.json`:
 ```json
 {"scan_date":"2026-04-26","findings":[{"id":"DRY-1","pattern":"...","status":"shipped|proposed"}]}

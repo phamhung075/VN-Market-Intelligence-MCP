@@ -19,7 +19,7 @@ Requirement spec in docs/TASKS.md | Architect task created | PO notified
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `ba`)
 
 **1. Read context**
-`docs/SPRINT_GOAL.md` vision | docs/TASKS.md task numbering | `docs/agent-memory/notebooks/ba.md`
+`docs/SPRINT_GOAL.md` vision | docs/TASKS.md task numbering | recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
 
 **2. Per requirement, identify**:
 - FR (capability) | NFR (perf, data freshness, language)
@@ -51,13 +51,6 @@ feature priority | VN term translation | data source availability | historical v
   Context: [brief memo with FR list, blockers, edge cases, DDD layers]
 ```
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-
-**Commit notebook**:
-```bash
-git add docs/agent-memory/notebooks/ba.md
-git commit -m "chore(memory/ba): notebook YYYY-MM-DD"
-```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 PO approves → BA Done → update docs/TASKS.md status → return:
 ```
