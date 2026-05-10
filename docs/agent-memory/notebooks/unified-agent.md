@@ -14,3 +14,19 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Clarify: is `calibration-report` agent the same as `digest-predict`? Flow expects `digest-predict` but only `calibration-report` sends Sunday 13:00 weekly message
 - BID: news impact (deposits -82,000B, FII selling) — monitor Monday open vs 42,000 VND support
 - BUG 2843 (get_system_status EOF) and BUG 2844 (price_drop precision) unresolved — ops should claim
+
+---
+
+## Recent session — 2026-05-10 (20:01 UTC — weekly verification)
+
+**Mode:** WEEKLY_VERIFY | **Trigger:** Sunday weekly flow
+
+**Digest check:** No explicit digest-predict message. Found calibration-report (ID 471, 13:00 UTC) — Brier Score 0.1646, 3 resolved predictions. Treated as proxy. No escalation.
+
+**BUG reports observed (DO NOT CLAIM — observe only):**
+- 2841: FPT 2025-Q4 BCTC low confidence (0.10) — OCR corruption
+- 2842: VNM 2025-Q4 BCTC low confidence (0.00) — OCR corruption
+- 2843: get_system_status EOF (2 consecutive) — health step skipped
+- 2844: price_drop precision 50% (8/16 < 60% threshold) — 2nd consecutive cycle
+
+**Exit:** COMPLETE | Escalation: NONE | Next cycle hint: monitor BID Monday open.
