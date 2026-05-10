@@ -25,9 +25,9 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 
 ## Carry-over for next session
 
-- Sprint 1867 active. 1863a + 1863b + 1863c + 1863e RECONCILE APPROVED and merged. 1863d/f/g/h pending.
-- Pre-existing failure set: 16 failures (178 x7, pre-existing). Stable baseline.
-- Pre-existing TSC errors: 0 (tsc clean on main).
+- Sprint 1867 active. 1863a + 1863b + 1863c + 1863e + 1863f RECONCILE APPROVED and merged. 1863d/g/h pending.
+- Pre-existing failure set: 15 failures (current bun test baseline). Stable.
+- Pre-existing TSC errors: present (H3-urgent-news, dailyDashboardJob, regimeConfidenceThreshold, watchdog 1557/1567, 1850e, 1854b) — all pre-existing.
 - Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
 - Remaining Todo: 1863g (knowledge updates), 1862c (Cowork MCP access — architect), 1862h, 1862i.
 
@@ -46,3 +46,5 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 **1863b-RECONCILE — verdictResolutionJob scheduler swap:** 14/14 pass. Full suite 9259/16 (16 pre-existing = same as main). tsc 0 errors. DDD PASS (scheduler imports infrastructure only). Security PASS. All 12 ACs verified. 1863f deleted, all 10 scenario families ported to 1863b + 2 new (batch, idempotency). Cherry-picked 43910535 onto main (branch had extra unrelated flow doc commit). APPROVED + merged. Report: reports/TASK_REPORT_1863b.md.
 
 **1863c-RECONCILE — Tier 3 cron wiring:** Full suite 9132/15 (15 fail, 1 fewer than prior baseline of 16 — no regression). tsc 0 new errors (identical pre-existing set confirmed on main). 8/8 ACs verified: cronConfig.ts L127 has verdictResolutionJob at minute=7; collision-avoidance comment present; Bun.env.CRON_VERDICT_RESOLUTION unique; startScheduler.ts L44 import correct; L668-676 schedule uses jobRunRepo.wrapRun; no duplicate import/schedule. Extra checks: no other cron at minute=7 or :37; env var unique; key unique. DDD PASS (cronConfig zero imports; startScheduler imports scheduler layer only). Security PASS (Bun.env, no secrets). Commit 84eeb7a4 cherry-picked onto main as 34acef31. APPROVED + merged. Report: reports/TASK_REPORT_1863c.md.
+
+**1863f-RECONCILE — signal_feedback 1864b regression guard:** Verify-only (no code changes). 4 cited file:line refs confirmed on main: agentSignalTools.ts:41 imports SignalFeedbackFindingDataSchema; agentSignalTools.ts:72-79 SIGNAL_TYPE_VALIDATORS includes signal_feedback; agentSignalStore.ts:37-47 SignalTypeSchema z.enum includes "signal_feedback" at line 46; signalTypes.ts:306 exports SignalFeedbackFindingDataSchema = z.record(z.unknown()), line 320 in SignalSchemas barrel. Full suite: 9134 pass / 15 fail (exact match to self-reported baseline). tsc errors all pre-existing. DDD PASS (no infra imports in domain/signals/). Security PASS. Branch diff: 2 commits only — task report (0b502df1) + memory notebook — zero production code on branch. APPROVED + merged.
