@@ -1,6 +1,6 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-10 (cycle 26 — 06:35 UTC) | Cycles completed: 26
+**Last updated:** 2026-05-10 (cycle 31 — 18:30 UTC) | Cycles completed: 31
 
 ---
 
@@ -489,3 +489,25 @@ Note: urgent_news rebounded 3→14 (7d window shift). chain_catalyst holding at 
 - New signals: ACB shareholder +6%, HCM stimulus (chain_catalyst), gold risk-off. All suppressed correctly.
 - H2/H3: NO recurrence. H1: self-correcting (see above).
 - Commodities flat. USD/VND flat. All macro NEUTRAL.
+
+---
+
+## Cycle 31 snapshot — 2026-05-10 18:30 UTC
+
+**Status:** NEEDS_ATTENTION | Direction: DEGRADING (vs c30 — H1 recurrence + Reuters/TE worse)
+
+**Hexagram summary:**
+- market-watcher (12 Pi — Standstill): 3rd H1-future occurrence → AUTO-CURE THRESHOLD REACHED. Fix Task 1865a merged (UTC guard) but container undeployed.
+- news-scout (4 Mong): H1-stale at 02:19 UTC — read stale MEMORY.md, self-corrected by 03:20 UTC.
+- unified-agent (11 Tai STRONG): RECOVERED.
+- agents-architect (50 Ding — Cauldron NEW ENERGY): Produced git-log-as-review-surface brief. Fire under Wind.
+- developer (2 Kun STRONG): 8 commits shipped (16:38–17:38 UTC).
+
+**Key findings:**
+- Container rebuild gates 4 merged fixes: 1862f + 1862j + 1862a (σ) + 1865a (UTC guard).
+- Reuters/TE WORSE: 80 errors (was 64 at c30, +16 in 3.5h). Circuit OPEN.
+- vnstock rotation at NKG+MBB (5th rotation). RPM 50 confirmed production-active.
+- σ data CRITICAL: 2/30 watchlist still — Monday 02:00 UTC market open <8h away.
+- Alert accuracy: 8% (12/143). WAL stable 1.79 MB. All 16 circuit breakers OK.
+- Auto-cures: 0 applied (1865a already in repo). Sessions reviewed: 30.
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%)
