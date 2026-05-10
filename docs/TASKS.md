@@ -38,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1868c | CHORE-LOW: B8-gap — migrate all sessions/ writes to notebook commits across 9 dev-team flow files (architect, ba, code-janitor, developer, fixer, market-analyst, pm, system-auditor, tran-ngoc-bau). AC3: 0 append_session/sessions/ refs in flows/skills. QA APPROVED 2026-05-11. | LOW | CHORE | developer | 2026-05-11 |
 | 1862i | CHORE-LOW: project-stats.json stale infra status — mcpServerHealth UP, connectionStatus OK, removed estimatedRecoveryTime/recoveryLink/affectedServices, toolCount 128→132, totalTasksDone 515→555, lastFixApplied→1863h. QA APPROVED 2026-05-11. | LOW | CHORE | ops | 2026-05-11 |
 | 1863h | CHORE-M: Migrate stale NULL-outcome agent_signals pruner into dataAuditJob (D-NEW check). 30-day TTL, try/catch non-fatal, console.log row count, task refs 1863h+1863b. 2 new tests + 16 pre-existing pass. QA APPROVED 2026-05-10. | MEDIUM | CHORE | developer | 2026-05-10 |
 | 1863a | FEATURE-M: Create `infrastructure/fileStore/alertVerdictStore.ts` — read/write/prune abstraction for `docs/data/alert-verdicts.json`. Atomic temp-file + rename pattern. Interface-injectable for tests. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
