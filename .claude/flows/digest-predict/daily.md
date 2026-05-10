@@ -2,23 +2,7 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[digest-predict] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error:** standalone incident files, docker commands, "Next Steps for Dev Team" sections, any file outside session log/notebook/channel messages.
-
-Your job = digest → predict → send → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -32,7 +16,9 @@ Daily digest to MARKET | WORK status | dev team feedback
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
 
-**0b. Regime extraction** (from bootstrap, zero extra tool calls)
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, CARRY_REGIME, CARRY_SPREAD, US10Y_SIGNAL, US10Y_VALUE, DXY_SIGNAL, MAX_DEPOSIT_RATE
+
 Parse `get_macro_snapshot` text block already in bootstrap:
 ```
 REGIME          = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
@@ -99,12 +85,10 @@ Append regime context: BUY signal + `REGIME=TIGHTENING` → add "Thiên thời b
 `BASE_CONTEXT_FRESH` + `recent_fixes` age < 20min → use payload, skip `get_recent_fixes()`. Else `get_recent_fixes(days=3, limit=10)`.
 New issues → `submit_feedback(agent="digest-predict")`. Zero → exit silently.
 
-**6. WORK**:
+**6. WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Digest & Predict] HH:MM UTC — DAILY digest sent
   Stocks: N | Chains: X complete, Y partial, Z failed | Predictions: N (Mon) | Nhân Hòa: {score}/5 | Next: TIME
 ```
 
-**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

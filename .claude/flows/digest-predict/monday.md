@@ -2,16 +2,7 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). CALL IT. Do not claim unavailability without trying.**
-Blocked = one-line BUG telegram + EXIT. No incident files, no docker commands, no "Next Steps" sections.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[digest-predict] Monday step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -25,7 +16,9 @@ Up to 5 prediction claims created | WORK notified | session log
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
 
-**0b. Regime guard** (from bootstrap, zero extra tool calls)
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, DAMPENING_ACTIVE
+
 Parse `get_macro_snapshot` text block in bootstrap:
 ```
 REGIME = "Global Liquidity: X" → TIGHTENING | EASING | NEUTRAL
@@ -79,6 +72,4 @@ Horizon:
 **P-8. WORK**: `send_telegram(channel="work", "[digest-predict] Monday claims: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 `DAMPENING_ACTIVE` → append "Self-correction: confidence -10%."
 
-**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

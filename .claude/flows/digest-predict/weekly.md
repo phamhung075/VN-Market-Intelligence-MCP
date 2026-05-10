@@ -2,16 +2,7 @@
 
 **Tools:** `.claude/tools/package/digest-predict.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). CALL IT. Do not claim unavailability without trying.**
-Blocked = one-line BUG telegram + EXIT. No incident files, no docker commands, no "Next Steps" sections.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[digest-predict] Weekly step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -23,7 +14,9 @@ Weekly digest to MARKET | WORK status
 
 ---
 
-**0b. Regime + Calendar** (before all else)
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
+
 Parse `get_macro_snapshot` from bootstrap context (or call once):
 ```
 REGIME       = "Global Liquidity: X"   → TIGHTENING | EASING | NEUTRAL
@@ -66,6 +59,4 @@ Tổng feedback: {N} từ {agents}
 `send_telegram(channel="market")`
 `send_telegram(channel="work", "[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
 
-**Notebook write** → `docs/agent-memory/notebooks/digest-predict.md`
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
