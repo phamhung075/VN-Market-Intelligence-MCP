@@ -1,10 +1,15 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1839b
+**Last updated:** 2026-05-10 | **Sprint:** 1862g
 
 ## Last session summary
 
-Implemented U-7 agent notebook population protocol (task 1839b). Added Step 0b (notebook read) and end-of-cycle notebook write to 10 agent flow files. Seeded 5 notebooks with real working memory from sprint history. Test file: 1839b-notebook-protocol.test.ts, 5 assertions, all GREEN.
+Implemented task 1862g: 4-hour time-window dedup for urgent_news signals in postSignal().
+- Added `dedupWindowMinutes` field to `PostSignalInput` (default: 240m for urgent_news, 0 for all other types).
+- Dedup check queries existing (stock_code, signal_type, direction) rows within window; returns -1 when suppressed.
+- JSON_EXTRACT path + LIKE fallback for SQLite compatibility.
+- 10 tests in 1862g-signal-dedup.test.ts: all GREEN.
+- Key lesson: dedup default must be type-aware (urgent_news only) to avoid breaking 1295d chain catalyst tests that post the same ticker+direction twice by design.
 
 ## Known patterns / preferences
 
@@ -16,8 +21,10 @@ Implemented U-7 agent notebook population protocol (task 1839b). Added Step 0b (
 - `docs/data/` is in `.gitignore` — use `git add -f docs/data/project-stats.json` when updating stats.
 - Path for test files: `apps/mcp-server/src/__tests__/NNN-task-name.test.ts`. Never at root or in `apps/mcp-server/reports/`.
 - Semble search before grep: use `mcp__semble__search` for exploration, grep only for exhaustive literal matching.
+- When adding dedup/gate logic to postSignal(), use type-aware defaults — don't apply spam suppression to chain_catalyst/price_confirmation signals by default or you will break enrichment-chain tests.
 
 ## Carry-over for next session
 
-- U-4 Phase 2 (getDb() refactor) merged 2026-05-03. Check if any new domain files added after merge still use getDb() directly.
-- Sprint 1839 still has pending tasks — check docs/TASKS.md before starting a new task.
+- 1862g complete and committed on task/1862g-signal-dedup. Awaiting QA merge.
+- 15 pre-existing failures in full suite (Task 178, 1549, 1031, 145, 1100, 262) — not caused by 1862g.
+- Check docs/TASKS.md for next task before starting.
