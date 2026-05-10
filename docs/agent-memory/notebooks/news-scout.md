@@ -20,3 +20,10 @@
 **TNB finding (c31):** H1-stale pattern — agent used stale MEMORY.md claim as live truth without calling MCP. Anti-hallucination skill (cowork-error-boundary) should prevent this. Tagged for reinforcement in next 1862c-D iteration.
 
 **Known issue:** 4h urgent_news dedup (Task 1862g) merged but container undeployed as of 2026-05-10.
+
+---
+
+### Cycle 21:21–21:22 UTC (2026-05-10) — off-hours Sunday run
+- Items: 20 | Impacts: 8 | Signals: [urgent_news(ACB), chain_catalyst(macro)] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Key findings: ACB strategic stake +6% Âu Lạc group (bullish, confidence 86%); VN-Index ATH 1909 + FII $1B inflow pending + Gold bullish (triple macro catalyst); HPG+DHG ex-div 11-15 May noted (suppressed, below threshold). Brent $101.29 elevated, cpi_pressure_risk unconfirmed (no prior month ref). No PMI data found this cycle.
