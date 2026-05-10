@@ -29,7 +29,7 @@ Detect files created in wrong locations. Auto-move violations:
 ls *.md | grep -vE "^(CLAUDE|README)\.md$"                                  # root .md violations
 find . -name "TASK_REPORT_*.md" -not -path "./reports/*" -not -path "./.claude/worktrees/*"
 find apps/mcp-server -name "*.md" -not -path "*/node_modules/*" -not -name "README.md"
-find . -name "*-session*.md" -not -path "./docs/agent-memory/sessions/*" -not -path "./.claude/*"
+find . -name "*-session*.md" -not -path "./.claude/*"
 ```
 For each violation → move to correct location per `.claude/knowledge/docs-organization.md` → log in Pass 10 report.
 

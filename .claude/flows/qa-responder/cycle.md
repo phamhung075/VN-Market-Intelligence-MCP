@@ -35,7 +35,7 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 **5. Send + mark**:
 `send_telegram(channel="market")` → `answer_ask_question(id=..., status="answered")`
 
-**6. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-qa-responder.md`:
+**6. Notebook commit** — append to `docs/agent-memory/notebooks/qa-responder.md`:
 ```
 ### Q&A Batch (HH:MM–HH:MM)
 - Questions: N | Recurring: X | Escalations: Y
@@ -51,6 +51,10 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 | market_alerts_fired | 0 |
 | exit_status | complete\|blocked\|empty |
 | token_estimate | N |
+```
+```bash
+git add docs/agent-memory/notebooks/qa-responder.md
+git commit -m "chore(memory/qa-responder): notebook YYYY-MM-DD"
 ```
 
 **7. WORK status** — `send_telegram(channel="work", message=...)`:

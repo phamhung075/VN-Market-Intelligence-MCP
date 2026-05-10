@@ -107,14 +107,18 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 Fired: X | Suppressed: Y | Next: TIME
 ```
 
-**5. Session log**
-`log_agent_work(...)` + append `docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md`:
+**5. Notebook commit**
+`log_agent_work(...)` + append `docs/agent-memory/notebooks/alert-commander.md`:
 ```
 ### Alert Cycle (HH:MM–HH:MM UTC)
 - Signals: [count by type]
 - Fired: N | Suppressed: M | MARKET: X
 - ChainCatalyst: N fired | M suppressed | event_types: [list]
 - Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
+```
+```bash
+git add docs/agent-memory/notebooks/alert-commander.md
+git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD"
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

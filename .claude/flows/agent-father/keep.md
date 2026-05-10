@@ -95,14 +95,14 @@ Apply fixes ONLY for mechanical/cosmetic issues:
 
 Log every auto-fix with: file, what was changed, guide reference.
 
-**5. Stale session log report**
+**5. Stale notebook report**
 
 ```
-# Find session logs older than 30 days
-Glob: docs/agent-memory/sessions/*.md
+# Find notebooks not updated in the last 30 days
+Glob: docs/agent-memory/notebooks/*.md
 ```
 
-Report count of stale logs per agent. Do NOT delete — information only.
+Report count of stale notebooks per agent. Do NOT delete — information only.
 
 **6. Generate maintenance report**
 
@@ -148,7 +148,7 @@ Report count of stale logs per agent. Do NOT delete — information only.
 
 ---
 
-**Session log** → append to `docs/agent-memory/sessions/YYYY-MM-DD-agent-father.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/agent-father.md`:
 ```
 ### Keep (maintenance) HH:MM
 - Trigger: <manual|scheduled>
@@ -157,6 +157,10 @@ Report count of stale logs per agent. Do NOT delete — information only.
 - Escalations: K
 - Orphans: O
 - Lesson: <any pattern noticed across agents>
+```
+```bash
+git add docs/agent-memory/notebooks/agent-father.md
+git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 ```
 
 **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`

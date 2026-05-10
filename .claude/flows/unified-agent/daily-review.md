@@ -30,10 +30,14 @@ Daily coordination summary ({date}):
 | BCTC | 48h |
 Exceeded → `submit_feedback(agent="unified-agent", ...)`
 
-**Session log** `docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md`:
+**Notebook commit** — append to `docs/agent-memory/notebooks/unified-agent.md`:
 ```
 ### Daily Review (HH:MM UTC)
 - Mode: DAILY_REVIEW | Freshness: [ok/stale] | Bugs: [list]
+```
+```bash
+git add docs/agent-memory/notebooks/unified-agent.md
+git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

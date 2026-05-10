@@ -35,7 +35,7 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 | Flows | `chore(flows)` | `.claude/flows/` |
 | Knowledge files | `docs(knowledge)` | `.claude/knowledge/` |
 | Docs / briefs | `docs(analysis)` | `docs/analysis-briefs/` |
-| Session logs | `docs(sessions)` | `docs/agent-memory/sessions/` |
+| Notebooks | `chore(memory/<agent-id>)` | `docs/agent-memory/notebooks/` — `notebook YYYY-MM-DD` (no trailers) |
 | Tasks / archive | `chore(tasks)` | `docs/TASKS.md`, `docs/TASKS_ARCHIVE.md` |
 | Data / stats | `chore(data)` | `docs/data/*.json` |
 | Reports / handoffs | `docs(reports)` | `reports/`, `docs/reports/`, `docs/handoffs/`, `docs/execution-logs/` |

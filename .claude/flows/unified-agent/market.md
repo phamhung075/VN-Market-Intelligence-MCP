@@ -117,12 +117,16 @@ Entry/exit → `post_agent_signal(type="conviction_change", ...)`:
 }
 ```
 
-## Session Log
-`docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md`:
+## Notebook Commit
+Append to `docs/agent-memory/notebooks/unified-agent.md`:
 ```
 ### Coordination Cycle (HH:MM–HH:MM)
 - Mode: MARKET | System: [health] | Alerts: N | Quality issues: N | Bugs: [list]
 - Regime: REGIME | Alignment: ALIGNMENT_SCORE | Headwind exposure: HEADWIND_weight%
+```
+```bash
+git add docs/agent-memory/notebooks/unified-agent.md
+git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

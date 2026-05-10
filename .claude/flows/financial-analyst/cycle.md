@@ -115,11 +115,15 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 ```
 Non-fatal: if `post_agent_signal` errors for feedback, log and continue.
 
-**5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-financial-analyst.md`:
+**5. Notebook commit** — append to `docs/agent-memory/notebooks/financial-analyst.md`:
 ```
 ### Analysis Cycle (HH:MM–HH:MM)
 - Stocks: N | Critical findings: [list] | Chain validations: M
 - Regime: REGIME | Max Deposit Rate: X.XX% | Valuation flags: [TICKER=verdict,...]
+```
+```bash
+git add docs/agent-memory/notebooks/financial-analyst.md
+git commit -m "chore(memory/financial-analyst): notebook YYYY-MM-DD"
 ```
 
 **5b. WORK** — `send_telegram(channel="work", message=...)`:

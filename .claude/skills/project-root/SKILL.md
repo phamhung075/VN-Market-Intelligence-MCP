@@ -15,7 +15,7 @@ Use `$PROJECT_ROOT` as prefix for **all** file writes in this session.
 
 | Wrong (relative) | Correct (absolute) |
 |---|---|
-| `docs/agent-memory/sessions/YYYY-MM-DD-agent.md` | `$PROJECT_ROOT/docs/agent-memory/sessions/YYYY-MM-DD-agent.md` |
+| `docs/agent-memory/notebooks/YYYY-MM-DD-agent.md` | `$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md` |
 | `docs/pipeline-state.json` | `$PROJECT_ROOT/docs/pipeline-state.json` |
 | `docs/TASKS.md` | `$PROJECT_ROOT/docs/TASKS.md` |
 | `docs/handoffs/TASK_NNN.md` | `$PROJECT_ROOT/docs/handoffs/TASK_NNN.md` |
