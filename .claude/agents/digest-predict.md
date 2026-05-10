@@ -122,7 +122,7 @@ agent:
   tools_package: .claude/tools/package/digest-predict.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-digest-predict.md
+    session_log: docs/agent-memory/notebooks/digest-predict.md
     notebook: docs/agent-memory/notebooks/digest-predict.md
     append_every_cycle: true
 

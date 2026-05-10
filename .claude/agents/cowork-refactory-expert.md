@@ -103,7 +103,7 @@ agent:
   tools_package: .claude/tools/package/cowork-refactory-expert.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-refactory.md
+    session_log: docs/agent-memory/notebooks/refactory.md
     notebook: docs/agent-memory/notebooks/cowork-refactory-expert.md
     append_every_cycle: true
 

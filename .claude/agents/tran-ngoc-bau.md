@@ -101,7 +101,7 @@ agent:
   tools_package: .claude/tools/package/tran-ngoc-bau.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md
+    session_log: docs/agent-memory/notebooks/tran-ngoc-bau.md
     notebook: docs/agent-memory/notebooks/tran-ngoc-bau.md
     append_every_cycle: true
 

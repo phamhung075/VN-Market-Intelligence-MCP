@@ -564,12 +564,12 @@
         "session_log_schema": {
           "heading": "### Cycle (HH:MM–HH:MM)",
           "required_fields": ["Items:", "Impacts:", "Signals:", "Regime:", "Carry:"],
-          "file_path": "docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md"
+          "file_path": "docs/agent-memory/notebooks/news-scout.md"
         },
         "log_agent_work_called": true
       },
       "assertions": [
-        "session log file path: docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md",
+        "notebook file path: docs/agent-memory/notebooks/news-scout.md",
         "heading must be '### Cycle (HH:MM–HH:MM)'",
         "all 5 required fields must be present",
         "log_agent_work must also be called with action='news-scout-cycle'",

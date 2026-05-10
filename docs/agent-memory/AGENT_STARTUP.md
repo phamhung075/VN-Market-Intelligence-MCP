@@ -22,7 +22,7 @@ append_session_record({
 })
 ```
 
-Writes to: `docs/agent-memory/sessions/YYYY-MM-DD-{agent_name}.md`
+Writes to: `docs/agent-memory/notebooks/{agent_name}.md`
 
 ---
 

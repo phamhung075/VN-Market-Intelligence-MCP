@@ -17,7 +17,6 @@ Creating a file in the wrong place causes duplication debt that requires manual 
 | `TASK_NNN.md` (handoff) | `docs/handoffs/` | root, `reports/` |
 | `REQ_NNN.md` | `docs/historical/` | root, `docs/` root |
 | `TECH_NNN.md` | `docs/historical/` | root, `docs/` root |
-| Session logs | `docs/agent-memory/sessions/` | root, `reports/` |
 | Agent notebooks | `docs/agent-memory/notebooks/` | root |
 | Analysis briefs | `docs/analysis-briefs/` | root, `reports/` |
 | Source code `*.ts` | `apps/mcp-server/src/` | root, `docs/` |

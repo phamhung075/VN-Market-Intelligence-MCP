@@ -102,7 +102,7 @@ agent:
   tools_package: .claude/tools/package/alert-commander.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md
+    session_log: docs/agent-memory/notebooks/alert-commander.md
     notebook: docs/agent-memory/notebooks/alert-commander.md
     append_every_cycle: true
 

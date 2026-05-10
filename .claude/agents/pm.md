@@ -101,7 +101,7 @@ agent:
   tools_package: .claude/tools/package/pm.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-pm.md
+    session_log: docs/agent-memory/notebooks/pm.md
     notebook: docs/agent-memory/notebooks/pm.md
     append_every_cycle: true
 

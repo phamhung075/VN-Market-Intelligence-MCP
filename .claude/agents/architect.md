@@ -107,7 +107,7 @@ agent:
   tools_package: .claude/tools/package/architect.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-architect.md
+    session_log: docs/agent-memory/notebooks/architect.md
     notebook: docs/agent-memory/notebooks/architect.md
     append_every_cycle: true
 

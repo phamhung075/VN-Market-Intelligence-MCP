@@ -144,7 +144,7 @@ Decision tree for bootstrap errors at agent startup:
   tools_package: .claude/tools/package/ops.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-ops.md
+    session_log: docs/agent-memory/notebooks/ops.md
     notebook: docs/agent-memory/notebooks/ops.md
     append_every_cycle: true
 

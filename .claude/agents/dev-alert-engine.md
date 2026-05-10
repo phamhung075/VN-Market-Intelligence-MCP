@@ -130,7 +130,7 @@ agent:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-alert-engine.md
+    session_log: docs/agent-memory/notebooks/dev-alert-engine.md
     notebook: docs/agent-memory/notebooks/dev-alert-engine.md
     append_every_cycle: true
 

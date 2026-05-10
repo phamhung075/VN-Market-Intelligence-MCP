@@ -130,7 +130,7 @@ agent:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-pdf-extractor.md
+    session_log: docs/agent-memory/notebooks/dev-pdf-extractor.md
     notebook: docs/agent-memory/notebooks/dev-pdf-extractor.md
     append_every_cycle: true
 

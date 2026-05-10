@@ -128,7 +128,7 @@ agent:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-kinh-dich.md
+    session_log: docs/agent-memory/notebooks/dev-kinh-dich.md
     notebook: docs/agent-memory/notebooks/dev-kinh-dich.md
     append_every_cycle: true
 

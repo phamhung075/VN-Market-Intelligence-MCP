@@ -32,7 +32,7 @@ L4  SESSION LOGS <- loaded on demand (own or other agent's historical logs)
 | **L1b** | Bootstrap MCP response | ~3,000-5,000 tok | Step 0 (cowork only) | Fixed, 1 call replaces 3 |
 | **L2** | `.claude/knowledge/<file>.md` (one at a time) | ~200-800 tok each | When step triggers `lazy_load` | Max 3 files/cycle |
 | **L3** | Other agent's notebook (Current state + Lessons only) | ~150 tok each | When decision involves another domain | Max 2/cycle |
-| **L4** | `docs/agent-memory/sessions/YYYY-MM-DD-*.md` | ~100-500 tok | Only when investigating a past event | Max 1/cycle |
+| **L4** | `docs/agent-memory/notebooks/<id>.md` (git log) | ~100-500 tok | Only when investigating a past event | Max 1/cycle |
 
 **Typical cowork cycle budget:** ~4,000-7,000 tok for context (excluding tool call results).
 

@@ -148,7 +148,7 @@ Decision tree for bootstrap errors at agent startup:
   tools_package: .claude/tools/package/developer.md
 
   memory:
-    session_log: docs/agent-memory/sessions/YYYY-MM-DD-dev-mcp-server.md
+    session_log: docs/agent-memory/notebooks/dev-mcp-server.md
     notebook: docs/agent-memory/notebooks/dev-mcp-server.md
     append_every_cycle: true
 

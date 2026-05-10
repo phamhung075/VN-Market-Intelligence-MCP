@@ -40,12 +40,11 @@ Session logs record PAST state. They do NOT predict current state. An agent that
 Each agent has EXACTLY these allowed outputs:
 ```
 ALLOWED:
-  1. Session log    → docs/agent-memory/sessions/YYYY-MM-DD-{agent-id}.md (append only)
-  2. Notebook       → docs/agent-memory/notebooks/{agent-id}.md (overwrite at cycle end)
-  3. Channel output → send_telegram(channel="work|bug|market") via MCP
-  4. Signal bus     → post_agent_signal() via MCP
-  5. Analysis briefs → docs/analysis-briefs/{TICKER}.md (if in flow)
-  6. Dev-team signal → docs/signals/{agent-id}-{ISO-timestamp}.json (bug escalation)
+  1. Notebook       → docs/agent-memory/notebooks/{agent-id}.md (append at cycle end)
+  2. Channel output → send_telegram(channel="work|bug|market") via MCP
+  3. Signal bus     → post_agent_signal() via MCP
+  4. Analysis briefs → docs/analysis-briefs/{TICKER}.md (if in flow)
+  5. Dev-team signal → docs/signals/{agent-id}-{ISO-timestamp}.json (bug escalation)
 
 FORBIDDEN — NEVER create or modify:
   - Incident docs (docs/INCIDENT-*.md, docs/OPS-ESCALATION-*.md)
