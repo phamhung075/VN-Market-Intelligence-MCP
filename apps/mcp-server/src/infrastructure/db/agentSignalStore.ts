@@ -138,6 +138,20 @@ export interface PostSignalInput {
   kinhDichConfidence?: number;
   /** Task 1328c — From ChainCatalystFindingData.agentSignalsMajority */
   agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
+  /**
+   * Task 1862g — Time-window dedup for same-ticker + same-signal-type + same-direction.
+   * If a signal with the same (stock_code, signal_type, direction) was posted within
+   * this many minutes, the call returns -1 (suppressed) and does NOT insert a row.
+   *
+   * Default behaviour:
+   *   - urgent_news signals: 240 minutes (4 hours) when this field is omitted.
+   *   - All other signal types: 0 (disabled) when this field is omitted.
+   *
+   * Set to 0 to disable dedup. Set to any positive value to enable for any signal type.
+   * Direction is read from finding_data.direction (fallback: finding_data.catalyst_direction).
+   * Dedup is only applied when BOTH stock_code AND direction are present.
+   */
+  dedupWindowMinutes?: number;
 }
 
 /**
@@ -276,7 +290,18 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     newsSentiment = null, // Task 1328c
     kinhDichConfidence = null, // Task 1328c
     agentSignalsMajority = null, // Task 1328c
+    dedupWindowMinutes: rawDedupWindowMinutes, // Task 1862g: undefined = use type-aware default
   } = input;
+
+  // Task 1862g: resolve dedup window.
+  // urgent_news default = 240 min (4h). All other types default = 0 (disabled).
+  // Callers can override by passing dedupWindowMinutes explicitly.
+  const dedupWindowMinutes =
+    rawDedupWindowMinutes !== undefined
+      ? rawDedupWindowMinutes
+      : signalType === "urgent_news"
+      ? 240
+      : 0;
 
   // 1334: Normalize sentinel values — agents may post "unknown" for market-wide signals.
   // "unknown" / "" / undefined all mean "no specific stock" → NULL in agent_signals.
@@ -284,6 +309,81 @@ export function postSignal(db: Database, input: PostSignalInput): number {
   // signals into a fake "unknown" stock bucket.
   const resolvedStockCode: string | null =
     !stockCode || stockCode === "unknown" ? null : stockCode;
+
+  // Task 1862g: 4-hour dedup for same (stock_code, signal_type, direction).
+  // Suppresses alert spam when news-scout fires the same ticker + direction repeatedly.
+  // Dedup only applies when BOTH stock_code AND direction are present in finding_data.
+  // Returns -1 (suppressed) without inserting when a duplicate is found within the window.
+  if (dedupWindowMinutes > 0 && resolvedStockCode !== null) {
+    const fd = findingData as Record<string, unknown>;
+    const direction =
+      typeof fd["direction"] === "string"
+        ? fd["direction"]
+        : typeof fd["catalyst_direction"] === "string"
+        ? fd["catalyst_direction"]
+        : null;
+
+    if (direction !== null) {
+      // Check whether the created_at column exists (base schema guard)
+      let hasCreatedAt = false;
+      try {
+        db.prepare("SELECT created_at FROM agent_signals LIMIT 0").all();
+        hasCreatedAt = true;
+      } catch {
+        hasCreatedAt = false;
+      }
+
+      if (hasCreatedAt) {
+        const cutoff = new Date(Date.now() - dedupWindowMinutes * 60_000)
+          .toISOString()
+          .replace("T", " ")
+          .replace(/\.\d{3}Z$/, "");
+
+        // Check for existing signal with same (stock_code, signal_type, direction).
+        // Direction is stored inside finding_data JSON — use JSON_EXTRACT when available,
+        // otherwise fall back to a LIKE search (SQLite < 3.38 may lack JSON functions).
+        let existing: { id: number } | null = null;
+        try {
+          existing = db
+            .prepare<{ id: number }, [string, string, string, string, string]>(
+              `SELECT id FROM agent_signals
+               WHERE stock_code  = ?
+                 AND signal_type = ?
+                 AND created_at >= ?
+                 AND (
+                   JSON_EXTRACT(finding_data, '$.direction') = ?
+                   OR JSON_EXTRACT(finding_data, '$.catalyst_direction') = ?
+                 )
+               LIMIT 1`,
+            )
+            .get(resolvedStockCode, signalType, cutoff, direction, direction);
+        } catch {
+          // JSON_EXTRACT not supported — fall back to LIKE (less precise but safe)
+          existing = db
+            .prepare<{ id: number }, [string, string, string, string, string]>(
+              `SELECT id FROM agent_signals
+               WHERE stock_code  = ?
+                 AND signal_type = ?
+                 AND created_at >= ?
+                 AND (
+                   finding_data LIKE '%"direction":"' || ? || '"%'
+                   OR finding_data LIKE '%"catalyst_direction":"' || ? || '"%'
+                 )
+               LIMIT 1`,
+            )
+            .get(resolvedStockCode, signalType, cutoff, direction, direction);
+        }
+
+        if (existing !== null) {
+          console.info(
+            `[agentSignalStore] Dedup suppressed: ${signalType} ${resolvedStockCode} ${direction} ` +
+            `(duplicate of id=${existing.id}, window=${dedupWindowMinutes}m)`,
+          );
+          return -1;
+        }
+      }
+    }
+  }
 
   // Task 1786: Earnings conflict detection.
   // For chain_catalyst signals with event_type = "earnings", check whether a prior
