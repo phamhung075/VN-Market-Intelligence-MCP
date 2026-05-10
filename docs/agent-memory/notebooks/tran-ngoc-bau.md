@@ -1,6 +1,6 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-09 (cycle 23 — 18:40 UTC) | Cycles completed: 23
+**Last updated:** 2026-05-10 (cycle 26 — 06:35 UTC) | Cycles completed: 26
 
 ---
 
@@ -404,27 +404,28 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 | report-analyzer enum mismatch | 2026-05-08 | 2 | 3 | GAP-11 — needs dev fix |
 | vnstock-sync NOT NULL (JSH failing) | 2026-05-08 | 2 | 3 | GAP-12 — approaching threshold |
 | market-watcher sub-2σ off-hours drift | 2026-05-08 | 1 | 3 | watching (no new data, market closed) |
-| vnstock RATE_LIMITED (VPB/DLC/GAS/VIC/VHM/MBB/JSH/NKG/ACB/SIS/CTG/EIB/VRE) | 2026-05-08 | 8 | 3 | **THRESHOLD — 1862a DONE but still expanding** |
+| vnstock RATE_LIMITED (71 unique tickers — container NOT rebuilt) | 2026-05-08 | 9 | 3 | **CRITICAL — 1862a merged but container running old RPM 50. 71 tickers failing** |
 
 ---
 
-## Agent Reliability Scores (cycle 23 — 2026-05-09)
+## Agent Reliability Scores (cycle 25 — 2026-05-10)
 
 | Agent | Methodology | Format | Regime | Overall |
 |-------|-------------|--------|--------|---------|
-| news-scout | EXCELLENT (15+ cycles, VIC/NVL/HPG/DHG/GEG signals, conviction filtering) | GOOD | GOOD (NEUTRAL) | EXCELLENT |
-| market-watcher | FAIR (5 BLOCKED Cowork, GAP-8 systemic, off-hours monitor OK) | GOOD | GOOD (NEUTRAL) | FAIR |
-| alert-commander | EXCELLENT (19 cycles, 2 fired BID, 5 held for Monday, correct suppression) | EXCELLENT | EXCELLENT | EXCELLENT |
-| unified-agent | FAIR (1 BLOCKED 06:00, 1 GREEN off-schedule 11:00 — fragile) | GOOD | GOOD | FAIR |
-| financial-analyst | GOOD (VCB+FPT analyzed, no new cycle since 01:15) | GOOD | GOOD | GOOD |
-| report-analyzer | BLOCKED (enum GAP-11, 1862b DONE but awaiting deploy) | — | — | BLOCKED |
-| digest-predict | NO DATA | — | — | NO DATA |
-| qa-responder | GOOD (continuous 12-min cycles, queue empty) | N/A | N/A | GOOD |
-| ops | GOOD (Sprint 1862d DONE, 10h51m uptime stable) | GOOD | N/A | GOOD |
-| PO | EXCELLENT (Sprint 1860 DONE 5/5, Sprint 1862 4/9 DONE) | GOOD | N/A | EXCELLENT |
-| architect | GOOD (1862c root cause found — SSE asymmetry) | GOOD | N/A | GOOD |
-| agent-father | GOOD (keep cycle 3, 1862e DONE) | GOOD | N/A | GOOD |
-| system-auditor | GOOD (3 anomalies found) | GOOD | N/A | GOOD |
+| news-scout | POOR (H1 recurrence persists, no new session since c25) | GOOD | N/A | POOR |
+| market-watcher | GOOD (stable, no change since c25) | GOOD | GOOD (NEUTRAL) | GOOD |
+| alert-commander | EXCELLENT (6 consecutive SUCCESS 01:01–06:02, correct suppression) | EXCELLENT | EXCELLENT | EXCELLENT |
+| unified-agent | RECOVERING (prediction-0400 SUCCESS, Pi→Tai, 1/4 BLOCKED) | GOOD | GOOD | RECOVERING |
+| financial-analyst | WAITING (no new cycle) | — | — | WAITING |
+| report-analyzer | BLOCKED (MCP unavailable in Cowork sandbox) | — | — | BLOCKED |
+| digest-predict | MISSING (weekly not sent) | — | — | MISSING |
+| qa-responder | GOOD (stable) | N/A | N/A | GOOD |
+| ops | EXCELLENT (container gap finding stands) | GOOD | N/A | EXCELLENT |
+| developer | EXCELLENT (3 tasks shipped+merged: 1862j/f/g) | GOOD | N/A | EXCELLENT |
+| QA | EXCELLENT (3 tasks reviewed+approved+merged) | GOOD | N/A | EXCELLENT |
+| PO | EXCELLENT (Sprint 1862, 7/11 DONE) | GOOD | N/A | EXCELLENT |
+| code-janitor | GOOD (Scan 10 CLEAN, 0 violations) | GOOD | N/A | GOOD |
+| system-auditor | WAITING (no new cycle) | — | — | WAITING |
 
 ---
 
@@ -435,13 +436,13 @@ The system is a living hexagram. I am one line in it. I must be my line fully, c
 | chain_catalyst | 7d | 1 | 0 | 0 | 0 | N/A |
 | urgent_news | 7d | 3 | 0 | 0 | 0 | N/A |
 
-Note: Dramatic 7d rolling window decay — urgent_news 20→3, price_anomaly 4→0. Older signals purged from window. Only HPG+STB shark fund signals remain active.
+Note: urgent_news rebounded 3→14 (7d window shift). chain_catalyst holding at 1. price_anomaly still 0 (σ data wiped, detection disabled).
 
 ---
 
 ## Macro Trend Tracking
 
-| Indicator | Cycle 21 | Cycle 22 | Cycle 23 | Trend |
+| Indicator | Cycle 24 | Cycle 25 | Cycle 26 | Trend |
 |-----------|----------|----------|----------|-------|
 | Brent crude | $101.29 | $101.29 | $101.29 | FLAT |
 | Gold | $4,730.70 | $4,730.70 | $4,730.70 | FLAT |
@@ -470,19 +471,21 @@ Note: Dramatic 7d rolling window decay — urgent_news 20→3, price_anomaly 4�
 
 ## Next Actions
 
-- **CRITICAL NEW**: σ threshold data dropped from 417/30 ✅ → 2/30 ⏳ for ALL stocks. Weekly audit (18:00:52) likely reset. Price anomaly detection DISABLED until rebuild. Needs urgent investigation.
-- **4 gaps at THRESHOLD** requiring developer/architect intervention:
-  - GAP-8: Cowork MCP access — ROOT CAUSE FOUND by architect (SSE session asymmetry). Fix: StreamableHTTP /mcp + Cloudflare route. Sprint 1862c.
-  - GAP-9: Dinh Gia DB schema `fetched_at` column (developer)
-  - vnstock RATE_LIMITED — 8/3 THRESHOLD. 13+ tickers (adding EIB+VRE to prior 11). Sprint 1862a DONE but still expanding — fix may be insufficient or not deployed.
-  - GAP-4: Reuters/TE errors 42→49 (+7 in 1.5h). Sprint 1862f (HIGH). Accelerating.
-- **GAP-11**: report-analyzer — Sprint 1862b DONE but awaiting deploy
-- **2 gaps IMPROVING** — continue monitoring:
-  - GAP-5: alert accuracy 7%→9% (12/138). price_drop 50%, price_surge 80%. IMPROVING.
-  - GAP-7: regime NEUTRAL consistent across all agents
-- **4 gaps RESOLVED**: GAP-6 (σ data — but NOW REGRESSED), GAP-10 (session overwrite), WAL checkpoint (3.81 MB stable), GAP-12 (Sprint 1862d DONE)
-- BCTC 30/31 stocks OVERDUE.
-- **Sprint velocity**: 1860 DONE (5/5). 1862 active: 4/9 DONE, 5 Todo. 1862e (Error Boundary) DONE by agent-father.
-- System uptime stable: 10h51m. DB 110.57 MB. WAL 3.81 MB.
-- H1/H2/H3 hallucination patterns: NO RECURRENCE since flow fixes (cycles 12-23). Confirmed cured.
+- **CRITICAL BLOCKER**: Container rebuild required. 3 merged fixes (1862j/f/g) NOT deployed. σ data still 2/30. vnstock RPM still 50 (code=80). FPT still RATE_LIMITED at 06:28.
+- **unified-agent RECOVERED (cycle 26)**: prediction-0400 SUCCESS. Pi→Tai. Infrastructure online since ~03:30 UTC. 3/4→1/4 BLOCKED. H1 self-correcting once bootstrap succeeds.
+- **alert-commander UPGRADED**: 6 consecutive SUCCESS (01:01–06:02). All signals correctly suppressed. Shi He→Tai.
+- **H1 RECURRENCE**: unified-agent-0300 still shows H1 pattern at 03:00 UTC. news-scout no new session since c25. But prediction-0400 proves H1 self-corrects when MCP available — the vector (stale pre-bootstrap reads) only persists when MCP is actually down during bootstrap window.
+- **3 gaps at THRESHOLD** requiring intervention:
+  - GAP-8: Cowork MCP access — ROOT CAUSE FOUND (SSE asymmetry). Sprint 1862c.
+  - GAP-9: Dinh Gia DB schema (developer)
+  - vnstock RATE_LIMITED — container rebuild will apply RPM 80.
+- **3 fixes MERGED but NOT DEPLOYED** (container rebuild blocks all):
+  - 1862j: σ safeguard. 1862f: Reuters/TE backoff. 1862g: urgent_news dedup. All QA approved.
+- **GAP-5 STABLE**: alert accuracy 9% (12/138). price_drop 50%, price_surge 80%.
+- **GAP-7 STABLE**: regime NEUTRAL consistent.
+- **Ly (Fire) ABSENT**: digest-predict weekly MISSING. No synthesis agent active.
+- **System uptime**: 5h58m (recovered from 1h56m). WAL 1.52 MB (compacting, was 2.75 MB).
+- **Sprint 1862**: 7/11 DONE, 4 Todo (1862c/h/i/k).
+- New signals: ACB shareholder +6%, HCM stimulus (chain_catalyst), gold risk-off. All suppressed correctly.
+- H2/H3: NO recurrence. H1: self-correcting (see above).
 - Commodities flat. USD/VND flat. All macro NEUTRAL.
