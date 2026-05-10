@@ -3,6 +3,12 @@
 - **Fix**: Implemented append_session_record
 - **Status**: Ready for QA
 
+### Task 1862h — Replace hardcoded "112 tools" literals
+- Files: restart-policy.md (2 hits), ops-incident-response.md (2 hits)
+- Fix: replaced all 4 literals with pointer to docs/data/project-stats.json
+- Acceptance: grep -rE '\b112 tools\b' .claude/knowledge/ → empty ✅
+- TASKS.md: 1862h marked Done
+
 ---
 
 ### Cycle 2026-05-10 — Task 1862j: W-3 sigma dedup safeguard

@@ -67,7 +67,7 @@ VPS Data Pipeline: Vinahost VPS → zenmidi.com → docker-compose services
    sleep 5
    curl http://localhost:3000/health
    ```
-6. Verify response: `{"status":"ok","tools":112,"jobs":50}`
+6. Verify response: `{"status":"ok","tools":<N>,"jobs":<M>}` — current counts in `docs/data/project-stats.json`
 
 ---
 
@@ -107,7 +107,7 @@ docker-compose ps      # Verify all healthy
 ## QA Validation After Code Merge
 
 1. `docker-compose ps` — all 9 services showing "Up ... (healthy)"
-2. `curl -s http://localhost:3000/health` — returns `{"status":"ok","tools":112,"jobs":50}`
+2. `curl -s http://localhost:3000/health` — returns `{"status":"ok","tools":<N>,"jobs":<M>}` — current counts in `docs/data/project-stats.json`
 3. `docker-compose logs mcp-server --tail 30` — no crash, no startup errors
 4. `sqlite3 /path/to/data/market.db "SELECT COUNT(*) FROM market_prices WHERE updated_at > datetime('now', '-5 minutes');"` — recent data ingestion ✓
 

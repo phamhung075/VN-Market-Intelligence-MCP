@@ -155,10 +155,11 @@ curl -s http://localhost:3000/health | jq .
 ```json
 {
   "status": "ok",
-  "tools": 112,
-  "jobs": 50
+  "tools": <N>,
+  "jobs": <M>
 }
 ```
+(Current counts in `docs/data/project-stats.json`)
 
 ### Step 4: If Restart Fails
 
@@ -196,7 +197,7 @@ Status: All 9 services up ✅
 Downtime: 3 min (06:52-06:55 UTC)
 Root cause: Database WAL lock (cleaned + restart)
 Action: docker-compose down && up + WAL cleanup
-Health: All 112 tools loaded, 50 cron jobs active ✅
+Health: All MCP tools loaded, all cron jobs active ✅ (counts in `docs/data/project-stats.json`)
 
 VPS services maintained local queues. No data lost.
 ```
