@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-09T19:07:00.000Z",
+  "updatedAt": "2026-05-10T08:07:00.000Z",
   "updatedBy": "dev-team-cron",
-  "lastCompleted": "Sprint 1862: 4 tasks. 1862a: vnstock rate limiter RPM 50→80, delay 1500→2500ms. 1862b: report-analyzer SKILL_MANIFEST enum added. 1862c: Cowork MCP access investigation (config fix recommended). 1862d: vnstock_events deploy verified OK."
+  "lastCompleted": "Sprint 1862 cycles 2-3: 1862j sigma dedup safeguard, 1862k container rebuilt RPM 80, 1862f RSS exponential backoff, 1862g urgent_news 4h signal dedup. 4 tasks shipped, 25 tests added."
 }
