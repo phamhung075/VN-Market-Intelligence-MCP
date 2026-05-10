@@ -150,6 +150,13 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 
 **4. Session log**
 
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Session log timestamp guard
+- Use ONLY the actual current UTC time when stamping session log entries
+- NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
+- If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log
+
 ```
 call_tool(server="vn-market", tool="log_agent_work", arguments={
   "action": "news-scout-cycle",
