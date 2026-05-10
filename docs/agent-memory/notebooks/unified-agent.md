@@ -45,3 +45,17 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Pending feedback: 24 items | Open high/critical warnings: 18
 - Telegram WORK: summary sent ✅ | BUG channel: send failed (known: TELEGRAM_REPORT_BUG_CHANNEL_ID issue)
 **Exit:** COMPLETE | Next: weekly flow Sun 23:30 UTC
+
+### Daily Review (22:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: news STALE 3.5h (>2h, already flagged by #2845 at 21:03 UTC — not re-submitted) | prices STALE (weekend/closed, expected)
+- System: OK (bootstrap probe passed; get_system_status EOF #2843 appears transient)
+- Alerts 24h: 0 open
+- News 24h: 10 articles — bullish bias (VN-Index targeting 2000, gold forecast up, HCMC stimulus)
+- Bugs (new, observed — not claimed): 5
+  - 2841: FPT 2025-Q4 BCTC low confidence (0.10) — OCR corruption suspicion
+  - 2842: VNM 2025-Q4 BCTC low confidence (0.00) — OCR corruption
+  - 2843: get_system_status EOF x2 — transient, system now OK
+  - 2844: price_drop precision 50% (2nd cycle) — persistent low accuracy
+  - 2845: news freshness >2h (already submitted by prior cycle)
+- Telegram WORK: summary sent ✅ | BUG: observe only (not claimed/re-filed)
+**Exit:** COMPLETE | Next: weekly verification Sun 23:30 UTC
