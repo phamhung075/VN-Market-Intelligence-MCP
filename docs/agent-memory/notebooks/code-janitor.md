@@ -43,3 +43,23 @@
 - JANITOR-013: small two-file change — good candidate if a developer is already touching agentSignalStore.ts
 - JANITOR-011: unblockable until puppeteer paths get integration test coverage
 - Next scan: watch for any new private number-parsing copies in infrastructure/fetchers
+
+---
+
+## Recent session — 2026-05-10 night (scan 12 — 23:45–23:58 VN)
+
+**Scope:** git diff HEAD~5..HEAD (5 commits, 14 modified production files including verdictResolutionJob.ts)
+
+**Result:** CLEAN — 0 violations in 5 checks
+
+| Check | Result |
+|-------|--------|
+| Classification maps | 0 findings |
+| Ticker arrays | 0 findings |
+| Magic numbers / crons | 0 findings — verdictResolutionJob.ts correctly uses VERDICT_GUARD_HOURS=24, VERDICT_TTL_DAYS=30, FLAT_THRESHOLD_PCT=1.0 |
+| Schema duplication | 0 findings |
+| Config drift | 0 findings |
+
+**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
+
+**Next trigger:** 2026-05-13 (3h cron) or on developer commit to signal-related files.

@@ -96,5 +96,12 @@ PIPELINE: continue
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/qa.md
+git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

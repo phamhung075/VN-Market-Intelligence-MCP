@@ -25,6 +25,20 @@ Implemented task 1862g: 4-hour time-window dedup for urgent_news signals in post
 
 ## Carry-over for next session
 
-- 1862g complete and committed on task/1862g-signal-dedup. Awaiting QA merge.
-- 15 pre-existing failures in full suite (Task 178, 1549, 1031, 145, 1100, 262) — not caused by 1862g.
+- 1862g committed (task/1862g-signal-dedup), 1862j committed (task/1862j-sigma-data-safeguard) — both awaiting QA merge.
+- 15 pre-existing failures in full suite (Task 178, 1549, 1031, 145, 1100, 262) — not caused by session tasks.
 - Check docs/TASKS.md for next task before starting.
+
+---
+
+## Recent session — 2026-05-10 (multiple tasks)
+
+**1862h — Replace hardcoded "112 tools" literals:**
+- Fixed 4 literals in restart-policy.md (2) + ops-incident-response.md (2) → pointer to docs/data/project-stats.json.
+
+**1862j — W-3 sigma dedup safeguard (CRITICAL):**
+- Root cause: `runWeeklyAudit` W-3 DELETE wiped all intraday readings → sigma data: 417 stocks → 2 READY.
+- Fix: Pre-count + dry-run; abort if wouldDelete/preCount > 50% (severity=critical). 5 tests GREEN. Branch: task/1862j-sigma-data-safeguard | Commit: fd5db6b6.
+
+**1862g — urgent_news 4h signal dedup:**
+- `dedupWindowMinutes`: 240m default for urgent_news, 0 for all other types. 10 tests GREEN. Branch: task/1862g-signal-dedup.

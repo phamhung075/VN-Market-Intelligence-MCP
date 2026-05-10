@@ -19,3 +19,20 @@ U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase
 ## Carry-over for next session
 
 - U-5 (prediction calibration feedback loop) and U-6 (RAG service wiring) are next in Tier 2. Both are SPRINT-M — review existing calibration tool signatures and RAG service API before designing.
+
+---
+
+## Recent session — 2026-05-09 (Task 1862c investigation)
+
+**Task:** Investigate Cowork scheduled-task MCP access failures — COMPLETE
+
+**Root cause confirmed:** `mcp__claude_ai_gateway__call_tool` is platform-injected. Cowork scheduled tasks do not reliably re-establish SSE sessions per invocation. CLI cron does (reads `.mcp.json` at startup). Structural asymmetry explains intermittent BLOCKED cycles.
+
+**Files analyzed:** market-watcher sessions (5 BLOCKED cycles), `.mcp.json`, `~/.cloudflared/config.yml` (SSE keepAliveTimeout 30s = heartbeat 30s → race condition), `apps/mcp-server/src/interface/mcp/transport.ts`, `server.ts` (`/mcp` stateless endpoint already exists).
+
+**Recommendations (ranked):**
+1. Add Cloudflare route for `/vn-market/mcp` → point Cowork at StreamableHTTP (stateless, no session dependency)
+2. Increase `keepAliveTimeout` 30s → 300s
+3. Migrate market-watcher + unified-agent to CLI cron for guaranteed access
+
+**Risk flags:** `/mcp` route missing from Cloudflare; heartbeat = timeout (race); in-memory session map lost on Docker restart.

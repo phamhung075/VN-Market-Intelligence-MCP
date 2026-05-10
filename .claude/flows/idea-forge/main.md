@@ -37,6 +37,13 @@ Proactively connect to:
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/idea-forge.md
+git commit -m "chore(memory/idea-forge): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`

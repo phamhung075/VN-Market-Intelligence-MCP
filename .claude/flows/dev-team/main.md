@@ -19,7 +19,7 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascending):
 
 1. Read the JSON file
-2. Log to session: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
+2. Log to notebook: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
 3. Append to an in-memory `pendingSignals[]` array
 4. **Move** the signal file to `docs/signals/processed/` with added fields:
    ```
@@ -167,7 +167,7 @@ Before anything else in Step 4, call `expire_monitoring_reports` via MCP gateway
 
 ```
 result = expire_monitoring_reports()
-log to session: "[dev-team] Expired {result.expired} monitoring reports (>72h)"
+log to notebook: "[dev-team] Expired {result.expired} monitoring reports (>72h)"
 ```
 
 This flips stale monitoring reports (resolution="monitoring", age >72h) to "wontfix" so the archive loop below can pick them up in Step 4 sub-step 5.
@@ -226,8 +226,10 @@ Run this **after Step 4 exits cleanly and before re-entering Step 1** (i.e., whe
 if ctx > 25%:
   1. log_agent_work(tag="sprint-boundary", state=current_sprint_id)
   2. Write: docs/agent-memory/notebooks/main.md (current tier, next sprint intent)
-  3. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
-  4. Return
+  3. git add docs/agent-memory/notebooks/main.md && git commit -m "chore(memory/dev-team): notebook YYYY-MM-DD"
+     (Convention: .claude/knowledge/commit-convention.md § Notebook Commits)
+  4. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
+  5. Return
      → stop-context-advisor.sh fires automatically on every response end
      → ctx >40%: osascript types /compact into main terminal (iTerm2 only)
      → ctx 30-40%: injects decision:block warning

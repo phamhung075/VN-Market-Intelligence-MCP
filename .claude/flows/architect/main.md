@@ -3,7 +3,7 @@
 **Tools:** `.claude/tools/package/architect.md`
 
 ## Input
-BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/sessions/LATEST.md`
+BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/notebooks/architect.md`
 
 ## Output
 `[Architect] Brownfield Findings` appended to `docs/handoffs/TASK_NNN.md` | PM notified
@@ -21,8 +21,8 @@ BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/ses
 ## Brownfield Protocol
 
 **1. Check recent TECH context**
-Check `docs/agent-memory/sessions/LATEST.md` for recent work on affected files.
-Found recent session → use as start, verify changes only. Not found → full index.
+Check `docs/agent-memory/notebooks/architect.md` for recent work on affected files.
+Found recent entry → use as start, verify changes only. Not found → full index.
 
 **2. Index codebase**
 ```bash
@@ -59,6 +59,13 @@ Rule: existing interface covers need → extend, never duplicate.
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/architect.md
+git commit -m "chore(memory/architect): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **5.** Update docs/TASKS.md status → return:
 ```

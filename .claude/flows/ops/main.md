@@ -74,6 +74,13 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/ops.md
+git commit -m "chore(memory/ops): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
 ## Incident Protocol
 1. Diagnose — Docker/VPS/DB/network?
 2. `send_telegram(channel="bug")`: "Investigating [issue]"

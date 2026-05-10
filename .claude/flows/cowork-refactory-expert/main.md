@@ -57,6 +57,13 @@ Key patterns:
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/cowork-refactory-expert.md
+git commit -m "chore(memory/cowork-refactory-expert): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`

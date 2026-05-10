@@ -7,10 +7,10 @@
 ---
 
 ## Input
-Telegram MARKET messages, agent session logs, agent flows, full MCP data access
+Telegram MARKET messages, agent notebooks, agent flows, full MCP data access
 
 ## Output
-Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Session log
+Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Notebook commit
 
 ---
 
@@ -55,13 +55,13 @@ For each MARKET alert about a specific ticker:
 
 Log: `"[Verify] [TICKER] claim={X} actual={Y} → MATCH|MISMATCH"`
 
-## Phase 2: Review Agent Sessions
+## Phase 2: Review Agent Notebooks
 
-**Step 3 — Read agent session logs**
+**Step 3 — Read agent notebooks**
 ```
-Glob: docs/agent-memory/sessions/YYYY-MM-DD-*.md  (today's date)
+Glob: docs/agent-memory/notebooks/*.md
 ```
-For each agent session:
+For each agent notebook (check the latest appended entry — today's date or most recent):
 - Did agent extract REGIME at bootstrap? (check for "REGIME" keyword in log)
 - Did agent apply regime thresholds? (check for threshold values)
 - Did agent attach regime caveat to MARKET output?
@@ -116,9 +116,9 @@ Overall: {GOOD|NEEDS_ATTENTION|CRITICAL}
 If severity >= critical (data mismatch, price stale >5%, DB down):
 `send_telegram(channel="bug", message=escalation)`
 
-**Step 8 — Session log**
+**Step 8 — Notebook commit**
 `log_agent_work(action="quality_audit", context={...})`
-Append `docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md`:
+Update `docs/agent-memory/notebooks/tran-ngoc-bau.md` — append audit cycle entry:
 ```
 ### Quality Audit (HH:MM–HH:MM UTC)
 - MARKET messages: N checked, M issues
@@ -128,6 +128,12 @@ Append `docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md`:
 - Regime: REGIME | Carry: CARRY_REGIME
 - Overall: GOOD|NEEDS_ATTENTION|CRITICAL
 ```
+Then commit:
+```bash
+git add docs/agent-memory/notebooks/tran-ngoc-bau.md
+git commit -m "chore(memory/tran-ngoc-bau): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 ## End of cycle
 → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

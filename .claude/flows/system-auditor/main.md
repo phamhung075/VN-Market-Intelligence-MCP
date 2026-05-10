@@ -60,12 +60,18 @@ Location: [file/table/process] | Details: [wrong] | Impact: [why] | Root cause: 
 ```
 severity ≥ warn → `send_telegram(channel="bug")`
 
-Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
+Update `docs/agent-memory/notebooks/system-auditor.md` — append audit entry:
 ```
 ### Audit Run (HH:MM–HH:MM)
 - Memory: N stale cleaned | Knowledge: N fixed | Anomalies: N new, M known
 - DB: [result] | Status: OK | escalated
 ```
+Then commit:
+```bash
+git add docs/agent-memory/notebooks/system-auditor.md
+git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
