@@ -16,7 +16,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. Architect investigation needed: why do Cowork scheduled tasks lose MCP access? TNB GAP-8. | HIGH | FIX | architect | — | — |
-| 1862f | FIX-HIGH: Reuters/TE RSS errors regression — 13→42 errors (3.2x jump since TNB cycle 21). GAP-4 significantly worsening while Vietnamese sources OK. Investigate circuit breaker reset behavior and add retry backoff or source failover. | HIGH | FIX | developer | — | — |
 | 1862h | CHORE-LOW: Hardcoded tool/job counts in knowledge files — restart-policy.md and ops-incident-response.md show 112 tools (actual 128). Replace with pointer to project-stats.json or dynamic health check. | LOW | CHORE | developer | — | — |
 | 1862i | CHORE-LOW: project-stats.json stale infrastructure status — still shows mcpServerHealth DOWN despite recovery at 03:01 UTC. Update infrastructureStatus to reflect current state. | LOW | CHORE | ops | — | — |
 
@@ -40,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1862f | FIX-HIGH: Reuters/TE RSS errors regression — exponential backoff on CircuitBreaker. 15min base + ×2 backoff + 2h cap for Reuters + TradingEconomics. 3 files + 10 tests. | HIGH | FIX | developer | 2026-05-10 |
 | 1862g | FIX-MEDIUM: urgent_news 4h dedup — postSignal() returns -1 for same (stock_code, signal_type, direction) within 4h window. 2 files + 10 tests. | MEDIUM | FIX | developer | 2026-05-10 |
 | 1862k | OPS-HIGH: vnstock rate limiter deployment — Container rebuilt with RPM 80 + SYNC_DELAY_MS 2500ms. 71 tickers were RATE_LIMITED due to stale image. | HIGH | OPS | ops | 2026-05-10 |
 | 1862j | FIX-CRITICAL: sigma threshold data safeguard — W-3 dedup aborts if >50% rows would be deleted. Critical finding + agent_feedback on abort. 2 files, 5 tests. | CRITICAL | FIX | developer | 2026-05-10 |
