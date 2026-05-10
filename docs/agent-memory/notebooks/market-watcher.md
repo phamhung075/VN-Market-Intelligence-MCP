@@ -66,3 +66,20 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 500 |
+
+### Cycle (22:38–22:39 UTC)
+- Stocks: 26 (stale, market CLOSED) | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Active signal: news-scout chain_catalyst — FII/FDI inflow surge (score 9.0, exp 00:22 UTC) → watch securities (VCI, SSI, HCM) on Monday open
+- Sector rotation: Securities +0.52%, Banking +0.47% leading | Aviation -1.45%, Logistics -1.34% lagging
+
+## Metrics (cycle 2026-05-10 22:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 2 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 650 |
