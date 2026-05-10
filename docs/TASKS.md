@@ -15,8 +15,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). | HIGH | FIX | architect → developer | — | architect-rca |
-| 1862h | CHORE-LOW: Hardcoded tool/job counts in knowledge files — restart-policy.md and ops-incident-response.md show 112 tools (actual 128). Replace with pointer to project-stats.json or dynamic health check. | LOW | CHORE | code-janitor | — | Done |
+| 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). Cycle 9 flag: 2nd cycle blocked — escalate to agents-architect spawn next cycle if no brief in docs/architecture-briefs/ by then. | HIGH | FIX | architect → developer | — | architect-rca |
+| 1868d | CHORE-LOW: Cherry-pick eb1c469f handoff sweep (73 archived-task handoffs ≥2026-05-03 cutoff) from task/1863b-reconcile-verdict-job to main, then CLEAN branch. Conservative rule: non-archived IDs kept; verify no active signal/brief refs broken. | LOW | CHORE | code-janitor | — | — |
 
 ---
 
