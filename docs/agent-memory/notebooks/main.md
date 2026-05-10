@@ -1,68 +1,73 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-10 22:30 UTC (Cycle 9 close) | **ctx at checkpoint:** post-/compact
+**Written:** 2026-05-10 22:45 UTC (Cycle 10 close) | **ctx at checkpoint:** ~mid-conversation
 
-## Cycle 9 shipped (2026-05-10)
+## Cycle 10 shipped (2026-05-10)
 
 | Task | Type | Result |
 |------|------|--------|
-| 1862i | CHORE-LOW project-stats refresh | merged (b27e1b11/59e2a639/2b4b9c3c/500e14fd) — QA conditional fix applied (future-date timestamp corrected to 2026-05-10T22:00:20Z) |
-| 1868c | CHORE-LOW B8-gap migration | merged (0dea2b68 + ad1de769 fixer commit + 6f314b3e tasks close) — 9 flow files, fixer restored 2 tran-ngoc-bau descriptor regressions |
+| 1868d | CHORE-LOW handoff sweep | merged `f6483b9d` + `47b33232` — 73 files cleaned, audit re-verified, task/1863b deleted |
+| 1862c (parent) | FIX-HIGH decomposed | brief `docs/architecture-briefs/2026-05-10-1862c-cowork-mcp-rca.md` → moved to Done via `e6d37aa7` |
 
-## Cycle 9 reports drained (all → monitoring)
+## Cycle 10 brief + decomposition
 
-- 2841/2842 BCTC-1345b FPT+VNM Q4 OCR low-conf — known pattern
-- 2843 get_system_status EOF — not reproducible on direct call
-- 2844 price_drop precision 50% — needs backtest analysis, not quick FIX
-- 2845 news freshness 2.5h — tied to Reuters/TE container rebuild gate
+**Architect RCA root causes (3 ranked):**
+1. Cloudflare `/mcp` route MISSING — `https://zenmidi.com/mcp` 404s
+2. SSE `keepAliveTimeout: 30s` = heartbeat boundary race — silent drops
+3. SseSessionManager in-process singleton — Docker restart wipes sessions, cowork holds dead IDs → 404s
 
-## Cycle 9 branch CLEAN
+**Why 1862-MAT-a not sufficient:** stops phantom BLOCKED claims (stale-memory cascade) but does NOT fix the real SSE race.
 
-- DELETED: task/1863c-reconcile-cron-wiring (100% dup of merged work)
-- DELETED: task/1863d-write-alert-verdict-tool (PATH-A abandoned, reshipped via RECONCILE)
-- RETAINED: task/1863b-reconcile-verdict-job (has unmerged `eb1c469f` handoff sweep, 73 files — tracked as 1868d in Todo)
+**Atomic tasks queued (Todo):**
+- **1862c-D** OPS-HIGH — Cloudflare `/vn-market/mcp` ingress rule + cron hint updates (`zenmidi.com/mcp` → `zenmidi.com/vn-market/mcp`). 30min. No rebuild.
+- **1862c-E** OPS-HIGH — SSE `keepAliveTimeout` 30s → 300s. 10min. No rebuild. Ship with D in single cloudflared reload.
+- **1862c-F** FIX-MEDIUM — `SseSessionManager` dead-session eviction in `apps/mcp-server/src/interface/mcp/transport.ts`. 2 files + 5 tests. Rebuild required. Blocked-by: container-rebuild.
+- **1862c-G** FIX-HIGH — Market-watcher smoke-test probe at cron start. 1 flow file. No rebuild.
+
+**Architect ship order:** D+E (single cloudflared reload) → observe 5 cycles → G → F (last, needs rebuild).
 
 ## Current baseline
 
-- **8804 pass / 1 fail** (per project-stats.json testBaselinePass)
-- toolCount=132, totalTasksDone=555, knowledgeFileCount=25
-- currentSprint=1867 closed (Cycle 8 1863a-h-RECONCILE) → 1868 next
+- **8804 pass / 1 fail** (unchanged)
+- toolCount=132, totalTasksDone=556 (+1 for 1868d)
+- currentSprint=1868
 - pipeline-state: idle
 
-## Carry-over to Cycle 10
+## Carry-over to Cycle 11
 
-### Blockers/escalations
-1. **1862c FIX-HIGH Cowork MCP access** — 2nd cycle blocked on architect RCA. **Action**: if no brief in `docs/architecture-briefs/` by next cycle, spawn agents-architect with deadline.
-2. **Container rebuild (ops scope)** — still gates 4 merged fixes (1862f, 1862j, 1865a, σ data). Monday 02:00 UTC open already passed. Single WORK telegram sent cycle 8. Don't re-spam ops unless escalation tier change.
-3. **1868d CHORE-LOW handoff sweep** — Todo. Cherry-pick eb1c469f from task/1863b, verify 73 files have no active signal/brief refs, then CLEAN branch.
+### Ready to ship (dev-team scope)
+- **1862c-G** is fastest dev win after D+E land. Architect recommends waiting per ship order, but if D+E delayed >2 cycles, ship G first for observability.
+
+### Ops-gated (waiting on user / ops)
+- **1862c-D + 1862c-E** — need Cloudflare config edits on host (not in our repo). Single WORK telegram already sent by PM cycle 10.
+- **Container rebuild** still gates 1862f / 1862j / 1865a / σ data / 1862c-F.
 
 ### Patterns to watch (3rd cycle = action)
-- 2843 get_system_status EOF — if 3rd occurrence, file FIX task
-- 2844 price_drop precision <60% — 2nd cycle persistent; if 3rd, schedule SPRINT-S with backtest
-- 2845 news freshness >2h — likely will resolve when container rebuild ships 1862f
+- 2843 get_system_status EOF (cycle 9 entry — still in monitoring)
+- 2844 price_drop precision <60% (cycle 9 entry — 2nd cycle persistent)
+- 2845 news freshness >2h (likely resolves on Reuters/TE rebuild)
 
-### TNB Cycle 31 still open (gated on ops)
-- σ data 2/30 for most stocks
-- Reuters/TE 80+ errors, "Ngưng"
-- DB queue: 18 critical warnings unprocessed (was 18 at c30, no progress — investigate why downstream consumer not draining)
+### TNB Cycle 32 improvement
+TNB ran c32 (`674188ca`) — status NEEDS_ATTENTION/**IMPROVING** vs c31's DEGRADING. RCA brief delivery likely contributed.
 
-## Architecture state (unchanged from cycle 8)
+## Architecture state (unchanged from cycle 9)
 
 - 9-service Docker architecture operational since 2026-04-25
-- MCP server UP (uptime 2h 55m at cycle close)
-- alertVerdictStore (file-backed) + verdictResolutionJob (cron `7 * * * *`) live since cycle 8
-- All 16 circuit breakers OK in DB; source health shows Reuters/TE Ngưng (1862f undeployed)
+- MCP server UP
+- alertVerdictStore + verdictResolutionJob cron `7 * * * *` live since cycle 8
+- All 16 circuit breakers OK in DB
+- Source health: Reuters/TE still Ngưng (1862f undeployed pending container rebuild)
 
-## Cycle 9 process notes
+## Cycle 10 process notes
 
-- HEAD.lock stale state during 1868c dev caused 1862i project-stats.json to leak into 1868c initial commit attempt — dev caught + reset HEAD~1 + selective re-stage. Lesson: parallel dev work on overlapping branches needs explicit branch checkout verification before commit.
-- QA caught future-date timestamp in 1862i (`lastSuccessfulCycle = 2026-05-11T...` while UTC was 2026-05-10T22:09). Lesson: don't paste system-reminder dates into commits without sanity-checking against actual `date -u`.
-- Cherry-pick from 30-file commit when 21 already on main → 9 gap files. Process: `--theirs` for genuine gaps, `--ours` for overlap. Worked but caused 2 descriptor regressions in tran-ngoc-bau requiring fixer round.
+- Parallel agent spawns worked cleanly this cycle (code-janitor + architect, different file scopes). No HEAD.lock issues this time.
+- TASKS.md anomaly from cycle 9 (1862h "handoff Done" stuck in Todo) appears self-corrected during code-janitor 1868d work.
+- PM decomposition kept WIP=0 (all 4 child tasks queued, none In Progress). Respects "ship completion not slices" + WIP ≤ 2.
 
-## Next-cycle intent (Cycle 10)
+## Next-cycle intent (Cycle 11)
 
-1. Drain any new signals + reports
-2. 1868d — handoff sweep cherry-pick + branch CLEAN
-3. 1862c escalation if architect brief still missing
-4. Watch the 3 monitoring patterns for 3rd-cycle triggers
-5. Possibly Sprint 1868 will start formally with 1868d
+1. Drain new signals + reports
+2. If 1862c-D/E shipped by ops → spawn dev for 1862c-G smoke probe
+3. If 1862c-D/E NOT shipped after 2 more cycles → escalate or ship 1862c-G first for observability
+4. Continue monitoring 2843/2844/2845 patterns
+5. If `expire_monitoring_reports` flips any of those to wontfix at 72h TTL → archive them
