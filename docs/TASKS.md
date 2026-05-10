@@ -16,8 +16,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). Cycle 9 flag: 2nd cycle blocked — escalate to agents-architect spawn next cycle if no brief in docs/architecture-briefs/ by then. | HIGH | FIX | architect → developer | — | architect-rca |
-| 1868d | CHORE-LOW: Cherry-pick eb1c469f handoff sweep (73 archived-task handoffs ≥2026-05-03 cutoff) from task/1863b-reconcile-verdict-job to main, then CLEAN branch. Conservative rule: non-archived IDs kept; verify no active signal/brief refs broken. | LOW | CHORE | code-janitor | — | — |
-
 ---
 
 ## In Progress
@@ -38,6 +36,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1868d | CHORE-LOW: Cherry-pick eb1c469f handoff sweep (73 archived-task handoffs ≥2026-05-03 cutoff) from task/1863b-reconcile-verdict-job to main, then CLEAN branch. Re-audit verified: all 73 in archive, no active signal/brief refs. Cherry-picked f6483b9d → main. Branch deleted. | LOW | CHORE | code-janitor | 2026-05-11 |
 | 1868c | CHORE-LOW: B8-gap — migrate all sessions/ writes to notebook commits across 9 dev-team flow files (architect, ba, code-janitor, developer, fixer, market-analyst, pm, system-auditor, tran-ngoc-bau). AC3: 0 append_session/sessions/ refs in flows/skills. QA APPROVED 2026-05-11. | LOW | CHORE | developer | 2026-05-11 |
 | 1862i | CHORE-LOW: project-stats.json stale infra status — mcpServerHealth UP, connectionStatus OK, removed estimatedRecoveryTime/recoveryLink/affectedServices, toolCount 128→132, totalTasksDone 515→555, lastFixApplied→1863h. QA APPROVED 2026-05-11. | LOW | CHORE | ops | 2026-05-11 |
 | 1863h | CHORE-M: Migrate stale NULL-outcome agent_signals pruner into dataAuditJob (D-NEW check). 30-day TTL, try/catch non-fatal, console.log row count, task refs 1863h+1863b. 2 new tests + 16 pre-existing pass. QA APPROVED 2026-05-10. | MEDIUM | CHORE | developer | 2026-05-10 |
