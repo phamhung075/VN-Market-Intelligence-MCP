@@ -48,3 +48,18 @@
 | 1858 close | 8804 | 1 (intentional) | 2026-05-08 |
 | 1860 close | 8804+N | <=1 | 2026-05-09 |
 | 1862 target | 8804+N | <=1 (1331a only) | — |
+
+---
+
+## Recent session — 2026-05-10 (cycle 00:15 UTC)
+
+**Channel audit:** MCP server UP. Used TNB cycle 23 session log as proxy (SSE-only, cannot call MCP tools directly from this context).
+
+**Issues found and actioned:**
+- 1862j (CRITICAL): sigma data wipe → W-3 dedup safeguard → developer. Pre-Monday market open priority.
+- 1862k (HIGH): vnstock rate limiter deployment verification → ops.
+- 1862f (HIGH): Reuters/TE errors 42→49 — already tracked, no new task.
+
+**Sprint 1862 state at session end:** 11 tasks total, 4 DONE, 7 Todo, 0 In Progress.
+
+**Priority order:** 1862j (CRITICAL, sigma=price detection disabled) > 1862k (HIGH, data pipeline) > 1862f (HIGH, Reuters/TE) > 1862c (HIGH, Cowork MCP) > 1862g (MEDIUM) > 1862h/i (LOW).
