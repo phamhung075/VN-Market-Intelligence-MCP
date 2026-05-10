@@ -15,13 +15,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1863a | FEATURE-M: Create `infrastructure/fileStore/alertVerdictStore.ts` — read/write/prune abstraction for `docs/data/alert-verdicts.json`. Atomic temp-file + rename pattern. Interface-injectable for tests. ~2h. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/TASK_1863a.md | — |
-| 1863b | FEATURE-M: Create `scheduler/alerts/verdictResolutionJob.ts` core — hourly cron job, pending→confirmed/false_positive logic, direction-match rule, price fetch, fail-loud on error. Depends on 1863a. ~2h. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/TASK_1863b.md | 1863a |
-| 1863c | FEATURE-M: Register cron + scheduler wiring — cronConfig.ts entry `0 * * * *`, startScheduler.ts registration, jobRunRepo.wrapRun pattern. Depends on 1863b. ~1h. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/TASK_1863c.md | 1863b |
-| 1863d | FEATURE-M: Create `interface/mcp/tools/alerts/alertVerdictTools.ts` — `write_alert_verdict` MCP tool (Zod schema, UUID gen, append to store). Independent of 1863a-c. ~2h. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/TASK_1863d.md | — |
-| 1863e | CHORE-M: Update alert-commander flow + tool-package — add `write_alert_verdict` to cycle.md Step 4a (after send_telegram/mark_alert_read), update alert-commander.md tool table. Depends on 1863d. ~1h. | MEDIUM | CHORE | developer | docs/handoffs/TASK_1863e.md | 1863d |
-| 1863f | FEATURE-M: Unit tests — verdict logic (10 AC cases), 24h window guard, TTL pruning, fail-loud on price fetch. Depends on 1863a-c. ~2h. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/TASK_1863f.md | 1863a, 1863b, 1863c |
-| 1863g | CHORE-M: Bootstrap data + knowledge updates — create `docs/data/alert-verdicts.json` ([]). Update cron-jobs.md, alert-policy.md, tree-map.md. ~1h. | MEDIUM | CHORE | developer | docs/handoffs/TASK_1863g.md | — |
+| 1863g | CHORE-M: Bootstrap data + knowledge updates — update cron-jobs.md, alert-policy.md, tree-map.md with verdictResolutionJob entries. docs/data/alert-verdicts.json already created (ready). ~1h. | MEDIUM | CHORE | developer | docs/handoffs/TASK_1863g.md | — |
 | 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). | HIGH | FIX | architect → developer | — | architect-rca |
 | 1862h | CHORE-LOW: Hardcoded tool/job counts in knowledge files — restart-policy.md and ops-incident-response.md show 112 tools (actual 128). Replace with pointer to project-stats.json or dynamic health check. | LOW | CHORE | code-janitor | — | Done |
 | 1862i | CHORE-LOW: project-stats.json stale infrastructure status — still shows mcpServerHealth DOWN despite recovery at 03:01 UTC. Update infrastructureStatus to reflect current state. | LOW | CHORE | ops | — | — |
@@ -46,6 +40,12 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1863a | FEATURE-M: Create `infrastructure/fileStore/alertVerdictStore.ts` — read/write/prune abstraction for `docs/data/alert-verdicts.json`. Atomic temp-file + rename pattern. Interface-injectable for tests. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
+| 1863b | FEATURE-M: Create `scheduler/alerts/verdictResolutionJob.ts` core — hourly cron job, pending→confirmed/false_positive logic, direction-match rule, price fetch, fail-loud on error. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
+| 1863c | FEATURE-M: Register cron + scheduler wiring — cronConfig.ts entry `0 * * * *`, startScheduler.ts registration, jobRunRepo.wrapRun pattern. ~1h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
+| 1863d | FEATURE-M: Create `interface/mcp/tools/alerts/alertVerdictTools.ts` — `write_alert_verdict` MCP tool (Zod schema, UUID gen, append to store). ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
+| 1863e | CHORE-M: Update alert-commander flow + tool-package — add `write_alert_verdict` to cycle.md Step 4a, update alert-commander.md tool table. ~1h. | MEDIUM | CHORE | developer | 2026-05-10 |
+| 1863f | FEATURE-M: Unit tests — verdict logic (10 AC cases), 24h window guard, TTL pruning, fail-loud on price fetch. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
 | 1862f | FIX-HIGH: Reuters/TE RSS errors regression — exponential backoff on CircuitBreaker. 15min base + ×2 backoff + 2h cap for Reuters + TradingEconomics. 3 files + 10 tests. | HIGH | FIX | developer | 2026-05-10 |
 | 1862g | FIX-MEDIUM: urgent_news 4h dedup — postSignal() returns -1 for same (stock_code, signal_type, direction) within 4h window. 2 files + 10 tests. | MEDIUM | FIX | developer | 2026-05-10 |
 | 1862k | OPS-HIGH: vnstock rate limiter deployment — Container rebuilt with RPM 80 + SYNC_DELAY_MS 2500ms. 71 tickers were RATE_LIMITED due to stale image. | HIGH | OPS | ops | 2026-05-10 |
