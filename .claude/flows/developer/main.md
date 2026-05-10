@@ -70,8 +70,12 @@ REPEAT per acceptance criterion
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
-**Append session log** (before QA):
-`append_session_record(agent_name="developer", task_name="Task NNN: ...", finding=..., status="Ready for QA")`
+**Commit notebook** (before QA):
+```bash
+git add docs/agent-memory/notebooks/developer.md
+git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

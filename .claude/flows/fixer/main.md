@@ -49,7 +49,12 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 - **Verification:** bun test PASS, tsc clean ✓
 ```
 
-**Append session log**: `append_session_record(agent_name="fixer", task_name="Task NNN", fix=..., status="Ready for QA")`
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/fixer.md
+git commit -m "chore(memory/fixer): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

@@ -27,7 +27,7 @@ Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
 3. Each finding with severity `high` → must become a sprint task (Step 1)
 4. Each finding with severity `med` → evaluate during sprint planning, include if capacity allows
 5. Persisting blockers → check against existing TASKS.md to avoid duplicates
-6. Positive signals → acknowledge in session log (track what's working)
+6. Positive signals → acknowledge in notebook (track what's working)
 7. **ACK the handoff** — append to the file:
    ```markdown
 
@@ -39,7 +39,7 @@ Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
    - Skipped findings: {list of finding #s skipped with reason, or "none"}
    ```
 
-If the file does not exist: log `"[po] No TNB handoff file found — skipping Step 0-TNB"` in session log and proceed normally.
+If the file does not exist: log `"[po] No TNB handoff file found — skipping Step 0-TNB"` in notebook and proceed normally.
 
 **This step feeds directly into Step 0 Channel Audit and Step 1 Sprint Planning.**
 
@@ -59,7 +59,7 @@ For each message, scan for these failure signals:
 |--------|-------------|--------|
 | **N/A values** | Any field showing `N/A`, `null`, `undefined`, `—`, or `0.0` where real data is expected | Open bug task → `ops` |
 | **Bug / error** | Stack traces, `ERROR`, `FAILED`, tool call errors, MCP exceptions | Open bug task → `ops` or `developer` |
-| **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in session log, spawn `claude-manager-helper` if pattern is recurring |
+| **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in notebook, spawn `claude-manager-helper` if pattern is recurring |
 | **Cowork doing wrong thing** | Agent reports completing work that contradicts the sprint goal or doesn't match what was asked | Open correction task → `ba` for re-spec |
 | **Silent period** | A channel has had 0 messages in >2h during market hours | Flag as potential pipeline failure → `ops` |
 | **Strategy error** | Agent applies wrong methodology, incorrect thresholds, flawed logic (e.g. bullish signal during bearish regime, wrong sector classification, inverted comparison) | Open fix task → `developer` |
@@ -128,7 +128,7 @@ get_recent_fixes()    ← last N fixes logged by ops — was this one applied?
 
 **If clean**: proceed to No-Task Guard.
 
-**Append to session log:**
+**Append to notebook** (`docs/agent-memory/notebooks/po.md`):
 ```
 Channel audit: MARKET(N msgs, X issues) | WORK(N msgs, X issues) | BUG(N msgs, X issues)
 Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEAN
@@ -193,5 +193,12 @@ Read `docs/REQ_NNN.md` — matches vision? AC clear? blockers answerable?
 Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output)
 - **Approve** → update docs/TASKS.md + `docs/SPRINT_GOAL.md` → return `PIPELINE: complete`
 - **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`
+
+**Commit notebook** (end of every cycle):
+```bash
+git add docs/agent-memory/notebooks/po.md
+git commit -m "chore(memory/po): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -90,6 +90,13 @@ Pass 9 Tool-Agent: OK | SKIPPED | N → architect
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Commit notebook**:
+```bash
+git add docs/agent-memory/notebooks/claude-manager-helper.md
+git commit -m "chore(memory/claude-manager-helper): notebook YYYY-MM-DD"
+```
+Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
