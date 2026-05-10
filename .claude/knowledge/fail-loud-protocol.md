@@ -45,6 +45,7 @@ ALLOWED:
   3. Channel output → send_telegram(channel="work|bug|market") via MCP
   4. Signal bus     → post_agent_signal() via MCP
   5. Analysis briefs → docs/analysis-briefs/{TICKER}.md (if in flow)
+  6. Dev-team signal → docs/signals/{agent-id}-{ISO-timestamp}.json (bug escalation)
 
 FORBIDDEN — NEVER create or modify:
   - Incident docs (docs/INCIDENT-*.md, docs/OPS-ESCALATION-*.md)
@@ -63,9 +64,20 @@ Violation = token waste + contamination of other agents' context.
 If ANY tool call or flow step fails after 1 retry:
 ```
 1. send_telegram(channel="bug", message="[{agent-id}] Step N failed: {one-line error}")
-2. Write cycle result to YOUR session log: "Cycle HH:MM — BLOCKED at step N: {error}"
-3. EXIT immediately — return early, end cycle
+2. Drop signal file → docs/signals/{agent-id}-{ISO-timestamp}.json:
+   {
+     "from": "{agent-id}",
+     "to": "po",
+     "type": "bug-escalation",
+     "payload": "[{agent-id}] Step N failed: {one-line error}",
+     "priority": "high",
+     "createdAt": "{ISO timestamp}"
+   }
+3. Write cycle result to YOUR session log: "Cycle HH:MM — BLOCKED at step N: {error}"
+4. EXIT immediately — return early, end cycle
 ```
+
+Step 1 = user visibility (Telegram BUG). Step 2 = automated fix pipeline (PO picks up → sprint task).
 
 Do NOT:
 - Investigate root causes (that's ops/developer's job)
@@ -74,23 +86,12 @@ Do NOT:
 - Create files outside your allowed outputs
 - Spend tokens analyzing why something failed
 
-**Your job = YOUR flow steps. Blocked = report + EXIT. Dev team reads BUG channel and fixes.**
+**Your job = YOUR flow steps. Blocked = report + EXIT. Dev team picks up the signal and fixes.**
 
 ## Why
 
 Agents on stale/missing knowledge produce hallucinated analyses, wrong sector classifications, misfired alerts. Silent fallback is worse than no output — a missing file is a deployment/config problem, not a transient network error.
 
-## Inline Block for Agent Files
+## Agent Reference
 
-Every analysis agent (`01`–`06`, `unified-agent`, `dev-team-cron`) embeds this under `## KNOWLEDGE LOAD FAILURE PROTOCOL`. The inline block is intentional — agents must be self-contained and cannot lazy-load the failure protocol itself.
-
-```markdown
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="bug", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="{agent-name}")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
-```
+Cowork agents reference this protocol via → skill: `.claude/skills/cowork-boundary/SKILL.md` (which contains the Knowledge Load Failure Protocol). No inline copies in agent .md files.
