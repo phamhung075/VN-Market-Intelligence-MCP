@@ -31,6 +31,20 @@ export interface CircuitBreakerConfig {
   resetTimeoutMs: number;
   /** Successful attempts in half-open required to close the circuit (default: 2) */
   halfOpenMaxAttempts: number;
+  /**
+   * Exponential backoff multiplier applied to resetTimeoutMs on each re-open
+   * from HALF_OPEN state (default: 1 = no backoff). A value of 2 doubles the
+   * timeout on every failed half-open probe, preventing rapid CB thrash for
+   * persistently failing sources (e.g. Reuters, TradingEconomics geo-blocks).
+   * Task 1862f.
+   */
+  backoffMultiplier: number;
+  /**
+   * Maximum resetTimeoutMs after backoff (default: same as resetTimeoutMs = no cap).
+   * Prevents infinite growth — backoff stops multiplying once this ceiling is reached.
+   * Task 1862f.
+   */
+  maxResetTimeoutMs: number;
 }
 
 export interface CircuitBreakerStats {
@@ -68,6 +82,8 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
   failureThreshold: 5,
   resetTimeoutMs: 60_000,
   halfOpenMaxAttempts: 2,
+  backoffMultiplier: 1,   // no backoff by default
+  maxResetTimeoutMs: 60_000,
 };
 
 export class CircuitBreaker {
@@ -82,10 +98,21 @@ export class CircuitBreaker {
   private _halfOpenSuccesses = 0;   // successes accumulated in half-open
   private _lastFailureAt: Date | null = null;
   private _openedAt: Date | null = null;
+  /**
+   * Current effective reset timeout — starts at config.resetTimeoutMs, doubles
+   * on each HALF_OPEN re-open when backoffMultiplier > 1, resets on close.
+   * Task 1862f.
+   */
+  private _currentResetTimeoutMs: number;
 
   constructor(name: string, config?: Partial<CircuitBreakerConfig>) {
     this.name = name;
     this.config = { ...DEFAULT_CONFIG, ...config };
+    // Ensure maxResetTimeoutMs is at least as large as the base timeout
+    if (this.config.maxResetTimeoutMs < this.config.resetTimeoutMs) {
+      this.config.maxResetTimeoutMs = this.config.resetTimeoutMs;
+    }
+    this._currentResetTimeoutMs = this.config.resetTimeoutMs;
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -131,6 +158,7 @@ export class CircuitBreaker {
     this._halfOpenSuccesses = 0;
     this._lastFailureAt = null;
     this._openedAt = null;
+    this._currentResetTimeoutMs = this.config.resetTimeoutMs;
   }
 
   /** Snapshot of current statistics. */
@@ -142,24 +170,25 @@ export class CircuitBreaker {
       state: this._state,
       lastFailure: this._lastFailureAt ? this._lastFailureAt.toISOString() : null,
       openedAt: this._state === "open" && this._openedAt ? this._openedAt.toISOString() : null,
-      resetTimeoutMs: this.config.resetTimeoutMs,
+      // Task 1862f: expose current (possibly backed-off) timeout, not the base config value
+      resetTimeoutMs: this._currentResetTimeoutMs,
     };
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
 
-  /** If open and resetTimeoutMs has elapsed, transition to half-open. */
+  /** If open and _currentResetTimeoutMs has elapsed, transition to half-open. */
   private _checkTimeout(): void {
     if (this._state !== "open") return;
     if (!this._openedAt) return;
     const elapsed = Date.now() - this._openedAt.getTime();
-    if (elapsed >= this.config.resetTimeoutMs) {
+    if (elapsed >= this._currentResetTimeoutMs) {
       this._state = "half-open";
       this._halfOpenSuccesses = 0;
       this._openedAt = null;
       logger.info("[circuitBreaker] state changed OPEN→HALF_OPEN", {
         name: this.name,
-        resetTimeoutMs: this.config.resetTimeoutMs,
+        resetTimeoutMs: this._currentResetTimeoutMs,
         elapsed,
       });
       logCircuitBreakerTransition({
@@ -168,7 +197,7 @@ export class CircuitBreaker {
         state_old: "open",
         state_new: "half-open",
         reason: "reset_timeout_elapsed",
-        reset_timeout_ms: this.config.resetTimeoutMs,
+        reset_timeout_ms: this._currentResetTimeoutMs,
         metrics: { elapsed },
       });
     }
@@ -180,11 +209,13 @@ export class CircuitBreaker {
     if (this._state === "half-open") {
       this._halfOpenSuccesses++;
       if (this._halfOpenSuccesses >= this.config.halfOpenMaxAttempts) {
-        // Enough successful probes — close the circuit
+        // Enough successful probes — close the circuit and reset backoff
         this._state = "closed";
         this._consecutiveFailures = 0;
         this._halfOpenSuccesses = 0;
         this._openedAt = null;
+        // Task 1862f: reset backed-off timeout to base value on successful recovery
+        this._currentResetTimeoutMs = this.config.resetTimeoutMs;
         logger.info("[circuitBreaker] state changed HALF_OPEN→CLOSED", {
           name: this.name,
           halfOpenMaxAttempts: this.config.halfOpenMaxAttempts,
@@ -224,6 +255,18 @@ export class CircuitBreaker {
   private _openCircuit(): void {
     const prevState: "closed" | "half-open" =
       this._state === "half-open" ? "half-open" : "closed";
+
+    // Task 1862f: apply exponential backoff when re-opening from HALF_OPEN.
+    // On the first trip (from CLOSED) the base timeout is used unchanged.
+    // On each HALF_OPEN probe failure the timeout is multiplied by backoffMultiplier,
+    // capped at maxResetTimeoutMs, preventing rapid re-open thrash for persistent failures.
+    if (prevState === "half-open" && this.config.backoffMultiplier > 1) {
+      this._currentResetTimeoutMs = Math.min(
+        Math.round(this._currentResetTimeoutMs * this.config.backoffMultiplier),
+        this.config.maxResetTimeoutMs,
+      );
+    }
+
     this._state = "open";
     this._openedAt = new Date();
     this._halfOpenSuccesses = 0;
@@ -231,6 +274,7 @@ export class CircuitBreaker {
       name: this.name,
       failureThreshold: this.config.failureThreshold,
       consecutiveFailures: this._consecutiveFailures,
+      resetTimeoutMs: this._currentResetTimeoutMs,
     });
     logCircuitBreakerTransition({
       timestamp: this._openedAt.toISOString(),
@@ -239,7 +283,7 @@ export class CircuitBreaker {
       state_new: "open",
       reason: "error_threshold_exceeded",
       error_count: this._consecutiveFailures,
-      reset_timeout_ms: this.config.resetTimeoutMs,
+      reset_timeout_ms: this._currentResetTimeoutMs,
       metrics: {
         failureThreshold: this.config.failureThreshold,
         totalFailures: this._failures,
