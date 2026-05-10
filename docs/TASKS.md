@@ -17,7 +17,6 @@
 |---------|-------|----------|------|-------|---------|------------|
 | 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). | HIGH | FIX | architect → developer | — | architect-rca |
 | 1862h | CHORE-LOW: Hardcoded tool/job counts in knowledge files — restart-policy.md and ops-incident-response.md show 112 tools (actual 128). Replace with pointer to project-stats.json or dynamic health check. | LOW | CHORE | code-janitor | — | Done |
-| 1862i | CHORE-LOW: project-stats.json stale infrastructure status — still shows mcpServerHealth DOWN despite recovery at 03:01 UTC. Update infrastructureStatus to reflect current state. | LOW | CHORE | ops | — | — |
 
 ---
 
@@ -39,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1862i | CHORE-LOW: project-stats.json stale infra status — mcpServerHealth UP, connectionStatus OK, removed estimatedRecoveryTime/recoveryLink/affectedServices, toolCount 128→132, totalTasksDone 515→555, lastFixApplied→1863h. QA APPROVED 2026-05-11. | LOW | CHORE | ops | 2026-05-11 |
 | 1863h | CHORE-M: Migrate stale NULL-outcome agent_signals pruner into dataAuditJob (D-NEW check). 30-day TTL, try/catch non-fatal, console.log row count, task refs 1863h+1863b. 2 new tests + 16 pre-existing pass. QA APPROVED 2026-05-10. | MEDIUM | CHORE | developer | 2026-05-10 |
 | 1863a | FEATURE-M: Create `infrastructure/fileStore/alertVerdictStore.ts` — read/write/prune abstraction for `docs/data/alert-verdicts.json`. Atomic temp-file + rename pattern. Interface-injectable for tests. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
 | 1863b | FEATURE-M: Create `scheduler/alerts/verdictResolutionJob.ts` core — hourly cron job, pending→confirmed/false_positive logic, direction-match rule, price fetch, fail-loud on error. ~2h. RECONCILE: swapped DB/agent_signals impl for file-store impl; 1863f deleted; 1863b test created 14/14 green. QA APPROVED 2026-05-10. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
