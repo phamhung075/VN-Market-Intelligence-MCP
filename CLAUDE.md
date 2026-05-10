@@ -56,6 +56,12 @@ All agent communication uses:
 
 ---
 
+## Commit Policy
+
+All commits follow `.claude/knowledge/commit-convention.md` — format, type vocabulary, sprint/area scope, task-id trailers, AC trailers, no-sprint rule.
+
+---
+
 ## Flows
 
 Agents follow their flow files. Dev-team cron: `.claude/flows/dev-team/main.md`

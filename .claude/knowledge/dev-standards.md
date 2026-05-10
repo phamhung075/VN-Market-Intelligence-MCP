@@ -89,14 +89,19 @@ Full reference → `.claude/WORKFLOW.md#branch-hygiene-checklist`
 
 ## Commit Format
 
+Full spec → `.claude/knowledge/commit-convention.md` (type vocabulary, scope, task-id, trailers, worked example, no-sprint rule).
+
+Shell mechanism — always use the heredoc pattern:
+
 ```bash
 git commit -m "$(cat <<'EOF'
-task(NNN): imperative description
+<type>(<sprint>/<area>): <task-id> <one-line title>
 
-- what changed
-- assumptions made
+<optional body>
 
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Sprint: <sprint>
+Task: <task-id>
+AC: <terse criterion 1> / <terse criterion 2>
 EOF
 )"
 ```

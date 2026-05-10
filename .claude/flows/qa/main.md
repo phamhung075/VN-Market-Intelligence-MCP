@@ -53,10 +53,11 @@ verdict: APPROVED | CHANGES_REQUESTED
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
 
 ## Approval
-**APPROVED**: append `[QA] Review Record` → merge + push + clean → return:
+**APPROVED**: append `[QA] Review Record` → merge + push + clean → return.
+Merge commit subject must follow `.claude/knowledge/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks.
 ```bash
 git checkout main
-git merge --no-ff task/NNN-kebab-description -m "merge(NNN): <title>"
+git merge --no-ff task/NNN-kebab-description -m "chore(<sprint>/<area>): merge task/NNN-<title>"
 git push origin main
 # Clean branch — handle worktrees explicitly:
 worktree_path=$(git worktree list --porcelain | grep -A1 "branch refs/heads/task/NNN" | grep "worktree" | awk '{print $2}')

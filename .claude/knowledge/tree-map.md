@@ -46,7 +46,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13, cooperation flow, signal bus)
 │
-├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format, branch hygiene)
+├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
+│   └── .claude/knowledge/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)
 │
 ├── .claude/knowledge/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
@@ -113,6 +114,7 @@ CLAUDE.md (root — always loaded)
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
 | `.claude/knowledge/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
+| `.claude/knowledge/commit-convention.md` | Developer / Architect | Commit format change |
 | `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
 | `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
 | `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |

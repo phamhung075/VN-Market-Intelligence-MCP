@@ -29,7 +29,7 @@ docs/TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/session
 | NNN | Short title | pending | role | — | NNN-1,NNN-2 |
 ```
 
-**3b. Create handoff file** `docs/handoffs/TASK_NNN.md`:
+**3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`.claude/knowledge/commit-convention.md`), making git the second copy:
 ```markdown
 ---
 sprint: NNN

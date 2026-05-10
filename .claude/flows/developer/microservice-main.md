@@ -47,12 +47,12 @@ REPEAT per acceptance criterion
 **After code — TypeScript/Bun**
 1. `cd apps/<service> && bun test` — service tests pass
 2. `bun tsc --noEmit` — 0 errors
-3. `git add -p && git commit` — format per dev-standards.md
+3. `git add -p && git commit` — format per `.claude/knowledge/commit-convention.md`
 
 **After code — Python/FastAPI**
 1. `cd apps/<service> && python -m pytest` — service tests pass
 2. Type check if configured (mypy/pyright)
-3. `git add -p && git commit` — format per dev-standards.md
+3. `git add -p && git commit` — format per `.claude/knowledge/commit-convention.md`
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `.claude/flows/developer/doc-review.md` with `SERVICE=<service>`

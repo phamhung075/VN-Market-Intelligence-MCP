@@ -42,7 +42,7 @@ REPEAT per acceptance criterion
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
-4. `git add -p && git commit` — format per dev-standards.md
+4. `git add -p && git commit` — format per `.claude/knowledge/commit-convention.md`
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:
