@@ -15,7 +15,10 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1862c | FIX-HIGH: Cowork scheduled-task MCP access — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **BLOCKED: Awaiting architect RCA.** Once RCA complete, PM will decompose into atomic fix tasks per 3-lever pattern (event/timeout/state). Cycle 9 flag: 2nd cycle blocked — escalate to agents-architect spawn next cycle if no brief in docs/architecture-briefs/ by then. | HIGH | FIX | architect → developer | — | architect-rca |
+| 1862c-D | OPS-HIGH: Add `/vn-market/mcp` Cloudflare ingress route — expose StreamableHTTP endpoint to cowork agents. Edit `~/.cloudflared/config.yml`, add ingress rule `path: /vn-market/mcp → http://localhost:3000/mcp` + reload cloudflared. Update cron hints (market-watcher, unified-agent, news-scout flows) from `https://zenmidi.com/mcp` to `https://zenmidi.com/vn-market/mcp`. No Docker rebuild. Arch brief: 1862c-D, ship with 1862c-E. | HIGH | OPS | ops | TASK_1862c-D.md | — |
+| 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. Edit `~/.cloudflared/config.yml` keepAliveTimeout value. No Docker rebuild. Ship together with 1862c-D in single cloudflared reload. | HIGH | OPS | ops | TASK_1862c-E.md | — |
+| 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection — detect stale/disconnected SSE sessions. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error response + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
+| 1862c-G | FIX-HIGH: Market-watcher smoke-test probe — pre-market verification call before full cycle. `cron-market-watcher.md` Step 0: cheap tool call (e.g. `get_system_status`) + BUG telegram on failure. Convert silent BLOCKED → immediate alert. 1 flow file, no rebuild. | HIGH | FIX | developer | TASK_1862c-G.md | — |
 ---
 
 ## In Progress
@@ -36,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1862c | FIX-HIGH: Cowork scheduled-task MCP access RCA — market-watcher BLOCKED at 04:38, unified-agent 4x BLOCKED before CLI recovery. **Architect brief complete.** Decomposed into 1862c-D/E/F/G (4 atomic tasks per brief 2026-05-10-1862c-cowork-mcp-rca.md). Root causes: (1) Cloudflare `/mcp` route missing, (2) SSE keepAliveTimeout = heartbeat (30s), (3) dead-session eviction + startup race. Ship order: D+E (no rebuild) → observe 5 cycles → G → F (rebuild). | HIGH | FIX | architect | 2026-05-11 |
 | 1868d | CHORE-LOW: Cherry-pick eb1c469f handoff sweep (73 archived-task handoffs ≥2026-05-03 cutoff) from task/1863b-reconcile-verdict-job to main, then CLEAN branch. Re-audit verified: all 73 in archive, no active signal/brief refs. Cherry-picked f6483b9d → main. Branch deleted. | LOW | CHORE | code-janitor | 2026-05-11 |
 | 1868c | CHORE-LOW: B8-gap — migrate all sessions/ writes to notebook commits across 9 dev-team flow files (architect, ba, code-janitor, developer, fixer, market-analyst, pm, system-auditor, tran-ngoc-bau). AC3: 0 append_session/sessions/ refs in flows/skills. QA APPROVED 2026-05-11. | LOW | CHORE | developer | 2026-05-11 |
 | 1862i | CHORE-LOW: project-stats.json stale infra status — mcpServerHealth UP, connectionStatus OK, removed estimatedRecoveryTime/recoveryLink/affectedServices, toolCount 128→132, totalTasksDone 515→555, lastFixApplied→1863h. QA APPROVED 2026-05-11. | LOW | CHORE | ops | 2026-05-11 |
