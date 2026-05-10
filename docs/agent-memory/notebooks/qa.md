@@ -1,10 +1,10 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-10 | **Sprint:** 1862
+**Last updated:** 2026-05-10 | **Sprint:** 1863
 
 ## Last session summary
 
-Task 1862f — RSS retry backoff on CircuitBreaker. 10/10 tests pass. Full suite 9069 pass / 15 fail (all 15 pre-existing on main, none in changed files). tsc 23 errors, all pre-existing. DDD PASS (pure infrastructure layer). Security PASS (no process.env, no secrets, no SQL, .js ESM imports, zero any). Logic verified: first open uses base timeout, HALF_OPEN re-open doubles (capped), close resets to base. Reuters + TE: 15min→30min→1h→2h progression confirmed. APPROVED + merged to main. Worktree removed. Branch deleted. Report: reports/TASK_REPORT_1862f.md.
+Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target test: 5/5 pass (happy/missing-ticker/bad-direction/conviction>1/store-throws). Full suite 9266 pass / 16 fail / 38 skip — 16 failures all pre-existing Task 178 (unrelated DB-less environment issue). tsc 0 errors. DDD PASS (alertVerdictTools imports infra only, no domain). Security PASS. AC1 PASS: write_alert_verdict in tools_packages. AC2 PASS: cycle.md Step 4a calls write_alert_verdict after send_telegram + mark_alert_read, before Step 4b. AC3 PASS: tools/package row present with full params. AC4 PASS: 5 test cases confirmed. AC5 PASS: import path correct, no circular dep. AC6 PASS: 5/5. AC7 PASS: 0 new regressions. AC8 PASS: tsc 0 errors. AC9 PASS (1864a): error path routes channel="work". Extra: Step 0 cycle-bootstrap probe present (MAT regression clean). WORK-vs-MARKET routing cleanly stated. APPROVED + merged to main. Branch deleted.
 
 ## Known patterns / preferences
 
@@ -25,9 +25,9 @@ Task 1862f — RSS retry backoff on CircuitBreaker. 10/10 tests pass. Full suite
 
 ## Carry-over for next session
 
-- Sprint 1867 active. 1863a + 1863b RECONCILE APPROVED and merged. 1863c/d/e/f/g/h pending.
-- Pre-existing failure set: 16 failures (178 x7, 1549, 1031, 145 x2, 1100, 262 x3, 1331a). Stable baseline.
-- Pre-existing TSC errors: 0 (tsc now clean on main as of 1863a).
+- Sprint 1867 active. 1863a + 1863b + 1863e RECONCILE APPROVED and merged. 1863c/d/f/g/h pending.
+- Pre-existing failure set: 16 failures (178 x7, pre-existing). Stable baseline.
+- Pre-existing TSC errors: 0 (tsc clean on main).
 - Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
 - Remaining Todo: 1863g (knowledge updates), 1862c (Cowork MCP access — architect), 1862h, 1862i.
 
