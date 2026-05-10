@@ -4,7 +4,7 @@
 
 ## Last session summary
 
-Task 1862g — urgent_news 4h dedup in postSignal(). 10/10 tests pass. Full suite 9137 tests, 0 failures (Bun OOM crash after all tests complete is known Bun v1.3.13 runtime bug). tsc pre-existing errors only — 0 new errors. DDD PASS (infrastructure layer, no domain imports). Security PASS (parameterized SQL, JSON_EXTRACT + LIKE fallback both safe). APPROVED + merged to main. Branch deleted. Report: reports/TASK_REPORT_1862g.md.
+Task 1862f — RSS retry backoff on CircuitBreaker. 10/10 tests pass. Full suite 9069 pass / 15 fail (all 15 pre-existing on main, none in changed files). tsc 23 errors, all pre-existing. DDD PASS (pure infrastructure layer). Security PASS (no process.env, no secrets, no SQL, .js ESM imports, zero any). Logic verified: first open uses base timeout, HALF_OPEN re-open doubles (capped), close resets to base. Reuters + TE: 15min→30min→1h→2h progression confirmed. APPROVED + merged to main. Worktree removed. Branch deleted. Report: reports/TASK_REPORT_1862f.md.
 
 ## Known patterns / preferences
 
@@ -25,7 +25,7 @@ Task 1862g — urgent_news 4h dedup in postSignal(). 10/10 tests pass. Full suit
 
 ## Carry-over for next session
 
-- Sprint 1862 active. 1862g APPROVED and merged.
-- Pre-existing failure set: 0 failures on 1862g run (9137 tests, Bun OOM crash post-completion is benign).
-- Pre-existing TSC errors: regimeConfidenceThreshold.ts + dailyDashboardJob.ts + 1854b/H3 test files — do NOT flag as regressions.
-- Next task: 1862f (Reuters/TE RSS errors regression) or 1862c (Cowork MCP access) — both in Todo.
+- Sprint 1862 active. 1862f + 1862g APPROVED and merged.
+- Pre-existing failure set: 15 failures (178-price-history x7, 1549-watchdog-news-staleness x1, plus others). Stable baseline.
+- Pre-existing TSC errors: regimeConfidenceThreshold.ts + dailyDashboardJob.ts + 1854b/H3 test files + 1557/1567 watchdog tests — do NOT flag as regressions.
+- Remaining Todo: 1862c (Cowork MCP access — architect), 1862h (hardcoded counts — developer), 1862i (project-stats stale — ops).
