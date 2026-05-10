@@ -1,10 +1,10 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-08 | **Sprint:** 1855
+**Last updated:** 2026-05-10 | **Sprint:** 1862
 
 ## Last session summary
 
-Task 1855a — suppress false pollNews all-sources-dark alert when VPS push is healthy. 6/6 new tests pass. Full suite 8984p/11f — 11 failures identical to main baseline. tsc 0 errors on changed files. DDD PASS. Security PASS. APPROVED + merged to main. Branch deleted. Report: apps/mcp-server/reports/TASK_REPORT_1855a.md.
+Task 1862g — urgent_news 4h dedup in postSignal(). 10/10 tests pass. Full suite 9137 tests, 0 failures (Bun OOM crash after all tests complete is known Bun v1.3.13 runtime bug). tsc pre-existing errors only — 0 new errors. DDD PASS (infrastructure layer, no domain imports). Security PASS (parameterized SQL, JSON_EXTRACT + LIKE fallback both safe). APPROVED + merged to main. Branch deleted. Report: reports/TASK_REPORT_1862g.md.
 
 ## Known patterns / preferences
 
@@ -25,6 +25,7 @@ Task 1855a — suppress false pollNews all-sources-dark alert when VPS push is h
 
 ## Carry-over for next session
 
-- Sprint 1846 DONE: 1846b APPROVED and merged. toolCount=128, totalTasksDone=515.
-- Pre-existing failure set (1 as of 1846): Task 1331a TEST-3 (RED guard — intentional).
-- Next task unknown — pipeline-state.json status=idle, waiting for PO.
+- Sprint 1862 active. 1862g APPROVED and merged.
+- Pre-existing failure set: 0 failures on 1862g run (9137 tests, Bun OOM crash post-completion is benign).
+- Pre-existing TSC errors: regimeConfidenceThreshold.ts + dailyDashboardJob.ts + 1854b/H3 test files — do NOT flag as regressions.
+- Next task: 1862f (Reuters/TE RSS errors regression) or 1862c (Cowork MCP access) — both in Todo.
