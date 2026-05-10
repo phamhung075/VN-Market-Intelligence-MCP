@@ -1,73 +1,73 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-10 22:45 UTC (Cycle 10 close) | **ctx at checkpoint:** ~mid-conversation
+**Written:** 2026-05-10 23:45 UTC (Cycle 11 close) | **ctx at checkpoint:** ~mid-conversation
 
-## Cycle 10 shipped (2026-05-10)
+## Cycle 11 shipped (2026-05-10)
 
-| Task | Type | Result |
-|------|------|--------|
-| 1868d | CHORE-LOW handoff sweep | merged `f6483b9d` + `47b33232` — 73 files cleaned, audit re-verified, task/1863b deleted |
-| 1862c (parent) | FIX-HIGH decomposed | brief `docs/architecture-briefs/2026-05-10-1862c-cowork-mcp-rca.md` → moved to Done via `e6d37aa7` |
+| Task | Type | Route | Result |
+|------|------|-------|--------|
+| 1862-SIGMA-SEED | UNBLOCK | ops | VERIFIED deploy (RPM 80 / 2500ms tests 5/5 pass); σ data is 30/30 × 12 trading days (need 20). TNB "2/30" was a misread. Cannot backfill (live-only sync). ETA full σ ≈ 2026-05-27. |
+| 1862f-RCA-BRIEF | UNBLOCK | architect | Brief `docs/architecture-briefs/2026-05-11-reuters-te-unreachability.md` delivered. Verdict: Option A wontfix+disable (1 task) OR Option B URL swap (2 tasks) — pending ops 5-curl probe. |
 
-## Cycle 10 brief + decomposition
+## Cycle 11 key insights
 
-**Architect RCA root causes (3 ranked):**
-1. Cloudflare `/mcp` route MISSING — `https://zenmidi.com/mcp` 404s
-2. SSE `keepAliveTimeout: 30s` = heartbeat boundary race — silent drops
-3. SseSessionManager in-process singleton — Docker restart wipes sessions, cowork holds dead IDs → 404s
+**TNB c32 "σ 2/30" reinterpreted:** All 30 watchlist tickers have OHLCV rows; the gap is *history depth* (12/20 trading days). BB σ-based strategies degrade until ~2026-05-27. Non-σ alerts (price moves, news, RSI, MACD) unaffected. Monday-open NOT blocked for those.
 
-**Why 1862-MAT-a not sufficient:** stops phantom BLOCKED claims (stale-memory cascade) but does NOT fix the real SSE race.
+**Reuters/TE alias surprise:** Labels are backward-compat aliases for Google News RSS + MarketWatch RSS (replaced in prior sprints). Architect identified `tradingEconomicsChromium.ts` as separate code path with file-persisted breaker — NOT touched by this RCA. Counters at 16/16/16 are in-memory module integers, reset on container restart.
 
-**Atomic tasks queued (Todo):**
-- **1862c-D** OPS-HIGH — Cloudflare `/vn-market/mcp` ingress rule + cron hint updates (`zenmidi.com/mcp` → `zenmidi.com/vn-market/mcp`). 30min. No rebuild.
-- **1862c-E** OPS-HIGH — SSE `keepAliveTimeout` 30s → 300s. 10min. No rebuild. Ship with D in single cloudflared reload.
-- **1862c-F** FIX-MEDIUM — `SseSessionManager` dead-session eviction in `apps/mcp-server/src/interface/mcp/transport.ts`. 2 files + 5 tests. Rebuild required. Blocked-by: container-rebuild.
-- **1862c-G** FIX-HIGH — Market-watcher smoke-test probe at cron start. 1 flow file. No rebuild.
-
-**Architect ship order:** D+E (single cloudflared reload) → observe 5 cycles → G → F (last, needs rebuild).
+**Pre-task gate:** Ops must run 5 curls (container + host) before PM creates the atomic Reuters/TE task. Probe verdict drives Option A vs B selection.
 
 ## Current baseline
 
 - **8804 pass / 1 fail** (unchanged)
-- toolCount=132, totalTasksDone=556 (+1 for 1868d)
+- toolCount=132, totalTasksDone=556
 - currentSprint=1868
 - pipeline-state: idle
+- branches: only main (no stale)
 
-## Carry-over to Cycle 11
-
-### Ready to ship (dev-team scope)
-- **1862c-G** is fastest dev win after D+E land. Architect recommends waiting per ship order, but if D+E delayed >2 cycles, ship G first for observability.
+## Carry-over to Cycle 12
 
 ### Ops-gated (waiting on user / ops)
-- **1862c-D + 1862c-E** — need Cloudflare config edits on host (not in our repo). Single WORK telegram already sent by PM cycle 10.
-- **Container rebuild** still gates 1862f / 1862j / 1865a / σ data / 1862c-F.
+- **1862c-D + 1862c-E** — Cloudflare config edits (still pending from cycle 10)
+- **Reuters/TE 5-curl probe** — ops to run from container + host per brief Section 2; outputs feed PM next cycle
+- **Container rebuild** still gates 1862f / 1862j / 1865a / σ data / 1862c-F (note: 1862j VERIFIED running with correct env — rebuild already happened)
+
+### Ready to ship (dev-team scope)
+- **1862c-G** — fastest dev win after D+E land (architect ship order: D+E → observe 5 cycles → G → F)
+- **Reuters/TE atomic task** — pending ops probe verdict (Option A = config disable, Option B = URL swap)
 
 ### Patterns to watch (3rd cycle = action)
-- 2843 get_system_status EOF (cycle 9 entry — still in monitoring)
-- 2844 price_drop precision <60% (cycle 9 entry — 2nd cycle persistent)
-- 2845 news freshness >2h (likely resolves on Reuters/TE rebuild)
+- 2843 get_system_status EOF (3rd cycle now — likely action in cycle 12)
+- 2844 price_drop precision <60% (3rd cycle now — likely action in cycle 12)
+- 2845 news freshness >2h (2nd cycle — likely resolves on Reuters/TE Option A/B ship)
 
-### TNB Cycle 32 improvement
-TNB ran c32 (`674188ca`) — status NEEDS_ATTENTION/**IMPROVING** vs c31's DEGRADING. RCA brief delivery likely contributed.
+### Stale agent notebooks (TNB c32 F4/F5)
+- system-auditor — last cycle 2026-05-09 16:15 UTC (deferred cycle 11, 1st observation)
+- financial-analyst — last cycle 2026-05-09 01:00 UTC (deferred cycle 11, 1st observation)
+- If still stale at cycle 12 (2nd observation), prepare investigation task; 3rd-cycle threshold = escalate to scheduler audit
 
-## Architecture state (unchanged from cycle 9)
+### TNB clarifications captured
+- "σ data 2/30" = history depth, not ticker count → no Monday-open blocker for non-σ strategies
+- Reuters/TE source labels are aliases → architecture brief documents actual endpoints
+
+## Architecture state (unchanged from cycle 10)
 
 - 9-service Docker architecture operational since 2026-04-25
-- MCP server UP
-- alertVerdictStore + verdictResolutionJob cron `7 * * * *` live since cycle 8
+- MCP server UP, 132 tools, alertVerdictStore + verdictResolutionJob cron `7 * * * *` live
 - All 16 circuit breakers OK in DB
-- Source health: Reuters/TE still Ngưng (1862f undeployed pending container rebuild)
 
-## Cycle 10 process notes
+## Cycle 11 process notes
 
-- Parallel agent spawns worked cleanly this cycle (code-janitor + architect, different file scopes). No HEAD.lock issues this time.
-- TASKS.md anomaly from cycle 9 (1862h "handoff Done" stuck in Todo) appears self-corrected during code-janitor 1868d work.
-- PM decomposition kept WIP=0 (all 4 child tasks queued, none In Progress). Respects "ship completion not slices" + WIP ≤ 2.
+- Parallel UNBLOCK spawn worked cleanly (ops + architect, different file scopes, both background mode).
+- TNB c32 signal drained on entry (per Step 0a) — ~1h old, not stale.
+- PO over-scoping avoided: F1 routed to architect-brief (research, not FIX); F2 absorbed into ops AC1; F3 disambiguated by ops as history-depth not ticker-count.
+- Reproducibility filter held: F4/F5/F6 + 3 MON deferred per "<3rd cycle = wait" rule.
 
-## Next-cycle intent (Cycle 11)
+## Next-cycle intent (Cycle 12)
 
 1. Drain new signals + reports
-2. If 1862c-D/E shipped by ops → spawn dev for 1862c-G smoke probe
-3. If 1862c-D/E NOT shipped after 2 more cycles → escalate or ship 1862c-G first for observability
-4. Continue monitoring 2843/2844/2845 patterns
-5. If `expire_monitoring_reports` flips any of those to wontfix at 72h TTL → archive them
+2. If ops 5-curl probe results published → PM creates Reuters/TE Option A/B atomic task
+3. If 1862c-D/E shipped by ops → spawn dev for 1862c-G smoke probe
+4. Check monitoring patterns 2843/2844 → 3rd cycle = action threshold reached
+5. Watch system-auditor + financial-analyst notebooks → if still stale, 2nd observation
+6. If `expire_monitoring_reports` flips any of those to wontfix at 72h TTL → archive them
