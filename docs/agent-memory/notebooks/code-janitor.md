@@ -63,3 +63,23 @@
 **Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
 
 **Next trigger:** 2026-05-13 (3h cron) or on developer commit to signal-related files.
+
+---
+
+## Session 13 (2026-05-10 23:58–00:06 VN) — dataAuditJob.ts review
+
+**Scope:** git diff HEAD~8..HEAD (1 modified file: apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts)
+
+**Result:** CLEAN — 0 violations in 5 checks
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | No ticker classification maps in audit job |
+| Ticker arrays | 0 findings | No hardcoded ticker arrays |
+| Magic numbers / crons | 0 findings | Time-window constants (30d, 60d, 180d, 48h) are business rules; existing offsite usage monitored separately |
+| Schema duplication | 0 findings | All DDL in schema-*.ts canonical sources |
+| Config drift | 0 findings | No ?? fallback pattern mismatches |
+
+**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
+
+**Quality:** Full
