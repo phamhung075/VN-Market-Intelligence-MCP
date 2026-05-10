@@ -69,6 +69,52 @@ G-Bond regime change check (Pillar 5.2):
 }
 ```
 
+**4b. Signal feedback → news-scout**
+For each `chain_catalyst` or `urgent_news` signal from `news-scout` processed in step 4:
+- If impact-chain validated (BCTC confirms catalyst, `valuation_verdict` ≠ AVOID):
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "financial-analyst",
+  "to_agent": "news-scout",
+  "signal_type": "signal_feedback",
+  "stock_code": "<TICKER>",
+  "payload": {
+    "original_signal_id": "<signal_id from chain finding>",
+    "accepted": true,
+    "reason": "impact-chain validated: EY_SPREAD=<value>, verdict=<verdict>"
+  },
+  "ttl_minutes": 60,
+  "chain_depth": 0,
+  "finding_data": {
+    "source_signal_type": "<urgent_news|chain_catalyst>",
+    "accepted": true,
+    "validation_detail": "BCTC confirms catalyst — ey_spread=<value>"
+  }
+})
+```
+- If rejected (BCTC contradicts, `valuation_verdict`=AVOID, or chain finding null):
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "financial-analyst",
+  "to_agent": "news-scout",
+  "signal_type": "signal_feedback",
+  "stock_code": "<TICKER>",
+  "payload": {
+    "original_signal_id": "<signal_id from chain finding>",
+    "accepted": false,
+    "reason": "impact-chain failed: <detail e.g. 'BCTC contradicts — declining ROE', 'valuation=AVOID', 'no chain finding'>"
+  },
+  "ttl_minutes": 60,
+  "chain_depth": 0,
+  "finding_data": {
+    "source_signal_type": "<urgent_news|chain_catalyst>",
+    "accepted": false,
+    "validation_detail": "<rejection reason>"
+  }
+})
+```
+Non-fatal: if `post_agent_signal` errors for feedback, log and continue.
+
 **5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-financial-analyst.md`:
 ```
 ### Analysis Cycle (HH:MM–HH:MM)

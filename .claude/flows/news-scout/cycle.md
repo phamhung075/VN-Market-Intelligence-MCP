@@ -23,6 +23,23 @@ If bootstrap fails or `market_context` missing → send BUG → STOP.
 **0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME
 
+**0c. Read pending feedback from financial-analyst**
+```
+call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "to_agent": "news-scout",
+  "signal_type": "signal_feedback",
+  "minutes_back": 120
+})
+```
+Parse results into `FEEDBACK_HINTS`:
+- Count `accepted=true` vs `accepted=false` per `source_signal_type` (`urgent_news`, `chain_catalyst`)
+- If acceptance rate for a signal type < 30% in last 10 feedback items → set `FILTER_HINT_<TYPE>=STRICT`
+  - Apply: raise impact threshold for that signal type by +1 (e.g. `impactScore ≥ 7` becomes `≥ 8`) for this cycle
+- If acceptance rate > 70% → set `FILTER_HINT_<TYPE>=LOOSE` (keep current thresholds)
+- If no feedback available → skip tuning, use default thresholds
+- Log feedback summary in session log: `Feedback: X accepted / Y rejected | Hints: [list]`
+Non-fatal: if tool errors, skip feedback tuning and continue.
+
 **1. Fetch news**
 
 ```
@@ -143,6 +160,7 @@ Append to `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
 ```
 ### Cycle (HH:MM–HH:MM)
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
+- Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
 ```
 
 **5. WORK channel**
