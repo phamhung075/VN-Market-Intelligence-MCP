@@ -43,6 +43,7 @@ export const SignalTypeSchema = z.enum([
   "fundamental_validation",
   "price_confirmation",
   "verified_chain",
+  "signal_feedback",
 ]);
 
 /** Valid signal types that agents can exchange (includes enrichment chain types). */

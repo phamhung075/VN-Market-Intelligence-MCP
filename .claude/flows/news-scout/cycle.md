@@ -26,12 +26,13 @@ Variables: REGIME, CARRY_REGIME
 **0c. Read pending feedback from financial-analyst**
 ```
 call_tool(server="vn-market", tool="get_agent_signals", arguments={
-  "to_agent": "news-scout",
-  "signal_type": "signal_feedback",
-  "minutes_back": 120
+  "agent": "news-scout",
+  "status": "unread"
 })
 ```
-Parse results into `FEEDBACK_HINTS`:
+Client-side filter: keep only signals where `signal_type === "signal_feedback"` (ignore other signal types).
+
+Parse filtered results into `FEEDBACK_HINTS`:
 - Count `accepted=true` vs `accepted=false` per `source_signal_type` (`urgent_news`, `chain_catalyst`)
 - If acceptance rate for a signal type < 30% in last 10 feedback items → set `FILTER_HINT_<TYPE>=STRICT`
   - Apply: raise impact threshold for that signal type by +1 (e.g. `impactScore ≥ 7` becomes `≥ 8`) for this cycle

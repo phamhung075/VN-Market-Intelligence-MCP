@@ -295,6 +295,16 @@ export const PriceAnomalyFindingDataSchema = z.object({
 }).passthrough();
 export type PriceAnomalyFindingDataInferred = z.infer<typeof PriceAnomalyFindingDataSchema>;
 
+// ── SignalFeedbackFindingData ──────────────────────────────────────────────────
+
+/**
+ * Finding data for signal_feedback signals.
+ *
+ * Permissive schema for feedback loop communications between agents.
+ * Accepts any payload structure via passthrough.
+ */
+export const SignalFeedbackFindingDataSchema = z.record(z.unknown()).passthrough();
+
 // ── Index exports ──────────────────────────────────────────────────────────────
 
 /**
@@ -307,4 +317,5 @@ export const SignalSchemas = {
   UrgentNews: UrgentNewsFindingDataSchema,
   CrossValidate: CrossValidateFindingDataSchema,
   PriceAnomaly: PriceAnomalyFindingDataSchema,
+  SignalFeedback: SignalFeedbackFindingDataSchema,
 } as const;
