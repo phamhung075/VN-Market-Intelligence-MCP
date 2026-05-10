@@ -20,7 +20,17 @@ import { CircuitBreaker, type CircuitState } from "./circuitBreaker.js";
 export const breakers = {
   cafef: new CircuitBreaker("cafef"),
   vnexpress: new CircuitBreaker("vnexpress"),
-  reuters: new CircuitBreaker("reuters"),
+  /**
+   * Reuters (Google News RSS) — geo-blocked from France in production.
+   * Task 1862f: 15 min base reset + exponential backoff × 2 (cap 2 h) to
+   * prevent rapid OPEN→HALF_OPEN→re-OPEN thrash that was growing errors 3.2×
+   * per sprint (13→42). Each failed probe doubles the wait before the next one.
+   */
+  reuters: new CircuitBreaker("reuters", {
+    resetTimeoutMs: 900_000,       // 15 minutes base
+    backoffMultiplier: 2,
+    maxResetTimeoutMs: 7_200_000,  // 2 hours cap
+  }),
   vneconomy: new CircuitBreaker("vneconomy"),
   hose: new CircuitBreaker("hose"),
   hnx: new CircuitBreaker("hnx"),
@@ -29,7 +39,15 @@ export const breakers = {
     failureThreshold: 3,
     resetTimeoutMs: 300_000, // 5 minutes
   }),
-  tradingEconomics: new CircuitBreaker("tradingEconomics"),
+  /**
+   * TradingEconomics (MarketWatch/Google News RSS) — frequently empty from France.
+   * Task 1862f: same 15 min / backoff × 2 / 2 h cap as reuters to stop error growth.
+   */
+  tradingEconomics: new CircuitBreaker("tradingEconomics", {
+    resetTimeoutMs: 900_000,       // 15 minutes base
+    backoffMultiplier: 2,
+    maxResetTimeoutMs: 7_200_000,  // 2 hours cap
+  }),
   yahooFinance: new CircuitBreaker("yahooFinance"),
   sbv: new CircuitBreaker("sbv"),
   /** Polymarket CLOB — back off after 5 failures, wait 10 min before retry */
