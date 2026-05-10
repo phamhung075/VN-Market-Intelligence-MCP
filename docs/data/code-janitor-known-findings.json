@@ -1,7 +1,22 @@
 {
-  "scan_date": "2026-05-09T14:28:00Z",
-  "last_run": "2026-05-09T14:28:00Z",
+  "scan_date": "2026-05-10T10:02:00Z",
+  "last_run": "2026-05-10T10:02:00Z",
   "findings": [
+    {
+      "fingerprint": "check-3:infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — circuit breaker timeouts (RESOLVED)",
+      "file": "apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts (SSOT) — reuters and tradingEconomics now import",
+      "lines": "GEO_BLOCKED_BREAKER_CONFIG const at line 21",
+      "detail": "JANITOR-025 SHIPPED: Both reuters and tradingEconomics breakers had identical config: resetTimeoutMs=900_000, backoffMultiplier=2, maxResetTimeoutMs=7_200_000. Extracted to GEO_BLOCKED_BREAKER_CONFIG constant. Both are geo-blocked from France with same retry strategy (Task 1862f). Commit 61c2cc9b (2026-05-10). Risk: RESOLVED.",
+      "canonical_source": "apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
+      "risk": "RESOLVED — constant is centralized, single edit point for timeout changes.",
+      "discovered_at": "2026-05-10T10:00:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-025",
+      "ship_directly": true,
+      "reason_shipped": "Single-file mechanical fix. 10 circuit breaker tests pass. Commit 61c2cc9b."
+    },
     {
       "fingerprint": "check-3:infrastructure/agents:CLAUDE_BIN-duplicated",
       "severity": "LOW",
@@ -256,6 +271,16 @@
     }
   ],
   "scan_checks": {
+    "scan-10": {
+      "scan_date": "2026-05-10T04:15:36Z",
+      "scope": "diff HEAD~3..HEAD (7 files: circuitBreaker.ts, circuitBreakerRegistry.ts, 1862f test, docs/TASKS.md, qa.md, session logs, reports)",
+      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
+      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
+      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "Circuit breaker registry contains timeout values (900_000, 7_200_000, 600_000, 300_000) but these are intentional business-logic config entries, not shared code duplication. Each breaker (reuters, ssc, polymarket, etc.) is independent with documented reasoning." },
+      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
+      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean." },
+      "summary": "All 5 checks pass. 0 new violations. Task 1862f (circuit breaker backoff) verified: 10 tests pass. Ready for next cycle."
+    },
     "scan-9": {
       "scan_date": "2026-05-09T14:28:00Z",
       "scope": "diff HEAD~15..HEAD (6 production TS files + test changes)",

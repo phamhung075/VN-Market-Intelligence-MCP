@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-09 (scan 9 — clean, 0 violations)
+## Last updated: 2026-05-10 (scan 11 — 1 finding, shipped)
 
 ## State summary
 
@@ -19,6 +19,7 @@
 | JANITOR-022 | DBC domain classification: added to agriculture sector in stock-classification.json | TBD |
 | JANITOR-023 | CLAUDE_BIN extracted to agentConstants.ts, imported by smartCompactSpawner.ts + qaResponderSpawner.ts | b836f129 |
 | JANITOR-024 | DEDUP_WINDOW_SECONDS inlined in isDuplicateReport default parameter | dd2e6b82 |
+| JANITOR-025 | GEO_BLOCKED_BREAKER_CONFIG for reuters + tradingEconomics in circuitBreakerRegistry.ts | 61c2cc9b |
 
 ### Open backlog
 
@@ -37,6 +38,7 @@
 
 ## Notes for next scan
 
+- Scan 11 (2026-05-10): JANITOR-025 shipped — GEO_BLOCKED_BREAKER_CONFIG centralized. Reuters + TradingEconomics now share single config constant (both geo-blocked, same retry strategy).
 - JANITOR-020: Task 1563 (Sprint 226) created marketContextBuilder.ts as DDD extraction — but marketContextTools.ts was never updated to use it. Good candidate when a developer touches either file.
 - JANITOR-013: small two-file change — good candidate if a developer is already touching agentSignalStore.ts
 - JANITOR-011: unblockable until puppeteer paths get integration test coverage
