@@ -41,10 +41,13 @@ get_cycle_bootstrap(agent_name="<agent-id>")
 
 ### Error handling (fail-loud)
 
-| Error | Action |
-|---|---|
-| `market_context` error | `send_telegram(channel="bug")` + drop signal → STOP immediately |
-| Any other error | `send_telegram(channel="bug")` + drop signal → STOP |
+<!-- SSE-handshake race: fresh cron sessions may not complete MCP gateway registration before Step 0 executes; 1 retry + 5s gap converts the race into a tolerable startup delay. -->
+
+| Error | First occurrence | Second occurrence (after 5s wait) |
+|---|---|---|
+| tool-not-found / MCP unavailable | Wait 5s → retry `get_cycle_bootstrap` once | `send_telegram(channel="bug")` + drop signal → STOP |
+| `market_context` error | `send_telegram(channel="bug")` + drop signal → STOP immediately | — |
+| Any other error | `send_telegram(channel="bug")` + drop signal → STOP | — |
 
 Never proceed with a degraded bootstrap — stale context produces worse signals than silence.
 
