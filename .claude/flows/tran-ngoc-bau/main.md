@@ -7,10 +7,10 @@
 ---
 
 ## Input
-Telegram MARKET messages, agent session logs, agent flows, full MCP data access
+Telegram MARKET messages, agent notebooks, agent flows, full MCP data access
 
 ## Output
-Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Session log
+Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Notebook commit
 
 ---
 
