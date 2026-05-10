@@ -35,8 +35,10 @@ CLAUDE.md (root — always loaded)
 │   ├── docs/data/stock-classification.json (tickers, sectors, trade exposure, peers, reverse map — volatile)
 │   └── mcp.config.json → alertPolicy (threshold values — volatile)
 │
-├── .claude/knowledge/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns)
-│   └── mcp.config.json → alertPolicy (threshold values — shared child with portfolio-schema)
+├── .claude/knowledge/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns, signal verdict lifecycle)
+│   ├── mcp.config.json → alertPolicy (threshold values — shared child with portfolio-schema)
+│   ├── apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts (hourly verdict resolver: pending→confirmed|false_positive, 24h guard, 30d TTL pruning, fail-loud — Task 1863)
+│   └── docs/data/alert-verdicts.json (aggregate verdict outcome stats — volatile)
 │
 ├── .claude/knowledge/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
 │

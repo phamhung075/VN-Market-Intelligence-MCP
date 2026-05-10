@@ -41,6 +41,15 @@ Live data → `docs/data/cron-registry.json`
 | 09:30 UTC M-F (16:30 VN) | `foreignFlowAlertJob` — daily foreign flow smart-money scan; fires HIGH alerts + evidence fragments | 1133 |
 | 01:00 UTC daily (08:00 VN) | `insiderCheckJob` — SSC insider transaction check + streak detection + evidence fragments | 1143 |
 
+## Signal Verdict Resolution
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `0 * * * *` (hourly) | `verdictResolutionJob` — resolves pending `agent_signals` verdicts (confirmed / false_positive) based on 4h price direction match; 24h window guard skips fresh signals; 30d TTL pruning; fail-loud to BUG channel on price fetch error | 1863 |
+
+Source: `apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts`
+Verdict lifecycle → `.claude/knowledge/alert-policy.md` (Signal Verdict Lifecycle section)
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |
