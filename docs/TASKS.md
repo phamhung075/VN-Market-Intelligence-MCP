@@ -41,7 +41,7 @@
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
 | 1863a | FEATURE-M: Create `infrastructure/fileStore/alertVerdictStore.ts` — read/write/prune abstraction for `docs/data/alert-verdicts.json`. Atomic temp-file + rename pattern. Interface-injectable for tests. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
-| 1863b | FEATURE-M: Create `scheduler/alerts/verdictResolutionJob.ts` core — hourly cron job, pending→confirmed/false_positive logic, direction-match rule, price fetch, fail-loud on error. ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
+| 1863b | FEATURE-M: Create `scheduler/alerts/verdictResolutionJob.ts` core — hourly cron job, pending→confirmed/false_positive logic, direction-match rule, price fetch, fail-loud on error. ~2h. RECONCILE: swapped DB/agent_signals impl for file-store impl; 1863f deleted; 1863b test created 14/14 green. QA APPROVED 2026-05-10. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
 | 1863c | FEATURE-M: Register cron + scheduler wiring — cronConfig.ts entry `0 * * * *`, startScheduler.ts registration, jobRunRepo.wrapRun pattern. ~1h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
 | 1863d | FEATURE-M: Create `interface/mcp/tools/alerts/alertVerdictTools.ts` — `write_alert_verdict` MCP tool (Zod schema, UUID gen, append to store). ~2h. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-10 |
 | 1863e | CHORE-M: Update alert-commander flow + tool-package — add `write_alert_verdict` to cycle.md Step 4a, update alert-commander.md tool table. ~1h. | MEDIUM | CHORE | developer | 2026-05-10 |
