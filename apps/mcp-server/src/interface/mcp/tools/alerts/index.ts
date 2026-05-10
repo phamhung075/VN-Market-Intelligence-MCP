@@ -10,3 +10,4 @@ export { registerAlertMuteTools } from "./alertMuteTools.js";
 export { registerCustomAlertTools } from "./customAlertTools.js";
 export { registerCronHealthTools } from "./cronHealthTools.js";
 export { registerPipelineHealthTools } from "./pipelineHealthTools.js";
+export { registerAlertVerdictTools } from "./alertVerdictTools.js";

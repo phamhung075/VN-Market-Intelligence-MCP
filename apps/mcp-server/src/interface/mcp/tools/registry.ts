@@ -92,6 +92,7 @@ import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js
 import { registerSmartCompactTool } from "./system/smartCompactTool.js";
 import { registerBctcBatchSweepTool } from "./financial-reports/bctcBatchSweepTool.js";
 import { registerBacktestTools, registerBacktestQueryTools, registerBacktestLifecycleTools } from "./backtesting/index.js";
+import { registerAlertVerdictTools } from "./alerts/alertVerdictTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -187,4 +188,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBacktestTools,                // Task 1842d: run_backtest (+1 → 120)
   registerBacktestQueryTools,           // Task 1844a: get_backtest_runs (#121) + get_backtest_run (#122) (+2 → 122)
   registerBacktestLifecycleTools,       // Task 1846b: delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) (+3 → 125)
+  registerAlertVerdictTools,            // Task 1863d: write_alert_verdict (#126)
 ];
