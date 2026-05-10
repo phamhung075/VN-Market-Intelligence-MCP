@@ -18,13 +18,9 @@ New agent files created + registered in roster/CLAUDE.md/dispatch. Files:
 
 ---
 
-## Error Boundary
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-If ANY file read/write fails after 1 retry:
-1. Log to session: `"[agent-father/create] Step N failed: {error}"`
-2. **Cleanup:** Delete any half-created files from this run
-3. RETURN with `PIPELINE: blocked`
-4. Do NOT leave orphaned files — incomplete agent is worse than no agent
+Agent-specific: **Cleanup** half-created files on failure. Incomplete agent is worse than no agent.
 
 ---
 

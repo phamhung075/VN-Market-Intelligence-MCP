@@ -2,11 +2,7 @@
 
 **Tools:** `.claude/tools/package/ops.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Error Boundary
-
-Recovery fails after standard steps → `send_telegram(channel="bug", message="[ops] VPS unrecoverable: {error}")` → EXIT. Do NOT loop or create speculative docs.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 

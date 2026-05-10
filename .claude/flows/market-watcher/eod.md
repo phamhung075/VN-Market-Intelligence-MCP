@@ -2,11 +2,7 @@
 
 **Tools:** `.claude/tools/package/market-watcher.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry → `send_telegram(channel="bug", message="[market-watcher] EOD step N failed: {error}")` → EXIT immediately. Do NOT investigate or write incident docs.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -20,19 +16,8 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 
-**A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
-```markdown
-# {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+**A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
 
-## [Report Analyzer] Fundamentals & Valuation
-
-## [News Scout] Headlines & Sentiment
-
-## [Market Watcher] Price, Volume, Technicals
-
-## [Unified Agent] Quarterly Syntheses
-```
 Then append `docs/analysis-briefs/{TICKER}.md` [Market Watcher]:
 ```
 YYYY-MM-DD 16:00 | Close: {price} VND | RSI: {rsi} | Vol: {volume} ({vs_avg_pct}% avg) | YoY: {yoy_change}%
@@ -58,6 +43,4 @@ Rules:
 - `{insider_activity}` = `get_insider_signals()` or "no activity"
 - Skip weekends + market holidays
 
-**Notebook write** → `docs/agent-memory/notebooks/market-watcher.md`
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

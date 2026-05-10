@@ -2,17 +2,7 @@
 
 **Tools:** `.claude/tools/package/report-analyzer.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-> Event-driven: only runs when new earnings detected.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[report-analyzer] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = earnings → parse → signals → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -51,19 +41,8 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 
 **4. Signal + ledger**
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
-If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
-```markdown
-# {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+If `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
 
-## [Report Analyzer] Fundamentals & Valuation
-
-## [News Scout] Headlines & Sentiment
-
-## [Market Watcher] Price, Volume, Technicals
-
-## [Unified Agent] Quarterly Syntheses
-```
 Append `docs/analysis-briefs/{TICKER}.md` [Report Analyzer]:
 ```markdown
 ### {TICKER} Q{N} {YEAR} — Released YYYY-MM-DD
@@ -78,17 +57,10 @@ Partial data → `N/A` | write fails → BUG channel immediately
 - Earnings: N tickers | Processed: [list] | Signals: M fundamental_validation
 ```
 
-**5b. WORK**:
+**5b. WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Report Analyzer] HH:MM UTC — N earnings processed
   Beat: X | Miss: Y | In-line: Z | Signals: M | Next: TIME
 ```
 
-**5c. BUG on error**:
-Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
-```
-[Report Analyzer] ⚠️ SEVERITY
-  Issue: ... | Impact: stocks | Status: Retrying/Blocked
-```
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

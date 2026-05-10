@@ -10,13 +10,7 @@ Requirement spec in docs/TASKS.md | Architect task created | PO notified
 
 ---
 
-## Error Boundary
-
-If any file read, write, or tool call fails after 1 retry:
-1. Append to session log: `"[ba] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = read context → write spec → create task → log. Blocked = log + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -56,10 +50,7 @@ feature priority | VN term translation | data source availability | historical v
 | BA-NNN | Requirement: [Feature Name] | pending | BA | — | — |
   Context: [brief memo with FR list, blockers, edge cases, DDD layers]
 ```
-**End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ba`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 PO approves → BA Done → update docs/TASKS.md status → return:
 ```

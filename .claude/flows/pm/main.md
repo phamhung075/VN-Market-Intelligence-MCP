@@ -10,13 +10,7 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 
 ---
 
-## Error Boundary
-
-If any file read, write, or tool call fails after 1 retry:
-1. Append to session log: `"[pm] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = plan tasks → create handoffs → monitor pipeline → log. Blocked = log + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -71,10 +65,7 @@ PIPELINE: continue
 
 **4.** Set task status → `in_progress` when developer picks up
 
-**End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `pm`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`

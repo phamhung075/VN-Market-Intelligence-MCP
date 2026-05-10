@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/system-auditor.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
 Git diff (last 24h), CLAUDE.md, docs/TASKS.md, memory/MEMORY.md
@@ -67,22 +67,15 @@ Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
 - DB: [result] | Status: OK | escalated
 ```
 
-## End-of-cycle notebook write
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `system-auditor`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | cron not running | prod table 0 rows expected > 0
 
 ---
 
-## Error Boundary
-
-- Tool or Read fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT. Do NOT investigate infrastructure.
-- Knowledge load fails → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+## Agent-Specific Error Cases
 - DB integrity check returns non-"ok" → report as CRITICAL anomaly → EXIT after Telegram alert.
-- Blocked at any step → report what was completed + EXIT.
 
 ## Step 7 — PO handoff if findings require dev work
 

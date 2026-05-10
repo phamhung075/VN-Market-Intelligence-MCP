@@ -35,18 +35,13 @@ Proactively connect to:
 - Sprint/task workflow implications
 - Tool + cron count impact (`docs/data/project-stats.json`)
 
-**End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `idea-forge`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ---
 
-## Error Boundary
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-- Read fails after 1 retry → log to session → EXIT
-- Idea is ambiguous and clarification stalls → return best-effort analysis with explicit unknowns noted
-- Blocked at any step → report what was completed + EXIT. Do NOT investigate infrastructure.
+Agent-specific: Idea ambiguous + clarification stalls → return best-effort analysis with explicit unknowns.
 
 ## PO handoff (if actionable)
 

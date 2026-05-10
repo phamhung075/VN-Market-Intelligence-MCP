@@ -46,17 +46,11 @@ Finding found?
 {"scan_date":"2026-04-26","findings":[{"id":"DRY-1","pattern":"...","status":"shipped|proposed"}]}
 ```
 
-## End-of-cycle notebook write
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `code-janitor`)
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-## Error Boundary
-
-- Tool fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT.
-- Knowledge load fails (fail-loud-protocol.md or janitor-procedures.md) → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
-- No duplication found → EXIT immediately (no report needed).
-- Multi-file fix attempted directly → STOP, create backlog task instead.
+Agent-specific: No duplication found → EXIT immediately. Multi-file fix → STOP, create backlog task.
 
 ## RETURN
 

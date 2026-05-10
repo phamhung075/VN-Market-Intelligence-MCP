@@ -12,12 +12,9 @@ Maintenance report with: orphan scan, roster accuracy, top-5 checks, auto-fixes 
 
 ---
 
-## Error Boundary
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-Uses **graceful degradation** (guide Section 18.4):
-- If individual agent check fails → SKIP, continue sweep
-- Tag report `PARTIAL` if >20% of agents could not be checked
-- EXIT only if guide or roster cannot be loaded
+Agent-specific: **Graceful degradation** — SKIP failed checks, continue. Tag `PARTIAL` if >20% skipped. EXIT only if guide/roster unloadable.
 
 ---
 

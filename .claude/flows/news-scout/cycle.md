@@ -2,58 +2,13 @@
 
 **Tools:** `.claude/tools/package/news-scout.md`
 
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+
 ## Input
 Bootstrap (market context 24h, system status, agent signals)
 
 ## Output
 `urgent_news` + `chain_catalyst` signals on bus | WORK status | ledger entries (05:00 UTC)
-
----
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-
-- NEVER say "MCP is not available in this session" without attempting the call
-- ALWAYS call the tool. If it fails, report the REAL error from the response
-- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
-- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
-
-**Signal threshold enforcement — phantom success is forbidden:**
-- NEUTRAL regime: urgent_news conviction threshold = 0.60. Below threshold → SUPPRESS, do NOT post
-- NEVER log "POSTED" for a signal that did not meet the regime conviction threshold
-- If you fire a signal below threshold and log it as success, that is a phantom success
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[news-scout] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error (these create phantom incidents):**
-- Writing standalone blocker/incident/recovery files
-- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
-- Writing "Recommended Action" or "Next Steps" sections with ops commands
-- Creating files outside: session log, notebook, channel messages
-
-Your job = fetch news → analyze → post signals → log. Blocked = report + EXIT.
-
----
-
-## How to Call Tools
-
-ALL tools use the MCP gateway. Every tool call in this flow means:
-
-```
-call_tool(
-  server: "vn-market",
-  tool: "<tool_name>",
-  arguments: { ... }
-)
-```
-
-If any tool call fails → read error message → apply fail-loud protocol (`.claude/knowledge/fail-loud-protocol.md`).
 
 ---
 
@@ -65,16 +20,8 @@ call_tool(server="vn-market", tool="get_cycle_bootstrap", arguments={ "agent_nam
 
 If bootstrap fails or `market_context` missing → send BUG → STOP.
 
-**0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
-Parse `get_macro_snapshot` text block already in bootstrap:
-```
-REGIME      = "Global Liquidity: X"       → TIGHTENING | EASING | NEUTRAL
-CARRY_REGIME = "VND Carry Spread" line    → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
-```
-If `get_macro_snapshot` not in bootstrap context → call it once:
-```
-call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
-```
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, CARRY_REGIME
 
 **1. Fetch news**
 
@@ -207,37 +154,11 @@ call_tool(server="vn-market", tool="send_telegram", arguments={
 })
 ```
 
-**6. BUG on error**
-
-Before sending to BUG: check recent fixes to avoid duplicate reports.
-```
-call_tool(server="vn-market", tool="get_recent_fixes", arguments={ "limit": 20 })
-```
-If issue already fixed (matching title/module in recent fixes) → **skip, do not re-report**.
-
-```
-call_tool(server="vn-market", tool="send_telegram", arguments={
-  "message": "[News Scout] ⚠️ SEVERITY\n  Issue: ... | Impact: ... | Status: Retrying/Blocked",
-  "channel": "bug"
-})
-```
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Batch 2 Sentiment Log (05:00 UTC daily)
-Per ticker from `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
-```markdown
-# {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+Per ticker from `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
 
-## [Report Analyzer] Fundamentals & Valuation
-
-## [News Scout] Headlines & Sentiment
-
-## [Market Watcher] Price, Volume, Technicals
-
-## [Unified Agent] Quarterly Syntheses
-```
 Then append to `docs/analysis-briefs/{TICKER}.md` [News Scout]:
 ```
 YYYY-MM-DD | {sentiment description} | YoY: {comparison or "no prior data"}

@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/market-analyst.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
 User question, news event, ticker, or morning routine trigger
@@ -68,17 +68,10 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 - **"toàn ngành"** = sector-wide (macro cause)
 - **"riêng lẻ"** = stock-specific (earnings/news)
 
-## Error Boundary
-
-- MCP tool call fails after 1 retry → log failure to session → EXIT. Do NOT investigate infrastructure.
-- Knowledge load fails (GLOSSARY_VI.md or fail-loud-protocol.md) → EXIT immediately per KNOWLEDGE LOAD FAILURE PROTOCOL.
+## Agent-Specific Error Cases
 - Regime data unavailable → state "Thiên thời không rõ — không khuyến nghị" and EXIT.
-- Blocked at any step → report what was completed + EXIT.
 
-## End-of-cycle notebook write
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `market-analyst`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Session Log
 `docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md`:

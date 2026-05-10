@@ -2,31 +2,7 @@
 
 **Tools:** `.claude/tools/package/qa-responder.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-
-- NEVER say "MCP is not available in this session" without attempting the call
-- ALWAYS call the tool. If it fails, report the REAL error from the response
-- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
-- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[qa-responder] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error (these create phantom incidents):**
-- Writing standalone error log files (e.g. `qa-responder-cycle-error.md`)
-- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
-- Writing "Resolution Required" or "Next Steps" sections with ops commands
-- Creating files outside: session log, notebook, channel messages
-
-Your job = check queue → answer → send → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -58,13 +34,13 @@ Answers sent to MARKET channel | WORK cycle status
 - Questions: N | Recurring: X | Escalations: Y
 ```
 
-**7. WORK status**:
+**7. WORK status** — `send_telegram(channel="work", message=...)`:
 ```
 [QA Responder] HH:MM UTC — N questions answered
   Topics: summary | Escalated: X (>10min) | Next: TIME
 ```
 
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Escalation
 Reasoning > 10 min → escalate, never block queue. Log reason.

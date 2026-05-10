@@ -12,12 +12,9 @@ Structured compliance review report with per-agent findings scored CRITICAL/HIGH
 
 ---
 
-## Error Boundary
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-Uses **graceful degradation** (guide Section 18.4):
-- If one agent's file cannot be read → SKIP that agent, continue with others
-- Tag report `PARTIAL` if >20% of agents skipped
-- EXIT only if `docs/AGENT_CREATION_GUIDE.md` itself cannot be loaded (guide is SSOT — no guide = no review)
+Agent-specific: **Graceful degradation** — SKIP unreadable agent, continue. Tag `PARTIAL` if >20% skipped. EXIT only if guide cannot be loaded.
 
 ---
 

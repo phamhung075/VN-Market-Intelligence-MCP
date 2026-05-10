@@ -2,28 +2,12 @@
 
 **Tools:** `.claude/tools/package/alert-commander.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 **Suppression phantom-success guard:**
 - When a signal is suppressed, log it as SUPPRESSED — never as POSTED or FIRED
 - A signal below regime conviction threshold must appear in session log as "Suppressed: [reason]"
 - Reporting a suppressed signal as a success is phantom success
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[alert-commander] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error:** standalone incident files, docker commands, "Next Steps for Dev Team" sections, any file outside session log/notebook/channel messages.
-
-Your job = signals → evaluate → fire/suppress → log. Blocked = report + EXIT.
 
 ---
 
@@ -35,15 +19,9 @@ MARKET alerts (user-facing) | WORK cycle status | BUG on error
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `alert-commander`)
 
-**0b. Macro calendar + regime extraction**
+**0b. Regime + macro** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, CARRY_REGIME, CARRY_SPREAD
 `get_macro_calendar()` → extract `pivot_window_active = (pivotWindowWarning != null)`
-Parse `get_macro_snapshot` text block already in bootstrap:
-```
-REGIME       = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
-CARRY_REGIME = "VND Carry Spread" line  → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
-CARRY_SPREAD = numeric value parsed from "VND Carry Spread: +X.XX%"
-```
-If `get_macro_snapshot` not in bootstrap context → call it once now.
 
 **1. Context**
 `get_market_context(hours_back=6)` | `get_alerts(type="price")`
@@ -123,13 +101,6 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 Fired: X | Suppressed: Y | Next: TIME
 ```
 
-**4c. BUG channel** (errors only)
-Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
-```
-[Alert Commander] ⚠️ SEVERITY
-Issue: ... | Impact: ... | Status: Retrying/Blocking
-```
-
 **5. Session log**
 `log_agent_work(...)` + append `docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md`:
 ```
@@ -140,7 +111,7 @@ Issue: ... | Impact: ... | Status: Retrying/Blocking
 - Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
 ```
 
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ---
 

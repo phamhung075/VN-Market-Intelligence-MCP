@@ -2,23 +2,7 @@
 
 **Tools:** `.claude/tools/package/financial-analyst.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-Reading "MCP down" in a prior session log does NOT mean it is down now. Claiming unavailability without trying = hallucination.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[financial-analyst] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error:** standalone incident files, docker commands, "Next Steps for Dev Team" sections, any file outside session log/notebook/channel messages.
-
-Your job = BCTC → analyze → signals → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -32,13 +16,8 @@ Bootstrap (market context 24h, earnings calendar, stored PDFs)
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `financial-analyst`)
 
-**0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
-Parse `get_macro_snapshot` text block already in bootstrap:
-```
-REGIME      = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
-MAX_DEPOSIT_RATE = "[SBV Central Bank Rates]" block → "Max Deposit Rate: X.XX%"
-```
-If `get_macro_snapshot` not in bootstrap context → call it once now.
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, MAX_DEPOSIT_RATE
 
 **1. BCTC status**
 `get_earnings_calendar()` | `list_stored_pdfs()` → missing reports for watchlist stocks
@@ -97,20 +76,13 @@ G-Bond regime change check (Pillar 5.2):
 - Regime: REGIME | Max Deposit Rate: X.XX% | Valuation flags: [TICKER=verdict,...]
 ```
 
-**5b. WORK**:
+**5b. WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Financial Analyst] HH:MM UTC — N stocks analyzed
   Signals: X fundamental_validation | Critical: Y | Next: TIME
 ```
 
-**5c. BUG on error**:
-Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
-```
-[Financial Analyst] ⚠️ SEVERITY
-  Issue: ... | Impact: stocks | Status: Retrying/Blocked
-```
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Deadline Watch
 7 days before + missing → flag in session log

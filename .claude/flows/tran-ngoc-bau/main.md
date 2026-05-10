@@ -2,16 +2,7 @@
 
 **Tools:** `.claude/tools/package/tran-ngoc-bau.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[tran-ngoc-bau] Step N failed: {one-line error}")`
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate infrastructure or write incident docs.
-
-Your job = audit quality → review sessions → auto-cure → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -26,6 +17,12 @@ Quality report to WORK | Flow corrections (auto-cure) | BUG escalations | Sessio
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `tran-ngoc-bau`)
+
+**Step 0b2 — Check previous handoff ACK**
+
+If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at the bottom:
+- **ACK present** → PO read previous cycle. Log `"Previous handoff ACK'd by PO"`. Proceed.
+- **ACK missing** → PO never processed previous findings. Log `"⚠ Previous handoff NOT ACK'd by PO — findings may be lost"`. Flag in session log. Include this in Step 9 findings as a persisting blocker.
 
 **Step 0c — Bootstrap**
 - Load `.claude/knowledge/alert-policy.md` (fail-loud)
@@ -103,7 +100,7 @@ If notebook shows same error repeated 3+ cycles:
 4. Log: `"[AutoCure] {agent}/flow.md — added regime caveat check at Step N"`
 5. Send to WORK: `"[Tran Ngoc Bau] Fixed: {agent} flow — {description}"`
 
-**Step 7 — Quality report to WORK**
+**Step 7 — Quality report to WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Tran Ngoc Bau] Quality Audit HH:MM UTC
 MARKET messages: N checked | M issues
@@ -132,37 +129,61 @@ Append `docs/agent-memory/sessions/YYYY-MM-DD-tran-ngoc-bau.md`:
 - Overall: GOOD|NEEDS_ATTENTION|CRITICAL
 ```
 
-## End-of-cycle notebook write
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `tran-ngoc-bau`)
+## End of cycle
+→ skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+## Step 9 — PO handoff (ALWAYS)
 
-## Step 9 — PO handoff if findings require dev work
+**Never skip this step.** PO decides what's actionable — TNB does not filter.
 
-Skip this step ONLY if audit found zero issues (Overall: GOOD, no auto-cures needed, no mismatches).
+1. Write `docs/handoffs/tnb-audit-latest.md` (overwrite each cycle):
+   ```markdown
+   # TNB Audit — Cycle {N} — {date}
 
-If audit found code/system issues that need fixing (methodology gaps, flow bugs, signal logic errors, data mismatches, threshold violations, missing checks):
+   ## Overall: GOOD|NEEDS_ATTENTION|CRITICAL
+   Direction: IMPROVING|STABLE|DEGRADING (vs previous cycle)
 
-1. Compile a findings summary with:
-   - Each issue: what's wrong, which agent/file/module, severity, evidence
-   - Suggested fix category: `fix` | `refactor` | `feat`
-   - Affected area: agent name, flow path, or source code path
+   ## Findings
+   | # | Issue | Agent/Module | Severity | Category | Evidence |
+   |---|-------|-------------|----------|----------|----------|
+   | 1 | ... | ... | high/med/low | fix/refactor/feat | ... |
 
-2. **Spawn PO agent** with prompt:
+   ## Auto-cures applied
+   - {list what was auto-fixed this cycle, or "None"}
+
+   ## Persisting blockers
+   - {carried-over issues from previous cycles}
+
+   ## Positive signals
+   - {improvements, recoveries, upgrades worth noting}
    ```
-   run .claude/flows/po/main.md
 
-   ## TNB Audit Findings (cycle N)
-   {paste findings table here}
+2. If zero issues found (Overall: GOOD, no auto-cures, no persisting blockers), still write the file with empty Findings table and filled Positive signals section.
 
-   Create sprint tasks for these issues. Prioritize by severity.
+3. **Signal dev-team** — drop a signal file in `docs/signals/`:
    ```
+   Filename: docs/signals/tnb-{ISO timestamp}.json
+   ```
+   ```json
+   {
+     "from": "tran-ngoc-bau",
+     "to": "po",
+     "type": "audit-handoff",
+     "payload": "docs/handoffs/tnb-audit-latest.md",
+     "priority": "high|normal",
+     "createdAt": "{ISO timestamp}"
+   }
+   ```
+   - `priority: "high"` if Overall is NEEDS_ATTENTION or CRITICAL
+   - `priority: "normal"` if Overall is GOOD
+   - **Do NOT write pipeline-state.json** — that file is dev-team internal only
 
 ## RETURN
 
 ```
 DONE: Quality audit — N MARKET msgs, M agent sessions, K auto-cures | Overall: GOOD|NEEDS_ATTENTION|CRITICAL
-NEXT: po (spawned with findings) | user (if GOOD — no issues)
-PIPELINE: complete
+NEXT: po
+HANDOFF: docs/handoffs/tnb-audit-latest.md
+PIPELINE: continue
 QUALITY: full | partial
 ```

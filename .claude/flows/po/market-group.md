@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
 Telegram MARKET channel unreviewed messages + server live data

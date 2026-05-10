@@ -2,33 +2,7 @@
 
 **Tools:** `.claude/tools/package/market-watcher.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-> Thresholds → `watch_thresholds` in YAML.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-
-- NEVER say "MCP is not available in this session" without attempting the call
-- ALWAYS call the tool. If it fails, report the REAL error from the response
-- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
-- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="bug", message="[market-watcher] Step N failed: {one-line error}")`
-   **⚠️ NEVER use channel="market" for errors. MARKET channel is reserved for alert-commander alerts ONLY. Errors → BUG always.**
-2. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error (these create phantom incidents):**
-- Writing standalone blocker/incident/recovery files (e.g. `*-BLOCKED.md`, `*-eod-blocker-report.md`)
-- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
-- Writing "Next Steps for Dev Team" sections — send one-line BUG telegram and EXIT
-- Creating files outside: session log, notebook, channel messages
-
-Your job = prices → anomalies → signals → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -42,15 +16,8 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 
-**0b. Regime extraction + adaptive thresholds** (from bootstrap, zero extra tool calls)
-Parse `get_macro_snapshot` text block already in bootstrap:
-```
-REGIME       = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
-CARRY_REGIME = "VND Carry Spread" line  → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
-US10Y_SIGNAL = "US 10Y Yield" line      → RISK-OFF | RISK-ON | NEUTRAL
-DXY_SIGNAL   = "DXY" line              → USD STRENGTHENING | USD WEAKENING | USD STABLE
-```
-If `get_macro_snapshot` not in bootstrap context → call it once now.
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
 
 Set adaptive thresholds (no tool call):
 ```
@@ -117,17 +84,10 @@ Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStd
 - Regime: REGIME | DXY: DXY_SIGNAL | US10Y: US10Y_SIGNAL | fx_pressure: [tickers] | pe_risk: [tickers]
 ```
 
-**5b. WORK**:
+**5b. WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Market Watcher] HH:MM UTC — N stocks monitored
   Anomalies: X | Volume spikes: Y (>Xx avg) | Chain confirms: Z | Next: TIME
 ```
 
-**5c. BUG on error**:
-Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
-```
-[Market Watcher] ⚠️ SEVERITY
-  Issue: ... | Impact: ... | Status: Retrying/Blocked
-```
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

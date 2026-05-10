@@ -10,13 +10,7 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 
 ---
 
-## Error Boundary
-
-If any file read, write, build, or test command fails after 1 retry:
-1. Append to session log: `"[qa] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = run pipeline → write report → approve or request changes → log. Blocked = log + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -99,10 +93,7 @@ HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```
 
-## End-of-cycle notebook write
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `qa`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

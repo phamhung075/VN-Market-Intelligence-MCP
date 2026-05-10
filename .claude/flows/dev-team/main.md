@@ -8,30 +8,54 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
-## Error Boundary
-
-If any spawned agent returns `PIPELINE: blocked` or a file read/write fails:
-1. Log to session: `"[dev-team] Step N blocked: {one-line error}"`
-2. `send_telegram(work, "[dev-team] Step N blocked: {one-line error}")`
-3. EXIT immediately. Do NOT attempt to continue the current tier.
-
-Your job = orchestrate the dev loop. Blocked = report + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
-## Step 0: Pipeline Resume — Check `docs/pipeline-state.json`
+## Step 0: Drain Signals + Pipeline Resume
+
+### Step 0a — Drain `docs/signals/` (before anything else)
+
+Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascending):
+
+1. Read the JSON file
+2. Log to session: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
+3. Append to an in-memory `pendingSignals[]` array
+4. **Move** the signal file to `docs/signals/processed/` with added fields:
+   ```
+   mv docs/signals/{filename} → docs/signals/processed/{filename}
+   ```
+   Before moving, append treatment metadata to the JSON:
+   ```json
+   {
+     ...original fields,
+     "processedAt": "{ISO timestamp}",
+     "processedBy": "dev-team",
+     "result": "routed-to-po|skipped-duplicate|skipped-stale"
+   }
+   ```
+   - `routed-to-po`: signal passed to PO triage
+   - `skipped-duplicate`: identical signal already in pendingSignals (same `from` + `type` + `payload`)
+   - `skipped-stale`: `createdAt` older than 24h
+
+5. **Prune** `docs/signals/processed/`: delete any processed files older than 7 days
+
+If `pendingSignals` is non-empty, these signals feed into Step 1 (PO triage). PO receives them as additional input alongside Telegram reports and TASKS.md.
+
+### Step 0b — Pipeline Resume — Check `docs/pipeline-state.json`
 
 - If `status == "in_progress"` AND `nextAgent` present AND `updatedAt < 24h` → spawn `nextAgent` immediately. Skip Step 1.
 - If `status == "in_progress"` AND `updatedAt >= 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.
 - If `"idle"` or missing → fall through to Step 1.
 
-**Session Gate:** PO cannot self-initiate if TASKS.md empty AND no Telegram reports. `send_telegram(work, "Dev loop idle.")` → EXIT.
+**Session Gate:** PO cannot self-initiate if TASKS.md empty AND no Telegram reports AND `pendingSignals` is empty. `send_telegram(work, "Dev loop idle.")` → EXIT.
 
 ---
 
 ## Step 1: PO Triage
 
 Launch `po`. Triage inputs:
+- `pendingSignals[]` from Step 0a (if any — pass as context in spawn prompt)
 - `read_telegram_reports(status="new")`
 - Unresolved reports: `listUnresolvedReports()` → `WHERE resolution NOT IN ('fixed','wontfix','duplicate') AND status='processed'`
 - docs/TASKS.md

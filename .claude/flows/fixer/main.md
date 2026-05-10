@@ -12,13 +12,7 @@
 
 ---
 
-## Error Boundary
-
-If any file read, write, build, or test command fails after 1 retry:
-1. Append to session log: `"[fixer] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = read QA issues → apply minimum fix → verify → log. Blocked = log + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -57,10 +51,7 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 
 **Append session log**: `append_session_record(agent_name="fixer", task_name="Task NNN", fix=..., status="Ready for QA")`
 
-**End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `fixer`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 Update docs/TASKS.md → return:
 ```

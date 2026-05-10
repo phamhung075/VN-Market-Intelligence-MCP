@@ -10,13 +10,7 @@ BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/ses
 
 ---
 
-## Error Boundary
-
-If any file read, write, or tool call fails after 1 retry:
-1. Append to session log: `"[architect] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = index codebase → design → write handoff → log. Blocked = log + EXIT.
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -64,10 +58,7 @@ Rule: existing interface covers need → extend, never duplicate.
 - **Scan clean:** true ✓
 ```
 
-**End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `architect`)
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **5.** Update docs/TASKS.md status → return:
 ```

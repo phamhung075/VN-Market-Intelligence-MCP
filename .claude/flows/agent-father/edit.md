@@ -13,13 +13,9 @@ Updated agent file(s) + diff summary showing all changes made with guide referen
 
 ---
 
-## Error Boundary
+> Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-If ANY file read/write fails after 1 retry:
-1. Log to session: `"[agent-father/edit] Step N failed: {error}"`
-2. **Rollback:** If edits were partially applied, revert to pre-edit state using git checkout
-3. RETURN with `PIPELINE: blocked`
-4. Never leave an agent in inconsistent state (definition says X but flow says Y)
+Agent-specific: **Rollback** partial edits (git checkout). Never leave agent in inconsistent state.
 
 ---
 

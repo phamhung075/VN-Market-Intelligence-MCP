@@ -2,33 +2,7 @@
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
-
-## Anti-Hallucination Guard
-
-**You have MCP gateway access (search your tools for `call_tool`). DO NOT claim it is unavailable. CALL IT FIRST.**
-
-- NEVER say "MCP is not available in this session" without attempting the call
-- ALWAYS call the tool. If it fails, report the REAL error from the response
-- Reading "MCP down" in a prior session log does NOT mean it is down now — session logs record past state
-- Claiming MCP is unavailable without trying = hallucination → produces fake incident reports
-
-## Error Boundary
-
-If ANY tool call fails after 1 retry:
-1. `send_telegram(channel="work", message="[unified-agent] Step N failed: {one-line error}")`
-2. `submit_feedback(severity="warning", title="[unified-agent] MCP step N failed", agent="unified-agent")` — ensures BUG channel gets notified
-3. Append to session log: `"Cycle HH:MM — BLOCKED at step N: {error}"`
-3. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-**FORBIDDEN on error (these create phantom incidents):**
-- Writing standalone blocker/incident files
-- Adding docker-compose commands, curl commands, or infrastructure recovery steps to any file
-- Writing "Recommendations" or "Next Steps" sections with ops commands
-- Diagnosing WHY the MCP is unavailable — report error text and EXIT
-- Creating files outside: session log, notebook, channel messages
-
-Your job = coordinate → review → report → log. Blocked = report + EXIT.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ---
 
@@ -42,14 +16,8 @@ Conviction shifts posted | issues filed | WORK heartbeat | `docs/analysis-briefs
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `unified-agent`)
 
-**0b. Regime extraction** (from bootstrap, zero extra tool calls)
-Parse `get_macro_snapshot` text block already in bootstrap:
-```
-REGIME      = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
-US10Y_SIGNAL = "US 10Y Yield" line     → RISK-OFF | RISK-ON | NEUTRAL
-DXY_SIGNAL  = "DXY" line              → USD STRENGTHENING | USD WEAKENING | USD STABLE
-```
-If `get_macro_snapshot` not in bootstrap context → call it once now.
+**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+Variables: REGIME, US10Y_SIGNAL, DXY_SIGNAL
 Load previous session log to check REGIME at last session end.
 
 **1. System health**
@@ -92,7 +60,7 @@ From `get_foreign_flow()` data + CARRY_REGIME + hot_money_risk signals from news
 Check if REGIME changed since last session log → if changed:
 - Log `REGIME_TRANSITION` event to WORK: `"[Unified] REGIME_TRANSITION: {old} → {new} (HH:MM UTC)"`
 
-**6. WORK**
+**6. WORK** — `send_telegram(channel="work", message=...)`:
 Issues → `submit_feedback(agent="unified-agent", ...)`
 Clean:
 ```
@@ -155,6 +123,4 @@ Entry/exit → `post_agent_signal(type="conviction_change", ...)`:
 - Regime: REGIME | Alignment: ALIGNMENT_SCORE | Headwind exposure: HEADWIND_weight%
 ```
 
-**Notebook write** → `docs/agent-memory/notebooks/unified-agent.md`
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

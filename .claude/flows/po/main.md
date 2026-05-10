@@ -2,7 +2,7 @@
 
 **Tools:** `.claude/tools/package/po.md`
 
-> **MCP call pattern:** Every tool in this flow → `call_tool(server="vn-market", tool="<name>", arguments={...})` via the MCP gateway `call_tool`.
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
 docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
@@ -12,19 +12,36 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 
 ---
 
-## Error Boundary
-
-If any file read, write, or tool call fails after 1 retry:
-1. Append to session log: `"[po] BLOCKED at step N: {one-line error}"`
-2. **EXIT immediately.** Do NOT investigate, write incident docs, or diagnose infrastructure.
-
-Your job = audit channels → plan sprint → approve specs → log. Blocked = log + EXIT.
-
 ---
 
 **Pre-check — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
+
+## Step 0-TNB — Read TNB audit findings (MANDATORY)
+
+Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
+
+1. Read the file completely
+2. Note Overall status, direction, findings table, persisting blockers, and positive signals
+3. Each finding with severity `high` → must become a sprint task (Step 1)
+4. Each finding with severity `med` → evaluate during sprint planning, include if capacity allows
+5. Persisting blockers → check against existing TASKS.md to avoid duplicates
+6. Positive signals → acknowledge in session log (track what's working)
+7. **ACK the handoff** — append to the file:
+   ```markdown
+
+   ---
+   ## PO ACK
+   - Read by: po
+   - At: {ISO timestamp}
+   - Tasks created: {list of task IDs, or "none — all GOOD"}
+   - Skipped findings: {list of finding #s skipped with reason, or "none"}
+   ```
+
+If the file does not exist: log `"[po] No TNB handoff file found — skipping Step 0-TNB"` in session log and proceed normally.
+
+**This step feeds directly into Step 0 Channel Audit and Step 1 Sprint Planning.**
 
 ## Step 0 — Channel Audit (MANDATORY, runs before everything)
 
