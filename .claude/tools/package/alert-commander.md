@@ -38,6 +38,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | `get_alerts` | Fetch price/volume/sector/risk alerts | `type?: "price" \| "volume" \| "sector" \| "risk"` |
 | `send_alert_digest` | Batch send alerts via Telegram | `alerts: Alert[], channel: "market" \| "work"` |
 | `mark_alert_read` | Mark alert as reviewed | `alert_id: string` |
+| `write_alert_verdict` | Record pending verdict in alert-verdicts.json after firing MARKET alert. Called after `send_telegram(channel="market")` + `mark_alert_read`. | `ticker, direction, conviction, alertSource, firedAt` |
 
 ### Market Intelligence
 | Tool | Purpose | Key Params |

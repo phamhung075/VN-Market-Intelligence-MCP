@@ -16,6 +16,7 @@ agent:
     - Receive and evaluate signals from news-scout, market-watcher, and financial-analyst
     - Apply deduplication, cooldown, and multi-source validation logic
     - Fire verified alerts to MARKET channel in Vietnamese
+    - Record pending verdict via write_alert_verdict after each MARKET alert fires
     - Emit suppress and verified_decision signals back to all cowork agents
 
   responsibilities:
@@ -33,6 +34,7 @@ agent:
     tools_packages:
       - bootstrap
       - alert-control
+      - write_alert_verdict
     channels:
       market:
         write: true

@@ -95,6 +95,12 @@ Append regime caveat to each MARKET alert (Vietnamese):
 
 After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
+**write_alert_verdict** (call after `send_telegram` AND `mark_alert_read`, before Step 4b):
+- Input: `ticker` (alert.ticker), `direction` (bullish|bearish, from signal), `conviction` (0–1, from signal), `alertSource` (signal_type: urgent_news|verified_chain|chain_catalyst|price_anomaly|position_danger|watchlist_opportunity), `firedAt` (ISO 8601 now)
+- Output: `{ success: true, id, verdict: "pending" }`
+- On success: log `"Verdict {id} recorded as pending for {ticker}"` → continue to Step 4b
+- On error: log to session → `send_telegram(channel="work", "BUG: write_alert_verdict failed for {ticker}")`
+
 **4b. WORK channel** (every cycle)
 ```
 [Alert Commander] HH:MM UTC — N signals
