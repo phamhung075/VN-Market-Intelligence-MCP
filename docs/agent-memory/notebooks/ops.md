@@ -75,10 +75,23 @@
 - Conclusion: Issue RESOLVED, no further action needed
 - Next: Await dev-team cron cycle to validate end-to-end workflow
 
-
 ---
 
 ## Lesson: 2026-05-06 False Positive Docker Outage
 
 Multiple agents reported "Docker/MCP offline 18h+" — this was FALSE. All 9 services were UP with 14h uptime. Root cause: agents read prior session logs claiming "MCP down" and assumed it was still true without attempting the actual tool call. Always verify by calling the tool, never trust session log claims about infrastructure status.
+
+---
+
+## Recent session — 2026-05-10 (Task 1862k)
+
+**Task:** Verify vnstock rate limiter deployment (Sprint 1862a) — FINDINGS ONLY, no fix
+
+**Finding:** Container UNDEPLOYED. Source has RPM 80 + SYNC_DELAY_MS 2500ms (commit 29ac583f, merged 2026-05-09 19:55:52). Running container still on RPM 50 + 1500ms (built 2026-05-09 07:46:23 — 12h before merge).
+
+**RATE_LIMITED ticker count:** 71 unique tickers (not 13 as sprint summary stated). HPG, HSG repeatedly failing across finance/balance/cash_flow/stats endpoints.
+
+**Recommendation:** Container rebuild required — `docker-compose down && docker-compose build --no-cache && docker-compose up -d`. Monitor 2 full intelligence cycles post-rebuild.
+
+**Status:** Findings reported to WORK channel. Container rebuild gates: 1862a (RPM 80) + 1862f (Reuters/TE backoff) + 1862j (sigma dedup) + 1865a (UTC guard) — all 4 fixes merged but undeployed.
 
