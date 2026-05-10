@@ -5,6 +5,7 @@ Create tran-ngoc-bau cron with CronCreate:
 - **prompt**:
   ```
   run .claude/flows/tran-ngoc-bau/main.md
+  MCP: https://zenmidi.com/mcp
   ```
 
 ## Manage

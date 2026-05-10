@@ -5,6 +5,7 @@ Create agent-father cron with CronCreate:
 - **prompt**:
   ```
   Launch subagent (subagent_type=agent-father). Read and execute .claude/flows/agent-father/main.md
+  MCP: https://zenmidi.com/mcp
   ```
 
 ## Manage

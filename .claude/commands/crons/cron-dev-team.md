@@ -5,6 +5,7 @@ Create dev-team cron with CronCreate:
 - **prompt**:
   ```
   Read and execute .claude/flows/dev-team/main.md
+  MCP: https://zenmidi.com/mcp
   ```
 
 ## Manage

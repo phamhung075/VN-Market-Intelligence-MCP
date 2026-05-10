@@ -5,6 +5,7 @@ Create claude-manager-helper cron with CronCreate:
 - **prompt**:
   ```
   Launch subagent (subagent_type=claude-manager-helper). Read and execute .claude/flows/claude-manager-helper/main.md
+  MCP: https://zenmidi.com/mcp
   ```
 
 ## Manage
