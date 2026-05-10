@@ -83,3 +83,21 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 650 |
+
+### Cycle (23:39–23:40 UTC)
+- Stocks: 26 (stale, market CLOSED) | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime defaults to NEUTRAL
+- Macro alerts: CRITICAL×2 — Brent 104.34 (+5.36σ extreme high) | Gold 4703.7 VND (-5.38σ extreme low)
+- New signal: news-scout chain_catalyst — FII $1B+ eyeing VN, market upgrade play (score 8, regime_adj=8) → watch securities (VCI, SSI, HCM) on Monday open
+
+## Metrics (cycle 2026-05-10 23:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 1 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 480 |
