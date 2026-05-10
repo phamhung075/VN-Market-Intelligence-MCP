@@ -35,3 +35,19 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - Requires: `get_watchlist()`, `get_price_history()`, `get_technical_indicators()`, `get_insider_signals()`
 - Outputs: Ledger entries, Telegram MARKET channel summary
 - post_agent_signal schema issue: price_anomaly payload missing required field `root` (linked to TASK-1365)
+
+---
+
+## Recent session — 2026-05-10
+
+**Cycles:** 22:38 UTC and 23:38 UTC (off-hours, VN market CLOSED — Sunday)
+
+**Both cycles:** 26 tickers monitored | 0 anomalies | 0 volume spikes | 0 chain confirms
+
+**Regime:** NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | DXY: USD_STABLE | US10Y: NEUTRAL
+
+**Context:** All prices STALE (>24h from 2026-05-08 08:59). Open alerts: 1 MEDIUM (HCM news_mention from 2026-05-09). 1 pending signal (GEG utilities from news-scout).
+
+**Macro:** Brent $101.29 | Gold $4,730.70 (risk-off) | USD/VND 26,305 (HIGH pressure). Aviation/Logistics negative bias (-1.45%/-1.34%). Steel stable.
+
+**Note (TNB c31 finding):** Session entries contain timestamps 22:38/23:38 UTC but file mtime was 17:40 UTC — future-dated entries. Task 1865a UTC guard fix merged but container undeployed. Watch for correct timestamps after container rebuild.
