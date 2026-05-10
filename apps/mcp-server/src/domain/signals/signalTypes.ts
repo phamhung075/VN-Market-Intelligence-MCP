@@ -301,9 +301,9 @@ export type PriceAnomalyFindingDataInferred = z.infer<typeof PriceAnomalyFinding
  * Finding data for signal_feedback signals.
  *
  * Permissive schema for feedback loop communications between agents.
- * Accepts any payload structure via passthrough.
+ * Accepts any payload structure (z.record is open-ended).
  */
-export const SignalFeedbackFindingDataSchema = z.record(z.unknown()).passthrough();
+export const SignalFeedbackFindingDataSchema = z.record(z.unknown());
 
 // ── Index exports ──────────────────────────────────────────────────────────────
 
