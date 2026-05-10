@@ -1,19 +1,16 @@
-# Notebook — unified-agent
-**Last updated:** 2026-05-11 (18:05 UTC) | **Sprint:** current
+# Unified Agent Notebook
+Last updated: 2026-05-10 | Sprint: current
 
-## Session Summary
-Market cycle (Mon 01:00 UTC+7 trigger). System healthy — all 16 CBs clear. REGIME NEUTRAL unchanged. Market closed (pre-open). 4 open alerts (1 HIGH GAS oil/geopolitical, 3 LOW foreign net-sell cluster). Portfolio: FPT only at -10.5% unrealised; conviction MODERATE → GIẢM BỚT recommendation. No conviction shifts ≥0.3. WORK telegram sent.
+## This Session
+Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly — found calibration-report (ID 471, 13:00 UTC) as weekly content proxy. No digest-predict agent message found specifically, but weekly prediction data IS present. Observed 4 new BUG reports, logged without claiming.
 
 ## Patterns
-- TradingEconomics source persistently down (79 consecutive failures) — regime extraction relying on cached/previous data only; no DXY or US10Y signals available until source restored
-- vnstock RATE_LIMITED on GVR/VRE recurring each cycle; self-recovering but adds noise to system errors log
-- get_sentiment_trend requires stock_code param — not callable as portfolio-wide scan; flow doc implies no-arg call → doc mismatch
-- get_insider_signals requires code + outstandingShares — not a portfolio sweep tool; flow step 4 implies portfolio-level call → doc mismatch
-- Unreviewed market messages response 78k chars — exceeds token limit at limit=50; needs smaller limit or pagination
-- 94% of alerts unscored (news_mention/volume_spike/macro_deviation) — accuracy metric unreliable at current scoring coverage
+- get_system_status EOF appearing as recurring failure (2 consecutive, flagged in BUG 2843) — may need ops investigation
+- price_drop alert precision chronic: 50% vs 60% threshold, 2nd consecutive cycle (BUG 2844)
+- BCTC OCR corruption pattern persisting: FPT and VNM Q4 both zero/near-zero confidence (BUG 2841, 2842)
+- FII carry spread remains negative (-33bp VND) → sustained outflow risk for banking sector
 
 ## Carry-over
-- FPT conviction watch at Mon market open (02:00 UTC); -10.5% position, GIẢM BỚT signal
-- Foreign net-sell 4,300B VND/week — watch acceleration Mon
-- VN-Index 1925 resistance key level for Mon 11/5 session
-- Doc self-heal: market.md — note get_sentiment_trend/get_insider_signals require params (not portfolio-wide)
+- Clarify: is `calibration-report` agent the same as `digest-predict`? Flow expects `digest-predict` but only `calibration-report` sends Sunday 13:00 weekly message
+- BID: news impact (deposits -82,000B, FII selling) — monitor Monday open vs 42,000 VND support
+- BUG 2843 (get_system_status EOF) and BUG 2844 (price_drop precision) unresolved — ops should claim

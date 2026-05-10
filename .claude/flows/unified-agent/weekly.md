@@ -1,4 +1,4 @@
-# Unified Agent — Weekly Verification Flow (Sunday 13:00 UTC)
+# Unified Agent — Weekly Verification Flow (Sunday 23:30 UTC)
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
@@ -9,7 +9,7 @@
 **Ownership:** Weekly analysis owned by `digest-predict/weekly.md` (Sun 16:00 UTC). This flow verifies delivery only.
 
 ## Input
-MARKET channel messages from digest-predict
+MARKET channel messages from digest-predict (or calibration-report — same weekly data, different sender name)
 
 ## Output
 Verification log | escalation if digest missing
