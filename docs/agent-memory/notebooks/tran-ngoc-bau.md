@@ -1,6 +1,37 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-10 (cycle 31 — 18:30 UTC) | Cycles completed: 31
+**Last updated:** 2026-05-10 (cycle 31 → cycle 32 — 22:30 UTC) | Cycles completed: 32
+
+---
+
+## Cycle 32 Watch Notes (2026-05-10 22:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (vs c31)
+
+**Container DEPLOY honored** — uptime 3h 23m. Restart ~19:05 UTC activated:
+- 1868c B8-gap migration (notebooks now SSOT for cycle state, sessions/ writes purged from 9 flow files)
+- 1862i stats refresh + 24h-future timestamp ROOT CAUSE fix (`2b4b9c3c`) — likely upstream cause of H1-future hallucinations
+- 1865a UTC guard ACTIVE — alert-commander 00:00 cycle properly stamped
+- 1863h-RECONCILE pruner migration shipped + qa APPROVED
+- 1867 verdictResolutionJob cron wired
+
+**H1-future status:** vestigial only. market-watcher notebook header carries 22:38/23:38 UTC entries from migration carry-over (one-time copy from sessions/ file). Metric block correctly reads 21:39 UTC. Will validate clean on next 22:39 cycle write. NOT a fresh recurrence — root cause patched at upstream.
+
+**Reuters/TE STILL Ngưng** post-restart: 1862f exponential backoff insufficient. Counters reset to 16/16/16 fresh, 0 successes since restart. Sources may be permanently unreachable from VPS — needs root-cause investigation beyond backoff (VPS IP block? RSS endpoint dead?).
+
+**vnstock 6th rotation** (EIB+VRE+DLC): RPM 50 still active OR rate ceiling tighter than 80. 1862j deployment status unclear.
+
+**σ data 2/30 unchanged** — pre-Mon market open blocker (<4h to 02:00 UTC).
+
+**Two cowork agents STALE 30+ hours:** system-auditor (no audit since 1862h/i shipped), financial-analyst (last cycle 2026-05-09 01:00 UTC). May indicate scheduler gap.
+
+**PO ACK pattern:** PO did NOT append explicit `## PO ACK` to c31 handoff per protocol, BUT created 3 tasks (1862j/k + reaffirmed 1862f) — implicit ACK. Suggesting protocol enforcement going forward.
+
+**DB queue draining:** -8 pending feedback (32 → 24). Critical warnings static at 18.
+
+**agents-architect** dropped Phase B-C4 signal (`2026-05-10T2202`) for B11+B8+B9 batch — agent-father executed. Major architectural collapse delivered: sessions → notebooks single SSOT.
+
+---
 
 ---
 
