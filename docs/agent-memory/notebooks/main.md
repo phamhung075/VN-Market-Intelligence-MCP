@@ -1,40 +1,39 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 17:24 UTC (Cycle 30 close — SPRINT-S-1877a SHIPPED)
+**Written:** 2026-05-11 17:42 UTC (Cycle 31 close — SPRINT-S-1877b SHIPPED)
 
-## Cycle 30 SPRINT-S-1877a (2026-05-11 17:07 → 17:24 UTC)
+## Cycle 31 SPRINT-S-1877b (2026-05-11 17:26 → 17:42 UTC)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0a Drain | 1 new signal: agents-architect phase-b audit-design (brief 2026-05-17-commit-convention-audit.md) | routed-to-po |
+| 0a Drain | 0 new signals at docs/signals/ root | pendingSignals empty |
 | 0b Resume | pipeline-state `idle` | fall through to Step 1 |
-| 1 PO | Brief fully prescriptive (264 lines); 1 file, 1 domain, no deps | **BATCH(SPRINT-S 1877a)** — architect step pre-done, skip to PM |
-| 2 PM | 6 ACs decomposed from brief §3 + §4; TASK_1877a handoff written; pipeline → in_progress | task ready for developer |
-| 3 Exec | developer ships `scripts/audits/commit-convention-audit.sh` (~250 LOC bash 3.2 compat); self-tested 7/7 ACs pass | commit 9ef44bd7 + notebook 377c504a |
-| 3 QA | Deep audit: re-ran script, verified schema match against brief §3/§4, spot-checked 3 violations (all genuine), bash 3.2 compat OK, JSON parseable | **APPROVED** — merge SHA 20005b95 |
-| 4 Scan | 3 audit-script test-artifact signals at root (2 FAIL + 1 PASS — premature window, not real greenlight) | drained to processed/ as `skipped-test-artifact` (would falsely trigger C1+C2 if routed) |
-| 4 CLEAN | `task/1877a-*` 0 unmerged commits → auto-deleted local (remote never landed) | branch gone |
-| 4 CLEAN | `task/1872a-5-*` still 4 unmerged commits → report-only (carried from cycle 29) | flagged again to WORK |
+| 1 PO | Triaged 4 Todo (ops-blocked) + cycle-30 flagged followups (1877b/1877c) + stale branch | **BATCH(SPRINT-S 1877b)** — close real flow gap before 2026-05-17 gate |
+| 2 Arch | Picked (a)+(b): `--emit-signal` flag + Phase B window guard | brief `2026-05-17-commit-convention-audit-guard.md` |
+| 2 PM | Brief fully prescriptive; decomposed 6 ACs from §4 directly | TASK_1877b handoff written, pipeline → in_progress, commit 5ea4ef88 |
+| 3 Exec | developer ships +29 LOC on `scripts/audits/commit-convention-audit.sh` | commit da432775; self-test 6/6 PASS |
+| 3 QA | Re-ran 6 ACs from scratch (incl AC-3b mocked out-of-window); validated bash 3.2 portability deviation | **APPROVED** — merge SHA 27e4e0d6 |
+| 4 Scan | No new signals, no new tg reports, no monitoring expired | nothing remaining |
+| 4 CLEAN | `task/1872a-5-*` still 4 unmerged commits with stale content | report-only (carried from cycles 29+30+31) |
 
 ## Sprint summary
 
-- **6/6 ACs shipped** — bash script implements full brief §3 algorithm + §4 signal schemas
-- **2 commits to main** — feat (9ef44bd7) + merge (20005b95) + 2 notebooks (377c504a, b7256e86)
-- **Cycle time:** ~17 min (signal drain → QA approved)
+- **6/6 ACs shipped** — flag + window guard prevents stray signal emission from test runs
+- **Commits to main:** pm (5ea4ef88) → feat (da432775) → merge (27e4e0d6) → QA (a438c67c)
+- **LOC delta:** +29 (within ≤30 budget); diff measured +26 net by QA
+- **Cycle time:** ~16 min (signal-empty drain → QA approved)
 
-## Operational notes (cycle 30)
+## Operational notes (cycle 31)
 
-1. **Architect short-circuit worked** — brief was concrete enough that pm decomposed directly into 6 ACs without re-running architect. Saved one agent spawn cycle. Pattern useful for future agents-architect briefs where the spec is fully prescriptive.
+1. **Architect short-circuit pattern held again** — brief was fully prescriptive (§3 spec + §4 6 ACs + §6 migration + §7 rollback). pm decomposed directly to handoff without re-running architect. Now 2 cycles in a row (30 + 31) — pattern is stable for SPRINT-S where brief is concrete.
 
-2. **Test-artifact signals = real flow gap** — the audit script drops signals whenever it runs, including from dev/qa test invocations. Today's run produced a PASS signal on 2026-05-11 (Day 0) which, if routed to agent-father, would falsely trigger C1+C2 collapse BEFORE the 2026-05-17 gate window closes. **Brief follow-up needed:** add a window guard in `scripts/audits/commit-convention-audit.sh` — only drop signals when SINCE_DATE matches the canonical Phase B window (2026-05-10..2026-05-17). Or: write signals to `docs/signals/processed/` directly with `result: dry-run` unless an explicit `--commit` flag is passed. Flagging for cycle 31+ as `1877b`.
+2. **bash 3.2 portability deviation declared by developer + verified by QA** — brief §3 used `[ "${TODAY_UTC}" \>= "2026-05-10" ]` pattern which is not POSIX-valid (bash 3.2 errors "binary operator expected"). Developer substituted two-clause `[ = ] || [ \> ]` pattern. QA confirmed lexicographic = chronological for YYYY-MM-DD strings. Documented as a deviation in commit + QA report. **Brief follow-up:** future architect briefs writing bash 3.2 specs should pre-validate any `\>=`/`\<=` patterns or note the two-clause workaround inline.
 
-3. **macOS bash 3.2 compat** — developer hit `local -n` (bash 4.0+) and locale-dependent awk formatting. Both fixed with portability tweaks. Documented as deviations in QA report. Convention: scripts in `scripts/` must run on bash 3.2 (default macOS shell). Future audit scripts should preface with `LC_ALL=C; LANG=C`.
+3. **Test artifact cleanup pattern improved** — QA proactively MOVED its AC-2 signal to /tmp then deleted, AND deleted its AC-3b temp script. Zero artifacts left at docs/signals/ root. With the guard now in place, future test runs structurally cannot leak signals — but until 1877b lands everywhere, manual cleanup remains the safe default.
 
-4. **Initial audit run reveals real convention compliance gaps** — verdict FAIL on real 7-day window (290 commits): C2=56.9% (target 85%), C3=78.1% (target 80%), C4=47.3% (target 95%). C1 PASS at 95.2%. C4 is the biggest gap — many novel area tokens (`ssot`, `cycle-28`, `memory/dev-team` etc.) are not in the vocab list. Either expand vocab OR tighten agent flows to use canonical tokens.
+4. **C4 vocab gap still open** — 1877c not seeded. Per PO triage, needs architect decision: expand vocab (low risk, broader cleanup later) vs tighten agent flows (smaller fix scope, behavior change). Defer to next cycle.
 
-5. **PM handoff file at wrong path** — pm wrote `TASK_1877a.md` at repo root instead of `docs/handoffs/TASK_1877a.md`. Deleted; report at `reports/TASK_REPORT_1877a.md` captures the same info. PM flow may need a path-convention reminder.
-
-6. **Orphaned brief decision** — `docs/architecture-briefs/ssot-team-tools-2026-05-11.md` (from cycle 29) committed as historical record alongside cycle 30 close (the refactor it describes already landed in main via `f5649bce`).
+5. **Stale branch unchanged** — `task/1872a-5-api-gateway-wording` still carries 4 commits with content older than main's superseding merges (chore(state) ×2 + docs(tree-map) + docs(mcp-server)). Flow rule: unmerged>0 → report-only. Cycles 29/30/31 all flagged. Manual `git push origin --delete task/1872a-5-*` or `git branch -D` needs user authorization.
 
 ## Todo state (4 rows unchanged; all ops/rebuild-blocked)
 
@@ -43,10 +42,16 @@
 - 1862c-F (FIX SseSessionManager — blocked by container-rebuild)
 - 1876a-A5 (OPS re-deploy 1869b-seed migration)
 
-## Next cycle (31) intent
+## Done state (deep stack from cycles 29-31)
 
-- Re-drain (no signals expected)
-- Consider seeding `1877b`: harden audit script with window guard + `--dry-run` flag (per cycle 30 finding #2)
-- Consider seeding `1877c`: expand C4 scope vocab list OR document additional canonical tokens (per cycle 30 finding #4)
-- Stale `task/1872a-5-*` branch: still report-only (4 unmerged commits, content stale). Manual review or user authorization needed.
-- If ops worker free: pick up 1862c-D + 1862c-E pair (cloudflared reload)
+- 1877b (SPRINT-S, 6 ACs) — audit script signal guard
+- 1877a (SPRINT-S, 6 ACs) — audit script v1 (the one we just hardened)
+- 1872a-1..7 + TNB-c36-6 — earlier work
+
+## Next cycle (32) intent
+
+- Re-drain (no signals expected — guard now in place)
+- **1877c is still defer-worthy** — needs architect decision (vocab-expand vs flow-tighten). Day-7 gate is 2026-05-17 (6 days away). C4=47.3% is the gap. If we want C4 to pass at gate, the work needs to be done in the next ~5 cycles.
+- Day-7 gate audit (2026-05-17): pm will invoke `bash scripts/audits/commit-convention-audit.sh 2026-05-10T00:00:00Z --emit-signal` to officially drop the signal. Both guards (flag + window) will pass.
+- Stale `task/1872a-5-*` branch: report-only.
+- If ops worker free: pick up 1862c-D + 1862c-E pair (cloudflared reload).
