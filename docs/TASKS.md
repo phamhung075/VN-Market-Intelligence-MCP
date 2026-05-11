@@ -32,7 +32,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1872a-3 | SPRINT-S: docs/ARCHITECTURE.md — AC3 MCP Server stat line → project-stats.json#toolCount + #cronJobCount pointers; AC6 restart inline cmd → restart-policy.md pointer. Single atomic edit, 2 lines. Branch task/1872a-3-architecture-md-ssot-pointers, commit 1b4f23a6. | MEDIUM | SPRINT-S | developer | — |
 | 1872a-2 | SPRINT-S: README.md — AC2 mcp-server "112 tools" → project-stats.json#toolCount pointer; AC5 arch SSOT pointer after ASCII diagram + per-service pointer after microservices table; AC6 docker restart block + dev step → restart-policy.md pointer. Branch task/1872a-2-readme-ssot-pointers, commit 03a404ce. | MEDIUM | SPRINT-S | developer | — |
 
 ---
@@ -41,6 +40,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1872a-3 | SPRINT-S: docs/ARCHITECTURE.md — AC3 MCP Server stat line → project-stats.json#toolCount + #cronJobCount pointers; AC6 inline docker restart cmd → restart-policy.md pointer. Merge SHA fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Merge commit on main. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-4 | SPRINT-S: mcp-server.md — replace hardcoded '62' scheduler count (AC4). Line 17 pointer to docs/data/project-stats.json#schedulerFileCount. Merge SHA a81a1fb4. QA APPROVED 2026-05-11. | LOW | SPRINT-S | dev-mcp-server | 2026-05-11 |
 | 1872a-5 | SPRINT-S: api-gateway/domain-model.md — replace hardcoded "all 8 services" with "all configured downstream services" (AC7). Line 65. Branch task/1872a-5-api-gateway-wording, commit eeba24a4. Merge SHA 172dfb0e. QA APPROVED 2026-05-11. | LOW | SPRINT-S | developer | 2026-05-11 |
