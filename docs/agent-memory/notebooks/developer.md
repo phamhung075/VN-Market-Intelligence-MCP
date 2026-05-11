@@ -1,14 +1,14 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1872a
+**Last updated:** 2026-05-11 | **Sprint:** 1871b
 
 ## Last session summary
 
-Task 1872a: Add notebook-commit invariant block to 5 cowork flows (alert-commander, unified-agent, financial-analyst, tran-ngoc-bau, system-auditor).
-- Root cause: 5 flows had git commit step but no `> Invariant:` + timestamp guard before notebook write. Pattern from 1865b (dev-team/po) was not propagated.
-- market-watcher, news-scout, qa-responder already compliant — no changes needed.
-- Flow-doc only. No TypeScript changes. tsc clean. Baseline 9163/15 unaffected.
-- Branch: task/1872a-notebook-commit-step | Commit: ca1bcba3
+Task 1871b: Expand ARCHITECTURE.md infrastructure/ tree from 4 subdirs to all 11.
+- Added: adapters, agents, cache, fileStore, microservices, observability, vps.
+- fileStore/ entry calls out alertVerdictStore.ts (Sprint 1863 primary pending-verdict store); cross-linked to 1871g alert-policy.md two-stage flow update.
+- Doc-only. tsc clean (pre-push hook passed). 16 insertions, 5 deletions.
+- Branch: worktree-agent-a9c4d75195f2e9f7c | Commit: a3c02d76
 
 ## Previous session — 1869c
 
@@ -35,6 +35,7 @@ Task 1869c: Extended 1865a UTC timestamp guard to qa-responder + news-scout flow
 
 ## Carry-over for next session
 
+- 1871b DONE: pushed. AC all green. Awaiting QA/merge.
 - 1871a DONE: task/1871a-arch-counts pushed. AC all green. Awaiting QA/merge.
 - Note: cronConfig.ts has 59 keys (brief said 56 — brief was already 3 stale). Used 59 as actual.
 - Note: docs/data/ is gitignored — always `git add -f` when editing project-stats.json.
