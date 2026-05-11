@@ -10,3 +10,9 @@ export {
   type MarketEarningYieldResult,
   type MarketEarningYieldRefused,
 } from "./marketEarningYield.js";
+// Task 1880a: Investment Clock phase classifier
+export {
+  classifyInvestmentClockPhase,
+  type InvestmentClockPhase,
+  type InvestmentClockResult,
+} from "./investmentClock.js";
