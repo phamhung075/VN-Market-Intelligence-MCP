@@ -103,3 +103,31 @@
 **Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
 
 **Quality:** Full
+
+---
+
+## Session 15 (2026-05-11 16:45–16:52 VN) — DDD vnstock extraction + repository adapter cleanup
+
+**Scope:** git diff HEAD~3..HEAD (8 files: Task 1871f vnstockTypes.ts + IVnstockRepository.ts + SqliteVnstockRepository.ts, vnstockStore.ts, vnstockBridge.ts)
+
+**Result:** 1 DRY violation found and shipped (JANITOR-026)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | No ticker classification maps. Clean. |
+| Ticker arrays | 0 findings | No hardcoded ticker arrays. Clean. |
+| Magic numbers / crons | 1 finding | SqliteVnstockRepository: 9 methods all had identical require("../vnstockStore.js") + try-catch + fallback pattern (45+ LOC duplication). Extracted to _callStore<T>(fnName, args, defaultValue) helper. |
+| Schema duplication | 0 findings | vnstockStore.ts contains only migrations + staleness checks. All DDL canonical in schema.ts. Clean. |
+| Config drift | 0 findings | No ?? fallback mismatches. Clean. |
+
+**Fix shipped:** JANITOR-026
+- File: apps/mcp-server/src/infrastructure/db/repositories/SqliteVnstockRepository.ts
+- Pattern: Dynamic require + try-catch repeated 9x (getLatestFinancials, getLatestTradingStats, getOfficers, getShareholders, getEvents, getLatestBalanceSheet, getLatestCashFlow, upsertFinancials, upsertTradingStats)
+- Canonical source: New private _callStore<T>() helper
+- Reduction: 52 LOC → 19 LOC (single-file mechanical)
+- Tests: 1838b-repository-adapters.test.ts: 21/21 pass. TSC clean.
+- Commit: 75f73af3
+
+**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
+
+**Quality:** Full

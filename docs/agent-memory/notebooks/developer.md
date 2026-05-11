@@ -1,8 +1,19 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877b
+**Last updated:** 2026-05-11 | **Sprint:** 1877c
 
 ## Last session summary
+
+Task 1877c: C4 scope-vocab remediation — VOCAB 20→52 tokens + sprint-ID exemption.
+- Changed VOCAB line 34: 20 → 52 alphabetically-ordered tokens (verbatim from brief §4.1).
+- Added sprint-ID exemption block inside C4 section: `first4=$(cut -c1-4)` + POSIX `case [0-9][0-9][0-9][0-9]` pattern → `return` early on match.
+- Updated .claude/knowledge/commit-convention.md: 52-token table + sprint-ID exemption note.
+- AC-1 PASS (bash -n syntax clean). AC-2 PASS (C4=0.9825 ≥ 0.95, 168/171). AC-3 PASS (sprint-IDs not flagged). AC-4 PASS (`*`,`c26`,`cycle-28` still in violations). AC-5 PASS (idempotent, same 0.9825 on 2nd run). AC-6 PASS (no forbidden patterns).
+- Net LOC: +20 (22 added, 2 removed), within ≤30 budget.
+- Branch: task/1877c-c4-vocab-remediation | Commit: 142b59ab.
+- Pipeline: status=in_progress, nextAgent=qa.
+
+## Previous last session summary
 
 Task 1877b: signal emission guard for scripts/audits/commit-convention-audit.sh.
 - Added PHASE_B_SINCE_CANONICAL + PHASE_B_UNTIL_DATE_CANONICAL constants (2 LOC).
