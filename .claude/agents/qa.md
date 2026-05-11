@@ -92,9 +92,10 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         trigger: error_handling_check
         fail_loud: false
-      - path: docs/ARCHITECTURE.md
+      - path: docs/architecture/global.md
         trigger: infrastructure_change
         fail_loud: false
+        note: "Architecture SSOT — enforces gate: reject merge if implementation contradicts docs/architecture/global.md or service microservice/<service>.md."
 
 ## Step 0-b: Handle Bootstrap Errors
 

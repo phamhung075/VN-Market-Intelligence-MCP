@@ -95,6 +95,10 @@ agent:
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
         fail_loud: false
+      - path: docs/architecture/global.md
+        trigger: service_scoped_task
+        fail_loud: false
+        note: "Architecture SSOT — read-only at Step 0c. Load microservice/<service>.md for service-scoped tasks."
 
 ## Step 0-b: Handle Bootstrap Errors
 

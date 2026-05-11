@@ -83,12 +83,10 @@ agent:
       - path: .claude/knowledge/alert-policy.md
         trigger: alert_architecture
         fail_loud: false
-      - path: docs/ARCHITECTURE.md
+      - path: docs/architecture/global.md
         trigger: design
         fail_loud: false
-      - path: docs/MICROSERVICES_DDD.md
-        trigger: design
-        fail_loud: false
+        note: "Architecture SSOT (read + write authority). Load docs/architecture/microservice/<service>.md for service-scoped design."
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
         fail_loud: false

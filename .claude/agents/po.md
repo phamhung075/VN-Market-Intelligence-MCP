@@ -73,9 +73,10 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/ARCHITECTURE.md
+      - path: docs/architecture/global.md
         trigger: feature_planning
         fail_loud: false
+        note: "Architecture SSOT — read-only for feature planning. Load docs/architecture/microservice/<service>.md for service-scoped sprint goals."
       - path: docs/AI_TEAM_DESIGN.md
         trigger: team_design
         fail_loud: false

@@ -77,6 +77,10 @@ agent:
       - path: .claude/knowledge/mcp-tools.md
         trigger: mcp_tool_check
         fail_loud: false
+      - path: docs/architecture/global.md
+        trigger: task_decomposition
+        fail_loud: false
+        note: "Architecture SSOT — name the relevant docs/architecture/microservice/<service>.md in each TASK_NNN.md handoff file."
 
   boundary_rules:
     scope: "YOUR flow steps ONLY. Break tasks → assign → track WIP → escalate blockers → exit."
