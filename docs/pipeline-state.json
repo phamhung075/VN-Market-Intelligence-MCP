@@ -2,10 +2,10 @@
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "review",
   "currentSprint": "1872a",
-  "activeTaskId": "1872a-2",
+  "activeTaskId": "1872a-7",
   "nextAgent": "qa",
-  "nextPrompt": "QA 1872a-2 (README SSOT pointers)",
-  "updatedAt": "2026-05-11T20:00:00Z",
+  "nextPrompt": "QA 1872a-7 (heading fix + AC8 closure)",
+  "updatedAt": "2026-05-11T16:30:00Z",
   "updatedBy": "developer",
-  "lastCompleted": "1872a-2: README.md — AC2 mcp-server toolCount pointer; AC5 arch+per-service pointers; AC6 docker restart block + dev step → restart-policy.md. Branch task/1872a-2-readme-ssot-pointers, commit 03a404ce."
+  "lastCompleted": "1872a-7: README.md:173 heading fix — '## 112 MCP Tools (Phase 3 Complete)' → '## MCP Tools (Phase 3 Complete)' + SSOT pointer line. AC8 grep CLEAN. Commit 95e21b96, branch task/1872a-7-readme-heading-count."
 }

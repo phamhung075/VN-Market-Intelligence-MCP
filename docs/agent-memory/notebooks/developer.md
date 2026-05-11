@@ -4,6 +4,23 @@
 
 ## Last session summary
 
+Task 1872a-7: README.md:173 heading count fix (AC8 closure).
+- Edit: `## 112 MCP Tools (Phase 3 Complete)` → `## MCP Tools (Phase 3 Complete)` + SSOT pointer line added below.
+- AC8 grep: CLEAN (zero hits for 112|128|132 + MCP Tool pattern across README + ARCHITECTURE + mcp-server.md).
+- Branch: task/1872a-7-readme-heading-count | Commit: 95e21b96 | tsc pre-push PASS.
+- Pipeline: status=review, nextAgent=qa, nextPrompt="QA 1872a-7 (heading fix + AC8 closure)".
+
+## Previous last session summary
+
+Task 1872a-6: AC8 grep verification (read-only).
+- Tool count grep (112|128|132 + MCP Tool): README.md:173 FAIL — `## 112 MCP Tools (Phase 3 Complete)` is hardcoded section heading, not addressed by 1872a-2 (which fixed line 92 in microservices table). docs/ARCHITECTURE.md PASS. docs/architecture/microservice/mcp-server.md PASS.
+- Cron/scheduler count grep (41|59|62 + cron/scheduler): all 3 files PASS.
+- Broad sweep (architect brief Section 4 one-liner): zero matches PASS.
+- Report: reports/TASK_REPORT_1872a-6.md. TASKS.md row added → Done. Pipeline: idle.
+- Follow-up needed: README.md:173 heading still hardcodes "112 MCP Tools" — new subtask required.
+
+## Previous last session summary
+
 Task 1872a-2: README.md — AC2 + AC5 + AC6 SSOT pointers (single atomic edit).
 - AC2 (line 92): mcp-server "112 tools" → `docs/data/project-stats.json` → `toolCount` pointer.
 - AC5-a: arch pointer after ASCII diagram block (before "### Three Telegram Channels"): links to docs/ARCHITECTURE.md + docs/architecture/global.md.
