@@ -19,12 +19,14 @@
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. Edit `~/.cloudflared/config.yml` keepAliveTimeout value. No Docker rebuild. Ship together with 1862c-D in single cloudflared reload. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection — detect stale/disconnected SSE sessions. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error response + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
 | 1876a-A5 | OPS-HIGH: Re-deploy 1869b-seed migration on prod DB. Diagnostic (1876a-A4) revealed Sprint 1869b-seed NEVER executed — VRE/HPG stuck at -3.0 default, NVL/DPM/MWG missing from watchlist entirely. (1) Locate migration file in `apps/mcp-server/migrations/` (or create if absent per `seedWatchlist.ts::migrateWatchlistThresholds`). (2) Ensure registered in `migrateDb.ts`. (3) Run on prod via `docker exec` SQL or container rebuild. (4) Re-verify via 1876a-A4 query — all 30+ rows show expected -7.0/-9.0 per high-vol classification. **Root impact:** entire Sprint 1869 (precision threshold tuning) was non-functional because thresholds never reached prod DB. | HIGH | OPS | ops | TASK_1876a_A5.md | — |
+
 ---
 
 ## In Progress
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1877b | SPRINT-S: `scripts/audits/commit-convention-audit.sh` signal emission guard — add `--emit-signal` flag + Phase B window check (2026-05-10..2026-05-17). Default behavior safe (no signal). With flag + valid window → emit. With flag + invalid window/SINCE_DATE → warning, no signal. AC1-AC6: safe-default, flag+window=emit, flag-without-window=warn, report-always, exit-code-unaffected, bash-3.2-compat. 6 LOC net addition. Single file. Brief: docs/architecture-briefs/2026-05-17-commit-convention-audit-guard.md. | MEDIUM | SPRINT-S | developer | TASK_1877b.md | 2026-05-11 |
 
 ---
 

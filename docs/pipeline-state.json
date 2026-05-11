@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "1877a",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-11T17:24:00Z",
-  "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 30 close — SPRINT-S-1877a SHIPPED (6/6 ACs). scripts/audits/commit-convention-audit.sh created (merge 20005b95). 3 test-artifact signals drained to processed/ as skipped-test-artifact (PASS signal on Day-0 was premature — would falsely trigger C1+C2). Local 1877a branch auto-cleaned. Stale 1872a-5-api-gateway-wording branch still report-only. Brief follow-ups for cycle 31: 1877b (script window guard + --dry-run flag), 1877c (C4 vocab expansion — initial real-window audit shows C4=47.3% vs target 95%)."
+  "status": "in_progress",
+  "currentSprint": "1877b",
+  "activeTaskId": "1877b",
+  "nextAgent": "developer",
+  "nextPrompt": "Implement SPRINT-S-1877b per docs/handoffs/TASK_1877b.md and brief docs/architecture-briefs/2026-05-17-commit-convention-audit-guard.md. Create branch task/1877b-audit-script-emit-signal-guard from main.",
+  "updatedAt": "2026-05-11T17:32:00Z",
+  "updatedBy": "pm",
+  "lastCompleted": "Cycle 31 init — SPRINT-S-1877b decomposed and moved to In Progress. Handoff docs/handoffs/TASK_1877b.md created (6 ACs: safe-default, flag+window=emit, flag-without-window=warn, report-always, exit-code-unaffected, bash-3.2-compat). Single file: scripts/audits/commit-convention-audit.sh (~6 LOC net addition). Test plan: 6 scenarios covering default, flag, SINCE_DATE, window boundaries. Depends on 1877a merge SHA 20005b95."
 }
