@@ -1,10 +1,25 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** M-1877e
+**Last updated:** 2026-05-12 | **Sprint:** 1878a
 
 ## Current state
 
-SPRINT-M-1877e spec complete. Spec at docs/specs/2026-05-17-c2-task-trailer-gap.md. Ready for Architect.
+SPRINT-1878a spec complete. Spec at docs/specs/1878a-ocf-column-migration.md. Ready for dev-mcp-server (no architect blocker — DDD placement question flagged as low-priority open question, not a hard blocker).
+
+## Last session summary (2026-05-12)
+
+Sprint 1878a — OCF column migration spec.
+
+Key findings:
+- `vnstock_cash_flow` table EXISTS, `operating_cf_bn REAL` (billions VND). `storeCashFlow()` already populates it.
+- `financial_reports` already has `operating_cf` (from BCTC OCR). New column `operating_cash_flow` is a distinct signal (vnstock API).
+- Critical: unit conversion `operating_cf_bn * 1000` required — tỷ VND -> triệu VND to match all other financial_reports scalars.
+- Bridge mapper pattern: `bridgeOCFToFinancialReports(db, ticker)` in vnstockStore.ts, called at end of `storeCashFlow()`.
+- Annual rows (period_quarter IS NULL) SKIP — vnstock provides quarterly only.
+- `backfillAllOCF(db)` needed for historical rows already in financial_reports before bridge was wired.
+- NULLABLE column (no DEFAULT 0) — 0 would corrupt accruals formula.
+- 7 TDD tests specified (idempotency, unit conversion, annual skip, no-match, trigger, backfill, quarter=0 edge case).
+- No PO blockers. One low-priority architect question: DDD placement of bridge (infra vs app layer).
 
 ## Last session summary (2026-05-11)
 

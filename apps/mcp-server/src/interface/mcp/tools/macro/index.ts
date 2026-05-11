@@ -15,4 +15,5 @@ export { registerCarryTools } from "./carryTools.js";
 // Task 1426b: yield spread signal tool (Báu Phase 2 — Dinh Gia)
 export { registerDinhGiaTools } from "./dinhGiaTools.js";
 // Task 1880a: Investment Clock phase tool
-export { registerInvestmentClockTools } from "./investmentClockTools.js";
+// Task 1880b: Pyramid tier tool
+export { registerInvestmentClockTools, registerPyramidTierTool } from "./investmentClockTools.js";

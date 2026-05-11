@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "1877e",
+  "currentSprint": "1880+signal-dedup-sqlite",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T20:17:14Z",
+  "updatedAt": "2026-05-11T22:46:49Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 35 idle — PO verdict NOTHING. C2 re-measure 0.6308→0.6364 (+0.56pp slope, sharp deceleration vs cycle 34 +4.41pp). Gap to 0.85 = 0.2136 / 5d 16h to 2026-05-17 gate. Decision: idle one cycle to confirm slope. If <1pp/cycle holds → SPRINT-M-1878b (C2 remediation) cycle 36. Stale task/1872a-5-api-gateway-wording 6th cycle, 4 unmerged commits — needs user authorization. Phase B: C1=0.9501 PASS / C2=0.6364 FAIL / C3=0.9254 PASS / C4=0.9628 PASS."
+  "lastCompleted": "Cycle 36: tier 1 shipped. 1880a (get_investment_clock_phase, merge 930dd2a3, 8/8 tests) + signal-T1 (create-signals-db migration, merge f971c22b, 7/7 tests). 5 signals drained (4 PO→BA spec-requests + 1 architect→agent-father). T4 docs done by agent-father (agent-chaining-protocol.md + tree-map.md). Tier 2 queued: 1880b (depends on 1880a — DONE), signal-T2 (depends on signal-T1 — DONE). Next cron firing :07 picks up tier 2. New telegram report 2854 (unified-agent, news freshness stale 22:03 UTC, MEDIUM) — for PO triage next cycle. PM wrote future timestamp 2026-05-12T00:15:33Z — UTC invariant violation, fixed inline (real UTC 22:33:31Z). Stale task/1872a-5 still pending user authorization (7th cycle now). C2 re-measure deferred to next cycle (gate 2026-05-17 at 0.85)."
 }

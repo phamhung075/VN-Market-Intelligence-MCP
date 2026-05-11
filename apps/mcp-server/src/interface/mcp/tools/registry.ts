@@ -88,7 +88,7 @@ import { registerSbvDebugTriggerTool } from "./system/sbvDebugTriggerTool.js";
 import { registerForeignFlowDebugTriggerTool } from "./system/foreignFlowDebugTriggerTool.js";
 import { registerCarryTools } from "./macro/carryTools.js";
 import { registerDinhGiaTools } from "./macro/dinhGiaTools.js";
-import { registerInvestmentClockTools } from "./macro/investmentClockTools.js";
+import { registerInvestmentClockTools, registerPyramidTierTool } from "./macro/investmentClockTools.js";
 import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js";
 import { registerSmartCompactTool } from "./system/smartCompactTool.js";
 import { registerBctcBatchSweepTool } from "./financial-reports/bctcBatchSweepTool.js";
@@ -191,4 +191,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBacktestLifecycleTools,       // Task 1846b: delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) (+3 → 125)
   registerAlertVerdictTools,            // Task 1863d: write_alert_verdict (#126)
   registerInvestmentClockTools,         // Task 1880a: get_investment_clock_phase (#127)
+  registerPyramidTierTool,              // Task 1880b: get_pyramid_tier (#128)
 ];
