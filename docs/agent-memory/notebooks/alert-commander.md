@@ -150,3 +150,10 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: NEUTRAL ([SKIP]) | Pivot window: unknown ([SKIP])
 - Notes: Market CLOSED (post-09:00 UTC close). All 4 price_anomaly signals from market-watcher (status: read). Not confirmed via get_alerts (returned empty). All σ < 4.0 — price-validation override threshold not met. No legal/crisis signals. No chain_catalyst on bus. New signals reflect close-of-day session data: FPT -2.64% (SGI Capital downside analysis published), NKG -2.47% (AU anti-dumping contagion from HSG/NKG chain, signal #2870), HVN -2.92% (aviation leading decline), EIB +2.71% (banking outperformer). All outcomes recorded suppressed. log_agent_work id=631.
+
+### Alert Cycle (10:00–10:04 UTC, 2026-05-11)
+- Signals: urgent_news ×2 (VIC id=2877 conf 0.50, HVN id=2878 conf 0.50) | price_anomaly ×3 (HVN id=2880 σ=2.57, EIB id=2881 σ=2.10, FPT id=2882 σ=2.06)
+- Fired: 0 | Suppressed: 5 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Pivot window: unknown ([SKIP] — get_macro_calendar not in tool package)
+- Notes: Market CLOSED (off-hours). VIC urgent_news id=2877 (Phạm Nhật Vượng đề xuất dự án điện 158,000 tỷ tại Điện Biên, impact_score=7) conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b: no price_anomaly for VIC in agent bus → no override → Suppressed. HVN urgent_news id=2878 (Vietnam Airlines thông báo tới 27,000+ cổ đông, impact_score=7) conviction 0.50 < 0.60 threshold. Step 3b: HVN price_anomaly id=2880 found in bootstrap (σ=2.57) < 4.0σ → no override → Suppressed. HVN price_anomaly id=2880 (σ=2.57) — not confirmed via get_alerts (empty) → Suppressed. EIB price_anomaly id=2881 (σ=2.10, +2.71% vs sector -1.0%, PE 37.7x speculative) — not confirmed → Suppressed. FPT price_anomaly id=2882 (σ=2.06, FII heavy seller) — not confirmed → Suppressed. Legal: clear. Crisis: clear. All 5 outcomes recorded suppressed. log_agent_work id=633.
