@@ -14,7 +14,7 @@
 | application | `src/application/usecases/` | Use cases: assembleBriefing, fetchParseAndStoreBctc, pollNews, runImpactChain, scanMarket, exportPortfolioSnapshot, etc. |
 | infrastructure | `src/infrastructure/` | SQLite (schema.ts + 8 slices), LanceDB, fetchers (VPS-proxied + direct), Telegram notifier, microservice HTTP clients, fileStore, circuit breakers, RAG embeddings |
 | interface | `src/interface/mcp/` | MCP server factory, SSE transport, tool registry (all tools registered here via registry.ts) |
-| scheduler | `src/scheduler/` | 62 scheduler files, cron registration via jobs.ts |
+| scheduler | `src/scheduler/` | scheduler files: see `docs/data/project-stats.json` → `schedulerFileCount`; cron registration via jobs.ts |
 
 **Key invariant:** `domain/` never imports from `infrastructure/`. Repository interfaces live in `domain/repositories/`; SQLite implementations in `infrastructure/db/repositories/`.
 
