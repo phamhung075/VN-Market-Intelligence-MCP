@@ -32,6 +32,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1872a-3 | SPRINT-S: docs/ARCHITECTURE.md — AC3 MCP Server stat line → project-stats.json#toolCount + #cronJobCount pointers; AC6 restart inline cmd → restart-policy.md pointer. Single atomic edit, 2 lines. Branch task/1872a-3-architecture-md-ssot-pointers, commit 1b4f23a6. | MEDIUM | SPRINT-S | developer | — |
+| 1872a-2 | SPRINT-S: README.md — AC2 mcp-server "112 tools" → project-stats.json#toolCount pointer; AC5 arch SSOT pointer after ASCII diagram + per-service pointer after microservices table; AC6 docker restart block + dev step → restart-policy.md pointer. Branch task/1872a-2-readme-ssot-pointers, commit 03a404ce. | MEDIUM | SPRINT-S | developer | — |
 
 ---
 

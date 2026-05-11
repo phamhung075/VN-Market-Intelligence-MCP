@@ -50,7 +50,7 @@ vn-market-intelligence/         ← pnpm workspace root
 - `pdf_extractor.db` — WRITE: pdf-extractor only (isolated, no sharing)
 - `rag_service.db` — WRITE: rag-service only (isolated, no sharing)
 
-**Restart:** `docker-compose down && docker-compose up -d` (all 9 services restart in lockstep)
+**Restart:** see `.claude/knowledge/restart-policy.md` (SSOT — docker-compose only, 9 services)
 
 ## Microservices Communication
 
@@ -75,7 +75,7 @@ VPS (Vinahost Vietnam)                  Local Docker
 
 ## Service Implementation Notes
 
-- **MCP Server**: 132 tools, 59 cron jobs, HTTP clients to 8 other services
+- **MCP Server**: tool count → `docs/data/project-stats.json#toolCount`; scheduler count → `docs/data/project-stats.json#cronJobCount`; HTTP clients to all configured downstream services
 - **API Gateway**: Central routing, health aggregation, load balancing
 - **Stock Price**: 3-tier price fallback (VPS bridge → exchange APIs → fallback)
 - **PDF Extractor**: pdfplumber + Tesseract OCR for BCTC financial statements

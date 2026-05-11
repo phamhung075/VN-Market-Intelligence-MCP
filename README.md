@@ -18,6 +18,8 @@ YOU (investor in France)
      Reads BUG Channel, auto-fixes, pushes to main, posts WORK status
 ```
 
+Full architecture docs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (module boundaries) and [`docs/architecture/global.md`](docs/architecture/global.md) (system SSOT).
+
 ### Three Telegram Channels (Sprint 051 hard cutover)
 
 | Channel | Env Var | Purpose |
@@ -60,21 +62,14 @@ cp .env.example .env
 
 ### Step 3: Start All 9 Microservices via Docker
 
-**The only allowed restart method is docker-compose** (deterministic state, all 9 services restart in lockstep):
-
-```bash
-docker-compose down
-docker-compose up -d
-sleep 5
-curl http://localhost:3000/health | jq .
-```
+**The only allowed restart method is docker-compose.** Full procedure and banned mechanisms: [`.claude/knowledge/restart-policy.md`](.claude/knowledge/restart-policy.md)
 
 **Expected response:**
 ```json
 {
   "status": "ok",
-  "tools": 112,
-  "jobs": 50
+  "tools": "<see docs/data/project-stats.json>",
+  "jobs": "<see docs/data/project-stats.json>"
 }
 ```
 
@@ -83,13 +78,13 @@ Hot reload is **FORBIDDEN**. Do NOT use `bun --hot`, `bun --watch`, `nodemon`, `
 For development:
 1. Edit code in `apps/mcp-server/src/`
 2. Run tests: `cd apps/mcp-server && bun test`
-3. Restart all services: `docker-compose down && docker-compose up -d && sleep 5`
+3. Restart all services: see `.claude/knowledge/restart-policy.md`
 
 ### Microservices Overview
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| **mcp-server** | 3000 | Claude MCP gateway (112 tools) |
+| **mcp-server** | 3000 | Claude MCP gateway (see `docs/data/project-stats.json` → `toolCount`) |
 | **api-gateway** | 4000 | Routing + health aggregation |
 | **stock-price** | 5010→5000 | Price aggregation (3-tier fallback) |
 | **pdf-extractor** | 5001 | BCTC PDF parsing |
@@ -98,6 +93,8 @@ For development:
 | **macro-indicators** | 5004 | SBV FX + commodity prices |
 | **kinh-dich-service** | 5005 | Hexagram readings |
 | **alert-engine** | 5006 | Signal evaluation |
+
+Per-service architecture docs: `docs/architecture/microservice/<service>.md`
 
 All services share SQLite database at `data/market.db`.
 

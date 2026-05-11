@@ -30,6 +30,15 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 
+### Alert Cycle (16:05–16:05 UTC) — 2026-05-11
+- Signals: urgent_news ×1 (VIC), price_anomaly ×2 (VRE, EIB)
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (stale -0.33%) | Pivot window: false
+- Suppressed: VIC urgent_news #2903 conv 0.50 < 0.60 (no price-val override) | VRE price_anomaly #2906 σ=2.13 (not confirmed via price alerts, σ<4.0) | EIB price_anomaly #2907 σ=2.57 (not confirmed via price alerts, σ<4.0)
+- Legal: clean | Crisis: clean | Market: CLOSED | VN-Index: 1,895.50 -1.04%
+- Note: EIB +2.71% counter-trend vs banking sector (-0.76%), 10x–25x volume spike — watch for accumulation narrative
+
 ### Alert Cycle (15:02–15:02 UTC) — 2026-05-11
 - Signals: urgent_news ×2 (VIC, HVN)
 - Fired: 0 | Suppressed: 2 | MARKET: 0

@@ -41,14 +41,6 @@ BUG channel hygiene: 3 root causes making BUG channel unusable (old messages nev
 
 ---
 
-## Sprint 1849 — DONE
-
-**Status:** DONE | **Closed:** 2026-05-07
-
-Telegram report resolution tracking: schema (resolution, resolved_at, claimed_by, claimed_at), store functions (markResolved, listUnresolvedReports, listResolvedReports), MCP tool upgrade, flow update (prevent infinite monitoring loops).
-
----
-
 ## Historical
 
 Full history: `docs/TASKS_ARCHIVE.md` (Sprints 1777–1848)

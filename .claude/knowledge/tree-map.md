@@ -74,27 +74,72 @@ CLAUDE.md (root — always loaded)
 ├── docs/ARCHITECTURE.md (module boundaries + mcp.config.json section map — preserved reference)
 │
 ├── docs/architecture/global.md (architecture SSOT: 9-service overview, Docker topology, two-team arch, data flow, conflict resolutions — maintained by Architect)
+│   ├── docs/architecture/1838a-repository-pattern.md (task reference: repository pattern architecture)
+│   ├── docs/architecture/1842a-backtesting-engine.md (task reference: backtesting engine design)
 │   ├── docs/architecture/microservice/mcp-server.md (mcp-server DDD layers, scheduler pointer, tool surface index)
-│   │   ├── docs/architecture/microservice/mcp-server/market-data.md
-│   │   ├── docs/architecture/microservice/mcp-server/financial-reports.md
-│   │   ├── docs/architecture/microservice/mcp-server/news-analysis.md
-│   │   ├── docs/architecture/microservice/mcp-server/alerts.md
-│   │   ├── docs/architecture/microservice/mcp-server/portfolio.md
-│   │   ├── docs/architecture/microservice/mcp-server/briefings.md
-│   │   ├── docs/architecture/microservice/mcp-server/macro.md
-│   │   ├── docs/architecture/microservice/mcp-server/sector.md
-│   │   ├── docs/architecture/microservice/mcp-server/kinhdich.md
-│   │   ├── docs/architecture/microservice/mcp-server/system.md
-│   │   ├── docs/architecture/microservice/mcp-server/analysis.md
-│   │   └── docs/architecture/microservice/mcp-server/backtesting.md
-│   ├── docs/architecture/microservice/api-gateway.md
-│   ├── docs/architecture/microservice/stock-price.md
-│   ├── docs/architecture/microservice/pdf-extractor.md
-│   ├── docs/architecture/microservice/rag-service.md
-│   ├── docs/architecture/microservice/technical-analysis.md
-│   ├── docs/architecture/microservice/macro-indicators.md
-│   ├── docs/architecture/microservice/kinh-dich.md
-│   └── docs/architecture/microservice/alert-engine.md
+│   │   ├── docs/architecture/microservice/mcp-server/domain-model.md
+│   │   ├── docs/architecture/microservice/mcp-server/usecases.md
+│   │   ├── docs/architecture/microservice/mcp-server/infrastructure.md
+│   │   ├── docs/architecture/microservice/mcp-server/testing.md
+│   │   ├── docs/architecture/microservice/mcp-server/alerts.md (tool group: alerting, monitoring, signal dispatch)
+│   │   ├── docs/architecture/microservice/mcp-server/analysis.md (tool group: TA, pattern detection)
+│   │   ├── docs/architecture/microservice/mcp-server/backtesting.md (tool group: strategy backtesting)
+│   │   ├── docs/architecture/microservice/mcp-server/briefings.md (tool group: daily/weekly briefing generation)
+│   │   ├── docs/architecture/microservice/mcp-server/financial-reports.md (tool group: BCTC/financial data)
+│   │   ├── docs/architecture/microservice/mcp-server/kinhdich.md (tool group: Kinh Dich hexagrams)
+│   │   ├── docs/architecture/microservice/mcp-server/macro.md (tool group: macro indicators)
+│   │   ├── docs/architecture/microservice/mcp-server/market-data.md (tool group: realtime HOSE/HNX/UPCOM quotes)
+│   │   ├── docs/architecture/microservice/mcp-server/news-analysis.md (tool group: sentiment, timeline, NVL)
+│   │   ├── docs/architecture/microservice/mcp-server/portfolio.md (tool group: position tracking, P&L)
+│   │   └── docs/architecture/microservice/mcp-server/sector.md (tool group: sector rotations, peer analytics)
+│   ├── docs/architecture/microservice/api-gateway.md (HTTP/gRPC reverse proxy, service routing, auth)
+│   │   ├── docs/architecture/microservice/api-gateway/domain-model.md
+│   │   ├── docs/architecture/microservice/api-gateway/usecases.md
+│   │   ├── docs/architecture/microservice/api-gateway/infrastructure.md
+│   │   ├── docs/architecture/microservice/api-gateway/api-reference.md
+│   │   └── docs/architecture/microservice/api-gateway/testing.md
+│   ├── docs/architecture/microservice/stock-price.md (realtime price aggregator, multi-exchange feed)
+│   │   ├── docs/architecture/microservice/stock-price/domain-model.md
+│   │   ├── docs/architecture/microservice/stock-price/usecases.md
+│   │   ├── docs/architecture/microservice/stock-price/infrastructure.md
+│   │   ├── docs/architecture/microservice/stock-price/api-reference.md
+│   │   └── docs/architecture/microservice/stock-price/testing.md
+│   ├── docs/architecture/microservice/pdf-extractor.md (BCTC/report PDF → structured data via OCR)
+│   │   ├── docs/architecture/microservice/pdf-extractor/domain-model.md
+│   │   ├── docs/architecture/microservice/pdf-extractor/usecases.md
+│   │   ├── docs/architecture/microservice/pdf-extractor/infrastructure.md
+│   │   ├── docs/architecture/microservice/pdf-extractor/api-reference.md
+│   │   └── docs/architecture/microservice/pdf-extractor/testing.md
+│   ├── docs/architecture/microservice/rag-service.md (semantic search, embeddings, VectorDB)
+│   │   ├── docs/architecture/microservice/rag-service/domain-model.md
+│   │   ├── docs/architecture/microservice/rag-service/usecases.md
+│   │   ├── docs/architecture/microservice/rag-service/infrastructure.md
+│   │   ├── docs/architecture/microservice/rag-service/api-reference.md
+│   │   └── docs/architecture/microservice/rag-service/testing.md
+│   ├── docs/architecture/microservice/technical-analysis.md (Python TA-Lib wrapper, indicator compute)
+│   │   ├── docs/architecture/microservice/technical-analysis/domain-model.md
+│   │   ├── docs/architecture/microservice/technical-analysis/usecases.md
+│   │   ├── docs/architecture/microservice/technical-analysis/infrastructure.md
+│   │   ├── docs/architecture/microservice/technical-analysis/api-reference.md
+│   │   └── docs/architecture/microservice/technical-analysis/testing.md
+│   ├── docs/architecture/microservice/macro-indicators.md (macro + sentiment aggregator)
+│   │   ├── docs/architecture/microservice/macro-indicators/domain-model.md
+│   │   ├── docs/architecture/microservice/macro-indicators/usecases.md
+│   │   ├── docs/architecture/microservice/macro-indicators/infrastructure.md
+│   │   ├── docs/architecture/microservice/macro-indicators/api-reference.md
+│   │   └── docs/architecture/microservice/macro-indicators/testing.md
+│   ├── docs/architecture/microservice/kinh-dich.md (hexagram generation, state machine, layer dispatch)
+│   │   ├── docs/architecture/microservice/kinh-dich/domain-model.md
+│   │   ├── docs/architecture/microservice/kinh-dich/usecases.md
+│   │   ├── docs/architecture/microservice/kinh-dich/infrastructure.md
+│   │   ├── docs/architecture/microservice/kinh-dich/api-reference.md
+│   │   └── docs/architecture/microservice/kinh-dich/testing.md
+│   └── docs/architecture/microservice/alert-engine.md (verdict resolver, cooldown, signal filtering)
+│       ├── docs/architecture/microservice/alert-engine/domain-model.md
+│       ├── docs/architecture/microservice/alert-engine/usecases.md
+│       ├── docs/architecture/microservice/alert-engine/infrastructure.md
+│       ├── docs/architecture/microservice/alert-engine/api-reference.md
+│       └── docs/architecture/microservice/alert-engine/testing.md
 │
 ├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │

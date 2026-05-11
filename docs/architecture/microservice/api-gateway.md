@@ -11,7 +11,7 @@
 | Layer | Path | Responsibility |
 |-------|------|----------------|
 | interface | Route handlers | Inbound HTTP endpoints for VPS push traffic |
-| infrastructure | Downstream HTTP clients | Health check aggregation to 8 other services |
+| infrastructure | Downstream HTTP clients | Health check aggregation across the microservice fleet |
 
 This service has no domain logic. It is a pure infrastructure adapter — a thin routing and health layer.
 
