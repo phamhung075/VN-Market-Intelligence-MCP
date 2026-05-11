@@ -187,3 +187,31 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **actions**: post_agent_signal price_anomaly EIB → alert-commander (id=2848)
 - **next_cycle_hint**: Monitor EIB for continuation or reversal. Watch HSG/NKG for further selling pressure (AU anti-dumping catalyst active). GAS if US-Iran escalates further.
 - **estimated_tokens**: 6000
+
+### Cycle (04:38–04:45 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (EIB +3.84% 2.65σ — continuation of 03:38 signal) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (from news-scout chain_catalyst payload) | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- Notable moves: EIB +3.84% (2.65σ, banking sector -0.08%, price-led, no vol confirm); VHM +2.50% (0.65σ, within normal given recent volatility); HVN -2.25% (alerted ×2 already); FPT -1.67% (1.49σ, below threshold)
+- Active chain_catalyst: HSG+NKG AU anti-dumping 56% (signal id=2849, score=9.0, exp 06:23 UTC) — HSG -1.20%, NKG -1.41%, HPG -0.37%
+- Supply chain: Stable (BDI=1,400) | Open chain findings: 0
+- Signal emitted: price_anomaly EIB id=2852 (continuation signal, 04:38 UTC)
+- [SKIP] No tool: get_macro_snapshot — regime from agent_signals payload
+
+## Metrics (cycle 2026-05-11 04:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 8 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
+
+## Cycle — 04:38 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**: EIB +3.84% (2.65σ) continuation of 03:38 anomaly — price-led move, banking sector flat (-0.08%), no vol confirm, no news catalyst. HSG/NKG AU anti-dumping chain still active (signal id=2849, score=9). Supply chain stable, 0 chain confirms.
+- **actions**: post_agent_signal price_anomaly EIB → alert-commander (id=2852); send_telegram WORK
+- **next_cycle_hint**: Monitor EIB for reversal (two consecutive σ>2.0 cycles without news — likely speculative). Watch HSG/NKG ahead of chain expiry 06:23 UTC. GAS if US-Iran headlines re-escalate.
+- **estimated_tokens**: 4200
