@@ -1,14 +1,15 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1871b
+**Last updated:** 2026-05-11 | **Sprint:** 1872a
 
 ## Last session summary
 
-Task 1871b: Expand ARCHITECTURE.md infrastructure/ tree from 4 subdirs to all 11.
-- Added: adapters, agents, cache, fileStore, microservices, observability, vps.
-- fileStore/ entry calls out alertVerdictStore.ts (Sprint 1863 primary pending-verdict store); cross-linked to 1871g alert-policy.md two-stage flow update.
-- Doc-only. tsc clean (pre-push hook passed). 16 insertions, 5 deletions.
-- Branch: worktree-agent-a9c4d75195f2e9f7c | Commit: a3c02d76
+Task 1872a-1: Add docs/architecture/ subtree to .claude/knowledge/tree-map.md (AC1).
+- Replaced standalone docs/ARCHITECTURE.md leaf (line 74) with full nested hierarchy.
+- Added: docs/architecture/global.md node + 8 microservice children + 12 mcp-server tool-group leaves.
+- Added 2 Write Ownership rows (global.md + microservice/<service>.md — Architect owner).
+- Branch: task/1872a-1-tree-map-dag | Commit: ed3faf76 (cherry-pick of 47e745b6)
+- 26 insertions / 1 deletion in tree-map.md. tsc hook passed (pre-push). Doc-only.
 
 ## Previous session — 1869c
 

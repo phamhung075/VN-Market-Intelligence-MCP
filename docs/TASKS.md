@@ -32,6 +32,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Branch task/1872a-1-tree-map-dag, commit ed3faf76. | MEDIUM | SPRINT-S | developer | TASK_1872a-1.md |
 | 1872a-4 | SPRINT-S: mcp-server.md — replace hardcoded '62' scheduler count (AC4). Line 17: "62 scheduler files" → SSOT pointer to docs/data/project-stats.json#schedulerFileCount. Branch task/1872a-4-mcp-server-scheduler-pointer, commit 52694e6e. | LOW | SPRINT-S | dev-mcp-server | TASK_1872a-4.md |
 
 ---
