@@ -315,9 +315,18 @@ function buildToolNameMap(): Map<string, ToolRegistryFn> {
     }
 
     for (const toolName of registeredNames) {
-      // First registration wins (no overwrites)
+      // First registration wins (no overwrites).
+      // Warn on collision: two registryFns claiming the same tool name would
+      // mean the second fn's registration would be ignored by this map, AND
+      // the real McpServer would throw "Tool X is already registered" at startup.
       if (!map.has(toolName)) {
         map.set(toolName, registryFn);
+      } else if (map.get(toolName) !== registryFn) {
+        console.warn(
+          `[agentBootstrap] buildToolNameMap: duplicate tool name "${toolName}" ` +
+            "detected across two different registryFns. First registration wins here; " +
+            "real McpServer will throw at startup. Fix: ensure each tool name is unique."
+        );
       }
     }
   }
@@ -389,7 +398,12 @@ export function getToolsForSkills(skills: string[]): ToolRegistryFn[] {
 /**
  * Resolve tool names → registration functions.
  * Deduplicates: if two tool names map to same registryFn (1 fn registers N tools),
- * the fn appears only once. Skips names not found in toolNameMap silently.
+ * the fn appears only once.
+ *
+ * Warn (not throw) when a name from the SKILL_MANIFEST has no entry in toolNameMap.
+ * This means the skill references a tool that was never registered in the toolRegistry —
+ * a configuration drift that would cause the tool to be silently absent from
+ * skill-gated sessions (symptom: "tool not found" in agent logs).
  */
 function resolveToolNames(toolNames: string[]): ToolRegistryFn[] {
   const seen = new Set<ToolRegistryFn>();
@@ -400,6 +414,12 @@ function resolveToolNames(toolNames: string[]): ToolRegistryFn[] {
     if (fn && !seen.has(fn)) {
       seen.add(fn);
       result.push(fn);
+    } else if (!fn) {
+      console.warn(
+        `[agentBootstrap] resolveToolNames: tool "${name}" not found in toolNameMap — ` +
+          "check that the tool is registered in toolRegistry. " +
+          "Skill-gated sessions will not receive this tool."
+      );
     }
   }
 
