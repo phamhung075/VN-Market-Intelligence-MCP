@@ -6,6 +6,7 @@ import type { Database } from "bun:sqlite";
 import type {
   IWatchlistRepository,
   WatchlistEntry,
+  WatchlistThresholds,
 } from "../../../domain/repositories/IWatchlistRepository.js";
 
 export class SqliteWatchlistRepository implements IWatchlistRepository {
@@ -36,5 +37,27 @@ export class SqliteWatchlistRepository implements IWatchlistRepository {
     } catch {
       return { watchlist: [], reference: [] };
     }
+  }
+
+  getThresholds(): Map<string, WatchlistThresholds> {
+    const result = new Map<string, WatchlistThresholds>();
+    try {
+      const rows = this.db
+        .query<{ code: string; alert_drop_pct: number | null; alert_rise_pct: number | null }, []>(
+          "SELECT code, alert_drop_pct, alert_rise_pct FROM watchlist WHERE alert_drop_pct IS NOT NULL AND alert_rise_pct IS NOT NULL",
+        )
+        .all();
+      for (const row of rows) {
+        if (row.alert_drop_pct !== null && row.alert_rise_pct !== null) {
+          result.set(row.code, {
+            dropPct: row.alert_drop_pct,
+            risePct: row.alert_rise_pct,
+          });
+        }
+      }
+    } catch {
+      // table may not exist yet — return empty map
+    }
+    return result;
   }
 }

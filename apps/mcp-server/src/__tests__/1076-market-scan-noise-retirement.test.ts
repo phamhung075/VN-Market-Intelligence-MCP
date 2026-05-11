@@ -166,10 +166,10 @@ const HEARTBEAT_MOVE: MarketPrice = {
 // Helper to add a watchlist entry
 // ─────────────────────────────────────────────────────────────────────────────
 
-function addWatchlistEntry(code: string) {
+function addWatchlistEntry(code: string, alertDropPct: number = -7) {
   db.exec(
-    `INSERT OR REPLACE INTO watchlist (code, exchange, domain, added_at)
-     VALUES ('${code}', 'HOSE', 'banking', '${new Date().toISOString()}')`,
+    `INSERT OR REPLACE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new)
+     VALUES ('${code}', 'HOSE', 'banking', '${new Date().toISOString()}', ${alertDropPct}, 5, 7, 1)`,
   );
 }
 

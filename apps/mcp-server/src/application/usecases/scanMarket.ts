@@ -17,7 +17,7 @@
 
 import { detectSignals } from "../../domain/services/signalDetector.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
-import type { MarketSnapshot } from "../../domain/services/signalDetector.js";
+import type { MarketSnapshot, SignalContext } from "../../domain/services/signalDetector.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { storeMarketPrices } from "../../infrastructure/fetchers/hose.js";
@@ -165,6 +165,17 @@ export async function scanMarket(
 
   const codes = watchlistEntries.map((w) => w.actionCode);
 
+  // ── Step 1b: Load per-stock thresholds from watchlist table ─────────────
+  // Returns a Map<code, {dropPct, risePct}> for stocks that have explicit
+  // alert_drop_pct / alert_rise_pct columns set. Stocks not in the map fall
+  // back to DEFAULT_DROP_PCT inside detectSignals.
+  let watchlistThresholds: Map<string, { dropPct: number; risePct: number }>;
+  try {
+    watchlistThresholds = deps.watchlistRepo.getThresholds();
+  } catch {
+    watchlistThresholds = new Map();
+  }
+
   // ── Step 2: Fetch live prices ───────────────────────────────────────────
   let prices: MarketPrice[];
 
@@ -280,7 +291,21 @@ export async function scanMarket(
       avgVolume,
     };
 
-    const detected = detectSignals(snapshot);
+    // Build per-stock SignalContext: inject watchlist thresholds when present.
+    // If no explicit threshold row exists for this code, context has no
+    // watchlistThresholds field → detectSignals falls back to DEFAULT_DROP_PCT.
+    const stockThresholds = watchlistThresholds.get(price.code);
+    const signalContext: SignalContext | undefined = stockThresholds
+      ? {
+          watchlistThresholds: {
+            dropPct: stockThresholds.dropPct,
+            risePct: stockThresholds.risePct,
+            impactScore: 0, // impact_score override not used for price signals
+          },
+        }
+      : undefined;
+
+    const detected = detectSignals(snapshot, signalContext);
 
     // Filter to only the three price-based signal types
     const priceSignals = detected.filter(
