@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "1872a",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-11T16:24:00Z",
-  "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 29 close — IDLE. 8 duplicate-replay signals drained (cycle 28 had copied but not removed originals — bug fixed). Todo: 4 rows all ops/rebuild-blocked. Stale branch task/1872a-5-api-gateway-wording still unmerged (4 commits, content stale older state — needs manual review). New orphaned brief docs/architecture-briefs/ssot-team-tools-2026-05-11.md untracked (no signal emitted)."
+  "status": "in_progress",
+  "currentSprint": "1877a",
+  "activeTaskId": "1877a",
+  "nextAgent": "qa",
+  "nextPrompt": "QA 1877a: Review scripts/audits/commit-convention-audit.sh (branch task/1877a-commit-convention-audit-script). Script audits git log against 4 criteria (C1 header format ≥90%, C2 task trailer ≥85%, C3 AC trailer ≥80%, C4 scope vocab ≥95%), emits JSON to docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json, drops greenlight/fail signal in docs/signals/, exits 0=PASS/1=FAIL. All 6 ACs from TASK_1877a.md. Verify: jq parses, all 4 criteria present, verdict computed, violations capped at 20, idempotency, exit code.",
+  "updatedAt": "2026-05-11T17:15:00Z",
+  "updatedBy": "developer",
+  "lastCompleted": "Task 1877a IMPL: scripts/audits/commit-convention-audit.sh created. All 7 acceptance checks passed (JSON valid, 4 criteria, verdict, violations capped, idempotent, exit 1=FAIL)."
 }

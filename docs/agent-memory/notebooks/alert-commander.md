@@ -39,6 +39,15 @@
 - Legal: clean | Crisis: clean | Market: CLOSED | VN-Index: 1,895.50 -1.04%
 - Note: EIB +2.71% counter-trend vs banking sector (-0.76%), 10x–25x volume spike — watch for accumulation narrative
 
+### Alert Cycle (17:03–17:03 UTC) — 2026-05-11
+- Signals: urgent_news ×3 (VIC, EIB, HVN), price_anomaly ×2 (EIB, FPT)
+- Fired: 0 | Suppressed: 5 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (inferred) | Carry: FII_OUTFLOW_RISK (stale -0.33%) | Pivot window: unknown
+- Suppressed: VIC urgent_news #2908 conf 0.50 < 0.60 (no price_anomaly override); EIB urgent_news #2909 conf 0.50 < 0.60 (sigma 2.10 < 4.0, no override); HVN urgent_news #2910 conf 0.50 < 0.60 (no price_anomaly for HVN); EIB price_anomaly #2912 sigma 2.10 < 4.0; FPT price_anomaly #2913 sigma 2.03 < 4.0
+- Legal: clean | Crisis: clean | Market: CLOSED | VN-Index: 1,895.50 (close)
+- Note: EIB counter-trend accumulation pattern persisting (+2.71%, 9.3x avg volume, mgmt reshuffle). FPT foreign net sell ~14,100B VND — lowest since end-2023, 3rd consecutive suppressed session.
+
 ### Alert Cycle (15:02–15:02 UTC) — 2026-05-11
 - Signals: urgent_news ×2 (VIC, HVN)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
