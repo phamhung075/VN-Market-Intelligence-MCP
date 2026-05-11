@@ -97,6 +97,16 @@ Designed Day-7 commit-convention audit with four concrete pass thresholds (C1 �
 
 ---
 
+## 2026-05-11T20:39:59Z
+
+**Brief:** `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md`
+
+Signal dedup moves from O(N) full-dir scan of `processed/*.json` to O(log N) SQLite `SELECT` against a dedicated `signals.db`; the DB row is SSOT for processed state while the filesystem copy is retained as human-readable audit artifact. Five tasks (T1 schema → T2 backfill → T3 drain rewrite, then T4+T5 in parallel) handed to agent-father for implementation.
+
+**Signal dropped:** `docs/signals/agents-architect-2026-05-11T20-39-59Z-signal-dedup-sqlite.json` → agent-father
+
+---
+
 ## Backfill — c35 — 2026-05-11
 
 ### Session: 1873a-tsc-reconcile
