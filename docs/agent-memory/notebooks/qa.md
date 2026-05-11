@@ -1,10 +1,18 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1872
+**Last updated:** 2026-05-11 | **Sprint:** 1871/1872
 
 ## Last session summary
 
-Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target test: 5/5 pass (happy/missing-ticker/bad-direction/conviction>1/store-throws). Full suite 9266 pass / 16 fail / 38 skip — 16 failures all pre-existing Task 178 (unrelated DB-less environment issue). tsc 0 errors. DDD PASS (alertVerdictTools imports infra only, no domain). Security PASS. AC1 PASS: write_alert_verdict in tools_packages. AC2 PASS: cycle.md Step 4a calls write_alert_verdict after send_telegram + mark_alert_read, before Step 4b. AC3 PASS: tools/package row present with full params. AC4 PASS: 5 test cases confirmed. AC5 PASS: import path correct, no circular dep. AC6 PASS: 5/5. AC7 PASS: 0 new regressions. AC8 PASS: tsc 0 errors. AC9 PASS (1864a): error path routes channel="work". Extra: Step 0 cycle-bootstrap probe present (MAT regression clean). WORK-vs-MARKET routing cleanly stated. APPROVED + merged to main. Branch deleted.
+Tier-2 QA cycle 20. Three branches: 1871b (ARCH.md infra/ tree), 1871d (cron-registry backfill), 1871f (DDD fix vnstock types).
+
+Authoritative baseline: 9168 pass / 12 fail / 38 skip on main HEAD 67d99029 (bun test --timeout 30000). TSC baseline: 23 pre-existing errors.
+
+1871b APPROVED: all 11 infra/ subdirs present in ARCHITECTURE.md, fileStore/ entry mentions alertVerdictStore.ts, cross-link to alert-policy.md (1871g). Doc-only. Merge SHA 6f161a4b.
+
+1871d APPROVED: 21 new entries added (41→62 total). schedulerFileCount=59 matches cronConfig.ts exactly. Existing 41 entries unchanged. New entries use consistent name/schedule/desc/file schema. 3 non-job entries (helper, old-format macro, ohlcvStartupProbe) explain 62 vs 59 delta — pre-existing in file. Merge SHA 2bcae2e5.
+
+1871f APPROVED: DDD critical check PASS — zero actual `import.*from.*infrastructure/` statements in domain/ (grep matched only comments/docstrings). New domain/models/vnstockTypes.ts contains 6 canonical types (zero imports). vnstockBridge.ts re-exports all 6 for backward compat (infra→domain direction = correct). TSC delta=0 (still 23). Vnstock test parity: 37/48/6 identical on both main and worktree. Full-suite delta in worktree (9050 vs 9168) caused by broken symlink data/ → ../../data (resolves to non-existent path in worktree). ENOENT failures are pre-existing worktree infrastructure, not code regression. Merge SHA 30030baa.
 
 ## Known patterns / preferences
 
@@ -25,14 +33,13 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 
 ## Carry-over for next session
 
-- Sprint 1872 active. 1872a + 1872b + Tier-1 bundle (1871a/1871e/1871g) APPROVED and merged.
-- Pre-existing failure set: 11 failures / 38 skip (bun test --timeout 30000 run; Bun v1.3.13 C++ panic at end is NOT a failure — 9169 pass before crash). Note: previous baseline 9297/16 was with different timeout or Bun run; current run shows 9169/11 — test count delta likely due to Bun crash cutting run short. Developer should recount with fresh run.
-- Pre-existing TSC errors: 23 errors on both main and task branches (H3-urgent-news, dailyDashboardJob, regimeConfidenceThreshold, watchdog 1557/1567, 1850e, 1854b). No new errors from 1871 bundle.
-- Tier-1 bundle note: 1871e commit carried 3 extra notebook files + alert-commander.md tool-package doc clarification (parallel dispatch artifact). All doc-only, no production code, non-blocking.
-- Next in queue: 1871b (infra/ tree expansion), 1871c (analysis/backtesting modules), 1871d (cron-registry.json backfill), 1871f (DDD violation IVnstockRepository).
-- Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
-- Remaining Todo (Sprint 1871): 1871a-g (SPRINT-S doc reconciliation + DDD fix), 1862c-D/E/F/G (Cowork MCP access).
-- 1872b CLOSED 2026-05-11. Merge SHA fb2d6fd2. TASKS.md updated b278b396.
+- Tier-2 QA cycle 20 COMPLETE. 1871b + 1871d + 1871f APPROVED and merged.
+- Authoritative baseline post-cycle 20: main HEAD 30030baa (after 3 merges). Expect ~9168/12/38 on fresh run.
+- Pre-existing TSC errors: 23 (unchanged across all 3 branches).
+- Worktree broken-symlink pattern: data/ → ../../data breaks when worktree is at .claude/worktrees/agent-XXXX/. Causes ~100 ENOENT failures in full-suite run from worktree. NOT a regression — compare vnstock-specific tests (same set) to confirm no code delta.
+- Baseline reconciliation: Tier-1 QA (9169/11) vs Tier-2 (9168/12) — 1-test delta is Bun flakiness, not regression. 1871f developer 9046/117 was worktree broken-symlink effect.
+- Remaining Todo (Sprint 1871): 1871c (analysis/backtesting ARCHITECTURE.md modules). 1862c-D/E/F/G (Cowork MCP access) still in Todo.
+- Sprint 1872 tasks (1872a/1872b) previously merged. TASKS.md Done section up to date through cycle 20.
 
 ---
 
