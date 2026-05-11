@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "review",
+  "status": "idle",
   "currentSprint": "1872a",
-  "activeTaskId": "1872a-7",
-  "nextAgent": "qa",
-  "nextPrompt": "QA 1872a-7 (heading fix + AC8 closure)",
-  "updatedAt": "2026-05-11T16:30:00Z",
-  "updatedBy": "developer",
-  "lastCompleted": "1872a-7: README.md:173 heading fix — '## 112 MCP Tools (Phase 3 Complete)' → '## MCP Tools (Phase 3 Complete)' + SSOT pointer line. AC8 grep CLEAN. Commit 95e21b96, branch task/1872a-7-readme-heading-count."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T16:19:41Z",
+  "updatedBy": "dev-team",
+  "lastCompleted": "Cycle 28 close — SPRINT-S-1872a COMPLETE (8/8 ACs, 5 merges). Drift signals from system-auditor cycle 27 fully resolved. Open: stale branch task/1872a-5-api-gateway-wording flagged to WORK for cycle 29 CLEAN."
 }
