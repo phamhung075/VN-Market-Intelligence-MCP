@@ -58,6 +58,13 @@ Rule: existing interface covers need → extend, never duplicate.
 - **Scan clean:** true ✓
 ```
 
+### Header update (required every cycle)
+Before the end-of-cycle skill writes the notebook, update line 3 of `docs/agent-memory/notebooks/architect.md`:
+```
+**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
+```
+Use `date -u` exclusively — same UTC source as the session log guard (1865a).
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **5.** Update docs/TASKS.md status → return:
