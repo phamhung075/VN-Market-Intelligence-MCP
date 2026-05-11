@@ -1,6 +1,70 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-10 (cycle 31 → cycle 32 — 22:30 UTC) | Cycles completed: 32
+**Last updated:** 2026-05-11 (cycle 32 → cycle 33 — 02:30 UTC) | Cycles completed: 33
+
+---
+
+## Cycle 33 Watch Notes (2026-05-11 02:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (vs c32 — σ recovered, agents-architect 2 RCAs shipped, financial-analyst recovered)
+
+**MAJOR INSIGHT — Reuters/TE PERMANENT FAILURE diagnosed by agents-architect:**
+Source labels "reuters" + "tradingEconomics" are BACKWARD-COMPAT ALIASES for Google News RSS + MarketWatch RSS — NOT original Reuters/TE endpoints. 1862f exponential backoff is correct but **cannot fix permanent endpoint failure**. Module-level `_reutersConsecutiveErrors` + `_teStreamConsecutiveErrors` reset on container restart → re-trips CB every restart. Brief: `docs/architecture-briefs/2026-05-11-reuters-te-unreachability.md`. Recommends config gate `reutersEnabled: false` + `tradingEconomicsStreamEnabled: false` (1 task) + `recordDisabled()` after threshold. Ops must probe (5 curl commands) to confirm block type before final fix.
+
+**agents-architect price_drop precision RCA shipped** (BUG 2844):
+- `detectSignals()` uses fixed -5% DEFAULT_DROP_PCT, ignores SQLite `alert_drop_pct`/`alert_rise_pct` overrides
+- Sector-wide decline (Step 5a) fires synthetic `price_drop` at -0.5% per stock — far below individual threshold
+- No VNINDEX guard: alerts fire uniformly during broad sell-offs with no alpha
+- Brief: `docs/architecture-briefs/2026-05-11-price-drop-precision-tuning.md` — Option A (-5→-7) + Option B (wire watchlistThresholds) = 3 atomic tasks. Estimated +10-15pp precision gain.
+
+**H1-future RECURRENCE in qa-responder + news-scout** (NEW finding):
+- qa-responder cycle entries `09:47 UTC`, `11:05 UTC` — both FUTURE relative to current 02:28 UTC
+- news-scout cycle entry `07:21 UTC` — FUTURE
+- 1865a UTC guard fix only patched market-watcher flow. qa-responder + news-scout flows have same H1-future structural defect, not patched.
+- market-watcher itself NOW PROPERLY STAMPED (00:38, 01:40 UTC) — fix is working where applied.
+- **Need: extend 1865a guard to all cowork flows that write timestamped notebook entries.**
+
+**σ data RECOVERED — Mon market open blocker DEFUSED:**
+- Was 2/30 watchlist at c32 (CRITICAL, <4h to 02:00 UTC open)
+- Now: Commodity 681/30 ✅, SBV 881/30 ✅, VNINDEX 31/30 ✅, all watchlist (ACB/BID/CTG/FPT/GAS/HPG/HSG/MBB/NKG) at 28/30 (1 cycle from ready)
+- σ-based detection will be FULLY OPERATIONAL by next cycle.
+
+**Reuters/TE counters CLIMBING** (16/16/16 c32 → 35/35/36 c33) — backoff firing repeatedly, 0 successes — confirms RCA above (not rate limit, permanent endpoint failure).
+
+**vnstock 7th rotation** (SAM+DAG+BID+VCB this cycle vs c32 EIB+VRE+DLC) — different tickers each cycle. RPM 80 deployment status STILL unclear.
+
+**system-auditor DEGRADING:** Notebook content shows last cycle still 2026-05-09 16:15 UTC — now ~34h stale (worse than c32's 30h+). NO new audit cycles fired since 1862h/i shipped.
+
+**financial-analyst RECOVERED:** Cycle 2026-05-11 01:00 UTC clean. 3 stocks analyzed (VCB/FPT/HPG all FAIR). 28/31 still QUÁ HẠN. 3 fundamental_validation signals posted (IDs 2827/2828/2829). **Tool gaps persist:** `get_macro_snapshot`, `get_insider_signals` (param mismatch), `get_bond_maturity_calendar` not in package.
+
+**PO STILL not cycling — 3rd silent TNB cycle:**
+- PO notebook last updated 2026-05-10 00:15 UTC (pre-c31)
+- No `## PO ACK` appended to c31 OR c32 handoff
+- Tasks 1862j/1862k from earlier still latest — no new task creation since
+- **Possible PO cron failure / agent stuck** — needs ops investigation
+
+**market-watcher REGIME=TIGHTENING transient detection:**
+- Brent +5.36σ extreme at 23:30 cycle → news-scout regime=TIGHTENING (cpi_pressure_risk=true) → market-watcher carry-forward TIGHTENING through 01:40 UTC
+- Bootstrap at 02:28 UTC settled back to NEUTRAL (DXY 98.05 STABLE, US10Y 4.36% NEUTRAL)
+- Detection chain working correctly; transient resolved
+
+**alert-commander 5 clean cycles:** 23:10, 00:00, 00:03, 01:02, 02:02 UTC. Properly stamped. log_agent_work id=613 (01:02), id=615 (02:02). VPB -6.98% noticed at open recovery to -3.40%.
+
+**unified-agent 4 clean cycles:** 22:01, 23:01, 00:01, 01:01, 02:01 UTC. Filed feedback for `price_drop precision 50%`. Doc self-heals BLOCKED (flow files protected) — repeat detection of `weekly.md` step 1 ambiguity + `market.md` Step 0b note about `get_macro_snapshot` tool package gap.
+
+**VPB -6.98% intraday gap:** caught by alert-commander + unified-agent (open alert MEDIUM), but NOT in agent signal bus. price_anomaly emission not firing for VPB. Worth investigating.
+
+**git HEAD.lock recurrence:** qa-responder reported same lock issue I encountered in c32. Cleared via `rm -f` then. Now persisting in agent context — may need flow-level retry/cleanup.
+
+**VN-Index 1925.36 +0.52%** (up from 1915.37 c32). Khôn (2) MUA 100%. Bullish micro-trend continuing.
+
+**DB queue:** unchanged from c32 (24 pending feedback / 18 critical warnings).
+
+**Container uptime 7h 23m** (~19:05 UTC restart, same as c32 c4h ago). All c32-deployed fixes still live.
+
+**get_agent_signals BROKEN:** requires `agent` param (not optional) — tool signature mismatch. Cannot do signal bus audit until fixed.
+
+**Verdict resolution backlog:** 145/7d alerts 100% UNKNOWN. 1867 cron wired but backlog not draining. Either job hasn't run yet OR data still too fresh (verdicts need future price data).
 
 ---
 

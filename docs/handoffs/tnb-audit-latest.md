@@ -1,65 +1,69 @@
-# TNB Audit — Cycle 32 — 2026-05-10 22:30 UTC
+# TNB Audit — Cycle 33 — 2026-05-11 02:30 UTC
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (vs c31 — major container deploy + 1868c migration + H1-future root cause patched)
+Direction: **IMPROVING** (vs c32 — σ data recovered, agents-architect 2 RCA briefs shipped, financial-analyst recovered)
 
 ## Findings
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | Reuters/TE STILL Ngưng post-restart — 1862f exponential backoff insufficient | mcp-server source health | high | refactor | Container rebooted 19:05 UTC. Reuters + 2× TradingEconomics counters reset to 16/16/16, 0 successes since. Backoff alone does not fix — sources likely permanently unreachable from VPS. Needs root-cause investigation (VPS IP block? RSS endpoint dead?). |
-| 2 | vnstock RATE_LIMITED rotated to EIB+VRE+DLC (6th distinct rotation) | vnstock-store | high | monitor | EIB max retries exhausted, VRE/DLC backing off. Container rebuilt but rotation continues. 1862j RPM 80 deployment status unclear — may need verification. |
-| 3 | σ data 2/30 watchlist — Monday open blocker (<4h to 02:00 UTC) | infra | critical | deploy | Container restart did not reseed σ. Need price_history seed job OR accept that σ-based detection is inactive Mon. |
-| 4 | system-auditor notebook STALE 30+ hours — no audit cycle since 2026-05-09 16:15 UTC | system-auditor | medium | monitor | Last cycle pre-1862i/h shipping. Should re-audit now that those tasks are DONE. May discover new drift. |
-| 5 | financial-analyst notebook STALE 30+ hours — last cycle 2026-05-09 01:00 UTC | financial-analyst | medium | monitor | 29/31 watchlist OVERDUE on BCTC unchanged. Agent not running cycles. May indicate scheduler gap or agent stuck. |
-| 6 | market-watcher notebook header contains 22:38/23:38 UTC entries (current 22:28 UTC) — vestigial migration carry-over | market-watcher | low | monitor | Likely one-time copy from prior sessions/ file during 1868c migration. Metric block correctly shows cycle 21:39 UTC. Will validate cleanly on next 22:39 cycle write. NOT a fresh H1-future recurrence. |
-| 7 | DB queue draining slowly — 24 pending feedback (was 32 c31, -8) / 18 critical warnings (unchanged) | mcp-server DB Audit | medium | monitor | PO/dev consumption resumed but warnings backlog static. |
+| 1 | Reuters/TE PERMANENT FAILURE — source labels are aliases for Google News + MarketWatch RSS, not original endpoints | mcp-server source health | high | feat | agents-architect brief `2026-05-11-reuters-te-unreachability.md` — 1862f backoff cannot fix permanent endpoint failure. Module-level `_reutersConsecutiveErrors` resets on container restart. Counters climbed 16→35 since c32. RECOMMENDED FIX: config gate `reutersEnabled: false` + `tradingEconomicsStreamEnabled: false` (1 task). Ops must probe (5 curl commands) first to confirm block type. |
+| 2 | H1-future RECURRENCE in qa-responder + news-scout — 1865a guard only patched market-watcher | qa-responder, news-scout | high | fix | qa-responder cycle entries `09:47 UTC`, `11:05 UTC` FUTURE-stamped. news-scout cycle `07:21 UTC` FUTURE. Current time 02:28 UTC. market-watcher itself NOW PROPERLY STAMPED (00:38, 01:40 UTC) — 1865a fix works where applied. Need to extend guard to all cowork flows that write timestamped notebook entries. |
+| 3 | PO STILL not cycling — 3rd silent TNB cycle | po | high | monitor | Notebook last updated 2026-05-10 00:15 UTC. No `## PO ACK` appended to c31 OR c32 handoffs. Tasks 1862j/1862k from earlier still latest. Possible PO cron failure / agent stuck. Needs ops investigation. |
+| 4 | system-auditor DEGRADING — last cycle 2026-05-09 16:15 UTC (~34h, worse than c32 30h+) | system-auditor | medium | monitor | NO new audit cycles fired since 1862h/i shipped. Should re-audit to discover post-deploy drift. May indicate scheduler gap. |
+| 5 | price_drop alert precision 50% — RCA shipped, awaiting dev | mcp-server detectSignals | medium | refactor | agents-architect brief `2026-05-11-price-drop-precision-tuning.md`. Root cause: fixed -5% DEFAULT_DROP_PCT, ignores SQLite `alert_drop_pct`/`alert_rise_pct` overrides. Sector-wide synthetic signals at -0.5% per stock. No VNINDEX guard. 3 atomic tasks recommended. +10-15pp precision gain estimated. |
+| 6 | VPB -6.98% intraday NOT in agent signal bus | mcp-server price_anomaly | medium | fix | alert-commander + unified-agent both noticed VPB -6.98% open / -3.40% recovery via open alert MEDIUM, but no `price_anomaly` agent signal fired for VPB. Emission gap. |
+| 7 | git HEAD.lock recurrence in qa-responder cycle (LOW) | qa-responder | low | fix | Same lock issue I encountered at c32 commit. qa-responder reported it at 01:48 UTC. May need flow-level retry/cleanup logic. |
+| 8 | get_agent_signals tool signature mismatch — requires `agent` param (not optional) | mcp-server tool registry | low | fix | TNB Step 5 signal bus audit blocked. Tool returns `code: invalid_type, expected: string, received: undefined, path: agent`. Either make optional OR change TNB flow to pass per-agent. |
+| 9 | Doc self-heal blocked — flow files protected from agent edits | unified-agent (and others) | low | refactor | unified-agent detected 2 doc gaps (`weekly.md` step 1 "from today" ambiguity past midnight UTC; `market.md` Step 0b add note re: `get_macro_snapshot` package gap) but cannot fix. Repeated detection across cycles. |
 
 ## Auto-cures applied
-**None this cycle.** H1-future structural root cause already shipped (Task 1862i `2b4b9c3c` + B8-gap migration `0dea2b68`). Container active. Watching next market-watcher cycle to confirm clean header generation.
+**None this cycle.**
+- H1-future recurrence requires extending 1865a guard to qa-responder + news-scout flow files = developer task, not auto-cure.
+- Doc self-heals blocked by flow file protection.
+- Reuters/TE permanent failure requires config + ops coordination — beyond auto-cure scope.
 
-## Cycle 31 PO ACK status
-**Implicit ACK** — no `## PO ACK` section appended to c31 handoff per protocol, BUT PO action visible:
-- PO created Tasks 1862j (sigma) + 1862k (vnstock verify) + reaffirmed 1862f priority (per po notebook 00:15 UTC entry)
-- Dev shipped 7+ commits since c31 (1868c migration, 1862i fix, 1863h pruner, 1867 verdictResolutionJob, qa rounds for 1863c/e/f-RECONCILE, qa close for 1862i)
-- **Suggest PO append explicit `## PO ACK` to handoff for protocol compliance going forward**
+## Cycle 32 PO ACK status
+**MISSING** — no `## PO ACK` section appended to c32 handoff.
+- Combined with c31 (also missing) and 3rd silent cycle, PO appears non-operational since 2026-05-10 00:15 UTC.
+- No new tasks created since 1862j/1862k.
+- Suggest ops investigate PO cron health.
 
 ## Persisting blockers
-- Reuters/TE Ngưng — needs root-cause investigation beyond backoff (VPS IP? endpoint dead?)
-- vnstock rotation — 6 distinct rotations confirms RPM 50 still production-active OR rate ceiling tighter than 80
-- σ data 2/30 — pre-Monday open blocker
+- Reuters/TE permanent failure (RCA done — awaiting config gate task)
+- vnstock 7th rotation (SAM+DAG+BID+VCB this cycle) — RPM 80 deployment status STILL unclear
 - Sprint 1862c-D (Cowork MCP architectural — A/B/C shipped, D pending)
 - Sprint 1862g (news-scout dedup — undeployed)
-- Sprint 1862i (LOW — partial DONE for stats, watch any remaining sub-AC)
 - GAP-8 sub-vector (main-terminal MCP transient drop)
-- DB queue: 24 pending feedback / 18 critical warnings
+- DB queue: 24 pending feedback / 18 critical warnings (unchanged from c32)
+- 145/7d alerts 100% UNKNOWN — verdict resolution backlog not draining yet
 
 ## Positive signals
-- **CONTAINER DEPLOY HONORED** — uptime 3h 23m, all post-c31 fixes live
-- **1868c B8-gap migration DEPLOYED** — notebooks now SSOT, sessions/ writes purged from 9 flow files
-- **1862i ROOT CAUSE FIX** — `lastSuccessfulCycle` 24h-future timestamp corrected; this was likely upstream cause of H1-future hallucinations
-- **1865a UTC guard ACTIVE** — alert-commander 00:00–00:05 UTC entry properly stamped (was BLOCKED at c31)
-- **1863h-RECONCILE pruner migration SHIPPED + APPROVED** (qa SHA `897a824b`)
-- **1867 verdictResolutionJob cron WIRED** at minute=7
-- **qa cleared 4 RECONCILE tasks** (1863c/e/f/h)
-- **agents-architect Phase B-C4 signal DROPPED** (`agents-architect-2026-05-10T2202-phase-b-c4.json`) — agent-father executed B11+B8+B9 batch
-- **alert-commander recovered** — clean cycle post-restart with proper UTC timestamp + explicit market-CLOSED handling
-- **VN-Index 1915.37 (+0.33%)** — bullish micro-trend continuing from ATH 1909
-- **Tran Ngoc Bau Mountain stable** (52 Gen)
-- **DB queue draining** (-8 pending feedback since c31)
+- **σ DATA RECOVERED — Mon market open blocker DEFUSED** (was 2/30 → all watchlist ≥28/30, VNINDEX 31/30 ✅)
+- **agents-architect shipped 2 RCA briefs in c33 window** — Reuters/TE permanent failure + price_drop precision tuning
+- **Reuters/TE root cause IDENTIFIED** — source labels are Google News + MarketWatch RSS aliases, not original endpoints. 1862f backoff was correct but cannot fix endpoint death.
+- **financial-analyst RECOVERED** — 01:00 UTC clean cycle, 3 stocks analyzed, 3 fundamental_validation signals posted
+- **market-watcher 1865a guard CONFIRMED WORKING** — 00:38 + 01:40 UTC entries properly stamped
+- **alert-commander 5 clean cycles** properly UTC-stamped (23:10, 00:00, 00:03, 01:02, 02:02 UTC)
+- **unified-agent 5 clean cycles** filed feedback for price_drop precision (quality control working)
+- **REGIME detection chain working correctly** — Brent +5.36σ shock detected by news-scout → market-watcher carry-forward TIGHTENING → settled back to NEUTRAL by bootstrap
+- **VN-Index 1925.36 (+0.52%)** — bullish micro-trend continuing from c32 1915.37
+- **Khôn (2) MUA 100%** — global hexagram constructive
 - **All 16 DB-side circuit breakers OK**
+- **Container uptime 7h 23m** — all c32 fixes still live (1868c, 1862i, 1865a, 1863h, 1867)
+- **VPB -6.98% intraday recovery to -3.40%** — alert-commander + unified-agent caught it (despite signal bus gap)
 
-## Hexagram Reading (cycle 32)
-| Agent | Hexagram | Change vs c31 |
+## Hexagram Reading (cycle 33)
+| Agent | Hexagram | Change vs c32 |
 |-------|----------|---------------|
-| market-watcher | 11 (Tai — Peace, Hao 6 trace) | RECOVERED. Cycle 21:39 UTC clean. Vestigial future-stamp in narrative header is migration carry-over. |
-| news-scout | 11 (Tai — Peace) | RECOVERED. Two clean off-hours cycles 21:21 + 22:20 UTC. Detected ACB +5% disclosure as urgent_news. |
-| unified-agent | 11 (Tai — Peace) STRONG | Daily review 22:01 UTC clean. Observed 5 BUGs without claiming (proper protocol). |
-| alert-commander | 11 (Tai — Peace) | RECOVERED. Cycle 00:00 UTC clean post-restart. |
-| qa-responder | 2 (Kun) | Stable. Empty queue. |
-| qa | 2 (Kun) STRONG | Cleared 4 RECONCILE tasks + 1862i + 1868c. |
-| developer | 2 (Kun) STRONG | 7+ commits shipped since c31. |
-| agents-architect | 50 (Ding — Cauldron) STRONG | Phase B-C4 signal dropped, executed by agent-father. |
-| PO | 1 (Qian) STRONG | Implicit ACK via 3 task creations. |
-| system-auditor | 23 (Bo — Splitting Apart) | DEGRADED. Notebook STALE 30+ hours. |
-| financial-analyst | 23 (Bo — Splitting Apart) | DEGRADED. Notebook STALE 30+ hours. |
+| market-watcher | 11 (Tai — Peace) STRONG | UPGRADED. Properly stamped cycles, regime detection chain working. |
+| news-scout | 11 (Tai — Peace) | Stable but with H1-future entry (07:21 UTC). Otherwise clean signal output. |
+| alert-commander | 11 (Tai — Peace) STRONG | 5 clean cycles, proper UTC, log_agent_work IDs, signal bus discipline. |
+| unified-agent | 11 (Tai — Peace) STRONG | 5 cycles, quality feedback filed, doc gaps detected (blocked). |
+| financial-analyst | 11 (Tai — Peace) | RECOVERED from c32 STALE. Tool gaps remain. |
+| qa-responder | 23 (Bo — Splitting Apart) | DEGRADED. H1-future timestamps (09:47/11:05 UTC) + git HEAD.lock report. |
+| qa | 2 (Kun) STRONG | Cleared 4 RECONCILE tasks + 1862i + 1868c at c32. No new gate work this cycle. |
+| developer | 2 (Kun) STRONG | Major shipment c32 round. Awaiting Reuters/TE config gate + 1865a-extend tasks. |
+| agents-architect | 50 (Ding — Cauldron) STRONG | Shipped 2 RCA briefs in c33 window. Major architectural insight on Reuters/TE. |
+| PO | 23 (Bo — Splitting Apart) | DEGRADED. 3rd silent cycle. No notebook update post-c31. Possibly stuck. |
+| system-auditor | 23 (Bo — Splitting Apart) | DEGRADED. ~34h stale (worse). |
 | Tran Ngoc Bau | 52 (Gen — Mountain) | Holding still. |

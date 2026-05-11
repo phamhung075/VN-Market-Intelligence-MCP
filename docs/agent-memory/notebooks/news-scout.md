@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 00:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 02:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (02:20–02:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 8 | Signals: [urgent_news×1, chain_catalyst×1] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: ACB insider +6% (Âu Lạc), Brent >107 USD (US-Iran), cpi_pressure_risk=true
+- Suppressed: HPG/DHG dividend (neutral), FPT personnel (low impact)
 
 ## Recent performance
 

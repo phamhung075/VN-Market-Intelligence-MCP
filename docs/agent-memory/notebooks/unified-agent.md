@@ -95,3 +95,36 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Portfolio: FPT only (-10.5%, 71,900 vs stop-loss 74,679) | VaR 95%: -1.5% normal | No conviction shifts ≥0.3
 - Prediction review: 1 open market (China/Taiwan), 0 resolved → accuracy N/A
 - Bugs: none new filed | Spam audit: SKIP (file inaccessible in sandbox)
+
+## Cycle — 01:01 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - System OK: all 16 CBs clear, D2D RATE_LIMITED WARNs (self-recovering), Reuters/TE stopped (persistent known).
+  - Portfolio: FPT -10.5% (71,900 VND), still below stop-loss floor 74,679. VaR 95% -1.5% (normal). Conviction 0.54 MODERATE → GIẢM BỚT unchanged.
+  - Macro extremes: Brent 104.67 (+5σ at 23:30 cycle), Gold VN -5σ. GAS HIGH alert (geopolitical cooling/oil supply signal). Regime last known NEUTRAL with latent TIGHTENING pressure.
+  - Prediction review: 1 open market, 0 resolved, accuracy N/A.
+  - Quality: price_drop precision 50% → feedback [MEDIUM] filed via submit_feedback.
+- **actions**: WORK telegram sent. Feedback submitted (price_drop accuracy). Notebook appended. Git commit blocked (HEAD.lock — sandbox permission issue).
+- **next_cycle_hint**: FPT stop-loss 74,679 — watch if Monday open triggers cut signal. Brent oil extreme → watch for oil/energy sector rotation. GAS geopolitical alert: if Iran deal progresses, oil drop accelerates. BID Âu Lạc stake watch (FII outflow vs domestic anchor).
+- **estimated_tokens**: 8000 (16 tool calls)
+
+### Coordination Cycle (02:01–02:09 UTC)
+- Mode: MARKET | System: OK (all 16 CBs clear, vnstock RATE_LIMITED ACB/MBB/TCB WARN normal market-open, Reuters/TE persistent down known) | Alerts: 7 open (4 CRITICAL macro Brent/Gold extreme, 2 HIGH GAS news, 1 MEDIUM VPB -6.98%) | Quality issues: 0 (alert accuracy N/A — 100% unknown, operational gap)
+- Regime: UNKNOWN (get_macro_snapshot not in package) | Alignment: N/A | Headwind: N/A
+- Portfolio: FPT only (-10.5%, 71,900 VND) | VaR 95%: -0.1% OK | No conviction shifts ≥0.3
+- Bugs: git HEAD.lock (qa-responder, LOW, 13min — not stale yet) | Spam audit: SKIP (file too large for sandbox)
+
+## Cycle — 02:01 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - System OK: 16 CBs clear. vnstock rate limits (ACB/MBB/TCB) normal during market open. Foreign flow fallback exhausted (early session, expected). BCTC 7h stale (off-hours, expected).
+  - Macro extremes sustained: Brent 104.65 (+3.96σ), Gold 4702.9 (-3.89σ). GAS 2x HIGH news_mention (US-Iran, oil bullish). VPB -6.98% → recovered to -3.40% intraday.
+  - Portfolio: FPT -10.5% unchanged. VaR -0.1% OK. Conviction MODERATE 0.54 → GIẢM BỚT. No shift ≥0.3.
+  - No legal risk. No crisis signals. Supply chain stable (BDI 1,400 normal). Energy grid normal. Climate: heat risk May (IDC/KBC/GEG — not in portfolio).
+  - Alert accuracy: 350 alerts all UNKNOWN (no scored outcomes) — operational gap not a bug.
+  - Regime: UNKNOWN (get_macro_snapshot not in unified-agent package — set REGIME=UNKNOWN per anti-hallucination rule).
+- **actions**: WORK telegram sent (clean cycle). Notebook appended. Git commit attempted.
+- **next_cycle_hint**: Watch VPB at open — was -6.98%, recovered to -3.40%; determine if price_drop sustained or bounce. GAS: US-Iran developments drive oil direction. FPT stop-loss 74,679 still active concern. git HEAD.lock (qa-responder) — if still present at next cycle, escalate.
+- **estimated_tokens**: 9000 (18 tool calls)

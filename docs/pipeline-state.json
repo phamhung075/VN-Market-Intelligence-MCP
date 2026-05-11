@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T02:45:00Z",
+  "updatedAt": "2026-05-11T03:45:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 13 UNBLOCK: PM decomposed 2844 brief into Sprint 1869 — 1869a (DEFAULT_DROP_PCT -5→-7), 1869b (wire watchlistThresholds at scanMarket.ts:283), 1869b-seed (DB migration 7.0/9.0). Ship order a→b→b-seed. Report 2846 marked duplicate of 2844. PO corrected: financial-analyst NOT stale (updated today); system-auditor IS stale (3rd obs, cycle 14 escalation). Loop exits idle."
+  "lastCompleted": "Cycle 14 UNBLOCK: TNB scheduler audit for stale system-auditor — diagnosis: cron def `0 16 * * *` exists at .claude/commands/crons/cron-system-auditor.md but session-scope CronCreate was lost during heavy 2026-05-10 sprint activity (16:38-17:38 UTC). Re-registered cron in main session (id 64cfb03a). Manual invoke recommended next opportunity. Architectural fix (persistent scheduler) deferred — out of dev-team scope. Sprint 1869 dev work (1869a/b/b-seed) deferred to cycle 15 — UNBLOCK preempted FIX priority. Loop exits idle."
 }
