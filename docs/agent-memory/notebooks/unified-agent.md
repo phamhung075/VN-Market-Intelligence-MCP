@@ -127,4 +127,25 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
   - Regime: UNKNOWN (get_macro_snapshot not in unified-agent package — set REGIME=UNKNOWN per anti-hallucination rule).
 - **actions**: WORK telegram sent (clean cycle). Notebook appended. Git commit attempted.
 - **next_cycle_hint**: Watch VPB at open — was -6.98%, recovered to -3.40%; determine if price_drop sustained or bounce. GAS: US-Iran developments drive oil direction. FPT stop-loss 74,679 still active concern. git HEAD.lock (qa-responder) — if still present at next cycle, escalate.
+  Doc self-heal (blocked — flow files protected): `market.md` Step 0b — add note: "`get_macro_snapshot` not in unified-agent package → set REGIME=UNKNOWN, do NOT attempt to call it."
 - **estimated_tokens**: 9000 (18 tool calls)
+
+### Coordination Cycle (03:01–03:07 UTC)
+- Mode: MARKET | System: OK (16 CBs clear, Reuters/TE stopped known, foreign flow fallback exhausted early session) | Alerts: 9 (4 CRITICAL macro, 2 HIGH GAS news, 3 MEDIUM price) | Quality issues: 0 (alert accuracy 100% UNKNOWN — ongoing operational gap)
+- Regime: UNKNOWN (get_macro_snapshot not in package — carry from 01:01 cycle) | Alignment: FPT=tech_export→TAILWIND (1.0) | Headwind: 0%
+- Portfolio: FPT only (-11.7%, 70,900 vs avg 80,300) | VaR 95%: -0.3% normal | Conviction 0.62 STRONG GIẢM BỚT (+0.08 from 0.54 — no shift alert <0.3)
+- Bugs: git HEAD.lock (02:42 UTC, ~24min, cannot remove — sandbox permission) | Spam audit: SKIP (file too large)
+
+## Cycle — 03:01 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - System OK: 16 CBs clear. Rate limits normal (market open). Foreign flow fallback exhausted (early session expected). BCTC 7.9h stale (off-hours expected).
+  - Macro extremes sustained: Brent 105.24 (+3.96σ extreme), Gold 4693.8 (-3.89σ extreme). GAS 2x HIGH news_mention (US-Iran oil tensions, supply uncertainty). 9 open alerts total.
+  - Portfolio: FPT -11.7% (70,900 vs 80,300 avg), VaR -0.3% normal. Conviction 0.62 STRONG → GIẢM BỚT. +0.08 change from prior cycle — below 0.3 threshold, no conviction alert.
+  - VHM +4.63% price_surge (not in portfolio, realty=HEADWIND). VPB fully recovered to +0.36%. Alignment 1.0 (tech_export TAILWIND in TIGHTENING).
+  - No legal risk. No crisis signals. Supply chain stable. Energy grid normal.
+  - Signal effectiveness: news-scout 11 signals/1 fired/N/A precision. Alert accuracy 351 UNKNOWN (100% — ongoing gap).
+- **actions**: WORK telegram sent (clean cycle + macro summary). Notebook appended. Git commit blocked (HEAD.lock sandbox permission).
+- **next_cycle_hint**: FPT stop-loss 74,679 — 70,900 now -5.3% below threshold, watch for recovery or cut signal. Brent extreme high sustaining — watch for GAS position opportunity. VPB bounce confirmed. git HEAD.lock persistent issue — try again at 03:30 cycle.
+- **estimated_tokens**: 10000 (20 tool calls)

@@ -66,3 +66,21 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: inactive
 - Notes: Market OPEN (02:00 UTC). ACB urgent_news id=2837 conviction 0.50 < 0.60 NEUTRAL threshold. No price_anomaly override (no price_anomaly signals in agent bus for ACB). No legal/crisis signals. VPB -6.98% open alert (MEDIUM, pre-existing, not in agent signal bus). GAS news_mention x2 (HIGH, pre-existing, already noted). MACRO Brent +3.96σ / Gold -3.89σ — last fired 00:45 UTC, not re-fired. Signal outcome recorded: id=2837 suppressed. log_agent_work id=615.
+
+## Cycle — 02:02 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - ACB urgent_news (Âu Lạc nhóm tăng sở hữu lên 6%) conviction 0.50 — dưới ngưỡng NEUTRAL 0.60, không có price_anomaly override
+  - VPB -6.98% trong open alerts nhưng không xuất hiện trong agent signal bus → không kích hoạt CRITICAL
+  - MACRO: Brent +3.96σ / Gold -3.89σ — đã gửi 00:45 UTC, không tái gửi
+- **actions**: record_signal_outcome(2837, suppressed) | send_telegram(work) | log_agent_work(615)
+- **next_cycle_hint**: Theo dõi VPB (-6.98%) nếu xuất hiện price_anomaly signal trong agent bus. ACB Âu Lạc pattern tiếp tục — kiểm tra conviction có tăng lên không.
+- **estimated_tokens**: 9000
+
+### Alert Cycle (03:03–03:06 UTC, 2026-05-11)
+- Signals: urgent_news ×1 (ACB id=2842 conf 0.50)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026)
+- Notes: Market OPEN (03:03 UTC). ACB urgent_news id=2842 conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b skip: get_agent_signals requires `agent` param (price_anomaly filter unavailable). No legal/crisis signals. VHM +4.57%/price_surge alert present (MEDIUM, pre-existing). MACRO CRITICAL (Brent ±σ, Gold ±σ) already in queue since ~23:30. No new chain_catalyst. log_agent_work id=618.

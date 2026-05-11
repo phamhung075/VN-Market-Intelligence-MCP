@@ -160,3 +160,30 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 890 |
+
+### Cycle (03:38–03:45 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (EIB +4.51% 2.7σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF (US-Iran tensions, oil +3.96σ) | fx_pressure: [EIB] | pe_risk: []
+- Notable moves: EIB +4.51% (2.7σ, PE=37.7 vs sector 9.0, ROE=4.5% vs sector 17.6%, vs banking avg -0.5%) — speculative; VHM +3.90% (0.96σ, already alerted); GVR -2.52% (1.0σ)
+- Macro: Oil Brent 105.24 (elevated, US-Iran); Gold 4,693.8 (falling); Supply chain stable (BDI=1,400); Energy grid normal (hydro 70%)
+- HSG chain_catalyst (id=2845, anti-dumping AU 56%) active — no price confirm needed (-2.01%)
+- Open chain findings: 0 | Signals emitted: 1 (price_anomaly EIB id=2848)
+
+## Metrics (cycle 2026-05-11 03:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 26 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 6000 |
+
+## Cycle — 03:38 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**: EIB +4.51% (2.7σ) — anomaly vs banking sector -0.5%; PE=37.7 (4.2x sector median). Supply chain/energy normal. HSG chain_catalyst from news-scout active (AU anti-dumping 56%). Macro: oil extreme high, gold extreme low.
+- **actions**: post_agent_signal price_anomaly EIB → alert-commander (id=2848)
+- **next_cycle_hint**: Monitor EIB for continuation or reversal. Watch HSG/NKG for further selling pressure (AU anti-dumping catalyst active). GAS if US-Iran escalates further.
+- **estimated_tokens**: 6000
