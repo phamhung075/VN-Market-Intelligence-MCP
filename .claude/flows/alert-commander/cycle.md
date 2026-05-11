@@ -119,6 +119,13 @@ Fired: X | Suppressed: Y | Next: TIME
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
 - NEVER write entries for cycles that have not fired yet
 
+### Header update (required every cycle)
+Before appending the `### Alert Cycle` block, update line 3 of the notebook:
+```
+**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
+```
+Use `date -u` exclusively — same UTC source as the session log guard (1865a).
+
 `log_agent_work(...)` + append `docs/agent-memory/notebooks/alert-commander.md`:
 ```
 ### Alert Cycle (HH:MM–HH:MM UTC)

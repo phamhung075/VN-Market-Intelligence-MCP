@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 22:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (23:19–23:21 UTC) 2026-05-11
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 FPT, chain_catalyst×1 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: FPT fund bottom-fishing at multi-year low (urgent_news bullish 8/10 #2953), VIC Vingroup lawsuit 68 defendants settle (chain_catalyst bullish 8/10 #2954 → VHM/VRE/D2D)
+- Suppressed: EIB/STB banking personnel neutral 7 (no direction), HVN shareholder notice neutral 7 (no catalyst), VIC energy project neutral 7 (recurring), HSG AU anti-dumping 5 (below threshold this cycle), gold/Brent 0% change
+- Notes: Same FPT/VIC articles recurring across off-hours cycles — alert-commander dedup expected. Market closed.
 
 ### Cycle (22:19–22:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×2 FPT/VIC] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
