@@ -81,7 +81,7 @@ export function checkRegimeConfidenceThreshold(
   }
 
   const normalisedRegime = (regime ?? DEFAULT_REGIME).toUpperCase();
-  const threshold = REGIME_THRESHOLDS[normalisedRegime] ?? REGIME_THRESHOLDS[DEFAULT_REGIME];
+  const threshold = REGIME_THRESHOLDS[normalisedRegime] ?? REGIME_THRESHOLDS[DEFAULT_REGIME] ?? 0.6;
 
   if (confidence >= threshold) {
     return { pass: true };

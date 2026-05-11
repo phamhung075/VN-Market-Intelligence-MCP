@@ -248,7 +248,7 @@ export function parseAgentCycles(content: string): AgentCycleSummary {
   const cycleStartIndices: number[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    if (cycleHeaderRe.test(lines[i])) {
+    if (cycleHeaderRe.test(lines[i]!)) {
       cycleStartIndices.push(i);
     }
   }
@@ -279,7 +279,7 @@ export function parseAgentCycles(content: string): AgentCycleSummary {
     // Extract anomaly count: "Anomalies: N", "Anomalies Detected: N", "anomalies: N |"
     const anomalyMatch = block.match(/[Aa]nomal(?:ies|y)(?:\s+[Dd]etected)?:\s*(\d+)/);
     if (anomalyMatch) {
-      anomalyCount += parseInt(anomalyMatch[1], 10);
+      anomalyCount += parseInt(anomalyMatch[1]!, 10);
     }
   }
 
@@ -315,7 +315,7 @@ export function sumSessionTokens(
 
     let match: RegExpExecArray | null;
     while ((match = tokenRe.exec(content)) !== null) {
-      total += parseInt(match[1], 10);
+      total += parseInt(match[1]!, 10);
     }
     // Reset lastIndex for reuse across loop iterations
     tokenRe.lastIndex = 0;
