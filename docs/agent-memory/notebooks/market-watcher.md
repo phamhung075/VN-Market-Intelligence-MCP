@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 19:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 20:38 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -428,6 +428,26 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3000 |
+
+### Cycle (20:37–20:38 UTC)
+- Stocks: 28 (EOD snapshot 09:00 UTC, market CLOSED) | Anomalies: 0 new | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime inferred NEUTRAL (USD_VND 26,123 stable)
+- VRE -6.41% (1.78σ, below 2.0σ threshold) — suppressed. FPT -2.64% (2.03σ), EIB +2.71% (2.10σ) — both suppressed, already signaled in prior cycles.
+- Active agent signals: VIC Vingroup lawsuit win (news-scout, impact=8, status=read); FPT fund bottom-fishing (news-scout, impact=7, status=read)
+- Open chain findings: 0 (last 15 min)
+- Sector 1d: Tech -2.15%, Auto -2.54% worst | Oil&Gas +1.29%, Securities +0.48% best
+
+## Metrics (cycle 2026-05-11 20:37 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 4 |
+| signals_emitted | 0 |
+| signals_suppressed | 3 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 1800 |
 
 ### Cycle (18:37–18:39)
 - Stocks: 31 | Anomalies: 0 (market closed) | Volume spikes: 0 | Chain confirms: 9
