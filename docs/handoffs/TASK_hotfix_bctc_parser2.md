@@ -41,3 +41,23 @@
 - [ ] Verify DGC and BSR now show extraction_confidence ≤ 0.05 and validation_status = low_confidence
 - [ ] Confirm `get_bctc_full('DIG')` and `get_bctc_full('SHB')` return data after reparse
 - [ ] Confirm `get_bctc_full('FPT')` returns net_profit in plausible triệu range (not quadrillions)
+
+## VERIFY 1870a: FAIL — 2026-05-11 04:47 UTC
+
+Pre-reparse: net_revenue=20.22545, net_profit=14324284.500434, confidence=0.75, low_confidence
+Post-reparse (forced delete + disk-scan): net_revenue=20.22545, net_profit=14324284.500434 — unchanged.
+
+Root cause (new, not covered by hotfix_bctc_parser2):
+- FPT PDF is mixed-unit: balance sheet pages use raw VND (`Đơn vi: VND`), giải trình page uses triệu đồng.
+- `detectUnitMultiplier` hits P_DONG_ONLY on balance sheet → returns -1.
+- `P_NET_PROFIT` pattern matches balance-sheet line "Lợi nhuận sau thuế **chưa phân phối**" (item 421), extracting raw VND value 14,324,284,500,434.
+- Sentinel = max of all income fields = 14.3T > 1e9 → m resolved to 0.000001.
+- `netRevenue` (correctly extracted as 20,225,450 triệu from giải trình) is then divided by 1,000,000 → stored as 20.22545 triệu (wrong by ×1,000,000).
+- Expected: 20,225,450 triệu = ~20,225 tỷ ≈ correct for FPT Q4 2025 annual revenue.
+
+Proposed fix (task 1870b — 1 file, ≤3 lines):
+In `incomeStatementExtractor.ts`, add negative lookahead to P_NET_PROFIT:
+```typescript
+const P_NET_PROFIT = /l[ợo]i\s+nhu[ậa]n\s+sau\s+thu[ếe](?!\s+ch[ưu]a\s+ph[âa]n\s+ph[ốo]i)/i;
+```
+This prevents the balance-sheet retained-earnings line from contaminating the income statement sentinel.
