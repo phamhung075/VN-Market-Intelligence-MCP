@@ -154,8 +154,27 @@ process_commit() {
 
   # -------------------------------------------------------------------------
   # C3 — AC trailer presence when Task: trailer is present
+  # Exemptions (no AC expected by convention):
+  #   - scope starts with memory/ (notebook commits)
+  #   - type+scope is chore(state*) (pipeline bookkeeping)
+  #   - subject contains "merge task/" (merge bundle commits)
   # -------------------------------------------------------------------------
-  if [ -n "${ltask}" ]; then
+  local is_c3_exempt=false
+  if [ "${is_notebook}" = "true" ]; then
+    is_c3_exempt=true
+  fi
+  case "${lsubj}" in
+    chore\(state*\):*)
+      is_c3_exempt=true
+      ;;
+  esac
+  case "${lsubj}" in
+    *merge\ task/*)
+      is_c3_exempt=true
+      ;;
+  esac
+
+  if [ -n "${ltask}" ] && [ "${is_c3_exempt}" = "false" ]; then
     c3_denominator=$((c3_denominator + 1))
     if [ -n "${lac}" ]; then
       c3_pass=$((c3_pass + 1))
