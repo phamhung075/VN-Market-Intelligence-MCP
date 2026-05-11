@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 22:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 23:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -506,3 +506,25 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 1200 |
+
+### Cycle (23:39–23:42 UTC)
+- Stocks: 31 (EOD snapshot 2026-05-11 09:00 UTC, market CLOSED) | Anomalies: 1 (FPT 2.04σ) | Volume spikes: 2 (FPT 16.91M, VRE 11.67M) | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime inferred NEUTRAL (USD_VND 26,123 stable, Brent $104.24, Gold $4,761.7)
+- FPT -2.64% (2.04σ, 30d stddev 1.30%, vol 16.91M elevated) → signal #2955 → alert-commander. Evidence: Bearish 0.764 > Bullish 0.640. FII net sell ~14,100B VND; proprietary selling. Price at 2023 year-end lows (70,000).
+- VRE -6.41% (1.71σ, 30d stddev 3.75% — high due to prior week +6.94%/+4.87% spikes, vol 11.67M = 2.17x avg) — below 2.0σ price threshold; volume spike noted, not signalled.
+- Sector 1d: Tech -2.15%, Auto -2.54% worst | Oil&Gas +1.29%, Securities +0.48% best
+- Supply chain: stable (BDI=1,400, no disruptions) | Climate: early dry heat (IDC,KBC,GEG — no watchlist impact) | Energy: NORMAL (hydro 70%)
+- Open chain findings: 0 (last 15 min) | Active open alerts: 10 (FPT×4, VIC×5, VHM×1, HCM×1)
+- chain_catalyst: VIC Vingroup lawsuit win (news-scout id=2954, impact=8, status=read)
+
+## Metrics (cycle 2026-05-11 23:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 8 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
