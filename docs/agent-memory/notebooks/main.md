@@ -54,6 +54,14 @@
 - 1877a (SPRINT-S, 6 ACs) — audit script v1
 - 1872a-1..7 + TNB-c36-6 — prior work
 
+## Cycle 32 close commit race
+
+The cycle 32 close artifacts (notebooks/main.md + pipeline-state.json) landed in commit `f920a36d` titled `chore(memory/market-watcher): notebook 2026-05-11` — market-watcher's parallel cron staged its own notebook between my `git add` and my `git commit`, sweeping my staged files into its commit. Work is fully persisted but the commit message misattributes ownership.
+
+**Race trigger:** dev-team `git add` → market-watcher `git add` (its own notebook) → market-watcher `git commit -m '...market-watcher...'` consumed the entire index → dev-team `git commit` saw clean tree.
+
+**Mitigation for future cycles:** `git commit -- <files>` (path-restricted commit) when other crons are likely active. Or use `git stash`/`git diff --cached --name-only` to verify expected files before committing. Documenting as a flow improvement; not seeding a sprint for it (single-occurrence racing event, not systemic).
+
 ## Next cycle (33) intent
 
 - **Step 0a will drain TNB signal `tnb-2026-05-11T18:30:00Z.json` (HIGH priority)** — route to PO with 6 NEW findings payload
