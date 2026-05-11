@@ -252,3 +252,11 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - **actions**: WORK telegram sent (15:05 UTC, clean). Notebook committed.
 - **next_cycle_hint**: BCTC earnings season: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days). FPT HOT_MONEY foreign exit continues — watch if contagion to other tech. Alert accuracy still ~0.3% (bug #2292 open).
 - **estimated_tokens**: 11000 (22 tool calls)
+
+### Coordination Cycle (16:01–16:10 UTC) — 2026-05-11
+- Mode: MARKET (post-close) | System: OK (all 16 CBs clear, FPT balance_sheet/finance + EIB stats rate-limited transient post-BCTC, Reuters/TE offline persistent) | Alerts: 8 open (4 MEDIUM: VIC×3+VHM+HCM; 4 LOW: FPT×2+VIC×2 — all notified) | Quality issues: 0 new (alert accuracy bug #2292 ongoing)
+- Regime: NEUTRAL (unchanged — Brent 103.87, Gold 1,675, USD_VND 26,123, inflation 8%, ambiguous → NEUTRAL per protocol) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (khối ngoại heavy selling FPT/VHM, "tiền nóng co cụm" persistent)
+- Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | VRE -6.41%, HVN -2.92%, FPT -2.64% (lowest since 2023-end), EIB +2.71% outlier | China/Taiwan 50.5% (unchanged) | 4 CRITICAL macro alerts (Brent >5σ, Gold -5σ)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG) | Spam audit: 10 msgs checked (structured reports, no spam) | 0 agent signals
+- ⚠️ BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) — earnings trigger ready
