@@ -34,7 +34,7 @@ import { initBriefingsTables } from "./schema-briefings.js";
 import { initMacroTables } from "./schema-macro.js";
 import { initSystemTables } from "./schema-system.js";
 import { initBacktestingTables } from "./schema-backtesting.js";
-import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026 } from "./seedWatchlist.js";
+import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, migrateWatchlistThresholds } from "./seedWatchlist.js";
 
 /**
  * Default DB path — resolved to absolute path at module load time.
@@ -209,6 +209,12 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
   db.exec(
     `UPDATE watchlist SET domain = 'construction' WHERE code = 'HUT' AND domain = 'real_estate'`
   );
+
+  // Task 1869b-seed — populate watchlist alert_drop_pct defaults
+  // Standard tier: -7.0 (replaces old schema default -3 / NULL rows)
+  // High-vol tier: -9.0 (NVL, DPM, REE, VNH, KBC, MWG, TCH)
+  // Idempotent: rows already at correct value are untouched.
+  migrateWatchlistThresholds(db);
 
   // Sprint 079 / Task 1204: delete corrupted VCB Q1-2025 record
   db.prepare(`

@@ -17,6 +17,7 @@ description: >
 | analyze stock / news | `market-analyst` | `main` |
 | brainstorm / explore idea | `idea-forge` | `main` |
 | sprint status / in progress | `pm` | `main` |
+| queue / triage / verify / track task | `po` (scoping) or `pm` (mechanics) | `main` |
 | system health / audit | `system-auditor` | `main` |
 | DRY violations / hardcoded values | `code-janitor` | `main` |
 | update cowork agents | `cowork-refactory-expert` | `main` |
@@ -86,6 +87,7 @@ Full protocol → `.claude/knowledge/fail-loud-protocol.md`
 |------|---------|
 | DDD: `domain/` never imports `infrastructure/` | `.claude/knowledge/dev-standards.md` |
 | Restart: `docker-compose down && docker-compose up -d` ONLY | `.claude/knowledge/restart-policy.md` |
+| Main terminal NEVER writes `docs/TASKS.md`, `docs/handoffs/*`, `docs/pipeline-state.json` — spawn `po` / `pm` / dev-team | `.claude/knowledge/agent-chaining-protocol.md` |
 | Never ask user to run code — spawn subagent | |
 | WIP: max 2 tasks In Progress in `docs/TASKS.md` | |
 | SQL: parameterized bindings only | |

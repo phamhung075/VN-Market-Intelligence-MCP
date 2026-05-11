@@ -160,6 +160,66 @@ export function backfillBctcQ1_2026(db: Database): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// migrateWatchlistThresholds — Task 1869b-seed
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * High-volatility tickers that receive a wider drop threshold (-9.0).
+ * All other watchlist rows receive the standard threshold (-7.0).
+ *
+ * Selection rationale: real-estate / retail sectors with historical
+ * daily std-dev > 2σ of watchlist average (see handoff 1869b-seed).
+ */
+export const HIGH_VOL_TICKERS = [
+  "NVL", "DPM", "REE", "VNH", "KBC", "MWG", "TCH",
+] as const;
+
+export const STANDARD_DROP_PCT = -7.0;
+export const HIGH_VOL_DROP_PCT = -9.0;
+
+/**
+ * Migrates watchlist alert_drop_pct defaults (Task 1869b-seed).
+ *
+ * - Sets alert_drop_pct = -9.0 for HIGH_VOL_TICKERS.
+ * - Sets alert_drop_pct = -7.0 for all other rows where value is NULL or
+ *   still at the old schema default (-3).
+ *
+ * Idempotent: rows already at -7.0 or -9.0 are left untouched by the
+ * WHERE guard (only NULL / -3 rows are updated for standard tier).
+ * The high-vol UPDATE is also idempotent — re-running writes the same value.
+ *
+ * Returns { standard, highVol } counts of rows actually updated.
+ */
+export function migrateWatchlistThresholds(db: Database): {
+  standard: number;
+  highVol: number;
+} {
+  // Step 1: set standard tier — only rows still at old default (-3) or NULL
+  const standardResult = db
+    .prepare(
+      `UPDATE watchlist
+          SET alert_drop_pct = ${STANDARD_DROP_PCT}
+        WHERE (alert_drop_pct IS NULL OR alert_drop_pct = -3)
+          AND code NOT IN (${HIGH_VOL_TICKERS.map(() => "?").join(", ")})`
+    )
+    .run(...HIGH_VOL_TICKERS);
+
+  // Step 2: set high-vol tier unconditionally (idempotent — same value each run)
+  const highVolResult = db
+    .prepare(
+      `UPDATE watchlist
+          SET alert_drop_pct = ${HIGH_VOL_DROP_PCT}
+        WHERE code IN (${HIGH_VOL_TICKERS.map(() => "?").join(", ")})`
+    )
+    .run(...HIGH_VOL_TICKERS);
+
+  return {
+    standard: standardResult.changes,
+    highVol: highVolResult.changes,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // validateSeedTickers
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-11 02:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (04:19–04:25 UTC) 2026-05-11
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst×1 HSG/NKG, urgent_news×1 ACB] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG anti-dumping AU 56% preliminary margin (bearish steel, chain→HPG), ACB Âu Lạc 3rd accumulation to 6% (bullish), Brent $105.53 +4%↑mean (US-Iran breakdown, below >5% MoM threshold)
+- Suppressed: VN-Index macro commentary (no direct watchlist hit), MWG (not on watchlist), gold falling -3.89σ (no spike trigger)
+
 ### Cycle (03:19–03:24 UTC) 2026-05-11
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst×1 HSG/NKG, urgent_news×1 ACB] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default]
