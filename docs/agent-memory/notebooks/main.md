@@ -1,6 +1,102 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 08:06 UTC (Cycle 19 close — 2 sprints shipped from TNB c34 F1/F2)
+**Written:** 2026-05-11 10:03 UTC (Cycle 20 close — Sprint 1871 fully SHIPPED, 7 SPRINT-S tasks)
+
+## Cycle 20 SHIPPED Sprint 1871 (2026-05-11 10:03 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| 1871a | SPRINT-S | `309c8562` (in bundle `6c939b4b`) | ARCHITECTURE.md + project-stats.json counts: 132 tools / 59 cron / 62 scheduler files (doc-updated). |
+| 1871e | SPRINT-S | `dbab4db4` (in bundle `6c939b4b`) | tran-ngoc-bau flow get_agent_signals call fixed: `{agent="tran-ngoc-bau", status="all"}` (code-fixed, Path A). |
+| 1871g | SPRINT-S | `27bd6356` (in bundle `6c939b4b`) | alert-policy.md two-stage WRITE→DERIVE→READ verdict flow rewrite (doc-updated). |
+| 1871b | SPRINT-S | merge `6f161a4b` | ARCHITECTURE.md infrastructure/ tree expanded: 11 subdirs (added adapters, agents, cache, fileStore, microservices, observability, vps). fileStore/ entry calls out alertVerdictStore.ts. (doc-updated) |
+| 1871d | SPRINT-S | merge `2bcae2e5` | cron-registry.json backfilled: 41→62 entries, 21 missing jobs added. schedulerFileCount=59 matches cronConfig.ts. (doc-updated) |
+| 1871f | SPRINT-S | merge `30030baa` | DDD code-fix: domain/models/vnstockTypes.ts NEW (6 interfaces extracted from infra/fetchers/vnstockBridge). IVnstockRepository + SqliteVnstockRepository + vnstockStore re-imported from domain. domain/ now has 0 infra imports. (code-fixed) |
+| 1871c | SPRINT-S | merge `22bef183` | ARCHITECTURE.md Module Boundaries + tools/ folder tree: added analysis/ (sequential_market_analysis) + backtesting/ (3 tools). 12 modules total. (doc-updated) |
+
+## Cycle 20 process notes
+
+- **Two signals re-fired** between cycle 19 drain (07:30 UTC) and close (08:06 UTC). Both content-identical to processed/ copies. Drained as `routed-to-po-rerun`. TNB likely re-emits idempotently while audit file is unchanged; architect signal re-fire is more concerning (no cron source). **Flag for c35 TNB**: signal-dedup needed at drain layer or TTL on architect signals.
+- **Parallel-dispatch race in Tier 1** (1871a + 1871e + 1871g): all 3 developers shared the local git working dir, commits stacked on `task/1871a-arch-counts` branch instead of 3 dedicated branches. Commits were clean (different files, no conflicts), salvaged via single-bundle QA + merge `6c939b4b`. **Process fix applied Tier 2+: worktree isolation** via `isolation: "worktree"` Agent param. Tier 2 (3 parallel devs in worktrees) ran cleanly with 3 separate branches.
+- **Baseline truth-finding**: cycle 19 carried a phantom 9297/16 baseline. Authoritative from Tier-2 QA: **9168 pass / 12 fail / 38 skip** with **23 pre-existing TSC errors** on main. Cycle 20 deltas all 0.
+- **1871f baseline anomaly explained**: developer reported 9046/117 from worktree — root cause was broken symlink `apps/mcp-server/data/ → ../../data` in worktree (target path doesn't exist for subpath). NOT a code regression. QA verified vs authoritative main baseline.
+- **TNB c34 F3 = 1871e** closed (one-line flow fix). Pattern: undetected because Zod failure was swallowed by cowork error boundary. **Flag for c35**: error boundary should surface Zod validation failures to WORK channel, not silently continue.
+- **1872c candidate REJECTED** (not promotable to FIX): `update_analysis_brief` tool does NOT exist in `apps/mcp-server/src/` — entirely absent, not a SKILL_MANIFEST gap like 1872b. Needs BA scoping (tool spec + handler + storage + manifest + tests). Park as NEW-MEDIUM for next sprint.
+- **F7 lock pattern**: 0 occurrences this cycle (pre-emptive `rm -f` held). 5 cycles tracked but no actual triggers — pattern may be self-clearing.
+- **Worktree GC**: 4 worktrees still locked post-merge — will be GC'd by lifecycle. Verify next cycle.
+
+## Sprint 1871 summary (all 7 tasks shipped)
+
+7 architecture/code drift reconciliations now closed:
+- D1 (counts: 132/59/62) ✓
+- D2 (infrastructure/ tree 11 subdirs) ✓
+- D3 (Module Boundaries 12 modules) ✓
+- D4 (cron-registry 62 entries) ✓
+- D5 (TNB get_agent_signals param) ✓
+- D6 (IVnstockRepository DDD code-fixed) ✓
+- D7 (alert-policy.md two-stage verdict flow) ✓
+
+Reconciliation directions documented per task (5 doc-updated, 2 code-fixed). Divergence root-causes mostly trace to Sprint 1863/1864/1865 additions never re-syncing to docs (3-month doc-drift window).
+
+## Current baseline
+
+- **9168 pass / 12 fail / 38 skip** (authoritative main HEAD `98878473` per Tier-2 QA + post-merge)
+- **23 pre-existing TSC errors** — UNCHANGED through all 7 1871 merges. **NEW finding for c35**: investigate + escalate as separate FIX-MEDIUM (likely 1873a candidate).
+- toolCount=132, cronJobCount=59, schedulerFileCount=62 (now SSOT-aligned across ARCH + stats + registry)
+- currentSprint=1874 (incremented; 1871 + 1872 fully closed)
+- pipeline-state: idle
+
+## Carry-over to Cycle 21
+
+### New candidates (not yet PO-triaged)
+- **1873a candidate** — 23 pre-existing TSC errors on main. Investigate scope, sprint-size, fix. Architect-tier scoping likely.
+- **1872c candidate (carried)** — news-scout `update_analysis_brief` tool missing entirely. NEW-MEDIUM with BA scoping.
+- **Error boundary upgrade** — cowork error boundary swallows Zod validation failures silently (1871e revealed this). Surface to WORK channel.
+- **Signal re-fire dedup** — TNB + architect signals both re-fired this cycle. Drain-layer or TTL fix needed.
+- **Worktree GC verification** — 4 worktrees locked post-merge; lifecycle should clean them. Verify.
+- **agents-architect notebook commit** — no flow file; agent-father to add commit step at agent definition level (1872a tail).
+
+### Ops-gated (unchanged)
+- 1862c-D + 1862c-E — Cloudflare config
+- 1862c-F + 1862c-G — rebuild + observation gated
+- Reuters/TE 5-curl probe — ops to run
+- 1862g news-scout dedup undeployed (re-verify)
+
+### TNB c34 deferred findings (status)
+- F1 → SHIPPED as 1872a (cycle 19)
+- F2 → SHIPPED as 1872b (cycle 19)
+- F3 → SHIPPED as 1871e (this cycle)
+- F4 push-prices ASYNC — OPS-monitor only
+- F5 get_unreviewed_market_messages 79k overflow — architect-tier deferred
+- F6 climate/energy transient timeout — monitor (one-shot)
+- F7 doc self-heal blocked — architectural
+- F8 HEAD.lock recurrent — no triggers this cycle, pattern may be self-clearing
+- F9 system-auditor silent — cron fire expected 16:00 UTC today (~6h)
+
+### Monitoring (C-6 no re-trigger)
+- 2833, 2834, 2836, 2839, 2841, 2842, 2845, 2847 (unchanged; 2839 = 1872c-candidate parked)
+
+## Architecture state
+
+- 9-service Docker architecture operational since 2026-04-25
+- MCP server UP, 132 tools, 59 cron keys, 62 scheduler files
+- alertVerdictStore + verdictResolutionJob cron `7 * * * *` live; flow now correctly described in alert-policy.md (1871g)
+- domain/ folder has 0 infrastructure/ imports after 1871f
+- ARCHITECTURE.md fully reconciled with live code (Sprint 1871)
+- cron-registry.json SSOT-aligned (Sprint 1871)
+- All cowork notebook-writing flows have UTC + commit guard (1865a/b + 1869c + 1872a)
+- alert-commander skill manifest now correctly includes write_alert_verdict (1872b)
+- All 16 circuit breakers OK in DB
+
+## Next-cycle intent (Cycle 21)
+
+1. Drain new signals + reports (watch for re-fire pattern)
+2. PO triage — scope 1873a (TSC errors) and 1872c (BA for update_analysis_brief tool)
+3. Verify 4 worktrees auto-GC'd
+4. Check 16:00 UTC system-auditor fire → F9 close-loop
+5. Check if PO MARKET/WORK/BUG audit surfaces new issues
+
+---
 
 ## Cycle 19 SHIPPED Sprint 1872 (2026-05-11 08:06 UTC)
 
