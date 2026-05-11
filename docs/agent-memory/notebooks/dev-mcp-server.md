@@ -106,6 +106,22 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 **Commit:** `52d63b61`
 
+### Task 1880b — get_pyramid_tier MCP tool (#128) (2026-05-12, DONE)
+
+**Domain:** `classifyPyramidTier(assetClass: string): PyramidTierResult` — pure static Map lookup, 18 entries covering VN + global asset classes, 5 tiers (cash/bonds/equity/alt/speculative).
+**Normalization:** `.toLowerCase().trim()` before lookup. Unknown → `{ tier: null, reason: "unknown_asset_class" }`. Never throws.
+**MCP handler:** `registerPyramidTierTool` appended to `investmentClockTools.ts`. Input schema `{ asset_class: z.string() }`. Output `{ asset_class, tier, tier_description }`.
+**Registry:** tool #128, `registerPyramidTierTool` in `registry.ts`.
+**Tests:** 23 pass / 0 fail in `1880b-pyramid-tier.test.ts`. Full suite 9273 pass. tsc clean.
+**Commit:** `d73e70f7` on branch `task/1880b-pyramid-tier`.
+
+Key patterns:
+- Domain fn has zero imports (no infra, no schema). Arch brief §4 R4 maintained.
+- handler imports domain fn from `../../../../domain/services/macro/pyramidTier.js`
+- `tier_description` omitted from unknown-input return shape (undefined, not null)
+
+---
+
 ### Task 1876a-A1 — alertAccuracy precision denominator fix (2026-05-11 UTC, DONE)
 
 **Problem:** Top-level Tổng precision used `hits / totalAlerts`, including UNKNOWN rows in denominator. Understated real precision. Example: 1 HIT, 3 MISS, 10 UNKNOWN → showed 7% instead of 25%.
