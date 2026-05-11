@@ -321,20 +321,22 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | exit_status | complete |
 | token_estimate | 4200 |
 
-### Cycle (14:40–14:45 UTC) 2026-05-11
-- Stocks: 31 | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
-- Carry: FII_OUTFLOW_RISK | Market: CLOSED (off-hours cycle, EOD data)
-- Signal emitted: VRE -6.41% (2.23σ) → alert-commander (id=2898)
-- Context: VN-Index -20pts session, real_estate -1.36%, FII outflow pressure. HSG -2.81% below threshold (30d stddev inflated by May 4 -21.63% event ~0.45σ). Chain findings: 0 new (15m window).
+### Cycle (14:37–14:41)
+- Stocks: 28 | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Off-hours 4h cycle. Market CLOSED. Prices = EOD snapshot (09:00 UTC).
+- VRE -6.41% (1.78σ, below 2.0σ threshold — 30d stddev ~3.6% incl. prior week volatility swings).
+- HSG -2.81% (0.47σ, stddev ~6.0% inflated by May-04 -21.63% crash). Anti-dumping catalyst (news-scout id=2901, HSG+NKG, AU 56% margin) noted.
+- EIB/FPT signals already emitted in prior cycles (11:38, 12:41 UTC) — suppressed dedup.
+- Open chain findings: 0.
 
-## Metrics (cycle 2026-05-11 14:40 UTC)
+## Metrics (cycle 2026-05-11 14:41 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 31 |
-| signals_emitted | 1 |
-| signals_suppressed | 4 |
+| items_fetched | 7 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
 | market_alerts_fired | 0 |
 | exit_status | complete |
-| token_estimate | 4200 |
+| token_estimate | 3800 |
