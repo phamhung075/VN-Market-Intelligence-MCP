@@ -16,6 +16,18 @@
 
 ---
 
+### Alert Cycle (11:03–11:03 UTC) — 2026-05-11
+- Signals: price_anomaly ×2 (FPT, HVN)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: NEUTRAL (N/A%) | Pivot window: false
+- Market: CLOSED | Legal: clear | Crisis: clear
+- Suppressed: FPT price_anomaly σ=2.04 conf=0.50 (below 0.80 + σ<4.0) | HVN price_anomaly σ=2.56 conf=0.50 (below 0.80 + σ<4.0)
+- VN-Index: 1,895.50 -1.04% | Broad selloff: BDD/real_estate/tech led by VRE -6.41%, FPT -2.64%, HVN -2.92%
+- Note: [SKIP] No tool: get_macro_calendar (not in agent package)
+
+---
+
 ## Recent session — 2026-05-10
 
 **Cycles run:** 00:01 (BLOCKED — MCP unreachable), 01:01, 02:01, 03:05, 04:02, 05:02, 06:02, 07:02 (BLOCKED at start), 08:02, 10:04, 14:xx, 20:03 UTC
