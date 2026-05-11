@@ -4,6 +4,28 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1869b-seed — Watchlist alert_drop_pct migration (2026-05-11, DONE)
+
+**Problem:** All watchlist rows had `alert_drop_pct = -3` (old schema default). 1869b wired per-stock thresholds into `detectSignals` but DB still had stale values.
+
+**Fix:** `migrateWatchlistThresholds(db)` in `seedWatchlist.ts`:
+- Standard tier: `UPDATE watchlist SET alert_drop_pct = -7.0 WHERE (alert_drop_pct IS NULL OR alert_drop_pct = -3) AND code NOT IN (high-vol-list)`
+- High-vol tier: `UPDATE watchlist SET alert_drop_pct = -9.0 WHERE code IN ('NVL','DPM','REE','VNH','KBC','MWG','TCH')`
+- Wired in `schema.ts` post-init migrations section (called after all tables created)
+- Idempotent: standard guard `IS NULL OR = -3` skips already-migrated rows
+
+**Key findings:**
+- No `migrations/` folder exists. Pattern = TS functions in `seedWatchlist.ts` + post-init block in `schema.ts`
+- HIGH_VOL_TICKERS not in WATCHLIST_SEED — they may be in prod DB as custom additions
+- `alert_rise_pct` default is already correct (5) — no migration needed
+- Negative sign convention confirmed: `-7.0` and `-9.0`
+
+**Tests:** 10 new in `1869b-seed-watchlist-thresholds.test.ts` — AC1-AC6 + full 25+7 scenario. All pass.
+
+**Counts:** 9153 pass / 16 fail (16 pre-existing). SHA 44d5bf2c. 3 files touched.
+
+---
+
 ### Task 1869b — Wire watchlistThresholds into scanMarket (2026-05-11, DONE)
 
 **Problem:** `detectSignals(snapshot)` — no second argument. `volatilityCalculator.ts` produced thresholds, `signalDetector.ts` accepted them, but `scanMarket.ts` never passed them. Dead wiring since Task 133.
