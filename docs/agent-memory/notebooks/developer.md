@@ -1,8 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877d
+**Last updated:** 2026-05-11 | **Sprint:** 1877e
 
 ## Last session summary
+
+Task 1877e-2: Flow tightening — PM + QA commit convention documentation.
+- pm/main.md: +5 LOC block after "End of cycle" — 4 C2-exempt patterns + mandatory Task trailer rule for sprint-scoped delivery commits.
+- qa/main.md: +1 LOC after merge-commit AC-exempt note — non-merge sprint-scoped commits MUST carry Task trailer.
+- developer/main.md: NO CHANGE — lines 45-46 already patched in 1877d (AC-1 spot-check PASS).
+- AC-1 PASS (lines 45-46 intact). AC-2 PASS (PM convention block present). AC-3 PASS (QA Task trailer mandate present). AC-4 PASS (no other flows modified). AC-5 PASS (no markdown syntax errors). AC-6 PASS (developer Task mandate confirmed).
+- Net LOC: +6 across 2 files. Doc-only, no code change.
+- Deviation: accidental commit to 1877e-3 branch then reverted cleanly; final commits on correct task/1877e-2-flow-tightening branch.
+- Branch: task/1877e-2-flow-tightening | Commits: b0b768e5 (pm), 6fa357af (qa).
+- Pipeline: status=in_progress, nextAgent=qa.
+
+## Previous last session summary
 
 Task 1877d: C3 AC-trailer gap closure — exemption policy for notebook/state/merge commits.
 - Patch site 1 (audit.sh): added `is_c3_exempt` flag + 3 `case` branches (notebook=is_notebook, chore(state*):*, *merge\ task/*). C3 denominator skipped when exempt.

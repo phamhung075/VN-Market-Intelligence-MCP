@@ -30,6 +30,14 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: N/A | Pivot window: false
 
+### Alert Cycle (20:01–20:02 UTC) — 2026-05-11
+- Signals: urgent_news ×1 (VIC id=2926), price_anomaly ×3 (EIB id=2929, FPT id=2930, VRE id=2931)
+- Fired: 0 | Suppressed: 4 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: VIC urgent_news id=2926 (Vingroup thắng kiện 68 cá nhân/tổ chức, conv 0.50 < 0.60, no price_anomaly override, no always-MARKET trigger) | EIB price_anomaly id=2929 (σ=2.10, get_alerts empty, σ<4.0) | FPT price_anomaly id=2930 (σ=2.03, get_alerts empty, σ<4.0) | VRE price_anomaly id=2931 (σ=1.71, get_alerts empty, σ<4.0)
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours)
+
 ### Alert Cycle (19:02–19:02 UTC) — 2026-05-11
 - Signals: urgent_news ×2 (FPT id=2921, VIC id=2922)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
