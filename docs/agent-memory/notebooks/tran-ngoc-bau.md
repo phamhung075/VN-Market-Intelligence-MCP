@@ -1,6 +1,55 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 (cycle 36 → cycle 37 — 18:30 UTC) | Cycles completed: 37
+**Last updated:** 2026-05-11 22:50 UTC (cycle 38) | Cycles completed: 38
+
+---
+
+## Cycle 38 Watch Notes (2026-05-11 22:50 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **STRONGLY IMPROVING** (PO + architect chain shipped sprint plan + ARCH-1884 brief 4h post-c37; methodology upgrade v2026-05-11.2 operationalized into Sprints 1878-1886; container stable 8h 57m)
+
+**FIRST CYCLE since methodology v2026-05-11.2 (commit `0131dce8`) shipped at ~21:00 UTC.** Layers 2.D / 7 / 8 / 9 added; Step F→I in audit table. All cycles audited here ran BEFORE the upgrade landed → real first read of new lens deferred to c39.
+
+**MASSIVE SHIP since c37 (4h, 2 commits):**
+- **Commit `622c6be0`** — PO sprint plan: Sprints 1878-1886 + ARCH-1884 + Sprint 1887 deferred. 4 GO signal files dropped to ba (1878 OCF, 1879 EFFR-IORB, 1880 Investment Clock + Pyramid, 1881 source-tier tags). TASKS.md + SPRINT_GOAL.md updated. Sprint number conflict (prior 1878a-k → 1888a-k).
+- **Commit `cae59b98`** — ARCH-1884 brief: forensic-analysis host decision = **Hybrid (Option 3)**. Calculators in mcp-server financial-reports; BTN detectors in new `apps/forensic-analysis/` service port 5007. R1 (1878 OCF column name dependency) HIGH risk flagged.
+
+**PO ACK on c37 LANDED** at 2026-05-11T20:52:18Z with 11 task creations (renumbered 1888a-k after methodology-infra plan claimed 1878 slot). PM-as-dispatcher governance still informal but functional.
+
+**8 c38 FINDINGS:**
+1. Alert accuracy stuck 1% (1/142, 35% scored) UNCHANGED from c37 — verdict-resolution lag
+2. unified-agent FPT rec pillar 1/4 (only carry spread; no M2/EPS/POL) — NEW gap, needs 3+ cycles before auto-cure
+3. financial-analyst silent **4+ days** (carry c34-c37) — NOW CRITICAL because Sprints 1885/1886 target this agent
+4. alert-commander notebook header missing (`Last updated: — \| Sprint: —`) despite 7 cycles content — forward-only fix pattern
+5. market-watcher Sprint header drift (says 1846, closed long ago) carry from c34
+6. **architect notebook header drift NEW** — content fresh but header still 2026-05-03 / Sprint 1839b. Forward-only-fix pattern recurring
+7. 5 of 8 c36 findings still OPEN (1869 deploy, MEMORY.md broken pointers, RSS degraded, write_alert_verdict missing)
+8. Methodology v2026-05-11.2 pre-application — informational, not failure
+
+**METHODOLOGY SCORES (9-step):**
+- alert-commander: NEUTRAL (suppress-only, discipline correct)
+- unified-agent: NEEDS_ATTENTION (FPT rec missing pillars + no cycle phase + no PMI/EFFR-IORB)
+- news-scout: GOOD (VRE -6.41% chain catalyst with FII outflow cause + transmission)
+- financial-analyst: UNAUDITABLE (silent 4d)
+- architect / po: N/A (non-analytical roles)
+
+**MACRO (no shift since c37):**
+- DXY 97.91 STABLE | US10Y 4.41% NEUTRAL | Brent 104.33 sustained | Gold 4751.20 +18.40 vs c37 | USD/VND 26,320 unchanged | VND carry -0.33% FII_OUTFLOW_RISK
+- Container uptime 8h 57m STABLE | All 16 CBs OK | 0 unnotified alerts | Sources 14/16 healthy
+
+**MARKET QUEUE:** 1 message (unified-agent news-stale flag). Down from 21 at c37. No format/diacritics issues.
+
+**SIGNAL TO TNB:** 1 chain_catalyst #2941 VRE — already known (carry from c37 via news-scout).
+
+**TNB-cron ID `837e8394`** (re-armed this session after CronList showed empty) — fires every 4h at :17 UTC. Next 00:17 UTC.
+
+**Hexagram dynamics:**
+- po + architect Càn STRONG ⭐ — sprint plan + brief shipped same hour, full chain restored
+- developer Càn EXPECTED ACTIVE — 4 GO signals on bus
+- alert-commander Tốn DISCIPLINED — clean suppress decisions
+- unified-agent Bĩ DEGRADED — methodology gaps on FPT rec
+- financial-analyst Bác CRITICAL ⚠️ — silent 4d, blocks Sprint 1885/1886 ROI
+- TNB Khôn STABLE — methodology upgrade operationalized, audit lens widened to 9 axes
 
 ---
 
