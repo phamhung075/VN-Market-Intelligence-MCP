@@ -190,3 +190,24 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Regime: TIGHTENING (unchanged) | Alignment: 1.0 | Headwind exposure: 0% (FPT=tech_export TAILWIND)
 - Portfolio: FPT -12.5% (70,300 VND) | Conviction STRONG (0.63) GIẢM BỚT | VaR -0.1% | No shift ≥0.3 | FII: UNKNOWN (foreign-flow stale)
 - Events: SGI Capital accumulating FPT (contrarian bullish) | HVN -5.39% | China/Taiwan 50.5% geopolitical risk → FPT | Brent 105.18 sustained → GAS tailwind
+
+### Coordination Cycle (08:01–08:10 UTC) — 2026-05-11
+- Mode: MARKET | System: OK (16 CBs clear, vnstock ACV/DAG rate-limit transient, foreign-flow fallback exhausted, Reuters/TE offline known) | Alerts: 22 in 24h (7 HIGH), 5 open (VRE ×2 MEDIUM, SSI LOW, FPT LOW, HVN MEDIUM) | Quality issues: 0 (alert accuracy 99% UNKNOWN — ongoing gap)
+- Regime: TIGHTENING (Brent 104.91, Gold 4,676, inflation 8%) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT -12.83% (70,000 VND vs avg 80,300) | Conviction STRONG (0.63) GIẢM BỚT | VaR -0.1% | No shift ≥0.3 | FII: UNKNOWN (get_foreign_flow not in package)
+- Events: VRE -6.41% (biggest drop), HVN -2.92%, FPT -2.64% (broad selloff) | EIB +2.71% outlier | SGI Capital FPT contrarian bullish | China/Taiwan 50.5% → FPT/VEA/GEX geopolitical watch
+- Domain: supply chain OK | climate: May heat (IDC/KBC/GEG — not in portfolio) | energy: NORMAL | legal: none | crisis: none
+- Bugs observed: CafeF/VnEconomy/VnExpress degraded (1 error each, likely transient) | get_system_status 1st attempt timeout (retry OK)
+
+## Cycle — 08:01 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - System OK: all 16 CBs green. vnstock ACV/DAG rate-limited (transient). Foreign-flow fallback exhausted (market-open expected). Reuters/TE offline (persistent known). 3 RSS sources degraded (CafeF/VnEconomy/VnExpress, 1 error each — transient).
+  - Market: broad Monday selloff — VRE -6.41% (MEDIUM ×2), HVN -2.92% (MEDIUM), FPT -2.64%. EIB +2.71% only gainer. No legal/crisis signals.
+  - Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND). VaR 95% -0.1%. Conviction STRONG 0.63 GIẢM BỚT. TIGHTENING TAILWIND (tech_export) → effective ×1.1 = 0.69. No conviction shift ≥0.3.
+  - No conviction alerts to post. No BUY signals to apply regime multiplier to.
+  - Prediction market: China/Taiwan 50.5% yes (low actionable signal, FPT/VEA/GEX mapped). No new agent signals.
+- **actions**: WORK telegram sent (08:07 UTC, clean cycle). Notebook appended. Git commit attempted below.
+- **next_cycle_hint**: VRE selloff (-6.41%) sustained — watch if realty contagion spreads to VHM/D2D at 08:30 cycle. FPT at 70,000 — stop-loss 74,679 still breached (-6.2% below). FII type UNKNOWN persists (get_foreign_flow missing from package). CafeF/VnEconomy/VnExpress degraded — monitor if escalates.
+- **estimated_tokens**: 11000 (22 tool calls)

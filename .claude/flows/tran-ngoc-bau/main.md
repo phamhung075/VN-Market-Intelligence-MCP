@@ -80,7 +80,7 @@ For agents with quality issues found in Step 3:
 ## Phase 3: Signal Quality
 
 **Step 5 — Signal bus audit**
-`get_agent_signals(limit=200, hours=24)` → all signals in last 24h
+`get_agent_signals(agent="tran-ngoc-bau", status="all")` → all signals addressed to tran-ngoc-bau
 
 Check:
 - Confidence distribution: flag if >50% of signals have default confidence (0.50)

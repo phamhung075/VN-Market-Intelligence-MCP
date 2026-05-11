@@ -132,3 +132,14 @@
 - Fired: HVN CRITICAL — price_anomaly 2.26σ, bearish, confirmed via open alert
 - Suppressed: ACB urgent_news (conf 0.50 < 0.60), SSI urgent_news (conf 0.50 < 0.60), NKG price_anomaly (sigma 2.10 < 4.0, not confirmed)
 - Anomalies: write_alert_verdict not found; record_signal_outcome(2866) returned climate data
+
+## Cycle — 08:06 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - HVN price_anomaly 2.26σ fired CRITICAL to MARKET — 3rd consecutive down session, aviation sector -1.78%, Brent $105/bbl + USD/VND 26,305 dual headwinds
+  - 3 signals suppressed: ACB/SSI urgent_news below NEUTRAL threshold (0.50 < 0.60); NKG price_anomaly sigma 2.10 < 4.0 + not confirmed via get_alerts
+  - Regime NEUTRAL, Carry FII_OUTFLOW_RISK (-0.33%), no legal/crisis signals, no chain_catalyst in bus
+- **actions**: 1 MARKET alert fired (HVN CRITICAL), 3 outcomes recorded suppressed, log_agent_work id=629 completed
+- **next_cycle_hint**: Monitor NKG/HSG — anti-dumping 56% preliminary margin from Australia embedded in NKG payload; watch for standalone chain_catalyst signal. VRE -6.41% has open alert but no bus signal — check if market-watcher will escalate. write_alert_verdict tool missing — needs investigation.
+- **estimated_tokens**: 18000
