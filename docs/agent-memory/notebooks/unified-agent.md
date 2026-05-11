@@ -177,3 +177,10 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Portfolio: FPT only (-12.0%, 70,700 VND vs avg 80,300) | VaR 95%: -0.1% OK | Conviction 0.62 STRONG GIẢM BỚT (unchanged) | No conviction shift ≥0.3 | FII type: UNKNOWN (foreign-flow data unavailable)
 - Domain: Supply chain stable | Climate: heat risk May (IDC/KBC/GEG, not in portfolio) | Energy grid: NORMAL | Insider signals: SKIP (no portfolio sweep per flow policy) | Legal: none | Crisis: none
 - Bugs: Spam audit SKIP (file inaccessible in sandbox) | get_climate_risk_signals: 1 retry needed (resolved) | get_unreviewed_market_messages: output too large (79k chars, file path unresolvable in sandbox)
+
+### Coordination Cycle (06:01–06:08 UTC) — 2026-05-11
+- Mode: MARKET | System: OK (Reuters/TE offline recurring, foreign-flow fallback) | Alerts: 12 | Quality issues: 0 bugs
+- Regime: TIGHTENING | Alignment: 1.0 | Headwind exposure: 0% (FPT=tech_export TAILWIND)
+- MACRO EXTREME: Brent +3.96σ (105.42), Gold -3.89σ (4668.5) — US-Iran geopolitical tension
+- Portfolio: FPT 100% (-12.1% unrealized) | Conviction STRONG (0.62) → GIẢM BỚT | VaR 95%: -0.1%
+- FII type: UNKNOWN (no foreign flow data). Crisis: None. Legal risk: None.

@@ -98,3 +98,10 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026)
 - Notes: Market OPEN (05:02 UTC). ACB urgent_news id=2850 (Âu Lạc tăng lên 6%) conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b: get_agent_signals(price_anomaly, ACB) → no hits → no override. EIB price_anomaly id=2852 (EIB +3.84%, 2.65σ) — not confirmed via get_alerts (no active price alerts); 2.65σ < 4.0σ override threshold. No legal/crisis signals. No chain_catalyst. No verified_chain. Macro: Brent $105.83, Gold $4682 — ongoing macro_deviation since 23:30 UTC, outside signal matrix scope. Carry spread -0.33% FII_OUTFLOW_RISK persists.
+
+### Alert Cycle (06:04–06:09 UTC, 2026-05-11)
+- Signals: urgent_news ×1 (ACB id=2853 conf 0.50) | price_anomaly ×2 (EIB id=2857 conf 0.50, HVN id=2858 conf 0.50)
+- Fired: 1 | Suppressed: 2 | MARKET: 1
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: unknown | Pivot window: false (next: June 2026)
+- Notes: Market OPEN (06:04 UTC). ACB urgent_news id=2853 (Nhóm Âu Lạc tăng từ 5%→6% vốn ACB, impact_score=8) — conviction 0.50 < 0.60 NEUTRAL threshold BUT "large insider >$5M or >5% stake" always-MARKET rule applied → FIRED. Kinh Dịch ACB: Quẻ Sư (7) MUA 100%. EIB price_anomaly id=2857 (3.64σ) — not confirmed via get_alerts (empty); 3.64σ < 4.0σ override → Suppressed. HVN price_anomaly id=2858 (2.63σ) — not confirmed via get_alerts (empty); 2.63σ < 4.0σ → Suppressed. Legal: none. Crisis: none. VN-Index 1,918.64 +0.17%. Pre-send divergence: ACB -0.22% (safe). Bug: write_alert_verdict tool not found → BUG telegram sent to work. log_agent_work id=624.

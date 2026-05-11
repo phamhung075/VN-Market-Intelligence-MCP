@@ -1,6 +1,20 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 05:35 UTC (Cycle 17 close — first cycle using 1865b's own UTC guard)
+**Written:** 2026-05-11 06:32 UTC (Cycle 18 close — idle, c34 mitigation verified)
+
+## Cycle 18 IDLE (2026-05-11 06:32 UTC)
+
+- 0 new telegram reports, 0 signals drained
+- 8 unresolved reports — all `monitoring` (2833, 2834, 2836, 2839, 2841, 2842, 2845, 2847). C-6 guard active, no Step 1 re-entry.
+- Branches: only `main`. Baseline 9163/15.
+- **c34 PO-ACK gap mitigation verified:** `docs/handoffs/tnb-audit-latest.md` ACK section persists in git via `ba55819e` (cycle 17 close commit). The fix landed — no overwrite/loss recurrence.
+- **1870b regex fix validated post-hoc:** New BCTC report 2848 (2026-05-11T04:43:30Z FPT) resolved as `fixed` at 05:15 UTC. Confirms P_NET_PROFIT retained-earnings exclusion is working in prod pipeline. Stale 2841 (FPT) + 2842 (VNM) remain monitoring; will auto-expire at 72h (~13:06 UTC on 2026-05-13).
+- **Reuters/TE probe:** still pending ops.
+- **system-auditor 16:00 UTC:** still ahead (~9.5h).
+
+No notebook rewrite — appended idle entry only.
+
+---
 
 ## Cycle 17 SHIPPED Sprint 1871 (2026-05-11)
 
