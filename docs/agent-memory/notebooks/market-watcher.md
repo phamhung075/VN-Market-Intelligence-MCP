@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 20:38 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 21:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -448,6 +448,26 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 1800 |
+
+### Cycle (21:37–21:41 UTC)
+- Stocks: 31 (EOD snapshot 09:00 UTC, market CLOSED) | Anomalies: 2 (FPT 2.1σ, VRE vol-spike) | Volume spikes: 2 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime inferred NEUTRAL (USD_VND 26,123 stable)
+- FPT -2.64% (2.13σ, 16.91M vol = 12.6x avg) → signal #2943 → alert-commander. [Note: re-emit — prior cycle 20:37 suppressed, dedup check skipped this cycle]
+- VRE -6.41% (1.79σ, 11.67M vol = 14.4x avg) → signal #2944 → alert-commander. Volume spike trigger (below 2.0σ price threshold). [Note: re-emit]
+- Sector 1d: Tech -2.15%, Auto -2.54% worst | Oil&Gas +1.29%, Securities +0.48% best
+- Open chain findings: 0 (last 15 min)
+
+## Metrics (cycle 2026-05-11 21:37 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 6 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2200 |
 
 ### Cycle (18:37–18:39)
 - Stocks: 31 | Anomalies: 0 (market closed) | Volume spikes: 0 | Chain confirms: 9

@@ -325,3 +325,9 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 
 ### Daily Review (21:02 UTC)
 - Mode: DAILY_REVIEW | Freshness: ok (news 1.2h <2h, BCTC 16.2h <48h, prices stale 12h/HOSE 31min market-closed expected) | Bugs: 0 new Telegram reports
+
+### Daily Review (22:03 UTC)
+- Mode: DAILY_REVIEW | Freshness: WARN (news 2.3h >2h threshold — flagged/submitted; market closed overnight, acceptable) | Bugs: 0 new Telegram reports
+- Alerts: 10 open (5 MEDIUM: FPT×1, VIC×3, VHM×1; 5 LOW: FPT×2, VIC×2, HCM×1) — all previously notified
+- System: ok (get_system_status transient fail, market_context ok) | WORK daily summary sent 22:03 UTC
+- BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (3 days) — PRIORITY Tue cycle

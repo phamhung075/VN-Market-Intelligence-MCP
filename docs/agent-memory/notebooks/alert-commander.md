@@ -265,3 +265,12 @@
 - **actions**: 3 signals suppressed + recorded; WORK status sent; log_agent_work id=651; notebook written (git commit failed — HEAD.lock held by host process, data persisted).
 - **next_cycle_hint**: Monitor VRE (-6.41%), FPT (-2.64%) at next open (02:00 UTC Tue) for continuation. Watch FII flow re: CARRY_REGIME escalation. EIB divergence (+2.71%, 9.3x vol) warrants banking sector watch.
 - **estimated_tokens**: 7000
+
+### Alert Cycle (22:02–22:02 UTC, 2026-05-11)
+- Signals: urgent_news ×3 (FPT id=2938 conf 0.50, VIC id=2939 conf 0.50, HSG id=2940 conf 0.50) | price_anomaly ×2 (FPT id=2943 σ=2.1, VRE id=2944 σ=1.79)
+- Fired: 0 | Suppressed: 5 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (inferred from market-watcher signal detail) | Carry: unknown ([SKIP] get_macro_snapshot not in package) | Pivot window: false
+- Suppressed: FPT urgent_news id=2938 (quỹ tích lũy tại đáy 70k, conv 0.50 < 0.60, no price_anomaly override — no active signals) | VIC urgent_news id=2939 (Vingroup thắng kiện 68 cá nhân, conv 0.50 < 0.60, no override) | HSG urgent_news id=2940 (Úc điều tra chống bán phá giá 56%, conv 0.50 < 0.60, no override) | FPT price_anomaly id=2943 (σ=2.1, get_alerts empty, σ<4.0) | VRE price_anomaly id=2944 (σ=1.79, get_alerts empty, σ<4.0)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: CLOSED (off-hours 2h cycle)
+- log_agent_work id=659
