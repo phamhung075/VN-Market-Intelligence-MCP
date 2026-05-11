@@ -83,3 +83,23 @@
 **Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
 
 **Quality:** Full
+
+---
+
+## Session 14 (2026-05-11 06:15–06:20 VN) — verdictResolutionJob.ts + signalDetector.ts review
+
+**Scope:** git diff HEAD~50..HEAD (7 production TS files: verdict+audit jobs, signal detector, alert tools, cron config)
+
+**Result:** CLEAN — 0 violations in 5 checks
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | No ticker classification maps |
+| Ticker arrays | 0 findings | No hardcoded ticker arrays |
+| Magic numbers / crons | 0 findings | verdictResolutionJob: TWENTY_FOUR_HOURS_MS + PRUNE_MAX_AGE_DAYS extracted (lines 60-61). signalDetector: DEFAULT_DROP_PCT = -7 centralized (commit d884be66). All proper SSOT. |
+| Schema duplication | 0 findings | All DDL in schema.ts canonical sources |
+| Config drift | 0 findings | All ?? patterns are safe DI injection fallbacks |
+
+**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
+
+**Quality:** Full
