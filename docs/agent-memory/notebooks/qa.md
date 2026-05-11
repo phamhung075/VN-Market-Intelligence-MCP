@@ -2,6 +2,19 @@
 
 **Last updated:** 2026-05-11 | **Sprint:** 1872a
 
+## Recent session — 2026-05-11 (1872a-3 ARCHITECTURE.md SSOT pointers)
+
+**1872a-3 — docs/ARCHITECTURE.md AC3+AC6 SSOT pointers:**
+Doc-only. Smart-skip tsc/tests (pre-push hook tsc ran on remote delete — PASS). DDD/security N/A.
+
+AC3 PASS: line 78 — "132 tools, 59 cron jobs, HTTP clients to 8 other services" → exact architect-brief phrasing: `tool count → docs/data/project-stats.json#toolCount; scheduler count → docs/data/project-stats.json#cronJobCount; HTTP clients to all configured downstream services`.
+AC6 PASS: line 53 — inline docker cmd → exact architect-brief phrasing: `see .claude/knowledge/restart-policy.md (SSOT — docker-compose only, 9 services)`.
+Task commit: 1b4f23a6. Merge SHA: fe82b9f9.
+Non-blocking: commit scope `docs(architecture)` vs required `docs(1872a/architecture)` per convention; Sprint: trailer absent. Both minor, doc-only task.
+Branch task/1872a-3-architecture-md-ssot-pointers deleted local+remote. TASKS.md 1872a-3 → Done.
+
+APPROVED.
+
 ## Recent session — 2026-05-11 (1872a-2 README SSOT pointers)
 
 **1872a-2 — README.md AC2+AC5+AC6 SSOT pointers:**
