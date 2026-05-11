@@ -320,3 +320,21 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (14:40–14:45 UTC) 2026-05-11
+- Stocks: 31 | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Carry: FII_OUTFLOW_RISK | Market: CLOSED (off-hours cycle, EOD data)
+- Signal emitted: VRE -6.41% (2.23σ) → alert-commander (id=2898)
+- Context: VN-Index -20pts session, real_estate -1.36%, FII outflow pressure. HSG -2.81% below threshold (30d stddev inflated by May 4 -21.63% event ~0.45σ). Chain findings: 0 new (15m window).
+
+## Metrics (cycle 2026-05-11 14:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 1 |
+| signals_suppressed | 4 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
