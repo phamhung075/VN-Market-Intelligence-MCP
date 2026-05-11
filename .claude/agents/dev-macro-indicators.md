@@ -21,7 +21,7 @@ agent:
   responsibilities:
     - All code changes within apps/macro-indicators/ only
     - Doc-review flow run after every code change
-    - macro-indicators docs kept current in docs/microservices/macro-indicators/
+    - macro-indicators docs kept current in docs/architecture/microservice/macro-indicators/
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -80,13 +80,13 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/macro-indicators/**  # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/macro-indicators/**  # domain-model, usecases, infrastructure, api-reference, testing, README
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, data sources, or config
       - Keep own agent description (.claude/agents/dev-macro-indicators.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/macro-indicators/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/macro-indicators/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -96,15 +96,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/macro-indicators/domain-model.md
+      - path: docs/architecture/microservice/macro-indicators/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/macro-indicators/usecases.md
+      - path: docs/architecture/microservice/macro-indicators/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/macro-indicators/infrastructure.md
+      - path: docs/architecture/microservice/macro-indicators/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/macro-indicators/api-reference.md
+      - path: docs/architecture/microservice/macro-indicators/api-reference.md
         trigger: api_work
-      - path: docs/microservices/macro-indicators/testing.md
+      - path: docs/architecture/microservice/macro-indicators/testing.md
         trigger: test_work
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms

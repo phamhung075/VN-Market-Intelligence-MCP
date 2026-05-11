@@ -21,7 +21,7 @@ agent:
   responsibilities:
     - All code changes within apps/technical-analysis/ only
     - Doc-review flow run after every code change
-    - technical-analysis docs kept current in docs/microservices/technical-analysis/
+    - technical-analysis docs kept current in docs/architecture/microservice/technical-analysis/
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -80,13 +80,13 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/technical-analysis/**  # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/technical-analysis/**  # domain-model, usecases, infrastructure, api-reference, testing, README
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, indicators, or config
       - Keep own agent description (.claude/agents/dev-technical-analysis.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/technical-analysis/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/technical-analysis/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -96,15 +96,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/technical-analysis/domain-model.md
+      - path: docs/architecture/microservice/technical-analysis/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/technical-analysis/usecases.md
+      - path: docs/architecture/microservice/technical-analysis/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/technical-analysis/infrastructure.md
+      - path: docs/architecture/microservice/technical-analysis/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/technical-analysis/api-reference.md
+      - path: docs/architecture/microservice/technical-analysis/api-reference.md
         trigger: api_work
-      - path: docs/microservices/technical-analysis/testing.md
+      - path: docs/architecture/microservice/technical-analysis/testing.md
         trigger: test_work
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms

@@ -14,7 +14,7 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with agent id, e.g. `dev-stock-price`)
 
-**Step 0c — Load service documentation** → read `docs/microservices/<service>/README.md` for service context. Lazy-load other docs as needed per DDD layer touched.
+**Step 0c — Load service documentation** → read `docs/architecture/microservice/<service>.md` for service context. Lazy-load other docs as needed per DDD layer touched.
 
 **Pre-code checklist**
 1. Confirm task status in docs/TASKS.md
@@ -67,7 +67,7 @@ REPEAT per acceptance criterion
 - **Git commits:** [hash message]
 - **Type check:** clean ✓
 - **Service tests:** N pass / 0 fail ✓
-- **Docs updated:** [docs/microservices/<service>/... — what changed] | NONE
+- **Docs updated:** [docs/architecture/microservice/<service>/... — what changed] | NONE
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 

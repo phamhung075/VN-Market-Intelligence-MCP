@@ -21,7 +21,7 @@ agent:
   responsibilities:
     - All code changes within apps/api-gateway/ only
     - Doc-review flow run after every code change
-    - api-gateway docs kept current in docs/microservices/api-gateway/
+    - api-gateway docs kept current in docs/architecture/microservice/api-gateway/
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -79,13 +79,13 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/api-gateway/**  # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/api-gateway/**  # domain-model, usecases, infrastructure, api-reference, testing, README
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, routing, or config
       - Keep own agent description (.claude/agents/dev-api-gateway.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/api-gateway/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/api-gateway/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -95,15 +95,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/api-gateway/domain-model.md
+      - path: docs/architecture/microservice/api-gateway/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/api-gateway/usecases.md
+      - path: docs/architecture/microservice/api-gateway/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/api-gateway/infrastructure.md
+      - path: docs/architecture/microservice/api-gateway/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/api-gateway/api-reference.md
+      - path: docs/architecture/microservice/api-gateway/api-reference.md
         trigger: api_work
-      - path: docs/microservices/api-gateway/testing.md
+      - path: docs/architecture/microservice/api-gateway/testing.md
         trigger: test_work
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search

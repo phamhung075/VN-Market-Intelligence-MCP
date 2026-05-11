@@ -93,7 +93,7 @@ agent:
     reads: [<other.db>]
   doc_maintenance:
     owns:
-      - docs/microservices/<service>/**
+      - docs/architecture/microservice/<service>/**
       - .claude/knowledge/<related-knowledge>.md
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, schema, or config

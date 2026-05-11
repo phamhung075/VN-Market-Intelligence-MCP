@@ -80,14 +80,14 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/alert-engine/**    # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/alert-engine/**    # domain-model, usecases, infrastructure, api-reference, testing, README
       - .claude/knowledge/alert-policy.md     # Alert policy rules (update when thresholds/cooldown change)
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, alert logic, or config
       - Keep own agent description (.claude/agents/dev-alert-engine.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/alert-engine/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/alert-engine/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -97,15 +97,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/alert-engine/domain-model.md
+      - path: docs/architecture/microservice/alert-engine/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/alert-engine/usecases.md
+      - path: docs/architecture/microservice/alert-engine/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/alert-engine/infrastructure.md
+      - path: docs/architecture/microservice/alert-engine/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/alert-engine/api-reference.md
+      - path: docs/architecture/microservice/alert-engine/api-reference.md
         trigger: api_work
-      - path: docs/microservices/alert-engine/testing.md
+      - path: docs/architecture/microservice/alert-engine/testing.md
         trigger: test_work
       - path: .claude/knowledge/alert-policy.md
         trigger: alert_implementation

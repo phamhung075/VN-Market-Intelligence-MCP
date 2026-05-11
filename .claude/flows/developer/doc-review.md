@@ -4,7 +4,7 @@
 
 **Input:** `SERVICE=<service-name>` (e.g. `stock-price`, `pdf-extractor`)
 
-**Output:** Updated docs in `docs/microservices/<service>/`
+**Output:** Updated docs in `docs/architecture/microservice/<service>/`
 
 ---
 
@@ -63,7 +63,7 @@ Document with concrete details:
 
 ## Step 3 — Update service README
 
-Update `docs/microservices/<service>/README.md` if any of these changed:
+Update `docs/architecture/microservice/<service>.md` if any of these changed:
 - Service dependencies (new external API, new DB table)
 - Port or configuration changes
 - New domain concepts introduced

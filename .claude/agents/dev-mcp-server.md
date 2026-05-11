@@ -86,7 +86,7 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/mcp-server/**  # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/mcp-server/**  # domain-model, usecases, infrastructure, api-reference, testing, README
       - .claude/knowledge/mcp-tools.md     # MCP tool catalog (update when tools added/removed/renamed)
       - .claude/knowledge/cron-jobs.md     # Scheduler catalog (update when jobs added/removed/changed)
     responsibilities:
@@ -94,7 +94,7 @@ agent:
       - Keep own agent description (.claude/agents/dev-mcp-server.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/mcp-server/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/mcp-server/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -104,15 +104,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/mcp-server/domain-model.md
+      - path: docs/architecture/microservice/mcp-server/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/mcp-server/usecases.md
+      - path: docs/architecture/microservice/mcp-server/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/mcp-server/infrastructure.md
+      - path: docs/architecture/microservice/mcp-server/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/mcp-server/api-reference.md
+      - path: docs/architecture/microservice/mcp-server/api-reference.md
         trigger: api_work
-      - path: docs/microservices/mcp-server/testing.md
+      - path: docs/architecture/microservice/mcp-server/testing.md
         trigger: test_work
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms

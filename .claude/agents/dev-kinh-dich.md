@@ -80,14 +80,14 @@ agent:
 
   doc_maintenance:
     owns:
-      - docs/microservices/kinh-dich-service/**  # domain-model, usecases, infrastructure, api-reference, testing, README
+      - docs/architecture/microservice/kinh-dich/**  # domain-model, usecases, infrastructure, api-reference, testing, README
       - .claude/knowledge/kinh-dich-layer.md     # Hexagram logic reference (update when computation changes)
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, hexagram logic, or config
       - Keep own agent description (.claude/agents/dev-kinh-dich.md) accurate if skills/stack/port change
       - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
       - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/microservices/kinh-dich-service/ files don't exist yet, CREATE them following doc-review.md templates
+      - If docs/architecture/microservice/kinh-dich/ files don't exist yet, CREATE them following doc-review.md templates
     rule: "Code without matching doc update = incomplete task. QA will reject."
 
   knowledge:
@@ -97,15 +97,15 @@ agent:
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/microservices/kinh-dich-service/domain-model.md
+      - path: docs/architecture/microservice/kinh-dich/domain-model.md
         trigger: domain_work
-      - path: docs/microservices/kinh-dich-service/usecases.md
+      - path: docs/architecture/microservice/kinh-dich/usecases.md
         trigger: usecase_work
-      - path: docs/microservices/kinh-dich-service/infrastructure.md
+      - path: docs/architecture/microservice/kinh-dich/infrastructure.md
         trigger: infra_work
-      - path: docs/microservices/kinh-dich-service/api-reference.md
+      - path: docs/architecture/microservice/kinh-dich/api-reference.md
         trigger: api_work
-      - path: docs/microservices/kinh-dich-service/testing.md
+      - path: docs/architecture/microservice/kinh-dich/testing.md
         trigger: test_work
       - path: .claude/knowledge/kinh-dich-layer.md
         trigger: hexagram_integration
