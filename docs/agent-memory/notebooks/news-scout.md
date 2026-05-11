@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 10:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (11:15–11:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst×1 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: VIC Phạm Nhật Vượng energy 158k tỷ Điện Biên (chain_catalyst neutral #2887, chain→POW/PPC/JSH)
+- Suppressed: HSG/NKG AU anti-dumping 56% (impact 5, below threshold — already fired prev cycles), FPT foreign sell 14.1k tỷ (impact 5, in alert queue), MWG bullish (not on watchlist)
 
 ### Cycle (10:21–10:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst×1 HSG+NKG+HPG] | Regime: NEUTRAL | Carry: NEUTRAL

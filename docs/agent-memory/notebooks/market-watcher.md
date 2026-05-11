@@ -287,3 +287,19 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (11:38–11:47 UTC)
+- Stocks: 31 | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Notes: Market CLOSED (off-hours, 4h cycle). FPT -2.64% (2.04σ) — foreign net sell ~14,100B VND, proprietary also selling, price at 2023-year-end lows; signal id=2888 → alert-commander. VRE -6.41% (1.71σ, below threshold — high 30d volatility from prior week's +6.94%/+4.87% spikes). Open chain findings: 0.
+
+## Metrics (cycle 2026-05-11 11:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 10 |
+| signals_emitted | 1 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3100 |
