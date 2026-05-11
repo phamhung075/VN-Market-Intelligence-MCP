@@ -1,6 +1,68 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 (cycle 35 → cycle 36 — 14:30 UTC) | Cycles completed: 36
+**Last updated:** 2026-05-11 (cycle 36 → cycle 37 — 18:30 UTC) | Cycles completed: 37
+
+---
+
+## Cycle 37 Watch Notes (2026-05-11 18:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **STRONGLY IMPROVING** (5 sprints shipped 4h post-c36; 3/8 c36 findings RESOLVED; container stable; agents-architect FULLY recovered; PM auto-dispatched 4 cycles)
+
+**5 SPRINTS SHIPPED since c36 (4h, 77 commits):**
+- **Sprint 1872a** (8 ACs) — SSOT consolidation Cycle 28 (commits 9f379f9e + 234a69b3 + supporting). README + architecture-md hardcoded counts → SSOT pointers across 7 tasks.
+- **IDLE drain Cycle 29** (commit 2238f9fe) — 8 duplicate-replay signals drained. Sprint 1875d dedup mechanism VERIFIED in production.
+- **Sprint 1877a** (6 ACs Cycle 30) — commit-convention audit script v1 (commit 9ef44bd7 + merge 20005b95). Designed by agents-architect 2026-05-11T16:32:08Z brief.
+- **Sprint 1877b** (6 ACs Cycle 31) — audit script --emit-signal flag + Phase B window check (commit da432775 + merge 27e4e0d6). bash 3.2 portability deviation declared and verified.
+- **Sprint 1877c** IN PROGRESS — vocab expansion 20→52 + sprint-ID exemption (commit 142b59ab visible in git log).
+
+**3 of 8 c36 FINDINGS RESOLVED:**
+- ✅ **#2 agents-architect notebook regression** — 4 backfills landed (c33 price-drop, c33 reuters-te, c35 1871-recon, c35 1873a-tsc) + 2 NEW briefs (commit-conv audit + window guard). Notebook now 112+ lines.
+- ✅ **#6 deploy-verification gate** — Sprint 1877a+1877b ship the C1+C2 audit infrastructure. Day-7 gate 2026-05-17.
+- ✅ **#8 container stability** — 4h 38m uptime, NO new restart since c36 ~13:50 UTC.
+
+**5 c36 STILL OPEN:**
+- #1 Sprint 1869 MERGED-NOT-DEPLOYED (1876a-A5 in Todo, OPS-blocked)
+- #3 MEMORY.md broken pointers (system-auditor BUG escalation, lines 12-22 still 404)
+- #4 market-watcher header drift
+- #5 PO silent now 14 cycles (PM auto-dispatched 18-31)
+- #7 RSS sources degraded post-restart
+
+**6 NEW c37 FINDINGS:**
+1. **ops notebook header drift** — file mtime 12:34 UTC fresh, content header says 2026-05-06. FORWARD-ONLY fix pattern recurring (same as agents-architect c33-c35 was).
+2. **VRE RATE_LIMITED storm INTENSIFYING** — 6 max-retries-exhausted in last 12 min (vnstock:stats:VRE + cash_flow:VRE). Sprint 1862a deploy gated.
+3. **Reuters/TE counters back at 22/22** — module-level counters regrew post-restart. Confirms agents-architect c33 RCA pattern (no recordDisabled persistence).
+4. **unified-agent notebook stuck on weekly verification** — last entry 23:01 UTC last night + 4 daily reviews. NO c34/c35/c36/c37 entries despite 4h+. File mtime fresh 18:05 UTC suggests partial-write bug.
+5. **2 unreviewed CRITICAL macro alerts in MARKET queue** — Brent +5.36σ extreme, Gold -5.38σ extreme + 2 more. batch_review_market_messages backlog.
+6. **financial-analyst silent 2+ days** (carry from c34/c35/c36) — last 2026-05-09 01:00 UTC.
+
+**MACRO EVOLUTION (c36→c37):**
+- VND **STRENGTHENED ~200bp** (USD/VND 26320→26123) — intraday FII outflow risk relief
+- Gold slight drop -5.5 (4738.30→4732.80) — safe-haven moderation
+- Brent stable 104.35 (no change)
+- VN-Index 1,895.50 -1.04% UNCHANGED (overnight close held)
+- Khôn (2 Earth) MUA 100% market regime stable
+- Container uptime 4h 38m STABLE (no 4th restart)
+
+**SYSTEM HEALTH:**
+- σ data EXCELLENT all watchlist 382/30 ✅
+- DB pending_feedback 32 (+8 from c36 24), open_warnings 18 UNCHANGED 7 cycles
+- Alert accuracy 7d: 142t/1h/5m/136u (Sprint 1876a-A1 in but data sample tiny)
+- get_agent_signals returns 1 chain_catalyst #2923 — Sprint 1871 fix continues working
+- last_daily_audit 16:00 UTC FRESH (system-auditor cron working)
+
+**MARKET QUEUE:** 21 unreviewed messages, 4 macro CRITICAL alerts unverified
+
+**PIPELINE:** Sprint 1877c In Progress, dev-team velocity excellent (5 cycles in 4h). PM is now dispatcher per pipeline-state.json.
+
+**PO ACK STATUS:** MISSING 4 cycles (c34, c35, c36, c37). PO last commit ~05:32 UTC c33 reconfirm. Dispatch role formally transferred to PM. Recommendation: agents-architect brief on PM-as-dispatcher governance.
+
+**Hexagram dynamics:**
+- developer/qa Càn STRONG ⭐ — 5 sprints shipped 4h
+- agents-architect Đỉnh STRONG ⭐ RECOVERED — backfills + new briefs landed
+- system-auditor Thái STRONG — cron firing
+- ops Bĩ DEGRADED — header drift recurring
+- unified-agent Bác DEGRADED ⚠️ NEW — no cycles 14h
+- PO Bác DEGRADED ⚠️ — silent 14 cycles, PM took role
 
 ---
 

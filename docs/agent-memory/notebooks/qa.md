@@ -1,6 +1,31 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877b
+**Last updated:** 2026-05-11 | **Sprint:** 1877c
+
+## Recent session — 2026-05-11 (1877c — C4 scope-vocab remediation)
+
+**1877c — VOCAB 20→52 + sprint-ID exemption:**
+Shell script + knowledge doc. DDD/security N/A. bash -n CLEAN.
+
+6 ACs re-run from scratch (no --emit-signal):
+- AC-1 PASS: bash -n exit 0.
+- AC-2 PASS: C4=0.9826 (169/172). ≥0.95 threshold MET.
+- AC-3 PASS: violations = [cycle-28, *, c26] only. 5 sprint-ID commits spot-checked — none in violations.
+- AC-4 PASS: *, c26, cycle-28 all present in violations array.
+- AC-5 PASS: two runs identical on all numeric fields. window.until differs (dynamic "now" — expected).
+- AC-6 PASS: grep for local -n / declare -A / mapfile / [ >= ] → 0 hits.
+
+VOCAB: 52 tokens, exact match to brief §4.1, alphabetically sorted. No extras, no missing.
+Sprint-ID pattern: `case "${first4}" in [0-9][0-9][0-9][0-9])` — POSIX-safe.
+Knowledge file: 8-line area-token table + sprint-ID exemption note confirmed.
+
+Non-blocking: dev claimed 168/171 (0.9825); actual run yielded 169/172 (0.9826) — consistent with architect note (additional compliant commits since sampling). Verdict still better than required.
+
+Merge SHA: 9e19cd4b. Branch task/1877c-c4-vocab-remediation deleted. TASKS.md 1877c In Progress → Done. pipeline-state idle.
+
+Overall audit verdict: C1 PASS, C2 FAIL (0.5694), C3 FAIL (0.7722), C4 PASS. 1877c scope = C4 only. C2/C3 separate concern.
+
+APPROVED.
 
 ## Recent session — 2026-05-11 (1877b — signal guard for commit-convention audit script)
 
