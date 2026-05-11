@@ -24,6 +24,14 @@
 - **next_cycle_hint**: Monitor FPT foreign sell-pressure (khối ngoại -14,100B VND — largest on market). Watch VRE -6.41% for stop-loss or verified_chain escalation. VN-Index -20pt session warrants elevated threshold vigilance next open.
 - **estimated_tokens**: 13000
 
+### Alert Cycle (23:01–23:03 UTC) — 2026-05-11
+- Signals: urgent_news ×2 (FPT id=2946, VIC id=2947)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Pivot window: false
+- Suppressed: FPT urgent_news id=2946 (smart-money bắt đáy, conf=0.50 < 0.60 NEUTRAL threshold, no price_anomaly override) | VIC urgent_news id=2947 (Vingroup kiện 68 cá nhân/tổ chức thành công, conf=0.50 < 0.60, no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: none | Market: CLOSED (off-hours)
+
 ### Alert Cycle (11:03–11:03 UTC) — 2026-05-11
 - Signals: price_anomaly ×2 (FPT, HVN)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
