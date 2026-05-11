@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 18:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 19:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -406,6 +406,28 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (19:38–19:41 UTC)
+- Stocks: 31 (EOD snapshot 09:00 UTC, market CLOSED) | Anomalies: 2 (>2.0σ) | Volume spikes: 3 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime inferred NEUTRAL (USD_VND 26,123 stable, no explicit macro block)
+- EIB +2.71% (2.10σ, 25.04M vol = 9.3x avg) → signal #2929 → alert-commander. Counter-trend vs banking sector -0.76%.
+- FPT -2.64% (2.03σ, 16.91M vol = 4.14x avg) → signal #2930 → alert-commander. Bearish evidence 0.7637 > bullish. FII net sell ~14,100B VND; price at 2023 year-end lows.
+- VRE -6.41% (1.71σ, 11.67M vol = 2.47x avg) → signal #2931 → alert-commander. Volume spike trigger (below 2.0σ price threshold). Reversal of prior week's rally.
+- Supply chain: stable (BDI=1,400, no disruptions) | Open chain findings: 0 (last 15 min)
+- Sector 1d: Tech -2.15%, Auto -2.54% worst | Oil&Gas +1.29%, Securities +0.48% best
+- Active agent signals: VIC Vingroup lawsuit win (news-scout, impact=8); FPT fund accumulation at lows (news-scout, impact=7)
+
+## Metrics (cycle 2026-05-11 19:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3000 |
 
 ### Cycle (18:37–18:39)
 - Stocks: 31 | Anomalies: 0 (market closed) | Volume spikes: 0 | Chain confirms: 9
