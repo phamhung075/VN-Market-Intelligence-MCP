@@ -8,8 +8,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1878a | METHODOLOGY-INFRA: OCF column migration in `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts` — add `operating_cash_flow` column to financial_reports + verify vnstock cash-flow sync writes to `vnstock_cash_flow` table (or backfill bridge). SSOT: methodology Layer 7 (Cash-Flow Reality). Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | — |
-| 1878b | METHODOLOGY-INFRA: `compute_accruals(ticker, quarters)` MCP tool — pure function = (NetIncome − OperatingCashFlow) / TotalAssets, returns time series. Depends on 1878a. SSOT: methodology Layer 7. Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | 1878a |
+| 1878a | METHODOLOGY-INFRA: OCF column migration — add `operating_cash_flow REAL NULLABLE` to `financial_reports` + `bridgeOCFToFinancialReports(db, ticker)` in `vnstockStore.ts` + `backfillAllOCF(db)` + idempotent `ALTER TABLE` migration in `schema-financial-reports.ts`. Unit: `operating_cf_bn * 1000.0` (tỷ→triệu VND mandatory). Period join: `period_year+period_quarter = year_report+quarter`; skip annual (`period_quarter IS NULL`). NULL handling: NULLABLE, no DEFAULT. Bridge strategy: live (called from `storeCashFlow`) + backfill. Open Qs (non-blocking): (1) wire `backfillAllOCF` into migration block vs CLI; (2) bridge updates all-ticker-quarters vs just-inserted. Arch advisory (non-blocking): DDD placement of `bridgeOCFToFinancialReports` (infra acceptable per spec). Spec: `docs/specs/1878a-ocf-column-migration.md` SHA 5a57f377. SSOT: methodology Layer 7. Owner: dev-mcp-server. | HIGH | FEATURE | dev-mcp-server | — | — |
+| 1878b | METHODOLOGY-INFRA: `compute_accruals(ticker, quarters)` MCP tool — pure function = (NetIncome − OperatingCashFlow) / TotalAssets, returns time series. Depends on 1878a (OCF column must be populated). SSOT: methodology Layer 7. Owner: dev-mcp-server. | HIGH | FEATURE | dev-mcp-server | — | 1878a |
 | 1879a | METHODOLOGY-INFRA: EFFR–IORB FRED fetcher in `apps/macro-indicators` — pull both series from FRED API, persist to macro store. SSOT: methodology Layer 2.D (Liquidity microstructure). Owner: ba spec → dev-macro-indicators. | HIGH | FEATURE | ba | — | — |
 | 1879b | METHODOLOGY-INFRA: `get_fed_liquidity_spread()` MCP tool — returns latest EFFR-IORB spread + 30d trend. Depends on 1879a. SSOT: methodology Layer 2.D. Owner: ba spec → dev-macro-indicators + dev-mcp-server. | HIGH | FEATURE | ba | — | 1879a |
 | signal-T3 | SIGNAL-DEDUP: `scripts/migrations/dedup-signals-live.ts` — deduplicate live `signals_processed` table rows by fingerprint, keep oldest per fingerprint. Depends on signal-T2 (DONE cb232b26). Blocks: signal-T4. | HIGH | FEATURE | developer | — | — |
@@ -54,7 +54,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1878a-spec | METHODOLOGY-INFRA: BA spec for OCF column migration — `operating_cash_flow` column in financial_reports + vnstock cash-flow sync bridge. SSOT: methodology Layer 7. Branch: spec/1878a-ocf-column. Owner: ba. | HIGH | SPEC | ba | — | 2026-05-12 |
 
 ---
 
@@ -69,6 +68,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1878a-spec | METHODOLOGY-INFRA: BA spec — `operating_cash_flow` column migration spec. 10/10 sections delivered (objective, schema, sourcing, unit/scale, period mapping, AC×6, out-of-scope, file list, TDD×7, risk/unknowns). Key decisions: NULL (no DEFAULT), *1000 conversion mandatory, bridge live+backfill both. VCB AC query verified. No production code (spec-only). Cherry-pick SHA 5a57f377 on main. Branch spec/1878a-ocf-column deleted. QA APPROVED 2026-05-12. | HIGH | SPEC | ba | 2026-05-12 |
 | NB-HDR-c38 | CHORE: Notebook header drift bundle — add `### Header update (required every cycle)` + UTC date capture to alert-commander/cycle.md + architect/main.md. 3 notebooks (financial-analyst, news-scout, unified-agent) appended by parallel agents (forward-only, safe). Merge SHA c4e4c1ab. TNB c38 findings #4 (alert-commander) + #5 (architect) CLOSED. Finding #6 (market-watcher) was already compliant — no patch needed. QA APPROVED 2026-05-12. | LOW | CHORE | agent-father | 2026-05-12 |
 | 1880b | METHODOLOGY-INFRA: `get_pyramid_tier(asset_class)` MCP tool (#128) — pure domain function, Maslow-style risk tier {cash, bonds, equity, alt, speculative}. DDD PASS, 23/23 tests, TSC 0 errors. Merge SHA cb232b26. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
 | signal-T2 | SIGNAL-DEDUP: `scripts/migrations/backfill-signals-db.ts` — scan processed/*.json, INSERT OR IGNORE with fingerprint, idempotent (57 scanned/57 skipped on re-run). 10/10 tests pass. Merge SHA cb232b26. QA APPROVED 2026-05-12. Unblocks signal-T3. | HIGH | FEATURE | developer | 2026-05-12 |
