@@ -177,6 +177,15 @@ export async function runTaAlertNotifier(
   const database = deps?.db ?? (await defaultGetDb());
   const nowFn = deps?.nowFn ?? (() => new Date());
 
+  // ── FR-5 observability: log pending price_anomaly signals before processing ─
+  try {
+    interface CountRow { cnt: number }
+    const pending = database.prepare<CountRow, []>(
+      `SELECT COUNT(*) AS cnt FROM agent_signals WHERE signal_type='price_anomaly' AND outcome IS NULL`,
+    ).get()?.cnt ?? 0;
+    logger.info(`[taAlertNotifier] starting — agent_signals.price_anomaly pending=${pending} processed_last_run=?`);
+  } catch { /* agent_signals may not exist yet — best-effort */ }
+
   // ── FR-1: Fetch unnotified TA alert rows ──────────────────────────────────
   const rows = database
     .prepare<AlertRow, []>(`

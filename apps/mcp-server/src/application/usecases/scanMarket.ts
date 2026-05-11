@@ -571,6 +571,9 @@ export async function scanMarket(
         count: alerts.length,
         codes: alerts.map((a) => a.actionCode),
       });
+      for (const a of alerts) {
+        logger.info(`[scanMarket] alert_written ticker=${a.actionCode} type=${a.signals[0]?.type ?? "unknown"} severity=${a.severity} notified_telegram=0 — emission_bridge_to_agent_signals=MISSING (1876a/B1 pending)`);
+      }
     } catch (err) {
       logger.error("[scanMarket] storeAlerts failed", {
         error: err instanceof Error ? err.message : String(err),

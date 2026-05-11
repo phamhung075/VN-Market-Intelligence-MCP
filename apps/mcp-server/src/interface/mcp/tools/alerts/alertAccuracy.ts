@@ -337,8 +337,9 @@ export function formatAccuracyReport(
     return emptyReport(`Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`);
   }
 
-  const hitPct = Math.round((hits / totalAlerts) * 100);
-  const missPct = Math.round((misses / totalAlerts) * 100);
+  const scoreable = hits + misses;
+  const hitPct = scoreable === 0 ? 0 : Math.round((hits / scoreable) * 100);
+  const missPct = scoreable === 0 ? 0 : Math.round((misses / scoreable) * 100);
   const unknownPct = 100 - hitPct - missPct;
 
   const lines: string[] = [

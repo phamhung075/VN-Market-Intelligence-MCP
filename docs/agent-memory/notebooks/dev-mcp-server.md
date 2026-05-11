@@ -4,6 +4,28 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1876a-A2 — Emission bridge gap log in scanMarket.ts (2026-05-11, DONE)
+
+**Change:** After `storeAlerts()` returns, loop over each alert and emit:
+`[scanMarket] alert_written ticker=X type=Y severity=Z notified_telegram=0 — emission_bridge_to_agent_signals=MISSING (1876a/B1 pending)`
+3 LOC. Logging-only. No logic change.
+
+**Result:** TSC clean. Test suite exit 0. Confirms VRE -6.41% class of silent alerts will now be visible in container logs.
+
+**Next:** Sprint 1877 B1 implements the actual bridge (agent_signals emission).
+
+---
+
+### Task 1876a-A3 — FR-5 observability log in taAlertNotifierJob (2026-05-11, DONE)
+
+**Change:** Added startup log at top of `runTaAlertNotifier` emitting `pending=<N>` count of `price_anomaly` signals with `outcome IS NULL`. Wrapped in try/catch (best-effort). `processed_last_run=?` (no stats table). 9 LOC, logging-only.
+
+**Result:** 28 pass / 0 fail. tsc clean. Log confirmed in test output (pending=1 when signals seeded, pending=0 otherwise).
+
+**After Sprint 1877 B1 (bridge):** log will show `pending=N>0` confirming emission bridge is live.
+
+---
+
 ### Task 1869b-seed — Watchlist alert_drop_pct migration (2026-05-11, DONE)
 
 **Problem:** All watchlist rows had `alert_drop_pct = -3` (old schema default). 1869b wired per-stock thresholds into `detectSignals` but DB still had stale values.
@@ -83,3 +105,13 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 - `apps/mcp-server/src/__tests__/1850f-fixture-contamination.test.ts` (7 new tests, all pass)
 
 **Commit:** `52d63b61`
+
+### Task 1876a-A1 — alertAccuracy precision denominator fix (2026-05-11 UTC, DONE)
+
+**Problem:** Top-level Tổng precision used `hits / totalAlerts`, including UNKNOWN rows in denominator. Understated real precision. Example: 1 HIT, 3 MISS, 10 UNKNOWN → showed 7% instead of 25%.
+
+**Fix:** Changed L340 to `hits / (hits + misses)` with divide-by-zero guard (scoreable=0 → 0%). Matches per-type formula at L369. 4 LOC change.
+
+**Test:** `src/__tests__/1876a-precision-denominator.test.ts` — 2 cases, both pass.
+
+**Commit:** `6d1ad3af`

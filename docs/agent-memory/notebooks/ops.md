@@ -95,3 +95,57 @@ Multiple agents reported "Docker/MCP offline 18h+" — this was FALSE. All 9 ser
 
 **Status:** Findings reported to WORK channel. Container rebuild gates: 1862a (RPM 80) + 1862f (Reuters/TE backoff) + 1862j (sigma dedup) + 1865a (UTC guard) — all 4 fixes merged but undeployed.
 
+
+---
+
+## Task 1876a-A4 — Watchlist Threshold Migration Verification ❌ FAILED
+
+**Date:** 2026-05-11T11:48:54Z  
+**Status:** DEPLOYMENT BUG — Sprint 1869b-seed migration NOT applied to production DB
+
+**Query Executed:**
+```sql
+SELECT code, alert_drop_pct, alert_rise_pct FROM watchlist WHERE code IN ('VRE', 'NVL', 'HPG', 'MWG', 'DPM') ORDER BY code;
+```
+
+**Diagnostic Results:**
+
+| code | alert_drop_pct | alert_rise_pct | expected | status |
+|------|----------------|----------------|----------|--------|
+| VRE  | -3.0           | 5.0            | -7.0     | FAIL |
+| NVL  | NOT FOUND      | —              | -9.0     | FAIL |
+| HPG  | -3.0           | 5.0            | -7.0     | FAIL |
+| MWG  | NOT FOUND      | —              | -9.0     | FAIL |
+| DPM  | NOT FOUND      | —              | -9.0     | FAIL |
+
+**Full Watchlist Status:**
+- All 31 watchlist rows stuck at **-3.0** (old schema default before Sprint 1869a)
+- Expected after migration: Standard stocks → **-7.0**, High-vol tier (NVL/DPM/REE/VNH/KBC/MWG/TCH) → **-9.0**
+- High-vol tickers NVL, MWG, DPM: **NOT PRESENT** in watchlist table at all
+- No migration tracking tables found in DB — migration runner has no audit trail
+
+**Verdict: FAIL**
+
+**Root Cause Analysis:**
+1. Migration never executed on production DB (all rows remain at -3.0 old default)
+2. High-vol tickers missing from watchlist (may indicate separate seed issue or incomplete watchlist init)
+3. Per Task 1869b-seed handoff: standard tier should be -7.0, high-vol -9.0. Neither condition met.
+
+**Impact:**
+- `detectSignals()` wired in 1869b will use stale -3.0 thresholds, not tuned -7.0/-9.0 values
+- Alert precision suffers; high-vol stocks not receiving adjusted thresholds
+- Defeats purpose of adaptive threshold system (Sprint 1869a+b+seed)
+
+**Required Action:**
+- Developer must verify migration file exists: `apps/mcp-server/migrations/YYYYMMDD_populate_alert_drop_pct.sql`
+- Check if migration was registered in `migrateDb.ts` and executed at container startup
+- If code exists but undeployed: rebuild container with `docker-compose build --no-cache && docker-compose up -d`
+- If migration missing from codebase: recreate per handoff Task_1869b-seed.md AC1-AC5 criteria
+- Verify watchlist init populates high-vol tickers before running migration
+
+**Related Files:**
+- Expected migration: `apps/mcp-server/migrations/` (YYYYMMDD_populate_alert_drop_pct.sql)
+- Test: `apps/mcp-server/src/__tests__/1869b-seed-watchlist-thresholds.test.ts`
+- Handoff: `docs/handoffs/TASK_1869b-seed.md`
+
+---
