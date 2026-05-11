@@ -1,8 +1,19 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877d
+**Last updated:** 2026-05-11 | **Sprint:** 1877e
 
 ## Last session summary
+
+Task 1877e-3: C2-Exempt Commit Categories — knowledge SSOT.
+- Patch site: `.claude/knowledge/commit-convention.md` after C3-Exempt table (line 112).
+- Inserted new `## C2-Exempt Commit Categories` section (+13 LOC): heading + intro + 4-row table.
+- 4 rows: `chore(cycle-NN)`, `chore(pm/cNN)`, `chore(pm/NNNN*)`, sprint-scoped `merge task/` chore.
+- AC-1 PASS (heading present). AC-2 PASS (3-col table). AC-3 PASS (4 rows verbatim from brief). AC-4 PASS (no other sections touched). AC-5 PASS (Markdown clean).
+- Branch: task/1877e-3-c2-exempt-knowledge | Commit: aea5cac3.
+- Path-restricted commit (cycle 32 lesson). No code execution — doc-only task.
+- LOC delta: +13 (commit-convention.md only).
+
+## Previous last session summary
 
 Task 1877d: C3 AC-trailer gap closure — exemption policy for notebook/state/merge commits.
 - Patch site 1 (audit.sh): added `is_c3_exempt` flag + 3 `case` branches (notebook=is_notebook, chore(state*):*, *merge\ task/*). C3 denominator skipped when exempt.
