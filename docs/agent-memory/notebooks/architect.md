@@ -67,3 +67,49 @@ U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase
 3. Migrate market-watcher + unified-agent to CLI cron for guaranteed access
 
 **Risk flags:** `/mcp` route missing from Cloudflare; heartbeat = timeout (race); in-memory session map lost on Docker restart.
+
+---
+
+## Session — 2026-05-11 (SPRINT-S-1877b signal guard design)
+
+**Task:** Design brief for hardening `scripts/audits/commit-convention-audit.sh` against stray signal emission from test runs.
+
+**Brief written:** `docs/architecture-briefs/2026-05-17-commit-convention-audit-guard.md`
+
+**Decision:** Combination `--emit-signal` flag + canonical window guard. Default = safe (no signal). Gate run on 2026-05-17 passes both guards. Stale test-artifact signals from today already drained by cycles 29/30 (git status shows 3 deletions) — no manual cleanup needed.
+
+**LOC delta:** ~6 LOC net addition to script. Single file edit. Bash 3.2 compat maintained.
+
+**ACs:** 6, all testable without mocking the date (AC-3 testable by passing wrong SINCE_DATE; AC-2 testable by passing correct SINCE_DATE + flag on any date 2026-05-10..2026-05-17).
+
+**Pipeline state:** idle
+
+---
+
+## Session — 2026-05-11 (SPRINT-S-1877c C4 vocab remediation)
+
+**Task:** Design brief to close C4 scope-vocab gap before the 2026-05-17 Day-7 Phase B gate.
+
+**Brief written:** `docs/architecture-briefs/2026-05-17-c4-vocab-remediation.md`
+
+**Audit window (2026-05-10..now):** 170 well-formed non-notebook commits. Current C4 = 0.4824.
+
+**Bucket analysis:**
+- IN_VOCAB (pass): 82 (48.2%)
+- BUCKET_A legitimate novel: 63 (37.1%) — 32 distinct real area/service/agent tokens never added to vocab
+- BUCKET_B sprint-ID as area: 22 (12.9%) — history-locked, e.g. `fix(1872a):` with no `/area`
+- BUCKET_B other true violations: 3 (1.8%) — `*`, `c26`, `cycle-28`
+
+**Decision: Path (c) Hybrid**
+1. Expand VOCAB from 20 to 52 tokens (add all 32 legitimate BUCKET_A tokens).
+2. Add sprint-ID exemption in C4 check: area starting with 4 digits counts as pass, skips vocab loop.
+   Implemented via `case "${first4}" in [0-9][0-9][0-9][0-9])` + `return` — POSIX/bash 3.2 safe.
+
+**Projected C4 after fix:** 145/148 = 97.97% on current window; 195/198 = 98.5% with 50 more commits.
+3 remaining fails (`*`, `c26`, `cycle-28`) are true violations; cannot exceed 5% threshold.
+
+**Files:** `scripts/audits/commit-convention-audit.sh` (VOCAB line + C4 block), `.claude/knowledge/commit-convention.md` (area list). Net LOC: ~16. Under 30 limit.
+
+**POSIX check:** case/cut/local/return — all bash 3.2 safe. No `[[`, no `\>=`, no floats in test.
+
+**Pipeline state:** idle

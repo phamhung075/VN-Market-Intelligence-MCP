@@ -221,3 +221,21 @@
 - **actions**: 2 signals suppressed + recorded; WORK status sent; notebook committed
 - **next_cycle_hint**: Monitor VRE (-6.41%) and FPT (-2.64%) on next open for confirmation of EOD sell-off continuation; watch FII flow for CARRY_REGIME escalation
 - **estimated_tokens**: 6000
+
+### Alert Cycle (18:01–18:03 UTC, 2026-05-11)
+- Signals: price_anomaly ×3 (VRE id=2917 σ=1.78, FPT id=2918 σ=2.13, EIB id=2919 σ=2.19)
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Notes: Market CLOSED (off-hours 2h cycle). All 3 price_anomaly signals from market-watcher (status: read, from 17:41 UTC). Not confirmed via get_alerts (returned empty). All σ < 4.0 — price-validation override threshold not met. No legal/crisis signals. No urgent_news or chain_catalyst on bus. Legal: clear. Crisis: clear. All outcomes recorded suppressed. log_agent_work id=651.
+
+## Cycle — 18:03 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - Market CLOSED (off-hours 2h cycle). VN-Index closed -20pts at 1,895.50 — broad sell-off.
+  - 3 price_anomaly signals from market-watcher (VRE -6.41% σ=1.78, FPT -2.64% σ=2.13, EIB +2.71% σ=2.19) — all below confirmation threshold (get_alerts empty, σ < 4.0).
+  - Regime NEUTRAL; CARRY_REGIME=FII_OUTFLOW_RISK (spread -0.33%); no legal/crisis signals.
+- **actions**: 3 signals suppressed + recorded; WORK status sent; log_agent_work id=651; notebook written (git commit failed — HEAD.lock held by host process, data persisted).
+- **next_cycle_hint**: Monitor VRE (-6.41%), FPT (-2.64%) at next open (02:00 UTC Tue) for continuation. Watch FII flow re: CARRY_REGIME escalation. EIB divergence (+2.71%, 9.3x vol) warrants banking sector watch.
+- **estimated_tokens**: 7000

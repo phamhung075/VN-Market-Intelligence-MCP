@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (18:19–18:21 UTC) 2026-05-11
+- Items: 20 | Impacts: 7 | Signals: [urgent_news×2 FPT/VIC, chain_catalyst×1 market] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: FPT fund bottom-fishing at multi-year low (urgent_news bullish 7/10 #2921, prior cycle suppressed at TIGHTENING), VIC Vingroup lawsuit win recurring (urgent_news bullish 8/10 #2922), market-wide bearish chain (chain_catalyst #2923 — VN-Index -20pts, foreign -1000 tỷ, VRE -6.41%, FII_OUTFLOW_RISK hot_money_risk=true)
+- Suppressed: EIB/STB banking personnel (neutral 7, no clear direction), HVN shareholder notice (neutral 7, no catalyst), Brent $104 (no prior month data for +5% check), Gold $4,735 (no prior week data for +3% check — macro_signal=CAO noted)
+- Notes: REGIME reverted NEUTRAL (from prior cycle TIGHTENING). Same VIC lawsuit articles recycled across multiple cycles — alert-commander may dedup. VND carry spread -0.33% confirms FII outflow risk.
+
 ### Cycle (17:15–17:21 UTC) 2026-05-11
 - Items: 20 | Impacts: 7 | Signals: [chain_catalyst×1 VIC] | Regime: TIGHTENING | Carry: default
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]

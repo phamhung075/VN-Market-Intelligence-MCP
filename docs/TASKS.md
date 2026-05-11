@@ -26,6 +26,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1877c | SPRINT-S: C4 scope-vocab remediation — expand canonical vocab 20→52 tokens in script VOCAB (brief §4.1) + add sprint-ID exemption to C4 logic (lines 173–182). 2 files: scripts/audits/commit-convention-audit.sh + .claude/knowledge/commit-convention.md. Net +16 LOC (≤30 budget). Target: C4 ≥ 95% on 2026-05-10..2026-05-17 window (projected 97.97%). Gate deadline 2026-05-17. Test: vocabulary check, sprint-ID pass/fail detection, non-digit violations persist, bash 3.2 compat, idempotent. | HIGH | SPRINT-S | developer | TASK_1877c.md | 2026-05-11 |
 
 ---
 

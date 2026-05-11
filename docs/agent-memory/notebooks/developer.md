@@ -1,20 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877a
+**Last updated:** 2026-05-11 | **Sprint:** 1877b
 
 ## Last session summary
 
-Task 1877a: scripts/audits/commit-convention-audit.sh created.
-- Pure bash, no Bun/Node deps. `set -euo pipefail` + `LC_ALL=C` (locale fix for awk decimal).
-- Parses git log via custom `--pretty=format` with trailer extraction per commit.
-- 4 criteria: C1 header regex, C2 task trailer (sprint-scoped, non-notebook), C3 AC trailer (when Task present), C4 scope vocab.
-- Violations capped at 20 per criterion. Idempotent: report filename includes YYYYMMDD.
-- Signal drop: PASS → greenlight JSON, FAIL → fail JSON (both in docs/signals/).
-- Exit 0=PASS, 1=FAIL. All 7 ACs verified locally.
-- Current window result (2026-05-10..now): C1=0.9517 PASS, C2=0.5694 FAIL, C3=0.7808 FAIL, C4=0.4727 FAIL → verdict FAIL.
-- Branch: task/1877a-commit-convention-audit-script | Commit: 9ef44bd7
+Task 1877b: signal emission guard for scripts/audits/commit-convention-audit.sh.
+- Added PHASE_B_SINCE_CANONICAL + PHASE_B_UNTIL_DATE_CANONICAL constants (2 LOC).
+- Added --emit-signal flag parse via `for arg in "$@"` loop (4 LOC).
+- Replaced unconditional signal block with EMIT_SIGNAL guard + window check (net +29 LOC, within ≤30 constraint).
+- bash 3.2 caveat: `[ >= ]` not valid in POSIX `[ ]` — replaced with two-branch `if [ = ] || [ \> ]` pattern for ge/le checks.
+- All 6 ACs self-tested: AC-1 PASS, AC-2 PASS, AC-3a PASS, AC-3b PASS, AC-4 PASS, AC-5 PASS, AC-6 PASS.
+- Test artifacts cleaned up (rm after AC-2 run; xargs rm after AC-4/AC-5 run).
+- Branch: task/1877b-audit-script-emit-signal-guard | Commit: da432775 | pre-push tsc PASS.
 - Pipeline: status=in_progress, nextAgent=qa.
-- macOS bash 3 caveat: `local -n` (nameref) not supported — used positional-args function instead.
 
 ## Previous last session summary
 

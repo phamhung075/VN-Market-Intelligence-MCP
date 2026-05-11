@@ -268,3 +268,11 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Events: None triggered | Market closed final — VN-Index -20pts → 1,895.5 | VRE -6.41% (RSI 70.6), FPT -2.64% (RSI 25.8 oversold), HVN -2.92% (RSI 24.4), HSG -2.81% (RSI 10.0 extreme oversold), NKG -2.47% | EIB +2.71% sole outlier | China/Taiwan 51% (unchanged, FPT/VEA/GEX watch)
 - Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG — not in portfolio)
 - BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) | Alert accuracy: 0.27% (1/369) bug #2292 open | Unreviewed: structured reports only, no spam
+
+### Coordination Cycle (18:03–18:10 UTC) — 2026-05-11
+- Mode: MARKET (post-close) | System: OK (all 16 CBs clear, VDC vnstock/VHM finance rate-limit transient, Reuters/TE offline persistent) | Alerts: 10 open (VIC×5 MEDIUM/LOW, FPT×3 MEDIUM/LOW, VHM×1 MEDIUM, HCM×1 MEDIUM — all notified) | Quality issues: 0 new (alert accuracy bug #2292 ongoing — 0.27% / 1 hit of 370)
+- Regime: NEUTRAL (unchanged — Brent 104.35, Gold 1,675, USD_VND 26,123, inflation 8%, DOW 23,750, ambiguous → NEUTRAL) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND, NEUTRAL no multiplier)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (persistent: heavy selling FPT 14,100tỷ, VHM 1,000tỷ, carry -0.33%, "tiền nóng co cụm")
+- Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | VRE -6.41%, HVN -2.92%, FPT -2.64% (RSI 25.8 oversold, lowest since 2023), HSG RSI 10.0 extreme oversold | EIB +2.71% sole outlier | Macro: Brent 104.35 (+5.36σ), Gold 4,732 (-5.38σ) EXTREME alerts | China/Taiwan 50.5% (unchanged)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Unreviewed: 10 structured reports (no spam)
+- BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) | No agent signals | WORK telegram sent 18:03 UTC clean
