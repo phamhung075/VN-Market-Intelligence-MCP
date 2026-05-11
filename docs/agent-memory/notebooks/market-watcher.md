@@ -303,3 +303,20 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3100 |
+
+### Cycle (12:37–12:41)
+- Stocks: 28 | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- VRE -6.41% (1.71σ, below threshold) | EIB +2.71% (2.10σ, signal emitted → alert-commander)
+- Market CLOSED. EOD close 09:00 UTC. VN-Index -~20pts. FII net sell >1,000B VND Monday.
+
+## Metrics (cycle 2026-05-11 12:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 28 |
+| signals_emitted | 1 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
