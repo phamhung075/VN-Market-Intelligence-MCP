@@ -599,7 +599,13 @@ export async function runDailyDashboardJob(
   const tasksMd = loadTasksMd();
   const signalData = await loadSignalData(7);
 
-  const dashboard = aggregateDailyDashboard({ date, stats, sessionFiles, tasksMd, signalData: signalData ?? undefined });
+  const dashboard = aggregateDailyDashboard({
+    date,
+    stats,
+    sessionFiles,
+    tasksMd,
+    ...(signalData != null ? { signalData } : {}),
+  });
 
   writeDashboard(dashboard);
 
