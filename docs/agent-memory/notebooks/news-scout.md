@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-11 02:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (05:19–05:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 4 | Signals: [urgent_news×1 ACB, chain_catalyst×3 GAS/HSG/SSI] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: Brent 105.55 +5.36σ cpi_pressure_risk=true (chain_catalyst macro bearish #2854), HSG/NKG AU anti-dumping 56% (chain_catalyst legal bearish #2855), ACB Âu Lạc 5%→6% progressive accumulation (urgent_news bullish #2853), Securities USD capital inflow 100k tỷ 2026 (chain_catalyst bullish #2856)
+- Suppressed: VN-Index market structure commentary (no direct watchlist hit), MWG (not on watchlist), gold falling (-3.89σ, not a spike)
+
 ### Cycle (04:19–04:25 UTC) 2026-05-11
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst×1 HSG/NKG, urgent_news×1 ACB] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default]
