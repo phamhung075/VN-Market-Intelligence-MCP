@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T20:07:39Z",
-  "updatedBy": "qa",
-  "lastCompleted": "Cycle 34 close — SPRINT-M-1877e APPROVED-WITH-DEFERRAL. Race recovery: 3 parallel developer agents caused branch contamination (1877e-1 empty stub, 1877e-2 clean, 1877e-3 contained all 3 tasks' work). QA salvage: deleted stub branch, merged 1877e-2 (SHA f18b359f) + 1877e-3 (SHA fcef31da) sequentially. Deliverables intact: is_c2_exempt guard (4 patterns) in audit script, C2-Exempt table in commit-convention.md (+13 LOC), PM convention block in pm/main.md (+5 LOC), QA Task-trailer mandate in qa/main.md (+1 LOC). C2 post-merge 0.6308 (up from 0.5867). AC-1 (C2≥0.85 by 2026-05-17) DEFERRED — requires natural commit flow (~2.5 days). ACs 2-7 all sub-tasks PASS. Phase B: C1=0.9501 PASS / C2=0.6308 FAIL / C3=0.9254 PASS / C4=0.9628 PASS."
+  "updatedAt": "2026-05-11T20:17:14Z",
+  "updatedBy": "dev-team",
+  "lastCompleted": "Cycle 35 idle — PO verdict NOTHING. C2 re-measure 0.6308→0.6364 (+0.56pp slope, sharp deceleration vs cycle 34 +4.41pp). Gap to 0.85 = 0.2136 / 5d 16h to 2026-05-17 gate. Decision: idle one cycle to confirm slope. If <1pp/cycle holds → SPRINT-M-1878b (C2 remediation) cycle 36. Stale task/1872a-5-api-gateway-wording 6th cycle, 4 unmerged commits — needs user authorization. Phase B: C1=0.9501 PASS / C2=0.6364 FAIL / C3=0.9254 PASS / C4=0.9628 PASS."
 }

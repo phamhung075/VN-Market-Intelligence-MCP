@@ -1,6 +1,47 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 20:09 UTC (Cycle 34 close — SPRINT-M-1877e SHIPPED, APPROVED-WITH-DEFERRAL)
+**Written:** 2026-05-11 20:17 UTC (Cycle 35 idle — PO verdict NOTHING)
+
+## Cycle 35 idle (2026-05-11 20:15 → 20:17 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals at root | empty |
+| 0b Resume | pipeline-state idle, no pre-route | fall through Step 1 |
+| 1 PO | Re-measured C2 + checked TG reports + listUnresolvedReports + stale-branch scan | **VERDICT: NOTHING** |
+| Telegram | WORK note sent (idle + slope numbers + 1872a-5 6th-cycle reminder) | sent |
+
+### C2 trajectory snapshot
+| Cycle | C2 | Δ |
+|-------|------|------|
+| pre-34 | 0.5867 | — |
+| post-34 | 0.6308 | +4.41pp |
+| post-35 | **0.6364** | **+0.56pp** |
+| target | 0.8500 | gap = 0.2136 |
+
+**Slope deceleration confirmed**: cycle 34's +4.41pp was a one-shot mechanical drop from exemption mechanism. Natural climb post-exemption running at +0.56pp/cycle ≈ 38 cycles needed to reach 0.85. **Insufficient for 5d 16h gate window** without SPRINT-M-1878b intervention.
+
+### Operational notes (cycle 35)
+
+1. **C2 natural-climb hypothesis falsified after one observation cycle**. Cycle 34 close projected +4.41pp/cycle sustained — actual cycle 35 only +0.56pp. The mechanical jump was the exemption (shrinking denominator); ongoing climb is genuine compliant commits only. Need denominator-side OR flow-side intervention before gate.
+
+2. **Decision: idle one more cycle** (cycle 36) to confirm slope is not noise. If slope <1pp/cycle holds at cycle 36 → seed **SPRINT-M-1878b "C2 task-trailer remediation"** with stronger flow enforcement (e.g., commit-msg hook, agent-side pre-commit validation, broader exemption review).
+
+3. **Parallel-spawn race did NOT recur** (no Tier 1 spawn this cycle — flow stayed within PO triage only). Mitigation candidate 1878a remains backlogged.
+
+4. **Stale `task/1872a-5-api-gateway-wording` 6th cycle**, still 4 unmerged. Report-only. WORK reminder sent.
+
+5. **TNB/VIRA deferred** — holds until C2 trajectory confirmed safe (per cycle 34 intent block).
+
+### Cycle 36 intent
+
+- Step 0a/0b drain + Step 1 PO triage fresh
+- **PO must re-measure C2** at start. If <0.65 at cycle 36 trigger → escalate to SPRINT-M-1878b immediately (do NOT wait further). If ≥0.66 → one more idle observation cycle then re-evaluate.
+- If 1878b seeds: BA spec should cover commit-msg hook + per-agent pre-commit validator + revisit exemption table for missed buckets.
+- Parallel-spawn race mitigation (1878a) still backlogged — open SPRINT-S if race recurs.
+- **2026-05-17 gate: 5 days 15h remaining post cycle 35 close**.
+
+---
 
 ## Cycle 34 SPRINT-M-1877e (2026-05-11 19:44 → 20:09 UTC)
 
