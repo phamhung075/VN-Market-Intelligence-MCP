@@ -8,7 +8,7 @@
  * from infrastructure.
  *
  * Default thresholds (configurable via SignalContext.watchlistThresholds):
- *   - price_drop   : price change <= -5 %
+ *   - price_drop   : price change <= -7 %
  *   - price_surge  : price change >= +5 %
  *   - volume_spike : volume >= 2× avgVolume
  *   - report_new   : latestReportDate within last 24 hours
@@ -144,7 +144,7 @@ export interface Signal {
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_DROP_PCT = -5;   // -5 % triggers price_drop
+const DEFAULT_DROP_PCT = -7;   // -7 % triggers price_drop (VN circuit breaker significance)
 const DEFAULT_RISE_PCT = 5;    // +5 % triggers price_surge
 const VOLUME_SPIKE_MULTIPLIER = 2; // 2× avgVolume triggers volume_spike
 const REPORT_FRESH_HOURS = 24; // reports within 24 h count as "new"

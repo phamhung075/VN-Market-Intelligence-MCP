@@ -232,7 +232,7 @@ describe("Task 133 — Signal Detector with Adaptive Volatility", () => {
 
   // TC-17: detectSignals uses adaptive thresholds when volatility provided
   it("uses adaptive drop threshold when volatility is provided", () => {
-    // Stable stock: adaptive threshold = -3%, fixed default = -5%
+    // Stable stock: adaptive threshold = -3%, fixed default = -7%
     // A -4% move should trigger with adaptive but NOT with default
     const history = buildHistory(30, 0.015);
     const vol = computeStockVolatility(history);
@@ -251,7 +251,7 @@ describe("Task 133 — Signal Detector with Adaptive Volatility", () => {
 
     // Adaptive threshold for stable stock ≈ -3%, so -4% should trigger
     expect(adaptiveTypes).toContain("price_drop");
-    // Default threshold = -5%, so -4% should NOT trigger
+    // Default threshold = -7%, so -4% should NOT trigger
     expect(defaultTypes).not.toContain("price_drop");
   });
 
@@ -327,12 +327,12 @@ describe("Task 133 — Signal Detector with Adaptive Volatility", () => {
   });
 
   // TC-22: fallback to defaults when no volatility and no watchlistThresholds
-  it("falls back to default -5%/+5% when no volatility or thresholds provided", () => {
+  it("falls back to default -7%/+5% when no volatility or thresholds provided", () => {
     const snapshotDrop4 = makeSnapshot({
       price: 96_000,
       previousPrice: 100_000, // -4%
     });
-    // -4% does NOT exceed default -5% threshold
+    // -4% does NOT exceed default -7% threshold
     const signals = detectSignals(snapshotDrop4);
     expect(signals.map((s) => s.type)).not.toContain("price_drop");
   });

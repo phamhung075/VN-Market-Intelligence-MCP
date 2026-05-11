@@ -132,17 +132,17 @@ describe("Task 122 — Signal Detector branch coverage", () => {
     expect(types).not.toContain("volume_spike");
   });
 
-  // SD-03: exact boundary -5.0% → must trigger price_drop
-  it("SD-03: price change exactly -5.0% triggers price_drop", () => {
-    const snapshot = makeSnapshot({ price: 95_000, previousPrice: 100_000 });
+  // SD-03: exact boundary -7.0% → must trigger price_drop
+  it("SD-03: price change exactly -7.0% triggers price_drop", () => {
+    const snapshot = makeSnapshot({ price: 93_000, previousPrice: 100_000 });
     const signals = detectSignals(snapshot);
     expect(signals.map((s) => s.type)).toContain("price_drop");
   });
 
-  // SD-04: just inside boundary -4.99% → must NOT trigger price_drop
-  it("SD-04: price change -4.99% does NOT trigger price_drop (below default threshold)", () => {
-    // -4.99% → changePct = -4.99, threshold = -5 → -4.99 > -5 → no drop
-    const snapshot = makeSnapshot({ price: 95_010, previousPrice: 100_000 });
+  // SD-04: just inside boundary -6.99% → must NOT trigger price_drop
+  it("SD-04: price change -6.99% does NOT trigger price_drop (below default threshold)", () => {
+    // -6.99% → changePct = -6.99, threshold = -7 → -6.99 > -7 → no drop
+    const snapshot = makeSnapshot({ price: 93_010, previousPrice: 100_000 });
     const signals = detectSignals(snapshot);
     expect(signals.map((s) => s.type)).not.toContain("price_drop");
   });
@@ -239,10 +239,13 @@ describe("Task 122 — Signal Detector branch coverage", () => {
     expect(drop!.severity).toBe("low");
   });
 
-  // SD-14: priceSeverity — 5–6.9% → medium
-  it("SD-14: priceSeverity — 5-6.9% produces medium severity", () => {
+  // SD-14: priceSeverity — 5–6.9% → medium (via custom threshold, default is now -7%)
+  it("SD-14: priceSeverity — 5-6.9% produces medium severity (via custom threshold)", () => {
     const snapshot = makeSnapshot({ price: 94_000, previousPrice: 100_000 }); // -6%
-    const signals = detectSignals(snapshot);
+    const context: SignalContext = {
+      watchlistThresholds: { dropPct: -5, risePct: 10, impactScore: 5 },
+    };
+    const signals = detectSignals(snapshot, context);
     const drop = signals.find((s) => s.type === "price_drop");
     expect(drop).toBeDefined();
     expect(drop!.severity).toBe("medium");

@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-11 02:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (03:19–03:24 UTC) 2026-05-11
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst×1 HSG/NKG, urgent_news×1 ACB] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG anti-dumping AU 56% preliminary margin (bearish steel), ACB Âu Lạc +6% ownership (bullish), Brent $105.24 +3.96σ (CPI watch, no >5% trigger)
+- Suppressed: VN-Index macro commentary (no direct watchlist hit), MWG sell rush (not on watchlist), HPG dividend calendar (neutral)
+
 ### Cycle (02:20–02:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 8 | Signals: [urgent_news×1, chain_catalyst×1] | Regime: TIGHTENING | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default]
