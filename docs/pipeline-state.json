@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
+  "status": "review",
   "currentSprint": "1872a",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-11T18:00:00Z",
-  "updatedBy": "qa",
-  "lastCompleted": "1872a-1: .claude/knowledge/tree-map.md — docs/architecture/ subtree added to canonical DAG (global.md + 8 microservices + 12 mcp-server tool groups) + 2 Write Ownership rows. QA APPROVED, merged to main."
+  "activeTaskId": "1872a-2",
+  "nextAgent": "qa",
+  "nextPrompt": "QA 1872a-2 (README SSOT pointers)",
+  "updatedAt": "2026-05-11T20:00:00Z",
+  "updatedBy": "developer",
+  "lastCompleted": "1872a-2: README.md — AC2 mcp-server toolCount pointer; AC5 arch+per-service pointers; AC6 docker restart block + dev step → restart-policy.md. Branch task/1872a-2-readme-ssot-pointers, commit 03a404ce."
 }

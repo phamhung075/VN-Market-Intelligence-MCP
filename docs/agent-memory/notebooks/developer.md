@@ -4,6 +4,25 @@
 
 ## Last session summary
 
+Task 1872a-2: README.md — AC2 + AC5 + AC6 SSOT pointers (single atomic edit).
+- AC2 (line 92): mcp-server "112 tools" → `docs/data/project-stats.json` → `toolCount` pointer.
+- AC5-a: arch pointer after ASCII diagram block (before "### Three Telegram Channels"): links to docs/ARCHITECTURE.md + docs/architecture/global.md.
+- AC5-b: per-service pointer after microservices table: `docs/architecture/microservice/<service>.md`.
+- AC6-A (lines 63-70): inline docker block replaced with restart-policy.md pointer.
+- AC6-B (line 86): dev restart step replaced with restart-policy.md pointer.
+- Branch: task/1872a-2-readme-ssot-pointers | Commit: 03a404ce | tsc pre-push PASS (doc-only).
+- Pipeline: status=review, nextAgent=qa, nextPrompt="QA 1872a-2 (README SSOT pointers)".
+
+## Previous last session summary
+
+Task 1872a-3: docs/ARCHITECTURE.md — AC3 + AC6 SSOT pointers (single atomic edit).
+- AC3 (line 78): "132 tools, 59 cron jobs, HTTP clients to 8 other services" → project-stats.json#toolCount + #cronJobCount pointers + "all configured downstream services".
+- AC6 (line 53): inline `docker-compose down && docker-compose up -d` → pointer to `.claude/knowledge/restart-policy.md`.
+- Branch: task/1872a-3-architecture-md-ssot-pointers | Commit: 1b4f23a6 | tsc pre-push PASS (doc-only).
+- Pipeline: status=review, nextAgent=qa.
+
+## Previous-previous last session summary
+
 Task 1872a-1: Add docs/architecture/ subtree to .claude/knowledge/tree-map.md (AC1).
 - Replaced standalone docs/ARCHITECTURE.md leaf (line 74) with full nested hierarchy.
 - Added: docs/architecture/global.md node + 8 microservice children + 12 mcp-server tool-group leaves.
