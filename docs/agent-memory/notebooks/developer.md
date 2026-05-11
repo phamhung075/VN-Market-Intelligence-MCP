@@ -1,8 +1,16 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877e
+**Last updated:** 2026-05-12 | **Sprint:** signal-T2
 
 ## Last session summary
+
+Task signal-T2: backfill-signals-db migration script.
+- New file: scripts/migrations/backfill-signals-db.ts — exports backfillFromDir + computeFingerprint.
+- New test: scripts/migrations/__tests__/backfill-signals-T2.test.ts — 10 tests, all pass.
+- Real-world run: 57 scanned, 27 inserted (signal files), 30 skipped (24 replay + 6 non-signal audit reports), 0 errors.
+- Re-run: 0 inserted, 57 skipped — idempotency confirmed.
+- Key decision: non-signal JSON (audit reports missing 'from') reclassified as SKIP not ERROR.
+- Branch: task/signal-T2-backfill | Commit: pending.
 
 Task 1877e-2: Flow tightening — PM + QA commit convention documentation.
 - pm/main.md: +5 LOC block after "End of cycle" — 4 C2-exempt patterns + mandatory Task trailer rule for sprint-scoped delivery commits.

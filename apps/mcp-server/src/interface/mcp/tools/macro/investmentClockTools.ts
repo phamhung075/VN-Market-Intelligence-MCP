@@ -1,8 +1,10 @@
 /**
  * Task 1880a — Investment Clock Phase MCP Tool
- * Task 1880b — Pyramid Tier MCP Tool (stub export; implementation added in 1880b)
+ * Task 1880b — Pyramid Tier MCP Tool
  *
- * Interface layer: registers `get_investment_clock_phase` MCP tool.
+ * Interface layer: registers two MCP tools:
+ *   - get_investment_clock_phase (1880a)
+ *   - get_pyramid_tier           (1880b)
  *
  * Tool: get_investment_clock_phase
  *   Input:  optional { _testSnapshot?: { pmi?: number | null; cpi?: number | null;
@@ -12,6 +14,11 @@
  *   - Production path: reads macro_indicators WHERE country='Vietnam' ORDER BY fetched_at DESC
  *   - Calls classifyInvestmentClockPhase() domain function with plain values
  *   - No HTTP — DB read only
+ *
+ * Tool: get_pyramid_tier
+ *   Input:  { asset_class: string }
+ *   Output: { asset_class, tier, tier_description } | { asset_class, tier: null, reason }
+ *   - Zero I/O — pure static lookup, fully deterministic
  *
  * Pattern follows carryTools.ts: optional test-injection param bypasses DB read.
  *
@@ -25,6 +32,9 @@ import {
   classifyInvestmentClockPhase,
   type InvestmentClockPhase,
 } from "../../../../domain/services/macro/investmentClock.js";
+import {
+  classifyPyramidTier,
+} from "../../../../domain/services/macro/pyramidTier.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
@@ -186,6 +196,61 @@ export function registerInvestmentClockTools(server: McpServer): void {
           ],
         };
       }
+    },
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1880b — get_pyramid_tier
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Register Pyramid Tier MCP tool on the given server instance.
+ *   - get_pyramid_tier (1880b, tool #128)
+ *
+ * Pure static lookup — zero I/O, fully deterministic, never throws.
+ *
+ * @param server The McpServer instance to register tools on.
+ */
+export function registerPyramidTierTool(server: McpServer): void {
+  server.tool(
+    "get_pyramid_tier",
+    "Classifies an asset class into one of five pyramid tiers: " +
+      "cash (highest safety) | bonds | equity | alt (alternative assets) | speculative (highest risk). " +
+      "Covers VN market asset classes (VN equity, government bond, etc.) plus global instruments " +
+      "(crypto, gold, REIT, warrant, penny stock, etc.). " +
+      "Input is case-insensitive and whitespace-trimmed. " +
+      "Unknown inputs return tier=null with reason='unknown_asset_class' — never throws. " +
+      "Zero I/O — pure static lookup, fully deterministic.",
+    {
+      asset_class: z
+        .string()
+        .describe(
+          "Asset class name to classify (e.g. 'VN equity', 'crypto', 'gold', 'government bond')",
+        ),
+    },
+    (args) => {
+      const { asset_class } = args as { asset_class: string };
+
+      const classification = classifyPyramidTier(asset_class);
+
+      const result: {
+        asset_class: string;
+        tier: string | null;
+        tier_description?: string;
+        reason?: string;
+      } = {
+        asset_class,
+        tier: classification.tier,
+        ...(classification.tier_description
+          ? { tier_description: classification.tier_description }
+          : {}),
+        ...(classification.reason ? { reason: classification.reason } : {}),
+      };
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+      };
     },
   );
 }

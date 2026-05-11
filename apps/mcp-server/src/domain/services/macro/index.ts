@@ -16,3 +16,9 @@ export {
   type InvestmentClockPhase,
   type InvestmentClockResult,
 } from "./investmentClock.js";
+// Task 1880b: Pyramid tier classifier
+export {
+  classifyPyramidTier,
+  type PyramidTier,
+  type PyramidTierResult,
+} from "./pyramidTier.js";

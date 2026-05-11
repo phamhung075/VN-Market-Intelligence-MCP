@@ -7,7 +7,10 @@
   "createdAt": "2026-05-11T20:56:31Z",
   "details": {
     "sprintId": "1880",
-    "tasks": ["1880a", "1880b"],
+    "tasks": [
+      "1880a",
+      "1880b"
+    ],
     "ssotLayer": "Layer 8 — Regime / Investment Clock + Maslow Pyramid",
     "filesPrimary": [
       "apps/mcp-server/src/interface/mcp/tools/ (2 new tools, pure functions)"
@@ -29,5 +32,9 @@
       "get_pyramid_tier('VN equity') returns 'equity'; get_pyramid_tier('crypto') returns 'speculative'",
       "Both tools deterministic — same input → same output, no I/O side effects"
     ]
-  }
+  },
+  "fingerprint": "90f08093c4abf2874fc9fa9b4ee61f1ba1e394d4afcc390037cf1c58ca3ee6d2",
+  "processedAt": "2026-05-11T22:27:33Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }

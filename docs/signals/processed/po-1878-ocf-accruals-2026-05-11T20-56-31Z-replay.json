@@ -7,7 +7,10 @@
   "createdAt": "2026-05-11T20:56:31Z",
   "details": {
     "sprintId": "1878",
-    "tasks": ["1878a", "1878b"],
+    "tasks": [
+      "1878a",
+      "1878b"
+    ],
     "ssotLayer": "Layer 7 — Cash-Flow Reality",
     "filesPrimary": [
       "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
@@ -27,11 +30,18 @@
       ]
     },
     "owner": "ba spec → dev-mcp-server implement",
-    "blocks": ["1885a", "1886a"],
+    "blocks": [
+      "1885a",
+      "1886a"
+    ],
     "successMetric": [
       "operating_cash_flow column present + populated for VCB last 4 quarters",
       "compute_accruals('VCB', 4) returns 4 numeric values, none null",
       "compute_accruals('FPT', 4) returns 4 numeric values, none null"
     ]
-  }
+  },
+  "fingerprint": "ebcc63bb661bcdbdf695c806b06f5e15fda9df1015a87a49ae40aaf5221f7712",
+  "processedAt": "2026-05-11T23:26:41Z",
+  "processedBy": "dev-team",
+  "result": "skipped-duplicate-replay"
 }

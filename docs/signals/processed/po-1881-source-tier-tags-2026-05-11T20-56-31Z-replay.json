@@ -7,7 +7,9 @@
   "createdAt": "2026-05-11T20:56:31Z",
   "details": {
     "sprintId": "1881",
-    "tasks": ["1881a"],
+    "tasks": [
+      "1881a"
+    ],
     "ssotLayer": "Layer 9 — Source hierarchy",
     "tierDefinition": {
       "1": "Primary / official issuer (FRED, central bank, statistics office, exchange filing)",
@@ -36,5 +38,9 @@
       "Tool output JSON includes source_tier field with valid value 1, 2, or 3",
       "No tier-3 source emits tier-1 (audit pass)"
     ]
-  }
+  },
+  "fingerprint": "278f3f7fb8a5ca0aa6bbc3dbacf46456e7cfa6707b724fb88c75a1b72b182510",
+  "processedAt": "2026-05-11T23:26:41Z",
+  "processedBy": "dev-team",
+  "result": "skipped-duplicate-replay"
 }
