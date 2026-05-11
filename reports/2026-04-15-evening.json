@@ -1,0 +1,23 @@
+{
+  "date": "2026-04-15",
+  "topAlerts": [
+    {
+      "severity": "high",
+      "message": "Macro alert [HIGH]: USD/VND: 26302 — cao bất thường (-2.61σ dưới TB 26333.2)",
+      "stocks": [
+        "MACRO"
+      ]
+    }
+  ],
+  "topStories": [],
+  "watchlistMovers": [
+    {
+      "code": "VCB",
+      "changePct": 3.53,
+      "price": 88000,
+      "exchange": "HOSE"
+    }
+  ],
+  "predictionSignals": [],
+  "generatedAt": "2026-04-15T15:30:00.750Z"
+}

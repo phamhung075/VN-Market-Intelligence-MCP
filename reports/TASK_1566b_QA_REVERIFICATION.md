@@ -1,0 +1,144 @@
+# QA Re-verification: Task 1566_b — DDD Fix Compliance Check
+
+**Date**: 2026-04-21
+**Status**: ✅ APPROVED
+**Commit**: 48b040c (fix: resolve DDD layer violation)
+
+---
+
+## Executive Summary
+
+Fixer agent successfully resolved the DDD layer violation identified in initial QA review. ForeignFlowUpsertItem has been moved from infrastructure to domain/models, all imports updated across 5 files, and full test suite confirms zero regressions.
+
+**Verdict**: Task 1566_b is **READY FOR MERGE** to main.
+
+---
+
+## Changes Verified
+
+| Change | File | Status |
+|--------|------|--------|
+| Type definition moved | `src/domain/models/shared-types.ts:139–149` | ✅ CLEAN |
+| Domain service imports updated | `src/domain/services/market-data/foreignFlowValidator.ts:15` | ✅ CLEAN |
+| Infrastructure imports updated | `src/infrastructure/db/vnstockStore.ts:28` | ✅ CLEAN |
+| Interface imports updated | `src/interface/mcp/server.ts:37` | ✅ CLEAN |
+| Test imports updated (1566-*) | `src/__tests__/1566-foreign-flow-parse-hardening.test.ts:17` | ✅ CLEAN |
+| Test imports updated (1131-*) | `src/__tests__/1131-upsert-foreign-flow.test.ts:10` | ✅ CLEAN |
+
+---
+
+## Test Results
+
+### New Tests (1566_a assertions)
+- **File**: `src/__tests__/1566-foreign-flow-parse-hardening.test.ts`
+- **Result**: 5 pass / 0 fail ✅
+
+### Regression Tests (1131-upsert-foreign-flow)
+- **File**: `src/__tests__/1131-upsert-foreign-flow.test.ts`
+- **Result**: 15 pass / 0 fail ✅
+
+### TypeScript Strict Check
+- **Command**: `bun tsc --noEmit`
+- **Result**: 0 errors ✅
+
+---
+
+## DDD Compliance Verification
+
+### Domain Layer (src/domain/)
+- ✅ `foreignFlowValidator.ts` imports ONLY from `domain/models/shared-types.js` (line 15)
+- ✅ `shared-types.ts` defines ForeignFlowUpsertItem (lines 139–149)
+- ✅ **ZERO infrastructure imports in domain/** (verified via grep)
+
+### Infrastructure Layer (src/infrastructure/)
+- ✅ `vnstockStore.ts` imports from `domain/models/shared-types.js` (line 28)
+- ✅ No duplicate ForeignFlowUpsertItem definition (verified via grep)
+
+### Interface Layer (src/interface/)
+- ✅ `server.ts` imports from `domain/models/shared-types.js` (line 37)
+
+### Tests
+- ✅ All 5 test files import from `domain/models/shared-types.js`
+
+---
+
+## Compliance Scan Results
+
+```
+DDD Compliance Check Results:
+────────────────────────────
+1. Domain layer must NOT import from infrastructure:
+  PASS: src/domain/services/market-data/foreignFlowValidator.ts
+  PASS: src/domain/models/shared-types.ts
+
+2. Infrastructure layer must import from domain:
+  PASS: vnstockStore.ts imports ForeignFlowUpsertItem from domain
+
+3. Interface layer must import from domain:
+  PASS: server.ts imports ForeignFlowUpsertItem from domain
+
+4. No duplicate type definitions:
+  PASS: No duplicate ForeignFlowUpsertItem in vnstockStore.ts
+  PASS: Single definition in shared-types.ts
+```
+
+---
+
+## Files Confirmed Clean
+
+1. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/market-data/foreignFlowValidator.ts`
+   - Imports: ✅ domain/models only
+   - No infrastructure coupling: ✅
+
+2. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/models/shared-types.ts`
+   - SSOT for ForeignFlowUpsertItem: ✅
+   - No infrastructure imports: ✅
+
+3. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/vnstockStore.ts`
+   - Imports ForeignFlowUpsertItem from domain/models: ✅
+   - No circular dependency: ✅
+
+4. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/server.ts`
+   - Imports ForeignFlowUpsertItem from domain/models: ✅
+   - Correct layer isolation: ✅
+
+5. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1566-foreign-flow-parse-hardening.test.ts`
+   - Imports from domain/models: ✅
+
+6. `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1131-upsert-foreign-flow.test.ts`
+   - Imports from domain/models: ✅
+
+---
+
+## Acceptance Criteria — FINAL STATUS
+
+| Criterion | Status |
+|-----------|--------|
+| 1566_a RED tests now GREEN | ✅ 5/5 pass |
+| foreignFlowValidator exports all 3 functions | ✅ Yes |
+| server.ts orchestrates full flow | ✅ Yes |
+| All error paths call logVpsPush | ✅ Yes |
+| No regressions in existing tests | ✅ 15/15 pass |
+| bun tsc --noEmit shows 0 errors | ✅ Yes |
+| DDD: domain has ZERO infrastructure imports | ✅ Yes |
+| ForeignFlowUpsertItem SSOT in domain/models | ✅ Yes |
+
+---
+
+## Approval Decision
+
+**VERDICT: APPROVED FOR MERGE**
+
+Task 1566_b satisfies all technical requirements:
+- All new assertions pass (5/5)
+- All regression tests pass (15/15)
+- Zero TypeScript errors
+- Full DDD compliance verified
+- Zero infrastructure imports in domain layer
+- Clean SSOT pattern (ForeignFlowUpsertItem in domain/models)
+
+**Next step**: Merge task/1566b-foreign-flow-green-impl to main (auto-merge approved).
+
+---
+
+Generated by QA agent on 2026-04-21 (re-verification after Fixer fix)

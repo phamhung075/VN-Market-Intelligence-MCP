@@ -1,0 +1,715 @@
+{
+  "eval_id": "news-scout-golden-v1",
+  "agent": "news-scout",
+  "version": "2026-05-07",
+  "description": "Golden eval for news-scout cycle. Validates news fetching, sentiment + impact scoring, regime multipliers, PMI detection, commodity chains, Hao 5 dedup, signal posting schemas, session log format, and error boundary behavior.",
+
+  "cases": [
+    {
+      "id": "NS-01",
+      "name": "Breaking watchlist news — post urgent_news signal",
+      "description": "High-impact article about a watchlist ticker must produce an urgent_news signal with all required finding_data fields.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "market_context": {
+            "trading_window": "open",
+            "macro_snapshot": "Global Liquidity: NEUTRAL\nVND Carry Spread: +1.50%"
+          },
+          "agent_signals": [],
+          "system_status": { "healthy": true }
+        },
+        "get_watchlist": {
+          "tickers": ["VCB", "FPT", "VNM", "HPG", "MWG", "VIC", "VHM", "MSN", "TCB", "BVH"]
+        },
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "SBV cắt giảm lãi suất tái cấp vốn 0.5%",
+              "source": "sbv_official",
+              "published_date": "2026-05-07T08:00:00Z",
+              "content": "Ngân hàng Nhà nước Việt Nam hôm nay tuyên bố cắt giảm lãi suất tái cấp vốn xuống còn 4.0%, hiệu lực từ ngày 10/05.",
+              "impact_score": 9,
+              "affected_tickers": ["VCB", "TCB", "BVH"]
+            }
+          ],
+          "impact_by_ticker": { "VCB": 9, "TCB": 8.5, "BVH": 7 },
+          "alerts": []
+        },
+        "get_agent_signals_hao5_check": {
+          "signals": []
+        },
+        "search_similar_context": {
+          "matches": [
+            {
+              "title": "SBV cắt lãi suất tháng 03/2024",
+              "date": "2024-03-15",
+              "outcome": "VCB +3.2% trong 5 ngày"
+            }
+          ]
+        }
+      },
+      "expected_outputs": {
+        "regime": "NEUTRAL",
+        "carry_regime": "NEUTRAL",
+        "sentiment_scores": {
+          "VCB": 0.85,
+          "TCB": 0.80,
+          "BVH": 0.70
+        },
+        "regime_multiplier_applied": {
+          "regime": "NEUTRAL",
+          "multiplier": 1.0,
+          "note": "NEUTRAL = no change to impact score"
+        },
+        "historical_context_used": true,
+        "signals_posted": [
+          {
+            "tool": "post_agent_signal",
+            "arguments": {
+              "from_agent": "news-scout",
+              "to_agent": "alert-commander",
+              "signal_type": "urgent_news",
+              "stock_code": "VCB",
+              "payload": {
+                "title": "SBV cắt giảm lãi suất tái cấp vốn 0.5%",
+                "impact_score": 9
+              },
+              "finding_data": {
+                "headline": "SBV cắt giảm lãi suất tái cấp vốn 0.5%",
+                "source": "sbv_official",
+                "severity": "critical",
+                "regime": "NEUTRAL",
+                "regime_adjusted_score": 9.0,
+                "hot_money_risk": false,
+                "cpi_pressure_risk": false
+              },
+              "ttl_minutes": 120,
+              "chain_depth": 0
+            }
+          }
+        ],
+        "hao5_check_called": true,
+        "session_log_entry": {
+          "fields_required": ["Items:", "Impacts:", "Signals:", "Regime:", "Carry:"]
+        }
+      },
+      "assertions": [
+        "regime must be NEUTRAL parsed from macro_snapshot",
+        "search_similar_context must be called for articles with impactScore >= 6",
+        "Hao 5 check must be called before posting: get_agent_signals(hours=2, status='in_processing')",
+        "urgent_news finding_data must contain: headline, source, severity, regime, regime_adjusted_score",
+        "severity must be one of: low | medium | high | critical",
+        "confidence (if included) as decimal 0–1",
+        "ttl_minutes = 120, chain_depth = 0"
+      ]
+    },
+
+    {
+      "id": "NS-02",
+      "name": "chain_catalyst — macro crisis triggers all-agent broadcast",
+      "description": "High-impact macro news must produce a chain_catalyst signal to 'all' with required finding_data fields.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "market_context": {
+            "trading_window": "open",
+            "macro_snapshot": "Global Liquidity: TIGHTENING\nVND Carry Spread: +0.80%"
+          },
+          "agent_signals": [],
+          "system_status": { "healthy": true }
+        },
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "US Federal Reserve raises rates 50bps — emerging market selloff begins",
+              "source": "reuters",
+              "published_date": "2026-05-07T07:30:00Z",
+              "content": "Federal Reserve surprised markets with a 50bps emergency hike. Asian markets are experiencing sharp outflows.",
+              "impact_score": 9.5,
+              "affected_tickers": ["VIC", "VHM", "VCB", "TCB"],
+              "macro_event": true
+            }
+          ],
+          "impact_by_ticker": { "VIC": 9.5, "VHM": 9.0, "VCB": 8.5 },
+          "alerts": []
+        },
+        "run_impact_chain": {
+          "affected_tickers": ["VIC", "VHM", "VCB", "TCB", "MSN"],
+          "sector_exposure": 0.85,
+          "estimated_recovery_days": 14
+        },
+        "get_agent_signals_hao5": {
+          "signals": []
+        }
+      },
+      "expected_outputs": {
+        "regime": "TIGHTENING",
+        "regime_multiplier_applied": {
+          "direction": "bearish",
+          "multiplier": 1.3,
+          "note": "TIGHTENING + bearish → score × 1.3"
+        },
+        "adjusted_impact_score": 9.5,
+        "signals_posted": [
+          {
+            "tool": "post_agent_signal",
+            "arguments": {
+              "from_agent": "news-scout",
+              "to_agent": "all",
+              "signal_type": "chain_catalyst",
+              "payload": {
+                "detail_contains": ["regime=TIGHTENING", "regime_adj_score"]
+              },
+              "finding_data": {
+                "event_type": "macro",
+                "direction": "bearish",
+                "confidence_gte": 0.80,
+                "affected_stocks": ["VIC", "VHM", "VCB", "TCB"],
+                "headline": "US Federal Reserve raises rates 50bps — emerging market selloff begins",
+                "source": "reuters",
+                "hot_money_risk": false,
+                "gdp_warning_signal": false
+              },
+              "ttl_minutes": 120,
+              "chain_depth": 0
+            }
+          }
+        ],
+        "note_on_regime_in_finding_data": "regime field NOT included in chain_catalyst finding_data (schema is strict, extra fields stripped). Regime included in payload.detail instead."
+      },
+      "assertions": [
+        "chain_catalyst must be posted to_agent='all'",
+        "finding_data must NOT include 'regime' key (ChainCatalystFindingDataSchema strips extra fields)",
+        "regime context must be in payload.detail as string: 'regime=TIGHTENING regime_adj_score=N'",
+        "required finding_data fields: event_type, direction, confidence, affected_stocks, affected_sectors, headline, source",
+        "TIGHTENING + bearish regime multiplier = 1.3 applied to impact_score",
+        "confidence must be decimal 0–1"
+      ]
+    },
+
+    {
+      "id": "NS-03",
+      "name": "PMI < 50 two consecutive months — GDP warning signal",
+      "description": "When Vietnam Manufacturing PMI < 50 for two consecutive months, a bearish chain_catalyst with gdp_warning_signal=true must be posted.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "market_context": {
+            "trading_window": "open",
+            "macro_snapshot": "Global Liquidity: NEUTRAL\nVND Carry Spread: +1.20%"
+          },
+          "agent_signals": [],
+          "system_status": { "healthy": true }
+        },
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "Vietnam Manufacturing PMI 48.2 in April — third month of contraction",
+              "source": "sp_global",
+              "published_date": "2026-05-07T02:00:00Z",
+              "content": "S&P Global: Vietnam Manufacturing PMI 48.2 (April), down from 48.9 (March). New orders declining.",
+              "impact_score": 8
+            }
+          ],
+          "impact_by_ticker": {},
+          "alerts": []
+        },
+        "session_log_previous_pmi": 48.9
+      },
+      "expected_outputs": {
+        "pmi_detected": {
+          "current_value": 48.2,
+          "previous_value": 48.9,
+          "both_below_50": true,
+          "gdp_warning_signal": true
+        },
+        "signals_posted": [
+          {
+            "signal_type": "chain_catalyst",
+            "finding_data": {
+              "event_type": "macro",
+              "direction": "bearish",
+              "gdp_warning_signal": true
+            },
+            "payload_note": "PMI < 50 hai tháng liên tiếp — cảnh báo GDP quý tới (lead: 6-8 tuần)"
+          }
+        ],
+        "session_log_pmi_stored": 48.2
+      },
+      "assertions": [
+        "PMI value must be extracted from article text (S&P Global source)",
+        "PMI < 50 AND previous month PMI < 50 triggers gdp_warning_signal=true",
+        "chain_catalyst must be posted with event_type=macro, direction=bearish",
+        "finding_data must include gdp_warning_signal=true",
+        "note must reference '6-8 tuần' lead time",
+        "current PMI value must be stored in session log for next cycle",
+        "PMI > 52 after prior < 50 triggers bullish chain_catalyst with gdp_recovery_signal=true"
+      ]
+    },
+
+    {
+      "id": "NS-04",
+      "name": "Brent crude > 5% — CPI pressure chain",
+      "description": "Brent crude up > 5% vs prior month must trigger cpi_pressure_risk=true in chain_catalyst signal.",
+      "mock_inputs": {
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "Brent crude surges 6.2% after OPEC surprise cut",
+              "source": "reuters",
+              "published_date": "2026-05-07T06:00:00Z",
+              "content": "Brent crude hit $95.40/barrel, up 6.2% from April average of $89.80.",
+              "commodity": "brent_crude",
+              "price_change_pct_vs_prior_month": 6.2,
+              "impact_score": 7.5
+            }
+          ]
+        },
+        "macro_snapshot_parsed": {
+          "regime": "NEUTRAL"
+        }
+      },
+      "expected_outputs": {
+        "commodity_chain_detected": {
+          "commodity": "brent_crude",
+          "change_pct": 6.2,
+          "threshold": 5.0,
+          "triggered": true
+        },
+        "chain_catalyst_note": "Dầu tăng mạnh → áp lực CPI → SBV có thể thắt chặt",
+        "cpi_pressure_risk": true,
+        "finding_data": {
+          "cpi_pressure_risk": true
+        }
+      },
+      "assertions": [
+        "Brent crude change > 5% vs prior month triggers cpi_pressure_risk flag",
+        "chain_catalyst note must include 'Dầu tăng mạnh → áp lực CPI → SBV có thể thắt chặt'",
+        "cpi_pressure_risk=true must be in finding_data or signal payload",
+        "Brent < 5% must NOT trigger this chain"
+      ]
+    },
+
+    {
+      "id": "NS-05",
+      "name": "Gold spike > 3% — VND asset flight signal for banking + BVH",
+      "description": "Gold spike > 3% in the week must produce urgent_news targeting banking and BVH watchlist stocks.",
+      "mock_inputs": {
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "Gold hits $3,250/oz — up 3.8% this week on safe-haven demand",
+              "source": "bloomberg",
+              "published_date": "2026-05-07T05:30:00Z",
+              "commodity": "gold",
+              "price_change_pct_week": 3.8,
+              "impact_score": 7
+            }
+          ]
+        },
+        "get_watchlist": {
+          "tickers": ["VCB", "TCB", "BVH", "FPT", "MWG"]
+        }
+      },
+      "expected_outputs": {
+        "gold_spike_detected": {
+          "change_pct_week": 3.8,
+          "threshold": 3.0,
+          "triggered": true
+        },
+        "target_tickers": ["VCB", "TCB", "BVH"],
+        "signal_note": "Vàng tăng — tín hiệu dân cư tìm nơi trú ẩn, thoát VND asset",
+        "signal_type": "urgent_news"
+      },
+      "assertions": [
+        "Gold > 3% weekly triggers urgent_news for banking tickers + BVH",
+        "signal note must include 'Vàng tăng — tín hiệu dân cư tìm nơi trú ẩn, thoát VND asset'",
+        "Gold < 3% must NOT trigger this signal"
+      ]
+    },
+
+    {
+      "id": "NS-06",
+      "name": "Hao 5 dedup — same ticker + signal type in last 2h skips posting",
+      "description": "When an identical ticker + signal_type exists in the agent bus with status='in_processing' within 2 hours, the new signal must be skipped.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "market_context": {
+            "trading_window": "open",
+            "macro_snapshot": "Global Liquidity: NEUTRAL\nVND Carry Spread: +1.00%"
+          },
+          "agent_signals": [],
+          "system_status": { "healthy": true }
+        },
+        "fetch_and_analyze": {
+          "fetched_articles": [
+            {
+              "title": "VNM tăng trưởng doanh thu Q1 vượt kỳ vọng",
+              "source": "cafef",
+              "impact_score": 8,
+              "affected_tickers": ["VNM"]
+            }
+          ],
+          "impact_by_ticker": { "VNM": 8 }
+        },
+        "get_agent_signals_hao5": {
+          "signals": [
+            {
+              "signal_id": "sig-existing-001",
+              "signal_type": "urgent_news",
+              "stock_code": "VNM",
+              "status": "in_processing",
+              "created_at": "2026-05-07T07:30:00Z",
+              "age_minutes": 90
+            }
+          ]
+        },
+        "current_time": "2026-05-07T09:00:00Z"
+      },
+      "expected_outputs": {
+        "hao5_check": {
+          "ticker": "VNM",
+          "signal_type": "urgent_news",
+          "existing_signal_found": true,
+          "age_minutes": 90,
+          "within_2h_window": true,
+          "action": "SKIP"
+        },
+        "log_entry": "Hào 5 check: VNM/urgent_news → skip",
+        "post_agent_signal_called": false
+      },
+      "assertions": [
+        "Hao 5 check must call get_agent_signals(hours=2, status='in_processing') before every signal post",
+        "Same ticker + signal_type in last 2h = SKIP",
+        "Log must contain 'Hào 5 check: {ticker}/{type} → skip'",
+        "post_agent_signal must NOT be called when skipping",
+        "Skip is NOT an error — no BUG channel message"
+      ]
+    },
+
+    {
+      "id": "NS-07",
+      "name": "EASING regime + bullish — score multiplier 1.2",
+      "description": "Under EASING regime, bullish news impact score must be multiplied by 1.2 before posting.",
+      "mock_inputs": {
+        "macro_snapshot_parsed": {
+          "regime": "EASING",
+          "carry_regime": "NEUTRAL"
+        },
+        "article": {
+          "impact_score": 7.0,
+          "direction": "bullish",
+          "affected_tickers": ["FPT"]
+        }
+      },
+      "expected_outputs": {
+        "regime_multiplier": {
+          "regime": "EASING",
+          "direction": "bullish",
+          "multiplier": 1.2,
+          "original_score": 7.0,
+          "adjusted_score": 8.4
+        },
+        "finding_data": {
+          "regime_adjusted_score": 8.4
+        }
+      },
+      "assertions": [
+        "EASING + bullish = multiplier 1.2",
+        "EASING + bearish = multiplier 0.8",
+        "TIGHTENING + bearish = multiplier 1.3",
+        "TIGHTENING + bullish = multiplier 0.7",
+        "NEUTRAL = multiplier 1.0 (no change)",
+        "regime_adjusted_score must be stored in finding_data"
+      ]
+    },
+
+    {
+      "id": "NS-08",
+      "name": "HOT_MONEY_INFLOW with carry spread > 3% — hot_money_risk flag",
+      "description": "When CARRY_REGIME=HOT_MONEY_INFLOW and carry spread > 3%, hot_money_risk=true must be set on FII-related news signals.",
+      "mock_inputs": {
+        "macro_snapshot_parsed": {
+          "regime": "NEUTRAL",
+          "carry_regime": "HOT_MONEY_INFLOW",
+          "carry_spread_pct": 3.6
+        },
+        "article": {
+          "title": "Foreign investors net buy VN stocks 4th consecutive session",
+          "impact_score": 7,
+          "direction": "bullish",
+          "fii_related": true,
+          "affected_tickers": ["VCB", "VIC"]
+        }
+      },
+      "expected_outputs": {
+        "hot_money_risk_flag": true,
+        "finding_data": {
+          "hot_money_risk": true
+        }
+      },
+      "assertions": [
+        "carry_spread > 3% + HOT_MONEY_INFLOW triggers hot_money_risk=true",
+        "hot_money_risk must be set in finding_data",
+        "carry_spread = 2.9% must NOT trigger (boundary strictly > 3%)"
+      ]
+    },
+
+    {
+      "id": "NS-09",
+      "name": "Error boundary — fetch_and_analyze fails after 1 retry",
+      "description": "Tool failure at Step 1 after 1 retry must trigger BUG channel message and immediate exit. No incident files created.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "market_context": {
+            "trading_window": "open",
+            "macro_snapshot": "Global Liquidity: NEUTRAL\nVND Carry Spread: +1.00%"
+          },
+          "agent_signals": [],
+          "system_status": { "healthy": true }
+        },
+        "fetch_and_analyze": {
+          "__simulate_error": true,
+          "error": "VPS proxy timeout: connection refused 10.0.0.5:8765",
+          "retry_count": 1
+        }
+      },
+      "expected_outputs": {
+        "bug_telegram_sent": true,
+        "bug_message_pattern": "[news-scout] Step 1 failed: VPS proxy timeout: connection refused 10.0.0.5:8765",
+        "session_log_entry_pattern": "Cycle HH:MM — BLOCKED at step 1: VPS proxy timeout",
+        "cycle_exited_immediately": true
+      },
+      "assertions": [
+        "bug message must start with [news-scout]",
+        "bug message must be single line",
+        "session log must contain 'BLOCKED at step N: {error}'",
+        "NO standalone blocker/incident/recovery files created",
+        "NO 'Recommended Action' or 'Next Steps' sections written",
+        "NO docker-compose, curl, or infrastructure commands in any output",
+        "cycle must exit — do NOT investigate or diagnose infrastructure"
+      ]
+    },
+
+    {
+      "id": "NS-10",
+      "name": "Bootstrap failure — market_context missing triggers BUG + STOP",
+      "description": "If bootstrap returns without market_context, agent must send BUG and stop.",
+      "mock_inputs": {
+        "get_cycle_bootstrap": {
+          "agent_signals": [],
+          "system_status": { "healthy": false },
+          "market_context": null
+        }
+      },
+      "expected_outputs": {
+        "bug_telegram_sent": true,
+        "bug_message_contains": ["news-scout", "bootstrap", "market_context missing"],
+        "cycle_continued": false
+      },
+      "assertions": [
+        "missing market_context is a hard stop — no partial cycle execution",
+        "BUG channel message must be sent",
+        "agent must NOT proceed to Step 1 without market_context"
+      ]
+    },
+
+    {
+      "id": "NS-11",
+      "name": "WORK channel message format — every cycle",
+      "description": "WORK channel message must follow exact format with HH:MM UTC, signals analyzed, fired/suppressed counts.",
+      "mock_inputs": {
+        "cycle_summary": {
+          "articles_fetched": 12,
+          "signals_fired": 3,
+          "signals_suppressed": 2,
+          "cycle_start_utc": "09:00",
+          "cycle_end_utc": "09:04",
+          "next_run_utc": "10:00",
+          "regime": "NEUTRAL"
+        }
+      },
+      "expected_outputs": {
+        "work_channel_message_schema": {
+          "starts_with": "[News Scout]",
+          "contains": ["UTC", "signals analyzed", "Fired:", "Suppressed:", "Next:"],
+          "format_example": "[News Scout] 09:04 UTC — 12 signals analyzed\n  Fired: 3 (catalysts) | Suppressed: 2 | Next: 10:00"
+        }
+      },
+      "assertions": [
+        "message must start with [News Scout]",
+        "must include HH:MM UTC",
+        "must include signals analyzed count",
+        "must include 'Fired: X (catalysts)'",
+        "must include 'Suppressed: Y'",
+        "must include 'Next: TIME'"
+      ]
+    },
+
+    {
+      "id": "NS-12",
+      "name": "Session log format — required fields",
+      "description": "Session log entry must contain all required fields in the standard cycle heading format.",
+      "mock_inputs": {
+        "cycle_data": {
+          "start_utc": "09:00",
+          "end_utc": "09:04",
+          "articles_fetched": 12,
+          "watchlist_impacts": 5,
+          "signals_fired": ["urgent_news", "chain_catalyst"],
+          "regime": "NEUTRAL",
+          "carry_regime": "NEUTRAL",
+          "pmi_value_stored": null
+        }
+      },
+      "expected_outputs": {
+        "session_log_schema": {
+          "heading": "### Cycle (HH:MM–HH:MM)",
+          "required_fields": ["Items:", "Impacts:", "Signals:", "Regime:", "Carry:"],
+          "file_path": "docs/agent-memory/notebooks/news-scout.md"
+        },
+        "log_agent_work_called": true
+      },
+      "assertions": [
+        "notebook file path: docs/agent-memory/notebooks/news-scout.md",
+        "heading must be '### Cycle (HH:MM–HH:MM)'",
+        "all 5 required fields must be present",
+        "log_agent_work must also be called with action='news-scout-cycle'",
+        "log_agent_work context must include: items, impacts, signals_fired, regime"
+      ]
+    },
+
+    {
+      "id": "NS-13",
+      "name": "Batch 2 sentiment log — daily 05:00 UTC ledger append",
+      "description": "At 05:00 UTC, per-ticker sentiment must be appended to docs/analysis-briefs/{TICKER}.md. New tickers get file created first.",
+      "mock_inputs": {
+        "trigger_time_utc": "05:00",
+        "get_watchlist": {
+          "tickers": ["VCB", "FPT"]
+        },
+        "sentiment_scores": {
+          "VCB": 0.35,
+          "FPT": 0.05
+        },
+        "existing_files": {
+          "docs/analysis-briefs/VCB.md": true,
+          "docs/analysis-briefs/FPT.md": false
+        }
+      },
+      "expected_outputs": {
+        "VCB": {
+          "action": "append",
+          "line_format": "2026-05-07 | {sentiment description} | YoY: {comparison or 'no prior data'}"
+        },
+        "FPT": {
+          "action": "create_then_append",
+          "file_sections_required": [
+            "# FPT — Analysis Ledger",
+            "## [Report Analyzer] Fundamentals & Valuation",
+            "## [News Scout] Headlines & Sentiment",
+            "## [Market Watcher] Price, Volume, Technicals",
+            "## [Unified Agent] Quarterly Syntheses"
+          ]
+        }
+      },
+      "assertions": [
+        "Run at 05:00 UTC daily only",
+        "If file does not exist: create with all 4 section headings first",
+        "Append under '## [News Scout] Headlines & Sentiment' section",
+        "Format: YYYY-MM-DD | {description} | YoY: {comparison}",
+        "Skip when |sentiment_score| < 0.1 AND not neutral (i.e., only append when |score| >= 0.1 OR documenting neutral absence)",
+        "FPT sentiment 0.05 — below 0.1 threshold — skip",
+        "Skip weekends and Vietnamese public holidays"
+      ]
+    },
+
+    {
+      "id": "NS-14",
+      "name": "signal_type schema validation — missing severity field rejected",
+      "description": "A post_agent_signal call with missing 'severity' in urgent_news finding_data must fail validation.",
+      "mock_inputs": {
+        "attempted_signal": {
+          "from_agent": "news-scout",
+          "to_agent": "alert-commander",
+          "signal_type": "urgent_news",
+          "stock_code": "VNM",
+          "payload": { "title": "VNM news", "impact_score": 8 },
+          "finding_data": {
+            "headline": "VNM Q1 earnings miss",
+            "source": "cafef"
+          }
+        }
+      },
+      "expected_outputs": {
+        "validation_error": true,
+        "error_message_contains": ["severity", "required"],
+        "signal_posted": false
+      },
+      "assertions": [
+        "urgent_news finding_data requires: headline, source, severity",
+        "missing severity must reject with validation error",
+        "chain_catalyst finding_data requires: event_type, direction, confidence, affected_stocks, affected_sectors, headline, source",
+        "invalid severity value (e.g. 'HIGH' uppercase) must also reject"
+      ]
+    }
+  ],
+
+  "schema_contracts": {
+    "urgent_news_finding_data": {
+      "required": ["headline", "source", "severity", "regime", "regime_adjusted_score"],
+      "optional": ["hot_money_risk", "cpi_pressure_risk"],
+      "severity_enum": ["low", "medium", "high", "critical"],
+      "confidence_format": "decimal 0.0–1.0"
+    },
+    "chain_catalyst_finding_data": {
+      "required": ["event_type", "direction", "confidence", "affected_stocks", "affected_sectors", "headline", "source"],
+      "optional": ["hot_money_risk", "gdp_warning_signal", "gdp_recovery_signal", "cpi_pressure_risk"],
+      "strict_schema": true,
+      "note": "ChainCatalystFindingDataSchema uses no .passthrough(). Extra fields silently stripped. Do NOT include 'regime' key here — use payload.detail instead.",
+      "event_type_enum": ["credit_policy", "trade_war", "earnings", "macro", "legal", "crisis", "sector_event"],
+      "direction_enum": ["bullish", "bearish", "neutral"]
+    },
+    "post_agent_signal_required_fields": ["from_agent", "to_agent", "signal_type", "payload", "finding_data", "ttl_minutes", "chain_depth"],
+    "log_agent_work_context_for_news_scout": {
+      "required": ["items", "impacts", "signals_fired", "regime"]
+    }
+  },
+
+  "regime_multipliers": {
+    "TIGHTENING_bearish": 1.3,
+    "TIGHTENING_bullish": 0.7,
+    "EASING_bullish": 1.2,
+    "EASING_bearish": 0.8,
+    "NEUTRAL": 1.0
+  },
+
+  "pmi_detection_rules": {
+    "source": "S&P Global — published 2nd–3rd of each month",
+    "gdp_warning": "PMI < 50 AND previous month PMI < 50",
+    "gdp_recovery": "PMI > 52 after prior < 50",
+    "store_in_session_log": true
+  },
+
+  "commodity_chain_triggers": {
+    "brent_crude_5pct": "Dầu tăng mạnh → áp lực CPI → SBV có thể thắt chặt, sets cpi_pressure_risk=true",
+    "gold_3pct_weekly": "Vàng tăng — tín hiệu dân cư tìm nơi trú ẩn, thoát VND asset, targets banking + BVH"
+  },
+
+  "channel_permissions": {
+    "market": { "write": true, "rule": "news findings, impact analysis" },
+    "work":   { "write": true, "rule": "cycle completion" },
+    "bug":    { "write": true, "rule": "errors only" }
+  },
+
+  "forbidden_behaviors": [
+    "Logging a suppressed signal as POSTED (phantom success)",
+    "Posting urgent_news signal without checking Hao 5 dedup first",
+    "Including 'regime' key directly in chain_catalyst finding_data (schema strips it)",
+    "Posting finding_data without required fields (headline, source, severity for urgent_news)",
+    "Creating standalone incident/blocker files on tool failure",
+    "Adding 'Recommended Action' or 'Next Steps' with ops commands on error",
+    "Continuing cycle when market_context is missing from bootstrap",
+    "Writing to market channel without news content (work-only cycles)",
+    "Appending to analysis-briefs without creating the file first if it doesn't exist",
+    "Claiming MCP is unavailable without attempting the tool call"
+  ]
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=VN Market OHLCV backfill poller timer — every 30 min
+Requires=vn-ohlcv-backfill.service
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+Unit=vn-ohlcv-backfill.service
+
+[Install]
+WantedBy=timers.target

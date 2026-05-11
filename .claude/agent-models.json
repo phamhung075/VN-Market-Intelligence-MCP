@@ -1,0 +1,86 @@
+{
+  "modes": {
+    "eco": {
+      "description": "Full Haiku — minimize costs",
+      "agents": {
+        "news-scout": "haiku",
+        "financial-analyst": "haiku",
+        "market-watcher": "haiku",
+        "report-analyzer": "haiku",
+        "alert-commander": "haiku",
+        "digest-predict": "haiku",
+        "qa-responder": "haiku",
+        "architect": "haiku",
+        "ba": "haiku",
+        "claude-manager-helper": "haiku",
+        "code-janitor": "haiku",
+        "cowork-refactory-expert": "haiku",
+        "developer": "haiku",
+        "fixer": "haiku",
+        "idea-forge": "haiku",
+        "market-analyst": "haiku",
+        "ops": "haiku",
+        "pm": "haiku",
+        "po": "haiku",
+        "qa": "haiku",
+        "system-auditor": "haiku",
+        "unified-agent": "haiku"
+      }
+    },
+    "normal": {
+      "description": "Mix Haiku + Sonnet — balanced cost/quality",
+      "agents": {
+        "news-scout": "haiku",
+        "financial-analyst": "haiku",
+        "market-watcher": "haiku",
+        "report-analyzer": "haiku",
+        "alert-commander": "sonnet",
+        "digest-predict": "sonnet",
+        "qa-responder": "haiku",
+        "architect": "sonnet",
+        "ba": "sonnet",
+        "claude-manager-helper": "haiku",
+        "code-janitor": "haiku",
+        "cowork-refactory-expert": "haiku",
+        "developer": "sonnet",
+        "fixer": "haiku",
+        "idea-forge": "haiku",
+        "market-analyst": "sonnet",
+        "ops": "sonnet",
+        "pm": "haiku",
+        "po": "haiku",
+        "qa": "sonnet",
+        "system-auditor": "haiku",
+        "unified-agent": "haiku"
+      }
+    },
+    "performance": {
+      "description": "Full Sonnet — max quality",
+      "agents": {
+        "news-scout": "sonnet",
+        "financial-analyst": "sonnet",
+        "market-watcher": "sonnet",
+        "report-analyzer": "sonnet",
+        "alert-commander": "sonnet",
+        "digest-predict": "sonnet",
+        "qa-responder": "sonnet",
+        "architect": "sonnet",
+        "ba": "sonnet",
+        "claude-manager-helper": "sonnet",
+        "code-janitor": "sonnet",
+        "cowork-refactory-expert": "sonnet",
+        "developer": "sonnet",
+        "fixer": "sonnet",
+        "idea-forge": "sonnet",
+        "market-analyst": "sonnet",
+        "ops": "sonnet",
+        "pm": "sonnet",
+        "po": "sonnet",
+        "qa": "sonnet",
+        "system-auditor": "sonnet",
+        "unified-agent": "sonnet"
+      }
+    }
+  },
+  "current_mode": "normal"
+}

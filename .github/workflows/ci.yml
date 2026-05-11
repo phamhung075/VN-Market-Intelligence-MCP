@@ -1,0 +1,59 @@
+name: CI
+
+# Trigger on every push to main and every PR targeting main.
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: bun test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # All `run` steps execute from apps/mcp-server by default.
+    defaults:
+      run:
+        working-directory: apps/mcp-server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Bun — version is sourced from .tool-versions at repo root (single source of truth).
+      # Note: bun-version-file resolves from repo root regardless of defaults.run.working-directory.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .tool-versions
+
+      # Cache bun install to avoid re-downloading packages on every run.
+      # hashFiles resolves from repo root.
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('apps/mcp-server/bun.lock') }}
+          restore-keys: bun-
+
+      # Install dependencies deterministically — fails if bun.lock is stale.
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Run the full test suite. CI exits non-zero if any test fails.
+      - name: Run tests
+        run: bun test
+
+      # Write pass/fail summary to the GitHub Actions step summary.
+      - name: Report test summary
+        if: always()
+        run: |
+          echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
+          bun test 2>&1 | grep -E "^[[:space:]]*[0-9]+ (pass|fail)" | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
+
+# AC-8 (optional) — Branch protection setup:
+# To require this CI job before merging to main, go to:
+#   GitHub repo > Settings > Branches > Add branch protection rule
+#   Branch name pattern: main
+#   Check: "Require status checks to pass before merging"
+#   Search for and add status check: "bun test"

@@ -1,0 +1,11 @@
+{
+  "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
+  "status": "idle",
+  "currentSprint": "1872a",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T18:00:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "1872a-1: .claude/knowledge/tree-map.md — docs/architecture/ subtree added to canonical DAG (global.md + 8 microservices + 12 mcp-server tool groups) + 2 Write Ownership rows. QA APPROVED, merged to main."
+}

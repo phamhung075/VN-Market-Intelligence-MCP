@@ -1,0 +1,330 @@
+{
+  "scan_date": "2026-05-10T10:02:00Z",
+  "last_run": "2026-05-10T10:02:00Z",
+  "findings": [
+    {
+      "fingerprint": "check-3:infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — circuit breaker timeouts (RESOLVED)",
+      "file": "apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts (SSOT) — reuters and tradingEconomics now import",
+      "lines": "GEO_BLOCKED_BREAKER_CONFIG const at line 21",
+      "detail": "JANITOR-025 SHIPPED: Both reuters and tradingEconomics breakers had identical config: resetTimeoutMs=900_000, backoffMultiplier=2, maxResetTimeoutMs=7_200_000. Extracted to GEO_BLOCKED_BREAKER_CONFIG constant. Both are geo-blocked from France with same retry strategy (Task 1862f). Commit 61c2cc9b (2026-05-10). Risk: RESOLVED.",
+      "canonical_source": "apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
+      "risk": "RESOLVED — constant is centralized, single edit point for timeout changes.",
+      "discovered_at": "2026-05-10T10:00:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-025",
+      "ship_directly": true,
+      "reason_shipped": "Single-file mechanical fix. 10 circuit breaker tests pass. Commit 61c2cc9b."
+    },
+    {
+      "fingerprint": "check-3:infrastructure/agents:CLAUDE_BIN-duplicated",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — CLAUDE_BIN centralized (RESOLVED)",
+      "file": "apps/mcp-server/src/infrastructure/agents/agentConstants.ts (SSOT) — smartCompactSpawner.ts and qaResponderSpawner.ts now import",
+      "lines": "agentConstants.ts line ~1 (SSOT)",
+      "detail": "JANITOR-023 SHIPPED: Both smartCompactSpawner.ts and qaResponderSpawner.ts now import CLAUDE_BIN from ./agentConstants.js. Commit b836f129 (merge) + 56a8851e (feature). Extracted to single canonical source.",
+      "canonical_source": "apps/mcp-server/src/infrastructure/agents/agentConstants.ts:CLAUDE_BIN",
+      "risk": "RESOLVED — constant is centralized, single edit point for path changes.",
+      "discovered_at": "2026-05-02T10:30:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-023",
+      "ship_directly": true,
+      "reason_shipped": "Two-file change shipped (extract to agentConstants.ts + update both imports). Commit b836f129. Both files now import from canonical source."
+    },
+    {
+      "fingerprint": "check-2:domain/services/marketContextBuilder.ts:MACRO_CODES-parallel-impl",
+      "severity": "MEDIUM",
+      "category": "Duplicate constant + interfaces + section-builder logic — MACRO_CODES in marketContextBuilder.ts and marketContextTools.ts (RESOLVED)",
+      "file": "apps/mcp-server/src/domain/services/marketContextBuilder.ts (SSOT) — marketContextTools.ts now delegates",
+      "lines": "79-85 (builder SSOT only)",
+      "detail": "JANITOR-020 SHIPPED: marketContextTools.ts registerMarketContextTools handler now calls buildWatchlistSection, buildMacroSection, buildAlertsSection, buildAnalysisSection, buildSystemStatusText from marketContextBuilder.ts instead of re-implementing locally. Commit ca94e876 (2026-04-30). Risk: RESOLVED.",
+      "canonical_source": "apps/mcp-server/src/domain/services/marketContextBuilder.ts:buildMarketContextText + buildSystemStatusText",
+      "risk": "RESOLVED — market context output is now unified in domain layer.",
+      "discovered_at": "2026-05-02T00:00:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-020",
+      "ship_directly": true,
+      "reason_shipped": "Two-file change shipped: marketContextTools.ts imports section builders from domain. Test coverage: 8558 tests pass. Commit ca94e876."
+    },
+    {
+      "fingerprint": "check-1:domain/services/financial-reports:detectUnitMultiplier-diverged",
+      "severity": "MEDIUM",
+      "category": "Duplicate helper function — detectUnitMultiplier private copy in incomeStatementExtractor.ts",
+      "file": "apps/mcp-server/src/domain/services/financial-reports/incomeStatementExtractor.ts",
+      "lines": "392-412",
+      "detail": "detectUnitMultiplier() is defined privately in both balanceSheetExtractor.ts (lines 204-246) and incomeStatementExtractor.ts (lines 392-412). The income statement copy is a stale port: it scans only 50 lines (vs 400 in balance sheet), is missing the '(Triệu VND)' bank BCTC column-header pattern, missing the nghìn đồng fallback, and missing magnitude-inference sentinels (-1/-2). Bank BCTC income statements will silently use the wrong multiplier (or default to 1 when the correct answer is 1000) in any PDF where the unit header appears after line 50. extractNumber() and LOOKAHEAD_LINES = 3 are also duplicated across all three extractors (balanceSheet, incomeStatement, cashFlow); the income statement version adds scientific-notation support (Task 1810a) absent from the other two.",
+      "canonical_source": "none yet — extraction to extractorHelpers.ts needed",
+      "risk": "MEDIUM — bank BCTC income statement extraction silently under-converts values when unit header is late in the PDF (post line 50). Silent divergence; no test failure.",
+      "discovered_at": "2026-04-27T14:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-014",
+      "ship_directly": false,
+      "reason_not_shipped": "Requires extracting shared helpers into a new file (extractorHelpers.ts) and updating all three extractor imports. Three-file change minimum. Constraint: ship only when single-file mechanical."
+    },
+    {
+      "fingerprint": "check-1:interface/mcp/tools/news-analysis/agentSignalTools.ts:SignalTypeEnum",
+      "severity": "LOW",
+      "category": "Duplicate classification maps — SignalTypeEnum re-lists SignalType union (RESOLVED)",
+      "file": "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts (SSOT) — agentSignalTools.ts now imports",
+      "lines": "37-46 (store SSOT only)",
+      "detail": "JANITOR-013 SHIPPED: agentSignalTools.ts line 29 now imports SignalTypeSchema and SignalType directly from agentSignalStore.ts. No re-declaration of z.enum in interface layer. Commit 2adf8829 (2026-04-30). Risk: RESOLVED.",
+      "canonical_source": "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:SignalTypeSchema (SSOT)",
+      "risk": "RESOLVED — signal types are now unified in store layer.",
+      "discovered_at": "2026-04-27T11:30:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-013",
+      "ship_directly": true,
+      "reason_shipped": "Two-file change shipped: agentSignalTools.ts imports SignalTypeSchema from store. Test coverage: 8558 tests pass. Commit 2adf8829."
+    },
+    {
+      "fingerprint": "check-3:infrastructure/fetchers/tradingEconomicsChromium.ts:puppeteer-launch-config",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — duplicated browser launch config",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts",
+      "lines": "136-141 and 499-504",
+      "detail": "playwrightScrape() and playwrightScrapeNews() both inline identical Puppeteer launch config: executablePath fallback '/usr/bin/chromium', User-Agent string 'Mozilla/5.0...Chrome/120.0.0.0', and args array ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']. Any change to browser launch config requires two edits. Fix: extract to shared constants or a createBrowser() helper at the top of the file.",
+      "canonical_source": "none yet — extraction needed",
+      "risk": "MEDIUM — one edit changes behaviour, the other doesn't. Silent divergence possible.",
+      "discovered_at": "2026-04-27T11:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-011",
+      "ship_directly": false,
+      "reason_not_shipped": "playwrightScrape/playwrightScrapeNews are never called in tests (always mocked via DI). Duplicated lines are inside the un-tested production-only code paths. Constraint: ship only when covered by existing tests."
+    },
+    {
+      "fingerprint": "check-3:infrastructure/fetchers:BROWSER_UA-18-files",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — BROWSER_UA string hardcoded in 18 source files",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/ (18 files) + application/services/imfDataFetcher.ts + application/usecases/fetchParseAndStoreBctc.ts + domain/services/bctcDiscovery.ts",
+      "lines": "various",
+      "detail": "The string 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' is hardcoded inline in 18 production source files. Some files define a local BROWSER_UA const (sbvCircular.ts, sscInsider.ts, congbao.ts, muasamcong.ts), others inline the string directly in fetch headers. Any User-Agent rotation (bot detection, version update) requires 18 edits across 3 layers. Fix: extract to infrastructure/http/browserHeaders.ts as BROWSER_UA constant and import from there.",
+      "canonical_source": "none yet — extraction to infrastructure/http/browserHeaders.ts needed",
+      "risk": "LOW — uniform string is currently consistent (no silent divergence). Maintenance risk: 18-file fan-out on any UA update.",
+      "discovered_at": "2026-04-27T16:30:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-017",
+      "ship_directly": false,
+      "reason_not_shipped": "18-file change across 3 architectural layers. Constraint: ship only when single-file mechanical."
+    },
+    {
+      "fingerprint": "check-2:mcp.config.json:referenceStocks",
+      "severity": "LOW",
+      "category": "Duplicate classification maps (managed)",
+      "file": "mcp.config.json",
+      "line": 58,
+      "detail": "market.referenceStocks duplicates SECTOR_PEERS ticker-to-sector mappings. However, duplication is managed via test coverage (1252-reference-stocks-sync.test.ts + 1282-sector-classification-dedup.test.ts). Both tests pass, confirming sync. Risk: acceptable for external MCP registry reference.",
+      "canonical_source": "src/domain/services/sectorPeers.ts:SECTOR_PEERS",
+      "risk": "Data drift mitigated by test coverage. Low priority for refactoring.",
+      "discovered_at": "2026-04-13T00:00:00Z",
+      "status": "managed"
+    }
+  ],
+  "fixed_findings": [
+    {
+      "fingerprint": "check-3:infrastructure/db/telegramReportStore.ts:DEDUP_WINDOW_SECONDS",
+      "severity": "LOW",
+      "category": "Magic number repeated in function default parameter (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/db/telegramReportStore.ts",
+      "detail": "DEDUP_WINDOW_SECONDS constant defined at line 219 (4*3600), but isDuplicateReport() function at line 318 used hardcoded 4*3600 as default parameter. Now uses DEDUP_WINDOW_SECONDS constant. Single edit point restored.",
+      "fix_type": "refactor",
+      "fix_commit": "dd2e6b82",
+      "fixed_at": "2026-05-09T12:15:00Z",
+      "fix_notes": "JANITOR-024. Single-file change. 7 tests pass (1215-bug-report-dedup.test.ts). TSC clean. Shipped directly."
+    },
+    {
+      "fingerprint": "check-3:infrastructure/agents/smartCompactSpawner.ts:MAX_TURN_CHARS",
+      "severity": "LOW",
+      "category": "Magic number repeated 3x within single file (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/agents/smartCompactSpawner.ts",
+      "detail": "500 (max chars per turn) was inlined on lines 65 and 73 for USER and ASSISTANT turn truncation. 60 (max turns retained) was inlined on line 81. Extracted to MAX_TURN_CHARS = 500 and MAX_TURNS = 60 constants at file top.",
+      "fix_type": "refactor",
+      "fix_commit": "f34852b0",
+      "fixed_at": "2026-05-02T10:30:00Z",
+      "fix_notes": "JANITOR-022. Single-file change. 2 tests pass (1821b-smart-compact-tool). TSC clean. Shipped directly."
+    },
+    {
+      "fingerprint": "check-3:application/usecases/discoverBctcPdfUrlBrowser.ts:BROWSER_FETCH_TIMEOUT_MS",
+      "severity": "LOW",
+      "category": "Magic number repeated 4x within single file (resolved)",
+      "file": "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlBrowser.ts",
+      "detail": "30000 (ms) was inlined on lines 52, 100, 147, and 217 (tryHoseBrowser, tryHnxBrowser, tryUpcomBrowser, defaultBrowserFetcher). Extracted to BROWSER_FETCH_TIMEOUT_MS = 30_000 constant at file top. Any timeout change now requires one edit.",
+      "fix_type": "refactor",
+      "fix_commit": "b33d6856",
+      "fixed_at": "2026-05-02T09:00:00Z",
+      "fix_notes": "JANITOR-021. Single-file change. 8 tests pass (1289f-bctc-browser-discovery). Shipped directly."
+    },
+    {
+      "fingerprint": "check-2:infrastructure/fetchers/sscInsider.ts:parseVnNumber-private-copy",
+      "severity": "LOW",
+      "category": "Duplicate helper function — private parseVnNumber in sscInsider.ts and muasamcong.ts (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts and muasamcong.ts",
+      "detail": "Both sscInsider.ts and muasamcong.ts had private parseVnNumber(s: string): number copies using simple dot-replace logic that diverged silently from the canonical vnNumberParser.ts. Both files now import parseVnNumber from canonical domain/services/vnNumberParser.js. Callers adapted to treat null return as 0 sentinel. 249-ssc-insider.test.ts: 15 pass. 248-muasamcong.test.ts: 8 pass.",
+      "fix_type": "refactor",
+      "fix_commit": "6e2cca53",
+      "fixed_at": "2026-05-01T00:00:00Z",
+      "fix_notes": "JANITOR-016. Two-file change on feat/janitor-016-parsevnnumber-dry branch. Both test suites pass. Shipped directly."
+    },
+    {
+      "fingerprint": "check-1:interface/mcp/tools/alerts/alertCheckTools.ts:SEVERITY_VI",
+      "severity": "LOW",
+      "category": "Duplicate inline severity label map (resolved)",
+      "file": "apps/mcp-server/src/interface/mcp/tools/alerts/alertCheckTools.ts",
+      "detail": "Local SEVERITY_VI const (ASCII values: NGHIEM TRONG/QUAN TRONG/LUU Y/THAP) duplicated the canonical SEVERITY_VI in sector/severityLabels.ts (diacritics: NGHIEM TRỌNG/QUAN TRỌNG/LƯU Ý/THẤP). formatAlertVi() is private and only used in the no-op registerAlertCheckTools. Replaced inline const with import from ../sector/severityLabels.js. Also corrects the ASCII fallback to use proper Vietnamese diacritics.",
+      "fix_type": "refactor",
+      "fix_commit": "pending",
+      "fixed_at": "2026-04-27T10:00:00Z",
+      "fix_notes": "JANITOR-009. Single-file cleanup. Test 176: PASS. TSC: no new errors. Shipped directly."
+    },
+    {
+      "fingerprint": "check-1:interface/mcp/tools/system/watchlist.ts:COMPANY_SHORT_NAME",
+      "severity": "LOW",
+      "category": "Duplicate display-name map (resolved)",
+      "file": "apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts",
+      "detail": "45-line COMPANY_SHORT_NAME map duplicated display names already in STOCK_CATALOG (stockAliases.ts). buildPeerSuggestionText() now calls getCompanyName() from stockAliases.ts directly.",
+      "fix_type": "refactor",
+      "fix_commit": "9c9fc6e6",
+      "fixed_at": "2026-04-29T10:00:00Z",
+      "fix_notes": "JANITOR-004. Single-file cleanup. Test suite: PASS (8053 tests). Shipped directly."
+    },
+    {
+      "fingerprint": "check-3:domain/models/imfIndicators.ts:IMF_HISTORICAL_BASELINE",
+      "severity": "LOW",
+      "category": "Magic number duplicated in 3 files (resolved)",
+      "file": "apps/mcp-server/src/domain/models/imfIndicators.ts",
+      "detail": "historicalBaseline: 3.0 was inlined in imfConvictionBridge.ts, imfIndicatorPollerJob.ts, and imfSignals.ts. Extracted to IMF_HISTORICAL_BASELINE constant in domain/models/imfIndicators.ts. All 3 callers updated to import the constant.",
+      "fix_type": "refactor",
+      "fix_commit": "4c2d83d3",
+      "fixed_at": "2026-04-29T10:00:00Z",
+      "fix_notes": "JANITOR-005. 4 files changed. Test suite: PASS (8053 tests). Shipped directly."
+    },
+    {
+      "fingerprint": "check-1:interface/mcp/tools/sector:severity-label-maps",
+      "severity": "LOW",
+      "category": "Duplicate inline severity label maps (resolved)",
+      "file": "apps/mcp-server/src/interface/mcp/tools/sector/severityLabels.ts (new SSOT)",
+      "detail": "Vietnamese severity label map (critical/high/medium/low) was inlined in 5 sector tool files: pharmaTools, leadershipTools, creditFlowTools, legalRiskTools, supplyChainTools. Extracted to shared severityLabels.ts as SEVERITY_VI. All 5 files now import from the shared location.",
+      "fix_type": "refactor",
+      "fix_commit": "b60cbf2d",
+      "fixed_at": "2026-04-29T10:00:00Z",
+      "fix_notes": "JANITOR-007. 6 files changed (1 new). Test suite: PASS (8053 tests). Shipped directly."
+    },
+    {
+      "fingerprint": "check-3:vps-scripts:log-rotation-10485760",
+      "severity": "LOW",
+      "category": "Magic number — repeated constant (resolved)",
+      "file": "vps-scripts/vps-lib.sh",
+      "detail": "10485760 (10 MB log-rotation threshold) was inlined in 10 separate VPS shell scripts. vps-lib.sh now defines LOG_ROTATE_BYTES=10485760 as the single source of truth. Each of the 10 scripts reads the constant from vps-lib.sh at startup via grep, with 10485760 as a safe fallback if vps-lib.sh is absent. The rotation check no longer contains the raw byte count.",
+      "fix_type": "refactor",
+      "fix_commit": "54bb7e3b",
+      "fixed_at": "2026-04-29T10:00:00Z",
+      "fix_notes": "JANITOR-008. 11 files changed. Shell scripts only — no TypeScript test impact."
+    },
+    {
+      "fingerprint": "check-3:mcp.config.json:scheduler",
+      "severity": "LOW",
+      "category": "Unused config section — dead data (resolved)",
+      "file": "mcp.config.json",
+      "line": 111,
+      "detail": "mcp.config.json 'scheduler' section (lines 111-119) with 7 cron expressions was legacy dead code never loaded by config.ts. Canonical source is src/scheduler/jobs.ts:CRONS (79 jobs). Removed entire section to eliminate stale documentation and maintenance confusion.",
+      "fix_type": "refactor",
+      "fix_commit": "b4200379",
+      "fixed_at": "2026-04-24T04:35:00Z",
+      "fix_notes": "Single-file cleanup. TypeScript compilation: PASS. Test suite: PASS (6415 tests). Shipped directly."
+    },
+    {
+      "fingerprint": "check-5:src/infrastructure/config.ts:clobApiUrl",
+      "severity": "MEDIUM",
+      "category": "Config drift — hardcoded fallback (resolved)",
+      "file": "src/infrastructure/config.ts",
+      "line": 545,
+      "detail": "Hardcoded fallback for clobApiUrl was 'https://clob-api.polymarket.com', but mcp.config.json specifies 'https://clob.polymarket.com'. Fallback now matches config canonical source.",
+      "fix_type": "refactor",
+      "fix_commit": "810d0c6",
+      "fixed_at": "2026-04-19T10:15:13Z",
+      "fix_notes": "Single-line change. Test coverage confirms fix. Shipped directly."
+    },
+    {
+      "fingerprint": "check-4:src/infrastructure/db/schedulerLockStore.ts:scheduler_locks",
+      "severity": "HIGH",
+      "category": "Schema duplication (resolved)",
+      "file": "src/infrastructure/db/schedulerLockStore.ts",
+      "line": 38,
+      "detail": "scheduler_locks DDL was defined inline in ensureSchedulerLocksTable(). Now canonicalized in src/infrastructure/db/schema.ts:initDatabase() (line 1417). ensureSchedulerLocksTable() kept for backwards compatibility (comment at line 39 documents intent).",
+      "fix_type": "refactor",
+      "fix_commit": "5b490fc (schema DDL move) + a83e92c (fixture usage)",
+      "fixed_at": "2026-04-13T15:45:00Z",
+      "fix_notes": "Canonical DDL now in schema.ts. Dual definition intentional for test compatibility."
+    },
+    {
+      "fingerprint": "check-3:src/domain/services/alertCooldown.ts:DEFAULT_CONFIG",
+      "severity": "LOW",
+      "category": "Hardcoded defaults vs config values (defensive coding)",
+      "file": "src/domain/services/alertCooldown.ts",
+      "line": 25,
+      "detail": "DEFAULT_CONFIG.maxAlertsPerStockPerDay is 3 (fallback). In production, config is always passed from intelligenceCycleJob.ts line 840-843 via mcpConfig.alertQuality. DEFAULT_CONFIG is defensive: used only if explicit config omitted. This is acceptable fallback pattern, not data duplication. Verified: intelligenceCycleJob passes effectiveCooldownConfig to shouldSuppressAlert every time.",
+      "fix_type": "none-defensive-coding",
+      "canonical_source": "src/infrastructure/config.ts:loadMcpConfig -> alertQuality.maxAlertsPerStockPerDay",
+      "risk": "Low. Fallback always overridden in production. Defensive pattern is safe.",
+      "discovered_at": "2026-04-13T00:00:00Z",
+      "status": "confirmed-safe"
+    }
+  ],
+  "scan_checks": {
+    "scan-10": {
+      "scan_date": "2026-05-10T04:15:36Z",
+      "scope": "diff HEAD~3..HEAD (7 files: circuitBreaker.ts, circuitBreakerRegistry.ts, 1862f test, docs/TASKS.md, qa.md, session logs, reports)",
+      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
+      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
+      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "Circuit breaker registry contains timeout values (900_000, 7_200_000, 600_000, 300_000) but these are intentional business-logic config entries, not shared code duplication. Each breaker (reuters, ssc, polymarket, etc.) is independent with documented reasoning." },
+      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
+      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean." },
+      "summary": "All 5 checks pass. 0 new violations. Task 1862f (circuit breaker backoff) verified: 10 tests pass. Ready for next cycle."
+    },
+    "scan-9": {
+      "scan_date": "2026-05-09T14:28:00Z",
+      "scope": "diff HEAD~15..HEAD (6 production TS files + test changes)",
+      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
+      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
+      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "isDuplicateReport() correctly uses DEDUP_WINDOW_SECONDS. New constants properly extracted (Tasks 1860b, 1860c). Staleness thresholds in syncVnstockData are business rules, not duplication." },
+      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
+      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "New constants DEDUP_WINDOW_SECONDS and MONITORING_EXPIRY_HOURS properly centralized. Clean." },
+      "summary": "All 5 checks pass. 0 new violations. JANITOR-024 (shipped in prior cycle) verified improved. Ready for next cycle."
+    },
+    "check-1-duplicate-classification-maps": {
+      "status": "complete",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files: telegramReportStore.ts, telegramReportTools.ts, feedbackTools.ts)",
+      "findings": 0,
+      "notes": "No Record<string,> keyed on ticker symbols. No sector/exchange/display-name classification maps. Clean."
+    },
+    "check-2-hardcoded-ticker-arrays": {
+      "status": "complete",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
+      "findings": 0,
+      "notes": "No uppercase ticker literals. Clean."
+    },
+    "check-3-repeated-magic-numbers-and-cron-duplication": {
+      "status": "complete",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
+      "findings": 1,
+      "notes": "JANITOR-024 shipped: DEDUP_WINDOW_SECONDS (4*3600) inlined in isDuplicateReport default parameter. Now uses constant. Commit dd2e6b82."
+    },
+    "check-4-schema-duplication": {
+      "status": "complete",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
+      "findings": 0,
+      "notes": "Zero CREATE TABLE or inline DDL. All DDL in schema.ts canonical source. Clean."
+    },
+    "check-5-config-drift": {
+      "status": "complete",
+      "items_scanned": 3,
+      "scope": "diff HEAD~15..HEAD (3 production TS files)",
+      "findings": 0,
+      "notes": "No hardcoded config fallbacks discovered. ??: patterns are error handling, not config drift. Clean."
+    }
+  }
+}

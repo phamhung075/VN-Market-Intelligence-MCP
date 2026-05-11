@@ -1,0 +1,10 @@
+{
+  "name": "@vn-market/shared-types",
+  "version": "1.0.0",
+  "description": "Inter-service TypeScript contracts for VN Market Intelligence microservices",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  }
+}
