@@ -216,3 +216,31 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **next_cycle_hint**: Monitor EIB for reversal (two consecutive σ>2.0 cycles without news — likely speculative). Watch HSG/NKG ahead of chain expiry 06:23 UTC. GAS if US-Iran headlines re-escalate.
 - **estimated_tokens**: 4200
 - **doc_self_heal**: 2 doc mismatches found in `.claude/tools/package/market-watcher.md` (protected, cannot auto-fix — flag for @developer): (1) `get_price_history` documents `tickers: string[]` but actual API uses `code: string`; (2) `get_sector_comparison` documents `metric?: string` but actual API requires `code: string`.
+
+### Cycle (05:39–05:46 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (EIB +3.84% 3.64σ, HVN -2.25% 2.63σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-ON (gold -5.38σ) | fx_pressure: [] | pe_risk: []
+- EIB: +3.84% (3.64σ), banking sector -0.4%, Gelex group news catalyst (alert 05:17), PE 37.7x vs sector 9.0x, ROE 4.5% vs 17.6% — speculative/news-driven. Signal id=2857.
+- HVN: -2.25% (2.63σ), aviation -1.18%, intraday volatile (surged +6.97% → dropped -6.97% → partial recovery 21,750). Thin volume 57.7K (22% avg). Signal id=2858.
+- Macro: Brent 105.66 (CRITICAL +5.36σ), Gold 4,681 (CRITICAL -5.38σ), BDI 1,400 stable. Energy grid normal (hydro 70%). Climate: early dry season heat (May). No supply chain disruptions.
+- Securities sector top performer +1.91% (1d): SSI +1.41%, VCI +0.96% — capital race catalyst (100,000 tỷ đ target for 2026).
+
+## Metrics (cycle 2026-05-11 05:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 14 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 7000 |
+
+## Cycle — 05:39 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**: EIB +3.84% (3.64σ) third consecutive cycle above threshold — Gelex news at 05:17 driving speculation; fundamentally weak (PE 37.7x, ROE 4.5%). HVN -2.25% (2.63σ) post intraday crash/recovery, thin volume. Securities sector outperforming on capital-raise narrative.
+- **actions**: post_agent_signal price_anomaly EIB id=2857; post_agent_signal price_anomaly HVN id=2858; send_telegram WORK
+- **next_cycle_hint**: EIB — watch for exhaustion/reversal (3 cycles, no fundamental support). HVN — confirm stabilization or further downside. GAS sensitivity to Brent 105+ / US-Iran news. SSI/VCI/HCM on securities sector momentum.
+- **estimated_tokens**: 7000
+- **doc_self_heal**: tool params mismatch known from prior cycle — `get_technical_indicators` and `get_ticker_intelligence` use `code` not `ticker`. Tools have insufficient history (13 candles) for TA signals on recently-added watchlist stocks.
