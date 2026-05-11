@@ -83,3 +83,13 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 - `apps/mcp-server/src/__tests__/1850f-fixture-contamination.test.ts` (7 new tests, all pass)
 
 **Commit:** `52d63b61`
+
+### Task 1876a-A1 — alertAccuracy precision denominator fix (2026-05-11 UTC, DONE)
+
+**Problem:** Top-level Tổng precision used `hits / totalAlerts`, including UNKNOWN rows in denominator. Understated real precision. Example: 1 HIT, 3 MISS, 10 UNKNOWN → showed 7% instead of 25%.
+
+**Fix:** Changed L340 to `hits / (hits + misses)` with divide-by-zero guard (scoreable=0 → 0%). Matches per-type formula at L369. 4 LOC change.
+
+**Test:** `src/__tests__/1876a-precision-denominator.test.ts` — 2 cases, both pass.
+
+**Commit:** `6d1ad3af`
