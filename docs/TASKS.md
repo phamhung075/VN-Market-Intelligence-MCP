@@ -8,17 +8,29 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1878a | SSOT-CRITICAL: Replace hardcoded "112 tools" in `agents/dev-mcp-server.md` (L4, L13) and `flows/ops/cloudflare-mcp.md` (L13, L29) with pointer to `docs/data/project-stats.json#toolCount` (actual: 132). Also replace hardcoded "50 cron jobs" in dev-mcp-server.md with pointer to `#cronJobCount`. 2 files, doc-only. | HIGH | CHORE | developer | — | — |
-| 1878b | SSOT-CRITICAL: Replace hardcoded "13 agents" in `.claude/AGENT_MODELS_README.md` (L15, L28, L54) with pointer to `docs/data/project-stats.json#devAgentCount` (actual: 14 core + 9 microservice). 1 file, doc-only. | HIGH | CHORE | developer | — | — |
-| 1878c | SSOT-CRITICAL: Update `docs/data/tool-registry.json` — toolCount 125 is stale (8 days old, last updated 2026-05-03). Reconcile category tool lists to match current 132 tools from `list_mcp_tools` or `project-stats.json#toolCount`. Update `lastUpdated` field. 1 file. | HIGH | CHORE | developer | — | — |
-| 1878d | SSOT-CRITICAL: Reconcile `cron-registry.json` (62 entries) vs `project-stats.json#cronJobCount` (59). Clarify whether difference is scheduler files vs cron keys (schedulerFileCount=62 vs cronJobCount=59). If both represent same concept, align to single value. Add `_note` explaining the distinction if intentional. 2 files. | HIGH | CHORE | developer | — | — |
-| 1878e | SSOT-MEDIUM: Fix `docs/references/agent-roster.md` self-contradiction — L5 says "7 agents" but L102+L114 says "8 agents" (7 numbered + 1 Unified Coordinator). Align L5 header to "8 agents" to match the clarification on L114. 1 file, doc-only. | MEDIUM | CHORE | developer | — | — |
-| 1878f | SSOT-MEDIUM: Fix session_log paths in `agents/system-auditor.md` (L106: `notebooks/auditor.md` should be `notebooks/system-auditor.md`) and `agents/cowork-refactory-expert.md` (L106: `notebooks/refactory.md` should be `notebooks/cowork-refactory-expert.md`). Verify actual notebook filenames exist. 2 files, doc-only. | MEDIUM | CHORE | agent-father | — | — |
-| 1878g | SSOT-MEDIUM: Extract task size rules from `flows/dev-team/main.md` L91-96 into `docs/{policies,protocols,standards,references}/task-size-rules.md` and replace inline block with pointer. Avoids drift if rules are duplicated elsewhere. 2 files (1 new knowledge file + 1 flow edit). | MEDIUM | CHORE | developer | — | — |
-| 1878h | SSOT-MEDIUM: Fix `project-stats.json#analysisAgentCount` from 9 to 8. Agent-roster.md counts 7 numbered + 1 Unified = 8 total. Setup agent (00) is run-once, not counted. 1 file. | MEDIUM | CHORE | developer | — | — |
-| 1878i | SSOT-LOW: Remove duplicate `max_alerts_per_day: 10` from `agents/alert-commander.md` (L50) — already defined in `docs/{policies,protocols,standards,references}/alert-policy.md` (SSOT). Replace with pointer to alert-policy.md. 1 file, doc-only. | LOW | CHORE | agent-father | — | — |
-| 1878j | SSOT-LOW: Document 9 microservice agents in `docs/references/agent-roster.md` — dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-mcp-server, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis. Add new section "Microservice Dev Agents" with agent/file/role columns. 1 file, doc-only. | LOW | CHORE | developer | — | — |
-| 1878k | SSOT-LOW: Remove orphaned reference to `AGENT_STARTUP.md` in `agents/system-auditor.md` (L77). File does not exist. Remove or replace with valid path. 1 file, doc-only. | LOW | CHORE | agent-father | — | — |
+| 1878a | METHODOLOGY-INFRA: OCF column migration in `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts` — add `operating_cash_flow` column to financial_reports + verify vnstock cash-flow sync writes to `vnstock_cash_flow` table (or backfill bridge). SSOT: methodology Layer 7 (Cash-Flow Reality). Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | — |
+| 1878b | METHODOLOGY-INFRA: `compute_accruals(ticker, quarters)` MCP tool — pure function = (NetIncome − OperatingCashFlow) / TotalAssets, returns time series. Depends on 1878a. SSOT: methodology Layer 7. Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | 1878a |
+| 1879a | METHODOLOGY-INFRA: EFFR–IORB FRED fetcher in `apps/macro-indicators` — pull both series from FRED API, persist to macro store. SSOT: methodology Layer 2.D (Liquidity microstructure). Owner: ba spec → dev-macro-indicators. | HIGH | FEATURE | ba | — | — |
+| 1879b | METHODOLOGY-INFRA: `get_fed_liquidity_spread()` MCP tool — returns latest EFFR-IORB spread + 30d trend. Depends on 1879a. SSOT: methodology Layer 2.D. Owner: ba spec → dev-macro-indicators + dev-mcp-server. | HIGH | FEATURE | ba | — | 1879a |
+| 1880a | METHODOLOGY-INFRA: `get_investment_clock_phase()` MCP tool — pure function over existing macro snapshot, returns one of {Recovery, Overheat, Stagflation, Reflation}. SSOT: methodology Layer 8 (Regime). Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | — |
+| 1880b | METHODOLOGY-INFRA: `get_pyramid_tier(asset_class)` MCP tool — pure function returns Maslow-style risk tier {cash, bonds, equity, alt, speculative}. SSOT: methodology Layer 8. Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | — |
+| 1881a | METHODOLOGY-INFRA: Source-tier `1\|2\|3` tag retrofit — add `source_tier` field to ~15 macro/news tool outputs (1=primary/official, 2=aggregator, 3=derived). SSOT: methodology Layer 9 (Source hierarchy). Owner: ba spec → dev-mcp-server + dev-macro-indicators. | HIGH | CHORE | ba | — | — |
+| ARCH-1884 | METHODOLOGY-INFRA: Architect brief — forensic-analysis host decision: new microservice vs extend financial-reports module. Output → `docs/architecture-briefs/2026-05-12-forensic-analysis-host.md`. Drives Sprint 1885+1886 placement. Parallel to 1878. Owner: architect (main terminal dispatch this turn). | HIGH | ARCH | architect | — | — |
+| 1882a | METHODOLOGY-INFRA: VIRA scraper deploy on Vinahost VPS + `get_vira_snapshot()` MCP tool. SSOT: methodology Layer 2 (VN macro). QUEUED behind 1878-1881. Owner: ba spec → ops + dev-macro-indicators. | HIGH | FEATURE | ba | — | 1878a, 1879a, 1880a, 1881a |
+| 1883a | METHODOLOGY-INFRA: PMI sub-components fetcher upgrade — break out new orders / employment / prices sub-indices from headline PMI. SSOT: methodology Layer 2.B. QUEUED. Owner: ba spec → dev-macro-indicators. | MEDIUM | FEATURE | ba | — | 1878a, 1879a, 1880a, 1881a |
+| 1885a | METHODOLOGY-FORENSICS: Beneish M-Score + Piotroski F-Score calculators — 8-variable + 9-variable forensic scores. BLOCKED on ARCH-1884 (host decision) + 1878 (OCF column). Owner: ba spec → host module per ARCH-1884. | HIGH | FEATURE | ba | — | ARCH-1884, 1878a |
+| 1886a | METHODOLOGY-FORENSICS: BTN detectors phase 1 — Cookie Jar Reserve + Big Bath earnings management detectors. BLOCKED on ARCH-1884 + 1885a. Owner: ba spec → host module per ARCH-1884. | HIGH | FEATURE | ba | — | ARCH-1884, 1885a |
+| 1888a | SSOT-CRITICAL: Replace hardcoded "112 tools" in `agents/dev-mcp-server.md` (L4, L13) and `flows/ops/cloudflare-mcp.md` (L13, L29) with pointer to `docs/data/project-stats.json#toolCount` (actual: 132). Also replace hardcoded "50 cron jobs" in dev-mcp-server.md with pointer to `#cronJobCount`. 2 files, doc-only. (Renumbered from 1878a — 1878 reassigned to methodology-infra.) | HIGH | CHORE | developer | — | — |
+| 1888b | SSOT-CRITICAL: Replace hardcoded "13 agents" in `.claude/AGENT_MODELS_README.md` (L15, L28, L54) with pointer to `docs/data/project-stats.json#devAgentCount` (actual: 14 core + 9 microservice). 1 file, doc-only. (Renumbered from 1878b.) | HIGH | CHORE | developer | — | — |
+| 1888c | SSOT-CRITICAL: Update `docs/data/tool-registry.json` — toolCount 125 is stale. Reconcile to current 132. (Renumbered from 1878c.) | HIGH | CHORE | developer | — | — |
+| 1888d | SSOT-CRITICAL: Reconcile `cron-registry.json` (62 entries) vs `project-stats.json#cronJobCount` (59). Clarify scheduler-files vs cron-keys distinction. (Renumbered from 1878d.) | HIGH | CHORE | developer | — | — |
+| 1888e | SSOT-MEDIUM: Fix `docs/references/agent-roster.md` "7 agents" vs "8 agents" self-contradiction. (Renumbered from 1878e.) | MEDIUM | CHORE | developer | — | — |
+| 1888f | SSOT-MEDIUM: Fix session_log paths in `agents/system-auditor.md` and `agents/cowork-refactory-expert.md`. (Renumbered from 1878f.) | MEDIUM | CHORE | agent-father | — | — |
+| 1888g | SSOT-MEDIUM: Extract task size rules from `flows/dev-team/main.md` L91-96 into `docs/{policies,protocols,standards,references}/task-size-rules.md`. (Renumbered from 1878g.) | MEDIUM | CHORE | developer | — | — |
+| 1888h | SSOT-MEDIUM: Fix `project-stats.json#analysisAgentCount` from 9 to 8. (Renumbered from 1878h.) | MEDIUM | CHORE | developer | — | — |
+| 1888i | SSOT-LOW: Remove duplicate `max_alerts_per_day: 10` from `agents/alert-commander.md` — point to alert-policy.md SSOT. (Renumbered from 1878i.) | LOW | CHORE | agent-father | — | — |
+| 1888j | SSOT-LOW: Document 9 microservice agents in `docs/references/agent-roster.md`. (Renumbered from 1878j.) | LOW | CHORE | developer | — | — |
+| 1888k | SSOT-LOW: Remove orphaned `AGENT_STARTUP.md` reference in `agents/system-auditor.md` L77. (Renumbered from 1878k.) | LOW | CHORE | agent-father | — | — |
 | JANITOR-027 | DRY: Time constant duplication — 21 files inline `24 * 60 * 60 * 1000` instead of MS_PER_DAY | LOW | DRY | code-janitor | — | — |
 | JANITOR-020 | DRY: MACRO_CODES + section-builder logic duplicate in marketContextBuilder.ts vs marketContextTools.ts | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-017 | DRY: BROWSER_UA string duplicated in 18 source files across 3 layers | LOW | DRY | code-janitor | — | — |
@@ -146,5 +158,13 @@
 | 1849c | SPRINT-S: Dev-team flow Step 4 update — monitoring loop guard (C-6). 1 file. | MEDIUM | SPRINT-S | developer | 2026-05-07 |
 | 1849d | SPRINT-S: Tests + regression — telegram report resolution tests. | MEDIUM | SPRINT-S | dev-mcp-server | 2026-05-07 |
 | 1850-GAP9 | FIX: get_technical_indicators migrated from market_prices_history to daily_ohlcv. 1 file + 34 tests. | HIGH | FIX | dev-mcp-server | 2026-05-07 |
+
+---
+
+## Deferred
+
+| Sprint | Title | Reason | Next Step |
+|--------|-------|--------|-----------|
+| 1887 | METHODOLOGY-FORENSICS: Virtual Capital / related-party graph detector | Needs own architect brief — graph-store choice, related-party data source, traversal patterns, false-positive control all unspecified | When 1885+1886 ship, queue separate ARCH-1887 brief before ba spec |
 
 ---

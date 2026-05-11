@@ -1,8 +1,53 @@
 # PO Notebook
 
-## Last updated: 2026-05-11T20:52Z (Sprint 1878 planning — SSOT conflict audit)
+## Last updated: 2026-05-11T20:56Z (methodology-infra sprint plan — Sprints 1878-1886 + ARCH-1884, 1887 deferred)
 
-## Current sprint focus: Sprint 1878 — SSOT conflict remediation (11 tasks, chore/maintenance, no new features)
+## Current sprint focus: Sprints 1878-1881 + ARCH-1884 — TNB methodology infrastructure foundations (OCF + EFFR-IORB + Investment Clock + source tiers + forensic-host architect brief)
+
+---
+
+## Sprint 1878-1886 + ARCH-1884 Planning — 2026-05-11T20:56Z
+
+### Trigger
+User said "go" on the methodology-infra sprint sequence after I (PO) returned the breakdown earlier this session.
+
+### Sprint number reassignment
+Conflict: existing SSOT-remediation tasks were already on 1878a-k (planned earlier same session, see prior notebook entry). User specified methodology-infra goes to 1878. Resolution: renumbered SSOT-remediation 1878a-k → 1888a-k. Both TASKS.md and SPRINT_GOAL.md updated. SSOT sprint becomes Backlog (was Active); methodology-infra sprints become Active.
+
+### Sprint 1862 status
+4 carry tasks (1862c-D/E/F/G) are ops-gated and rebuild-gated. NOT closeable this turn. Marked SPRINT_GOAL.md as "Active (carry)" rather than DONE.
+
+### Active sprints scoped (8 GO + 1 BLOCKED bundle + 1 DEFERRED)
+- **1878** GO — OCF column + compute_accruals (Layer 7). Tasks 1878a, 1878b. Owner: ba → dev-mcp-server.
+- **1879** GO — EFFR-IORB FRED fetcher + get_fed_liquidity_spread (Layer 2.D). Tasks 1879a, 1879b. Owner: ba → dev-macro-indicators + dev-mcp-server.
+- **1880** GO — get_investment_clock_phase + get_pyramid_tier (Layer 8). Tasks 1880a, 1880b. Owner: ba → dev-mcp-server.
+- **1881** GO — source_tier 1|2|3 retrofit on ~15 tools (Layer 9). Task 1881a. Owner: ba → dev-mcp-server + dev-macro-indicators.
+- **ARCH-1884** GO (parallel to 1878) — Architect brief: forensic-analysis host (new microservice vs extend financial-reports). Output → docs/architecture-briefs/2026-05-12-forensic-analysis-host.md. Owner: architect (main terminal dispatches this turn — PO cannot spawn architect).
+- **1882** QUEUED — VIRA scraper + get_vira_snapshot. Behind 1878-1881.
+- **1883** QUEUED — PMI sub-components fetcher upgrade. Behind 1878-1881.
+- **1885** BLOCKED — Beneish M-Score + Piotroski F-Score. Needs ARCH-1884 + 1878.
+- **1886** BLOCKED — BTN detectors phase 1 (Cookie Jar + Big Bath). Needs ARCH-1884 + 1885.
+- **1887** DEFERRED — Virtual Capital / related-party graph. Added to Deferred section in TASKS.md with "needs own architect brief later" note. NOT in active queue.
+
+### Signal files dropped (4)
+- docs/signals/po-1878-ocf-accruals-2026-05-11T20-56-31Z.json → ba
+- docs/signals/po-1879-effr-iorb-2026-05-11T20-56-31Z.json → ba
+- docs/signals/po-1880-investment-clock-pyramid-2026-05-11T20-56-31Z.json → ba
+- docs/signals/po-1881-source-tier-tags-2026-05-11T20-56-31Z.json → ba
+
+ARCH-1884 has no signal file — main terminal dispatches architect directly per user instruction.
+
+### Files written
+- docs/SPRINT_GOAL.md (replaced 1878-SSOT active block with 1878-1881+ARCH-1884 active block; appended Sprint 1888 backlog block; demoted 1862 to "Active (carry)")
+- docs/TASKS.md (renumbered 11 SSOT tasks 1878→1888; added 13 new task rows for 1878a/b, 1879a/b, 1880a/b, 1881a, ARCH-1884, 1882a, 1883a, 1885a, 1886a; added Deferred section with 1887)
+- docs/signals/ × 4 (above)
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### Channel audit
+SKIPPED — user provided explicit sprint sequence as input, no need to re-audit MARKET/WORK/BUG.
+
+### HEAD.lock note
+.git/HEAD.lock present at session start (Spotlight pattern). Will rm before commit.
 
 ---
 
