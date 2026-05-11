@@ -1,6 +1,6 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1867
+**Last updated:** 2026-05-11 | **Sprint:** 1872
 
 ## Last session summary
 
@@ -25,12 +25,12 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 
 ## Carry-over for next session
 
-- Sprint 1867 active. 1863a + 1863b + 1863c + 1863e + 1863f RECONCILE APPROVED and merged. 1863d/g/h pending.
-- Pre-existing failure set: 15 failures (current bun test baseline). Stable.
+- Sprint 1872 active. 1872a + 1872b APPROVED and merged.
+- Pre-existing failure set: 16 failures (current bun test baseline as of 1872b). Stable.
 - Pre-existing TSC errors: present (H3-urgent-news, dailyDashboardJob, regimeConfidenceThreshold, watchdog 1557/1567, 1850e, 1854b) — all pre-existing.
 - Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
-- Remaining Todo: 1863g (knowledge updates), 1862c (Cowork MCP access — architect), 1862h.
-- 1862i CLOSED 2026-05-11. QA fix applied (lastSuccessfulCycle timestamp was 24h future).
+- Remaining Todo (Sprint 1871): 1871a-g (SPRINT-S doc reconciliation + DDD fix), 1862c-D/E/F/G (Cowork MCP access).
+- 1872b CLOSED 2026-05-11. Merge SHA fb2d6fd2. TASKS.md updated b278b396.
 
 ---
 
