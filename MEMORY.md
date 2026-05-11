@@ -8,21 +8,9 @@
 - **Previous false alarm**: Marked OFFLINE May 7–10, but infrastructure now operational
 - **Root Cause**: Previous status was stale; recovery occurred before verification
 
-### Recent Activity (Pre-Blockade)
-- [Last Market Cycle (07:01 UTC, May 8)](docs/agent-memory/sessions/2026-05-08-unified-agent.md) — **GREEN** ✓
-- [Prediction Review (03:01 UTC, May 9)](docs/agent-memory/sessions/2026-05-09-unified-agent-0301.md) — **GREEN** ✓ — MCP Infrastructure RECOVERED (false positive)
-- [Prediction Review (01:01 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent.md) — **RED** ❌ — MCP offline, blocked
-- [Daily Review (01:43 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent-daily-review.md) — **RED** ❌ — MCP offline, blocked
-- [Prediction Review Retry (02:00 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent-0200.md) — **RED** ❌ — MCP offline, blocked
-- [Infrastructure Diagnostic (03:00 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent-0300.md) — **RED** ❌ — MCP offline, escalation documented
-
-### Recovery Operations (Post-Recovery 04:47 UTC)
-- [Prediction Review Recovery (08:01 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent-prediction-recovery.md) — **GREEN** ✓ — Infrastructure restored; 1 active claim tracked, 0 resolved predictions
-- [Prediction Review Off-Cycle (09:01 UTC, May 10)](docs/agent-memory/sessions/2026-05-10-unified-agent-0901.md) — **GREEN** ✓ — Infrastructure validation post-recovery; 1 active claim (50.5% YES), macro NEUTRAL
-
-### Alert Commander Activity (Last Known)
-- [Alert Commander (20:01 UTC, May 9)](docs/agent-memory/sessions/2026-05-09-alert-commander.md) — **GREEN** ✓ — 3 urgent_news signals (dividend season), 0 fired
-- Status: Offline since then (MCP dependency)
+### Recent Activity
+- Unified Agent working memory → [docs/agent-memory/notebooks/unified-agent.md](docs/agent-memory/notebooks/unified-agent.md)
+- Alert Commander working memory → [docs/agent-memory/notebooks/alert-commander.md](docs/agent-memory/notebooks/alert-commander.md)
 
 ## Schedule
 
@@ -68,4 +56,4 @@
 - Alert queue: Monitoring nominal (0 urgent signals)
 - Portfolio: No new risk signals since May 9 (pre-recovery logs may be stale)
 - Prediction Markets: 1 active claim (China/Taiwan/GTA VI, ends 2026-07-31); 0 resolved yet
-- Recovery Status: [2026-05-10-unified-agent-prediction-recovery.md](docs/agent-memory/sessions/2026-05-10-unified-agent-prediction-recovery.md) ✅
+- Recovery Status: see [unified-agent notebook](docs/agent-memory/notebooks/unified-agent.md) ✅
