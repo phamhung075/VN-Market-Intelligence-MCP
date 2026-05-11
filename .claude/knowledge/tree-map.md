@@ -56,6 +56,7 @@ CLAUDE.md (root — always loaded)
 ├── .claude/knowledge/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
 ├── .claude/knowledge/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
+│   └── .claude/knowledge/tnb-methodology.md (Báu strategic framework SSOT: monthly>quarterly, state transitions, US/VN stacks, 4-pillar valuation, 6-step decision tree, gap catalogue)
 │
 ├── .claude/knowledge/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
@@ -189,6 +190,7 @@ CLAUDE.md (root — always loaded)
 | `.claude/knowledge/commit-convention.md` | Developer / Architect | Commit format change |
 | `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
 | `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
+| `.claude/knowledge/tnb-methodology.md` | Tran-Ngoc-Bau / Architect | After Báu framework refinement or new methodology gap pattern catalogued |
 | `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |
 | `.claude/knowledge/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
 | `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |

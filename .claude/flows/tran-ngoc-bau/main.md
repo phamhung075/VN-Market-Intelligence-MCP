@@ -27,6 +27,7 @@ If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at 
 **Step 0c — Bootstrap**
 - Load `.claude/knowledge/alert-policy.md` (fail-loud)
 - Load `.claude/knowledge/alert-message-format.md` (fail-loud)
+- Load `.claude/knowledge/tnb-methodology.md` (fail-loud) — the Báu strategic framework. Used in Phase 2.5.
 - `get_macro_snapshot()` → extract REGIME, CARRY_REGIME, DXY_SIGNAL, US10Y_SIGNAL
 - `get_system_status()` → confirm infrastructure healthy. If DOWN → send BUG, EXIT.
 
@@ -44,6 +45,7 @@ For each message, check:
 - [ ] Regime caveat appended when required (TIGHTENING + bullish must have caveat)
 - [ ] Ticker symbol valid (in watchlist or known VN stock)
 - [ ] No duplicate messages (same ticker + same signal type within 2h)
+- [ ] **Pillar coverage** — investment-thesis messages reference ≥3 of {M2, COC, EPS, POL} per `tnb-methodology.md` Layer 4. Score logged for Phase 2.5.
 
 **Step 2 — Cross-validate with live data**
 For each MARKET alert about a specific ticker:
@@ -77,6 +79,31 @@ For agents with quality issues found in Step 3:
 4. Check: does flow attach regime caveat?
 5. If systematic gap (same error 3+ cycles in notebook history) → AUTO-CURE (Step 6)
 
+## Phase 2.5: Methodology Audit (Báu framework)
+
+**Step 4b — Score every reviewed agent against `tnb-methodology.md` Layer 5.**
+
+For each agent notebook surveyed in Step 3 + every MARKET investment thesis from Step 1, walk the 6-step decision tree:
+
+| Step | Check | Source |
+|------|-------|--------|
+| A | Highest-frequency indicator opens the analysis (monthly > quarterly) | Layer 1.1 |
+| B | Threshold crossings flagged (PMI ↔ 50, USD/VND ↔ 26500, US10Y ↔ 4.5%, FII carry ↔ 0) | Layer 1.2 |
+| C | Cause + transmission chain attached (Level 1 → Level 4 of `market-analysis.md`) | Layer 1.3 |
+| D | US calls: PMI checked **before** consumer / services | Layer 2.A + 2.B |
+| E | VN calls: VIRA/WiData cited **before** IMF/ADB/WB | Layer 3 |
+| F | Investment theses: pillar count of {M2, COC, EPS, POL} ≥ 3 | Layer 4 |
+
+Score: ≥5/6 = GOOD | 3–4 = NEEDS_ATTENTION | ≤2 = CRITICAL
+
+Log per agent:
+```
+[Methodology] {agent} A=✓ B=✗ C=✓ D=n/a E=✓ F=2/4 → NEEDS_ATTENTION
+  gap: {pull entry from tnb-methodology.md "Common methodology gaps" catalogue}
+```
+
+If the same gap appears 3+ cycles in the same agent's notebook → **AUTO-CURE (Step 6)** using the auto-cure column of the catalogue table. If gap is not in the catalogue, append it there first (do NOT inline new gaps in the flow).
+
 ## Phase 3: Signal Quality
 
 **Step 5 — Signal bus audit**
@@ -107,6 +134,8 @@ MARKET messages: N checked | M issues
 - {issue 1}
 - {issue 2}
 Agent sessions: N reviewed | M methodology gaps
+Methodology scores (Báu Layer 5): GOOD={x} NEEDS_ATTENTION={y} CRITICAL={z}
+  Top gap pattern: {entry from tnb-methodology.md catalogue}
 Signals: N total | M dedup candidates | P low-confidence
 Auto-cures: N applied
 Overall: {GOOD|NEEDS_ATTENTION|CRITICAL}
