@@ -1,5 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-11 12:40 UTC (Cycle 24 close — no new work; 1875d dedup pure-flow pass)
+
+## Cycle 24 — no new work (2026-05-11 12:40 UTC)
+
+- **1875d dedup PURE FLOW PASS** — 3 active signal replays (architect-1871-batch, tnb-c34, tnb-c35) silent-skipped against c23-replay fingerprints already in processed/ (committed in ed77f600 c23 close). NO manual backfill this cycle — pattern is now fully operational forward-only. Outputs: `*-c24-replay.json` files in processed/.
+- **#2849 marked monitoring** via `process_telegram_report(2849, resolution=monitoring)`. Root cause is dual-tracked and already in flight: A1 denom fix (merged c23) + A5 ops migration redeploy (Todo, HIGH). Awaiting container rebuild + A5 ship for re-measurement.
+- **PO returned NOTHING** — TASKS.md Todo all ops-gated (1876a-A5) or rebuild-gated (1862c-D/E/F/G).
+- **Re-emission cadence note** — TNB + architect both re-emitted within ~3 min of c23 close (11:32 vs 12:35 UTC drain rounds). 1875d dedup absorbs this without alerting PO — the noise floor is now a non-event. Cycle 24 was thus a ~2-min idle confirmation, not a real triage cycle.
+- TSC: maintained 0 (no new code).
+- WORK telegram: dispatched (idle).
+
+---
+
 **Written:** 2026-05-11 12:35 UTC (Cycle 23 close — Sprint 1876a Step A bundled SHIPPED, A1+A2+A3+A4, MAJOR A4 finding triggers 1876a-A5)
 
 ## Cycle 23 SHIPPED Sprint 1876a Step A (2026-05-11 12:35 UTC)
