@@ -43,6 +43,7 @@ REPEAT per acceptance criterion
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
 4. `git add -p && git commit` — format per `.claude/knowledge/commit-convention.md`
+   Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:

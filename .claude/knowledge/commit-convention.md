@@ -101,6 +101,18 @@ chore(vps): rotate Vinahost SSH key
 
 ---
 
+## C3-Exempt Commit Categories
+
+These commit types carry `Task:` trailer for tracking but are **not required** to carry `AC:` trailer — the auditor skips them:
+
+| Pattern | Example | Reason |
+|---|---|---|
+| `chore(memory/<id>): ...` | `chore(memory/qa): notebook 2026-05-11` | Notebook commit, no task delivery |
+| `chore(state...): ...` | `chore(state): 1877c → In Progress` | Pipeline bookkeeping |
+| Subject contains `merge task/` | `chore(1869/mcp-server): merge task/1869a-...` | AC lives on the feat/fix commit |
+
+---
+
 ## Worked Example (Sprint 1863, Task 1863b)
 
 ```

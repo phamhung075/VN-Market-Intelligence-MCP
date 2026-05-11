@@ -54,7 +54,8 @@ verdict: APPROVED | CHANGES_REQUESTED
 
 ## Approval
 **APPROVED**: append `[QA] Review Record` → merge + push + clean → return.
-Merge commit subject must follow `.claude/knowledge/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks.
+Merge commit subject must follow `.claude/knowledge/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
+If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.
 ```bash
 git checkout main
 git merge --no-ff task/NNN-kebab-description -m "chore(<sprint>/<area>): merge task/NNN-<title>"
