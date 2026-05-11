@@ -176,7 +176,8 @@ export async function runVpsProxyWatchdog(
     readNews?:        () => Date | null;
     readOhlcv?:       () => Date | null;
     readForeignFlow?: () => Date | null;
-
+    readReuters?:     () => Date | null;
+    readTe?:          () => Date | null;
   } = {},
 ): Promise<string> {
   const now = options.now ?? new Date();
