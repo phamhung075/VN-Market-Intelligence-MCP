@@ -1,6 +1,6 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-06 16:42 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 00:22 UTC | **Status:** OPERATIONAL
 
 ## Recent performance
 
@@ -32,3 +32,14 @@
 - Items: 20 | Impacts: 6 | Signals: [urgent_news(ACB, id=2824), chain_catalyst(FII macro, id=2825)] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
 - Key findings: Same batch as 21:21 cycle (no new articles since last run). ACB/Âu Lạc stake signal re-evaluated; FII inflow chain_catalyst posted. HPG+DHG ex-div suppressed (NEUTRAL sentiment). Gold at ~4730 USD/oz — week-on-week % change insufficient for spike trigger. No PMI data. VN-Index target 2000 pts — bullish market narrative sustained.
+
+### Cycle (off-hours 07:21–07:22 UTC 2026-05-11)
+- Items: 20 | Impacts: 9 (≥6) | Signals: [urgent_news×1 (ACB), chain_catalyst×1 (FII macro)] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Watchlist hits: ACB (bullish, stake ↑5%→6%), HPG+DHG (dividend cut 11-15/5, neutral), SSI (ESOP, neutral)
+- Key: VN-Index approaching 2000 (impact 10), FII $1B+ macro catalyst (impact 8), Gold surge bullish (impact 8)
+
+### Cycle (00:22–00:24 UTC 2026-05-11) — off-hours Monday run
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst×3 (#2834,#2835,#2836)] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Key: Brent EXTREME +5.36σ → cpi_pressure_risk=true → chain_catalyst macro/bearish (GAS,HPG,banking); ACB banking bullish (Âu Lạc stake 6%, conf 86%, regime-adj 5.6 → chain_catalyst not urgent_news); HPG+DHG dividend cutoff 11-15/5 (sector/neutral). No PMI data. VN-Index rally to 2000 narrative sustained (5 similar past events in context).

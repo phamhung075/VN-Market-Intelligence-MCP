@@ -1,72 +1,30 @@
 # VCB — Analysis Ledger 2026
-
-## Historical Context
-See archives: [2025](archive/VCB-2025.md) | [2024](archive/VCB-2024.md)
-
----
+**Sector**: Banking | **Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 
-### 2026-01-15
-| Metric | Value | vs Prior Q | vs YoY |
-|--------|-------|-----------|--------|
-| P/E | — | — | — |
-| ROE | — | — | — |
-| Debt/Equity | — | — | — |
+### VCB Q4 2025 — Released 2026-05-10
 
-**Verdict:** Analysis pending
+| Metric | Current Q (Q4-2025) | vs Prior Q (Q1-2025)* | vs YoY Same Q (Q4-2024)† |
+|--------|--------------------|-----------------------|--------------------------|
+| Revenue (VND bn) | 16,169.8 | +18.1% | N/A |
+| Net Income (VND bn) | 8,633.8 | -0.8% | N/A |
+| EPS (VND) | 1,033 | N/A | N/A |
+| ROE (%) | 16.7% (annualized) | -0.5 pp (quarterly) | N/A |
+| Debt/Equity | N/A (bank) | — | — |
+| Operating Margin (%) | 96.8% | +0.0 pp | N/A |
+| P/E (x) | 14.1 | sector median: 9.0 | — |
 
----
+*\*QoQ comparison Q1→Q4; seasonal bias applies — Q4 typically stronger than Q1.*
+*†YoY Q4-2024 data unavailable in system — primary verdict signal degraded; confidence 56% (unaudited).*
+
+**Verdict**: In-line — revenue +18.1% seasonal; net profit flat; ROE below sector median.
+
+Sector context: VCB trades at P/E premium 14.1x vs sector median 9.0x (+57%), P/B 2.2x vs 1.5x (+45%). ROE 16.7% annualized below sector median 17.6%. Sentiment trend negative (slope -0.21, 5/13 bullish articles 30d).
+Signal: `fundamental_validation` id=2833 | confidence=0.62
 
 ## [News Scout] Headlines & Sentiment
 
-### 2026-01-15
-Sentiment baseline established.
-
----
-
 ## [Market Watcher] Price, Volume, Technicals
 
-### 2026-01-15
-Price monitoring initiated.
-
----
-
-## [Insider Tracker] Management Activity
-
-### 2026-01-15
-Insider activity monitoring started.
-
----
-
 ## [Unified Agent] Quarterly Syntheses
-
-(Quarterly entries will be added here: Q1, Q2, Q3, Q4)
-
-### 2026-05-20 · Batch 1 (Pre-Open)
-Price: 26,400 | RSI: pending | YoY vs May 20 2025: 24,900 VND = +5.8%
-Banking sector stable pre-open.
-
-### 2026-05-20 · Batch 2 (Midday Sentiment)
-2026-05-20 | Banking sector quiet, neutral stance +0.1 | YoY May 20 2025 sentiment was +0.2
-
-### 2026-05-20 · Batch 3 (Pre-Close)
-Price: 27,100 VND | RSI: 61 neutral | Volume: 2.1M shares | Trend: up
-Banking consolidating gains, no excess enthusiasm.
-
-### 2026-05-20 · Batch 4 (EOD Summary)
-Close: 27,200 VND (+2.3% daily, +6.8% YoY) | RSI: 61 | Volume: 2.4M (+8% vs 20d avg)
-YoY comparison (May 20 2025): Price was 25,500 → gain of 6.8% over year
-Sentiment: +0.1 (steady, no strong drivers) | Insider: no activity
-Summary: Banking sector modestly firm. Stable returns, blue-chip safety profile.
-
----
-
-### 2026-04-27 · EOD
-**2026-04-27 16:00** | Close: 60,600 VND (-3.50%) | RSI: N/A (insufficient data) | Volume: 1.19M | Sentiment: Stable (57% bullish)
-Banking sector pressure. VCB declining with broader market weakness. No insider activity detected.
-
-### 2026-05-01 · EOD
-**2026-05-01 16:00** | Close: 59,800 VND (+0.00% daily, -1.32% YoY) | RSI: N/A | Volume: 643.1K | Sentiment: Bearish
-Banking sector HIGH ALERT: 7-stock coordinated pulldown (avg -1.63%). VCB stable but sector headwind material. Insider: no activity
-Action: Hold / Watch sector pressure

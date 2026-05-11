@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-10T23:45:00Z",
+  "updatedAt": "2026-05-11T00:15:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 11 UNBLOCK x2: (a) 1862-SIGMA-SEED ops VERIFIED deploy + reinterpreted TNB '2/30' as 12/20 trading-day history (natural ETA 2026-05-27, not a Monday-open blocker for non-σ alerts); (b) 1862f-RCA-BRIEF architect delivered Option A/B brief with 5-curl probe gate for PM next cycle. Reuters/TE labels are aliases for Google News + MarketWatch RSS. 1862c-D/E/F/G unchanged Todo. Cycle exits idle."
+  "lastCompleted": "Cycle 12 monitoring triage: 2843 wontfix (4-cycle non-reproducible), 2844 brief delivered (price_drop precision — Option A threshold tune + Option B adaptive wiring, 3 atomic tasks pending PM), 2845 left monitoring (downstream of Reuters/TE fix). Critical finding: adaptive threshold system built but dead-wired at scanMarket.ts:283. 1862c-D/E/F/G unchanged. Cycle exits idle."
 }

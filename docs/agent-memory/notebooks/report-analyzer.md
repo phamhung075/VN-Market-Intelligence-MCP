@@ -20,3 +20,7 @@ Cycle 2026-05-10 02:00 UTC — BLOCKED. MCP gateway tool (`mcp__claude_ai_gatewa
 **Status:** BLOCKED — MCP gateway unavailable in session scope.
 **Impact:** 0 earnings analyzed, 0 signals posted, 0 reports generated.
 **Next cycle:** Scheduled (daily 02:00 + 14:00 UTC). Will auto-retry on next trigger.
+
+### Analysis Cycle (02:00–02:05 UTC)
+- Earnings: 1 ticker (VCB Q4-2025, filed 2026-05-10) | Processed: [VCB] | Signals: 1 fundamental_validation
+- YoY Q4-2024 data unavailable — verdict confidence degraded to 0.62 (unaudited filing)

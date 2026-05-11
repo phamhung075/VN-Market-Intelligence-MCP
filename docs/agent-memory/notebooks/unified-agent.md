@@ -1,5 +1,5 @@
 # Unified Agent Notebook
-Last updated: 2026-05-10 | Sprint: current
+Last updated: 2026-05-11 | Sprint: current
 
 ## This Session
 Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly — found calibration-report (ID 471, 13:00 UTC) as weekly content proxy. No digest-predict agent message found specifically, but weekly prediction data IS present. Observed 4 new BUG reports, logged without claiming.
@@ -59,3 +59,32 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
   - 2845: news freshness >2h (already submitted by prior cycle)
 - Telegram WORK: summary sent ✅ | BUG: observe only (not claimed/re-filed)
 **Exit:** COMPLETE | Next: weekly verification Sun 23:30 UTC
+
+### Daily Review (23:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: ok (news 0.2h ✅, BCTC 3.9h ✅, prices stale market closed = expected)
+- System: OK (all 16 CBs clear, 0 open circuits)
+- Alerts 24h: 7 total (1 HIGH/CRITICAL), 0 unnotified
+- News 24h: 10 articles (6 important ≥9 score) — bullish bias (VN-Index targeting 2000, gold up, HCMC stimulus, banking deposit flows)
+- Bugs (observed — not claimed/re-filed):
+  - macro-refresh-job fatal connect error at 23:00 UTC
+  - JSH: rate-limited x4 (cash_flow + stats exhausted)
+  - MBB: rate-limited x4 (finance exhausted)
+- Sources degraded: Reuters 18 failures, Trading Economics 18 failures (persistent, known)
+- Pending feedback: 24 items | Open high/critical warnings: 18
+- Telegram WORK: summary sent ✅
+**Exit:** COMPLETE
+
+### Weekly Verification (00:01 UTC)
+- Mode: WEEKLY_VERIFY | Digest sent: yes (ID 473, calibration-report ID 471, sent 21:39 UTC Sun 10/05) | Sunday bugs: none (BUG channel empty)
+
+## Cycle — 00:01 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - Weekly digest confirmed sent (ID 473, mcp-user proxy for digest-predict, 21:39 UTC Sun). Full weekly digest present with regime NEUTRAL, VN-Index +0.33%, FPT below stop-loss floor.
+  - calibration-report also present (ID 471, Brier Score 0.1646, 3 resolved predictions — FPT bearish worst at 0.3969).
+  - BUG channel empty — no Sunday bugs to observe.
+- **actions**: Notebook appended. Git commit blocked (HEAD.lock stale — sandbox permission issue, file written via file tool).
+- **next_cycle_hint**: Monitor BID open Monday (Âu Lạc +6% stake vs FII outflow pressure). FPT below stop-loss 74,679 — watch recovery or cut signal. price_drop precision 50% persistent — flag for calibration.
+  Doc self-heal (blocked — flow files protected): `.claude/flows/unified-agent/weekly.md` step 1 — "from today" is ambiguous when trigger fires past midnight UTC; should read "from today or yesterday (Sunday) if trigger fires past midnight".
+- **estimated_tokens**: 1500 (3 tool calls)
