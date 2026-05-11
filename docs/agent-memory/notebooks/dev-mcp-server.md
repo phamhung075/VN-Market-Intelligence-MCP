@@ -4,6 +4,18 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1876a-A2 — Emission bridge gap log in scanMarket.ts (2026-05-11, DONE)
+
+**Change:** After `storeAlerts()` returns, loop over each alert and emit:
+`[scanMarket] alert_written ticker=X type=Y severity=Z notified_telegram=0 — emission_bridge_to_agent_signals=MISSING (1876a/B1 pending)`
+3 LOC. Logging-only. No logic change.
+
+**Result:** TSC clean. Test suite exit 0. Confirms VRE -6.41% class of silent alerts will now be visible in container logs.
+
+**Next:** Sprint 1877 B1 implements the actual bridge (agent_signals emission).
+
+---
+
 ### Task 1876a-A3 — FR-5 observability log in taAlertNotifierJob (2026-05-11, DONE)
 
 **Change:** Added startup log at top of `runTaAlertNotifier` emitting `pending=<N>` count of `price_anomaly` signals with `outcome IS NULL`. Wrapped in try/catch (best-effort). `processed_last_run=?` (no stats table). 9 LOC, logging-only.
