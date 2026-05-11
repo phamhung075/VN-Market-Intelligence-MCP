@@ -79,26 +79,30 @@ For agents with quality issues found in Step 3:
 4. Check: does flow attach regime caveat?
 5. If systematic gap (same error 3+ cycles in notebook history) → AUTO-CURE (Step 6)
 
-## Phase 2.5: Methodology Audit (Báu framework)
+## Phase 2.5: Methodology Audit (integrated Báu + Long/Tuấn framework)
 
 **Step 4b — Score every reviewed agent against `tnb-methodology.md` Layer 5.**
 
-For each agent notebook surveyed in Step 3 + every MARKET investment thesis from Step 1, walk the 6-step decision tree:
+For each agent notebook surveyed in Step 3 + every MARKET investment thesis from Step 1, walk the 9-step decision tree:
 
 | Step | Check | Source |
 |------|-------|--------|
 | A | Highest-frequency indicator opens the analysis (monthly > quarterly) | Layer 1.1 |
 | B | Threshold crossings flagged (PMI ↔ 50, USD/VND ↔ 26500, US10Y ↔ 4.5%, FII carry ↔ 0) | Layer 1.2 |
 | C | Cause + transmission chain attached (Level 1 → Level 4 of `market-analysis.md`) | Layer 1.3 |
-| D | US calls: PMI checked **before** consumer / services | Layer 2.A + 2.B |
+| D | US calls: PMI (with sub-components) checked **before** consumer / services; Fed liquidity claims reference EFFR–IORB spread | Layer 2 |
 | E | VN calls: VIRA cited (or VIRA-absence noted while VPS scraper is pending), IMF/ADB/WB never primary, **no WiData** (paid, off-limits) | Layer 3 |
 | F | Investment theses: pillar count of {M2, COC, EPS, POL} ≥ 3 | Layer 4 |
+| G | BCTC opinions: NI vs OCF compared **and** ≥1 forensic gate (M-Score / F-Score / accruals / BTN trick check) | Layer 7 |
+| H | Investment theses: cycle phase declared **and** pyramid tier matches phase | Layer 8 |
+| I | All macro claims trace to a Tier 1–3 source (no social-media-as-primary) | Layer 9 |
 
-Score: ≥5/6 = GOOD | 3–4 = NEEDS_ATTENTION | ≤2 = CRITICAL
+Score: ≥7/9 = GOOD | 4–6 = NEEDS_ATTENTION | ≤3 = CRITICAL
+(Steps G, H, I = `n/a` when output type doesn't apply — n/a is neutral, max stays effective.)
 
 Log per agent:
 ```
-[Methodology] {agent} A=✓ B=✗ C=✓ D=n/a E=✓ F=2/4 → NEEDS_ATTENTION
+[Methodology] {agent} A=✓ B=✗ C=✓ D=✓ E=✓ F=2/4 G=n/a H=✗ I=✓ → NEEDS_ATTENTION
   gap: {pull entry from tnb-methodology.md "Common methodology gaps" catalogue}
 ```
 
@@ -134,7 +138,7 @@ MARKET messages: N checked | M issues
 - {issue 1}
 - {issue 2}
 Agent sessions: N reviewed | M methodology gaps
-Methodology scores (Báu Layer 5): GOOD={x} NEEDS_ATTENTION={y} CRITICAL={z}
+Methodology scores (Layer 5, 9-step): GOOD={x} NEEDS_ATTENTION={y} CRITICAL={z}
   Top gap pattern: {entry from tnb-methodology.md catalogue}
 Signals: N total | M dedup candidates | P low-confidence
 Auto-cures: N applied

@@ -287,3 +287,17 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Foreign flow pipeline paused | fii_type=HOT_MONEY (inferred from news signals)
 - No crisis signals | No legal risk signals | Supply chain stable (BDI 1,400) | Grid NORMAL
 
+
+## Cycle — 19:00 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - REGIME_TRANSITION: NEUTRAL → TIGHTENING (Brent +3.96σ, inflation 8%, carry VND -33bp, hot money retreating)
+  - FPT @ 70,000 (-12.83%) — 11 days below stop-loss 74,679; RSI 25.8 oversold; foreign selling 14,100 tỷ; conviction STRONG bearish 0.63 → GIẢM BỚT
+  - Portfolio 100% in headwind sector (tech); ALIGNMENT_SCORE=0.00; fii_type=HOT_MONEY
+- **actions**:
+  - WORK: REGIME_TRANSITION posted | Portfolio misalignment posted | FII HOT_MONEY warning posted | cycle heartbeat sent
+  - Feedback filed: price_drop accuracy 25% < 60% threshold (alert_quality/medium)
+  - Notebook committed: chore(memory/unified-agent): notebook 2026-05-11
+- **next_cycle_hint**: Watch banking BCTC releases (ACB/BID/CTG/EIB/MBB/VCB/VPB due 2026-05-15 — 4 days). Monitor FPT for conviction shift if RSI < 20 or volume spike. Foreign flow pipeline paused — check restoration. VRE data gap from vnstock rate-limiting.
+- **estimated_tokens**: 13000
