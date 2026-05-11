@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": 1869,
+  "currentSprint": 1870,
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T03:45:00Z",
+  "updatedAt": "2026-05-11T04:55:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 14 UNBLOCK: TNB scheduler audit for stale system-auditor — diagnosis: cron def `0 16 * * *` exists at .claude/commands/crons/cron-system-auditor.md but session-scope CronCreate was lost during heavy 2026-05-10 sprint activity (16:38-17:38 UTC). Re-registered cron in main session (id 64cfb03a). Manual invoke recommended next opportunity. Architectural fix (persistent scheduler) deferred — out of dev-team scope. Sprint 1869 dev work (1869a/b/b-seed) deferred to cycle 15 — UNBLOCK preempted FIX priority. Loop exits idle."
+  "lastCompleted": "Cycle 15 SHIPPED Sprint 1869 end-to-end: 1869a (DEFAULT_DROP_PCT -5→-7, d884be66) + 1869c (UTC guard extended to qa-responder + news-scout, e3bd83a5) + 1869b (wired watchlistThresholds at scanMarket.ts:296, dbefc47c) + 1869b-seed (DB migration alert_drop_pct -7/-9, 44d5bf2c). Baseline 9153 pass / 16 fail. Adaptive price-drop precision system end-to-end live. Report 2844 marked fixed. TNB c33 F2+F5 actioned. Branches cleaned. PO ACK closed."
 }
