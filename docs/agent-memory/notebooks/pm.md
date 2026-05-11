@@ -1,12 +1,12 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1846
+**Last updated:** 2026-05-11 | **Sprint:** 1869
 
 ## Current state
 
-- WIP: 0 / 2 (no tasks In Progress yet)
-- Todo: 1846b (M, FEATURE)
-- Developer assigned to 1846b next
+- WIP: 0 / 2 (no tasks In Progress)
+- Todo: 1869a, 1869b, 1869b-seed (price_drop precision tuning), 1862c-D/E/F/G (cowork MCP RCA)
+- Developer next: 1869a → 1869b → 1869b-seed (sequenced)
 
 ## Last session summary
 
@@ -39,3 +39,24 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **Dependency tiers enforced:** Tier 1 (1863a) → Tier 2 (1863b, 1863d parallel) → Tier 3 (1863c, 1863f, 1863h parallel) → Tier 4 (1863g final gate). WIP max=2 respected.
 
 **Status at session end:** READY FOR HANDOFF. Tier 1 ready: 1863a-RECONCILE (alertVerdictStore.ts) → dev-mcp-server.
+
+---
+
+## Recent session — 2026-05-11 (Sprint 1869 decompose)
+
+**Input:** Architect brief 2026-05-11-price-drop-precision-tuning.md + Telegram report 2846 duplicate marking
+
+**Actions:**
+- Decomposed brief into 3 atomic tasks per architect plan (A, B, B-seed sequencing):
+  - 1869a: FIX, raise DEFAULT_DROP_PCT -5 → -7 (signalDetector.ts const), ~45 min
+  - 1869b: SPRINT-S, wire watchlistThresholds into scanMarket line 283 (~1.5h)
+  - 1869b-seed: FIX, DB migration populate alert_drop_pct defaults (7.0 standard, 9.0 high-vol)
+- Created 3 handoff files (TASK_1869a/b/b-seed.md) with AC details + sequencing
+- Updated docs/TASKS.md: added 3 tasks to Todo section; 1869b-seed depends on 1869b
+- Telegram report 2846: marked duplicate of 2844 via process_telegram_report(id=2846, resolution=duplicate, delete_telegram_message=true) — pending dev execution
+
+**Dependency edges enforced:** A (independent) → B (B depends on A logically) → B-seed (depends on B wired). Ship sequence: A first (immediate precision lift) → B (wiring) → B-seed (populates wired column).
+
+**WIP snapshot:** Todo = 1869a/b/b-seed + 1862c-D/E/F/G = 7 items. Max 2 In Progress enforced. Developer recommended to start 1869a next.
+
+**Status at session end:** READY FOR HANDOFF. 1869a ready → developer.

@@ -43,3 +43,9 @@
 - Items: 20 | Impacts: 7 | Signals: [chain_catalyst×3 (#2834,#2835,#2836)] | Regime: TIGHTENING | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
 - Key: Brent EXTREME +5.36σ → cpi_pressure_risk=true → chain_catalyst macro/bearish (GAS,HPG,banking); ACB banking bullish (Âu Lạc stake 6%, conf 86%, regime-adj 5.6 → chain_catalyst not urgent_news); HPG+DHG dividend cutoff 11-15/5 (sector/neutral). No PMI data. VN-Index rally to 2000 narrative sustained (5 similar past events in context).
+
+### Cycle (01:22–01:26 UTC 2026-05-11) — off-hours Monday run
+- Items: 20 | Impacts: 8 | Signals: [urgent_news×1 (ACB #2837)] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Key: ACB Âu Lạc 5%→6% stake escalation (bullish, conf 84%, regime_adj=8.0) → urgent_news. FII capital inflow narrative (impact 6, neutral) suppressed — below threshold. Brent CRITICAL alerts already captured in prior cycle — suppressed dedup. No PMI data. VN-Index 2000 target narrative sustained.
+- Note: get_macro_snapshot not in news-scout tool package → REGIME defaulted NEUTRAL. Estimated tokens: 6500 (13 tool calls × 500).

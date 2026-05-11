@@ -1,76 +1,65 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 00:15 UTC (Cycle 12 close) | **ctx at checkpoint:** post-compact
+**Written:** 2026-05-11 02:45 UTC (Cycle 13 close) | **ctx at checkpoint:** post-cycle-12-compact
 
-## Cycle 12 shipped (2026-05-11)
+## Cycle 13 shipped (2026-05-11)
 
 | Task | Type | Route | Result |
 |------|------|-------|--------|
-| Monitor-2843 | RESOLVE | direct MCP | wontfix — 4-cycle persistent, sporadic, non-reproducible since cycle 9 direct-call verification. delete_success=false on Telegram side, but row state authoritative (processed/wontfix). |
-| Monitor-2844 | UNBLOCK | architect | Brief `docs/architecture-briefs/2026-05-11-price-drop-precision-tuning.md` delivered. Verdict: Option A (DEFAULT_DROP_PCT -5→-7) + Option B (wire adaptive thresholds — already built, dead-wired at `scanMarket.ts:283`). 3 atomic tasks for PM. Report 2844 marked processed by architect. |
-| Monitor-2845 | DEFER | none | Left in monitoring — downstream of pending Reuters/TE Option A/B ship; should self-resolve. |
+| 2844-decomp | UNBLOCK | pm | Sprint 1869 created: **1869a** (FIX, DEFAULT_DROP_PCT -5→-7), **1869b** (SPRINT-S, wire watchlistThresholds at scanMarket.ts:283), **1869b-seed** (FIX, DB migration alert_drop_pct=7.0/9.0). Handoffs written. Ship order: a → b → b-seed. |
+| 2846-dup | RESOLVE | direct MCP | duplicate of 2844 — same price_drop precision issue. delete_success=null (Telegram side) but row authoritative. |
 
-## Cycle 12 key insights
+## Cycle 13 key insights
 
-**Critical architectural finding from 2844 brief:** The adaptive threshold system is fully built (`volatilityCalculator.ts`, `SignalContext.watchlistThresholds`, `alert_drop_pct` DB column) but DEAD-WIRED. `scanMarket.ts:283` calls `detectSignals(snapshot)` — second `context` argument never passed. Option B is a 2-line fix + DB seed, not a new feature. PM should sequence A first (immediate -5→-7), then B (adaptive activation), then C+D as follow-on.
+**PO correction of stale claim:** financial-analyst notebook updated TODAY (2026-05-11 01:00 UTC) — NOT stale. Cycle 12 carry-over claim was wrong. system-auditor stays stale (last 2026-05-09 16:15 UTC = 3rd observation now). Per TNB threshold, scheduler audit escalation due cycle 14 if still stale.
 
-**FP root causes (4 patterns from brief):**
-1. Borderline -5% to -6.9% drops recovering intraday (3-4/8) — fixed threshold too low
-2. Sector-wide synthetic price_drop at -0.5% sector threshold (2-3/8) — step 5a emits for whole sector
-3. Weekend stale-price gap reversals (1-2/8) — no market-hours guard on price_drop path (only volume_spike has ATC guard)
-4. Ex-dividend mechanical drops (1/8) — no corporate actions calendar
+**PM did not auto-execute MCP:** PM created handoffs noting "2846 dup-mark pending developer execution" but main terminal ran `process_telegram_report` directly (one-line action, no need to spawn dev). Worth noting that PM doesn't have MCP gateway access in this session — same constraint as PO.
 
-**PO mixed-type BATCH (process note):** PO returned BATCH containing resolve + architect-brief actions — incorrect per UNBLOCK/BATCH separation. Reinterpreted at main terminal as: direct MCP resolve(2843) + UNBLOCK→architect(2844). Worth flagging to agent-father if recurs.
-
-**PO MCP access gap:** PO reported "MCP gateway tool not in my exposed toolset for this session" — verified data via MCP directly from main terminal. Known PO limitation; main acts as MCP proxy when PO needs report state.
+**Brief→tasks flow validated:** Architect brief (cycle 12) → PM decomp (cycle 13) is the natural sequence. Brief is decision artifact; PM just enumerates atomic tasks with file paths + AC + dependencies. No re-architect needed.
 
 ## Current baseline
 
 - **8804 pass / 1 fail** (unchanged)
-- toolCount=132, totalTasksDone=556 (unchanged from cycle 11 — no tasks closed this cycle)
-- currentSprint=1868
+- toolCount=132, totalTasksDone=556 (unchanged — no implementation tasks shipped this cycle, only planning)
+- currentSprint=1869 (incremented from 1868)
 - pipeline-state: idle
-- branches: only main (no stale)
+- Todo: 7 items (1869a/b/b-seed + 1862c-D/E/F/G)
 
-## Carry-over to Cycle 13
+## Carry-over to Cycle 14
 
-### Ops-gated (waiting on user / ops)
+### Ready to ship (dev-team scope) — NEW
+- **1869a** (FIX, 45m, mcp-server) — DEFAULT_DROP_PCT -5→-7 in signalDetector.ts. Independent. Ship first.
+- **1869b** (SPRINT-S, 1.5h, mcp-server) — wire watchlistThresholds at scanMarket.ts:283. After 1869a.
+- **1869b-seed** (FIX, 1h, mcp-server) — DB migration. Depends on 1869b.
+
+### Ops-gated (unchanged from cycle 12)
 - **1862c-D + 1862c-E** — Cloudflare config edits (still pending since cycle 10)
-- **Reuters/TE 5-curl probe** — ops to run from container + host per brief Section 2; outputs feed PM next cycle
-- **Container rebuild** still gates 1862f / 1865a / 1862c-F
+- **Reuters/TE 5-curl probe** — ops to run from container + host per brief Section 2
+- **1862c-F + 1862c-G** — rebuild + observation gated
 
-### Ready to ship (dev-team scope)
-- **PM task creation from 2844 brief** — 3 atomic tasks (A-1 threshold constant, B-1 context wiring, B-seed DB migration). PM should pick up cycle 13.
-- **1862c-G** — fastest dev win after D+E land (architect ship order: D+E → observe 5 cycles → G → F)
-- **Reuters/TE atomic task** — pending ops probe verdict (Option A = config disable, Option B = URL swap)
+### Patterns to watch
+- **2845** (news freshness >2h, 4th cycle next) — leave monitoring; downstream of pending Reuters/TE fix
+- **system-auditor notebook** — 3rd observation stale; cycle 14 = escalate to scheduler audit per TNB threshold
 
-### Patterns to watch (3rd cycle = action)
-- 2845 news freshness >2h (3rd cycle) — leave monitoring, downstream of Reuters/TE fix
-- (2843/2844 cleared this cycle)
-
-### Stale agent notebooks (TNB c32 F4/F5) — 2ND OBSERVATION
-- system-auditor — last cycle 2026-05-09 16:15 UTC (2nd cycle deferred)
-- financial-analyst — last cycle 2026-05-09 01:00 UTC (2nd cycle deferred)
-- If still stale at cycle 13 (3rd observation), escalate to scheduler audit per TNB threshold
-
-## Architecture state (unchanged from cycle 11)
+## Architecture state (unchanged)
 
 - 9-service Docker architecture operational since 2026-04-25
 - MCP server UP, 132 tools, alertVerdictStore + verdictResolutionJob cron `7 * * * *` live
 - All 16 circuit breakers OK in DB
 
-## Cycle 12 process notes
+## Cycle 13 process notes
 
-- Background architect spawn worked cleanly (290s duration, 51 tool uses, 80k tokens). Architect self-resolved report 2844 + sent its own WORK telegram.
-- Direct MCP resolve from main terminal validated for 2843 — bypassed need to spawn dev for single-row update.
-- Cycle ran during post-compact context — notebook is canonical state for cycle 13 entry.
-- Monitoring pattern triage at 4-cycle threshold confirmed correct (wontfix when non-reproducible, brief when actionable).
+- Single UNBLOCK cycle — no parallel agent spawns needed.
+- PO triage returned clean UNBLOCK with route_to: pm; corrected one stale-notebook misclaim (financial-analyst).
+- Cycle 13 = "planning" cycle (no code shipped, only TASKS.md update + 3 handoffs).
+- Dev work for 1869a/b/b-seed will trigger cycle 14 if PM signals or if cron picks them up.
 
-## Next-cycle intent (Cycle 13)
+## Next-cycle intent (Cycle 14)
 
 1. Drain new signals + reports
-2. If ops 5-curl probe results published → PM creates Reuters/TE Option A/B atomic task
-3. If 1862c-D/E shipped by ops → spawn dev for 1862c-G smoke probe
-4. If brief 2844 not yet picked up by PM → nudge PO with 3-task breakdown
-5. Watch system-auditor + financial-analyst notebooks → if still stale (3rd observation), escalate to scheduler audit
-6. If `expire_monitoring_reports` flips 2845 at 72h TTL → archive
+2. If 1869a/b/b-seed ready (no blockers) → spawn `dev-mcp-server` for 1869a (Tier 1, independent)
+3. After 1869a Done → spawn dev for 1869b (Tier 2)
+4. After 1869b Done → spawn dev for 1869b-seed (Tier 3)
+5. system-auditor notebook 3rd-obs check → if still stale, route to TNB for scheduler audit
+6. Reuters/TE atomic task — pending ops probe verdict (Option A vs B)
+7. Check if `expire_monitoring_reports` flips 2845 at 72h TTL → archive

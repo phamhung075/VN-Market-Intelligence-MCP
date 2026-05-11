@@ -88,3 +88,10 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - **next_cycle_hint**: Monitor BID open Monday (Âu Lạc +6% stake vs FII outflow pressure). FPT below stop-loss 74,679 — watch recovery or cut signal. price_drop precision 50% persistent — flag for calibration.
   Doc self-heal (blocked — flow files protected): `.claude/flows/unified-agent/weekly.md` step 1 — "from today" is ambiguous when trigger fires past midnight UTC; should read "from today or yesterday (Sunday) if trigger fires past midnight".
 - **estimated_tokens**: 1500 (3 tool calls)
+
+### Coordination Cycle (01:01–01:15 UTC)
+- Mode: MARKET + PREDICTION_REVIEW | System: OK (all 16 CBs clear, D2D RATE_LIMITED WARN self-recovering) | Alerts: 5 (4 CRITICAL macro, 1 HIGH GAS) | Quality issues: 1 (price_drop 50% < 60% → feedback filed)
+- Regime: NEUTRAL (last known from weekly 2026-05-10) | Tightening pressure signals: Brent +5σ extreme | Alignment: FPT=tech_export→TAILWIND (1.0) | Headwind exposure: 0%
+- Portfolio: FPT only (-10.5%, 71,900 vs stop-loss 74,679) | VaR 95%: -1.5% normal | No conviction shifts ≥0.3
+- Prediction review: 1 open market (China/Taiwan), 0 resolved → accuracy N/A
+- Bugs: none new filed | Spam audit: SKIP (file inaccessible in sandbox)

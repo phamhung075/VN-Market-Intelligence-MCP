@@ -52,3 +52,10 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: inactive (next: June 2026)
 - Notes: Market CLOSED (off-hours). ACB urgent_news id=2830 conviction 0.50 < 0.60 NEUTRAL threshold. No price_anomaly override. No legal/crisis signals. 2 open CRITICAL macro_deviation alerts (Brent +5.36σ, Gold -5.38σ) — pending since 23:30, outside signal matrix scope. Clean cycle.
+
+### Alert Cycle (01:02–01:05 UTC, 2026-05-11)
+- Signals: news_mention ×1 (GAS HIGH, unnotified) | fundamental_validation ×1 (report-analyzer, read — not in matrix)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: unknown | Pivot window: unknown
+- Notes: Market CLOSED (off-hours, ~1h to open). GAS news_mention HIGH (00:58 UTC) — Suppressed: not from agent bus, no conviction score, prices stale 64h (weekend). Macro CRITICAL (Brent +3.96σ, Gold -3.89σ) already fired at 00:45 UTC. Legal: none. Crisis: none. VN-Index 1,915.37 +0.33%. Kinh Dịch global: Khôn (2) MUA 100%. log_agent_work id=613.
