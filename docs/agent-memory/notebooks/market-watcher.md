@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 16:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 17:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -384,3 +384,25 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (17:38–17:41 UTC)
+- Stocks: 28 (EOD snapshot 09:00 UTC, market CLOSED) | Anomalies: 3 (>1.5σ TIGHTENING) | Volume spikes: 3 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE,EIB] | pe_risk: [FPT]
+- [SKIP] No tool: get_macro_snapshot — regime inferred from news-scout chain_catalyst payload (regime=TIGHTENING) + USD/VND 26,123 + bearish breadth
+- Thresholds: sigma=1.5σ, vol_mult=1.5x, downside_bias=true
+- VRE -6.41% (1.78σ, 11.67M vol=2.5x avg) → signal #2917 → alert-commander [fx_pressure, downside_bias→HIGH]
+- FPT -2.64% (2.13σ, 16.91M vol=4.1x avg) → signal #2918 → alert-commander [pe_compression_risk, downside_bias→HIGH]
+- EIB +2.71% (2.19σ, 25.04M vol=9.3x avg) → signal #2919 → alert-commander [fx_pressure, MEDIUM]
+- Supply chain: stable (BDI=1,400, no disruptions) | Climate: early dry heat (IDC,KBC,GEG — no watchlist impact) | TA: insufficient candles (13/35)
+- Open chain findings: 0 (last 15 min)
+
+## Metrics (cycle 2026-05-11 17:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 8 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
