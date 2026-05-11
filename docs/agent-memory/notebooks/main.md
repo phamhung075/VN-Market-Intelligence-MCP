@@ -1,6 +1,63 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 11:04 UTC (Cycle 22 close — Sprint 1875 fully SHIPPED, 4 tasks, TNB c35 F1/F2/F3 + signal-dedup all closed)
+**Written:** 2026-05-11 12:35 UTC (Cycle 23 close — Sprint 1876a Step A bundled SHIPPED, A1+A2+A3+A4, MAJOR A4 finding triggers 1876a-A5)
+
+## Cycle 23 SHIPPED Sprint 1876a Step A (2026-05-11 12:35 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| 1876a-A1 | FIX-HIGH | `6d1ad3af` (bundled) | Precision denominator fix — `alertAccuracy.ts` L340 `hits/totalAlerts` → `hits/(hits+misses)` matching per-type L369. Divide-by-zero guard. 2 unit tests pass. Side effect: real precision was always higher than reported (UNKNOWN was diluting denom). QA pre-read content APPROVED. |
+| 1876a-A2 | FIX-MED | `0a5ffc3f` (bundled) | scanMarket emission-gap warning log — 3 LOC after storeAlerts(). Now every Lane B (mcp-server price) alert write logs `[scanMarket] alert_written ticker=X type=Y severity=Z notified_telegram=0 — emission_bridge_to_agent_signals=MISSING (1876a/B1 pending)`. VRE-class gap newly visible in container logs. QA APPROVED. |
+| 1876a-A3 | FIX-MED | `6d1a8db7` (bundled) | taAlertNotifier row-count obs — 9 LOC + try/catch at job start. Logs `pending=N processed_last_run=?`. After 1877 B1 ships, N>0 = bridge live. QA APPROVED. |
+| 1876a-A4 | OPS-LOW | notebook `4c88a8aa` | **VERDICT FAIL — major finding.** 1869b-seed migration NEVER ran on prod. VRE/HPG stuck at -3.0 (old schema default). NVL/DPM/MWG missing from watchlist entirely. **Entire Sprint 1869 precision threshold tuning (1869a + 1869b + 1869b-seed) was non-functional.** Triggers 1876a-A5 ops re-deploy. |
+
+## Sprint 1876a Step A architect brief — 3 independent bugs (NOT shared root)
+
+Brief: `docs/architecture-briefs/2026-05-11-1876a-alert-engine-rca.md`
+
+- **B1 (HIGH)** No code bridges `alerts` table → `agent_signals.price_anomaly`. The bridge simply doesn't exist. scanMarket writes alerts; taAlertNotifierJob READS price_anomaly but doesn't CREATE. Architect found no INSERT point.
+- **B2 (HIGH)** alertAccuracy.ts L340 denominator bug — UNKNOWN diluted precision metric. **FIXED via 1876a-A1.**
+- **B3 (MEDIUM)** verdictResolutionJob baseline uses 2-day-old close instead of at-fire price → systematic scoring error.
+- **Two dispatch lanes confirmed**: `apps/alert-engine` microservice (Lane A) uses `EvaluateAlertUseCase` → direct Telegram for high/critical (BYPASSES agent_bus by design). `apps/mcp-server scanMarket` (Lane B) writes `alerts` table → NO Telegram, NO bridge. HVN fired correctly (Lane A) but VRE/VPB silent (Lane B no notifier + no bridge).
+- **1875c "no bug" UPHELD on Q9** — `buildToolNameMap()` exact-string Map keys, no collision. c35 F3 was gateway SSE transient, not registry defect. Precision data is NOT contaminated by Q9. RISK-2 NOT realized.
+- **Q10 1869b path is wired correctly** — but the seed values aren't in the DB (per A4). Code path OK, deployment path broken.
+
+## Step B parked for Sprint 1877 (per architect)
+
+- **B1**: Create `bridgeAlertsToSignalBus()` called after `storeAlerts()` in scanMarket.
+- **B2**: Extend price Telegram notifier (close Lane B notification gap).
+- **B3**: Fix `verdictResolutionJob.ts` `snaps[0]` → most-recent close.
+
+## Cycle 23 process notes
+
+- **Signal dedup 1875d FIRST EFFECTIVE TEST PASSED** — 3 active signals (architect-1871-batch, tnb-c34, tnb-c35) all silent-skipped after one-time backfill of `fingerprint` field into the 3 matching pre-1875d processed/ files. Fingerprints computed identically (sha256(from + type + stringify(payload) + createdAt)) → exact match. New `*.c23-replay.json` files created in processed/ for audit trail. pendingSignals empty post-drain → no PO routing of replays. PO only triaged 1 new telegram report (#2849 alert quality regression).
+- **Worktree isolation 3-way race** — 3 dev-mcp-server agents spawned in one Agent message all chained their commits onto `task/1876a-A3-fr5-observability-log` (the last branch). Named branches `task/1876a-A1-*` and `task/1876a-A2-*` point to pre-cycle main. Likely cause: worktree spawn-order race where each subsequent agent's worktree branched from a prior agent's HEAD rather than fresh main. **Resolution: bundled merge** of A3 branch carrying all 3 fixes + 3 notebook commits + 1 A4 ops notebook. QA pre-read content APPROVED A1, full QA APPROVED A2/A3.
+- **TNB c35 F4 closed** — c23 verification (3h 28min observation post 1872b deploy `fb2d6fd2` at 08:04 UTC): zero new BUG reports referencing write_alert_verdict. Handoff entry updated (then reverted by linter; close commit re-asserts).
+- **TNB c35 F10 dual-cause confirmed and re-prioritized** — Cause A (~7+ cycles): cowork sandbox permission denies `rm -f .git/HEAD.lock`. Cause B (c22 close): true OS-level race vs concurrent alert-commander commit `2849431c`. Both real, both needing different fixes. SPRINT-M candidate next sprint.
+- **Architect brief committed** — `2026-05-11-1876a-alert-engine-rca.md` (with B1/B2/B3 + Q&A sections). Other untracked briefs from prior cycles left alone.
+
+## Carry-overs for cycle 24+
+
+- **1876a-A5 (Todo)** — OPS re-deploys 1869b-seed migration. **HIGH priority** because precision metric and emission-gap surveillance both depend on real thresholds being in DB. If thresholds still -3.0 in c24, A1's denominator fix won't show precision improvement.
+- **F5 (VRE emission gap) → Sprint 1877 B1** — bridgeAlertsToSignalBus implementation.
+- **F6 (system-auditor)** — wait for 16:00 UTC fire (~3.5h out as of cycle close at 12:35 UTC). If silent, escalate c25.
+- **F7 (get_recent_fixes 9-day stale)** — LOW, deferred.
+- **F11 (financial-analyst silent 2+ days)** — disposition pending.
+- **F10 (HEAD.lock dual-cause)** — Sprint 1877 candidate (sandbox perm + flock wrapper).
+- **1862c-D/E/F/G** — ops-gated, unchanged.
+- **1872c** — news-scout update_analysis_brief missing tool, BA scoping needed (SPRINT-M).
+
+## Cycle status
+
+- TSC: 0 errors maintained.
+- Pre-push hook: `[pre-push] tsc OK` real-validated.
+- Working tree: many untracked from prior cycles (preserved per system reminders).
+- Push status: bundled merge pushed.
+- WORK telegram: dispatched.
+
+---
+
+
 
 ## Cycle 22 SHIPPED Sprint 1875 (2026-05-11 11:04 UTC)
 

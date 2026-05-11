@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T11:04:32Z",
+  "updatedAt": "2026-05-11T12:35:48Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 22 SHIPPED Sprint 1875 — 4 FIX tasks (1875a-d): TNB c35 F1 qa-responder UTC full pass (6 surfaces), F2 agents-architect agent-def CREATED (was missing for ~5 cycles), F3 record_signal_outcome no-bug + regression guard + observability, signal drain-layer fingerprint dedup. TSC remains 0. Pushed 0e5670ae. 4 worktrees GC'd. F4 verification + F5 VRE emission gap + F6 system-auditor fire all pending c23."
+  "lastCompleted": "Cycle 23 SHIPPED Sprint 1876a Step A bundled (A1+A2+A3+A4). A1 fix(mcp/1876a/alert-accuracy) precision denominator excludes UNKNOWN. A2 fix(mcp/1876a/scan-market) emission-gap warning log. A3 fix(mcp/1876a/ta-alert-notifier) row-count obs. A4 OPS verdict FAIL: 1869b-seed migration never executed on prod (VRE/HPG stuck at -3.0, NVL/DPM/MWG missing entirely) → triggered 1876a-A5 ops re-deploy. Architect brief 2026-05-11-1876a-alert-engine-rca.md committed (3 independent bugs identified, not shared root; 1875c upheld). 1875d fingerprint dedup FIRST EFFECTIVE TEST passed (3 replays silent-skipped after one-time backfill of fingerprints into pre-1875d processed/ files). TNB c35 F4 closed (write_alert_verdict 0 BUG reports since 1872b deploy). F10 re-prioritized: dual-cause confirmed (sandbox perm + concurrent-cron-commit race). Worktree isolation race: 3 simultaneous dev-mcp-server spawns chained on one branch (task/1876a-A3) — bundled-merge resolution. TSC 0 maintained. Pushed bundled merge."
 }
