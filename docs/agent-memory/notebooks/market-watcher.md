@@ -244,3 +244,30 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **next_cycle_hint**: EIB — watch for exhaustion/reversal (3 cycles, no fundamental support). HVN — confirm stabilization or further downside. GAS sensitivity to Brent 105+ / US-Iran news. SSI/VCI/HCM on securities sector momentum.
 - **estimated_tokens**: 7000
 - **doc_self_heal**: tool params mismatch known from prior cycle — `get_technical_indicators` and `get_ticker_intelligence` use `code` not `ticker`. Tools have insufficient history (13 candles) for TA signals on recently-added watchlist stocks.
+
+### Cycle (06:38–06:42 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (EIB +3.61% 2.45σ, HVN -2.92% 2.58σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- EIB: +3.61% (2.45σ) — 4th consecutive cycle above 2σ threshold; price 22,950 (up from 22,150 prior day); volume 1.97M elevated; no insider, no evidence score. Speculative/liquidity-driven. Signal id=2862.
+- HVN: -2.92% (2.58σ) — continuing multi-day downtrend (30d: -4.64%); bearish evidence 0.56; open alert active since 06:16; volume thin 83.4K. Signal id=2863.
+- Macro: Brent 105.54 (elevated), Gold 4,678.4 (falling trend), USD/VND 26,123. Supply chain stable (BDI=1,400). Energy grid normal (hydro 70%). Climate: early dry heat (May), no watchlist impact.
+- Sector rotation: Securities +1.65% leading (1d) | Aviation -1.42%, Tech -1.46% lagging. Only 1d data (no 5d available).
+- Open chain findings: 0
+
+## Metrics (cycle 2026-05-11 06:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 11 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3500 |
+
+## Cycle — 06:38 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**: EIB +3.61% (2.45σ) 4th consecutive anomaly cycle — deceleration from prior cycles (3.84%→3.61%), still above threshold; fundamentally weak. HVN -2.92% (2.58σ) ongoing downtrend confirmed, bearish evidence score. Securities sector outperforming (+1.65%). Macro stable (supply chain, energy, climate all clear).
+- **actions**: post_agent_signal price_anomaly EIB id=2862; post_agent_signal price_anomaly HVN id=2863; send_telegram WORK
+- **next_cycle_hint**: EIB — deceleration pattern, watch for reversal below 2σ (approaching 08:30 market close). HVN — bearish continuation vs support at 21,500. GAS / oil exposure if Brent holds above 105.
