@@ -55,7 +55,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
 | 1878a-spec | METHODOLOGY-INFRA: BA spec for OCF column migration — `operating_cash_flow` column in financial_reports + vnstock cash-flow sync bridge. SSOT: methodology Layer 7. Branch: spec/1878a-ocf-column. Owner: ba. | HIGH | SPEC | ba | — | 2026-05-12 |
-| NB-HDR-c38 | CHORE: Notebook header maintenance cycle 38 — update `**Last updated:**` timestamps in all agent notebooks that missed UTC guard. Branch: task/NB-HDR-c38. Owner: agent-father. | LOW | CHORE | agent-father | — | 2026-05-12 |
 
 ---
 
@@ -70,6 +69,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| NB-HDR-c38 | CHORE: Notebook header drift bundle — add `### Header update (required every cycle)` + UTC date capture to alert-commander/cycle.md + architect/main.md. 3 notebooks (financial-analyst, news-scout, unified-agent) appended by parallel agents (forward-only, safe). Merge SHA c4e4c1ab. TNB c38 findings #4 (alert-commander) + #5 (architect) CLOSED. Finding #6 (market-watcher) was already compliant — no patch needed. QA APPROVED 2026-05-12. | LOW | CHORE | agent-father | 2026-05-12 |
 | 1880b | METHODOLOGY-INFRA: `get_pyramid_tier(asset_class)` MCP tool (#128) — pure domain function, Maslow-style risk tier {cash, bonds, equity, alt, speculative}. DDD PASS, 23/23 tests, TSC 0 errors. Merge SHA cb232b26. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
 | signal-T2 | SIGNAL-DEDUP: `scripts/migrations/backfill-signals-db.ts` — scan processed/*.json, INSERT OR IGNORE with fingerprint, idempotent (57 scanned/57 skipped on re-run). 10/10 tests pass. Merge SHA cb232b26. QA APPROVED 2026-05-12. Unblocks signal-T3. | HIGH | FEATURE | developer | 2026-05-12 |
 | 1880a | METHODOLOGY-INFRA: `get_investment_clock_phase()` MCP tool — pure domain classifier, returns {Recovery, Overheat, Stagflation, Reflation, insufficient_data}. Truth table: PMI>50+CPI≤3→Recovery, PMI>50+CPI>3→Overheat, PMI≤50+CPI>3→Stagflation, PMI≤50+CPI≤3→Reflation. DDD PASS, 8/8 tests, TSC 0 errors. Merge SHA b6aca505. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
