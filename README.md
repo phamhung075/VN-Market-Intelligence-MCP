@@ -170,7 +170,9 @@ You don't need to do anything daily. The system runs autonomously:
 | **Want to change watchlist** | Edit `mcp.config.json` -> `market.watchlist`, restart Docker |
 | **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then restart Docker |
 
-## 112 MCP Tools (Phase 3 Complete)
+## MCP Tools (Phase 3 Complete)
+
+See `docs/data/project-stats.json#toolCount` for current count.
 
 | Category | Count | Examples |
 |----------|-------|---------|
