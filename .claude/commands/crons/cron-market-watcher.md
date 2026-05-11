@@ -7,6 +7,11 @@ Create market-watcher cron with CronCreate:
   Check current UTC time (Asia/Ho_Chi_Minh = UTC+7).
   Market hours: Mon–Fri 02:00–08:30 UTC (09:00–15:30 ICT).
 
+  Step 0 — MCP smoke probe (before any other work):
+  Call get_system_status via MCP gateway.
+  If the call FAILS (error, timeout, tool not found) → send_telegram(channel=bug, message="[market-watcher] Step 0 smoke probe FAILED — MCP unreachable, cycle aborted") → EXIT immediately.
+  If the call SUCCEEDS → proceed to Step 1.
+
   If current time is Mon–Fri 02:00–08:30 UTC → Read and execute .claude/flows/market-watcher/cycle.md
   If current time is Mon–Fri 16:00 UTC (±5 min) → Read and execute .claude/flows/market-watcher/eod.md
   Otherwise → EXIT immediately. No work outside market hours or EOD window.
@@ -22,6 +27,7 @@ Create market-watcher cron with CronCreate:
 - **recurring**: true
 - **prompt**:
   ```
+  Step 0 — MCP smoke probe: call get_system_status. If FAILS → send_telegram(channel=bug, "[market-watcher] Step 0 FAILED — MCP unreachable") → EXIT.
   Read and execute .claude/flows/market-watcher/cycle.md
   MCP: https://zenmidi.com/mcp
   ```
@@ -34,6 +40,7 @@ Create market-watcher cron with CronCreate:
 - **recurring**: true
 - **prompt**:
   ```
+  Step 0 — MCP smoke probe: call get_system_status. If FAILS → send_telegram(channel=bug, "[market-watcher] Step 0 FAILED — MCP unreachable") → EXIT.
   Read and execute .claude/flows/market-watcher/eod.md
   MCP: https://zenmidi.com/mcp
   ```

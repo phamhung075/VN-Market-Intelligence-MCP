@@ -226,3 +226,10 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Events: None triggered | Market closed — VN-Index ~1,905 (-~20pts, -1%), VRE -6.41%, FPT -2.64% (lowest since end 2023), HVN -2.92%, EIB +2.71% outlier | Real estate sector leading decline | BCTC: 24 tickers overdue 11d, 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 15/5 (4d)
 - Supply chain: OK (BDI 1,400, stable) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: none | Crisis: none | Prediction: China/Taiwan 50.5% (low actionable)
 - No unreviewed telegram reports | 99% alert outcomes unknown (review gap ongoing)
+
+### Coordination Cycle (13:00–13:05 UTC) — 2026-05-11
+- Mode: MARKET | System: OK (16 CBs clear, DHG/DAG rate-limit WARNs transient, Reuters/TE offline persistent) | Alerts: 8 open (+1 VIC MEDIUM 12:34 vs prior cycle) | Quality issues: 1 (price_drop 25% ongoing)
+- Regime: NEUTRAL (unchanged from 11:01 cycle) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND, NEUTRAL no multiplier)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | No shift ≥0.3 | fii_type=HOT_MONEY
+- Events: None triggered | VN-Index confirmed closed ~1,895–1,905 (-~20pts), VRE -6.41%, FPT -2.64% (late 2023 low), HVN -2.92%, EIB +2.71% | BCTC 24 tickers overdue 11d, 7 banks due 15/5 | Prediction: China/Taiwan 50.5% (unchanged)
+- Supply chain: OK | Energy: NORMAL | Legal: none | Crisis: none | No new telegram reports
