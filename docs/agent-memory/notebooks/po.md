@@ -1,65 +1,71 @@
 # PO Notebook
 
-## Last updated: 2026-05-09 (Sprint 1862 cycle 4)
+## Last updated: 2026-05-11 (Dev-team cycle 17, TNB c33 reconfirm)
 
-## Current sprint: 1862
-
-### State at session start
-
-- Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=515, toolCount=128
-- Sprint 1860 DONE (5/5 tasks shipped)
-- Sprint 1862 active: 9 tasks total, 4 DONE, 5 Todo, 0 In Progress
-- MCP infra: recovered at 03:01 UTC (project-stats.json stale — still shows DOWN, task 1862i)
-
-### Sprint 1862 — TNB audit cycles 21 + 22 + agent-father cycle 3
-
-| Task | Severity | Issue | Root cause | Owner | Status |
-|------|----------|-------|------------|-------|--------|
-| 1862a | CRITICAL | vnstock 10+ tickers RATE_LIMITED | Global 50 RPM limit insufficient | developer | DONE |
-| 1862b | HIGH | report-analyzer cannot bootstrap | Not in MCP agent enum | dev-mcp-server | DONE |
-| 1862c | HIGH | Cowork scheduled-tasks lose MCP access | Unknown — needs architect investigation | architect | Todo |
-| 1862d | MEDIUM | JSH NOT NULL constraint on vnstock_events | Deploy gap — fix merged, container rebuilt | ops | DONE |
-| 1862e | HIGH | 7 dev-team flows missing Error Boundary | Pre-standardization flows | agent-father | DONE |
-| 1862f | HIGH | Reuters/TE RSS errors regression 13→42 (3.2x) | Circuit breaker reset + no backoff | developer | Todo |
-| 1862g | MEDIUM | news-scout VIC 6+ cycle signal repetition | No time-window dedup for same-ticker+direction | developer | Todo |
-| 1862h | LOW | Hardcoded 112 tool count in knowledge files | Manual count never updated after sprints | developer | Todo |
-| 1862i | LOW | project-stats.json stale infra status | No auto-update on MCP recovery | ops | Todo |
-
-### Key decisions
-
-- 1862f is highest priority remaining — Reuters/TE 3.2x regression is data pipeline degradation affecting news quality
-- 1862g is important but lower urgency — signal repetition is noise, not data loss
-- 1862h and 1862i are quick wins — can be batched
-- 1862c needs architect — cannot be solved by developer alone (Cowork MCP provisioning is infrastructure design)
-
-### Patterns observed
-
-- vnstock rate limiting was escalating but 1862a fix (RPM 50→80) deployed. Monitor next TNB cycles.
-- Reuters/TE errors are volatile — spike after system restarts, unclear if circuit breaker resets properly
-- Cowork MCP access (GAP-8) systemic — 9 blocked events today across 4 agents. Structural gap.
-- news-scout signal repetition: VIC bullish fired 6+ consecutive cycles. Conviction filter passes each time because news articles are technically different, but user sees repeated noise.
-- Knowledge file drift: hardcoded counts go stale within 2-3 sprints. Need pointer pattern.
-
-### Test baseline tracking
-
-| Sprint | Pass | Fail | Date |
-|--------|------|------|------|
-| 1846 close | 8804 | 1 (intentional) | 2026-05-03 |
-| 1858 close | 8804 | 1 (intentional) | 2026-05-08 |
-| 1860 close | 8804+N | <=1 | 2026-05-09 |
-| 1862 target | 8804+N | <=1 (1331a only) | — |
+## Current sprint focus: 1870 SHIPPED, 1865b QUEUED, 1862c-D/E/F/G remaining
 
 ---
 
-## Recent session — 2026-05-10 (cycle 00:15 UTC)
+## Recent session — 2026-05-11 ~05:32 UTC (dev-team cycle 17)
 
-**Channel audit:** MCP server UP. Used TNB cycle 23 session log as proxy (SSE-only, cannot call MCP tools directly from this context).
+### Trigger
+TNB c33 signal re-fired same `tnb-2026-05-11T02:30:00Z.json` after handoff file was overwritten at 05:13 UTC. Cycle 15 PO ACK was lost — never committed to git. Reconfirming stance.
 
-**Issues found and actioned:**
-- 1862j (CRITICAL): sigma data wipe → W-3 dedup safeguard → developer. Pre-Monday market open priority.
-- 1862k (HIGH): vnstock rate limiter deployment verification → ops.
-- 1862f (HIGH): Reuters/TE errors 42→49 — already tracked, no new task.
+### Disposition of c33 findings (carried forward)
 
-**Sprint 1862 state at session end:** 11 tasks total, 4 DONE, 7 Todo, 0 In Progress.
+| # | Finding | Status |
+|---|---------|--------|
+| F1 | Reuters/TE config gate | OPS-GATED (5-curl probe pending) |
+| F2 | H1-future qa-responder + news-scout | SHIPPED 1869c (e3bd83a5) |
+| F3 | PO silent cycle | RESOLVED |
+| F4 | system-auditor stale | Cron re-registered c14, fires 16:00 UTC today |
+| F5 | price_drop precision | SHIPPED Sprint 1869 (1869a/b/b-seed) |
+| F6 | VPB price_anomaly emission gap | DEFERRED (1 obs only) |
+| F7 | git HEAD.lock retry | DEFERRED (low) |
+| F8 | get_agent_signals param | DEFERRED (low) |
+| F9 | Doc self-heal block | DEFERRED (architectural) |
 
-**Priority order:** 1862j (CRITICAL, sigma=price detection disabled) > 1862k (HIGH, data pipeline) > 1862f (HIGH, Reuters/TE) > 1862c (HIGH, Cowork MCP) > 1862g (MEDIUM) > 1862h/i (LOW).
+### Cycle 16 progress (just finished, 05:10 UTC)
+- Sprint 1870 SHIPPED: 1870a VERIFY-FAIL + 1870b FIX-HIGH (FPT BCTC P_NET_PROFIT regex cross-section contamination fixed)
+- Baseline: 9163 pass / 15 fail (was 9153/16)
+- Report 2848 fixed
+- NEW finding deferred: FPT income-statement split-label OCR limit (paragraph-only net profit)
+- NEW H1-future hit: dev-team OWN writes (pipeline-state.json + notebooks/main.md cycle-15 close stamp 04:55 vs actual 04:38 UTC)
+
+### Cycle 17 dispatch decision: **Option A — Surface 1865b**
+
+**Task 1865b** — extend H1-future UTC guard to dev-team-own writes (pipeline-state.json + notebooks/main.md)
+- Scope: FIX-LOW, doc-only, 1-3 files
+- Reuses pattern from 1865a (market-watcher) and 1869c (qa-responder + news-scout)
+- Closes last unguarded surface — prevents repeat in c34
+- Owner: agent-father (flow edit on `.claude/flows/dev-team/main.md` close step)
+
+### TNB c34 candidate finding (flagged pre-emptively)
+**Flow gap: PO ACK appendices are not committed to git** — cycle 15 ACK loss proves dev-team flow needs to stage + commit handoff file after PO appends ACK. Recommend agent-father flow edit. Will be formally logged when TNB c34 fires.
+
+### Sprint 1862 remaining todo (post cycle 16)
+- 1862c-D, 1862c-E (OPS, Cloudflare config — ops-gated)
+- 1862c-F (FIX-MEDIUM, rebuild-gated)
+- 1862c-G (FIX-HIGH, observation-gated after D+E ship)
+
+### Sprint 1870 close
+- Commits: 947f8054, 72b7fd0d, b58326e6, 412fb9c3, b7ac4b08
+- FPT revenue 20.22545 → 20.2T VND ✓, VCB regression 0%
+
+### Key patterns observed this cycle
+- **PO ACK on disk is fragile** — must be committed immediately. TNB signal re-fire pattern can overwrite uncommitted handoff appendices.
+- **H1-future UTC guard pattern is repeating** — third surface this week (market-watcher → qa-responder/news-scout → dev-team own writes). Worth checking if any other agent flow writes timestamps.
+- **TNB → PO → developer chain works** — c33 findings F2 + F5 shipped cleanly in two cycles after audit.
+
+---
+
+## Earlier sessions (compacted)
+
+### 2026-05-10 cycle (00:15 UTC)
+- 1862j (CRITICAL sigma wipe) + 1862k (HIGH vnstock rate limiter) created
+- Sprint 1862 had 11 tasks, 4 DONE, 7 Todo at session end
+
+### 2026-05-09 (Sprint 1862 cycle 4)
+- Created 1862a-i (9 tasks) from TNB cycles 21+22 + agent-father cycle 3
+- Baseline 8804 pass / 1 intentional fail
+- Priority order: 1862f > 1862g > 1862c (architect) > 1862h/i (quick wins)

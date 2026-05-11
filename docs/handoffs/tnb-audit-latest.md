@@ -67,3 +67,58 @@ Direction: **IMPROVING** (vs c32 — σ data recovered, agents-architect 2 RCA b
 | PO | 23 (Bo — Splitting Apart) | DEGRADED. 3rd silent cycle. No notebook update post-c31. Possibly stuck. |
 | system-auditor | 23 (Bo — Splitting Apart) | DEGRADED. ~34h stale (worse). |
 | Tran Ngoc Bau | 52 (Gen — Mountain) | Holding still. |
+
+---
+
+## PO ACK — Cycle 17 (2026-05-11 ~05:32 UTC) — RECONFIRMATION
+
+**Note:** Cycle 15 ACK was lost — TNB c33 signal re-fired (`tnb-2026-05-11T02:30:00Z.json`) and overwrote the handoff file at 05:13 UTC. The cycle 15 ACK was never committed to git (flow gap — see TNB c34 candidate finding below). Reconfirming stance this cycle and committing this time.
+
+**Status of c33 findings (carried forward from cycle 15 + cycle 16 progress):**
+
+| # | Finding | Disposition | Evidence |
+|---|---------|-------------|----------|
+| F1 | Reuters/TE permanent failure — config gate | OPS-GATED (awaiting 5-curl probe) | No PO task yet. Decision deferred until ops confirms block type. |
+| F2 | H1-future qa-responder + news-scout | SHIPPED as 1869c | Commit `e3bd83a5`. Guard extended from market-watcher (1865a) to qa-responder + news-scout. |
+| F3 | PO silent cycle | RESOLVED at cycle 15 | PO cycling normally since c33 ACK. |
+| F4 | system-auditor stale | NO ACTION | Cron re-registered c14, fires 16:00 UTC today. Re-evaluate next cycle if still silent. |
+| F5 | price_drop precision 50% | SHIPPED as Sprint 1869 | 1869a + 1869b + 1869b-seed all merged. RCA fully actioned. |
+| F6 | VPB price_anomaly emission gap | DEFERRED | 1 observation only. Re-open if pattern repeats. |
+| F7 | git HEAD.lock retry | DEFERRED | Low priority, intermittent. |
+| F8 | get_agent_signals param signature | DEFERRED | Low priority, TNB can work around. |
+| F9 | Doc self-heal block | DEFERRED | Architectural — needs design pass, not a single-sprint fix. |
+
+**Cycle 16 surprise findings:**
+- FPT income-statement split-label OCR limit (paragraph-only net profit) — DEFERRED (architect-tier, see Dispatch decision below).
+- H1-future bug hit dev-team's OWN writes (pipeline-state.json + notebooks/main.md cycle-15 close stamped 04:55 UTC vs actual 04:38 UTC) — SURFACING AS NEW TASK 1865b (see Dispatch).
+
+### Cycle 17 Dispatch Decision: **Option A — Surface 1865b**
+
+**Task 1865b — extend H1-future UTC guard to dev-team-own writes (pipeline-state.json + notebooks/main.md)**
+- Scope: doc-only, FIX-LOW
+- Files: 1-3 (likely `.claude/flows/dev-team/main.md` close-stamp step + any wrapper that writes pipeline-state.json)
+- Rationale: 1869c already proved the pattern works for cowork agents. Dev-team writes are now the last unguarded surface — cycle 16 demonstrated they leak future timestamps that can corrupt pipeline-state ordering and replay.
+- Pattern: reuse the same UTC guard logic from 1865a (market-watcher) and 1869c (qa-responder + news-scout).
+- Priority: ship before next TNB cycle so c34 baseline is clean.
+
+**Option B (FPT split-label paragraph fallback)**: DEFER. Needs architect — pattern design for narrative-paragraph numeric extraction is a SPRINT-S minimum, not a quick fix. Will queue when next architecture window opens. Not blocking any sprint.
+
+**Option C (NOTHING)**: REJECTED — the dev-team own-write H1-future leak is the same class of bug we just shipped two fixes for. Closing the third surface is cheap and prevents repeat surprise in c34.
+
+### TNB c34 candidate finding (flagging now, formal log when c34 audit fires)
+
+**Flow gap: PO ACK appendices are not committed to git**
+
+- Evidence this cycle: cycle 15 PO ACK was appended to `docs/handoffs/tnb-audit-latest.md` on disk, never committed. TNB c33 signal re-fired same file path with cycle-33 content, overwriting the appended ACK. Same audit had to be triaged twice.
+- Impact: false "PO silent" signals in future audits, lost decisions, duplicate work, wasted cycles.
+- Recommended fix (for dev-team flow `.claude/flows/dev-team/main.md` or PO close step in `.claude/flows/po/main.md`): after PO appends `## PO ACK` to `docs/handoffs/tnb-audit-latest.md`, dev-team close step MUST stage + commit the handoff file with a `docs(po): ACK cycle-N` commit. Or PO flow itself commits before exit.
+- Severity if logged in c34: medium / fix
+- Owner: agent-father (flow edit) once TNB c34 formalizes it. Surfacing here so the gap is on record before next cycle.
+
+### Commit instruction for dev-team cycle 17 close
+
+Please commit this handoff file as part of cycle 17 close:
+```
+docs(po): ACK TNB c33 cycle-17 reconfirm + flag handoff-commit flow gap
+```
+(no sprint scope — pure docs / handoff trail)

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": 1871,
+  "currentSprint": 1872,
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T05:10:00Z",
+  "updatedAt": "2026-05-11T05:35:30Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 16 SHIPPED Sprint 1870: 1870a VERIFY-FAIL (947f8054/72b7fd0d, root cause IDed) + 1870b FIX-HIGH (b58326e6/412fb9c3/b7ac4b08, P_NET_PROFIT negative lookahead). FPT revenue 20.22545 → 20.2T VND ✓. VCB regression 0%. Baseline 9163 pass / 15 fail. Report 2848 fixed. Branches cleaned. Surprise: FPT income-stmt split-label OCR limit (pre-existing, defer)."
+  "lastCompleted": "Cycle 17 SHIPPED Sprint 1871: 1865b FIX-LOW (daec15ac/8a334edc, dev-team + PO UTC guards). PO ACK c33 re-appended to handoff (cycle 15 ACK was lost — never git-committed). TNB c33 signal re-fire absorbed (no new findings vs c33). Branch cleaned. Surface flagged for TNB c34: PO-ACK-not-committed flow gap. Used 1865b's own guard to stamp this entry — eat dog food."
 }

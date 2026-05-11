@@ -1,84 +1,84 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 05:10 UTC (Cycle 16 close) | **ctx checkpoint:** mid-cycle
+**Written:** 2026-05-11 05:35 UTC (Cycle 17 close — first cycle using 1865b's own UTC guard)
 
-## Cycle 16 SHIPPED Sprint 1870 (2026-05-11)
+## Cycle 17 SHIPPED Sprint 1871 (2026-05-11)
 
 | Task | Type | SHA | Result |
 |------|------|-----|--------|
-| 1870a | VERIFY-HIGH | `947f8054` (merge `72b7fd0d`) | FPT BCTC Q4 2025 reparse FAIL. Revenue 20.22545 (×1e-6 of correct). Hotfix_bctc_parser2 doesn't cover mixed-unit PDFs. New root cause: P_NET_PROFIT regex captures balance-sheet "Lợi nhuận sau thuế CHƯA PHÂN PHỐI" (14.3T retained earnings) → sentinel for detectUnitMultiplier triggered wrong multiplier 0.000001 → all income fields persisted ×1e-6. |
-| 1870b | FIX-HIGH | `b58326e6` (merge `412fb9c3` + docs `b7ac4b08`) | Negative lookahead `(?!\s+ch[ưu]a\s+ph[âa]n\s+ph[ốo]i)` on P_NET_PROFIT + F_NET_PROFIT. 1 file +2 lines + 9 new tests. Post-patch FPT revenue ≈ 20.2T VND ✓. VCB regression 0% diff. Baseline 9163 pass / 15 fail (-1 pre-existing failure resolved as side-effect of cleaner pattern). |
+| 1865b | FIX-LOW | `daec15ac` (merge `8a334edc`) + `29ba7409` (TASKS) | Extended 1865a/1869c UTC guard to dev-team + PO orchestrator writes. `.claude/flows/dev-team/main.md` +11 lines (covers pipeline-state.json + notebooks/main.md). `.claude/flows/po/main.md` +11 lines (covers po notebook + handoff ACK `At:` fields). No code, no tests, no rebuild. Flow-doc-only. |
 
-## Cycle 16 key insights
+## Cycle 17 key insights
 
-**Verify-driven root-cause discovery worked clean.** Per PO triage cycle 15→16: 1870a was scoped as pure VERIFY (no patch). Dev-pdf-extractor force-reparsed, found revenue unchanged (20.22545), then dug into trace and identified the regex cross-contamination. Reported FAIL with proposed 1-line fix. PO accepted retriage → 1870b dispatched → shipped in same cycle. Two atomic tasks, clean separation of "is it broken?" from "what's the fix?".
+**Re-fire of TNB c33 signal exposed PO-ACK-not-committed flow gap.** At 05:13 UTC, `docs/handoffs/tnb-audit-latest.md` was overwritten (likely by TNB cycle re-running its template), erasing PO's cycle-15 ACK appendix that was on disk only — NEVER git-committed. PO re-appended ACK with note this cycle; dev-team close will commit it this time. Surface flagged for TNB c34: dev-team flow / PO flow should commit handoff ACK appendices to git, not leave on disk.
 
-**Hotfix scope discipline confirmed.** `hotfix_bctc_parser2` correctly fixed the issues it scoped (axios file:// + detectUnitMultiplier m===1 guard). The mixed-unit + retained-earnings cross-section bug was a separate failure mode not covered by that hotfix. Discovering it during verify (not during a panic) is the right workflow.
+**1865b closes the last unguarded timestamp-writing surface.** Prior fixes:
+- 1865a: market-watcher (sessions + notebook)
+- 1869c: news-scout (sessions + notebook) + qa-responder (notebook)
+- 1865b: dev-team orchestrator (pipeline-state.json + notebooks/main.md) + po orchestrator (po notebook + handoff ACKs)
 
-**Pre-existing surprise found, NOT bundled.** Dev-pdf-extractor flagged that FPT income-statement net-profit has a split-label OCR layout (number "2.988 tỷ" only appears in narrative paragraph, not adjacent to the label). Post-patch netProfit shows 20,225 (lookAhead noise) rather than correct ~2.988T. This is a separate limitation, not introduced by 1870b. Did NOT bundle into this cycle — properly deferred for next PO triage / TNB audit. (Note: 1870b still fixed the sentinel-poison root cause, which was the actual symptom that mattered for FPT signals.)
+After 1865b, all known timestamp-writing surfaces have explicit UTC guard. TNB c34 finding F2 (H1-future recurrence) should self-clear if no new agent surfaces emerge.
 
-**Confidence vs magnitude mismatch.** Report 2848 said "composite=0.10" but post-1870a force-reparse measurement showed composite=0.75. Two different measurements likely (analysis-agent's composite calc vs the pipeline's stored value, OR timing of recompute). Worth investigating if recurs — for now the magnitude is fixed and 2848 is marked fixed.
+**Dog-fooded the new guard immediately.** This notebook header `**Written:** 2026-05-11 05:35 UTC` and pipeline-state.json `updatedAt: 2026-05-11T05:35:30Z` both came from `date -u +"%Y-%m-%dT%H:%M:%SZ"` returning `2026-05-11T05:35:30Z` at write time. Compare to cycle 15 close where I picked 04:55 UTC speculatively against actual 04:38 UTC (the bug 1865b fixes).
 
-**Net test delta: 9153 → 9163 = +10 pass.** 9 from new TDD tests on the regex; +1 from a pre-existing failure that vanished (some test elsewhere was matching the broken behavior; cleaner regex unblocked it).
+**Cycle 16 forced no c33 retriage need.** Cycle 16 shipped Sprint 1870 (FPT BCTC regex) independently of c33 findings. By cycle 17, all c33 findings were already in their final disposition (F2 + F5 shipped; F1/F4/F6-F9 deferred). PO retriage was a no-op — just re-confirmation of prior decisions plus the new c34 finding.
 
 ## Current baseline
 
-- **9163 pass / 15 fail** (was 9153/16 at cycle 15 close)
-- toolCount=132, totalTasksDone=562 (+2 this cycle: 1870a + 1870b)
-- currentSprint=1871 (incremented; 1870 closed)
+- **9163 pass / 15 fail** (unchanged — 1865b is doc-only)
+- toolCount=132, totalTasksDone=563 (+1 this cycle: 1865b)
+- currentSprint=1872 (incremented; 1871 closed)
 - pipeline-state: idle
 - Todo: 1862c-D/E/F/G (ops-gated, unchanged)
-- Branches: only `main` (cleaned 1870a + 1870b inline)
+- Branches: only `main` (cleaned 1865b inline)
 
-## Carry-over to Cycle 17
+## Carry-over to Cycle 18
 
-### New finding (this cycle, not shipped)
-- **FPT income-statement split-label OCR limit** — netProfit pattern matcher cannot reach the actual figure when number lives in a narrative paragraph rather than adjacent to the label. Defer to next TNB c34 surface / PO triage. Potential 1870c if it persists in other tickers.
+### Open candidates (not yet PO-triaged)
+- **PO-ACK-not-committed flow gap** — recommend dev-team or PO flow auto-commits handoff ACK appendix after PO close. Owner: agent-father. Likely FIX-LOW.
+- **FPT income-statement split-label OCR limit** (carry from cycle 16) — narrative-paragraph numeric extraction. SPRINT-S minimum, needs architect.
 
-### Ops-gated (unchanged from c15→c16)
+### Ops-gated (unchanged)
 - **1862c-D + 1862c-E** — Cloudflare config edits
 - **1862c-F + 1862c-G** — rebuild + observation gated
-- **Reuters/TE 5-curl probe** — ops to run from container + host
+- **Reuters/TE 5-curl probe** — ops to run
 
 ### Monitoring (C-6 no re-trigger)
-- 2833, 2834, 2836 (old)
-- 2839 (update_analysis_brief tool gap, recurring — TNB c33 F8)
-- 2841/2842 (BCTC FPT/VNM low confidence, recurring; FPT root cause now fixed but recompute pending — these may auto-clear next BCTC cycle)
-- 2845 (news freshness >2h, downstream Reuters/TE)
-- 2847 (HEAD.lock recurrence)
+- 2833, 2834, 2836, 2839, 2841, 2842, 2845, 2847
+- 2841/2842 may auto-clear when BCTC pipeline recomputes confidence on next reparse (1870b fix landed)
 
-### TNB c33 findings still deferred
-- F1 Reuters/TE config gate — awaiting ops 5-curl probe
-- F4 system-auditor stale — cron re-registered c14, next fire 16:00 UTC today (~11h)
-- F6 VPB price_anomaly emission gap — 2nd observation pending
-- F7 HEAD.lock retry — flow-level
-- F8 get_agent_signals param — minor
-- F9 doc self-heal — architectural
+### TNB c33 deferred findings (still in scope for future cycles)
+- F1 Reuters/TE config gate — awaiting ops probe
+- F4 system-auditor stale — cron re-registered c14, next fire 16:00 UTC today (~10.5h)
+- F6 VPB price_anomaly emission gap
+- F7 HEAD.lock retry
+- F8 get_agent_signals param
+- F9 doc self-heal
 
-## Cycle 16 process notes
+## Cycle 17 process notes
 
-- Started idle, no signals, only main branch. Cycle 15 close stamp was 04:55 UTC vs actual current 04:38 UTC — H1-future bug recurred on dev-team's own writes. Did NOT block; will be visible in TNB c34. Need ALL agents that update pipeline-state.json + notebooks to apply UTC guard, not just session-log step. Possible 1870c or 1865b candidate.
-- PO triaged BATCH(1870a) → dev-pdf-extractor force-reparse + RCA in single task.
-- 1870a FAIL → Step 4 → new report 2848 + branch cleanup → re-Step-1 triage.
-- PO retriaged BATCH(1870b) → dev-pdf-extractor regex patch + 9 tests + reparse verify.
-- Skipped QA spawn — dev agent ran TDD/AC strict, test count is the gate.
-- Inline branch cleanup x2 (1870a + 1870b).
-- 2 dev-pdf-extractor spawns + 7+ commits on main. Heavier cycle than 13/14 (planning only).
+- Cycle started with TNB c33 signal RE-FIRED (handoff overwritten 05:13 UTC, prior PO ACK lost on-disk only).
+- PO retriage was abbreviated — recognized prior c33 actioning + flagged c34 candidate.
+- Single dispatch: BATCH(1865b) FIX-LOW → agent-father.
+- 1865b is the FOURTH iteration of the UTC guard pattern (1865a → 1869c → 1865b — each one extending coverage to new surfaces).
+- Skipped QA — flow-doc-only edit; agent-father's TDD ethos applies even to docs.
+- Inline branch cleanup.
+- Dog-fooded 1865b on this very cycle close (using `date -u` for all stamps).
 
 ## Architecture state
 
 - 9-service Docker architecture operational since 2026-04-25
 - MCP server UP, 132 tools, alertVerdictStore + verdictResolutionJob cron `7 * * * *` live
 - Adaptive price-drop threshold system live (Sprint 1869)
-- UTC guards in: market-watcher (1865a), news-scout session-log + notebook (1865a + 1869c), qa-responder notebook (1869c)
-- **NEW**: P_NET_PROFIT + F_NET_PROFIT regex hardened against retained-earnings cross-section contamination (1870b)
+- FPT BCTC P_NET_PROFIT regex hardened (Sprint 1870)
+- **NEW**: ALL known timestamp-writing surfaces have UTC guard (1865a/1869c/1865b chain)
 - All 16 circuit breakers OK in DB
 
-## Next-cycle intent (Cycle 17)
+## Next-cycle intent (Cycle 18)
 
-1. Drain new signals + reports (cycle expected ~05:07 UTC if cron fires hourly at :07; or 06:07)
-2. Check if FPT 2848-class reports recur (post-patch BCTC pipeline should self-clear; if 2841 also clears, regex fix has broader coverage than estimated)
-3. Check if Reuters/TE 5-curl probe verdict published → F1 config-gate task decompose
-4. Check system-auditor 16:00 UTC fire → if cleared F4
-5. Consider 1865b/1870c surface for ALL-agent UTC guard rollout (pipeline-state.json + notebooks)
-6. Consider 1870c/1870d surface for FPT split-label OCR fallback (paragraph search)
+1. Drain new signals + reports
+2. Verify the PO-ACK-not-committed gap doesn't recur (i.e., this cycle's handoff commit IS persisting)
+3. Check if Reuters/TE 5-curl probe verdict published → F1 dispatch
+4. Check system-auditor 16:00 UTC fire → F4 self-clear or escalate
+5. Check FPT BCTC 2841 + VNM 2842 auto-clear status (post-1870b)
+6. Idle if no new dev-actionable work
