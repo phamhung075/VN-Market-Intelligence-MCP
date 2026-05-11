@@ -110,17 +110,17 @@ beforeEach(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * A price drop at -5% (signal detector default threshold).
+ * A price drop at -7% (signal detector default threshold).
  * Per TECH_054 section 10, medium moves (2-5%) were "noise" in legacy direct-Telegram
- * implementations. Here we use -5% to confirm that even when a signal fires, no
+ * implementations. Here we use -7% to confirm that even when a signal fires, no
  * Telegram is sent — only a DB insert happens.
  */
 const FIVE_PCT_DROP: MarketPrice = {
   code: "VCB",
   exchange: "HOSE",
-  price: 95_000,
+  price: 93_000,
   previousPrice: 100_000,
-  changePct: -5.0,
+  changePct: -7.0,
   volume: 500_000,
   avgVolume: 0,
   fetchedAt: new Date().toISOString(),
@@ -217,7 +217,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
   it("price drop at threshold: no Telegram send, alert stored to DB (noise retired, DB preserved)", async () => {
     addWatchlistEntry("VCB");
 
-    // Runtime: call scanMarket with a -5% drop (at default signal detector threshold).
+    // Runtime: call scanMarket with a -7% drop (at default signal detector threshold).
     // Telegram send invariant is verified statically by the source-check tests above.
     const result = await scanMarket(makeDeps(async () => [FIVE_PCT_DROP]));
 
@@ -229,7 +229,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
       .prepare("SELECT COUNT(*) as cnt FROM alerts WHERE affected_actions_json LIKE '%VCB%'")
       .get() as { cnt: number };
 
-    // signal fires at -5% → alert stored → DB has row
+    // signal fires at -7% → alert stored → DB has row
     expect(alertRow.cnt).toBeGreaterThanOrEqual(1);
   });
 
@@ -239,7 +239,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
     const result = await scanMarket(makeDeps(async () => [THREE_PCT_DROP]));
 
     expect(result.scanned).toBe(1);
-    // -3% is below the default -5% threshold, so no price_drop signal fires
+    // -3% is below the default -7% threshold, so no price_drop signal fires
     // (no volume spike either since avgVolume = 0 suppresses it)
     expect(result.signals).toBe(0);
     expect(result.alerts).toBe(0);

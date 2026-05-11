@@ -46,10 +46,10 @@ describe("Task 063 — Signal Detector", () => {
   const safeNow = new Date("2026-04-18T10:00:00Z");
 
   // TC-1: price drop triggers price_drop
-  it("returns price_drop signal when price falls by -5%", () => {
+  it("returns price_drop signal when price falls by -7%", () => {
     const snapshot = makeSnapshot({
-      price: 95_000,
-      previousPrice: 100_000, // -5%
+      price: 93_000,
+      previousPrice: 100_000, // -7%
     });
 
     const signals = detectSignals(snapshot);
