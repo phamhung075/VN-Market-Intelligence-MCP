@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Pre-push hook: run `bun tsc --noEmit` to catch the "tracked code imports
-# untracked files" class of bug that bit Loop #20 Slice 1 (kinhDich domain
-# files were imported by tracked code but never committed, breaking main
-# on every fresh clone / launchd restart).
+# Pre-push hook: run tsc --noEmit via pnpm workspace filter to catch the
+# "tracked code imports untracked files" class of bug that bit Loop #20
+# Slice 1 (kinhDich domain files were imported by tracked code but never
+# committed, breaking main on every fresh clone / launchd restart).
+#
+# BUG-FIX (1873f): The original hook ran `bun tsc --noEmit` from REPO ROOT
+# where tsconfig.json has `"include":["src/**/*"]` but no /src/ exists at
+# root → tsc compiled 0 files and exited 0 (phantom OK). Fixed by delegating
+# to `pnpm --filter vn-market check` which runs tsc from apps/mcp-server
+# where tsconfig.json is valid and src/ exists.
 #
 # Install: ./scripts/git-hooks/install.sh  (symlinks into .git/hooks/)
 # Bypass (NOT recommended, equivalent to --no-verify which is forbidden):
@@ -18,15 +24,15 @@ fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-if ! command -v bun >/dev/null 2>&1; then
-  echo "[pre-push] WARN: bun not on PATH — skipping tsc check"
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[pre-push] WARN: pnpm not on PATH — skipping tsc check"
   exit 0
 fi
 
-echo "[pre-push] running: bun tsc --noEmit"
-if ! bun tsc --noEmit; then
+echo "[pre-push] running: pnpm --filter vn-market check (tsc from apps/mcp-server)"
+if ! pnpm --filter vn-market check; then
   echo ""
-  echo "[pre-push] BLOCKED: bun tsc --noEmit failed."
+  echo "[pre-push] BLOCKED: tsc failed in apps/mcp-server."
   echo "[pre-push] Common cause: tracked code imports a file you forgot to 'git add'."
   echo "[pre-push] Fix the errors above, then re-run 'git push'."
   exit 1
