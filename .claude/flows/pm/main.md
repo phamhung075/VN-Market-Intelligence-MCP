@@ -67,6 +67,13 @@ PIPELINE: continue
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**PM commits convention:**
+- `chore(memory/pm): notebook YYYY-MM-DD` — notebook only, no trailers (C2-exempt)
+- `chore(pm/cNN): <description>` — cycle bookkeeping, no trailers (C2-exempt: cycle ref)
+- `chore(pm/NNNN*): <description>` — sprint bookkeeping (decompose, move-to-Done), no trailers (C2-exempt: PM housekeeping)
+- `chore(cycle-NN): <description>` — cycle artifact persist, no trailers (C2-exempt: cycle ref)
+- Any commit where scope contains a sprint number AND delivers code/config MUST carry `Task:` trailer.
+
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`
 - WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`
