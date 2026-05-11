@@ -140,7 +140,27 @@ process_commit() {
     is_notebook=true
   fi
 
-  if [ "${is_sprint_scoped}" = "true" ] && [ "${is_notebook}" = "false" ]; then
+  # C2 exempt: scope digit is cycle/PM-cycle reference, not sprint task
+  # Or: subject is a sprint-scoped merge-task chore (AC lives on feat/fix)
+  local is_c2_exempt=false
+  case "${scope}" in
+    cycle-[0-9]*)
+      is_c2_exempt=true
+      ;;
+    pm/c[0-9]*)
+      is_c2_exempt=true
+      ;;
+    pm/[0-9][0-9][0-9][0-9]*)
+      is_c2_exempt=true
+      ;;
+  esac
+  case "${lsubj}" in
+    *"merge task/"*)
+      is_c2_exempt=true
+      ;;
+  esac
+
+  if [ "${is_sprint_scoped}" = "true" ] && [ "${is_notebook}" = "false" ] && [ "${is_c2_exempt}" = "false" ]; then
     c2_denominator=$((c2_denominator + 1))
     if [ -n "${ltask}" ]; then
       c2_pass=$((c2_pass + 1))
