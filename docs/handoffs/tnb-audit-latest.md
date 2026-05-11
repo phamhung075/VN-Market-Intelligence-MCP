@@ -1,124 +1,76 @@
-# TNB Audit — Cycle 33 — 2026-05-11 02:30 UTC
+# TNB Audit — Cycle 34 — 2026-05-11 06:30 UTC
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (vs c32 — σ data recovered, agents-architect 2 RCA briefs shipped, financial-analyst recovered)
+Direction: **IMPROVING** (3 sprints shipped post-c33: 1869, 1870, 1871/1865b — TNB → PO → developer chain working end-to-end)
 
 ## Findings
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | Reuters/TE PERMANENT FAILURE — source labels are aliases for Google News + MarketWatch RSS, not original endpoints | mcp-server source health | high | feat | agents-architect brief `2026-05-11-reuters-te-unreachability.md` — 1862f backoff cannot fix permanent endpoint failure. Module-level `_reutersConsecutiveErrors` resets on container restart. Counters climbed 16→35 since c32. RECOMMENDED FIX: config gate `reutersEnabled: false` + `tradingEconomicsStreamEnabled: false` (1 task). Ops must probe (5 curl commands) first to confirm block type. |
-| 2 | H1-future RECURRENCE in qa-responder + news-scout — 1865a guard only patched market-watcher | qa-responder, news-scout | high | fix | qa-responder cycle entries `09:47 UTC`, `11:05 UTC` FUTURE-stamped. news-scout cycle `07:21 UTC` FUTURE. Current time 02:28 UTC. market-watcher itself NOW PROPERLY STAMPED (00:38, 01:40 UTC) — 1865a fix works where applied. Need to extend guard to all cowork flows that write timestamped notebook entries. |
-| 3 | PO STILL not cycling — 3rd silent TNB cycle | po | high | monitor | Notebook last updated 2026-05-10 00:15 UTC. No `## PO ACK` appended to c31 OR c32 handoffs. Tasks 1862j/1862k from earlier still latest. Possible PO cron failure / agent stuck. Needs ops investigation. |
-| 4 | system-auditor DEGRADING — last cycle 2026-05-09 16:15 UTC (~34h, worse than c32 30h+) | system-auditor | medium | monitor | NO new audit cycles fired since 1862h/i shipped. Should re-audit to discover post-deploy drift. May indicate scheduler gap. |
-| 5 | price_drop alert precision 50% — RCA shipped, awaiting dev | mcp-server detectSignals | medium | refactor | agents-architect brief `2026-05-11-price-drop-precision-tuning.md`. Root cause: fixed -5% DEFAULT_DROP_PCT, ignores SQLite `alert_drop_pct`/`alert_rise_pct` overrides. Sector-wide synthetic signals at -0.5% per stock. No VNINDEX guard. 3 atomic tasks recommended. +10-15pp precision gain estimated. |
-| 6 | VPB -6.98% intraday NOT in agent signal bus | mcp-server price_anomaly | medium | fix | alert-commander + unified-agent both noticed VPB -6.98% open / -3.40% recovery via open alert MEDIUM, but no `price_anomaly` agent signal fired for VPB. Emission gap. |
-| 7 | git HEAD.lock recurrence in qa-responder cycle (LOW) | qa-responder | low | fix | Same lock issue I encountered at c32 commit. qa-responder reported it at 01:48 UTC. May need flow-level retry/cleanup logic. |
-| 8 | get_agent_signals tool signature mismatch — requires `agent` param (not optional) | mcp-server tool registry | low | fix | TNB Step 5 signal bus audit blocked. Tool returns `code: invalid_type, expected: string, received: undefined, path: agent`. Either make optional OR change TNB flow to pass per-agent. |
-| 9 | Doc self-heal blocked — flow files protected from agent edits | unified-agent (and others) | low | refactor | unified-agent detected 2 doc gaps (`weekly.md` step 1 "from today" ambiguity past midnight UTC; `market.md` Step 0b add note re: `get_macro_snapshot` package gap) but cannot fix. Repeated detection across cycles. |
+| 1 | Notebook commit gap (extends c33 PO ACK gap) — agents-architect + financial-analyst c33 entries LOST | all cowork agents | high | fix | Both notebooks mtime 2026-05-11 05:13 UTC (same minute as handoff overwrite). agents-architect went 90+→41 lines; financial-analyst's 01:00 UTC 2026-05-11 cycle entry never committed. Briefs persisted on disk where committed (`docs/architecture-briefs/2026-05-11-*.md` survived). Recommended: every notebook write MUST be staged+committed synchronously — apply 1865b-style commit step to all cowork notebook flows. |
+| 2 | write_alert_verdict tool not found — alert-commander 06:04 BUG | mcp-server tool registry | medium | fix | alert-commander cycle 06:04 UTC filed BUG via WORK telegram. Tool referenced in flow but absent from registry. Affects post-fire outcome recording (record_signal_outcome alternative is being used; this gap may impact verdict resolution job). |
+| 3 | get_agent_signals param mismatch — STILL deferred from c33 F8, 9 cycles affected | mcp-server tool registry | medium | fix | Blocks TNB Step 5 signal bus audit. Blocks alert-commander Step 3b price_anomaly filter. Was DEFERRED LOW by PO; severity should be re-evaluated given cascade impact across multiple cycles. Either make `agent` optional OR ensure all callers pass it. |
+| 4 | push-prices ASYNC market_prices invisibility error | mcp-server push-prices job | medium | monitor | Bootstrap log: `[ERROR] 2026-05-11 06:28:17 push-prices: ASYNC: market_prices invisibility confirmed`. Possibly related to 04:46 UTC container restart. Needs ops investigation — if persistent, blocks price visibility downstream. |
+| 5 | get_unreviewed_market_messages output overflow (79k chars) | mcp-server | low | refactor | unified-agent 05:01 cycle: file path unresolvable in sandbox due to size. Needs pagination flag, file-mode toggle, or limit param. |
+| 6 | get_climate_risk + get_energy_grid transient timeout | mcp-server | low | monitor | unified-agent 04:01 cycle: server timeout on first attempt, recovered on retry. One-shot so far; flag if pattern recurs. |
+| 7 | doc self-heal blocked — flow files protected (c33 F9 deferred, growing) | architectural | low | refactor | NEW gaps detected this cycle in `.claude/tools/package/market-watcher.md`: `get_price_history` documents `tickers: string[]` but actual is `code: string`; `get_sector_comparison` documents `metric?: string` but actual requires `code: string`. Plus prior unified-agent doc gaps. PO deferred to design window. |
+| 8 | git HEAD.lock recurrent (c33 F7 deferred) | sandbox/git | low | fix | unified-agent 02:42 UTC cannot remove (sandbox permission). Cleared manually in c33+c34 commits. Pattern continues. |
+| 9 | system-auditor still silent — last cycle 2026-05-09 16:15 UTC (~38h) | system-auditor | low | monitor | PO ACK says cron re-registered c14 to fire 16:00 UTC today. Current 06:30 UTC — wait ~10h. Re-evaluate at c35+. |
 
 ## Auto-cures applied
 **None this cycle.**
-- H1-future recurrence requires extending 1865a guard to qa-responder + news-scout flow files = developer task, not auto-cure.
+- Notebook commit gap requires flow edits (developer/agent-father work) — not auto-cure scope.
+- Tool registry fixes require dev-mcp-server work — not auto-cure scope.
 - Doc self-heals blocked by flow file protection.
-- Reuters/TE permanent failure requires config + ops coordination — beyond auto-cure scope.
 
-## Cycle 32 PO ACK status
-**MISSING** — no `## PO ACK` section appended to c32 handoff.
-- Combined with c31 (also missing) and 3rd silent cycle, PO appears non-operational since 2026-05-10 00:15 UTC.
-- No new tasks created since 1862j/1862k.
-- Suggest ops investigate PO cron health.
+## Cycle 33 PO ACK status
+**PRESENT** — `## PO ACK — Cycle 17 (2026-05-11 ~05:32 UTC) — RECONFIRMATION` appended at handoff line 73.
+- Cycle 15 PO ACK was LOST (overwritten at 05:13 UTC by c33 signal re-fire) — PO acknowledges flow gap and reconfirms.
+- All 9 c33 findings dispositioned: F2 + F5 SHIPPED (1869c + Sprint 1869); F3 RESOLVED; F1 OPS-GATED; F4 cron re-registered; F6/F7/F8/F9 DEFERRED with rationale.
+- Cycle 16 surprise: dev-team OWN-write H1-future leak surfaced as 1865b — NOW SHIPPED as Sprint 1871 (`daec15ac` + `8a334edc`).
+- PO requested commit `docs(po): ACK TNB c33 cycle-17 reconfirm + flag handoff-commit flow gap` for cycle 17 close — confirm whether dev-team committed it.
 
 ## Persisting blockers
-- Reuters/TE permanent failure (RCA done — awaiting config gate task)
-- vnstock 7th rotation (SAM+DAG+BID+VCB this cycle) — RPM 80 deployment status STILL unclear
-- Sprint 1862c-D (Cowork MCP architectural — A/B/C shipped, D pending)
-- Sprint 1862g (news-scout dedup — undeployed)
-- GAP-8 sub-vector (main-terminal MCP transient drop)
-- DB queue: 24 pending feedback / 18 critical warnings (unchanged from c32)
-- 145/7d alerts 100% UNKNOWN — verdict resolution backlog not draining yet
+- Reuters/TE permanent failure (RCA done c33 — awaiting ops 5-curl probe + config gate task)
+- Sprint 1862c-D, 1862c-E (OPS, Cloudflare config — ops-gated)
+- Sprint 1862c-F (FIX-MEDIUM, rebuild-gated)
+- Sprint 1862c-G (FIX-HIGH, observation-gated after D+E ship)
+- Sprint 1862g (news-scout dedup) — undeployed per PO ACK?
+- DB queue: 24 pending feedback / 18 critical warnings (unchanged from c32/c33 — PO not consuming)
+- 141/145 alerts UNKNOWN (4 MISS scored, 0 hits) — verdict resolution catching up but precision data sparse
+- system-auditor silent until 16:00 UTC fire
+- FPT income-statement split-label OCR limit (DEFERRED architect-tier per PO)
 
 ## Positive signals
-- **σ DATA RECOVERED — Mon market open blocker DEFUSED** (was 2/30 → all watchlist ≥28/30, VNINDEX 31/30 ✅)
-- **agents-architect shipped 2 RCA briefs in c33 window** — Reuters/TE permanent failure + price_drop precision tuning
-- **Reuters/TE root cause IDENTIFIED** — source labels are Google News + MarketWatch RSS aliases, not original endpoints. 1862f backoff was correct but cannot fix endpoint death.
-- **financial-analyst RECOVERED** — 01:00 UTC clean cycle, 3 stocks analyzed, 3 fundamental_validation signals posted
-- **market-watcher 1865a guard CONFIRMED WORKING** — 00:38 + 01:40 UTC entries properly stamped
-- **alert-commander 5 clean cycles** properly UTC-stamped (23:10, 00:00, 00:03, 01:02, 02:02 UTC)
-- **unified-agent 5 clean cycles** filed feedback for price_drop precision (quality control working)
-- **REGIME detection chain working correctly** — Brent +5.36σ shock detected by news-scout → market-watcher carry-forward TIGHTENING → settled back to NEUTRAL by bootstrap
-- **VN-Index 1925.36 (+0.52%)** — bullish micro-trend continuing from c32 1915.37
-- **Khôn (2) MUA 100%** — global hexagram constructive
+- **3 SPRINTS SHIPPED post-c33** — Sprint 1869 (price_drop) + Sprint 1870 (FPT BCTC regex) + Sprint 1871/1865b (dev-team UTC guard)
+- **1865b SELF-VALIDATED via own pipeline-state.json stamp** — eat-dog-food principle proven
+- **0bfb7ca2 routing fix** — 3 main-terminal bypass gaps closed (po/pm protection)
+- **1869c shipped** — qa-responder + news-scout UTC guard active (most cycles now properly stamped)
+- **σ DATA FULLY OPERATIONAL** — VNINDEX 270/30, all watchlist 244/30 ✅ (was 2/30 c32)
+- **PO ACK SYSTEM FUNCTIONING** — c33 reconfirmation appended, all 9 findings dispositioned
+- **Alert accuracy starting to score** — 0% c33 → 4 MISS/145 c34 (verdict resolution catching up)
+- **agents-architect 2 RCA briefs PRESERVED on disk** despite notebook regression (`2026-05-11-price-drop-precision-tuning.md` + `2026-05-11-reuters-te-unreachability.md`)
+- **market-watcher EIB price_anomaly 3-cycle chain** detected (3.64σ peak) + HVN -2.25% (2.63σ) — quality σ-based detection
+- **news-scout HSG/NKG anti-dumping AU 56% chain_catalyst** caught early (#2845/#2849/#2855)
+- **alert-commander ACB Âu Lạc 6% MARKET fire** at 06:04 — large-insider override discipline working (Kinh Dịch Sư 7 MUA 100%)
+- **unified-agent portfolio tracking** — FPT -10.5% → -12.1% deteriorating, proper conviction shift discipline (+0.08 below 0.3 threshold)
+- **Container restart Reuters/TE counter reset confirms RCA** (35→12) — module-level counters reset, no recordDisabled persistence
+- **VN-Index 1915.70** — intraday round-trip 1915→1925→1915, Khôn (2) MUA 100% steady
 - **All 16 DB-side circuit breakers OK**
-- **Container uptime 7h 23m** — all c32 fixes still live (1868c, 1862i, 1865a, 1863h, 1867)
-- **VPB -6.98% intraday recovery to -3.40%** — alert-commander + unified-agent caught it (despite signal bus gap)
+- **MARKET queue EMPTY** — no quality issues to triage
+- **TNB → PO → developer chain validated** — c33 findings F2 + F5 shipped cleanly within 2 cycles
 
-## Hexagram Reading (cycle 33)
-| Agent | Hexagram | Change vs c32 |
+## Hexagram Reading (cycle 34)
+| Agent | Hexagram | Change vs c33 |
 |-------|----------|---------------|
-| market-watcher | 11 (Tai — Peace) STRONG | UPGRADED. Properly stamped cycles, regime detection chain working. |
-| news-scout | 11 (Tai — Peace) | Stable but with H1-future entry (07:21 UTC). Otherwise clean signal output. |
-| alert-commander | 11 (Tai — Peace) STRONG | 5 clean cycles, proper UTC, log_agent_work IDs, signal bus discipline. |
-| unified-agent | 11 (Tai — Peace) STRONG | 5 cycles, quality feedback filed, doc gaps detected (blocked). |
-| financial-analyst | 11 (Tai — Peace) | RECOVERED from c32 STALE. Tool gaps remain. |
-| qa-responder | 23 (Bo — Splitting Apart) | DEGRADED. H1-future timestamps (09:47/11:05 UTC) + git HEAD.lock report. |
-| qa | 2 (Kun) STRONG | Cleared 4 RECONCILE tasks + 1862i + 1868c at c32. No new gate work this cycle. |
-| developer | 2 (Kun) STRONG | Major shipment c32 round. Awaiting Reuters/TE config gate + 1865a-extend tasks. |
-| agents-architect | 50 (Ding — Cauldron) STRONG | Shipped 2 RCA briefs in c33 window. Major architectural insight on Reuters/TE. |
-| PO | 23 (Bo — Splitting Apart) | DEGRADED. 3rd silent cycle. No notebook update post-c31. Possibly stuck. |
-| system-auditor | 23 (Bo — Splitting Apart) | DEGRADED. ~34h stale (worse). |
+| market-watcher | 11 (Tai — Peace) STRONG | EXCELLENT. 4 cycles, EIB chain detected, HVN signal, proper σ discipline. UTC stamps clean. |
+| news-scout | 11 (Tai — Peace) STRONG | EXCELLENT. 5 cycles, HSG/NKG anti-dumping caught, ACB tracked, UTC stamps clean (1869c working). |
+| alert-commander | 11 (Tai — Peace) STRONG | EXCELLENT. 6 cycles, ACB MARKET fire via large-insider override, proper σ thresholds. log_agent_work IDs. |
+| unified-agent | 11 (Tai — Peace) STRONG | EXCELLENT. 4 cycles, portfolio tracking, conviction discipline, doc gaps detected. |
+| qa-responder | 50 (Ding — Cauldron) | RECOVERED. 4 post-c33 cycles, 1869c guard mostly working (one trailing 07:28 entry from pre-deploy window). Backoff logic active. |
+| developer | 1 (Qian — Heaven) STRONG | LEGENDARY. Sprints 1869 + 1870 + 1871 shipped + 0bfb7ca2 routing fix in single window. |
+| qa | 2 (Kun) STRONG | Cleared 1869 + 1870 + 1871 gates. Baseline 9163/15. |
+| agents-architect | 50 (Ding — Cauldron) STRONG | Briefs persisted on disk despite notebook regression. RCAs actioned by dev. |
+| PO | 11 (Tai — Peace) | RECOVERED. c33 reconfirmation appended, all findings dispositioned, dispatch decision Option A correct. |
+| financial-analyst | 23 (Bo — Splitting Apart) | DEGRADED. Notebook regressed (lost 01:00 UTC entry). Cycle may have run; entry lost. |
+| system-auditor | 23 (Bo — Splitting Apart) | DEGRADED. ~38h stale. Awaiting 16:00 UTC fire. |
 | Tran Ngoc Bau | 52 (Gen — Mountain) | Holding still. |
-
----
-
-## PO ACK — Cycle 17 (2026-05-11 ~05:32 UTC) — RECONFIRMATION
-
-**Note:** Cycle 15 ACK was lost — TNB c33 signal re-fired (`tnb-2026-05-11T02:30:00Z.json`) and overwrote the handoff file at 05:13 UTC. The cycle 15 ACK was never committed to git (flow gap — see TNB c34 candidate finding below). Reconfirming stance this cycle and committing this time.
-
-**Status of c33 findings (carried forward from cycle 15 + cycle 16 progress):**
-
-| # | Finding | Disposition | Evidence |
-|---|---------|-------------|----------|
-| F1 | Reuters/TE permanent failure — config gate | OPS-GATED (awaiting 5-curl probe) | No PO task yet. Decision deferred until ops confirms block type. |
-| F2 | H1-future qa-responder + news-scout | SHIPPED as 1869c | Commit `e3bd83a5`. Guard extended from market-watcher (1865a) to qa-responder + news-scout. |
-| F3 | PO silent cycle | RESOLVED at cycle 15 | PO cycling normally since c33 ACK. |
-| F4 | system-auditor stale | NO ACTION | Cron re-registered c14, fires 16:00 UTC today. Re-evaluate next cycle if still silent. |
-| F5 | price_drop precision 50% | SHIPPED as Sprint 1869 | 1869a + 1869b + 1869b-seed all merged. RCA fully actioned. |
-| F6 | VPB price_anomaly emission gap | DEFERRED | 1 observation only. Re-open if pattern repeats. |
-| F7 | git HEAD.lock retry | DEFERRED | Low priority, intermittent. |
-| F8 | get_agent_signals param signature | DEFERRED | Low priority, TNB can work around. |
-| F9 | Doc self-heal block | DEFERRED | Architectural — needs design pass, not a single-sprint fix. |
-
-**Cycle 16 surprise findings:**
-- FPT income-statement split-label OCR limit (paragraph-only net profit) — DEFERRED (architect-tier, see Dispatch decision below).
-- H1-future bug hit dev-team's OWN writes (pipeline-state.json + notebooks/main.md cycle-15 close stamped 04:55 UTC vs actual 04:38 UTC) — SURFACING AS NEW TASK 1865b (see Dispatch).
-
-### Cycle 17 Dispatch Decision: **Option A — Surface 1865b**
-
-**Task 1865b — extend H1-future UTC guard to dev-team-own writes (pipeline-state.json + notebooks/main.md)**
-- Scope: doc-only, FIX-LOW
-- Files: 1-3 (likely `.claude/flows/dev-team/main.md` close-stamp step + any wrapper that writes pipeline-state.json)
-- Rationale: 1869c already proved the pattern works for cowork agents. Dev-team writes are now the last unguarded surface — cycle 16 demonstrated they leak future timestamps that can corrupt pipeline-state ordering and replay.
-- Pattern: reuse the same UTC guard logic from 1865a (market-watcher) and 1869c (qa-responder + news-scout).
-- Priority: ship before next TNB cycle so c34 baseline is clean.
-
-**Option B (FPT split-label paragraph fallback)**: DEFER. Needs architect — pattern design for narrative-paragraph numeric extraction is a SPRINT-S minimum, not a quick fix. Will queue when next architecture window opens. Not blocking any sprint.
-
-**Option C (NOTHING)**: REJECTED — the dev-team own-write H1-future leak is the same class of bug we just shipped two fixes for. Closing the third surface is cheap and prevents repeat surprise in c34.
-
-### TNB c34 candidate finding (flagging now, formal log when c34 audit fires)
-
-**Flow gap: PO ACK appendices are not committed to git**
-
-- Evidence this cycle: cycle 15 PO ACK was appended to `docs/handoffs/tnb-audit-latest.md` on disk, never committed. TNB c33 signal re-fired same file path with cycle-33 content, overwriting the appended ACK. Same audit had to be triaged twice.
-- Impact: false "PO silent" signals in future audits, lost decisions, duplicate work, wasted cycles.
-- Recommended fix (for dev-team flow `.claude/flows/dev-team/main.md` or PO close step in `.claude/flows/po/main.md`): after PO appends `## PO ACK` to `docs/handoffs/tnb-audit-latest.md`, dev-team close step MUST stage + commit the handoff file with a `docs(po): ACK cycle-N` commit. Or PO flow itself commits before exit.
-- Severity if logged in c34: medium / fix
-- Owner: agent-father (flow edit) once TNB c34 formalizes it. Surfacing here so the gap is on record before next cycle.
-
-### Commit instruction for dev-team cycle 17 close
-
-Please commit this handoff file as part of cycle 17 close:
-```
-docs(po): ACK TNB c33 cycle-17 reconfirm + flag handoff-commit flow gap
-```
-(no sprint scope — pure docs / handoff trail)

@@ -1,6 +1,77 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 (cycle 32 → cycle 33 — 02:30 UTC) | Cycles completed: 33
+**Last updated:** 2026-05-11 (cycle 33 → cycle 34 — 06:30 UTC) | Cycles completed: 34
+
+---
+
+## Cycle 34 Watch Notes (2026-05-11 06:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (3 sprints shipped post-c33: 1869, 1870, 1871/1865b — TNB → PO → developer chain working)
+
+**PO ACK SYSTEM FUNCTIONING:** c33 ACK reconfirmation appended to handoff at 05:32 UTC, all 9 findings dispositioned. Cycle 15 ACK was LOST (overwritten at 05:13 UTC by signal re-fire); cycle 17 reconfirms and commits this time. **Flow gap acknowledged by PO**: handoff appendices must be staged + committed.
+
+**3 SPRINTS SHIPPED since c33:**
+- **Sprint 1871 (1865b FIX-LOW)** — `daec15ac` + `8a334edc`. UTC guard extended to dev-team + po orchestrators. Self-validated via pipeline-state.json (eat-dog-food). currentSprint=1872 now active.
+- **Sprint 1869 (price_drop precision)** — 1869a + 1869b + 1869b-seed all merged. 1869b-seed migration of watchlist `alert_drop_pct` defaults to -7/-9. Alert accuracy went 0% → 4 MISS/145 (3% scored) — verdict resolution catching up.
+- **Sprint 1870 (FPT BCTC regex)** — `b58326e6` + `412fb9c3` + `b7ac4b08`. P_NET_PROFIT retained-earnings exclusion. Baseline 9163 pass / 15 fail (was 9153/16).
+- **1869c (qa-responder + news-scout UTC guard)** also shipped per PO ACK (commit `e3bd83a5` claimed but not in recent 20-commit window).
+- **0bfb7ca2 routing fix** — 3 main-terminal bypass gaps closed (po/pm protection).
+
+**σ DATA FULLY OPERATIONAL** (was 2/30 c32, all ≥28/30 c33): VNINDEX 270/30 ✅, all watchlist 244/30 ✅. Mon market open detection FULLY ACTIVE.
+
+**Container restarted ~04:46 UTC** (uptime 1h 41m at bootstrap). Second restart since c32. Reuters/TE counters reset 35→12 — confirms agents-architect RCA (module-level counters reset on restart, no recordDisabled persistence).
+
+**NEW c34 FINDING — Notebook commit gap** (extends c33 PO ACK gap):
+- agents-architect notebook REGRESSED from c33 90+ lines to current 41 lines — c33 entries for `2026-05-11-price-drop-precision-tuning.md` brief + `2026-05-11-reuters-te-unreachability.md` brief LOST.
+- financial-analyst notebook REGRESSED — git log shows only `277f9eeb chore(memory/financial-analyst): notebook 2026-05-09` last commit. The 01:00 UTC 2026-05-11 cycle entry I saw at c33 was working-tree-only and never committed; now overwritten back to HEAD state.
+- Both notebooks mtime 2026-05-11 05:13 UTC — IDENTICAL minute as handoff overwrite. Same loss event.
+- **Briefs DID persist on disk** (`docs/architecture-briefs/2026-05-11-*.md`) — content survived where committed to a different path.
+- Root cause class: same as PO ACK loss. Working-tree-only changes are FRAGILE. Notebook commits must happen synchronously with notebook writes, not deferred.
+- Recommended fix: every agent flow's notebook write step MUST stage+commit immediately. Apply same pattern as 1865b's pipeline-state.json commit step.
+
+**NEW c34 FINDING — write_alert_verdict tool missing:**
+alert-commander 06:04 cycle filed BUG via WORK telegram: `write_alert_verdict tool not found`. Tool referenced in flow but absent from registry. Either flow drift or tool unregistered. Affects post-fire outcome recording.
+
+**NEW c34 FINDING — push-prices ASYNC market_prices invisibility:**
+Bootstrap error log: `[ERROR] 2026-05-11 06:28:17 push-prices: ASYNC: market_prices invisibility confirmed`. Unknown root cause, possibly related to container restart 04:46 UTC. Needs ops investigation.
+
+**NEW c34 FINDING — get_unreviewed_market_messages overflow:**
+unified-agent 05:01 cycle: 79k chars output, file path unresolvable in sandbox. Needs pagination flag or file-mode toggle.
+
+**NEW c34 FINDING — get_climate_risk + get_energy_grid transient timeout:**
+unified-agent 04:01 cycle: server timeout on first attempt, recovered on retry. Pattern observed; worth investigating if persistent.
+
+**PERSISTING — get_agent_signals param mismatch (c33 F8):** STILL blocking TNB Step 5 + alert-commander Step 3b. 9 cycles affected now. Was DEFERRED LOW by PO; severity should be re-evaluated given cascade impact.
+
+**PERSISTING — doc self-heal blocked (c33 F9):**
+- market-watcher detected 2 new doc gaps in `.claude/tools/package/market-watcher.md`:
+  - `get_price_history` documents `tickers: string[]` but actual API uses `code: string`
+  - `get_sector_comparison` documents `metric?: string` but actual API requires `code: string`
+- unified-agent re-detected `weekly.md` step 1 + `market.md` Step 0b doc gaps
+- All BLOCKED — flow files protected from agent edits.
+- Architectural pass needed (PO deferred to design window).
+
+**PERSISTING — git HEAD.lock (c33 F7):** unified-agent reported 02:42 UTC, ~24min, cannot remove — sandbox permission. Pattern continues. Cleared manually in my c33+c34 commits.
+
+**PERSISTING — Reuters/TE Ngưng (c33 F1):** counters 12/12/12 (climbing from 0 post-restart). OPS-GATED awaiting 5-curl probe per PO ACK.
+
+**system-auditor:** Still silent — last cycle 2026-05-09 16:15 UTC, ~38h stale now. PO ACK says cron re-registered c14 to fire 16:00 UTC today. Current 06:30 UTC — wait ~10h. Re-evaluate at c35+.
+
+**QUALITY OUTPUT — c34 is bumper crop:**
+- market-watcher: EIB price_anomaly chain 3 consecutive cycles (03:38 2.7σ → 04:38 2.65σ → 05:39 3.64σ), Gelex group news catalyst. HVN -2.25% (2.63σ) signal id=2858. **Proper σ-based detection working**.
+- news-scout: HSG/NKG anti-dumping AU 56% chain_catalyst caught (#2845/#2849/#2855), ACB Âu Lạc 6% accumulation tracked across 5 cycles (#2837/#2842/#2846/#2850/#2853/#2854/#2861).
+- alert-commander: ACB urgent_news id=2853 FIRED to MARKET at 06:04 via large-insider override (conviction 0.50 < 0.60 but >5% stake always-MARKET rule). Kinh Dịch Sư (7) MUA 100%. EIB 3.64σ + HVN 2.63σ both SUPPRESSED at 4.0σ override threshold (correct discipline). log_agent_work ids 618/620/624.
+- unified-agent: Portfolio FPT tracking -10.5% → -11.7% → -12.0% → -12.1% (deteriorating). Conviction shift +0.08 below 0.3 threshold (proper discipline). VIC institutional exit detected (VCBF sold).
+
+**MARKET QUEUE EMPTY:** 0 reports (good — no quality issues to triage). c33's 1 report processed.
+
+**VN-Index 1915.70 +0.02%** — intraday round-trip c32 1915.37 → c33 1925.36 → c34 1915.70. Khôn (2) MUA 100% unchanged. Bullish narrative continues but momentum capped.
+
+**Macro:** Brent **105.45** (sustained oil rally, US-Iran tension), Gold 4677 (down from c33), DXY 98.09 STABLE, USD/VND 26305 unchanged, US10Y 4.36% NEUTRAL. Regime NEUTRAL with TIGHTENING pressure from Brent.
+
+**DB queue:** UNCHANGED from c33 (24 pending feedback / 18 critical warnings). PO not consuming feedback — that's OK if backlog represents lower-priority items.
+
+**Alert stats:** 18 in 24h (up from 14 c33), 7 HIGH/CRITICAL (unchanged), 0 unnotified.
 
 ---
 
