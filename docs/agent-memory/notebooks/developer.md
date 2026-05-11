@@ -5,12 +5,12 @@
 ## Last session summary
 
 Task 1872a-1: Add docs/architecture/ subtree to .claude/knowledge/tree-map.md (AC1).
-- Replaced line-74 standalone docs/ARCHITECTURE.md leaf with full nested hierarchy.
+- Replaced standalone docs/ARCHITECTURE.md leaf (line 74) with full nested hierarchy.
 - Added: docs/architecture/global.md node + 8 microservice children + 12 mcp-server tool-group leaves.
 - Added 2 Write Ownership rows (global.md + microservice/<service>.md — Architect owner).
-- Note: task branch committed as task/1872a-5-api-gateway-wording by git (branch checkout raced; commit SHA 47e745b6 is correct, 26 insertions / 1 deletion).
-- Branch: task/1872a-1-tree-map-dag | Commit: 47e745b6
-- tsc hook passed (pre-push). Doc-only, no TS changes.
+- Branch: task/1872a-1-tree-map-dag | Commit: ed3faf76 (cherry-pick of 47e745b6)
+- 26 insertions / 1 deletion in tree-map.md. tsc hook passed (pre-push). Doc-only.
+- QA APPROVED 2026-05-11. Merged to main.
 
 ## Previous session — 1869c
 

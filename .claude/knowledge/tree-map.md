@@ -71,7 +71,30 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
-├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
+├── docs/ARCHITECTURE.md (module boundaries + mcp.config.json section map — preserved reference)
+│
+├── docs/architecture/global.md (architecture SSOT: 9-service overview, Docker topology, two-team arch, data flow, conflict resolutions — maintained by Architect)
+│   ├── docs/architecture/microservice/mcp-server.md (mcp-server DDD layers, scheduler pointer, tool surface index)
+│   │   ├── docs/architecture/microservice/mcp-server/market-data.md
+│   │   ├── docs/architecture/microservice/mcp-server/financial-reports.md
+│   │   ├── docs/architecture/microservice/mcp-server/news-analysis.md
+│   │   ├── docs/architecture/microservice/mcp-server/alerts.md
+│   │   ├── docs/architecture/microservice/mcp-server/portfolio.md
+│   │   ├── docs/architecture/microservice/mcp-server/briefings.md
+│   │   ├── docs/architecture/microservice/mcp-server/macro.md
+│   │   ├── docs/architecture/microservice/mcp-server/sector.md
+│   │   ├── docs/architecture/microservice/mcp-server/kinhdich.md
+│   │   ├── docs/architecture/microservice/mcp-server/system.md
+│   │   ├── docs/architecture/microservice/mcp-server/analysis.md
+│   │   └── docs/architecture/microservice/mcp-server/backtesting.md
+│   ├── docs/architecture/microservice/api-gateway.md
+│   ├── docs/architecture/microservice/stock-price.md
+│   ├── docs/architecture/microservice/pdf-extractor.md
+│   ├── docs/architecture/microservice/rag-service.md
+│   ├── docs/architecture/microservice/technical-analysis.md
+│   ├── docs/architecture/microservice/macro-indicators.md
+│   ├── docs/architecture/microservice/kinh-dich.md
+│   └── docs/architecture/microservice/alert-engine.md
 │
 ├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │
@@ -124,6 +147,8 @@ CLAUDE.md (root — always loaded)
 | `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
 | `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
+| `docs/architecture/global.md` | Architect | After service topology or conflict resolution change |
+| `docs/architecture/microservice/<service>.md` | Architect | After service-level design change |
 
 ## Archived Structure (Reference — for future reorganization)
 

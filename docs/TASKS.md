@@ -32,8 +32,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Branch task/1872a-1-tree-map-dag, commit 47e745b6. | MEDIUM | SPRINT-S | developer | TASK_1872a-1.md |
-| 1872a-4 | SPRINT-S: mcp-server.md — replace hardcoded '62' scheduler count (AC4). Line 17: "62 scheduler files" → SSOT pointer to docs/data/project-stats.json#schedulerFileCount. Branch task/1872a-4-mcp-server-scheduler-pointer, commit 52694e6e. | LOW | SPRINT-S | dev-mcp-server | TASK_1872a-4.md |
 
 ---
 
@@ -41,6 +39,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Merge commit on main. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
+| 1872a-4 | SPRINT-S: mcp-server.md — replace hardcoded '62' scheduler count (AC4). Line 17 pointer to docs/data/project-stats.json#schedulerFileCount. Merge SHA a81a1fb4. QA APPROVED 2026-05-11. | LOW | SPRINT-S | dev-mcp-server | 2026-05-11 |
 | 1872a-5 | SPRINT-S: api-gateway/domain-model.md — replace hardcoded "all 8 services" with "all configured downstream services" (AC7). Line 65. Branch task/1872a-5-api-gateway-wording, commit eeba24a4. Merge SHA 172dfb0e. QA APPROVED 2026-05-11. | LOW | SPRINT-S | developer | 2026-05-11 |
 | TNB-c36-6 | SPRINT-S: Architect brief — deploy-verification flow step. `docs/architecture-briefs/2026-05-11-deploy-verification-flow.md` (156 lines, §1-§6). Pattern evidence: 1862a/f/j + 1865a + 1869a/b/seed all MERGED-NOT-DEPLOYED. Picks mechanism (b) smoke probe via `run_diagnostic_probe` MCP tool. Proposes follow-up sprint TNB6-A (flow Step 3.5 in dev-team/main.md + qa/main.md template) + TNB6-B (new MCP tool dev-mcp-server) + TNB6-C (retroactive smoke_check definitions for 7 undeployed sprints attached to 1876a-A5). Merge SHA `7db7ec0b`, commit `b2950c4a`. QA APPROVED 2026-05-11. | HIGH | SPRINT-S | architect | 2026-05-11 |
 | TNB-c36-4 | FIX: market-watcher cycle.md header-maintenance step. `.claude/flows/market-watcher/cycle.md` Step 5 (Notebook commit) gains "### Header update (required every cycle)" sub-section using `date -u` for `**Last updated:**` line. 8 LOC. Forward-only; market-watcher overwrites stale 2026-05-06 header on next cycle. eod.md untouched (uses overwrite skill). Merge SHA `a35e168c`, commit `94d21f72`. QA APPROVED 2026-05-11. | MEDIUM | FIX | agent-father | 2026-05-11 |
