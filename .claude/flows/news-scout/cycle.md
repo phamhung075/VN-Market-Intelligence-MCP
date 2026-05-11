@@ -165,6 +165,14 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 ```
 
 Append to `docs/agent-memory/notebooks/news-scout.md`:
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook timestamp guard
+- Use ONLY the actual current UTC time when stamping notebook entries
+- NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
+- If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing
+
 ```
 ### Cycle (HH:MM–HH:MM)
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME

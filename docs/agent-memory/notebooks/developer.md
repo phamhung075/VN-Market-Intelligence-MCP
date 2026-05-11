@@ -1,15 +1,16 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-10 | **Sprint:** 1862g
+**Last updated:** 2026-05-11 | **Sprint:** 1869c
 
 ## Last session summary
 
-Implemented task 1862g: 4-hour time-window dedup for urgent_news signals in postSignal().
-- Added `dedupWindowMinutes` field to `PostSignalInput` (default: 240m for urgent_news, 0 for all other types).
-- Dedup check queries existing (stock_code, signal_type, direction) rows within window; returns -1 when suppressed.
-- JSON_EXTRACT path + LIKE fallback for SQLite compatibility.
-- 10 tests in 1862g-signal-dedup.test.ts: all GREEN.
-- Key lesson: dedup default must be type-aware (urgent_news only) to avoid breaking 1295d chain catalyst tests that post the same ticker+direction twice by design.
+Task 1869c: Extended 1865a UTC timestamp guard to qa-responder + news-scout flow files.
+- Root cause: 1865a only added guard to news-scout session-log step (Step 4 `log_agent_work`), not to the notebook append block immediately after. qa-responder had zero guards.
+- Applied identical "Notebook timestamp guard" block (invariant + 3 bullet rules) to: `news-scout/cycle.md` before notebook append, `qa-responder/cycle.md` before notebook commit (Step 6).
+- market-watcher guard verified unchanged (line 84-89).
+- Test result: 9267 pass / 15 fail. All 15 failures pre-existing (Task 178 + infra). Flow-only edits, no TypeScript changes.
+- Key lesson: when a guard is added to a "session log" step, check if the SAME flow writes timestamps in a separate notebook-commit step — both need the guard.
+- Deviation: task said `main.md` but actual files are `cycle.md`.
 
 ## Known patterns / preferences
 
@@ -22,11 +23,12 @@ Implemented task 1862g: 4-hour time-window dedup for urgent_news signals in post
 - Path for test files: `apps/mcp-server/src/__tests__/NNN-task-name.test.ts`. Never at root or in `apps/mcp-server/reports/`.
 - Semble search before grep: use `mcp__semble__search` for exploration, grep only for exhaustive literal matching.
 - When adding dedup/gate logic to postSignal(), use type-aware defaults — don't apply spam suppression to chain_catalyst/price_confirmation signals by default or you will break enrichment-chain tests.
+- UTC timestamp guards in flow files must cover ALL timestamp-writing steps (session log AND notebook commit), not just the first one.
 
 ## Carry-over for next session
 
-- 1862g committed (task/1862g-signal-dedup), 1862j committed (task/1862j-sigma-data-safeguard) — both awaiting QA merge.
-- 15 pre-existing failures in full suite (Task 178, 1549, 1031, 145, 1100, 262) — not caused by session tasks.
+- 1869c committed on task/1869c-utc-guard-extension, awaiting QA merge.
+- 15 pre-existing failures in full suite (Task 178 + infra) — unchanged.
 - Check docs/TASKS.md for next task before starting.
 
 ---
