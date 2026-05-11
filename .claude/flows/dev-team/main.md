@@ -16,11 +16,28 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ### Step 0a — Drain `docs/signals/` (before anything else)
 
+**Rationale:** Signal sources (cowork agents, TNB, architect) may idempotently re-emit the same signal across cron cycles — e.g. if their own flow re-runs without detecting that the signal was already consumed. The in-memory `pendingSignals[]` dedup only covers files seen within the current drain pass; it cannot catch re-arrivals from a prior cycle. The fingerprint check below gates against the persistent `processed/` history so re-fired duplicates are drained silently and never retriage through PO.
+
 Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascending):
 
 1. Read the JSON file
 2. Log to notebook: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
 3. Append to an in-memory `pendingSignals[]` array
+3b. **Fingerprint check vs `docs/signals/processed/`:**
+    ```
+    fingerprint = sha256(signal.from + signal.type + JSON.stringify(signal.payload) + signal.createdAt)
+    ```
+    Scan all files in `docs/signals/processed/` for a matching `fingerprint` field.
+    - If a match is found:
+      - Do NOT append to `pendingSignals[]` (skip PO routing)
+      - Set `result = "skipped-duplicate-replay"`
+      - Still move the source file to `docs/signals/processed/` with metadata (see step 4) using filename suffix `-replay` before `.json`
+      - Log to notebook: `"[dev-team] Signal {filename} skipped — duplicate replay (fingerprint match)"`
+    - If no match: proceed to step 4 normally
+    - **Escape hatches** (for manual replay):
+      - Delete the processed/ copy → fingerprint absent → signal routes again on next cycle
+      - Bump `createdAt` in the source file → different fingerprint → treated as a new signal
+
 4. **Move** the signal file to `docs/signals/processed/` with added fields:
    ```
    mv docs/signals/{filename} → docs/signals/processed/{filename}
@@ -29,13 +46,15 @@ Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascendin
    ```json
    {
      ...original fields,
+     "fingerprint": "<sha256 hex>",
      "processedAt": "{ISO timestamp}",
      "processedBy": "dev-team",
-     "result": "routed-to-po|skipped-duplicate|skipped-stale"
+     "result": "routed-to-po|skipped-duplicate|skipped-duplicate-replay|skipped-stale"
    }
    ```
    - `routed-to-po`: signal passed to PO triage
-   - `skipped-duplicate`: identical signal already in pendingSignals (same `from` + `type` + `payload`)
+   - `skipped-duplicate`: identical signal already in pendingSignals (same `from` + `type` + `payload`, in-memory check within this drain pass)
+   - `skipped-duplicate-replay`: fingerprint matched a prior processed/ file — signal was already handled in a previous cycle
    - `skipped-stale`: `createdAt` older than 24h
 
 5. **Prune** `docs/signals/processed/`: delete any processed files older than 7 days
