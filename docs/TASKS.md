@@ -32,6 +32,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Branch task/1872a-1-tree-map-dag, commit 47e745b6. | MEDIUM | SPRINT-S | developer | TASK_1872a-1.md |
 
 ---
 

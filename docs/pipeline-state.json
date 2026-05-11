@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": 1876,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-11T15:40:00Z",
-  "updatedBy": "system-auditor",
-  "lastCompleted": "Cycle 27 re-audit complete: SSOT structure verified (22 files exist, pointers resolve). 3 documentation follow-ups identified: tree-map.md missing DAG entry, hardcoded tool counts in README/ARCHITECTURE, docker-compose restart command triplication. Signal: system-auditor-2026-05-11T15-34-37Z-arch-ssot-rerun.json"
+  "status": "review",
+  "currentSprint": "1872a",
+  "activeTaskId": "1872a-1",
+  "nextAgent": "qa",
+  "nextPrompt": "QA 1872a-1 (tree-map DAG)",
+  "updatedAt": "2026-05-11T17:40:00Z",
+  "updatedBy": "developer",
+  "lastCompleted": "1872a-1: .claude/knowledge/tree-map.md — added docs/architecture/ subtree (global.md + 8 microservices + 12 mcp-server tool groups) + 2 Write Ownership rows. Branch task/1872a-1-tree-map-dag, commit 47e745b6."
 }
