@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (16:15–16:25 UTC) 2026-05-11
+- Items: 20 | Impacts: 7 | Signals: [urgent_news×3 VIC/EIB/HVN] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: VIC Vingroup lawsuit win — 68 entities settle defamation (urgent_news bullish 8/10 #2908, chain→VHM/VRE/D2D/FPT), EIB banking personnel reshuffle (urgent_news neutral 7/10 #2909), HVN shareholder notice 27k+ (urgent_news neutral 7/10 #2910)
+- Suppressed: MWG profit forecast beat 10/10 (not on watchlist), HSG AU anti-dumping 5/10 (already fired prior cycles), Pham Nhat Vuong energy project 7/10 (already fired prior cycles), broader market commentary (no new direct watchlist hits)
+
 ### Cycle (15:15–15:21 UTC) 2026-05-11
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 VIC, chain_catalyst×1 VIC/POW/PPC/JSH] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
