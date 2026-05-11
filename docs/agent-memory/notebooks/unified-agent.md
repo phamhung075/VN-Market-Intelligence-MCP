@@ -322,3 +322,6 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
   - No new WORK posts (REGIME_TRANSITION + FII + misalignment all posted at 19:00 UTC cycle)
 - **next_cycle_hint**: Banking BCTC releases 2026-05-15 (ACB/BID/CTG/EIB/MBB/VCB/VPB) — earnings triggers ready. Monitor FPT RSI/volume for reversal signal. Foreign flow pipeline restoration. GVR rate-limit clear expected.
 - **estimated_tokens**: 9500
+
+### Daily Review (21:02 UTC)
+- Mode: DAILY_REVIEW | Freshness: ok (news 1.2h <2h, BCTC 16.2h <48h, prices stale 12h/HOSE 31min market-closed expected) | Bugs: 0 new Telegram reports
