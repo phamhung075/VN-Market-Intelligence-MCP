@@ -62,7 +62,7 @@ interface ServiceRegistryPort {
 - Method: `aggregate(): Promise<AggregatedHealth>`
 
 **Logic:**
-1. Fans out health checks to all 8 services via `Promise.allSettled()`
+1. Fans out health checks to all configured downstream services via `Promise.allSettled()`
 2. Maps failed checks to `status: 'down'`, `latencyMs: -1`
 3. Overall status:
    - All ok → `'ok'`
