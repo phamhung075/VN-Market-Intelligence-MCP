@@ -1,5 +1,53 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-11 14:50 UTC (Cycle 26 close — 4 doc-only tasks SHIPPED from TNB c36 handoff)
+
+## Cycle 26 SHIPPED 4 tasks + 2 telegram dedups (2026-05-11 14:50 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| TNB-c36-3 | CHORE (developer) | commit `8335cf1e`, merge `43c4a5dd` | MEMORY.md root file: 9 broken `docs/agent-memory/sessions/2026-05-08/09/10-*.md` refs replaced with notebook redirects. Before 72 → after 60 lines. **Path-bug uncovered:** system-auditor signal pointed to `docs/MEMORY.md` (non-existent) instead of root `MEMORY.md`. Logged in TNB6 brief follow-up. |
+| TNB-c36-2 | FIX (agent-father) | commit `6c336bc6`, merge `b8ce2bcf` | agents-architect notebook backfill — 4 missing past briefs (c33 price-drop-precision-tuning + c33 reuters-te-unreachability + c35 1871-reconciliation + c35 1873a-tsc-reconcile). All 4 briefs existed on disk, no reconstruction needed. 41 → 101 lines. Resolves 1875b forward-only gap. |
+| TNB-c36-4 | FIX (agent-father) | commit `94d21f72`, merge `a35e168c` | `.claude/flows/market-watcher/cycle.md` Step 5 gains "### Header update (required every cycle)" sub-section using `date -u`. Forward-only — market-watcher overwrites stale 2026-05-06 header on next cycle. eod.md correctly untouched (overwrite skill handles it). |
+| TNB-c36-6 | SPRINT-S brief (architect) | commit `b2950c4a`, merge `7db7ec0b` | `docs/architecture-briefs/2026-05-11-deploy-verification-flow.md` 156 lines, §1-§6. Pattern evidence: 1862a/f/j + 1865a + 1869 cluster all MERGED-NOT-DEPLOYED. Mechanism (b) smoke probe via new `run_diagnostic_probe` MCP tool. Follow-up sprint TNB6-A/B/C proposed (flow step + tool + retroactive smoke_checks). |
+| #2850/#2851 | Telegram dedup (pm) | n/a | Alert-accuracy 0.3% reports → monitoring. Root cause dual-covered by 1876a-A1 (denom fix, rebuild-gated) + 1876a-A5 (1869b-seed migration redeploy — Todo). |
+
+## TNB c36 audit consumed
+
+PO triaged TNB c36 (13 findings, NEEDS_ATTENTION/STRONGLY IMPROVING). Picks above shipped findings #2 + #3 + #4 + #6. Findings deferred / no-op:
+- #1 Sprint 1869 MERGED-NOT-DEPLOYED → already tracked as 1876a-A5, ops-gated.
+- #5 PO silent 9h+ → self-actioned (PO appended c34/c35/c36 ACK to po.md, no formal authority transfer).
+- #7 RSS transient → monitor.
+- #8 3rd container restart in 10h → ops investigation, not dev-team scope.
+- #9-13 carry-overs from c35.
+
+## Operational notes
+
+1. **HEAD.lock contention recurred** during stash/checkout (concurrent qa-responder cron) — cleared with `rm -f .git/HEAD.lock`. Same pattern as c25.
+2. **Branch-chaining via shared checkout** — sequential agent invocations on same git directory inherit prior branch's tip. TNB#6 branch contained TNB#4 commit because checkout state wasn't reset. Merges still clean (each merge is `--no-ff` so structure preserved; `git log --oneline main..branch` confirmed no surprises).
+3. **Stash overlay after merge** — popped stash had pre-merge file states which appeared as "modifications" against the merged HEAD. Resolved via `git checkout HEAD -- <files>` to keep merged content. Files affected: `cycle.md`, `qa-responder.md` notebook, `deploy-verification-flow.md` (deleted in stash, kept from HEAD).
+4. **1875d dedup PURE FLOW pass (3rd consecutive cycle)** — 3 known signal replays (architect 1871-batch + tnb 06:30 + tnb 10:30) silent-skipped against c24-replay fingerprints in processed/. Output: `*-c26-replay.json` files.
+
+## Todo state (unchanged 4 rows)
+
+- 1862c-D (OPS Cloudflare ingress)
+- 1862c-E (OPS SSE keepAliveTimeout)
+- 1862c-F (FIX-MED rebuild-gated)
+- 1876a-A5 (OPS 1869b-seed migration redeploy — covers TNB c36 #1)
+
+## TSC + tests
+
+- tsc: 0 errors (markdown-only changes).
+- Tests: baseline unchanged (QA confirmed 9307 pass / 13 fail still holds).
+
+## Next cycle focus candidates
+
+- If ops ships 1862c-D/E or 1876a-A5 → re-measure alert precision + observe smoke probe in action.
+- TNB6-A/B/C sequence available for next PO triage IF a new sprint window opens.
+- TNB c36 #5 PO catch-up done — protocol restored.
+
+---
+
 **Written:** 2026-05-11 14:02 UTC (Cycle 25 close — Task 1862c-G SHIPPED, smoke probe)
 
 ## Cycle 25 SHIPPED Task 1862c-G (2026-05-11 14:02 UTC)
