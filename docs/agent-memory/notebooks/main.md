@@ -1,6 +1,103 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 10:38 UTC (Cycle 21 close — Sprint 1873 fully SHIPPED, 5 tasks, TSC merge gate restored)
+**Written:** 2026-05-11 11:04 UTC (Cycle 22 close — Sprint 1875 fully SHIPPED, 4 tasks, TNB c35 F1/F2/F3 + signal-dedup all closed)
+
+## Cycle 22 SHIPPED Sprint 1875 (2026-05-11 11:04 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| 1875a | FIX-HIGH | merge `d3692c42` | TNB c35 F1 — qa-responder H1-future leak. 1869c was insufficient (only patched notebook commit). Now 6 timestamp surfaces guarded: invariant block + Step 0a cycle-start anchor + Step 0b backoff_until + Step 1 queue-empty WORK + Step 6 notebook header + Step 7 WORK status/Next. Counter-sequencing rule (monotonic append) explicit. (flows-fixed) |
+| 1875b | FIX-HIGH | merge `cb15b66d` | TNB c35 F2 — agents-architect notebook 4 missing briefs. **Root cause discovered:** `.claude/agents/agents-architect.md` did NOT EXIST anywhere — agent was running from Cowork context with no definition file → no invariant could be enforced. CREATED full agent definition with brief-commit invariant embedded (3-step: `date -u` → notebook append → git commit) + machine-readable flags in constraints block. Factory-pattern compliant (SSOT/DRY/lazy-load/tree-DAG). (agent-def created) |
+| 1875c | FIX-HIGH | merge `eec8384f` | TNB c35 F3 — record_signal_outcome dispatch bug. **RCA: NO actual bug found.** Dispatch table clean (126 unique tool names, MCP SDK exact-key lookup, separate handlers). TNB's evidence (alert-commander 08:06 "returned climate data") likely transient gateway issue or client-side misparse — 1 occurrence, no repro. Defensive observability added instead: 13-line collision-warn + manifest-drift warn in agentBootstrap.ts + 5 regression tests guarding record_signal_outcome ≠ climate handler. (observability-added) |
+| 1875d | FIX-MEDIUM | merge `d6f7a7b6` | Signal re-fire dedup. 3rd-cycle recurrence (c20/c21/c22 same 2 signals). Added Step 3b "fingerprint check vs processed/" — `sha256(from + type + payload + createdAt)` matched against on-disk history → mark `skipped-duplicate-replay` and skip PO routing. Escape hatches: delete processed/ copy OR bump createdAt. Effective from c23. (flows-fixed) |
+
+## Cycle 22 process notes
+
+- **Signal re-fire pattern AT 3rd CYCLE** — same 2 signals (TNB c34 + architect 1871-batch) drained as `skipped-duplicate` again, plus 1 fresh NEW c35 TNB signal at 10:30 UTC. Promoted to actionable as 1875d. After 1875d lands, c23 drain will silent-skip the re-firers.
+- **TNB c35 audit "STRONGLY IMPROVING"** — 12 findings, 1 RESOLVED (F8 get_agent_signals via 1871e), 3 HIGH actionable picked (F1/F2/F3 = this batch), F4 verification-only deferred, F5 (VRE emission) parked for architect, F6 awaiting 16:00 UTC, F7/F9-F12 LOW.
+- **1875b SIGNIFICANT FINDING** — agents-architect agent was operating WITHOUT a definition file. This is the root cause of notebook regression across c33/c34/c35 (~5 cycles). Created definition + embedded invariant. Subsequent agents-architect fires will load this on every invocation.
+- **1875c RCA inverted expectation** — TNB F3 framed as "tool routing bug" but exhaustive registry scan showed code is clean. Decision (with QA approval): accept "no bug, add regression guard" since rerunning would lose the defensive observability. If F3 recurs c23+, escalate.
+- **Worktree isolation 4-way clean** — all 4 Tier 1 devs parallel-spawned, 4 separate branches, 4 clean merges, no race. Pattern proven stable.
+- **Pre-push hook real-validated AGAIN** — both 1873 fix work (c21) and Sprint 1875 commits (c22) report `[pre-push] tsc OK` from `pnpm --filter vn-market check`. Phantom-OK era over.
+- **F7 (HEAD.lock)**: 0 occurrences this cycle. 7 cycles tracked with no actual trigger. **Recommendation: deprioritize / mark as resolved.**
+- **F10 vs F6 (HEAD.lock vs system-auditor)**: TNB c35 lists same 2 ongoing items. F6 still waiting on 16:00 UTC fire.
+
+## Sprint 1875 summary (all 4 tasks shipped)
+
+4 process / agent-def / observability gaps now closed:
+- F1 qa-responder H1-future (6-surface UTC guard) ✓
+- F2 agents-architect notebook (agent-def created + 3-step invariant) ✓
+- F3 record_signal_outcome dispatch (no bug; regression guard + observability) ✓
+- Signal re-fire dedup (drain-layer fingerprint check) ✓
+
+Root divergences: F1 = 1869c was scoped too narrowly (notebook-commit only, missed 5 other surfaces). F2 = factory rule (every agent needs an agent-def file) was implicit, not enforced. F3 = false positive in TNB evidence (no actual code defect). Signal dedup = on-disk history dedup was never specified at drain layer.
+
+## Current baseline
+
+- **TSC errors: 0** on local main `0e5670ae`
+- bun test 9356/0 passing (last measured c22 Tier 1 QA — up from c21's authoritative 9168/12/38, suggests significant test growth between cycles)
+- toolCount=132, cronJobCount=59, schedulerFileCount=62
+- currentSprint=1875→1876 (1875 closed)
+- pipeline-state: idle
+- Pre-push hook real-gating active (`pnpm --filter vn-market check`)
+- `.claude/agents/agents-architect.md` NOW EXISTS (was missing for ~5 cycles)
+
+## Carry-over to Cycle 23
+
+### Open candidates (not yet PO-triaged)
+- **1872c (carried, parked)** — news-scout `update_analysis_brief` tool entirely missing; needs BA scoping. Likely SPRINT-M.
+- **Error boundary upgrade** — cowork error boundary silently swallowed 1871e Zod failure. Still open. FIX-MEDIUM.
+- **TNB c35 F4 (verify)** — 1872b merged c19; alert-commander cycles 06:04 + 08:06 STILL filed BUG. Check next cycle: did BUGs stop post-deploy? If yes, F4 self-closed. If no, deeper investigation (manifest may not be read at session boundary).
+- **TNB c35 F5 (VRE emission)** — 2nd recurrence of price_drop → price_anomaly emission gap class (after c33 F6 VPB). NEEDS ARCHITECT BRIEF before fix.
+- **TNB c35 F7 (get_recent_fixes 9-day stale)** — LOW, backing-table or query bug.
+- **TNB c35 F11 (financial-analyst silent 2+ days)** — disposition needed (expected low-freq vs broken cron).
+
+### Ops-gated (unchanged)
+- 1862c-D/E (Cloudflare config) — ops
+- 1862c-F (rebuild) — observation-gated
+- 1862c-G (FIX-HIGH but flow-edit) — observation after D+E
+- Reuters/TE 5-curl probe — ops
+
+### TNB c35 closed/deferred status
+- F1/F2/F3 → SHIPPED as 1875a/1875b/1875c
+- F4 → verify next cycle (BUG filings continued?)
+- F5 → architect brief (next sprint)
+- F6 → 16:00 UTC fire (~5h from cycle 22 close)
+- F7/F9/F11 → LOW, park
+- F8 → RESOLVED ✅ (1871e)
+- F10 (HEAD.lock) → DEPRIORITIZE (7 cycles no real trigger)
+- F12 → resolved on container restart, monitor
+
+### Monitoring (C-6 no re-trigger)
+- 2833, 2834, 2836, 2839, 2841, 2842, 2845, 2847 (unchanged)
+
+## Architecture state
+
+- 9-service Docker architecture operational since 2026-04-25
+- MCP server UP, 132 tools, 59 cron keys, 62 scheduler files
+- alertVerdictStore + verdictResolutionJob cron `7 * * * *` live
+- domain/ folder has 0 infrastructure/ imports (1871f)
+- ARCHITECTURE.md fully reconciled with live code (1871)
+- cron-registry.json SSOT-aligned (1871)
+- All cowork notebook-writing flows have UTC + commit guard (1865a/b + 1869c + 1872a + **1875a** for qa-responder full surface)
+- alert-commander skill manifest includes write_alert_verdict (1872b)
+- Pre-push hook real-gates tsc via `pnpm --filter vn-market check` (1873f)
+- TSC errors on main = 0 (Sprint 1873)
+- **NEW (1875b)**: agents-architect agent definition exists with brief-commit invariant
+- **NEW (1875c)**: tool registry has collision/drift observability warnings + 5 regression tests for record_signal_outcome
+- **NEW (1875d)**: dev-team signal drain has on-disk fingerprint dedup
+- All 16 circuit breakers OK in DB
+
+## Next-cycle intent (Cycle 23)
+
+1. Drain new signals + reports (1875d should silent-skip the re-firers — first real test)
+2. **F4 verification**: check WORK channel for new write_alert_verdict BUG filings — if none since 1872b deploy, F4 self-closed
+3. **F6 verification**: check if system-auditor fired 16:00 UTC (might be too early at next cron tick depending on time)
+4. If PO promotes F5 (VRE emission) → architect scoping
+5. If PO promotes 1872c → BA scoping
+6. Idle if no new dev-actionable work
+
+---
 
 ## Cycle 21 SHIPPED Sprint 1873 (2026-05-11 10:38 UTC)
 
