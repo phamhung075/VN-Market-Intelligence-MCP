@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1869
+**Last updated:** 2026-05-11 | **Sprint:** 1877a
 
 ## Current state
 
@@ -60,3 +60,32 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **WIP snapshot:** Todo = 1869a/b/b-seed + 1862c-D/E/F/G = 7 items. Max 2 In Progress enforced. Developer recommended to start 1869a next.
 
 **Status at session end:** READY FOR HANDOFF. 1869a ready → developer.
+
+---
+
+## Cycle 30 — 2026-05-11 Step 2: Task 1877a Decomposition
+
+**Input:** Architect brief `docs/architecture-briefs/2026-05-17-commit-convention-audit.md` (263 lines, pre-existing design, no architect step needed for Cycle 30). PM instruction: decompose into atomic ACs, create handoff, assign to developer, set WIP.
+
+**Brief context:** Day-7 commit-convention audit script for Phase B greenlight gate (C1+C2 collapse). Window: 2026-05-10 → 2026-05-17. 4 pass criteria (C1≥90% header format, C2≥85% task trailer, C3≥80% ac trailer, C4≥95% scope vocab). All thresholds must pass independently; single fail = FAIL verdict. Script drops greenlight/fail signal per brief §4 schema.
+
+**Actions:**
+- Decomposed brief §3 (algorithm) + §4 (signal schemas) into 6 atomic ACs:
+  - AC1: Parameterizable SINCE_DATE with defaults (2026-05-10T00:00:00Z)
+  - AC2: Parse git log, filter bare merges, audit against 4 criteria
+  - AC3: Emit JSON report to docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json with full schema
+  - AC4: Correctly compute all 4 criteria pass rates (C1/C2/C3/C4 each independently)
+  - AC5: Violations arrays (≤20 per criterion), idempotent overwrite same-day
+  - AC6: Exit 0 on PASS, 1 on FAIL; drop greenlight/fail signal with correct schema
+- Created handoff file: TASK_1877a.md (126 lines, full acceptance criteria + test plan)
+- Updated docs/TASKS.md: added 1877a row to Todo section (MEDIUM priority, deadline 2026-05-17)
+- Updated pipeline-state.json: status=in_progress, currentSprint=1877a, activeTaskId=1877a, nextAgent=developer
+- Updated PM notebook header: sprint ref updated to 1877a
+
+**File scope verification:** Single file to create (`scripts/audits/commit-convention-audit.sh`). No subdependencies or parallel subtasks. Directory `scripts/audits/` does not exist — developer will `mkdir -p` inline.
+
+**WIP enforcement:** No tasks currently In Progress (WIP = 0/2). Task 1877a spawned to developer; WIP will become 1/2 on handoff acceptance.
+
+**Test plan:** Baseline (run against 2026-05-10 → 2026-05-11 window): JSON parse, schema completeness, verdict computation, violations cap at 20, idempotency (re-run same day), signal files (PASS/FAIL), exit codes (0/1), spot-check 3 violations per criterion.
+
+**Status at session end:** READY FOR HANDOFF. 1877a decomposed and handed off → developer. Branch: task/1877a-commit-convention-audit-script.
