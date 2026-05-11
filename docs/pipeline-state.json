@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": "1877b",
-  "activeTaskId": "1877b",
-  "nextAgent": "developer",
-  "nextPrompt": "Implement SPRINT-S-1877b per docs/handoffs/TASK_1877b.md and brief docs/architecture-briefs/2026-05-17-commit-convention-audit-guard.md. Create branch task/1877b-audit-script-emit-signal-guard from main.",
-  "updatedAt": "2026-05-11T17:32:00Z",
-  "updatedBy": "pm",
-  "lastCompleted": "Cycle 31 init — SPRINT-S-1877b decomposed and moved to In Progress. Handoff docs/handoffs/TASK_1877b.md created (6 ACs: safe-default, flag+window=emit, flag-without-window=warn, report-always, exit-code-unaffected, bash-3.2-compat). Single file: scripts/audits/commit-convention-audit.sh (~6 LOC net addition). Test plan: 6 scenarios covering default, flag, SINCE_DATE, window boundaries. Depends on 1877a merge SHA 20005b95."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T17:45:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "SPRINT-S-1877b SHIPPED (6/6 ACs). scripts/audits/commit-convention-audit.sh now defaults to no signal emission; --emit-signal flag + Phase B window guard required. Merge SHA 27e4e0d6."
 }

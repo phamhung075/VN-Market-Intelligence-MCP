@@ -26,7 +26,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1877b | SPRINT-S: `scripts/audits/commit-convention-audit.sh` signal emission guard — add `--emit-signal` flag + Phase B window check (2026-05-10..2026-05-17). Default behavior safe (no signal). With flag + valid window → emit. With flag + invalid window/SINCE_DATE → warning, no signal. AC1-AC6: safe-default, flag+window=emit, flag-without-window=warn, report-always, exit-code-unaffected, bash-3.2-compat. 6 LOC net addition. Single file. Brief: docs/architecture-briefs/2026-05-17-commit-convention-audit-guard.md. | MEDIUM | SPRINT-S | developer | TASK_1877b.md | 2026-05-11 |
 
 ---
 
@@ -41,6 +40,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1877b | SPRINT-S: `scripts/audits/commit-convention-audit.sh` signal emission guard — `--emit-signal` flag + Phase B window check (2026-05-10..2026-05-17). Default safe (no signal). Flag + valid window → emit. Flag + invalid window/SINCE_DATE → WARNING + no signal. 6 ACs verified. Net +26 LOC. Deviation: `\>=` not POSIX → two-clause `[ = ] \|\| [ \> ]` (correct). Merge SHA 27e4e0d6. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1877a | SPRINT-S: `scripts/audits/commit-convention-audit.sh` — Day-7 Phase B C1/C2 gate. 4 criteria (C1≥90% header, C2≥85% task trailer, C3≥80% AC trailer, C4≥95% scope vocab). JSON report to `docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json`. FAIL signal dropped. Exit 0/1. Idempotent. Merge SHA 20005b95. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-2 | SPRINT-S: README.md — AC2 mcp-server "112 tools" → project-stats.json#toolCount pointer; AC5 arch SSOT pointer after ASCII diagram + per-service pointer after microservices table; AC6 docker restart block + dev step → restart-policy.md pointer. Commit 03a404ce, merged via fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-3 | SPRINT-S: docs/ARCHITECTURE.md — AC3 MCP Server stat line → project-stats.json#toolCount + #cronJobCount pointers; AC6 inline docker restart cmd → restart-policy.md pointer. Merge SHA fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |

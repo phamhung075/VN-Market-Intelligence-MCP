@@ -1,6 +1,30 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877a
+**Last updated:** 2026-05-11 | **Sprint:** 1877b
+
+## Recent session — 2026-05-11 (1877b — signal guard for commit-convention audit script)
+
+**1877b — `scripts/audits/commit-convention-audit.sh` --emit-signal guard:**
+Shell script only. DDD/security N/A. bash -n CLEAN. Pre-push tsc PASS.
+
+6 ACs re-run from scratch:
+- AC-1 PASS: no flag → "Signal emission skipped" + zero root signals.
+- AC-2 PASS: canonical SINCE + flag + today in window → exactly 1 FAIL signal written, jq clean.
+- AC-3a PASS: non-canonical SINCE + flag → WARNING + zero root signals, exit=1.
+- AC-3b PASS: temp copy with UNTIL=2026-05-10, today=2026-05-11 → WARNING + zero root signals.
+- AC-4 PASS: processed/ report always written, jq clean, verdict+4 criteria+violations present.
+- AC-5 PASS: exit=1 across all invocations (FAIL verdict), suppression did not affect exit code.
+- AC-6 PASS: bash -n CLEAN, no local -n / declare -A / mapfile. [ ] comparisons escape < > with \.
+
+Deviation: brief §3 `\>=` pattern not POSIX-valid (bash errors: binary operator expected). Two-clause `[ = ] || [ \> ]` replacement verified equivalent for YYYY-MM-DD lexicographic order. APPROVED.
+
+Artifact cleanup: AC-2 test signal moved to /tmp then deleted. Temp AC-3b script deleted. Zero test artifacts remain in docs/signals/ root.
+
+Net LOC: +26 (diff count). Developer self-reported +29; both within ≤30 constraint.
+
+Merge SHA: 27e4e0d6. Branch task/1877b deleted local+remote (pre-push tsc PASS). TASKS.md: 1877b In Progress → Done. pipeline-state: idle.
+
+APPROVED.
 
 ## Recent session — 2026-05-11 (1877a — commit-convention audit script)
 
