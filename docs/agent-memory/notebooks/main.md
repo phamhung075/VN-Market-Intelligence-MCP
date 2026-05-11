@@ -1,6 +1,57 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 14:50 UTC (Cycle 26 close — 4 doc-only tasks SHIPPED from TNB c36 handoff)
+**Written:** 2026-05-11 15:42 UTC (Cycle 27 close — UNBLOCK system-auditor re-audit, no code change)
+
+## Cycle 27 UNBLOCK system-auditor (2026-05-11 15:42 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 7 signals in `docs/signals/` | 5 silent-skip replays (1871-batch + memory-pointers + 3 tnb) via 1875d fingerprint match; 2 NEW routed to PO (architect@16:00Z asking system-auditor re-audit + system-auditor arch-ssot baseline) |
+| 0b Resume | pipeline-state `idle`, sprint=1876 | fall through to Step 1 |
+| 1 PO triage | architect explicitly asks system-auditor re-audit; baseline audit (signal B) is pre-SSOT and stale | verdict: **UNBLOCK → system-auditor** |
+| 2 UNBLOCK | system-auditor re-audit scope: 22-file SSOT structure + R1/R2/R3 reconciliation + port/restart/services SSOT + pointer integrity + drift | re-audit run, 2 signals emitted (`arch-ssot-rerun` 9.8K + `ssot-audit` 1.3K), notebook + pipeline-state updated by system-auditor |
+
+## Re-audit findings (queued for c28 PO triage)
+
+- **22-file SSOT structure** ✓ verified (global.md + 9 microservice/* + 12 mcp-server tool groups)
+- **Port HOST:CONTAINER** ✓ consistent
+- **Agent pointers (bcecc3f0 73 path rewrites)** ✓ resolve
+- **Legacy `docs/microservices/` refs** ✓ zero remaining
+- **5 anomalies emitted**:
+  - WARN-1 tree-map.md missing `docs/architecture/` DAG entry (dual SSOT hazard)
+  - WARN-2 README.md + ARCHITECTURE.md still hardcoded tool counts (112 / 132 / 62 schedulers) — pointer-to-JSON violation
+  - WARN-3 docker restart command triplicated across README + ARCHITECTURE + restart-policy.md
+  - INFO-4 README.md missing arch SSOT cross-references
+  - INFO-5 BCTC runbook trim ✓ DONE (was R2 from baseline) — no action
+
+## 1875d dedup PURE FLOW pass (4th consecutive cycle)
+
+5 known replays silent-skipped against processed/ fingerprints. Output: `*-c27-replay.json` files. 0 false-positive routes.
+
+## Operational notes
+
+1. **Architect future-timestamp signal** — `architect-2026-05-11T16:00:00Z.json` was written at filesystem-time 15:30Z but its `createdAt` field is `16:00:00Z` (future). Minor: not a problem for dedup since fingerprint includes createdAt, but worth flagging to architect flow as "never speculatively future-date signals".
+2. **architect→system-auditor signal routing gap** — `to: system-auditor` but system-auditor flow doesn't read `docs/signals/`. Dev-team forwarded to PO with note. Could be cleaner if system-auditor flow added a signal-drain step OR architect routes such signals directly to PO with system-auditor as `route_to` hint.
+3. **system-auditor emitted 2 signals** — one mid-run (`ssot-audit-2026-05-11.json`, 1.3K compressed) + canonical at-end (`arch-ssot-rerun.json`, 9.8K detailed). Both will be drained next cycle; fingerprints differ so dedup won't collapse them. PO can pick richer one or merge.
+
+## Todo state (unchanged 4 rows)
+
+- 1862c-D (OPS Cloudflare ingress)
+- 1862c-E (OPS SSE keepAliveTimeout)
+- 1862c-F (FIX-MED rebuild-gated)
+- 1876a-A5 (OPS 1869b-seed migration redeploy)
+
+## TSC + tests
+
+- No code change this cycle (UNBLOCK only). TSC + test baseline unchanged.
+
+## Next cycle focus candidates
+
+- c28 PO triage: 2 fresh audit signals → BATCH of doc-fix FIX rows (tree-map DAG entry, hardcoded counts de-hardcoding, docker restart de-duplication) likely 3 small tasks.
+- WARN-1 (tree-map DAG entry) is highest-leverage — owner architect or agent-father.
+- WARN-2/3 are mechanical: code-janitor or developer can handle in single FIX batch.
+
+---
 
 ## Cycle 26 SHIPPED 4 tasks + 2 telegram dedups (2026-05-11 14:50 UTC)
 
