@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # commit-convention-audit.sh — Day-7 commit convention audit for Phase B C1/C2 greenlight
 # Brief: docs/architecture-briefs/2026-05-17-commit-convention-audit.md
-# Usage: bash scripts/audits/commit-convention-audit.sh [SINCE_DATE]
+# Usage: bash scripts/audits/commit-convention-audit.sh [SINCE_DATE] [--emit-signal]
 # Exit: 0 = PASS, 1 = FAIL
 
 set -euo pipefail
@@ -15,6 +15,16 @@ export LANG=C
 # ---------------------------------------------------------------------------
 SINCE_DATE="${1:-2026-05-10T00:00:00Z}"
 UNTIL_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# Canonical Phase B window constants
+PHASE_B_SINCE_CANONICAL="2026-05-10T00:00:00Z"
+PHASE_B_UNTIL_DATE_CANONICAL="2026-05-17"   # inclusive end, UTC date only
+
+# Flag parsing — --emit-signal can appear at any position after SINCE_DATE
+EMIT_SIGNAL=false
+for arg in "$@"; do
+  [ "${arg}" = "--emit-signal" ] && EMIT_SIGNAL=true
+done
 REPORT_DIR="docs/signals/processed"
 REPORT_DATE="$(date -u +%Y%m%d)"
 REPORT_FILE="${REPORT_DIR}/commit-convention-audit-${REPORT_DATE}.json"
@@ -342,11 +352,26 @@ echo "C3 AC trailer:      ${c3_actual} (threshold 0.80) — ${c3_pass_bool}"
 echo "C4 scope vocab:     ${c4_actual} (threshold 0.95) — ${c4_pass_bool}"
 
 # ---------------------------------------------------------------------------
-# Signal drop
+# Signal drop — only when --emit-signal flag is present AND window guard passes
 # ---------------------------------------------------------------------------
-if [ "${verdict}" = "PASS" ]; then
-  SIGNAL_FILE="docs/signals/agents-architect-${SIGNAL_TS}-phase-b-c1-c2.json"
-  cat > "${SIGNAL_FILE}" << EOF
+if [ "${EMIT_SIGNAL}" = "true" ]; then
+  TODAY_UTC="$(date -u +%Y-%m-%d)"
+  window_ok=false
+  date_ge_start=false
+  date_le_end=false
+  if [ "${TODAY_UTC}" = "2026-05-10" ] || [ "${TODAY_UTC}" \> "2026-05-10" ]; then date_ge_start=true; fi
+  if [ "${TODAY_UTC}" = "${PHASE_B_UNTIL_DATE_CANONICAL}" ] || [ "${TODAY_UTC}" \< "${PHASE_B_UNTIL_DATE_CANONICAL}" ]; then date_le_end=true; fi
+  if [ "${SINCE_DATE}" = "${PHASE_B_SINCE_CANONICAL}" ] && \
+     [ "${date_ge_start}" = "true" ] && [ "${date_le_end}" = "true" ]; then
+    window_ok=true
+  fi
+
+  if [ "${window_ok}" = "false" ]; then
+    echo "WARNING: --emit-signal ignored. SINCE_DATE or today (${TODAY_UTC}) outside Phase B window (2026-05-10..2026-05-17). Report written; no signal dropped."
+  else
+    if [ "${verdict}" = "PASS" ]; then
+      SIGNAL_FILE="docs/signals/agents-architect-${SIGNAL_TS}-phase-b-c1-c2.json"
+      cat > "${SIGNAL_FILE}" << SIGEOF
 {
   "from": "agents-architect",
   "to": "agent-father",
@@ -356,20 +381,20 @@ if [ "${verdict}" = "PASS" ]; then
   "verdict": "PASS",
   "generated_at": "${UNTIL_DATE}"
 }
-EOF
-  echo "Signal drop (PASS): ${SIGNAL_FILE}"
-else
-  # Collect failing criteria list
-  failing_criteria="["
-  first=true
-  [ "${c1_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C1"'; first=false; }
-  [ "${c2_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C2"'; first=false; }
-  [ "${c3_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C3"'; first=false; }
-  [ "${c4_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C4"'; first=false; }
-  failing_criteria+="]"
+SIGEOF
+      echo "Signal drop (PASS): ${SIGNAL_FILE}"
+    else
+      # Collect failing criteria list
+      failing_criteria="["
+      first=true
+      [ "${c1_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C1"'; first=false; }
+      [ "${c2_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C2"'; first=false; }
+      [ "${c3_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C3"'; first=false; }
+      [ "${c4_pass_bool}" = "false" ] && { [ "${first}" = "true" ] || failing_criteria+=","; failing_criteria+='"C4"'; first=false; }
+      failing_criteria+="]"
 
-  SIGNAL_FILE="docs/signals/agents-architect-${SIGNAL_TS}-phase-b-c1-c2-fail.json"
-  cat > "${SIGNAL_FILE}" << EOF
+      SIGNAL_FILE="docs/signals/agents-architect-${SIGNAL_TS}-phase-b-c1-c2-fail.json"
+      cat > "${SIGNAL_FILE}" << SIGEOF
 {
   "from": "agents-architect",
   "to": "user",
@@ -381,8 +406,12 @@ else
   "remediation": "See violations list in audit report. Extend window by 7 days (re-run 2026-05-24). Fix agent flows that produced violations.",
   "generated_at": "${UNTIL_DATE}"
 }
-EOF
-  echo "Signal drop (FAIL): ${SIGNAL_FILE}"
+SIGEOF
+      echo "Signal drop (FAIL): ${SIGNAL_FILE}"
+    fi
+  fi
+else
+  echo "Signal emission skipped (no --emit-signal flag). Report at: ${REPORT_FILE}"
 fi
 
 # Exit 0 = PASS, 1 = FAIL
