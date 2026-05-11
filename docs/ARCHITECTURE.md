@@ -75,7 +75,7 @@ VPS (Vinahost Vietnam)                  Local Docker
 
 ## Service Implementation Notes
 
-- **MCP Server**: 112 tools, 50 cron jobs, HTTP clients to 8 other services
+- **MCP Server**: 132 tools, 59 cron jobs, HTTP clients to 8 other services
 - **API Gateway**: Central routing, health aggregation, load balancing
 - **Stock Price**: 3-tier price fallback (VPS bridge → exchange APIs → fallback)
 - **PDF Extractor**: pdfplumber + Tesseract OCR for BCTC financial statements
@@ -171,7 +171,7 @@ src/
 │   ├── mcp/
 │   │   ├── server.ts                ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts             ← SSEServerTransport setup
-│   │   └── tools/                   ← 100 registered MCP tools (via registry.ts)
+│   │   └── tools/                   ← 132 registered MCP tools (via registry.ts)
 │   │       ├── registry.ts          ← Central tool registration, imports all module barrels
 │   │       ├── index.ts             ← Top-level barrel
 │   │       ├── market-data/         ← prices, OHLCV, foreign flow, insider, TA, price alerts
@@ -185,7 +185,7 @@ src/
 │   │       ├── kinhdich/            ← hexagram readings and transitions
 │   │       └── system/              ← watchlist, ask queue, feedback, VPS proxy, system status
 │   └── scheduler/index.ts           ← startScheduler()
-└── scheduler/                       ← 38 files: jobs.ts + summaryJobs.ts + module subfolders
+└── scheduler/                       ← 62 files: jobs.ts + summaryJobs.ts + module subfolders
     ├── jobs.ts                      ← Master cron registration
     ├── summaryJobs.ts / vpsProxyWatchdogJob.ts / pipelineWatchdogJob.ts
     ├── davPharmacyJob.ts / weatherCheckJob.ts / walCheckpointAlert.ts
