@@ -218,3 +218,11 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | Effective 0.69 (×1.1 TAILWIND+TIGHTENING) | No shift ≥0.3 | FII: UNKNOWN
 - Events: None triggered | Market closed final — VRE -6.41% (worst), HVN -2.92%, FPT -2.64%, EIB +2.71% | China/Taiwan 50.5% (unchanged, FPT/VEA/GEX watch) | Supply chain OK | Energy NORMAL | Legal: none | Crisis: none
 - Unreviewed: 50 msgs (39 user_ask_reply, 3 france_summary, 3 morning_briefing, 2 alert_digest, 2 evening_summary, 1 calibration_report) — structured agent reports, no spam detected
+
+### Coordination Cycle (11:01–11:06 UTC) — 2026-05-11
+- Mode: MARKET | System: OK (all CBs clear, vnstock rate-limit WARNs HPG/HCM transient, Reuters/TE offline persistent) | Alerts: 7 open (all notified) | Quality issues: 1 (price_drop 25% + price_surge 0% < 60%, filed feedback)
+- Regime: NEUTRAL (DXY 97.98, US10Y NEUTRAL, Carry -0.33% FII_OUTFLOW_RISK) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND, NEUTRAL no multiplier)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime, no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (carry -0.33%, foreign selling FPT -14,100tỷ + VHM -1,000tỷ, "tiền nóng co cụm")
+- Events: None triggered | Market closed — VN-Index ~1,905 (-~20pts, -1%), VRE -6.41%, FPT -2.64% (lowest since end 2023), HVN -2.92%, EIB +2.71% outlier | Real estate sector leading decline | BCTC: 24 tickers overdue 11d, 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 15/5 (4d)
+- Supply chain: OK (BDI 1,400, stable) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: none | Crisis: none | Prediction: China/Taiwan 50.5% (low actionable)
+- No unreviewed telegram reports | 99% alert outcomes unknown (review gap ongoing)
