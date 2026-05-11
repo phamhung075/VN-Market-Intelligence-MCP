@@ -276,3 +276,14 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | VRE -6.41%, HVN -2.92%, FPT -2.64% (RSI 25.8 oversold, lowest since 2023), HSG RSI 10.0 extreme oversold | EIB +2.71% sole outlier | Macro: Brent 104.35 (+5.36σ), Gold 4,732 (-5.38σ) EXTREME alerts | China/Taiwan 50.5% (unchanged)
 - Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Unreviewed: 10 structured reports (no spam)
 - BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) | No agent signals | WORK telegram sent 18:03 UTC clean
+
+### Coordination Cycle (19:00–19:06 UTC)
+- Mode: MARKET | System: OK (VRE vnstock rate-limit WARN, Reuters/TE 24 failures known) | Alerts: 10 | Quality issues: price_drop accuracy 25% < 60% (feedback filed)
+- Regime: TIGHTENING (prev: NEUTRAL) | Alignment: 0.00 | Headwind exposure: 100% (FPT/tech)
+- REGIME_TRANSITION posted to WORK | Portfolio misalignment posted | FII HOT_MONEY warning posted
+- FPT @ 70,000 (-12.83%) below stop-loss 74,679 | RSI=25.8 oversold | conviction STRONG bearish 0.63
+- Macro: Brent 04.35 (+3.96σ) EXTREME | Inflation 8% | USD/VND 26,123 | carry VND -33bp
+- VN-Index 1,895.5 (-20pts/-1.04%) | Q1/2026 BCTC: 24 tickers overdue 11 days; banking (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15
+- Foreign flow pipeline paused | fii_type=HOT_MONEY (inferred from news signals)
+- No crisis signals | No legal risk signals | Supply chain stable (BDI 1,400) | Grid NORMAL
+
