@@ -25,9 +25,9 @@ If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at 
 - **ACK missing** → PO never processed previous findings. Log `"⚠ Previous handoff NOT ACK'd by PO — findings may be lost"`. Flag in session log. Include this in Step 9 findings as a persisting blocker.
 
 **Step 0c — Bootstrap**
-- Load `.claude/knowledge/alert-policy.md` (fail-loud)
-- Load `.claude/knowledge/alert-message-format.md` (fail-loud)
-- Load `.claude/knowledge/tnb-methodology.md` (fail-loud) — the Báu strategic framework. Used in Phase 2.5.
+- Load `docs/policies/alert-policy.md` (fail-loud)
+- Load `docs/standards/alert-message-format.md` (fail-loud)
+- Load `docs/standards/tnb-methodology.md` (fail-loud) — the Báu strategic framework. Used in Phase 2.5.
 - `get_macro_snapshot()` → extract REGIME, CARRY_REGIME, DXY_SIGNAL, US10Y_SIGNAL
 - `get_system_status()` → confirm infrastructure healthy. If DOWN → send BUG, EXIT.
 
@@ -40,7 +40,7 @@ If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at 
 
 For each message, check:
 - [ ] Vietnamese diacritics present (no mojibake, no missing marks)
-- [ ] Message structure follows `.claude/knowledge/alert-message-format.md`
+- [ ] Message structure follows `docs/standards/alert-message-format.md`
 - [ ] Confidence displayed as 0–1 decimal (not percentage, not raw integer)
 - [ ] Regime caveat appended when required (TIGHTENING + bullish must have caveat)
 - [ ] Ticker symbol valid (in watchlist or known VN stock)
@@ -177,7 +177,7 @@ Then:
 git add docs/agent-memory/notebooks/tran-ngoc-bau.md
 git commit -m "chore(memory/tran-ngoc-bau): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ## End of cycle
 → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

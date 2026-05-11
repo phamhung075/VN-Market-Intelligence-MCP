@@ -87,8 +87,8 @@ agent:
   doc_maintenance:
     owns:
       - docs/architecture/microservice/mcp-server/**  # domain-model, usecases, infrastructure, api-reference, testing, README
-      - .claude/knowledge/mcp-tools.md     # MCP tool catalog (update when tools added/removed/renamed)
-      - .claude/knowledge/cron-jobs.md     # Scheduler catalog (update when jobs added/removed/changed)
+      - docs/standards/mcp-tools.md     # MCP tool catalog (update when tools added/removed/renamed)
+      - docs/standards/cron-jobs.md     # Scheduler catalog (update when jobs added/removed/changed)
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, schema, or config
       - Keep own agent description (.claude/agents/dev-mcp-server.md) accurate if skills/stack/port change
@@ -99,9 +99,9 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/dev-standards.md
+      - path: docs/policies/dev-standards.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/architecture/microservice/mcp-server/domain-model.md
@@ -116,13 +116,13 @@ agent:
         trigger: test_work
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms
-      - path: .claude/knowledge/cron-jobs.md
+      - path: docs/standards/cron-jobs.md
         trigger: scheduler_work
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: mcp_tool_change
-      - path: .claude/knowledge/alert-policy.md
+      - path: docs/policies/alert-policy.md
         trigger: alert_implementation
-      - path: .claude/knowledge/kinh-dich-layer.md
+      - path: docs/references/kinh-dich-layer.md
         trigger: hexagram_integration
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search

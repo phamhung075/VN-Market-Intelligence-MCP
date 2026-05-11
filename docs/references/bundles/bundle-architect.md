@@ -26,40 +26,40 @@ One call, all always-needed rules. Load this instead of dev-standards.md + tree-
 ```
 CLAUDE.md (root — always loaded)
 │
-├── .claude/knowledge/tree-map.md ← THIS FILE
+├── docs/references/tree-map.md ← THIS FILE
 │
-├── .claude/knowledge/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
+├── docs/standards/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
 │   └── docs/data/tool-registry.json (tool list + count — volatile)
 │
-├── .claude/knowledge/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
+├── docs/standards/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
 │   └── docs/data/cron-registry.json (job list + count — volatile)
 │
-├── .claude/knowledge/portfolio-schema.md (position rules: ledger logic, stop-loss formula, TP ladder, analysis block format)
+├── docs/standards/portfolio-schema.md (position rules: ledger logic, stop-loss formula, TP ladder, analysis block format)
 │   ├── docs/data/stock-classification.json (tickers, sectors, trade exposure, peers, reverse map — volatile)
 │   └── mcp.config.json → alertPolicy (threshold values — volatile)
 │
-├── .claude/knowledge/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns)
+├── docs/policies/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns)
 │   └── mcp.config.json → alertPolicy (threshold values — shared child with portfolio-schema)
 │
-├── .claude/knowledge/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
+├── docs/standards/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
 │
-├── .claude/knowledge/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
+├── docs/protocols/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
 │
-├── .claude/knowledge/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
+├── docs/references/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
 │
-├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13, cooperation flow, signal bus)
+├── docs/references/agent-roster.md (team structure: analysis 8 + dev 13, cooperation flow, signal bus)
 │
-├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format, branch hygiene)
+├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format, branch hygiene)
 │
-├── .claude/knowledge/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
+├── docs/protocols/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
-├── .claude/knowledge/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
+├── docs/standards/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
 │
-├── .claude/knowledge/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
+├── docs/policies/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
-├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
+├── docs/protocols/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
-├── .claude/knowledge/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
+├── docs/policies/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
@@ -96,11 +96,11 @@ CLAUDE.md (root — always loaded)
 | `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
-| `.claude/knowledge/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
-| `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
-| `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
-| `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |
-| `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
+| `docs/policies/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
+| `docs/protocols/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
+| `docs/standards/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
+| `docs/policies/qa-checklist.md` | QA / Architect | After QA rule change |
+| `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 
 ---
 
@@ -119,7 +119,7 @@ CLAUDE.md (root — always loaded)
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars, or permission denied):
 1. IMMEDIATELY `send_telegram(channel="work", message="[architect] Knowledge load failed: <filename> — <error detail>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="architect")`
 3. STOP current cycle, return early
@@ -130,7 +130,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 ## Lazy-Load (read ONLY when task touches that area)
 
-- Full tree-map rules (diamond DAG rules, drift detection) → `.claude/knowledge/tree-map.md`
-- MCP tool surface (when designing tool-adding features) → `.claude/knowledge/mcp-tools.md`
-- Cron schedule (when designing scheduler features) → `.claude/knowledge/cron-jobs.md`
-- Feature schemas → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+- Full tree-map rules (diamond DAG rules, drift detection) → `docs/references/tree-map.md`
+- MCP tool surface (when designing tool-adding features) → `docs/standards/mcp-tools.md`
+- Cron schedule (when designing scheduler features) → `docs/standards/cron-jobs.md`
+- Feature schemas → `docs/standards/portfolio-schema.md`, `docs/policies/alert-policy.md`, `docs/protocols/ask-queue-protocol.md`

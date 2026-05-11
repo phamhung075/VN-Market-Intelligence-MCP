@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-10 (scan 11 — 1 finding, shipped)
+## Last updated: 2026-05-10 (scan 16 — 6 findings, 1 shipped, 5 proposed)
 
 ## State summary
 
@@ -20,11 +20,18 @@
 | JANITOR-023 | CLAUDE_BIN extracted to agentConstants.ts, imported by smartCompactSpawner.ts + qaResponderSpawner.ts | b836f129 |
 | JANITOR-024 | DEDUP_WINDOW_SECONDS inlined in isDuplicateReport default parameter | dd2e6b82 |
 | JANITOR-025 | GEO_BLOCKED_BREAKER_CONFIG for reuters + tradingEconomics in circuitBreakerRegistry.ts | 61c2cc9b |
+| JANITOR-026 | SqliteVnstockRepository _callStore<T> helper extracted — 9 methods | 75f73af3 |
+| JANITOR-033 | analysisAgentCount 9→8 in docs/data/project-stats.json | 2026-05-10 |
 
 ### Open backlog
 
 | ID | Description | Blocker |
 |----|-------------|---------|
+| JANITOR-028 | Dev MCP Server agent .md: remove "112 tools" from lines 4, 13 | Requires agent-father approval |
+| JANITOR-029 | Cloudflare ops flow: remove "Full 112 tools available" from lines 13, 29 | Requires ops/developer approval |
+| JANITOR-030 | Agent Models README: replace "All 13 agents" (lines 15, 28) with unquantified wording | Requires agent-father approval |
+| JANITOR-031 | Agent Roster: fix line 5 "7 agents" → "8 agents" (line 102 is correct) | Requires agent-father approval |
+| JANITOR-032 | Alert Commander: max_alerts_per_day duplicates alert-policy.md threshold | Requires agent-father approval |
 | JANITOR-011 | Puppeteer launch config dup in tradingEconomicsChromium.ts | No test coverage on affected paths |
 | JANITOR-013 | SignalTypeEnum re-lists SignalType union (two-file change) | Two-file change |
 | JANITOR-017 | BROWSER_UA string in 18 source files (18-file fan-out) | 18-file fan-out across 3 layers |
@@ -38,11 +45,9 @@
 
 ## Notes for next scan
 
-- Scan 11 (2026-05-10): JANITOR-025 shipped — GEO_BLOCKED_BREAKER_CONFIG centralized. Reuters + TradingEconomics now share single config constant (both geo-blocked, same retry strategy).
-- JANITOR-020: Task 1563 (Sprint 226) created marketContextBuilder.ts as DDD extraction — but marketContextTools.ts was never updated to use it. Good candidate when a developer touches either file.
-- JANITOR-013: small two-file change — good candidate if a developer is already touching agentSignalStore.ts
-- JANITOR-011: unblockable until puppeteer paths get integration test coverage
-- Next scan: watch for any new private number-parsing copies in infrastructure/fetchers
+- Scan 16 (2026-05-10): SSOT conflict audit on meta-configuration files. Found 6 hardcoded volatile counts: 3 in agent .md files, 1 in flow .md, 1 in knowledge file, 1 in JSON. Fixed analysisAgentCount (9→8) in project-stats.json. 5 config-file violations proposed as backlog tasks (require agent-father/ops approval, outside code-janitor's edit scope).
+- JANITOR-028–JANITOR-032: All require approval from agent-father or flow owners before edits (not mechanical, not production code).
+- Next scan: watch for any new agent creations that increment devAgentCount or analysisAgentCount without updating project-stats.json.
 
 ---
 
@@ -131,3 +136,39 @@
 **Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
 
 **Quality:** Full
+
+---
+
+## Session 16 (2026-05-10 00:00–00:15 VN) — Hardcoded volatile counts in meta-configuration
+
+**Scope:** SSOT conflict audit — agent .md, knowledge .md, flow .md, JSON config files
+
+**Result:** 6 violations found, 1 shipped, 5 proposed
+
+| Finding | File | Lines | Count | Status | Ship | Reason |
+|---------|------|-------|-------|--------|------|--------|
+| JANITOR-028 | .claude/agents/dev-mcp-server.md | 4, 13 | "112 tools" | Proposed | No | Agent .md protected |
+| JANITOR-029 | .claude/flows/ops/cloudflare-mcp.md | 13, 29 | "Full 112 tools" | Proposed | No | Flow .md protected |
+| JANITOR-030 | .claude/AGENT_MODELS_README.md | 15, 28 | "All 13 agents" | Proposed | No | Meta-config file |
+| JANITOR-031 | .claude/knowledge/agent-roster.md | 5 | "7 agents" (correct: 8) | Proposed | No | Knowledge .md protected |
+| JANITOR-032 | .claude/agents/alert-commander.md | 50 | max_alerts_per_day=10 | Proposed | No | Agent .md protected |
+| JANITOR-033 | docs/data/project-stats.json | 19 | analysisAgentCount=9 (correct: 8) | **Shipped** | Yes | JSON data file, direct fix |
+
+**Direct fix:** JANITOR-033 — analysisAgentCount 9→8 in project-stats.json. Commit pending.
+
+**Backlog:** 5 new tasks created (JANITOR-028–032). Require agent-father (3 tasks), ops/developer (1 task) approval.
+
+**Constraint:** Code-janitor role limited to direct edits of production code + JSON data files. Agent .md, knowledge .md, flow .md require approval from agent-father or flow owners.
+
+**Quality:** Full
+
+---
+
+## Cumulative Metrics
+
+- **Total scans:** 16
+- **Violations found:** 27 (shipped 14, proposed 9, managed 4)
+- **Ship-directly success rate:** 52% (14 shipped / 27 found)
+- **Backlog density:** 33% (9 open / 27 found)
+- **Managed (test coverage):** 15% (4 managed / 27 found)
+- **Recurring violations:** 0 (all prior findings resolved or managed)

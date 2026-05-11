@@ -20,7 +20,7 @@ Include updated docs in the same commit as their related source category.
 | `apps/mcp-server/src/**` (schema change) | Any `docs/` architecture docs referencing that schema |
 | `docs/TASKS.md` | `docs/TASKS_ARCHIVE.md` — archive completed tasks if not already done |
 | `.claude/flows/**` | Relevant agent `.md` if the flow change affects agent behavior |
-| `.claude/knowledge/**` | Any agent `.md` that references the changed knowledge file |
+| `docs/{policies,protocols,standards,references}/**` | Any agent `.md` that references the changed knowledge file |
 | Source code bug fix | Add entry to relevant session log if a bug was resolved |
 
 Do not create new documentation files unless clearly missing. Prefer updating existing docs.
@@ -33,7 +33,7 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 |----------|--------------|---------|
 | Agent files | `chore(agents)` | `.claude/agents/*.md` |
 | Flows | `chore(flows)` | `.claude/flows/` |
-| Knowledge files | `docs(knowledge)` | `.claude/knowledge/` |
+| Knowledge files | `docs(knowledge)` | `docs/{policies,protocols,standards,references}/` |
 | Docs / briefs | `docs(analysis)` | `docs/analysis-briefs/` |
 | Notebooks | `chore(memory/<agent-id>)` | `docs/agent-memory/notebooks/` — `notebook YYYY-MM-DD` (no trailers) |
 | Tasks / archive | `chore(tasks)` | `docs/TASKS.md`, `docs/TASKS_ARCHIVE.md` |

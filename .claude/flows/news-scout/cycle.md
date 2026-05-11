@@ -195,7 +195,7 @@ call_tool(server="vn-market", tool="send_telegram", arguments={
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 ## Batch 2 Sentiment Log (05:00 UTC daily)
-Per ticker from `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
+Per ticker from `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `docs/references/analysis-ledger-template.md`
 
 Then append to `docs/analysis-briefs/{TICKER}.md` [News Scout]:
 ```

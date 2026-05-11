@@ -156,6 +156,6 @@ await call_tool(
 ## Related Documentation
 
 - **All Tools Index:** `.claude/tools/list/README.md`
-- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
-- **Signal Types:** `.claude/knowledge/mcp-tools.md` → "Inter-Agent Signal Types"
-- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`
+- **MCP Logic:** `docs/standards/mcp-tools.md`
+- **Signal Types:** `docs/standards/mcp-tools.md` → "Inter-Agent Signal Types"
+- **Fail-Loud Protocol:** `docs/protocols/fail-loud-protocol.md`

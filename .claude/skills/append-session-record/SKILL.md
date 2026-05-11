@@ -15,6 +15,6 @@ git add docs/agent-memory/notebooks/<agent-id>.md
 git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
 ```
 
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 Failure is non-fatal — log a warning and continue.

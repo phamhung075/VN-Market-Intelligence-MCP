@@ -140,5 +140,5 @@ Complete index → `.claude/tools/list/INDEX.md`
 
 - **All Tools Index:** `.claude/tools/list/INDEX.md`
 - **Full Tools List:** `.claude/tools/list/all-tools.md`
-- **Signal Types:** `.claude/knowledge/mcp-tools.md` → "Inter-Agent Signal Types"
-- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`
+- **Signal Types:** `docs/standards/mcp-tools.md` → "Inter-Agent Signal Types"
+- **Fail-Loud Protocol:** `docs/protocols/fail-loud-protocol.md`

@@ -373,17 +373,17 @@ if (alreadyFixed) {
 
 ## VPS Connection Guide
 
-See: `.claude/knowledge/reference_vps_setup.md`
+See: `docs/{policies,protocols,standards,references}/reference_vps_setup.md`
 
 ## BCTC Extraction Runbook
 
-See: `.claude/knowledge/bctc-extraction-runbook.md`
+See: `docs/protocols/bctc-extraction-runbook.md`
 
 ## Related Documentation
 
 - **All Tools Index:** `.claude/tools/list/README.md`
-- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
-- **Alert Policy:** `.claude/knowledge/alert-policy.md`
-- **VPS Setup:** `.claude/knowledge/reference_vps_setup.md`
-- **BCTC Runbook:** `.claude/knowledge/bctc-extraction-runbook.md`
-- **PDF OCR Architecture:** `.claude/knowledge/reference_pdf_ocr_vps_architecture.md`
+- **MCP Logic:** `docs/standards/mcp-tools.md`
+- **Alert Policy:** `docs/policies/alert-policy.md`
+- **VPS Setup:** `docs/{policies,protocols,standards,references}/reference_vps_setup.md`
+- **BCTC Runbook:** `docs/protocols/bctc-extraction-runbook.md`
+- **PDF OCR Architecture:** `docs/{policies,protocols,standards,references}/reference_pdf_ocr_vps_architecture.md`

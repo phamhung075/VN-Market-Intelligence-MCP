@@ -50,7 +50,7 @@ vn-market-intelligence/         ← pnpm workspace root
 - `pdf_extractor.db` — WRITE: pdf-extractor only (isolated, no sharing)
 - `rag_service.db` — WRITE: rag-service only (isolated, no sharing)
 
-**Restart:** see `.claude/knowledge/restart-policy.md` (SSOT — docker-compose only, 9 services)
+**Restart:** see `docs/policies/restart-policy.md` (SSOT — docker-compose only, 9 services)
 
 ## Microservices Communication
 
@@ -158,7 +158,7 @@ src/
 │   ├── fileStore/                   ← JSON file stores; alertVerdictStore.ts = primary pending-verdict
 │   │                                   write target (Sprint 1863); read by verdictResolutionJob before
 │   │                                   writing outcome to agent_signals.outcome DB column.
-│   │                                   Two-stage verdict flow documented in .claude/knowledge/alert-policy.md
+│   │                                   Two-stage verdict flow documented in docs/policies/alert-policy.md
 │   │                                   (updated 1871g).
 │   ├── microservices/               ← HTTP clients to downstream Docker services (clients.ts)
 │   ├── notifiers/

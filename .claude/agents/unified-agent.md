@@ -56,17 +56,17 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         fail_loud: true
-      - path: .claude/knowledge/agent-roster.md
+      - path: docs/references/agent-roster.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/portfolio-schema.md
+      - path: docs/standards/portfolio-schema.md
         trigger: portfolio_review
         fail_loud: false
-      - path: .claude/knowledge/alert-policy.md
+      - path: docs/policies/alert-policy.md
         trigger: quality_check
         fail_loud: false
 

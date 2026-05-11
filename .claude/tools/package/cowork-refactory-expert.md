@@ -64,7 +64,7 @@ Bash: git add .claude/cowork/ && git commit -m "refactor: clarify <agent-id> pro
 ## Knowledge Loaded at Start
 
 - `.claude/skills/token-economy/SKILL.md` — 3-tier compression rules
-- `.claude/knowledge/agent-roster.md` — agent responsibilities
+- `docs/references/agent-roster.md` — agent responsibilities
 - User feedback files: `feedback_cowork_prompt.md`, `feedback_agent_autonomy.md`, etc.
 
 ## Channel Permissions

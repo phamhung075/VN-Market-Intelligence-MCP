@@ -40,7 +40,7 @@ Everything else handled internally by agent chain.
 
 ## Branch Hygiene
 
-Full checklist → `.claude/knowledge/dev-standards.md`
+Full checklist → `docs/policies/dev-standards.md`
 
 Key rules:
 - Every task ends on `main` with clean working tree

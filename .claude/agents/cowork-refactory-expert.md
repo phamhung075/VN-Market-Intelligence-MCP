@@ -69,15 +69,15 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/agent-roster.md
+      - path: docs/references/agent-roster.md
         trigger: agent_structure_check
         fail_loud: false
-      - path: .claude/knowledge/cron-jobs.md
+      - path: docs/standards/cron-jobs.md
         trigger: scheduler_check
         fail_loud: false
       - path: docs/GLOSSARY_VI.md

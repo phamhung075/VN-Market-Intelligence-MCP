@@ -61,8 +61,8 @@ compare_backtest_runs(run_ids=["test-run-1", "test-run-2"])
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/dev-standards.md` — code style expectations for test readability
-- `.claude/knowledge/alert-policy.md` — alert thresholds and test scenarios (lazy-load)
+- `docs/policies/dev-standards.md` — code style expectations for test readability
+- `docs/policies/alert-policy.md` — alert thresholds and test scenarios (lazy-load)
 - `docs/architecture/test-strategy.md` — testing architecture and mocking patterns
 
 ## Channel Permissions

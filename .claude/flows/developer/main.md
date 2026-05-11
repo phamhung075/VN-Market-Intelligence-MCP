@@ -27,7 +27,7 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
 4. `depends_on` not Done → STOP, notify PM
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
-6. **Before creating any new file** → look up canonical location in `.claude/knowledge/docs-organization.md` table.
+6. **Before creating any new file** → look up canonical location in `docs/policies/docs-organization.md` table.
    Quick ref: source→`apps/mcp-server/src/` | tests→`apps/mcp-server/src/__tests__/` | reports→`reports/` | handoffs→`docs/handoffs/` | never at root.
 
 **TDD workflow**
@@ -42,14 +42,14 @@ REPEAT per acceptance criterion
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
-4. `git add -p && git commit` — format per `.claude/knowledge/commit-convention.md`
+4. `git add -p && git commit` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:
    - `docs/analysis-briefs/` for any ticker/sector mentioned in the task
    - `docs/handoffs/` — update the current handoff only
-   - `.claude/knowledge/` — update any knowledge file whose domain was changed (e.g. mcp-tools.md if MCP tool added, cron-jobs.md if scheduler changed)
+   - `docs/{policies,protocols,standards,references}/` — update any knowledge file whose domain was changed (e.g. mcp-tools.md if MCP tool added, cron-jobs.md if scheduler changed)
    - `docs/WORK.md` — append a one-liner summary of what changed
 2. Edit each found doc to reflect the new behaviour/API/schema — keep changes minimal and factual
 3. Run graphify incremental update on changed docs:
@@ -78,7 +78,7 @@ Then:
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

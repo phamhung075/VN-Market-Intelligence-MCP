@@ -72,15 +72,15 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
       - path: docs/agent-memory/AGENT_STARTUP.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/cron-jobs.md
+      - path: docs/standards/cron-jobs.md
         trigger: scheduler_health_check
         fail_loud: false
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: tool_health_check
         fail_loud: false
       - path: .claude/skills/semble-search/SKILL.md

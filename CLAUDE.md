@@ -14,7 +14,7 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ## Agent Routing — User Request → Agent
 
-→ See `.claude/knowledge/agent-routing.md` for routing intent table and principles.
+→ See `docs/references/agent-routing.md` for routing intent table and principles.
 
 ---
 
@@ -22,7 +22,7 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 Main terminal is permanent switch. Sub-agents cannot spawn each other.
 
-Protocol: `.claude/knowledge/agent-chaining-protocol.md`
+Protocol: `docs/protocols/agent-chaining-protocol.md`
 
 ```
 main terminal
@@ -43,7 +43,7 @@ All agent communication uses:
 
 ## Commit Policy
 
-All commits follow `.claude/knowledge/commit-convention.md` — format, type vocabulary, sprint/area scope, task-id trailers, AC trailers, no-sprint rule.
+All commits follow `docs/policies/commit-convention.md` — format, type vocabulary, sprint/area scope, task-id trailers, AC trailers, no-sprint rule.
 
 ---
 

@@ -12,7 +12,7 @@ After completing your work, review the documentation you followed this cycle and
 ### What to review
 
 1. **Your flow file** — the `.claude/flows/<agent>/*.md` you executed
-2. **Knowledge files** — any `.claude/knowledge/*.md` you loaded during the cycle
+2. **Knowledge files** — any `docs/{policies,protocols,standards,references}/*.md` you loaded during the cycle
 3. **Skill files** — any `.claude/skills/*/SKILL.md` you invoked
 
 ### What to fix

@@ -90,9 +90,9 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/dev-standards.md
+      - path: docs/policies/dev-standards.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/architecture/microservice/api-gateway/domain-model.md

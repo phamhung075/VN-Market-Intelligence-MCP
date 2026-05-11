@@ -83,16 +83,16 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/alert-policy.md
+      - path: docs/policies/alert-policy.md
         fail_loud: true
-      - path: .claude/knowledge/alert-message-format.md
+      - path: docs/standards/alert-message-format.md
         fail_loud: true
-      - path: .claude/knowledge/tnb-methodology.md
+      - path: docs/standards/tnb-methodology.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/market-analysis.md
+      - path: docs/standards/market-analysis.md
         trigger: cascade_or_thesis_check
         fail_loud: false
       - path: docs/data/stock-classification.json

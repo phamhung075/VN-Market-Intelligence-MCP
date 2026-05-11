@@ -30,7 +30,7 @@ L4  SESSION LOGS <- loaded on demand (own or other agent's historical logs)
 | **L0** | YAML frontmatter from `.claude/agents/<id>.md` | ~200 tok | Always (auto by harness) | Fixed |
 | **L1** | `docs/agent-memory/notebooks/<id>.md` | ~300 tok | Step 0b (every cycle) | Fixed, max 50 lines |
 | **L1b** | Bootstrap MCP response | ~3,000-5,000 tok | Step 0 (cowork only) | Fixed, 1 call replaces 3 |
-| **L2** | `.claude/knowledge/<file>.md` (one at a time) | ~200-800 tok each | When step triggers `lazy_load` | Max 3 files/cycle |
+| **L2** | `docs/<bucket>/<file>.md` (one at a time) | ~200-800 tok each | When step triggers `lazy_load` | Max 3 files/cycle |
 | **L3** | Other agent's notebook (Current state + Lessons only) | ~150 tok each | When decision involves another domain | Max 2/cycle |
 | **L4** | `docs/agent-memory/notebooks/<id>.md` (git log) | ~100-500 tok | Only when investigating a past event | Max 1/cycle |
 
@@ -65,13 +65,13 @@ RIGHT:  Step 0: bootstrap() -> Step 3: extract from bootstrap context    <- FREE
 ```yaml
 # WRONG -- market-watcher always loads alert-policy but never fires alerts
 always_load:
-  - path: .claude/knowledge/alert-policy.md    # <- WASTE: 800 tok x 96 cycles/day = 76,800 tok/day
+  - path: docs/policies/alert-policy.md    # <- WASTE: 800 tok x 96 cycles/day = 76,800 tok/day
 
 # RIGHT -- only load what your flow actually uses
 always_load:
-  - path: .claude/knowledge/fail-loud-protocol.md   # <- Used by error boundary (every cycle)
+  - path: docs/protocols/fail-loud-protocol.md   # <- Used by error boundary (every cycle)
 lazy_load:
-  - path: .claude/knowledge/alert-policy.md          # <- Only if this agent fires alerts
+  - path: docs/policies/alert-policy.md          # <- Only if this agent fires alerts
     trigger: alert_decision
 ```
 
@@ -123,7 +123,7 @@ Some data doesn't change every cycle. Don't re-fetch what hasn't changed.
 |------|-----------------|----------|-----|
 | Sector rotation | ~4h | Notebook lesson | 4h (skip if last read < 4h ago) |
 | BCTC deadlines | Monthly | Agent definition YAML | Until next quarter |
-| Glossary terms | Never | `.claude/knowledge/` | infinity (never lazy-load at startup) |
+| Glossary terms | Never | `docs/{policies,protocols,standards,references}/` | infinity (never lazy-load at startup) |
 | Watch thresholds | Per regime change | Agent definition YAML | Until regime changes |
 | Macro snapshot | ~1h | Bootstrap | 1 cycle (always fresh from bootstrap) |
 | Price data | ~15min | Tool call result | 1 cycle (always fresh) |
@@ -147,16 +147,16 @@ ELSE
 ```yaml
 knowledge:
   always_load:                              # Loaded with identity -- MUST be used every cycle
-    - path: .claude/knowledge/fail-loud-protocol.md
+    - path: docs/protocols/fail-loud-protocol.md
       fail_loud: true
   lazy_load:                                # Loaded when step needs it
-    - path: .claude/knowledge/mcp-tools.md
+    - path: docs/standards/mcp-tools.md
       trigger: mcp_tool_call               # Load when first MCP tool is needed
       fail_loud: true
-    - path: .claude/knowledge/kinh-dich-layer.md
+    - path: docs/references/kinh-dich-layer.md
       trigger: hexagram_signal             # Load only if hexagram data appears
       fail_loud: false
-    - path: .claude/knowledge/alert-policy.md
+    - path: docs/policies/alert-policy.md
       trigger: alert_decision              # Load when about to fire/suppress alert
       fail_loud: true
 ```
@@ -187,12 +187,12 @@ Before loading any file or calling any tool, the agent asks:
    NO  -> use and discard
 ```
 
-### 4.8 Pre-bundled Knowledge (`.claude/knowledge/bundles/`)
+### 4.8 Pre-bundled Knowledge (`docs/references/bundles/`)
 
 For agents that always need the same set of knowledge files, bundles avoid N+1 reads:
 
 ```
-.claude/knowledge/bundles/bundle-<agent-id>.md
+docs/references/bundles/bundle-<agent-id>.md
 ```
 
 A bundle = one file that concatenates essential sections from multiple knowledge files. Maintained by `claude-manager-helper`. Agent loads 1 file instead of 5.

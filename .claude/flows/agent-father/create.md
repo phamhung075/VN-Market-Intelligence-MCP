@@ -156,7 +156,7 @@ Create `.claude/tools/package/<agent_name>.md` following the pattern from refere
 
 | Target | Action |
 |--------|--------|
-| `.claude/knowledge/agent-roster.md` | Add row to appropriate team table (Analysis Team or Dev Team) |
+| `docs/references/agent-roster.md` | Add row to appropriate team table (Analysis Team or Dev Team) |
 | `CLAUDE.md` | Add routing entry to Agent Routing table |
 | `.claude/skills/dispatch/SKILL.md` | Add row to Dispatch Table |
 

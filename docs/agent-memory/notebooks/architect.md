@@ -19,6 +19,31 @@ U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase
 ## Carry-over for next session
 
 - U-5 (prediction calibration feedback loop) and U-6 (RAG service wiring) are next in Tier 2. Both are SPRINT-M — review existing calibration tool signatures and RAG service API before designing.
+- ARCH-1884 brief written: Hybrid decision (Option 3). Calculators in mcp-server domain; BTN detectors in new forensic-analysis service (port 5007). Sprint 1887 (Virtual Capital) lands on same forensic-analysis service with its own DB volume.
+
+---
+
+## Session — 2026-05-12 (ARCH-1884 forensic-analysis host decision)
+
+**Task:** Architect brief — where should forensic accounting logic (M-Score, F-Score, accruals, BTN detectors) live?
+
+**Decision:** Option 3 — Hybrid. Pure-function calculators (M-Score, F-Score, accruals) in `apps/mcp-server/src/domain/services/financial-reports/`. Heuristic detectors (Cookie Jar, Big Bath, Big Bet; Sprint 1886) and future Virtual Capital (Sprint 1887) in new `apps/forensic-analysis/` service, port 5007.
+
+**Brief written:** `docs/architecture-briefs/2026-05-12-forensic-analysis-host.md`
+
+**Key design decisions:**
+- Calculators are pure ratio functions over 2 BCTC rows — same family as `ratioComputer.ts`. No new service justified for Sprint 1885.
+- BTN detectors require multi-quarter heuristic matching; Virtual Capital needs graph storage → isolated service is correct.
+- Data access: forensic-analysis reads `market_data` SQLite volume as `:ro` (WAL mode allows concurrent read). No circular HTTP.
+- MCP surface: all 4 tools registered on mcp-server (single MCP boundary). BTN tool routes via HTTP to 5007.
+- Sprint 1878 column name (`operating_cash_flow` vs `operating_cf`) is a hard dependency — flagged as Risk R1.
+- M-Score VAS/GAAP variance flagged (R2): use cash-flow TATA variant.
+
+**Test delta estimate:** ~74 new tests across 1885+1886 → projected base ~5,996.
+
+**Risks ranked:** R1 (1878 column) HIGH, R2 (M-Score VAS) MEDIUM, R3 (SQLite WAL) LOW, R4 (gateway health) LOW, R5 (latency) LOW, R6 (tool name coordination) LOW.
+
+**Pipeline state:** idle
 
 ---
 
@@ -111,5 +136,68 @@ U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase
 **Files:** `scripts/audits/commit-convention-audit.sh` (VOCAB line + C4 block), `.claude/knowledge/commit-convention.md` (area list). Net LOC: ~16. Under 30 limit.
 
 **POSIX check:** case/cut/local/return — all bash 3.2 safe. No `[[`, no `\>=`, no floats in test.
+
+**Pipeline state:** idle
+
+---
+
+## Session — 2026-05-11 (SPRINT-S-1877d C3 AC trailer gap)
+
+**Task:** Design brief to close C3 AC-trailer gap: 77.2% → ≥80% before 2026-05-17 Phase B gate.
+
+**Brief written:** `docs/architecture-briefs/2026-05-17-c3-ac-trailer-gap.md`
+
+**Audit window (2026-05-10..now):** 81 commits with Task trailer (C3 denominator). 62 pass (AC present). 19 violations.
+
+**Bucket analysis:**
+- `chore(memory/*)`: 7 violations — notebook commits, no-sprint rule explicitly says no AC
+- `chore(state*)`: 4 violations — pipeline bookkeeping (task → In Progress/Review)
+- merge commits (subject contains `merge task/`): 5 violations — AC lives on the feat/fix not the merge
+- `docs(*)`: 2 violations — genuine omissions, should carry AC
+- `chore(qa/pm)`: 1 violation — borderline; flow tightening covers
+
+**Decision: Path (c) Hybrid**
+1. Add `is_c3_exempt` flag in audit script C3 block — exempts memory/*, chore(state*), and subjects containing "merge task/".
+2. Flow patches: developer/main.md (add explicit AC trailer reminder), qa/main.md (note merge-commit AC exemption).
+3. commit-convention.md: add § C3-Exempt Commit Categories table.
+
+**Math after exemption:** denominator drops 81→65. Rate = 62/65 = 0.9538 >> 0.80 target. Immediate PASS.
+
+**POSIX check:** `case "${lsubj}" in chore\(state*\):*` — literal parens escaped, glob `*` POSIX safe. No `[[`, no `=~`. bash -n passes.
+
+**LOC delta:** +24 LOC across 4 files. Under 30 limit.
+
+**False-positive risk:** LOW. `chore(state)` is reserved scope; no production code goes there. Residual covered by C1 header-format audit.
+
+**Pipeline state:** idle
+
+---
+
+## Session — 2026-05-11 (SPRINT-M-1877e C2 task-trailer gap)
+
+**Task:** Design brief to close C2 task-trailer gap: 58.67% → ≥85% before 2026-05-17 Phase B gate.
+
+**Brief written:** `docs/architecture-briefs/2026-05-17-c2-task-trailer-gap.md`
+
+**Live audit run:** C2 = 0.5867 (44/75), 31 violations. C1=0.9571 PASS, C3=0.9180 PASS, C4=0.9611 PASS. Only C2 blocking gate.
+
+**Full violation breakdown:**
+- cycle-NN: 1 — `chore(cycle-28)` housekeeping, digit is cycle not sprint
+- pm/cNN: 1 — `chore(pm/c26)` cycle bookkeeping
+- sprint-scoped merge task/ chore: 3 — `chore(1870a): merge task/…`, `chore(1869/mcp-server): merge task/…` x2
+- pm/sprint bookkeeping: 2 — `chore(pm/1862c)` decompose + move-to-Done
+- genuine delivery miss (history-locked): 24 — all sprints 1862–1876, all pre-1877, CANNOT fix
+
+**Decision: Path (c) Hybrid.** Exemptions: 7 misses removed from denom (cycle-NN, pm/cNN, pm/NNNN* sprint bookkeeping, sprint-scoped chore with `merge task/` in subject).
+
+After exemptions: 44/68 = 0.6471. Need 92+ new sprint-scoped commits at ≥91.2% compliance to reach 0.85. At 37 sprint-scoped/day, achievable in 2.5 days with near-perfect flow compliance.
+
+**Critical risk:** 80% compliance gives 0.7655 — FAIL. Flow tightening is mandatory. 1877e-2 must ship immediately.
+
+**4th flow file correction:** BA spec said agent-father — wrong (only writes memory/* commits). Real patch site is pm/main.md.
+
+**LOC delta:** +35 LOC across 4 files. Within SPRINT-M budget.
+
+**Parallelism:** all 3 sub-tasks independent — PM fires Tier 1 parallel.
 
 **Pipeline state:** idle

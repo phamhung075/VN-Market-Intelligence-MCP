@@ -7,7 +7,7 @@
 1. **CLAUDE.md is root.** All paths start from CLAUDE.md pointers.
 2. **Parent → child only.** Never child → parent. No circular references.
 3. **Multiple parents may share a child.** Diamond dependencies OK.
-4. **`.claude/knowledge/*.md`** = logic, rules, how-to. Stable. Agents read, rarely write.
+4. **`docs/{policies,protocols,standards,references}/*.md`** = logic, rules, how-to. Stable. Agents read, rarely write.
 5. **`docs/data/*.json`** = volatile data (counts, lists, stats). Agents read AND write during work.
 6. **JSON never in `.claude/`.** Always in `docs/data/`.
 7. **MD never contains volatile counts/lists** — point to JSON child instead.
@@ -18,59 +18,63 @@
 ```
 CLAUDE.md (root — always loaded)
 │
-├── .claude/knowledge/tree-map.md ← THIS FILE
+├── docs/references/tree-map.md ← THIS FILE
 │
-├── .claude/knowledge/agent-routing.md (agent dispatch: routing intent table, procedural prompt rule, routing principles)
+├── docs/references/agent-routing.md (agent dispatch: routing intent table, procedural prompt rule, routing principles)
 │
-├── .claude/knowledge/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
+├── docs/protocols/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
 │   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
 │   ├── docs/signals/*.json (cross-team signal files: cowork→dev-team, drained at Step 0a — volatile)
 │   └── docs/signals/processed/*.json (treated signals with processedAt/result metadata — auto-pruned after 7 days)
 │
-├── .claude/knowledge/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
+├── docs/standards/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
 │   └── docs/data/project-stats.json (tool count + master stats file — volatile)
 │
-├── .claude/knowledge/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
+├── docs/standards/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
 │   └── docs/data/cron-registry.json (job list + count — volatile)
 │
-├── .claude/knowledge/portfolio-schema.md (position rules: ledger logic, stop-loss formula, TP ladder, analysis block format)
+├── docs/standards/portfolio-schema.md (position rules: ledger logic, stop-loss formula, TP ladder, analysis block format)
 │   ├── docs/data/stock-classification.json (tickers, sectors, trade exposure, peers, reverse map — volatile)
 │   └── mcp.config.json → alertPolicy (threshold values — volatile)
 │
-├── .claude/knowledge/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns, signal verdict lifecycle)
+├── docs/policies/alert-policy.md (firing rules: position-danger, watchlist-opportunity, Commander exclusivity, cooldowns, signal verdict lifecycle)
 │   ├── mcp.config.json → alertPolicy (threshold values — shared child with portfolio-schema)
 │   ├── apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts (hourly verdict resolver: pending→confirmed|false_positive, 24h guard, 30d TTL pruning, fail-loud — Task 1863)
 │   └── docs/data/alert-verdicts.json (aggregate verdict outcome stats — volatile)
 │
-├── .claude/knowledge/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
+├── docs/standards/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
 │
-├── .claude/knowledge/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
+├── docs/protocols/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
 │
-├── .claude/knowledge/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
+├── docs/references/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
 │
-├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13 + microservices 9, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol)
+├── docs/references/agent-roster.md (team structure: analysis 8 + dev 13 + microservices 9, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol)
 │
-├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
-│   └── .claude/knowledge/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)
+├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
+│   └── docs/policies/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)
 │
-├── .claude/knowledge/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
+├── docs/protocols/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
-├── .claude/knowledge/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
-│   └── .claude/knowledge/tnb-methodology.md (Báu strategic framework SSOT: monthly>quarterly, state transitions, US/VN stacks, 4-pillar valuation, 6-step decision tree, gap catalogue)
+├── docs/standards/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
+│   └── docs/standards/tnb-methodology.md (Báu strategic framework SSOT: monthly>quarterly, state transitions, US/VN stacks, 4-pillar valuation, 6-step decision tree, gap catalogue)
 │
-├── .claude/knowledge/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
+├── docs/policies/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
 ├── .claude/skills/token-economy/SKILL.md Part 3 (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE — merged into skill, no separate knowledge file)
 │
 ├── .claude/skills/semble-search/SKILL.md (code search decision guide: when Semble vs Grep/Glob/Read)
 │
-├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
+├── .claude/skills/doc-heal-system/SKILL.md (full-subtree audit + auto-fix: tree-map DAG, SSOT, factory pointers, no-hardcode rule — escalates semantic drift to architect)
 │
-├── .claude/knowledge/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
+├── .claude/skills/doc-self-heal/SKILL.md (per-agent end-of-cycle doc fix: narrow scope, files touched this cycle only — companion to doc-heal-system)
 │
-├── .claude/knowledge/ops-incident-response.md (incident playbook: service failures, recovery procedures, severity levels)
+├── docs/protocols/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
-├── .claude/knowledge/vps-setup.md (VPS operations: Vinahost connection, service management, health checks)
+├── docs/policies/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
+│
+├── docs/protocols/ops-incident-response.md (incident playbook: service failures, recovery procedures, severity levels)
+│
+├── docs/references/vps-setup.md (VPS operations: Vinahost connection, service management, health checks)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
@@ -186,15 +190,15 @@ CLAUDE.md (root — always loaded)
 | `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
-| `.claude/knowledge/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
-| `.claude/knowledge/commit-convention.md` | Developer / Architect | Commit format change |
-| `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
-| `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
-| `.claude/knowledge/tnb-methodology.md` | Tran-Ngoc-Bau / Architect | After Báu framework refinement or new methodology gap pattern catalogued |
-| `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |
-| `.claude/knowledge/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
-| `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
-| `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
+| `docs/policies/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
+| `docs/policies/commit-convention.md` | Developer / Architect | Commit format change |
+| `docs/protocols/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
+| `docs/standards/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
+| `docs/standards/tnb-methodology.md` | Tran-Ngoc-Bau / Architect | After Báu framework refinement or new methodology gap pattern catalogued |
+| `docs/policies/qa-checklist.md` | QA / Architect | After QA rule change |
+| `docs/protocols/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
+| `docs/references/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
+| `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
 | `docs/architecture/global.md` | Architect | After service topology or conflict resolution change |
 | `docs/architecture/microservice/<service>.md` | Architect | After service-level design change |

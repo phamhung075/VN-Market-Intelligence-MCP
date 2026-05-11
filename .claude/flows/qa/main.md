@@ -54,7 +54,7 @@ verdict: APPROVED | CHANGES_REQUESTED
 
 ## Approval
 **APPROVED**: append `[QA] Review Record` → merge + push + clean → return.
-Merge commit subject must follow `.claude/knowledge/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
+Merge commit subject must follow `docs/policies/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
 If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.
 QA non-merge commits with sprint scope (digit in scope) MUST carry `Task:` trailer.
 ```bash
@@ -103,7 +103,7 @@ PIPELINE: continue
 git add docs/agent-memory/notebooks/qa.md
 git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

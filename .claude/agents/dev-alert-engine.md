@@ -81,7 +81,7 @@ agent:
   doc_maintenance:
     owns:
       - docs/architecture/microservice/alert-engine/**    # domain-model, usecases, infrastructure, api-reference, testing, README
-      - .claude/knowledge/alert-policy.md     # Alert policy rules (update when thresholds/cooldown change)
+      - docs/policies/alert-policy.md     # Alert policy rules (update when thresholds/cooldown change)
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, alert logic, or config
       - Keep own agent description (.claude/agents/dev-alert-engine.md) accurate if skills/stack/port change
@@ -92,9 +92,9 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/dev-standards.md
+      - path: docs/policies/dev-standards.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/architecture/microservice/alert-engine/domain-model.md
@@ -107,9 +107,9 @@ agent:
         trigger: api_work
       - path: docs/architecture/microservice/alert-engine/testing.md
         trigger: test_work
-      - path: .claude/knowledge/alert-policy.md
+      - path: docs/policies/alert-policy.md
         trigger: alert_implementation
-      - path: .claude/knowledge/alert-message-format.md
+      - path: docs/standards/alert-message-format.md
         trigger: alert_formatting
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms

@@ -64,7 +64,7 @@ Caveman spec → `.claude/skills/caveman/SKILL.md` (ultra: agent-to-agent | lite
 | market-watcher | `price_anomaly`, `volume_spike` | alert-commander |
 | alert-commander | `suppress`, `verified_decision` | all cowork agents |
 
-API: `post_agent_signal(type, payload)` → `get_agent_signals()` — full spec → `.claude/knowledge/mcp-tools.md`
+API: `post_agent_signal(type, payload)` → `get_agent_signals()` — full spec → `docs/standards/mcp-tools.md`
 
 ---
 
@@ -77,7 +77,7 @@ API: `post_agent_signal(type, payload)` → `get_agent_signals()` — full spec 
 | `bug` | ALL agents on error | Incidents, anomalies, bootstrap failures |
 
 Fail-loud: any knowledge Read failure → `send_telegram(channel="bug")` + STOP
-Full protocol → `.claude/knowledge/fail-loud-protocol.md`
+Full protocol → `docs/protocols/fail-loud-protocol.md`
 
 ---
 
@@ -85,9 +85,9 @@ Full protocol → `.claude/knowledge/fail-loud-protocol.md`
 
 | Rule | Pointer |
 |------|---------|
-| DDD: `domain/` never imports `infrastructure/` | `.claude/knowledge/dev-standards.md` |
-| Restart: `docker-compose down && docker-compose up -d` ONLY | `.claude/knowledge/restart-policy.md` |
-| Main terminal NEVER writes `docs/TASKS.md`, `docs/handoffs/*`, `docs/pipeline-state.json` — spawn `po` / `pm` / dev-team | `.claude/knowledge/agent-chaining-protocol.md` |
+| DDD: `domain/` never imports `infrastructure/` | `docs/policies/dev-standards.md` |
+| Restart: `docker-compose down && docker-compose up -d` ONLY | `docs/policies/restart-policy.md` |
+| Main terminal NEVER writes `docs/TASKS.md`, `docs/handoffs/*`, `docs/pipeline-state.json` — spawn `po` / `pm` / dev-team | `docs/protocols/agent-chaining-protocol.md` |
 | Never ask user to run code — spawn subagent | |
 | WIP: max 2 tasks In Progress in `docs/TASKS.md` | |
 | SQL: parameterized bindings only | |
@@ -99,10 +99,10 @@ Full protocol → `.claude/knowledge/fail-loud-protocol.md`
 
 | Content | Location |
 |---------|----------|
-| Logic / rules / policy | `.claude/knowledge/*.md` |
+| Logic / rules / policy | `docs/{policies,protocols,standards,references}/*.md` |
 | Volatile counts / lists | `docs/data/*.json` |
 | Core architecture | `docs/*.md` (6 files max) |
 | Agent memory / sessions | `docs/agent-memory/` |
 | Task reports / archive | `docs/archive/` |
 
-Full DAG → `.claude/knowledge/tree-map.md`
+Full DAG → `docs/references/tree-map.md`

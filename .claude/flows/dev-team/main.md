@@ -257,7 +257,7 @@ if ctx > 25%:
   1. log_agent_work(tag="sprint-boundary", state=current_sprint_id)
   2. Write: docs/agent-memory/notebooks/main.md (current tier, next sprint intent)
   3. git add docs/agent-memory/notebooks/main.md && git commit -m "chore(memory/dev-team): notebook YYYY-MM-DD"
-     (Convention: .claude/knowledge/commit-convention.md § Notebook Commits)
+     (Convention: docs/policies/commit-convention.md § Notebook Commits)
   4. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
   5. Return
      → stop-context-advisor.sh fires automatically on every response end

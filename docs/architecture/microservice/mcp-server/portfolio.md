@@ -39,8 +39,8 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 
 ## Invariants
 
-1. Position ledger rules: see `.claude/knowledge/portfolio-schema.md`.
-2. Stop-loss formula and TP ladder: `.claude/knowledge/portfolio-schema.md`.
+1. Position ledger rules: see `docs/standards/portfolio-schema.md`.
+2. Stop-loss formula and TP ladder: `docs/standards/portfolio-schema.md`.
 3. Stock classification (sectors, peers): `docs/data/stock-classification.json`.
-4. Alert policy for position-danger: `.claude/knowledge/alert-policy.md`.
+4. Alert policy for position-danger: `docs/policies/alert-policy.md`.
 5. `get_user_positions_for_analysis` is formatted for Cowork agents (compact, analysis-ready).

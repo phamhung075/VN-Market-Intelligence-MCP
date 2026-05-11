@@ -1,7 +1,97 @@
 {
-  "scan_date": "2026-05-11T23:58:00Z",
-  "last_run": "2026-05-11T23:58:00Z",
+  "scan_date": "2026-05-10T00:00:00Z",
+  "last_run": "2026-05-10T00:15:00Z",
   "findings": [
+    {
+      "fingerprint": "check-5:docs/data/project-stats.json:analysisAgentCount",
+      "severity": "LOW",
+      "category": "Hardcoded volatile count — analysisAgentCount (RESOLVED)",
+      "file": "docs/data/project-stats.json (SSOT for project metrics)",
+      "lines": "Line 19",
+      "detail": "JANITOR-033 SHIPPED: analysisAgentCount was 9 (incorrect, counted Setup agent 00). Correct count: 8 (Unified Coordinator + 7 numbered agents 1-8). Fixed to 8. Commit 2026-05-10. Risk: RESOLVED.",
+      "canonical_source": "docs/data/project-stats.json:analysisAgentCount",
+      "risk": "RESOLVED — count now accurate, single edit point for team size changes.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "shipped",
+      "backlog_task": "JANITOR-033",
+      "ship_directly": true,
+      "reason_shipped": "Single-file mechanical fix. JSON data file, no test rebuild needed. Commit pending."
+    },
+    {
+      "fingerprint": "check-5:meta-config:dev-mcp-server.md:tool-count-hardcoded",
+      "severity": "LOW",
+      "category": "Hardcoded volatile count — tool count in agent description (PROPOSED)",
+      "file": ".claude/agents/dev-mcp-server.md (agent metadata)",
+      "lines": "Lines 4, 13",
+      "detail": "JANITOR-028 PROPOSED: Agent description says 'with 112 MCP tools, 50 cron jobs' (outdated; actual toolCount=132, cronJobCount=59 per project-stats.json). Hardcoded counts become stale after tool/job additions. Fix: remove hardcoded counts, use generic wording 'orchestrates MCP tools and cron jobs'. Requires agent-father approval.",
+      "canonical_source": "docs/data/project-stats.json#toolCount, #cronJobCount",
+      "risk": "LOW — description is informational, not load-bearing. Stale wording misleads but does not break functionality.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-028",
+      "ship_directly": false,
+      "reason_not_shipped": "Agent .md files are protected configuration, require agent-father approval. Not editable by code-janitor role."
+    },
+    {
+      "fingerprint": "check-5:meta-config:cloudflare-mcp.md:tool-count-hardcoded",
+      "severity": "LOW",
+      "category": "Hardcoded volatile count — tool count in ops flow (PROPOSED)",
+      "file": ".claude/flows/ops/cloudflare-mcp.md (operations flow)",
+      "lines": "Lines 13, 29",
+      "detail": "JANITOR-029 PROPOSED: Flow documentation says 'Full 112 tools available' (line 13) and health check expectation '{\"status\":\"ok\",\"tools\":112}' (line 29). Actual count = 132. Fix: remove count from line 13, generalize to 'Full tool suite available'. Update health check example to show dynamic count or omit the static expectation. Requires ops/developer approval.",
+      "canonical_source": "docs/data/project-stats.json#toolCount",
+      "risk": "LOW — flow documentation is informational. Stale count may confuse ops team but does not block operations.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-029",
+      "ship_directly": false,
+      "reason_not_shipped": "Flow .md files are protected, require developer/ops approval. Not editable by code-janitor role."
+    },
+    {
+      "fingerprint": "check-5:meta-config:AGENT_MODELS_README.md:agent-count-hardcoded",
+      "severity": "LOW",
+      "category": "Hardcoded volatile count — dev team agent count (PROPOSED)",
+      "file": ".claude/AGENT_MODELS_README.md (meta-documentation)",
+      "lines": "Lines 15, 28",
+      "detail": "JANITOR-030 PROPOSED: Document says 'All 13 agents' in both eco and normal mode descriptions (lines 15, 28). Actual dev-team agent count varies per mode and may grow. Fix: replace 'All 13 agents' with 'All dev-team agents' (unquantified). Requires agent-father approval.",
+      "canonical_source": "docs/data/project-stats.json#devAgentCount",
+      "risk": "LOW — hardcoded count misleads after agent creation/removal but does not break script functionality.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-030",
+      "ship_directly": false,
+      "reason_not_shipped": "Meta-config file, protected. Requires agent-father approval."
+    },
+    {
+      "fingerprint": "check-5:meta-config:agent-roster.md:analysis-team-count-mismatch",
+      "severity": "MEDIUM",
+      "category": "Conflicting hardcoded counts — analysis team agent count (PROPOSED)",
+      "file": ".claude/knowledge/agent-roster.md (team roster metadata)",
+      "lines": "Line 5 vs Line 102 (conflicting)",
+      "detail": "JANITOR-031 PROPOSED: Line 5 header says 'Analysis Team (Claude Cowork — 7 agents)' but line 102 states 'Analysis Team count clarification: 7 numbered agents + 1 Unified Coordinator (on-demand + daily scheduled) = 8 total'. Audit confirms line 102 is correct (8 agents). Fix: Line 5 '7 agents' → '8 agents'. Requires agent-father approval.",
+      "canonical_source": ".claude/knowledge/agent-roster.md (lines 9-17 for correct list: 8 agents)",
+      "risk": "MEDIUM — conflicting documentation confuses team structure understanding.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-031",
+      "ship_directly": false,
+      "reason_not_shipped": "Knowledge .md files are protected. Requires agent-father approval."
+    },
+    {
+      "fingerprint": "check-5:meta-config:alert-commander.md:max-alerts-dup",
+      "severity": "LOW",
+      "category": "Hardcoded threshold duplicated — max_alerts_per_day (PROPOSED)",
+      "file": ".claude/agents/alert-commander.md (agent metadata)",
+      "lines": "Line 50",
+      "detail": "JANITOR-032 PROPOSED: Agent constraints section hardcodes 'max_alerts_per_day: 10'. Same threshold exists in alert-policy.md (SSOT for alert rules). Two edit points for same business rule create drift risk. Fix: remove hardcoded value from agent .md, add comment pointer to alert-policy.md as canonical source. Requires agent-father approval.",
+      "canonical_source": ".claude/knowledge/alert-policy.md (alerts per day threshold)",
+      "risk": "LOW — duplicate config is not load-bearing (agent uses config file at runtime), but creates maintenance confusion.",
+      "discovered_at": "2026-05-10T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-032",
+      "ship_directly": false,
+      "reason_not_shipped": "Agent .md files are protected. Requires agent-father approval."
+    },
     {
       "fingerprint": "check-3:infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
       "severity": "LOW",
@@ -158,6 +248,17 @@
   ],
   "fixed_findings": [
     {
+      "fingerprint": "check-5:docs/data/project-stats.json:analysisAgentCount",
+      "severity": "LOW",
+      "category": "Hardcoded volatile count — analysisAgentCount (resolved)",
+      "file": "docs/data/project-stats.json",
+      "detail": "JANITOR-033. analysisAgentCount 9→8. Correct count: Unified Coordinator (on-demand) + 7 numbered agents (1-8 in roster) = 8 total. Setup agent (00) is bootstrap-only, not counted. Single-file JSON data fix.",
+      "fix_type": "data_fix",
+      "fix_commit": "2026-05-10 (pending)",
+      "fixed_at": "2026-05-10T00:10:00Z",
+      "fix_notes": "JANITOR-033. Single-file data correction. No test rebuild needed. Commit pending."
+    },
+    {
       "fingerprint": "check-3:infrastructure/db/telegramReportStore.ts:DEDUP_WINDOW_SECONDS",
       "severity": "LOW",
       "category": "Magic number repeated in function default parameter (resolved)",
@@ -304,133 +405,49 @@
       "risk": "Low. Fallback always overridden in production. Defensive pattern is safe.",
       "discovered_at": "2026-04-13T00:00:00Z",
       "status": "confirmed-safe"
+    },
+    {
+      "fingerprint": "check-3:infrastructure/db/repositories/SqliteVnstockRepository.ts:require-try-catch-dup",
+      "severity": "LOW",
+      "category": "Duplicate dynamic require + try-catch pattern (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/db/repositories/SqliteVnstockRepository.ts",
+      "detail": "JANITOR-026 SHIPPED: Nine methods (getLatestFinancials, getLatestTradingStats, getOfficers, getShareholders, getEvents, getLatestBalanceSheet, getLatestCashFlow, upsertFinancials, upsertTradingStats) all had identical require('../vnstockStore.js') + try-catch + fallback pattern (45+ LOC). Extracted to private _callStore<T>(fnName, args, defaultValue) helper (19 LOC). Single-file mechanical fix. Tests: 1838b-repository-adapters.test.ts: 21/21 pass. Commit: 75f73af3 (2026-05-11).",
+      "fix_type": "refactor",
+      "fix_commit": "75f73af3",
+      "fixed_at": "2026-05-11T16:52:00Z",
+      "fix_notes": "JANITOR-026. Single-file mechanical fix. 21 tests pass (1838b-repository-adapters). TSC clean. Shipped directly."
     }
   ],
   "scan_checks": {
     "scan-16": {
-      "scan_date": "2026-05-11T23:58:00Z",
-      "scope": "git diff HEAD~50..HEAD (21 production files across application/domain/infrastructure/interface/scheduler layers)",
-      "check-1-duplicate-classification-maps": {
+      "scan_date": "2026-05-10T00:00:00Z",
+      "scope": "Meta-configuration files audit — agent .md, knowledge .md, flow .md, JSON data files",
+      "check-1-agent-files": {
         "status": "complete",
-        "findings": 0,
-        "notes": "No Record<string,> keyed on tickers. Clean."
+        "findings": 3,
+        "notes": "dev-mcp-server.md (2 lines: tool count hardcoded), alert-commander.md (1 line: max_alerts_per_day dup)"
       },
-      "check-2-hardcoded-ticker-arrays": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No uppercase ticker arrays. Clean."
-      },
-      "check-3-repeated-magic-numbers-and-cron-duplication": {
+      "check-2-knowledge-files": {
         "status": "complete",
         "findings": 1,
-        "notes": "JANITOR-027 proposed: Pattern `24 * 60 * 60 * 1000` inlined in 21 files. Canonical source exists (MS_PER_DAY in timeConstants.ts). Multi-file violation — added to backlog."
+        "notes": "agent-roster.md line 5: '7 agents' vs line 102 '8 agents' (mismatch)"
       },
-      "check-4-schema-duplication": {
+      "check-3-flow-files": {
         "status": "complete",
-        "findings": 0,
-        "notes": "No production CREATE TABLE. All DDL canonical in schema-*.ts. Clean."
+        "findings": 1,
+        "notes": "cloudflare-mcp.md lines 13, 29: tool count hardcoded in ops flow docs"
       },
-      "check-5-config-drift": {
+      "check-4-json-data-files": {
         "status": "complete",
-        "findings": 0,
-        "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean."
+        "findings": 1,
+        "notes": "project-stats.json line 19: analysisAgentCount=9 (should be 8)"
       },
-      "summary": "4 checks clean, 1 finding. JANITOR-027 proposed (21-file time constant duplication). Ready for next cycle."
-    },
-    "scan-10": {
-      "scan_date": "2026-05-10T04:15:36Z",
-      "scope": "diff HEAD~3..HEAD (7 files: circuitBreaker.ts, circuitBreakerRegistry.ts, 1862f test, docs/TASKS.md, qa.md, session logs, reports)",
-      "check-1-duplicate-classification-maps": {
+      "check-5-meta-docs": {
         "status": "complete",
-        "findings": 0,
-        "notes": "No Record<string,> keyed on tickers. Clean."
+        "findings": 1,
+        "notes": "AGENT_MODELS_README.md lines 15, 28: 'All 13 agents' hardcoded (count variable)"
       },
-      "check-2-hardcoded-ticker-arrays": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No uppercase ticker arrays. Clean."
-      },
-      "check-3-repeated-magic-numbers-and-cron-duplication": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "Circuit breaker registry contains timeout values (900_000, 7_200_000, 600_000, 300_000) but these are intentional business-logic config entries, not shared code duplication. Each breaker (reuters, ssc, polymarket, etc.) is independent with documented reasoning."
-      },
-      "check-4-schema-duplication": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean."
-      },
-      "check-5-config-drift": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean."
-      },
-      "summary": "All 5 checks pass. 0 new violations. Task 1862f (circuit breaker backoff) verified: 10 tests pass. Ready for next cycle."
-    },
-    "scan-9": {
-      "scan_date": "2026-05-09T14:28:00Z",
-      "scope": "diff HEAD~15..HEAD (6 production TS files + test changes)",
-      "check-1-duplicate-classification-maps": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No Record<string,> keyed on tickers. Clean."
-      },
-      "check-2-hardcoded-ticker-arrays": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No uppercase ticker arrays. Clean."
-      },
-      "check-3-repeated-magic-numbers-and-cron-duplication": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "isDuplicateReport() correctly uses DEDUP_WINDOW_SECONDS. New constants properly extracted (Tasks 1860b, 1860c). Staleness thresholds in syncVnstockData are business rules, not duplication."
-      },
-      "check-4-schema-duplication": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean."
-      },
-      "check-5-config-drift": {
-        "status": "complete",
-        "findings": 0,
-        "notes": "New constants DEDUP_WINDOW_SECONDS and MONITORING_EXPIRY_HOURS properly centralized. Clean."
-      },
-      "summary": "All 5 checks pass. 0 new violations. JANITOR-024 (shipped in prior cycle) verified improved. Ready for next cycle."
-    },
-    "check-1-duplicate-classification-maps": {
-      "status": "complete",
-      "items_scanned": 3,
-      "scope": "diff HEAD~15..HEAD (3 production TS files: telegramReportStore.ts, telegramReportTools.ts, feedbackTools.ts)",
-      "findings": 0,
-      "notes": "No Record<string,> keyed on ticker symbols. No sector/exchange/display-name classification maps. Clean."
-    },
-    "check-2-hardcoded-ticker-arrays": {
-      "status": "complete",
-      "items_scanned": 3,
-      "scope": "diff HEAD~15..HEAD (3 production TS files)",
-      "findings": 0,
-      "notes": "No uppercase ticker literals. Clean."
-    },
-    "check-3-repeated-magic-numbers-and-cron-duplication": {
-      "status": "complete",
-      "items_scanned": 3,
-      "scope": "diff HEAD~15..HEAD (3 production TS files)",
-      "findings": 1,
-      "notes": "JANITOR-024 shipped: DEDUP_WINDOW_SECONDS (4*3600) inlined in isDuplicateReport default parameter. Now uses constant. Commit dd2e6b82."
-    },
-    "check-4-schema-duplication": {
-      "status": "complete",
-      "items_scanned": 3,
-      "scope": "diff HEAD~15..HEAD (3 production TS files)",
-      "findings": 0,
-      "notes": "Zero CREATE TABLE or inline DDL. All DDL in schema.ts canonical source. Clean."
-    },
-    "check-5-config-drift": {
-      "status": "complete",
-      "items_scanned": 3,
-      "scope": "diff HEAD~15..HEAD (3 production TS files)",
-      "findings": 0,
-      "notes": "No hardcoded config fallbacks discovered. ??: patterns are error handling, not config drift. Clean."
+      "summary": "6 findings. 1 shipped (project-stats.json JANITOR-033), 5 proposed (require agent-father/ops approval). Role constraints: protected files (.md) require approval; JSON data files editable directly."
     }
   }
 }

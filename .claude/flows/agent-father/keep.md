@@ -57,7 +57,7 @@ Classify findings:
 Glob: .claude/agents/*.md → extract filenames → set A
 
 # Roster entries
-Grep: "\.md" .claude/knowledge/agent-roster.md → extract filenames → set B
+Grep: "\.md" docs/references/agent-roster.md → extract filenames → set B
 ```
 
 Compare:
@@ -82,7 +82,7 @@ Apply fixes ONLY for mechanical/cosmetic issues:
 
 | Fix | Action | Condition |
 |-----|--------|-----------|
-| Missing fail-loud reference | Add `- path: .claude/knowledge/fail-loud-protocol.md` to `always_load` | Check #1 FAIL |
+| Missing fail-loud reference | Add `- path: docs/protocols/fail-loud-protocol.md` to `always_load` | Check #1 FAIL |
 | Stale version date | Update `version: "YYYY-MM-DD"` to today | Check #5 FAIL, >90 days |
 | Missing roster entry | Add row to appropriate team table | UNREGISTERED from Step 2 |
 | Missing notebook | Create scaffold from template | MISSING_NOTEBOOK from Step 1 |

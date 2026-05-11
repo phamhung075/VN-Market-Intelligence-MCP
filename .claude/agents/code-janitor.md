@@ -69,9 +69,9 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/janitor-procedures.md
+      - path: docs/protocols/janitor-procedures.md
         fail_loud: true
       - path: docs/data/code-janitor-known-findings.json
         fail_loud: true

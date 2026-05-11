@@ -29,7 +29,7 @@ docs/TASKS.md (task numbering) | Architect proposal | recent agent notebooks (`d
 | NNN | Short title | pending | role | — | NNN-1,NNN-2 |
 ```
 
-**3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`.claude/knowledge/commit-convention.md`), making git the second copy:
+**3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`docs/policies/commit-convention.md`), making git the second copy:
 ```markdown
 ---
 sprint: NNN
@@ -49,7 +49,7 @@ blocks: []
 - **Files to create:** [path — purpose]
 - **Files to modify:** [path:lines]
 - **Dependencies:** [list or "none"]
-- **Knowledge needed:** `.claude/knowledge/dev-standards.md` + others
+- **Knowledge needed:** `docs/policies/dev-standards.md` + others
 ```
 
 **3c.** Update docs/TASKS.md (status → pending) → return task list with dependency tiers:

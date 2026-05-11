@@ -82,7 +82,7 @@ Schema: `src/infrastructure/db/schema.ts` (public API) backed by 8 slice files.
 
 Cron count: `docs/data/project-stats.json` → `cronJobCount`
 Scheduler files: `docs/data/project-stats.json` → `schedulerFileCount`
-Cron registry: `.claude/knowledge/cron-jobs.md` → `docs/data/cron-registry.json`
+Cron registry: `docs/standards/cron-jobs.md` → `docs/data/cron-registry.json`
 
 Master registration: `src/scheduler/jobs.ts`
 
@@ -94,5 +94,5 @@ Master registration: `src/scheduler/jobs.ts`
 2. `server.ts` bootstrap: MCP tools + scheduler start together. No lazy registration.
 3. Cowork agents access tools via SSE (`/sse` endpoint). CLI cron agents access tools via StreamableHTTP (`/mcp` endpoint — stateless, no session dependency).
 4. Circuit breakers wrap all external HTTP calls (fetchers + microservice clients).
-5. Alert verdict lifecycle: pending → confirmed | false_positive via `verdictResolutionJob.ts` (hourly, minute=7). Full policy: `.claude/knowledge/alert-policy.md`.
+5. Alert verdict lifecycle: pending → confirmed | false_positive via `verdictResolutionJob.ts` (hourly, minute=7). Full policy: `docs/policies/alert-policy.md`.
 6. fileStore (`src/infrastructure/fileStore/alertVerdictStore.ts`) is the primary write target for pending verdicts. verdictResolutionJob reads from fileStore before writing outcome to `agent_signals.outcome` DB column.

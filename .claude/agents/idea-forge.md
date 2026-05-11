@@ -66,7 +66,7 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/ARCHITECTURE.md

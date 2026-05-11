@@ -306,5 +306,5 @@ await call_tool(
 - **All Tools Index:** `.claude/tools/list/README.md`
 - **Kinh Dich:** `.claude/tools/list/kinhdich.md`
 - **Backtesting:** `.claude/tools/list/backtesting.md`
-- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
-- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`
+- **MCP Logic:** `docs/standards/mcp-tools.md`
+- **Fail-Loud Protocol:** `docs/protocols/fail-loud-protocol.md`

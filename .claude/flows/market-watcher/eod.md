@@ -18,7 +18,7 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 
-**A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
+**A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create from `docs/references/analysis-ledger-template.md`
 
 Then append `docs/analysis-briefs/{TICKER}.md` [Market Watcher]:
 ```

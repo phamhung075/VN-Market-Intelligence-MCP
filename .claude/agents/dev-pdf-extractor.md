@@ -83,7 +83,7 @@ agent:
   doc_maintenance:
     owns:
       - docs/architecture/microservice/pdf-extractor/**       # domain-model, usecases, infrastructure, api-reference, testing, README
-      - .claude/knowledge/bctc-extraction-runbook.md  # BCTC runbook (update when pipeline/OCR logic changes)
+      - docs/protocols/bctc-extraction-runbook.md  # BCTC runbook (update when pipeline/OCR logic changes)
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, OCR pipeline, or config
       - Keep own agent description (.claude/agents/dev-pdf-extractor.md) accurate if skills/stack/port change
@@ -94,9 +94,9 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/dev-standards.md
+      - path: docs/policies/dev-standards.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/architecture/microservice/pdf-extractor/domain-model.md
@@ -109,7 +109,7 @@ agent:
         trigger: api_work
       - path: docs/architecture/microservice/pdf-extractor/testing.md
         trigger: test_work
-      - path: .claude/knowledge/bctc-extraction-runbook.md
+      - path: docs/protocols/bctc-extraction-runbook.md
         trigger: bctc_extraction
       - path: docs/GLOSSARY_VI.md
         trigger: vn_financial_terms

@@ -20,7 +20,7 @@ description: >
 
 ## Knowledge Load Failure Protocol
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars, or permission denied):
 1. IMMEDIATELY `send_telegram(channel="bug", message="[{agent-id}] Knowledge load failed: <filename> — <error detail>")`
 2. Drop signal: `docs/signals/{agent-id}-{ISO-timestamp}.json` → `{ "from": "{agent-id}", "to": "po", "type": "bug-escalation", "payload": "Knowledge load failed: <filename>", "priority": "high", "createdAt": "{ISO}" }`
 3. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="{agent-id}")`

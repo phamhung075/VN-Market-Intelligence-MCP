@@ -49,8 +49,8 @@ send_telegram(channel="work", message="Sprint XXX kickoff...")
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/agent-roster.md` — agent capabilities and autonomy
-- `.claude/knowledge/mcp-tools.md` — MCP tools reference
+- `docs/references/agent-roster.md` — agent capabilities and autonomy
+- `docs/standards/mcp-tools.md` — MCP tools reference
 - `docs/TASKS.md` — current task backlog
 - `project_sprint_XXX_status.md` — recent sprint completion summaries
 

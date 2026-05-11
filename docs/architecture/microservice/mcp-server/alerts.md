@@ -48,7 +48,7 @@ verdictResolutionJob (hourly, minute=7) → reads fileStore → updates agent_si
 Pruning: 30d TTL on resolved verdicts; 24h guard on re-resolution
 ```
 
-Full policy: `.claude/knowledge/alert-policy.md`
+Full policy: `docs/policies/alert-policy.md`
 
 ---
 

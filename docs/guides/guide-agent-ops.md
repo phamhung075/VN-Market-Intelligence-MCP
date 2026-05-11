@@ -71,7 +71,7 @@ Facts from other agents' notebooks. Refresh when stale (>3 days).
 | **Domain insight** | Business knowledge | `VN lunch break 11:30-13:00 -> no price updates` |
 | **Error pattern** | Recurring failure | `BCTC HDBank non-standard format -> flag, don't retry` |
 
-**Do NOT save:** raw tool outputs, temporary debug info, one-time fixes already in code, things already in `.claude/knowledge/*.md`.
+**Do NOT save:** raw tool outputs, temporary debug info, one-time fixes already in code, things already in `docs/{policies,protocols,standards,references}/*.md`.
 
 ### 7.4 Token Economy of Knowledge
 

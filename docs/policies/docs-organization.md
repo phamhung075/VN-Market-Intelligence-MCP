@@ -21,7 +21,7 @@ Creating a file in the wrong place causes duplication debt that requires manual 
 | Analysis briefs | `docs/analysis-briefs/` | root, `reports/` |
 | Source code `*.ts` | `apps/mcp-server/src/` | root, `docs/` |
 | Tests `*.test.ts` | `apps/mcp-server/src/__tests__/` | root, `reports/` |
-| Knowledge/rules | `.claude/knowledge/` | root, `docs/` |
+| Knowledge/rules | `docs/{policies,protocols,standards,references}/` | root, `docs/` |
 | Agent configs | `.claude/agents/` | root |
 | `*.md` (any other) | See decision tree below | ❌ Never at root except `CLAUDE.md`, `README.md` |
 
@@ -35,7 +35,7 @@ When creating a new `.md` file, use this decision tree:
 
 ```
 ┌─ Is it logic, rules, or policy?
-│  └→ .claude/knowledge/*.md
+│  └→ docs/{policies,protocols,standards,references}/*.md
 │
 ├─ Is it session analysis or agent memory?
 │  └→ /memory/*.md (via MCP tool, not Write)
@@ -66,8 +66,22 @@ When creating a new `.md` file, use this decision tree:
 | `docs/archive/` | Investigation/audit reports | Read-only | Auto-file, never delete |
 | `docs/historical/` | Task specs (REQ/TECH) | Read-only | Append-only, 0 files (cleaned 2026-04-26) |
 | `docs/agent-memory/` | Shared analysis workbook | Lazy-load | Agent MCP tools manage |
-| `.claude/knowledge/` | Logic & rules | Read-heavy | Stable, update on policy change |
+| `docs/policies/` | Enforceable rules / decisions / conventions | Read-heavy | Stable, update on policy change |
+| `docs/protocols/` | Sequence flows / procedures / runbooks | Read-heavy | Stable, update on process change |
+| `docs/standards/` | Format specs / schemas / methodologies / tool lookups | Read-heavy | Stable, update on spec change |
+| `docs/references/` | Lookups / rosters / maps / templates (incl. `bundles/`) | Read-heavy | Stable, update on registry change |
 | `.claude/skills/` | CLI skills (Caveman, etc.) | Read-only | Never delete |
+| `.claude/agents/` | Agent configs | Read-only | Update via agent-md-factory |
+| `.claude/flows/` | Agent flow files | Read-only | Update via flow guide |
+
+### Knowledge bucket decision matrix
+
+| Question to ask | Bucket |
+|------|--------|
+| Is it an enforceable rule / decision? (e.g. alert-policy, restart-policy, commit-convention) | `policies/` |
+| Is it a sequence / procedure / runbook? (e.g. agent-chaining, fail-loud, bctc-extraction-runbook) | `protocols/` |
+| Is it a format spec / schema / methodology / tool lookup? (e.g. mcp-tools, cron-jobs, portfolio-schema) | `standards/` |
+| Is it a roster / map / template / glossary? (e.g. tree-map, agent-roster, agent-routing) | `references/` |
 
 ## Auto-File Rules (Enforcement)
 
@@ -103,9 +117,9 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 **`docs/` ROOT (9 files — active use)**
 1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
 2. `AI_TEAM_DESIGN.md` — two-team architecture (Analysis + Dev)
-3. `MICROSERVICES_DDD.md` — language choice, DDD pattern, monorepo structure
+3. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/architecture/global.md`)
 4. `GLOSSARY_VI.md` — Vietnamese financial terms
-5. `SESSION_SUMMARY_20260424.md` — current session notes
+5. `SESSION_SUMMARY_*.md` — current session notes
 6. `TASKS_ARCHIVE.md` — done task index by sprint
 7. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
 8. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
@@ -138,7 +152,7 @@ ls -1 docs/*.md
 # Should be exactly these 9:
 # ARCHITECTURE.md
 # AI_TEAM_DESIGN.md
-# MICROSERVICES_DDD.md
+# AGENT_CREATION_GUIDE.md
 # GLOSSARY_VI.md
 # SESSION_SUMMARY_*.md
 # TASKS_ARCHIVE.md
@@ -156,8 +170,8 @@ ls -1 docs/*.md
 find docs/*.md \
   -not -name "ARCHITECTURE.md" \
   -not -name "AI_TEAM_DESIGN.md" \
+  -not -name "AGENT_CREATION_GUIDE.md" \
   -not -name "GLOSSARY_VI.md" \
-  -not -name "MICROSERVICES_DDD.md" \
   -not -name "SESSION_SUMMARY*" \
   -not -name "TASKS_ARCHIVE.md" \
   -not -name "SPRINT_GOAL.md" \
@@ -170,6 +184,6 @@ This runs automatically before each work task if violations detected.
 
 ---
 
-**Updated by:** Cleanup session 2026-04-25
+**Updated by:** Knowledge → docs/ migration 2026-05-11
 **Next review:** After next document creation
-**Related:** CLAUDE.md § File Organization, tree-map.md
+**Related:** CLAUDE.md § File Organization, `docs/references/tree-map.md`

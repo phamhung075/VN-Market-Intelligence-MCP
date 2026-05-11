@@ -65,7 +65,7 @@ Dev team cron workflow:
 
 ## Stock Classification
 
-Full table → `.claude/knowledge/portfolio-schema.md`
+Full table → `docs/standards/portfolio-schema.md`
 
 ## Agent Cooperation Flow
 
@@ -125,4 +125,4 @@ Dev Team claims BUG reports, processes, deletes (keeps channel clean).
 
 ## Agent Routing Intent
 
-→ See `.claude/knowledge/agent-routing.md` for full routing table and principles. This knowledge file is the SSOT for agent dispatch rules.
+→ See `docs/references/agent-routing.md` for full routing table and principles. This knowledge file is the SSOT for agent dispatch rules.

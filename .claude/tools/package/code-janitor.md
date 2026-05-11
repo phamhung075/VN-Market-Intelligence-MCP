@@ -57,7 +57,7 @@ Never hardcode:
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/dev-standards.md` — code style and formatting
+- `docs/policies/dev-standards.md` — code style and formatting
 - No lazy-load required
 
 ## Channel Permissions

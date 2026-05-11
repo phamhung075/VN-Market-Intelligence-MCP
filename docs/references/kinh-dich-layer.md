@@ -28,7 +28,7 @@ Kinh Dich is the **DEFAULT layer for every stock analysis**.
 
 Priority lines: **Hào 3** = current price action | **Hào 5** = medium-term trend | **Biến quẻ** = future state
 
-`kinhDichConfidence` = 0–100. Threshold for `watchlist-opportunity` alert → `.claude/knowledge/alert-policy.md`
+`kinhDichConfidence` = 0–100. Threshold for `watchlist-opportunity` alert → `docs/policies/alert-policy.md`
 
 ## Agent Integration Pattern
 
@@ -51,7 +51,7 @@ Include in position analysis block:
 ```
 Kinh Dịch: {hexagram_name} — {1-line signal}
 ```
-Full position block format → `.claude/knowledge/portfolio-schema.md`
+Full position block format → `docs/standards/portfolio-schema.md`
 
 ## Digest Writer Weekly
 

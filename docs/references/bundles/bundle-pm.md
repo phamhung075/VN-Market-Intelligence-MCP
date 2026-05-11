@@ -6,7 +6,7 @@ One call, always-needed rules. PM's full protocol + handoff template are in pm.m
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars, or permission denied):
 1. IMMEDIATELY `send_telegram(channel="work", message="[pm] Knowledge load failed: <filename> — <error detail>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="pm")`
 3. STOP current cycle, return early
@@ -25,6 +25,6 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 ## Lazy-Load (read ONLY when task touches that area)
 
-- MCP tool surface → `.claude/knowledge/mcp-tools.md`
-- Agent roster (signal bus, cooperation) → `.claude/knowledge/agent-roster.md`
-- Cron schedule → `.claude/knowledge/cron-jobs.md`
+- MCP tool surface → `docs/standards/mcp-tools.md`
+- Agent roster (signal bus, cooperation) → `docs/references/agent-roster.md`
+- Cron schedule → `docs/standards/cron-jobs.md`

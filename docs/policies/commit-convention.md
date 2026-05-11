@@ -158,7 +158,7 @@ Merge commits bundle multiple tasks. Use `chore` or `feat` type, sprint-scoped. 
 chore(1863/scheduler): merge task/1863b-verdict-resolution-job
 ```
 
-Format: follow `.claude/knowledge/commit-convention.md` — type and sprint scope required; `Task:` trailer omitted when merging multi-task branches.
+Format: follow `docs/policies/commit-convention.md` — type and sprint scope required; `Task:` trailer omitted when merging multi-task branches.
 
 ---
 

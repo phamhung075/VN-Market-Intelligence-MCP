@@ -21,8 +21,8 @@ Created a dedicated Ops agent on the Dev Team for VPS and server operations.
 - KNOWLEDGE: vps-setup, ops-incident-response, restart-policy (always-load); lazy-load alert-policy, cron-jobs on demand
 
 ### 2. Knowledge Base (3 new files)
-- `.claude/knowledge/vps-setup.md` — VPS infrastructure (5 services, endpoints, deployment, troubleshooting)
-- `.claude/knowledge/ops-incident-response.md` — 5 playbooks (service down, server crash, DB corruption, cascade failure, deployment failure)
+- `docs/references/vps-setup.md` — VPS infrastructure (5 services, endpoints, deployment, troubleshooting)
+- `docs/protocols/ops-incident-response.md` — 5 playbooks (service down, server crash, DB corruption, cascade failure, deployment failure)
 - Updated `agent-roster.md` — Ops added to Dev Team, hourly cron chain
 - Updated `cron-jobs.md` — Ops in dev-team chain (runs after QA, ~30s baseline)
 
@@ -53,9 +53,9 @@ If all green → silent. If degraded → attempts recovery OR escalates with dia
 
 - Full instructions: `.claude/agents/ops.md`
 - Setup guide: `.claude/agents/OPS_AGENT_SETUP.md`
-- VPS guide: `.claude/knowledge/vps-setup.md`
-- Incident playbooks: `.claude/knowledge/ops-incident-response.md`
-- Agent roster: `.claude/knowledge/agent-roster.md`
-- Cron schedule: `.claude/knowledge/cron-jobs.md`
+- VPS guide: `docs/references/vps-setup.md`
+- Incident playbooks: `docs/protocols/ops-incident-response.md`
+- Agent roster: `docs/references/agent-roster.md`
+- Cron schedule: `docs/standards/cron-jobs.md`
 
 All files include cross-references and are versioned in git.

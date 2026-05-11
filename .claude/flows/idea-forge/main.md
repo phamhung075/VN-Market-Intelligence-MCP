@@ -42,7 +42,7 @@ Proactively connect to:
 git add docs/agent-memory/notebooks/idea-forge.md
 git commit -m "chore(memory/idea-forge): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ---
 

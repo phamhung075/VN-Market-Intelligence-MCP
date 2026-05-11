@@ -27,7 +27,7 @@ Threshold values → `mcp.config.json` → `alertPolicy` (volatile, shared child
 
 ## Stop-Loss Computation
 
-Formula → `.claude/knowledge/portfolio-schema.md` (SSOT for position logic)
+Formula → `docs/standards/portfolio-schema.md` (SSOT for position logic)
 
 ## Alert Commander Exclusivity
 

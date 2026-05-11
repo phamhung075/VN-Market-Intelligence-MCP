@@ -52,7 +52,7 @@ Read: docs/data/project-stats.json, performance metrics
 
 - `project_4layer_architecture.md` — current 4-layer system design
 - `project_architecture_migration.md` — 9-service Docker topology
-- `.claude/knowledge/mcp-tools.md` — available tool capabilities
+- `docs/standards/mcp-tools.md` — available tool capabilities
 - `docs/data/project-stats.json` — project metrics and scope
 
 ## Channel Permissions

@@ -28,6 +28,6 @@ git add docs/agent-memory/notebooks/<agent-id>.md
 git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
 ```
 
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 > Requires `$PROJECT_ROOT` set by skill: `.claude/skills/project-root/SKILL.md`

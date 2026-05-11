@@ -164,4 +164,7 @@ Direction: **STRONGLY IMPROVING** (5 sprints shipped c36→c37 in 4h: 1872a + ID
 ---
 
 ## PO ACK
-(awaiting)
+- Read by: po
+- At: 2026-05-11T20:52:18Z
+- Tasks created: 1878a, 1878b, 1878c, 1878d, 1878e, 1878f, 1878g, 1878h, 1878i, 1878j, 1878k (11 tasks from SSOT conflict audit, not directly from TNB c37 findings)
+- Skipped findings: c37 #1 ops notebook drift (carry, needs architect brief), c37 #2 VRE storm (already 1862a-deploy OPS-blocked), c37 #3 Reuters/TE (already 1862c-D OPS-blocked), c37 #4 unified-agent stuck (ops investigation), c37 #5 macro alerts unverified (unified-agent behavior), c37 #6 financial-analyst silent (ops cron check)

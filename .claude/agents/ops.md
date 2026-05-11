@@ -71,15 +71,15 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/restart-policy.md
+      - path: docs/policies/restart-policy.md
         fail_loud: true
     lazy_load:
       - path: docs/ARCHITECTURE.md
         trigger: incident_diagnosis
         fail_loud: false
-      - path: .claude/knowledge/bug-reporting-via-mcp.md
+      - path: docs/protocols/bug-reporting-via-mcp.md
         trigger: bug_report
         fail_loud: false
 

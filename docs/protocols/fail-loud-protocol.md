@@ -4,7 +4,7 @@
 
 ## Rule
 
-Read `.claude/knowledge/<file>.md` when knowledge is needed. If Read fails (ENOENT, empty, <50 chars, permission denied) → follow these 5 steps immediately. Do NOT proceed with partial knowledge.
+Read `docs/<bucket>/<file>.md` when knowledge is needed. If Read fails (ENOENT, empty, <50 chars, permission denied) → follow these 5 steps immediately. Do NOT proceed with partial knowledge.
 
 ## The 5 Steps
 

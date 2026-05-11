@@ -89,7 +89,7 @@ Full reference → `.claude/WORKFLOW.md#branch-hygiene-checklist`
 
 ## Commit Format
 
-Full spec → `.claude/knowledge/commit-convention.md` (type vocabulary, scope, task-id, trailers, worked example, no-sprint rule).
+Full spec → `docs/policies/commit-convention.md` (type vocabulary, scope, task-id, trailers, worked example, no-sprint rule).
 
 Shell mechanism — always use the heredoc pattern:
 

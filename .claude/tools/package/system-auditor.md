@@ -45,8 +45,8 @@ Read: /docs/data/project-stats.json
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/mcp-tools.md` — tool catalog and MCP interface
-- `.claude/knowledge/agent-roster.md` — agent responsibilities and channels
+- `docs/standards/mcp-tools.md` — tool catalog and MCP interface
+- `docs/references/agent-roster.md` — agent responsibilities and channels
 - `reference_vps_setup.md` — VPS connection, credentials, troubleshooting
 - `reference_pdf_ocr_vps_architecture.md` — BCTC pipeline architecture and failure modes
 

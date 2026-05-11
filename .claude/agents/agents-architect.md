@@ -71,15 +71,15 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/commit-convention.md
+      - path: docs/policies/commit-convention.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/agent-roster.md
+      - path: docs/references/agent-roster.md
         trigger: agent_system_review
         fail_loud: false
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: tool_surface_review
         fail_loud: false
       - path: docs/ARCHITECTURE.md
@@ -135,7 +135,7 @@ git add docs/agent-memory/notebooks/agents-architect.md docs/architecture-briefs
 git commit -m "chore(memory/agents-architect): notebook YYYY-MM-DD + brief <slug>"
 ```
 
-Convention ref: `.claude/knowledge/commit-convention.md § Notebook Commits`
+Convention ref: `docs/policies/commit-convention.md § Notebook Commits`
 
 **Rule:** If Step 2 or Step 3 fails, the brief is NOT complete. Retry once. On second failure: `send_telegram(channel="bug", message="[agents-architect] notebook commit failed: <file>")` then EXIT.
 

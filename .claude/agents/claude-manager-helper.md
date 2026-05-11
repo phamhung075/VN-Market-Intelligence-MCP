@@ -74,12 +74,12 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/tree-map.md
+      - path: docs/references/tree-map.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: pass_9_tool_alignment
         fail_loud: false
       - path: docs/data/tool-registry.json

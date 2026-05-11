@@ -61,9 +61,9 @@ Write: /docs/bug-fixes/BUG_NNNN_summary.md
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/dev-standards.md` — code style for consistency
-- `.claude/knowledge/fail-loud-protocol.md` — error reporting standards
-- `.claude/knowledge/alert-policy.md` — alert behavior and expected thresholds (lazy-load)
+- `docs/policies/dev-standards.md` — code style for consistency
+- `docs/protocols/fail-loud-protocol.md` — error reporting standards
+- `docs/policies/alert-policy.md` — alert behavior and expected thresholds (lazy-load)
 
 ## Channel Permissions
 

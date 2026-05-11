@@ -70,7 +70,7 @@ agent:
     always_load:
       - path: docs/data/project-stats.json
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       - path: docs/architecture/global.md

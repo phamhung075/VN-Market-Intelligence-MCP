@@ -21,7 +21,7 @@
 
 Kinh Dich tools live in mcp-server. See `docs/architecture/microservice/mcp-server/kinhdich.md` for: `get_kinhdich_reading`, `get_market_hexagram`, `get_transition_probabilities`, `run_hexagram_backtest`.
 
-Kinh Dich layer rules: `.claude/knowledge/kinh-dich-layer.md`
+Kinh Dich layer rules: `docs/references/kinh-dich-layer.md`
 
 ---
 
@@ -51,5 +51,5 @@ None. Reads `market.db` with `readonly:true`. mcp-server writes hexagram reading
 1. Input: always exactly 6 signals → one hexagram (6 lines).
 2. Ngu Hanh (Five Elements) classifier maps hexagram lines to Kim/Moc/Thuy/Hoa/Tho for trading context.
 3. Markov transition probabilities: lookup from `hexagram_transitions` table (historical transitions).
-4. Default layer: see `.claude/knowledge/kinh-dich-layer.md` for which layer is active.
+4. Default layer: see `docs/references/kinh-dich-layer.md` for which layer is active.
 5. Backtesting (`hexagramBacktester.ts`): measures hexagram prediction accuracy vs actual price moves.

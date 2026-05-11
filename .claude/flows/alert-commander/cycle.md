@@ -79,7 +79,7 @@ For each `chain_catalyst` signal from signal bus:
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
 - ≤ 3 → `send_telegram(channel="market")` per alert
-Format: `.claude/knowledge/alert-message-format.md` (Vietnamese, full diacritics)
+Format: `docs/standards/alert-message-format.md` (Vietnamese, full diacritics)
 
 Append regime caveat to each MARKET alert (Vietnamese):
 - `TIGHTENING` + bullish signal:

@@ -41,7 +41,7 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 
 **4. Signal + ledger**
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
-If `docs/analysis-briefs/{TICKER}.md` does not exist → create from `.claude/knowledge/analysis-ledger-template.md`
+If `docs/analysis-briefs/{TICKER}.md` does not exist → create from `docs/references/analysis-ledger-template.md`
 
 Append `docs/analysis-briefs/{TICKER}.md` [Report Analyzer]:
 ```markdown

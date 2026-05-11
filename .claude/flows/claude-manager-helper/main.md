@@ -15,7 +15,7 @@ Fixed violations | pass report | `send_telegram(channel="bug")` on issues
 git diff --name-only HEAD~3..HEAD
 ```
 Groups:
-- `GROUP_KNOWLEDGE` = `.claude/knowledge/*.md` | `docs/data/*.json` | `docs/*.md`
+- `GROUP_KNOWLEDGE` = `docs/{policies,protocols,standards,references}/*.md` | `docs/data/*.json` | `docs/*.md`
 - `GROUP_AGENTS` = `.claude/agents/*.md` | `cowork-workspace-team-claude-desktop/*.md`
 - `GROUP_TOOLS` = `apps/mcp-server/src/interface/mcp/tools/*.ts`
 - `GROUP_ROOT` = `CLAUDE.md` | `docs/TASKS.md` | `docs/SPRINT_GOAL.md`
@@ -31,7 +31,7 @@ find . -name "TASK_REPORT_*.md" -not -path "./reports/*" -not -path "./.claude/w
 find apps/mcp-server -name "*.md" -not -path "*/node_modules/*" -not -name "README.md"
 find . -name "*-session*.md" -not -path "./.claude/*"
 ```
-For each violation → move to correct location per `.claude/knowledge/docs-organization.md` → log in Pass 10 report.
+For each violation → move to correct location per `docs/policies/docs-organization.md` → log in Pass 10 report.
 
 ## Pass 1: Tree-Map Integrity
 **SKIP IF** `GROUP_KNOWLEDGE` empty.
@@ -60,7 +60,7 @@ docs/TASKS.md > 80 → archive Done. docs/SPRINT_GOAL.md > 30 → delete old goa
 
 ## Pass 7: Boilerplate Dedup
 **SKIP IF** `GROUP_AGENTS` empty.
-Repeated blocks (>3 lines in 3+ files) → extract to `.claude/knowledge/`
+Repeated blocks (>3 lines in 3+ files) → extract to `docs/{policies,protocols,standards,references}/`
 
 ## Pass 8: Telegram Compliance
 **SKIP IF** all of `GROUP_AGENTS` + `GROUP_KNOWLEDGE` + `GROUP_ROOT` empty.
@@ -72,6 +72,9 @@ Auto-fix ALL safe violations. Unresolvable → launch `architect` subagent.
 **SKIP IF** `GROUP_TOOLS` + `GROUP_AGENTS` both empty.
 Compare agents vs `docs/data/tool-registry.json` → MISSING/invisible/duplicate/overlapping
 Issues → `architect` subagent + `reports/TOOL_AGENT_AUDIT_<YYYY-MM-DD>.md` + BUG
+
+## Pass 9b: Full-Subtree Heal (always runs on Mon/Thu cron)
+After git-diff passes complete, invoke **skill: `.claude/skills/doc-heal-system/SKILL.md`** for full-subtree audit (catches drift that git-diff missed: orphan files, tree-map mismatches, hardcoded counts, size caps, factory drift). Skill writes `reports/DOC_HEAL_<YYYY-MM-DD>.md` and escalates semantic drift to architect/agent-father/cowork-refactory-expert.
 
 ## Pass 10: Report
 ```
@@ -86,6 +89,7 @@ Pass 6 Memory:     OK | SKIPPED | N removed
 Pass 7 Dedup:      OK | SKIPPED | N extracted
 Pass 8 Telegram:   OK | SKIPPED | N fixed | N → architect
 Pass 9 Tool-Agent: OK | SKIPPED | N → architect
+Pass 9b Doc-Heal:  OK | N auto-fixes | K escalated
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
@@ -95,7 +99,7 @@ Pass 9 Tool-Agent: OK | SKIPPED | N → architect
 git add docs/agent-memory/notebooks/claude-manager-helper.md
 git commit -m "chore(memory/claude-manager-helper): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ---
 

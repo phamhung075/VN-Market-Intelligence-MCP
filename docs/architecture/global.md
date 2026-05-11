@@ -62,7 +62,7 @@ Detailed specs per service: `docs/architecture/microservice/<service>.md`
 
 All 9 services share a single `docker-compose.yml`. They communicate via Docker internal network (service names as hostnames). A shared named volume (`/data`) carries the SQLite databases and LanceDB vector store.
 
-Restart command (operator-only): see `.claude/knowledge/restart-policy.md` — that is the SSOT.
+Restart command (operator-only): see `docs/policies/restart-policy.md` — that is the SSOT.
 Dev agents do NOT call docker-compose directly.
 
 ---
@@ -83,12 +83,12 @@ Dev agents do NOT call docker-compose directly.
 
 ## Two-Team Architecture
 
-→ See `.claude/knowledge/agent-roster.md` § Two-Team Architecture for team members, runtime, and data access patterns.
+→ See `docs/references/agent-roster.md` § Two-Team Architecture for team members, runtime, and data access patterns.
 
 Related docs:
-- Agent roster: `.claude/knowledge/agent-roster.md`
-- Tool patterns: `.claude/knowledge/mcp-tools.md`
-- Cron schedule: `.claude/knowledge/cron-jobs.md`
+- Agent roster: `docs/references/agent-roster.md`
+- Tool patterns: `docs/standards/mcp-tools.md`
+- Cron schedule: `docs/standards/cron-jobs.md`
 
 ---
 
@@ -100,7 +100,7 @@ Related docs:
 call_tool(server: "vn-market", tool: "<tool_name>", arguments: {...})
 ```
 
-Tool registry: `.claude/knowledge/mcp-tools.md` → `docs/data/tool-registry.json`
+Tool registry: `docs/standards/mcp-tools.md` → `docs/data/tool-registry.json`
 
 ---
 
@@ -153,8 +153,8 @@ MCP server runs in France. All VN stock APIs, SSC BCTC portal, news sources, SBV
 | `vn-sbv-fetch.service` | SBV FX rates | 30min | (internal) |
 | `vn-foreign-flow.service` | Foreign buy/sell | 60s (market hours) | POST /api/push-prices |
 
-Full VPS operations: `.claude/knowledge/vps-setup.md`
-BCTC pipeline diagnostics: `.claude/knowledge/bctc-extraction-runbook.md`
+Full VPS operations: `docs/references/vps-setup.md`
+BCTC pipeline diagnostics: `docs/protocols/bctc-extraction-runbook.md`
 
 ---
 
@@ -167,7 +167,7 @@ domain ← application ← interface ← scheduler
 Cross-layer rule: imports flow inward only. `domain/` never imports `infrastructure/`.
 Repository pattern: interfaces in `domain/repositories/`, SQLite implementations in `infrastructure/db/repositories/`.
 
-Full DDD standards: `.claude/knowledge/dev-standards.md`
+Full DDD standards: `docs/policies/dev-standards.md`
 
 ---
 
@@ -195,7 +195,7 @@ Slice files: `schema-market-data.ts`, `schema-financial-reports.ts`, `schema-new
 |----------|-----------|
 | Tool count drift (README claims 112, ARCHITECTURE claims 132) | SSOT is `docs/data/project-stats.json`. This file never hardcodes counts. |
 | Port notation (→ vs :) | Canonical notation: `HOST:CONTAINER` (Docker Compose standard). |
-| Docker restart command duplicated in 3 places | SSOT: `.claude/knowledge/restart-policy.md`. All other docs point there. |
+| Docker restart command duplicated in 3 places | SSOT: `docs/policies/restart-policy.md`. All other docs point there. |
 | Microservices list duplicated in 3 places | SSOT: this file (global.md). Others should link here. |
 | BCTC pipeline description duplicated | SSOT: this file + `docs/ARCHITECTURE.md` § BCTC. Runbook covers diagnostics only. |
 

@@ -71,4 +71,4 @@ TP3 = avg_cost * 1.30   (30%)
 | `get_portfolio_risk()` | VaR, max drawdown per position |
 | `get_portfolio_conviction()` | Cross-signal validation per position |
 
-Alert thresholds → `mcp.config.json` → `alertPolicy`. Firing rules → `.claude/knowledge/alert-policy.md`
+Alert thresholds → `mcp.config.json` → `alertPolicy`. Firing rules → `docs/policies/alert-policy.md`

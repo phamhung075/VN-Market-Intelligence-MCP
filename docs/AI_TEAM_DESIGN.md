@@ -2,15 +2,15 @@
 
 ## Two-Team Architecture
 
-→ See `.claude/knowledge/agent-roster.md` § Two-Team Architecture for full team roster, member count, and cooperation protocol.
+→ See `docs/references/agent-roster.md` § Two-Team Architecture for full team roster, member count, and cooperation protocol.
 
 ## Three-Channel Rules
 
-→ See `.claude/knowledge/agent-roster.md` § Three-Channel Rules for channel assignments and write restrictions.
+→ See `docs/references/agent-roster.md` § Three-Channel Rules for channel assignments and write restrictions.
 
 ## Analysis Team (Claude Cowork)
 
-→ See `.claude/knowledge/agent-roster.md` § Analysis Team for roster, scheduling, roles, and file references.
+→ See `docs/references/agent-roster.md` § Analysis Team for roster, scheduling, roles, and file references.
 
 ## Problem Reporting Flow
 
@@ -21,7 +21,7 @@
 
 ## Dev Team (Claude Code CLI Cron — hourly)
 
-→ See `.claude/knowledge/agent-roster.md` § Dev Team for roster, responsibilities, and hourly cron workflow.
+→ See `docs/references/agent-roster.md` § Dev Team for roster, responsibilities, and hourly cron workflow.
 
 Cycle flow:
 1. Check BUG channel → empty → exit (1 API call)
@@ -39,5 +39,5 @@ Cost optimization: exit immediately if no reports | FIX NOW before SPRINT TASK |
 9 Docker microservices (TypeScript/Bun + Python/FastAPI). Shared SQLite database. Telegram Bot API. VPS proxy in Vietnam for geo-blocked sources.
 
 - Tool count → `docs/data/project-stats.json`
-- Scheduled jobs → `.claude/knowledge/cron-jobs.md`
-- Tool list → `.claude/knowledge/mcp-tools.md`
+- Scheduled jobs → `docs/standards/cron-jobs.md`
+- Tool list → `docs/standards/mcp-tools.md`

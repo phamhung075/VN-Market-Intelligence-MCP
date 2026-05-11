@@ -23,7 +23,7 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 
 1. Input to hexagram: always 6 signals (binary: yin/yang).
 2. 64 hexagrams in library — static data, never changes.
-3. Ngu Hanh (Five Elements): Kim (Metal), Moc (Wood), Thuy (Water), Hoa (Fire), Tho (Earth). Classification rules: `.claude/knowledge/kinh-dich-layer.md`.
+3. Ngu Hanh (Five Elements): Kim (Metal), Moc (Wood), Thuy (Water), Hoa (Fire), Tho (Earth). Classification rules: `docs/references/kinh-dich-layer.md`.
 4. Nuclear hexagram: computed from lines 2-5 of original hexagram.
 5. Transformed hexagram: computed from changing lines (moving yao).
 6. Backtesting accuracy tracked in `market.db` (kinhdich_readings table with outcome fields).

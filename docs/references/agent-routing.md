@@ -28,6 +28,6 @@ Spawn the matching agent. Never do the work yourself.
 
 ## Routing Principles
 
-1. **Main terminal is permanent switch.** Sub-agents cannot spawn each other (see `.claude/knowledge/agent-chaining-protocol.md`).
+1. **Main terminal is permanent switch.** Sub-agents cannot spawn each other (see `docs/protocols/agent-chaining-protocol.md`).
 2. **Agent dispatch is exclusive.** Each intent routes to exactly one primary agent. Secondary agents may be chained by the primary.
 3. **No agent execution in main terminal.** Main terminal only routes; work is delegated.

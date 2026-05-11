@@ -210,6 +210,6 @@ Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output
 git add docs/agent-memory/notebooks/po.md
 git commit -m "chore(memory/po): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

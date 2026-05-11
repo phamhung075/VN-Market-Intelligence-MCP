@@ -1,27 +1,32 @@
-## Sprint 1862 — ACTIVE
+## Sprint 1878 — ACTIVE
 
-**Status:** Active | **Scheduled:** 2026-05-09
+**Status:** Active | **Scheduled:** 2026-05-11
 
-# Sprint 1862 Goal
+# Sprint 1878 Goal
 
 ## Vision
-Stabilize data pipeline reliability (vnstock + RSS), eliminate signal noise (dedup), and correct stale system metadata. TNB audit cycles 21-22.
+Eliminate all SSOT conflicts across agent definitions, knowledge files, and registry data so every count and reference resolves to a single authoritative source.
 
 ## Scope
-IN: vnstock rate limiter tuning (DONE 1862a), report-analyzer enum (DONE 1862b), vnstock_events deploy gap (DONE 1862d), Cowork MCP access investigation (1862c), Error Boundary standardization (1862e), Reuters/TE RSS regression fix (1862f), news-scout signal dedup for repeated ticker+direction (1862g), hardcoded tool counts in knowledge files (1862h), stale project-stats.json infra status (1862i).
-OUT: New feature work, Cowork architecture redesign, BCTC pipeline changes.
+IN: 11 SSOT anomalies — hardcoded tool/agent/scheduler counts in agent definitions and flows, stale tool-registry.json, agent-roster self-contradiction, wrong session_log paths, inlined task size rules, orphaned AGENT_STARTUP.md reference, undocumented microservice agents.
+OUT: New features, infrastructure changes, BCTC pipeline, Cowork architecture.
 
 ## Success Metric
-- [DONE] vnstock sync completes full watchlist cycle without RATE_LIMITED errors on any ticker
-- [DONE] report-analyzer agent boots successfully via MCP enum
-- [DONE] vnstock_events NOT NULL constraint failure resolved for JSH
-- Cowork scheduled-task MCP access root cause documented with fix deployed or workaround
-- 7 dev-team flows have Error Boundary section 6.2
-- Reuters/TE error count drops below 15 (from 42) and stays stable across 3 TNB cycles
-- news-scout does not fire same-ticker same-direction urgent_news more than once per 4h window
-- Knowledge files reference project-stats.json instead of hardcoded counts
-- project-stats.json infrastructureStatus reflects actual server state
-- Baseline >= 8804
+- Zero hardcoded tool/agent/scheduler counts in agent .md or flow .md files (all point to project-stats.json or equivalent SSOT)
+- tool-registry.json toolCount matches project-stats.json (132)
+- agent-roster.md analysis team count consistent (no self-contradiction)
+- analysisAgentCount in project-stats.json matches agent-roster.md
+- session_log paths in all agent files resolve to real filenames
+- No orphaned file references in agent definitions
+- grep audit for hardcoded "112", "113", "125" tool counts returns zero hits in .md files
+
+---
+
+## Sprint 1862 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-11
+
+Stabilize data pipeline reliability (vnstock + RSS), eliminate signal noise (dedup), and correct stale system metadata. TNB audit cycles 21-22.
 
 ---
 

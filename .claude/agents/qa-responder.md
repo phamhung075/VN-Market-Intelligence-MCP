@@ -81,20 +81,20 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/ask-queue-protocol.md
+      - path: docs/protocols/ask-queue-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/kinh-dich-layer.md
+      - path: docs/references/kinh-dich-layer.md
         trigger: stock_question
         fail_loud: false
-      - path: .claude/knowledge/portfolio-schema.md
+      - path: docs/standards/portfolio-schema.md
         trigger: position_question
         fail_loud: false
-      - path: .claude/knowledge/restart-policy.md
+      - path: docs/policies/restart-policy.md
         trigger: ops_question
         fail_loud: false
 

@@ -20,7 +20,7 @@
 
 Alert tools live in mcp-server. See `docs/architecture/microservice/mcp-server/alerts.md` for: `get_alerts`, `mark_alert_read`, `manage_alert_mute`, `list_alert_rules`, `send_alert_digest`, `get_alert_accuracy`, `get_signal_effectiveness`, `get_cascade_metrics`, `get_cascade_outcomes`, `get_open_chain_findings`, `get_crisis_early_warning`, `get_signal_rejection_summary`, `write_alert_verdict`, `record_signal_outcome`.
 
-Alert policy: `.claude/knowledge/alert-policy.md`
+Alert policy: `docs/policies/alert-policy.md`
 
 ---
 
@@ -58,7 +58,7 @@ verdictResolutionJob (hourly, minute=7) → reads fileStore → updates agent_si
 Outcomes: pending | confirmed | false_positive
 ```
 
-Full policy: `.claude/knowledge/alert-policy.md`
+Full policy: `docs/policies/alert-policy.md`
 
 ---
 

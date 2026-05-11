@@ -48,7 +48,7 @@ Live data → `docs/data/cron-registry.json`
 | `0 * * * *` (hourly) | `verdictResolutionJob` — resolves pending `agent_signals` verdicts (confirmed / false_positive) based on 4h price direction match; 24h window guard skips fresh signals; 30d TTL pruning; fail-loud to BUG channel on price fetch error | 1863 |
 
 Source: `apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts`
-Verdict lifecycle → `.claude/knowledge/alert-policy.md` (Signal Verdict Lifecycle section)
+Verdict lifecycle → `docs/policies/alert-policy.md` (Signal Verdict Lifecycle section)
 
 ## Analysis Ownership (dedup policy)
 

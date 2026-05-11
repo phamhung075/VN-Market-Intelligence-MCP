@@ -1,8 +1,58 @@
 # PO Notebook
 
-## Last updated: 2026-05-11 (Dev-team cycle 17, TNB c33 reconfirm)
+## Last updated: 2026-05-11T20:52Z (Sprint 1878 planning — SSOT conflict audit)
 
-## Current sprint focus: 1870 SHIPPED, 1865b QUEUED, 1862c-D/E/F/G remaining
+## Current sprint focus: Sprint 1878 — SSOT conflict remediation (11 tasks, chore/maintenance, no new features)
+
+---
+
+## Sprint 1878 Planning — 2026-05-11T20:52Z
+
+### Trigger
+User-initiated SSOT conflict audit found 15 anomalies (11 actionable after dedup against existing Done tasks).
+
+### Tasks created (11)
+**HIGH (4):** 1878a (hardcoded "112 tools" in 2 files), 1878b (hardcoded "13 agents" in AGENT_MODELS_README), 1878c (tool-registry.json stale at 125 vs 132), 1878d (cron-registry vs project-stats cronJobCount conflict)
+**MEDIUM (4):** 1878e (agent-roster "7 agents" vs "8 agents" self-contradiction), 1878f (wrong session_log paths in 2 agent files), 1878g (task size rules inlined in dev-team flow), 1878h (analysisAgentCount=9 vs actual=8)
+**LOW (3):** 1878i (alert-commander duplicates max_alerts_per_day from alert-policy.md), 1878j (9 microservice agents undocumented in agent-roster), 1878k (orphaned AGENT_STARTUP.md reference)
+
+### Overlap check with Sprint 1872a
+Sprint 1872a fixed hardcoded counts in README.md, ARCHITECTURE.md, mcp-server.md, api-gateway/domain-model.md. But did NOT touch: dev-mcp-server.md agent definition (L4/L13), cloudflare-mcp.md flow (L13/L29), AGENT_MODELS_README.md (L15/L28/L54). These are net-new gaps.
+
+### TNB c37 ACK
+Read at 2026-05-11T20:52:18Z. 6 new findings all carry/deferred (ops-gated or investigation-needed). 3 c36 findings RESOLVED. PO silence acknowledged -- this sprint planning session breaks the 14-cycle gap.
+
+### Channel audit: SKIPPED (user provided explicit audit findings as input)
+
+---
+
+## Cycle 33 — 2026-05-11T19:16Z
+
+### Triage
+- TNB c37 NEEDS_ATTENTION + STRONGLY_IMPROVING: 5 sprints/4h, 3/8 c36 findings RESOLVED, 6 NEW
+- VIRA infra-request HIGH but cross-cutting (ops+dev) → SPRINT-M+, defer
+- Phase B gate 6d out: C1 95.4% C2 56.9% C3 77.2% C4 98.3%
+
+### Decision: SPRINT-S 1877d (C3 AC-trailer 77.2%→80%)
+- Smallest, gate-blocker, ~7 commits flow-tighten
+- Architect brief first to decide flow vs retro
+- TNB findings disposition:
+  - #1 ops notebook drift → architect brief (next cycle)
+  - #2 VRE storm → already 1862a-deploy OPS-blocked
+  - #3 Reuters/TE → 1862c-D OPS-blocked (carry)
+  - #4 unified-agent stuck → ops investigation (next cycle)
+  - #5 macro alerts unverified → unified-agent behavior
+  - #6 fin-analyst silent → ops cron check (next cycle)
+- C2 (56.9%→85%) deferred — too big for SPRINT-S, plan SPRINT-M after 1877d
+- VIRA scraper deferred — needs ba+architect SPRINT-M+
+
+### Carry
+- PO silence 14 cycles RESOLVED this cycle (PM dispatch ad-hoc, governance brief later)
+- Stale branch task/1872a-5-api-gateway-wording 5th cycle flagged
+
+---
+
+## Recent session — 2026-05-11 ~05:32 UTC (dev-team cycle 17)
 
 ---
 

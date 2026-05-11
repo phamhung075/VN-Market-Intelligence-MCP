@@ -211,7 +211,7 @@ const similar = await call_tool(
 
 - **All Tools Index:** `.claude/tools/list/README.md`
 - **Financial Reports:** `.claude/tools/list/financial-reports.md`
-- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
-- **BCTC Extraction:** `.claude/knowledge/bctc-extraction-runbook.md`
-- **Low Confidence Handling:** `.claude/knowledge/low-confidence-handling.md`
-- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`
+- **MCP Logic:** `docs/standards/mcp-tools.md`
+- **BCTC Extraction:** `docs/protocols/bctc-extraction-runbook.md`
+- **Low Confidence Handling:** `docs/{policies,protocols,standards,references}/low-confidence-handling.md`
+- **Fail-Loud Protocol:** `docs/protocols/fail-loud-protocol.md`

@@ -84,12 +84,12 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/dev-standards.md
+      - path: docs/policies/dev-standards.md
         fail_loud: true
-      - path: .claude/knowledge/qa-checklist.md
+      - path: docs/policies/qa-checklist.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         trigger: error_handling_check
         fail_loud: false
       - path: docs/architecture/global.md

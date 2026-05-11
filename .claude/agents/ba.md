@@ -69,10 +69,10 @@ agent:
     always_load:
       - path: docs/GLOSSARY_VI.md
         fail_loud: true
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/portfolio-schema.md
+      - path: docs/standards/portfolio-schema.md
         trigger: position_rules
         fail_loud: false
       - path: docs/data/stock-classification.json

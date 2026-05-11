@@ -57,8 +57,8 @@ Maintains SSOT for:
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/agent-roster.md` — agent inventory
-- `.claude/knowledge/mcp-tools.md` — tool inventory
+- `docs/references/agent-roster.md` — agent inventory
+- `docs/standards/mcp-tools.md` — tool inventory
 - `project_tree_map.md` — knowledge tree canonical DAG
 - `docs/data/project-stats.json` — SSOT for counts
 

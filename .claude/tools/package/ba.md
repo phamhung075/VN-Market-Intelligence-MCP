@@ -47,10 +47,10 @@ Edit: acceptance_criteria section with new conditions
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/stock-classification.md` — domain concepts (sectors, tiers)
-- `.claude/knowledge/alert-policy.md` — business rules and alert definitions (lazy-load)
+- `docs/{policies,protocols,standards,references}/stock-classification.md` — domain concepts (sectors, tiers)
+- `docs/policies/alert-policy.md` — business rules and alert definitions (lazy-load)
 - `docs/GLOSSARY_VI.md` — Vietnamese financial terminology (lazy-load)
-- `.claude/knowledge/mcp-tools.md` — tool capabilities context
+- `docs/standards/mcp-tools.md` — tool capabilities context
 
 ## Channel Permissions
 

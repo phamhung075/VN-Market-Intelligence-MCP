@@ -95,7 +95,7 @@ git push origin --delete task/NNN-branch-name
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars, or permission denied):
 1. IMMEDIATELY `send_telegram(channel="work", message="[qa] Knowledge load failed: <filename> — <error detail>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="qa")`
 3. STOP current cycle, return early
@@ -106,6 +106,6 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 ## Lazy-Load (read ONLY when task touches that area)
 
-- Feature schemas for acceptance criteria → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- MCP tool surface → `.claude/knowledge/mcp-tools.md`
-- Agent roster (for agent-related reviews) → `.claude/knowledge/agent-roster.md`
+- Feature schemas for acceptance criteria → `docs/standards/portfolio-schema.md`, `docs/policies/alert-policy.md`, `docs/protocols/ask-queue-protocol.md`
+- MCP tool surface → `docs/standards/mcp-tools.md`
+- Agent roster (for agent-related reviews) → `docs/references/agent-roster.md`

@@ -270,11 +270,11 @@ Other requests queue or fail gracefully.
 
 ## Related Documentation
 
-- **MCP Tool Specs:** `.claude/knowledge/mcp-tools.md` (full signatures)
-- **Stock Classification:** `.claude/knowledge/stock-classification.md` (16 sectors)
-- **Kinh Dich Logic:** `.claude/knowledge/kinh-dich-layer.md` (architecture)
-- **BCTC Extraction:** `.claude/knowledge/bctc-extraction-runbook.md` (VPS pipeline)
-- **Alert Policy:** `.claude/knowledge/alert-policy.md` (Telegram integration)
+- **MCP Tool Specs:** `docs/standards/mcp-tools.md` (full signatures)
+- **Stock Classification:** `docs/{policies,protocols,standards,references}/stock-classification.md` (16 sectors)
+- **Kinh Dich Logic:** `docs/references/kinh-dich-layer.md` (architecture)
+- **BCTC Extraction:** `docs/protocols/bctc-extraction-runbook.md` (VPS pipeline)
+- **Alert Policy:** `docs/policies/alert-policy.md` (Telegram integration)
 
 ---
 

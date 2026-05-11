@@ -77,7 +77,7 @@ agent:
       - path: docs/AGENT_CREATION_GUIDE.md
         fail_loud: true
         note: "Slim index (~75 lines). Architecture + TOC + recipes. Always loaded."
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
       # Guide parts (load per flow step)
@@ -106,13 +106,13 @@ agent:
         trigger: quality_pattern_check
         fail_loud: false
       # Non-guide knowledge
-      - path: .claude/knowledge/agent-roster.md
+      - path: docs/references/agent-roster.md
         trigger: registration_or_review
         fail_loud: false
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: tool_package_authoring
         fail_loud: false
-      - path: .claude/knowledge/docs-organization.md
+      - path: docs/policies/docs-organization.md
         trigger: file_placement_check
         fail_loud: false
       - path: .claude/skills/dispatch/SKILL.md

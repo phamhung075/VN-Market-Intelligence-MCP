@@ -56,7 +56,7 @@ PDF-related MCP tools live in mcp-server, not here. See `docs/architecture/micro
 | < 0.2 | Insert with `low_confidence=true` flag + WORK channel alert |
 | >= 0.2 | Normal insert |
 
-Source: `.claude/knowledge/bctc-extraction-runbook.md` + MEMORY reference `reference_low_confidence_handling.md`
+Source: `docs/protocols/bctc-extraction-runbook.md` + MEMORY reference `reference_low_confidence_handling.md`
 
 ---
 

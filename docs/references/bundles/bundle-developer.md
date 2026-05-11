@@ -112,7 +112,7 @@ No other restart mechanism is allowed. All 9 microservices restart in determinis
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars, or permission denied):
 1. IMMEDIATELY `send_telegram(channel="work", message="[developer] Knowledge load failed: <filename> — <error detail>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="developer")`
 3. STOP current cycle, return early
@@ -123,9 +123,9 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 ## Lazy-Load (read ONLY when task touches that area)
 
-- Portfolio rules (stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
-- Alert firing rules → `.claude/knowledge/alert-policy.md`
-- Hexagram integration → `.claude/knowledge/kinh-dich-layer.md`
-- MCP tool surface (when adding/modifying tools) → `.claude/knowledge/mcp-tools.md`
-- Cron schedule (when touching schedulers) → `.claude/knowledge/cron-jobs.md`
+- Portfolio rules (stop-loss, TP ladder) → `docs/standards/portfolio-schema.md`
+- Alert firing rules → `docs/policies/alert-policy.md`
+- Hexagram integration → `docs/references/kinh-dich-layer.md`
+- MCP tool surface (when adding/modifying tools) → `docs/standards/mcp-tools.md`
+- Cron schedule (when touching schedulers) → `docs/standards/cron-jobs.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`

@@ -91,7 +91,7 @@ Then:
 git add docs/agent-memory/notebooks/market-analyst.md
 git commit -m "chore(memory/market-analyst): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ---
 

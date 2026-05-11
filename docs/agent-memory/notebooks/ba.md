@@ -1,14 +1,21 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1846
+**Last updated:** 2026-05-11 | **Sprint:** M-1877e
 
 ## Current state
 
-Sprint 1846 spec complete. Handed off to Architect. ARCH-1846 in Backlog.
+SPRINT-M-1877e spec complete. Spec at docs/specs/2026-05-17-c2-task-trailer-gap.md. Ready for Architect.
 
-## Last session summary
+## Last session summary (2026-05-11)
 
-Wrote REQ_1846.md for Sprint 1846. Four deliverables:
+C2 task-trailer gap spec for Phase B Day-7 gate (2026-05-17). Evidence: 100 commits since 2026-05-10.
+
+Key finding: C2 denominator includes `chore(cycle-NN)` and `chore(pm/cNN)` — digit in scope is a cycle ref, not a sprint ID. These are housekeeping commits that should be C2-exempt. Exempting them + flow tightening = Path (c) Hybrid.
+
+3 sub-tasks: 1877e-1 (audit script exemption), 1877e-2 (flow tightening x4 flows), 1877e-3 (knowledge file table).
+No PO blockers. Budget: ~50 LOC / 6 files.
+
+## Prior session summary (1846)
 1. delete_backtest_run MCP tool (#123) — purge a stored run by UUID
 2. export_backtest_run_csv MCP tool (#124) — convert trades[] from resultJson to CSV
 3. compare_backtest_runs MCP tool (#125) — side-by-side metrics for 2–5 run IDs

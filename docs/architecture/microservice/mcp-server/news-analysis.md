@@ -54,6 +54,6 @@ VPS push (POST /api/push-news, 226 items/15min cycle from 10 sources)
 ## Invariants
 
 1. 10 news sources: CafeF (2), VnExpress, VnEconomy, Vietstock (3), VietnamBiz, VnBusiness, TuoiTre, NhanDan (2), NLD. BaoDauTu: INVESTIGATE (0 items — parsing issue task 1185).
-2. Cascade engine: causal cascade framework from `.claude/knowledge/market-analysis.md`.
+2. Cascade engine: causal cascade framework from `docs/standards/market-analysis.md`.
 3. `search_similar_context` uses multilingual-MiniLM embeddings (384-dim, local ONNX via rag-service).
 4. `dataAuditJob` prunes stale NULL-outcome `agent_signals` (moved to dataAuditJob from separate pruner — 1863h).

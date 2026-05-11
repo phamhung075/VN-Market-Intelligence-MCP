@@ -51,10 +51,10 @@ mcp__semble__find_related(file="/path/to/file.ts", type="imports")
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/dev-standards.md` — code style, module structure, DDD
-- `.claude/knowledge/fail-loud-protocol.md` — error reporting
-- `.claude/knowledge/cron-jobs.md` — scheduler job patterns (lazy-load)
-- `.claude/knowledge/mcp-tools.md` — MCP tool reference (lazy-load)
+- `docs/policies/dev-standards.md` — code style, module structure, DDD
+- `docs/protocols/fail-loud-protocol.md` — error reporting
+- `docs/standards/cron-jobs.md` — scheduler job patterns (lazy-load)
+- `docs/standards/mcp-tools.md` — MCP tool reference (lazy-load)
 
 ## Channel Permissions
 

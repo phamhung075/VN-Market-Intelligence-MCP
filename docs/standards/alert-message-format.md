@@ -118,4 +118,4 @@ Rủi ro:
 
 ## QA Enforcement
 
-See `.claude/knowledge/qa-checklist.md` section "Alert Format Check" for review items.
+See `docs/policies/qa-checklist.md` section "Alert Format Check" for review items.

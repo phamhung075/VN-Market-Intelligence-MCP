@@ -1,0 +1,57 @@
+Finding #	Type	Severity	File(s)	Line(s)	Issue	Current Value	Expected Value	Category	Fix Priority
+1	Hardcoded Count	HIGH	.claude/agents/dev-mcp-server.md	4	Tool count hardcoded	"112 tools"	pointer to docs/data/project-stats.json (132)	Hardcoded Volatile Data	URGENT
+2	Hardcoded Count	HIGH	.claude/flows/ops/cloudflare-mcp.md	13	Tool count hardcoded	"Full 112 tools available"	pointer to docs/data/project-stats.json (132)	Hardcoded Volatile Data	URGENT
+3	Count Mismatch	MEDIUM	docs/data/tool-registry.json	14	Tool count stale	125	132 (per project-stats.json 2026-05-11)	Data Drift	HIGH
+4	Count Discrepancy	HIGH	.claude/AGENT_MODELS_README.md	15,28	Agent count hardcoded	"All 13 agents"	pointer to docs/data/project-stats.json (devAgentCount: 14)	Hardcoded Volatile Data	URGENT
+5	Count Discrepancy	HIGH	.claude/AGENT_MODELS_README.md	15,28	Microservice agents undercounted	"13 agents"	Clarify definition: include 9 microservice-scoped agents	Undercounting	HIGH
+6	Internal Contradiction	MEDIUM	.claude/knowledge/agent-roster.md	5	Analysis agent count low	"7 agents"	"8 agents" (matches line 102 architecture diagram)	Inconsistency	HIGH
+7	Internal Contradiction	MEDIUM	.claude/knowledge/agent-roster.md	102	Analysis agent count high	"8 agents"	Consistent with line 5 update	Inconsistency	HIGH
+8	Count Mismatch	MEDIUM	docs/data/cron-registry.json	-	Scheduler file count conflict	59	Resolve vs project-stats.json value of 62	JSON Field Conflict	MEDIUM
+9	Count Mismatch	MEDIUM	docs/data/project-stats.json	15	Scheduler file count conflict	62	Reconcile vs cron-registry.json value of 59	JSON Field Conflict	MEDIUM
+10	Stale Pointer	MEDIUM	.claude/agents/system-auditor.md	106	Session log path incorrect	docs/agent-memory/notebooks/auditor.md	docs/agent-memory/sessions/YYYY-MM-DD-system-auditor.md	Wrong Directory Structure	MEDIUM
+11	Stale Pointer	MEDIUM	.claude/agents/cowork-refactory-expert.md	106	Session log path incorrect	docs/agent-memory/notebooks/refactory.md	docs/agent-memory/sessions/YYYY-MM-DD-cowork-refactory-expert.md	Wrong Directory Structure	MEDIUM
+12	Rules Inline	MEDIUM	.claude/flows/dev-team/main.md	91-96	Task size rules not centralized	Inline task classification (FIX/SPRINT-S/M/L)	Centralize in .claude/knowledge/dev-standards.md	Rules Not Centralized	MEDIUM
+13	Hardcoded Rule	LOW	.claude/agents/alert-commander.md	50	Alert operational rule hardcoded	max_alerts_per_day: 10	In .claude/knowledge/alert-policy.md only	Operational Rule Split	LOW
+14	Count Discrepancy	LOW	docs/data/project-stats.json	19	Analysis agent count off	analysisAgentCount: 9	Verify actual count (8 Cowork agents visible)	Counting Error	LOW
+15	Documentation Gap	LOW	.claude/knowledge/agent-roster.md	-	Microservice agents not documented	Missing: 9 microservice-scoped agents	Add section for dev-mcp-server, dev-api-gateway, etc.	Documentation Gap	LOW
+
+KEY METRICS
+
+Total Anomalies Found: 15
+├─ HIGH severity: 4 (findings 1, 2, 4, 5)
+├─ MEDIUM severity: 8 (findings 3, 6, 7, 8, 9, 10, 11, 12)
+└─ LOW severity: 3 (findings 13, 14, 15)
+
+Tree-Map Compliance: 2 FAIL, 4 PASS
+
+CANONICAL SOURCES (Verified)
+
+Data Point	Location	Status
+Tool count	docs/data/project-stats.json (132)	CURRENT (2026-05-11)
+Scheduler count	CONFLICTED between cron-registry.json (59) and project-stats.json (62)	NEEDS RESOLUTION
+Dev agent count	docs/data/project-stats.json (14)	CANONICAL
+Analysis agents	.claude/knowledge/agent-roster.md (8)	CANONICAL
+Alert rules	.claude/knowledge/alert-policy.md	CANONICAL
+Cron jobs	.claude/knowledge/cron-jobs.md	GOOD (uses pointers, no hardcoded counts)
+
+AFFECTED FILES (Priority Order)
+
+URGENT (Block Changes):
+1. .claude/agents/dev-mcp-server.md:4
+2. .claude/flows/ops/cloudflare-mcp.md:13
+3. .claude/AGENT_MODELS_README.md (lines 15, 28)
+4. docs/data/tool-registry.json (refresh entire file)
+
+HIGH (Fix This Sprint):
+5. .claude/knowledge/agent-roster.md (lines 5, 102)
+6. docs/data/cron-registry.json vs project-stats.json (reconcile)
+
+MEDIUM (Fix Soon):
+7. .claude/agents/system-auditor.md:106
+8. .claude/agents/cowork-refactory-expert.md:106
+9. .claude/flows/dev-team/main.md (lines 91-96)
+
+LOW (Document):
+10. .claude/agents/alert-commander.md:50
+11. docs/data/project-stats.json (analysisAgentCount verification)
+12. .claude/knowledge/agent-roster.md (microservice documentation)

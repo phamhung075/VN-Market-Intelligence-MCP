@@ -55,5 +55,5 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 2. `get_system_status` consolidates: `get_source_health` (removed), `get_data_freshness` (removed), `get_error_summary` (removed).
 3. `restart_vps_service`: operator-level only (dev-team CLI cron). Never called from Cowork agents.
 4. VPS staleness watchdog: 45-min threshold (vpsProxyWatchdogJob) + 6h market-hours threshold (priceUpdateWatchdogJob). Dual-layer coverage.
-5. Telegram /ask bot commands routing: `.claude/knowledge/ask-queue-protocol.md` + `.claude/knowledge/telegram-commands.md`.
+5. Telegram /ask bot commands routing: `docs/protocols/ask-queue-protocol.md` + `docs/standards/telegram-commands.md`.
 6. `smart_compact` invokes a spawned compact sub-agent for Cowork context management.

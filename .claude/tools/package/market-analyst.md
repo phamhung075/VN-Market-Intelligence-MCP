@@ -41,8 +41,8 @@ Read file: /docs/data/backtest-results.json
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/stock-classification.md` — sector mapping, liquidity tiers
-- `.claude/knowledge/alert-policy.md` — alert thresholds and severity (lazy-load)
+- `docs/{policies,protocols,standards,references}/stock-classification.md` — sector mapping, liquidity tiers
+- `docs/policies/alert-policy.md` — alert thresholds and severity (lazy-load)
 - `docs/GLOSSARY_VI.md` — Vietnamese financial terms (lazy-load on demand)
 
 ## Channel Permissions

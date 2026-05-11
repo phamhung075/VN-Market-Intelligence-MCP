@@ -46,7 +46,7 @@ Then:
 git add docs/agent-memory/notebooks/code-janitor.md
 git commit -m "chore(memory/code-janitor): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 - State: `docs/data/code-janitor-known-findings.json`:
 ```json
 {"scan_date":"2026-04-26","findings":[{"id":"DRY-1","pattern":"...","status":"shipped|proposed"}]}

@@ -29,7 +29,7 @@ No changes in CLAUDE.md/docs/TASKS.md → EXIT.
 - Each entry: file exists, content current, not stale
 - Broken pointers | index > 200 lines | contradictions → fix or delete
 
-**2. Knowledge hygiene** — `.claude/knowledge/*.md`:
+**2. Knowledge hygiene** — `docs/{policies,protocols,standards,references}/*.md`:
 - Hardcoded volatile values → replace with pointer to `docs/data/*.json`
 - Verify JSON counts: `tool-registry.json` vs actual | `cron-registry.json` vs jobs | `stock-classification.json` vs watchlist
 
@@ -81,7 +81,7 @@ Then:
 git add docs/agent-memory/notebooks/system-auditor.md
 git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

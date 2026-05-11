@@ -62,7 +62,7 @@ cp .env.example .env
 
 ### Step 3: Start All 9 Microservices via Docker
 
-**The only allowed restart method is docker-compose.** Full procedure and banned mechanisms: [`.claude/knowledge/restart-policy.md`](.claude/knowledge/restart-policy.md)
+**The only allowed restart method is docker-compose.** Full procedure and banned mechanisms: [`docs/policies/restart-policy.md`](docs/policies/restart-policy.md)
 
 **Expected response:**
 ```json
@@ -78,7 +78,7 @@ Hot reload is **FORBIDDEN**. Do NOT use `bun --hot`, `bun --watch`, `nodemon`, `
 For development:
 1. Edit code in `apps/mcp-server/src/`
 2. Run tests: `cd apps/mcp-server && bun test`
-3. Restart all services: see `.claude/knowledge/restart-policy.md`
+3. Restart all services: see `docs/policies/restart-policy.md`
 
 ### Microservices Overview
 

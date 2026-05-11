@@ -270,6 +270,6 @@ await call_tool(
 ## Related Documentation
 
 - **All Tools Index:** `.claude/tools/list/README.md`
-- **Ask Queue Protocol:** `.claude/knowledge/ask-queue-protocol.md`
-- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
-- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`
+- **Ask Queue Protocol:** `docs/protocols/ask-queue-protocol.md`
+- **MCP Logic:** `docs/standards/mcp-tools.md`
+- **Fail-Loud Protocol:** `docs/protocols/fail-loud-protocol.md`

@@ -61,7 +61,7 @@ import type {
  * The stored `operating_profit` column value is NOT altered — it remains 0
  * (accurate to the OCR extraction).
  *
- * Source of truth: .claude/knowledge/stock-classification.md (sector=banking).
+ * Source of truth: docs/{policies,protocols,standards,references}/stock-classification.md (sector=banking).
  * Developer must sync this set against that file on each update.
  */
 const BANKING_TICKERS = new Set([

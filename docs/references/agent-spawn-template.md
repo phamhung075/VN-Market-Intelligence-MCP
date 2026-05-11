@@ -104,7 +104,7 @@ Why parallel: each task writes to a different file (different knowledge files, d
 - Always source the previous agent's DONE sentence verbatim from its RETURN block.
 - The NEXT sentence is the NEXT line of the previous RETURN block, re-addressed to the new agent.
 - Include the handoff file path so the receiving agent has full context without re-reading docs/TASKS.md.
-- **Before creating any file**: check `.claude/knowledge/docs-organization.md` for canonical location.
+- **Before creating any file**: check `docs/policies/docs-organization.md` for canonical location.
   Wrong location = duplication debt. When in doubt: `reports/` for task reports, `docs/handoffs/` for handoffs, never at project root.
 
 ---

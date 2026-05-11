@@ -94,7 +94,7 @@ agent:
   doc_maintenance:
     owns:
       - docs/architecture/microservice/<service>/**
-      - .claude/knowledge/<related-knowledge>.md
+      - docs/<bucket>/<file>.md
     responsibilities:
       - Update zone docs after ANY code change that alters behavior, API, schema, or config
       - Keep own agent description accurate if skills/stack/port change
@@ -153,8 +153,8 @@ constraints:
     # Read-only: files this agent can read but never edit
     reads:
       - docs/agent-memory/notebooks/*.md          # Other agents' notebooks
-      - .claude/knowledge/*.md                     # Shared knowledge
-      - .claude/knowledge/bundles/bundle-*.md      # Pre-bundled knowledge
+      - docs/{policies,protocols,standards,references}/*.md                     # Shared knowledge
+      - docs/references/bundles/bundle-*.md      # Pre-bundled knowledge
       - docs/handoffs/TASK_*.md                    # Task context
 ```
 
@@ -249,10 +249,10 @@ This file lists which MCP tools the agent is authorized to call. Referenced in f
 ```yaml
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/<file>.md
+      - path: docs/<bucket>/<file>.md
         trigger: <trigger-name>
         fail_loud: false
 ```
@@ -350,7 +350,7 @@ Documents signal bus connections — who triggers this agent and who it triggers
 ```markdown
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars):
+If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file missing, empty, <50 chars):
 1. `send_telegram(channel="bug", message="[{agent-name}] Knowledge load failed: <filename>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed", agent="{agent-name}")`
 3. STOP current cycle, return early

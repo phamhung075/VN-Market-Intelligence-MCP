@@ -52,7 +52,7 @@ After creating agent files, register in:
 | File | What to add |
 |------|-------------|
 | `CLAUDE.md` | Agent Routing table row |
-| `.claude/knowledge/agent-roster.md` | Team section entry |
+| `docs/references/agent-roster.md` | Team section entry |
 | `.claude/skills/dispatch/SKILL.md` | Dispatch table entry |
 | `docs/AI_TEAM_DESIGN.md` | Team design entry |
 

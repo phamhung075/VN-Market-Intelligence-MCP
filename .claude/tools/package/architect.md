@@ -51,7 +51,7 @@ Write: docs/architecture/RFC_NNNN_title.md
 - `reference_ddd_microservices.md` — DDD layer pattern and testing tiers
 - `project_architecture_migration.md` — current 9-service Docker architecture
 - `project_4layer_architecture.md` — server cron + Claude schedule + Cowork + CLI layers
-- `.claude/knowledge/mcp-tools.md` — MCP interface and tool categories
+- `docs/standards/mcp-tools.md` — MCP interface and tool categories
 
 ## Channel Permissions
 

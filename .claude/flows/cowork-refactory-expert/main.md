@@ -26,7 +26,7 @@ grep -r "scheduler\.add(" apps/mcp-server/src/scheduler/*.ts
 grep -r "case '" apps/mcp-server/src/interface/
 ```
 Verify removed: `// DEPRECATED:` or `// NO-OP` markers
-Cross-check: `.claude/knowledge/mcp-tools.md` | `.claude/knowledge/cron-jobs.md` | `docs/data/project-stats.json`
+Cross-check: `docs/standards/mcp-tools.md` | `docs/standards/cron-jobs.md` | `docs/data/project-stats.json`
 
 ## Rewrite Checklist
 - [ ] Tool count matches live
@@ -43,8 +43,8 @@ Cross-check: `.claude/knowledge/mcp-tools.md` | `.claude/knowledge/cron-jobs.md`
 ## Cowork Refresh Prompt (provide after every update)
 ```
 Agent system updated. Current state:
-- Tools: [N] (see .claude/knowledge/mcp-tools.md)
-- Scheduler: [N jobs] (see .claude/knowledge/cron-jobs.md)
+- Tools: [N] (see docs/standards/mcp-tools.md)
+- Scheduler: [N jobs] (see docs/standards/cron-jobs.md)
 - Watchlist: [N tickers, M sectors]
 - Telegram: MARKET (user alerts) | WORK (dev status) | BUG (errors)
 
@@ -62,7 +62,7 @@ Key patterns:
 git add docs/agent-memory/notebooks/cowork-refactory-expert.md
 git commit -m "chore(memory/cowork-refactory-expert): notebook YYYY-MM-DD"
 ```
-Convention: `.claude/knowledge/commit-convention.md` § Notebook Commits
+Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ---
 

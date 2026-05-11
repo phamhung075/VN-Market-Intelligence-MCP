@@ -46,7 +46,7 @@ Write: docs/sprints/SPRINT_XXX_summary.md
 
 ## Knowledge Loaded at Start
 
-- `.claude/knowledge/agent-roster.md` — agent routing and responsibilities
+- `docs/references/agent-roster.md` — agent routing and responsibilities
 - `docs/TASKS.md` — current task backlog
 - `.claude/flows/pm/main.md` — PM workflow and escalation rules
 

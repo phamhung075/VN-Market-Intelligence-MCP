@@ -58,20 +58,20 @@ agent:
 
   knowledge:
     always_load:
-      - path: .claude/knowledge/fail-loud-protocol.md
+      - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
-      - path: .claude/knowledge/alert-policy.md
+      - path: docs/policies/alert-policy.md
         fail_loud: true
-      - path: .claude/knowledge/alert-message-format.md
+      - path: docs/standards/alert-message-format.md
         fail_loud: true
     lazy_load:
-      - path: .claude/knowledge/portfolio-schema.md
+      - path: docs/standards/portfolio-schema.md
         trigger: position_check
         fail_loud: false
-      - path: .claude/knowledge/kinh-dich-layer.md
+      - path: docs/references/kinh-dich-layer.md
         trigger: hexagram_signal
         fail_loud: false
-      - path: .claude/knowledge/mcp-tools.md
+      - path: docs/standards/mcp-tools.md
         trigger: startup
         fail_loud: true
 
