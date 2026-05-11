@@ -234,3 +234,10 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | Real estate led decline (VRE -6.41%, VHM -1.83%, VIC -1.33%), tech -2.64% (FPT lowest since end 2023), aviation -2.92% | EIB +2.71% sole outlier | China/Taiwan 50.5% (unchanged)
 - Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate risk tool: transient error (skipped) | Spam audit: skipped (oversized response)
 - No Telegram reports | 0 agent signals | Alert quality degrading (0.3%, was 1% May 9)
+
+### Coordination Cycle (15:05–15:10 UTC) — 2026-05-11
+- Mode: MARKET (post-close) | System: OK (all 16 CBs clear, NKG BCTC rate-limit transient, Reuters/TE offline persistent) | Alerts: 8 open (4 MEDIUM: VIC×3+VHM+HCM; 4 LOW: FPT×2+VIC×2 — all previously notified) | Quality issues: 0 new (alert accuracy bug already filed @2292 prev cycle)
+- Regime: NEUTRAL (unchanged from 14:00 cycle — macro mixed, Brent 103.02, inflation 8%, DOW 23750) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (persistent: khối ngoại heavy selling FPT/VHM, "tiền nóng co cụm")
+- Events: None triggered | Market closed final — VN-Index -20pts → 1,895.5 | VRE -6.41%, FPT -2.64%, HVN -2.92%, NKG -2.47%, GVR -2.66% | EIB +2.71% outlier | China/Taiwan 50.5% (unchanged, FPT/VEA/GEX watch)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG — not in portfolio) | Spam audit: skipped (oversized) | No Telegram reports | 0 agent signals
