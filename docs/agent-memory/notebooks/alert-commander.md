@@ -28,6 +28,15 @@
 - Signals: price_anomaly ×2 (FPT, HVN)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+
+### Alert Cycle (15:02–15:02 UTC) — 2026-05-11
+- Signals: urgent_news ×2 (VIC, HVN)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: VIC urgent_news 0.50 < 0.60 | HVN urgent_news 0.50 < 0.60 — no price-anomaly override
+- No legal/crisis hits. Market CLOSED (off-hours).
 - Regime: NEUTRAL | Carry: NEUTRAL (N/A%) | Pivot window: false
 - Market: CLOSED | Legal: clear | Crisis: clear
 - Suppressed: FPT price_anomaly σ=2.04 conf=0.50 (below 0.80 + σ<4.0) | HVN price_anomaly σ=2.56 conf=0.50 (below 0.80 + σ<4.0)
