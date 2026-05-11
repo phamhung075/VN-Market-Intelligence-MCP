@@ -20,10 +20,10 @@ import type {
   VnstockTradingStats,
   VnstockOfficer,
   VnstockShareholder,
-  VnstockEvent,
   VnstockBalanceSheet,
   VnstockCashFlow,
-} from "../fetchers/vnstockBridge.js";
+} from "../../domain/models/vnstockTypes.js";
+import type { VnstockEvent } from "../../domain/models/shared-types.js";
 import type { DailyForeignFlow } from "../../domain/services/foreignFlowAnalyzer.js";
 import type { ForeignFlowUpsertItem } from "../../domain/models/shared-types.js";
 

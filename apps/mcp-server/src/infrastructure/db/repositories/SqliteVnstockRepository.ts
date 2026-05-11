@@ -9,10 +9,10 @@ import type {
   VnstockTradingStats,
   VnstockOfficer,
   VnstockShareholder,
-  VnstockEvent,
   VnstockBalanceSheet,
   VnstockCashFlow,
-} from "../../fetchers/vnstockBridge.js";
+} from "../../../domain/models/vnstockTypes.js";
+import type { VnstockEvent } from "../../../domain/models/shared-types.js";
 
 export class SqliteVnstockRepository implements IVnstockRepository {
   // db parameter reserved for future direct-query migration (Phase 2+).

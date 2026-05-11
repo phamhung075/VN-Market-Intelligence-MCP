@@ -1,20 +1,16 @@
 // apps/mcp-server/src/domain/repositories/IVnstockRepository.ts
 // Task 1838b — Domain port for vnstock data access.
-//
-// NOTE (Phase 1 pragmatic exception — R-1 in design doc):
-//   This interface imports types from infrastructure/fetchers/vnstockBridge.js.
-//   These types should eventually move to domain/models/vnstockTypes.ts (Phase 3).
-//   Flagged as tech-debt item per design section 2.3 + 6.
+// Task 1871f — DDD fix: types extracted to domain/models/vnstockTypes.ts.
 
 import type {
   VnstockFinancials,
   VnstockTradingStats,
   VnstockOfficer,
   VnstockShareholder,
-  VnstockEvent,
   VnstockBalanceSheet,
   VnstockCashFlow,
-} from "../../infrastructure/fetchers/vnstockBridge.js";
+} from "../models/vnstockTypes.js";
+import type { VnstockEvent } from "../models/shared-types.js";
 
 export interface IVnstockRepository {
   getLatestFinancials(code: string): VnstockFinancials | null;

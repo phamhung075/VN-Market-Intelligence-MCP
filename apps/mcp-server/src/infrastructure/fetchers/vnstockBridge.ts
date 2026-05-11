@@ -22,9 +22,10 @@ import { logger } from "../logger.js";
 import { ANSI_JUNK_RE, ANSI_ESCAPE_RE, BOX_DRAWING_RE } from "../../domain/utils/ansiUtils.js";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — re-exported from domain (DDD fix Task 1871f)
 // ---------------------------------------------------------------------------
 
+// Infrastructure-only type (price shape used only in fetcher layer)
 export interface VnstockPrice {
   code: string;
   open: number;
@@ -36,58 +37,24 @@ export interface VnstockPrice {
   changePct: number;
 }
 
-export interface VnstockFinancials {
-  code: string;
-  yearReport: number;
-  quarter: number;
-  source: "vnstock";
-  // Income statement
-  revenue: number;           // billion VND
-  revenueYoY: number;        // %
-  netProfit: number;          // billion VND
-  netProfitYoY: number;      // %
-  eps: number;                // VND
-  // Ratios
-  pe: number;
-  pb: number;
-  roe: number;               // %
-  roa: number;               // %
-  debtToEquity: number;
-  netProfitMargin: number;   // %
-  // Banking specific
-  nim: number | null;         // % (null for non-bank)
-  npl: number | null;         // % (null for non-bank)
-  fetchedAt: string;
-}
-
-export interface VnstockTradingStats {
-  code: string;
-  foreignRoom: number;
-  foreignVolume: number;
-  currentHoldingRatio: number;
-  maxHoldingRatio: number;
-  avgVolume2w: number;
-  high52w: number;
-  low52w: number;
-  pctFromHigh52w: number;
-  pctFromLow52w: number;
-  fetchedAt: string;
-}
-
-export interface VnstockOfficer {
-  code: string;
-  name: string;
-  position: string;
-  ownPercent: number;
-  quantity: number;
-}
-
-export interface VnstockShareholder {
-  code: string;
-  name: string;
-  quantity: number;
-  ownPercent: number;
-}
+// Domain types: canonical definitions live in domain/models/vnstockTypes.ts
+// Imported locally for use in function signatures + re-exported for backward compat.
+import type {
+  VnstockFinancials,
+  VnstockTradingStats,
+  VnstockOfficer,
+  VnstockShareholder,
+  VnstockBalanceSheet,
+  VnstockCashFlow,
+} from "../../domain/models/vnstockTypes.js";
+export type {
+  VnstockFinancials,
+  VnstockTradingStats,
+  VnstockOfficer,
+  VnstockShareholder,
+  VnstockBalanceSheet,
+  VnstockCashFlow,
+};
 
 // Re-export shared types from domain (DDD fix — Task 1320)
 import type {
@@ -96,34 +63,6 @@ import type {
   VnstockOrderBook,
 } from "../../domain/models/shared-types.js";
 export type { VnstockIntradayTick, VnstockEvent, VnstockOrderBook };
-
-export interface VnstockBalanceSheet {
-  code: string;
-  yearReport: number;
-  quarter: number;
-  totalAssets: number;        // billion VND
-  totalLiabilities: number;
-  totalEquity: number;
-  cash: number;               // cash and equivalents
-  shortTermDebt: number;
-  longTermDebt: number;
-  receivables: number;
-  inventory: number;
-  source: "vnstock";
-  fetchedAt: string;
-}
-
-export interface VnstockCashFlow {
-  code: string;
-  yearReport: number;
-  quarter: number;
-  operatingCashFlow: number;  // billion VND
-  investingCashFlow: number;
-  financingCashFlow: number;
-  netCashFlow: number;
-  source: "vnstock";
-  fetchedAt: string;
-}
 
 export interface VnstockNewsItem {
   code: string;
