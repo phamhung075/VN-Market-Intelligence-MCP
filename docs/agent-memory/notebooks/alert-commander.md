@@ -178,9 +178,8 @@
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Pivot window: unknown ([SKIP] — get_macro_calendar not in tool package)
 - Notes: Market CLOSED (off-hours). VIC urgent_news id=2877 (Phạm Nhật Vượng đề xuất dự án điện 158,000 tỷ tại Điện Biên, impact_score=7) conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b: no price_anomaly for VIC in agent bus → no override → Suppressed. HVN urgent_news id=2878 (Vietnam Airlines thông báo tới 27,000+ cổ đông, impact_score=7) conviction 0.50 < 0.60 threshold. Step 3b: HVN price_anomaly id=2880 found in bootstrap (σ=2.57) < 4.0σ → no override → Suppressed. HVN price_anomaly id=2880 (σ=2.57) — not confirmed via get_alerts (empty) → Suppressed. EIB price_anomaly id=2881 (σ=2.10, +2.71% vs sector -1.0%, PE 37.7x speculative) — not confirmed → Suppressed. FPT price_anomaly id=2882 (σ=2.06, FII heavy seller) — not confirmed → Suppressed. Legal: clear. Crisis: clear. All 5 outcomes recorded suppressed. log_agent_work id=633.
 
-### Alert Cycle (13:04–13:04 UTC, 2026-05-11)
-- Signals: urgent_news ×1 (HVN id=2892 conf 0.50) | price_anomaly ×1 (EIB id=2893 σ=2.10)
+### Alert Cycle (14:02–14:03 UTC)
+- Signals: urgent_news×1, price_anomaly×1
 - Fired: 0 | Suppressed: 2 | MARKET: 0
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
-- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Pivot window: unknown ([SKIP] — get_macro_calendar not in tool package)
-- Notes: Market CLOSED (off-hours, 13:04 UTC). HVN urgent_news id=2892 (Vietnam Airlines thông báo quan trọng đến 27,000+ cổ đông, impact_score=7) conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b: get_agent_signals(price_anomaly, HVN) → no signals → no override → Suppressed. EIB price_anomaly id=2893 (σ=2.10, +2.71% vs banking sector, impact_score=5) — not confirmed via get_alerts (empty); σ 2.10 < 4.0 and impact 5 < 6 → override criteria not met → Suppressed. Legal: clear. Crisis: clear. log_agent_work id=640.
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
