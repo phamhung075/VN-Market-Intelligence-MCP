@@ -45,11 +45,13 @@ Audited indicators (read order = audit order):
 ## Layer 3 — Vietnam economic health stack
 
 ### Source hierarchy (mandatory)
-1. **VIRA** (Hội Nghiên cứu Thị trường Liên ngân hàng) — interbank-economist survey on rates, FX, inflation.
-2. **WiData** (WiGroup) — domestic-deep dataset.
-3. **Avoid** as primary: IMF / ADB / World Bank — too aggregated and lagged for VN moves.
+1. **VIRA** (Hội Nghiên cứu Thị trường Liên ngân hàng — `https://vira.org.vn/`) — interbank-economist survey on rates, FX, inflation. **Primary VN source. Free, scrapable.** Routed through the Vinahost VPS scraper (geo-blocked outside VN).
+2. ~~WiData (WiGroup)~~ — paid product, NOT available to this system. Do not cite, do not require.
+3. **Avoid** as primary: IMF / ADB / World Bank — too aggregated and lagged for VN moves. Valid as cross-check only.
 
-An agent quoting IMF/ADB/WB *as primary* on a VN call = methodology gap. They are valid as cross-check only.
+An agent quoting IMF/ADB/WB *as primary* on a VN call = methodology gap. An agent citing WiData = also a gap (we do not have access).
+
+> **Implementation note** — VIRA scraping must be added to the VPS proxy stack alongside the existing geo-blocked sources (prices, BCTC, news, FX, foreign-flow). Until that lands, TNB tolerates VIRA-absence on the VN side and only flags IMF/ADB/WB-as-primary or WiData citation as gaps.
 
 ### Variables (in priority order)
 1. **Tỷ giá** (USD/VND) — break above 26500 = FII outflow accelerator.
@@ -82,7 +84,7 @@ Step A → Did the agent open with the highest-frequency indicator? (Layer 1.1)
 Step B → Did the agent flag any threshold crossing? (Layer 1.2)
 Step C → Did the agent attach a cause/transmission chain? (Layer 1.3 + market-analysis.md)
 Step D → For US calls: PMI checked before consumer? (Layer 2)
-Step E → For VN calls: VIRA/WiData cited before IMF/ADB/WB? (Layer 3)
+Step E → For VN calls: VIRA cited (or VIRA-absent acknowledged), and IMF/ADB/WB not cited as primary? WiData citation = automatic fail. (Layer 3)
 Step F → For investment theses: how many of {M2, COC, EPS, POL}? (Layer 4)
 
 Score:  ≥5 of 6 = GOOD
@@ -121,6 +123,8 @@ An agent that jumps to step 5 (recommendation) without showing 1–4 = methodolo
 | Catalyst missing | news-scout impact_chain output | high | escalate to BUG |
 | US analysis without PMI | unified-agent | high | flow edit: add PMI bootstrap |
 | VN call citing IMF/ADB/WB primary | financial-analyst, digest-predict | medium | flow edit: source priority list |
+| VN call citing WiData | any agent | medium | flow edit: strike WiData (paid, inaccessible) |
+| VN call missing VIRA when VPS scraper is live | any agent | low | flow edit: add VIRA fetch step |
 | Investment rec missing pillar | alert-commander outbound | high | flow edit: pillar checklist |
 | Manufacturing→services causality inverted | unified-agent thesis | high | escalate to BUG |
 | Single-source sentiment (CB only or UMich only) | unified-agent | low | flow edit: require both |

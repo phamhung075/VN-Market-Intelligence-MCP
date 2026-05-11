@@ -91,7 +91,7 @@ For each agent notebook surveyed in Step 3 + every MARKET investment thesis from
 | B | Threshold crossings flagged (PMI ↔ 50, USD/VND ↔ 26500, US10Y ↔ 4.5%, FII carry ↔ 0) | Layer 1.2 |
 | C | Cause + transmission chain attached (Level 1 → Level 4 of `market-analysis.md`) | Layer 1.3 |
 | D | US calls: PMI checked **before** consumer / services | Layer 2.A + 2.B |
-| E | VN calls: VIRA/WiData cited **before** IMF/ADB/WB | Layer 3 |
+| E | VN calls: VIRA cited (or VIRA-absence noted while VPS scraper is pending), IMF/ADB/WB never primary, **no WiData** (paid, off-limits) | Layer 3 |
 | F | Investment theses: pillar count of {M2, COC, EPS, POL} ≥ 3 | Layer 4 |
 
 Score: ≥5/6 = GOOD | 3–4 = NEEDS_ATTENTION | ≤2 = CRITICAL
