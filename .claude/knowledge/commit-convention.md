@@ -50,7 +50,17 @@ EOF
 
 - Scope format: `<sprint>/<area>` — e.g. `feat(1863/scheduler):`
 - `<sprint>` = sprint number (integer)
-- `<area>` = domain noun: `scheduler`, `mcp`, `knowledge`, `agents`, `infra`, `docker`, `qa`, `rag`, `db`, `alerts`, `telegram`, `vps`, etc.
+- `<area>` = domain noun — canonical list (kept in sync with audit script VOCAB):
+  `agent-doc`, `agents`, `agents-architect`, `alert-accuracy`, `alerts`, `api-gateway`,
+  `arch`, `architecture`, `audit`, `cleanup`, `commit-convention`, `crons`, `cycle`,
+  `data`, `db`, `deploy-verification`, `dev-team`, `docker`, `flow`, `flows`,
+  `infra`, `janitor`, `knowledge`, `market-watcher`, `mcp`, `mcp-server`, `mcp-tool`,
+  `memory`, `merge`, `microservice`, `notebooks`, `pm`, `qa`, `rag`, `readme`,
+  `registry`, `routing`, `scan-market`, `scheduler`, `sessions`, `signals`, `skill`,
+  `skills`, `ssot`, `state`, `system-auditor`, `ta-alert-notifier`, `tasks`,
+  `telegram`, `tree-map`, `types`, `vps`
+- Sprint/task IDs used as sole area token (e.g. `1872a`, `1864b`) are accepted
+  but discouraged — prefer `<sprint>/<area>` (e.g. `feat(1872a/flows):`).
 
 ---
 

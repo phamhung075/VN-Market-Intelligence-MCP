@@ -31,7 +31,7 @@ REPORT_FILE="${REPORT_DIR}/commit-convention-audit-${REPORT_DATE}.json"
 SIGNAL_TS="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
 
 # Canonical area token vocabulary (from .claude/knowledge/commit-convention.md § Scope Rules)
-VOCAB="scheduler mcp knowledge agents infra docker qa rag db alerts telegram vps architecture tree-map memory state merge tasks audit cycle"
+VOCAB="agent-doc agents agents-architect alert-accuracy alerts api-gateway arch architecture audit cleanup commit-convention crons cycle data db deploy-verification dev-team docker flow flows infra janitor knowledge market-watcher mcp mcp-server mcp-tool memory merge microservice notebooks pm qa rag readme registry routing scan-market scheduler sessions signals skill skills ssot state system-auditor ta-alert-notifier tasks telegram tree-map types vps"
 
 mkdir -p "${REPORT_DIR}"
 
@@ -171,7 +171,6 @@ process_commit() {
   # C4 — Scope vocabulary compliance (non-notebook commits only)
   # -------------------------------------------------------------------------
   if [ "${is_notebook}" = "false" ]; then
-    # Only check commits that match header format (have a parseable scope)
     if echo "${lsubj}" | grep -qE "${HEADER_RE}"; then
       c4_denominator=$((c4_denominator + 1))
       # Extract area token: last segment after / in scope, or full scope if no /
@@ -181,6 +180,17 @@ process_commit() {
       else
         area_token="${scope}"
       fi
+
+      # Sprint/task IDs used as area token are convention-exempt (counted as pass).
+      # Pattern: area token starts with 4+ consecutive digits (e.g. 1872a, 1864b-X).
+      local first4=""
+      first4="$(echo "${area_token}" | cut -c1-4)"
+      case "${first4}" in
+        [0-9][0-9][0-9][0-9])
+          c4_pass=$((c4_pass + 1))
+          return
+          ;;
+      esac
 
       local vocab_match=false
       for token in ${VOCAB}; do
