@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "1880+signal-dedup-sqlite",
+  "currentSprint": "1880+signal-dedup-sqlite+1878a-spec",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T22:46:49Z",
+  "updatedAt": "2026-05-11T23:57:54Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 36: tier 1 shipped. 1880a (get_investment_clock_phase, merge 930dd2a3, 8/8 tests) + signal-T1 (create-signals-db migration, merge f971c22b, 7/7 tests). 5 signals drained (4 PO→BA spec-requests + 1 architect→agent-father). T4 docs done by agent-father (agent-chaining-protocol.md + tree-map.md). Tier 2 queued: 1880b (depends on 1880a — DONE), signal-T2 (depends on signal-T1 — DONE). Next cron firing :07 picks up tier 2. New telegram report 2854 (unified-agent, news freshness stale 22:03 UTC, MEDIUM) — for PO triage next cycle. PM wrote future timestamp 2026-05-12T00:15:33Z — UTC invariant violation, fixed inline (real UTC 22:33:31Z). Stale task/1872a-5 still pending user authorization (7th cycle now). C2 re-measure deferred to next cycle (gate 2026-05-17 at 0.85)."
+  "lastCompleted": "Cycle 37: 3 merges. (1) signal-T2 + 1880b + cycle-37 drain state → merge cb232b26 (signal-T2 10/10 tests, 1880b 23/23 tests, full suite 9406/0). (2) NB-HDR-c38 notebook header drift bundle → merge c4e4c1ab (TNB c38 #4 alert-commander + #5 architect CLOSED, #6 market-watcher already compliant). (3) 1878a-spec cherry-pick → SHA 5a57f377 (10/10 sections verified, key decisions: NULL no-default, bridge+backfill both, *1000 unit conversion mandatory). Branches deleted: task/signal-T2-backfill, task/1880b-pyramid-tier (empty), task/NB-HDR-c38, spec/1878a-ocf-column. CROSS-POLLUTION INCIDENT: parallel-tier-1 agents in shared working tree caused 1880b commits to land on signal-T2 branch + duplicate signal-T2 commit on spec branch. Resolved via QA cherry-pick. Mitigation: future parallel spawns may need worktree isolation per agent — flag for architect c38. Tier 2 backlog ready: 1878a impl (dev-mcp-server, schema column + bridge + tests), 1878b accruals (blocked-by 1878a), 1879/1881 BA specs queued. signal-T3 unblocked. 2 new telegram reports flagged for next cron (id=2854 MEDIUM news-freshness, id=2855 LOW git HEAD.lock on host). Stale task/1872a-5 still pending user auth (8th cycle). C2 gate 2026-05-17 currently 0.6364, passive accrual."
 }

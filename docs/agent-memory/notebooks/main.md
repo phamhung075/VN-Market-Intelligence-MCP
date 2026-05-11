@@ -1,6 +1,47 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 20:17 UTC (Cycle 35 idle — PO verdict NOTHING)
+**Written:** 2026-05-11 23:57 UTC (Cycle 37 — 3 merges, 4-task dispatch)
+
+## Cycle 37 (2026-05-11 23:26 → 23:57 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 6 signals at root → fingerprint check | 5 replay-skip + 1 routed (TNB c38) |
+| 0b Resume | pipeline idle | fall through Step 1 |
+| 1 PO | triage 1 pendingSignal + carry-over + TG reports | **BATCH(4)**: 1880b + signal-T2 + 1878a-spec + NB-HDR-c38 |
+| 2 Plan | reuse cycle 36 arch briefs (1880 + signal-dedup) | skip |
+| 3 Dispatch | tier-1 parallel: dev-mcp-server + developer + ba + agent-father | 4 returns, all GREEN |
+| 3 QA | sequential merges to dodge race on main | 3 SHAs: cb232b26 + c4e4c1ab + 5a57f377 |
+| 4 Scan | 0 monitoring expired, 2 new TG reports (2854 + 2855), 0 stale branches except 1872a-5 | defer reports to c38 |
+| 4.5 | notebook + commit | this entry |
+
+### Merges delivered
+
+| Sprint | Merge SHA | Tests | Notes |
+|---|---|---|---|
+| signal-T2 + 1880b | cb232b26 | 10/10 + 23/23, full 9406/0 | drain state folded in |
+| NB-HDR-c38 | c4e4c1ab | doc-only | TNB c38 #4/#5 CLOSED |
+| 1878a-spec | 5a57f377 (cherry-pick) | 10/10 sections | dev-mcp-server unblocked |
+
+### Cross-pollution incident (must address before next parallel-tier-1)
+
+4 agents spawned in same `Agent(...)` block shared the WORKING TREE because the project repo is a single git worktree. Results:
+- `task/1880b-pyramid-tier` branch was CREATED but never received commits — 1880b code landed on `task/signal-T2-backfill` (the branch that happened to be HEAD when dev-mcp-server ran git commit)
+- `spec/1878a-ocf-column` captured `eedafa2d` (NB-HDR-c38) + duplicate `35ff7539` (signal-T2 content) before reaching its own commit `6ffe3493`
+- Drained signals (the `mv` to processed/ I did pre-dispatch) ended up partially committed on signal-T2 branch and partially untracked
+
+**Resolved this cycle** by QA cherry-pick + careful sequential merges. **Mitigation for c38+:** flag to architect — option A use git worktrees per agent (one tmp worktree per parallel branch), option B serialize tier-1 spawns when they touch overlapping subtrees, option C have each agent stash + reset before commit.
+
+### Carry-over to cycle 38
+
+- **Backlog ready:** 1878a impl (dev-mcp-server), 1878b accruals (blocked-by 1878a), 1879 EFFR-IORB BA spec, 1881 source-tier BA spec, signal-T3 drain rewrite (unblocked), signal-T5 qa tests (blocked-by T3), ARCH-1884 status drift reconciliation (brief is on main, TASKS.md not yet updated)
+- **2 new TG reports** for PO triage: id=2854 MEDIUM news-freshness, id=2855 LOW git HEAD.lock on docker host
+- **TNB re-audit at c39** (cron 24:00 UTC) — will score new Layers 7/8/9
+- **Stale task/1872a-5** 8th cycle pending user auth
+- **C2** still 0.6364 vs gate 0.85 at 2026-05-17 (5 days remaining)
+- **PM Step 4.5 UTC invariant violation** (cycle 36) — surface to TNB at c39
+
+---
 
 ## Cycle 35 idle (2026-05-11 20:15 → 20:17 UTC)
 
