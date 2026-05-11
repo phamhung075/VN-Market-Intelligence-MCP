@@ -155,8 +155,10 @@ const P_TOTAL_INCOME_TAX = /t[ổo]ng\s+chi\s+ph[ía]\s+thu[ếe]\s+TNDN/i;
 const F_TOTAL_INCOME_TAX = /tong\s+chi\s+phi\s+thue\s+TNDN/i;
 
 // Net profit
-const P_NET_PROFIT = /l[ợo]i\s+nhu[ậa]n\s+sau\s+thu[ếe]/i;
-const F_NET_PROFIT = /loi\s+nhuan\s+sau\s+thue/i;
+// Task 1870b: negative lookahead excludes "chưa phân phối" (retained earnings on
+// balance sheet) which was poisoning detectUnitMultiplier sentinel in mixed-unit PDFs.
+const P_NET_PROFIT = /l[ợo]i\s+nhu[ậa]n\s+sau\s+thu[ếe](?!\s+ch[ưu]a\s+ph[âa]n\s+ph[ốo]i)/i;
+const F_NET_PROFIT = /loi\s+nhuan\s+sau\s+thue(?!\s+chua\s+phan\s+phoi)/i;
 
 const P_MINORITY_INTEREST =
   /l[ợo]i\s+[ía]ch\s+.*c[ổo]\s+[đd][ôo]ng\s+kh[ôo]ng\s+ki[ểe]m\s+so[áa]t/i;
