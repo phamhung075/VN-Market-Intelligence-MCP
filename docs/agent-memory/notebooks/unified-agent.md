@@ -301,3 +301,24 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
   - Notebook committed: chore(memory/unified-agent): notebook 2026-05-11
 - **next_cycle_hint**: Watch banking BCTC releases (ACB/BID/CTG/EIB/MBB/VCB/VPB due 2026-05-15 — 4 days). Monitor FPT for conviction shift if RSI < 20 or volume spike. Foreign flow pipeline paused — check restoration. VRE data gap from vnstock rate-limiting.
 - **estimated_tokens**: 13000
+
+### Coordination Cycle (20:05–20:08 UTC) — 2026-05-11
+- Mode: MARKET (post-close) | System: OK (all 16 CBs clear, GVR vnstock rate-limit WARN transient, Reuters/TE offline persistent) | Alerts: 10 open (VIC×5, FPT×3, VHM×1, HCM×1 — all notified) | Quality issues: 0 new (alert accuracy bug #2292 ongoing — price_drop 25%, 1/4 scored)
+- Regime: TIGHTENING (unchanged from 19:00 UTC cycle) | No new REGIME_TRANSITION | Alignment: 0.0 (FPT/tech → headwind under TIGHTENING) | FII_TYPE=HOT_MONEY (carry VND -33bp, heavy selling 14,100tỷ, "tiền nóng co cụm")
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | No new shift ≥0.3 | BCTC (FPT Q1/2026) 11 days overdue — not new entry, no earnings trigger
+- Events: None new triggered | Market closed — VN-Index 1,895.5 (-20pts/-1.04%) | RSI oversold: FPT 25.8, HSG 10.0, HVN 24.4, NKG 23.1 | EIB +2.71% sole outlier | Macro: Brent 104.28 (+5σ EXTREME), Gold 1,675 (-5σ EXTREME)
+- Supply chain: STABLE | Energy: NORMAL | Legal: CLEAR | Crisis: CLEAR | No agent signals | WORK sent 20:05 UTC clean
+- BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) — PRIORITY next cycle
+
+## Cycle — 20:05 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - REGIME: TIGHTENING (unchanged from 19:00 UTC cycle — no new transition)
+  - FPT @ 70,000 (-12.83%) — oversold RSI 25.8, 11d below stop-loss 74,679, FII selling 14,100tỷ, conviction STRONG bearish 0.63 → GIẢM BỚT
+  - Banking BCTC (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 4 days — key upcoming catalyst
+- **actions**:
+  - WORK heartbeat sent (20:05 UTC clean)
+  - No new WORK posts (REGIME_TRANSITION + FII + misalignment all posted at 19:00 UTC cycle)
+- **next_cycle_hint**: Banking BCTC releases 2026-05-15 (ACB/BID/CTG/EIB/MBB/VCB/VPB) — earnings triggers ready. Monitor FPT RSI/volume for reversal signal. Foreign flow pipeline restoration. GVR rate-limit clear expected.
+- **estimated_tokens**: 9500
