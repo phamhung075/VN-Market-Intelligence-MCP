@@ -27,6 +27,7 @@
 | `1349b-cb-logging.test.ts` | Circuit breaker state transitions |
 | `1394-alert-digest-diacritics.test.ts` | Vietnamese diacritics in alerts |
 | `1551-pipeline-watchdog-market-alert.test.ts` | Alert pipeline supervision |
+| `1875c-record-signal-outcome-routing.test.ts` | Dispatch regression guard: record_signal_outcome returns signal-outcome shape (not climate), handler distinct from get_climate_risk_signals, alert_commander skill resolves correctly |
 
 ### BCTC & Financial Reports
 | Test File | Coverage |
