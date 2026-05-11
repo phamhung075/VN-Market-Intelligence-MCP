@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-10 (scan 16 — 6 findings, 1 shipped, 5 proposed)
+## Last updated: 2026-05-12 (scan 17 — 0 new findings, 0 shipped, backlog stable)
 
 ## State summary
 
@@ -48,6 +48,26 @@
 - Scan 16 (2026-05-10): SSOT conflict audit on meta-configuration files. Found 6 hardcoded volatile counts: 3 in agent .md files, 1 in flow .md, 1 in knowledge file, 1 in JSON. Fixed analysisAgentCount (9→8) in project-stats.json. 5 config-file violations proposed as backlog tasks (require agent-father/ops approval, outside code-janitor's edit scope).
 - JANITOR-028–JANITOR-032: All require approval from agent-father or flow owners before edits (not mechanical, not production code).
 - Next scan: watch for any new agent creations that increment devAgentCount or analysisAgentCount without updating project-stats.json.
+
+---
+
+## Session 17 (2026-05-12 17:00–17:15 VN) — Full codebase scan after recent commits
+
+**Scope:** All production source files (apps/mcp-server/src/); last 5 commits reviewed for DRY violations.
+
+**Result:** CLEAN — 0 new violations. 1 recurrent finding already proposed (JANITOR-027).
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | No ticker maps duplicated outside canonical sources (sectorPeers.ts, stockAliases.ts) |
+| Ticker arrays | 0 findings | No hardcoded ticker arrays with 2+ tickers outside tests |
+| Magic numbers / time constants | 1 recurrent | JANITOR-027: MS_PER_DAY hardcoded in 23 files. Canonical source: timeConstants.ts. Already proposed (multi-file refactoring, not shippable per constraint). |
+| Schema duplication | 0 findings | All DDL in schema-*.ts canonical files. No production inline DDL. |
+| Config drift | 0 findings | All ?? fallback patterns match mcp.config.json values. |
+
+**Open backlog status:** 9 items (JANITOR-011, -013, -017, -020, -027 plus 4 meta-config tasks -028 to -032). All stable — no new violations added to backlog this scan.
+
+**Quality:** Full — all 5 checks executed; all procedures followed; no knowledge load failures.
 
 ---
 
@@ -166,9 +186,9 @@
 
 ## Cumulative Metrics
 
-- **Total scans:** 16
-- **Violations found:** 27 (shipped 14, proposed 9, managed 4)
+- **Total scans:** 17
+- **Violations found:** 27 (shipped 14, proposed 9, managed 4; 0 new in scan 17)
 - **Ship-directly success rate:** 52% (14 shipped / 27 found)
 - **Backlog density:** 33% (9 open / 27 found)
 - **Managed (test coverage):** 15% (4 managed / 27 found)
-- **Recurring violations:** 0 (all prior findings resolved or managed)
+- **Recurring violations:** 1 (JANITOR-027 multi-file refactoring, flagged again in scan 17 but already proposed)

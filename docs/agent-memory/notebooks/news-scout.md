@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 21:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 22:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (22:19–22:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×2 FPT/VIC] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: FPT fund bottom-fishing at multi-year low (urgent_news bullish 7/10 #2946), VIC Vingroup lawsuit resolution recurring (urgent_news bullish 8/10 #2947 — defendants removed articles, apologized, fined)
+- Suppressed: EIB/STB banking personnel neutral 7 (no direction), HVN shareholder notice neutral 7 (no catalyst), BSR refinery rename neutral 6, gold/Brent 0% change (no spike), GEX prop-desk sell neutral 6
+- Notes: Same VIC/FPT articles persisting across off-hours cycles — alert-commander dedup expected. Gold at $4,752/oz (CAO signal) but 0% weekly change, no trigger. Market closed.
 
 ### Cycle (21:19–21:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 6 | Signals: [urgent_news×3 FPT/VIC/HSG, chain_catalyst×1 market] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
