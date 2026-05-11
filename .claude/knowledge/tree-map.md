@@ -20,13 +20,15 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/tree-map.md ← THIS FILE
 │
+├── .claude/knowledge/agent-routing.md (agent dispatch: routing intent table, procedural prompt rule, routing principles)
+│
 ├── .claude/knowledge/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
 │   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
 │   ├── docs/signals/*.json (cross-team signal files: cowork→dev-team, drained at Step 0a — volatile)
 │   └── docs/signals/processed/*.json (treated signals with processedAt/result metadata — auto-pruned after 7 days)
 │
 ├── .claude/knowledge/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
-│   └── docs/data/tool-registry.json (tool list + count — volatile)
+│   └── docs/data/project-stats.json (tool count + master stats file — volatile)
 │
 ├── .claude/knowledge/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
 │   └── docs/data/cron-registry.json (job list + count — volatile)
@@ -46,7 +48,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
 │
-├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13, cooperation flow, signal bus)
+├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13 + microservices 9, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol)
 │
 ├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
 │   └── .claude/knowledge/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)

@@ -14,25 +14,7 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ## Agent Routing — User Request → Agent
 
-Spawn the matching agent. Never do the work yourself.
-
-| Intent | Spawn |
-|--------|-------|
-| add / build / improve | `po` |
-| bug / broken (infra) | `ops` |
-| bug / broken (code) | `developer` |
-| analyze stock / news | `market-analyst` |
-| brainstorm / explore | `idea-forge` |
-| sprint status | `pm` |
-| queue / triage / verify / track task | `po` (scoping) or `pm` (mechanics) |
-| system health / audit | `system-auditor` |
-| DRY / hardcoded values | `code-janitor` |
-| update cowork agents | `cowork-refactory-expert` |
-| organize / cleanup | `claude-manager-helper` |
-| create / edit / review / maintain agent | `agent-father` |
-| quality / strategy audit | `tran-ngoc-bau` |
-
-**Procedural prompts still route.** If the user writes step-by-step instructions ("1) Read X, 2) Edit Y, 3) Set Z"), the steps describe what the AGENT does — main terminal still spawns the matching agent and forwards the full prompt verbatim. Never execute the steps directly.
+→ See `.claude/knowledge/agent-routing.md` for routing intent table and principles.
 
 ---
 

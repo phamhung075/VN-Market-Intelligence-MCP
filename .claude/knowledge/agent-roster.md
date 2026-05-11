@@ -99,13 +99,30 @@ Every task has a progressive context file at `docs/handoffs/TASK_NNN.md`. Agents
 ## Two-Team Architecture
 
 ```
-ANALYSIS TEAM (Cowork, 7 agents, cloud)
-  → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID)  = user alerts/answers
-  → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID)  = status
-  → BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID) = bugs
+ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)
+  Serves user with investment intelligence
+  → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID) = user-facing alerts/answers
+  → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID) = team status
+  → BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID) = problem reports
         ↓ WORK + BUG
-DEV TEAM (Claude Code CLI, local cron, every 1h)
+DEV TEAM (Claude Code CLI — local cron, every 1h)
   Reads BUG → auto-fixes → pushes to main
   → WORK: fix-shipped notices, sprint summaries
-  → Restart: docker-compose down && docker-compose up -d (no hot reload, deterministic state)
+  → Restart: docker-compose (no hot reload, deterministic lockstep restart of 9 services)
 ```
+
+**Analysis Team count clarification:** 7 numbered agents + 1 Unified Coordinator (on-demand + daily scheduled) = 8 total. Setup agent (00) runs once.
+
+## Three-Channel Rules
+
+| Channel | Env Var | Who Writes | Never Write |
+|---------|---------|------------|-------------|
+| MARKET | `TELEGRAM_INFO_MARKET_GROUP_ID` | Alert Commander (alerts), Digest & Predict (digests), QA Responder (/ask answers) | Internal dev reports, agent feedback |
+| WORK | `TELEGRAM_INFO_WORK_CHANNEL_ID` | Dev Team, Unified Coordinator, all agents (status) | User-facing analysis |
+| BUG | `TELEGRAM_REPORT_BUG_CHANNEL_ID` | All analysis agents via `submit_feedback` | Anything not a bug |
+
+Dev Team claims BUG reports, processes, deletes (keeps channel clean).
+
+## Agent Routing Intent
+
+→ See `.claude/knowledge/agent-routing.md` for full routing table and principles. This knowledge file is the SSOT for agent dispatch rules.

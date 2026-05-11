@@ -50,7 +50,7 @@ call_tool(
 
 ## Tool Count & List
 
-Live data → `docs/data/tool-registry.json`
+Live data → `docs/data/project-stats.json`
 Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ## Renamed/Removed Tools — CRITICAL

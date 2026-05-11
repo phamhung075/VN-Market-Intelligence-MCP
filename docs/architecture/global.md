@@ -83,16 +83,12 @@ Dev agents do NOT call docker-compose directly.
 
 ## Two-Team Architecture
 
-Full design: `docs/AI_TEAM_DESIGN.md`
+→ See `.claude/knowledge/agent-roster.md` § Two-Team Architecture for team members, runtime, and data access patterns.
 
-| Team | Members | Runtime | Data access |
-|------|---------|---------|-------------|
-| Analysis (Cowork) | news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, unified-coordinator, qa-responder | Claude.ai cowork sessions (SSE) | MCP gateway exclusively via `call_tool(server="vn-market", ...)` |
-| Dev (CLI cron) | developer, fixer, ops, pm, po, qa, architect, ba, + support agents | CLI cron (`cron-jobs.md`) | Direct file system + MCP gateway |
-
-Agent roster: `.claude/knowledge/agent-roster.md`
-Tool patterns: `.claude/knowledge/mcp-tools.md`
-Cron schedule: `.claude/knowledge/cron-jobs.md`
+Related docs:
+- Agent roster: `.claude/knowledge/agent-roster.md`
+- Tool patterns: `.claude/knowledge/mcp-tools.md`
+- Cron schedule: `.claude/knowledge/cron-jobs.md`
 
 ---
 
