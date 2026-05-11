@@ -128,6 +128,9 @@ src/
 │           └── index.ts
 ├── infrastructure/
 │   ├── config.ts / logger.ts / circuitBreaker.ts / circuitBreakerRegistry.ts
+│   ├── adapters/                    ← Output formatters for analysis results (analysisFormatters.ts)
+│   ├── agents/                      ← Cowork agent helpers: constants, qaResponder/smartCompact spawners
+│   ├── cache/                       ← In-process session tool cache (sessionToolCache.ts)
 │   ├── db/
 │   │   ├── schema.ts                ← Thin orchestrator (~248 lines): imports all slices,
 │   │   │                               exposes getDb / initDatabase / closeDb (backward-compat)
@@ -152,14 +155,22 @@ src/
 │   │   ├── ssc.ts (Puppeteer) / pdf.ts / pdfOcrWorker.ts
 │   │   ├── polymarket.ts / sbv.ts / yahooFinance.ts
 │   │   └── index.ts
+│   ├── fileStore/                   ← JSON file stores; alertVerdictStore.ts = primary pending-verdict
+│   │                                   write target (Sprint 1863); read by verdictResolutionJob before
+│   │                                   writing outcome to agent_signals.outcome DB column.
+│   │                                   Two-stage verdict flow documented in .claude/knowledge/alert-policy.md
+│   │                                   (updated 1871g).
+│   ├── microservices/               ← HTTP clients to downstream Docker services (clients.ts)
 │   ├── notifiers/
 │   │   ├── telegram.ts / telegramCommands.ts / telegramWebhookSetup.ts
 │   │   └── index.ts
-│   └── rag/
-│       ├── embeddings.ts            ← HuggingFace multilingual-MiniLM (local ONNX)
-│       ├── vectorstore.ts           ← LanceDB read/write/search
-│       ├── retriever.ts             ← Multi-level RAG search with temporal decay
-│       └── index.ts
+│   ├── observability/               ← Circuit-breaker logger + per-job metrics (jobMetrics.ts)
+│   ├── rag/
+│   │   ├── embeddings.ts            ← HuggingFace multilingual-MiniLM (local ONNX)
+│   │   ├── vectorstore.ts           ← LanceDB read/write/search
+│   │   ├── retriever.ts             ← Multi-level RAG search with temporal decay
+│   │   └── index.ts
+│   └── vps/                         ← SSH exec helper for Vinahost VPS operator commands (sshExec.ts)
 ├── application/usecases/
 │   ├── assembleBriefing.ts / assembleEveningSummary.ts / assembleAlertDigest.ts
 │   ├── checkSscReports.ts / fetchParseAndStoreBctc.ts / parseBctcReport.ts
