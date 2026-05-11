@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (13:15–13:25 UTC) 2026-05-11
+- Items: 20 | Impacts: 3 | Signals: [chain_catalyst×2 VIC/HSG, urgent_news×1 HVN] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: VIC Phạm Nhật Vượng energy 158k tỷ Điện Biên (chain_catalyst bullish 9/10 #2895, chain→VHM/VRE/D2D/POW/PPC/JSH), HSG/NKG AU anti-dumping 56% (chain_catalyst bearish 7/10 #2896, chain→HPG), HVN shareholder announcement (urgent_news neutral 7/10 #2897)
+- Note: Same stories active as prior cycles — articles remain top items post-market close. Off-hours run 13:20 UTC.
+- Suppressed: MWG profit beat 10/10 (not on watchlist), VN-Index commentary bearish 9/10 (no direct hit), gold recovery (no >3% spike detected), Brent +0.00% (flat)
+
 ### Cycle (11:15–11:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst×1 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default]
