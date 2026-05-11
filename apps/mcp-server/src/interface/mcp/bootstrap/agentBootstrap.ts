@@ -112,6 +112,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "send_telegram",
     "send_alert_digest",
     "record_signal_outcome",
+    "write_alert_verdict",
     "get_alert_accuracy",
     "manage_alert_mute",
     "list_alert_rules",
