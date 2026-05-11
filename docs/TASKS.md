@@ -32,6 +32,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1877d | SPRINT-S: C3 AC-trailer 77.2% → ≥80% (Phase B Day-7 gate). Path (c) Hybrid: 3 commit categories C3-exempt (memory/*, chore(state*), merge-task subject) + flow tightening. 4 files: scripts/audits/commit-convention-audit.sh (+12 LOC), .claude/flows/developer/main.md (+1 LOC), .claude/flows/qa/main.md (+1 LOC), .claude/knowledge/commit-convention.md (+10 LOC). Net +24 LOC. 6 ACs: C3 ≥0.80, notebook/state/merge exempt, genuine violation still caught, bash 3.2 clean. Gate: 2026-05-17. | HIGH | SPRINT-S | developer | TASK_1877d.md | 2026-05-11 |
 
 ---
 
