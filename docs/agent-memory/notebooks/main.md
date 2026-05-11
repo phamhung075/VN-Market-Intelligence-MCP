@@ -1,5 +1,37 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-11 14:02 UTC (Cycle 25 close — Task 1862c-G SHIPPED, smoke probe)
+
+## Cycle 25 SHIPPED Task 1862c-G (2026-05-11 14:02 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| 1862c-G | FIX-HIGH (doc-only) | commit `0e503587`, merge `edea59f8` | Smoke probe added to `.claude/commands/crons/cron-market-watcher.md` — `get_system_status` call as Step 0 in all 3 cron entries (hourly, 15-min intraday, EOD). FAIL → BUG telegram + EXIT; PASS → proceed to Step 1+. Converts silent BLOCKED into immediate alert. +7 LOC, no rebuild. QA APPROVED (tsc PASS, 9307 pass / 13 fail baseline — 4 fewer than pre-branch main). |
+
+## PO verdict reversed cycle 24 outcome
+
+C24 PO said all Todo was gated. C25 PO re-read architect brief §6 and found explicit "1862c-G is independent and can ship any time." Table `Blocked-by` column = `—` confirmed formal gate empty. The "ship order D+E → G → F" sequence in the parent 1862c row is a recommendation, not a hard gate. G's smoke probe is transport-agnostic (tests whatever MCP path is live), so it doesn't conflict with the upcoming D+E Cloudflare ingress flip.
+
+## Operational issues encountered (and resolved)
+
+1. **HEAD.lock stuck** during `git checkout main` after dev's commit — concurrent agent left the lock. Cleared with `rm -f .git/HEAD.lock`.
+2. **Parallel market-watcher cron re-staged a REVERT** of the smoke probe in `cron-market-watcher.md` mid-merge. Detected via `git diff --cached`. Unstaged + restored file from HEAD before checkout. Lesson: when a freshly-shipped flow file change targets a file used by an in-flight cron prompt, the cron may regenerate stale content on its next stage. Worth noting for future flow-edit tasks targeting cron-* files.
+3. **PM in-flight stash** with notebook scratch from 4 cowork agents (alert-commander, market-watcher, news-scout, unified-agent). Stashed pre-checkout, popped post-merge. Those notebooks remain dirty in working tree for their own agents to commit on next run.
+
+## Remaining Todo state (no change)
+
+- 1862c-D (OPS-HIGH): Cloudflare ingress route — owner ops.
+- 1862c-E (OPS-HIGH): SSE keepAliveTimeout 30→300s — owner ops, ship with D.
+- 1862c-F (FIX-MED): SseSessionManager dead-session eviction — gated on D+E + 5 stable cycles + container rebuild.
+- 1876a-A5 (OPS-HIGH): Re-deploy 1869b-seed migration to prod — owner ops, blocks unified-agent precision number recovery.
+
+## TSC + tests
+
+- tsc: 0 errors (markdown-only change, no surface).
+- Tests: 9307 pass / 13 fail (4 fewer than pre-branch main; pre-existing failures unrelated to this task per QA).
+
+---
+
 **Written:** 2026-05-11 12:40 UTC (Cycle 24 close — no new work; 1875d dedup pure-flow pass)
 
 ## Cycle 24 — no new work (2026-05-11 12:40 UTC)
