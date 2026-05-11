@@ -215,3 +215,4 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **actions**: post_agent_signal price_anomaly EIB → alert-commander (id=2852); send_telegram WORK
 - **next_cycle_hint**: Monitor EIB for reversal (two consecutive σ>2.0 cycles without news — likely speculative). Watch HSG/NKG ahead of chain expiry 06:23 UTC. GAS if US-Iran headlines re-escalate.
 - **estimated_tokens**: 4200
+- **doc_self_heal**: 2 doc mismatches found in `.claude/tools/package/market-watcher.md` (protected, cannot auto-fix — flag for @developer): (1) `get_price_history` documents `tickers: string[]` but actual API uses `code: string`; (2) `get_sector_comparison` documents `metric?: string` but actual API requires `code: string`.
