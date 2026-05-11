@@ -19,7 +19,7 @@
 import { describe, test, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry, MacroContext } from "../domain/services/cascadeEngine.js";
-import type { AnalysisEntry, AnalysisLevel } from "../domain/services/newsNormalizer.js";
+import type { AnalysisEntry, AnalysisLevel, ImpactDirection } from "../domain/services/newsNormalizer.js";
 import type { DomainType } from "../../bctc-schema.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -256,7 +256,7 @@ describe("Task 1850e — Chemicals/Petrochemicals Cascade Rules", () => {
   test("TC-8: Chemicals domain included in cascade map", () => {
     // Verify that key chemicals keywords match the chemicals domain rules
 
-    const testCases = [
+    const testCases: { keyword: string; expectDirection: ImpactDirection }[] = [
       { keyword: "giá dầu tăng", expectDirection: "down" },
       { keyword: "oil price rise", expectDirection: "down" },
       { keyword: "hỗ trợ xuất khẩu", expectDirection: "up" },
