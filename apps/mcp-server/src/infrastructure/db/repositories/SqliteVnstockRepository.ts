@@ -18,84 +18,51 @@ export class SqliteVnstockRepository implements IVnstockRepository {
   // db parameter reserved for future direct-query migration (Phase 2+).
   constructor(private readonly _db: Database) {}
 
-  getLatestFinancials(code: string): VnstockFinancials | null {
+  // Helper: safely call vnstockStore function with fallback
+  private _callStore<T>(fnName: string, args: unknown[], defaultValue: T): T {
     try {
-      const { getLatestFinancials } = require("../vnstockStore.js");
-      return getLatestFinancials(code) ?? null;
+      const store = require("../vnstockStore.js");
+      const fn = store[fnName];
+      if (typeof fn !== "function") throw new Error(`Store function '${fnName}' not found`);
+      return fn(...(Array.isArray(args) ? args : [args])) ?? defaultValue;
     } catch {
-      return null;
+      return defaultValue;
     }
+  }
+
+  getLatestFinancials(code: string): VnstockFinancials | null {
+    return this._callStore("getLatestFinancials", [code], null);
   }
 
   getLatestTradingStats(code: string): VnstockTradingStats | null {
-    try {
-      const { getLatestTradingStats } = require("../vnstockStore.js");
-      return getLatestTradingStats(code) ?? null;
-    } catch {
-      return null;
-    }
+    return this._callStore("getLatestTradingStats", [code], null);
   }
 
   getOfficers(code: string): VnstockOfficer[] {
-    try {
-      const { getOfficers } = require("../vnstockStore.js");
-      return getOfficers(code) ?? [];
-    } catch {
-      return [];
-    }
+    return this._callStore("getOfficers", [code], []);
   }
 
   getShareholders(code: string): VnstockShareholder[] {
-    try {
-      const { getShareholders } = require("../vnstockStore.js");
-      return getShareholders(code) ?? [];
-    } catch {
-      return [];
-    }
+    return this._callStore("getShareholders", [code], []);
   }
 
   getEvents(code: string): VnstockEvent[] {
-    try {
-      const { getEvents } = require("../vnstockStore.js");
-      return getEvents(code) ?? [];
-    } catch {
-      return [];
-    }
+    return this._callStore("getEvents", [code], []);
   }
 
   getLatestBalanceSheet(code: string): VnstockBalanceSheet | null {
-    try {
-      const { getLatestBalanceSheet } = require("../vnstockStore.js");
-      return getLatestBalanceSheet(code) ?? null;
-    } catch {
-      return null;
-    }
+    return this._callStore("getLatestBalanceSheet", [code], null);
   }
 
   getLatestCashFlow(code: string): VnstockCashFlow | null {
-    try {
-      const { getLatestCashFlow } = require("../vnstockStore.js");
-      return getLatestCashFlow(code) ?? null;
-    } catch {
-      return null;
-    }
+    return this._callStore("getLatestCashFlow", [code], null);
   }
 
   upsertFinancials(data: VnstockFinancials): void {
-    try {
-      const { upsertFinancials } = require("../vnstockStore.js");
-      upsertFinancials(data);
-    } catch {
-      // best-effort
-    }
+    this._callStore("upsertFinancials", [data], undefined);
   }
 
   upsertTradingStats(data: VnstockTradingStats): void {
-    try {
-      const { upsertTradingStats } = require("../vnstockStore.js");
-      upsertTradingStats(data);
-    } catch {
-      // best-effort
-    }
+    this._callStore("upsertTradingStats", [data], undefined);
   }
 }
