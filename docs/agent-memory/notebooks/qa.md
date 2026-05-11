@@ -1,8 +1,20 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877e
+**Last updated:** 2026-05-12 | **Sprint:** 1880a
 
-## Recent session — 2026-05-11 (1877e — C2-exempt guard + flow tightening + knowledge SSOT, race recovery)
+## Recent session — 2026-05-12 (1880a — get_investment_clock_phase MCP tool)
+
+**1880a — APPROVED:**
+8/8 tests pass (27 expect calls). TSC 0 errors. DDD PASS (investmentClock.ts has zero infra imports, grep clean). Security PASS (no process.env, no any, parameterized SQL in interface layer). All 5 AC outputs verified (Recovery/Overheat/Stagflation/Reflation/insufficient_data). Truth table boundary: PMI=50 → DOWN, CPI=3.0 → LOW → Reflation (Test 7 PASS). Null fallback paths: PMI→gdpGrowth (Test 5), CPI→inflationRate (Test 8), both null → insufficient_data (Test 6). AC4 fetched_at: present in result object at investmentClockTools.ts:170. Registry: import line 91, registered at line 193 as #127. Both barrels export new symbols. Full suite Bun OOM crash is pre-existing infra issue (peak 2.71GB RSS on full __tests__/ dir); adjacent test file 188-alert-digest.test.ts ran clean (34/0). Not caused by 1880a. Branch task/1880a-investment-clock-phase deleted. TASKS.md 1880a Backlog → Done. Report: reports/TASK_REPORT_1880a.md.
+
+## Recent session — 2026-05-12 (signal-T1 — create-signals-db migration)
+
+**signal-T1 — APPROVED:**
+7/7 tests pass. tsc clean. Schema matches brief §2 exactly (id AUTOINCREMENT + fingerprint UNIQUE NOT NULL, 2 indexes). Idempotent verified (2 runs, both exit 0). Gitignore confirmed. import.meta.main guard present. DDD clean (no apps/ imports). Security clean (no process.env, no hardcoded secrets). LOC 89 vs ~30 target — non-blocking (extra comments + error handling).
+Branch merged no-ff to main. Branch deleted. signal-T2 unblocked → added to Backlog.
+Report: reports/TASK_REPORT_signal-T1.md.
+
+## Previous session — 2026-05-11 (1877e — C2-exempt guard + flow tightening + knowledge SSOT, race recovery)
 
 **1877e — SPRINT-M race recovery (3 parallel agents, branch contamination):**
 DDD/security N/A (script + doc only). bash -n CLEAN.
