@@ -1,6 +1,23 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** 1880a
+**Last updated:** 2026-05-12 | **Sprint:** 1880b + signal-T2 (cycle 37)
+
+## Recent session — 2026-05-12 (cycle 37 — 1880b + signal-T2 merge gate)
+
+**1880b — get_pyramid_tier MCP tool (#128) — APPROVED:**
+23/23 tests pass. 1880a regression 8/8. Full suite 9406/0 (Bun v1.3.13 post-completion panic = known macOS heap teardown, not test failure). TSC 0 errors. Tool #128 `get_pyramid_tier` confirmed registry.ts:194 (`registerPyramidTierTool`). DDD PASS (pyramidTier.ts: zero infra imports, pure domain). Security PASS (no process.env, no hardcoded secrets). Delivered on task/signal-T2-backfill branch (cross-branch placement, content correct per QA gate spec).
+
+**signal-T2 — backfill-signals-db migration — APPROVED:**
+10/10 tests pass (25 expect calls). signal-T1 carry-over 7/7. TSC 0 errors. Idempotency verified: re-run on real processed/ dir → 57 scanned / 0 inserted / 57 skipped / 0 errors. SyntaxError log on bad.json = expected error-handling path (test fixture). DDD PASS (scripts/, no domain imports). Security PASS (Bun.env.DB_PATH, no traversal).
+
+**Drain commit (signal-drain-c37):**
+ee0d77b4 — 10 signal files (5 original + 5 replay + 1 TNB), arch-brief 2026-05-12, tool-usage-stats.json, ops session log, 2 TASK files moved root→reports/.
+
+**Merge:** --no-ff, SHA cb232b26 to main. Branches deleted: task/signal-T2-backfill + task/1880b-pyramid-tier (empty). TASKS.md: 1880b+signal-T2 Backlog→Done, signal-T3 added (unblocked), 1878a-spec+NB-HDR-c38 added In Progress.
+
+**Notes for next QA:**
+- Full suite count shifted: 9273 (dev claim) vs 9406 (actual). Delta likely from new test files added in drain commits from other agents. Not a regression — 0 fail.
+- Bun crash line present in output — always check if it comes AFTER test summary (post-completion teardown = safe).
 
 ## Recent session — 2026-05-12 (1880a — get_investment_clock_phase MCP tool)
 
