@@ -10,7 +10,7 @@
 Claude Desktop cannot connect to MCP server via Cloudflare Tunnel URL with path prefix. SSE opens but POST fails. Reports: "cannot connect on cloudflare" or MCP health unavailable.
 
 ## Output
-MCP server accessible via `https://zenmidi.com/vn-market/sse` | Claude Desktop connects successfully | Full 112 tools available
+MCP server accessible via `https://zenmidi.com/vn-market/sse` | Claude Desktop connects successfully | Full MCP tools available
 
 ---
 
@@ -26,7 +26,7 @@ Expected: `200 OK` with `text/event-stream`
 ```bash
 curl https://zenmidi.com/vn-market/health | jq .
 ```
-Expected: `{"status":"ok","tools":112,"jobs":50}`
+Expected: `{"status":"ok","tools":<current_count>,"jobs":<current_count>}`
 
 **Layer 3: Protocol-level (REQUIRED for MCP)**
 ```bash

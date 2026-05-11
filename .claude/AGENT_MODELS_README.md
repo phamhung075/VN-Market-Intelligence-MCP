@@ -12,7 +12,7 @@ cd .claude
 ## Modes
 
 ### `eco` mode (token economy)
-- **Dev Team**: All 13 agents → **Haiku** (fast, cheap)
+- **Dev Team**: All dev-team agents → **Haiku** (fast, cheap)
 - **Cowork Team**: Manual change needed (set to Haiku in workspace)
 - **Use case**: Cost optimization, long-running analysis sessions
 
@@ -25,7 +25,7 @@ cd .claude
 - **Use case**: Production mode, balanced cost/quality
 
 ### `performance` mode (maximum quality)
-- **Dev Team**: All 13 agents → **Sonnet** (best analysis)
+- **Dev Team**: All dev-team agents → **Sonnet** (best analysis)
 - **Cowork Team**: Manual change needed (set to Sonnet 4.6 in workspace)
 - **Use case**: Critical tasks, complex analysis, feature work
 
@@ -51,7 +51,7 @@ The `normal` mode restores these original settings automatically.
 ## Two-Team Architecture
 
 ### Dev Team (.claude/agents/)
-✅ Automatic — script handles all 13 agents
+✅ Automatic — script handles all dev-team agents
 
 ```
 architect.md

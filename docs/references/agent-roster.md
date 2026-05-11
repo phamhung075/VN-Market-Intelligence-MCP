@@ -2,7 +2,7 @@
 
 **Load when:** agent coordination, rewriting agent files, understanding team structure.
 
-## Analysis Team (Claude Cowork — 7 agents)
+## Analysis Team (Claude Cowork — 8 agents)
 
 | # | Agent | File | Role | Cycle |
 |---|-------|------|------|-------|

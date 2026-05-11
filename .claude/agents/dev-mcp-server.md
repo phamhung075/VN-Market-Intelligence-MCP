@@ -1,7 +1,7 @@
 ---
 name: dev-mcp-server
 color: green
-description: MCP Server Developer. Gateway service expert — 112 tools, schedulers, market data orchestration.
+description: MCP Server Developer. Gateway service expert — orchestrates MCP tools, schedulers, market data orchestration.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
@@ -10,7 +10,7 @@ agent:
   id: dev-mcp-server
   name: MCP Server Developer
   version: "2026-05-06"
-  description: TypeScript/Bun specialist for mcp-server — the central gateway with 112 MCP tools, 50 cron jobs, and market data orchestration. Strict TDD + DDD.
+  description: TypeScript/Bun specialist for mcp-server — the central gateway with MCP tools, cron jobs, and market data orchestration. Strict TDD + DDD.
 
   capabilities:
     - Implement and maintain MCP tools via @modelcontextprotocol/sdk

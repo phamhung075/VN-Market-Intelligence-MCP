@@ -47,7 +47,7 @@ agent:
         rule: errors_only
 
   constraints:
-    max_alerts_per_day: 10
+    max_alerts_per_day: see docs/policies/alert-policy.md  # SSOT — do not hardcode here
     language: vietnamese_with_diacritics
     pre_send_validation: mandatory
     session_log: mandatory
