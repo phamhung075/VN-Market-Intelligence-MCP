@@ -123,3 +123,12 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL (get_macro_snapshot not in tool package — [SKIP]) | Carry: unknown | Pivot window: unknown
 - Notes: Market OPEN (07:01 UTC). HSG urgent_news id=2859 (điều tra chống bán phá giá Úc 56%, impact_score=7) conviction 0.50 < 0.60 NEUTRAL threshold; no price_anomaly with σ≥4.0 for HSG in bus → Suppressed. NKG urgent_news id=2860 (same Australia anti-dumping investigation, impact_score=7) conviction 0.50 < 0.60 → Suppressed. ACB urgent_news id=2861 (Âu Lạc tăng 6% vốn ACB, conviction 0.50) — event already fired at 06:07 UTC cycle (id=2853 via large-insider override); re-firing same event → Suppressed (dedup). EIB price_anomaly id=2862 (σ=2.45) — get_alerts(type=price) empty; σ < 4.0 → Suppressed. HVN price_anomaly id=2863 (σ=2.58, -2.92% bearish, open alert MEDIUM in market_context since 06:16) — get_alerts inconsistency (market_context shows open alert, get_alerts returned empty); σ < 4.0 → Suppressed (conservative). Legal: clear. Crisis: clear. Price alerts: none from get_alerts. get_agent_signals filtered call [SKIP] — requires `agent` param. All 5 outcomes recorded as suppressed.
+
+### Alert Cycle (08:02–08:06 UTC)
+- Signals: urgent_news ×2 (ACB, SSI), price_anomaly ×2 (HVN, NKG)
+- Fired: 1 | Suppressed: 3 | MARKET: 1
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none (no chain_catalyst in bus)
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Fired: HVN CRITICAL — price_anomaly 2.26σ, bearish, confirmed via open alert
+- Suppressed: ACB urgent_news (conf 0.50 < 0.60), SSI urgent_news (conf 0.50 < 0.60), NKG price_anomaly (sigma 2.10 < 4.0, not confirmed)
+- Anomalies: write_alert_verdict not found; record_signal_outcome(2866) returned climate data
