@@ -143,3 +143,10 @@
 - **actions**: 1 MARKET alert fired (HVN CRITICAL), 3 outcomes recorded suppressed, log_agent_work id=629 completed
 - **next_cycle_hint**: Monitor NKG/HSG — anti-dumping 56% preliminary margin from Australia embedded in NKG payload; watch for standalone chain_catalyst signal. VRE -6.41% has open alert but no bus signal — check if market-watcher will escalate. write_alert_verdict tool missing — needs investigation.
 - **estimated_tokens**: 18000
+
+### Alert Cycle (09:03–09:04 UTC, 2026-05-11)
+- Signals: price_anomaly ×4 (EIB id=2873 σ=2.10, HVN id=2874 σ=2.56, FPT id=2875 σ=2.03, NKG id=2876 σ=2.38)
+- Fired: 0 | Suppressed: 4 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: NEUTRAL ([SKIP]) | Pivot window: unknown ([SKIP])
+- Notes: Market CLOSED (post-09:00 UTC close). All 4 price_anomaly signals from market-watcher (status: read). Not confirmed via get_alerts (returned empty). All σ < 4.0 — price-validation override threshold not met. No legal/crisis signals. No chain_catalyst on bus. New signals reflect close-of-day session data: FPT -2.64% (SGI Capital downside analysis published), NKG -2.47% (AU anti-dumping contagion from HSG/NKG chain, signal #2870), HVN -2.92% (aviation leading decline), EIB +2.71% (banking outperformer). All outcomes recorded suppressed. log_agent_work id=631.
