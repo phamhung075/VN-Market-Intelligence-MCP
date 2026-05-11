@@ -30,7 +30,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 |------|---------|-----------|
 | `get_cycle_bootstrap` | Fetch signals + market context + system status in parallel | `agent_name: "alert-commander"` |
 | `get_system_status` | Database, source health, data freshness, recent errors | — |
-| `get_agent_signals` | Recent inter-agent signals (last 24h) | — |
+| `get_agent_signals` | Recent inter-agent signals (last 24h) | `agent: string` (REQUIRED), `signal_type?: string, stock_code?: string` |
 
 ### Alert Management
 | Tool | Purpose | Key Params |
@@ -38,7 +38,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | `get_alerts` | Fetch price/volume/sector/risk alerts | `type?: "price" \| "volume" \| "sector" \| "risk"` |
 | `send_alert_digest` | Batch send alerts via Telegram | `alerts: Alert[], channel: "market" \| "work"` |
 | `mark_alert_read` | Mark alert as reviewed | `alert_id: string` |
-| `write_alert_verdict` | Record pending verdict in alert-verdicts.json after firing MARKET alert. Called after `send_telegram(channel="market")` + `mark_alert_read`. | `ticker, direction, conviction, alertSource, firedAt` |
+| `write_alert_verdict` | [UNVERIFIED — tool not found 2026-05-11] Record pending verdict in alert-verdicts.json after firing MARKET alert. Called after `send_telegram(channel="market")` + `mark_alert_read`. | `ticker, direction, conviction, alertSource, firedAt` |
 
 ### Market Intelligence
 | Tool | Purpose | Key Params |
@@ -52,7 +52,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 |------|---------|-----------|
 | `get_legal_risk_signals` | Legal/prosecution/tax penalty risks | — |
 | `get_crisis_early_warning` | Crisis velocity, mention spikes, severity trends | — |
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
 
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |

@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 06:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 08:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (08:21–08:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst×2 steel/macro] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG AU anti-dumping 56% (chain_catalyst bearish steel #2870, chain→HPG), VN-Index divergence 9/10 macro bearish (chain_catalyst #2871, SSI/VCI/HCM)
+- Suppressed: HVN announcement neutral 6/10 (below threshold), MWG bullish/bearish conflicting (not on watchlist), Brent 104.91 stable, gold down (no spike)
 
 ### Cycle (07:21–07:24 UTC) 2026-05-11
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 HSG/NKG/HPG, urgent_news×2 ACB/SSI] | Regime: NEUTRAL | Carry: NEUTRAL

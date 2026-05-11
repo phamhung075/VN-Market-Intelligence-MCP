@@ -65,7 +65,15 @@ agent_signal created → outcome = NULL / 'fired'
 **Fail-loud:** price fetch error → one BUG Telegram alert per job run (signal skipped, not failed)
 **Missing price data** (weekend gap, no history): signal skipped, retried next hour
 
-Verdict outcomes stored in `agent_signals.outcome` column. Aggregate data → `docs/data/alert-verdicts.json`
+**Two-stage write→derive lifecycle (Sprint 1863d):**
+
+| Stage | Actor | Action | Target |
+|-------|-------|--------|--------|
+| WRITE | `write_alert_verdict` MCP tool | alert-commander calls at alert-fire time | `data/alert-verdicts.json` via `infrastructure/fileStore/alertVerdictStore.ts` (PRIMARY pending-verdict store) |
+| DERIVE | `verdictResolutionJob` cron `7 * * * *` | reads JSON → evaluates 4h price delta → writes resolved outcome | `agent_signals.outcome` DB column |
+| READ | any consumer | post-resolution: query `agent_signals.outcome`; pre-resolution: read `data/alert-verdicts.json` directly | — |
+
+`data/alert-verdicts.json` is the **entry point** (pending verdicts registered here first). `agent_signals.outcome` is **derived state** (eventually consistent, updated by cron). Skip calling `write_alert_verdict` → verdict is never registered → `verdictResolutionJob` has nothing to resolve.
 
 ## Legacy Alert Types (pre-Sprint 054 — in DB, not auto-fired)
 
