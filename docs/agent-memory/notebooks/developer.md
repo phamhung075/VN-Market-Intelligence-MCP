@@ -12,7 +12,24 @@ Task 1877e-2: Flow tightening — PM + QA commit convention documentation.
 - Net LOC: +6 across 2 files. Doc-only, no code change.
 - Deviation: accidental commit to 1877e-3 branch then reverted cleanly; final commits on correct task/1877e-2-flow-tightening branch.
 - Branch: task/1877e-2-flow-tightening | Commits: b0b768e5 (pm), 6fa357af (qa).
-- Pipeline: status=in_progress, nextAgent=qa.
+
+Task 1877e-1: is_c2_exempt guard in commit-convention-audit.sh.
+- Patch site: `scripts/audits/commit-convention-audit.sh` line 143 (before C2 gate).
+- Inserted 17 LOC: `local is_c2_exempt=false` + 2 `case` blocks (scope: cycle-NN / pm/cNN / pm/NNNN*; lsubj: *merge task/*).
+- Modified 1 line: added `&& [ "${is_c2_exempt}" = "false" ]` to gate condition.
+- AC-7 PASS (bash -n exits 0). AC-2 PASS (SHA 234a69b3 absent from violations). AC-3 PASS (SHA 6f02aed1 absent). AC-4 PASS (SHA c7545b9a absent). AC-5 PASS (SHA e6d37aa7 absent). AC-6 PASS (SHA 0a5ffc3f present + flagged).
+- C2 measured post-patch: 0.6190 (up from 0.5867). Denominator 75→68 (7 exemptions applied).
+- AC-1 (C2 ≥ 0.85 on 2026-05-17) DEFERRED — depends on 92+ new compliant commits via flow tightening.
+- Branch: task/1877e-1-audit-c2-exempt | Commit: 1e491da7.
+
+Task 1877e-3: C2-Exempt Commit Categories — knowledge SSOT.
+- Patch site: `.claude/knowledge/commit-convention.md` after C3-Exempt table (line 112).
+- Inserted new `## C2-Exempt Commit Categories` section (+13 LOC): heading + intro + 4-row table.
+- 4 rows: `chore(cycle-NN)`, `chore(pm/cNN)`, `chore(pm/NNNN*)`, sprint-scoped `merge task/` chore.
+- AC-1 PASS (heading present). AC-2 PASS (3-col table). AC-3 PASS (4 rows verbatim from brief). AC-4 PASS (no other sections touched). AC-5 PASS (Markdown clean).
+- Branch: task/1877e-3-c2-exempt-knowledge | Commit: aea5cac3.
+- LOC delta: +13 (commit-convention.md only).
+- Race recovery: 1877e-1/2/3 parallel spawn caused branch contamination. Net deliverables intact after QA salvage merge.
 
 ## Previous last session summary
 
