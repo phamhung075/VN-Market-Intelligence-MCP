@@ -91,3 +91,10 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: unknown | Pivot window: unknown
 - Notes: Market OPEN (04:04 UTC). ACB urgent_news id=2846 conviction 0.50 < 0.60 NEUTRAL threshold; no price_anomaly override for ACB. EIB price_anomaly id=2848 (EIB +4.51%, 2.7σ) — not confirmed via get_alerts (returned no active price alerts); 2.7σ < 4.0σ override threshold. No legal/crisis signals. No chain_catalyst. Price alerts: none active. Market snapshot: VN-Index 1,921.80 +0.34% (divergence OK). MACRO context: Brent ~105 (+5σ extreme), Gold ~4695 (-5σ extreme) — ongoing since 23:30 UTC. log_agent_work id=620.
+
+### Alert Cycle (05:02–05:07 UTC, 2026-05-11)
+- Signals: urgent_news ×1 (ACB id=2850 conf 0.50) | price_anomaly ×1 (EIB id=2852 conf 0.50)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026)
+- Notes: Market OPEN (05:02 UTC). ACB urgent_news id=2850 (Âu Lạc tăng lên 6%) conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b: get_agent_signals(price_anomaly, ACB) → no hits → no override. EIB price_anomaly id=2852 (EIB +3.84%, 2.65σ) — not confirmed via get_alerts (no active price alerts); 2.65σ < 4.0σ override threshold. No legal/crisis signals. No chain_catalyst. No verified_chain. Macro: Brent $105.83, Gold $4682 — ongoing macro_deviation since 23:30 UTC, outside signal matrix scope. Carry spread -0.33% FII_OUTFLOW_RISK persists.
