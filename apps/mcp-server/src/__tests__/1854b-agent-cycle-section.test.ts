@@ -203,9 +203,10 @@ describe("Task 1854b — aggregateDailyDashboard agents block", () => {
     });
 
     const watcher = dashboard.agents["market-watcher"];
-    expect(watcher.cycleCount).toBe(3);
-    expect(watcher.blockedCount).toBe(1);
-    expect(watcher.anomalyCount).toBe(2);
+    expect(watcher).toBeDefined();
+    expect(watcher!.cycleCount).toBe(3);
+    expect(watcher!.blockedCount).toBe(1);
+    expect(watcher!.anomalyCount).toBe(2);
   });
 
   it("produces empty agents object when no session files match", () => {
