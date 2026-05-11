@@ -4,6 +4,28 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1869b — Wire watchlistThresholds into scanMarket (2026-05-11, DONE)
+
+**Problem:** `detectSignals(snapshot)` — no second argument. `volatilityCalculator.ts` produced thresholds, `signalDetector.ts` accepted them, but `scanMarket.ts` never passed them. Dead wiring since Task 133.
+
+**Fix:**
+1. `IWatchlistRepository`: added `WatchlistThresholds` interface + `getThresholds(): Map<string, WatchlistThresholds>` port method
+2. `SqliteWatchlistRepository`: implemented `getThresholds()` — `SELECT code, alert_drop_pct, alert_rise_pct FROM watchlist WHERE alert_drop_pct IS NOT NULL AND alert_rise_pct IS NOT NULL`
+3. `scanMarket.ts`: Step 1b loads threshold map; per-stock loop builds `SignalContext` with `watchlistThresholds` when present; calls `detectSignals(snapshot, signalContext)`
+4. `1076` test: `addWatchlistEntry` now inserts explicit `alert_drop_pct=-7` — schema DEFAULT was `-3` (not `-7`), which conflicted with the "3% is noise" assertion
+
+**Tests:** 10 new in `1869b-watchlist-threshold-wiring.test.ts` (4 unit, 4 integration)
+- NVL (threshold=-9) silent on -7.5% drop
+- VCB (threshold=-7) fires on -7.5% drop
+- Two-stock selective alerting
+- watchlistThresholds priority over volatility
+
+**Counts:** 9148 pass / 11 fail. SHA dbefc47c. 5 files touched.
+
+**Next:** 1869b-seed — DB migration to populate stock-tier defaults (standard=7%, high-vol=9%)
+
+---
+
 ### Task 1869a — price_drop threshold -5% → -7% (2026-05-11, DONE)
 
 **Problem:** `DEFAULT_DROP_PCT = -5` too low for 30-stock watchlist volatility profile. Precision 50% (8/16) vs 60% gate.
