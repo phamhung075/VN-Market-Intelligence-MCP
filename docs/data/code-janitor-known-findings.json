@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-05-10T10:02:00Z",
-  "last_run": "2026-05-10T10:02:00Z",
+  "scan_date": "2026-05-11T23:58:00Z",
+  "last_run": "2026-05-11T23:58:00Z",
   "findings": [
     {
       "fingerprint": "check-3:infrastructure/circuitBreakerRegistry.ts:GEO_BLOCKED_BREAKER_CONFIG",
@@ -118,6 +118,42 @@
       "risk": "Data drift mitigated by test coverage. Low priority for refactoring.",
       "discovered_at": "2026-04-13T00:00:00Z",
       "status": "managed"
+    },
+    {
+      "fingerprint": "check-3:domain/services/timeConstants.ts:MS_PER_DAY-21-files",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — MS_PER_DAY inlined in 21 files",
+      "files_affected": [
+        "apps/mcp-server/src/application/services/imfDataFetcher.ts",
+        "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
+        "apps/mcp-server/src/application/usecases/generatePeriodicSummary.ts",
+        "apps/mcp-server/src/application/usecases/pollNews.ts",
+        "apps/mcp-server/src/application/usecases/syncVnstockData.ts",
+        "apps/mcp-server/src/domain/services/macro/macroCalendar.ts",
+        "apps/mcp-server/src/infrastructure/db/evidenceFragmentStore.ts",
+        "apps/mcp-server/src/infrastructure/db/mentionVelocityStore.ts",
+        "apps/mcp-server/src/infrastructure/fileStore/alertVerdictStore.ts",
+        "apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts",
+        "apps/mcp-server/src/interface/mcp/tools/macro/predictionTools.ts",
+        "apps/mcp-server/src/interface/mcp/tools/news-analysis/compareTools.ts",
+        "apps/mcp-server/src/interface/mcp/tools/portfolio/portfolioRiskTool.ts",
+        "apps/mcp-server/src/interface/mcp/tools/sector/correlationTools.ts",
+        "apps/mcp-server/src/interface/mcp/tools/sector/sectorRotationTools.ts",
+        "apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts",
+        "apps/mcp-server/src/scheduler/briefings/franceSummaryJob.ts",
+        "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
+        "apps/mcp-server/src/scheduler/macro/predictionOutcomeJob.ts",
+        "apps/mcp-server/src/scheduler/macro/predictionResolutionJob.ts",
+        "apps/mcp-server/src/scheduler/news-analysis/evidenceAccumulatorJob.ts"
+      ],
+      "detail": "JANITOR-027 PROPOSED: Pattern `24 * 60 * 60 * 1000` (one day in milliseconds) is inlined in 21 production files across all architectural layers. Canonical source exists: src/domain/services/timeConstants.ts:MS_PER_DAY (line 11). This constant was added early-sprint but consuming code predates it. Values are consistent (no silent divergence). Maintenance risk: any time constant change requires 21 separate edits across 4 layers (application, domain, infrastructure, interface, scheduler).",
+      "canonical_source": "apps/mcp-server/src/domain/services/timeConstants.ts:MS_PER_DAY",
+      "risk": "LOW — uniform value ensures no silent divergence. Maintenance risk: 21-file fan-out on any time-constant update.",
+      "discovered_at": "2026-05-11T23:58:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-027",
+      "ship_directly": false,
+      "reason_not_shipped": "21-file change across 4 architectural layers. Constraint: ship only when single-file mechanical."
     }
   ],
   "fixed_findings": [
@@ -271,24 +307,94 @@
     }
   ],
   "scan_checks": {
+    "scan-16": {
+      "scan_date": "2026-05-11T23:58:00Z",
+      "scope": "git diff HEAD~50..HEAD (21 production files across application/domain/infrastructure/interface/scheduler layers)",
+      "check-1-duplicate-classification-maps": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No Record<string,> keyed on tickers. Clean."
+      },
+      "check-2-hardcoded-ticker-arrays": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No uppercase ticker arrays. Clean."
+      },
+      "check-3-repeated-magic-numbers-and-cron-duplication": {
+        "status": "complete",
+        "findings": 1,
+        "notes": "JANITOR-027 proposed: Pattern `24 * 60 * 60 * 1000` inlined in 21 files. Canonical source exists (MS_PER_DAY in timeConstants.ts). Multi-file violation — added to backlog."
+      },
+      "check-4-schema-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No production CREATE TABLE. All DDL canonical in schema-*.ts. Clean."
+      },
+      "check-5-config-drift": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean."
+      },
+      "summary": "4 checks clean, 1 finding. JANITOR-027 proposed (21-file time constant duplication). Ready for next cycle."
+    },
     "scan-10": {
       "scan_date": "2026-05-10T04:15:36Z",
       "scope": "diff HEAD~3..HEAD (7 files: circuitBreaker.ts, circuitBreakerRegistry.ts, 1862f test, docs/TASKS.md, qa.md, session logs, reports)",
-      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
-      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
-      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "Circuit breaker registry contains timeout values (900_000, 7_200_000, 600_000, 300_000) but these are intentional business-logic config entries, not shared code duplication. Each breaker (reuters, ssc, polymarket, etc.) is independent with documented reasoning." },
-      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
-      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean." },
+      "check-1-duplicate-classification-maps": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No Record<string,> keyed on tickers. Clean."
+      },
+      "check-2-hardcoded-ticker-arrays": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No uppercase ticker arrays. Clean."
+      },
+      "check-3-repeated-magic-numbers-and-cron-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "Circuit breaker registry contains timeout values (900_000, 7_200_000, 600_000, 300_000) but these are intentional business-logic config entries, not shared code duplication. Each breaker (reuters, ssc, polymarket, etc.) is independent with documented reasoning."
+      },
+      "check-4-schema-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean."
+      },
+      "check-5-config-drift": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No hardcoded fallbacks diverging from mcp.config.json. Clean."
+      },
       "summary": "All 5 checks pass. 0 new violations. Task 1862f (circuit breaker backoff) verified: 10 tests pass. Ready for next cycle."
     },
     "scan-9": {
       "scan_date": "2026-05-09T14:28:00Z",
       "scope": "diff HEAD~15..HEAD (6 production TS files + test changes)",
-      "check-1-duplicate-classification-maps": { "status": "complete", "findings": 0, "notes": "No Record<string,> keyed on tickers. Clean." },
-      "check-2-hardcoded-ticker-arrays": { "status": "complete", "findings": 0, "notes": "No uppercase ticker arrays. Clean." },
-      "check-3-repeated-magic-numbers-and-cron-duplication": { "status": "complete", "findings": 0, "notes": "isDuplicateReport() correctly uses DEDUP_WINDOW_SECONDS. New constants properly extracted (Tasks 1860b, 1860c). Staleness thresholds in syncVnstockData are business rules, not duplication." },
-      "check-4-schema-duplication": { "status": "complete", "findings": 0, "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean." },
-      "check-5-config-drift": { "status": "complete", "findings": 0, "notes": "New constants DEDUP_WINDOW_SECONDS and MONITORING_EXPIRY_HOURS properly centralized. Clean." },
+      "check-1-duplicate-classification-maps": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No Record<string,> keyed on tickers. Clean."
+      },
+      "check-2-hardcoded-ticker-arrays": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No uppercase ticker arrays. Clean."
+      },
+      "check-3-repeated-magic-numbers-and-cron-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "isDuplicateReport() correctly uses DEDUP_WINDOW_SECONDS. New constants properly extracted (Tasks 1860b, 1860c). Staleness thresholds in syncVnstockData are business rules, not duplication."
+      },
+      "check-4-schema-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "No production CREATE TABLE. All DDL canonical in schema.ts. Clean."
+      },
+      "check-5-config-drift": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "New constants DEDUP_WINDOW_SECONDS and MONITORING_EXPIRY_HOURS properly centralized. Clean."
+      },
       "summary": "All 5 checks pass. 0 new violations. JANITOR-024 (shipped in prior cycle) verified improved. Ready for next cycle."
     },
     "check-1-duplicate-classification-maps": {

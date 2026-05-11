@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": "1877c",
-  "activeTaskId": "1877c",
-  "nextAgent": "qa",
-  "nextPrompt": "Verify SPRINT-S-1877c per docs/handoffs/TASK_1877c.md",
-  "updatedAt": "2026-05-11T18:10:00Z",
-  "updatedBy": "developer",
-  "lastCompleted": "SPRINT-S-1877c impl DONE — VOCAB 20→52 tokens + sprint-ID exemption. C4=0.9825 (168/171). Branch task/1877c-c4-vocab-remediation, commit 142b59ab. 6/6 ACs self-tested PASS. Net +20 LOC (≤30 budget). No POSIX deviations."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T18:35:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "SPRINT-S-1877c SHIPPED (6/6 ACs). C4 vocab 20→52 + sprint-ID exemption. C4 verdict on real 7-day window: 98.26% (169/172, target ≥95%). 3 true violations remain: *, c26, cycle-28."
 }

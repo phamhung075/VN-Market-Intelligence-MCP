@@ -8,6 +8,12 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| JANITOR-027 | DRY: Time constant duplication — 21 files inline `24 * 60 * 60 * 1000` instead of MS_PER_DAY | LOW | DRY | code-janitor | — | — |
+| JANITOR-020 | DRY: MACRO_CODES + section-builder logic duplicate in marketContextBuilder.ts vs marketContextTools.ts | MEDIUM | DRY | code-janitor | — | — |
+| JANITOR-017 | DRY: BROWSER_UA string duplicated in 18 source files across 3 layers | LOW | DRY | code-janitor | — | — |
+| JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
+| JANITOR-013 | DRY: SignalTypeEnum re-lists SignalType union in agentSignalTools.ts (2-file change) | LOW | DRY | code-janitor | — | — |
+| JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
 
 ---
 
@@ -26,7 +32,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1877c | SPRINT-S: C4 scope-vocab remediation — expand canonical vocab 20→52 tokens in script VOCAB (brief §4.1) + add sprint-ID exemption to C4 logic (lines 173–182). 2 files: scripts/audits/commit-convention-audit.sh + .claude/knowledge/commit-convention.md. Net +16 LOC (≤30 budget). Target: C4 ≥ 95% on 2026-05-10..2026-05-17 window (projected 97.97%). Gate deadline 2026-05-17. Test: vocabulary check, sprint-ID pass/fail detection, non-digit violations persist, bash 3.2 compat, idempotent. | HIGH | SPRINT-S | developer | TASK_1877c.md | 2026-05-11 |
 
 ---
 
@@ -41,6 +46,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1877c | SPRINT-S: C4 scope-vocab remediation — expand canonical vocab 20→52 tokens + sprint-ID exemption in C4 logic. 2 files: scripts/audits/commit-convention-audit.sh + .claude/knowledge/commit-convention.md. Net +20 LOC. C4=0.9826 (169/172, threshold 0.95 PASS). 3 true violations remain: *, c26, cycle-28. Merge SHA 9e19cd4b. QA APPROVED 2026-05-11. | HIGH | SPRINT-S | developer | 2026-05-11 |
 | 1877b | SPRINT-S: `scripts/audits/commit-convention-audit.sh` signal emission guard — `--emit-signal` flag + Phase B window check (2026-05-10..2026-05-17). Default safe (no signal). Flag + valid window → emit. Flag + invalid window/SINCE_DATE → WARNING + no signal. 6 ACs verified. Net +26 LOC. Deviation: `\>=` not POSIX → two-clause `[ = ] \|\| [ \> ]` (correct). Merge SHA 27e4e0d6. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1877a | SPRINT-S: `scripts/audits/commit-convention-audit.sh` — Day-7 Phase B C1/C2 gate. 4 criteria (C1≥90% header, C2≥85% task trailer, C3≥80% AC trailer, C4≥95% scope vocab). JSON report to `docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json`. FAIL signal dropped. Exit 0/1. Idempotent. Merge SHA 20005b95. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-2 | SPRINT-S: README.md — AC2 mcp-server "112 tools" → project-stats.json#toolCount pointer; AC5 arch SSOT pointer after ASCII diagram + per-service pointer after microservices table; AC6 docker restart block + dev step → restart-policy.md pointer. Commit 03a404ce, merged via fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
