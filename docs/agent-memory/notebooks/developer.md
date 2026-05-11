@@ -1,8 +1,16 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1869c
+**Last updated:** 2026-05-11 | **Sprint:** 1872a
 
 ## Last session summary
+
+Task 1872a: Add notebook-commit invariant block to 5 cowork flows (alert-commander, unified-agent, financial-analyst, tran-ngoc-bau, system-auditor).
+- Root cause: 5 flows had git commit step but no `> Invariant:` + timestamp guard before notebook write. Pattern from 1865b (dev-team/po) was not propagated.
+- market-watcher, news-scout, qa-responder already compliant — no changes needed.
+- Flow-doc only. No TypeScript changes. tsc clean. Baseline 9163/15 unaffected.
+- Branch: task/1872a-notebook-commit-step | Commit: ca1bcba3
+
+## Previous session — 1869c
 
 Task 1869c: Extended 1865a UTC timestamp guard to qa-responder + news-scout flow files.
 - Root cause: 1865a only added guard to news-scout session-log step (Step 4 `log_agent_work`), not to the notebook append block immediately after. qa-responder had zero guards.

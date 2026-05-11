@@ -30,7 +30,19 @@ Daily coordination summary ({date}):
 | BCTC | 48h |
 Exceeded → `submit_feedback(agent="unified-agent", ...)`
 
-**Notebook commit** — append to `docs/agent-memory/notebooks/unified-agent.md`:
+**Notebook commit**
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook timestamp guard
+- Before writing `docs/agent-memory/notebooks/unified-agent.md`, ALWAYS get current UTC via:
+  ```
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  ```
+- Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
+- NEVER write entries for cycles that have not fired yet
+
+Append to `docs/agent-memory/notebooks/unified-agent.md`:
 ```
 ### Daily Review (HH:MM UTC)
 - Mode: DAILY_REVIEW | Freshness: [ok/stale] | Bugs: [list]

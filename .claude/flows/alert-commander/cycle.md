@@ -108,6 +108,17 @@ Fired: X | Suppressed: Y | Next: TIME
 ```
 
 **5. Notebook commit**
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook timestamp guard
+- Before writing `docs/agent-memory/notebooks/alert-commander.md`, ALWAYS get current UTC via:
+  ```
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  ```
+- Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
+- NEVER write entries for cycles that have not fired yet
+
 `log_agent_work(...)` + append `docs/agent-memory/notebooks/alert-commander.md`:
 ```
 ### Alert Cycle (HH:MM–HH:MM UTC)
