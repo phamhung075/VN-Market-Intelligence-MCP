@@ -1,6 +1,25 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1875
+**Last updated:** 2026-05-11 | **Sprint:** 1872a
+
+## Recent session — 2026-05-11 (1872a-2 README SSOT pointers)
+
+**1872a-2 — README.md AC2+AC5+AC6 SSOT pointers:**
+Doc-only. Smart-skip tsc/tests. DDD/security N/A.
+
+Branch situation: `task/1872a-2-readme-ssot-pointers` local tip = main HEAD (d85d1c43, zero diff). Actual README commit 03a404ce was authored on what became `task/1872a-3-architecture-md-ssot-pointers`. All changes reached main via merge commit fe82b9f9 (1872a-3 merge). Work confirmed present in main:README.md.
+
+AC2 PASS: mcp-server row (line 87) — `(112 tools)` → `(see docs/data/project-stats.json → toolCount)`.
+AC5a PASS: line 21 — arch pointer `docs/ARCHITECTURE.md` + `docs/architecture/global.md` added after ASCII diagram.
+AC5b PASS: line 97 — `Per-service architecture docs: docs/architecture/microservice/<service>.md` after table.
+AC6-A PASS: lines 63-70 docker block → restart-policy.md pointer.
+AC6-B PASS: line 81 dev step 3 inline cmd → restart-policy.md pointer.
+Scope PASS: only README.md in the task commit.
+Commit trailers PASS: Sprint:1872a / Task:1872a-2 / AC:2,5,6.
+Arch-update flag: NO (pointer-only, no structural change).
+Remaining `## 112 MCP Tools` heading (line 173): NOT in AC scope per architect brief matrix.
+
+APPROVED. Work already in main. TASKS.md row moved Review→Done.
 
 ## Last session summary
 
