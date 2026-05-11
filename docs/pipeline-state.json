@@ -3,9 +3,9 @@
   "status": "in_progress",
   "currentSprint": "1877c",
   "activeTaskId": "1877c",
-  "nextAgent": "developer",
-  "nextPrompt": "Implement SPRINT-S-1877c per docs/handoffs/TASK_1877c.md and brief docs/architecture-briefs/2026-05-17-c4-vocab-remediation.md. Create branch task/1877c-c4-vocab-remediation from main.",
-  "updatedAt": "2026-05-11T17:50:00Z",
-  "updatedBy": "pm",
-  "lastCompleted": "Cycle 31 close — SPRINT-S-1877b SHIPPED (6/6 ACs). scripts/audits/commit-convention-audit.sh guarded with --emit-signal flag + Phase B window check (merge 27e4e0d6). +29 LOC net (≤30 budget). Test runs now structurally cannot leak signals. Architect short-circuit pattern held (no re-arch spawn). bash 3.2 \\>= portability deviation documented. Stale 1872a-5 branch report-only (3rd cycle flagged). 1877c (C4 vocab gap, 47.3% vs 95%) still defer-worthy — 6 days to 2026-05-17 gate."
+  "nextAgent": "qa",
+  "nextPrompt": "Verify SPRINT-S-1877c per docs/handoffs/TASK_1877c.md",
+  "updatedAt": "2026-05-11T18:10:00Z",
+  "updatedBy": "developer",
+  "lastCompleted": "SPRINT-S-1877c impl DONE — VOCAB 20→52 tokens + sprint-ID exemption. C4=0.9825 (168/171). Branch task/1877c-c4-vocab-remediation, commit 142b59ab. 6/6 ACs self-tested PASS. Net +20 LOC (≤30 budget). No POSIX deviations."
 }
