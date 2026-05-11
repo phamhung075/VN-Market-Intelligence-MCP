@@ -1,6 +1,98 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-11 10:03 UTC (Cycle 20 close — Sprint 1871 fully SHIPPED, 7 SPRINT-S tasks)
+**Written:** 2026-05-11 10:38 UTC (Cycle 21 close — Sprint 1873 fully SHIPPED, 5 tasks, TSC merge gate restored)
+
+## Cycle 21 SHIPPED Sprint 1873 (2026-05-11 10:38 UTC)
+
+| Task | Type | SHA | Result |
+|------|------|-----|--------|
+| 1873b | SPRINT-S | merge `86aa8b81` | Added `readReuters?: () => Date \| null` + `readTe?` optional fields to `vpsProxyWatchdogJob.ts` inline options type. TS2353×8 cleared. (code-fixed, types-only) |
+| 1873c | SPRINT-S | merge `b8758927` | `noUncheckedIndexedAccess` guards — `!` asserts inside already-bounded blocks (`dailyDashboardJob.ts` L251/282/318), `?? 0.6` numeric fallback in `regimeConfidenceThreshold.ts` L84, `expect(watcher).toBeDefined()` in 1854b test L205. TS18048+TS2345+TS2322×9 cleared. (code-fixed) |
+| 1873d | SPRINT-S | merge `84d74f4c` | Discriminated-union narrowing in H3 regime-threshold test — `if (result.pass) throw new Error(...)` guards at L34/L80/L105 narrow union for subsequent `.reason` accesses. TS2339×4 cleared. (code-fixed, test-only) |
+| 1873e | SPRINT-S | merge `eb220ca4` | `exactOptionalPropertyTypes:true` — replaced `signalData ?? undefined` with conditional spread `...(signalData != null ? { signalData } : {})` at dailyDashboardJob L602; typed 1850e `testCases` array with explicit `ImpactDirection` import. TS2379+TS2769×2 cleared. (code-fixed) |
+| 1873f | SPRINT-S | merge `f6501fe3` | **CRITICAL — merge gate restored.** Changed `scripts/git-hooks/pre-push` from `bun tsc --noEmit` (repo root, phantom `src/**/*` glob → compiled 0 files → false OK on every push since hook install) to `pnpm --filter vn-market check` (delegates to apps/mcp-server). Hook now actually gates. Push `c06c5f9a` confirmed real-tsc OK. (infra-fixed) |
+
+## Cycle 21 process notes
+
+- **Clean drain at 10:07 UTC** — `docs/signals/` empty, no re-fire this cycle (c20 anomaly did not recur). Pipeline-state was idle.
+- **PO chose Option B**: CLEAN (4 worktrees locked from c20) + SPRINT-S 1873a scope. Telegram + reports checked: 0 new, 8 monitoring unchanged (C-6 guard holds).
+- **Architect 1873a RCA crisp**: root `tsconfig.json` has `"include":["src/**/*"]` but `/src/` doesn't exist at repo root → tsc compiles 0 files → exits 0 = phantom OK for every push since hook install. 23 errors had been invisible for ~3+ months. Decomposed into 4 clusters across 7 files + 1 hook fix = 5 atomic tasks.
+- **Worktree isolation worked this cycle** — 3 parallel Tier 1 devs (1873b/c/d) produced 3 clean separate branches. No parallel-dispatch race (c20 lesson applied).
+- **Tier 2 worktree branched from origin/main** (Tier 1 unpushed) — dev's measured baseline 23→21 was vs origin/main, not local main. 3-way merge into local main (with Tier 1) composed cleanly (different lines of `dailyDashboardJob.ts`).
+- **Final-zero gate cleared after 1873e merge** — 23 → 0 TSC errors on local main. 1873f then deployed hook fix; simulated hook on local main reported OK; real push (`c06c5f9a`) gated successfully.
+- **F9 sanity touch**: pre-push hook now consistent with monorepo `pnpm --filter vn-market check` convention from root `package.json`. No version of "tsc OK" can phantom-pass anymore.
+- **Initial QA on CLEAN aborted** — 2 worktrees had ephemeral session-memory diffs. Authorized Option A (discard) since all task SHAs already merged + memory files were stale unsynced copies of cycle-20 work. Subsequent re-spawn completed cleanly.
+- **F7 (HEAD.lock)**: 0 occurrences this cycle. 6 consecutive cycles with no actual triggers — pattern appears self-clearing or fully prevented by pre-emptive `rm -f`. May be safe to deprioritize.
+
+## Sprint 1873 summary (all 5 tasks shipped)
+
+5 type-safety drifts + 1 merge-gate restoration now closed:
+- Cluster A (TS2353 ×8 readReuters port) → 1873b ✓
+- Cluster B (TS18048/2345/2322 ×9 noUncheckedIndex) → 1873c ✓
+- Cluster C (TS2339 ×4 union narrowing) → 1873d ✓
+- Cluster D (TS2379+TS2769 exactOptional) → 1873e ✓
+- **Merge gate restoration** (hook running phantom-config) → 1873f ✓ (highest leverage — prevents recurrence)
+
+Root divergence cause: pre-push hook was installed when monorepo had a different layout (`src/**/*` at root), kept its include glob, was never re-verified after monorepo restructure (Sprint 209-220 modular monolith refactor). All 23 errors landed undetected over ~3+ months.
+
+## Current baseline
+
+- **TSC errors: 0** on local main `c06c5f9a` (validated via working hook)
+- bun test counts: not re-measured this cycle (no test code modified beyond 4 narrow test files; expect ≈ 9168/12/38 ± minor)
+- toolCount=132, cronJobCount=59, schedulerFileCount=62 (unchanged from c20)
+- currentSprint=1874→1875 (1873 closed)
+- pipeline-state: idle
+- Hook now real-gates `pnpm --filter vn-market check` from apps/mcp-server workspace
+
+## Carry-over to Cycle 22
+
+### Open candidates (not yet PO-triaged)
+- **1872c candidate (carried, parked)** — news-scout `update_analysis_brief` tool entirely missing (NOT skill-manifest gap; verified c20). Needs BA scoping: tool spec + handler + storage + manifest + tests. Likely SPRINT-M.
+- **Error boundary upgrade** — cowork error boundary silently swallowed 1871e Zod failure for 9 cycles (revealed c20). Should surface Zod validation failures to WORK channel. FIX-MEDIUM, architect or developer scope.
+- **Signal re-fire dedup** — TNB + architect signals re-fired c20 between drain and close. Drain-layer dedup OR TTL on signals. FIX-LOW, recurrence not seen this cycle but still worth fixing pre-emptively.
+- **agents-architect notebook commit** — 1872a tail; no flow dir exists; agent-father to add at agent definition level. FIX-LOW.
+
+### Ops-gated (unchanged)
+- 1862c-D + 1862c-E — Cloudflare config edits
+- 1862c-F + 1862c-G — rebuild + observation gated
+- Reuters/TE 5-curl probe — ops to run
+- 1862g news-scout dedup — verify deployed state
+
+### TNB c34 deferred findings (status)
+- F1/F2/F3 → SHIPPED as 1872a/1872b/1871e
+- F4 push-prices ASYNC — OPS-monitor (no new evidence this cycle)
+- F5 get_unreviewed_market_messages 79k overflow — architect-tier deferred
+- F6 climate/energy transient timeout — monitor (one-shot)
+- F7 HEAD.lock — pattern self-clearing (6 cycles no trigger) — recommend deprioritize
+- F8 doc self-heal — architectural
+- F9 system-auditor — next cron fire 16:00 UTC today (~5.5h from cycle 21 close)
+
+### Monitoring (C-6 no re-trigger)
+- 2833, 2834, 2836, 2839, 2841, 2842, 2845, 2847 (unchanged from c20; 2839 = 1872c-candidate parked)
+
+## Architecture state
+
+- 9-service Docker architecture operational since 2026-04-25
+- MCP server UP, 132 tools, 59 cron keys, 62 scheduler files (Sprint 1871 SSOT-aligned)
+- alertVerdictStore + verdictResolutionJob cron `7 * * * *` live
+- domain/ folder has 0 infrastructure/ imports after 1871f
+- ARCHITECTURE.md fully reconciled with live code (Sprint 1871)
+- cron-registry.json SSOT-aligned (Sprint 1871)
+- All cowork notebook-writing flows have UTC + commit guard (1865a/b + 1869c + 1872a)
+- alert-commander skill manifest now correctly includes write_alert_verdict (1872b)
+- **NEW (1873f)**: pre-push hook real-gates tsc via `pnpm --filter vn-market check` — phantom-OK eliminated
+- **NEW (Sprint 1873)**: TSC errors on main = 0 (was 23 silently invisible for ~3+ months)
+- All 16 circuit breakers OK in DB
+
+## Next-cycle intent (Cycle 22)
+
+1. Drain new signals + reports
+2. Check 16:00 UTC system-auditor fire → F9 close-loop
+3. If PO triages 1872c → spawn BA for `update_analysis_brief` tool spec
+4. If error-boundary upgrade promoted → architect scoping
+5. Idle if no new dev-actionable work
+
+---
 
 ## Cycle 20 SHIPPED Sprint 1871 (2026-05-11 10:03 UTC)
 
