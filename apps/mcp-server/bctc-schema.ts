@@ -1,1 +1,0 @@
-../../bctc-schema.ts

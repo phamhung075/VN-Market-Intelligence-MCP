@@ -1,9 +1,0 @@
-__pycache__
-*.pyc
-*.pyo
-.pytest_cache
-.mypy_cache
-__tests__
-data/
-.env
-*.db
