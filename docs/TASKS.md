@@ -12,7 +12,7 @@
 | 1878b | METHODOLOGY-INFRA: `compute_accruals(ticker, quarters)` MCP tool — pure function = (NetIncome − OperatingCashFlow) / TotalAssets, returns time series. Depends on 1878a. SSOT: methodology Layer 7. Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | 1878a |
 | 1879a | METHODOLOGY-INFRA: EFFR–IORB FRED fetcher in `apps/macro-indicators` — pull both series from FRED API, persist to macro store. SSOT: methodology Layer 2.D (Liquidity microstructure). Owner: ba spec → dev-macro-indicators. | HIGH | FEATURE | ba | — | — |
 | 1879b | METHODOLOGY-INFRA: `get_fed_liquidity_spread()` MCP tool — returns latest EFFR-IORB spread + 30d trend. Depends on 1879a. SSOT: methodology Layer 2.D. Owner: ba spec → dev-macro-indicators + dev-mcp-server. | HIGH | FEATURE | ba | — | 1879a |
-| 1880b | METHODOLOGY-INFRA: `get_pyramid_tier(asset_class)` MCP tool — pure function returns Maslow-style risk tier {cash, bonds, equity, alt, speculative}. SSOT: methodology Layer 8. Owner: ba spec → dev-mcp-server. | HIGH | FEATURE | ba | — | — |
+| signal-T3 | SIGNAL-DEDUP: `scripts/migrations/dedup-signals-live.ts` — deduplicate live `signals_processed` table rows by fingerprint, keep oldest per fingerprint. Depends on signal-T2 (DONE cb232b26). Blocks: signal-T4. | HIGH | FEATURE | developer | — | — |
 | 1881a | METHODOLOGY-INFRA: Source-tier `1\|2\|3` tag retrofit — add `source_tier` field to ~15 macro/news tool outputs (1=primary/official, 2=aggregator, 3=derived). SSOT: methodology Layer 9 (Source hierarchy). Owner: ba spec → dev-mcp-server + dev-macro-indicators. | HIGH | CHORE | ba | — | — |
 | ARCH-1884 | METHODOLOGY-INFRA: Architect brief — forensic-analysis host decision: new microservice vs extend financial-reports module. Output → `docs/architecture-briefs/2026-05-12-forensic-analysis-host.md`. Drives Sprint 1885+1886 placement. Parallel to 1878. Owner: architect (main terminal dispatch this turn). | HIGH | ARCH | architect | — | — |
 | 1882a | METHODOLOGY-INFRA: VIRA scraper deploy on Vinahost VPS + `get_vira_snapshot()` MCP tool. SSOT: methodology Layer 2 (VN macro). QUEUED behind 1878-1881. Owner: ba spec → ops + dev-macro-indicators. | HIGH | FEATURE | ba | — | 1878a, 1879a, 1880a, 1881a |
@@ -36,7 +36,6 @@
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-013 | DRY: SignalTypeEnum re-lists SignalType union in agentSignalTools.ts (2-file change) | LOW | DRY | code-janitor | — | — |
 | JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
-| signal-T2 | SIGNAL-DEDUP: `scripts/migrations/backfill-signals-db.ts` — scan `docs/signals/processed/*.json`, INSERT OR IGNORE each row with recomputed fingerprint where missing. Log row count. Unblocked by signal-T1 (DONE 2026-05-12). Depends on: signal-T1. Blocks: signal-T3. | HIGH | FEATURE | developer | — | — |
 
 ---
 
@@ -55,6 +54,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1878a-spec | METHODOLOGY-INFRA: BA spec for OCF column migration — `operating_cash_flow` column in financial_reports + vnstock cash-flow sync bridge. SSOT: methodology Layer 7. Branch: spec/1878a-ocf-column. Owner: ba. | HIGH | SPEC | ba | — | 2026-05-12 |
+| NB-HDR-c38 | CHORE: Notebook header maintenance cycle 38 — update `**Last updated:**` timestamps in all agent notebooks that missed UTC guard. Branch: task/NB-HDR-c38. Owner: agent-father. | LOW | CHORE | agent-father | — | 2026-05-12 |
 
 ---
 
@@ -69,6 +70,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1880b | METHODOLOGY-INFRA: `get_pyramid_tier(asset_class)` MCP tool (#128) — pure domain function, Maslow-style risk tier {cash, bonds, equity, alt, speculative}. DDD PASS, 23/23 tests, TSC 0 errors. Merge SHA cb232b26. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
+| signal-T2 | SIGNAL-DEDUP: `scripts/migrations/backfill-signals-db.ts` — scan processed/*.json, INSERT OR IGNORE with fingerprint, idempotent (57 scanned/57 skipped on re-run). 10/10 tests pass. Merge SHA cb232b26. QA APPROVED 2026-05-12. Unblocks signal-T3. | HIGH | FEATURE | developer | 2026-05-12 |
 | 1880a | METHODOLOGY-INFRA: `get_investment_clock_phase()` MCP tool — pure domain classifier, returns {Recovery, Overheat, Stagflation, Reflation, insufficient_data}. Truth table: PMI>50+CPI≤3→Recovery, PMI>50+CPI>3→Overheat, PMI≤50+CPI>3→Stagflation, PMI≤50+CPI≤3→Reflation. DDD PASS, 8/8 tests, TSC 0 errors. Merge SHA b6aca505. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
 | signal-T1 | SIGNAL-DEDUP: `scripts/migrations/create-signals-db.ts` — idempotent schema migration for `docs/signals/signals.db` (`signals_processed` table + 2 indexes). 7/7 tests pass. Merge SHA merged to main. QA APPROVED 2026-05-12. Unblocks signal-T2. | HIGH | FEATURE | developer | 2026-05-12 |
 | 1877e-3 | SPRINT-M: `docs/policies/commit-convention.md` — C2-Exempt Commit Categories table (13 LOC). 4 rows: cycle-NN, pm/cNN, pm/NNNN*, merge-task subject. ACs 1-5 PASS. Merge SHA fcef31da (race-recovery salvage). QA APPROVED 2026-05-11. | HIGH | SPRINT-M | developer | 2026-05-11 |
