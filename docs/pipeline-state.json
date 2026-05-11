@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": "1877e",
-  "activeTaskId": "1877e-1, 1877e-2, 1877e-3",
-  "nextAgent": "developer",
-  "nextPrompt": "SPRINT-M-1877e Tier 1 parallel — 3 independent handoffs: TASK_1877e-1.md (audit script is_c2_exempt guard), TASK_1877e-2.md (flow tightening pm/qa), TASK_1877e-3.md (knowledge file C2-exempt table). All +35 LOC, 4 files. Exemptions + flow tightening drive C2 from 0.5867 → target ≥0.85 by 2026-05-17 (6 days).",
-  "updatedAt": "2026-05-11T20:15:00Z",
-  "updatedBy": "pm",
-  "lastCompleted": "Cycle 33 close — SPRINT-S-1877d SHIPPED (6/6 ACs, AC-4 documented deviation). C3 AC-trailer Path (c) hybrid: 3 chore categories exempt + flow tightening (merge 67fd8a7e). C3 verdict 0.9180 (target ≥0.80 PASS). +33 LOC net (4 cosmetic over 30 budget). Architect short-circuit pattern held 4th cycle in a row. Phase B: C1=0.9567 PASS / C2=0.5867 FAIL / C3=0.9180 PASS / C4=0.9611 PASS — C2 only remaining gate blocker (6 days). 1877e SPRINT-M-cand seeded for cycle 34 via nextAgent=ba pre-route. 2 TG reports archived: 2853 HEAD.lock wontfix (ENV pattern, 4th cycle), 2852 precision-25% monitoring (downstream of 1876a-A5). Branch 1877d deleted. Stale 1872a-5 still 4 unmerged (5th cycle)."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T20:07:39Z",
+  "updatedBy": "qa",
+  "lastCompleted": "Cycle 34 close — SPRINT-M-1877e APPROVED-WITH-DEFERRAL. Race recovery: 3 parallel developer agents caused branch contamination (1877e-1 empty stub, 1877e-2 clean, 1877e-3 contained all 3 tasks' work). QA salvage: deleted stub branch, merged 1877e-2 (SHA f18b359f) + 1877e-3 (SHA fcef31da) sequentially. Deliverables intact: is_c2_exempt guard (4 patterns) in audit script, C2-Exempt table in commit-convention.md (+13 LOC), PM convention block in pm/main.md (+5 LOC), QA Task-trailer mandate in qa/main.md (+1 LOC). C2 post-merge 0.6308 (up from 0.5867). AC-1 (C2≥0.85 by 2026-05-17) DEFERRED — requires natural commit flow (~2.5 days). ACs 2-7 all sub-tasks PASS. Phase B: C1=0.9501 PASS / C2=0.6308 FAIL / C3=0.9254 PASS / C4=0.9628 PASS."
 }

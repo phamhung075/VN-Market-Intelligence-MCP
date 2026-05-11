@@ -1,6 +1,22 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877d
+**Last updated:** 2026-05-11 | **Sprint:** 1877e
+
+## Recent session — 2026-05-11 (1877e — C2-exempt guard + flow tightening + knowledge SSOT, race recovery)
+
+**1877e — SPRINT-M race recovery (3 parallel agents, branch contamination):**
+DDD/security N/A (script + doc only). bash -n CLEAN.
+
+Deliverables verified: is_c2_exempt guard (4 case patterns) in audit script, C2-Exempt table (+13 LOC) in commit-convention.md, PM convention block (+5 LOC) in pm/main.md, QA Task-trailer mandate (+1 LOC) in qa/main.md.
+
+Race recovery: 1877e-1 empty stub deleted. 1877e-2 merged (f18b359f). 1877e-3 merged (fcef31da, notebook conflict resolved preserving all 3 task entries).
+
+Final audit post-merge: C1=0.9501 PASS / C2=0.6308 FAIL (DEFERRED, was 0.5867) / C3=0.9254 PASS / C4=0.9628 PASS.
+Exempt bucket spot-check: all 4 patterns correctly excluded, 1 genuine violator correctly flagged.
+AC-1 (C2≥0.85) DEFERRED to 2026-05-17 — requires ~92 new compliant commits via flow tightening.
+ACs 2-7 (1877e-1), 1-6 (1877e-2), 1-5 (1877e-3): all PASS.
+
+APPROVED-WITH-DEFERRAL. Report: reports/TASK_REPORT_1877e.md.
 
 ## Recent session — 2026-05-11 (1877d — C3 AC-trailer exemption policy)
 
