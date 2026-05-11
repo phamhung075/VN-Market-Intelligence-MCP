@@ -115,7 +115,19 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 ```
 Non-fatal: if `post_agent_signal` errors for feedback, log and continue.
 
-**5. Notebook commit** — append to `docs/agent-memory/notebooks/financial-analyst.md`:
+**5. Notebook commit**
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook timestamp guard
+- Before writing `docs/agent-memory/notebooks/financial-analyst.md`, ALWAYS get current UTC via:
+  ```
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  ```
+- Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
+- NEVER write entries for cycles that have not fired yet
+
+Append to `docs/agent-memory/notebooks/financial-analyst.md`:
 ```
 ### Analysis Cycle (HH:MM–HH:MM)
 - Stocks: N | Critical findings: [list] | Chain validations: M

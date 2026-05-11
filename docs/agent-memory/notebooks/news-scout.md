@@ -1,6 +1,18 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 02:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 06:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (07:21–07:24 UTC) 2026-05-11
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 HSG/NKG/HPG, urgent_news×2 ACB/SSI] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG AU anti-dumping 56% (chain_catalyst bearish steel #2865, chain→HPG), ACB Âu Lạc 6% stake (urgent_news bullish #2866), SSI ESOP 295 employees (urgent_news neutral #2867)
+- Suppressed: VN-Index market commentary (no direct watchlist hit), MWG (not on watchlist), gold intraday drop (no spike), Brent 104.39 (<5% MoM move unconfirmed)
+
+### Cycle (06:20–06:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 3 | Signals: [urgent_news×3 HSG, NKG, ACB] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG AU anti-dumping 56% (urgent_news bearish #2859/#2860), ACB Âu Lạc 6% stake accumulation (urgent_news bullish #2861)
+- Suppressed: VN-Index commentary, MWG (not on watchlist), gold intraday drop (no spike), oil news (no >5% monthly move confirmed)
 
 ### Cycle (05:19–05:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 4 | Signals: [urgent_news×1 ACB, chain_catalyst×3 GAS/HSG/SSI] | Regime: NEUTRAL | Carry: NEUTRAL

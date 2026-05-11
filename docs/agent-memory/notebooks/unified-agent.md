@@ -184,3 +184,9 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - MACRO EXTREME: Brent +3.96σ (105.42), Gold -3.89σ (4668.5) — US-Iran geopolitical tension
 - Portfolio: FPT 100% (-12.1% unrealized) | Conviction STRONG (0.62) → GIẢM BỚT | VaR 95%: -0.1%
 - FII type: UNKNOWN (no foreign flow data). Crisis: None. Legal risk: None.
+
+### Coordination Cycle (07:01–07:09 UTC) — 2026-05-11
+- Mode: MARKET | System: OK (Reuters/TE offline known, SIS/VCB rate-limit transient, foreign-flow fallback exhausted) | Alerts: 2 open (FPT LOW, HVN MEDIUM) | Quality issues: 0 (alert accuracy tracking gap ongoing)
+- Regime: TIGHTENING (unchanged) | Alignment: 1.0 | Headwind exposure: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT -12.5% (70,300 VND) | Conviction STRONG (0.63) GIẢM BỚT | VaR -0.1% | No shift ≥0.3 | FII: UNKNOWN (foreign-flow stale)
+- Events: SGI Capital accumulating FPT (contrarian bullish) | HVN -5.39% | China/Taiwan 50.5% geopolitical risk → FPT | Brent 105.18 sustained → GAS tailwind

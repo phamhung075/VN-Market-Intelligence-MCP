@@ -105,3 +105,21 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: unknown | Pivot window: false (next: June 2026)
 - Notes: Market OPEN (06:04 UTC). ACB urgent_news id=2853 (Nhóm Âu Lạc tăng từ 5%→6% vốn ACB, impact_score=8) — conviction 0.50 < 0.60 NEUTRAL threshold BUT "large insider >$5M or >5% stake" always-MARKET rule applied → FIRED. Kinh Dịch ACB: Quẻ Sư (7) MUA 100%. EIB price_anomaly id=2857 (3.64σ) — not confirmed via get_alerts (empty); 3.64σ < 4.0σ override → Suppressed. HVN price_anomaly id=2858 (2.63σ) — not confirmed via get_alerts (empty); 2.63σ < 4.0σ → Suppressed. Legal: none. Crisis: none. VN-Index 1,918.64 +0.17%. Pre-send divergence: ACB -0.22% (safe). Bug: write_alert_verdict tool not found → BUG telegram sent to work. log_agent_work id=624.
+
+## Cycle — 06:07 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - ACB urgent_news id=2853 (Nhóm Âu Lạc 5%→6% vốn ACB, impact_score=8) — FIRED via large-insider override (conviction 0.50 below threshold, but >5% stake rule applies always). Kinh Dịch Sư (7) MUA 100%.
+  - EIB id=2857 (3.64σ) and HVN id=2858 (2.63σ) price_anomaly suppressed — get_alerts(type=price) returned empty; both below 4.0σ override threshold.
+  - Legal: clean | Crisis: clean | Pivot window: inactive (next June 2026)
+- **actions**: send_telegram(market, ACB) | record_signal_outcome(2853 fired, 2857 suppressed, 2858 suppressed) | mark_alert_read | send_telegram(work, status) | send_telegram(work, BUG write_alert_verdict) | log_agent_work(624)
+- **next_cycle_hint**: ACB Âu Lạc pattern FIRED this cycle — monitor follow-up accumulation. EIB Gelex rally (3.64σ) still active (expires 07:43 UTC). HVN intraday volatility (2.63σ) watch for confirmed price alert. write_alert_verdict tool missing — BUG already filed.
+- **estimated_tokens**: 22 tool calls × 500 = 11000
+
+### Alert Cycle (07:02–07:04 UTC, 2026-05-11)
+- Signals: urgent_news ×3 (HSG id=2859 conf 0.50, NKG id=2860 conf 0.50, ACB id=2861 conf 0.50) | price_anomaly ×2 (EIB id=2862 conf 0.50 σ=2.45, HVN id=2863 conf 0.50 σ=2.58)
+- Fired: 0 | Suppressed: 5 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in tool package — [SKIP]) | Carry: unknown | Pivot window: unknown
+- Notes: Market OPEN (07:01 UTC). HSG urgent_news id=2859 (điều tra chống bán phá giá Úc 56%, impact_score=7) conviction 0.50 < 0.60 NEUTRAL threshold; no price_anomaly with σ≥4.0 for HSG in bus → Suppressed. NKG urgent_news id=2860 (same Australia anti-dumping investigation, impact_score=7) conviction 0.50 < 0.60 → Suppressed. ACB urgent_news id=2861 (Âu Lạc tăng 6% vốn ACB, conviction 0.50) — event already fired at 06:07 UTC cycle (id=2853 via large-insider override); re-firing same event → Suppressed (dedup). EIB price_anomaly id=2862 (σ=2.45) — get_alerts(type=price) empty; σ < 4.0 → Suppressed. HVN price_anomaly id=2863 (σ=2.58, -2.92% bearish, open alert MEDIUM in market_context since 06:16) — get_alerts inconsistency (market_context shows open alert, get_alerts returned empty); σ < 4.0 → Suppressed (conservative). Legal: clear. Crisis: clear. Price alerts: none from get_alerts. get_agent_signals filtered call [SKIP] — requires `agent` param. All 5 outcomes recorded as suppressed.
