@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (19:20–19:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 VIC, chain_catalyst×2 VIC+FPT] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: VIC Vingroup lawsuit 68 defendants (urgent_news bullish 8/10 #2926, chain_catalyst #2927 → VHM/VRE/D2D conf 84%), FPT fund bottom-fishing at multi-year low (chain_catalyst bullish 7/10 #2928 → FPT/SIS conf 75%)
+- Suppressed: EIB/STB banking personnel neutral 7 (no direction), HVN shareholder notice neutral 7 (no catalyst), BSR refinery rename neutral 6, GEX prop-desk sell neutral 6, gold/Brent no intraday spike, PMI no data this cycle
+- Notes: Same VIC lawsuit articles recurring across cycles — alert-commander should dedup. FPT foreign net sell ~14,100 tỷ vs domestic fund accumulation — divergence signal. Market closed (off-hours cycle).
+
 ### Cycle (18:19–18:21 UTC) 2026-05-11
 - Items: 20 | Impacts: 7 | Signals: [urgent_news×2 FPT/VIC, chain_catalyst×1 market] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
