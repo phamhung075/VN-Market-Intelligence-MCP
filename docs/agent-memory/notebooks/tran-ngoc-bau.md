@@ -1,6 +1,53 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 (cycle 33 → cycle 34 — 06:30 UTC) | Cycles completed: 34
+**Last updated:** 2026-05-11 (cycle 34 → cycle 35 — 10:30 UTC) | Cycles completed: 35
+
+---
+
+## Cycle 35 Watch Notes (2026-05-11 10:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **STRONGLY IMPROVING** (11 tasks shipped across Sprint 1871 + Sprint 1873 in 4h window since c34)
+
+**MASSIVE SHIPPING since c34:**
+- **Sprint 1871 ALL 7 SHIPPED** (1871a-g): ARCHITECTURE.md counts (1871a), infrastructure/ tree (1871b), Module Boundaries (1871c), cron-registry backfill 62 entries (1871d), get_agent_signals param fix (1871e), IVnstockRepository DDD code-fixed via vnstockTypes.ts (1871f), alert-policy.md two-stage flow rewritten (1871g). Tier-1 bundled (a/e/g), Tier-2 worktree-isolated (b/d/f), Tier-3 final (c). dev-team Cycle 20 close.
+- **Sprint 1873 SHIPPED 4** (1873b/c/d/e): TSC type fixes — Watchdog options type (b), narrow indexed access (c), RegimeThresholdResult H3 test (d), conditional spread + ImpactDirection cast (e). 23 pre-existing TSC errors getting attacked.
+- currentSprint=1872 → **1874** active.
+
+**get_agent_signals FIX VERIFIED ✅** — c33 F8 / c34 #3 RESOLVED. Tested with `agent: "tran-ngoc-bau"` param → returned 2 chain_catalyst signals (HSG #2879, HSG #2883). TNB Step 5 unblocked after 9 cycles of failure. alert-commander Step 3b also unblocked.
+
+**HVN CRITICAL FIRED to MARKET at 08:02 UTC** — alert-commander 2.26σ confirmed via open alert. Real quality signal output.
+
+**VN-Index -1.04% sell-off DETECTED** — unified-agent properly tracked TIGHTENING regime + macro extreme. VRE -6.41%, FPT -2.64%, HSG/NKG -2.4%. Brent SOFTENING 105.45→103.55. Container uptime 5h 41m.
+
+**agents-architect 2 NEW BRIEFS** dropped:
+- `2026-05-11-1871-reconciliation.md` (06:42 UTC, signal `architect-2026-05-11T06:42:24Z-1871-batch.json` to PO)
+- `2026-05-11-1873a-tsc-reconcile.md`
+
+**NEW c35 FINDINGS (7 new + 5 carry):**
+1. **qa-responder H1-future leak PERSISTS** post-1869c — entry "11:05 UTC" written at file mtime 10:21 UTC (~44min future). Out-of-order entries (02:48→07:28→05:00 etc.). 1869c guard incomplete.
+2. **agents-architect notebook REGRESSION CONTINUES** — still 41 lines despite 4 brief writes (2 c33 + 2 c35). Briefs persist on disk; notebook entries still lost. Same class as c34 #1 but for this specific agent.
+3. **record_signal_outcome TOOL ROUTING BUG** — alert-commander 08:06: `record_signal_outcome(2866) returned climate data`. Wrong handler dispatched.
+4. **write_alert_verdict missing PERSISTS** (c34 #2) — alert-commander 06:04 + 08:06 STILL filing BUG.
+5. **VRE -6.41% NOT MARKET-fired** by alert-commander — emission gap, same class as c33 F6 VPB. alert-engine fires alert; bus signal not generated; commander can't escalate.
+6. **system-auditor STILL silent** (~58h) — awaiting 16:00 UTC fire per PO ACK c33.
+7. **get_recent_fixes 9 days stale** — last fix dated 2026-05-02 10:16. Possible bug.
+8-12 are carry-overs (get_unreviewed_market_messages overflow, git HEAD.lock, financial-analyst silent, push-prices ASYNC).
+
+**POSITIVE:**
+- Notebook commits visible PER agent (chore(memory/news-scout), chore(memory/alert-commander), chore(memory/qa), chore(memory/dev-team), chore(memory/developer)). c34 finding #1 PARTLY ADDRESSED — only agents-architect still regressed.
+- Alert accuracy 0% → 1 HIT/5 MISS/137 unknown (1.4% hit rate but FIRST HIT recorded).
+- σ data EXCELLENT — VNINDEX 427/30, all watchlist 382/30 ✅.
+- All 16 DB CBs OK. 0 unnotified alerts. 14 sources healthy.
+- Brent softening detected (geopolitical tension easing?).
+- HSG/NKG anti-dumping AU 56% chain caught across 6+ cycles.
+- TNB → PO → developer chain validated (c33 F8 fix shipped in 2 cycles).
+- Architect → developer chain validated (1871-batch → 7 tasks shipped in 4h).
+
+**Container uptime 5h 41m** — stable post c34's 04:46 UTC restart. Reuters/TE counters now 36/36/36 (climbing as expected, RCA still valid — module-level counter resets, no recordDisabled persistence).
+
+**c34 PO ACK status:** Not yet checked (PO notebook last updated cycle 17 at 05:32 UTC — needs cycle 18 to consume c34). Carry-forward to c36 audit.
+
+
 
 ---
 
