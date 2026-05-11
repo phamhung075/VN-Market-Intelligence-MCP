@@ -81,12 +81,19 @@ Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStd
 
 **5. Notebook commit** — append to `docs/agent-memory/notebooks/market-watcher.md` (APPEND ONLY — each cycle adds a new `### Cycle` block):
 
-> Invariant: timestamp = current UTC, never future, never speculative.
+> Invariant: timestamp = current UTC, never future, never speculative. (UTC guard — Sprint 1865a pattern)
 
 ### Notebook timestamp guard
 - Use ONLY the actual current UTC time when stamping notebook entries
 - NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
 - If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing
+
+### Header update (required every cycle)
+Before appending the `### Cycle` block, update line 3 of the notebook:
+```
+**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
+```
+Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 ```
 ### Cycle (HH:MM–HH:MM)
 - Stocks: N | Anomalies: M (>Xσ) | Volume spikes: K | Chain confirms: L
