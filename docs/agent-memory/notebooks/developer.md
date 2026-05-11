@@ -35,8 +35,10 @@ Task 1869c: Extended 1865a UTC timestamp guard to qa-responder + news-scout flow
 
 ## Carry-over for next session
 
-- 1869c committed on task/1869c-utc-guard-extension, awaiting QA merge.
-- 15 pre-existing failures in full suite (Task 178 + infra) — unchanged.
+- 1871a DONE: task/1871a-arch-counts pushed. AC all green. Awaiting QA/merge.
+- Note: cronConfig.ts has 59 keys (brief said 56 — brief was already 3 stale). Used 59 as actual.
+- Note: docs/data/ is gitignored — always `git add -f` when editing project-stats.json.
+- 15 pre-existing failures in full suite (Task 178 + infra) — unchanged (no code touched).
 - Check docs/TASKS.md for next task before starting.
 
 ---
