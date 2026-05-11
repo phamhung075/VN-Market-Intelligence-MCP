@@ -22,6 +22,37 @@ U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase
 
 ---
 
+## Session — 2026-05-11 (Architecture SSOT Foundation)
+
+**Task:** Build docs/architecture/ SSOT from scratch — foundation build
+
+**Files written:** 22 total
+- `docs/architecture/global.md` — server-wide SSOT (9 services, Docker topology, two-team arch, data flow, VPS proxy, conflict resolutions table)
+- `docs/architecture/microservice/<name>.md` x 9 — one per service: mcp-server, api-gateway, stock-price, pdf-extractor, rag-service, technical-analysis, macro-indicators, kinh-dich, alert-engine
+- `docs/architecture/microservice/mcp-server/<group>.md` x 12 — tool groups: market-data, financial-reports, news-analysis, alerts, portfolio, briefings, macro, sector, kinhdich, system, analysis, backtesting
+
+**Conflicts resolved (from 2026-05-11 audit):**
+1. Tool count drift (README 112 vs ARCHITECTURE 132) → SSOT is `project-stats.json`; new files never hardcode counts.
+2. Port notation → standardized to `HOST:CONTAINER` (Docker Compose canonical).
+3. Restart command duplication (3 places) → all new files point to `restart-policy.md`.
+4. Services list duplication → SSOT is `global.md`.
+5. BCTC pipeline duplication → SSOT in `global.md` + `ARCHITECTURE.md`; runbook = diagnostics only.
+
+**Drift items (cannot resolve here — escalated to backlog via signal):**
+- BaoDauTu RSS 0-item parsing issue → existing task 1185
+- `docs/ARCHITECTURE.md` still has hardcoded toolCount (132) → minor, future cleanup sprint
+
+**Signal written:** `docs/signals/architect-2026-05-11T16-00-00Z.json` → system-auditor (re-audit)
+**Pipeline state:** idle
+
+**Patterns confirmed:**
+- All new architecture docs use pointer-only pattern (no volatile counts — point to project-stats.json).
+- Tool group files at `docs/architecture/microservice/mcp-server/<group>.md` map one-to-one to `src/interface/mcp/tools/<group>/` module folders.
+- 9 microservice files map exactly to 9 Docker services in docker-compose.yml.
+- agent-father pointers in 7 dev-team agents now resolve.
+
+---
+
 ## Recent session — 2026-05-09 (Task 1862c investigation)
 
 **Task:** Investigate Cowork scheduled-task MCP access failures — COMPLETE
