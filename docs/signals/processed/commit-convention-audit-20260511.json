@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-05-11T17:18:27Z",
+  "window": {
+    "since": "2026-05-30T00:00:00Z",
+    "until": "2026-05-11T17:18:27Z"
+  },
+  "total_commits": 0,
+  "excluded_bare_merges": 0,
+  "audited_commits": 0,
+  "criteria": {
+    "C1_header_format": {
+      "threshold": 0.90,
+      "actual": 1.0,
+      "pass": true,
+      "violations": []
+    },
+    "C2_task_trailer": {
+      "threshold": 0.85,
+      "actual": 1.0,
+      "pass": true,
+      "violations": []
+    },
+    "C3_ac_trailer": {
+      "threshold": 0.80,
+      "actual": 1.0,
+      "pass": true,
+      "violations": []
+    },
+    "C4_scope_vocab": {
+      "threshold": 0.95,
+      "actual": 1.0,
+      "pass": true,
+      "violations": []
+    }
+  },
+  "verdict": "PASS",
+  "greenlight_action": "C1+C2"
+}

@@ -39,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1877a | SPRINT-S: `scripts/audits/commit-convention-audit.sh` — Day-7 Phase B C1/C2 gate. 4 criteria (C1≥90% header, C2≥85% task trailer, C3≥80% AC trailer, C4≥95% scope vocab). JSON report to `docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json`. FAIL signal dropped. Exit 0/1. Idempotent. Merge SHA 20005b95. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-2 | SPRINT-S: README.md — AC2 mcp-server "112 tools" → project-stats.json#toolCount pointer; AC5 arch SSOT pointer after ASCII diagram + per-service pointer after microservices table; AC6 docker restart block + dev step → restart-policy.md pointer. Commit 03a404ce, merged via fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-3 | SPRINT-S: docs/ARCHITECTURE.md — AC3 MCP Server stat line → project-stats.json#toolCount + #cronJobCount pointers; AC6 inline docker restart cmd → restart-policy.md pointer. Merge SHA fe82b9f9. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1872a-1 | SPRINT-S: tree-map.md — add docs/architecture/ subtree (AC1). docs/architecture/global.md + 8 microservices + 12 mcp-server tool groups. 2 Write Ownership rows added. Merge commit on main. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |

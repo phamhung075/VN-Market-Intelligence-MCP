@@ -1,6 +1,24 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1872a
+**Last updated:** 2026-05-11 | **Sprint:** 1877a
+
+## Recent session — 2026-05-11 (1877a — commit-convention audit script)
+
+**1877a — `scripts/audits/commit-convention-audit.sh` Phase B C1/C2 gate:**
+Shell script only. DDD/security N/A. Pre-push tsc PASS (triggered on push).
+
+Script re-run: 293 total, 1 bare merge excluded, 292 audited.
+C1=0.9521 (PASS ≥0.90), C2=0.5694 (FAIL), C3=0.7838 (FAIL), C4=0.4759 (FAIL). Verdict: FAIL. Exit 1.
+FAIL signal emitted to `docs/signals/agents-architect-<ts>-phase-b-c1-c2-fail.json`.
+JSON report: `docs/signals/processed/commit-convention-audit-20260511.json` — jq parses clean, all 8 top-level keys, all 4 criteria objects.
+
+All 6 ACs PASS. 3 violations spot-checked — zero false positives.
+Bash 3.2 compat confirmed (no local -n, no 4.0+ constructs). LC_ALL=C locale fix verified.
+Non-blocking deviations: commit type `feat` vs `chore` per task spec (defensible); empty-window returns 1.0/PASS instead of 0.0/FAIL (test plan note, not AC).
+
+Merge SHA: 20005b95. Branch task/1877a-commit-convention-audit-script deleted. TASKS.md: 1877a → Done.
+
+APPROVED.
 
 ## Recent session — 2026-05-11 (1872a-3 ARCHITECTURE.md SSOT pointers)
 

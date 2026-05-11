@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": "1877a",
-  "activeTaskId": "1877a",
-  "nextAgent": "qa",
-  "nextPrompt": "QA 1877a: Review scripts/audits/commit-convention-audit.sh (branch task/1877a-commit-convention-audit-script). Script audits git log against 4 criteria (C1 header format ≥90%, C2 task trailer ≥85%, C3 AC trailer ≥80%, C4 scope vocab ≥95%), emits JSON to docs/signals/processed/commit-convention-audit-<YYYYMMDD>.json, drops greenlight/fail signal in docs/signals/, exits 0=PASS/1=FAIL. All 6 ACs from TASK_1877a.md. Verify: jq parses, all 4 criteria present, verdict computed, violations capped at 20, idempotency, exit code.",
-  "updatedAt": "2026-05-11T17:15:00Z",
-  "updatedBy": "developer",
-  "lastCompleted": "Task 1877a IMPL: scripts/audits/commit-convention-audit.sh created. All 7 acceptance checks passed (JSON valid, 4 criteria, verdict, violations capped, idempotent, exit 1=FAIL)."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-11T17:19:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "Task 1877a DONE: scripts/audits/commit-convention-audit.sh QA APPROVED. All 6 ACs verified. FAIL verdict correct (window not closed, pre-convention commits). Merge SHA 20005b95. Branch deleted. TASKS.md updated."
 }
