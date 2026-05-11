@@ -39,6 +39,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1875b | FIX-HIGH: agents-architect.md NEW agent definition — Brief-Commit Invariant embedded (3-step: UTC stamp → notebook append → atomic git commit). Inline Operating Cycle (no flow file). YAML frontmatter complete (name/color/description/tools/model). Factory pattern PASS. Merge SHA cb15b66d. QA APPROVED 2026-05-11. | HIGH | FIX | agents-architect | 2026-05-11 |
+| 1875c | FIX-HIGH: record_signal_outcome dispatch — RCA: no code bug (all 126 names unique, exact-key dispatch). Defensive observability added (collision + drift warnings in agentBootstrap.ts). 5 regression tests. Merge SHA eec8384f. QA APPROVED 2026-05-11. | HIGH | FIX | developer | 2026-05-11 |
 | 1873f | FIX-INFRA: Restore pre-push tsc gate — replace `bun tsc --noEmit` (root, phantom OK) with `pnpm --filter vn-market check` (delegates to apps/mcp-server where src/ exists). Phantom-OK eliminated; hook simulation verified; push clean. Merge SHA f6501fe3. QA APPROVED 2026-05-11. | HIGH | FIX | developer | 2026-05-11 |
 | 1873e | FIX-TS: exactOptionalPropertyTypes strict — ImpactDirection cast + conditional spread for optional fields. TS2375/TS2322 cluster E: 5→0. Merge SHA eb220ca4. QA APPROVED 2026-05-11. | LOW | FIX | developer | 2026-05-11 |
 | 1873c | FIX-TS: noUncheckedIndexedAccess guards — dailyDashboardJob.ts L251/282/318 `!` asserts inside guarded loops; regimeConfidenceThreshold.ts L84 `?? 0.6` numeric fallback; 1854b test L205-208 `toBeDefined()` + `!` narrowing. TS18048/TS2345/TS2322 cluster: 9→0, total 23→14. L602+ untouched. Merge SHA b8758927. QA APPROVED 2026-05-11. | LOW | FIX | developer | 2026-05-11 |
