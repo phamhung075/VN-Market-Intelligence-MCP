@@ -4,6 +4,18 @@
 
 ## Last session summary
 
+Task 1877e-1: is_c2_exempt guard in commit-convention-audit.sh.
+- Patch site: `scripts/audits/commit-convention-audit.sh` line 143 (before C2 gate).
+- Inserted 17 LOC: `local is_c2_exempt=false` + 2 `case` blocks (scope: cycle-NN / pm/cNN / pm/NNNN*; lsubj: *merge task/*).
+- Modified 1 line: added `&& [ "${is_c2_exempt}" = "false" ]` to gate condition.
+- AC-7 PASS (bash -n exits 0). AC-2 PASS (SHA 234a69b3 absent from violations). AC-3 PASS (SHA 6f02aed1 absent). AC-4 PASS (SHA c7545b9a absent). AC-5 PASS (SHA e6d37aa7 absent). AC-6 PASS (SHA 0a5ffc3f present + flagged).
+- C2 measured post-patch: 0.6190 (up from 0.5867). Denominator 75→68 (7 exemptions applied). Matches brief projection 0.6471 is achievable via flow compliance.
+- AC-1 (C2 ≥ 0.85 on 2026-05-17) depends on 1877e-2 flow tightening + 92+ new compliant commits — not yet passed.
+- Branch: task/1877e-1-audit-c2-exempt | Commit: 1e491da7. Path-restricted commit (cycle 32 lesson).
+- LOC delta: +17 inserted / 0 removed (1 line modified). Within SPRINT-M ≤80 budget.
+
+## Previous last session summary
+
 Task 1877e-3: C2-Exempt Commit Categories — knowledge SSOT.
 - Patch site: `.claude/knowledge/commit-convention.md` after C3-Exempt table (line 112).
 - Inserted new `## C2-Exempt Commit Categories` section (+13 LOC): heading + intro + 4-row table.
