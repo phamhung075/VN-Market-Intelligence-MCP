@@ -194,7 +194,9 @@ src/
 │   │       ├── macro/               ← macro indicators, policy, predictions, calibration
 │   │       ├── sector/              ← sector comparison, rotation, supply chain, energy, pharma, …
 │   │       ├── kinhdich/            ← hexagram readings and transitions
-│   │       └── system/              ← watchlist, ask queue, feedback, VPS proxy, system status
+│   │       ├── system/              ← watchlist, ask queue, feedback, VPS proxy, system status
+│   │       ├── analysis/            ← sequential_market_analysis
+│   │       └── backtesting/         ← run_backtest, get_backtest_runs, get_backtest_run
 │   └── scheduler/index.ts           ← startScheduler()
 └── scheduler/                       ← 62 files: jobs.ts + summaryJobs.ts + module subfolders
     ├── jobs.ts                      ← Master cron registration
@@ -231,6 +233,8 @@ Ten domain modules span `tools/`, `domain/services/` (where applicable), and `sc
 | `sector` | Sector comparison, rotation, supply chain, energy, pharma, credit flow, legal risk, climate | Yes | — | Flat (sectorRotationDetector, sectorValuationComparator, creditFlowAnalyzer, energyMarketAnalyzer, pharmaEventMapper, …) |
 | `kinhdich` | Hexagram readings, Hao encoding, Ngu Hanh, Markov transitions, backtesting | Yes | — | Yes (`kinhDich/` subfolder) |
 | `system` | Watchlist, /ask queue, feedback, VPS proxy health, system status, agent work logs | Yes | Yes (2 jobs) | — |
+| `analysis` | Sequential multi-step market analysis combining TA, macro, and news signals into a structured narrative | Yes | — | — |
+| `backtesting` | Strategy backtesting execution, run listing, and run retrieval | Yes | — | — |
 
 **Barrel pattern**: every module exposes `index.ts` that re-exports all public symbols. `registry.ts` and `jobs.ts` import only from barrels — never from individual files within a module.
 
