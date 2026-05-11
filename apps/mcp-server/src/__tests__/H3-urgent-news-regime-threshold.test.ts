@@ -31,6 +31,7 @@ describe("H3 — urgent_news regime confidence threshold", () => {
       };
       const result = checkRegimeConfidenceThreshold(input);
       expect(result.pass).toBe(false);
+      if (result.pass) throw new Error("expected pass=false");
       expect(result.reason).toContain("0.50");
       expect(result.reason).toContain("0.60");
     });
@@ -77,6 +78,7 @@ describe("H3 — urgent_news regime confidence threshold", () => {
       };
       const result = checkRegimeConfidenceThreshold(input);
       expect(result.pass).toBe(false);
+      if (result.pass) throw new Error("expected pass=false");
       expect(result.reason).toContain("0.50");
     });
 
@@ -102,6 +104,7 @@ describe("H3 — urgent_news regime confidence threshold", () => {
       };
       const result = checkRegimeConfidenceThreshold(input);
       expect(result.pass).toBe(false);
+      if (result.pass) throw new Error("expected pass=false");
       expect(result.reason).toContain("0.40");
     });
 
