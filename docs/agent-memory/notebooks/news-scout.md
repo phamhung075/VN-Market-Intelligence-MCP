@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (17:15–17:21 UTC) 2026-05-11
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst×1 VIC] | Regime: TIGHTENING | Carry: default
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: Vingroup kiện thắng 68 đối tượng đưa tin sai (chain_catalyst bullish adj 5.6 #2915, conf 86%, chain→VHM/VRE/D2D). Regime shift NEUTRAL→TIGHTENING (Brent $104.6, chi phí vốn tăng vọt).
+- Suppressed: HVN shareholder notice (conf 16% — below threshold), EIB banking personnel (conf 50%, impact chain 6), FPT fund bottom-fishing (regime adj 4.9), gold +0.00% (no spike)
+- Notes: VRE -6.41% no news match — monitoring. Brent $104.6 elevated → cpi_pressure_risk watch. Same VIC lawsuit articles recurring across off-hours cycles.
+
 ### Cycle (16:15–16:25 UTC) 2026-05-11
 - Items: 20 | Impacts: 7 | Signals: [urgent_news×3 VIC/EIB/HVN] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
