@@ -241,3 +241,14 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (persistent: khối ngoại heavy selling FPT/VHM, "tiền nóng co cụm")
 - Events: None triggered | Market closed final — VN-Index -20pts → 1,895.5 | VRE -6.41%, FPT -2.64%, HVN -2.92%, NKG -2.47%, GVR -2.66% | EIB +2.71% outlier | China/Taiwan 50.5% (unchanged, FPT/VEA/GEX watch)
 - Supply chain: STABLE (BDI 1,400) | Energy: NORMAL | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG — not in portfolio) | Spam audit: skipped (oversized) | No Telegram reports | 0 agent signals
+
+## Cycle — 15:05 UTC
+
+- **cycle_date**: 2026-05-11
+- **findings**:
+  - System OK: all 16 CBs clear. NKG BCTC rate-limited (transient). Reuters/TE offline (persistent known). No new telegram reports. No agent signals.
+  - Market closed: VN-Index -20pts → 1,895.5. VRE -6.41% (worst), HVN -2.92%, FPT -2.64% (at 2023 low), GVR -2.66%. EIB +2.71% sole outlier. Real estate led decline.
+  - Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND). VaR 95% -0.1%. Conviction STRONG 0.63 GIẢM BỚT. NEUTRAL regime, no multiplier. ALIGNMENT 1.0 (FPT TAILWIND). fii_type=HOT_MONEY.
+- **actions**: WORK telegram sent (15:05 UTC, clean). Notebook committed.
+- **next_cycle_hint**: BCTC earnings season: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days). FPT HOT_MONEY foreign exit continues — watch if contagion to other tech. Alert accuracy still ~0.3% (bug #2292 open).
+- **estimated_tokens**: 11000 (22 tool calls)
