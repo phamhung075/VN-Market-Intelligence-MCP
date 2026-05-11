@@ -271,3 +271,19 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **findings**: EIB +3.61% (2.45σ) 4th consecutive anomaly cycle — deceleration from prior cycles (3.84%→3.61%), still above threshold; fundamentally weak. HVN -2.92% (2.58σ) ongoing downtrend confirmed, bearish evidence score. Securities sector outperforming (+1.65%). Macro stable (supply chain, energy, climate all clear).
 - **actions**: post_agent_signal price_anomaly EIB id=2862; post_agent_signal price_anomaly HVN id=2863; send_telegram WORK
 - **next_cycle_hint**: EIB — deceleration pattern, watch for reversal below 2σ (approaching 08:30 market close). HVN — bearish continuation vs support at 21,500. GAS / oil exposure if Brent holds above 105.
+
+### Cycle (10:30–10:42 UTC)
+- Stocks: 31 | Anomalies: 2 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Notes: Market CLOSED (post-09:00 UTC). VRE -6.41% (1.71σ, below threshold). FPT -2.64% (2.04σ) + HVN -2.92% (2.56σ) → signals posted. HSG -2.81% (0.45σ, stddev inflated by May-04 -21.63% shock). Active chain: HSG/NKG AU anti-dumping 56% (from news-scout, impact=8). Supply chain stable, energy grid normal.
+
+## Metrics (cycle 2026-05-11 10:30 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
