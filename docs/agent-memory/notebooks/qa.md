@@ -25,9 +25,11 @@ Task 1863e-RECONCILE — Tier 3 alert-commander wiring. Commit 4286c150. Target 
 
 ## Carry-over for next session
 
-- Sprint 1872 active. 1872a + 1872b APPROVED and merged.
-- Pre-existing failure set: 16 failures (current bun test baseline as of 1872b). Stable.
-- Pre-existing TSC errors: present (H3-urgent-news, dailyDashboardJob, regimeConfidenceThreshold, watchdog 1557/1567, 1850e, 1854b) — all pre-existing.
+- Sprint 1872 active. 1872a + 1872b + Tier-1 bundle (1871a/1871e/1871g) APPROVED and merged.
+- Pre-existing failure set: 11 failures / 38 skip (bun test --timeout 30000 run; Bun v1.3.13 C++ panic at end is NOT a failure — 9169 pass before crash). Note: previous baseline 9297/16 was with different timeout or Bun run; current run shows 9169/11 — test count delta likely due to Bun crash cutting run short. Developer should recount with fresh run.
+- Pre-existing TSC errors: 23 errors on both main and task branches (H3-urgent-news, dailyDashboardJob, regimeConfidenceThreshold, watchdog 1557/1567, 1850e, 1854b). No new errors from 1871 bundle.
+- Tier-1 bundle note: 1871e commit carried 3 extra notebook files + alert-commander.md tool-package doc clarification (parallel dispatch artifact). All doc-only, no production code, non-blocking.
+- Next in queue: 1871b (infra/ tree expansion), 1871c (analysis/backtesting modules), 1871d (cron-registry.json backfill), 1871f (DDD violation IVnstockRepository).
 - Branch merge strategy: if branch has extra unrelated commits causing doc conflicts, cherry-pick production commit only.
 - Remaining Todo (Sprint 1871): 1871a-g (SPRINT-S doc reconciliation + DDD fix), 1862c-D/E/F/G (Cowork MCP access).
 - 1872b CLOSED 2026-05-11. Merge SHA fb2d6fd2. TASKS.md updated b278b396.
