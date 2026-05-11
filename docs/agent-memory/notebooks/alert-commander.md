@@ -84,3 +84,10 @@
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026)
 - Notes: Market OPEN (03:03 UTC). ACB urgent_news id=2842 conviction 0.50 < 0.60 NEUTRAL threshold. Step 3b skip: get_agent_signals requires `agent` param (price_anomaly filter unavailable). No legal/crisis signals. VHM +4.57%/price_surge alert present (MEDIUM, pre-existing). MACRO CRITICAL (Brent ±σ, Gold ±σ) already in queue since ~23:30. No new chain_catalyst. log_agent_work id=618.
+
+### Alert Cycle (04:04–04:09 UTC, 2026-05-11)
+- Signals: urgent_news ×1 (ACB id=2846 conf 0.50) | price_anomaly ×1 (EIB id=2848 conf 0.50)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: unknown | Pivot window: unknown
+- Notes: Market OPEN (04:04 UTC). ACB urgent_news id=2846 conviction 0.50 < 0.60 NEUTRAL threshold; no price_anomaly override for ACB. EIB price_anomaly id=2848 (EIB +4.51%, 2.7σ) — not confirmed via get_alerts (returned no active price alerts); 2.7σ < 4.0σ override threshold. No legal/crisis signals. No chain_catalyst. Price alerts: none active. Market snapshot: VN-Index 1,921.80 +0.34% (divergence OK). MACRO context: Brent ~105 (+5σ extreme), Gold ~4695 (-5σ extreme) — ongoing since 23:30 UTC. log_agent_work id=620.
