@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": 1870,
+  "currentSprint": 1871,
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T04:55:00Z",
+  "updatedAt": "2026-05-11T05:10:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 15 SHIPPED Sprint 1869 end-to-end: 1869a (DEFAULT_DROP_PCT -5→-7, d884be66) + 1869c (UTC guard extended to qa-responder + news-scout, e3bd83a5) + 1869b (wired watchlistThresholds at scanMarket.ts:296, dbefc47c) + 1869b-seed (DB migration alert_drop_pct -7/-9, 44d5bf2c). Baseline 9153 pass / 16 fail. Adaptive price-drop precision system end-to-end live. Report 2844 marked fixed. TNB c33 F2+F5 actioned. Branches cleaned. PO ACK closed."
+  "lastCompleted": "Cycle 16 SHIPPED Sprint 1870: 1870a VERIFY-FAIL (947f8054/72b7fd0d, root cause IDed) + 1870b FIX-HIGH (b58326e6/412fb9c3/b7ac4b08, P_NET_PROFIT negative lookahead). FPT revenue 20.22545 → 20.2T VND ✓. VCB regression 0%. Baseline 9163 pass / 15 fail. Report 2848 fixed. Branches cleaned. Surprise: FPT income-stmt split-label OCR limit (pre-existing, defer)."
 }
