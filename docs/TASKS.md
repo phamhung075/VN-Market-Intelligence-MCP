@@ -19,7 +19,6 @@
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. Edit `~/.cloudflared/config.yml` keepAliveTimeout value. No Docker rebuild. Ship together with 1862c-D in single cloudflared reload. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection — detect stale/disconnected SSE sessions. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error response + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
 | 1862c-G | FIX-HIGH: Market-watcher smoke-test probe — pre-market verification call before full cycle. `cron-market-watcher.md` Step 0: cheap tool call (e.g. `get_system_status`) + BUG telegram on failure. Convert silent BLOCKED → immediate alert. 1 flow file, no rebuild. | HIGH | FIX | developer | TASK_1862c-G.md | — |
-| 1871c | SPRINT-S: Add analysis/ and backtesting/ to ARCHITECTURE.md Module Boundaries table + folder tree. Drift: doc lists 10 tool modules, code has 12 (analysis/sequential_market_analysis; backtesting/run_backtest+get_backtest_runs+get_backtest_run). Files: docs/ARCHITECTURE.md. AC: Module Boundaries row added per module with tool names, folder tree entry added, divergence root-cause in task report. Brief D3. | MEDIUM | SPRINT-S | developer | TASK_1871c.md | 1871b |
 ---
 
 ## In Progress
@@ -40,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1871c | SPRINT-S: Add analysis/ and backtesting/ to ARCHITECTURE.md Module Boundaries table + folder tree. 12-row table (10 original + analysis + backtesting). tools/ tree updated with sequential_market_analysis, run_backtest, get_backtest_runs, get_backtest_run. Merge SHA 22bef183. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1871f | SPRINT-S: Resolve DDD violation — extract vnstock types to domain/models/vnstockTypes.ts. IVnstockRepository.ts + vnstockBridge.ts + SqliteVnstockRepository.ts + vnstockStore.ts updated. Zero domain→infra import statements. Re-export pattern in vnstockBridge.ts for backward compat. TSC delta=0. Merge SHA 30030baa. QA APPROVED 2026-05-11. | HIGH | SPRINT-S | dev-mcp-server | 2026-05-11 |
 | 1871d | SPRINT-S: Backfill 21 missing jobs in cron-registry.json (41→62 entries). schedulerFileCount corrected to 59 (matches cronConfig.ts key count). Existing 41 entries unchanged. New entries use consistent name/schedule/desc/file schema. Merge SHA 2bcae2e5. QA APPROVED 2026-05-11. | MEDIUM | SPRINT-S | developer | 2026-05-11 |
 | 1871b | SPRINT-S: Expand ARCHITECTURE.md infrastructure/ tree to all 11 subdirs (adapters/agents/cache/db/fetchers/fileStore/microservices/notifiers/observability/rag/vps). fileStore/alertVerdictStore.ts documented. Cross-link to alert-policy.md (updated 1871g). Merge SHA 6f161a4b. QA APPROVED 2026-05-11. | HIGH | SPRINT-S | developer | 2026-05-11 |
