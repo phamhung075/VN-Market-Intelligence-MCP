@@ -1,8 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1872a
+**Last updated:** 2026-05-11 | **Sprint:** 1877a
 
 ## Last session summary
+
+Task 1877a: scripts/audits/commit-convention-audit.sh created.
+- Pure bash, no Bun/Node deps. `set -euo pipefail` + `LC_ALL=C` (locale fix for awk decimal).
+- Parses git log via custom `--pretty=format` with trailer extraction per commit.
+- 4 criteria: C1 header regex, C2 task trailer (sprint-scoped, non-notebook), C3 AC trailer (when Task present), C4 scope vocab.
+- Violations capped at 20 per criterion. Idempotent: report filename includes YYYYMMDD.
+- Signal drop: PASS → greenlight JSON, FAIL → fail JSON (both in docs/signals/).
+- Exit 0=PASS, 1=FAIL. All 7 ACs verified locally.
+- Current window result (2026-05-10..now): C1=0.9517 PASS, C2=0.5694 FAIL, C3=0.7808 FAIL, C4=0.4727 FAIL → verdict FAIL.
+- Branch: task/1877a-commit-convention-audit-script | Commit: 9ef44bd7
+- Pipeline: status=in_progress, nextAgent=qa.
+- macOS bash 3 caveat: `local -n` (nameref) not supported — used positional-args function instead.
+
+## Previous last session summary
 
 Task 1872a-7: README.md:173 heading count fix (AC8 closure).
 - Edit: `## 112 MCP Tools (Phase 3 Complete)` → `## MCP Tools (Phase 3 Complete)` + SSOT pointer line added below.

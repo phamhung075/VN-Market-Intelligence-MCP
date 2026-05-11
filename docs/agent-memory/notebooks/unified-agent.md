@@ -260,3 +260,11 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | VRE -6.41%, HVN -2.92%, FPT -2.64% (lowest since 2023-end), EIB +2.71% outlier | China/Taiwan 50.5% (unchanged) | 4 CRITICAL macro alerts (Brent >5σ, Gold -5σ)
 - Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG) | Spam audit: 10 msgs checked (structured reports, no spam) | 0 agent signals
 - ⚠️ BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) — earnings trigger ready
+
+### Coordination Cycle (17:00–17:10 UTC) — 2026-05-11
+- Mode: MARKET (post-close, ad-hoc run) | System: OK (all 16 CBs clear, vnstock FPT/VHM BCTC rate-limit transient, Reuters/TE offline persistent) | Alerts: 9 open (VIC×3 MEDIUM, VHM×1 MEDIUM, HCM×1 MEDIUM, FPT×2 LOW, VIC×2 LOW — all notified) | Quality issues: 0 new (alert accuracy bug #2292 ongoing)
+- Regime: NEUTRAL (unchanged from 11:01 UTC transition — Brent 104.6, Gold 1,675, USD_VND 26,123, inflation 8%, ambiguous → NEUTRAL) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND, NEUTRAL no multiplier)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (khối ngoại heavy selling FPT 14,100tỷ, VHM 1,000tỷ — "tiền nóng co cụm" persistent)
+- Events: None triggered | Market closed final — VN-Index -20pts → 1,895.5 | VRE -6.41% (RSI 70.6), FPT -2.64% (RSI 25.8 oversold), HVN -2.92% (RSI 24.4), HSG -2.81% (RSI 10.0 extreme oversold), NKG -2.47% | EIB +2.71% sole outlier | China/Taiwan 51% (unchanged, FPT/VEA/GEX watch)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate: May heat risk (IDC/KBC/GEG — not in portfolio)
+- BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (4 days) | Alert accuracy: 0.27% (1/369) bug #2292 open | Unreviewed: structured reports only, no spam
