@@ -220,6 +220,17 @@ After all tasks Done:
 
 ## Step 4.5: Proactive Compact Checkpoint
 
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook + pipeline-state timestamp guard
+- Before writing `docs/pipeline-state.json` or `docs/agent-memory/notebooks/main.md`, ALWAYS get current UTC via:
+  ```
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  ```
+- Use the returned value verbatim — NEVER speculatively round up, NEVER pick a future minute, NEVER guess "approximate close time"
+- This applies to `updatedAt` in pipeline-state.json AND to the `**Written:** YYYY-MM-DD HH:MM UTC` header line in notebooks/main.md
+- If notebook contains task table rows with timestamps (e.g. "cycle finished 04:55 UTC"), each timestamp must reflect actual measured UTC at that step
+
 Run this **after Step 4 exits cleanly and before re-entering Step 1** (i.e., when more work exists):
 
 ```

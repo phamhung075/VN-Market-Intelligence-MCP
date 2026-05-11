@@ -195,6 +195,17 @@ Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output
 - **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`
 
 **Commit notebook** (end of every cycle):
+
+> Invariant: timestamp = current UTC, never future, never speculative.
+
+### Notebook + ACK timestamp guard
+- Before writing `docs/agent-memory/notebooks/po.md` or appending the `## PO ACK` block in any handoff file, ALWAYS get current UTC via:
+  ```
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  ```
+- Use the returned value verbatim for the `At: {ISO timestamp}` field — NEVER speculate, NEVER round to a future minute
+- This applies to every ACK append (Step 0-TNB) and to any notebook header date
+
 ```bash
 git add docs/agent-memory/notebooks/po.md
 git commit -m "chore(memory/po): notebook YYYY-MM-DD"
