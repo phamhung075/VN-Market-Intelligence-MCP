@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-11T16:19:41Z",
+  "updatedAt": "2026-05-11T16:24:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 28 close — SPRINT-S-1872a COMPLETE (8/8 ACs, 5 merges). Drift signals from system-auditor cycle 27 fully resolved. Open: stale branch task/1872a-5-api-gateway-wording flagged to WORK for cycle 29 CLEAN."
+  "lastCompleted": "Cycle 29 close — IDLE. 8 duplicate-replay signals drained (cycle 28 had copied but not removed originals — bug fixed). Todo: 4 rows all ops/rebuild-blocked. Stale branch task/1872a-5-api-gateway-wording still unmerged (4 commits, content stale older state — needs manual review). New orphaned brief docs/architecture-briefs/ssot-team-tools-2026-05-11.md untracked (no signal emitted)."
 }

@@ -203,5 +203,11 @@
     }
   ],
   "nextAction": "PO reviews this signal. Architect + developer triage priority_1 + priority_2 items. PM blocks sprint 1872 new work until tree-map and hardcoded counts addressed.",
-  "reportedToChannels": []
+  "reportedToChannels": [],
+  "fingerprint": "f921175d229fa66a481bc1eea33d86e2811d66624ef4afa7da4639fea9d15a7b",
+  "processedAt": "2026-05-11T16:23:00Z",
+  "processedBy": "dev-team",
+  "result": "skipped-duplicate-replay",
+  "cycleNum": 29,
+  "replay_note": "All 5 actionable items closed by SPRINT-S-1872a (8/8 ACs DONE cycle 28)"
 }
