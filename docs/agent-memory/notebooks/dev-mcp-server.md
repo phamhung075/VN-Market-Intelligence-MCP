@@ -4,6 +4,16 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1876a-A3 — FR-5 observability log in taAlertNotifierJob (2026-05-11, DONE)
+
+**Change:** Added startup log at top of `runTaAlertNotifier` emitting `pending=<N>` count of `price_anomaly` signals with `outcome IS NULL`. Wrapped in try/catch (best-effort). `processed_last_run=?` (no stats table). 9 LOC, logging-only.
+
+**Result:** 28 pass / 0 fail. tsc clean. Log confirmed in test output (pending=1 when signals seeded, pending=0 otherwise).
+
+**After Sprint 1877 B1 (bridge):** log will show `pending=N>0` confirming emission bridge is live.
+
+---
+
 ### Task 1869b-seed — Watchlist alert_drop_pct migration (2026-05-11, DONE)
 
 **Problem:** All watchlist rows had `alert_drop_pct = -3` (old schema default). 1869b wired per-stock thresholds into `detectSignals` but DB still had stale values.
