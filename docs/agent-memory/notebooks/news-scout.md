@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 08:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 10:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (10:21–10:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst×1 HSG+NKG+HPG] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Key: HSG/NKG AU anti-dumping 56% (chain_catalyst bearish steel #2883, chain→HPG)
+- Suppressed: VIC energy project 158k tỷ (7/10 neutral, below chain_catalyst threshold), HVN announcement (7/10 neutral, low chain confidence 16%), VN-Index commentary (no direct watchlist hit), MWG bullish (not on watchlist)
 
 ### Cycle (09:21–09:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 3 | Signals: [urgent_news×2 VIC/HVN, chain_catalyst×1 HSG+NKG] | Regime: NEUTRAL | Carry: NEUTRAL
