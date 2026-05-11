@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 20:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-11 21:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (21:19–21:22 UTC) 2026-05-11
+- Items: 20 | Impacts: 6 | Signals: [urgent_news×3 FPT/VIC/HSG, chain_catalyst×1 market] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: FPT fund bottom-fishing at multi-year low (urgent_news bullish 7/10 #2938), VIC Vingroup lawsuit win (urgent_news bullish 8/10 #2939), HSG AU anti-dumping 56% investigation (urgent_news bearish 6/10 #2940, escalated from prior suppressed 5/10), VN-Index -20pts broad selloff chain_catalyst #2941 (VRE -6.41%, foreign -1000 tỷ, FII_OUTFLOW_RISK)
+- Suppressed: EIB/STB banking personnel neutral 7 (no direction), HVN shareholder notice neutral 7 (no catalyst), BSR refinery rename neutral 6, Brent $104 (no prior month data for +5%), Gold $4,745 (no prior week data for +3%)
+- Notes: HSG anti-dumping (AU, 56% margin) escalated to urgent_news this cycle given direct export risk. Same VIC lawsuit articles recurring — alert-commander dedup expected.
 
 ### Cycle (20:20–20:22 UTC) 2026-05-11
 - Items: 20 | Impacts: 7 | Signals: [urgent_news×1 VIC, chain_catalyst×2 VIC+FPT] | Regime: NEUTRAL | Carry: NEUTRAL
