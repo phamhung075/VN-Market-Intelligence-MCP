@@ -28,6 +28,16 @@
 - Signals: price_anomaly ×2 (FPT, HVN)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: N/A | Pivot window: false
+
+### Alert Cycle (19:02–19:02 UTC) — 2026-05-11
+- Signals: urgent_news ×2 (FPT id=2921, VIC id=2922)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: N/A | Pivot window: false
+- Suppressed: FPT urgent_news (conviction 0.50 < 0.60 NEUTRAL threshold, no price_anomaly override) | VIC urgent_news (conviction 0.50 < 0.60, no override)
+- Legal risk: clear | Crisis: clear | Price alerts: none
+- Market: CLOSED (off-hours, 19:02 UTC)
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 
 ### Alert Cycle (16:05–16:05 UTC) — 2026-05-11
