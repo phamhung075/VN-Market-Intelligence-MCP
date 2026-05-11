@@ -19,6 +19,7 @@ Conviction shifts posted | issues filed | WORK heartbeat | `docs/analysis-briefs
 **0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, US10Y_SIGNAL, DXY_SIGNAL
 Load previous session log to check REGIME at last session end.
+> ⚠️ `get_macro_snapshot` NOT in unified-agent package. Infer REGIME from bootstrap MACRO block (Brent/oil, USD_VND, interest_rate, inflation) + notebook last-cycle REGIME label. If ambiguous → NEUTRAL.
 
 **1. System health**
 `get_system_status()` | `get_rate_limit_status()` | `get_recent_fixes(days=2)` + `read_telegram_reports(status="new", limit=50, unclaimed_only=false)`
@@ -57,7 +58,8 @@ From `get_foreign_flow()` data + CARRY_REGIME + hot_money_risk signals from news
 - Default if unclear → `fii_type=UNKNOWN`
 
 **5. Quality**
-`get_alert_accuracy()` precision < 60% = bug | `get_signal_effectiveness()` chains vs standalone | `get_unreviewed_market_messages(limit=50)` spam audit
+`get_alert_accuracy()` precision < 60% = bug | `get_signal_effectiveness()` chains vs standalone | `get_unreviewed_market_messages(limit=10)` spam audit
+> ⚠️ `get_unreviewed_market_messages` with limit=50 routinely exceeds 89k chars. Use limit=10 to stay within token budget.
 
 Check if REGIME changed since last session log → if changed:
 - Log `REGIME_TRANSITION` event to WORK: `"[Unified] REGIME_TRANSITION: {old} → {new} (HH:MM UTC)"`

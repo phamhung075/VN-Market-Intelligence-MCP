@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-11 11:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (15:15–15:21 UTC) 2026-05-11
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 VIC, chain_catalyst×1 VIC/POW/PPC/JSH] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: VIC Vingroup lawsuit win — 68 entities settle defamation (urgent_news bullish 8/10 #2903), VIC energy project 158k tỷ Điện Biên (chain_catalyst bullish 7/10 #2904, chain→POW/PPC/JSH)
+- Suppressed: EIB/STB banking leadership changes (impact 7, neutral — below urgent_news threshold), HVN shareholder notice (impact 7, neutral), HSG AU anti-dumping (impact 5), broader VN-Index -20pts (covered prior cycles)
+
 ### Cycle (13:15–13:25 UTC) 2026-05-11
 - Items: 20 | Impacts: 3 | Signals: [chain_catalyst×2 VIC/HSG, urgent_news×1 HVN] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default]
