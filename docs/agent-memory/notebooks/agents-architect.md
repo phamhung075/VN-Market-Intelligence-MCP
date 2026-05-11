@@ -87,6 +87,16 @@
 
 ---
 
+## 2026-05-11T16:32:08Z
+
+**Brief:** `docs/architecture-briefs/2026-05-17-commit-convention-audit.md`
+
+Designed Day-7 commit-convention audit with four concrete pass thresholds (C1 ≥90% header format, C2 ≥85% Task trailer, C3 ≥80% AC trailer, C4 ≥95% scope vocab), specifying a shell script at `scripts/audits/commit-convention-audit.sh` that emits a JSON verdict and auto-drops greenlight signal to agent-father for C1+C2 collapse on PASS, with pm as manual trigger on 2026-05-17.
+
+**Signal dropped:** `docs/signals/agents-architect-2026-05-11T16-32-08Z-phase-b-c1-c2-audit-design.json` → agent-father
+
+---
+
 ## Backfill — c35 — 2026-05-11
 
 ### Session: 1873a-tsc-reconcile
