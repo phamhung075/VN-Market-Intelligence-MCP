@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 15:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-11 16:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -363,3 +363,24 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (16:38–16:40 UTC)
+- Stocks: 28 (EOD snapshot 09:00 UTC) | Anomalies: 2 (>2.0σ) | Volume spikes: 3 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- [SKIP] No tool: get_macro_snapshot — regime defaulted NEUTRAL (USD_VND 26123 stable)
+- EIB +2.71% (2.10σ, 25.04M vol = 9.3x avg) → signal #2912 → alert-commander. Counter-trend surge vs banking -0.76%. Possible accumulation.
+- FPT -2.64% (2.03σ, 16.91M vol = 4.14x avg) → signal #2913 → alert-commander. Foreign net sell ~14,100B VND, proprietary sell. Price at 2023 year-end lows (70,000).
+- VRE -6.41% (1.76σ, 11.67M vol = 2.47x avg) — volume spike only, below 2.0σ price threshold. Not signalled.
+- Sector 1d: Tech -2.15%, Auto -2.54% worst | Oil&Gas +1.29%, Securities +0.48% best.
+- Supply chain: stable (BDI=1,400). Open chain findings: 0.
+
+## Metrics (cycle 2026-05-11 16:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 7 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
