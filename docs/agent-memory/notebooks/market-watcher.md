@@ -141,3 +141,22 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 420 |
+
+### Cycle (02:38–02:40 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (VHM +5.24%≈1.26σ below 1.5σ threshold, existing MEDIUM alert) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF (carry-forward) | fx_pressure: [banking,realty] | pe_risk: [VCB,VIC,ACB]
+- Notable moves: VHM +5.24% (already alerted 02:30), VRE +2.09%, EIB +1.13%; Downside: GVR -1.26%, HCM -1.25%, HSG -1.20%, FPT -1.11%, BID -1.06% — all <1.5σ
+- Macro alerts: CRITICAL×4 active (Brent 104.61 extreme high, Gold extreme low); GAS chain_catalyst signal active (US-Iran tension, oil>107)
+- Sector rotation: 1d data only — RE +0.21%, agri +0.57%, banking -0.22%, tech -0.85%
+- Open chain findings: 0 | Signals emitted: 0
+
+## Metrics (cycle 2026-05-11 02:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 26 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 890 |
