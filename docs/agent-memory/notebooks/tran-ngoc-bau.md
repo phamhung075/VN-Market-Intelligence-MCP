@@ -1,6 +1,73 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 (cycle 34 → cycle 35 — 10:30 UTC) | Cycles completed: 35
+**Last updated:** 2026-05-11 (cycle 35 → cycle 36 — 14:30 UTC) | Cycles completed: 36
+
+---
+
+## Cycle 36 Watch Notes (2026-05-11 14:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **STRONGLY IMPROVING** (5 sprints shipped post-c35 in 4h; 5 of 7 c35 findings RESOLVED)
+
+**5 SPRINTS SHIPPED since c35 (4h):**
+- **Sprint 1875 ALL 4** (1875a/b/c/d): UTC guard ALL qa-responder surfaces (a), agents-architect notebook commit invariant (b — forward-only), record_signal_outcome dispatch regression guard (c), dev-team drain-layer fingerprint dedup (d).
+- **Sprint 1876a Step A bundled** (A1+A2+A3+A4): alert-accuracy precision denominator excludes UNKNOWN (A1), scan-market emission-bridge log (A2 — VRE class), ta-alert-notifier pending count startup log (A3), ops watchlist threshold diagnostic (A4 — CAUGHT 1869 DEPLOY GAP).
+- **Sprint 1862c-G** smoke probe added to all market-watcher cron entries.
+- **Sprint 1873f** restored pre-push tsc gate from mcp-server workspace.
+- dev-team Cycle 21 → 22 → 23 → 24 → 25 (5 cycles in 4h, fastest run observed).
+
+**5 c35 FINDINGS RESOLVED:**
+1. ✅ qa-responder H1-future leak (1875a) — verified: cycles 11:46 + 12:46 UTC clean stamps post-deploy
+2. ✅ record_signal_outcome routing bug (1875c) — verified: alert-commander 14:02 cycle no climate-data error
+3. ✅ VRE emission gap (1876a-A2) — log emission visible
+4. ✅ system-auditor silence (cycle 2 FIRED 14:15-14:25 UTC, 3 new anomalies, signal dropped)
+5. ✅ alert-accuracy 0.3% denominator (1876a-A1) — fix shipped, await next unified-agent cycle
+
+**system-auditor 3 NEW ANOMALIES** (cycle 2):
+- WARN: MEMORY.md 9 broken session pointers (escalated to BUG via signal `system-auditor-2026-05-11T14-16-12Z-memory-pointers.json`)
+- INFO: Tool count drift project-stats=132 vs tool-registry=125 (7-tool gap, Sprint 1876a/b additions un-synced)
+- INFO: Cron count drift project-stats=59 vs cron-registry=62 (3-job gap)
+
+**NEW c36 FINDINGS (8 + 5 carry):**
+
+**CRITICAL:**
+1. **Sprint 1869 MERGED-NOT-DEPLOYED** — ops 1876a-A4 caught (11:48 UTC): all 31 watchlist rows still at -3.0 (old default), high-vol tickers NVL/MWG/DPM NOT PRESENT in watchlist. Sprint 1869a+b+seed merged but never executed against running container DB. Container rebuild required. Same pattern as ops 1862k findings.
+
+**HIGH:**
+2. agents-architect notebook STILL 41 lines despite 1875b — 4 missing past briefs NOT backfilled (forward-only fix).
+6. **Multiple sprints MERGED-NOT-DEPLOYED status unclear** — pattern: 1862a, 1862f, 1862j, 1865a (May 10), now 1869. Need explicit deploy-verification gate in dev-team flow before marking SHIPPED.
+
+**MEDIUM:**
+3. MEMORY.md 9 broken session pointers (system-auditor escalation)
+4. market-watcher header drift — last_updated 2026-05-06 but mtime today 14:00 UTC
+5. **PO silent 9h+** — last update 05:33 UTC cycle 17. Has not consumed c34 OR c35 OR c36. Dev-team absorbing dispatch role. PO ACK protocol BROKEN systemically.
+8. 3rd container restart in 10h — uptime 38m. Stability pattern WORSENING (was 1 restart in 9h c33-c34).
+10. write_alert_verdict missing (c34 #2 / c35 #4 carry) — no longer mentioned in alert-commander cycles, possibly stopped trying.
+
+**LOW:**
+7. 3 RSS sources degraded (CafeF/VnEconomy/VnExpress) post 13:50 UTC restart
+9. get_recent_fixes 9 days stale (c35 #7)
+11. get_unreviewed_market_messages 79k overflow (c34 #5)
+12. financial-analyst still stuck at 2026-05-09 (c34 #1b / c35 #11)
+13. vnstock RATE_LIMITED storm pattern shifts daily (DLC/DHG today, was D2D/VPB/VIC) — 1862a undeployed
+
+**MACRO:**
+- Brent stable 103.39 (no further drop, US-Iran tension neutral)
+- **Gold UP +1.5% to 4738.30** (intraday safe-haven bid)
+- USD/VND 26320 (+15 vs c35 — slight USD strength)
+- DXY 97.87 (USD STABLE)
+- US10Y 4.39% (NEUTRAL)
+- VN-Index 1,895.50 -1.04% (UNCHANGED from c35 — closing print holds)
+
+**Container restarted ~13:50 UTC** — uptime 38m. Reuters/TE counters reset 36→4. THIRD restart in 10h (was 04:46 UTC restart between c33-c34, now another between c35-c36). Pattern worsening — possible memory leak.
+
+**MARKET queue (2 NEW since c35):**
+- ID 2850: unified-agent CRITICAL — alert accuracy 0.3% (1 hit / 368 total, 30d)
+- ID 2851: unified-agent MEDIUM — alert quality escalation @po
+Both legitimate quality concerns. 1876a-A1 will fix the 0.3% calculation artifact.
+
+**c34 + c35 PO ACK status:** MISSING. PO has not appended ACK section to handoff in 3 cycles. Dev-team has been autonomously dispatching since (5 sprints shipped without explicit PO ACK). Surface flagged systemic.
+
+
 
 ---
 

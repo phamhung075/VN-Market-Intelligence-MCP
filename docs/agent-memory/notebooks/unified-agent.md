@@ -227,9 +227,10 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Supply chain: OK (BDI 1,400, stable) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: none | Crisis: none | Prediction: China/Taiwan 50.5% (low actionable)
 - No unreviewed telegram reports | 99% alert outcomes unknown (review gap ongoing)
 
-### Coordination Cycle (13:00–13:05 UTC) — 2026-05-11
-- Mode: MARKET | System: OK (16 CBs clear, DHG/DAG rate-limit WARNs transient, Reuters/TE offline persistent) | Alerts: 8 open (+1 VIC MEDIUM 12:34 vs prior cycle) | Quality issues: 1 (price_drop 25% ongoing)
-- Regime: NEUTRAL (unchanged from 11:01 cycle) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND, NEUTRAL no multiplier)
-- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | No shift ≥0.3 | fii_type=HOT_MONEY
-- Events: None triggered | VN-Index confirmed closed ~1,895–1,905 (-~20pts), VRE -6.41%, FPT -2.64% (late 2023 low), HVN -2.92%, EIB +2.71% | BCTC 24 tickers overdue 11d, 7 banks due 15/5 | Prediction: China/Taiwan 50.5% (unchanged)
-- Supply chain: OK | Energy: NORMAL | Legal: none | Crisis: none | No new telegram reports
+### Coordination Cycle (14:00–14:10 UTC) — 2026-05-11
+- Mode: MARKET (post-close) | System: OK (all 16 CBs clear, vnstock rate-limit WARNs ACB/NKG/ACV BCTC transient, Reuters/TE/CafeF/VnEconomy/VnExpress RSS degraded) | Alerts: 8 open (4 MEDIUM: VIC×3, VHM, HCM; 4 LOW: FPT×2, VIC×2) | Quality issues: 1 (alert accuracy 0.3% / 1 hit of 368 — filed @po, BUG msg 2292)
+- Regime: NEUTRAL (macro mixed: real rate -3%, DOW 23750, BRENT 103, GOLD 4747) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95% -0.1% | Conviction STRONG 0.63 GIẢM BỚT | NEUTRAL regime no multiplier | No shift ≥0.3 | fii_type=HOT_MONEY (khối ngoại bán ròng >1,000tỷ, FPT 14,100tỷ, "tiền nóng co cụm")
+- Events: None triggered | Market closed — VN-Index -20pts → 1,895.5 | Real estate led decline (VRE -6.41%, VHM -1.83%, VIC -1.33%), tech -2.64% (FPT lowest since end 2023), aviation -2.92% | EIB +2.71% sole outlier | China/Taiwan 50.5% (unchanged)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL (hydro 70%, demand 53%) | Legal: CLEAR | Crisis: CLEAR | Climate risk tool: transient error (skipped) | Spam audit: skipped (oversized response)
+- No Telegram reports | 0 agent signals | Alert quality degrading (0.3%, was 1% May 9)
