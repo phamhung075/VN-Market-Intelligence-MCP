@@ -1,5 +1,29 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** 1892b api-gateway push routes (cycle 42)
+
+## Recent session — 2026-05-12 (1892b — api-gateway /api/push-* routing)
+
+**1892b — APPROVED:**
+Worktree: `agent-a8f9390a6682e5844`. Commit: `f032a8f7`. Branch: `worktree-agent-a8f9390a6682e5844`.
+
+Tests: 40/40 pass (was 30/4 files on main, +10 new tests in 5th file). TSC 0 errors. DDD PASS. Security PASS.
+
+AC-1 PASS: POST /api/push-news → MCP_URL/api/push-news, 200 happy path. Path NOT stripped — test line 134 explicitly asserts `calls[0].url === http://mcp-server:3000/api/push-news`.
+AC-2 PASS: GET /api/health/vps-news → 404 passthrough from MCP on unknown endpoint. No auth injection — captured headers checked.
+AC-3 PASS: existing /stock/* and /macro/* routes still strip prefix correctly. Test lines 361 + 384 assert exact URLs.
+AC-4 PASS: 401 returned when MCP rejects missing auth. Gateway passes headers unchanged.
+AC-5 PASS: `api` registered via `MCP_URL` const (line 16 index.ts). `getAllServices()` filters `noProbe=true` — `api` excluded from health probes (health_checker.ts line 59).
+
+proxyPath() deviation from spec: spec specified `proxyPath(serviceName, reqPath)` using `serviceName === 'api'`. Impl uses `proxyPath(reqPath, svc)` checking `svc.noProbe`. Design improvement — avoids stringly-typed name comparison, future-proof. Non-blocking, no defect.
+
+Commit `f032a8f7`: `feat(1892/api-gateway): 1892b wire...` with Sprint/Task/AC trailers — PASS per convention.
+Notebook `d0b77044`: separate from feature commit — c43 PASS.
+process.env in index.ts: pre-existing on main (all 9 service URL entries used it before). New line consistent with surrounding code. Pre-existing nit, not introduced by 1892b.
+Bun OOM: main baseline confirms 30 tests in api-gateway suite, no OOM. Pre-existing on full suite only.
+
+Diff stat: 7 files in `git diff main...HEAD --name-only` (includes notebook from d0b77044). Feature commit f032a8f7 stat: 6 files clean (4 production + 2 docs). No accidental edits.
+
 **Last updated:** 2026-05-12 | **Sprint:** CLEAN-1872a-5 branch deletion (cycle 41)
 
 ## Recent session — 2026-05-12 (CLEAN-1872a-5 — stale branch deletion)

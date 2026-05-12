@@ -2,7 +2,7 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/market-watcher-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 06:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 07:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -151,3 +151,21 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 6000 |
+
+### Cycle (07:38–07:43 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Notable intraday: VRE +5.51% (~1.59σ, below 2.0σ; existing MEDIUM alert), GVR +3.60% (~1.48σ), GAS +3.26% (~1.30σ, HIGH alert via Brent +3%)
+- Chain signal: DHG chain_catalyst (news-scout, 07:22) — Chinese group acquires top VN pharma; FII_OUTFLOW_RISK may pressure pharma sector. No price move on DHG (+0.00%).
+- Open chain findings: 0 (last 15 min) | Open alerts: 20 (21 at bootstrap) | System: OK
+
+## Metrics (cycle 2026-05-12 07:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 6 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4500 |

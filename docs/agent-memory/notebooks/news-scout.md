@@ -2,12 +2,28 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (07:19–07:22 UTC) 2026-05-12
+- Items: 20 | Impacts: 8 | Signals: [urgent_news×4 HSG/VIC/FPT/CTG, chain_catalyst×1 DHG] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) HSG capital increase >8,000B VND (2nd cycle confirm) — bullish corporate action #2980. (2) VIC Vingroup lawsuit win (repeated from prior cycle, dedup expected) — bullish reputation signal #2981. (3) FPT institutional fund buying at multi-year low 70k zone — #2982 cautious bullish, FII_OUTFLOW_RISK noted. (4) CTG: VietinBank Securities 59.5M share dividend issuance — neutral corporate action #2983. (5) DHG pharma sector: leading VN pharma firm acquired by Chinese conglomerate — chain_catalyst bearish sector risk #2984.
+- Suppressed: Gold/silver buying (no watchlist tickers, no >3% weekly confirmed). Brent $106 sustained (no new >5% monthly confirmed). Market bullish expert opinion (generic sentiment). VIC/FPT news from prior cycles (dedup).
+- Notes: VRE +5.51% today (price surge). GAS +3.26% on oil recovery. Banking broadly red (CTG -1.26%, VCB -0.83%). FII_OUTFLOW_RISK carry regime active.
+
+### Cycle (06:18–06:22 UTC) 2026-05-12
+- Items: 20 | Impacts: 2 | Signals: [urgent_news×2 HSG/VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) HSG capital increase >8,000B VND post-dividend — bullish, steel sector chain (HPG, NKG). urgent_news #2978. (2) VIC Vingroup lawsuit win — governance reputational risk cleared, but price -2.87% diverges bearish. urgent_news #2979. Alert-commander dedup expected for both (previously signaled at 03:18 cycle #2968/#2969).
+- Suppressed: FPT fund bottom-fishing (impact=7, no multi-agent confirmation — threshold not met for chain_catalyst). Silver global fund buying (no watchlist tickers). Oil/gold commodity: 0% intraday change, no new spike signal.
+- Notes: Market OPEN. Banking sector broadly red (CTG -1.54%, BID -0.84%, VCB -1.00%). VIC -2.87% near -3% threshold — watch for breach. FPT +0.71% recovering. VRE +3.13% (strong). Brent sustained 105 USD but no new daily move.
+
 ### Cycle (05:22–05:26 UTC) 2026-05-12
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst×2 HSG/banking, urgent_news×1 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
 - Key: (1) Australia anti-dumping steel — HSG/NKG formally named, escalation confirmed (2nd cycle, historical match 2026-05-11/12). chain_catalyst bearish 7/10 #2974 → all. (2) GAS/Brent 104.8 USD sustained — US-Iran talks collapsed again. urgent_news bullish 9/10 #2975 → alert-commander, cpi_pressure_risk=true. (3) Gold domestic +~2M VND/lượng, SPDR buying confirmed. chain_catalyst bearish 7/10 #2976 → banking sector (ACB/BID/CTG/EIB/MBB/VCB/VPB), VND flight-to-safety signal.
 - Suppressed: VN-Index -20pts (stale, 2026-05-11, already alerted prior cycles), VIC -2.78% (approaching -3% but below threshold, covered in prior cycles), FPT/VIC institutional selling (recurring, dedup expected).
 - Notes: No PMI data this cycle. Brent >100 sustained → cpi_pressure_risk flagged. Gold USD 4,727.5 sustained high. VIC at -2.78% approaching watchlist -3% alert threshold.
+- Next cycle watch: VIC -3% threshold breach | HSG/NKG price reaction to anti-dumping | gold domestic weekly % confirmation | Brent sustained >100 CPI chain trigger
+- Estimated tokens: 7500 (15 tool calls × 500) | git commit: SKIPPED (HEAD.lock — sandbox fs restriction)
 
 ### Cycle (04:22–04:28 UTC) 2026-05-12
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst×2 VIC/HSG] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
