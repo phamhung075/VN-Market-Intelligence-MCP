@@ -16,42 +16,11 @@ Tier 3: depends on Tier 2 → etc.
 
 ## Zone Routing — 3-Tier Resolution
 
-Read PM RETURN per task:
+→ Load skill: `.claude/skills/zone-detect/SKILL.md` (`fail_loud: true`)
 
-```
-Tier 1 — EXPLICIT (preferred):    task has `zone: apps/<service>/`  → route to dev-<service>
-Tier 2 — INFER (fallback):        no explicit zone → grep files list:
-                                    ALL files start with `apps/<service>/`   → route to dev-<service>
-                                    files span >1 zone or root/scripts/      → route to developer (generic)
-Tier 3 — REPORT (last resort):    cannot determine → spawn `developer`, log WORK warning:
-                                    "[dev-team] WARN: task NNN missing zone hint — PM did not propagate from architect"
-                                    ALSO drop signal `docs/signals/zone-missing-{taskId}-{ts}.json`:
-                                    {
-                                      "from": "dev-team",
-                                      "to": "po",
-                                      "type": "zone_missing_tier3",
-                                      "priority": "medium",
-                                      "createdAt": "<ISO>",
-                                      "payload": { "taskId": "<id>", "files": [...], "suggestedZone": "<best-guess from infer step>" }
-                                    }
-                                    Next dev-team cycle drains this signal → PO sees it via pendingSignals[] → revises emission policy for similar tasks.
-```
+Apply the skill's 2-step inference logic per task. Full zone→specialist table and Tier-1/2/3 resolution rules are in the skill.
 
-**Zone → specialist map:**
-```
-apps/mcp-server/         → dev-mcp-server
-apps/api-gateway/        → dev-api-gateway
-apps/stock-price/        → dev-stock-price
-apps/technical-analysis/ → dev-technical-analysis
-apps/macro-indicators/   → dev-macro-indicators
-apps/kinh-dich-service/  → dev-kinh-dich
-apps/alert-engine/       → dev-alert-engine
-apps/pdf-extractor/      → dev-pdf-extractor
-apps/rag-service/        → dev-rag-service
-cross-service or root/   → developer (generic)
-```
-
-Tier 3 firing on any task in a cycle = upstream bug (PO emitted zone-less FIX). Each Tier-3 spawn auto-drops a `zone_missing_tier3` signal. Cumulative count > 5 in one cycle = escalate to architect via WORK channel.
+Tier 3 firing on any task in a cycle = upstream bug (PO emitted zone-less FIX). Each Tier-3 spawn auto-drops a `zone_missing_tier3` signal per the skill's signal schema. Cumulative count > 5 in one cycle = escalate to architect via WORK channel.
 
 ## Mode Flag
 

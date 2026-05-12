@@ -39,20 +39,9 @@ Found recent notebook entry → use as start, verify changes only. Not found →
 
 **2. Detect target zone(s)** — MANDATORY before any code index. Skip = mcp-server bias bug.
 
-Inspect BA spec / task description / file hints to pick which microservice zone(s) are touched:
+→ Load skill: `.claude/skills/zone-detect/SKILL.md` (`fail_loud: true`)
 
-| Hint in spec | Zone | dev-* specialist |
-|---|---|---|
-| MCP tool / cron / market orchestration | `apps/mcp-server/` | dev-mcp-server |
-| HTTP routing / gateway / health aggregation | `apps/api-gateway/` | dev-api-gateway |
-| price fallback / VPS bridge / quote agg | `apps/stock-price/` | dev-stock-price |
-| RSI / MACD / BB / indicator math | `apps/technical-analysis/` | dev-technical-analysis |
-| SBV FX / commodity / macro trend | `apps/macro-indicators/` | dev-macro-indicators |
-| hexagram / I-Ching / kinh dich | `apps/kinh-dich-service/` | dev-kinh-dich |
-| dedup / cooldown / Telegram dispatch | `apps/alert-engine/` | dev-alert-engine |
-| BCTC / OCR / Vietnamese parse | `apps/pdf-extractor/` | dev-pdf-extractor |
-| embeddings / LanceDB / semantic search | `apps/rag-service/` | dev-rag-service |
-| cross-service / root / scripts/ | (multi) | generic developer |
+Inspect BA spec / task description / file hints → apply Tier-1/2 inference from the skill's zone table to pick which microservice zone(s) are touched.
 
 Record selected zone(s) in `[Architect] Brownfield Findings` § Zone (Step 4). Multi-zone = list all; PM will split into per-zone subtasks.
 

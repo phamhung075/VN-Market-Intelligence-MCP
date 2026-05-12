@@ -61,7 +61,10 @@ CLAUDE.md (root — always loaded)
 ├── docs/references/agent-roster.md (team structure: analysis + dev + microservices, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol — counts in `docs/data/project-stats.json`)
 │
 ├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
-│   └── docs/policies/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)
+│   └── docs/policies/commit-convention.md (index: section-anchor redirects for `§ X` back-compat — children below)
+│       ├── docs/policies/commit-convention-format.md (Format · Shell · Type vocab · Scope · Task ID · Trailers · AC style)
+│       ├── docs/policies/commit-convention-exemptions.md (No-Sprint Rule · C3-Exempt · C2-Exempt)
+│       └── docs/policies/commit-convention-examples.md (Worked Example · Merge Commits · Notebook Commits)
 │
 ├── docs/protocols/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
 │
@@ -81,6 +84,8 @@ CLAUDE.md (root — always loaded)
 ├── .claude/skills/token-economy/SKILL.md (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE inline; Parts 1-2 in children)
 │   ├── .claude/skills/token-economy/policies.md (Part 1: 15 writing techniques, MCP task templates, quick workflow)
 │   └── .claude/skills/token-economy/compress.md (Part 2: /compress command, CLI usage, compression rules)
+│
+├── .claude/skills/zone-detect/SKILL.md (zone→specialist routing: 9-zone table + Tier-1/2/3 inference; SSOT for architect + dev-team execute-tier)
 │
 ├── .claude/skills/semble-search/SKILL.md (code search decision guide: when Semble vs Grep/Glob/Read)
 │

@@ -1,6 +1,7 @@
 # Workflow Map — Full Vector Chart
 
-**File size note:** 156L (>120 due to agent roster table which doesn't decompose cleanly without breaking cross-references). Each row represents 1 agent's role; splitting would fragment context. W1-W19 detailed flows split to workflow-map-cycles.md.
+<!-- size-justification: 167L — chart view of all 35 agents in one table (9 dev-* enumerated explicitly so zone routing is auditable from this file alone); row-per-agent must stay co-located so the reader can scan "who does what" without paging. W1-W19 detailed flows already split to workflow-map-cycles.md. -->
+
 
 **Load when:** understanding the end-to-end picture of who does what, what each agent takes, what main terminal does, how cron and demand flows differ.
 
@@ -110,7 +111,15 @@ W20 BUG channel feedback loop
 | `agent-father` | daily cron + demand | agent-roster, dispatch skill, AGENT_CREATION_GUIDE | create/edit/review/keep agent files + flows |
 | `agents-architect` | demand or TNB signal | sessions, notebooks, ARCHITECTURE.md | docs/architecture-briefs/*.md + docs/signals/* |
 | `idea-forge` | demand | architecture, related agents | brainstorm doc, optional → po |
-| `dev-*` (×9) | dev-team Step 3 (zone-routed) | handoff, apps/<zone>/ code, docs/architecture/microservice/<service>/ | code commits scoped to zone; doc-review after code |
+| `dev-mcp-server` | dev-team Step 3 — zone `apps/mcp-server/` | handoff, mcp tool surface, scheduler | tool/cron commits, [Developer] in handoff |
+| `dev-api-gateway` | dev-team Step 3 — zone `apps/api-gateway/` | handoff, routing/proxy config | gateway commits, health-aggregation tweaks |
+| `dev-stock-price` | dev-team Step 3 — zone `apps/stock-price/` | handoff, VPS bridge, price fallback chain | price-aggregator commits, stock_price.db schema |
+| `dev-technical-analysis` | dev-team Step 3 — zone `apps/technical-analysis/` | handoff, RSI/MACD/BB compute paths | indicator commits, TA-Lib Python wrapper |
+| `dev-macro-indicators` | dev-team Step 3 — zone `apps/macro-indicators/` | handoff, SBV FX, commodity, PMI sources | macro fetcher commits, source-tier tagging |
+| `dev-kinh-dich` | dev-team Step 3 — zone `apps/kinh-dich-service/` | handoff, hexagram/hao state machine | I-Ching service commits, layer dispatch |
+| `dev-alert-engine` | dev-team Step 3 — zone `apps/alert-engine/` | handoff, dedup/cooldown/verdict resolver | alert-engine commits, signal-filter tweaks |
+| `dev-pdf-extractor` | dev-team Step 3 — zone `apps/pdf-extractor/` | handoff, BCTC parser, OCR pipeline | pdf-extractor commits, Vietnamese parse fixes |
+| `dev-rag-service` | dev-team Step 3 — zone `apps/rag-service/` | handoff, embeddings, LanceDB | rag-service commits, semantic-search tuning |
 
 ---
 
@@ -153,6 +162,7 @@ Every one of the 35 agents has `.claude/flows/<agent>/main.md` — main terminal
 ## Related
 
 - `.claude/skills/dispatch/SKILL.md` — Intent → Agent table SSOT
+- `.claude/skills/zone-detect/SKILL.md` — Zone → dev-* specialist table SSOT (used by architect + dev-team execute-tier)
 - `docs/protocols/agent-chaining-protocol.md` — return-block grammar, pipeline-state spec
 - `docs/references/agent-roster.md` — team rosters + cooperation matrix
 - `docs/references/tree-map.md` — full DAG of all docs
