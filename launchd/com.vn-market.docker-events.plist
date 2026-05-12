@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.docker-events</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/docker</string>
+    <string>events</string>
+    <string>--format</string>
+    <string>{{json .}}</string>
+  </array>
+
+  <!-- Boot persistence -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Crash recovery: restart on non-zero exit (Docker daemon down = exit 1) -->
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+    <key>Crashed</key>
+    <true/>
+  </dict>
+
+  <!-- Back off after repeated crashes (e.g. Docker Desktop not yet started) -->
+  <key>ThrottleInterval</key>
+  <integer>15</integer>
+
+  <!-- Log destination — newsyslog rotates this file -->
+  <key>StandardOutPath</key>
+  <string>/usr/local/var/log/docker-events.log</string>
+  <key>StandardErrorPath</key>
+  <string>/usr/local/var/log/docker-events-error.log</string>
+
+  <!-- Inherit user PATH so /usr/local/bin/docker resolves correctly -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/admin</string>
+  </dict>
+</dict>
+</plist>

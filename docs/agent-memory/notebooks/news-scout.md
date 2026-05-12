@@ -256,3 +256,8 @@
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
 - Key: ACB Âu Lạc 5%→6% stake escalation (bullish, conf 84%, regime_adj=8.0) → urgent_news. FII capital inflow narrative (impact 6, neutral) suppressed — below threshold. Brent CRITICAL alerts already captured in prior cycle — suppressed dedup. No PMI data. VN-Index 2000 target narrative sustained.
 - Note: get_macro_snapshot not in news-scout tool package → REGIME defaulted NEUTRAL. Estimated tokens: 6500 (13 tool calls × 500).
+
+### Cycle (17:20–17:22 UTC 2026-05-12) — off-hours run
+- Items: 20 | Impacts: 5 (≥6) | Signals: [chain_catalyst×1 (#3006)] | Regime: NEUTRAL | Carry: default
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Key: Thêm CTCK hạ dự phóng VN-Index 2026 (bearish, 8/10, regime_adj=8.0) + CTCK cảnh báo "xanh vỏ đỏ lòng" khi VN-Index áp sát đỉnh → chain_catalyst macro-bearish, affects securities/banking/RE/tech/steel. FII bán ròng 800tỷ (VIC, impact 4) → suppressed below threshold. STB bullish 10/10 (nhân sự cấp cao) → suppressed (not in watchlist). Brent 107.22 HIGH macro alert already open. Gold 4683.2 (-1.14σ vs 90d mean) — no spike. No PMI data.

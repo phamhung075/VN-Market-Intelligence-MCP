@@ -42,7 +42,7 @@ Rules:
   - `REGIME=EASING` + action=`Buy on dip` → append `"(Thiên thời thuận — carry tích cực)"`
   - `REGIME=TIGHTENING` + action=`Reduce` → append `"(Thiên thời bất lợi — ưu tiên phòng thủ)"`
 - `{sentiment}` = last [News Scout] entry
-- `{insider_activity}` = `get_insider_signals()` or "no activity"
+- `{insider_activity}` = `get_insider_signals(code="{TICKER}")` or "no activity" (requires `code`; `outstandingShares` auto-fetched)
 - Skip weekends + market holidays
 
 **C. WORK status** — `send_telegram(channel="work", message=...)`:

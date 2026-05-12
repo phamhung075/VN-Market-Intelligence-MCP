@@ -1,12 +1,22 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 16:04 UTC | **Sprint:** c49-phase5-shipped+container-rca-closed+1896c-queued
+**Last updated:** 2026-05-12 17:03 UTC | **Sprint:** c50-1896c-design-shipped+clean-c50-7-branches-pruned
 
 ## Current state
 
 Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: NEUTRAL (regime tools not in package). No legal/crisis signals. Notable: GVR +4.46%, VRE +5.51%, GAS +3.94% post-session. FPT position -12.08%.
 
 ## Last session summary
+
+### Alert Cycle (17:03–17:03 UTC) — 2026-05-12
+- Signals: urgent_news ×1 (CTG id=3002, from news-scout)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (default — get_macro_snapshot not in package) | Carry: UNKNOWN | Pivot window: UNKNOWN
+- Suppressed: CTG urgent_news id=3002 (VietinBank Securities phát hành 59.5M cổ phiếu cổ tức, conf=0.50 < NEUTRAL threshold=0.60; no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: 0 active | Market: CLOSED (off-hours)
+- VN-Index: 1,901.10 (+0.30%) | CTG close: 35,250 (-0.98%) | Kinh Dịch: Khôn (2) — MUA 100%
+- log_agent_work id=695
 
 ### Alert Cycle (16:04–16:05 UTC) — 2026-05-12
 - Signals: 0 (bus empty — no inter-agent signals)
