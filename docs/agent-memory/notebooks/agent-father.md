@@ -1,41 +1,31 @@
 # Agent Father — Notebook
 
 **Last updated:** 2026-05-13
-**Sprint:** c57 / CLEAN-c56-leftovers-c57
+**Sprint:** c58 / CLEAN-c57-leftovers+worktree-orphan-c58
 
-## Last Session Summary
+## This Session
 
-CLEAN-c56-leftovers-c57: 5 atomic commits bundling c56/c57 boundary leftovers. Committed 2 evidence log files (PRIMARY ARTIFACTS for c58 architect brief update — Docker VirtioFS root cause confirmed: PID 51247 com.apple.Virtualization.VirtualMachine.xpc holds .git/HEAD.lock read-only fd). Notebooks drift (news-scout + po), out-of-band session log (2026-05-12-digest-predict.md), processed signal moves (c56 + c57), TASKS.md archive trim 82L→80L (moved 1876a-A5 + 1862c-D to TASKS_ARCHIVE.md). No HEAD.lock recurrence in session.
+CLEAN-c57-leftovers+worktree-orphan-c58: 5 atomic commits (A→E). Committed 3 staged notebooks (alert-commander+financial-analyst+news-scout), H4 PREFLIGHT evidence log (7th recurrence, PID 51247), 2 processed signals (renames), and TASKS.md trim 84L→80L (archived 1896a+1896c+1896c-impl+1876a-A6). Orphan worktree dir .claude/worktrees/agent-a0f89162 removed (untracked, no commit). index.lock recurrence (removed stale lock, 1 retry). Phase 5 gate GREEN for all commits.
 
-## Commits (c57 — this session)
+## Commits (c58)
 
-- `dd50904f` chore(memory/c57): notebooks drift — news-scout + po
-- `188ce558` chore(sessions/c57): out-of-band agent session logs
-- `03a8ea47` docs(evidence/c57): live HEAD.lock + index.lock race captures — Docker VirtioFS root cause
-- `58d34642` chore(signals/c57): drained signal moves c56 + c57
-- `aabd89f8` chore(tasks/c57): archive 2 oldest Done rows — TASKS.md 82L→80L
+- `b09f0841` chore(memory/c58): notebooks alert-commander+financial-analyst+news-scout 2026-05-12
+- `9d9aa017` chore(dev-team/c58): PREFLIGHT lsof evidence — HEAD.lock 7th recurrence captured
+- `f7c24999` chore(signals/c58): drain h4-confirmed + tnb-2026-05-12T22-50-00Z → processed
+- (worktree removal: untracked, no commit needed)
+- `c6d7ad8f` chore(c58/tasks): archive 4 Done rows — TASKS.md 84L→80L
 
-## Commits (c57 — earlier FIX tier)
+## Patterns Noticed
 
-- `749a0b02` fix(dev-team/c57): PREFLIGHT diagnostic + worktree gc — flow edit
-- `3ff05127` docs(protocol/c57): head-lock-self-cure c57 update — H2 eliminated, diagnostic instrumentation
+- index.lock recurrence: stale lock from prior process. Safe rm if no live git pid running. Verified before removing.
+- git rename detection: works correctly when move is staged (both delete + create in same git add).
+- TASKS.md trim: Done rows to archive = 4 oldest rows. Move to TASKS_ARCHIVE.md inline table row (compact, not expanded).
 
-## H4 Root Cause Confirmed (c57)
+## Zone Health
 
-PID 51247 = com.apple.Virtualization.VirtualMachine.xpc reading .git/HEAD.lock. Docker Desktop VM file mirroring watches entire project root (bind-mount subdirs in docker-compose.yml trigger parent scan). Validates H4. Feeds c58 architect brief for permanent fix: add .git/ to Docker Desktop file-sharing exclusion list OR migrate bind mounts to named volumes.
+No zone drift detected. All agent file changes were notebook-only (committed by other cron crews).
 
-## Lessons Learned
+## Carry-over (next session)
 
-- [c57] Evidence files committed in own atomic commit with full body description — traceable for c58 architect.
-- [c57] PREFLIGHT algorithm can grow beyond split-policy 120L if inline algorithm needed. Size-justification comment required.
-- [c57] git rename detection fires correctly when both deletion + creation staged together.
-- HEAD.lock recurrence is a known pathology (c55 self-cure). Each occurrence: verify 0-byte + no live pid → rm safe.
-- index.lock can auto-clear between git add and git commit — re-stage required.
-- TASKS.md "≤80 lines" constraint: trim by moving oldest Done rows to TASKS_ARCHIVE.md inline table.
-- [c53] index.lock from a prior process — safe to rm if no other git process running.
-- docs/agents/ (not .claude/agents/) is canonical home for knowledge.md + handlers.md
-
-## Cross-Team Notes
-
-- cowork-refactory-expert: live tool surface rewrites — do not duplicate
-- claude-manager-helper: DAG integrity + tree-map enforcement — do not duplicate
+- NEXT: architect (ARCH-1896-RE-RCA-c58) — H4 evidence (SHA 9d9aa017) committed, ready for Tier 3 brief update.
+- git worktree list clean: only main branch, no orphans.
