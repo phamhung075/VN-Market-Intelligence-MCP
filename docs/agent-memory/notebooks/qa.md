@@ -1,5 +1,26 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** signal-T5 dedup integration tests (cycle 38)
+
+## Recent session — 2026-05-12 (signal-T5 — SQLite dedup drain cycle integration tests)
+
+**signal-T5 — APPROVED (QA as author + verifier):**
+6/6 tests pass (38 expect calls, 494ms). TSC 0 errors. DDD PASS (no infra imports). Security PASS (no process.env, no hardcoded secrets).
+
+AC-T5.1 PASS: fresh signal SELECT path → pendingSignals[0].from=agents-architect, result=routed-to-po, DB row fingerprint confirmed, inbox consumed.
+AC-T5.2 PASS: replay duplicate → 2nd cycle pendingSignals=[], result=skipped-duplicate-replay, -replay suffix file present, DB count stays 1.
+AC-T5.3 PASS: INSERT OR IGNORE double-insert same fingerprint → no throw, COUNT(*)=1.
+AC-T5.4 PASS: prune 7d → 2 old rows deleted (processed_at=2026-05-04), 1 recent row (2026-05-11) survives; old-signal-1.json + old-signal-2.json filesystem deleted; recent-signal.json present.
+AC-T5.5 PASS: null DB → warnLogged=true, dbUnavailable=true, inbox file preserved, processed/ empty.
+AC-T5.6 PASS: stale 48h createdAt → skipped-stale, -stale suffix, pendingSignals=[], DB count=0.
+
+Placement: scripts/migrations/__tests__/signal-T5-dedup-integration.test.ts (matches T1/T2 convention, not apps/mcp-server/__tests__/).
+runDrainCycle() helper models Step 0a pseudocode without importing production code.
+computeFingerprint() imported from backfill-signals-db.ts per spec.
+
+Merge SHA: fc1061e1. Branch task/signal-T5-qa-tests deleted. Report: reports/TASK_REPORT_signal-T5.md.
+Fallback-removal pre-condition MET: signal-T5 passed. One clean cycle 39 still required before flow lines 117-133 removal.
+
 **Last updated:** 2026-05-12 | **Sprint:** 1878b compute_accruals (cycle 38)
 
 ## Recent session — 2026-05-12 (1878b — compute_accruals merge gate)
