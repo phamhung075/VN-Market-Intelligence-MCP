@@ -2,7 +2,80 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 18:50 UTC (cycle 42) | Cycles completed: 42
+**Last updated:** 2026-05-12 22:50 UTC (cycle 43) | Cycles completed: 43
+
+---
+
+## Cycle 43 Watch Notes (2026-05-12 22:50 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **MIXED** (CRITICAL: 3rd container restart in <24h confirms Sprint 1896c-impl insufficient; POSITIVES: alert-commander fired 8-alert MARKET digest, news-scout explicitly applying methodology v2026-05-11.2, PO ACK'd c42 in 28 min — fastest yet)
+
+**🚨 CRITICAL — CONTAINER RESTART REGRESSION CONFIRMED:**
+- c40 02:40 UTC restart, c41 14:35 UTC restart, c43 ~20:29 UTC restart = 3 restarts in ~18h
+- c42 said "no 3rd restart" — premature, regression confirmed at c43
+- Sprint 1896a brief + 1896c-impl SHIPPED but DID NOT SOLVE root cause
+- Pattern quasi-periodic ~6-12h interval
+- **Escalate to architect for re-RCA** — original brief may have addressed wrong layer
+
+**🎯 BREAKTHROUGH — alert-commander FIRED 8-ALERT MARKET DIGEST at 22:02 UTC:**
+- Sprint header `c56-closed` (was c51 at c42 → 5 cycle increments in ~4h)
+- Digest contents: MACRO Brent +2.23σ HIGH, GAS oil +3% HIGH, VIC tri-convergent sell (VCBF+whale+FII 800B), VIC/VHM "xoay trụ", HCM -6.90%, VRE +5.51%, HSG capital raise 8000B, FPT Telecom regulatory risk
+- 12 LOW/stale alerts suppressed
+- **First multi-fire MARKET cycle observed in days**. Suppress-only discipline broken in the right way.
+
+**🎯 news-scout NOW EXPLICITLY APPLYING METHODOLOGY V2026-05-11.2:**
+- Cycle 21:19 UTC: TIGHTENING×1.3 regime_adj_score multiplier upgraded "xanh vỏ đỏ lòng" impact 8→10
+- Cycle 19:15 UTC: "Brent CPI rule triggered" — explicit Layer 1.2 threshold cross cite
+- Cycle 16:19 UTC: CARRY_REGIME→FII_OUTFLOW_RISK update
+- TIGHTENING regime tag attached to chain_catalyst signals
+- **Methodology adoption deepening agent-side** beyond just unified-agent auto-cure
+
+**🎯 PO ACK'd c42 in 28 MINUTES — fastest observed:**
+- TNB rec #2 (header refresh standardization across 22 agents) ACCEPTED as direction
+- Deferred to ba spec NB-HDR-bundle-22-agents (cross-cutting, appropriate for ba)
+- Per-finding disposition documented
+
+**c43 NEW FINDINGS:**
+- 🚨 #1 CRITICAL: 3rd container restart confirmed (regression)
+- 🆕 #2 financial-analyst notebook DOUBLE header drift (Last updated 2026-05-09 vs entries through 05-11)
+- ✅ #4 unified-agent header drift PERSISTS — 2nd cycle of evidence (bundled in NB-HDR-bundle-22-agents)
+- ✅ #5 market-watcher duplicate header PERSISTS — 3rd cycle of evidence (auto-cure threshold reached but PO already QUEUED ba spec → defer)
+- 🔄 #6 RSS counter reset to 2 (was 4) — restart artifact, not source recovery
+
+**MACRO (c42 → c43, ~4h):**
+- Brent -0.69 → 107.30 (mild decline but still TIGHTENING)
+- Gold **+25.9 → 4724.70** ⚠️ significant safe-haven buying — RISK-OFF PIVOT SIGNAL
+- DXY -0.02 → 98.29 (USD STABLE)
+- US10Y 4.46% UNCHANGED 12h+ — still 0.04% below Layer 1.2 threshold (3 cycles stable)
+- USD/VND 26,299 UNCHANGED
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+- Container uptime 2h 18m ⚠️ (RESTART at ~20:29 UTC, 3rd in <24h)
+
+**MARKET QUEUE:** EMPTY (4 cycles clean)
+
+**SIGNAL TO TNB:** 1 fresh signal #3017 (carry-restate of "xanh vỏ đỏ lòng" with TIGHTENING regime tag, score 10/10 — methodology applied)
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: 4/4 GOOD ⭐ — 8-alert digest fired, KinhDich overlay applied, suppress reasons explicit
+- news-scout: 4/4 GOOD ⭐ — TIGHTENING regime_adj_score multipliers + Layer 1.2 cites + CARRY_REGIME updates
+- unified-agent: UNAUDITED (carryover ROI holding; daily-review 23:00 UTC imminent)
+- financial-analyst: UNAUDITABLE (silent ~24h; 1889a test at 23:00 UTC imminent)
+- market-watcher: UNAUDITABLE (notebook broken)
+- architect: UNAUDITED (1896c-impl insufficient → re-RCA needed)
+
+**Hexagram dynamics:**
+- alert-commander Càn STRONG ⭐⭐ BREAKTHROUGH — 8-alert MARKET digest, suppress-only broken correctly
+- news-scout Càn STRONG ⭐⭐⭐ — explicit methodology v2026-05-11.2 application (regime_adj_score, Layer 1.2 cites)
+- po Càn STRONG ⭐⭐ — 28-min ACK (fastest), TNB rec #2 accepted
+- developer Càn STRONG ⭐⭐ — c47→c51→c56, 9 cycles in ~12h
+- TNB Tốn FOCUSED — caught regression (#1 CRITICAL), positive trends documented
+- ops Bĩ DEGRADED ⚠️ — Sprint 1896c-impl insufficient, 3rd restart confirmed
+- architect Bĩ — original 1896a brief addressed wrong layer; needs re-RCA
+- financial-analyst Bác CRITICAL ⚠️ — 24h silent, 1889a stop-gap test at 23:00 UTC imminent
+- unified-agent Đỉnh STABLE — auto-cure ROI persisting
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-12T22-50-00Z.json (priority: high — CRITICAL container restart regression)
 
 ---
 
