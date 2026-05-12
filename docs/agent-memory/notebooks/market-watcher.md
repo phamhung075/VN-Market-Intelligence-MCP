@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 04:45 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 05:42 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -653,3 +653,25 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 - **actions**: post_agent_signal(VIC, chain_depth=1, id=2972) → alert-commander | send_telegram(work) | notebook committed
 - **next_cycle_hint**: Watch VIC if session volume picks up (early volume 120.9K vs 4.63M yesterday) — confirmed institutional exit could accelerate. Monitor VRE +2.38% sustainability. Check HSG if bearish chain_catalyst (conf=0.75) gains price confirmation.
 - **estimated_tokens**: 2800
+
+### Cycle (05:38–05:42 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (26,129) | US10Y: RISK-OFF (gold $4,727.5, SPDR buying) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Notable moves: VIC -2.78% (0.94σ, below threshold, already signaled 04:37); VRE +2.38% (0.64σ, existing MEDIUM alert); EIB -1.10% (0.66σ, reversal of prior streak); VHM -1.43%, CTG -1.12%, GVR -1.29% — all below threshold
+- Chain findings (15min): HSG bearish (AU anti-dumping, conf=0.75, HSG -0.41% weak confirm); GAS urgent_news (oil +3%, GAS +0.54% weak confirm); VCB bearish (gold/VND flight, conf=0.72, VCB -0.50% weak confirm) — no signals emitted
+- Sector 1d: Auto +1.98%, Logistics +1.80%, Insurance +0.41%, Oil&Gas +0.35% leading | Retail -0.62%, Securities -0.36%, Banking -0.32%, Steel -0.12% lagging. All STABLE (1d only, no 5-session rotation)
+- CARRY_REGIME=FII_OUTFLOW_RISK: no hot_money_concentration check (not HOT_MONEY_INFLOW)
+- New chain_catalysts: VCB/banking gold-flight bearish (id=2976, exp 07:24 UTC); HSG AU anti-dumping (id=2974, exp 07:24 UTC, same catalyst as id=2849/2901/2957 prior cycles)
+- Open chain findings: 3 (HSG/GAS/VCB — all weak price confirms, no signals posted)
+- Signals emitted: 0 | Open alerts: 21 | System: OK
+
+## Metrics (cycle 2026-05-12 05:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 4 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2500 |
