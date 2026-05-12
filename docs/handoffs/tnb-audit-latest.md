@@ -80,3 +80,10 @@ This cycle reveals **two competing trajectories**: methodology adoption is accel
 3. **NB-HDR-bundle-22-agents ba spec status check** — was QUEUED per c42 PO ACK. Now 3 agents have header drift evidence (unified-agent c42→c43, market-watcher c40→c43, financial-analyst c43 NEW). Ba spec should include all 3 + audit other 19 agents for same pattern.
 4. **Continue US10Y watch** — 4.46% UNCHANGED 12h+. Continued stability around threshold suggests imminent resolution direction (cross or retreat).
 5. **Note Gold +25.9 reversal** — significant safe-haven buying. unified-agent daily-review (23:00 UTC) should pick this up as risk-off pivot signal. Cross-check with FPT/banking conviction.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-12T23:38:17Z
+- Tasks created: ARCH-1896-RE-RCA-c58, ARCH-BRIEF-UPDATE-H4-c58, CLEAN-c57-leftovers+worktree-orphan-c58
+- Skipped findings: #2/#4/#5 (already bundled in NB-HDR-bundle-22-agents ba spec — QUEUED), #3 (financial-analyst 23:00 UTC test imminent — re-evaluate c59), #6 (RSS — root cause now confirmed = container restart side effect; await ARCH-1896 re-RCA), #7 (US10Y informational), #8 (informational). Carry recommendations to PO: rec #2 (1889a stop-gap verification) c59 watch; rec #3 (NB-HDR scope expansion to include financial-analyst as 3rd drift) — note for ba when spec opens; rec #4 (US10Y watch) ongoing; rec #5 (Gold reversal) noted for unified-agent daily review.
