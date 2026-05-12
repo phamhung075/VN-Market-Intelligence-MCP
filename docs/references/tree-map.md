@@ -98,6 +98,7 @@ CLAUDE.md (root — always loaded)
 ├── docs/protocols/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
 ├── docs/protocols/head-lock-self-cure.md (HEAD.lock recurrence guard: root-cause hypotheses, safe-remove algorithm, escalation tree, audit log format — dev-team Step 0-PREFLIGHT)
+│   └── docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md (unified RCA: HEAD.lock 5-cycle recurrence + SDK worktree orphan — 4 hypotheses, diagnostic plan, 7 c57+ tasks — ARCH-HEADLOCK-RCA-c56)
 │
 ├── docs/protocols/bug-reporting-via-mcp.md (index: auto-dedup system for bug reports)
 │   ├── docs/protocols/bug-reporting-capture.md (Phase 1: agent error detection + MCP tool call)
