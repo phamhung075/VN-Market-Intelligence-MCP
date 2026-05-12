@@ -6,6 +6,9 @@ description: >
   not just agent .md permission lists.
 ---
 
+<!-- size-justification: 143L — atomic audit procedure: scan layers + claim resolution + exception rules are read as a single playbook by system-auditor. Splitting would require the auditor to load multiple files per run. -->
+
+
 ## Purpose
 
 Detect truly unused MCP tools before proposing removal.

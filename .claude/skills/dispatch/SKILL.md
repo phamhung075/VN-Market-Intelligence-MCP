@@ -7,24 +7,55 @@ description: >
   what rules govern the system.
 ---
 
+<!-- size-justification: 136L — atomic routing constitution: dispatch table + handoff chain + signal bus + channel matrix + non-negotiables + file placement are cross-referenced as one unit. Splitting fragments the SSOT every other agent reads on each routing decision. -->
+
+
+## Auto-Switch Protocol — Universal Entry
+
+**Every agent has `.claude/flows/<agent>/main.md` as the single entry point.** `main.md` is a thin dispatcher that picks the right sub-flow (cycle / eod / daily / weekly / create / edit / review / keep / …) based on trigger, time of day, or caller intent.
+
+| Caller | What they invoke | What happens |
+|---|---|---|
+| User demand (free text) | Main terminal reads dispatch table → spawns matching agent with prompt `run .claude/flows/<agent>/main.md` | Agent's `main.md` dispatches to the right sub-flow internally |
+| Cron tick | Cron prompt says `run .claude/flows/<agent>/main.md` | Same — `main.md` reads the clock and picks the sub-flow |
+| Agent handoff | Previous agent returns `NEXT: <agent>` | Main terminal spawns target with `run .claude/flows/<agent>/main.md` + prior return as context |
+
+**Cron skill files (`.claude/commands/crons/cron-<agent>.md`) MUST point to `main.md`** — never hardcode a sub-flow path. If the agent has time-of-day branching, encode it inside `main.md`, not in the cron prompt.
+
+**Cooperation loop:**
+1. Main terminal spawns agent A → A's `main.md` runs → A writes RETURN block.
+2. Main terminal reads RETURN: if `PIPELINE: continue` and `NEXT: <agent>` → spawn next via its `main.md`.
+3. Cowork agents drop signals at `docs/signals/*.json` instead of NEXT — dev-team drains at Step 0a (see `docs/protocols/agent-chaining-protocol.md`).
+4. Loop until `PIPELINE: complete` or `blocked` → idle.
+
 ## Dispatch Table — User Intent → Agent
 
-| Intent | Agent | Flow |
-|--------|-------|------|
-| add / build / improve [feature] | `po` | `main` |
-| bug / broken (infra) | `ops` | `main` |
-| bug / broken (code) | `developer` | `main` |
-| analyze stock / news | `market-analyst` | `main` |
-| brainstorm / explore idea | `idea-forge` | `main` |
-| sprint status / in progress | `pm` | `main` |
-| queue / triage / verify / track task | `po` (scoping) or `pm` (mechanics) | `main` |
-| system health / audit | `system-auditor` | `main` |
-| DRY violations / hardcoded values | `code-janitor` | `main` |
-| update cowork agents | `cowork-refactory-expert` | `main` |
-| organize / clean files / knowledge | `claude-manager-helper` | `main` |
-| create / edit / review / maintain agent | `agent-father` | `create` / `edit` / `review` / `keep` |
+| Intent | Agent | Sub-flow | Notes |
+|--------|-------|------|-------|
+| add / build / improve [feature] | `po` | `main` | Vision + sprint kickoff |
+| bug / broken (infra) | `ops` | `main` | VPS, Docker, network, MCP server reachability |
+| bug / broken (code) — **tracked fix** | `po` | `main` | PO triages → dev-team chain creates TASK_NNN → developer (default for any bug report) |
+| bug / broken (code) — **explicit one-shot patch** | `developer` | `main` | Only when user explicitly asks "quick fix, no task tracking" |
+| analyze stock / news | `market-analyst` | `main` | Investment Q&A, news impact, sector compare |
+| earnings report / quarterly parsing | `report-analyzer` | `main` | Cowork agent; manual spawn ok on demand |
+| brainstorm / explore idea | `idea-forge` | `main` | Open-ended exploration before committing to a sprint |
+| sprint status / in progress | `pm` | `main` | "What's the team doing?" |
+| queue / triage — **what should we work on?** | `po` | `main` | Scoping / prioritization |
+| queue / track — **what's planned & where is it?** | `pm` | `main` | Mechanics / status |
+| system health / audit (observe, report) | `system-auditor` | `main` | Periodic anomaly detection; produces a report — no fixes |
+| service down / latency / pipeline failure (react, fix) | `ops` | `main` | Active incident response |
+| DRY violations / hardcoded values | `code-janitor` | `main` | Static dedup sweep |
+| update cowork agents | `cowork-refactory-expert` | `main` | Rewrite/refresh cowork .md files |
+| organize / clean files / knowledge | `claude-manager-helper` | `main` | MEMORY.md slim, DAG hygiene |
+| create / edit / review / maintain agent | `agent-father` | `main` → `create` / `edit` / `review` / `keep` | All agent-file lifecycle |
+| schedule / cron — **existing skill** | (invoke the skill directly) | n/a | If `.claude/commands/crons/cron-<agent>.md` exists, run it — do not spawn anyone |
+| schedule / cron — **new schedule needed** | `agent-father` | `main` → `create` | Authors a new cron skill file |
+| strategy quality audit | `tran-ngoc-bau` | `main` | TNB methodology compliance |
+| inter-agent architecture / brief | `agents-architect` | `main` | Outputs `docs/architecture-briefs/*.md` |
 
-Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/{flow}.md`
+Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/main.md` (dispatcher) → sub-flows.
+
+**Cowork cron-driven agents** (`news-scout`, `financial-analyst`, `market-watcher`, `alert-commander`, `digest-predict`, `qa-responder`, `unified-agent`) are **not normally direct-spawned by main terminal**. They run on their own schedule and communicate via `docs/signals/*.json`. User-typed intents that *sound* like them (e.g. "what's the news?") route to `market-analyst` which then queries the right MCP tools. Manual spawn is allowed in exceptional cases (e.g. user explicitly says "run market-watcher now").
 
 ---
 

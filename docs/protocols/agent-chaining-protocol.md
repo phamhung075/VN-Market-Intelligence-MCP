@@ -1,5 +1,7 @@
 # Agent Chaining Protocol
 
+<!-- size-justification: 165L — architect-managed SSOT: pipeline maps + return templates + parallel spawn rules + cross-team signal directory are read as one unit by every chaining-related agent (PM, architect, dev-team). Excluded from split waves per zone-enforcement-and-split-policy brief § Excluded. -->
+
 **title:** Agent Chaining Protocol
 **description:** Main terminal as permanent switch — how agents chain, pipeline maps, return templates, parallel spawn rules, and fixer ceiling.
 
