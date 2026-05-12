@@ -97,6 +97,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/protocols/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
+├── docs/protocols/head-lock-self-cure.md (HEAD.lock recurrence guard: root-cause hypotheses, safe-remove algorithm, escalation tree, audit log format — dev-team Step 0-PREFLIGHT)
+│
 ├── docs/protocols/bug-reporting-via-mcp.md (index: auto-dedup system for bug reports)
 │   ├── docs/protocols/bug-reporting-capture.md (Phase 1: agent error detection + MCP tool call)
 │   ├── docs/protocols/bug-reporting-routing.md (Phase 2: dedup logic + SQLite storage)
@@ -262,16 +264,16 @@ Children created by zone-enforcement-and-split-policy brief — lazy-loaded from
 
 ```
 .claude/agents/agents-architect.md (parent)
-│   └── .claude/agents/agents-architect/handlers.md (brief-commit invariant + operating cycle)
+│   └── docs/agents/agents-architect/handlers.md (brief-commit invariant + operating cycle)
 │
 .claude/agents/ops.md (parent)
-│   └── .claude/agents/ops/handlers.md (Step 0-b bootstrap errors + flow catalog + inter-agent routing)
+│   └── docs/agents/ops/handlers.md (Step 0-b bootstrap errors + flow catalog + inter-agent routing)
 │
 .claude/agents/agent-father.md (parent)
-│   └── .claude/agents/agent-father/knowledge.md (full lazy_load policy — guide parts + non-guide)
+│   └── docs/agents/agent-father/knowledge.md (full lazy_load policy — guide parts + non-guide)
 │
 .claude/agents/dev-mcp-server.md (parent)
-│   └── .claude/agents/dev-mcp-server/knowledge.md (lazy_load table + Step 0-b handler + doc_maintenance rules)
+│   └── docs/agents/dev-mcp-server/knowledge.md (lazy_load table + Step 0-b handler + doc_maintenance rules)
 ```
 
 ## Agent File Splits (Wave 3A)
@@ -280,16 +282,16 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — lazy-loa
 
 ```
 .claude/agents/market-watcher.md (parent — 109L after split)
-│   └── .claude/agents/market-watcher/knowledge.md (channel routing rules, signals, schedule crons, watch thresholds)
+│   └── docs/agents/market-watcher/knowledge.md (channel routing rules, signals, schedule crons, watch thresholds)
 │
 .claude/agents/dev-alert-engine.md (parent — 122L + justification header)
-│   └── .claude/agents/dev-alert-engine/knowledge.md (doc_maintenance rules + full lazy_load table)
+│   └── docs/agents/dev-alert-engine/knowledge.md (doc_maintenance rules + full lazy_load table)
 │
 .claude/agents/dev-pdf-extractor.md (parent — 124L + justification header)
-│   └── .claude/agents/dev-pdf-extractor/knowledge.md (doc_maintenance rules + full lazy_load table)
+│   └── docs/agents/dev-pdf-extractor/knowledge.md (doc_maintenance rules + full lazy_load table)
 │
 .claude/agents/dev-kinh-dich.md (parent — 122L + justification header)
-│   └── .claude/agents/dev-kinh-dich/knowledge.md (doc_maintenance rules + full lazy_load table)
+│   └── docs/agents/dev-kinh-dich/knowledge.md (doc_maintenance rules + full lazy_load table)
 ```
 
 ## Flow File Splits (Wave 3A)

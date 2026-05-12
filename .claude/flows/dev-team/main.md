@@ -18,11 +18,46 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 
 | Spawn context | JUMP TO | Detail file |
 |---|---|---|
-| Cold start / cron tick | `drain-signals` | `drain-signals.md` |
+| Cold start / cron tick | `preflight` | inline below |
+| HEAD.lock cleared / preflight pass | `drain-signals` | `drain-signals.md` |
 | Pipeline resume (`in_progress`) | `pipeline-resume` | inline below |
 | FIX / direct task | `execute` | `execute-tier.md` |
 | Post-execution verification only | `post-cycle` | `post-cycle.md` |
 | Empty signals + empty TASKS.md + no reports | `session-gate` | inline below |
+
+---
+
+<!-- jump:preflight -->
+## Step 0-PREFLIGHT — HEAD.lock Guard
+
+> Full algorithm + escalation tree → `docs/protocols/head-lock-self-cure.md`
+
+```
+if .git/HEAD.lock not exists → skip, JUMP TO drain-signals
+
+else:
+  age = (macOS) now() - $(stat -f %m .git/HEAD.lock)
+        (linux)  now() - $(stat -c %Y .git/HEAD.lock)
+  pid_alive = pgrep -x git | xargs -I{} lsof -p {} 2>/dev/null | grep '.git' → non-empty?
+
+  if age > 60s AND NOT pid_alive:
+    rm .git/HEAD.lock
+    send_telegram(work, "[PREFLIGHT] HEAD.lock removed — age={age}s, no live git pid — {ISO timestamp}")
+    session_headlock_count++
+    if session_headlock_count >= 3 within 24h:
+      send_telegram(work, "HEAD.lock recurred 3x in 24h — architect rethink needed")
+      write docs/signals/{ts}-headlock-recurrence.json:
+        {from: "dev-team", to: "architect", type: "recurring-bug", payload: {module: ".git/HEAD.lock", count: 3}}
+    JUMP TO drain-signals
+
+  elif age <= 60s:
+    send_telegram(bug, "HEAD.lock too young ({age}s) — may be active write — escalate ops")
+    JUMP TO end
+
+  elif pid_alive:
+    send_telegram(bug, "HEAD.lock held by live git pid — escalate ops")
+    JUMP TO end
+```
 
 ---
 
