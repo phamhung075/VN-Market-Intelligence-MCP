@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 01:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 02:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -572,3 +572,24 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 1400 |
+
+### Cycle (02:38–02:40 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (26,129) | US10Y: NEUTRAL (US equities new highs) | CARRY: NEUTRAL | fx_pressure: [] | pe_risk: []
+- FPT +1.86% (1.43σ, 30d stddev ~1.30%) — below 2.0σ; chain_catalyst active (institutional accumulation, news-scout id=2966, exp 04:22 UTC). Evidence bearish 0.764 > bullish 0.640 — conviction split.
+- GAS +0.95% (0.36σ, 30d stddev ~2.67%) — below threshold; HIGH alert for news_mention (Brent +3%, US-Iran). Bullish evidence 0.633.
+- POW +1.08%, VHM +0.87%, VRE +0.89% — all below threshold.
+- Sector 1d: Tech +1.05%, Logistics +1.58%, RE +1.30%, Insurance +1.02% leading | Auto -0.89%, Pharma -0.07% lagging. All STABLE (only 1d data, no 5-session rotation confirmed).
+- Supply chain: STABLE (BDI=1,400, no disruptions) | HCM price_drop alert MEDIUM (was -6.90% at 02:01 UTC, now +0.36% recovery)
+- Open chain findings: 0 (last 15 min) | Open alerts: 15 | System: OK
+
+## Metrics (cycle 2026-05-12 02:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 7 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2200 |
