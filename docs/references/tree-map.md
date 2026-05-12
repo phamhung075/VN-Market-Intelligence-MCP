@@ -25,7 +25,8 @@ CLAUDE.md (root — always loaded)
 ├── docs/protocols/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
 │   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
 │   ├── docs/signals/*.json (cross-team signal files: cowork→dev-team, drained at Step 0a — volatile)
-│   └── docs/signals/processed/*.json (treated signals with processedAt/result metadata — auto-pruned after 7 days)
+│   ├── docs/signals/processed/*.json (treated signals with processedAt/result metadata — auto-pruned after 7 days)
+│   └── docs/signals/signals.db (dedup index: signals_processed table — SQLite SSOT, O(log N) fingerprint lookup — sole writer: dev-team Step 0a)
 │
 ├── docs/standards/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
 │   └── docs/data/project-stats.json (tool count + master stats file — volatile)
@@ -183,6 +184,7 @@ CLAUDE.md (root — always loaded)
 
 | File | Maintained by | Trigger |
 |------|--------------|---------|
+| `docs/signals/signals.db` | dev-team flow (Step 0a) — sole writer; all other agents read-only | Each drain cycle (INSERT + DELETE prune) |
 | `docs/data/tool-registry.json` | Developer | After adding/removing MCP tool |
 | `docs/data/cron-registry.json` | Developer | After adding/removing scheduler |
 | `docs/data/stock-classification.json` | Market-Analyst / PO | Watchlist change, sector update |
