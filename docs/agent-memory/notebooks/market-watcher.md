@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 17:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 18:39 UTC | **Sprint:** 1846
 
 **Last updated:** 2026-05-12 12:41 UTC | **Sprint:** 1846
 
@@ -302,3 +302,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - Fixed 1 item in `.claude/flows/market-watcher/eod.md`
   - `get_insider_signals()`: corrected to `get_insider_signals(code="{TICKER}")` — requires `code` param, `outstandingShares` auto-fetched
 - Commit pending: `.git/HEAD.lock` + `objects/maintenance.lock` held by git maintenance process. Fix staged, will commit next cycle.
+
+### Cycle (18:38–18:39 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ NEUTRAL) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (news-scout signal id=3008, regime_adj_score=9.0) | DXY: USD STABLE (26,129) | US10Y: N/A | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours, 4h interval). EOD snapshot 08:17 UTC. VN-Index near historical high ~1,920 with broad caution: multiple brokers lowering 2026 targets, FII net sell 800B VND session.
+- Top closing moves vs sigma: VRE +5.51% (1.52σ, below 2.0σ — existing MEDIUM price_surge), GVR +4.46% (1.73σ, below 2.0σ — signaled 12:38 cycle), GAS +3.94% (1.45σ, below 2.0σ — HIGH alert via Brent +2.23σ). No new anomalies.
+- Macro: Brent 107.91, Gold 4,689.6, USD/VND 26,129. Supply chain STABLE (BDI=1,400). Energy NORMAL. Climate: dry season heat, no watchlist impact.
+- News-scout signal active: id=3008 "xanh vỏ đỏ lòng" — index near all-time high but breadth deteriorating, FII selling; impact=9.
+- Open chain findings: 0 (last 15 min) | Open alerts: 25 | System: OK
+
+## Metrics (cycle 2026-05-12 18:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 6 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3000 |
