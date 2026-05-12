@@ -137,3 +137,9 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **next_cycle_hint**: Daily-review 23:00 UTC next. Banking BCTC 2026-05-15 = EPS catalyst. FPT oversold RSI 25.8 — watch for post-BCTC reversal signal. VRE bull trap monitoring.
 - **estimated_tokens**: 7000 (14 tool calls)
 - **Pillars**: M2=✗ (not available) COC=✓ (Brent $107.51 +2.23σ, carry -0.33%, DXY 98.35) EPS=✓ (banking BCTC 3d out, SGI Capital accumulating FPT, BCTC overdue proxy) POL=✓ (FPT Telecom compliance risk) → 3/4
+
+### Daily Review (20:02 UTC)
+- Mode: DAILY_REVIEW | Freshness: news-stale(2.7h/>2h), others ok | Bugs: [BCTC-1345b VNM 2025-Q4 OCR corruption suspected]
+- Alerts: 15/15 sent (2 HIGH: MACRO oil +2.23σ, GAS news) | System: ok | Rate limits: BDI exhausted, ACB once
+- Key: VRE +5.21% surge, HCM -6.90% drop, VCBF reducing VIC / holding FPT, HSG capital increase >8k tỷ
+- Feedback submitted: news freshness overage (low severity)
