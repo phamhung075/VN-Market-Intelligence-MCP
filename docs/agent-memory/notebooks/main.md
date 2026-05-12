@@ -1,5 +1,46 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-12 01:49 UTC (Cycle 38 — 2 sequential merges)
+
+## Cycle 38 (2026-05-12 00:26 → 01:49 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals | empty |
+| 0b Resume | pipeline idle | fall through |
+| 1 PO | triage 0 signals + 2 carry-over TG reports + clean TASKS.md | **BATCH(2)**: 1878a + signal-T3 |
+| 2 Plan | spec on main (1878a-5a57f377) + brief on main (signal-dedup) | skip |
+| 3 Dispatch | **SEQUENTIAL** anti-c37: 1878a first → QA → merge → signal-T3 → QA → merge | both GREEN |
+| 4 Scan | 0 monitoring expired, 2 same TG reports defer again, 0 stale ex 1872a-5 | defer |
+| 4.5 | notebook + commit | this entry |
+
+### Merges delivered
+
+| Sprint | Merge SHA | Tests | Notes |
+|---|---|---|---|
+| 1878a OCF impl | 1fb5282b | 12/12 + 9363/17-same-as-main | AC-2/3 live deferred to container restart |
+| signal-T3 drain rewrite | 2b643ec9 | doc-only | dual-record + DB-down degradation |
+
+### Cross-pollution mitigation (c37 incident response)
+
+This cycle used **sequential dispatch** — 1878a fully merged before signal-T3 spawned. Both branches created from clean `main` HEAD with verified `git status` empty. Zero pollution observed.
+
+**Tradeoff:** ~50% longer wall time vs parallel (~80 min sequential vs ~50 min parallel estimate). Accepted for safety.
+
+**Permanent fix still pending:** SPRINT-PARALLEL-ISOLATION architect brief deferred to c39. Options: per-agent git worktrees, serialized HEAD-mutating ops, or pre-spawn stash+reset protocol.
+
+### Carry-over to cycle 39
+
+- **Ready (no deps):** 1878b compute_accruals (unblocked from 1878a), 1879 BA spec, 1881 BA spec, signal-T4 doc updates, signal-T5 QA integration tests
+- **Blocked:** 1885a/1886a/1887 — ARCH-1884 brief on main but TASKS.md row drift (paperwork reconciliation 1-line edit), 1878b is now ready
+- **TNB c39 cron** at 24:00 UTC — would have fired before this cycle if running. Check `docs/signals/` next cron for TNB audit signal. Should score new Layers 7/8/9 + flag c36 PM violation + c37 cross-pollution incident
+- **Ops:** container restart needed for 1878a live AC-2/3 (VCB+FPT 4 non-NULL rows). No code blocker.
+- **TG reports 2854 + 2855** still NEW status, 2 cycles deferred — PO c39 must triage or set monitoring resolution
+- **Stale task/1872a-5** 9th cycle pending user auth
+- **C2** 0.6364 vs 0.85 gate 2026-05-17 (5d remaining)
+
+---
+
 **Written:** 2026-05-11 23:57 UTC (Cycle 37 — 3 merges, 4-task dispatch)
 
 ## Cycle 37 (2026-05-11 23:26 → 23:57 UTC)
