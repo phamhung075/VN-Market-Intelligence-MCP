@@ -1,10 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1839b
+**Last updated:** 2026-05-12 02:03 UTC | **Sprint:** 1878b
 
 ## Last session summary
 
-U-4 getDb() repository pattern refactor completed (Sprints 1838b + 1839a). Phase 1: top 5 highest-coupled domain files migrated to repository interfaces. Phase 2: remaining domain files migrated. Result: `grep -r "getDb()" src/domain/` returns 0 results. All 8799+ tests pass.
+1878b `compute_accruals` spec written. Pure-function accruals calculator placed in `domain/services/financial-reports/accruals.ts` (extends existing financial-reports subfolder, consistent with ARCH-1884 decision). Tool in `interface/mcp/tools/financial-reports/computeAccrualsTool.ts`. Last-N quarters input pattern chosen (consistent with sibling time-series tools). Null-row inclusion strategy chosen over silent skip. 12 ACs defined covering pure-function, null handling, zero denominator, sort order, default/max, and registry visibility. Spec: `docs/specs/1878b-compute-accruals.md`.
+
+---
+
+## Session — 2026-05-12 (1878b compute_accruals spec)
+
+**Task:** Architect spec for `compute_accruals` MCP tool — forensic Layer 7 building block.
+
+**Brownfield scan:** No `forensic/` domain directory exists. `domain/services/financial-reports/` contains `ratioComputer.ts`, `periodDeltaComputer.ts` — canonical home for pure-function calculators. `operating_cash_flow` column confirmed live in `schema-financial-reports.ts` (1878a merged). Registry pattern in `interface/mcp/tools/registry.ts` — no `server.ts` edit needed. Tool group = `financial-reports/` (existing, correct).
+
+**Key decisions:**
+1. Domain placement: `domain/services/financial-reports/accruals.ts` — extend not duplicate. No new `forensic/` dir.
+2. Tool file: `interface/mcp/tools/financial-reports/computeAccrualsTool.ts` — new file in existing group.
+3. Input: `ticker + quarters` (last-N, default 8, max 20) — consistent with time-series tools pattern.
+4. Null handling: include row with `accruals_ratio: null` + `missing: [...]` — no silent skip.
+5. Division-by-zero: `total_assets = 0` → `null` + `error: "zero_total_assets"`.
+6. Sort: ascending (oldest first) — chart-friendly.
+7. Unit: `unit: "ratio"` at envelope level; raw inputs exposed as `_m` fields.
+8. No new schema — reads existing `financial_reports` columns.
+
+**ACs written:** 8 (AC-1 through AC-8). Tests: 12 (T1-T12), TDD, in-memory SQLite for tool-level tests.
+
+**Risks ranked:** R1 sparse OCF data HIGH, R2 1878a backfill incomplete HIGH, R3 net_profit nulls MEDIUM, R4 zero assets LOW, R5 DDD violation CRITICAL (mitigated by layer assignment).
+
+**Spec:** `docs/specs/1878b-compute-accruals.md`
+
+**Pipeline state:** idle
 
 ## Known patterns / preferences
 
