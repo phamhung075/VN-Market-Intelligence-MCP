@@ -1,5 +1,25 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** signal-T4 doc-only FIX (cycle 38)
+
+## Recent session — 2026-05-12 (signal-T4 doc-only FIX merge gate)
+
+**signal-T4 — SSOT doc updates for SQLite signal dedup — APPROVED:**
+Doc-only. bun test + tsc skipped (smart-skip, no production code). DDD/security N/A.
+
+AC1(a) dual-record: PASS — agent-chaining-protocol.md line 132: "Dual-record write on new signal: DB INSERT (SSOT index) + filesystem move to docs/signals/processed/".
+AC1(b) spec ref: PASS — `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` present in same line; file exists on main.
+AC1(c) DB-unavail path: PASS — line 133: "DB unavailable (ENOENT/locked after 3×200ms retry): log WARN, skip dedup, preserve inbox, retry next cycle".
+AC2(a) signals.db leaf: PASS — tree-map.md line 28: `└── docs/signals/signals.db (dedup index: signals_processed table — SQLite SSOT, O(log N) fingerprint lookup — sole writer: dev-team Step 0a)`.
+AC2(b) write-ownership row: PASS — table row at line 184: `docs/signals/signals.db | dev-team flow (Step 0a) — sole writer; all other agents read-only | Each drain cycle`.
+AC3 LOC: PASS — doc commit 7717adb5: 6 ins / 3 del = 9 net (≤10 budget).
+AC4 scope: PASS — doc commit touches exactly 2 files (agent-chaining-protocol.md + tree-map.md); notebook in separate exempt commit 7c03f9e9.
+AC5 markdown: PASS — fences balanced (22 + 2), spec file exists, no broken internal link refs.
+C2 gate: PASS — Task-Id: signal-T4 + AC: AC1, AC2, AC3, AC4, AC5 on commit 7717adb5; type=docs scope=signals.
+
+Merge SHA: 9bb2d338. Branch task/signal-T4-doc-updates deleted (local; no remote). Report: reports/TASK_REPORT_signal-T4.md.
+Graphify: DEFERRED — graphify Python package not installed; existing graphify-out/graph.json intact (prior run preserved).
+
 **Last updated:** 2026-05-12 | **Sprint:** signal-T3 drain rewrite (cycle 38)
 
 ## Recent session — 2026-05-12 (signal-T3 drain rewrite merge gate)
