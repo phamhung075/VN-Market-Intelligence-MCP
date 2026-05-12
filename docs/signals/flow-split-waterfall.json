@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "priority": "normal",
+  "payload": "docs/architecture-briefs/2026-05-12-flow-split-waterfall.md",
+  "summary": "Flow split + waterfall knowledge discovery: 3 high-impact flows (dev-team 340L, po 215L, market-analyst 105L) to be split into router + sub-flows with parallel docs_required blocks. Implementation blocked on user answers to 3 open questions.",
+  "createdAt": "2026-05-12T07:54:26Z"
+}

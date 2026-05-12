@@ -107,6 +107,16 @@ Signal dedup moves from O(N) full-dir scan of `processed/*.json` to O(log N) SQL
 
 ---
 
+## 2026-05-12T07:54:26Z
+
+**Brief:** `docs/architecture-briefs/2026-05-12-flow-split-waterfall.md`
+
+16 flow files audited (1,987 total lines); 4 flows identified as split candidates (dev-team 340L, po 215L, pm 107L, market-analyst 105L) — proposed router + sub-flow pattern with parallel `docs_required` blocks at each sub-flow head; Phase 1 targets dev-team/po/market-analyst for ~40-50% flow-context token reduction; implementation gated on 3 user open questions (task-type detection mechanism, shared preamble placement, sub-flow path convention).
+
+**Signal dropped:** `docs/signals/flow-split-waterfall.json` → agent-father
+
+---
+
 ## Backfill — c35 — 2026-05-11
 
 ### Session: 1873a-tsc-reconcile
