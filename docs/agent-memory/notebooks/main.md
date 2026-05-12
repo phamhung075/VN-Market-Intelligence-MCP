@@ -1,6 +1,46 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 14:39 UTC (Cycle 48 — 3-way Phase 4 parallel + 1879b deployment unblocked)
+**Written:** 2026-05-12 15:40 UTC (Cycle 49 — Phase 5 merge gate shipped + container restart RCA closed false-alarm)
+
+## Cycle 49 (2026-05-12 15:26 → 15:40 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 1 signal: tnb-2026-05-12T14-50-00Z (TNB c41 audit handoff). fp 176ee6c1 not in DB → drained routed-to-po, INSERT ok, mv processed/. | 1 routed |
+| 0b Resume | idle (c48 closed 14:39 UTC) | fall through |
+| 1 Triage | TNB c41: GOOD STRONGLY IMPROVING. Auto-cure ROI proven (4/4 pillars at 07:00 UTC, self-suppressed at 2/4 at 08:00 — guardrail working). 8 findings. PO escalated #1 (container restart 2nd in <12h) per recurring-bug rule. PO BATCH(2): 1896a architect SPRINT-S container-restart RCA + 1895b agent-father SPRINT-M Phase 5 Option 2 impl. | 2 parallel |
+| 3 Exec | **2-way Phase 4 PARALLEL** (architect doc-only + agent-father code). Disjoint zones (briefs/ vs flows/+scripts/), single code writer, no worktree. | 2 concurrent |
+| 3 architect 1896a | Brief `docs/architecture-briefs/2026-05-12-container-restart-rca.md` `aa1d4525`. Verdict: **false-alarm-h4**. c41 14:35 UTC "restart" was c48 ops deliberate `docker-compose up -d mcp-server` rebuild deploying 1879b. Sprint 1336 named-volume strategy globally intact across all 9 services. H1/H2/H3 ruled out. **C40 02:40 UTC restart (separate event) still needs ops evidence.** TNB recalibration: add `# TNB-PLANNED-RESTART` tagging convention (bundle later). | design done |
+| 3 agent-father 1895b | `74956508` (feat). 4 helper scripts: `scripts/audits/{index-check,tree-verify,c2-alert,recovery-snapshot}.sh`. Step 3 merge gate inserted in `.claude/flows/dev-team/main.md`. `git commit -am` ban codified in `developer/main.md` + `commit-convention.md`. **Phase 5 rollout ready.** | impl done |
+| 3 PM sync | TASKS.md `46a569a3`: 1896a → Done (false-alarm-h4), 1895b → Done (impl shipped), 1896b → NEW MEDIUM Todo (c40 RCA pending ops). | sync 1 |
+| 3 ops c40 evidence | `dd2a0fa5` (docs). Handoff: `docs/handoffs/ops-c40-restart-evidence.md`. Verdict: **inconclusive-events-expired**. C40 02:40 UTC restart REAL + UNPLANNED but Docker events retention (24h) purged the evidence window. Sprint 1336 named-volume confirmed intact. All 9 services healthy at audit. No actionable RCA possible. | inconclusive |
+| 3 PM close | TASKS.md `b6337e25`: 1896b → Done (inconclusive), 1896c → NEW MEDIUM Todo (persistent-docker-events-logging — prevent next evidence loss). | sync 2 |
+| 4 Scan | 2 new reports. **#2862** qa-responder HEAD.lock blocked notebook commit at 14:47 UTC (TNB-c33-F7 pattern). Lock verified ABSENT at c49 close — transient. → fixed + delete. **#2863** unified-agent alert accuracy 22% (n=9 scored/385 fired). Same scoring-pipeline coverage gap as #2861. → monitoring (n still well below n≥30/type threshold). | 1 fixed 1 monitoring |
+| 4 Unresolved | `list_unresolved_reports` MCP tool RENAMED → "Tool not found" error now (was signature-drift in c47/c48, now full deletion?). Carry-over to ops as known issue. | skipped |
+| 4 WORK | c49 close announcement | pending |
+
+### Phase 4 verification — 3rd cycle
+- 2-way parallel doc+code dispatch: zero conflicts (architect docs-only, agent-father single code writer on flows+scripts)
+- Phase 5 merge gate now CODIFIED but not yet EXERCISED (no multi-code-writer parallel this cycle — no chance to exercise)
+- Eat-dogfood validation: all 5 commits this cycle used `git commit -m` (no `-am`). Ban is operationally adopted.
+
+### Key outcomes
+- **1895b SHIPPED** — Phase 5 Option 2 merge gate is live. Next multi-code-writer cycle gets the protection.
+- **Container restart RCA**: c41 = false alarm (was the c48 deploy). c40 = real but evidence lost. Sprint 1336 globally intact. 1896c queued to prevent next evidence loss.
+- **TNB audit ROI proven 2nd cycle running** — c41 audit drove architect dispatch (recurring-bug rule), saved cycle from chasing wrong root cause.
+- **Throughput**: ~14 min wall (15:26 → 15:40 UTC). Comparable to c48 (13 min). 2-way parallel is the sweet spot.
+
+### c50 carry-over (priority order)
+1. **USER Cloudflare dashboard action** — HIGH, STILL BLOCKS 1894a + pollNews #2860. Brief: `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. (User is config admin; cannot dispatch.)
+2. **1896c persistent-docker-events-logging** — MEDIUM. Owner ops or agent-father. Likely config-only.
+3. **1881a ba spec** — HIGH, 7+ cycles deferred (source-tier retrofit).
+4. **1890a ba spec** — MEDIUM, 11+ cycles deferred (financial-analyst tool-pkg re-eval).
+5. **CLEAN sweep** — 6 worktree-agent-* still pid-locked (a471/a4d9/a57f/a86f/a8f9/a9e8) + task/1888a-ssot-tool-cron-pointers. Defer one more cycle.
+6. **TNB-PLANNED-RESTART convention** — bundle into ops notebook header in next ops/agent-father chore.
+7. **`list_unresolved_reports` MCP tool** — RENAMED or REMOVED. Escalate to ops as bug; likely needs MCP server doc audit.
+8. **financial-analyst 23:00 UTC cycle** — first test of Sprint 1889a stop-gap (Layer 7/8). Watch for NI vs OCF + cycle phase tag.
+9. **US10Y 4.5% Layer 1.2 cross watch** — currently 4.46%, climbing 0.05 in 8h. Audit agents for cross-flag if breach within 24h.
+10. **TASKS.md cap** 198/80 — auto-archive eligible 2026-05-19+.
 
 ## Cycle 48 (2026-05-12 14:26 → 14:39 UTC)
 
