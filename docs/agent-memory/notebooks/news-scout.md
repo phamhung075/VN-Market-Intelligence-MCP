@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (21:19–21:22 UTC) 2026-05-12
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst×1 VN-Index/macro, urgent_news×1 VIC] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) Multiple CTCK cutting VN-Index 2026 forecast + "xanh vỏ đỏ lòng" warning, impact 8 → TIGHTENING×1.3=10 → chain_catalyst #3017 bearish macro, 38-stock cascade, conf 0.75. (2) VIC: confluence of 3 sell signals (khối ngoại 800 tỷ + VCBF reducing + cá mập exit) after Apr record high → urgent_news #3018 VIC, severity=high, regime_adj=6.5. (3) Brent +2.23σ HIGH alert (existing) → cpi_pressure_risk=true carried forward.
+- Suppressed: STB 10/10 (not on watchlist). HPG 800M shares (neutral). VRE surge (pre-existing alert). Foreign sell VIC chain 4/10 neutral (captured in urgent_news instead).
+- Notes: Off-hours cycle 21:19 UTC. Market CLOSED. No PMI data. TIGHTENING regime inferred from Brent +2.23σ. STB not on watchlist — no signal.
+
 ### Cycle (20:21–20:22 UTC) 2026-05-12
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 GAS, chain_catalyst×2 VIC/real_estate/banking, CTCK/securities] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
