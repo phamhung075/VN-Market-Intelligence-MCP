@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (00:15–00:28 UTC) 2026-05-12
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×2 HSG/GAS, urgent_news×1 VCB] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) AU steel antidumping HSG/NKG escalation — 2nd article 2026-05-12 confirms, refired as chain_catalyst #2957 bearish (prior: urgent_news #2940 fired 21:19 cycle — alert-commander dedup expected). (2) Gold "bật tăng mạnh" 2026-05-12 → urgent_news #2958 VCB hot_money_risk — NOTE: actual % change ~+0.47% ($4752→$4774.5), not confirmed >3%; fired on headline language, possible overfire, alert-commander should filter. (3) Asia energy shock + oil/Iran chain_catalyst #2959 bearish GAS/POW/PPC (impact 7, cpi_pressure_risk flagged).
+- Suppressed: VIC/VHM real estate -20pts (prior cycles), FPT tech selling (prior cycles), gold/Brent intraday 0% in bootstrap, Vietnam grain imports $2.6B neutral, Bitcoin whale neutral.
+- Notes: Off-hours cycle, market CLOSED. AU steel investigation is day-2 escalation — cumulative risk growing for HSG/NKG export margins. Gold signal warrants alert-commander validation before forwarding.
+
 ### Cycle (23:19–23:21 UTC) 2026-05-11
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 FPT, chain_catalyst×1 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
