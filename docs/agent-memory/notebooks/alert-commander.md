@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 20:02 UTC | **Sprint:** 1876a-A6
+**Last updated:** 2026-05-12 21:04 UTC | **Sprint:** c54-closed
 
 ### Alert Cycle (20:01–20:02 UTC) — 2026-05-12
 - Signals: 0 (bus empty — no inter-agent signals)
@@ -432,3 +432,10 @@ Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | C
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: none
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Market: CLOSED (post-session, 15:02 UTC)
+
+### Alert Cycle (21:01–21:03 UTC)
+- Signals: urgent_news×1
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: GAS urgent_news conf=0.50 < 0.60 NEUTRAL threshold, no price_anomaly override
