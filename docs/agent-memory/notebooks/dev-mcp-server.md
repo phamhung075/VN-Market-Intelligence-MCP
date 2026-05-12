@@ -106,6 +106,24 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 **Commit:** `52d63b61`
 
+### Task 1878b — compute_accruals MCP tool (#129) (2026-05-12, DONE)
+
+**Domain:** `computeAccrualPoint(input: AccrualsInput): AccrualPointResult` — pure function in `domain/services/financial-reports/accruals.ts`. Zero infrastructure imports. Formula: `(NetIncome - OCF) / TotalAssets`.
+**Null handling:** missing array accumulates "NET_INCOME", "OCF", "TOTAL_ASSETS" as applicable. Row always included.
+**Zero-TA:** `total_assets = 0` → `accruals_ratio: null`, `error: "zero_total_assets"`.
+**Sort:** DB query DESC LIMIT N, then `.reverse()` → ascending oldest-first in output.
+**MCP handler:** `buildComputeAccrualsHandler(db)` factory (testable injection pattern). `registerComputeAccrualsTool` in `computeAccrualsTool.ts`.
+**Registry:** tool #129, entry added after registerPyramidTierTool.
+**Barrel:** `financial-reports/index.ts` exports `registerComputeAccrualsTool`.
+**Tests:** 12 pass / 0 fail in `1878b-compute-accruals.test.ts`. T1-T6 domain unit (no SQLite), T7-T12 tool integration (in-memory SQLite). tsc clean. SHA 4d7ab740.
+
+Key patterns:
+- Domain fn has zero imports from infra or interface. DDD audit: grep confirms only comment text references infra, no import statements.
+- Full suite bun OOM crash is pre-existing (9273+ tests, 1.6GB peak, Bun 1.3.13). Targeted 44-test run (task + 3 neighbors) = 0 fail.
+- T12 validates Zod schema directly without touching DB (correct isolation for schema rejection test).
+
+---
+
 ### Task 1880b — get_pyramid_tier MCP tool (#128) (2026-05-12, DONE)
 
 **Domain:** `classifyPyramidTier(assetClass: string): PyramidTierResult` — pure static Map lookup, 18 entries covering VN + global asset classes, 5 tiers (cash/bonds/equity/alt/speculative).
