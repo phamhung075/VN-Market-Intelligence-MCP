@@ -15,6 +15,7 @@
 
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
+import { bridgeOCFToFinancialReports } from "./schema-financial-reports.js";
 import type {
   VnstockFinancials,
   VnstockTradingStats,
@@ -868,6 +869,9 @@ export function storeCashFlow(cf: VnstockCashFlow): void {
     cf.source, cf.fetchedAt,
   );
   markFetched(cf.code, "cash_flow");
+  // Task 1878a: bridge OCF to financial_reports immediately after store.
+  // Updates ALL quarters for this ticker (idempotent, covers historical rows).
+  bridgeOCFToFinancialReports(db, cf.code);
 }
 
 /**

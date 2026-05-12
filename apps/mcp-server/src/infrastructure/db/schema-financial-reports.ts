@@ -69,6 +69,16 @@ export function initFinancialReportsTables(db: Database): void {
     if (!colNames.has("confidence_financial")) {
       db.exec("ALTER TABLE financial_reports ADD COLUMN confidence_financial REAL");
     }
+
+    // ── Task 1878a: OCF bridge column (vnstock API-grade, quarterly only) ───
+    // Separate from existing `operating_cf` (BCTC OCR/PDF extraction).
+    // Unit: triệu VND (millions) — consistent with all other scalar columns.
+    // NULLABLE: not every ticker has vnstock cash-flow history.
+    if (!colNames.has("operating_cash_flow")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN operating_cash_flow REAL",
+      );
+    }
   } catch {
     // fresh DB — CREATE TABLE already included the columns
   }
@@ -251,4 +261,76 @@ export function initFinancialReportsTables(db: Database): void {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vncf_code ON vnstock_cash_flow(code)`);
+
+  // ── Task 1878a: backfill OCF on migration ─────────────────────────────────
+  // Dev decision: wire backfillAllOCF into the migration block so new tickers
+  // are covered automatically on every server start (idempotent UPDATE is a
+  // no-op when values already populated). Simpler than a separate CLI command.
+  backfillAllOCF(db);
+}
+
+// ---------------------------------------------------------------------------
+// Task 1878a — OCF Bridge mapper
+// ---------------------------------------------------------------------------
+
+/**
+ * bridgeOCFToFinancialReports — lifts vnstock quarterly OCF into financial_reports.
+ *
+ * Strategy (dev decision): update ALL quarters for the ticker on each call
+ * (single UPDATE covers all, historical rows included). Simpler than tracking
+ * just-inserted quarter; idempotent (repeated calls = same result).
+ *
+ * Unit conversion: vnstock_cash_flow.operating_cf_bn is tỷ VND (billions).
+ *                  financial_reports.operating_cash_flow is triệu VND (millions).
+ *                  Multiply by 1000.0.
+ *
+ * Skips:
+ *   - Annual rows in financial_reports (period_quarter IS NULL)
+ *   - vnstock_cash_flow rows where quarter = 0 (treated as annual by exchange)
+ *
+ * @param db     Database instance (injected — supports in-memory test DBs)
+ * @param ticker Stock code (e.g. "VCB")
+ */
+export function bridgeOCFToFinancialReports(
+  db: Database,
+  ticker: string,
+): void {
+  db.prepare(
+    `UPDATE financial_reports
+     SET operating_cash_flow = (
+       SELECT vcf.operating_cf_bn * 1000.0
+       FROM vnstock_cash_flow vcf
+       WHERE vcf.code        = financial_reports.action_code
+         AND vcf.year_report = financial_reports.period_year
+         AND vcf.quarter     = financial_reports.period_quarter
+         AND vcf.quarter BETWEEN 1 AND 4
+       ORDER BY vcf.fetched_at DESC
+       LIMIT 1
+     )
+     WHERE financial_reports.action_code    = ?
+       AND financial_reports.period_quarter IS NOT NULL`,
+  ).run(ticker);
+}
+
+/**
+ * backfillAllOCF — one-shot backfill for all tickers in vnstock_cash_flow.
+ *
+ * Iterates all distinct codes in vnstock_cash_flow and calls
+ * bridgeOCFToFinancialReports for each. Idempotent: re-running is a no-op if
+ * values are already populated (UPDATE sets same value, no observable change).
+ *
+ * Called automatically from initFinancialReportsTables (dev decision: migration
+ * block placement ensures new tickers are covered on server restart).
+ *
+ * @param db Database instance
+ */
+export function backfillAllOCF(db: Database): void {
+  const tickers = db
+    .prepare<{ code: string }, []>(
+      "SELECT DISTINCT code FROM vnstock_cash_flow",
+    )
+    .all();
+  for (const { code } of tickers) {
+    bridgeOCFToFinancialReports(db, code);
+  }
 }

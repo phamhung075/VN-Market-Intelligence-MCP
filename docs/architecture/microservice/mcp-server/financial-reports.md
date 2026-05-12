@@ -36,3 +36,22 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 3. 22 financial ratios: P/E, P/B, ROE, ROA, EBITDA, D/E, current ratio, quick ratio, gross margin, operating margin, net margin, asset turnover, inventory turnover, debt service coverage, interest coverage, working capital, capex ratio, free cash flow, dividend yield, EPS, book value/share, enterprise value.
 4. periodDeltaComputer: QoQ (quarter-on-quarter) and YoY (year-on-year) deltas computed on-the-fly.
 5. VPS BCTC pipeline is PULL-based: VPS pulls queue (`bctc_vps_queue` table) → downloads → pushes back. MCP never initiates PDF downloads.
+
+---
+
+## Schema: `financial_reports.operating_cash_flow` (Sprint 1878a)
+
+**Column:** `operating_cash_flow REAL` (nullable, no default) — added via idempotent ALTER TABLE migration in `initFinancialReportsTables`.
+
+**Source:** `vnstock_cash_flow.operating_cf_bn * 1000.0` (tỷ VND → triệu VND).
+
+**Purpose:** API-grade OCF distinct from `operating_cf` (BCTC OCR/PDF). Both columns coexist — divergence between them is useful for 1885a forensics.
+
+**Bridge:** `bridgeOCFToFinancialReports(db, ticker)` in `schema-financial-reports.ts` — runs UPDATE for ALL quarters of ticker after each `storeCashFlow()` call. Also called via `backfillAllOCF(db)` on `initFinancialReportsTables` (migration block).
+
+**Constraints:**
+- Annual rows (`period_quarter IS NULL`) are never bridged — vnstock provides quarterly only.
+- `vnstock_cash_flow.quarter = 0` (legacy annual marker) is excluded from JOIN via `quarter BETWEEN 1 AND 4`.
+- Unit conversion mandatory: multiply by 1000.0 (1 tỷ = 1000 triệu).
+
+**Downstream:** unblocks 1878b `compute_accruals`, 1885a Beneish/Piotroski, 1886a BTN forensics.
