@@ -88,16 +88,16 @@ REPEAT per acceptance criterion
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
-**Notebook commit** (before QA):
-Append task summary to `docs/agent-memory/notebooks/developer.md` — task name, findings, status.
-Then:
+**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE — task name, findings, status; never append).
+
+**Commit notebook**:
 ```bash
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
-**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+**End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md` (chains session-log + notebook-write + doc-self-heal)
 
 **Update docs/TASKS.md**: In Progress → Review → return:
 ```

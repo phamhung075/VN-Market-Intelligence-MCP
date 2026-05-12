@@ -1,8 +1,7 @@
 # PO — Step 0: Channel Audit + Cross-Check
 
-<!-- size-justification: 142L — 5 sequential audit phases (0 channels · 0-a2 chat-group · 0-b cross-check vs fix history · 0-c zone inference · 0-d zone-health notebook scan) that share PO's single decision context (the same scan result drives whether to open a task, which zone to tag, which dev-* to route to). Splitting per-phase would force PO to load 5 files per cycle and break the "audit → cross-check → zone → assign" linear flow operators follow. -->
-
 **Parent flow:** `.claude/flows/po/main.md` (Step 0 dispatcher — MANDATORY, runs before sprint planning)
+**Zone resolution:** Step 0-c + 0-d extracted to `.claude/flows/po/zone-routing.md` — call it whenever a new FIX/SPRINT entry needs `zone:` resolved.
 
 ---
 
@@ -85,50 +84,11 @@ get_recent_fixes()    ← last N fixes logged by ops — was this one applied?
 
 **Never open a duplicate bug task.** Always resolve the root cause (regression vs deploy gap) first.
 
-## Step 0-c — Zone Inference (MANDATORY before emitting any FIX)
+## Step 0-c + 0-d — Zone Routing (sub-flow)
 
-Resolve `zone:` for every FIX/SPRINT entry using this table before writing the task:
+→ Run sub-flow: `.claude/flows/po/zone-routing.md` — resolves `zone:` for every FIX/SPRINT entry + scans dev-* notebooks for `Zone health:` drift.
 
-| Hint in BUG message / affected file | Zone | dev-* specialist |
-|---|---|---|
-| MCP tool / cron / market orchestration / `apps/mcp-server/` path | `apps/mcp-server/` | dev-mcp-server |
-| HTTP routing / gateway / health agg / `apps/api-gateway/` | `apps/api-gateway/` | dev-api-gateway |
-| price fallback / VPS bridge / quote agg / `apps/stock-price/` | `apps/stock-price/` | dev-stock-price |
-| RSI / MACD / BB / indicator math / `apps/technical-analysis/` | `apps/technical-analysis/` | dev-technical-analysis |
-| SBV FX / commodity / macro trend / `apps/macro-indicators/` | `apps/macro-indicators/` | dev-macro-indicators |
-| hexagram / I-Ching / kinh dich / `apps/kinh-dich-service/` | `apps/kinh-dich-service/` | dev-kinh-dich |
-| dedup / cooldown / Telegram dispatch / `apps/alert-engine/` | `apps/alert-engine/` | dev-alert-engine |
-| BCTC / OCR / Vietnamese parse / `apps/pdf-extractor/` | `apps/pdf-extractor/` | dev-pdf-extractor |
-| embeddings / LanceDB / semantic search / `apps/rag-service/` | `apps/rag-service/` | dev-rag-service |
-| cross-service / root / scripts/ / Docker / shared infra | `cross-service/` | generic developer |
-| affects 2+ apps/ subtrees | `multi` | architect must split |
-
-Rule: every emitted FIX/SPRINT entry MUST resolve to exactly one row. If unclear → escalate to architect (don't guess).
-
----
-
-## Step 0-d — Zone Health Notebook Scan
-
-Read the last notebook entry for each active dev-* agent and extract any "Zone health:" line:
-```
-docs/agent-memory/notebooks/dev-mcp-server.md
-docs/agent-memory/notebooks/dev-api-gateway.md
-docs/agent-memory/notebooks/dev-stock-price.md
-docs/agent-memory/notebooks/dev-technical-analysis.md
-docs/agent-memory/notebooks/dev-macro-indicators.md
-docs/agent-memory/notebooks/dev-kinh-dich.md
-docs/agent-memory/notebooks/dev-alert-engine.md
-docs/agent-memory/notebooks/dev-pdf-extractor.md
-docs/agent-memory/notebooks/dev-rag-service.md
-```
-
-For each notebook: scan the most recent entry for a line starting with `Zone health:`. Collect into `pendingObservations[]`. Exclude `"Zone health: no drift detected"` lines (no action needed).
-
-For each non-trivial `Zone health:` line:
-- If it mentions coverage drop, unused fixtures, stale tests, or doc drift → add to `pendingObservations[]` for consideration in sprint planning
-- If it mentions a critical regression or broken test → open a FIX task immediately (treat as BUG signal)
-
-Surface `pendingObservations[]` in notebook and optionally into sprint planning if capacity allows.
+Required output: every emitted FIX/SPRINT entry carries `zone:` (one of `apps/<service>/`, `multi`, or `cross-service/`). `pendingObservations[]` collected for sprint planning.
 
 ---
 

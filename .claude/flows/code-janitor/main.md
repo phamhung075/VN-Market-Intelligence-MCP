@@ -36,12 +36,12 @@ Finding found?
 `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 
 ## Memory + State (every scan)
-- Notebook commit — append to `docs/agent-memory/notebooks/code-janitor.md`:
+- **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE). Body template for this agent:
 ```
 ### Scan NNN (HH:MM–HH:MM)
 - Checks: [which] | Findings: N new, M recurrent | Action: shipped X | backlog Y | clean
 ```
-Then:
+- **Commit notebook**:
 ```bash
 git add docs/agent-memory/notebooks/code-janitor.md
 git commit -m "chore(memory/code-janitor): notebook YYYY-MM-DD"

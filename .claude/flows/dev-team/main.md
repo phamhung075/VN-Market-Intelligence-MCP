@@ -1,3 +1,4 @@
+<!-- size-justification: 136L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. Steps 0b/1/2 are too small to extract into siblings; sub-flows already absorb Steps 0a/3/4. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Input

@@ -1,4 +1,4 @@
-<!-- size-justification: 123L — atomic QA gate flow; TDD/DDD/security checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
+<!-- size-justification: 151L — atomic QA gate flow with JUMP-TO dispatch (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
 # QA — Main Flow
 
 **Tools:** `.claude/tools/package/qa.md`
@@ -29,6 +29,23 @@ Parallel QA: multiple tasks in same tier can be QA'd simultaneously if on differ
 
 ---
 
+## Dispatch — Fluid JUMP TO
+
+JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
+
+| Spawn context | JUMP TO |
+|---|---|
+| Normal Step-3 QA (post-dev handoff) | `pipeline` |
+| Step-2 CLEAN spawn (branch cleanup) | run inline CLEAN one-liner in Role section, then JUMP TO `end` |
+| Pipeline result: all green, no arch impact | `approved` |
+| Pipeline result: issues found (round < 2) | `changes-requested` |
+| Pipeline result: arch concern (new domain/MCP tool/cross-service) | `architect-review` |
+| Tests broken on `main` | `emergency` |
+
+After pre-checks (project-root, notebook-read, Smart-Skip), jump to the labelled section. Verdict branches at end of `pipeline` are JUMP TOs, not sequential walks.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `qa`)
@@ -38,6 +55,7 @@ Parallel QA: multiple tasks in same tier can be QA'd simultaneously if on differ
 - String literal only → skip DDD + security. Run: full suite + tsc.
 - Never skip `bun test` + `bun tsc --noEmit`.
 
+<!-- jump:pipeline -->
 ## Pipeline
 ```bash
 git checkout task/NNN-kebab-description
@@ -49,7 +67,11 @@ grep -r "from.*application" <modified_files>     # must return NOTHING
 grep -r "process\.env" src/                      # must return NOTHING
 grep -r "password\|secret\|token" src/ | grep -v test | grep -v "//"
 ```
-New domain service / MCP tool / cross-service HTTP / DDD refactor → request Architect review before merge.
+Verdict routing:
+- All checks pass AND no arch concern → JUMP TO `approved`
+- Issues found AND round < 2 → JUMP TO `changes-requested`
+- Issues found AND round ≥ 2 → JUMP TO `changes-requested` (RETURN block routes to architect)
+- New domain service / MCP tool / cross-service HTTP / DDD refactor → JUMP TO `architect-review`
 
 ## Task Report
 
@@ -68,6 +90,8 @@ verdict: APPROVED | CHANGES_REQUESTED
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
 
 ## Approval
+
+<!-- jump:approved -->
 **APPROVED**: append `[QA] Review Record` → merge + push + clean → return.
 Merge commit subject must follow `docs/policies/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
 If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.
@@ -92,6 +116,7 @@ HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```
 
+<!-- jump:changes-requested -->
 **CHANGES_REQUESTED**: append issues (file:line) → check fixer round count in handoff → return:
 ```
 ## RETURN
@@ -102,6 +127,7 @@ HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```
 
+<!-- jump:architect-review -->
 **ARCHITECT_REVIEW_NEEDED** → return:
 ```
 ## RETURN
@@ -120,5 +146,6 @@ git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
+<!-- jump:emergency -->
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

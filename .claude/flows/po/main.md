@@ -1,4 +1,4 @@
-<!-- size-justification: 129L — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`. -->
+<!-- size-justification: 130L — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`. -->
 # Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `.claude/tools/package/po.md`
@@ -116,10 +116,11 @@ Do not inline these workflows here — that's the whole point of the split.
 
 ---
 
-**Commit notebook** (end of every cycle):
+**Notebook write** (end of every cycle) → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE, target ≤50L). Skill handles body discipline + Carry-over block.
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.
 
+**Commit notebook**:
 ```bash
 git add docs/agent-memory/notebooks/po.md
 git commit -m "chore(memory/po): notebook YYYY-MM-DD"
