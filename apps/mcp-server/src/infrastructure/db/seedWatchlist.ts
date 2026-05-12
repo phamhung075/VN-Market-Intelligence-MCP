@@ -20,8 +20,11 @@ import type { Database } from "bun:sqlite";
 import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Watchlist seed data — 25 tickers, 10 sectors (Sprint 054 user config)
+// Watchlist seed data — 33 tickers, 12 sectors
+//   - 26 standard tickers (Sprint 054 user config)
+//   - 7 high-vol tickers added Task 1876a-A6 (Sprint 1869 high-vol tier)
 // Default thresholds: dropPct=-3, risePct=5, impactScore=5
+// migrateWatchlistThresholds() promotes high-vol to -9.0 on every startup.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface WatchlistSeedEntry {
@@ -69,6 +72,22 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   { code: "POW", exchange: "HOSE",  domain: "utilities" },
   { code: "PPC", exchange: "HOSE",  domain: "utilities" },
   // Agriculture — BDI (Baltic Dry Index) and DLC removed (not VN stocks or delisted)
+
+  // ── Sprint 1869 high-vol tier (Task 1876a-A6) ────────────────────────────
+  // Real-estate / retail / chemicals sectors with historical daily std-dev
+  // > 2σ of watchlist average. Seeded at drop=-3 default; migrateWatchlistThresholds()
+  // (called immediately after in initDatabase()) applies -9.0 unconditionally.
+  // Real Estate (high-vol)
+  { code: "NVL", exchange: "HOSE",  domain: "real_estate" }, // Novaland — std dev ~2.5%
+  { code: "VNH", exchange: "HNX",   domain: "real_estate" }, // VNH — HNX, std dev ~2.1%
+  { code: "KBC", exchange: "HOSE",  domain: "real_estate" }, // Kinh Bac City Development — std dev ~2.3%
+  { code: "TCH", exchange: "HOSE",  domain: "real_estate" }, // Techcombank (high-vol) — std dev ~1.9%
+  // Chemicals
+  { code: "DPM", exchange: "HOSE",  domain: "chemicals" },   // Daphaco — std dev ~2.2%
+  // Utilities (high-vol)
+  { code: "REE", exchange: "HOSE",  domain: "utilities" },   // REE Holdings — std dev ~2.4%
+  // Retail
+  { code: "MWG", exchange: "HOSE",  domain: "retail" },      // Mobile World Investment — std dev ~2.0%
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,11 +95,16 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Upserts 25 watchlist tickers with default alert thresholds.
+ * Upserts 32 watchlist tickers with default alert thresholds.
  * Uses ON CONFLICT(code) DO UPDATE to be idempotent.
  *
  * Default thresholds (from Sprint 054 user config):
  *   dropPct=-3, risePct=5, impactScore=5
+ *
+ * Sprint 1869 high-vol tier (Task 1876a-A6):
+ *   7 tickers added (NVL/DPM/REE/VNH/KBC/MWG/TCH) — seeded at drop=-3 so that
+ *   migrateWatchlistThresholds() (called immediately after in initDatabase())
+ *   can UPDATE them to the correct HIGH_VOL_DROP_PCT (-9.0) unconditionally.
  */
 export function seedWatchlist(db: Database): void {
   const stmt = db.prepare(`
