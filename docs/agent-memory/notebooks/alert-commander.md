@@ -1,12 +1,20 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 00:02 UTC | **Sprint:** —
+**Last updated:** 2026-05-12 02:01 UTC | **Sprint:** —
 
 ## Current state
 
 Market CLOSED (off-hours cycle). 0 MARKET alerts fired. Regime: NEUTRAL.
 
 ## Last session summary
+
+### Alert Cycle (02:01–02:01 UTC) — 2026-05-12
+- Signals: urgent_news ×1 (VIC id=2962)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: NEUTRAL | Pivot window: false
+- Suppressed: VIC urgent_news id=2962 (Vingroup thắng kiện 68 cá nhân/tổ chức, conv=0.50 < NEUTRAL threshold=0.60, no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: none | Market: OPEN
 
 ### Alert Cycle (00:01–00:02 UTC)
 - Signals: urgent_news×1, price_anomaly×1 (fundamental_validation×3 not evaluated)
