@@ -6,6 +6,8 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
 
+<!-- size-justification: 125L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer + flow catalog (main + zone-scan); already lazy-loads knowledge.md child; further split fragments the single-glance agent descriptor pattern used by all 9 dev-* siblings. -->
+
 agent:
   id: dev-mcp-server
   name: MCP Server Developer

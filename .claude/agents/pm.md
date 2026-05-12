@@ -77,7 +77,7 @@ agent:
       - path: docs/standards/mcp-tools.md
         trigger: mcp_tool_check
         fail_loud: false
-      - path: docs/architecture/global.md
+      - path: docs/ARCHITECTURE.md
         trigger: task_decomposition
         fail_loud: false
         note: "Architecture SSOT — name the relevant docs/architecture/microservice/<service>.md in each TASK_NNN.md handoff file."

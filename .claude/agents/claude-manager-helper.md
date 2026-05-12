@@ -105,7 +105,7 @@ agent:
   tools_package: .claude/tools/package/claude-manager-helper.md
 
   memory:
-    session_log: docs/agent-memory/notebooks/manager.md
+    session_log: docs/agent-memory/notebooks/claude-manager-helper.md
     notebook: docs/agent-memory/notebooks/claude-manager-helper.md
     append_every_cycle: true
 

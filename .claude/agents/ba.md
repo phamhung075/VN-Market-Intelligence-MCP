@@ -78,7 +78,7 @@ agent:
       - path: docs/data/stock-classification.json
         trigger: ticker_context
         fail_loud: false
-      - path: docs/architecture/global.md
+      - path: docs/ARCHITECTURE.md
         trigger: service_boundary
         fail_loud: false
         note: "Architecture SSOT — read-only. Load docs/architecture/microservice/<service>.md for service boundary mapping."

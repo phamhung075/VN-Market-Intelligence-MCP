@@ -83,7 +83,7 @@ agent:
       - path: docs/policies/alert-policy.md
         trigger: alert_architecture
         fail_loud: false
-      - path: docs/architecture/global.md
+      - path: docs/ARCHITECTURE.md
         trigger: design
         fail_loud: false
         note: "Architecture SSOT (read + write authority). Load docs/architecture/microservice/<service>.md for service-scoped design."
