@@ -66,11 +66,15 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/policies/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
-├── .claude/skills/token-economy/SKILL.md Part 3 (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE — merged into skill, no separate knowledge file)
+├── .claude/skills/token-economy/SKILL.md (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE inline; Parts 1-2 in children)
+│   ├── .claude/skills/token-economy/policies.md (Part 1: 15 writing techniques, MCP task templates, quick workflow)
+│   └── .claude/skills/token-economy/compress.md (Part 2: /compress command, CLI usage, compression rules)
 │
 ├── .claude/skills/semble-search/SKILL.md (code search decision guide: when Semble vs Grep/Glob/Read)
 │
-├── .claude/skills/doc-heal-system/SKILL.md (full-subtree audit + auto-fix: tree-map DAG, SSOT, factory pointers, no-hardcode rule — escalates semantic drift to architect)
+├── .claude/skills/doc-heal-system/SKILL.md (full-subtree audit + auto-fix: tree-map DAG, SSOT, factory pointers — escalates semantic drift to architect)
+│   ├── .claude/skills/doc-heal-system/phases.md (Phases 0-7: discover, pointer integrity, orphans, SSOT, size caps, dedup, memory, report)
+│   └── .claude/skills/doc-heal-system/reference.md (Appendix A: skill factory template; Appendix B: discovery commands)
 │
 ├── .claude/skills/doc-self-heal/SKILL.md (per-agent end-of-cycle doc fix: narrow scope, files touched this cycle only — companion to doc-heal-system)
 │
