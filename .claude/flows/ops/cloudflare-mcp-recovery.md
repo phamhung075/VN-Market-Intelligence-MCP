@@ -38,7 +38,7 @@ npx @modelcontextprotocol/inspector https://zenmidi.com/vn-market/sse
 
 ## Reference Documentation
 
-- **Full integration guide:** `docs/CLOUDFLARE_MCP_INTEGRATION.md`
+- **Design decision record:** `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`
 - **Transport code:** `apps/mcp-server/src/interface/mcp/transport.ts`
 - **Server setup:** `apps/mcp-server/src/interface/mcp/server.ts`
 - **Docker config:** `docker-compose.yml` (CLOUDFLARE_PATH_PREFIX + HOST)

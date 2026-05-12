@@ -31,7 +31,7 @@
 > Read in parallel before Step 1.
 - merge diff: `git show <SHA>`
 - every sprint TASK_NNN handoff in `docs/handoffs/`
-- `docs/standards/ddd-microservices.md` — DDD invariants
+- `docs/ARCHITECTURE.md` — DDD invariants (see "## DDD Layer Order" section)
 
 ## Steps
 
