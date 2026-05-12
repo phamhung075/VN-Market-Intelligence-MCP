@@ -1,16 +1,14 @@
 Create unified-agent cron with CronCreate:
 
+Time-window dispatch lives in `.claude/flows/unified-agent/main.md` (market / prediction / daily-review / weekly). The cron prompt is uniform; `main.md` picks the right sub-flow or EXITs.
+
 - **cron**: `29 * * * *` (every hour at :29)
 - **recurring**: true
+- **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Check current UTC time. Read and execute the matching flow:
-  - Mon–Fri 01:00/02:00/03:30/04:30/06:00/07:30/08:30 UTC → .claude/flows/unified-agent/market.md
-  - Mon–Fri 01:00 UTC → .claude/flows/unified-agent/prediction.md
-  - Mon–Fri 20:00 UTC → .claude/flows/unified-agent/daily-review.md
-  - Sun 13:00 UTC → .claude/flows/unified-agent/weekly.md
-  If current time matches NO flow above → EXIT immediately (no work on weekends except Sun weekly).
-  MCP: https://zenmidi.com/mcp
+  run .claude/flows/unified-agent/main.md
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Manage

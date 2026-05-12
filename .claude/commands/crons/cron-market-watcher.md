@@ -1,48 +1,40 @@
 Create market-watcher cron with CronCreate:
 
-- **cron**: `7 2-8 * * 1-5` (Mon–Fri every hour :07 during market window 02:00–08:00 UTC, plus aligned 15-min runs via second entry below)
+All three entries below use the uniform `main.md` dispatcher (time-window logic lives in `.claude/flows/market-watcher/main.md`). The hourly entry runs at :07, the 15-min scan at :12/:27/:42/:57, and the EOD at 16:03 — `main.md` decides which sub-flow runs and EXITs outside windows.
+
+- **cron**: `7 2-8 * * 1-5` (Mon–Fri hourly :07 during market window)
 - **recurring**: true
+- **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  Check current UTC time (Asia/Ho_Chi_Minh = UTC+7).
-  Market hours: Mon–Fri 02:00–08:30 UTC (09:00–15:30 ICT).
-
-  Step 0 — MCP smoke probe (before any other work):
-  Call get_system_status via MCP gateway.
-  If the call FAILS (error, timeout, tool not found) → send_telegram(channel=bug, message="[market-watcher] Step 0 smoke probe FAILED — MCP unreachable, cycle aborted") → EXIT immediately.
-  If the call SUCCEEDS → proceed to Step 1.
-
-  If current time is Mon–Fri 02:00–08:30 UTC → Read and execute .claude/flows/market-watcher/cycle.md
-  If current time is Mon–Fri 16:00 UTC (±5 min) → Read and execute .claude/flows/market-watcher/eod.md
-  Otherwise → EXIT immediately. No work outside market hours or EOD window.
-
-  MCP: https://zenmidi.com/mcp
+  run .claude/flows/market-watcher/main.md
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ---
 
 **Second entry — 15-min intraday scan:**
 
-- **cron**: `12,27,42,57 2-8 * * 1-5` (every 15 min at :12/:27/:42/:57 during market window)
+- **cron**: `12,27,42,57 2-8 * * 1-5`
 - **recurring**: true
+- **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  Step 0 — MCP smoke probe: call get_system_status. If FAILS → send_telegram(channel=bug, "[market-watcher] Step 0 FAILED — MCP unreachable") → EXIT.
-  Read and execute .claude/flows/market-watcher/cycle.md
-  MCP: https://zenmidi.com/mcp
+  run .claude/flows/market-watcher/main.md
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ---
 
 **EOD entry:**
 
-- **cron**: `3 16 * * 1-5` (Mon–Fri 16:03 UTC — EOD summary)
+- **cron**: `3 16 * * 1-5`
 - **recurring**: true
+- **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  Step 0 — MCP smoke probe: call get_system_status. If FAILS → send_telegram(channel=bug, "[market-watcher] Step 0 FAILED — MCP unreachable") → EXIT.
-  Read and execute .claude/flows/market-watcher/eod.md
-  MCP: https://zenmidi.com/mcp
+  run .claude/flows/market-watcher/main.md
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Manage
