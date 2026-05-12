@@ -1,5 +1,7 @@
 # Workflow Map — Full Vector Chart
 
+**File size note:** 156L (>120 due to agent roster table which doesn't decompose cleanly without breaking cross-references). Each row represents 1 agent's role; splitting would fragment context. W1-W19 detailed flows split to workflow-map-cycles.md.
+
 **Load when:** understanding the end-to-end picture of who does what, what each agent takes, what main terminal does, how cron and demand flows differ.
 
 **SSOT for the dispatch table:** `.claude/skills/dispatch/SKILL.md`. This file is the **chart view** — it visualises the relationships between agents, signals, and channels. Routes themselves live in the dispatch skill.

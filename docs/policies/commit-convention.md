@@ -1,6 +1,10 @@
 # Commit Convention — SSOT
 
-**Load when:** any agent writes a git commit, authors a commit step in a flow, or reviews commit format.
+**Load when:** writing commits, reviewing PRs, automated validation.
+
+**Enforced by:** `developer`, `fixer`, `qa`, pre-commit hooks (future).
+
+**File size note:** 196L (>120 due to atomic reference tables: Format/Scope rules, Type vocabulary, C2/C3 exemptions, and Worked examples. These are cross-referenced as a unit and don't split cleanly without fragmenting the SSOT. Kept as single reference for integrity.
 
 ---
 
