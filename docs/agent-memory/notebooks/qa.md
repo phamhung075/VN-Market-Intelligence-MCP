@@ -1,5 +1,28 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** signal-T6 fallback removal (cycle 40)
+
+## Recent session — 2026-05-12 (signal-T6 — DEPRECATED fallback removal)
+
+**signal-T6 — APPROVED:**
+Doc-only. bun test + tsc skipped (smart-skip). DDD/security N/A. Scope: `.claude/flows/dev-team/main.md` only.
+
+AC-1 PASS: Step 0a-fallback block (prev lines 117-133) + code fence fully deleted. grep returns 0 matches for "Step 0a-fallback".
+AC-2 PASS: catch block (lines 33-39) now inline degrade: log WARN + pendingSignals=[] + inbox untouched + retry next cycle. Zero "jump to Step 0a-fallback" text anywhere.
+AC-3 PASS: `grep -c fallback` = 0. Clean.
+AC-4 PASS: 14 code fence markers (7 balanced pairs). No orphan fences.
+AC-5 PASS: 4 ins / 24 del = -20 net LOC (≤30 budget).
+
+Functional integrity: Step 0a-1 (line 43), dual-record write 4a+4b (lines 70-101), prune 5a+5b (lines 103-113), Step 0b (line 119) — all INTACT.
+
+Commit `5ce8e73e`: `chore(signals)` scope (canonical vocab). Task-Id: signal-T6, AC: AC-1..AC-5, Closes: signal-T6. Task-Id key (non-standard vs Task:) — non-blocking per T4 precedent. No Sprint: trailer (no sprint number in signal-T series) — acceptable per no-sprint rule.
+
+Merge SHA: f6f57bc5. Branch task/signal-T6-fallback-removal deleted (local). Report: reports/TASK_REPORT_signal-T6.md.
+
+Graphify: DEFERRED — package not installed (consistent with prior cycles 38-40).
+
+Signal-dedup project COMPLETE. T1-T6 all closed. SQLite is now sole dedup path.
+
 **Last updated:** 2026-05-12 | **Sprint:** signal-T5 dedup integration tests (cycle 38)
 
 ## Recent session — 2026-05-12 (signal-T5 — SQLite dedup drain cycle integration tests)
