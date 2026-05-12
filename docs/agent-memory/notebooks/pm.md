@@ -224,11 +224,33 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 53 — 2026-05-12 Task Sync: 1876a-A5 → Done-PARTIAL | 1876a-A6 → In Progress
+
+**Input:** Architect c53 Tier 2 handoff TASK_1876a-A6.md (brownfield findings). 1876a-A5 status: DONE-PARTIAL (standard tier 31 rows deployed, high-vol gap identified).
+
+**Actions:**
+- **1876a-A5 → DONE-PARTIAL:** Moved from In Progress → Done section. Annotation: standard-tier re-deployment succeeded (31 rows -7.0 via c52 docker-compose restart). High-vol gap confirmed (7 tickers missing from watchlist table). Follow-up: 1876a-A6 (seed 7 tickers WATCHLIST_SEED).
+- **1876a-A6 → IN PROGRESS:** Moved from Todo → In Progress. Architect brownfield decision: add 7 entries to WATCHLIST_SEED (NVL/DPM/REE/VNH/KBC/MWG/TCH with domain/exchange). File scope: `apps/mcp-server/src/infrastructure/db/seedWatchlist.ts` only. 7 ACs (SQL verification), idempotent (UPSERT + unconditional UPDATE -9.0), docker-compose restart required post-merge. Zone enforcement: ZONE=apps/mcp-server/ mandatory. WIP = 2/2 (1876a-A6 + 1894a Cloudflare user-pending).
+- **pipeline-state.json:** status=in_progress, activeTaskId=1876a-A6, nextAgent=dev-mcp-server, nextPrompt=handoff brief.
+- **TASKS.md:** Cap 179/80 lines (1876a-A5 added to Done, 1876a-A6 moved In Progress, net −1).
+
+**File state diffs:**
+- TASKS.md In Progress: 1876a-A6 added (top), title reformatted with architect summary
+- TASKS.md Done: 1876a-A5 added (top), DONE-PARTIAL annotation
+- pipeline-state.json: status/activeTaskId/nextAgent/nextPrompt updated
+- PM notebook: current c53 session appended
+
+**Commit:** Pending.
+
+**WIP final:** 2/2. No blockers. Ready for handoff.
+
+---
+
 ## Current state
 
-- WIP: 1 / 2 (In Progress: 1876a-A5 OPS-EXEC docker restart, 1894a Cloudflare awaits user)
+- WIP: 2 / 2 (In Progress: 1876a-A6 dev-mcp-server WATCHLIST_SEED 7 entries, 1894a Cloudflare awaits user)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design, incident-driven)
 - Todo: 1896b (ops RCA follow-up, c40 restart evidence), 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
-- Done: 1896a (RCA false-alarm-h4), 1896c (brief shipped), 1895b (merge-gate impl), 1879b (fed-liquidity tool), 1879a (FRED fetcher), signal suite (T1-T6 dedup), and 40+ prior arcs
+- Done: 1876a-A5 (DONE-PARTIAL standard tier deployed), 1896a (RCA false-alarm-h4), 1896c (brief shipped), 1895b (merge-gate impl), 1879b (fed-liquidity tool), 1879a (FRED fetcher), signal suite (T1-T6 dedup), and 40+ prior arcs
 - CLEAN state: 7 worktree branches swept, all merged content verified on main
-- **Headroom:** 1 In Progress slot available (max WIP = 2)
+- **Headroom:** 0 In Progress slots available (max WIP = 2, at capacity)
