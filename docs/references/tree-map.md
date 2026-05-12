@@ -222,6 +222,18 @@ CLAUDE.md (root — always loaded)
 └── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
 ```
 
+## Zone-Scan Flow (Zone Empowerment — 2026-05-12)
+
+Shared proactive scan flow used weekly by all 9 dev-* specialists:
+
+```
+.claude/flows/developer/zone-scan.md (shared weekly zone-scan — stale imports, test ratio, doc drift)
+  → emits docs/signals/zone-scan-<service>-<ts>.json (type: zone_health_report, to: po)
+  → po triage-signals.md handles zone_health_report signals
+```
+
+---
+
 ## Flow File Splits (Wave 2A)
 
 Children created by zone-enforcement-and-split-policy brief — thin dispatcher parent + sibling sub-flows:

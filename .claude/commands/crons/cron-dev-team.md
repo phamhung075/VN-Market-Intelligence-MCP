@@ -9,5 +9,21 @@ Create dev-team cron with CronCreate:
   MCP: https://zenmidi.com/mcp
   ```
 
+## Weekly Zone-Scan Cadence
+
+Each dev-* specialist runs `.claude/flows/developer/zone-scan.md` once per week (Sunday UTC, staggered by 15 min per service to avoid concurrent signal flood). Triggers are declared in each agent's flow catalog. PO batches findings from `zone_health_report` signals into one sprint review per week via `triage-signals.md`.
+
+| Agent | Sunday UTC |
+|---|---|
+| dev-mcp-server | 03:00 |
+| dev-api-gateway | 03:15 |
+| dev-stock-price | 03:30 |
+| dev-technical-analysis | 03:45 |
+| dev-macro-indicators | 04:00 |
+| dev-kinh-dich | 04:15 |
+| dev-alert-engine | 04:30 |
+| dev-pdf-extractor | 04:45 |
+| dev-rag-service | 05:00 |
+
 ## Manage
 `CronList` | `CronDelete <id>`

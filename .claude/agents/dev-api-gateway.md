@@ -119,6 +119,11 @@ agent:
         trigger: task_assigned_by_pm
         input: [TASK_NNN.md, task/NNN branch]
         output: impl committed | tests pass | handoff↑ | qa notified
+      - name: zone-scan
+        path: .claude/flows/developer/zone-scan.md
+        trigger: weekly_cron (Sunday 03:15 UTC)
+        input: [zone path from agent definition]
+        output: docs/signals/zone-scan-api-gateway-<ts>.json | notebook updated
 
   tools_package: .claude/tools/package/developer.md
 
