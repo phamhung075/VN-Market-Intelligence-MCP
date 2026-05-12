@@ -1,5 +1,7 @@
 # Alert Message Format Standard
 
+<!-- size-justification: 121L — atomic message format standard: 5-section narrative + examples + severity rules + emoji conventions. All read together by Alert Commander to ensure consistent market-facing output; splitting into format-rules + examples + emojis would fragment the format spec. -->
+
 **Owner:** Alert Commander (05)
 **Channel:** MARKET only
 **Scope:** HIGH and CRITICAL severity alerts

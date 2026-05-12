@@ -1,5 +1,7 @@
 # Bundle: Architect
 
+<!-- size-justification: 132L — curated multi-source bundle (DDD rules + naming + QA + fail-loud patterns). Splitting would require cross-references defeating the single-load purpose. Bundle is read as unit by architect agent; splitting fragments cohesion. -->
+
 One call, all always-needed rules. Load this instead of dev-standards.md + tree-map.md + qa-checklist.md + fail-loud-protocol.md separately.
 
 ---

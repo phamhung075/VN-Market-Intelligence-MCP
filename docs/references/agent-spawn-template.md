@@ -1,5 +1,7 @@
 # Agent Spawn Template
 
+<!-- size-justification: 122L — operational quick-reference for all spawn scenarios: sequential chains, parallel tiers, conditional branching, RETURN block schema. All scenarios kept together for at-a-glance lookup during dispatch; splitting by scenario type would require cross-reference jumps defeating the template purpose. -->
+
 Operational reference for the main terminal. Defines how to build spawn prompts from agent RETURN blocks and when to run agents in parallel vs sequentially.
 
 Source: CLAUDE.md "Agent Chaining Protocol" section (canonical prose lives there; this file is the SSOT for quick agent lookup).

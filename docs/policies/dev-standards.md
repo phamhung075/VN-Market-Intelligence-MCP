@@ -1,5 +1,7 @@
 # Developer Standards
 
+<!-- size-justification: 123L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. -->
+
 ## Code Search — Preferred Tools
 
 | Task | Tool |

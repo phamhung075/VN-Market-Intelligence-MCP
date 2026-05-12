@@ -1,5 +1,7 @@
 # Agent Roster
 
+<!-- size-justification: 131L — canonical team structure SSOT: agent names, files, roles, schedules, + Dev team rosters. Single source of truth for agent coordination and spawn decisions; splitting into role/schedule/team groups loses the cross-reference benefit. -->
+
 **Load when:** agent coordination, rewriting agent files, understanding team structure.
 
 ## Analysis Team (Claude Cowork)
@@ -16,6 +18,7 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | Digest & Predict | `digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
 | QA Responder | `qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
 | Tran Ngoc Bau | `tran-ngoc-bau.md` | Strategy supervisor, quality audit, auto-cure | Daily 20:00 VN |
+| Report Analyzer | `report-analyzer.md` | Parse quarterly earnings → QoQ/YoY metrics, beat/miss signals | Event-driven (on earnings release) |
 
 ## Dev Team (Claude Code CLI — local cron)
 
@@ -37,12 +40,14 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
 | Agent Father | `agent-father.md` | Creates, edits, reviews, maintains all agents per AGENT_CREATION_GUIDE.md | Sonnet |
 | Agents Architect | `agents-architect.md` | Design inter-agent comms, system context, architecture briefs → signals agent-father | Sonnet |
-| Report Analyzer | `report-analyzer.md` | Parse quarterly earnings reports, extract QoQ/YoY metrics for investor ledger | Sonnet |
 | Semble Search | `.claude/skills/semble-search/SKILL.md` | Code search decision guide: when to use Semble vs Grep/Glob/Read | N/A (skill, not agent) |
 
 ## Microservice Dev Agents (Claude Code CLI — zone-scoped)
 
 All share flow: `.claude/flows/developer/microservice-main.md`
+All share tool package: `.claude/tools/package/developer.md`
+
+**Naming convention drift:** `apps/kinh-dich-service/` carries a `-service` suffix while all other microservices use bare names (`apps/alert-engine/`, `apps/stock-price/`, …). Architecture doc folder is `docs/architecture/microservice/kinh-dich/` (bare name). Recommend renaming `apps/kinh-dich-service/` → `apps/kinh-dich/` in a future developer task (touches Docker compose + imports).
 
 | Agent | File | Zone | Model |
 |-------|------|------|-------|
@@ -125,4 +130,4 @@ Dev Team claims BUG reports, processes, deletes (keeps channel clean).
 
 ## Agent Routing Intent
 
-→ See `docs/references/agent-routing.md` for full routing table and principles. This knowledge file is the SSOT for agent dispatch rules.
+→ Intent → Agent table SSOT: `.claude/skills/dispatch/SKILL.md`. Routing principles: `docs/references/agent-routing.md`.

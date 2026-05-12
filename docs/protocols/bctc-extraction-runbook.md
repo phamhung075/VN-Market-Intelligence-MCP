@@ -1,5 +1,7 @@
 # BCTC PDF Extraction Runbook
 
+<!-- size-justification: 125L — detailed operational runbook: architecture diagram + job specs + VPS/Docker integration details + diagnostics. Tightly coupled procedure flow; splitting into micro-docs would require readers to jump between files. Atomic operational manual for on-call debugging. -->
+
 > Lazy-load this file when: diagnosing BCTC extraction failures, BCTC pipeline health checks, any work touching bctcPdfPullJob / bctcReparseJob / pdfOcrWorker.
 
 ---

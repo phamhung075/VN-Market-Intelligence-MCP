@@ -1,5 +1,7 @@
 # MCP Tools — Logic & Mapping
 
+<!-- size-justification: 137L — atomic SSOT tool catalog: per-agent tool list + renamed tools table + mandatory patterns. Splitting fragments lookup surface; all agents read this file together to resolve tool availability. -->
+
 **Load when:** tool selection, agent rewriting, or system capability review.
 
 ---

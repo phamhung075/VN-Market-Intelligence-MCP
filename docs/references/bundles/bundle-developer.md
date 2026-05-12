@@ -1,5 +1,7 @@
 # Bundle: Developer
 
+<!-- size-justification: 131L — curated multi-source bundle (DDD rules + fail-loud patterns + restart commands). Bundle is read as unit by developer agent; splitting would require re-references defeating the single-load purpose. Cohesion loss > size overhead. -->
+
 One call, all always-needed rules. Load this instead of dev-standards.md + fail-loud-protocol.md + restart-policy.md separately.
 
 ---
