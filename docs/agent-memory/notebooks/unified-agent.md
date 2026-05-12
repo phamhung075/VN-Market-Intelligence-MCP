@@ -82,3 +82,17 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **next_cycle_hint**: Market closes 08:59. BCTC banks due May 15. FPT oversold persists. VRE: monitor if +5% sustained. GAS: oil geopolitics driver. 23:00 UTC daily-review cycle next.
 - **estimated_tokens**: 7000 (14 tool calls)
 - **Pillars**: M2=✗ (not available) COC=✓ (carry -0.33%, banks no cut, Brent $106) EPS=✗ (BCTC overdue 12d) POL=✓ (FPT Telecom compliance issue) → 2/4
+
+### Coordination Cycle (13:00–13:05 UTC) — 2026-05-12
+- Mode: OFF-SCHEDULE PROBE (market CLOSED) | System: OK (bootstrap live, get_portfolio_conviction connector error) | Alerts: 25 pending | Quality issues: none new
+- Regime: TIGHTENING (unchanged, Brent $107.79) | Alignment: 1.0 | Headwind: 0%
+
+## Cycle — 13:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **trigger**: Off-schedule (13:00 UTC not in defined slot) — automated run
+- **findings**: Market CLOSED (last prices 08:17 UTC). New post-market alerts: VIC/VHM/VCB 12:35 news_mention ("Thanh khoản giảm mạnh, thị trường xoay trụ?" — vneconomy). Bearish analysis: securities firm lowered VN-Index forecast due to external risks. Legal/Crisis: CLEAR. FPT unchanged: 70,600 (-12.1%, -48.5M VND), conviction 0.49 GIẢM BỚT, RSI 25.8 oversold. No conviction shifts triggered.
+- **actions**: WORK telegram sent (13:05 UTC). Notebook appended.
+- **next_cycle_hint**: BCTC 7 banks due 2026-05-15 (2 days — ACB/BID/CTG/EIB/MBB/VCB/VPB). Daily-review 23:00 UTC next. Monitor VN-Index rotation/liquidity theme overnight.
+- **estimated_tokens**: 2500 (4 tool calls)
+- **Pillars**: M2=✗ COC=✓ (Brent $107.79, carry -0.33%) EPS=✗ (BCTC overdue) POL=✗ → 1/4 (off-schedule probe, no conviction output)

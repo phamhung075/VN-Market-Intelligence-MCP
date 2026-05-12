@@ -12,6 +12,21 @@ Analysis in session log | signals noted | recommendation (bullish/bearish/neutra
 
 ---
 
+## Dispatch (Compose)
+Detect entry sub-flow from spawn context (heuristic table below).
+Each sub-flow's footer declares which next_flow(s) to chain into.
+Follow chains until a sub-flow yields STOP.
+Multiple sub-flows MAY be composed in a single invocation (Lego pattern).
+
+| Spawn context | Entry sub-flow |
+|---|---|
+| Morning cron / daily trigger | `morning.md` |
+| News article / event | `news-event.md` |
+| Ticker deep dive | `financials.md` |
+| Sector move / peer compare | `sector.md` |
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `market-analyst`)

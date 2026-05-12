@@ -12,6 +12,21 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
+## Dispatch (Compose)
+Detect entry sub-flow from spawn context (heuristic table below).
+Each sub-flow's footer declares which next_flow(s) to chain into.
+Follow chains until a sub-flow yields STOP.
+Multiple sub-flows MAY be composed in a single invocation (Lego pattern).
+
+| Spawn context | Entry sub-flow |
+|---|---|
+| Cold start / cron tick | `drain.md` |
+| Pipeline resume (`in_progress`) | `triage.md` |
+| FIX / direct task | `execute.md` |
+| Post-execution verification only | `scan.md` |
+
+---
+
 ## Step 0: Drain Signals + Pipeline Resume
 
 ### Step 0a — Drain `docs/signals/` (before anything else)

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "c46-phase3-3rd-pass+1893a+1879a+ops+CLOUDFLARE_ESCALATION",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-12T13:05:00Z",
+  "status": "in_progress",
+  "currentSprint": "c47-phase4-1st-parallel-dispatch+1894a+1879b",
+  "activeTaskId": "1894a-cloudflare-tunnel-routing+1879b",
+  "nextAgent": "qa-parallel-after-both-return",
+  "nextPrompt": "QA both 1894a (ops infra) + 1879b (dev-mcp-server worktree) in parallel per Phase 4 §3 (Q3 PERMIT)",
+  "updatedAt": "2026-05-12T13:30:00Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 46: 3rd consecutive Phase 3 parallel verification PASS. 3 agents dispatched in single message (2 worktrees + 1 main-terminal ops bundle). Shipped: 1893a Phase 4 relaxation brief (10ac3da0, 375 LOC, 7 sections, 3 flow patches verbatim-applicable, 4 PO open questions), 1879a FRED EFFR-IORB fetcher (f7240b5e impl + 4756e4f4 docs, 6/6 ACs PASS, +6 tests, baseline 9130→9136, INSERT OR IGNORE idempotency, hooks into existing macroIndicatorRefreshJob no new cron), ops bundle (4439abce, both 1892a-ops AC-3 reverify + TNB c40 container restart triage). PM sync 69447270. CRITICAL ESCALATION DISCOVERED: 1892a-ops AC-3 PASSES LOCALLY (HTTP 200 from localhost:4000/api/push-news) but FAILS PUBLICLY (HTTP 404 from zenmidi.com/api/push-news) — Cloudflare tunnel/public-edge DNS not forwarding /api/* to api-gateway:4000. User pollNews BUG-channel alert NOT yet fully resolved at infra level. NEW HIGH Todo 1894a-cloudflare-tunnel-routing routed to ops c47 via .claude/flows/ops/cloudflare-mcp.md. TNB c40 container restart classified as probable routine (no OOM/panic, all services healthy), monitor c47-c50. User refresh observed uncommitted in working tree during cycle: 9 agent .md + 5 flow files modified, new sub-flow directories created — router pattern now live for dev-team flow. Cycle 46 used the router→drain→triage→plan→execute pattern from refreshed flows successfully. Phase 4 flow patches READY to apply but gated on PO ACK of 4 open questions: Q1 WIP cap raise, Q2 Phase 5 worktree-merge-protocol timing, Q3 QA parallelism formalization, Q4 WORK announcement timing. Concurrent agents observed committing to main during this cycle (alert-commander, agent-father, market-watcher, qa, news-scout, unified-agent notebooks) — no merge conflicts with feature work. 2 c44 worktrees still pid-locked. TASKS.md at 195/80 lines, auto-archive eligible 2026-05-19 (latest Done from 2026-05-11; cutoff 2026-05-05). c47 backlog: 1894a Cloudflare tunnel (HIGH, closes user BUG), PO ACK 4 open Qs, 1879b get_fed_liquidity_spread (deps now resolved), 1890a/1881 specs, CLEAN sweep (defer c44 worktrees, sweep c45 + 1888a + stale remote branches), TNB c40 monitoring carry."
+  "lastCompleted": "Cycle 47 in flight: Phase 4 1st parallel dispatch. PO triage shipped governance (cd390765 = TNB c40 ACK + 4 Qs answered on 1893a brief: Q1 WIP=2 KEEP, Q2 Phase 5 c46-c47, Q3 QA parallel PERMITTED, Q4 announce now). WORK channel announced Phase 4 unlock. BATCH dispatched in parallel: 1894a Cloudflare tunnel (ops main-terminal, host config) + 1879b get_fed_liquidity_spread (dev-mcp-server worktree). Both agents running in background. 5 c44+c45 worktrees still pid-locked. TASKS.md 193/80 (auto-archive 2026-05-19+)."
 }

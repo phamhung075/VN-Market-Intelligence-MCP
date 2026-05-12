@@ -1,37 +1,10 @@
-# Product Owner — Main Flow
+# PO — Channel Audit
 
-**Tools:** `.claude/tools/package/po.md`
+## docs_required
+> Read ALL of the following in a single parallel tool call before Step 1.
 
-> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
-
-## Input
-docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
-
-## Output
-`docs/SPRINT_GOAL.md` vision | BA task in docs/TASKS.md | sprint sign-off
-
----
-
----
-
-## Dispatch (Compose)
-Detect entry sub-flow from spawn context (heuristic table below).
-Each sub-flow's footer declares which next_flow(s) to chain into.
-Follow chains until a sub-flow yields STOP.
-Multiple sub-flows MAY be composed in a single invocation (Lego pattern).
-
-| Spawn context | Entry sub-flow |
-|---|---|
-| Cron / dev-team spawn | `channel-audit.md` |
-| BUG channel report | `bug-triage.md` |
-| Sprint kickoff | `sprint-plan.md` |
-| QA sprint-complete signal | `sprint-signoff.md` |
-
----
-
-**Pre-check — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
-
-**Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
+- docs/TASKS.md                          # why: cross-check issues against existing tasks / fix-history grep
+- docs/handoffs/tnb-audit-latest.md      # why: TNB findings to carry into audit (conditional: only if file exists)
 
 ## Step 0-TNB — Read TNB audit findings (MANDATORY)
 
@@ -49,16 +22,14 @@ Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
    ---
    ## PO ACK
    - Read by: po
-   - At: {ISO timestamp}
+   - At: {ISO timestamp — get via `date -u +"%Y-%m-%dT%H:%M:%SZ"`, use verbatim}
    - Tasks created: {list of task IDs, or "none — all GOOD"}
    - Skipped findings: {list of finding #s skipped with reason, or "none"}
    ```
 
 If the file does not exist: log `"[po] No TNB handoff file found — skipping Step 0-TNB"` in notebook and proceed normally.
 
-**This step feeds directly into Step 0 Channel Audit and Step 1 Sprint Planning.**
-
-## Step 0 — Channel Audit (MANDATORY, runs before everything)
+## Step 1: Channel Audit
 
 Read the last 10 messages from each channel and evaluate as the **user** (not as an agent):
 
@@ -74,13 +45,13 @@ For each message, scan for these failure signals:
 |--------|-------------|--------|
 | **N/A values** | Any field showing `N/A`, `null`, `undefined`, `—`, or `0.0` where real data is expected | Open bug task → `ops` |
 | **Bug / error** | Stack traces, `ERROR`, `FAILED`, tool call errors, MCP exceptions | Open bug task → `ops` or `developer` |
-| **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in notebook, spawn `claude-manager-helper` if pattern is recurring |
-| **Cowork doing wrong thing** | Agent reports completing work that contradicts the sprint goal or doesn't match what was asked | Open correction task → `ba` for re-spec |
+| **Content mismatch** | Message topic doesn't match the channel | Flag in notebook, spawn `claude-manager-helper` if pattern is recurring |
+| **Cowork doing wrong thing** | Agent reports completing work that contradicts sprint goal | Open correction task → `ba` for re-spec |
 | **Silent period** | A channel has had 0 messages in >2h during market hours | Flag as potential pipeline failure → `ops` |
-| **Strategy error** | Agent applies wrong methodology, incorrect thresholds, flawed logic (e.g. bullish signal during bearish regime, wrong sector classification, inverted comparison) | Open fix task → `developer` |
-| **Logic error** | Calculation wrong, condition inverted, comparison backward, data aggregation incorrect | Open fix task → `developer` |
-| **UX / display issue** | Bad formatting, missing Vietnamese diacritics, truncated text, unreadable numbers, ugly layout, missing context in alert | Open UX task → `developer` |
-| **Incomplete information** | Alert missing key data user needs (no %, no direction, no comparison period, no context) | Open UX task → `developer` |
+| **Strategy error** | Agent applies wrong methodology, incorrect thresholds, flawed logic | Open fix task → `developer` |
+| **Logic error** | Calculation wrong, condition inverted, comparison backward | Open fix task → `developer` |
+| **UX / display issue** | Bad formatting, missing Vietnamese diacritics, truncated text | Open UX task → `developer` |
+| **Incomplete information** | Alert missing key data user needs | Open UX task → `developer` |
 
 **Evaluate from the user's perspective:**
 - Would the user understand this message?
@@ -90,7 +61,7 @@ For each message, scan for these failure signals:
 - Is the strategy/logic sound? (not just error-free, but *correct*)
 - Would the user find this message *useful*? (not just valid but actually helpful)
 
-### Step 0-a2 — Chat group review
+### Step 1a — Chat group review
 
 ```
 read_telegram_reports(channel="market-group", limit=10)
@@ -104,7 +75,7 @@ Scan user messages for:
 
 Each finding → task in TASKS.md with category `ux` or `bug`.
 
-### Step 0-b — Cross-check issues against fix history (MANDATORY if any issue found)
+### Step 1b — Cross-check issues against fix history (MANDATORY if any issue found)
 
 Before opening a new bug task, verify the issue wasn't already fixed:
 
@@ -149,14 +120,12 @@ Channel audit: MARKET(N msgs, X issues) | WORK(N msgs, X issues) | BUG(N msgs, X
 Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEAN
 ```
 
----
-
-## No-Task Guard
+## Step 2: No-Task Guard
 
 Before doing anything, check:
 1. docs/TASKS.md — any pending/in-progress tasks? → handle those first
 2. `read_telegram_reports(status="new")` — any user requests? → handle those first
-3. Channel audit (Step 0) found issues? → self-initiate sprint from those findings
+3. Channel audit (Step 1) found issues? → self-initiate sprint from those findings
 4. All empty AND channels clean → return:
 ```
 ## RETURN
@@ -167,64 +136,18 @@ PIPELINE: idle
 
 **PO CAN self-initiate** when channel audit found bugs, strategy errors, UX issues, or logic problems — these are the sprint backlog.
 
-## Self-Initiating Sprint
-
-**1.** Assess: `docs/data/project-stats.json` (counts) | last 2 task reports | user session goal
-
-**2.** Highest-impact: reliability (failing tests, footguns) | coverage (missing signals) | UX (useless alerts) | architecture (DDD debt)
-
-**3.** Write `docs/SPRINT_GOAL.md`:
-```markdown
-# Sprint NNN Goal
-
-## Vision
-[one sentence: business outcome]
-
-## Scope
-IN: [what we're building]
-OUT: [what we're NOT doing]
-
-## Success Metric
-[how we know it's done]
-```
-
-**4.** Create BA task: `| BA-NNN | Requirement Spec for Vision NNN | pending | BA | — |`
-
-**5.** Return:
-```
 ## RETURN
-DONE: Sprint NNN goal written, BA task created
-NEXT: ba | write requirement spec for docs/SPRINT_GOAL.md
-HANDOFF: docs/SPRINT_GOAL.md
-PIPELINE: continue
+
+```
+DONE: Channel audit complete — N issues found
+ISSUES: [list or CLEAN]
+PIPELINE: continue → sprint-plan | idle
 ```
 
-## When BA Returns Spec
-Read `docs/REQ_NNN.md` — matches vision? AC clear? blockers answerable?
-- **Approve** → `status: APPROVED` → return `NEXT: architect | run brownfield analysis`
-- **Reject** → feedback in `docs/REQ_NNN.md` → return `NEXT: ba | revise spec per feedback`
+---
 
-## When QA Signals Sprint Complete
-Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output)
-- **Approve** → update docs/TASKS.md + `docs/SPRINT_GOAL.md` → return `PIPELINE: complete`
-- **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`
-
-**Commit notebook** (end of every cycle):
-
-> Invariant: timestamp = current UTC, never future, never speculative.
-
-### Notebook + ACK timestamp guard
-- Before writing `docs/agent-memory/notebooks/po.md` or appending the `## PO ACK` block in any handoff file, ALWAYS get current UTC via:
-  ```
-  date -u +"%Y-%m-%dT%H:%M:%SZ"
-  ```
-- Use the returned value verbatim for the `At: {ISO timestamp}` field — NEVER speculate, NEVER round to a future minute
-- This applies to every ACK append (Step 0-TNB) and to any notebook header date
-
-```bash
-git add docs/agent-memory/notebooks/po.md
-git commit -m "chore(memory/po): notebook YYYY-MM-DD"
-```
-Convention: `docs/policies/commit-convention.md` § Notebook Commits
-
-**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+## next_flows (compose)
+> After this flow, you MAY read AND follow any of the below. Multiple allowed.
+- → flows/po/bug-triage.md        # when: BUG channel has unclassified bug messages not yet in TASKS.md
+- → flows/po/sprint-plan.md       # when: channels clean (or bugs filed) AND no critical blockers AND sprint capacity available
+- → STOP                          # when: No-Task Guard triggered — no tasks, no requests, channels clean

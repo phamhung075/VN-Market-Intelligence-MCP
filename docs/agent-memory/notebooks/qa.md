@@ -1,5 +1,47 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** 1893a phase 4 sequential-mandate relaxation brief (cycle QA)
+
+## Recent session — 2026-05-12 (1893a — phase 4 sequential-mandate relaxation brief)
+
+**1893a — APPROVED (doc-only, architect brief):**
+Commit: `10ac3da0`. Single file: `docs/architecture-briefs/2026-05-12-phase4-sequential-mandate-relaxation.md`. 375 lines.
+
+Single-file check: `git show --stat 10ac3da0` = 1 file changed, 375 insertions. PASS.
+
+7-section checklist:
+- S1 Summary: PASS (c44+c45 outcomes, what unlocks, what stays guarded)
+- S2 Eligibility Criteria: PASS (2a disjoint zone, 2b file-overlap probe, 2c SSOT veto list, 2d dependency check, 2e test suite isolation)
+- S3 WIP guidance: PASS (WIP=2 rationale — cognitive load, disk, batch reality, merge sequencing)
+- S4 Failure modes c37/c44/c45: PASS (4a c37 incident with root causes + resolution, 4b c44 success, 4c c45 success with mid-cycle disruption)
+- S5 Flow patch points BEFORE/AFTER: PASS (3 patches: execute.md L49, agent-chaining-protocol.md L75, dev-standards.md L87)
+- S6 Rollback signal: PASS (5-trigger table + 5-step rollback procedure)
+- S7 Open questions: PASS (Q1-Q4 explicitly deferred, "Architect does not auto-decide these")
+
+Flow patch hunk applicability:
+- 5a execute.md L49: BEFORE text confirmed on actual L49. Minor: brief omits `**bold**` markers around "Parallel spawns..." in the BEFORE block (file has `**Parallel spawns use SDK-native worktree isolation**`). Also heading says "Lines 49 and 87" but file has only 70 lines — "and 87" is a phantom reference (no second hunk provided). Semantic intent is unambiguous: replace L49 trailing mandate sentence. Verdict: APPLICABLE with minor cosmetic note.
+- 5b agent-chaining-protocol.md L75: BEFORE text matches exactly. PASS.
+- 5c dev-standards.md L87: BEFORE text matches exactly. PASS.
+Overall flow patch verdict: APPLICABLE VERBATIM for 5b+5c. 5a requires awareness of bold markers and phantom "and 87" — non-blocking ambiguity.
+
+Path existence check: all 4 cited paths verified present on main:
+- `.claude/flows/dev-team/execute.md` PASS
+- `docs/protocols/agent-chaining-protocol.md` PASS
+- `docs/policies/dev-standards.md` PASS
+- `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md` PASS
+
+c44/c45 evidence accuracy: verified via git log + reflog. Cherry-pick SHAs `f4141f63` (1892b) and `bb49b82c` (1888a) confirmed on main. `3031ffb1` notebook cherry-pick + `HEAD@{9}: reset: moving to bb49b82c` confirmed in reflog. Evidence accurate.
+
+Open questions deferral: all 4 questions framed as questions, headed "Architect does not auto-decide these". Q1/Q2/Q4 give "Recommended default" / "Architect recommends" / "Architect preference" — opinions, not decisions. Q3: "Architect flags this as likely safe but does not auto-permit. Needs PO decision." PASS.
+
+Commit convention: `docs(arch/1893a): phase 4 sequential-mandate relaxation brief`. Trailers: `Task-Id: 1893a` (non-standard key vs `Task:`), `AC:` (present), `Closes: 1893a` (non-standard). Missing `Sprint:` trailer. Per precedent (signal-T6, 1875b, 1872a-3): task 1893a not in TASKS.md (no sprint number assigned) → no-sprint rule applies → Sprint/Task trailers not required. `Task-Id:` key non-standard but per T4/signal-T6/1875b precedent = non-blocking. Overall: NON-BLOCKING.
+
+No notebook bundling: commit is single brief file only. PASS.
+
+Tests: 9399 pass / 17 fail. All 17 failures are pre-existing (same set as prior cycles: Task 178 price_history, Task 1549, cron-registry count=43, Task 1031 DGC, Sprint 145 diacritics, Task 1100, Task 262 climate x3, Task 1331a TEST-3 RED). Zero new failures introduced by doc-only commit. TSC 0 errors. PASS.
+
+DDD scan: N/A (doc-only). Security scan: N/A (doc-only).
+
 **Last updated:** 2026-05-12 | **Sprint:** 1892b api-gateway push routes (cycle 42)
 
 ## Recent session — 2026-05-12 (1892b — api-gateway /api/push-* routing)
