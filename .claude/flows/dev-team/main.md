@@ -16,36 +16,67 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ### Step 0a — Drain `docs/signals/` (before anything else)
 
-**Rationale:** Signal sources (cowork agents, TNB, architect) may idempotently re-emit the same signal across cron cycles — e.g. if their own flow re-runs without detecting that the signal was already consumed. The in-memory `pendingSignals[]` dedup only covers files seen within the current drain pass; it cannot catch re-arrivals from a prior cycle. The fingerprint check below gates against the persistent `processed/` history so re-fired duplicates are drained silently and never retriage through PO.
+**Rationale:** Signal sources (cowork agents, TNB, architect) may idempotently re-emit the same signal across cron cycles — e.g. if their own flow re-runs without detecting that the signal was already consumed. The in-memory `pendingSignals[]` dedup only covers files seen within the current drain pass; it cannot catch re-arrivals from a prior cycle. The fingerprint check below gates against the persistent `signals_processed` table in `docs/signals/signals.db` so re-fired duplicates are drained silently and never retriage through PO.
+
+Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md`
+DB unavailability degradation: `docs/protocols/agent-chaining-protocol.md` § Cross-Team Signal Directory
+
+---
+
+#### Step 0a-0 — Open signals.db (SQLite path — primary)
+
+```
+db_path = docs/signals/signals.db
+try:
+  open db_path with bun:sqlite (READ_WRITE mode)
+  db_available = true
+catch (ENOENT | SQLITE_CANTOPEN | locked after 3×200ms retry):
+  db_available = false
+  log to notebook: "[dev-team] WARN: signals.db unavailable — degrading to JSON file scan fallback this cycle"
+  # degrade: process all inbox signals without dedup check, do NOT move to processed/
+  # retry next cycle; filesystem inbox remains intact
+  → jump to Step 0a-fallback (below)
+```
+
+---
+
+#### Step 0a-1 — Glob and iterate (SQLite path)
 
 Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascending):
 
-1. Read the JSON file
+1. Read the JSON file.
 2. Log to notebook: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
-3. Append to an in-memory `pendingSignals[]` array
-3b. **Fingerprint check vs `docs/signals/processed/`:**
+3. Append to an in-memory `pendingSignals[]` array.
+
+3b. **Fingerprint check vs `signals_processed` table:**
     ```
     fingerprint = sha256(signal.from + signal.type + JSON.stringify(signal.payload) + signal.createdAt)
+
+    SELECT 1 FROM signals_processed WHERE fingerprint = ? LIMIT 1
     ```
-    Scan all files in `docs/signals/processed/` for a matching `fingerprint` field.
-    - If a match is found:
+    - **Match found** (duplicate):
       - Do NOT append to `pendingSignals[]` (skip PO routing)
       - Set `result = "skipped-duplicate-replay"`
-      - Still move the source file to `docs/signals/processed/` with metadata (see step 4) using filename suffix `-replay` before `.json`
-      - Log to notebook: `"[dev-team] Signal {filename} skipped — duplicate replay (fingerprint match)"`
-    - If no match: proceed to step 4 normally
-    - **Escape hatches** (for manual replay):
-      - Delete the processed/ copy → fingerprint absent → signal routes again on next cycle
-      - Bump `createdAt` in the source file → different fingerprint → treated as a new signal
+      - Move source file → `docs/signals/processed/{filename-replay}.json` (insert `-replay` before `.json`)
+      - Append metadata to JSON before moving (see step 4 format)
+      - Log to notebook: `"[dev-team] Signal {filename} skipped — duplicate replay (fingerprint match in signals.db)"`
+      - No DB INSERT for duplicates
+    - **No match** (new signal): proceed to step 4 (dual-record write)
 
-4. **Move** the signal file to `docs/signals/processed/` with added fields:
+    **Escape hatches** (manual replay):
+    - Delete the `processed/` filesystem copy AND the `signals_processed` row for that fingerprint → signal routes again on next cycle
+    - Bump `createdAt` in the source file → different fingerprint → treated as new signal
+
+4. **Dual-record write** (new, non-duplicate signals only):
+
+   **4a — Filesystem move** (existing behavior, preserved):
    ```
    mv docs/signals/{filename} → docs/signals/processed/{filename}
    ```
    Before moving, append treatment metadata to the JSON:
    ```json
    {
-     ...original fields,
+     "...original fields",
      "fingerprint": "<sha256 hex>",
      "processedAt": "{ISO timestamp}",
      "processedBy": "dev-team",
@@ -54,10 +85,54 @@ Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascendin
    ```
    - `routed-to-po`: signal passed to PO triage
    - `skipped-duplicate`: identical signal already in pendingSignals (same `from` + `type` + `payload`, in-memory check within this drain pass)
-   - `skipped-duplicate-replay`: fingerprint matched a prior processed/ file — signal was already handled in a previous cycle
+   - `skipped-duplicate-replay`: fingerprint matched `signals_processed` DB row — signal was already handled in a previous cycle
    - `skipped-stale`: `createdAt` older than 24h
 
-5. **Prune** `docs/signals/processed/`: delete any processed files older than 7 days
+   **4b — DB INSERT** (new behavior — SSOT for dedup):
+   ```sql
+   INSERT INTO signals_processed
+     (fingerprint, from_agent, to_agent, type, priority, payload,
+      created_at, processed_at, processed_by, result, source_filename)
+   VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), 'dev-team', ?, ?)
+   ```
+   - File is the canonical human-readable artifact; DB row is the search index for dedup.
+   - If DB INSERT fails (non-UNIQUE violation should not occur — UNIQUE constraint is a safety net):
+     - Log to notebook: `"[dev-team] ERROR: signals.db INSERT failed for {filename}: {error}"`
+     - Continue — file move is canonical SSOT; DB insert failure is non-fatal.
+
+5. **Prune** (both DB and filesystem — run once after all signals in the inbox batch are processed):
+
+   **5a — DB prune:**
+   ```sql
+   DELETE FROM signals_processed WHERE processed_at < datetime('now', '-7 days');
+   ```
+
+   **5b — Filesystem prune** (parallel, unchanged behavior):
+   Delete any files in `docs/signals/processed/` with `processedAt` older than 7 days.
+
+   Both prunes run each cycle to keep DB rows and filesystem copies in sync.
+
+---
+
+#### Step 0a-fallback — JSON file scan (DEPRECATED — backup path only)
+
+> **DEPRECATED.** This path is active only when `signals.db` is unavailable (Step 0a-0 catch block).
+> Removal trigger: after 2 consecutive drain cycles where the SQLite path completes without error.
+> Current status: cycle 38 = "cycle 1 post-T2 backfill". Removal eligible after cycle 39 success.
+> Pre-condition for removal: signal-T5 (QA integration tests for dedup SELECT + INSERT + prune) must pass.
+> Until removal: file scan runs as fallback; duplicate signals may route to PO if DB is down.
+
+```
+Scan all files in docs/signals/processed/ for a matching `fingerprint` field.
+if match found → skip (move with -replay suffix, no PO routing)
+if no match → route to PO + move to processed/
+Prune: delete processed files older than 7 days (filesystem only)
+```
+
+Do NOT move files to `processed/` when in fallback mode — leave inbox intact for retry on next cycle.
+Log WARN to notebook at start of fallback path (already done in Step 0a-0).
+
+---
 
 If `pendingSignals` is non-empty, these signals feed into Step 1 (PO triage). PO receives them as additional input alongside Telegram reports and TASKS.md.
 
