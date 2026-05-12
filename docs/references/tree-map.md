@@ -22,7 +22,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/references/agent-routing.md (pointer + procedural-prompt rule + routing principles; intent table SSOT in .claude/skills/dispatch/SKILL.md)
 │
-├── docs/references/workflow-map.md (vector chart: 20 workflows W1–W20, agent take/produce table, main-terminal do/never; load for end-to-end view)
+├── docs/references/workflow-map.md (index: 20 workflows, agent takes/writes, main-terminal rules)
+│   └── docs/references/workflow-map-cycles.md (W5-W19: cron cowork, dev cycle, maintenance, demand-driven)
 │
 ├── docs/protocols/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
 │   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
