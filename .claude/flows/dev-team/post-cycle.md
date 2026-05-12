@@ -1,0 +1,43 @@
+# Dev Team — Step 4 & 4.5: Scan + Compact Checkpoint
+
+**Parent flow:** `.claude/flows/dev-team/main.md` (Step 4 / 4.5 dispatcher)
+
+---
+
+## Step 4 — Scan
+
+**4.0 — Expire stale monitoring:**
+```
+expire_monitoring_reports()  # flips monitoring reports >72h to "wontfix"
+log: "[dev-team] Expired {result.expired} monitoring reports"
+```
+
+**4.1 — Post-execution checks:**
+1. Non-main branches remain → add CLEAN batch → Step 1.
+2. `read_telegram_reports(status="new").length > 0` → `send_telegram(work, "Found N new report(s)")` → Step 1.
+3. `listUnresolvedReports()` non-monitoring count > 0 → `send_telegram(work, "Found N unresolved")` → Step 1.
+4. **Monitoring-only guard (C-6):** ALL unresolved are monitoring → `send_telegram(work, "N in monitoring — no action.")` → archive + exit. (Prevents infinite loop.)
+5. **Archive resolved** (fixed/wontfix/duplicate): `process_telegram_report(id, delete_telegram_message=true)` for each.
+6. Nothing remaining → `send_telegram(work, "Dev loop idle.")` → EXIT.
+
+---
+
+## Step 4.5 — Compact Checkpoint
+
+> Invariant: always `date -u +"%Y-%m-%dT%H:%M:%SZ"` — never speculative.
+
+Run after Step 4 exits cleanly, before re-entering Step 1:
+```
+if ctx > 25%:
+  1. log_agent_work(tag="sprint-boundary", state=current_sprint_id)
+  2. Write docs/agent-memory/notebooks/main.md
+  3. git add docs/agent-memory/notebooks/main.md
+     git commit -m "chore(memory/dev-team): notebook YYYY-MM-DD"
+  4. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
+  5. Return  # hook: ctx>40% → /compact | ctx 30-40% → decision:block | ctx<30% → silent
+```
+After compact: resume from Step 1 via smart-compact-protocol.md.
+
+**If ctx ≤ 25%:** skip → Step 1.
+
+**Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
