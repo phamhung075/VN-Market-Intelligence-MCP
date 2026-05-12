@@ -1,8 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** signal-T2
+**Last updated:** 2026-05-12 | **Sprint:** signal-T3
 
 ## Last session summary
+
+Task signal-T3: dev-team Step 0a drain rewrite — SQLite dedup.
+- File: .claude/flows/dev-team/main.md — Step 0a replaced (92 insertions / 17 deletions).
+- New algorithm: SELECT 1 FROM signals_processed WHERE fingerprint = ? LIMIT 1 replaces O(N) dir scan.
+- Dual-record write: filesystem move (canonical audit artifact) + DB INSERT (search index SSOT).
+- DB INSERT failure non-fatal: log error to notebook, continue (file is SSOT).
+- DB unavailability degradation: ENOENT/SQLITE_CANTOPEN/locked (3x200ms retry) → WARN log → JSON file scan fallback, inbox preserved, retry next cycle.
+- Fallback path marked DEPRECATED. Removal trigger: 2 consecutive cycles SQLite path success. Cycle 38 = cycle 1 post-T2. Eligible after cycle 39. Pre-condition: signal-T5 (QA tests) must pass.
+- Cross-refs added: docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md + docs/protocols/agent-chaining-protocol.md.
+- Branch: task/signal-T3-drain-rewrite | Commit: 6a83e2f4.
+- Key decisions: fallback removal trigger is "cycle 39 + T5 pass" (not just cycle count). JSON fallback does NOT move files to processed/ in degraded mode — inbox preserved for retry.
+- Pipeline: status=in_progress, nextAgent=qa.
+
+## Previous last session summary
 
 Task signal-T2: backfill-signals-db migration script.
 - New file: scripts/migrations/backfill-signals-db.ts — exports backfillFromDir + computeFingerprint.
