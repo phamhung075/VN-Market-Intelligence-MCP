@@ -1,12 +1,13 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** 1878b / ARCH-1884
+**Last updated:** 2026-05-12 | **Sprint:** c47 Phase 4 parallel dispatch + incident forensics
 
 ## Current state
 
-- WIP: 0 / 2 (no tasks In Progress)
-- Todo: 1869a, 1869b, 1869b-seed (price_drop precision tuning), 1862c-D/E/F/G (cowork MCP RCA)
-- Developer next: 1869a → 1869b → 1869b-seed (sequenced)
+- WIP: 1 / 2 (In Progress: 1894a awaits user dashboard action)
+- Backlog HIGH: 1895a worktree-merge-protocol (incident-driven, Phase 5 architect design)
+- Todo: 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
+- CLEAN sweep BLOCKER: 6 worktrees all pid-locked, no go
 
 ## Last session summary
 
@@ -137,3 +138,25 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **WIP final:** 0/2. No blockers.
 
 **Status at session end:** ARCH-1884 reconciliation complete + cap-violation header added. Ready for next cycle.
+
+---
+
+## Cycle 47 — 2026-05-12 Phase 4 Parallel Dispatch Complete + Incident Forensics
+
+**Input:** Developer c47 outcomes (1879b feature done, cloudflare brief shipped to architect, concurrent-commit race incident detected)
+
+**Actions:**
+- **1879b DONE:** Move from Todo → Done section. Annotation: merged into SHA `8bec73d3` mixed with architect brief due to HEAD.lock race during `git cherry-pick`. Functional state correct (all 1879b code present + cloudflare brief on main); logical atomicity violated C2 contract.
+- **1894a-cloudflare-tunnel-routing IN PROGRESS:** Move from Todo → In Progress with `(awaits user dashboard action)` annotation. Root cause = Cloudflare ingress rules not forwarding `/api/*` to api-gateway:4000 (code fix 1892b deployed but tunnel layer misconfigured). User role: config admin. Next action belongs to user per CLAUDE.md Agent Autonomy rule — never ask user to run technical actions; spawn subagent instead. Here, user IS the subagent (Cloudflare dashboard admin). Mark awaiting.
+- **1895a-worktree-merge-protocol HIGH TODO (NEW):** Add to Backlog as Phase 5 architect design task. Forensic evidence from c47 incident: HEAD.lock contention race during concurrent `git cherry-pick a6d4b555` + architect `git commit` caused 1879b staged files to be swept into architect commit SHA `8bec73d3`. Requirement: design serialized merge gate (file-lock or transaction wrapper) to prevent index races on concurrent agent cherry-picks. Priority HIGH (incident-driven). Pre-existing in PO carry-over (mentioned c46 Q2, c47 incident confirms HIGH), now with forensic justification.
+- **WIP status:** 1 In Progress (1894a awaits user). Under cap (1/2).
+- **Carry-over backlog unchanged:** 6 worktrees pid-locked (no go), 1881a + 1890a deferred multi-cycle, 1862c-D/E chain todo.
+
+**File state diffs:**
+- TASKS.md: 1879b moved Done (line 78, merge SHA + atomicity note), 1894a moved In Progress (line 51, awaits user annotation), 1895a added Backlog (line 26 after 1888k, forensic evidence + HIGH priority)
+- TASKS.md preamble: CAP 193/80 kept (auto-archive eligible 2026-05-19+)
+- PM notebook: Current state updated (WIP 1/2, 1895a HIGH, CLEAN blocker 6 worktrees), c47 session appended
+
+**Commit:** Pending below.
+
+**Status at session end:** READY FOR COMMIT. All cycle 47 task state synced. Incident properly escalated to 1895a Phase 5 design brief queue.
