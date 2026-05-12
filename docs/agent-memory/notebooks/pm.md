@@ -160,3 +160,23 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **Commit:** Pending below.
 
 **Status at session end:** READY FOR COMMIT. All cycle 47 task state synced. Incident properly escalated to 1895a Phase 5 design brief queue.
+
+---
+
+## Cycle 49 — 2026-05-12 PM Sync + 1896a/1896b Triage
+
+**Input:** c49 cycle completion (1896a RCA brief finalized, 1895b implementation complete, ops evidence gap for c40 restart).
+
+**Actions:**
+- **1896a→Done:** Moved from Todo → Done section. Annotation: false-alarm-h4, c41 restart was c48 deploy rebuild (1879b feature), Sprint 1336 integrity intact globally
+- **1895b→VERIFIED:** Confirmed in Done section with commit 74956508; agent-father completed Option 2 merge-gate implementation (4 scripts, 3-doc ban codification, all ACs pass)
+- **1896b→NEW MEDIUM Todo:** Queued as follow-up RCA task. Description: c40 02:40 UTC restart (unresolved); pending ops evidence pull (`docker events` + `docker logs` filter 02:30–02:45 window); escalate to sub-sprint if genuine crash detected
+- **TNB-PLANNED-RESTART convention (DEFERRED BUNDLE):** Noted in c49 notebook for future ops-coordination bundle. Convention rule: ops notebook entries must tag deliberate container lifecycle operations with `# TNB-PLANNED-RESTART` to prevent TNB from re-classifying planned ops actions as restart-pattern events. Document update only, no sprint id needed yet.
+- **WIP status:** 0/2 (1894a awaits user dashboard action). Under cap.
+
+**File state diffs:**
+- TASKS.md Todo: 1896b added (MEDIUM RCA, pending ops evidence)
+- TASKS.md Done: 1896a added (architect brief false-alarm-h4 + Sprint 1336 intact), 1895b verified present
+- PM notebook: c49 session appended
+
+**Status:** Ready for commit.
