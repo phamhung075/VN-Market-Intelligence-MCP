@@ -1,4 +1,4 @@
-<!-- size-justification: 136L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. Steps 0b/1/2 are too small to extract into siblings; sub-flows already absorb Steps 0a/3/4. -->
+<!-- size-justification: 165L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Input
@@ -29,34 +29,62 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 ---
 
 <!-- jump:preflight -->
-## Step 0-PREFLIGHT — HEAD.lock Guard
+## Step 0-PREFLIGHT — HEAD.lock Guard + Worktree GC
 
 > Full algorithm + escalation tree → `docs/protocols/head-lock-self-cure.md`
 
 ```
-if .git/HEAD.lock not exists → skip, JUMP TO drain-signals
+ts = $(date -u +%Y%m%dT%H%M%SZ)
+
+if .git/HEAD.lock not exists:
+  # T5: worktree prune (always, lock absent branch)
+  pruned = $(git worktree prune -v 2>&1 | head -20)
+  if pruned non-empty: send_telegram(work, "[PREFLIGHT] git worktree prune: {pruned}")
+  # T6: 24h worktree lock expiry sweep
+  if .claude/worktrees/ exists:
+    for each f in .claude/worktrees/*/.git/*.lock:
+      age_h = (now() - mtime(f)) / 3600
+      if age_h > 24:
+        log "[PREFLIGHT] expired worktree lock: {f} age={age_h}h removed"
+        rm -f {f}
+  JUMP TO drain-signals
 
 else:
+  # T2: capture lock size for diagnostics
+  lock_size = $(stat -f %z .git/HEAD.lock)   # macOS; Linux: stat -c %s
   age = (macOS) now() - $(stat -f %m .git/HEAD.lock)
         (linux)  now() - $(stat -c %Y .git/HEAD.lock)
   pid_alive = pgrep -x git | xargs -I{} lsof -p {} 2>/dev/null | grep '.git' → non-empty?
 
   if age > 60s AND NOT pid_alive:
+    # T1: capture lsof + lock metadata before removal
+    lsof .git/HEAD.lock 2>&1 > docs/agent-memory/sessions/preflight-lsof-{ts}.log
+    ls -laT .git/HEAD.lock >> docs/agent-memory/sessions/preflight-lsof-{ts}.log
+    # T1 (future commit steps): wrap git commit as:
+    #   GIT_TRACE=1 GIT_TRACE_PACK_ACCESS=1 git commit ... \
+    #     2>&1 | tee -a docs/agent-memory/sessions/git-trace-{ts}.log
     rm .git/HEAD.lock
-    send_telegram(work, "[PREFLIGHT] HEAD.lock removed — age={age}s, no live git pid — {ISO timestamp}")
+    send_telegram(work, "[PREFLIGHT] HEAD.lock removed — age={age}s size={lock_size}B pid_alive=false — {ISO timestamp}")
     session_headlock_count++
     if session_headlock_count >= 3 within 24h:
       send_telegram(work, "HEAD.lock recurred 3x in 24h — architect rethink needed")
       write docs/signals/{ts}-headlock-recurrence.json:
         {from: "dev-team", to: "architect", type: "recurring-bug", payload: {module: ".git/HEAD.lock", count: 3}}
+    # T5+T6: run worktree gc after lock clearance too
+    pruned = $(git worktree prune -v 2>&1 | head -20)
+    if pruned non-empty: send_telegram(work, "[PREFLIGHT] git worktree prune: {pruned}")
+    if .claude/worktrees/ exists:
+      for each f in .claude/worktrees/*/.git/*.lock:
+        age_h = (now() - mtime(f)) / 3600
+        if age_h > 24: log "[PREFLIGHT] expired worktree lock: {f} age={age_h}h removed"; rm -f {f}
     JUMP TO drain-signals
 
   elif age <= 60s:
-    send_telegram(bug, "HEAD.lock too young ({age}s) — may be active write — escalate ops")
+    send_telegram(bug, "HEAD.lock too young ({age}s) size={lock_size}B — may be active write — escalate ops")
     JUMP TO end
 
   elif pid_alive:
-    send_telegram(bug, "HEAD.lock held by live git pid — escalate ops")
+    send_telegram(bug, "HEAD.lock held by live git pid size={lock_size}B — escalate ops")
     JUMP TO end
 ```
 
