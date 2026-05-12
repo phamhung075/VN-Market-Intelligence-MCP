@@ -1,6 +1,68 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 05:32 UTC (Cycle 43 — 1891a worktree-isolation doc updates shipped)
+**Written:** 2026-05-12 07:05 UTC (Cycle 44 — Phase 3 parallel verification PASS + pollNews fix Track 1)
+
+## Cycle 44 (2026-05-12 06:26 → 07:05 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals (TNB c40 audit landed `091e65bb` during parallel work — drain consumed it) | empty |
+| 0b Resume | idle | fall through |
+| 1 PO Triage | 0 new TG, MCP gateway UP, open pollNews fix from offline architect brief | BATCH 1892a-ops + 1892a-dev (parallelizable) |
+| 2 Plan | Skipped — architect brief = design (Option A); PO split into 2 disjoint tracks | direct parallel dispatch |
+| 3 Exec | **PARALLEL via SDK `isolation: "worktree"`** — ops + dev-mcp-server in single message | 2 worktrees independent |
+| 3 Ops | 1892a-ops worktree `agent-a86faa89fd87e2fea`: AC-1+2 PASS, AC-3 FAIL (HTTP 404 = api-gateway routing missing), AC-4 MONITORING. Commit `39605bf2` | docs-only |
+| 3 Dev | 1892a-dev worktree `agent-a471dae68a36bf743`: AC-5/6/7/8 all PASS. 8/8 new tests green. Commit `380cff96` | code+tests+script |
+| 3 QA | Parallel QA both branches. Dev APPROVED (byte-equivalent refactor, 9260/9273 pass). Ops APPROVED (AC-3 diagnosis correct: gateway pattern `/:service/*` rejects bare `/api/*`). | both green |
+| 3 Merge | Cherry-pick: dev → `dbed5ba4`, ops → `41f54f22`. Zero conflicts (disjoint files). | clean |
+| 3 PM | TASKS.md sync: 1892a-ops + 1892a-dev Done + 1892b Todo HIGH (api-gateway routing). | `fba211ed` |
+| 4.0 Expire | 0 monitoring expired | clean |
+| 4 Scan | 0 new TG, MCP gateway UP throughout | clean |
+
+### 🎯 Phase 3 Verification VERDICT: PASS
+
+**SDK-native `isolation: "worktree"` parallel mechanism worked exactly as designed:**
+- 2 worktrees spawned in single message → independent execution → no cross-contamination
+- Disjoint scopes maintained (ops: `docs/agent-memory/notebooks/ops.md`; dev: `apps/mcp-server/**` + `vps-scripts/fetch-vn-news.sh`)
+- Both branches QA-approved
+- Cherry-pick merge zero conflicts
+- AC-3 FAIL is a **discovery** (api-gateway routing gap), NOT a parallel-mechanism failure
+- Total cycle wall time ~39 min — would have been ~60+ min sequential
+
+**Per `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md` Phase 3 roadmap:**
+- ✅ c44 verification PASS (1 successful run)
+- ⏳ c45 verification required (1 more successful run before Phase 4 unlocks)
+- Sequential mandate REMAINS until c45 also passes
+
+### Strategic outcomes
+
+- **pollNews production bug** (user-reported BUG-channel spam): infrastructure track 50% fixed (VPS service running + redeploy + endpoint URL corrected). Code track 100% complete (handler extracted, health endpoint live, script hardened with heartbeat sentinel, 8 new tests). **Real news ingestion still gated on 1892b api-gateway routing fix.**
+- **AC-3 discovery**: `/api/push-*` endpoints exist on MCP server but bare `/api/*` URLs return 404 through API Gateway because pattern is `/:service/*` requiring registered service prefix. NEW Todo `1892b` HIGH priority in TASKS.md.
+- **TNB c40 audit landed `091e65bb` during parallel work** — important downstream items for c45 PO triage:
+  - 1st auto-cure shipped (unified-agent Layer 4 pillar gap, `.claude/flows/unified-agent/market.md` Step 4b)
+  - alert-commander + architect header drift RESOLVED ✅ (1889a + NB-HDR-c39 worked)
+  - financial-analyst silent AGAIN post-c39 single recovery (Sprint 1885/1886 ROI at risk)
+  - **PO never ACK'd c39 handoff** — governance HIGH
+  - Container restart at ~02:40 UTC (uptime 12h → 4h7m) — needs ops investigation
+  - market-watcher notebook header drift still LOW (Sprint:1846 stale)
+- **C2 commit-convention gate** 2026-05-17 (5 days): +5 conformant commits this cycle (1892a-ops + 1892a-dev + cherry-picks + PM sync + close).
+- **Worktree cleanup deferred**: both worktree branches still locked by live agent sessions (pid 76802). Will clean at session end via natural agent expiry — non-blocking.
+
+### c45 carry-over (priority order)
+
+1. **1892b api-gateway routing** (HIGH — closes user bug; gates 1892a-ops AC-3+AC-4). `apps/api-gateway/src/index.ts` needs `/api/push-*` route passthroughs. Zone: `apps/api-gateway` → `dev-api-gateway`.
+2. **TNB c40 PO triage** — 4 HIGH findings need ACK + actions: financial-analyst silence pattern, PO governance (c39 ACK missing), container restart, plus 1 auto-cure verification (unified-agent Step 4b — observe next cycle).
+3. **Phase 3 verification c45 run** — 2nd parallel candidate to confirm mechanism. Natural candidates: 1879a (FRED fetcher, `apps/mcp-server`) + 1888a (SSOT chore, doc-only) OR 1892b (api-gateway) + 1888a.
+4. **1879a impl** — FRED EFFR/IORB fetcher (spec ready).
+5. **1879b impl** — `get_fed_liquidity_spread()` (depends 1879a).
+6. **1890a ba spec** — financial-analyst tool-package re-eval (6+ cycle carry).
+7. **1888a SSOT chore** — hardcoded counts → pointers.
+8. **1881 ba spec** — source-tier retrofit Layer 9.
+9. **1889a auto-cure verification** — still pending; window CLOSES at end of c45 per c39 catalogue rule (3rd cycle = success/fail).
+10. **CLEAN batch** — 7+ stale remote branches; can sweep after c45 Phase 3 verification.
+
+---
+
 
 ## Cycle 43 (2026-05-12 05:26 → 05:32 UTC)
 
