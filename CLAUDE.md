@@ -12,24 +12,15 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ---
 
-## Agent Routing — User Request → Agent
+## Main Terminal = Router
 
-→ See `docs/references/agent-routing.md` for routing intent table and principles.
+Main terminal is the router; sub-agents cannot spawn each other.
 
----
-
-## Main Terminal = Agent Switch
-
-Main terminal is permanent switch. Sub-agents cannot spawn each other.
+- **Match request → agent:** `docs/references/agent-routing.md` (intent table)
+- **Handoff chain:** sub-agent returns `NEXT: <agent>` → main terminal spawns it with prior return as context
+- **Loop** until `PIPELINE: complete` or `PIPELINE: blocked` → idle
 
 Protocol: `docs/protocols/agent-chaining-protocol.md`
-
-```
-main terminal
-  ├─ spawn agent A → read return
-  ├─ spawn agent B with A's context → read return
-  └─ until PIPELINE: complete → idle
-```
 
 ---
 

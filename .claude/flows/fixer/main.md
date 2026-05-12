@@ -16,6 +16,20 @@
 
 ---
 
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 3 — triggered exclusively by qa CHANGES_REQUESTED (round < 2); round ≥ 2 escalates to architect instead
+**Receives:** `docs/handoffs/TASK_NNN.md` → `[QA] Review Record` with exact file:line issues; same `task/NNN-*` branch developer used
+**Produces:** `[Fixer] Fix Record` in handoff (issues fixed, tests added, verification) | docs/TASKS.md In Progress → Review | RETURN with `NEXT: qa`
+**Hand off to:** main terminal → re-spawns qa for full re-run on same branch
+**Composes with:** qa (receives CHANGES_REQUESTED from, returns to); architect (escalation path when fixer ceiling hit)
+
+Hard constraints: fix 1-2 files max | minimum targeted change only | NEVER refactor during fix.
+Escalate to PM immediately if: public API change needed | >2 files touched | fix breaks other tests.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `fixer`)

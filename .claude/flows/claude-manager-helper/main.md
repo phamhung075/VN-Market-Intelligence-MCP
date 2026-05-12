@@ -16,7 +16,7 @@ git diff --name-only HEAD~3..HEAD
 ```
 Groups:
 - `GROUP_KNOWLEDGE` = `docs/{policies,protocols,standards,references}/*.md` | `docs/data/*.json` | `docs/*.md`
-- `GROUP_AGENTS` = `.claude/agents/*.md` | `cowork-workspace-team-claude-desktop/*.md`
+- `GROUP_AGENTS` = `.claude/agents/*.md` | `.claude/flows/*/*.md`
 - `GROUP_TOOLS` = `apps/mcp-server/src/interface/mcp/tools/*.ts`
 - `GROUP_ROOT` = `CLAUDE.md` | `docs/TASKS.md` | `docs/SPRINT_GOAL.md`
 - `GROUP_MEMORY` = `memory/MEMORY.md`

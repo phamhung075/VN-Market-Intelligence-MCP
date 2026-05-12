@@ -2,21 +2,20 @@
 
 **Load when:** agent coordination, rewriting agent files, understanding team structure.
 
-## Analysis Team (Claude Cowork — 8 agents)
+## Analysis Team (Claude Cowork)
 
-| # | Agent | File | Role | Cycle |
-|---|-------|------|------|-------|
-| 0 | Setup | `00-setup-watchlist.md` | Seed watchlist | Once |
-| — | Unified Coordinator | `unified-agent.md` | Coordinate + quality review + last-mile check | On-demand + Daily 22:00 VN + Sunday 20:00 VN |
-| 1 | News Scout | `01-news-scout.md` | News, sentiment, impact chains, legal/crisis detection | 15 min (market) / 60 min (off) |
-| 2 | Financial Analyst | `02-financial-analyst.md` | Collect BCTC status + analyze financials in same cycle | 2x daily (08:00 + 20:00 VN) |
-| 4 | Market Watcher | `04-market-watcher.md` | Prices, anomalies, supply chain, climate/energy | 5 min (market) / 2h (off) |
-| 5 | Alert Commander | `05-alert-commander.md` | ONLY agent → MARKET channel | 10 min (market) / 30 min (off) |
-| 6 | Digest & Predict | `06-digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
-| 7 | QA Responder | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
-| 8 | Tran Ngoc Bau | `08-tran-ngoc-bau.md` | Strategy supervisor, quality audit, auto-cure | Daily 20:00 VN |
+Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.claude/agents/`.
 
-Coordinator: `cowork-workspace-team-claude-desktop/unified-agent.md`
+| Agent | File | Role | Cycle |
+|-------|------|------|-------|
+| Unified Coordinator | `unified-agent.md` | Coordinate + quality review + last-mile check | On-demand + Daily 22:00 VN + Sunday 20:00 VN |
+| News Scout | `news-scout.md` | News, sentiment, impact chains, legal/crisis detection | 15 min (market) / 60 min (off) |
+| Financial Analyst | `financial-analyst.md` | Collect BCTC status + analyze financials in same cycle | 2x daily (08:00 + 20:00 VN) |
+| Market Watcher | `market-watcher.md` | Prices, anomalies, supply chain, climate/energy | 5 min (market) / 2h (off) |
+| Alert Commander | `alert-commander.md` | ONLY agent → MARKET channel | 10 min (market) / 30 min (off) |
+| Digest & Predict | `digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
+| QA Responder | `qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
+| Tran Ngoc Bau | `tran-ngoc-bau.md` | Strategy supervisor, quality audit, auto-cure | Daily 20:00 VN |
 
 ## Dev Team (Claude Code CLI — local cron)
 

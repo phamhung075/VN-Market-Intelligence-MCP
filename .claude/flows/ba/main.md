@@ -14,6 +14,20 @@ Requirement spec in docs/TASKS.md | Architect task created | PO notified
 
 ---
 
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 2 — SPRINT-M/L only, first sub-step before architect
+**Receives:** `docs/SPRINT_GOAL.md` vision | `docs/TASKS.md` task numbering | module memory notebooks
+**Produces:** FR/NFR spec with DDD layer assignments, blockers, edge cases → written to `docs/handoffs/TASK_NNN.md`; RETURN block with `NEXT: architect`
+**Hand off to:** main terminal → spawns architect with BA spec as context
+**Composes with:** architect (next) and pm (two steps later) in the same SPRINT-M/L planning chain
+
+Not called for SPRINT-S — architect handles S alone.
+Blockers (Q-only-PO-can-answer) must be resolved before returning — loop with PO if needed.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `ba`)

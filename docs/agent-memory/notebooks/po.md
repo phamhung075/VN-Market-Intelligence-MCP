@@ -1,6 +1,151 @@
 # PO Notebook
 
-## Last updated: 2026-05-12T13:29:39Z (dev-team c47 triage — BATCH(2): 1894a UNBLOCK + 1879b)
+## Last updated: 2026-05-12T16:28:02Z (dev-team c50 triage — BATCH(2): 1879a-row-purge CHORE + 1896c persistent-docker-events)
+
+---
+
+## Cycle 50 triage — 2026-05-12T16:28:02Z
+
+### Trigger
+Cron-fired dev-team c50. Inputs (per main-terminal brief): empty pendingSignals, empty new TG reports, 14 unresolved-monitoring reports (none new since c49 close at 15:27 UTC apart from #2861/#2863 alert-quality 17%/22% — Sprint 1869 OPS-blocked carry, no action), TASKS.md Todo includes stale 1879a (duplicate of Done at L83 merge SHA `f7240b5e`).
+
+### Step 0 — Channel audit
+SKIPPED telegram MCP. Inputs already enumerated and TNB c41 (15:27 UTC ACK) covers MARKET/WORK/BUG for the day. No fresh BUG delta beyond the 14-monitor list (all carry). Will redo Step 0 next cycle if main terminal demands.
+
+### Unresolved-reports disposition
+All 14 reports are `monitoring` — none rotate to new-task this cycle. Rationale per report:
+- #2841/#2842 BCTC FPT/VNM low-confidence — Sprint 2026-05-10 monitoring; await re-parse cycle.
+- #2845/#2854 news freshness — tied to #2860 (Cloudflare 1894a USER-BLOCKED).
+- #2847 git HEAD.lock — known structural (TNB-c33-F7), workaround inlined.
+- #2849-#2852/#2861/#2863 alert precision/quality — Sprint 1869 OPS-blocked via 1876a-A5 (1869b-seed never reached prod DB).
+- #2857 price_surge 0% — c50-04:04 UTC; monitoring 12h+ window.
+- #2859 get_system_status EOF — single-shot c50-05:09 UTC; not recurring.
+- #2860 pollNews 0 items — gated on 1894a Cloudflare USER action.
+
+### Stale-branch CLEAN posture
+`git worktree list` confirms 6 worktree-agent-* + 1 task/1888a are `locked` flagged (git-worktree lock), but `.pidlocks/` is **empty** → no live agents. Per-branch unmerged commits:
+- a57f4c (task/1888a-ssot-tool-cron-pointers via worktree) → 0 unmerged commits → CLEAN-safe.
+- a471dae (1892a pushNews+health) → 1 commit `380cff96` → check vs main.
+- a4d979 (1879b get_fed_liquidity_spread `a6d4b555`) → 1879b is DONE in TASKS.md L82 merge SHA d098bb24/a6d4b555 → likely already merged.
+- a86faa (1892a-ops `39605bf2`) → 1892a-ops DONE (merge SHA 4439abce) → may need force-prune.
+- a8f9390 (1892b api-gateway routing `f032a8f7`) → 1892b DONE → may need force-prune.
+- a9e8f08 (1879a fetcher `4e4aaf5e`) → 1879a Done L83 merge SHA `f7240b5e` → already merged, locked worktree leftover.
+- Defer full CLEAN batch to qa — not PO direct execution. Add CLEAN item to BATCH this cycle (10+ cycle deferral exceeds tolerance; main terminal can route to qa).
+
+### BATCH selection — Option A: 2-item (CHORE + UNBLOCK-S)
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → M/L.
+
+1. **1879a-row-purge** (CHORE/FIX, doc-only, ALREADY-APPLIED this turn — purges duplicate Todo row at TASKS.md L39 which collided with Done row at L83). 1-line edit, zero risk. Logged here for traceability; not dispatched.
+2. **1896c persistent-docker-events** (MEDIUM/UNBLOCK-S, ops or agent-father). Config-only (supervisor unit or `docker events >> /var/log/docker-events.log &`). Unblocks future restart RCAs from 24h Docker retention purge (root reason 1896b was inconclusive). No code, no rebuild. Zone: ops host config / supervisor. Single file write or systemd-style unit.
+3. **CLEAN-c50** (qa-routed). 6 stale worktrees + 1 stale branch; all reference merged-or-empty branches. Route to qa for `git worktree remove --force` + `git branch -D` pass. WIP-cheap (no domain-code).
+
+Cloudflare 1894a → still HIGH but USER-BLOCKED (config admin only); PO cannot dispatch. NOT in BATCH.
+1862c-D/E → HIGH OPS, ops-gated. Carry. NOT in BATCH (capacity 2 active dispatches + 1 CLEAN).
+1876a-A5 → HIGH OPS, ops-gated (1869b-seed prod re-deploy). Carry. NOT in BATCH this cycle; queue for next.
+1881a/1890a → ba spec, defer one more cycle (capacity).
+
+### Cross-pollution + WIP check
+- 1896c touches: host-side supervisor config OR `docker-compose.yml` `logging` section OR new `infra/supervisor/docker-events.conf`. NOT a repo-domain-code zone — disjoint from any active dev sprint.
+- CLEAN touches: git worktree dir + branch refs only. Disjoint.
+- WIP: 0 In Progress (1894a is USER-BLOCKED, doesn't count). Adding 1896c → 1 In Progress. CLEAN runs to qa, not as WIP.
+- Phase 4 ELIGIBLE: disjoint zones (ops/host vs git-housekeeping), no shared-SSOT writes, no `depends_on`.
+
+### Items deferred (NOT this BATCH)
+- 1894a Cloudflare → USER action pending. Brief at `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`.
+- 1881a source-tier retrofit (HIGH ba spec) — 7+ cycles deferred. Defer one more.
+- 1890a fin-analyst tool-pkg (MEDIUM ba spec) — 11+ cycles deferred. Defer one more.
+- 1862c-D/E (HIGH OPS) — ops-gated. Defer.
+- 1876a-A5 (HIGH OPS) — ops-gated. Defer.
+- 1885a/1886a — blocked on ARCH-1884 + 1878.
+- 1882a/1883a — queued behind 1878-1881.
+- 1888b-k (SSOT chores) — defer (low-volume cleanup, batch later).
+- 1890a — defer.
+- 5 JANITOR tasks — bulk-batch later.
+- TASKS.md cap 199→198/80 (-1 from 1879a purge) — auto-archive eligible 2026-05-19.
+- `list_unresolved_reports` MCP tool drift (now "Tool not found") — workaround `status=processed` query active; escalate to ops if persists c51.
+
+### Hard-constraint compliance
+- WIP ≤2: PASS (0→1 + CLEAN to qa)
+- Disjoint zones (§2a): PASS
+- No shared-SSOT writes (§2c): PASS
+- No file overlap (§2b): PASS
+- No `depends_on` between 1896c + CLEAN: PASS
+- Sequential dependency declared: none
+
+### Files written this cycle
+- docs/TASKS.md (purged duplicate Todo row L39 for 1879a; Done row at L83 intact)
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+Not present at session start. No rm needed.
+
+---
+
+## Cycle 49 triage — 2026-05-12T15:27:53Z
+
+### Trigger
+Cron-fired dev-team c49. TNB c41 audit handoff in `docs/handoffs/tnb-audit-latest.md` (GOOD/STRONGLY IMPROVING, 8 findings, auto-cure ROI proven). TNB rec #1 → verify Sprint 1895a-incident actually addresses container restart RCA.
+
+### Step 0-TNB — Verified: 1895a is NOT container-restart RCA → GAP
+- 1895a brief at `docs/architecture-briefs/2026-05-12-worktree-merge-protocol.md` = Phase 5 worktree merge-protocol (HEAD.lock race during cherry-pick). NOT restart RCA.
+- No other brief in `docs/architecture-briefs/` matches container/restart/incident keywords.
+- TASKS.md grep "container.*restart" → only 1892a-ops notebook bundle reference ("TNB-c40-container-restart-triage") — operational triage, not architect RCA.
+- Conclusion: alert-commander header conflated 1895a-merge-protocol with restart-incident. Real RCA missing.
+- Severity: HIGH/ops. Sprint 1336 (2026-04-25) supposedly closed SQLite VirtualMachine teardown → 2 restarts in <12h on 2026-05-12 = confirmed regression OR new failure mode.
+
+### Step 0-TNB ACK shipped
+Appended `## PO ACK — cycle 41 — 2026-05-12T15:27:53Z` to `docs/handoffs/tnb-audit-latest.md`. Disposition:
+- #1 container restart → NEW task 1896a (architect RCA brief, HIGH/ops)
+- #2 HOSE 4/4 sources fail → roll into 1896a evidence if persists past 02:00 UTC market open
+- #3 RSS post-restart degradation → known-pattern, no task
+- #4 fin-analyst silent 16h → 1889a stop-gap shipped, await 23:00 UTC cycle
+- #5 market-watcher header drift → CARRY (c40 ACK #5)
+- #6 US10Y 4.46% climbing → MONITOR, audit if 4.50+ in 24h
+- #7 Reuters/TE counter reset → known-pattern post-restart
+- #8 alert accuracy 1% stagnant → CARRY (OPS-blocked, Sprint 1869)
+
+### Step 0 — Channel audit
+SKIPPED telegram MCP calls — TNB c41 functions as audit (covers MARKET/WORK/BUG indirectly via methodology audit + restart timeline + RSS degradation). Fresh delta since c48 close (14:39 UTC, 48 min ago) low-probability for new BUG channel material beyond TNB findings. If main terminal demands explicit channel reads, redo Step 0 next cycle.
+
+### BATCH selection — Option C: parallel (architect + developer)
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → M/L.
+- 1896a container-restart RCA (HIGH/ops, ARCH, recurring bug ≥2 restarts → PM-escalation rule triggers Architect rethink before any new fix per MEMORY.md `feedback_recurring_bug_escalation.md`). Doc-only path: `docs/architecture-briefs/2026-05-12-container-restart-rca.md`. Read-only on notebooks/ops + alert-commander + tnb handoff + MEMORY.md `project_sqlite_corruption_fix.md`.
+- 1895b Phase 5 worktree-merge-protocol IMPL (HIGH, developer or agent-father, ~4h). Spec: `docs/architecture-briefs/2026-05-12-worktree-merge-protocol.md` Option 2. Writes: `.claude/flows/dev-team/main.md` + new `scripts/audits/*.sh` (4 helpers). Unblocks Phase 5 rollout.
+
+Cloudflare 1894a → still HIGH but USER-BLOCKED (config admin only); PO cannot dispatch. Confirmed pending — not in BATCH.
+
+### Cross-pollution + WIP check
+- 1896a touches: `docs/architecture-briefs/2026-05-12-container-restart-rca.md` (new file, doc-only zone).
+- 1895b touches: `.claude/flows/dev-team/main.md` + `scripts/audits/*.sh` (4 new files) + (optionally) flow docs in `.claude/flows/`.
+- Disjoint zones: PASS (`docs/architecture-briefs/` vs `.claude/flows/` + `scripts/`).
+- No shared-SSOT writes: PASS (neither writes to TASKS.md, project-stats.json, ARCHITECTURE.md, agent .md files, etc.).
+- WIP: 0 → +2 = at cap 2. OK.
+- Phase 4 ELIGIBLE: disjoint zones, no `depends_on` (1896a is RCA-only; 1895b implements approved 1895a). PARALLEL safe — proven c48.
+
+### Items deferred (NOT this BATCH)
+- 1894a Cloudflare tunnel routing → STILL pending USER dashboard action. Brief at `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. No PO dispatch possible.
+- 1881a source-tier retrofit (HIGH, ba spec) — 6+ cycles deferred; defer one more (capacity 2 only).
+- 1890a fin-analyst tool-pkg re-eval (MEDIUM, ba spec) — 10+ cycles deferred.
+- CLEAN sweep — 6 worktree-agent-* pid-locked (a471/a4d9/a57f/a86f/a8f9/a9e8); defer one more cycle.
+- TASKS.md cap 195/80 → 196/80 with 1896a; auto-archive eligible 2026-05-19.
+- FRED data sync — `get_fed_liquidity_spread` returns no_data until macroIndicatorRefreshJob populates EFFR+IORB; passive wait.
+- 23:00 UTC unified-agent daily-review cycle (TNB rec #2 — possible Step 4b pillar check missing on daily-review.md) — monitor c50.
+
+### Hard-constraint compliance
+- WIP ≤2: PASS (0→2)
+- Disjoint zones (§2a): PASS (docs/architecture-briefs/ vs .claude/flows/+scripts/)
+- No shared-SSOT writes (§2c): PASS
+- No file overlap (§2b): PASS
+- No `depends_on` between 1896a and 1895b: PASS
+- Sequential dependency declared: none
+
+### Files written this cycle
+- docs/handoffs/tnb-audit-latest.md (PO ACK c41 appended)
+- docs/TASKS.md (1896a row inserted above 1895b)
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+Not present at session start. No rm needed.
 
 ---
 

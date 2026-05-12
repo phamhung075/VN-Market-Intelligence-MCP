@@ -14,6 +14,19 @@ BA spec or user requirement, `docs/TASKS.md` task number, recent agent notebooks
 
 ---
 
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 2 — SPRINT-S (alone) or SPRINT-M/L (after ba); also post-merge review for SPRINT-L after last tier merge
+**Receives:** BA spec (`docs/handoffs/TASK_NNN.md`) for M/L; direct task spec for S; post-merge: merged handoff + git log for L review
+**Produces:** `[Architect] Brownfield Findings` appended to `docs/handoffs/TASK_NNN.md` — verified paths, reuse patterns, design decisions, DDD layer assignments, risk flags; RETURN block with `NEXT: pm`
+**Hand off to:** main terminal → spawns pm with architect output
+**Composes with:** ba (prior step, M/L only); qa triggers `ARCHITECT_REVIEW_NEEDED` in Step 3 when new domain service/cross-service HTTP detected
+
+Post-merge L review: read final merged state, write `[Architect] Post-Merge Review` section, return `PIPELINE: complete` or open backlog tasks.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `architect`)

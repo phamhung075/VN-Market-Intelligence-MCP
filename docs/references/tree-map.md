@@ -49,7 +49,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/references/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
 │
-├── docs/references/agent-roster.md (team structure: analysis 8 + dev 13 + microservices 9, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol)
+├── docs/references/agent-roster.md (team structure: analysis + dev + microservices, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol — counts in `docs/data/project-stats.json`)
 │
 ├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
 │   └── docs/policies/commit-convention.md (commit format SSOT: type vocabulary, sprint/area scope, task-id, trailers, worked example, no-sprint rule)
@@ -148,8 +148,6 @@ CLAUDE.md (root — always loaded)
 │       ├── docs/architecture/microservice/alert-engine/infrastructure.md
 │       ├── docs/architecture/microservice/alert-engine/api-reference.md
 │       └── docs/architecture/microservice/alert-engine/testing.md
-│
-├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │
 ├── docs/AGENT_CREATION_GUIDE.md (agent creation index — always loaded by agent-father)
 │   ├── docs/guides/guide-zones.md (Sections 2-3: Two-Zone Folder Design + Per-Agent File Map)

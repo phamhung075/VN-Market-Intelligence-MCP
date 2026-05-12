@@ -114,16 +114,18 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 - Other historical (24) — tool inventories, blocker analyses, architecture reviews
 - Moved 2026-04-25 from cluttered root
 
-**`docs/` ROOT (9 files — active use)**
+**`docs/` ROOT (8 files — active use)**
+
+Two-team architecture lives in `docs/references/agent-roster.md` (no separate root file).
+
 1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
-2. `AI_TEAM_DESIGN.md` — two-team architecture (Analysis + Dev)
-3. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/architecture/global.md`)
-4. `GLOSSARY_VI.md` — Vietnamese financial terms
-5. `SESSION_SUMMARY_*.md` — current session notes
-6. `TASKS_ARCHIVE.md` — done task index by sprint
-7. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
-8. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
-9. `TASKS.md` — active sprint Kanban (≤80 lines, PM-owned)
+2. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/architecture/global.md`)
+3. `GLOSSARY_VI.md` — Vietnamese financial terms
+4. `SESSION_SUMMARY_*.md` — current session notes
+5. `TASKS_ARCHIVE.md` — done task index by sprint
+6. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
+7. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
+8. `TASKS.md` — active sprint Kanban (≤80 lines, PM-owned)
 
 ## Examples
 
@@ -149,9 +151,8 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 # What's currently in docs/ root?
 ls -1 docs/*.md
 
-# Should be exactly these 9:
+# Should be exactly these 8:
 # ARCHITECTURE.md
-# AI_TEAM_DESIGN.md
 # AGENT_CREATION_GUIDE.md
 # GLOSSARY_VI.md
 # SESSION_SUMMARY_*.md
@@ -169,7 +170,6 @@ ls -1 docs/*.md
 # Find orphaned files in root docs/
 find docs/*.md \
   -not -name "ARCHITECTURE.md" \
-  -not -name "AI_TEAM_DESIGN.md" \
   -not -name "AGENT_CREATION_GUIDE.md" \
   -not -name "GLOSSARY_VI.md" \
   -not -name "SESSION_SUMMARY*" \

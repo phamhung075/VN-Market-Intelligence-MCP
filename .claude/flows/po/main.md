@@ -14,18 +14,56 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 
 ---
 
-## Dispatch (Compose)
-Detect entry sub-flow from spawn context (heuristic table below).
-Each sub-flow's footer declares which next_flow(s) to chain into.
-Follow chains until a sub-flow yields STOP.
-Multiple sub-flows MAY be composed in a single invocation (Lego pattern).
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
 
-| Spawn context | Entry sub-flow |
+**Called from:** dev-team Step 1 — triage all inputs and classify work
+**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `listUnresolvedReports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch` list
+**Produces:** `NOTHING` (→ idle EXIT) or `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])` where type ∈ {FIX, SPIKE, SPRINT-S, SPRINT-M, SPRINT-L, UNBLOCK, CLEAN}
+**Hand off to:** main terminal — who routes batch by type into Step 2 (planning) or Step 3 (direct FIX)
+**Composes with:** architect/ba/pm in Step 2 (never directly — main terminal is the router)
+
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → SPRINT-M/L
+Size thresholds: FIX ≤10 lines ≤3 files | SPRINT-S ≤30 lines ≤5 files 1 domain | SPRINT-M multi-domain | SPRINT-L arch/new service
+CLEAN: flag any branch with 0 unmerged commits (`git log main..<branch> --oneline` empty) or stale worktree — route to qa.
+SPIKE: exploratory question with no clear scope or success criteria; time-boxed investigation needed before a real sprint can be planned. Signals: "what if...", "is it feasible to...", "how would X behave under...", or user/research question with unknown answer space. Output: findings doc, not shipped code. Time-box default: 2 hours.
+
+**SPIKE batch entry schema:**
+```
+{
+  type: "SPIKE",
+  id: "SPIKE_NNN",          # next available NNN, mirror task-id convention
+  title: "<kebab-topic>",
+  question: "<the actual question to answer>",
+  mode: "spike",            # mandatory — triggers feature-spike.md in developer/dev-* spawn
+  zone?: "apps/<service>/", # optional hint
+  timebox?: <minutes>       # default 120
+}
+```
+
+**SPIKE example:**
+```
+{
+  type: "SPIKE",
+  id: "SPIKE_001",
+  title: "websocket-feed-feasibility",
+  question: "Is it feasible to replace the current polling loop in stock-price with a WebSocket feed from SSI? What latency and reconnect behaviour would we get?",
+  mode: "spike",
+  zone: "apps/stock-price/",
+  timebox: 120
+}
+```
+
+---
+
+## Dispatch
+
+| Spawn context | Entry section |
 |---|---|
-| Cron / dev-team spawn | `channel-audit.md` |
-| BUG channel report | `bug-triage.md` |
-| Sprint kickoff | `sprint-plan.md` |
-| QA sprint-complete signal | `sprint-signoff.md` |
+| Cron / dev-team spawn | Step 0-TNB → Step 0 (Channel Audit) |
+| BUG channel report | Step 0 Channel Audit → bug classification |
+| Sprint kickoff | Self-Initiating Sprint |
+| QA sprint-complete signal | When QA Signals Sprint Complete |
 
 ---
 

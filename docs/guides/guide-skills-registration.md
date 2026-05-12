@@ -51,9 +51,8 @@ After creating agent files, register in:
 
 | File | What to add |
 |------|-------------|
-| `CLAUDE.md` | Agent Routing table row |
-| `docs/references/agent-roster.md` | Team section entry |
+| `docs/references/agent-routing.md` | Routing intent table row (if user-invocable) |
+| `docs/references/agent-roster.md` | Team section entry (SSOT for team design) |
 | `.claude/skills/dispatch/SKILL.md` | Dispatch table entry |
-| `docs/AI_TEAM_DESIGN.md` | Team design entry |
 
 For cron-scheduled: `.claude/commands/crons/cron-<agent-id>.md`

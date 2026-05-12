@@ -31,8 +31,8 @@ Formula → `docs/standards/portfolio-schema.md` (SSOT for position logic)
 
 ## Alert Commander Exclusivity
 
-Only `05-alert-commander.md` calls `send_telegram(channel="market")` for alerts.
-Exceptions: Digest Writer (06) for digests, QA Responder (07) for /ask answers.
+Only `alert-commander.md` calls `send_telegram(channel="market")` for alerts.
+Exceptions: `digest-predict.md` for digests, `qa-responder.md` for /ask answers.
 
 ## Internal Cooldown Rules (Alert Commander judgment — never suppress)
 

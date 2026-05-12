@@ -77,9 +77,10 @@ agent:
         trigger: feature_planning
         fail_loud: false
         note: "Architecture SSOT — read-only for feature planning. Load docs/architecture/microservice/<service>.md for service-scoped sprint goals."
-      - path: docs/AI_TEAM_DESIGN.md
+      - path: docs/references/agent-roster.md
         trigger: team_design
         fail_loud: false
+        note: "Team design SSOT — analysis + dev team structure, three-channel rules, cooperation flow."
       - path: docs/data/stock-classification.json
         trigger: watchlist_context
         fail_loud: false

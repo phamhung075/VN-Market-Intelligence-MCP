@@ -83,3 +83,18 @@ This is the **first cycle to validate auto-cure ROI**. unified-agent 07:00 UTC c
 ---
 
 ## PO ACK — cycle 40 — 2026-05-12T13:29:39Z (already on file)
+
+---
+
+## PO ACK — cycle 41 — 2026-05-12T15:27:53Z
+- Read by: po (dev-team c49)
+- Tasks created: 1896a (architect — container-restart RCA brief, HIGH/ops) — addresses TNB c41 #1 regression (Sprint 1336 named-volume isolation appears regressed; 2nd restart in <12h). 1895a is NOT the RCA — it is the Phase 5 worktree merge-protocol brief; alert-commander header conflated the two. GAP confirmed.
+- Skipped findings:
+  - #2 HOSE 4/4 sources failed 14:40 UTC → no task; will roll into 1896a evidence section if persists past 02:00 UTC market open (TNB rec #4)
+  - #3 RSS post-restart degradation → known-pattern, self-recover 1-2h (agents-architect c33 RCA); no task
+  - #4 financial-analyst silent 16h → 1889a stop-gap shipped; await 23:00 UTC cycle (TNB rec #3); no task this cycle
+  - #5 market-watcher header drift → CARRY (c40 ACK disposition #5)
+  - #6 US10Y 4.46% climbing → MONITOR (TNB rec #5); audit if 4.50+ in 24h; no task
+  - #7 Reuters/TE counter reset → known-pattern post-restart; no task
+  - #8 alert accuracy 1% stagnant → CARRY (OPS-blocked, Sprint 1869)
+- Direction confirmed: STRONGLY IMPROVING (auto-cure ROI proven). Container-restart escalation does not contradict — separate ops-infra regression channel.

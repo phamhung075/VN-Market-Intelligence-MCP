@@ -12,18 +12,14 @@ Analysis in session log | signals noted | recommendation (bullish/bearish/neutra
 
 ---
 
-## Dispatch (Compose)
-Detect entry sub-flow from spawn context (heuristic table below).
-Each sub-flow's footer declares which next_flow(s) to chain into.
-Follow chains until a sub-flow yields STOP.
-Multiple sub-flows MAY be composed in a single invocation (Lego pattern).
+## Dispatch
 
-| Spawn context | Entry sub-flow |
+| Spawn context | Entry section |
 |---|---|
-| Morning cron / daily trigger | `morning.md` |
-| News article / event | `news-event.md` |
-| Ticker deep dive | `financials.md` |
-| Sector move / peer compare | `sector.md` |
+| Morning cron / daily trigger | Morning Routine |
+| News article / event | News Event Analysis |
+| Ticker deep dive | Stock Financials |
+| Sector move / peer compare | Sector Context |
 
 ---
 

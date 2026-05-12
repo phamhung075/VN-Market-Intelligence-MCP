@@ -244,6 +244,24 @@
       "backlog_task": "JANITOR-027",
       "ship_directly": false,
       "reason_not_shipped": "21-file change across 4 architectural layers. Constraint: ship only when single-file mechanical."
+    },
+    {
+      "fingerprint": "check-2:application/cascadeExecutor.ts + infrastructure/fetchers/priceSourceRouter.ts:large-cap-overlap",
+      "severity": "LOW",
+      "category": "Overlapping ticker arrays — large-cap stock lists",
+      "files_affected": [
+        "apps/mcp-server/src/application/cascadeExecutor.ts",
+        "apps/mcp-server/src/infrastructure/fetchers/priceSourceRouter.ts"
+      ],
+      "lines": "cascadeExecutor.ts line 194; priceSourceRouter.ts line 53",
+      "detail": "JANITOR-034 PROPOSED: cascadeExecutor.ts defines LARGE_CAP_FALLBACK = ['MWG', 'KDH', 'FPT', 'MSN', 'VCB', 'HPG', 'BID', 'CTG'] for MSCI inclusion cascade (Task 1280). priceSourceRouter.ts defines MAJOR_CAPS = ['VNM', 'FPT', 'VCB', 'HPG', 'BID', 'VHM', 'VIC', 'CTG'] for Yahoo Finance fallback pricing. Overlap: 6 tickers shared (FPT, VCB, HPG, BID, CTG, and MSN vs VNM difference). Same semantic purpose (major market-cap stocks) but different membership. Not a strict code duplicate (different layers, different business rules) but creates maintenance risk if market-cap classification changes.",
+      "canonical_source": "none — consider extracting to domain/models/marketCapClassification.ts or adding majorCap boolean to SECTOR_PEERS",
+      "risk": "LOW — consistent overlap means no silent divergence. Maintenance risk: any major-cap list update requires 2 edits. Future refactoring: add majorCap flag to stock classification in sectorPeers.ts or mcp.config.json.",
+      "discovered_at": "2026-05-13T10:30:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-034",
+      "ship_directly": false,
+      "reason_not_shipped": "Two-file change across 2 layers. Requires domain design decision (extract to canonical source vs keep local). Not mechanical."
     }
   ],
   "fixed_findings": [
@@ -448,6 +466,36 @@
         "notes": "AGENT_MODELS_README.md lines 15, 28: 'All 13 agents' hardcoded (count variable)"
       },
       "summary": "6 findings. 1 shipped (project-stats.json JANITOR-033), 5 proposed (require agent-father/ops approval). Role constraints: protected files (.md) require approval; JSON data files editable directly."
+    },
+    "scan-19": {
+      "scan_date": "2026-05-13T10:30:00Z",
+      "scope": "Full codebase DRY scan; git diff HEAD~20..HEAD production files",
+      "check-1-classification-maps": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "All ticker→sector mappings canonical in sectorPeers.ts, stockAliases.ts. No duplicates."
+      },
+      "check-2-ticker-arrays": {
+        "status": "complete",
+        "findings": 1,
+        "notes": "cascadeExecutor.ts:194 LARGE_CAP_FALLBACK vs priceSourceRouter.ts:53 MAJOR_CAPS — overlapping lists (6 tickers shared), different membership, different layers. Not strict dup but duplication-risk. JANITOR-034 proposed."
+      },
+      "check-3-magic-numbers": {
+        "status": "complete",
+        "findings": 1,
+        "notes": "JANITOR-027 (MS_PER_DAY in 21 files) recurrent — already proposed multi-file refactoring."
+      },
+      "check-4-schema-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "All DDL canonical in schema-*.ts. No production inline DDL. Tested: alertMuteStore.ts, vnstockStore.ts, schedulerLockStore.ts all reference canonical source with comments."
+      },
+      "check-5-config-drift": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "All ?? fallback patterns safe. No mismatches between code defaults and mcp.config.json."
+      },
+      "summary": "1 new proposed (JANITOR-034). 1 recurrent (JANITOR-027 already proposed). 0 shipped. Quality: full."
     }
   }
 }

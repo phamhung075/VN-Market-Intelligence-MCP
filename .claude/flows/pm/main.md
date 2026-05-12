@@ -14,6 +14,20 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 
 ---
 
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 2 final step (all sprint sizes after architect); Step 3 after each tier completes to update docs/TASKS.md and unblock next tier
+**Receives:** Step 2: architect output (`[Architect] Brownfield Findings` in `docs/handoffs/TASK_NNN.md`) + current `docs/TASKS.md`; Step 3: completed tier list + QA results
+**Produces:** Step 2: atomic task list with dependency tiers in RETURN block (`tier1 (parallel): ...`, `tier2 (after tier1): ...`) + `docs/handoffs/TASK_NNN-*.md` per subtask; Step 3: updated `docs/TASKS.md` (Done statuses) + RETURN unblocking next tier
+**Hand off to:** Step 2 → main terminal routes to Step 3 execution; Step 3 → main terminal spawns next tier developers
+**Composes with:** architect (receives from), developer + qa (provides task specs to, monitors status of)
+
+Each atomic task must be: single file/fn group | clear AC | ~2h agent work | explicit deps.
+WIP > 2 → hold and return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `pm`)

@@ -65,10 +65,6 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
 │
-├── docs/IMPLEMENTATION_STATUS.md (sprint history — reference only, not for volatile stats)
-│
-├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
-│
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
 │
 ├── docs/data/project-stats.json (sprint number, counts — volatile, root-level stats)

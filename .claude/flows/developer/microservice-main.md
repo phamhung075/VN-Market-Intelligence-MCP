@@ -1,5 +1,7 @@
 # Microservice Developer — Main Flow
 
+**Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.
+
 **Tools:** `.claude/tools/package/developer.md`
 
 ## Input
@@ -7,6 +9,17 @@
 
 ## Output
 Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in handoff | PM/QA notified
+
+---
+
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 3 — main terminal routes by zone (e.g., `apps/stock-price/` → dev-stock-price); parallel tasks in different zones use `isolation: "worktree"` on each Agent call
+**Receives:** `docs/handoffs/TASK_NNN.md` with `[Architect] Brownfield Findings` — files to read/modify/create, AC, branch name, target zone `apps/<service>/`
+**Produces:** Code + tests on `task/NNN-*` branch within zone | `[Developer] Implementation Record` in handoff | doc-review pass if `docs/architecture/microservice/<service>/` touched | RETURN with `NEXT: qa`
+**Hand off to:** main terminal → spawns qa with branch + handoff
+**Composes with:** [`doc-review.md`](./doc-review.md) sub-flow (auto-invoked after code, before QA, when service docs are touched); parallel sibling dev-* agents run simultaneously in separate worktrees per tier (disjoint zones are safe)
 
 ---
 

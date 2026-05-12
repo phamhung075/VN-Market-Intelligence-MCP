@@ -1,8 +1,28 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-12 (scan 18 — 0 new findings, 0 shipped, backlog stable; 3 recent features audited CLEAN)
+## Last updated: 2026-05-13 (scan 19 — 1 new potential finding: overlapping large-cap ticker lists; proposed JANITOR-034; 0 shipped)
 
 ## State summary
+
+### Session 19 (2026-05-13 — Full codebase scan)
+
+**Scope:** Commits HEAD~20..HEAD; all 5 DRY checks executed.
+
+**Result:** 1 new finding (proposed for backlog); 0 shipped; backlog stable at 9 items.
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | All ticker→sector maps in canonical sources |
+| Ticker arrays | 1 finding | LARGE_CAP_FALLBACK (cascadeExecutor.ts:194) vs MAJOR_CAPS (priceSourceRouter.ts:53): overlapping lists, different membership, different semantic purposes. Not strict dup (domain review needed). Propose JANITOR-034. |
+| Magic numbers / crons | 1 recurrent | JANITOR-027: MS_PER_DAY in 21 files (already proposed multi-file refactoring) |
+| Schema duplication | 0 findings | All DDL canonical in schema-*.ts |
+| Config drift | 0 findings | All fallback patterns safe; no mismatches |
+
+**Proposed:** JANITOR-034 — large-cap ticker list duplication (low priority, requires domain design decision)
+
+**Quality:** Full
+
+---
 
 ### Shipped fixes (cumulative)
 
@@ -27,6 +47,7 @@
 
 | ID | Description | Blocker |
 |----|-------------|---------|
+| JANITOR-034 | Overlapping large-cap ticker lists (cascadeExecutor.ts vs priceSourceRouter.ts) | Domain design decision |
 | JANITOR-028 | Dev MCP Server agent .md: remove "112 tools" from lines 4, 13 | Requires agent-father approval |
 | JANITOR-029 | Cloudflare ops flow: remove "Full 112 tools available" from lines 13, 29 | Requires ops/developer approval |
 | JANITOR-030 | Agent Models README: replace "All 13 agents" (lines 15, 28) with unquantified wording | Requires agent-father approval |

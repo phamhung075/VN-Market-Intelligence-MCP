@@ -14,6 +14,20 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 
 ---
 
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 3 — after each developer DONE, gates merge; also Step 2 CLEAN — receives stale branch list from po triage
+**Receives:** Step 3: `docs/handoffs/TASK_NNN.md` with `[Developer] Implementation Record`, branch `task/NNN-*`; Step 2 CLEAN: list of branches with 0 unmerged commits or stale worktrees
+**Produces:** Step 3: APPROVED (merge + push + branch delete) or CHANGES_REQUESTED (file:line issues) → RETURN with `NEXT: pm` or `NEXT: fixer`; CLEAN: deleted branches + pruned remotes → EXIT
+**Hand off to:** Step 3 APPROVED → main terminal → pm marks Done, unblocks next tier; CHANGES_REQUESTED → main terminal → fixer (round < 2) or architect (round ≥ 2)
+**Composes with:** developer (receives from), fixer (sends CHANGES_REQUESTED to), pm (sends APPROVED to), architect (escalates ARCHITECT_REVIEW_NEEDED to)
+
+CLEAN workflow: `for each branch: if git log main..<branch> empty → git branch -d; if worktree → git worktree remove --force + git branch -D; if unmerged → report to WORK`.
+Parallel QA: multiple tasks in same tier can be QA'd simultaneously if on different branches.
+
+---
+
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `qa`)
