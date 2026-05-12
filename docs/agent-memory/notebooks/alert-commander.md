@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 13:02 UTC | **Sprint:** c45-phase3-parallel-verification-2nd-PASS+1892b+1888a
+**Last updated:** 2026-05-12 14:02 UTC | **Sprint:** c47-phase4-1st-parallel-dispatch+1879b-done+1894a-user-gated+1895a-incident
 
 ## Current state
 
@@ -359,3 +359,13 @@ Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | C
 - Suppressed: FPT urgent_news id=2938 (quỹ tích lũy tại đáy 70k, conv 0.50 < 0.60, no price_anomaly override — no active signals) | VIC urgent_news id=2939 (Vingroup thắng kiện 68 cá nhân, conv 0.50 < 0.60, no override) | HSG urgent_news id=2940 (Úc điều tra chống bán phá giá 56%, conv 0.50 < 0.60, no override) | FPT price_anomaly id=2943 (σ=2.1, get_alerts empty, σ<4.0) | VRE price_anomaly id=2944 (σ=1.79, get_alerts empty, σ<4.0)
 - Legal: clear | Crisis: clear | Price alerts: none active | Market: CLOSED (off-hours 2h cycle)
 - log_agent_work id=659
+
+### Alert Cycle (14:01–14:02 UTC, 2026-05-12)
+- Signals: 0 bus signals (agent_signals empty)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (get_macro_snapshot not in package — [SKIP]) | Carry: NEUTRAL | Pivot window: false
+- Legal: clear | Crisis: clear
+- Raw alerts open: 17 (notable: GAS HIGH oil+3%, MACRO HIGH Brent +2.23σ, HCM price_drop -6.90%, VRE price_surge +5.21%)
+- Market: CLOSED (off-hours 2h cycle)
+- log_agent_work id=688
