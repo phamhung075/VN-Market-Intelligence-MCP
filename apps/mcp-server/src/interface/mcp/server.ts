@@ -43,6 +43,8 @@ export {
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
 import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
+import { handlePushNews } from "./routes/pushNewsHandler.js";
+import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -281,6 +283,12 @@ export async function createBunServer(
       return;
     }
 
+    // ── GET /api/health/vps-news — VPS news push liveness (no auth) ─────────
+    if (method === "GET" && pathname === "/api/health/vps-news") {
+      handleVpsNewsHealth(req, res, db);
+      return;
+    }
+
     // ── GET / — info ──────────────────────────────────────────────────────
     if (method === "GET" && pathname === "/") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -377,92 +385,7 @@ export async function createBunServer(
 
     // ── VPS push: VN news (CafeF, VnExpress, VnEconomy RSS) ────────────────
     if (method === "POST" && pathname === "/api/push-news") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-      try {
-        if (!body.trim()) {
-          safeLogVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Empty request body" }, db);
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Empty request body" }));
-          return;
-        }
-        const items: Array<{
-          title: string;
-          url: string;
-          publishedAt: string;
-          content: string;
-          source: string;
-        }> = JSON.parse(body);
-
-        if (!Array.isArray(items) || items.length === 0) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Expected non-empty JSON array of RssItem" }));
-          return;
-        }
-
-        // Group items by source for injection into pollNews
-        const bySource: Record<string, typeof items> = {};
-        for (const item of items) {
-          const src = (item.source || "vps").toLowerCase();
-          (bySource[src] ??= []).push(item);
-        }
-
-        log.info("[push-news] received VN news from VPS", {
-          total: items.length,
-          sources: Object.keys(bySource).map((s) => `${s}:${bySource[s]!.length}`),
-        });
-
-        // Fire-and-forget: run pollNews with VPS items injected as fetchers
-        setImmediate(async () => {
-          try {
-            const { pollNews } = await import("../../application/usecases/pollNews.js");
-            const { recordJobRun } = await import("../../infrastructure/db/cronJobRunStore.js");
-            await recordJobRun(db, "pollNewsJob", async () => {
-              const result = await pollNews({
-                fetchers: {
-                  // Build a fetcher for every key present in bySource.
-                  // This forwards all 9 (or more) VPS-pushed source keys without
-                  // maintaining a hardcoded list here.
-                  ...Object.fromEntries(
-                    Object.keys(bySource).map((src) => [src, async () => bySource[src] ?? []])
-                  ),
-                  // Non-VN sources: always no-op in push-news context.
-                  // Placed after spread so they override any hypothetical key collision.
-                  reuters:          async () => [],
-                  tradingeconomics: async () => [],
-                },
-              });
-              log.info("[push-news] pipeline complete", {
-                fetched: result.fetched,
-                inserted: result.inserted,
-                duplicates: result.duplicates,
-                alerts: result.alerts,
-              });
-            });
-          } catch (err) {
-            log.error("[push-news] pipeline failed", {
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-        });
-
-        safeLogVpsPush({ service: "news", itemsCount: items.length, status: "ok" }, db);
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, received: items.length }));
-      } catch (err) {
-        log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
-        safeLogVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) }, db);
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON" }));
-      }
+      await handlePushNews(req, res, db, log);
       return;
     }
 

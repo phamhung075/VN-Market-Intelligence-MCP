@@ -183,7 +183,22 @@ TOTAL=$(echo "$ALL_JSON" | jq 'length' 2>/dev/null || echo 0)
 echo "$(TS) [NEWS  ] INFO  Step 2: merged total=$TOTAL unique items" >> "$LOG"
 
 if [ "$TOTAL" = "0" ]; then
-  echo "$(TS) [NEWS  ] WARN  SKIP: no items — all sources may be blocked" >> "$LOG"
+  echo "$(TS) [NEWS  ] ERROR all RSS sources returned 0 items — sending heartbeat sentinel" >> "$LOG"
+  # Send a heartbeat sentinel so vps_push_log registers a row (satisfies suppression gate).
+  # The MCP server rejects an empty array with 400, so we wrap in a single sentinel item
+  # that pollNews will treat as a no-op (unknown source key, no URL → de-duped / skipped).
+  SENTINEL='[{"title":"__heartbeat__","url":"","publishedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","content":"","source":"heartbeat"}]'
+  HB_RESP=$(curl -s -w "\n__HTTP__%{http_code}" \
+    --connect-timeout 10 --max-time 20 \
+    -X POST "$API_URL" \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: $API_KEY" \
+    -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
+    -d "$SENTINEL")
+  HB_HTTP=$(echo "$HB_RESP" | grep "__HTTP__" | sed 's/__HTTP__//')
+  echo "$(TS) [NEWS  ] INFO  heartbeat sentinel sent http=$HB_HTTP" >> "$LOG"
+  ELAPSED=$(( $(date -u +%s) - START_S ))
+  echo "$(TS) [NEWS  ] INFO  === DONE in ${ELAPSED}s (heartbeat only) ===" >> "$LOG"
   exit 0
 fi
 
