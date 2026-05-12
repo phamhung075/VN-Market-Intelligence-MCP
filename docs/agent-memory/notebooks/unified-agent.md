@@ -68,3 +68,17 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **actions**: WORK telegram sent (07:13 UTC, clean + FII HOT_MONEY warning + BCTC alerts + quality flag). No conviction shift ≥0.3. Pillars: M2=✓ COC=✓ EPS=✓ POL=✓ (4/4).
 - **next_cycle_hint**: Banking BCTC due 2026-05-15 (ACB/BID/CTG/EIB/MBB/VCB/VPB). FPT oversold RSI 25.8 — watch for reversal. FII outflow risk persistent. Monitor price_drop precision trend.
 - **estimated_tokens**: 10000 (20 tool calls)
+
+### Coordination Cycle (08:00–08:10 UTC) — 2026-05-12
+- Mode: MARKET (closing 08:59 UTC) | System: OK (bootstrap ok, get_system_status connector error but infrastructure live) | Alerts: 20 open | Quality issues: alert accuracy 1% (ongoing)
+- Regime: TIGHTENING (tentative, prev NEUTRAL) | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+
+## Cycle — 08:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**: FPT 70,600 (+0.86%, -12.1%, -48.5M VND). RSI 25.8 oversold. Conviction MODERATE 0.49 GIẢM BỚT. Kinh Dịch Kiển (39) GIU 48%. FII: HOT_MONEY (carry -0.33%, FPT most-sold). VRE +5.51% today (bull trap risk — Kinh Dịch THẬN TRỌNG 34%). GAS +3.94% (oil $106.2 +3%, US ATH). Banking all red (CTG -0.98%, VCB -0.66%). No legal/crisis signals. BCTC: 7 banks due 2026-05-15 (3 days). 24 other tickers 12d overdue. Supply chain stable. Signal effectiveness 0/7d. Alert accuracy 1% (2/381).
+- **regime_transition**: NEUTRAL → TIGHTENING (Brent $106.2, inflation 8%, banks no rate cut, carry -0.33%) — pillar_count=2/4 (M2 missing, EPS missing) → NO conviction shift issued
+- **actions**: WORK telegram sent (08:09 UTC). Notebook appended.
+- **next_cycle_hint**: Market closes 08:59. BCTC banks due May 15. FPT oversold persists. VRE: monitor if +5% sustained. GAS: oil geopolitics driver. 23:00 UTC daily-review cycle next.
+- **estimated_tokens**: 7000 (14 tool calls)
+- **Pillars**: M2=✗ (not available) COC=✓ (carry -0.33%, banks no cut, Brent $106) EPS=✗ (BCTC overdue 12d) POL=✓ (FPT Telecom compliance issue) → 2/4
