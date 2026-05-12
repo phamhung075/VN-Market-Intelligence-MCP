@@ -1,5 +1,7 @@
 # PO — Step 0: Channel Audit + Cross-Check
 
+<!-- size-justification: 142L — 5 sequential audit phases (0 channels · 0-a2 chat-group · 0-b cross-check vs fix history · 0-c zone inference · 0-d zone-health notebook scan) that share PO's single decision context (the same scan result drives whether to open a task, which zone to tag, which dev-* to route to). Splitting per-phase would force PO to load 5 files per cycle and break the "audit → cross-check → zone → assign" linear flow operators follow. -->
+
 **Parent flow:** `.claude/flows/po/main.md` (Step 0 dispatcher — MANDATORY, runs before sprint planning)
 
 ---

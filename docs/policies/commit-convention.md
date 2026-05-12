@@ -1,6 +1,6 @@
 # Commit Convention — SSOT (Index)
 
-<!-- size-justification: 48L — thin index after Wave 4 split. Children: commit-convention-format.md (format/type/scope/trailers/AC), commit-convention-exemptions.md (no-sprint/C2/C3), commit-convention-examples.md (worked/merge/notebook). -->
+<!-- size-justification: 60L — thin index after Wave 4 split (most of the lines are anchor redirects for `§ X` back-compat callers). Children: commit-convention-format.md, commit-convention-exemptions.md, commit-convention-examples.md. -->
 
 **Load when:** writing commits, reviewing PRs, automated validation.
 

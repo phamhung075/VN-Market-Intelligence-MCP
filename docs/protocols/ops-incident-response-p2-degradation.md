@@ -1,5 +1,7 @@
 > Parent: [ops-incident-response.md](./ops-incident-response.md)
 
+<!-- size-justification: 268L — split child of ops-incident-response.md; carries 4 Yellow-severity playbooks (single-service, deployment-rollback, partial-data, slow-pipeline) that each chain trigger → diagnose → fix → verify. Splitting per-playbook would break the cross-playbook decision branch ("if symptom X, jump to playbook Y") that operators follow during incident triage. -->
+
 # P2 Degradation & Recovery
 
 **Severity:** Yellow (degraded — single service down or deployment issue)

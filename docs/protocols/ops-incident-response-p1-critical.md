@@ -1,5 +1,7 @@
 > Parent: [ops-incident-response.md](./ops-incident-response.md)
 
+<!-- size-justification: 181L — split child of ops-incident-response.md; further decomposition would fragment paired Purple/Red playbooks (each playbook is a single atomic decision tree: trigger → action → rollback). Within-playbook splits break operator's eye-trace during incident response. -->
+
 # P1 Critical Incidents
 
 **Severity:** Purple (data risk) + Red (multi-service down)

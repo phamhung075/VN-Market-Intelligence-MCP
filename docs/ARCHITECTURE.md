@@ -1,5 +1,7 @@
 # Architecture
 
+<!-- size-justification: 389L — top-level architecture index used as the canonical "monorepo + services + ports + DDD layers + cron + databases" reference (12+ callers across docs/policies, docs/references, TASKS, bundle-architect, signals, sessions). Splitting by section would force every caller to walk a children-tree just to answer "what port does service X run on" — defeating the purpose of a single-glance overview. Sections already self-describe; navigation is by heading anchor. -->
+
 ## DDD Layer Order
 
 `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer: inward only. `domain/` never imports `infrastructure/`.
