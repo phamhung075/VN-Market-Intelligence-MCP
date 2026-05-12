@@ -1,5 +1,12 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** CLEAN-1872a-5 branch deletion (cycle 41)
+
+## Recent session — 2026-05-12 (CLEAN-1872a-5 — stale branch deletion)
+
+**CLEAN-1872a-5 — branch delete, no merge gate:**
+Spot-check PASS. 4 unmerged commits: `73fd8753` (state), `9f437240` (state), `47e745b6` (tree-map AC1), `22981c13` (mcp-server.md SSOT). `git diff main -- .claude/knowledge/tree-map.md docs/architecture/microservice/mcp-server.md` = zero output. Content confirmed on main via fe82b9f9. No worktree. Branch deleted with `git branch -D`. No production code touched. Report: reports/TASK_REPORT_CLEAN-1872a-5.md.
+
 **Last updated:** 2026-05-12 | **Sprint:** signal-T6 fallback removal (cycle 40)
 
 ## Recent session — 2026-05-12 (signal-T6 — DEPRECATED fallback removal)
