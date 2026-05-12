@@ -94,6 +94,13 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with agent id)
 
+**Zone health observation (mandatory — 1 line):**
+Before calling notebook-write, compose one "Zone health:" line summarising the zone state observed this cycle. Append it to the notebook entry:
+```
+Zone health: <metric or observation — e.g. "test coverage ~78% (-4%), 3 unused fixtures in stock-price module"> | HEALTHY
+```
+If nothing noteworthy: `Zone health: no drift detected`. This line is consumed by PO channel-audit to surface coverage or doc-drift signals without a user prompt.
+
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
 **Update docs/TASKS.md**: In Progress → Review → return:

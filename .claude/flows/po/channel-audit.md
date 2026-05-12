@@ -105,6 +105,31 @@ Rule: every emitted FIX/SPRINT entry MUST resolve to exactly one row. If unclear
 
 ---
 
+## Step 0-d — Zone Health Notebook Scan
+
+Read the last notebook entry for each active dev-* agent and extract any "Zone health:" line:
+```
+docs/agent-memory/notebooks/dev-mcp-server.md
+docs/agent-memory/notebooks/dev-api-gateway.md
+docs/agent-memory/notebooks/dev-stock-price.md
+docs/agent-memory/notebooks/dev-technical-analysis.md
+docs/agent-memory/notebooks/dev-macro-indicators.md
+docs/agent-memory/notebooks/dev-kinh-dich.md
+docs/agent-memory/notebooks/dev-alert-engine.md
+docs/agent-memory/notebooks/dev-pdf-extractor.md
+docs/agent-memory/notebooks/dev-rag-service.md
+```
+
+For each notebook: scan the most recent entry for a line starting with `Zone health:`. Collect into `pendingObservations[]`. Exclude `"Zone health: no drift detected"` lines (no action needed).
+
+For each non-trivial `Zone health:` line:
+- If it mentions coverage drop, unused fixtures, stale tests, or doc drift → add to `pendingObservations[]` for consideration in sprint planning
+- If it mentions a critical regression or broken test → open a FIX task immediately (treat as BUG signal)
+
+Surface `pendingObservations[]` in notebook and optionally into sprint planning if capacity allows.
+
+---
+
 **If 1+ issues found**: create bug/correction tasks in docs/TASKS.md (with correct root-cause label + zone) before proceeding to sprint planning.
 
 **If clean**: proceed to No-Task Guard (back in main.md).
