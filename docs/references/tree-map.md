@@ -193,6 +193,30 @@ CLAUDE.md (root — always loaded)
 └── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
 ```
 
+## Flow File Splits (Wave 2A)
+
+Children created by zone-enforcement-and-split-policy brief — thin dispatcher parent + sibling sub-flows:
+
+```
+.claude/flows/tran-ngoc-bau/main.md (thin dispatcher — 23L)
+│   ├── .claude/flows/tran-ngoc-bau/bootstrap.md (Steps 0a-0c: project root, notebook, handoff ACK, bootstrap)
+│   ├── .claude/flows/tran-ngoc-bau/audit-market.md (Phase 1-2: MARKET audit + cross-validate + notebook review)
+│   ├── .claude/flows/tran-ngoc-bau/audit-methodology.md (Phase 2.5: 9-step Báu methodology scoring)
+│   ├── .claude/flows/tran-ngoc-bau/audit-signals.md (Phase 3: signal bus audit + confidence + dedup)
+│   └── .claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md (Phase 4: auto-cure + report + notebook + PO handoff)
+│
+.claude/flows/news-scout/cycle.md (thin dispatcher — 23L)
+│   ├── .claude/flows/news-scout/stage-bootstrap.md (Stage 0: bootstrap + regime + feedback hints)
+│   ├── .claude/flows/news-scout/stage-fetch.md (Stage 1: fetch_and_analyze + historical context)
+│   ├── .claude/flows/news-scout/stage-sentiment.md (Stage 2: sentiment scoring + PMI + regime multiplier)
+│   ├── .claude/flows/news-scout/stage-signals.md (Stage 3: post urgent_news + chain_catalyst signals)
+│   └── .claude/flows/news-scout/stage-log-notify.md (Stage 4-5: session log + WORK channel + Batch 2)
+│
+.claude/flows/ops/cloudflare-mcp.md (thin dispatcher — 20L)
+│   ├── .claude/flows/ops/cloudflare-mcp-diagnosis.md (3-layer diagnosis + 4 root causes + per-issue fixes)
+│   └── .claude/flows/ops/cloudflare-mcp-recovery.md (step-by-step recovery + escalation + notebook entry)
+```
+
 ## Agent File Splits (Wave 2A)
 
 Children created by zone-enforcement-and-split-policy brief — lazy-loaded from parent agent on trigger:
