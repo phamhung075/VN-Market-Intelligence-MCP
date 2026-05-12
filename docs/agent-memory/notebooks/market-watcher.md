@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-11 23:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 00:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -528,3 +528,24 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (00:38–00:41 UTC)
+- Stocks: 31 (EOD snapshot 2026-05-11 09:00 UTC, market CLOSED) | Anomalies: 2 (FPT 2.13σ, VRE vol-spike 1.79σ) | Volume spikes: 2 (FPT ~13x, VRE ~17x) | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING (USD/VND 26,123) | US10Y: RISK-OFF (FII outflows, VN-Index -20pts) | fx_pressure: [VRE, VHM, VIC, banking] | pe_risk: [FPT, VHM, VIC]
+- FPT -2.64% (2.13σ, 30d stddev 1.24%, vol 16.91M ~13x avg) → signal #2960 → alert-commander. pe_compression_risk=true (FII xả mạnh nhất sàn, kh ngoại bán ròng ~14,100B VND). Price at multi-year low 70,000.
+- VRE -6.41% (1.79σ, 30d stddev 3.59%, vol 11.67M ~17x avg ~690K) → signal #2961 → alert-commander. Volume spike trigger (>2.0x). fx_pressure=true (realty + USD strengthening). Massively underperforms sector (-1.36% avg vs -6.41%).
+- HSG -2.81% (0.47σ — high base stddev from -21.63% drop 2026-05-04 anti-dumping probe) → not signalled. chain_catalyst: Australia anti-dumping investigation HSG/NKG (news-scout id=2957, impact=7).
+- Sector 1d: Tech -2.15%, Real estate -1.36%, Steel -1.31%, Banking -0.76% | Oil&Gas +1.29% (Brent $104.46)
+- Supply chain: STABLE (BDI=1,400) | Energy: NORMAL (hydro 70%) | Macro: Brent $104.46 + US-Iran tensions → CPI/SBV tightening risk
+- Open chain findings: 0 (last 15 min) | GAS risk: energy shock (Asia + US-Iran, signal id=2959)
+
+## Metrics (cycle 2026-05-12 00:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 10 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |

@@ -1,12 +1,21 @@
 # Alert Commander — Notebook
 
-**Last updated:** — | **Sprint:** —
+**Last updated:** 2026-05-12 00:02 UTC | **Sprint:** —
 
 ## Current state
 
-(no session recorded)
+Market CLOSED (off-hours cycle). 0 MARKET alerts fired. Regime: NEUTRAL.
 
 ## Last session summary
+
+### Alert Cycle (00:01–00:02 UTC)
+- Signals: urgent_news×1, price_anomaly×1 (fundamental_validation×3 not evaluated)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: urgent_news FPT #2953 (conf=0.50 < NEUTRAL 0.60, no price override: sigma=2.04<4.0); price_anomaly FPT #2955 (not confirmed via get_alerts)
+- Legal: clear | Crisis: clear
+
 
 (none)
 
