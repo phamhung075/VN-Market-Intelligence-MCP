@@ -1,6 +1,6 @@
 # Financial Analyst — Notebook
 
-**Last updated:** 2026-05-09 | **Sprint:** —
+**Last updated:** 2026-05-12 | **Sprint:** —
 
 ## Last session summary
 
@@ -18,6 +18,18 @@ Cycle 2026-05-09 01:00–01:15 UTC. Analyzed 2/31 watchlist stocks (VCB, FPT). 2
 - BCTC Q4-2025 deadline 2026-04-15, Q1-2026 deadline 2026-04-30 — both overdue. Track when submissions arrive.
 - Net margin compression QoQ is a red flag even when absolute levels are acceptable.
 - P/E premium without ROE premium = valuation stretched — note in fundamental_validation signal.
+
+---
+
+## Recent session — 2026-05-12
+
+### Analysis Cycle (23:01–23:06 UTC)
+- Stocks: 1 analyzed (VCB) | Critical findings: [37/38 stocks OVERDUE on BCTC; VCB sole filer today] | Chain validations: 1 (VRE rejected — no BCTC)
+- Regime: NEUTRAL (get_macro_snapshot not in package — data gap) | Max Deposit Rate: 6.00% (assumed) | Valuation flags: [VCB=FAIR]
+- VCB: Q4-2025 filed 2026-05-12. Revenue +18.1% QoQ, Net Profit -0.8% QoQ, Net Margin -10.2pp. PE=14.1 (sector premium +57%), EY_SPREAD=1.09% → FAIR. ROE=16.7% (below median 17.6%). Sentiment NEGATIVE slope=-0.24. KinhDich=MUA (Que Khon, contradicts negative sentiment). Signal #3023 posted to alert-commander.
+- VRE: price_anomaly (+5.51%, chain signal #3020 from market-watcher) — REJECTED, no BCTC data. Signal_feedback #3022 posted to news-scout.
+- Legal risks: None. Insider: [SKIP] requires outstandingShares param. Layer 7: [SKIP] get_cash_flow tool not found. search_similar_context: [ERROR] server not responding. Investment Clock: insufficient_data. Pyramid: equity tier.
+- Deadline watch: 37/38 stocks OVERDUE (Q4-2025 deadline 15/04, Q1-2026 deadline 30/04). Critical — no new filings except VCB.
 
 ---
 

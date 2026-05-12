@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (09:21–09:22 UTC) 2026-05-13
+- Items: 20 | Impacts: 8 | Signals: [] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 1 rejected (VRE, no BCTC Q1-2026 data) | Filter hints: [default thresholds — <10 feedback items]
+- Key: (1) STB near ceiling after senior personnel change 10/10 bullish — banking chain conf 50% → below 0.80 threshold, suppressed. (2) Multiple CTCK lowering VN-Index 2026 forecast + "xanh vỏ đỏ lòng" peak warning — run_impact_chain: 9/10 bearish conf 79% — just below 0.80 chain_catalyst floor, suppressed. (3) FII net sell 800B+ VND, VIC most affected. (4) GAS +3.94%, GVR +4.46% from prior close. No PMI data. No commodity spike trigger.
+- Suppressed: STB chain (banking conf 50%). VN-Index downgrade macro (conf 79%). FII/VIC (impact 6, below urgent_news ≥7). HPG 800M shares (neutral, impact 5).
+- Notes: Off-hours cycle 09:21 UTC (market CLOSED). Stories are carry-over from 2026-05-12 — no new fresh news since 17:19 UTC yesterday. CARRY_REGIME=FII_OUTFLOW_RISK (persistent FII selling pattern).
+
 ### Cycle (21:19–21:22 UTC) 2026-05-12
 - Items: 20 | Impacts: 7 | Signals: [chain_catalyst×1 VN-Index/macro, urgent_news×1 VIC] | Regime: TIGHTENING | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
