@@ -4,6 +4,32 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1879b — get_fed_liquidity_spread MCP tool (#130) (2026-05-12, DONE)
+
+**Files:** 4 new, 3 modified
+- NEW `domain/services/macro/computeFedLiquiditySpread.ts` — pure fn, OLS slope, InsufficientDataError
+- NEW `infrastructure/db/fredQueries.ts` — fetchEffrIorbSamples (INNER JOIN EFFR+IORB on date)
+- NEW `interface/mcp/tools/macro/getFedLiquiditySpreadTool.ts` — registerFedLiquiditySpreadTool, tool #130
+- NEW `src/__tests__/1879b-fed-liquidity-spread.test.ts` — 10 tests (5 describes × 2 its each)
+- `domain/services/macro/index.ts` — barrel export for computeFedLiquiditySpread
+- `interface/mcp/tools/macro/index.ts` — barrel export for registerFedLiquiditySpreadTool
+- `interface/mcp/tools/registry.ts` — registered as tool #130
+
+**Key decisions:**
+- OLS slope over last 30 samples (not all samples) — per spec
+- slope > 0.01 = widening, < -0.01 = narrowing, else stable
+- InsufficientDataError thrown on empty input (spec requirement)
+- trend30d=null when < 30 samples (not error — valid partial data state)
+- T5 DDD audit: strips comment lines before checking for banned patterns (Date.now() appeared in JSDoc comment)
+- fredQueries.ts uses `date('now', '-' || ? || ' days')` — SQLite dynamic date math
+- `window` renamed to `window30` to avoid JS reserved word collision
+
+**Results:** 10/10 pass. tsc clean. SHA a6d4b555.
+Note: worktree branch does NOT include 1879a (sha 4e4aaf5e not in history). fred_series_daily schema
+created in test in-memory DB; prod schema created by 1879a when it merges.
+
+---
+
 ### Task 1879a — FRED EFFR/IORB fetcher + fred_series_daily table (2026-05-12, DONE)
 
 **Files:** 5 touched (2 new)
