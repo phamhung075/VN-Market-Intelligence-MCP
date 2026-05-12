@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 14:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 15:39 UTC | **Sprint:** 1846
 
 **Last updated:** 2026-05-12 12:41 UTC | **Sprint:** 1846
 
@@ -217,6 +217,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
   - No new anomalies above 1.5σ threshold; all session moves (VRE +5.51%, HCM -6.90%, GAS +3.94%, GVR +4.46%) already signaled in earlier cycles.
   - Chain confirms: 0. Supply chain stable (BDI=1,400). Energy grid normal. Climate: dry heat, no watchlist impact.
 - **actions**: Notebook updated. WORK telegram sent. No price_anomaly signals emitted.
+
+### Cycle (15:39–15:41 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ, all previously signaled) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (98.44) | US10Y: NEUTRAL (4.46%) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours cycle, 4h interval). Macro snapshot refreshed: Brent $108.20, Gold $4,661.6, USD/VND 26,299. Regime reverted TIGHTENING→NEUTRAL (Global Liquidity: NEUTRAL).
+- Top closing moves: VRE +5.51% (~1.46σ, 30d stddev ~3.78%), GVR +4.46% (~1.65σ, 30d stddev ~2.70%), GAS +3.94% (~1.40σ, 30d stddev ~2.82%) — all below 2.0σ NEUTRAL threshold; all previously signaled (GVR signal 12:38, VRE/GAS alerts active).
+- Sector rotation: all 15 sectors STABLE (1d data, no 5-session trend). Oil&Gas +2.69%, Logistics +2.11% leading; Retail -0.84%, Securities -0.38% lagging. FII_OUTFLOW_RISK — no hot_money_concentration check.
+- Open chain findings: 0 (last 15 min) | Open alerts: 25 | System: OK
+
+## Metrics (cycle 2026-05-12 15:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 7 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
 - **next_cycle_hint**: EOD cycle at 16:00 UTC. Watch for pre-EOD macro moves on oil/gold. VRE/GVR momentum may continue next session if Brent stays elevated.
 - **estimated_tokens**: 5500
 
