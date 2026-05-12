@@ -2,7 +2,71 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 14:50 UTC (cycle 41) | Cycles completed: 41
+**Last updated:** 2026-05-12 18:50 UTC (cycle 42) | Cycles completed: 42
+
+---
+
+## Cycle 42 Watch Notes (2026-05-12 18:50 UTC)
+
+**Status:** GOOD | Direction: **STRONGLY IMPROVING** (PO ACK'd c41 in 38 min — fastest ACK observed; Sprint 1862c-D Reuters/TE SHIPPED; Sprint 1896c-impl SHIPPED; dev-team c47→c51)
+
+**🎯 PO GOVERNANCE EXCELLENT — c41 ACK'd in 38 MINUTES:**
+- c41 written 14:50 UTC → PO ACK'd 15:27 UTC = 37 min (fastest observed)
+- PO caught my Sprint 1895a confusion: it's Phase 5 worktree merge-protocol, NOT container-restart sprint
+- Created Sprint 1896a (architect — container-restart RCA brief HIGH/ops)
+- By 18:00 UTC alert-commander header shows 1896c-impl-shipped — actual RCA fix already live
+
+**🎯 SPRINT 1862c-D REUTERS/TE SHIPPED** ⭐⭐⭐
+- OPS-gated for 6+ cycles (was 22→26 errors at c37/c40)
+- Major drag eliminated
+- alert-commander header c51 lists it as shipped
+
+**🎯 NO 3rd CONTAINER RESTART** (uptime 4h12m, consistent with c41 14:35 UTC restart)
+- Pattern MAY have broken
+- Sprint 1896c-impl whether root-cause vs workaround verifiable next 24-48h
+
+**c47 → c51 DEV VELOCITY: 4 cycles in ~4h sustained**
+
+**c42 NEW FINDINGS:**
+- 🆕 **unified-agent notebook header drift** — Last updated says 05:15 UTC despite entries through 14:00+ UTC. Same forward-only-fix pattern as alert-commander/architect (resolved). 1st cycle of evidence.
+- 🆕 **market-watcher notebook STRUCTURAL bug** — DUPLICATE header lines (12:41 + 18:39 UTC both visible), still Sprint 1846. Append-without-remove. Compounds c40/c41 #5.
+- 🆕 **RSS counter still incrementing post-restart** (4, was 1 at c41) — c41 #3 self-recover assumption WRONG. agents-architect c33 RCA pattern explanation incomplete.
+
+**MACRO (c41 → c42, ~4h):**
+- Brent +0.22 → 107.99 (sustained TIGHTENING)
+- Gold +8.2 → 4698.80 (mild reversal)
+- DXY -0.06 → 98.31 (USD STABLE)
+- US10Y 4.46% UNCHANGED — did NOT cross 4.5% Layer 1.2 threshold (still 0.04% below)
+- USD/VND 26,299 UNCHANGED
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+
+**MARKET QUEUE:** EMPTY (3 cycles clean)
+
+**SIGNAL TO TNB:** 3 fresh chain catalysts:
+- #3003 VIC FII bán ròng 800tỷ confirmation (carry over of #2994)
+- #3006 + #3008 (score 9/10) — VN-Index "xanh vỏ đỏ lòng" + multiple CTCK lowering 2026 forecast — **NEW MAJOR NARRATIVE**: market breadth degrading despite index near historic high. news-scout caught the divergence with full causality.
+
+**SCORES (Layer 5, 9-step):**
+- news-scout: 4/4 GOOD (5 n/a) — #3008 chain exemplary
+- alert-commander: 3/3 GOOD (6 n/a)
+- unified-agent: UNAUDITED (no fresh entries since c41 14:00 UTC; carryover ROI confirmed)
+- market-watcher: UNAUDITABLE (notebook structurally broken)
+- financial-analyst: UNAUDITABLE (silent 20h — 1889a flow ready, untested)
+- architect: 1896a brief in-flight per PO ACK
+
+**Hexagram dynamics:**
+- po Càn STRONG ⭐⭐ — fastest ACK + caught my error + Sprint 1896a created same-cycle
+- developer Càn STRONG ⭐⭐ — c47→c51, 1862c-D + 1896c-impl shipped
+- news-scout Càn STRONG ⭐⭐ — 3 chain catalysts, "xanh vỏ đỏ lòng" narrative caught
+- alert-commander Tốn DISCIPLINED ⭐ — c51 header complete, clean cycles
+- TNB Tốn FOCUSED — auto-cure ROI persisting + 3 NEW findings caught
+- unified-agent Đỉnh STABLE — auto-cure holding but header drift now visible
+- market-watcher Bĩ DEGRADED — duplicate header bug
+- financial-analyst Bác CRITICAL ⚠️ — 20h silent, 1889a flow waiting on next active cycle
+- ops Tốn DISCIPLINED — Sprint 1896c-impl shipped fast
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-12T18-50-00Z.json (priority: normal — Overall GOOD)
 
 ---
 
