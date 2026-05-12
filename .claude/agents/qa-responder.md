@@ -110,7 +110,7 @@ agent:
       description: Every 12min — triggered by askQueueCheck cron
 
   flow:
-    default: .claude/flows/qa-responder/cycle.md
+    default: .claude/flows/qa-responder/main.md  # Thin dispatcher → cycle sub-flow
 
   tools_package: .claude/tools/package/qa-responder.md
 

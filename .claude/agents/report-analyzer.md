@@ -79,7 +79,7 @@ agent:
     description: Triggered on earnings release detection via get_earnings_calendar()
 
   flow:
-    default: .claude/flows/report-analyzer/cycle.md
+    default: .claude/flows/report-analyzer/main.md  # Thin dispatcher → cycle sub-flow
 
   tools_package: .claude/tools/package/report-analyzer.md
 

@@ -80,7 +80,7 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/agents/agent-father/knowledge.md
+      - path: docs/agents/agent-father/knowledge.md
         trigger: knowledge_section_authoring_or_lazy_load_audit
         fail_loud: false
         note: "Full load policy table (guide parts + non-guide). Load when auditing or authoring knowledge sections."
@@ -88,7 +88,7 @@ agent:
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
-    default: .claude/flows/agent-father/create.md
+    default: .claude/flows/agent-father/main.md  # Thin dispatcher → routes to create/edit/review/keep sub-flows
     catalog:
       - {name: create, path: .claude/flows/agent-father/create.md, trigger: user_requests_new_agent}
       - {name: edit, path: .claude/flows/agent-father/edit.md, trigger: user_requests_agent_change}
@@ -115,4 +115,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| knowledge.md | knowledge_section_authoring_or_lazy_load_audit | `.claude/agents/agent-father/knowledge.md` |
+| knowledge.md | knowledge_section_authoring_or_lazy_load_audit | `docs/agents/agent-father/knowledge.md` |

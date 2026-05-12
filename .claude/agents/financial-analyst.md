@@ -87,7 +87,7 @@ agent:
     reminder_days_before: 7
 
   flow:
-    default: .claude/flows/financial-analyst/cycle.md
+    default: .claude/flows/financial-analyst/main.md  # Thin dispatcher → cycle sub-flow
 
   tools_package: .claude/tools/package/financial-analyst.md
 

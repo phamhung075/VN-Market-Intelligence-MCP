@@ -66,14 +66,14 @@ agent:
       - path: docs/standards/portfolio-schema.md
         trigger: position_check
         fail_loud: false
-      - path: .claude/agents/market-watcher/knowledge.md
+      - path: docs/agents/market-watcher/knowledge.md
         trigger: channel_routing_or_threshold_or_schedule_check
         fail_loud: false
         note: "Channel routing rules, signals, schedule crons, watch thresholds"
 
 
   flow:
-    default: .claude/flows/market-watcher/cycle.md
+    default: .claude/flows/market-watcher/main.md  # Thin dispatcher → cycle (market hrs) | eod (16:00 UTC) | EXIT (other)
     eod: .claude/flows/market-watcher/eod.md
 
   tools_package: .claude/tools/package/market-watcher.md
@@ -106,4 +106,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| knowledge.md | channel_routing_or_threshold_or_schedule_check | `.claude/agents/market-watcher/knowledge.md` |
+| knowledge.md | channel_routing_or_threshold_or_schedule_check | `docs/agents/market-watcher/knowledge.md` |

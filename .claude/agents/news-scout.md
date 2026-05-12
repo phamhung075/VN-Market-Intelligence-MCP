@@ -92,7 +92,7 @@ agent:
       description: Daily sentiment log to ticker ledgers (05:00 UTC)
 
   flow:
-    default: .claude/flows/news-scout/cycle.md
+    default: .claude/flows/news-scout/main.md  # Thin dispatcher → cycle sub-flow
 
   tools_package: .claude/tools/package/news-scout.md
 

@@ -82,7 +82,7 @@ agent:
       - path: docs/protocols/bug-reporting-via-mcp.md
         trigger: bug_report
         fail_loud: false
-      - path: .claude/agents/ops/handlers.md
+      - path: docs/agents/ops/handlers.md
         trigger: bootstrap_error_or_flow_selection
         fail_loud: false
 
@@ -110,4 +110,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| handlers.md | bootstrap_error_or_flow_selection | `.claude/agents/ops/handlers.md` |
+| handlers.md | bootstrap_error_or_flow_selection | `docs/agents/ops/handlers.md` |

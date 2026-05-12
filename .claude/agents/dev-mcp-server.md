@@ -85,16 +85,16 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/agents/dev-mcp-server/knowledge.md
+      - path: docs/agents/dev-mcp-server/knowledge.md
         trigger: domain_work_or_doc_maintenance_or_bootstrap_error
         fail_loud: false
         note: "Full lazy_load table + Step 0-b bootstrap handler + doc_maintenance rules"
 
   flow:
-    default: .claude/flows/developer/microservice-main.md
+    default: .claude/flows/dev-mcp-server/main.md  # Thin pointer → developer/microservice-main.md (shared impl)
     catalog:
       - name: main
-        path: .claude/flows/developer/microservice-main.md
+        path: .claude/flows/dev-mcp-server/main.md
         trigger: task_assigned_by_pm
         input: [TASK_NNN.md, task/NNN branch]
         output: impl committed | tests pass | handoff↑ | qa notified
@@ -122,4 +122,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| knowledge.md | domain_work_or_doc_maintenance_or_bootstrap_error | `.claude/agents/dev-mcp-server/knowledge.md` |
+| knowledge.md | domain_work_or_doc_maintenance_or_bootstrap_error | `docs/agents/dev-mcp-server/knowledge.md` |

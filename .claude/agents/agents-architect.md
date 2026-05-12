@@ -85,14 +85,14 @@ agent:
       - path: docs/ARCHITECTURE.md
         trigger: system_design
         fail_loud: false
-      - path: .claude/agents/agents-architect/handlers.md
+      - path: docs/agents/agents-architect/handlers.md
         trigger: operating_cycle_or_commit_invariant
         fail_loud: true
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
-    default: inline  # No dedicated flow file. Operating cycle defined in handlers.md.
+    default: .claude/flows/agents-architect/main.md  # Thin dispatcher → routes to handlers.md § Operating Cycle
 
   tools_package: .claude/tools/package/architect.md  # Reuse architect tool package (read/write/bash)
 
@@ -112,4 +112,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| handlers.md | operating_cycle_or_commit_invariant | `.claude/agents/agents-architect/handlers.md` |
+| handlers.md | operating_cycle_or_commit_invariant | `docs/agents/agents-architect/handlers.md` |

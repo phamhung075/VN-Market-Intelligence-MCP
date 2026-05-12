@@ -99,7 +99,7 @@ agent:
       flow: .claude/flows/unified-agent/prediction.md
 
   flow:
-    default: .claude/flows/unified-agent/market.md
+    default: .claude/flows/unified-agent/main.md  # Thin dispatcher → market/daily-review/weekly/prediction by UTC clock
 
   tools_package: .claude/tools/package/unified-agent.md
 

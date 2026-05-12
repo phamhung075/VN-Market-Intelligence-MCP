@@ -118,7 +118,7 @@ agent:
 
 
   flow:
-    default: .claude/flows/digest-predict/daily.md
+    default: .claude/flows/digest-predict/main.md  # Thin dispatcher → daily/monday/weekly/monthly sub-flows by UTC clock
 
   tools_package: .claude/tools/package/digest-predict.md
 

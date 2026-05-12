@@ -88,7 +88,7 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: .claude/agents/dev-pdf-extractor/knowledge.md
+      - path: docs/agents/dev-pdf-extractor/knowledge.md
         trigger: domain_work_or_doc_maintenance_or_bctc_extraction
         fail_loud: false
         note: "doc_maintenance rules + full lazy_load table (domain, usecases, infra, api, testing, bctc-runbook, glossary, semble)"
@@ -96,10 +96,10 @@ agent:
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
-    default: .claude/flows/developer/microservice-main.md
+    default: .claude/flows/dev-pdf-extractor/main.md  # Thin pointer → developer/microservice-main.md (shared impl)
     catalog:
       - name: main
-        path: .claude/flows/developer/microservice-main.md
+        path: .claude/flows/dev-pdf-extractor/main.md
         trigger: task_assigned_by_pm
         input: [TASK_NNN.md, task/NNN branch]
         output: impl committed | tests pass | handoff↑ | qa notified
@@ -127,4 +127,4 @@ agent:
 
 | Child | Trigger | Path |
 |---|---|---|
-| knowledge.md | domain_work_or_doc_maintenance_or_bctc_extraction | `.claude/agents/dev-pdf-extractor/knowledge.md` |
+| knowledge.md | domain_work_or_doc_maintenance_or_bctc_extraction | `docs/agents/dev-pdf-extractor/knowledge.md` |

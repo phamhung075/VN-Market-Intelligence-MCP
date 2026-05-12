@@ -98,7 +98,7 @@ agent:
       description: Every 2h outside market hours
 
   flow:
-    default: .claude/flows/alert-commander/cycle.md
+    default: .claude/flows/alert-commander/main.md  # Thin dispatcher → cycle sub-flow
 
   tools_package: .claude/tools/package/alert-commander.md
 

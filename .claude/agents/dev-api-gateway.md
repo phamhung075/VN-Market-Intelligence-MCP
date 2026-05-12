@@ -112,10 +112,10 @@ agent:
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
-    default: .claude/flows/developer/microservice-main.md
+    default: .claude/flows/dev-api-gateway/main.md  # Thin pointer → developer/microservice-main.md (shared impl)
     catalog:
       - name: main
-        path: .claude/flows/developer/microservice-main.md
+        path: .claude/flows/dev-api-gateway/main.md
         trigger: task_assigned_by_pm
         input: [TASK_NNN.md, task/NNN branch]
         output: impl committed | tests pass | handoff↑ | qa notified
