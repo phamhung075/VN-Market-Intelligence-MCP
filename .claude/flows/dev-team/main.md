@@ -32,10 +32,10 @@ try:
   db_available = true
 catch (ENOENT | SQLITE_CANTOPEN | locked after 3×200ms retry):
   db_available = false
-  log to notebook: "[dev-team] WARN: signals.db unavailable — degrading to JSON file scan fallback this cycle"
-  # degrade: process all inbox signals without dedup check, do NOT move to processed/
-  # retry next cycle; filesystem inbox remains intact
-  → jump to Step 0a-fallback (below)
+  log to notebook: "[dev-team] WARN: signals.db unavailable — skipping drain this cycle, inbox retained for retry"
+  # hard skip: pendingSignals = [] (no triage this cycle)
+  # inbox files left untouched — no mv to processed/
+  # cycle continues downstream with empty pendingSignals; retry on next cron tick
 ```
 
 ---
@@ -111,26 +111,6 @@ Glob `docs/signals/*.json`. For each signal file (sorted by `createdAt` ascendin
    Delete any files in `docs/signals/processed/` with `processedAt` older than 7 days.
 
    Both prunes run each cycle to keep DB rows and filesystem copies in sync.
-
----
-
-#### Step 0a-fallback — JSON file scan (DEPRECATED — backup path only)
-
-> **DEPRECATED.** This path is active only when `signals.db` is unavailable (Step 0a-0 catch block).
-> Removal trigger: after 2 consecutive drain cycles where the SQLite path completes without error.
-> Current status: cycle 38 = "cycle 1 post-T2 backfill". Removal eligible after cycle 39 success.
-> Pre-condition for removal: signal-T5 (QA integration tests for dedup SELECT + INSERT + prune) must pass.
-> Until removal: file scan runs as fallback; duplicate signals may route to PO if DB is down.
-
-```
-Scan all files in docs/signals/processed/ for a matching `fingerprint` field.
-if match found → skip (move with -replay suffix, no PO routing)
-if no match → route to PO + move to processed/
-Prune: delete processed files older than 7 days (filesystem only)
-```
-
-Do NOT move files to `processed/` when in fallback mode — leave inbox intact for retry on next cycle.
-Log WARN to notebook at start of fallback path (already done in Step 0a-0).
 
 ---
 
