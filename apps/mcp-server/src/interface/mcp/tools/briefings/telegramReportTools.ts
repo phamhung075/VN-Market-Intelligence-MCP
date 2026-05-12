@@ -22,6 +22,7 @@ import {
   listNewReports,
   listAllReports,
   listNewReportsUnclaimed,
+  listUnresolvedReports,
   getReport,
   markProcessed,
   markResolved,
@@ -345,6 +346,41 @@ export function registerTelegramReportTools(server: McpServer): void {
             {
               type: "text" as const,
               text: formatReportError("claim", id, err instanceof Error ? err.message : String(err)),
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── list_unresolved_reports ───────────────────────────────────────────────
+  server.tool(
+    "list_unresolved_reports",
+    "Trả về tất cả báo cáo chưa được giải quyết dứt điểm: " +
+      "resolution NOT IN ('fixed', 'wontfix', 'duplicate') VÀ status != 'processed'. " +
+      "Bao gồm các báo cáo với resolution='none' (chưa xử lý) và resolution='monitoring' (đang theo dõi). " +
+      "Dùng bởi PO triage (Step 1) để đánh giá tồn đọng và alert-commander để đối chiếu verdict.",
+    {},
+    async () => {
+      try {
+        await initDatabase();
+        const db = getDb();
+        const rows = listUnresolvedReports(db);
+        const serialized = rows.map(serializeReport);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(serialized) }],
+        };
+      } catch (err) {
+        console.error("[list_unresolved_reports] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: formatReportError(
+                "liệt kê chưa giải quyết",
+                0,
+                err instanceof Error ? err.message : String(err),
+              ),
             },
           ],
         };
