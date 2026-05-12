@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1879a — FRED EFFR/IORB fetcher + fred_series_daily table (2026-05-12, DONE)
+
+**Files:** 5 touched (2 new)
+- NEW `infrastructure/fetchers/fredEffrIorb.ts` — fetchFredEffrIorb(httpClient?, db?, sleepFn?)
+- NEW `src/__tests__/1879a-fred-effr-iorb-fetcher.test.ts` — 6 tests (all AC)
+- `infrastructure/db/schema-macro.ts` — fred_series_daily DDL + index
+- `infrastructure/fetchers/index.ts` — export fetchFredEffrIorb + types
+- `scheduler/macro/macroIndicatorRefreshJob.ts` — hook after fetchFedFundsRate
+
+**Key decisions:**
+- sleepFn injectable (3rd param) → T5 HTTP-500 retry test runs in <100ms (no real backoff)
+- Sequential EFFR then IORB (not parallel) — FRED public tier is generous, sequential is simpler
+- INSERT OR IGNORE on UNIQUE(series, date) — re-runs idempotent; count via before/after select
+- Schema in schema-macro.ts (not migrations/ folder — project uses TS function pattern)
+
+**Results:** 9130 pass (baseline) → 9136 pass after. 118 fail (pre-existing, was 124 pre-stash).
+SHA: 4e4aaf5e. All 6 ACs PASS. TSC clean.
+
+---
+
 ### Task 1876a-A2 — Emission bridge gap log in scanMarket.ts (2026-05-11, DONE)
 
 **Change:** After `storeAlerts()` returns, loop over each alert and emit:

@@ -60,6 +60,19 @@ Verdict lifecycle → `docs/policies/alert-policy.md` (Signal Verdict Lifecycle 
 | Calibration report | server `calibrationReportJob` (Sun 13:00) | — | Sends to MARKET + WORK; digest-predict/weekly must NOT re-call `get_calibration_report()` |
 | Summary data (daily/weekly/monthly) | server `summaryJobs` | — | Data generators only (no Telegram); agents read via `get_market_summary()` |
 
+## Macro Indicator Refresh Job — FRED Fetchers
+
+`macroIndicatorRefreshJob` (schedule: `CRON_MACRO_INDICATOR_REFRESH`, default `0 6 * * *`) calls:
+
+| Fetcher | FRED Series | Storage | Task |
+|---------|-------------|---------|------|
+| `fetchFedFundsRate()` | `FEDFUNDS` (monthly) | `tracked_indicators` | 1423b |
+| `fetchFredEffrIorb()` | `EFFR` + `IORB` (daily) | `fred_series_daily` | 1879a |
+
+`fetchFredEffrIorb` persists full FRED history on first run (backfill), then adds 0 new rows for already-seen `(series, date)` pairs (`INSERT OR IGNORE` idempotency). HTTP failures retry 3x with exponential backoff; permanent failure → null returned, nothing written.
+
+Source: `apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts`
+
 ## VPS Proxy Watchdog (price)
 
 `vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
