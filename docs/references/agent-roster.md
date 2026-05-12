@@ -49,17 +49,19 @@ All share tool package: `.claude/tools/package/developer.md`
 
 **Naming convention drift:** `apps/kinh-dich-service/` carries a `-service` suffix while all other microservices use bare names (`apps/alert-engine/`, `apps/stock-price/`, …). Architecture doc folder is `docs/architecture/microservice/kinh-dich/` (bare name). Recommend renaming `apps/kinh-dich-service/` → `apps/kinh-dich/` in a future developer task (touches Docker compose + imports).
 
-| Agent | File | Zone | Model |
-|-------|------|------|-------|
-| Dev MCP Server | `dev-mcp-server.md` | `apps/mcp-server/` | Sonnet |
-| Dev API Gateway | `dev-api-gateway.md` | `apps/api-gateway/` | Sonnet |
-| Dev Stock Price | `dev-stock-price.md` | `apps/stock-price/` | Sonnet |
-| Dev Technical Analysis | `dev-technical-analysis.md` | `apps/technical-analysis/` | Sonnet |
-| Dev Macro Indicators | `dev-macro-indicators.md` | `apps/macro-indicators/` | Sonnet |
-| Dev Kinh Dich | `dev-kinh-dich.md` | `apps/kinh-dich-service/` | Sonnet |
-| Dev Alert Engine | `dev-alert-engine.md` | `apps/alert-engine/` | Sonnet |
-| Dev PDF Extractor | `dev-pdf-extractor.md` | `apps/pdf-extractor/` | Sonnet |
-| Dev RAG Service | `dev-rag-service.md` | `apps/rag-service/` | Sonnet |
+**Doc ownership rule:** Each dev-* specialist is the sole committer of its zone doc folder. Architect writes only to `docs/architecture-briefs/`. Any architect brief that proposes doc edits under a microservice path MUST produce a signal routing the doc-write subtask to the relevant dev-* agent.
+
+| Agent | File | Zone | Model | doc_owner |
+|-------|------|------|-------|-----------|
+| Dev MCP Server | `dev-mcp-server.md` | `apps/mcp-server/` | Sonnet | `docs/architecture/microservice/mcp-server/` |
+| Dev API Gateway | `dev-api-gateway.md` | `apps/api-gateway/` | Sonnet | `docs/architecture/microservice/api-gateway/` |
+| Dev Stock Price | `dev-stock-price.md` | `apps/stock-price/` | Sonnet | `docs/architecture/microservice/stock-price/` |
+| Dev Technical Analysis | `dev-technical-analysis.md` | `apps/technical-analysis/` | Sonnet | `docs/architecture/microservice/technical-analysis/` |
+| Dev Macro Indicators | `dev-macro-indicators.md` | `apps/macro-indicators/` | Sonnet | `docs/architecture/microservice/macro-indicators/` |
+| Dev Kinh Dich | `dev-kinh-dich.md` | `apps/kinh-dich-service/` | Sonnet | `docs/architecture/microservice/kinh-dich/` |
+| Dev Alert Engine | `dev-alert-engine.md` | `apps/alert-engine/` | Sonnet | `docs/architecture/microservice/alert-engine/` |
+| Dev PDF Extractor | `dev-pdf-extractor.md` | `apps/pdf-extractor/` | Sonnet | `docs/architecture/microservice/pdf-extractor/` |
+| Dev RAG Service | `dev-rag-service.md` | `apps/rag-service/` | Sonnet | `docs/architecture/microservice/rag-service/` |
 
 **Semble tools:** `developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor` all carry `mcp__semble__search` + `mcp__semble__find_related` in their tool lists.
 

@@ -346,7 +346,7 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dis
 | `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
 | `docs/architecture/global.md` | Architect | After service topology or conflict resolution change |
-| `docs/architecture/microservice/<service>.md` | Architect | After service-level design change |
+| `docs/architecture/microservice/<service>.md` | dev-<service> (sole committer) | After code change alters behavior, API, schema, or config — Architect routes doc subtask to dev-* via signal, never writes directly |
 
 ## Archived Structure (Reference — for future reorganization)
 

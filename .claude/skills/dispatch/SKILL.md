@@ -55,6 +55,8 @@ description: >
 
 Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/main.md` (dispatcher) → sub-flows.
 
+**Dev-* specialist doc-ownership:** Each dev-* agent is sole committer of `docs/architecture/microservice/<service>/`. Architect writes only to `docs/architecture-briefs/`. Architect briefs that propose microservice doc edits MUST route the doc-write subtask to the matching dev-* agent, not to architect or generic developer. Full table → `docs/references/agent-roster.md` § doc_owner column.
+
 **Cowork cron-driven agents** (`news-scout`, `financial-analyst`, `market-watcher`, `alert-commander`, `digest-predict`, `qa-responder`, `unified-agent`) are **not normally direct-spawned by main terminal**. They run on their own schedule and communicate via `docs/signals/*.json`. User-typed intents that *sound* like them (e.g. "what's the news?") route to `market-analyst` which then queries the right MCP tools. Manual spawn is allowed in exceptional cases (e.g. user explicitly says "run market-watcher now").
 
 ---
