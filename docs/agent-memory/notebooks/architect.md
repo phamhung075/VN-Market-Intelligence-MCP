@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-13 00:00 UTC | **Sprint:** ARCH-1896-RE-RCA-c58
+**Last updated:** 2026-05-13 ~00:45 UTC | **Sprint:** ARCH-BRIEF-UPDATE-H4-c58
 
-## Last session summary (ARCH-1896-RE-RCA-c58)
+## Last session summary (ARCH-BRIEF-UPDATE-H4-c58 — Tier 3)
+
+H4 CONFIRMED brief update. Updated `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md`:
+- Status bumped to RESOLVED-MECHANISM, OPEN-FIX-PICK
+- Tally corrected: 5 cycles → 7 cycles (c52–c58)
+- H1/H2/H3 marked REJECTED/ELIMINATED; H4 CONFIRMED with VirtioFS mechanism
+- F1-F4 ranked: F2 PRIMARY (named volumes, phased F2a+F2b), F4 SECONDARY (retry wrapper)
+- F3 REJECTED (too disruptive), F1 BLOCKED (user action)
+- c59+ impl plan added (c59-T1: F2a, c59-T2: F4, c60-T1: F2b)
+- Q1+Q2 closed (both resolved c57)
+- c58 orphan `.claude/worktrees/agent-a0f89162/` noted in Section 5
+- Cross-link to `2026-05-13-container-restart-rca-v2.md` added (both touch Docker Desktop VM)
+- 118L → 139L (within 140L cap)
+
+## Previous session summary (ARCH-1896-RE-RCA-c58 — Tier 2)
 
 Re-RCA for TNB c43 CRITICAL escalation ("3rd restart in <24h, 1896c-impl insufficient").
 Loaded docker-events log (1896c-impl start: 17:31:34 UTC 2026-05-12). Found 5 die events,
@@ -18,22 +32,6 @@ c40 status: unchanged — inconclusive (pre-log, no ops evidence in window).
 Recommendation: MONITOR c59+c60, then close 1896 fully.
 c59 fix (if opened): TNB recalibration — add `# TNB-PLANNED-RESTART` tag convention to ops
 flow. SPRINT-S, ≤20 LOC, zone: `.claude/flows/ops/`.
-
----
-
-## Previous session summary (1876a-A6)
-
-Task: Brownfield scan for seeding 7 high-vol watchlist tickers (NVL/DPM/REE/VNH/KBC/MWG/TCH)
-at alert_drop_pct=-9.0. Root cause: SEED GAP — 7 tickers absent from `WATCHLIST_SEED` array
-entirely. Decision (a): add 7 entries to `WATCHLIST_SEED` in `seedWatchlist.ts`. Idempotent.
-Handoff: `docs/handoffs/TASK_1876a-A6.md`.
-
----
-
-## Previous session summary (1896c)
-
-Persistent Docker events logging design brief. launchd plist + newsyslog rotation. Log at
-`/usr/local/var/log/docker-events.log`. Brief: `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`.
 
 ---
 
@@ -53,3 +51,5 @@ Persistent Docker events logging design brief. launchd plist + newsyslog rotatio
 - 1878b `compute_accruals` spec: `docs/specs/1878b-compute-accruals.md`.
 - c40 container restart: inconclusive (pre-log). Re-evaluate if TNB flags again post-c60.
 - TNB recalibration (1896 close gate): SPRINT-S pending — `# TNB-PLANNED-RESTART` convention.
+- Headlock F2a + F4: c59-T1 (ops/developer) + c59-T2 (dev-team). F2b after writer-audit c60.
+- F1 (Docker Desktop .git/ exclusion): user-queue carry item.
