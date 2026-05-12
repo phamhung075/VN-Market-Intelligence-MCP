@@ -1,5 +1,51 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-12 04:23 UTC (Cycle 41 extension — user-requested full TNB c39 sweep)
+
+## Cycle 41 EXTENSION (2026-05-12 03:39 → 04:23 UTC) — user req "take all TNB handoff non read"
+
+After c41 close (`d376e962` at 03:38), user pushed PO to consume the **full c39 handoff document** (not just signal summary). Re-dispatched PO to triage findings #3-#8.
+
+### PO full-handoff triage (`95145342`)
+
+| # | Finding | Decision | Tracking |
+|---|---|---|---|
+| #3 | unified-agent FPT pillar gap (2nd cycle) | MONITOR | Deferred row `TNB-c39-#3` (c40+ = 3rd-cycle window) |
+| #4 | financial-analyst tool-package gaps (TNB rec #3, carry from c33) | NEW SPRINT | Backlog row `1890a` — ba spec → S-size |
+| #5 | Alert accuracy +1 hit marginal | MONITOR | Deferred row `TNB-c39-#5` (re-eval c43) |
+| #6 | 5 of 8 c36 + 5 c38 carries | WONTFIX | All carries already tracked or auto-cured; no untracked items |
+| #7 | architect notebook header drift | WONTFIX | Already auto-cured (header now `2026-05-12 02:03 UTC / Sprint 1878b`) |
+| #8 | alert-commander notebook header drift | CHORE → shipped | `NB-HDR-c39` Todo→ship→Done in same extension |
+
+### NB-HDR-c39 immediate ship
+
+- `5f485e20` — patch `.claude/flows/alert-commander/cycle.md` Step 5 (+4 LOC, jq-reads `currentSprint` from `pipeline-state.json` with `idle` fallback) + TASKS.md row removal
+- `e0bd05a3` — TASKS.md Done row move
+
+Next alert-commander cycle will write its header with `Sprint: c41-tnb-pivot-flow-wiring+1879-spec` (or current active). Forward-only-fix pattern broken.
+
+### Extension scorecard
+
+- Total c41 commits: 9 (5 main + 1 PO triage + 2 NB-HDR + 1 ext close)
+- TASKS.md state: 183 → 180 (PO net +4) → 180 (NB-HDR Todo→Done move = 0 net rows)
+- Sprint 1890a (financial-analyst tool-package re-evaluation) added to Backlog — ba spec next
+- TNB c39 audit fully consumed; nothing left untriaged
+
+### Refresh of c42 carry-over
+
+- 1889a impl (developer/agent-md-editor)
+- 1879a + 1879b impl chain (dev-mcp-server)
+- 1890a ba spec (ba)
+- 1881 source-tier ba spec (ba, deferred again)
+- SPRINT-PARALLEL-ISOLATION arch brief — **6 cycles deferred now, cutoff c43 ABSOLUTE**
+- TNB c40 cron handoff still MIA — watch c42 drain
+
+### C2 commit-convention gate
+
+c41 total: **7 conformant commits** (signal-T6 row, 1889a-spec, 1879-spec, c41 TASKS sync, c41 close, PO triage, NB-HDR-c39 ship + Done move). Passive accrual healthy. Gate 2026-05-17.
+
+---
+
 **Written:** 2026-05-12 03:38 UTC (Cycle 41 — TNB c39 pivot to flow-wiring + 1879 spec)
 
 ## Cycle 41 (2026-05-12 03:26 → 03:38 UTC)
