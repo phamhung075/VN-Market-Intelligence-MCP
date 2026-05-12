@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** c47 Phase 4 parallel dispatch + incident forensics
+**Last updated:** 2026-05-12 | **Sprint:** c52
 
 ## Current state
 
@@ -204,10 +204,31 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 52 — 2026-05-12 Brownfield Findings: 1876a-A5 Exec-Only Simplification
+
+**Input:** Architect brief TASK_1876a-A5.md for Sprint 1869b watchlist seed re-deployment on prod.
+
+**Findings summary:** Brownfield analysis confirms migrateWatchlistThresholds() at apps/mcp-server/src/infrastructure/db/seedWatchlist.ts:193-220 is already wired unconditionally into initDatabase() (schema.ts:217). Root cause: prod mcp-server container was never restarted after Sprint 1869 merged. No missing migration files, no code changes required.
+
+**Actions:**
+- **1876a-A5→IN PROGRESS (SIMPLIFIED):** Moved from Todo → In Progress. Execution path simplified to one-liner: `docker-compose restart mcp-server` triggers initDatabase() which fires migrateWatchlistThresholds() automatically. Verification via 1876a-A4 query (30+ rows at -7.0/-9.0, NVL/DPM/MWG present). No code changes needed — reuse established migration pattern (inline migrations at container startup).
+- **Sequence enforcement:** This is final sprint deliverable, so Docker restart IS the deliverable itself, not a follow-up. Follows dev-team invariant "Docker restart: after final sprint merge only."
+- **WIP status:** 1/2 (1876a-A5 now In Progress, 1894a awaiting user dashboard action). Headroom: 1.
+- **File state diffs:**
+  - TASKS.md Todo: 1876a-A5 removed (moved to In Progress)
+  - TASKS.md In Progress: 1876a-A5 added with exec-only one-liner description
+  - pipeline-state.json: status=in_progress, activeTaskId=1876a-A5, nextAgent=ops, nextPrompt=exec-only brief, updatedBy=pm, currentSprint=c52
+- **Commit:** 6773773e type=pm scope=c52
+
+**Status:** READY FOR OPS HANDOFF. 1876a-A5 decomposed, simplified, and assigned to ops. Pipeline: continue.
+
+---
+
 ## Current state
 
-- WIP: 0 / 2 (In Progress: 1894a Cloudflare tunnel routing awaits user dashboard action)
+- WIP: 1 / 2 (In Progress: 1876a-A5 OPS-EXEC docker restart, 1894a Cloudflare awaits user)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design, incident-driven)
 - Todo: 1896b (ops RCA follow-up, c40 restart evidence), 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
 - Done: 1896a (RCA false-alarm-h4), 1896c (brief shipped), 1895b (merge-gate impl), 1879b (fed-liquidity tool), 1879a (FRED fetcher), signal suite (T1-T6 dedup), and 40+ prior arcs
 - CLEAN state: 7 worktree branches swept, all merged content verified on main
+- **Headroom:** 1 In Progress slot available (max WIP = 2)
