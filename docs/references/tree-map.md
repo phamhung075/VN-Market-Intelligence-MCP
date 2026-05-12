@@ -80,7 +80,10 @@ CLAUDE.md (root — always loaded)
 │   ├── docs/protocols/ops-incident-response-p2-degradation.md (P2 Yellow: single service + deployment playbooks)
 │   └── docs/protocols/ops-incident-response-decision-tree.md (decision matrix + escalation rules)
 │
-├── docs/references/vps-setup.md (VPS operations: Vinahost connection, service management, health checks)
+├── docs/references/vps-setup.md (index: Vinahost connection, service & endpoint routing)
+│   ├── docs/references/vps-setup-services.md (5 fetch services: price, BCTC, news, FX, foreign flow)
+│   ├── docs/references/vps-setup-endpoints.md (local POST endpoints: prices, BCTC, news, FX)
+│   └── docs/references/vps-setup-deployment.md (deployment, monitoring, recovery, cost optimization)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
