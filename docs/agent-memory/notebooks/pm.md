@@ -112,3 +112,28 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **Blockers:** None. WIP limit (2/2) enforced.
 
 **Status at session end:** TASKS.md synced. signal-T4 closed, signal-T5 ready. 1878b + ARCH-1884 live. Commit pending.
+
+---
+
+## Cycle 40 — 2026-05-12 ARCH-1884 Reconciliation
+
+**Input:** ARCH-1884 merged SHA cae59b98 but TASKS.md row was still in Backlog (drift detected by PO c40).
+
+**Actions:**
+- Moved ARCH-1884 row from Backlog → Done section (line 67 after header); set completed date 2026-05-12, merge SHA cae59b98
+- Checked opportunistic fixes: signal-T5 already done (not stale, QA approved 2026-05-12); signal-T4 done; 1878b done; no 1872a-5/signal-T6 drift found
+- Checked archiving eligibility: earliest done row is 2026-05-07 (5 days old); no rows >7 days old yet. Archive will auto-trigger 2026-05-19 when 1849+ tasks age to 7+ days
+- Added cap-violation header to TASKS.md preamble (176/80 lines) noting pending archive schedule
+- Verified WIP = 0/2 (In Progress section empty, no blocker)
+
+**File state diffs:**
+- Backlog: ARCH-1884 removed
+- Done: ARCH-1884 added (first row); AC: completed 2026-05-12, SHA cae59b98
+- TASKS.md: 177 lines (was 178 after manual ARCH-1884 move, net −1)
+- Archive file: not created (no rows eligible yet; note in cap-violation header)
+
+**Commit:** 33174487 type=chore scope=pm/tasks (task/ARCH-1884-reconcile)
+
+**WIP final:** 0/2. No blockers.
+
+**Status at session end:** ARCH-1884 reconciliation complete + cap-violation header added. Ready for next cycle.
