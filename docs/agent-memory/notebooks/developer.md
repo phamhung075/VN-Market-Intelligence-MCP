@@ -1,8 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** signal-T3
+**Last updated:** 2026-05-12 | **Sprint:** signal-T4
 
 ## Last session summary
+
+Task signal-T4: doc-only update for SQLite signal dedup (FIX, ≤10 LOC).
+- Files: docs/protocols/agent-chaining-protocol.md + docs/references/tree-map.md.
+- AC1: Cross-Team Signal Directory updated — file-scan dedup replaced with dual-record write (DB INSERT SSOT + filesystem copy), spec ref added, DB-unavailable degraded path noted.
+- AC2: tree-map.md — docs/signals/signals.db leaf added under agent-chaining-protocol node; write-ownership row added (sole writer: dev-team Step 0a).
+- AC3: 6 insertions / 3 deletions = 9 net lines (≤10 budget PASS).
+- AC4: no new files, no code changes outside docs/.
+- AC5: tsc pre-push clean; no broken links.
+- Branch: task/signal-T4-doc-updates | Commit: 7717adb5.
+- Pipeline: status=in_progress, nextAgent=qa.
+
+## Previous last session summary
 
 Task signal-T3: dev-team Step 0a drain rewrite — SQLite dedup.
 - File: .claude/flows/dev-team/main.md — Step 0a replaced (92 insertions / 17 deletions).
