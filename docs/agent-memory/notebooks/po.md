@@ -1,6 +1,74 @@
 # PO Notebook
 
-## Last updated: 2026-05-12T01:53Z (dev-team c39 triage — BATCH(3): 1878b + signal-T4 + signal-T5)
+## Last updated: 2026-05-12T13:29:39Z (dev-team c47 triage — BATCH(2): 1894a UNBLOCK + 1879b)
+
+---
+
+## Cycle 47 triage — 2026-05-12T13:29:39Z
+
+### Trigger
+Cron-fired dev-team c47. TNB c40 audit handoff re-routed (NEEDS_ATTENTION/MIXED, 8 findings, Finding #4 = PO never ACK'd c39). 4 PO open Qs from 1893a Phase 4 brief §6 pending.
+
+### Step 0 — TNB c40 ACK SHIPPED
+Appended `## PO ACK — cycle 40 — 2026-05-12T13:29:39Z` to `docs/handoffs/tnb-audit-latest.md`. Disposition per finding:
+- #1 unified-agent pillar gap auto-cure → MONITOR c47-c50 (no new task; flow-edit landed)
+- #2 financial-analyst silent → NO new task (1889a flow-edit already DONE; stop-gap shipped)
+- #3 container restart 02:40 UTC → OPS deferred; watch window c47-c50; escalate if 2nd restart in 24h
+- #4 PO ACK gap → RESOLVED by this ACK
+- #5 market-watcher header drift → CARRY (bundle with 1862c-G smoke probe addendum)
+- #6 Reuters/TE 26 → CARRY; escalate Sprint 1862c-D at 30
+- #7 alert accuracy 1% → CARRY (Sprint 1869 deploy via 1876a-A5)
+- #8 Layer 7/8 fin-analyst auto-cure → DEFER per self-statement (counter only advances on active cycles)
+
+### Step 0-B — 1893a PO Answers SHIPPED
+Appended `## PO Answers` to `docs/architecture-briefs/2026-05-12-phase4-sequential-mandate-relaxation.md`:
+- Q1 WIP: KEEP 2 (enforce sub-tier split)
+- Q2 Phase 5 timing: c46-c47 → open task `1895a` (next PM sync, architect-dispatched, NOT this BATCH)
+- Q3 QA parallelism: PERMIT under same §2 criteria; arch verification note required after 1st cycle
+- Q4 announcement: send AT START of c47 (informational); main-terminal owns
+
+Phase 4 flow patches (§5) UNBLOCKED → queue as task `1896a` next PM sync (NOT this BATCH).
+
+### Channel audit
+SKIPPED — inputs to triage already enumerated. TNB c40 covers methodology audit; ops alerts captured in Finding #3 disposition; no fresh BUG/MARKET deltas reported in c46 close.
+
+### BATCH selection
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → S → M/L.
+- 1894a-cloudflare-tunnel-routing (HIGH, ops, UNBLOCK) — closes user pollNews bug. zenmidi.com/api/push-news 404 while localhost:4000 OK. Cloudflare tunnel routing fix. Already routed to ops in TASKS.md.
+- 1879b get_fed_liquidity_spread (HIGH, dev-mcp-server, S-size) — 1879a fetcher DONE; pure-fn MCP tool + DB query layer; 5 tests. Disjoint zone vs 1894a (apps/mcp-server vs ops cloudflare config). PARALLEL-eligible per Phase 4 §2.
+
+### Cross-pollution + WIP check
+- 1894a touches: `~/.cloudflared/config.yml` (ops host-side), DNS records (Cloudflare console), no repo files.
+- 1879b touches: `apps/mcp-server/src/domain/services/macro/computeFedLiquiditySpread.ts` (new) + `apps/mcp-server/src/interface/mcp/tools/macro/getFedLiquiditySpreadTool.ts` (new) + tests. Disjoint from ops zone.
+- WIP: 0 In Progress → +2 = within WIP=2 cap.
+- Phase 4 ELIGIBLE: disjoint zones (ops + dev-mcp-server), no shared-SSOT writes, no `depends_on` between the two, WIP=2. Main terminal may parallel-dispatch via `isolation: "worktree"`.
+
+### Items deferred (NOT this BATCH)
+- 1890a ba spec (MEDIUM, fin-analyst tool-pkg) — 7+ cycles deferred. Defer one more (capacity 2 only).
+- 1881a source-tier retrofit (HIGH, ba spec, ~15 tools) — 3 cycles deferred. Defer one more.
+- 1895a Phase 5 worktree-merge-protocol — architect dispatch path, next PM sync.
+- 1896a Phase 4 flow patches (§5) — agent-father, next PM sync.
+- CLEAN sweep — 5 worktrees pid-locked, defer; task/1888a-ssot-tool-cron-pointers branch — defer one cycle.
+- TASKS.md cap violation 193/80 — auto-archive eligible 2026-05-19, NOT YET (latest Done 2026-05-11).
+- Stale remote branches (~7) — defer to dedicated CLEAN sprint.
+
+### Hard-constraint compliance
+- WIP ≤2: PASS (0→2)
+- Disjoint zones (§2a): PASS (ops + dev-mcp-server)
+- No shared-SSOT writes (§2c): PASS (no veto-list files in write-sets)
+- No file overlap (§2b): PASS
+- No `depends_on` link between 1894a and 1879b: PASS
+- Sequential dependency declared: none — both can run in parallel
+
+### Files written this cycle
+- docs/handoffs/tnb-audit-latest.md (PO ACK section appended)
+- docs/architecture-briefs/2026-05-12-phase4-sequential-mandate-relaxation.md (PO Answers section appended)
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+Not present at session start. No rm needed.
+
+---
 
 ## Current sprint focus: Sprints 1878-1881 + ARCH-1884 — TNB methodology infrastructure foundations (OCF + EFFR-IORB + Investment Clock + source tiers + forensic-host architect brief)
 
