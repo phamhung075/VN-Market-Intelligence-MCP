@@ -1,63 +1,55 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-12 19:14 UTC | **Sprint:** 1876a-A6
+**Last updated:** 2026-05-13 00:00 UTC | **Sprint:** ARCH-1896-RE-RCA-c58
 
-## Last session summary (1876a-A6)
+## Last session summary (ARCH-1896-RE-RCA-c58)
 
-Task: Brownfield scan for seeding 7 high-vol watchlist tickers (NVL/DPM/REE/VNH/KBC/MWG/TCH)
-at alert_drop_pct=-9.0. Root cause: SEED GAP — 7 tickers absent from `WATCHLIST_SEED` array
-entirely, never inserted. `migrateWatchlistThresholds()` operates via UPDATE, requires rows to
-exist first. Decision (a): add 7 entries to `WATCHLIST_SEED` in `seedWatchlist.ts`. On next
-container restart, `seedWatchlist()` inserts them at default -3, then `migrateWatchlistThresholds()`
-immediately UPDATEs to -9.0. Fully idempotent — safe on prod (31 standard rows -7.0 untouched).
-7 ACs defined. No schema change, no Drizzle migration, no new tests needed (existing 9-test
-suite covers 25+7 scenario). Single file edit: `seedWatchlist.ts`. Handoff: `docs/handoffs/TASK_1876a-A6.md`.
+Re-RCA for TNB c43 CRITICAL escalation ("3rd restart in <24h, 1896c-impl insufficient").
+Loaded docker-events log (1896c-impl start: 17:31:34 UTC 2026-05-12). Found 5 die events,
+zero OOM events, zero health_status:unhealthy events. All post-1896c-impl die events are
+exit=0 (clean stop) or exit=137-via-SIGKILL (Docker stop-timeout, NOT kernel OOM):
+- api-gateway 17:31 UTC: SIGTERM hang → SIGKILL during 1862c-DE deploy (ops action)
+- mcp-server 19:58+20:00 UTC: 1876a-A5 exec-only migration restart (ops action)
+- mcp-server 20:29 UTC: 1876a-A6 docker-compose up --build (ops action)
+TNB c43 saw 20:29 restart, computed uptime=2h18m at 22:47, misclassified as crash.
+VERDICT: false-alarm-h4-batch. 1896c-impl logging is working correctly.
+Brief: `docs/architecture-briefs/2026-05-13-container-restart-rca-v2.md` (117L)
+c40 status: unchanged — inconclusive (pre-log, no ops evidence in window).
+Recommendation: MONITOR c59+c60, then close 1896 fully.
+c59 fix (if opened): TNB recalibration — add `# TNB-PLANNED-RESTART` tag convention to ops
+flow. SPRINT-S, ≤20 LOC, zone: `.claude/flows/ops/`.
 
 ---
 
-## Previous session summary (1876a-A5)
+## Previous session summary (1876a-A6)
 
-Brownfield scan: `migrateWatchlistThresholds(db)` exists at `seedWatchlist.ts:193-220`, is
-idempotent, and IS ALREADY WIRED inside `schema.ts::initDatabase()` at line 217. No `migrateDb.ts`
-and no `migrations/` directory — only execution path is container startup. Root cause confirmed:
-mcp-server container was not restarted after 1869b merged. DECISION (a) exec-only. No code change.
-Existing test coverage in `1869b-seed-watchlist-thresholds.test.ts` (9 tests). Executor: ops.
-Handoff: `docs/handoffs/TASK_1876a-A5.md`.
+Task: Brownfield scan for seeding 7 high-vol watchlist tickers (NVL/DPM/REE/VNH/KBC/MWG/TCH)
+at alert_drop_pct=-9.0. Root cause: SEED GAP — 7 tickers absent from `WATCHLIST_SEED` array
+entirely. Decision (a): add 7 entries to `WATCHLIST_SEED` in `seedWatchlist.ts`. Idempotent.
+Handoff: `docs/handoffs/TASK_1876a-A6.md`.
 
 ---
 
 ## Previous session summary (1896c)
 
-Persistent Docker events logging design brief. Recommended Option 4 (launchd plist + newsyslog
-rotation). Plist at `~/Library/LaunchAgents/com.vn-market.docker-events.plist`, KeepAlive.Crashed=true,
-ThrottleInterval=15s, log `/usr/local/var/log/docker-events.log`, newsyslog 50MB/daily, 30-day
-retention. Source-controlled copies in `launchd/`. No domain code change, no Docker rebuild.
-Brief: `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`.
+Persistent Docker events logging design brief. launchd plist + newsyslog rotation. Log at
+`/usr/local/var/log/docker-events.log`. Brief: `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`.
 
 ---
 
 ## Known patterns / preferences
 
-- Phase-gate approach for SPRINT-L refactors: always split Phase 1 (design + top-N files) and
-  Phase 2+ (remaining files). Single-phase SPRINT-L refactors routinely cause merge conflicts.
-- Coupling analysis via graph: use graph tool to identify highest-coupling nodes before refactors.
-- `domain/repositories/` is the clean boundary between domain and infrastructure. Repository
-  interfaces in domain, SQLite implementations in `infrastructure/db/repositories/`. Canonical
-  ports-and-adapters pattern.
-- Default-param injection: `constructor(private repo: IRepo = new SqliteRepo())`. Production
-  uses SQLite default; tests inject in-memory mocks.
-- DDD layer audit before design: `grep -r "from.*infrastructure" src/domain/`. Never add domain
-  task without confirming design keeps domain clean.
-- SPRINT-M tasks single-phase. SPRINT-L always requires Architect design document appended to
-  handoff before developer starts.
-- `server.ts` bootstrap: all new MCP tools must be added to registration list. Single wiring point.
-- `initDatabase()` is the migration runner. Container restart = migration execution. Established
-  pattern — no standalone migration CLI exists.
+- Phase-gate: SPRINT-L always split Phase 1 (design) + Phase 2+ (impl). Never single-phase.
+- `domain/repositories/` = clean boundary. Repository interfaces in domain, SQLite impls in infra.
+- Default-param injection: `constructor(private repo = new SqliteRepo())`. Tests inject mocks.
+- `initDatabase()` is the migration runner. Container restart = migration execution.
+- `server.ts` bootstrap: all new MCP tools registered there. Single wiring point.
+- DDD layer audit before design: `grep -r "from.*infrastructure" src/domain/`.
 
 ## Carry-over for next session
 
-- ARCH-1884 brief written: Hybrid decision. Calculators in mcp-server domain; BTN detectors in
-  new forensic-analysis service (port 5007). Sprint 1887 (Virtual Capital) lands on forensic-analysis.
-- 1878b `compute_accruals` spec written. Spec: `docs/specs/1878b-compute-accruals.md`.
-- Phase 5 merge gate still not exercised (6 cycles dormant) — flag if not exercised by c55.
-- `docs/architecture/global.md` is Architecture SSOT (read before any system-level design).
+- ARCH-1884 brief: Hybrid decision. Calculators in mcp-server domain; BTN detectors in
+  forensic-analysis service (port 5007). Sprint 1887 (Virtual Capital) → forensic-analysis.
+- 1878b `compute_accruals` spec: `docs/specs/1878b-compute-accruals.md`.
+- c40 container restart: inconclusive (pre-log). Re-evaluate if TNB flags again post-c60.
+- TNB recalibration (1896 close gate): SPRINT-S pending — `# TNB-PLANNED-RESTART` convention.
