@@ -1,6 +1,65 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 07:55 UTC (Cycle 45 — Phase 3 parallel verification 2nd PASS → Phase 4 unlock criterion MET)
+**Written:** 2026-05-12 13:05 UTC (Cycle 46 — 3rd Phase 3 parallel pass + Cloudflare ESCALATION discovered)
+
+## Cycle 46 (2026-05-12 12:26 → 13:05 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0 Router | NEW main.md = router. Default → drain. | route: drain |
+| 0a Drain | 1 signal: `flow-split-waterfall.json` (architect→agent-father, brief implemented in user refresh — ACK only, not a dev task) | 1 routed-to-po, 0 pruned |
+| 0b Resume | idle | fall through |
+| 1 Triage | PO returned BATCH(5): 1893a-phase4-brief, 1879a impl, 1892a-ops-AC3-reverify (UNBLOCK), TNB-c40-ops-triage (UNBLOCK), c46-branch-sweep (CLEAN). Phase 3 parallel pair: 1893a + 1879a. | 3 dispatchable |
+| 2 Plan | 1893a SPRINT-S = architect directly authors (deliverable IS the brief). 1879a SPRINT-S = dev-mcp-server uses existing BA spec. Ops bundle combined into 1 invocation (shared notebook). | direct dispatch |
+| 3 Exec | **PARALLEL via SDK `isolation:"worktree"` + 1 main-terminal ops** — 3 agents in single message: architect (1893a) + dev-mcp-server (1879a) + ops (bundle). | 3 agents running concurrently |
+| 3 Architect 1893a | 375-line brief at `docs/architecture-briefs/2026-05-12-phase4-sequential-mandate-relaxation.md`. 7 sections. 3 flow patches verbatim. 4 open PO questions. Commit `10ac3da0`. | docs-only |
+| 3 Dev 1879a | `apps/mcp-server/src/infrastructure/fetchers/fredEffrIorb.ts` (+237), test file (+222), schema-macro.ts (+17), index export (+7), scheduler hook (+13), cron-jobs.md docs (+14), dev-mcp-server notebook (+19). 6/6 ACs. Commits `4e4aaf5e` impl + `b0f69037` docs. | code+tests+docs |
+| 3 Ops bundle | 1892a-ops AC-3: **LOCAL PASS** (localhost:4000/api/push-news → 200) but **PUBLIC FAIL** (zenmidi.com/api/push-news → 404). Root cause = Cloudflare tunnel/DNS not forwarding /api/* to api-gateway. TNB c40 restart classified routine (no OOM/panic), monitor c47-c50. Commit `4439abce`. | mixed: code OK, infra broken |
+| 3 QA | Parallel QA both worktrees. 1893a APPROVED (7/7 sections, 3 hunks applicable, path-existence verified, c44/c45 evidence accurate). 1879a APPROVED (6/6 ACs, idempotency confirmed, DDD compliant, parametrized SQL, no `any`). | both green |
+| 3 Merge | Cherry-pick chaos with stash dance (user refresh blocked picorages, HEAD.lock pattern returned, concurrent agents committed to main during window). Final: 1879a impl `f7240b5e`, 1879a docs `4756e4f4`, 1893a brief `10ac3da0` (direct commit not picored), ops `4439abce` (direct commit). | all on main |
+| 3 PM | TASKS.md sync `69447270`: 1893a + 1879a Done, ops bundle marked. **NEW HIGH Todo `1894a-cloudflare-tunnel-routing`** routed to ops c47. | escalation logged |
+| 4.0 Expire | n/a (no monitoring reports) | n/a |
+| 4 Scan | WORK telegram sent. Notebook + pipeline-state write. | clean |
+
+### Critical Escalation — User pollNews bug NOT FULLY RESOLVED
+
+**Diagnostic chain**:
+- c43-c44: code lacked handler → fixed in 1892a (handler extracted, byte-equivalent)
+- c44: gateway routing missing → fixed in 1892b (api virtual service + proxyPath)
+- c45: 1892b cherry-picked to main → expected resolution
+- c46 ops re-verify: code 100% works locally (`localhost:4000/api/push-news → 200`) but public URL still 404 (`zenmidi.com/api/push-news → 404`)
+- **Root cause**: Cloudflare tunnel / public-edge DNS does NOT forward `/api/*` to api-gateway:4000. Likely tunnel ingress rules missing or wrong service binding.
+
+**Next step**: 1894a routed to ops via `.claude/flows/ops/cloudflare-mcp.md` flow. May produce architect Phase 5 brief if tunnel config rewrite needed.
+
+### Phase 3 Verification — 3rd consecutive PASS
+
+c44 + c45 + c46 = 3 consecutive successful Phase 3 parallel runs. Phase 4 flow patches authored (1893a brief) but APPLICATION GATED on PO ACK of 4 open questions:
+- Q1: WIP cap raise (2 → 3?) — architect recommends keep at 2
+- Q2: Phase 5 worktree-merge-protocol timing — architect recommends c46/c47
+- Q3: QA parallelism formalization — needs PO sign-off (currently informal)
+- Q4: WORK announcement timing for unlock
+
+### Concurrent agent activity
+
+During the ~40min cycle window, observed direct-to-main commits from: alert-commander, agent-father (cycle 4 keep sweep), market-watcher, qa, news-scout, unified-agent. All notebook-only, all disjoint from feature work — no merge conflicts. Pattern is healthy concurrent cowork operation; surface for governance review at PO level if interleaving becomes problematic.
+
+### c47 carry-over
+
+1. **1894a Cloudflare tunnel** (HIGH, BLOCKS user pollNews resolution) — route to ops via cloudflare-mcp.md flow.
+2. **PO ACK** of 4 open Qs from 1893a brief (governance — Phase 4 patches gated on this).
+3. **1879b impl** — `get_fed_liquidity_spread()` MCP tool now unblocked (deps 1879a DONE).
+4. **1890a ba spec** — financial-analyst tool-package re-eval (7+ cycles old).
+5. **1881 ba spec** — source-tier 1|2|3 retrofit (3 cycles deferred).
+6. **CLEAN sweep** — c45 worktree branches eligible; task/1888a-ssot-tool-cron-pointers stale; 7+ stale remote branches. Defer c44 worktrees (still pid 76802 locked).
+7. **TNB c40 monitoring** — container restart pattern watch c47-c50. ≥2 more events → escalate.
+8. **TASKS.md cap** at 195/80, auto-archive eligible 2026-05-19.
+9. **Phase 4 flow patches** — apply mechanically after PO Q4 ACK (which patch lands first depends on announcement timing).
+10. **agent-md-factory check** — multiple agents writing to notebooks directly; ensure user refresh discipline (eager→conditional triggers) didn't break notebook-policy compliance.
+
+---
+
+## Cycle 45 (2026-05-12 07:26 → 07:55 UTC) — 2nd Phase 3 PASS
 
 ## Cycle 45 (2026-05-12 07:26 → 07:55 UTC)
 
