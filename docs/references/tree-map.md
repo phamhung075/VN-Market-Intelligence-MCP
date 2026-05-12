@@ -1,5 +1,7 @@
 # Knowledge Tree Map — Canonical DAG
 
+<!-- size-justification: 294L — the DAG SSOT itself. Splitting into "core rules" + "tree sections" + "flow splits" + "agent splits" would create chicken-and-egg circular references: every split child must register back to tree-map, and tree-map is the parent. Atomicity is required for pointer integrity gates. Self-referential SSOT cannot be cleanly split. -->
+
 **Load when:** before any lazy-load, file creation, or knowledge maintenance. This is the single source of truth for the file dependency graph.
 
 ## Rules
@@ -50,6 +52,10 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/protocols/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
 │
+├── docs/protocols/smart-compact-protocol.md (index: context management, hook thresholds, auto-compact)
+│   ├── docs/protocols/smart-compact-protocol-hooks.md (iTerm2 auto-compact, sub-agent behavior, session targeting)
+│   └── docs/protocols/smart-compact-protocol-offload.md (dev-team orchestration, state preservation, resume protocol)
+│
 ├── docs/references/kinh-dich-layer.md (hexagram rules: default layer, hao states, agent integration pattern)
 │
 ├── docs/references/agent-roster.md (team structure: analysis + dev + microservices, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol — counts in `docs/data/project-stats.json`)
@@ -66,6 +72,12 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/policies/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
+├── docs/policies/docs-organization.md (index: file placement quick-ref)
+│   ├── docs/policies/docs-organization-location-table.md (canonical location table SSOT)
+│   ├── docs/policies/docs-organization-decision-tree.md (decision tree by file type)
+│   ├── docs/policies/docs-organization-examples.md (worked examples of placement)
+│   └── docs/policies/docs-organization-enforcement.md (auto-file rules + archive purposes)
+│
 ├── .claude/skills/token-economy/SKILL.md (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE inline; Parts 1-2 in children)
 │   ├── .claude/skills/token-economy/policies.md (Part 1: 15 writing techniques, MCP task templates, quick workflow)
 │   └── .claude/skills/token-economy/compress.md (Part 2: /compress command, CLI usage, compression rules)
@@ -80,7 +92,15 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/protocols/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
-├── docs/policies/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
+├── docs/protocols/bug-reporting-via-mcp.md (index: auto-dedup system for bug reports)
+│   ├── docs/protocols/bug-reporting-capture.md (Phase 1: agent error detection + MCP tool call)
+│   ├── docs/protocols/bug-reporting-routing.md (Phase 2: dedup logic + SQLite storage)
+│   └── docs/protocols/bug-reporting-resolution.md (Phase 3: dev team processing + FAQ)
+│
+├── docs/policies/restart-policy.md (index: server restart rules)
+│   ├── docs/policies/restart-policy-rationale.md (why docker-compose only)
+│   ├── docs/policies/restart-policy-verification.md (health checks + QA validation)
+│   └── docs/policies/restart-policy-troubleshooting.md (diagnostic steps + error recovery)
 │
 ├── docs/protocols/ops-incident-response.md (index: severity classification, runbook routing)
 │   ├── docs/protocols/ops-incident-response-p1-critical.md (P1 Purple/Red: data risk + cascade failure playbooks)
