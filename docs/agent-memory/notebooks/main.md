@@ -1,6 +1,69 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 13:05 UTC (Cycle 46 — 3rd Phase 3 parallel pass + Cloudflare ESCALATION discovered)
+**Written:** 2026-05-12 13:51 UTC (Cycle 47 — 1st Phase 4 parallel cycle + concurrent-commit incident)
+
+## Cycle 47 (2026-05-12 13:27 → 13:51 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0 Router | Default → drain | route: drain |
+| 0a Drain | 3 signals: 2 replays (flow-split, tnb-02-50 — fingerprints match DB) + 1 new (tnb-06-50, c40 audit, sha256 not in DB) | 1 routed-to-po + 2 replay-skipped |
+| 0b Resume | idle | fall through |
+| 1 Triage | PO returned BATCH(2): 1894a UNBLOCK (ops, closes user pollNews) + 1879b FEATURE (dev-mcp-server, deps unblocked). Governance shipped: TNB c40 ACK + 4 Phase 4 Qs answered (cd390765). Q1 WIP=2 KEEP, Q2 Phase 5 c46-c47, Q3 QA parallel PERMITTED, Q4 announce now. | Phase 4 unlocked |
+| 2 Plan | 1894a UNBLOCK → ops direct. 1879b spec complete in TASKS.md → dev-mcp-server direct. Skip ba/architect/pm for atomic well-spec'd tasks. | direct dispatch |
+| 3 Exec (1st pass) | **1st Phase 4 PARALLEL dispatch** via SDK `isolation:"worktree"` + main-terminal ops. WORK channel announced Phase 4 unlock before dispatch (Q4 answer). | 2 agents concurrent |
+| 3 Ops 1894a | FAIL/ESCALATED. Cloudflare tunnel dashboard-managed (not config.yml). Only 2 ingress rules: /vn-market→:3000, /gateway→:4040 (typo). Missing /api/*. Created `docs/signals/1894a-cloudflare-routing-escalation.json` + diagnostic notebook. Commit `a21522e8`. | escalated to architect |
+| 3 Dev 1879b | 6/6 ACs PASS. 10/10 it-blocks (5 describe × 2 it). 3-layer DDD: pure domain `computeFedLiquiditySpread` + infra `fetchEffrIorbSamples` (INNER JOIN EFFR+IORB) + interface tool #130. Worktree branch `worktree-agent-a4d9792552e621655`. Commit `a6d4b555` (worktree). | done |
+| 3 Exec (2nd pass) | **2nd Phase 4 PARALLEL dispatch in same cycle** under Q3 PERMIT: QA(1879b) + architect(1894a routing brief) concurrent. 1st time QA-parallel-with-architect. | 2 agents concurrent |
+| 3 QA 1879b | APPROVED. Per-AC PASS table. Targeted neighborhood 10/0 PASS. TS clean. DDD clean. Security PASS (parameterized SQL, Zod input, no env). Notebook in worktree. | merge-ready |
+| 3 Architect 1894a | **Option B selected** — `/api/*` → `:4000` (api-gateway) honoring 1892b proxyPath+noProbe infra. Side-fix `/gateway` typo `:4040`→`:4000`. Brief `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md` with user-actionable Cloudflare dashboard payload + verification curls + rollback procedure. Commit `8bec73d3`. | user-actionable |
+| 3 Merge 1879b | **⚠️ INCIDENT: HEAD.lock concurrent-commit race.** Cherry-pick `a6d4b555` partially staged files (A status) but commit failed due to HEAD.lock contention from architect agent's parallel commit window. Architect's subsequent `git commit` absorbed my staged 1879b files into SHA `8bec73d3` (mixed-content commit). Functional state correct (1879b code + cloudflare brief BOTH on main); logical atomicity violated (C2 rule). Subsequent attempts to retry cherry-pick all reported "nothing to commit" since files were already in HEAD via 8bec73d3. | functional ✓ atomicity ✗ |
+| 3 PM | TASKS.md sync `2a608137`. 1879b → Done, 1894a → In Progress (awaits user), 1895a-worktree-merge-protocol → NEW HIGH Todo (forensic evidence from this cycle). WIP=1/2. | sync |
+| 4 Scan | 0 monitoring to expire. 1 NEW report #2860 (pollNews 08:45Z) — same bug as in-progress 1894a — marked `monitoring` to suppress Step 1 re-trigger (C-6 guard). list_unresolved_reports tool not found via gateway (signature drift; non-blocking). | scan ok |
+| 4 WORK | c47 close announcement sent | done |
+
+### Phase 4 verification — 1st cycle
+- **2 parallel dispatches in single cycle**: dev+ops AND qa+architect. Both completed cleanly at agent level.
+- **Throughput**: 2-task BATCH + governance + escalation + brief + QA + merge + PM sync = ~24 min wall (13:27 → 13:51 UTC).
+- **Latency hit**: ~5min lost to HEAD.lock recovery + diagnosis. Pre-Phase 4 this would have been 0 (sequential dispatch can't race).
+- **Status**: Phase 4 functional but exposes git-index race that Phase 5 (1895a) must serialize.
+
+### Critical: 1895a Phase 5 worktree-merge-protocol — forensic evidence
+**Race condition observed**:
+1. Main-terminal: `git cherry-pick a6d4b555` → files staged (Added) but commit step hits HEAD.lock
+2. Architect agent: writes its brief + notebook → `git commit -am ...` → succeeds (lock released) → SHA `8bec73d3` includes ALL staged content including the un-committed cherry-pick artifacts
+3. Result: One SHA contains two logically-distinct changes; commit message reflects only one of them.
+
+**Design requirements for 1895a**:
+- Serialized merge gate: file-lock OR transaction wrapper around `git cherry-pick`/`git merge`
+- Pre-merge check: ensure index is empty before staging anything
+- Post-merge verification: SHA matches the cherry-picked content exactly (compare tree hashes)
+- Recovery path: if interrupted, `git reset --soft HEAD~1 && git stash` to isolate, then redo
+- WORK telegram on any C2 atomicity violation detected post-hoc
+
+### Concurrent agent activity observed (healthy operation)
+- `1c7d8935` market-watcher notebook — landed during cherry-pick window
+- `420752e1` market-watcher 2nd notebook — landed during architect window
+- `85001524` qa-responder notebook — landed during PM window
+- None caused merge conflicts (disjoint zones); none affected feature correctness.
+- The race that DID cause incident was specifically architect agent commit overlapping main-terminal cherry-pick.
+
+### TNB c40 monitoring (carry-over c47-c50)
+- Container restart at 02:40 UTC c40 audit window — classified routine, ≥1 more event would trigger architect escalation.
+- c47 cycle: no new restart observed.
+- Continue watch through c50.
+
+### c48 carry-over
+1. **USER Cloudflare dashboard action** (HIGH, BLOCKS 1894a close + closes pollNews BUG report #2860). Brief at `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md` has exact payload + verify curls.
+2. **1895a Phase 5 worktree-merge-protocol** (HIGH, architect). Forensic evidence ready.
+3. **1879b deployment verify** — confirm `get_fed_liquidity_spread` callable via MCP on live mcp-server (post-deploy smoke probe per TNB6 deploy-verification pattern).
+4. **1890a ba spec** (MEDIUM, 9+ cycles deferred).
+5. **1881a ba spec** (HIGH, 5+ cycles deferred).
+6. **CLEAN sweep** — 6 worktrees pid-locked, ~7 stale remote branches, task/1888a unmerged check. Defer.
+7. **TNB c41** audit (~14:50 UTC next cron tick).
+8. **TASKS.md cap** ~195/80 — auto-archive eligible 2026-05-19+ (latest Done 2026-05-11; cutoff 2026-05-05).
+
+---
 
 ## Cycle 46 (2026-05-12 12:26 → 13:05 UTC)
 
