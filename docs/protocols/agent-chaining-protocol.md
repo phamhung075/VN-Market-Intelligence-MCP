@@ -130,8 +130,9 @@ docs/signals/{agent}-{ISO-timestamp}.json
 **Rules:**
 - One file per signal — no overwrite risk, no concurrent corruption
 - Dev-team drains all signals at Step 0a (FIFO by `createdAt`)
-- Processed signals move to `docs/signals/processed/` with `processedAt`, `processedBy`, `result` fields appended
-- Processed files auto-pruned after 7 days
+- Dedup: `SELECT 1 FROM signals_processed WHERE fingerprint = ? LIMIT 1` in `docs/signals/signals.db` (O(log N)); replaces old O(N) `processed/` dir scan. Dual-record write on new signal: DB INSERT (SSOT index) + filesystem move to `docs/signals/processed/` (human audit copy). Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md`
+- DB unavailable (ENOENT/locked after 3×200ms retry): log WARN, skip dedup, preserve inbox, retry next cycle
+- Processed files auto-pruned after 7 days (DB DELETE + parallel filesystem prune)
 - `pipeline-state.json` is dev-team internal only — cowork agents must NOT write it
 
 **Who can drop signals:** any agent that needs dev-team action (TNB audit findings, ops escalations, cowork bug reports).
