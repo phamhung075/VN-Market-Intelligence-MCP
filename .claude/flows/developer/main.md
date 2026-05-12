@@ -1,5 +1,7 @@
 # Developer — Main Flow
 
+**Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.
+
 **Tools:** `.claude/tools/package/developer.md`
 
 ## Input
@@ -11,6 +13,20 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+
+---
+
+## Role in dev-team flow
+> Canonical orchestration: `.claude/flows/dev-team/main.md`
+
+**Called from:** dev-team Step 3 — one task at a time, per dependency tier; parallel tasks use `isolation: "worktree"` on each Agent call
+**Receives:** `docs/handoffs/TASK_NNN.md` with `[Architect] Brownfield Findings` — files to read/modify/create, AC, branch name, zone
+**Produces:** Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in handoff | RETURN with `NEXT: qa`
+**Hand off to:** main terminal → spawns qa with branch + handoff
+**Composes with:** parallel sibling developers run simultaneously in separate worktrees per tier. NOTE: this flow targets `apps/mcp-server/` root only — dev-* zone agents (dev-stock-price, dev-pdf-extractor, etc.) use [`microservice-main.md`](./microservice-main.md).
+
+Zone routing (main terminal picks agent, not this flow): `apps/mcp-server/` → dev-mcp-server | `apps/alert-engine/` → dev-alert-engine | etc. — see dev-team Step 3 agent routing table for full map.
+Conflict check is main terminal's responsibility — disjoint files → parallel allowed; same file → sequential; shared SSOT write → sequential.
 
 ---
 
@@ -42,8 +58,9 @@ REPEAT per acceptance criterion
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
-4. `git add -p && git commit` — format per `docs/policies/commit-convention.md`
+4. `git add -p && git commit -m "..."` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
+   **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`).
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:

@@ -1,7 +1,7 @@
 # Agent Father — Notebook
 
 **Last updated:** 2026-05-12
-**Sprint:** maintenance cycle 4
+**Sprint:** 1895b / maintenance cycle 4
 
 ## Last Session Summary
 Keep sweep (34 agents). 0 auto-fixes applied (no safe mechanical fixes found). 7 escalations (Error Boundary missing in 7 dev-team flows — batch fix opportunity). Roster CLEAN.
@@ -70,3 +70,27 @@ Keep sweep (35 agents). 1 auto-fix applied. 3 escalations. 0 orphan flows. 0 orp
 - Escalations: 3 (semble-search structural, dev-* missing packages, main.md missing flow)
 - Orphans: 0 structural (main.md + WORK.md notebooks intentional)
 - Lesson: Error Boundary fix from cycle 3 fully resolved — 7→0 failures. Confirms batch PO task pattern is effective for systemic issues.
+
+---
+
+## c49 — 2026-05-12 (task 1895b-worktree-merge-protocol-impl)
+
+**Task:** Phase 5 Structural Sequential Merge Gate — implement Option 2 from architect brief `docs/architecture-briefs/2026-05-12-worktree-merge-protocol.md`.
+
+**Files written:**
+- `scripts/audits/index-check.sh` — Control 1: pre-merge staged-index guard. `git diff --cached --quiet`; exit 1 + stderr if dirty.
+- `scripts/audits/tree-verify.sh` — Control 3: post-merge tree-hash verification. Compares `git diff-tree --name-only` HEAD vs cherry-pick SHA; exit 1 + diff on mismatch.
+- `scripts/audits/c2-alert.sh` — Control 4: C2 atomicity rule check. Parses type/scope from subject, detects docs+code or feat+md-only mixed commits; exit 0 always (detective, non-blocking).
+- `scripts/audits/recovery-snapshot.sh` — Control 5: soft-reset rollback aid. `git reset --soft HEAD~1 && git stash push -m "recovery-<ts>-polluted-<sha>"`. Operator-explicit only.
+
+**Docs edited:**
+- `.claude/flows/dev-team/main.md` — replaced "After each tier: spawn pm" with explicit 5-step Merge Gate block (Controls 1-3-4-5) + developer spawn constraint banner (`git commit -am` ban).
+- `.claude/flows/developer/main.md` — added `git commit -am` ban to step 4 with c47 reference.
+- `docs/policies/commit-convention.md` — added mandatory rule block after Shell Pattern section.
+- `docs/TASKS.md` — 1895b moved Todo → In Progress on start, Done at end.
+
+**Script tests:** index-check correctly detected dirty index (staged workspace files); tree-verify printed usage error on no args; c2-alert passed HEAD commit as C2 OK; recovery-snapshot not run (operator-explicit).
+
+**Lessons:**
+- `git diff --cached --quiet` exits 1 even when dirty from ambient workspace state (other agents' staged commits) — confirms the script is live-testing correctly.
+- c47 incident root cause fully codified in 3 enforcing docs + 4 runnable controls. Structural gate eliminates the race by construction (no main-terminal git write until all tier agents returned + gate entered).

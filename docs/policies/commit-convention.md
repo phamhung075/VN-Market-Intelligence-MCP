@@ -31,6 +31,8 @@ EOF
 )"
 ```
 
+**Mandatory rule:** Use `git commit -m` (index-only) exclusively. **NEVER use `git commit -am` or `git commit -a`** — the `-a` flag greedily stages untracked index content from concurrent agent writes, violating C2 atomicity. Root cause of c47 incident (`8bec73d3`). Enforced by merge gate Control 4 (`scripts/audits/c2-alert.sh`).
+
 ---
 
 ## Type Vocabulary
