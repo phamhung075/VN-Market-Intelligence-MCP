@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 03:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 04:45 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -615,3 +615,33 @@ Last successful cycle: 2026-05-09 16:38 UTC (EOD post-close analysis) ✅
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3500 |
+
+## Cycle — 03:38 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**: Market OPEN. 26 stocks priced, 5 N/A. No anomalies above 2.0σ. VRE +4.76% (1.29σ) — below threshold, existing MEDIUM price_surge alert active. HCM +2.00% (0.74σ) — recovered from intraday -6.90% at 02:01. GAS +0.82% (0.31σ) — oil elevated (Brent $105.11, US-Iran). Sector all STABLE (1d only). Supply chain stable. Energy normal. 17 open alerts.
+- **actions**: send_telegram(work) — 26 stocks, 0 anomalies, 0 spikes, 0 chain confirms
+- **next_cycle_hint**: Watch VRE if momentum continues above 35,500 (break of intraday high). Monitor GAS on US-Iran headlines. HCM recovery trajectory in securities sector. EIB — check if prior multi-day anomaly streak resumes.
+- **estimated_tokens**: 5500
+
+### Cycle (04:37–04:45 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 1 (VIC)
+- Regime: NEUTRAL | DXY: USD STABLE (26,129) | US10Y: RISK-ON (US mkts new highs) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- VIC -2.78% (0.94σ, 30d stddev ~2.96%) — below 2.0σ anomaly threshold; chain_catalyst confirmed (news-scout id=2970, conf=0.82, bearish). VCBF reduced VIC stake; large fund fully exited. Signal posted id=2972 (chain_depth=1).
+- VRE +2.38% (0.66σ, 30d stddev ~3.61%) — partial recovery from yesterday's -6.41%. Below threshold.
+- VHM -1.43% | CTG -1.12% | EIB -1.10% — all below threshold; broad banking/RE weakness.
+- GAS +0.54% — oil elevated (Brent $104.89). Sector rotation: oil_gas +0.35%, realty +0.24%, banking -0.32%.
+- CARRY_REGIME=FII_OUTFLOW_RISK: no hot_money_concentration check (not HOT_MONEY_INFLOW).
+- Open chain findings: VIC (bearish, conf=0.82) + HSG (bearish, conf=0.75). HSG -0.41% — insufficient price confirmation.
+- Open alerts: 20 | System: OK
+
+## Metrics (cycle 2026-05-12 04:37 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 5 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
