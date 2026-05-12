@@ -143,3 +143,14 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - Alerts: 15/15 sent (2 HIGH: MACRO oil +2.23σ, GAS news) | System: ok | Rate limits: BDI exhausted, ACB once
 - Key: VRE +5.21% surge, HCM -6.90% drop, VCBF reducing VIC / holding FPT, HSG capital increase >8k tỷ
 - Feedback submitted: news freshness overage (low severity)
+
+## Cycle — 20:02 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**:
+  - System OK; 15 alerts (2 HIGH: MACRO Brent +2.23σ, GAS oil surge); news RSS 2.7h (minor overage)
+  - BUG: BCTC-1345b VNM 2025-Q4 OCR corruption (conviction signal skipped)
+  - Rate limits: BDI vnstock exhausted retries; market CLOSED as expected
+- **actions**: Telegram WORK summary sent | freshness feedback submitted (low/other) | notebook committed
+- **next_cycle_hint**: Monitor BDI rate-limit recovery; VNM BCTC OCR fix needed; watch VRE/HCM follow-through next session
+- **estimated_tokens**: 3500

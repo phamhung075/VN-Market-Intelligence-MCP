@@ -1,56 +1,67 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 18:27 UTC (Cycle 52 — HEADLOCK-c52 + 1876a-A5 partial)
+**Written:** 2026-05-12 20:03 UTC (Cycle 53 — WAVE2-RESIDUE-CLEAN + 1876a-A6 SHIPPED)
 
-## Cycle 52 (2026-05-12 17:42 → 18:27 UTC)
+## Cycle 53 (2026-05-12 19:14 → 20:03 UTC, ~50 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0a Drain | inbox empty (`docs/signals/*.json` = 0 files); signals.db OK | 0 routed |
-| 0b Resume | idle (c51 closed 17:35 UTC) | fall through |
-| 1 Triage | 1 new TG report #2864 (QA Responder, .git/HEAD.lock blocking commits, 17:48 UTC). pendingSignals=[]. listUnresolvedReports tool still not-found (drift c50/c51/c52, 3rd cycle). PO BATCH(2): FIX HEADLOCK-c52 + SPRINT-S 1876a-A5. | 2 dispatched |
-| 2 Plan | FIX direct→Step 3 ops; SPRINT-S thin path: architect (brownfield-only, no new design) → pm (TASKS.md+state edit) → executor. | sequence set |
-| 3 Tier 1 ops HEADLOCK-c52 | `.git/HEAD.lock` (0 bytes, ctime 19:42 local) removed by ops. No live git process holding it. `git status` healthy. TG WORK posted. Stale-lock workaround for known macOS pattern (TNB-c33-F7). | done, unblocks all commits |
-| 3 Tier 2 architect 1876a-A5 | Brownfield scan: `migrateWatchlistThresholds()` lives at apps/mcp-server/src/infrastructure/db/seedWatchlist.ts:193-220 and is already unconditionally called by schema.ts::initDatabase() L217. DECISION (a) exec-only. Root cause: prod mcp-server never restarted post-1869b merge. Handoff TASK_1876a-A5.md written. No code change required. | brief done |
-| 3 Tier 2 pm 1876a-A5 | Commits `6773773e` (TASKS.md row→In Progress, simplified to exec-only) + `b49c365f` (notebooks/pm.md c52 log). pipeline-state.json updated to in_progress 1876a-A5 ops. | sync 2 |
-| 3 Tier 2 ops 1876a-A5 | `docker-compose restart mcp-server` 14:35 UTC. initDatabase() ran migrateWatchlistThresholds(). **31 rows -3.0→-7.0 (standard tier)**. Sprint 1869 precision-tuning live for these. **HIGH-VOL GAP**: NVL/DPM/REE/VNH/KBC/MWG/TCH MISSING from watchlist table — migration has 0 rows to set to -9.0. Migration code correct, but seeding upstream incomplete. | partial PASS |
-| 3 Tier 2 follow-up | 1876a-A6 queued for c53 — PM to add row + architect to scope high-vol seeding strategy (insert rows vs detection-only mechanism). | deferred |
-| 4 Scan | expire_monitoring: 0 expired. New reports: 0 (post-#2864 processed). Branches: main only. report #2864 marked fixed + log_fix id=212. | clean |
-| 4 WORK | 2 TG posted: (a) 1876a-A5 partial PASS + high-vol gap; (b) USER-ACTION BUNDLE Cloudflare (1894a /api/* + 1862c-E-dashboard /vn-market/sse). | sent |
-| 4.5 Compact | notebook + pipeline-state + commit. | in progress |
+| 0a Drain | 2 signals: agents-architect brief_complete (zone-enforcement-and-split-policy) + tran-ngoc-bau audit-handoff c42 → routed to PO, INSERTed to signals.db | 2 routed |
+| 0b Resume | idle (c52 closed 18:27 UTC) | fall through |
+| 1 Triage | 0 new TG at start; listUnresolvedReports MCP drift 3rd cycle. PO returned BATCH(2): SPRINT-S 1876a-A6 (7 high-vol tickers) + CLEAN WAVE2-RESIDUE. PO also wrote 1876a-A5→Done-PARTIAL + 1876a-A6 Todo row, ACK'd TNB c42 in handoff append. | 2 dispatched |
+| 2 Plan | SPRINT-S: architect → pm → dev → qa → ops sequential. CLEAN: agent-father direct on main. Residue MUST land FIRST (dirty tree blocks worktree spawn). | sequenced |
+| 3 Tier 1 agent-father | 47 files across 6 wave commits (A-F) + 3-file tail wave G (commit-convention split children) + thin-index G2 + pre-merge bundle (b8b95aa0, 11 files inc. new dev-zone-empowerment brief from concurrent architect). Pointer integrity PASS, line >120 gate PASS for new work. | done |
+| 3 Tier 2 architect 1876a-A6 | Brownfield decision (a): add 7 entries to WATCHLIST_SEED. Decision rationale: seed gap, not migrate gap; migrate UPDATE auto-applies -9.0 next start. Handoff TASK_1876a-A6.md, 7 SQL-verifiable ACs. | brief done |
+| 3 Tier 3 pm 1876a-A6 | Commit b77b5347: TASKS.md 1876a-A5→Done-PARTIAL + 1876a-A6 Todo→In Progress; pipeline-state.json idle→in_progress; pm notebook c53. WIP 2/2 capacity. | sync done |
+| 3 Tier 4 dev-mcp-server (worktree-isolated) | branch worktree-agent-a66e04c8b9546ff28, commit 6848c848: 7 entries in WATCHLIST_SEED + 12 new tests (1876a-A6-high-vol-seed.test.ts), 9277/9277 full suite pass, typecheck 0 errors. | impl done |
+| 3 Tier 5 QA | APPROVE 7/7 ACs, DDD PASS, security PASS. Report TASK_REPORT_1876a-A6.md. Noted minor TCH comment "Techcombank" cosmetic mismatch (domain=real_estate correct per handoff). | approved |
+| 3 Merge Gate (Phase 5 FIRST FULL EXERCISE) | index-check.sh failed first attempt (qa-responder.md staged from concurrent agent) → reset + bundle-commit residue (b8b95aa0) → re-check PASS. cherry-pick → 388e6533 PASS. tree-verify PASS. c2-alert PASS. worktree remove DEFERRED (SDK lock pid 18429 — auto-cleanup on agent exit). | Phase 5 GREEN |
+| 3 Tier 5 ops deploy | docker-compose up --build -d mcp-server PASS 2.2s. Verify SQL: 7/7 high-vol -9.0 (NVL/DPM/REE/VNH/KBC/MWG/TCH), 31 standard -7.0 untouched, total watchlist=38. WORK TG sent. | LIVE |
+| 4 Scan | expire_monitoring: 0. New reports during cycle: 2 (queued c54). Branches: main + locked worktree (auto-cleanup). | clean |
+| 4.5 Compact | notebook + pipeline-state + commit | in progress |
 
-### Phase 5 Gate — 6th cycle dormant
-- Single-tier sequential ops only this cycle (Tier 1 ops + Tier 2 chain architect→pm→ops). Zero multi-worktree-code-writer tiers.
-- Gate code on disk untested. Not concerning; next time a developer-class tier has 2+ worktree-parallel agents, gate gets first real test.
-- All c52 commits this cycle used `git commit -m` (6773773e, b49c365f). Architect/ops produced no new commits (handoff doc only + exec-only restart).
+### HEAD.lock recurrence (2nd time this cycle)
+- Cleared inline at 19:42 local during pre-merge bundle commit. pgrep verified no live git process. `rm -f .git/HEAD.lock` → retry commit succeeded.
+- Recurring TNB-c33-F7 macOS Spotlight pattern. Recurring-fix rule NOT triggered (workaround, not module fix). c54 candidate: self-cure flow for QA Responder / dev-team (check no-live-git before clean).
 
-### Key outcomes c52
-- **HEADLOCK-c52 cleared** — `.git/HEAD.lock` (stale, 0 bytes, ctime 19:42 local) removed by ops. QA Responder TG #2864 acknowledged + processed (resolution=fixed, log_fix id=212). Recurring macOS pattern workaround codified in 1895b worktree-merge-protocol; recurring-fix-escalation rule NOT triggered (this is a workaround, not a recurring fix to same module).
-- **1876a-A5 partial** — Sprint 1869 standard tier now LIVE on prod (31 rows -7.0). HIGH-VOL gap discovered: 7 tickers missing from watchlist entirely (not migration scope, separate seeding issue). Follow-up 1876a-A6 queued.
-- **2 user-action TGs sent** — bundled Cloudflare dashboard items + 1876a-A5 partial-pass status.
-- **Throughput**: ~45 min wall (17:42 → 18:27 UTC). Longer than c50/c51's 9-min because architect scan + PM update + container restart + verify added latency. Within acceptable range for exec-only SPRINT-S.
+### Phase 5 Gate — FIRST FULL EXERCISE (7 cycles dormant)
+- index-check.sh Control 1 fired correctly on staged drift → reset+bundle worked as designed.
+- cherry-pick path used (ff-only failed due to diverged main from concurrent commits b5b0e326, 4743aa5f, 5791ba8b).
+- tree-verify.sh, c2-alert.sh Controls 3+4 GREEN.
+- Worktree remove (Control 2c/2d) deferred to SDK auto-cleanup — pid lock prevents force-remove.
+- All controls behaved per spec. Gate ready for steady-state operation.
 
-### c53 carry-over (priority order)
-1. **USER Cloudflare dashboard actions (bundle, STILL BLOCKING)** — HIGH:
-   - 1894a `/api/*` routing (for pollNews TG #2860)
-   - 1862c-E-dashboard `/vn-market/sse` route (for MCP SSE access)
-   - 2nd cycle as bundled ask
-2. **1876a-A6** — HIGH FOLLOW-UP. High-vol ticker seeding strategy (NVL/DPM/REE/VNH/KBC/MWG/TCH not in watchlist). PM adds row + architect scopes (insert rows directly vs new auto-seeding mechanism vs runtime detection-only).
-3. **1862c-F** — FIX MEDIUM, container-rebuild-gated. Monitor 1862c-D/E stability 4 more cycles (1 down post-c51 ship; 4 to go).
-4. **newsyslog sudoer install** — operator runs `sudo cp launchd/docker-events-newsyslog.conf /etc/newsyslog.d/docker-events.conf` to activate 30-day rotation. Non-urgent.
-5. **1881a ba spec** — HIGH, 10+ cycles deferred. Source-tier 1|2|3 retrofit.
-6. **1890a ba spec** — MEDIUM, 14+ cycles deferred. financial-analyst tool-package gaps.
-7. **`list_unresolved_reports` MCP tool** — drift 3rd cycle. Escalate c53 to dev-mcp-server for MCP doc audit OR confirm intentional removal.
-8. **JANITOR-034** large-cap overlap (proposed scan-19) — promote to TASKS.md Backlog.
-9. **TNB-PLANNED-RESTART convention** — ops notebook header bundle.
-10. **financial-analyst 23:00 UTC cycle** — Sprint 1889a Layer 7/8 stop-gap first test. Check post-c52 close (~4.5h away).
-11. **US10Y 4.5% Layer 1.2 cross watch** — was 4.46% at c41 (4h+ ago).
-12. **TNB c42+** — next audit fires when own cron triggers (last was c41 14:47 UTC, ~3.5h ago).
-13. **TASKS.md cap** 198/80 — auto-archive eligible 2026-05-19+. Add 1876a-A6 row will push to 199.
-14. **Pre-existing unstaged residue** at session start (~20 mods + 10 untracked from out-of-band agent work) — still uncommitted, needs triage. Route to code-janitor next cycle.
-15. **1888b/c/d/e/f/g/i/j/k** SSOT chores cluster — bulk fix candidate for c53 or c54.
+### Concurrent out-of-band agent activity this cycle
+- agents-architect: dev-zone-empowerment track-C/E briefs landed (4743aa5f, 5791ba8b) + new brief file in pre-merge bundle.
+- market-watcher: notebook commit b5b0e326.
+- Multiple flow/protocol/notebook edits (po/channel-audit, po/triage-signals, ops-incident-response-p1/p2, commit-convention parent, qa-responder notebook, ARCHITECTURE.md, architect notebook) — all bundled into b8b95aa0 pre-merge cleanup.
+- Pattern: agents-architect + claude-manager-helper running async during dev-team cycle is now normal; pre-merge bundle pattern handles it cleanly.
 
-### Patterns reinforced c52
-- **PO partial-completion routing**: when an architect-classified task turns out to have an in-scope deliverable PLUS an out-of-scope gap, dispatch the in-scope work, log the gap as a new task, do NOT block the whole sprint on out-of-scope discovery. (1876a-A5 → 1876a-A6 follow-up.)
-- **Stale lock detection runbook**: QA Responder pattern works — when a commit fails with `HEAD.lock`, post BUG report including the exact `rm` command path. dev-team next cycle picks up + dispatches ops. Round-trip ~30 min. Could shorten if we add a self-clean-stale-lock action to QA Responder's own flow with safety guard (no live git process check first).
-- **Heavy notebook trim**: prior c51 notebook reached 883 lines. Per waterfall lazy-load policy (≤200 lines), this c52 overwrite is fully fresh; key c51 context lives in pipeline-state.json's `lastCompleted` field + git log + TASKS.md Done section. Pattern: each cycle overwrites notebook with own state + forward-looking carry-over, never appends history.
+### Key outcomes c53
+- **Sprint 1869 precision-tuning FULLY LIVE** — 7 high-vol -9.0 + 31 standard -7.0 = 38 watchlist rows correctly tiered. Multi-cycle blocker resolved.
+- **WAVE2-RESIDUE-CLEAN shipped** — 47+3+11+ files staged, pointer integrity PASS, zone-enforcement-and-split-policy brief Wave-2 implementation now reflected on main.
+- **Phase 5 merge gate first full exercise GREEN** — Controls 1+3+4 fired correctly; pre-merge bundle pattern emerged as standard handling for concurrent agent drift.
+- **2 new TG reports queued for c54** — #2865 (BCTC VNM low conf recurring) + #2866 (RSS 2.7h soft threshold).
+
+### c54 carry-over (priority order)
+1. **USER Cloudflare bundle 3rd ask** — 1894a /api/* + 1862c-E-dashboard /vn-market/sse — STILL BLOCKING after 2 cycles
+2. **Triage 2 new TG reports** — #2865 BCTC-1345b VNM 2025-Q4 (recurring OCR pattern VNM/VEA assets<equity) + #2866 unified-agent RSS 2.7h > 2h
+3. **list_unresolved_reports MCP drift 4th cycle** — escalate to dev-mcp-server for MCP tool audit
+4. **1862c-F monitoring** — 3 cycles remaining (was 4 after c52)
+5. **Notebook header refresh standardization** (TNB c42 finding #1) — flow-edit across 22 agents for append-without-remove
+6. **market-watcher duplicate header bug** (TNB c42 finding #2) — structural flow-edit
+7. **1881a + 1890a ba specs** — long-deferred (10+ and 14+ cycles)
+8. **1888b/c/d/e/f/g/i/j/k SSOT chore cluster** — bulk fix candidate
+9. **RSS counter post-restart pattern** (TNB c42 finding #3) — c41 self-recover prediction was WRONG, agents-architect c33 RCA incomplete
+10. **JANITOR-034 large-cap overlap** — promote to TASKS.md Backlog
+11. **TNB-PLANNED-RESTART convention** — ops notebook header bundle
+12. **financial-analyst 23:00 UTC test** — Sprint 1889a Layer 7/8 first observation
+13. **US10Y 4.5% cross watch** — still 4.46% per TNB c42 (0.04% below threshold)
+14. **TASKS.md cap 180/80** — eligible auto-archive 2026-05-19+
+15. **HEAD.lock self-cure flow** — propose for QA Responder / dev-team / ops pre-commit hook
+
+### Patterns reinforced c53
+- **Pre-merge bundle pattern**: when concurrent agents leave drift between QA approval and merge gate, dev-team commits the drift as `chore(c<N>/pre-merge): bundle <id> handoffs + concurrent agent residue` before index-check retry. Replaces ad-hoc reset/stash juggling. Emerged organically; codify in execute-tier.md merge gate section c54 candidate.
+- **HEAD.lock inline cure (no-spawn)**: 2nd recurrence in 2 cycles. Spawning ops takes ~30 min round-trip; inline rm-after-pgrep takes <10s. Safe when verified no live git process. Should be canonical for dev-team orchestrator (already does merge gate scripts).
+- **Worktree SDK lock vs git worktree remove**: SDK keeps worktree dir locked until owning agent process exits. Per agent isolation brief, this is expected — branch is unmerged from main perspective but cherry-pick already on main. Don't force-remove; trust SDK auto-cleanup.
+- **Phase 5 gate Control-1 reset+bundle**: when index-check fires due to concurrent agent stage, reset HEAD + explicit `git add <paths>` of legitimate residue + bundle commit is the recovery path. Worked first try this cycle.
