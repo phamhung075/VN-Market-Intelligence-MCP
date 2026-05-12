@@ -1,10 +1,10 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-12 14:00 UTC | **Sprint:** 1894a
+**Last updated:** 2026-05-12 14:28 UTC | **Sprint:** 1895a
 
 ## Last session summary
 
-Session 1894a: Cloudflare tunnel routing brief authored. Decision: Option B — `/api/*` → `localhost:4000` (api-gateway). Rationale: 1892b `proxyPath()`+`noProbe` already live in handlers.ts; bypassing it (Option A) kills the merged infra. Side-fix briefed: `/gateway` port 4040 → 4000. User-actionable dashboard payload + verification curls + rollback procedure in brief. Brief: `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. Pipeline state: idle.
+Session 1895a: Worktree merge protocol (Phase 5) design brief authored. C47 forensic analysis confirmed: `git commit -am` greedy add + HEAD.lock preemption = architect agent absorbed staged 1879b cherry-pick files into `8bec73d3`. Five controls designed: (1) pre-merge index empty check, (2) structural sequential merge gate in Step 3 post-tier, (3) post-merge tree-hash verification, (4) C2 atomicity alert, (5) `reset --soft + stash` recovery path. Recommended Option 2 (structural gate) over flock or stash checkpoint. Key agent constraint: `git commit -m` only, never `-am`. Brief: `docs/architecture-briefs/2026-05-12-worktree-merge-protocol.md`. Design-only; implementation deferred pending PO + agents-architect review.
 
 ---
 
