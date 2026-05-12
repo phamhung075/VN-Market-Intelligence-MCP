@@ -1,12 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 06:03 UTC | **Sprint:** c43-1891a-worktree-isolation-doc
+**Last updated:** 2026-05-12 07:03 UTC | **Sprint:** c43-1891a-worktree-isolation-doc
 
 ## Current state
 
-Market OPEN (04:05 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp). Kinh Dịch: Khôn (2) MUA 100%. VN-Index: 1,889.56 (-0.31%).
+Market OPEN (07:03 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp). Kinh Dịch: Khôn (2) MUA 100%. VN-Index: 1,899.31 (+0.20%).
 
 ## Last session summary
+
+### Alert Cycle (07:01–07:03 UTC) — 2026-05-12
+- Signals: urgent_news ×2 (HSG id=2978, VIC id=2979) — both status=read
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp) | Pivot window: false
+- Suppressed: HSG urgent_news id=2978 (Hoa Sen tăng vốn >8,000B VND, conf=0.50 < NEUTRAL threshold=0.60, no price_anomaly override) | VIC urgent_news id=2979 (Vingroup kiện đưa tin sai — governance win, conf=0.50 < 0.60, price -2.65% divergence noted, no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN
+- VN-Index: 1,899.31 (+0.20%) | Notable: GAS +2.17%, VRE +2.53%, GVR +1.01%, POW +1.08% | VIC -2.65%, VHM -1.93%, CTG -1.40%
+- System: WARN — vnstock RATE_LIMITED (FPT/GAS), foreign-flow-job all fallbacks exhausted (transient)
+- log_agent_work id=680
 
 ### Alert Cycle (06:02–06:03 UTC) — 2026-05-12
 - Signals: urgent_news ×1 (GAS id=2975)
