@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (13:21–13:25 UTC) 2026-05-12
+- Items: 20 | Impacts: 0 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) VN-Index returned to 1,900pts, money rotating to real estate sector (VHM/VIC/VRE/D2D) — impact 7 NEUTRAL, confidence ~0.72 below 0.80 chain_catalyst floor → suppressed. (2) Foreign net selling 800B VND, VIC heaviest sold — impact 5 watchlist hit, below threshold. (3) CTG VietinBank dividend 59.5M shares — neutral corporate action impact 7. (4) Brent 107.79 (+2.23σ above mean 104.57) — already alerted HIGH 08:15 UTC, no duplicate. (5) DHG pharma acquisition by Chinese conglomerate — historical context: no prior similar events, impact 6 below chain_catalyst threshold.
+- Suppressed: VN-Index/BĐS rotation (confidence <0.80). Foreign selling VIC (impact 5). Brent deviation (already alerted). STB near-limit surge (not on watchlist).
+- Notes: Market CLOSED (off-hours cycle). GAS +3.94%, GVR +4.46%, VRE +5.51% — strong movers today. Banking sector broadly red. Multiple institutional rotation signals: VCBF & "cá mập" exiting VIC, holding FPT (accumulated in prior cycles).
+
 ### Cycle (07:19–07:22 UTC) 2026-05-12
 - Items: 20 | Impacts: 8 | Signals: [urgent_news×4 HSG/VIC/FPT/CTG, chain_catalyst×1 DHG] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
