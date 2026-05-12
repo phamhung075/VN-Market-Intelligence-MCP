@@ -2,7 +2,7 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/market-watcher-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 07:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 12:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -169,3 +169,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4500 |
+
+### Cycle (12:38–12:41 UTC)
+- Stocks: 26 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (>1.5σ TIGHTENING) | Volume spikes: 1 (GVR ~8x avg) | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING (USD/VND 26,129) | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK (FII net sell 800B VND) | fx_pressure: [] | pe_risk: []
+- GVR +4.46% (1.84σ) — agriculture sector outlier (sector avg -0.3%); bullish evidence 0.7565; signal 2995 → alert-commander. VRE +5.51% & GAS +3.94% already alerted (prior cycles).
+- TIGHTENING thresholds applied: sigma=1.5σ, vol_mult=1.5x, downside_bias=true
+- Macro: Brent 107.81 (+2.23σ above avg 104.57) → CPI/SBV tightening risk. Gold 4,712. Energy grid NORMAL. Supply chain STABLE (BDI=1,400). Climate: dry season heat (no watchlist impact).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check
+- Open chain findings: 0 (last 15 min) | Open alerts: 17 | System: OK
+
+## Metrics (cycle 2026-05-12 12:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 14 |
+| signals_emitted | 1 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 7500 |
