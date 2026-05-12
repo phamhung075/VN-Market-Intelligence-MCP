@@ -12,35 +12,44 @@ Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
-## Dispatch
+## Dispatch — Fluid JUMP TO
 
-| Spawn context | Entry step | Detail file |
+JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
+
+| Spawn context | JUMP TO | Detail file |
 |---|---|---|
-| Cold start / cron tick | Step 0a | `drain-signals.md` |
-| Pipeline resume (`in_progress`) | Step 0b | inline below |
-| FIX / direct task | Step 3 | `execute-tier.md` |
-| Post-execution verification only | Step 4 | `post-cycle.md` |
+| Cold start / cron tick | `drain-signals` | `drain-signals.md` |
+| Pipeline resume (`in_progress`) | `pipeline-resume` | inline below |
+| FIX / direct task | `execute` | `execute-tier.md` |
+| Post-execution verification only | `post-cycle` | `post-cycle.md` |
+| Empty signals + empty TASKS.md + no reports | `session-gate` | inline below |
 
 ---
 
+<!-- jump:drain-signals -->
 ## Step 0a — Drain `docs/signals/`
 
 → Run sub-flow: `.claude/flows/dev-team/drain-signals.md`
 
-Output: `pendingSignals[]` for Step 1, or empty (DB unavailable / no signals).
+Output: `pendingSignals[]` for Step 1, or empty.
+
+If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 
 ---
 
+<!-- jump:pipeline-resume -->
 ## Step 0b — Pipeline Resume + Session Gate
 
-- `in_progress` AND `nextAgent` AND `updatedAt < 24h` → spawn `nextAgent` immediately. Skip Step 1.
+- `in_progress` AND `nextAgent` AND `updatedAt < 24h` → spawn `nextAgent` immediately. JUMP TO `execute`.
 - `in_progress` AND `updatedAt ≥ 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.
 - `"idle"` or missing → fall through to Step 1.
 
-**Session Gate:** TASKS.md empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → EXIT.
+<!-- jump:session-gate -->
+**Session Gate:** TASKS.md empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → JUMP TO `end`.
 
 ---
 
+<!-- jump:po-triage -->
 ## Step 1 — PO Triage
 
 → Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `listUnresolvedReports()`, `docs/TASKS.md`, `git log --oneline -30`, `git branch`
@@ -49,6 +58,7 @@ Output: `pendingSignals[]` for Step 1, or empty (DB unavailable / no signals).
 
 ---
 
+<!-- jump:planning -->
 ## Step 2 — Planning
 
 | Type | Sequence | Notes |
@@ -65,6 +75,7 @@ Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into hand
 
 ---
 
+<!-- jump:execute -->
 ## Step 3 — Execution
 
 → Run sub-flow: `.claude/flows/dev-team/execute-tier.md`
@@ -73,6 +84,7 @@ Covers: tier grouping, zone routing (3-tier resolution: explicit → infer → r
 
 ---
 
+<!-- jump:post-cycle -->
 ## Step 4 + 4.5 — Scan + Compact
 
 → Run sub-flow: `.claude/flows/dev-team/post-cycle.md`

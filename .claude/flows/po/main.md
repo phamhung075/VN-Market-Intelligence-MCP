@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — already a thin dispatcher; sub-flow routing table + BATCH schema spec are tightly bound and cannot decompose cleanly. -->
+<!-- size-justification: 129L — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`. -->
 # Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `.claude/tools/package/po.md`
@@ -44,19 +44,19 @@ SPIKE: exploratory question, no clear scope. Output: findings doc. Time-box defa
 
 ---
 
-## Dispatch
+## Dispatch — Fluid JUMP TO
 
-Pre-flight (Step 0-TNB → Step 0-SIG → Step 0 Channel Audit → Step 0-b cross-check → No-Task Guard) routes to sibling files. Load only the sub-flow you need.
+JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md` · in-file jumps use `JUMP TO <label>`; cross-file routes use `→ Run sub-flow: <path>`.
 
-| Spawn context | Entry sub-flow |
+| Spawn context | First action |
 |---|---|
-| Cron / dev-team spawn (triage) | Run Step 0-TNB → Step 0-SIG → Step 0 → No-Task Guard (this file orchestrates) |
-| BUG channel report only | Run Step 0 (channel-audit) only |
-| Triage finished, found backlog → kick off sprint | Jump to `po/sprint-kickoff.md` |
-| BA returned a spec for review | Jump to `po/review-ba-spec.md` |
-| QA signalled sprint complete | Jump to `po/sprint-signoff.md` |
+| Cron / dev-team spawn (triage) | JUMP TO `tnb-audit` (pre-flight chain auto-falls through to `no-task-guard`) |
+| BUG channel report only | JUMP TO `channel-audit` |
+| Triage finished, found backlog → kick off sprint | → Run sub-flow: `.claude/flows/po/sprint-kickoff.md` |
+| BA returned a spec for review | → Run sub-flow: `.claude/flows/po/review-ba-spec.md` |
+| QA signalled sprint complete | → Run sub-flow: `.claude/flows/po/sprint-signoff.md` |
 
-Never inline both pre-flight and a branch workflow — keep context lean. Pre-flight always runs first, then jump to the right sibling and EXIT via its RETURN block.
+Never inline both pre-flight and a branch workflow — keep context lean. Pre-flight always runs first, then route to the right sibling and EXIT via its RETURN block.
 
 ---
 
@@ -64,18 +64,21 @@ Never inline both pre-flight and a branch workflow — keep context lean. Pre-fl
 
 **Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
 
+<!-- jump:tnb-audit -->
 ## Step 0-TNB — Read TNB Audit Findings (MANDATORY)
 
 → Run sub-flow: `.claude/flows/po/triage-tnb.md`
 
 Feeds findings into Step 1 sprint planning. ACK appended to `docs/handoffs/tnb-audit-latest.md`.
 
+<!-- jump:triage-signals -->
 ## Step 0-SIG — Triage pendingSignals[]
 
 → Run sub-flow: `.claude/flows/po/triage-signals.md`
 
-MANDATORY when dev-team passed signals. Each `pendingSignals[]` entry routed per signal-type table. Skip when array empty.
+MANDATORY when dev-team passed signals. Each `pendingSignals[]` entry routed per signal-type table. If `pendingSignals[]` empty → JUMP TO `channel-audit`.
 
+<!-- jump:channel-audit -->
 ## Step 0 — Channel Audit + Cross-Check
 
 → Run sub-flow: `.claude/flows/po/channel-audit.md`
@@ -84,13 +87,14 @@ Reads MARKET/WORK/BUG/market-group (10 msgs each), classifies issues by 9-row fa
 
 ---
 
+<!-- jump:no-task-guard -->
 ## No-Task Guard
 
 After pre-flight runs, check:
 1. docs/TASKS.md — any pending/in-progress tasks? → handle first
 2. `read_telegram_reports(status="new")` — any user requests? → handle first
 3. Step 0 found issues? → self-initiate sprint from those findings
-4. All empty AND channels clean → return:
+4. All empty AND channels clean → JUMP TO `end` and return:
 ```
 ## RETURN
 DONE: No tasks, no user requests, channels clean
