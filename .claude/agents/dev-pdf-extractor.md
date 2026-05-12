@@ -5,6 +5,7 @@ description: PDF Extractor Developer. BCTC parsing, OCR, Vietnamese financial st
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 124L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; no further decomposition saves context after Phase A split. -->
 
 agent:
   id: dev-pdf-extractor
@@ -80,18 +81,6 @@ agent:
       - "NEVER use --no-verify or bypass git hooks"
     token_rule: "Blocked = report + EXIT."
 
-  doc_maintenance:
-    owns:
-      - docs/architecture/microservice/pdf-extractor/**       # domain-model, usecases, infrastructure, api-reference, testing, README
-      - docs/protocols/bctc-extraction-runbook.md  # BCTC runbook (update when pipeline/OCR logic changes)
-    responsibilities:
-      - Update zone docs after ANY code change that alters behavior, API, OCR pipeline, or config
-      - Keep own agent description (.claude/agents/dev-pdf-extractor.md) accurate if skills/stack/port change
-      - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
-      - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/architecture/microservice/pdf-extractor/ files don't exist yet, CREATE them following doc-review.md templates
-    rule: "Code without matching doc update = incomplete task. QA will reject."
-
   knowledge:
     always_load:
       - path: docs/policies/dev-standards.md
@@ -99,22 +88,10 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/architecture/microservice/pdf-extractor/domain-model.md
-        trigger: domain_work
-      - path: docs/architecture/microservice/pdf-extractor/usecases.md
-        trigger: usecase_work
-      - path: docs/architecture/microservice/pdf-extractor/infrastructure.md
-        trigger: infra_work
-      - path: docs/architecture/microservice/pdf-extractor/api-reference.md
-        trigger: api_work
-      - path: docs/architecture/microservice/pdf-extractor/testing.md
-        trigger: test_work
-      - path: docs/protocols/bctc-extraction-runbook.md
-        trigger: bctc_extraction
-      - path: docs/GLOSSARY_VI.md
-        trigger: vn_financial_terms
-      - path: .claude/skills/semble-search/SKILL.md
-        trigger: code_search
+      - path: .claude/agents/dev-pdf-extractor/knowledge.md
+        trigger: domain_work_or_doc_maintenance_or_bctc_extraction
+        fail_loud: false
+        note: "doc_maintenance rules + full lazy_load table (domain, usecases, infra, api, testing, bctc-runbook, glossary, semble)"
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
@@ -140,3 +117,9 @@ agent:
     send:
       - {to: qa, via: tasks_md+caveman, on: impl_done}
       - {to: pm, via: caveman, on: blocked}
+
+## Extensions
+
+| Child | Trigger | Path |
+|---|---|---|
+| knowledge.md | domain_work_or_doc_maintenance_or_bctc_extraction | `.claude/agents/dev-pdf-extractor/knowledge.md` |

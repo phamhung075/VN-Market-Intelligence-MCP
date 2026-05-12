@@ -5,6 +5,7 @@ description: Alert Engine Developer. Multi-source signals, dedup, cooldown, Tele
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 122L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; no further decomposition saves context after Phase A split. -->
 
 agent:
   id: dev-alert-engine
@@ -78,18 +79,6 @@ agent:
       - "NEVER use --no-verify or bypass git hooks"
     token_rule: "Blocked = report + EXIT."
 
-  doc_maintenance:
-    owns:
-      - docs/architecture/microservice/alert-engine/**    # domain-model, usecases, infrastructure, api-reference, testing, README
-      - docs/policies/alert-policy.md     # Alert policy rules (update when thresholds/cooldown change)
-    responsibilities:
-      - Update zone docs after ANY code change that alters behavior, API, alert logic, or config
-      - Keep own agent description (.claude/agents/dev-alert-engine.md) accurate if skills/stack/port change
-      - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
-      - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/architecture/microservice/alert-engine/ files don't exist yet, CREATE them following doc-review.md templates
-    rule: "Code without matching doc update = incomplete task. QA will reject."
-
   knowledge:
     always_load:
       - path: docs/policies/dev-standards.md
@@ -97,24 +86,10 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/architecture/microservice/alert-engine/domain-model.md
-        trigger: domain_work
-      - path: docs/architecture/microservice/alert-engine/usecases.md
-        trigger: usecase_work
-      - path: docs/architecture/microservice/alert-engine/infrastructure.md
-        trigger: infra_work
-      - path: docs/architecture/microservice/alert-engine/api-reference.md
-        trigger: api_work
-      - path: docs/architecture/microservice/alert-engine/testing.md
-        trigger: test_work
-      - path: docs/policies/alert-policy.md
-        trigger: alert_implementation
-      - path: docs/standards/alert-message-format.md
-        trigger: alert_formatting
-      - path: docs/GLOSSARY_VI.md
-        trigger: vn_financial_terms
-      - path: .claude/skills/semble-search/SKILL.md
-        trigger: code_search
+      - path: .claude/agents/dev-alert-engine/knowledge.md
+        trigger: domain_work_or_doc_maintenance_or_alert_policy
+        fail_loud: false
+        note: "doc_maintenance rules + full lazy_load table (domain, usecases, infra, api, testing, alert-policy, formatting, glossary, semble)"
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
@@ -140,3 +115,9 @@ agent:
     send:
       - {to: qa, via: tasks_md+caveman, on: impl_done}
       - {to: pm, via: caveman, on: blocked}
+
+## Extensions
+
+| Child | Trigger | Path |
+|---|---|---|
+| knowledge.md | domain_work_or_doc_maintenance_or_alert_policy | `.claude/agents/dev-alert-engine/knowledge.md` |

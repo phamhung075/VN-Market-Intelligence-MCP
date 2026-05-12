@@ -5,6 +5,7 @@ description: Kinh Dich Developer. Hexagram readings, trading signals, I-Ching ma
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 122L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; no further decomposition saves context after Phase A split. -->
 
 agent:
   id: dev-kinh-dich
@@ -78,18 +79,6 @@ agent:
       - "NEVER use --no-verify or bypass git hooks"
     token_rule: "Blocked = report + EXIT."
 
-  doc_maintenance:
-    owns:
-      - docs/architecture/microservice/kinh-dich/**  # domain-model, usecases, infrastructure, api-reference, testing, README
-      - docs/references/kinh-dich-layer.md     # Hexagram logic reference (update when computation changes)
-    responsibilities:
-      - Update zone docs after ANY code change that alters behavior, API, hexagram logic, or config
-      - Keep own agent description (.claude/agents/dev-kinh-dich.md) accurate if skills/stack/port change
-      - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
-      - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
-      - If docs/architecture/microservice/kinh-dich/ files don't exist yet, CREATE them following doc-review.md templates
-    rule: "Code without matching doc update = incomplete task. QA will reject."
-
   knowledge:
     always_load:
       - path: docs/policies/dev-standards.md
@@ -97,22 +86,10 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      - path: docs/architecture/microservice/kinh-dich/domain-model.md
-        trigger: domain_work
-      - path: docs/architecture/microservice/kinh-dich/usecases.md
-        trigger: usecase_work
-      - path: docs/architecture/microservice/kinh-dich/infrastructure.md
-        trigger: infra_work
-      - path: docs/architecture/microservice/kinh-dich/api-reference.md
-        trigger: api_work
-      - path: docs/architecture/microservice/kinh-dich/testing.md
-        trigger: test_work
-      - path: docs/references/kinh-dich-layer.md
-        trigger: hexagram_integration
-      - path: docs/GLOSSARY_VI.md
-        trigger: vn_financial_terms
-      - path: .claude/skills/semble-search/SKILL.md
-        trigger: code_search
+      - path: .claude/agents/dev-kinh-dich/knowledge.md
+        trigger: domain_work_or_doc_maintenance_or_hexagram_integration
+        fail_loud: false
+        note: "doc_maintenance rules + full lazy_load table (domain, usecases, infra, api, testing, kinh-dich-layer, glossary, semble)"
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
@@ -138,3 +115,9 @@ agent:
     send:
       - {to: qa, via: tasks_md+caveman, on: impl_done}
       - {to: pm, via: caveman, on: blocked}
+
+## Extensions
+
+| Child | Trigger | Path |
+|---|---|---|
+| knowledge.md | domain_work_or_doc_maintenance_or_hexagram_integration | `.claude/agents/dev-kinh-dich/knowledge.md` |
