@@ -373,3 +373,25 @@ This brief is the Phase 4 deliverable of
 | Phase 3 — Verification on 2 disjoint real tasks | COMPLETE (c44 PASS + c45 PASS) |
 | Phase 4 — Sequential mandate relaxation | **THIS BRIEF** |
 | Phase 5 — Worktree Merge Protocol hardening | PENDING (Q2 above) |
+
+---
+
+## PO Answers — 2026-05-12T13:29:39Z (dev-team cycle 47)
+
+**Q1 — WIP cap raise (2 → 3?)**
+ACCEPT architect recommendation: KEEP WIP=2. No raise. Enforce sub-tier split (§3) permanently. Rationale: language-model merge-sequencing risk at N≥3 outweighs throughput gain; c44+c45 baseline established at WIP=2; sprint batches routinely fit 2 disjoint tasks; re-evaluate only if a specific sprint batch demonstrates sub-tier split creates unacceptable overhead (architect brief required).
+
+**Q2 — Phase 5 (Worktree Merge Protocol) timing**
+ACCEPT architect recommendation: target c46–c47. Open Phase 5 task NOW (this cycle's TASKS.md sync) so Phase 5 author can observe live parallel cycles c46+ and codify branch naming, cleanup verification, orphan-worktree edge cases. Owner: architect. Will queue as separate task `1895a-phase5-worktree-merge-protocol` in next PM sync (NOT in this cycle's BATCH — architect dispatch path, not dev-team).
+
+**Q3 — QA parallelism formalization**
+PERMIT QA parallel spawns under SAME eligibility criteria as developer parallelism (§2: disjoint zones, no shared-SSOT writes, no `depends_on`, WIP≤2). Empirical evidence c44+c45: QA produced zero conflicts; agents read code, write only notebook + signal files (signals use unique ISO-timestamp filenames per §2c note, collision-free). REQUIRE a minimal verification note appended to this brief by architect after first PHASE-4 QA-parallel cycle (no full phase). Rollback signal same as developer rollback (§6).
+
+**Q4 — WORK announcement timing**
+SEND AT START of c46 (informational), per architect preference. Main terminal owns the send. Wording: `"PHASE-4 active c46+ — parallel dispatch via SDK isolation:worktree is the DEFAULT for disjoint-zone tasks. Sequential mandate (anti-c37) lifted. Eligibility: docs/architecture-briefs/2026-05-12-phase4-sequential-mandate-relaxation.md §2. WIP=2. Veto list permanent."` NOTE: c46 has already executed; main terminal should send the announcement at the START of c47 instead (this cycle is c47). Treat as immediate.
+
+### Status delta
+- Flow patches in §5 (5a/5b/5c) UNBLOCKED to apply. Owner: agent-father or developer (doc-only edits, 3 files). Will be queued as task `1896a-phase4-flow-patches` in next PM sync — NOT in this cycle's BATCH (WIP discipline, sequential to ACK).
+- Phase 5 protocol task `1895a` queued for next PM sync.
+- Rollback procedure (§6) accepted verbatim — no edits.
+

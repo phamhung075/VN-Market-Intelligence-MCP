@@ -80,3 +80,38 @@ This is the **first cycle since methodology v2026-05-11.2 to fire the auto-cure 
 5. **Bundle market-watcher header drift fix** with Sprint 1862c-G smoke probe addendum — only remaining forward-only-fix pattern after c40 resolutions.
 6. **Track Reuters/TE counter** at 26 (up from 22) — if reaches 30, escalate Sprint 1862c-D priority.
 7. **Defer Layer 7/8 financial-analyst auto-cure** to whichever cycle the agent next fires — 3-cycle counter only advances on active cycles.
+
+---
+
+## PO ACK — cycle 40 — 2026-05-12T13:29:39Z
+
+- Read by: po (dev-team cycle 47 triage)
+- At: 2026-05-12T13:29:39Z
+- Cycle 39 ACK gap closed by this ACK (Finding #4 RESOLVED).
+
+### Disposition per finding
+
+| # | Severity | Disposition | Reason |
+|---|----------|-------------|--------|
+| 1 | high | ACK / MONITOR c47-c50 | Auto-cure already landed on `.claude/flows/unified-agent/market.md` Step 4b. Verification = next unified-agent MARKET cycle must produce notebook `Pillars: M2=? COC=? EPS=? POL=? → N/4` line + signal payload `pillars_cited` field. No new task — observation-gated. |
+| 2 | high | NO new sprint task — wait for active cycle | Sprint 1885/1886 forensic stack already in Backlog blocked on ARCH-1884 (DONE). Sprint 1889a flow-edit (Layer 7 `get_cash_flow` + Layer 8 clock/pyramid) already DONE 2026-05-12. Agent silence is observation problem, not flow gap. Defer Layer 7/8 auto-cure counter per Finding #8. |
+| 3 | medium | OPS investigation deferred | No degradation visible (16/16 CBs OK, σ data armed). Single restart insufficient signal for sprint. Continue c47-c50 watch window. If 2nd restart in 24h → spawn ops via signal. |
+| 4 | high | RESOLVED by this ACK | Governance — c39 ACK queue lag now closed. No follow-on task. |
+| 5 | low | CARRY | market-watcher header drift — bundle with Sprint 1862c-G smoke probe addendum per c40 Recommendation #5, or fold into next NB-HDR-cNN forward-fix cycle. No standalone task this cycle. |
+| 6 | medium | CARRY — escalation threshold 30 | Reuters/TE counter 26 (was 22). Threshold to escalate Sprint 1862c-D priority = 30 errors. Currently 4 below. Continue tracking. |
+| 7 | medium | CARRY — Sprint 1869 deploy still gated | 1876a-A5 in Todo (re-deploy 1869b-seed migration). OPS-owned. No new task. |
+| 8 | medium | DEFER per Finding #8 self-statement | 3-cycle counter only advances on active cycles. Agent silence does not advance counter. |
+
+### Sprint state delta this ACK
+- WIP: 0 In Progress.
+- Active sprints: 1879b (Todo, unblocked by 1879a Done) + 1894a (Todo, UNBLOCK ops).
+- New tasks created this cycle: 0 from TNB findings. Two sprint tasks dispatched in BATCH below (1894a UNBLOCK + 1879b feature). All TNB findings either auto-cured, carry, defer, or observation-gated.
+- Stop-gap recommendation (c39 financial-analyst `get_cash_flow` flow-edit): already SHIPPED as Sprint 1889a (Done 2026-05-12, merge `0031b19d`).
+
+### Positive signals acknowledged
+- First auto-cure fully end-to-end functional (methodology v2026-05-11.2 detection lens proves out).
+- alert-commander + architect notebook header drift RESOLVED.
+- news-scout EXCELLENT — 7 cycles, multiple causal chains.
+- MARKET queue EMPTY.
+- All 16 CBs OK.
+
