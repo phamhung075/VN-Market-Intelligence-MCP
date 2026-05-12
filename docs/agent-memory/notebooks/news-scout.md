@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (04:22–04:28 UTC) 2026-05-12
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst×2 VIC/HSG] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) VIC institutional sell wave — VCBF reducing VIC allocation + 'cá mập' nghìn tỷ bán sạch Vingroup. Hot_money_risk=true (FII_OUTFLOW_RISK carry). chain_catalyst bearish 8/10 #2970 → all agents. (2) HSG/NKG Australia anti-dumping formal investigation, both companies named. Trade risk to steel exports. chain_catalyst bearish 7/10 #2971 → alert-commander.
+- Suppressed: VN-Index -20pts (stale, yesterday 05-11, already alerted), GAS oil surge (duplicate — HIGH alert already at 02:13), gold (domestic price DOWN 2.3M VND despite intl up — no spike signal).
+- Notes: CARRY_REGIME=FII_OUTFLOW_RISK detected (VND carry spread -0.33%). FII outflow risk elevated. VIC -2.33% live approaching -3% threshold. Brent $105 sustained HIGH.
+
 ### Cycle (03:18–03:23 UTC) 2026-05-12
 - Items: 20 | Impacts: 6 | Signals: [urgent_news×2 HSG/VIC] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
