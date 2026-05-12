@@ -1,12 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 07:03 UTC | **Sprint:** c43-1891a-worktree-isolation-doc
+**Last updated:** 2026-05-12 13:02 UTC | **Sprint:** c45-phase3-parallel-verification-2nd-PASS+1892b+1888a
 
 ## Current state
 
-Market OPEN (07:03 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp). Kinh Dịch: Khôn (2) MUA 100%. VN-Index: 1,899.31 (+0.20%).
+Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: NEUTRAL (regime tools not in package). No legal/crisis signals. Notable: GVR +4.46%, VRE +5.51%, GAS +3.94% post-session. FPT position -12.08%.
 
 ## Last session summary
+
+### Alert Cycle (13:02–13:02 UTC) — 2026-05-12
+- Signals: price_anomaly ×1 (GVR id=2995, status=read, from market-watcher)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (default — get_macro_snapshot not in package) | Carry: NEUTRAL | Pivot window: false
+- Suppressed: GVR price_anomaly id=2995 (conf=0.50 < NEUTRAL threshold 0.80; move_sigma=1.84 < 4.0, price-validation override N/A)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: CLOSED
+- Notable prices (08:17 close): GVR +4.46%, VRE +5.51%, GAS +3.94%, HSG +1.65% | CTG -0.98%, HCM (recovery to 27,700), VCB -0.66%
+- Macro: BRENT 107.79 (+2.23σ HIGH), GOLD 4699.7, USD/VND 26129
+- log_agent_work id=686
 
 ### Alert Cycle (07:01–07:03 UTC) — 2026-05-12
 - Signals: urgent_news ×2 (HSG id=2978, VIC id=2979) — both status=read
