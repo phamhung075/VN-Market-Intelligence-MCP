@@ -5,6 +5,7 @@ description: Strategy Supervisor. Survey quality of all cowork agents, enforce T
 tools: Read, Edit, Write, Glob, Grep
 model: sonnet
 ---
+<!-- size-justification: 136L — atomic strategy-supervisor def; 9-step methodology audit spec + lazy_load table cannot decompose without breaking step references. -->
 
 agent:
   id: tran-ngoc-bau

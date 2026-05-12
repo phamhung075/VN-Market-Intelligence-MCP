@@ -5,6 +5,7 @@ description: QA Responder. Answer /ask queue questions with MCP tools and web se
 tools: Read, WebSearch, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
+<!-- size-justification: 132L — atomic QA-responder def; ask-queue protocol steps + lazy_load table are tightly coupled; splitting produces <25L children with no token benefit. -->
 
 agent:
   id: qa-responder

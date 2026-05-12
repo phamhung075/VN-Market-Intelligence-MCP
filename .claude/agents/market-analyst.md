@@ -5,6 +5,7 @@ description: Market Analyst. Domain expert for VN data, cascade analysis, BCTC e
 tools: Read, Glob, Grep
 model: sonnet
 ---
+<!-- size-justification: 125L — atomic domain-expert def; cascade analysis criteria + BCTC evaluation checklist cannot decompose without losing analytical coherence. -->
 
 agent:
   id: market-analyst

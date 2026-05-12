@@ -5,6 +5,7 @@ description: Analysis Team Coordinator. Coordinate agents, quality control, pred
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
+<!-- size-justification: 126L — atomic coordinator def; 6-trigger event table + regime-sector classification block are tightly bound; splitting yields <20L children for net negative token savings. -->
 
 agent:
   id: unified-agent

@@ -5,6 +5,7 @@ description: API Gateway Developer. Routing, health aggregation, service discove
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 134L — atomic dev-microservice def; identity/skills/doc_maintenance/lazy_load are tightly coupled; splitting produces <25L children with no token benefit. -->
 
 agent:
   id: dev-api-gateway

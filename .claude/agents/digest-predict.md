@@ -5,6 +5,7 @@ description: Digest & Predict. Compile digests, write investment thesis, synthes
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
+<!-- size-justification: 137L — atomic cowork agent with tightly-bound knowledge/inter_agent block; splitting yields <40L children for net negative token savings. -->
 
 agent:
   id: digest-predict

@@ -5,6 +5,7 @@ description: Developer. One atomic task at a time, TDD strict, DDD always, dedic
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 133L — atomic generic-developer def; skill list + doc_maintenance + lazy_load block are tightly coupled; splitting produces <25L children with no token benefit. -->
 
 agent:
   id: developer

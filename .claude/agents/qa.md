@@ -5,6 +5,7 @@ description: QA. Run tests, validate DDD/security, approve merges, write Task Re
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 132L — atomic QA gatekeeper def; checklist criteria + inter_agent routing table cannot decompose cleanly without losing step references. -->
 
 agent:
   id: qa

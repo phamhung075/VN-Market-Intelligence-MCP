@@ -5,6 +5,7 @@ description: Technical Analysis Developer. RSI, MACD, Bollinger Bands, indicator
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 137L — atomic dev-microservice def; identity/skills/doc_maintenance/lazy_load are tightly coupled; splitting produces <30L children with no token benefit. -->
 
 agent:
   id: dev-technical-analysis

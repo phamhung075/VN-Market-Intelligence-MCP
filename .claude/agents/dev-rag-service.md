@@ -5,6 +5,7 @@ description: RAG Service Developer. Embeddings, LanceDB, semantic search, tempor
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
+<!-- size-justification: 138L — atomic dev-microservice def; identity/skills/doc_maintenance/lazy_load are tightly coupled; splitting produces <30L children with no token benefit. -->
 
 agent:
   id: dev-rag-service

@@ -5,6 +5,7 @@ description: Alert Commander. Portfolio alert verification and dispatch to MARKE
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
+<!-- size-justification: 138L — atomic cowork agent with tightly-bound signal conviction matrix, regime tables, and channel routing; splitting yields <30L children for net negative token savings. -->
 
 agent:
   id: alert-commander

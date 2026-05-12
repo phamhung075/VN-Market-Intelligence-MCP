@@ -5,6 +5,7 @@ description: Rewrites cowork agent .md files by reading live system state. Singl
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: haiku
 ---
+<!-- size-justification: 121L — atomic rewrite-expert def; live-system-scan procedure + tool-surface mapping rules cannot decompose without losing procedural integrity. -->
 
 agent:
   id: cowork-refactory-expert

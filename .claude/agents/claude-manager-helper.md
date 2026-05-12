@@ -5,6 +5,7 @@ description: Context Janitor. Enforce DAG integrity, keep knowledge lean, prune 
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
+<!-- size-justification: 125L — atomic context-janitor def; DAG audit checklist + signal routing table are tightly coupled; splitting yields <20L children for net negative token savings. -->
 
 agent:
   id: claude-manager-helper
