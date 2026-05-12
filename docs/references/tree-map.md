@@ -170,7 +170,11 @@ CLAUDE.md (root — always loaded)
 │   ├── docs/guides/guide-agent-ops.md (Sections 7-12: Notebook, Cross-Team, Reports, Maintenance, Registry, Responsibility)
 │   ├── docs/guides/guide-error-signals.md (Sections 13-14: Error Boundary + Signal Bus)
 │   ├── docs/guides/guide-skills-registration.md (Sections 15-16: Skills Catalog + Registration Checklist)
-│   └── docs/guides/guide-quality.md (Section 18: Autonomous Quality Patterns — 6-layer stack)
+│   └── docs/guides/guide-quality.md (index: 6-layer quality framework)
+│       ├── docs/guides/guide-quality-layers.md (Layer 0: graceful degradation + error handling)
+│       ├── docs/guides/guide-quality-validation.md (Layers 1-2: grounding + pre-send validation)
+│       ├── docs/guides/guide-quality-confidence.md (Layers 3-4: confidence scoring + decision trace)
+│       └── docs/guides/guide-quality-review.md (Layer 5: self-review + flow integration)
 │
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
 │
