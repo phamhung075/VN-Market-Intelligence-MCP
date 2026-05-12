@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-11 | **Sprint:** 1877a
+**Last updated:** 2026-05-12 | **Sprint:** 1878b / ARCH-1884
 
 ## Current state
 
@@ -89,3 +89,26 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 **Test plan:** Baseline (run against 2026-05-10 → 2026-05-11 window): JSON parse, schema completeness, verdict computation, violations cap at 20, idempotency (re-run same day), signal files (PASS/FAIL), exit codes (0/1), spot-check 3 violations per criterion.
 
 **Status at session end:** READY FOR HANDOFF. 1877a decomposed and handed off → developer. Branch: task/1877a-commit-convention-audit-script.
+
+---
+
+## Cycle 39 — 2026-05-12 Task Queue Sync
+
+**Input:** signal-T4 merged SHA 9bb2d338; 1878b (SPRINT-S, dev-mcp-server) in progress; 1878a (OCF column) completed.
+
+**Actions:**
+- Removed signal-T4 and signal-T5 from Backlog (blocking dependency was signal-T4)
+- Added signal-T4 → Done row: merged 9bb2d338, doc-only chore
+- Added signal-T5 → Done row: marked Ready (QA dispatch pending), unblocked (signal-T4 DONE)
+- Updated 1878b row: dep clarified to signal 1878a (DONE 1fb5282b), noted architect ARCH-1884 parallel dispatch
+- WIP: 0 In Progress (architect brief 1884 generating in parallel, developer will pick 1878b after)
+
+**Dependency state:**
+- signal-T4 UNBLOCKED & DONE (9bb2d338)
+- signal-T5 UNBLOCKED (ready for QA dispatch this cycle)
+- 1878b ready (OCF column 1878a complete; architect brief ARCH-1884 dispatched in parallel)
+- ARCH-1884 (forensic-analysis host decision) in architect queue
+
+**Blockers:** None. WIP limit (2/2) enforced.
+
+**Status at session end:** TASKS.md synced. signal-T4 closed, signal-T5 ready. 1878b + ARCH-1884 live. Commit pending.

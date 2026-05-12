@@ -1,8 +1,60 @@
 # PO Notebook
 
-## Last updated: 2026-05-11T20:56Z (methodology-infra sprint plan — Sprints 1878-1886 + ARCH-1884, 1887 deferred)
+## Last updated: 2026-05-12T01:53Z (dev-team c39 triage — BATCH(3): 1878b + signal-T4 + signal-T5)
 
 ## Current sprint focus: Sprints 1878-1881 + ARCH-1884 — TNB methodology infrastructure foundations (OCF + EFFR-IORB + Investment Clock + source tiers + forensic-host architect brief)
+
+---
+
+## Cycle 39 triage — 2026-05-12T01:53Z
+
+### Step 0 audit (input from c39 brief)
+- Signal inbox: EMPTY (`docs/signals/*.json` ENOENT)
+- signals_processed DB: 27 rows, 0 pruned (no >7d)
+- Filesystem processed: 57 files, 0 stale
+- TNB handoff: tnb-audit-latest.md is the c38 file already ACK'd cycle 38 (NB-HDR-c38 closed #4/#5/#6 header drift). c39 TNB cron not yet fired this slot.
+- Channel audit: SKIPPED — brief states inbox empty + c38 audit covers last 7 cycles. No new MARKET/WORK/BUG drops since c38 ACK.
+
+### Disposition of persistent TG reports (no third deferral)
+- **#2854 (MEDIUM news freshness)** — Defer to ops cron health-check, NOT a dev-team task. Disposition: WONTFIX-by-dev, owner=ops monitoring. Rationale: needs live VPS/source-side diagnostic, not code change. Surface in BATCH `notes` for ops cron.
+- **#2855 (LOW git HEAD.lock)** — WONTFIX-persistent. Already documented in TNB c38 persisting blockers as TNB-c33-F7 (Spotlight macOS structural). Workaround `rm .git/HEAD.lock` is inlined in dev-team flows. Architectural fix deferred indefinitely; will reopen only if it blocks commits. Closing as known-issue.
+
+### Backlog priority chosen
+1. **1878b** compute_accruals MCP tool — 1878a OCF column DONE → unblocked. Pure function `(NetIncome - OCF) / TotalAssets` time series. Owner: dev-mcp-server. SPRINT-S. Zone: `apps/mcp-server/src/domain/forensic/` (new) + new MCP tool registration.
+2. **signal-T4** doc updates — protocol + tree-map. Doc-only, FIX-size. Owner: developer. Unblocks signal-T5. Zone: `docs/protocols/agent-chaining-protocol.md` + `docs/references/tree-map.md`.
+3. **signal-T5** QA integration tests — full drain cycle (SELECT+INSERT+prune). Blocks fallback path removal. Owner: qa. Zone: `tests/integration/signals/` (new) + unit harness in mcp-server. Sequential after T4.
+
+### Cross-pollution clearance
+- 1878b touches: `apps/mcp-server/src/domain/forensic/*` (new dir), `apps/mcp-server/src/interface/mcp/tools/financial/*` (new tool file). Zero overlap with signal-T4/T5.
+- signal-T4 touches: `docs/protocols/agent-chaining-protocol.md`, `docs/references/tree-map.md`. Doc-only.
+- signal-T5 touches: `tests/integration/signals/*.test.ts` (new), possibly small unit fixture in `apps/mcp-server/src/infrastructure/db/`. Disjoint from 1878b's domain/forensic + interface/mcp/tools.
+- Verdict: 1878b parallel with signal-T4 SAFE. signal-T5 sequential AFTER signal-T4 lands.
+
+### WIP check
+- In Progress: 0 (TASKS.md In Progress section empty)
+- Adding 3 → max concurrent 2 (1878b + signal-T4 parallel, T5 holds). Within WIP cap.
+
+### Items deferred to next cycle
+- **Stale branch CLEAN** task/1872a-5-api-gateway-wording (9th cycle deferred → 10th). Verified 4 unmerged commits are state-tracking duplicates (notebooks + tree-map content already on main via fe82b9f9). Safe but cap≤3 this cycle; queue first slot for c40.
+- **1879 BA spec** EFFR-IORB — queue after 1878b ships.
+- **1881 BA spec** source-tier retrofit — queue.
+- **ARCH-1884 reconciliation** TASKS.md row vs brief at cae59b98 — drift check 1-min job, defer.
+- **SPRINT-PARALLEL-ISOLATION architect brief** — defer; this cycle's disjoint-files check confirms ad-hoc parallel works while brief is pending.
+- **PM Step 4.5 UTC violation** from c36 — surface only when TNB c39 audit fires. Audit absent this slot.
+
+### Hard-constraint compliance
+- WIP ≤2 In Progress: PASS (0→2 max concurrent)
+- Disjoint files certified: PASS
+- TG reports 2854/2855 dispositioned: PASS (no third deferral)
+- Sequential dependency declared: signal-T5 → after signal-T4
+
+### Files written this cycle
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+Not present at session start. No rm needed.
+
+---
 
 ---
 
