@@ -1,12 +1,27 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** 1878a
+**Last updated:** 2026-05-12 | **Sprint:** 1879
 
 ## Current state
 
-SPRINT-1878a spec complete. Spec at docs/specs/1878a-ocf-column-migration.md. Ready for dev-mcp-server (no architect blocker — DDD placement question flagged as low-priority open question, not a hard blocker).
+SPRINT-1879 spec complete. Spec at docs/specs/1879-effr-iorb-ba-spec.md. No PO blockers. Ready for dev-mcp-server.
 
-## Last session summary (2026-05-12)
+## Last session summary (2026-05-12) — 1879
+
+Sprint 1879 — EFFR-IORB FRED fetcher + get_fed_liquidity_spread() MCP tool. Layer 2.D liquidity microstructure.
+
+Key findings:
+- FRED fetching lives in `apps/mcp-server`, NOT `apps/macro-indicators`. Apps/macro-indicators is a standalone commodity/SBV Hono microservice (port 5004) with no FRED client and no scheduler.
+- Existing `fredApi.ts` handles `FEDFUNDS` (monthly). New fetcher handles `EFFR` + `IORB` (daily).
+- `tracked_indicators` dedup is UNIQUE(indicator, source) = single latest row. Daily time-series needs NEW table `fred_series_daily` with UNIQUE(series, date).
+- All CSV rows parsed (not just last row) to enable backfill on first run.
+- Scheduler hook: piggyback on existing `macroIndicatorRefreshJob` (0 6 * * *) — no new cron entry.
+- Domain: `computeFedLiquiditySpread()` pure function in `domain/services/macro/fedLiquiditySpread.ts` — zero infra imports. Trend slope is OLS over sample index.
+- Spread convention: IORB - EFFR (positive = abundance, negative = stress).
+- No FRED API key needed — public CSV endpoint confirmed by existing fetcher.
+- 10 TDD tests total (6 fetcher + 5 tool). No PO blockers.
+
+## Prior session summary (2026-05-12) — 1878a
 
 Sprint 1878a — OCF column migration spec.
 
