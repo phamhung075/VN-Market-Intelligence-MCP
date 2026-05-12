@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 15:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 17:41 UTC | **Sprint:** 1846
 
 **Last updated:** 2026-05-12 12:41 UTC | **Sprint:** 1846
 
@@ -278,3 +278,27 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_eod_sent | 1 |
 | exit_status | complete |
 | token_estimate | 16000 |
+
+### Cycle (17:38–17:41 UTC)
+- Stocks: 29 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | CARRY: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours, 4h interval). VN-Index: 1,901.10 +0.30%. Brent: $107.22 (elevated, +2.23σ). Gold: $4,683.2. USD/VND: 26,129.
+- Top closing moves: VRE +5.51% (1.52σ, below 2.0σ), GVR +4.46% (1.66σ, below 2.0σ), GAS +3.94% (1.45σ, below 2.0σ) — all previously signaled/alerted.
+- News-scout signal active: chain_catalyst id=3006 — multiple brokers lowering VN-Index 2026 target; "xanh vỏ đỏ lòng" risk near historical high. Impact score 8.
+- Open chain findings: 0 (last 15 min) | Open alerts: 25 | System: OK
+
+## Metrics (cycle 2026-05-12 17:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 8 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
+
+## Doc self-heal (2026-05-12 EOD)
+- Fixed 1 item in `.claude/flows/market-watcher/eod.md`
+  - `get_insider_signals()`: corrected to `get_insider_signals(code="{TICKER}")` — requires `code` param, `outstandingShares` auto-fetched
+- Commit pending: `.git/HEAD.lock` + `objects/maintenance.lock` held by git maintenance process. Fix staged, will commit next cycle.
