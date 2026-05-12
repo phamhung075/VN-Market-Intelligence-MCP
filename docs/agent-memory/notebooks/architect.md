@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-12 16:45 UTC | **Sprint:** 1896c
+**Last updated:** 2026-05-12 18:00 UTC | **Sprint:** 1876a-A5
 
-## Last session summary
+## Last session summary (1876a-A5)
+
+Session 1876a-A5: Thin scope brief for re-deploying 1869b-seed migration on prod DB.
+Brownfield scan confirmed: `migrateWatchlistThresholds(db)` exists in `seedWatchlist.ts:193-220`,
+is idempotent, and IS ALREADY WIRED inside `schema.ts::initDatabase()` at line 217.
+No `migrateDb.ts` and no `migrations/` directory exist — the only execution path is
+container startup. Root cause confirmed: mcp-server container was not restarted after
+1869b merged. DECISION (a) exec-only — `docker-compose restart mcp-server` triggers
+`initDatabase()` which runs `migrateWatchlistThresholds` automatically. No code change,
+no new files. Existing test coverage in `1869b-seed-watchlist-thresholds.test.ts` (9 tests).
+Handoff: `docs/handoffs/TASK_1876a-A5.md`. Executor: ops.
+
+---
+
+## Previous last session summary (1896c)
 
 Session 1896c: Persistent Docker events logging design brief authored. Recommended Option 4 (launchd plist + newsyslog rotation) over Option 1 (ad-hoc background — no crash recovery), Option 2 (json-file driver — wrong data, captures app logs not daemon events), and Option 3 (external log shipper — overkill for SPRINT-S single-user host). Key decisions: plist at `~/Library/LaunchAgents/com.vn-market.docker-events.plist`, KeepAlive.Crashed=true, ThrottleInterval=15s, log at `/usr/local/var/log/docker-events.log`, newsyslog rotation 50MB/daily, 30 archives = 30-day retention. Source-controlled copies in `launchd/`. No domain code change, no Docker rebuild, no new container dependency. Owner hint: ops (launchctl + file copy scope); agent-father as fallback if plist authoring needed. Brief: `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`. Commit SHA pending.
 

@@ -1,6 +1,148 @@
 # PO Notebook
 
-## Last updated: 2026-05-12T16:28:02Z (dev-team c50 triage — BATCH(2): 1879a-row-purge CHORE + 1896c persistent-docker-events)
+## Last updated: 2026-05-12T18:16:15Z (dev-team c52 triage — BATCH(2): HEAD.lock UNBLOCK + 1876a-A5 OPS migration redeploy)
+
+---
+
+## Cycle 52 triage — 2026-05-12T18:16:15Z
+
+### Trigger
+Cron-fired dev-team c52. Inputs per main-terminal brief: empty pendingSignals (`docs/signals/*.json` clean — verified `ls docs/signals/` shows only `processed/` + `signals.db`). 1 new TG report #2864 17:48 UTC from QA Responder: HEAD.lock structural. `list_unresolved_reports` MCP tool still drifted (carry from c50/c51). WIP 0/2 dispatchable (1894a USER-BLOCKED, non-dispatchable). Pre-existing unstaged residue ~20 mods + 10 untracked from out-of-band agent work (noted, not blocking).
+
+### Step 0-TNB
+TNB handoff file at `docs/handoffs/tnb-audit-latest.md` still c41 file (last ACK c49 15:27 UTC). No new TNB cycle to ACK. **No action.**
+
+### Step 0-SIG — pendingSignals[] EMPTY
+Verified `ls /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/signals/` → only `processed/` + `signals.db`, no fresh `*.json`. Logged: `[po] No pending signals`. Proceeding.
+
+### Step 0 — Channel audit
+SKIPPED telegram MCP calls. Inputs already enumerated by main terminal. TNB c41 (14:47 UTC ACK at c49) still covers MARKET/WORK/BUG indirectly. Only fresh delta: TG #2864 17:48 UTC (HEAD.lock from QA Responder). Redo Step 0 next cycle if main terminal demands explicit reads.
+
+### CRITICAL INFRA — HEAD.lock blocking ALL commits
+- `.git/HEAD.lock` present at session start: 0 bytes, ctime `12 mai 19:42` local (verified via `ls -la`).
+- TG report #2864 (17:48 UTC, [QA Responder]): "git commit failed: HEAD.lock exists (Operation not permitted). Notebook updated in-memory only. Manual lock removal needed: rm .git/HEAD.lock".
+- This blocks ALL commits this cycle including notebook commits, dev-team commits, any further triage output.
+- **Must be 1st BATCH item.** Single 1-line ops command: `rm /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.git/HEAD.lock`.
+- **Recurring-bug check:** HEAD.lock pattern has fired TNB-c33-F7 + c47 cherry-pick race + c51 QA-Responder = ≥3 occurrences. BUT per `feedback_recurring_bug_escalation.md` the rule is "≥2 fix commits on same module" — these are not fix-attempts, they are workaround invocations of a known macOS Spotlight structural issue with inlined `rm .git/HEAD.lock` already codified in dev-team flow + 1895b worktree-merge-protocol controls. NOT escalating to architect; continuing to workaround. If we see ≥2 distinct *code fix attempts* on commit pipeline, then escalate.
+
+### Verification done this cycle
+- TASKS.md L1-90 read: 1 In Progress (1894a-cloudflare USER-BLOCKED), 3 Todo (1862c-E-dashboard, 1862c-F, 1876a-A5), 20+ Done rows from c50/c51 sprints (1862c-D ops, 1896c arch + impl, 1896a/b RCA, 1895a/b worktree-merge-protocol, 1889a/spec, 1879-spec + a/b, 1878a/b + a-spec, ARCH-1884, 1880b pyramid, signal-T2/3/4/5/6, NB-HDR-c38/c39). All Done rows from c51 confirm c51 BATCH shipped clean.
+- CAP VIOLATION still 180/80 — same as c51 entry. Auto-archive eligible 2026-05-19.
+- Git log -10: HEAD at 8db4fbec (market-watcher notebook), c51 close commits intact (cfa5165b dev-team c51 + 0ee1150a pm/c51 + 01c30703 1862c-DE ops + 16ff50e1 1896c-impl).
+
+### BATCH selection — Option A: 2-item (UNBLOCK + OPS) — INTENTIONALLY 1 slot under cap
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → M/L.
+
+1. **HEAD.lock removal** (FIX/UNBLOCK, 1-line ops). Single shell command: `rm /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.git/HEAD.lock`. Zone: `ops/git-housekeeping`. Unblocks all commits this cycle. NO Docker rebuild. NO code change. **Dispatch first; everything else depends on this.**
+2. **1876a-A5** (HIGH OPS). 1869b-seed migration redeploy on prod DB. Locate migration in `apps/mcp-server/migrations/` (or create per `seedWatchlist.ts::migrateWatchlistThresholds`), ensure registered in `migrateDb.ts`, run on prod via `docker exec` SQL or container rebuild. Re-verify via 1876a-A4 query — all 30+ rows show expected -7.0/-9.0 per high-vol classification. Unblocks ALL of Sprint 1869 (precision threshold tuning was non-functional because thresholds never reached prod DB). Carry from c50 + c51 (main-terminal sequenced explicitly: "Don't run cloudflared + DB migration in same tier if ops capacity single-channel" — cloudflared landed c51, this cycle ops free). Zone: `ops/db-migration` + possibly `apps/mcp-server/migrations/`. Files: 1-3 (migration script + migrateDb.ts registration if missing). **Dispatchable.**
+
+### Items deferred (NOT this BATCH) — explicit deferrals
+- **1894a Cloudflare /api/*** (HIGH UNBLOCK, In Progress) — USER-BLOCKED, awaits Cloudflare dashboard action. PO cannot dispatch. CARRY. Surfaces in main-terminal slate for user visibility only.
+- **1862c-E-dashboard** (HIGH OPS, Todo split) — also USER-BLOCKED (same Cloudflare dashboard channel as 1894a). Can be bundled with 1894a in a single user-action UNBLOCK message; main-terminal owns user-facing communication, not PO. CARRY (NOTE FOR MAIN: 2 USER-BLOCKED Cloudflare items can be batched in 1 message to user).
+- **1862c-F** (FIX MEDIUM) — Container-rebuild-gated. Sequence after 1862c-D/E confirmed stable (5 cycles). Currently c52, 1862c-D landed c51 → need cycles 52-56 stable. CARRY.
+- **1888b/c/d** SSOT hardcode fixes (HIGH CHORE, doc-only) — 3 small chores: AGENT_MODELS_README.md 13→17+9, tool-registry.json 125→132, cron-registry vs project-stats 62 vs 59 distinction. Bulk-batchable next cycle. Skipped this cycle to leave WIP slack for ops migration. CARRY.
+- **1881a** source-tier retrofit (HIGH ba spec, 8+ cycles deferred) — CARRY.
+- **1890a** fin-analyst tool-pkg (MEDIUM ba spec, 12+ cycles deferred) — CARRY.
+- **1882a/1883a** queued behind 1878-1881 — CARRY.
+- **1885a/1886a** previously BLOCKED on ARCH-1884; now Done, but capacity used. CARRY.
+- **JANITOR-034** large-cap overlap (c50 finding pending promotion) — LOW. CARRY.
+- **5 JANITOR backlog** tasks — bulk-batch later. CARRY.
+- **`list_unresolved_reports` MCP tool drift** — c50+c51 still not-found. Workaround `read_telegram_reports(status="processed", unclaimed_only=false)` available. Defer ops investigation one more cycle (3rd). CARRY but flag for c53 escalation if persists.
+- **newsyslog sudoer install** for 1896c-impl (non-blocking) — CARRY.
+- **financial-analyst 23:00 UTC cycle test** — passive monitor (TNB c41 #4). CARRY.
+- **Pre-existing unstaged residue** (~20 mods + 10 untracked from out-of-band agent work) — CARRY for code-janitor or developer cleanup next cycle. NOT this BATCH (would conflate with HEAD.lock fix).
+- **TASKS.md cap 180/80 lines** — archive eligible 2026-05-19. CARRY.
+
+### Cross-pollution + WIP check
+- **HEAD.lock removal** touches: `.git/HEAD.lock` only. No repo files. No SSOT writes.
+- **1876a-A5** touches: prod DB (`market.db` rows via SQL), possibly `apps/mcp-server/migrations/*.sql` (new) + `migrateDb.ts` registration. Disjoint from `.git/` zone.
+- WIP: 0 In Progress → +1 (1876a-A5 only; HEAD.lock fix is sub-FIX-size, not WIP). Cap respected (≤2).
+- Disjoint zones: PASS (`.git/` housekeeping vs `apps/mcp-server/migrations/` + prod DB).
+- No shared-SSOT writes: PASS (neither writes to TASKS.md, project-stats.json, ARCHITECTURE.md).
+- No file overlap: PASS.
+- No `depends_on` between the two (but HEAD.lock fix is SEQUENTIAL-FIRST because 1876a-A5 will need to commit migration files): sequential gate declared.
+- Phase 4 ELIGIBLE for parallel: NO (sequential by infra dependency — commits blocked until HEAD.lock cleared).
+
+### Hard-constraint compliance
+- WIP ≤2: PASS (0→1, FIX/UNBLOCK not WIP)
+- Disjoint zones (§2a): PASS
+- No shared-SSOT writes (§2c): PASS
+- No file overlap (§2b): PASS
+- Sequential dependency declared: HEAD.lock removal MUST land before 1876a-A5 (and before any commit this cycle)
+- Recurring bug check: HEAD.lock is workaround pattern, not fix-attempt cluster → no architect escalation needed
+
+### Files written this cycle
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+.git/HEAD.lock PRESENT at session start (0 bytes, ctime 19:42 local). MUST `rm` BEFORE notebook commit. Dispatched in BATCH item #1.
+
+---
+
+## Cycle 51 triage — 2026-05-12T17:28:03Z
+
+### Trigger
+Cron-fired dev-team c51. Inputs per main-terminal brief: empty pendingSignals (c42 TNB has not landed; last audit c41 14:47 UTC, already ACK'd c47+c49), empty `read_telegram_reports(status="new")`, 14 unresolved-monitoring reports (same set as c50, none past 72h). WIP 0/2 (1894a USER-BLOCKED, non-dispatchable).
+
+### Step 0-TNB
+TNB handoff file at `docs/handoffs/tnb-audit-latest.md` is **still the c41 file** (mtime 17:28 from earlier this session, content unchanged — already ACK'd at L89-103). No new TNB cycle to ACK. **No action.**
+
+### Step 0-SIG — pendingSignals[] EMPTY
+Logged: `[po] No pending signals`. Proceeding to channel audit.
+
+### Step 0 — Channel audit
+SKIPPED telegram MCP. Inputs already enumerated by main terminal. TNB c41 (14:47 UTC ACK) covers MARKET/WORK/BUG indirectly. No fresh BUG delta beyond 14-monitor list (all carry). Redo Step 0 next cycle if main terminal demands.
+
+### Verification done this cycle
+- TASKS.md: 1879a duplicate purge from c50 **PERSISTED** (only Done row at L82, no Todo dup).
+- TASKS.md: 1896b row **DUPLICATED** — appears in Todo L39 (no date) AND Done L68 (dated 2026-05-12). Needs CHORE row-purge (same pattern as c50's 1879a fix).
+- TASKS.md: 1896c-impl row **MISSING** — brief at L66 (Done, merge `f8dcccf1`) but no impl task in Todo. Main-terminal references "1896c-impl"; need to create row OR carry as BATCH entry with new ID.
+- janitor scan-19 (438a24d7) proposed JANITOR-034 (LARGE_CAP_FALLBACK vs MAJOR_CAPS overlap) — currently in `docs/data/code-janitor-known-findings.json` only, NOT in TASKS.md Backlog. LOW priority; promote later batch.
+
+### BATCH selection — Option B: 3-item (UNBLOCK + OPS + CHORE)
+Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → M/L.
+
+1. **1862c-D + 1862c-E bundle** (HIGH OPS, UNBLOCK). Cloudflared ingress route `/vn-market/mcp` + SSE keepAliveTimeout 30s→300s on `/vn-market/sse`. Both edit `~/.cloudflared/config.yml`, single cloudflared reload. No Docker rebuild. **Unblocks chronic cowork scheduled-task MCP access blockers** (market-watcher/unified-agent/news-scout). Zone: ops host config (`~/.cloudflared/config.yml`). **Dispatchable.**
+2. **1896c-impl** (MEDIUM OPS). New row needed: ops install `~/Library/LaunchAgents/com.vn-market.docker-events.plist` + `/etc/newsyslog.d/docker-events.conf` + `launchd/docker-events-logging.md` operator runbook per arch brief `f8dcccf1` (`docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`). Single-cycle ops sprint. Unblocks future restart RCAs (1896b inconclusive because Docker 24h retention purged evidence). Zone: ops host config (launchd + macOS newsyslog). **Disjoint from cloudflared zone — both ops but different files/surfaces.**
+3. **1896b-row-purge** (CHORE, doc-only, 1-line edit). Same pattern as c50's 1879a purge. Removes Todo L39 duplicate; Done L68 row intact. Zero risk, doesn't count as WIP.
+
+### Items deferred (NOT this BATCH) — explicit deferrals
+- **1894a Cloudflare** (HIGH UNBLOCK) — USER-BLOCKED, config admin only. PO cannot dispatch. CARRY. Brief: `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. Surfaces in main-terminal slate for user visibility only.
+- **1876a-A5** (HIGH OPS) — 1869b-seed migration redeploy. Main-terminal explicit guidance: "Don't run both [cloudflared + DB migration] in same tier if ops capacity is single-channel." Sequence to c52. CARRY.
+- **1862c-F** (FIX MEDIUM) — Container-rebuild-gated. Sequence after D+E confirmed stable (5 cycles). CARRY.
+- **1881a source-tier retrofit** (HIGH ba spec) — 8+ cycles deferred. Capacity 3 already used. CARRY one more.
+- **1890a fin-analyst tool-pkg** (MEDIUM ba spec) — 12+ cycles deferred. CARRY.
+- **1882a/1883a** — queued behind 1878-1881. CARRY.
+- **1885a/1886a** — blocked on ARCH-1884 + 1878. CARRY.
+- **1888b-k** SSOT chores — bulk-batch later. CARRY.
+- **JANITOR-034** large-cap overlap (janitor-proposed scan-19) — LOW priority, promote to Backlog later. CARRY.
+- **5 JANITOR backlog** tasks — bulk-batch later. CARRY.
+- **`list_unresolved_reports` MCP tool drift** — c50 still not-found. Workaround active via `status=processed` query. Defer ops investigation one more cycle. CARRY.
+- **TASKS.md cap 180/80 lines** — archive eligible 2026-05-19. CARRY.
+
+### Cross-pollution + WIP check
+- **1862c-D+E bundle** touches: `~/.cloudflared/config.yml` (single file, single reload). Optionally cron-hint URL updates in `.claude/flows/market-watcher/`, `unified-agent/`, `news-scout/` — but flow doc edits can be deferred to verify step. Primary zone: ops host config.
+- **1896c-impl** touches: `~/Library/LaunchAgents/com.vn-market.docker-events.plist` (new), `/etc/newsyslog.d/docker-events.conf` (new), `launchd/docker-events-logging.md` (new operator runbook). All new files. Disjoint from cloudflared.
+- **1896b-row-purge** touches: `docs/TASKS.md` L39 (delete duplicate Todo row). Doc-only.
+- WIP: 0 → +2 (1862c-D+E bundle as one + 1896c-impl as one) = 2 at cap. CHORE row-purge runs but doesn't count as WIP (doc-edit only).
+- Disjoint zones: PASS (cloudflared YAML vs macOS launchd plist vs TASKS.md).
+- No shared-SSOT writes: PASS.
+- No `depends_on` between bundle and 1896c-impl: PASS.
+- **Phase 4 ELIGIBLE** for parallel dispatch — disjoint ops surfaces.
+
+### Hard-constraint compliance
+- WIP ≤2: PASS (0→2 + CHORE)
+- Disjoint zones (§2a): PASS
+- No shared-SSOT writes (§2c): PASS
+- No file overlap (§2b): PASS
+- No `depends_on` between 1862c-D+E and 1896c-impl: PASS
+- Ops channel pressure: main-terminal explicitly OK'd this combo ("bundle the cloudflared pair, separate the migration redeploy" — 1876a-A5 deferred to next cycle)
+
+### Files written this cycle
+- docs/agent-memory/notebooks/po.md (this entry)
+
+### HEAD.lock note
+Not present at session start. No rm needed.
 
 ---
 
