@@ -259,6 +259,57 @@ Children created by zone-enforcement-and-split-policy brief — lazy-loaded from
 │   └── .claude/agents/dev-mcp-server/knowledge.md (lazy_load table + Step 0-b handler + doc_maintenance rules)
 ```
 
+## Agent File Splits (Wave 3A)
+
+Children created by zone-enforcement-and-split-policy brief Wave 3A — lazy-loaded from parent agent on trigger:
+
+```
+.claude/agents/market-watcher.md (parent — 109L after split)
+│   └── .claude/agents/market-watcher/knowledge.md (channel routing rules, signals, schedule crons, watch thresholds)
+│
+.claude/agents/dev-alert-engine.md (parent — 122L + justification header)
+│   └── .claude/agents/dev-alert-engine/knowledge.md (doc_maintenance rules + full lazy_load table)
+│
+.claude/agents/dev-pdf-extractor.md (parent — 124L + justification header)
+│   └── .claude/agents/dev-pdf-extractor/knowledge.md (doc_maintenance rules + full lazy_load table)
+│
+.claude/agents/dev-kinh-dich.md (parent — 122L + justification header)
+│   └── .claude/agents/dev-kinh-dich/knowledge.md (doc_maintenance rules + full lazy_load table)
+```
+
+## Flow File Splits (Wave 3A)
+
+Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dispatcher parent + sibling sub-flows:
+
+```
+.claude/flows/financial-analyst/cycle.md (thin dispatcher — 20L)
+│   ├── .claude/flows/financial-analyst/stage-bootstrap.md (Steps 0-0b: bootstrap + regime)
+│   ├── .claude/flows/financial-analyst/stage-analyze.md (Steps 1-4b: BCTC + EY spread + Layer 7/8 + chain validation + signal feedback)
+│   └── .claude/flows/financial-analyst/stage-log-notify.md (Steps 5-5b: notebook + WORK + deadline watch)
+│
+.claude/flows/agent-father/edit.md (thin dispatcher — 22L)
+│   ├── .claude/flows/agent-father/edit-prepare.md (Steps 0a-4: validate + read + guide lookup + edit plan)
+│   └── .claude/flows/agent-father/edit-apply.md (Steps 5-8: apply edits + cascade + validate + diff + notebook + RETURN)
+│
+.claude/flows/alert-commander/cycle.md (thin dispatcher — 20L)
+│   ├── .claude/flows/alert-commander/stage-bootstrap.md (Steps 0-2: bootstrap + regime + context + legal/crisis)
+│   ├── .claude/flows/alert-commander/stage-signals.md (Steps 3-3c: signal matrix + price-validation override + chain_catalyst routing)
+│   └── .claude/flows/alert-commander/stage-dispatch-log.md (Steps 4a-5: MARKET dispatch + verdict + WORK + notebook + firing rules + value investor mode)
+│
+.claude/flows/unified-agent/market.md (thin dispatcher — 21L)
+│   ├── .claude/flows/unified-agent/market-bootstrap.md (Steps 0-1: bootstrap + regime + system health)
+│   ├── .claude/flows/unified-agent/market-analysis.md (Steps 2-6: intelligence + portfolio + domain + pillar coverage + WORK)
+│   └── .claude/flows/unified-agent/market-events-log.md (special event triggers + conviction shift + notebook commit)
+│
+.claude/flows/agent-father/review.md (thin dispatcher — 22L)
+│   ├── .claude/flows/agent-father/review-setup.md (Steps 0a-2: build agent list + load 15-check compliance matrix)
+│   └── .claude/flows/agent-father/review-execute.md (Steps 3-6: per-agent checks + cross-agent consistency + report + rank + notebook + RETURN)
+│
+.claude/flows/ops/data-validation.md (thin dispatcher — 22L)
+│   ├── .claude/flows/ops/data-validation-checks.md (Steps 1-4: VPS dry-run + pipeline health + freshness + classify)
+│   └── .claude/flows/ops/data-validation-report.md (Steps 5-6: bug report + return + PO handoff)
+```
+
 ## Deleted Files (merged into parents)
 
 | Deleted | Content moved to |
