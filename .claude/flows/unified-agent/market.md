@@ -57,6 +57,34 @@ From `get_foreign_flow()` data + CARRY_REGIME + hot_money_risk signals from news
   → flag: `fii_type=STRUCTURAL` — stable signal, no special warning
 - Default if unclear → `fii_type=UNKNOWN`
 
+**4b. Pillar coverage check** (TNB Layer 4 — `docs/standards/tnb-methodology.md`)
+
+Every conviction shift, BUY/SELL/HOLD recommendation, or rebalancing call must reference ≥3 of 4 pillars `{M2, COC, EPS, POL}`. Cite the source tool for each:
+
+| Pillar | What | Source tool / signal |
+|---|---|---|
+| **M2** (Lượng tiền) | Money supply, credit growth, OMO net injection | bootstrap MACRO block, `get_macro_snapshot` (if available), SBV data in regime |
+| **COC** (Chi phí vốn) | Fed Funds, SBV refinancing, VND carry spread, US10Y | bootstrap MACRO block, CARRY_REGIME, regime extraction |
+| **EPS** (Triển vọng lợi nhuận) | EPS growth, sector margin trend, ROE | `get_portfolio_conviction`, BCTC pipeline (`compare_financials` per ticker) |
+| **POL** (Chính sách) | Tax/regulatory/monetary directives | `get_legal_risk_signals`, `get_crisis_early_warning`, congbao feed |
+
+Score each output (notebook line, WORK message, conviction_change signal payload):
+- count pillars actually cited (not just available — must appear in the reasoning)
+- if `pillar_count < 3` → log `[Methodology] pillar_count=N/4 — missing: [list]` and append warning to WORK heartbeat
+
+In every `post_agent_signal(type="conviction_change", ...)` payload, include:
+```json
+"finding_data": {
+  ...
+  "pillars_cited": ["M2", "COC", "EPS"]  // ≥3 of 4 — list which pillars informed the decision
+}
+```
+
+In every notebook cycle entry, append a one-line pillar tally:
+```
+- Pillars: M2=✓ (M2 +12% yoy) COC=✓ (carry -33bp) EPS=✓ (FPT EPS yoy +4%) POL=✗ → 3/4
+```
+
 **5. Quality**
 `get_alert_accuracy()` precision < 60% = bug | `get_signal_effectiveness()` chains vs standalone | `get_unreviewed_market_messages(limit=10)` spam audit
 > ⚠️ `get_unreviewed_market_messages` with limit=50 routinely exceeds 89k chars. Use limit=10 to stay within token budget.

@@ -1,12 +1,21 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 05:04 UTC | **Sprint:** c42-1889a-impl+parallel-isolation-brief
+**Last updated:** 2026-05-12 06:03 UTC | **Sprint:** c43-1891a-worktree-isolation-doc
 
 ## Current state
 
 Market OPEN (04:05 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp). Kinh Dịch: Khôn (2) MUA 100%. VN-Index: 1,889.56 (-0.31%).
 
 ## Last session summary
+
+### Alert Cycle (06:02–06:03 UTC) — 2026-05-12
+- Signals: urgent_news ×1 (GAS id=2975)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp) | Pivot window: false
+- Suppressed: GAS urgent_news id=2975 (Brent 104.8 USD US-Iran peace stall, conv=0.50 < NEUTRAL threshold=0.60, no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN
+- log_agent_work id=677
 
 ### Alert Cycle (05:01–05:04 UTC) — 2026-05-12
 - Signals: chain_catalyst ×1 (HSG id=2971), price_anomaly ×1 (VIC id=2972)

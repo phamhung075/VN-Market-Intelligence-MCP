@@ -86,7 +86,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `post_agent_signal` | Post signal to inter-agent bus | `signal_type: string, payload: object, confidence: number` |
+| `post_agent_signal` | Post signal to inter-agent bus | `from_agent: string, to_agent: string, signal_type: "urgent_news"|"price_anomaly"|"cross_validate"|"suppress"|"chain_catalyst"|"fundamental_validation"|"price_confirmation"|"verified_chain", payload: object {must include root field per TECH_1293}, confidence: number` |
 
 ### Logging & Feedback
 | Tool | Purpose | Key Params |

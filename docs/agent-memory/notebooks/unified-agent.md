@@ -428,3 +428,22 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - VRE +5.21% surge | GAS HIGH oil news | HCM -6.90% drop | HSG capital +8,000t | VIC VCBF exit
 - BCTC: 24 tickers overdue 12d | Banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15
 - FII: UNKNOWN (get_foreign_flow not in package) | CARRY: FII_OUTFLOW_RISK
+
+### Coordination Cycle (06:00–06:15 UTC) — 2026-05-12
+- Mode: MARKET | System: OK (all CBs clear, foreign-flow WARN recurring known) | Alerts: 20 open (1 HIGH GAS) | Quality issues: chain catalyst 0 fired/7d (monitoring), 98% unknown validation
+- Regime: **TIGHTENING** (TRANSITION from NEUTRAL — Brent +3.96σ, inflation 8%, banks resist rate cut) | Alignment: 1.0 | Headwind: 0% (FPT tech_export = TAILWIND)
+
+## Cycle — 06:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**:
+  - REGIME_TRANSITION: NEUTRAL → TIGHTENING detected. Basis: Brent $104.8 +3.96σ, inflation 8%, USD/VND 26,129, FiinGroup confirms rate cut resistance. WORK posted.
+  - FII type: HOT_MONEY (tiền nóng co cụm, khối ngoại bán ròng ~14,100 tỷ, carry -0.33% FII_OUTFLOW_RISK, foreign-flow pipeline paused).
+  - Portfolio: FPT 5,000cp @ 80,300 → 70,200 (-12.6%, -50.5M VND). Conviction 0.54 MODERATE × 1.1 tailwind = 0.59 effective. RSI 25.8 oversold. Kinh Dịch Khôn (2) MUA. System rec: GIẢM BỚT.
+  - Key alerts: VRE +2.38% (earlier surged +5.21%), GAS HIGH (oil +3%), HCM price_drop -6.90%, VIC -3.5% (VCBF sold entire VIC position), HSG capital raise >8,000 tỷ. Prediction market: China/Taiwan 50.5% (neutral).
+  - Legal: CLEAR. Crisis: CLEAR. Supply chain: STABLE (BDI 1,400). Energy: NORMAL. Climate: seasonal May heat risk (IDC/KBC/GEG — no portfolio impact).
+  - BCTC: 24 tickers overdue 12d; 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (3 days) — earnings trigger active next cycle.
+  - post_agent_signal failed (schema mismatch TECH_1293 — known issue).
+- **actions**: WORK telegram: REGIME_TRANSITION post + clean loop. Notebook appended.
+- **next_cycle_hint**: BCTC bank earnings (ACB/BID/CTG/EIB/MBB/VCB/VPB) due May 15 — earnings event trigger in 3d. FPT RSI 25.8 oversold + TIGHTENING TAILWIND — watch for reversal signal. FII HOT_MONEY risk: any carry spread widening could accelerate FII outflow. VIC structural selloff (VCBF exit) — monitor for contagion.
+- **estimated_tokens**: 7500 (15 tool calls)
