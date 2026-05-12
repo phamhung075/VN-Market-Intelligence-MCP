@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-12 14:28 UTC | **Sprint:** 1895a
+**Last updated:** 2026-05-12 16:45 UTC | **Sprint:** 1896c
 
 ## Last session summary
+
+Session 1896c: Persistent Docker events logging design brief authored. Recommended Option 4 (launchd plist + newsyslog rotation) over Option 1 (ad-hoc background — no crash recovery), Option 2 (json-file driver — wrong data, captures app logs not daemon events), and Option 3 (external log shipper — overkill for SPRINT-S single-user host). Key decisions: plist at `~/Library/LaunchAgents/com.vn-market.docker-events.plist`, KeepAlive.Crashed=true, ThrottleInterval=15s, log at `/usr/local/var/log/docker-events.log`, newsyslog rotation 50MB/daily, 30 archives = 30-day retention. Source-controlled copies in `launchd/`. No domain code change, no Docker rebuild, no new container dependency. Owner hint: ops (launchctl + file copy scope); agent-father as fallback if plist authoring needed. Brief: `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`. Commit SHA pending.
+
+---
+
+## Previous session summary (1896a)
+
+Session 1896a: Container-restart RCA brief authored. Verdict: false-alarm-h4. c41 14:35 UTC "restart" = intentional ops deploy for 1879b (ops notebook evidence: docker-compose up -d mcp-server, healthy in 1 minute). Sprint 1336 named-volume fix confirmed intact — all 9 services on market_data named volume, zero bind-mount regressions. c40 02:40 UTC event inconclusive; ops E1-E3 evidence requested before final close. No implementation sprint required. TNB recalibration: ops should tag planned restarts with # TNB-PLANNED-RESTART in notebook. Commit SHA aa1d4525.
+
+---
+
+## Session 1895a summary
 
 Session 1895a: Worktree merge protocol (Phase 5) design brief authored. C47 forensic analysis confirmed: `git commit -am` greedy add + HEAD.lock preemption = architect agent absorbed staged 1879b cherry-pick files into `8bec73d3`. Five controls designed: (1) pre-merge index empty check, (2) structural sequential merge gate in Step 3 post-tier, (3) post-merge tree-hash verification, (4) C2 atomicity alert, (5) `reset --soft + stash` recovery path. Recommended Option 2 (structural gate) over flock or stash checkpoint. Key agent constraint: `git commit -m` only, never `-am`. Brief: `docs/architecture-briefs/2026-05-12-worktree-merge-protocol.md`. Design-only; implementation deferred pending PO + agents-architect review.
 
