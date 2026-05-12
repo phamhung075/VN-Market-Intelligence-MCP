@@ -80,70 +80,20 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
     lazy_load:
-      # Guide parts (load per flow step)
-      - path: docs/guides/guide-zones.md
-        trigger: file_placement_or_zone_check
+      - path: .claude/agents/agent-father/knowledge.md
+        trigger: knowledge_section_authoring_or_lazy_load_audit
         fail_loud: false
-      - path: docs/guides/guide-lazy-load.md
-        trigger: knowledge_section_authoring
-        fail_loud: false
-      - path: docs/guides/guide-agent-definition.md
-        trigger: agent_definition_authoring
-        fail_loud: true
-      - path: docs/guides/guide-flows.md
-        trigger: flow_file_authoring
-        fail_loud: true
-      - path: docs/guides/guide-agent-ops.md
-        trigger: notebook_or_registry_authoring
-        fail_loud: false
-      - path: docs/guides/guide-error-signals.md
-        trigger: error_boundary_or_signal_authoring
-        fail_loud: false
-      - path: docs/guides/guide-skills-registration.md
-        trigger: registration_or_review
-        fail_loud: false
-      - path: docs/guides/guide-quality.md
-        trigger: quality_pattern_check
-        fail_loud: false
-      # Non-guide knowledge
-      - path: docs/references/agent-roster.md
-        trigger: registration_or_review
-        fail_loud: false
-      - path: docs/standards/mcp-tools.md
-        trigger: tool_package_authoring
-        fail_loud: false
-      - path: docs/policies/docs-organization.md
-        trigger: file_placement_check
-        fail_loud: false
-      - path: .claude/skills/dispatch/SKILL.md
-        trigger: dispatch_registration
-        fail_loud: false
+        note: "Full load policy table (guide parts + non-guide). Load when auditing or authoring knowledge sections."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/agent-father/create.md
     catalog:
-      - name: create
-        path: .claude/flows/agent-father/create.md
-        trigger: user_requests_new_agent
-        input: [agent_name, agent_type, purpose_description]
-        output: agent files created + registered in all locations
-      - name: edit
-        path: .claude/flows/agent-father/edit.md
-        trigger: user_requests_agent_change
-        input: [agent_name, change_description]
-        output: updated agent files + diff summary
-      - name: review
-        path: .claude/flows/agent-father/review.md
-        trigger: user_requests_audit_or_periodic
-        input: [agent_name(s) or "all"]
-        output: compliance review report with findings
-      - name: keep
-        path: .claude/flows/agent-father/keep.md
-        trigger: scheduled_or_manual_maintenance
-        input: [trigger_type]
-        output: maintenance report + auto-fixes applied
+      - {name: create, path: .claude/flows/agent-father/create.md, trigger: user_requests_new_agent}
+      - {name: edit, path: .claude/flows/agent-father/edit.md, trigger: user_requests_agent_change}
+      - {name: review, path: .claude/flows/agent-father/review.md, trigger: user_requests_audit_or_periodic}
+      - {name: keep, path: .claude/flows/agent-father/keep.md, trigger: scheduled_or_manual_maintenance}
 
   tools_package: .claude/tools/package/agent-father.md
 
@@ -160,3 +110,9 @@ agent:
     send:
       - {to: user, via: caveman, on: agent_created_or_updated}
       - {to: claude-manager-helper, via: caveman, on: request_dag_check_after_creation}
+
+## Extensions
+
+| Child | Trigger | Path |
+|---|---|---|
+| knowledge.md | knowledge_section_authoring_or_lazy_load_audit | `.claude/agents/agent-father/knowledge.md` |

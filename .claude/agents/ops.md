@@ -82,64 +82,15 @@ agent:
       - path: docs/protocols/bug-reporting-via-mcp.md
         trigger: bug_report
         fail_loud: false
-
-## Step 0-b: Handle Bootstrap Errors
-
-Decision tree for bootstrap errors at agent startup:
-
-- `market_context` error → STOP. Do not proceed. Market context is critical; operating without it produces invalid analysis.
-- `agent_signals`-only error → CONTINUE. Proceed without signals. Signal data is supplementary; core work can continue.
+      - path: .claude/agents/ops/handlers.md
+        trigger: bootstrap_error_or_flow_selection
+        fail_loud: false
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
   flow:
     default: .claude/flows/ops/main.md
-    catalog:
-      - name: main
-        path: .claude/flows/ops/main.md
-        trigger: incident_detected_or_health_check
-        input:
-          - Health check result or alert trigger
-        output:
-          - BUG channel incident report
-          - Recovery action taken or escalation sent to WORK
-      - name: cloudflare-mcp
-        path: .claude/flows/ops/cloudflare-mcp.md
-        trigger: cloudflare_tunnel_mcp_connection_failure
-        input:
-          - Claude Desktop cannot connect via Cloudflare SSE
-          - "cannot connect on cloudflare" error report
-        output:
-          - MCP accessible via https://zenmidi.com/vn-market/sse
-          - Claude Desktop connects successfully
-      - name: docker
-        path: .claude/flows/ops/docker.md
-        trigger: container_health_issue
-        input:
-          - Container down or restart loop
-        output:
-          - All services healthy, /health returns 200
-      - name: vps
-        path: .claude/flows/ops/vps.md
-        trigger: vps_proxy_issue
-        input:
-          - VPS service failure or data fetch timeout
-        output:
-          - Service restored or escalation sent
-      - name: bctc
-        path: .claude/flows/ops/bctc.md
-        trigger: bctc_extraction_failure
-        input:
-          - PDF extraction timeout or parse error
-        output:
-          - BCTC data available or escalation sent
-      - name: db
-        path: .claude/flows/ops/db.md
-        trigger: database_corruption_or_lock
-        input:
-          - SQLite lock timeout or integrity failure
-        output:
-          - Database healthy or WAL cleaned
+    # Full catalog → see handlers.md § Flow Catalog
 
   tools_package: .claude/tools/package/ops.md
 
@@ -149,14 +100,14 @@ Decision tree for bootstrap errors at agent startup:
     append_every_cycle: true
 
   inter_agent:
-    receives_from:
-      - agent: any
-        mechanism: telegram_bug
-        trigger: infrastructure_incident_reported
-    sends_to:
-      - agent: dev_team
-        mechanism: telegram_bug
-        trigger: incident_diagnosed_or_escalation
-      - agent: architect
-        mechanism: caveman
-        trigger: systemic_failure_needs_design_fix
+    # Full routing → see handlers.md § Inter-Agent Routing
+    recv:
+      - {from: any, via: telegram_bug, on: infrastructure_incident_reported}
+    send:
+      - {to: dev_team, via: telegram_bug, on: incident_diagnosed_or_escalation}
+
+## Extensions
+
+| Child | Trigger | Path |
+|---|---|---|
+| handlers.md | bootstrap_error_or_flow_selection | `.claude/agents/ops/handlers.md` |
