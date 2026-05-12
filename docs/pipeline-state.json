@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "signal-dedup-COMPLETE+pm-housekeeping",
+  "currentSprint": "c41-tnb-pivot-flow-wiring+1879-spec",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-12T02:37:13Z",
+  "updatedAt": "2026-05-12T03:38:18Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 40: 3 sequential merges (anti cross-pollution from c37, 3rd consecutive cycle). (1) signal-T6 fallback removal → f6f57bc5 (-20 net LOC, grep fallback=0, signal-dedup project COMPLETE — SQLite is sole path). (2) CLEAN-1872a-5 → a4a90951 (10-cycle stale branch deleted; 4 commits verified as dupes of fe82b9f9). (3) ARCH-1884 reconciliation → 33174487 (TASKS.md row Done + cap-violation header at 177/80 lines, option b chosen). 0 signals drained (cycle 3 of 3 post-T2 clean SQLite path). 0 new TG reports. 0 monitoring expired. TG 2854 still monitoring (~70h to auto-expire). PM c40 noted signal-T6 row absent from TASKS.md — minor drift, c41 backfill 1-line. SPRINT-PARALLEL-ISOLATION architect brief still deferred (4 cycles now). 1879 EFFR-IORB + 1881 source-tier BA specs ready for c41. C2 gate 2026-05-17 — 3 new conformant commits this cycle continue passive accrual. TNB c40 cron handoff did not arrive in this slot."
+  "lastCompleted": "Cycle 41: TNB c39 audit signal routed via SQLite dedup (1st non-empty drain in 4 cycles, fingerprint 9a033b95…). PO triage caught that Sprint 1880 is ALREADY SHIPPED (1880a b6aca505 + 1880b cb232b26) — TNB recommendation #1 collapses from 'build infra' to 'wire merged infra into financial-analyst flow'. 4 sequential deliveries (anti-c37 cycle 4): (1) PM signal-T6 row backfill → 7c1d882f (c40 drift fixed). (2) 1889a-spec → 67b8ecd5 (financial-analyst flow-edit spec, Layer 7 NI-vs-OCF + Layer 8 cycle/tier; closes TNB c39 findings #1+#2 in one flow edit; all 3 infra tools already merged → zero-blocker impl). (3) 1879-spec → d098bb24 (EFFR-IORB FRED fetcher + get_fed_liquidity_spread() tool combined spec; BA investigation revised classification — lives in apps/mcp-server NOT apps/macro-indicators; reuse FredHttpClient + piggyback macroIndicatorRefreshJob cron; new table fred_series_daily). (4) PM c41 sync → 66e29d67 (+2 spec Done + 3 impl Todo rows, 178→183). Step 4: 0 stale branches, 1 new TG 2856 (VNM 1345b repeat) → wontfix per pattern. SPRINT-PARALLEL-ISOLATION arch brief deferred 5 cycles now (cutoff c43). C2 gate: 4 new conformant commits this cycle. Auto-cure verification window for 1889a opens c42-c44 (Layer 7: + 📍 Cycle: text in financial-analyst session logs). TNB c40 cron handoff did NOT arrive — watch c42."
 }

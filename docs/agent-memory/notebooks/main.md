@@ -1,5 +1,54 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-12 03:38 UTC (Cycle 41 — TNB c39 pivot to flow-wiring + 1879 spec)
+
+## Cycle 41 (2026-05-12 03:26 → 03:38 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | TNB c39 audit signal (1 file, new fingerprint `9a033b95…`) routed-to-po, DB 28 rows, 0 pruned | first non-empty drain in 4 cycles |
+| 0b Resume | idle | fall through |
+| 1 PO | TNB audit + 1 new TG (BCTC-1345b VNM repeat) + c40 carry | **BATCH(3)** — MINI-FIX signal-T6 row + SPRINT-S 1889a + SPRINT-S 1879 |
+| 2 Plan | mini-fix → PM direct; 1889a → BA only; 1879 → BA only | no architect (flow-wiring + fetcher reuse) |
+| 3 Dispatch | **SEQUENTIAL** A→B→C: PM-row → BA-1889a → BA-1879 → PM-sync | 4 GREEN |
+| 4.0 | expire_monitoring_reports → 0 | clean |
+| 4 Scan | 0 stale branches, 1 new TG → wontfix (VNM 1345b pattern), 0 non-monitoring unresolved | clean |
+| 4.5 | notebook + pipeline-state + commit | this entry |
+
+### Merges + chores delivered
+
+| Sprint | SHA | Notes |
+|---|---|---|
+| signal-T6 row backfill | `7c1d882f` | c40 PM drift fixed; mirrored T3-T5 row format |
+| 1889a-spec | `67b8ecd5` | BA flow-edit spec; **all 3 infra tools already merged** (1878a/1880a/1880b) → zero-blocker implementation |
+| 1879-spec | `d098bb24` | BA combined spec (1879a fetcher + 1879b tool); **classification revised: lives in apps/mcp-server NOT apps/macro-indicators**; reuse existing `FredHttpClient` + piggyback `macroIndicatorRefreshJob` cron; new table `fred_series_daily(series,date)` |
+| c41 TASKS sync | `66e29d67` | +2 spec Done rows + 3 implementation Todo (1889a, 1879a, 1879b); 178→183 lines |
+
+### Key pivot — TNB c39 priority
+
+PO triage caught that **Sprint 1880 was already shipped** (1880a `b6aca505` + 1880b `cb232b26`, both 2026-05-12). TNB recommendation #1 ("prioritize Sprint 1880 for Layer 8 fix on financial-analyst") collapses from "build infra" to "wire merged infra into flow." Output: 1889a spec — single flow-edit closes both Layer 7 (NI vs OCF) and Layer 8 (cycle phase + tier) gaps. Highest-ROI move because all 3 tools (`get_cash_flow`, `get_investment_clock_phase`, `get_pyramid_tier`) are live but unused.
+
+### Cross-pollution mitigation status
+
+c41 = 4th consecutive cycle of sequential dispatch (post-c37 incident). Zero observed conflicts. **SPRINT-PARALLEL-ISOLATION architect brief now deferred 5 cycles** — should force-ship c42 if backlog clears, else c43 absolute cutoff.
+
+### Carry-over to cycle 42
+
+- **1889a implementation** — flow edit at `.claude/flows/financial-analyst/cycle.md` per 1889a-spec. Pick `agent-md-editor` or generic developer (doc-only edit, no code/tests).
+- **1879a implementation** — FRED fetcher (TS, apps/mcp-server). Reuse `FredHttpClient`. New table migration + `fetchFedEffrIorbJob` call appended to existing `macroIndicatorRefreshJob`. 6 ACs / 6 tests.
+- **1879b implementation** — `get_fed_liquidity_spread()` tool, depends on 1879a. 4 ACs / 5 tests. Domain mirrors `carryTradeSignal.ts`.
+- **1881 source-tier BA spec** — deferred again (c42).
+- **SPRINT-PARALLEL-ISOLATION arch brief** — deferred 5 cycles. Cutoff c43.
+- **TASKS.md cap 183/80** — auto-archive eligible 2026-05-19 (Sprint 1849+ hits 7d age).
+- **TNB c40 cron handoff** — did NOT arrive in c41 drain (only c39 audit signal). Watch c42.
+- **Auto-cure verification window** for 1889a: c42-c44 financial-analyst session logs must show `Layer 7:` + `📍 Cycle:` text.
+
+### C2 commit-convention gate progress
+
+c41 added **4 conformant commits** (signal-T6 row backfill, 1889a-spec, 1879-spec, TASKS sync). Trailers `Task-Id`, `AC`, `Closes` present per convention. Gate 2026-05-17 (4 days). Passive accrual on track.
+
+---
+
 **Written:** 2026-05-12 02:37 UTC (Cycle 40 — signal-dedup project COMPLETE)
 
 ## Cycle 40 (2026-05-12 02:27 → 02:37 UTC)
