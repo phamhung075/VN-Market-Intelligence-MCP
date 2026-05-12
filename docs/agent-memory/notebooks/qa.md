@@ -1,5 +1,16 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** 1879b deployment-verify smoke test
+
+## Recent session — 2026-05-12 (1879b — deployment verification)
+
+**1879b — DEPLOYMENT_BLOCKED:**
+Tool code confirmed on main via concurrent-commit `8bec73d3` (docs label, feature payload).
+Test suite: 10/10 pass (23 expect calls, 394ms, 100% line coverage). DDD PASS (zero infra imports in computeFedLiquiditySpread.ts). Security PASS (parameterized SQL `.prepare<EffrIorbRow,[number]>().all(days)`, no process.env).
+Container `vn-market-intelligence-mcp-mcp-server-1` image built 2026-05-10T00:30Z — predates feature commit (2026-05-12T13:42Z). Container files confirmed: `getFedLiquiditySpreadTool.ts`, `computeFedLiquiditySpread.ts`, `fredQueries.ts` — ALL ABSENT from running container. Live `toolCount=132` is correct for the pre-feature image (125 labeled tools + multi-tool registrations = 132 actual).
+Branch `tmp-1879b`: 1 unmerged commit (`a6d4b555`) — this is the concurrent-commit duplicate. Feature is already on main as `8bec73d3`. Branch is safe to delete AFTER container restart confirms tool live.
+OPS action required: rebuild + restart mcp-server container to pick up `8bec73d3` code.
+
 **Last updated:** 2026-05-12 | **Sprint:** 1893a phase 4 sequential-mandate relaxation brief (cycle QA)
 
 ## Recent session — 2026-05-12 (1893a — phase 4 sequential-mandate relaxation brief)
@@ -65,6 +76,27 @@ process.env in index.ts: pre-existing on main (all 9 service URL entries used it
 Bun OOM: main baseline confirms 30 tests in api-gateway suite, no OOM. Pre-existing on full suite only.
 
 Diff stat: 7 files in `git diff main...HEAD --name-only` (includes notebook from d0b77044). Feature commit f032a8f7 stat: 6 files clean (4 production + 2 docs). No accidental edits.
+
+**Last updated:** 2026-05-12 | **Cycle:** CLEAN-c50 stale worktree + branch sweep
+
+## Recent session — 2026-05-12 (CLEAN-c50 — 7 stale branches pruned)
+
+**CLEAN-c50 — 6 worktrees + 7 branches deleted:**
+
+Verification method: `git log main..<branch> --oneline` for each, then file-level content check on main.
+
+Results per branch:
+- `worktree-agent-a57f` (held `task/1888a`) — 0 commits ahead; content confirmed in main (`bb49b82c` chore/ssot/1888a). Worktree removed, branch deleted.
+- `worktree-agent-a9e8` (1879a) — 2 commits ahead by SHA, but content confirmed in main: `f7240b5e` (FRED EFFR-IORB fetcher) + `4756e4f4` (1879a/docs). Cherry-picked under different SHAs. Worktree removed, branch deleted.
+- `worktree-agent-a4d9` (1879b) — 1 commit ahead by SHA (`a6d4b555` get_fed_liquidity_spread MCP tool). Content confirmed in main: `computeFedLiquiditySpread.ts` + `getFedLiquiditySpreadTool.ts` both present. Worktree removed, branch deleted.
+- `worktree-agent-a471` (1892a) — 1 commit ahead by SHA (`380cff96`). Content confirmed in main: `dbed5ba4` + `41f54f22` (pushNewsHandler + health endpoint). Worktree removed, branch deleted.
+- `worktree-agent-a86f` (1892a) — 1 commit ahead by SHA (`39605bf2`). Same 1892a content confirmed. Worktree removed, branch deleted.
+- `worktree-agent-a8f9` (1892b) — 2 commits ahead by SHA (`f032a8f7` + notebook). Content confirmed in main: `f4141f63` (1892b wire /api/push-* routing). Worktree removed, branch deleted.
+- `task/1888a-ssot-tool-cron-pointers` — 2 commits ahead by SHA (`9c260bc4`+`264374c2`). Content confirmed in main: `bb49b82c` (same SSOT change). Branch deleted (no worktree, was registered under agent-a57f path).
+
+All 6 worktrees unlocked + `git worktree remove --force` succeeded. All 7 branches `git branch -D` succeeded.
+
+Post-sweep state: `git branch` = `* main` only. `git worktree list` = 1 entry (main). CLEAN.
 
 **Last updated:** 2026-05-12 | **Sprint:** CLEAN-1872a-5 branch deletion (cycle 41)
 

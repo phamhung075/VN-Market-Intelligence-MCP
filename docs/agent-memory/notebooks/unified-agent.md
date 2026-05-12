@@ -122,3 +122,18 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **next_cycle_hint**: Banking BCTC 2026-05-15 = EPS pillar trigger. Daily-review 23:00 UTC next. Monitor FPT RSI oversold recovery + Telecom regulatory outcome.
 - **estimated_tokens**: 9000 (17 tool calls)
 - **Pillars**: M2=✗ (not available) COC=✓ (Brent $107.89 +2.23σ, carry -0.33%, inflation 8%) EPS=∂ (BCTC overdue 12d, oversold RSI proxy) POL=✓ (FPT Telecom compliance risk) → 2/4 [Methodology gap logged to WORK]
+
+### Coordination Cycle (16:01–16:10 UTC) — 2026-05-12
+- Mode: MARKET (off-schedule 16:00 UTC, market CLOSED) | System: OK (25 alerts pending, all 11 API sources ready) | Alerts: 17 open (10 reviewed queue) | Quality: 22% accuracy < 60% (filed HIGH prior cycles)
+- Regime: TIGHTENING (unchanged — Brent $107.51 +2.23σ, inflation 8%, carry -0.33%, DXY 98.35) | Alignment: 1.0 | Headwind: 0% (FPT=tech_export=TAILWIND)
+
+## Cycle — 16:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **trigger**: Off-schedule (16:00 UTC not in defined slot) — automated run
+- **findings**: Market CLOSED. VN-Index closed 1,901 (+0.30% vs prev session 1,896). FPT 70,600 (-12.1%, -48.5M VND), conviction 0.49 MODERATE GIẢM BỚT, Kinh Dịch Kiển(39) GIU 48%, RSI 25.8 oversold. Top movers today: VRE +5.51% (bull trap risk, KD THẬN TRỌNG 34%), GVR +4.46%, GAS +3.94% (oil geopolitics). Banking all red. Post-market bearish: securities firm lowered VN-Index forecast (external risks). Evening summary: VIX 18.75, DXY 98.35, S&P500 7,367, Hang Seng 26,348. Legal/Crisis: CLEAR. Prediction market: China/Taiwan 50.5% YES (neutral). Supply chain stable. No new Telegram reports. No conviction shifts ≥0.3.
+- **banking_bctc_alert**: ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 deadline 2026-05-15 (3 days) — EPS pillar trigger imminent.
+- **actions**: WORK telegram sent (16:01 UTC). Notebook appended.
+- **next_cycle_hint**: Daily-review 23:00 UTC next. Banking BCTC 2026-05-15 = EPS catalyst. FPT oversold RSI 25.8 — watch for post-BCTC reversal signal. VRE bull trap monitoring.
+- **estimated_tokens**: 7000 (14 tool calls)
+- **Pillars**: M2=✗ (not available) COC=✓ (Brent $107.51 +2.23σ, carry -0.33%, DXY 98.35) EPS=✓ (banking BCTC 3d out, SGI Capital accumulating FPT, BCTC overdue proxy) POL=✓ (FPT Telecom compliance risk) → 3/4

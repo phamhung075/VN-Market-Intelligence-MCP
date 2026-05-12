@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (16:19–16:21 UTC) 2026-05-12
+- Items: 20 | Impacts: 8 | Signals: [urgent_news×1 CTG, chain_catalyst×1 VIC/FII] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) CTG dividend 59.5M shares — watchlist hit impact 7, urgent_news #3002 fired. (2) FII sell 800B VND, VIC heaviest — carry spread -0.33% confirms FII_OUTFLOW_RISK → chain_catalyst #3003 (bearish, real_estate/banking). (3) Brent 107.66 still HIGH (+2.23σ) — already alerted, no duplicate. (4) Gold USD 4676.5 = -1.47σ below avg 4717 → no gold spike. No PMI data found.
+- Suppressed: HPG shares delivery (impact 5, neutral). Pharma M&A (IMP not DHG, off-watchlist). VN-Index 1900 (context only).
+- Notes: Market CLOSED (off-hours cycle 16:19 UTC). CARRY_REGIME updated to FII_OUTFLOW_RISK vs prior NEUTRAL.
+
 ### Cycle (15:21–15:24 UTC) 2026-05-12
 - Items: 20 | Impacts: 3 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
