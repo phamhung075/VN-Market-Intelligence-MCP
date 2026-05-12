@@ -5,7 +5,9 @@
   "severity": "high",
   "summary": "POST https://zenmidi.com/api/push-news returns 404 because the Cloudflare tunnel dashboard has not been configured with /api/* ingress rules. The tunnel is dashboard-managed (not file-based), and currently only routes /vn-market/* and /gateway/* paths.",
   "root_cause": "Cloudflare tunnel configuration is managed via Cloudflare dashboard, not via local config.yml. Dashboard config only has 2 routes: /vn-market → localhost:3000, /gateway → localhost:4040. The /api/* ingress rule needed to route VPS push endpoints (push-news, push-prices, push-sbv-rates, push-foreign-flow) to MCP server (localhost:3000) is missing.",
-  "affected_services": ["mcp-server:3000"],
+  "affected_services": [
+    "mcp-server:3000"
+  ],
   "diagnosis": {
     "steps_taken": [
       "1. Verified localhost:3000/api/push-news works (returns 401 for missing auth, confirming endpoint exists)",
@@ -32,6 +34,12 @@
     ],
     "ac_after_fix": "curl -X POST https://zenmidi.com/api/push-news -H 'Authorization: Bearer TOKEN' -H 'Content-Type: application/json' -d '{\"items\":[]}' → HTTP 401 (correct auth required, not 404)"
   },
-  "blocker_for": ["1894a-cloudflare-tunnel-routing"],
-  "escalation_to": "architect"
+  "blocker_for": [
+    "1894a-cloudflare-tunnel-routing"
+  ],
+  "escalation_to": "architect",
+  "fingerprint": "2bec961e54957021dba4d2a5a559722de28899d72b09fce911b4e20c80066e90",
+  "processedAt": "2026-05-12T14:27:11Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po-replay-c48-architect-brief-already-written"
 }
