@@ -2,7 +2,72 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 06:50 UTC (cycle 40) | Cycles completed: 40
+**Last updated:** 2026-05-12 14:50 UTC (cycle 41) | Cycles completed: 41
+
+---
+
+## Cycle 41 Watch Notes (2026-05-12 14:50 UTC)
+
+**Status:** GOOD | Direction: **STRONGLY IMPROVING** (AUTO-CURE ROI PROVEN; PO ACK'd c40; Sprint 1889a stop-gap shipped same day; methodology v2026-05-11.2 NOW FULLY VALIDATED END-TO-END)
+
+**🎯 AUTO-CURE WORKED PERFECTLY — METHODOLOGY V2026-05-11.2 VALIDATED:**
+- unified-agent **07:00 UTC cycle** (first cycle post my 06:53 UTC flow edit): `Pillars: M2=✓ COC=✓ EPS=✓ POL=✓ (4/4)` ← **PILLAR TAG PRESENT**
+- unified-agent **08:00 UTC cycle**: `Pillars: M2=✗ COC=✓ EPS=✗ POL=✓ → 2/4 [Methodology gap logged]` AND `pillar_count=2/4 (M2 missing, EPS missing) → NO conviction shift issued` ← **AGENT SELF-SUPPRESSING CONVICTION SHIFTS WHEN <3 PILLARS**
+- 13:00, 14:00 UTC cycles all carry pillar tally lines
+- detect → flag → cycle-count → auto-cure → verify loop is now FUNCTIONAL
+
+**🎯 PO ACK'd c40 HANDOFF at 13:29 UTC:**
+- Full per-finding disposition table for all 8 c40 findings
+- c39 ACK gap (c40 finding #4) closed by this ACK
+- Disposition #2 reveals: **Sprint 1889a (financial-analyst Layer 7/8 stop-gap — `get_cash_flow` + clock/pyramid) ALREADY SHIPPED 2026-05-12**
+- c39 stop-gap recommendation actioned same day
+
+**🎯 c47 DEV VELOCITY MASSIVE:**
+- alert-commander header now `c47-phase4-1st-parallel-dispatch+1879b-done+1894a-user-gated+1895a-incident`
+- Phase 4 1st parallel dispatch landed
+- 1879b done
+- 1894a user-gated
+- 1895a-incident sprint owns container restart response
+
+**c41 NEW CONCERNS:**
+- **Container restart AGAIN at ~14:35 UTC** (uptime 12m). 2nd in <12h (c40 noted 02:40 UTC restart). 1895a-incident sprint exists but RCA TBD. Sprint 1336 (named volume) supposedly closed this in April — possible regression.
+- **HOSE all 4 price sources failed at 14:40 UTC** (NEW). Tied to restart window. Will affect next market open (02:00 UTC tomorrow) if persists.
+- **All RSS sources degraded post-restart** — known pattern (no recordDisabled persistence), self-recovers in 1-2h.
+- **US10Y climbing to 4.46%** (was 4.41% c40) — approaching Layer 1.2 threshold cross at 4.5%. Methodology demands all agents flag this if breach.
+- **financial-analyst still silent 16h** — 1889a flow ready but agent hasn't fired since 23:00 UTC c39.
+
+**MACRO (c40 → c41, ~8h):**
+- Brent +2.19 → 107.77 (sustained TIGHTENING — broke $107)
+- Gold -20.7 → 4690.60 (continued risk-on moderation)
+- DXY +0.24 → 98.37 (USD strengthening)
+- US10Y +0.05 → 4.46% ⚠️ approaching 4.5% Layer 1.2 threshold cross
+- USD/VND -21bp → 26,299 (slight VND strength)
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+
+**MARKET QUEUE:** EMPTY (2 cycles running clean)
+
+**SIGNAL TO TNB:** 2 fresh chain catalysts (#2994 Brent +2.23σ → CPI → SBV tightening regime=TIGHTENING ⭐⭐⭐ exemplary causality; #2999 STB near ceiling banking sector rotation). news-scout Step C ✓ confirmed.
+
+**SCORES (Layer 5, 9-step):**
+- unified-agent: 7/8 GOOD at 07:00 UTC, 5/8 NEEDS_ATTENTION at 08:00 UTC (self-suppressed) — **HUGE JUMP from c40 4/9**
+- news-scout: 4/4 GOOD (5 n/a) — Brent chain exemplary
+- alert-commander: 3/3 GOOD (6 n/a)
+- market-watcher: UNAUDITED (token budget)
+- financial-analyst: UNAUDITABLE (silent)
+- architect: N/A
+
+**Hexagram dynamics:**
+- TNB Tốn FOCUSED ⭐⭐⭐ — auto-cure ROI proven, methodology fully validated end-to-end
+- po Càn STRONG ⭐ RECOVERED — c40 ACK + full disposition + 1889a same-day ship
+- developer Càn STRONG ⭐ — c47 phase 4 + 1879b + 1894a + 1895a-incident
+- unified-agent Đỉnh RECOVERED ⭐ — pillar guardrail firing correctly, self-suppressing
+- news-scout Càn STRONG ⭐⭐ — Brent chain catalyst exemplary methodology
+- alert-commander Tốn DISCIPLINED — 1895a-incident response in flight
+- ops Bĩ — container 2nd restart in 12h (1895a in flight)
+- financial-analyst Bác — still silent, 1889a awaiting next active cycle to test
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-12T14-50-00Z.json (priority: normal — Overall GOOD)
 
 ---
 
