@@ -1,6 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 18:02 UTC | **Sprint:** c51-1862c-D-shipped+1896c-impl-shipped+1862c-E-split-dashboard-user-pending
+**Last updated:** 2026-05-12 19:03 UTC | **Sprint:** c52-closed
+
+### Alert Cycle (19:03–19:03 UTC) — 2026-05-12
+- Signals: 5 evaluated (2x news_mention HIGH, 1x price_surge, 1x price_drop, 1x macro_deviation)
+- Fired: 0 | Suppressed: 5 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL (default — macro_snapshot no regime labels) | Carry: NEUTRAL (default) | Pivot window: false
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: CLOSED (off-hours 2h cycle)
+- Suppressed: VRE price_surge stale>14h; HCM price_drop recovered at close; MACRO/GAS macro_deviation stale>10h; KinhDich Khôn MUA — agentsMajority unconfirmed
+- KinhDich market signal: Khôn (2) MUA 100% — noted for next open cycle
 
 ### Alert Cycle (18:01–18:02 UTC) — 2026-05-12
 - Signals: 0 (bus empty — no inter-agent signals)
