@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 22:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 23:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -397,3 +397,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3500 |
+
+### Cycle (23:38–23:40 UTC)
+- Stocks: 31 watchlist | Priced (EOD close 08:17 UTC): 26 | Anomalies: 2 (VRE 1.52σ, GVR 1.73σ) | Volume spikes: 1 (VRE 2.4x) | Chain confirms: 0
+- Regime: TIGHTENING (inferred — macro_snapshot not in bootstrap; prior cycles show NEUTRAL per Global Liquidity text; possible over-signal if NEUTRAL is correct) | DXY: USD STRENGTHENING (USD/VND 26,129) | US10Y: RISK-OFF (Gold $4,725) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE] | pe_risk: []
+- VRE +5.51% (1.52σ, 30d stddev ~3.63%, vol 12.47M ~2.4x avg) → signal #3024 → alert-commander. fx_pressure=true (realty+USD strengthening). Note: VRE previously signaled (#2961, #3020); redundant under NEUTRAL 2.0σ threshold.
+- GVR +4.46% (1.73σ, 30d stddev ~2.58%, vol 4.45M ~1.29x avg, below vol spike threshold) → signal #3025 → alert-commander. Bullish evidence 0.76. Agriculture sector. No fx_pressure. Note: if NEUTRAL regime, 1.73σ < 2.0σ threshold — signal may be noise; GVR previously signaled at 12:38 (#2995).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check
+- Sector 1d: Oil&Gas +2.69%, Logistics +2.11%, RE +0.81%, Agriculture +0.24% leading | Retail -0.84%, Securities -0.38%, Utilities -0.37% lagging. All STABLE (1d only).
+- Macro: Brent $107.3 (elevated), Gold $4,725.1 (risk-off), USD/VND 26,129. Agent signals: 0. Open chain findings: 0 (last 15 min). System: OK. Market CLOSED (off-hours, 4h cycle).
+
+## Metrics (cycle 2026-05-12 23:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
