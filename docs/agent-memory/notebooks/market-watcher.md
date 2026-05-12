@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 21:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 22:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -377,3 +377,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (22:38–22:40 UTC)
+- Stocks: 38 watchlist | Priced (EOD close 08:17 UTC): 31 | Anomalies: 1 (VRE vol-spike 2.06x, 1.21σ) | Volume spikes: 1 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (98.29, 4.46%) | US10Y: NEUTRAL | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- VRE +5.51% (1.21σ, 5-session stddev ~4.57%) — volume 12.47M = 2.06x 4-session avg (~6.05M). Outperforms sector: +5.51% vs real_estate avg +0.7% (+4.8pp). PE 9.8 vs sector 19.3 (deep discount). ROE 14.3% above sector median 6.3%. FII net 0. Technical data insufficient (14/35 candles). Signal #3020 → alert-commander (volume trigger).
+- GVR +4.46% (1.71σ) | vol 1.75x avg — below both thresholds | GAS +3.94% (1.27σ) | vol 1.20x — below thresholds
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check
+- Macro: Brent $107.22 (elevated, >$90 bullish oil_gas), Gold $4,722.6 (high risk-off signal), USD/VND 26,299. Supply chain STABLE (BDI N/A). Energy N/A. Sector rotation: all STABLE (1d data only).
+- Open chain findings: 0 (last 15 min) | Open alerts: 0 per bootstrap | System: OK | Market CLOSED (off-hours)
+
+## Metrics (cycle 2026-05-12 22:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3500 |
