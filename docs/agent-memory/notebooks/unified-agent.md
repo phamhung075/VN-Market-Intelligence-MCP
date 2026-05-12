@@ -402,3 +402,29 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - **actions**: WORK telegram sent (03:07 UTC, clean). Notebook appended.
 - **next_cycle_hint**: BCTC 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (3 days) — PRIORITY. FPT recovery +1.57% — watch if sustained through session. FII pipeline still paused (foreign flow unavailable). HSG capital raise: monitor if conviction triggers on price reaction.
 - **estimated_tokens**: 8500 (17 tool calls)
+
+### Coordination Cycle (04:00–04:07 UTC) — 2026-05-12
+- Mode: MARKET (open) | System: OK (all 13 sources ready, no rate limits) | Alerts: 20 open (10 in 6h window) | Quality issues: 1 new (price_surge 0% precision, filed MEDIUM)
+- Regime: NEUTRAL (DXY 97.99 stable, US10Y 4.41% neutral, carry -0.33% FII_OUTFLOW_RISK) | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+
+## Cycle — 04:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**:
+  - System OK: 13/13 sources ready, no rate limits, no stale Telegram reports, no unclaimed >4h. Legal: CLEAR. Crisis: CLEAR. Supply chain: STABLE. Prediction markets: 1 market (China/Taiwan 50.5% yes — no actionable signal).
+  - Portfolio: FPT 5,000cp @ 80,300 → 70,400 (-12.3%, -49.5M VND). VaR 95% -0.1% normal. Conviction STRONG 0.61, rec GIẢM BỚT. Kinh Dịch Khôn (2) BUY. FPT TAILWIND in TIGHTENING (tech_export). Alignment 1.0.
+  - Key price action: VRE +4.02% bounce (from -6.41% yesterday), GAS +1.22% (oil +3% overnight, US ATH), HCM +1.45%, FPT +0.57% recovery. Banking all red: CTG -0.98%, VPB -0.90%, VCB -0.50%.
+  - FII: HOT_MONEY profile confirmed (khối ngoại bán ròng 14,100 tỷ, carry -0.33%, no new foreign flow data — pipeline paused).
+  - BCTC Q1/2026: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 3 days — earnings trigger watch active.
+  - Quality: price_surge precision 0% (2/2 miss) → feedback submitted [MEDIUM alert_quality].
+- **actions**: WORK telegram sent (04:06 UTC, clean). Bug feedback submitted. Notebook appended.
+- **next_cycle_hint**: Banking BCTC due May 15 (2 more days from next cycle). FPT recovery +0.57% at 04:01 — watch if holds toward session close. VRE +4% bounce after -6.41% — monitor for sustained reversal. FII outflow risk persistent. BCTC earnings event triggers ready for banks.
+- **estimated_tokens**: 8000 (16 tool calls)
+
+### Coordination Cycle (05:00–05:15 UTC)
+- Mode: MARKET | System: ok (bootstrap fallback — get_system_status EOF x2) | Alerts: 20 | Quality issues: get_system_status EOF (medium, filed)
+- Regime: NEUTRAL | Alignment: 100% (FPT/tech TAILWIND) | Headwind exposure: 0%
+- FPT: -12.5% (-50M VND) | RSI=25.8 oversold | Conviction 0.60 STRONG | Rec: GIẢM BỚT
+- VRE +5.21% surge | GAS HIGH oil news | HCM -6.90% drop | HSG capital +8,000t | VIC VCBF exit
+- BCTC: 24 tickers overdue 12d | Banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15
+- FII: UNKNOWN (get_foreign_flow not in package) | CARRY: FII_OUTFLOW_RISK

@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (05:22–05:26 UTC) 2026-05-12
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×2 HSG/banking, urgent_news×1 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) Australia anti-dumping steel — HSG/NKG formally named, escalation confirmed (2nd cycle, historical match 2026-05-11/12). chain_catalyst bearish 7/10 #2974 → all. (2) GAS/Brent 104.8 USD sustained — US-Iran talks collapsed again. urgent_news bullish 9/10 #2975 → alert-commander, cpi_pressure_risk=true. (3) Gold domestic +~2M VND/lượng, SPDR buying confirmed. chain_catalyst bearish 7/10 #2976 → banking sector (ACB/BID/CTG/EIB/MBB/VCB/VPB), VND flight-to-safety signal.
+- Suppressed: VN-Index -20pts (stale, 2026-05-11, already alerted prior cycles), VIC -2.78% (approaching -3% but below threshold, covered in prior cycles), FPT/VIC institutional selling (recurring, dedup expected).
+- Notes: No PMI data this cycle. Brent >100 sustained → cpi_pressure_risk flagged. Gold USD 4,727.5 sustained high. VIC at -2.78% approaching watchlist -3% alert threshold.
+
 ### Cycle (04:22–04:28 UTC) 2026-05-12
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst×2 VIC/HSG] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]

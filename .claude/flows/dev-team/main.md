@@ -222,11 +222,14 @@ Route by zone:
 → ONE message: Agent(fixer, task A) + Agent(fixer, task B)
 ```
 
+**Parallel spawns use SDK-native worktree isolation** — add `isolation: "worktree"` to each Agent call for parallel tasks. SDK handles worktree lifecycle (create + cleanup). Main terminal merges each worktree branch (fast-forward if disjoint) after all agents in the tier return. See `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md` for full rationale. Sequential dispatch remains MANDATORY until c44 verification (Phase 3). After c44+c45 pass, Phase 4 relaxes the mandate.
+
 **Conflict check before parallel spawn** (main terminal must verify):
-- Different files → ✅ parallel
-- Same file modified by both → ❌ sequential
+- Different files, disjoint scopes → ✅ parallel — use `isolation: "worktree"` on each Agent call
+- Same file modified by both → ❌ sequential — omit `isolation`, spawn one at a time
 - Task B `depends_on` Task A → ❌ sequential (wait for A Done)
-- Same test suite → ⚠️ parallel ok if different test files
+- Shared SSOT write (docs/TASKS.md, docs/data/project-stats.json, any agent .md, docs/pipeline-state.json) → ❌ sequential
+- Same test suite → ⚠️ parallel ok if different test files AND tests do not share a SQLite DB
 
 **After each tier completes:**
 - Spawn `pm` to update docs/TASKS.md + unblock next tier → read return → spawn next tier

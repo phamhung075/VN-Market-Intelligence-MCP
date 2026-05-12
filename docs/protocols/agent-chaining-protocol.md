@@ -58,6 +58,24 @@ Same pipeline stage, no conflict → always parallel:
   Agent(fixer, task A) + Agent(fixer, task B)  ← fine
 ```
 
+## Parallel Isolation
+
+Parallel developer spawns MUST use the SDK-native `isolation: "worktree"` parameter on each Agent tool call. This gives each agent its own git worktree (isolated HEAD, branch, and working directory) — preventing the shared-HEAD race that caused c37.
+
+**When to use `isolation: "worktree"`:**
+- Tasks with disjoint file scopes (no file appears in both agents' write sets)
+- Different service zones (e.g. `apps/stock-price/` + `apps/alert-engine/`)
+
+**When NOT to use (force sequential instead):**
+- Overlapping file scopes — any file written by both agents
+- Tasks that write shared SSOT files: `docs/TASKS.md`, `docs/data/project-stats.json`, any agent `.md` file, `docs/pipeline-state.json`
+
+**Invariant preserved:** Main terminal remains the only spawner — sub-agents cannot spawn each other. Worktree isolation does not change this constraint.
+
+**Sequential mandate:** Sequential dispatch remains MANDATORY until c44 verification (Phase 3 of the roadmap). After c44+c45 pass, Phase 4 relaxes this mandate.
+
+Source: `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md`
+
 ## Agent Return Template
 
 Every agent ends with:

@@ -74,6 +74,22 @@ describe("Task NNN — Title", () => {
 });
 ```
 
+## Parallel Agent Dispatch
+
+| Scenario | Dispatch | `isolation` param |
+|----------|----------|-------------------|
+| Tasks with disjoint file scopes | parallel | `isolation: "worktree"` REQUIRED |
+| Tasks touching shared SSOT files | sequential | omit `isolation` |
+| Sequential (default / anti-c37) | sequential | omit `isolation` |
+
+**Shared SSOT files that hard-trigger sequential dispatch:** `docs/TASKS.md`, `docs/data/project-stats.json`, any agent `.md` file, `docs/pipeline-state.json`.
+
+Sequential dispatch remains the DEFAULT until c44 verification passes (see Phase 3 roadmap).
+
+Source: `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md`
+
+---
+
 ## Branch Hygiene (after QA merge)
 
 After merge to main, verify:

@@ -1,12 +1,31 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 03:04 UTC | **Sprint:** —
+**Last updated:** 2026-05-12 05:04 UTC | **Sprint:** c42-1889a-impl+parallel-isolation-brief
 
 ## Current state
 
-Market OPEN (03:04 UTC). 0 MARKET alerts fired. Regime: NEUTRAL. Kinh Dịch: Khôn (2) MUA 100%.
+Market OPEN (04:05 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp). Kinh Dịch: Khôn (2) MUA 100%. VN-Index: 1,889.56 (-0.31%).
 
 ## Last session summary
+
+### Alert Cycle (05:01–05:04 UTC) — 2026-05-12
+- Signals: chain_catalyst ×1 (HSG id=2971), price_anomaly ×1 (VIC id=2972)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 1 suppressed | event_types: [trade_war]
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp) | Pivot window: false
+- Suppressed: HSG chain_catalyst id=2971 (Australia anti-dumping investigation, dir=bearish, conf=0.50 < NEUTRAL threshold=0.75) | VIC price_anomaly id=2972 (σ=0.94 < 4.0, no active price alert confirmed)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN
+- log_agent_work id=675
+
+### Alert Cycle (04:01–04:05 UTC) — 2026-05-12
+- Signals: urgent_news ×2 (HSG id=2968, VIC id=2969)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%, stale May 9) | Pivot window: false ([SKIP] get_macro_calendar not in package)
+- Suppressed: HSG urgent_news id=2968 (Hoa Sen tăng vốn >8,000B VND post-dividend issuance, conf=0.50 < NEUTRAL threshold=0.60, no price_anomaly override — no hits for HSG) | VIC urgent_news id=2969 (Vingroup thắng kiện 68 cá nhân/tổ chức, conf=0.50 < 0.60, no price_anomaly override — no hits for VIC)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN
+- VN-Index: 1,889.56 (-0.31%) | Notable: VRE +4.02%, HCM +1.63%, FPT +0.57%, GAS +1.22% | VIC -1.21%, VHM -0.99%, CTG -0.98%, VPB -0.72%
+- log_agent_work id=673
 
 ### Alert Cycle (03:01–03:04 UTC) — 2026-05-12
 - Signals: urgent_news ×1 (VIC id=2965)
