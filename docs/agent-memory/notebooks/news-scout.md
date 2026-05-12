@@ -285,6 +285,13 @@
 - Suppressed: STB (not watchlist), FII/VIC (impact 4), Brent (already alerted), Gold (no spike).
 - Notes: Market CLOSED (off-hours). Historical context: LanceDB empty (0 matches). Carry confirmed NEUTRAL (no macro snapshot in bootstrap).
 
+### Cycle (22:20–22:22 UTC 2026-05-13) — off-hours run
+- Items: 20 | Impacts: 5 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: VN-Index near ATH + brokers lowering 2026 forecast + "xanh vỏ đỏ lòng" warning → chain impact 8/10, conf 71% (below 0.80 chain_catalyst floor) → suppressed. FII bán ròng 800B VND phiên 12/5, VIC hardest hit → impact 4/10 → suppressed. STB 10/10 bullish (senior exec change, 7M shares, new peak) → not on watchlist → suppressed. No PMI data. Gold $4,722 (+0.00% day, no spike). Brent $107.42 (+0.00% day, no new signal). All news from 2026-05-12.
+- Suppressed: VN-Index warning (conf 71% < 80%), FII/VIC (impact 4), STB (not watchlist), Brent/Gold (no intraday move).
+- Notes: Off-hours cycle, market CLOSED. All articles are from prior trading day (2026-05-12). No new catalysts qualifying for signals.
+
 ### Cycle (17:20–17:22 UTC 2026-05-12) — off-hours run
 - Items: 20 | Impacts: 5 (≥6) | Signals: [chain_catalyst×1 (#3006)] | Regime: NEUTRAL | Carry: default
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
