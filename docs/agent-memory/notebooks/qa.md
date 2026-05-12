@@ -1,5 +1,58 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** signal-T3 drain rewrite (cycle 38)
+
+## Recent session — 2026-05-12 (signal-T3 drain rewrite merge gate)
+
+**signal-T3 — Dev-team Step 0a SQLite SELECT rewrite — APPROVED (doc-only):**
+No code tests required (doc-only change). bun test + tsc skipped per gate spec.
+DDD scan: N/A (no production code). Security scan: N/A (no production code).
+
+Grep results (all PASS):
+- `signals.db` — 8 occurrences (Step 0a-0, rationale, fallback section, error logs)
+- `signals_processed` — 6 occurrences (SELECT, INSERT, DELETE, escape hatches)
+- `fingerprint` — 10 occurrences (computation line, SELECT pattern, logs, escape hatches)
+- `SELECT 1 FROM signals_processed WHERE fingerprint` — line 55 PASS
+- Fallback-removal trigger — lines 120-122: "Removal trigger: after 2 consecutive drain cycles... Removal eligible after cycle 39 success. Pre-condition: signal-T5 must pass." PASS
+- Dual-record write — step 4 header + 4a/4b sub-steps PASS
+- DB-unavailability degradation + retry (ENOENT|SQLITE_CANTOPEN|locked 3x200ms) — lines 33-38 PASS
+- Cross-ref `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` — line 21 PASS (file exists)
+- Cross-ref `docs/protocols/agent-chaining-protocol.md` — line 22 PASS (file exists)
+- DELETE-based prune — line 107: `DELETE FROM signals_processed WHERE processed_at < datetime('now', '-7 days')` PASS
+
+Brief alignment (2026-05-11-signal-dedup-sqlite.md):
+- Dual-record semantics (file canonical + DB index): ALIGNED (step 4a+4b)
+- Degraded mode: brief §7 says "process all inbox signals without dedup check, do NOT move to processed/". Flow matches exactly (Step 0a-fallback + Step 0a-0 catch block). ALIGNED
+- SELECT pattern: ALIGNED (O(log N) via idx_signals_fingerprint)
+- DB prune DELETE: ALIGNED (5a SQL matches brief §5)
+- Filesystem prune retained parallel: ALIGNED (5b)
+- Fallback deprecation path: ALIGNED (DEPRECATED header + removal trigger)
+
+Idempotency/safety check:
+- signals.db EXISTS at `docs/signals/signals.db` with 27 backfill rows from signal-T2 (cycle 37)
+- Schema: `signals_processed` table, UNIQUE fingerprint constraint, idx_signals_fingerprint index — all confirmed
+- Next cron: signal arrives → fingerprint computed → SELECT 1 → if in 27-row set → skipped-duplicate-replay. SAFE
+- Step 0a uses inline `bun:sqlite` pseudocode — no unshipped helper script required. scripts/migrations/create-signals-db.ts and backfill-signals-db.ts both EXIST (T1/T2 shipped).
+
+Markdown lint: 16 code fences (even) PASS. Step headers: 0a-0, 0a-1, 0a-fallback consistent PASS. Step 0b and Step 1 unaffected PASS. No broken cross-refs PASS.
+
+Deviations: NONE. Brief deviation note: flow adds "Do NOT move files to processed/ when in fallback mode" (Step 0a-fallback line 132) which is a sensible conservative addition — brief §7 implies this, flow makes it explicit. NOT a blocking deviation.
+
+TASKS.md mismatch note: Backlog row `signal-T3` described `dedup-signals-live.ts` (a different sub-task). That row replaced with signal-T4 (doc updates) + signal-T5 (QA tests) to reflect actual pipeline state. signal-T3 moved to Done.
+
+Merge SHA 2b643ec9. Branch task/signal-T3-drain-rewrite deleted. Report: reports/TASK_REPORT_signal-T3.md.
+
+**Last updated:** 2026-05-12 | **Sprint:** 1878a OCF column migration (cycle 38)
+
+## Recent session — 2026-05-12 (cycle 38 — 1878a merge gate)
+
+**1878a — OCF column migration — APPROVED:**
+12/12 tests pass (34 expect calls, 165ms). Full suite task branch: 9363 pass / 17 fail. Full suite main baseline: 9351 pass / 17 fail. Delta: +12 pass / 0 new fail. TSC 0 errors. DDD PASS (bridge + backfill in infra layer, no domain imports). Security PASS (parameterized SQL `?` + `.run(ticker)`, no process.env). Bridge SQL: `* 1000.0` confirmed, `period_quarter IS NOT NULL` guard confirmed, `quarter BETWEEN 1 AND 4` edge-case guard confirmed. Migration idempotent (T2 PASS). Annual rows stay NULL (T5a PASS). quarter=0 no-op (T5b PASS). backfillAllOCF all-tickers + idempotent (T7a+T7b PASS). AC-2/AC-3 (VCB/FPT live rows) DEFERRED — requires container restart on market.db. Merge SHA 1fb5282b. Branch task/1878a-ocf-impl deleted. TASKS.md: 1878a Backlog→Done, 1878b unblocked (blocked-by removed), 1885a blocked-by updated. Report: reports/TASK_REPORT_1878a.md.
+
+**Notes for next QA:**
+- Bun crash after run (post-completion macOS heap teardown) — pre-existing, not caused by 1878a. Always check crash comes AFTER summary line.
+- AC-2/AC-3 container restart flag carried forward — ops should verify on next maintenance window.
+
 **Last updated:** 2026-05-12 | **Sprint:** 1880b + signal-T2 (cycle 37)
 
 ## Recent session — 2026-05-12 (cycle 37 — 1880b + signal-T2 merge gate)
