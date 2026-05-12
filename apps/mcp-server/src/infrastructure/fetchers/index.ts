@@ -108,5 +108,12 @@ export {
   type FredHttpClient,
 } from "./fredApi.js";
 
+// ── Task 1879a: FRED EFFR + IORB daily series fetcher ────────────────────────
+export {
+  fetchFredEffrIorb,
+  type FredDailyRow,
+  type FetchFredEffrIorbResult,
+} from "./fredEffrIorb.js";
+
 // ── Sprint 1813: BCTC discovery HTTP fetch adapter ────────────────────────────
 export { bctcHttpFetch } from "./bctcHttpFetcher.js";

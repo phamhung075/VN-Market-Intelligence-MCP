@@ -10,6 +10,7 @@
  *   - prediction_markets        — Polymarket markets (Task 163)
  *   - prediction_signals        — detected prediction signals
  *   - tracked_indicators        — general indicator tracker (Task 1489)
+ *   - fred_series_daily         — FRED daily series rows: EFFR + IORB (Task 1879a)
  *   - bond_maturity             — bond maturity calendar (Task 1045)
  *   - pharma_events             — pharma regulatory events (Task 1046)
  *   - kinhdich_readings         — Kinh Dich hexagram readings (Task 1047)
@@ -267,6 +268,20 @@ export function initMacroTables(db: Database): void {
       last_seen             TEXT DEFAULT (datetime('now')),
       PRIMARY KEY (from_hexagram, to_hexagram, stock_code)
     )
+  `);
+
+  // ── FRED Daily Series (Task 1879a) ───────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS fred_series_daily (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      series     TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      value      REAL NOT NULL,
+      fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (series, date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_fred_series_daily_series_date
+      ON fred_series_daily (series, date DESC);
   `);
 
   // ── Bond Maturity Calendar (Task 1045) ────────────────────────────────────

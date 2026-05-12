@@ -19,6 +19,7 @@ import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 import { fetchFedFundsRate } from "../../infrastructure/fetchers/fredApi.js";
+import { fetchFredEffrIorb } from "../../infrastructure/fetchers/fredEffrIorb.js";
 
 
 /**
@@ -66,6 +67,17 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
       logger.info(`[macroRefresh] fed_funds_rate = ${fedRate}%`);
     } else {
       logger.warn("[macroRefresh] fed_funds_rate fetch returned null — FRED unavailable");
+    }
+
+    // Fetch EFFR + IORB daily series from FRED (Task 1879a)
+    const effrIorbResult = await fetchFredEffrIorb(undefined, db);
+    if (effrIorbResult !== null) {
+      logger.info(
+        `[macroRefresh] EFFR/IORB persisted — EFFR: ${effrIorbResult.effrRows} new rows, IORB: ${effrIorbResult.iorbRows} new rows`,
+        { effrRows: effrIorbResult.effrRows, iorbRows: effrIorbResult.iorbRows },
+      );
+    } else {
+      logger.warn("[macroRefresh] EFFR/IORB fetch returned null — FRED unavailable");
     }
 
     // Check SLA after refresh
