@@ -180,3 +180,34 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 - PM notebook: c49 session appended
 
 **Status:** Ready for commit.
+
+---
+
+## Cycle 50 — 2026-05-12 c50 Outcomes: Brief Shipped + Housekeeping
+
+**Input:** Three outcomes from user c50 sync: (1) 1896c architect brief shipped, (2) CLEAN-c50 QA swept 7 stale branches, (3) 1879a Todo row already purged by PO.
+
+**Actions:**
+
+- **1896c→Done (ARCHITECT BRIEF SHIPPED):** Moved from Todo → Done section. Annotation: brief `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md` delivered; recommended Option 4 (launchd plist + newsyslog rotation); owner hint: ops (launchctl + file copy; agent-father fallback). Merge SHA f8dcccf1. Status: design phase complete, operations phase queued (ops executes next cycle or deferred to following cycle).
+- **CLEAN-c50 QA HOUSEKEEPING (LOG ONLY):** Swept 6 worktree branches (worktree-agent-* + task/1888a-ssot-tool-cron-pointers); all verified merged content already on main (cherry-pick pattern had made them appear ahead-by-SHA; file-level verification confirmed). Commit 819fc455. Marking as housekeeping artifact (not a TASKS.md task row by default).
+- **1879a DUPLICATE CHECK:** Verified no stale 1879a row in Backlog. Only one 1879a row exists (in Done section, merged 2026-05-12); remaining Backlog references (1882a, 1883a blocked_by lists) correctly reference the Done task. PO purge confirmed clean.
+- **TASKS.md cap:** Reduced to 177 lines (removed 1896c from Todo, added to Done). Still under cap 180/80 (archive checkpoint 2026-05-19+ for tasks >7 days).
+- **WIP status:** 0/2 (1894a In Progress awaits user dashboard action). Under cap.
+
+**File state diffs:**
+- TASKS.md Todo: 1896c removed (moved to Done)
+- TASKS.md Done: 1896c added at top (brief shipped, op hint flagged)
+- PM notebook: c50 session appended
+
+**Status:** READY FOR COMMIT. No blockers. Pipeline: continue.
+
+---
+
+## Current state
+
+- WIP: 0 / 2 (In Progress: 1894a Cloudflare tunnel routing awaits user dashboard action)
+- Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design, incident-driven)
+- Todo: 1896b (ops RCA follow-up, c40 restart evidence), 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
+- Done: 1896a (RCA false-alarm-h4), 1896c (brief shipped), 1895b (merge-gate impl), 1879b (fed-liquidity tool), 1879a (FRED fetcher), signal suite (T1-T6 dedup), and 40+ prior arcs
+- CLEAN state: 7 worktree branches swept, all merged content verified on main
