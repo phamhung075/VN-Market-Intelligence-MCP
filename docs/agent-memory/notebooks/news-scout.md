@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (20:21–20:22 UTC) 2026-05-12
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 GAS, chain_catalyst×2 VIC/real_estate/banking, CTCK/securities] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) Brent 107.84 (+2.23σ HIGH alert) → urgent_news #3013 GAS bullish, cpi_pressure_risk=true. (2) Foreign net sell 800B+ VND, VIC heaviest + VCBF liquidating VIC → chain_catalyst #3014 bearish, 16 watchlist stocks (real_estate+banking), conf 0.88. (3) Multiple CTCK cutting VN-Index 2026 forecasts + "xanh vỏ đỏ lòng" warning → chain_catalyst #3015 bearish, securities sector (SSI/VCI/HCM). (4) VRE +5.51% (threshold hit) — already in bootstrap alerts. (5) GVR +4.46% (below +5% threshold, no signal). (6) STB near ceiling — not on watchlist, no signal.
+- Suppressed: STB management change (not on watchlist). HPG 800M dividend shares (impact 5, neutral). Crypto regulation (no watchlist hit). VRE price surge (pre-existing alert).
+- Notes: Off-hours cycle 20:21 UTC. No PMI data. Brent >100 → cpi_pressure_risk active. CARRY_REGIME neutral (no carry spread parsed).
+
 ### Cycle (19:15–19:27 UTC) 2026-05-12
 - Items: 20 | Impacts: 12 | Signals: [chain_catalyst×2 STB/banking, GAS/macro-CPI] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
