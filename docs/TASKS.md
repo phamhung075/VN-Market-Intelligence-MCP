@@ -1,6 +1,6 @@
 # TASKS — VN Market Intelligence MCP
 
-> **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md` | **Archived Done tasks:** See `docs/TASKS_ARCHIVE.md` for complete history (1777–1848) | **CAP VIOLATION:** 176/80 lines — archiving pending (no rows >7d old yet; will archive once Sprint 1849+ tasks age to ≥7d on 2026-05-19+)
+> **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md` | **Archived Done tasks:** See `docs/TASKS_ARCHIVE.md` for complete history (1777–1848) | **CAP VIOLATION:** 180/80 lines — archiving pending (no rows >7d old yet; will archive once Sprint 1849+ tasks age to ≥7d on 2026-05-19+)
 
 ---
 
@@ -24,7 +24,7 @@
 | 1888i | SSOT-LOW: Remove duplicate `max_alerts_per_day: 10` from `agents/alert-commander.md` — point to alert-policy.md SSOT. (Renumbered from 1878i.) | LOW | CHORE | agent-father | — | — |
 | 1888j | SSOT-LOW: Document 9 microservice agents in `docs/references/agent-roster.md`. (Renumbered from 1878j.) | LOW | CHORE | developer | — | — |
 | 1888k | SSOT-LOW: Remove orphaned `AGENT_STARTUP.md` reference in `agents/system-auditor.md` L77. (Renumbered from 1878k.) | LOW | CHORE | agent-father | — | — |
-| JANITOR-027 | DRY: Time constant duplication — 21 files inline `24 * 60 * 60 * 1000` instead of MS_PER_DAY | LOW | DRY | code-janitor | — | — |
+| 1890a | METHODOLOGY-TOOLPKG: financial-analyst tool-package gaps (TNB c33→c39 carry, 6+ cycles). Re-evaluate 3 missing tools now that agent is active: (a) `get_macro_snapshot` — add to `.claude/tools/package/financial-analyst.md` (tool exists; was filtered). (b) `get_insider_signals` — currently requires per-stock outstandingShares; spec a wrapper that auto-fetches from `vnstock_overview`. (c) `get_bond_maturity_calendar` — missing entirely; decision: build (Layer 6 credit signal) vs deprecate the credit-rollover branch in financial-analyst flow. Owner: ba spec → dev-mcp-server (if build) or agent-md-editor (if deprecate). Size: S (single ba spec + 1-2 dev tasks max). | MEDIUM | CHORE | ba | — | — |
 | JANITOR-020 | DRY: MACRO_CODES + section-builder logic duplicate in marketContextBuilder.ts vs marketContextTools.ts | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-017 | DRY: BROWSER_UA string duplicated in 18 source files across 3 layers | LOW | DRY | code-janitor | — | — |
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
@@ -43,6 +43,7 @@
 | 1862c-D | OPS-HIGH: Add `/vn-market/mcp` Cloudflare ingress route — expose StreamableHTTP endpoint to cowork agents. Edit `~/.cloudflared/config.yml`, add ingress rule `path: /vn-market/mcp → http://localhost:3000/mcp` + reload cloudflared. Update cron hints (market-watcher, unified-agent, news-scout flows) from `https://zenmidi.com/mcp` to `https://zenmidi.com/vn-market/mcp`. No Docker rebuild. Arch brief: 1862c-D, ship with 1862c-E. | HIGH | OPS | ops | TASK_1862c-D.md | — |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. Edit `~/.cloudflared/config.yml` keepAliveTimeout value. No Docker rebuild. Ship together with 1862c-D in single cloudflared reload. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection — detect stale/disconnected SSE sessions. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error response + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
+| NB-HDR-c39 | CHORE: TNB c39 finding #7+#8 residual — architect notebook header is fresh post-c38 fix, but alert-commander notebook shows `**Sprint:** —`. Patch alert-commander/cycle.md Step 5 (or notebook template) to capture last sprint-id during cycle. ≤5 LOC, agent-md-editor 1 commit. Forward-only safe. | LOW | CHORE | agent-md-editor | — | — |
 | 1876a-A5 | OPS-HIGH: Re-deploy 1869b-seed migration on prod DB. Diagnostic (1876a-A4) revealed Sprint 1869b-seed NEVER executed — VRE/HPG stuck at -3.0 default, NVL/DPM/MWG missing from watchlist entirely. (1) Locate migration file in `apps/mcp-server/migrations/` (or create if absent per `seedWatchlist.ts::migrateWatchlistThresholds`). (2) Ensure registered in `migrateDb.ts`. (3) Run on prod via `docker exec` SQL or container rebuild. (4) Re-verify via 1876a-A4 query — all 30+ rows show expected -7.0/-9.0 per high-vol classification. **Root impact:** entire Sprint 1869 (precision threshold tuning) was non-functional because thresholds never reached prod DB. | HIGH | OPS | ops | TASK_1876a_A5.md | — |
 
 ---
@@ -177,5 +178,7 @@
 | Sprint | Title | Reason | Next Step |
 |--------|-------|--------|-----------|
 | 1887 | METHODOLOGY-FORENSICS: Virtual Capital / related-party graph detector | Needs own architect brief — graph-store choice, related-party data source, traversal patterns, false-positive control all unspecified | When 1885+1886 ship, queue separate ARCH-1887 brief before ba spec |
+| TNB-c39-#3 | MONITOR: unified-agent FPT pillar gap (2nd cycle of evidence at c39) | Per TNB protocol need 3rd cycle to auto-cure. c40 daily review (~02:01 UTC) is the verification window. No action this sprint. | If c40 unified-agent cycle repeats FPT-without-pillars pattern → spawn auto-cure CHORE (unified-agent flow Step adding mandatory pillar enumeration). If c40 PASSES → close as transient. |
+| TNB-c39-#5 | MONITOR: Alert accuracy +1 hit marginal (2/141 scored, 35%) | Sprint 1869 verdict pipeline still catching up; expected to climb organically as verdictResolutionJob processes pending verdicts. | Re-evaluate at c43 (~4 cycles forward). Action trigger: if precision flatlines or regresses → spawn FIX task. |
 
 ---
