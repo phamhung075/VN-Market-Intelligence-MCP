@@ -22,3 +22,11 @@ export {
   type PyramidTier,
   type PyramidTierResult,
 } from "./pyramidTier.js";
+// Task 1879b: Fed Liquidity Spread
+export {
+  computeFedLiquiditySpread,
+  InsufficientDataError,
+  type FedSpreadSample,
+  type SpreadTrend,
+  type FedLiquiditySpreadResult,
+} from "./computeFedLiquiditySpread.js";

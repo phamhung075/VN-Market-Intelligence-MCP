@@ -1,8 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-12 02:03 UTC | **Sprint:** 1878b
+**Last updated:** 2026-05-12 14:00 UTC | **Sprint:** 1894a
 
 ## Last session summary
+
+Session 1894a: Cloudflare tunnel routing brief authored. Decision: Option B — `/api/*` → `localhost:4000` (api-gateway). Rationale: 1892b `proxyPath()`+`noProbe` already live in handlers.ts; bypassing it (Option A) kills the merged infra. Side-fix briefed: `/gateway` port 4040 → 4000. User-actionable dashboard payload + verification curls + rollback procedure in brief. Brief: `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. Pipeline state: idle.
+
+---
+
+## Session — 2026-05-12 (1894a Cloudflare tunnel /api/* routing decision)
+
+**Task:** Architecture brief — route `/api/*` to :3000 (mcp-server) or :4000 (api-gateway)?
+
+**Brownfield scan:**
+- `apps/api-gateway/src/interface/handlers.ts` — `proxyPath()` helper + `noProbe` flag ALREADY IMPLEMENTED (1892b merged). Line 98: `if (svc.noProbe) return reqPath;`.
+- `apps/api-gateway/src/index.ts` — `api` virtual service registered pointing to `MCP_URL ?? http://mcp-server:3000`.
+- `docs/signals/1894a-cloudflare-routing-escalation.json` — ops confirmed: localhost:4000/api/push-news → 200; zenmidi.com/api/push-news → 404. Tunnel dashboard-managed; local config.yml ignored.
+- `/gateway` rule points to `localhost:4040` (wrong — api-gateway listens on :4000). Typo confirmed.
+
+**Decision:** Option B — `/api/*` → `localhost:4000`. 1892b infra is live and tested; routing around it (Option A) would make `proxyPath()` dead code for public traffic and split the public HTTP surface across two services.
+
+**Key risks flagged:** None HIGH. Propagation delay (10-90s) is LOW. Auth pass-through confirmed correct (verbatim header forwarding in handlers.ts:70).
+
+**Brief:** `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md` (156 lines, 7 sections).
+
+**Pipeline state:** idle — awaiting user to apply Cloudflare dashboard change.
+
+---
+
+## Session — 2026-05-12 (1878b compute_accruals spec)
 
 1878b `compute_accruals` spec written. Pure-function accruals calculator placed in `domain/services/financial-reports/accruals.ts` (extends existing financial-reports subfolder, consistent with ARCH-1884 decision). Tool in `interface/mcp/tools/financial-reports/computeAccrualsTool.ts`. Last-N quarters input pattern chosen (consistent with sibling time-series tools). Null-row inclusion strategy chosen over silent skip. 12 ACs defined covering pure-function, null handling, zero denominator, sort order, default/max, and registry visibility. Spec: `docs/specs/1878b-compute-accruals.md`.
 
