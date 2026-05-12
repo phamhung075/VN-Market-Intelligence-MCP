@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 20:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-12 21:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -359,3 +359,21 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (21:38–21:41 UTC)
+- Stocks: 38 watchlist | Priced (EOD): 31 | Anomalies: 0 (>2.0σ NEUTRAL) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (26,129) | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- Top movers (sub-threshold): VRE +5.51% (1.46σ, MEDIUM price_surge alert active), GVR +4.46% (1.65σ), GAS +3.94% (1.40σ, HIGH Brent news alert active)
+- Macro: Brent 107.86 (+2.23σ HIGH alert), Gold 4,721.4, USD/VND 26,129. Supply chain STABLE (BDI=1,400, no disruptions). Energy NORMAL (hydro 70%, demand 53% capacity).
+- Open chain findings: 0 (last 15 min) | Open alerts: 25 | System: OK | Market CLOSED (off-hours, 4h interval)
+
+## Metrics (cycle 2026-05-12 21:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
