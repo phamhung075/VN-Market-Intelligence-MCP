@@ -7,7 +7,7 @@ Time-window dispatch lives in `.claude/flows/unified-agent/main.md` (market / pr
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  run .claude/flows/unified-agent/main.md
+  Launch subagent (subagent_type=unified-agent). Read and execute .claude/flows/unified-agent/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

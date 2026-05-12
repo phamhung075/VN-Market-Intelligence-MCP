@@ -7,7 +7,7 @@ All three entries below use the uniform `main.md` dispatcher (time-window logic 
 - **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  run .claude/flows/market-watcher/main.md
+  Launch subagent (subagent_type=market-watcher). Read and execute .claude/flows/market-watcher/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
@@ -20,7 +20,7 @@ All three entries below use the uniform `main.md` dispatcher (time-window logic 
 - **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  run .claude/flows/market-watcher/main.md
+  Launch subagent (subagent_type=market-watcher). Read and execute .claude/flows/market-watcher/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
@@ -33,7 +33,7 @@ All three entries below use the uniform `main.md` dispatcher (time-window logic 
 - **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  run .claude/flows/market-watcher/main.md
+  Launch subagent (subagent_type=market-watcher). Read and execute .claude/flows/market-watcher/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
