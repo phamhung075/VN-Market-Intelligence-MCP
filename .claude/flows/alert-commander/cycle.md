@@ -121,10 +121,13 @@ Fired: X | Suppressed: Y | Next: TIME
 
 ### Header update (required every cycle)
 Before appending the `### Alert Cycle` block, update line 3 of the notebook:
+```bash
+SPRINT=$(jq -r '.currentSprint // "idle"' docs/pipeline-state.json 2>/dev/null || echo "idle")
 ```
-**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
 ```
-Use `date -u` exclusively — same UTC source as the session log guard (1865a).
+**Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** $SPRINT
+```
+Use `date -u` exclusively — same UTC source as the session log guard (1865a). Fallback: if `jq` fails or `currentSprint` is null, `$SPRINT` = `idle`.
 
 `log_agent_work(...)` + append `docs/agent-memory/notebooks/alert-commander.md`:
 ```
