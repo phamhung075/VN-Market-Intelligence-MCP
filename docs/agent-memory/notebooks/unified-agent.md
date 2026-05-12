@@ -154,3 +154,9 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **actions**: Telegram WORK summary sent | freshness feedback submitted (low/other) | notebook committed
 - **next_cycle_hint**: Monitor BDI rate-limit recovery; VNM BCTC OCR fix needed; watch VRE/HCM follow-through next session
 - **estimated_tokens**: 3500
+
+### Daily Review (23:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: prices-ok(market closed) | news-stale(5.7h/>2h) | Bugs: none new
+- News: 10 items (3 bearish: VN-Index forecast downgrade, liquidity drop; 1 bullish: STB near-ceiling; 6 neutral) | Alerts: 0/0 | System: ok | Bugs: 0
+- Telegram WORK sent | freshness feedback submitted (low/performance_issue) | no Telegram bug reports
+- Key carry-overs: BCTC 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (tomorrow) — EPS catalyst. FPT oversold RSI 25.8. VRE +5.51% bull-trap risk. Bearish: securities firm cut VN-Index forecast.
