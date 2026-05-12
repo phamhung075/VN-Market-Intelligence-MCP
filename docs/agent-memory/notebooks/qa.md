@@ -1,5 +1,28 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-12 | **Sprint:** 1878b compute_accruals (cycle 38)
+
+## Recent session — 2026-05-12 (1878b — compute_accruals merge gate)
+
+**1878b — compute_accruals MCP tool (#129) — APPROVED:**
+12/12 tests pass (31 expect calls, 460ms). 1878a regression 12/12. TSC 0 errors. DDD PASS (accruals.ts: import only `{ z } from "zod"` — zero infra/interface imports). Security PASS (parameterized SQL `.prepare().all(ticker, quarters)`, no process.env, no hardcoded secrets).
+
+AC-1: (300-100)/5000=0.04 PASS (T1, toBeCloseTo 10 decimals).
+AC-2: null NI → ratio null + missing["NET_INCOME"] + error null PASS (T2, accruals.ts:59-60).
+AC-3: zero TA → null + error:"zero_total_assets" + missing:[] PASS (T5, accruals.ts:75-76).
+AC-4: sort ascending oldest→newest PASS (T7: data[0].period_quarter=1, data[3].period_quarter=4).
+AC-5: registerComputeAccrualsTool in toolRegistry[] at registry.ts:196 as #129 PASS. Prior was #128 (registerPyramidTierTool). Array has 89 entries (multi-tool registration functions account for gap).
+AC-6: formula in tool description (computeAccrualsTool.ts:191) + unit:"ratio" field in AccrualsEnvelope interface (:50) and envelope objects (:108, :173) PASS.
+AC-7: default quarters=8 (T11: 12 seeded, 8 returned) + Zod rejects quarters=25 max=20 (T12: safeParse.success=false) PASS.
+AC-8: in-memory SQLite via makeTestDb() + multi-quarter fixtures T7/T8/T9/T10/T11 PASS.
+
+Commit convention 4d7ab740: type=feat scope=financial-reports, Sprint:S1878b, Task-Id:1878b, AC:AC-1/AC-2/AC-3/AC-4/AC-5/AC-6/AC-7/AC-8. All 8 ACs listed — C2 gate PASS.
+
+Note: accruals.ts line 79 uses `!` non-null assertions (`net_income_m!` / `ocf_m!`) inside the `missing.length === 0` guard — correctly safe (both confirmed non-null at that point). Line 16 `import { z }` used for exported AccrualsInputSchema (imported by test file). Coverage 96.55% on accruals.ts (1 branch in isFinite guard uncovered — defensive code path, acceptable).
+
+Merge SHA: ad04be0d. Branch task/1878b-compute-accruals deleted local (no remote). Report: reports/TASK_REPORT_1878b.md. TASKS.md: 1878b Backlog→Done.
+Graphify: DEFERRED — package not installed (consistent with prior cycle 38 graphify status).
+
 **Last updated:** 2026-05-12 | **Sprint:** signal-T4 doc-only FIX (cycle 38)
 
 ## Recent session — 2026-05-12 (signal-T4 doc-only FIX merge gate)
