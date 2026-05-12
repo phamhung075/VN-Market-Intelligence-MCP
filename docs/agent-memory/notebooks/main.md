@@ -1,6 +1,56 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 16:35 UTC (Cycle 50 — 1896c brief + CLEAN-c50 7-branch sweep)
+**Written:** 2026-05-12 17:35 UTC (Cycle 51 — 1862c-DE cloudflared bundle + 1896c-impl launchd install)
+
+## Cycle 51 (2026-05-12 17:26 → 17:35 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | inbox empty (c42 TNB not yet fired — last audit c41 14:47 UTC, ~2.5h ago at cycle start) | 0 routed |
+| 0b Resume | idle (c50 closed 16:35 UTC) | fall through |
+| 1 Triage | New reports empty. 14 unresolved (ALL monitoring, same as c50). WIP 0/2. PO BATCH(3): 1862c-DE UNBLOCK + 1896c-impl SPRINT-S + CLEAN-c51 1896b-row-purge. PO found 1896b duplicate row (Todo no-date + Done dated) — same pattern as c50's 1879a. | 3 dispatched |
+| 3 Exec | **2-way Phase 4 PARALLEL ops** (1862c-DE + 1896c-impl). Disjoint host paths (~/.cloudflared/ vs ~/Library/LaunchAgents/), disjoint repo files (cron-hint flows vs launchd/ new dir). No worktree. | 2 concurrent |
+| 3 ops 1862c-DE | `01c30703`. **D PASS**: `curl OPTIONS https://zenmidi.com/vn-market/mcp` → HTTP 204. **E PARTIAL**: keepAliveTimeout 30s→300s in local config, but `/vn-market/sse` returns 404 — root tunnel ingress managed via Cloudflare dashboard (NOT local config). User-action required (similar to 1894a pattern). Backup `~/.cloudflared/config.yml.bak.1778607054`. 3 cron-hint files updated (market-watcher/unified-agent/news-scout). | D=done, E=split |
+| 3 ops 1896c-impl | `16ff50e1`. 3 deliverables (`launchd/com.vn-market.docker-events.plist` + `docker-events-newsyslog.conf` + `docker-events-logging.md` runbook). launchd loaded PID 14119, events flowing, **artificial restart test PASS** (8+ events captured for `docker-compose restart api-gateway`). newsyslog sudoer-install pending (non-blocking; launchd persists logs already, 30-day retention activates when operator runs sudo cp). | impl done |
+| Phase 5 Gate | Control 1 PASS exit 0 (index empty post-ops-commits). Both ops on main repo direct, no worktree merges. Gate STILL not exercised against worktree-parallel-code-writers (5th cycle since ship). | n/a |
+| 3 PM sync | `0ee1150a`. TASKS.md: 1862c-D → Done. 1862c-E → split (config Done + dashboard remains Todo, user-action). 1896c-impl → Done. 1896b duplicate row purged (same as c50 1879a fix). 1879a single-occurrence verified. WIP 0/2. | sync 1 |
+| 4 Scan | expire_monitoring: 0 (oldest 2841 = 46h, threshold 72h). New reports: 0. Branches: main. Unresolved: 14 ALL monitoring → **C-6 guard fires**. | guard hit |
+| 4 WORK | c51 close announcement | pending |
+| 4.5 Compact | notebook + pipeline-state + commit + WORK | pending |
+
+### Phase 4 verification — 5th cycle
+- 2-way parallel ops×2 (different host paths + different repo zones): zero conflicts.
+- Phase 4 parallel disjoint-zone holding firm across diverse agent classes (arch+code, arch+qa, ops+ops).
+- **Phase 5 merge gate still NOT exercised** — 5 cycles since 1895b ship, zero multi-worktree-code-writer tiers. Gate is dormant code on disk. Not concerning; next time a developer-class tier has 2+ worktree-parallel agents, gate gets first real test.
+- Eat-dogfood validation: all 3 c51 commits used `git commit -m` (01c30703, 16ff50e1, 0ee1150a). Plus close commit.
+
+### Key outcomes
+- **1862c-D shipped** — `/vn-market/mcp` ingress live, HTTP 204 PASS. Cron-hint URLs propagated to 3 flows (market-watcher/unified-agent/news-scout).
+- **1862c-E config-side shipped** — keepAliveTimeout 300s local. SSE route ITSELF still 404 (Cloudflare dashboard work, user-action). Tracking similar to 1894a.
+- **1896c-impl shipped** — launchd plist running PID 14119, docker events persisting. 1896b incident-class evidence loss now mitigated. newsyslog 30-day rotation needs sudoer cp (operator-pending).
+- **Two USER-blocked dashboard items now in flight**: 1894a (Cloudflare /api/* routing) + 1862c-E-dashboard (Cloudflare /vn-market/sse route). Both same surface (Cloudflare ingress); user could bundle in one dashboard session.
+- **Throughput**: ~9 min wall (17:26 → 17:35 UTC). Same as c50.
+
+### c52 carry-over (priority order)
+1. **USER Cloudflare dashboard actions (bundle)** — HIGH, STILL BLOCKS:
+   - 1894a `/api/*` routing (for pollNews #2860)
+   - 1862c-E-dashboard `/vn-market/sse` route (for MCP SSE access)
+   - Briefs: `2026-05-12-cloudflare-tunnel-api-routing.md` + 1862c-E recommendation
+2. **1876a-A5** — HIGH OPS. 1869b-seed migration redeploy. Sprint 1869 thresholds never reached prod. Likely 1 cycle. Sequence c52 (separated from cloudflared per c51 risk-balance).
+3. **1862c-F** — FIX MEDIUM, container-rebuild-gated. Monitor 1862c-D/E stability 5 cycles; sequence after.
+4. **newsyslog sudoer install** — operator runs `sudo cp launchd/docker-events-newsyslog.conf /etc/newsyslog.d/docker-events.conf` to activate 30-day rotation. Non-urgent (launchd already persists; just no rotation cap until then).
+5. **1881a ba spec** — HIGH, 9+ cycles deferred.
+6. **1890a ba spec** — MEDIUM, 13+ cycles deferred.
+7. **`list_unresolved_reports` MCP tool** — still drift. Escalate to dev-mcp-server for MCP doc audit OR confirm intentional removal.
+8. **JANITOR-034** large-cap overlap (proposed scan-19) — promote to TASKS.md Backlog.
+9. **TNB-PLANNED-RESTART convention** — ops notebook header bundle.
+10. **financial-analyst 23:00 UTC cycle** — Sprint 1889a Layer 7/8 stop-gap first test (~5.5h after c51 close).
+11. **US10Y 4.5% Layer 1.2 cross watch** — was 4.46% at c41 (~3h ago), audit if breach within 24h.
+12. **TNB c42** — next audit fires when own cron triggers (last was c41 14:47 UTC).
+13. **TASKS.md cap** 198/80 — auto-archive eligible 2026-05-19+.
+
+### Pre-existing unstaged residue (NOT c51's responsibility)
+At session start there were already ~20 unstaged modifications in working tree (CLAUDE.md, .claude/flows/*, .claude/commands/crons/*, docs/agent-memory/notebooks/{alert-commander,market-watcher,po}.md, docs/references/agent-roster.md, docs/references/tree-map.md, etc.) plus ~10 untracked new flow files (alert-commander, news-scout, financial-analyst, market-watcher main.md, etc.). c51 ops/PM all used explicit `git add <path>` to avoid touching these. Likely from out-of-band agent-father/cowork work that hasn't been committed. Carry-over: someone should triage and either commit or revert these.
 
 ## Cycle 50 (2026-05-12 16:26 → 16:35 UTC)
 
