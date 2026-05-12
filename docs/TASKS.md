@@ -1,6 +1,6 @@
 # TASKS — VN Market Intelligence MCP
 
-> **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md` | **Archived Done tasks:** See `docs/TASKS_ARCHIVE.md` for complete history (1777–1848)
+> **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md` | **Archived Done tasks:** See `docs/TASKS_ARCHIVE.md` for complete history (1777–1848) | **CAP VIOLATION:** 176/80 lines — archiving pending (no rows >7d old yet; will archive once Sprint 1849+ tasks age to ≥7d on 2026-05-19+)
 
 ---
 
@@ -11,7 +11,6 @@
 | 1879a | METHODOLOGY-INFRA: EFFR–IORB FRED fetcher in `apps/macro-indicators` — pull both series from FRED API, persist to macro store. SSOT: methodology Layer 2.D (Liquidity microstructure). Owner: ba spec → dev-macro-indicators. | HIGH | FEATURE | ba | — | — |
 | 1879b | METHODOLOGY-INFRA: `get_fed_liquidity_spread()` MCP tool — returns latest EFFR-IORB spread + 30d trend. Depends on 1879a. SSOT: methodology Layer 2.D. Owner: ba spec → dev-macro-indicators + dev-mcp-server. | HIGH | FEATURE | ba | — | 1879a |
 | 1881a | METHODOLOGY-INFRA: Source-tier `1\|2\|3` tag retrofit — add `source_tier` field to ~15 macro/news tool outputs (1=primary/official, 2=aggregator, 3=derived). SSOT: methodology Layer 9 (Source hierarchy). Owner: ba spec → dev-mcp-server + dev-macro-indicators. | HIGH | CHORE | ba | — | — |
-| ARCH-1884 | METHODOLOGY-INFRA: Architect brief — forensic-analysis host decision: new microservice vs extend financial-reports module. Output → `docs/architecture-briefs/2026-05-12-forensic-analysis-host.md`. Drives Sprint 1885+1886 placement. Parallel to 1878. Owner: architect (main terminal dispatch this turn). | HIGH | ARCH | architect | — | — |
 | 1882a | METHODOLOGY-INFRA: VIRA scraper deploy on Vinahost VPS + `get_vira_snapshot()` MCP tool. SSOT: methodology Layer 2 (VN macro). QUEUED behind 1878-1881. Owner: ba spec → ops + dev-macro-indicators. | HIGH | FEATURE | ba | — | 1878a, 1879a, 1880a, 1881a |
 | 1883a | METHODOLOGY-INFRA: PMI sub-components fetcher upgrade — break out new orders / employment / prices sub-indices from headline PMI. SSOT: methodology Layer 2.B. QUEUED. Owner: ba spec → dev-macro-indicators. | MEDIUM | FEATURE | ba | — | 1878a, 1879a, 1880a, 1881a |
 | 1885a | METHODOLOGY-FORENSICS: Beneish M-Score + Piotroski F-Score calculators — 8-variable + 9-variable forensic scores. BLOCKED on ARCH-1884 (host decision). OCF column (1878a) now DONE. Owner: ba spec → host module per ARCH-1884. | HIGH | FEATURE | ba | — | ARCH-1884 |
@@ -65,6 +64,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| ARCH-1884 | METHODOLOGY-INFRA: Architect brief — forensic-analysis host decision: new microservice vs extend financial-reports module. Output → `docs/architecture-briefs/2026-05-12-forensic-analysis-host.md`. Drives Sprint 1885+1886 placement. Owner: architect. Merge SHA cae59b98. | HIGH | ARCH | architect | 2026-05-12 |
 | 1878b | METHODOLOGY-INFRA: `compute_accruals(ticker, quarters)` MCP tool — Sloan Accruals Ratio time-series. Pure domain fn (accruals.ts, zero infra imports) + interface tool (computeAccrualsTool.ts). 12/12 tests pass, TSC 0 errors, DDD PASS. toolRegistry #129. Merge SHA ad04be0d. QA APPROVED 2026-05-12. | HIGH | FEATURE | dev-mcp-server | 2026-05-12 |
 | signal-T4 | SIGNAL-DEDUP: Doc updates — `docs/protocols/agent-chaining-protocol.md` (replace file-scan dedup description with dual-record model + SQLite SELECT ref) + `docs/references/tree-map.md` (add signals.db node + write-ownership row). Depends on signal-T3 (DONE 2b643ec9). Merge SHA 9bb2d338. QA APPROVED 2026-05-12. Unblocked signal-T5. | HIGH | CHORE | developer | 2026-05-12 |
 | signal-T5 | SIGNAL-DEDUP: QA integration tests for full drain cycle — (a) unit: dedup SELECT returns correct result for known fingerprint, INSERT OR IGNORE on duplicate does not throw, prune deletes only rows older than 7 days; (b) integration: fresh signal routes to PO, re-fired signal skipped, stale signal skipped, DB-unavailable path degrades without error throw. Depends on signal-T3 (DONE 2b643ec9) + signal-T4 (DONE 9bb2d338). Fallback removal trigger: c39 success + signal-T5 pass (both required). Ready for QA dispatch. | HIGH | FEATURE | qa | — |
