@@ -77,3 +77,20 @@ This cycle benefits from **the fastest PO ACK observed** (c41 written 14:50 UTC 
 4. **financial-analyst still silent 20h** — 23:00 UTC daily-review fire is the test point for Sprint 1889a stop-gap. If misses again, escalate cron schedule audit.
 5. **Continue US10Y watch** — still 4.46%, 0.04% below 4.5% Layer 1.2 threshold. Methodology demands all agents flag the cross.
 6. **No PO action required for c42** — direction STRONGLY IMPROVING. Monitor c51+ dev velocity sustained.
+
+---
+## PO ACK — cycle 42 — 2026-05-12T19:17:51Z
+- Read by: po
+- Disposition per finding:
+  - #1 unified-agent header drift NEW (1st cycle) → MONITOR c53-c54; if persists, bundle with #2 in flow-edit ba spec
+  - #2 market-watcher duplicate-header bug + content-stale → flow-edit ba spec QUEUED (NB-HDR-bundle-22-agents) — too large for c53 FIX (cross-cutting append-without-remove pattern on 22 agents); defer to ba spec next cycle
+  - #3 RSS counter climbing (c41 self-recover prediction WRONG) → carry; agents-architect c33 RCA pattern incomplete; defer to ops cycle audit
+  - #4 Sprint name conflation (1895a vs 1896a) → informational only; no action
+  - #5 financial-analyst silent 20h → MONITOR 23:00 UTC daily-review fire (Sprint 1889a stop-gap first test)
+  - #6 US10Y 4.46% UNCHANGED — still below 4.5% → MONITOR Layer 1.2 cross
+  - #7 warnings climbing 19→32 → MONITOR; weekly audit stale 3d
+- Tasks created: none this cycle (#2 deferred ba spec, #5/#6/#7 monitor)
+- Tasks deferred: NB-HDR-bundle-22-agents (flow-edit ba spec, c54+), US10Y watch
+- TNB-rec #2 (header refresh standardization across 22 agents) — accepted as direction, deferred for capacity
+- TNB-rec #3 (1862c-D shipped status refresh in c36 carry-over) — already reflected in current TASKS.md (1862c-D row Done L64), action stale-list cleanup not needed
+- Direction confirmed STRONGLY IMPROVING — no PO action required this cycle
