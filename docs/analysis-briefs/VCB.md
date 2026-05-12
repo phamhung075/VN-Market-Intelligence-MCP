@@ -26,5 +26,7 @@ Signal: `fundamental_validation` id=2833 | confidence=0.62
 ## [News Scout] Headlines & Sentiment
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 59,900 VND | RSI: N/A | Vol: 6.55M (190% avg) | YoY: N/A
+
 
 ## [Unified Agent] Quarterly Syntheses

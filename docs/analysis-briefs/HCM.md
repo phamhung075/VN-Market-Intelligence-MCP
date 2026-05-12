@@ -7,5 +7,7 @@
 2026-04-29 | Bearish crisis: Floor trading + insider notification to 29,000 shareholders amid forced selloff | YoY: distress signal (regulatory/operational issue)
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 27,700 VND | RSI: N/A | Vol: 6.75M (168% avg) | YoY: N/A
+
 
 ## [Unified Agent] Quarterly Syntheses

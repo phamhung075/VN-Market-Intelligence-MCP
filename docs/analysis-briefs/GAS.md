@@ -8,6 +8,8 @@
 2026-05-01 | Price: 75.200 VND (+2.31%) — strong momentum aligned with positive sector news
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 76,500 VND | RSI: N/A | Vol: 1.56M (185% avg) | YoY: N/A
+
 
 ## [Market Watcher] Price, Volume, Technicals
 

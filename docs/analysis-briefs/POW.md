@@ -11,6 +11,8 @@
 2026-04-29 | Government policy support: PM directive to prevent electricity shortages, boost imports | YoY: no prior comparable policy signal
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 14,050 VND | RSI: N/A | Vol: 10.58M (149% avg) | YoY: N/A
+
 
 (Price monitoring initiated)
 

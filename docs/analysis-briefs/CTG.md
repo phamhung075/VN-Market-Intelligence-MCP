@@ -17,6 +17,8 @@
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 35,250 VND | RSI: N/A | Vol: 8.81M (223% avg) | YoY: N/A
+
 
 ### 2026-05-01 16:00 EOD
 **Close**: 34,950 VND (+0.43% daily) | **RSI**: N/A | **Volume**: avg

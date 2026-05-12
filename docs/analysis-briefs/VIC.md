@@ -12,6 +12,8 @@
 2026-05-09 | **BULLISH** Chứng khoán lập đỉnh mới, CTCK gọi tên 5 nhóm cổ phiếu có cơ hội — analyst call targets VIC as money-accumulation play in May | YoY: Recovery from May 1 sell-off
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 222,000 VND | RSI: N/A | Vol: 4.02M (170% avg) | YoY: N/A
+
 
 (Price action: +5.70% to +4.20% intraday)
 

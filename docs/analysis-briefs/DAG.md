@@ -6,6 +6,8 @@
 ## [News Scout] Headlines & Sentiment
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-12 16:00 | Close: 1,400 VND | RSI: N/A | Vol: 0 (N/A avg) | YoY: N/A
+
 2026-05-09 16:00 | Close: 1.400 VND | RSI: N/A (market closed) | Vol: N/A (stale) | YoY: N/A
 
 ## [Unified Agent] Quarterly Syntheses

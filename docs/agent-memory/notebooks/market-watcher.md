@@ -258,3 +258,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (16:38–16:50 UTC) — EOD
+- Stocks: 26 priced, 5 N/A (BDI,DLC,SIS,VDC,JSH) | Ledger: 26 written (25 appended, 1 created: HSG)
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Brent: 107.51 | Gold: 4,673.2 | USD/VND: 26,129
+- RSI: N/A all tickers (<35 candles in DB). YoY: N/A (insufficient history).
+- Top movers: VRE +5.51%, GVR +4.46%, GAS +3.94% | Decliners: CTG -0.98% (223% vol), D2D -1.01%, HVN -0.00%
+- MARKET EOD batch sent. WORK telegram sent.
+- Insider: get_insider_signals requires code+outstandingShares — used "no activity" for all tickers.
+- Open alerts: 25 | System: OK
+
+## Metrics (cycle 2026-05-12 16:38 UTC — EOD)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 32 |
+| signals_emitted | 0 |
+| ledger_written | 26 |
+| market_eod_sent | 1 |
+| exit_status | complete |
+| token_estimate | 16000 |
