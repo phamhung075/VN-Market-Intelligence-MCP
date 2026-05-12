@@ -1,0 +1,81 @@
+> Parent: [./docs-organization.md](./docs-organization.md)
+
+# Docs Organization — Auto-File Rules & Enforcement
+
+Automated rules that move misplaced files and validate folder structure.
+
+## Auto-File Rules
+
+Files with these patterns **automatically** go to `docs/archive/`:
+- `*INVESTIGATION*.md`
+- `*_ANALYSIS.md`
+- `AUDIT_*.md`
+- `BCTC_*.md`
+- `DEPLOYMENT*.md`
+- `SPRINT_*` (except active docs/SPRINT_GOAL.md)
+- `IMPLEMENTATION_*.md`
+- `SYSTEM_*.md`
+- `OPS_*.md`
+
+If created in root by mistake → auto-moved to archive/ before next work task.
+
+---
+
+## Archive Purposes
+
+### `docs/historical/` (read-only reference)
+
+- **REQ_NNN** — all feature requirements ever assigned (count volatile, increments each sprint)
+- **TECH_NNN** — all technical specs ever written (count volatile, increments each sprint)
+- Canonical reference for task context and design decisions
+- No deletion, no modification
+- Current counts in `docs/data/project-stats.json`
+
+### `docs/archive/` (read-only reference)
+
+Auto-filed categories:
+- BCTC_*.md (14) — PDF extraction investigations
+- AUDIT_*.md (3) — system audits
+- Investigation/analysis files (20) — findings, root causes, discoveries
+- Operational docs (28) — sprint summaries, deployment reports, system analyses
+- Other historical (24) — tool inventories, blocker analyses, architecture reviews
+- Last migrated 2026-04-25 from cluttered root
+
+---
+
+## Docs Root Canonical Files
+
+**Exactly 8 files (no more):**
+
+1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
+2. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/architecture/global.md`)
+3. `GLOSSARY_VI.md` — Vietnamese financial terms
+4. `SESSION_SUMMARY_*.md` — current session notes
+5. `TASKS_ARCHIVE.md` — done task index by sprint
+6. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
+7. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
+8. `TASKS.md` — active sprint Kanban (≤80 lines, PM-owned)
+
+Two-team architecture lives in `docs/references/agent-roster.md` (no separate root file).
+
+---
+
+## Enforcement Check (Auto-Run)
+
+Before each work task:
+
+```bash
+# Find orphaned files in root docs/
+find docs/*.md \
+  -not -name "ARCHITECTURE.md" \
+  -not -name "AGENT_CREATION_GUIDE.md" \
+  -not -name "GLOSSARY_VI.md" \
+  -not -name "SESSION_SUMMARY*" \
+  -not -name "TASKS_ARCHIVE.md" \
+  -not -name "SPRINT_GOAL.md" \
+  -not -name "WORK.md" \
+  -not -name "TASKS.md" | \
+  xargs -I {} mv {} docs/archive/
+```
+
+This runs automatically before each work task if violations detected.
