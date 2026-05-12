@@ -1,4 +1,4 @@
-> Parent: [../dev-alert-engine.md](../dev-alert-engine.md)
+> Parent: [../../../.claude/agents/dev-alert-engine.md](../../../.claude/agents/dev-alert-engine.md)
 
 # Dev Alert Engine — Knowledge
 

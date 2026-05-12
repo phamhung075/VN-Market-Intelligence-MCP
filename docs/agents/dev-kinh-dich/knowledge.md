@@ -1,4 +1,4 @@
-> Parent: [../dev-kinh-dich.md](../dev-kinh-dich.md)
+> Parent: [../../../.claude/agents/dev-kinh-dich.md](../../../.claude/agents/dev-kinh-dich.md)
 
 # Dev Kinh Dich — Knowledge
 

@@ -1,4 +1,4 @@
-> Parent: [../dev-pdf-extractor.md](../dev-pdf-extractor.md)
+> Parent: [../../../.claude/agents/dev-pdf-extractor.md](../../../.claude/agents/dev-pdf-extractor.md)
 
 # Dev PDF Extractor — Knowledge
 

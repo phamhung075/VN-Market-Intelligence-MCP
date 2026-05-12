@@ -1,4 +1,4 @@
-> Parent: [../agents-architect.md](../agents-architect.md)
+> Parent: [../../../.claude/agents/agents-architect.md](../../../.claude/agents/agents-architect.md)
 
 # Agents Architect — Handler Reference
 

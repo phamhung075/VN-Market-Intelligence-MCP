@@ -1,4 +1,4 @@
-> Parent: [../ops.md](../ops.md)
+> Parent: [../../../.claude/agents/ops.md](../../../.claude/agents/ops.md)
 
 # Ops — Handler Reference
 

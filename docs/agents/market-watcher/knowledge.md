@@ -1,4 +1,4 @@
-> Parent: [../market-watcher.md](../market-watcher.md)
+> Parent: [../../../.claude/agents/market-watcher.md](../../../.claude/agents/market-watcher.md)
 
 # Market Watcher — Knowledge
 

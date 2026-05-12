@@ -1,4 +1,4 @@
-> Parent: [../agent-father.md](../agent-father.md)
+> Parent: [../../../.claude/agents/agent-father.md](../../../.claude/agents/agent-father.md)
 
 # Agent Father — Knowledge Load Policy
 

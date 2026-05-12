@@ -1,4 +1,4 @@
-> Parent: [../dev-mcp-server.md](../dev-mcp-server.md)
+> Parent: [../../../.claude/agents/dev-mcp-server.md](../../../.claude/agents/dev-mcp-server.md)
 
 # Dev MCP Server — Knowledge Load Policy
 
