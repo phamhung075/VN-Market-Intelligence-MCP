@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (03:18–03:23 UTC) 2026-05-12
+- Items: 20 | Impacts: 6 | Signals: [urgent_news×2 HSG/VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) HSG capital raise >8,000B VND post-dividend stock issuance (urgent_news bullish 9/10 #2968, chain cascade to steel sector HPG/NKG). (2) VIC Vingroup lawsuit wins — defendants removed articles, apologized, fined (urgent_news bullish 8/10 #2969). VRE +4.46% early session notable.
+- Suppressed: FPT fund bottom-fishing (chain scored 4/10 neutral — below threshold; fetch_analyze gave 7/10 but chain conservative), EIB/STB banking personnel neutral 7 (no direction), VinFast 1500 EV order neutral 6, BSR refinery rename neutral 6, gold/Brent 0% change today, AgriS insider buy 9 (not on watchlist)
+- Notes: VIC/FPT articles recurring again — alert-commander dedup expected. HSG already had MEDIUM alert at 03:01 from alert-commander; signal fired for agent bus. Market OPEN.
+
 ### Cycle (02:17–02:25 UTC) 2026-05-12
 - Items: 20 | Impacts: 2 | Signals: [urgent_news×1 VIC, chain_catalyst×1 FPT] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]

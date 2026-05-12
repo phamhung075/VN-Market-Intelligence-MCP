@@ -158,9 +158,23 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 - If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log
 
 ```
+# Step 1 — open work log (returns id)
 call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "status": "running",
   "action": "news-scout-cycle",
   "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" }
+})
+# → { "id": <log_id> }
+
+# Step 2 — close work log (required: agent_name, id, status)
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "id": "<log_id from step 1>",
+  "status": "completed",
+  "action": "news-scout-cycle",
+  "context": { "items": N, "impacts": M, "signals_fired": X, "regime": "<REGIME>" },
+  "signal_ids": ["<signal_id_1>"]
 })
 ```
 

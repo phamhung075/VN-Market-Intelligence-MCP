@@ -387,3 +387,18 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - **actions**: WORK telegram sent (02:04 UTC, clean). Notebook appended.
 - **next_cycle_hint**: Watch FPT at open — was 70,000 flat, VN-Index recovery to 1,920 may lift tech. Gold reversal is key macro shift — if sustained, TIGHTENING pressure may ease. HCM -6.90% at open — watch if securities sector contagion. BCTC 7 banks due May 15 (3 days) — earnings triggers ready. BUG #2855 HEAD.lock at 3h — escalate if still present at 03:30 cycle.
 - **estimated_tokens**: 9000 (18 tool calls)
+
+### Coordination Cycle (03:00–03:07 UTC) — 2026-05-12
+- Mode: MARKET (open) | System: OK (all CBs green, vnstock RATE_LIMITED OIL/D2D/ACB transient/known, Reuters/TE offline persistent) | Alerts: 16 open (+1 NEW: HSG capital raise >8,000 tỷ MEDIUM) | Quality issues: 0 new (price_drop 40% / price_surge 0% — already filed, dedup skip)
+- Regime: TIGHTENING (unchanged) | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+
+## Cycle — 03:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**:
+  - System OK: all CBs clear, rate limits 11/11, vnstock RATE_LIMITED OIL/D2D/ACB (WARN/transient). Reuters/TE offline (persistent/known). 1 new Telegram report (2856: VNM BCTC low confidence, from analysis-agent, <4h → no escalation). Legal: CLEAR. Crisis: CLEAR.
+  - FPT: 71,100 (+1.57%) — recovery from yesterday's 70,000 close. Portfolio VaR -0.1%. Conviction 0.55 GIẢM BỚT (from 0.60 at 02:04, shift -0.05 <0.3). Kinh Dịch: Kiển (39) GIU 48%. FII: HOT_MONEY (persistent, no new flow data). Alignment 1.0.
+  - NEW event: HSG capital raise >8,000 tỷ via stock dividend (MEDIUM news_mention 03:01). Not a special event trigger. GAS HIGH alert (oil +3%, US market at highs). No conviction shifts ≥0.3. Climate: seasonal heat risk (not portfolio-relevant). Energy: NORMAL. Supply chain: STABLE.
+- **actions**: WORK telegram sent (03:07 UTC, clean). Notebook appended.
+- **next_cycle_hint**: BCTC 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (3 days) — PRIORITY. FPT recovery +1.57% — watch if sustained through session. FII pipeline still paused (foreign flow unavailable). HSG capital raise: monitor if conviction triggers on price reaction.
+- **estimated_tokens**: 8500 (17 tool calls)
