@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (02:17–02:25 UTC) 2026-05-12
+- Items: 20 | Impacts: 2 | Signals: [urgent_news×1 VIC, chain_catalyst×1 FPT] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) VIC Vingroup wins lawsuit vs 68 defendants (urgent_news bullish 8/10 #2965, conf 86%, chain→VHM/VRE/D2D). (2) FPT fund unexpected dip-buy after multi-year low (chain_catalyst bullish 7/10 #2966, conf 75% → FPT/SIS). Market OPEN. FPT +2.00%, GAS +1.63%, VRE +1.64% early session.
+- Suppressed: EIB/STB banking personnel neutral 7 (no direction), HVN shareholder notice neutral 7 (no catalyst), VinFast 1500 EV order neutral 6, AgriS/SBT insider buy 9 (not on watchlist), oil +3% (below 5% threshold), gold 0% today (no weekly spike confirmed)
+- Notes: VIC/FPT articles recurring across cycles — alert-commander dedup expected. CARRY_REGIME=FII_OUTFLOW_RISK: foreign net sold 14,100 tỷ VND, VND carry -33bp. GAS already has HIGH alert from 02:13 cycle for oil +3%.
+
 ### Cycle (00:15–00:28 UTC) 2026-05-12
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst×2 HSG/GAS, urgent_news×1 VCB] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
