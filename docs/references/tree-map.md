@@ -187,6 +187,24 @@ CLAUDE.md (root — always loaded)
 └── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
 ```
 
+## Agent File Splits (Wave 2A)
+
+Children created by zone-enforcement-and-split-policy brief — lazy-loaded from parent agent on trigger:
+
+```
+.claude/agents/agents-architect.md (parent)
+│   └── .claude/agents/agents-architect/handlers.md (brief-commit invariant + operating cycle)
+│
+.claude/agents/ops.md (parent)
+│   └── .claude/agents/ops/handlers.md (Step 0-b bootstrap errors + flow catalog + inter-agent routing)
+│
+.claude/agents/agent-father.md (parent)
+│   └── .claude/agents/agent-father/knowledge.md (full lazy_load policy — guide parts + non-guide)
+│
+.claude/agents/dev-mcp-server.md (parent)
+│   └── .claude/agents/dev-mcp-server/knowledge.md (lazy_load table + Step 0-b handler + doc_maintenance rules)
+```
+
 ## Deleted Files (merged into parents)
 
 | Deleted | Content moved to |
