@@ -1,198 +1,59 @@
-# Commit Convention — SSOT
+# Commit Convention — SSOT (Index)
+
+<!-- size-justification: 48L — thin index after Wave 4 split. Children: commit-convention-format.md (format/type/scope/trailers/AC), commit-convention-exemptions.md (no-sprint/C2/C3), commit-convention-examples.md (worked/merge/notebook). -->
 
 **Load when:** writing commits, reviewing PRs, automated validation.
 
 **Enforced by:** `developer`, `fixer`, `qa`, pre-commit hooks (future).
 
-**File size note:** 196L (>120 due to atomic reference tables: Format/Scope rules, Type vocabulary, C2/C3 exemptions, and Worked examples. These are cross-referenced as a unit and don't split cleanly without fragmenting the SSOT. Kept as single reference for integrity.
+---
+
+## Children — load only what you need
+
+| Topic | File |
+|---|---|
+| Format · Shell heredoc · Type vocab · Scope rules · Task ID · Trailers · AC style | [`commit-convention-format.md`](./commit-convention-format.md) |
+| No-Sprint Rule · C3-Exempt · C2-Exempt | [`commit-convention-exemptions.md`](./commit-convention-exemptions.md) |
+| Worked Example · Merge Commits · Notebook Commits | [`commit-convention-examples.md`](./commit-convention-examples.md) |
 
 ---
+
+## Section Redirects (back-compat for `§ X` references)
+
+Callers that say `commit-convention.md § X` should still find the section here, then follow to the child.
 
 ## Format
-
-```
-<type>(<sprint>/<area>): <task-id> <one-line title>
-
-<optional body — wrap at 72 cols>
-
-Sprint: <number>
-Task: <task-id>
-AC: <slash-separated acceptance criteria, terse>
-```
-
-### Shell Pattern (heredoc — always use this mechanism)
-
-```bash
-git commit -m "$(cat <<'EOF'
-<type>(<sprint>/<area>): <task-id> <one-line title>
-
-<optional body>
-
-Sprint: <sprint>
-Task: <task-id>
-AC: <terse criterion 1> / <terse criterion 2> / <terse criterion N>
-EOF
-)"
-```
-
-**Mandatory rule:** Use `git commit -m` (index-only) exclusively. **NEVER use `git commit -am` or `git commit -a`** — the `-a` flag greedily stages untracked index content from concurrent agent writes, violating C2 atomicity. Root cause of c47 incident (`8bec73d3`). Enforced by merge gate Control 4 (`scripts/audits/c2-alert.sh`).
-
----
+→ See [`commit-convention-format.md § Format`](./commit-convention-format.md#format)
 
 ## Type Vocabulary
-
-| Type | When |
-|------|------|
-| `feat` | New capability, tool, or user-visible behaviour |
-| `fix` | Bug fix — broken behaviour corrected |
-| `chore` | Scaffolding, config, maintenance — no behaviour change |
-| `test` | Test-only change (no production code) |
-| `docs` | Documentation only |
-| `refactor` | Internal restructure — no behaviour change, no new tests |
-
----
+→ See [`commit-convention-format.md § Type Vocabulary`](./commit-convention-format.md#type-vocabulary)
 
 ## Scope Rules
-
-- Scope format: `<sprint>/<area>` — e.g. `feat(1863/scheduler):`
-- `<sprint>` = sprint number (integer)
-- `<area>` = domain noun — canonical list (kept in sync with audit script VOCAB):
-  `agent-doc`, `agents`, `agents-architect`, `alert-accuracy`, `alerts`, `api-gateway`,
-  `arch`, `architecture`, `audit`, `cleanup`, `commit-convention`, `crons`, `cycle`,
-  `data`, `db`, `deploy-verification`, `dev-team`, `docker`, `flow`, `flows`,
-  `infra`, `janitor`, `knowledge`, `market-watcher`, `mcp`, `mcp-server`, `mcp-tool`,
-  `memory`, `merge`, `microservice`, `notebooks`, `pm`, `qa`, `rag`, `readme`,
-  `registry`, `routing`, `scan-market`, `scheduler`, `sessions`, `signals`, `skill`,
-  `skills`, `ssot`, `state`, `system-auditor`, `ta-alert-notifier`, `tasks`,
-  `telegram`, `tree-map`, `types`, `vps`
-- Sprint/task IDs used as sole area token (e.g. `1872a`, `1864b`) are accepted
-  but discouraged — prefer `<sprint>/<area>` (e.g. `feat(1872a/flows):`).
-
----
+→ See [`commit-convention-format.md § Scope Rules`](./commit-convention-format.md#scope-rules)
 
 ## Task ID Format
-
-- Always `NNNN<a-z>` lowercase — e.g. `1863b`, `1866a`
-- Single task: `Task: 1863b`
-- Multiple tasks in one commit: comma-separate — `Task: 1863a, 1863h`
-
----
+→ See [`commit-convention-format.md § Task ID Format`](./commit-convention-format.md#task-id-format)
 
 ## Trailers
-
-Three machine-parseable git trailers on all sprint commits:
-
-```
-Sprint: <number>
-Task: <task-id>
-AC: <slash-separated list>
-```
-
-Query trailers after the fact:
-```bash
-git log --grep="Sprint: 1863" --pretty="format:%h %s%n%(trailers:key=Sprint)%(trailers:key=Task)%(trailers:key=AC)"
-```
-
----
-
-## No-Sprint Rule
-
-Commits with no sprint context (hotfix, doc tweak, repo maintenance): **omit Sprint/Task/AC trailers entirely**. Use the scope to carry context instead:
-
-```
-fix(infra/docker): correct volume mount path
-docs(knowledge/commit-convention): fix worked example typo
-chore(vps): rotate Vinahost SSH key
-```
-
----
-
-## C3-Exempt Commit Categories
-
-These commit types carry `Task:` trailer for tracking but are **not required** to carry `AC:` trailer — the auditor skips them:
-
-| Pattern | Example | Reason |
-|---|---|---|
-| `chore(memory/<id>): ...` | `chore(memory/qa): notebook 2026-05-11` | Notebook commit, no task delivery |
-| `chore(state...): ...` | `chore(state): 1877c → In Progress` | Pipeline bookkeeping |
-| Subject contains `merge task/` | `chore(1869/mcp-server): merge task/1869a-...` | AC lives on the feat/fix commit |
-
----
-
-## C2-Exempt Commit Categories
-
-These commit types are excluded from the C2 denominator — they contain a digit in scope but do not deliver sprint tasks:
-
-| Pattern | Example | Reason |
-|---|---|---|
-| `chore(cycle-NN): ...` | `chore(cycle-28): persist 1872a artifacts` | Digit is cycle number, not sprint ID |
-| `chore(pm/cNN): ...` | `chore(pm/c26): add Done rows from TNB c36` | Digit is cycle reference |
-| `chore(pm/NNNN*): ...` | `chore(pm/1862c): decompose RCA brief` | PM sprint bookkeeping, no code delivery |
-| Sprint-scoped chore containing `merge task/` | `chore(1869/mcp-server): merge task/1869b-...` | AC lives on the feat/fix commit |
-
----
-
-## Worked Example (Sprint 1863, Task 1863b)
-
-```
-feat(1863/scheduler): 1863b verdictResolutionJob hourly resolver
-
-Reads pending alerts from store, fetches current price,
-flips to confirmed/false_positive based on direction match.
-Fail-loud on price fetch error.
-
-Sprint: 1863
-Task: 1863b
-AC: cron 0 * * * * / pending→confirmed|false_positive / fail-loud on price error / 24h window
-```
-
----
+→ See [`commit-convention-format.md § Trailers`](./commit-convention-format.md#trailers)
 
 ## AC Trailer Style
+→ See [`commit-convention-format.md § AC Trailer Style`](./commit-convention-format.md#ac-trailer-style)
 
-- Terse — enough to recall what passed, not a full spec rewrite
-- Slash-separated on a single line: `AC: criterion 1 / criterion 2 / criterion N`
-- No trailing slash
+## No-Sprint Rule
+→ See [`commit-convention-exemptions.md § No-Sprint Rule`](./commit-convention-exemptions.md#no-sprint-rule)
 
----
+## C3-Exempt Commit Categories
+→ See [`commit-convention-exemptions.md § C3-Exempt Commit Categories`](./commit-convention-exemptions.md#c3-exempt-commit-categories)
+
+## C2-Exempt Commit Categories
+→ See [`commit-convention-exemptions.md § C2-Exempt Commit Categories`](./commit-convention-exemptions.md#c2-exempt-commit-categories)
+
+## Worked Example
+→ See [`commit-convention-examples.md § Worked Example (Sprint 1863, Task 1863b)`](./commit-convention-examples.md#worked-example-sprint-1863-task-1863b)
 
 ## Merge Commits
-
-Merge commits bundle multiple tasks. Use `chore` or `feat` type, sprint-scoped. `Task:` trailer is optional (use only if merging a single task branch):
-
-```
-chore(1863/scheduler): merge task/1863b-verdict-resolution-job
-```
-
-Format: follow `docs/policies/commit-convention.md` — type and sprint scope required; `Task:` trailer omitted when merging multi-task branches.
-
----
+→ See [`commit-convention-examples.md § Merge Commits`](./commit-convention-examples.md#merge-commits)
 
 ## Notebook Commits
-
-Agents commit their notebook at end of each work cycle. **No Sprint/Task/AC trailers** — memory update, not task completion.
-
-Format: `chore(memory/<agent-id>): notebook YYYY-MM-DD`
-
-Shell pattern:
-```bash
-git add docs/agent-memory/notebooks/<agent-id>.md
-git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
-```
-
-Worked example:
-```
-chore(memory/developer): notebook 2026-05-10
-```
-
-Query per-agent history:
-```bash
-git log --follow --oneline -- docs/agent-memory/notebooks/developer.md
-git log --follow -p -- docs/agent-memory/notebooks/developer.md | head -60
-```
-
-Rules:
-- Scope is always `memory/<agent-id>` — agent ID must match the notebook filename (e.g. `tran-ngoc-bau`, not `tnb`)
-- Date is the session date (YYYY-MM-DD), not commit timestamp
-- No Sprint/Task/AC trailers — omit entirely
-- One commit per agent per cycle — do not batch multiple agents into one commit
+→ See [`commit-convention-examples.md § Notebook Commits`](./commit-convention-examples.md#notebook-commits)
