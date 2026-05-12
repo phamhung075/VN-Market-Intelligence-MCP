@@ -96,3 +96,29 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - **next_cycle_hint**: BCTC 7 banks due 2026-05-15 (2 days — ACB/BID/CTG/EIB/MBB/VCB/VPB). Daily-review 23:00 UTC next. Monitor VN-Index rotation/liquidity theme overnight.
 - **estimated_tokens**: 2500 (4 tool calls)
 - **Pillars**: M2=✗ COC=✓ (Brent $107.79, carry -0.33%) EPS=✗ (BCTC overdue) POL=✗ → 1/4 (off-schedule probe, no conviction output)
+
+### Coordination Cycle (14:00–14:09 UTC) — 2026-05-12
+- Mode: MARKET (off-schedule 14:00 UTC, market CLOSED) | System: OK (all 16 CBs green, vnstock rate-limit WARN on ACB/VCB/SSI, news sources degraded but last push 1.5h ago) | Alerts: 17 open | Quality issues: price_drop 17%, price_surge 33% (<60%) → feedback filed
+
+## Cycle — 14:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**: Market CLOSED (prices as of 08:17 UTC). REGIME=NEUTRAL (corrected: DXY~98, US10Y NEUTRAL, Carry -0.33% per yesterday digest). FPT 70,600 (-12.1%, -48.5M VND), conviction 0.49 MODERATE GIẢM BỚT, RSI 25.8 oversold, Kinh Dịch Kiển(39) GIU 48%. Brent $107.94 (+2.23σ HIGH). No legal/crisis signals. Supply chain stable. Energy grid normal. 97% alerts unreviewed (unknown accuracy). Banking BCTC deadline 2026-05-15 (3 days: VCB/BID/EIB/MBB/ACB/CTG/VPB). FPT BCTC Q1 overdue 12d. VCBF + whale exiting VIC, holding FPT. SGI Capital accumulating FPT.
+- **actions**: WORK telegram sent (14:09 UTC, clean + methodology flags). Feedback filed: alert_quality MEDIUM. No conviction shifts.
+- **next_cycle_hint**: BCTC banks due 2026-05-15 (ACB/BID/CTG/EIB/MBB/VCB/VPB) — EPS pillar event. FPT oversold RSI 25.8. Daily-review 23:00 UTC next.
+- **estimated_tokens**: 10500 (21 tool calls)
+- **Pillars**: M2=✗ (data not available) COC=✓ (carry -0.33%, Brent $107.94 inflationary) EPS=✓ (BCTC overdue but SGI Capital accumulating = implicit bullish EPS view) POL=✗ → 2/4 [Methodology gap logged]
+
+### Coordination Cycle (15:01–15:08 UTC) — 2026-05-12
+- Mode: MARKET (off-schedule 15:00 UTC, market CLOSED) | System: OK (all 16 CBs green, CTG rate-limit WARN vnstock, RSS degraded/flowing) | Alerts: 17 open | Quality: 22% accuracy < 60% → feedback filed HIGH
+
+## Cycle — 15:00 UTC
+
+- **cycle_date**: 2026-05-12
+- **trigger**: Off-schedule (15:00 UTC not in defined slot) — automated run
+- **regime_transition**: NEUTRAL → TIGHTENING (Brent $107.89 +2.23σ, Inflation 8%, SBV 5%, Carry -0.33%)
+- **findings**: Market CLOSED. VN-Index recovered to 1,909 (from 1,896 morning open, -1.04%). FPT 70,600 +0.86% today, conviction 0.49 MODERATE GIẢM BỚT, Kinh Dịch Kiển(39) GIU 48%, RSI 25.8 oversold. ALIGNMENT_SCORE=1.0 (FPT=tech_export=TAILWIND). Key FPT signals: FPT Telecom regulatory risk (POL), VCBF+whale holding FPT (bullish institutional). BCTC Q1 overdue 12d (all watchlist). Banking BCTC deadline 2026-05-15 (3d: ACB/BID/CTG/EIB/MBB/VCB/VPB). No conviction shift ≥0.3. No legal/crisis signals. Prediction market: China/Taiwan 50.5% YES (neutral). Alert accuracy: 22% (score filed HIGH).
+- **actions**: WORK telegram sent (15:05 UTC) with REGIME_TRANSITION. Feedback filed: alert_quality HIGH. Notebook appended.
+- **next_cycle_hint**: Banking BCTC 2026-05-15 = EPS pillar trigger. Daily-review 23:00 UTC next. Monitor FPT RSI oversold recovery + Telecom regulatory outcome.
+- **estimated_tokens**: 9000 (17 tool calls)
+- **Pillars**: M2=✗ (not available) COC=✓ (Brent $107.89 +2.23σ, carry -0.33%, inflation 8%) EPS=∂ (BCTC overdue 12d, oversold RSI proxy) POL=✓ (FPT Telecom compliance risk) → 2/4 [Methodology gap logged to WORK]

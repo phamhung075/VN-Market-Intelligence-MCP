@@ -2,6 +2,20 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (15:21–15:24 UTC) 2026-05-12
+- Items: 20 | Impacts: 3 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) CTG VietinBank Securities 59.5M share dividend — impact chain 6/10, below ≥7 threshold → suppressed. (2) FII foreign net selling 800B VND, VIC heaviest — impact 4, watchlist hit but below threshold. (3) HPG 800M shares dividend delivery — impact 5, neutral, below threshold. (4) Brent 107.89 (+2.23σ) — already HIGH alerted 08:15 UTC, no duplicate. No PMI data found. No chain_catalyst triggers.
+- Suppressed: CTG dividend (impact 6). VIC FII selling (impact 4). HPG shares delivery (impact 5).
+- Notes: Market CLOSED (off-hours cycle 15:21 UTC). No new signal since 14:20 cycle.
+
+### Cycle (14:20–14:23 UTC) 2026-05-12
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 STB/banking] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) STB near ceiling after senior leadership change, 7M shares, new peak — chain_catalyst banking sector bullish #2999. (2) VN-Index at 1,900, real estate rotation — neutral context. (3) Gold domestic fell 2.3M VND/tael — no gold spike trigger. (4) Brent 107.94 (+2.23σ) — not >5% vs prior month, CPI rule not triggered. (5) Pharma M&A (Chinese takeover) — impact 6, DHG uncertain attribution, suppressed.
+- Suppressed: Gold spike (domestic fell). Brent (below 5% monthly threshold). Pharma M&A (uncertain DHG attribution). VN-Index BĐS rotation (below confidence floor).
+- Notes: Market CLOSED (off-hours cycle 14:20 UTC). Strong movers today: VRE +5.51%, GVR +4.46%, GAS +3.94%. Banking broadly mild red. STB not on watchlist but banking sector catalyst posted.
+
 ### Cycle (13:21–13:25 UTC) 2026-05-12
 - Items: 20 | Impacts: 0 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
