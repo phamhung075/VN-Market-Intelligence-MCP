@@ -16,11 +16,15 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 Main terminal is the router; sub-agents cannot spawn each other.
 
-- **Match request → agent:** `docs/references/agent-routing.md` (intent table)
-- **Handoff chain:** sub-agent returns `NEXT: <agent>` → main terminal spawns it with prior return as context
-- **Loop** until `PIPELINE: complete` or `PIPELINE: blocked` → idle
+**Auto-switch** — for any user demand OR cron tick:
+1. Match intent → agent via `.claude/skills/dispatch/SKILL.md` (SSOT dispatch table)
+2. Spawn target agent with `run .claude/flows/<agent>/main.md` — every agent has a `main.md` dispatcher that picks the right sub-flow
+3. Read RETURN block → if `PIPELINE: continue` and `NEXT: <agent>`, spawn the next agent the same way
+4. Loop until `PIPELINE: complete` or `blocked` → idle
 
-Protocol: `docs/protocols/agent-chaining-protocol.md`
+Cooperation: cowork agents drop `docs/signals/*.json` (dev-team drains at Step 0a); dev-team agents write `docs/pipeline-state.json` + `docs/handoffs/TASK_NNN.md`.
+
+Protocol: `docs/protocols/agent-chaining-protocol.md` · Routing/cooperation SSOT: `.claude/skills/dispatch/SKILL.md`
 
 ---
 

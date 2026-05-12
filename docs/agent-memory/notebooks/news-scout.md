@@ -2,6 +2,13 @@
 
 **Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
 
+### Cycle (19:15–19:27 UTC) 2026-05-12
+- Items: 20 | Impacts: 12 | Signals: [chain_catalyst×2 STB/banking, GAS/macro-CPI] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: (1) STB near-ceiling after senior leadership change → chain_catalyst #3011 (bullish, banking, conf 0.82, affects VCB/BID/EIB/MBB/ACB/CTG/VPB). (2) Brent 107.91 (+2.23σ above mean 104.57) — CPI pressure rule triggered (>5% above baseline, macro alert HIGH) → chain_catalyst #3012 (bearish, macro/SBV tightening risk, conf 0.80, cpi_pressure_risk=true). (3) Multiple CTCK lowering VN-Index 2026 forecast (impact 8, context only). (4) FII net selling 800B VND, VIC heaviest (impact 5, below threshold). (5) VRE +5.51% already alerted 03:19 UTC, no duplicate. No PMI data found.
+- Suppressed: CTCK forecast cuts (no specific catalyst). FII selling VIC (impact 5). VRE surge (already alerted). HPG 800M shares (neutral, impact 5).
+- Notes: Market CLOSED (off-hours cycle 19:15 UTC). Brent CPI rule triggered this cycle (prior cycles suppressed as "not >5% monthly" — macro alert HIGH overrides). STB duplicate of 14:20 chain_catalyst — new data confirms near-ceiling price action, re-fired with banking watchlist expanded.
+
 ### Cycle (16:19–16:21 UTC) 2026-05-12
 - Items: 20 | Impacts: 8 | Signals: [urgent_news×1 CTG, chain_catalyst×1 VIC/FII] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
@@ -256,6 +263,13 @@
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
 - Key: ACB Âu Lạc 5%→6% stake escalation (bullish, conf 84%, regime_adj=8.0) → urgent_news. FII capital inflow narrative (impact 6, neutral) suppressed — below threshold. Brent CRITICAL alerts already captured in prior cycle — suppressed dedup. No PMI data. VN-Index 2000 target narrative sustained.
 - Note: get_macro_snapshot not in news-scout tool package → REGIME defaulted NEUTRAL. Estimated tokens: 6500 (13 tool calls × 500).
+
+### Cycle (18:20–18:25 UTC 2026-05-12) — off-hours run
+- Items: 20 | Impacts: 5 (≥6) | Signals: [chain_catalyst×1 (#3008)] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds]
+- Key: VN-Index áp sát đỉnh lịch sử ~1,920 + nhiều CTCK hạ dự phóng 2026 + cảnh báo 'xanh vỏ đỏ lòng' → chain_catalyst macro bearish 9/10 #3008 (regime_adj=9.0, conf 0.82). Affects VIC/VHM/VRE/D2D/FPT/SSI/VCI/HCM/VCB/BID/ACB/CTG/MBB/VPB/EIB/GAS/HPG/HSG/NKG. FII bán ròng 800tỷ VND phiên 12/5 (VIC hardest hit) → impact 4/10, below threshold, suppressed. STB 10/10 bullish (senior exec change) → not on watchlist, suppressed. Brent 107.22 (+2.23σ) already HIGH alerted 08:15, no duplicate. Gold 4683.2 (-1.14σ) no spike. No PMI data.
+- Suppressed: STB (not watchlist), FII/VIC (impact 4), Brent (already alerted), Gold (no spike).
+- Notes: Market CLOSED (off-hours). Historical context: LanceDB empty (0 matches). Carry confirmed NEUTRAL (no macro snapshot in bootstrap).
 
 ### Cycle (17:20–17:22 UTC 2026-05-12) — off-hours run
 - Items: 20 | Impacts: 5 (≥6) | Signals: [chain_catalyst×1 (#3006)] | Regime: NEUTRAL | Carry: default

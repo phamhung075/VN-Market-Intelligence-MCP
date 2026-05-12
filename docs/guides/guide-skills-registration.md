@@ -51,8 +51,8 @@ After creating agent files, register in:
 
 | File | What to add |
 |------|-------------|
-| `docs/references/agent-routing.md` | Routing intent table row (if user-invocable) |
+| `.claude/skills/dispatch/SKILL.md` | Dispatch table entry (SSOT for Intent → Agent — if user-invocable) |
 | `docs/references/agent-roster.md` | Team section entry (SSOT for team design) |
-| `.claude/skills/dispatch/SKILL.md` | Dispatch table entry |
+| `docs/references/agent-routing.md` | Only if a new routing *principle* needs documenting — never duplicate the intent table |
 
 For cron-scheduled: `.claude/commands/crons/cron-<agent-id>.md`
