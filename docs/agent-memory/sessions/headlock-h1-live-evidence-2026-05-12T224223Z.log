@@ -1,0 +1,22 @@
+# LIVE HEAD.LOCK POST-CONCURRENT-COMMIT EVIDENCE — c57
+captured_at: 2026-05-12T224223Z
+trigger: agent-father c57 merge-gate; concurrent market-watcher cron commit b9056f34 just landed
+previous_evidence: docs/agent-memory/sessions/indexlock-race-evidence-2026-05-12T224153Z.log
+
+## Sequence reconstructed:
+1. agent-father c57 FIX shipped 3 commits 749a0b02, 3ff05127, 602a96bc
+2. agent-father attempted merge-gate retry — caught market-watcher's index.lock
+3. market-watcher's git commit completed → SHA b9056f34
+4. HEAD.lock now present (size=0) — H1 hypothesis live observation
+
+## HEAD.lock state
+age=43s size=0B
+creation_ts: 2026-05-13T00:41:40Z
+content (if any):
+
+## live git procs at capture time
+(none)
+
+## lsof
+COMMAND     PID  USER   FD   TYPE DEVICE SIZE/OFF     NODE NAME
+com.apple 51247 admin *631r   REG    1,4        0 29067863 .git/HEAD.lock
