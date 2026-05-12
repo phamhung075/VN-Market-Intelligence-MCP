@@ -352,3 +352,15 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
   - Notebook appended (uncommitted — git lock blocked)
 - **next_cycle_hint**: Banking BCTC (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 4 days — priority. Monitor git HEAD.lock resolution.
 - **estimated_tokens**: 4500
+
+### Daily Review (00:02 UTC)
+- Mode: DAILY_REVIEW | Freshness: news 0.2h ✅ | prices 15h stale (market closed, expected ✅) | BCTC 19.3h ✅
+- System: OK | Circuit breakers: all green (0 open) | Rate limits: HVN (finance/balance_sheet exhausted), HSG (cash_flow exhausted) — transient
+- Alerts 24h: 25 sent, 4 HIGH/CRITICAL, 0 unnotified | Last alert 17:07 UTC
+- News 24h: 10 articles — bearish bias | VN-Index -20pts Mon, FPT -2.64% (multi-year low, FII net sell 14,100B), VRE -6.41%, Vingroup broad sell-off
+- Bugs (observed — not claimed): #2854 news freshness stale (22:04 UTC, condition now resolved) | #2855 git HEAD.lock (now resolved — no lock present)
+- Reuters RSS: 46 failures (persistent, known) | Trading Economics: 46 failures (persistent, known)
+- Pending feedback: 32 items | Open high/critical warnings: 18
+- Telegram WORK: summary sent ✅
+- next_cycle_hint: Banking BCTC (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 3 days — PRIORITY. Market open 02:00 UTC Tue.
+**Exit:** COMPLETE
