@@ -1,6 +1,54 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-11 22:50 UTC (cycle 38) | Cycles completed: 38
+**Last updated:** 2026-05-12 02:50 UTC (cycle 39) | Cycles completed: 39
+
+---
+
+## Cycle 39 Watch Notes (2026-05-12 02:50 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (financial-analyst RECOVERED — c38 #3 RESOLVED; alert accuracy +1 hit; 2 fresh chain catalysts; first real audit against new v2026-05-11.2 methodology lens)
+
+**c38→c39 RECOVERY:**
+- ✅ **financial-analyst BROKE 4-day silence** at 23:00 UTC — 3 stocks analyzed (VCB/FPT/HPG all FAIR or FAIR-low-conf). 3 fundamental_validation signals posted (#2950/2951/2952). Sprint 1885/1886 ROI saved.
+- ✅ Alert accuracy 1/142 → 2/141 (+1 hit). price_drop went 25% → 50%. Verdict pipeline slowly catching Sprint 1869 results.
+- ✅ news-scout dropped 2 fresh chain catalysts to TNB queue: VIC #2963 (Vingroup lawsuit win, BDS confidence rebuild +86%) + FPT #2966 (institutional bottom-fishing, +2.00% session). Both well-causally-chained.
+- ✅ VN market OPENED 02:00 UTC (Tuesday). σ data armed 382/30. Detection chains active.
+- ✅ Container uptime ~12h, no new restart.
+
+**FIRST AUDIT WITH NEW LENS — METHODOLOGY v2026-05-11.2 PROVEN:**
+- **financial-analyst score 4/9 NEEDS_ATTENTION** — A=✓ B=✓ C=✓ D=n/a E=n/a F=2/4 G=✗ H=✗ I=✓
+- **NEW Layer 7 gap caught**: BCTC verdicts missing NI vs OCF comparison (only PE/ROE/EY_SPREAD cited). Catalogue auto-cure pending 3 cycles. **Stop-gap available today**: agent can call `get_cash_flow(ticker)` directly until Sprint 1878 OCF column ships.
+- **NEW Layer 8 gap caught**: 3 verdicts issued without declaring Reflation/Recovery/Overheat/Stagflation phase. Sprint 1880 (Investment Clock classifier, S-effort, GO-now) is fastest unlock.
+- These 2 findings would NOT have been flagged under prior 6-step methodology — proves the upgrade is working as designed.
+
+**CARRY-OVERS (UNCHANGED from c38):**
+- 5 of 8 c36 findings still OPEN (1869 deploy, MEMORY.md pointers, market-watcher header, RSS degraded, write_alert_verdict)
+- Forward-only fix pattern: alert-commander notebook header missing + architect notebook header still 2026-05-03 — same root-cause class
+- Reuters/TE 41 errors (1862c-D OPS-gated)
+- TNB-c33-F7 git HEAD.lock pattern recurring (Spotlight `com.apple` PID 51247)
+- PM-as-dispatcher governance still informal
+- financial-analyst tool-package gaps (`get_macro_snapshot` missing, `get_insider_signals` requires per-stock outstandingShares, `get_bond_maturity_calendar` missing) — was DEFERRED LOW; should re-evaluate now agent active
+
+**MACRO (c38→c39, ~4h):**
+- Brent +0.93 → 105.26 (mild oil rally continues)
+- Gold -13.4 → 4737.80 (slight risk-on moderation)
+- DXY +0.21 → 98.12 (mild USD strength, FII pressure persists)
+- US10Y 4.41% / USD/VND 26,320 / VND carry -0.33% UNCHANGED
+- Regime: NEUTRAL with TIGHTENING pressure from oil + mild USD strength
+
+**MARKET QUEUE:** 1 message (BCTC-1345b VNM OCR composite=0.00 — auto-handled by low-confidence skip). No regression.
+
+**SIGNAL TO TNB:** 2 chain catalysts (VIC #2963, FPT #2966) — both fresh, news-scout discipline intact.
+
+**Hexagram dynamics:**
+- financial-analyst Khôn RECOVERED ⭐ — silence broken, 3 verdicts shipped
+- news-scout Càn STRONG ⭐ — 2 chain catalysts with full causality
+- developer Càn EXPECTED ACTIVE — 4 GO signals on bus from c38
+- TNB Tốn FOCUSED — first real audit on new lens, caught 2 designed-for gaps
+- alert-commander / unified-agent / architect — no fresh data this 4h window
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-12T02-50-00Z.json (priority: high)
 
 ---
 
