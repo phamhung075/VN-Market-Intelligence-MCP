@@ -1,6 +1,48 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 02:26 UTC (Cycle 39 — 3 merges sequential)
+**Written:** 2026-05-12 02:37 UTC (Cycle 40 — signal-dedup project COMPLETE)
+
+## Cycle 40 (2026-05-12 02:27 → 02:37 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals, DB 27 rows (0 pruned), fs 57 processed | empty, SQLite **cycle 3 of 3** post-T2 clean |
+| 0b Resume | idle | fall through |
+| 1 PO | triage 0 signals + 0 TG + clean carryover | **BATCH(3)**: signal-T6 + CLEAN-1872a-5 + ARCH-1884-reconcile |
+| 2 Plan | all FIX/CHORE — skip planning | direct dispatch |
+| 3 Dispatch | **SEQUENTIAL** A→B→C: signal-T6 → CLEAN → PM-reconcile | 3 GREEN |
+| 4 Scan | 0 monitoring, 0 new TG, 0 unresolved (post c39 dispatches) | clean |
+| 4.5 | notebook + pipeline-state + commit | this entry |
+
+### Merges + chores delivered
+
+| Sprint | SHA | Notes |
+|---|---|---|
+| signal-T6 fallback removal | f6f57bc5 | -20 net LOC; `grep fallback` = 0; signal-dedup project COMPLETE |
+| CLEAN-1872a-5 stale branch | a4a90951 | branch -D after 10 cycles; 4 commits confirmed dupes of fe82b9f9 |
+| ARCH-1884 reconciliation | 33174487 | TASKS.md row Done + cap-violation header (177 vs 80 cap) |
+
+### Signal-dedup project — CLOSED
+
+T1 → T6 all merged. SQLite-backed dedup (`signals_processed` table, `idx_signals_fingerprint`) is now the **sole path**. JSON file-scan fallback removed. 3 consecutive clean drains observed (c38, c39, c40). signal-T5 QA integration (6/6) provides regression coverage.
+
+### Cross-pollution status (c37 lesson)
+
+c40 = 3rd consecutive cycle with strict sequential dispatch. Zero pollution. **SPRINT-PARALLEL-ISOLATION** architect brief still deferred — punted to c41+ (3 cycles in a row now). The interim sequential pattern works but caps throughput; arch brief should not slip indefinitely.
+
+### Carry-over to cycle 41
+
+- **TASKS.md cap violation persists** (177/80 lines). PM c40 chose option (b) — cap-violation header. Archive auto-eligible once Sprint 1849+ rows hit 7d age (~2026-05-19). c41 PM should validate the header is visible.
+- **PM minor row-drift**: signal-T6 has no row in TASKS.md (PM c40 reported "not found"). c41 PM should add a backfill row marked Done with SHA f6f57bc5.
+- **1879 EFFR-IORB BA spec** ready (queue pos 1)
+- **1881 source-tier retrofit BA spec** ready (queue pos 2)
+- **SPRINT-PARALLEL-ISOLATION architect brief** — still deferred (4th cycle now if c41 doesn't pick up)
+- **PM Step 4.5 UTC violation** from c36 + PM 80-line misread from c39 — both pending TNB audit (TNB c40 cron handoff did NOT arrive in this slot)
+- **Ops container restart** for 1878a live AC-2/3 still pending — not dev-cycle actionable
+- **TG 2854 monitoring** — auto-expires in ~70h via `expire_monitoring_reports`
+- **C2 commit-convention gate** 2026-05-17 — c40 added 3 conformant commits (signal-T6, CLEAN, ARCH reconcile). 4 days remaining. C2 ratio should improve to ≥0.85 in next 1-2 cycles.
+
+
 
 ## Cycle 39 (2026-05-12 01:52 → 02:26 UTC)
 

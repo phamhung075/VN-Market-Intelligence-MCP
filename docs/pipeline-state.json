@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "1878+signal-dedup-sqlite",
+  "currentSprint": "signal-dedup-COMPLETE+pm-housekeeping",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-12T02:26:24Z",
+  "updatedAt": "2026-05-12T02:37:13Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 39: 3 sequential merges (anti cross-pollution from c37). (1) signal-T4 doc updates → 9bb2d338 (agent-chaining-protocol + tree-map dual-record + signals.db leaf, 9 net LOC). (2) 1878b compute_accruals → ad04be0d (12/12 + 1878a-regression 12/12, registry tool #129, DDD pure fn, accruals = (NI-OCF)/TA ratio, unit annotation). (3) signal-T5 QA integration → fc1061e1 (6/6 AC: SELECT fresh + replay duplicate + INSERT-OR-IGNORE idempotency + prune 7d TTL + DB-unavail degraded + 24h stale; 38 expects 494ms). Fallback removal eligibility now MET (c38=1, c39=2 clean SQLite cycles + signal-T5 6/6 + signal-T4 docs). c40 action: developer FIX to delete .claude/flows/dev-team/main.md lines 117-133 (DEPRECATED JSON file-scan). 0 signals drained. TG 2855 wontfix (deleted), TG 2854 monitoring (ops cron concern). Stale task/1872a-5 STILL pending (10th cycle now — c40 CLEAN). PM bug: 416b1ffd reported TASKS.md=176 lines as 'under 80-line threshold' — invariant misread, flag for TNB. SPRINT-PARALLEL-ISOLATION architect brief STILL deferred. C2 gate 2026-05-17 — 3 new conformant commits this cycle improve ratio passively."
+  "lastCompleted": "Cycle 40: 3 sequential merges (anti cross-pollution from c37, 3rd consecutive cycle). (1) signal-T6 fallback removal → f6f57bc5 (-20 net LOC, grep fallback=0, signal-dedup project COMPLETE — SQLite is sole path). (2) CLEAN-1872a-5 → a4a90951 (10-cycle stale branch deleted; 4 commits verified as dupes of fe82b9f9). (3) ARCH-1884 reconciliation → 33174487 (TASKS.md row Done + cap-violation header at 177/80 lines, option b chosen). 0 signals drained (cycle 3 of 3 post-T2 clean SQLite path). 0 new TG reports. 0 monitoring expired. TG 2854 still monitoring (~70h to auto-expire). PM c40 noted signal-T6 row absent from TASKS.md — minor drift, c41 backfill 1-line. SPRINT-PARALLEL-ISOLATION architect brief still deferred (4 cycles now). 1879 EFFR-IORB + 1881 source-tier BA specs ready for c41. C2 gate 2026-05-17 — 3 new conformant commits this cycle continue passive accrual. TNB c40 cron handoff did not arrive in this slot."
 }
