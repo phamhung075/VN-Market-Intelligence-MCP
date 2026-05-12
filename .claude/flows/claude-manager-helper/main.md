@@ -111,7 +111,7 @@ Agent-specific: Critical misalignment (Passes 8-9) → escalate to architect BEF
 
 ```
 DONE: 10-pass audit complete — N passes run | M auto-fixes applied | K escalated to architect
-NEXT: user | architect (if critical issues escalated)
+NEXT: agents-architect (if critical issues escalated — they author a brief → agent-father) | idle (otherwise — cron will retry)
 PIPELINE: complete
 QUALITY: full | partial (if passes skipped due to no changes)
 ```

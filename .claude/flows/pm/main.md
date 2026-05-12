@@ -49,6 +49,7 @@ docs/TASKS.md (task numbering) | Architect proposal | recent agent notebooks (`d
 sprint: NNN
 branch: task/NNN-kebab-name
 size: S|M|L
+zone: apps/<service>/   ← MANDATORY — copy from architect handoff § Zone; dev-team Step 3 routes by this
 depends_on: []
 blocks: []
 ---
@@ -57,6 +58,7 @@ blocks: []
 [3 sentences: what, where, why]
 
 ## [PM] Planning Context
+- **Zone:** apps/<service>/   ← also in body for visibility
 - **Acceptance Criteria:**
   - [ ] Criterion 1
 - **Files to read first:** [path:lines]
@@ -66,16 +68,22 @@ blocks: []
 - **Knowledge needed:** `docs/policies/dev-standards.md` + others
 ```
 
-**3c.** Update docs/TASKS.md (status → pending) → return task list with dependency tiers:
+**Multi-zone handling:** If architect returned `ZONE: multi`, split the design into one subtask per zone — each subtask carries its own single zone. Never bundle multi-zone work in one task: zone-routed parallel spawns require disjoint scopes.
+
+**3c.** Update docs/TASKS.md (status → pending) → return task list with dependency tiers and zone per task:
 ```
 ## RETURN
 DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
 TASKS:
-  tier1 (parallel): NNN-a [files: src/foo.ts], NNN-b [files: src/bar.ts]
-  tier2 (after tier1): NNN-c [depends_on: NNN-a, files: src/baz.ts]
+  tier1 (parallel):
+    - NNN-a [zone: apps/stock-price/, files: apps/stock-price/src/foo.ts]
+    - NNN-b [zone: apps/alert-engine/, files: apps/alert-engine/src/bar.ts]
+  tier2 (after tier1):
+    - NNN-c [zone: apps/stock-price/, depends_on: NNN-a, files: apps/stock-price/src/baz.ts]
 HANDOFF: docs/handoffs/TASK_NNN-a.md, docs/handoffs/TASK_NNN-b.md, docs/handoffs/TASK_NNN-c.md
 PIPELINE: continue
 ```
+`zone:` on every task is mandatory — dev-team Step 3 reads this field to pick the right dev-* specialist.
 
 **4.** Set task status → `in_progress` when developer picks up
 

@@ -62,7 +62,7 @@ Agent-specific: No duplication found → EXIT immediately. Multi-file fix → ST
 
 ```
 DONE: Scan complete — N findings | M shipped | K backlog tasks created
-NEXT: user | pm (if backlog tasks created)
+NEXT: po (if backlog tasks created — PO triages into next sprint) | idle (otherwise — cron will retry next cycle)
 PIPELINE: complete
 QUALITY: full | partial (if knowledge load failed)
 ```

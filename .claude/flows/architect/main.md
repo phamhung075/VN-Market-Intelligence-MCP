@@ -37,36 +37,54 @@ Post-merge L review: read final merged state, write `[Architect] Post-Merge Revi
 Check recent agent notebooks (`docs/agent-memory/notebooks/*.md`) for recent work on affected files.
 Found recent notebook entry → use as start, verify changes only. Not found → full index.
 
-**2. Index codebase**
-```bash
-find apps/mcp-server/src/domain -name "*.ts" | head -20
-find apps/mcp-server/src/application -name "*.ts" | head -20
-find apps/mcp-server/src/infrastructure -name "*.ts" | head -20
-find apps/mcp-server/src/interface -name "*.ts" | head -20
-grep -r "export interface.*Repository" apps/mcp-server/src/domain/
-grep -r "implements.*Repository" apps/mcp-server/src/infrastructure/
-ls apps/mcp-server/src/application/usecases/
-ls apps/mcp-server/src/interface/mcp/
-```
-Rule: existing interface covers need → extend, never duplicate.
+**2. Detect target zone(s)** — MANDATORY before any code index. Skip = mcp-server bias bug.
 
-**3. Produce technical design**
-- Files to read/modify/create (specific paths)
+Inspect BA spec / task description / file hints to pick which microservice zone(s) are touched:
+
+| Hint in spec | Zone | dev-* specialist |
+|---|---|---|
+| MCP tool / cron / market orchestration | `apps/mcp-server/` | dev-mcp-server |
+| HTTP routing / gateway / health aggregation | `apps/api-gateway/` | dev-api-gateway |
+| price fallback / VPS bridge / quote agg | `apps/stock-price/` | dev-stock-price |
+| RSI / MACD / BB / indicator math | `apps/technical-analysis/` | dev-technical-analysis |
+| SBV FX / commodity / macro trend | `apps/macro-indicators/` | dev-macro-indicators |
+| hexagram / I-Ching / kinh dich | `apps/kinh-dich-service/` | dev-kinh-dich |
+| dedup / cooldown / Telegram dispatch | `apps/alert-engine/` | dev-alert-engine |
+| BCTC / OCR / Vietnamese parse | `apps/pdf-extractor/` | dev-pdf-extractor |
+| embeddings / LanceDB / semantic search | `apps/rag-service/` | dev-rag-service |
+| cross-service / root / scripts/ | (multi) | generic developer |
+
+Record selected zone(s) in `[Architect] Brownfield Findings` § Zone (Step 4). Multi-zone = list all; PM will split into per-zone subtasks.
+
+**3. Index codebase** — scope to selected zone(s) only:
+```bash
+ZONE=apps/<service>          # e.g. apps/stock-price — substitute from Step 2
+find "$ZONE/src" -name "*.ts" -o -name "*.py" | head -40
+grep -r "export interface.*Repository\|implements.*Repository\|class .*Service" "$ZONE/src/" 2>/dev/null | head -20
+ls "$ZONE/src/application/usecases/" 2>/dev/null
+ls "$ZONE/src/interface/" 2>/dev/null
+```
+For multi-zone tasks, repeat for each zone. Rule: existing interface covers need → extend, never duplicate.
+
+**4. Produce technical design**
+- Files to read/modify/create (specific paths under zone)
 - DDD layer assignment (which layer each class)
 - Interface/implementation split (ports + adapters)
 - Test strategy (unit/integration/e2e)
 - Risk flags (security, memory, perf, DDD violations)
 
-**4. Append to handoff file** `docs/handoffs/TASK_NNN.md`:
+**5. Append to handoff file** `docs/handoffs/TASK_NNN.md`:
 ```markdown
 ## [Architect] Brownfield Findings
 
+- **Zone:** apps/<service>/   ← MANDATORY — PM propagates, dev-team Step 3 routes by this
+  - If multi-zone: list each + flag for PM to split into subtasks per zone
 - **Verified paths:**
-  - `/path/src/domain/service.ts:40-120` — description
+  - `apps/<service>/src/domain/service.ts:40-120` — description
 - **Reuse patterns:**
   - Extend X rather than duplicate
 - **Design decisions:**
-  - Layer: domain service in `src/domain/services/`
+  - Layer: domain service in `apps/<service>/src/domain/services/`
   - Dependency injection: inject via constructor
 - **Scan clean:** true ✓
 ```
@@ -80,10 +98,11 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**5.** Update docs/TASKS.md status → return:
+**6.** Update docs/TASKS.md status → return:
 ```
 ## RETURN
 DONE: Technical design complete, brownfield findings written to docs/handoffs/TASK_NNN.md
+ZONE: apps/<service>/   ← copy from handoff § Zone, or "multi" if split needed
 NEXT: pm | break design into atomic tasks and create developer handoffs
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
