@@ -5,7 +5,8 @@
  *   GET  /health              → aggregate health of all services
  *   GET  /health/:service     → per-service health check
  *   GET  /health-dashboard    → self-contained HTML health dashboard (auto-refresh 60s)
- *   ANY  /:service/*          → reverse proxy to downstream service
+ *   ANY  /api/*               → reverse proxy to MCP server — path passed VERBATIM (no prefix strip)
+ *   ANY  /:service/*          → reverse proxy to downstream service — strips /:service prefix
  */
 
 import { Hono } from 'hono';
@@ -55,8 +56,11 @@ export function createRouter(
       return c.json({ error: `Unknown service: ${serviceName}` }, 404);
     }
 
-    // Build downstream URL: strip leading /:service from path
-    const path = '/' + c.req.path.split('/').slice(2).join('/');
+    // Build downstream URL.
+    // Virtual alias services (noProbe=true, e.g. 'api') forward the FULL path verbatim
+    // so that /api/push-news reaches MCP as /api/push-news, not /push-news.
+    // All other services strip the leading /:service segment as before.
+    const path = proxyPath(c.req.path, svc as { noProbe?: boolean });
     const query = c.req.url.includes('?') ? '?' + c.req.url.split('?')[1] : '';
     const targetUrl = `${svc.baseUrl}${path}${query}`;
 
@@ -79,6 +83,23 @@ export function createRouter(
   });
 
   return app;
+}
+
+// ── Path helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Determine the downstream path for a proxy request.
+ *
+ * - Virtual alias services (noProbe=true): pass the full request path VERBATIM.
+ *   Example: /api/push-news → /api/push-news (MCP expects the full path).
+ * - Real services: strip the leading /:service segment.
+ *   Example: /stock/prices → /prices
+ */
+export function proxyPath(reqPath: string, svc: { noProbe?: boolean }): string {
+  if (svc.noProbe) {
+    return reqPath; // verbatim — preserve full path including /api/ prefix
+  }
+  return '/' + reqPath.split('/').slice(2).join('/');
 }
 
 // ── Dashboard HTML builder ─────────────────────────────────────────────────

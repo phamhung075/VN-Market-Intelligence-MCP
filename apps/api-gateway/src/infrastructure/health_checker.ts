@@ -8,6 +8,9 @@
 import type { HealthCheckPort } from '../domain/repositories.js';
 import type { ServiceConfig, ServiceHealthResult } from '../domain/models.js';
 
+/** Extended config: virtual/alias services skip live health probes. */
+export type ServiceConfigExtended = ServiceConfig & { noProbe?: boolean };
+
 export class HTTPHealthChecker implements HealthCheckPort {
   async checkHealth(service: ServiceConfig): Promise<ServiceHealthResult> {
     const start = Date.now();
@@ -47,8 +50,13 @@ export class StaticServiceRegistry {
     this.services = buildServiceConfigs(serviceUrls);
   }
 
+  /**
+   * Returns services eligible for active health probing.
+   * Virtual alias services (noProbe=true) are excluded — they share an
+   * upstream with a real service and do not expose a separate /health endpoint.
+   */
   getAllServices() {
-    return Object.values(this.services);
+    return Object.values(this.services).filter((s) => !s.noProbe);
   }
 
   getService(name: string) {
@@ -67,5 +75,8 @@ function buildServiceConfigs(urls: Record<string, string>) {
     stock:      { name: 'stock',      baseUrl: urls['stock']      ?? 'http://stock-price:5000',         healthPath: '/health', timeoutMs: timeout },
     'kinh-dich': { name: 'kinh-dich', baseUrl: urls['kinh-dich'] ?? 'http://kinh-dich-service:5005',  healthPath: '/health', timeoutMs: timeout },
     alert:      { name: 'alert',      baseUrl: urls['alert']      ?? 'http://alert-engine:5006',        healthPath: '/health', timeoutMs: timeout },
-  } as Record<string, { name: string; baseUrl: string; healthPath: string; timeoutMs: number }>;
+    // Virtual alias: /api/* routes to MCP server with full path preserved.
+    // noProbe=true: excluded from active health probes (no /health endpoint to ping separately).
+    api:        { name: 'api',        baseUrl: urls['api']        ?? urls['mcp'] ?? 'http://mcp-server:3000', healthPath: '/health', timeoutMs: timeout, noProbe: true },
+  } as Record<string, ServiceConfigExtended>;
 }

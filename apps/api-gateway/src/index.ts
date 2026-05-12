@@ -13,8 +13,9 @@ import { createRouter } from './interface/handlers.js';
 const PORT = parseInt(process.env['PORT'] ?? '4000', 10);
 
 // Service URLs: configurable via environment (for docker-compose service names)
+const MCP_URL = process.env['MCP_URL'] ?? 'http://mcp-server:3000';
 const serviceUrls: Record<string, string> = {
-  mcp:        process.env['MCP_URL']        ?? 'http://mcp-server:3000',
+  mcp:        MCP_URL,
   pdf:        process.env['PDF_URL']        ?? 'http://pdf-extractor:5001',
   rag:        process.env['RAG_URL']        ?? 'http://rag-service:5002',
   ta:         process.env['TA_URL']         ?? 'http://technical-analysis:5003',
@@ -22,6 +23,8 @@ const serviceUrls: Record<string, string> = {
   stock:      process.env['STOCK_URL']      ?? 'http://stock-price:5000',
   'kinh-dich': process.env['KINH_DICH_URL'] ?? 'http://kinh-dich-service:5005',
   alert:      process.env['ALERT_URL']      ?? 'http://alert-engine:5006',
+  // Virtual alias: /api/* routes to MCP server with full path preserved (no prefix strip)
+  api:        MCP_URL,
 };
 
 const registry = new StaticServiceRegistry(serviceUrls);

@@ -3,7 +3,7 @@
 **File:** `apps/api-gateway/src/interface/handlers.ts`
 
 ## GET /health
-Aggregate health of all 8 downstream services.
+Aggregate health of all 8 downstream services (virtual alias `api` excluded from probes).
 
 **Response (200 if ok/degraded, 503 if down):**
 ```json
@@ -18,7 +18,7 @@ Aggregate health of all 8 downstream services.
 ## GET /health/:service
 Single service health check.
 
-**Path param:** `service` — registry key (mcp, pdf, rag, ta, macro, stock, kinh-dich, alert)
+**Path param:** `service` — registry key (mcp, pdf, rag, ta, macro, stock, kinh-dich, alert, api)
 
 **Response (200/503):**
 ```json
@@ -39,6 +39,20 @@ Self-contained HTML dashboard. Auto-refreshes every 60 seconds.
 - XSS-safe: all dynamic values escaped via `escapeHtml()`
 - Placeholder sections: "Signals", "Prediction Accuracy", "Active Alerts" (MCP data not yet wired)
 
+## ANY /api/*
+Virtual alias route — forwards to MCP server with **full path preserved verbatim**.
+
+**Behavior:**
+1. Looks up `api` key in registry (alias of `MCP_URL`)
+2. Passes the FULL request path without stripping the `/api/` prefix
+3. Forwards all headers including `Authorization` unchanged
+4. Returns upstream response unchanged
+
+**Example:** `POST /api/push-news` → `POST http://mcp-server:3000/api/push-news`
+
+**Errors:**
+- 502: MCP unreachable
+
 ## ANY /:service/*
 Reverse proxy to downstream services.
 
@@ -48,6 +62,10 @@ Reverse proxy to downstream services.
 3. Forward request (method, headers, body) with timeout `10000ms` (5x health timeout)
 4. Return upstream response (status code, content-type, body)
 
+**Path routing uses `proxyPath()`:**
+- Virtual alias services (`noProbe: true`): path passed verbatim
+- Real services: `/:service` segment stripped
+
 **Example:** `POST /mcp/api/chat?foo=bar` → `POST http://mcp-server:3000/api/chat?foo=bar`
 
 **Errors:**
@@ -56,6 +74,7 @@ Reverse proxy to downstream services.
 
 ## Helper Functions
 
+- `proxyPath(reqPath, svc)`: verbatim for noProbe services, strips `/:service` prefix for real services
 - `statusClass(status)`: 'ok'→'status-up', 'down'→'status-down', else 'status-unknown'
 - `statusLabel(status)`: 'ok'→'UP', 'down'→'DOWN', 'degraded'→'DEGRADED'
 - `escapeHtml(str)`: Escapes &, <, >, ", ' for XSS prevention
