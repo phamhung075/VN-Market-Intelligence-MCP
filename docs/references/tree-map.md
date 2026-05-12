@@ -20,7 +20,9 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/references/tree-map.md ← THIS FILE
 │
-├── docs/references/agent-routing.md (agent dispatch: routing intent table, procedural prompt rule, routing principles)
+├── docs/references/agent-routing.md (pointer + procedural-prompt rule + routing principles; intent table SSOT in .claude/skills/dispatch/SKILL.md)
+│
+├── docs/references/workflow-map.md (vector chart: 20 workflows W1–W20, agent take/produce table, main-terminal do/never; load for end-to-end view)
 │
 ├── docs/protocols/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
 │   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
@@ -73,7 +75,10 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/policies/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
 │
-├── docs/protocols/ops-incident-response.md (incident playbook: service failures, recovery procedures, severity levels)
+├── docs/protocols/ops-incident-response.md (index: severity classification, runbook routing)
+│   ├── docs/protocols/ops-incident-response-p1-critical.md (P1 Purple/Red: data risk + cascade failure playbooks)
+│   ├── docs/protocols/ops-incident-response-p2-degradation.md (P2 Yellow: single service + deployment playbooks)
+│   └── docs/protocols/ops-incident-response-decision-tree.md (decision matrix + escalation rules)
 │
 ├── docs/references/vps-setup.md (VPS operations: Vinahost connection, service management, health checks)
 │
