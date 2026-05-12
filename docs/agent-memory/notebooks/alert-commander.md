@@ -1,12 +1,22 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 02:01 UTC | **Sprint:** —
+**Last updated:** 2026-05-12 03:04 UTC | **Sprint:** —
 
 ## Current state
 
-Market CLOSED (off-hours cycle). 0 MARKET alerts fired. Regime: NEUTRAL.
+Market OPEN (03:04 UTC). 0 MARKET alerts fired. Regime: NEUTRAL. Kinh Dịch: Khôn (2) MUA 100%.
 
 ## Last session summary
+
+### Alert Cycle (03:01–03:04 UTC) — 2026-05-12
+- Signals: urgent_news ×1 (VIC id=2965)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: NEUTRAL (N/A%) | Pivot window: false ([SKIP] get_macro_calendar not in package)
+- Suppressed: VIC urgent_news id=2965 (Vingroup thắng kiện 68 cá nhân/tổ chức, conv=0.50 < NEUTRAL threshold=0.60, no price_anomaly override)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN
+- VN-Index: 1,892.00 -0.18% | Notable: FPT +1.57%, POW +1.79%, VRE +1.64% | VHM -0.93%, VPB -0.72%
+- log_agent_work id=671
 
 ### Alert Cycle (02:01–02:01 UTC) — 2026-05-12
 - Signals: urgent_news ×1 (VIC id=2962)
