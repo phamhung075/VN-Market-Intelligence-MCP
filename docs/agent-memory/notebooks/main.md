@@ -1,5 +1,55 @@
 # Dev Team — Sprint Boundary Notebook
 
+**Written:** 2026-05-12 04:34 UTC (Cycle 42 — 1889a impl + arch brief shipped)
+
+## Cycle 42 (2026-05-12 04:27 → 04:34 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals (TNB c40 handoff still MIA — 2nd cycle absent) | empty |
+| 0b Resume | idle | fall through |
+| 1 PO | 0 signals + 2 new TG (resolved pre-PO) + clean Todo | **BATCH(2)** — 1889a impl + arch brief |
+| 2 Plan | both doc-only — no architect chain needed for 1889a; arch brief = architect-only | skip planning for 1889a |
+| 3 Dispatch | **SEQUENTIAL** A→B (anti-c37 cycle 5): developer (1889a) → architect (parallel-isolation) | 2 GREEN |
+| 4.0 | expire_monitoring_reports → 0 | clean |
+| 4 Scan | 0 stale branches, 0 new TG, 0 non-monitoring unresolved | clean |
+| 4.5 | notebook + pipeline-state + commit | this entry |
+
+### TG triage (pre-PO)
+
+- TG 2857 (price_surge precision 0% 2/2 miss) → **monitoring** (Sprint 1869 verdict pipeline catching up; alert quality class, no new action)
+- TG 2858 (HEAD.lock 26-min stale) → **fixed** (lock cleared by c41-ext commits; transient race resolved)
+
+### Merges + chores delivered
+
+| Sprint | SHA | Notes |
+|---|---|---|
+| 1889a (flow-edit impl) | `0031b19d` | +28 LOC to `.claude/flows/financial-analyst/cycle.md`. Step 2c (L7 NI-vs-OCF: divergence threshold 0.30 + 2-quarter rule) + Step 3b (L8 `📍 Cycle: {phase} \| Tier: {tier}` header). 8/8 AC PASS incl. insufficient_data + empty-cashflow guards. Closes TNB c39 #1+#2 implementation. |
+| 1889a → Done row | `02d86787` | TASKS.md move Todo→Done |
+| SPRINT-PARALLEL-ISOLATION arch brief | `af91a171` | 10-section decision brief at `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md`. **Decision: SDK-native `isolation: "worktree"`** — zero custom code, SDK handles lifecycle, rollback = remove one parameter. **Risks:** R1 medium (merge conflict if PM conflict-check misses same-file edits — surfaces as merge failure, safe), R6 low (pipeline-state.json race — Phase 2 ownership transfer). **Roadmap:** Phase 1 c43 doc updates → Phase 2 c43 flow update → Phase 3 c44 2-task verification → Phase 4 c44/c45 both pass → relax sequential mandate → Phase 5 c46+ worktree-merge-protocol hardening. |
+
+### Strategic outcomes
+
+- **6-cycle deferral on parallel-isolation finally closed.** Brief identifies native SDK answer (Agent tool's `isolation: "worktree"` parameter) — zero custom infra needed. Sequential dispatch can be safely relaxed after Phase 3 c44 verification.
+- **1889a auto-cure verification window OPEN c42-c44.** Watch financial-analyst session logs for `Layer 7:` text + `📍 Cycle:` header. If present in ≥1 verdict per cycle across 3 cycles → finding #1+#2 cured.
+- **TNB c40 handoff MIA 2nd cycle.** Pattern check: if c43 still no handoff → escalate to PO for TNB cron health review.
+
+### Carry-over to cycle 43
+
+- **Phase 1 + Phase 2 doc updates** per arch brief — update `docs/protocols/agent-chaining-protocol.md` + `docs/standards/dev-standards.md` + `.claude/flows/dev-team/main.md` Step 3 (CHORE, ≤3 files, owner: developer or agent-md-editor). **High priority — unlocks parallelism.**
+- **1879a impl** — FRED EFFR/IORB fetcher (6 ACs, 6 tests, new `fred_series_daily` table)
+- **1879b impl** — `get_fed_liquidity_spread()` tool (depends 1879a; 4 ACs, 5 tests)
+- **1890a ba spec** — financial-analyst tool-package re-eval (TNB c39 finding #4)
+- **1888a SSOT chore** — hardcoded counts removal (2 files, doc-only)
+- **1881 ba spec** — source-tier retrofit (deferred 2 cycles now)
+- **TNB c40 handoff check** — 3rd-cycle MIA = trigger PO investigation
+
+### C2 commit-convention gate
+
+c42 added **4 conformant commits** (1889a impl + TASKS move + arch brief + close). Gate 2026-05-17 (5 days). Total since c40: 14 commits with full trailers. Healthy accrual.
+
+---
+
 **Written:** 2026-05-12 04:23 UTC (Cycle 41 extension — user-requested full TNB c39 sweep)
 
 ## Cycle 41 EXTENSION (2026-05-12 03:39 → 04:23 UTC) — user req "take all TNB handoff non read"
