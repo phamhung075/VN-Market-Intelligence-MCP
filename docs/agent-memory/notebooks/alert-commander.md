@@ -1,6 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-12 21:04 UTC | **Sprint:** c54-closed
+**Last updated:** 2026-05-12 22:04 UTC | **Sprint:** c56-closed
+
+### Alert Cycle (22:02–22:04 UTC) — 2026-05-12
+- Signals: 1 agent signal (VIC urgent_news id=3018, news-scout); 20 open alerts
+- Fired: 8 (MARKET digest) | Suppressed: 12 | MARKET: 1 digest
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-33bp) | Pivot window: false (next: Jun 2026)
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
+- Digest fired: MACRO Brent +2.23σ (HIGH), GAS oil +3% (HIGH), VIC tri-convergent sell (VCBF+whale+FII 800B), VIC/VHM "xoay trụ", HCM -6.90%, VRE +5.51%, HSG capital raise 8000B, FPT Telecom regulatory risk
+- Suppressed: VIC urgent_news id=3018 (expired 23:22 12/5 + conf=0.50<0.60); 12 LOW/stale alerts
+- Kinh Dịch: Khôn (2) MUA 100% | VN-Index: 1,901.10 (+0.30%)
+- log_agent_work id=711
 
 ### Alert Cycle (20:01–20:02 UTC) — 2026-05-12
 - Signals: 0 (bus empty — no inter-agent signals)
