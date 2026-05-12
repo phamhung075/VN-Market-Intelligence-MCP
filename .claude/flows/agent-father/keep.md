@@ -1,4 +1,5 @@
-# Agent Father — Keep (Maintenance) Flow
+<!-- size-justification: 127L — atomic maintenance flow with inline 15-check audit table + 5-check sweep matrix; splitting individual check rows yields no token benefit. -->
+# Agent Father — Keep (Maintenance) Flow — Thin Dispatcher
 
 **Tools:** `.claude/tools/package/agent-father.md`
 
@@ -25,84 +26,13 @@ Agent-specific: **Graceful degradation** — SKIP failed checks, continue. Tag `
 **0b. Read notebook** → `docs/agent-memory/notebooks/agent-father.md`
 - Check carry-over from last maintenance run (known issues, deferred fixes)
 
-**1. Orphan detection**
+**1-2. Scan orphans + roster** → run sub-flow: `.claude/flows/agent-father/scan-orphans.md`
 
-Scan for files that exist without a matching agent definition:
+Output: ORPHAN_FLOW / ORPHAN_NOTEBOOK / ORPHAN_PACKAGE / MISSING_FLOW / MISSING_NOTEBOOK lists; UNREGISTERED / PHANTOM sets.
 
-```
-# Flow dirs without matching agent
-Glob: .claude/flows/*/
-Compare against: Glob .claude/agents/*.md
+**3-5. Top-5 checks + auto-fix + stale notebook report** → run sub-flow: `.claude/flows/agent-father/sweep-fixes.md`
 
-# Notebooks without matching agent
-Glob: docs/agent-memory/notebooks/*.md
-Compare against: Glob .claude/agents/*.md
-
-# Tool packages without matching agent
-Glob: .claude/tools/package/*.md
-Compare against: Glob .claude/agents/*.md
-```
-
-Classify findings:
-- **ORPHAN_FLOW** — flow directory exists but no `.claude/agents/<name>.md`
-- **ORPHAN_NOTEBOOK** — notebook exists but no matching agent
-- **ORPHAN_PACKAGE** — tool package exists but no matching agent
-- **MISSING_FLOW** — agent exists but flow path does not resolve
-- **MISSING_NOTEBOOK** — agent exists but notebook does not exist
-
-**2. Roster accuracy**
-
-```
-# Filesystem agents
-Glob: .claude/agents/*.md → extract filenames → set A
-
-# Roster entries
-Grep: "\.md" docs/references/agent-roster.md → extract filenames → set B
-```
-
-Compare:
-- `A - B` = **UNREGISTERED** (in filesystem, not in roster)
-- `B - A` = **PHANTOM** (in roster, not in filesystem)
-
-**3. Top-5 critical checks per agent**
-
-Lightweight sweep — Grep-based, no full file reads:
-
-| # | Check | Method | Auto-fixable? |
-|---|-------|--------|--------------|
-| 1 | Has `fail-loud-protocol` reference | `Grep "fail-loud-protocol" <agent>.md` | YES — add to always_load |
-| 2 | Has `Error Boundary` in flow | `Grep "Error Boundary" <flow>.md` | NO — needs manual authoring |
-| 3 | Has `boundary_rules` section | `Grep "boundary_rules" <agent>.md` | NO — needs manual authoring |
-| 4 | Flow path resolves | Read first line of flow file | YES — fix path if obvious typo |
-| 5 | Version not >90 days stale | `Grep "version:" <agent>.md`, parse date | YES — update to today |
-
-**4. Auto-fix safe violations**
-
-Apply fixes ONLY for mechanical/cosmetic issues:
-
-| Fix | Action | Condition |
-|-----|--------|-----------|
-| Missing fail-loud reference | Add `- path: docs/protocols/fail-loud-protocol.md` to `always_load` | Check #1 FAIL |
-| Stale version date | Update `version: "YYYY-MM-DD"` to today | Check #5 FAIL, >90 days |
-| Missing roster entry | Add row to appropriate team table | UNREGISTERED from Step 2 |
-| Missing notebook | Create scaffold from template | MISSING_NOTEBOOK from Step 1 |
-
-**DO NOT auto-fix:**
-- Missing Error Boundary (requires understanding agent's work)
-- Missing boundary_rules (requires understanding agent's scope)
-- Missing inter_agent routing (requires understanding agent's partners)
-- Structural issues (wrong type, wrong model, wrong tools)
-
-Log every auto-fix with: file, what was changed, guide reference.
-
-**5. Stale notebook report**
-
-```
-# Find notebooks not updated in the last 30 days
-Glob: docs/agent-memory/notebooks/*.md
-```
-
-Report count of stale notebooks per agent. Do NOT delete — information only.
+Output: auto-fix log (mechanical/cosmetic only); escalation list (anything requiring manual authoring); stale notebook counts.
 
 **6. Generate maintenance report**
 
@@ -167,7 +97,7 @@ git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
-## Step 7 — PO handoff if findings require dev work
+## Step 7 — PO Handoff if Findings Require Dev Work
 
 If maintenance found escalations, broken agents, missing critical sections, structural issues, or orphans needing attention:
 
@@ -192,7 +122,7 @@ Skip this step ONLY if zero escalations and all checks passed.
 
 ```
 DONE: Maintenance sweep — N agents, M auto-fixes, K escalations
-NEXT: po (spawned with findings) | user (if clean)
+NEXT: po (spawned with findings) | idle (if clean — next cron will sweep)
 PIPELINE: complete
 QUALITY: full | partial
 ```

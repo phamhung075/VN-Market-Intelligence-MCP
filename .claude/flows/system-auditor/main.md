@@ -1,3 +1,4 @@
+<!-- size-justification: 124L — atomic auditor dispatcher; dedup fingerprint logic + scan checklist table are tightly coupled to individual check steps. -->
 # System Auditor — Main Flow
 
 **Tools:** `.claude/tools/package/system-auditor.md`

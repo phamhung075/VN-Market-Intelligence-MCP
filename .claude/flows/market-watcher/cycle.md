@@ -1,3 +1,4 @@
+<!-- size-justification: 124L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step. -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `.claude/tools/package/market-watcher.md`

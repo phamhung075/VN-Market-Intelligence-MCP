@@ -1,3 +1,4 @@
+<!-- size-justification: 131L — atomic market-group audit flow; step table + SSOT signal classification table cannot decompose cleanly without breaking step references. -->
 # PO — Market Group Analysis Flow
 
 **Tools:** `.claude/tools/package/po.md`

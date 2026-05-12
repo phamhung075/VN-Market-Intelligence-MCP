@@ -1,3 +1,4 @@
+<!-- size-justification: 123L — atomic QA gate flow; TDD/DDD/security checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
 # QA — Main Flow
 
 **Tools:** `.claude/tools/package/qa.md`

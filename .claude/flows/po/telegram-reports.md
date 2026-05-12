@@ -1,3 +1,4 @@
+<!-- size-justification: 128L — atomic telegram-reports handler; routing decision table + per-category action rules cannot decompose without losing handler coherence. -->
 # PO — Telegram Reports Flow
 
 **Tools:** `.claude/tools/package/po.md`

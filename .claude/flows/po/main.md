@@ -1,16 +1,15 @@
-# Product Owner — Main Flow
+<!-- size-justification: 124L — already a thin dispatcher; sub-flow routing table + BATCH schema spec are tightly bound and cannot decompose cleanly. -->
+# Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `.claude/tools/package/po.md`
 
 > Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
-docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
+docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md` | `pendingSignals[]` from dev-team
 
 ## Output
-`docs/SPRINT_GOAL.md` vision | BA task in docs/TASKS.md | sprint sign-off
-
----
+`docs/SPRINT_GOAL.md` vision | BA task in docs/TASKS.md | sprint sign-off | BATCH return to dev-team
 
 ---
 
@@ -18,39 +17,28 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 > Canonical orchestration: `.claude/flows/dev-team/main.md`
 
 **Called from:** dev-team Step 1 — triage all inputs and classify work
-**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `listUnresolvedReports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch` list
+**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `listUnresolvedReports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch`
 **Produces:** `NOTHING` (→ idle EXIT) or `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])` where type ∈ {FIX, SPIKE, SPRINT-S, SPRINT-M, SPRINT-L, UNBLOCK, CLEAN}
-**Hand off to:** main terminal — who routes batch by type into Step 2 (planning) or Step 3 (direct FIX)
+**Hand off to:** main terminal — routes batch by type into Step 2 (planning) or Step 3 (direct FIX)
 **Composes with:** architect/ba/pm in Step 2 (never directly — main terminal is the router)
 
 Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → SPRINT-M/L
 Size thresholds: FIX ≤10 lines ≤3 files | SPRINT-S ≤30 lines ≤5 files 1 domain | SPRINT-M multi-domain | SPRINT-L arch/new service
-CLEAN: flag any branch with 0 unmerged commits (`git log main..<branch> --oneline` empty) or stale worktree — route to qa.
-SPIKE: exploratory question with no clear scope or success criteria; time-boxed investigation needed before a real sprint can be planned. Signals: "what if...", "is it feasible to...", "how would X behave under...", or user/research question with unknown answer space. Output: findings doc, not shipped code. Time-box default: 2 hours.
+CLEAN: flag any branch with 0 unmerged commits (`git log main..<branch> --oneline` empty) or stale worktree → route to qa.
+SPIKE: exploratory question, no clear scope. Output: findings doc. Time-box default 2h. Schema below.
+
+**Every FIX/SPRINT-* entry MUST carry `zone:`** — one of: `apps/<service>/` (single zone), `multi` (architect must split), or `cross-service/` (genuine root/scripts work — routes to generic developer). dev-team Step 3 reads this field; missing zone = batch rejected back to PO.
 
 **SPIKE batch entry schema:**
 ```
 {
   type: "SPIKE",
-  id: "SPIKE_NNN",          # next available NNN, mirror task-id convention
+  id: "SPIKE_NNN",
   title: "<kebab-topic>",
   question: "<the actual question to answer>",
-  mode: "spike",            # mandatory — triggers feature-spike.md in developer/dev-* spawn
-  zone?: "apps/<service>/", # optional hint
-  timebox?: <minutes>       # default 120
-}
-```
-
-**SPIKE example:**
-```
-{
-  type: "SPIKE",
-  id: "SPIKE_001",
-  title: "websocket-feed-feasibility",
-  question: "Is it feasible to replace the current polling loop in stock-price with a WebSocket feed from SSI? What latency and reconnect behaviour would we get?",
   mode: "spike",
-  zone: "apps/stock-price/",
-  timebox: 120
+  zone?: "apps/<service>/",
+  timebox?: <minutes>          # default 120
 }
 ```
 
@@ -58,12 +46,17 @@ SPIKE: exploratory question with no clear scope or success criteria; time-boxed 
 
 ## Dispatch
 
-| Spawn context | Entry section |
+Pre-flight (Step 0-TNB → Step 0-SIG → Step 0 Channel Audit → Step 0-b cross-check → No-Task Guard) routes to sibling files. Load only the sub-flow you need.
+
+| Spawn context | Entry sub-flow |
 |---|---|
-| Cron / dev-team spawn | Step 0-TNB → Step 0 (Channel Audit) |
-| BUG channel report | Step 0 Channel Audit → bug classification |
-| Sprint kickoff | Self-Initiating Sprint |
-| QA sprint-complete signal | When QA Signals Sprint Complete |
+| Cron / dev-team spawn (triage) | Run Step 0-TNB → Step 0-SIG → Step 0 → No-Task Guard (this file orchestrates) |
+| BUG channel report only | Run Step 0 (channel-audit) only |
+| Triage finished, found backlog → kick off sprint | Jump to `po/sprint-kickoff.md` |
+| BA returned a spec for review | Jump to `po/review-ba-spec.md` |
+| QA signalled sprint complete | Jump to `po/sprint-signoff.md` |
+
+Never inline both pre-flight and a branch workflow — keep context lean. Pre-flight always runs first, then jump to the right sibling and EXIT via its RETURN block.
 
 ---
 
@@ -71,193 +64,57 @@ SPIKE: exploratory question with no clear scope or success criteria; time-boxed 
 
 **Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
 
-## Step 0-TNB — Read TNB audit findings (MANDATORY)
+## Step 0-TNB — Read TNB Audit Findings (MANDATORY)
 
-Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
+→ Run sub-flow: `.claude/flows/po/triage-tnb.md`
 
-1. Read the file completely
-2. Note Overall status, direction, findings table, persisting blockers, and positive signals
-3. Each finding with severity `high` → must become a sprint task (Step 1)
-4. Each finding with severity `med` → evaluate during sprint planning, include if capacity allows
-5. Persisting blockers → check against existing TASKS.md to avoid duplicates
-6. Positive signals → acknowledge in notebook (track what's working)
-7. **ACK the handoff** — append to the file:
-   ```markdown
+Feeds findings into Step 1 sprint planning. ACK appended to `docs/handoffs/tnb-audit-latest.md`.
 
-   ---
-   ## PO ACK
-   - Read by: po
-   - At: {ISO timestamp}
-   - Tasks created: {list of task IDs, or "none — all GOOD"}
-   - Skipped findings: {list of finding #s skipped with reason, or "none"}
-   ```
+## Step 0-SIG — Triage pendingSignals[]
 
-If the file does not exist: log `"[po] No TNB handoff file found — skipping Step 0-TNB"` in notebook and proceed normally.
+→ Run sub-flow: `.claude/flows/po/triage-signals.md`
 
-**This step feeds directly into Step 0 Channel Audit and Step 1 Sprint Planning.**
+MANDATORY when dev-team passed signals. Each `pendingSignals[]` entry routed per signal-type table. Skip when array empty.
 
-## Step 0 — Channel Audit (MANDATORY, runs before everything)
+## Step 0 — Channel Audit + Cross-Check
 
-Read the last 10 messages from each channel and evaluate as the **user** (not as an agent):
+→ Run sub-flow: `.claude/flows/po/channel-audit.md`
 
-```
-read_telegram_reports(channel="market", limit=10)
-read_telegram_reports(channel="work",   limit=10)
-read_telegram_reports(channel="bug",    limit=10)
-```
-
-For each message, scan for these failure signals:
-
-| Signal | Description | Action |
-|--------|-------------|--------|
-| **N/A values** | Any field showing `N/A`, `null`, `undefined`, `—`, or `0.0` where real data is expected | Open bug task → `ops` |
-| **Bug / error** | Stack traces, `ERROR`, `FAILED`, tool call errors, MCP exceptions | Open bug task → `ops` or `developer` |
-| **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in notebook, spawn `claude-manager-helper` if pattern is recurring |
-| **Cowork doing wrong thing** | Agent reports completing work that contradicts the sprint goal or doesn't match what was asked | Open correction task → `ba` for re-spec |
-| **Silent period** | A channel has had 0 messages in >2h during market hours | Flag as potential pipeline failure → `ops` |
-| **Strategy error** | Agent applies wrong methodology, incorrect thresholds, flawed logic (e.g. bullish signal during bearish regime, wrong sector classification, inverted comparison) | Open fix task → `developer` |
-| **Logic error** | Calculation wrong, condition inverted, comparison backward, data aggregation incorrect | Open fix task → `developer` |
-| **UX / display issue** | Bad formatting, missing Vietnamese diacritics, truncated text, unreadable numbers, ugly layout, missing context in alert | Open UX task → `developer` |
-| **Incomplete information** | Alert missing key data user needs (no %, no direction, no comparison period, no context) | Open UX task → `developer` |
-
-**Evaluate from the user's perspective:**
-- Would the user understand this message?
-- Does the output reflect what was actually asked?
-- Are signals actionable or just noise?
-- Are agents reporting progress on the right tasks?
-- Is the strategy/logic sound? (not just error-free, but *correct*)
-- Would the user find this message *useful*? (not just valid but actually helpful)
-
-### Step 0-a2 — Chat group review
-
-```
-read_telegram_reports(channel="market-group", limit=10)
-```
-
-Scan user messages for:
-- Complaints about message quality, formatting, or missing details
-- Questions that reveal the alerts are confusing or incomplete
-- Requests for features or changes (implicit or explicit)
-- User pointing out wrong data, bad analysis, or misleading signals
-
-Each finding → task in TASKS.md with category `ux` or `bug`.
-
-### Step 0-b — Cross-check issues against fix history (MANDATORY if any issue found)
-
-Before opening a new bug task, verify the issue wasn't already fixed:
-
-**1. Check docs/TASKS.md** — search for the same module/ticker/tool name in Done tasks:
-```
-grep -i "<keyword>" docs/TASKS.md
-```
-If a matching Done task exists → the fix was merged. Suspect **deploy gap** (see below).
-
-**2. Check git log** — last 20 commits for a fix on the same module:
-```
-git log --oneline -20 -- <affected file or path>
-```
-If a fix commit exists but the bug still shows in channel → **container not rebuilt**.
-
-**3. Check container state** — is the running server actually on the latest code?
-```
-get_system_status()   ← compare reported version/build-time vs latest git commit timestamp
-get_recent_fixes()    ← last N fixes logged by ops — was this one applied?
-```
-
-**Decision matrix:**
-
-| Git has fix? | Container current? | Action |
-|---|---|---|
-| No | — | New bug — open task → `developer` |
-| Yes | Yes | Regression — open task, tag `regression`, priority HIGH |
-| Yes | No | Deploy gap — open task → `ops`: rebuild container (`docker compose up -d --build`) |
-| Done task exists, no git fix | — | Task was closed prematurely — reopen it, priority HIGH |
-
-**Never open a duplicate bug task.** Always resolve the root cause (regression vs deploy gap) first.
-
----
-
-**If 1+ issues found**: create bug/correction tasks in docs/TASKS.md (with correct root-cause label) before proceeding to sprint planning.
-
-**If clean**: proceed to No-Task Guard.
-
-**Append to notebook** (`docs/agent-memory/notebooks/po.md`):
-```
-Channel audit: MARKET(N msgs, X issues) | WORK(N msgs, X issues) | BUG(N msgs, X issues)
-Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEAN
-```
+Reads MARKET/WORK/BUG/market-group (10 msgs each), classifies issues by 9-row failure-signal table, cross-checks against TASKS.md + git + container state (4-row decision matrix). New FIX/SPRINT tasks carry `zone:`.
 
 ---
 
 ## No-Task Guard
 
-Before doing anything, check:
-1. docs/TASKS.md — any pending/in-progress tasks? → handle those first
-2. `read_telegram_reports(status="new")` — any user requests? → handle those first
-3. Channel audit (Step 0) found issues? → self-initiate sprint from those findings
+After pre-flight runs, check:
+1. docs/TASKS.md — any pending/in-progress tasks? → handle first
+2. `read_telegram_reports(status="new")` — any user requests? → handle first
+3. Step 0 found issues? → self-initiate sprint from those findings
 4. All empty AND channels clean → return:
 ```
 ## RETURN
 DONE: No tasks, no user requests, channels clean
-NEXT: user | provide session goal or priority to initiate next sprint
+NEXT: idle (next cron tick will retry — autonomous mode never returns to user when channels are clean)
 PIPELINE: idle
 ```
 
-**PO CAN self-initiate** when channel audit found bugs, strategy errors, UX issues, or logic problems — these are the sprint backlog.
+**PO CAN self-initiate** when channel audit found bugs, strategy errors, UX issues, or logic problems — these are the sprint backlog. To kick off → jump to `po/sprint-kickoff.md`.
 
-## Self-Initiating Sprint
+## Branch Workflows (load only the one you need)
 
-**1.** Assess: `docs/data/project-stats.json` (counts) | last 2 task reports | user session goal
+| Caller intent | File |
+|---|---|
+| Triage finished, backlog found → kick off new sprint | `po/sprint-kickoff.md` |
+| BA returned a spec for review (`docs/REQ_NNN.md`) | `po/review-ba-spec.md` |
+| QA signalled sprint complete (`reports/SPRINT_REPORT_NNN.md`) | `po/sprint-signoff.md` |
 
-**2.** Highest-impact: reliability (failing tests, footguns) | coverage (missing signals) | UX (useless alerts) | architecture (DDD debt)
+Do not inline these workflows here — that's the whole point of the split.
 
-**3.** Write `docs/SPRINT_GOAL.md`:
-```markdown
-# Sprint NNN Goal
-
-## Vision
-[one sentence: business outcome]
-
-## Scope
-IN: [what we're building]
-OUT: [what we're NOT doing]
-
-## Success Metric
-[how we know it's done]
-```
-
-**4.** Create BA task: `| BA-NNN | Requirement Spec for Vision NNN | pending | BA | — |`
-
-**5.** Return:
-```
-## RETURN
-DONE: Sprint NNN goal written, BA task created
-NEXT: ba | write requirement spec for docs/SPRINT_GOAL.md
-HANDOFF: docs/SPRINT_GOAL.md
-PIPELINE: continue
-```
-
-## When BA Returns Spec
-Read `docs/REQ_NNN.md` — matches vision? AC clear? blockers answerable?
-- **Approve** → `status: APPROVED` → return `NEXT: architect | run brownfield analysis`
-- **Reject** → feedback in `docs/REQ_NNN.md` → return `NEXT: ba | revise spec per feedback`
-
-## When QA Signals Sprint Complete
-Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output)
-- **Approve** → update docs/TASKS.md + `docs/SPRINT_GOAL.md` → return `PIPELINE: complete`
-- **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`
+---
 
 **Commit notebook** (end of every cycle):
 
-> Invariant: timestamp = current UTC, never future, never speculative.
-
-### Notebook + ACK timestamp guard
-- Before writing `docs/agent-memory/notebooks/po.md` or appending the `## PO ACK` block in any handoff file, ALWAYS get current UTC via:
-  ```
-  date -u +"%Y-%m-%dT%H:%M:%SZ"
-  ```
-- Use the returned value verbatim for the `At: {ISO timestamp}` field — NEVER speculate, NEVER round to a future minute
-- This applies to every ACK append (Step 0-TNB) and to any notebook header date
+> Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.
 
 ```bash
 git add docs/agent-memory/notebooks/po.md
