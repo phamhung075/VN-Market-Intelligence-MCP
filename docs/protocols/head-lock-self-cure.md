@@ -86,3 +86,33 @@ Architect signal triggers root-cause rethink brief in `docs/architecture-briefs/
 ```
 
 Log lines written to: `docs/agent-memory/notebooks/main.md` (dev-team notebook, end of cycle).
+
+---
+
+## c57 diagnostic instrumentation (T1+T2+T5+T6 shipped)
+
+**Ref:** `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md`
+**Cycle:** c57 | **Task:** HEADLOCK-DIAGNOSTIC+WORKTREE-GC-c57 | **Owner:** agent-father
+
+### What was added to PREFLIGHT (dev-team/main.md Step 0-PREFLIGHT)
+
+**T2 — Lock-size logging:** On `HEAD.lock` detection, capture `stat -f %z .git/HEAD.lock` → `lock_size`. Log line now includes: `age={age}s size={lock_size}B pid_alive={bool}`. Size=0 → lock created but git never wrote (H2/H3 early crash). Size>0 → partial write → signal interruption (H3/H4).
+
+**T1 — lsof + GIT_TRACE instrumentation:** Before safe-remove, run `lsof .git/HEAD.lock` + `ls -laT .git/HEAD.lock` → `docs/agent-memory/sessions/preflight-lsof-{ts}.log`. Future git commit steps SHOULD be wrapped: `GIT_TRACE=1 GIT_TRACE_PACK_ACCESS=1 git commit ... 2>&1 | tee docs/agent-memory/sessions/git-trace-{ts}.log` — captures hook invocation sequence to disambiguate H1 vs H2.
+
+**T5 — Worktree prune:** After HEAD.lock processing (or in absent branch), run `git worktree prune -v 2>&1 | head -20`. If non-empty, send to WORK channel: `[PREFLIGHT] git worktree prune: {paths}`. Prevents orphaned worktree buildup from SDK agent crashes (Issue B).
+
+**T6 — 24h worktree lock expiry:** After worktree prune, sweep `.claude/worktrees/*/.git/*.lock`. Each lock file older than 24h is force-removed with log: `[PREFLIGHT] expired worktree lock: {path} age={hours}h removed`. Skip if `.claude/worktrees/` directory absent.
+
+### H2 eliminated (c57 pre-PO probe)
+
+Pre-PO repo probe confirmed: no executable commit hooks in `.git/hooks/` (only `pre-push` symlink; no `pre-commit`, `post-commit`, `commit-msg`). GPG signing confirmed off (`commit.gpgsign=false`). H2 (hook crash after lock acquisition) eliminated as root cause. Remaining candidates: H1 (rapid sequential race), H3 (SDK signal handling), H4 (APFS-on-Docker-VM semantics).
+
+### Evidence files
+
+- `docs/agent-memory/sessions/preflight-lsof-*.log` — lsof output captured at each HEAD.lock detection
+- `docs/agent-memory/sessions/git-trace-*.log` — GIT_TRACE output from wrapped commit steps (future)
+
+### Next-step gate
+
+3 PREFLIGHT fires with evidence logs captured → architect reviews `preflight-lsof-*.log` + `git-trace-*.log` → updates `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` with confirmed root cause → T4 fix becomes specifiable (M-A1 retry / M-A2 serialize / M-A4 trap).
