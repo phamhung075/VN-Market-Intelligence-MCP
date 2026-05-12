@@ -1,6 +1,7 @@
 # Financial Analyst — Cycle Flow
 
 **Tools:** `.claude/tools/package/financial-analyst.md`
+**Methodology:** `docs/standards/tnb-methodology.md` §Layer-7 §Layer-8
 
 > Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
@@ -44,6 +45,18 @@ G-Bond regime change check (Pillar 5.2):
   - Downgrade FAIR verdict → EXPENSIVE when `gbond_regime_signal=true`
 - If G-Bond yield not available → log data gap in session log, skip check
 
+**2c. Layer 7 — Forensic NI vs OCF** (tnb-methodology.md §Layer-7)
+`get_cash_flow(ticker, quarters=8)` → OCF array per quarter
+
+IF empty/no data → log: "Layer 7: no cash flow data for {ticker} — Layer 7 skipped" → continue (non-fatal)
+
+IF data returned — compute per quarter: `accrual = NI - OCF`
+- `divergence_flag = |OCF - NI| / |NI| > 0.30 AND OCF < NI for ≥2 consecutive quarters`
+- IF divergence_flag → append to verdict: "earnings quality WARN: NI>OCF divergence ≥2 consecutive qtrs" → `earnings_quality_warn=true`
+- ELSE → append to verdict: "Layer 7: no persistent accrual divergence detected" → `earnings_quality_warn=false`
+
+Log: "Layer 7: {ticker} accrual check done — flag={divergence_flag}"
+
 **2b. Historical BCTC context** `search_similar_context(query=<ticker>+" "+<quarter_summary>, action_code=<ticker>, k=3, recency_days=365)`
 - Call once per stock after `get_bctc_full(code)` returns
 - Query: ticker + brief summary (e.g. "VCB Q1 2026 lợi nhuận tăng")
@@ -53,6 +66,17 @@ G-Bond regime change check (Pillar 5.2):
 
 **3. Insider + legal**
 `get_insider_signals()` buy/sell patterns | `get_legal_risk_signals()` prosecution/tax/court
+
+**3b. Layer 8 — Investment Clock + Pyramid tier** (tnb-methodology.md §Layer-8)
+`get_investment_clock_phase()` → phase
+`get_pyramid_tier("equity")` → tier
+
+IF phase == "insufficient_data": phase_display = "insufficient_data" (no crash — continue)
+
+Render header (prepend to verdict output + include in signal finding_data):
+  "📍 Cycle: {phase} | Tier: {tier}"
+
+Log: "Layer 8: phase={phase} tier={tier}"
 
 **4. Chain validation**
 `get_open_chain_findings(minutes_back=30)` → BCTC confirm/contradict catalyst?
@@ -64,7 +88,10 @@ G-Bond regime change check (Pillar 5.2):
     "valuation_verdict": "<CHEAP|FAIR|EXPENSIVE|AVOID>",
     "regime": "<TIGHTENING|EASING|NEUTRAL>",
     "rate_sensitive_headwind": false,
-    "gbond_regime_signal": false
+    "gbond_regime_signal": false,
+    "cycle_phase": "<phase|insufficient_data>",
+    "pyramid_tier": "equity",
+    "earnings_quality_warn": false
   }
 }
 ```
