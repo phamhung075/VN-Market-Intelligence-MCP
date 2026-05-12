@@ -1,6 +1,48 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 15:40 UTC (Cycle 49 — Phase 5 merge gate shipped + container restart RCA closed false-alarm)
+**Written:** 2026-05-12 16:35 UTC (Cycle 50 — 1896c brief + CLEAN-c50 7-branch sweep)
+
+## Cycle 50 (2026-05-12 16:26 → 16:35 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | inbox empty (TNB c41 was last; no c42 yet — fires :50 each hour) | 0 routed |
+| 0b Resume | idle (c49 closed 15:40 UTC) | fall through |
+| 1 Triage | New reports empty. 14 unresolved (ALL `monitoring`). 7 stale branches on disk. PO returned BATCH(2): 1896c SPRINT-S + CLEAN-c50. PO self-purged stale 1879a Todo duplicate inline (1-line TASKS.md fix). | 2 dispatched |
+| 3 Exec | **2-way Phase 4 PARALLEL** (architect doc-only + qa housekeeping). Disjoint zones (briefs/ vs git branches), no worktree. | 2 concurrent |
+| 3 architect 1896c | `f8dcccf1` design brief `docs/architecture-briefs/2026-05-12-persistent-docker-events-logging.md`. **Recommended: Option 4** (macOS launchd plist + newsyslog rotation). 3 deliverable files: `~/Library/LaunchAgents/com.vn-market.docker-events.plist` + `/etc/newsyslog.d/docker-events.conf` + `launchd/docker-events-logging.md` runbook. 30-day retention, KeepAlive.Crashed=true. Owner: ops. Option 2 (json-file) explicitly ruled out — captures app stdout NOT daemon events. | design done |
+| 3 qa CLEAN-c50 | `819fc455`. **7 branches pruned**: 6 worktree-agent-* (a471/a4d9/a57f/a86f/a8f9/a9e8) + task/1888a-ssot-tool-cron-pointers. All ahead-by-SHA from cherry-pick pattern but file-level content verified in main first. `git worktree list` now shows main only. | sweep clean |
+| Phase 5 Gate | Control 1 `bash scripts/audits/index-check.sh` PASS (exit 0). No worktree merge needed (both agents on main repo direct). Merge gate still NOT exercised against a real worktree-parallel-code-writer scenario. | n/a |
+| 3 PM sync | `b3b112a2`. TASKS.md: 1896c moved Todo→Done (architect brief shipped, ops execution can be a 1896c-impl follow-up if PO opens). 1879a duplicate confirmed gone post-PO purge. WIP 0/2. | sync 1 |
+| 4 Scan | expire_monitoring: 0 expired (oldest 2841 = 45h, none past 72h). New reports: 0. Branches: only main. Unresolved: 14 ALL monitoring → **monitoring-only guard (C-6) fires**: send WORK message + exit, no infinite loop. | guard hit |
+| 4 List drift | `list_unresolved_reports` STILL not-found (carry from c49). Workaround: `read_telegram_reports(status="processed")` query. | known drift |
+| 4 WORK | c50 close announcement | pending |
+| 4.5 Compact | notebook + pipeline-state + commit + WORK | pending |
+
+### Phase 4 verification — 4th cycle
+- 2-way parallel arch+qa: zero conflicts (architect→docs/architecture-briefs/, qa→git branches). Worked clean. Phase 4 disjoint-zone rule continues to hold.
+- **Phase 5 merge gate**: still NOT exercised. 4 cycles since ship; zero multi-worktree-code-writer batches. Next time a tier has 2+ developer-class agents with `isolation: "worktree"` — gate gets first real test. Currently the gate is dead code on disk; not concerning but worth noting.
+- Eat-dogfood validation: 4 c50 commits all `git commit -m` (819fc455 qa, f8dcccf1 arch, b3b112a2 pm + close). Plus a janitor commit 438a24d7 from separate cron (out-of-band — scan-19 proposed JANITOR-034). Dogfood holding clean.
+
+### Key outcomes
+- **1896c design SHIPPED** — launchd plist + newsyslog. Now ops needs to execute (likely 1 cycle of ops work to install + verify). Prevents next 1896b-style evidence-loss incident.
+- **7 stale branches PRUNED** — 10+ cycle carry-over closed. Main-only state restored. Disk + git refs cleaner.
+- **PO inline cleanup** — 1879a stale Todo row purged at triage time (1-line edit, not a separate batch). Cap-management discipline working.
+- **Throughput**: ~9 min wall (16:26 → 16:35 UTC). Faster than c49 (14 min) and c48 (13 min). Smaller workload (S sprint + CLEAN) so not a fair comparison.
+
+### c51 carry-over (priority order)
+1. **USER Cloudflare dashboard action** — HIGH, STILL BLOCKS 1894a + pollNews #2860. Brief: `docs/architecture-briefs/2026-05-12-cloudflare-tunnel-api-routing.md`. (User is config admin; cannot dispatch.)
+2. **1896c ops execution** — MEDIUM. ops install launchd plist + newsyslog + runbook per arch brief `f8dcccf1`. May need new 1896c-impl Todo if PO wants explicit task row.
+3. **1862c-D + 1862c-E** — HIGH OPS. Cloudflared `/vn-market/mcp` ingress route + SSE keepAliveTimeout 30s→300s. Brief exists, ops-only. Bundle in one cloudflared reload.
+4. **1876a-A5** — HIGH OPS. Re-deploy 1869b-seed migration on prod DB (Sprint 1869 thresholds never reached prod). Unblocks Sprint 1869 precision-tuning effectiveness.
+5. **1881a ba spec** — HIGH, 8+ cycles deferred (source-tier retrofit).
+6. **1890a ba spec** — MEDIUM, 12+ cycles deferred (financial-analyst tool-pkg re-eval).
+7. **`list_unresolved_reports` MCP tool** — still drift. Escalate to ops/dev-mcp-server for MCP doc audit OR confirm intentional removal + update flow Step 1 input definition.
+8. **TNB-PLANNED-RESTART convention** — bundle into ops notebook header in next ops/agent-father chore.
+9. **financial-analyst 23:00 UTC cycle** — first test of Sprint 1889a stop-gap (Layer 7/8). Watch for NI vs OCF + cycle phase tag. Window opens ~7h after c50 close.
+10. **US10Y 4.5% Layer 1.2 cross watch** — was 4.46% at c41 audit (~2h ago). Audit if breach within 24h.
+11. **TASKS.md cap** 198/80 — auto-archive eligible 2026-05-19+ (1 week).
+12. **TNB c42 audit** — own cron, fires ~:50 of next hour. Will land before c51 cron tick.
 
 ## Cycle 49 (2026-05-12 15:26 → 15:40 UTC)
 
