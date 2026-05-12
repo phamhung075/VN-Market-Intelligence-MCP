@@ -37,6 +37,7 @@ Coordinator: `cowork-workspace-team-claude-desktop/unified-agent.md`
 | Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene | Sonnet |
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
 | Agent Father | `agent-father.md` | Creates, edits, reviews, maintains all agents per AGENT_CREATION_GUIDE.md | Sonnet |
+| Agents Architect | `agents-architect.md` | Design inter-agent comms, system context, architecture briefs → signals agent-father | Sonnet |
 | Report Analyzer | `report-analyzer.md` | Parse quarterly earnings reports, extract QoQ/YoY metrics for investor ledger | Sonnet |
 | Semble Search | `.claude/skills/semble-search/SKILL.md` | Code search decision guide: when to use Semble vs Grep/Glob/Read | N/A (skill, not agent) |
 

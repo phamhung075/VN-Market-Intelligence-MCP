@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 07:47 UTC | **Sprint:** 1863
+**Last updated:** 2026-05-12 12:47 UTC | **Sprint:** 1863
 
 ## Current state
 
-**Status:** Operational — BACKOFF ACTIVE
-**Queue:** Empty (persistent empty cycles — market hours, no questions filed)
-**consecutive_empty_cycles:** 0 (reset) | **backoff_until:** 2026-05-12T08:47:07Z
+**Status:** Operational
+**Queue:** Empty
+**consecutive_empty_cycles:** 1 | **backoff_until:** none
 
 ## Known patterns / preferences
 
@@ -113,6 +113,21 @@ Verdict: APPROVED. Merged to main (6accc32a). Branch deleted. TASKS.md updated.
 - consecutive_empty_cycles: 5 → BACKOFF SET | backoff_until: 2026-05-12T08:47:07Z (counter reset to 0)
 
 ## Metrics (cycle 2026-05-12 07:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~500 |
+
+### Q&A Batch (12:46–12:47 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 1 | backoff_until: none (prior backoff 08:47:07Z expired)
+
+## Metrics (cycle 2026-05-12 12:47 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
