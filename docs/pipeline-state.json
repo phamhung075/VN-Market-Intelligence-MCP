@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "c51-1862c-D-shipped+1896c-impl-shipped+1862c-E-split-dashboard-user-pending",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-12T17:35:00Z",
-  "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 51 closed (2-way Phase 4 parallel ops×2 + Tier 2 PM; Phase 5 Control 1 PASS). Inbox empty, 0 new reports, 14 unresolved ALL monitoring (C-6 guard hit). PO BATCH(3): 1862c-DE UNBLOCK + 1896c-impl SPRINT-S + CLEAN-c51-1896b-row-purge. Outcomes: (1) 1862c-DE ops 01c30703 — D PASS (`curl https://zenmidi.com/vn-market/mcp` HTTP 204); E SPLIT (config-side keepAliveTimeout 300s done locally; SSE `/vn-market/sse` still 404 because root tunnel ingress managed via Cloudflare dashboard, NOT local config — user-action required like 1894a). 3 cron-hint files updated. Backup `~/.cloudflared/config.yml.bak.1778607054`. (2) 1896c-impl ops 16ff50e1 — 3 deliverables (`launchd/com.vn-market.docker-events.plist`, `docker-events-newsyslog.conf`, runbook). launchd loaded PID 14119, events flowing, artificial restart test PASS (8+ events captured). newsyslog sudoer-install pending (non-blocking; 30-day rotation activates when operator runs sudo cp). (3) PM sync 0ee1150a — 1862c-D Done, 1862c-E split (config done, dashboard remains Todo user-action), 1896c-impl Done, 1896b duplicate row purged (same pattern as c50 1879a). 1879a single-occurrence verified. Phase 5 merge gate still NOT exercised (5 cycles since ship, no multi-worktree-code-writer tier). All 3 c51 commits + close commit used `git commit -m`. Throughput ~9 min. Two USER-blocked Cloudflare dashboard items now in flight (1894a /api/* + 1862c-E-dashboard /vn-market/sse) — bundlable for user. c52 priority: USER Cloudflare bundle, 1876a-A5 HIGH ops (1869b-seed redeploy), 1862c-F monitoring 5 cycles, newsyslog sudoer install, 1881a/1890a deferred specs, list_unresolved_reports drift escalation, JANITOR-034 promotion, TNB-PLANNED-RESTART bundle, financial-analyst 23:00 UTC cycle test. Pre-existing unstaged residue at session start (~20 mods + 10 untracked) needs triage — out-of-band agent work uncommitted."
+  "status": "in_progress",
+  "currentSprint": "c52",
+  "activeTaskId": "1876a-A5",
+  "nextAgent": "ops",
+  "nextPrompt": "OPS-EXEC: docker-compose restart mcp-server → initDatabase() fires migrateWatchlistThresholds() automatically. Verify via 1876a-A4 query.",
+  "updatedAt": "2026-05-12T17:40:00Z",
+  "updatedBy": "pm",
+  "lastCompleted": "Cycle 52 begun. PM decomposed 1876a-A5 brownfield findings into exec-only task: prod container restart triggers pre-wired migration. WIP=1 (1876a-A5 In Progress). Headroom=1."
 }
