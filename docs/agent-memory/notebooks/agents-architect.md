@@ -117,6 +117,16 @@ Signal dedup moves from O(N) full-dir scan of `processed/*.json` to O(log N) SQL
 
 ---
 
+## 2026-05-12T18:38:54Z
+
+**Brief:** `docs/architecture-briefs/2026-05-12-dev-zone-enforcement-and-split-policy.md`
+
+Zone enforcement gap identified: 9 dev-* specialists are correctly wired but remain idle because FIX path bypasses zone assignment and Tier 3 fires silently with no feedback loop to PO; Wave 1 closes the loop (5 flow edits, new `zone_missing_tier3` signal type), Wave 2 splits 67 oversize files across 4 classes with agent-father owning 43 and claude-manager-helper owning 24.
+
+**Signal dropped:** `docs/signals/agents-architect-2026-05-12T18-38-54Z-zone-enforcement-split-policy.json` → agent-father
+
+---
+
 ## Backfill — c35 — 2026-05-11
 
 ### Session: 1873a-tsc-reconcile
