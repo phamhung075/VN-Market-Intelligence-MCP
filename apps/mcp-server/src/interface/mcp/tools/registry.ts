@@ -94,6 +94,7 @@ import { registerSmartCompactTool } from "./system/smartCompactTool.js";
 import { registerBctcBatchSweepTool } from "./financial-reports/bctcBatchSweepTool.js";
 import { registerBacktestTools, registerBacktestQueryTools, registerBacktestLifecycleTools } from "./backtesting/index.js";
 import { registerAlertVerdictTools } from "./alerts/alertVerdictTools.js";
+import { registerComputeAccrualsTool } from "./financial-reports/computeAccrualsTool.js"; // Task 1878b: compute_accruals (#129)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -192,4 +193,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerAlertVerdictTools,            // Task 1863d: write_alert_verdict (#126)
   registerInvestmentClockTools,         // Task 1880a: get_investment_clock_phase (#127)
   registerPyramidTierTool,              // Task 1880b: get_pyramid_tier (#128)
+  registerComputeAccrualsTool,          // Task 1878b: compute_accruals (#129)
 ];

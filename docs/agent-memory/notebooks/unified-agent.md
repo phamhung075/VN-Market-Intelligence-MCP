@@ -364,3 +364,26 @@ Weekly verification cycle (20:01 UTC Sunday). Checked for digest-predict weekly 
 - Telegram WORK: summary sent ✅
 - next_cycle_hint: Banking BCTC (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 3 days — PRIORITY. Market open 02:00 UTC Tue.
 **Exit:** COMPLETE
+
+### Coordination Cycle (02:04–02:10 UTC) — 2026-05-12
+- Mode: MARKET (open) | System: OK (get_system_status transient/known, rate-limits 14/14 ready, Reuters/TE offline persistent) | Alerts: 13 open (NEW: HCM -6.90% MEDIUM price_drop 02:01 UTC; FPT×3, VIC×5, VHM×1, HCM×2) | Quality issues: 0 new (price_drop 25% + price_surge 0% — already filed, dedup skip)
+- Regime: TIGHTENING (unchanged from 19:00 UTC 11/05 — Brent 105.01, carry VND -33bp, inflation 8%) | No REGIME_TRANSITION | Alignment: 1.0 | Headwind: 0% (FPT=tech_export TAILWIND)
+- Portfolio: FPT 5,000 @ 80,300 → 70,000 (-12.83% / -51.5M VND) | VaR 95%: -0.1% | Conviction STRONG 0.60 GIẢM BỚT | No shift ≥0.3 | fii_type=HOT_MONEY (carry -33bp, khối ngoại FPT 14,100tỷ persistent)
+- Events: Gold reversed -5.38σ → +1.97σ (SPDR Trust mua ròng, "bất ngờ bật tăng mạnh") | VN-Index recovery to 1,920+ (bullish open) | "Cá mập" sold all VIC but holds FPT (contrarian bullish signal) | HCM -6.90% (securities, not in portfolio)
+- Supply chain: STABLE (BDI 1,400) | Energy: NORMAL | Legal: CLEAR | Crisis: CLEAR | Prediction: China/Taiwan 50.5% (unchanged)
+- Unreviewed: 10 structured reports (morning briefing, digests, france-summary) — no spam | WORK: sent 02:04 UTC clean
+
+## Cycle — 02:04 UTC
+
+- **cycle_date**: 2026-05-12
+- **findings**:
+  - System OK: get_system_status transient (known #2843 pattern). Rate limits 14/14 ready. 2 BUG reports in queue (#2854 stale/resolved, #2855 git HEAD.lock ~3h — below 4h escalation threshold).
+  - Market OPEN. VN-Index recovering to 1,920+ (bullish gap open vs Mon close 1,895.5). News sentiment: bullish open — "Cá mập" whale holds FPT, gold reversal, VN-Index article optimistic. HCM -6.90% MEDIUM alert (securities, not portfolio).
+  - Gold: major reversal overnight — from -5.38σ extreme low → +1.97σ above mean. SPDR Gold Trust mua ròng. Risk-off pivot signal. Brent still elevated at 105.01.
+  - Regime: TIGHTENING (unchanged). No REGIME_TRANSITION. Alignment 1.0 (FPT tech_export TAILWIND). No portfolio misalignment.
+  - FPT: 70,000 VND flat at open (-12.83%). Conviction STRONG 0.60 GIẢM BỚT. No shift ≥0.3. fii_type=HOT_MONEY persistent. BCTC Q1/2026 still 12 days overdue.
+  - Quality: price_drop 25% / price_surge 0% — both below 60% threshold, already filed. No new submission.
+  - BCTC watch: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 in 3 days — HIGH PRIORITY.
+- **actions**: WORK telegram sent (02:04 UTC, clean). Notebook appended.
+- **next_cycle_hint**: Watch FPT at open — was 70,000 flat, VN-Index recovery to 1,920 may lift tech. Gold reversal is key macro shift — if sustained, TIGHTENING pressure may ease. HCM -6.90% at open — watch if securities sector contagion. BCTC 7 banks due May 15 (3 days) — earnings triggers ready. BUG #2855 HEAD.lock at 3h — escalate if still present at 03:30 cycle.
+- **estimated_tokens**: 9000 (18 tool calls)
