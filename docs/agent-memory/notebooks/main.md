@@ -1,6 +1,51 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 04:34 UTC (Cycle 42 — 1889a impl + arch brief shipped)
+**Written:** 2026-05-12 05:32 UTC (Cycle 43 — 1891a worktree-isolation doc updates shipped)
+
+## Cycle 43 (2026-05-12 05:26 → 05:32 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals (TNB c40 handoff still MIA — 2nd cycle absent) | empty |
+| 0b Resume | idle | fall through |
+| 1 PO Triage | TG 2859 new (`get_system_status` EOF, recurring class) + c42 backlog | BATCH 1891a |
+| 2 Plan | Skipped — arch brief = design, PO doc-only CHORE shortcut | direct dispatch |
+| 3 Exec | developer 1891a: 3 files (`docs/protocols/agent-chaining-protocol.md` +18, `docs/policies/dev-standards.md` +16, `.claude/flows/dev-team/main.md` Step 3 +6/-3) | merge `6a7008f0` |
+| 3 QA | All 6 ACs PASS, internal consistency clean, c44 mandate wording explicit across all 3 files | APPROVED |
+| 3 PM | Add 1891a Done row to TASKS.md (185→186 lines) | `5a16a40e` |
+| 4.0 Expire | 0 monitoring reports expired | clean |
+| 4 Scan | TG 2859 archived `monitoring` (recurring class, 0 prior fix commits → escalation rule not met) | clean |
+
+### Sequential dispatch (anti-c37, cycle 6)
+1 delivery (1891a). All file edits in scope; no cross-file contention.
+
+### Strategic outcomes
+
+- **Phase 1+2 of SPRINT-PARALLEL-ISOLATION SHIPPED.** SDK-native `isolation: "worktree"` parameter now documented in protocol + standards + flow Step 3. Sequential mandate held until c44 verification per arch brief Phase 3.
+- **Phase 3 verification window OPEN c44.** Main terminal can attempt 2 disjoint parallel tasks via worktree isolation. QA + tests must pass; failure = revert.
+- **Phase 4 (relax sequential mandate) gated on c44+c45 verification pass.**
+- **Conflict-check rule sharpened.** Shared SSOT writes (`docs/TASKS.md`, `docs/data/project-stats.json`, agent `.md`, `docs/pipeline-state.json`) now hard-sequential triggers. Documented in all 3 files for cross-reference consistency.
+- **R6 pipeline-state.json parallel-exception prose gap noted** (Phase 5 scope per arch brief — not 1891a blocker).
+- **Hygiene flag:** 5 cowork notebooks (`alert-commander`, `market-watcher`, `news-scout`, `qa-responder`, `unified-agent`) accidentally bundled into `6a7008f0` instead of separate `chore(memory/*)` commits. Content correct, but commit-convention violated. Carry-over to next-cycle dev prompts to prevent re-occurrence.
+- **TNB c40 handoff MIA 2nd cycle** (last handoff mtime 04:49 UTC = c39). 3rd-cycle MIA at c44 triggers PO investigation per established rule.
+- **TG 2859 (`get_system_status` EOF recurring):** Same module as TG 2843. PO held escalation per recurring-bug rule (requires ≥2 fix commits on same module, not ≥2 occurrences). 3rd occurrence within 7 days = architect root-cause rethink. Currently 2/3 watch.
+- **C2 commit-convention gate** 2026-05-17 (5 days remaining): +3 conformant commits this cycle (developer + PM + close = `6a7008f0`, `5a16a40e`, close). Passive accrual healthy.
+- **1889a auto-cure verification window** still OPEN c42-c44. No financial-analyst session log check this cycle (deferred to c44 alongside Phase 3 verification).
+
+### c44 carry-over backlog (priority order)
+
+1. **Phase 3 verification** — Main terminal spawns 2 disjoint real tasks in parallel via `isolation: "worktree"`. Candidates: 1879a (FRED fetcher, `apps/mcp-server`) + 1888a (SSOT chore, 2 doc files). Disjoint file scopes confirmed. After QA + tests green, Phase 4 unlocks at c45.
+2. **1879a impl** — FRED EFFR/IORB fetcher, 6 ACs, 6 tests, spec `docs/specs/1879-effr-iorb-ba-spec.md`.
+3. **1879b impl** — `get_fed_liquidity_spread()` MCP tool, 4 ACs, 5 tests (depends 1879a Done).
+4. **1890a ba spec** — financial-analyst tool-package re-eval per TNB c39 #4 (6+ cycle carry).
+5. **1888a SSOT chore** — hardcoded "112 tools" + "50 crons" → pointers to `docs/data/project-stats.json#toolCount` (2 files).
+6. **1881 ba spec** — source-tier retrofit Layer 9 (3rd cycle deferred).
+7. **TNB c40 handoff** — 3rd-cycle MIA at c44 = PO investigation.
+8. **1889a auto-cure verification** — read latest financial-analyst session for `Layer 7:` text + `📍 Cycle:` header.
+9. **CLEAN batch** — 7 stale remote branches; defer until after Phase 3 verification (any worktree branches created during c44 must not be swept mid-flight).
+
+---
+
 
 ## Cycle 42 (2026-05-12 04:27 → 04:34 UTC)
 

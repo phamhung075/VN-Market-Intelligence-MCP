@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c42-1889a-impl+parallel-isolation-brief",
+  "currentSprint": "c43-1891a-worktree-isolation-doc",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-12T04:34:15Z",
+  "updatedAt": "2026-05-12T05:32:30Z",
   "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 42: 2 sequential deliveries (anti-c37 cycle 5). (1) 1889a flow-edit impl → 0031b19d (+28 LOC to .claude/flows/financial-analyst/cycle.md; Step 2c L7 NI-vs-OCF 0.30 threshold + 2-quarter rule, Step 3b L8 cycle/tier header, insufficient_data + empty guards; 8/8 AC PASS) + Done row move 02d86787. Closes TNB c39 #1+#2 implementation. Auto-cure verification window OPEN c42-c44. (2) SPRINT-PARALLEL-ISOLATION arch brief → af91a171 (6-cycle deferral CLOSED; 10-section decision brief at docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md). DECISION: SDK-native isolation:'worktree' parameter on Agent spawns — zero custom infra, SDK handles lifecycle. Roadmap Phase 1+2 = c43 doc updates, Phase 3 = c44 2-task verification, Phase 4 = relax sequential mandate after c44+c45 pass. TG 2857 monitoring (alert precision 0%), TG 2858 fixed (HEAD.lock cleared). TNB c40 handoff MIA 2nd cycle — pattern check c43. C2 gate +4 conformant commits. c43 backlog: Phase 1+2 doc updates HIGH PRIORITY, 1879a/b impl chain, 1890a ba spec, 1888a SSOT chore, 1881 ba spec."
+  "lastCompleted": "Cycle 43: 1 sequential delivery (anti-c37 cycle 6). 1891a worktree-isolation doc updates SHIPPED — Phase 1+2 of SPRINT-PARALLEL-ISOLATION arch brief COMPLETE. Merge SHA 6a7008f0 (docs/protocols/agent-chaining-protocol.md +18, docs/policies/dev-standards.md +16, .claude/flows/dev-team/main.md Step 3 +6/-3). All 6 ACs PASS, QA APPROVED with internal consistency clean. PM added Done row at 5a16a40e (TASKS.md 185→186). Phase 3 verification window OPEN at c44 — main terminal can attempt 2 disjoint parallel tasks via isolation:'worktree' SDK parameter; QA + tests gate Phase 4 sequential-mandate relaxation. Conflict-check rule sharpened: shared SSOT writes (TASKS.md, project-stats.json, agent .md, pipeline-state.json) = hard-sequential triggers. TG 2859 (recurring get_system_status EOF) archived monitoring; 2/3 watch before architect escalation. TNB c40 handoff MIA 2nd cycle. Hygiene flag: 5 cowork notebooks accidentally bundled into 6a7008f0 (commit-convention violation, no functional impact). C2 gate +3 conformant commits. c44 carry-over: Phase 3 verification (1879a + 1888a parallel candidates), 1879b impl, 1890a/1881 specs, TNB c40 check, 1889a auto-cure verification, stale-branch sweep deferred to post-Phase-3."
 }
