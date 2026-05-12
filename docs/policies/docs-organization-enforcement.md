@@ -48,7 +48,7 @@ Auto-filed categories:
 **Exactly 8 files (no more):**
 
 1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
-2. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/architecture/global.md`)
+2. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/ARCHITECTURE.md`)
 3. `GLOSSARY_VI.md` — Vietnamese financial terms
 4. `SESSION_SUMMARY_*.md` — current session notes
 5. `TASKS_ARCHIVE.md` — done task index by sprint

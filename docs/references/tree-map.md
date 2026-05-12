@@ -119,9 +119,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
-├── docs/ARCHITECTURE.md (module boundaries + mcp.config.json section map — preserved reference)
-│
-├── docs/architecture/global.md (architecture SSOT: 9-service overview, Docker topology, two-team arch, data flow, conflict resolutions — maintained by Architect)
+├── docs/ARCHITECTURE.md (architecture SSOT: 9-service overview, Docker topology, two-team arch, data flow, module boundaries + mcp.config.json section map, conflict resolutions — maintained by Architect)
 │   ├── docs/architecture/1838a-repository-pattern.md (task reference: repository pattern architecture)
 │   ├── docs/architecture/1842a-backtesting-engine.md (task reference: backtesting engine design)
 │   ├── docs/architecture/microservice/mcp-server.md (mcp-server DDD layers, scheduler pointer, tool surface index)
@@ -357,7 +355,7 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dis
 | `docs/references/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
 | `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
-| `docs/architecture/global.md` | Architect | After service topology or conflict resolution change |
+| `docs/ARCHITECTURE.md` | Architect | After service topology or conflict resolution change |
 | `docs/architecture/microservice/<service>.md` | dev-<service> (sole committer) | After code change alters behavior, API, schema, or config — Architect routes doc subtask to dev-* via signal, never writes directly |
 
 ## Archived Structure (Reference — for future reorganization)
