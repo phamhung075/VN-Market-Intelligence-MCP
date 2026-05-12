@@ -210,11 +210,11 @@ Every new child file created by a split MUST be registered in `docs/references/t
 
 ### 4.3 Agent Lazy-Load Declaration
 
-When an agent section is moved to a child file, the trigger MUST move with it to the agent's lazy_load block. Example — `dev-mcp-server.md` knowledge section moved to `.claude/agents/dev-mcp-server/knowledge.md`:
+When an agent section is moved to a child file, the trigger MUST move with it to the agent's lazy_load block. Example — `dev-mcp-server.md` knowledge section moved to `docs/agents/dev-mcp-server/knowledge.md`:
 
 ```yaml
 lazy_load:
-  - path: .claude/agents/dev-mcp-server/knowledge.md
+  - path: docs/agents/dev-mcp-server/knowledge.md
     trigger: agent_startup  # replaces inline section
 ```
 

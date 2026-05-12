@@ -7,9 +7,6 @@ description: >
   what rules govern the system.
 ---
 
-<!-- size-justification: 136L — atomic routing constitution: dispatch table + handoff chain + signal bus + channel matrix + non-negotiables + file placement are cross-referenced as one unit. Splitting fragments the SSOT every other agent reads on each routing decision. -->
-
-
 ## Auto-Switch Protocol — Universal Entry
 
 **Every agent has `.claude/flows/<agent>/main.md` as the single entry point.** `main.md` is a thin dispatcher that picks the right sub-flow (cycle / eod / daily / weekly / create / edit / review / keep / …) based on trigger, time of day, or caller intent.
@@ -87,55 +84,14 @@ Caveman spec → `.claude/skills/caveman/SKILL.md` (ultra: agent-to-agent | lite
 
 ---
 
-## Cowork Signal Bus
+## Cross-Cutting References (pointer rows)
 
-| From | Signal | To |
-|------|--------|----|
-| news-scout | `news_impact`, `crisis_velocity` | alert-commander |
-| financial-analyst | `bctc_signal`, `valuation_flag` | alert-commander |
-| report-analyzer | `fundamental_validation` | alert-commander |
-| market-watcher | `price_anomaly`, `volume_spike` | alert-commander |
-| alert-commander | `suppress`, `verified_decision` | all cowork agents |
-
-API: `post_agent_signal(type, payload)` → `get_agent_signals()` — full spec → `docs/standards/mcp-tools.md`
-
----
-
-## Telegram Output Bus
-
-| Channel | Senders | Content |
-|---------|---------|---------|
-| `market` | alert-commander + digest-predict + qa-responder | User alerts, briefings, /ask answers |
-| `work` | dev team + unified-agent | Fix-shipped, sprint status, cycle summaries |
-| `bug` | ALL agents on error | Incidents, anomalies, bootstrap failures |
-
-Fail-loud: any knowledge Read failure → `send_telegram(channel="bug")` + STOP
-Full protocol → `docs/protocols/fail-loud-protocol.md`
-
----
-
-## Non-Negotiables
-
-| Rule | Pointer |
-|------|---------|
-| DDD: `domain/` never imports `infrastructure/` | `docs/policies/dev-standards.md` |
-| Restart: `docker-compose down && docker-compose up -d` ONLY | `docs/policies/restart-policy.md` |
-| Main terminal NEVER writes `docs/TASKS.md`, `docs/handoffs/*`, `docs/pipeline-state.json` — spawn `po` / `pm` / dev-team | `docs/protocols/agent-chaining-protocol.md` |
-| Never ask user to run code — spawn subagent | |
-| WIP: max 2 tasks In Progress in `docs/TASKS.md` | |
-| SQL: parameterized bindings only | |
-| VN sources: always via Vinahost VPS proxy | `docs/ARCHITECTURE.md` |
-
----
-
-## File Placement
-
-| Content | Location |
-|---------|----------|
-| Logic / rules / policy | `docs/{policies,protocols,standards,references}/*.md` |
-| Volatile counts / lists | `docs/data/*.json` |
-| Core architecture | `docs/*.md` (6 files max) |
-| Agent memory / sessions | `docs/agent-memory/` |
-| Task reports / archive | `docs/archive/` |
-
-Full DAG → `docs/references/tree-map.md`
+| Concern | SSOT |
+|---|---|
+| Cowork signal bus (news→alert-commander, BCTC→alert-commander, price-anomaly→alert-commander, suppress→all cowork) | `docs/standards/mcp-tools.md` § Signal Bus |
+| Telegram channels — market (alerts), work (dev/cycle), bug (errors, ALL agents) | `docs/policies/alert-policy.md` |
+| Fail-loud on any knowledge Read failure → `send_telegram(channel="bug")` + STOP | `docs/protocols/fail-loud-protocol.md` |
+| DDD (domain never imports infra), restart policy, WIP=2, parameterized SQL, VPS proxy for VN sources | `docs/policies/dev-standards.md` · `docs/policies/restart-policy.md` · `docs/ARCHITECTURE.md` |
+| Main terminal never writes `docs/TASKS.md` / `docs/handoffs/*` / `docs/pipeline-state.json` — spawn po/pm/dev-team | `docs/protocols/agent-chaining-protocol.md` |
+| Never ask user to run code — spawn subagent (ops/developer/qa). User is config admin only | `CLAUDE.md § Interdiction` |
+| File placement — logic→`docs/{policies,protocols,standards,references}/`; volatile→`docs/data/*.json`; core arch→`docs/*.md` (≤6); agent memory→`docs/agent-memory/`; reports→`docs/archive/` | `docs/references/tree-map.md` |

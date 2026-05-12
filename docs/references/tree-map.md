@@ -327,6 +327,21 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dis
 │   └── .claude/flows/ops/data-validation-report.md (Steps 5-6: bug report + return + PO handoff)
 ```
 
+## Flow File Splits (Wave 3B — 2026-05-12)
+
+Workflow-map autonomy fixes — extract reusable sub-flows so multiple callers don't duplicate logic:
+
+```
+.claude/flows/po/channel-audit.md (Steps 0/0-a2/0-b only — 103L)
+│   └── .claude/flows/po/zone-routing.md (Step A zone inference table + Step B zone-health notebook scan — reusable by triage-signals.md, sprint-kickoff.md too — 60L)
+
+.claude/skills/dispatch/SKILL.md (slimmed 141L → 97L)
+│   ├── Cowork Signal Bus details → `docs/standards/mcp-tools.md` § Signal Bus
+│   ├── Telegram channel matrix → `docs/policies/alert-policy.md`
+│   ├── Non-Negotiables details → `docs/policies/dev-standards.md` + `docs/protocols/agent-chaining-protocol.md`
+│   └── File Placement details → `docs/references/tree-map.md` (this file)
+```
+
 ## Deleted Files (merged into parents)
 
 | Deleted | Content moved to |
