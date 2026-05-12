@@ -1,6 +1,54 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 01:49 UTC (Cycle 38 — 2 sequential merges)
+**Written:** 2026-05-12 02:26 UTC (Cycle 39 — 3 merges sequential)
+
+## Cycle 39 (2026-05-12 01:52 → 02:26 UTC)
+
+| Step | Action | Result |
+|------|--------|--------|
+| 0a Drain | 0 signals, DB 27 rows (none >7d), fs 57 processed (none >7d) | empty, SQLite clean = cycle 2 of 2 post-T2 |
+| 0b Resume | pipeline idle | fall through |
+| 1 PO | triage 0 signals + 2 carry-over TG + clean TASKS.md | **BATCH(3)**: 1878b + signal-T4 + signal-T5 |
+| 2 Plan | 1878b: architect spec `docs/specs/1878b-compute-accruals.md` (b56889d9, 8 ACs, 12 TDD) | signal-T4 FIX skip, signal-T5 QA-owned skip |
+| 3 Dispatch | **SEQUENTIAL** anti-c37: T4 → QA-T4 → 1878b-arch → 1878b-dev → QA-1878b → T5(QA-own) | 3 GREEN |
+| 4 Scan | TG 2855 wontfix (deleted), TG 2854 monitoring, 1 stale branch defer | clean |
+| 4.5 | notebook + pipeline-state + commit | this entry |
+
+### Merges delivered
+
+| Sprint | Merge SHA | Tests | Notes |
+|---|---|---|---|
+| signal-T4 doc updates | 9bb2d338 | doc-only | dual-record protocol + tree-map signals.db node |
+| 1878b compute_accruals | ad04be0d | 12/12 + 1878a-regression 12/12 | DDD pure fn, registry #129, unit "ratio" |
+| signal-T5 QA integration | fc1061e1 | 6/6 (38 expects, 494ms) | covers SELECT/INSERT/prune/degraded/stale |
+
+### Fallback removal eligibility (signal-dedup)
+
+**ALL pre-conditions now MET:**
+- c38 = cycle 1 post-T2 clean ✅
+- c39 = cycle 2 post-T2 clean ✅ (this cycle)
+- signal-T5 QA integration 6/6 ✅
+- signal-T4 docs updated 9bb2d338 ✅
+
+**c40 action item:** developer FIX to remove `.claude/flows/dev-team/main.md` lines 117-133 (DEPRECATED JSON file-scan fallback) + update line 121-122 trigger statement. Safety margin = 1 more clean cycle (c40 start drain confirms) before deletion.
+
+### Cross-pollution status (c37 lesson)
+
+Strict sequential dispatch maintained. Zero pollution. **SPRINT-PARALLEL-ISOLATION architect brief STILL deferred** — pushed to c40+ given cycle window pressure. Sequential remains interim mitigation.
+
+### Carry-over to cycle 40
+
+- **Ready (no deps):** signal-T6 fallback path removal (NEW, c40 owner=developer), 1879 BA spec EFFR-IORB, 1881 BA spec source-tier retrofit
+- **Blocked still:** 1885a/1886a/1887 forensic methodology — gated on ARCH-1884 reconciliation (TASKS.md row drift, 1-line PM edit)
+- **CLEAN candidate:** `task/1872a-5-api-gateway-wording` 10th cycle, 4 commits already on main via fe82b9f9. PO certified safe-to-clean. c40 must execute.
+- **Ops action:** container restart for 1878a live AC-2/3 (VCB+FPT 4 non-NULL rows) — STILL pending.
+- **TNB c39 audit signal** — did not arrive in this slot's drain queue. Watch c40 drain.
+- **PM bug to flag TNB:** cycle 39 PM (416b1ffd) reported TASKS.md = 176 lines and claimed "under 80-line archive threshold". The 80-line cap is the maximum, not a threshold. PM is misreading invariant. Audit-worthy.
+- **TG 2854 monitoring** — ops/news cron concern, may auto-expire via `expire_monitoring_reports` in 72h if not addressed.
+- **TG 2855 wontfix** closed.
+- **C2 gate** 2026-05-17 — 4 more days. This cycle added 3 conformant feat/docs/test commits → C2 ratio improves passively. PM should confirm next cycle.
+
+
 
 ## Cycle 38 (2026-05-12 00:26 → 01:49 UTC)
 
