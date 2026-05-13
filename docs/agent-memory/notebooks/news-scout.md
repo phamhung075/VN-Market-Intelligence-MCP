@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 17:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 18:25 UTC | **Status:** OPERATIONAL
+
+### Cycle (18:15–18:25 UTC) 2026-05-13
+- Items: 20 | Impacts: 7 | Signals: [urgent_news×1 #3100 GAS/oil-surge, chain_catalyst×2 #3101 oil_gas-bullish, #3102 FII-14d/13,000B-bearish] | Regime: NEUTRAL (get_macro_snapshot not in bootstrap; prior cycles TIGHTENING — news context: Fed rate hike fears/gold reversal confirm TIGHTENING likely) | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: GAS +6.93% Brent 105.75 USD → chain confirmed 9/10 BULLISH → urgent_news #3100 + chain_catalyst #3101 (oil_gas+chemicals, cpi_pressure_risk=true). Khối ngoại bán ròng 14 phiên/13,000B VND → chain 7/10 → chain_catalyst #3102 (macro, bearish, FPT+banking+RE+securities). VRE -6.91% (near -7% threshold), VHM -4.81%, banking group down (STB -4.30%, EIB -2.00%). Imexpharm 8/10 suppressed (IMP not watchlist). Gold declining (not spike).
+- Suppressed: IMP insider sell post-M&A 8/10 (not watchlist), VIC Vượng gold-mining 6/10 (neutral), VIC robot surgery 6/10 (below threshold w/o TIGHTENING mult), SSI retail IPO 6/10 (neutral), CTCK self-trading sell 6/10 (no direct watchlist hit), gold $10k forecast (no VN direct hit), VinFast split (no watchlist), GEX capital raise (not watchlist), PLX petrol price (not watchlist).
+- Notes: REGIME defaulted NEUTRAL (no macro snapshot in bootstrap). Note: if TIGHTENING applied, GAS 9×0.7=6.3 would be suppressed (as in prior cycles). Signals may be over-stated vs regime context — flag for financial-analyst review. FII outflow: 14 sessions confirmed persistent. Brent >100 active (cpi_pressure_risk flagged). Next cycle: ~22:00 UTC.
 
 ### Cycle (17:15–17:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 7 | Signals: [urgent_news×1 #3095 DHG/IMP-insider-exit, chain_catalyst×1 #3096 FII-14d/13,000B] | Regime: TIGHTENING | Carry: NEUTRAL

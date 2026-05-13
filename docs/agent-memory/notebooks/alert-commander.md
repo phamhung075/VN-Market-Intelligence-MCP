@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 17:04 UTC | **Sprint:** c77-1903a
+**Last updated:** 2026-05-13 18:07 UTC | **Sprint:** c79
 
 ### Alert Cycle (17:02–17:04 UTC) — 2026-05-13
 - Signals: 3 (price_anomaly: GAS id=3092, VRE id=3093, EIB id=3094 — all from market-watcher)
@@ -630,3 +630,11 @@ Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | C
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Suppressed: GAS urgent_news conf=0.50 < 0.60 NEUTRAL threshold, no price_anomaly override
+
+### Alert Cycle (18:04–18:07 UTC) — 2026-05-13
+- Signals: 3 (urgent_news: DHG id=3095 from news-scout; price_anomaly: GAS id=3098, VRE id=3099 from market-watcher)
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- Suppressed: DHG urgent_news (conf=0.50 < TIGHTENING threshold 0.75, no DHG price_anomaly override available) | GAS price_anomaly (no active price alert confirmation via get_alerts) | VRE price_anomaly (no active price alert confirmation via get_alerts)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK | Pivot window: false (next: June 2026)
+- Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (off-hours cycle)

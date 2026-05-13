@@ -12,5 +12,7 @@ data/
 dist/
 .claude/worktrees
 .claude/scheduled_tasks.lock
-reports/*-evening.json
+.claire/
+**/reports/*-evening.json
 /__pycache__/
+docs/agent-memory/sessions/preflight-lsof-*.log
