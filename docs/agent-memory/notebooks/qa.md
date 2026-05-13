@@ -1,5 +1,32 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** fred-parallelize-fetch-all-macro merge gate
+
+## Recent session — 2026-05-13 (fred-parallelize-fetch-all-macro — APPROVED)
+
+**fred-parallelize-fetch-all-macro — APPROVED (smoke conditional — container down):**
+Branch: `task/fred-parallelize-fetch-all-macro`. 2 commits ahead of main (fix e777d83e + docs b205b60c). Merge SHA: `8b4b2961`.
+
+Tests (apps/macro-indicators): 90 pass / 0 fail / 12 skip (102 total). Matches dev claim exactly.
+
+TSC: 22 errors — ALL in `__tests__/` files exclusively (pre-existing `global.fetch.preconnect` Bun Mock<> typing gap). Zero production-code errors. Confirmed: `bun tsc --noEmit 2>&1 | grep "error TS" | grep -v "__tests__"` = 0 lines.
+
+DDD PASS: `grep -rn "from.*infrastructure" apps/macro-indicators/src/application/` = 0 hits. `grep -rn "from.*infrastructure" apps/macro-indicators/src/domain/` = 0 hits.
+
+Security: `process.env` in `index.ts:34-35` and `fred-macro.ts:43` — all pre-existing lines, zero new lines in branch diff. No hardcoded secrets. No SQL.
+
+Diff verification: `sleepMs` helper removed (4 lines). `fetchAllMacro` body: sequential for-of + await per iteration → `Promise.all(entries.map(...))` fan-out. Net ~81 lines (under 120 LOC note in handoff). Clean.
+
+Smoke test: port 5006 = connection refused. Container not running locally. Container image predates feature code. CONDITIONAL APPROVAL — code is green; smoke requires ops to rebuild macro-indicators image.
+
+Handoff signal moved to processed/: `docs/signals/processed/dev-macro-indicators-fred-fix-2026-05-13T13-30-00Z.json`.
+
+WorldBank follow-up filed: `docs/signals/qa-worldbank-sequential-loop-2026-05-13T14-00-00Z.json` — low priority, same sequential-loop pattern, 7 indicators x 1.5-2.5s sleep = 10-17s vs 8s budget.
+
+Branch deleted locally + remote. Pre-push tsc hook PASS. Pushed to origin/main as 8b4b2961.
+
+Report: reports/TASK_REPORT_fred-parallelize-fetch-all-macro.md.
+
 **Last updated:** 2026-05-13 | **Session:** macro-scrapers-curl-cffi-upgrade merge gate
 
 ## Recent session — 2026-05-13 (macro-scrapers-curl-cffi-upgrade — APPROVED)
