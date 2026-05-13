@@ -1,6 +1,27 @@
 # dev-mainserver-crawls — Notebook
 
-**Last updated:** 2026-05-13T17:30Z | **Sprint:** 1899a-reuters-fallback
+**Last updated:** 2026-05-13T19:00Z | **Sprint:** 1899a-routes (c79)
+
+---
+
+## This session (cycle 7 — c79 2026-05-13T19:00Z)
+
+Task: 1899a-routes — Hono router + 5 routes + Reuters fallback wiring.
+
+**Implemented:**
+- `apps/news-fetch/src/interface/handlers.ts` — createRouter(rssPort, fallbackPort, bloombergPort) DI factory. 5 routes: GET /health ({status,service,port}), POST+GET /news/reuters/headlines (RSS primary → Playwright fallback on error/empty), POST+GET /news/bloomberg/headlines (single path, no fallback). Shared fetchReuters/fetchBloomberg inner helpers for DRY GET+POST. Error handling: try/catch all routes → 500 {error, fetchedAt}. 142L.
+- `apps/news-fetch/src/index.ts` — Rewired composition root: imports createRouter + ReutersRssScraper + ReutersStealthFallback + BloombergStealth, wires real ports. No more inline health route (owned by handlers.ts). 35L.
+- `apps/news-fetch/__tests__/1899a-routes-health-reuters.test.ts` — 18 tests: GET /health shape, reuters success (fallback NOT invoked), reuters fallback error path, reuters fallback empty path, scraper-throws → 500. 199L.
+- `apps/news-fetch/__tests__/1899a-routes-bloomberg.test.ts` — 17 tests: bloomberg success/defaults/error-as-is/throws→500, GET aliases for both sources (querystring maxItems + defaults). 197L.
+- `apps/news-fetch/__tests__/1899a-core-smoke.test.ts` — Updated health assertion: `version` field removed (was skeleton), `port: 5008` added per AC.
+- 35 new tests. 137/137 full suite pass (baseline was 112 — +25 net new; smoke test update accounts for diff). tsc: 0 errors.
+- Branch: task/1899a-routes-handlers. Commit: 2c0b9f45.
+- DDD: PASS — handlers.ts imports only application/ (use-cases) + domain/ (repositories, models). index.ts is composition root (allowed to import infrastructure).
+- Split policy: both test files ≤200L (199L + 197L).
+
+**Pattern note:** Used createRouter() factory (same pattern as macro-indicators) instead of module-level app singleton — enables unit testing with injected mocks without touching global constructors or PlaywrightBrowserFactory.
+
+**Smoke test update rationale:** 1899a-core-smoke imported `app` from index.ts; when index.ts was rewired to use createRouter with real scrapers, the old `version` field disappeared (health is now owned by handlers.ts per AC which specifies `port:5008`). Updated assertion is correct per spec.
 
 ---
 
@@ -116,6 +137,8 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 | investing-economic-calendar | apps/macro-indicators/ | flaresolverr-bypass | ~10MB (+96MB container) | wired | 2026-05-13 103 tests green |
 | adb-kidb | apps/macro-indicators/ | spa-xhr-intercept Phase 2 | ~15MB | wired | live confirmed 2026-05-13 |
 | imf-weo | apps/macro-indicators/ | open-api-key | ~5MB | wired | live confirmed 2026-05-13 |
+| reuters-news | apps/news-fetch/ | rss (primary) + playwright-stealth (fallback) | ~30-50MB RSS / ~400-500MB fallback | ROUTED — awaiting ops container provisioning | c79 routes wired |
+| bloomberg-news | apps/news-fetch/ | playwright-stealth | ~400-500MB | ROUTED — awaiting ops container provisioning | c79 routes wired |
 
 ---
 
@@ -125,7 +148,7 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 |-----------|------------------|-------------------|-------------|-------------|
 | macro-indicators | none | ~70MB (8 scrapers + TS base) | 1536MB (post-resize) | none — budget OK |
 | flaresolverr | Chromium (internal) | ~96MB observed | 512MB limit | none — 18.81% of budget |
-| news-fetch (TBD) | bloomberg (Playwright ~450MB) + reuters (Playwright ~450MB) | ~900MB if concurrent | NOT YET CREATED | FLAG REMAINS: news-fetch container must be provisioned at >=2GB |
+| news-fetch (TBD) | bloomberg (Playwright ~450MB) + reuters (Playwright ~450MB, fallback only) | ~900MB if concurrent | NOT YET CREATED | FLAG REMAINS: news-fetch container must be provisioned at >=2GB |
 
 ---
 
@@ -138,7 +161,7 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 | cloudflare-managed-bypass | `docs/mainserver-crawl-techniques/cloudflare-managed-bypass.md` | (superseded for investing.com) | ~25MB | curl_cffi; blocked by Turnstile v2 — escalated |
 | flaresolverr-bypass | `docs/mainserver-crawl-techniques/flaresolverr-bypass.md` | investing-economic-calendar | ~10MB helper + 96MB container | FlareSolverr v3.4.6; cf_clearance cached TTL 25min |
 | spa-xhr-intercept | `docs/mainserver-crawl-techniques/spa-xhr-intercept.md` | adb-kidb | ~400MB (Phase 1) / ~15MB (Phase 2) | Phase 1 complete; Phase 2 production adapter wired |
-| playwright-stealth | `docs/mainserver-crawl-techniques/playwright-stealth.md` | bloomberg-markets, reuters-asia-news | ~350-500MB | bloomberg-stealth.ts WIRED (c77); reuters-stealth.ts WIRED (c78); news-fetch container pending ops |
+| playwright-stealth | `docs/mainserver-crawl-techniques/playwright-stealth.md` | bloomberg-markets, reuters-asia-news | ~350-500MB | bloomberg-stealth.ts WIRED (c77); reuters-stealth.ts WIRED (c78); routes WIRED (c79); news-fetch container pending ops |
 | botasaurus-human-sim | `docs/mainserver-crawl-techniques/botasaurus-human-sim.md` | (was imf-datamapper) | ~400-500MB | SUPERSEDED by imf-weo open-api approach |
 
 ---
@@ -157,6 +180,7 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 | 2026-05-13 | investing-economic-calendar | apps/macro-indicators/ | flaresolverr-bypass | ~10MB (+96MB) | rewired; FlareSolverr adapter + cf_clearance cache; 103 tests green |
 | 2026-05-13 | adb-kidb | apps/macro-indicators/ | spa-xhr-intercept Phase 2 | ~15MB | wired, Phase 1 discovery complete, live confirmed |
 | 2026-05-13 | imf-weo | apps/macro-indicators/ | open-api-key | ~5MB | wired (api.imf.org SDMX 3.0), live confirmed |
+| 2026-05-13 | reuters-news + bloomberg-news | apps/news-fetch/ | rss+playwright-stealth / playwright-stealth | ~450MB each | routes WIRED (c79); awaiting 1899a-gateway + ops container |
 
 ---
 
@@ -165,6 +189,8 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 - **FRED_API_KEY needed (ops):** fred-macro adapter wired and conditional. Activates automatically when key added to .env. Free key: https://fred.stlouisfed.org/docs/api/api_key.html
 - **Container rebuild needed (macro-indicators):** FlareSolverr Python helpers require macro-indicators container rebuild to take effect. Rebuild = ops territory.
 - **ADB KIDB slow API:** Response time ~15-20s per indicator. Batch of 4 indicators takes ~60-80s. Do NOT call fetchVnMacroBatch() in time-sensitive contexts. Consider caching or async background refresh.
-- **news-fetch microservice TBD:** Reuters + Bloomberg scrapers need a news-fetch service. See `docs/architecture-briefs/2026-05-13-news-fetch-service.md`. bloomberg + reuters remain blocked.
+- **news-fetch microservice pending ops:** Routes wired (c79). Still needs: 1899a-gateway (Tier 4) + ops docker-compose provisioning (>=2GB RAM). news-fetch container flag remains open.
 - **CNBC timeout budget:** fetchBatch now uses Python subprocess with 30s timeout. The use-case wraps in 8s withTimeout — this will still timeout at 8s for the TS layer. Ops/dev need to increase the cnbc timeout budget in FetchExternalMacroUseCase to 35s after container rebuild.
 - **FlareSolverr cf_clearance cache is in-process:** If macro-indicators runs multiple workers, each has its own cache. For multi-worker: externalise to Redis. Single-worker (current): no action needed.
+
+Zone health: 1899a-routes WIRED — 137 tests pass, tsc 0 errors, DI factory enables full mock coverage; 5 routes complete; awaiting 1899a-gateway + ops container to go live | HEALTHY

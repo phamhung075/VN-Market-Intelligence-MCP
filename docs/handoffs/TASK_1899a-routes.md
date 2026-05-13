@@ -241,3 +241,23 @@ curl http://localhost:5008/news/bloomberg/headlines?maxItems=3
 - All files in src/interface/
 - Update src/index.ts to wire handler router (minimal change)
 - Next task (1899a-gateway) will add gateway routing + docker-compose
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** news-fetch
+- **Zone:** apps/news-fetch/
+- **Files created:**
+  - `apps/news-fetch/src/interface/handlers.ts:142L` — createRouter() factory, 5 routes (health + reuters POST/GET + bloomberg POST/GET), RSS→fallback logic, DI ports
+  - `apps/news-fetch/__tests__/1899a-routes-health-reuters.test.ts:199L` — 18 tests: health shape, reuters success/fallback/error/defaults
+  - `apps/news-fetch/__tests__/1899a-routes-bloomberg.test.ts:197L` — 17 tests: bloomberg success/error/defaults, GET aliases for both sources
+- **Files modified:**
+  - `apps/news-fetch/src/index.ts:35L` — composition root: imports createRouter + scrapers, wires real ports
+  - `apps/news-fetch/__tests__/1899a-core-smoke.test.ts:35L` — updated health shape assertion (version→port, per AC)
+- **Tests written:** 35 new route tests across 2 files (split policy ≤200L each), 137 total / 0 fail
+- **Git commits:** `2c0b9f45 feat(1899a-routes): Hono router + 5 routes + Reuters fallback wiring`
+- **Type check:** clean (0 errors)
+- **Service tests:** 137 pass / 0 fail
+- **Docs updated:** docs/TASKS.md — 1899a-routes moved to IN REVIEW
+- **Graphify:** skipped (no docs/architecture impacted)
