@@ -1,57 +1,62 @@
 # PO Notebook
 
-## Last updated: 2026-05-13T21:50:15Z (c84 triage — BATCH(2): 1881a-impl + 1888l)
+## Last updated: 2026-05-13T23:14:12Z (c86 TNB triage — BATCH(2): AUTOCURE-C86-MW-DEDUP + SPIKE_C86_MCP_REG)
 
 ---
 
-## Cycle 84 triage
+## Cycle 86 triage (TNB audit-handoff drain)
 
 ### Trigger
-Dev-team c84 cron tick. Main HEAD `eacd9b47`. Pipeline idle, WIP 0/2. PREFLIGHT cleared a stale HEAD.lock age=452s in 1 retry — recurrence pressure continues to subside (consistent with 1897b-carry notes; 6/6 lock-free or single-retry PREFLIGHTs since c69). `pendingSignals[]` EMPTY (drain-signals.md ran, 0 root signal files). Branch tree clean, main only. c83 closed clean: 1881a-spec + 1888-CDG bundle SHIPPED.
+TNB audit cycle 47 drained (signal fingerprint `2ec368436e4eb302`, file moved to `docs/signals/processed/`). Overall NEEDS_ATTENTION; direction STABLE-IMPROVING. WIP 0/2 — full headroom.
 
-### Step 0-SIG + Step 0-TNB + Step 0 (channel audit)
-- 0-SIG: pendingSignals empty → fell through.
-- 0-TNB: tnb-audit-latest.md still c46, fully ACK'd in c76 PO ACK block (4 findings classified, all routed to existing tasks or held). No new TNB cycle. No re-ACK needed.
-- 0 channel audit: MCP `read_telegram_reports` not invoked directly (caveman gateway tool-binding not exposed in this autonomous spawn; per fail-loud §22 anti-hallucination + c78/c83 precedent). Relied on TNB c46 cross-channel aggregation + git log -10 (clean c83 closure, no BUG commits) + PREFLIGHT clean. No new BUG signals inferred.
+### Step 0-TNB — ACK appended
+TNB c47 handoff ACK appended to `docs/handoffs/tnb-audit-latest.md` with per-rec disposition. 10 findings + 6 recs triaged.
 
-### Sprint posture
-1899a chain fully landed (c75–c81); methodology source-tier work (1881a-spec) shipped c83 with REQ enumerated 16 tools + 4 spec-time discoveries flagged. **1881a-impl is now the highest-leverage HIGH ready** — but is `zone: multi` → architect split mandatory before dev dispatch (per po/main.md L30). **1888l is the second HIGH ready** — isolated cross-service chore (agent-father), no architect needed. Disjoint owners → both fit WIP=2.
+### TNB recommendation disposition
+
+| Rec | Disposition | Where it goes |
+|---|---|---|
+| #1 — Confirm 1903a deploy (`get_macro_snapshot` + `write_alert_verdict`) | Code SHIPPED c77/c82 (`d5251193`). Only `[UNVERIFIED]` label in tool package stale. | **NEW 1903a-labels** → Todo (MEDIUM CHORE, dev) |
+| #2 — Add `get_cash_flow` to fin-analyst pkg (4-cycle Layer 7 skip) | Overlaps 1890a methodology-toolpkg umbrella. | **FOLDED into 1890a** + bumped MEDIUM→HIGH, scope expanded 3→4 tools |
+| #3 — alert-commander stage-bootstrap.md note (c46 carry) | `.claude/` write-protected in cowork; dev-team applies. | **NEW 1903b-doc-self-heal** → Todo (MEDIUM CHORE, dev) |
+| #4 — MCP gateway session registration (c47 had no handle) | High-leverage diagnostic — recurring blocker for live audits. | **SPIKE_C86_MCP_REG → BATCHED this cycle** (timebox 120m, ops zone) |
+| #5 — US10Y 4.49% (0.01% from threshold) | Threshold-cross logic exists in alert-commander/news-scout. | Notebook watchlist carry, no task |
+| #6 — BCTC banking cohort 02:00 UTC 2026-05-15 | Cron wired; observational. | Notebook reminder, no task |
+
+### Pre-staged auto-cure
+TNB applied `.claude/flows/market-watcher/cycle.md` Step 4 off-hours duplicate guard (UNCOMMITTED). 3-cycle threshold met c47 (GAS/VRE 15:40/19:41/21:38 UTC unchanged-close re-emits). Wrapped as **AUTOCURE-C86-MW-DEDUP** in BATCH for developer commit+push.
 
 ### Decision: BATCH(2)
-**Priority applied:** HIGH ready > MEDIUM ready > LOW > blocked.
+**Priority applied:** auto-cure ship > SPIKE (recurring blocker) > new Todos for next cycle.
 
-1. **SPRINT-M — 1881a-impl** (zone: multi). REQ_1881a.md ready; 16 tools enumerated; architect resolves BLK-1 plain-text schema + carves into per-zone sub-tasks (mcp/macro/news). Dev-team Step 2 must route to architect FIRST.
+1. **CHORE/AUTOCURE — AUTOCURE-C86-MW-DEDUP** (zone: `.claude/` cross-service). Single uncommitted file. Developer commits + pushes. baseline_pass: tree-verify (doc change only, no test impact).
 
-2. **SPRINT-S — 1888l** (zone: cross-service/). agent-father error-boundary parity — 3-file chore in .claude/flows/agents-architect/ + .claude/agents/agents-architect.md. Isolated, no architect, no BA spec needed (SSOT compliance chore).
+2. **SPIKE — SPIKE_C86_MCP_REG** (zone: `apps/mcp-server/` + cowork-desktop config). Timebox 120m. ops investigates whether c47 MCP no-registration is config gap or sporadic. Output: `docs/spikes/SPIKE_C86_MCP_REG.md`.
 
-### Items declined / deferred to c85+
-- **1890a** — methodology MEDIUM, no pressure.
+Disjoint owners (developer vs ops), disjoint zones — both parallel-eligible. WIP 0→2.
+
+### Items declined / deferred to c87+
+- **1890a (HIGH now)** — needs ba spec first; queue when WIP frees. Heightened priority due to 4-cycle Layer 7 carry.
+- **1903a-labels, 1903b-doc-self-heal** — sit in Todo (MEDIUM), dispatch c87+ when WIP capacity available; both `.claude/` zone dev chores.
 - **JANITOR-020/014/011** — code-janitor cron picks up.
 - **TASK-BCTC-3** — dev-vps-crawls parallel stream.
-- **1862c-F** — `container-rebuild` unmet + 5-clean-cycle gate.
-- **1862c-E-dashboard** — user-blocked (Cloudflare dashboard).
-- **1897b-carry** — user (F1) + architect (SPIKE), can't dispatch; recurrence pressure subsiding.
-- **1900c health-probe-refine** — LOW OPS cosmetic.
-- **1899a-bloomberg-test-split** — LOW REFACTOR non-blocking carry.
+- **1900c, 1899a-bloomberg-test-split** — LOW, non-blocking.
+- **1862c-E/F, 1897b-carry** — user/architect blocked.
+
+### Carry-forward watchlist to c87+
+- **US10Y 4.49%** — 0.01% from Layer 1.2 threshold (4.50%). Any agent seeing breach must explicit cross-flag. Confirm logic still works in flows.
+- **BCTC banking cohort 2026-05-15** — ACB/BID/CTG/EIB/MBB/VCB/VPB. Verify financial-analyst + report-analyzer cycles fire at 02:00 UTC.
+- **Silent agents (TNB UNAUDITABLE)** — financial-analyst (no 2026-05-13 cycle), digest-predict (last 2026-05-11), report-analyzer (last 2026-05-12 02:02 UTC 0-earnings exit). Re-audit c87+; if still silent → ops cron-cadence task.
+- **HEAD.lock pressure** — 6/6 lock-free or 1-retry PREFLIGHTs since c69; trend confirmed subsiding.
+- **AUTOCURE-C86-MW-DEDUP result** — confirm market-watcher next off-hours cycle shows SUPPRESSED log for unchanged-price re-scans (validates guard).
+- **SPIKE_C86_MCP_REG result** — if config gap, immediate fix task. If sporadic, ops monitors with reproduction harness.
 
 ### Hard-constraint compliance
 - WIP ≤ 2: PASS (0 → 2).
-- Disjoint zones: PASS (multi/apps-prod vs cross-service/.claude-meta).
-- Disjoint owners: PASS (architect→dev-chain vs agent-father).
+- Disjoint zones: PASS (`.claude/` doc vs `apps/mcp-server/` infra).
+- Disjoint owners: PASS (developer vs ops).
 - Zone tag on every row: PASS.
-- Recurring-bug rule: N/A.
-
-### Handoff sequence
-1. Dispatch 1888l first (no architect needed, faster close).
-2. Dispatch 1881a-impl in parallel via architect (BLK-1 schema decision → per-zone split → BA→dev).
-
-### Carry-forward to c85
-- 1881a-impl architect split outcome → unlocks ≥3 per-zone sub-tasks.
-- 1888l agent-father compliance audit result.
-- TNB next-cycle audit (no new since c46 — overdue, watch for c47).
-- US10Y 4.48% watchlist (Layer 1.2 threshold 4.5%).
-- NB-HDR-bundle-22-agents ba spec carry.
-- HEAD.lock pressure: 6/6 clean-or-1-retry cycles — confirm trend at c85+.
+- Recurring-bug rule: SPIKE_C86_MCP_REG is escalation, not duplicate fix — c47 MCP-not-registered is distinct from c46 connection-refused.
 
 ### Sign-off
-c84 BATCH(2) emitted. PO sub-flow EXIT to main terminal Step 2 (planning) for both rows. 1881a-impl routes to architect first, 1888l direct to agent-father. Notebook OVERWRITE complete.
+c86 BATCH(2) emitted. PO sub-flow EXITs to main terminal Step 3 (direct dispatch — AUTOCURE is CHORE, SPIKE goes direct to ops; no architect/BA gate needed). Notebook OVERWRITE complete.

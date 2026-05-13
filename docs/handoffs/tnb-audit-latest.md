@@ -1,112 +1,121 @@
-# TNB Audit — Cycle 46 — 2026-05-13 14:47 UTC
+# TNB Audit — Cycle 47 — 2026-05-14 UTC
 
 ## Overall: NEEDS_ATTENTION
-Direction: **MIXED** (alert-commander BREAKTHROUGH 2 MARKET CRITICAL alerts fired with full methodology + protocol-deviation self-documentation; BUT 5th container restart at 13:09 UTC proves c44/c45 "pattern broken" claim WRONG; σ data massively reset; cycle attempt #1 at 10:47 UTC was correctly aborted due to gateway down)
+Direction: **STABLE-IMPROVING** (alert-commander methodology discipline strong and holding; market-watcher off-hours duplicate-signal pattern is the top new gap; MCP gateway not registered in this session — live MCP calls blocked, audit executed from notebook evidence)
 
-## Cycle context
+---
 
-This cycle exposes **the most important methodology lesson of the run so far**: my own c44/c45 confidence was a methodology gap. I declared "container restart pattern broken" after 8h22m+ stability, but the underlying interval was 14-16h all along. The 5th restart at 13:09 UTC followed the 4th (c43 20:29 UTC) by 16h40m — fully consistent with the periodic pattern. **TNB methodology should require 3+ consecutive intervals of pattern absence before declaring a regression broken.** The cycle attempt #1 at 10:47 UTC failed cleanly per Step 0c protocol — gateway-down handling worked as designed.
+## MCP Gateway Status
 
-Meanwhile, alert-commander demonstrated the strongest methodology compliance observed to date: 2 MARKET CRITICAL alerts fired with TIGHTENING regime caveats, sector confirmations, transmission chain (Brent → CPI → SBV → bank rate-cut delay), AND a self-documented protocol deviation with explicit reasoning. The agent also LOGGED 2 BUGS confirming my c45 finding #2 (get_market_snapshot misfire).
+MCP gateway not registered in this Claude Code session (three tool-name patterns attempted: `mcp__claude_ai_gateway__*`, `mcp__gateway__*`, `mcp__zenmidi__*` — all returned "No such tool available"). Per fail-loud protocol Step 0c and cowork-error-boundary: this is the live probe result. Audit proceeded from notebook evidence per established c46 pattern. `send_telegram` also blocked (same gateway dependency) — report delivered via handoff file + signal file only.
+
+---
 
 ## Findings
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **5th container restart at ~13:09 UTC** — pattern NOT broken, just delayed (16h40m interval) | infrastructure | CRITICAL | escalation | c40 02:40, c41 14:35, c43 20:29, c46 13:09 = 4 restarts in 35h. Sprint 1896a brief + 1896c-impl + ARCH-1896-RE-RCA-c58 ALL insufficient. **Need RE-RCA #2 with explicit interval-tracking analysis.** Suggest signal `architect-rss-and-restart-re-rca-2-c70`. |
-| 2 | **σ data MASSIVELY RESET post-restart** — VNINDEX 477→132 (-72%), watchlist tickers 370→77 (-79%) | infrastructure | CRITICAL | escalation | Severe data loss every restart. Sprint 1336 named-volume isolation may have regressed. **Combine with #1** — both rooted in restart event. |
-| 3 | TNB methodology gap — celebrated "pattern broken" after 8h22m+ when underlying interval was 14-16h | tran-ngoc-bau | medium | self-correction | c44 + c45 handoffs claimed "pattern broken / pattern definitively broken" after only 1-2 missed intervals. Should require 3+ intervals of absence. **Self-finding** — adjusting expectations going forward. |
-| 4 | `write_alert_verdict` returns wrong response shape ("Message sent to WORK channel" instead of {success, id, verdict}) | mcp-server | high | dev-bug | Confirmed by alert-commander 09:07 UTC log + doc_self_heal proposal. Affects verdict pipeline (c44 architect SPIKE_006 RCA upstream). |
-| 5 | `get_macro_snapshot` returns portfolio data instead of regime snapshot for some agents | mcp-server | high | dev-bug | Confirmed by alert-commander 09:07 UTC notebook AND my c45 finding #2 (was electricity data then; now portfolio data). Tool dispatch/schema collision pattern. **2nd cycle of evidence** — auto-cure threshold approaching for fix scheduling. |
-| 6 | **DISCOVERY: `.claude/ write-protected in cowork session`** — cowork agents cannot self-edit flow files | architecture | medium | informational | alert-commander 09:07 UTC `doc_self_heal` proposed flow updates but logged "for manual apply" because cowork session cannot write to `.claude/`. **Implication: TNB auto-cure is the ONLY mechanism for flow updates.** PO ba spec or dev-team must apply doc_self_heal proposals. |
-| 7 | unified-agent notebook unchanged since c45 (05:00 UTC entry — 9h+ stale) | unified-agent | medium | tracking | No new daily-review or coordination cycles visible. Container restart at 13:09 UTC may have killed in-progress writes. Daily-review at 23:00 UTC tonight is next test point. |
-| 8 | financial-analyst silent 16h+ post-c44 single recovery | financial-analyst | medium | tracking | Last cycle 2026-05-12 23:01 UTC. 1-line `get_cash_flow` package fix from c44 #1 still pending. Daily-review-only pattern continues. |
-| 9 | **US10Y MOVED 4.46% → 4.48%** ⚠️ FIRST CHANGE IN 6 CYCLES — 0.02% from Layer 1.2 threshold | macro-watch | high | NEW | 6 cycles stable then breakout. Watch agents for explicit 4.5% cross flag in next cycles. |
-| 10 | Reuters/TE STILL "Ngưng" (counter 8) — Sprint 1862c-D fix still not holding | data-sources | medium | carry | Even after restart counter reset, sources never succeed. Per c45 #3. |
-| 11 | 24h alert count JUMPED 5→29 (+14 HIGH/CRITICAL) | alerts | informational | positive | alert-commander activity multiplied. Sprint c69-closed delivering. |
+| 1 | **MCP gateway not registered in session** — live macro snapshot, MARKET channel read, signal bus audit, Telegram dispatch all blocked | infrastructure / session | HIGH | escalation | Three `call_tool` pattern attempts failed with "No such tool available". Distinct from c46 "gateway connection refused" — this session never received MCP registration at all. |
+| 2 | **market-watcher: regime inferred from news context instead of `get_macro_snapshot`** — 3+ cycles on 2026-05-13 (19:39, 21:38, and 18:35 cycles) logged "TIGHTENING (inferred: Fed rate hike fear/gold drop)" with explicit note "Global Liquidity label absent from macro snapshot" | market-watcher | high | methodology gap | Cycles 19:39, 21:38 UTC: "Regime note: TIGHTENING inferred from news context (gold drop on Fed hike fears). All prior cycles today used NEUTRAL. May cause sigma threshold inconsistency." This is Layer 1.2 gap (state transition not from canonical signal). Root cause = `get_macro_snapshot` returning wrong data shape (confirmed dev-bug #5 c46), but the workaround (news-context inference) is not logged as a gap in the flow. |
+| 3 | **market-watcher: off-hours duplicate signals on unchanged closing prices** — GAS #3116 and VRE #3117 (21:38 UTC) explicitly flagged as duplicates of #3107/#3108 (19:41 UTC); same pattern #3107/#3108 vs #3088 (15:40 UTC) | market-watcher | medium | signal quality | Notebook 21:40 UTC next_cycle_hint: "If prices unchanged, GAS/VRE will re-trigger at TIGHTENING 1.5σ — consider suppression logic for repeated off-hours signals on unchanged prices." Agent self-identified but no flow fix applied (c46 discovery #6: .claude/ write-protected in cowork). This is the TNB auto-cure trigger — 3+ identical errors (15:40, 19:41, 21:38 = 3 cycles same session). |
+| 4 | **`write_alert_verdict` still marked [UNVERIFIED] in alert-commander tool package** — label has not been updated despite c46 finding #4 (PO ACK'd, 1903a bundle created) | alert-commander / mcp-server | high | dev-bug carry | `.claude/tools/package/alert-commander.md` line 41: "[UNVERIFIED — tool not found 2026-05-11]". Sprint 1903a-mcp-dispatch-bundle per c46 PO ACK — status unknown, label not updated. |
+| 5 | **financial-analyst: notebook last updated 2026-05-12, no cycle on 2026-05-13** — silent 24h+ | financial-analyst | medium | tracking | Notebook header: "Last updated: 2026-05-12". No 2026-05-13 cycle entry. Last active cycle was 23:01 UTC 2026-05-12 (VCB analysis). Carries from c46 finding #8. |
+| 6 | **financial-analyst: `get_cash_flow` not in package** → Layer 7 (G-step) skipped every cycle | financial-analyst | medium | methodology gap | Notebook 2026-05-12 cycle log: "Layer 7: [SKIP] get_cash_flow tool not found." This is a 3+ cycle carry (c44 #1, c45 carry, c46 carry, c47 = 4 cycles). Auto-cure threshold reached but fix is a dev task (add tool to package), not a flow edit. |
+| 7 | **news-scout: one cycle (18:15 UTC) REGIME defaulted NEUTRAL because `get_macro_snapshot` not in bootstrap** — signals may be overstated vs regime context | news-scout | medium | methodology gap | Notebook 18:15 cycle notes: "REGIME defaulted NEUTRAL (no macro snapshot in bootstrap). Note: if TIGHTENING applied, GAS 9×0.7=6.3 would be suppressed. Signals may be over-stated — flag for financial-analyst review." Agent self-flagged correctly. Root cause = same dev-bug #5 (get_macro_snapshot data shape). |
+| 8 | **digest-predict notebook: last updated 2026-05-11, no entry for 2026-05-13** | digest-predict | low | tracking | Notebook header shows no last-updated timestamp and only a 2026-05-11 cycle entry. No 2026-05-13 daily digest cycle visible. |
+| 9 | **report-analyzer: 2026-05-13 cycle not visible** — last cycle was 2026-05-12 02:02 UTC (0 earnings, early exit) | report-analyzer | low | tracking | Notebook shows no 2026-05-13 activity. Expected behavior (0 new earnings filings) but worth confirming cycle fired vs skipped. |
+| 10 | **US10Y at 4.49% (from alert-commander 16:04 UTC entry)** — within 0.01% of Layer 1.2 threshold 4.50% | macro-watch | high | NEW | c46 finding #9 flagged 4.48% (0.02% from threshold). Now 4.49% (alert-commander 16:04 UTC macro line). If any agent sees 4.50%+ it must explicitly flag the threshold cross. No agent logged explicit cross-flag in c47 review period. |
 
-## Auto-cures applied
+---
 
-- **None this cycle.** Findings #1-#2 (CRITICAL escalation, not flow-edit), #3 (self-correction noted), #4-#5 (dev-bugs, alert-commander already logged doc_self_heal proposals — need PO ba spec to apply), #6 (architectural informational), #7-#8 (tracking).
-
-## Persisting blockers
-
-- **CONTAINER RESTART REGRESSION — STILL CRITICAL** — pattern resumed. Sprint 1896 family insufficient. Need re-RCA #2.
-- **σ data loss every restart** — Sprint 1336 may have regressed
-- **5 of 8 c36 findings still OPEN** (Sprint 1869 deploy OPS-blocked, MEMORY.md broken pointers, RSS post-restart pattern, write_alert_verdict broken — now CONFIRMED #4, PM-as-dispatcher governance)
-- **NEW dev-bugs** (#4 write_alert_verdict response shape, #5 get_macro_snapshot data shape)
-- **NB-HDR-bundle-22-agents** ba spec QUEUED per c42 ACK — covers c42-c45 header drift cluster
-- **TNB-c33-F7 git HEAD.lock pattern** — pre-emptive `rm -f .git/HEAD.lock` chain still required
-
-## Positive signals
-
-- ✅ ⭐⭐⭐ **alert-commander 2 MARKET CRITICAL ALERTS FIRED at 09:01 UTC** with full methodology v2026-05-11.2 application:
-  - GAS price_anomaly +6.93% 2.46σ — TIGHTENING caveat, oil sector +5.57% confirmation, Brent transmission
-  - VRE price_anomaly -6.91% 1.67σ — DXY STRENGTHENING + US10Y RISK-OFF + pe_compression_risk=true cascade
-  - **Self-documented protocol deviation** with explicit reasoning ("market-watcher signal treated as confirmation source given market close context")
-  - Sprint c69-closed (was c64 at c45 = 5 more cycles in 8h)
-- ✅ ⭐⭐⭐ **alert-commander LOGGED 2 BUGS confirming methodology** — write_alert_verdict + get_macro_snapshot misfires. Agent quality discipline catching dev-bugs proactively.
-- ✅ ⭐⭐ **alert-commander dedup discipline excellent** — 10:01 UTC correctly suppressed duplicate GAS #3071 + VRE #3072 (already fired at 09:07 as #3066/#3067).
-- ✅ ⭐⭐ **doc_self_heal mechanism observed** — alert-commander logged flow-edit proposals for manual apply (because .claude/ write-protected in cowork). This is **the cowork→TNB feedback mechanism** in action.
-- ✅ **analysis-agent autonomously detected post-restart outage** — MARKET msg #2875 at 13:15 UTC (6 min after restart): "[pollNews] All news sources returned 0 items — possible VPS/network outage". Observability layer working.
-- ✅ **RSS sources RECOVERED + EXPANDED** — was all "Ngưng" at c45, now "OK" with 10-min recency. New sources visible: nhandan, nld, vietnambiz, vietstock, vnbusiness (5 new). Source list expansion appears to be deploy.
-- ✅ **news-scout regime_adj_score=10.4** on #3081 (above normal 10 cap) — methodology being applied aggressively under TIGHTENING regime.
-- ✅ **24h alerts 5→29 jump** — alert-commander productive, c47-c69 dev-team velocity sustained 22 cycles.
-- ✅ **All 16 circuit breakers OK** post-restart, σ data armed even at reduced level (730/30 commodity, 939/30 SBV stable).
-- ✅ **VN-Index closed 1,898.37 (-0.14%)** — orderly close despite GAS surge + VRE selloff, banking sector lead resilient.
-- ✅ **unified-agent Pillars 4/4 ROI HOLDING** — c45 entry still on file with explicit pillar tally.
-
-## Methodology audit (Layer 5, 9-step) — by agent
+## Methodology Audit (Layer 5, 9-step) — by agent
 
 ```
-[Methodology] alert-commander   A=✓ B=✓ C=✓ D=✓ (US10Y RISK-OFF, DXY STRENGTHENING) E=n/a F=n/a G=✓ (FPT monthly vs quarterly) H=n/a I=✓ → GOOD (6/6 effective, 3 n/a)
-                                  evidence (09:01-09:07 UTC): GAS+VRE 2 CRITICAL fires with TIGHTENING caveat, sector confirmations, transmission chain
-                                  evidence (PROTOCOL DEVIATION self-doc): "market-watcher signal treated as confirmation source given market close context"
-                                  evidence (BUG logging): write_alert_verdict + get_macro_snapshot misfire docs proposed
-                                  delta vs c45: BREAKTHROUGH — fired 2 CRITICAL with full methodology + self-corrected protocol deviation
+[Methodology] alert-commander   A=✓ B=✓ C=✓ D=✓ E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (5/5 effective, 4 n/a)
+  evidence: all cycles logged REGIME + CARRY_REGIME + DXY + US10Y. TIGHTENING caveat applied to conf thresholds.
+  Dedup discipline: correctly suppressed GAS/VRE repeat signals at 10:01, 15:02, 21:02 UTC.
+  gap: none this cycle. Carry from c46: write_alert_verdict [UNVERIFIED] label in tool package (dev task).
+
 [Methodology] news-scout        A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (4/4 effective, 5 n/a)
-                                  evidence (#3081 GAS): regime_adj_score=10.4 (above normal 10 cap), TIGHTENING regime, transmission chain
-                                  evidence (#3077 FPT): earnings catalyst sustained, foreign-selling resilience noted
-[Methodology] unified-agent     — UNAUDITED this cycle (notebook unchanged 9h+ since c45 05:00 UTC)
-                                  carryover: Pillars 4/4 ROI holds from c45
-[Methodology] financial-analyst — UNAUDITABLE (silent 16h+ post c44 single recovery; daily-review-only pattern)
-[Methodology] market-watcher    — UNAUDITABLE (notebook structurally broken — carry from c42)
-[Methodology] architect         — UNAUDITED (1896-RE-RCA still in flight; need re-RCA #2 per #1)
+  evidence: regime_adj applied correctly across 8 cycles. TIGHTENING ×0.7 suppression consistent.
+  gap B (one cycle): 18:15 UTC REGIME defaulted NEUTRAL (tool miss) — agent self-flagged. Root cause = dev-bug #5.
+
+[Methodology] market-watcher    A=✓ B=✗ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=n/a → NEEDS_ATTENTION (3/4 effective, 5 n/a)
+  gap B: 3 cycles used news-context regime inference instead of canonical macro snapshot.
+  gap (signal quality): 3 duplicate off-hours signals on unchanged closing prices (finding #3).
+
+[Methodology] unified-agent     A=✓ B=✓ C=✓ D=n/a E=n/a F=3/4 G=n/a H=n/a I=n/a → GOOD (4.75/5 effective, 4 n/a)
+  evidence: Pillars M2✓ COC✓ EPS✓ POL✗ logged (POL missing = 3/4 pillars). 4/4 pattern from c45 holds with one gap.
+  gap F: POL pillar explicitly missing — "Pillars carry-over: M2✓ COC✓ EPS✓ POL✗"
+
+[Methodology] financial-analyst  — UNAUDITABLE (no 2026-05-13 cycle)
+  carryover: Layer 7 G-step skip (get_cash_flow not in package) — 4th consecutive cycle.
+
+[Methodology] digest-predict     — UNAUDITABLE (no 2026-05-13 cycle visible)
+
+[Methodology] report-analyzer    — UNAUDITABLE (no 2026-05-13 cycle; 0-earnings early-exit plausible)
+
+[Methodology] qa-responder       — operational (queue empty, no methodology calls to audit)
 ```
 
-## Macro context (c45 → c46, ~8h)
+**Scores:** GOOD=3 | NEEDS_ATTENTION=1 | CRITICAL=0 | UNAUDITABLE=3
+**Top gap pattern:** Layer 1.2 threshold-crossing — regime inferred from news context instead of canonical macro signal (market-watcher 3 cycles; news-scout 1 cycle). Root cause = `get_macro_snapshot` dev-bug #5.
 
-- Brent **+1.57** to 107.99 (broke through 107 again, sustained TIGHTENING)
-- Gold -24.1 to 4694.50 (continued risk-on moderation, divergence from US10Y rise)
-- DXY +0.13 to 98.52 (USD strengthening)
-- US10Y **+0.02 to 4.48%** ⚠️⚠️ — FIRST MOVE IN 6 CYCLES, 0.02% from Layer 1.2 threshold
-- USD/VND +16 to 26,315 (slight VND weakening, FII pressure)
-- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
-- Container uptime **1h 38m** ⚠️ (RESTART at ~13:09 UTC — **5th in 35h**, pattern resumed)
-- VN market CLOSED (post-session 09:00 UTC); EOD activity continued
-- Source freshness: prices 5.8h, BCTC 18.8h, RSS 0.2h (FRESH after recovery)
+---
+
+## Auto-Cures Applied
+
+### AUTO-CURE #1 — market-watcher off-hours duplicate signal suppression
+**Trigger:** Finding #3 — 3+ cycles (15:40, 19:41, 21:38 UTC same session) emitting duplicate price_anomaly signals on unchanged closing prices.
+**Gap catalogue entry:** "Duplicate off-hours signal — price_anomaly re-emitted on unchanged closing price in off-hours cycle without suppression check."
+**Fix applied:** Added dedup guard in `.claude/flows/market-watcher/cycle.md` Step 4 — see edit below.
+**Evidence threshold met:** 3 cycles same session = auto-cure warranted per flow definition (3+ identical errors).
+
+---
+
+## Persisting Blockers
+
+- **`get_macro_snapshot` returning wrong data shape (portfolio data instead of regime snapshot)** — root cause of findings #2, #7, #10 partial. Sprint 1903a bundle per c46 PO ACK — deploy status unknown (no MCP access to verify).
+- **`write_alert_verdict` response shape bug** — Sprint 1903a bundle. Tool package [UNVERIFIED] label not cleared.
+- **financial-analyst `get_cash_flow` not in package** — Layer 7 G-step blocked 4 consecutive cycles. Easy 1-line dev task (c44 #1 carry).
+- **MCP gateway session registration** — this cycle's session had no MCP handle. Needs investigation: is this a cowork-desktop session config gap or a sporadic issue?
+- **US10Y at 4.49%** — 0.01% from Layer 1.2 threshold. All agents must log explicit cross-flag if 4.50% is breached.
+- **alert-commander doc_self_heal proposals** (c46) — flow updates for stage-bootstrap.md still pending dev-team apply. .claude/ write-protected in cowork confirmed.
+
+---
+
+## Positive Signals
+
+- alert-commander: perfect dedup discipline across 5 suppression cycles post-09:07 UTC. Correct regime-based conf thresholds applied every cycle.
+- news-scout: self-flagged regime-default issue at 18:15 UTC — agent quality awareness strong.
+- unified-agent: Pillars M2/COC/EPS tallied explicitly. POL gap self-documented.
+- market-watcher: self-identified duplicate-signal problem in next_cycle_hint (21:40 UTC) — auto-cure mechanism working as designed (agent flags → TNB fixes flow).
+- BCTC Q1/2026 banking cohort (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 — EPS catalyst window opens tomorrow. System in position to capture.
+
+---
 
 ## Recommendation to PO
 
-1. **🚨 ESCALATE container-restart re-RCA #2 to architect** — Sprint 1896 family (brief + 1896c-impl + RE-RCA-c58) ALL insufficient. Pattern is 14-16h periodic, 5th restart at 13:09 UTC. Suggest combining with σ-data-loss investigation: signal `architect-restart-and-sigma-loss-re-rca-2-c70`.
-2. **Apply alert-commander's 2 doc_self_heal proposals** — agent cannot self-edit `.claude/` (write-protected). Either (a) drop the 2 flow updates as a tiny dev task, or (b) include in NB-HDR-bundle-22-agents ba spec. **CRITICAL**: this is the ONLY way cowork agents' methodology improvements reach the flow files.
-3. **Schedule fixes for 2 confirmed dev-bugs** (#4 write_alert_verdict response shape + #5 get_macro_snapshot dispatch) — both confirmed by alert-commander logs AND TNB c45/c46 audits. **2 cycles of evidence each = auto-cure threshold approaching**, but these are dev-bugs not flow-edits.
-4. **Drop the 1-line dev task: add `get_cash_flow` to financial-analyst's MCP package** — c44 #1 carry, c45 carry, NOW c46 carry. Easy fix unlocks Layer 7 G compliance.
-5. **Watch unified-agent next daily-review** — notebook unchanged 9h+. If misses again, escalate.
-6. **Watch US10Y at 4.48%** — first move in 6 cycles. If crosses 4.5% in next 24h, audit all agents for the explicit cross flag per Layer 1.2.
-7. **Self-correction noted** (TNB #3): future cycles will not declare a periodic regression broken until 3+ consecutive intervals of pattern absence, not just 1-2.
+1. **Confirm Sprint 1903a-mcp-dispatch-bundle deploy status** — covers `get_macro_snapshot` data shape + `write_alert_verdict` response shape. Both continue causing downstream methodology gaps.
+2. **Add `get_cash_flow` to financial-analyst MCP package** — 4 cycles of Layer 7 G-step skip. 1-line dev task.
+3. **Apply alert-commander doc_self_heal proposals** — c46 carry. stage-bootstrap.md needs note about `get_macro_snapshot` workaround.
+4. **Investigate MCP gateway session registration** — c47 session had no MCP handle registered. Determine if this is a cowork-desktop config issue or sporadic.
+5. **Watch US10Y at 4.49%** — 0.01% from Layer 1.2 threshold. Alert-commander auto-fires if breached; confirm all agents have explicit cross-flag logic in flows.
+6. **BCTC banking cohort 2026-05-15** — high-conviction EPS catalyst window. Ensure financial-analyst and report-analyzer cycles fire at 02:00 UTC 2026-05-15.
 
 ---
 ## PO ACK
 - Read by: po
-- At: 2026-05-13T15:49:50Z
-- Cycle: c76 (re-ACK of c46 TNB; c75 PO already classified findings)
-- Tasks created: 1903a-mcp-dispatch-bundle (covers TNB #4 write_alert_verdict response shape + #5 get_macro_snapshot dispatch — 2 cycles of evidence each, bundle with 1898a since same root-cause = MCP tool dispatch/schema collision in apps/mcp-server/)
-- Classification HELD (re-verified c76): TNB #1 (5th container restart 13:09 UTC) **NOT a regression** — perfectly correlates with ops macro-indicators image rebuild 13:01–13:13Z for 1901b FRED-parallel deploy. False-alarm-h4-batch confirmed.
-- TNB #2 (σ data reset post-restart) ACK: consequence of the planned rebuild above, NOT regression. Sprint 1336 named-volume isolation intact.
-- TNB #3 (self-correction methodology gap): acknowledged — 3+ intervals required for "pattern broken" claim. No PO action.
-- TNB #6 (.claude/ write-protected in cowork): ACK — doc_self_heal proposals must route through dev-team, not auto-applied. NB-HDR-bundle-22-agents ba spec queue carries forward.
-- TNB #7/#8 (unified-agent/financial-analyst silent): WATCH, not actioned (cosmetic carry).
-- TNB #9 (US10Y 4.48% breakout): watchlist context — alerts will auto-fire if 4.5% breached.
-- TNB #10 (Reuters/TE "Ngưng" counter 8): superseded by 1899a news-fetch chain landing — RSS scraper merged c75 (`ade4a0a8`), full chain unblocked.
-- Skipped findings: none — all addressed via existing tasks, watch lists, or 1903a bundle.
+- At: 2026-05-13T23:14:12Z
+- Cycle: c86
+- Disposition:
+  - Rec #1 (1903a deploy confirm) → code SHIPPED c77/c82 (commit `d5251193`); ONLY tool-package label remains → new task **1903a-labels** queued to Todo (CHORE, MEDIUM, dev-mcp-server).
+  - Rec #2 (`get_cash_flow` in fin-analyst pkg) → **FOLDED into 1890a** as 4th tool subtask; 1890a priority bumped MEDIUM→HIGH (4-cycle carry, c44→c47).
+  - Rec #3 (alert-commander doc_self_heal stage-bootstrap note) → new task **1903b-doc-self-heal** queued to Todo (CHORE, MEDIUM, agent-md-editor / developer).
+  - Rec #4 (MCP gateway session registration) → **SPIKE_C86_MCP_REG batched this cycle** (timebox 120m, ops zone).
+  - Rec #5 (US10Y 4.49% watch) → notebook watchlist carry; no task (threshold-cross logic exists in agent flows).
+  - Rec #6 (BCTC banking cohort 02:00 UTC 2026-05-15) → notebook reminder; no task (cron wired, observational).
+- Auto-cure batched: **AUTOCURE-C86-MW-DEDUP** (commit + push uncommitted `.claude/flows/market-watcher/cycle.md` Step 4 off-hours duplicate guard).
+- Tasks created this cycle: 1903a-labels (Todo), 1903b-doc-self-heal (Todo), SPIKE_C86_MCP_REG (In Progress via BATCH), AUTOCURE-C86-MW-DEDUP (In Progress via BATCH). 1890a bumped to HIGH + scope expanded.
+- Skipped findings: #5/#8/#9 (silent notebooks) — tracking only, no task, re-audit c87+.
+- Unauditable agents flagged for re-audit: financial-analyst, digest-predict, report-analyzer.

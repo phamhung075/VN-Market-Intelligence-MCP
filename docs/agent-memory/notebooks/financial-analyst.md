@@ -21,6 +21,20 @@ Cycle 2026-05-09 01:00–01:15 UTC. Analyzed 2/31 watchlist stocks (VCB, FPT). 2
 
 ---
 
+## Recent session — 2026-05-13
+
+### Analysis Cycle (23:00–23:05 UTC)
+- Stocks: 2 with BCTC data (VCB, FPT) | Critical findings: [37/38 stocks OVERDUE on BCTC; mass late-filing persists] | Chain validations: 0 (0 open chain findings)
+- Regime: TIGHTENING (inferred from news "nỗi lo Fed tăng lãi suất") | Max Deposit Rate: 6.00% (assumed — get_macro_snapshot not in package, data gap) | Valuation flags: [VCB=FAIR, FPT=FAIR]
+- VCB: Q4-2025 filed 2026-05-12. Revenue +18.1% QoQ, Net Profit -0.8% QoQ, Net Margin 53.4% (-10.2pp). PE=14.1 (sector premium +57% vs median 9.0x), EY_SPREAD=1.09% → FAIR. ROE=16.7% (below sector median 17.6%). Sentiment NEGATIVE slope=-0.17. KinhDich=THAN TRONG (Que Ty #8), reliability 48%. Tightening + rate_sensitive_headwind=true — no bullish signal. Signal #3121 posted.
+- FPT: Q4-2025 partial BCTC (confidence 75%, revenue OK but Net Profit anomalous 0.1% margin). PE=13.8 (sector DISCOUNT -20% vs median 17.3), ROE=28.3% (far above sector 10.6%). EY_SPREAD=1.25% → FAIR. Sentiment NEGATIVE slope=-0.15. No bullish signal (TIGHTENING).
+- HPG: BCTC confidence 44% (Net Revenue=0, parse failure) — insufficient for valuation. Skipped.
+- Legal risks: None detected. Insider signals: [SKIP] requires outstandingShares param. Layer 7: [SKIP] get_cash_flow not in package. Layer 8: [SKIP] get_investment_clock_phase not in package. G-Bond: [SKIP] get_bond_maturity_calendar not in package.
+- Deadline watch: 37/38 stocks OVERDUE (Q4-2025 deadline 15/04, Q1-2026 deadline 30/04). VCB sole filer as of today.
+- Tool schema mismatches logged: get_bctc_full needs `code` not `ticker`; get_kinhdich_reading needs `code` not `ticker`; get_insider_signals requires `code` + `outstandingShares`.
+
+---
+
 ## Recent session — 2026-05-12
 
 ### Analysis Cycle (23:01–23:06 UTC)
