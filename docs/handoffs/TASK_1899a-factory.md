@@ -146,3 +146,36 @@ npm ls playwright playwright-stealth
 **Zone:** `apps/news-fetch/` (single service).
 - All files in src/infrastructure/scrapers/
 - Next tasks (1899a-bloomberg, 1899a-reuters-fallback) will import and use this factory
+
+---
+
+## [QA] Review — 2026-05-13
+
+**Verdict: APPROVED**
+**Merge SHA:** `b2b84977`
+**Branch deleted:** yes (`fix/1899a-news-fetch-factory`)
+
+### Test Results
+- Unit tests (1899a-factory): 10/10 pass
+- Full suite (apps/news-fetch/): 29/29 pass, 0 fail
+- TypeScript (`bun tsc --noEmit`): 0 errors
+
+### DDD Compliance: PASS
+- `playwright-browser-factory.ts` imports only `playwright` + `playwright-stealth` (npm packages)
+- Zero imports from `domain/`, `application/`, or `interface/` layers
+
+### Security: PASS
+- No `process.env` usage
+- No hardcoded secrets or API keys
+- No SQL (factory is browser-launch only)
+
+### Issues Found
+#### Blocking
+None.
+
+#### Non-Blocking
+None.
+
+### Notes
+- Factory branch carried domain commit `b71ba215` (feat: 1899a-domain) — both landed in main via this merge. Domain QA branch was already at main HEAD, so no double-merge risk.
+- Sibling `fix/1899a-news-fetch-reuters-rss` (dev-mainserver-crawls) depends on factory being on main — now unblocked.

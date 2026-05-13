@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 14:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 15:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -74,6 +74,27 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (15:32–15:40)
+- Stocks: 34 priced (4 N/A: BDI,DLC,VDC,JSH) | Anomalies: 1 (GAS 2.11σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- GAS +6.93% (2.11σ, 30d stddev ≈3.29%, close 81,800 VND, vol 635K) → signal #3088 → alert-commander. Oil/Gas sector +5.57% 1d. Brent 107.94. Bullish evidence 0.633. DXY USD STRENGTHENING but oil_gas exempt from fx_pressure rule.
+- VRE -6.91% (1.61σ, 30d stddev ≈4.29%) — below 2.0σ threshold; not signalled. Part of broad real-estate sector decline (-2.33% avg, 9 stocks down). Prior HIGH price_drop alert (08:30 UTC) covers.
+- VHM -4.81% (1.19σ, 30d stddev ≈4.03%) — below threshold. Real-estate sector drop confirmed.
+- Market closed (post-session off-hours cycle). Prices are closing values from 08:59 UTC.
+- Chain findings: 0 (last 15 min) | Supply chain: STABLE (BDI=1,400) | 20 open alerts (banking×7 HIGH, real-estate×9 HIGH, securities MEDIUM, MWG MEDIUM)
+- Context: VN-Index -2.73 pts to 1,898.37; foreign selling on FPT; SSIAM/Japan inst. capital inflow signal (news-scout #3086, bullish offset to FII selling)
+
+## Metrics (cycle 2026-05-13 15:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 7 |
+| signals_emitted | 1 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3600 |
 
 ## Known patterns / preferences
 
