@@ -32,7 +32,6 @@
 | 1901a | OPS-MEDIUM (c72 carry): investing-economic-calendar CF Turnstile v2 — curl_cffi all variants 403. FlareSolverr container PROVISIONED c73 (per `ops-flaresolverr-provisioned` signal; `flaresolverr-1` up healthy). REMAINING: integrate FlareSolverr → `investing.com` adapter to pull cf_clearance cookie. Adapter currently returns status=error gracefully. | MEDIUM | OPS | ops | — | — |
 | 1898a | FIX-HIGH (TNB c45): `get_market_snapshot` returning electricity data instead of stocks. Investigate routing/source mix-up. Owner: ba spec → dev-mcp-server. Re-verify post-gateway-restore. | HIGH | FIX | ba | — | — |
 | 1898b | FIX-HIGH (TNB c45): RSS degradation accelerating — Sprint 1862c-D fix didn't hold. News sources returning empty arrays again. Owner: ba spec → dev-mcp-server / ops. Re-verify post-gateway-restore. | HIGH | FIX | ba | — | — |
-| 1899a-core | SCAFFOLD: Service skeleton — Dockerfile (multi-stage Playwright), package.json, tsconfig.json, src/index.ts (Bun.serve export + wiring). Zone: apps/news-fetch/. (Tier 1, 0 deps, ~2h). | MEDIUM | FEATURE | developer | TASK_1899a-core.md | — |
 | 1899a-domain | SCAFFOLD: Domain layer — models.ts (Article, NewsSource enum, FetchResult), repositories.ts (ReutersNewsPort, BloombergNewsPort interfaces). Zone: apps/news-fetch/. (Tier 2, depends 1899a-core, ~1.5h). | MEDIUM | FEATURE | developer | TASK_1899a-domain.md | 1899a-core |
 | 1899a-app | SCAFFOLD: Application layer — use-cases.ts (FetchReutersHeadlinesUseCase, FetchBloombergHeadlinesUseCase). Zone: apps/news-fetch/. (Tier 2, depends 1899a-domain, ~1h). | MEDIUM | FEATURE | developer | TASK_1899a-app.md | 1899a-domain |
 | 1899a-factory | SCAFFOLD: Shared infrastructure — PlaywrightBrowserFactory (launch/configure/close Chromium stealth). Zone: apps/news-fetch/. (Tier 2, depends 1899a-core, ~1h). | MEDIUM | FEATURE | developer | TASK_1899a-factory.md | 1899a-core |
@@ -58,6 +57,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1899a-core | SCAFFOLD: Service skeleton — Dockerfile (multi-stage Playwright), package.json, tsconfig.json, src/index.ts (Bun.serve export + wiring). Zone: apps/news-fetch/. | MEDIUM | FEATURE | developer | TASK_1899a-core.md |
+
 ---
 ## Done
 
