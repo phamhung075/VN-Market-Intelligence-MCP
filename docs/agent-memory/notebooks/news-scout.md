@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 06:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 07:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (07:15–07:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3059 FPT, chain_catalyst×1 #3060 FPT/SIS] | Regime: MIXED | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT lãi T4/2026 +21% YoY (bullish, impact 9, conf 90%) → urgent_news #3059 + chain_catalyst #3060. FPT +0.85% (underreaction — 3rd consecutive cycle). RE sector deep red: VHM -6.37%, VRE -6.77%, VIC -4.14%, KBC -2.56%. GAS +6.93% sustained (3rd cycle). SSIAM–Japan partnership (impact 8, securities). STB ATH (impact 8, not on watchlist).
+- Suppressed: VHM bond 3000B (neutral, impact 5), IMP exec sales (not watchlist), HAG insider buy (not watchlist), silver/gold global (no VN direct hit), SACOMBANK rename story (narrative, no price catalyst).
+- Notes: FPT earnings re-signaled due to price underreaction. RE sector weakness persisting — no explicit catalyst news found; likely profit-taking near ATH. GAS surge (+6.93%) now 3 consecutive cycles — Brent $106 confirmed driver. CARRY_REGIME: NEUTRAL.
 
 ### Cycle (06:15–06:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3050 FPT, chain_catalyst×2 #3051 FPT earnings, #3052 GAS/Brent CPI chain] | Regime: NEUTRAL | Carry: NEUTRAL

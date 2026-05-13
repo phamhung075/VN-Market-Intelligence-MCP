@@ -35,3 +35,15 @@ export interface ScoredIndicator {
   tier: MacroTier;
   impactScore: number;   // 2–10
 }
+
+// ── Extended snapshot for external sources ────────────────────────────────
+
+/** Extended macro snapshot including all 6 new external sources. */
+export interface ExtendedMacroSnapshot extends MacroSnapshot {
+  worldBankVn: Record<string, import('./repositories.js').WorldBankDataPoint[]> | null;
+  yahooFxIndices: Record<string, import('./repositories.js').YahooQuote | null> | null;
+  cnbcIndices: Record<string, import('./repositories.js').CnbcQuote | null> | null;
+  tradingEconomicsVn: Record<string, import('./repositories.js').TradingEconomicsIndicator | null> | null;
+  fredMacro: Record<string, import('./repositories.js').FredSeriesResult | null> | null;
+  economicCalendar: import('./repositories.js').EconomicCalendarEvent[] | null;
+}
