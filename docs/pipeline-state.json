@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c78",
+  "currentSprint": "c79",
   "activeTaskId": null,
-  "nextAgent": "pm",
-  "nextPrompt": "1899a-reuters-fallback QA APPROVED — merge SHA 3e04dc5f on main. Mark task done, unblock downstream (1899a-routes).",
-  "updatedAt": "2026-05-13T18:10:00Z",
-  "updatedBy": "qa-c78",
-  "lastCompleted": "Cycle 78 1899a-reuters-fallback QA APPROVED `3e04dc5f` — 28/28 targeted tests, 112/112 full suite, 0 TSC errors, DDD PASS, security PASS. All AC verified. No blocking issues."
+  "nextAgent": "po",
+  "nextPrompt": "c78 closed — both 1899a-reuters-fallback (3e04dc5f) and 1898b (0a76cf8d) APPROVED, 1899a-routes unblocked. Begin c79 triage.",
+  "updatedAt": "2026-05-13T19:55:00Z",
+  "updatedBy": "dev-team-c78-close",
+  "lastCompleted": "Cycle 78: BATCH(2) shipped — 1899a-reuters-fallback (DataDome stealth, FALLBACK, 28/28) `3e04dc5f`/`e0a5da53` + 1898b (RSS source-health 2-line fix + 8 regression tests RSS-REG-01..08) `0a76cf8d`/`d8bc4991`. pm housekeeping `19594166` (TASKS.md 73L). HEAD.lock cure #33 (age 583s com.apple) auto-handled."
 }
