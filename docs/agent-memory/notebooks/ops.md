@@ -263,3 +263,58 @@ technical-analysis       Up 19h (healthy) ✓
 
 **Next:** Await dev-team scaffold of news-fetch service; ops will then size it to ≥2GB and run verification.
 
+
+---
+
+## Task: Cloudflare Tunnel Config Update — BLOCKED (2026-05-13)
+
+**Status:** UNRECOVERABLE — Tunnel in token mode, local config not applied
+
+**Mission:** Apply `/api/*` ingress rule to route VPS push requests (push-prices, push-news) through tunnel
+
+**Attempted Steps:**
+1. Verified `~/.cloudflared/config.yml` contains rule at lines 31-36 ✓
+2. Captured tunnel status: Running via Homebrew services ✓
+3. Restarted service with `brew services restart cloudflared` ✓
+4. Waited for re-establishment (3s delay) ✓
+5. Tested endpoints: `curl https://zenmidi.com/api/push-prices` → **404** ✗
+
+**Root Cause Diagnosis:**
+
+cloudflared process command:
+```
+/usr/local/bin/cloudflared tunnel run --token eyJhIjoiYWJ...
+```
+
+**Critical Finding:** Tunnel runs in **token mode** (managed via Cloudflare dashboard), NOT via local config file.
+
+Token mode behavior:
+- Ingress rules read from **Cloudflare API** (dashboard-managed)
+- Local `config.yml` file **IGNORED**
+- Credentials file `~/.cloudflared/vn-market-mcp.json` exists but **EMPTY**
+- Cannot switch to config mode without credentials export
+
+**Tunnel Details:**
+- Name: `vn-market-mcp`
+- ID: `c4bcc391-b030-4b50-a61b-c454fc86c8c3`
+- Created: 2026-03-29 17:57:18 UTC
+- Mode: Token-based (dashboard managed)
+
+**Test Results (Post-Restart):**
+- push-prices: **404** (should be 405/400)
+- push-news: **404** (should be 405/400)
+- Conclusion: Config change not picked up
+
+**Recovery Options:**
+
+| Option | Path | Effort | Owner |
+|--------|------|--------|-------|
+| **1** | Update Cloudflare dashboard directly; add ingress rule `^/api/*` → `localhost:4000` | Manual dashboard work | dev-mcp-server |
+| **2** | Export tunnel credentials locally; reconfigure Homebrew service to use config-file mode | Requires Cloudflare account access + service reconfiguration | Dev team + ops |
+
+**Escalation:** Cannot proceed without dashboard access (required for Option 1) or credential export (required for Option 2). Signal: `docs/signals/ops-cloudflare-config-blocker-2026-05-13T11-50-00Z.json`
+
+**Lessons:**
+- Cloudflared token mode (quick tunnel / dashboard-managed) decouples local config from actual behavior
+- Always verify which mode the tunnel is running in before attempting config-file updates
+- For persistent tunnels, check if credentials file exists; if empty, tunnel is dashboard-managed
