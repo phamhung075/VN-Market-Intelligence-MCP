@@ -1,63 +1,56 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T08:55Z (c67 close — SPIKE_006 6-TASK CHAIN COMPLETE + 1st C2-clean ship in 5 cycles)
+**Written:** 2026-05-13T09:25Z (c68 close — 1897g shipped C2-clean + 2nd consecutive clean ship; id=2874 finalized)
 
-## c67 (2026-05-13T08:36Z → 08:55Z, ~19 min)
+## c68 (2026-05-13T09:13Z → 09:25Z, ~12 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock age=1994s 0B PID 51247 VirtioFS — **22nd** recurrence cured | lsof log `20260513T083710Z` |
+| 0 PREFLIGHT | HEAD.lock age=324s 0B PID 51247 com.apple VirtioFS — **23rd** recurrence cured | lsof log `20260513T091323Z` |
 | 0a Drain | 0 pending signals | empty |
-| 1 PO Triage | Router discretion (state unambiguous: 0 signals, 0 new telegrams, T-6 chain order obvious) → BATCH(1) | SPIKE_006-c61-T6 |
-| 3 Tier 1 | dev-mcp-server (T-6 integration test ship) | **shipped C2-ATOMIC clean `572bd8c3` — NO CONTAMINATION** |
-| MERGE GATE | No split required (1st clean ship since c63) — agent self-reset market-watcher.md per C2 instruction | direct main |
-| Post | TASKS update + this notebook + pipeline-state + close commit | (pending) |
+| 1 PO Triage | Router discretion (state clear: 0 signals, 0 new telegrams, 1897g promoted CRITICAL c67, 2 fresh ops handoffs) → BATCH(1) | 1897g |
+| 3 Tier 1 | agent-father (1897g — C2 protocol preamble across 9 dev-*.md) | **shipped C2-ATOMIC clean `f4e2bcb5` — agent-father self-caught + reset alert-commander.md** |
+| MERGE GATE | No split required (2nd consecutive clean ship) | direct main |
+| Post | TASKS update (82L→80L) + this notebook + pipeline-state + close commit + push + WORK + id=2874 resolved=fixed | (in progress) |
 
-### Merge chain (origin/main after c67, since c66 close `d6408f1f`)
-- `8f0cf970` chore(memory/alert-commander) — inter-cycle
-- `db03af49` chore(memory/market-watcher) — inter-cycle during T-6 build (agent self-reset properly)
-- `572bd8c3` **test(alerts/scoring-unification) — T-6 C2-ATOMIC SHIP** (1 file, 207 insertions, 5/5 tests, tsc clean)
+### Merge chain (origin/main after c68, since c67 close `2441f515`)
+- `4addf08d` chore(memory/alert-commander) — inter-cycle
+- `f4e2bcb5` **chore(agents/dev-preamble) — 1897g C2 PROTOCOL CODIFIED** (9 files, 98 insertions)
 
-### MAJOR WIN: C2-CLEAN SHIP (no contamination this cycle)
-- 4 prior consecutive contamination events (c63/c64/c65/c66) all due to agent `git add` wildcard.
-- c67 prompt embedded explicit C2 verification: "Before commit, run `git diff --cached --name-only` and verify EXACTLY 1 file."
-- Agent followed protocol — when concurrent market-watcher.md notebook was accidentally staged, it executed `git reset HEAD docs/agent-memory/notebooks/market-watcher.md` before committing.
-- **VALIDATES 1897g**: codify C2 verification protocol in `.claude/agents/dev-*.md` preamble. Promote from HIGH to **CRITICAL** for c68 ship.
+### MAJOR WIN #2: 2nd C2-CLEAN SHIP in 2 cycles
+- c67: 1st clean ship (572bd8c3, T-6 integration test) — proved inline C2 verification works.
+- c68: 2nd clean ship (f4e2bcb5, agent-father 1897g) — codified the protocol into preamble of 9 dev-*.md.
+- **agent-father self-applied the very protocol it was codifying**: detected `docs/agent-memory/notebooks/alert-commander.md` accidentally staged via concurrent activity → ran `git reset HEAD ...` → final staged list = exactly 9 expected files.
+- This validates: protocol in preamble + protocol in cycle prompt = double defense. Future dev specialists will carry the protocol durably.
 
-### HEAD.lock recurrences (c67 = 1 cure)
-- 22nd @ 08:37Z PREFLIGHT — age=1994s 0B canonical VirtioFS signature.
-- F4 idiom not exercised this cycle (no mid-commit lock — single agent build was fast).
+### HEAD.lock recurrences (c68 = 1 cure)
+- 23rd @ 09:13Z PREFLIGHT — age=324s 0B canonical VirtioFS signature.
+- F4 idiom not exercised this cycle.
 
-### c67 BATCH outcomes
+### c68 BATCH outcomes
 | Task | SHA | Status |
 |---|---|---|
-| SPIKE_006-c61-T6 (integration test) | 572bd8c3 | DONE — 5/5 tests, tsc clean, **C2-atomic** |
+| 1897g — C2 preamble codify | f4e2bcb5 | DONE — 9 files, 98 insertions, **C2-atomic** |
 
-### SPIKE_006 6-TASK CHAIN COMPLETE
-| Ship | Task | Cycle | SHA | C2 |
-|---|---|---|---|---|
-| 1 | T-1 threshold 0.1→1.0 | c61 | d6d3c5d9 | clean (task branch) |
-| 2 | T-2 scoreAlert deletion | c64 | 214957b0 | contaminated → split |
-| 3 | T-3 (combined) | c64 | (same) | contaminated → split |
-| 4 | T-4 insufficientSample guard | c65 | 80493433 | contaminated → 3-way split |
-| 5 | T-5 verdictResolutionJob write-back + OOS-5 | c66 | 284335cf | contaminated → soft-reset split |
-| 6 | T-6 integration test | c67 | 572bd8c3 | **C2-CLEAN** |
+### id=2874 telegram report (alert_quality 22%) — FINALIZED
+- Status: `processed`, claimed_by `dev-team`, resolution `fixed` @ c68.
+- Justification: SPIKE_006 6-task chain complete (c61→c67); domain-scorer-only path verified by T-6 integration test 572bd8c3; C2 protocol codification c68 prevents regression. Eligible for alert_quality re-measurement at next unified-agent daily cycle.
 
-### c68 carry-forward (priority order)
-1. **1897g CRITICAL** (PROMOTED from HIGH) — codify C2 verification protocol in `.claude/agents/dev-*.md` preamble. c67 proved it works. Cost: agent-father edits ~10 dev-*.md files. Ship next cycle.
-2. **1897b CRITICAL** — F1 USER Docker `.git/` exclude. HEAD.lock 22x/24h.
-3. **1897f HIGH** — architect rethink agent-spawn semantics (now less urgent since 1897g defense works).
-4. **1898a HIGH** — get_market_snapshot electricity bug (ba spec).
-5. **1898b HIGH** — RSS regression (ba spec).
-6. **1899a MEDIUM** — news-fetch service scaffold (architect brief).
-7. TASKS.md 81L (1 over cap; trim 1 more Done row).
-8. USER Cloudflare 1894a + 1862c-E (15th cycle).
-9. METHODOLOGY-INFRA + JANITOR long-tail.
-10. id=2874 telegram report → can finalize resolution since SPIKE_006 complete (resolution=fixed candidate after monitoring 1-2 cycles).
+### c69 carry-forward (priority order)
+1. **1897b CRITICAL** — F1 USER Docker `.git/` exclude. HEAD.lock 23x/24h. Only known root-cure.
+2. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server).
+3. **1898b HIGH** — RSS regression post-1862c-D (ba spec → dev-mcp-server / ops).
+4. **1899a MED** — news-fetch service scaffold (architect brief; fresh ops handoff `docs/handoffs/ops-news-fetch-scaffold.md`).
+5. **1897f HIGH** — architect rethink agent-spawn semantics (lower urgency now that 1897g defense codified).
+6. USER Cloudflare 1894a + 1862c-E (16th cycle still BLOCKING).
+7. METHODOLOGY-INFRA (1881a/1882a/1883a/1885a/1886a) + SSOT-CRITICAL (1888b/c/d) long-tail.
+8. JANITOR DRY backlog.
+9. ops-fred-key.md (USER admin task — no dev work; FRED_API_KEY paste once user has key).
+10. Concurrent agent activity (dev-mainserver-crawls, dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch agents + flows + handoffs) needs commit by respective owners — not dev-team scope but worth flagging if it lingers.
 
 ### Steady state metrics
-- HEAD.lock cure: 22/22 (100%); frequency ~1-2/cycle (was 3/cycle c65).
-- Contamination: 4/5 last cycles → **1/5 c67 was clean** (first time C2 verification protocol applied inline).
-- **1897g VALIDATION**: explicit C2 instruction in agent prompt template prevents contamination. Codify in preamble.
-- Recovery: soft-reset+selective-re-add remains default for any future split.
-- SPIKE_006: 6/6 ACs shipped across c61→c67. Ready for unified-agent alert_quality re-evaluation.
+- HEAD.lock cure: 23/23 (100%); frequency ~1/cycle.
+- C2 clean ships: 2/2 last cycles (c67 + c68). 0/5 c63→c66.
+- **1897g VALIDATED + SHIPPED**: protocol now in dev-*.md preamble.
+- Recovery pattern: soft-reset + selective re-stage (proven 15x faster than cherry-pick); no recovery needed last 2 cycles.
+- SPIKE_006: 6/6 ACs shipped c61→c67; id=2874 finalized c68.

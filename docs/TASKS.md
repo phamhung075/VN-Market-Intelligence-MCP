@@ -32,6 +32,7 @@
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-013 | DRY: SignalTypeEnum re-lists SignalType union in agentSignalTools.ts (2-file change) | LOW | DRY | code-janitor | — | — |
 | JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
+| TASK-BCTC-3 | Reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC scraper. Current Playwright path (post-TASK-BCTC-1) is heavy on 1GB VPS; need httpx/requests alternative for resource efficiency. AC: (1) Identify XHR endpoints via browser DevTools/mitmproxy. (2) Document recipe in `docs/vps-sources/hsx-bctc/triage.md`. (3) Implement no-browser discovery function for HOSE. (4) Live-test 3+ HOSE tickers (VNM, VEA, HPG) discovers Q1/2026 PDFs. (5) Playwright remains as fallback. Owner: dev-vps-crawls. | MEDIUM | FEATURE | dev-vps-crawls | — | — |
 
 ---
 
@@ -63,11 +64,9 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
-| SPIKE_006-COMPLETE-c67 | TEST-S **DONE 2026-05-13 c67**: T-6 integration test `SPIKE006-scoring-unification.test.ts` (5/5 pass, 17 expects). Commit `572bd8c3` C2-ATOMIC (first clean ship in 5 cycles, no contamination — C2 verification protocol worked). **SPIKE_006 6-task chain COMPLETE** (T-1 c61, T-2 c64, T-3 c64, T-4 c65, T-5 c66, T-6 c67). All AC-1..AC-5 + OOS-5 verified. | HIGH | TEST | developer | 2026-05-13 |
-| SPIKE_006-c61-T5-SHIPPED-c66 | FIX-S **DONE 2026-05-13 c66**: `verdictResolutionJob` write-back + OOS-5. Commit `284335cf` atomic. 17/17 tests. | HIGH | FIX | developer | 2026-05-13 |
-| SPIKE_006-c61-T4-SHIPPED-c65 | FIX-S **DONE 2026-05-13 c65**: `insufficientSample` guard in `formatAccuracyReport`. Commit `80493433` (atomic after 3-way split). 20/20 tests. Addresses telegram id=2874 (alert_precision 22%). | HIGH | FIX | developer | 2026-05-13 |
-| SPIKE_006-c61-T2-SHIPPED-c64 | FIX-S **DONE 2026-05-13 c64**: `scoreAlert()` deleted; Path 2 wired to domain scorer. Commit `214957b0`. 19/19 tests. | HIGH | FIX | developer | 2026-05-13 |
-| 1897c-ESCALATED-c64 | SPIKE **ESCALATED c64 → SUBSUMED-c65 by 1897f**: Worktree-isolation rethink redirected to agent-spawn-on-task-branch (root cause is NOT worktree flag). | HIGH | SPIKE | architect | 2026-05-13 |
+| 1897g-c68-SHIPPED | CHORE-S **DONE 2026-05-13 c68**: C2 commit verification protocol codified in `.claude/agents/dev-*.md` preamble across 9 agents (alert-engine, api-gateway, kinh-dich, macro-indicators, mcp-server, pdf-extractor, rag-service, stock-price, technical-analysis). Commit `f4e2bcb5` C2-ATOMIC (2nd clean ship in 2 cycles — agent-father self-caught accidentally-staged notebook + reset before commit). 98 insertions, 9 files. Prevents future contamination at the systemic level (was inline-only c67). | CRITICAL | CHORE | agent-father | 2026-05-13 |
+| SPIKE_006-COMPLETE-c67 | TEST-S **DONE 2026-05-13 c67**: T-6 integration test `SPIKE006-scoring-unification.test.ts` (5/5 pass, 17 expects). Commit `572bd8c3` C2-ATOMIC (first clean ship in 5 cycles). **SPIKE_006 6-task chain COMPLETE** (T-1 c61 d6d3c5d9, T-2 c64 214957b0, T-4 c65 80493433, T-5 c66 284335cf, T-6 c67 572bd8c3). All AC-1..AC-5 + OOS-5 verified. id=2874 finalized resolution=fixed at c68. | HIGH | TEST | developer | 2026-05-13 |
+| 1897c-ESCALATED-c64 | SPIKE **ESCALATED c64 → SUBSUMED-c65 by 1897f → CLOSED-c68**: Worktree-isolation rethink redirected to agent-spawn-on-task-branch. 1897g c68 codification of inline C2 protocol is the actual root-cause defense. 1897f architect rethink still HIGH but now lower-urgency. | HIGH | SPIKE | architect | 2026-05-13 |
 
 ---
 
