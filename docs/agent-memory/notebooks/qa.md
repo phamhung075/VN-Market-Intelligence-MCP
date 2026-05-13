@@ -1,6 +1,32 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** fred-parallelize-fetch-all-macro merge gate
+**Last updated:** 2026-05-13 | **Session:** worldbank-parallelize-fetch-vn-macro-batch merge gate
+
+## Recent session — 2026-05-13 (worldbank-parallelize-fetch-vn-macro-batch — APPROVED)
+
+Branch: `task/worldbank-parallelize-fetch-vn-macro-batch`. Key commits: `7a12913f` (fix) + `2c847d8c` (docs). Cherry-picked onto main as `9d58a2d1` + `1370b8c1` (branch had 3 extra unrelated commits — flaresolverr, ops notebook, 1899a decompose — so cherry-pick used instead of --no-ff merge).
+
+Tests (apps/macro-indicators): 93 pass / 0 fail / 12 skip (105 total). +3 new tests vs baseline (all-ok, one-fail-isolated, concurrent timing).
+
+TSC: 22 errors — same baseline as main (pre-existing `global.fetch.preconnect` Bun Mock<> typing gap in test files). Zero production-code errors.
+
+DDD PASS: `grep -rn "from.*infrastructure" apps/macro-indicators/src/application/` = 0 hits.
+
+Security: `process.env` in `index.ts` + `fred-macro.ts` are pre-existing. Zero new process.env in branch diff. No hardcoded secrets. No SQL. world-bank-macro.ts clean.
+
+Diff: `sleepMs` helper removed from world-bank-macro.ts. `fetchVnMacroBatch` rewritten from sequential for-of + sleepMs to `Promise.all` fan-out. 7 indicators concurrent. Net ~24 lines source change + 87-line test addition.
+
+Bonus check: `fetch-external-macro.ts` worldBank: 8_000ms budget confirmed. WB ~2-3s with parallel dispatch, well within budget.
+
+QA signal moved to processed/: `docs/signals/processed/qa-worldbank-sequential-loop-2026-05-13T14-00-00Z.json`.
+
+Branch deleted locally (D force — branch had 3 unrelated commits). No remote branch to delete.
+
+Tasks: 1900b-worldbank removed from Todo → added to Done as `1900b-worldbank-SHIPPED-c74`.
+
+Report: reports/TASK_REPORT_1900b-worldbank.md.
+
+Note for next cycle: HEAD.lock recurrence is still active (multiple lock events during this session — checkout bounce, stash interference). Consider filing 1897b-carry escalation if this cycle was affected by contamination.
 
 ## Recent session — 2026-05-13 (fred-parallelize-fetch-all-macro — APPROVED)
 
