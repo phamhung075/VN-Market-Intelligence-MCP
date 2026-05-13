@@ -20,7 +20,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1881a-impl-ssot | source_tier — methodology Layer 9 doc update. Sync `docs/standards/tnb-methodology-layers.md` § Layer 9 with brief's Source hierarchy table. One-file doc chore. Parallel-eligible with 1881a-impl-mcp. AC: Layer 9 updated, source_tier enum explained, backwards-compat note (additive field only). | MEDIUM | CHORE | developer | — | — |
 | 1900c-health-probe-refine | OPS-LOW (c73 discovery): `flows/ops/docker.md` § Post-Rebuild Health Verification probes ports 5007/5008 for pdf-extractor/rag-service but Python services map internal port differently — c73 probe got 7/9 200 + 2/9 000. Fix: enumerate per-service actual `/health` paths + ports (use `docker inspect <svc> --format '{{.NetworkSettings.Ports}}'`), update curl recipe in rule, OR use `docker inspect --format='{{.State.Health.Status}}'` as authoritative healthy check. | LOW | OPS | ops | — | — |
 | 1899a-bloomberg-test-split | SCAFFOLD-S: Split `1899a-bloomberg.test.ts` (494L) into 4 files ≤200L each by logical group: DOM happy path / JSON fallback / PerimeterX+lifecycle / normalizeDate helper. Non-blocking follow-up from c77 QA non-blocking note. Zone: apps/news-fetch/__tests__/. | LOW | REFACTOR | dev-mainserver-crawls | — | — |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
@@ -35,16 +34,13 @@
 
 ## Review
 
-| Task ID | Title | Priority | Type | Owner | Handoff |
-|---------|-------|----------|------|-------|---------|
-| 1881a-impl-ssot | source_tier — methodology Layer 9 doc update. `docs/standards/tnb-methodology-layers.md` § Layer 9 added. Parallel-eligible with 1881a-impl-mcp. | MEDIUM | CHORE | developer | — |
-
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
-| 1881a-impl-mcp-SHIPPED-c85 | SOURCE_TIER RETROFIT **DONE 2026-05-14 c85**: 16 MCP tool handlers + 1 contract test. JSON envelope pattern (source_tier: 1|2|3 as const, first field). 20/20 contract tests pass, 9234/9268 full suite, tsc 0 errors. Branch task/1881a-impl-mcp merged. QA APPROVED. | HIGH | FEATURE | dev-mcp-server | 2026-05-14 |
+| 1881a-impl-ssot-SHIPPED-c85 | SOURCE_TIER SSOT **DONE 2026-05-14 c85**: Layer 9 doc update `docs/standards/tnb-methodology-layers.md` § source_tier hierarchy explained, enum documented, backwards-compat note (additive field only). Merge commit `6a700f15`. QA APPROVED. | MEDIUM | CHORE | developer | 2026-05-14 |
+| 1881a-impl-mcp-SHIPPED-c85 | SOURCE_TIER RETROFIT **DONE 2026-05-14 c85**: 16 MCP tool handlers + 1 contract test. JSON envelope pattern (source_tier: 1|2|3 as const, first field). 20/20 contract tests pass, 9234/9268 full suite, tsc 0 errors. Merge commit `c2e2fb08`. QA APPROVED. | HIGH | FEATURE | dev-mcp-server | 2026-05-14 |
 | 1888l-SHIPPED-c84 | SSOT-HIGH (agent-father escalation c-maintenance) **DONE 2026-05-13 c84**: agents-architect Error Boundary — (a) error-boundary skill ref added to `.claude/flows/agents-architect/main.md` L7, (b) fail-loud-protocol.md already in always_load (no-op), (c) BLOCKED/EXIT block added to `docs/agents/agents-architect/handlers.md` L70-79. QA APPROVED. Commits: docs `859a2ce8`, nb appended. Branch `task/1888l-agents-architect-error-boundary` deleted. | HIGH | CHORE | agent-father | 2026-05-13 |
 | 1881a-impl-SPLIT-c84 | METHODOLOGY-INFRA IMPL **SPLIT 2026-05-13 c84** (architect brief 2026-05-13 landed — BLK-1 resolved via JSON wrapper option a). Bifurcated into: (a) **1881a-impl-mcp** (M, HIGH) — 16 tool handlers + test file, Zone: apps/mcp-server, dev-mcp-server owner. (b) **1881a-impl-ssot** (S, MEDIUM) — Layer 9 doc update, parallel-eligible. Spec: `docs/architecture-briefs/2026-05-13-source-tier-schema-decision.md`. | HIGH | FEATURE | developer | 2026-05-13 |
 | 1881a-spec-SHIPPED-c83 | METHODOLOGY-INFRA SPEC **DONE 2026-05-13 c83**: BA spec REQ_1881a.md authored, 16 tools enumerated, 4 spec-time discoveries flagged for PO/architect (source-classification, tag-syntax, tool-packaging gaps, macro-refresh SLA). Next: PO review → architect handoff for BLK-1 plain-text schema decision → impl cycle (1881a-impl). Commits: feat `0189381c`, nb `e36242f1`. | HIGH | CHORE | ba | 2026-05-13 |
