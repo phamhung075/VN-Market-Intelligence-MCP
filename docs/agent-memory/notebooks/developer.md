@@ -1,8 +1,27 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** c80 / 1899a-tests
+**Last updated:** 2026-05-13 | **Sprint:** c81 / 1888e
 
 ## Last session summary
+
+Task 1888e — SSOT doc fix: eliminate "7 agents" vs "8 agents" self-contradiction in agent-roster.md.
+
+**What was done:**
+
+- Read `docs/references/agent-roster.md` — found two contradictory mentions:
+  - Line 120: `ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)`
+  - Line 132: `7 numbered agents + 1 Unified Coordinator ... = 8 total`
+- Read `docs/data/project-stats.json` — SSOT field `analysisAgentCount: 9` (reconciled 2026-05-12).
+- Analysis Team table has 9 rows (Unified Coordinator, News Scout, Financial Analyst, Market Watcher, Alert Commander, Digest & Predict, QA Responder, Tran Ngoc Bau, Report Analyzer).
+- Fixed both lines to 9 and replaced the stale clarification with a pointer to SSOT field.
+
+**Commits:**
+- `80fbabf1 fix(1888e): agent-roster SSOT — eliminate 7-vs-8 contradiction`
+- Branch: task/1888e-agent-roster-count
+
+**Worktree note:** Branch was behind main by ~84 files (fast-forward merge from 20c6813b) before editing.
+
+## Previous last session summary
 
 Task 1899a-tests — integration + unit test suite for news-fetch service.
 
@@ -43,19 +62,6 @@ CWD for this session is the worktree at `.claude/worktrees/agent-ae4486f872e1bdb
 - `newsHeadlinesRefreshJob` in mcp-server/scheduler/news-analysis/ — interface layer, no domain imports.
 - bunfig.toml only sets timeout — bun discovers both `__tests__/` and `src/__tests__/` naturally.
 
-## Previous last session summary
-
-Task macro-external-allsettled-timeout — fix POST /macro/external orchestration timeout in macro-indicators.
-
-**Problem:** Route fanned out to 6 scrapers with combined timeout that broke when slow sources exceeded budget.
-
-**Fix applied:**
-- `apps/macro-indicators/src/application/fetch-external-macro.ts`: withTimeout() per source (8s fast, 30s calendar). execute() returns ExternalMacroEnvelope. Never throws.
-- `apps/macro-indicators/src/interface/handlers.ts`: HTTP 200 when ok >= 1, HTTP 502 only when all 6 fail.
-- New test: `__tests__/unit/fetch-external-macro.test.ts` — 11 tests.
-
-**Test results:** 85 pass / 0 fail / 12 skip. Commit: 12a7221e.
-
 ## Known patterns / preferences
 
 - TDD cycle is mandatory: write failing test first, then minimum code to pass.
@@ -71,6 +77,7 @@ Task macro-external-allsettled-timeout — fix POST /macro/external orchestratio
 
 ## Carry-over for next session
 
-- Branch task/1899a-integration-tests ready for QA.
+- Branch task/1888e-agent-roster-count ready for QA.
+- Branch task/1899a-integration-tests also ready for QA (prior task).
 - Pre-existing playwright tsc errors in news-fetch (2 files) — QA should confirm pre-existing.
 - mcp-server 134 pre-existing failures (unrelated to 1899a-tests task).
