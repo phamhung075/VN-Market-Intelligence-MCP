@@ -125,4 +125,6 @@ export const CRONS = {
    *  Minute=7 (not 0) to avoid pile-up with cronHealthAlert/weatherCheck/imfIndicatorPoller
    *  and other jobs that cluster at minute=0 every hour. Architect amendment 2026-05-10. */
   verdictResolutionJob:      Bun.env.CRON_VERDICT_RESOLUTION                 ?? '7 * * * *',
+  /** newsHeadlinesRefresh — Bloomberg + Reuters via news-fetch service: every 30 min (task 1899a-cron) */
+  newsHeadlinesRefresh:      Bun.env['CRON_NEWS_HEADLINES_REFRESH']           ?? '*/30 * * * *',
 }

@@ -55,6 +55,7 @@ import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
+import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { CRONS } from './cronConfig.js'
@@ -672,6 +673,15 @@ export function startScheduler() {
         log(`[verdict-resolution] evaluated=${result.rowsEvaluated} resolved=${result.rowsResolved} pruned=${result.rowsPruned} errors=${result.errors}`)
       }
       return { rowsWritten: result.rowsResolved }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 30 min — News headlines refresh — task 1899a-cron
+  // Sequential: Bloomberg first, Reuters second (RAM constraint: no concurrent Playwright browsers).
+  // Pushes normalized articles to /api/push-news. Errors per source logged and skipped.
+  cron.schedule(CRONS.newsHeadlinesRefresh, async () => {
+    await jobRunRepo.wrapRun('newsHeadlinesRefreshJob', async () => {
+      await newsHeadlinesRefreshJob()
     })
   }, { timezone: 'UTC' })
 
