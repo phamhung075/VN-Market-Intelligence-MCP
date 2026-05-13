@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 20:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 21:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (21:15–21:25 UTC) 2026-05-13
+- Items: 20 | Impacts: 3 | Signals: [urgent_news #3114 GAS, chain_catalyst #3115 oil_gas] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: GAS +6.93% impact_chain=8/10 bullish, confidence=86% → NEUTRAL no adj → urgent_news + chain_catalyst fired (hot_money_risk=true). Khối ngoại bán ròng 14 phiên/13,000+B → impact_chain max 5 → below threshold, logged only. IMP insider sell (non-watchlist). VIC Vượng new ventures impact=6 → below threshold. Gold falling (Fed hike fears). Brent $105.55 > $100 macro support for oil_gas.
+- Suppressed: FII outflow (impact 5, <7 threshold), VIC new company (6<7), SSI retail (6<7), gold outlook (neutral/no spike), IMP insider exit (non-watchlist)
 
 ### Cycle (20:15–20:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3109] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
