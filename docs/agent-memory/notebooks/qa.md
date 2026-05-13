@@ -1,5 +1,37 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** c82 BATCH(2) gate — 1903a (re-verification) + 1888b SSOT
+
+## Recent session — 2026-05-13 (c82 BATCH(2) — ALL APPROVED)
+
+### 1903a re-verification (HEAD d5251193 — notebook only, no production code change)
+
+Claim: both sub-bugs (write_alert_verdict shape, get_macro_snapshot regime) stale-resolved pre-c82; regression tests landed at c77 (SHA 4833b052).
+
+Checks:
+- `grep "Message sent to WORK channel" apps/mcp-server/src/` — found only in `telegramTools.ts:95` (user-facing string in telegram tool, not in alertVerdictTools handler). NOT in alert verdict return path. PASS.
+- `grep "{success" alertVerdictTools.ts` — line 64: `Promise<{ success: boolean; id: string; ticker: string; verdict: string }>`, line 87: `success: true`. Correct shape confirmed. PASS.
+- `bun test src/__tests__/1903a-dispatch-regression.test.ts` — 10 pass / 0 fail (WAV-REG-01..07 + GMS-REG-02..04). PASS.
+- `bun tsc --noEmit` — 0 errors. PASS.
+
+Verdict: APPROVED (stale-resolved — no production code changed, regression tests already green on main).
+
+### 1888b SSOT (.claude/AGENT_MODELS_README.md)
+
+Claim: replaced hardcoded agent counts with SSOT pointers to `docs/data/project-stats.json`.
+
+Checks:
+- `grep -nE "[0-9]+ agents?" AGENT_MODELS_README.md` — no matches. No hardcoded counts remain. PASS.
+- SSOT pointers present: lines 15, 21, 26, 52 reference `docs/data/project-stats.json#devAgentCount` and `#microserviceAgentCount`. PASS.
+- `project-stats.json` values: `devAgentCount: 17`, `microserviceAgentCount: 9`. SSOT exists and is populated. PASS.
+- Diff stat: 10 lines changed (4 insertions, 6 deletions) — matches ~10L expectation. PASS.
+
+Smart-skip: string-literal-only change (SSOT pointers replacing hardcoded strings in .md). DDD + security not applicable to .md file. Full tsc already clean from 1903a check above.
+
+Verdict: APPROVED.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** c81 BATCH(3) gate — 1899a-cron + 1888e + CLEAN-c81
 
 ## Recent session — 2026-05-13 (c81 BATCH(3) — ALL APPROVED)
