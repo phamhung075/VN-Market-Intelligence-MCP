@@ -8,7 +8,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1881a | METHODOLOGY-INFRA: Source-tier `1\|2\|3` tag retrofit — add `source_tier` field to ~15 macro/news tool outputs (1=primary/official, 2=aggregator, 3=derived). SSOT: methodology Layer 9 (Source hierarchy). Owner: ba spec → dev-mcp-server + dev-macro-indicators. | HIGH | CHORE | ba | — | — |
-| 1888b | SSOT-CRITICAL: Replace hardcoded "13 agents" in `.claude/AGENT_MODELS_README.md` (L15, L28, L54) with pointer to `docs/data/project-stats.json#devAgentCount` (actual after 2026-05-12 audit: 17 dev + 9 microservice). 1 file, doc-only. (Renumbered from 1878b.) | HIGH | CHORE | developer | — | — |
 | 1888c | SSOT-CRITICAL: Update `docs/data/tool-registry.json` — toolCount 125 is stale. Reconcile to current 132. (Renumbered from 1878c.) | HIGH | CHORE | developer | — | — |
 | 1888d | SSOT-CRITICAL: Reconcile `cron-registry.json` (62 entries) vs `project-stats.json#cronJobCount` (59). Clarify scheduler-files vs cron-keys distinction. (Renumbered from 1878d.) | HIGH | CHORE | developer | — | — |
 | 1888g | SSOT-MEDIUM: Extract task size rules from `flows/dev-team/main.md` L91-96 into `docs/{policies,protocols,standards,references}/task-size-rules.md`. (Renumbered from 1878g.) | MEDIUM | CHORE | developer | — | — |
@@ -19,7 +18,6 @@
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
 | TASK-BCTC-3 | Reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC scraper. AC: (1) Identify XHR endpoints. (2) Document recipe in `docs/vps-sources/hsx-bctc/triage.md`. (3) Implement no-browser discovery for HOSE. (4) Live-test 3+ HOSE tickers (VNM/VEA/HPG) discovers Q1/2026 PDFs. (5) Playwright remains fallback. Owner: dev-vps-crawls. | MEDIUM | FEATURE | dev-vps-crawls | — | — |
-| 1903a | FIX-HIGH BUNDLE (TNB c46 #4+#5, 2 cycles evidence each): MCP tool dispatch/schema collision in `apps/mcp-server/`. (a) `write_alert_verdict` returns "Message sent to WORK channel" instead of `{success, id, verdict}` shape (verdict pipeline blocked; alert-commander confirmed in 09:07 UTC log). (b) `get_macro_snapshot` returns portfolio data instead of regime snapshot for some agents (electricity at c45 → portfolio at c46). Same family as 1898a (`get_market_snapshot` electricity data) — investigate shared tool-registry/dispatch root-cause. Owner: ba spec → dev-mcp-server. Re-verify post-gateway-restore. Zone: `apps/mcp-server/`. | HIGH | FIX | ba | — | — |
 
 ---
 
@@ -50,6 +48,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1903a-SHIPPED-c82 | FIX-HIGH **STALE-RESOLVED 2026-05-13 c82**: Both bugs (write_alert_verdict shape + get_macro_snapshot portfolio) self-healed during gateway-restore c77. Regression tests (`d5251193`) verify fix holds. No production code changes c82. Root-cause: c77 gateway rebuild isolated tool invocation paths. Zone: apps/mcp-server/. Commit: nb `d5251193`. | HIGH | FIX | developer | 2026-05-13 |
+| 1888b-SHIPPED-c82 | SSOT-CRITICAL **DONE 2026-05-13 c82**: Replace hardcoded "13 agents" in `.claude/AGENT_MODELS_README.md` (L15, L28, L54) with pointer to `docs/data/project-stats.json#devAgentCount` (actual after 2026-05-12 audit: 17 dev + 9 microservice). 1 file, doc-only. Commits: fix `49f5d1eb`, nb `ff618e1d`. QA APPROVED. | HIGH | CHORE | developer | 2026-05-13 |
 | 1899a-cron-SHIPPED-c81 | WIRING **DONE 2026-05-13 c81**: MCP scheduler job — job-body-already-existed wiring (3 files: barrel index.ts, cronConfig.ts entry, startScheduler.ts registration, mcp.config.json section). Zone: apps/mcp-server/. Commits: feat `89ad6c4a`, nb `50c74418`. QA APPROVED. Unblocks (was last wiring step). | MEDIUM | FEATURE | dev-mcp-server | 2026-05-13 |
 | 1888e-SHIPPED-c81 | SSOT-MEDIUM **DONE 2026-05-13 c81**: Fix `docs/references/agent-roster.md` "7 agents" vs "8 agents" self-contradiction. Root: pointer update to `project-stats.json#analysisAgentCount = 9`. Zone: docs/. Commits: fix `a7bb2313`, nb `763fe826`. QA APPROVED. | MEDIUM | CHORE | developer | 2026-05-13 |
 | 1899a-gateway-SHIPPED-c80 | WIRING **DONE 2026-05-13 c80**: Gateway + docker-compose — api-gateway routing config, docker-compose.yml news-fetch service block, ops-news-fetch-scaffold.md port correction. Zone: multi. Commits: feat `f91c5baa`, nb `837529ef`. QA APPROVED. Unblocks 1899a-cron (no more deps). | MEDIUM | FEATURE | developer | 2026-05-13 |
