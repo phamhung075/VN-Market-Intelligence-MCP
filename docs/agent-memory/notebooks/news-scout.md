@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 01:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 03:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (03:15–03:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 9 | Signals: [chain_catalyst×1 #3038] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: VN-Index near ATH — multiple CTCK hạ dự phóng 2026 + "xanh vỏ đỏ lòng" warning + liquidity drop. Impact chain 9/10 bearish NEUTRAL, conf 0.73. chain_catalyst #3038 → all agents, 38 watchlist stocks, all sectors. Brent $106.85 flat. Gold $4,703 flat. No PMI data. USD/VND 26,129.
+- Suppressed: STB 10/10 bullish (not on watchlist; banking spill 4/10 below threshold). VHM bond 3,000B VND (neutral, impact 5, no threshold breach). IMP leaders selling (impact 6, not on watchlist). HAG insider buying (not on watchlist).
+- Notes: Market OPEN cycle 03:15 UTC. STB leadership change continues to be notable but not watchlist-relevant. VN-Index macro warning is recurring pattern (3rd cycle in a row since May 12). CARRY_REGIME: NEUTRAL.
 
 ### Cycle (01:20–01:22 UTC) 2026-05-13
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst×1 #3030] | Regime: NEUTRAL | Carry: NEUTRAL
