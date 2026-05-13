@@ -1,5 +1,25 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1898b RSS degradation fix + regression guards (c78)
+
+## Recent session — 2026-05-13 (1898b — APPROVED)
+
+Commit `0a76cf8d` already on main (direct commit, no branch merge). Zone: `apps/mcp-server/`. Files: 1 prod (`sourceHealthTools.ts` +7L: 2 `recordDisabled` calls + comment block) + 1 test (`1898b-rss-degradation-regression.test.ts` 176L — within 200L split-policy cap).
+
+Targeted tests: 8/8 pass (RSS-REG-01..08, 16 expect() calls). Baseline 1335: 4/4 pass. TSC: 0 errors.
+
+DDD PASS: sourceHealthTools.ts (interface layer) — zero infrastructure/application imports. Test imports from infrastructure/application are expected test-consumer pattern.
+
+Security PASS: no process.env, no hardcoded secrets, no SQL.
+
+Developer correction verified: spec AC-02 asserted `source_type contains "nhandan"` but newsNormalizer.ts:961 sets sourceType="news" for all RSS items (discriminator). Developer corrected assertions to source_url (`https://${source}.vn/article-...`). AC-02 intent fully satisfied — row inserted with traceable source identity.
+
+AC-06 verified: sourceHealthTools.ts:63-64 — recordDisabled("Reuters RSS") + recordDisabled("Trading Economics") called at module load. SourceHealthTracker.recordDisabled() confirmed at sourceHealthTracker.ts:189. Ghost Ngưng|20 entries prevented on fresh process start.
+
+All 8 ACs PASS. Report: `reports/TASK_REPORT_1898b.md`. Handoff: `docs/handoffs/TASK_1898b-rss-degradation.md`.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1899a-reuters-fallback gate (c78)
 
 ## Recent session — 2026-05-13 (1899a-reuters-fallback ReutersStealthFallback — APPROVED)
