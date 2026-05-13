@@ -136,6 +136,87 @@ describe('FredMacroAdapter', () => {
     });
   });
 
+  describe('fetchAllMacro — parallel execution (key present, mocked)', () => {
+    beforeEach(() => {
+      process.env['FRED_API_KEY'] = 'a'.repeat(32);
+      adapter = new FredMacroAdapter();
+    });
+
+    it('returns results for all series when all succeed', async () => {
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        const urlStr = String(url);
+        const match = urlStr.match(/series_id=([^&]+)/);
+        const seriesId = match ? match[1]! : 'UNKNOWN';
+        return new Response(JSON.stringify(makeFredResponse(seriesId)), { status: 200 });
+      }) as unknown as typeof fetch;
+
+      const result = await adapter.fetchAllMacro();
+
+      expect(Object.keys(result)).toHaveLength(Object.keys(FRED_SERIES).length);
+      for (const v of Object.values(result)) {
+        expect(v).not.toBeNull();
+        expect(v!.observations).toHaveLength(3);
+      }
+    });
+
+    it('returns null for a failed series but succeeds for all others', async () => {
+      const failSeriesId = 'VIXCLS'; // vix
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        const urlStr = String(url);
+        if (urlStr.includes(`series_id=${failSeriesId}`)) {
+          return new Response('server error', { status: 500 });
+        }
+        const match = urlStr.match(/series_id=([^&]+)/);
+        const seriesId = match ? match[1]! : 'UNKNOWN';
+        return new Response(JSON.stringify(makeFredResponse(seriesId)), { status: 200 });
+      }) as unknown as typeof fetch;
+
+      const result = await adapter.fetchAllMacro();
+
+      expect(Object.keys(result)).toHaveLength(Object.keys(FRED_SERIES).length);
+      // vix failed — should be null
+      expect(result['vix']).toBeNull();
+      // all others succeeded
+      const otherKeys = Object.keys(FRED_SERIES).filter((k) => k !== 'vix');
+      for (const k of otherKeys) {
+        expect(result[k]).not.toBeNull();
+      }
+    });
+
+    it('dispatches all series fetches concurrently, not sequentially', async () => {
+      // Track fetch call timestamps to verify overlap (parallel calls start before
+      // any single slow fetch completes).
+      const callStartTimes: number[] = [];
+      const seriesCount = Object.keys(FRED_SERIES).length;
+
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        callStartTimes.push(Date.now());
+        // Simulate non-trivial latency — sequential would take seriesCount * 50ms+
+        await new Promise((r) => setTimeout(r, 50));
+        const urlStr = String(url);
+        const match = urlStr.match(/series_id=([^&]+)/);
+        const seriesId = match ? match[1]! : 'UNKNOWN';
+        return new Response(JSON.stringify(makeFredResponse(seriesId)), { status: 200 });
+      }) as unknown as typeof fetch;
+
+      const before = Date.now();
+      await adapter.fetchAllMacro();
+      const elapsed = Date.now() - before;
+
+      // All calls must have been dispatched before any completes (i.e. within first 50ms window)
+      expect(callStartTimes).toHaveLength(seriesCount);
+      const firstCall = callStartTimes[0]!;
+      const lastCall = callStartTimes[callStartTimes.length - 1]!;
+      // If sequential with 50ms each: lastCall >= firstCall + (seriesCount-1)*50
+      // If parallel: all calls dispatched within a small window (<30ms)
+      expect(lastCall - firstCall).toBeLessThan(30);
+
+      // Total elapsed must be well under sequential time (seriesCount * 50ms = 400ms)
+      // Parallel: ~50-100ms for all 8 fetches together
+      expect(elapsed).toBeLessThan(seriesCount * 50);
+    });
+  });
+
   describe('FRED_SERIES catalog', () => {
     it('contains expected series IDs', () => {
       expect(FRED_SERIES['fed_funds_rate']).toBe('FEDFUNDS');
