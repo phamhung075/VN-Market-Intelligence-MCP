@@ -1,30 +1,49 @@
 # Agent Father — Notebook
 
 **Last updated:** 2026-05-13
-**Sprint:** c59 / c59-T2-F4-retry-wrapper
+**Sprint:** c60 / TASKS-cap-rotation + 1888f-session-log-verify
 
 ## This Session
 
-c59-T2-F4-retry-wrapper shipped. Appended § F4 Git Commit Retry Wrapper to
-head-lock-self-cure.md (119L→150L, exactly at cap). Added F4 reference comment
-in dev-team/main.md PREFLIGHT block (+2L, size-justification updated 165L→167L).
-Added notebook-write/SKILL.md commit section pointing to F4 idiom. 1 atomic commit
-`fb3093ae`. F2a remains blocked at verify — both ./reports/ and ./docs/data/ have
-active host-writers; scope re-RCA deferred to c60 architect.
+**Concern A — TASKS.md cap rotation (c60):**
+Archived 5 oldest Done rows (CLEAN-c56-leftovers-c57, HEADLOCK-DIAGNOSTIC+WORKTREE-GC-c57,
+HEADLOCK-ROOT-CAUSE-CONFIRMED-c57, ARCH-BRIEF-UPDATE-H4-c58, ARCH-1896-RE-RCA-c58) to
+docs/TASKS_ARCHIVE.md under new section "Archive — Added 2026-05-13 by dev-team (c60 cap
+rotation)". TASKS.md: 81L→75L post-rotation. Commit A: `c4772914`. Phase 5: tree-verify
+EXIT 0, C2 OK.
+
+Linter note: concurrent agents modified TASKS.md between my edits — absorbed 1888c restore,
+1888f-DONE row, and other concurrent Done rows (b64b92b2 + 2d91c859). Net: all my changes
+present in HEAD.
+
+**Concern B — 1888f session_log path verification:**
+Read both .claude/agents/system-auditor.md and .claude/agents/cowork-refactory-expert.md.
+Both already have canonical session_log paths:
+- system-auditor.md L106: `session_log: docs/agent-memory/notebooks/system-auditor.md`
+- cowork-refactory-expert.md L107: `session_log: docs/agent-memory/notebooks/cowork-refactory-expert.md`
+No drift found. Paths are canonical per tree-map.md SSOT. No file changes needed.
+1888f Done row committed via concurrent b64b92b2. 1888f removed from Backlog in same commit.
+Phase 5: C2 OK.
+
+Note: system-auditor.md still has orphaned `docs/agent-memory/AGENT_STARTUP.md` always_load
+reference (task 1888k — separate backlog item, not in scope for c60).
 
 ## Patterns Noticed
 
-- 150L cap on protocol docs: must count first with wc -l before appending sections.
-  3 extra lines trimmed by merging "Scope of defense" heading into bullet point.
-- size-justification comments in flows must be kept current with actual line count.
+- Concurrent agents (developer cron) modify TASKS.md mid-session. Linter absorbs in-flight
+  edits into their commits. Atomicity preserved but indexing requires re-read before commit.
+- TASKS.md cap rotation: 5 rows removed + TASKS_ARCHIVE.md grows by ~10L per rotation cycle.
+- HEAD index SHA changes between tool calls when concurrent agents commit — always check
+  `git diff` before staging to understand what's already in HEAD.
 
 ## Zone Health
 
-No zone drift. Protocol doc + flow + skill only. Working tree clean post-commit.
+No zone drift. Docs-only changes (TASKS.md, TASKS_ARCHIVE.md). Working tree clean post-cycle
+(developer.md notebook modified by concurrent agent — not my zone).
 
 ## Carry-over (next session)
 
-- F2a (named volumes) blocked at verify; c60 architect re-RCA needed before any fix.
-- F2a revised Option A (per-file mounts for docs/data/) documented in brief § 9 —
-  architect needs to pick Option A vs defer to c60.
-- H4 mechanism stable c57+c58+c59; F4 retry now in place as defense-in-depth.
+- 1888k: remove orphaned AGENT_STARTUP.md from system-auditor.md always_load (LOW priority).
+- 1888i: remove duplicate max_alerts_per_day from alert-commander.md (LOW priority).
+- F2a Option A (per-file mounts) shipped by developer c60 — HEAD.lock defense now in place.
+- F4 retry wrapper stable (c59 ship); no lock collisions in c60.
