@@ -1,5 +1,39 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** macro-scrapers-curl-cffi-upgrade merge gate
+
+## Recent session — 2026-05-13 (macro-scrapers-curl-cffi-upgrade — APPROVED)
+
+**macro-scrapers-curl-cffi-upgrade — APPROVED:**
+Branch: `task/macro-scrapers-curl-cffi-upgrade`. 5 commits ahead of main (tip e7ce66b2). Merge SHA: `96823f44`.
+
+Tests (apps/macro-indicators): 87 pass / 0 fail / 12 skip (99 total). TSC: all errors are pre-existing `global.fetch.preconnect` Bun Mock<> typing gap in test files — zero new production-code errors. Identical pattern to prior cycle.
+
+DDD PASS: `grep -rn "from.*infrastructure" apps/macro-indicators/src/application/` → 0 hits. Python helpers are infrastructure-only, no imports into application or domain.
+
+File-size policy: 120-line limit applies to markdown docs only (per brief 2026-05-12-dev-zone-enforcement-and-split-policy.md §3.2). Python/TS source files have no line-count policy. All TS adapters ≤120 lines. Python helpers range 118-194 lines — no violation.
+
+Security PASS: `process.env` only in pre-existing files (index.ts:34-35, fred-macro.ts:47) — zero lines in branch diff. No hardcoded secrets in new Python helpers or TS adapters. No SQL.
+
+Scope PASS: 13 changed files in apps/macro-indicators (3 TS adapters + 3 Python helpers + 1 use-case timeout edit + 4 test files + domain/defaults.ts + 2 signal files) plus notebooks/signals. No drift into unrelated services.
+
+Smoke test: POST http://localhost:5004/macro/external → HTTP 200.
+Per-source results:
+- worldBank: timeout (8001ms) — pre-existing, not in scope
+- yahoo: ok (5391ms → 6096ms across 2 runs)
+- cnbc: ok (~5887ms)
+- tradingEconomics: ok (~6000ms)
+- fred: timeout (8000ms) — pre-existing design mismatch (sequential 8-series fetch vs 8s budget)
+- calendar: ok (~10195ms) — PULL-based mode, CF blocked externally
+
+summary.ok=4 confirmed (was 1 before upgrade). Matches ops signal evidence.
+
+Investing-calendar blocked signal: `docs/signals/dev-mainserver-crawls-investing-blocked-2026-05-13T12-15-00Z.json` confirmed present. CF Turnstile v2, routed to ops for FlareSolverr. Not blocking.
+
+FRED follow-up signal filed: `docs/signals/qa-bug-fred-regression-2026-05-13T12-25-00Z.json`. Root cause: fetchAllMacro() is sequential (8 series + 0.6-1s sleeps) vs 8s use-case budget — design mismatch, not a regression from this branch. Recommended fix: raise budget to 90s or parallelize with Promise.all (same pattern as this upgrade).
+
+Branch deleted locally (no remote). Pre-push tsc hook PASS. Pushed to origin/main as 96823f44.
+
 **Last updated:** 2026-05-13 | **Session:** macro-external-allsettled-timeout merge gate
 
 ## Recent session — 2026-05-13 (macro-external-allsettled-timeout — Promise.allSettled fix)
