@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 16:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 17:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (17:15–17:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 7 | Signals: [urgent_news×1 #3095 DHG/IMP-insider-exit, chain_catalyst×1 #3096 FII-14d/13,000B] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: Loạt lãnh đạo IMP bán cổ phiếu hậu M&A Trung Quốc 6,000B (May 1) → fetch impact 8/10, chain 7×TIGHTENING×1.3=9.1 → urgent_news #3095 (DHG, high, cafef). Khối ngoại bán ròng 14 phiên liên tiếp/13,000B VND (escalating từ 10,000B/10 phiên ngày 08/05) → 6×1.3=7.8 → chain_catalyst #3096 (macro, bearish, hot_money_risk=true, all sectors). Gold flat/declining (Fed rate hike fears confirmed). GAS +6.93% suppressed (bullish ×0.7=4.9). Market CLOSED (off-hours, 4h interval).
+- Suppressed: GAS oil surge (bullish TIGHTENING ×0.7=4.9<7), VIC/Vượng robot surgery (bullish 6×0.7=4.2), SSI retail IPO pick (neutral 6<7), VinFast split (no watchlist), GEX capital raise (not watchlist), petrol price PLX (neutral 7×0.7=4.9), gold $10k prediction (neutral/global no VN direct hit).
+- Notes: FII outflow escalating — 13,000B/14d vs 10,000B/10d (May 8). IMP insider exit signal finally crosses threshold due to TIGHTENING regime amplification. Carry: NEUTRAL (no explicit spread data — get_macro_snapshot not in package). Next cycle: ~21:15 UTC.
 
 ### Cycle (16:15–16:20 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 #3089 FPT+banking/foreign-selling] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
