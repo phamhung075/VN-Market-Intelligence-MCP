@@ -1,5 +1,30 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Sprint:** SPIKE_006-c61-T1 threshold raise (cycle 61)
+
+## Recent session — 2026-05-13 (SPIKE_006-c61-T1 — price-signal threshold 0.1→1.0)
+
+**SPIKE_006-c61-T1 — APPROVED:**
+Commit: `55085c1c`. Branch: `task/spike006-c61-t1-threshold-raise`. 2 files only (domain service + test file).
+
+Tests: 9428 pass / 30 fail (+2 from main baseline of 9426/30). TEST-15 (price_drop 0.5%→UNKNOWN) + TEST-16 (price_surge 1.1%→HIT) both pass. Pre-existing 30 failures unchanged. TSC: 0 errors.
+
+DDD PASS: `alertOutcomeScorer.ts` has zero imports (pure function file), domain-only edit confirmed.
+Security PASS: no process.env, no SQL, no hardcoded secrets.
+
+Phase 5 audits (all GREEN):
+- index-check.sh: exit 0 (no staged files pre-merge)
+- tree-verify.sh 55085c1c: exit 0 (file set matches)
+- c2-alert.sh 55085c1c: "C2 OK — type/scope consistent with file set"
+
+AC checks:
+- AC-3a (TEST-15): PASS — 0.5% drop → UNKNOWN
+- AC-3b (TEST-16): PASS — 1.1% surge → HIT
+- OOS-2 (composite stays at 0.1): PASS — only price-signal branch changed
+- No interface layer touched: PASS
+
+Merge SHA: `d6d3c5d9` (--no-ff). Branch deleted. Report: reports/TASK_REPORT_SPIKE_006_c61_T1.md.
+
 **Last updated:** 2026-05-12 | **Sprint:** 1879b deployment-verify smoke test
 
 ## Recent session — 2026-05-12 (1879b — deployment verification)
