@@ -1,6 +1,5 @@
 version: '3.9'
 services:
-  # nginx removed - Cloudflare Tunnel handles routing directly to services
   mcp-server:
     build:
       context: .
@@ -179,6 +178,8 @@ services:
         reservations:
           memory: 1g
           cpus: '0.25'
+    env_file:
+    - .env
   stock-price:
     build:
       context: apps/stock-price
@@ -308,10 +309,6 @@ services:
         reservations:
           memory: 256m
           cpus: '0.25'
-  # cloudflared disabled - use macOS daemon instead (no container conflicts)
-  # cloudflared:
-  #   image: cloudflare/cloudflared:latest
-  #   command: tunnel run c4bcc391-b030-4b50-a61b-c454fc86c8c3 for /vn-market and /gateway routes
 volumes:
   market_data:
     driver: local
