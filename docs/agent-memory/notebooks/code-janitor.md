@@ -1,8 +1,26 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-13 (scan 22 — 0 new findings; 0 shipped; backlog stable at 9 items)
+## Last updated: 2026-05-13 (CLEAN-c81 — housekeeping only; 0 DRY violations found)
 
 ## State summary
+
+### Session 23 (2026-05-13 — CLEAN-c81 housekeeping)
+
+**Scope:** XS cleanup task (CLEAN-c81): remove stale 1899a-gateway Todo row from docs/TASKS.md + prune 2 fully-merged worktree-agent branches.
+
+**Result:** Housekeeping complete — no DRY scan executed (maintenance task, not code scan).
+
+| Task | Status | Details |
+|------|--------|---------|
+| Remove stale 1899a-gateway Todo row | DONE | Line 33 removed; SHIPPED version (c80) retained at line 56 |
+| Delete worktree-agent-a1578231ec1b3deec | DONE | Verified merged into main; deleted successfully |
+| Delete worktree-agent-a63fd9e29f6856090 | DONE | Verified merged into main; deleted successfully |
+
+**Commit:** `19e29700` — chore(clean-c81): remove stale 1899a-gateway Todo row + prune 2 merged worktree-agent branches
+
+**Outcome:** TASKS.md cleaned (32→31 rows in Todo table); worktree-agent-* branches now only active spawns (aea30e4a8e1461810, aee580fe6c94df729 remain).
+
+---
 
 ### Session 22 (2026-05-13 — Full codebase scan HEAD~30..HEAD)
 
@@ -130,179 +148,15 @@
 
 ## Notes for next scan
 
-- Scan 16 (2026-05-10): SSOT conflict audit on meta-configuration files. Found 6 hardcoded volatile counts: 3 in agent .md files, 1 in flow .md, 1 in knowledge file, 1 in JSON. Fixed analysisAgentCount (9→8) in project-stats.json. 5 config-file violations proposed as backlog tasks (require agent-father/ops approval, outside code-janitor's edit scope).
-- JANITOR-028–JANITOR-032: All require approval from agent-father or flow owners before edits (not mechanical, not production code).
-- Scan 18 (2026-05-12): Audited 3 recent features (compute_accruals, operating_cash_flow, investment_clock_phase). All CLEAN. No new violations. JANITOR-014 resolved: extractorHelpers.ts canonical source confirmed in use by all three extractors.
-- Next scan: watch for any new agent creations that increment devAgentCount or analysisAgentCount without updating project-stats.json.
-
----
-
-## Session 18 (2026-05-12 17:15–17:30 VN) — Audit of recent feature commits + full DRY scan
-
-**Scope:** Commits 4d7ab740, d66b6902, d73e70f7 (last 3 production features); full codebase DRY check.
-
-**Features audited:**
-1. 4d7ab740 (compute_accruals MCP tool): accruals.ts + computeAccrualsTool.ts — CLEAN. Proper DDD: domain logic in accruals.ts (pure, no imports), tool layer handles DB I/O.
-2. d66b6902 (operating_cash_flow column + OCF bridge): schema migration + bridgeOCFToFinancialReports() + backfillAllOCF() — CLEAN. No duplication. Idempotent bridge strategy.
-3. d73e70f7 (investment_clock_phase tool): not reviewed yet (beyond last 3 commits).
-
-**Result:** CLEAN — 0 new violations.
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Classification maps | 0 findings | All in canonical sources (sectorPeers.ts, stockAliases.ts) |
-| Ticker arrays | 0 findings | Example strings in comments only, not data duplication |
-| Magic numbers / time constants | 1 recurrent | JANITOR-027: MS_PER_DAY hardcoded in 32 files. Already proposed (multi-file refactoring). |
-| Schema duplication | 0 findings | All DDL in schema-*.ts canonical files. No inline production DDL. |
-| Config drift | 0 findings | All ?? fallback patterns safe. No mismatches. |
-
-**Validated:**
-- JANITOR-014 resolved: extractorHelpers.ts is canonical source for detectUnitMultiplier, extractNumber, LOOKAHEAD_LINES, stripDiacritics. All three extractors (balanceSheet, income, cashFlow) import correctly. No duplicate implementations.
-- Recent features follow DDD and SSOT patterns correctly.
-
-**Backlog unchanged:** 9 items stable (JANITOR-011, -013, -017, -020, -027 plus 4 meta-config tasks).
-
-**Quality:** Full — all 5 checks executed; no knowledge load failures.
-
----
-
-## Session 17 (2026-05-12 17:00–17:15 VN) — Full codebase scan after recent commits
-
-**Scope:** All production source files (apps/mcp-server/src/); last 5 commits reviewed for DRY violations.
-
-**Result:** CLEAN — 0 new violations. 1 recurrent finding already proposed (JANITOR-027).
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Classification maps | 0 findings | No ticker maps duplicated outside canonical sources (sectorPeers.ts, stockAliases.ts) |
-| Ticker arrays | 0 findings | No hardcoded ticker arrays with 2+ tickers outside tests |
-| Magic numbers / time constants | 1 recurrent | JANITOR-027: MS_PER_DAY hardcoded in 23 files. Canonical source: timeConstants.ts. Already proposed (multi-file refactoring, not shippable per constraint). |
-| Schema duplication | 0 findings | All DDL in schema-*.ts canonical files. No production inline DDL. |
-| Config drift | 0 findings | All ?? fallback patterns match mcp.config.json values. |
-
-**Open backlog status:** 9 items (JANITOR-011, -013, -017, -020, -027 plus 4 meta-config tasks -028 to -032). All stable — no new violations added to backlog this scan.
-
-**Quality:** Full — all 5 checks executed; all procedures followed; no knowledge load failures.
-
----
-
-## Recent session — 2026-05-10 night (scan 12 — 23:45–23:58 VN)
-
-**Scope:** git diff HEAD~5..HEAD (5 commits, 14 modified production files including verdictResolutionJob.ts)
-
-**Result:** CLEAN — 0 violations in 5 checks
-
-| Check | Result |
-|-------|--------|
-| Classification maps | 0 findings |
-| Ticker arrays | 0 findings |
-| Magic numbers / crons | 0 findings — verdictResolutionJob.ts correctly uses VERDICT_GUARD_HOURS=24, VERDICT_TTL_DAYS=30, FLAT_THRESHOLD_PCT=1.0 |
-| Schema duplication | 0 findings |
-| Config drift | 0 findings |
-
-**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
-
-**Next trigger:** 2026-05-13 (3h cron) or on developer commit to signal-related files.
-
----
-
-## Session 13 (2026-05-10 23:58–00:06 VN) — dataAuditJob.ts review
-
-**Scope:** git diff HEAD~8..HEAD (1 modified file: apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts)
-
-**Result:** CLEAN — 0 violations in 5 checks
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Classification maps | 0 findings | No ticker classification maps in audit job |
-| Ticker arrays | 0 findings | No hardcoded ticker arrays |
-| Magic numbers / crons | 0 findings | Time-window constants (30d, 60d, 180d, 48h) are business rules; existing offsite usage monitored separately |
-| Schema duplication | 0 findings | All DDL in schema-*.ts canonical sources |
-| Config drift | 0 findings | No ?? fallback pattern mismatches |
-
-**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
-
-**Quality:** Full
-
----
-
-## Session 14 (2026-05-11 06:15–06:20 VN) — verdictResolutionJob.ts + signalDetector.ts review
-
-**Scope:** git diff HEAD~50..HEAD (7 production TS files: verdict+audit jobs, signal detector, alert tools, cron config)
-
-**Result:** CLEAN — 0 violations in 5 checks
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Classification maps | 0 findings | No ticker classification maps |
-| Ticker arrays | 0 findings | No hardcoded ticker arrays |
-| Magic numbers / crons | 0 findings | verdictResolutionJob: TWENTY_FOUR_HOURS_MS + PRUNE_MAX_AGE_DAYS extracted (lines 60-61). signalDetector: DEFAULT_DROP_PCT = -7 centralized (commit d884be66). All proper SSOT. |
-| Schema duplication | 0 findings | All DDL in schema.ts canonical sources |
-| Config drift | 0 findings | All ?? patterns are safe DI injection fallbacks |
-
-**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
-
-**Quality:** Full
-
----
-
-## Session 15 (2026-05-11 16:45–16:52 VN) — DDD vnstock extraction + repository adapter cleanup
-
-**Scope:** git diff HEAD~3..HEAD (8 files: Task 1871f vnstockTypes.ts + IVnstockRepository.ts + SqliteVnstockRepository.ts, vnstockStore.ts, vnstockBridge.ts)
-
-**Result:** 1 DRY violation found and shipped (JANITOR-026)
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Classification maps | 0 findings | No ticker classification maps. Clean. |
-| Ticker arrays | 0 findings | No hardcoded ticker arrays. Clean. |
-| Magic numbers / crons | 1 finding | SqliteVnstockRepository: 9 methods all had identical require("../vnstockStore.js") + try-catch + fallback pattern (45+ LOC duplication). Extracted to _callStore<T>(fnName, args, defaultValue) helper. |
-| Schema duplication | 0 findings | vnstockStore.ts contains only migrations + staleness checks. All DDL canonical in schema.ts. Clean. |
-| Config drift | 0 findings | No ?? fallback mismatches. Clean. |
-
-**Fix shipped:** JANITOR-026
-- File: apps/mcp-server/src/infrastructure/db/repositories/SqliteVnstockRepository.ts
-- Pattern: Dynamic require + try-catch repeated 9x (getLatestFinancials, getLatestTradingStats, getOfficers, getShareholders, getEvents, getLatestBalanceSheet, getLatestCashFlow, upsertFinancials, upsertTradingStats)
-- Canonical source: New private _callStore<T>() helper
-- Reduction: 52 LOC → 19 LOC (single-file mechanical)
-- Tests: 1838b-repository-adapters.test.ts: 21/21 pass. TSC clean.
-- Commit: 75f73af3
-
-**Backlog unchanged:** 4 items (JANITOR-011, -013, -017, -020) remain proposed.
-
-**Quality:** Full
-
----
-
-## Session 16 (2026-05-10 00:00–00:15 VN) — Hardcoded volatile counts in meta-configuration
-
-**Scope:** SSOT conflict audit — agent .md, knowledge .md, flow .md, JSON config files
-
-**Result:** 6 violations found, 1 shipped, 5 proposed
-
-| Finding | File | Lines | Count | Status | Ship | Reason |
-|---------|------|-------|-------|--------|------|--------|
-| JANITOR-028 | .claude/agents/dev-mcp-server.md | 4, 13 | "112 tools" | Proposed | No | Agent .md protected |
-| JANITOR-029 | .claude/flows/ops/cloudflare-mcp.md | 13, 29 | "Full 112 tools" | Proposed | No | Flow .md protected |
-| JANITOR-030 | .claude/AGENT_MODELS_README.md | 15, 28 | "All 13 agents" | Proposed | No | Meta-config file |
-| JANITOR-031 | .claude/knowledge/agent-roster.md | 5 | "7 agents" (correct: 8) | Proposed | No | Knowledge .md protected |
-| JANITOR-032 | .claude/agents/alert-commander.md | 50 | max_alerts_per_day=10 | Proposed | No | Agent .md protected |
-| JANITOR-033 | docs/data/project-stats.json | 19 | analysisAgentCount=9 (correct: 8) | **Shipped** | Yes | JSON data file, direct fix |
-
-**Direct fix:** JANITOR-033 — analysisAgentCount 9→8 in project-stats.json. Commit pending.
-
-**Backlog:** 5 new tasks created (JANITOR-028–032). Require agent-father (3 tasks), ops/developer (1 task) approval.
-
-**Constraint:** Code-janitor role limited to direct edits of production code + JSON data files. Agent .md, knowledge .md, flow .md require approval from agent-father or flow owners.
-
-**Quality:** Full
+- CLEAN-c81: Housekeeping completed 2026-05-13 (stale 1899a-gateway Todo row removed + 2 merged worktree-agent branches pruned). No DRY violations found. Backlog stable at 9 items.
+- Next scheduled DRY scan: 2026-05-13 or on developer commit to signal-related/DRY-sensitive files.
 
 ---
 
 ## Cumulative Metrics
 
-- **Total scans:** 17
-- **Violations found:** 27 (shipped 14, proposed 9, managed 4; 0 new in scan 17)
+- **Total scans:** 17 (+ 1 housekeeping session)
+- **Violations found:** 27 (shipped 14, proposed 9, managed 4; 0 new in scan 17 + c81)
 - **Ship-directly success rate:** 52% (14 shipped / 27 found)
 - **Backlog density:** 33% (9 open / 27 found)
 - **Managed (test coverage):** 15% (4 managed / 27 found)
