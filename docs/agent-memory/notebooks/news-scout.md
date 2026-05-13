@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 14:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 16:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (16:15–16:20 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 #3089 FPT+banking/foreign-selling] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: Khối ngoại bán ròng 1,500+ tỷ tâm điểm FPT và nhóm ngân hàng (2 consecutive sessions) → chain_catalyst #3089 (sector_event, bearish, regime_adj=7.8, hot_money_risk=true). FPT +21% T4/2026 suppressed again (TIGHTENING ×0.7=5.6). Gold declining on Fed fears (spike not triggered). GAS +6.93% price alert already fired (news impact ≤6 neutral → no new signal). Market CLOSED (off-hours, 4h interval).
+- Suppressed: FPT earnings (TIGHTENING ×0.7=5.6<7), SSIAM Japan deal (5.6<7), GAS oil news (neutral 6<7), Imexpharm IMP (not watchlist), Gelex GEX (not watchlist), VinFast split (no watchlist hit).
+- Notes: TIGHTENING confirmed (Fed rate hike fears + gold reversal). HOT_MONEY_OUTFLOW intensifying — khối ngoại bán ròng targeting FPT+banking. FPT earnings 21% not moving price (+0.14%) due to foreign selling pressure. Banking broad -1.81%, RE broad -2.33% from prior session. Next cycle: ~20:20 UTC.
 
 ### Cycle (14:21–14:22 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 #3081 GAS/CPI/SBV] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
