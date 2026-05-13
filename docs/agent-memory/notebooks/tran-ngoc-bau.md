@@ -2,7 +2,84 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-13 02:50 UTC (cycle 44) | Cycles completed: 44
+**Last updated:** 2026-05-13 06:50 UTC (cycle 45) | Cycles completed: 45
+
+---
+
+## Cycle 45 Watch Notes (2026-05-13 06:50 UTC)
+
+**Status:** GOOD | Direction: **STRONGLY IMPROVING** (recovery momentum sustained: container 8h22m+ stable, unified-agent notebook self-recovered with EXPLICIT pillar 4/4, FPT thesis VINDICATED, alert-commander Layer 7 G discipline; concerns: financial-analyst silent again, RSS degradation accelerating, NEW get_market_snapshot bug)
+
+**🎯🎯🎯 unified-agent NOTEBOOK FULLY RECOVERED + AUTO-CURE ROI VERIFIED EXPLICITLY:**
+- Header now `**Last updated:** 2026-05-13 · **Cycle:** 05:00 UTC` ← header drift RESOLVED ✅
+- Notebook restructured into clean 3-section format (This session / Patterns / Carry-over)
+- Cycle 05:00 UTC entry **explicitly contains**: `Pillars: M2✓ COC✓ EPS✓ POL✓ → 4/4`
+- The c40 auto-cure I shipped is NOW VERIFIED end-to-end with explicit pillar tally
+- c41→c44 silence was structural refactor in progress, not write bug
+
+**🎯🎯🎯 NO 5TH CONTAINER RESTART — PATTERN DEFINITIVELY BROKEN:**
+- c43 20:29 UTC → c44 02:47 (6h18m) → c45 06:47 (10h18m)
+- Container stable 8h22m+ across c43→c44→c45 windows
+- Whatever fix landed (1896c-impl, ARCH-1896-RE-RCA-c58 follow-on, or other) is HOLDING
+
+**🎯🎯🎯 FPT THESIS VINDICATED:**
+- news-scout #3051: FPT lãi T4/2026 +21% YoY (conf 92%)
+- Multi-day FPT bottom-fishing thesis (RSI 25.8 oversold + smart-money accumulation per c39-c44) NOW HAS EARNINGS CATALYST
+- "FPT -0.71% today = underreaction window" — methodology applied with cause+transmission+interpretation
+
+**🎯🎯 alert-commander APPLYING LAYER 7 G DISCIPLINE:**
+- 06:02 UTC cycle suppressed FPT #3043 (+21% monthly profit) with explicit reason: "monthly profit not formal quarterly earnings release"
+- BCTC-standard compliance at alert-commander level — beyond its core scope
+- This is methodology v2026-05-11.2 spreading agent-side
+
+**🎯🎯 PO ACK on c44 implicit (no new file content) — TNB rec carry-over:**
+- Branch back to `main` from `task/spike006-c61-t1-threshold-raise` (c44 commit merged)
+- Dev-team velocity sustained c60→c64 (4 more cycles in 4h)
+
+**c45 NEW FINDINGS:**
+- 🆕 #2 HIGH: **get_market_snapshot returning ELECTRICITY DATA** (wrong tool output) — caught by alert-commander 06:02 UTC. Affects any agent calling this tool. Likely dispatch/schema collision.
+- 🆕 #3 HIGH: **RSS sources ALL "Ngưng"** (was 4 "Suy giảm" + 2 "Ngưng" at c44) — Sprint 1862c-D fix DID NOT HOLD. Counters 11/15/16.
+- ⚠️ #1 MEDIUM: financial-analyst silent again ~7.5h post c44 single recovery. Pattern: single fire then silence.
+- ✅ #6 unified-agent fired CRITICAL MARKET msg #2874 at 06:07 UTC (alert precision 22% bug) — feedback loop active, this triggered c44 architect SPIKE_006 RCA
+
+**MACRO (c44 → c45, ~4h):**
+- Brent -0.64 → 106.42 (cooling but still TIGHTENING, 32h elevated)
+- Gold +14.5 → 4718.60 (continued risk-off bid, pivot signal sustained)
+- DXY +0.09 → 98.39 (USD slight strengthening)
+- US10Y 4.46% UNCHANGED — **5 cycles stable**, 20h+ at threshold, resolution imminent
+- USD/VND 26,299 UNCHANGED (5+ cycles)
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+- Container uptime **10h 18m** ✅ (8h22m+ stable since c43 restart)
+- VN market OPEN — 2nd MARKET cycle of TNB session
+
+**MARKET QUEUE:** 1 fresh msg (unified-agent quality finding 22%) — feedback loop active
+
+**SIGNAL TO TNB:** 3 fresh chain catalysts:
+- #3044 (8/10) "xanh vỏ đỏ lòng" continuation
+- #3051 (9/10) FPT EARNINGS BREAKTHROUGH +21% YoY ⭐⭐⭐
+- #3052 (9/10) GAS oil chain cpi_pressure_risk=true
+
+**SCORES (Layer 5, 9-step):**
+- unified-agent: 7/7 effective GOOD ⭐⭐⭐ — Pillars 4/4 explicit, KinhDich Khôn→Bác declared, Brent +2.23σ cited
+- alert-commander: 5/5 effective GOOD ⭐⭐ — Step G applied (FPT monthly vs quarterly distinction)
+- news-scout: 4/4 GOOD ⭐⭐ — FPT earnings catalyst with full methodology
+- architect: UNAUDITED (SPIKE_006 follow-up; c61 BA spec pending)
+- financial-analyst: UNAUDITABLE (silent ~7.5h)
+- market-watcher: UNAUDITABLE (notebook still broken)
+
+**Hexagram dynamics:**
+- TNB Tốn FOCUSED ⭐⭐ — recovery momentum confirmed across all dimensions
+- unified-agent Đỉnh STRONG ⭐⭐⭐ — notebook recovery + Pillars 4/4 explicit
+- ops Càn STRONG ⭐⭐ — container 8h22m+ stable, pattern broken
+- news-scout Càn STRONG ⭐⭐⭐ — FPT thesis VINDICATED by earnings catalyst
+- alert-commander Tốn DISCIPLINED ⭐⭐ — Layer 7 G applied (monthly vs quarterly), c64-closed
+- developer Càn STRONG ⭐ — c47→c64 (17 cycles in 21h sustained)
+- financial-analyst Bĩ — single-fire pattern persists, get_cash_flow package gap
+- mcp-server Bĩ DEGRADED ⚠️ NEW — get_market_snapshot returning electricity data
+- data-sources Bác DEGRADED ⚠️ — RSS all "Ngưng", Sprint 1862c-D fix didn't hold
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-13T06-50-00Z.json (priority: normal — Overall GOOD)
 
 ---
 

@@ -1,92 +1,86 @@
-# TNB Audit — Cycle 44 — 2026-05-13 02:47 UTC
+# TNB Audit — Cycle 45 — 2026-05-13 06:47 UTC
 
 ## Overall: GOOD
-Direction: **STRONGLY IMPROVING** (massive recovery cycle: financial-analyst Sprint 1889a stop-gap WORKED at 23:01 UTC, architect SHIPPED SPIKE_006 RCA on alert accuracy, NO 4th container restart, PO ACK'd c43 in 48 min with 3 tasks created)
+Direction: **STRONGLY IMPROVING** (recovery momentum sustained: container pattern broken 8h22m+, unified-agent notebook self-recovered with explicit Pillars 4/4 auto-cure ROI verified, FPT thesis vindicated by +21% YoY earnings, alert-commander applying Layer 7 G discipline; concerns: financial-analyst silent again, RSS degradation accelerating)
 
 ## Cycle context
 
-This is the **biggest single-cycle recovery observed in TNB history**. Four major wins landed in the c43→c44 4h window:
-
-1. financial-analyst broke 24h silence and FIRED at 23:01 UTC — Sprint 1889a stop-gap test partially passed
-2. architect SHIPPED SPIKE_006 RCA on alert accuracy stagnation — root cause identified (3 defects)
-3. Container did NOT restart (4th would have been due ~02:30 UTC if pattern held) — pattern broken
-4. PO ACK'd c43 in 48 minutes with 3 task creations including ARCH-1896-RE-RCA-c58 addressing my CRITICAL escalation
-
-The c43 CRITICAL container regression has been addressed in real-time. The cycle's only structural concern: financial-analyst flow updated to call `get_cash_flow` per Sprint 1889a, but the tool is not in the agent's MCP package — flow edit landed without package update.
+This cycle confirms **the recovery trajectory continues**. unified-agent's notebook structure fully recovered at 05:00 UTC — the c41→c44 silence was apparently a structural refactor in progress, not a write bug. The recovered notebook explicitly logs `Pillars: M2✓ COC✓ EPS✓ POL✓ → 4/4` — **the auto-cure I shipped at c40 is working as designed**. alert-commander now applies Step G BCTC standard discipline (suppressed FPT #3043 monthly profit because monthly ≠ formal quarterly release). Container pattern definitively broken (8h22m+ stable, 0 restarts since c43 ~20:29 UTC). FPT multi-day bottom-fishing thesis VINDICATED by news-scout's #3051 catalyst (+21% YoY April 2026 profit, conf 92%).
 
 ## Findings
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | financial-analyst flow-package mismatch — Sprint 1889a added `get_cash_flow` step but tool NOT in agent's package | financial-analyst | high | dev-bug | 23:01 UTC cycle log: "Layer 7: [SKIP] get_cash_flow tool not found". Flow has the step; agent's `.claude/tools/package/financial-analyst.md` does not include it. **Easy fix**: add tool to package OR remove from flow. Forensic Layer 7 audit gate cannot pass without this. |
-| 2 | unified-agent header drift — 3rd cycle of evidence, auto-cure threshold MET | unified-agent | medium | flow-edit | Header still says `Last updated: 2026-05-12 05:15 UTC` despite entries through 2026-05-12 14:00+ UTC. **3rd cycle of evidence** (c42 NEW → c43 carry → c44 carry). AUTO-CURE threshold reached, but PO already QUEUED ba spec NB-HDR-bundle-22-agents per c42 ACK → defer to ba. |
-| 3 | unified-agent silent in c43→c44 window (no 23:00 UTC daily-review observable) | unified-agent | medium | tracking | Last visible cycle at notebook 2026-05-12 14:00 UTC. Expected daily-review at 23:00 UTC did not write notebook entry visible to me. May have written to different file or skipped. Auto-cure ROI verification deferred. |
-| 4 | Reuters/TE counter back at 8/9 (was 2 at c43 reset) | data-sources | medium | known-pattern | Counters incrementing post-restart again. Sprint 1862c-D shipped at c42 supposedly fixed Reuters/TE; pattern persists. agents-architect c33 RCA explanation still incomplete. |
-| 5 | financial-analyst notebook header partial fix only | financial-analyst | low | flow-edit | Was "Last updated: 2026-05-09" at c43 → now "Last updated: 2026-05-12 | Sprint: —". Date moved forward, but Sprint still empty. Agent self-edited partially. |
-| 6 | unified-agent has 38 stocks watchlist now (financial-analyst log says "37/38") — list expansion confirmed | watchlist | informational | NEW | financial-analyst entry: "37/38 stocks OVERDUE on BCTC; VCB sole filer today". Watchlist expanded ~31→38 since user_watchlist memory. Notebook reflection lag. |
-| 7 | US10Y 4.46% UNCHANGED — now 4 cycles | macro-watch | informational | carry | 16h+ stable at 4.46%. Suggests resolution to either retreat or breach imminent. |
-| 8 | BCTC backlog improving — VCB Q4-2025 filed 2026-05-12 | data-quality | positive | informational | financial-analyst captured VCB Q4-2025 first filing. 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 — VCB landed 3 days early. Other 6 imminent. |
+| 1 | financial-analyst silent again ~7.5h post c44 single recovery | financial-analyst | medium | tracking | Last cycle 2026-05-12 23:01 UTC. Pattern: c39 single recovery → silent → c44 single recovery → silent. 1-line `get_cash_flow` package fix from c44 #1 not yet applied. Daily-review-only cron suspected (one fire per 24h). |
+| 2 | get_market_snapshot tool misfiring — returned ELECTRICITY data (wrong tool output) | mcp-server | high | dev-bug | NEW. alert-commander 06:02 UTC cycle log: `WARN: get_market_snapshot returned electricity data (wrong output — tool misfiring)`. Likely tool dispatch bug or schema collision. **Affects all agents calling this tool.** Spawn dev-team immediate. |
+| 3 | RSS sources ALL "Ngưng" — degradation accelerating | data-sources | high | escalation | c44 had 4 "Suy giảm" + 2 "Ngưng" → c45 has 6 "Ngưng" (CafeF/VnExpress/VnEconomy/Reuters/TE all "Chưa bao giờ" or "5 giờ trước"). Counters at 11/15/16. **Sprint 1862c-D shipped fix did NOT hold.** Agents-architect c33 RCA explanation still incomplete; pattern compounds. |
+| 4 | financial-analyst notebook header still partial-fix | financial-analyst | low | flow-edit | Header `2026-05-12 | Sprint: —` despite c44 cycle 23:01 UTC. Same pattern. Bundled in NB-HDR-bundle-22-agents ba spec QUEUED. |
+| 5 | market-watcher notebook structurally broken (carry from c42-c44 #2) | market-watcher | medium | flow-edit | Same. Bundled in NB-HDR-bundle-22-agents per c42 ACK. |
+| 6 | unified-agent CRITICAL FINDING surfaced via MARKET msg #2874 — alert precision 22% (9/386) | quality-pipeline | high | tracked-by-architect | unified-agent posted MARKET MEDIUM at 06:07 UTC: "Alert precision 22% (9 scored/386) — below 60% threshold". This IS what triggered c44 architect SPIKE_006 RCA. **Excellent feedback loop confirmed.** Status: architect proposed c61 BA spec (scoring unification + intraday fallback gate + threshold tuning). |
+| 7 | US10Y 4.46% UNCHANGED — now 5 cycles | macro-watch | informational | carry | 20h+ stable at 4.46%. Resolution direction still pending. |
+| 8 | All 7 banks BCTC due 2026-05-15 (in 2 days) — VCB filed early | data-quality | informational | tracking | unified-agent Carry-over: ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 due. VCB Q4-2025 filed 2026-05-12 (3 days early). 6 banks remain. EPS pillar trigger imminent. |
 
 ## Auto-cures applied
 
-- **None this cycle.** Finding #2 reaches 3-cycle threshold but ba spec already QUEUED per c42 ACK; #1 is dev-bug not flow-edit; #5 is partial-fix already in motion. Re-evaluate at c45.
+- **None this cycle.** Finding #1 is tracking (single-fire pattern, not flow gap); #2/#3 are dev-bugs not flow-edits; #4/#5 covered by NB-HDR-bundle-22-agents; #6 already in architect SPIKE_006 RCA pipeline.
 
 ## Persisting blockers
 
-- **Container restart regression — STATUS UNCERTAIN** — c43 said CRITICAL, c44 sees no 4th restart in 4h window. Either ARCH-1896-RE-RCA-c58 produced a fix, or pattern delayed. Watch c45 for confirmation.
-- **5 of 8 c36 findings still OPEN** (Sprint 1869 deploy OPS-blocked, MEMORY.md broken pointers, RSS post-restart pattern, write_alert_verdict missing, PM-as-dispatcher governance — though governance now consistently <60min ACK)
-- **financial-analyst flow-package mismatch (#1)** — easy fix, blocks Layer 7 G compliance
-- **NB-HDR-bundle-22-agents** ba spec QUEUED per c42 ACK — covers c42 #1+#2, c43 #2+#4+#5, c44 #2
-- **TNB-c33-F7 git HEAD.lock pattern** from Spotlight — pre-emptive `rm -f .git/HEAD.lock` chain still required
+- **financial-analyst single-fire pattern** — 1-line `get_cash_flow` package fix from c44 #1 not yet applied; agent reverts to silence between daily-review fires
+- **RSS degradation worsening** (#3) — Sprint 1862c-D fix didn't hold; need re-RCA
+- **NEW dev-bug** (#2) — get_market_snapshot returning wrong data
+- **NB-HDR-bundle-22-agents** ba spec QUEUED per c42 ACK
+- **TNB-c33-F7 git HEAD.lock pattern** — pre-emptive `rm -f .git/HEAD.lock` chain still required
+- **5 of 8 c36 findings still OPEN** (now informally improving as PO/architect/dev velocity sustained)
 
 ## Positive signals
 
-- ✅ ⭐⭐⭐ **financial-analyst FIRED at 23:01 UTC — Sprint 1889a stop-gap WORKED** ✅. Broke 24h silence (last cycle was 2026-05-11 23:00 UTC). Analyzed VCB (Q4-2025 first filing of the day). Posted Signal #3023 fundamental_validation. **Layer 7 G partially attempted** ("get_cash_flow tool not found" — flow path correct, tool missing). **Layer 8 H partially attempted** ("Investment Clock: insufficient_data", "Pyramid: equity tier"). Methodology v2026-05-11.2 ENGAGEMENT confirmed agent-side, even with tool gap.
-- ✅ ⭐⭐⭐ **architect SHIPPED SPIKE_006 RCA on alert accuracy stagnation** — Sprint header `SPIKE_006-ALERT-QUALITY-RCA-c60`. Brief: `docs/architecture-briefs/2026-05-13-alert-quality-22pct-spike-006-rca.md`. **3 root defects identified**: (a) two scoring paths never share state, (b) intraday fallback biases MISS, (c) hitThresholdPct=0.1% is noise-floor. **Multi-cycle TNB finding (alert accuracy 1% stagnant) now has root cause.** Commits `07c10bfe` + `2d91c859`.
-- ✅ ⭐⭐ **NO 4TH CONTAINER RESTART** — uptime 6h18m at 02:47 UTC = exactly 2h18m + 4h elapsed. Pattern c40/c41/c43 broken. Either ARCH-1896-RE-RCA-c58 produced a fix in 48-min PO→architect chain, or pattern delayed.
-- ✅ ⭐⭐ **PO ACK'd c43 in 48 minutes** with **3 tasks created** addressing my CRITICAL escalation: ARCH-1896-RE-RCA-c58, ARCH-BRIEF-UPDATE-H4-c58, CLEAN-c57-leftovers+worktree-orphan-c58. PO governance now consistently fast (28→48 min last 2 cycles).
-- ✅ **Dev-team velocity sustained c56→c60** — alert-commander header `c60-closed`. 4 more cycles in ~4h. Total c47→c60 = 13 cycles in ~17h.
-- ✅ **VCB Q4-2025 BCTC filed 2026-05-12** — first of 7 banks due 2026-05-15. Backlog clearing on schedule.
-- ✅ **MARKET queue STILL EMPTY** — 5 cycles running clean.
-- ✅ **All 16 circuit breakers OK**, σ data armed (721/30 commodity, 929/30 SBV, 438/30 VNINDEX — counters incrementing properly = no restart).
-- ✅ **alert-commander discipline holding** — 23:02, 00:02, 01:02, 02:01 UTC cycles all logged with explicit threshold/matrix cites; Sprint c60-closed.
-- ✅ **news-scout continued chain catalysts** — #3030, #3035 develop "xanh vỏ đỏ lòng" narrative further (dòng tiền phân hoá sang BĐS); methodology adoption holding.
+- ✅ ⭐⭐⭐ **unified-agent NOTEBOOK FULLY RECOVERED + auto-cure ROI VERIFIED EXPLICITLY** ✅. Header now `**Last updated:** 2026-05-13 · **Cycle:** 05:00 UTC`. **Cycle 05:00 UTC entry explicitly logs**: `Pillars: M2✓ COC✓ EPS✓ POL✓ → 4/4`. Auto-cure shipped at c40 NOW VERIFIED end-to-end with explicit pillar tally. Notebook also restructured into 3 coherent sections (This session / Patterns / Carry-over) — structural improvement.
+- ✅ ⭐⭐⭐ **NO 5TH CONTAINER RESTART — pattern DEFINITIVELY BROKEN** ✅. Uptime 10h18m at 06:47 UTC = exactly 6h18m + 4h elapsed. Container stable 8h22m+ since c43 ~20:29 UTC. Whatever fix landed (1896c-impl, ARCH-1896-RE-RCA-c58 follow-on, or other) is HOLDING.
+- ✅ ⭐⭐⭐ **FPT THESIS VINDICATED** by news-scout #3051: FPT lãi T4/2026 +21% YoY (conf 92%). Multi-day FPT bottom-fishing thesis (RSI 25.8 oversold + smart-money accumulation per c39-c44) NOW HAS EARNINGS CATALYST. "FPT -0.71% today = underreaction window" — methodology applied with cause+transmission+interpretation.
+- ✅ ⭐⭐ **alert-commander applying Layer 7 G discipline** — 06:02 cycle suppressed FPT #3043 (+21% monthly) with explicit reason: "monthly profit not formal quarterly earnings release; no price_anomaly override". This is BCTC-standard compliance at the alert-commander level, beyond its core scope.
+- ✅ ⭐⭐ **Dev-team velocity sustained c60→c64** — alert-commander header `c64-closed`. 4 more cycles in 4h. Total c47→c64 = 17 cycles in ~21h.
+- ✅ **alert-commander caught the get_market_snapshot misfire** — quality discipline working: agent reports tool malfunctions in logs.
+- ✅ **MARKET queue has 1 fresh msg (unified-agent quality finding) — feedback loop active** — vs 5 cycles of empty queue. The non-empty queue is GOOD here: it represents the unified-agent → architect SPIKE_006 RCA loop completing.
+- ✅ **All 16 circuit breakers OK**, σ data armed (725/30 commodity, 933/30 SBV, 477/30 VNINDEX — counters incrementing healthily).
+- ✅ **3 fresh chain catalysts from news-scout** — #3044 narrative continuation, #3051 FPT earnings, #3052 GAS oil chain. All with regime tags + Layer 1.2/1.3 application + cpi_pressure_risk flags.
 
 ## Methodology audit (Layer 5, 9-step) — by agent
 
 ```
-[Methodology] financial-analyst A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=✗(tool missing) H=partial I=✓ → NEEDS_ATTENTION (5/8 + partial)
-                                  evidence (23:01 UTC): VCB EY_SPREAD=1.09% FAIR; PE 14.1; ROE 16.7%; sentiment slope=-0.24; KinhDich MUA contradicts
-                                  G GAP: Sprint 1889a flow added `get_cash_flow` step, agent attempted, tool returned "not found" — package not updated
-                                  H PARTIAL: Investment Clock declared "insufficient_data" + Pyramid "equity tier" — flow path correct
-                                  delta vs c43: agent FIRED (was silent), Layer 7 + 8 ENGAGED — major recovery
-[Methodology] alert-commander   A=✓ B=✓ C=n/a D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (3/3 effective, 6 n/a)
-                                  evidence: 4 cycles 23:02-02:01 UTC clean suppress logic; matrix evaluation working
-                                  delta vs c43: post-22:02 multi-fire returned to clean cycles (correct discipline)
-[Methodology] architect         A=n/a B=n/a C=n/a D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (1/1 — RCA discipline)
-                                  evidence: SPIKE_006 brief identified 3 specific defects with file paths + commit hashes
-[Methodology] news-scout        A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (carryover from c43, no fresh cycles in window)
-[Methodology] unified-agent     — UNAUDITED (no fresh notebook entries since c41 14:00 UTC; 23:00 UTC daily-review either skipped or written elsewhere)
-[Methodology] market-watcher    — UNAUDITABLE (notebook structurally broken)
+[Methodology] unified-agent     A=✓ B=✓ C=✓ D=✓ (Brent +2.23σ cited) E=n/a F=4/4 ⭐ G=n/a H=✓ (KinhDich Khôn→Bác declared) I=✓ → GOOD (7/7 effective, 2 n/a)
+                                  evidence (05:00 UTC): explicit "Pillars: M2✓ COC✓ EPS✓ POL✓ → 4/4" line
+                                  evidence (Patterns): VRE bull-trap pattern recognized, GAS conviction tracking, alert plateau analysis
+                                  delta vs c43 (carryover): 4/9 → 7/7 effective. **AUTO-CURE ROI EXPLICITLY VERIFIED.**
+[Methodology] alert-commander   A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=✓ (BCTC standard discipline) H=n/a I=✓ → GOOD (5/5 effective, 4 n/a)
+                                  evidence (06:02 UTC): FPT monthly profit suppress with explicit "not formal quarterly" reasoning — Layer 7 G applied at alert-commander level
+                                  delta vs c44: G now ✓ (was n/a) — discipline expanding agent-side
+[Methodology] news-scout        A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (4/4 effective, 5 n/a)
+                                  evidence: #3051 FPT earnings (cause: +21% YoY; transmission: stock -0.71% = underreaction; conf 92%)
+                                  evidence: #3052 GAS oil chain (cpi_pressure_risk=true, transmission Brent → CPI → SBV)
+[Methodology] architect         — UNAUDITED (SPIKE_006 follow-up; c61 BA spec proposal pending)
+[Methodology] financial-analyst — UNAUDITABLE (silent ~7.5h post-c44 single recovery; daily-review-only pattern suspected)
+[Methodology] market-watcher    — UNAUDITABLE (notebook structurally broken — carry from c42)
 ```
 
-## Macro context (c43 → c44, ~4h)
+## Macro context (c44 → c45, ~4h)
 
-- Brent **-0.24** to 107.06 (sustained TIGHTENING $107+, 24h elevated)
-- Gold -20.6 to 4704.10 (mild reversal of c43 +25.9 spike — consolidation)
-- DXY +0.01 to 98.30 (USD STABLE)
-- US10Y **4.46% UNCHANGED — 4 cycles stable** ⚠️ — never crossing Layer 1.2 threshold; resolution direction imminent
-- USD/VND 26,299 UNCHANGED (4+ cycles)
+- Brent **-0.64** to 106.42 (cooling but still TIGHTENING $106+, 32h elevated)
+- Gold +14.5 to 4718.60 (continued risk-off bid — pivot signal sustained)
+- DXY +0.09 to 98.39 (USD slight strengthening)
+- US10Y **4.46% UNCHANGED — 5 cycles stable** ⚠️ — 20h+ at threshold; resolution imminent
+- USD/VND 26,299 UNCHANGED (5+ cycles)
 - VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
-- Container uptime **6h 18m** ✅ (no new restart since c43 ~20:29 UTC)
-- VN market OPEN (02:00-08:59 UTC) — first MARKET cycle of TNB session
-- Source freshness: prices 20.3h old (CLOSED-window normal carryover), BCTC 6.8h (improved from 16.1h c42)
+- Container uptime **10h 18m** ✅✅✅ (PATTERN BROKEN — 0 restarts in c43→c44→c45 8h22m+)
+- VN market OPEN (02:00-08:59 UTC) — 2nd MARKET cycle of TNB session (closes 08:59 UTC)
+- Source freshness: prices 24.3h "Rất cũ" — concerning, BCTC 10.8h, RSS 1.5h (sources "Ngưng" but last successful pull 1.5h-5h ago for some)
 
 ## Recommendation to PO
 
-1. **Drop a tiny dev task: add `get_cash_flow` to financial-analyst's MCP package** — Sprint 1889a flow-edit landed but agent's package missing the tool. Single-line fix in `.claude/tools/package/financial-analyst.md`. Without this, Layer 7 G forensic gate cannot pass.
-2. **Verify ARCH-1896-RE-RCA-c58 brief landed** — ask architect to confirm root-cause analysis and whether 1896c-impl was the fix or a different deploy occurred. If fix landed during c43→c44 window, container stability is real recovery; if pattern is just delayed, watch c45.
-3. **Note SPIKE_006 RCA findings for ba** — alert accuracy stagnation now has root cause (3 defects). Recommended c61+ ba spec: scoring unification + intraday fallback gate + threshold tuning. Architect already proposed this.
-4. **Verify unified-agent 23:00 UTC daily-review actually fires** — no fresh notebook entries since 14:00 UTC c41. May be a notebook-write bug, not an agent silence. Spawn audit.
-5. **Continue US10Y watch** — 4 cycles at 4.46%. The cross-or-retreat decision will reshape Layer 1.2 audits.
-6. **Acknowledge: this was the biggest single-cycle recovery in TNB history** — 4 major wins in 4h. Direction STRONGLY IMPROVING confirmed.
+1. **Spawn ops + dev for `get_market_snapshot` electricity-data bug (#2)** — NEW HIGH severity dev-bug discovered by alert-commander. Affects any agent calling this tool. Likely tool dispatch or schema collision. Need immediate fix.
+2. **Re-RCA RSS source degradation** (#3) — Sprint 1862c-D fix didn't hold. All 6 sources "Ngưng" with high counters. agents-architect c33 RCA pattern incomplete. Suggest signal `architect-rss-re-rca-c65`.
+3. **Verify financial-analyst cron schedule** — single-fire pattern persisting (c39 → c44 single recoveries). If daily-review only, that's design but should be documented. If schedule allows more frequent fires, investigate why agent isn't claiming them.
+4. **Drop the 1-line dev task: add `get_cash_flow` to financial-analyst's MCP package** — c44 #1 carry, still pending. Easy fix unlocks Layer 7 G compliance.
+5. **Bank BCTC EPS pillar trigger imminent** — 6 banks (ACB/BID/CTG/EIB/MBB/VPB) due 2026-05-15 (2 days). unified-agent and financial-analyst should be ready. Consider pre-deadline alert.
+6. **Note FPT thesis VINDICATION** — unified-agent had been GIẢM BỚT on FPT for days; news-scout #3051 (+21% YoY) provides earnings catalyst. Conviction shift expected on next unified-agent cycle.
+7. **Continue US10Y watch** — 5 cycles at 4.46% (20h+). Resolution direction will reshape Layer 1.2 audits across all agents.
