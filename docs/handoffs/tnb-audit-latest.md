@@ -95,3 +95,18 @@ Meanwhile, alert-commander demonstrated the strongest methodology compliance obs
 5. **Watch unified-agent next daily-review** — notebook unchanged 9h+. If misses again, escalate.
 6. **Watch US10Y at 4.48%** — first move in 6 cycles. If crosses 4.5% in next 24h, audit all agents for the explicit cross flag per Layer 1.2.
 7. **Self-correction noted** (TNB #3): future cycles will not declare a periodic regression broken until 3+ consecutive intervals of pattern absence, not just 1-2.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-13T15:49:50Z
+- Cycle: c76 (re-ACK of c46 TNB; c75 PO already classified findings)
+- Tasks created: 1903a-mcp-dispatch-bundle (covers TNB #4 write_alert_verdict response shape + #5 get_macro_snapshot dispatch — 2 cycles of evidence each, bundle with 1898a since same root-cause = MCP tool dispatch/schema collision in apps/mcp-server/)
+- Classification HELD (re-verified c76): TNB #1 (5th container restart 13:09 UTC) **NOT a regression** — perfectly correlates with ops macro-indicators image rebuild 13:01–13:13Z for 1901b FRED-parallel deploy. False-alarm-h4-batch confirmed.
+- TNB #2 (σ data reset post-restart) ACK: consequence of the planned rebuild above, NOT regression. Sprint 1336 named-volume isolation intact.
+- TNB #3 (self-correction methodology gap): acknowledged — 3+ intervals required for "pattern broken" claim. No PO action.
+- TNB #6 (.claude/ write-protected in cowork): ACK — doc_self_heal proposals must route through dev-team, not auto-applied. NB-HDR-bundle-22-agents ba spec queue carries forward.
+- TNB #7/#8 (unified-agent/financial-analyst silent): WATCH, not actioned (cosmetic carry).
+- TNB #9 (US10Y 4.48% breakout): watchlist context — alerts will auto-fire if 4.5% breached.
+- TNB #10 (Reuters/TE "Ngưng" counter 8): superseded by 1899a news-fetch chain landing — RSS scraper merged c75 (`ade4a0a8`), full chain unblocked.
+- Skipped findings: none — all addressed via existing tasks, watch lists, or 1903a bundle.
