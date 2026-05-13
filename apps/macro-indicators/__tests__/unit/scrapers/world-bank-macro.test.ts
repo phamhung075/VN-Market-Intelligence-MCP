@@ -105,6 +105,93 @@ describe('WorldBankMacroAdapter', () => {
     });
   });
 
+  describe('fetchVnMacroBatch — parallel execution', () => {
+    it('returns results for all indicators when all succeed', async () => {
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        const urlStr = String(url);
+        // Extract indicator code from URL path segment
+        const match = urlStr.match(/\/indicator\/([^?]+)/);
+        const code = match ? decodeURIComponent(match[1]!) : 'UNKNOWN';
+        const indicatorName = Object.entries(VN_INDICATORS).find(([, c]) => c === code)?.[0] ?? code;
+        const body = makeWbResponse(code, indicatorName);
+        return new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }) as unknown as typeof fetch;
+
+      const result = await adapter.fetchVnMacroBatch();
+
+      expect(Object.keys(result)).toHaveLength(Object.keys(VN_INDICATORS).length);
+      for (const key of Object.keys(VN_INDICATORS)) {
+        expect(result[key]).toBeDefined();
+        expect(result[key]!.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('returns empty array for a failed indicator but succeeds for all others', async () => {
+      const failCode = VN_INDICATORS['fdi_inflows']!; // BX.KLT.DINV.CD.WD
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        const urlStr = String(url);
+        if (urlStr.includes(encodeURIComponent(failCode)) || urlStr.includes(failCode)) {
+          return new Response('server error', { status: 500 });
+        }
+        const match = urlStr.match(/\/indicator\/([^?]+)/);
+        const code = match ? decodeURIComponent(match[1]!) : 'UNKNOWN';
+        const indicatorName = Object.entries(VN_INDICATORS).find(([, c]) => c === code)?.[0] ?? code;
+        const body = makeWbResponse(code, indicatorName);
+        return new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }) as unknown as typeof fetch;
+
+      const result = await adapter.fetchVnMacroBatch();
+
+      expect(Object.keys(result)).toHaveLength(Object.keys(VN_INDICATORS).length);
+      // failed indicator returns empty array (graceful degradation)
+      expect(result['fdi_inflows']).toEqual([]);
+      // all others succeeded
+      const otherKeys = Object.keys(VN_INDICATORS).filter((k) => k !== 'fdi_inflows');
+      for (const k of otherKeys) {
+        expect(result[k]!.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('dispatches all indicator fetches concurrently, not sequentially', async () => {
+      const callStartTimes: number[] = [];
+      const indicatorCount = Object.keys(VN_INDICATORS).length;
+
+      global.fetch = mock(async (url: RequestInfo | URL) => {
+        callStartTimes.push(Date.now());
+        // Simulate non-trivial latency — sequential would take indicatorCount * 50ms+
+        await new Promise((r) => setTimeout(r, 50));
+        const urlStr = String(url);
+        const match = urlStr.match(/\/indicator\/([^?]+)/);
+        const code = match ? decodeURIComponent(match[1]!) : 'UNKNOWN';
+        const indicatorName = Object.entries(VN_INDICATORS).find(([, c]) => c === code)?.[0] ?? code;
+        const body = makeWbResponse(code, indicatorName);
+        return new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }) as unknown as typeof fetch;
+
+      const before = Date.now();
+      await adapter.fetchVnMacroBatch();
+      const elapsed = Date.now() - before;
+
+      // All calls must have been dispatched before any completes (within first 50ms window)
+      expect(callStartTimes).toHaveLength(indicatorCount);
+      const firstCall = callStartTimes[0]!;
+      const lastCall = callStartTimes[callStartTimes.length - 1]!;
+      // Sequential: lastCall >= firstCall + (indicatorCount-1)*50; Parallel: all within <30ms
+      expect(lastCall - firstCall).toBeLessThan(30);
+      // Total elapsed well under sequential time (indicatorCount * 50ms = 350ms); parallel: ~50-100ms
+      expect(elapsed).toBeLessThan(indicatorCount * 50);
+    });
+  });
+
   describe('VN_INDICATORS catalog', () => {
     it('contains expected indicator codes', () => {
       expect(VN_INDICATORS['gdp_usd']).toBe('NY.GDP.MKTP.CD');

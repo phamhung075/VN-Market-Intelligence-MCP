@@ -62,11 +62,6 @@ interface WbDataPoint {
 
 type WbApiResponse = [WbApiMeta, WbDataPoint[]];
 
-/** Sleep utility with jitter for polite rate limiting. */
-function sleepMs(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 export class WorldBankMacroAdapter implements WorldBankMacroPort {
   private readonly mostRecentDefault = 10;
   private readonly timeoutMs = 10_000;
@@ -106,15 +101,18 @@ export class WorldBankMacroAdapter implements WorldBankMacroPort {
   }
 
   async fetchVnMacroBatch(): Promise<Record<string, WorldBankDataPoint[]>> {
-    const result: Record<string, WorldBankDataPoint[]> = {};
     const entries = Object.entries(VN_INDICATORS);
 
-    for (const [name, code] of entries) {
-      result[name] = await this.fetchVnIndicator(code);
-      // 2s jitter between calls — World Bank is generous but undocumented rate limit
-      await sleepMs(1_500 + Math.random() * 1_000);
-    }
+    // Fan out all 7 indicators concurrently — World Bank public API limit is 10 req/10s;
+    // 7 parallel calls is well within budget. Sequential loop + sleeps caused 10-17s total
+    // latency, exceeding the 8s per-source budget in fetch-external-macro.ts.
+    // Parallel dispatch brings latency to ~2-3s.
+    const results = await Promise.all(
+      entries.map(([, code]) => this.fetchVnIndicator(code)),
+    );
 
-    return result;
+    return Object.fromEntries(
+      entries.map(([name], i) => [name, results[i] ?? []]),
+    );
   }
 }
