@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-13 21:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (22:21–22:28 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: GAS +6.93% chain=9/10 bullish → TIGHTENING adj 9×0.7=6.3 (suppressed, <7). Foreign selling 14d/13,000+B → adj 9×1.3=10 but confidence 72%<80% (suppressed). IMP insider sell post-CN M&A (non-watchlist). Gold falling (Fed hike fears). Brent -2.27σ below mean at 105.64. Market CLOSED off-hours.
+- Suppressed: GAS bullish adj 6.3 (<7 threshold); FII macro outflow (conf 72%<80%)
+
 ### Cycle (21:15–21:25 UTC) 2026-05-13
 - Items: 20 | Impacts: 3 | Signals: [urgent_news #3114 GAS, chain_catalyst #3115 oil_gas] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
 - Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
