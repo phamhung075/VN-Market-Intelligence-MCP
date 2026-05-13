@@ -126,6 +126,26 @@ Wire news-fetch into API gateway (3 file edits: index.ts, health_checker.ts, han
 
 ---
 
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `apps/api-gateway/src/index.ts:26` — added `news: process.env['NEWS_URL'] ?? 'http://news-fetch:5008'` to serviceUrls
+  - `apps/api-gateway/src/infrastructure/health_checker.ts:78` — added news config entry to buildServiceConfigs
+  - `apps/api-gateway/src/interface/handlers.ts:109` — added `'news'` to DASHBOARD_SERVICES array
+  - `docker-compose.yml` — added news-fetch service block (port 5008, 2.5g limit, 2g reservation, start_period 30s); added NEWS_URL to api-gateway env
+  - `docs/handoffs/ops-news-fetch-scaffold.md:13` — corrected port 5007 → 5008
+  - `docs/ARCHITECTURE.md` — added news-fetch row to services table; updated monorepo tree (9→10 services)
+- **Tests written/updated:**
+  - `__tests__/unit/static-service-registry.test.ts` — updated count 8→9, added 'news' to names assertion
+  - `__tests__/integration/aggregate-health-usecase.test.ts` — updated service count 8→9
+- **Git commits:** see below
+- **tsc status:** clean (0 errors)
+- **Full suite:** 40 pass / 0 fail
+- **Docs updated:** docs/ARCHITECTURE.md (services table + monorepo tree), docs/handoffs/ops-news-fetch-scaffold.md (port correction)
+- **Graphify:** skipped (no policy/protocol docs impacted)
+
+---
+
 ## [Developer] Notes
 
 **Service block template (copy-paste friendly):**

@@ -22,8 +22,9 @@ vn-market-intelligence/         ← pnpm workspace root
 │   ├── technical-analysis/     ← TypeScript/Bun — TA indicators (port 5003)
 │   ├── macro-indicators/       ← TypeScript/Bun — macro snapshot (port 5004)
 │   ├── kinh-dich-service/      ← TypeScript/Bun — hexagram readings (port 5005)
-│   └── alert-engine/           ← TypeScript/Bun — signal evaluation (port 5006)
-├── docker-compose.yml          ← All 9 services + shared /data volume
+│   ├── alert-engine/           ← TypeScript/Bun — signal evaluation (port 5006)
+│   └── news-fetch/             ← TypeScript/Bun — Reuters + Bloomberg scrapers (port 5008)
+├── docker-compose.yml          ← All 10 services + shared /data volume
 ├── packages/
 │   ├── shared-types/           ← Inter-service TS contracts
 │   ├── shared-db/              ← SQLite schema
@@ -44,6 +45,7 @@ vn-market-intelligence/         ← pnpm workspace root
 | macro-indicators | 5004 | TypeScript/Bun | ✅ Running |
 | kinh-dich-service | 5005 | TypeScript/Bun | ✅ Running |
 | alert-engine | 5006 | TypeScript/Bun | ✅ Running |
+| news-fetch | 5008 | TypeScript/Bun | ✅ Running |
 
 **Database isolation (single-writer):**
 - `market.db` — WRITE: mcp-server only | READ: technical-analysis, macro-indicators, kinh-dich-service (readonly:true)

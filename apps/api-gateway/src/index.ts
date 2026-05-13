@@ -23,6 +23,7 @@ const serviceUrls: Record<string, string> = {
   stock:      process.env['STOCK_URL']      ?? 'http://stock-price:5000',
   'kinh-dich': process.env['KINH_DICH_URL'] ?? 'http://kinh-dich-service:5005',
   alert:      process.env['ALERT_URL']      ?? 'http://alert-engine:5006',
+  news:       process.env['NEWS_URL']       ?? 'http://news-fetch:5008',
   // Virtual alias: /api/* routes to MCP server with full path preserved (no prefix strip)
   api:        MCP_URL,
 };

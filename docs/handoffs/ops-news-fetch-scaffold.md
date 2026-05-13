@@ -10,7 +10,7 @@ Infrastructure scan found NO `news-fetch` service in `docker-compose.yml` (curre
 ## Action Needed
 Scaffold a new `news-fetch` service in `docker-compose.yml` with:
 - Base: Bun/TypeScript (same as macro-indicators)
-- Port: 5007 (next available)
+- Port: 5008 (corrected per architect brief 2026-05-13 port assignment review; 5007 was wrong)
 - Memory: ≥2GB (for Reuters + Bloomberg headless Playwright/Botasaurus)
 - Database: market.db (read-only)
 - Healthcheck: same pattern as macro-indicators

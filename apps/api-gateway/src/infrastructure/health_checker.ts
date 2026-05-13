@@ -75,6 +75,7 @@ function buildServiceConfigs(urls: Record<string, string>) {
     stock:      { name: 'stock',      baseUrl: urls['stock']      ?? 'http://stock-price:5000',         healthPath: '/health', timeoutMs: timeout },
     'kinh-dich': { name: 'kinh-dich', baseUrl: urls['kinh-dich'] ?? 'http://kinh-dich-service:5005',  healthPath: '/health', timeoutMs: timeout },
     alert:      { name: 'alert',      baseUrl: urls['alert']      ?? 'http://alert-engine:5006',        healthPath: '/health', timeoutMs: timeout },
+    news:       { name: 'news',       baseUrl: urls['news']       ?? 'http://news-fetch:5008',           healthPath: '/health', timeoutMs: timeout },
     // Virtual alias: /api/* routes to MCP server with full path preserved.
     // noProbe=true: excluded from active health probes (no /health endpoint to ping separately).
     api:        { name: 'api',        baseUrl: urls['api']        ?? urls['mcp'] ?? 'http://mcp-server:3000', healthPath: '/health', timeoutMs: timeout, noProbe: true },

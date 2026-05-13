@@ -106,7 +106,7 @@ export function proxyPath(reqPath: string, svc: { noProbe?: boolean }): string {
 
 /** All known services displayed in the dashboard (order matters for layout). */
 const DASHBOARD_SERVICES: ReadonlyArray<string> = [
-  'mcp', 'pdf', 'rag', 'ta', 'macro', 'stock', 'kinh-dich', 'alert',
+  'mcp', 'pdf', 'rag', 'ta', 'macro', 'stock', 'kinh-dich', 'alert', 'news',
 ];
 
 /** Map a HealthStatus to a CSS class used in the dashboard. */
