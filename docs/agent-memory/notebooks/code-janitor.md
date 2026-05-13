@@ -1,8 +1,28 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-13 (scan 21 — 0 new findings; 0 shipped; backlog stable at 9 items)
+## Last updated: 2026-05-13 (scan 22 — 0 new findings; 0 shipped; backlog stable at 9 items)
 
 ## State summary
+
+### Session 22 (2026-05-13 — Full codebase scan HEAD~30..HEAD)
+
+**Scope:** Commits HEAD~30..HEAD (30 most recent); 5 DRY checks executed.
+
+**Result:** CLEAN — 0 new violations in all 5 checks.
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | All ticker→sector mappings canonical in sectorPeers.ts, stockAliases.ts. CLEAN. |
+| Ticker arrays | 0 new | JANITOR-034 (cascadeExecutor.ts LARGE_CAP_FALLBACK vs priceSourceRouter.ts MAJOR_CAPS) unchanged — already proposed. |
+| Magic numbers / crons | 0 new | JANITOR-027 (MS_PER_DAY in 32 files) recurrent — already proposed multi-file refactoring. |
+| Schema duplication | 0 findings | All DDL canonical in schema-*.ts. No production inline DDL. CLEAN. |
+| Config drift | 0 findings | All ?? fallback patterns are safe defensive code (DI, optional defaults). CLEAN. |
+
+**Backlog unchanged:** 9 items stable (JANITOR-011, -013, -017, -020, -027 plus meta-config -028 to -032, and -034).
+
+**Quality:** Full — all 5 checks executed; no knowledge load failures.
+
+---
 
 ### Session 21 (2026-05-13 — Full codebase scan + recent commits audit)
 
