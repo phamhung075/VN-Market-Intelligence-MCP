@@ -246,11 +246,76 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 72 — 2026-05-13 news-fetch Service Decomposition
+
+**Input:** Architect brief `docs/architecture-briefs/2026-05-13-news-fetch-service.md` (442 lines, complete scaffold design: port 5008, multi-stage Dockerfile, 3 scrapers, Hono routes, gateway wiring, MCP cron job).
+
+**Actions:**
+
+- **Decomposed 1899a into 10 atomic subtasks** per brief §2 module layout + dependency graph:
+  - Tier 1 (parallel-eligible, 0 deps):
+    - 1899a-core: Dockerfile + package.json + tsconfig + src/index.ts (M size, developer)
+  - Tier 2 (after core, parallel):
+    - 1899a-domain: Domain models + port interfaces (S, developer)
+    - 1899a-app: Use cases (S, developer)
+    - 1899a-factory: PlaywrightBrowserFactory (S, developer)
+    - 1899a-reuters-rss: Reuters RSS scraper (M, dev-mainserver-crawls)
+    - 1899a-bloomberg: Bloomberg Playwright scraper (L, dev-mainserver-crawls)
+    - 1899a-reuters-fallback: Reuters fallback Playwright (M, dev-mainserver-crawls)
+  - Tier 3 (after adapters):
+    - 1899a-routes: Hono router + handlers (M, developer)
+  - Tier 4 (after routes):
+    - 1899a-gateway: Gateway wiring + docker-compose + port correction (M, developer)
+  - Tier 5 (finalization, parallel):
+    - 1899a-cron: MCP scheduler job (M, dev-mcp-server)
+    - 1899a-tests: Unit + integration suite (L, developer)
+
+- **Created 10 handoff files** in docs/handoffs/:
+  - TASK_1899a-{core,domain,app,factory,reuters-rss,bloomberg,reuters-fallback,routes,gateway,cron,tests}.md
+  - Each with full AC, file scope, dependencies, knowledge needed, dev notes
+  - Sequencing enforced: Tier 1 → Tier 2 parallel → Tier 3 → Tier 4 → Tier 5 parallel
+  - Critical path: core → domain → app/factory/adapters in parallel → routes → gateway → (cron + tests parallel)
+
+- **Updated docs/TASKS.md**:
+  - Removed single 1899a-FEATURE row
+  - Added 10 Todo rows with explicit depends_on edges
+  - Preserved MEDIUM priority, developer + dev-mainserver-crawls + dev-mcp-server as owners
+  - Total scaffold scope: ~120 lines code, 8 files modified, 15 files created (per brief §15-16)
+
+- **Dependency graph verified**:
+  - No cycles
+  - Critical path: 1899a-core → 1899a-domain (1.5h) → 1899a-app (1h) → 1899a-routes (1.5h) → 1899a-gateway (1h) → total ~6.5h critical path
+  - Parallel potential: Tier 2 adapters (3 tasks) can run concurrently after core/domain ready; Tier 5 tests + cron can run after routes/gateway
+  - Estimated total: ~18 hours dev work, ~2 days with max WIP=2 parallel
+
+- **Risk flags noted in handoffs**:
+  - Brief §1 PORT CORRECTION: ops handoff said 5007, architect corrected to 5008 → 1899a-gateway corrects ops handoff
+  - Brief §9 RAM constraint: sequential Playwright dispatch mandatory (encoded in 1899a-cron job)
+  - Brief §6b/§6c: DataDome/PerimeterX detection + non-retry policy (encoded in adapter specs)
+  - Brief §6: PlaywrightBrowserFactory mandatory (no direct chromium.launch calls) — encoded as shared infra task 1899a-factory
+
+- **WIP enforcement**:
+  - Currently 0 In Progress (developer ready to pick first task)
+  - Max 2 In Progress enforced per PM flow
+  - Recommend: start 1899a-core (immediate); when developer picks second tier, start 1899a-domain + one of {factory, app} in parallel
+  - Handoff priority order: 1899a-core → (1899a-domain, 1899a-factory in parallel) → (adapters ready)
+
+- **File state diffs**:
+  - docs/TASKS.md: added 10 rows in Todo section, line count +12 (from ~183 to ~195)
+  - docs/handoffs/: added 10 new .md files (~700 lines total)
+  - docs/architecture-briefs/2026-05-13-news-fetch-service.md: unchanged (SSOT, no corrections needed per brief §1 re-verification)
+
+- **Commit pending**: `chore(pm/1899a): decompose news-fetch service scaffold into 10 atomic tasks`
+
+- **Status at session end**: READY FOR HANDOFF. All subtasks decomposed, handoffs created, deps verified, WIP budget available (0/2). Recommend developer start with 1899a-core immediately.
+
+---
+
 ## Current state
 
-- WIP: 2 / 2 (In Progress: 1876a-A6 dev-mcp-server WATCHLIST_SEED 7 entries, 1894a Cloudflare awaits user)
-- Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design, incident-driven)
-- Todo: 1896b (ops RCA follow-up, c40 restart evidence), 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
-- Done: 1876a-A5 (DONE-PARTIAL standard tier deployed), 1896a (RCA false-alarm-h4), 1896c (brief shipped), 1895b (merge-gate impl), 1879b (fed-liquidity tool), 1879a (FRED fetcher), signal suite (T1-T6 dedup), and 40+ prior arcs
-- CLEAN state: 7 worktree branches swept, all merged content verified on main
-- **Headroom:** 0 In Progress slots available (max WIP = 2, at capacity)
+- WIP: 0 / 2 (In Progress: none; ready for 1899a-core handoff)
+- Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
+- Todo: 1899a-{core,domain,app,factory,reuters-rss,bloomberg,reuters-fallback,routes,gateway,cron,tests} (10 subtasks, Tier 1→5), 1900a (OPS-CRITICAL gateway health), 1901a/1901b (OPS/FIX), 1898a/1898b (FIX-HIGH), 1862c-D/E/F/G (cowork chain), 1881a/1883a source-tier (ba spec, deferred), 1890a tool-pkg (ba, deferred)
+- Done: (40+ arcs from prior cycles)
+- CLEAN state: 7 worktree branches swept
+- **Headroom:** 2 In Progress slots available (ready for 1899a-core + parallel Tier 2 task)
