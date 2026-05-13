@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 09:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 10:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (10:15–10:20 UTC) 2026-05-13
+- Items: 20 | Impacts: 9 | Signals: [urgent_news×2 #3073 FPT, #3074 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT lãi T4/2026 +21% (6th re-signal, persistent underreaction, FII bán ròng nghìn tỷ tâm điểm FPT ngày 13/5) → urgent_news #3073, impact 9, regime_adj=9. GAS +6.93% (6th consecutive cycle, Brent $107.22) → urgent_news #3074, impact 7. Market CLOSED (off-hours, 4h interval). Banking sector -1.81% avg (HIGH alerts active). RE sector -2.33% avg (HIGH alerts active). Gold reversal confirmed "giảm mạnh vì nỗi lo Fed tăng lãi suất". Gelex Electric capital raise 6,400B + 785B sub-investment (GEX, bullish, not watchlist). Imexpharm IMP insider exec sell post Chinese M&A (6,000B) → IMP neutral/DHG indirect bearish 4/10 — suppressed.
+- Suppressed: IMP insider sell (not watchlist, DHG indirect 4/10 below threshold), SSIAM–Japan (securities no direct watchlist hit), SeABank insider buy (SSB not watchlist), GEX sub-investment (construction not watchlist), gold/silver global (no direct VN hit), HAG/AgriS/Fecon/dividend items (not watchlist or impact <6).
+- Notes: REGIME: NEUTRAL (gold reversal from TIGHTENING prior cycle; no new SBV/Fed signal this cycle). GAS surge now 6 consecutive cycles — Brent $107.22. FPT earnings underreaction deepens (6th cycle, FII selling pressure cited). PMI: not detected this cycle. CPI chain: not triggered (no prior-month Brent baseline). Next cycle: ~14:20 UTC.
 
 ### Cycle (09:15–09:20 UTC) 2026-05-13
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst×2 #3068 GAS/oil_gas, #3069 FPT/earnings] | Regime: NEUTRAL | Carry: NEUTRAL

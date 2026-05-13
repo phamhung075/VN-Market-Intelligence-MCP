@@ -318,3 +318,60 @@ Token mode behavior:
 - Cloudflared token mode (quick tunnel / dashboard-managed) decouples local config from actual behavior
 - Always verify which mode the tunnel is running in before attempting config-file updates
 - For persistent tunnels, check if credentials file exists; if empty, tunnel is dashboard-managed
+
+---
+
+## Task: Cloudflare Tunnel /api/* Ingress Fix Verification — COMPLETE
+
+**Status:** VERIFIED & RESOLVED — Dashboard ingress rule update confirmed live
+
+**Date:** 2026-05-13 12:15 UTC
+
+**Mission:** Verify that the Cloudflare dashboard update (adding `/api/*` → `localhost:4000` ingress rule) resolves the VPS push-path blocker flagged earlier.
+
+**Prior Context:**
+- Blocker: `docs/signals/ops-cloudflare-config-blocker-2026-05-13T11-50-00Z.json`
+- User confirmed dashboard table now shows correct rule: `zenmidi.com / api → http://localhost:4000`
+
+### Verification Steps
+
+**Step 1: Local endpoint tests (mcp-server)**
+
+| Endpoint | Method | Status Code | Verdict |
+|----------|--------|------------|---------|
+| http://localhost:4000/health | GET | 200 | mcp-server healthy ✓ |
+| http://localhost:4000/api/push-prices | POST | 401 | Route exists (auth required) ✓ |
+| http://localhost:4000/api/push-news | POST | 401 | Route exists (auth required) ✓ |
+
+**Step 2: Cloudflare tunnel tests (via zenmidi.com)**
+
+| Endpoint | Method | Status Code | Verdict |
+|----------|--------|------------|---------|
+| https://zenmidi.com/api/push-prices | POST | 401 | **Ingress rule LIVE** ✓ |
+| https://zenmidi.com/api/push-news | POST | POST | **Ingress rule LIVE** ✓ |
+
+**Result:** Both Cloudflare routes return **401 (unauthorized)**, NOT 404 (routing failure). This proves the `/api/*` ingress rule is active and routing to localhost:4000.
+
+### Root Cause Analysis (Confirmed)
+
+**Original Problem:** Tunnel running in token mode (dashboard-managed), local config.yml changes ignored.
+
+**Fix Applied:** User updated Cloudflare dashboard directly with `/api/*` ingress rule. Token-mode tunnel pulled updated config from Cloudflare API on next health check.
+
+**Status:** UNBLOCKED — VPS push services can now POST to Cloudflare without encountering 404 errors.
+
+### Artifact Created
+
+- **Signal:** `docs/signals/processed/ops-cloudflare-config-verified-2026-05-13T12-15-00Z.json`
+  - Full verification results + 5 curl status codes
+  - Next steps documented
+
+### Completion Checklist
+
+- [x] Local endpoints tested (3/3 pass)
+- [x] Cloudflare tunnel endpoints tested (2/2 pass)
+- [x] 404 blocker cleared (routes now return 401/app response)
+- [x] Signal created with verification evidence
+- [x] Notebook updated (this entry)
+
+**Blocker Status:** RESOLVED ✓ — Ready for VPS push services to attempt delivery
