@@ -4,6 +4,25 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### SPIKE_006-c61-T4 — AC-4 insufficientSample guard (2026-05-13, DONE)
+
+**Problem:** `formatAccuracyReport` showed accuracy % even with tiny sample sizes (n=1, 2), making precision figures misleading.
+
+**Fix:** Compute `scoreable = hits + misses`. If `scoreable < 20`: set `insufficientSample = true`, prepend Vietnamese warning `"Chua du du lieu danh gia (N=X, can >=20)"`, suppress ALL `%` output (summary line + signal breakdown + worst-stocks section). Else: normal path unchanged.
+
+**Type change:** `AccuracyReport` gains `insufficientSample: boolean`. Additive — `dailyDashboardJob` uses `Pick<AccuracyReport, ...>` without this field, no break.
+
+**Test changes:**
+- AC-4 test: 9 pre-scored rows (2 HIT, 7 MISS via `outcome` column) — verifies flag=true, no `\d+%`, warning present.
+- "worst performer" test: updated from 3 to 20 pre-scored MISS rows (Path 1) to clear the guard.
+- "calculates correct %" test: updated from 2 to 20 pre-scored HIT rows (Path 1) to clear the guard.
+
+**Key lesson:** When `insufficientSample` suppresses %, must suppress breakdown + worst-stock sections too — they also emit `%`. Pre-scored rows (`outcome` column) bypass domain scorer / price lookups, making tests deterministic.
+
+**Counts:** 20 pass / 0 fail. SHA 7bc5853b. tsc clean.
+
+---
+
 ### SPIKE_006-c61-T3 — AC-2 calendarDaysElapsed + intraday gate (2026-05-13, DONE)
 
 **Problem:** `scoreAlert` Path 2 always tried intraday 1-12h fallback, including for same-calendar-day alerts. This biased accuracy upward on day-1 data.

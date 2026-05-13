@@ -1,91 +1,53 @@
 # PO Notebook
 
-## Last updated: 2026-05-13T00:37Z (c59 triage — BATCH(3): c59-T1-F2a + c59-T2-F4 + CLEAN-c58-leftovers-c59)
+## Last updated: 2026-05-13T~06:15Z (c65 triage — BATCH(1): SPIKE_006-c61-T4)
 
 ---
 
-## Cycle 59 triage
+## Cycle 65 triage
 
 ### Trigger
-Dev-team c59 PREFLIGHT @ 00:36:20Z caught **8th HEAD.lock recurrence** w/ same PID **51247** (Docker Desktop VM). Mechanism stable — H4 confirmed THIRD time. Evidence: `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log`. Pipeline=idle, c58-closed. pendingSignals[]=EMPTY (drained at Step 0a).
+Dev-team c65 cron tick. pendingSignals=[] (drained empty). 1 unclaimed TG report: id=2874 unified-agent MEDIUM alert_quality "Alert precision 22% (9 scored/386)". Same signal that drove c60-c61 SPIKE_006 RCA. T-1 (threshold) shipped c61, T-2 (Path 2 wiring) shipped c64, T-3 (intraday gate + calendarDaysElapsed) shipped c63. T-4 unblocked.
 
-Architect's c59 plan is **already published** in `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` §7 (commit `b31722b9`). PO role this cycle = batch-dispatch, no new spec.
+### Channel audit (last 10 each)
+- MARKET: clean — no errors
+- WORK: c64 close + memory notebooks — normal
+- BUG: id=2874 unified-agent alert precision — DIRECTLY addressed by T-4 (n<20 guard). No other open bugs.
 
-### Step 0-TNB / Step 0-SIG / Channel audit
-- TNB: no new audit handoff this cycle (c58 verdict closed: TNB-c43 #1 = MONITOR false-alarm)
-- Signals: empty
-- Channels: light scan — MARKET clean, WORK PREFLIGHT-only, BUG clean, market-group clean. 0 new TG reports.
+### Decision: BATCH(1) = T-4 only
+- T-4 is the canonical response to TG id=2874 (n=9 → insufficientSample guard).
+- T-3 dependency LISTED in TASKS.md is STALE — T-3 shipped c63 (commit `20bab938`, in TASKS_ARCHIVE.md L58). Unblock T-4 manually in notebook decision; PM/agent-father will reconcile Todo row on next cap-rotation.
+- 1897d architect brief request: NOT a BATCH item this cycle. USER bundle 1897b/1897d are NON-DISPATCHABLE (config admin only). Architect spike on Phase 4 worktree isolation already escalated c64 (1897c-ESCALATED). Don't double-spawn.
+- 1862c-F deferred — depends on container-rebuild; 5-cycle stability gate not yet satisfied.
+- SSOT cluster 1888b-k, methodology 1881a/1890a, JANITOR x6: defer (T-4/T-5/T-6 ship sequence is hot path).
 
-### USER carry — Cloudflare bundle 8th cycle
-- 1894a-cloudflare-tunnel-routing (In Progress, USER 5th-cycle awaits dashboard)
-- 1862c-E-dashboard (Todo, USER awaits dashboard)
-- NON-DISPATCHABLE in cron. Carry to c60.
+### BATCH(1)
+1. **SPIKE_006-c61-T4** (FIX-S, HIGH). Owner: dev-mcp-server. Zone: `apps/mcp-server/src/interface/mcp/tools/alerts/`. Files: `alertAccuracy.ts` + `__tests__/183-alert-accuracy.test.ts`. Baseline: 8804 pass, 1 fail (sustained). AC: insufficientSample boolean on AccuracyReport; gate `scoreable=hits+misses<20`; prepend Vietnamese warning "Chua du du lieu danh gia (N=X, can ≥20)"; skip % line; dailyDashboardJob non-breaking (Pick type doesn't include new field). Handoff: `docs/handoffs/TASK_SPIKE_006_c61_T4.md` (already authored c61). Spec frozen — no BA respin.
 
-### Decision: F2a + F4 are now ESSENTIAL
-8th recurrence with same PID = mechanism unchanged, PREFLIGHT symptomatic cure not sustainable. Architect's recommendation (F2 primary, F4 secondary) is the right path. Execute both this cycle.
+### Telegram triage
+- TG id=2874 → claim with link "SPIKE_006-c61-T4 ship in c65 batch; insufficientSample guard will suppress 22% display when n<20".
 
-### BATCH selection — 3 entries
+### Cross-pollution + WIP
+- WIP before: 0 (1894a is USER-blocked, doesn't count). After: 1 (dev-mcp-server T-4).
+- Per-agent WIP ≤2: PASS
+- File overlap: NONE (single agent, single zone)
+- Recurring-bug rule: SPIKE_006 is architect-approved RCA chain (T-1..T-6 atomic ship order); NOT symptom retry. Rule satisfied.
+- Zone enforcement: `apps/mcp-server/` → dev-mcp-server per zone-detect SKILL. PASS.
 
-1. **c59-T1-F2a-named-volumes** (FIX-HIGH, HIGH). Owner: developer (NOT dev-mcp-server zone-agent — `docker-compose.yml` is root config, cross-service). Migrate `./reports` + `./docs/data` bind-mounts → named volumes in `docker-compose.yml`. Zone: `cross-service/`. Goal: shrink VirtioFS scan surface on project root so Docker Desktop VM stops scanning into `.git/`. Lowest-risk pair (these paths don't need host-side editing in the dev loop; CLI tools like alert-engine + BCTC pipeline reach them via container path remap if needed). Files: `docker-compose.yml` + any container path docs. Baseline: bind-mounts removed for both paths; alert-engine + BCTC tools still resolve paths; 8804 tests pass. Size: S.
-
-2. **c59-T2-F4-retry-wrapper** (FIX-MEDIUM, MEDIUM). Owner: dev-team (touches dev-team flow + `.claude/skills/*`, not docker-compose). Wrap `git commit` + `git add` calls with retry-on-lock helper: 3 retries × 2s on `index.lock` / `HEAD.lock` EEXIST. Update `docs/protocols/head-lock-self-cure.md` to reference the wrapper. Defense-in-depth — survives even if F2a leaves residual VirtioFS scan. Zone: `cross-service/`. Files: dev-team flow + 1-2 skill files + 1 protocol doc. Size: S. Baseline: helper active in flow; no regression in flow tests.
-
-3. **CLEAN-c58-leftovers-c59** (CLEAN, MEDIUM). Owner: agent-father. Bundle c58→c59 boundary drift: (a) 3 staged notebooks (news-scout staged + report-analyzer staged + alert-commander modified) from concurrent crons; (b) modified `docs/agent-memory/modules/tool-usage-stats.json`; (c) untracked `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log` (c59 PREFLIGHT evidence — 8th-cycle log); (d) TASKS.md is already 80L clean — no archive needed this cycle. Zone: `cross-service/`. Size: S.
-
-### Cross-pollution + WIP check
-- c59-T1 (F2a) touches: `docker-compose.yml`, possibly path-remap doc
-- c59-T2 (F4) touches: `.claude/flows/dev-team/main.md` + `.claude/skills/*` + `docs/protocols/head-lock-self-cure.md`
-- CLEAN touches: `docs/agent-memory/{notebooks,sessions,modules}/` only
-- File overlap: NONE. F2a = root config; F4 = dev-team flow/skills; CLEAN = memory dirs.
-- WIP: 0 → +1 (T1 developer) +1 (T2 dev-team) +1 (CLEAN agent-father) = 3. **Per-agent WIP ≤2: PASS** (3 different agents).
-- Same-agent serialization: none required (3 different owners, disjoint zones).
-- Recurring-bug rule: 8-cycle pathology with H4 CONFIRMED + architect brief approved F2/F4. This is NOT another fix attempt on the symptom — it is the architect-approved root-cause fix. Rule satisfied.
-- Zone enforcement: all 3 entries carry explicit `cross-service/`.
-
-### Items deferred to c60+
-- USER Cloudflare bundle (8th cycle ask, carry)
-- c60-T1 F2b — migrate `./docs/agent-memory` after writer-audit (gated on F2a stable + writer-audit complete)
-- F1 USER queue — Docker Desktop file-sharing exclusion (carry indefinitely)
-- TNB-PLANNED-RESTART convention SPRINT-S (defer to c61 per architect)
-- NB-HDR-bundle-22-agents ba spec (TNB drift cluster)
-- 1881a / 1890a / 1888b-k SSOT cluster (9 items)
-- 6 JANITOR DRY items
-- 1862c-F SSE eviction (after 1862c-E-dashboard)
+### Items deferred to c66+
+- T-5 (write-back + flat-band fix) — sequential after T-4
+- T-6 (integration test) — sequential after T-5
+- 1862c-E-dashboard / 1894a Cloudflare (USER-blocked, carry)
+- 1897b / 1897d USER bundle (config admin only, carry indefinitely)
+- 1888b-k SSOT cluster, 1881a/1890a methodology, JANITOR x6
+- T-3 row reconciliation in TASKS.md Todo (cosmetic; T-3 in archive)
 
 ### Hard-constraint compliance
-- WIP ≤2 per-agent: PASS (3 distinct owners)
-- Disjoint zones (§2a): PASS
-- No shared-SSOT writes (§2c): PASS — F2a writes compose, F4 writes flow/skills, CLEAN writes memory
-- No file overlap (§2b): PASS
-- Recurring-bug check: F2/F4 = architect-approved RCA fix, not symptom retry
-- Zone enforcement: all 3 entries carry `cross-service/`
+- WIP ≤2: PASS (1)
+- Disjoint zones: PASS (single)
+- Recurring-bug: PASS (architect chain)
+- Zone tag: PASS (`apps/mcp-server/`)
 
-### Files written this cycle
-- docs/agent-memory/notebooks/po.md (this overwrite)
-- docs/TASKS.md (3 rows inserted by dev-team Step 2 from BATCH)
-
-### Carry-over to c60
-1. USER Cloudflare bundle (9th cycle ask)
-2. c60-T1 F2b — migrate `docs/agent-memory` to named volume (after F2a stable + writer-audit)
-3. F1 USER — Docker Desktop file-sharing exclusion (long-tail user queue)
-4. TNB-PLANNED-RESTART convention SPRINT-S
-5. NB-HDR-bundle-22-agents ba spec
-6. Tool registry SSOT 133/138 drift
-7. 1881a / 1890a / 1888b-k SSOT cluster
-8. 6 JANITOR DRY items
-9. 1862c-F SSE eviction
-10. Container-restart MONITOR (TNB-c43 #1 closed false-alarm; watch for re-emergence)
-
----
-
-## Cycle 58 summary (compacted)
-c58 BATCH(3): ARCH-1896-RE-RCA-c58 (TNB-c43 #1 verdict = monitor / false alarm) + ARCH-BRIEF-UPDATE-H4-c58 (H4 CONFIRMED, F2+F4 picked, brief 118→139L) + CLEAN-c57-leftovers+worktree-orphan-c58 (5 atomic commits, orphan worktree cleared).
-
-## Cycle 57 summary (compacted)
-c57 BREAKTHROUGH: H4 root cause CONFIRMED = Docker Desktop VirtualMachine VirtioFS holds fds on `.git/HEAD.lock`. PID 51247.
-
-## Persisting infra patterns
-- HEAD.lock: **8-cycle recurrence c52→c59**. H4 CONFIRMED 3x (c57, c58, c59 — same PID 51247). F2a+F4 dispatched c59 = end of cycle expected.
-- Container restart: TNB-c43 #1 closed FALSE-ALARM c58 (3 restarts = intentional ops deploys, exit 0/137-SIGKILL not OOM). MONITOR only.
-- Cloudflare dashboard: 8+ USER-BLOCKED cycles (1894a + 1862c-E-dashboard)
-- Wave-2 split-policy residue: ongoing boundary drift, weekly CLEAN bundle pattern stable
+### Carry-forward to c66
+- T-5 next in SPIKE_006 ship order
+- TG id=2874 will re-emit until scored pool >20 (T-5 verdictResolutionJob write-back grows the pool). T-4 alone suppresses display; T-5 fixes the underlying pool problem.
