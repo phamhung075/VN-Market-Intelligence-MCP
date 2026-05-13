@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 01:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 02:39 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -9,6 +9,24 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - VN-Index recovery to 1,920+ (bullish gap open vs Mon close 1,895.5)
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Oil elevated (Brent $105.11, US-Iran)
 - 21 open alerts (VIC×5 MEDIUM/LOW, FPT×3, VRE, GAS, HCM, HSG)
+
+### Cycle (02:32–02:39)
+- Stocks: 31 | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Top movers: GVR +2.07% (0.77σ), VRE -1.41% (0.39σ), DHG -1.23%, KBC -1.05% — all sub-threshold
+- Supply chain stable (BDI 1,400, no disruptions) | Chain findings: 0
+- Context: Foreign selling >800B VND/session (VIC), liquidity declining, 2 brokers cut VN-Index 2026 targets
+
+## Metrics (cycle 2026-05-13 02:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
 
 ## Known patterns / preferences
 
