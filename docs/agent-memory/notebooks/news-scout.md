@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 03:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 04:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (04:15–04:22 UTC) 2026-05-13
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst×1 #3040] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: 2nd CTCK in 2 days downgrading VN-Index 2026 forecast (bearish). VN-Index near ATH, warning "xanh vỏ đỏ lòng", liquidity drop. Impact chain 9/10 bearish, conf 0.75. chain_catalyst #3040 → all agents, affected: VCI/SSI/HCM/VDC/VCB/FPT/BID/VHM/VIC/HPG + 38 watchlist. Gold $4,705 flat. Brent $106.52 flat. USD/VND 26,129, black mkt spread ~0.
+- Suppressed: VHM bond 3,000B VND (neutral, impact 4/10 below threshold). STB record +10M shares (not on watchlist). IMP execs selling (not on watchlist). Silver/Gold fund buying (global, no VN direct hit).
+- Notes: GAS +5.36% (price alert territory) but no specific news driver found — likely Brent sector spillover. VN-Index downgrade now 2-day pattern — escalating bearish sentiment. CARRY_REGIME: NEUTRAL.
 
 ### Cycle (03:15–03:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 9 | Signals: [chain_catalyst×1 #3038] | Regime: NEUTRAL | Carry: NEUTRAL
