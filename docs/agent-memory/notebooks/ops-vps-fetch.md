@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-05-13 04:49 UTC | **Sprint:** bootstrap-inventory
+**Last updated:** 2026-05-13 09:17 UTC | **Sprint:** re-recon hsx-bctc
 
 ---
 
@@ -20,7 +20,7 @@ Zone: ops-zone (VPS / infra)
 | cafef-index | 2026-05-13 | healthy | none |
 | vn-news-rss | 2026-05-13 | healthy (upstream) / MCP push 404 | none |
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
-| hsx-bctc | 2026-05-13 | CRITICAL — no PDFs acquired | page_restructure + resource_limit |
+| hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 
 ---
 
@@ -32,18 +32,25 @@ Zone: ops-zone (VPS / infra)
 | 2026-05-13 | cafef-index | bootstrap | 200 OK, clean JSON. Healthy. |
 | 2026-05-13 | vn-news-rss | bootstrap | All 14 RSS feeds 200 OK. MCP push-news endpoint 404. Signal dropped. |
 | 2026-05-13 | sbv-rates | bootstrap | 200 OK, Akamai CDN, rate advisory 5min. Healthy. |
-| 2026-05-13 | hsx-bctc | bootstrap | BROKEN. HNX AJAX returns homepage. Playwright crashes (pthread_create). Zero Q1/2026 PDFs. Signal dropped (critical). |
+| 2026-05-13 04:49 | hsx-bctc | bootstrap | BROKEN. HNX AJAX returns homepage. Playwright crashes (pthread_create). Zero Q1/2026 PDFs. Signal dropped (critical). |
+| 2026-05-13 09:17 | hsx-bctc | fetch_broken (re-recon) | ROOT CAUSE FOUND. Old params pageIndex/pageSize replaced with p* param set. Endpoint URL unchanged. Q1/2026 PDFs confirmed. Signal dropped (critical). |
 
 ---
 
 ## Lessons Learned
 
-- HNX AJAX endpoint `NextPageTinCPNY_CBTCPH` silently returns homepage HTML instead of error when parameters are wrong or endpoint has moved. Hard to detect without checking response `<title>` or size (expected: 1-5KB fragment; actual: 40KB full page).
-- curl cannot POST to HNX (SSL cert validation fails: `unable to get local issuer certificate`). Must use Python urllib with `ssl.CERT_NONE`.
-- VPS `TasksMax=32` in `vn-bctc-fetch.service` is hitting Playwright thread limits. Chromium spawn fails with `pthread_create: Resource temporarily unavailable`.
-- `bgapidatafeed.vps.com.vn` embeds foreign flow fields (`fBVol`, `fSVolume`, `fRoom`) in every OHLCV response — foreign-flow and price services share the same upstream.
+- HNX AJAX endpoint `NextPageTinCPNY_CBTCPH` silently returns homepage HTML (40KB) when POST params are not recognised. Correct param set: `pNumPage`, `pAction`, `pNhomTin`, `pTieuDeTin`, `pMaChungKhoan`, `pFromDate`, `pToDate`, `pOrderBy`, `pNumRecord`. Old set `pageIndex`/`pageSize` no longer accepted.
+- `pAction=0` = page navigation (browse all). `pAction=1` = filtered search (requires other filter params to be meaningful; empty filters with pAction=1 can return empty results).
+- Date format for HNX filters: `dd/MM/yyyy` with forward slashes. Vietnamese locale.
+- HNX landing page now issues a 302 redirect adding `/vi-vn/` prefix. Referer header must use the new path.
+- No session cookie or CSRF token required for HNX AJAX calls despite a session cookie being set on the landing page.
+- curl cannot POST to HNX (SSL cert chain fails). Python urllib with `ssl.CERT_NONE` works.
+- ArticlesFileAttach endpoint (`/ModuleArticles/ArticlesCPEtfs/ArticlesFileAttach`) accepts `pArticlesID` and returns HTML fragment with direct `owa.hnx.vn/ftp/*.pdf` links.
+- PDF filename encodes: ticker, date, language (Vi/En), document type, and period (Q1_2026 etc.) — can filter by filename pattern without parsing article metadata.
+- MWG (HOSE) returns empty set from HNX endpoint — expected. HNX endpoint only serves HNX/UPCOM listed tickers.
+- `bgapidatafeed.vps.com.vn` embeds foreign flow fields in every OHLCV response — foreign-flow and price services share the same upstream.
 - MCP push failures (prices: 38 failures, news: 404) are infrastructure issues on the MCP side, not upstream source issues.
-- VCB XML endpoint comment says "Only one request every 5 minutes" — advisory only, not enforced technically (Akamai would enforce harder limits at higher frequency).
+- VCB XML endpoint comment says "Only one request every 5 minutes" — advisory only, not enforced technically.
 
 ---
 
@@ -51,4 +58,5 @@ Zone: ops-zone (VPS / infra)
 
 | Signal file | Source | Dropped at | Status |
 |------------|--------|-----------|--------|
-| docs/signals/dev-vps-crawls-2026-05-13T04-49-25Z.json | hsx-bctc + vps-prices + vn-news-rss | 2026-05-13 04:49 UTC | pending dev-vps-crawls |
+| docs/signals/dev-vps-crawls-2026-05-13T04-49-25Z.json | hsx-bctc + vps-prices + vn-news-rss | 2026-05-13 04:49 UTC | pending dev-vps-crawls (superseded for hsx-bctc) |
+| docs/signals/dev-vps-crawls-2026-05-13T09-17-00Z.json | hsx-bctc (re-recon, critical) | 2026-05-13 09:17 UTC | pending dev-vps-crawls |
