@@ -1,6 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 15:03 UTC | **Sprint:** c74-closed
+**Last updated:** 2026-05-13 16:04 UTC | **Sprint:** c76
+
+### Alert Cycle (16:03–16:04 UTC) — 2026-05-13
+- Signals: 2 (urgent_news: FPT id=3085 from news-scout; price_anomaly: GAS id=3088 from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
+- Suppressed: FPT id=3085 (urgent_news conf=0.50 < NEUTRAL threshold 0.60; no price_anomaly override for FPT)
+- Suppressed: GAS id=3088 (price_anomaly — get_alerts(type=price) empty; not confirmed)
+- Macro: Brent $106.80 | Gold $4703.90 | USD/VND 26,315 | DXY 98.48 USD STABLE | US10Y 4.49% NEUTRAL
+- log_agent_work id=765
 
 ### Alert Cycle (15:02–15:03 UTC) — 2026-05-13
 - Signals: 2 (price_anomaly: GAS id=3082, VRE id=3083 — from market-watcher, created 14:40 UTC)
