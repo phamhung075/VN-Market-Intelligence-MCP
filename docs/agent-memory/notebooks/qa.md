@@ -1,6 +1,36 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** 1899a-core news-fetch scaffold merge gate
+**Last updated:** 2026-05-13 | **Session:** 1901a-flaresolverr-adapter merge gate
+
+## Recent session — 2026-05-13 (1901a-flaresolverr-adapter — APPROVED via cherry-pick)
+
+Branch: `task/investing-calendar-flaresolverr-adapter`. 7 commits unique to branch, only 2 in scope.
+
+CRITICAL DEFECT FOUND: merge commit `f77bc3aa` (5464b4c0 + c99df155) dropped all 3 flaresolverr deliverable files from HEAD. `flaresolverr_helper.py`, `flaresolverr-helper.test.ts`, `flaresolverr-bypass.md` all absent from working tree. Branch HEAD was shipping the old `investing_calendar_fetch.py` (curl_cffi-only, returns status=error) and old TS adapter (with `sleepMs` still present). First test run misleadingly showed "10 pass" for flaresolverr tests from Bun disk cache from pre-checkout state — file was gone from tree.
+
+Cherry-picked `5464b4c0` (feat, 5 files) + `42968429` (docker-compose FlareSolverr container) onto main.
+
+Tests: 103 pass / 0 fail / 12 skip (115 total). 10 flaresolverr tests all green. Dev claimed 105 — actual baseline is 103, consistent with prior cycles.
+
+TSC: 22 errors all in test files (`global.fetch.preconnect` Bun Mock<> typing gap, pre-existing). Zero production errors.
+
+DDD PASS: 0 domain/application → infrastructure imports.
+
+Security PASS: `cf_clearance` REDACTED explicitly in CLI smoke path. Cookie values not in `print(json.dumps(result))` output (result dict contains only status/data/fetched_at). No `process.env` in new files.
+
+Docker-compose: adds FlareSolverr container block — companion infra, approved alongside feature.
+
+Foreign commits excluded: `7a12913f`/`2c847d8c` (worldBank, already on main as `9d58a2d1`/`1370b8c1`), `0a335b72` (1899a PM decompose, already on main as `ef21a754`), `c99df155` (ops notebook).
+
+Merge SHAs on main: `5395f966` (feat) + `5ee72b46` (docker) + `49d1128b` (QA artifacts).
+
+Signal moved to processed: `docs/signals/processed/dev-mainserver-crawls-flaresolverr-adapter-2026-05-13T14-09-54Z.json`.
+
+1901a → Done in TASKS.md. Report: `reports/TASK_REPORT_1901a-flaresolverr-adapter.md`.
+
+NOTE: Container at port 5004 predates new Python files — smoke will show calendar=failed/timeout until ops rebuilds macro-indicators image. Expected.
+
+Pattern to remember: Bun test cache can show stale "pass" for deleted test files if test runner is invoked before checkout drops the file. Always verify with `find` / `git ls-tree` when in-scope test count seems too high.
 
 ## Recent session — 2026-05-13 (1899a-core news-fetch scaffold — APPROVED)
 
