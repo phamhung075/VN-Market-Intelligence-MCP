@@ -3,9 +3,9 @@
   "status": "idle",
   "currentSprint": "c77-in-progress",
   "activeTaskId": null,
-  "nextAgent": "pm",
-  "nextPrompt": "Task 1903a APPROVED. Merge SHA 4833b052 on main. 10/10 targeted tests pass, 32/32 precedent tests pass, tsc 0 errors, 7/7 ACs verified. Mark 1903a Done in TASKS.md and unblock downstream.",
-  "updatedAt": "2026-05-13T17:30:00Z",
-  "updatedBy": "qa",
-  "lastCompleted": "1903a QA APPROVED: MCP dispatch regression-shape guard. SHA 4833b052. 10/10 pass, tsc 0 errors, 199L test file, all 7 ACs verified, pre-existing 31 suite failures unchanged."
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-13T18:00:00Z",
+  "updatedBy": "pm-c77",
+  "lastCompleted": "c77 close prep: 1899a-bloomberg SHIPPED (d76fc44b + qa b83df34c, 29/29 tests, DOM/JSON fallback + PerimeterX bypass). 1903a SHIPPED (4833b052 + qa d823fccc, 10/10 tests, regression-shape guard write_alert_verdict + get_macro_snapshot). Pipeline idle. 1899a-routes now unblocked (1899a-bloomberg done); blocked-by 1899a-reuters-fallback only. Follow-up 1899a-bloomberg-test-split queued (Low priority refactor)."
 }
