@@ -253,3 +253,28 @@ Push when ready. PR required; no force-push. Target: main.
 - **Service tests:** 20/20 contract tests pass; 9234/9268 full suite pass (34 pre-existing, unchanged) ✓
 - **Docs updated:** NONE (interface-layer annotation only; brief + test cover the schema)
 - **Graphify:** skipped (no docs/architecture/microservice/ files impacted)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-14
+- **Branch:** task/1881a-impl-mcp HEAD 6dd412bd
+- **Verdict:** APPROVED
+
+### Pipeline Results
+- tsc --noEmit: 0 errors
+- Contract tests (1881a-source-tier.test.ts): 20/20 pass
+- Full suite: 9234 pass / 34 fail (34 pre-existing unchanged)
+- DDD scan: 0 new domain/infra imports in interface/* files
+- Security scan: PASS (no secrets, no process.env, no raw SQL)
+- Zone check: PASS (all changes in interface/mcp/tools/ + __tests__)
+
+### AC Verification
+AC-1 through AC-9: ALL PASS. See reports/TASK_REPORT_1881a-impl-mcp.md.
+
+### Non-blocking Note
+TASK handoff tier table stale for get_sentiment_trend + get_policy_signals (shows tier 2; REQ_1881a.md authoritative = tier 3). Developer correctly followed spec. No action required.
+
+### Merge
+chore(1881a/mcp-server): merge task/1881a-impl-mcp
