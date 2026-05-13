@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "spec-ready",
+  "status": "idle",
   "currentSprint": "c78",
-  "activeTaskId": "1898b",
-  "nextAgent": "dev-mcp-server",
-  "nextPrompt": "Task 1898b spec at docs/REQ_1898b.md. PARTIAL verdict — implement 2 changes: (1) add recordDisabled for Reuters RSS + Trading Economics legacy in sourceHealthTools.ts (2 lines), (2) create 1898b-rss-degradation-regression.test.ts with 8 tests (RSS-REG-01..08). No prod handler changes. Zone: apps/mcp-server/. See AC-01..AC-08 in REQ.",
-  "updatedAt": "2026-05-13T17:40:00Z",
-  "updatedBy": "ba-c78",
-  "lastCompleted": "Cycle 78 1899a-reuters-fallback SHIPPED `50d587cd` — ReutersStealthFallback (Playwright stealth, DataDome). FALLBACK path only. DataDome: captcha-delivery.com + x-dd-b:3. 133L prod. 3 test files ≤200L each. 28/28 new tests pass. 112/112 full suite. 0 new TSC errors. DDD PASS. Branch task/1899a-reuters-fallback (worktree kept). | (Prior c77: bloomberg `d76fc44b` QA APPROVED, 1903a `4833b052` QA APPROVED.)"
+  "activeTaskId": null,
+  "nextAgent": "pm",
+  "nextPrompt": "1899a-reuters-fallback QA APPROVED — merge SHA 3e04dc5f on main. Mark task done, unblock downstream (1899a-routes).",
+  "updatedAt": "2026-05-13T18:10:00Z",
+  "updatedBy": "qa-c78",
+  "lastCompleted": "Cycle 78 1899a-reuters-fallback QA APPROVED `3e04dc5f` — 28/28 targeted tests, 112/112 full suite, 0 TSC errors, DDD PASS, security PASS. All AC verified. No blocking issues."
 }

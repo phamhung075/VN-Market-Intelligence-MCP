@@ -220,3 +220,91 @@ bun test src/__tests__/integration/reuters-stealth-live.test.ts
 **Zone:** `apps/news-fetch/` (single service).
 - All files in src/infrastructure/scrapers/
 - Next task (1899a-routes) will wire fallback invocation (RSS error → trigger this)
+
+---
+
+## [QA] Review — 2026-05-13
+
+**Verdict:** APPROVED
+**Merge SHA:** `3e04dc5f` (feat commit shipped directly on main; branch `task/1899a-reuters-fallback` already deleted)
+**Branch deleted:** yes
+**Cycle:** dev-team c78
+
+### Test Results
+
+| Scope | Pass | Fail |
+|---|---|---|
+| Targeted (3 files) | 28 | 0 |
+| Full suite (`apps/news-fetch/`) | 112 | 0 |
+
+37 expect() calls across targeted tests. 178 expect() calls full suite. No regressions.
+
+### TSC
+
+`bun tsc --noEmit` — **0 errors** (clean output, no output = 0 errors).
+
+Pre-existing errors note (dev flagged `playwright-browser-factory.ts:23` + `1899a-factory.test.ts:89`):
+- `playwright-browser-factory.ts:23` — `import playwright from 'playwright'` is a default import, no type error observed under current tsconfig.
+- `1899a-factory.test.ts:89` — `as unknown as` cast for Bun mock typing; idiomatic workaround, no structural type bug.
+- Both lines are present and tsc returns 0 errors. No new task required — not real type bugs.
+
+### DDD Compliance: PASS
+
+`reuters-stealth.ts` imports (lines 20–22):
+- `../../domain/repositories.js` (ReutersNewsPort)
+- `../../domain/models.js` (NewsSource, Article, FetchResult)
+- `./playwright-browser-factory.js` (PlaywrightBrowserFactory)
+
+Zero imports from `application/` or `interface/`. grep returned nothing.
+
+### Security: PASS
+
+- No `process.env` — none found
+- No hardcoded secrets, API keys, or passwords — none found
+- No SQL — scraper only (no DB interaction)
+
+### AC Verification
+
+| AC | Status | Location |
+|---|---|---|
+| `reuters-stealth.ts` created | PASS | `apps/news-fetch/src/infrastructure/scrapers/reuters-stealth.ts` (133L) |
+| Imports `ReutersNewsPort` from `../../domain/repositories.js` | PASS | line 20 |
+| Imports `NewsSource, Article, FetchResult` from `../../domain/models.js` | PASS | line 21 |
+| Imports `PlaywrightBrowserFactory` from `./playwright-browser-factory.js` | PASS | line 22 |
+| Implements `ReutersNewsPort` | PASS | line 27 `implements ReutersNewsPort` |
+| `fetchHeadlines(maxItems: number = 15): Promise<FetchResult>` | PASS | line 28 |
+| Uses `PlaywrightBrowserFactory.launch()` (not `chromium.launch()` directly) | PASS | line 30 |
+| try/finally block wrapping page ops | PASS | lines 32–119 |
+| `browser.close()` in finally | PASS | line 118 |
+| Pre-nav pause 500–1500 ms | PASS | lines 34–35 |
+| `page.goto` timeout 25000ms | PASS | lines 37–40 (`PAGE_TIMEOUT_MS = 25_000`) |
+| DataDome header check (`x-dd-b: 3`) | PASS | lines 43–53 |
+| DataDome body check (`captcha-delivery.com`) | PASS | lines 56–66 |
+| Both DataDome paths return `error: 'datadome-block', articles: []` | PASS | lines 46–52, 59–65 |
+| Scroll humanization 33% then 50% | PASS | lines 69–74 |
+| DOM selector `article[data-testid="Article"]` | PASS | line 78 |
+| Headline selector `[data-testid="Heading"]` | PASS | line 81 |
+| URL selector `a[href*="/article/"]`, prefixed with `https://www.reuters.com` | PASS | lines 84–86 |
+| Date selector `time[data-testid="DateLineTime"]` datetime attr | PASS | lines 88–89 |
+| `confidence: 'LOW'` (always LOW for FALLBACK) | PASS | line 97 |
+| `method: 'playwright-stealth'` on all return paths | PASS | lines 50, 63, 105, 114 |
+| `source: NewsSource.REUTERS` on all return paths | PASS | lines 47, 60, 101, 111 |
+| `normalizeDate` helper function exported | PASS | line 124 |
+| Catch block for generic errors (network/timeout) | PASS | lines 108–116 |
+| Empty page returns `articles: [], error: null` | PASS | lines 100–107 |
+| maxItems cap applied via `.slice(0, maxItems)` | PASS | line 80 |
+| TypeScript strict (no `any`, `.js` import paths) | PASS | all imports end `.js`, no `any` in prod code |
+
+All AC items: PASS (28/28).
+
+### Issues
+
+**Blocking:** none
+
+**Non-Blocking:** none
+
+### Notes
+
+- Split-policy (200L cap): all 4 files within cap — `reuters-stealth.ts` 133L, 3 test files 197L / 158L / 119L. Developer learned from c77 bloomberg 494L flag. No follow-up split task needed.
+- Pattern identical to 1899a-bloomberg (c77): same factory, same shape, DataDome instead of PerimeterX. FALLBACK designation correct.
+- `normalizeDate` exported (unlike bloomberg-stealth's unexported helper) — enables direct unit testing. Clean design improvement over c77 sibling.
