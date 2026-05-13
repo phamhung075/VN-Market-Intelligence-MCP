@@ -51,6 +51,14 @@ Active board → `TASKS.md`
 
 ---
 
+## Archive — Added 2026-05-13 by PM (c64 close)
+
+| Task ID | Title | Priority | Type | Owner | Completed |
+|---------|-------|----------|------|-------|-----------|
+| SPIKE_006-c61-T3-SHIPPED-c63 | FIX-S **DONE 2026-05-13 c63**: Remove intraday fallback gating in `alertAccuracy.ts` (L206-217). Compute `calendarDaysElapsed = Math.floor((now - triggeredAt) / 86_400_000)` before calling domain scorer in Path 2. Updated `183-alert-accuracy.test.ts` (AC-2: same-calendar-day alert must not score intraday). Commits `20bab938` impl + `e4e8efd4` notebook/handoff. Tests 16/16 pass. Type check clean. T-2 wiring (Path 2) deferred per spec. | HIGH | FIX | developer | 2026-05-13 |
+
+---
+
 ## Archive — Added 2026-04-29 (Sprint 1409)
 
 - **1296–1302:** IMF classifier, fail-loud injection, token reduction, TelegramMessageFactory, textUtils DDD fix, newsNormalizer fix
