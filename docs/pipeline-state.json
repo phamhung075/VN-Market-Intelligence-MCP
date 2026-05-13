@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c77-closed",
+  "currentSprint": "c77-in-progress",
   "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-13T17:00:00Z",
-  "updatedBy": "qa-c77",
-  "lastCompleted": "Cycle 77 QA CLOSE 2026-05-13. 1899a-bloomberg APPROVED. Merge SHA d76fc44b on main. 29/29 targeted tests, 84/84 full suite, 0 TSC errors. DDD PASS, Security PASS, all 10 AC groups verified. Split-policy: 494L test file — decision (b) approve + follow-up task 1899a-bloomberg-test-split next cycle. Handoff TASK_1899a-bloomberg.md updated. All branches deleted. Outstanding: 1903a HIGH (MCP dispatch hardening), 1899a-routes Tier 3 unblocked, 1899a-bloomberg-test-split (new NB follow-up)."
+  "nextAgent": "pm",
+  "nextPrompt": "Task 1903a APPROVED. Merge SHA 4833b052 on main. 10/10 targeted tests pass, 32/32 precedent tests pass, tsc 0 errors, 7/7 ACs verified. Mark 1903a Done in TASKS.md and unblock downstream.",
+  "updatedAt": "2026-05-13T17:30:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "1903a QA APPROVED: MCP dispatch regression-shape guard. SHA 4833b052. 10/10 pass, tsc 0 errors, 199L test file, all 7 ACs verified, pre-existing 31 suite failures unchanged."
 }
