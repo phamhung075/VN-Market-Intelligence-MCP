@@ -313,3 +313,23 @@ PLAYWRIGHT_LIVE=true bun test    # Include integration tests
 - Files in E2E: apps/mcp-server/src/__tests__/e2e/
 
 **Final task in Tier 5:** After this task completes, all 1899a subtasks are done. Service is ready for deployment.
+
+---
+
+## [Developer] Implementation Record
+
+- **Files created:**
+  - `apps/news-fetch/bunfig.toml` — enables src/__tests__/ discovery by bun test
+  - `apps/news-fetch/src/__tests__/unit/reuters-rss.test.ts:130` — 12 tests, ReutersRssScraper + normalizeRfcDate, all mocked
+  - `apps/news-fetch/src/__tests__/unit/use-cases.test.ts:110` — 9 tests, FetchReuters/Bloomberg use cases, port injection
+  - `apps/news-fetch/src/__tests__/unit/bloomberg-stealth.test.ts:130` — 8 tests, BloombergStealth, mock.module playwright
+  - `apps/news-fetch/src/__tests__/integration/reuters-rss-live.test.ts:55` — 3 tests, skipIf CI!='true'
+  - `apps/news-fetch/src/__tests__/integration/bloomberg-stealth-live.test.ts:60` — 3 tests, skipIf PLAYWRIGHT_LIVE!='true'
+  - `apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts:130` — new scheduler job, Bloomberg-first dispatch
+  - `apps/mcp-server/src/__tests__/e2e/newsHeadlinesRefreshJob.e2e.test.ts:130` — 3 tests, mock fetch, order + resilience
+- **Tests written:** 165 pass / 6 skip / 0 fail (news-fetch) | 3 pass / 0 fail (mcp-server E2E)
+- **Git commits:** `7f8bbeae feat(1899a-tests): integration + unit test suite for news-fetch`
+- **tsc status:** 0 new errors (2 pre-existing playwright type errors unchanged)
+- **Full suite:** news-fetch 165/165 GREEN, mcp-server e2e 3/3 GREEN, baseline regressions 0
+- **Docs updated:** NONE (no knowledge files changed — pure test + scheduler job)
+- **Graphify:** skipped (no docs impacted)
