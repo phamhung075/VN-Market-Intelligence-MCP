@@ -33,10 +33,10 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ### Price & Technical Analysis
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_price_history` | OHLCV and price trends for single or multiple tickers | `tickers: string[], days?: number` |
-| `get_patterns` | Detected chart patterns (head-and-shoulders, flags, etc.) | `ticker: string` |
-| `get_technical_indicators` | RSI, MACD, Bollinger Bands, ADX, etc. | `ticker: string` |
-| `get_ticker_intelligence` | Price momentum, volatility, correlation, support/resistance | `ticker: string` |
+| `get_price_history` | OHLCV and price trends for a single ticker | `code: string, days: number` |
+| `get_patterns` | Detected chart patterns (head-and-shoulders, flags, etc.) | `code: string` |
+| `get_technical_indicators` | RSI, MACD, Bollinger Bands, ADX, etc. | `code: string` |
+| `get_ticker_intelligence` | Price momentum, volatility, correlation, support/resistance | `code: string` |
 
 ### Market Rotation & Flows
 | Tool | Purpose | Key Params |
