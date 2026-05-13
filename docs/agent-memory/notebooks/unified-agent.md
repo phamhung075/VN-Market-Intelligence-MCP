@@ -1,8 +1,12 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-13 · **Cycle:** 20:00 UTC (Daily Review)
+**Last updated:** 2026-05-13 · **Cycle:** 22:04 UTC (Daily Review)
 
 ## This session
+
+### Daily Review (22:04 UTC)
+- Mode: DAILY_REVIEW | Freshness: news STALE (17:33 UTC, 4.5h) | Bugs: 2875 (pollNews 0-items), 2876 (HEAD.lock recurring)
+- System: ok | Alerts: 20/29 | News: 10 articles (4 notable) | No lock file present at cycle time
 
 Daily Review 20:00 UTC 13/05. VN market CLOSED. System OK (0 open circuits, uptime 6h52m). 29 alerts in 24h (15 HIGH/CRITICAL, 0 unnotified). Sector themes: real estate broad sell-off (VRE -6.91%, VHM -4.81%), banking mixed (BID +2.51%, ACB/EIB/MBB red), GAS +6.93% oil tailwind. Bugs observed (no claim): 2875 (pollNews transient 0-items 13:15 UTC, sources self-recovered by 20:00), 2876 (HEAD.lock recurring — last cleared 2026-05-12 18:27). News RSS: 2.5h marginally stale (caused by 2875, self-recovered). BCTC: vnstock rate-limiting CTG/PPC — scraping actively in progress. Pillars carry-over: M2✓ COC✓ EPS✓ POL✗.
 
