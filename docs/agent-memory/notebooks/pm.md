@@ -1,16 +1,34 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** c83
+**Last updated:** 2026-05-13 | **Sprint:** c84
 
 ## Current state
 
-- WIP: 0 / 2 (In Progress: none; headroom available)
-- Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
-- Todo: 1900c-health-probe (LOW), 1899a-bloomberg-test-split (S), 1862c-E/F (OPS), 1881a/1888c/d/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3 (Backlog)
-- Done: 9 recent (1903a-stale-resolved-c82 + 1888b-shipped-c82 + 1899a-cron-c81 + 1888e-c81 + 1899a-gateway-c80 + 1899a-tests-c80 + 1899a-routes-c79 + CLEAN-c79 + 1899a-reuters-fallback-c78)
-- **1899a news-fetch scaffold: COMPLETE** (10 tasks shipped, unblocks downstream integration)
-- CLEAN state: No WIP exceeds 2. No blockers detected.
-- **Status:** READY FOR NEXT CYCLE.
+- WIP: 0 / 2 (In Progress: none; headroom available for 1881a-impl-mcp dispatch)
+- Backlog HIGH: 1890a (toolpkg gaps), 1897b-carry (worktree isolation escalation), JANITOR-{011,014,020}, TASK-BCTC-3
+- Todo: **1881a-impl-mcp** (M, HIGH — MCP tools), **1881a-impl-ssot** (S, MEDIUM — doc), 1900c-health-probe (LOW), 1899a-bloomberg-test-split (S), 1862c-E/F (OPS, blocked)
+- Done: 11 recent (1888l-shipped-c84 + 1881a-impl-split-c84 + 1881a-spec-c83 + 1888-CDG-c83 + 1903a-c82 + 1888b-c82 + 1899a-cron-c81 + 1888e-c81 + 1899a-gateway-c80 + 1899a-tests-c80 + 1899a-routes-c79)
+- **CLEAN state:** No WIP exceeds 2. No blockers. Architect brief (1881a) landed c84.
+- **Status:** READY FOR NEXT CYCLE c85 dispatch.
+
+---
+
+## Cycle 84 — 2026-05-13 c84 Post-Cycle Housekeeping: 1888l SHIPPED + 1881a-impl SPLIT
+
+**Input:** Dev-team c84 completion. QA-APPROVED SHIPPED outcomes:
+1. **1888l (SSOT-HIGH CHORE):** agents-architect Error Boundary — (a) error-boundary skill ref added to `.claude/flows/agents-architect/main.md`, (b) fail-loud-protocol.md no-op confirmation, (c) BLOCKED/EXIT block added to `docs/agents/agents-architect/handlers.md`. Commit: docs `859a2ce8`, branch deleted.
+2. **1881a-impl (METHODOLOGY-INFRA IMPL SPLIT):** Architect brief 2026-05-13 landed (BLK-1 resolved via JSON wrapper option a). Split into: (a) **1881a-impl-mcp** (M, HIGH, dev-mcp-server), (b) **1881a-impl-ssot** (S, MEDIUM, developer). Both seeded into Todo with WIP headroom.
+
+**Actions:**
+- Moved 1888l → 1888l-SHIPPED-c84 (Done).
+- Moved 1881a-impl → 1881a-impl-SPLIT-c84 (Done with split note).
+- Seeded 1881a-impl-mcp + 1881a-impl-ssot into Todo (unblocked, parallel-eligible).
+- TASKS.md trimmed: 69L → 71L (under 80L cap). Backlog reduced 8→6 rows.
+- WIP: 0/2 (clean), Blockers: none.
+
+**Carry-over to c85:** 1881a-impl-mcp (M, ready for dispatch), 1881a-impl-ssot (S, ready for dispatch), 1890a (MEDIUM), 1899a-bloomberg-test-split (LOW), 1900c (LOW), JANITOR-{011,014,020}, TASK-BCTC-3, 1862c-{E,F} (blocked: container-rebuild), 1897b-carry (blocked: user-action).
+
+**Status:** READY FOR NEXT CYCLE. c84 housekeeping complete. 1881a bifurcation primes for parallel dev dispatch.
 
 ---
 
