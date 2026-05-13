@@ -30,10 +30,6 @@
 
 ## In Progress
 
-| Task ID | Title | Priority | Type | Owner | Handoff | Started |
-|---------|-------|----------|------|-------|---------|---------|
-| AUTOCURE-C86-MW-DEDUP | CHORE/AUTOCURE (TNB c47 pre-staged): commit + push uncommitted `.claude/flows/market-watcher/cycle.md` Step 4 off-hours duplicate-signal guard. TNB applied the edit directly (3-cycle threshold met c47: GAS/VRE re-emitted on unchanged closing prices at 15:40, 19:41, 21:38 UTC). 1 file, doc/flow change only. Zone: `.claude/` (cross-service). | HIGH | CHORE | developer | — | 2026-05-13 |
-| SPIKE_C86_MCP_REG | SPIKE (TNB c47 rec #4): Investigate MCP gateway session registration. c47 audit session received no MCP handle (`mcp__claude_ai_gateway__*`, `mcp__gateway__*`, `mcp__zenmidi__*` all "No such tool available"). Distinct from c46 "connection refused". Question: is this a cowork-desktop session config gap (deterministic) or a sporadic registration failure (race condition)? Output: findings doc in `docs/spikes/SPIKE_C86_MCP_REG.md` — recommended fix or escalation. Timebox: 120m. Zone: `apps/mcp-server/` + cowork-desktop config. | HIGH | SPIKE | ops | — | 2026-05-13 |
 ---
 
 ## Review
@@ -43,6 +39,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| AUTOCURE-C86-MW-DEDUP | CHORE/AUTOCURE **DONE 2026-05-14 c86**: `.claude/flows/market-watcher/cycle.md` Step 4 off-hours duplicate-signal guard committed + pushed. Merge commit `b5151e1d`. QA APPROVED. Report: `reports/TASK_REPORT_AUTOCURE-C86-MW-DEDUP.md`. | HIGH | CHORE | developer | 2026-05-14 |
+| SPIKE_C86_MCP_REG | SPIKE **DONE 2026-05-14 c86**: MCP gateway session registration investigation complete. Finding: cowork agent .md `MCP:` header is documentation-only, real config in Cowork Desktop. Recommendations: (a) doc-drift fix for 9 stale headers, (b) inspect Cowork Desktop config, (c) Cloudflare tunnel 404 as separate ticket. Output: `docs/spikes/SPIKE_C86_MCP_REG.md` (116L). Merge commit `346bf916`. | HIGH | SPIKE | ops | 2026-05-14 |
 | 1881a-impl-ssot-SHIPPED-c85 | SOURCE_TIER SSOT **DONE 2026-05-14 c85**: Layer 9 doc update `docs/standards/tnb-methodology-layers.md` § source_tier hierarchy explained, enum documented, backwards-compat note (additive field only). Merge commit `6a700f15`. QA APPROVED. | MEDIUM | CHORE | developer | 2026-05-14 |
 | 1881a-impl-mcp-SHIPPED-c85 | SOURCE_TIER RETROFIT **DONE 2026-05-14 c85**: 16 MCP tool handlers + 1 contract test. JSON envelope pattern (source_tier: 1|2|3 as const, first field). 20/20 contract tests pass, 9234/9268 full suite, tsc 0 errors. Merge commit `c2e2fb08`. QA APPROVED. | HIGH | FEATURE | dev-mcp-server | 2026-05-14 |
 | 1888l-SHIPPED-c84 | SSOT-HIGH (agent-father escalation c-maintenance) **DONE 2026-05-13 c84**: agents-architect Error Boundary — (a) error-boundary skill ref added to `.claude/flows/agents-architect/main.md` L7, (b) fail-loud-protocol.md already in always_load (no-op), (c) BLOCKED/EXIT block added to `docs/agents/agents-architect/handlers.md` L70-79. QA APPROVED. Commits: docs `859a2ce8`, nb appended. Branch `task/1888l-agents-architect-error-boundary` deleted. | HIGH | CHORE | agent-father | 2026-05-13 |
