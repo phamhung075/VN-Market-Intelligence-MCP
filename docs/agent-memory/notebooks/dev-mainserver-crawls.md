@@ -1,6 +1,20 @@
 # dev-mainserver-crawls — Notebook
 
-**Last updated:** 2026-05-13T14:09Z | **Sprint:** investing-calendar-flaresolverr-adapter
+**Last updated:** 2026-05-13T16:42Z | **Sprint:** 1899a-bloomberg-scraper
+
+---
+
+## This session (cycle 5 — c77 2026-05-13T16:42Z)
+
+Task: 1899a-bloomberg — BloombergStealth scraper.
+
+**Implemented:**
+- `apps/news-fetch/src/infrastructure/scrapers/bloomberg-stealth.ts` — BloombergStealth class implementing BloombergNewsPort. DOM primary (HIGH) + __NEXT_DATA__ fallback (LOW). PerimeterX detection via px-block. Human simulation (pre-nav pause 500-1500ms, scroll). browser.close() in finally. ~140L.
+- `apps/news-fetch/__tests__/1899a-bloomberg.test.ts` — 29 tests: DOM happy path, maxItems cap, JSON fallback, PerimeterX, browser.close() all paths, error handling, normalizeDate.
+- 84/84 tests pass (full suite). tsc: 2 pre-existing errors (playwright module types in factory.ts + factory.test.ts, not mine). 0 new errors.
+- Branch: task/1899a-bloomberg-scraper. Commit: 44e2f0a5.
+- DDD: PASS — imports only domain/* and ./playwright-browser-factory.
+- RAM: ~400-500MB per scrape (headless). news-fetch container must be provisioned >=2GB (ops flag from cycle 2 remains open).
 
 ---
 
@@ -108,7 +122,7 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 | cloudflare-managed-bypass | `docs/mainserver-crawl-techniques/cloudflare-managed-bypass.md` | (superseded for investing.com) | ~25MB | curl_cffi; blocked by Turnstile v2 — escalated |
 | flaresolverr-bypass | `docs/mainserver-crawl-techniques/flaresolverr-bypass.md` | investing-economic-calendar | ~10MB helper + 96MB container | FlareSolverr v3.4.6; cf_clearance cached TTL 25min |
 | spa-xhr-intercept | `docs/mainserver-crawl-techniques/spa-xhr-intercept.md` | adb-kidb | ~400MB (Phase 1) / ~15MB (Phase 2) | Phase 1 complete; Phase 2 production adapter wired |
-| playwright-stealth | `docs/mainserver-crawl-techniques/playwright-stealth.md` | bloomberg-markets, reuters-asia-news | ~350-500MB | BLOCKED — news-fetch service not yet created |
+| playwright-stealth | `docs/mainserver-crawl-techniques/playwright-stealth.md` | bloomberg-markets, reuters-asia-news | ~350-500MB | bloomberg-stealth.ts WIRED (c77); news-fetch container pending ops |
 | botasaurus-human-sim | `docs/mainserver-crawl-techniques/botasaurus-human-sim.md` | (was imf-datamapper) | ~400-500MB | SUPERSEDED by imf-weo open-api approach |
 
 ---
