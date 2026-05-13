@@ -1,5 +1,54 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** c83 BATCH(2) gate — 1881a spec + 1888-CDG bundle
+
+## Recent session — 2026-05-13 (c83 BATCH(2) — ALL APPROVED)
+
+### Track A — 1881a BA spec (REQ_1881a.md)
+
+Doc-only. No code changed. No tsc/test run required.
+
+Structure checks:
+- TLDR: present. Methodology Context: present. Tool Inventory Table: 16 tools, canonical list. Schema Delta (FR-1..FR-4): present. Functional/Non-Functional Requirements: present. AC-1..AC-8: present. Owner Split: present. Risks: present. Out of Scope: present. PASS.
+- Backward-compat AC: NFR-1 "Zero breaking changes — all existing fields remain at same path/type" + AC-2 includes backward-compat check for each JSON tool. PASS.
+- Multi-source / fallback tool: FR-3 table documents `get_macro_snapshot` and `get_foreign_flow` primary+fallback paths including tier annotation and `source_note` requirement. AC-5 tests fallback path. PASS.
+
+Spot-checks (3 tools):
+- `get_imf_signals` — spec assigns tier 1. imfSignals.ts confirmed: reads from IMF DataMapper API cache; description string references "IMF DataMapper API". Direct official source. Tier 1 CORRECT.
+- `get_investment_clock_phase` — spec assigns tier 2. investmentClockTools.ts confirmed: reads `macro_indicators WHERE country='Vietnam'` — populated by TradingEconomics scraper. Aggregator source. Tier 2 CORRECT.
+- `get_insider_transactions` — spec assigns tier 1. insiderTools.ts confirmed: sscInsider.ts fetches from `congbothongtin.ssc.gov.vn` (official SSC portal). Tier 1 CORRECT.
+
+SBV nuance: SBV portal down → VCB XML proxy → tier 2 conservative assignment. Justified and documented. PASS.
+Foreign flow nuance: VPS proxy intermediary → tier 2 conservative. PASS.
+BLK-1 architect decision required for 4 text-output tools — correctly flagged as blocker, not a spec defect.
+dev-macro-indicators zero scope — correctly documented in Owner Split. PASS.
+
+Verdict: APPROVED.
+
+### Track B — 1888-CDG bundle (5 files)
+
+JSON validation: tool-registry.json PASS, cron-registry.json PASS, project-stats.json PASS.
+
+Value checks:
+- `jq '.toolCount' tool-registry.json` → 125. Expected 125. PASS.
+- `jq '.toolCount' project-stats.json` → 125. Expected 125. PASS.
+- `jq '.cronJobCount' project-stats.json` → 62. Expected 62. PASS.
+- `jq '._definition' cron-registry.json` → non-null string defining schedulerFileCount. Expected non-null. PASS.
+
+po/main.md checks:
+- `grep -n 'docs/standards/task-size-rules.md' po/main.md` → line 26: pointer present. PASS.
+- `grep -c 'Size thresholds:' po/main.md` → 0. Inline rule removed. PASS.
+
+task-size-rules.md structure: FIX/SPRINT-S/M/L table with line/file budgets present. Escalation rules (FIX→S, S→M, M→L) present. Line-budget guidelines present. SPIKE section present. PASS.
+
+Tree-map placement: `docs/standards/` is a canonical node in tree-map.md (16 occurrences). Placement correct. PASS.
+
+Sub-task G deviation: agent edited po/main.md L26 (correct location) not dev-team/main.md L91-96 (PO's stale pointer). Grep evidence reviewed. Correct file was edited. Non-blocking upgrade.
+
+Verdict: APPROVED.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** c82 BATCH(2) gate — 1903a (re-verification) + 1888b SSOT
 
 ## Recent session — 2026-05-13 (c82 BATCH(2) — ALL APPROVED)
