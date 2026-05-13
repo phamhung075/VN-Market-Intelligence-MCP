@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 05:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 06:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -553,3 +553,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 2 price_anomaly signals posted (#3045 GAS, #3046 HVN → alert-commander). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Watch GAS for continuation/reversal (catalyst unclear — check news at 06:00). Monitor HVN through close. Real estate sector (VHM/VIC/VRE) broad weakness worth watching if extends. No chain findings active.
 - **estimated_tokens**: 4500
+
+### Cycle (06:37–06:42)
+- Stocks: 31 watchlist | Priced: 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 3 (GAS 2.56σ, HVN 2.65σ, DPM 2.02σ) | Volume spikes: 2 (GAS ~3.8x, DPM ~8.9x) | Chain confirms: 0
+- Regime: NEUTRAL (confirmed from news-scout payloads: regime=NEUTRAL) | DXY: USD STABLE (USD/VND 26,129, free-bank gap ~0) | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- GAS +6.93% (2.56σ, 30d stddev 2.71%, vol 5.64M ~3.8x avg 1.5M) → signal #3053 → alert-commander. Brent $106.33 tailwind. Evidence bullish 0.633. Sector outlier (+6.9% vs sector avg +1.16%/1d). cpi_pressure_risk=true. Note: continuation of 05:20 signal (#3045); same intraday price snapshot.
+- HVN -2.78% (2.65σ, 30d stddev 1.05%, vol 585.1K) → signal #3054 → alert-commander. Evidence bearish 0.56. Aviation sector -0.75%. 5-session losing streak continuing (22,700→21,000). Oil-cost margin pressure context. Note: continuation of 05:20 signal (#3046).
+- DPM +3.38% (2.02σ, 30d stddev 1.67%, vol 3.81M ~8.9x avg ~430K) → signal #3055 → alert-commander. Chemicals sector ONLY inflow sector today. Oil-linked catalyst (fertilizer/gas feedstock). New signal this cycle.
+- Sector rotation: Chemicals only INFLOW; all others STABLE. Oil&Gas +1.16%, Chemicals +4.95%/5d leading. Real estate -1.47%/5d, Tech -1.45%/5d lagging.
+- Macro: Brent $106.33 (CPI pressure active), Gold $4,717.4, USD/VND 26,129. Energy grid NORMAL (hydro 70%, demand 53%). Supply chain STABLE (BDI=1,400).
+- Agent signals active: news-scout #3051 (FPT +21% YoY earnings, underreaction window), #3052 (GAS CPI chain, Brent $106.33, impact=9)
+- Open chain findings: 0 (last 15 min) | System: OK | Market OPEN
+
+## Metrics (cycle 2026-05-13 06:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 15 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5200 |

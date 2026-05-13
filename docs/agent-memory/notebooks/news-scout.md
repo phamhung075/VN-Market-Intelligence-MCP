@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 05:25 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 06:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (06:15–06:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3050 FPT, chain_catalyst×2 #3051 FPT earnings, #3052 GAS/Brent CPI chain] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT lãi T4/2026 +21% YoY (bullish, impact 9, conf 92%) → urgent_news #3050 + chain_catalyst #3051, FPT trading -0.71% = underreaction. GAS +6.93% intraday + Brent $106.33 (>$100 threshold) → CPI pressure chain_catalyst #3052, cpi_pressure_risk=true, affected: GAS/DPM/POW + banking sector. DPM +3.38%, POW +1.78% corroborating energy sector move. CTCK continuing to cut VN-Index forecast (3rd day pattern) — monitored, not re-signaled (already posted #3040/#3044).
+- Suppressed: VHM bond 3,000B (neutral, impact 5), IMP exec sales (not watchlist), HAG chairman buying (not watchlist), silver/gold global (no VN direct hit), Hà Đô utility sub (neutral).
+- Notes: GAS surge persists (5.36% prior cycle → 6.93% now, escalating). Brent $106 confirmed CPI chain trigger. FPT earnings underreaction may close on next session. CARRY_REGIME: NEUTRAL.
 
 ### Cycle (05:15–05:25 UTC) 2026-05-13
 - Items: 20 | Impacts: 3 | Signals: [urgent_news×1 #3043 FPT, chain_catalyst×1 #3044 securities] | Regime: NEUTRAL | Carry: NEUTRAL
