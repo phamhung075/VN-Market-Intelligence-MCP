@@ -1,6 +1,31 @@
 # dev-mainserver-crawls — Notebook
 
-**Last updated:** 2026-05-13T10:25Z | **Sprint:** external-macro-wiring
+**Last updated:** 2026-05-13T12:20Z | **Sprint:** macro-scrapers-curl-cffi-upgrade
+
+---
+
+## This session (cycle 3)
+
+QA reported 4 scrapers returning no data from container egress. Mission: upgrade to curl_cffi.
+
+**Root causes diagnosed (not what QA expected):**
+- yahoo-finance: NOT a bot-block. Bun fetch works. Issue: 12 sequential fetches × 1-2s jitter = 12-24s > 8s timeout budget.
+- trading-economics: NOT a bot-block (Bun fetch returns HTML). Two bugs: (1) sequential 7-fetch timeout, (2) @graph JSON-LD structure missed by TS regex — always returned null.
+- cnbc: NOT a bot-block. Two bugs: (1) sequential 6-fetch timeout, (2) stale symbols — SP500/DJ30/NASDAQ return code=1 no data; dotted symbols .SPX/.DJI/.IXIC return code=0 with price.
+- investing-calendar: CF Turnstile v2 JS challenge escalation. All curl_cffi variants blocked. Needs FlareSolverr.
+
+**Implemented:**
+- yahoo_finance_fetch.py: curl_cffi chrome136, ThreadPoolExecutor parallel, ~15MB, 11/11 symbols ok
+- trading_economics_fetch.py: curl_cffi chrome136, parallel, @graph JSON-LD unwrapping, 7/7 indicators ok
+- cnbc_markets_fetch.py: curl_cffi chrome136, parallel, dotted symbols, 6/6 ok with price+change
+- investing_calendar_fetch.py: docstring updated with CF Turnstile v2 diagnosis, graceful error
+- domain/defaults.ts: DEFAULT_CNBC_SYMBOLS updated to dotted symbols (.SPX/.DJI/...)
+- 3 TS adapters rewritten to spawn Python subprocess (interface unchanged)
+- Unit tests: 87 pass, 0 fail (spawn mocked, no real network calls)
+
+**Signals:**
+- docs/signals/dev-mainserver-crawls-investing-blocked-2026-05-13T12-15-00Z.json → ops
+- docs/signals/dev-mainserver-crawls-2026-05-13T12-20-00Z.json → qa
 
 ---
 
@@ -31,13 +56,12 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 
 | Source | Microservice | Technique | RAM cost | Status | Last verified |
 |--------|-------------|-----------|---------|--------|--------------|
-| yahoo-finance-fx-indices | apps/macro-indicators/ | plain fetch (v8 API) | ~5MB | deployed | pre-existing |
+| yahoo-finance-fx-indices | apps/macro-indicators/ | curl_cffi-chrome136-subprocess | ~15MB | upgraded | 2026-05-13 live 11/11 ok |
 | world-bank-macro | apps/macro-indicators/ | header-rotation | ~5MB | wired | unit tests pass |
-| yahoo-finance-fx-indices | apps/macro-indicators/ | header-rotation | ~5MB | wired | unit tests pass |
-| cnbc-world-markets | apps/macro-indicators/ | header-rotation | ~5MB | wired | unit tests pass |
-| trading-economics-vn | apps/macro-indicators/ | header-rotation | ~5MB | wired | unit tests pass |
+| cnbc-world-markets | apps/macro-indicators/ | curl_cffi-chrome136-subprocess + symbol fix | ~15MB | upgraded | 2026-05-13 live 6/6 ok |
+| trading-economics-vn | apps/macro-indicators/ | curl_cffi-chrome136-subprocess + @graph fix | ~15MB | upgraded | 2026-05-13 live 7/7 ok |
 | fred-macro | apps/macro-indicators/ | open-api-key | ~5MB | wired-inactive (key missing) | key-absent guard verified |
-| investing-economic-calendar | apps/macro-indicators/ | cloudflare-managed-bypass | ~25MB | wired | unit tests pass |
+| investing-economic-calendar | apps/macro-indicators/ | cloudflare-managed-bypass | ~25MB | BLOCKED (CF Turnstile v2) | 2026-05-13 diagnosis |
 | adb-kidb | apps/macro-indicators/ | spa-xhr-intercept Phase 2 | ~15MB | wired | live confirmed 2026-05-13 |
 | imf-weo | apps/macro-indicators/ | open-api-key | ~5MB | wired | live confirmed 2026-05-13 |
 
@@ -84,9 +108,8 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 ## Carry-over
 
 - **FRED_API_KEY needed (ops):** fred-macro adapter wired and conditional. Activates automatically when key added to .env. Free key: https://fred.stlouisfed.org/docs/api/api_key.html
-- **investing.com country_id=35 (Vietnam) unconfirmed:** First live run should omit country filter to capture all events, then filter by country name `"Vietnam"`. Document confirmed ID in recon.md.
-- **Python deps needed in macro-indicators container:** `pip install curl_cffi beautifulsoup4 lxml` must be in Dockerfile for investing-economic-calendar adapter to function. Flag for ops.
+- **investing.com CF Turnstile v2 BLOCKED:** All curl_cffi variants tested and blocked. Needs FlareSolverr Docker container (see blocked signal). Until provisioned, calendar source remains failed in envelope.
+- **Container rebuild needed:** TS adapter changes (yahoo/cnbc/trading-economics) require macro-indicators container rebuild to take effect. Python helpers are in-place already. Rebuild = ops territory.
 - **ADB KIDB slow API:** Response time ~15-20s per indicator. Batch of 4 indicators takes ~60-80s. Do NOT call fetchVnMacroBatch() in time-sensitive contexts. Consider caching or async background refresh.
 - **news-fetch microservice TBD:** Reuters + Bloomberg scrapers need a news-fetch service. See `docs/architecture-briefs/2026-05-13-news-fetch-service.md`. bloomberg + reuters remain blocked.
-- **TradingEconomics live test regression:** `tradingeconomics.com/vietnam/gdp` changed structure (no JSON-LD Dataset found). Pre-existing issue since previous cycle — not caused by this cycle. Needs re-investigation in next session.
-- **QA signal:** `docs/signals/qa-2026-05-13T10-25-00Z.json` — 2 new scrapers (adb-kidb + imf-weo), 4 new routes, 67 unit tests pass.
+- **CNBC timeout budget:** fetchBatch now uses Python subprocess with 30s timeout. The use-case wraps in 8s withTimeout — this will still timeout at 8s for the TS layer. Ops/dev need to increase the cnbc timeout budget in FetchExternalMacroUseCase to 35s after container rebuild.
