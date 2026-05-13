@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 02:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 03:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -27,6 +27,26 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (03:32–03:40)
+- Stocks: 31 priced (4 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A (tool not in pkg) | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- Top movers: GAS +3.27% (1.16σ, stddev 2.82%), HCM +2.71% (1.02σ), NVL +2.76% (0.68σ), KBC -1.95% (1.32σ) — all sub-threshold
+- Sector rotation: all 16 sectors STABLE (insufficient 5d data) | Oil/Gas 1d +0.55%, Securities +0.63%, Banking -0.18%
+- Supply chain: STABLE (BDI=1,400) | Climate: heat-risk May (IDC,KBC,GEG — KBC watchlisted, not anomalous)
+- Chain findings: 0 (last 15 min) | GAS bullish evidence 0.633 (no signal — sub-threshold)
+- Context: news-scout chain_catalyst active (breadth divergence, VN-Index near ATH, brokers cutting targets, liquidity declining — regime_adj=9 NEUTRAL)
+
+## Metrics (cycle 2026-05-13 03:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
 
 ## Known patterns / preferences
 
