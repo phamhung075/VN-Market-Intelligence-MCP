@@ -1,6 +1,14 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 03:04 UTC | **Sprint:** c60-closed
+**Last updated:** 2026-05-13 04:03 UTC | **Sprint:** c61-closed
+
+### Alert Cycle (04:01–04:03 UTC) — 2026-05-13
+- Signals: 0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: Jun 2026)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Notes: RSS sources 3h stale (CafeF/VnExpress/VnEconomy), foreign-flow fallback exhausted — rate-limit WARNs on vnstock (NVL/BID/PDR/REE/KBC), no action needed
 
 ### Alert Cycle (03:01–03:04 UTC) — 2026-05-13
 - Signals: 1 (id=3036 urgent_news VCB/banking sector — from news-scout, status:read, expires 04:23 UTC)

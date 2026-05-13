@@ -1,8 +1,30 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-13 (scan 20 — 0 new findings; 0 shipped; backlog stable at 9 items)
+## Last updated: 2026-05-13 (scan 21 — 0 new findings; 0 shipped; backlog stable at 9 items)
 
 ## State summary
+
+### Session 21 (2026-05-13 — Full codebase scan + recent commits audit)
+
+**Scope:** Commits HEAD~30..HEAD; 496 production TS files scanned; all 5 DRY checks executed.
+
+**Result:** CLEAN — 0 new violations in all 5 checks.
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Classification maps | 0 findings | All ticker→sector mappings canonical in sectorPeers.ts, stockAliases.ts. CLEAN. |
+| Ticker arrays | 0 new | JANITOR-034 (cascadeExecutor.ts LARGE_CAP_FALLBACK vs priceSourceRouter.ts MAJOR_CAPS) unchanged — already proposed (pending domain design decision). |
+| Magic numbers / crons | 0 new | JANITOR-027 (MS_PER_DAY in 24 files) recurrent — already proposed multi-file refactoring. |
+| Schema duplication | 0 findings | All DDL canonical in schema-*.ts. Verified: alertMuteStore.ts, vnstockStore.ts, schedulerLockStore.ts (all reference schema.ts with comments). |
+| Config drift | 0 findings | All ?? fallback patterns are defensive. No mismatches between code defaults and config values. |
+
+**Features audited:** 1 recent code change (alertOutcomeScorer.ts, Task 1847d-B) — CLEAN. No duplication introduced.
+
+**Backlog unchanged:** 9 items (JANITOR-011, -013, -017, -020, -027 plus 4 meta-config -028 to -032, and -034).
+
+**Quality:** Full — all 5 checks executed; no knowledge load failures.
+
+---
 
 ### Session 20 (2026-05-13 — Full codebase scan + commit 7cf276cf audit)
 
