@@ -1,6 +1,18 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 07:02 UTC | **Sprint:** c65-closed
+**Last updated:** 2026-05-13 08:03 UTC | **Sprint:** c66-closed
+
+### Alert Cycle (08:01–08:03 UTC) — 2026-05-13
+- Signals: 2 (urgent_news: FPT id=3059 — from news-scout; price_anomaly: GAS id=3061 — from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Suppressed: FPT urgent_news id=3059 (monthly profit +21% YoY, conf=0.50 < 0.60 NEUTRAL threshold; monthly profit not formal quarterly earnings release; no price_anomaly override — get_agent_signals no hits; FPT +0.14% at cycle time)
+- Suppressed: GAS price_anomaly id=3061 (σ=2.56 < 4.0, get_alerts(price) empty — not confirmed; GAS +6.93% live, Brent $106.56 supportive)
+- Context: Real estate severe selloff continuing — VHM -4.81%, VRE -6.91% (no agent bus signals; not evaluated). GAS +6.93% oil play on Brent. Gold bearish reversal (Fed tightening fear). HVN -2.08% aviation weak. Market near close 08:59 UTC.
+- WARN: get_agent_signals(market-watcher, GAS) misfired — returned portfolio allocation data (same pattern as prior cycles)
+- log_agent_work id=746
 
 ### Alert Cycle (07:02–07:02 UTC) — 2026-05-13
 - Signals: 4 (urgent_news: FPT id=3050 — from news-scout; price_anomaly: GAS id=3053, HVN id=3054, DPM id=3055 — from market-watcher)
