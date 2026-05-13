@@ -47,3 +47,14 @@ No zone drift. Docs-only changes (TASKS.md, TASKS_ARCHIVE.md). Working tree clea
 - 1888i: remove duplicate max_alerts_per_day from alert-commander.md (LOW priority).
 - F2a Option A (per-file mounts) shipped by developer c60 — HEAD.lock defense now in place.
 - F4 retry wrapper stable (c59 ship); no lock collisions in c60.
+
+---
+
+### Keep (maintenance) 2026-05-13
+- Trigger: manual
+- Agents scanned: 39
+- Auto-fixes: 1 (roster: added 4 unregistered crawl pipeline agents)
+- Escalations: 2 (agents-architect missing Error Boundary; semble-search classification ambiguity)
+- Orphans: 1 ORPHAN_FLOW (dev-team — shared infra, intentional)
+- Notebooks stale (>30d): 0
+- Lesson: 4 new crawl pipeline agents (ops-vps-fetch, ops-mainserver-fetch, dev-vps-crawls, dev-mainserver-crawls) created since last cycle — all have agent files + flow dirs + notebooks but were not in roster. Auto-fixed by inserting new "Crawl Pipeline Agents" section. semble-search is a skill-shim in .claude/agents/ — lacks lifecycle boilerplate by design, not a real compliance gap; needs PO decision on classification.

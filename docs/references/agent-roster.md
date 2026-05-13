@@ -63,6 +63,17 @@ All share tool package: `.claude/tools/package/developer.md`
 | Dev PDF Extractor | `dev-pdf-extractor.md` | `apps/pdf-extractor/` | Sonnet | `docs/architecture/microservice/pdf-extractor/` |
 | Dev RAG Service | `dev-rag-service.md` | `apps/rag-service/` | Sonnet | `docs/architecture/microservice/rag-service/` |
 
+## Crawl Pipeline Agents (Claude Code CLI — source recon + scraper implementation)
+
+Ops agents run HTTP recon and produce structured docs; Dev agents implement scrapers from those docs.
+
+| Agent | File | Role | Zone |
+|-------|------|------|------|
+| Ops VPS Fetch | `ops-vps-fetch.md` | SSH recon on Vinahost VPS for geo-blocked VN sources | `docs/vps-sources/` |
+| Ops Mainserver Fetch | `ops-mainserver-fetch.md` | Direct HTTP recon from main server for international sources | `docs/mainserver-sources/` |
+| Dev VPS Crawls | `dev-vps-crawls.md` | Implement lightweight scrapers on VPS (no headless browser) | `docs/vps-crawl-techniques/` |
+| Dev Mainserver Crawls | `dev-mainserver-crawls.md` | Implement scrapers on main server (headless browser permitted) | `docs/mainserver-crawl-techniques/` |
+
 **Semble tools:** `developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor` all carry `mcp__semble__search` + `mcp__semble__find_related` in their tool lists.
 
 Dev team cron workflow:
