@@ -1,13 +1,34 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** c52
+**Last updated:** 2026-05-13 | **Sprint:** c76
 
 ## Current state
 
-- WIP: 1 / 2 (In Progress: 1894a awaits user dashboard action)
+- WIP: 1 / 2 (In Progress: 1898a dev-mcp-server regression-shape guard)
 - Backlog HIGH: 1895a worktree-merge-protocol (incident-driven, Phase 5 architect design)
-- Todo: 1862c-D/E/F/G (cowork MCP RCA chain), 1881a source-tier retrofit (ba spec, HIGH, 4+ cycles deferred), 1890a financial-analyst tool-pkg (ba spec, MEDIUM, 8+ cycles deferred)
-- CLEAN sweep BLOCKER: 6 worktrees all pid-locked, no go
+- Todo: 1899a-{factory,boeing,reuters-fallback,routes,gateway,cron,tests} (Tier 2-5 news-fetch, 7 remaining), 1900a (OPS gateway health), 1901a/1901b (OPS/FIX), 1898b (FIX-HIGH RSS), 1862c-D/E/F/G (cowork chain), 1881a/1883a (ba spec deferred), 1890a (ba toolpkg deferred)
+- Done (c76): 1899a-app SHIPPED 98703242, 1899a-domain/factory/reuters-rss/routes all prior cycles
+
+---
+
+## Cycle 76 — 2026-05-13 PM Sync: 1899a-app SHIPPED + 1898a IN PROGRESS
+
+**Input:** dev-team merge-gate Step 3 completion. 1899a-app final commit 98703242 (use-cases.ts delivered). 1898a spec landed commit 99bf48e6 (docs/REQ_1898a.md, regression-shape tests only).
+
+**Actions:**
+
+- **1899a-app → Done (SHIPPED c76):** Moved from Todo → Done section. Annotation: clean-extract worktree commit 16064b37 (original had CLAUDE.md + notebook-write hook contamination; main extracted 34L use-cases.ts only). FetchReutersHeadlinesUseCase + FetchBloombergHeadlinesUseCase both implement domain ports. 55/55 tests pass, tsc 0 errors, DDD PASS (imports only ../domain/*). Commit SHA 98703242. Unblocks 1899a-routes (Tier 3) next cycle.
+- **1898a → In Progress (REGRESSION-SHAPE GUARD):** Moved from Todo → In Progress. Owner: dev-mcp-server. Spec doc: docs/REQ_1898a.md (landed commit 99bf48e6). Nature: bug self-healed during gateway-restore; shape tests only (2 test files, ~30L) to prevent silent reintroduction of `get_market_snapshot` electricity-data routing error (TNB c45 symptom). Next: QA regression-shape gate, then merge.
+- **WIP status:** 1/2 (1898a In Progress). Headroom: 1 In Progress slot available for next task.
+- **TASKS.md line count:** 79 lines (post-edit). Well under 80L cap invariant.
+- **pipeline-state.json:** status=in_progress, currentSprint=c76, activeTaskId=1898a, nextAgent=qa, nextPrompt=regression-shape gate template, updatedBy=pm-c76.
+- **PM notebook:** Current state updated (WIP 1/2, 1898a live, Tier 3 unblocked), c76 session appended.
+
+**Archive decision:** None needed this cycle (oldest Done row 1900a-gateway-restored from c73, 3 days old; auto-archive threshold 7+ days).
+
+**Status:** READY FOR QA HANDOFF. All c76 task state synced. Pipeline continues.
+
+---
 
 ## Last session summary
 

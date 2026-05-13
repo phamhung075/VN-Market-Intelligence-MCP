@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "c75-closed",
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-13T15:50:00Z",
-  "updatedBy": "dev-team",
-  "lastCompleted": "Cycle 75 FULL CLOSE 2026-05-13. BATCH(5) shipped end-to-end: (1) UNBLOCK pm-c75-commit-bundle = `6cdbfd4b` (10 TASK_1899a-*.md handoffs + 2 arch briefs). (2) CLEAN af-c75-new-agents-commit = `18c540e7` (4 new agents dev-{vps,mainserver}-crawls + ops-{vps,mainserver}-fetch + flows + docs/agents dirs, 12 files, retry=0). (3) FIX 1899a-domain merged `d7302f75` (cherry-pick of b71ba215, 16/16 unit tests, QA artifacts `b6d303ed`). (4) FIX 1899a-factory merged `b2b84977` (cc3c995e PlaywrightBrowserFactory + stealth, 10/10 tests, QA `52fa67b8`). (5) FIX 1899a-reuters-rss merged `ade4a0a8` (36eace95 ReutersRssScraper plain fetch+DOMParser, 26 tests, QA `f16bfcf8`). Full suite **55/55 green** across 4 files; tsc --noEmit 0 errors; DDD-clean (0 cross-layer imports in apps/news-fetch/src/domain/). All 3 fix branches deleted; only main remains. **PREFLIGHT lock-cure #28** at c75 start (HEAD.lock age=1196s removed). **WIP peak 3** during parallel FIX dispatch (domain || factory; reuters-rss after dep clear), justified by disjoint DDD layers (domain / factory-infra / reuters-infra-adapter). User correction mid-cycle: 'why stop?' → resumed Step 2 UNBLOCK matrix EXIT to continue BATCH tail (ship-completion, not slices). PO declined to escalate TNB c46 container-restart finding (correlates with FRED-parallel ops rebuild 13:01–13:13 UTC, classified false-alarm-h4-batch). PO side-edits (TASKS.md 79L, tnb-audit-latest.md ACK, po notebook) still uncommitted — roll into c76 housekeeping. Outstanding: news-scout report id=2875 (analysis-agent pollNews 0-items VPS/network outage) for c76 triage — likely now superseded by news-fetch chain landing. Telegram WORK notified at 15:50. **HEAD.lock lifetime**: 28/28 cures (100%) — c75 lock-free post-cure."
+  "status": "in_progress",
+  "currentSprint": "c76",
+  "activeTaskId": "1898a",
+  "nextAgent": "qa",
+  "nextPrompt": "Merge gate for task/1898a-regression-shape-guard — verify only 2 test files in commit, run baseline, gate APPROVE/CHANGES_REQUESTED",
+  "updatedAt": "2026-05-13T16:08:00Z",
+  "updatedBy": "pm-c76",
+  "lastCompleted": "Cycle 76 task-state update: 1899a-app SHIPPED commit 98703242 (34L use-cases.ts, DDD PASS, 55/55 tests), moved Todo → Done. 1898a regression-shape spec landed commit 99bf48e6 (docs/REQ_1898a.md, 2 test files, ~30L), moved Todo → In Progress owner dev-mcp-server. WIP = 1/2. Unblocks 1899a-routes (Tier 3) next cycle after 1898a QA gate."
 }
