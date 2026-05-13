@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-12 23:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 00:39 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -417,3 +417,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (00:39–00:40 UTC)
+- Stocks: 31 watchlist | Priced (EOD close 2026-05-12 08:17 UTC): 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING (USD/VND 26,129) | US10Y: RISK-OFF (Gold $4,732.4) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours, 4h cycle, 00:39 UTC 2026-05-13). New trading day opens 02:00 UTC.
+- Active agent signals: STB leadership change bullish catalyst (news-scout #3027, impact=7, exp 02:21 UTC); VN-Index "xanh vỏ đỏ lòng" warning near ATH, FII net sell 800B VND (news-scout #3028, impact=9, exp 02:21 UTC). Both expire before market open — watch for refresh.
+- Macro: Brent $107.3 (elevated, SBV tightening risk), Gold $4,732.4 (risk-off), USD/VND 26,129. System: OK, 0 alerts pending.
+- Pre-session context: VN-Index near historical high ~1,920; broker downgrades active; TIGHTENING regime → heightened sensitivity at open (sigma_threshold=1.5σ, downside_bias=true).
+- Open chain findings: N/A (market closed) | Open alerts: 0 (per bootstrap)
+
+## Metrics (cycle 2026-05-13 00:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 1 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 1800 |
