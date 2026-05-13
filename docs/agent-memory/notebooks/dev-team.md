@@ -1,44 +1,44 @@
 # dev-team notebook
 
-## Current state (c81 close — 2026-05-13T19:55Z)
-- Pipeline: idle. Main HEAD `6b19b44f` (pm c81 notebook).
+## Current state (c82 close — 2026-05-13T20:55Z)
+- Pipeline: idle. Main HEAD `7ff3bd5b` (pm c82 notebook).
 - WIP: 0/2. Branches: main only. Worktrees: main only.
-- HEAD.lock cures lifetime: **37/37** (1 fired in c81: cure #37 during QA gate, auto-cleared by QA).
-- Sprint 1899a (news-fetch service): **COMPLETE** — 10 tasks shipped c76→c81.
+- HEAD.lock cures lifetime: **39/39** (2 fired in c82: #38 + #39, both during merge-gate, both auto-cured after >60s age verification).
 
-## c81 cycle log
+## c82 cycle log
 - PREFLIGHT: clean (no HEAD.lock at entry). worktree prune empty. signals/ empty.
-- PO triage: BATCH(3) — 1899a-cron (SPRINT-S/XS, apps/mcp-server/) + 1888e (FIX/XS, doc) + CLEAN-c81 (CLEAN/XS, cross-service). Stale Todo row 1899a-gateway flagged, 2 merged worktree-agent-* branches flagged.
+- PO triage: BATCH(2) — 1903a (HIGH FIX, M, apps/mcp-server/, 2-cycle TNB evidence) + 1888b (HIGH SSOT, XS, .claude/AGENT_MODELS_README.md).
 - Tier execution (parallel via isolation:worktree):
-  - Track A (dev-mcp-server): isolation engaged correctly (`.claude/worktrees/agent-aea30e4a8e1461810`). Branch `task/1899a-cron-scheduler`. Commits `40514118` (feat) + `572cb877` (notebook). 4 files / 21 insertions. Files: scheduler/news-analysis/index.ts (new barrel), scheduler/cronConfig.ts (CRONS entry), scheduler/startScheduler.ts (import + jobRunRepo.wrapRun registration), mcp.config.json (newsHeadlinesRefresh section). TSC 0 errors. **Worktree base validation passed** — agent confirmed HEAD = main before coding (c80 lesson applied).
-  - Track B (developer): isolation engaged (`.claude/worktrees/agent-aee580fe6c94df729`). Branch `task/1888e-agent-roster-count`. Commits `80fbabf1` (fix) + `e4efe111` (notebook). 1 file / 2 insertions, 2 deletions. agent-roster.md L120 "8 agents"→"9 agents", L132 prose→SSOT pointer `project-stats.json#analysisAgentCount`. Verified analysisAgentCount=9 already exists in stats file (reconciled 2026-05-12).
-  - Track C (code-janitor): worked directly in main worktree (no isolation needed for housekeeping). Commits `19e29700` (clean) + `2cfd307b` (notebook). Removed stale TASKS.md Todo row + deleted both merged worktree-agent-* branches (verified `--merged main` precondition before `git branch -d`).
-- Merge gate:
-  - Cherry-pick A: `89ad6c4a` (feat) + `50c74418` (notebook) onto main. Tree-verify exit 0, c2-alert OK.
-  - Cherry-pick B: `a7bb2313` (fix) + `763fe826` (notebook) onto main. Tree-verify exit 0, c2-alert OK.
-  - CLEAN-c81 already on main (track C worked in main worktree).
-  - Worktrees A + B locked (per spawn) — unlocked + force-removed cleanly. All task branches deleted.
-- HEAD.lock cure #37 mid-QA-gate: QA found stale lock from background git process during run, removed before notebook commit. No content risk; lifetime counter advanced.
-- QA gate (BATCH(3)):
-  - 1899a-cron: APPROVED. tsc 0 errors. bun test exit 0 (9331 pass, 33-35 pre-existing flaky fail — same set as prior cycles). E2E 3/3. DDD PASS (only infra logger import). Pattern parity with taAlertScan/macroRefresh confirmed. Security PASS (Bun.env, no process.env, no secrets).
-  - 1888e: APPROVED. Contradiction gone. SSOT pointer present. Value 9 verified.
-  - CLEAN-c81: APPROVED. Stale row gone. Branches deleted.
-- pm c81 update: TASKS.md `f60fe926` → 70L (well under 80L cap). Done rows: `1899a-cron-SHIPPED-c81`, `1888e-SHIPPED-c81`. CLEAN-c81 implicit in commit. project-stats.json totalTasksDone +3 (gitignored).
+  - Track A (dev-mcp-server): worktree `agent-a656e72ae289f2091`. **Re-verification found BOTH sub-bugs STALE.** Bug A (write_alert_verdict) returns correct `{success, id, ticker, verdict}` shape (alertVerdictTools.ts:64,87). Bug B (get_macro_snapshot) emits correct regime snapshot (macroTools.ts). Root cause of TNB evidence: stale `.js` artifacts in container, cleared on c73 restart. Regression tests landed at c77 (`4833b052`). No production code change needed. Notebook-only commit `be25b299`.
+  - Track B (developer): worktree `agent-aa1716eee14b98f65`. Branch `task/1888b-agent-models-ssot` (later resolved as worktree-auto branch). Commits `f381bc12` (fix) + `a68e8c79` (notebook). 4 hardcoded count sites replaced with SSOT pointers (`#devAgentCount` + `#microserviceAgentCount`). Verified values exist in project-stats.json (devAgentCount=17, microserviceAgentCount=9).
+- Merge gate (MESSY — significant cleanup needed):
+  - 2 background market-watcher commits landed mid-gate (`2120aec3` notebook + `89bf0da0` self-heal), advancing main HEAD twice.
+  - HEAD.lock cure #38: age=88s, auto-cured.
+  - 18 stale test file deletions in main worktree (unstaged) — restored via `git restore`. Cause: unknown rogue agent or interrupted operation. Files exist in HEAD `2120aec3` and were correctly restored.
+  - Cherry-pick A `be25b299` initially failed (uncommitted state). After clean restore, re-attempted: succeeded as `4221b371`, then was rewound by accidental `--abort` during B prep. Re-cherry-picked as `d5251193`.
+  - HEAD.lock cure #39: triggered post-A cherry-pick, age=78s, auto-cured.
+  - Cherry-pick B succeeded: `49f5d1eb` (fix) + `ff618e1d` (notebook).
+  - Worktrees unlocked + force-removed. All task + worktree-agent-* branches deleted.
+- QA gate:
+  - 1903a: APPROVED (stale-resolved). Regression tests `1903a-dispatch-regression.test.ts` 10/10 pass. No "Message sent to WORK channel" in alert path. tsc 0 errors.
+  - 1888b: APPROVED. No hardcoded counts remain. SSOT pointers present + values verified.
+- pm c82 update: TASKS.md `5b725af0` → 70L. Done rows: `1903a-SHIPPED-c82` (stale-resolved), `1888b-SHIPPED-c82`. project-stats.json totalTasksDone +2.
 
 ## Lessons / patterns
-- **Worktree isolation engaged correctly this cycle** (both A + B). c80 single-occurrence isolation failure (gateway agent landed on main path) did NOT recur. Investigation candidate from c80 closed for now; revisit only if recurs. Working hypothesis: race condition during simultaneous isolation:worktree spawns may have caused the c80 anomaly — c81's lower concurrency (2 isolated + 1 in-main) avoided it.
-- **Worktree base validation works**: both isolated agents confirmed `git rev-parse HEAD == git rev-parse main` before coding (per c80 lesson). No stale-base self-rebase needed this cycle. Pattern is durable; keep in spawn prompts.
-- **In-main housekeeping pattern**: CLEAN/CHORE tasks that only touch docs + git branch operations (no code) can skip isolation:worktree. Code-janitor working directly in main worktree saved overhead and avoided cherry-pick step. Acceptable when (1) main has no uncommitted changes, (2) task touches only doc/config files, (3) no risk of conflict with concurrent agents.
-- **HEAD.lock cure #37 during QA gate**: 4th in 5 cycles (#34, #35, #36, #37). Pattern is established. Future: just-noting, no escalation. Skill enhancement still candidate (auto-cure with Spotlight/git-bg-process detection inline).
-- **Sprint 1899a closure marker**: news-fetch service from scratch in 10 atomic tasks (core, domain, app, factory, bloomberg, reuters-rss, reuters-fallback, routes, gateway, tests, cron) over 6 cycles. Process notes: granular XS/S sizing + handoff-per-task + clear AC enabled high parallelism. No mid-sprint redesign needed. Worth referencing as exemplar for next service scaffold.
+- **Stale-bug re-verification is essential**: 1903a TNB evidence was 2 cycles old. Re-running grep + tests BEFORE coding revealed both bugs already self-healed by c73 restart + c77 regression tests. Saved a wasted ba→architect→developer chain. Pattern: for HIGH FIX with >1-cycle-old evidence, FIRST step is always re-verification, not fix planning. If agent finds stale, close as "stale-resolved" with the verifying regression tests as receipt.
+- **Background commits can advance main during gate**: market-watcher cron + self-heal landed 2 commits mid-merge-gate (`2120aec3`, `89bf0da0`). Cherry-picks still worked because they're SHA-anchored, not HEAD-relative. Pattern is safe but requires re-reading HEAD before final close commit.
+- **Unstaged test file deletions in main worktree**: 18 monorepo test files deleted (unstaged) in working tree but still in HEAD. Cause unknown — possibly an aborted janitor or rogue process. Recovery: `git restore <paths>` brings them back. Add to investigation backlog: identify what's deleting these and prevent it.
+- **HEAD.lock pattern continues** (#38, #39 in c82 alone, 5 cures in 6 cycles). Both auto-cured after age>60s with no live git pid. Pattern is durable. Still no auto-cure-without-escalation in skill — c83 candidate for code-janitor: detect com.apple/macOS-VM Spotlight-pattern locks and auto-handle silently.
+- **`git cherry-pick --abort` rewinds HEAD silently**: if you abort while another cherry-pick is in flight (e.g., due to second cherry-pick blocking), it can undo a prior successful cherry-pick. Pattern: always check `git log --oneline -2` after abort to confirm what landed; re-apply if needed.
+- **Worktree branch naming inconsistency**: dev-mcp-server (Track A) created `task/1903a-mcp-dispatch-collision` AND that branch contained the notebook commit; developer (Track B) reported the same convention but the actual branch in worktree list was `worktree-agent-aa1716eee14b98f65`. Both worked because cherry-pick is SHA-based, not branch-name-based. But the naming inconsistency is worth standardizing in c83.
 
-## Carry-over to c82
-- **1903a** (HIGH FIX, MCP tool dispatch/schema collision in apps/mcp-server/) — TNB c46 #4+#5 evidence. Re-verify post-gateway-restore.
-- **1881a** (HIGH source_tier retrofit) — ~15 macro/news tools, ba spec needed.
-- **1888b/c/d/g** (HIGH SSOT) — doc-only XS series, good c82 batch candidates.
-- **1899a-bloomberg-test-split** (LOW) — split 494L test file.
+## Carry-over to c83
+- **1881a** (HIGH METHODOLOGY) — source_tier retrofit ~15 tools.
+- **1888c/d/g** (HIGH/MEDIUM SSOT) — doc-only XS batch.
+- **1899a-bloomberg-test-split** (LOW).
 - **1900c-health-probe-refine** (LOW OPS).
-- **1862c-E-dashboard** (USER-action: Cloudflare dashboard ingress).
-- **1897b-carry** (URGENT-F1 USER-action: Docker .git/ exclude).
+- **1862c-E-dashboard** (USER-action).
+- **1897b-carry** (URGENT-F1 USER-action).
 - **1862c-F** (MEDIUM FIX, blocked on container-rebuild).
-- **Closed**: c80 worktree-isolation investigation candidate. Did NOT recur c81. Keep eyes on it but no escalation.
+- **Investigation candidate**: who/what is deleting test files in main worktree? If recurs c83, escalate.
+- **Skill enhancement candidate**: auto-cure HEAD.lock without escalation for Spotlight/com.apple/macOS-VM PID patterns + age>60s. 5 cures in 6 cycles justifies durable handling.

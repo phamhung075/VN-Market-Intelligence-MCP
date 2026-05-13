@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c82",
+  "currentSprint": "c83",
   "activeTaskId": null,
   "nextAgent": "po",
-  "nextPrompt": "c81 closed. 1899a-cron + 1888e + CLEAN-c81 shipped. News-fetch sprint 1899a COMPLETE (10 tasks c76→c81). c82 ready for next priorities: 1903a (HIGH FIX MCP dispatch), 1881a (HIGH source_tier retrofit), 1888b/c/d (HIGH SSOT doc), 1862c-E-dashboard (USER-action), 1897b-carry (USER-action F1 Docker .git/ exclude).",
-  "updatedAt": "2026-05-13T19:55:00Z",
-  "updatedBy": "dev-team-c81",
-  "lastCompleted": "Cycle 81: 1899a-cron shipped `89ad6c4a`/`50c74418`, 1888e shipped `a7bb2313`/`763fe826`, CLEAN-c81 shipped `19e29700`/`2cfd307b`. QA `cfe55c20`. pm `f60fe926`/`6b19b44f`. HEAD.lock cure #37 (QA gate, auto-cleared)."
+  "nextPrompt": "c82 closed. 1903a stale-resolved (c77 regression tests verify both sub-bugs fixed). 1888b SSOT shipped. c83 candidates: 1881a (HIGH source_tier retrofit), 1888c/d/g (SSOT doc batch), 1899a-bloomberg-test-split (LOW), 1900c-health-probe-refine (LOW OPS), 1862c-F (MEDIUM FIX blocked on container-rebuild).",
+  "updatedAt": "2026-05-13T20:55:00Z",
+  "updatedBy": "dev-team-c82",
+  "lastCompleted": "Cycle 82: 1903a stale-resolved (notebook only `d5251193`), 1888b shipped `49f5d1eb`/`ff618e1d`. QA `0c8a17e8`. pm `5b725af0`/`7ff3bd5b`. HEAD.lock cures #38+#39 (mid-merge-gate, both auto-cured after >60s age verification)."
 }
