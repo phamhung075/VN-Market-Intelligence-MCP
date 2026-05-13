@@ -219,8 +219,37 @@ Push when ready. PR required; no force-push. Target: main.
 
 ## Success Criteria (QA Review)
 
-- [ ] 16 tools return `source_tier: T as const` (first field, compile-time literal).
-- [ ] 1881a-source-tier.test.ts passes all AC assertions.
-- [ ] `bun test` green (no regressions).
-- [ ] `tsc --noEmit` 0 errors.
-- [ ] Commit message follows convention (type/scope/Sprint/Task/AC/trailers).
+- [x] 16 tools return `source_tier: T as const` (first field, compile-time literal).
+- [x] 1881a-source-tier.test.ts passes all AC assertions.
+- [x] `bun test` green (no regressions).
+- [x] `tsc --noEmit` 0 errors.
+- [x] Commit message follows convention (type/scope/Sprint/Task/AC/trailers).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/interface/mcp/tools/
+- **Files modified:**
+  - `macro/carryTools.ts` — get_carry_trade_signal tier 3, get_macro_calendar tier 3
+  - `macro/macroTools.ts` — get_macro_snapshot tier 2 text-wrap
+  - `macro/imfSignals.ts` — get_imf_signals tier 1 + per-record
+  - `macro/policyTools.ts` — get_policy_signals tier 3 text-wrap
+  - `macro/dinhGiaTools.ts` — get_yield_spread_signal tier 3
+  - `macro/getFedLiquiditySpreadTool.ts` — get_fed_liquidity_spread tier 1
+  - `macro/investmentClockTools.ts` — get_investment_clock_phase tier 2
+  - `news-analysis/sentimentTrendTools.ts` — get_sentiment_trend tier 3 text-wrap
+  - `news-analysis/analysis.ts` — fetch_and_analyze tier 2
+  - `market-data/foreignFlowTools.ts` — get_foreign_flow tier 2 + source_note fallback
+  - `market-data/marketTools.ts` — get_market_snapshot tier 2 text-wrap
+  - `market-data/marketContextTools.ts` — get_market_context tier 2
+  - `market-data/insiderTools.ts` — get_insider_transactions tier 1
+  - `market-data/technicalIndicatorTools.ts` — get_technical_indicators tier 3
+  - `market-data/tickerIntelligenceTools.ts` — get_ticker_intelligence tier 2
+- **Tests written:** `apps/mcp-server/src/__tests__/1881a-source-tier.test.ts` — 20 assertions, GREEN
+- **Git commits:** `6dd412bd feat(mcp/source-tier): 1881a retrofit 16 tools + contract tests`
+- **Type check:** clean ✓ (tsc --noEmit 0 errors)
+- **Service tests:** 20/20 contract tests pass; 9234/9268 full suite pass (34 pre-existing, unchanged) ✓
+- **Docs updated:** NONE (interface-layer annotation only; brief + test cover the schema)
+- **Graphify:** skipped (no docs/architecture/microservice/ files impacted)

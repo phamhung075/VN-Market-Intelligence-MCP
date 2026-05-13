@@ -20,7 +20,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1881a-impl-mcp | source_tier retrofit — 16 tool handlers + test file. Architect brief 2026-05-13 landed (option a: JSON wrapper). Zone: apps/mcp-server/src/interface/mcp/tools/. Tools: 12 JSON-output + 4 text-output (macro/news). Add `source_tier: 1\|2\|3` as first field per brief § Per-tool Type Interfaces. Contract tests: 1881a-source-tier.test.ts (AC-2/3/4/5/7/8 patterns). AC: tools updated, integration + contract tests pass, no domain/infra imports. | HIGH | FEATURE | dev-mcp-server | TASK_1881a-impl-mcp.md | — |
 | 1881a-impl-ssot | source_tier — methodology Layer 9 doc update. Sync `docs/standards/tnb-methodology-layers.md` § Layer 9 with brief's Source hierarchy table. One-file doc chore. Parallel-eligible with 1881a-impl-mcp. AC: Layer 9 updated, source_tier enum explained, backwards-compat note (additive field only). | MEDIUM | CHORE | developer | — | — |
 | 1900c-health-probe-refine | OPS-LOW (c73 discovery): `flows/ops/docker.md` § Post-Rebuild Health Verification probes ports 5007/5008 for pdf-extractor/rag-service but Python services map internal port differently — c73 probe got 7/9 200 + 2/9 000. Fix: enumerate per-service actual `/health` paths + ports (use `docker inspect <svc> --format '{{.NetworkSettings.Ports}}'`), update curl recipe in rule, OR use `docker inspect --format='{{.State.Health.Status}}'` as authoritative healthy check. | LOW | OPS | ops | — | — |
 | 1899a-bloomberg-test-split | SCAFFOLD-S: Split `1899a-bloomberg.test.ts` (494L) into 4 files ≤200L each by logical group: DOM happy path / JSON fallback / PerimeterX+lifecycle / normalizeDate helper. Non-blocking follow-up from c77 QA non-blocking note. Zone: apps/news-fetch/__tests__/. | LOW | REFACTOR | dev-mainserver-crawls | — | — |
@@ -39,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1881a-impl-mcp | source_tier retrofit — 16 tool handlers + test file. IMPL DONE 2026-05-14. 15 interface files + 1 contract test. 20/20 tests pass, tsc clean. Branch: task/1881a-impl-mcp. Commit: 6dd412bd. AC-1 through AC-9 verified. | HIGH | FEATURE | dev-mcp-server | TASK_1881a-impl-mcp.md |
 
 ---
 ## Done
