@@ -1,5 +1,23 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1903a dispatch regression-shape guard gate (c77)
+
+## Recent session — 2026-05-13 (1903a — APPROVED)
+
+Commit `4833b052` already on main (test-only, no branch merge). Zone: `apps/mcp-server/`. 1 file: `1903a-dispatch-regression.test.ts` (199L — within 200L split-policy cap).
+
+Targeted tests: 10/10 pass (16 expect() calls) — WAV-REG-01..07 + GMS-REG-02..04 all green. 084+089 precedent: 32/32 pass (80 expect() calls). Full suite: 9322 pass / 31 fail / 38 skip — 31 failures pre-existing (same set as prior cycles: tasks 178, 230, 1031, 1343a, 1352a, 262, signal-T5, etc.). Bun C++ crash at end is pre-existing infra issue (same crash URL). TSC: 0 errors.
+
+DDD: N/A (Smart-Skip — test-only). Security: PASS — no process.env (Bun.env used correctly), no secrets, no SQL, all HTTP mocked via makeFakeStore() + _testCommodityClient/_testSbvClient fixture injection.
+
+No-prod-code-change confirmed: `git show --stat 4833b052` = 1 file, 199 insertions only.
+
+All 7 ACs verified with file:line mapping. Report: `reports/TASK_REPORT_1903a.md`.
+
+Pattern: identical to 1898a (commit `e95eb8c7`). Test-only gate, DDD N/A, security N/A, Bun crash pre-existing. 199L within cap — no split follow-up needed.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1899a-bloomberg merge gate (c77)
 
 ## Recent session — 2026-05-13 (1899a-bloomberg BloombergStealth scraper — APPROVED)
