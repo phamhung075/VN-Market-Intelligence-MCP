@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c83",
+  "currentSprint": "c84",
   "activeTaskId": null,
   "nextAgent": "po",
-  "nextPrompt": "c82 closed. 1903a stale-resolved (c77 regression tests verify both sub-bugs fixed). 1888b SSOT shipped. c83 candidates: 1881a (HIGH source_tier retrofit), 1888c/d/g (SSOT doc batch), 1899a-bloomberg-test-split (LOW), 1900c-health-probe-refine (LOW OPS), 1862c-F (MEDIUM FIX blocked on container-rebuild).",
-  "updatedAt": "2026-05-13T20:55:00Z",
-  "updatedBy": "dev-team-c82",
-  "lastCompleted": "Cycle 82: 1903a stale-resolved (notebook only `d5251193`), 1888b shipped `49f5d1eb`/`ff618e1d`. QA `0c8a17e8`. pm `5b725af0`/`7ff3bd5b`. HEAD.lock cures #38+#39 (mid-merge-gate, both auto-cured after >60s age verification)."
+  "nextPrompt": "c83 closed. 1881a BA spec shipped (REQ_1881a.md, 16 tools, 4 discoveries incl BLK-1 for 4 plain-text tools — needs architect). 1888-CDG SSOT bundle shipped (toolCount=125, cronJobCount=62, task-size-rules extracted). c84 candidates: 1881a-impl (12/16 tools unblocked; 4 await BLK-1 architect decision), 1888l (HIGH agent-father SSOT), 1890a (MEDIUM TOOLPKG), 1899a-bloomberg-test-split (LOW), 1900c (LOW OPS), JANITOR-011/014/020, TASK-BCTC-3, 1862c-F (blocked container-rebuild).",
+  "updatedAt": "2026-05-13T21:35:00Z",
+  "updatedBy": "dev-team-c83",
+  "lastCompleted": "Cycle 83: 1881a BA spec `0189381c`/`e36242f1` (16 tools, 4 spec discoveries flagged), 1888-CDG bundle `76829836`/`69521f26` (toolCount=125, cronJobCount=62 +_definition, task-size-rules extracted). QA `1e7c44a0`. pm `801afd6f`/`9a4d46ad` (69L, totalTasksDone 557→559). HEAD.lock cure #40 (PREFLIGHT, age=1506s, auto-cured). Worktree harness auto-merged transparently — no manual cherry-pick this cycle."
 }
