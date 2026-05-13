@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 17:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 18:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -95,6 +95,27 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3600 |
+
+### Cycle (18:35–18:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [banking,realty] | pe_risk: [FPT,VCB,VHM]
+- Market CLOSED (off-hours 4h cycle). Closing prices from 08:59 UTC.
+- GAS +6.93% (1.85σ, 30d stddev ≈3.74%) — sub-threshold; signal #3088 already emitted at 15:40 cycle.
+- VRE -6.91% (1.42σ, 30d stddev ≈4.85%) — sub-threshold; covered by HIGH price_drop alert 08:30 UTC.
+- VHM -4.81% (0.99σ, 30d stddev ≈4.84%) — sub-threshold.
+- Chain findings: 0 (last 15 min). 20 open alerts (banking×7 HIGH, real-estate×9 HIGH). FII net-sell 14 sessions.
+- Context: Brent $105.75, Gold $4,696, VN-Index 1,898.37. VN-Index -2.73 pts today. Fed rate hike fear (gold drop). EVN electricity price hike potential.
+
+## Metrics (cycle 2026-05-13 18:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 3 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
 
 ## Known patterns / preferences
 
