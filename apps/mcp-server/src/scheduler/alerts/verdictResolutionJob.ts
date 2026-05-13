@@ -23,6 +23,10 @@ import {
   pruneVerdicts,
 } from "../../infrastructure/fileStore/alertVerdictStore.js";
 import type { AlertVerdict } from "../../infrastructure/fileStore/alertVerdictStore.js";
+import {
+  writeAlertOutcome,
+  type AlertOutcome,
+} from "../../infrastructure/db/alertStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -43,6 +47,8 @@ export interface VerdictResolutionJobDeps {
   fetchHistory?: (ticker: string, days: number) => Promise<number | null>;
   /** Telegram sender — defaults to sendTelegramBug */
   telegramSender?: (channel: string, message: string) => Promise<void>;
+  /** Writes HIT/MISS to alerts.outcome; injectable for tests (E-3: must never throw) */
+  writeOutcomeFn?: (alertId: string, outcome: AlertOutcome, detail?: string) => Promise<void>;
   nowFn?: () => Date;
 }
 
@@ -68,7 +74,8 @@ function resolveDirection(
   direction: string,
   pctMove: number
 ): "confirmed" | "false_positive" {
-  if (Math.abs(pctMove) < 1.0) return "confirmed"; // flat — safe
+  // OOS-5 fix: direction-aware confirm only — flat-band early-return removed.
+  // A bearish alert with +0.9% move is a false_positive, not confirmed.
   if (direction === "bearish") {
     return pctMove <= -1.0 ? "confirmed" : "false_positive";
   }
@@ -148,6 +155,18 @@ function buildDefaultStore(): AlertVerdictStoreIface {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Default writeAlertOutcome adapter — wraps the infra function synchronously.
+ * Sync DB call made async to match injectable interface.
+ */
+async function defaultWriteOutcomeFn(
+  alertId: string,
+  outcome: AlertOutcome,
+  detail?: string,
+): Promise<void> {
+  writeAlertOutcome(alertId, outcome, detail);
+}
+
+/**
  * Resolve pending alert verdicts >=24h old.
  * All external calls are injectable via `deps` for unit tests.
  */
@@ -158,6 +177,7 @@ export async function runVerdictResolutionJobCron(
   const fetchPrice = deps?.fetchPrice ?? defaultFetchPrice;
   const fetchHistory = deps?.fetchHistory ?? defaultFetchHistory;
   const telegramSender = deps?.telegramSender ?? defaultTelegramSender;
+  const writeOutcomeFn = deps?.writeOutcomeFn ?? defaultWriteOutcomeFn;
   const now = deps?.nowFn?.() ?? new Date();
 
   const result: VerdictResolutionJobResult = {
@@ -219,6 +239,15 @@ export async function runVerdictResolutionJobCron(
         basePrice: priceAtFire,
         closePriceAt24h: priceAtResolution,
       });
+
+      // AC-5: Write HIT/MISS to alerts.outcome (E-3: never throws — missing alertId is not critical)
+      const outcomeValue: AlertOutcome = verdict === "confirmed" ? "HIT" : "MISS";
+      try {
+        await writeOutcomeFn(row.id, outcomeValue, detail);
+      } catch (err) {
+        const warnMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`[verdictResolutionJob] writeAlertOutcome failed for alert ${row.id}: ${warnMsg}`);
+      }
 
       result.rowsResolved++;
     } catch (err) {

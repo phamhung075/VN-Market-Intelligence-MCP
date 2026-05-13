@@ -12,6 +12,7 @@
 
 import { describe, it, expect } from "bun:test";
 import type { AlertVerdict } from "../infrastructure/fileStore/alertVerdictStore.js";
+import type { AlertOutcome } from "../infrastructure/db/alertStore.js";
 import {
   runVerdictResolutionJobCron,
   type VerdictResolutionJobDeps,
@@ -45,6 +46,12 @@ function makeVerdict(
 
 // ── Test-double builder ────────────────────────────────────────────────────
 
+interface OutcomeCall {
+  alertId: string;
+  outcome: AlertOutcome;
+  detail?: string | undefined;
+}
+
 interface TestDeps extends VerdictResolutionJobDeps {
   /** Updated rows captured by the injected store.updateVerdict */
   updated: AlertVerdict[];
@@ -52,22 +59,27 @@ interface TestDeps extends VerdictResolutionJobDeps {
   bugs: string[];
   /** Number of times pruneVerdicts was called */
   pruneCallCount: number;
+  /** Calls to writeOutcomeFn captured for AC-5 assertions */
+  outcomeCalls: OutcomeCall[];
 }
 
 function buildDeps(
   rows: AlertVerdict[],
   priceNow: number | null,
   priceHistory: number | null,
-  pruneReturn: number = 0
+  pruneReturn: number = 0,
+  writeOutcomeError?: Error,
 ): TestDeps {
   const store: AlertVerdict[] = [...rows];
   const updated: AlertVerdict[] = [];
   const bugs: string[] = [];
+  const outcomeCalls: OutcomeCall[] = [];
   let pruneCallCount = 0;
 
   const deps: TestDeps = {
     updated,
     bugs,
+    outcomeCalls,
     pruneCallCount: 0,
     store: {
       readVerdicts: async () => [...store],
@@ -88,6 +100,10 @@ function buildDeps(
     fetchHistory: async (_ticker: string, _days: number) => priceHistory,
     telegramSender: async (_channel: string, msg: string) => {
       bugs.push(msg);
+    },
+    writeOutcomeFn: async (alertId: string, outcome: AlertOutcome, detail?: string) => {
+      if (writeOutcomeError) throw writeOutcomeError;
+      outcomeCalls.push({ alertId, outcome, detail });
     },
     nowFn: () => NOW,
   };
@@ -151,27 +167,30 @@ describe("Task 1863b — verdictResolutionJob (file-store backed)", () => {
     expect(updated?.verdict).toBe("false_positive");
   });
 
-  // ── AC-5 / 1863f-AC-1+AC-2: |pct| < 1% → confirmed (regardless of direction)
-  it("flat move |pct|<1% bullish → confirmed", async () => {
+  // ── OOS-5 fix: flat move |pct|<1% is now direction-aware, not auto-confirmed ─
+  it("OOS-5: flat move +0.5% bullish → false_positive (not enough upside)", async () => {
     const row = makeVerdict({ id: "r5a", ticker: "HPG", direction: "bullish" });
-    const deps = buildDeps([row], 100.5, 100);
+    const deps = buildDeps([row], 100.5, 100); // +0.5% — below 1% bullish threshold
 
     const result = await runVerdictResolutionJobCron(deps);
 
     expect(result.rowsResolved).toBe(1);
     const updated = deps.updated[0];
-    expect(updated?.verdict).toBe("confirmed");
+    expect(updated?.verdict).toBe("false_positive");
   });
 
-  it("flat move |pct|<1% bearish → confirmed", async () => {
+  it("OOS-5: bearish alert with +0.9% move → NOT confirmed (false_positive)", async () => {
     const row = makeVerdict({ id: "r5b", ticker: "HPG", direction: "bearish" });
-    const deps = buildDeps([row], 100.5, 100);
+    const deps = buildDeps([row], 100.9, 100); // +0.9% — wrong direction for bearish
 
     const result = await runVerdictResolutionJobCron(deps);
 
     expect(result.rowsResolved).toBe(1);
     const updated = deps.updated[0];
-    expect(updated?.verdict).toBe("confirmed");
+    // bearish alert with price UP is false_positive, regardless of magnitude
+    expect(updated?.verdict).toBe("false_positive");
+    // Verify writeOutcomeFn was called with MISS (not HIT)
+    expect(deps.outcomeCalls[0]?.outcome).toBe("MISS");
   });
 
   // ── AC-6 / 1863f-AC-7: 24h guard — row just under 24h is skipped ─────────
@@ -292,5 +311,43 @@ describe("Task 1863b — verdictResolutionJob (file-store backed)", () => {
     expect(result.rowsEvaluated).toBe(0);
     expect(result.rowsResolved).toBe(0);
     expect(deps.updated.length).toBe(0);
+  });
+
+  // ── AC-5: HIT/MISS write-back ─────────────────────────────────────────────
+  it("AC-5: confirmed verdict → writeOutcomeFn called with 'HIT'", async () => {
+    const row = makeVerdict({ id: "ac5-hit", ticker: "VIC", direction: "bullish" });
+    const deps = buildDeps([row], 102, 100); // +2% bullish → confirmed
+
+    await runVerdictResolutionJobCron(deps);
+
+    expect(deps.outcomeCalls.length).toBe(1);
+    expect(deps.outcomeCalls[0]?.alertId).toBe("ac5-hit");
+    expect(deps.outcomeCalls[0]?.outcome).toBe("HIT");
+  });
+
+  it("AC-5: false_positive verdict → writeOutcomeFn called with 'MISS'", async () => {
+    const row = makeVerdict({ id: "ac5-miss", ticker: "VHM", direction: "bullish" });
+    const deps = buildDeps([row], 98, 100); // -2% bullish → false_positive
+
+    await runVerdictResolutionJobCron(deps);
+
+    expect(deps.outcomeCalls.length).toBe(1);
+    expect(deps.outcomeCalls[0]?.alertId).toBe("ac5-miss");
+    expect(deps.outcomeCalls[0]?.outcome).toBe("MISS");
+  });
+
+  // ── E-3: writeOutcomeFn error does NOT throw ──────────────────────────────
+  it("E-3: writeOutcomeFn throw does not propagate — job still resolves row", async () => {
+    const row = makeVerdict({ id: "e3-id", ticker: "SSI", direction: "bullish" });
+    const deps = buildDeps([row], 102, 100, 0, new Error("DB not found"));
+
+    // Must not throw
+    const result = await runVerdictResolutionJobCron(deps);
+
+    // Row is still marked resolved even if write-back fails
+    expect(result.rowsResolved).toBe(1);
+    expect(result.errors).toBe(0);
+    const updated = deps.updated[0];
+    expect(updated?.verdict).toBe("confirmed");
   });
 });
