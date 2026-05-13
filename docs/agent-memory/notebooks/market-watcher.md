@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 04:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 05:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -524,3 +524,24 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2200 |
+
+### Cycle (05:20–05:40)
+- Stocks: 31 watchlist | Priced: 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.56σ, HVN 2.65σ) | Volume spikes: 1 (GAS 3.6x avg) | Chain confirms: 0
+- Regime: NEUTRAL (get_macro_snapshot not in pkg — defaults applied) | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- GAS +6.93% (2.56σ, 30d stddev 2.71%, vol 4.41M = 3.6x avg 1.22M) → signal #3045 → alert-commander. Outperforms oil_gas sector (+1.16%). Brent $106.51 supportive. Evidence bullish 0.633. TA insufficient (14/35 candles).
+- HVN -2.78% (2.65σ, 30d stddev 1.05%, vol 421.8K = 1.03x avg — no volume spike) → signal #3046 → alert-commander. Evidence bearish 0.56. Aviation sector -0.75%. Continuing 5-session losing streak (22,700→21,000, -7.49%).
+- VHM -2.18% (0.58σ, 30d stddev 3.76%) — high base volatility, sub-threshold. KBC -1.95%, VIC -1.62%, VRE -1.83%, BID -1.32% — all sub-threshold.
+- Sector rotation: all 16 sectors STABLE (1d data only). Oil&Gas +1.16%, Chemicals +2.63%, Securities +0.50% leading | Banking -0.34%, Aviation -0.75%, Real estate -0.38% lagging.
+- Agent signal active: news-scout #3044 (2 CTCKs cut VN-Index 2026 targets, "xanh vỏ đỏ lòng", impact=8).
+- Open chain findings: 0 (last 15 min) | System: OK
+
+## Metrics (cycle 2026-05-13 05:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 14 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4500 |
