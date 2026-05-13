@@ -1,62 +1,61 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T06:55Z (c65 close — SPIKE_006-T4 SHIPPED + 3-way contamination split)
+**Written:** 2026-05-13T09:52Z (c66 close — SPIKE_006-T5 SHIPPED + 4th consecutive contamination split)
 
-## c65 (2026-05-13T06:36Z → 06:55Z, ~19min)
+## c66 (2026-05-13T07:37Z → 09:52Z, ~135 min — slow due to context-compaction restart mid-cycle)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock age=1888s 0B PID 51247 — **17th** recurrence cured | lsof log `20260513T063659Z` |
-| 0a Drain | 0 pending signals | empty |
-| 1 PO Triage | 1 telegram (id=2874 unified-agent alert_quality 22% — SPIKE_006 motivator) → BATCH(1) | SPIKE_006-c61-T4 (n<20 guard) |
-| 3 Tier 1 | dev-mcp-server (T-4 ship) | shipped contaminated, atomic split needed |
-| MERGE GATE | 3-cherry-pick split (mw + T-4 atomic + mw-tail) + qa-responder race + notebooks commit | 5 commits on main |
-| Post | PM update + WORK notify | aa04da81 |
+| 0 PREFLIGHT | NO HEAD.lock (first clean preflight since c62) | T5/T6 worktree GC ran clean |
+| 0a Drain | 3 pending signals (qa-scraper + ops-infra + tnb-audit) | All routed-to-po, dual-record write OK |
+| 1 PO Triage | 1 telegram unresolved id=2874 (T-4 already addressed); 3 signals informational; 2 TNB bugs flagged | BATCH(1) SPIKE_006-c61-T5 |
+| 3 Tier 1 | dev-mcp-server (T-5 ship) | shipped d8fc77ca contaminated (10 extra files) |
+| MERGE GATE | soft-reset + selective re-add split (cleaner than c63/c64/c65 cherry-pick) | 2 atomic commits (284335cf + befea792) |
+| Post | Signal drain commit + PM TASKS update + close | 9ff5479b + 6420ebec + this commit |
 
-### Merge chain (origin/main after c65)
-- `564fc91f` chore(memory/market-watcher) — preserved from contaminated task branch (de486331 origin)
-- `80493433` fix(alerts/ac-4) — **T-4 ATOMIC SHIP** (C2-clean, split from contaminated 7bc5853b)
-- `8a813a3f` chore(memory/market-watcher) — tail (tool-package + notebook) split from same 7bc5853b
-- `d354f418` chore(memory/qa-responder) — concurrent agent commit (race during recovery, landed clean on main)
-- `ccda107e` chore(memory/sessions) — c65 PREFLIGHT lsof + notebooks (dev-mcp-server + po)
-- `aa04da81` chore(tasks) — PM close c65 (T-4→Done, T-5 unblocked, 1897e/f new)
+### Merge chain (origin/main after c66, since c65 close `b4695412`)
+- `ce96996d` chore(memory/alert-commander) — inter-cycle
+- `0cc5b27a` feat(macro-indicators) — dev-mainserver-crawls 22 files +2212L (6 macro scrapers)
+- `450a895f` infra(ops/macro-indicators) — RAM 512MB→1.5GB + Python deps
+- `e299bf99` chore(memory/market-watcher) — inter-cycle during T-5 build
+- `284335cf` **fix(alerts/ac-5+oos-5) — T-5 ATOMIC SHIP** (C2-clean, split from d8fc77ca)
+- `befea792` chore(memory/dev-vps-crawls) — preserve from same split
+- `9ff5479b` chore(signals/c66-drain) — 3 signals → processed/
+- `6420ebec` chore(tasks) — PM close (T-5 Done, T-6 unblocked, 1898a/b + 1899a new)
 
-### CONTAMINATION event (c65 #3 — **3rd consecutive cycle**)
-- dev-mcp-server T-4 spawn on local main HEAD 75624c6a (NO `isolation:worktree` flag — per 1897c escalation).
-- BUT contamination STILL HAPPENED. Two distinct events:
-  - (a) market-watcher de486331 (notebook + news-scout) committed on task branch before T-4 commit.
-  - (b) T-4 commit 7bc5853b itself bundled non-T-4 files (`.claude/tools/package/market-watcher.md` + `notebook/market-watcher.md` 8L tail). C2 violation on task branch.
-- Recovery: 3-cherry-pick split (564fc91f mw + 80493433 T-4 atomic + 8a813a3f mw-tail). + concurrent qa-responder d354f418 landed direct on main (clean).
-- **1897f escalation:** isolation:worktree flag is NOT the root cause. Agent-spawn-on-task-branch semantic is. Architect rethink required.
+### CONTAMINATION event (c66 #4 — **4th consecutive cycle**)
+- dev-mcp-server spawned WITHOUT `isolation:worktree` (per 1897f finding).
+- Worked on `main` per explicit prompt instruction.
+- `d8fc77ca` shipped with 10 EXTRA files bundled: `docs/agent-memory/notebooks/dev-vps-crawls.md` + 7 `docs/vps-crawl-techniques/*.md` + `docs/vps-sources/README.md`.
+- Agent claimed "pre-commit hook auto-staged" — **VERIFIED FALSE**: `.git/hooks/pre-commit` does not exist; only `pre-push` symlink active. Root cause is agent error (likely `git add .` or wildcard despite C2 instruction).
+- Recovery: `git reset --soft HEAD~1` + selective re-stage of 2 target files → atomic commit `284335cf`. Then preserve untracked siblings as `befea792`.
+- **Soft-reset split is faster than cherry-pick (1 minute vs 15+ min in c63/c64/c65).** Adopt as default recovery pattern.
 
-### HEAD.lock recurrences (c65 = 3 cures in 19min)
-- 17th @ 06:37Z PREFLIGHT — age=1888s 0B (canonical)
-- 18th @ 06:47Z mid-commit — index.lock 12s ghost, self-cleared in 5s (F4 wait worked)
-- 19th @ 06:47Z mid-commit — HEAD.lock 48s ghost, manual rm after 8s wait
-- F4 retry idiom (`docs/protocols/head-lock-self-cure.md § F4`) **VALIDATED** — saves manual rm in ~50% of recurrences. PROMOTE to default commit wrapper.
-- **1897e** NEW HIGH — 19x/24h, frequency now 3/cycle. F1 USER (1897b Docker .git/ exclude) priority **CRITICAL** (was URGENT c64).
+### HEAD.lock recurrences (c66 = 1 cure)
+- 20th @ ~09:43Z mid-commit (during dev-mcp-server build) — F4 retried 2x failed, manual rm succeeded per agent report.
+- **F4 idiom**: 1/3 success c65 → 0/2 success c66. Promote to commit wrapper still HIGH priority but effectiveness diminishing.
+- PREFLIGHT @ 07:37Z **clean** (first since c62) — encouraging.
 
-### c65 BATCH outcomes
+### c66 BATCH outcomes
 | Task | SHA | Status |
 |---|---|---|
-| SPIKE_006-c61-T4 (insufficientSample n<20) | 80493433 | DONE — 20/20 tests, tsc clean, atomic |
-| PM TASKS.md close | aa04da81 | DONE — 83 lines (3 over cap; archive deferred) |
+| SPIKE_006-c61-T5 (verdict write-back + OOS-5) | 284335cf | DONE — 17/17 tests, tsc clean, atomic |
 
-### c66 carry-forward (priority order)
-1. **1897b CRITICAL** — F1 USER Docker `.git/` exclude. Lock frequency now 3/cycle. Cannot dev-team execute.
-2. **1897e HIGH** — HEAD.lock 19x/24h escalation. F4 idiom validated; promote to commit wrapper protocol.
-3. **1897f HIGH** — ARCHITECT rethink: agent-spawn-on-task-branch semantics. isolation:worktree flag NOT the root cause (c65 spawned WITHOUT flag, still contaminated). Phase 4 model wrong.
-4. **1897c HIGH** — Worktree isolation SPIKE (now subsumed by 1897f).
-5. **1897d HIGH** — VirtioFS interference architect rethink (lock-retry wrapper / tmpfs).
-6. **SPIKE_006-c61-T5** — next ship order (verdictResolutionJob outcome write-back + OOS-5 flat-band).
-7. **SPIKE_006-c61-T6** — integration test.
-8. **TASKS.md size cleanup** — 83 lines > 80 cap; PM next cycle should archive c61-c63 Done rows.
-9. USER Cloudflare bundle (1894a + 1862c-E) — 14th-cycle still BLOCKING.
-10. METHODOLOGY-INFRA + SSOT-doc + JANITOR DRY long-tail.
+### c67 carry-forward (priority order)
+1. **1897b CRITICAL** — F1 USER Docker `.git/` exclude. Lock 20x/24h. F4 effectiveness diminishing.
+2. **1897f HIGH** — ARCHITECT rethink agent-spawn-on-task-branch semantics. Even with `main`-only spawn + explicit C2 instruction, contamination occurred 4th time. Real root cause: agent's `git add` behavior is non-deterministic / under-specified in prompt template.
+3. **1897g NEW HIGH** — Agent prompt template MUST forbid `git add .` / wildcard `git add` / `git add -A` / `git add -u` patterns. Only `git add <explicit-path>` allowed. Codify in `.claude/agents/dev-*.md` standard preamble. (Subsumes 1897e since F4 retry effectiveness ↓.)
+4. **SPIKE_006-c61-T6** — next ship order (integration test, unblocked).
+5. **1898a** — get_market_snapshot electricity bug (HIGH TNB c45).
+6. **1898b** — RSS regression post-1862c-D (HIGH TNB c45).
+7. **1899a** — news-fetch service scaffold (architect brief).
+8. TASKS.md 81L (1 over cap; archive 1 more row).
+9. USER Cloudflare 1894a + 1862c-E (15th cycle).
+10. METHODOLOGY-INFRA + JANITOR long-tail.
 
 ### Steady state metrics
-- HEAD.lock cure: 19/19 (100% — but frequency now 3/cycle vs 1/cycle c63 vs 2/cycle c64).
-- Contamination events: 3/3 last cycles (c63, c64, c65). isolation:worktree flag NOT the variable (c65 omitted flag, contamination occurred anyway).
-- C2 warnings this cycle: 1 (ccda107e chore(memory/sessions) touches sessions/ subdir — established convention since c62, audit script doesn't recognize).
-- T-4 path: branch ship → split-cherry-pick + concurrent race recovery → main → branch deleted.
-- F4 retry idiom: 2/3 lock recurrences self-resolved (5s, 8s wait) — promote to wrapper.
+- HEAD.lock cure: 20/20 (100%); frequency stabilizing at ~1/cycle this cycle (was 3/cycle c65).
+- Contamination events: 4/4 last cycles (c63, c64, c65, c66). Worktree flag NOT the variable. Agent `git add` behavior IS the variable. **1897g escalation: codify C2 in agent prompt preamble.**
+- Recovery pattern: soft-reset+selective-re-add proven faster than cherry-pick split. Default forward.
+- C2 warnings this cycle: 0 (befea792 + 9ff5479b + 6420ebec all single-zone or explicit chore).
+- Inter-cycle agent commits since c65 close: 4 (alert-commander notebook, macro-indicators feat, ops infra, market-watcher notebook) — none required dev-team intervention.
