@@ -1,6 +1,23 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** c83 BATCH(2) gate — 1881a spec + 1888-CDG bundle
+**Last updated:** 2026-05-13 | **Session:** c84 gate — 1888l agents-architect error-boundary parity
+
+## Recent session — 2026-05-13 (c84 — APPROVED)
+
+### 1888l — agents-architect error-boundary parity
+
+Doc-only. No code changed. Smart-skip: bun test + tsc not applicable to .md-only changes. tsc pre-push hook confirmed 0 errors on push.
+
+Compliance checks:
+- agents-architect/main.md L7: error-boundary skill ref present, exact match to po/main.md L6 wording. PASS.
+- .claude/agents/agents-architect.md L74: fail-loud-protocol.md already in always_load with fail_loud: true. No-op confirmed. PASS.
+- docs/agents/agents-architect/handlers.md L70-79: BLOCKED/EXIT block present before RETURN, with send_telegram(channel="bug") + EXIT instruction. Matches boundary pattern. PASS.
+- Commit `docs(c84/agents-architect)`: type docs, scope c84/agents-architect, Sprint + Task + AC trailers all present. PASS.
+
+Verdict: APPROVED.
+Merge commit: 859a2ce8. Branch task/1888l-agents-architect-error-boundary deleted.
+
+---
 
 ## Recent session — 2026-05-13 (c83 BATCH(2) — ALL APPROVED)
 
