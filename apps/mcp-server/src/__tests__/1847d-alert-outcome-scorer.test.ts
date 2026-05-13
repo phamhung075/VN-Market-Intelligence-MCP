@@ -169,4 +169,38 @@ describe('alertOutcomeScorer', () => {
       expect(result.outcome).toBe('hit');
     });
   });
+
+  describe('scoreAlertOutcome - AC-3: price-signal threshold raised to 1.0%', () => {
+    it('TEST-15: price_drop 0.5% move → UNKNOWN (below 1.0% threshold)', () => {
+      // classifyAlertType must produce hitThresholdPct = -1.0 for price_drop
+      const classification = classifyAlertType(
+        JSON.stringify([{ type: 'price_drop' }]),
+        null,
+      );
+      expect(classification.alertClass).toBe('price-signal');
+      const alertPrice = 100;
+      // Price drops 0.5% — below new 1.0% threshold
+      const windowPrices: PricePoint[] = [
+        { price: 99.5, fetchedAt: '2026-05-13T10:00:00Z' },
+      ];
+      const result = scoreAlertOutcome(classification, alertPrice, windowPrices, 2);
+      expect(result.outcome).toBe('unknown');
+    });
+
+    it('TEST-16: price_surge 1.1% move → HIT (above 1.0% threshold)', () => {
+      // classifyAlertType must produce hitThresholdPct = 1.0 for price_surge
+      const classification = classifyAlertType(
+        JSON.stringify([{ type: 'price_surge' }]),
+        null,
+      );
+      expect(classification.alertClass).toBe('price-signal');
+      const alertPrice = 100;
+      // Price rises 1.1% — above new 1.0% threshold
+      const windowPrices: PricePoint[] = [
+        { price: 101.1, fetchedAt: '2026-05-13T10:00:00Z' },
+      ];
+      const result = scoreAlertOutcome(classification, alertPrice, windowPrices, 2);
+      expect(result.outcome).toBe('hit');
+    });
+  });
 });

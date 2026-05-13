@@ -1,6 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 02:02 UTC | **Sprint:** c60-closed
+**Last updated:** 2026-05-13 03:04 UTC | **Sprint:** c60-closed
+
+### Alert Cycle (03:01–03:04 UTC) — 2026-05-13
+- Signals: 1 (id=3036 urgent_news VCB/banking sector — from news-scout, status:read, expires 04:23 UTC)
+- Fired: 1 | Suppressed: 0 | MARKET: 1
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: Jun 2026)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Fired: VCB/banking URGENT_NEWS bearish (gold +3.8%/week → VND asset flight) — conviction 0.70 ≥ 0.60 NEUTRAL threshold → MARKET
+- KinhDich VCB: Khôn→Bác (23), 48% — confirms bearish short-term pressure
+- Verdict: 0b27d686, pending | record_signal_outcome: fired
 
 ### Alert Cycle (02:01–02:02 UTC) — 2026-05-13
 - Signals: 0 (bus empty — no inter-agent signals)

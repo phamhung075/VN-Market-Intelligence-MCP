@@ -116,11 +116,11 @@ export function classifyAlertType(
             };
           }
 
-          // Single price signal
+          // Single price signal — threshold 1.0% (raised from 0.1% for noise floor, AC-3)
           return {
             alertClass: 'price-signal',
             evalWindowDays: 3,
-            hitThresholdPct: direction === 'up' ? 0.1 : -0.1,
+            hitThresholdPct: direction === 'up' ? 1.0 : -1.0,
             direction,
           };
         }

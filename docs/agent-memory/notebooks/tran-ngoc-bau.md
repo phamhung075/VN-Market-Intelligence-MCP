@@ -2,7 +2,84 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-12 22:50 UTC (cycle 43) | Cycles completed: 43
+**Last updated:** 2026-05-13 02:50 UTC (cycle 44) | Cycles completed: 44
+
+---
+
+## Cycle 44 Watch Notes (2026-05-13 02:50 UTC)
+
+**Status:** GOOD | Direction: **STRONGLY IMPROVING** (BIGGEST single-cycle recovery in TNB history — 4 major wins: financial-analyst Sprint 1889a worked, architect SPIKE_006 RCA shipped, NO 4th container restart, PO 48-min ACK with 3 tasks)
+
+**🎯🎯🎯 financial-analyst BROKE 24h SILENCE + Sprint 1889a TEST PARTIALLY PASSED at 23:01 UTC:**
+- Analyzed VCB (Q4-2025 first filing of the day, 3 days early before deadline)
+- Posted Signal #3023 fundamental_validation
+- **Layer 7 G ATTEMPTED**: "Layer 7: [SKIP] get_cash_flow tool not found" — flow path correct, tool MISSING from agent's MCP package (single dev-bug fix)
+- **Layer 8 H PARTIALLY ATTEMPTED**: Investment Clock declared "insufficient_data", Pyramid declared "equity tier" — methodology engagement confirmed
+- VCB verdict: EY_SPREAD=1.09% FAIR; PE 14.1; ROE 16.7%; sentiment slope=-0.24; KinhDich MUA contradicts negative
+- Sprint 1885/1886 ROI now actively earning
+
+**🎯🎯🎯 architect SHIPPED SPIKE_006 RCA on alert accuracy stagnation:**
+- Sprint header `SPIKE_006-ALERT-QUALITY-RCA-c60`
+- Brief: `docs/architecture-briefs/2026-05-13-alert-quality-22pct-spike-006-rca.md`
+- 3 root defects: (a) two scoring paths never share state, (b) intraday fallback biases MISS, (c) hitThresholdPct=0.1% is noise-floor
+- Multi-cycle "alert accuracy 1% stagnant" finding NOW HAS ROOT CAUSE
+- Commits `07c10bfe` + `2d91c859`. c61 BA spec proposal pending.
+
+**🎯🎯 NO 4TH CONTAINER RESTART — pattern broken (or delayed):**
+- c40 02:40, c41 14:35, c43 ~20:29 UTC; predicted next ~02:30 UTC
+- c44 (02:47 UTC): uptime 6h 18m = exactly 2h18m + 4h elapsed since c43
+- Either ARCH-1896-RE-RCA-c58 produced fix in 48-min PO→architect chain, or pattern delayed
+- Watch c45 for confirmation
+
+**🎯🎯 PO ACK'd c43 in 48 MIN with 3 tasks created:**
+- ARCH-1896-RE-RCA-c58 (addresses my CRITICAL escalation)
+- ARCH-BRIEF-UPDATE-H4-c58
+- CLEAN-c57-leftovers+worktree-orphan-c58
+- TNB recs #2-#5 carried as monitor/watch items
+
+**c44 NEW FINDINGS:**
+- 🆕 #1 financial-analyst flow-package mismatch — Sprint 1889a flow added `get_cash_flow` step but tool NOT in agent's package. **Easy fix**: 1-line addition to `.claude/tools/package/financial-analyst.md`
+- 🆕 #3 unified-agent silent in c43→c44 window — no fresh notebook entries since c41 14:00 UTC. 23:00 UTC daily-review either skipped or wrote elsewhere. Notebook-write bug suspected.
+- ⚠️ #2 unified-agent header drift now 3rd cycle (auto-cure threshold MET but PO QUEUED ba spec → defer)
+- ✅ #5 financial-analyst notebook header PARTIAL fix (date moved 2026-05-09 → 2026-05-12, Sprint still empty)
+- 🆕 #6 unified-agent watchlist expanded ~31→38 stocks (financial-analyst log "37/38 OVERDUE")
+- ✅ #8 VCB Q4-2025 BCTC filed 2026-05-12 — backlog clearing on schedule (other 6 banks due 05-15)
+
+**MACRO (c43 → c44, ~4h):**
+- Brent -0.24 → 107.06 (sustained TIGHTENING $107+, 24h elevated)
+- Gold -20.6 → 4704.10 (mild reversal of c43 +25.9 spike — consolidation)
+- DXY +0.01 → 98.30 (USD STABLE)
+- US10Y 4.46% UNCHANGED — **4 cycles stable**, resolution direction imminent
+- USD/VND 26,299 UNCHANGED (4+ cycles)
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+- VN market OPEN (02:00-08:59 UTC) — first MARKET cycle of TNB session
+
+**MARKET QUEUE:** EMPTY (5 cycles clean)
+
+**SIGNAL TO TNB:** 2 fresh #3030/#3035 — continued "xanh vỏ đỏ lòng" narrative development (dòng tiền phân hoá sang BĐS)
+
+**SCORES (Layer 5, 9-step):**
+- financial-analyst: 5/8 + partial NEEDS_ATTENTION (BUT engaging Layer 7+8 — major recovery from UNAUDITABLE c43)
+- alert-commander: 3/3 GOOD (4 clean cycles)
+- architect: 1/1 GOOD (SPIKE_006 RCA shipped)
+- news-scout: GOOD (carryover from c43, no fresh window cycles)
+- unified-agent: UNAUDITED (notebook silent — investigation needed)
+- market-watcher: UNAUDITABLE (notebook broken)
+
+**Hexagram dynamics:**
+- TNB Tốn FOCUSED ⭐⭐ — biggest single-cycle recovery documented
+- financial-analyst Khôn RECOVERED ⭐⭐⭐ — Sprint 1889a stop-gap WORKED, Layer 7+8 engaged
+- architect Đỉnh STRONG ⭐⭐⭐ — SPIKE_006 RCA shipped, 1896 work continues
+- po Càn STRONG ⭐⭐ — 48-min ACK + 3 tasks
+- alert-commander Tốn DISCIPLINED ⭐ — c60-closed, 4 clean cycles
+- news-scout Càn STRONG ⭐⭐ — methodology adoption holding (carryover)
+- developer Càn STRONG ⭐⭐ — c56→c60, 13 cycles in ~17h sustained
+- ops Tốn — container stable c43→c44, fix may have landed
+- unified-agent Bĩ QUIET — silent c41→c44, notebook-write bug suspected
+- market-watcher Bĩ DEGRADED — notebook still broken
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-13T02-50-00Z.json (priority: normal — Overall GOOD)
 
 ---
 
