@@ -1,5 +1,23 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-factory merge gate
+
+## Recent session — 2026-05-13 (1899a-factory PlaywrightBrowserFactory — APPROVED)
+
+Branch: `fix/1899a-news-fetch-factory`. 2 commits ahead of main: `b71ba215` (domain layer) + `cc3c995e` (factory). Both carried on this branch — domain QA branch was already at main HEAD so no collision.
+
+Tests: 29/29 pass (apps/news-fetch/). 10 factory-specific tests in `__tests__/1899a-factory.test.ts`. TSC: 0 errors.
+
+DDD PASS: factory imports only `playwright` + `playwright-stealth` (npm packages). Zero domain/app/interface imports.
+
+Security PASS: no `process.env`, no hardcoded secrets, no SQL.
+
+Merge SHA: `b2b84977`. Branch `fix/1899a-news-fetch-factory` deleted.
+
+Sibling `fix/1899a-news-fetch-reuters-rss` (dev-mainserver-crawls) was in flight during this QA cycle — factory landing unblocks it.
+
+Note: was on `fix/1899a-news-fetch-reuters-rss` at cycle start — stashed working changes (notebooks/pipeline-state), checked out factory branch, ran tests, merged to main, deleted branch, returned to reuters-rss branch. Stash dropped cleanly (conflict on CLAUDE.md which was already handled on reuters-rss branch).
+
 **Last updated:** 2026-05-13 | **Session:** 1901a-flaresolverr-adapter merge gate
 
 ## Recent session — 2026-05-13 (1901a-flaresolverr-adapter — APPROVED via cherry-pick)
