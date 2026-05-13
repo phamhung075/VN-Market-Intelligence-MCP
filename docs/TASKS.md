@@ -39,6 +39,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1881a-impl-ssot | source_tier — methodology Layer 9 doc update. `docs/standards/tnb-methodology-layers.md` § Layer 9 added. Parallel-eligible with 1881a-impl-mcp. | MEDIUM | CHORE | developer | — |
 
 ---
 ## Done
