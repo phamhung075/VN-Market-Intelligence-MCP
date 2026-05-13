@@ -4,6 +4,67 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### push-path-fix — VPS push path failures (2026-05-13, DONE)
+
+**Mission:** Fix two MCP-side push path failures flagged by dev-vps-crawls recon.
+
+**Failure 1 (vps-prices):** fetch-prices.sh posting to `__MCP_BASE__/api/push-prices` → 404.
+**Failure 2 (vn-news-rss):** fetch-vn-news.sh posting to `__MCP_BASE__/api/push-news` → 404.
+
+**Investigation outcome:**
+- Both `/api/push-prices` (server.ts:317) and `/api/push-news` (server.ts:387) ARE registered and correctly handled.
+- Root cause: Cloudflare tunnel had no `/api/*` ingress rule — all `/api/` traffic hit catch-all `http_status:404` before reaching mcp-server. Config fix was already applied (`~/.cloudflared/config.yml` has `path: ^/api/` rule). Tunnel restart needed (ops task).
+- VPS body shapes confirmed: stock price unit conversion (×1000) correct; index/global_index as-is correct; news body `{title, url, publishedAt, content, source}` matches handler exactly.
+
+**Code changes:**
+- NEW `src/__tests__/1892b-vps-contract-push.test.ts` — 10 tests, 0 fail (P1-P6 prices, N1-N4 news)
+- UPDATED `docs/vps-sources/vps-prices/recon.md` — root cause + contract confirmation
+- UPDATED `docs/vps-sources/vn-news-rss/recon.md` — root cause + contract confirmation
+- NEW `docs/signals/qa-2026-05-13T09-32-54Z.json` — QA signal with ops action required
+
+**No mcp-server route/handler changes needed. Zone is healthy.**
+
+SHA: 3d6383a2. tsc clean. 10 new tests pass.
+
+Zone health: both push routes healthy and contract-verified; Cloudflare tunnel restart still pending (ops dependency); no code drift detected.
+
+---
+
+### TASK-PUSH-1 — VPS prices 404 root cause (2026-05-13, SUPERSEDED BY push-path-fix)
+
+**Investigation result:** NOT a key drift, NOT an unsubstituted placeholder, NOT Cloudflare connectivity.
+
+**Actual root cause:** `~/.cloudflared/config.yml` has NO ingress rule for `/api/*`. Every request to `https://zenmidi.com/api/*` hits the catch-all `http_status:404` rule. This affects ALL VPS push services (prices, news, sbv, foreign-flow, OHLCV) — not just prices.
+
+**Verified:**
+- VPS `fetch-prices.sh` line 15-18: `__MCP_BASE__` and `__API_KEY__` are substituted correctly. Key = `38955a0a...` matches `.env`.
+- `curl https://zenmidi.com/api/watchlist` from VPS: HTTP 404 (Cloudflare, not mcp-server).
+- `curl http://localhost:3000/api/watchlist`: HTTP 200, returns 39 codes + 11 global indices.
+- `curl http://localhost:4000/api/watchlist`: HTTP 200 via api-gateway.
+- `curl https://zenmidi.com/health`: HTTP 404 — even `/health` not routed.
+- Current tunnel ingress: only `/vn-market/*` paths routed to `localhost:3000`.
+
+**Fix required (ops, NOT mcp-server zone):**
+Add ingress rule to `~/.cloudflared/config.yml` BEFORE the default 404:
+```yaml
+  - hostname: zenmidi.com
+    path: ^/api/
+    service: http://localhost:4000
+    originRequest:
+      keepAliveTimeout: 30s
+  - hostname: zenmidi.com
+    path: ^/health
+    service: http://localhost:4000
+    originRequest:
+      keepAliveTimeout: 10s
+```
+Then: `brew services restart cloudflared`
+Verify: `curl https://zenmidi.com/api/watchlist -H "X-API-Key: <key>"` → 200.
+
+**No mcp-server code changes needed. All services and routes are correct.**
+
+---
+
 ### SPIKE_006-c61-T4 — AC-4 insufficientSample guard (2026-05-13, DONE)
 
 **Problem:** `formatAccuracyReport` showed accuracy % even with tiny sample sizes (n=1, 2), making precision figures misleading.
