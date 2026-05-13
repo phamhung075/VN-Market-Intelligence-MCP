@@ -263,23 +263,26 @@ describe("Task 183 — get_alert_accuracy MCP tool", () => {
 
   it("shows worst performer stock section when there are misses", async () => {
     const alertTime = new Date(Date.now() - 4 * 86_400_000).toISOString();
-    const priceAtAlert = new Date(
-      new Date(alertTime).getTime() + 60_000,
-    ).toISOString();
-    const priceAfter = new Date(
-      new Date(alertTime).getTime() + 2 * 86_400_000,
-    ).toISOString();
+    const db = getDb();
 
-    // VEA: 3 alerts all missed
-    for (let i = 0; i < 3; i++) {
+    // VEA: 20 alerts all pre-scored MISS (Path 1 — no price lookup needed)
+    // Need ≥20 scoreable to pass insufficientSample gate and show breakdown
+    for (let i = 0; i < 20; i++) {
       const t = new Date(
         new Date(alertTime).getTime() + i * 3_600_000,
       ).toISOString();
-      const p1 = new Date(new Date(t).getTime() + 60_000).toISOString();
-      const p2 = new Date(new Date(t).getTime() + 2 * 86_400_000).toISOString();
-      seedAlert({ id: `e${i}`, code: "VEA", signalType: "price_drop", triggeredAt: t });
-      seedPrice("VEA", 50000 + i * 100, p1);
-      seedPrice("VEA", 51000 + i * 100, p2); // rose = MISS for drop signal
+      db.prepare(`
+        INSERT INTO alerts (id, triggered_at, severity, signals_json, affected_actions_json, message, read, outcome, outcome_at)
+        VALUES (?, ?, ?, ?, ?, ?, 0, 'MISS', ?)
+      `).run(
+        `e${i}`,
+        t,
+        "medium",
+        JSON.stringify([{ type: "price_drop", actionCode: "VEA", severity: "medium", confidence: 0.8 }]),
+        JSON.stringify([{ code: "VEA", expectedImpact: "down", confidence: 0.8 }]),
+        "VEA price_drop signal",
+        new Date(new Date(t).getTime() + 2 * 86_400_000).toISOString(),
+      );
     }
 
     const result = await callTool(server, "get_alert_accuracy", { days: 30 });
@@ -288,21 +291,31 @@ describe("Task 183 — get_alert_accuracy MCP tool", () => {
   });
 
   it("calculates correct percentage in summary line", async () => {
-    // 2 HITs, 0 MISSes, 0 UNKNOWN
+    // 20 pre-scored HITs — need ≥20 scoreable to pass insufficientSample gate
     const base = Date.now() - 5 * 86_400_000;
-    for (let i = 0; i < 2; i++) {
+    const db = getDb();
+    const codes = ["VNM","FPT","VCB","VHM","HPG","MWG","VIC","TCB","BID","CTG",
+                   "ACB","VPB","SSI","VND","HDB","STB","EIB","MBB","TPB","SHB"];
+    for (let i = 0; i < 20; i++) {
       const alertTime = new Date(base + i * 3_600_000).toISOString();
-      const p1 = new Date(base + i * 3_600_000 + 60_000).toISOString();
-      const p2 = new Date(base + i * 3_600_000 + 2 * 86_400_000).toISOString();
-      const code = i === 0 ? "VNM" : "FPT";
-      seedAlert({ id: `f${i}`, code, signalType: "price_drop", triggeredAt: alertTime });
-      seedPrice(code, 100000, p1);
-      seedPrice(code, 90000, p2); // fell = HIT
+      const code = codes[i]!;
+      db.prepare(`
+        INSERT INTO alerts (id, triggered_at, severity, signals_json, affected_actions_json, message, read, outcome, outcome_at)
+        VALUES (?, ?, ?, ?, ?, ?, 0, 'HIT', ?)
+      `).run(
+        `f${i}`,
+        alertTime,
+        "medium",
+        JSON.stringify([{ type: "price_drop", actionCode: code, severity: "medium", confidence: 0.8 }]),
+        JSON.stringify([{ code, expectedImpact: "down", confidence: 0.8 }]),
+        `${code} price_drop signal`,
+        new Date(base + i * 3_600_000 + 2 * 86_400_000).toISOString(),
+      );
     }
 
     const result = await callTool(server, "get_alert_accuracy", { days: 30 });
     const text = result.content[0]!.text;
-    // Should show 100% accuracy (2 hits out of 2 total)
+    // Should show 100% accuracy (20 hits out of 20 total)
     expect(text).toContain("100%");
   });
 
@@ -415,6 +428,60 @@ describe("AC-2 — intraday fallback gated by calendarDaysElapsed", () => {
     const alertTs = now - 25 * 3_600_000;
     const elapsed = Math.floor((now - alertTs) / 86_400_000);
     expect(elapsed).toBe(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-4 — insufficientSample guard: n<20 triggers warning, suppresses % line
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("AC-4 — insufficientSample guard (n<20)", () => {
+  it("AC-4: 9 alerts (2 HIT, 7 MISS) → insufficientSample=true, no %, Vietnamese warning present", () => {
+    // Build 9 rows: 2 with HIT outcome, 7 with MISS outcome (scoreable=9 < 20)
+    const base = Date.now() - 5 * 86_400_000;
+    const makeRow9 = (id: string, outcome: "HIT" | "MISS"): AlertRowLike => ({
+      id,
+      triggered_at: new Date(base).toISOString(),
+      severity: "medium",
+      signals_json: JSON.stringify([
+        { type: "price_drop", actionCode: "TST9", severity: "medium", confidence: 0.8 },
+      ]),
+      affected_actions_json: JSON.stringify([
+        { code: "TST9", expectedImpact: "down", confidence: 0.8 },
+      ]),
+      outcome,
+      outcome_at: new Date(base + 86_400_000).toISOString(),
+      outcome_detail: null,
+    });
+
+    const rows: AlertRowLike[] = [
+      makeRow9("ac4-h1", "HIT"),
+      makeRow9("ac4-h2", "HIT"),
+      makeRow9("ac4-m1", "MISS"),
+      makeRow9("ac4-m2", "MISS"),
+      makeRow9("ac4-m3", "MISS"),
+      makeRow9("ac4-m4", "MISS"),
+      makeRow9("ac4-m5", "MISS"),
+      makeRow9("ac4-m6", "MISS"),
+      makeRow9("ac4-m7", "MISS"),
+    ];
+
+    const report = formatAccuracyReport(rows, 30);
+
+    // AC-4a: flag is set
+    expect(report.insufficientSample).toBe(true);
+
+    // AC-4b: accuracy % NOT in text (e.g. "22%" should not appear)
+    expect(report.text).not.toMatch(/\d+%/);
+
+    // AC-4c: Vietnamese warning present and contains N=9
+    expect(report.text).toContain("Chua du du lieu danh gia");
+    expect(report.text).toContain("N=9");
+
+    // AC-4d: counts are still correct
+    expect(report.hits).toBe(2);
+    expect(report.misses).toBe(7);
+    expect(report.total).toBe(9);
   });
 });
 

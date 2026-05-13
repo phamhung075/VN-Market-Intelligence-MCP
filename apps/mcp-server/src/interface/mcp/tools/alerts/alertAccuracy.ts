@@ -167,6 +167,8 @@ export interface AccuracyReport {
   hits: number;
   misses: number;
   unknowns: number;
+  /** True when scoreable (hits+misses) < 20 — not enough data to trust the % */
+  insufficientSample: boolean;
 }
 
 /**
@@ -193,6 +195,7 @@ export function formatAccuracyReport(
     hits: 0,
     misses: 0,
     unknowns: 0,
+    insufficientSample: false,
   });
 
   if (rows.length === 0) {
@@ -302,64 +305,80 @@ export function formatAccuracyReport(
   }
 
   const scoreable = hits + misses;
+  const insufficientSample = scoreable < 20;
   const hitPct = scoreable === 0 ? 0 : Math.round((hits / scoreable) * 100);
   const missPct = scoreable === 0 ? 0 : Math.round((misses / scoreable) * 100);
   const unknownPct = 100 - hitPct - missPct;
 
-  const lines: string[] = [
-    `Độ chính xác tín hiệu (${days} ngày)`,
-    "",
-  ];
+  const lines: string[] = [];
+
+  // AC-4: prepend warning when sample is too small to trust %
+  if (insufficientSample) {
+    lines.push(`Chua du du lieu danh gia (N=${scoreable}, can ≥20)`);
+    lines.push("");
+  }
+
+  lines.push(`Độ chính xác tín hiệu (${days} ngày)`);
+  lines.push("");
 
   if (filter) {
     lines.push(`Cổ phiếu: ${filter}`);
     lines.push("");
   }
 
-  lines.push(
-    `Tổng: ${totalAlerts} cảnh báo | Hit: ${hits} (${hitPct}%) | Miss: ${misses} (${missPct}%) | Unknown: ${unknowns} (${unknownPct}%)`,
-  );
-
-  // ── Signal type breakdown ─────────────────────────────────────────────────
-  if (signalBreakdown.size > 0) {
-    lines.push("");
-    lines.push("Phân tích theo loại tín hiệu:");
-
-    const sorted = [...signalBreakdown.entries()].sort(
-      ([, a], [, b]) => b.hit + b.miss - (a.hit + a.miss),
+  if (insufficientSample) {
+    // Skip accuracy % line — sample too small
+    lines.push(
+      `Tổng: ${totalAlerts} cảnh báo | Hit: ${hits} | Miss: ${misses} | Unknown: ${unknowns}`,
     );
+  } else {
+    lines.push(
+      `Tổng: ${totalAlerts} cảnh báo | Hit: ${hits} (${hitPct}%) | Miss: ${misses} (${missPct}%) | Unknown: ${unknowns} (${unknownPct}%)`,
+    );
+  }
 
-    for (const [sigType, counts] of sorted) {
-      const scoreable = counts.hit + counts.miss;
-      if (scoreable === 0) {
-        lines.push(`  ${sigType}: N/A (${counts.unknown} unknown)`);
-      } else {
-        const pct = Math.round((counts.hit / scoreable) * 100);
-        lines.push(`  ${sigType}: ${pct}% (${counts.hit}/${scoreable})`);
+  // ── Signal type breakdown and worst stocks — only when sample is sufficient ─
+  if (!insufficientSample) {
+    if (signalBreakdown.size > 0) {
+      lines.push("");
+      lines.push("Phân tích theo loại tín hiệu:");
+
+      const sorted = [...signalBreakdown.entries()].sort(
+        ([, a], [, b]) => b.hit + b.miss - (a.hit + a.miss),
+      );
+
+      for (const [sigType, counts] of sorted) {
+        const sigScoreable = counts.hit + counts.miss;
+        if (sigScoreable === 0) {
+          lines.push(`  ${sigType}: N/A (${counts.unknown} unknown)`);
+        } else {
+          const pct = Math.round((counts.hit / sigScoreable) * 100);
+          lines.push(`  ${sigType}: ${pct}% (${counts.hit}/${sigScoreable})`);
+        }
       }
     }
-  }
 
-  // ── Stock breakdown — worst performers ───────────────────────────────────
-  const worstStocks: Array<{ code: string; hit: number; total: number; accuracy: number }> = [];
+    // ── Stock breakdown — worst performers ─────────────────────────────────
+    const worstStocks: Array<{ code: string; hit: number; total: number; accuracy: number }> = [];
 
-  for (const [code, counts] of stockBreakdown.entries()) {
-    const scoreable = counts.hit + counts.miss;
-    if (scoreable === 0) continue;
-    const accuracy = Math.round((counts.hit / scoreable) * 100);
-    worstStocks.push({ code, hit: counts.hit, total: scoreable, accuracy });
-  }
+    for (const [code, counts] of stockBreakdown.entries()) {
+      const stockScoreable = counts.hit + counts.miss;
+      if (stockScoreable === 0) continue;
+      const accuracy = Math.round((counts.hit / stockScoreable) * 100);
+      worstStocks.push({ code, hit: counts.hit, total: stockScoreable, accuracy });
+    }
 
-  worstStocks.sort((a, b) => a.accuracy - b.accuracy);
+    worstStocks.sort((a, b) => a.accuracy - b.accuracy);
 
-  if (worstStocks.length > 0) {
-    lines.push("");
-    lines.push("Cổ phiếu chính xác thấp nhất:");
+    if (worstStocks.length > 0) {
+      lines.push("");
+      lines.push("Cổ phiếu chính xác thấp nhất:");
 
-    const displayCount = Math.min(5, worstStocks.length);
-    for (let i = 0; i < displayCount; i++) {
-      const s = worstStocks[i]!;
-      lines.push(`  ${s.code}: ${s.total} cảnh báo, ${s.accuracy}% chính xác`);
+      const displayCount = Math.min(5, worstStocks.length);
+      for (let i = 0; i < displayCount; i++) {
+        const s = worstStocks[i]!;
+        lines.push(`  ${s.code}: ${s.total} cảnh báo, ${s.accuracy}% chính xác`);
+      }
     }
   }
 
@@ -381,6 +400,7 @@ export function formatAccuracyReport(
     hits,
     misses,
     unknowns,
+    insufficientSample,
   };
 }
 
