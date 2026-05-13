@@ -73,7 +73,10 @@ All sources use standard RSS 2.0:
 
 ## Notes
 
-- **MCP push endpoint returning 404** as of 2026-05-13: `PUSH 245 items → /api/push-news http=404`. This is a MCP-server-side routing issue, NOT an upstream RSS issue. All 14 upstream feeds are healthy.
+- **MCP push endpoint was returning 404** as of 2026-05-13: `PUSH 245 items → /api/push-news http=404`.
+  - **Root cause diagnosed 2026-05-13:** Cloudflare tunnel had no ingress rule for `/api/*`. All `/api/push-news` requests hit the catch-all `http_status:404` before reaching mcp-server. The route and handler ARE correctly implemented.
+  - **Fix applied:** Added `path: ^/api/` ingress rule in `~/.cloudflared/config.yml`. Tunnel restart required via `ops` agent.
+  - **Contract confirmed:** VPS body shape `{ title, url, publishedAt, content, source }` matches handler schema exactly. Heartbeat sentinel `[{"title":"__heartbeat__","url":"","source":"heartbeat",...}]` accepted (handler treats it as a no-op). Verified by `1892b-vps-contract-push.test.ts`.
 - CafeF `server: cf-rp` means Cloudflare is in the chain for the main domain but not blocking RSS. If Cloudflare activates managed challenge in future, `cafef.vn` RSS would break first.
 - `fetch-vn-news.sh` uses a rotating User-Agent array and 3-attempt retry — this is appropriate for the current source set.
 - VietStock RSS sits on a separate nginx server (not the Cloudflare-protected `finance.vietstock.vn`).

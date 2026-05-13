@@ -77,5 +77,8 @@ The endpoint returns a JSON array. Each element is a quote object:
 
 - This same endpoint is used by BOTH `vn-price-fetch` AND `vn-foreign-flow` services — foreign flow fields (`fBVol`, `fSVolume`, `fRoom`) are embedded in every quote object.
 - `closePrice` is in full VND (e.g. 60100.0), while `lastPrice` / `highPrice` / `lowPrice` appear to be in thousands VND (59.1 = 59,100 VND). Watch unit mismatch.
-- Price-fetch service: upstream fetch is healthy. MCP push is failing (38 consecutive failures as of 2026-05-13 04:40 UTC — `cannot reach MCP server`). This is an MCP-side issue, NOT an upstream issue.
+- Price-fetch service: upstream fetch is healthy. MCP push was failing (38 consecutive failures as of 2026-05-13 04:40 UTC — `cannot reach MCP server`).
+  - **Root cause diagnosed 2026-05-13:** Cloudflare tunnel (`~/.cloudflared/config.yml`) had no ingress rule for `/api/*`. All `/api/push-prices` requests hit the catch-all `http_status:404` before reaching mcp-server. The mcp-server route and handler are correct and have been verified by contract tests (`1892b-vps-contract-push.test.ts`).
+  - **Fix applied:** Added `path: ^/api/` ingress rule pointing to `http://localhost:4000` in `~/.cloudflared/config.yml`. Tunnel restart required via `ops` agent.
+  - **Contract confirmed:** VPS body shape `{ code, price, volume, change_pct, ref_price, high, low, type }` matches handler schema exactly. Price unit conversion (stock × 1000, index/global_index as-is) is correctly implemented.
 - No rate limit observed at probe-time. Deployed scraper fetches every 60s with no throttling concerns.
