@@ -4,6 +4,28 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### SPIKE_006-c61-T3 — AC-2 calendarDaysElapsed + intraday gate (2026-05-13, DONE)
+
+**Problem:** `scoreAlert` Path 2 always tried intraday 1-12h fallback, including for same-calendar-day alerts. This biased accuracy upward on day-1 data.
+
+**Fix:** In `scoreAlert`, compute `calendarDaysElapsed = Math.floor((now - alertTs) / 86_400_000)` and gate intraday block behind `calendarDaysElapsed >= 1`. One condition change (`if (!priceAfter)` → `if (!priceAfter && calendarDaysElapsed >= 1)`).
+
+**Tests:** 4 new AC-2 cases in `183-alert-accuracy.test.ts`:
+- AC-2a: elapsed=0 (30min ago) + intraday 5% drop → UNKNOWN (gate closed)
+- AC-2b: elapsed=1 (25h ago) + intraday 5% drop → HIT (gate open)
+- AC-2c/d: pure math verification (floor division correctness)
+
+**Key lessons:**
+- Biome linter auto-removes unused imports on file save — must use imported symbol immediately in same edit
+- `Parameters<typeof fn>[0][number]` pattern extracts array element type for test row construction
+- RED confirmation: 1 fail before impl (AC-2a unknowns=0 instead of 1); GREEN after: 16/16
+
+**Counts:** 16 pass / 0 fail. SHA 4aeb3470. tsc clean.
+
+Zone health: alertAccuracy.ts line coverage 66.67% (Path 1 DB-scored branch partially uncovered); no drift detected in zone structure.
+
+---
+
 ### Task 1879b — get_fed_liquidity_spread MCP tool (#130) (2026-05-12, DONE)
 
 **Files:** 4 new, 3 modified

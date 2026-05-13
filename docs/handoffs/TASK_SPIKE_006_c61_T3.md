@@ -48,3 +48,17 @@ In `formatAccuracyReport` Path 2 (NULL-outcome rows):
 ## Next Task
 
 After this task ships with green tests, developer picks up T-2 (delete scoreAlert, wire domain call).
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts` L205-225 — added `calendarDaysElapsed` computation + gate (`if (!priceAfter && calendarDaysElapsed >= 1)`)
+  - `apps/mcp-server/src/__tests__/183-alert-accuracy.test.ts` L14-22, L311-413 — added `formatAccuracyReport` import + 4 AC-2 test cases
+- **Tests written:** `183-alert-accuracy.test.ts` — 4 new AC-2 cases (AC-2a gate-blocked, AC-2b gate-open, AC-2c/d math), all GREEN
+- **Git commits:** `4aeb3470 fix(alerts/ac-2): gate intraday fallback behind calendarDaysElapsed >= 1`
+- **Type check:** clean
+- **Service tests:** 16 pass / 0 fail
+- **Docs updated:** NONE (no microservice docs touched)
+- **Graphify:** skipped (no docs impacted)
+- **Deviation from spec:** None. Implemented exactly as architect specified in §2 + §3.
