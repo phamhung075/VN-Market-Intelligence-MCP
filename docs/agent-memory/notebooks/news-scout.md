@@ -373,3 +373,6 @@
 - Items: 20 | Impacts: 5 (≥6) | Signals: [chain_catalyst×1 (#3006)] | Regime: NEUTRAL | Carry: default
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
 - Key: Thêm CTCK hạ dự phóng VN-Index 2026 (bearish, 8/10, regime_adj=8.0) + CTCK cảnh báo "xanh vỏ đỏ lòng" khi VN-Index áp sát đỉnh → chain_catalyst macro-bearish, affects securities/banking/RE/tech/steel. FII bán ròng 800tỷ (VIC, impact 4) → suppressed below threshold. STB bullish 10/10 (nhân sự cấp cao) → suppressed (not in watchlist). Brent 107.22 HIGH macro alert already open. Gold 4683.2 (-1.14σ vs 90d mean) — no spike. No PMI data.
+
+### Cycle 12:19 UTC
+- BLOCKED at step 0: get_cycle_bootstrap — MCP gateway unreachable (connection refused port 3000). Signal dropped. Cycle skipped.
