@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 07:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 08:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -605,3 +605,24 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4800 |
+
+### Cycle (08:38–08:40)
+- Stocks: 31 watchlist | Priced: 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.46σ, VRE 1.67σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (news-scout signals #3063/#3064 explicit: regime=TIGHTENING, regime_adj_score=10) | DXY: USD STRENGTHENING (Brent $107.19 + Fed hike fears) | US10Y: RISK-OFF (gold falling "nỗi lo Fed tăng lãi suất") | CARRY: FII_OUTFLOW_RISK | fx_pressure: [banking, realty] | pe_risk: [VRE, VHM, VIC]
+- GAS +6.93% (2.46σ, 30d stddev 2.82%, vol 635K) → signal #3066 → alert-commander. Whole oil sector +5.3% avg (PLX +6.8%, OIL +7.0%, PVD +6.4%). Brent $107.19. GAS outperforms sector (6.93% vs 5.3%). Evidence bullish 0.633. TA insufficient (15/35 candles). Session continuation (5th signal: #3041→#3045→#3053→#3061→#3066).
+- VRE -6.91% (1.67σ, 30d stddev 4.14%, vol 1.44M) → signal #3067 → alert-commander. Crosses TIGHTENING 1.5σ threshold (prior cycles suppressed at 1.86σ NEUTRAL 2.0σ). fx_pressure=true (realty+USD strengthening). pe_compression_risk=true (large-cap BDS, RISK-OFF, FII exposure). Real estate sector -1.28% 1d.
+- VHM -4.81% (1.21σ, 30d stddev 3.96%) — below 1.5σ threshold; pe_compression_risk context noted.
+- Sector rotation: Oil/Gas +5.57% 1d — clear session leader. Real estate -1.28%, Banking -0.40% lagging. All 16 sectors STABLE (1d only, no 5-session rotation).
+- Open alerts: 20 HIGH (banking sector price_drop: STB/EIB/ACB/MBB/VPB/CTG/BID/VCB; realty: VHM/VRE/VIC/D2D/KBC/NVL/TCH/VNH; securities: HCM/SSI/VCI; agriculture: GVR; retail: MWG)
+- Agent signals: news-scout #3063 (GAS/Brent $106.89→CPI→SBV tightening risk, impact=10); #3064 (VN-Index near ATH, CTCK hạ dự phóng 2026, impact=10). Chain findings: 0 (last 15 min).
+
+## Metrics (cycle 2026-05-13 08:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 12 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5500 |

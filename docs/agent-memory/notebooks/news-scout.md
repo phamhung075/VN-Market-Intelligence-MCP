@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 07:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 08:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (08:15–08:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3062 FPT, chain_catalyst×2 #3063 GAS/CPI, #3064 VN-Index ATH macro] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT lãi T4/2026 +21% (bullish, impact chain 7, conf 84%) → urgent_news #3062, regime_adj=4.9 (TIGHTENING×0.7). GAS +6.93% (4th consecutive cycle), Brent $106.89 confirmed >$100 → chain_catalyst #3063 bearish, cpi_pressure_risk=true, affected: GAS/DPM/POW/BID/VCB/VHM. CTCK tiếp tục hạ dự phóng VN-Index 2026 + "xanh vỏ đỏ lòng" warning (4th cycle pattern) → chain_catalyst #3064 bearish macro, regime_adj=10, affected: HCM/SSI/VCI/VND. VHM -4.81% (Vinhomes bond issuance 3,000B — bearish debt signal, regime_adj=6.5, not posted — no breaking news hook).
+- Suppressed: VHM bond 3,000B (neutral impact 5), IMP exec sales (not watchlist), HAG chairman buy (not watchlist), silver/gold fund global (no VN direct hit), SSIAM–Japan partnership (impact 8 securities but no direct watchlist ticker), Hà Đô sub-company (neutral), AgriS insider sell (not watchlist), Dabaco dividend (not watchlist).
+- Notes: REGIME upgraded TIGHTENING this cycle (Fed rate hike fears → gold sharp reversal, news "giá vàng giảm mạnh vì nỗi lo Fed tăng lãi suất"). GAS sustained surge now 4 consecutive cycles — Brent $106.89 the confirmed driver. VN-Index ATH warning now 4-day escalating pattern. Market approaching close (08:18 UTC, closes 08:59 UTC). FPT earnings underreaction continues (+0.14% only). CARRY_REGIME: NEUTRAL.
 
 ### Cycle (07:15–07:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3059 FPT, chain_catalyst×1 #3060 FPT/SIS] | Regime: MIXED | Carry: NEUTRAL
