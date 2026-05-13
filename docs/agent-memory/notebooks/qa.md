@@ -1,5 +1,57 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** c81 BATCH(3) gate — 1899a-cron + 1888e + CLEAN-c81
+
+## Recent session — 2026-05-13 (c81 BATCH(3) — ALL APPROVED)
+
+### 1899a-cron (commits 89ad6c4a + 50c74418)
+
+Files changed: `apps/mcp-server/src/scheduler/cronConfig.ts` (+1 `newsHeadlinesRefresh` CRONS entry), `apps/mcp-server/src/scheduler/news-analysis/index.ts` (+1 barrel export), `apps/mcp-server/src/scheduler/startScheduler.ts` (+1 import + 5-line cron.schedule block), `mcp.config.json` (+8L scheduler.newsHeadlinesRefresh section). Total: 21 insertions.
+
+AC verification:
+- barrel export `newsHeadlinesRefreshJob` in news-analysis/index.ts: PASS
+- cronConfig.ts CRONS entry `newsHeadlinesRefresh: Bun.env['CRON_NEWS_HEADLINES_REFRESH'] ?? '*/30 * * * *'`: PASS
+- startScheduler.ts import `{ newsHeadlinesRefreshJob } from './news-analysis/index.js'` at line 58: PASS
+- startScheduler.ts `cron.schedule(CRONS.newsHeadlinesRefresh, ...)` with `jobRunRepo.wrapRun('newsHeadlinesRefreshJob', ...)` at lines 682-686: PASS
+- mcp.config.json `scheduler.newsHeadlinesRefresh` with cadence `*/30 * * * *`: PASS
+- `jobRunRepo.wrapRun` pattern matches taAlertScan/macroRefresh entries: PASS
+
+TSC: 0 errors (bun tsc --noEmit, clean). Full suite: 9331 pass / 33-35 fail (flaky pre-existing, exit 0) / 38 skip. E2E newsHeadlinesRefreshJob.e2e.test.ts: 3/3 pass.
+
+DDD: newsHeadlinesRefreshJob imports `../../infrastructure/logger.js` only — no domain/ or unrelated-service imports. cronConfig.ts: pure config, zero imports. PASS.
+
+Security: Bun.env used throughout (cronConfig.ts Bun.env, newsHeadlinesRefreshJob.ts Bun.env for NEWS_FETCH_URL/MCP_SERVER_URL/VPS_PUSH_API_KEY). No process.env, no hardcoded secrets. PASS.
+
+Diff-stat sanity: 21 insertions — matches cherry-pick output.
+
+Verdict: APPROVED.
+
+### 1888e (commits a7bb2313 + 763fe826)
+
+File changed: `docs/references/agent-roster.md` (4 lines, 2 insertions / 2 deletions).
+
+AC verification:
+- "7 agents" / "8 agents" contradiction: grep returned only line 82 (unrelated "7 days" text) — no stale "7 agents" or "8 agents" strings remain. PASS.
+- SSOT pointer used: line 9 "Count → `docs/data/project-stats.json#analysisAgentCount`". PASS.
+- Value 9: agent-roster.md lines 120 + 132 both read "9 agents". project-stats.json#analysisAgentCount = 9. Cowork agent files (.claude/agents/*.md excluding dev-*): count verified via roster section. PASS.
+
+Doc-only — no tsc/test requirement. Verdict: APPROVED.
+
+### CLEAN-c81 (commits 19e29700 + 2cfd307b)
+
+- TASKS.md Todo table: `1899a-gateway` plain row absent. Only SHIPPED-c80 suffix row at line 55 in Done table. PASS.
+- `git branch`: no `worktree-agent-a1578231ec1b3deec` or `worktree-agent-a63fd9e29f6856090` branches. PASS.
+- HEAD.lock: absent. PASS.
+
+Verdict: APPROVED.
+
+### Cross-batch checks
+- HEAD.lock absent: PASS.
+- No accidental commits to .gitignore/package.json/lock files: PASS (diffs clean).
+- Diff-stat sanity: 1899a-cron 21L, 1888e 2L change, CLEAN 1L deletion — all nominal.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1899a-gateway + 1899a-tests BATCH(2) gate (c80)
 
 ## Recent session — 2026-05-13 (1899a-gateway — APPROVED)

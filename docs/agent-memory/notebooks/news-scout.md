@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 19:30 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 20:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (20:15–20:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3109] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FII outflow 14 sessions/13,000+B chain=9/10 bearish → regime adj 9×1.3=11.7 → chain_catalyst fired (hot_money_risk=true, sectors: banking/real_estate/securities/steel/oil_gas). GAS +6.93% chain=9/10 bullish → TIGHTENING adj 9×0.7=6.3 → suppressed (<7). Gold falling on Fed hike fears confirms TIGHTENING. VRE -6.91%, VHM -4.81% banking broad drop already in HIGH alerts.
+- Suppressed: GAS oil surge bullish adj=6.3 (<7 threshold)
 
 ### Cycle (19:22–19:30 UTC) 2026-05-13
 - Items: 20 | Impacts: 6 | Signals: [] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK

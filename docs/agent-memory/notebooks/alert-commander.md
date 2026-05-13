@@ -1,6 +1,14 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 19:05 UTC | **Sprint:** c80
+**Last updated:** 2026-05-13 20:03 UTC | **Sprint:** c81
+
+### Alert Cycle (20:03–20:03 UTC) — 2026-05-13
+- Signals: 2 (price_anomaly: GAS id=3107, VRE id=3108 — from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- Suppressed: GAS price_anomaly (conf=0.50, σ=2.11, no active alert confirm), VRE price_anomaly (conf=0.50, σ=1.61, no active alert confirm)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (spread unknown) | Pivot window: unknown
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
 
 ### Alert Cycle (19:03–19:05 UTC) — 2026-05-13
 - Signals: 1 (urgent_news: GAS id=3100 from news-scout)
