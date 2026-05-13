@@ -1,5 +1,27 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-reuters-fallback gate (c78)
+
+## Recent session — 2026-05-13 (1899a-reuters-fallback ReutersStealthFallback — APPROVED)
+
+Feat commit `3e04dc5f` on main. Branch `task/1899a-reuters-fallback` already deleted. Files: 1 prod (`reuters-stealth.ts` 133L) + 3 test files (`-dom.test.ts` 197L / `-detect.test.ts` 158L / `-lifecycle.test.ts` 119L). All within 200L split-policy cap.
+
+Targeted tests: 28/28 pass (37 expect() calls). Full suite `apps/news-fetch/`: 112/112 pass, 0 regressions. TSC: `bun tsc --noEmit` = 0 errors (clean, no output).
+
+DDD PASS: 3 imports only — `../../domain/repositories.js`, `../../domain/models.js`, `./playwright-browser-factory.js`. grep confirmed zero `application/` or `interface/` imports.
+
+Security PASS: no `process.env`, no hardcoded secrets, no SQL. All Playwright calls mocked in tests.
+
+Pre-existing TSC errors (dev flagged `playwright-browser-factory.ts:23` + `1899a-factory.test.ts:89`): tsc returns 0 errors under current tsconfig. Line 23 = standard default import; line 89 = `as unknown as` cast for Bun mock typing. Not real type bugs — no new task filed.
+
+AC: 28/28 items PASS. Key: DataDome dual-detection (header `x-dd-b:3` + body `captcha-delivery.com`), `browser.close()` in finally (tested by lifecycle suite), `confidence:'LOW'` on all paths, `normalizeDate` exported (improvement over bloomberg sibling). Split-policy clean — developer applied lesson from c77 bloomberg 494L flag.
+
+Pattern: identical to 1899a-bloomberg (c77, PerimeterX). Sibling shape confirmed clean.
+
+Pipeline-state: status=idle, nextAgent=pm, 1899a-reuters-fallback APPROVED.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1903a dispatch regression-shape guard gate (c77)
 
 ## Recent session — 2026-05-13 (1903a — APPROVED)
