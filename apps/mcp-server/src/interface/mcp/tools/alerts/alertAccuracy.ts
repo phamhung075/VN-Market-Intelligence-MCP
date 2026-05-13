@@ -35,6 +35,11 @@ import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { writeAlertOutcome } from "../../../../infrastructure/db/alertStore.js";
 import type { AlertOutcome } from "../../../../infrastructure/db/alertStore.js";
+import {
+  classifyAlertType,
+  scoreAlertOutcome,
+} from "../../../../domain/services/alertOutcomeScorer.js";
+import type { PricePoint } from "../../../../domain/services/alertOutcomeScorer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -146,105 +151,6 @@ function alertPredictedDirection(signalTypes: string[]): PredictedDirection {
   return "neutral";
 }
 
-/**
- * Score one alert against the actual price history.
- *
- * Scoring rules:
- *   - Direction is "neutral" → UNKNOWN (not scoreable)
- *   - No price data at or after alert time → UNKNOWN
- *   - Actual price change aligns with predicted direction → HIT
- *   - Actual price change opposes predicted direction     → MISS
- *   - No meaningful price change (< 0.1%) → UNKNOWN (ambiguous)
- *
- * @param predictedDir - Direction the signal predicted
- * @param alertTime    - ISO 8601 timestamp when the alert was triggered
- * @param code         - Stock ticker to look up in market_prices_history
- * @returns AccuracyResult
- */
-function scoreAlert(
-  predictedDir: PredictedDirection,
-  alertTime: string,
-  code: string,
-): AccuracyResult {
-  if (predictedDir === "neutral") return "UNKNOWN";
-
-  const db = getDb();
-  const alertTs = new Date(alertTime).getTime();
-  if (Number.isNaN(alertTs)) return "UNKNOWN";
-
-  // Find the price closest to (but after) the alert time
-  const priceAtAlert = db
-    .prepare<PriceRow, [string, string]>(`
-      SELECT price, fetched_at
-      FROM market_prices_history
-      WHERE code = ? AND fetched_at >= ?
-      ORDER BY fetched_at ASC
-      LIMIT 1
-    `)
-    .get(code, alertTime) as PriceRow | undefined;
-
-  if (!priceAtAlert) return "UNKNOWN";
-
-  // Find a price 1-3 days after the alert
-  const minLookForward = new Date(alertTs + 1 * 86_400_000).toISOString();
-  const maxLookForward = new Date(alertTs + 3 * 86_400_000).toISOString();
-
-  let priceAfter = db
-    .prepare<PriceRow, [string, string, string]>(`
-      SELECT price, fetched_at
-      FROM market_prices_history
-      WHERE code = ? AND fetched_at >= ? AND fetched_at <= ?
-      ORDER BY fetched_at ASC
-      LIMIT 1
-    `)
-    .get(code, minLookForward, maxLookForward) as PriceRow | undefined;
-
-  // Intraday fallback (task 307 / report #673): when the strict 1-3 day
-  // window has no data yet (early-stage deployment, very recent alert),
-  // try a 1-12h forward window instead. Trades temporal precision for
-  // coverage so accuracy stops being '100% UNKNOWN' on day 1.
-  //
-  // AC-2 gate: only allow intraday fallback when calendarDaysElapsed >= 1.
-  // A same-calendar-day alert (e.g. fired 14:00, queried 14:30) must NOT
-  // score via intraday — doing so would conflate "no multi-day data yet"
-  // with "price already confirmed intraday". The 1-12h window is only
-  // meaningful once at least one calendar day has elapsed.
-  const now = Date.now();
-  const calendarDaysElapsed = Math.floor((now - alertTs) / 86_400_000);
-
-  if (!priceAfter && calendarDaysElapsed >= 1) {
-    const intradayMin = new Date(alertTs + 1 * 3_600_000).toISOString();
-    const intradayMax = new Date(alertTs + 12 * 3_600_000).toISOString();
-    priceAfter = db
-      .prepare<PriceRow, [string, string, string]>(`
-        SELECT price, fetched_at
-        FROM market_prices_history
-        WHERE code = ? AND fetched_at >= ? AND fetched_at <= ?
-        ORDER BY fetched_at ASC
-        LIMIT 1
-      `)
-      .get(code, intradayMin, intradayMax) as PriceRow | undefined;
-  }
-
-  if (!priceAfter) return "UNKNOWN";
-
-  const changePct =
-    ((priceAfter.price - priceAtAlert.price) / priceAtAlert.price) * 100;
-
-  // Threshold: ignore changes smaller than 0.1% (noise)
-  if (Math.abs(changePct) < 0.1) return "UNKNOWN";
-
-  if (predictedDir === "down" && changePct < 0) return "HIT";
-  if (predictedDir === "up" && changePct > 0) return "HIT";
-  // Volatility predictors (volume_spike) are HIT when ANY meaningful price
-  // move follows the alert. They never MISS — only HIT or UNKNOWN — because
-  // volume spikes predict movement, not direction.
-  if (predictedDir === "volatility") {
-    return Math.abs(changePct) >= 0.5 ? "HIT" : "UNKNOWN";
-  }
-  return "MISS";
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Output formatter
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,9 +223,58 @@ export function formatAccuracyReport(
       result = (o === "HIT" || o === "MISS") ? (o as AccuracyResult) : "UNKNOWN";
       scoredFromDb++;
     } else {
-      // ── Path 2: on-the-fly price comparison (backward compat) ─────────
-      const predictedDir = alertPredictedDirection(signalTypes);
-      result = scoreAlert(predictedDir, row.triggered_at, code);
+      // ── Path 2: domain scorer (AC-1) ──────────────────────────────────
+      const db = getDb();
+      const alertTs = new Date(row.triggered_at).getTime();
+      const calendarDaysElapsed = Number.isNaN(alertTs)
+        ? 0
+        : Math.floor((Date.now() - alertTs) / 86_400_000);
+
+      const classification = classifyAlertType(row.signals_json, null);
+
+      // Fetch first price at/after alert time (must be in the past — no future timestamps)
+      const priceAtAlertRow = Number.isNaN(alertTs)
+        ? undefined
+        : (db
+            .prepare<PriceRow, [string, string]>(`
+              SELECT price, fetched_at
+              FROM market_prices_history
+              WHERE code = ? AND fetched_at >= ? AND fetched_at <= datetime('now')
+              ORDER BY fetched_at ASC
+              LIMIT 1
+            `)
+            .get(code, row.triggered_at) as PriceRow | undefined);
+      const alertPrice = priceAtAlertRow?.price ?? null;
+
+      // Fetch window prices AFTER the alert baseline price (exclusive start) and
+      // within evalWindowDays, capped at now — no future timestamps.
+      const windowStart = priceAtAlertRow?.fetched_at ?? row.triggered_at;
+      const windowEnd = Number.isNaN(alertTs)
+        ? row.triggered_at
+        : new Date(alertTs + classification.evalWindowDays * 86_400_000).toISOString();
+      const windowRows = Number.isNaN(alertTs) || !priceAtAlertRow
+        ? []
+        : (db
+            .prepare<PriceRow, [string, string, string]>(`
+              SELECT price, fetched_at
+              FROM market_prices_history
+              WHERE code = ? AND fetched_at > ? AND fetched_at <= min(?, datetime('now'))
+              ORDER BY fetched_at ASC
+            `)
+            .all(code, windowStart, windowEnd) as PriceRow[]);
+      const windowPrices: PricePoint[] = windowRows.map((r) => ({
+        price: r.price,
+        fetchedAt: r.fetched_at,
+      }));
+
+      const domainResult = scoreAlertOutcome(
+        classification,
+        alertPrice,
+        windowPrices,
+        calendarDaysElapsed,
+      );
+      const o = domainResult.outcome.toUpperCase();
+      result = (o === "HIT" || o === "MISS") ? (o as AccuracyResult) : "UNKNOWN";
     }
 
     totalAlerts++;

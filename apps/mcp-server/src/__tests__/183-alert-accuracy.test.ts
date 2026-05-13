@@ -17,6 +17,12 @@ import {
   registerAlertAccuracyTool,
   formatAccuracyReport,
 } from "../interface/mcp/tools/alerts/alertAccuracy.js";
+import {
+  classifyAlertType,
+  scoreAlertOutcome,
+} from "../domain/services/alertOutcomeScorer.js";
+import type { PricePoint } from "../domain/services/alertOutcomeScorer.js";
+import * as alertAccuracyModule from "../interface/mcp/tools/alerts/alertAccuracy.js";
 
 // Type alias to keep AC-2 row construction readable
 type AlertRowLike = Parameters<typeof formatAccuracyReport>[0][number];
@@ -409,5 +415,113 @@ describe("AC-2 — intraday fallback gated by calendarDaysElapsed", () => {
     const alertTs = now - 25 * 3_600_000;
     const elapsed = Math.floor((now - alertTs) / 86_400_000);
     expect(elapsed).toBe(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-1 — NULL-outcome alert row uses domain scorer path
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("AC-1 — NULL-outcome alert row uses domain scorer (scoreAlert deleted)", () => {
+  beforeEach(() => {
+    const db = getDb();
+    db.exec("DELETE FROM market_prices_history");
+  });
+
+  it("AC-1a: scoreAlert is NOT an export of alertAccuracy module", () => {
+    // Verify the local scoreAlert function was deleted — not reachable via exports
+    expect((alertAccuracyModule as Record<string, unknown>)["scoreAlert"]).toBeUndefined();
+  });
+
+  it("AC-1b: NULL-outcome row with price drop — formatAccuracyReport matches direct scoreAlertOutcome call", () => {
+    // Alert: price_drop, 5 days ago, outcome = NULL
+    const now = Date.now();
+    const alertTs = now - 5 * 86_400_000;
+    const triggeredAt = new Date(alertTs).toISOString();
+    const code = "TSAC1B";
+
+    // Seed: alertPrice at +1min, windowPrice at +2days (5% drop)
+    const alertPriceFetchedAt = new Date(alertTs + 60_000).toISOString();
+    const windowPriceFetchedAt = new Date(alertTs + 2 * 86_400_000).toISOString();
+    const alertPriceValue = 100_000;
+    const windowPriceValue = 95_000;
+
+    const db = getDb();
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run(code, alertPriceValue, alertPriceFetchedAt);
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run(code, windowPriceValue, windowPriceFetchedAt);
+
+    // Build a NULL-outcome AlertRow (Path 2 will trigger)
+    const row: AlertRowLike = {
+      id: "ac1b",
+      triggered_at: triggeredAt,
+      severity: "medium",
+      signals_json: JSON.stringify([
+        { type: "price_drop", actionCode: code, severity: "medium", confidence: 0.8 },
+      ]),
+      affected_actions_json: JSON.stringify([{ code, expectedImpact: "down", confidence: 0.8 }]),
+      outcome: null,
+      outcome_at: null,
+      outcome_detail: null,
+    };
+
+    // formatAccuracyReport result (Path 2 via domain scorer)
+    const report = formatAccuracyReport([row], 30);
+
+    // Direct domain scorer call with the same inputs
+    const classification = classifyAlertType(row.signals_json, null);
+    const calendarDaysElapsed = Math.floor((now - alertTs) / 86_400_000);
+    const windowPrices: PricePoint[] = [{ price: windowPriceValue, fetchedAt: windowPriceFetchedAt }];
+    const domainResult = scoreAlertOutcome(
+      classification,
+      alertPriceValue,
+      windowPrices,
+      calendarDaysElapsed,
+    );
+
+    // Map domain outcome to AccuracyResult (same mapping as Path 2)
+    const expectedOutcome = domainResult.outcome.toUpperCase();
+    const expectedHits = expectedOutcome === "HIT" ? 1 : 0;
+    const expectedMisses = expectedOutcome === "MISS" ? 1 : 0;
+    const expectedUnknowns = expectedOutcome !== "HIT" && expectedOutcome !== "MISS" ? 1 : 0;
+
+    expect(report.hits).toBe(expectedHits);
+    expect(report.misses).toBe(expectedMisses);
+    expect(report.unknowns).toBe(expectedUnknowns);
+    expect(report.total).toBe(1);
+
+    // The 5% drop for price_drop should be a HIT (threshold -1.0% per AC-3)
+    expect(report.hits).toBe(1);
+    expect(report.misses).toBe(0);
+  });
+
+  it("AC-1c: NULL-outcome row with no price data — domain scorer returns UNKNOWN", () => {
+    // Alert: price_drop, 5 days ago, outcome = NULL, no price data
+    const alertTs = Date.now() - 5 * 86_400_000;
+    const triggeredAt = new Date(alertTs).toISOString();
+    const code = "TSAC1C";
+
+    const row: AlertRowLike = {
+      id: "ac1c",
+      triggered_at: triggeredAt,
+      severity: "medium",
+      signals_json: JSON.stringify([
+        { type: "price_drop", actionCode: code, severity: "medium", confidence: 0.8 },
+      ]),
+      affected_actions_json: JSON.stringify([{ code, expectedImpact: "down", confidence: 0.8 }]),
+      outcome: null,
+      outcome_at: null,
+      outcome_detail: null,
+    };
+
+    const report = formatAccuracyReport([row], 30);
+
+    // No price data → domain scorer returns unknown → UNKNOWN in report
+    expect(report.unknowns).toBe(1);
+    expect(report.hits).toBe(0);
+    expect(report.misses).toBe(0);
   });
 });
