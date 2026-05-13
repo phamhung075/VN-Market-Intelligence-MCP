@@ -1,6 +1,28 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 09:07 UTC | **Sprint:** c67-closed
+**Last updated:** 2026-05-13 10:04 UTC | **Sprint:** c69-closed
+
+### Alert Cycle (10:01–10:04 UTC) — 2026-05-13
+- Signals: 2 (price_anomaly: GAS id=3071, VRE id=3072 — from market-watcher, created 09:40 UTC)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Market: CLOSED (post-session, off-hours 2h cycle)
+- Suppressed: GAS id=3071 (price_anomaly +6.93% σ=2.46 — not confirmed via get_alerts; σ<4.0 no override; same-session event already fired as id=3066 at 09:07 cycle)
+- Suppressed: VRE id=3072 (price_anomaly -6.91% σ=1.83 — duplicate, same-session event already fired as id=3067 at 09:07 cycle; VRE price_drop [HIGH] open alert still present but event already alerted)
+- Macro: Brent $107.31 | Gold $4706 | USD/VND 26,299 | DXY 98.55 USD STABLE | US10Y 4.46% NEUTRAL
+- log_agent_work id=755
+
+## Cycle — 09:07 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: GAS +6.93% oil surge (Brent $106.86) + VRE -6.91% BDS sector selloff (DXY STRENGTHENING, US10Y RISK-OFF). Regime shifted to TIGHTENING (per signal text). write_alert_verdict VRE returned anomalous response. get_macro_snapshot still returning portfolio data (not regime snapshot) — REGIME parsed from signal payload.detail text.
+- **actions**: 2 MARKET alerts fired (GAS CRITICAL, VRE CRITICAL) | 1 suppressed (FPT urgent_news conf<threshold) | 3 signal outcomes recorded | 1 GAS verdict pending (id=85974bc4) | BUG logged (VRE verdict anomaly) | log_agent_work id=750
+- **next_cycle_hint**: Watch BDS selloff continuation at open 02:00 UTC tomorrow (VHM/VRE/VIC). Monitor FPT position (-11.96%) against TIGHTENING regime. GAS: check if oil sector hold or reversal (Kinh Dịch Kiển 39 bearish vs price momentum conflict).
+- **estimated_tokens**: 9000
+- **doc_self_heal**: .claude/ directory write-protected in cowork session — fixes logged for manual apply:
+  - `.claude/tools/package/alert-commander.md` → `write_alert_verdict`: remove [UNVERIFIED] label; add note: "sometimes returns {success, id, verdict} (correct), sometimes 'Message sent to WORK channel' (anomalous) — log BUG if response ≠ {success: true}"
+  - `.claude/flows/alert-commander/stage-bootstrap.md` → Step 0b: add "⚠️ get_macro_snapshot returns portfolio conviction data (not regime snapshot). Parse REGIME from signal payload.detail text (regex: regime=TIGHTENING|EASING|NEUTRAL) and DXY/US10Y from bootstrap macro section."
 
 ### Alert Cycle (09:01–09:07 UTC) — 2026-05-13
 - Signals: 3 (urgent_news: FPT id=3062 — from news-scout; price_anomaly: GAS id=3066, VRE id=3067 — from market-watcher)
