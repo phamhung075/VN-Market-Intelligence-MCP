@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 10:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 14:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (14:21–14:22 UTC) 2026-05-13
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst×1 #3081 GAS/CPI/SBV] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: Brent $107.45 + GAS +6.93% → chain_catalyst #3081 (macro, bearish, affected: oil_gas/banking/real_estate, regime_adj=10.4). FPT +21% T4/2026 suppressed (regime TIGHTENING ×0.7 → 5.6). Gold declining ("đảo chiều giảm mạnh" Fed rate hike fears) — spike trigger not fired. Imexpharm insider sell post-Chinese M&A → DHG indirect 6.5/10 (below threshold 7). SSIAM Japan–VN deal suppressed (5.6 after regime adj). Market CLOSED (off-hours).
+- Suppressed: FPT +21% (TIGHTENING ×0.7=5.6), Imexpharm/DHG (6.5<7), SSIAM (5.6<7), VinFast split (no watchlist), Gelex/GEX (no watchlist), gold decline (not spike).
+- Notes: REGIME shift confirmed → TIGHTENING (Fed rate hike + Brent $107.45 + gold reversal). HOT_MONEY_OUTFLOW: khối ngoại bán ròng 1,500B VND. CPI pressure risk active. PMI: not detected. Banking broad -1.81%, RE broad -2.33% persisting. Next cycle: ~18:00 UTC.
 
 ### Cycle (10:15–10:20 UTC) 2026-05-13
 - Items: 20 | Impacts: 9 | Signals: [urgent_news×2 #3073 FPT, #3074 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
