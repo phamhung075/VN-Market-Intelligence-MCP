@@ -1,8 +1,31 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** c60
+**Last updated:** 2026-05-13 | **Sprint:** qa-cleanup-2026-05-13
 
 ## Last session summary
+
+Task qa-cleanup-2026-05-13 — Task A + Task B (2 atomic items):
+
+**Task A — DDD layer violation fix (macro-indicators):**
+- Moved DEFAULT_SYMBOLS + DEFAULT_CNBC_SYMBOLS from infrastructure scrapers to new domain/defaults.ts.
+- application/fetch-external-macro.ts now imports from domain/defaults.js — zero application→infrastructure imports.
+- Infrastructure scrapers re-export constants from domain for backward-compat (test call sites unchanged).
+- New test: __tests__/unit/domain-defaults.test.ts — 4 tests GREEN.
+- Full macro-indicators suite: 74 pass / 0 fail.
+- Branch: task/qa-bug-ddd-macro-defaults | Commit: e7a21d60 | merged to main (fast-forward).
+- Bug signal archived: docs/signals/processed/qa-bug-2026-05-13T12-30-00Z.json.
+
+**Task B — merge task/push-path-fix-vps-contract-tests:**
+- Branch diverged from main (Task A landed first) → standard merge used (not fast-forward).
+- File preserved on main: apps/mcp-server/src/__tests__/1892b-vps-contract-push.test.ts.
+- Post-merge test: 10 pass / 0 fail (bun test src/__tests__/1892b-vps-contract-push.test.ts).
+
+**Key decisions:**
+- domain/defaults.ts over domain/models.ts — models.ts has value-object types; defaults.ts is a clean separate concern.
+- tsc errors in __tests__/ (preconnect missing on Mock) are pre-existing, not introduced by this task.
+- graphify skipped — no knowledge files changed (pure code + test).
+
+## Previous last session summary
 
 Task c60 — Concern A + B + C (3 atomic commits):
 
