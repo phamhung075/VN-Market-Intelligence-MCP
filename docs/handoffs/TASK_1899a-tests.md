@@ -316,6 +316,21 @@ PLAYWRIGHT_LIVE=true bun test    # Include integration tests
 
 ---
 
+## [QA] Review Record
+
+**Date:** 2026-05-13 | **Verdict:** APPROVED | **Round:** 1
+
+- Tests: 165 pass / 6 skip / 0 fail (news-fetch) | 3 pass / 0 fail (mcp-server E2E)
+- tsc: 0 errors (news-fetch + mcp-server)
+- DDD: PASS — newsHeadlinesRefreshJob.ts imports infrastructure logger only; no domain imports
+- Security: PASS — Bun.env used throughout (NEWS_FETCH_URL, MCP_SERVER_URL, VPS_PUSH_API_KEY); no process.env, no hardcoded secrets
+- Split-policy: all new files ≤177L — within 200L cap
+- Pre-existing TSC noise (playwright): confirmed unchanged from c79 notebook, 0 errors under tsconfig
+- Scope creep assessment: newsHeadlinesRefreshJob.ts ships 1899a-cron job body but NOT the wiring. 1899a-cron remains open for: (1) news-analysis/index.ts barrel, (2) jobs.ts registration + CRONS entry, (3) mcp.config.json entry. 1899a-tests APPROVED as-is.
+- Report: reports/TASK_REPORT_1899a-tests.md
+
+---
+
 ## [Developer] Implementation Record
 
 - **Files created:**

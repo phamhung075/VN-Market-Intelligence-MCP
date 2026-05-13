@@ -229,3 +229,17 @@ docker-compose logs news-fetch  # Check startup logs
 **Single-writer rule:** Each zone has one owner. Gateway files are api-gateway concern (managed by developer). Root docker-compose is shared (managed by developer). Handoffs updated by PM (this task).
 
 **Next task:** 1899a-cron (MCP scheduler integration)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-13 | **Verdict:** APPROVED | **Round:** 1
+
+- Tests: 40 pass / 0 fail
+- tsc: 0 errors (api-gateway)
+- DDD: PASS — handlers.ts imports application types only; health_checker.ts imports domain types only
+- Security: PASS — process.env in index.ts is pre-existing (present since f4141f63), not introduced by this task
+- Split-policy: handlers.ts 263L pre-existing (unchanged size); all other modified files well under cap
+- All 9 AC items verified
+- Report: reports/TASK_REPORT_1899a-gateway.md

@@ -1,6 +1,32 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** 1899a-routes Hono router gate (c79)
+**Last updated:** 2026-05-13 | **Session:** 1899a-gateway + 1899a-tests BATCH(2) gate (c80)
+
+## Recent session — 2026-05-13 (1899a-gateway — APPROVED)
+
+Commits `f91c5baa` (feat) + `837529ef` (notebook) already on main. Zone: multi (api-gateway + root + docs).
+
+Files: api-gateway/src/index.ts (+1L news serviceUrl), health_checker.ts:78 (+news config entry), handlers.ts:109 (+1 string to DASHBOARD_SERVICES), docker-compose.yml (news-fetch service block + NEWS_URL in api-gateway env), docs/handoffs/ops-news-fetch-scaffold.md (port 5007→5008), docs/ARCHITECTURE.md (news-fetch row).
+
+Tests: 40/40 pass. TSC: 0 errors. DDD PASS. Security: process.env in index.ts pre-existing since f4141f63 — not a new violation. handlers.ts 263L pre-existing size — task added 1 line only.
+
+All 9 AC items verified. Report: reports/TASK_REPORT_1899a-gateway.md.
+
+---
+
+## Recent session — 2026-05-13 (1899a-tests — APPROVED + scope creep assessment)
+
+Commits `d2818207` (feat) + `64c3db67` (notebook) + `da5d1b0f` (tasks→Done) already on main. Zone: apps/news-fetch/ + apps/mcp-server/.
+
+Files created: bunfig.toml, 3 unit test files (177L/148L/142L), 2 integration test files (62L/61L), newsHeadlinesRefreshJob.ts (136L), newsHeadlinesRefreshJob.e2e.test.ts (143L). All within 200L split-policy cap.
+
+Tests: 165 pass / 6 skip / 0 fail (news-fetch). 3/3 mcp-server E2E pass. TSC: 0 errors. DDD PASS: newsHeadlinesRefreshJob imports infrastructure logger only. Security PASS: Bun.env throughout, no process.env, no hardcoded secrets.
+
+Scope creep — newsHeadlinesRefreshJob.ts: Ships 1899a-cron job body (sequential Bloomberg→Reuters dispatch, error isolation, logging). DOES NOT ship wiring: news-analysis/index.ts barrel missing, jobs.ts not updated (no CRONS entry, no startScheduler registration), mcp.config.json not updated. Decision: 1899a-tests APPROVED. 1899a-cron remains open — developer must complete 3 wiring steps only (job body already exists, do not re-create).
+
+Report: reports/TASK_REPORT_1899a-tests.md.
+
+---
 
 ## Recent session — 2026-05-13 (1899a-routes — APPROVED)
 
