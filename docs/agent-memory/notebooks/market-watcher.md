@@ -159,6 +159,14 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | exit_status | complete |
 | token_estimate | 4200 |
 
+## Cycle — 21:40 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: TIGHTENING regime (Fed hike fear, gold drop). GAS +6.93% (2.19σ) — oil_gas sector-wide rally on Brent crude. VRE -6.91% (1.67σ) — stock-specific underperformance vs sector (-1.1%), fx_pressure=true. Both are repeat signals vs 19:41 cycle (off-hours, same closing prices). VHM -4.81% (1.24σ) sub-threshold.
+- **actions**: 2 signals posted (#3116 GAS, #3117 VRE). WORK telegram sent. Notebook committed.
+- **next_cycle_hint**: Monitor for 01:00 UTC pre-market cycle. If prices unchanged (market still closed), GAS/VRE will re-trigger at TIGHTENING 1.5σ — consider suppression logic for repeated off-hours signals on unchanged prices.
+- **estimated_tokens**: 8500
+
 ## Known patterns / preferences
 
 - EOD cycle scheduled for 16:00 UTC
