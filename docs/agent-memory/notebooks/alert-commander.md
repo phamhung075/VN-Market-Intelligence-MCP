@@ -1,8 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 05:02 UTC | **Sprint:** c62-closed
+**Last updated:** 2026-05-13 06:04 UTC | **Sprint:** c64-closed
 
 ### Alert Cycle (05:01–05:02 UTC) — 2026-05-13
+
+### Alert Cycle (06:02–06:04 UTC) — 2026-05-13
+- Signals: 3 (urgent_news: FPT id=3043 — from news-scout; price_anomaly: GAS id=3045, HVN id=3046 — from market-watcher)
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false ([SKIP] no tool)
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Suppressed: FPT urgent_news id=3043 (monthly profit +21%, conv=0.50 < 0.60 NEUTRAL threshold; monthly profit not formal quarterly earnings release; no price_anomaly override — get_agent_signals empty; Kinh Dịch Khôn→Bác (23) conf=48% THAN TRONG bearish; stock -0.71%)
+- Suppressed: GAS price_anomaly id=3045 (σ=2.56 < 4.0, get_alerts empty — not confirmed; stock +6.93% live but unverified via alert system)
+- Suppressed: HVN price_anomaly id=3046 (σ=2.65 < 4.0, get_alerts empty — not confirmed; 5-session downtrend 22,700→21,000 -7.49%)
+- Context: GAS +6.93% (Brent 106.2 USD supportive, 3.6x volume — stock-specific catalyst); HVN aviation sector weak; FPT +21% monthly profit beat vs market -0.71%
+- WARN: get_market_snapshot returned electricity data (wrong output — tool misfiring)
+- record_signal_outcome: 3043=suppressed, 3045=suppressed, 3046=suppressed
+- log_agent_work id=736
+
 - Signals: 2 (price_anomaly: GAS id=3041, HVN id=3042 — from market-watcher)
 - Fired: 0 | Suppressed: 2 | MARKET: 0
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
