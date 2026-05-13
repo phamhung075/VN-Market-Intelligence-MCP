@@ -1,9 +1,31 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-13
-**Sprint:** c60 / TASKS-cap-rotation + 1888f-session-log-verify
+**Last updated:** 2026-05-13T21:52:39Z
+**Sprint:** c84 / 1888l-agents-architect-error-boundary
 
-## This Session
+## This Session — 2026-05-13T21:52:39Z (c84 / 1888l)
+
+**Task: 1888l — agents-architect error-boundary SSOT chore**
+
+Three sub-fixes applied:
+(a) Added `> Error boundary + MCP call pattern → skill: .claude/skills/cowork-error-boundary/SKILL.md` at top of `.claude/flows/agents-architect/main.md` — mirrors po/main.md L6 and architect/main.md L13 pattern.
+(b) Verified `.claude/agents/agents-architect.md` `always_load` already contains `docs/protocols/fail-loud-protocol.md` (L74). No change needed.
+(c) Added BLOCKED/EXIT block to `docs/agents/agents-architect/handlers.md` Operating Cycle § Step 6 — matches EXIT/BLOCKED pattern used in po and architect handlers.
+
+Files changed: 2 (.claude/flows/agents-architect/main.md, docs/agents/agents-architect/handlers.md).
+Branch: task/1888l-agents-architect-error-boundary.
+
+## Patterns Noticed
+
+- Concurrent agents (developer cron) modify TASKS.md mid-session. Linter absorbs in-flight
+  edits into their commits. Atomicity preserved but indexing requires re-read before commit.
+- TASKS.md cap rotation: 5 rows removed + TASKS_ARCHIVE.md grows by ~10L per rotation cycle.
+- HEAD index SHA changes between tool calls when concurrent agents commit — always check
+  `git diff` before staging to understand what's already in HEAD.
+
+---
+
+### Previous session — c60 / TASKS-cap-rotation + 1888f-session-log-verify
 
 **Concern A — TASKS.md cap rotation (c60):**
 Archived 5 oldest Done rows (CLEAN-c56-leftovers-c57, HEADLOCK-DIAGNOSTIC+WORKTREE-GC-c57,
