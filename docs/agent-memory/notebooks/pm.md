@@ -332,11 +332,38 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 78 — 2026-05-13 c78 Housekeeping: Reuters + RSS Fix SHIPPED
+
+**Input:** Dev-team c78 completion. Two QA-APPROVED shipments:
+1. 1899a-reuters-fallback (FEATURE): Commits `3e04dc5f` (feat) + `e0a5da53`/`a070960c` (qa)
+2. 1898b (FIX-HIGH RSS): Commits `0a76cf8d` (feat) + `d8bc4991` (qa)
+
+**Actions:**
+
+- **1899a-reuters-fallback → Done:** Moved from Todo → Done section. Reuters DataDome stealth fallback (Playwright, FALLBACK-only). Unblocks 1899a-routes (Tier 3).
+- **1898b → Done:** Moved from Todo → Done section. RSS degradation fix (2-line `recordDisabled` display for Reuters RSS + Trading Economics) + 8 regression tests RSS-REG-01..08 (176L, within split-policy).
+- **1899a-routes UNBLOCKED:** Removed `1899a-reuters-fallback` from `blocked_by` edge. Now depends only on `1899a-app, 1899a-reuters-rss` (both shipped prior cycles). Tier 3 ready to pick up next cycle.
+- **Done section TRIMMED:** Kept top 5 recent entries (1899a-reuters-fallback c78 + 1898b c78 + 1900a c73 + 1901b c73 + 1900b c74); rotated 7 older entries (1899a-{core,domain,app,factory,reuters-rss}, 1901a, 1899a-bloomberg, 1903a, 1898a, 1902a) to archive notation. TASKS.md now 73L (target ≤80L).
+- **File state:**
+  - TASKS.md: 73 lines (−7 lines from trim, +0 for 1899a-reuters-fallback handoff row since it was Todo→Done in-place), commit `19594166`.
+  - Done section: 6 rows (5 tasks + 1 archive notation)
+  - Todo section: 7 rows (1900c-health-probe + 1899a-{routes,bloomberg-test-split,gateway,cron,tests} + 1862c-E/F active)
+
+**WIP status:** 0/2 (In Progress empty). Headroom available for 1899a-routes pickup in c79.
+
+**Archive decision:** Older Done entries (c73–c76 tasks, 5+ days old) rotated via inline notation. Full archive rotation to `docs/TASKS_archive.md` pending (threshold: ≥7 day age; next rotation checkpoint 2026-05-19+).
+
+**Blockers:** None. Pipeline clean.
+
+**Status at session end:** READY FOR NEXT CYCLE. c78 housekeeping complete. 1899a-routes now unblocked and available for c79 developer pickup.
+
+---
+
 ## Current state
 
-- WIP: 0 / 2 (In Progress: none; ready for 1899a-core handoff)
+- WIP: 0 / 2 (In Progress: none; 1899a-routes unblocked and ready to pick)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
-- Todo: 1899a-{core,domain,app,factory,reuters-rss,bloomberg,reuters-fallback,routes,gateway,cron,tests} (10 subtasks, Tier 1→5), 1900a (OPS-CRITICAL gateway health), 1901a/1901b (OPS/FIX), 1898a/1898b (FIX-HIGH), 1862c-D/E/F/G (cowork chain), 1881a/1883a source-tier (ba spec, deferred), 1890a tool-pkg (ba, deferred)
-- Done: (40+ arcs from prior cycles)
-- CLEAN state: 7 worktree branches swept
-- **Headroom:** 2 In Progress slots available (ready for 1899a-core + parallel Tier 2 task)
+- Todo: 1900c-health-probe (LOW), 1899a-{routes,bloomberg-test-split,gateway,cron,tests} (5 remaining from Tier 3-5), 1862c-E/F (OPS chain), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
+- Done: 5 recent (1899a-reuters-fallback + 1898b + 1900a + 1901b + 1900b), 7 archived (notation)
+- CLEAN state: No WIP exceeds 2. No blockers detected.
+- **Headroom:** 2 In Progress slots available (c79 developer can pick 1899a-routes + one parallel task)
