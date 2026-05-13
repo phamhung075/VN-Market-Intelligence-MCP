@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 04:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 05:25 UTC | **Status:** OPERATIONAL
+
+### Cycle (05:15–05:25 UTC) 2026-05-13
+- Items: 20 | Impacts: 3 | Signals: [urgent_news×1 #3043 FPT, chain_catalyst×1 #3044 securities] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT lãi tháng 4/2026 +21% (bullish, impact 8) → urgent_news #3043. Ít nhất 2 CTCK hạ dự phóng VN-Index 2026 + cảnh báo "xanh vỏ đỏ lòng" (bearish macro, impact 8) → chain_catalyst #3044 → all, affected: SSI/HCM/VCI. GAS +6.93% (price move, no news driver — Brent spillover). Brent $106.51 stable. Gold $4,710 flat. USD/VND 26,129.
+- Suppressed: VHM bond 3000B (neutral, impact 5), IMP exec sales (not watchlist), Silver/Gold fund news (global).
+- Notes: Pattern continues — 2 consecutive days of CTCK bearish VN-Index revisions. Banking sector broadly -0.4% to -1.3%.
 
 ### Cycle (04:15–04:22 UTC) 2026-05-13
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst×1 #3040] | Regime: NEUTRAL | Carry: NEUTRAL
