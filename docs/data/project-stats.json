@@ -19,7 +19,7 @@
   "analysisAgentCount": 9,
   "microserviceAgentCount": 9,
   "_agentCountReconciled": "2026-05-12 main-terminal audit: report-analyzer moved to Analysis Team (chaining-protocol + agent file = cowork). devAgentCount = roster Dev Team rows (incl. semble-search skill proxy). analysisAgentCount = roster Analysis Team rows. microserviceAgentCount = roster Microservice rows. Filesystem total = 17 + 9 + 9 = 35.",
-  "totalTasksDone": 555,
+  "totalTasksDone": 557,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,

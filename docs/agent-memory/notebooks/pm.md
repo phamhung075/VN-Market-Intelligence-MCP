@@ -385,11 +385,39 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 80 — 2026-05-13 c80 Post-Cycle Housekeeping: 1899a-gateway + 1899a-tests SHIPPED
+
+**Input:** Dev-team + QA c80 completion. Two QA-APPROVED shipments:
+1. 1899a-gateway (FEATURE): Commits `f91c5baa` (feat) + `837529ef` (notebook)
+2. 1899a-tests (FEATURE): Commits `d2818207` (feat) + `64c3db67` (notebook) + `da5d1b0f` (task-md). **INCLUDES job body** (136L `newsHeadlinesRefreshJob.ts`).
+
+**Actions:**
+
+- **1899a-gateway → Done:** Moved from Todo → Done section. Gateway + docker-compose wiring complete. QA APPROVED. Unblocks 1899a-cron (removes dep).
+- **1899a-tests → Done:** Moved from Todo → Done section. Unit + integration suite + E2E scheduler job tests. **NOTE: job body shipped here (136L); 1899a-cron is now wiring-only (3 steps: barrel + jobs.ts wiring + config entry).** QA APPROVED.
+- **1899a-cron SCOPE REDUCED:** Updated Todo row — rescoped from full job to wiring-only (3 steps). Size downgraded S→XS (~30min). Removed dependency on 1899a-gateway (gateway already shipped). Added note: "JOB BODY ALREADY EXISTS (136L, shipped by 1899a-tests c80)."
+- **Done section TRIMMED:** Kept top 5 recent entries (1899a-gateway + 1899a-tests + 1899a-routes + CLEAN-c79 + 1899a-reuters-fallback c78); archived 6 older entries (1898b, 1900a, 1901b, 1900b, 1899a-{app,domain}, etc) to inline notation.
+- **TASKS.md line count:** 72 lines (−7 from trim, +0 net). Well under 80L cap.
+- **project-stats.json:** totalTasksDone incremented 555→557 (2 tasks shipped).
+- **File state:**
+  - TASKS.md: 72 lines, Done section 5 rows + archive notation, Todo: 6 rows (1900c + 1899a-{bloomberg-test-split,cron} + 1862c-E/F + no gateway), commit pending.
+  - pipeline-state.json: no change needed (developer owns next task 1899a-cron).
+
+**WIP status:** 0/2 (In Progress empty). Headroom available for 1899a-cron + parallel task.
+
+**Blockers:** None. Pipeline clean.
+
+**Newly unblocked:** 1899a-cron (removed 1899a-gateway dep).
+
+**Status at session end:** READY FOR NEXT CYCLE. c80 post-cycle housekeeping complete. 1899a-cron unblocked and ready for developer pickup (wiring-only, ~30min).
+
+---
+
 ## Current state
 
-- WIP: 0 / 2 (In Progress: none; headroom available for next tier)
+- WIP: 0 / 2 (In Progress: none; headroom available)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
-- Todo: 1900c-health-probe (LOW), 1899a-{bloomberg-test-split,gateway,cron,tests} (4 remaining Tier 3-5), 1862c-E/F (OPS), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
-- Done: 7 recent (1899a-routes + CLEAN-c79 + 1899a-reuters-fallback + 1898b + 1900a + 1901b + 1900b), 11 archived (notation)
+- Todo: 1900c-health-probe (LOW), 1899a-{bloomberg-test-split,cron} (2 remaining), 1862c-E/F (OPS), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
+- Done: 5 recent (1899a-gateway + 1899a-tests + 1899a-routes + CLEAN-c79 + 1899a-reuters-fallback), 6 archived (notation)
 - CLEAN state: No WIP exceeds 2. No blockers detected.
-- **Status:** READY FOR NEXT CYCLE. 1899a-gateway unblocked (tier 4, developer ready to pick).
+- **Status:** READY FOR NEXT CYCLE. 1899a-cron unblocked (wiring-only, ~30min, developer ready to pick).
