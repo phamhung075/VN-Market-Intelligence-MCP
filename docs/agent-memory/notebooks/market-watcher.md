@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 11:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 12:38 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -688,3 +688,17 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 800 |
+
+### Cycle (12:38–12:39)
+- Cycle 12:38 UTC — BLOCKED at step 0: get_cycle_bootstrap connection refused (port 3000) after 2 attempts with 5s gap. MCP server offline since at least 11:38 UTC (market post-close, trading window likely closed).
+
+## Metrics (cycle 2026-05-13 12:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 0 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 600 |
