@@ -1,10 +1,23 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** 1879
+**Last updated:** 2026-05-13 | **Sprint:** 1903
 
 ## Current state
 
-REQ_1898a spec complete. Spec at docs/REQ_1898a.md. No PO blockers. Ready for dev-mcp-server.
+REQ_1903a spec complete. Spec at docs/REQ_1903a.md. Both tools HEALED. Regression-test-only path. No PO blockers. Ready for dev-mcp-server.
+
+## Last session summary (2026-05-13) — 1903a
+
+Task 1903a — MCP dispatch/schema collision bundle (write_alert_verdict + get_macro_snapshot).
+
+Key findings:
+- Both tools HEALED post-c73 restart. Same stale-build root as 1898a.
+- `write_alert_verdict` live call (c77 16:43Z): returns `{success:true, id:UUID, ticker:"VCB", verdict:"pending"}` — correct object shape, NOT string "Message sent to WORK channel".
+- `get_macro_snapshot` live call (c77 16:43Z): returns `=== Macro Snapshot ===` block with [Commodity Prices], [SBV Central Bank Rates], [Macro Signal Summary] — no portfolio/electricity bleed.
+- Registry: `registerAlertVerdictTools` index 126, `registerMacroTools` index 7 — no name collision in source.
+- Spec: regression-test-only path. New test file `1903a-dispatch-regression.test.ts`, 7 WAV-REG assertions + 3 GMS-REG additions. No prod code changes.
+- 1898a MT-REGRESSION already covers GMS basic shape — 1903a extends with 3 additional assertions (GMS-REG-02 through GMS-REG-04).
+- 7 AC items. Owner: dev-mcp-server.
 
 ## Last session summary (2026-05-13) — 1898a
 
