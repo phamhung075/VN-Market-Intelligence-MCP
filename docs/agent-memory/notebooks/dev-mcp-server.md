@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1899a-cron — newsHeadlinesRefresh scheduler wiring (2026-05-13, DONE)
+
+**Mission:** XS wiring task. Job body shipped in c80 (1899a-tests). Wire it into the scheduler.
+
+**3 changes:**
+1. NEW `apps/mcp-server/src/scheduler/news-analysis/index.ts` — single-line barrel: `export { newsHeadlinesRefreshJob } from './newsHeadlinesRefreshJob'`
+2. `apps/mcp-server/src/scheduler/cronConfig.ts` — added `newsHeadlinesRefresh: Bun.env['CRON_NEWS_HEADLINES_REFRESH'] ?? '*/30 * * * *'`
+3. `apps/mcp-server/src/scheduler/startScheduler.ts` — import from `./news-analysis/index.js` + `cron.schedule(CRONS.newsHeadlinesRefresh, ...)` with `jobRunRepo.wrapRun`
+4. `mcp.config.json` — added `"scheduler": { "newsHeadlinesRefresh": { "cadence": "*/30 * * * *", "enabled": true, ... } }`
+
+**Worktree base:** Was d532495b (stale vs main 2afd9533). Merged main first before branching — per c80 lesson.
+
+**TSC:** 0 errors. Tests: 9210 pass / 137 fail (pre-existing worktree env failures: ENOENT test data dirs, network errors).
+
+**Commit:** `40514118` on branch `task/1899a-cron-scheduler`.
+
+**Pattern note:** cronConfig.ts uses `Bun.env['KEY']` bracket notation (consistent with existing entries using bracket notation for dynamic keys). startScheduler.ts uses `jobRunRepo.wrapRun()` pattern (not `recordJobRun(getDb(), ...)`).
+
+---
+
 ### push-path-fix — VPS push path failures (2026-05-13, DONE)
 
 **Mission:** Fix two MCP-side push path failures flagged by dev-vps-crawls recon.
