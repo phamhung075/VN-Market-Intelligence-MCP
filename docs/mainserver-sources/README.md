@@ -91,6 +91,16 @@ These sources are expected to be accessible without VPS proxy but must still be 
 
 | Source name | URL pattern | Anti-bot confirmed | Last recon |
 |-------------|------------|-------------------|-----------|
-| (none yet) | — | — | — |
+| world-bank-macro | `api.worldbank.org/v2/country/VN/indicator/{code}` | none | 2026-05-13 |
+| yahoo-finance-fx-indices | `query2.finance.yahoo.com/v8/finance/chart/{symbol}` | none | 2026-05-13 |
+| trading-economics-vn | `tradingeconomics.com/vietnam/{indicator}` | none (soft session) | 2026-05-13 |
+| cnbc-world-markets | `quote.cnbc.com/quote-html-webservice/restQuote/...` | none | 2026-05-13 |
+| marketwatch-indices | `marketwatch.com/investing/...` | none (low priority — VN not tracked) | 2026-05-13 |
+| fred-macro | `api.stlouisfed.org/fred/series/observations` | login_required (API key) | 2026-05-13 |
+| investing-economic-calendar | `investing.com/economic-calendar/` | cloudflare_managed (__cf_bm passive) | 2026-05-13 |
+| reuters-asia-news | `reuters.com/markets/asia/` | datadome (hard block) | 2026-05-13 |
+| bloomberg-markets | `bloomberg.com/markets` | perimeterx (passive + paywall) | 2026-05-13 |
+| adb-kidb | `kidb.adb.org` | none (SPA — API discovery needed) | 2026-05-13 |
+| imf-datamapper | `www.imf.org/external/datamapper/api/v1/{indicator}/{country}` | akamai_bot (hard 403) | 2026-05-13 |
 
 > Update this table when a new recon doc is written.
