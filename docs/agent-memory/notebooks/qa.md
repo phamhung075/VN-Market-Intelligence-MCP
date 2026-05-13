@@ -1,6 +1,36 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** 1881a-impl-ssot gate — Layer 9 doc APPROVED
+**Last updated:** 2026-05-14 | **Session:** c85 gate — 1881a-impl-mcp source_tier retrofit APPROVED
+
+## Recent session — 2026-05-14 (c85 — 1881a-impl-mcp APPROVED)
+
+### 1881a-impl-mcp — source_tier retrofit 16 MCP tools + contract tests
+
+Branch: task/1881a-impl-mcp HEAD 6dd412bd. Files: 15 interface tool files + 1 contract test.
+
+Pipeline:
+- tsc --noEmit: 0 errors. PASS.
+- Contract tests (1881a-source-tier.test.ts): 20/20 pass. PASS.
+- Full suite: 9234 pass / 34 fail (34 pre-existing, unchanged). PASS.
+- DDD scan: 0 new domain/infra imports in interface/* files. PASS.
+- Security scan: no secrets, no process.env, no raw SQL added. PASS.
+- Zone check: all changes in interface/mcp/tools/ + __tests__/. PASS.
+
+Tier spot-checks (3 tools vs REQ_1881a.md authoritative spec):
+- get_imf_signals: tier 1 envelope + per-record tier 1 — CORRECT.
+- get_macro_snapshot: tier 2 text-wrap — CORRECT.
+- get_insider_transactions: tier 1 — CORRECT.
+
+Tier note: TASK handoff table showed tier 2 for get_sentiment_trend + get_policy_signals, but REQ_1881a.md (SSOT) assigns both tier 3 (derived from rag_analyses). Developer correctly followed spec. Non-blocking; task table was stale.
+
+AC-5 (get_foreign_flow fallback): _testFallback="cache" path adds source_note="fallback:cache" on all return branches (zero-detect, insufficient, analyze, catch). Confirmed in foreignFlowTools.ts L207, L221, L238, L261. PASS.
+
+Merge commit: c2e2fb08. Branch task/1881a-impl-mcp deleted (local; no remote).
+Report: reports/TASK_REPORT_1881a-impl-mcp.md
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (1881a-impl-ssot — APPROVED)
 
