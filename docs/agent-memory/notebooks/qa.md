@@ -1,5 +1,25 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-reuters-rss merge gate
+
+## Recent session — 2026-05-13 (1899a-reuters-rss ReutersRssScraper — APPROVED)
+
+Branch: `fix/1899a-news-fetch-reuters-rss`. 1 commit ahead of main (`36eace95`, on top of factory merge `b2b84977`). No rebase needed.
+
+Tests: 55/55 pass (100 expect() calls) across 4 files in `apps/news-fetch/`. 26 new unit tests in `__tests__/1899a-reuters-rss.test.ts`. TSC: 0 errors (bun tsc --noEmit clean).
+
+DDD PASS: `reuters-rss.ts` imports only `../../domain/repositories.js` + `../../domain/models.js`. Domain has 0 infra imports (grep confirmed).
+
+Security PASS: no `process.env`, no hardcoded credentials. `BROWSER_UA` is a public User-Agent string (not a secret). All 17 scraper instantiations in tests preceded by `globalThis.fetch = mockFetch*` override (18 total mock assignments — 1 in beforeEach captures original). No live HTTP in CI.
+
+Merge SHA: `ade4a0a8` (no-ff). Branch `fix/1899a-news-fetch-reuters-rss` deleted.
+
+1899a-* dev chain complete: domain + factory + reuters-rss all on main. Celebratory WORK Telegram sent.
+
+TASKS.md: 1899a-reuters-rss row removed from Todo, SHIPPED entry added to Done.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1899a-domain merge gate
 
 ## Recent session — 2026-05-13 (1899a-domain — APPROVED via cherry-pick)
