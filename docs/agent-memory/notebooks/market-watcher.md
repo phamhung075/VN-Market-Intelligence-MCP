@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 06:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 07:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -583,3 +583,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 3 price_anomaly signals posted (#3053 GAS, #3054 HVN, #3055 DPM → alert-commander). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Monitor DPM for continuation (oil-feedstock chain; chemicals inflow). Watch FPT for +21% earnings underreaction reversal toward 71,000+. Confirm GAS/HVN positions haven't changed materially (same 06:17 snapshot used). Next price update expected ~07:00 cycle.
 - **estimated_tokens**: 5200
+
+### Cycle (07:38–07:40)
+- Stocks: 31 watchlist | Priced: 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (GAS 2.56σ) | Volume spikes: 1 (GAS 3.44x avg) | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (98.42) | US10Y: NEUTRAL (4.46%) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- GAS +6.93% (2.56σ, 30d stddev 2.71%, vol 5.85M = 3.44x avg ~1.70M) → signal #3061 → alert-commander. Brent $106.27 tailwind. Evidence bullish 0.633. Sector outlier (+6.9% vs oil_gas peers all flat 0.0%). PB 2.9x vs sector 1.6x (premium). TA insufficient (14/35 candles).
+- HVN -2.55% (~2.43σ, 30d stddev ~1.05%) → suppressed (already signaled #3046/#3054 this session). Slight recovery from -2.78% prior cycles.
+- DPM +2.81% (~1.68σ, 30d stddev ~1.67%) — sub-threshold. VRE -6.77% (1.86σ), VHM -6.37% (1.70σ), VIC -4.14% (1.52σ) — all below 2.0σ (high base volatility).
+- Sector rotation: Chemicals INFLOW (+2.81% 1d). All others STABLE (1d). Real estate -1.32%/5d continuing weakness.
+- FPT +0.85% (0.69σ) — sub-threshold; earnings beat +21% underreaction persists. news-scout chain_catalyst #3060 active (FPT 90% impact score, conflict flagged).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check.
+- Open chain findings: 0 (last 15 min) | Open alerts: 0 | System: OK | Market OPEN
+
+## Metrics (cycle 2026-05-13 07:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 1 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4800 |
