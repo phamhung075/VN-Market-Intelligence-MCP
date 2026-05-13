@@ -345,4 +345,30 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     expect(text).toContain("bình thường (");
     expect(text).toContain("bình thường");
   });
+
+  // MT-REGRESSION-1898a: response-shape guard — no electricity / portfolio content (stale-build guard)
+  it("get_macro_snapshot returns regime/macro shape — no electricity or portfolio content (regression: 1898a / TNB c45 stale-build guard)", async () => {
+    const server = makeServer();
+    const result = await callTool(server, "get_macro_snapshot", {
+      _testCommodityClient: COMMODITY_NORMAL,
+      _testSbvClient: SBV_NORMAL,
+    });
+
+    const text = firstText(result);
+
+    // (i) Contains macro snapshot header — macro handler, not electricity/portfolio handler
+    expect(text).toContain("=== Macro Snapshot ===");
+
+    // (ii) Contains expected macro sections
+    expect(text).toContain("[Commodity Prices]");
+    expect(text).toContain("[SBV Central Bank Rates]");
+
+    // (iii) Must NOT contain electricity content markers (stale-build regression guard)
+    expect(text).not.toContain("ĐIỆN LỰC");
+    expect(text).not.toContain("TRẠNG THÁI ĐIỆN");
+
+    // (iv) Must NOT contain portfolio content markers (stale-build regression guard)
+    expect(text).not.toContain("portfolio");
+    expect(text).not.toContain("positions");
+  });
 });

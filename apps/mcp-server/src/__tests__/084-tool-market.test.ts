@@ -234,6 +234,42 @@ describe("Task 084 — Market MCP Tools", () => {
       expect(text).toMatch(/Generated|generated|UTC|T\d{2}:\d{2}/);
     });
 
+    it("get_market_snapshot returns stock-shape array (regression: 1898a / TNB c45 stale-build guard)", async () => {
+      const db = getDb();
+      try {
+        db.exec(`
+          INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, exchange, updated_at)
+          VALUES ('VCB', 88000, 1.15, 1500000, 'HOSE', '2026-03-28T00:00:00.000Z')
+        `);
+      } catch {
+        // column may not exist in :memory: — continue
+      }
+
+      const text = await callTool(server, "get_market_snapshot", {
+        codes: ["VCB"],
+        _testHoseClient: makeMockClient(HOSE_PRICES_MOCK_JSON),
+        _testHnxClient: makeMockClient("[]"),
+        _testUpcomClient: makeMockClient("[]"),
+      });
+
+      // (i) Contains VN-Index market header — stock handler, not electricity/portfolio handler
+      expect(text).toContain("VN-Index:");
+
+      // (ii) Contains a VCB price line with VND and % change — stock-shape confirmed
+      expect(text).toMatch(/VCB\s+[\d,]+\.?\d*\s+VND\s+[+-][\d.]+%/);
+
+      // (iii) Contains Generated timestamp
+      expect(text).toMatch(/Generated:/);
+
+      // (iv) Must NOT contain electricity content markers (stale-build regression guard)
+      expect(text).not.toContain("ĐIỆN LỰC");
+      expect(text).not.toContain("TRẠNG THÁI ĐIỆN");
+
+      // (v) Must NOT contain portfolio content markers (stale-build regression guard)
+      expect(text).not.toContain("portfolio");
+      expect(text).not.toContain("positions");
+    });
+
   });
 
   // ── get_patterns ──────────────────────────────────────────────────────────
