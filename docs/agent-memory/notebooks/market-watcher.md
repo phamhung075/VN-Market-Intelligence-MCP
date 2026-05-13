@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 12:38 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 13:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -702,3 +702,20 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 600 |
+
+### Cycle (13:38–13:40)
+- Stocks: 37 | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE] | pe_risk: []
+- GAS +6.93% (2.11σ): oil sector-wide surge, Brent 107.45; signal→alert-commander id=3079
+- VRE -6.91% (1.83σ): stock-specific, massively underperforms sector (-6.91% vs -1.1% avg), fx_pressure=true, escalated HIGH; signal id=3080
+
+## Metrics (cycle 2026-05-13 13:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 37 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 6200 |
