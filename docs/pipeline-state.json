@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
-  "currentSprint": "c76",
-  "activeTaskId": "1898a",
-  "nextAgent": "qa",
-  "nextPrompt": "Merge gate for task/1898a-regression-shape-guard — verify only 2 test files in commit, run baseline, gate APPROVE/CHANGES_REQUESTED",
-  "updatedAt": "2026-05-13T16:08:00Z",
-  "updatedBy": "pm-c76",
-  "lastCompleted": "Cycle 76 task-state update: 1899a-app SHIPPED commit 98703242 (34L use-cases.ts, DDD PASS, 55/55 tests), moved Todo → Done. 1898a regression-shape spec landed commit 99bf48e6 (docs/REQ_1898a.md, 2 test files, ~30L), moved Todo → In Progress owner dev-mcp-server. WIP = 1/2. Unblocks 1899a-routes (Tier 3) next cycle after 1898a QA gate."
+  "status": "idle",
+  "currentSprint": "c76-closed",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-13T16:30:00Z",
+  "updatedBy": "dev-team-c76",
+  "lastCompleted": "Cycle 76 FULL CLOSE 2026-05-13. BATCH(3) shipped end-to-end: (1) CLEAN c75-side-edits-commit = `a7544cab` + preflight cure `80216e93` (HEAD.lock cure #29 mid-cycle, age=348s com.apple lsof). (2) SCAFFOLD 1899a-app SHIPPED `98703242` — clean-extract from worktree commit 16064b37 after detecting CLAUDE.md + notebook-write/SKILL.md hook auto-stage contamination (worktree base d532495b predated c76 housekeeping). 34L use-cases.ts, 55/55 tests pass, tsc clean, DDD PASS. (3) FIX 1898a SHIPPED `e95eb8c7` — TNB c45 bug verified SELF-HEALED post c73 restart by ba spec; dev-mcp-server added regression-shape guards (2 test files, 62L). QA APPROVED `45a74e4d`. Pm housekeeping `24962042`. HEAD.lock cure #30 fired during cherry-pick (age=847s com.apple). WIP peak 2/2 (1898a + 1899a-app parallel, disjoint zones). All branches deleted; main only. Side notes: `.claire/worktrees/` orphan dir flagged for janitor. Outstanding for c77: 1903a HIGH (MCP dispatch hardening bundle from TNB c46 #4+#5), 1899a-routes Tier 3 now unblocked, 1897b-carry user-action F1 still pending. HEAD.lock lifetime: 30/30 cures."
 }
