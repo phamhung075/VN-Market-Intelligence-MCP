@@ -4,6 +4,29 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1903a — MCP dispatch collision investigation (2026-05-13, STALE)
+
+**Mission:** Re-verify Bug A (write_alert_verdict returns string) and Bug B (get_macro_snapshot returns portfolio data).
+
+**Re-verification result: BOTH BUGS STALE.**
+
+Bug A: `alertVerdictTools.ts:86-91` returns `{success, id, ticker, verdict}` — correct in source. No string literal return present.
+Bug B: `macroTools.ts` formatMacroSnapshot emits `=== Macro Snapshot ===` block — correct. No portfolio/electricity bleed in source.
+
+Root cause (from REQ_1903a.md + TASK_REPORT_1903a.md): stale-build artifact. Container ran old `.js` before c73 restart. Same pattern as 1898a. Both healed post-c73 restart.
+
+Prior cycle work (commit `4833b052` via branch `task/1903a-regression-shape`, QA-approved at c77):
+- NEW `apps/mcp-server/src/__tests__/1903a-dispatch-regression.test.ts` (199L, 10 tests)
+- Suite A (WAV-REG-01..07): write_alert_verdict shape guard — all 7 pass
+- Suite B (GMS-REG-02..04): get_macro_snapshot shape guard — all 3 pass
+- No production code changes (test-only patch, stale-build fix not requiring source change)
+
+Current state on main (c908475a): 10/10 pass, tsc 0 errors. No further action required.
+
+**Pattern to remember:** Stale-build dispatch collisions always clear on container rebuild. Guard with regression shape tests (not prod code changes). Test file within 200L split-policy cap avoids follow-up split task.
+
+---
+
 ### Task 1899a-cron — newsHeadlinesRefresh scheduler wiring (2026-05-13, DONE)
 
 **Mission:** XS wiring task. Job body shipped in c80 (1899a-tests). Wire it into the scheduler.
