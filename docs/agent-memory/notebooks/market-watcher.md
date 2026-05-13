@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 15:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 16:42 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -757,6 +757,27 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | cycles_run | 1 |
 | items_fetched | 9 |
 | signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4800 |
+
+### Cycle (16:38–16:42)
+- Stocks: 33 priced (EOD close 08:59 UTC, 5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 3 (GAS 2.56σ, VRE 1.90σ, EIB 1.64σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (news-scout #3089, regime_adj_score=7.8) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE, EIB] | pe_risk: []
+- GAS +6.93% (2.56σ, 30d stddev 2.71%, vol 635K) → signal #3092 → alert-commander. Oil_gas sector +5.57%/1d (PLX +6.8%, OIL +7.0%). Brent 106.77. Bullish evidence 0.633. PB 2.9x vs sector 1.6x. No fx_pressure/pe_risk for oil_gas. Continuation signal (multiple today).
+- VRE -6.91% (1.90σ, 30d stddev 3.63%, vol 1.44M) → signal #3093 → alert-commander [MEDIUM→HIGH, downside_bias]. Severe underperformer vs realty sector -1.28% avg. fx_pressure=true (DXY STRENGTHENING + realty). Real estate broad decline: 9 stocks avg -2.33%. Kh ngoại bán ròng active.
+- EIB -2.00% (1.64σ, 30d stddev 1.22%, vol 1.21M) → signal #3094 → alert-commander [MEDIUM→HIGH, downside_bias] NEW signal. Banking underperformer vs sector -0.40% avg. fx_pressure=true (DXY STRENGTHENING + banking). Context: kh ngoại bán ròng >116M ACB shares/month; banking sector broad decline (STB -4.30%, EIB -2.00%, TPB -1.27%).
+- VHM -4.81% (1.28σ, 30d stddev 3.76%) — below 1.5σ threshold; noted for context.
+- Sector rotation: Oil&Gas +5.57% leader | Real estate -1.28%, Banking -0.40% lagging. All 16 STABLE (1d data). CARRY=FII_OUTFLOW_RISK: no hot_money_concentration check.
+- Macro: Brent 106.77, Gold 4,701.9, USD/VND 26,129. BDI 1,400 (STABLE). Energy: BÌNH THƯỜNG (hydro 70%). Climate: heat risk (May dry) — no watchlist impact. Chain confirms: 0 (last 15 min). Market CLOSED (off-hours, 4h cycle).
+
+## Metrics (cycle 2026-05-13 16:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 15 |
+| signals_emitted | 3 |
 | signals_suppressed | 0 |
 | market_alerts_fired | 0 |
 | exit_status | complete |
