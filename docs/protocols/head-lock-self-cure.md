@@ -116,3 +116,35 @@ Pre-PO repo probe confirmed: no executable commit hooks in `.git/hooks/` (only `
 ### Next-step gate
 
 3 PREFLIGHT fires with evidence logs captured → architect reviews `preflight-lsof-*.log` + `git-trace-*.log` → updates `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` with confirmed root cause → T4 fix becomes specifiable (M-A1 retry / M-A2 serialize / M-A4 trap).
+
+---
+
+## F4 — Git Commit Retry Wrapper (c59-T2)
+
+**Ref:** `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` § 6 F4
+**Cycle:** c59 | **Task:** c59-T2-F4-retry-wrapper | **Owner:** agent-father
+
+### Idiom
+
+```bash
+git_commit_retry() {
+  local n=0; local max=3
+  until [ $n -ge $max ]; do
+    if git commit "$@" 2>&1 | tee /tmp/git-commit-${$}.log; then return 0; fi
+    if grep -qE 'index\.lock|HEAD\.lock' /tmp/git-commit-${$}.log; then
+      n=$((n+1)); sleep 2; continue
+    fi
+    return 1  # non-lock failure — do not retry
+  done
+  return 1  # exhausted retries
+}
+```
+
+Usage: replace `git commit -m "..."` with `git_commit_retry -m "..."` at any flow or skill commit site.
+
+### When to apply
+
+- **Flow commit steps** (dev-team close, notebook-write, post-cycle) — replace bare `git commit` with `git_commit_retry`.
+- **Skill commit steps** (notebook-write, agent-md-factory) — same substitution.
+- Retry fires **only** on `index.lock` or `HEAD.lock` in stderr. All other failures propagate immediately.
+- Rationale: Docker Desktop VirtioFS (H4 confirmed c57+c58) races git's atomic lock; 2s sleep clears the scan window. 3 retries = 6s max overhead before hard-fail.

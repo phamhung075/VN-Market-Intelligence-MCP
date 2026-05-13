@@ -34,4 +34,13 @@ Write(path=$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md, content=<≤
 
 Never use Edit/Append. Never preserve prior session content outside the explicit `## Carry-over` block.
 
+### Commit — retry on lock collision (F4)
+
+Notebook commits are bare `git commit` calls that hit `index.lock` / `HEAD.lock` during Docker VirtioFS scan races (H4 confirmed c57+c58). Use the `git_commit_retry` idiom for all notebook commit steps:
+
+```bash
+# idiom → docs/protocols/head-lock-self-cure.md § F4 — Git Commit Retry Wrapper
+git_commit_retry -m "chore(memory/<agent-id>): notebook <cycle>"
+```
+
 > Requires `$PROJECT_ROOT` set by skill: `.claude/skills/project-root/SKILL.md`
