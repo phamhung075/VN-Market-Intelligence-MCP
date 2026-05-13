@@ -42,7 +42,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_sector_rotation` | Relative performance across 16 sectors | — |
-| `get_sector_comparison` | Detailed metrics and rankings by sector | `metric?: string` |
+| `get_sector_comparison` | Compare a watchlist stock vs sector peers (PE/PB/ROE/price/FII) | `code: string` (required — watchlist ticker, e.g. "VCB") |
 | `get_market_snapshot` | VN-Index, foreign flow, trading halts, sector leaders | — |
 
 ### Macro & Risk Analysis
