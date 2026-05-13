@@ -1,6 +1,22 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** 1899a-factory merge gate
+**Last updated:** 2026-05-13 | **Session:** 1899a-domain merge gate
+
+## Recent session — 2026-05-13 (1899a-domain — APPROVED via cherry-pick)
+
+Branch `fix/1899a-news-fetch-domain` was empty (never advanced by developer — domain commit `b71ba215` landed on `fix/1899a-news-fetch-factory` instead). Cherry-picked `b71ba215` onto main → `d7302f75`.
+
+Tests: 16/16 pass (29 expect() calls). `bun test apps/news-fetch/src/__tests__/unit/` — domain-models.test.ts only. TSC: 0 errors.
+
+DDD PASS: `grep -rn "from.*infrastructure\|from.*application\|from.*interface" apps/news-fetch/src/domain/` — 0 hits.
+
+Security PASS: pure TS interfaces/enums — no runtime code, no process.env, no secrets, no SQL.
+
+Branch `fix/1899a-news-fetch-domain` deleted (was at same commit as main `18c540e7`).
+
+Rebase signal for `fix/1899a-news-fetch-reuters-rss`: NOT NEEDED — branch already contains domain commit via factory merge `b2b84977`.
+
+Pattern: developer may commit task N's work while on task N+1's branch. Always verify `git branch --contains <sha>` before accepting branch tip as deliverable. Handoff SHA is authoritative.
 
 ## Recent session — 2026-05-13 (1899a-factory PlaywrightBrowserFactory — APPROVED)
 

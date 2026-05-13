@@ -140,3 +140,37 @@ tsc --noEmit
 **Zone:** `apps/news-fetch/` (single service, no cross-zone).
 - All files in src/domain/
 - Next tasks (1899a-app, adapters) will depend on these interfaces and enums
+
+---
+
+## QA Gate — 2026-05-13
+
+**Outcome:** APPROVED
+
+**Merge SHA:** `d7302f75` (cherry-picked onto main from `b71ba215` on factory branch)
+
+**Branch note:** `fix/1899a-news-fetch-domain` was never advanced by developer — domain commit landed on `fix/1899a-news-fetch-factory` branch instead. Cherry-picked `b71ba215` to main. Domain branch deleted (was empty).
+
+### Test Results
+- Unit tests (`bun test apps/news-fetch/src/__tests__/unit/`): **16 pass / 0 fail** (29 expect() calls)
+- TypeScript (`bun tsc --noEmit` in apps/news-fetch): **0 errors**
+
+### DDD Compliance: PASS
+- `grep -rn "from.*infrastructure\|from.*application\|from.*interface" apps/news-fetch/src/domain/` — 0 hits
+
+### Security: PASS
+- No `process.env` (domain files are pure TS interfaces/enums — no runtime code)
+- No hardcoded secrets or credentials
+- No SQL (domain layer only)
+
+### Issues Found
+#### Blocking
+None.
+
+#### Non-Blocking
+- Branch naming mismatch: developer committed domain work to `fix/1899a-news-fetch-factory` rather than `fix/1899a-news-fetch-domain`. Handled via cherry-pick; no rework needed.
+
+### Merge Status
+- Merged to main as `d7302f75`
+- Branch `fix/1899a-news-fetch-domain` deleted
+- Rebase signal needed for `fix/1899a-news-fetch-reuters-rss`: YES (branch base at merge time = `18c540e7`, now contains `d7302f75` via factory merge)
