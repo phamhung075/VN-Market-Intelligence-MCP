@@ -38,6 +38,19 @@ Active board → `TASKS.md`
 
 ---
 
+## Archive — Added 2026-05-13 by PM (c61 cap rotation)
+
+| Task ID | Title | Priority | Type | Owner | Completed |
+|---------|-------|----------|------|-------|-----------|
+| HEADLOCK-PREFLIGHT-VALIDATED-c60 | OPS-INFO **DONE 2026-05-13 c60**: 9th HEAD.lock recurrence cured at PREFLIGHT 01:36:13Z (age=1953s, size=0). Same PID 51247 (Docker VM) — 4th consecutive cycle with identical fingerprint. Plus 10th recurrence fired mid-cycle during developer F2a commit, cleared via PREFLIGHT safe-remove. Evidence: `docs/agent-memory/sessions/preflight-lsof-20260513T013613Z.log` (commit `c49fac1f`). H4 mechanism fully stable; F2a Option A now shipped (`d127fb18`) — expected to reduce surface area for c61+. | INFO | OPS | dev-team | 2026-05-13 |
+| 1888c-TOOLCOUNT-RECONCILE-c60 | CHORE-SMALL **DONE 2026-05-13 c60**: tool-registry.json toolCount 125→133 per project-stats.json SSOT. Doc-only single field. | HIGH | CHORE | developer | 2026-05-13 |
+| F2a-OptionA-PER-FILE-MOUNTS-c60 | FIX-SMALL **DONE 2026-05-13 c60**: Per-file :ro mounts in docker-compose.yml for 3 docs/data JSON files (replaces dir mount of `./docs/data`). Eliminates VirtioFS dir-scan surface (root cause for HEAD.lock recurrences per brief §9). Validated via docker-compose config. ./reports/ untouched (separate F2b-reports task). ./docs/agent-memory/ untouched (F2b-agent-memory pending). | HIGH | FIX | developer | 2026-05-13 |
+| SPIKE_006-ALERT-QUALITY-RCA-c60 | SPIKE-S **DONE 2026-05-13 c60**: Alert accuracy 22% RCA verdict methodology-bug. Brief `docs/architecture-briefs/2026-05-13-alert-quality-22pct-spike-006-rca.md` (≤120L). c61 task proposal in §7. Closes telegram report id=2869. | HIGH | SPIKE | architect | 2026-05-13 |
+| 1888f-SESSION-LOG-PATHS-c60 | CHORE-SMALL **DONE 2026-05-13 c60**: Canonicalized session_log paths in system-auditor.md + cowork-refactory-expert.md to `docs/agent-memory/notebooks/<id>.md` per tree-map.md SSOT. 2 files. | MEDIUM | CHORE | agent-father | 2026-05-13 |
+| HEADLOCK-PREFLIGHT-VALIDATED-c59 | OPS-INFO **DONE 2026-05-13 c59**: 8th HEAD.lock recurrence captured at PREFLIGHT 00:36:12Z (age=1952s, size=0). lsof confirmed SAME PID 51247 (Docker VM) — 3rd consecutive cycle with identical fingerprint. H4 mechanism fully stable. Evidence: `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log` (commit `25cfa43a`). | INFO | OPS | dev-team | 2026-05-13 |
+
+---
+
 ## Archive — Added 2026-04-29 (Sprint 1409)
 
 - **1296–1302:** IMF classifier, fail-loud injection, token reduction, TelegramMessageFactory, textUtils DDD fix, newsNormalizer fix
