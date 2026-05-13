@@ -1,8 +1,28 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-13 ~00:45 UTC | **Sprint:** ARCH-BRIEF-UPDATE-H4-c58
+**Last updated:** 2026-05-13 ~01:50 UTC | **Sprint:** SPIKE_006-ALERT-QUALITY-RCA-c60
 
-## Last session summary (ARCH-BRIEF-UPDATE-H4-c58 — Tier 3)
+## Last session summary (SPIKE_006-c60 — alert accuracy 22% RCA)
+
+SPIKE_006 findings complete. Primary verdict: H-A methodology bug (CONFIRMED, HIGH confidence).
+Three root defects identified:
+1. Two independent scoring paths (alertAccuracy.ts Path 2 on-the-fly vs alertOutcomeScorer domain
+   vs verdictResolutionJob → alert-verdicts.json) never share state. alert-verdicts.json = empty [].
+2. Intraday fallback (1-12h window) biases same-session alerts to MISS (VN market close creates
+   artificial recovery within session).
+3. hitThresholdPct=0.1% for price-signal class is noise-floor, not meaningful direction threshold.
+4. Accuracy denominator = hits/(hits+misses) on n=9 scoreable — too small for 60% threshold to mean anything.
+
+H-B partial: verdictResolutionJob confirmed inert (empty alert-verdicts.json). High skip rate in
+alertOutcomeJob plausible but unconfirmed without live run.
+
+Brief: `docs/architecture-briefs/2026-05-13-alert-quality-22pct-spike-006-rca.md` (≤120L)
+Commits: `07c10bfe` (findings doc) + `2d91c859` (TASKS.md Done row)
+Phase 5: c2-alert GREEN both commits. tree-verify passes.
+Telegram report 2869: claimed=architect / resolution=monitoring / status=processed.
+c61 task proposal: BA spec (M) — scoring unification + intraday fallback gate + threshold tuning.
+
+## Previous session summary (ARCH-BRIEF-UPDATE-H4-c58 — Tier 3)
 
 H4 CONFIRMED brief update. Updated `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md`:
 - Status bumped to RESOLVED-MECHANISM, OPEN-FIX-PICK
@@ -53,3 +73,6 @@ flow. SPRINT-S, ≤20 LOC, zone: `.claude/flows/ops/`.
 - TNB recalibration (1896 close gate): SPRINT-S pending — `# TNB-PLANNED-RESTART` convention.
 - Headlock F2a + F4: c59-T1 (ops/developer) + c59-T2 (dev-team). F2b after writer-audit c60.
 - F1 (Docker Desktop .git/ exclusion): user-queue carry item.
+- SPIKE_006 c61: BA spec needed — scoring unification (alertAccuracy.ts + alertOutcomeScorer + verdictResolutionJob).
+  Primary: merge Path 2 to domain scorer. Secondary: gate intraday fallback (≥1 trading day). Tertiary: hitThresholdPct 0.1%→1.0%.
+  Open Q before BA spec: confirm with user whether 60% threshold is hits/(hits+misses) or hits/total.
