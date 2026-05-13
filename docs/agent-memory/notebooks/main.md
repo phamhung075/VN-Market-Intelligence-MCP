@@ -1,60 +1,75 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T09:50Z (c69 close — RCA breakthrough on 1894a + 3 signals drained + concurrent activity acknowledged)
+**Written:** 2026-05-13T10:40Z (c70 close — 16-cycle 1894a blocker FINALLY RESOLVED externally)
 
-## c69 (2026-05-13T09:36Z → 09:50Z, ~14 min)
+## c70 (2026-05-13T10:37Z → 10:40Z, ~3 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | No HEAD.lock present | **lock-free cycle — 1st in many** |
-| 0a Drain | 3 signals → processed/ | architect news-fetch design-complete + 2 qa (dev-vps-crawls HSX/HNX + dev-mcp-server VPS contract tests) |
-| 1 PO Triage | Router discretion (state clear: 0 telegrams, 1899a brief now ready, USER 1894a still blocking) → BATCH(1) | ops-cloudflared-restart-c69 |
-| 3 Tier 1 | ops (cloudflared service restart + curl verify) | **NO CODE SHIPPED but MAJOR RCA: cloudflared in NAMED-TUNNEL TOKEN MODE — local config.yml IGNORED** |
-| MERGE GATE | n/a (no code commit from ops; only docs updates by dev-team) | — |
-| Post | TASKS.md updates (1894a precision refine + 1899a brief-ready + 1894a-RCA-c69 Done row) + this notebook + pipeline-state + close commit | (in progress) |
+| 0 PREFLIGHT | No HEAD.lock; worktree gc empty | **2nd lock-free cycle in a row** |
+| 0a Drain | 1 stale signal → processed/ | ops-cloudflare-config-blocker (11:50, superseded by 12:15 verified) |
+| 1 Inbox | telegram new=0, unresolved=[] | clean |
+| 1 PO Triage | Router discretion: 1894a externally resolved → close-cycle dominates → NO BATCH | (no spawn) |
+| Post | TASKS.md (close 1894a, remove resolved 1888h, add CLOSED-c70 row) + this notebook + pipeline-state + close commit + push pulling 14 concurrent commits | (in progress) |
 
-### Merge chain (origin/main since c68 close `aa705af2`)
-All concurrent-agent ships landed BEFORE the c69 cron tick fired:
-- `0ce9162c` chore(memory/ops-vps-fetch): recon hsx-bctc HNX param contract fix
-- `4a86eef3` fix(vps-crawls/hsx-bctc): HNX `/vi-vn/` referer + `pNhomTin` empty + homepage guard (Q1/2026 PDFs now flowing)
-- `0da3f0ea` chore(memory/news-scout): notebook
-- `3d6383a2` test(mcp-server): VPS contract tests for push-prices and push-news (10/10 pass)
-- `171355cc` chore(memory/dev-mcp-server): notebook push-path-fix cycle
-- (architect brief `docs/architecture-briefs/2026-05-13-news-fetch-service.md` written 06:00Z — uncommitted but on disk)
+### 🎉 1894a CLOSED — 16-cycle blocker resolved
 
-### 🔴 MAJOR RCA: 1894a 16-cycle blocker root cause finally identified
+Between c69 close (09:50Z) and c70 tick (10:37Z), USER took the precise dashboard action defined at c69:
+- Added `^/api/*` → `http://localhost:4000` ingress rule on Cloudflare dashboard (vn-market-mcp tunnel, Public Hostnames)
+- ops verified 12:15Z via curl smoke tests:
+  - `https://zenmidi.com/api/push-prices` → **401** (was 404 for 16 cycles)
+  - `https://zenmidi.com/api/push-news` → **401** (was 404)
+  - 401 = auth required = route working (correct behaviour)
+- Verification signal: `docs/signals/processed/ops-cloudflare-config-verified-2026-05-13T12-15-00Z.json` (status=RESOLVED)
+- Verified merge commit on origin: `aa5cdd69 chore(memory/ops): verify cloudflare tunnel /api/* fix`
 
-For the **16 cycles** the user has been blocked on `POST https://zenmidi.com/api/push-news → 404`:
-- Multiple prior cycles claimed "applied fix to `~/.cloudflared/config.yml`" → fix was technically applied but **ineffective**.
-- ops c69 discovered the actual reason: cloudflared on this Mac runs in **NAMED TUNNEL TOKEN MODE** (launchd plist). In this mode, the local `config.yml` is IGNORED. **Ingress rules come from the Cloudflare DASHBOARD.**
-- Verified: localhost:4000/api/push-news returns 401 (mcp-server route healthy + auth working); `brew services restart cloudflared` succeeded; external `https://zenmidi.com/api/push-news` still returned 404.
-- **USER action now PRECISE**: log into https://dash.cloudflare.com → Cloudflare Tunnel → vn-market-mcp → Public Hostnames → add ingress rule Path `^/api/*` → Service `http://localhost:4000`. (Not a config file edit, not a service restart — a dashboard click.)
-- 1894a row in TASKS.md updated with the refined fix path. Priority bumped HIGH→CRITICAL.
+**Process lesson confirmed**: When a fix has been "applied" 3+ cycles without verified external effect, demand external curl verification. c69 ops escalation prompt → RCA → precise USER action defined → user executed → c70 verifies. Total: 16 cycles to close, but final 2 cycles (c69 RCA + c70 close) shipped the actual fix.
 
-### HEAD.lock (c69 = 0 cures)
-- First lock-free cycle in many. Background pattern persists at ~1/cycle steady-state but absent this iteration.
+### Concurrent ship chain since c69 (origin/main `b0959af2`..local `HEAD`, 14 commits)
+- `3d6383a2` test(mcp-server): VPS contract tests for push-prices and push-news endpoints
+- `171355cc` chore(memory/dev-mcp-server): notebook 2026-05-13 push-path-fix cycle
+- `b0959af2` chore(dev-team/c69): close cycle
+- `5ea87896` chore(memory/qa-responder): notebook
+- `8c9f2fcc` feat(mainserver-crawls): wire adb-kidb + imf-weo adapters into macro-indicators
+- `7c75b6e3` chore(ops): Cloudflare tunnel blocker — token mode prevents config-file update
+- `d82b8f9a` chore(memory/code-janitor): notebook scan 22
+- `d93bd18f` chore(memory/alert-commander): notebook
+- `aa5cdd69` chore(memory/ops): verify cloudflare tunnel /api/* fix 2026-05-13T12-15
+- `ef3f7769` chore(memory/qa): notebook 2026-05-13 batch drain — 5 signals validated
+- `e7a21d60` fix(macro-indicators/arch): move DEFAULT_SYMBOLS + DEFAULT_CNBC_SYMBOLS to domain layer (resolves qa-bug 12:30 DDD violation)
+- `0d6265e5` chore(merge): merge task/push-path-fix-vps-contract-tests to main
+- `c5fc2711` chore(signals): move qa-bug-2026-05-13T12-30-00Z to processed
+- `b5756e75` chore(memory/developer): notebook 2026-05-13
 
-### c69 BATCH outcomes
+### Working tree (uncommitted at c70 tick — concurrent agents' WIP)
+- M: `docs/agent-memory/notebooks/architect.md`, `docs/agent-memory/modules/tool-usage-stats.json`, `scripts/deploy-vinahost.sh`, `vps-scripts/fetch-bctc.sh`
+- ??: 4 new agent files (dev-mainserver-crawls, dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch) + 4 flow dirs + 4 doc dirs + 2 architecture-briefs (news-fetch + vps-data-flow-restoration)
+- These belong to other owners — DO NOT touch in close-cycle commit (C2-clean discipline)
+
+### HEAD.lock (c70 = 0 cures)
+- 2nd consecutive lock-free cycle. Background pattern may be subsiding (or sampling artifact). Continue monitoring.
+- 1897b USER ask (Docker `.git/` exclude) still queued but pressure reduced.
+
+### c70 BATCH outcomes
 | Task | Outcome | Status |
 |---|---|---|
-| ops-cloudflared-restart-c69 | RCA discovered: token-mode tunnel → dashboard config required, not local file | DONE (diagnostic) — no code ship; USER action precision-refined |
+| (no BATCH — close-cycle dominant) | Acknowledge external resolution + push concurrent ships | DONE (admin) |
 
-### c70 carry-forward (priority order)
-1. **1894a USER CRITICAL** — Cloudflare dashboard ingress rule `^/api/*` → `localhost:4000`. Now precisely specified. Single click in dashboard.
-2. **1897b CRITICAL** — F1 USER Docker `.git/` exclude (HEAD.lock 23x/last-day; absent this cycle but pattern persists).
-3. **1899a developer scaffold** — architect brief ready (`docs/architecture-briefs/2026-05-13-news-fetch-service.md`); 15 new files + 8 mods. Big SPRINT-M for c70.
-4. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server).
-5. **1898b HIGH** — RSS regression (ba spec → dev-mcp-server / ops).
-6. **1897f HIGH** — architect rethink (lower urgency post-1897g).
-7. **1862c-E-dashboard** — overlaps with 1894a (same dashboard, same `/api/*` family of routes).
-8. **Concurrent untracked agent work** — 4 new dev-*/ops-* agents + flows + handoffs still uncommitted by their owners; flag if lingers another cycle.
-9. METHODOLOGY-INFRA + SSOT-CRITICAL + JANITOR long-tail.
+### c71 carry-forward (priority order, refreshed)
+1. **1899a developer SPRINT-M scaffold** — architect brief ready `docs/architecture-briefs/2026-05-13-news-fetch-service.md`; 15 new files + 8 mods; port 5008. **TOP PRIORITY** now that 1894a is unblocked.
+2. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server). Likely actionable now that push-path is unblocked.
+3. **1898b HIGH** — RSS regression. **Re-test first** — with `/api/push-news` now routing correctly, the VPS RSS push may have already self-recovered. ops cycle next tick to verify.
+4. **1862c-E-dashboard** — SAME dashboard, DIFFERENT path family (`/vn-market/sse`). Check if USER's dashboard pass also covered SSE route; if not, queue similar precise ask.
+5. **1897b CARRY** — F1 USER Docker `.git/` exclude (HEAD.lock background — pressure reduced, 2 lock-free cycles).
+6. **1897c/d/e/f CARRY** — worktree spike + HEAD.lock contamination — defer pending pressure return.
+7. **Concurrent untracked agent work** — 4 new dev-*/ops-* agents + flows + handoffs + 2 architecture-briefs still uncommitted on disk. Flag owners c71 if still lingering.
+8. **METHODOLOGY-INFRA + SSOT-CRITICAL + JANITOR** — long-tail.
 
 ### Steady state metrics
-- HEAD.lock cure: 23/23 lifetime (100%); 0 this cycle (good signal, but small sample).
-- C2 clean ships: 2/2 last shipping cycles (c67, c68). c69 had no code ship (ops diagnostic only).
-- 1899a unblocked for c70 (architect brief done).
-- 1894a finally has a PRECISE fix path after 16 cycles of misdiagnosis.
+- HEAD.lock cure lifetime: 23/23 (100%); 0 this cycle (good — 2 lock-free in a row).
+- C2 clean ships: 2/2 last shipping cycles (c67, c68); c69 + c70 = diagnostic + admin (no code ship).
+- 1894a 16-cycle blocker CLOSED. Net unblock value: VPS push pipeline now operable.
 
 ### Process win
-- Spawning `ops` with a full step-list + verification curl + SSH e2e + DB check enabled the agent to **escalate diagnostic depth** beyond the assumed fix. Without that explicit escalation prompt, c69 might have just "applied config" again and reported success → 17th cycle. Lesson: when a fix has been "applied" 3+ cycles without effect, the prompt should demand verification before claiming success.
+- c69 RCA → c70 close in 50 minutes wall-clock (cron tick to user action to verification). Fastest 16-cycle-blocker resolution since the user-action precision pattern was added to the prompt.
+- Discipline lesson re-encoded: when a fix has been "applied" 3+ cycles without verified external effect, NEXT prompt must demand external curl verification before claiming success.
