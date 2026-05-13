@@ -1,5 +1,30 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** macro-external-allsettled-timeout merge gate
+
+## Recent session — 2026-05-13 (macro-external-allsettled-timeout — Promise.allSettled fix)
+
+**macro-external-allsettled-timeout — APPROVED:**
+Branch: `task/macro-external-allsettled-timeout`. Fix commit: `12a7221e`. Merge SHA: `1c6a7a01`.
+
+Tests: 85 pass / 0 fail / 12 skip. TSC: 37 errors — all pre-existing `global.fetch preconnect` Bun Mock<> typing gap (confirmed identical to main baseline via `git stash` comparison). Production code TSC: 0 errors.
+
+DDD PASS: Previous violation (DEFAULT_SYMBOLS/DEFAULT_CNBC_SYMBOLS from infrastructure/scrapers/) FIXED — both constants now in `apps/macro-indicators/src/domain/defaults.ts`. Zero `from.*infrastructure` imports in application layer. `withTimeout` helper lives in application layer as expected.
+
+Security PASS: `process.env` in `index.ts:34-35` and `fred-macro.ts:47` are pre-existing (branch diff = 0 lines changed in those files). No hardcoded secrets. No SQL in changed files.
+
+Contract verified:
+- Per-source envelope `{ status, data?, error?, latencyMs }`: PASS (fetch-external-macro.ts:60-65)
+- Aggregate `{ sources, fetchedAt, summary: { ok, failed, totalLatencyMs } }`: PASS (fetch-external-macro.ts:82-86)
+- HTTP 200 when ok>=1, HTTP 502 when ok===0: PASS (handlers.ts:41-44)
+- execute() never throws — all paths through withTimeout: PASS (11 new unit tests)
+
+Smoke test: `curl POST localhost:5004/macro/external` → HTTP 200 in 8.0s. Envelope present. summary.ok=1 (calendar ok). 5 timeout (worldBank/yahoo/cnbc/tradingEconomics/fred). HTTP 200 correct.
+
+Secondary finding: 4-5 of 6 scrapers consistently timeout at 8s. Cause: geo-blocking from non-VN Docker host (France dev env). Container logs show FRED HTTP 500 (API errors), tradingEconomics JSON-LD not found, yahoo HTTP 404, calendar HTTP 403. Fix is working correctly — graceful degradation as designed. Filed: `docs/signals/qa-bug-macro-scrapers-slow-2026-05-13T11-05-10Z.json`. Routed to ops (VPS proxy check) + developer (budget review). Non-blocking.
+
+Branch deleted locally (no remote). Report: `reports/TASK_REPORT_macro-external-allsettled-timeout.md`.
+
 **Last updated:** 2026-05-13 | **Session:** bootstrap batch drain — 5 signals (macro scrapers + RAM + hsx-bctc + vps-contract + adb/imf)
 
 ## Recent session — 2026-05-13 (bootstrap batch drain — signals 1-5)
