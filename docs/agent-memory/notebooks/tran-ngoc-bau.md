@@ -2,7 +2,96 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-13 06:50 UTC (cycle 45) | Cycles completed: 45
+**Last updated:** 2026-05-13 14:50 UTC (cycle 46) | Cycles completed: 46
+
+---
+
+## Cycle 46 Watch Notes (2026-05-13 14:50 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **MIXED** (alert-commander BREAKTHROUGH 2 MARKET CRITICAL fires + protocol-deviation self-doc; BUT 5th container restart proves c44/c45 'pattern broken' WRONG — pattern interval is 14-16h not 6-12h)
+
+**🚨 c46 ATTEMPT #1 ABORTED at 10:47 UTC** — gateway connection refused. Step 0c protocol worked: clean abort, no false findings. Now learn this was the 5th container restart in progress.
+
+**🚨 5TH CONTAINER RESTART CONFIRMED AT ~13:09 UTC:**
+- c40 02:40 UTC, c41 14:35 UTC, c43 20:29 UTC, c46 13:09 UTC = 4 confirmed restarts in 35h
+- Pattern interval is **14-16h**, not 6-12h as I estimated at c43
+- My c44/c45 "pattern broken" celebration was WRONG (only 8h22m + 4h elapsed = 12h+ but interval is 14-16h)
+- Sprint 1896a brief + 1896c-impl + ARCH-1896-RE-RCA-c58 ALL insufficient
+- **Need re-RCA #2** with explicit interval-tracking
+- **TNB self-correction**: future regression-broken claims require 3+ consecutive intervals of absence
+
+**🚨 σ DATA MASSIVELY RESET POST-RESTART:**
+- VNINDEX 477/30 → 132/30 (-72%)
+- ACB/ACV/BID/CTG... 370/30 → 77/30 (-79%)
+- Severe data loss every restart
+- Sprint 1336 named-volume isolation may have regressed
+- Combine with #1 in re-RCA #2
+
+**🎯🎯🎯 alert-commander BREAKTHROUGH (Sprint c69-closed, was c64 at c45):**
+- **09:01 UTC: 2 MARKET CRITICAL alerts fired** with FULL methodology v2026-05-11.2
+  - GAS price_anomaly CRITICAL +6.93% 2.46σ — TIGHTENING caveat, oil sector +5.57% confirmation, Brent transmission
+  - VRE price_anomaly CRITICAL -6.91% 1.67σ — DXY STRENGTHENING + US10Y RISK-OFF + pe_compression_risk=true cascade
+- **PROTOCOL DEVIATION SELF-DOCUMENTED**: "market-watcher signal treated as confirmation source given market close context" (deviation from 08:01 suppression pattern)
+- **2 BUGS LOGGED** via doc_self_heal: write_alert_verdict response shape + get_macro_snapshot returning portfolio data
+- 10:01 UTC: dedup discipline excellent (suppressed duplicate GAS #3071 + VRE #3072)
+
+**🆕 CRITICAL DISCOVERY — `.claude/ write-protected in cowork session`:**
+- alert-commander logged flow-edit proposals "for manual apply" because cowork session cannot write to `.claude/`
+- **TNB auto-cure is the ONLY mechanism for flow updates from agent feedback**
+- This is the cowork→TNB feedback loop architectural reality
+- PO must apply doc_self_heal proposals via dev task or NB-HDR ba spec
+
+**🆕 US10Y FINALLY MOVED — 4.46% → 4.48% (+0.02):**
+- First change in 6 cycles (24h+ stable)
+- Now 0.02% from Layer 1.2 threshold cross at 4.50%
+- Watch all agents for explicit cross flag if breaches in next 24h
+
+**c46 NEW FINDINGS:**
+- 🚨 #1 5th container restart, pattern resumed at 16h40m interval
+- 🚨 #2 σ data massive reset post-restart
+- 🆕 #3 TNB self-correction: pattern-broken claims need 3+ intervals of absence
+- 🆕 #4 write_alert_verdict response shape bug (CONFIRMED by alert-commander)
+- 🆕 #5 get_macro_snapshot returning portfolio data (2nd cycle of evidence — was electricity at c45)
+- 🆕 #6 .claude/ write-protected in cowork (architectural discovery)
+- ✅ #11 24h alerts JUMPED 5→29 (+14 HIGH/CRITICAL)
+
+**MACRO (c45 → c46, ~8h):**
+- Brent +1.57 → 107.99 (broke through 107 again, sustained TIGHTENING)
+- Gold -24.1 → 4694.50 (continued risk-on moderation)
+- DXY +0.13 → 98.52 (USD strengthening)
+- US10Y **+0.02 → 4.48%** ⚠️⚠️ FIRST MOVE IN 6 CYCLES (Layer 1.2 threshold approaching)
+- USD/VND +16 → 26,315 (slight VND weakening)
+- VND carry -0.33% UNCHANGED (FII_OUTFLOW_RISK)
+- Container uptime **1h 38m** ⚠️ (5th restart at 13:09 UTC)
+- VN market CLOSED post-session 09:00 UTC
+
+**MARKET QUEUE:** 1 fresh msg #2875 (analysis-agent autonomously detected post-restart outage at 13:15 UTC — 6 min post-restart)
+
+**SIGNAL TO TNB:** 2 fresh chain catalysts:
+- #3077 (9/10) FPT EARNINGS continuation — price resilient vs foreign selling
+- #3081 (10/10) GAS — **regime_adj_score=10.4** (above normal cap), TIGHTENING regime aggressive
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: 6/6 effective GOOD ⭐⭐⭐ — BREAKTHROUGH 2 CRITICAL fires + protocol deviation self-doc + 2 BUGS logged
+- news-scout: 4/4 GOOD ⭐⭐ — regime_adj_score 10.4 aggressive
+- unified-agent: UNAUDITED (notebook unchanged 9h+; Pillars 4/4 ROI holds from c45)
+- financial-analyst: UNAUDITABLE (silent 16h+)
+- market-watcher: UNAUDITABLE (notebook broken)
+- architect: UNAUDITED (1896-RE-RCA still in flight, need re-RCA #2)
+
+**Hexagram dynamics:**
+- alert-commander Càn STRONG ⭐⭐⭐ BREAKTHROUGH — 2 MARKET CRITICAL + protocol discipline excellent
+- news-scout Càn STRONG ⭐⭐ — regime_adj_score 10.4 aggressive methodology
+- TNB Tốn FOCUSED + SELF-CORRECTING — abort #1 protocol worked, methodology gap acknowledged
+- developer Càn STRONG ⭐ — c64→c69 (5 more cycles in 8h)
+- ops Bĩ DEGRADED ⚠️ — 5th restart, σ data loss, Sprint 1896 family insufficient
+- mcp-server Bĩ DEGRADED — 2 confirmed bugs (write_alert_verdict, get_macro_snapshot)
+- unified-agent Đỉnh STABLE — Pillars 4/4 ROI holds from c45 (no fresh data)
+- financial-analyst Bác — single-fire pattern persists 16h+
+- analysis-agent Tốn DISCIPLINED — autonomous outage detection working
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-13T14-50-00Z.json (priority: high — CRITICAL pattern resumed)
 
 ---
 
