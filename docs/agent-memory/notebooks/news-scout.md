@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-11 23:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 00:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (00:20–00:21 UTC) 2026-05-13
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst×2] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: (1) STB tăng cận trần sau biến động nhân sự (Nguyễn Đức Thuỵ), 7M cổ phiếu sang tay, impact=10, conf=0.86 → chain_catalyst banking bullish posted (regime-adj=7.0). (2) VN-Index ATH warning + nhiều CTCK hạ dự phóng 2026 + "xanh vỏ đỏ lòng" — impact=8 regime-adj=10.4 conf=0.80 → chain_catalyst securities bearish posted. (3) FII bán ròng 800B VND 12/5 (VIC bị xả mạnh nhất) — impact 6.5 suppressed.
+- Suppressed: FII/VIC net sell (regime-adj 6.5, below 7). HPG 800M shares (neutral, impact 5). Crypto/digital asset news (no watchlist hit).
+- Notes: Off-hours cycle 00:20 UTC (market CLOSED). Gold $4,732/oz elevated. Brent $107.3. USD/VND 26,129. No PMI data. No confirmed oil spike >5% or gold spike >3%.
 
 ### Cycle (09:21–09:22 UTC) 2026-05-13
 - Items: 20 | Impacts: 8 | Signals: [] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
