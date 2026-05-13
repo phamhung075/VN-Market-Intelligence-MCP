@@ -4,20 +4,24 @@
  * DDD wiring: domain/ ← application/ ← infrastructure/ ← interface/
  * Port: 5008 (configurable via $PORT)
  *
- * Skeleton: /health only. Adapters, use-cases, and routes
- * are added by downstream tasks (1899a-domain, 1899a-app,
- * 1899a-factory, 1899a-reuters-rss, 1899a-bloomberg, 1899a-routes).
+ * Routes owned by: src/interface/handlers.ts (1899a-routes)
+ *   GET  /health
+ *   POST /news/reuters/headlines   (RSS primary + Playwright fallback)
+ *   GET  /news/reuters/headlines   (alias)
+ *   POST /news/bloomberg/headlines (Playwright only)
+ *   GET  /news/bloomberg/headlines (alias)
  */
 
-import { Hono } from 'hono';
-import { pkg } from './pkg.js';
+import { createRouter } from './interface/handlers.js';
+import { ReutersRssScraper } from './infrastructure/scrapers/reuters-rss.js';
+import { ReutersStealthFallback } from './infrastructure/scrapers/reuters-stealth.js';
+import { BloombergStealth } from './infrastructure/scrapers/bloomberg-stealth.js';
 
-/** Hono app — exported for unit tests (no port binding required). */
-export const app = new Hono();
-
-// ── Health route ─────────────────────────────────────────────────────────────
-app.get('/health', (c) =>
-  c.json({ status: 'ok', service: 'news-fetch', version: pkg.version }),
+// ── Composition root — wire scrapers into router ──────────────────────────────
+export const app = createRouter(
+  new ReutersRssScraper(),
+  new ReutersStealthFallback(),
+  new BloombergStealth(),
 );
 
 // ── Server binding (skipped when imported in tests) ───────────────────────────

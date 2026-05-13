@@ -1,6 +1,6 @@
 /**
  * Smoke test — news-fetch service skeleton
- * Task: 1899a-core
+ * Task: 1899a-core (updated by 1899a-routes: health shape now includes port field)
  *
  * Boots the Hono app directly (no network port) and hits /health.
  * Playwright pre-flight is NOT required at this stage.
@@ -23,7 +23,8 @@ describe('1899a-core — news-fetch skeleton smoke test', () => {
 
     expect(body.status).toBe('ok');
     expect(body.service).toBe('news-fetch');
-    expect(typeof body.version).toBe('string');
+    // port field added by 1899a-routes (spec §AC GET /health)
+    expect(body.port).toBe(5008);
   });
 
   it('GET /health Content-Type is application/json', async () => {
