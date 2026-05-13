@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 20:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 21:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -138,6 +138,26 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4100 |
+
+### Cycle (21:38–21:41)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.19σ, VRE 1.67σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (inferred: Fed rate hike fear/gold drop) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE] | pe_risk: []
+- GAS +6.93% (2.19σ, 30d stddev ≈3.17%, vol 635K) → signal #3116 → alert-commander. Oil/Gas sector-wide rally (+5.3-5.57%). Brent 105.39. ⚠️ Note: duplicate of #3107 (19:41 UTC) — same closing price, 4h off-hours cycle.
+- VRE -6.91% (1.67σ, 30d stddev ≈4.13%, vol 1.44M) → signal #3117 → alert-commander. Stock-specific drop (sector -1.1%). fx_pressure=true (realty+USD STRENGTHENING). downside_bias escalated MEDIUM→HIGH. ⚠️ Duplicate of #3108 (19:41 UTC).
+- VHM -4.81% (1.24σ, 30d stddev ≈3.88%) — below 1.5σ threshold, no signal.
+- Market CLOSED (off-hours 4h cycle). All prices are closing values from 08:59 UTC.
+- Chain findings: 0 (last 15 min) | Supply chain: STABLE (BDI=1,400) | 20 open alerts.
+
+## Metrics (cycle 2026-05-13 21:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 2 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
 
 ## Known patterns / preferences
 
