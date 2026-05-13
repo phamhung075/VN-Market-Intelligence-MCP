@@ -28,12 +28,19 @@ Zone: dev-zone (VPS scraper code)
 
 ## Technique Registry
 
-| Technique | Doc | First used for | Notes |
-|-----------|-----|---------------|-------|
-| plain-requests-open-api | docs/vps-crawl-techniques/plain-requests-open-api.md | vps-prices, cafef-index, sbv-rates | Lightest path. 3 sources. No bypass needed. |
-| ua-rotation-rss | docs/vps-crawl-techniques/ua-rotation-rss.md | vn-news-rss | 5-UA pool, 3 retries, human delay. 14 RSS sources. |
-| hnx-ajax-post | docs/vps-crawl-techniques/hnx-ajax-post.md | hsx-bctc | SSL CERT_NONE + pAction=1 required. HNX/UPCOM tickers only. |
-| ssc-playwright-download | docs/vps-crawl-techniques/ssc-playwright-download.md | hsx-bctc (HOSE) | Playwright, currently failing TasksMax. Document-only for now. |
+| Technique | Doc | First used for | RAM/req | Notes |
+|-----------|-----|---------------|---------|-------|
+| plain-requests-open-api | docs/vps-crawl-techniques/plain-requests-open-api.md | vps-prices, cafef-index, sbv-rates | 3–8 MB | Lightest path. 3 sources. No bypass needed. |
+| ua-rotation-rss | docs/vps-crawl-techniques/ua-rotation-rss.md | vn-news-rss | 3–8 MB | 5-UA pool, 3 retries, human delay. 14 RSS sources. |
+| hnx-ajax-post | docs/vps-crawl-techniques/hnx-ajax-post.md | hsx-bctc | 5–10 MB | SSL CERT_NONE + pAction=1 required. HNX/UPCOM tickers only. |
+| ssc-playwright-download | docs/vps-crawl-techniques/ssc-playwright-download.md | hsx-bctc (HOSE) | 300–500 MB | Playwright, currently failing TasksMax. Document-only for now. |
+| tls-fingerprint-spoof | docs/vps-crawl-techniques/tls-fingerprint-spoof.md | (future CF-protected sources) | 5–15 MB | curl_cffi JA4+ impersonation. 2026 standard for TLS bypass. |
+| cloudflare-js-bypass | docs/vps-crawl-techniques/cloudflare-js-bypass.md | (upgrade path cafef.vn) | 5–15 MB | curl_cffi. Upgrade path if CF IUAM activates. |
+| cloudflare-managed-bypass | docs/vps-crawl-techniques/cloudflare-managed-bypass.md | (future) | 5–80 MB | cloudscraper largely ineffective v3+. cf_clearance replay preferred. |
+| header-rotation | docs/vps-crawl-techniques/header-rotation.md | (upgrade path rss/news) | 3–8 MB | Full header rotation doc. Same pattern as ua-rotation-rss. |
+| cookie-warmup | docs/vps-crawl-techniques/cookie-warmup.md | (pre-condition hsx.vn XHR) | 2–5 MB | Session warmup + cookie persistence to disk. |
+| js-mini-challenge | docs/vps-crawl-techniques/js-mini-challenge.md | (no current source) | 20–35 MB peak | node -e / execjs. No VN source requires this currently. |
+| captcha-workaround | docs/vps-crawl-techniques/captcha-workaround.md | (no current source) | 5–10 MB | 2captcha or XHR skip. No VN source requires this currently. |
 
 ---
 
@@ -43,6 +50,8 @@ Zone: dev-zone (VPS scraper code)
 |------|--------|-----------|---------|
 | 2026-05-13 | all 5 sources | reverse-documentation | Bootstrap catalog complete. 4 technique docs written. |
 | 2026-05-13 | hsx-bctc | live probe + triage | HNX endpoint confirmed working for HNX tickers; HOSE path blocked; triage doc at docs/vps-sources/hsx-bctc/triage.md |
+| 2026-05-13 | hsx-bctc (TASK-BCTC-2) | live verification | NVB Q1/2026: PASS — 1 PDF URL returned (confidence 0.9). VEA Q1/2026: empty (UPCOM, not yet filed or SSC needed). HNX endpoint fully operational. |
+| 2026-05-13 | technique catalog | bootstrap + research | 7 new technique docs written (tls-fingerprint-spoof, cloudflare-js-bypass, cloudflare-managed-bypass, header-rotation, cookie-warmup, js-mini-challenge, captcha-workaround). README updated with RAM rankings. |
 
 ---
 
@@ -87,6 +96,13 @@ Zone: dev-zone (VPS scraper code)
 - systemd units all have TasksMax=32, MemoryMax=128-256M
 - Shared: vps-lib.sh for logging, log rotation at 10MB
 
+### 2026 Anti-Bot Research Findings
+- curl_cffi >= 0.7 is the 2026 standard for TLS bypass — JA4+ fingerprint emits exact Chrome profile
+- cloudscraper is largely ineffective against CF v3+/Turnstile as of 2026 (still works for v1/v2 only)
+- httpx alone does NOT improve TLS fingerprint over requests
+- VPS RAM budget: curl_cffi uses 5–15 MB/req vs 300–500 MB for Chromium (30–100x lighter)
+- No current VN source requires TLS bypass — all 5 sources are open APIs or RSS feeds
+
 ---
 
 ## Lessons Learned
@@ -97,3 +113,5 @@ Zone: dev-zone (VPS scraper code)
 - HOSE tickers are NOT on HNX endpoint — routing logic in scraper must check exchange before probing
 - VPS TasksMax=32 is a hard ceiling for any multi-threaded process (Chromium, Java, etc.)
 - VPS RAM ~1GB: Playwright/Chromium is risky even with TasksMax raised
+- cloudscraper (2026): document it but warn it is obsolete for CF v3+
+- curl_cffi is the right upgrade path for any future TLS-checked VN source
