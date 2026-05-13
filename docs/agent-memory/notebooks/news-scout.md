@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 08:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 09:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (09:15–09:20 UTC) 2026-05-13
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst×2 #3068 GAS/oil_gas, #3069 FPT/earnings] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: GAS +6.93% (ceiling, 5th consecutive cycle), Brent $106.86 OPEC cuts geopolitical → chain_catalyst #3068 bullish oil_gas, conf 89%. FPT lãi T4/2026 +21% (5th re-signal, underreaction pattern) → chain_catalyst #3069 bullish tech, conf 82%. Market CLOSED (post-08:59 UTC). Off-hours cycle (4h interval). Banking sector -1.81% avg (STB -4.30%, EIB -2.00%); RE sector -2.33% avg (VRE -6.91%, VHM -4.81%) — all captured in price_drop alerts, no additional signals. Imexpharm insider sell after Chinese M&A (IMP, impact 8/10, conf 88%) — not watchlist, DHG indirect impact 4/10 below threshold — suppressed.
+- Suppressed: IMP insider sell (not watchlist, DHG indirect impact too low), SSIAM–Japan partnership (securities, no direct watchlist ticker at threshold), SeABank insider buy (SSB not watchlist), GEX sub-investment (construction, not watchlist), gold fund buying (global, no VN direct hit), HAG/AgriS/Dabaco/Fecon/dividend items (not watchlist or impact <6).
+- Notes: Market closed. REGIME: NEUTRAL (no SBV/Fed explicit signal this cycle; previous TIGHTENING from gold reversal now resolved — gold flat 0%). GAS surge now 5 consecutive cycles — Brent $106.86 confirmed, OPEC + geopolitics driver. FPT earnings underreaction persists (5th cycle). VHM bond issuance 3,000B already flagged prior cycles. Next cycle: 13:20 UTC.
 
 ### Cycle (08:15–08:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [urgent_news×1 #3062 FPT, chain_catalyst×2 #3063 GAS/CPI, #3064 VN-Index ATH macro] | Regime: TIGHTENING | Carry: NEUTRAL
