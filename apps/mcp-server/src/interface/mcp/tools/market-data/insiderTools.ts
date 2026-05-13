@@ -91,7 +91,8 @@ export function registerInsiderTools(
     "Return insider transaction history from SSC disclosures. " +
       "Includes on-the-fly streak detection for accumulation patterns (>= 2 distinct buy days by same insider). " +
       "If code is omitted, returns all watchlist stocks. " +
-      "Data is populated by insiderCheckJob (daily 08:00 VN time, Task 1145).",
+      "Data is populated by insiderCheckJob (daily 08:00 VN time, Task 1145). " +
+      "Source tier: 1 (primary official — SSC portal congbothongtin.ssc.gov.vn is the official State Securities Commission regulatory portal).",
     {
       code: z
         .string()
@@ -144,6 +145,7 @@ export function registerInsiderTools(
         const streaks = computeStreaks(transactions);
 
         const output = {
+          source_tier: 1 as const,
           transactions: transactions.map((t) => ({
             code:             t.code,
             insiderName:      t.insiderName,
@@ -170,7 +172,10 @@ export function registerInsiderTools(
           content: [
             {
               type: "text" as const,
-              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+              text: JSON.stringify({
+                source_tier: 1 as const,
+                error: err instanceof Error ? err.message : String(err),
+              }, null, 2),
             },
           ],
         };

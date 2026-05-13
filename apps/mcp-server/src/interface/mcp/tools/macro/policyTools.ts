@@ -96,7 +96,7 @@ export function registerPolicyTools(
 ): void {
   server.tool(
     "get_policy_signals",
-    "Get recent government policy signals (Nghị định, Thông tư, Quyết định) and their sector impact. Returns Vietnamese plain-text analysis.",
+    "Get recent government policy signals (Nghị định, Thông tư, Quyết định) and their sector impact. Returns Vietnamese plain-text analysis. Source tier: 3 (derived — policyImpactMapper classifies stored news text from rag_analyses; fully derived signal).",
     {
       sector: z.string().optional().describe("Filter by sector (e.g. 'banking', 'real_estate'). Omit for all sectors."),
       days: z.coerce.number().int().min(1).max(90).optional().default(30).describe("Look-back window in days (default: 30)"),
@@ -120,14 +120,21 @@ export function registerPolicyTools(
         const text = formatPolicySignals(policySignals, sector);
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            text,
+            fetchedAt: new Date().toISOString(),
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_policy_signals] error", {
           error: err instanceof Error ? err.message : String(err),
         });
         return {
-          content: [{ type: "text" as const, text: "Lỗi khi truy vấn tín hiệu chính sách." }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            error: "Lỗi khi truy vấn tín hiệu chính sách.",
+          }, null, 2) }],
         };
       }
     },

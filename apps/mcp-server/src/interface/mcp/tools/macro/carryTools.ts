@@ -103,7 +103,8 @@ export function registerCarryTools(server: McpServer): void {
       "Reads the SBV max deposit rate from sbv_rates and the US Fed Funds rate from " +
       "tracked_indicators (source: FRED), then classifies the carry spread into one of: " +
       "HOT_MONEY_INFLOW (spread >2.5%), NEUTRAL (0.5–2.5%), FII_OUTFLOW_RISK (<0.5%). " +
-      "Returns regime, carrySpread, vndDepositRate, fedFundsRate, reasoning, and computedAt.",
+      "Returns regime, carrySpread, vndDepositRate, fedFundsRate, reasoning, and computedAt. " +
+      "Source tier: 3 (derived — computed from cached tier-2 inputs; carrySpread is derived).",
     {
       /**
        * Test-only: inject VND deposit rate directly (bypasses DB read).
@@ -132,7 +133,10 @@ export function registerCarryTools(server: McpServer): void {
         const signal: CarryTradeSignal = computeCarryTradeSignal(vndRate, fedRate);
 
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(signal, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            ...signal,
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_carry_trade_signal] unexpected error", {
@@ -142,7 +146,10 @@ export function registerCarryTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error computing carry trade signal: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 3 as const,
+                error: (err as Error).message,
+              }, null, 2),
             },
           ],
         };
@@ -157,7 +164,8 @@ export function registerCarryTools(server: McpServer): void {
       "Each event is annotated with isPivotWindow=true when it falls in months 3, 6, 9, or 12 " +
       "(quarter-end periods of heightened VN market sensitivity). " +
       "Also returns currentMonthIsPivotWindow, nextPivotWindow label, and a warning if " +
-      "within 14 days of a pivot month.",
+      "within 14 days of a pivot month. " +
+      "Source tier: 3 (derived — static computed schedule, no live external source).",
     {
       /** Number of calendar days to look ahead (default 60, max 365). */
       days: z.number().int().min(1).max(365).optional(),
@@ -180,7 +188,10 @@ export function registerCarryTools(server: McpServer): void {
       const result: MacroCalendarResult = getMacroCalendar(referenceDate, days ?? 60);
 
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text" as const, text: JSON.stringify({
+          source_tier: 3 as const,
+          ...result,
+        }, null, 2) }],
       };
     },
   );

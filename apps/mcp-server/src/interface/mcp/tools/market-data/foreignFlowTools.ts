@@ -122,7 +122,9 @@ export function registerForeignFlowTools(
       "and a daily history table. " +
       "Severity HIGH = 3+ consecutive days in same direction AND total net volume > 100k shares. " +
       "If foreign flow data has not been collected yet (all volumes are 0), returns a clear no-data message. " +
-      "Data freshness depends on the VPS push-foreign-flow pipeline (Task 1132/1135).",
+      "Data freshness depends on the VPS push-foreign-flow pipeline (Task 1132/1135). " +
+      "Source tier: 2 (aggregator — HOSE/HNX data via Vinahost VPS proxy intermediary). " +
+      "source_note field indicates path: 'primary', 'fallback:cache', or 'fallback:none'.",
     {
       code: z
         .string()
@@ -136,8 +138,20 @@ export function registerForeignFlowTools(
         .optional()
         .default(10)
         .describe("Number of calendar days of history to fetch (2–30, default 10)"),
+      /**
+       * Test-only: inject fallback mode string ('cache' | 'sse' | 'none').
+       * When set, simulates a fallback path and adds source_note to the response.
+       */
+      _testFallback: z.string().optional(),
     },
-    async ({ code, days }) => {
+    async ({ code, days, _testFallback }) => {
+      // Resolve source_note for fallback simulation (test injection)
+      const sourceNote: string =
+        (_testFallback === "cache") ? "fallback:cache" :
+        (_testFallback === "sse")   ? "fallback:sse"   :
+        (_testFallback === "none")  ? "fallback:none"  :
+        "primary";
+
       try {
         // Resolve DB — injected in tests, real getDb() in production
         const resolvedDb = db ?? getDb();
@@ -183,64 +197,69 @@ export function registerForeignFlowTools(
         //  (a) no rows at all, or
         //  (b) all foreignVolume values are 0
         if (history.length === 0 || history.every((r) => r.foreignVolume === 0)) {
+          const envelope: Record<string, unknown> = {
+            source_tier: 2 as const,
+            note:
+              `No data available for ${code}: foreign investor volume has not been collected yet. ` +
+              "Data is populated by the VPS push-foreign-flow pipeline (Task 1132/1135). " +
+              "Check back after the pipeline has run at least one day.",
+          };
+          if (sourceNote !== "primary") envelope.source_note = sourceNote;
           return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  `No data available for ${code}: foreign investor volume has not been collected yet. ` +
-                  "Data is populated by the VPS push-foreign-flow pipeline (Task 1132/1135). " +
-                  "Check back after the pipeline has run at least one day.",
-              },
-            ],
+            content: [{ type: "text" as const, text: JSON.stringify(envelope, null, 2) }],
           };
         }
 
         // ── Insufficient data guard ───────────────────────────────────────────
         if (history.length < 2) {
+          const envelope: Record<string, unknown> = {
+            source_tier: 2 as const,
+            note:
+              `Insufficient foreign flow data for ${code}: only ${history.length} row(s) found. ` +
+              "At least 2 days of history are required to compute flow deltas. " +
+              "Data is populated by the VPS push-foreign-flow pipeline.",
+          };
+          if (sourceNote !== "primary") envelope.source_note = sourceNote;
           return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  `Insufficient foreign flow data for ${code}: only ${history.length} row(s) found. ` +
-                  "At least 2 days of history are required to compute flow deltas. " +
-                  "Data is populated by the VPS push-foreign-flow pipeline.",
-              },
-            ],
+            content: [{ type: "text" as const, text: JSON.stringify(envelope, null, 2) }],
           };
         }
 
         // ── Analyze ───────────────────────────────────────────────────────────
         const signal = analyzeForeignFlow(history);
         if (signal === null) {
+          const envelope: Record<string, unknown> = {
+            source_tier: 2 as const,
+            note:
+              `Insufficient foreign flow data for ${code}: analysis returned null. ` +
+              "At least 2 days of history with non-zero volume are required.",
+          };
+          if (sourceNote !== "primary") envelope.source_note = sourceNote;
           return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  `Insufficient foreign flow data for ${code}: analysis returned null. ` +
-                  "At least 2 days of history with non-zero volume are required.",
-              },
-            ],
+            content: [{ type: "text" as const, text: JSON.stringify(envelope, null, 2) }],
           };
         }
 
         // ── Format and return ─────────────────────────────────────────────────
         const text = formatForeignFlowOutput(code, signal, history);
+        const envelope: Record<string, unknown> = {
+          source_tier: 2 as const,
+          text,
+        };
+        if (sourceNote !== "primary") envelope.source_note = sourceNote;
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify(envelope, null, 2) }],
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[get_foreign_flow] Error for ${code}:`, msg);
+        const envelope: Record<string, unknown> = {
+          source_tier: 2 as const,
+          error: `Error retrieving foreign flow data for ${code}: ${msg}`,
+        };
+        if (sourceNote !== "primary") envelope.source_note = sourceNote;
         return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error retrieving foreign flow data for ${code}: ${msg}`,
-            },
-          ],
+          content: [{ type: "text" as const, text: JSON.stringify(envelope, null, 2) }],
         };
       }
     },

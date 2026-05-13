@@ -219,8 +219,62 @@ Push when ready. PR required; no force-push. Target: main.
 
 ## Success Criteria (QA Review)
 
-- [ ] 16 tools return `source_tier: T as const` (first field, compile-time literal).
-- [ ] 1881a-source-tier.test.ts passes all AC assertions.
-- [ ] `bun test` green (no regressions).
-- [ ] `tsc --noEmit` 0 errors.
-- [ ] Commit message follows convention (type/scope/Sprint/Task/AC/trailers).
+- [x] 16 tools return `source_tier: T as const` (first field, compile-time literal).
+- [x] 1881a-source-tier.test.ts passes all AC assertions.
+- [x] `bun test` green (no regressions).
+- [x] `tsc --noEmit` 0 errors.
+- [x] Commit message follows convention (type/scope/Sprint/Task/AC/trailers).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/interface/mcp/tools/
+- **Files modified:**
+  - `macro/carryTools.ts` — get_carry_trade_signal tier 3, get_macro_calendar tier 3
+  - `macro/macroTools.ts` — get_macro_snapshot tier 2 text-wrap
+  - `macro/imfSignals.ts` — get_imf_signals tier 1 + per-record
+  - `macro/policyTools.ts` — get_policy_signals tier 3 text-wrap
+  - `macro/dinhGiaTools.ts` — get_yield_spread_signal tier 3
+  - `macro/getFedLiquiditySpreadTool.ts` — get_fed_liquidity_spread tier 1
+  - `macro/investmentClockTools.ts` — get_investment_clock_phase tier 2
+  - `news-analysis/sentimentTrendTools.ts` — get_sentiment_trend tier 3 text-wrap
+  - `news-analysis/analysis.ts` — fetch_and_analyze tier 2
+  - `market-data/foreignFlowTools.ts` — get_foreign_flow tier 2 + source_note fallback
+  - `market-data/marketTools.ts` — get_market_snapshot tier 2 text-wrap
+  - `market-data/marketContextTools.ts` — get_market_context tier 2
+  - `market-data/insiderTools.ts` — get_insider_transactions tier 1
+  - `market-data/technicalIndicatorTools.ts` — get_technical_indicators tier 3
+  - `market-data/tickerIntelligenceTools.ts` — get_ticker_intelligence tier 2
+- **Tests written:** `apps/mcp-server/src/__tests__/1881a-source-tier.test.ts` — 20 assertions, GREEN
+- **Git commits:** `6dd412bd feat(mcp/source-tier): 1881a retrofit 16 tools + contract tests`
+- **Type check:** clean ✓ (tsc --noEmit 0 errors)
+- **Service tests:** 20/20 contract tests pass; 9234/9268 full suite pass (34 pre-existing, unchanged) ✓
+- **Docs updated:** NONE (interface-layer annotation only; brief + test cover the schema)
+- **Graphify:** skipped (no docs/architecture/microservice/ files impacted)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-14
+- **Branch:** task/1881a-impl-mcp HEAD 6dd412bd
+- **Verdict:** APPROVED
+
+### Pipeline Results
+- tsc --noEmit: 0 errors
+- Contract tests (1881a-source-tier.test.ts): 20/20 pass
+- Full suite: 9234 pass / 34 fail (34 pre-existing unchanged)
+- DDD scan: 0 new domain/infra imports in interface/* files
+- Security scan: PASS (no secrets, no process.env, no raw SQL)
+- Zone check: PASS (all changes in interface/mcp/tools/ + __tests__)
+
+### AC Verification
+AC-1 through AC-9: ALL PASS. See reports/TASK_REPORT_1881a-impl-mcp.md.
+
+### Non-blocking Note
+TASK handoff tier table stale for get_sentiment_trend + get_policy_signals (shows tier 2; REQ_1881a.md authoritative = tier 3). Developer correctly followed spec. No action required.
+
+### Merge
+chore(1881a/mcp-server): merge task/1881a-impl-mcp

@@ -47,7 +47,8 @@ export function registerFedLiquiditySpreadTool(server: McpServer): void {
       "measures how much the overnight money market rate exceeds the Fed's floor rate. " +
       "Includes 30-day OLS trend classification: " +
       "'widening' (slope > 0.01%/day), 'narrowing' (< -0.01%/day), 'stable', or null if < 30 samples. " +
-      "Data sourced from FRED API via fred_series_daily table.",
+      "Data sourced from FRED API via fred_series_daily table. " +
+      "Source tier: 1 (primary official — FRED is the Federal Reserve's official data release).",
     {
       /**
        * Lookback window in calendar days for sample selection (default 60).
@@ -68,7 +69,10 @@ export function registerFedLiquiditySpreadTool(server: McpServer): void {
         const result: FedLiquiditySpreadResult = computeFedLiquiditySpread(samples);
 
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 1 as const,
+            ...result,
+          }, null, 2) }],
         };
       } catch (err) {
         if (err instanceof InsufficientDataError) {
@@ -80,6 +84,7 @@ export function registerFedLiquiditySpreadTool(server: McpServer): void {
               {
                 type: "text" as const,
                 text: JSON.stringify({
+                  source_tier: 1 as const,
                   error: "no_data",
                   message: "fred_series_daily has no paired EFFR+IORB rows. Run macroIndicatorRefreshJob to populate.",
                 }),
@@ -95,7 +100,10 @@ export function registerFedLiquiditySpreadTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error computing Fed liquidity spread: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 1 as const,
+                error: `Error computing Fed liquidity spread: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };
