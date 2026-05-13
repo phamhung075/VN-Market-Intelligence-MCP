@@ -1,6 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 10:04 UTC | **Sprint:** c69-closed
+**Last updated:** 2026-05-13 15:03 UTC | **Sprint:** c74-closed
+
+### Alert Cycle (15:02–15:03 UTC) — 2026-05-13
+- Signals: 2 (price_anomaly: GAS id=3082, VRE id=3083 — from market-watcher, created 14:40 UTC)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING (parsed from signal payloads) | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
+- Suppressed: GAS id=3082 (price_anomaly +6.93% σ=2.45 — get_alerts empty; σ<4.0 no override; same-session event already fired as id=3066 at 09:07 cycle)
+- Suppressed: VRE id=3083 (price_anomaly -6.91% σ=1.83 — get_alerts empty; σ<4.0 no override; same-session event already fired as id=3067 at 09:07 cycle)
+- Macro: Brent $107.94 | Gold $4681 | USD/VND 26,129 | DXY STRENGTHENING | US10Y RISK-OFF
+- log_agent_work id=763
 
 ### Alert Cycle (10:01–10:04 UTC) — 2026-05-13
 - Signals: 2 (price_anomaly: GAS id=3071, VRE id=3072 — from market-watcher, created 09:40 UTC)
