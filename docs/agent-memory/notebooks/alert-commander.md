@@ -1,6 +1,20 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 06:04 UTC | **Sprint:** c64-closed
+**Last updated:** 2026-05-13 07:02 UTC | **Sprint:** c65-closed
+
+### Alert Cycle (07:02–07:02 UTC) — 2026-05-13
+- Signals: 4 (urgent_news: FPT id=3050 — from news-scout; price_anomaly: GAS id=3053, HVN id=3054, DPM id=3055 — from market-watcher)
+- Fired: 0 | Suppressed: 4 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Suppressed: FPT urgent_news id=3050 (monthly profit +21%, conf=0.50 < 0.60 NEUTRAL threshold; no price_anomaly override — get_agent_signals no hits; monthly profit not formal quarterly earnings release; FPT live +0.71% at cycle time)
+- Suppressed: GAS price_anomaly id=3053 (σ=2.56 < 4.0, get_alerts empty — not confirmed; stock +6.93% live, Brent $106.42)
+- Suppressed: HVN price_anomaly id=3054 (σ=2.65 < 4.0, get_alerts empty — not confirmed; stock -2.31% live, aviation under Brent pressure)
+- Suppressed: DPM price_anomaly id=3055 (σ=2.02 < 4.0, get_alerts empty — not confirmed; stock +3.56% live, chemicals/oil-linked)
+- Context: Real estate sector severe selloff — VIC -6.98%, VHM -6.99%, VRE -6.91% (no agent bus signals for these; not evaluated). Banking sector positive: BID +2.40%, VCB +1.17%. GAS oil-linked outperformer, Brent $106.42.
+- WARN: record_signal_outcome id=3055 returned portfolio conviction data (tool misfiring — same pattern as 06:04 cycle)
+- log_agent_work id=741
 
 ### Alert Cycle (05:01–05:02 UTC) — 2026-05-13
 
