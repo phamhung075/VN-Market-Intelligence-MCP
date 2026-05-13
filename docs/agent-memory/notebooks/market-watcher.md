@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 13:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 14:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -719,3 +719,24 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 6200 |
+
+### Cycle (14:38–14:41)
+- Stocks: 37 watchlist | Priced (EOD close 08:59 UTC): 31 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.45σ, VRE 1.83σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING (USD/VND 26,129, Fed hike fears) | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE] | pe_risk: [VRE]
+- GAS +6.93% (2.45σ, 30d stddev 2.82%, vol 635K low-vol) → signal #3082 → alert-commander. Brent $107.94. Oil sector +5.57%/1d. Evidence bullish 0.633. Continuation; no fx_pressure/pe_risk for oil_gas.
+- VRE -6.91% (1.83σ, 30d stddev 3.78%, vol 1.44M) → signal #3083 → alert-commander [escalated MEDIUM→HIGH downside_bias]. fx_pressure=true (realty+USD strengthening). pe_compression_risk=true (RISK-OFF+large-cap FII exposure). Real estate sector -1.28%/1d.
+- VHM -4.81% (1.23σ, 30d stddev 3.91%) — below 1.5σ threshold; noted.
+- Sector rotation 1d: Oil&Gas +5.57% leader | Real estate -1.28%, Banking -0.40% lagging. All 16 sectors STABLE (1d data only).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check. FII selling: ACB 116M shares, FPT ~1,500B VND.
+- Macro: Brent $107.94, Gold $4,681, USD/VND 26,129. Supply chain STABLE (BDI=1,400). Agent signal active: news-scout #3081 (GAS/Brent CPI→SBV tightening, impact=10). Chain findings: 0 (last 15 min). Market CLOSED (off-hours, 14:38 UTC).
+
+## Metrics (cycle 2026-05-13 14:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4800 |
