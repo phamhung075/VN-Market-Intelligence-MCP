@@ -1,83 +1,75 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T13:42Z (c73 close — gateway RESTORED + FRED parallel shipped + WorldBank in-flight)
+**Written:** 2026-05-13T14:42Z (c74 close — housekeeping cycle, fleet steady)
 
-## c73 (2026-05-13T13:37Z → 13:42Z, ~5 min)
+## c74 (2026-05-13T14:37Z → 14:42Z, ~5 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | No HEAD.lock, no index.lock, no worktree locks | **5th consecutive lock-free PREFLIGHT** |
-| Branch check | On `task/worldbank-parallelize-fetch-vn-macro-batch` (NOT main) — pm contamination | Switch to main, cherry-pick pm admin |
-| Gateway probe | `call_tool(log_agent_work)` → schema validation = live dial (NOT cache) | 🎉 GATEWAY UP (was DOWN ~2h+) |
-| Health probe (per new rule) | 7/9 services /health 200; pdf/rag 5007/5008 → 000 (port mismatch) | 🔍 1900c-probe-refine carry |
-| 0a Drain | 3 signals → processed/ | alert-commander, dev-macro-indicators-fred-fix, qa-worldbank-sequential-loop |
-| Cherry-pick | `0a335b72 chore(pm/1899a)` → `ef21a754` on main (TASKS.md + pm notebook) | 11 1899a-* tasks landed |
-| 1 Triage | Router discretion: 1900a+1901b shipped, worldbank in-flight (not gated), pm-recovered → housekeeping close | NO BATCH spawn |
-| Post | TASKS.md compressed 92→77L; archive grew +13 rows; notebook + pipeline-state + close commit | (in progress) |
+| 0 PREFLIGHT | No HEAD.lock, no index.lock, no worktree locks | **6th consecutive lock-free PREFLIGHT** |
+| Branch state | On main, 4 commits ahead origin (ops + system-auditor + news-scout untracked) | Clean — ready to push |
+| 0a Drain | 6 signals → processed/ (4 dup-overwrites from prior agents + 1 clean mv + 1 fresh ops signal mid-cycle) | All drained |
+| 1 Triage | Router discretion: 3 INFO signals (already-actioned by their owners) + 2 actionable bugs | NO BATCH spawn — backlog file only |
+| 1902a file | DDD violation in `fetch-external-macro.ts` (app imports infra constants) → Backlog row | 1 row added, TASKS 78→79L |
+| playwright-stealth | Already noted inline in `1899a-factory` Todo row (signal pre-existing) | No new row needed |
+| 1900b/1899a-core/1901a | Already in Done from c73→c74 inflight work | Branches cleaned earlier this turn |
+| Branch sweep | 3 local + 2 remote stale branches deleted (worldbank, push-path-fix, qa-bug-ddd, 1899a-core ×2) | Final: main + origin/main only |
+| Post | TASKS.md 78→79L; notebook + pipeline-state + close commit | (in progress) |
 
-### 🎉 GATEWAY RESTORED (1900a SHIPPED)
-- Was DOWN ~2h+ from 10:48Z spanning c71-c72
-- Restored ~13:09Z (28 min before c73 PREFLIGHT)
-- Likely fix: ops `docker restart mcp-server` between c72 and c73 (silent fix — no signal log)
-- Bonus: **FlareSolverr container ADDED** (`flaresolverr-1` up 4 min healthy) per `ops-flaresolverr-provisioned-2026-05-13T133742706321Z` signal — partial 1901a addressed (cookie integration still pending)
+### Signal triage (6 drained)
 
-### c73 PROBE LESSON VALIDATED
-Per c72 cache-survives-death lesson, this cycle's gateway probe used `call_tool(log_agent_work)` instead of `list_servers`. Result: schema validation error surfaced (`agent_name required`) — **proves live dial** because validation runs server-side at downstream MCP. Cache-only returns wouldn't trigger schema validation. Then corrected schema → session id `759` returned. Lesson confirmed permanent.
+| Signal | From → To | Verdict |
+|---|---|---|
+| dev-vps-crawls-09:17 (recon-complete CRITICAL) | ops-vps-fetch → dev-vps-crawls | INFO — HNX CBTCPH contract fix, already applied by consumer |
+| qa-09:30 (scraper-operational HIGH) | dev-vps-crawls → qa | INFO — HNX BCTC operational, integration tests + E2E SHB Q1/2026 PASS |
+| qa-10:25 (scraper-batch-operational NORMAL) | dev-mainserver-crawls → qa | INFO — ADB+IMF+international macro scrapers wired into apps/macro-indicators |
+| qa-bug-12:30 (ddd-violation NORMAL non-blocking) | qa → developer | **ACTIONABLE** → 1902a-ddd Backlog |
+| qa-bug-playwright-stealth-16:09 (qa-bug MEDIUM non-blocking) | qa → developer | NOTE already inline on 1899a-factory Todo row |
+| ops-macro-rebuild-flaresolverr-16:54 (ops success) | ops → dev-team | INFO — macro-indicators image `2a965c8a`, 9/9 services healthy, `requests` dep fix shipped `e41b2822` |
 
-### 🎉 FRED PARALLEL (1901b SHIPPED in-flight)
-- `e777d83e fix(macro-indicators): parallelize FRED fetchAllMacro` — sequential 8-series × 1s sleep → `Promise.all`
-- `b205b60c docs(macro-indicators): update infrastructure + testing docs`
-- `8b4b2961 chore(macro-indicators): merge task/fred-parallelize-fetch-all-macro`
-- 90 unit tests pass / 0 fail / 12 skip
-- qa gate notebook `25de5bff`, ops rebuild notebook `76888733`
+### 🎉 c74 fleet status (steady)
+- **9/9 services healthy** per ops `/health` aggregator (mcp, pdf, rag, ta, macro, stock, kinh-dich, alert all OK, latencies 1-3ms)
+- **FlareSolverr container** healthy 59min uptime, version 3.4.6
+- **macro-indicators rebuild** complete with FlareSolverr adapter (cold solve ~60-90s, hot path ~3s via cf_clearance cache)
+- **All 3 c73 carry-forward shipping items closed by inflight cycles**: 1900b worldbank (cherry `9d58a2d1`), 1899a-core scaffold (cherry `8329294c`), 1901a FlareSolverr (cherry `5395f966` + container `5ee72b46`)
 
-### 🔄 WORLDBANK IN-FLIGHT (1900b CARRIED to c74)
-- Branch `task/worldbank-parallelize-fetch-vn-macro-batch` HEAD `2c847d8c`
-- Carries `7a12913f fix(macro-indicators): parallelize WorldBank fetchVnMacroBatch` + `2c847d8c` docs
-- Same Promise.all pattern as FRED fix — reusable
-- ⚠️ Branch ALSO carries `0a335b72 chore(pm/1899a)` — already cherry-picked to main as `ef21a754` → c74 merge must `--no-ff` or rebase to dedupe
-- qa signal `qa-worldbank-sequential-loop-2026-05-13T14:00:00Z` (future ts — typo for ~13:32Z) flagged the bug; dev shipped fix in same window
-- **c74 qa gate task**: merge branch after smoke + tests
+### 🧹 BRANCH SWEEP (user-requested mid-cycle)
+- Verified content identity via byte-diff before destructive ops:
+  - `task/worldbank-parallelize-fetch-vn-macro-batch` 2 commits ≡ main `9d58a2d1`+`1370b8c1` ✅
+  - `task/1899a-core-news-fetch-scaffold` 3 commits ≡ main `8329294c`+`5395f966`+(`1e8a707a` no-op merge) ✅
+- Deleted local: `task/push-path-fix-vps-contract-tests` (0 ahead), `task/qa-bug-ddd-macro-defaults` (0 ahead), `task/1899a-core-news-fetch-scaffold` (forced)
+- Deleted remote: `origin/task/worldbank-parallelize-fetch-vn-macro-batch`, `origin/task/1899a-core-news-fetch-scaffold`
+- Pre-push tsc gate passed both remote deletes
+- Final: `main` + `origin/main` only — zero stale refs
 
-### 🐛 PM BRANCH CONTAMINATION (recovered)
-- pm authored `0a335b72 chore(pm/1899a): decompose news-fetch service scaffold into 10 atomic tasks` but committed on `task/worldbank-parallelize-fetch-vn-macro-batch` feature branch instead of `main`
-- Recovery this cycle: `git cherry-pick 0a335b72` on main → `ef21a754` (TASKS.md + pm notebook clean cherry)
-- 10 untracked handoff files (`docs/handoffs/TASK_1899a-*.md`) remain on disk — pm to commit in c74
-- Pattern: pm flow needs `git switch main` guard before TASKS.md edit (carry-forward for pm flow lesson)
+### HEAD.lock (c74 = 0 events, lifetime 27/27)
+- PREFLIGHT: 6th consecutive clean
+- Pressure clearly subsiding — no commits this cycle hit lock contention
+- F1 USER ask (Docker .git/ exclude) priority dropping further
 
-### 🔍 HEALTH PROBE DISCOVERY (1900c carry)
-- New rule in `flows/ops/docker.md` § Post-Rebuild Health Verification probes ports 5001-5008
-- c73 actual result: ports 3000/5001/5002/5003/5004/5005/5006 → 200 (7/9), 5007/5008 → 000 (timeout/refused)
-- Root cause: pdf-extractor + rag-service are Python services with internal port 5001/5002, NOT host-mapped to 5007/5008
-- Authoritative alternative: `docker inspect --format='{{.State.Health.Status}}' <svc>` — uses container's own healthcheck (which IS healthy for all 9)
-- c74 task: refine rule to per-service-port-actual OR switch to docker inspect
-
-### HEAD.lock (c73 = 0 events, lifetime 26/26)
-- PREFLIGHT: 5th consecutive clean
-- Pressure subsiding — squashed 1897b/c/d/e/f into single `1897b-carry` row
-- F1 USER ask (Docker .git/ exclude) still relevant but priority dropping
-
-### c73 BATCH outcomes
+### c74 BATCH outcomes
 | Task | Outcome | Status |
 |---|---|---|
-| (no BATCH — gateway already restored, major work shipped in-flight, pm contamination recovery; close + escalate) | 1900a DONE + 1901b DONE + 1900b/1900c added + 1899a-* preserved + TASKS compressed 92→77L | DONE (admin) |
+| (no BATCH — pure housekeeping: drain 6 + file 1 backlog + sweep 5 branches + close) | 1902a-ddd added; TASKS 78→79L | DONE (admin) |
 
-### c74 carry-forward (priority order)
-1. **🔴 1900b worldbank** — qa merge gate on `task/worldbank-parallelize-fetch-vn-macro-batch` (--no-ff to dedupe ef21a754 cherry).
-2. **pm handoff commit** — pm to commit 10 untracked `docs/handoffs/TASK_1899a-*.md`.
-3. **1898a + 1898b** — re-test post-gateway-restore (likely auto-resolve).
-4. **1901a continuation** — integrate FlareSolverr (already provisioned) → investing.com adapter.
-5. **1900c probe-refine** — fix `flows/ops/docker.md` § Post-Rebuild rule for pdf/rag ports.
-6. **1899a-* dev** — 11 atomic scaffold tasks now ready (no blockers, WIP 0/2).
-7. **1862c-E-dashboard** — Cloudflare dashboard SSE ingress still pending.
+### c75 carry-forward (priority order)
+1. **pm handoff commit** — pm to commit 10 untracked `docs/handoffs/TASK_1899a-*.md` (unchanged from c73 carry).
+2. **1898a + 1898b re-test** — `get_market_snapshot` electricity bug + RSS regression — now confirmed safe to re-test post-gateway-restore + fleet-healthy.
+3. **1899a-* dev chain** — 11 atomic Todo rows ready, WIP 0/2, blocked only by pm handoff commit (item 1).
+4. **1900c probe-refine** — `flows/ops/docker.md` § Post-Rebuild ports fix for pdf/rag.
+5. **1902a DDD violation** — `fetch-external-macro.ts` move constants domain layer (small, non-blocking).
+6. **1862c-E-dashboard** — Cloudflare dashboard SSE ingress still pending.
+7. **agent-father commit** — 4 new dev-*/ops-* agents (dev-mainserver-crawls, dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch) + flow folders + doc folders untracked.
+8. **architect commit** — 2 architecture briefs (news-fetch-service, vps-data-flow-restoration) untracked.
 
 ### Steady state metrics
-- HEAD.lock cures lifetime: 26/26 (100%); 0 events c73 (5th clean PREFLIGHT consecutive).
-- C2 clean ships: 4/4 last shipping cycles (212ea95e + curl-cffi merges + FRED merge + c73 close).
-- MCP gateway uptime: 🎉 RESTORED ~13:09Z (~33 min uptime at c73 close after ~2h+ outage).
-- TASKS.md: 77L (3L headroom under 80 cap after compression).
+- HEAD.lock cures lifetime: 27/27 (100%); 0 events c74 (6th clean PREFLIGHT).
+- C2 clean ships: 5/5 (c73 close + cherry shipping bursts + this c74 close).
+- MCP gateway uptime: stable — 9/9 services healthy at c74 close.
+- TASKS.md: 79L (1L headroom under 80 cap).
+- Local branches: 1 (main only).
 
-### Process lessons (c73 new)
-- **pm-on-wrong-branch trap**: pm cron commits land on whatever branch is checked out. pm flow needs `git switch main` guard before TASKS.md edit. (Recoverable via cherry-pick but adds noise.)
-- **Health probe per-service port mismatch**: blanket ports 5001-5008 assumption breaks for Python services. Authoritative source is `docker inspect --format '{{.State.Health.Status}}'` (each service's own healthcheck).
-- **Gateway probe via `call_tool` confirmed**: schema validation error surfaces only on live dial; cache-only returns can't trigger server-side schema enforcement. (c72 lesson validated this cycle.)
+### Process lessons (c74 new)
+- **Signal duplicate handling**: When `git mv` fails with "la destination existe", verify byte-identity via `diff -q` before destructive removal — multiple agents can race-process the same signal.
+- **Mid-cycle commits by other agents**: Main can grow by 4+ commits during a single cron tick (ops + system-auditor + news-scout shipping). Always re-check `git log origin/main..HEAD` before push, and trust other agents' worktree state rather than wiping it.
+- **Branch verification before destructive sweep**: User-requested branch deletes ALWAYS preceded by content-equivalence diff vs main (`git diff <feature-commit>^ <feature-commit>` vs `git diff <main-cherry>^ <main-cherry>`). Saved a false-positive false-negative event this cycle.

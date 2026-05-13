@@ -20,6 +20,7 @@
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
 | TASK-BCTC-3 | Reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC scraper. AC: (1) Identify XHR endpoints. (2) Document recipe in `docs/vps-sources/hsx-bctc/triage.md`. (3) Implement no-browser discovery for HOSE. (4) Live-test 3+ HOSE tickers (VNM/VEA/HPG) discovers Q1/2026 PDFs. (5) Playwright remains fallback. Owner: dev-vps-crawls. | MEDIUM | FEATURE | dev-vps-crawls | — | — |
+| 1902a | DDD-VIOLATION (qa c74 signal): `apps/macro-indicators/src/application/fetch-external-macro.ts` L27-28 imports `DEFAULT_SYMBOLS` + `DEFAULT_CNBC_SYMBOLS` from `../infrastructure/scrapers/` (app→infra cross-layer). Fix: move constants to `domain/models.ts` (or new `domain/config.ts`) — both app + infra import from domain. Non-blocking (tests/runtime OK, tsc clean). Source: signal `qa-bug-2026-05-13T12-30-00Z`. | MEDIUM | CHORE | developer | — | — |
 
 ---
 
