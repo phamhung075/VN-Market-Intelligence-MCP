@@ -55,6 +55,13 @@ globalSourceTracker.seedKnownSources([
   "VnEconomy RSS",
   "Trading Economics News",
 ]);
+// Task 1898b: mark permanently-disabled legacy sources as "disabled" (not "Ngưng").
+// Reuters RSS fetcher was removed from resolvedFetchers defaults in Sprint 1833g.
+// Trading Economics (legacy stream) was also permanently disabled in Sprint 1833g.
+// Calling recordDisabled() here mirrors the newsapi | disabled display pattern and
+// prevents ghost "Ngưng | 20" entries from misleading operators on a fresh process start.
+globalSourceTracker.recordDisabled("Reuters RSS");
+globalSourceTracker.recordDisabled("Trading Economics");
 
 /**
  * Test-only reset for the global source health tracker.
