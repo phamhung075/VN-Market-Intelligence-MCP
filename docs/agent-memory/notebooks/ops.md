@@ -585,3 +585,122 @@ Contents:
 
 **Next:** QA signoff; FRED parallelization feature LIVE on main ✓
 
+
+---
+
+## Task: Rebuild macro-indicators from WorldBank Parallelization — COMPLETE
+
+**Status:** PASS — Container rebuilt, WorldBank parallelization verified working
+
+**Date:** 2026-05-13 16:16 UTC
+
+**Mission:** Rebuild macro-indicators service after QA merged WorldBank parallelization fix (commits 9d58a2d1 + 1370b8c1)
+
+**Context:** Sequential WorldBank indicator fetches (7 series with 1.5–2.5s sleeps) caused ~10–17s timeout. Commits replaced with Promise.all parallelization (identical pattern to FRED fix earlier today). Expected wall time: 10–17s → 2–3s.
+
+### Rebuild Steps
+
+**Step 1: Build Container**
+- Command: `docker compose build --no-cache macro-indicators`
+- Result: SUCCESS ✓
+- Build time: 39.3s (layers cached except final export)
+- Image SHA: `sha256:2de4d9b9a9cf2fae0a47e46702b30cd3f783668598859c09edd4b044bb3c544c` ✓
+
+**Step 2: Restart Service**
+- Command: `docker compose up -d macro-indicators && sleep 3`
+- Result: SUCCESS ✓
+- Container status: Recreate → Started
+- Healthcheck: healthy within 38 seconds ✓
+- Logs: Clean startup, no env passthrough issues, no errors ✓
+
+**Step 3: All Services Health Check (mandatory post-rebuild)**
+- Command: `docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"`
+- Result: All 10 services (9 + gateway + orphan flaresolverr) healthy ✓
+
+### Smoke Test Results
+
+**Endpoint:** POST http://localhost:5004/macro/external
+
+| Source | Status | Latency (ms) | Expected | Result |
+|--------|--------|--------------|----------|--------|
+| **worldBank** | **ok** | **124** | timeout → ok | PASS ✓ |
+| yahoo | ok | 6930 | no regression | PASS ✓ |
+| cnbc | ok | 6525 | no regression | PASS ✓ |
+| tradingEconomics | ok | 6926 | no regression | PASS ✓ |
+| fred | ok | 392 | no regression | PASS ✓ |
+| calendar | ok | 9946 | ok (awaiting investing-calendar adapter merge) | PASS ✓ |
+
+**Summary:**
+- Total sources: 6 ok, 0 failed ✓
+- worldBank: status=ok, latencyMs=124 (well under 5000ms target) ✓
+- No regressions in other sources ✓
+
+### WorldBank Data Verification
+
+All 7 indicators fetched successfully via Promise.all:
+1. **gdp_usd** (NY.GDP.MKTP.CD): 10 years, latest 2024 = $476.39B ✓
+2. **gdp_growth** (NY.GDP.MKTP.KD.ZG): 10 years, latest 2024 = 7.09% ✓
+3. **cpi_inflation** (FP.CPI.TOTL.ZG): 10 years, latest 2024 = 3.62% ✓
+4. **fdi_inflows** (BX.KLT.DINV.CD.WD): 10 years, latest 2024 = $20.17B ✓
+5. **exports_usd** (NE.EXP.GNFS.CD): 10 years, latest 2024 = $429.48B ✓
+6. **imports_usd** (NE.IMP.GNFS.CD): 10 years, latest 2024 = $398.77B ✓
+7. **unemployment** (SL.UEM.TOTL.ZS): 10 years, latest 2025 = 1.523% ✓
+
+### Post-Rebuild Fleet Health Check
+
+| Service | Status | Port | Health |
+|---------|--------|------|--------|
+| alert-engine | Up (healthy) | 5006 | ✓ |
+| api-gateway | Up (healthy) | 4000 | ✓ |
+| flaresolverr | Up (healthy) | 8191 | ✓ |
+| kinh-dich-service | Up (healthy) | 5005 | ✓ |
+| macro-indicators | Up (healthy) | 5004 | ✓ |
+| mcp-server | Up (healthy) | 3000 | ✓ |
+| pdf-extractor | Up (healthy) | 5001 | ✓ |
+| rag-service | Up (healthy) | 5002 | ✓ |
+| stock-price | Up (healthy) | 5010 | ✓ |
+| technical-analysis | Up (healthy) | 5003 | ✓ |
+
+**Gateway Health:**
+- Endpoint: GET http://localhost:3000/health
+- Response: HTTP 200 ✓
+- toolCount: 138 ✓
+- sessions: 50 active ✓
+
+**Collateral Damage Check:** NONE — all 10 services healthy, gateway operational ✓
+
+### Regression Check
+
+- **fred** (parallelized this morning): **no regression** (ok, 392ms)
+- **yahoo**: **no regression** (ok, 6930ms)
+- **cnbc**: **no regression** (ok, 6525ms)
+- **tradingEconomics**: **no regression** (ok, 6926ms)
+- **calendar**: **no regression** (ok, 9946ms)
+
+### Signal Created
+
+**File:** `docs/signals/processed/ops-macro-rebuild-worldbank-2026-05-13T16-16Z.json`
+
+Contents:
+- Image SHA + commit hashes (9d58a2d1, 1370b8c1)
+- Build time (39.3s) + restart time (38s)
+- All 6 sources: status, latencyMs, expected behavior
+- Health check results for all 10 services + gateway
+- Regression baseline (fred/yahoo/cnbc/te all clean)
+- Pass criteria confirmation (all 6 met)
+
+### Completion Checklist
+
+- [x] Commits verified (9d58a2d1 + 1370b8c1)
+- [x] Container rebuilt (--no-cache)
+- [x] Container healthy (38s startup, health checks passing)
+- [x] Smoke test passed (worldBank status=ok, 124ms < 5000ms ✓)
+- [x] All 7 WorldBank indicators populated ✓
+- [x] No regressions (fred/yahoo/cnbc/te/calendar all ok)
+- [x] Fleet health verified (10 services, 0 collateral damage)
+- [x] Gateway operational (port 3000 bound, 138 tools, 50 sessions)
+- [x] Signal created + verified
+- [x] Notebook updated (this entry)
+
+**Result:** WorldBank parallelization feature now LIVE on main — macro-indicators smoke envelope flipped from worldBank.status=timeout → ok ✓
+
