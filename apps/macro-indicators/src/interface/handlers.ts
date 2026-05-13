@@ -27,24 +27,30 @@ export function createRouter(
     }
   });
 
-  /** Fetch all external macro sources (World Bank, Yahoo, CNBC, TE, FRED, Investing). */
+  /** Fetch all external macro sources (World Bank, Yahoo, CNBC, TE, FRED, Investing).
+   *
+   * Returns the partial-result envelope:
+   *   { sources: { worldBank, yahoo, cnbc, tradingEconomics, fred, calendar }, fetchedAt, summary }
+   *
+   * HTTP 200 — ≥1 source succeeded (partial data is still useful).
+   * HTTP 502 — ALL sources failed or timed out (no data available).
+   * execute() never throws; envelope shape is guaranteed.
+   */
   app.post('/macro/external', async (c) => {
-    try {
-      const result = await externalUseCase.execute();
-      return c.json(result);
-    } catch (err) {
-      return c.json({ error: String(err) }, 500);
+    const result = await externalUseCase.execute();
+    if (result.summary.ok === 0) {
+      return c.json(result, 502);
     }
+    return c.json(result);
   });
 
   /** GET convenience alias — trigger external macro fetch. */
   app.get('/macro/external', async (c) => {
-    try {
-      const result = await externalUseCase.execute();
-      return c.json(result);
-    } catch (err) {
-      return c.json({ error: String(err) }, 500);
+    const result = await externalUseCase.execute();
+    if (result.summary.ok === 0) {
+      return c.json(result, 502);
     }
+    return c.json(result);
   });
 
   /** Fetch international institutional data: ADB KIDB + IMF WEO. */
