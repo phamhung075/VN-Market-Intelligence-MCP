@@ -45,7 +45,11 @@
 ### WorldBankMacroAdapter
 **File:** `apps/macro-indicators/__tests__/unit/scrapers/world-bank-macro.test.ts`
 
-Covers: successful parse of WB API v2 format, HTTP 404, network throw, batch with 7 indicators.
+| Test group | Cases |
+|------------|-------|
+| `fetchVnIndicator` | parses WB API v2 format / HTTP 404 → [] / network throw → [] / empty data array → [] / null value field → [{value: null}] |
+| `fetchVnMacroBatch` (parallel) | all-ok: 7 results non-empty / one-fail: fdi_inflows=[], others non-empty / timing: all 7 dispatched within 30ms window |
+| `VN_INDICATORS` catalog | 7 entries, known codes present |
 
 ## Run Commands
 ```bash
@@ -54,5 +58,5 @@ cd apps/macro-indicators && bun tsc --noEmit
 ```
 
 ## Current counts (2026-05-13)
-- Total tests: 102 (90 pass, 12 skip, 0 fail)
-- `bun test` runtime: ~600ms (all unit, parallel mock execution)
+- Total tests: 105 (93 pass, 12 skip, 0 fail)
+- `bun test` runtime: ~640ms (all unit, parallel mock execution)

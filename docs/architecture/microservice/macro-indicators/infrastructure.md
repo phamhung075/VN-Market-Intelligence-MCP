@@ -75,8 +75,27 @@ One series failure returns null for that key; others are unaffected.
 - **Base URL:** `https://api.worldbank.org/v2/country/VN/indicator`
 - **Auth:** None (open API)
 - **Per-indicator timeout:** `AbortSignal.timeout(10_000)` (10s)
-- **Concurrency:** Sequential for-loop with 1.5-2.5s jitter between calls (World Bank undocumented rate limit). Total ~10-17s for 7 indicators — currently exceeds the 8s per-source budget in fetch-external-macro.ts (known follow-up issue).
+- **Concurrency:** `Promise.all` across all 7 indicators — parallel dispatch, ~2-3s total wall time (previously sequential + 1.5-2.5s jitter sleeps = 10-17s which exceeded the 8s per-source budget)
+- **World Bank rate limit:** 10 req/10s public limit — 7 parallel calls is safe
 - Fetches 7 VN annual macro indicators: GDP, GDP growth, CPI, FDI, exports, imports, unemployment.
+
+### fetchVnIndicator(indicatorCode, mostRecentN=10)
+Fetches the N most-recent annual data points for one indicator. Returns `WorldBankDataPoint[]` (empty array on any error).
+
+### fetchVnMacroBatch()
+Fan-out via `Promise.all` over `VN_INDICATORS` entries. Returns `Record<name, WorldBankDataPoint[]>`.
+One indicator failure returns `[]` for that key; others are unaffected.
+
+### VN_INDICATORS catalog (7 indicators)
+| Key | WB Code | Description |
+|-----|---------|-------------|
+| `gdp_usd` | NY.GDP.MKTP.CD | GDP (current US$) |
+| `gdp_growth` | NY.GDP.MKTP.KD.ZG | GDP growth (annual %) |
+| `cpi_inflation` | FP.CPI.TOTL.ZG | Inflation, CPI (annual %) |
+| `fdi_inflows` | BX.KLT.DINV.CD.WD | FDI net inflows (BoP, current US$) |
+| `exports_usd` | NE.EXP.GNFS.CD | Exports of goods and services (US$) |
+| `imports_usd` | NE.IMP.GNFS.CD | Imports of goods and services (US$) |
+| `unemployment` | SL.UEM.TOTL.ZS | Unemployment, total (% of labor force) |
 
 ## Environment Variables
 ```
