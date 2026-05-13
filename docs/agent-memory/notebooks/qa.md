@@ -1,6 +1,24 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-13 | **Session:** c84 gate — 1888l agents-architect error-boundary parity
+**Last updated:** 2026-05-14 | **Session:** 1881a-impl-ssot gate — Layer 9 doc APPROVED
+
+## Recent session — 2026-05-14 (1881a-impl-ssot — APPROVED)
+
+### 1881a-impl-ssot — Layer 9 source authority hierarchy
+
+Doc-only. No code changed. Smart-skip: bun test + tsc not applicable to .md-only changes. tsc pre-push hook confirmed 0 errors on push.
+
+AC checks:
+- Layer 9 enumerates 3 tiers with examples: PASS (table rows Tier 1/2/3 with concrete source names).
+- `source_tier` enum `1|2|3` documented: PASS (bold header + table).
+- Backwards-compat note (additive, NFR-1): PASS ("Backwards compatibility note" paragraph cites NFR-1 explicitly).
+- Cross-link to brief: PASS (Cross-ref block at section top pointing to 2026-05-13-source-tier-schema-decision.md).
+
+Zone check: 4 files. Target = docs/standards/tnb-methodology-layers.md. Others = TASKS.md (task row housekeeping) + 2 notebooks. No source code. No zone leakage.
+
+Verdict: APPROVED. Merge commit: 6a700f15. Branch task/1881a-impl-ssot deleted locally + remote.
+
+---
 
 ## Recent session — 2026-05-13 (c84 — APPROVED)
 
