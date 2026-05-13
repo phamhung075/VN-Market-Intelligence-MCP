@@ -3,8 +3,8 @@
   "_trigger": "after adding/removing MCP tool, update count + list",
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
   "lastUpdated": "2026-05-03",
-  "toolCount": 133,
-  "_note": "2026-05-03: Task 1845c — get_backtest_runs + get_backtest_run (+2 → 125). Task 1842d — run_backtest (+1 → 123). 2026-04-30: Task 1796 sync — +9 net tools. 2026-04-26: FIX-VPS-DEBUG-TRIGGERS → 113. 2026-04-23: Task 1300a/b added agent memory tools → 107.",
+  "toolCount": 125,
+  "_note": "2026-05-13: 1888-CDG-C — toolCount reconciled to categories tools[] sum (canonical array). 2026-05-03: Task 1845c — get_backtest_runs + get_backtest_run (+2 → 125). Task 1842d — run_backtest (+1 → 123). 2026-04-30: Task 1796 sync — +9 net tools. 2026-04-26: FIX-VPS-DEBUG-TRIGGERS → 113. 2026-04-23: Task 1300a/b added agent memory tools → 107.",
   "categories": [
     { "name": "Watchlist", "count": 4, "tools": ["add_to_watchlist", "remove_from_watchlist", "get_watchlist", "update_thresholds"] },
     { "name": "Financial Reports", "count": 5, "tools": ["get_financial_summary", "compare_financials", "list_stored_pdfs", "read_bctc_pdf", "bctc_skip_queue_item"] },

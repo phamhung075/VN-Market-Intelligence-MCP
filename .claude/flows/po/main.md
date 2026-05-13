@@ -23,7 +23,7 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 **Composes with:** architect/ba/pm in Step 2 (never directly — main terminal is the router)
 
 Priority order: recurring bugs → UNBLOCK → FIX → CLEAN → SPRINT-S → SPRINT-M/L
-Size thresholds: FIX ≤10 lines ≤3 files | SPRINT-S ≤30 lines ≤5 files 1 domain | SPRINT-M multi-domain | SPRINT-L arch/new service
+> Task size rules → docs/standards/task-size-rules.md
 CLEAN: flag any branch with 0 unmerged commits (`git log main..<branch> --oneline` empty) or stale worktree → route to qa.
 SPIKE: exploratory question, no clear scope. Output: findings doc. Time-box default 2h. Schema below.
 
