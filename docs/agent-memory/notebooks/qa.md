@@ -1,5 +1,25 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-bloomberg merge gate (c77)
+
+## Recent session — 2026-05-13 (1899a-bloomberg BloombergStealth scraper — APPROVED)
+
+Merge SHA `d76fc44b` on main. Branch `task/1899a-bloomberg-scraper` already deleted. Files: 1 prod (`bloomberg-stealth.ts` 150L) + 1 test (`1899a-bloomberg.test.ts` 494L).
+
+Targeted tests: 29/29 pass (41 expect() calls). Full suite `apps/news-fetch/`: 84/84 pass, 0 regressions. TSC: 0 errors.
+
+DDD PASS: 3 imports only — `../../domain/repositories.js`, `../../domain/models.js`, `./playwright-browser-factory.js`. Zero application/interface imports.
+
+Security PASS: no `process.env`, no hardcoded secrets, no SQL. `any` in JSDoc comment only; JSON fallback uses `Record<string, unknown>`.
+
+All 10 AC groups verified with file:line mapping.
+
+Split-policy: 494L test file exceeds 200L cap. Decision (b) — approved with follow-up task `1899a-bloomberg-test-split` for next cycle. 4 clean logical split boundaries identified (dom/json-fallback/lifecycle/normalize-date).
+
+Handoff updated: `docs/handoffs/TASK_1899a-bloomberg.md`. Commit: chore(qa/1899a-bloomberg).
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1898a merge gate (c76)
 
 ## Recent session — 2026-05-13 (1898a regression-shape guard — APPROVED)

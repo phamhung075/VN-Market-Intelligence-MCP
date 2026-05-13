@@ -239,3 +239,109 @@ bun test src/__tests__/integration/bloomberg-stealth-live.test.ts
 **Zone:** `apps/news-fetch/` (single service).
 - All files in src/infrastructure/scrapers/
 - Next task (1899a-routes) will wire this into use case
+
+---
+
+## [QA] Review — 2026-05-13
+
+**Verdict:** APPROVED
+**Merge SHA:** `d76fc44b`
+**Branch deleted:** yes (`task/1899a-bloomberg-scraper`); notebook HEAD also committed (`bf0f3bdd`)
+
+### Test Results
+
+| Scope | Pass | Fail |
+|---|---|---|
+| `__tests__/1899a-bloomberg.test.ts` (targeted) | 29 | 0 |
+| Full suite — `apps/news-fetch/` (5 files) | 84 | 0 |
+
+41 expect() calls in targeted file. 141 expect() calls across full suite. 0 regressions introduced.
+
+### TypeScript
+
+`bun tsc --noEmit` — **0 errors**.
+
+### DDD Compliance — PASS
+
+`bloomberg-stealth.ts` imports:
+- `../../domain/repositories.js` — domain port interface
+- `../../domain/models.js` — domain value types
+- `./playwright-browser-factory.js` — permitted sibling infrastructure
+
+Zero imports from `application/`, `interface/`, or any other infra module.
+
+### Security — PASS
+
+- No `process.env` (uses `Bun.env` pattern; scraper has no env reads at all — correct for a pure scraper)
+- No hardcoded credentials or API keys; `BLOOMBERG_NEWS_URL` is a public URL constant — not a secret
+- No SQL (no database layer in this file)
+- No unguarded `!` non-null assertions; all attribute reads use `.catch(() => null)` fallback
+- `any` appears only in JSDoc comment (`/** Normalise any parseable... */`), not as a TypeScript type
+
+### AC Verification
+
+| AC | Status | Note |
+|---|---|---|
+| `bloomberg-stealth.ts` created | PASS | `apps/news-fetch/src/infrastructure/scrapers/bloomberg-stealth.ts` — 150L |
+| Imports `BloombergNewsPort` from `../../domain/repositories` | PASS | line 17 (type import) |
+| Imports `NewsSource, Article, FetchResult` from `../../domain/models` | PASS | line 18 |
+| Imports `PlaywrightBrowserFactory` from `./playwright-browser-factory` | PASS | line 19 |
+| `BloombergStealth` implements `BloombergNewsPort` | PASS | line 24 |
+| `async fetchHeadlines(maxItems: number = 10): Promise<FetchResult>` | PASS | line 25 |
+| Calls `PlaywrightBrowserFactory.launch()` — NOT `playwright.chromium.launch()` | PASS | line 27 |
+| `try/finally` wrapping page operations | PASS | lines 29–136 |
+| `browser.close()` in `finally` block | PASS | line 135; 3 test cases assert 1 call each (happy / px-block / goto-throws) |
+| Pre-nav pause 500–1500 ms | PASS | lines 31–32 |
+| Scroll to 33% then 50% viewport | PASS | lines 40–45 |
+| Navigates to `https://www.bloomberg.com/news`, timeout 30 s | PASS | lines 34–37 |
+| DOM selector `[data-component="headline"]` | PASS | line 62 |
+| Extracts headline, URL (prefixed), publishedAt (`data-value` then `datetime`) | PASS | lines 65–83 |
+| `confidence: 'HIGH'` for DOM path | PASS | line 83 |
+| JSON fallback on 0 DOM articles — `script#__NEXT_DATA__` | PASS | lines 88–116 |
+| JSON path `props.pageProps.stories[].headline/.publishedAt` | PASS | lines 98–113 |
+| `confidence: 'LOW'` for JSON fallback | PASS | line 109 |
+| PerimeterX `px-block` detection | PASS | lines 49–58 |
+| Returns `error: 'perimeterx-challenge'`, `articles: []` on px-block | PASS | lines 51–57 |
+| `console.warn` on PerimeterX | PASS | line 50 (produces output in test run — confirmed) |
+| No retry in same cycle | PASS | single return, no retry logic |
+| `source: NewsSource.BLOOMBERG` | PASS | all Article push calls |
+| `fetchedAt: new Date().toISOString()` | PASS | line 26 |
+| `method: 'playwright-stealth'` | PASS | all FetchResult returns |
+| Timeout error → `articles: [], error: <message>` | PASS | lines 125–133 + test |
+| Network error → `articles: [], error: <message>` | PASS | same catch block |
+| Zero articles + no error → `articles: [], error: null` | PASS | test case "both DOM and __NEXT_DATA__ yield nothing" |
+| Strict TypeScript — no implicit `any` | PASS | `any` in JSDoc comment only; JSON fallback uses `Record<string, unknown>` cast |
+
+All 10 AC groups pass.
+
+### Issues
+
+**Blocking:** none.
+
+**Non-Blocking:**
+1. `[NB-1]` `bloomberg-stealth.ts` line 140 — `/** Normalise any parseable... */` — JSDoc word "any" is fine, but the `any` annotation in the skeleton (`story: any`) was intentionally replaced with `Record<string, unknown>` — good catch by developer. No action needed.
+2. `[NB-2]` **Split-policy decision** — see below.
+
+### Split-Policy Decision — (b) APPROVE with follow-up task
+
+Test file is **494L** vs 200L cap in `docs/policies/dev-standards.md`.
+
+**Decision: (b) — Approve now; open follow-up task `1899a-bloomberg-test-split`.**
+
+Rationale: the 494L file has clean, non-overlapping logical groupings that map directly to split boundaries:
+- Lines 1–258 — DOM extraction happy path (8 cases) → `1899a-bloomberg-dom.test.ts`
+- Lines 260–280 — maxItems cap (1 case) — folds into dom file
+- Lines 282–361 — JSON fallback (5 cases) → `1899a-bloomberg-json-fallback.test.ts`
+- Lines 363–427 — PerimeterX + lifecycle (4 cases) → `1899a-bloomberg-lifecycle.test.ts`
+- Lines 463–494 — `normalizeDate` helper (7 cases) → `1899a-bloomberg-normalize-date.test.ts`
+
+No logic interleaving: mock setup is at module scope (shared), but each group could carry its own `activeMockPage` reset. The 200L cap exists to reduce review contention and diff noise — the bloomberg test file poses zero merge risk as it is self-contained. Splitting now adds non-trivial effort for zero functional gain in this cycle.
+
+Follow-up task `1899a-bloomberg-test-split` will be opened for next cycle: split into 4 files, each ≤200L, verify all 29 tests still pass after split.
+
+### Notes
+
+- `normalizeDate` is exported (line 141) — correct, enables direct unit testing (7 normalizeDate tests confirm ISO roundtrip, null passthrough, timezone normalisation to UTC).
+- PerimeterX `console.warn` producing stdout in test run is expected and acceptable; tests assert on returned `error` field, not stderr.
+- `browser.close()` lifecycle verified in 3 independent code paths (success / px-block / goto-throws) — RAM constraint fully respected per brief §9.
+- Implementation matches developer skeleton in §[Developer] Notes almost exactly, with two improvements: (1) proper `catch(() => null)` guards on attribute reads vs bare `.getAttribute()`, (2) `Record<string, unknown>` cast instead of `any` for JSON fallback iteration.
