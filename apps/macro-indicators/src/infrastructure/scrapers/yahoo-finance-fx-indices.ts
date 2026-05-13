@@ -1,111 +1,107 @@
 /**
  * Infrastructure Adapter — yahoo-finance-fx-indices
  *
- * Source: Yahoo Finance v8 chart API (query1/query2.finance.yahoo.com)
- * Technique: header-rotation (~5MB RAM — plain fetch, no bot protection on v8 API)
+ * Source: Yahoo Finance v8 chart API (query2.finance.yahoo.com)
+ * Technique: curl_cffi Chrome impersonation via Python subprocess (~15MB RAM)
  * Recon: docs/mainserver-sources/yahoo-finance-fx-indices/recon.md
  *
- * Fetches FX rates (EURUSD, USDVND, USDJPY, GBPUSD) and global indices
- * (S&P 500, Nikkei, Hang Seng, Shanghai). v8 chart API is fully open.
- * v7 quote API requires auth — do NOT use.
+ * Replaces Bun native fetch which timed out at 8s budget due to sequential
+ * symbol fetches accumulating >12s total (12 symbols × 1-2s jitter each).
+ * Python subprocess fetches all symbols in parallel via ThreadPoolExecutor.
+ *
+ * Python helper: src/infrastructure/scrapers/yahoo_finance_fetch.py
+ * Interface unchanged — YahooFxIndicesPort contract preserved.
  */
 
 import type { YahooFxIndicesPort, YahooQuote } from '../../domain/repositories.js';
 export { DEFAULT_SYMBOLS } from '../../domain/defaults.js';
 
-const BASE_URL = 'https://query2.finance.yahoo.com/v8/finance/chart';
+import { spawn } from 'child_process';
+import path from 'path';
 
-const UA_POOL = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-];
+/** Absolute path to the Python fetch helper. */
+const PYTHON_HELPER = path.join(
+  process.cwd(),
+  'src/infrastructure/scrapers/yahoo_finance_fetch.py',
+);
 
-function randomUa(): string {
-  return UA_POOL[Math.floor(Math.random() * UA_POOL.length)]!;
-}
-
-function browserHeaders(): HeadersInit {
-  return {
-    'User-Agent': randomUa(),
-    'Accept': 'application/json',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://finance.yahoo.com/',
-  };
-}
-
-/** Shape of the v8 chart API meta object. */
-interface YahooMeta {
+/** Shape returned by the Python helper per-symbol. */
+interface PythonQuote {
   symbol: string;
+  price: number;
   currency: string;
   exchangeName: string;
-  regularMarketPrice?: number;
-  regularMarketTime?: number;
-  regularMarketDayHigh?: number;
-  regularMarketDayLow?: number;
-  fiftyTwoWeekHigh?: number;
-  fiftyTwoWeekLow?: number;
+  dayHigh: number | null;
+  dayLow: number | null;
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  lastUpdated: string;
 }
 
-interface YahooChartResponse {
-  chart?: {
-    result?: Array<{ meta?: YahooMeta }>;
-    error?: unknown;
-  };
+interface PythonEnvelope {
+  status: string;
+  data?: Record<string, PythonQuote | null>;
+  reason?: string;
 }
 
-function sleepMs(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
+/** Run the Python helper and return all fetched quotes as a record. */
+function runPythonHelper(symbols: string[]): Promise<Record<string, YahooQuote | null>> {
+  return new Promise((resolve) => {
+    const py = spawn(
+      'python3',
+      [PYTHON_HELPER, '--symbols', ...symbols],
+      { timeout: 45_000 },
+    );
 
-function toIso(unixSec?: number): string {
-  if (!unixSec) return new Date().toISOString();
-  return new Date(unixSec * 1000).toISOString();
+    let stdout = '';
+    let stderr = '';
+    py.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });
+    py.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
+
+    py.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`[yahoo-fx-indices] Python helper exited ${code}: ${stderr.slice(0, 300)}`);
+        resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+        return;
+      }
+      try {
+        const envelope = JSON.parse(stdout) as PythonEnvelope;
+        if (envelope.status !== 'ok' || !envelope.data) {
+          console.error('[yahoo-fx-indices] helper error:', envelope.reason);
+          resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+          return;
+        }
+        const result: Record<string, YahooQuote | null> = {};
+        for (const sym of symbols) {
+          const q = envelope.data[sym];
+          result[sym] = q ?? null;
+        }
+        resolve(result);
+      } catch (err) {
+        console.error('[yahoo-fx-indices] JSON parse error:', err);
+        resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+      }
+    });
+
+    py.on('error', (err) => {
+      console.error('[yahoo-fx-indices] spawn error:', err.message);
+      resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+    });
+  });
 }
 
 export class YahooFxIndicesAdapter implements YahooFxIndicesPort {
-  private readonly timeoutMs = 8_000;
-
   async fetchSymbol(symbol: string): Promise<YahooQuote | null> {
-    const url = `${BASE_URL}/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-
-    try {
-      const resp = await fetch(url, {
-        headers: browserHeaders(),
-        signal: AbortSignal.timeout(this.timeoutMs),
-      });
-
-      if (!resp.ok) {
-        console.error(`[yahoo-fx-indices] HTTP ${resp.status} for ${symbol}`);
-        return null;
-      }
-
-      const raw = (await resp.json()) as YahooChartResponse;
-      const meta = raw?.chart?.result?.[0]?.meta;
-      if (!meta || meta.regularMarketPrice === undefined) return null;
-
-      return {
-        symbol: meta.symbol,
-        price: meta.regularMarketPrice,
-        currency: meta.currency ?? 'USD',
-        exchangeName: meta.exchangeName ?? '',
-        dayHigh: meta.regularMarketDayHigh ?? null,
-        dayLow: meta.regularMarketDayLow ?? null,
-        fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh ?? null,
-        fiftyTwoWeekLow: meta.fiftyTwoWeekLow ?? null,
-        lastUpdated: toIso(meta.regularMarketTime),
-      };
-    } catch (err) {
-      console.error(`[yahoo-fx-indices] fetch error for ${symbol}:`, err);
-      return null;
-    }
+    const result = await this.fetchBatch([symbol]);
+    return result[symbol] ?? null;
   }
 
   async fetchBatch(symbols: string[]): Promise<Record<string, YahooQuote | null>> {
-    const result: Record<string, YahooQuote | null> = {};
-    for (const sym of symbols) {
-      result[sym] = await this.fetchSymbol(sym);
-      await sleepMs(1_000 + Math.random() * 1_000); // 1-2s jitter
+    try {
+      return await runPythonHelper(symbols);
+    } catch (err) {
+      console.error('[yahoo-fx-indices] unexpected error:', err);
+      return Object.fromEntries(symbols.map((s) => [s, null]));
     }
-    return result;
   }
 }

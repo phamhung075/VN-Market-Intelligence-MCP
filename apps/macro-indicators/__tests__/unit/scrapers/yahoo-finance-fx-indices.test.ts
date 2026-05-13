@@ -1,94 +1,134 @@
 /**
- * Unit tests — YahooFxIndicesAdapter
+ * Unit tests — YahooFxIndicesAdapter (curl_cffi subprocess)
  *
- * Mocks global fetch. Tests v8 chart API parsing, error paths.
+ * The adapter now shells out to yahoo_finance_fetch.py via spawn().
+ * Unit tests mock child_process.spawn to avoid actual network calls.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
 import { YahooFxIndicesAdapter, DEFAULT_SYMBOLS } from '../../../src/infrastructure/scrapers/yahoo-finance-fx-indices.js';
+import * as childProcess from 'child_process';
+import { EventEmitter } from 'events';
 
-function makeYahooResponse(symbol: string, price: number) {
-  return {
-    chart: {
-      result: [
-        {
-          meta: {
-            symbol,
-            currency: 'USD',
-            exchangeName: 'CCY',
-            regularMarketPrice: price,
-            regularMarketTime: 1778648482,
-            regularMarketDayHigh: price + 0.01,
-            regularMarketDayLow: price - 0.01,
-            fiftyTwoWeekHigh: price + 0.05,
-            fiftyTwoWeekLow: price - 0.05,
-          },
-        },
-      ],
-    },
+/** Build a minimal spawn mock that emits stdout JSON and closes with code 0. */
+function makeSpawnMock(payload: object, exitCode = 0) {
+  return () => {
+    const stdout = new EventEmitter();
+    const stderr = new EventEmitter();
+    const proc = new EventEmitter() as ReturnType<typeof childProcess.spawn>;
+    (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stdout = stdout;
+    (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stderr = stderr;
+
+    // Emit data on next tick so listeners are attached first
+    setTimeout(() => {
+      stdout.emit('data', Buffer.from(JSON.stringify(payload)));
+      proc.emit('close', exitCode);
+    }, 0);
+
+    return proc;
   };
 }
 
-describe('YahooFxIndicesAdapter', () => {
+function makeOkEnvelope(symbols: string[]): object {
+  const data: Record<string, object> = {};
+  for (const sym of symbols) {
+    data[sym] = {
+      symbol: sym,
+      price: 1.1738,
+      currency: 'USD',
+      exchangeName: 'CCY',
+      dayHigh: 1.18,
+      dayLow: 1.17,
+      fiftyTwoWeekHigh: 1.2,
+      fiftyTwoWeekLow: 1.1,
+      lastUpdated: '2026-05-13T12:00:00.000Z',
+    };
+  }
+  return { status: 'ok', data, fetched_at: '2026-05-13T12:00:00Z' };
+}
+
+describe('YahooFxIndicesAdapter (subprocess)', () => {
   let adapter: YahooFxIndicesAdapter;
-  let originalFetch: typeof global.fetch;
 
   beforeEach(() => {
     adapter = new YahooFxIndicesAdapter();
-    originalFetch = global.fetch;
   });
 
-  afterEach(() => {
-    global.fetch = originalFetch;
+  describe('fetchBatch', () => {
+    it('returns parsed quotes from Python helper stdout', async () => {
+      const symbols = ['EURUSD=X', '^GSPC'];
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock(makeOkEnvelope(symbols)) as never,
+      );
+
+      const result = await adapter.fetchBatch(symbols);
+
+      expect(result['EURUSD=X']).not.toBeNull();
+      expect(result['EURUSD=X']!.price).toBeCloseTo(1.1738);
+      expect(result['^GSPC']).not.toBeNull();
+      expect(spawnSpy).toHaveBeenCalled();
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null values when Python helper exits non-zero', async () => {
+      const symbols = ['EURUSD=X'];
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock({ status: 'error', reason: 'curl_cffi not installed' }, 1) as never,
+      );
+
+      const result = await adapter.fetchBatch(symbols);
+      expect(result['EURUSD=X']).toBeNull();
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null values when helper returns status=error', async () => {
+      const symbols = ['EURUSD=X'];
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock({ status: 'error', reason: 'network timeout' }, 0) as never,
+      );
+
+      const result = await adapter.fetchBatch(symbols);
+      expect(result['EURUSD=X']).toBeNull();
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null values when helper stdout is invalid JSON', async () => {
+      const symbols = ['EURUSD=X'];
+      function badJsonFactory() {
+        const stdout = new EventEmitter();
+        const stderr = new EventEmitter();
+        const proc = new EventEmitter() as ReturnType<typeof childProcess.spawn>;
+        (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stdout = stdout;
+        (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stderr = stderr;
+        setTimeout(() => {
+          stdout.emit('data', Buffer.from('not-json'));
+          proc.emit('close', 0);
+        }, 0);
+        return proc;
+      }
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(badJsonFactory as never);
+
+      const result = await adapter.fetchBatch(symbols);
+      expect(result['EURUSD=X']).toBeNull();
+
+      spawnSpy.mockRestore();
+    });
   });
 
   describe('fetchSymbol', () => {
-    it('parses v8 chart API response into YahooQuote', async () => {
-      global.fetch = mock(async () =>
-        new Response(JSON.stringify(makeYahooResponse('EURUSD=X', 1.1738)), {
-          status: 200,
-        }),
+    it('delegates to fetchBatch and returns single symbol', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock(makeOkEnvelope(['USDVND=X'])) as never,
       );
 
-      const result = await adapter.fetchSymbol('EURUSD=X');
-
+      const result = await adapter.fetchSymbol('USDVND=X');
       expect(result).not.toBeNull();
-      expect(result!.symbol).toBe('EURUSD=X');
       expect(result!.price).toBeCloseTo(1.1738);
-      expect(result!.currency).toBe('USD');
-      expect(result!.exchangeName).toBe('CCY');
-      expect(result!.lastUpdated).toBeTruthy();
-    });
 
-    it('returns null on HTTP error', async () => {
-      global.fetch = mock(async () => new Response('error', { status: 429 }));
-      const result = await adapter.fetchSymbol('EURUSD=X');
-      expect(result).toBeNull();
-    });
-
-    it('returns null when meta has no regularMarketPrice', async () => {
-      const noPrice = {
-        chart: { result: [{ meta: { symbol: 'MXAP', currency: 'USD', exchangeName: 'UNKNOWN' } }] },
-      };
-      global.fetch = mock(async () =>
-        new Response(JSON.stringify(noPrice), { status: 200 }),
-      );
-      const result = await adapter.fetchSymbol('MXAP');
-      expect(result).toBeNull();
-    });
-
-    it('returns null on network error', async () => {
-      global.fetch = mock(async () => { throw new Error('timeout'); });
-      const result = await adapter.fetchSymbol('EURUSD=X');
-      expect(result).toBeNull();
-    });
-
-    it('returns null when chart.result is missing', async () => {
-      global.fetch = mock(async () =>
-        new Response(JSON.stringify({ chart: { result: null } }), { status: 200 }),
-      );
-      const result = await adapter.fetchSymbol('EURUSD=X');
-      expect(result).toBeNull();
+      spawnSpy.mockRestore();
     });
   });
 
