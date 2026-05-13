@@ -66,6 +66,8 @@ curl http://localhost:3000/health
 ```
 NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 
+**MANDATORY post-rebuild 9-service health check** (any rebuild/restart, even single-service) → `.claude/flows/ops/docker.md` § Post-Rebuild Health Verification. Rationale: c71 — `--force-recreate macro-indicators` knocked mcp-server gateway port 3000; ~50 min blast radius before detection.
+
 ## DB Health
 ```bash
 ls -lh apps/mcp-server/data/db.sqlite*            # WAL < 10MB normal, >50MB = flag

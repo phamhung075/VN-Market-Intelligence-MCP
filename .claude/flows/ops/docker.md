@@ -24,6 +24,33 @@ curl http://localhost:3000/health
 
 NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 
+## Post-Rebuild Health Verification (MANDATORY)
+
+**Trigger:** any `--force-recreate`, `docker-compose up -d`, `docker-compose down`+`up`, single-service rebuild, or container restart — even when scoped to ONE service.
+
+**Why:** rebuilds can collateral-damage neighbour services (port re-binding, network race). c71 incident (2026-05-13): `--force-recreate macro-indicators` for FRED activation knocked mcp-server gateway port 3000; 3 cowork agents + dev-team blocked ~50 min before detection. Single-service success in isolation ≠ fleet healthy.
+
+**Procedure (run after EVERY rebuild, before declaring success):**
+```bash
+docker-compose ps                                    # all 9 services Up? note any Restarting/Exit
+docker port mcp-server 3000                          # gateway port still bound?
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/health      # expect 200
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5004/health      # macro-indicators
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5001/health      # technical-analysis
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5002/health      # stock-price
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5003/health      # api-gateway
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5005/health      # kinh-dich
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5006/health      # alert-engine
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5007/health      # pdf-extractor
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5008/health      # rag-service (if up)
+```
+
+**Pass:** all containers `Up`, port 3000 bound, all `/health` return 200.
+**Fail:** any container Restarting/Exit OR any `/health` non-200 OR port unbound →
+- `send_telegram(channel="bug")` with collateral-damage signal: `🚨 POST-REBUILD COLLATERAL: <service> healthy but <other-service> degraded after rebuild`
+- `docker-compose restart <degraded-service>` → re-verify
+- If still failing after 1 restart → escalate (do NOT mark rebuild as successful in signal/notebook)
+
 **Notebook write** → `docs/agent-memory/notebooks/ops.md`
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
