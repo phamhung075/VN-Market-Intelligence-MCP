@@ -1,6 +1,26 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c85 gate — 1881a-impl-mcp source_tier retrofit APPROVED
+**Last updated:** 2026-05-14 | **Session:** c86 gate — AUTOCURE-C86-MW-DEDUP APPROVED
+
+## Recent session — 2026-05-14 (c86 — AUTOCURE-C86-MW-DEDUP APPROVED)
+
+### AUTOCURE-C86-MW-DEDUP — off-hours duplicate guard, market-watcher cycle.md
+
+Branch: task/c86-autocure-mw-dedup. Commits: 564230d2 (autocure) + 90700f82 (developer notebook). Scope: doc/flow XS, cross-service zone, no apps/* test surface.
+
+Pipeline:
+- tsc --noEmit: 0 errors. PASS.
+- Full suite: 9721 pass / 0 fail. PASS.
+- DDD scan: doc-only change, no imports. PASS.
+- Security scan: no secrets, no process.env. PASS.
+
+AC checks: all 6 PASS. AutoCure block at cycle.md:51 — before post_agent_signal, trigger stock_code+move_pct+calendar session, SUPPRESSED log with id, 24h re-emit escape, TNB c47 attribution, no other Step 4 logic touched.
+
+Merge commit: b5151e1d. Branch deleted local + remote. Report: reports/TASK_REPORT_AUTOCURE-C86-MW-DEDUP.md.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c85 — 1881a-impl-mcp APPROVED)
 
