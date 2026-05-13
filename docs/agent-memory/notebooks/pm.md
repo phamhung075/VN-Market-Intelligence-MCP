@@ -359,11 +359,37 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 79 — 2026-05-13 Post-Cycle Housekeeping: 1899a-routes + CLEAN-c79 SHIPPED
+
+**Input:** Dev-team c79 completion. Two QA-APPROVED shipments:
+1. 1899a-routes (FEATURE): Commits `644c8fe4` (feat) + `43609750` (nb)
+2. CLEAN-c79 (CHORE): Commits `4bdc1316` (A+B: .claire/ orphans + gitignore) + `cb0fdb56` (C: preflight-lsof retention)
+
+**Actions:**
+
+- **1899a-routes → Done:** Moved from Todo → Done section. Hono router + 5 routes (handlers.ts) + Reuters fallback wiring. 137/137 pass, tsc 0 errors. QA APPROVED. Unblocks 1899a-gateway (Tier 4).
+- **CLEAN-c79 → Done:** Added new row (housekeeping artifact). .claire/ typo worktree orphans removed, preflight-lsof retention policy implemented. Tree-verify PASS, c2-alert OK.
+- **1899a-gateway UNBLOCKED:** Removed `1899a-routes` from `blocked_by` edge. Now Tier 4 ready for developer pickup next cycle.
+- **1899a-tests UNBLOCKED (Tier 5 independent):** Depends on adapters only (all shipped prior cycles); no tier dependency on routes/gateway.
+- **Done section TRIMMED:** Kept top 5 recent rows + archived older entries (11 archived now, was 7). TASKS.md now 72 lines (target ≤80L).
+- **File state:**
+  - TASKS.md: 72 lines (down from 79), commit pending.
+  - Done section: 7 rows (5 tasks + 1 archive notation, down from original table size)
+  - Todo section: 4 remaining tasks (1900c-health-probe + 1899a-{bloomberg-test-split,gateway,cron,tests} minus routes)
+
+**WIP status:** 0/2 (In Progress empty). Headroom available for 1899a-gateway + one parallel task pickup in c80.
+
+**Blockers:** None. Pipeline clean.
+
+**Status at session end:** READY FOR NEXT CYCLE. c79 post-cycle housekeeping complete. 1899a-gateway unblocked (Tier 4). Next: developer continues with gateway wiring and docker-compose config.
+
+---
+
 ## Current state
 
-- WIP: 0 / 2 (In Progress: none; 1899a-routes unblocked and ready to pick)
+- WIP: 0 / 2 (In Progress: none; headroom available for next tier)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
-- Todo: 1900c-health-probe (LOW), 1899a-{routes,bloomberg-test-split,gateway,cron,tests} (5 remaining from Tier 3-5), 1862c-E/F (OPS chain), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
-- Done: 5 recent (1899a-reuters-fallback + 1898b + 1900a + 1901b + 1900b), 7 archived (notation)
+- Todo: 1900c-health-probe (LOW), 1899a-{bloomberg-test-split,gateway,cron,tests} (4 remaining Tier 3-5), 1862c-E/F (OPS), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
+- Done: 7 recent (1899a-routes + CLEAN-c79 + 1899a-reuters-fallback + 1898b + 1900a + 1901b + 1900b), 11 archived (notation)
 - CLEAN state: No WIP exceeds 2. No blockers detected.
-- **Headroom:** 2 In Progress slots available (c79 developer can pick 1899a-routes + one parallel task)
+- **Status:** READY FOR NEXT CYCLE. 1899a-gateway unblocked (tier 4, developer ready to pick).
