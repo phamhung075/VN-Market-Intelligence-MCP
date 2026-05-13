@@ -1,6 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 04:03 UTC | **Sprint:** c61-closed
+**Last updated:** 2026-05-13 05:02 UTC | **Sprint:** c62-closed
+
+### Alert Cycle (05:01–05:02 UTC) — 2026-05-13
+- Signals: 2 (price_anomaly: GAS id=3041, HVN id=3042 — from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Price alerts: none active | Market: OPEN (02:00–08:59 UTC)
+- Suppressed: GAS price_anomaly (σ=2.56, conf=0.50) — unconfirmed by get_alerts, σ<4.0 no override
+- Suppressed: HVN price_anomaly (σ=2.65, conf=0.50) — unconfirmed by get_alerts, σ<4.0 no override
+- Context: Brent $106.51 supports GAS move; HVN under VND/aviation pressure (USD/VND 26,299)
+- record_signal_outcome: 3041=suppressed, 3042=suppressed
 
 ### Alert Cycle (04:01–04:03 UTC) — 2026-05-13
 - Signals: 0
