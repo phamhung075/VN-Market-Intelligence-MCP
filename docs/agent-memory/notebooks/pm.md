@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** c82
+**Last updated:** 2026-05-13 | **Sprint:** c83
 
 ## Current state
 
@@ -14,25 +14,22 @@
 
 ---
 
-## Cycle 82 — 2026-05-13 c82 Post-Cycle Housekeeping: 1903a Stale-Resolved + 1888b SHIPPED
+## Cycle 83 — 2026-05-13 c83 BATCH(2) Post-Cycle Housekeeping: 1881a-spec + 1888-CDG SHIPPED
 
-**Input:** Dev-team + QA c82 completion. Two QA-APPROVED outcomes:
-1. 1903a (FIX-HIGH): Both bugs (write_alert_verdict shape, get_macro_snapshot portfolio) self-healed during c77 gateway-restore. Regression tests verify fix holds. No production code changes c82.
-2. 1888b (CHORE SSOT): Hardcoded "13 agents" → pointer to project-stats.json#devAgentCount. Commits `49f5d1eb` (fix) + `ff618e1d` (notebook).
+**Input:** Dev-team + QA c83 completion. Two QA-APPROVED + SHIPPED outcomes:
+1. **1881a-spec (BA CHORE):** REQ_1881a.md authored, 16 tools enumerated, 4 spec-time discoveries flagged. Next: PO review → architect handoff for BLK-1 schema decision → 1881a-impl dev cycle.
+2. **1888-CDG (SSOT-CRITICAL BUNDLE):** 3-sub-task rectification: (a) tool-registry toolCount→125 (1888c), (b) cron-registry reconcile (1888d), (c) task-size-rules extracted to docs/standards (1888g). PO ref stale (L91-96 in dev-team/main.md)—developer corrected in-flight.
 
 **Actions:**
+- Moved 1881a → 1881a-impl (Backlog, awaits 1881a-spec shipment + PO review). Removed 1881a, 1888c, 1888d, 1888g from Backlog.
+- Added 1881a-spec-SHIPPED-c83 + 1888-CDG-SHIPPED-c83 at top of Done section.
+- TASKS.md trimmed: 70L → 73L (target ≤80L). Backlog reduced 11→8 rows.
+- project-stats.json: totalTasksDone 557→559 (+2).
+- WIP: 0/2 (clean), Blockers: none.
 
-- **1903a → Done (STALE-RESOLVED):** Moved from Backlog → Done section. Annotation: "stale-resolved at c82 — regression tests (d5251193) verify c77 fix holds". Root cause: c77 gateway rebuild isolated tool invocation paths, preventing cross-agent routing errors. No code changes shipped c82; notebook only. Unblocks downstream regression confidence.
-- **1888b → Done:** Moved from Backlog → Done section. SSOT doc fix complete (3 hardcoded refs → project-stats.json pointer). QA APPROVED.
-- **TASKS.md TRIM:** Removed 1903a + 1888b from Backlog; added to Done section (top 2). Line count: 70L (target ≤80L).
-- **project-stats.json:** totalTasksDone incremented by 2.
-- **WIP status:** 0/2 (In Progress empty). Headroom available.
-- **Blockers:** None. Pipeline clean.
-- **File state:**
-  - TASKS.md: 70 lines (post-edit), Done section now 9 rows, Backlog: 1888c/d/g/l/1881a/1890a/1897b-carry remain (7 rows)
-  - pipeline-state.json: no change needed
+**Carry-over to c84:** 1888l (HIGH), 1890a (MEDIUM), 1899a-bloomberg-test-split (LOW), 1900c (LOW), JANITOR-{011,014,020}, TASK-BCTC-3, 1862c-{E,F} (blocked: container-rebuild), 1897b-carry (blocked: user-action).
 
-**Status at session end:** READY FOR NEXT CYCLE. c82 post-cycle housekeeping complete. 1903a & 1888b shipped. Next: 1900c health-probe or parallel backlog work.
+**Status:** READY FOR NEXT CYCLE. c83 housekeeping complete. Pipeline clean.
 
 ---
 
