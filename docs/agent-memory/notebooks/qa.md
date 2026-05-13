@@ -1,5 +1,53 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** bootstrap batch drain — 5 signals (macro scrapers + RAM + hsx-bctc + vps-contract + adb/imf)
+
+## Recent session — 2026-05-13 (bootstrap batch drain — signals 1-5)
+
+**Batch: 5 QA signals drained. 4 already in processed/, 1 new (signal 5).**
+
+Signal status on arrival:
+- Signals 1,2,3,4: already in `docs/signals/processed/` (consumed by prior dev cycles). Code on main.
+- Signal 5 (`qa-2026-05-13T10-25-00Z.json`): present in inbox — moved to processed after validation.
+
+**Validation results:**
+
+Signal 1 — mainserver-external-macro-v1 (6 scrapers, POST /macro/external):
+- Unit tests: 67 pass / 0 fail (9 files: all 6 scrapers + macro-score-service + compute-usecase + investing-calendar)
+- Production TSC: 0 errors. Test-file TSC: 37 errors (preconnect missing on Mock<> — Bun fetch mock typing gap, pre-existing pattern)
+- DDD VIOLATION FOUND: `apps/macro-indicators/src/application/fetch-external-macro.ts` lines 27-28 import DEFAULT_SYMBOLS + DEFAULT_CNBC_SYMBOLS from infrastructure/scrapers/. Filed `docs/signals/qa-bug-2026-05-13T12-30-00Z.json`. Non-blocking (tests pass, no runtime impact).
+- Route confirmed: POST /macro/external and GET /macro/external in handlers.ts lines 31+41.
+
+Signal 2 — macro-indicators RAM 512MB→1.5GB + Python deps:
+- docker-compose.yml line 177: `memory: 1.5g` CONFIRMED.
+- Dockerfile lines 17-19: apk + pip install curl_cffi beautifulsoup4 lxml CONFIRMED.
+- Container startup + health evidence from signal file: PASS (ops-verified, 10.36MiB / 1.5GiB = 0.67% at idle).
+- PASS (evidence from ops signal + code inspection).
+
+Signal 3 — hsx-bctc HNX contract fix (SHB Q1/2026 e2e):
+- VPS-side Python script fix. Not in codebase — applied directly to /root/ on Vinahost VPS.
+- Integration tests embedded in signal: T1-T4 PASS. SHB Q1/2026 e2e PASS (confidence=0.9, PDF URL confirmed).
+- Technique doc updated: docs/vps-crawl-techniques/hnx-ajax-post.md.
+- QA cannot re-run VPS tests. Evidence from dev-vps-crawls signal accepted.
+- PASS (evidence-based).
+
+Signal 4 — VPS push contract tests (1892b-vps-contract-push.test.ts):
+- Test file on branch `task/push-path-fix-vps-contract-tests` (NOT yet merged to main — dev omitted merge step).
+- Extracted and ran from branch: 10/10 pass, 29 expect() calls, 219ms.
+- P6 → 401 CONFIRMED (not 404). N3 → 401 CONFIRMED. Cloudflare fix contract verified.
+- BLOCKING ISSUE: test file not on main. Branch must be merged before signal is fully closed.
+
+Signal 5 — adb-kidb + imf-weo wiring:
+- Unit tests: 67 pass (includes adb-kidb.test.ts 8 tests + imf-weo.test.ts 9 tests in the full unit suite).
+- Routes confirmed in handlers.ts: POST /macro/external/adb (L51), POST /macro/external/imf (L60), POST /macro/external/international (L70), GET /macro/external/international (L79).
+- FetchInternationalMacroUseCase: 44 lines, DDD CLEAN (imports only from domain/repositories.js).
+- Production TSC: 0 errors.
+- PASS.
+
+Pre-existing issue: TradingEconomics integration test — with INTEGRATION=true not run (live tests skipped). All 12 integration tests are gated on INTEGRATION=true env flag — 0 run, 12 skip, 0 fail without it. Not a regression.
+
+DDD bug filed: `docs/signals/qa-bug-2026-05-13T12-30-00Z.json`.
+
 **Last updated:** 2026-05-13 | **Sprint:** SPIKE_006-c61-T1 threshold raise (cycle 61)
 
 ## Recent session — 2026-05-13 (SPIKE_006-c61-T1 — price-signal threshold 0.1→1.0)
