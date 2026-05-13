@@ -1,8 +1,36 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** signal-T4
+**Last updated:** 2026-05-13 | **Sprint:** c60
 
 ## Last session summary
+
+Task c60 — Concern A + B + C (3 atomic commits):
+
+**Concern A — F2a Option A per-file :ro mounts (docker-compose.yml):**
+- Verify-first: grepped mcp-server/src/ for docs/data/ reads (non-test). No fs.readdir on docs/data/ found — safe for per-file mounts.
+- Production reads confirmed: project-stats.json (dailyDashboardJob), stock-classification.json (bctcBatchSweepJob), alert-verdicts.json (alertVerdictStore, :ro preserved).
+- NOT mounted: cron-registry.json (tests only), tool-registry.json (in-code array), daily-dashboard.json (container writes, already :ro blocked).
+- Replaced `./docs/data:/app/docs/data:ro` with 3 per-file :ro mounts.
+- `docker compose config` parse: CLEAN (only pre-existing `version` obsolete warning).
+- HEAD.lock collision at commit: no live git pid → safe-remove → retry PASS.
+- Commit A: d127fb18.
+
+**Concern B — 1888c toolCount reconcile (tool-registry.json):**
+- project-stats.json toolCount=133 (SSOT). tool-registry.json had 125 (stale).
+- Updated toolCount scalar only; tools[] array unchanged.
+- jq validate: 133 returned, JSON clean.
+- docs/data/ gitignored — used git add -f.
+- Commit B: 00e3cebb.
+
+**Concern C — TASKS.md update:**
+- Re-read TASKS.md (agent-father had already run in parallel, 1888f Done row present).
+- Removed 1888c from Backlog.
+- Added Done rows: 1888c-TOOLCOUNT-RECONCILE-c60 + F2a-OptionA-PER-FILE-MOUNTS-c60.
+- Commit C: b64b92b2.
+
+Phase 5 gates: dev-gates/ scripts not yet created (future deliverable). docker compose config validated manually.
+
+## Previous last session summary
 
 Task signal-T4: doc-only update for SQLite signal dedup (FIX, ≤10 LOC).
 - Files: docs/protocols/agent-chaining-protocol.md + docs/references/tree-map.md.
