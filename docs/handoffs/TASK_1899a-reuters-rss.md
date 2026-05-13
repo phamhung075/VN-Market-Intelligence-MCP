@@ -192,3 +192,32 @@ curl -H "User-Agent: Mozilla/5.0" https://feeds.reuters.com/reuters/businessNews
 **Zone:** `apps/news-fetch/` (single service).
 - All files in src/infrastructure/scrapers/
 - Next task (1899a-routes) will wire this scraper into use case
+
+---
+
+## [QA] Review — 2026-05-13
+
+**Verdict: APPROVED**
+**Merge SHA:** `ade4a0a8` (no-ff merge to main)
+**Branch deleted:** yes
+
+### Test Results
+- Unit tests (1899a-reuters-rss.test.ts): 26 pass / 0 fail
+- Full suite (apps/news-fetch/): 55 pass / 0 fail / 100 expect() calls
+- TypeScript (bun tsc --noEmit): 0 errors
+
+### DDD Compliance: PASS
+- `apps/news-fetch/src/infrastructure/scrapers/reuters-rss.ts` imports only `../../domain/repositories.js` and `../../domain/models.js`
+- Domain layer has zero infrastructure imports (confirmed via grep)
+
+### Security: PASS
+- No `process.env` (Bun.env policy: N/A — no env vars used)
+- No hardcoded credentials or API keys
+- Browser User-Agent constant (not secret)
+- All HTTP mocked via `globalThis.fetch` override in tests — no live network calls in CI
+
+### Rebase needed: no
+- Branch `36eace95` was already 1 commit ahead of `main` at `b2b84977` (the factory merge)
+
+### Issues Found
+- None blocking. None non-blocking.
