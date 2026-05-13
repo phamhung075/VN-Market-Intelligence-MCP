@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c81",
+  "currentSprint": "c82",
   "activeTaskId": null,
   "nextAgent": "po",
-  "nextPrompt": "c80 closed. 1899a-gateway + 1899a-tests shipped. 1899a-cron reduced to XS wiring-only (job body exists), unblocked for c81.",
-  "updatedAt": "2026-05-13T21:25:00Z",
-  "updatedBy": "dev-team-c80",
-  "lastCompleted": "Cycle 80: 1899a-gateway shipped `f91c5baa`/`837529ef`, 1899a-tests shipped `d2818207`/`64c3db67`/`da5d1b0f`. pm housekeeping `889db6ff`. HEAD.lock cure #36."
+  "nextPrompt": "c81 closed. 1899a-cron + 1888e + CLEAN-c81 shipped. News-fetch sprint 1899a COMPLETE (10 tasks c76→c81). c82 ready for next priorities: 1903a (HIGH FIX MCP dispatch), 1881a (HIGH source_tier retrofit), 1888b/c/d (HIGH SSOT doc), 1862c-E-dashboard (USER-action), 1897b-carry (USER-action F1 Docker .git/ exclude).",
+  "updatedAt": "2026-05-13T19:55:00Z",
+  "updatedBy": "dev-team-c81",
+  "lastCompleted": "Cycle 81: 1899a-cron shipped `89ad6c4a`/`50c74418`, 1888e shipped `a7bb2313`/`763fe826`, CLEAN-c81 shipped `19e29700`/`2cfd307b`. QA `cfe55c20`. pm `f60fe926`/`6b19b44f`. HEAD.lock cure #37 (QA gate, auto-cleared)."
 }

@@ -1,36 +1,44 @@
 # dev-team notebook
 
-## Current state (c80 close — 2026-05-13T21:25Z)
-- Pipeline: idle. Main HEAD `889db6ff` (pm-c80 housekeeping).
+## Current state (c81 close — 2026-05-13T19:55Z)
+- Pipeline: idle. Main HEAD `6b19b44f` (pm c81 notebook).
 - WIP: 0/2. Branches: main only. Worktrees: main only.
-- HEAD.lock cures lifetime: **36/36** (1 fired in c80: #36 stash attempt age unknown, com.apple PID 43751 Spotlight, auto-cured).
+- HEAD.lock cures lifetime: **37/37** (1 fired in c81: cure #37 during QA gate, auto-cleared by QA).
+- Sprint 1899a (news-fetch service): **COMPLETE** — 10 tasks shipped c76→c81.
 
-## c80 cycle log
-- PREFLIGHT: clean (no HEAD.lock at entry). No pending signals.
-- PO triage: BATCH(2) parallel disjoint zones — 1899a-gateway (SPRINT-S, multi-zone) + 1899a-tests (SPRINT-S, apps/news-fetch/). Both handoffs already exist from prior cycle.
-- Tier execution (parallel via isolation:worktree spawn):
-  - Track A (dev-api-gateway): worked **directly in main worktree** (isolation didn't engage) — branch `task/1899a-integration-tests` (wrong name, should have been `task/1899a-gateway-wiring`). Feat `4f63f64d` + notebook `10e6a507`. 40 tests, 0 tsc. Files: api-gateway/{index.ts, health_checker.ts, handlers.ts}, docker-compose.yml (news-fetch service block), ops-news-fetch-scaffold.md (port 5007→5008), ARCHITECTURE.md.
-  - Track B (developer): worktree on stale base `d532495b` (c77/c78 HEAD). Agent self-rebased: merged main HEAD `3e2e828` into its branch before writing tests. Feat `7f8bbeae` + notebook `ab5a1dc4` + tasks-md `5c2f0971`. 165 pass / 6 skip / 0 fail (news-fetch), 3 pass mcp-server E2E. **Scope creep**: created `newsHeadlinesRefreshJob.ts` (1899a-cron's deliverable) to make E2E test pass.
-- HEAD.lock cure #36 mid-stash before tests cherry-pick: age unknown, com.apple PID 43751 (Spotlight). lsof captured.
+## c81 cycle log
+- PREFLIGHT: clean (no HEAD.lock at entry). worktree prune empty. signals/ empty.
+- PO triage: BATCH(3) — 1899a-cron (SPRINT-S/XS, apps/mcp-server/) + 1888e (FIX/XS, doc) + CLEAN-c81 (CLEAN/XS, cross-service). Stale Todo row 1899a-gateway flagged, 2 merged worktree-agent-* branches flagged.
+- Tier execution (parallel via isolation:worktree):
+  - Track A (dev-mcp-server): isolation engaged correctly (`.claude/worktrees/agent-aea30e4a8e1461810`). Branch `task/1899a-cron-scheduler`. Commits `40514118` (feat) + `572cb877` (notebook). 4 files / 21 insertions. Files: scheduler/news-analysis/index.ts (new barrel), scheduler/cronConfig.ts (CRONS entry), scheduler/startScheduler.ts (import + jobRunRepo.wrapRun registration), mcp.config.json (newsHeadlinesRefresh section). TSC 0 errors. **Worktree base validation passed** — agent confirmed HEAD = main before coding (c80 lesson applied).
+  - Track B (developer): isolation engaged (`.claude/worktrees/agent-aee580fe6c94df729`). Branch `task/1888e-agent-roster-count`. Commits `80fbabf1` (fix) + `e4efe111` (notebook). 1 file / 2 insertions, 2 deletions. agent-roster.md L120 "8 agents"→"9 agents", L132 prose→SSOT pointer `project-stats.json#analysisAgentCount`. Verified analysisAgentCount=9 already exists in stats file (reconciled 2026-05-12).
+  - Track C (code-janitor): worked directly in main worktree (no isolation needed for housekeeping). Commits `19e29700` (clean) + `2cfd307b` (notebook). Removed stale TASKS.md Todo row + deleted both merged worktree-agent-* branches (verified `--merged main` precondition before `git branch -d`).
 - Merge gate:
-  - 1899a-gateway: cherry-pick `4f63f64d` + `10e6a507` → main `f91c5baa` + `837529ef`. Tree-verify exit 0, c2-alert OK. Misnamed branches deleted. **Stray test files** (apps/news-fetch/src/__tests__/unit/{reuters-rss,use-cases,bloomberg-stealth}.test.ts + integration/) appeared in main worktree post-stash-pop — quarantined to /tmp/c80-gateway-stray then removed after tests merge.
-  - 1899a-tests: cherry-pick `7f8bbeae` + `ab5a1dc4` + `5c2f0971` → main `d2818207` + `64c3db67` + `da5d1b0f`. Tree-verify exit 0, c2-alert OK. Worktree unlocked + removed. Branch deleted.
-- QA gate (combined BATCH):
-  - 1899a-gateway: APPROVED. 40/40, 0 tsc, AC 9/9 PASS, DDD PASS, security PASS.
-  - 1899a-tests: APPROVED. 165 pass / 6 skip / 0 fail, AC met, DDD PASS, 200L policy met (max 177L).
-  - **Scope creep ruling: 1899a-cron NOT closed**. Job body shipped (136L), but 3 wiring AC items absent: barrel index.ts + jobs.ts CRONS entry + mcp.config.json section. 1899a-cron remains open, scope reduced to wiring-only (S→XS, ~30min).
-- pm c80 update: TASKS.md `889db6ff` → 71L. 1899a-gateway + 1899a-tests Done. 1899a-cron scope reduced + unblocked. project-stats.json totalTasksDone 555→557 (gitignored, tracked locally).
+  - Cherry-pick A: `89ad6c4a` (feat) + `50c74418` (notebook) onto main. Tree-verify exit 0, c2-alert OK.
+  - Cherry-pick B: `a7bb2313` (fix) + `763fe826` (notebook) onto main. Tree-verify exit 0, c2-alert OK.
+  - CLEAN-c81 already on main (track C worked in main worktree).
+  - Worktrees A + B locked (per spawn) — unlocked + force-removed cleanly. All task branches deleted.
+- HEAD.lock cure #37 mid-QA-gate: QA found stale lock from background git process during run, removed before notebook commit. No content risk; lifetime counter advanced.
+- QA gate (BATCH(3)):
+  - 1899a-cron: APPROVED. tsc 0 errors. bun test exit 0 (9331 pass, 33-35 pre-existing flaky fail — same set as prior cycles). E2E 3/3. DDD PASS (only infra logger import). Pattern parity with taAlertScan/macroRefresh confirmed. Security PASS (Bun.env, no process.env, no secrets).
+  - 1888e: APPROVED. Contradiction gone. SSOT pointer present. Value 9 verified.
+  - CLEAN-c81: APPROVED. Stale row gone. Branches deleted.
+- pm c81 update: TASKS.md `f60fe926` → 70L (well under 80L cap). Done rows: `1899a-cron-SHIPPED-c81`, `1888e-SHIPPED-c81`. CLEAN-c81 implicit in commit. project-stats.json totalTasksDone +3 (gitignored).
 
 ## Lessons / patterns
-- **Worktree isolation didn't engage for one agent**: gateway agent's isolation:"worktree" spawn somehow worked in main worktree directly, creating wrong-named branch + leaking stray files. Pattern: when checking out parallel-spawn results, ALWAYS verify `git worktree list` first — if any agent's branch is on the MAIN path instead of `.claude/worktrees/agent-<id>/`, the isolation failed. Plan: investigate agent-father / isolation:worktree contract; may need explicit branch-name validation in agent prompts.
-- **Stale worktree base ↔ self-rebase pattern**: tests agent's worktree was on c77/c78 HEAD `d532495b` (~48 commits behind). Agent detected by attempting tsc and seeing missing files → ran `git -C <parent-path> rev-parse main` to get current main SHA → `git merge <main-sha>` into its branch. This worked but is fragile. Pattern: agent-father should validate worktree base before spawn, OR agent prompts should include `git fetch + git rebase origin/main` as Step 0.
-- **Scope creep enabling E2E**: tests agent created the production scheduler job (136L) to satisfy its E2E test that needed the job to exist. QA correctly separated the deliverables: tests are APPROVED (the test suite IS the deliverable for 1899a-tests), but 1899a-cron is NOT closed (wiring missing). Lesson: scope creep that enables tests but doesn't ship full functionality is acceptable AS LONG AS QA gates downstream tasks to their actual AC.
-- **HEAD.lock cure #36 — Spotlight persistence**: 3rd com.apple-held HEAD.lock in 4 cycles (cures #34, #35, #36). Pattern is durable. Future flow: if HEAD.lock age >>60s + com.apple PID, auto-cure no escalation. Skill enhancement candidate.
+- **Worktree isolation engaged correctly this cycle** (both A + B). c80 single-occurrence isolation failure (gateway agent landed on main path) did NOT recur. Investigation candidate from c80 closed for now; revisit only if recurs. Working hypothesis: race condition during simultaneous isolation:worktree spawns may have caused the c80 anomaly — c81's lower concurrency (2 isolated + 1 in-main) avoided it.
+- **Worktree base validation works**: both isolated agents confirmed `git rev-parse HEAD == git rev-parse main` before coding (per c80 lesson). No stale-base self-rebase needed this cycle. Pattern is durable; keep in spawn prompts.
+- **In-main housekeeping pattern**: CLEAN/CHORE tasks that only touch docs + git branch operations (no code) can skip isolation:worktree. Code-janitor working directly in main worktree saved overhead and avoided cherry-pick step. Acceptable when (1) main has no uncommitted changes, (2) task touches only doc/config files, (3) no risk of conflict with concurrent agents.
+- **HEAD.lock cure #37 during QA gate**: 4th in 5 cycles (#34, #35, #36, #37). Pattern is established. Future: just-noting, no escalation. Skill enhancement still candidate (auto-cure with Spotlight/git-bg-process detection inline).
+- **Sprint 1899a closure marker**: news-fetch service from scratch in 10 atomic tasks (core, domain, app, factory, bloomberg, reuters-rss, reuters-fallback, routes, gateway, tests, cron) over 6 cycles. Process notes: granular XS/S sizing + handoff-per-task + clear AC enabled high parallelism. No mid-sprint redesign needed. Worth referencing as exemplar for next service scaffold.
 
-## Carry-over to c81
-- **1899a-cron** (XS wiring-only, MEDIUM) — UNBLOCKED, scope reduced. Job body exists at `apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts` (136L). Remaining: barrel index.ts + jobs.ts CRONS entry + mcp.config.json section.
-- **1899a-bloomberg-test-split** (LOW) — split 494L test into ≤200L files.
-- **1900c-health-probe-refine** (LOW).
-- **1862c-E/F, 1888b/c/d/e SSOT, 1881a/1890a/1897b/JANITORs** in Backlog (unchanged).
-- **1897b-carry (URGENT-F1: USER ACTION PENDING)** — Docker .git/ exclude.
-- **Investigation candidate**: why did gateway agent's isolation:"worktree" land on main path? Single-occurrence so far; if recurs c81, escalate to architect.
+## Carry-over to c82
+- **1903a** (HIGH FIX, MCP tool dispatch/schema collision in apps/mcp-server/) — TNB c46 #4+#5 evidence. Re-verify post-gateway-restore.
+- **1881a** (HIGH source_tier retrofit) — ~15 macro/news tools, ba spec needed.
+- **1888b/c/d/g** (HIGH SSOT) — doc-only XS series, good c82 batch candidates.
+- **1899a-bloomberg-test-split** (LOW) — split 494L test file.
+- **1900c-health-probe-refine** (LOW OPS).
+- **1862c-E-dashboard** (USER-action: Cloudflare dashboard ingress).
+- **1897b-carry** (URGENT-F1 USER-action: Docker .git/ exclude).
+- **1862c-F** (MEDIUM FIX, blocked on container-rebuild).
+- **Closed**: c80 worktree-isolation investigation candidate. Did NOT recur c81. Keep eyes on it but no escalation.
