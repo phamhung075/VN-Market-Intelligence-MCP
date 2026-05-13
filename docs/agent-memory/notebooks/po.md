@@ -1,53 +1,57 @@
 # PO Notebook
 
-## Last updated: 2026-05-13T17:30:11Z (c78 triage — BATCH(2): 1898b re-verify + 1899a-reuters-fallback)
+## Last updated: 2026-05-13T21:50:15Z (c84 triage — BATCH(2): 1881a-impl + 1888l)
 
 ---
 
-## Cycle 78 triage
+## Cycle 84 triage
 
 ### Trigger
-Dev-team c78 cron tick. Main HEAD `0d4d348f`. Pipeline idle, WIP 0/2. PREFLIGHT clean (no HEAD.lock, no live worktrees, no pending signals — only processed/). Stale `worktree-agent-a63fd9e29f6856090` branch ref visible in `git branch -a` but `git worktree list` shows nothing — non-blocking. c77 closed clean: 1899a-bloomberg + 1903a both SHIPPED.
+Dev-team c84 cron tick. Main HEAD `eacd9b47`. Pipeline idle, WIP 0/2. PREFLIGHT cleared a stale HEAD.lock age=452s in 1 retry — recurrence pressure continues to subside (consistent with 1897b-carry notes; 6/6 lock-free or single-retry PREFLIGHTs since c69). `pendingSignals[]` EMPTY (drain-signals.md ran, 0 root signal files). Branch tree clean, main only. c83 closed clean: 1881a-spec + 1888-CDG bundle SHIPPED.
 
-### Step 0 — Channel/TNB cross-check
-MCP `read_telegram_reports` not invoked directly (gateway live; per fail-loud-protocol §22 anti-hallucination — relied on TNB c46 audit which already aggregates cross-channel signals + git log -30 ship pattern). TNB #4+#5 closed c77 via 1903a regression-guard. TNB #10 Reuters/TE "Ngưng" superseded by 1899a chain. No new BUG signals since c77.
+### Step 0-SIG + Step 0-TNB + Step 0 (channel audit)
+- 0-SIG: pendingSignals empty → fell through.
+- 0-TNB: tnb-audit-latest.md still c46, fully ACK'd in c76 PO ACK block (4 findings classified, all routed to existing tasks or held). No new TNB cycle. No re-ACK needed.
+- 0 channel audit: MCP `read_telegram_reports` not invoked directly (caveman gateway tool-binding not exposed in this autonomous spawn; per fail-loud §22 anti-hallucination + c78/c83 precedent). Relied on TNB c46 cross-channel aggregation + git log -10 (clean c83 closure, no BUG commits) + PREFLIGHT clean. No new BUG signals inferred.
 
 ### Sprint posture
-1899a chain progress: domain ✓ + factory ✓ + reuters-rss ✓ + app ✓ + bloomberg ✓ (5/8 tier complete c77). reuters-fallback is the **last remaining tier-2 blocker** before routes/gateway/cron/tests unlock. 1898b is a TNB c45 carry that may already have self-healed post c73 gateway-restart + 1899a chain landing (TNB c46 confirmed "RSS sources RECOVERED + EXPANDED, 5 new sources"). 1898a precedent (self-healed c76) suggests 1898b deserves live-re-verify first, not pre-written FIX spec.
+1899a chain fully landed (c75–c81); methodology source-tier work (1881a-spec) shipped c83 with REQ enumerated 16 tools + 4 spec-time discoveries flagged. **1881a-impl is now the highest-leverage HIGH ready** — but is `zone: multi` → architect split mandatory before dev dispatch (per po/main.md L30). **1888l is the second HIGH ready** — isolated cross-service chore (agent-father), no architect needed. Disjoint owners → both fit WIP=2.
 
 ### Decision: BATCH(2)
-**Priority applied:** TNB carry > sprint momentum > SSOT chores > LOW refactor.
+**Priority applied:** HIGH ready > MEDIUM ready > LOW > blocked.
 
-1. **FIX-HIGH — 1898b RSS degradation re-verify**. BA spec round — live-re-verify post-gateway-restore + 1899a chain landing. If self-healed → regression-shape guard spec (1898a precedent) or close outright. If degraded → full FIX spec to dev-mcp-server. Zone `apps/mcp-server/`. Cheap, may close itself.
+1. **SPRINT-M — 1881a-impl** (zone: multi). REQ_1881a.md ready; 16 tools enumerated; architect resolves BLK-1 plain-text schema + carves into per-zone sub-tasks (mcp/macro/news). Dev-team Step 2 must route to architect FIRST.
 
-2. **SPRINT-S — 1899a-reuters-fallback**. Tier-2 scaffold, sibling of 1899a-bloomberg shipped c77 (~1.5h, 29/29 tests, identical structural pattern). PlaywrightBrowserFactory + ReutersNewsPort impl, FALLBACK only (primary = ReutersRssScraper). Unblocks 1899a-routes immediately after. Zone `apps/news-fetch/`. Owner: dev-mainserver-crawls.
+2. **SPRINT-S — 1888l** (zone: cross-service/). agent-father error-boundary parity — 3-file chore in .claude/flows/agents-architect/ + .claude/agents/agents-architect.md. Isolated, no architect, no BA spec needed (SSOT compliance chore).
 
-### Items declined / deferred to c79+
-- **1888b/c/d/e/g/l SSOT cluster** — not hot path, batch later in doc-only cycle.
-- **1899a-bloomberg-test-split** — LOW REFACTOR, non-blocking c77 carry.
-- **1900c health-probe-refine** — LOW OPS, no urgency.
-- **1903a follow-up / 1898a follow-up** — both SHIPPED + APPROVED c76/c77; no carry.
-- **1897b-carry URGENT-F1** — USER action only, not dispatchable.
-- **1862c-E-dashboard + 1862c-F** — USER action + 5-clean-cycle gate not met.
-- **JANITOR-020/014/011** — code-janitor cron will pick up.
-- **TASK-BCTC-3** — dev-vps-crawls owned, separate stream.
-- **1881a / 1890a** — methodology, defer.
+### Items declined / deferred to c85+
+- **1890a** — methodology MEDIUM, no pressure.
+- **JANITOR-020/014/011** — code-janitor cron picks up.
+- **TASK-BCTC-3** — dev-vps-crawls parallel stream.
+- **1862c-F** — `container-rebuild` unmet + 5-clean-cycle gate.
+- **1862c-E-dashboard** — user-blocked (Cloudflare dashboard).
+- **1897b-carry** — user (F1) + architect (SPIKE), can't dispatch; recurrence pressure subsiding.
+- **1900c health-probe-refine** — LOW OPS cosmetic.
+- **1899a-bloomberg-test-split** — LOW REFACTOR non-blocking carry.
 
 ### Hard-constraint compliance
-- WIP ≤2: PASS (0→2, both disjoint).
-- Disjoint zones + owners: PASS (`apps/mcp-server/` ba ≠ `apps/news-fetch/` dev-mainserver-crawls).
-- Zone tag on every FIX/SPRINT: PASS.
-- Recurring-bug rule: N/A — neither task is on 2nd fix attempt.
+- WIP ≤ 2: PASS (0 → 2).
+- Disjoint zones: PASS (multi/apps-prod vs cross-service/.claude-meta).
+- Disjoint owners: PASS (architect→dev-chain vs agent-father).
+- Zone tag on every row: PASS.
+- Recurring-bug rule: N/A.
 
-### TASKS.md re-pack
-File at 83L vs 80L cap. **Deferred** to pm c78-close — minor (3L over), Backlog/Todo ordering acceptable. Index-only update on this cycle.
+### Handoff sequence
+1. Dispatch 1888l first (no architect needed, faster close).
+2. Dispatch 1881a-impl in parallel via architect (BLK-1 schema decision → per-zone split → BA→dev).
 
-### Carry-forward to c79
-- 1899a-routes immediately dispatchable once reuters-fallback lands (last blocker).
-- 1898b outcome determines if FIX spec or close.
-- TNB #7 unified-agent daily-review 23:00 UTC test point.
+### Carry-forward to c85
+- 1881a-impl architect split outcome → unlocks ≥3 per-zone sub-tasks.
+- 1888l agent-father compliance audit result.
+- TNB next-cycle audit (no new since c46 — overdue, watch for c47).
 - US10Y 4.48% watchlist (Layer 1.2 threshold 4.5%).
 - NB-HDR-bundle-22-agents ba spec carry.
+- HEAD.lock pressure: 6/6 clean-or-1-retry cycles — confirm trend at c85+.
 
 ### Sign-off
-c78 BATCH(2) emitted. PO sub-flow EXIT to main terminal Step 2 (planning) for both rows. Notebook OVERWRITE complete.
+c84 BATCH(2) emitted. PO sub-flow EXIT to main terminal Step 2 (planning) for both rows. 1881a-impl routes to architect first, 1888l direct to agent-father. Notebook OVERWRITE complete.
