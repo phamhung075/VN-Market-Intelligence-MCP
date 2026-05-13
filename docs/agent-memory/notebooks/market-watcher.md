@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 09:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 10:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -654,3 +654,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (10:38–10:41)
+- Stocks: 31 watchlist | Priced (EOD close 08:59 UTC): 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (all session anomalies already signaled) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING (Fed hike fears, gold declining) | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours, 4h cycle, 10:38 UTC). All session anomalies processed in prior cycles (GAS #3066/#3071, VRE #3067/#3072).
+- Session final moves reviewed: GAS +6.93% (2.46σ — signaled ×5 today), VRE -6.91% (1.83σ — signaled), VHM -4.81% (1.23σ, below 1.5σ threshold), HVN -2.08% (previously signaled), BID +2.51%, HCM +2.89% — no new signals warranted.
+- Sector rotation 1d: Oil&Gas +5.57% (session leader, oil-price catalyst), Chemicals +2.44%, Securities +2.89% leading | Real estate -1.28% (VRE -6.91%, VHM -4.81%), Banking -0.40% (broad sector decline, 7 watchlist stocks down) lagging.
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check. Khối ngoại bán ròng: ACB (116M shares), FPT (~1,500B VND).
+- Macro: Brent $107.22, Gold $4,707.1, USD/VND 26,129. Supply chain: BDI=1,400 (STABLE). Open chain findings: 0 (last 15 min). Open alerts: 27 (20 HIGH: banking ×8, realty ×9, news ×3). System: OK.
+
+## Metrics (cycle 2026-05-13 10:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 3 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
