@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 00:39 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 01:39 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -437,3 +437,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 1800 |
+
+### Cycle (01:39–01:41 UTC)
+- Stocks: 31 watchlist | Priced (EOD close 2026-05-12 08:17 UTC): 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (news-scout id=3030, regime_adj_score=8.0) | DXY: USD STABLE (26,129) | US10Y: RISK-OFF (Gold $4,714.9) | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market CLOSED (pre-market window, 01:39 UTC 2026-05-13 — opens 02:00 UTC in ~21 min). Thresholds: σ=2.0, vol_mult=2.0x, downside_bias=false.
+- Active chain catalyst: id=3030 "xanh vỏ đỏ lòng" — multiple CTCK cut VN-Index 2026 forecasts; FII net sell 800B VND on 12/5 (VIC heaviest); liquidity declining near ATH. Impact=8. Expires 05:21 UTC (valid through market open).
+- Pre-open context: VN-Index near historical high ~1,920; bearish macro overhang from broker downgrades + FII outflows. Watch for gap-down or sector rotation at 02:00 UTC open. VIC, VHM, VRE (realty) + banking sector under pressure from FII selling.
+- Macro: Brent $106.73 (elevated, CPI/SBV tightening risk), Gold $4,714.9 (risk-off), USD/VND 26,129. Supply chain: STABLE (BDI sector trend stable). Energy: NORMAL.
+- Sector 1d (2026-05-12 final): Oil&Gas +2.69%, Logistics +2.11%, RE +0.85% leading | Retail -0.84%, Securities -0.38%, Utilities -0.37% lagging. All 16 sectors STABLE (1d data only, no 5-session rotation).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check.
+- Open chain findings: 0 (last 15 min) | Open alerts: 1 (VIC LOW news_mention) | System: OK
+
+## Metrics (cycle 2026-05-13 01:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 3 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2200 |

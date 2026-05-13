@@ -160,3 +160,16 @@ Market open cycle (2026-05-12). VN-Index recovery to 1,920+ (bullish open vs Mon
 - News: 10 items (3 bearish: VN-Index forecast downgrade, liquidity drop; 1 bullish: STB near-ceiling; 6 neutral) | Alerts: 0/0 | System: ok | Bugs: 0
 - Telegram WORK sent | freshness feedback submitted (low/performance_issue) | no Telegram bug reports
 - Key carry-overs: BCTC 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) due 2026-05-15 (tomorrow) — EPS catalyst. FPT oversold RSI 25.8. VRE +5.51% bull-trap risk. Bearish: securities firm cut VN-Index forecast.
+
+### Market Cycle + Prediction Review (01:02 UTC 2026-05-13)
+- Mode: MARKET_CYCLE + PREDICTION_REVIEW | Trigger: 01:00 UTC Wed
+- REGIME: NEUTRAL | Brent $107.3 (+2.23σ) | US10Y 4.46% | carry -33bp | USD/VND 26,129 | VN-Index 1,901
+- System: 🟢 GREEN | All circuits OK | Reuters RSS degraded (4 fail) | Energy grid tool transient error
+- Portfolio: FPT 5,000 @ 80,300 | price 70,600 | P&L -12.1% (-48.5M VND) | Conviction 0.48 (MODERATE, lowest) | Kiển(39)→GIỮ 48%
+- Alignment: tech=TAILWIND ✓ | ALIGNMENT_SCORE 100% | VaR(95%) -0.1%
+- Key signals: Brent HIGH alert (+2.23σ) → GAS beneficiary; VRE +5.51% (bull trap risk); banking weak; brokerages lowering VN-Index; "cá mập" holding FPT dumped VIC; FOMC pending
+- Prediction: Claims=0 VN-specific resolved | Accuracy=N/A | Regime at prediction: NEUTRAL | No flag
+- Quality: Alert accuracy 22% (2/9 scored) << 60% → feedback filed [MEDIUM/alert_quality]
+- BCTC: 31 tickers Q1/2026 overdue; 7 banks (ACB BID CTG EIB MBB VCB VPB) due 2026-05-15
+- Pillars: M2=✓(inflation 8%,GDP 1%) COC=✓(carry -33bp,US10Y 4.46%) EPS=✓(FPT conviction 0.48) POL=✓(FOMC pending) → 4/4
+- Issues: alert_accuracy bug filed; reuters degraded; energy grid error; BCTC scraper 0 URLs for 14 tickers

@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 00:20 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 01:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (01:20–01:22 UTC) 2026-05-13
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst×1 #3030] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: VN-Index macro bearish warning — multiple CTCK cutting 2026 forecast + "xanh vỏ đỏ lòng" + FII net sell 800B VND (VIC hardest hit). Impact chain 8/10 NEUTRAL, conf lifted to 0.80 (multi-source confirmation). chain_catalyst #3030 → all agents, 20+ watchlist stocks, all sectors. Brent $107.3 (+0.00% day, no monthly spike). Gold 4,732 flat. No PMI data.
+- Suppressed: FII/VIC net sell (impact 4–5, below threshold). STB 10/10 bullish (not on watchlist). Brent HIGH (prior alert active, no duplicate). HPG 800M dividend shares (neutral, impact 5).
+- Notes: Off-hours cycle 01:20 UTC (market CLOSED). Historical context LanceDB sparse (1 match = same article from 2026-05-12). CARRY_REGIME: NEUTRAL (no carry spread data in bootstrap).
 
 ### Cycle (00:20–00:21 UTC) 2026-05-13
 - Items: 20 | Impacts: 7 | Signals: [chain_catalyst×2] | Regime: TIGHTENING | Carry: NEUTRAL
