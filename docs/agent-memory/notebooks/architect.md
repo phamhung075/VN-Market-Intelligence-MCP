@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-13 ~01:50 UTC | **Sprint:** SPIKE_006-ALERT-QUALITY-RCA-c60
+**Last updated:** 2026-05-13 ~09:00 UTC | **Sprint:** 1881a-impl-arch-brief
 
-## Last session summary (SPIKE_006-c60 — alert accuracy 22% RCA)
+## Last session summary (1881a-impl-arch-brief — source_tier schema decision)
+
+BLK-1 resolved. Chose option (a) JSON wrapper for text-output tools over option (b) header
+line. Rationale: FR-5 compile-time constant + AC-7 tsc enforcement only achievable with
+typed object literal. Text preserved verbatim in `.text` field — zero content loss.
+Brief: `docs/architecture-briefs/2026-05-13-source-tier-schema-decision.md`
+Sub-tasks split: 1881a-impl-mcp (all 16 tool edits + tests, zone: apps/mcp-server/) is
+the sole implementation zone — apps/macro-indicators has no MCP tools (spec-confirmed).
+1881a-impl-ssot is a companion docs-only task (zone: docs/).
+Parallel dispatch approved for -mcp and -ssot after brief lands.
+Branch: task/1881a-impl-arch-brief. Commit pending.
+
+## Previous session summary (SPIKE_006-c60 — alert accuracy 22% RCA)
 
 SPIKE_006 findings complete. Primary verdict: H-A methodology bug (CONFIRMED, HIGH confidence).
 Three root defects identified:
