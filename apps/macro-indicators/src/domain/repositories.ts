@@ -123,3 +123,31 @@ export interface EconomicCalendarEvent {
 export interface InvestingCalendarPort {
   fetchCalendar(countryId?: string): Promise<EconomicCalendarEvent[]>;
 }
+
+// ── ADB KIDB port (sprint 2026-05-13, Phase 2 direct API) ─────────────────
+
+/** Single annual data point from ADB Key Indicators Database. */
+export interface AdbKidbDataPoint {
+  year: string;    // e.g. "2024"
+  value: number;
+}
+
+/** Port: fetch VN macro indicators from ADB KIDB SDMX v4 API. */
+export interface AdbKidbPort {
+  fetchIndicator(dataflow: string, indicator: string): Promise<AdbKidbDataPoint[]>;
+  fetchVnMacroBatch(): Promise<Record<string, AdbKidbDataPoint[]>>;
+}
+
+// ── IMF WEO port (sprint 2026-05-13, api.imf.org SDMX 3.0) ───────────────
+
+/** Single annual WEO data point (historical or IMF forecast). */
+export interface ImfWeoDataPoint {
+  year: string;    // e.g. "2025" — may be a forecast year
+  value: number;
+}
+
+/** Port: fetch VN WEO indicators from IMF api.imf.org SDMX 3.0. */
+export interface ImfWeoPort {
+  fetchIndicator(indicatorCode: string): Promise<ImfWeoDataPoint[]>;
+  fetchVnWeoMacroBatch(): Promise<Record<string, ImfWeoDataPoint[]>>;
+}

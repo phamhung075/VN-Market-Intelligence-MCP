@@ -5,10 +5,12 @@
 import { Hono } from 'hono';
 import type { ComputeMacroUseCase } from '../application/usecases.js';
 import type { FetchExternalMacroUseCase } from '../application/fetch-external-macro.js';
+import type { FetchInternationalMacroUseCase } from '../application/fetch-international-macro.js';
 
 export function createRouter(
   useCase: ComputeMacroUseCase,
   externalUseCase: FetchExternalMacroUseCase,
+  internationalUseCase: FetchInternationalMacroUseCase,
 ): Hono {
   const app = new Hono();
 
@@ -39,6 +41,44 @@ export function createRouter(
   app.get('/macro/external', async (c) => {
     try {
       const result = await externalUseCase.execute();
+      return c.json(result);
+    } catch (err) {
+      return c.json({ error: String(err) }, 500);
+    }
+  });
+
+  /** Fetch international institutional data: ADB KIDB + IMF WEO. */
+  app.post('/macro/external/adb', async (c) => {
+    try {
+      const result = await internationalUseCase.execute();
+      return c.json({ adbKidb: result.adbKidb, fetchedAt: result.fetchedAt });
+    } catch (err) {
+      return c.json({ error: String(err) }, 500);
+    }
+  });
+
+  app.post('/macro/external/imf', async (c) => {
+    try {
+      const result = await internationalUseCase.execute();
+      return c.json({ imfWeo: result.imfWeo, fetchedAt: result.fetchedAt });
+    } catch (err) {
+      return c.json({ error: String(err) }, 500);
+    }
+  });
+
+  /** Fetch both ADB KIDB + IMF WEO together. */
+  app.post('/macro/external/international', async (c) => {
+    try {
+      const result = await internationalUseCase.execute();
+      return c.json(result);
+    } catch (err) {
+      return c.json({ error: String(err) }, 500);
+    }
+  });
+
+  app.get('/macro/external/international', async (c) => {
+    try {
+      const result = await internationalUseCase.execute();
       return c.json(result);
     } catch (err) {
       return c.json({ error: String(err) }, 500);

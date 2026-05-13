@@ -1,4 +1,10 @@
-# Recon — imf-datamapper
+# Recon — imf-datamapper [SUPERSEDED]
+
+> **SUPERSEDED 2026-05-13:** www.imf.org DataMapper is Akamai-blocked from main server.
+> Production adapter switched to `api.imf.org` SDMX 3.0 (no bot protection).
+> See: `docs/mainserver-sources/imf-weo-api/recon.md` + `apps/macro-indicators/src/infrastructure/scrapers/imf-weo.ts`
+
+# Recon — imf-datamapper (original — archived)
 
 **Date:** 2026-05-13 05:00 UTC
 **Agent:** ops-mainserver-fetch

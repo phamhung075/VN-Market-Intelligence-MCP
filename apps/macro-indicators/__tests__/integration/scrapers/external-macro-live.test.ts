@@ -15,12 +15,17 @@ import { describe, it, expect } from 'bun:test';
 const SKIP = process.env['INTEGRATION'] !== 'true';
 const REASON = 'Set INTEGRATION=true to run live endpoint tests';
 
-function itLive(name: string, fn: () => Promise<void>) {
+function itLive(name: string, fn: () => Promise<void>, timeoutMs = 15_000) {
   if (SKIP) {
     it.skip(`[live] ${name} — ${REASON}`, fn);
   } else {
-    it(`[live] ${name}`, fn, 15_000);
+    it(`[live] ${name}`, fn, timeoutMs);
   }
+}
+
+/** Extended timeout variant for slow APIs (e.g. ADB KIDB ~15-20s). */
+function itLiveSlow(name: string, fn: () => Promise<void>) {
+  return itLive(name, fn, 45_000);
 }
 
 function sleep(ms: number) {
@@ -150,6 +155,84 @@ describe('Live endpoint integration — external macro scrapers', () => {
       expect(result!.observations.length).toBeGreaterThan(0);
       expect(result!.observations[0]!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       await sleep(1_000);
+    });
+  });
+
+  describe('AdbKidbAdapter', () => {
+    // ADB KIDB API is slow (~15-20s per request) — use 45s timeout
+    itLiveSlow('fetchIndicator(EO_NA_CONST_GOO, NGDP_R_PTX_PS) returns VN GDP growth', async () => {
+      const { AdbKidbAdapter } = await import(
+        '../../../src/infrastructure/scrapers/adb-kidb.js'
+      );
+      const adapter = new AdbKidbAdapter();
+
+      const result = await adapter.fetchIndicator('EO_NA_CONST_GOO', 'NGDP_R_PTX_PS');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]!.year).toMatch(/^\d{4}$/);
+      expect(typeof result[0]!.value).toBe('number');
+      // Vietnam GDP growth should be positive in recent years
+      const latest = result.at(-1)!;
+      expect(latest.value).toBeGreaterThan(0);
+      await sleep(2_000);
+    });
+
+    itLiveSlow('fetchIndicator(MFP_PR, PCPI_PC_PP_PT) returns VN CPI', async () => {
+      const { AdbKidbAdapter } = await import(
+        '../../../src/infrastructure/scrapers/adb-kidb.js'
+      );
+      const adapter = new AdbKidbAdapter();
+
+      const result = await adapter.fetchIndicator('MFP_PR', 'PCPI_PC_PP_PT');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      // CPI % change should be a realistic inflation number (0-20% for VN)
+      const latest = result.at(-1)!;
+      expect(latest.value).toBeGreaterThan(-5);
+      expect(latest.value).toBeLessThan(30);
+      await sleep(2_000);
+    });
+  });
+
+  describe('ImfWeoAdapter', () => {
+    itLive('fetchIndicator(NGDP_RPCH) returns VN GDP growth + forecasts', async () => {
+      const { ImfWeoAdapter } = await import(
+        '../../../src/infrastructure/scrapers/imf-weo.js'
+      );
+      const adapter = new ImfWeoAdapter();
+
+      const result = await adapter.fetchIndicator('NGDP_RPCH');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(10); // Historical + forecasts
+      expect(result[0]!.year).toMatch(/^\d{4}$/);
+      // Should include forecast years
+      const years = result.map((d) => d.year);
+      expect(years).toContain('2025'); // WEO forecast year
+      // Vietnam GDP growth reasonable bounds
+      const year2024 = result.find((d) => d.year === '2024');
+      if (year2024) {
+        expect(year2024.value).toBeGreaterThan(0);
+        expect(year2024.value).toBeLessThan(20);
+      }
+      await sleep(2_000);
+    });
+
+    itLive('fetchIndicator(PCPIPCH) returns VN inflation data', async () => {
+      const { ImfWeoAdapter } = await import(
+        '../../../src/infrastructure/scrapers/imf-weo.js'
+      );
+      const adapter = new ImfWeoAdapter();
+
+      const result = await adapter.fetchIndicator('PCPIPCH');
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(5);
+      const recent = result.filter((d) => parseInt(d.year, 10) >= 2020);
+      expect(recent.length).toBeGreaterThan(0);
+      await sleep(2_000);
     });
   });
 });
