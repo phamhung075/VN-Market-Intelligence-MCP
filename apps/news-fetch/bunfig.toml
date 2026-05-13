@@ -1,0 +1,6 @@
+# ── Bun configuration — news-fetch microservice ────────────────────────────
+# https://bun.sh/docs/runtime/bunfig
+
+[test]
+# Default per-test timeout (ms)
+timeout = 30000
