@@ -31,8 +31,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1881a-impl-ssot | source_tier — methodology Layer 9 doc update. Sync `docs/standards/tnb-methodology-layers.md` § Layer 9 with brief's Source hierarchy table. One-file doc chore. Parallel-eligible with 1881a-impl-mcp. AC: Layer 9 updated, source_tier enum explained, backwards-compat note (additive field only). | MEDIUM | CHORE | developer | — | 2026-05-14 |
-
 ---
 
 ## Review
