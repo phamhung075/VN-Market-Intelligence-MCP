@@ -24,8 +24,7 @@ import type {
   FredMacroPort,
   InvestingCalendarPort,
 } from '../domain/repositories.js';
-import { DEFAULT_SYMBOLS } from '../infrastructure/scrapers/yahoo-finance-fx-indices.js';
-import { DEFAULT_CNBC_SYMBOLS } from '../infrastructure/scrapers/cnbc-world-markets.js';
+import { DEFAULT_SYMBOLS, DEFAULT_CNBC_SYMBOLS } from '../domain/defaults.js';
 
 export interface ExternalMacroResult {
   worldBankVn: Awaited<ReturnType<WorldBankMacroPort['fetchVnMacroBatch']>> | null;

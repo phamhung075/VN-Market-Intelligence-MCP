@@ -11,22 +11,9 @@
  */
 
 import type { YahooFxIndicesPort, YahooQuote } from '../../domain/repositories.js';
+export { DEFAULT_SYMBOLS } from '../../domain/defaults.js';
 
 const BASE_URL = 'https://query2.finance.yahoo.com/v8/finance/chart';
-
-/** Default symbol set: FX rates relevant to VN market + global indices. */
-export const DEFAULT_SYMBOLS: string[] = [
-  // FX rates
-  'EURUSD=X', 'USDVND=X', 'USDJPY=X', 'GBPUSD=X', 'DTWEXBGS',
-  // Global indices
-  '^GSPC',     // S&P 500
-  '^DJI',      // Dow Jones
-  '^IXIC',     // NASDAQ
-  '^N225',     // Nikkei 225
-  '^HSI',      // Hang Seng
-  '000001.SS', // Shanghai Composite
-  '^FTSE',     // FTSE 100
-];
 
 const UA_POOL = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',

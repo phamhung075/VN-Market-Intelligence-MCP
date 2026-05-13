@@ -10,19 +10,10 @@
  */
 
 import type { CnbcWorldMarketsPort, CnbcQuote } from '../../domain/repositories.js';
+export { DEFAULT_CNBC_SYMBOLS } from '../../domain/defaults.js';
 
 const QUOTE_BASE =
   'https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol';
-
-/** Default CNBC symbols for global market coverage. */
-export const DEFAULT_CNBC_SYMBOLS: string[] = [
-  'SP500',    // S&P 500
-  'DJ30',     // Dow Jones Industrial Average
-  'NASDAQ',   // NASDAQ Composite
-  'NIKKEI225', // Nikkei 225
-  'FTSE100',  // FTSE 100
-  'HK.HSI',   // Hang Seng Index
-];
 
 const UA_POOL = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
