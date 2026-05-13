@@ -28,8 +28,31 @@
 - Signal structure validation (required fields + valid enums)
 - Direction calculation: USD/VND 25500 → BEARISH
 
+## Scraper Unit Tests
+
+### FredMacroAdapter
+**File:** `apps/macro-indicators/__tests__/unit/scrapers/fred-macro.test.ts`
+
+| Test group | Cases |
+|------------|-------|
+| `isAvailable` | key absent → false / key short → false / key 32-char → true |
+| `fetchSeries` (key absent) | returns null + console.warn |
+| `fetchSeries` (mocked) | parses observations / API error body / HTTP 500 / network throw |
+| `fetchAllMacro` (key absent) | all 8 keys present, all values null |
+| `fetchAllMacro` (parallel) | all-ok: 8 results / one-fail: null for VIXCLS, others non-null / timing: all 8 dispatched within 30ms window |
+| `FRED_SERIES` catalog | 8 entries, known IDs present |
+
+### WorldBankMacroAdapter
+**File:** `apps/macro-indicators/__tests__/unit/scrapers/world-bank-macro.test.ts`
+
+Covers: successful parse of WB API v2 format, HTTP 404, network throw, batch with 7 indicators.
+
 ## Run Commands
 ```bash
 cd apps/macro-indicators && bun test
 cd apps/macro-indicators && bun tsc --noEmit
 ```
+
+## Current counts (2026-05-13)
+- Total tests: 102 (90 pass, 12 skip, 0 fail)
+- `bun test` runtime: ~600ms (all unit, parallel mock execution)

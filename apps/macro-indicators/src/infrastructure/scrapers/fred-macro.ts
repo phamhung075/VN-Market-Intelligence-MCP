@@ -29,10 +29,6 @@ export const FRED_SERIES: Record<string, string> = {
   us_10y_breakeven_infl:   'T10YIE',      // 10-Year Breakeven Inflation Rate
 };
 
-function sleepMs(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 interface FredApiResponse {
   observations?: Array<{ date: string; value: string }>;
   error_code?: number;
@@ -107,14 +103,18 @@ export class FredMacroAdapter implements FredMacroPort {
       return Object.fromEntries(Object.keys(FRED_SERIES).map((k) => [k, null]));
     }
 
-    const result: Record<string, FredSeriesResult | null> = {};
     const entries = Object.entries(FRED_SERIES);
 
-    for (const [name, seriesId] of entries) {
-      result[name] = await this.fetchSeries(seriesId);
-      await sleepMs(600 + Math.random() * 400); // 0.6-1s — FRED allows 120 req/60s
-    }
+    // Fan out all 8 series concurrently — FRED public limit is 120 req/min;
+    // 8 parallel calls is well within budget. Sequential loop + sleeps caused
+    // ~8-12s total latency, exceeding the 8s per-source budget in
+    // fetch-external-macro.ts. Parallel dispatch brings latency to ~1s.
+    const results = await Promise.all(
+      entries.map(([, seriesId]) => this.fetchSeries(seriesId)),
+    );
 
-    return result;
+    return Object.fromEntries(
+      entries.map(([name], i) => [name, results[i] ?? null]),
+    );
   }
 }
