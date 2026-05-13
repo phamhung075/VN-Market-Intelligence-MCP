@@ -2,9 +2,19 @@
 """
 investing_calendar_fetch.py — Cloudflare-managed bypass helper
 
-Technique: cloudflare-managed-bypass (curl_cffi, chrome124 impersonation)
+Technique: cloudflare-managed-bypass (curl_cffi, chrome136 impersonation)
 RAM: ~25MB (curl_cffi + lxml + Python interpreter)
 Called by: investing-economic-calendar.ts (Node spawns this as subprocess)
+
+2026-05-13 regression diagnosis:
+  - chrome124 → CF Turnstile JS challenge escalation (warmup returns 403)
+  - chrome136 + Sec-Fetch-* headers → warmup still 403 (full Turnstile mode)
+  - Root cause: investing.com has moved economic-calendar behind CF Turnstile v2
+    which requires JavaScript execution (interactive challenge). curl_cffi alone
+    cannot solve this. Escalation path: FlareSolverr or Playwright-stealth.
+  - Status: BLOCKED pending ops provisioning FlareSolverr container.
+  - This file returns status="error" with CF_TURNSTILE_BLOCKED reason gracefully.
+  - Signal dropped: docs/signals/dev-mainserver-crawls-investing-blocked-<ts>.json
 
 Usage:
     python3 investing_calendar_fetch.py --country 35
@@ -46,25 +56,38 @@ WARMUP_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/136.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/html,application/xhtml+xml,*/*;q=0.9",
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;"
+        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
+    ),
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "Cache-Control": "max-age=0",
 }
 
 POST_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/136.0.0.0 Safari/537.36"
     ),
-    "Accept": "*/*",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
     "Content-Type": "application/x-www-form-urlencoded",
     "X-Requested-With": "XMLHttpRequest",
     "Referer": f"{BASE_URL}/economic-calendar/",
     "Origin": BASE_URL,
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
 }
 
 
@@ -85,7 +108,7 @@ def fetch_calendar(country_id: str) -> dict:
     1. GET page to warm up __cf_bm + __cflb cookies (TLS impersonation via curl_cffi)
     2. POST to calendar API with captured CF session cookies
     """
-    session = cffi_requests.Session(impersonate="chrome124")
+    session = cffi_requests.Session(impersonate="chrome136")
 
     # Step 1: warmup — get CF cookies
     try:
