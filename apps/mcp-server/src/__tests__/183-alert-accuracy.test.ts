@@ -13,7 +13,13 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerAlertAccuracyTool } from "../interface/mcp/tools/alerts/alertAccuracy.js";
+import {
+  registerAlertAccuracyTool,
+  formatAccuracyReport,
+} from "../interface/mcp/tools/alerts/alertAccuracy.js";
+
+// Type alias to keep AC-2 row construction readable
+type AlertRowLike = Parameters<typeof formatAccuracyReport>[0][number];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — direct tool invocation (bypass SSE transport)
@@ -299,5 +305,109 @@ describe("Task 183 — get_alert_accuracy MCP tool", () => {
     expect(result.content[0]!.type).toBe("text");
     expect(typeof result.content[0]!.text).toBe("string");
     expect(result.content[0]!.text.length).toBeGreaterThan(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-2 — intraday gate: calendarDaysElapsed must be >= 1 to use 1-12h window
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("AC-2 — intraday fallback gated by calendarDaysElapsed", () => {
+  function makeRow(opts: {
+    id: string;
+    code: string;
+    signalType: string;
+    triggeredAt: string;
+    outcome?: string | null;
+  }): AlertRowLike {
+    return {
+      id: opts.id,
+      triggered_at: opts.triggeredAt,
+      severity: "medium",
+      signals_json: JSON.stringify([
+        { type: opts.signalType, actionCode: opts.code, severity: "medium", confidence: 0.8 },
+      ]),
+      affected_actions_json: JSON.stringify([
+        { code: opts.code, expectedImpact: "down", confidence: 0.8 },
+      ]),
+      outcome: opts.outcome ?? null,
+      outcome_at: null,
+      outcome_detail: null,
+    };
+  }
+
+  beforeEach(() => {
+    const db = getDb();
+    db.exec("DELETE FROM market_prices_history");
+  });
+
+  it("AC-2a: same-calendar-day alert (elapsed=0) with intraday price drop → UNKNOWN (gate blocks)", () => {
+    // calendarDaysElapsed = floor(30min / 86400000ms) = 0
+    // Without gate: 5% intraday drop would score as HIT
+    // With gate:    elapsed=0 blocks intraday window → UNKNOWN
+    const now = Date.now();
+    const alertTs = now - 30 * 60_000; // 30 min ago
+    const triggeredAt = new Date(alertTs).toISOString();
+
+    const db = getDb();
+    // Price at alert time (+1 min)
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run("TSAC2A", 100000, new Date(alertTs + 60_000).toISOString());
+    // Intraday price: +2h from alert, 5% drop (within 1-12h window)
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run("TSAC2A", 95000, new Date(alertTs + 2 * 3_600_000).toISOString());
+
+    const rows: AlertRowLike[] = [
+      makeRow({ id: "ac2a", code: "TSAC2A", signalType: "price_drop", triggeredAt }),
+    ];
+    const report = formatAccuracyReport(rows, 1);
+
+    // Gate closed (elapsed=0) → no intraday fallback → UNKNOWN
+    expect(report.unknowns).toBe(1);
+    expect(report.hits).toBe(0);
+    expect(report.misses).toBe(0);
+  });
+
+  it("AC-2b: next-calendar-day alert (elapsed=1) with intraday price drop → HIT (gate open)", () => {
+    // calendarDaysElapsed = floor(25h / 24h) = 1
+    // No 1-3 day window data; intraday 1-12h window has a 5% drop → HIT
+    const now = Date.now();
+    const alertTs = now - 25 * 3_600_000; // 25 hours ago
+    const triggeredAt = new Date(alertTs).toISOString();
+
+    const db = getDb();
+    // Price at alert time (+1 min)
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run("TSAC2B", 100000, new Date(alertTs + 60_000).toISOString());
+    // Intraday price: +2h from alert, 5% drop (within 1-12h window)
+    db.prepare(
+      "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES (?, ?, 0, ?)",
+    ).run("TSAC2B", 95000, new Date(alertTs + 2 * 3_600_000).toISOString());
+
+    const rows: AlertRowLike[] = [
+      makeRow({ id: "ac2b", code: "TSAC2B", signalType: "price_drop", triggeredAt }),
+    ];
+    const report = formatAccuracyReport(rows, 30);
+
+    // Gate open (elapsed=1) → intraday fallback → 5% drop for price_drop → HIT
+    expect(report.hits).toBe(1);
+    expect(report.unknowns).toBe(0);
+  });
+
+  it("AC-2c: calendarDaysElapsed math — 30min elapsed → 0", () => {
+    const now = Date.now();
+    const alertTs = now - 30 * 60_000;
+    const elapsed = Math.floor((now - alertTs) / 86_400_000);
+    expect(elapsed).toBe(0);
+  });
+
+  it("AC-2d: calendarDaysElapsed math — 25h elapsed → 1", () => {
+    const now = Date.now();
+    const alertTs = now - 25 * 3_600_000;
+    const elapsed = Math.floor((now - alertTs) / 86_400_000);
+    expect(elapsed).toBe(1);
   });
 });

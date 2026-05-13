@@ -203,7 +203,16 @@ function scoreAlert(
   // window has no data yet (early-stage deployment, very recent alert),
   // try a 1-12h forward window instead. Trades temporal precision for
   // coverage so accuracy stops being '100% UNKNOWN' on day 1.
-  if (!priceAfter) {
+  //
+  // AC-2 gate: only allow intraday fallback when calendarDaysElapsed >= 1.
+  // A same-calendar-day alert (e.g. fired 14:00, queried 14:30) must NOT
+  // score via intraday — doing so would conflate "no multi-day data yet"
+  // with "price already confirmed intraday". The 1-12h window is only
+  // meaningful once at least one calendar day has elapsed.
+  const now = Date.now();
+  const calendarDaysElapsed = Math.floor((now - alertTs) / 86_400_000);
+
+  if (!priceAfter && calendarDaysElapsed >= 1) {
     const intradayMin = new Date(alertTs + 1 * 3_600_000).toISOString();
     const intradayMax = new Date(alertTs + 12 * 3_600_000).toISOString();
     priceAfter = db
