@@ -2,115 +2,112 @@
  * Infrastructure Adapter — cnbc-world-markets
  *
  * Source: CNBC quote.cnbc.com REST quote API
- * Technique: header-rotation (~5MB RAM — plain fetch, Akamai passive only)
+ * Technique: curl_cffi Chrome impersonation via Python subprocess (~15MB RAM)
  * Recon: docs/mainserver-sources/cnbc-world-markets/recon.md
  *
- * Fetches global index quotes (S&P 500, Dow, NASDAQ, FTSE, Nikkei, Hang Seng).
- * Quote API is open JSON, no auth. Akamai GRN is passive — no bot challenge.
+ * Replaces Bun native fetch which accumulated >8s over 6 sequential fetches
+ * and returned no data due to stale symbol names.
+ *
+ * Symbol fix (2026-05-13): CNBC quote API returns price data only for
+ * dot-prefixed symbols (.SPX, .DJI, .IXIC, .N225, .HSI, .FTSE).
+ * The legacy SP500/DJ30/NASDAQ symbols return code=1 with no price.
+ *
+ * Python helper: src/infrastructure/scrapers/cnbc_markets_fetch.py
+ * Interface unchanged — CnbcWorldMarketsPort contract preserved.
  */
 
 import type { CnbcWorldMarketsPort, CnbcQuote } from '../../domain/repositories.js';
-export { DEFAULT_CNBC_SYMBOLS } from '../../domain/defaults.js';
 
-const QUOTE_BASE =
-  'https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol';
+import { spawn } from 'child_process';
+import path from 'path';
 
-const UA_POOL = [
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+/** Corrected CNBC dotted symbols that return actual price data. */
+export const DEFAULT_CNBC_SYMBOLS: string[] = [
+  '.SPX',   // S&P 500
+  '.DJI',   // Dow Jones Industrial Average
+  '.IXIC',  // NASDAQ Composite
+  '.N225',  // Nikkei 225
+  '.HSI',   // Hang Seng Index
+  '.FTSE',  // FTSE 100
 ];
 
-function randomUa(): string {
-  return UA_POOL[Math.floor(Math.random() * UA_POOL.length)]!;
+/** Absolute path to the Python fetch helper. */
+const PYTHON_HELPER = path.join(
+  process.cwd(),
+  'src/infrastructure/scrapers/cnbc_markets_fetch.py',
+);
+
+interface PythonQuote {
+  symbol: string;
+  last: string;
+  change: string;
+  changePct: string;
+  open: string;
+  fetchedAt: string;
 }
 
-function quoteHeaders(): HeadersInit {
-  return {
-    'User-Agent': randomUa(),
-    'Accept': 'application/json',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Referer': 'https://www.cnbc.com/',
-  };
+interface PythonEnvelope {
+  status: string;
+  data?: Record<string, PythonQuote | null>;
+  reason?: string;
 }
 
-interface CnbcFormattedQuote {
-  symbol?: string;
-  code?: number;
-  last?: string;
-  change?: string;
-  change_pct?: string;
-  open?: string;
-  volume?: string;
-}
+function runPythonHelper(symbols: string[]): Promise<Record<string, CnbcQuote | null>> {
+  return new Promise((resolve) => {
+    const py = spawn(
+      'python3',
+      [PYTHON_HELPER, '--symbols', ...symbols],
+      { timeout: 30_000 },
+    );
 
-interface CnbcApiResponse {
-  FormattedQuoteResult?: {
-    FormattedQuote?: CnbcFormattedQuote[];
-  };
-}
+    let stdout = '';
+    let stderr = '';
+    py.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });
+    py.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
 
-function sleepMs(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
+    py.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`[cnbc-world-markets] Python helper exited ${code}: ${stderr.slice(0, 300)}`);
+        resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+        return;
+      }
+      try {
+        const envelope = JSON.parse(stdout) as PythonEnvelope;
+        if (envelope.status !== 'ok' || !envelope.data) {
+          console.error('[cnbc-world-markets] helper error:', envelope.reason);
+          resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+          return;
+        }
+        const result: Record<string, CnbcQuote | null> = {};
+        for (const sym of symbols) {
+          result[sym] = envelope.data[sym] ?? null;
+        }
+        resolve(result);
+      } catch (err) {
+        console.error('[cnbc-world-markets] JSON parse error:', err);
+        resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+      }
+    });
 
-function buildUrl(symbol: string): string {
-  const params = new URLSearchParams({
-    symbols: symbol,
-    requestMethod: 'itv',
-    noform: '1',
-    partnerId: '2',
-    fund: '1',
-    exthrs: '1',
-    output: 'json',
-    events: '1',
+    py.on('error', (err) => {
+      console.error('[cnbc-world-markets] spawn error:', err.message);
+      resolve(Object.fromEntries(symbols.map((s) => [s, null])));
+    });
   });
-  return `${QUOTE_BASE}?${params.toString()}`;
 }
 
 export class CnbcWorldMarketsAdapter implements CnbcWorldMarketsPort {
-  private readonly timeoutMs = 8_000;
-
   async fetchQuote(symbol: string): Promise<CnbcQuote | null> {
-    const url = buildUrl(symbol);
-    const fetchedAt = new Date().toISOString();
-
-    try {
-      const resp = await fetch(url, {
-        headers: quoteHeaders(),
-        signal: AbortSignal.timeout(this.timeoutMs),
-      });
-
-      if (!resp.ok) {
-        console.error(`[cnbc-world-markets] HTTP ${resp.status} for ${symbol}`);
-        return null;
-      }
-
-      const raw = (await resp.json()) as CnbcApiResponse;
-      const quote = raw?.FormattedQuoteResult?.FormattedQuote?.[0];
-
-      // code=1 means symbol found; no price means data unavailable
-      if (!quote || quote.code !== 1 || !quote.last) return null;
-
-      return {
-        symbol: quote.symbol ?? symbol,
-        last: quote.last,
-        change: quote.change ?? '',
-        changePct: quote.change_pct ?? '',
-        open: quote.open ?? '',
-        fetchedAt,
-      };
-    } catch (err) {
-      console.error(`[cnbc-world-markets] fetch error for ${symbol}:`, err);
-      return null;
-    }
+    const result = await this.fetchBatch([symbol]);
+    return result[symbol] ?? null;
   }
 
   async fetchBatch(symbols: string[]): Promise<Record<string, CnbcQuote | null>> {
-    const result: Record<string, CnbcQuote | null> = {};
-    for (const sym of symbols) {
-      result[sym] = await this.fetchQuote(sym);
-      await sleepMs(1_000 + Math.random() * 1_500); // 1-2.5s jitter
+    try {
+      return await runPythonHelper(symbols);
+    } catch (err) {
+      console.error('[cnbc-world-markets] unexpected error:', err);
+      return Object.fromEntries(symbols.map((s) => [s, null]));
     }
-    return result;
   }
 }

@@ -31,11 +31,13 @@ describe('domain defaults (DDD layer compliance)', () => {
     expect(DEFAULT_SYMBOLS).toContain('^HSI');
   });
 
-  it('DEFAULT_CNBC_SYMBOLS includes major global indices', async () => {
+  it('DEFAULT_CNBC_SYMBOLS includes major global indices (dotted symbols)', async () => {
     const { DEFAULT_CNBC_SYMBOLS } = await import('../../src/domain/defaults.js');
-    expect(DEFAULT_CNBC_SYMBOLS).toContain('SP500');
-    expect(DEFAULT_CNBC_SYMBOLS).toContain('DJ30');
-    expect(DEFAULT_CNBC_SYMBOLS).toContain('NASDAQ');
-    expect(DEFAULT_CNBC_SYMBOLS).toContain('NIKKEI225');
+    // 2026-05-13: symbol fix — CNBC quote API returns price only for dot-prefixed symbols.
+    // Legacy SP500/DJ30/NASDAQ return code=1 with no data and are excluded.
+    expect(DEFAULT_CNBC_SYMBOLS).toContain('.SPX');
+    expect(DEFAULT_CNBC_SYMBOLS).toContain('.DJI');
+    expect(DEFAULT_CNBC_SYMBOLS).toContain('.IXIC');
+    expect(DEFAULT_CNBC_SYMBOLS).toContain('.N225');
   });
 });
