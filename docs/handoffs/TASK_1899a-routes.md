@@ -261,3 +261,27 @@ curl http://localhost:5008/news/bloomberg/headlines?maxItems=3
 - **Service tests:** 137 pass / 0 fail
 - **Docs updated:** docs/TASKS.md — 1899a-routes moved to IN REVIEW
 - **Graphify:** skipped (no docs/architecture impacted)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-13 | **Sprint:** c79 | **Round:** 1
+- **Verdict:** APPROVED
+- **Tests:** 137 pass / 0 fail (targeted: 25 route tests in 2 files; baseline 112)
+- **TSC:** 0 errors
+- **DDD:** PASS — handlers.ts imports application/ (use-cases) only; no infrastructure/ imports; interface→application permitted per DDD layer rule
+- **Security:** PASS — no process.env, no hardcoded secrets (index.ts uses Bun.env.PORT with default, not a leak)
+- **File lengths:** handlers.ts 142L, health-reuters test 199L, bloomberg test 197L — all within 200L split policy
+- **AC sweep:** all 9 AC items verified
+  - handlers.ts created with Hono, use-case imports, scraper ports via DI factory — PASS
+  - GET /health returns {status, service, port} — PASS
+  - POST /news/reuters/headlines with fallback logic (RSS error → stealth, RSS empty → stealth) — PASS
+  - GET /news/reuters/headlines alias with querystring maxItems — PASS
+  - POST /news/bloomberg/headlines NO fallback (error returned as-is) — PASS
+  - GET /news/bloomberg/headlines alias — PASS
+  - Error handling 500 JSON with fetchedAt on scraper throw — PASS
+  - No implicit any, Hono context typed — PASS
+  - src/index.ts wired via createRouter() composition root — PASS
+- **Merge:** 644c8fe4 already on main, branch task/1899a-routes-handlers deleted
+- **Report:** reports/TASK_REPORT_1899a-routes.md

@@ -1,5 +1,25 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-routes Hono router gate (c79)
+
+## Recent session — 2026-05-13 (1899a-routes — APPROVED)
+
+Commits `644c8fe4` (feat) + `43609750` (notebook) on main. Branch `task/1899a-routes-handlers` already deleted at input time. Zone: `apps/news-fetch/`.
+
+Files: 1 prod (`handlers.ts` 142L: `createRouter()` factory, 5 routes, DI ports) + 1 prod update (`index.ts` 35L: composition root) + 2 test files (`1899a-routes-health-reuters.test.ts` 199L / `1899a-routes-bloomberg.test.ts` 197L). All within 200L split-policy cap.
+
+Targeted tests: 25/25 pass (37 expect() calls). Full suite `apps/news-fetch/`: 137/137 pass, 0 regressions (+25 net new from baseline 112). TSC: `bun tsc --noEmit` = 0 errors (clean, no output).
+
+DDD PASS: handlers.ts imports `../application/use-cases.js` (use cases only) + `../domain/repositories.js` + `../domain/models.js`. Zero `infrastructure/` or `interface/` imports. Interface → application permitted per DDD layer rule.
+
+Security PASS: no `process.env`, no hardcoded secrets. `index.ts:28` uses `Bun.env.PORT` (runtime env read at entry point, not a leak).
+
+Bloomberg no-fallback verified: `fetchBloomberg()` (handlers.ts:102-105) returns error result as-is with no fallback branch. AC §6c confirmed by test `1899a-routes-bloomberg.test.ts:124-132`.
+
+Reuters fallback path covered: RSS error → fallback (test line 161-172), RSS empty → fallback (test line 175-187), both paths verified via mock call assertions.
+
+AC: 9/9 items PASS. createRouter() factory pattern mirrors macro-indicators per spec. Split-policy clean.
+
 **Last updated:** 2026-05-13 | **Session:** 1898b RSS degradation fix + regression guards (c78)
 
 ## Recent session — 2026-05-13 (1898b — APPROVED)
