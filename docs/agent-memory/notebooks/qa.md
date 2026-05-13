@@ -1,5 +1,21 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1899a-core news-fetch scaffold merge gate
+
+## Recent session — 2026-05-13 (1899a-core news-fetch scaffold — APPROVED)
+
+Branch: `task/1899a-core-news-fetch-scaffold`. 3 commits ahead of main: `120e16ca` (scaffold — GOOD), `47a85265` (FlareSolverr adapter — CONTAMINATION, excluded), `1e8a707a` (worldbank merge artifact — CONTAMINATION, excluded). Cherry-picked only `120e16ca` → landed as `8329294c` on main.
+
+Tests (apps/news-fetch): 3 pass / 0 fail. TSC: 0 errors (bun tsc --noEmit clean). DDD PASS: domain/application/infrastructure/interface dirs created, 0 cross-layer imports in any src file. Security PASS: Bun.env used (not process.env), no hardcoded secrets, no SQL.
+
+diff scope confirmed clean: all 8 files in apps/news-fetch/** only. No docker-compose.yml. No workspace-level file touched.
+
+playwright-stealth 0.0.1 pin: only published version on npm. Pinned correctly for scaffold. Signal filed: `docs/signals/qa-bug-playwright-stealth-version-2026-05-13T160900Z.json`. 1899a-factory must evaluate playwright-extra + puppeteer-extra-plugin-stealth before browser launch code ships.
+
+Handoff moved to processed/. TASKS.md: 1899a-core → Done. 1899a-domain + 1899a-factory unblocked (were blocked by 1899a-core). Report: reports/TASK_REPORT_1899a-core.md.
+
+Note: contaminated branch `task/1899a-core-news-fetch-scaffold` NOT deleted (contains 47a85265 + 1e8a707a which belong to separate tasks still in flight — FlareSolverr adapter + worldbank merge artifact must be handled by their own QA cycles).
+
 **Last updated:** 2026-05-13 | **Session:** worldbank-parallelize-fetch-vn-macro-batch merge gate
 
 ## Recent session — 2026-05-13 (worldbank-parallelize-fetch-vn-macro-batch — APPROVED)
