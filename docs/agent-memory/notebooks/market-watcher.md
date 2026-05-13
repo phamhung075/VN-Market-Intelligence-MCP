@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 22:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 23:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -166,6 +166,27 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 2 signals posted (#3116 GAS, #3117 VRE). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Monitor for 01:00 UTC pre-market cycle. If prices unchanged (market still closed), GAS/VRE will re-trigger at TIGHTENING 1.5σ — consider suppression logic for repeated off-hours signals on unchanged prices.
 - **estimated_tokens**: 8500
+
+### Cycle (23:39–23:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.19σ, VRE 1.67σ) — BOTH SUPPRESSED | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE] | pe_risk: []
+- GAS +6.93% (2.19σ) → SUPPRESSED: off-hours duplicate — same closing price, signal already emitted this session (id=3116, 21:40:45 UTC)
+- VRE -6.91% (1.67σ) → SUPPRESSED: off-hours duplicate — same closing price, signal already emitted this session (id=3117, 21:40:49 UTC)
+- VHM -4.81% (1.24σ) — below 1.5σ threshold, no signal.
+- Market CLOSED (off-hours 4h cycle). All prices are closing values from 2026-05-13 08:59 UTC.
+- Macro: Supply chain STABLE (BDI=1,400). Climate: May heat-risk (IDC,KBC,GEG — no watchlist impact). Energy: NORMAL (hydro 70%). 20 open alerts (banking×7 HIGH, real-estate×9 HIGH).
+- CARRY_REGIME=FII_OUTFLOW_RISK: foreign selling 14 consecutive sessions, >13,000B VND outflow. No new chain confirmations.
+
+## Metrics (cycle 2026-05-13 23:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3400 |
 
 ## Known patterns / preferences
 
