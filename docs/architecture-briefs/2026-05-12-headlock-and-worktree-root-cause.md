@@ -89,3 +89,32 @@ SDK `isolation: "worktree"` agents that die via process-kill or timeout leave or
 
 1. ~~Are GPG commit signing hooks active?~~ **CLOSED c57** — `commit.gpgsign` unset; `.git/hooks/` empty except pre-push symlink.
 2. ~~Does `git worktree prune` run safely with active dev-team session?~~ **CLOSED c57** — no TOCTOU observed across c57+c58; T5 shipped `749a0b02`.
+
+---
+
+## 9. F2a Verify-First Audit (c59 — HOST-WRITER CONFLICT)
+
+**Status:** BLOCKED — both target paths have active host-side writers. Wholesale migration deferred.
+
+| Path | Mount | Container access | Host writers | Named-vol safe? |
+|---|---|---|---|---|
+| `./reports/` | rw bind-mount | reads evening JSON; no confirmed container writes | QA (TASK_REPORT_NNN.md, SPRINT_REPORT_NNN.md), claude-manager-helper (DOC_HEAL_*.md), market-watcher, cowork agents — 713 files active | **NO** — host can't reach named volume |
+| `./docs/data/` | `:ro` bind-mount | reads project-stats.json, cron-registry.json, stock-classification.json, alert-verdicts.json | host agents write all JSON files; `dailyDashboardJob` + `alertVerdictStore` attempt writes but `:ro` silently blocks them | **NO** — host can't update named volume |
+
+**Recommended narrower scope for F2a (revised):**
+
+Option A — **Individual file mounts for `./docs/data/`** (reduces scan surface, no host-writer break):
+Replace `- ./docs/data:/app/docs/data:ro` with explicit per-file mounts:
+```yaml
+- ./docs/data/project-stats.json:/app/docs/data/project-stats.json:ro
+- ./docs/data/cron-registry.json:/app/docs/data/cron-registry.json:ro
+- ./docs/data/stock-classification.json:/app/docs/data/stock-classification.json:ro
+- ./docs/data/alert-verdicts.json:/app/docs/data/alert-verdicts.json:ro
+```
+Eliminates dir-level VirtioFS scan on `docs/data/` (50% of the 2 problem mounts). `./reports/` stays as bind-mount (no safe alternative without workflow change).
+
+Option B — **Keep both as bind-mounts; rely on F4 retry wrapper** (defense-in-depth only; no scan reduction).
+
+**Recommendation:** Ship Option A for `./docs/data/` file-level mounts only. Escalate `./reports/` bind-mount to architect for workflow redesign (F2b-reports, separate task).
+
+**Evidence files:** `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log` | audit run: 2026-05-13 c59-T1
