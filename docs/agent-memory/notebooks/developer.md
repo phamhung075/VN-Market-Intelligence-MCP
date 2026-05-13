@@ -1,8 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1881a / ssot-doc
+**Last updated:** 2026-05-14 | **Sprint:** c86-autocure-mw-dedup
 
 ## Last session summary
+
+Task AUTOCURE-C86-MW-DEDUP — doc-only chore: TNB c47 auto-cure off-hours duplicate guard committed and pushed.
+
+**What was done:**
+
+- Branch `task/c86-autocure-mw-dedup` created from main.
+- Staged ONLY `.claude/flows/market-watcher/cycle.md` (3 lines added: AutoCure 2026-05-14 TNB c47 off-hours duplicate guard block).
+- Other uncommitted files (tool-usage-stats.json, notebooks/financial-analyst.md, notebooks/tran-ngoc-bau.md) left unstaged — not in scope.
+- Pre-push tsc hook: PASSED (doc-only, no TS changes).
+- Pushed branch to remote.
+
+**Commits:**
+- `564230d2 chore(market-watcher/c86): TNB c47 auto-cure — off-hours duplicate guard`
+- Branch: `task/c86-autocure-mw-dedup`
+
+## Previous last session summary
 
 Task 1881a-impl-ssot — doc-only chore: Layer 9 source authority hierarchy added to `docs/standards/tnb-methodology-layers.md`.
 
@@ -24,21 +40,6 @@ Task 1881a-impl-ssot — doc-only chore: Layer 9 source authority hierarchy adde
 - `d3cda97e docs(1881a/ssot): 1881a-impl-ssot — Layer 9 source authority hierarchy`
 - Branch: `task/1881a-impl-ssot`
 
-## Previous last session summary
-
-Task 1888-CDG (B, C, D, G sub-tasks) — SSOT doc-only bundle. Three coordinated cleanups in one atomic commit.
-
-**What was done:**
-
-- Sub-task C (tool-registry): categories tools[] arrays sum = 125. toolCount field was 133 (stale). Reconciled to 125 per canonical array rule. project-stats.json#toolCount updated to match.
-- Sub-task D (cron-registry): jobs[] array has 62 entries. schedulerFileCount field was 59, cronJobCount was 59. Both reconciled to 62. Added `_definition` key documenting authoritative source (jobs[] length, excludes orchestrators).
-- Sub-task G (task-size-rules): Created docs/standards/task-size-rules.md with FIX/SPRINT-S/M/L table, line-budget guidelines, escalation rules. Replaced inline line with pointer.
-- JSON validation passed (jq . all 3 files exit 0).
-
-**Commits:**
-- `76829836 fix(1888-CDG): SSOT bundle — tool-registry + cron-registry + task-size-rules`
-- Branch: main (worktree, no task branch — doc-only per PO instructions)
-
 ## Known patterns / preferences
 
 - TDD cycle is mandatory: write failing test first, then minimum code to pass.
@@ -47,9 +48,11 @@ Task 1888-CDG (B, C, D, G sub-tasks) — SSOT doc-only bundle. Three coordinated
 - Semble search before grep for exploration.
 - Worktree sessions: verify CWD and merge from parent main if worktree branch is behind.
 - mock.module() must be declared before module import in Bun test files.
+- NEVER use `git commit -am` — greedily absorbs staged index content (C2 atomicity violation, c47 incident SHA 8bec73d3).
 
 ## Carry-over for next session
 
 - toolCount in tool-registry.json = 125 (categories sum). Source code has ~137 server.tool() calls — categories list is stale by ~12 tools. Future task should add missing tools to categories.
 - Branch `task/1881a-impl-ssot` awaiting QA gate — do NOT merge until QA approves.
+- Branch `task/c86-autocure-mw-dedup` awaiting QA gate.
 - Pre-existing playwright tsc errors in news-fetch (2 files) — QA should confirm pre-existing.
