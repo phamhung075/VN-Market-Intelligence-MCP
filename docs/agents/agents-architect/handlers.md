@@ -67,6 +67,17 @@ Write `docs/signals/<slug>.json` to notify agent-father or pm.
 **Step 6 — Notify WORK**
 `send_telegram(channel="work", message="[agents-architect] Brief ready: <slug>")` if user-visible impact.
 
+**BLOCKED / EXIT**
+
+If at any step an unresolvable blocker is encountered (file unreadable after 1 retry, signal write fails, notebook commit fails after 1 retry):
+```
+## RETURN
+BLOCKED: <one-line description of the blocker>
+ACTION: send_telegram(channel="bug", message="[agents-architect] BLOCKED: <description>")
+NEXT: EXIT — do not proceed to subsequent steps
+PIPELINE: blocked
+```
+
 **RETURN**
 ```
 DONE: Brief authored + notebook committed

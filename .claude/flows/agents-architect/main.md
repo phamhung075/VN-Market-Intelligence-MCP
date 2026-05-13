@@ -4,6 +4,8 @@ Universal entry. The operating cycle lives in `docs/agents/agents-architect/hand
 
 **Tools:** `.claude/tools/package/architect.md` (reused — see agent `tools_package` field).
 
+> Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+
 ## Inputs
 
 One of:
