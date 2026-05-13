@@ -39,7 +39,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| SPIKE_006-c61-T6 | TEST-S: New integration test file `SPIKE006-scoring-unification.test.ts` — end-to-end `formatAccuracyReport` with mock domain scorer. Verify `scoreAlert` no longer exported from module. All 6 test files green; baseline 8804 tests preserved. **UNBLOCKED c66 after T-5 ship.** | HIGH | TEST | developer | TASK_SPIKE_006_c61_T6.md | — |
 | 1898a | FIX-HIGH (TNB c45): `get_market_snapshot` returning electricity data instead of stocks. Investigate routing/source mix-up. Owner: ba spec → dev-mcp-server. | HIGH | FIX | ba | — | — |
 | 1898b | FIX-HIGH (TNB c45): RSS degradation accelerating — Sprint 1862c-D fix didn't hold. News sources returning empty arrays again. Owner: ba spec → dev-mcp-server / ops. | HIGH | FIX | ba | — | — |
 | 1899a | FEATURE-MED: news-fetch service scaffold (handoff `docs/handoffs/ops-news-fetch-scaffold.md`). New Docker service for dedicated news ingestion. Owner: architect brief → dev-team. | MEDIUM | FEATURE | architect | — | — |
@@ -64,7 +63,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
-| SPIKE_006-c61-T5-SHIPPED-c66 | FIX-S **DONE 2026-05-13 c66**: `verdictResolutionJob` write-back + OOS-5 direction-aware confirm. Commit `284335cf` (atomic, C2-clean after split from contaminated `d8fc77ca`). AC-5 HIT/MISS write-back via `writeAlertOutcome` injectable; E-3 try/catch no-throw; OOS-5 flat-band early-return removed (bearish+0.9% → false_positive). 17/17 tests on 1863b. tsc clean. | HIGH | FIX | developer | 2026-05-13 |
+| SPIKE_006-COMPLETE-c67 | TEST-S **DONE 2026-05-13 c67**: T-6 integration test `SPIKE006-scoring-unification.test.ts` (5/5 pass, 17 expects). Commit `572bd8c3` C2-ATOMIC (first clean ship in 5 cycles, no contamination — C2 verification protocol worked). **SPIKE_006 6-task chain COMPLETE** (T-1 c61, T-2 c64, T-3 c64, T-4 c65, T-5 c66, T-6 c67). All AC-1..AC-5 + OOS-5 verified. | HIGH | TEST | developer | 2026-05-13 |
+| SPIKE_006-c61-T5-SHIPPED-c66 | FIX-S **DONE 2026-05-13 c66**: `verdictResolutionJob` write-back + OOS-5. Commit `284335cf` atomic. 17/17 tests. | HIGH | FIX | developer | 2026-05-13 |
 | SPIKE_006-c61-T4-SHIPPED-c65 | FIX-S **DONE 2026-05-13 c65**: `insufficientSample` guard in `formatAccuracyReport`. Commit `80493433` (atomic after 3-way split). 20/20 tests. Addresses telegram id=2874 (alert_precision 22%). | HIGH | FIX | developer | 2026-05-13 |
 | SPIKE_006-c61-T2-SHIPPED-c64 | FIX-S **DONE 2026-05-13 c64**: `scoreAlert()` deleted; Path 2 wired to domain scorer. Commit `214957b0`. 19/19 tests. | HIGH | FIX | developer | 2026-05-13 |
 | 1897c-ESCALATED-c64 | SPIKE **ESCALATED c64 → SUBSUMED-c65 by 1897f**: Worktree-isolation rethink redirected to agent-spawn-on-task-branch (root cause is NOT worktree flag). | HIGH | SPIKE | architect | 2026-05-13 |
