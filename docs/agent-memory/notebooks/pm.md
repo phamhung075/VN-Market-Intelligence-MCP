@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** c76
+**Last updated:** 2026-05-13 | **Sprint:** c81
 
 ## Current state
 
@@ -413,11 +413,37 @@ Handoff created: docs/handoffs/TASK_1846b.md. TASKS.md updated (ARCH-1846 moved 
 
 ---
 
+## Cycle 81 — 2026-05-13 c81 Post-Cycle Housekeeping: 1899a-cron + 1888e SHIPPED
+
+**Input:** Dev-team + QA c81 completion. Three QA-APPROVED shipments:
+1. 1899a-cron (FEATURE): Commits `89ad6c4a` (feat) + `50c74418` (notebook). Job-body-already-existed wiring (3 files: barrel, cronConfig.ts, startScheduler.ts, mcp.config.json).
+2. 1888e (CHORE): Commits `a7bb2313` (fix) + `763fe826` (notebook). agent-roster.md 7-vs-8 contradiction → SSOT pointer to project-stats.json#analysisAgentCount.
+3. CLEAN-c81 (implicit): Stale Todo row removed + 2 merged worktree-agent-* branches deleted.
+
+**Actions:**
+
+- **1899a-cron → Done:** Moved from Todo → Done section. Wiring-only, 3 steps (barrel + cronConfig + startScheduler). QA APPROVED. Completes 1899a news-fetch scaffold tier 5.
+- **1888e → Done:** Moved from Backlog → Done section. SSOT doc fix (agent-roster.md pointer). QA APPROVED.
+- **CLEAN-c81 → Done (implicit):** Housekeeping artifact (stale Todo row + branch cleanup). Commit message notes content.
+- **TASKS.md TRIM:** Removed 1899a-cron from Todo, removed 1888e from Backlog. Done section now 7 rows (top 5 recent + 2 older). Line count: 70L (target ≤80L).
+- **project-stats.json:** totalTasksDone incremented by 3 (1899a-cron + 1888e + CLEAN-c81).
+- **WIP status:** 0/2 (In Progress empty). Headroom available.
+- **Blockers:** None. Pipeline clean.
+- **File state:**
+  - TASKS.md: 70 lines (trimmed), commit pending
+  - Done section: 7 rows (1899a-cron-SHIPPED-c81, 1888e-SHIPPED-c81, 1899a-gateway-SHIPPED-c80, 1899a-tests-SHIPPED-c80, 1899a-routes-SHIPPED-c79, CLEAN-c79-SHIPPED-c79, 1899a-reuters-fallback-SHIPPED-c78)
+  - Todo section: 6 rows (1900c-health-probe, 1899a-bloomberg-test-split, 1862c-E/F)
+
+**Status at session end:** READY FOR NEXT CYCLE. c81 housekeeping complete. 1899a news-fetch scaffold COMPLETE (all 10 tasks shipped across c76–c81). Next: 1900c health-probe or parallel work queue.
+
+---
+
 ## Current state
 
 - WIP: 0 / 2 (In Progress: none; headroom available)
 - Backlog HIGH: 1895a Phase 5 worktree-merge-protocol (architect design)
-- Todo: 1900c-health-probe (LOW), 1899a-{bloomberg-test-split,cron} (2 remaining), 1862c-E/F (OPS), 1881a/1888b/c/d/e/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
-- Done: 5 recent (1899a-gateway + 1899a-tests + 1899a-routes + CLEAN-c79 + 1899a-reuters-fallback), 6 archived (notation)
+- Todo: 1900c-health-probe (LOW), 1899a-bloomberg-test-split (S), 1862c-E/F (OPS), 1881a/1888b/c/d/g/l/1890a/1897b-carry (Backlog), JANITOR-{011,014,020}, TASK-BCTC-3, 1903a (Backlog)
+- Done: 7 recent (1899a-cron-c81 + 1888e-c81 + 1899a-gateway-c80 + 1899a-tests-c80 + 1899a-routes-c79 + CLEAN-c79 + 1899a-reuters-fallback-c78)
+- **1899a news-fetch scaffold: COMPLETE** (10 tasks shipped, unblocks downstream integration)
 - CLEAN state: No WIP exceeds 2. No blockers detected.
-- **Status:** READY FOR NEXT CYCLE. 1899a-cron unblocked (wiring-only, ~30min, developer ready to pick).
+- **Status:** READY FOR NEXT CYCLE.
