@@ -375,3 +375,99 @@ Token mode behavior:
 - [x] Notebook updated (this entry)
 
 **Blocker Status:** RESOLVED ✓ — Ready for VPS push services to attempt delivery
+
+---
+
+## Task: Rebuild macro-indicators from curl-cffi Upgrade — COMPLETE
+
+**Status:** PASS — Container rebuilt successfully, all 3 scrapers verified working
+
+**Date:** 2026-05-13 12:19 UTC
+
+**Mission:** Rebuild macro-indicators service after dev-mainserver-crawls landed curl-cffi Python subprocess refactor (commit 39ab15c1)
+
+**Context:** Three TS adapters rewritten to spawn curl_cffi Python subprocesses: yahoo-finance-fx-indices.ts, trading-economics-vn.ts, cnbc-world-markets.ts. Timeout budgets raised (yahoo=50s, cnbc=35s, te=65s) in fetch-external-macro.ts.
+
+### Rebuild Steps
+
+**Step 1: Verify Branch**
+- Current branch: `task/macro-scrapers-curl-cffi-upgrade` ✓
+- Tip commit: `39ab15c1` (fix: raise per-source timeouts for Python subprocess scrapers) ✓
+
+**Step 2: Build Container**
+- Command: `docker-compose build --no-cache macro-indicators`
+- Result: SUCCESS ✓
+- Build time: 46.7s
+- Python deps verified in build logs:
+  - curl_cffi-0.15.0 ✓
+  - beautifulsoup4-4.14.3 ✓
+  - lxml-6.1.0 ✓
+
+**Step 3: Restart Container**
+- Command: `docker-compose up -d --force-recreate --no-deps macro-indicators`
+- Result: SUCCESS ✓
+- Healthcheck status: healthy (within 8 seconds) ✓
+
+**Step 4: Verify Python Helpers**
+- curl_cffi runtime: 0.15.0 ✓
+- Helper files in container:
+  - /app/src/infrastructure/scrapers/investing_calendar_fetch.py ✓
+  - /app/src/infrastructure/scrapers/cnbc_markets_fetch.py ✓
+  - /app/src/infrastructure/scrapers/trading_economics_fetch.py ✓
+  - /app/src/infrastructure/scrapers/yahoo_finance_fetch.py ✓
+
+### Smoke Test Results
+
+**Endpoint:** POST http://localhost:5004/macro/external
+
+| Metric | Expected | Actual | Status |
+|--------|----------|--------|--------|
+| HTTP Status | 200 | 200 | PASS |
+| summary.ok | ≥2 | 4 | PASS |
+| yahoo status | ok | ok | PASS |
+| cnbc status | ok | ok | PASS |
+| tradingEconomics status | ok | ok | PASS |
+| calendar status | ok | ok | PASS |
+| summary.timeout | N/A | 2 (fred, worldBank) | expected |
+| summary.failed | 0 | 0 | PASS |
+
+**Notable Improvement:** summary.ok = 4 (up from 1 pre-upgrade where only calendar was working)
+
+### Post-Rebuild Health Verification
+
+Per ops.md mandatory check (triggered by `--force-recreate` single-service rebuild):
+
+| Service | Status | Port | Health Check |
+|---------|--------|------|--------------|
+| macro-indicators | Up (healthy) | 5004 | 200 ✓ |
+| Other services | Not running | — | N/A (normal state) |
+| mcp-server | Not running | 3000 | N/A (normal state) |
+| Collateral damage | NONE | — | No services unexpectedly offline |
+
+**Verdict:** Rebuild successful, zero collateral damage, macro-indicators is sole service running and healthy.
+
+### Signals Created
+
+1. **ops-macro-rebuild-2026-05-13T12-19-35Z.json**
+   - Build/healthcheck/smoke evidence
+   - Python deps + helper files inventory
+   - Upgraded sources status (all ok)
+
+2. **qa-macro-curl-cffi-2026-05-13T12-19-35Z.json**
+   - Validation checklist for QA (9 items, all PASS)
+   - Branch/commit + smoke evidence
+   - Merge-readiness confirmation
+
+### Completion Checklist
+
+- [x] Branch verified (task/macro-scrapers-curl-cffi-upgrade @ 39ab15c1)
+- [x] Container rebuilt (--no-cache flag applied)
+- [x] Python deps installed (curl_cffi 0.15.0 + libs confirmed)
+- [x] Container healthy (8s startup, healthcheck passing)
+- [x] All 4 helper .py files present
+- [x] Smoke test passed (POST /macro/external → 4 ok sources)
+- [x] No collateral damage (mandatory fleet check)
+- [x] Signals created (ops + qa)
+- [x] Notebook updated (this entry)
+
+**Next:** qa-responder picks up qa-macro-curl-cffi signal and validates full test suite on branch before merge decision
