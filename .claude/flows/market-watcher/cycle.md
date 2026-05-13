@@ -47,6 +47,9 @@ Per stock: apply sector flags before emitting signal:
 
 **4. Signal anomalies**
 Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach → post signal:
+
+> **[AutoCure 2026-05-14 TNB c47] Off-hours duplicate guard:** Before posting any `price_anomaly` signal in an off-hours cycle (market CLOSED), check: has the same `stock_code` + same `move_pct` (i.e. unchanged closing price) already generated a signal in this calendar session (since last market open)? If yes → **SKIP signal, log as SUPPRESSED: "off-hours duplicate — same closing price, signal already emitted this session (id=XXXX)"**. Rationale: off-hours crons re-scan unchanged EOD prices every N hours; re-emitting is noise not signal. Only emit a NEW signal if `move_pct` has changed (intraday pre-market move) or if 24h+ have elapsed since the original signal.
+
 ```
 call_tool(server="vn-market", tool="post_agent_signal", arguments={
   "from_agent": "market-watcher",
