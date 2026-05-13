@@ -1,62 +1,51 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-12 21:50 UTC (Cycle 54 — WAVE2-RESIDUE-CLEAN-c54 + MCP-DRIFT-list-unresolved-reports SHIPPED)
+**Written:** 2026-05-13T05:20Z (c63 close — SPIKE_006-c61-T3 + CLEAN + F2a-RCA)
 
-## Cycle 54 (2026-05-12 21:07 → 21:50 UTC, ~43 min)
+## c63 (2026-05-13T05:05Z → 05:20Z, ~15min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0a Drain | 6 signals from agent-father (broken-pointer-repair + dev-zone-empowerment tracks A-E, all `implementation_complete`, low priority). All commits already on main from c53 concurrent runs. Moved to docs/signals/processed/. | 6 drained |
-| 0b Resume | idle (c53 closed 20:03 UTC at 3d340c97) | fall through |
-| 1 Triage | 2 new TG reports #2865 #2866 (both claimed+processed monitoring resolution). list_unresolved_reports MCP still missing 4th cycle. PO returned BATCH(2): CLEAN WAVE2-RESIDUE-CLEAN-c54 + FIX MCP-DRIFT-list-unresolved-reports. 17 modified + 1 untracked on main from c53/c54 boundary. | 2 dispatched |
-| 2 Plan | Disjoint zones (.claude/* + docs/agent-memory/* vs apps/mcp-server/) → PARALLEL spawn eligible. CLEAN: agent-father direct on main (residue cleanup). FIX: dev-mcp-server with isolation:worktree (ended up on main per agent's own decision). | sequenced |
-| 3 Tier 1 PARALLEL (2 agents) | agent-father: 4 commits (202c3890 memory, fc8a7ac2 agents, da9d1a95 flows-skills, fccbd163 semble-search), 18 files. POINTER_INTEGRITY PASS. SPLIT_POLICY FLAG: alert-commander.md 434L append-violation → notebook-write skill updated with hard cap 80L + Write-not-Edit instruction. dev-mcp-server: 7cf276cf (4 files, 35 LOC, 12 TDD tests pass, typecheck 0 errors). Root cause: listUnresolvedReports() existed in store layer (1849a) but never wired to interface — store had no caller. | done |
-| 3 Merge gate residue cleanup | Pre-merge bundles: ccc1f862 (PO triage residue + jump-to skill register + tool-usage-stats) + 8bbf8f3d (signal moves to processed/). Working tree CLEAN post-bundle. | clean |
-| 3 Phase 5 gate | index-check.sh PASS (after bundle). tree-verify.sh 7cf276cf PASS. c2-alert HEAD PASS. All 3 controls GREEN on direct-to-main commits (no worktree merge needed this cycle). | Phase 5 GREEN |
-| 3 Tier 2 ops deploy | docker-compose up --build -d mcp-server PASS 22.4s. Container healthy 60s. list_unresolved_reports visible in `search_tools`, smoke-test returns []. toolCount 132→133. 4-cycle MCP drift RESOLVED. | LIVE |
-| 4 Scan | 6740 tests (skipped for FIX 35 LOC; agent ran 12 new + 12/12 pass). Branches: main + locked c53 worktree (carryover). | clean |
-| 4.5 Compact | notebook + pipeline-state + commit | in progress |
+| 0 PREFLIGHT | HEAD.lock age=95s 0B PID 51247 — 14th recurrence cured | lsof log `20260513T050521Z` |
+| 0a Drain | 0 pending signals | empty |
+| 1 PO Triage | TG #2873 (4th-consecutive alert_quality dup vs #2869) → `duplicate` claimed | BATCH(3) |
+| 3 Tier 1 PARALLEL | dev-mcp-server (worktree spec) + qa (main) + architect (main) | merged |
 
-### HEADLOCK-c54 (3rd recurrence in 3 cycles)
-- Cleared inline by dev-mcp-server during its commit. Recurring TNB-c33-F7 macOS Spotlight pattern. Workaround stable but pattern persistent.
-- c55 candidate (priority #14): self-cure flow for dev-mcp-server / dev-team / ops (pgrep-then-rm precedent).
+### Merge gate
+- `20bab938` fix(alerts/ac-2) — calendarDaysElapsed + intraday gate (16/16 tests, tsc clean)
+- `e4e8efd4` chore(memory/dev-mcp-server) — notebook + handoff (C2 warning: handoff in chore/memory)
+- `974a936c` feat(mainserver-crawls) — CONTAMINATION cherry-pick (see below)
+- `74331a6b` docs(architecture-briefs) — F2a RCA brief
+- `25af3da0` chore(tasks) — c63 close + 1897a/b/c carry-forward
 
-### Phase 5 Gate — Second exercise (c53 was first)
-- Both Tier 1 agents committed directly on main (CLEAN by design; FIX agent self-overrode worktree isolation).
-- No cherry-pick path needed this cycle; all 3 controls clean on direct commits.
-- Worktree from c53 (agent-a66e04c8b9546ff28) STILL locked 1h+ post-c53-close — SDK auto-cleanup did not fire. Escalate ops c55.
+### CONTAMINATION event (c63 #1)
+- dev-mcp-server spawned with `isolation:"worktree"` but actual repo HEAD checked out spike branch directly in main working dir (no separate worktree path).
+- dev-mainserver-crawls (concurrent bg agent finishing prior bootstrap) committed `e20ebcc1` to spike branch at 07:15:32 because HEAD was there.
+- Recovery: cherry-picked e20ebcc1 → `974a936c` to preserve work, force-deleted spike branch.
+- **Root cause SPIKE filed as 1897c.**
 
-### Concurrent out-of-band agent activity this cycle
-- news-scout: notebook commit b26dc58f (between Tier 1 commits and Tier 2 ops).
-- All other concurrent edits absorbed into pre-merge bundle ccc1f862 (PO own flow/notebook writes, jump-to skill registration, tool-usage-stats).
+### F2a verdict (c63 SPIKE)
+- F2a deployed at `d127fb18` (c60) but PARTIAL: only `./docs/data` decomposed. `./reports` + `./docs/agent-memory` dir mounts still expose project root to Docker VirtioFS → PID 51247 sustains `.git/HEAD.lock` access.
+- Recommendation: accept PREFLIGHT safe-remove as PERMANENT (doc SPRINT-S) + F1 USER (Docker file-sharing exclude `.git/`).
+- Brief: `docs/architecture-briefs/2026-05-13-headlock-recurrence-post-F2a.md`
 
-### Key outcomes c54
-- **MCP-DRIFT-list-unresolved-reports RESOLVED** — 4-cycle drift closed. Root cause = store-without-interface wiring (1849a delivered domain layer only, never registered as tool). 35 LOC + 12 tests + docker rebuild + ops verify.
-- **WAVE2-RESIDUE-CLEAN-c54 SHIPPED** — 18 files across 4 atomic commits + 2 pre-merge bundle commits. Working tree CLEAN at cycle end.
-- **TG queue drained** — 2865 + 2866 both `monitoring` resolution (recurring patterns, not new bugs).
-- **alert-commander notebook append-bug structural fix** — notebook-write skill hardened with 80L cap + Write-not-Edit instruction. Should prevent further notebook-bloat across all cowork agents.
-- **Phase 5 gate steady-state operation** — 2nd consecutive cycle with all 3 controls green. Pattern proven.
+### CLEAN-stale-remotes-c63
+- 5 verified-merged remote branches deleted (1872a-1/2, 1880a-investment-clock-phase, signal-T1/T4).
+- 1 skipped: `task/1872a-5-api-gateway-wording` has 3 unmerged commits (9f437240, 47e745b6, 22981c13) → carry-forward 1897a.
 
-### c55 carry-over (priority order)
-1. **USER Cloudflare bundle 4th ask** — 1894a /api/* + 1862c-E-dashboard /vn-market/sse — STILL BLOCKING after 3 cycles
-2. **Worktree c53 SDK auto-cleanup failure** — escalate ops (locked >1h, needs investigation: SDK config? force-remove sequence? agent-process lifecycle?)
-3. **Tool registry SSOT drift** — ops reports actual toolCount=138 vs declared 133. Reconcile docs/data/project-stats.json + mcp-tools.md + actual catalog.
-4. **NB-HDR-bundle-22-agents ba spec** (TNB c42 #1+#2 deferred) — but partial fix already shipped (notebook-write skill 80L cap). May be unnecessary.
-5. **market-watcher duplicate-header bug flow-edit** (TNB c42 #2)
-6. **1881a + 1890a ba specs** (long-deferred 11+/15+ cycles)
-7. **1888b/c/d/e/f/g/i/j/k SSOT chore cluster** — bulk fix candidate (note: 1888c toolCount=125→132 stale, now ALSO stale 132→133)
-8. **RSS counter post-restart pattern** (TNB c42 #3)
-9. **JANITOR-034 large-cap overlap** — promote to TASKS.md Backlog
-10. **TNB-PLANNED-RESTART convention** — ops notebook header bundle
-11. **financial-analyst 23:00 UTC test** — Sprint 1889a Layer 7/8 (this cycle past 23:00 UTC; check next TNB audit)
-12. **US10Y 4.5% cross watch** — still 4.46%
-13. **TASKS.md cap 180/80** — eligible auto-archive 2026-05-19+
-14. **HEAD.lock self-cure flow** — 3rd consecutive cycle; propose now via architect brief
-15. **1862c-F monitoring** — 2 cycles remaining (was 3 after c53)
+### c64 carry-forward (priority order)
+1. **F1 USER ask** (1897b) — Docker file-sharing exclude `.git/` — eliminates HEAD.lock root cause (2-min user action)
+2. **Worktree isolation SPIKE** (1897c) — why `isolation:"worktree"` didn't create separate worktree path
+3. **task/1872a-5 TRIAGE** (1897a) — merge or abandon 3 unmerged commits
+4. **SPIKE_006 T-2 ship** — Path 2 (scoreAlert → domain scorer wiring) deferred from c63 T-3
+5. SPIKE_006 T-4/T-5/T-6 — remainder of c61 spec migration
+6. **USER Cloudflare bundle** (1894a + 1862c-E) — 13th-cycle ask still BLOCKING
+7. METHODOLOGY-* (6) + SSOT-doc (8) + JANITOR DRY (5) — long-tail backlog
+8. RSS aggregator stall (TNB c42 #3)
+9. TNB recalibration SPRINT-S
+10. financial-analyst `get_cash_flow` missing tool
 
-### Patterns reinforced c54
-- **Parallel disjoint-zone dispatch** worked clean — agent-father (cross-service .claude/* + docs/agent-memory/*) + dev-mcp-server (apps/mcp-server/) had zero conflict. No merge gate intervention needed beyond standard 3 controls. Codify in execute-tier.md.
-- **Pre-merge bundle pattern** (c53-emergent) re-used this cycle — ccc1f862 + 8bbf8f3d absorbed all out-of-band drift cleanly. Now canonical pattern.
-- **HEAD.lock inline cure** (no-spawn) — 3rd consecutive cycle. Cycle-7 escalation horizon: c55 propose dedicated self-cure flow.
-- **Worktree SDK lock = does NOT auto-cleanup reliably** — c53 worktree still locked 1h+ after agent exit. Contradicts architecture brief assumption. Escalate.
-- **Notebook append-bug structural fix** — alert-commander 434L (c53 finding) cured via notebook-write skill update during this cycle's residue sweep, not deferred to dedicated ba spec. Demonstrates skill-level structural cures beat per-agent flow-edits.
+### Steady state metrics
+- HEAD.lock cure: 14/14 (100% PREFLIGHT success)
+- C2 warnings this cycle: 1 (handoff bundled with notebook commit — non-blocking)
+- Phase 4 worktree isolation: NOT load-bearing (1897c filed)
