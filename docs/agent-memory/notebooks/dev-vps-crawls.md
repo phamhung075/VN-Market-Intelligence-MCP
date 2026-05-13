@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** bootstrap
+**Last updated:** 2026-05-13T09:30Z | **Sprint:** hsx-bctc-contract-fix
 
 ---
 
@@ -16,12 +16,12 @@ Zone: dev-zone (VPS scraper code)
 
 | Source | Script | Technique | Status | Last verified |
 |--------|--------|-----------|--------|--------------|
-| vps-prices | /root/fetch-prices.sh | plain-requests-open-api | healthy upstream, MCP push failing | 2026-05-13 |
+| vps-prices | /root/fetch-prices.sh | plain-requests-open-api | healthy end-to-end (112 items 200 OK) | 2026-05-13 |
 | cafef-index | /root/fetch-prices.sh (Step 3) | plain-requests-open-api | healthy | 2026-05-13 |
 | sbv-rates | /root/fetch-sbv.sh | plain-requests-open-api | healthy end-to-end | 2026-05-13 |
-| vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | healthy upstream, MCP push 404 | 2026-05-13 |
-| vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | healthy (embedded in vps-prices data) | 2026-05-13 |
-| hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | endpoint works for HNX tickers with pAction=1 | 2026-05-13 |
+| vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | healthy end-to-end (245 items 200 OK) | 2026-05-13 |
+| vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | healthy (101 items upserted) | 2026-05-13 |
+| hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
 | hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | FAILING: TasksMax=32 kills Chromium | 2026-05-13 |
 
 ---
@@ -52,6 +52,8 @@ Zone: dev-zone (VPS scraper code)
 | 2026-05-13 | hsx-bctc | live probe + triage | HNX endpoint confirmed working for HNX tickers; HOSE path blocked; triage doc at docs/vps-sources/hsx-bctc/triage.md |
 | 2026-05-13 | hsx-bctc (TASK-BCTC-2) | live verification | NVB Q1/2026: PASS — 1 PDF URL returned (confidence 0.9). VEA Q1/2026: empty (UPCOM, not yet filed or SSC needed). HNX endpoint fully operational. |
 | 2026-05-13 | technique catalog | bootstrap + research | 7 new technique docs written (tls-fingerprint-spoof, cloudflare-js-bypass, cloudflare-managed-bypass, header-rotation, cookie-warmup, js-mini-challenge, captcha-workaround). README updated with RAM rankings. |
+| 2026-05-13 | TASK-PUSH-FINAL | MCP_BASE fix + redeploy | Changed MCP_BASE from bare zenmidi.com to zenmidi.com/vn-market. Fixed fetch-bctc.sh template (hardcoded URLs → __MCP_BASE__ tokens). Deployed all 8 scripts. Prices: 112 items pushed 200 OK. News: 245 items pushed 200 OK. All 4 fetch services active. |
+| 2026-05-13T09:30Z | hsx-bctc | hnx-ajax-post contract fix | Signal dev-vps-crawls-2026-05-13T09-17-00Z drained. 5 patches applied to discover-bctc-urls-browser.py: Referer /vi-vn/ prefix, pNhomTin empty, homepage fallback guard, ticker slug startswith fix. All 4 integration tests PASS. SHB Q1/2026 e2e PASS — PDF URL confirmed. QA signaled. |
 
 ---
 
@@ -71,6 +73,16 @@ Zone: dev-zone (VPS scraper code)
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
 
 ---
+
+## Key Findings — 2026-05-13T09:30Z Contract Fix
+
+### HNX Contract Changes Applied
+- Referer MUST include `/vi-vn/` language prefix — server 302s without it (change detected 2026-05-13)
+- `pNhomTin` MUST be empty string — `'FIN_REPORT'` wrapper no longer works (contract changed)
+- Ticker slugs in SYMBOL hrefs are `ticker+listingcode` (e.g. `shb125017`) — must use `startswith()` not equality
+- Homepage fallback guard added: `len(body) > 30_000 AND "Trang chủ" in body` → RuntimeError
+- SHB Q1/2026: PASS — PDF URL `https://owa.hnx.vn/ftp///cims/2026/4_W5/...Q1_2026.pdf`
+- ArticlesFileAttach CAN article 615286: 4 Q1/2026 PDFs confirmed
 
 ## Key Findings — 2026-05-13 Bootstrap
 
@@ -115,3 +127,7 @@ Zone: dev-zone (VPS scraper code)
 - VPS RAM ~1GB: Playwright/Chromium is risky even with TasksMax raised
 - cloudscraper (2026): document it but warn it is obsolete for CF v3+
 - curl_cffi is the right upgrade path for any future TLS-checked VN source
+- HNX Referer /vi-vn/ prefix: server added language redirect 2026-05-13, all Referer headers must use new path
+- HNX pNhomTin: FIN_REPORT wrapper removed from contract — empty string works correctly
+- HNX ticker slugs: response uses ticker+listingcode slug (e.g. shb125017) — always startswith(), never equality
+- Homepage fallback is a silent failure mode — always guard with (size>30KB AND Trang chu) before parsing
