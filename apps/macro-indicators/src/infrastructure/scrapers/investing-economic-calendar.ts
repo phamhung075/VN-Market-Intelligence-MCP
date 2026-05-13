@@ -2,26 +2,33 @@
  * Infrastructure Adapter — investing-economic-calendar
  *
  * Source: investing.com/economic-calendar
- * Technique: cloudflare-managed-bypass (~25MB RAM — curl_cffi TLS impersonation)
+ * Technique: flaresolverr-bypass (~10MB helper process; FlareSolverr container ~96MB)
  * Recon: docs/mainserver-sources/investing-economic-calendar/recon.md
+ * Technique doc: docs/mainserver-crawl-techniques/flaresolverr-bypass.md
  *
- * Cloudflare Bot Management passive mode (__cf_bm cookie). curl_cffi with
- * chrome124 TLS fingerprint impersonation passes the CF passive check without
- * triggering JS challenge. Two-step: GET warmup → POST calendar API.
+ * Cloudflare Turnstile v2 JS challenge — curl_cffi alone was blocked (2026-05-13).
+ * FlareSolverr v3.4.6 is provisioned at http://flaresolverr:8191 (compose-network).
+ * This adapter shells out to Python for the FlareSolverr solve + calendar fetch.
  *
- * NOTE: curl_cffi is a Python library. This adapter shells out to Python for
- * the CF bypass step, then parses the returned JSON. The Python helper script
- * lives at apps/macro-indicators/src/infrastructure/scrapers/investing_calendar_fetch.py.
+ * Python helper: src/infrastructure/scrapers/investing_calendar_fetch.py
+ *   Internally uses: src/infrastructure/scrapers/flaresolverr_helper.py
  *
- * Alternative if curl_cffi unavailable: native fetch with __cf_bm cookie from
- * a prior warmup session (cookie TTL ~30 min). Graceful fallback returns [].
+ * Fast path: if cf_clearance is cached in the Python process, subsequent calls
+ * try curl_cffi direct (no FlareSolverr round-trip). FlareSolverr is used on cache
+ * miss or 403 response.
+ *
+ * Per-source timeout budget: 30000ms
+ *   - Cold solve via FlareSolverr: ~5s (ops-confirmed smoke)
+ *   - curl_cffi POST to calendar API: ~2s
+ *   - Parse + marshal: <0.5s
+ *   - Total hot path (cache hit): ~3s  |  cold path: ~8s  |  budget: 30s
  */
 
 import type { InvestingCalendarPort, EconomicCalendarEvent } from '../../domain/repositories.js';
 import { spawn } from 'child_process';
 import path from 'path';
 
-/** Vietnam country ID on investing.com (likely 35 — needs session verification). */
+/** Vietnam country ID on investing.com economic calendar. */
 const DEFAULT_COUNTRY_ID = '35';
 
 /** Absolute path to the Python fetch helper. */
@@ -30,11 +37,7 @@ const PYTHON_HELPER = path.join(
   'src/infrastructure/scrapers/investing_calendar_fetch.py',
 );
 
-function sleepMs(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/** Run the Python helper and return parsed JSON output. */
+/** Run the Python helper and return parsed calendar events. */
 function runPythonHelper(countryId: string): Promise<EconomicCalendarEvent[]> {
   return new Promise((resolve) => {
     const py = spawn('python3', [PYTHON_HELPER, '--country', countryId], {
@@ -48,15 +51,18 @@ function runPythonHelper(countryId: string): Promise<EconomicCalendarEvent[]> {
 
     py.on('close', (code) => {
       if (code !== 0) {
-        console.error(`[investing-calendar] Python helper exited ${code}: ${stderr.slice(0, 300)}`);
+        console.error(
+          `[investing-calendar] Python helper exited ${code}: ${stderr.slice(0, 300)}`
+        );
         resolve([]);
         return;
       }
       try {
         const parsed = JSON.parse(stdout) as { status: string; data: EconomicCalendarEvent[] };
-        if (parsed.status === 'ok') resolve(parsed.data);
-        else {
-          console.error(`[investing-calendar] helper returned error: ${JSON.stringify(parsed)}`);
+        if (parsed.status === 'ok') {
+          resolve(parsed.data);
+        } else {
+          console.error('[investing-calendar] helper returned error:', JSON.stringify(parsed));
           resolve([]);
         }
       } catch (err) {
@@ -75,7 +81,6 @@ function runPythonHelper(countryId: string): Promise<EconomicCalendarEvent[]> {
 export class InvestingCalendarAdapter implements InvestingCalendarPort {
   async fetchCalendar(countryId = DEFAULT_COUNTRY_ID): Promise<EconomicCalendarEvent[]> {
     try {
-      await sleepMs(3_000 + Math.random() * 2_000); // 3-5s between calendar pulls
       return await runPythonHelper(countryId);
     } catch (err) {
       console.error('[investing-calendar] unexpected error:', err);
