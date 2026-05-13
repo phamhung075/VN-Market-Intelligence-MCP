@@ -40,8 +40,47 @@ ORDER BY fetched_at DESC LIMIT 10
 - **Access:** readonly (`market.db`)
 - **No owned tables** — reads only from mcp-server's macro_indicators table
 
+## FredMacroAdapter
+- **File:** `apps/macro-indicators/src/infrastructure/scrapers/fred-macro.ts`
+- Implements `FredMacroPort`
+- **Auth:** `FRED_API_KEY` env var (32-char key). If absent, `isAvailable()` returns false and all methods return null-filled records.
+- **Base URL:** `https://api.stlouisfed.org/fred/series/observations`
+- **Per-series timeout:** `AbortSignal.timeout(10_000)` (10s)
+- **Concurrency:** `Promise.all` across all 8 series — parallel dispatch, ~1s total wall time (previously sequential + 0.6-1s sleeps = 8-12s which exceeded the 8s per-source budget)
+- **FRED rate limit:** 120 req/min — 8 parallel calls is safe
+
+### fetchSeries(seriesId, limit=10)
+Fetches the N most-recent observations for a single FRED series. Returns `FredSeriesResult | null`.
+FRED API returns HTTP 200 with `error_code` in body on key failure — handled explicitly.
+
+### fetchAllMacro()
+Fan-out via `Promise.all` over `FRED_SERIES` entries. Returns `Record<name, FredSeriesResult | null>`.
+One series failure returns null for that key; others are unaffected.
+
+### FRED_SERIES catalog (8 series)
+| Key | Series ID | Description |
+|-----|-----------|-------------|
+| `fed_funds_rate` | FEDFUNDS | Federal Funds Rate (monthly) |
+| `us_cpi` | CPIAUCSL | US CPI (monthly) |
+| `vix` | VIXCLS | CBOE VIX (daily) |
+| `us_10y_yield` | GS10 | 10-Year Treasury Yield |
+| `yield_spread_10y2y` | T10Y2Y | 10Y-2Y spread (recession signal) |
+| `usd_broad_index` | DTWEXBGS | USD Broad Goods Index |
+| `us_unemployment` | UNRATE | US Unemployment Rate |
+| `us_10y_breakeven_infl` | T10YIE | 10-Year Breakeven Inflation Rate |
+
+## WorldBankMacroAdapter
+- **File:** `apps/macro-indicators/src/infrastructure/scrapers/world-bank-macro.ts`
+- Implements `WorldBankMacroPort`
+- **Base URL:** `https://api.worldbank.org/v2/country/VN/indicator`
+- **Auth:** None (open API)
+- **Per-indicator timeout:** `AbortSignal.timeout(10_000)` (10s)
+- **Concurrency:** Sequential for-loop with 1.5-2.5s jitter between calls (World Bank undocumented rate limit). Total ~10-17s for 7 indicators — currently exceeds the 8s per-source budget in fetch-external-macro.ts (known follow-up issue).
+- Fetches 7 VN annual macro indicators: GDP, GDP growth, CPI, FDI, exports, imports, unemployment.
+
 ## Environment Variables
 ```
-PORT    → 5004
-DB_PATH → ./data/market.db (readonly)
+PORT         → 5004
+DB_PATH      → ./data/market.db (readonly)
+FRED_API_KEY → 32-char FRED API key (optional — adapter activates automatically when set)
 ```
