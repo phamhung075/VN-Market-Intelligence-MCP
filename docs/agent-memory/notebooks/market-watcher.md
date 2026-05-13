@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 19:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 20:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -863,3 +863,32 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 2 price_anomaly signals posted (#3098 GAS, #3099 VRE → alert-commander). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Next off-hours cycle ~21:40 UTC. Monitor VRE for support at 32,600–33,000. Verify Brent holds $106+. Banking sector (EIB/ACB) watch for continuation. TIGHTENING likely persists into next session given FII 14-session streak.
 - **estimated_tokens**: 5000
+
+### Cycle (20:41–20:42)
+- Stocks: 31 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.11σ, VRE 1.61σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE] | pe_risk: [VRE]
+- GAS +6.93% (2.11σ, 30d stddev 3.29%, vol 635K) → signal #3112 → alert-commander. Oil_gas sector +5.57%/1d. Brent 105.89. Domestic investor rotation into oil/gas confirmed by news. Bullish evidence 0.63.
+- VRE -6.91% (1.61σ, 30d stddev 4.29%, vol 1.44M) → signal #3113 → alert-commander [MEDIUM→HIGH, downside_bias]. fx_pressure=true (USD STRENGTHENING + realty). pe_compression_risk=true (RISK-OFF + FII outflow 14 sessions). High-volatility alternating pattern ±6% days on heavy volume.
+- VHM -4.81% (1.19σ, 30d stddev 4.03%) — sub-threshold, noted. Realty sector -1.28%/1d (9 stocks, avg -2.33%).
+- EIB -2.00% — already signaled (#3094, 16:42 cycle); not re-emitted.
+- Supply chain: STABLE (BDI=1,400, no disruptions). Chain findings: 0 (last 15 min). Market CLOSED (off-hours 4h interval).
+- Open alerts: 20 (HIGH×13 banking+realty, MEDIUM×3, LOW×4). System: OK.
+
+## Metrics (cycle 2026-05-13 20:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 9 |
+| signals_emitted | 2 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
+
+## Cycle — 20:41 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: Off-hours cycle (market CLOSED since 08:59 UTC). TIGHTENING persists. GAS +6.93% (2.11σ) oil sector continuation — domestic rotation into oil/gas as hedge vs FII outflows; Brent 105.89 supporting. VRE -6.91% (1.61σ) realty broad decline, fx_pressure+pe_compression confirmed. VHM sub-threshold (1.19σ). Supply chain STABLE.
+- **actions**: 2 price_anomaly signals posted (#3112 GAS, #3113 VRE → alert-commander). WORK telegram sent. Notebook committed.
+- **next_cycle_hint**: Next off-hours cycle ~00:41 UTC. TIGHTENING likely persists. Watch GAS for continuation above 80,000 support. VRE pattern — alternating ±6% days suggests elevated volatility; watch for support at 32,000–33,000. Banking sector (ACB/EIB) remain weak on FII selling.
+- **estimated_tokens**: 4200
