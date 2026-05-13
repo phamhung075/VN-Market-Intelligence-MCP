@@ -4,7 +4,22 @@
 
 ## Current state
 
-SPRINT-1879 spec complete. Spec at docs/specs/1879-effr-iorb-ba-spec.md. No PO blockers. Ready for dev-mcp-server.
+REQ_1898a spec complete. Spec at docs/REQ_1898a.md. No PO blockers. Ready for dev-mcp-server.
+
+## Last session summary (2026-05-13) — 1898a
+
+Task 1898a — get_market_snapshot returns wrong data (electricity / portfolio content).
+
+Key findings:
+- Bug has self-healed post-restart. Live gateway now returns correct HOSE/HNX/UPCOM data (VCB 60,100 VND, ACB 22,500 VND, VN-Index 1,898.37).
+- Root is a stale deployed build, NOT a code-level dispatch collision. Source at marketTools.ts:79-273 is correct.
+- `server.ts` creates a fresh `McpServer` per `POST /mcp` request — all handlers re-registered from compiled `.js` on every call. Stale build = stale handler on every call until container rebuild.
+- No tool name collision in registry (registerMarketTools=index 6, registerEnergyTools=index 50, both have distinct names: `get_market_snapshot` vs `get_energy_grid_signals`).
+- Shared root with 1903a (get_macro_snapshot returning portfolio data): both are stale-build artifacts, both cleared on restart. 1898a scope = response-shape test guard. 1903a scope = broader dispatch hardening.
+- Fix is test-only: add response shape assertions to 084-tool-market.test.ts and 089-tool-macro.test.ts. No production code changes needed.
+- get_macro_snapshot shape assertions included in 1898a scope (same root, 2 lines of test) — 1903a handles the broader family.
+
+## Prior session summary (2026-05-12) — 1879
 
 ## Last session summary (2026-05-12) — 1879
 
