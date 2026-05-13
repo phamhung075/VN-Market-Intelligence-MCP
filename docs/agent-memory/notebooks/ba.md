@@ -1,10 +1,24 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** 1903
+**Last updated:** 2026-05-13 | **Sprint:** 1898b (c78)
 
 ## Current state
 
-REQ_1903a spec complete. Spec at docs/REQ_1903a.md. Both tools HEALED. Regression-test-only path. No PO blockers. Ready for dev-mcp-server.
+REQ_1898b spec complete. PARTIAL verdict — 7 of 8 sources healed (VnExpress, VnEconomy, CafeF, + 5 new VPS-push sources all OK at 14min recency). Reuters RSS permanently disabled in Sprint 1833g but still displays `Ngưng | 20` ghost row — misleading. Fix: 2-line `recordDisabled` addition in sourceHealthTools.ts + 8 regression tests for the 5 new VPS sources. No prod logic changes. No PO blockers. Ready for dev-mcp-server.
+
+## Last session summary (2026-05-13) — 1898b
+
+Task 1898b — RSS degradation re-verify (TNB c45/c46 carry).
+
+Key findings:
+- `fetch_and_analyze` (4 sources): cafef, vnexpress, vneconomy all HEALED — fresh articles (2026-05-13 timestamps), correct AnalysisEntry shape.
+- `reuters` slot in `fetch_and_analyze` uses Google News RSS (not VPS) — returns 5 items but includes one 41-day-old article (Google News aggregation behaviour, not a regression).
+- 5 new VPS-push sources (nhandan, nld, vietnambiz, vietstock, vnbusiness): ALL OK at 14min recency per `get_system_status` source health table. Healed at VPS push layer.
+- `Reuters RSS | Ngưng | 20` in source health is a ghost: `pollNews.ts` permanently disabled `reuters` (RSS) in Sprint 1833g — no fetcher calls it in scheduled runs. The 20-error count is pre-1833g accumulation.
+- `pollNews.ts:638 vpsOnlyKeys` confirms: nhandan, nld, vietnambiz, vietstock, vnbusiness are inject-only — only activate if VPS push caller provides them. VPS push health confirmed OK.
+- `fetch_and_analyze`'s `sources` enum only has 4 options — the 5 new sources are not accessible via this tool (by design — VPS-push-only path).
+- Spec: 2 targeted changes. (1) `sourceHealthTools.ts` — add `recordDisabled` for Reuters RSS + Trading Economics legacy to fix ghost Ngưng display. (2) New test file `1898b-rss-degradation-regression.test.ts` — 8 assertions: RSS-REG-01..05 (5 new sources each insert to rag_analyses), RSS-REG-06 (health tracker updated), RSS-REG-07 (all-empty zero-items guard), RSS-REG-08 (partial recovery path).
+- 8 AC items. Owner: dev-mcp-server.
 
 ## Last session summary (2026-05-13) — 1903a
 
