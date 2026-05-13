@@ -13,6 +13,11 @@ COPY . .
 FROM oven/bun:1.3.13-alpine
 
 WORKDIR /app
+
+# Install Python + curl_cffi, beautifulsoup4, lxml for investing.com adapter
+RUN apk add --no-cache python3 py3-pip python3-dev gcc musl-dev libxml2-dev libxslt-dev && \
+    pip install --no-cache-dir curl_cffi beautifulsoup4 lxml
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/src ./src
 COPY package.json tsconfig.json ./
