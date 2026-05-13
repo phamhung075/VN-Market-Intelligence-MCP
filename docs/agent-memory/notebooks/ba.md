@@ -1,127 +1,49 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** 1898b (c78)
+**Last updated:** 2026-05-13 | **Sprint:** 1881a (c83)
 
 ## Current state
 
-REQ_1898b spec complete. PARTIAL verdict — 7 of 8 sources healed (VnExpress, VnEconomy, CafeF, + 5 new VPS-push sources all OK at 14min recency). Reuters RSS permanently disabled in Sprint 1833g but still displays `Ngưng | 20` ghost row — misleading. Fix: 2-line `recordDisabled` addition in sourceHealthTools.ts + 8 regression tests for the 5 new VPS sources. No prod logic changes. No PO blockers. Ready for dev-mcp-server.
+REQ_1881a spec complete. 16 tools enumerated for source_tier retrofit. No PO blockers. One architect decision required (BLK-1: text-output wrapping). Owner: dev-mcp-server for all 16 tool files + new test file.
 
-## Last session summary (2026-05-13) — 1898b
+## Last session summary (2026-05-13) — 1881a
 
-Task 1898b — RSS degradation re-verify (TNB c45/c46 carry).
-
-Key findings:
-- `fetch_and_analyze` (4 sources): cafef, vnexpress, vneconomy all HEALED — fresh articles (2026-05-13 timestamps), correct AnalysisEntry shape.
-- `reuters` slot in `fetch_and_analyze` uses Google News RSS (not VPS) — returns 5 items but includes one 41-day-old article (Google News aggregation behaviour, not a regression).
-- 5 new VPS-push sources (nhandan, nld, vietnambiz, vietstock, vnbusiness): ALL OK at 14min recency per `get_system_status` source health table. Healed at VPS push layer.
-- `Reuters RSS | Ngưng | 20` in source health is a ghost: `pollNews.ts` permanently disabled `reuters` (RSS) in Sprint 1833g — no fetcher calls it in scheduled runs. The 20-error count is pre-1833g accumulation.
-- `pollNews.ts:638 vpsOnlyKeys` confirms: nhandan, nld, vietnambiz, vietstock, vnbusiness are inject-only — only activate if VPS push caller provides them. VPS push health confirmed OK.
-- `fetch_and_analyze`'s `sources` enum only has 4 options — the 5 new sources are not accessible via this tool (by design — VPS-push-only path).
-- Spec: 2 targeted changes. (1) `sourceHealthTools.ts` — add `recordDisabled` for Reuters RSS + Trading Economics legacy to fix ghost Ngưng display. (2) New test file `1898b-rss-degradation-regression.test.ts` — 8 assertions: RSS-REG-01..05 (5 new sources each insert to rag_analyses), RSS-REG-06 (health tracker updated), RSS-REG-07 (all-empty zero-items guard), RSS-REG-08 (partial recovery path).
-- 8 AC items. Owner: dev-mcp-server.
-
-## Last session summary (2026-05-13) — 1903a
-
-Task 1903a — MCP dispatch/schema collision bundle (write_alert_verdict + get_macro_snapshot).
+Task 1881a — source_tier retrofit spec (TNB Layer 9 — Source Hierarchy).
 
 Key findings:
-- Both tools HEALED post-c73 restart. Same stale-build root as 1898a.
-- `write_alert_verdict` live call (c77 16:43Z): returns `{success:true, id:UUID, ticker:"VCB", verdict:"pending"}` — correct object shape, NOT string "Message sent to WORK channel".
-- `get_macro_snapshot` live call (c77 16:43Z): returns `=== Macro Snapshot ===` block with [Commodity Prices], [SBV Central Bank Rates], [Macro Signal Summary] — no portfolio/electricity bleed.
-- Registry: `registerAlertVerdictTools` index 126, `registerMacroTools` index 7 — no name collision in source.
-- Spec: regression-test-only path. New test file `1903a-dispatch-regression.test.ts`, 7 WAV-REG assertions + 3 GMS-REG additions. No prod code changes.
-- 1898a MT-REGRESSION already covers GMS basic shape — 1903a extends with 3 additional assertions (GMS-REG-02 through GMS-REG-04).
-- 7 AC items. Owner: dev-mcp-server.
+- 16 tools enumerated (not ~15 as estimated in brief — one extra: `get_macro_calendar` in carryTools.ts).
+- SBV data: `sbv.ts` fetcher has SBV portal DOWN; rates arrive via Vietcombank XML (`portal.vietcombank.com.vn`). Conservative tier = 2 (not 1). Future sprint can upgrade to tier 1 if direct SBV API is restored.
+- HOSE/HNX prices: VnDirect finfo-api v4 is the actual endpoint — broker aggregator, not exchange. Tier 2.
+- Foreign flow: Vinahost VPS proxy push from HOSE/HNX. VPS is intermediary. Tier 2. Has 3-path fallback (primary/cache/sse/none) — spec requires `source_note` field on fallback paths.
+- 4 text-output tools (`get_macro_snapshot`, `get_market_snapshot`, `get_sentiment_trend`, `get_policy_signals`) need Architect decision on wrapping before impl (BLK-1).
+- Tier 1 tools: `get_imf_signals` (imf.org REST API), `get_fed_liquidity_spread` (FRED CSV), `get_insider_transactions` (SSC portal congbothongtin.ssc.gov.vn).
+- Tier 3 tools: `get_carry_trade_signal`, `get_macro_calendar`, `get_yield_spread_signal`, `get_policy_signals`, `get_sentiment_trend`, `get_technical_indicators` (all computed/derived from cached inputs).
+- dev-macro-indicators service: no changes needed — it has no MCP tool registration, is a Hono microservice on port 5004.
+- BCTC tools intentionally excluded — they have a dedicated confidence field already.
+- 8 AC categories covering: static value, JSON shape, text-output, multi-source records, fallback path, description string, TypeScript types, error path.
+- No PO blockers.
 
-## Last session summary (2026-05-13) — 1898a
+## Prior session summary (2026-05-13) — 1898b
 
-Task 1898a — get_market_snapshot returns wrong data (electricity / portfolio content).
+REQ_1898b spec complete. PARTIAL verdict — 7 of 8 sources healed (VnExpress, VnEconomy, CafeF, + 5 new VPS-push sources all OK at 14min recency). Reuters RSS permanently disabled in Sprint 1833g but still displays `Ngưng | 20` ghost row. Fix: 2-line `recordDisabled` addition in sourceHealthTools.ts + 8 regression tests for the 5 new VPS sources. No prod logic changes. No PO blockers. Ready for dev-mcp-server.
 
-Key findings:
-- Bug has self-healed post-restart. Live gateway now returns correct HOSE/HNX/UPCOM data (VCB 60,100 VND, ACB 22,500 VND, VN-Index 1,898.37).
-- Root is a stale deployed build, NOT a code-level dispatch collision. Source at marketTools.ts:79-273 is correct.
-- `server.ts` creates a fresh `McpServer` per `POST /mcp` request — all handlers re-registered from compiled `.js` on every call. Stale build = stale handler on every call until container rebuild.
-- No tool name collision in registry (registerMarketTools=index 6, registerEnergyTools=index 50, both have distinct names: `get_market_snapshot` vs `get_energy_grid_signals`).
-- Shared root with 1903a (get_macro_snapshot returning portfolio data): both are stale-build artifacts, both cleared on restart. 1898a scope = response-shape test guard. 1903a scope = broader dispatch hardening.
-- Fix is test-only: add response shape assertions to 084-tool-market.test.ts and 089-tool-macro.test.ts. No production code changes needed.
-- get_macro_snapshot shape assertions included in 1898a scope (same root, 2 lines of test) — 1903a handles the broader family.
+## Prior session summary (2026-05-13) — 1903a
 
-## Prior session summary (2026-05-12) — 1879
+Task 1903a — MCP dispatch/schema collision bundle (write_alert_verdict + get_macro_snapshot). Both tools HEALED post-c73 restart. Spec: regression-test-only path. 7 WAV-REG assertions + 3 GMS-REG additions. No prod code changes. 7 AC items. Owner: dev-mcp-server.
 
-## Last session summary (2026-05-12) — 1879
+## Prior session summary (2026-05-13) — 1898a
 
-Sprint 1879 — EFFR-IORB FRED fetcher + get_fed_liquidity_spread() MCP tool. Layer 2.D liquidity microstructure.
-
-Key findings:
-- FRED fetching lives in `apps/mcp-server`, NOT `apps/macro-indicators`. Apps/macro-indicators is a standalone commodity/SBV Hono microservice (port 5004) with no FRED client and no scheduler.
-- Existing `fredApi.ts` handles `FEDFUNDS` (monthly). New fetcher handles `EFFR` + `IORB` (daily).
-- `tracked_indicators` dedup is UNIQUE(indicator, source) = single latest row. Daily time-series needs NEW table `fred_series_daily` with UNIQUE(series, date).
-- All CSV rows parsed (not just last row) to enable backfill on first run.
-- Scheduler hook: piggyback on existing `macroIndicatorRefreshJob` (0 6 * * *) — no new cron entry.
-- Domain: `computeFedLiquiditySpread()` pure function in `domain/services/macro/fedLiquiditySpread.ts` — zero infra imports. Trend slope is OLS over sample index.
-- Spread convention: IORB - EFFR (positive = abundance, negative = stress).
-- No FRED API key needed — public CSV endpoint confirmed by existing fetcher.
-- 10 TDD tests total (6 fetcher + 5 tool). No PO blockers.
-
-## Prior session summary (2026-05-12) — 1878a
-
-Sprint 1878a — OCF column migration spec.
-
-Key findings:
-- `vnstock_cash_flow` table EXISTS, `operating_cf_bn REAL` (billions VND). `storeCashFlow()` already populates it.
-- `financial_reports` already has `operating_cf` (from BCTC OCR). New column `operating_cash_flow` is a distinct signal (vnstock API).
-- Critical: unit conversion `operating_cf_bn * 1000` required — tỷ VND -> triệu VND to match all other financial_reports scalars.
-- Bridge mapper pattern: `bridgeOCFToFinancialReports(db, ticker)` in vnstockStore.ts, called at end of `storeCashFlow()`.
-- Annual rows (period_quarter IS NULL) SKIP — vnstock provides quarterly only.
-- `backfillAllOCF(db)` needed for historical rows already in financial_reports before bridge was wired.
-- NULLABLE column (no DEFAULT 0) — 0 would corrupt accruals formula.
-- 7 TDD tests specified (idempotency, unit conversion, annual skip, no-match, trigger, backfill, quarter=0 edge case).
-- No PO blockers. One low-priority architect question: DDD placement of bridge (infra vs app layer).
-
-## Last session summary (2026-05-11)
-
-C2 task-trailer gap spec for Phase B Day-7 gate (2026-05-17). Evidence: 100 commits since 2026-05-10.
-
-Key finding: C2 denominator includes `chore(cycle-NN)` and `chore(pm/cNN)` — digit in scope is a cycle ref, not a sprint ID. These are housekeeping commits that should be C2-exempt. Exempting them + flow tightening = Path (c) Hybrid.
-
-3 sub-tasks: 1877e-1 (audit script exemption), 1877e-2 (flow tightening x4 flows), 1877e-3 (knowledge file table).
-No PO blockers. Budget: ~50 LOC / 6 files.
-
-## Prior session summary (1846)
-1. delete_backtest_run MCP tool (#123) — purge a stored run by UUID
-2. export_backtest_run_csv MCP tool (#124) — convert trades[] from resultJson to CSV
-3. compare_backtest_runs MCP tool (#125) — side-by-side metrics for 2–5 run IDs
-4. IBacktestResultRepository.deleteRun(id): boolean — new interface method + SQLite impl
-
-Key finding: equityCurve is computed locally in backtestEngine.ts (number[]) but is NOT
-serialised into BacktestReport or resultJson. This blocks includeEquityCurve=true in
-export_backtest_run_csv. Flagged as BLK-1 with 3 options for Architect.
-
-BacktestReport.trades confirmed fields: ticker, entryDate, exitDate, entryPrice,
-exitPrice, direction, returnPct, confidence, positionWeight.
-holdDays is not stored — must be derived from exitDate minus entryDate in ms / 86_400_000.
-
-deleteRun() SQLite pattern: DELETE WHERE id=?, check stmt.run().changes >= 1.
-Consistent with existing error-return-null pattern (catch returns false, not throw).
-
-backtestTools.ts currently ~226 lines (tools #120, #121, #122). Sprint 1846 adds 3 more.
-File split decision deferred to Architect (BLK-2).
-
-Tool slots confirmed free: #123, #124, #125.
+Task 1898a — get_market_snapshot returns wrong data. Bug self-healed post-restart. Root = stale deployed build. Fix: test-only (response shape assertions). No production code changes. Shared root with 1903a (stale-build artifacts).
 
 ## Known patterns / preferences
 
 - Always read strategyRegistry.ts + backtestEngine.ts together — they are tightly coupled
-- TA service (apps/technical-analysis) is real-time only; historical TA must come from
-  daily_ohlcv in the mcp-server SQLite DB
-- globalSourceTracker is a globalThis singleton — test isolation issues are common in
-  news pipeline tests; check for _resetGlobalSourceTracker() calls in beforeEach
+- TA service (apps/technical-analysis) is real-time only; historical TA must come from daily_ohlcv in the mcp-server SQLite DB
+- globalSourceTracker is a globalThis singleton — test isolation issues are common in news pipeline tests; check for _resetGlobalSourceTracker() calls in beforeEach
 - OHLCV date column is TEXT YYYY-MM-DD (string-sortable, no Date parsing needed)
 - U-4 injection pattern: getDb() called inside tool handler, not at module scope
 - Error format in all MCP tools: { error: '...' } JSON content block, never throw
-- benchmarkReturn and sharpeRatio are nullable in BacktestRunRecord — always serialise
-  as null not undefined
-- backtestResultRepo.ts getRunById() catch block returns null (not throw) — tool layer
-  must handle null explicitly
-- deleteRun() should follow same pattern: catch returns false (not throw)
-- equityCurve is NOT in resultJson — recompute from trades if needed (BLK-1 Option C)
+- benchmarkReturn and sharpeRatio are nullable in BacktestRunRecord — always serialise as null not undefined
+- SBV portal is currently DOWN; rates come from VCB XML proxy — treat as tier 2 source
+- VnDirect finfo-api v4 is the HOSE/HNX price source (broker aggregator) — tier 2
+- apps/macro-indicators is a standalone Hono service on port 5004, not part of mcp-server tool registration
