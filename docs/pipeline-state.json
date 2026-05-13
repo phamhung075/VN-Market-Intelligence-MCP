@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c79",
+  "currentSprint": "c80",
   "activeTaskId": null,
   "nextAgent": "po",
-  "nextPrompt": "c78 closed — both 1899a-reuters-fallback (3e04dc5f) and 1898b (0a76cf8d) APPROVED, 1899a-routes unblocked. Begin c79 triage.",
-  "updatedAt": "2026-05-13T19:55:00Z",
-  "updatedBy": "dev-team-c78-close",
-  "lastCompleted": "Cycle 78: BATCH(2) shipped — 1899a-reuters-fallback (DataDome stealth, FALLBACK, 28/28) `3e04dc5f`/`e0a5da53` + 1898b (RSS source-health 2-line fix + 8 regression tests RSS-REG-01..08) `0a76cf8d`/`d8bc4991`. pm housekeeping `19594166` (TASKS.md 73L). HEAD.lock cure #33 (age 583s com.apple) auto-handled."
+  "nextPrompt": "c79 closed. 1899a-routes + CLEAN-c79 shipped. 1899a-gateway + 1899a-tests both unblocked for parallel pickup c80.",
+  "updatedAt": "2026-05-13T20:55:00Z",
+  "updatedBy": "dev-team-c79",
+  "lastCompleted": "Cycle 79: 1899a-routes shipped `644c8fe4`/`43609750`, CLEAN-c79 shipped `4bdc1316`/`cb0fdb56`. pm housekeeping `fce95405`. HEAD.lock cures #34+#35."
 }
