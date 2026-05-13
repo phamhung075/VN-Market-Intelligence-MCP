@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 18:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 19:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -116,6 +116,28 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (19:39–19:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.11σ, VRE 1.61σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (inferred from Fed rate hike news; prior cycles today used NEUTRAL — see note) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE] | pe_risk: []
+- GAS +6.93% (2.11σ, 30d stddev ≈3.29%, vol 635K — below avg ~1.22M) → signal #3107 → alert-commander. NOTE: duplicate of #3088 (15:40 cycle) — same closing price. TIGHTENING threshold (1.5σ) triggered re-signal; NEUTRAL (2.0σ) would also have triggered.
+- VRE -6.91% (1.61σ, 30d stddev ≈4.29%, vol 1.44M — well below avg ~8.1M) → signal #3108 → alert-commander. fx_pressure=true (real_estate + USD STRENGTHENING). NOTE: was suppressed at 15:40 cycle under NEUTRAL threshold (2.0σ). Coverage: HIGH price_drop alert #08:30 UTC already active. Thin volume weakens signal conviction.
+- VHM -4.81% (1.19σ) — below 1.5σ, no signal.
+- Market CLOSED (off-hours 4h cycle). All prices are closing values from 08:59 UTC.
+- Sector: Oil/Gas +5.57% 1d (Brent $105.75), Real estate -1.28% 1d (-2.33% avg across 9 stocks incl. VRE -6.91%, VHM -4.81%), Banking -0.40% 1d. Chain findings: 0 (last 15 min).
+- Supply chain: STABLE (BDI=1,400). 20 open alerts (banking×7 HIGH, real-estate×9 HIGH, MWG MEDIUM, HCM MEDIUM).
+- ⚠️ Regime note: "Global Liquidity" label absent from macro snapshot — TIGHTENING inferred from news context (gold drop on Fed hike fears). All prior cycles today used NEUTRAL. May cause sigma threshold inconsistency.
+
+## Metrics (cycle 2026-05-13 19:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 2 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4100 |
 
 ## Known patterns / preferences
 
