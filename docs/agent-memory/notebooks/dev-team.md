@@ -1,37 +1,36 @@
 # dev-team notebook
 
-## Current state (c79 close — 2026-05-13T20:55Z)
-- Pipeline: idle. Main HEAD `fce95405` (pm-c79 housekeeping).
+## Current state (c80 close — 2026-05-13T21:25Z)
+- Pipeline: idle. Main HEAD `889db6ff` (pm-c80 housekeeping).
 - WIP: 0/2. Branches: main only. Worktrees: main only.
-- HEAD.lock cures lifetime: **35/35** (2 fired in c79: #34 PREFLIGHT age=1403s com.apple PID 51247, #35 mid-cherry-pick age=376s com.apple PID 43751 — both auto-cured).
+- HEAD.lock cures lifetime: **36/36** (1 fired in c80: #36 stash attempt age unknown, com.apple PID 43751 Spotlight, auto-cured).
 
-## c79 cycle log
-- PREFLIGHT: HEAD.lock cure #34 (age=1403s, com.apple Spotlight, lsof captured to preflight-lsof-20260513T182848Z.log). Drained signals (empty).
-- PO triage: BATCH(2) parallel disjoint zones — 1899a-routes (SPRINT-M, spec ready, fast-track) + CLEAN-c79-stale-artifacts (3 buckets).
-- Tier execution (parallel):
-  - Track A (dev-mainserver-crawls worktree): 1899a-routes — Hono router with `createRouter()` DI factory (mirrors macro-indicators). 5 routes: GET /health + POST/GET /news/reuters/headlines + POST/GET /news/bloomberg/headlines. Reuters fallback RSS→stealth wired. Bloomberg no fallback (per §6c). handlers.ts 142L, test files 199L + 197L. Feat `2c0b9f45` → cherry-picked to main `644c8fe4`. 137/137 tests, 0 tsc.
-  - Track B (code-janitor, no isolation/used main worktree): CLEAN-c79 — Bucket A: removed 3 .claire/ orphan worktree dirs + gitignore line. Bucket B: fixed gitignore pattern `reports/*-evening.json` → `**/reports/*-evening.json` (was repo-root-scoped). Bucket C: created docs/agent-memory/sessions/.retention.md (7-day policy for preflight-lsof logs) + gitignore. Commits `4bdc1316` (A+B) + `cb0fdb56` (C) → main via ff-merge.
-- HEAD.lock cure #35 mid-cherry-pick: age=376s com.apple PID 43751, stash error triggered detection. lsof captured to preflight-lsof-20260513T184721Z.log.
+## c80 cycle log
+- PREFLIGHT: clean (no HEAD.lock at entry). No pending signals.
+- PO triage: BATCH(2) parallel disjoint zones — 1899a-gateway (SPRINT-S, multi-zone) + 1899a-tests (SPRINT-S, apps/news-fetch/). Both handoffs already exist from prior cycle.
+- Tier execution (parallel via isolation:worktree spawn):
+  - Track A (dev-api-gateway): worked **directly in main worktree** (isolation didn't engage) — branch `task/1899a-integration-tests` (wrong name, should have been `task/1899a-gateway-wiring`). Feat `4f63f64d` + notebook `10e6a507`. 40 tests, 0 tsc. Files: api-gateway/{index.ts, health_checker.ts, handlers.ts}, docker-compose.yml (news-fetch service block), ops-news-fetch-scaffold.md (port 5007→5008), ARCHITECTURE.md.
+  - Track B (developer): worktree on stale base `d532495b` (c77/c78 HEAD). Agent self-rebased: merged main HEAD `3e2e828` into its branch before writing tests. Feat `7f8bbeae` + notebook `ab5a1dc4` + tasks-md `5c2f0971`. 165 pass / 6 skip / 0 fail (news-fetch), 3 pass mcp-server E2E. **Scope creep**: created `newsHeadlinesRefreshJob.ts` (1899a-cron's deliverable) to make E2E test pass.
+- HEAD.lock cure #36 mid-stash before tests cherry-pick: age unknown, com.apple PID 43751 (Spotlight). lsof captured.
 - Merge gate:
-  - CLEAN-c79: ff-merge to main `cb0fdb56` (tree-verify exit 0, c2-alert exit 0). Branch deleted.
-  - 1899a-routes: cherry-pick `644c8fe4`+`43609750` to main (tree-verify exit 0, c2-alert OK). Worktree unlocked + removed. Branch deleted.
-- QA gates:
-  - 1899a-routes: APPROVED. 137/137 + AC 9/9, 0 tsc, DDD PASS (handlers.ts imports application+domain only, no infra), security PASS. TASK_REPORT_1899a-routes.md written.
-  - CLEAN-c79: skipped formal QA gate (CLEAN type, no functional change; tree-verify+c2-alert sufficient).
-- pm c79 update: TASKS.md 72L (down from 73L). 1899a-routes + CLEAN-c79 → Done. 1899a-gateway (Tier 4) + 1899a-tests (Tier 5) **both unblocked** for c80 parallel pickup. Notebook + housekeeping commit `fce95405`.
+  - 1899a-gateway: cherry-pick `4f63f64d` + `10e6a507` → main `f91c5baa` + `837529ef`. Tree-verify exit 0, c2-alert OK. Misnamed branches deleted. **Stray test files** (apps/news-fetch/src/__tests__/unit/{reuters-rss,use-cases,bloomberg-stealth}.test.ts + integration/) appeared in main worktree post-stash-pop — quarantined to /tmp/c80-gateway-stray then removed after tests merge.
+  - 1899a-tests: cherry-pick `7f8bbeae` + `ab5a1dc4` + `5c2f0971` → main `d2818207` + `64c3db67` + `da5d1b0f`. Tree-verify exit 0, c2-alert OK. Worktree unlocked + removed. Branch deleted.
+- QA gate (combined BATCH):
+  - 1899a-gateway: APPROVED. 40/40, 0 tsc, AC 9/9 PASS, DDD PASS, security PASS.
+  - 1899a-tests: APPROVED. 165 pass / 6 skip / 0 fail, AC met, DDD PASS, 200L policy met (max 177L).
+  - **Scope creep ruling: 1899a-cron NOT closed**. Job body shipped (136L), but 3 wiring AC items absent: barrel index.ts + jobs.ts CRONS entry + mcp.config.json section. 1899a-cron remains open, scope reduced to wiring-only (S→XS, ~30min).
+- pm c80 update: TASKS.md `889db6ff` → 71L. 1899a-gateway + 1899a-tests Done. 1899a-cron scope reduced + unblocked. project-stats.json totalTasksDone 555→557 (gitignored, tracked locally).
 
 ## Lessons / patterns
-- **Janitor without isolation:worktree**: code-janitor worked directly in main worktree on `clean/c79-stale-artifacts` branch instead of an isolated worktree. ff-merge back was clean but bundled 2 unrelated notebook updates (alert-commander, news-scout) in commit `4bdc1316`. Pattern: always pass `isolation: "worktree"` to background agents to avoid main-worktree branch confusion + hook noise leaking into feat commits.
-- **createRouter() factory for testable Hono router**: 1899a-routes adopted dev-macro-indicators pattern of `createRouter({deps})` accepting injected ports → enables full mock injection without launching real browsers in tests. New canonical pattern for HTTP services with browser/network deps.
-- **HEAD.lock pattern persists**: cures #34+#35 both held by com.apple Spotlight indexer (PID 51247, 43751). Persists across reboots / git refs. Pattern: long-idle (>>60s) com.apple-held HEAD.lock = orphan from prior ref update, safe to cure when no live git pid. Log to `preflight-lsof-*.log` for archive.
-- **POST primary + GET alias parity**: 5 routes = 1 health + 2 POST + 2 GET aliases for backwards-compat / curl convenience. Pattern mirrors macro-indicators routing.
+- **Worktree isolation didn't engage for one agent**: gateway agent's isolation:"worktree" spawn somehow worked in main worktree directly, creating wrong-named branch + leaking stray files. Pattern: when checking out parallel-spawn results, ALWAYS verify `git worktree list` first — if any agent's branch is on the MAIN path instead of `.claude/worktrees/agent-<id>/`, the isolation failed. Plan: investigate agent-father / isolation:worktree contract; may need explicit branch-name validation in agent prompts.
+- **Stale worktree base ↔ self-rebase pattern**: tests agent's worktree was on c77/c78 HEAD `d532495b` (~48 commits behind). Agent detected by attempting tsc and seeing missing files → ran `git -C <parent-path> rev-parse main` to get current main SHA → `git merge <main-sha>` into its branch. This worked but is fragile. Pattern: agent-father should validate worktree base before spawn, OR agent prompts should include `git fetch + git rebase origin/main` as Step 0.
+- **Scope creep enabling E2E**: tests agent created the production scheduler job (136L) to satisfy its E2E test that needed the job to exist. QA correctly separated the deliverables: tests are APPROVED (the test suite IS the deliverable for 1899a-tests), but 1899a-cron is NOT closed (wiring missing). Lesson: scope creep that enables tests but doesn't ship full functionality is acceptable AS LONG AS QA gates downstream tasks to their actual AC.
+- **HEAD.lock cure #36 — Spotlight persistence**: 3rd com.apple-held HEAD.lock in 4 cycles (cures #34, #35, #36). Pattern is durable. Future flow: if HEAD.lock age >>60s + com.apple PID, auto-cure no escalation. Skill enhancement candidate.
 
-## Carry-over to c80
-- **1899a-gateway** (Tier 4, MEDIUM) — UNBLOCKED. Wires api-gateway routing + docker-compose news-fetch service block. Zone: multi.
-- **1899a-tests** (Tier 5, MEDIUM) — UNBLOCKED. Parallel-eligible with gateway (different zones). Zone: apps/news-fetch/.
-- **1899a-cron** (Tier 5) — blocked-by 1899a-gateway.
+## Carry-over to c81
+- **1899a-cron** (XS wiring-only, MEDIUM) — UNBLOCKED, scope reduced. Job body exists at `apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts` (136L). Remaining: barrel index.ts + jobs.ts CRONS entry + mcp.config.json section.
 - **1899a-bloomberg-test-split** (LOW) — split 494L test into ≤200L files.
 - **1900c-health-probe-refine** (LOW).
 - **1862c-E/F, 1888b/c/d/e SSOT, 1881a/1890a/1897b/JANITORs** in Backlog (unchanged).
 - **1897b-carry (URGENT-F1: USER ACTION PENDING)** — Docker .git/ exclude.
-- **preflight-lsof-* logs**: now gitignored per CLEAN-c79 bucket C. .retention.md documents 7-day rotation.
+- **Investigation candidate**: why did gateway agent's isolation:"worktree" land on main path? Single-occurrence so far; if recurs c81, escalate to architect.

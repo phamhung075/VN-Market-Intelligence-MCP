@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c80",
+  "currentSprint": "c81",
   "activeTaskId": null,
   "nextAgent": "po",
-  "nextPrompt": "c79 closed. 1899a-routes + CLEAN-c79 shipped. 1899a-gateway + 1899a-tests both unblocked for parallel pickup c80.",
-  "updatedAt": "2026-05-13T20:55:00Z",
-  "updatedBy": "dev-team-c79",
-  "lastCompleted": "Cycle 79: 1899a-routes shipped `644c8fe4`/`43609750`, CLEAN-c79 shipped `4bdc1316`/`cb0fdb56`. pm housekeeping `fce95405`. HEAD.lock cures #34+#35."
+  "nextPrompt": "c80 closed. 1899a-gateway + 1899a-tests shipped. 1899a-cron reduced to XS wiring-only (job body exists), unblocked for c81.",
+  "updatedAt": "2026-05-13T21:25:00Z",
+  "updatedBy": "dev-team-c80",
+  "lastCompleted": "Cycle 80: 1899a-gateway shipped `f91c5baa`/`837529ef`, 1899a-tests shipped `d2818207`/`64c3db67`/`da5d1b0f`. pm housekeeping `889db6ff`. HEAD.lock cure #36."
 }
