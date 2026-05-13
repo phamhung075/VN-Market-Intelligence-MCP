@@ -1,5 +1,19 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-13 | **Session:** 1898a merge gate (c76)
+
+## Recent session — 2026-05-13 (1898a regression-shape guard — APPROVED)
+
+Cherry-pick `e95eb8c7` on main. Scope: 2 test files only (084-tool-market + 089-tool-macro, +62L, 0 prod changes).
+
+Targeted tests (084+089): 32 pass / 0 fail (80 expect() calls). TSC: 0 errors. Full suite: Bun C++ crash (pre-existing infra issue, same crash URL as all prior cycles — not attributable to 1898a).
+
+DDD: N/A (test-only). Security PASS: all HTTP mocked via _test* params, no process.env, no secrets.
+
+AC: all 5 bullets (a-e) verified with file:line mapping. Report: `reports/TASK_REPORT_1898a.md`.
+
+---
+
 **Last updated:** 2026-05-13 | **Session:** 1899a-reuters-rss merge gate
 
 ## Recent session — 2026-05-13 (1899a-reuters-rss ReutersRssScraper — APPROVED)
