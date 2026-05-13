@@ -34,14 +34,23 @@ import { DEFAULT_SYMBOLS, DEFAULT_CNBC_SYMBOLS } from '../domain/defaults.js';
 
 // ── Per-source timeout budgets (ms) ──────────────────────────────────────────
 
-/** Default timeout budget per source. Override via constructor for tests. */
+/**
+ * Default timeout budget per source. Override via constructor for tests.
+ *
+ * 2026-05-13: yahoo, cnbc, tradingEconomics upgraded to Python subprocess
+ * (curl_cffi + ThreadPoolExecutor). Budgets raised to accommodate subprocess
+ * startup (~1s) + parallel network time (~3-5s) + safety margin.
+ *   yahoo:           50s (11 symbols, parallel ~4s in practice)
+ *   cnbc:            35s (6 dotted symbols, parallel ~2s in practice)
+ *   tradingEconomics: 65s (7 slugs, parallel ~4-6s; slug pages are heavier)
+ */
 const DEFAULT_TIMEOUTS: SourceTimeouts = {
-  worldBank:        8_000,
-  yahoo:            8_000,
-  cnbc:             8_000,
-  tradingEconomics: 8_000,
-  fred:             8_000,
-  calendar:        30_000,  // Python subprocess + CF warmup
+  worldBank:         8_000,
+  yahoo:            50_000,  // Python subprocess + 11 parallel symbol fetches
+  cnbc:             35_000,  // Python subprocess + 6 parallel quote fetches
+  tradingEconomics: 65_000,  // Python subprocess + 7 parallel TE page fetches
+  fred:              8_000,
+  calendar:         30_000,  // Python subprocess + CF warmup
 };
 
 export interface SourceTimeouts {

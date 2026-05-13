@@ -25,12 +25,18 @@ export const DEFAULT_SYMBOLS: string[] = [
   '^FTSE',     // FTSE 100
 ];
 
-/** Default symbol set for CNBC quote API: global market coverage. */
+/**
+ * Default symbol set for CNBC quote API: global market coverage.
+ *
+ * 2026-05-13 fix: CNBC quote API returns price data only for dot-prefixed
+ * symbols. Legacy names (SP500, DJ30, NASDAQ, NIKKEI225, FTSE100, HK.HSI)
+ * return code=1 with no price — they are excluded.
+ */
 export const DEFAULT_CNBC_SYMBOLS: string[] = [
-  'SP500',     // S&P 500
-  'DJ30',      // Dow Jones Industrial Average
-  'NASDAQ',    // NASDAQ Composite
-  'NIKKEI225', // Nikkei 225
-  'FTSE100',   // FTSE 100
-  'HK.HSI',    // Hang Seng Index
+  '.SPX',   // S&P 500
+  '.DJI',   // Dow Jones Industrial Average
+  '.IXIC',  // NASDAQ Composite
+  '.N225',  // Nikkei 225
+  '.HSI',   // Hang Seng Index
+  '.FTSE',  // FTSE 100
 ];

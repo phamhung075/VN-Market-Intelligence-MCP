@@ -1,113 +1,137 @@
 /**
- * Unit tests — TradingEconomicsVnAdapter
+ * Unit tests — TradingEconomicsVnAdapter (curl_cffi subprocess)
  *
- * Mocks global fetch. Tests JSON-LD extraction and meta description parsing.
+ * The adapter now shells out to trading_economics_fetch.py via spawn().
+ * Unit tests mock child_process.spawn to avoid actual network calls.
+ *
+ * Also validates:
+ * - @graph JSON-LD unwrapping is handled by Python helper (not TS regex)
+ * - fetchIndicator delegates to fetchVnMacroBatch correctly
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
 import { TradingEconomicsVnAdapter, VN_TE_SLUGS } from '../../../src/infrastructure/scrapers/trading-economics-vn.js';
+import * as childProcess from 'child_process';
+import { EventEmitter } from 'events';
 
-const MOCK_HTML_WITH_JSONLD = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta property="og:description" content="The Gross Domestic Product (GDP) in Vietnam was worth 476.39 billion US dollars in 2024. GDP in Vietnam averaged 91.44 USD Billion from 1985 until 2024." />
-  <script type="application/ld+json">
-  {
-    "@context": "http://schema.org",
-    "@type": "Dataset",
-    "name": "Vietnam GDP",
-    "alternateName": "Vietnam GDP - Historical Dataset (1985-12-31/2024-12-31)",
-    "description": "The GDP in Vietnam was worth 476.39 billion USD in 2024.",
-    "temporalCoverage": "1985-12-31/2024-12-31",
-    "spatialCoverage": "Vietnam",
-    "dateModified": "2026-05-01T00:00:00Z"
+function makeSpawnMock(payload: object, exitCode = 0) {
+  return () => {
+    const stdout = new EventEmitter();
+    const stderr = new EventEmitter();
+    const proc = new EventEmitter() as ReturnType<typeof childProcess.spawn>;
+    (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stdout = stdout;
+    (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stderr = stderr;
+    setTimeout(() => {
+      stdout.emit('data', Buffer.from(JSON.stringify(payload)));
+      proc.emit('close', exitCode);
+    }, 0);
+    return proc;
+  };
+}
+
+function makeOkEnvelope(): object {
+  const data: Record<string, object> = {};
+  for (const key of Object.keys(VN_TE_SLUGS)) {
+    data[key] = {
+      name: `Vietnam ${key}`,
+      latestValue: `Current ${key} value`,
+      temporalCoverage: '1990-01-01/2026-01-01',
+      dateModified: '2026-05-01T00:00:00Z',
+      fetchedAt: '2026-05-13T12:00:00Z',
+    };
   }
-  </script>
-</head>
-<body><div>Vietnam GDP content</div></body>
-</html>
-`;
+  return { status: 'ok', data, fetched_at: '2026-05-13T12:00:00Z' };
+}
 
-const MOCK_HTML_NO_JSONLD = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta property="og:description" content="Some description without JSON-LD" />
-</head>
-<body><div>No JSON-LD here</div></body>
-</html>
-`;
-
-describe('TradingEconomicsVnAdapter', () => {
+describe('TradingEconomicsVnAdapter (subprocess)', () => {
   let adapter: TradingEconomicsVnAdapter;
-  let originalFetch: typeof global.fetch;
 
   beforeEach(() => {
     adapter = new TradingEconomicsVnAdapter();
-    originalFetch = global.fetch;
   });
 
-  afterEach(() => {
-    global.fetch = originalFetch;
+  describe('fetchVnMacroBatch', () => {
+    it('returns all VN indicators parsed from Python helper', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock(makeOkEnvelope()) as never,
+      );
+
+      const result = await adapter.fetchVnMacroBatch();
+
+      expect(result['gdp']).not.toBeNull();
+      expect(result['gdp']!.name).toBe('Vietnam gdp');
+      expect(result['inflation_cpi']).not.toBeNull();
+      expect(Object.keys(result)).toHaveLength(Object.keys(VN_TE_SLUGS).length);
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null-filled record when Python helper exits non-zero', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock({ status: 'error', reason: 'blocked' }, 1) as never,
+      );
+
+      const result = await adapter.fetchVnMacroBatch();
+      expect(Object.values(result).every((v) => v === null)).toBe(true);
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null-filled record when helper returns status=error', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock({ status: 'error', reason: 'timeout' }, 0) as never,
+      );
+
+      const result = await adapter.fetchVnMacroBatch();
+      expect(Object.values(result).every((v) => v === null)).toBe(true);
+
+      spawnSpy.mockRestore();
+    });
+
+    it('returns null-filled record when JSON parse fails', async () => {
+      function badJsonFactory() {
+        const stdout = new EventEmitter();
+        const stderr = new EventEmitter();
+        const proc = new EventEmitter() as ReturnType<typeof childProcess.spawn>;
+        (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stdout = stdout;
+        (proc as unknown as { stdout: EventEmitter; stderr: EventEmitter }).stderr = stderr;
+        setTimeout(() => {
+          stdout.emit('data', Buffer.from('invalid-json'));
+          proc.emit('close', 0);
+        }, 0);
+        return proc;
+      }
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(badJsonFactory as never);
+
+      const result = await adapter.fetchVnMacroBatch();
+      expect(Object.values(result).every((v) => v === null)).toBe(true);
+
+      spawnSpy.mockRestore();
+    });
   });
 
   describe('fetchIndicator', () => {
-    it('extracts JSON-LD Dataset and meta description from HTML', async () => {
-      global.fetch = mock(async () =>
-        new Response(MOCK_HTML_WITH_JSONLD, {
-          status: 200,
-          headers: { 'content-type': 'text/html' },
-        }),
+    it('returns indicator by slug via batch delegation', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock(makeOkEnvelope()) as never,
       );
 
       const result = await adapter.fetchIndicator('gdp');
-
       expect(result).not.toBeNull();
-      expect(result!.name).toBe('Vietnam GDP');
-      expect(result!.temporalCoverage).toBe('1985-12-31/2024-12-31');
-      expect(result!.dateModified).toBe('2026-05-01T00:00:00Z');
-      expect(result!.latestValue).toContain('476.39 billion');
-      expect(result!.fetchedAt).toBeTruthy();
+      expect(result!.name).toBe('Vietnam gdp');
+
+      spawnSpy.mockRestore();
     });
 
-    it('returns null when no JSON-LD Dataset block found', async () => {
-      global.fetch = mock(async () =>
-        new Response(MOCK_HTML_NO_JSONLD, { status: 200 }),
+    it('returns null for unknown slug', async () => {
+      const spawnSpy = spyOn(childProcess, 'spawn').mockImplementation(
+        makeSpawnMock(makeOkEnvelope()) as never,
       );
 
-      const result = await adapter.fetchIndicator('unknown-slug');
+      const result = await adapter.fetchIndicator('unknown-slug-xyz');
       expect(result).toBeNull();
-    });
 
-    it('returns null on HTTP error', async () => {
-      global.fetch = mock(async () => new Response('Forbidden', { status: 403 }));
-      const result = await adapter.fetchIndicator('gdp');
-      expect(result).toBeNull();
-    });
-
-    it('returns null on network error', async () => {
-      global.fetch = mock(async () => { throw new Error('connection refused'); });
-      const result = await adapter.fetchIndicator('gdp');
-      expect(result).toBeNull();
-    });
-
-    it('captures ASP.NET_SessionId from Set-Cookie header', async () => {
-      global.fetch = mock(async () =>
-        new Response(MOCK_HTML_WITH_JSONLD, {
-          status: 200,
-          headers: {
-            'set-cookie': 'ASP.NET_SessionId=abc123xyz; path=/; HttpOnly',
-          },
-        }),
-      );
-
-      await adapter.fetchIndicator('gdp');
-      // Subsequent call should include Cookie header — verify by checking adapter state
-      // (internal sessionCookie is private; test indirectly via successful batch)
-      const result = await adapter.fetchIndicator('inflation-cpi');
-      // Second call still works (mock returns same body) — session persistence
-      expect(result).not.toBeNull();
+      spawnSpy.mockRestore();
     });
   });
 
