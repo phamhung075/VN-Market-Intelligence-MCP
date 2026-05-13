@@ -1,6 +1,14 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 16:04 UTC | **Sprint:** c76
+**Last updated:** 2026-05-13 17:04 UTC | **Sprint:** c77-1903a
+
+### Alert Cycle (17:02–17:04 UTC) — 2026-05-13
+- Signals: 3 (price_anomaly: GAS id=3092, VRE id=3093, EIB id=3094 — all from market-watcher)
+- Fired: 0 | Suppressed: 3 | MARKET: 0
+- Suppressed: GAS (conf=0.50/0.80, σ=2.56, no price alert confirm), VRE (conf=0.50/0.80, σ=1.90), EIB (conf=0.50/0.80, σ=1.64)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
 
 ### Alert Cycle (16:03–16:04 UTC) — 2026-05-13
 - Signals: 2 (urgent_news: FPT id=3085 from news-scout; price_anomaly: GAS id=3088 from market-watcher)
@@ -12,6 +20,15 @@
 - Suppressed: GAS id=3088 (price_anomaly — get_alerts(type=price) empty; not confirmed)
 - Macro: Brent $106.80 | Gold $4703.90 | USD/VND 26,315 | DXY 98.48 USD STABLE | US10Y 4.49% NEUTRAL
 - log_agent_work id=765
+
+## Cycle — 16:04 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: 2 signals received (FPT urgent_news conf=0.50 below NEUTRAL threshold; GAS price_anomaly unconfirmed via active price alerts). Legal/crisis clear. Macro snapshot returning correct regime labels (NEUTRAL, FII_OUTFLOW_RISK) this cycle.
+- **actions**: record_signal_outcome suppressed ×2; send_telegram work; log_agent_work id=765
+- **next_cycle_hint**: Monitor FPT — April profit +21% news still circulating (impact_score=8); watch for cross-validation or confidence upgrade. GAS oil_gas sector bullish momentum may generate new price_anomaly if session opens with continuation.
+- **estimated_tokens**: 7000
+- **doc_self_heal**: `.claude/tools/package/alert-commander.md` Key Params for `log_agent_work` incomplete — requires `agent_name` (REQUIRED) + two-step status pattern (running→completed with `id`). File protected, manual update needed.
 
 ### Alert Cycle (15:02–15:03 UTC) — 2026-05-13
 - Signals: 2 (price_anomaly: GAS id=3082, VRE id=3083 — from market-watcher, created 14:40 UTC)
