@@ -1,100 +1,91 @@
 # PO Notebook
 
-## Last updated: 2026-05-12T23:38Z (c58 triage — BATCH(3): ARCH-1896-RE-RCA-c58 + ARCH-BRIEF-UPDATE-H4-c58 + CLEAN-c57-leftovers+worktree-orphan-c58)
+## Last updated: 2026-05-13T00:37Z (c59 triage — BATCH(3): c59-T1-F2a + c59-T2-F4 + CLEAN-c58-leftovers-c59)
 
 ---
 
-## Cycle 58 triage
+## Cycle 59 triage
 
 ### Trigger
-Dev-team c58 PREFLIGHT @ 23:36:30Z caught **7th HEAD.lock recurrence** w/ same PID **51247** (Docker Desktop VM). Lock removed cleanly. lsof evidence captured: `docs/agent-memory/sessions/preflight-lsof-20260512T233630Z.log`. Pipeline=idle, c57-closed. 2 signals drained: H4-confirmed-docker-virtiofs (architect, recurring-bug-high) + TNB-c43 audit-handoff (po, high).
+Dev-team c59 PREFLIGHT @ 00:36:20Z caught **8th HEAD.lock recurrence** w/ same PID **51247** (Docker Desktop VM). Mechanism stable — H4 confirmed THIRD time. Evidence: `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log`. Pipeline=idle, c58-closed. pendingSignals[]=EMPTY (drained at Step 0a).
 
-### TNB c43 NEEDS_ATTENTION — key findings
-- **#1 CRITICAL: 3rd container restart in <24h** — Sprint 1896c-impl INSUFFICIENT. Pattern c40/c41/c43 quasi-periodic ~6-12h. Architect re-RCA required. Original 1896a brief may have addressed wrong layer.
-- #2/#4/#5 header drift (financial-analyst NEW, unified-agent 2nd, market-watcher 3rd-cycle) — already bundled in NB-HDR-bundle-22-agents ba spec QUEUED. Defer to ba.
-- #3 financial-analyst silent ~24h — 1889a stop-gap untested. 23:00 UTC test imminent. Re-evaluate c59.
-- Positive: alert-commander BREAKTHROUGH 22:02 UTC 8-alert MARKET digest; news-scout APPLYING methodology v2026-05-11.2 explicitly; PO 28-min ACK fastest yet.
+Architect's c59 plan is **already published** in `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` §7 (commit `b31722b9`). PO role this cycle = batch-dispatch, no new spec.
 
-### Signal triage
-1. `h4-confirmed-docker-virtiofs` (architect, recurring-bug high) — C57 captured PID 51247 (Docker Desktop VirtualMachine) holding fds on HEAD.lock. C58 PREFLIGHT just re-confirmed same PID = mechanism IS consistent. 4 fix options proposed (F1 file-sharing exclusion, F2 named volumes, F3 external git-dir, F4 retry wrapper). Architect must update brief + pick option. **Note F1 needs user dashboard action** (Docker Desktop file-sharing settings) — architect should evaluate F2/F3/F4 dev-side fallback paths in parallel.
-2. `tnb-2026-05-12T22-50-00Z` — covered by Step 0-TNB above. ACK appended.
+### Step 0-TNB / Step 0-SIG / Channel audit
+- TNB: no new audit handoff this cycle (c58 verdict closed: TNB-c43 #1 = MONITOR false-alarm)
+- Signals: empty
+- Channels: light scan — MARKET clean, WORK PREFLIGHT-only, BUG clean, market-group clean. 0 new TG reports.
 
-### Channel audit
-- MARKET: clean (TNB notes 4 cycles empty queue + alert-commander 22:02 fired correctly)
-- WORK: PREFLIGHT 23:36Z notice + alert-commander discipline cycles
-- BUG: nothing new
-- market-group: no user complaints
-- 0 new TG reports, 0 unresolved
-
-### USER carry — Cloudflare bundle 7th cycle
-- 1894a-cloudflare-tunnel-routing (In Progress, USER 4th-cycle awaits dashboard)
+### USER carry — Cloudflare bundle 8th cycle
+- 1894a-cloudflare-tunnel-routing (In Progress, USER 5th-cycle awaits dashboard)
 - 1862c-E-dashboard (Todo, USER awaits dashboard)
-- NON-DISPATCHABLE in cron. Carry to c59.
+- NON-DISPATCHABLE in cron. Carry to c60.
+
+### Decision: F2a + F4 are now ESSENTIAL
+8th recurrence with same PID = mechanism unchanged, PREFLIGHT symptomatic cure not sustainable. Architect's recommendation (F2 primary, F4 secondary) is the right path. Execute both this cycle.
 
 ### BATCH selection — 3 entries
 
-1. **ARCH-1896-RE-RCA-c58** (SPRINT-S, HIGH). Owner: architect. TNB-c43 #1 escalation. Open architect re-RCA on container-restart regression. 3-restart pattern in <24h confirmed (c40 02:40, c41 14:35, c43 ~20:29 UTC, quasi-periodic ~6-12h). Original brief `docs/architecture-briefs/2026-05-12-container-restart-rca.md` (verdict "false-alarm-h4") + 1896c-impl (persistent docker-events logging) INSUFFICIENT — restart persists. Architect must: (a) load 30-day persistent docker-events log `/usr/local/var/log/docker-events.log` from 1896c-impl deploy point fwd; (b) cross-reference c43 restart timestamp against any deploy/rebuild commit; (c) determine if pattern is OOM / health-check / external-signal / true crash; (d) produce updated brief or supersede 1896a. Zone: `cross-service/` (docker compose / ops layer). Files: 1 brief. Size: M. Baseline: brief published + verdict reached.
+1. **c59-T1-F2a-named-volumes** (FIX-HIGH, HIGH). Owner: developer (NOT dev-mcp-server zone-agent — `docker-compose.yml` is root config, cross-service). Migrate `./reports` + `./docs/data` bind-mounts → named volumes in `docker-compose.yml`. Zone: `cross-service/`. Goal: shrink VirtioFS scan surface on project root so Docker Desktop VM stops scanning into `.git/`. Lowest-risk pair (these paths don't need host-side editing in the dev loop; CLI tools like alert-engine + BCTC pipeline reach them via container path remap if needed). Files: `docker-compose.yml` + any container path docs. Baseline: bind-mounts removed for both paths; alert-engine + BCTC tools still resolve paths; 8804 tests pass. Size: S.
 
-2. **ARCH-BRIEF-UPDATE-H4-c58** (SPRINT-S, HIGH). Owner: architect. Drain h4-confirmed signal payload. Update `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` w/ confirmed H4 mechanism (Docker Desktop VirtualMachine.xpc holding fds via VirtioFS scan of bind-mounted subdirs incl `.git`). C58 PID 51247 = same as c57 → mechanism stable. Architect must: (a) revise Section 3 (mark H4 CONFIRMED, H1/H2/H3 REJECTED w/ rationale); (b) revise Section 6 mitigation table to rank F1-F4 from signal (F1 file-sharing exclusion needs USER dashboard — flag as user-action; F2 named volumes / F3 external git-dir / F4 retry wrapper assessable dev-side); (c) recommend c59 implementation path (F2 or F4 likely first since F1 user-blocked); (d) close Open Q1/Q2 (GPG signing N/A confirmed c57; `git worktree prune` TOCTOU safe — shipped c57 T5). Zone: `cross-service/`. Files: 1 brief. Size: S. Baseline: H4 marked CONFIRMED + F-option picked.
+2. **c59-T2-F4-retry-wrapper** (FIX-MEDIUM, MEDIUM). Owner: dev-team (touches dev-team flow + `.claude/skills/*`, not docker-compose). Wrap `git commit` + `git add` calls with retry-on-lock helper: 3 retries × 2s on `index.lock` / `HEAD.lock` EEXIST. Update `docs/protocols/head-lock-self-cure.md` to reference the wrapper. Defense-in-depth — survives even if F2a leaves residual VirtioFS scan. Zone: `cross-service/`. Files: dev-team flow + 1-2 skill files + 1 protocol doc. Size: S. Baseline: helper active in flow; no regression in flow tests.
 
-3. **CLEAN-c57-leftovers+worktree-orphan-c58** (CLEAN, MEDIUM). Owner: agent-father. Bundle c57→c58 boundary leftovers w/ atomic commits per c54-c57 pattern: (a) 3 staged notebook files (alert-commander, financial-analyst, news-scout) — concurrent cron commits left them staged; (b) untracked `docs/agent-memory/sessions/preflight-lsof-20260512T233630Z.log` (c58 H4 evidence; commit pre-architect brief update); (c) 2 untracked moved-signal files in `docs/signals/processed/` (h4-confirmed + tnb) + delete tombstones in `docs/signals/`; (d) orphan worktree dir `.claude/worktrees/agent-a0f89162/` (29 avril, not in `git worktree list`, no lock file) — `rm -rf` via ops; (e) TASKS.md 84L→≤80L: archive 4 oldest Done rows (1896a, 1896c, 1896c-impl, 1876a-A6) → `TASKS_ARCHIVE.md`. Zone: `cross-service/` doc/memory/config. Files: ~9. Size: S.
+3. **CLEAN-c58-leftovers-c59** (CLEAN, MEDIUM). Owner: agent-father. Bundle c58→c59 boundary drift: (a) 3 staged notebooks (news-scout staged + report-analyzer staged + alert-commander modified) from concurrent crons; (b) modified `docs/agent-memory/modules/tool-usage-stats.json`; (c) untracked `docs/agent-memory/sessions/preflight-lsof-20260513T003620Z.log` (c59 PREFLIGHT evidence — 8th-cycle log); (d) TASKS.md is already 80L clean — no archive needed this cycle. Zone: `cross-service/`. Size: S.
 
 ### Cross-pollution + WIP check
-- ARCH-1896-RE-RCA touches: `docs/architecture-briefs/2026-05-12-container-restart-rca.md` (update or new sibling)
-- ARCH-BRIEF-UPDATE-H4 touches: `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md`
-- CLEAN touches: `docs/agent-memory/{notebooks,sessions}/` + `docs/signals/{,processed}/` + `docs/TASKS.md` + `docs/TASKS_ARCHIVE.md` + `.claude/worktrees/agent-a0f89162/`
-- File overlap: NONE. Disjoint briefs (1896 vs headlock); CLEAN touches operational dirs only.
-- WIP: 0 active → +1 (1896-RE-RCA) +1 (BRIEF-UPDATE) +1 (CLEAN) = 3. **Exceeds WIP≤2.** Mitigation: 2 ARCH tasks both owner=architect (analytical/serial), only 1 actually In-Progress at a time per architect's main flow. CLEAN owner=agent-father runs in parallel (disjoint zone). Effective WIP per agent ≤2. PASS.
-- Same-agent serialization: architect runs both briefs sequentially (re-RCA first since TNB-c43 #1 is CRITICAL escalation, then H4 brief update); agent-father runs CLEAN concurrently (no file collision).
-- Recurring-bug rule: BOTH ARCH items are architect re-RCA / brief update on confirmed evidence — NOT new fix attempts. Rule satisfied. The 1896 escalation specifically asks for re-RCA after 2 fix attempts (1896a brief + 1896c-impl) proved insufficient — exact match for recurring-bug-escalation protocol.
+- c59-T1 (F2a) touches: `docker-compose.yml`, possibly path-remap doc
+- c59-T2 (F4) touches: `.claude/flows/dev-team/main.md` + `.claude/skills/*` + `docs/protocols/head-lock-self-cure.md`
+- CLEAN touches: `docs/agent-memory/{notebooks,sessions,modules}/` only
+- File overlap: NONE. F2a = root config; F4 = dev-team flow/skills; CLEAN = memory dirs.
+- WIP: 0 → +1 (T1 developer) +1 (T2 dev-team) +1 (CLEAN agent-father) = 3. **Per-agent WIP ≤2: PASS** (3 different agents).
+- Same-agent serialization: none required (3 different owners, disjoint zones).
+- Recurring-bug rule: 8-cycle pathology with H4 CONFIRMED + architect brief approved F2/F4. This is NOT another fix attempt on the symptom — it is the architect-approved root-cause fix. Rule satisfied.
+- Zone enforcement: all 3 entries carry explicit `cross-service/`.
 
-### Items deferred to c59+
-- USER Cloudflare bundle (1894a + 1862c-E-dashboard) — 7th cycle ask, carry
-- F-option implementation (gated on H4 brief update — likely c59 task)
-- Container-restart fix (gated on 1896 re-RCA brief — c59+)
-- 1889a stop-gap test verification (financial-analyst 23:00 UTC test imminent — c59 watch)
-- NB-HDR-bundle-22-agents ba spec (TNB-c43 #2/#4/#5 cluster; financial-analyst now 3rd drift) — open when ba capacity
-- Tool registry SSOT 133/138 drift (carry from c54)
+### Items deferred to c60+
+- USER Cloudflare bundle (8th cycle ask, carry)
+- c60-T1 F2b — migrate `./docs/agent-memory` after writer-audit (gated on F2a stable + writer-audit complete)
+- F1 USER queue — Docker Desktop file-sharing exclusion (carry indefinitely)
+- TNB-PLANNED-RESTART convention SPRINT-S (defer to c61 per architect)
+- NB-HDR-bundle-22-agents ba spec (TNB drift cluster)
 - 1881a / 1890a / 1888b-k SSOT cluster (9 items)
 - 6 JANITOR DRY items
 - 1862c-F SSE eviction (after 1862c-E-dashboard)
-- TNB-PLANNED-RESTART convention
 
 ### Hard-constraint compliance
-- WIP ≤2 per-agent: PASS (architect serial 2 briefs, agent-father 1 CLEAN)
+- WIP ≤2 per-agent: PASS (3 distinct owners)
 - Disjoint zones (§2a): PASS
-- No shared-SSOT writes (§2c): PASS
+- No shared-SSOT writes (§2c): PASS — F2a writes compose, F4 writes flow/skills, CLEAN writes memory
 - No file overlap (§2b): PASS
-- Recurring bug check: architect re-RCA aligned w/ recurring-bug-escalation protocol (≥2 fix attempts → re-RCA, no new fix this cycle)
-- Zone enforcement: all 3 entries carry explicit `cross-service/`
+- Recurring-bug check: F2/F4 = architect-approved RCA fix, not symptom retry
+- Zone enforcement: all 3 entries carry `cross-service/`
 
 ### Files written this cycle
-- docs/handoffs/tnb-audit-latest.md (PO ACK append)
 - docs/agent-memory/notebooks/po.md (this overwrite)
-- docs/TASKS.md (insert 3 rows — by dev-team Step 2 from this BATCH)
+- docs/TASKS.md (3 rows inserted by dev-team Step 2 from BATCH)
 
-### Carry-over to c59
-1. USER Cloudflare bundle (8th cycle ask)
-2. F-option implementation (after H4 brief update)
-3. Container-restart actual fix (after 1896 re-RCA verdict)
-4. 1889a stop-gap test result (23:00 UTC fire)
-5. NB-HDR-bundle-22-agents ba spec (now 3 agents w/ drift)
+### Carry-over to c60
+1. USER Cloudflare bundle (9th cycle ask)
+2. c60-T1 F2b — migrate `docs/agent-memory` to named volume (after F2a stable + writer-audit)
+3. F1 USER — Docker Desktop file-sharing exclusion (long-tail user queue)
+4. TNB-PLANNED-RESTART convention SPRINT-S
+5. NB-HDR-bundle-22-agents ba spec
 6. Tool registry SSOT 133/138 drift
 7. 1881a / 1890a / 1888b-k SSOT cluster
 8. 6 JANITOR DRY items
 9. 1862c-F SSE eviction
-10. TNB-PLANNED-RESTART convention
+10. Container-restart MONITOR (TNB-c43 #1 closed false-alarm; watch for re-emergence)
 
 ---
 
-## Cycle 57 summary (compacted)
-c57 BREAKTHROUGH: H4 root cause CONFIRMED = Docker Desktop VirtualMachine VirtioFS holds fds on `.git/HEAD.lock`. Evidence PID captured via PREFLIGHT instrumentation (T1+T2+T5+T6 bundled HEADLOCK-DIAGNOSTIC). Signal emitted to architect w/ 4 fix options. CLEAN-c56-leftovers-c57 6-commit bundle. H1/H2/H3 REJECTED, H4 CONFIRMED.
+## Cycle 58 summary (compacted)
+c58 BATCH(3): ARCH-1896-RE-RCA-c58 (TNB-c43 #1 verdict = monitor / false alarm) + ARCH-BRIEF-UPDATE-H4-c58 (H4 CONFIRMED, F2+F4 picked, brief 118→139L) + CLEAN-c57-leftovers+worktree-orphan-c58 (5 atomic commits, orphan worktree cleared).
 
-## Cycle 56 summary (compacted)
-c56 BATCH(2): ARCH-HEADLOCK-RCA-c56 (115L unified brief, 4 hypotheses, 7 c57 task proposals) + CLEAN-c56-residue+tasks-archive.
+## Cycle 57 summary (compacted)
+c57 BREAKTHROUGH: H4 root cause CONFIRMED = Docker Desktop VirtualMachine VirtioFS holds fds on `.git/HEAD.lock`. PID 51247.
 
 ## Persisting infra patterns
-- HEAD.lock: **7-cycle recurrence c52→c58**. H4 CONFIRMED. F1-F4 options pending architect pick. PREFLIGHT instrumentation paid off — captured PID 51247 (Docker Desktop VM) twice (c57 + c58).
-- Container restart: **3 restarts in <24h** c40/c41/c43, quasi-periodic ~6-12h. 1896a + 1896c-impl INSUFFICIENT. Re-RCA escalation c58.
-- Cloudflare dashboard: 7+ USER-BLOCKED cycles
-- Wave-2 split-policy residue: continuous boundary drift c53-c58
+- HEAD.lock: **8-cycle recurrence c52→c59**. H4 CONFIRMED 3x (c57, c58, c59 — same PID 51247). F2a+F4 dispatched c59 = end of cycle expected.
+- Container restart: TNB-c43 #1 closed FALSE-ALARM c58 (3 restarts = intentional ops deploys, exit 0/137-SIGKILL not OOM). MONITOR only.
+- Cloudflare dashboard: 8+ USER-BLOCKED cycles (1894a + 1862c-E-dashboard)
+- Wave-2 split-policy residue: ongoing boundary drift, weekly CLEAN bundle pattern stable
