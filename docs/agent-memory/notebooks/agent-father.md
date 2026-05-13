@@ -1,31 +1,30 @@
 # Agent Father — Notebook
 
 **Last updated:** 2026-05-13
-**Sprint:** c58 / CLEAN-c57-leftovers+worktree-orphan-c58
+**Sprint:** c59 / CLEAN-c58-leftovers-c59
 
 ## This Session
 
-CLEAN-c57-leftovers+worktree-orphan-c58: 5 atomic commits (A→E). Committed 3 staged notebooks (alert-commander+financial-analyst+news-scout), H4 PREFLIGHT evidence log (7th recurrence, PID 51247), 2 processed signals (renames), and TASKS.md trim 84L→80L (archived 1896a+1896c+1896c-impl+1876a-A6). Orphan worktree dir .claude/worktrees/agent-a0f89162 removed (untracked, no commit). index.lock recurrence (removed stale lock, 1 retry). Phase 5 gate GREEN for all commits.
+CLEAN-c58-leftovers-c59: 4 atomic commits (A→D). Skipped commit B (alert-commander already committed as bb779dd4). Committed staged notebooks (news-scout+report-analyzer), tool-usage-stats module refresh, and c59 PREFLIGHT evidence log (8th recurrence, PID 51247). Phase 5 gate GREEN for all commits. c2-alert non-blocking warning on commit C (modules/ vs notebooks/ scope — expected).
 
-## Commits (c58)
+## Commits (c59 CLEAN)
 
-- `b09f0841` chore(memory/c58): notebooks alert-commander+financial-analyst+news-scout 2026-05-12
-- `9d9aa017` chore(dev-team/c58): PREFLIGHT lsof evidence — HEAD.lock 7th recurrence captured
-- `f7c24999` chore(signals/c58): drain h4-confirmed + tnb-2026-05-12T22-50-00Z → processed
-- (worktree removal: untracked, no commit needed)
-- `c6d7ad8f` chore(c58/tasks): archive 4 Done rows — TASKS.md 84L→80L
+- `cae33188` chore(memory/c59): notebooks news-scout+report-analyzer 2026-05-13
+- B skipped — alert-commander already committed (bb779dd4)
+- `064ec4e2` chore(memory/c59): tool-usage-stats module refresh
+- `25cfa43a` chore(dev-team/c59): PREFLIGHT lsof evidence — HEAD.lock 8th recurrence captured
 
 ## Patterns Noticed
 
-- index.lock recurrence: stale lock from prior process. Safe rm if no live git pid running. Verified before removing.
-- git rename detection: works correctly when move is staged (both delete + create in same git add).
-- TASKS.md trim: Done rows to archive = 4 oldest rows. Move to TASKS_ARCHIVE.md inline table row (compact, not expanded).
+- alert-commander pre-check critical: saved a duplicate commit (already committed in prior cycle).
+- c2-alert non-blocking: modules/ scope warning acceptable, not a violation.
+- index-check.sh: ABORT output on staged files = expected gate behavior, not error. Staged files should be committed, then gate re-run.
 
 ## Zone Health
 
-No zone drift detected. All agent file changes were notebook-only (committed by other cron crews).
+No zone drift. Notebook-only + session log commit. Working tree clean after D.
 
 ## Carry-over (next session)
 
-- NEXT: architect (ARCH-1896-RE-RCA-c58) — H4 evidence (SHA 9d9aa017) committed, ready for Tier 3 brief update.
-- git worktree list clean: only main branch, no orphans.
+- NEXT: developer (c59-T1-F2a-named-volumes) — H4 evidence SHA 25cfa43a committed, 8th recurrence baseline for F2a AC.
+- H4 mechanism stable 3rd consecutive cycle (PIDs consistent).
