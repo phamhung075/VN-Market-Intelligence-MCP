@@ -357,7 +357,7 @@ export function registerTickerIntelligenceTools(
 ): void {
   server.tool(
     "get_ticker_intelligence",
-    "Get a complete Vietnamese-language pre-trade intelligence brief for one stock ticker. Aggregates latest price, evidence score, insider activity (7 days), foreign flow, BCTC AI outlook, and prediction calibration into a single formatted response.",
+    "Get a complete Vietnamese-language pre-trade intelligence brief for one stock ticker. Aggregates latest price, evidence score, insider activity (7 days), foreign flow, BCTC AI outlook, and prediction calibration into a single formatted response. Source tier: 2 (aggregator — multi-source composite: prices tier-2 + evidence tier-3 + insider tier-1 + prediction tier-3; conservative rule assigns tier 2).",
     {
       code: z
         .string()
@@ -369,7 +369,13 @@ export function registerTickerIntelligenceTools(
     async ({ code }) => {
       const resolvedDb = db ?? getDb();
       const text = await handleGetTickerIntelligence(code, resolvedDb);
-      return { content: [{ type: "text" as const, text }] };
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify({
+          source_tier: 2 as const,
+          text,
+          fetchedAt: new Date().toISOString(),
+        }, null, 2) }],
+      };
     },
   );
 }

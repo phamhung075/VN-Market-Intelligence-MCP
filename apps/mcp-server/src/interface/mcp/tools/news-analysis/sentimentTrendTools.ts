@@ -159,7 +159,7 @@ export function registerSentimentTrendTools(
 ): void {
   server.tool(
     "get_sentiment_trend",
-    "Show sentiment trend for a stock over N days based on past analyses",
+    "Show sentiment trend for a stock over N days based on past analyses. Source tier: 3 (derived — computed from stored rag_analyses sentiment entries; fully derived signal).",
     {
       stock_code: z.string().optional().describe("Stock code (e.g. 'VNM'). Alias: 'symbol'."),
       symbol: z.string().optional().describe("Stock code alias for stock_code (cross-tool consistency)."),
@@ -177,7 +177,10 @@ export function registerSentimentTrendTools(
       const raw = stock_code ?? symbol;
       if (!raw) {
         return {
-          content: [{ type: "text" as const, text: "Error: stock_code (or symbol) is required" }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            error: "Error: stock_code (or symbol) is required",
+          }, null, 2) }],
         };
       }
       const code = raw.toUpperCase().trim();
@@ -188,7 +191,11 @@ export function registerSentimentTrendTools(
         const text = formatTrendOutput(trend);
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            text,
+            fetchedAt: new Date().toISOString(),
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_sentiment_trend] Failed", {
@@ -199,7 +206,10 @@ export function registerSentimentTrendTools(
           content: [
             {
               type: "text" as const,
-              text: `Error computing sentiment trend for ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              text: JSON.stringify({
+                source_tier: 3 as const,
+                error: `Error computing sentiment trend for ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              }, null, 2),
             },
           ],
         };

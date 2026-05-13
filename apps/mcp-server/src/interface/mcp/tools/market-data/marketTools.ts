@@ -81,7 +81,8 @@ export function registerMarketTools(server: McpServer): void {
     "Fetch live market prices from all Vietnamese exchanges (HOSE, HNX, UPCOM). " +
       "Optionally provide a list of stock codes to look up; if omitted or empty, " +
       "only the VN-Index benchmark is fetched. Each exchange fetch is error-isolated " +
-      "so a single exchange failure does not block results from the others.",
+      "so a single exchange failure does not block results from the others. " +
+      "Source tier: 2 (aggregator — VnDirect finfo-api v4 re-aggregates HOSE/HNX/UPCOM exchange data).",
     {
       codes: z
         .array(z.string().min(1).max(10))
@@ -254,7 +255,11 @@ export function registerMarketTools(server: McpServer): void {
         }
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 2 as const,
+            text,
+            fetchedAt: generatedAt,
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_market_snapshot] Error", {
@@ -264,7 +269,10 @@ export function registerMarketTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error fetching market snapshot: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error fetching market snapshot: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

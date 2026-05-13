@@ -100,7 +100,8 @@ export function registerDinhGiaTools(server: McpServer): void {
       "SBV max deposit rate from sbv_rates, then classifies the spread into one of: " +
       "CHEAP (spread >2pp), FAIRLY_VALUED (0 < spread ≤ 2pp), EXPENSIVE (spread ≤ 0), " +
       "or UNKNOWN (data unavailable). " +
-      "Returns label, spread, earningYield, depositRate, reasoning, and computedAt.",
+      "Returns label, spread, earningYield, depositRate, reasoning, and computedAt. " +
+      "Source tier: 3 (derived — yield spread is computed from cached earnings yield and deposit rate).",
     {
       /**
        * Test-only: inject earnings yield directly (bypasses DB read).
@@ -134,7 +135,10 @@ export function registerDinhGiaTools(server: McpServer): void {
         );
 
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(signal, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            ...signal,
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_yield_spread_signal] unexpected error", {
@@ -144,7 +148,10 @@ export function registerDinhGiaTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error computing yield spread signal: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 3 as const,
+                error: `Error computing yield spread signal: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

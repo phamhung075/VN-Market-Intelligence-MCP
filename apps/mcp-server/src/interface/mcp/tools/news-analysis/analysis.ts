@@ -87,7 +87,8 @@ export function registerAnalysisTools(server: McpServer): void {
     "fetch_and_analyze",
     "Fetch live news from RSS sources (CafeF, VnExpress, Reuters/AP News), " +
       "normalize each item into a structured AnalysisEntry, store in SQLite RAG memory and vector store, " +
-      "and return a formatted summary of the market intelligence gathered.",
+      "and return a formatted summary of the market intelligence gathered. " +
+      "Source tier: 2 (aggregator — all 4 RSS sources are news aggregators; no official government source).",
     {
       sources: z
         .array(z.enum(["cafef", "vnexpress", "reuters", "vneconomy"]))
@@ -122,7 +123,11 @@ export function registerAnalysisTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `No news items fetched from sources: ${sources.join(", ")}.\nThis may be due to network unavailability or empty feeds.`,
+                text: JSON.stringify({
+                  source_tier: 2 as const,
+                  text: `No news items fetched from sources: ${sources.join(", ")}.\nThis may be due to network unavailability or empty feeds.`,
+                  fetchedAt: new Date().toISOString(),
+                }, null, 2),
               },
             ],
           };
@@ -205,7 +210,11 @@ export function registerAnalysisTools(server: McpServer): void {
         const lines = [header, "", ...entries.map(formatAnalysisEntry)];
 
         return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 2 as const,
+            text: lines.join("\n"),
+            fetchedAt: new Date().toISOString(),
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[fetch_and_analyze] Error", {
@@ -215,7 +224,10 @@ export function registerAnalysisTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error fetching and analyzing news: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error fetching and analyzing news: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

@@ -454,7 +454,9 @@ export function registerMacroTools(server: McpServer): void {
       "from Yahoo Finance and central bank rates (overnight, refinancing, official FX) " +
       "from the State Bank of Vietnam (SBV). Returns a formatted macro intelligence " +
       "summary with signal cascade indicators for energy, gold, banking, real estate " +
-      "and aviation sectors. Each source fetch is independently error-isolated.",
+      "and aviation sectors. Each source fetch is independently error-isolated. " +
+      "Source tier: 2 (aggregator — Yahoo Finance + Vietcombank XML proxy for SBV rates). " +
+      "TODO: upgrade to tier 1 when direct SBV REST API is implemented.",
     {
       /**
        * Test-only: inject a CommoditySnapshot object directly (bypasses HTTP),
@@ -638,7 +640,11 @@ export function registerMacroTools(server: McpServer): void {
         const text = formatMacroSnapshot(snapshot, thienThoi, dinhGiaInputs);
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 2 as const,
+            text,
+            fetchedAt,
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_macro_snapshot] Unexpected error", {
@@ -648,7 +654,10 @@ export function registerMacroTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error fetching macro snapshot: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error fetching macro snapshot: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

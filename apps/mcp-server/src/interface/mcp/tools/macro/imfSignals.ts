@@ -32,7 +32,7 @@ import { logger } from "../../../../infrastructure/logger.js";
 export function registerImfSignalsTool(server: McpServer): void {
   server.tool(
     "get_imf_signals",
-    "Fetch latest IMF economic indicators and macro sentiment classification for VN market analysis. Returns global growth forecasts, inflation indicators, and sector impact scores derived from IMF DataMapper API data (refreshed every 6 hours).",
+    "Fetch latest IMF economic indicators and macro sentiment classification for VN market analysis. Returns global growth forecasts, inflation indicators, and sector impact scores derived from IMF DataMapper API data (refreshed every 6 hours). Source tier: 1 (primary official — direct IMF DataMapper REST API from imf.org).",
     {
       indicator_code: z
         .string()
@@ -68,7 +68,9 @@ export function registerImfSignalsTool(server: McpServer): void {
         });
 
         const response = {
+          source_tier: 1 as const,
           indicators: indicators.map((ind) => ({
+            source_tier: 1 as const,
             code: ind.code,
             name: ind.name,
             value: ind.value,
@@ -108,7 +110,7 @@ export function registerImfSignalsTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: message, indicators: [], data_count: 0 }, null, 2),
+              text: JSON.stringify({ source_tier: 1 as const, error: message, indicators: [], data_count: 0 }, null, 2),
             },
           ],
         };

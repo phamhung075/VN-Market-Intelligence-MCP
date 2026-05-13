@@ -52,7 +52,8 @@ export function registerMarketContextTools(server: McpServer): void {
       "(4) RECENT ANALYSIS — latest RAG analysis entries ordered by impact score; " +
       "(5) SYSTEM STATUS — health summary with pending alert count and last cycle time. " +
       "Use this at the start of every agent session instead of calling " +
-      "get_watchlist + get_market_snapshot + get_macro_snapshot + get_alerts + get_analysis_history separately.",
+      "get_watchlist + get_market_snapshot + get_macro_snapshot + get_alerts + get_analysis_history separately. " +
+      "Source tier: 2 (aggregator — compound: watchlist DB + macro DB + alerts DB + rag DB; conservative minimum across sub-sources).",
     {
       hours_back: z.coerce
         .number()
@@ -86,8 +87,13 @@ export function registerMarketContextTools(server: McpServer): void {
           buildSystemStatusText(db),
         ];
 
+        const text = sections.join("\n");
         return {
-          content: [{ type: "text" as const, text: sections.join("\n") }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 2 as const,
+            text,
+            fetchedAt: new Date().toISOString(),
+          }, null, 2) }],
         };
       } catch (err) {
         console.error("[get_market_context] Error:", err);
@@ -95,7 +101,10 @@ export function registerMarketContextTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error assembling market context: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error assembling market context: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

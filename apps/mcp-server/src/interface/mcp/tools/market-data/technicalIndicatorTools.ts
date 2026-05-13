@@ -268,7 +268,8 @@ export function registerTechnicalIndicatorTools(
     "Compute RSI(14), MACD(12,26,9), MA(5/20/50), and Bollinger Bands(20,2σ) " +
       "for a VN stock ticker using existing price history. Returns a Vietnamese-" +
       "friendly plain-text report with a TANG/GIAM/TRUNG TINH conclusion block. " +
-      "Reads from the local market_prices_history table — no new data fetches.",
+      "Reads from the local market_prices_history table — no new data fetches. " +
+      "Source tier: 3 (derived — all indicators computed from price history; no live external source).",
     {
       code: z
         .string()
@@ -321,7 +322,11 @@ export function registerTechnicalIndicatorTools(
         const text = formatReport(code, candles, lookbackDays);
 
         return {
-          content: [{ type: "text" as const, text }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 3 as const,
+            text,
+            fetchedAt: new Date().toISOString(),
+          }, null, 2) }],
         };
       } catch (err) {
         logger.error("[get_technical_indicators] Query failed", {
@@ -333,7 +338,10 @@ export function registerTechnicalIndicatorTools(
           content: [
             {
               type: "text" as const,
-              text: `Lỗi tính chỉ báo kỹ thuật ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              text: JSON.stringify({
+                source_tier: 3 as const,
+                error: `Lỗi tính chỉ báo kỹ thuật ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              }, null, 2),
             },
           ],
         };

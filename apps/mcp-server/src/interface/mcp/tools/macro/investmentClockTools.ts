@@ -97,7 +97,8 @@ export function registerInvestmentClockTools(server: McpServer): void {
       "Fallback growth: gdp_growth > 0 = UP. " +
       "Inflation: CPI > 3.0% = HIGH (SBV early-warning threshold); ≤ 3.0 = LOW. " +
       "Fallback inflation: inflation_rate column. " +
-      "Returns phase, raw signal values, signal labels, thresholds, and fetched_at for staleness assessment.",
+      "Returns phase, raw signal values, signal labels, thresholds, and fetched_at for staleness assessment. " +
+      "Source tier: 2 (aggregator — macro_indicators table populated by TradingEconomics scraper).",
     {
       /**
        * Test-only: inject snapshot values directly (bypasses DB read).
@@ -158,6 +159,7 @@ export function registerInvestmentClockTools(server: McpServer): void {
         });
 
         const result: {
+          source_tier: 2;
           phase: InvestmentClockPhase | null;
           reason?: string;
           pmi: number | null;
@@ -167,6 +169,7 @@ export function registerInvestmentClockTools(server: McpServer): void {
           thresholds: { pmi_expansion: number; cpi_pressure: number };
           fetched_at: string | null;
         } = {
+          source_tier: 2 as const,
           phase: classification.phase,
           ...(classification.reason ? { reason: classification.reason } : {}),
           pmi,
@@ -191,7 +194,10 @@ export function registerInvestmentClockTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Error computing investment clock phase: ${(err as Error).message}`,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error computing investment clock phase: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };
