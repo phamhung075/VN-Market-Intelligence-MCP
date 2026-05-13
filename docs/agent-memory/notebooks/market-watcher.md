@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 03:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 04:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -55,6 +55,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 0 signals posted. WORK telegram sent. Notebook + commit done.
 - **next_cycle_hint**: Watch GAS if move extends toward 2.0σ (>5.6%). Monitor KBC for heat-risk + declining real-estate breadth. Liquidity/breadth divergence context remains active.
 - **estimated_tokens**: 3500
+
+### Cycle (04:32–04:40)
+- Stocks: 31 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.56σ, HVN 2.65σ) | Volume spikes: 1 (GAS ~2.9x avg) | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (USD/VND 26,129, free-market gap ~0) | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- GAS +6.93% (2.56σ, 30d stddev 2.71%, vol 4.41M ~2.9x avg) → signal #3041 → alert-commander. Brent crude $106.51 tailwind. Evidence bullish 0.633. 2nd consecutive surge (+3.94% Mon).
+- HVN -2.78% (2.65σ, 30d stddev 1.05%, vol 421.8K) → signal #3042 → alert-commander. Evidence bearish 0.56. 4-day losing streak from 22,700 (May 7) to 21,000. Aviation sector -0.75% 1d.
+- Sector rotation: all 16 sectors STABLE (1d only). Oil/Gas +1.16%, Chemicals +2.63%, Securities +0.50% | Banking -0.34%, Aviation -0.75%, Real estate -0.38%
+- Chain findings: 0 (last 15 min) | chain_catalyst active: news-scout #3040 (2 CTCKs cut VN-Index 2026 target, day 2, regime_adj=9)
+
+## Metrics (cycle 2026-05-13 04:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
 
 ## Known patterns / preferences
 
