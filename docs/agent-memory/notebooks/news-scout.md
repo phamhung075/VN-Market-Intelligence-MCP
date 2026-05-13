@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 18:25 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-13 19:30 UTC | **Status:** OPERATIONAL
+
+### Cycle (19:22–19:30 UTC) 2026-05-13
+- Items: 20 | Impacts: 6 | Signals: [] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: GAS +6.93% chain 9/10 bullish → regime adj 9×0.7=6.3 (suppressed, <7). IMP insider sell post-CN M&A fetch=8/10 → not watchlist stock → suppressed. Khối ngoại bán ròng 14 phiên/13,000+B → adj 5×1.3=6.5 (suppressed, <7). Price alerts for VRE -6.91%, VHM -4.81%, banking -1.81% already fired by market-watcher. Market CLOSED (off-hours, 4h interval).
+- Suppressed: GAS oil boom (bullish TIGHTENING ×0.7=6.3<7), IMP insider exit (non-watchlist, DHG chain=4/10<7), FII 14d/13,000B (5×1.3=6.5<7), VIC Vượng new company (6×0.7=4.2), SSI retail IPO (6×0.7=4.2), GEX capital raise (not watchlist), gold $10k forecast (global neutral).
+- Notes: CARRY revised to FII_OUTFLOW_RISK from 14-session persistent outflow pattern. All price events already captured. No novel unpriced catalysts this cycle. Next cycle: ~23:00 UTC.
 
 ### Cycle (18:15–18:25 UTC) 2026-05-13
 - Items: 20 | Impacts: 7 | Signals: [urgent_news×1 #3100 GAS/oil-surge, chain_catalyst×2 #3101 oil_gas-bullish, #3102 FII-14d/13,000B-bearish] | Regime: NEUTRAL (get_macro_snapshot not in bootstrap; prior cycles TIGHTENING — news context: Fed rate hike fears/gold reversal confirm TIGHTENING likely) | Carry: NEUTRAL
