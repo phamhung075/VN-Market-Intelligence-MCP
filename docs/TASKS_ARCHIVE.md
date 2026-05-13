@@ -353,6 +353,19 @@ Full suite regression: 0 new failures vs Sprint 107 baseline.
 
 ---
 
+## Archive — Added 2026-05-13 by dev-team (c59 TASKS.md cap rotation)
+
+**Period:** 2026-05-12/13 c56-c57 | **Rows archived:** 4
+
+| Task ID | Title | Priority | Type | Owner | Completed |
+|---------|-------|----------|------|-------|-----------|
+| HEADLOCK-PREFLIGHT-VALIDATED-c57 | OPS-INFO: Step 0-PREFLIGHT fired correctly c57 (6th recurrence, age=1835s, size=0). Self-cure + WORK notify + signal. | INFO | OPS | dev-team | 2026-05-13 |
+| ARCH-HEADLOCK-RCA-c56 | ARCH-HIGH: Unified HEAD.lock + worktree RCA brief `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md` (115L). 4 hypotheses ranked. 7 c57 task proposals (T1-T7). Merge SHA `90998723`. | HIGH | ARCH | agents-architect | 2026-05-12 |
+| CLEAN-c56-residue+tasks-archive | CLEAN-MEDIUM: 46-file c55 drift bundle + TASKS 202L→79L. 7 atomic commits `702e446f`/`f07e19d7`/`9303e30b`/`816ddcef`/`27bfc2ff`/`e8bb263b`/`1b6baef7`. agent-father session had 3× HEAD.lock recurrence inline (feeds ARCH-HEADLOCK-RCA-c56). | MEDIUM | CLEAN | agent-father | 2026-05-12 |
+| HEADLOCK-PREFLIGHT-VALIDATED-c56 | OPS-INFO: Step 0-PREFLIGHT fired correctly c56 (5th recurrence, age=741s, size=0). Self-cure + WORK notify + signal emit `docs/signals/processed/2026-05-12T213640Z-headlock-5th-recurrence.routed-to-po.json`. | INFO | OPS | dev-team | 2026-05-12 |
+
+---
+
 ## Archive — Added 2026-05-13 by dev-team (c58 TASKS.md cap rotation)
 
 **Period:** 2026-05-12 c54-c55 | **Rows archived:** 4
