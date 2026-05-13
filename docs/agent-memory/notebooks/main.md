@@ -1,56 +1,60 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T09:25Z (c68 close — 1897g shipped C2-clean + 2nd consecutive clean ship; id=2874 finalized)
+**Written:** 2026-05-13T09:50Z (c69 close — RCA breakthrough on 1894a + 3 signals drained + concurrent activity acknowledged)
 
-## c68 (2026-05-13T09:13Z → 09:25Z, ~12 min)
+## c69 (2026-05-13T09:36Z → 09:50Z, ~14 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock age=324s 0B PID 51247 com.apple VirtioFS — **23rd** recurrence cured | lsof log `20260513T091323Z` |
-| 0a Drain | 0 pending signals | empty |
-| 1 PO Triage | Router discretion (state clear: 0 signals, 0 new telegrams, 1897g promoted CRITICAL c67, 2 fresh ops handoffs) → BATCH(1) | 1897g |
-| 3 Tier 1 | agent-father (1897g — C2 protocol preamble across 9 dev-*.md) | **shipped C2-ATOMIC clean `f4e2bcb5` — agent-father self-caught + reset alert-commander.md** |
-| MERGE GATE | No split required (2nd consecutive clean ship) | direct main |
-| Post | TASKS update (82L→80L) + this notebook + pipeline-state + close commit + push + WORK + id=2874 resolved=fixed | (in progress) |
+| 0 PREFLIGHT | No HEAD.lock present | **lock-free cycle — 1st in many** |
+| 0a Drain | 3 signals → processed/ | architect news-fetch design-complete + 2 qa (dev-vps-crawls HSX/HNX + dev-mcp-server VPS contract tests) |
+| 1 PO Triage | Router discretion (state clear: 0 telegrams, 1899a brief now ready, USER 1894a still blocking) → BATCH(1) | ops-cloudflared-restart-c69 |
+| 3 Tier 1 | ops (cloudflared service restart + curl verify) | **NO CODE SHIPPED but MAJOR RCA: cloudflared in NAMED-TUNNEL TOKEN MODE — local config.yml IGNORED** |
+| MERGE GATE | n/a (no code commit from ops; only docs updates by dev-team) | — |
+| Post | TASKS.md updates (1894a precision refine + 1899a brief-ready + 1894a-RCA-c69 Done row) + this notebook + pipeline-state + close commit | (in progress) |
 
-### Merge chain (origin/main after c68, since c67 close `2441f515`)
-- `4addf08d` chore(memory/alert-commander) — inter-cycle
-- `f4e2bcb5` **chore(agents/dev-preamble) — 1897g C2 PROTOCOL CODIFIED** (9 files, 98 insertions)
+### Merge chain (origin/main since c68 close `aa705af2`)
+All concurrent-agent ships landed BEFORE the c69 cron tick fired:
+- `0ce9162c` chore(memory/ops-vps-fetch): recon hsx-bctc HNX param contract fix
+- `4a86eef3` fix(vps-crawls/hsx-bctc): HNX `/vi-vn/` referer + `pNhomTin` empty + homepage guard (Q1/2026 PDFs now flowing)
+- `0da3f0ea` chore(memory/news-scout): notebook
+- `3d6383a2` test(mcp-server): VPS contract tests for push-prices and push-news (10/10 pass)
+- `171355cc` chore(memory/dev-mcp-server): notebook push-path-fix cycle
+- (architect brief `docs/architecture-briefs/2026-05-13-news-fetch-service.md` written 06:00Z — uncommitted but on disk)
 
-### MAJOR WIN #2: 2nd C2-CLEAN SHIP in 2 cycles
-- c67: 1st clean ship (572bd8c3, T-6 integration test) — proved inline C2 verification works.
-- c68: 2nd clean ship (f4e2bcb5, agent-father 1897g) — codified the protocol into preamble of 9 dev-*.md.
-- **agent-father self-applied the very protocol it was codifying**: detected `docs/agent-memory/notebooks/alert-commander.md` accidentally staged via concurrent activity → ran `git reset HEAD ...` → final staged list = exactly 9 expected files.
-- This validates: protocol in preamble + protocol in cycle prompt = double defense. Future dev specialists will carry the protocol durably.
+### 🔴 MAJOR RCA: 1894a 16-cycle blocker root cause finally identified
 
-### HEAD.lock recurrences (c68 = 1 cure)
-- 23rd @ 09:13Z PREFLIGHT — age=324s 0B canonical VirtioFS signature.
-- F4 idiom not exercised this cycle.
+For the **16 cycles** the user has been blocked on `POST https://zenmidi.com/api/push-news → 404`:
+- Multiple prior cycles claimed "applied fix to `~/.cloudflared/config.yml`" → fix was technically applied but **ineffective**.
+- ops c69 discovered the actual reason: cloudflared on this Mac runs in **NAMED TUNNEL TOKEN MODE** (launchd plist). In this mode, the local `config.yml` is IGNORED. **Ingress rules come from the Cloudflare DASHBOARD.**
+- Verified: localhost:4000/api/push-news returns 401 (mcp-server route healthy + auth working); `brew services restart cloudflared` succeeded; external `https://zenmidi.com/api/push-news` still returned 404.
+- **USER action now PRECISE**: log into https://dash.cloudflare.com → Cloudflare Tunnel → vn-market-mcp → Public Hostnames → add ingress rule Path `^/api/*` → Service `http://localhost:4000`. (Not a config file edit, not a service restart — a dashboard click.)
+- 1894a row in TASKS.md updated with the refined fix path. Priority bumped HIGH→CRITICAL.
 
-### c68 BATCH outcomes
-| Task | SHA | Status |
+### HEAD.lock (c69 = 0 cures)
+- First lock-free cycle in many. Background pattern persists at ~1/cycle steady-state but absent this iteration.
+
+### c69 BATCH outcomes
+| Task | Outcome | Status |
 |---|---|---|
-| 1897g — C2 preamble codify | f4e2bcb5 | DONE — 9 files, 98 insertions, **C2-atomic** |
+| ops-cloudflared-restart-c69 | RCA discovered: token-mode tunnel → dashboard config required, not local file | DONE (diagnostic) — no code ship; USER action precision-refined |
 
-### id=2874 telegram report (alert_quality 22%) — FINALIZED
-- Status: `processed`, claimed_by `dev-team`, resolution `fixed` @ c68.
-- Justification: SPIKE_006 6-task chain complete (c61→c67); domain-scorer-only path verified by T-6 integration test 572bd8c3; C2 protocol codification c68 prevents regression. Eligible for alert_quality re-measurement at next unified-agent daily cycle.
-
-### c69 carry-forward (priority order)
-1. **1897b CRITICAL** — F1 USER Docker `.git/` exclude. HEAD.lock 23x/24h. Only known root-cure.
-2. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server).
-3. **1898b HIGH** — RSS regression post-1862c-D (ba spec → dev-mcp-server / ops).
-4. **1899a MED** — news-fetch service scaffold (architect brief; fresh ops handoff `docs/handoffs/ops-news-fetch-scaffold.md`).
-5. **1897f HIGH** — architect rethink agent-spawn semantics (lower urgency now that 1897g defense codified).
-6. USER Cloudflare 1894a + 1862c-E (16th cycle still BLOCKING).
-7. METHODOLOGY-INFRA (1881a/1882a/1883a/1885a/1886a) + SSOT-CRITICAL (1888b/c/d) long-tail.
-8. JANITOR DRY backlog.
-9. ops-fred-key.md (USER admin task — no dev work; FRED_API_KEY paste once user has key).
-10. Concurrent agent activity (dev-mainserver-crawls, dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch agents + flows + handoffs) needs commit by respective owners — not dev-team scope but worth flagging if it lingers.
+### c70 carry-forward (priority order)
+1. **1894a USER CRITICAL** — Cloudflare dashboard ingress rule `^/api/*` → `localhost:4000`. Now precisely specified. Single click in dashboard.
+2. **1897b CRITICAL** — F1 USER Docker `.git/` exclude (HEAD.lock 23x/last-day; absent this cycle but pattern persists).
+3. **1899a developer scaffold** — architect brief ready (`docs/architecture-briefs/2026-05-13-news-fetch-service.md`); 15 new files + 8 mods. Big SPRINT-M for c70.
+4. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server).
+5. **1898b HIGH** — RSS regression (ba spec → dev-mcp-server / ops).
+6. **1897f HIGH** — architect rethink (lower urgency post-1897g).
+7. **1862c-E-dashboard** — overlaps with 1894a (same dashboard, same `/api/*` family of routes).
+8. **Concurrent untracked agent work** — 4 new dev-*/ops-* agents + flows + handoffs still uncommitted by their owners; flag if lingers another cycle.
+9. METHODOLOGY-INFRA + SSOT-CRITICAL + JANITOR long-tail.
 
 ### Steady state metrics
-- HEAD.lock cure: 23/23 (100%); frequency ~1/cycle.
-- C2 clean ships: 2/2 last cycles (c67 + c68). 0/5 c63→c66.
-- **1897g VALIDATED + SHIPPED**: protocol now in dev-*.md preamble.
-- Recovery pattern: soft-reset + selective re-stage (proven 15x faster than cherry-pick); no recovery needed last 2 cycles.
-- SPIKE_006: 6/6 ACs shipped c61→c67; id=2874 finalized c68.
+- HEAD.lock cure: 23/23 lifetime (100%); 0 this cycle (good signal, but small sample).
+- C2 clean ships: 2/2 last shipping cycles (c67, c68). c69 had no code ship (ops diagnostic only).
+- 1899a unblocked for c70 (architect brief done).
+- 1894a finally has a PRECISE fix path after 16 cycles of misdiagnosis.
+
+### Process win
+- Spawning `ops` with a full step-list + verification curl + SSH e2e + DB check enabled the agent to **escalate diagnostic depth** beyond the assumed fix. Without that explicit escalation prompt, c69 might have just "applied config" again and reported success → 17th cycle. Lesson: when a fix has been "applied" 3+ cycles without effect, the prompt should demand verification before claiming success.

@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 08:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-13 09:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -626,3 +626,31 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5500 |
+
+## Cycle — 08:40 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: TIGHTENING regime confirmed (news-scout #3063/#3064, regime_adj_score=10). 2 anomalies: GAS +6.93% (2.46σ) — whole oil sector surging on Brent $107.19, 5th signal this session; VRE -6.91% (1.67σ) — first signal under TIGHTENING 1.5σ threshold (previously sub-2.0σ). VHM -4.81% (1.21σ) near-miss. 20 open HIGH alerts across banking/realty/securities sectors. Market approaching close (08:59 UTC). Fed rate hike fears driving USD strengthening + gold decline.
+- **actions**: 2 price_anomaly signals posted (#3066 GAS, #3067 VRE → alert-commander). WORK telegram sent. Notebook updated and committed.
+- **next_cycle_hint**: Post-market 09:00 UTC cycle. Watch for session close prices on VHM (-4.81%), VIC (-0.45%), banking sector. Monitor whether TIGHTENING regime persists into next session. GAS/oil sector — check if Brent holds $107+.
+- **estimated_tokens**: 5500
+
+### Cycle (09:37–09:40)
+- Stocks: 31 watchlist | Priced: 26 (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (GAS 2.46σ, VRE 1.83σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE (realty)] | pe_risk: [VRE]
+- GAS +6.93% (2.46σ, stddev 2.82%, vol 635K) → signal #3071 → alert-commander. Oil sector +5.57% 1d. Brent $106.86. Limit-up low-volume session. Catalyst confirmed via news-scout chain_catalyst #3068 (impact=9).
+- VRE -6.91% (1.83σ, stddev 3.78%, vol 1.44M) → signal #3072 → alert-commander [escalated MEDIUM→HIGH per downside_bias]. fx_pressure=true (realty+USD). pe_compression_risk=true (RISK-OFF + FII outflow). Real estate sector -1.28% 1d avg.
+- VHM -4.81% (1.23σ) — below 1.5σ threshold; noted for context.
+- Macro: BDI 1,400 stable, no supply chain disruption. Energy grid BÌNH THƯỜNG (hydro 70%). No climate alerts.
+- Market CLOSED (final close 08:59 UTC). Post-market off-hours cycle.
+
+## Metrics (cycle 2026-05-13 09:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 10 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
