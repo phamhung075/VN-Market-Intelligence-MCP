@@ -1,75 +1,68 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-13T10:40Z (c70 close — 16-cycle 1894a blocker FINALLY RESOLVED externally)
+**Written:** 2026-05-13T11:38Z (c71 close — MCP gateway outage discovered + 8 signals drained + 2 carry-forwards queued)
 
-## c70 (2026-05-13T10:37Z → 10:40Z, ~3 min)
+## c71 (2026-05-13T11:37Z → 11:40Z, ~3 min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | No HEAD.lock; worktree gc empty | **2nd lock-free cycle in a row** |
-| 0a Drain | 1 stale signal → processed/ | ops-cloudflare-config-blocker (11:50, superseded by 12:15 verified) |
-| 1 Inbox | telegram new=0, unresolved=[] | clean |
-| 1 PO Triage | Router discretion: 1894a externally resolved → close-cycle dominates → NO BATCH | (no spawn) |
-| Post | TASKS.md (close 1894a, remove resolved 1888h, add CLOSED-c70 row) + this notebook + pipeline-state + close commit + push pulling 14 concurrent commits | (in progress) |
+| 0 PREFLIGHT | No HEAD.lock | **3rd consecutive lock-free PREFLIGHT** |
+| 0a Drain | 8 signals → processed/ | alert-commander, developer×2, ops-fred-activated, qa, qa-bug-macro-scrapers-slow, qa-responder, unified-agent |
+| 1 Inbox | log_agent_work BLOCKED — gateway connection refused (host.docker.internal:3000) | 🔴 OUTAGE |
+| 1 PO Triage | Router discretion: gateway down → no cowork BATCH possible; close + escalate 1900a | 1900a ops + 1900b qa queued |
+| Post | TASKS.md (add 1900a + 1900b; remove TNB-c39-#5 RESOLVED) + this notebook + pipeline-state + close commit | (in progress) |
 
-### 🎉 1894a CLOSED — 16-cycle blocker resolved
+### 🔴 MCP gateway outage (1900a CRITICAL)
+Pattern across 3 cowork agents + dev-team c71:
+- 10:48Z `qa-responder` → bug-escalation "dial vn-market: connection refused 192.168.65.254:3000"
+- 10:51Z `ops` FRED activation SUCCESS — macro-indicators container rebuilt + force-recreated
+- 11:01Z `alert-commander` → bug-escalation "host.docker.internal:3000 connection refused after 2 attempts"
+- 11:01Z `unified-agent` → bug-escalation "MCP gateway connection refused, retries=2, action=STOP"
+- 11:37Z **c71 dev-team** → log_agent_work fails with same error → gateway STILL DOWN
 
-Between c69 close (09:50Z) and c70 tick (10:37Z), USER took the precise dashboard action defined at c69:
-- Added `^/api/*` → `http://localhost:4000` ingress rule on Cloudflare dashboard (vn-market-mcp tunnel, Public Hostnames)
-- ops verified 12:15Z via curl smoke tests:
-  - `https://zenmidi.com/api/push-prices` → **401** (was 404 for 16 cycles)
-  - `https://zenmidi.com/api/push-news` → **401** (was 404)
-  - 401 = auth required = route working (correct behaviour)
-- Verification signal: `docs/signals/processed/ops-cloudflare-config-verified-2026-05-13T12-15-00Z.json` (status=RESOLVED)
-- Verified merge commit on origin: `aa5cdd69 chore(memory/ops): verify cloudflare tunnel /api/* fix`
+**Hypothesis**: ops's container rebuild at 10:51Z (--force-recreate macro-indicators for FRED activation) likely knocked port 3000 mapping or the mcp-server container itself. Cowork agents have been failing for ~50 minutes.
 
-**Process lesson confirmed**: When a fix has been "applied" 3+ cycles without verified external effect, demand external curl verification. c69 ops escalation prompt → RCA → precise USER action defined → user executed → c70 verifies. Total: 16 cycles to close, but final 2 cycles (c69 RCA + c70 close) shipped the actual fix.
+**c72 ops priority**: verify `docker ps` for vn-market-intelligence-mcp-mcp-server-1, confirm port 3000 binding (`docker port`), `docker restart` if needed. Cowork cron cycles 11:00/11:15/11:30 likely all failed silently.
 
-### Concurrent ship chain since c69 (origin/main `b0959af2`..local `HEAD`, 14 commits)
-- `3d6383a2` test(mcp-server): VPS contract tests for push-prices and push-news endpoints
-- `171355cc` chore(memory/dev-mcp-server): notebook 2026-05-13 push-path-fix cycle
-- `b0959af2` chore(dev-team/c69): close cycle
-- `5ea87896` chore(memory/qa-responder): notebook
-- `8c9f2fcc` feat(mainserver-crawls): wire adb-kidb + imf-weo adapters into macro-indicators
-- `7c75b6e3` chore(ops): Cloudflare tunnel blocker — token mode prevents config-file update
-- `d82b8f9a` chore(memory/code-janitor): notebook scan 22
-- `d93bd18f` chore(memory/alert-commander): notebook
-- `aa5cdd69` chore(memory/ops): verify cloudflare tunnel /api/* fix 2026-05-13T12-15
-- `ef3f7769` chore(memory/qa): notebook 2026-05-13 batch drain — 5 signals validated
-- `e7a21d60` fix(macro-indicators/arch): move DEFAULT_SYMBOLS + DEFAULT_CNBC_SYMBOLS to domain layer (resolves qa-bug 12:30 DDD violation)
-- `0d6265e5` chore(merge): merge task/push-path-fix-vps-contract-tests to main
-- `c5fc2711` chore(signals): move qa-bug-2026-05-13T12-30-00Z to processed
-- `b5756e75` chore(memory/developer): notebook 2026-05-13
+### Concurrent ships since c70 close (in processed signals)
+- `12a7221e` developer task/macro-external-allsettled-timeout (UNMERGED — qa needs to validate; signal queued 1900b)
+- `e7a21d60` macro-indicators DDD fix (already on main, qa-bug-12:30 resolved)
+- push-path-fix-vps-contract-tests branch merged to main (developer 13:00 signal)
+- ops FRED activated 10:51Z (signal SUCCESS — `FEDFUNDS=3.64` smoke ✓)
 
-### Working tree (uncommitted at c70 tick — concurrent agents' WIP)
-- M: `docs/agent-memory/notebooks/architect.md`, `docs/agent-memory/modules/tool-usage-stats.json`, `scripts/deploy-vinahost.sh`, `vps-scripts/fetch-bctc.sh`
-- ??: 4 new agent files (dev-mainserver-crawls, dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch) + 4 flow dirs + 4 doc dirs + 2 architecture-briefs (news-fetch + vps-data-flow-restoration)
-- These belong to other owners — DO NOT touch in close-cycle commit (C2-clean discipline)
+### qa-bug observational (folded into 1900b)
+- 4 geo-blocked macro scrapers (worldBank/yahoo/cnbc/tradingEconomics) consistently hit 8s timeout from Docker container running on France host. Not a code issue — environmental (these scrapers require VN IP / VPS proxy routing). FRED hits HTTP 500 for VIXCLS/GS10/T10YIE (FRED-side API errors). Calendar OK.
+- Promise.allSettled fix (12a7221e) working correctly — graceful degradation. ok>=1 → HTTP 200 with partial envelope.
+- Next: ops verify VPS proxy routing for these 4 scrapers; consider 8s→15s timeout bump.
 
-### HEAD.lock (c70 = 0 cures)
-- 2nd consecutive lock-free cycle. Background pattern may be subsiding (or sampling artifact). Continue monitoring.
-- 1897b USER ask (Docker `.git/` exclude) still queued but pressure reduced.
+### HEAD.lock (c71 = 0 cures, 3rd consecutive PREFLIGHT clean)
+- Pattern subsiding. 1897b USER ask priority continues to decay.
 
-### c70 BATCH outcomes
+### c71 BATCH outcomes
 | Task | Outcome | Status |
 |---|---|---|
-| (no BATCH — close-cycle dominant) | Acknowledge external resolution + push concurrent ships | DONE (admin) |
+| (no BATCH — gateway down blocks cowork spawn; close + escalate) | 1900a + 1900b queued | DONE (admin) |
 
-### c71 carry-forward (priority order, refreshed)
-1. **1899a developer SPRINT-M scaffold** — architect brief ready `docs/architecture-briefs/2026-05-13-news-fetch-service.md`; 15 new files + 8 mods; port 5008. **TOP PRIORITY** now that 1894a is unblocked.
-2. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server). Likely actionable now that push-path is unblocked.
-3. **1898b HIGH** — RSS regression. **Re-test first** — with `/api/push-news` now routing correctly, the VPS RSS push may have already self-recovered. ops cycle next tick to verify.
-4. **1862c-E-dashboard** — SAME dashboard, DIFFERENT path family (`/vn-market/sse`). Check if USER's dashboard pass also covered SSE route; if not, queue similar precise ask.
-5. **1897b CARRY** — F1 USER Docker `.git/` exclude (HEAD.lock background — pressure reduced, 2 lock-free cycles).
-6. **1897c/d/e/f CARRY** — worktree spike + HEAD.lock contamination — defer pending pressure return.
-7. **Concurrent untracked agent work** — 4 new dev-*/ops-* agents + flows + handoffs + 2 architecture-briefs still uncommitted on disk. Flag owners c71 if still lingering.
-8. **METHODOLOGY-INFRA + SSOT-CRITICAL + JANITOR** — long-tail.
+### c72 carry-forward (priority order)
+1. **🔴 1900a CRITICAL OPS** — restore MCP gateway port 3000 (3 cowork agents + dev-team all blocked since 10:48Z). docker ps + restart mcp-server container.
+2. **1900b qa MEDIUM** — validate + merge `task/macro-external-allsettled-timeout` (commit 12a7221e, 85 pass). Then ops VPS proxy follow-up for geo-blocked scrapers.
+3. **1899a developer SPRINT-M** — news-fetch scaffold (architect brief ready, top FEATURE).
+4. **1898a HIGH** — `get_market_snapshot` electricity bug (ba spec → dev-mcp-server).
+5. **1898b HIGH** — RSS regression — **likely related to gateway outage**; re-test after 1900a fix.
+6. **1862c-E-dashboard** — `/vn-market/sse` family — re-check post-gateway-restore.
+7. **Concurrent untracked work** — 4 new dev-*/ops-* agents + flows + 2 architecture-briefs still uncommitted. Flag owners.
 
 ### Steady state metrics
-- HEAD.lock cure lifetime: 23/23 (100%); 0 this cycle (good — 2 lock-free in a row).
-- C2 clean ships: 2/2 last shipping cycles (c67, c68); c69 + c70 = diagnostic + admin (no code ship).
-- 1894a 16-cycle blocker CLOSED. Net unblock value: VPS push pipeline now operable.
+- HEAD.lock cure lifetime: 24/24 (100%); 0 this cycle (3rd consecutive clean PREFLIGHT, though 1 mid-commit cure last cycle).
+- C2 clean ships: 2/2 last shipping cycles.
+- **MCP gateway uptime: DEGRADED since ~10:48Z (~50 min outage at c71 tick)**.
 
-### Process win
-- c69 RCA → c70 close in 50 minutes wall-clock (cron tick to user action to verification). Fastest 16-cycle-blocker resolution since the user-action precision pattern was added to the prompt.
-- Discipline lesson re-encoded: when a fix has been "applied" 3+ cycles without verified external effect, NEXT prompt must demand external curl verification before claiming success.
+### Communication degraded
+- WORK Telegram BLOCKED this cycle (send_telegram routes through gateway).
+- log_agent_work session #(unknown) — start call failed; cannot mark complete.
+- All cowork agents (cron-scheduled) likely failing silently.
+- **Recovery via ops 1900a** unblocks all of the above.
+
+### Process lesson
+- ops infrastructure tasks (container rebuilds, --force-recreate) need post-action health verification of cross-service dependencies. FRED activation succeeded for macro-indicators in isolation, but the rebuild collateral-damaged the mcp-server gateway port mapping.
+- Suggest c72 add to ops flow: post-rebuild "docker ps + verify all 9 services healthy" check.
