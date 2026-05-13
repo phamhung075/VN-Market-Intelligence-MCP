@@ -117,7 +117,7 @@ Every task has a progressive context file at `docs/handoffs/TASK_NNN.md`. Agents
 ## Two-Team Architecture
 
 ```
-ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)
+ANALYSIS TEAM (Claude Cowork — 9 agents, cloud)
   Serves user with investment intelligence
   → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID) = user-facing alerts/answers
   → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID) = team status
@@ -129,7 +129,7 @@ DEV TEAM (Claude Code CLI — local cron, every 1h)
   → Restart: docker-compose (no hot reload, deterministic lockstep restart of 9 services)
 ```
 
-**Analysis Team count clarification:** 7 numbered agents + 1 Unified Coordinator (on-demand + daily scheduled) = 8 total. Setup agent (00) runs once.
+**Analysis Team count:** 9 agents — see `docs/data/project-stats.json#analysisAgentCount`.
 
 ## Three-Channel Rules
 
