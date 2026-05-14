@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c94 ACTIVE
+**Last updated:** 2026-05-14 | **Sprint:** c95 CLOSED
 
 ## Current state
 
-- **WIP: 2/2 (AT CAPACITY)** — 1909a-extractor (dev-pdf-extractor, CRITICAL BCTC drift guard) + 1909b-tool (dev-mcp-server, CRITICAL OCF tool)
+- **WIP: 0/2 (CLEAN)** — 1909a-extractor + 1909b-tool SHIPPED + QA APPROVED. 1909c reparse-validation + 1910b effr-package-reg moved to Todo, blocked on container deploy
 - **c94 DISPATCH (2026-05-14T18:00Z):** Sprint 1909 + 1910 decomposed, 5 sub-tasks entered to TASKS.md (1909a/b/c + 1910a/b). WIP set to 2 (1909a + 1909b): parallel-eligible, disjoint zones. 1910b in Todo (sequential after 1909b deploy, shared agentBootstrap.ts). 1910a in Backlog (USER-ACTION: FRED_API_KEY env var). 1909c in Backlog (blocked on 1909a+1909b deploy).
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,29 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 95 — 2026-05-14 c95 Close: 1909a + 1909b SHIPPED (WIP=0/2 CLEAN)
+
+**Input:** Dev-team + QA c95 completion. 1909a-extractor + 1909b-tool APPROVED.
+
+**Outcomes:**
+1. **1909a-extractor-SHIPPED-c95 (CRITICAL, dev-pdf-extractor):** `cashFlowExtractor.ts` multi-layout support (7-block detection + sub-line balance logic) + implicit VAL-07 protection from 1908c-pattern drift. 22 new + 23 baseline fixtures (VNM/DIG/VCB Q4-2025). Domain zero-I/O. tsc 0. Minor console.warn format deviation (non-blocking). Commits: impl `148d1e99` + notebook `3b8d76f7`. QA APPROVED 7/7 AC.
+2. **1909b-tool-SHIPPED-c95 (CRITICAL, dev-mcp-server):** New `get_bctc_ocf` MCP tool (#132). **Architect SD-2 honored**: `extraction_method` SELECT'd from DB enum (pdf-parse/ocr-200/ocr-300/news_inference), never hardcoded. Registered in registry + agentBootstrap + financial-analyst.md + SKILL_MANIFEST.md. 8 tests / 29 assertions PASS, 4 enum values covered. tsc 0. Cherry-pick union-merge applied for 1890a-B compatibility. Commits: impl `d285cc68` + notebook `a3381005`. QA APPROVED 11/11 AC.
+
+**Actions:**
+- Removed 1909a-extractor + 1909b-tool from In Progress → Done. WIP becomes 0/2 (CLEAN).
+- Moved 1909c-reparse-validation from Backlog → Todo. Blocked by "Container deploy" (once mcp-server container rebuilt, ops can run reparse).
+- Updated 1910b-effr-package-reg Blocked by from "1909b-tool deployed" → "Container deploy" (sequential after ops rebuild, shared agentBootstrap.ts).
+- TASKS.md final: 77L (under 80L cap). Zero archive trigger.
+- PM notebook updated: WIP=0/2, c95 CLOSED, container deploy context set for next cycle.
+
+**Container deploy NOTE:** Router will trigger ops in post-cycle if appropriate. Do NOT spawn ops myself per feedback_agent_autonomy.md.
+
+**Carry-over to c96:** 1909c (CRITICAL OPS, blocked container deploy), 1910b (HIGH CHORE, blocked container deploy), 1910a (HIGH FEATURE, blocked USER-ACTION FRED_API_KEY), 1907a (HIGH OPS escalated TNB-c49), 1907b (LOW OPS observational), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect), TASK-BCTC-3, 1900c, 1899a-bloomberg-test-split, 1862c-{E,F}.
+
+**Status:** c95 CLOSED. Pipeline clean. BCTC OCF extraction layer 7 gate ready for ops reparse. No blockers on developer side — container deploy sequence required.
 
 ---
 
