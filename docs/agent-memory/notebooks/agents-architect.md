@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-14T16:59:39Z
+
+**Brief:** `docs/architecture-briefs/2026-05-14-ssot-data-location-mapping.md`
+
+docs/ bind-mount gap: cowork agents on Claude Desktop cannot read policies, protocols, architecture briefs, or specs because mcp-server only bind-mounts `docs/agent-memory/` and 3 individual JSON files; 4 changes close the gap (C1 full docs/ ro mount, C2 MCP read_knowledge_doc tool, C3 daily DB backup cron, C4 rebuild policy doc), with C1 as a 1-hour highest-ROI first sprint.
+
+**Signal dropped:** `docs/signals/2026-05-14T165939Z-ssot-data-location-mapping.json` → po
+
+---
+
 ## 2026-05-14T12:05:39Z
 
 **Brief:** `docs/architecture-briefs/2026-05-14-1912d-cutover-audit.md`
