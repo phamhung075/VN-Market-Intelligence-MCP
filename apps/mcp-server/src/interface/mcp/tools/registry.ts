@@ -96,6 +96,7 @@ import { registerBacktestTools, registerBacktestQueryTools, registerBacktestLife
 import { registerAlertVerdictTools } from "./alerts/alertVerdictTools.js";
 import { registerComputeAccrualsTool } from "./financial-reports/computeAccrualsTool.js"; // Task 1878b: compute_accruals (#129)
 import { registerFedLiquiditySpreadTool } from "./macro/getFedLiquiditySpreadTool.js"; // Task 1879b: get_fed_liquidity_spread (#130)
+import { registerGetCashFlowTool } from "./financial-reports/cashFlowTool.js"; // Task 1890a-A: get_cash_flow (#131)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -196,4 +197,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerPyramidTierTool,              // Task 1880b: get_pyramid_tier (#128)
   registerComputeAccrualsTool,          // Task 1878b: compute_accruals (#129)
   registerFedLiquiditySpreadTool,       // Task 1879b: get_fed_liquidity_spread (#130)
+  registerGetCashFlowTool,              // Task 1890a-A: get_cash_flow (#131)
 ];

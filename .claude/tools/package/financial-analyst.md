@@ -34,8 +34,52 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: "Q1" \| "Q2" \| "Q3" \| "Q4"` |
+| `get_cash_flow` | Full 4-line CF statement + OCF/NI forensic ratio (FA G-step) | `ticker: string, period?: "Q1"–"Q4", year?: number` |
 | `list_stored_pdfs` | List available BCTC PDFs for all tickers | — |
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
+
+### Cash Flow Intelligence (FA G-step)
+
+`get_cash_flow` — focused forensic tool for OCF vs NI accrual check.
+
+**Params:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `ticker` | string | YES | VN stock ticker, case-insensitive |
+| `period` | "Q1"\|"Q2"\|"Q3"\|"Q4" | NO | Quarter filter; omit for latest |
+| `year` | number | NO | Fiscal year (e.g. 2025); omit for latest |
+
+**Output shape (found):**
+```json
+{
+  "source_tier": 1,
+  "found": true,
+  "code": "VCB",
+  "period": "Q1/2025",
+  "period_year": 2025,
+  "period_quarter": 1,
+  "operating_cf": 15000,
+  "investing_cf": -5000,
+  "financing_cf": -2000,
+  "capex": -3000,
+  "free_cash_flow": 12000,
+  "ocf_ni_ratio": 1.5
+}
+```
+
+`ocf_ni_ratio = operating_cf / net_profit`. Returns `null` when `net_profit` is 0 or null.
+All monetary values in VND millions.
+
+**Output shape (not found):**
+```json
+{ "source_tier": 1, "found": false, "code": "VCB", "period": "Q4/2025" }
+```
+
+**Usage note (R3):** Call `get_cash_flow` **after** `get_bctc_full` in the FA G-step — not instead of it.
+`get_bctc_full` provides sentiment trend + QoQ/YoY comparison. `get_cash_flow` adds the full CF statement
+and the OCF/NI forensic ratio that `get_bctc_full` does not surface.
+
+---
 
 ### Financial Analysis
 | Tool | Purpose | Key Params |
