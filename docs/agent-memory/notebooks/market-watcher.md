@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 16:47 UTC | **Sprint:** 1865a
+**Last updated:** 2026-05-14 17:39 UTC | **Sprint:** 1865a
 
 ## Current state
 
@@ -254,6 +254,37 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 0 signals posted (1 suppressed). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: ~14:41 UTC off-hours 4h. If prices unchanged (market still closed), FPT +4.53% will re-trigger at 3.62σ — suppress via off-hours duplicate guard (id=3159). Monitor VPB (1.90σ, borderline) and VIC ATH for any intraday pre-market moves that would break suppression. HOT_MONEY_INFLOW regime: watch banking + tech sectors for FII concentration risk next session.
 - **estimated_tokens**: 4200
+
+### Cycle (17:37–17:39)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (1 suppressed) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (USD/VND 26,132) | US10Y: RISK-OFF (US CPI 3yr high) | CARRY_REGIME: HOT_MONEY_INFLOW | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours 4h cycle). Closing prices from 2026-05-14 08:59 UTC. VN-Index ATH confirmed.
+- FPT +4.53% (3.62σ, stddev 1.25%) → SUPPRESSED: off-hours duplicate — same closing price, signal already emitted this session (id=3159, 09:42 UTC)
+- VPB +3.24% (1.90σ, stddev 1.71%) — below 2.0σ NEUTRAL threshold; in-session signal #3155 covers.
+- VIC +3.98% (1.46σ, stddev 2.73%) — below threshold; VinFast restructuring bullish chain_catalyst active (news-scout #3157/#3160, conf=0.82). new chain_catalyst #3182 (17:22 UTC, regime_adj=8, FII net buy confirmed).
+- VRE +3.48% (0.81σ, stddev 4.29%), VHM +2.95% (0.73σ, stddev 4.03%), GAS +2.20% (0.67σ, stddev 3.29%) — all below threshold.
+- HOT_MONEY_INFLOW: top 3 FII net-buy sectors = tech, real_estate, banking → hot_money_concentration=true flagged for session log.
+- Chain findings: 0 (last 15 min, confirmed). 20 open alerts (banking×7, real_estate×9+, tech×2).
+- Context: news-scout chain_catalyst #3182 (17:22 UTC) — VN-Index ATH, khối ngoại mua ròng, Phạm Nhật Vượng wealth >10% GDP. Macro: Brent 105.52, Gold 4686.1, USD/VND 26,132.
+
+## Metrics (cycle 2026-05-14 17:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
+
+## Cycle — 17:39 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEUTRAL regime, CARRY_REGIME=HOT_MONEY_INFLOW. VN-Index ATH session (confirmed by news-scout #3182, 17:22 UTC). FPT +4.53% (3.62σ) only anomaly — suppressed as off-hours duplicate of id=3159 (09:42 UTC, same closing price 73,900 VND). All other movers below 2.0σ: VPB 1.90σ, VIC 1.46σ, VRE 0.81σ, VHM 0.73σ, GAS 0.67σ. Chain findings: 0. HOT_MONEY_INFLOW: FII concentration in tech + real_estate + banking.
+- **actions**: 0 signals posted (1 suppressed). WORK telegram sent. Notebook committed.
+- **next_cycle_hint**: ~21:39 UTC off-hours 4h. If prices unchanged, FPT at 3.62σ will again trigger suppression guard (id=3159). If tomorrow's pre-market shows new price action (breakout above 73,900 or drop), suppression does not apply. Monitor HOT_MONEY_INFLOW continuation into next session — FII buying reversal in tech + real_estate is significant if sustained.
+- **estimated_tokens**: 3200
 
 ## Known patterns / preferences
 
