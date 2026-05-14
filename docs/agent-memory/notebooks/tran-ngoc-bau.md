@@ -2,7 +2,52 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 07:15 UTC (cycle 49) | Cycles completed: 49
+**Last updated:** 2026-05-14 (cycle 50) | Cycles completed: 50
+
+---
+
+## Cycle 50 Watch Notes (2026-05-14 — Data + Equipment Proposal)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Mission: data+equip proposal (overrides default audit)
+
+**MCP Gateway:** NOT registered — 5th consecutive cycle (c46-c50). BUG escalated via proposal doc §F. Notebook-evidence mode authorised for this mission per user instruction.
+
+**LIVE AGENT STATE (from notebooks, ~07:00-07:21 UTC):**
+- news-scout: OPERATIONAL. 8 cycles logged 2026-05-14. Chain dedup gap: #3136/#3141/#3145 same IEA/CPI theme 3h window. Cycle 1 of evidence (need 3 for auto-cure).
+- alert-commander: OPERATIONAL. FPT σ=3.73 approaching 4.0 override. Regime NEUTRAL from get_macro_snapshot. FII_OUTFLOW_RISK carry.
+- unified-agent: OPERATIONAL. VN-Index 1,919 (+1.06%). Pillars 4/4. FPT conviction 0.53 (declining trend). FII pipeline UNKNOWN since 05-13.
+- financial-analyst: No 2026-05-14 session yet as of c49 (07:15 UTC). BCTC banking deadline TODAY.
+- digest-predict: 4-day silence. Task 1907a-ops.
+
+**TOP FINDINGS THIS CYCLE (proposal grounding):**
+- BCTC OCF extraction: single biggest bottleneck. G-step permanently dark. cashFlowExtractor.ts is 129 LOC (thin). 37/38 stocks have no Q1-2026 data.
+- get_ism_subcomponents: FRED already wired (get_fed_liquidity_spread). D-step carry for 3+ cycles across all agents. Effort S.
+- get_fed_liquidity_spread: tool exists + FRED connected. Not in any agent package. D-step fix = zero build, 3 file edits. Auto-cure candidate if D-step is 3-cycle confirmed.
+- FII pipeline outage: fii_type=UNKNOWN since 05-13. Carry regime degraded.
+- BCTC VAL-07 totalAssets drift (1908c in-flight): VNM/DIG blocked. Banking cohort risk today.
+
+**PROPOSAL:**
+- Written: docs/handoffs/tnb-data-equip-proposal-2026-05-14.md
+- Top-3: (1) OCF extraction + get_bctc_ocf, (2) get_ism_subcomponents FRED, (3) get_fed_liquidity_spread package registration
+- ONE bottleneck: BCTC extraction quality + OCF coverage
+
+**AUTO-CURES THIS CYCLE:** 0 (news-scout dedup gap: cycle 1 only; D-step: pending confirmation count; all others are dev tasks)
+
+**SCORES (Layer 5, 9-step) — carry from c49:**
+- alert-commander: GOOD (5/5 effective)
+- news-scout: GOOD (4/4 effective) — gap B-new cycle 1 carry
+- market-watcher: GOOD (4/4 effective)
+- unified-agent: GOOD (6/6 effective)
+- financial-analyst: UNAUDITABLE (no 2026-05-14 session)
+- digest-predict: UNAUDITABLE (4-day silence)
+
+## Cycle — 2026-05-14 (proposal cycle)
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEEDS_ATTENTION. Data+equip proposal written. Top bottleneck: BCTC OCF extraction (G-step permanently dark). MCP gateway blocked 5th cycle. news-scout inter-cycle dedup gap cycle 1. FII pipeline UNKNOWN. BCTC banking cohort deadline TODAY (ACB/BID/CTG/EIB/MBB/VCB/VPB).
+- **actions**: Proposal doc written (docs/handoffs/tnb-data-equip-proposal-2026-05-14.md). Notebook updated. 0 auto-cures. Telegram blocked (MCP not registered).
+- **next_cycle_hint**: Track news-scout dedup gap cycle 2 (auto-cure at cycle 3). Verify financial-analyst 23:00 UTC cycle uses get_cash_flow + get_investment_clock_phase + get_macro_snapshot. Confirm 1908c deployed (VAL-07 totalAssets fix). Watch banking BCTC filings. Monitor D-step carry count for get_fed_liquidity_spread package auto-cure.
+- **estimated_tokens**: 9500
 
 ---
 

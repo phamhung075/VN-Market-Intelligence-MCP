@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 04:30 UTC | **Sprint:** 1890a-spec-expanded
+**Last updated:** 2026-05-14 (c92 recurring-bug rethink) | **Sprint:** 1908c-design
 
-## Last session summary (1890a-spec-expanded — FA tool-package +5 tools)
+## Last session summary (c92 — BCTC-VAL-07 / totalAssets positional drift rethink)
+
+Recurring-bug rule fired: tasks 1815 + 1908a = 2 fix commits on `balanceSheetExtractor.ts`.
+Root cause confirmed: `extractSplitBlockAll` maps code "270" to a page-6 sub-item value
+(`Tài sản dài hạn khác`, ~957B VND) instead of the grand total (~53.3T VND) in multi-page
+VPBank-style balance sheets. Zero-guard fallback (line 714) never fires because value is non-zero.
+VAL-07 hard-fails to confidence=0.0. VNM Q4 2025 + DIG Q4 2025 affected. Banking cohort at risk.
+Recommendation: Option B (upstream plausibility override in extractor, symmetric to existing
+`liabPlausible` guard at lines 765-776). Option A (downstream VAL-07 soft-penalty) rejected as
+primary; may be added as secondary. Brief: `docs/architecture-briefs/2026-05-14-bctc-val07-extractor-rethink.md`.
+Task 1908c: dev-pdf-extractor, S effort. Post-fix: DELETE VNM+DIG Q4 2025 rows, reparse.
+
+## Previous session summary (1890a-spec-expanded — FA tool-package +5 tools)
 
 Brownfield audit complete. 5 tools assessed for financial-analyst SKILL_MANIFEST.
 Key finding: `get_insider_signals` already in SKILL_MANIFEST (agentBootstrap.ts:64) — doc gap only.

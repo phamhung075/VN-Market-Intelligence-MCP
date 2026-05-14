@@ -1,8 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 07:05 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 08:02 UTC | **Sprint:** c84
 
 ## This session
+
+### Alert Cycle (08:02–08:02 UTC)
+- Signals: price_anomaly ×2 (FPT id=3149, VPB id=3150)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: FPT conf=0.50 (σ=2.41 < 4.0 override, no active price alert); VPB conf=0.50 (σ=2.01 < 4.0 override, no active price alert)
+- Legal/crisis: clear
 
 Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, conf=0.50) — suppressed (no active price alerts; σ < 4.0 override floor). FPT at 74,000 VND (+4.67%) driven by US Nasdaq record on tech stocks. Legal/crisis clear. Regime: NEUTRAL. CARRY_REGIME: FII_OUTFLOW_RISK (-0.33%). 0 MARKET alerts fired.
 
