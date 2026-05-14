@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c96 CLOSED
+**Last updated:** 2026-05-14 c98 | **Sprint:** c98 DISPATCH — 1912a sprintified
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — 1909a-extractor + 1909b-tool SHIPPED + QA APPROVED. 1910b shipped c96 (config-only, zero-build). 1909c HOLD (AC-1/2/3 PASS, AC-4/5 awaiting Q1-2026 PDFs + FA cycle). 1910a moved to Todo (FRED_API_KEY confirmed in .env). Container rebuild dispatched in parallel ops cycle.
+- **WIP: 1/2 (OPEN)** — 1912a-gateway-spec IN PROGRESS (dev-api-gateway owner). Handoff TASK_1912a-gateway-go-migration.md created. Spec + architect APPROVE landed. Go competency lazy-load installed c253060bf. P2+P3 BLOCKED until 24h smoke window (AC-10).
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,27 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 98 — 2026-05-14 c98 Sprintify: 1912a-gateway-spec dispatched (WIP=1/2)
+
+**Input:** Upstream gates all cleared. Spec REQ_1912a.md landed (11 ACs). Architect review APPROVE (commit `813053b6`). agent-father Go competency installed (commit `253060bf`). BA + architect + dev role decisions all resolved. Blocker D-1 (/healthz k8s alias, Go-only) and D-2 (dev role = extend dev-api-gateway) both resolved.
+
+**Actions:**
+1. **Created handoff TASK_1912a-gateway-go-migration.md** (≤200L per split policy). Frontmatter: sprint=1912, branch=task/1912a-gateway-go-migration, size=M, zone=apps/api-gateway/, blocks=[1912b-alert-engine, 1912c-stock-price]. TLDR, PM Planning Context (zone, ACs, files to read/create/modify, dependencies, knowledge), Implementation Checklist (high-level, DDD layers), Risk Flags (R-G1 to R-G5 from spec § 6), Sequencing & Blockers (AC-10 24h smoke window gate P2/P3), AC Reference table.
+2. **Updated TASKS.md:**
+   - 1912-go-migration-program (Backlog): annotation "Phase 1 dispatched c98" + note on 1912a entry moved to In Progress
+   - 1912a-gateway-spec: moved Todo → In Progress. Updated row: Owner=dev-api-gateway, Handoff=docs/handoffs/TASK_1912a-gateway-go-migration.md, Blocked by=—. Row text updated to reflect APPROVE brief + resolved blockers + Go competency lazy-load installed.
+3. **WIP check:** 0/2 (before) → 1/2 (after). Within capacity. No parallel task touches apps/api-gateway/ zone. Clear.
+4. **TASKS.md line count:** 84L (acceptable for critical phase-1 dispatch; will compact if >85L next cycle).
+5. **PM notebook:** Updated header (c98) + current-state entry (WIP=1/2, 1912a IN PROGRESS, Go competency installed, P2+P3 blocked on AC-10 smoke window).
+
+**Status:** Sprintify COMPLETE. Handoff ready. 1912a dispatched to dev-api-gateway. Pre-flight checks PASS. Ready for dev flow Step 3 (execute).
+
+**Dispatch signal:** PM will drop `docs/signals/{ts}-1912a-pm-to-dev-api-gateway.json` with: from=pm, to=dev-api-gateway, type=dispatch-ready, task=1912a-gateway-go-migration, handoff=docs/handoffs/TASK_1912a-gateway-go-migration.md, branch=task/1912a-gateway-go-migration, commit=<sha> (to be filled in post-commit).
+
+**Carry-over to c99:** 1912a (In Progress), 1909c (HOLD, blocked Q1-2026 PDFs), 1910a (TODO, user-pending FRED_API_KEY), 1907a (CRITICAL OPS escalated TNB-c51), 1907b (LOW OPS observational), JANITOR-{021,011,014,020}, 1897b-carry (HIGH F1 USER), TASK-BCTC-3, 1900c, 1899a-bloomberg-test-split, 1862c-{E,F} (user-blocked).
 
 ---
 
