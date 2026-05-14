@@ -1,16 +1,29 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c87
+**Last updated:** 2026-05-14 | **Sprint:** c88
 
 ## Current state
 
 - WIP: 0 / 2 (clean; In Progress empty)
-- **SHIPPED c87:** 1903-doc-pair (DONE; QA approved, merged `54e255e4`), 1904a-deploy-gap-news (PARTIAL; rebuild+cron OK; playwright-stealth ESM bug escalated to c88)
-- Backlog HIGH: 1890a (toolpkg gaps + get_cash_flow), 1897b-carry (worktree isolation escalation), JANITOR-{011,014,020}, TASK-BCTC-3
-- Todo top-3 for c88: 1900c-health-probe-refine (LOW, ops), 1899a-bloomberg-test-split (LOW, dev), 1862c-E (HIGH, ops — Cloudflare user-blocked)
+- **SHIPPED c88:** 1905a (DONE; stealth-fix code merge `580771ae` + ops deploy `166dd89f`), 1904a (DONE; AC4 unblocked via 1905a, newsHeadlinesRefreshJob verified HTTP 200)
+- Backlog HIGH: 1890a (toolpkg + get_cash_flow), 1897b-carry (worktree isolation), JANITOR-{011,014,020}, TASK-BCTC-3
+- Todo top-3 for c89: 1900c-health-probe-refine (LOW, ops), 1899a-bloomberg-test-split (LOW, dev), 1862c-E (HIGH, ops — user-blocked)
 - Blockers: 1862c-F (container-rebuild deferred), 1897b-carry (architect SPIKE pending)
-- **TASKS.md:** 68L (under 80L cap). Signal ref: `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json`
-- **Status:** c87 CLOSED. WIP=0. Ready for c88 cron at :07.
+- **TASKS.md:** 75L (under 80L cap). Signal drained: `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json` → opened 1905a.
+- **Status:** c88 CLOSED. WIP=0. Ready for c89 cron at :07.
+
+---
+
+## Cycle 88 — 2026-05-14 c88 Close: 1905a + 1904a SHIPPED (stealth-fix + deploy)
+
+**Signal drain → task open → task close cycle:**
+1. **Signal input:** `ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json` routed to PO → opened 1905a-news-fetch-stealth-fix.
+2. **Developer action:** Removed broken playwright-stealth v0.0.1 (CJS placeholder, never-functional). Replaced with inline stealth pattern: `context.addInitScript()` patches `navigator.webdriver = undefined` in PlaywrightBrowserFactory. 172 tests pass (6 new TDD ACs RED→GREEN). Code merge `580771ae`.
+3. **QA approval:** 1905a APPROVED. Squash merged as `580771ae`. Branch deleted.
+4. **Ops deploy:** Rebuilt news-fetch container, bumped playwright base image v1.44.0→v1.60.0 to match npm-resolved runtime. Fixed stale Dockerfile (missing unzip + curl re-added post-c87). Deploy commit `166dd89f`. newsHeadlinesRefreshJob verified HTTP 200.
+5. **1904a unblocked:** AC4 now PASS. All ACs verified. Moved to Done with both code+deploy SHAs.
+
+**Outcome:** c88 SHIPPED, WIP=0, ready for c89 dispatch.
 
 ---
 
