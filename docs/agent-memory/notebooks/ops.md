@@ -703,3 +703,46 @@ All 7 reports filed within 5h window (2026-05-13 19:07–2026-05-14 10:05 UTC):
 4. Notify ops to retry AC-6 gate + smoke window start
 
 ---
+
+---
+
+## Cycle — 2026-05-14 c100 (digest-predict-silence-6d follow-up)
+
+**Task:** 1907a (CRITICAL) + 1907b (escalate to HIGH)  
+**Duration:** 15 min diagnostic  
+**Finding:** Root cause = stalled Claude Desktop iTerm2 trigger (cowork-layer, not infrastructure)
+
+### Investigation Summary
+- Confirmed: digest-predict is **cowork/Claude Desktop agent**, NOT Bun scheduler job
+- Last full cycle: 2026-05-11 21:38 UTC (6 days ago)
+- Sessions 2026-05-12 and 2026-05-13: **stubs only** (no work recorded, early exit)
+- 2026-05-14: **no session stub at all** (trigger not firing today)
+
+### Root Cause Classification
+**Class A+C Hybrid:**
+- **(A)** Scheduler infrastructure unwired: digest-predict cron specs are documentation-only; no Bun job registered
+- **(C)** Agent runtime failures: 2026-05-12/13 sessions opened but exited early (MCP timeout? Telegram API? Flow logic race?)
+
+### Infrastructure Health (verified healthy)
+- Docker: 9 services healthy, api-gateway-go + mcp-server up 3-6h
+- Database: no corruption, no WAL size issues
+- MCP server: health endpoint UP, last successful cycle 2026-05-14 09:16 UTC
+
+### Actions Taken
+- **Did NOT restart services** (per ops protocol)
+- Verified: no stale git locks, no scheduler container (expected, by design)
+- Wrote diagnostic handoff: `docs/handoffs/digest-predict-6day-silence-ops-diagnosis-c100.md`
+
+### Escalation
+**To:** developer (HIGH priority)  
+**Reason:** Cowork trigger verification + session exit investigation required. User-facing breakage (6 missed digests).  
+**Handoff:** diagnostic document ready; developer to verify Claude Desktop health + analyze 2026-05-12/13 logs.
+
+### Estimated Recovery Time
+- Developer investigation: 30 min (if trigger is simple restart)
+- If session capture timeout: may require flow hardening (1–2h)
+- If Telegram API issue: credential rotation (15 min)
+- If architectural issue (external trigger unreliable): architect review (async, blocks 1907c sprint task)
+
+**Next cycle:** Observe 2026-05-15-digest-predict.md session stub. If full cycle writes → fire resolved. If stub or silent → developer escalation confirmed.
+
