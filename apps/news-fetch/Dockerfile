@@ -13,9 +13,13 @@ RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile
 COPY . .
 
 # ── Stage 2: Playwright runtime (Ubuntu 22.04 Jammy — glibc for Chromium) ────
-FROM mcr.microsoft.com/playwright:v1.44.0-jammy
+# Updated to v1.60.0 to match npm playwright@1.60.0 from bun.lock
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
 WORKDIR /app
+
+# Install unzip + curl required for Bun install
+RUN apt-get update && apt-get install -y unzip curl && rm -rf /var/lib/apt/lists/*
 
 # Install Bun in the Jammy runtime (no Alpine apk available here)
 RUN curl -fsSL https://bun.sh/install | bash
