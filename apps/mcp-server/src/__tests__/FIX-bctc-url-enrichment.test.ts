@@ -142,52 +142,44 @@ describe("FIX — discoverHosePdfUrls uses SSC_IBOARD_BASE_URL env override", ()
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tests — discoverHosePdfUrls: cafef JSON API strategy
+// Tests — discoverHosePdfUrls: cafef strategy removal (TASK_1916b)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX — discoverHosePdfUrls cafef uses JSON API endpoint (not HTML scrape)", () => {
-  it("cafef strategy captures PDF URL from JSON response when SSC fails", async () => {
-    const capturedCafefUrls: string[] = [];
+describe("TASK_1916b — discoverHosePdfUrls cafef strategy permanently removed", () => {
+  it("_fetchCafef is silently ignored -- cafef is never called even when supplied", async () => {
+    const cafefCallCount = { n: 0 };
 
-    const cafefMock: HttpFetchFn = async (url, _timeout) => {
-      capturedCafefUrls.push(url);
+    const cafefMock: HttpFetchFn = async (_url, _timeout) => {
+      cafefCallCount.n++;
       return JSON.stringify({
-        Data: [
-          {
-            Title: "BCTC Q1 2025 FPT",
-            Url: "/data/files/fpt-bctc-q1-2025.pdf",
-          },
-        ],
+        Data: [{ Url: "/data/files/fpt-bctc-q1-2025.pdf" }],
       });
     };
 
+    // SSC also fails so all active strategies return empty
     const result = await discoverHosePdfUrls("FPT", {
-      _fetchSsc: mockDnsFail,        // SSC fails (geo-blocked)
-      _fetchCafef: cafefMock,
+      _fetchSsc: mockDnsFail,
+      _fetchCafef: cafefMock,        // passed but must NOT be called
       _fetchVietstock: mockEmptyJson,
     });
 
-    // cafef URL must target an API endpoint, not .chn HTML page
-    expect(capturedCafefUrls.length).toBeGreaterThan(0);
-    // PDF must be found via cafef
-    expect(result.urls.length).toBeGreaterThan(0);
-    expect(result.source).toBe("cafef");
-    expect(result.urls[0]).toMatch(/\.pdf$/i);
+    // cafef must NOT have been invoked
+    expect(cafefCallCount.n).toBe(0);
+    // No PDF found (SSC dead, vietstock empty, cafef skipped)
+    expect(result.urls).toHaveLength(0);
+    expect(result.source).toBeNull();
   });
 
-  it("cafef extraction resolves relative /data/files/... paths to absolute cafef.vn URL", async () => {
+  it("returns null source when SSC fails and cafef mock has PDFs (cafef ignored)", async () => {
+    // Verify that even when _fetchCafef would succeed, cafef strategy is never activated
     const result = await discoverHosePdfUrls("HPG", {
       _fetchSsc: mockDnsFail,
-      _fetchCafef: mockCafefJsonSuccess("HPG"),
+      _fetchCafef: mockCafefJsonSuccess("HPG"), // would have returned PDFs -- now ignored
       _fetchVietstock: mockEmptyJson,
     });
 
-    expect(result.urls.length).toBeGreaterThan(0);
-    expect(result.source).toBe("cafef");
-    // Relative URL must be resolved to absolute
-    expect(result.urls[0]).toMatch(/^https?:\/\//);
-    expect(result.urls[0]).toContain("cafef.vn");
-    expect(result.urls[0]).toMatch(/\.pdf$/i);
+    expect(result.source).toBeNull();
+    expect(result.urls).toHaveLength(0);
   });
 });
 

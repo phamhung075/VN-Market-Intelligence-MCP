@@ -246,13 +246,16 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
     }
   });
 
-  it("enricher falls back to cafef when VPS proxy returns empty", async () => {
+  // TASK_1916b: cafef strategy permanently removed. Updated: when SSC proxy returns
+  // empty and vietstock also returns empty, enricher populates 0 URLs (no cafef fallback).
+  it("enricher does NOT fall back to cafef when VPS proxy returns empty (cafef removed in TASK_1916b)", async () => {
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
       VALUES (?, ?, ?, ?, ?)
     `).run("HPG", 2025, "Q1", "pending", null);
 
-    const cafefMock: HttpFetchFn = async (_url, _timeout) => {
+    const cafefSpy: HttpFetchFn = async (_url, _timeout) => {
+      // This mock would succeed -- but cafef is no longer called (TASK_1916b)
       return JSON.stringify({
         Data: [{ Url: "/data/files/hpg-bctc-q1-2025.pdf" }],
       });
@@ -266,18 +269,19 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
         db: testDb,
         discoverOptions: {
           _fetchSsc: mockEmpty,       // proxy returns nothing
-          _fetchCafef: cafefMock,     // cafef fallback succeeds
-          _fetchVietstock: mockEmpty,
+          _fetchCafef: cafefSpy,      // deprecated no-op -- cafef never called
+          _fetchVietstock: mockEmpty, // vietstock also empty
         },
       });
 
-      expect(result.urlsPopulated).toBe(1);
+      // cafef is no longer in the strategy chain -- 0 URLs populated
+      expect(result.urlsPopulated).toBe(0);
 
       const row = testDb.query(
         "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'HPG'"
       ).get() as { source_url: string | null };
 
-      expect(row.source_url).toContain("hpg-bctc-q1-2025.pdf");
+      expect(row.source_url).toBeNull();
     } finally {
       if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
       else Bun.env["SSC_IBOARD_BASE_URL"] = prev;

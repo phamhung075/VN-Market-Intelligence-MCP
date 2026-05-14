@@ -80,23 +80,21 @@ describe("1343b — HOSE PDF Discovery", () => {
     }
   });
 
-  // Test 2: Fallback to cafef.vn if SSC fails
-  it("should fallback to cafef.vn when SSC returns no results", async () => {
+  // Test 2: TASK_1916b -- cafef.vn strategy permanently removed.
+  // When SSC returns nothing and vietstock also returns nothing, result is null.
+  // _fetchCafef is now a no-op (deprecated backward-compat field, never called).
+  it("should return null source when SSC and vietstock both return no results (cafef removed in TASK_1916b)", async () => {
     const ticker = "FPT";
-    const cafefPdfUrl = `https://cafef.vn/static/fpt-bctc-q4-2025.pdf`;
-
+    // _fetchCafef is now ignored (deprecated no-op) -- pass any value
     const result = await discoverHosePdfUrls(ticker, {
-      _fetchSsc: mockFetchEmpty,   // SSC returns nothing for this ticker
-      _fetchCafef: mockCafefFetch(cafefPdfUrl),
-      _fetchVietstock: mockFetchEmptyHtml,
+      _fetchSsc: mockFetchEmpty,           // SSC returns nothing
+      _fetchCafef: mockFetchEmptyHtml,     // ignored (deprecated)
+      _fetchVietstock: mockFetchEmptyHtml, // vietstock also returns nothing
     });
 
-    // Primary source should be cafef since SSC returned nothing
-    expect(result.source).toBe("cafef");
-    expect(result.urls?.length).toBeGreaterThan(0);
-    result.urls?.forEach(url => {
-      expect(url).toMatch(/\.pdf$/i);
-    });
+    // cafef is no longer tried -- result has no PDF URLs
+    expect(result.source).toBeNull();
+    expect(result.urls).toHaveLength(0);
   });
 
   // Test 3: Source attribution
