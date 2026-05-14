@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 10:00 UTC | **Sprint:** 1909-rubber-stamp
+**Last updated:** 2026-05-14 08:28 UTC | **Sprint:** 1910-fred-ism+effr-pkg
 
-## Last session summary (c94 — 1909 rubber-stamp review)
+## Last session summary (c94 — 1910 rubber-stamp review)
+
+Rubber-stamp review for Sprint 1910 (get_ism_subcomponents FRED tool + get_fed_liquidity_spread package reg).
+SD-1 RESOLVED: PATH (a) chosen — FRED REST API + free API key (`FRED_API_KEY` env var).
+Public CSV tier (`fredgraph.csv?id=`) does not serve ISM sub-component series; REST API does.
+Provisional series IDs NAPMNO/NAPMEMP/NAPMPI/NAPMBI require developer confirmation at build time.
+1910b auto-cure: 3-cycle evidence confirmed (FA 2026-05-11/12/13, UA 2026-05-14, NS 2026-05-13). Ships unconditionally.
+agentBootstrap.ts lines 30/46/224 confirmed correct; get_fed_liquidity_spread absent from all 3 arrays.
+get_fed_liquidity_spread confirmed registered: registry.ts:98+199. Zero-build package reg.
+No new arch brief. Output: docs/handoffs/ARCH_REVIEW_1910.md.
+Risk R2: FRED_API_KEY must not be committed — .env only.
+
+## Previous session summary (c94 — 1909 rubber-stamp review)
 
 Rubber-stamp review for Sprint 1909 (BCTC OCF Extractor Expansion + `get_bctc_ocf` tool).
 Authority brief: `docs/architecture-briefs/2026-05-14-bctc-val07-extractor-rethink.md`.
