@@ -4,6 +4,37 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-14 c108-tick2 — 1912b-cutover COMPLETE
+
+**Commits:**
+- `35aa6824 feat(1912b/alert-engine): Go cutover — Dockerfile multi-stage + TS files removed`
+- `235ce359 chore(1912b/alert-engine): agent-md-factory refresh — TS/Bun → Go 1.22`
+- `b992fc42 chore(1912b/alert-engine): doc-sweep TS→Go + tree-map orphan clean`
+
+**Signal:** `docs/signals/20260514T174506Z-1912b-cutover-complete.json`
+
+**Steps completed:**
+- (a) docker-compose.yml: no change needed, already uses `dockerfile: Dockerfile` without TS CMD override
+- (b) Dockerfile: alpine:3.19→3.20, sqlite-dev in builder, sqlite-libs in runtime, output /out/server, ENTRYPOINT /app/server
+- (c) TS files removed: src/ (16 files, previously deleted b884a6a3) + bun.lock/bunfig.toml/package.json/tsconfig.json (4 files staged this sprint)
+- (d) agent .md: version→2026-05-14, stack→Go 1.22+net/http+log/slog+mattn/go-sqlite3+chi, test_command→go test, type_check→go vet
+- (e) doc-sweep: 7 docs updated (ARCHITECTURE.md + 6 alert-engine docs)
+- (f) README-log-schema.md: authored at apps/alert-engine/README-log-schema.md
+- (g) tree-map: no orphan alert-engine TS refs found — clean
+- (h) graphify: CLI not installed on host, existing graphify-out/graph.json preserved
+- (i) signal dropped to pm+ops
+
+**TS files removed count:** 20 (16 src/ + 4 config files)
+**Files touched:** 13
+
+**Key discovery:** src/ files were already deleted in commit b884a6a3 (market-watcher notebook commit — contamination from prior session). This sprint cleaned up the remaining TS config files (bun.lock, bunfig.toml, package.json, tsconfig.json) which were still tracked in git.
+
+**HEAD.lock:** Spotlight (com.apple pid 43751) orphan — same recurring issue. Removed safely per head-lock-self-cure.md.
+
+**Next:** smoke gate 6h (ops/qa). On smoke pass → pm dispatches 1912c-cutover.
+
+---
+
 ### 2026-05-14 c108 post — 1912b BLK-1 + BLK-2 FIXED, RE-SUBMITTED TO QA
 
 **Commit:** `758ce97c feat(1912b/alert-engine): commit missed domain+app+infra source`
