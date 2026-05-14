@@ -1,13 +1,13 @@
 # api-gateway — Use Cases
 
 ## AggregateHealthUseCase
-- **File:** `apps/api-gateway/src/application/usecases.ts`
+- **File:** `apps/api-gateway/pkg/application/aggregate.go`
 - **Input:** none
 - **Output:** `AggregatedHealth`
 - Orchestrates `AggregateHealthService.aggregate()`
 
 ## ServiceHealthUseCase
-- **File:** `apps/api-gateway/src/application/usecases.ts`
+- **File:** `apps/api-gateway/pkg/application/aggregate.go`
 - **Input:** `serviceName: string`
 - **Output:** `ServiceHealthResult | null`
 - Looks up service in registry, runs single health check

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/application"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/application"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 )
 
 // ── JSON helpers ─────────────────────────────────────────────────────────────

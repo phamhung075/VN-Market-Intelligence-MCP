@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/infrastructure"
+	"github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
 )
 
 func TestStaticServiceRegistry_Returns9Services(t *testing.T) {

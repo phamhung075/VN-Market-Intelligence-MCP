@@ -1,7 +1,7 @@
 # api-gateway — Infrastructure
 
 ## HTTPHealthChecker
-- **File:** `apps/api-gateway/src/infrastructure/health_checker.ts`
+- **File:** `apps/api-gateway/pkg/infrastructure/healthchecker.go`
 - Implements `HealthCheckPort`
 - Uses `fetch()` with `AbortSignal.timeout(service.timeoutMs)`
 - HTTP 2xx → `status: 'ok'`
@@ -10,7 +10,7 @@
 - Always measures `latencyMs = Date.now() - start`
 
 ## StaticServiceRegistry
-- **File:** `apps/api-gateway/src/infrastructure/health_checker.ts`
+- **File:** `apps/api-gateway/pkg/infrastructure/healthchecker.go`
 - Implements `ServiceRegistryPort`
 - Built from env vars via `buildServiceConfigs()`
 - `getAllServices()` returns only probeable services (filters `noProbe: true` entries)

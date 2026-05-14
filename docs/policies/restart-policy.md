@@ -32,7 +32,7 @@ Manual launchctl commands — DEPRECATED (old monolithic server was decommission
 
 ```
 MCP Server (port 3000)          TypeScript/Bun
-├─ API Gateway (port 4000)      TypeScript/Bun
+├─ API Gateway (port 4000)      Go
 ├─ Stock Price (port 5000)      TypeScript/Bun
 ├─ PDF Extractor (port 5001)    Python/FastAPI
 ├─ RAG Service (port 5002)      Python/FastAPI

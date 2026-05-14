@@ -1,6 +1,6 @@
 # Microservice: api-gateway
 
-**Language:** TypeScript / Bun
+**Language:** Go
 **Port:** 4000 (external + internal)
 **Role:** Central routing layer. Receives VPS push traffic for stock prices and foreign flow, aggregates health checks across all services, handles load balancing for inbound data pushes.
 

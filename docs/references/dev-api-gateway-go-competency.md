@@ -1,9 +1,10 @@
-# dev-api-gateway — Go Competency (1912a)
+# dev-api-gateway — Go Competency
 
-**Trigger:** `go_migration` — load when working on the Go rewrite of api-gateway.
+**Trigger:** `gateway_work` — load when working on the Go gateway implementation.
 
-**Full plan:** `docs/architecture-briefs/2026-05-14-go-migration-3-services.md`
+**Historical context:** `docs/architecture-briefs/2026-05-14-go-migration-3-services.md`
 **Requirements:** `docs/REQ_1912a.md`
+**Module path:** `github.com/vn-market-intelligence/api-gateway` (renamed from `api-gateway-go` per 1912d cutover)
 
 ---
 

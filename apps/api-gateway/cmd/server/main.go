@@ -1,4 +1,4 @@
-// Package main is the wiring entry point for the api-gateway-go microservice.
+// Package main is the wiring entry point for the api-gateway microservice.
 package main
 
 import (
@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/application"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/infrastructure"
-	httpinterface "github.com/vn-market-intelligence/api-gateway-go/pkg/interface/http"
+	"github.com/vn-market-intelligence/api-gateway/pkg/application"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
+	httpinterface "github.com/vn-market-intelligence/api-gateway/pkg/interface/http"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func main() {
 	router := httpinterface.NewRouter(handlers, logger)
 
 	addr := fmt.Sprintf(":%s", port)
-	logger.Info("api-gateway-go starting", "port", port)
+	logger.Info("api-gateway starting", "port", port)
 
 	if err := http.ListenAndServe(addr, router); err != nil {
 		logger.Error("server error", "error", err)

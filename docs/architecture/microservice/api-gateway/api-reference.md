@@ -1,6 +1,6 @@
 # api-gateway — API Reference
 
-**File:** `apps/api-gateway/src/interface/handlers.ts`
+**File:** `apps/api-gateway/pkg/interface/http/handlers.go`
 
 ## GET /health
 Aggregate health of all 8 downstream services (virtual alias `api` excluded from probes).

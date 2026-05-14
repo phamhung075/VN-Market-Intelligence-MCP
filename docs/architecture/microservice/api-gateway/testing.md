@@ -1,35 +1,33 @@
 # api-gateway — Testing
 
-## Test File
-`apps/api-gateway/src/__tests__/1841a-health-dashboard.test.ts`
+## Test Files
+`apps/api-gateway/pkg/interface/http/handlers_test.go`
 
 ## Framework
-Bun test (`bun:test`)
+Go test (`testing.T`) — table-driven tests
 
 ## Test Fixtures
-- `FIXED_HEALTH`: All 8 services 'ok' with realistic latencies (33-80ms)
-- `DEGRADED_HEALTH`: 6 ok + pdf/rag 'down' (latency -1)
+- `FIXED_HEALTH`: All 9 services 'ok' with realistic latencies
+- `DEGRADED_HEALTH`: Services with 'down' status (latency -1)
 
 ## Acceptance Criteria Tests
 
 | ID | Test | Assertion |
 |----|------|-----------|
-| AC-1 | HTTP 200 + content-type | Status 200, text/html |
-| AC-2 | Page title | Contains `<title>VN Market Intelligence` |
-| AC-3 | All 8 services displayed | Body contains all service keys |
-| AC-4a | Green CSS for UP | `<div class="card status-up">` |
-| AC-4b | Red CSS for DOWN | `<div class="card status-down">` |
-| AC-5 | Auto-refresh | `http-equiv="refresh"` + `content="60"` |
-| AC-6 | Self-contained | No http/https in link/script tags |
-| AC-7 | MCP placeholders | Contains `id="signals"`, `id="prediction"`, `id="alerts"` |
+| AC-1 | HTTP 200 health response | Status 200, application/json |
+| AC-2 | JSON envelope shape | `{status, services{}, latencies{}, checkedAt}` |
+| AC-3 | All 9 services listed | All service keys present in response |
+| AC-4 | Degraded state | Overall status 'degraded' when any service down |
+| AC-5 | Service health individual | `/health/:service` returns single service result |
+| AC-6 | Proxy routing | `/api/*` routes forwarded to MCP server |
+| AC-7 | 404 handling | Unknown routes return 404 |
 
 ## Unit Tests
-- `buildDashboardHtml()` renders UP/DOWN badges correctly
-- Latency display: "42 ms" for ok, "N/A" for down
-- `checkedAt` timestamp included
+- `AggregateHealthUseCase` — all ok → 'ok', any down → 'degraded'
+- `StaticServiceRegistry` — returns 9 services, filters noProbe entries
+- `AggregateHealthService` — fan-out via `goroutine` + `sync.WaitGroup`
 
 ## Run Commands
 ```bash
-cd apps/api-gateway && bun test
-cd apps/api-gateway && bun tsc --noEmit
+cd apps/api-gateway && go test ./...
 ```

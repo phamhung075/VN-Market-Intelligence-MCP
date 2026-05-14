@@ -5,9 +5,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/application"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/infrastructure"
+	"github.com/vn-market-intelligence/api-gateway/pkg/application"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
 )
 
 // ── Mock checker ────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 )
 
 // HTTPHealthChecker is the concrete implementation of HealthCheckerPort.

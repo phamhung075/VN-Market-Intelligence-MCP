@@ -162,3 +162,18 @@ All three services use only `hono` + `bun-types` + `typescript` as declared depe
 1. **Go version pin:** Which Go version? Recommended 1.22 (stdlib `net/http` improvements, `slices` package). Needs user/PO confirmation for base image consistency.
 2. **CGO policy:** `mattn/go-sqlite3` requires CGO. If user prefers pure-Go SQLite (e.g., `modernc.org/sqlite`), performance tradeoff acceptable? Pure-Go avoids gcc dependency in Docker but is ~2x slower on heavy query loads.
 3. **Log format alignment:** Current TS services use `console.log` (unstructured). Should Go services use structured JSON logging (`log/slog`) to align with future observability plans? Or plain text to match current ops expectations?
+
+---
+
+## Phase 1 Close-out
+
+**Status:** DONE
+
+**Cutover date:** 2026-05-14 (user directive c105 — override 24h smoke gate)
+**Cutover SHA:** see `docs/signals/*-1912d-complete.json`
+**Audit brief:** `docs/architecture-briefs/2026-05-14-1912d-cutover-audit.md`
+
+**Final state:** Go gateway (`github.com/vn-market-intelligence/api-gateway`) is now `apps/api-gateway/`. TS gateway retired. Port 4000 served by Go. All 9 services healthy at cutover (smoke: 9.5ms avg latency).
+
+**Phase 2 (1912b-alert-engine):** UNLOCKED
+**Phase 3 (1912c-stock-price):** UNLOCKED

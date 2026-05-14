@@ -57,7 +57,7 @@ interface ServiceRegistryPort {
 ## Domain Service
 
 ### AggregateHealthService
-- **File:** `apps/api-gateway/src/domain/services.ts`
+- **File:** `apps/api-gateway/pkg/domain/services.go`
 - Constructor: `(checker: HealthCheckPort, registry: ServiceRegistryPort)`
 - Method: `aggregate(): Promise<AggregatedHealth>`
 

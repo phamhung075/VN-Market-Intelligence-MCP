@@ -4,7 +4,7 @@ package application
 import (
 	"context"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 )
 
 // AggregatorPort is a port for the aggregate health operation (allows test injection).

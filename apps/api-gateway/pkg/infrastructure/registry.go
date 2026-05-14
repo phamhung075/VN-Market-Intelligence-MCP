@@ -1,7 +1,7 @@
 // Package infrastructure provides concrete implementations of domain ports.
 package infrastructure
 
-import "github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
+import "github.com/vn-market-intelligence/api-gateway/pkg/domain"
 
 const defaultTimeoutMs = int64(2000)
 

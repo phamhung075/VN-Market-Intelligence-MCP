@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/application"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/domain"
-	"github.com/vn-market-intelligence/api-gateway-go/pkg/infrastructure"
-	httphandler "github.com/vn-market-intelligence/api-gateway-go/pkg/interface/http"
+	"github.com/vn-market-intelligence/api-gateway/pkg/application"
+	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
+	"github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
+	httphandler "github.com/vn-market-intelligence/api-gateway/pkg/interface/http"
 )
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
