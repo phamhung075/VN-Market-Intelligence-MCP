@@ -1,42 +1,34 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c88-1905a-news-fetch-stealth-fix
+**Last updated:** 2026-05-14 | **Sprint:** c89-1906a-headlock-cure-permanent
 
 ## Last session summary
 
+Task 1906a-headlock-cure-permanent — doc-only reclassification of HEAD.lock PREFLIGHT self-cure.
+
+**What was done:**
+- `docs/protocols/head-lock-self-cure.md` +13L net:
+  - Status line added to header: PERMANENT OPERATIONAL POLICY (reclassified 2026-05-14)
+  - New `§ (f) Policy Classification` — rationale, c87/c88/c89 3-cycle evidence, F1 structural cure cross-ref, `1897b-carry` tracking pointer
+- `reports/TASK_HANDOFF_1906a-headlock-cure-permanent.md` created (ULTRA)
+- No code changed, no tests, tsc gate N/A (doc-only)
+
+**Commits:** (see SHA in branch task/c89-1906a-headlock-cure-permanent)
+**Branch:** `task/c89-1906a-headlock-cure-permanent`
+
+## Previous last session summary
+
 Task 1905a-news-fetch-stealth-fix — fix news-fetch container startup crash.
 
-**Root cause:** `playwright-stealth` v0.0.1 is a never-functional placeholder package that throws `'Wrong package'` at import time. Option A (CJS interop) was ruled out immediately — no interop can fix a module that throws unconditionally.
+**Root cause:** `playwright-stealth` v0.0.1 is a never-functional placeholder package that throws `'Wrong package'` at import time.
 
 **Fix (option B):** Removed `playwright-stealth` dep entirely. Replaced with inline stealth in `playwright-browser-factory.ts`:
 - `STEALTH_INIT_SCRIPT` constant patches `navigator.webdriver = undefined` via `context.addInitScript()` before `newPage()`
 - Added `viewport`, `locale`, `colorScheme` to `newContext()` options
 
-**Files changed:**
-- `apps/news-fetch/src/infrastructure/scrapers/playwright-browser-factory.ts` — core fix
-- `apps/news-fetch/package.json` — dep removed
-- `apps/news-fetch/bun.lock` — regenerated (1 removed)
-- 6 test files — `addInitScript` added to playwright mocks, `playwright-stealth` mocks removed
-- New: `src/__tests__/unit/1905a-playwright-browser-factory.test.ts` (6 ACs)
-
 **Results:** 172 pass / 0 fail / tsc clean / DDD clean
-
 **Commits:** `502499e3 fix(c88/news-fetch): 1905a — replace playwright-stealth placeholder with inline stealth`
 **Branch:** `task/c88-1905a-news-fetch-stealth-fix`
-**Handoff:** `reports/TASK_HANDOFF_1905a-news-fetch-stealth-fix.md`
-
-## Previous last session summary
-
-Task 1903-doc-pair — doc-only CHORE pair: stale label clear + macro fallback note.
-
-**What was done:**
-- Branch `task/c87-1903-doc-pair` created from main.
-- 1903a: Removed `[UNVERIFIED — tool not found 2026-05-11]` label from `write_alert_verdict` entry in `.claude/tools/package/alert-commander.md`. Sweep of all `.claude/tools/package/*.md` found no other UNVERIFIED labels.
-- 1903b: Added `get_macro_snapshot` fallback note to `.claude/flows/alert-commander/stage-bootstrap.md` step 0b.
-- tsc gate: PASSED (doc-only).
-
-**Commits:** `d7ddca53 docs(c87/agent-doc): 1903-doc-pair — clear stale UNVERIFIED label + macro fallback note`
-**Branch:** `task/c87-1903-doc-pair`
 
 ## Known patterns / preferences
 
@@ -56,4 +48,4 @@ Task 1903-doc-pair — doc-only CHORE pair: stale label clear + macro fallback n
 - Branch `task/c86-autocure-mw-dedup` awaiting QA gate.
 - Branch `task/c87-1903-doc-pair` awaiting QA gate.
 - Branch `task/c88-1905a-news-fetch-stealth-fix` awaiting QA gate.
-- Pre-existing playwright tsc errors in news-fetch (2 files) — confirmed resolved in 1905a fix.
+- Branch `task/c89-1906a-headlock-cure-permanent` awaiting QA gate.
