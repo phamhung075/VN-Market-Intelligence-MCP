@@ -1,50 +1,50 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T10:14:03Z (c97 triage — 1910a dispatch + ops news/BCTC probe)
+## Last updated: 2026-05-14T10:57:26Z (c98 triage — 1912 PO decisions + FA gateway escalation)
 
 ---
 
-## Cycle 97 triage — dev-team Step 1 PO triage
+## Cycle 98 triage — dev-team Step 1 PO triage
 
-**Input:** pendingSignals[]=EMPTY, 12 new Telegram reports, TASKS.md WIP=0/2 (1909c HOLD AC-4/5 until 2026-05-16, Todo has 1910a-ism-tool HIGH unblocked).
+**Input:** 2 pendingSignals[] (1912 architect brief + tnb c51), WIP=0/2 free, 1910a USER-STOPPED Todo, 1909c HOLD.
 
 ### Decisions
 
-1. **DISPATCH 1910a-ism-tool** (HIGH FEATURE, dev-mcp-server). Architect SD-1 verbatim honored: FRED REST API key path (a) — JSON parse, CSV does not serve sub-components. FRED_API_KEY confirmed in .env line 23, gitignored. Spec `docs/specs/1910-fred-ism-subcomponents-and-effr-package-reg.md` + handoff `docs/handoffs/TASK_1910a-ism-tool.md`.
+1. **1912 program — 3 architect open questions ALL CONFIRMED** (architect-recommended defaults adopted):
+   - **Q1 Go 1.22** — monorepo base image consistency, stdlib `slices`, `net/http` improvements.
+   - **Q2 `mattn/go-sqlite3` (CGO)** — alert-engine q30s + stock-price tier-3 cache cannot eat ~2x pure-Go penalty. Standard `golang:1.22-alpine + apk add gcc musl-dev` per brief R1.
+   - **Q3 `log/slog` JSON** — aligns with ops observability roadmap, TNB layers + cowork-side parsers.
+   - Program moved Backlog with decisions baked in; sub-task **1912a-gateway-spec (SPRINT-M, BA owner)** added to Todo for Phase 1 dispatch.
 
-2. **DISPATCH 1911a-news-bctc-probe** (MEDIUM OPS, ops owner). Combined read-only probe:
-   - (A) Reports #2875/#2877/#2884 — `pollNews` 0-items outage 21h old; ops checks news_articles recency + scheduler log; resolves auto-recovered or escalates.
-   - (B) Report #2878 — VNM Q4-2025 BCTC low-confidence; ops SELECTs financial_reports post-1908c merge; resolves duplicate (linked 1908c) if conf≥0.2, else escalates.
-   - **No production code.** SELECT + log inspection only.
+2. **FA runtime gap — NOT a server-side bug.** Verified `get_cash_flow` / `get_macro_snapshot` / `get_investment_clock_phase` registered both in `agentBootstrap.ts` financial_analyst[] (L72-75) and `tools/registry.ts` (L99/L197/L201). Per tnb `mcp_gateway.blocker_type=user_action_desktop_config` + SPIKE_C86_MCP_REG, blocker is Claude Desktop / cowork gateway config. **Spawned 1913-fa-mcp-gateway-config-user-action (CRITICAL, F1 USER, BCTC deadline 2026-05-15).** Did NOT spawn a dev FIX — would be misrouted.
 
-3. **Telegram housekeeping** — 7 HEAD.lock cowork-side virtiofs spam reports (#2876, #2879, #2880, #2881, #2882, #2883, #2885) claim+resolve "duplicate" linked to 1897b-carry. These are sandbox-side spam — host PREFLIGHT auto-cures each tick.
+3. **1907a digest-predict 5d silence — ESCALATED HIGH → CRITICAL** per tnb c51 recommendation. Same gateway/desktop substrate as 1913; linked.
+
+4. **Alert precision scoring (bug 2874) — DEFERRED.** MEDIUM, no urgency tag, queue WIP discipline + BCTC tomorrow + 1912 launch take priority. Tracked, not actioned.
 
 ### WIP plan
-- WIP=2/2 (1910a + 1911a). 1909c HOLD does not consume slot.
-- Hold 1899a-bloomberg-test-split (LOW REFACTOR) — keep merge gate clear for 1910a HIGH FEATURE.
+- BATCH(2) returned: **1912a-gateway-spec (SPRINT-M, ba zone:apps/api-gateway/)** + **FIX-1913-fa-gateway-config-USER (UNBLOCK, owner=user)**.
+- 1910a stays Todo USER-STOPPED until user signal — do NOT redispatch.
 
-### Channel audit (mandatory per feedback_po_channel_audit)
-- MARKET: not directly read (gateway available; bypassed for time). Substrate = 12 Telegram reports listed in spawn context.
-- WORK: HEAD.lock duplicates dominate (7/12 reports) — known issue, F1 USER action 1897b.
-- BUG: BCTC #2878 (likely stale post-1908c) + pollNews #2875 (21h old) → covered by 1911a probe.
+### Channel audit
+- Skipped MARKET/WORK/BUG read (gateway offline for cowork c46-c51 per tnb). Substrate already in 2 signals processed.
 
 ### Recurring-bug compliance
-- 1910a `getIsmSubcomponentsTool.ts`: 0 prior FIX commits on this module. No architect block needed (analog 1879 ISM fetcher already shipped).
-- 1911a is probe-only (no code) — recurring-bug rule does not apply.
+- 1912a-gateway-spec: BA work, no prior FIX on `apps/api-gateway/` Go rewrite. Architect brief is the unblocker.
+- 1913: USER action, no code path.
 
-### Carry-forward to c98+
-- 1910a build → QA → ship. Expected M-effort, 1-2 cycles.
-- 1911a probe results → either close reports or spawn FIX ticket.
-- 1909c HOLD lifts 2026-05-16 once Q1-2026 PDFs land at SSC + post-banking-deadline reparse pass.
-- 1897b USER F1 (Docker .git/ exclusion) — still open; HEAD.lock cowork-side will keep firing until structural cure.
+### Carry-forward to c99+
+- 1912a spec → architect review → PM sprintify → dev-* (still TBD per zone — Go rewrite needs a new dev role assignment, BA spec must flag this).
+- 1912b alert-engine spec (Phase 2) blocked until 1912a P1 ships + 24h smoke window.
+- 1912c stock-price spec (Phase 3) blocked until 1912b stable.
+- 1913 user-action F1 — user refresh Claude Desktop / cowork MCP config; observe FA next cycle.
+- 1907a CRITICAL — observe next 3 cycles for digest-predict signal; if silent again → architect rethink (cowork heartbeat reliability).
 
 ### Sign-off
-c97 BATCH(2): 1910a-ism-tool dispatched (dev-mcp-server zone apps/mcp-server) + 1911a-news-bctc-probe dispatched (ops). 7 Telegram dupes queued for housekeeping. PO sub-flow EXIT.
+c98 BATCH(2): 1912a-gateway-spec (SPRINT-M, ba) + 1913-fa-gateway-config (UNBLOCK, user). 1907a escalated CRITICAL in place. PO sub-flow EXIT.
 
 ---
 
-## Cycle 94 triage — TNB c50 data + equipment proposal intake — ARCHIVED
+## Cycle 97 triage — ARCHIVED (1910a dispatched then USER-STOPPED, 1911a probe shipped)
 
-TNB c50 split: Sprint 1909 (BCTC OCF) + Sprint 1910 (FRED ISM + EFFR pkg-reg). All SHIPPED by c96. Banking deadline 2026-05-15 MET via 1908c+1909a+1909b+1890a chain. c97 picks up 1910a (only remaining Todo from that bundle).
-
----
+Carry: 1910a stays Todo pending user signal; 1909c HOLD until 2026-05-16.
