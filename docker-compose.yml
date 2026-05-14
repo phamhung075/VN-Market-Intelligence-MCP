@@ -247,6 +247,42 @@ services:
         reservations:
           memory: 256m
           cpus: '0.25'
+  api-gateway-go:
+    build:
+      context: apps/api-gateway-go
+      dockerfile: Dockerfile
+    ports:
+    - 4001:4000
+    environment:
+    - PORT=4000
+    - MCP_URL=http://mcp-server:3000
+    - PDF_URL=http://pdf-extractor:5001
+    - RAG_URL=http://rag-service:5002
+    - TA_URL=http://technical-analysis:5003
+    - MACRO_URL=http://macro-indicators:5004
+    - STOCK_URL=http://stock-price:5000
+    - KINH_DICH_URL=http://kinh-dich-service:5005
+    - ALERT_URL=http://alert-engine:5006
+    - NEWS_URL=http://news-fetch:5008
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://localhost:4000/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.25'
+        reservations:
+          memory: 64m
+          cpus: '0.1'
   kinh-dich-service:
     build:
       context: apps/kinh-dich-service
