@@ -2,7 +2,83 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-13 14:50 UTC (cycle 46) | Cycles completed: 46
+**Last updated:** 2026-05-14 04:30 UTC (cycle 48) | Cycles completed: 48
+
+---
+
+## Cycle 48 Watch Notes (2026-05-14 04:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (get_macro_snapshot fix confirmed across 3 agents; c47 auto-cure ROI verified; financial-analyst package gap is the top carry blocker; BCTC banking Q1 deadline TODAY)
+
+**MCP Gateway:** Not registered in TNB session — 3rd consecutive cycle (c46/c47/c48). SPIKE_C86_MCP_REG per c86 PO ACK. Audit from notebook evidence per established pattern.
+
+**c47 AUTO-CURE ROI VERIFIED:**
+- Off-hours duplicate guard (Step 4, market-watcher/cycle.md) confirmed working
+- market-watcher 23:39 UTC: GAS/VRE both suppressed "off-hours duplicate — same closing price"
+- 02:32 UTC (2026-05-14): 0 anomalies, clean cycle — pattern not re-triggered
+- Cumulative noise eliminated: ~4 duplicate signals per off-hours session × recurring pattern
+
+**REGIME FIX CONFIRMED (c86 SPIKE_C86_MCP_REG effect):**
+- alert-commander 01:02 + 02:03 UTC: REGIME=NEUTRAL from get_macro_snapshot (not inferred)
+- news-scout 02:21 UTC: REGIME=TIGHTENING from get_macro_snapshot (correct label, ×0.7 applied)
+- market-watcher 02:32 UTC: REGIME=NEUTRAL from get_macro_snapshot (correct)
+- financial-analyst STILL inferring from news — tool not in its package (separate fix needed in 1890a)
+
+**NEW FINDING #3 — financial-analyst Layer 8 H-step SKIP:**
+- get_investment_clock_phase not in package → cycle phase never declared
+- Joins B-step (get_macro_snapshot) + G-step (get_cash_flow) = 3 tool gaps in one agent
+- All financial-analyst outputs missing cycle phase + pyramid tier (Layer 8 requirement)
+- No existing task — needs new subtask under 1890a or standalone
+
+**BCTC BANKING Q1/2026 — URGENT TODAY (2026-05-15 VNT = ~17:00 UTC 2026-05-14):**
+- ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 deadline
+- Unified-agent flagged urgently (carry-over: "BCTC CATALYST URGENT TODAY")
+- financial-analyst Layer 7 G-step skip = OCF vs NI comparison blocked for this EPS window
+- report-analyzer wired at 00:10 UTC — will process on next cycle post-filing
+
+**US10Y: 4.49% — 0.01% from threshold:**
+- Unified-agent: US10Y_SIGNAL=RISK-OFF (02:00 UTC)
+- No agent logged explicit Layer 1.2 cross-flag this cycle
+- alert-commander carry-over does not mention US10Y value in 01:02/02:03 entries
+
+**MACRO (from notebook evidence, ~02:00 UTC 2026-05-14):**
+- Regime: TIGHTENING (news-scout, get_macro_snapshot); NEUTRAL (market-watcher/alert-commander)
+- DXY: USD STABLE (98.45, slight soften from 98.53 — unified-agent 02:00 UTC)
+- US10Y_SIGNAL: RISK-OFF | US10Y ~4.49% (threshold 4.50%)
+- FII: 14 consecutive sessions net sell, >13,000B VND outflow (CARRY_REGIME=FII_OUTFLOW_RISK)
+- Brent: ~105-107 range (TIGHTENING support) | Gold: volatile (Fed hike fears)
+- VN market: approaching open (02:00 UTC = ~09:00 VNT pre-market)
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: 5/5 effective GOOD — regime from snapshot, correct dedup
+- news-scout: 4/4 effective GOOD — TIGHTENING discipline restored, FII chain_catalyst correct
+- market-watcher: 4/4 effective GOOD — regime from snapshot, auto-cure working
+- unified-agent: 6/6 effective GOOD — Pillars 4/4, cycle declared, BCTC urgency flagged
+- financial-analyst: 3/5 NEEDS_ATTENTION — B/G/H all skip (3 missing tools)
+- report-analyzer: 2/2 GOOD — VCB Q4-2025 processed
+- digest-predict: UNAUDITABLE (3-day silence)
+
+**HEXAGRAM DYNAMICS:**
+- alert-commander Càn STRONG — regime fix holding, dedup discipline clean
+- news-scout Càn STRONG — TIGHTENING discipline restored, correct FII suppression/amplification
+- market-watcher Tốn RECOVERING — auto-cure working, regime from snapshot
+- unified-agent Đỉnh STABLE — Pillars 4/4, BCTC urgency self-flagged
+- financial-analyst Bĩ DEGRADED (3 tool gaps, 5-cycle carry on G-step)
+- digest-predict Bác — 3-day silence, daily digest gap
+- TNB Tốn FOCUSED — auto-cure ROI verified, regime fix confirmed
+
+**AUTO-CURES THIS CYCLE:** 0 new (all remaining gaps = dev-package tasks)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-14T04-30-00Z.json (priority: high — NEEDS_ATTENTION)
+
+## Cycle — 04:30 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEEDS_ATTENTION. get_macro_snapshot fix confirmed across alert-commander/news-scout/market-watcher (3 agents). c47 auto-cure ROI verified (market-watcher off-hours duplicate guard working, 23:39 UTC suppression clean). NEW finding: financial-analyst Layer 8 H-step skip (get_investment_clock_phase not in package) — joins B+G = 3 tool gaps. BCTC banking Q1/2026 deadline TODAY (ACB/BID/CTG/EIB/MBB/VCB/VPB). MCP gateway not in TNB session (3rd consecutive cycle — c46/c47/c48).
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-14T04-30-00Z.json, priority=high). 0 auto-cures applied (all gaps are dev-package tasks). Telegram blocked (MCP unavailable).
+- **next_cycle_hint**: Watch BCTC Q1/2026 banking cohort filings (ACB/BID/CTG/EIB/MBB/VCB/VPB) — financial-analyst must process at 03:30 UTC cycle. Monitor US10Y for 4.50% threshold cross. Confirm 1890a deploy (3 tools for financial-analyst). Confirm SPIKE_C86_MCP_REG resolved for TNB session.
+- **estimated_tokens**: 7500
 
 ---
 

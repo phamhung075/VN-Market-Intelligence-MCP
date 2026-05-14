@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 01:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 02:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1012,3 +1012,23 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (02:38–02:41 UTC)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: [FPT]
+- ⚠️ FPT +2.12% (1.55σ, stddev 1.365%, 30d) — signal id=3134 posted to alert-commander. Outperforming sector avg +0.8%. PE discount vs sector (-20%), high ROE (28.3%), mixed evidence (bear 0.76 > bull 0.64). pe_compression_risk=true (RISK-OFF + large-cap + FII outflow). Catalyst: US tech rally, FPT 12% revenue from US IT services. Counterweight: SGI Capital 70% cash (macro caution), FII net 0 in 5 sessions.
+- GAS +3.79% (1.15σ, stddev ~3.29%) — sub-threshold (1.5σ). High vol stock. Continuing 3-day rally (+3.79%/+6.93%/+3.94%). Prior price_surge alert from yesterday session.
+- VRE +2.12% (0.51σ, stddev 4.14%) — sub-threshold. High volatility masking move.
+- VIC -1.36% (0.51σ, stddev 2.66%) — sub-threshold. Downside_bias active but below threshold.
+- Macro: Supply chain STABLE (BDI=1,400). Energy NORMAL (hydro 70%). Climate: heat risk May (IDC,KBC,GEG). Sector rotation: all 16 sectors STABLE (1d data only). CARRY_REGIME=FII_OUTFLOW_RISK — no hot_money_concentration (FII selling, not buying).
+
+## Metrics (cycle 2026-05-14 02:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5200 |
