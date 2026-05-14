@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 06:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 07:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1153,3 +1153,18 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - **actions**: signal price_anomaly FPT → alert-commander (id=3143) | signal price_anomaly VPB → alert-commander (id=3144) | WORK telegram sent
 - **next_cycle_hint**: Watch FPT follow-through vs 30d high 75,500; VPB needs sustained vol to confirm breakout; GAS near-threshold (0.93σ) with IEA bullish supply warning; POW downside (-1.41%) in TIGHTENING warrants monitoring
 - **estimated_tokens**: 6500
+
+### Cycle (07:38–07:41)
+- Stocks: 34 | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VPB] | pe_risk: [FPT, VPB]
+
+## Metrics (cycle 2026-05-14 07:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
