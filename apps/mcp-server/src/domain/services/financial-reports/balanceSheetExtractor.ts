@@ -715,6 +715,15 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     totalAssets = currentAssets.total + nonCurrentAssets.total;
   }
 
+  // BCTC-1908c: Plausibility override — positional extraction drift on code 270.
+  // When extractSplitBlockAll captures a sub-item value instead of the grand total,
+  // computedFromSubtotals will be >> totalAssets (ratio > 5). Discard and recompute.
+  const computedFromSubtotals = currentAssets.total + nonCurrentAssets.total;
+  if (totalAssets > 0 && computedFromSubtotals > 0 && computedFromSubtotals / totalAssets > 5) {
+    console.warn("[balanceSheetExtractor] BCTC-1908c: totalAssets positional drift detected; overriding with sub-total sum.");
+    totalAssets = computedFromSubtotals;
+  }
+
   // --- Current liabilities ---
   const currentLiabilities: CurrentLiabilities = {
     shortTermDebt: fv(P_SHORT_TERM_DEBT, "311", 311),
