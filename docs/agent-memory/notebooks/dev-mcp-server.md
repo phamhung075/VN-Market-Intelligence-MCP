@@ -4,6 +4,33 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1909b — get_bctc_ocf MCP tool (#132) (2026-05-14, DONE)
+
+**Mission:** New MCP tool `get_bctc_ocf(code, period_year, period_quarter)` returning OCF forensic-gate fields.
+
+**Files created:**
+- NEW `interface/mcp/tools/financial-reports/getBctcOcfTool.ts` — handler, U-4 injection pattern
+- NEW `src/__tests__/1909b-get-bctc-ocf.test.ts` — 8 tests (happy ×3, no-row ×2, confidence ×1, validation ×2)
+
+**Files modified:**
+- `financial-reports/index.ts` — +1 export
+- `tools/registry.ts` — +import + register as #132
+- `bootstrap/agentBootstrap.ts` — +`get_bctc_ocf` in financial_analyst array
+- `docs/SKILL_MANIFEST.md` — +1 row, updated timestamp
+- `.claude/tools/package/financial-analyst.md` — +1 row Financial Reports section
+
+**Critical (SD-2):** `extraction_method` SELECT'd from real DB column — NOT hardcoded. Tests assert enum values `pdf-parse`, `ocr-200`, `news_inference` and null all pass through correctly from DB.
+
+**Results:** 8/8 tests GREEN. tsc 0 errors. Commit `0c0e85f8` on branch `task/1909b-get-bctc-ocf-tool`.
+
+**Pattern notes:**
+- Input schema uses `code` + `period_year` + `period_quarter` (exact match per spec, not the `ticker`/`period`/`year` shape of cashFlowTool.ts)
+- `source_tier: 1 as const` compile-time literal per 1881a SSOT
+- `getDb()` called inside MCP registration callback (not module scope) — U-4 pattern
+- Error path returns `{ source_tier: 1, error: "validation_error", details: [...] }` — no throw
+
+---
+
 ### Task 1907a-digest-predict-silence — diagnostic (2026-05-14, DONE)
 
 **Mission:** Identify why digest-predict notebook has been silent for 3 days (last entry 2026-05-11 21:38 UTC).
