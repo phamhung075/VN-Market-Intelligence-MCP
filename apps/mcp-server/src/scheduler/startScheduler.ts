@@ -233,12 +233,13 @@ export function startScheduler() {
   // Startup catch-up: if server restarts after 09:30 GMT+7, stranded PDFs
   // won't be reparsed until tomorrow. Fire-and-forget 30s after boot.
   // Triggered by report 1108 (VNM/VEA PDFs on disk but financial_reports empty).
+  // Fix task 1915-fix-part1: call runBctcReparseWithDb(db) instead of
+  // runBctcReparseJob() directly — the direct call bypassed db injection and
+  // produced a misleading fire-and-forget recordJobRun no-op.
   setTimeout(async () => {
     try {
-      const r = await runBctcReparseJob()
-      if (r.resolved > 0) {
-        log(`[bctc-reparse] startup catch-up: resolved=${r.resolved} examined=${r.examined}`)
-      }
+      await runBctcReparseWithDb(db)
+      log('[bctc-reparse] startup catch-up: complete')
     } catch (err) {
       log(`[bctc-reparse] startup catch-up failed: ${err instanceof Error ? err.message : String(err)}`)
     }
