@@ -4,6 +4,27 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-14 c108-tick3-fix — 1912b DDL ordering bug FIXED
+
+**Commit:** `bfa93672 fix(1912b/alert-engine): split InitAlertTables DDL into 3 phases — base / ALTER / outcome index`
+
+**Root cause (1-line):** `CREATE INDEX idx_alerts_outcome_pending ... WHERE outcome IS NULL` ran inside the same DDL blob as `CREATE TABLE`, executing before `ALTER TABLE` added the `outcome` column — SQLite rejected it with "no such column: outcome" on any TS-era DB where the table already existed.
+
+**Fix shape (3-phase):**
+- Phase 1: `CREATE TABLE IF NOT EXISTS` (base columns only, no outcome) + `CREATE INDEX idx_alert_engine_stocks` + `CREATE INDEX idx_alert_engine_fingerprint` + `CREATE TABLE IF NOT EXISTS alert_mutes`
+- Phase 2: existing `ALTER TABLE ADD COLUMN` loop for `outcome`/`outcome_at`/`outcome_detail` (duplicate-column-name ignore retained)
+- Phase 3: `CREATE INDEX IF NOT EXISTS idx_alerts_outcome_pending ON alert_engine_records(outcome) WHERE outcome IS NULL` — isolated exec after Phase 2 guarantees column exists
+
+**Test added:** `TestInitAlertTables_PreMigrationDB` in `sqlite_test.go` — seeds in-memory DB with TS-era schema (no outcome columns), calls `InitAlertTables`, asserts nil error + outcome columns present via PRAGMA + idx_alerts_outcome_pending in sqlite_master.
+
+**Tests:** 38/38 PASS (17 infra + 10 domain + 3 application + 8 interface/http). New test is test #17 in infra package.
+
+**Lesson for future Go SQLite migrations:** NEVER mix `CREATE INDEX` referencing a new column with `CREATE TABLE` in a single DDL blob. SQLite processes the blob sequentially but `CREATE TABLE IF NOT EXISTS` is a no-op on existing DBs — any subsequent DDL in the same blob that references new columns will fail before `ALTER TABLE` can add them. Always: base schema → ALTER TABLE → dependent indexes. Three separate `db.Exec` calls.
+
+**Signal:** `docs/signals/20260514T210000Z-1912b-fix-ready.json`
+
+---
+
 ### 2026-05-14 c108-tick2 — 1912b-cutover COMPLETE
 
 **Commits:**
