@@ -1,0 +1,19 @@
+{
+  "task": "c92 — 1908c post-fix ops deploy",
+  "date": "2026-05-14",
+  "operation": "DB cleanup — VNM Q4 2025 + DIG Q4 2025 bad rows deletion",
+  "database": "data/market.db",
+  "table": "financial_reports",
+  "status": "NO BAD ROWS FOUND",
+  "details": {
+    "vnm_q4_2025_count": 0,
+    "dig_q4_2025_count": 0,
+    "total_bad_rows_deleted": 0,
+    "reason": "Guard in place before extraction or extraction never ran with broken code"
+  },
+  "guard_verification": {
+    "file": "apps/mcp-server/src/domain/services/financial-reports/balanceSheetExtractor.ts",
+    "lines": "720-724",
+    "status": "ACTIVE — plausibility override check for totalAssets positional drift"
+  }
+}
