@@ -4,40 +4,30 @@
 
 ## This session
 
-### Daily Review (23:01 UTC)
-- Mode: DAILY_REVIEW | Freshness: news STALE (5.5h, already reported 22:02 UTC — dedup skip) | Bugs: 1 (news RSS)
-- System: ok | Alerts: 20 open/24h (3 HIGH), 55 pending | VN-Index ATH session closed
-- Carry-over: BCTC Q1/2026 filings due today 15/05 (banking sector); FPT 73,900 — monitor 78,000 threshold
+Daily Review (23:01 UTC 2026-05-14). System ok. Sent daily coordination summary to WORK channel. 20 alerts fired in 24h (3 HIGH: MACRO×2, GAS×1). News freshness stale at 5.5h — already reported as performance_issue at 22:02 UTC, dedup skipped. Prices stale as expected (market closed outside 02:00–08:59 UTC window). 55 alerts pending.
 
-Daily Review (22:02 UTC 2026-05-14):
-- Mode: DAILY_REVIEW | System: ok (16/16 CB) | Alerts: 26 sent 24h, 4 HIGH/CRITICAL, 0 unnotified | Bugs: 0
-- VN-Index ATH confirmed (+27pts): VIC+3.98%, VHM+2.95%, FPT+4.53% — khối ngoại reversed to net-buy
-- Freshness: news 4.5h STALE (RSS degraded — CafeF/VnExpress/VnEconomy/Reuters all 1 failure); feedback submitted (medium/performance_issue)
-- ACB vnstock RATE_LIMITED (max retries exhausted); bctcQueueEnricher 0 URLs for MWG/NVL/REE/TCH/VNH (recurring)
-- Telegram BUG channel delivery failed (TELEGRAM_REPORT_BUG_CHANNEL_ID) — noted for ops
+## Cycle — 23:01 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: System ok; VN-Index ATH session closed (+27pts led by VIC/VHM/FPT); news RSS still degraded (5.5h stale, previously filed); 1 outstanding BUG (msg 2889)
+- **actions**: sent_telegram(work) daily summary; notebook commit
+- **next_cycle_hint**: BCTC Q1/2026 major filing day 15/05 — pull banking sector at 02:00 UTC open; FPT 73,900 vs 78,000 threshold watch
+- **estimated_tokens**: 1500
 
 ## Patterns noticed
 
-- REGIME: macro_snapshot = authoritative (NEUTRAL); news-framing inflates to TIGHTENING — maintain discipline
-- HEAD.lock: VirtioFS race recurring (c33/c52/c58+/msg2886). Permanent fix needed (rm on host docker layer)
-- Alert scoring pipeline stalled: 441 unknowns / 0 scored — bug 2874 open, no fix yet
-- get_portfolio_conviction: persistent server timeout across cycles — likely tool endpoint down, not transient
-- RSS degradation: all feeds showing 1+ failures overnight, news freshness consistently exceeds 2h threshold
-- bctcQueueEnricher 0-URL errors for multiple tickers is recurring (not isolated) — scrape or geo-block issue
-- Telegram BUG channel ID may be misconfigured — submit_feedback BUG delivery reported failed this cycle
+- RSS degradation: all feeds showing 1+ failures, news freshness consistently exceeds 2h threshold — recurring, filed
+- HEAD.lock VirtioFS race: recurring on commit (c33/c52/c58+/msg2886) — ops permanent fix needed
+- Alert scoring pipeline stalled: 441 unknowns / 0 scored — bug 2874 open
+- get_portfolio_conviction: persistent server timeout across cycles
+- bctcQueueEnricher 0-URL errors for MWG/NVL/REE/TCH/VNH — recurring scrape/geo-block issue
+- REGIME: NEUTRAL confirmed multiple cycles; news-framing inflates to TIGHTENING — maintain macro_snapshot discipline
 
 ## Carry-over (next session)
 
-- **🔴 BCTC Q1/2026 FILING TODAY 15/05**: ACB/BID/CTG/EIB/MBB/VCB/VPB — pull data at 02:00 UTC open. Major EPS catalyst.
-- **FPT session 2/2**: 73,900 < 78,000 (session 1 failed threshold). If no break above 78,000 today → reduce position per carry-over rule.
+- **🔴 BCTC Q1/2026 FILING 15/05**: ACB/BID/CTG/EIB/MBB/VCB/VPB — pull at 02:00 UTC open. Major EPS catalyst.
+- **FPT session 2/2**: 73,900 < 78,000 (session 1 failed threshold). No break above 78,000 → reduce position.
 - **VCB Q4-2025 filed 14/05**: Pull get_bctc_full(VCB) at open — assess conviction shift.
-- **REGIME**: NEUTRAL confirmed 2 consecutive cycles. Recheck if Warsh/Fed tone hardens.
+- **REGIME**: NEUTRAL confirmed 2+ cycles. Recheck if Warsh/Fed tone hardens.
 - **HEAD.lock CRITICAL**: msg 2886 unclaimed >8h. Ops: `rm .git/HEAD.lock` on host — permanent fix needed.
-- **get_portfolio_conviction**: bug filed (performance_issue). Monitor at next cycle; if still down → escalate to BUG channel.
-- **FII pipeline**: fii_type=UNKNOWN. Foreign net-buy FPT noted 14/05. Reassess when pipeline recovers.
-- **VCI**: Institutional exit double confirmed — no entry.
-- **Alert scoring**: bug 2874, 441 unknowns. Scoring pipeline needs fix.
-- **China/Taiwan prediction market**: 50.5% YES ($1.8M) — geo-risk tail on FPT/VEA/GEX.
-- **FOMC Jun 18**: PMI 2/6, CPI 4/6, FOMC 18/6, SBV 24/6.
-- **TELEGRAM_REPORT_BUG_CHANNEL_ID**: BUG channel delivery failed this cycle — ops verify env var.
-- **RSS feeds**: All degraded overnight. Monitor at 02:00 UTC open — if still failing → submit critical feedback.
+- **RSS staleness**: news >5h — follow up if still degraded at 01:00 cycle.

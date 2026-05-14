@@ -80,3 +80,12 @@ None this cycle. c53 cure (alert-commander stage-bootstrap.md retry-once + conse
 3. **news-scout F/H-step** — track cycle 3. If chain_catalyst signals still show 0/4 pillars + no cycle phase at c55, auto-cure threshold reached → modify stage-signals.md to require pillar summary in payload.detail.
 4. **1913 BLOCKING-F1** — user desktop config refresh is the only unblock path. TNB cannot escalate further; recommend PO/user action.
 5. **digest-predict 1907a** — confirm ops/developer pickup via TASKS.md. If still Backlog at c55 → recommend explicit sprint assignment.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-14T23:25:53Z
+- Tasks created: 1917-telegram-bug-channel-env-fix (NEW — finding #5)
+- Skipped findings: #1 (already 1913 in Backlog BLOCKING-F1), #2 (already 1907a CRITICAL OPS), #3 (cycle 2/3 — watch c55), #4 (subsumed by 1913 substrate), #6 (FA blocked by 1913 — no new task), #7 (already 1914 in Backlog), #8 (already 1914b in Backlog). Persisting blocker #3 alert precision N=0/441 (bug 2874) not yet a TASKS.md entry — flagged for c55 channel-audit pickup if recurring.
+- Direction: IMPROVING confirmed. 1915 chain closed (runtime AC PASS). Positive signals acknowledged.
+- Next sprint priority per c114 carry-forward + TNB Next Cycle: launch 1914 SPRINT-S (news-scout dedup API) — addresses TNB finding #7 + carry-forward priority.
