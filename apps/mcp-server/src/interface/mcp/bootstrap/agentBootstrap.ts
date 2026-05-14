@@ -72,6 +72,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_macro_snapshot",
     "get_bond_maturity_calendar",
     "get_investment_clock_phase",
+    "get_bctc_ocf",
   ],
   market_watcher: [
     "get_cycle_bootstrap",

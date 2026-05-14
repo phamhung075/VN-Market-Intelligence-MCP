@@ -3,7 +3,7 @@
 **SSOT mirror of `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`.**
 Update both files together whenever a tool is added or a skill changes.
 
-Last updated: 2026-05-14 (Task 1890a-B — added `get_macro_snapshot`, `get_bond_maturity_calendar`, `get_investment_clock_phase` to `financial_analyst`)
+Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_analyst`; prior: 1890a-B added `get_macro_snapshot`, `get_bond_maturity_calendar`, `get_investment_clock_phase`)
 
 ---
 
@@ -55,7 +55,8 @@ Last updated: 2026-05-14 (Task 1890a-B — added `get_macro_snapshot`, `get_bond
     "get_cash_flow",
     "get_macro_snapshot",
     "get_bond_maturity_calendar",
-    "get_investment_clock_phase"
+    "get_investment_clock_phase",
+    "get_bctc_ocf"
   ],
   "market_watcher": [
     "get_cycle_bootstrap",

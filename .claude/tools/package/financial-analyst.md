@@ -35,6 +35,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 |------|---------|-----------|
 | `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: "Q1" \| "Q2" \| "Q3" \| "Q4"` |
 | `get_cash_flow` | Full 4-line CF statement + OCF/NI forensic ratio (FA G-step) | `ticker: string, period?: "Q1"–"Q4", year?: number` |
+| `get_bctc_ocf` | Focused OCF forensic-gate: operating/investing/financing + confidence + extraction_method | `code: string, period_year: number, period_quarter: number` |
 | `list_stored_pdfs` | List available BCTC PDFs for all tickers | — |
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
 
