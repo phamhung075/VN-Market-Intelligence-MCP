@@ -1,16 +1,43 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c93 ACTIVE (close 2026-05-14T17:45Z)
+**Last updated:** 2026-05-14 | **Sprint:** c94 ACTIVE
 
 ## Current state
 
-- WIP: 0 / 2 (CLEAN) — 1908c executing (dev-pdf-extractor), 1907a escalated HIGH (TNB c49: 4-day user-facing outage since 2026-05-11 21:38).
-- **c93 CLOSE (2026-05-14T17:45Z):** 1907a escalated LOW→HIGH (TNB c49 finding #3: 4-day digest-predict silence). JANITOR-021 opened (c92 tree-verify procedural). Banking deadline 2026-05-15 COVERED: 1908c FIX active + 1890a deployed (live + reparse triggered c92).
-- **ESCALATION NOTE:** 1907a 3-day silence 2026-05-11 21:38→2026-05-14 17:30 UTC now flagged as 4-day user-facing outage. Root cause = Claude Desktop external trigger unwired; cron not auto-running. Recommend immediate verification next 3 cycles (c93-c95).
-- Backlog: 1908c (HIGH FIX, dev-pdf-extractor), 1907b (LOW OPS observational), 1907a (HIGH OPS escalated), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect, URGENT-F1), TASK-BCTC-3
-- Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
-- **TASKS.md:** 82L (under 80L cap - over, but unavoidable: 1907a escalation + JANITOR-021 are both required by TNB c49). Will compact older Done entries next cycle if >85L.
-- **Status:** c93 CLOSED. WIP=0/2. No blockers. Banking window 2026-05-15 prepared.
+- **WIP: 2/2 (AT CAPACITY)** — 1909a-extractor (dev-pdf-extractor, CRITICAL BCTC drift guard) + 1909b-tool (dev-mcp-server, CRITICAL OCF tool)
+- **c94 DISPATCH (2026-05-14T18:00Z):** Sprint 1909 + 1910 decomposed, 5 sub-tasks entered to TASKS.md (1909a/b/c + 1910a/b). WIP set to 2 (1909a + 1909b): parallel-eligible, disjoint zones. 1910b in Todo (sequential after 1909b deploy, shared agentBootstrap.ts). 1910a in Backlog (USER-ACTION: FRED_API_KEY env var). 1909c in Backlog (blocked on 1909a+1909b deploy).
+- **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
+- **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
+- **Backlog:** 1907a (HIGH OPS escalated, TNB c49), 1907b (LOW OPS observational), 1909c (CRITICAL OPS, blocked), 1910a (HIGH FEATURE, user-action blocked), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect, URGENT-F1), TASK-BCTC-3
+- **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
+- **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
+- **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 94 — 2026-05-14 c94 Decomposition: 1909+1910 sub-tasks entered, WIP-2 1909a+1909b In Progress
+
+**Input:** BA decomp + architect rubber-stamp for 1909 (3 sub-tasks) + 1910 (2 sub-tasks). Dev-team flow Step 2 complete. PM entry required.
+
+**Actions:**
+1. **TASKS.md compacted:** Archived 18 pre-c80 tasks + 1903a stale bundled note into single line. From 82L → 73L (under 80L cap).
+2. **Entered 1909a-extractor + 1909b-tool → In Progress (WIP=2/2 AT CAPACITY).** Parallel-eligible zones (domain/services/financial-reports vs interface/mcp/tools/financial-reports). Both CRITICAL for BCTC OCF gate.
+3. **Entered 1909c-reparse-validation → Backlog (CRITICAL OPS, blocked on 1909a+1909b deploy).** Completion gate: Layer 7 G-step PASS in financial-analyst notebook.
+4. **Entered 1910a-ism-tool → Backlog (HIGH FEATURE, USER-ACTION blocked: FRED_API_KEY env var).** Architect SD-1 resolved: PATH (a) FRED REST API + free key.
+5. **Entered 1910b-effr-package-reg → Todo (HIGH CHORE, sequential after 1909b deployed).** Zero-build. Shares agentBootstrap.ts with 1909b → PM sequenced 1910b AFTER 1909b merge.
+6. **Created 5 handoff files:** TASK_1909a-extractor.md, TASK_1909b-tool.md, TASK_1909c-reparse-validation.md, TASK_1910a-ism-tool.md, TASK_1910b-effr-package-reg.md. All include zone, dependencies, file lists, acceptance criteria.
+7. **Updated PM notebook:** c94 state + WIP status + BCTC deadline coverage + user-action blockers flagged.
+
+**WIP gate (≤2):**
+- Dispatched 1909a + 1909b (CRITICAL: banking deadline 2026-05-15 covered by prior 1908c + 1890a, this extends Layer 7 gate).
+- Justified by 1908c precedent (similar extractor refactor took ~1 cycle). Both tasks disjoint file paths.
+- 1910a blocked on user-action (FRED API key registration). 1910b blocked on 1909b deploy (shared file conflict). 1909c blocked on both 1909a+1909b deploy.
+
+**Carry-over to c95:** 1909a+1909b (In Progress), 1909c (Backlog, reparse validation), 1910a (Backlog, user-action), 1910b (Todo, sequential), 1907a (HIGH OPS escalated, TNB c49), 1907b (LOW OPS), JANITOR-{021,011,014,020}, 1897b-carry, TASK-BCTC-3, 1900c, 1899a-bloomberg-test-split, 1862c-{E,F}.
+
+**TASKS.md:** 73L (under cap). WIP=2/2. Blockers: 1907a TNB escalation (observational), 1910a user-action (FRED API), 1862c-E user-action (Cloudflare), 1897b-carry F1 (Docker .git/ exclusion).
+
+**Status:** c94 dispatch complete. Dev-team flow Step 3 execution ready.
 
 ---
 

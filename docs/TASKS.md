@@ -7,6 +7,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1910a-ism-tool | NEW `get_ism_subcomponents` MCP tool via FRED REST API (PATH-a per architect SD-1). Provisional series IDs NAPMNO/NAPMEMP/NAPMPI/NAPMBI (dev confirms at build). Needs `FRED_API_KEY` in `.env` (user-action). Reuse 1879 fetcher pattern with one endpoint swap (CSV→JSON). Cron piggyback on `macroIndicatorRefreshJob`. | HIGH | FEATURE | dev-mcp-server | TASK_1910a-ism-tool.md | **USER-ACTION: FRED_API_KEY env var** |
+| 1909c-reparse-validation | run `bctcReparseJob` on watchlist; FA Layer 7 G-step PASS on ≥1 watchlist ticker captured in financial-analyst notebook (ship-completion gate per `feedback_ship_completion.md`) | CRITICAL | OPS | ops | TASK_1909c-reparse-validation.md | 1909a-extractor + 1909b-tool deployed |
 | 1907a-digest-predict-silence | OPS-HIGH **ESCALATED c93 TNB-c49**: digest-predict 3-day silence 2026-05-11 21:38→2026-05-14 17:30 UTC. Root cause = cron unwired by design (Claude Desktop external trigger). 4-day user-facing outage (TNB c49 finding #3). Recommend: (1) immediately verify Claude Desktop iTerm2/launchctl trigger active, (2) observe next 3 cycles for repeat silence, (3) if recurs → architect rethink on Claude Desktop reliability (cowork heartbeat, session capture, firewall). Follow-up task: 1907b-investigate. | HIGH | OPS | ops | — | — |
 | 1907b-digest-predict-cowork-trigger-investigate | OPS-LOW follow-up: Verify Claude Desktop iTerm2/launchctl trigger active (Session Capture sync status). Investigate 2026-05-12/13 silent exits from digest-predict-silence record. Check cowork desktop heartbeat + any credential/firewall issues blocking MCP calls to market-intelligence-mcp server. Recommended: review logs in ~/.claude/sessions/ and observe next 3 cycles (c91-c93) for repeat silence. Root cause known (c90 DIAG in 1907a): cron unwired by design → Claude Desktop external trigger model. | LOW | OPS | ops | TASK_1907b-investigate.md | — |
 | JANITOR-021 | tree-verify window fix: c92 tree-verify exit=1 failure was procedural (audit checks HEAD diff payload vs cherry-pick payload; fails when PM close commit lands on top of merge commit). Audit tool needs window adjustment for `merge-commit + PM-close` shape. Non-blocking — fix on idle cycle. Files: `scripts/audits/tree-verify.sh`. | LOW | REFACTOR | code-janitor | — | — |
@@ -15,8 +17,6 @@
 | JANITOR-014 | DRY: detectUnitMultiplier + extractNumber + LOOKAHEAD_LINES duplicated in 3 financial extractors | MEDIUM | DRY | code-janitor | — | — |
 | JANITOR-011 | DRY: Puppeteer launch config duplicated in tradingEconomicsChromium.ts (2 methods) | MEDIUM | DRY | code-janitor | — | test-coverage |
 | TASK-BCTC-3 | Reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC scraper. AC: (1) Identify XHR endpoints. (2) Document recipe in `docs/vps-sources/hsx-bctc/triage.md`. (3) Implement no-browser discovery for HOSE. (4) Live-test 3+ HOSE tickers (VNM/VEA/HPG) discovers Q1/2026 PDFs. (5) Playwright remains fallback. Owner: dev-vps-crawls. | MEDIUM | FEATURE | dev-vps-crawls | — | — |
-| 1909-bctc-ocf | PO-AUTHORED 2026-05-14 c94 (TNB c50 #1 — THE BOTTLENECK): expand `cashFlowExtractor.ts` to balance-sheet parity (apply 1908c positional-drift override pattern) + new `get_bctc_ocf` MCP tool for Layer 7 G-step (NI vs OCF). Spec: `docs/specs/1909-bctc-ocf-extractor-and-tool.md`. AC includes end-to-end G-step pass in real financial-analyst cycle (ship-completion). Recurring-bug check: 0 prior FIX commits on cashFlowExtractor — no architect block. | CRITICAL | FEATURE | dev-pdf-extractor + dev-mcp-server | — | ba-decomp |
-| 1910-fred-ism+effr-pkg | PO-AUTHORED 2026-05-14 c94 (TNB c50 #2 + #3 bundled — D-step compliance): NEW `get_ism_subcomponents` (FRED Manufacturing PMI sub-series) + zero-build registration of existing `get_fed_liquidity_spread` into financial-analyst/news-scout/unified-agent packages. Spec: `docs/specs/1910-fred-ism-subcomponents-and-effr-package-reg.md`. Reuses 1879 FRED pattern. Recurring-bug check: 0 prior commits on ISM — no architect block. Fast-follow Sprint 1909. | HIGH | FEATURE | dev-mcp-server + agent-md-editor | — | ba-decomp |
 
 ---
 
@@ -24,14 +24,19 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1910b-effr-package-reg | Zero-build: add `get_fed_liquidity_spread` to financial_analyst (L46) + news_scout (L30) + unified_coordinator (L224) arrays in agentBootstrap.ts + 3 package docs (financial-analyst.md / news-scout.md / unified-agent.md) + SKILL_MANIFEST.md mirror. Auto-cure 3-cycle evidence confirmed (FA 2026-05-11/12/13, UA 2026-05-14, NS 2026-05-13). | HIGH | CHORE | agent-md-editor | TASK_1910b-effr-package-reg.md | 1909b-tool deployed |
 | 1900c-health-probe-refine | OPS-LOW (c73 discovery): `flows/ops/docker.md` § Post-Rebuild Health Verification probes ports 5007/5008 for pdf-extractor/rag-service but Python services map internal port differently — c73 probe got 7/9 200 + 2/9 000. Fix: enumerate per-service actual `/health` paths + ports (use `docker inspect <svc> --format '{{.NetworkSettings.Ports}}'`), update curl recipe in rule, OR use `docker inspect --format='{{.State.Health.Status}}'` as authoritative healthy check. | LOW | OPS | ops | — | — |
 | 1899a-bloomberg-test-split | SCAFFOLD-S: Split `1899a-bloomberg.test.ts` (494L) into 4 files ≤200L each by logical group: DOM happy path / JSON fallback / PerimeterX+lifecycle / normalizeDate helper. Non-blocking follow-up from c77 QA non-blocking note. Zone: apps/news-fetch/__tests__/. | LOW | REFACTOR | dev-mainserver-crawls | — | — |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
-| _1903a-labels + 1903b-doc-self-heal_ | _PROMOTED 2026-05-14 c87 → bundled as `1903-doc-pair` in In Progress_ | — | — | — | — | — |
 ---
 
 ## In Progress
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+| 1909a-extractor | `cashFlowExtractor.ts` → parity + 1908c drift guard + fixtures (VNM, DIG, VCB Q4-2025) | CRITICAL | FEATURE | dev-pdf-extractor | TASK_1909a-extractor.md | none |
+| 1909b-tool | `getBctcOcfTool.ts` + tool-registry + agentBootstrap manifest + financial-analyst.md package doc. **CRITICAL: SELECT `extraction_method` from DB (real column with enum pdf-parse/ocr-200/ocr-300/news_inference) — DO NOT hardcode.** Architect SD-2 correction. | CRITICAL | FEATURE | dev-mcp-server | TASK_1909b-tool.md | none |
 
 ---
 
@@ -67,7 +72,7 @@
 | 1888e-SHIPPED-c81 | SSOT-MEDIUM **DONE 2026-05-13 c81**: Fix `docs/references/agent-roster.md` "7 agents" vs "8 agents" self-contradiction. Root: pointer update to `project-stats.json#analysisAgentCount = 9`. Zone: docs/. Commits: fix `a7bb2313`, nb `763fe826`. QA APPROVED. | MEDIUM | CHORE | developer | 2026-05-13 |
 | 1899a-gateway-SHIPPED-c80 | WIRING **DONE 2026-05-13 c80**: Gateway + docker-compose — api-gateway routing config, docker-compose.yml news-fetch service block, ops-news-fetch-scaffold.md port correction. Zone: multi. Commits: feat `f91c5baa`, nb `837529ef`. QA APPROVED. Unblocks 1899a-cron (no more deps). | MEDIUM | FEATURE | developer | 2026-05-13 |
 | 1899a-tests-SHIPPED-c80 | TESTS **DONE 2026-05-13 c80**: Unit + integration suite for news-fetch. 5 unit/integration files (165 pass / 6 skip), E2E newsHeadlinesRefreshJob + scheduler job (3/3 pass). **NOTE: Job body shipped here (136L, `newsHeadlinesRefreshJob.ts`); 1899a-cron wiring-only (3 steps remain).** Commits: feat `d2818207`, nb `64c3db67`, task-md `da5d1b0f`. QA APPROVED. | MEDIUM | FEATURE | developer | 2026-05-13 |
-| _(9 more tasks archived: 1899a-routes-c79, CLEAN-c79, 1899a-reuters-fallback, 1898b, 1900a, 1901b, 1900b, 1899a-{app,domain}, 1901a, 1899a-{factory,reuters-rss,core}, 1899a-bloomberg, 1903a, 1898a, 1902a)_ | — | — | — | — | — |
+| _(18 more tasks archived: 1899a-routes-c79, CLEAN-c79, 1899a-reuters-fallback, 1898b/1900a/1901b/1900b, 1899a-{app,domain,factory,reuters-rss,core,bloomberg,routes}, 1903a, 1898a, 1902a, 1881a-spec, 1888-CDG, 1881a-impl-split, 1888l, 1903a-SPIKE + pre-c80 bundle)_ | — | — | — | — | — |
 
 ---
 
