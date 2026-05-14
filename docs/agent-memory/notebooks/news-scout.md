@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 17:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 20:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (20:20–20:22 UTC)
+- Items: 20 | Impacts: 5 | Signals: [urgent_news #3192, chain_catalyst #3193] | Regime: NEUTRAL | Carry: NEUTRAL (FED spread unavailable)
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3192: Phạm Nhật Vượng wealth >10% GDP VN → VIC; severity=medium; regime=NEUTRAL adj_score=8; confidence=0.80
+- chain_catalyst #3193: sector_event bullish → VIC, VHM, VRE, VPB, BID (real_estate+banking+securities) — VN-Index ATH +27pts, khối ngoại đảo chiều mua ròng, VinFast tái cấu trúc; regime=NEUTRAL adj_score=8.0; confidence=0.82
+- NOTE: Recurring VIC/real_estate bullish theme throughout today (overlaps #3179/#3180/#3182/#3183/#3185/#3186/#3190). Bus dedup API returns empty for self-sent signals (known limitation). FPT Japanese JV skipped (confidence 0.72 < 0.80 threshold). Gold: 4670 (-2.52σ below avg). Brent: 106.29 (recovered). Market CLOSED (off-hours).
 
 ### Cycle (19:20–19:22 UTC)
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3190] | Regime: NEUTRAL | Carry: NEUTRAL
