@@ -1,8 +1,28 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-13 (CLEAN-c81 — housekeeping only; 0 DRY violations found)
+## Last updated: 2026-05-14 (janitor-1912 artifact cleanup — shipped)
 
 ## State summary
+
+### Session 24 (2026-05-14 — janitor-1912 artifact cleanup)
+
+**Scope:** Targeted cleanup task (janitor-1912) — remove stale Bun tests + verify Go tests.
+
+**Task:** RF-1: Remove 2 TypeScript Bun test files from git tracking. RF-2: Verify alert-engine/server binary status.
+
+| File | Action | Status |
+|------|--------|--------|
+| apps/stock-price/__tests__/unit/resolve-price-service.test.ts | git rm --cached | SHIPPED (commit b05624aa) |
+| apps/stock-price/__tests__/integration/fetch-price-usecase.test.ts | git rm --cached | SHIPPED (commit b05624aa) |
+| apps/alert-engine/server | Binary on disk; never committed | N/A — not tracked |
+
+**Test verification:**
+- apps/stock-price: go test ./... → PASS (all tests)
+- apps/alert-engine: go test ./... → PASS (all tests)
+
+**Result:** DONE. Stale TypeScript artifacts removed from git. Go migration clean. Commit: b05624aa.
+
+---
 
 ### Session 23 (2026-05-13 — CLEAN-c81 housekeeping)
 
