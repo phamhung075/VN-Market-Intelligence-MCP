@@ -1,8 +1,13 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-14 · **Cycle:** 22:02 UTC (Daily Review)
+**Last updated:** 2026-05-14 · **Cycle:** 23:01 UTC (Daily Review)
 
 ## This session
+
+### Daily Review (23:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: news STALE (5.5h, already reported 22:02 UTC — dedup skip) | Bugs: 1 (news RSS)
+- System: ok | Alerts: 20 open/24h (3 HIGH), 55 pending | VN-Index ATH session closed
+- Carry-over: BCTC Q1/2026 filings due today 15/05 (banking sector); FPT 73,900 — monitor 78,000 threshold
 
 Daily Review (22:02 UTC 2026-05-14):
 - Mode: DAILY_REVIEW | System: ok (16/16 CB) | Alerts: 26 sent 24h, 4 HIGH/CRITICAL, 0 unnotified | Bugs: 0
