@@ -627,3 +627,79 @@ All 7 reports filed within 5h window (2026-05-13 19:07–2026-05-14 10:05 UTC):
 - HEAD.lock issue systemic (virtiofs mount behavior) — awaiting 1897b F1 completion
 - No escalation needed; all findings are known/tracked
 
+
+---
+
+## Task: c100 — 1912a Gateway Go Migration Phase 1 Deployment — AC-6 BLOCKED
+
+**Status:** BLOCKED — AC-6 Vitest gate FAILED. Pre-existing test failures prevent smoke window start.
+
+**Deploy Date:** 2026-05-14 13:47 UTC
+
+### Build & Deploy Verdict
+✅ Go gateway container built and started successfully on port 4001.
+❌ AC-6 Vitest validation FAILED — test suite has 34 pre-existing failures.
+
+### Deployment Status
+
+#### Successful Steps
+1. **Build:** `docker-compose build api-gateway-go` — ✅ BUILD SUCCESS
+   - Image: `sha256:cc29cef889187382b77a3f5b28afa218d3bfa8a66e2c2505a1127e4a5dc896be`
+   - Multi-stage Dockerfile with CGO_ENABLED=0, pure binary
+
+2. **Start:** `docker-compose up -d api-gateway-go` — ✅ RUNNING
+   - Container: `vn-market-intelligence-mcp-api-gateway-go-1`
+   - Port: 4001 (mapped to internal 4000)
+
+3. **Health Probes:** ✅ ALL PASS
+   - `/health` → 200 OK (all 9 services healthy)
+   - `/healthz` → 200 OK (k8s liveness alias)
+   - Health JSON: `{"status":"ok","services":{...}}`
+   - Dashboard `/` → 404 (expected: not implemented in Go yet)
+
+4. **TS Gateway Regression Check:** ✅ NO REGRESSION
+   - `http://localhost:4000/health` → 200 OK (TS gateway still healthy)
+
+#### Failed Step: AC-6 Vitest Gate
+**Command:** `MCP_GATEWAY_URL=http://localhost:4001 bun test` (apps/mcp-server)
+
+**Results:**
+- Against Go gateway (4001): **9277 PASS + 34 FAIL + 38 SKIP** (9349 total)
+- Against TS gateway (4000): **9277 PASS + 34 FAIL + 38 SKIP** (9349 total)
+
+**Finding:** IDENTICAL test results. Go gateway is NOT the cause of failures. 34 test failures are pre-existing in the codebase.
+
+**Baseline Mismatch:**
+- `project-stats.json` specifies: `testBaseline=8804, testBaselinePass=8804`
+- Actual suite: 9277/9311 tests (test count grew, not updated in baseline)
+- AC-6 requirement: "must remain 8804/8804" (impossible — actual baseline is 9277)
+
+**Root Cause:** QA deferred AC-6/AC-10 post-merge in c99. The 34 test failures were not caught pre-merge.
+
+### Signal Generated
+- File: `docs/signals/2026-05-14T11:58:25Z-1912a-ops-to-fixer-ac6-fail.json`
+- Type: `ac6-gate-fail`
+- Recipient: fixer
+- Status: BLOCKED
+
+### Smoke Window Status
+❌ **CANNOT START** — AC-6 gate must PASS before 24h smoke window begins.
+
+### Remediation Required
+1. **Fixer** must resolve 34 pre-existing test failures
+2. **QA** must re-validate Vitest against both gateways
+3. **PM** must update `project-stats.json` testBaseline to reflect actual suite size (9277 vs 8804)
+4. Once fixed, ops re-runs AC-6 gate to unblock smoke window
+
+### Blockers
+- Pre-existing test failures (not caused by Go gateway)
+- Baseline mismatch in project-stats.json
+- QA gate deferral left pre-merge issues undetected
+
+### Next Steps (Blocked on Fixer)
+1. Identify and fix 34 failing tests
+2. Re-run Vitest against both gateways (must be identical)
+3. Update project-stats.json testBaseline
+4. Notify ops to retry AC-6 gate + smoke window start
+
+---
