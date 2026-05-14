@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 07:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 08:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (08:20–08:22 UTC) 2026-05-14
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst #3151 VN-ATH, chain_catalyst #3152 FPT-Japan-JV, chain_catalyst #3153 DNNN-dilution] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: VN-Index new ATH (08:12 UTC) — VIC+3.98%, VHM+2.95%, VRE+3.48% rally; breadth narrow, foreign sell 14 sessions >13,000B → #3151 bullish/caution chain_catalyst (adj 5.6). FPT Japan automotive JV (07:19 UTC) — FPT+4.53% price confirms → #3152 chain_catalyst tech (adj 8.0 neutral). DNNN stock market fundraising policy — bearish dilution risk banking/securities (adj 10.4, previously suppressed 4x on ambiguity/no direct name — posted this cycle as threshold exceeded). Gold <4,700 + large buyer: no +3%/week spike → suppressed. VCI fund exit (adj 6.5 <7) → suppressed.
+- ⚠️ Note: DNNN #3153 same article from 03:16 UTC suppressed in cycles #07:20, #06:20, #05:19, #03:20 — may warrant review by financial-analyst.
 
 ### Cycle (07:20–07:21 UTC) 2026-05-14
 - Items: 20 | Impacts: 4 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
