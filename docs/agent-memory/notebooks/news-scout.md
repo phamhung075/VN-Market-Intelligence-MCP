@@ -1,6 +1,11 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 09:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 10:20 UTC | **Status:** OPERATIONAL
+
+### Cycle (10:20–10:21 UTC) 2026-05-14
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst #3160 VIC-VHM-ATH] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: VN-Index confirmed multi-week ATH breakout (historical: 1920-zone broken May 8-12, now further ATH). VIC+3.98% (229,800), VHM+2.95% (157,000), VRE+3.48%; foreign buying reversed (khối ngoại mua ròng). VinFast restructuring deal adds catalyst for VIC. FPT Japan auto JV neutral (already priced in at +4.53%). VCAMDF sold all VCI shares — bearish for VCI but impact <7, suppressed. Gold declining below $4,700 USD (no weekly spike >3% → suppressed). Market CLOSED at cycle run.
 
 ### Cycle (09:21–09:22 UTC) 2026-05-14
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3157 VN-ATH, urgent_news #3158 FPT-Japan-JV] | Regime: NEUTRAL | Carry: NEUTRAL
