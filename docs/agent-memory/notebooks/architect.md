@@ -1,6 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 (c97 — 1912 go-migration-3-services brief)
+**Last updated:** 2026-05-14 11:02 UTC | **Sprint:** 1912a spec review
+
+## Last session summary (1912a spec review — APPROVE)
+
+Task: 1912a-gateway-spec BA spec review. Both blockers resolved. Verdict: APPROVE.
+
+D-1 (/healthz): Option b confirmed. TS source verified — NO /healthz handler exists (only
+/health, /health/:service, /health-dashboard, /:service/*). Go implementation adds /healthz
+as k8s liveness probe alias to /health. TS gateway no backport needed (no k8s orchestrator,
+no mcp-server consumer calls /healthz). Brief § 3.1 updated in-place.
+
+Dev role gap: Option A confirmed. Extend dev-api-gateway with Go lazy-load block (trigger:
+go_migration). Route to agent-father — architect does NOT edit agent files. PM sprintify gate:
+agent-father must commit dev-api-gateway.md Go block first.
+
+AC adequacy: All 11 ACs pass. All 5 BA-flagged endpoints have explicit ACs (AC-2: /health +
+/health/:service; AC-4: /health-dashboard; AC-3: /api/* + /:service/*). Rollback concrete
+(stateless, image-tag swap, docker-compose up -d). SDD-1 structurally preserved (no MCP tools
+in gateway; source_tier in mcp-server only). Bun teardown risk eliminated by design (no CGO,
+no bun:sqlite in gateway). AC-10 smoke window unambiguous on pass condition; fail-early
+trigger is impl note for developer (503 sustained >5 min → abort P2, revert TS image).
+
+Outputs: review doc at docs/architecture-briefs/2026-05-14-1912a-spec-review.md,
+signal to PM at docs/signals/2026-05-14T11-02-21Z-1912a-architect-to-pm.json.
 
 ## Last session summary (c97 — 1912 Go migration brief)
 

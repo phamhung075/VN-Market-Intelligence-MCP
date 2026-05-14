@@ -47,7 +47,7 @@ All three services use only `hono` + `bun-types` + `typescript` as declared depe
 | `domain/repositories.ts` — HealthCheckerPort interface | `pkg/domain/ports.go` — Go interface |
 | `infrastructure/health_checker.ts` — HTTP health poller | `pkg/infrastructure/healthchecker.go` — `net/http` client, goroutines per service |
 | `application/usecases.ts` — AggregateHealthUseCase | `pkg/application/aggregate.go` — orchestrates domain via port |
-| `interface/handlers.ts` — Hono routes `/health`, `/healthz`, `/api/*` | `pkg/interface/http/router.go` — `net/http` or `chi` router |
+| `interface/handlers.ts` — Hono routes `/health`, `/health/:service`, `/health-dashboard`, `/api/*`, `/:service/*` | `pkg/interface/http/router.go` — `net/http` or `chi` router; adds `/healthz` alias → same handler as `/health` (k8s liveness probe, Go-only addition per 1912a spec review) |
 
 **MCP bridge:** api-gateway exposes no MCP tools. It is consumed by the user's browser and by mcp-server's `clients.ts` via HTTP. Go replaces only the HTTP server. Interface layer stays pure HTTP. No stdio/gRPC needed.
 
