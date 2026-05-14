@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 19:42 UTC | **Sprint:** 1865a
+**Last updated:** 2026-05-14 20:38 UTC | **Sprint:** unknown (MCP unavailable)
 
 ## Current state
 
@@ -1463,3 +1463,19 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - **actions**: 0 signals emitted | 1 suppressed (FPT dup) | WORK telegram sent
 - **next_cycle_hint**: VIC VinFast restructure catalyst un-priced for tomorrow open — watch for gap-up confirmation. VPB +3.24% (1.83σ) approaching threshold — check if sustained next session. Gold/Brent both below average (macro HIGH alerts open).
 - **estimated_tokens**: 4200
+
+### Cycle (20:38–20:38)
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: UNKNOWN | DXY: UNKNOWN | US10Y: UNKNOWN | fx_pressure: [] | pe_risk: []
+- **BLOCKED at Step 0:** get_cycle_bootstrap — connector not responding after 1 retry
+
+## Metrics (cycle 2026-05-14 20:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 2800 |
