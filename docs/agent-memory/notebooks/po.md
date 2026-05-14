@@ -1,42 +1,42 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T22:38:37Z (c115 — dev-team cron tick; 4 new signals routed; WIP idle; awaiting ops runtime AC for 1915-part2)
+## Last updated: 2026-05-14T23:25:53Z (c116 — dev-team cron tick; TNB c54 audit ACK'd; 1 new task; 1914 SPRINT-S kicked off)
 
 ---
 
-## Cycle 115 — Dev-team cron tick PO triage (BATCH=NOTHING)
+## Cycle 116 — Dev-team cron tick PO triage
 
-**Spawn context:** dev-team `main.md` Step 0-PREFLIGHT → drain-signals → Step 1 PO Triage. User flagged ops agent currently redeploying mcp-server for 1915-fix-part2 runtime AC (do not block on it).
+**Spawn context:** dev-team `main.md` Step 0-PREFLIGHT → drain-signals → Step 1 PO Triage. User context: 1915 chain fully closed (runtime AC PASS, committed `38ceddf8`). 1909c unblocked — awaiting Q1-2026 BCTC PDFs. WIP=0/2. 1913 MCP-gateway-down at 10+ cycles (USER ACTION, not dev-fixable). Next priority per c115 carry-forward: 1914 SPRINT-S (news-scout dedup API) once 1915 chain closed.
 
-### PREFLIGHT + drain (Step 0/0a)
-- `.git/HEAD.lock` ABSENT. `git worktree prune -v` empty. T6 24h sweep clean.
-- Inbox had 17 `*.json` signals: 11 REPLAYs (already dual-recorded in `processed/`, moved with `-replay-{ts}` suffix), 4 NEW (moved to `processed/`).
-- 2 of the "REPLAY" ones (`tnb-2026-05-14T18-30-00Z`, `unified-agent-2026-05-14T190800Z`) were genuine prior signals previously processed; replay tag correctly applied.
+### PREFLIGHT + drain
+- `.git/HEAD.lock` EXISTED — age 1378s, size 0B, held by `com.apple PID 43751` (Spotlight orphan, matches `feedback_git_stale_locks.md`). Removed per protocol. T1 lsof log captured `docs/agent-memory/sessions/preflight-lsof-20260514T232447Z.log`. T5/T6 worktree GC clean.
+- 1 new signal: `tnb-2026-05-15T00-30-00Z.json` (audit-handoff, fingerprint `54d7d900...`). Routed to PO Step 0-TNB, dual-recorded, moved to `processed/`.
 
-### 4 NEW signals routed
-1. `alert-commander-2026-05-14T21:02:05Z` (high, bug-escalation) — MCP gateway unreachable on get_cycle_bootstrap.
-2. `developer-2026-05-15T000000Z-1915-fix-part2-impl-done` — superseded; QA already approved 1915-fix-part2 (commit `5ff3e617`) before this cycle. No action.
-3. `digest-predict-2026-05-14T21:34:40Z` (high, bug-escalation) — MCP gateway non-responsive, daily digest blocked at bootstrap.
-4. `market-watcher-2026-05-14T203856Z` (high, bug-escalation) — same pattern.
+### Step 0-TNB — TNB c54 audit
+- Overall: NEEDS_ATTENTION, Direction IMPROVING.
+- 8 findings: #1+#4 already 1913 (BLOCKING-F1), #2 already 1907a (CRITICAL OPS), #3 news-scout pillar coverage cycle 2/3 (watch c55), #5 NEW (Telegram BUG channel env var misconfig), #6 FA blocked by 1913, #7 already 1914, #8 already 1914b.
+- ACK appended to `docs/handoffs/tnb-audit-latest.md` at 2026-05-14T23:25:53Z. Tasks created: 1917-telegram-bug-channel-env-fix.
 
-Signals 1+3+4 all reinforce the SAME substrate as 1913 (FA gateway desktop config — Claude Desktop MCP gateway registration). Now 8th-10th cycles of evidence. No new dev work; 1913 escalation annotated in TASKS.md.
+### Step 0 — Channel audit
+- Live MCP probe not available in PO shell session — TNB c54 audit cross-checked all channels & notebooks within last hour, used as authoritative proxy. Not a stale-memory propagation.
+- New finding #5 cross-checked: zero matches in TASKS.md/TASKS_ARCHIVE.md or git log. Decision-matrix → New bug → ops, zone `cross-service/`.
 
 ### Pipeline state (Step 0b)
-- WIP = 0 (TASKS.md In Progress empty). 1915-fix-part2 moved to Done at c114 by QA (commit `5ff3e617`). Awaiting ops runtime AC (background ops redeploy in flight per user-injected context — do not block).
-- TASKS.md Backlog: 1915-bctc-pipeline-silence (now SUPERSEDED, awaiting runtime AC), janitor-1912 LOW, 1914 MEDIUM, 1914b LOW, 1913 USER F1, 1907a OPS, 1897b USER F1, 3x JANITOR-DRY, TASK-BCTC-3.
+- WIP = 0/2 (In Progress empty). Backlog leadership: 1915 DONE annotated, 1917 NEW HIGH FIX (ops), 1914 MEDIUM SPRINT-S (queued), janitor-1912 LOW, 1914b LOW, 1913 USER F1, 1907a CRITICAL OPS, 1897b USER F1.
 
-### Step 1 — PO Triage decision
-- **BATCH = NOTHING** this cycle.
-- Reasoning: ops redeploy in flight for 1915-part2 AC verification; opening new dev work would compete for attention. The 3 MCP-gateway signals are F1 USER substrate, not new dev tasks. Low/medium backlog (1914 SPRINT-S, 1914b CHORE, janitor-1912) can wait until ops verdict lands and we know whether 1915 chain is fully closed.
-- Annotated 1915-bctc-pipeline-silence as SUPERSEDED (awaiting runtime AC verification).
-- Annotated 1913 cycle counter (10+ cycles, escalation note for next cycle if pattern continues).
+### Step 1 — PO Triage decision: BATCH
 
-### Telegram
-- send_telegram(work, "PO c115 cron tick: PREFLIGHT clean, 4 signals routed (3x MCP-gateway-down reinforce 1913 F1 ev 8th-10th cycle; 1x stale 1915-part2 impl-done after QA approval). BATCH=NOTHING. WIP idle. Awaiting ops redeploy + runtime AC on 1915-part2 (VEA/VNM rows in financial_reports + pdf_extracted_text).")
+1. **UNBLOCK 1917-telegram-bug-channel-env-fix** → ops. HIGH, env var config in docker-compose (`cross-service/`). Single-action FIX. Frees BUG escalation path.
+2. **SPRINT-S 1914-news-scout-dedup-api** → ba → architect → pm. Per c115 carry-forward + TNB Next Cycle #3. Zone `apps/mcp-server/`. Addresses TNB finding #7 (8+ cycles repeated theme).
 
-### Carry-forward to c116+
-- READ ops runtime AC verdict on 1915-part2. If PASS → close 1915-bctc-pipeline-silence parent + 1909c unblocks. If FAIL → spawn 1915-fix-part3 SPIKE.
-- If 1913 MCP-gateway pattern repeats next cycle (11th cycle), draft TNB protocol invocation note + reclassify 1913 URGENT-F1 → BLOCKING-F1.
-- After 1915 chain closes: spawn 1914 SPRINT-S (news-scout dedup API) — clear MEDIUM backlog item; banking pressure off.
-- Background carries: janitor-1912 LOW CLEAN, 1914b LOW CHORE, 1907a CRITICAL OPS.
-- Pending USER F1: 1913 (FA gateway), 1897b-carry (Docker .git/ exclude).
+Both fit WIP=2 budget. 1907a/1909c CRITICAL OPS not dev-fixable (substrate of 1913 F1 USER ACTION). janitor-1912/1914b LOW deferred.
+
+### Telegram (deferred — gateway down per 1913)
+- send_telegram(work, "PO c116 cron tick: TNB c54 audit ACK'd. 1 new task (1917 Telegram BUG channel env fix → ops HIGH). 1914 SPRINT-S kicked off (news-scout dedup API → ba). HEAD.lock orphan Spotlight-pid cleared. WIP 0→2.") — queued; will retry once 1913 F1 USER ACTION resolves.
+
+### Carry-forward to c117+
+- READ ops verdict on 1917 (env var resolves + send_telegram bug probe succeeds).
+- READ ba spec for 1914 — review per `po/review-ba-spec.md`.
+- TNB finding #3 cycle 3/3 watch at c117 — if news-scout chain_catalyst still 0/4 pillars → auto-cure threshold reached → modify `stage-signals.md` to require pillar summary in payload.detail.
+- 1909c-reparse-validation ops to run bctcReparseJob 2026-05-16.
+- Pending USER F1: 1913 (FA gateway), 1897b-carry (Docker .git/ exclude). HEAD.lock orphan-Spotlight pattern recurred at c116 — 22nd cumulative occurrence.
