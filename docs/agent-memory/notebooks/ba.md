@@ -1,10 +1,28 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1912c (c107)
+**Last updated:** 2026-05-14 | **Sprint:** 1912b+1912c (c107)
 
 ## Current state
 
+REQ_1912b spec complete (c107). 1912b = Phase 2 of Go migration program. Alert-engine Go rewrite. 16 ACs. D-1: response shape mismatch internal DTO vs clients.ts; D-2: scheduler jobs bypass /evaluate — both developer-resolved. No PO blockers.
 REQ_1912c spec complete (c107). 1912c = Phase 3 of Go migration program. stock-price Go rewrite. 14 ACs. 2 spec-time clarifications flagged (R-SPEC-1: PriceSnapshot.timestamp vs fetchedAt field name; R-SPEC-2: path-param vs query-param route shape for /price/history). No PO blockers. dev-stock-price to implement.
+
+## Last session summary (2026-05-14) — 1912b
+
+Sprint 1912b — alert-engine Go migration spec.
+
+Key findings from TS source inspection:
+- 2 routes: GET /health, POST /evaluate. Health JSON: {status,service,port:5006}.
+- EvaluateAlertResponse (internal DTO): {fired, cooldown_sec, reason, fingerprint}.
+- AlertEvaluateResponse (clients.ts consumer): {alert_id, code, fired, reason, telegram_sent}. SHAPE MISMATCH — developer must reconcile (D-1).
+- 3 domain functions: computeFingerprint (djb2, 8-hex, order-independent signalTypes), shouldSuppressAlert (cooldown+daily cap, critical/non-MACRO bypass), isDuplicate.
+- EvaluateAlertUseCase: mute → dedup(60min) → cooldown/cap → store → telegram. sendTelegram defaults false.
+- SQLite: alert_engine.db sole write target. WAL mode. Tables: alert_engine_records + alert_mutes + outcome cols (1847d-A).
+- Telegram routing: critical/high → 'market', else → 'work'. Silent-skip on missing token.
+- bbAlertScanJob + taAlertScanJob do NOT call /evaluate — write direct to alerts table in market.db (D-2).
+- 3 TS test files: unit (195 LOC), integration/handlers (143 LOC), 1847d-A schema (175 LOC).
+
+16 ACs: AC-1 CGO Dockerfile, AC-2 /health parity, AC-3 validation 4-cases, AC-4 stock uppercase, AC-5 response shape, AC-6 computeFingerprint numeric parity, AC-7 shouldSuppressAlert 5-case, AC-8 isDuplicate, AC-9 usecase orchestration, AC-10 SQLite WAL parity, AC-11 outcome schema (1847d-A), AC-12 mcp-server 8804 unchanged, AC-13 Telegram silent-skip, AC-14 log/slog JSON, AC-15 gateway 9/9 healthy, AC-16 tests-before-impl (R5).
 
 ## Last session summary (2026-05-14) — 1912c
 
