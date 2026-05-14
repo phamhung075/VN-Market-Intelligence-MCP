@@ -1,10 +1,15 @@
 # Fixer — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1839b
+**Last updated:** 2026-05-14 | **Sprint:** c99
 
 ## Last session summary
 
-No fixer activations this sprint (1839b). All QA reviews resulted in APPROVED on first pass.
+**c99 activation (2026-05-14):** Task 1912a-gateway-go-migration BLK-1 fixed.
+- Issue: Dockerfile L8 `COPY go.mod go.sum ./` failed because go.sum absent (stdlib-only Go module produces no go.sum).
+- Fix: Created empty `apps/api-gateway-go/go.sum` (1 file, 0 bytes).
+- Commit: `dcd0a91b` — signal created `docs/signals/2026-05-14T11-26-19Z-1912a-fixer-to-qa.json`.
+- HEAD.lock contention × 2 during cycle (F4 retry self-cure applied both times). Root cause: macOS Spotlight or parallel process orphaning locks. No recurring pattern yet.
+- Branch pushed. QA gate ready.
 
 ## Known patterns / preferences
 
