@@ -16,7 +16,7 @@ vn-market-intelligence/         ← pnpm workspace root
 │   │   ├── Dockerfile
 │   │   └── package.json
 │   ├── api-gateway/            ← Go — routing layer (port 4000)
-│   ├── stock-price/            ← TypeScript/Bun — price aggregation (port 5000, mapped 5010)
+│   ├── stock-price/            ← Go 1.22 (CGO) — price aggregation (port 5000, mapped 5010)
 │   ├── pdf-extractor/          ← Python/FastAPI — PDF parsing (port 5001)
 │   ├── rag-service/            ← Python/FastAPI — embeddings + search (port 5002)
 │   ├── technical-analysis/     ← TypeScript/Bun — TA indicators (port 5003)
@@ -38,7 +38,7 @@ vn-market-intelligence/         ← pnpm workspace root
 |---------|------|----------|--------|
 | mcp-server | 3000 | TypeScript/Bun | ✅ Running |
 | api-gateway | 4000 | Go | ✅ Running |
-| stock-price | 5010:5000 | TypeScript/Bun | ✅ Running |
+| stock-price | 5010:5000 | Go 1.22 (CGO) | ✅ Running |
 | pdf-extractor | 5001 | Python/FastAPI | ✅ Running |
 | rag-service | 5002 | Python/FastAPI | ✅ Running |
 | technical-analysis | 5003 | TypeScript/Bun | ✅ Running |

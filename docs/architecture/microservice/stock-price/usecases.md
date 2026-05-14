@@ -1,29 +1,54 @@
 # stock-price — Use Cases
 
+**Package:** `pkg/application/`
+
 ## FetchPriceUseCase
-- **File:** `apps/stock-price/src/application/usecases.ts`
-- **Input:** `FetchPriceRequest { code: string }`
-- **Output:** `FetchPriceResponse { code, price, volume, change, changePercent, source, latencyMs, fetchedAt }`
-- Uppercases code before passing to `ResolvePriceService.fetchPrice()`
+
+**File:** `pkg/application/usecases.go`
+
+- **Constructor:** `NewFetchPriceUseCase(service *domain.ResolvePriceService) *FetchPriceUseCase`
+- **Input:** `FetchPriceRequest { Code string }`
+- **Output:** `FetchPriceResponse { Code, Price, Volume, Change, ChangePercent, Source, LatencyMs, FetchedAt }`
+- Uppercases Code before passing to `ResolvePriceService.FetchPrice()`
 - Maps `PriceQuote` to response DTO
 
 ## PriceHistoryUseCase
-- **File:** `apps/stock-price/src/application/usecases.ts`
-- **Input:** `PriceHistoryRequest { code: string, days: number }`
-- **Output:** `PriceHistoryResponse { code: string, history: DailyOHLCV[] }`
-- Uppercases code, calls `historyRepo.getHistory(code, days)`
+
+**File:** `pkg/application/usecases.go`
+
+- **Constructor:** `NewPriceHistoryUseCase(repo domain.PriceHistoryPort) *PriceHistoryUseCase`
+- **Input:** `PriceHistoryRequest { Code string, Days int }`
+- **Output:** `PriceHistoryResponse { Code string, History []domain.DailyOHLCV }`
+- Uppercases Code, calls `historyRepo.GetHistory(code, days)`
 - Returns history wrapped in response DTO
 
 ## DTOs
-- **File:** `apps/stock-price/src/application/dtos.ts`
 
-```typescript
-interface FetchPriceRequest { code: string }
-interface FetchPriceResponse {
-  code: string, price: number, volume: number,
-  change: number, changePercent: number,
-  source: PriceSource, latencyMs: number, fetchedAt: string
+**File:** `pkg/application/usecases.go`
+
+```go
+type FetchPriceRequest struct {
+    Code string
 }
-interface PriceHistoryRequest { code: string, days: number }
-interface PriceHistoryResponse { code: string, history: DailyOHLCV[] }
+
+type FetchPriceResponse struct {
+    Code          string  `json:"code"`
+    Price         float64 `json:"price"`
+    Volume        float64 `json:"volume"`
+    Change        float64 `json:"change"`
+    ChangePercent float64 `json:"changePercent"`
+    Source        string  `json:"source"`
+    LatencyMs     int64   `json:"latencyMs"`
+    FetchedAt     string  `json:"fetchedAt"`
+}
+
+type PriceHistoryRequest struct {
+    Code string
+    Days int
+}
+
+type PriceHistoryResponse struct {
+    Code    string              `json:"code"`
+    History []domain.DailyOHLCV `json:"history"`
+}
 ```

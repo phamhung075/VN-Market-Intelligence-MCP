@@ -1,86 +1,91 @@
 # stock-price — Domain Model
 
+**Package:** `pkg/domain/`
+
 ## Types
 
 ### PriceSource
-```typescript
-type PriceSource = 'hose' | 'hnx' | 'upcom' | 'vndirect' | 'cache'
+```go
+type PriceSource string
+
+const (
+    PriceSourceHose  PriceSource = "hose"
+    PriceSourceHnx   PriceSource = "hnx"
+    PriceSourceUpcom PriceSource = "upcom"
+    PriceSourceCache PriceSource = "cache"
+)
 ```
 
 ### PriceQuote (core value object)
-```typescript
-interface PriceQuote {
-  code: string           // Stock symbol (always uppercased)
-  price: number          // Price in VND
-  volume: number         // Trading volume
-  change: number         // Absolute VND change
-  changePercent: number  // Percentage change
-  source: PriceSource    // Which tier returned this
-  latencyMs: number      // Response time in ms
-  fetchedAt: string      // ISO 8601 timestamp
+```go
+type PriceQuote struct {
+    Code          string      // Stock symbol (always uppercased)
+    Price         float64     // Price in VND
+    Volume        float64     // Trading volume
+    Change        float64     // Absolute VND change
+    ChangePercent float64     // Percentage change
+    Source        PriceSource // Which tier returned this
+    LatencyMs     int64       // Response time in ms
+    FetchedAt     string      // ISO 8601 timestamp (RFC3339)
 }
 ```
 
 ### DailyOHLCV
-```typescript
-interface DailyOHLCV {
-  date: string    // "YYYY-MM-DD"
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
+```go
+type DailyOHLCV struct {
+    Date   string  // "YYYY-MM-DD"
+    Open   float64
+    High   float64
+    Low    float64
+    Close  float64
+    Volume float64
 }
 ```
 
-### TierResult
-```typescript
-interface TierResult {
-  success: boolean
-  quote: PriceQuote | null
-  error?: string
-}
-```
+## Repository Ports (interfaces)
 
-## Repository Ports
+**File:** `pkg/domain/ports.go`
 
 ### PriceFetcherPort
-```typescript
-interface PriceFetcherPort {
-  fetchPrice(code: string): Promise<PriceQuote | null>
+```go
+type PriceFetcherPort interface {
+    FetchPrice(ctx context.Context, code string) (*PriceQuote, error)
 }
 ```
-Used by all 3 tiers. Returns `null` on any error (not exceptions).
+Returns `nil, nil` on tier miss (not an error). Returns non-nil error only on infrastructure failure.
 
 ### PriceHistoryPort
-```typescript
-interface PriceHistoryPort {
-  getHistory(code: string, days: number): Promise<DailyOHLCV[]>
-  saveQuote(quote: PriceQuote): Promise<void>
+```go
+type PriceHistoryPort interface {
+    GetHistory(code string, days int) ([]DailyOHLCV, error)
+    SaveQuote(quote PriceQuote) error
 }
 ```
 
 ## Domain Service
 
 ### ResolvePriceService
-- **File:** `apps/stock-price/src/domain/services.ts`
-- Constructor: `(tier1: PriceFetcherPort, tier2: PriceFetcherPort, tier3: PriceFetcherPort, history: PriceHistoryPort)`
 
-**Method: `fetchPrice(code: string): Promise<PriceQuote>`**
-- Runs all 3 tiers **concurrently** via `Promise.allSettled()`
-- Returns **first successful (non-null) result** from any tier
-- Persists result via `history.saveQuote(quote)` — fire-and-forget (not awaited)
-- Throws `PriceNotAvailableError` if all tiers fail
+**File:** `pkg/domain/services.go`
+
+Constructor: `NewResolvePriceService(tier1, tier2, tier3 PriceFetcherPort, history PriceHistoryPort) *ResolvePriceService`
+
+**Method: `FetchPrice(ctx context.Context, code string) (PriceQuote, error)`**
+- Runs all 3 tiers **concurrently** via goroutines + channel
+- Returns **first successful (non-nil) result** from any tier
+- Persists result via `history.SaveQuote(quote)` — fire-and-forget (goroutine, error discarded)
+- Returns `*PriceNotAvailableError` if all tiers return nil or error
 
 ### PriceNotAvailableError
-```typescript
-class PriceNotAvailableError extends Error {
-  constructor(code: string) // message: "Price not available for {code}"
+```go
+type PriceNotAvailableError struct {
+    Code string
 }
+func (e *PriceNotAvailableError) Error() string // "Price not available for {code}"
 ```
 
 ## Key Design Decisions
-- **No retry logic**: Single attempt per tier, 3000ms timeout
-- **No circuit breaker**: Tiers are stateless, every request attempts all 3
+- **No retry logic**: Single attempt per tier, 3000ms timeout per tier HTTP call
+- **No circuit breaker**: Tiers are stateless, every request attempts all 3 concurrently
 - **Concurrent fallback**: All tiers run simultaneously, first success wins
-- **Code normalization**: Always `.toUpperCase()` before tier fetches
+- **Code normalization**: Always `strings.ToUpper()` before tier fetches

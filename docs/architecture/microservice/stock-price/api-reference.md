@@ -1,6 +1,6 @@
 # stock-price — API Reference
 
-**File:** `apps/stock-price/src/interface/handlers.ts`
+**File:** `apps/stock-price/pkg/interface/http/router.go`
 
 ## GET /health
 ```json
@@ -35,12 +35,14 @@ Fetch live price with 3-tier concurrent fallback.
 
 **500:** `{ "error": "[error message]" }`
 
-## GET /price/history/:code
-Historical daily OHLCV candles.
+## GET /price/history
+Historical daily OHLCV candles (query-param form — used by mcp-server clients.ts).
 
-**Path param:** `code` (stock symbol, uppercased internally)
+**Query params:**
+- `code` (required, stock symbol — uppercased internally)
+- `days` (optional, default: 30, must be positive integer)
 
-**Query param:** `days` (default: 30, must be positive integer)
+**URL example:** `GET /price/history?code=VCB&days=30`
 
 **Response (200):**
 ```json
@@ -53,3 +55,10 @@ Historical daily OHLCV candles.
 ```
 
 **400:** Missing code, invalid days parameter
+
+## GET /price/history/:code
+Backward-compatible path-param route (also accepts `?days=N`).
+
+**URL example:** `GET /price/history/VCB?days=30`
+
+**Response:** same shape as query-param route above.
