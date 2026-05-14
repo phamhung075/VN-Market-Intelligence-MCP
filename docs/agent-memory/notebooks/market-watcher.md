@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 18:42 UTC | **Sprint:** 1865a
+**Last updated:** 2026-05-14 19:42 UTC | **Sprint:** 1865a
 
 ## Current state
 
@@ -1430,3 +1430,36 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (19:38–19:42)
+- Stocks: 31 (26 priced, 5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 1 (VIC)
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- CARRY_REGIME: HOT_MONEY_INFLOW → hot_money_concentration flagged: real_estate (+1.15%), tech (+1.72%), banking (+1.04%)
+- Top movers (EOD): FPT +4.53% (2.68σ SUPPRESSED—dup id=3188), VIC +3.98% (1.47σ), VRE +3.48% (~1.4σ), VPB +3.24% (1.83σ), VHM +2.95%
+- Downside: GVR -1.63%, DPM -1.47%, POW -1.41% — all sub-threshold
+- VIC: chain catalyst id=3190 (news-scout 19:22 UTC) — ATH + VinFast restructure, 1.47σ below signal threshold
+- Supply chain: STABLE (BDI 1,400) | Climate: May heat risk (IDC/KBC/GEG), no active warnings | Energy: NORMAL (hydro 70%)
+- Gold -2.07σ, Brent -2.12σ below averages (both macro HIGH alerts already open)
+- Market CLOSED (off-hours cycle, EOD prices from 08:59 UTC)
+
+## Metrics (cycle 2026-05-14 19:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
+
+## Cycle — 19:42 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**:
+  - Market CLOSED (off-hours, 19:38 UTC). All prices are EOD from 08:59 UTC.
+  - FPT +4.53% (2.68σ) suppressed — off-hours duplicate (id=3188 already emitted 18:42 UTC, same closing price).
+  - VIC chain catalyst (id=3190, news-scout 19:22 UTC): ATH + VinFast restructure. Price 1.47σ — below 2.0σ threshold, no price_anomaly. CARRY_REGIME=HOT_MONEY_INFLOW: real_estate/tech/banking flagged hot_money_concentration.
+- **actions**: 0 signals emitted | 1 suppressed (FPT dup) | WORK telegram sent
+- **next_cycle_hint**: VIC VinFast restructure catalyst un-priced for tomorrow open — watch for gap-up confirmation. VPB +3.24% (1.83σ) approaching threshold — check if sustained next session. Gold/Brent both below average (macro HIGH alerts open).
+- **estimated_tokens**: 4200
