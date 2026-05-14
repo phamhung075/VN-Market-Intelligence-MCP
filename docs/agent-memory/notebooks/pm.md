@@ -15,6 +15,29 @@
 
 ---
 
+## Cycle 96 — 2026-05-14 c96 Close: 1910b SHIPPED + 1909c HOLD (WIP=0/2 CLEAN)
+
+**Input:** QA c96 completion. 1910b (effr-package-reg) APPROVED. Ops c96 1909c reparse-validation report: AC-1/2/3 PASS, AC-4/5 HOLD (Q1-2026 PDFs awaiting SSC, banking deadline 2026-05-15).
+
+**Outcomes:**
+1. **1910b-effr-package-reg-SHIPPED-c96 (HIGH CHORE, agent-md-editor):** Zero-build config-only. Added `get_fed_liquidity_spread` to 3 agent bootstrap arrays (financial_analyst L77, news_scout L45, unified_coordinator L271) in agentBootstrap.ts + 3 package docs (financial-analyst.md, news-scout.md, unified-agent.md) + SKILL_MANIFEST.md mirror. Auto-cure 3-cycle evidence confirmed (FA c05–13, UA c14, NS c13). Commits: config `e7fd1718` + notebook `961c62ec` + news-scout-nb `b6daa3e7`. QA APPROVED 9/9 AC. Container rebuild dispatched in parallel ops cycle.
+2. **1909c-reparse-validation [PARTIAL PASS + HOLD]:** AC-1/2/3 PASS (pipeline verified, Q4-2025 sample 9/9 tickers extract OK, tool registered, toolCount=140). AC-4/5 HOLD: Q1-2026 BCTC PDFs not yet at SSC (banking deadline 2026-05-15 = tomorrow); scheduled reparse trigger 2026-05-16 post-deadline. FA Layer 7 G-step gate remains open. Commit `b3d1fa47` (ops). Recommendation: Trigger `bctcReparseJob` 2026-05-16 morning, evaluate AC-4 (≥30/37 non-zero OCF target) at that time.
+
+**Actions:**
+- Moved 1910b from Todo → Done with c96 tag + commit SHAs + QA APPROVED 9/9.
+- Updated 1909c in Todo: Added [HOLD] marker, updated Blocked by to "Q1-2026 BCTC PDFs at SSC + next FA cycle". Kept CRITICAL priority — ship-completion gate still open. Added note: AC-1/2/3 PASS already.
+- Moved 1910a from Backlog → Todo (FRED_API_KEY confirmed in .env line 23). Unblocked.
+- TASKS.md final: 78L (under 80L cap). WIP=0/2.
+- PM notebook updated (c96 entry).
+
+**Container deploy NOTE:** Router will trigger ops rebuild in post-cycle. Do NOT spawn ops myself per feedback_agent_autonomy.md.
+
+**Carry-over to c97:** 1909c HOLD (reparse trigger 2026-05-16), 1910a (HIGH FEATURE ready for dev dispatch), 1907a (HIGH OPS escalated TNB-c49), 1907b (LOW OPS observational), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect), TASK-BCTC-3, 1900c, 1899a-bloomberg-test-split, 1862c-{E,F}.
+
+**Status:** c96 CLOSED. WIP=0/2 CLEAN. Pipeline ready. 1910b config deployed (awaiting container rebuild). 1909c await-only gate blocking until 2026-05-16. 1910a now unblocked + ready for dev dispatch. No code-path blockers.
+
+---
+
 ## Cycle 95 — 2026-05-14 c95 Close: 1909a + 1909b SHIPPED (WIP=0/2 CLEAN)
 
 **Input:** Dev-team + QA c95 completion. 1909a-extractor + 1909b-tool APPROVED.
