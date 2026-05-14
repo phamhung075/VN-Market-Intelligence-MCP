@@ -41,6 +41,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1916a-vps-part | **VPS route deployed — awaiting QA** Add `GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q` to `vps-proxy-server.js`. Shells out to `discover-bctc-urls-browser.py`, returns `string[]`. Auth: X-API-Key required (401 without key). Deployed `vps-scripts/vps-proxy-server.js` → VPS 125.212.251.27 via SCP + `systemctl restart vn-vps-proxy`. Live verification: 200+[] with key, 401 without key. Branch: `task/1916a-vps-discover-route`, commit `1b8f8cd5`. Parallel sibling: 1916a-mcp-part (bctcHttpFetcher.ts X-API-Key injection). | CRITICAL | FIX | developer | — | — |
 
 ---
 ## Done

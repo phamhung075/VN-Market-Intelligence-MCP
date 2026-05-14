@@ -52,3 +52,5 @@ TASK-1380 updated: [DATA] → [BUG]. Root cause confirmed by ops: alert_engine f
   Suppressed: 0 | Pending validation: 1 (existing VIC price_drop from market-watcher)
   Regime: NEUTRAL + FII_OUTFLOW_RISK (hot money risk flagged)
   Next: 01:45 UTC (15-min cycle) | Watchlist: 34 tickers monitored
+
+## [Developer] 2026-05-14 — 1916a-vps-part: add GET /proxy/bctc-discover/:ticker to vps-proxy-server.js — deployed to VPS 125.212.251.27:8765, 200+[] with key / 401 without key — branch task/1916a-vps-discover-route commit 1b8f8cd5
