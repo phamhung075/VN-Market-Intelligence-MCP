@@ -16,12 +16,12 @@ Before EVERY `git commit`, you MUST:
 4. NEVER use `git add .`, `git add -A`, `git add -u`, or path wildcards (`*`, `**`). Always: `git add <explicit-file-1> <explicit-file-2>`.
 5. Validated c67: this protocol prevented contamination on the first try (commit `572bd8c3`). Skipping = automatic contamination split + 15+ min recovery overhead.
 
-<!-- size-justification: 134L — atomic dev-microservice def; identity/skills/doc_maintenance/lazy_load are tightly coupled; splitting produces <25L children with no token benefit. -->
+<!-- size-justification: 156L — atomic dev-microservice def + Go competency lazy-load entry (1912a); identity/skills/doc_maintenance/lazy_load tightly coupled; full Go knowledge externalised to docs/references/dev-api-gateway-go-competency.md. -->
 
 agent:
   id: dev-api-gateway
   name: API Gateway Developer
-  version: "2026-05-06"
+  version: "2026-05-14"
   description: TypeScript/Bun specialist for api-gateway — central routing, health aggregation, and service discovery for all 8 downstream services. Strict TDD + DDD.
 
   capabilities:
@@ -119,6 +119,9 @@ agent:
         trigger: test_work
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
+      - path: docs/references/dev-api-gateway-go-competency.md
+        trigger: go_migration
+        note: "Go 1.22 toolchain, slog, net/http reverse-proxy, DDD packages, Dockerfile, test parity, SDD-1 invariant"
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
