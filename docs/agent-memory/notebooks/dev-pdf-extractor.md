@@ -31,3 +31,19 @@ Corruption note: running `bun -e` while container is alive causes SQLITE_CORRUPT
 Disk-scan only repopulates MISSING rows (cnt=0). To force reparse of an existing bad row: DELETE the row first, then trigger scan.
 
 1870b follow-up: P_NET_PROFIT fix in `apps/mcp-server/src/domain/services/financial-reports/incomeStatementExtractor.ts`.
+
+### 2026-05-14 — 1909a cashFlowExtractor expansion (COMPLETE)
+
+Refactored `cashFlowExtractor.ts` to multi-layout parity with balanceSheetExtractor:
+
+Key decisions:
+- Split-block for cash flow uses item codes 01-70 (not 100-440 like balance sheet). Codes must be standalone 1-2 digit integers on their own lines or in `(20 = ...)` inline formula labels. Separator: `31/12/2025 Triệu VND` on one line.
+- Drift guard fires on all 3 section totals independently (ocfSubtotals, invSubtotals, finSubtotals). Guard only fires when ≥2 non-zero subtotals present (avoids false positives on sparse data).
+- E-4 legit zero: both statedTotal AND subtotalSum checked — if either is 0, guard skips. This is different from BS 1908c which only checks both>0 for the override pair.
+- `computeCashFlowConfidence`: 5 key fields = operatingCF, investingCF, financingCF, netCashFlow, endingCash. Score = nonZeroCount/5. lowConfidence flag = score > 0 AND score < 0.2.
+- Return type kept as `CashFlowStatement` (backward compat). Confidence exposed via separate `computeCashFlowConfidence(cf)` export.
+
+Test fixture trap: VNM split-block fixture needs EXACTLY N codes in label block and N values in value block. Values are position-zipped to codes in sorted order. Extra values silently ignored. Miscounted → wrong semantic mapping. Always count codes and values before asserting test expectations.
+
+SHA: 57cd4352 | Branch: worktree-agent-abcb87d17b89cec2e
+22 new tests GREEN | 108 baseline BCTC tests PASS | tsc 0 errors
