@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-14T12:05:39Z
+
+**Brief:** `docs/architecture-briefs/2026-05-14-1912d-cutover-audit.md`
+
+Comprehensive pre-cutover audit for 1912d: identified ~18 files requiring edit across apps/ (delete TS gateway, mv Go gateway), docker-compose.yml (delete `api-gateway-go:` block, fix host port 4001→4000), 6 microservice architecture docs (TS stack refs → Go paths), ARCHITECTURE.md + restart-policy.md + README.md (language tags), dev-api-gateway.md agent (tech_stack + test_command + skills + lazy-load trigger), and 3 architecture brief close-outs; Go module rename flagged as optional cosmetic; execution order and risk register included.
+
+**Signal dropped:** `docs/signals/2026-05-14T120539Z-1912d-cutover-audit.json` → agent-father
+
+---
+
 ## 2026-05-12T21:52:40Z
 
 **Brief:** `docs/architecture-briefs/2026-05-12-headlock-and-worktree-root-cause.md`
