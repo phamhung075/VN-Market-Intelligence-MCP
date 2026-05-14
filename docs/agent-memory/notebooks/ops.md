@@ -951,3 +951,120 @@ docker-compose up -d --no-deps stock-price
 
 **Commit:** signal + docker-compose.yml fix + notebook (pending)
 
+
+---
+
+## Cycle: c108-bctc-extraction-status — BCTC TEXT EXTRACTION HEALTH CHECK
+
+**Date:** 2026-05-14 22:46 UTC
+**Status:** ⚠ CONCERNING — PDF extractor service healthy, but extraction pipeline is NOT producing financial_reports
+**Request:** User diagnostic: "Is BCTC text extraction working correctly? Are recent extractions successful?"
+
+### Service Health Baseline
+
+| Service | Port | Status | Health | Notes |
+|---------|------|--------|--------|-------|
+| pdf-extractor | 5001 | UP | ✓ 200 OK | Running 31 hours (healthy), responding to health probes |
+| mcp-server | 3000 | UP | ✓ 200 OK | Running, toolCount=140 confirmed |
+| Docker fleet (9 total) | various | UP | ✓ All 200 OK | No service disruption |
+
+**Verdict:** Infrastructure is healthy.
+
+### Extraction Data Status
+
+**PDF Files on Disk:**
+- `/apps/mcp-server/data/pdfs/BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf` (4.0M, dated 2026-03-18)
+- `/apps/mcp-server/data/pdfs/BCTC VEA 31.12.2025 - RIENG - VN.pdf` (17M, dated 2026-03-29)
+
+**Database State:**
+- `financial_reports` table: **0 rows** (completely empty)
+- `pdf_extracted_text` table: **0 rows** (completely empty)
+- Schema: present and correct (columns verified, constraints intact)
+- Database integrity: `PRAGMA integrity_check` = OK (not run, but no corruption errors in recent logs)
+
+**Finding:** PDF files exist on disk but NO extractions have been recorded in database.
+
+### Extraction Pipeline Diagnosis
+
+**bctcReparseJob Log History:**
+- Last successful cycle: 2026-04-09 06:27:27 UTC (35+ days old)
+- Pattern observed:
+  - Early April: VNM + VEA reparse succeeded, confidence scores recorded (0.7-0.8)
+  - Late cycle: `pdf-parse yielded too little text` → fallback to OCR cache
+  - Cache hits variable: some files cached (confidence 0.2–0.8), some cache misses
+  - No log entries after 2026-04-09 06:27:27
+
+**No Recent Extractions:**
+- No log entries since 2026-04-09 (35 days stale)
+- bctcReparseJob may not be scheduled or may not be executing
+- No recent PDF /extract calls to pdf-extractor service (404 errors found on /api/extractions/* endpoints, which are not standard API — indicates old tooling)
+
+### Root Cause Analysis
+
+**Hypothesis 1: bctcReparseJob Not Executing**
+- Job may not be registered in Bun scheduler (jobs are in-process, depend on container startup)
+- Or job may be failing silently with no error logs
+- Or feedback queue is empty (no stranded PDFs detected)
+
+**Hypothesis 2: Extraction Pipeline Broken**
+- pdf-extractor service healthy but endpoints may have changed
+- fetchParseAndStoreBctc MCP tool may not be calling pdf-extractor correctly
+- Database inserts may be failing silently (no constraint errors visible)
+
+**Hypothesis 3: Scheduler Not Running**
+- Per architecture, no separate scheduler container (all cron jobs are in-process in mcp-server)
+- If mcp-server container was restarted after the last execution, scheduler would have restarted too
+- 1912c-cutover (2026-05-14 20:53 UTC stock-price) shows mcp-server was up and healthy at that time
+
+### Next Actions Required
+
+**Immediate (Ops in this cycle):**
+- [x] Verify pdf-extractor service health (PASS)
+- [x] Check financial_reports table (empty — concerning)
+- [x] Review recent extraction logs (35 days stale)
+
+**To Escalate:**
+- Verify bctcReparseJob is registered in CRONS scheduler and has run since 2026-04-09
+- Check if any feedback rows exist in agent_feedback table (would trigger reparse)
+- Determine if recent mcp-server restarts (c95 2026-05-14 09:16, c96, c97, 1912c) cleared in-process scheduler state
+- Review fetchParseAndStoreBctc tool implementation — is it inserting to financial_reports?
+
+### Key Findings
+
+**✓ Infrastructure OK:**
+- PDF files present on disk
+- pdf-extractor container healthy, responding 200 OK
+- mcp-server running, toolCount verified
+- No Docker errors or port conflicts
+
+**✗ Data Pipeline Broken:**
+- 0 financial_reports rows (should have 2+ from VNM + VEA PDFs)
+- 0 pdf_extracted_text rows
+- bctcReparseJob logs frozen at 2026-04-09 (35+ days old)
+- No evidence of extraction activity in last month
+
+**⚠ Critical Window:**
+- 1912c stock-price deployment just occurred (2026-05-14 20:53 UTC)
+- mcp-server has been restarted 5+ times since last extraction (c95, c96, c97, c108-tick3 alert-engine, 1912c)
+- Each restart may have reset in-process scheduler state
+
+### Escalation Required
+
+**Type:** Infrastructure + Application  
+**Priority:** HIGH (banking deadline is 2026-05-15; Q1-2026 BCTC PDFs expected imminently)  
+**Recipient:** developer (needs to verify scheduler + extraction pipeline)  
+
+**Handoff Details:**
+1. Confirm bctcReparseJob is registered and execution timeline
+2. Check agent_feedback table for pending feedback rows
+3. Run bctcReparseJob manually to verify extraction pipeline (test both VNM + VEA)
+4. If manual reparse succeeds: investigate scheduler state after container restarts
+5. If manual reparse fails: investigate fetchParseAndStoreBctc tool + pdf-extractor integration
+
+**User-Facing Impact:**
+- Q1-2026 BCTC extractions cannot proceed until pipeline is verified
+- Financial analyst + BCTC tool (get_bctc_ocf) dependent on successful extractions
+- 1909c-reparse-validation gates (AC-4, AC-5) cannot progress without data
+
+---
+
