@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 11:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 12:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (12:19–12:21 UTC)
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst #3167] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3167: credit_policy bearish → securities (HCM, SSI, VCI) — lãi suất tăng rủi ro CTCK, regime adj score 10.4
+- Suppressed: VN-Index ATH (bullish × TIGHTENING = 5.6, below threshold); FPT Japan JV (neutral, 7, already priced +4.53%); gold below 4700 (falling, no spike)
+- Gold: 4702.4 (falling, not spiking >3%). Brent: 104.8 (-2.12σ below avg, no CPI pressure signal). No PMI data.
 
 ## This session (2026-05-14 11:20–11:22 UTC)
 
