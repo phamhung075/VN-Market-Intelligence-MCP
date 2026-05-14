@@ -1,6 +1,6 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T05:14:03Z (c91 triage — BATCH(1): 1908a-bctc-vnm-q4-low-confidence SPIKE)
+## Last updated: 2026-05-14T17:45:00Z (c93 status — 1907a escalated HIGH + 1908c executing + 1890a deployed)
 
 ---
 
@@ -39,3 +39,21 @@
 
 ### Sign-off
 c91 BATCH(1) emitted. SPIKE-only cycle. PO sub-flow EXITs to main terminal Step 2 (SPIKE routing). Notebook OVERWRITE complete.
+
+---
+
+## Cycle 93 triage (1 escalation + 1 janitor, WIP=0/2)
+
+**Input:** TNB c49 user-facing outage escalation (1907a 4-day silence) + c92 tree-verify procedural failure (JANITOR-021).
+
+**Outcomes:**
+- **1907a escalated HIGH** (TNB c49 finding #3): digest-predict 4-day outage 2026-05-11 21:38→2026-05-14 17:30 UTC. Root cause = Claude Desktop external trigger unwired (cron not auto-running). User-facing: market timing alerts missed 4 days. Recommend immediate verification next 3 cycles.
+- **JANITOR-021 opened (NEW, LOW):** c92 tree-verify exit=1 was procedural (audit checks HEAD diff vs cherry-pick; fails when PM close lands on merge commit). Non-blocking. Fix on idle cycle.
+- **1908c executing** (dev-pdf-extractor, banking deadline 2026-05-15 COVERED).
+- **1890a deployed** (live + reparse job active c92).
+
+**Banking window:** PREPARED. Q1/2026 PDFs + FA tools live.
+
+**Watch-list c93+:** news-scout inter-cycle dedup gap (1/3 evidence cycles), FPT σ approaching 4.0 floor, US10Y 4.49%, financial-analyst tool 23:00Z post-1890a validation for BCTC Q1 banking deadline 2026-05-15.
+
+**Status:** c93 CLOSED. 1907a HIGH escalation noted for user attention. No other blockers. Carry-forward: 1908c (executing), 1907a (escalated), JANITOR-021 (queued).
