@@ -1,6 +1,22 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c92 gate — 1908c totalAssets plausibility override APPROVED
+**Last updated:** 2026-05-14 | **Session:** c93 gate — 1909b-tool get_bctc_ocf APPROVED
+
+## Recent session — 2026-05-14 (c93 — 1909b-tool get_bctc_ocf APPROVED)
+
+### 1909b-tool — get_bctc_ocf MCP Tool (CRITICAL FEATURE)
+
+Branch: task/1909b-get-bctc-ocf-tool. Merged onto main (d285cc68 impl + a3381005 notebook). Cherry-pick union merge — 1890a-B tools + new get_bctc_ocf both present.
+
+SD-2 critical check: `extraction_method` SELECT'd from DB column (L130-143). `BctcOcfRow` interface: `extraction_method: string | null`. No hardcoded `"ocr_parsed"` or any literal. DB value flows unmodified to envelope.
+
+Pipeline: tsc 0 errors. 8/8 tests PASS (29 expect() calls). All 4 extraction_method enum values covered in tests: pdf-parse (a), ocr-200 (a2), null (a3), ocr-300 (b2), news_inference (c). DDD PASS — getDb() inside handler scope (L213), no module-level injection. Security PASS — no process.env, parameterized SQL (.prepare(...).get()), no throw, error returns JSON content block. source_tier=1 literal type in both found/not-found interfaces. Registration complete: registry.ts L100+L202, index.ts L11, agentBootstrap.ts L75, SKILL_MANIFEST.md L59, financial-analyst.md L38. 1890a-B union merge verified (get_macro_snapshot/get_bond_maturity_calendar/get_investment_clock_phase at L72-74).
+
+All 11 ACs: PASS. No blocking issues. No non-blocking issues.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c92 — 1908c totalAssets plausibility override APPROVED)
 
