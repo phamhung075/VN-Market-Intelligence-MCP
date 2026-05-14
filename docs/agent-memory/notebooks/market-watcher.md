@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 09:42 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 10:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -222,6 +222,30 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 1 signal posted (#3147 FPT price_anomaly → alert-commander, pe_compression_risk=true). WORK telegram sent. Notebook + commit done.
 - **next_cycle_hint**: Watch FPT if move extends (already +3.25% intraday). VIC and VPB both sitting just under 1.5σ — a further nudge triggers. Monitor oil sector (GAS) — prior 2-day rally on Brent; today's +2.57% is lower energy but still elevated. Banking sector +0.70% avg — watch for fx_pressure materialising under USD STRENGTHENING.
 - **estimated_tokens**: 8000
+
+### Cycle (10:38–10:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (1 suppressed) | Volume spikes: 0 | Chain confirms: 0 new
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-OFF (US CPI 3yr high) | CARRY_REGIME: HOT_MONEY_INFLOW (khối ngoại đảo chiều mua ròng) | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours 4h cycle). Closing prices from 2026-05-14 08:59 UTC. VN-Index NEW ATH session.
+- FPT +4.53% (3.62σ, stddev 1.25%, vol 2.16M) → SUPPRESSED: off-hours duplicate — same closing price, signal already emitted this session (id=3159, 09:42 UTC)
+- VPB +3.24% (1.90σ, stddev 1.71%) — below 2.0σ NEUTRAL threshold; in-session signal #3155 (08:42 UTC) covers.
+- VIC +3.98% (1.46σ, stddev 2.73%) — below threshold; VinFast restructuring catalyst active (news-scout #3157/#3160 bullish chain_catalyst, conf=0.82). VN-Index ATH driver.
+- VRE +3.48% (0.81σ, stddev 4.29%), VHM +2.95% (0.73σ, stddev 4.03%), GAS +2.20% (0.67σ, stddev 3.29%) — all below threshold.
+- CARRY context: HOT_MONEY_INFLOW — FII reversed 14-session net-sell streak; tech + real_estate top FII net buy sectors.
+- Chain findings (120 min): FPT [id=3154 mw, 3158 ns urgent_news, 3159 mw] | VIC [id=3157 ns, 3160 ns chain_catalyst bullish] | VPB [id=3155 mw]
+- Sector rotation: all 16 sectors STABLE (1d data only). Top: Automotive +1.98%, Tech +1.72%, Real estate +1.15%, Banking +1.04%. Lagging: Chemicals -1.47%, Utilities -0.10%, Steel -0.11%
+- Macro: Brent 106.32, Gold 4,700.9, USD/VND 26,132. Oil price DOWN today (geopolitical de-escalation, Hormuz open). VN-Index ATH (1,920+ level broken).
+
+## Metrics (cycle 2026-05-14 10:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
 
 ## Known patterns / preferences
 
