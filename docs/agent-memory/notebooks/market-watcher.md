@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 05:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 06:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -195,6 +195,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 0 signals posted (2 suppressed). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Pre-market cycle starts 01:00 UTC. If VN market opens with gap (prices change from 81,800/33,000/152,500 VND), suppression guard will not apply — emit fresh signals. Monitor FII selling continuation and banking sector for further deterioration.
 - **estimated_tokens**: 3500
+
+### Cycle (06:37–06:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 1 (FPT 2.60σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: [FPT]
+- FPT +3.25% (2.60σ, 30d stddev ≈1.25%, vol 1.86M) → signal #3147 → alert-commander. US tech rally tailwind (Nasdaq record highs). PE discount -20% vs sector, ROE 28.3% sector-best. pe_compression_risk=true (large-cap + FII exposure + RISK-OFF). Bearish evidence 0.76 (mixed). BCTC overdue Q4-2025 (14d). Sector tech flat +0.0% vs FPT outperformance.
+- VIC +3.98% (1.46σ, stddev ≈2.73%) — below 1.5σ TIGHTENING threshold; no signal. VPB +2.52% (1.48σ, stddev ≈1.71%) — borderline, below threshold.
+- Macro: Sector rotation all 16 STABLE (1d only). Supply chain STABLE (BDI=1,400). Climate: May heat-risk (IDC,KBC,GEG — no watchlist direct impact). Energy: NORMAL (hydro 70% est.). Chain findings: 0.
+- Context: news-scout chain_catalyst #3145 (IEA oil stock drawdown, Brent ~106, US CPI highest 3yr, regime_adj=9.1 TIGHTENING). VRE +2.58% (0.60σ — high natural vol), GAS +2.57% (0.78σ — trending). 20 open alerts active.
+
+## Metrics (cycle 2026-05-14 06:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4800 |
 
 ## Known patterns / preferences
 
@@ -1115,3 +1134,14 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5800 |
+
+## Cycle — 05:41 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**:
+  - FPT +4.67% = 3.73σ — massive outperformance vs tech sector (+4.2pp delta); Nasdaq record + US tech catalyst; PE 13.8 (20% discount); ROE 28.3% best-in-class; bearish evidence slightly dominant (0.76 vs 0.64) — move is real but regime headwinds remain
+  - VPB +2.70% = 1.58σ — borderline anomaly in banking sector; USD STRENGTHENING → fx_pressure; PE in-line, ROE below median; sector-wide banking bid (+1.17% avg)
+  - TIGHTENING regime confirmed: US CPI 3yr high, Fed higher-for-longer, FII selling 14 sessions (>13,000 tỷ VND), SGI Capital >70% cash
+- **actions**: signal price_anomaly FPT → alert-commander (id=3143) | signal price_anomaly VPB → alert-commander (id=3144) | WORK telegram sent
+- **next_cycle_hint**: Watch FPT follow-through vs 30d high 75,500; VPB needs sustained vol to confirm breakout; GAS near-threshold (0.93σ) with IEA bullish supply warning; POW downside (-1.41%) in TIGHTENING warrants monitoring
+- **estimated_tokens**: 6500
