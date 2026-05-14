@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### SPIKE 1916 — bctcQueueEnricher 0 URLs (2026-05-14, DONE)
+
+**Question:** Cheerio selectors stale vs auth-block vs dead endpoints?
+
+**Root cause CONFIRMED:** ALL 4 strategies are dead simultaneously. This is not ticker-specific.
+- Strategy 0 (VPS Playwright /proxy/bctc-discover): route never deployed on VPS. Also bctcHttpFetcher.ts sends no X-API-Key header → 401.
+- Strategy 1 (SSC iboard): iboard-query.ssc.vn NXDOMAIN → VPS returns 502.
+- Strategy 2 (cafef FinanceInfo.ashx): 301 redirect loses params → cafef.vn HTML page with 0 PDFs.
+- Strategy 3 (vietstock): HTTP 404 → bctcHttpFetcher throws → [].
+
+**Why "9 tickers work":** Those 9 tickers already have source_url from VPS-push (fetch-bctc.sh), not from the enricher. Enricher skips rows with non-null source_url.
+
+**No Cheerio involved:** bctcDiscovery.ts uses JSON parsing + regex only. No Cheerio import.
+
+**Fix required:** (A) Add /proxy/bctc-discover/:ticker route to vps-proxy-server.js + inject X-API-Key in bctcHttpFetcher.ts. (B) Replace cafef strategy with live endpoint.
+
+**Findings doc:** docs/spikes/SPIKE_1916-bctc-queue-enricher-scraper-broken.md
+
+---
+
 ### SPIKE 1915 — bctc-pipeline-silence (2026-05-14, DONE)
 
 **Mission:** Identify root cause of bctcReparseJob silence since 2026-04-09.
