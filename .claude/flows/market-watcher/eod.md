@@ -36,6 +36,8 @@ Sentiment: {sentiment} | Insider: {insider_activity}
 ```
 `send_telegram(channel="market")`
 
+> **Message size:** Telegram enforces a 4000-char limit. With >=20 tickers the full watchlist exceeds this. Split into multiple messages (e.g. gainers / flat+decliners) rather than one call per ticker.
+
 Rules:
 - `{brief_action}` max 10 words: Hold / Buy on dip / Reduce / Watch
   - `REGIME=TIGHTENING` + action=`Buy on dip` → append `"(Thiên thời bất lợi — xác nhận trước khi mua)"`
