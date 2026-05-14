@@ -1,4 +1,4 @@
-# api-gateway-go — Log Schema (AC-7)
+# api-gateway — Log Schema (AC-7)
 
 ## Format
 

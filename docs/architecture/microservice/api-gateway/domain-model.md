@@ -3,54 +3,69 @@
 ## Types
 
 ### HealthStatus
-```typescript
-type HealthStatus = 'ok' | 'degraded' | 'down'
+```go
+// HealthStatus represents the health state of a service.
+type HealthStatus string
+
+const (
+    StatusOk       HealthStatus = "ok"
+    StatusDegraded HealthStatus = "degraded"
+    StatusDown     HealthStatus = "down"
+)
 ```
 
 ### ServiceHealthResult
-```typescript
-interface ServiceHealthResult {
-  service: string           // Service key from registry (e.g. 'mcp', 'pdf')
-  status: HealthStatus
-  latencyMs: number         // Response time in ms (-1 if failed)
-  error?: string            // Error message on non-ok
+```go
+// ServiceHealthResult is the health result for a single downstream service.
+type ServiceHealthResult struct {
+    Service   string       `json:"service"`
+    Status    HealthStatus `json:"status"`
+    LatencyMs int64        `json:"latencyMs"`
+    Error     string       `json:"error,omitempty"`
 }
 ```
 
 ### AggregatedHealth
-```typescript
-interface AggregatedHealth {
-  status: HealthStatus                    // Overall system health
-  services: Record<string, HealthStatus>  // Per-service status map
-  latencies: Record<string, number>       // Per-service latency map
-  checkedAt: string                       // ISO timestamp
+```go
+// AggregatedHealth is the aggregated health response across all services.
+type AggregatedHealth struct {
+    Status    HealthStatus            `json:"status"`
+    Services  map[string]HealthStatus `json:"services"`
+    Latencies map[string]int64        `json:"latencies"`
+    CheckedAt string                  `json:"checkedAt"`
 }
 ```
 
 ### ServiceConfig
-```typescript
-interface ServiceConfig {
-  name: string       // Service key
-  baseUrl: string    // e.g. "http://mcp-server:3000"
-  healthPath: string // Always "/health"
-  timeoutMs: number  // Always 2000ms
+```go
+// ServiceConfig holds the configuration for a single downstream service.
+type ServiceConfig struct {
+    Name       string
+    BaseURL    string
+    HealthPath string
+    TimeoutMs  int64
+    NoProbe    bool // virtual alias services: excluded from health probes
 }
 ```
 
 ## Repository Ports
 
-### HealthCheckPort
-```typescript
-interface HealthCheckPort {
-  checkHealth(service: ServiceConfig): Promise<ServiceHealthResult>
+### HealthCheckerPort
+```go
+// HealthCheckerPort is the port for checking the health of a single service.
+type HealthCheckerPort interface {
+    CheckHealth(ctx context.Context, svc *ServiceConfig) (*ServiceHealthResult, error)
 }
 ```
 
 ### ServiceRegistryPort
-```typescript
-interface ServiceRegistryPort {
-  getAllServices(): ServiceConfig[]
-  getService(name: string): ServiceConfig | undefined
+```go
+// ServiceRegistryPort is the port for reading the service registry.
+type ServiceRegistryPort interface {
+    // GetAllServices returns all services eligible for active health probing (NoProbe=false).
+    GetAllServices() []*ServiceConfig
+    // GetService returns a service by name, or nil if not found.
+    GetService(name string) *ServiceConfig
 }
 ```
 
@@ -58,14 +73,14 @@ interface ServiceRegistryPort {
 
 ### AggregateHealthService
 - **File:** `apps/api-gateway/pkg/domain/services.go`
-- Constructor: `(checker: HealthCheckPort, registry: ServiceRegistryPort)`
-- Method: `aggregate(): Promise<AggregatedHealth>`
+- Constructor: `NewAggregateHealthService(checker HealthCheckerPort, registry ServiceRegistryPort) *AggregateHealthService`
+- Method: `Aggregate(ctx context.Context) (*AggregatedHealth, error)`
 
 **Logic:**
-1. Fans out health checks to all configured downstream services via `Promise.allSettled()`
-2. Maps failed checks to `status: 'down'`, `latencyMs: -1`
+1. Fans out health checks to all configured downstream services via goroutines + `sync.WaitGroup`
+2. Maps failed checks to `Status: StatusDown`, `LatencyMs: -1`
 3. Overall status:
-   - All ok → `'ok'`
-   - All down → `'down'`
-   - Mixed → `'degraded'`
-4. Returns `AggregatedHealth` with ISO timestamp
+   - All ok → `StatusOk`
+   - All down → `StatusDown`
+   - Mixed → `StatusDegraded`
+4. Returns `AggregatedHealth` with RFC3339Nano timestamp (`time.Now().UTC()`)
