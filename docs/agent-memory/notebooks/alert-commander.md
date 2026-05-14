@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 08:02 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 09:08 UTC | **Sprint:** c84
 
 ## This session
 
@@ -93,3 +93,14 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Legal: CLEAR | Crisis: CLEAR | Market: OPEN (20-min cycle)
 - log_agent_work id=789
+
+### Alert Cycle (09:05–09:08 UTC) — 2026-05-14
+- Signals: 2 (price_anomaly: FPT id=3154, VPB id=3155 from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- Suppressed: FPT id=3154 (conf=0.50, σ=3.62 < 4.0, no active price alert confirmation) | VPB id=3155 (conf=0.50, σ=1.90 < 4.0, no active price alert confirmation)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING (news-fallback) | Carry: NEUTRAL (get_macro_snapshot not in package) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (off-hours 2h cycle, post-session)
+- VN-Index: 1,925.46 (+1.43%) | Kinh Dịch: Khôn(2) MUA 100%
+- Notable: FPT +4.53% (automotive JV catalyst, pe_compression_risk, FII mixed) | VPB +3.24% (banking, DXY fx_pressure) | VN-Index ATH 1,925 breadth narrow FII net sell 14 sessions
+- log_agent_work id=806
