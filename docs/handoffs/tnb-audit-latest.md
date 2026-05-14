@@ -84,3 +84,23 @@ No `## PO ACK` section found in previous handoff (c52). PO did not acknowledge c
 4. **1912a smoke window closes 2026-05-15T14:00Z** — 1912d-cutover-cleanup triggers if clean.
 5. **news-scout F/H-step** — track cycle 2 of pillar/cycle-phase gap in chain_catalyst signals.
 6. **digest-predict** — confirm developer pickup of 1907a via PM TASKS.md on next available read.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-14T20:03:43Z (c109)
+- Tasks created:
+  - `janitor-1912` (Backlog, LOW CLEAN, code-janitor) — covers RF-1 (stock-price stale TS tests) + RF-2 (alert-engine tracked server binary) from 1912 program post-merge architect review.
+  - `1914b-log-agent-work-doc` (Backlog, LOW CHORE, agent-md-editor) — TNB finding #8 alert-commander package doc gap on two-call pattern.
+- Existing tasks covering findings:
+  - Finding #1 (MCP gateway 8th cycle) → tracked in **1913-fa-mcp-gateway-config-user-action** (CRITICAL F1 USER). No new task.
+  - Finding #2 (digest-predict 7d silence CRITICAL) → tracked in **1907a-digest-predict-silence** (CRITICAL OPS) + 1907b in archive footer. No new task.
+  - Finding #3 (alert-commander auto-cure FIRED) → POSITIVE signal, no action. Acknowledged.
+  - Finding #4 (FA G/H/B runtime skip) → same substrate as 1913. No new task.
+  - Finding #5 (BCTC Q1/2026 banking deadline TODAY 2026-05-15) → observational; will resolve via existing **1909c-reparse-validation** (HOLD for 2026-05-16 reparse). No new task.
+  - Finding #6 (news-scout dedup API limitation) → tracked in **1914-news-scout-dedup-api** (MEDIUM SPRINT-S). No new task.
+  - Finding #7 (news-scout F-step 1/4 pillars + H-step missing) → **1st cycle of evidence**, TNB protocol requires 3rd cycle before auto-cure. Monitor only; no task yet.
+  - Finding #9 (digest-predict ops c100 developer pickup unverified) → subordinate to 1907a, observational.
+- Skipped findings: none
+- Persisting blockers acknowledged (1913, 1907a, FA-skip, BCTC banking cohort, dedup API, alert precision N=0/440) — all already in TASKS.md or known.
+- Direction IMPROVING confirmed. 1912 PROGRAM COMPLETE c108 noted.
