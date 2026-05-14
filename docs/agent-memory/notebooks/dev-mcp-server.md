@@ -4,6 +4,24 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1914 — news-scout dedup API fix (2026-05-15, DONE)
+
+**Mission:** Add `fromAgent` filter to `getSignals()` so news-scout can query its own prior posts for inter-cycle dedup.
+
+**Root cause:** `getSignals()` filtered on `to_agent` only. News-scout posts to `"alert-commander"`, not itself, so its prior signals were invisible when calling `get_agent_signals(agent="news-scout")`.
+
+**Implementation divergence:** Handoff spec said to add `from_agent` as an additional AND clause while keeping `to_agent` filter. This would have still blocked rows where `to_agent != "news-scout"`. Instead, when `fromAgent` is set, the WHERE clause switches exclusively to `s.from_agent = ?` (ignores `to_agent` axis entirely). The `agent` param is still accepted for API symmetry.
+
+**Files modified:**
+- `apps/mcp-server/src/infrastructure/db/agentSignalStore.ts` — `GetSignalsOptions.fromAgent` added; WHERE clause switches mode; read-mark guard updated
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — `from_agent` Zod param added and forwarded
+- `apps/mcp-server/src/__tests__/242-agent-signals.test.ts` — 3 new tests AC-6a/b/c
+- `.claude/flows/news-scout/stage-signals.md` — dedup gate call updated with `from_agent` + `status="all"`
+
+**Results:** 14/14 GREEN (242 suite). 9305 pass / 37 fail full suite (37 pre-existing). tsc 0 errors.
+
+---
+
 ### Task 1916b-fix-cafef-strategy-replacement (2026-05-14, DONE)
 
 **Mission:** Remove dead cafef.vn Strategy 2 from `bctcDiscovery.ts`. Investigate 3 replacement candidates; all dead from France. Clean removal with backward-compat `_fetchCafef` no-op.

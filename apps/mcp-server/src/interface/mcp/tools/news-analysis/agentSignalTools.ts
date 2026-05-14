@@ -331,7 +331,8 @@ export function registerAgentSignalTools(server: McpServer): void {
   server.tool(
     "get_agent_signals",
     "Retrieve pending signals addressed to the given agent (or broadcast 'all'). " +
-      "Unread signals are marked as read on retrieval.",
+      "Unread signals are marked as read on retrieval. " +
+      "Pass from_agent to query sender history instead (read-mark suppressed).",
     {
       agent: z
         .string()
@@ -340,13 +341,23 @@ export function registerAgentSignalTools(server: McpServer): void {
         .enum(["unread", "all"])
         .default("unread")
         .describe("Filter: 'unread' (default) or 'all'"),
+      from_agent: z
+        .string()
+        .optional()
+        .describe(
+          "If provided, return only signals sent BY this agent (sender history). " +
+            "Useful for inter-cycle dedup checks. Read-mark side-effect is suppressed.",
+        ),
     },
     async (args) => {
       try {
         await initDatabase();
         const db = getDb();
 
-        const signals = getSignals(db, args.agent, { status: args.status });
+        const signals = getSignals(db, args.agent, {
+          status: args.status,
+          ...(args.from_agent !== undefined ? { fromAgent: args.from_agent } : {}),
+        });
 
         return {
           content: [{ type: "text" as const, text: formatSignalLines(signals, args.agent) }],

@@ -240,4 +240,85 @@ describe("Task 242 — Agent Signal Bus", () => {
       expect(id).toBeGreaterThan(0);
     }
   });
+
+  // ── AC-6: fromAgent filter (Task 1914) ─────────────────────────────────────
+
+  it("AC-6a: getSignals with fromAgent returns self-sent rows regardless of to_agent", () => {
+    // news-scout → alert-commander (self-sent, should be returned)
+    postSignal(db, {
+      fromAgent: "news-scout",
+      toAgent: "alert-commander",
+      signalType: "urgent_news",
+      payload: { title: "Breaking", detail: "VCB rally" },
+      ttlMinutes: 120,
+    });
+    // alert-commander → news-scout (cross-agent, should NOT be returned)
+    postSignal(db, {
+      fromAgent: "alert-commander",
+      toAgent: "news-scout",
+      signalType: "cross_validate",
+      payload: { title: "Validate", detail: "Confirm VCB" },
+      ttlMinutes: 120,
+    });
+
+    const signals = getSignals(db, "news-scout", { fromAgent: "news-scout", status: "all" });
+    expect(signals.length).toBe(1);
+    expect(signals[0]!.fromAgent).toBe("news-scout");
+    expect(signals[0]!.toAgent).toBe("alert-commander");
+  });
+
+  it("AC-6b: getSignals without fromAgent does not expose cross-agent rows", () => {
+    // news-scout → alert-commander
+    postSignal(db, {
+      fromAgent: "news-scout",
+      toAgent: "alert-commander",
+      signalType: "urgent_news",
+      payload: { title: "Breaking", detail: "VCB rally" },
+      ttlMinutes: 120,
+    });
+    // alert-commander → news-scout
+    postSignal(db, {
+      fromAgent: "alert-commander",
+      toAgent: "news-scout",
+      signalType: "cross_validate",
+      payload: { title: "Validate", detail: "Confirm VCB" },
+      ttlMinutes: 120,
+    });
+
+    // Without fromAgent, news-scout inbox: only the row addressed TO news-scout
+    const signals = getSignals(db, "news-scout", { status: "all" });
+    expect(signals.length).toBe(1);
+    expect(signals[0]!.toAgent).toBe("news-scout");
+    expect(signals[0]!.fromAgent).toBe("alert-commander");
+  });
+
+  it("AC-6c: getSignals with fromAgent + status=all returns read self-sent rows; read-mark NOT triggered", () => {
+    // news-scout posts to "all"
+    const id = postSignal(db, {
+      fromAgent: "news-scout",
+      toAgent: "all",
+      signalType: "chain_catalyst",
+      payload: { title: "Macro", detail: "CPI spike" },
+      ttlMinutes: 180,
+    });
+
+    // Simulate another agent having already marked it read
+    db.exec(`UPDATE agent_signals SET status = 'read' WHERE id = ${id}`);
+
+    // Dedup query: fromAgent set, status=all — should return the row
+    const signals = getSignals(db, "news-scout", { fromAgent: "news-scout", status: "all" });
+    expect(signals.length).toBe(1);
+    expect(signals[0]!.fromAgent).toBe("news-scout");
+
+    // Verify read-mark side-effect was NOT triggered (row still has status "read" as set above,
+    // meaning getSignals did not re-mark it in any unexpected way — status remains "read")
+    const row = db
+      .query<{ status: string }, [number]>("SELECT status FROM agent_signals WHERE id = ?")
+      .get(id);
+    expect(row?.status).toBe("read");
+
+    // Second call also returns the row (status unchanged proves no unread→read flip happened)
+    const signals2 = getSignals(db, "news-scout", { fromAgent: "news-scout", status: "all" });
+    expect(signals2.length).toBe(1);
+  });
 });

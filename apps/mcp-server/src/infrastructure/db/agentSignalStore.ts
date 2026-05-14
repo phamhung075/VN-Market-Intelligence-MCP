@@ -696,6 +696,12 @@ export function postSignal(db: Database, input: PostSignalInput): number {
 export interface GetSignalsOptions {
   /** "unread" (default) returns only unread; "all" returns all statuses. */
   status?: "unread" | "all";
+  /**
+   * When set, filters by sender (from_agent = ?) instead of the standard
+   * recipient filter. Used for sender-history / dedup lookups. Read-mark
+   * side-effect is suppressed when this is provided.
+   */
+  fromAgent?: string;
 }
 
 /**
@@ -748,20 +754,27 @@ export function getSignals(
     validated_at?: string;
   };
 
+  // When fromAgent is set, query sender history: filter by from_agent only (ignores to_agent axis).
+  // When fromAgent is absent, query inbox: filter by to_agent (standard behaviour).
+  const recipientClause = opts.fromAgent === undefined
+    ? "(s.to_agent = ? OR s.to_agent = 'all')"
+    : "s.from_agent = ?";
+  const bindParam = opts.fromAgent !== undefined ? opts.fromAgent : agent;
+
   const rows = db
     .query<RawRow, [string]>(
       `SELECT id, from_agent, to_agent, signal_type, stock_code, payload, status,
               created_at, expires_at${validationColumns}
        FROM agent_signals s
-       WHERE (s.to_agent = ? OR s.to_agent = 'all')
+       WHERE ${recipientClause}
          AND s.expires_at > datetime('now')
          ${statusClause}
        ORDER BY s.id ASC`,
     )
-    .all(agent) as RawRow[];
+    .all(bindParam) as RawRow[];
 
-  // Mark unread rows as read (only when we fetched in unread mode)
-  if (statusFilter === "unread" && rows.length > 0) {
+  // Mark unread rows as read (only when fetching as inbox — NOT when doing sender-history lookup)
+  if (statusFilter === "unread" && opts.fromAgent === undefined && rows.length > 0) {
     const ids = rows.map((r) => r.id).join(",");
     db.exec(`UPDATE agent_signals SET status = 'read' WHERE id IN (${ids})`);
   }
