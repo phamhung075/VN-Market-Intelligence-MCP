@@ -1,6 +1,47 @@
 # PO Notebook
 
-## Last updated: 2026-05-14 (c99 re-triage — 1910a USER-STOPPED → RESTART as 1910a-retry)
+## Last updated: 2026-05-14 (c106 — 1912d cutover housekeeping, Phase 1 fully closed)
+
+---
+
+## Cycle 106 — 1912d cutover housekeeping post-USER-OVERRIDE c105
+
+**Input:** 1 drained signal `1912d-complete` (sha 75d134a7 — feat commit, 5 commits total to HEAD 2a92eb3f). USER OVERRIDE c105 cut 24h smoke window ~22h short ("reploy new and remove old now" + rename + doc-sweep). WIP=0/2 post-cutover. 1910a-retry in Todo. 1912b/1912c formally unlocked.
+
+### Evidence gathered
+- TASKS.md L10-11 (1912 program + 1912d row) both pre-dated USER OVERRIDE — required SHIPPED close-out + Phase 1 closure note.
+- TASKS.md L49 1912a Done row referenced "carry-forward 1912d per directive" — required close-out tail.
+- 5 commits verified via `git log --oneline -8`: 75d134a7 / c1cc8c1f / ec49a740 / d9cd69ed / 2a92eb3f (HEAD).
+- project-stats.json carried stale "RUNNING" smoke window + 1912a-centric sprintGoal — both updated.
+- TASKS.md was at 84L pre-edit (over 80L invariant); archived 7 oldest Done rows (1881a-impl-ssot/mcp-c85, 1888l-c84, 1881a-impl-SPLIT-c84, 1881a-spec-c83, 1888-CDG-c83, 1903a-c82) into footer line — final 77L.
+
+### Decisions
+1. **1912-go-migration-program (L10):** updated to "Phase 1 FULLY CLOSED c106". USER OVERRIDE noted. P2/P3 UNLOCKED with "architect re-brief required before BA spec" gating note.
+2. **1912d-cutover-cleanup:** removed from Backlog (L11), inserted as new Done row `1912d-cutover-cleanup-SHIPPED-c106` listing all 5 SHAs + scope + deviations.
+3. **1912a-gateway-go-migration-SHIPPED-c99 (L49):** kept in Done, condensed older smoke detail, added close-out tail referencing 1912d cutover.
+4. **1912b/1912c promotion to Todo: HELD.** Per the architect-brief 2026-05-14-go-migration-3-services.md program shape, each phase needs its own spec dispatch. The originating brief is Phase 1 scoped (gateway only); P2/P3 need either (a) brief extension or (b) fresh per-phase brief before BA spec. Promoting to Todo without a spec hand-off violates the BA spec approval gate (boundary rule). Leave in PROGRAM row, dispatch architect re-brief next cycle.
+5. **1910a-retry-ism-tool:** stays in Todo. WIP free post-cutover — eligible for dev-team dispatch next cycle (PM/dispatcher scope, not PO).
+6. **1913 USER F1 BCTC deadline TONIGHT 17:00 UTC (~9h):** durable user-action row in Backlog, no PO action.
+7. **1907a digest-predict, 1897b-carry HEAD.lock, alert-commander news-fallback at 2/3:** all monitored but no PO escalation criteria met this cycle.
+
+### WIP plan
+- BATCH = NOTHING (cycle is pure housekeeping; no new task dispatch from PO).
+- Mandatory commits made: TASKS.md + project-stats.json + this notebook.
+
+### Channel audit
+- Skipped MARKET/WORK/BUG read this cycle. Justification: single-event housekeeping cycle, no sprint planning, drained signal already carries full c105 context (containers healthy, 9/9 services, no audit-triggering anomalies).
+
+### Recurring-bug compliance
+- N/A this cycle (no new task dispatched).
+
+### Carry-forward to c107+
+- Architect: re-brief P2 (1912b-alert-engine) + P3 (1912c-stock-price) — extend or split the 2026-05-14-go-migration-3-services.md brief. P2/P3 cannot enter Todo until architect brief lands.
+- Dev-team dispatcher: 1910a-retry-ism-tool ready for promotion if WIP allows.
+- 1909c reparse: Q1-2026 PDFs awaited 2026-05-16 (BCTC banking deadline).
+- 1913 user-action F1: deadline 2026-05-15 17:00 UTC — observational.
+
+### Sign-off
+c106 housekeeping: 1912d SHIPPED, 1912 Phase 1 FULLY CLOSED, P2/P3 unlocked-pending-architect-brief, TASKS.md trimmed 84→77L, project-stats refreshed. BATCH=NOTHING. PO sub-flow EXIT.
 
 ---
 
