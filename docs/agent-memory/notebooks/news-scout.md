@@ -451,3 +451,10 @@
 ### Cycle (01:19–01:22 UTC 2026-05-14)
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst(3130), urgent_news ACB(3131)] | Regime: TIGHTENING | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+
+### Cycle (04:20–04:23 UTC 2026-05-14)
+- Items: 20 | Impacts: 6 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Key: IEA warns global oil reserves declining at record rate, Brent 105.97 → GAS +3.30% (chain 9/10 raw → 6.3 TIGHTENING adj, below 7 threshold). FPT +4.95% on US tech record highs (8/10 raw → 5.6 adj, below threshold). VPB +3.06% banking breadth. Foreign net selling 14 consecutive sessions >13,000B VND (4/10 raw → 5.2 adj). Gold at 4678.3 (-1.8σ below avg, declining — no spike). DNNN capital markets article (8/10 bearish) — no watchlist ticker, suppressed.
+- Suppressed: All 6 watchlist impacts fell below threshold after TIGHTENING regime multiplier (bullish ×0.7, bearish insufficient confidence).
+- Notes: Market OPEN. BCTC Q4-2025 overdue alert (37 stocks, HIGH) already open from prior cycle.
