@@ -1,12 +1,27 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-13 | **Sprint:** 1881a (c83)
+**Last updated:** 2026-05-14 | **Sprint:** 1909 (c94)
 
 ## Current state
 
-REQ_1881a spec complete. 16 tools enumerated for source_tier retrofit. No PO blockers. One architect decision required (BLK-1: text-output wrapping). Owner: dev-mcp-server for all 16 tool files + new test file.
+REQ_1909 spec complete (c94). 3 sub-tasks: 1909a-extractor (dev-pdf-extractor, M), 1909b-tool (dev-mcp-server, S), 1909c-reparse-validation (ops, S). 4 spec-time discoveries flagged. No PO blockers. Architect rubber-stamp eligible. TASKS.md compaction required before PM entry (79L → would breach 80L cap).
 
-## Last session summary (2026-05-13) — 1881a
+## Last session summary (2026-05-14) — 1909
+
+Sprint 1909 BCTC OCF Extractor Expansion + `get_bctc_ocf` tool.
+
+Sub-tasks:
+- 1909a-extractor: `cashFlowExtractor.ts` 129 LOC → structural parity with balanceSheetExtractor. extractSplitBlockAll migration + 1908c drift guard pattern on 3 OCF sections + confidence scoring + 3-fixture test set (VNM/DIG/VCB Q4-2025).
+- 1909b-tool: `getBctcOcfTool.ts` new file, pattern from cashFlowTool.ts. source_tier:1 invariant. agentBootstrap + SKILL_MANIFEST + package docs. SEQUENCE AFTER 1890a-B (shared files).
+- 1909c-reparse-validation: bctcReparseJob trigger on 37-stock watchlist Q1-2026. 30/37 OCF non-zero gate. 1 FA Layer 7 G-step PASS in notebook.
+
+4 spec-time discoveries:
+- SD-1: architect confirm VN cash flow PDFs carry numeric line codes (rubber-stamp eligible)
+- SD-2: architect confirm `extraction_method` DB column exists or derive as constant "ocr_parsed"
+- SD-3: PM sequence 1909b after 1890a-B — shared agentBootstrap/SKILL_MANIFEST merge risk
+- SD-4: PM compact TASKS.md before entry (79L → 80L cap breach)
+
+## Prior session summary (2026-05-13) — 1881a
 
 Task 1881a — source_tier retrofit spec (TNB Layer 9 — Source Hierarchy).
 
@@ -47,3 +62,7 @@ Task 1898a — get_market_snapshot returns wrong data. Bug self-healed post-rest
 - SBV portal is currently DOWN; rates come from VCB XML proxy — treat as tier 2 source
 - VnDirect finfo-api v4 is the HOSE/HNX price source (broker aggregator) — tier 2
 - apps/macro-indicators is a standalone Hono service on port 5004, not part of mcp-server tool registration
+- 1908c positional-drift override pattern: if sum(subtotals)/stated_total > 5 AND both > 0 → override + console.warn — canonical for all BCTC extractor grand-total fields
+- cashFlowExtractor.ts is currently thin (129 LOC, findValue keyword loop) — 1909a upgrades to extractSplitBlockAll parity
+- get_bctc_ocf (1909b) and get_cash_flow (1890a-A) coexist — ocf is forensic subset, cash_flow is full statement
+- TASKS.md 80L cap: always check wc -l before adding rows; compact Done section first if near cap
