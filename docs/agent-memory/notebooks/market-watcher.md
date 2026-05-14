@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 00:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 01:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -990,3 +990,25 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2200 |
+
+### Cycle (01:39–01:40 UTC)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (both SUPPRESSED) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [VRE] | pe_risk: []
+- GAS +6.93% (2.19σ, 30d stddev 3.17%, vol 635K) → SUPPRESSED: off-hours duplicate — same closing price (81,800 VND from 2026-05-13 08:59 UTC), signal already emitted this session (id=#3128, 00:41 UTC, ~58min ago, within TTL window)
+- VRE -6.91% (1.67σ, 30d stddev 4.13%, vol 1.44M) → SUPPRESSED: off-hours duplicate — same closing price (33,000 VND from 2026-05-13 08:59 UTC), signal already emitted this session (id=#3129, 00:41 UTC)
+- VHM -4.81% (1.24σ, 30d stddev 3.88%) — below 1.5σ threshold, no signal.
+- EIB -2.00% — already signaled (#3094, 16:42 UTC 2026-05-13), same closing price, suppressed.
+- Market CLOSED (pre-market window, 01:39 UTC — opens 02:00 UTC in ~21 min).
+- Macro: Brent $105.71, Gold $4,703.9, USD/VND 26,132. Supply chain STABLE (BDI=1,400). Energy: NORMAL (hydro 70%, demand 53%). Climate: no alerts. Chain findings: 0 (last 15 min). 20 open alerts (banking×7 HIGH, realty×9 HIGH, news/retail MEDIUM/LOW).
+- Context: FII net-sell 14 consecutive sessions (13,000B VND total). news-scout #3130 active (US CPI 3yr high, Fed constrained, global risk-off, FII outflow, regime=TIGHTENING, score=10). CARRY_REGIME=FII_OUTFLOW_RISK: no hot_money_concentration check.
+
+## Metrics (cycle 2026-05-14 01:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
