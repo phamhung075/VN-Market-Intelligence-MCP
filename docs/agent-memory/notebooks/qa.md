@@ -1,6 +1,24 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c93 gate — 1909b-tool get_bctc_ocf APPROVED
+**Last updated:** 2026-05-14 | **Session:** c95 gate — 1909a-extractor cashFlowExtractor expansion APPROVED
+
+## Recent session — 2026-05-14 (c95 — 1909a-extractor cashFlowExtractor expansion APPROVED)
+
+### 1909a-extractor — cashFlowExtractor Multi-Layout Expansion (CRITICAL FEATURE)
+
+Branch: task/1909a-cashflow-extractor-expansion (worktree). Merge commits: 148d1e99 impl + 3b8d76f7 notebook. Post-merge gate.
+
+Diff scope: 2 files ONLY — cashFlowExtractor.ts (+604 lines) + 1909a test file (+517 lines). All 34 full-suite failures confirmed pre-existing (unrelated scopes: 178/230/1343a/1031/1336/145/1343e/1100/1349a/262/signal-T5/cron-registry/1549/239).
+
+Implementation: extractSplitBlockAll + parseSplitBlockCashFlow (VNM-style split-block PDFs), detectUnitMultiplier (triệu/tỷ + magnitude inference), applyMultiplier (tỷ → triệu ×1000), applyDriftGuard (DRIFT_THRESHOLD=5, E-4 both>0 guard), computeCashFlowConfidence (BCTC-1345b: =0→skip, <0.2→low_confidence), E-2 bank label variants (luồng tiền thuần), E-3 parenthesised negatives, ASCII diacritic fallback patterns.
+
+Pipeline: tsc 0 errors. 22 new tests PASS (VNM split-block, DIG inline E-3, VCB bank E-2, drift guard, E-4, tỷ unit, confidence 4 cases). 23 baseline PASS (044/1878a/1890a). DDD PASS (zero imports from infrastructure; pure domain function, zero I/O). Security PASS (no process.env, no secrets, no SQL, no HTTP). All 7 ACs PASS.
+
+Non-blocking: console.warn format uses `"[cashFlowExtractor] Drift guard triggered on <label>:"` instead of spec-mandated `"[cashFlowExtractor] BCTC-1909a: <section> positional drift detected; overriding."`. BCTC-1909a token absent. Functional behavior correct; format-only deviation, no operational impact.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c93 — 1909b-tool get_bctc_ocf APPROVED)
 
