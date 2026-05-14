@@ -4,6 +4,38 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-14 c108 post — 1912b BLK-1 + BLK-2 FIXED, RE-SUBMITTED TO QA
+
+**Commit:** `758ce97c feat(1912b/alert-engine): commit missed domain+app+infra source`
+**BLK-1 closed:** 7 missing source files staged+committed (domain/errors, domain/models, domain/ports, domain/services, application/dtos, application/evaluate, infrastructure/config). go build now reproducible from history.
+**BLK-2 closed:** `.gitignore` line `apps/*/server` added. Binary excluded. Confirmed via `git check-ignore`.
+**Tests:** 37/37 PASS confirmed post-fix (`go test ./pkg/... -count=1` all 4 packages ok).
+**TASKS.md:** 1912b owner flipped to qa. Re-gate requested.
+
+### 2026-05-14 c108 — QA HANDOFF: 1912b CHANGES_REQUESTED
+
+**QA verdict:** CHANGES_REQUESTED. Two blocking issues. Do not re-submit until both fixed.
+
+**BLK-1 — MISSING SOURCE FROM COMMIT 92186e39:**
+7 files exist in working tree but were never staged/committed. `git log --all -- <path>` returns empty for all. A clean checkout of the commit fails go build. Stage and commit all 7:
+
+- `apps/alert-engine/pkg/domain/errors.go`
+- `apps/alert-engine/pkg/domain/models.go`
+- `apps/alert-engine/pkg/domain/ports.go`
+- `apps/alert-engine/pkg/domain/services.go`
+- `apps/alert-engine/pkg/application/dtos.go`
+- `apps/alert-engine/pkg/application/evaluate.go`
+- `apps/alert-engine/pkg/infrastructure/config.go`
+
+Commit message: `feat(1912b/alert-engine): commit missed domain+app+infra source`
+
+**BLK-2 — BUILD BINARY UNTRACKED + NO GITIGNORE:**
+`apps/alert-engine/server` is a Mach-O x86_64 binary. Must add to .gitignore before it gets staged accidentally. Add `apps/alert-engine/server` to root `.gitignore` (or use `apps/*/server` pattern).
+
+**Everything else PASS:** tests 37/37 (actual count — you counted 10 domain-services tests inside sqlite_test.go's outcome group which brought your count to 27; actual runner shows 37), DDD PASS, DB isolation PASS, all cited ACs PASS.
+
+Re-submit to QA after 2 commits.
+
 ### 2026-05-14 — Task 1912b complete (Go migration Phase 2)
 
 **Status:** IMPL READY — 27/27 go test PASS, go vet clean, go mod tidy clean
