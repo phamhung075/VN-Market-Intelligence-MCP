@@ -1,8 +1,25 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c86-autocure-mw-dedup
+**Last updated:** 2026-05-14 | **Sprint:** c87-1903-doc-pair
 
 ## Last session summary
+
+Task 1903-doc-pair — doc-only CHORE pair: stale label clear + macro fallback note.
+
+**What was done:**
+
+- Branch `task/c87-1903-doc-pair` created from main.
+- 1903a: Removed `[UNVERIFIED — tool not found 2026-05-11]` label from `write_alert_verdict` entry in `.claude/tools/package/alert-commander.md`. Tool confirmed shipped in c77/c82 (commit 4833b052). Sweep of all `.claude/tools/package/*.md` found no other UNVERIFIED labels.
+- 1903b: Added `get_macro_snapshot` fallback note (1 line, ≤3 lines constraint met) to `.claude/flows/alert-commander/stage-bootstrap.md` step 0b. Fallback: derive regime hint from news context; logs `REGIME_SOURCE=news-fallback`. Cross-linked to `regime-extraction/SKILL.md`.
+- tsc gate: PASSED (doc-only, no TS changes).
+- Pushed branch to remote.
+- Handoff written to `reports/TASK_HANDOFF_1903-doc-pair.md`.
+
+**Commits:**
+- `d7ddca53 docs(c87/agent-doc): 1903-doc-pair — clear stale UNVERIFIED label + macro fallback note`
+- Branch: `task/c87-1903-doc-pair`
+
+## Previous last session summary
 
 Task AUTOCURE-C86-MW-DEDUP — doc-only chore: TNB c47 auto-cure off-hours duplicate guard committed and pushed.
 
@@ -17,28 +34,6 @@ Task AUTOCURE-C86-MW-DEDUP — doc-only chore: TNB c47 auto-cure off-hours dupli
 **Commits:**
 - `564230d2 chore(market-watcher/c86): TNB c47 auto-cure — off-hours duplicate guard`
 - Branch: `task/c86-autocure-mw-dedup`
-
-## Previous last session summary
-
-Task 1881a-impl-ssot — doc-only chore: Layer 9 source authority hierarchy added to `docs/standards/tnb-methodology-layers.md`.
-
-**What was done:**
-
-- Branch `task/1881a-impl-ssot` created from main (clean start).
-- Read architect brief `docs/architecture-briefs/2026-05-13-source-tier-schema-decision.md` and `docs/REQ_1881a.md` for tier table + assignment rules.
-- File had 22 lines, Layers 1-3 only. Added Layer 9 section with:
-  - `source_tier` enum table: Tier 1 = primary/official, Tier 2 = aggregator, Tier 3 = derived/computed, with concrete examples from the brief.
-  - Assignment rules: compile-time constant, conservative assignment, lowest-authority dominates, derived = Tier 3.
-  - Wire format snippet (JSON-output and text-output tools).
-  - Backwards-compat note (additive field, NFR-1 ref).
-  - Fallback path annotation (`source_note` field).
-  - Cross-link to brief and `docs/REQ_1881a.md` § Tool Inventory.
-- Updated file title to "(Layers 1-3, 9)".
-- TASKS.md: 1881a-impl-ssot moved Todo → Review.
-
-**Commits:**
-- `d3cda97e docs(1881a/ssot): 1881a-impl-ssot — Layer 9 source authority hierarchy`
-- Branch: `task/1881a-impl-ssot`
 
 ## Known patterns / preferences
 
@@ -55,4 +50,5 @@ Task 1881a-impl-ssot — doc-only chore: Layer 9 source authority hierarchy adde
 - toolCount in tool-registry.json = 125 (categories sum). Source code has ~137 server.tool() calls — categories list is stale by ~12 tools. Future task should add missing tools to categories.
 - Branch `task/1881a-impl-ssot` awaiting QA gate — do NOT merge until QA approves.
 - Branch `task/c86-autocure-mw-dedup` awaiting QA gate.
+- Branch `task/c87-1903-doc-pair` awaiting QA gate.
 - Pre-existing playwright tsc errors in news-fetch (2 files) — QA should confirm pre-existing.

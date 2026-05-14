@@ -12,6 +12,7 @@
 **0b. Regime + macro** → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME, CARRY_SPREAD
 `get_macro_calendar()` → extract `pivot_window_active = (pivotWindowWarning != null)`
+Fallback: if `get_macro_snapshot` unavailable, derive regime hint from news context (dominant sentiment: bearish → TIGHTENING hint, bullish → EASING hint, mixed → NEUTRAL). Log as `REGIME_SOURCE=news-fallback`. See skill `regime-extraction/SKILL.md` § Regime Extraction for canonical variable definitions.
 
 **1. Context**
 `get_market_context(hours_back=6)` | `get_alerts(type="price")`
