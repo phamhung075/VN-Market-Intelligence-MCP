@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 02:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 03:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1032,3 +1032,32 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5200 |
+
+## Cycle — 02:41 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: FPT +2.12% (1.55σ) breached TIGHTENING 1.5σ threshold — only anomaly this cycle. GAS +3.79% (1.15σ) sub-threshold despite 3-day oil rally. All 16 sectors stable. Macro benign (supply chain OK, energy normal). CARRY_REGIME=FII_OUTFLOW_RISK with FII selling 14 consecutive sessions.
+- **actions**: 1 signal posted — price_anomaly FPT id=3134 to alert-commander (pe_compression_risk=true). WORK telegram sent. Notebook updated.
+- **next_cycle_hint**: Watch FPT for sustained breakout above 72,200 or reversal on FII selling pressure. GAS rally validity depends on Brent holding 105+. Banking sector recovering today (+0.65%) — watch VCB/BID for continuation. Regime remains TIGHTENING; downside_bias active.
+- **estimated_tokens**: 5500
+
+### Cycle (03:38–03:41)
+- Stocks: 35 | Anomalies: 1 (FPT +5.37% / 4.44σ > 1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- Top movers: FPT +5.37% (4.44σ), GAS +3.55% (1.12σ sub-threshold), VPB +2.16%, BID +1.99%, VCB +1.66%, HVN +1.65%
+- FPT catalyst: US Nasdaq record high (US tech rally), FPT ~12% US revenue. Sector outperforms: +5.4% vs tech avg +0.8%. PE 13.8 vs sector 17.3 (discount), ROE 28.3%. Signal id=3138.
+- GAS: 3.55% today but 3-day cumulative surge (+6.93%+3.55%), stddev high (3.17%) → 1.12σ sub-threshold. Supported by Brent 105.81 + IEA storage warning.
+- Banking broad recovery: ACB +0.89%, BID +1.99%, CTG +1.27%, MBB +0.97%, VCB +1.66%, VPB +2.16% — reversal after yesterday sector drop.
+- Chain findings: 0 (last 15 min) | Sector rotation: all 16 sectors stable, insufficient 5d data.
+- Context: BCTC overdue alert persists (37 stocks), VHM -1.18% weak in real estate, DXY pressure on banking/realty flagged but no fx_pressure trigger (FPT not in those sectors).
+
+## Metrics (cycle 2026-05-14 03:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 35 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
