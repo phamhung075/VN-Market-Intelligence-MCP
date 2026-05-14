@@ -1,21 +1,21 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "ops 1890a-deploy 2026-05-14",
+  "_lastRefreshedBy": "ops 1909-deploy 2026-05-14",
   "lastUpdated": "2026-05-14",
-  "currentSprint": 1890,
+  "currentSprint": 1909,
   "previousSprint": {
-    "number": 1889,
+    "number": 1890,
     "status": "DONE",
-    "summary": "Sprint 1889: completed phase 3c parallel dispatch, SQLite corruption fixed, 4-9 cycle HEAD.lock cure with permanent policy. toolCount=138."
+    "summary": "Sprint 1890: get_cash_flow tool + financial_analyst manifest update. Deployed 2026-05-14 04:26 UTC. toolCount=139."
   },
-  "sprintGoal": "Sprint 1890: Financial analyst tools (1890a-A: get_cash_flow, 1890a-B: manifest update). Deployed 2026-05-14 04:26 UTC. toolCount=139 (includes 8 waterfall tools from 1878b/1879b/1880a/1880b).",
+  "sprintGoal": "Sprint 1909: BCTC OCF extractor expansion (1909a) + get_bctc_ocf MCP tool (1909b). Deployed 2026-05-14 09:16 UTC. toolCount=140 (added get_bctc_ocf #132).",
   "testBaseline": 8804,
   "testBaselineTarget": 8804,
   "testBaselinePass": 8804,
   "testBaselineFail": 1,
   "testFailures": 1,
-  "toolCount": 139,
+  "toolCount": 140,
   "schedulerFileCount": 62,
   "cronJobCount": 62,
   "knowledgeFileCount": 25,
@@ -28,13 +28,13 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1890a DEPLOY: get_cash_flow tool registered, financial_analyst SKILL_MANIFEST updated (4 new tools manifested). All AC pass. 2026-05-14 04:26 UTC.",
-  "currentSprintNotes": "Sprint 1890 DEPLOY 2026-05-14. get_cash_flow (#131) + manifest update (get_macro_snapshot, get_investment_clock_phase, get_bond_maturity_calendar). mcp-server:3000 health=200. toolCount=139. No service disrupted.",
+  "lastFixApplied": "1909 DEPLOY: cashFlowExtractor multi-layout + drift guard (1909a) + get_bctc_ocf tool (1909b #132) registered, financial_analyst SKILL_MANIFEST updated. All AC pass. 2026-05-14 09:16 UTC.",
+  "currentSprintNotes": "Sprint 1909 DEPLOY 2026-05-14 c95. get_bctc_ocf (#132) live; smoke test VNM Q4-2025 OCF=1,738,940 thousand VND extraction_method=pdf-parse confidence=0.75. mcp-server health=200. toolCount=140. Sprint 1910 (FRED ISM + EFFR pkg-reg) Todo for next cycle.",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-14",
     "mcpServerHealth": "UP",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "lastSuccessfulCycle": "2026-05-14T04:26:36Z"
+    "lastSuccessfulCycle": "2026-05-14T09:16:00Z"
   }
 }
