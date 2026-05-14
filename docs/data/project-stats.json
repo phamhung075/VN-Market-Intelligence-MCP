@@ -1,7 +1,7 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "po c110 — UNBLOCK-CRITICAL 1915-bctc-pipeline-silence queued from ops signal (BCTC 35d silent, banking Q1-2026 filings T-~9h)",
+  "_lastRefreshedBy": "po c112 — UNBLOCK-CRITICAL 1916-bctc-queue-enricher-scraper-broken queued alongside 1915 (ops confirmed Docker logs 2026-05-14 20:00-20:15Z: SSC portal scraper returns 0 URLs for 14/30 watchlist tickers — DPM/KBC/MWG/NVL/REE/TCH/VNH+7; likely SSC HTML structure changed, Cheerio selectors stale). Two parallel SPIKEs queued: 1915 (extraction-side silence) + 1916 (discovery-side silence).",
   "lastUpdated": "2026-05-14",
   "currentSprint": 1912,
   "previousSprint": {
@@ -34,7 +34,7 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "1912d c105-c106: Go cutover SHIPPED (5 commits, HEAD 2a92eb3f). USER OVERRIDE cut smoke ~22h early. TS gateway retired, Go primary host:4000, module renamed api-gateway-go→api-gateway. 9/9 services healthy 4ms avg. Doc/agent sweep complete (47 files: 16 TS deletions + 17 Go renames + docker-compose + 13 docs + dev-api-gateway agent switched + 5 Go-vs-doc divergences corrected).",
-  "currentSprintNotes": "c110 (2026-05-14T20:24Z): UNBLOCK-CRITICAL `1915-bctc-pipeline-silence` queued from ops signal. BCTC pipeline silent 35d (last good 2026-04-09): financial_reports=0 rows, pdf_extracted_text=0 rows, bctcReparseJob logs frozen, 2 watchlist PDFs (VNM+VEA Q4-2025) unextracted. Banking Q1-2026 SSC filing window opens 02:00-09:00 UTC 2026-05-15 (T-~6-13h). SPIKE first (2h timebox) → narrow 3 ops candidates (scheduler reg lost post-Go-migration / fetchParseAndStoreBctc swallow / empty discovery) → targeted FIX before 02:00 UTC. Owner dev-mcp-server, zone apps/mcp-server/. NOT recurring-bug rule trigger vs 1908/1909-series (different failure mode: upstream ingestion silence, not extractor accuracy). c109 housekeeping carries: janitor-1912 + 1914b-log-agent-work-doc queued. 1913 USER F1 (FA gateway desktop config) still pending. 1909c reparse stays HOLD — now blocked by 1915 in addition to calendar.",
+  "currentSprintNotes": "c112 (2026-05-14T20:28Z): UNBLOCK-CRITICAL `1916-bctc-queue-enricher-scraper-broken` queued alongside still-open 1915. Ops confirmed (Docker logs 2026-05-14 20:00-20:15Z) bctcQueueEnricherJob SSC portal scraper returning 0 URLs for 14/30 watchlist tickers (DPM/KBC/MWG/NVL/REE/TCH/VNH+7); working tickers (VCB/FPT/DIG/BSR/DGC/HPG/SHB/VEA/VNM, 12 PDFs last Apr 27-29). Likely cause: SSC portal (ssc.hsx.vn) HTML structure changed → Cheerio/jsdom selectors stale. Banking Q1-2026 cohort deadline 2026-05-15. 1916 SPIKE 2h timebox → identify new selectors → targeted FIX. Key file apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts. Owner dev-mcp-server, zone apps/mcp-server/. **CONCURRENT with 1915 (extraction-side silence) — different upstream stage (1916=discovery, 1915=extraction). BOTH SPIKEs run in parallel, do NOT block 1916 on 1915.** Both must fix for full pipeline recovery. Sprint 1912 program-complete background carries: janitor-1912, 1914 dedup-api, 1914b-log-agent-work-doc, 1913 USER F1 (FA gateway desktop config, 10th cycle pending), 1907a digest-predict 5d silence (ops). 1909c reparse stays HOLD — now blocked by BOTH 1915 + 1916 in addition to calendar.",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-14",
     "mcpServerHealth": "UP",
