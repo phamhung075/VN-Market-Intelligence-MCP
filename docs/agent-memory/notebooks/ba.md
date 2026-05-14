@@ -4,6 +4,24 @@
 
 ## Current state
 
+REQ_1910 spec complete (c94). 2 sub-tasks: 1910a-ism-tool (dev-mcp-server, M), 1910b-effr-package-reg (agent-md-editor, XS). SD-1 raised (FRED ISM series IDs unconfirmed on public CSV endpoint — dev must confirm via FRED API key or alt source). D-step 3-cycle evidence confirmed — 1910b ships immediately. TASKS.md at 80L cap — PM must compact before entry.
+
+## Last session summary (2026-05-14) — 1910
+
+Sprint 1910 `get_ism_subcomponents` + `get_fed_liquidity_spread` package registration.
+
+Sub-tasks:
+- 1910a-ism-tool: NEW FRED fetcher `fredIsmSubcomponents.ts` + domain `ismRegimeSignal.ts` + tool `getIsmSubcomponentsTool.ts`. Reuse `fred_series_daily` table (1879a). SD-1: FRED public CSV endpoint does NOT serve ISM sub-series — 25+ IDs tested, all return HTML error. Developer must use FRED API key (free) to confirm series IDs. Provisional: `NAPMNO` / `NAPMEMP` / `NAPMPI` / `NAPMBI`. Cron: piggyback `macroIndicatorRefreshJob` (daily, idempotent). 3 test files (domain unit + fetcher integration + contract).
+- 1910b-effr-package-reg: Add `get_fed_liquidity_spread` to `financial_analyst`, `news_scout`, `unified_coordinator` arrays in `agentBootstrap.ts` + 3 package .md files + `docs/SKILL_MANIFEST.md`. D-step carry 3+ cycles confirmed (FA: 2026-05-11/12/13; UA: 2026-05-14). Zero code change. 1910b can ship before 1910a.
+
+2 SDs:
+- SD-1: FRED ISM series IDs unconfirmed on public CSV tier — developer resolves (FRED API key free registration or alt source)
+- SD-2: If FRED API key: `FRED_API_KEY` env var needed in Docker config
+
+No PO blockers. Architect rubber-stamp eligible (1879 pattern is authority; no new brief needed).
+
+## Prior session summary (2026-05-14) — 1909
+
 REQ_1909 spec complete (c94). 3 sub-tasks: 1909a-extractor (dev-pdf-extractor, M), 1909b-tool (dev-mcp-server, S), 1909c-reparse-validation (ops, S). 4 spec-time discoveries flagged. No PO blockers. Architect rubber-stamp eligible. TASKS.md compaction required before PM entry (79L → would breach 80L cap).
 
 ## Last session summary (2026-05-14) — 1909
