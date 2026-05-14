@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-13 21:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 00:25 UTC | **Status:** OPERATIONAL
+
+### Cycle (00:15–00:25 UTC) 2026-05-14
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst #3126 EVN/CPI, chain_catalyst #3127 FII-outflow] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: EVN electricity price hike → CPI pressure → SBV tightening risk, adj 7×1.3=9.1 → chain_catalyst #3126 fired (cpi_pressure_risk=true, sectors: utilities/banking). Khối ngoại bán ròng 14 phiên/13,000+B → adj 6×1.3=7.8 → chain_catalyst #3127 fired (sectors: banking/real_estate/securities). GAS +6.93% bullish TIGHTENING adj 4.2 → suppressed. IMP insider sell (non-watchlist). Gold volatile (drop+rebound, no sustained >3% spike). Brent 105.57, no >5% month-on-month confirmation.
+- Suppressed: GAS bullish adj 4.2 (<7); IMP insider (non-watchlist); Gold volatility (no 3% spike); VIC Vượng ventures (adj 4.2<7)
 
 ### Cycle (22:21–22:28 UTC) 2026-05-13
 - Items: 20 | Impacts: 5 | Signals: [] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
