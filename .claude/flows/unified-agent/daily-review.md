@@ -1,4 +1,4 @@
-# Unified Agent — Daily Review Flow (20:00 UTC)
+# Unified Agent — Daily Review Flow (23:00 UTC)
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
@@ -28,7 +28,8 @@ Daily coordination summary ({date}):
 | Prices | 30 min |
 | News | 2h |
 | BCTC | 48h |
-Exceeded → `submit_feedback(agent="unified-agent", ...)`
+Exceeded → `submit_feedback(agent="unified-agent", category="performance_issue", severity="...", title="...", description="...")`
+  Note: `category` is required — use: cascade_rule_gap | data_extraction_error | alert_quality | threshold_issue | performance_issue | other
 
 **Notebook commit**
 
