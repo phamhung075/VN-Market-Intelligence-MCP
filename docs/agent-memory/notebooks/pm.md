@@ -1,16 +1,42 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c91 ACTIVE (dispatch 2026-05-14T05:12Z)
+**Last updated:** 2026-05-14 | **Sprint:** c92 ACTIVE (dispatch 2026-05-14T12:45Z)
 
 ## Current state
 
-- WIP: 0 / 2 (CLEAN) — SPIKE 1908a complete, c91 dispatch ready
-- **c91 DISPATCH (2026-05-14T05:12Z):** 1908a SPIKE → Done (triage doc, no code). Carry-forward 1908b (HIGH OPS-FIX, architect-routed per recurring-bug rule).
-- **BCTC RECURRING-BUG ESCALATION:** VNM Q4 2025 low-confidence = schema drift in extractSplitBlockAll (code "270" mapped to sub-item 957M vs grand total 53T) → VAL-07 hard-fail (liab > assets*5). Prior fix 1815 (VAL-01-POSITION guard) exists; VAL-07 unprotected. Banking cohort filing window 2026-05-15 — architect rethink required before fix attempt (1908b brief expected).
-- Backlog: 1908b (HIGH OPS-FIX, architect), 1907b (LOW OPS observational), 1897b-carry (F1 USER + architect, URGENT-F1), JANITOR-{011,014,020}, TASK-BCTC-3
+- WIP: 0 / 2 (CLEAN) — 1908b brief landed, 1908c FIX queued in Backlog, dev-pdf-extractor PARALLEL dispatch ready
+- **c92 DISPATCH (2026-05-14T12:45Z):** 1908b architect brief DONE (Option B plausibility override recommended). 1908c-bctc-val07-totalassets-plausibility-override created in Backlog HIGH, 3-line guard after line 716, golden test fixtures (VNM/DIG positive + VCB/FPT regression guards). Dev-pdf-extractor will execute in parallel on task/1908c branch; PM commits TASKS.md on main (no conflict, different files).
+- **BCTC RECURRING-BUG FIX QUEUED:** Banking deadline 2026-05-15 (24-48h window). Option B upstream guard ships in time, eliminates bad data at entry point. Post-fix: DELETE VNM/DIG Q4 2025 DB rows + trigger bctcReparseJob.
+- Backlog: 1908c (HIGH FIX, dev-pdf-extractor), 1907b (LOW OPS observational), 1897b-carry (F1 USER + architect, URGENT-F1), JANITOR-{011,014,020}, TASK-BCTC-3
 - Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 79L (under 80L cap). Archive not required.
-- **Status:** c91 active. WIP=0/2. 1908b awaiting architect brief before dev can start.
+- **Status:** c92 active. WIP=0/2. 1908c ready for execute-tier. No blockers.
+
+---
+
+## Cycle 92 — 2026-05-14 c92 Post-Cycle Housekeeping: 1908b Brief DONE + 1908c FIX Queued (banking deadline 2026-05-15)
+
+**Input:** Architect brief 2026-05-14 landed. Recurring-bug escalation resolved. FIX task 1908c ready for dev-pdf-extractor.
+
+**Outcome:**
+1. **1908b-bctc-val07-extractor-rethink → Done.** Architect brief delivered 2026-05-14: `docs/architecture-briefs/2026-05-14-bctc-val07-extractor-rethink.md` (109L). Recommendation: **Option B (upstream plausibility override in extractor)** is primary fix. Reasoning: (a) keeps bad data out of DB, (b) mirrors `liabPlausible` pattern (lines 765-776), (c) prevents drift on other fields, (d) ships in time for banking deadline 2026-05-15.
+2. **1908c-bctc-val07-totalassets-plausibility-override → Backlog HIGH.** New FIX task created. Implementation: 3-line guard after line 716 (`if (totalAssets > 0 && computedFromSubtotals > 0 && computedFromSubtotals / totalAssets > 5)` → override). Golden test fixtures: VNM Q4 2025 (55x ratio trigger) + DIG Q4 2025 (28,460x trigger) + VCB + FPT (regression). Baseline pass: 042-bctc-balance-sheet.test.ts + 1120-split-block + 287-balance-sheet-unit-header. New test: `1908c-totalassets-plausibility-override.test.ts`. Zone: `apps/mcp-server/src/domain/services/financial-reports/balanceSheetExtractor.ts` (primary) + `financialFiguresValidator.ts` (optional secondary). Effort: S.
+3. **Parallel execution model:** PM commits TASKS.md on main; dev-pdf-extractor starts task/1908c branch in parallel. No file conflicts (separate branches, separate files).
+
+**Actions:**
+- Moved 1908b from Backlog → Done with architect brief ref + 2026-05-14 completion.
+- Inserted 1908c in Backlog HIGH (FIX type, dev-pdf-extractor owner) with full implementation spec from architect brief.
+- Updated TASKS.md header to reflect ready state: WIP=0/2, 1908c queued, banking urgency noted.
+- Created TASK_1908c.md handoff file (from architect brief atomic change spec + test strategy).
+- PM notebook updated (current state + cycle entry).
+
+**TASKS.md:** 79L (under 80L cap).
+
+**WIP Status:** 0/2 (CLEAN). 1908c in Backlog (not In Progress), ready for execute-tier dispatch to dev-pdf-extractor.
+
+**Carry-over to c93:** 1908c (now executing), 1907b (LOW OPS observational), 1897b-carry (URGENT-F1), 1900c (LOW), 1899a-bloomberg-test-split, 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3.
+
+**Status:** c92 CLOSED. Recurring-bug rethink shipped. FIX task ready. Banking deadline 2026-05-15 covered. No blockers.
 
 ---
 

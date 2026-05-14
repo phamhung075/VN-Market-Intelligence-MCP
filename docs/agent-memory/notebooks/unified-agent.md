@@ -1,48 +1,42 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-14 · **Cycle:** 01:00 UTC (Market + Prediction Review)
+**Last updated:** 2026-05-14 · **Cycle:** 06:00 UTC (Market)
 
 ## This session
 
-### Coordination Cycle (01:00–01:05 UTC)
-- Mode: MARKET | System: ok (0 circuits, uptime 45m, Reuters degraded/known, bctcQueueEnricher 0-URL/known) | Alerts: 32/24h (16 HIGH/CRITICAL, 0 unnotified) | Quality issues: 1 (bug 2874 precision scoring stalled) | Bugs: none new
-- Regime: TIGHTENING | Alignment: 1.0 | Headwind exposure: 0% (FPT=tech=TAILWIND)
-- Pillars: M2=✓ (inflation 8%, GDP 1%, SBV 5%) COC=✓ (US CPI highest ~3yr, Fed hawkish, carry -33bp) EPS=✓ (BCTC Q1 banking due 15/05 tomorrow) POL=✗ → 3/4
-- FPT conviction 0.50 MODERATE → GIỮ/GIẢM BỚT | -12.0% (-48M VND) | ALIGNMENT_SCORE=1.0
-- New 01:00 signal: US CPI highest ~3yr → TIGHTENING confirmed; SGI Capital 70% cash → risk-off; FII_type=UNKNOWN
-- BCTC CATALYST: ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 hạn 15/05 (T+1) — EPS trigger imminent
-- Prediction Review: 1 open market (China/Taiwan 50.5%=yes), no resolved claims, accuracy N/A, REGIME at prediction: TIGHTENING, no feedback flag
-
-### Daily Review (23:01 UTC)
-
-### Daily Review (23:01 UTC)
-- Mode: DAILY_REVIEW | Freshness: ok (news 0.5h, BCTC 27h, prices market-closed-expected) | Bugs: 3 observed (2875, 2876, 2877)
-- System: ok | Alerts: 30/30 sent | News: 10 articles (3 important) | Uptime: 9h52m
-
-Daily Review 23:01 UTC 13/05. VN market CLOSED. System OK (0 open circuits, all circuit breakers OK). 30 alerts 24h (16 HIGH/CRITICAL, 0 unnotified). Sector themes: banking -1.81% avg (STB -4.3%, EIB -2%), real estate -2.33% (VRE -6.91%, VHM -4.81%), GAS +6.93% oil tailwind, Brent -2.27σ below MA (macro alert HIGH). Bugs observed (no claim, no re-file): 2875 (pollNews 0-items transient), 2876 (HEAD.lock recurring — ops clear needed), 2877 (news freshness >2h, self-resolved by 23:00). BCTC: 27h — within 48h threshold OK. vnstock rate-limiting HSG/TCH/HPG cash-flow active. bctcQueueEnricher 0 URLs for REE/TCH/VNH — geo-block risk.
-
-### Daily Review (22:04 UTC)
-- Mode: DAILY_REVIEW | Freshness: news STALE (17:33 UTC, 4.5h) | Bugs: 2875 (pollNews 0-items), 2876 (HEAD.lock recurring)
-- System: ok | Alerts: 20/29 | News: 10 articles (4 notable) | No lock file present at cycle time
-
-Daily Review 20:00 UTC 13/05. VN market CLOSED. System OK (0 open circuits, uptime 6h52m). 29 alerts in 24h (15 HIGH/CRITICAL, 0 unnotified). Sector themes: real estate broad sell-off (VRE -6.91%, VHM -4.81%), banking mixed (BID +2.51%, ACB/EIB/MBB red), GAS +6.93% oil tailwind. Bugs observed (no claim): 2875 (pollNews transient 0-items 13:15 UTC, sources self-recovered by 20:00), 2876 (HEAD.lock recurring — last cleared 2026-05-12 18:27). News RSS: 2.5h marginally stale (caused by 2875, self-recovered). BCTC: vnstock rate-limiting CTG/PPC — scraping actively in progress. Pillars carry-over: M2✓ COC✓ EPS✓ POL✗.
+### Market Cycle (06:00 UTC 14/05/2026)
+- Mode: MARKET | System: OK (0 circuits) | Alerts: 43/24h (18 HIGH/CRIT, 0 unnotified)
+- REGIME: TIGHTENING (stable — US CPI highest in 3 years, Fed constrained, gold $4,705)
+- US10Y_SIGNAL: RISK-OFF | DXY_SIGNAL: USD STRENGTHENING | CARRY_REGIME: NEUTRAL
+- VN-Index: ~1,919 (+1.06%) — new high intraday | Market: OPEN
+- ALIGNMENT: 1.0 (FPT=tech=TAILWIND in TIGHTENING)
+- FPT: 73,900 / avg 80,300 / -8.0% (-32M VND) | conviction MODERATE 0.53 → XEM XÉT GIẢM
+- Conviction trend: [0.61,0.55,0.55,0.53,0.53,0.55,0.50,0.53] — slight bounce on US tech rally
+- Pillars: M2✓(infl 8%, GDP 1%) COC✓(carry -33bp, US10Y RISK-OFF) EPS✓(BCTC Q1 overdue 14d) POL✓ → 4/4
+- Sector: FPT +4.53% (US tech tailwind) | VRE +3.64% (recovery from -6.91% yesterday) | GAS +2.32% | Banks broad +1-2.5%
+- FII type: UNKNOWN (foreign-flow pipeline paused) | Carry -33bp → FII_OUTFLOW_RISK signal persists
+- Legal risk: clean | Crisis: none | Supply chain: stable (BDI 1,400) | Energy: BÌNH THƯỜNG
+- Climate: May heat risk → IDC/KBC/GEG (no portfolio impact)
+- HEAD.lock: 5 reports (2876/2879/2880/2881/2882) recurring — commits blocked, escalated to WORK
+- BCTC VNM Q4: confidence=0.00 (OCR corruption, report 2878)
+- Alert precision: N=4 insufficient | Signal effectiveness: N/A
 
 ## Patterns noticed
 
-- VRE bull trap confirmed: +5.51% (12/05) → -6.91% (13/05). Kinh Dịch reversal reliable (2 for 2).
-- GAS conviction STRONG across 3+ sessions (Brent $105.89). FII_OUTFLOW_RISK still blocking entry.
-- HEAD.lock recurring (now c33/c52/c53 pattern) — ops rm needed each time; no permanent fix yet.
-- Alert precision: 413/414 unscored — scoring pipeline stalled, bug 2874 filed.
+- VRE bull trap confirmed: +5.51% (12/05) → -6.91% (13/05) → recovery +3.64% (14/05). Volatility high.
+- GAS conviction volatile — Brent elevated $106.27 but Kinh Dịch bearish (Kiển 39) → no entry signal.
+- HEAD.lock recurring (c33/c52/c53/c54/c55 pattern) — needs permanent ops fix, not just rm.
+- Alert precision: 425 unknown / 4 scored — scoring pipeline stalled (bug 2874 prior cycle).
+- FPT conviction declining multi-cycle despite tech=TAILWIND — fundamental divergence concern.
+- VN-Index making new highs but institutional risk-off (SGI Capital 70% cash) — breadth risk.
 
 ## Carry-over (next session)
 
-- **🔴 BCTC CATALYST (URGENT)**: ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 due 2026-05-15 (2 days). EPS trigger — watch conviction shift at 02:00 UTC open 14/05.
-- **HEAD.lock**: Bug 2876 filed. Recurring pattern — ops clear needed before next commit cycle.
-- **Alert precision**: 0% scored (413 unknown) — bug 2874. Watch for dev fix.
-- **FPT position**: conviction 0.50 GIẢM BỚT, foreign selling confirmed. Review post-BCTC Q1 release.
-- **BCTC scraper**: vnstock rate-limiting CTG/PPC active — may resolve overnight. 31 tickers overdue.
-- **FII pipeline**: fii_type=UNKNOWN. Reassess when pipeline recovers.
-- **FOMC**: Jun 18 — next pivot window: PMI 2/6, CPI 4/6, FOMC 18/6, SBV 24/6.
-
-### Daily Review (00:02 UTC)
-- Mode: DAILY_REVIEW | Freshness: ok (market closed, all sources within limits) | Bugs: [HEAD.lock stale - recurring, vnstock rate-limits DLC/VRE, news freshness >2h transient resolved]
+- **🔴 BCTC Q1/2026 DEADLINE TOMORROW (15/05)**: ACB/BID/CTG/EIB/MBB/VCB/VPB — major EPS catalyst.
+- **HEAD.lock URGENT**: 5+ cycles of commit failures. Ops `rm .git/HEAD.lock` on host needed. File permanent fix request.
+- **FPT position**: Conviction 0.53 XEM XÉT GIẢM, Kinh Dịch BÁN 56%. Watch post-BCTC Q1/2026 for reversal signal.
+- **FII pipeline**: fii_type=UNKNOWN since 13/05. Reassess when pipeline recovers.
+- **Alert precision**: bug 2874 open, 425 unknowns in scoring queue.
+- **VCI insider sell**: Nguyễn Thanh Phượng fund liquidated all VCI — follow-through risk.
+- **China/Taiwan prediction market**: 50.5% yes ($1.8M) — FPT/VEA/GEX mapped, geo-risk tail.
+- **FOMC**: Jun 18 — pivot window: PMI 2/6, CPI 4/6, FOMC 18/6, SBV 24/6.

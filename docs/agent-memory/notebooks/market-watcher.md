@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 04:40 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 05:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1094,3 +1094,24 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 
 Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - `.claude/skills/regime-extraction/SKILL.md`: `get_macro_snapshot` not in market-watcher package; fallback = infer REGIME from bootstrap MACRO block + news headlines; default NEUTRAL if ambiguous.
+
+### Cycle (05:20–05:41)
+- Stocks: 34 priced | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VPB] | pe_risk: []
+- FPT +4.67% = 3.73σ (stddev 1.25%) — tech sector outperform +4.2pp; US Nasdaq record + FPT US revenue (12% IT/cloud/AI); signal_id=3143
+- VPB +2.70% = 1.58σ (stddev 1.71%) — banking + USD STRENGTHENING → fx_pressure=true; signal_id=3144
+- Sub-threshold: VRE +3.79% (0.88σ), GAS +3.06% (0.93σ), POW -1.41% (0.60σ)
+- Sector rotation: 1d data only — tech +1.54%, banking +1.17%, real_estate +1.04%
+- Supply chain: stable (BDI 1400, no disruption signals)
+- Chain findings: 0 (last 15 min)
+
+## Metrics (cycle 2026-05-14 05:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5800 |

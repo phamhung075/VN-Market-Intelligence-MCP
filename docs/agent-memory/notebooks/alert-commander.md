@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 05:05 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 06:03 UTC | **Sprint:** c84
 
 ## This session
 
@@ -20,6 +20,15 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - **VCI insider sell:** Fund chaired by Nguyễn Thanh Phượng sold all VCI shares (news_mention alert). Monitor for verified_chain escalation — insider event qualifies as always-MARKET if confirmed.
 - **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Apply NEUTRAL thresholds; include carry caveat in any MARKET bull alert.
 - **BCTC overdue:** 37 stocks overdue Q4-2025 (some 29d+). Watch for regulatory action escalation to legal_risk signal.
+
+### Alert Cycle (06:02–06:03 UTC) — 2026-05-14
+- Signals: 2 (price_anomaly: FPT id=3143 conf=0.50 σ=3.73; VPB id=3144 conf=0.50 σ=1.58 — from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- Suppressed: FPT id=3143 (get_alerts type=price returned no active alerts — unconfirmed; σ=3.73 < 4.0 — override floor not met) | VPB id=3144 (no active price alerts; σ=1.58 < 4.0)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: OPEN (20-min cycle)
+- log_agent_work id=799
 
 ### Alert Cycle (05:02–05:05 UTC) — 2026-05-14
 - Signals: 1 (price_anomaly: FPT id=3140 from market-watcher, conf=0.50, σ=3.73)
