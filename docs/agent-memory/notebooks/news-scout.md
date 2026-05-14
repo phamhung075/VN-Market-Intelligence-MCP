@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 20:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 22:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (22:20–22:22 UTC)
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3196, chain_catalyst #3197] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3196: sector_event bullish → VIC, VHM, FPT, VPB, VCB, VRE (real_estate+tech+banking+securities) — VN-Index ATH 14/5, Phạm Nhật Vượng wealth >10% GDP VN, VinFast tái cấu trúc; regime=NEUTRAL adj_score=8.0; confidence=0.82
+- chain_catalyst #3197: sector_event bullish → FPT (tech) — FPT x Japanese auto JV (automotive tech, AI, smart mobility); FPT +4.53% 14/5; regime=NEUTRAL adj_score=7.5; confidence=0.80
+- NOTE: Recurring VIC/Vingroup/FPT bullish theme from 14/5. Dedup API still returns empty for self-sent signals (known limitation). Theme overlaps with #3185/#3186/#3190/#3192/#3193. Off-hours cycle (market CLOSED). Gold: 4655.4 (-3.14σ extreme low). Brent: 106.55. No PMI data.
 
 ### Cycle (20:20–20:22 UTC)
 - Items: 20 | Impacts: 5 | Signals: [urgent_news #3192, chain_catalyst #3193] | Regime: NEUTRAL | Carry: NEUTRAL (FED spread unavailable)
