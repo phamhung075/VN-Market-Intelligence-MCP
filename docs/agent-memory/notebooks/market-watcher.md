@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 07:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 08:42 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1179,3 +1179,25 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - **actions**: 2 price_anomaly signals posted (FPT id=3149, VPB id=3150 → alert-commander), WORK telegram sent.
 - **next_cycle_hint**: Monitor FPT continuation vs reversal from 74,300 intraday peak. Watch VPB vs banking sector for sustained outperformance. Track DXY/US10Y for regime shift.
 - **estimated_tokens**: 4500
+
+### Cycle (08:40–08:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK
+- fx_pressure: [VPB, ACB, BID, CTG, VCB — banking sector] | pe_risk: [FPT — large-cap tech, FII exposure]
+- **FPT** +4.53% (3.62σ, stddev 1.253%) — signal_id=3154 — JV catalyst with Japanese auto group; pe_compression_risk=true; evidence mixed (Bullish 0.64 vs Bearish 0.76)
+- **VPB** +3.24% (1.90σ, stddev 1.708%) — signal_id=3155 — banking, fx_pressure=true; DNNN dilution risk (BID/CTG/VCB) spills to sector sentiment
+- Sub-threshold: VIC +3.98% (1.46σ), VRE +3.48% (0.81σ), VHM +2.95% (0.73σ), GAS +2.20% (0.67σ), GVR -1.63% (0.63σ), POW -1.41% (0.60σ)
+- VN-Index: 1,925.46 (+1.43%) ATH — led by VIN group (VIC+3.98%, VHM+2.95%, VRE+3.48%); breadth narrow; FII net sell 14 sessions
+- Supply chain: stable (BDI=1,400, no disruptions) | Chain findings: 0 (last 15 min)
+- Context: news-scout signals — ATH breadth divergence + DNNN dilution risk + FPT JV catalyst
+
+## Metrics (cycle 2026-05-14 08:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5200 |
