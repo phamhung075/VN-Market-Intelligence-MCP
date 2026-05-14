@@ -1,48 +1,52 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T01:14:03Z (c88 triage — BATCH(1): 1905a-news-fetch-stealth-fix)
+## Last updated: 2026-05-14T03:14:28Z (c90 triage — BATCH(2): 1890a-spec-expanded + 1907a-digest-predict-silence)
 
 ---
 
-## Cycle 88 triage (ops signal drain)
+## Cycle 90 triage (TNB c48 handoff drain)
 
 ### Trigger
-Ops signal `ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json` drained: news-fetch deploy partial — playwright-stealth ESM import bug at `apps/news-fetch/src/infrastructure/scrapers/playwright-browser-factory.ts:24`. 1904a AC4 blocked. WIP 0/2 — full headroom.
+TNB audit-handoff signal `tnb-2026-05-14T04-30-00Z.json` (cycle 48). Overall NEEDS_ATTENTION, IMPROVING direction. FA Layer 7 G-step skip = 5th consecutive cycle; NEW H-step skip identified. BCTC banking cohort deadline TODAY. WIP 0/2 — full headroom.
 
-### Classification
-- type=FIX (single-file import refactor)
-- owner=developer (code bug, not ops)
-- zone=`apps/news-fetch/` (single disjoint zone)
-- size=S
-- recurring-bug rule: NOT triggered (first fix attempt on this module)
+### TNB rec dispositions
+| Rec | Action |
+|---|---|
+| #1 FA pkg +3 tools incl NEW `get_investment_clock_phase` (H-step) | ACCEPT — bump+expand 1890a to 5-tool scope, dispatch BA spec |
+| #2 SPIKE_C86_MCP_REG (TNB session) | NOT-ACTIONABLE — user/Cowork-Desktop config |
+| #3 BCTC banking 2026-05-15 | OBSERVATIONAL — cron wired; carry-watch |
+| #4 digest-predict 3-day silence | ACCEPT — new task 1907a (ops diagnosis) |
+| #5 US10Y 4.49% | OBSERVATIONAL — no breach |
+| #6 1903a-labels | STALE in TNB — shipped c87 (1903-doc-pair) |
 
-### Decision: BATCH(1)
-**1905a-news-fetch-stealth-fix** — HIGH FIX. AC: container healthy, /health 200, q30m job succeeds, tsc + tests green. Unblocks 1904a AC4 news-freshness. baseline_pass: tsc + container build + healthcheck + integration green.
+### Decision: BATCH(2)
+1. **1890a-spec-expanded** — HIGH CHORE → ba. Scope: 5 FA pkg tools (`get_macro_snapshot`, `get_insider_signals`, `get_bond_maturity_calendar`, `get_cash_flow`, `get_investment_clock_phase` NEW). Zone: `.claude/tools/package/financial-analyst.md` + `apps/mcp-server/`. Urgency: BCTC banking cohort filing TODAY. baseline_pass: ba spec ack + architect review trigger (build vs deprecate decisions).
+2. **1907a-digest-predict-silence** — MEDIUM OPS → ops. Diagnose 3-day silence (cron wiring vs schedule vs agent-side). Zone: `apps/mcp-server/`. baseline_pass: root-cause report; remediation = separate task if code change.
 
 ### Items declined / deferred
-- 1890a (HIGH, ba spec needed) — queue when WIP frees post-1905a.
-- 1897b-carry, 1862c-{E,F} — user/architect blocked.
-- 1903-doc-pair already closed c87, 1904a partial-closed c87.
-- JANITOR-{011,014,020}, TASK-BCTC-3 — pick up via janitor cron / dev-vps-crawls stream.
-- 1900c-health-probe-refine, 1899a-bloomberg-test-split — LOW, non-blocking.
+- 1897b-carry, 1862c-{E,F} — user/architect/container-blocked.
+- JANITOR-{011,014,020} — janitor cron stream.
+- TASK-BCTC-3 — dev-vps-crawls stream.
+- 1900c, 1899a-bloomberg-test-split — LOW non-blocking.
+- HEAD.lock 4th-cycle self-cure — expected per permanent policy (1906a c89). F1 USER cure remains in 1897b-carry.
 
-### Commit hygiene (c87 carry-lesson)
-Committed `docs/TASKS.md` ONLY via `git commit --only <path>`. Pre-staged cross-agent notebooks (alert-commander, market-watcher, qa-responder, unified-agent, report-analyzer) NOT bundled — preserved for their owners' notebook commits.
-
-### Carry-forward watchlist to c89+
-- **1905a outcome** — confirm fix lands, news-fetch container goes healthy, q30m job no longer errors connection-refused, 1904a AC4 closes.
-- **playwright-stealth replacement choice** — if dev picks option (b) modern ESM stealth, note dep choice for future news-fetch scrapers (reuters-stealth.ts, bloomberg-stealth.ts likely affected).
-- **1890a** — 4-cycle Layer 7 G-step skip still open; dispatch ba spec next cycle when WIP capacity returns.
-- **US10Y 4.49%** — 0.01% from Layer 1.2 threshold; threshold-cross logic exists.
-- **BCTC banking cohort 2026-05-15 02:00 UTC** — observational verify.
-- **HEAD.lock pressure** — subsiding trend continues.
+### Channel audit (scope-limited)
+MCP gateway unavailable in flow scope (TNB c48 pattern persists). Memory-evidence audit: no new BUG signals beyond TNB c48; commits c87→c89 clean; HEAD.lock self-cured as expected. No content errors, no wrong-cowork-actions detected.
 
 ### Hard-constraint compliance
-- WIP ≤ 2: PASS (0 → 1).
-- Disjoint zones: PASS (single zone, single task).
+- WIP ≤ 2: PASS (0 → 2).
+- Disjoint zones: PASS — 1890a = `.claude/tools/package/` + mcp-server tool registration; 1907a = mcp-server scheduler. Different files; co-tenant in apps/mcp-server/ acceptable per dev-team zone policy (different sub-paths).
 - Zone tag on every row: PASS.
-- TASKS.md ≤ 80L: PASS (74L).
-- Recurring-bug rule: N/A (first fix on this module).
+- TASKS.md ≤ 80L: PASS (76L).
+- Recurring-bug rule: N/A (1890a is pkg-addition carry, not ≥2 fix commits on same module).
+
+### Carry-forward watchlist to c91+
+- **1890a-spec deploy** — pre-BCTC-filing window: race to ship FA pkg additions before Q1/2026 banking EPS catalyst hits report-analyzer/financial-analyst crons.
+- **1907a root-cause** — if cron unwired, code fix → new task; if config drift, runbook update.
+- **MCP gateway in TNB session** — track if Cowork Desktop config gets touched (user action).
+- **US10Y 4.49%** — threshold watch.
+- **digest-predict 4th day silence** — if 1907a not picked by c91, escalate priority MEDIUM→HIGH.
+- **HEAD.lock** — F1 USER (Docker .git/ exclusion) still only structural cure; preflight self-cure permanent policy holds.
 
 ### Sign-off
-c88 BATCH(1) emitted. PO sub-flow EXITs to main terminal Step 3 (direct dispatch — FIX, no architect/BA gate). Notebook OVERWRITE complete.
+c90 BATCH(2) emitted. PO sub-flow EXITs to main terminal Step 2 (BA spec) + Step 3 (OPS dispatch). TNB handoff ACK appended. Notebook OVERWRITE complete.

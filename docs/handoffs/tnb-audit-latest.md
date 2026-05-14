@@ -116,3 +116,16 @@ MCP gateway not registered in this Claude Code session. Live probe attempted per
 6. **1903a-labels** — clear `[UNVERIFIED]` label on `write_alert_verdict` in alert-commander tool package. Low effort, removes audit noise.
 
 ---
+
+## PO ACK — c90 2026-05-14T03:14:28Z
+
+- **Rec #1 (FA tool-package +3 tools incl. H-step `get_investment_clock_phase` NEW)** — ACCEPTED. Task **1890a expanded → `1890a-spec-expanded`** with 5-tool scope; BCTC urgency tag added (Q1/2026 banking cohort deadline TODAY). Dispatched to BA this batch.
+- **Rec #2 (SPIKE_C86_MCP_REG)** — Spike doc shipped c86. TNB session-scope persists = Cowork Desktop config gap (user action). Not dev-team actionable c90.
+- **Rec #3 (BCTC banking 2026-05-15)** — Observational; cron-wired (02:00/03:30 UTC). FA G-step risk = mitigated only via 1890a deploy. Carry-watch.
+- **Rec #4 (digest-predict 3-day silence)** — ACCEPTED. New task **1907a-digest-predict-silence** (ops diagnosis). Dispatched.
+- **Rec #5 (US10Y 4.49%)** — Observational; no breach. Carry-watch.
+- **Rec #6 (1903a-labels)** — STALE: shipped c87 as `1903-doc-pair-SHIPPED-c87`. TNB notebook needs refresh.
+
+**BATCH(2) dispatched c90:** 1890a-spec-expanded (HIGH CHORE → ba) + 1907a-digest-predict-silence (MEDIUM OPS → ops). WIP 0/2 → 2/2.
+
+---
