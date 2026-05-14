@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 00:25 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 02:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (02:15–02:21 UTC) 2026-05-14
+- Items: 20 | Impacts: 3 | Signals: [chain_catalyst #3132 FII-outflow+US-inflation] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FII bán ròng 14 phiên/13,000+B + Lạm phát Mỹ cao nhất 3 năm (Fed gặp khó) → adj 7×1.3=9.1 bearish → chain_catalyst #3132 fired (hot_money_risk=true, sectors: banking/securities/real_estate/tech). GAS +4.28% bullish → TIGHTENING adj ×0.7=6.3 → suppressed (already alerted price_surge 02:00). CTG/Trương Mỹ Lan factory auction impact=3 → below threshold. SGI Capital 70% cash confirms institutional risk aversion. Brent 105.6 (-2.27σ), no >5% month-on-month → no CPI pressure rule. Gold volatile rebound, no sustained 3% spike.
+- Suppressed: GAS bullish adj 6.3 (<7); CTG/TML legal (3<7); VCI fund exit neutral (5<7)
 
 ### Cycle (00:15–00:25 UTC) 2026-05-14
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst #3126 EVN/CPI, chain_catalyst #3127 FII-outflow] | Regime: TIGHTENING | Carry: NEUTRAL
