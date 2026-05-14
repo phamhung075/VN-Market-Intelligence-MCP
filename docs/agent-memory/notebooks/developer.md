@@ -1,8 +1,25 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c89-1906a-headlock-cure-permanent
+**Last updated:** 2026-05-14 | **Sprint:** 1910b-effr-package-reg
 
 ## Last session summary
+
+Task 1910b-effr-package-reg — zero-build: register `get_fed_liquidity_spread` in 3 agent packages.
+
+**What was done:**
+- `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`: added `"get_fed_liquidity_spread"` to `news_scout` (L45), `financial_analyst` (L77), `unified_coordinator` (L271)
+- `.claude/tools/package/financial-analyst.md`: +1 row in Macro Intelligence section
+- `.claude/tools/package/news-scout.md`: +1 row, new "US Monetary Chain" section; Last Updated bumped
+- `.claude/tools/package/unified-agent.md`: +1 row in new "Macro Intelligence (COC)" section; Last Updated bumped
+- `docs/SKILL_MANIFEST.md`: JSON arrays updated for all 3 agents; "Recently registered tools" table +1 row; Last updated bumped
+- tsc: 0 errors (config-only, no code)
+- No code changes — pure config + docs
+
+**Commits:** c6981eb7 feat(1910/bootstrap): 1910b register get_fed_liquidity_spread in 3 agent packages
+**Branch:** `task/1910b-effr-package-registration`
+**Flag for ops:** agentBootstrap.ts edited — container rebuild required in next ops cycle.
+
+## Previous last session summary
 
 Task 1906a-headlock-cure-permanent — doc-only reclassification of HEAD.lock PREFLIGHT self-cure.
 
@@ -16,7 +33,7 @@ Task 1906a-headlock-cure-permanent — doc-only reclassification of HEAD.lock PR
 **Commits:** (see SHA in branch task/c89-1906a-headlock-cure-permanent)
 **Branch:** `task/c89-1906a-headlock-cure-permanent`
 
-## Previous last session summary
+## Previous previous last session summary
 
 Task 1905a-news-fetch-stealth-fix — fix news-fetch container startup crash.
 
