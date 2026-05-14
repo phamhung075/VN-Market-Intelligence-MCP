@@ -1,8 +1,27 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1916a-vps-discover-route
+**Last updated:** 2026-05-15 | **Sprint:** 1915-fix-part2
 
 ## Last session summary
+
+Task 1915-fix-part2 — `scanDiskForStrandedPdfs()` filename fallback for non-watchlist tickers.
+
+**Root cause:** The `else` branch (watchlist populated) had `if (!matched) continue` with no fallback. VEA/VNM PDFs on disk but absent from the 38-entry production watchlist were silently skipped every cycle.
+
+**Fix:** Single block replacement in `bctcReparseJob.ts` lines 481-488: `if (matched) { ticker = matched.toUpperCase(); } else { tickerFromFilename fallback }`. `tickerFromFilename()` already existed from part1 — this wires the populated-watchlist miss path to it.
+
+**Test updates:**
+- DSE-09 added (RED → GREEN): watchlist `["HPG","VCB"]` + `VNM_Q4_2025.pdf` → VNM returned.
+- DSE-06 updated: was "returns only VNM (VEA ignored)", now "returns both VNM + VEA via fallback". Both change is intentional — old assertion tested the bug.
+- 1416c "regression guard" test updated: was "HPG skipped when not in watchlist", now "HPG picked up via filename fallback". WATCHLIST_SEED fix remains the canonical solution for #2682; filename fallback is additional safety net.
+
+**Total: 15/15 GREEN (9 DSE + 6 1416c). tsc 0 errors.**
+
+**Commits:** `6fead90d fix(1915/scheduler): 1915-fix-part2 scanDiskForStrandedPdfs filename fallback for non-watchlist tickers`
+**Branch:** main (per CLAUDE.md: no branches for dev)
+**Runtime AC pending:** ops redeploy + `financial_reports` VEA/VNM row count > 0.
+
+## Previous last session summary
 
 Task 1916a-vps-part — add `GET /proxy/bctc-discover/:ticker` route to `vps-scripts/vps-proxy-server.js`.
 
