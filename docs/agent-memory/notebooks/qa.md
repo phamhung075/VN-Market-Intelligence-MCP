@@ -1,6 +1,28 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c88 gate — 1905a-news-fetch-stealth-fix APPROVED
+**Last updated:** 2026-05-14 | **Session:** c89 gate — 1906a-headlock-cure-permanent APPROVED
+
+## Recent session — 2026-05-14 (c89 — 1906a-headlock-cure-permanent APPROVED)
+
+### 1906a-headlock-cure-permanent — HEAD.lock PREFLIGHT cure reclassified permanent operational policy
+
+Branch: task/c89-1906a-headlock-cure-permanent. Fix commit: 40c66d1b. Notebook: 2892a799. Zone: docs/protocols/ only (+ developer notebook rotation + handoff — all legitimate).
+
+Pipeline: tsc 0 errors (pre-push hook). PASS. No tests required (doc-only). DDD PASS. Security PASS. Zone PASS — single protocol doc edited, +13L surgical addition.
+
+AC checks all PASS:
+- git diff --stat: 3 files (protocol doc + developer notebook + handoff) — no .ts/.json/.yml touched.
+- Status header updated: PERMANENT OPERATIONAL POLICY (reclassified 2026-05-14).
+- § (f) Policy Classification appended with 3-cycle evidence, 100% cure rate, architect brief cross-ref.
+- 1897b-carry present in TASKS.md Backlog (grep confirmed).
+- Architect brief docs/architecture-briefs/2026-05-13-headlock-recurrence-post-F2a.md exists (ls confirmed).
+- +13L is minimal and surgical for a new § block.
+
+Merge commit: 3538ce5b. Branch deleted local + remote. Report: reports/TASK_REPORT_1906a-headlock-cure-permanent.md. TASKS.md: 1906a moved to Done.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c88 — 1905a-news-fetch-stealth-fix APPROVED)
 
