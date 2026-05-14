@@ -1,6 +1,42 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 17:54 UTC | **Sprint:** 1912b-cutover blocker c108
+**Last updated:** 2026-05-14 18:29 UTC | **Sprint:** 1912 program-complete SPRINT-L review c108
+
+## Last session summary (c108 SPRINT-L — 1912 Go migration program-complete review)
+
+Task: Post-merge architect review for 1912 Go migration program (4 services).
+
+Scope correction: prompt named 1912a as "macro-indicators" — actual service is api-gateway.
+macro-indicators (port 5004) remains Bun/TS, is NOT in 1912 scope. Confirmed via TASKS.md +
+processed signals. Signals reviewed: 1912a (QA-to-ops), 1912b (compressed-smoke-pass), 1912c
+(deploy-complete-compressed-smoke-pass), 1912d (cutover-audit processed/).
+
+Verification results:
+- docker-compose.yml: CLEAN — zero Dockerfile.go references. All 4 migrated services use `dockerfile: Dockerfile`.
+- api-gateway Dockerfile: golang:1.22-alpine, no CGO (stdlib only, Hono→net/http). Go binary confirmed.
+- alert-engine Dockerfile: golang:1.22-alpine + gcc musl-dev sqlite-dev → alpine:3.20 runtime. CGO=1 mattn/go-sqlite3. PASS.
+- stock-price Dockerfile: golang:1.22-alpine + gcc musl-dev → alpine:3.19 runtime. CGO=1. PASS.
+- TS sources in alert-engine: CLEAN (src/ dir removed). 
+- TS sources in stock-price: 2 legacy bun:test .ts test files git-tracked in __tests__/ (RF-1, LOW, janitor-only).
+- alert-engine/server binary git-tracked despite .gitignore rule (RF-2, LOW, janitor-only).
+- node_modules/ in alert-engine + stock-price: gitignored, no runtime impact (RF-3, INFO).
+- project-stats.json: updated to PROGRAM COMPLETE status.
+- tree-map.md: VALID — no broken pointers to removed TS sources (docs/architecture refs point to .md docs, not source .ts files).
+
+Risk flags raised (all non-blocking):
+RF-1: apps/stock-price/__tests__/*.ts (2 files) git-tracked — import paths broken vs Go layout.
+RF-2: apps/alert-engine/server binary git-tracked — gitignore added post-commit.
+Both are janitor tasks, not blockers.
+
+Lessons learned for future Go migrations:
+1. Add `git rm --cached apps/<service>/server` step to cutover checklist before .gitignore rule — prevents RF-2 class.
+2. Delete all TS test files in same cutover commit as TS src removal — TASKS.md 1912c scope (b+c) missed __tests__/.
+3. compressed-smoke pattern (T+10min vs 6h) is now precedent for 2 migrations — add to architecture-briefs index if a 3rd migration occurs.
+4. Prompt-level service naming can drift from actual signals — always verify via signals + TASKS.md before committing review findings.
+
+Outputs:
+- Signal: docs/signals/20260514T182941Z-1912-go-migration-program-complete.json
+- project-stats.json: PROGRAM COMPLETE status updated.
 
 ## Last session summary (c108-tick3-blocker — 1912b schema migration decision)
 

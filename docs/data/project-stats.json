@@ -9,7 +9,7 @@
     "status": "DONE (1910b shipped 2026-05-14 c96)",
     "summary": "Sprint 1910b: get_fed_liquidity_spread package registration in financial_analyst/news_scout/unified_coordinator. Deployed c96."
   },
-  "sprintGoal": "Sprint 1912 Phase 1 FULLY CLOSED c106: 1912a Go gateway MERGED c99 (f7ef8c32) + DEPLOYED c100 (cc29cef8) + 1912d cutover SHIPPED c105-c106 (HEAD 2a92eb3f). USER OVERRIDE c105 cut 24h smoke ~22h early; cutover executed cleanly. Go now primary host:4000, TS retired, module renamed api-gateway-go→api-gateway, 9/9 services healthy. Phase 2 (1912b-alert-engine) + Phase 3 (1912c-stock-price) UNLOCKED — architect re-brief required before BA spec.",
+  "sprintGoal": "Sprint 1912 PROGRAM COMPLETE c108: All 4 services migrated. 1912a (api-gateway) CLOSED c106. 1912b (alert-engine) CLOSED c108 — user-override compressed smoke. 1912c (stock-price) CLOSED c108 — user-override compressed smoke. 1912d (api-gateway cutover) CLOSED c106. 3 services now on Go 1.22 + CGO + mattn/go-sqlite3 + log/slog JSON. Architect post-merge review PASS. 2 low-severity janitor items flagged (RF-1: stale TS tests in stock-price, RF-2: tracked server binary in alert-engine).",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
@@ -34,7 +34,7 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "1912d c105-c106: Go cutover SHIPPED (5 commits, HEAD 2a92eb3f). USER OVERRIDE cut smoke ~22h early. TS gateway retired, Go primary host:4000, module renamed api-gateway-go→api-gateway. 9/9 services healthy 4ms avg. Doc/agent sweep complete (47 files: 16 TS deletions + 17 Go renames + docker-compose + 13 docs + dev-api-gateway agent switched + 5 Go-vs-doc divergences corrected).",
-  "currentSprintNotes": "Sprint 1912 Phase 1 FULLY CLOSED c106. P2 (1912b-alert-engine) + P3 (1912c-stock-price) UNLOCKED — architect re-brief required before BA spec. 1910a-retry-ism-tool in Todo with WIP free — eligible for dispatch next dev-team cycle. 1909c reparse HOLD Q1-2026 PDFs (deadline 2026-05-15 ~9h). 1913 USER F1 (FA gateway desktop config) still pending — BCTC banking deadline TONIGHT 2026-05-15 17:00 UTC.",
+  "currentSprintNotes": "Sprint 1912 PROGRAM COMPLETE c108. Architect post-merge SPRINT-L review done. 1910a-retry-ism-tool in Todo with WIP free — eligible for dispatch next dev-team cycle. 1909c reparse HOLD Q1-2026 PDFs (deadline 2026-05-15 ~9h). 1913 USER F1 (FA gateway desktop config) still pending. Janitor carry: RF-1 (stock-price stale TS tests) + RF-2 (alert-engine tracked server binary).",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-14",
     "mcpServerHealth": "UP",
