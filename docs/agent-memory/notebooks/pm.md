@@ -1,11 +1,11 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c95 CLOSED
+**Last updated:** 2026-05-14 | **Sprint:** c96 CLOSED
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — 1909a-extractor + 1909b-tool SHIPPED + QA APPROVED. 1909c reparse-validation + 1910b effr-package-reg moved to Todo, blocked on container deploy
-- **c94 DISPATCH (2026-05-14T18:00Z):** Sprint 1909 + 1910 decomposed, 5 sub-tasks entered to TASKS.md (1909a/b/c + 1910a/b). WIP set to 2 (1909a + 1909b): parallel-eligible, disjoint zones. 1910b in Todo (sequential after 1909b deploy, shared agentBootstrap.ts). 1910a in Backlog (USER-ACTION: FRED_API_KEY env var). 1909c in Backlog (blocked on 1909a+1909b deploy).
+- **WIP: 0/2 (CLEAN)** — 1909a-extractor + 1909b-tool SHIPPED + QA APPROVED. 1910b shipped c96 (config-only, zero-build). 1909c HOLD (AC-1/2/3 PASS, AC-4/5 awaiting Q1-2026 PDFs + FA cycle). 1910a moved to Todo (FRED_API_KEY confirmed in .env). Container rebuild dispatched in parallel ops cycle.
+- **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
 - **Backlog:** 1907a (HIGH OPS escalated, TNB c49), 1907b (LOW OPS observational), 1909c (CRITICAL OPS, blocked), 1910a (HIGH FEATURE, user-action blocked), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect, URGENT-F1), TASK-BCTC-3
