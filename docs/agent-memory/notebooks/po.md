@@ -1,53 +1,65 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T20:03Z (c109 — TNB c53 ACK + housekeeping)
+## Last updated: 2026-05-14T20:24Z (c110 — UNBLOCK-CRITICAL 1915 BCTC pipeline silence)
 
 ---
 
-## Cycle 109 — TNB c53 ACK + janitor queue + TASKS.md trim
+## Cycle 110 — 1915-bctc-pipeline-silence (UNBLOCK-CRITICAL, T-~9h from banking window)
 
-**Spawn context:** cron / dev-team triage. WIP=0/2, no in-progress tasks. `pendingSignals[]` empty (all 14 signals drained to `processed/`). 1912 PROGRAM COMPLETE c108 (architect post-merge review PASS, signal `20260514T182941Z-1912-go-migration-program-complete.json`). TNB c53 handoff awaiting ACK.
+**Spawn context:** main-terminal handed me an ops report directly (no pendingSignals[] file — verbal handoff via user message). Banking Q1-2026 BCTC filing window opens 2026-05-15 02:00-09:00 UTC (~6-13h from now). 7 watchlist banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) will land in SSC; pipeline must accept them.
 
-### Triage findings
-- TNB c53 (`docs/handoffs/tnb-audit-latest.md`): 9 findings, direction IMPROVING. Most already tracked. NEW work surfaced: finding #8 (alert-commander `log_agent_work` package doc gap, two-call API not documented). Finding #7 (news-scout F/H-step methodology gap) at 1/3 cycles — monitor only.
-- Architect post-merge review surfaced 2 non-blocking RFs: RF-1 (stock-price stale Bun tests `apps/stock-price/__tests__/*.ts`) + RF-2 (alert-engine `apps/alert-engine/server` binary git-tracked). 1912 Done row L47 promised "janitor-1912" but no row existed.
-- TASKS.md L10 carried a stale "PROGRAM CLOSED" Backlog row duplicating the Done row at L47.
-- TASKS.md was 82L on entry (over 80L invariant).
+### Ops signal payload (verbatim)
+- `financial_reports` table: 0 rows
+- `pdf_extracted_text` table: 0 rows
+- `bctcReparseJob` logs frozen 2026-04-09 (35d, no activity)
+- 2 watchlist PDFs on disk (VNM + VEA Q4-2025) never extracted
+- Last good run 2026-04-09
+- 3 ops root-cause candidates: (1) scheduler reg lost after container restarts c95-c97 / 1912c Go migration, (2) `fetchParseAndStoreBctc` swallow, (3) empty feedback queue / discovery upstream broken
 
 ### Decisions
-1. **Drop duplicate 1912-go-migration-program Backlog row (L10).** Program is closed in Done; keeping the Backlog row violates SSOT.
-2. **Queue `janitor-1912` (LOW CLEAN, code-janitor, zone:multi).** Covers RF-1+RF-2 with concrete AC. Non-blocking, no urgency.
-3. **Queue `1914b-log-agent-work-doc` (LOW CHORE, agent-md-editor, zone:cross-service).** TNB finding #8 doc-only fix for alert-commander package doc.
-4. **No new SPRINT.** WIP=0/2 but BCTC banking deadline TODAY (2026-05-15 02:00-09:00 UTC filings, ~6-13h out) consumes near-term attention. Spawning a new SPRINT-M would compete for ops/dev focus right before the catalyst window. Stay observational.
-5. **TASKS.md trim:** archived 6 rows c89-c86 (1906a/1905a/1904a/1903-doc-pair/AUTOCURE-C86-MW-DEDUP/SPIKE_C86_MCP_REG) into footer summary line. 83L → 77L.
-
-### Channel audit
-- Skipped MARKET/WORK/BUG live read. Justification: MCP gateway 8th consecutive cycle blocked (1913 USER F1), live audit not feasible. TNB c53 handoff is the substrate signal — used as proxy per established cowork-error-boundary pattern (notebook-evidence mode).
+1. **Queue `1915-bctc-pipeline-silence` as UNBLOCK-CRITICAL.** Highest priority — blocks 1909c AC-4/5, `get_bctc_ocf` tool, FA Layer 7 G-step.
+2. **SPIKE-first (2h timebox)**, not direct FIX. Three ops candidates are mutually exclusive; cannot guess. SPIKE confirms ONE root cause + emits targeted FIX as separate task. Cannot afford full SPRINT-M ceremony with T-~9h.
+3. **Zone `apps/mcp-server/`** — both `bctcReparseJob` (scheduler/financial-reports/) and `fetchParseAndStoreBctc` (application/usecases/) live there. Verified via grep.
+4. **Owner: dev-mcp-server.** Service-scoped.
+5. **Recurring-bug rule check**: 1908a/b/c + 1909a/b/c are extractor-accuracy work (same domain). This signal is **upstream pipeline silence** (no extraction happens at all) — different failure mode. NOT a recurring-bug trigger. Proceed without architect-rethink gate.
+6. **1909c-reparse-validation** stays HOLD — now blocked by 1915 in addition to calendar. Cannot exercise reparse on Q1-2026 PDFs until ingestion live.
+7. **Channel audit skipped this cycle** — MCP gateway 9th consecutive cycle blocked (1913 USER F1). Verbal ops handoff is the substrate signal per cowork-error-boundary notebook-evidence mode.
 
 ### Recurring-bug compliance
-- janitor-1912: 0 prior commits on these paths as bug fix. Rule N/A.
-- 1914b: doc-only, 0 fix commits. Rule N/A.
+- 1915: 0 prior fix commits on `bctcReparseJob` registration or `fetchParseAndStoreBctc` swallow paths. Rule N/A.
+- Different failure mode than 1908/1909 (upstream ingestion vs. extractor accuracy).
 
-### WIP plan
-- BATCH = `[{type: "CLEAN", id: "janitor-1912", zone: "multi"}, {type: "CLEAN", id: "1914b-log-agent-work-doc", zone: "cross-service/"}]`. Both LOW, both queueable. Dev-team router may park if banking-cohort attention preferred.
-- 1909c-reparse-validation stays HOLD until 2026-05-16.
-- 1899a-bloomberg-test-split + 1862c-E/F + JANITOR-011/014/020 + TASK-BCTC-3 remain Backlog/Todo, no change.
+### BATCH return
+```
+[{
+  type: "SPIKE",
+  id: "1915-bctc-pipeline-silence",
+  title: "bctc-pipeline-silence-triage",
+  question: "Which of 3 ops root-cause candidates is real: (1) bctcReparseJob unregistered post-container-restart, (2) fetchParseAndStoreBctc silent failure, (3) empty feedback queue / discovery upstream broken?",
+  mode: "spike",
+  zone: "apps/mcp-server/",
+  timebox: 120,
+  deadline: "2026-05-15T02:00:00Z"
+}]
+```
+Dev-team router: spawn architect→ba→dev-mcp-server SPIKE chain immediately. SPIKE output `reports/SPIKE_1915-bctc-pipeline-silence.md` + carry-forward FIX task.
 
 ### Signal drop
-None this cycle (housekeeping only, no PM dispatch needed).
+None this cycle — task created in TASKS.md is the authoritative signal. Dev-team picks up via routine triage.
 
-### Carry-forward to c110+
-- Watch BCTC Q1/2026 filings 02:00-09:00 UTC 2026-05-15: ACB/BID/CTG/EIB/MBB/VCB/VPB. Alert via market-watcher + alert-commander price anomalies.
-- 1907a digest-predict 7d silence (CRITICAL OPS) — dev pickup status unverified at TNB c53. Re-check next cycle.
-- 1913 USER F1 still pending (8th cycle gateway blocked).
-- Finding #7 news-scout pillars/cycle-phase: monitor for 2nd evidence cycle.
-- 1909c reparse Q1-2026 PDFs 2026-05-16 → FA Layer 7 G-step exercise.
+### Carry-forward to c111+
+- 1915 SPIKE result: confirmed root cause + FIX task ID — needs PO review before merge (CRITICAL gate).
+- Post-FIX: verify 2 PDFs (VNM+VEA Q4-2025) extracted, `financial_reports`/`pdf_extracted_text` > 0, log entry within 1h.
+- 1909c-reparse-validation un-HOLD once 1915 FIX merged + banking cohort PDFs extracted.
+- 1913 USER F1 still pending (9th cycle gateway blocked).
+- janitor-1912 + 1914b-log-agent-work-doc carried (LOW, no urgency).
+- 1907a digest-predict 7d silence (CRITICAL OPS) — re-check next cycle.
 
 ### Sign-off
-c109 HOUSEKEEPING: TNB c53 ACK'd, 2 new LOW Backlog rows (janitor-1912 + 1914b), 1 duplicate Backlog row dropped, TASKS.md 83L→77L. project-stats.json refreshed. BATCH = 2 CLEAN entries (LOW). PO sub-flow EXIT.
+c110 UNBLOCK-CRITICAL: 1 new task (1915-bctc-pipeline-silence), TASKS.md +1 row, project-stats.json refreshed (currentSprintNotes + _lastRefreshedBy). BATCH = 1 SPIKE entry (CRITICAL, deadline 02:00 UTC). PO sub-flow EXIT → main terminal routes to architect/ba/dev-mcp-server for SPIKE execution.
 
 ---
 
-## Cycle 108 — 1912b + 1912c cutover dispatch (carry-over reference)
+## Cycle 109 — TNB c53 ACK + janitor queue + TASKS.md trim (carry-over)
 
-Sequential cutover, 6h smoke each. Coupled scope per 1912d precedent (docker-compose + Dockerfile + .ts deletion + agent-md-factory + doc-sweep + tree-map + graphify + signal). Both phases shipped clean c108, program closed via architect post-merge review.
+c109 housekeeping shipped: TNB c53 ACK'd, janitor-1912 + 1914b-log-agent-work-doc queued, 1912 duplicate row dropped, TASKS.md 83L→77L. WIP=0/2. Full detail in git history (notebook overwritten).
