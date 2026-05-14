@@ -26,6 +26,10 @@ services:
       VPS_HOST: 125.212.251.27
       VPS_SSH_USER: root
       VPS_SSH_KEY_PATH: /run/secrets/vps_ssh_key
+      # VPS_PUSH_API_KEY: loaded from .env — required for VPS proxy auth
+      # Used by: bctcHttpFetcher (X-API-Key header for /proxy/bctc-discover),
+      #          server.ts push route handlers (incoming VPS push validation).
+      # Value: set in .env (never commit plaintext key to git).
       PORT: '3000'
       CLOUDFLARE_PATH_PREFIX: /vn-market
     env_file:
