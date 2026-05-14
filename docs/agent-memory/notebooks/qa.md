@@ -1,6 +1,52 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c114 — 1915-fix-part1 APPROVED (66275c67)
+**Last updated:** 2026-05-14 | **Session:** c115 — 1916b-fix-cafef-strategy-replacement APPROVED (3732bcd9)
+
+## Session 2026-05-14 c115 — 1916b-fix-cafef-strategy-replacement QA gate
+
+### TASK REPORT — 1916b
+
+```
+date: 2026-05-14
+outcome: APPROVED
+```
+
+#### Changed files
+- `apps/mcp-server/src/domain/services/bctcDiscovery.ts` — Strategy 2 removed; `extractCafefUrls`, `tryFetchCafef`, `CAFEF_API_BASE`, `CAFEF_BASE`, `PDF_HREF_RE` deleted; `_fetchCafef` kept as deprecated no-op; vietstock promoted to strategy 2
+- `apps/mcp-server/src/__tests__/1916b-cafef-strategy-replacement.test.ts` — new file, 12 tests
+- `apps/mcp-server/src/__tests__/1343b-hose-pdf-discovery-red.test.ts` — cafef assertion updated
+- `apps/mcp-server/src/__tests__/FIX-bctc-url-enrichment.test.ts` — cafef success tests → no-op spy
+- `apps/mcp-server/src/__tests__/FIX-bctc-ssc-vps-proxy.test.ts` — falls-back-to-cafef → 0 URLs
+
+#### Test Results
+- tsc: 0 errors
+- New task tests (1916b): 12/12 PASS
+- 1916b + modified files + regression set (10 files): 82/82 PASS
+- Remaining bctc suite (40 files batch A): 218/222 pass / 3 fail pre-existing (1294b + 1343e) confirmed identical on main; 1294b isolates to 0 fail (inter-test DB pollution); 1343e pre-existing on main
+- Remaining bctc suite (batch B, 21 files): 164/164 PASS
+
+#### DDD: PASS
+- Zero actual import statements from domain/ to infrastructure/. Confirmed with `grep -n "^import.*from.*infrastructure"` on all domain files.
+- bctcDiscovery.ts is domain layer — no infrastructure imports, Bun.env only (correct).
+
+#### Security: PASS
+- No process.env usage in bctcDiscovery.ts (Bun.env only).
+- No hardcoded secrets, API keys, or passwords.
+- Removed symbols (CAFEF_API_BASE, CAFEF_BASE) had no credentials.
+
+#### AC Coverage
+- AC-1b: Strategy 2 cleanly deleted with inline comment referencing TASK_1916b + SPIKE_1916. PASS.
+- AC-2: cafef call count = 0 (spy confirmed never invoked). 0-URL rate unchanged. PASS.
+- AC-3: All stale tests updated; 1916b test file with 12 passing tests. PASS.
+
+#### Merge
+- Cherry-picked commits `311c8b95` + `c9f93340` to main as `3732bcd9` + `79c0ffaf`
+- TASKS.md: 1916b moved to Done (`b92ef05c`)
+- Branch `task/1916b-fix-cafef-strategy-replacement` deleted
+
+#### Verdict: APPROVED
+
+---
 
 ## Session 2026-05-14 c114 — 1915-fix-part1-scan-disk-empty-watchlist QA gate
 
