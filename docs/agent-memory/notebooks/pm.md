@@ -1,17 +1,40 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c89
+**Last updated:** 2026-05-14 | **Sprint:** c90 CLOSED
 
 ## Current state
 
-- WIP: 2 / 2 (AT CAPACITY) — In Progress: 1890a-A (CRITICAL, dev-mcp-server), 1890a-B (HIGH, agent-md-editor, blocked by A)
-- **FINALIZED c90:** 1907a-digest-predict-silence (DIAG-DONE, ops approved), 1890a-spec-expanded (SPEC-DONE, spawned A+B subtasks), 1906a-headlock-cure-permanent (DONE c89)
-- **NEW c90:** 1907b-digest-predict-cowork-trigger-investigate (LOW OPS follow-up, observational)
-- Backlog LOW: 1907b (investigation), 1897b-carry (F1 USER + architect SPIKE), JANITOR-{011,014,020}, TASK-BCTC-3
+- WIP: 0 / 2 (CLEAN) — Both 1890a-A and 1890a-B SHIPPED + DEPLOYED c90
+- **c90 CLOSED:** 1890a-A + 1890a-B SHIPPED (4 FA tools manifested incl get_cash_flow). Ops deploy successful 2026-05-14T04:26:26Z, toolCount 130→139, all 9-service fleet healthy.
+- **BCTC Q1/2026 banking window COVERED** — deadline 2026-05-15 passed with deploy. get_cash_flow tool live, 5/5 tests PASS, source_tier=1 invariant verified.
+- Backlog: 1897b-carry (F1 USER + architect, URGENT-F1), 1907b (LOW OPS observational), JANITOR-{011,014,020}, TASK-BCTC-3
 - Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
-- **TASKS.md:** 80L (at cap). WIP=2. Sequencing locked: 1890a-A deploy first → 1890a-B after merge (shared manifest files).
-- **Handoffs created:** TASK_1890a-A.md, TASK_1890a-B.md, TASK_1907b-investigate.md
-- **Status:** c90 FINALIZED. WIP at capacity. BCTC Q1/2026 banking deadline (TODAY 2026-05-15) = CRITICAL PRIORITY. Ready for developer dispatch.
+- **TASKS.md:** 58L (well under 80L cap). Archive not required.
+- **Status:** c90 CLOSED + DEPLOYED. WIP=0. Ready for c91 dispatch (1897b-carry PRIORITY, unblocks architecture).
+
+---
+
+## Cycle 90 — 2026-05-14 c90 Close: 1890a-A + 1890a-B SHIPPED + DEPLOYED (WIP=0/2 CLEAN)
+
+**Input:** Dev-team + ops c90 completion. 1890a sprint SHIPPED and DEPLOYED.
+
+**Outcomes:**
+1. **1890a-A (CRITICAL, dev-mcp-server, BUILD-DONE):** `get_cash_flow` tool live. Commit `fd7cbe44` + QA approval `07a1af9a`. Full CF statement (operating_cf/investing_cf/financing_cf/capex/free_cash_flow) + OCF/NI ratio (null-safe). DDD pattern verified. 5/5 tests PASS (happy path + missing quarter + unknown ticker + zero NP + null NP). source_tier=1 invariant VERIFIED. Zone: apps/mcp-server/.
+2. **1890a-B (HIGH, agent-md-editor, MANIFEST-DONE):** 3 manifest additions (get_macro_snapshot / get_bond_maturity_calendar / get_investment_clock_phase) + doc-verify get_insider_signals. Commit `915763a2`. agentBootstrap.ts + SKILL_MANIFEST.md + financial-analyst.md all synchronized. 26/26 spot-check tests PASS. Zone: apps/mcp-server/ + docs/.
+3. **Ops deploy (2026-05-14T04:26:26Z):** Image SHA `9ecc5371...`. Container restart successful. toolCount 130→139 (get_cash_flow #131 + 8 waterfall tools). Post-rebuild health check: 9/9 services UP, mcp-server /health=200 OK. Deploy report: `reports/TASK_REPORT_1890a-deploy.md`. Deploy commit `4a786039`.
+4. **BCTC Q1/2026 banking deadline (2026-05-15) COVERED** — get_cash_flow live in production for BCTC extraction pipeline.
+
+**Actions:**
+- Moved 1890a-A from In Progress → Done (SHIPPED tag + code `fd7cbe44` + QA `07a1af9a` + deploy `4a786039`).
+- Moved 1890a-B from In Progress → Done (SHIPPED tag + code `915763a2` + deploy `4a786039`).
+- TASKS.md: Removed In Progress section (WIP=0). Final line count 58L (under 80L cap).
+- project-stats.json: Updated previousSprint from 1867 to 1889, toolCount confirmed 139.
+- PM notebook: Updated header and current state (WIP=0, c90 CLOSED).
+- Status: WIP=0/2 CLEAN. Ready for c91 dispatch.
+
+**Carry-over to c91:** 1897b-carry (URGENT-F1, blocks architecture), 1907b (LOW observational), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3.
+
+**Status:** c90 CLOSED + DEPLOYED. Pipeline clean. BCTC covered. Ready for PO/architect to prioritize c91.
 
 ---
 
