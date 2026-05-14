@@ -1,6 +1,20 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c95 gate — 1909a-extractor cashFlowExtractor expansion APPROVED
+**Last updated:** 2026-05-14 | **Session:** c96 gate — 1910b-effr-package-reg APPROVED
+
+## Recent session — 2026-05-14 (c96 — 1910b-effr-package-reg APPROVED)
+
+### 1910b — effr-package-reg (CHORE zero-build)
+
+Merged onto main: e7fd1718 feat + 961c62ec notebook + b6daa3e7 news-scout notebook. HEAD b3d1fa47.
+
+Zero-build config + docs only. No test file (no production code). tsc 0 errors. DDD PASS (interface/ layer only). Security PASS (no env, no secrets, no SQL).
+
+3 hits in agentBootstrap.ts: news_scout L45, financial_analyst L77, unified_coordinator L271. Agent identity keys exact match (news_scout/financial_analyst/unified_coordinator). Package docs: financial-analyst.md L104 Macro Intelligence section, news-scout.md L49 US Monetary Chain section, unified-agent.md L47 Macro Intelligence (COC) section. SKILL_MANIFEST.md L282 single row listing all 3 agents. Regressions: get_bctc_ocf L76, get_macro_snapshot L73, get_bond_maturity_calendar L74, get_investment_clock_phase L75 all still present. Commit scope: 5 files only (agentBootstrap.ts + 3 package docs + SKILL_MANIFEST.md). All 9 ACs PASS. Container rebuild required (agentBootstrap.ts touched).
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c95 — 1909a-extractor cashFlowExtractor expansion APPROVED)
 
