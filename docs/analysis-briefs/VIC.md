@@ -28,3 +28,4 @@ Action: Reduce / Watch sector sentiment
 
 (Pending Q1 synthesis)
 2026-05-01 | "Sell in May" thị trường chứng khoán lo ngại — VIC confirms sector headwind. Bullish thesis (Q1 fund holdings) challenged by seasonal rotation.
+2026-05-14 16:00 | Close: 229,800 VND | RSI: N/A(16c) | Vol: 374.7K (N/A% avg) | YoY: N/A

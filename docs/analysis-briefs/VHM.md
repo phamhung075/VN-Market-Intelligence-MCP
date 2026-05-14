@@ -40,3 +40,4 @@ Action: Reduce / Monitor support levels
 ## [Unified Agent] Quarterly Syntheses
 
 (Quarterly entries will be added here: Q1, Q2, Q3, Q4)
+2026-05-14 16:00 | Close: 157,000 VND | RSI: N/A(16c) | Vol: 554.3K (N/A% avg) | YoY: N/A

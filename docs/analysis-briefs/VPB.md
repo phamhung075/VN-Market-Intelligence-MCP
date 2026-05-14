@@ -37,3 +37,4 @@ Action: Reduce / Monitor support
 ## [Unified Agent] Quarterly Syntheses
 
 (Pending Q1 2026 synthesis)
+2026-05-14 16:00 | Close: 28,650 VND | RSI: N/A(16c) | Vol: 2.53M (N/A% avg) | YoY: N/A

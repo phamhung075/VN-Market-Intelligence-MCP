@@ -12,3 +12,4 @@
 
 
 ## [Unified Agent] Quarterly Syntheses
+2026-05-14 16:00 | Close: 28,100 VND | RSI: N/A(16c) | Vol: 1.16M (N/A% avg) | YoY: N/A

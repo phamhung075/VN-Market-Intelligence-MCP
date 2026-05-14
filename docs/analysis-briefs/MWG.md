@@ -30,3 +30,4 @@ Active cash deployment into securities and lending for diversified returns.
 ## [Unified Agent] Quarterly Syntheses
 
 Q1 2026 positive outlook: margin expansion + financial positioning strong. Await formal earnings release and BCTC filing.
+2026-05-14 16:00 | Close: 84,200 VND | RSI: N/A(16c) | Vol: 400.2K (N/A% avg) | YoY: N/A

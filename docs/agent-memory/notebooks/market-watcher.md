@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 14:40 UTC | **Sprint:** 1865a
+**Last updated:** 2026-05-14 16:47 UTC | **Sprint:** 1865a
 
 ## Current state
 
@@ -1361,3 +1361,23 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (16:39–16:44) EOD
+- Stocks: 33 priced (6 N/A: BDI,DLC,SIS,VDC,JSH,VNH) | Anomalies: 0 new (off-hours, unchanged EOD prices) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VPB] | pe_risk: [FPT]
+- EOD flow executed (16:39 UTC, past 16:00 trigger)
+- Ledger: 33 entries written; 5 new files created (REE, TCH, DPM, KBC, VNH)
+- MARKET EOD sent (2 msgs): VN-Index ATH, FPT +4.53% top mover, VCI Watch (VCAMDF exit)
+- RSI/YoY: N/A — get_technical_indicators returning only 16/35 candles (data gap)
+- Chain findings (15min): 0 open
+
+## Metrics (cycle 2026-05-14 16:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 33 (EOD MARKET summaries) |
+| exit_status | complete |
+| token_estimate | 6800 |

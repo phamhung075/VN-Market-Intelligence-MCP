@@ -19,3 +19,4 @@ Oil & gas sector strength continues. GAS outperforming amid positive retail gas 
 Action: Hold / Monitor upside
 
 ## [Unified Agent] Quarterly Syntheses
+2026-05-14 16:00 | Close: 83,600 VND | RSI: N/A(16c) | Vol: 406.8K (N/A% avg) | YoY: N/A

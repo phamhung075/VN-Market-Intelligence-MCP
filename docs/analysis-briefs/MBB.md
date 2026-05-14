@@ -37,3 +37,4 @@ Action: Hold / Neutral stance
 ## [Unified Agent] Quarterly Syntheses
 
 (Pending Q1 2026 synthesis)
+2026-05-14 16:00 | Close: 25,850 VND | RSI: N/A(16c) | Vol: 1.31M (N/A% avg) | YoY: N/A

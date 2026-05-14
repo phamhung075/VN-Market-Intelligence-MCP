@@ -19,3 +19,4 @@
 - Carry regime: FII_OUTFLOW_RISK — watch for institutional profit-taking despite positive news
 
 ## [Unified Agent] Quarterly Syntheses
+2026-05-14 16:00 | Close: 73,900 VND | RSI: N/A(16c) | Vol: 2.16M (~42% avg) | YoY: N/A
