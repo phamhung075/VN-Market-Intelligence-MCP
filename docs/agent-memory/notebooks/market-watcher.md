@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 17:39 UTC | **Sprint:** 1865a
+**Last updated:** 2026-05-14 18:42 UTC | **Sprint:** 1865a
 
 ## Current state
 
@@ -1412,3 +1412,21 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 33 (EOD MARKET summaries) |
 | exit_status | complete |
 | token_estimate | 6800 |
+
+### Cycle (18:38–18:42)
+- Stocks: 33 priced (6 N/A: BDI,DLC,SIS,VDC,JSH,VNH) | Anomalies: 1 (FPT +4.53% = 2.60σ) | Volume spikes: 0 vs 2.0x | Chain confirms: 0
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED). FPT anomaly emitted (signal id=3188) — new move_pct 4.53% vs prior intraday 5.09%, no duplicate. Catalyst: Japanese auto JV (news-scout chain id=3186). Sector outperformance: +4.5% vs tech avg +0.8%.
+- Macro: supply chain STABLE (BDI 1,400), energy grid NORMAL (hydro 70%).
+- VIC (1.37σ), VRE (0.83σ), VHM (0.74σ), VPB (1.74σ) — all below 2.0σ threshold (high baseline volatility).
+
+## Metrics (cycle 2026-05-14 18:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
