@@ -2,7 +2,58 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 (cycle 53) | Cycles completed: 53
+**Last updated:** 2026-05-15 (cycle 54) | Cycles completed: 54
+
+---
+
+## Cycle 54 Watch Notes (2026-05-15 ~00:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Auto-cure: 0 applied (no 3-cycle threshold met this cycle)
+
+**MCP Gateway:** NOT registered in this session (TNB cannot direct-probe). Alert-commander 21:02 UTC + digest-predict 21:34 UTC + market-watcher 20:38 UTC all logged "gateway unreachable" simultaneously (c114 per TASKS.md 1913). Unified-agent 22:02 UTC ok (16/16 CB) — session-scope isolation inconsistency. 1913 escalated to BLOCKING-F1 in TASKS.md. Notebook-evidence mode.
+
+**KEY FINDINGS THIS CYCLE:**
+- 1915-bctc-pipeline-silence: DONE (2026-05-15). VEA/VNM Q4-2025 extracted. 1909c-reparse-validation UNBLOCKED. Major positive.
+- alert-commander 21:02 UTC: hard abort Step 0 (gateway unreachable — new failure mode vs c53 B-step regime-fallback). c53 auto-cure validated at 18:03 UTC (used get_macro_snapshot correctly) but cannot prevent full gateway outage.
+- Telegram BUG channel: TELEGRAM_REPORT_BUG_CHANNEL_ID misconfigured (unified-agent 22:02 UTC). BUG escalations silently dropped. Not yet in TASKS.md — new finding.
+- news-scout F/H-step: cycle 2 of evidence. 7 off-hours cycles, all chain_catalyst signals, zero pillar coverage (M2/COC/EPS/POL) in payload. Track cycle 3 at c55 for auto-cure.
+- news-scout dedup API: 8+ cycles same VIC/FPT ATH theme (#3162→#3197). 1914 Backlog MEDIUM, no In-Progress pick-up.
+- digest-predict: 4-day+ silence. 1907a Backlog CRITICAL, no In-Progress owner.
+- financial-analyst: no 2026-05-14 23:00 session. Infrastructure blocked (1913). 1909c unblocked but needs ops owner.
+- Previous handoff (c53) ACK'd by PO. Tasks: janitor-1912 + 1914b created.
+
+**METHODOLOGY SCORES (Layer 5, 9-step — c54):**
+- news-scout chain_catalyst #3196 (22:20 UTC): 3/7 applicable → NEEDS_ATTENTION (F=0/4 pillars, H=no phase/tier)
+- alert-commander 18:03 UTC (c53 carry): 4/4 → GOOD
+- unified-agent 22:02 UTC: 7/9 → GOOD (G=partial 1915 done but reparse pending, H=partial)
+- financial-analyst: UNAUDITABLE (no session, 1913 blocked)
+- digest-predict: CRITICAL/UNAUDITABLE (4-day silence)
+
+**MARKET STATE:**
+- VN-Index: 1,925 ATH | REGIME: NEUTRAL (authoritative macro_snapshot) | CARRY: NEUTRAL (FED spread unavailable at 20:20 UTC cycle) / FII_OUTFLOW_RISK (-33bp earlier)
+- Khối ngoại đảo chiều mua ròng (confirmed unified-agent 22:02 UTC)
+- Gold: 4655.4 (-3.14σ extreme low at 22:22 UTC cycle) | Brent: 106.55 (recovered from -2.12σ)
+- RSS feeds: all degraded overnight (unified-agent 22:02: news 4.5h STALE)
+- ACB vnstock: RATE_LIMITED
+
+**SCORES SUMMARY:**
+- alert-commander: GOOD (c53 18:03 UTC validated; 21:02 UTC gateway abort = infrastructure, not flow gap)
+- news-scout: NEEDS_ATTENTION (F/H-step cycle 2; dedup API limitation persisting)
+- unified-agent: GOOD (7/9)
+- financial-analyst: UNAUDITABLE (no session, 1913)
+- market-watcher: carry from c53 GOOD (last session 2026-05-13)
+- digest-predict: CRITICAL (4-day+ silence)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-15T00-30-00Z.json (priority: high)
+
+## Cycle — 2026-05-15 (cycle 54, ~00:30 UTC)
+
+- **cycle_date**: 2026-05-15
+- **findings**: NEEDS_ATTENTION/IMPROVING. No auto-cure applied (news-scout F/H-step cycle 2, need cycle 3; full gateway abort at 21:02 UTC = infrastructure F1, not flow-curable). NEW finding: Telegram BUG channel TELEGRAM_REPORT_BUG_CHANNEL_ID misconfigured — BUG escalations silently dropped. 1915-bctc-pipeline-silence DONE (major positive). 1909c-reparse-validation UNBLOCKED. 1913 BLOCKING-F1 multi-agent simultaneous failure c114. digest-predict 4-day+ silence (CRITICAL). Previous handoff ACK'd by PO.
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-15T00-30-00Z.json). Notebook updated. 0 Telegram (MCP unregistered).
+- **next_cycle_hint**: (1) ops verify TELEGRAM_REPORT_BUG_CHANNEL_ID env var — BUG escalations silently failing (new, not in TASKS.md). (2) 1909c-reparse-validation: ops assign In-Progress owner, run bctcReparseJob 2026-05-16. (3) news-scout F/H-step cycle 3: if chain_catalyst still 0/4 pillars + no cycle phase → auto-cure stage-signals.md. (4) 1913 BLOCKING-F1: user Desktop config refresh (PO escalation path). (5) financial-analyst 23:00 UTC next cycle: if 1913 still blocked, G/H/B steps remain SKIP.
+- **estimated_tokens**: 11500
 
 ---
 

@@ -1,23 +1,19 @@
-# TNB Audit — Cycle 53 — 2026-05-14 UTC
+# TNB Audit — Cycle 54 — 2026-05-15 UTC
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (auto-cure fired on alert-commander B-step; news-scout dedup gate holding; banking BCTC deadline confirmed filed per unified-agent 18:01 UTC; digest-predict 7-day silence; MCP gateway 8th consecutive cycle blocked)
-
----
-
-## MCP Gateway Status
-
-Live probe attempted per error-boundary skill. Tool `mcp__claude_ai_gateway__call_tool` not registered in this session scope. Result: NOT REGISTERED — **8th consecutive cycle** (c46–c53). Notebook-evidence mode authorised (established pattern).
-
-Impact: MARKET channel read blocked, signal bus direct audit blocked, Telegram dispatch blocked. All findings from notebook + flow evidence.
-
-Task 1913-fa-mcp-gateway-config-user-action: CRITICAL F1 USER ACTION persists.
+Direction: **IMPROVING** (1915-bctc-pipeline-silence DONE; 1909c unblocked; c53 auto-cure on alert-commander B-step confirmed structurally present; news-scout F/H-step gap entering cycle 2 tracking; multi-agent MCP gateway failure c114 escalated to BLOCKING-F1 in TASKS.md)
 
 ---
 
 ## Previous Handoff ACK
 
-No `## PO ACK` section found in previous handoff (c52). PO did not acknowledge c52 findings. Findings from c52 carried forward.
+`## PO ACK` found in c53 handoff (acknowledged 2026-05-14T20:03Z c109). Tasks created: janitor-1912 + 1914b. Direction IMPROVING confirmed. Carry-forward findings incorporated.
+
+---
+
+## MCP Gateway Status
+
+Live probe: per error-boundary skill, live MCP call required before BLOCKED verdict. Alert-commander notebook records 21:02 UTC cycle as "get_cycle_bootstrap unreachable after 1 retry." However, unified-agent 22:02 UTC shows "System: ok (16/16 CB)" — session-scope isolation is not uniform. TASKS.md 1913 records c114 multi-agent simultaneous failure: alert-commander c114 (21:02 UTC) + digest-predict c114 (21:34 UTC) + market-watcher c114 (20:38 UTC) all logged gateway unreachable simultaneously. PO already escalated to BLOCKING-F1 in TASKS.md text. TNB cannot perform a direct MCP probe in this session (tool not registered). Notebook-evidence mode authorised per established pattern.
 
 ---
 
@@ -25,82 +21,62 @@ No `## PO ACK` section found in previous handoff (c52). PO did not acknowledge c
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **MCP gateway not registered — 8th consecutive cycle (c46–c53)** | infrastructure / session | HIGH | escalation | Live probe: tool not found. MARKET audit, bus audit, Telegram dispatch all blocked. Task 1913: CRITICAL F1 USER ACTION (Desktop config). Persisting since c46. |
-| 2 | **digest-predict: 7-day silence (2026-05-11 21:38 → 2026-05-14 18:xx UTC)** | digest-predict | CRITICAL | tracking / escalation | Notebook: "(no session recorded)". Task 1907a escalated CRITICAL. Root cause confirmed c100: cron unwired + cowork runtime exits. Developer pick-up status unverified this cycle. |
-| 3 | **alert-commander B-step news-fallback: 3-cycle threshold crossed — AUTO-CURE FIRED** | alert-commander | medium → CURED | auto-cure | c51 10:03, c52 14:02, c53 15:04 UTC — all off-hours 2h cycles. news-fallback produced REGIME=TIGHTENING (c52 14:02) or TIGHTENING (c53 15:04) while macro snapshot returns NEUTRAL. Fix: retry-once instruction + conservative-tier WARNING added to `.claude/flows/alert-commander/stage-bootstrap.md`. |
-| 4 | **financial-analyst: runtime G/H/B step skip — 1913 F1 user-action** | financial-analyst | HIGH | methodology gap | 2026-05-13 23:05: "Layer 7: [SKIP] get_cash_flow not in package." tools ARE in agentBootstrap.ts L72-75 — Desktop gateway config mismatch. Cannot auto-cure. Persists until user refreshes Desktop config. No 2026-05-14 23:00 session visible yet (cycle runs post-18:00 UTC). |
-| 5 | **BCTC Q1/2026 banking deadline TODAY — filings status** | financial-analyst / banking | HIGH | catalyst / tracking | Unified-agent 18:01 UTC carry-over: "BCTC Q1/2026 FILING TODAY 15/05: ACB/BID/CTG/EIB/MBB/VCB/VPB — pull data at 02:00 UTC open." VCB Q4-2025 confirmed filed 14/05. Q1/2026 cohort: not confirmed filed as of 18:03 UTC. bctcReparseJob scheduled 2026-05-16. G-step OCF exercisable post-reparse IF Desktop config fixed. |
-| 6 | **news-scout inter-cycle dedup: API limitation noted — theme overlap not dedup'd** | news-scout | medium | methodology gap | 17:19 + 18:20 UTC cycles: same VN-Index ATH + FPT JV theme posted (#3179/#3180/#3182/#3183/#3185/#3186). Agent noted: "dedup API continues to return empty for self-sent signals (known limitation)." Inter-cycle dedup gate from c51 auto-cure is correct in flow; underlying API not self-returning results. Signals still firing on same theme across 2h window. |
-| 7 | **news-scout chain_catalyst F-step: 1/4 pillars on investment thesis signals** | news-scout | medium | methodology gap | 17:19 UTC #3182: M2 implied (FII mua ròng), COC/EPS/POL not stated. Systematic across all chain_catalyst signals — no pillar coverage declaration. H-step also missing (no cycle phase/pyramid tier). 1st cycle of evidence — track 2 more before auto-cure. |
-| 8 | **alert-commander: doc_self_heal noted — log_agent_work two-step pattern incomplete in package doc** | alert-commander | low | tooling | 18:03 UTC cycle log: "log_agent_work entry is incomplete — actual API requires two-call pattern; file is read-protected; dev team fix needed." Not a flow-file issue. Escalate to dev. |
-| 9 | **digest-predict ops c100 diagnosis — developer pickup unverified** | digest-predict | HIGH | tracking | c52 note: ops c100 root cause A+C hybrid (scheduler unwired + cowork runtime exits). PM TASKS.md update not confirmed this cycle. Cannot access PM notebook (not read this cycle). Observation only per constraint. |
+| 1 | **MCP gateway multi-agent simultaneous failure c114 — escalated to BLOCKING-F1** | infrastructure / alert-commander / digest-predict / market-watcher | CRITICAL | escalation | TASKS.md 1913: alert-commander c114 21:02 UTC, digest-predict c114 21:34 UTC, market-watcher c114 20:38 UTC — all "gateway unreachable." Unified-agent 22:02 UTC ok (16/16 CB). PO TASKS.md already notes BLOCKING-F1 escalation text. Task 1913 = F1 USER ACTION (Desktop config refresh). |
+| 2 | **digest-predict: 4+ day silence (2026-05-11 21:38 → 2026-05-15 ~00:00 UTC)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)." 1907a in Backlog CRITICAL. Root cause = cron unwired (Claude Desktop trigger). Linked to 1913 same gateway substrate. Developer/ops pickup status per TASKS.md: 1907a still in Backlog, no In-Progress assignment visible. |
+| 3 | **news-scout F/H-step: cycle 2 of evidence — pillar coverage absent from all chain_catalyst signals** | news-scout | medium (cycle 2/3) | methodology gap | 7 news-scout cycles 16:20–22:22 UTC: chain_catalyst #3173/#3175/#3179/#3180/#3182/#3183/#3185/#3186/#3190/#3192/#3193/#3196/#3197 — none declare pillar coverage (M2/COC/EPS/POL) or cycle phase/pyramid tier in signal payload. Pattern is systematic across all chain_catalyst output. This is cycle 2 of evidence — auto-cure threshold is 3 consecutive cycles. Track at c55. |
+| 4 | **alert-commander 21:02 UTC: full gateway abort (new failure mode vs c53 B-step regime-fallback)** | alert-commander | HIGH | escalation | Notebook 21:02 UTC: "cycle aborted at Step 0 — get_cycle_bootstrap unreachable after 1 retry." This is different from the c51–c53 REGIME_SOURCE=news-fallback pattern that c53 auto-cure addressed. The c53 cure (retry-once + conservative WARNING) is present in stage-bootstrap.md — but full gateway unavailability bypasses it entirely. Not a flow-file issue; tied to 1913 F1. |
+| 5 | **Telegram BUG channel delivery failed — TELEGRAM_REPORT_BUG_CHANNEL_ID misconfiguration** | unified-agent / ops | medium | ops | Unified-agent 22:02 UTC: "Telegram BUG channel delivery failed (TELEGRAM_REPORT_BUG_CHANNEL_ID) — noted for ops." Patterns noted: "Telegram BUG channel ID may be misconfigured." This prevents BUG-channel escalation from reaching ops. Not in TASKS.md. First cycle of evidence. |
+| 6 | **financial-analyst: no 2026-05-14 23:00 UTC session recorded** | financial-analyst | HIGH | tracking | Notebook last updated 2026-05-12 (2026-05-13 23:00 UTC session is latest). BCTC Q1/2026 banking deadline TODAY (2026-05-15). 1915-bctc-pipeline-silence DONE — VEA/VNM now extracted. FA cannot run G/H/B Layer 7 steps until 1913 Desktop config resolved. 1909c-reparse-validation UNBLOCKED (Todo, no In-Progress owner assigned yet). |
+| 7 | **news-scout dedup API limitation: 8+ cycles of same VIC/FPT ATH theme (signals #3162→#3197)** | news-scout | medium | methodology gap | All 7+ off-hours cycles 14:20–22:22 UTC: same VIC/VHM/VRE real_estate ATH + FPT JV themes re-fire because get_agent_signals returns empty for self-sent signals. 180-min gate in stage-signals.md is structurally correct but cannot enforce suppression. Task 1914-news-scout-dedup-api in Backlog MEDIUM — no In-Progress pick-up yet. |
+| 8 | **alert-commander log_agent_work two-call pattern — package doc still incomplete** | alert-commander | low | tooling | alert-commander 21:02 UTC pre-abort cycle doc_self_heal not logged (abort at Step 0). Task 1914b-log-agent-work-doc in Backlog LOW. PO ACK'd c53. No pick-up assignment yet. |
 
 ---
 
-## Methodology Scores (Layer 5, 9-step) — c53 Fresh Claims
+## Methodology Scores (Layer 5, 9-step) — c54 Fresh Claims
 
 | Agent | Score | Status | Key Gaps |
 |-------|-------|--------|----------|
-| news-scout chain_catalyst #3182 (17:19 UTC) | 3/7 applicable | NEEDS_ATTENTION | F=1/4 pillars, H=no cycle phase/pyramid, B=no threshold flags |
-| alert-commander suppression 18:03 UTC | 4/4 applicable | GOOD | n/a |
-| unified-agent 18:01 UTC full cycle | 7/9 | GOOD | G=blocked-infra (not methodology), H=partial (pyramid tier unstated) |
+| news-scout chain_catalyst #3196 (22:20 UTC) | 3/7 applicable | NEEDS_ATTENTION | F=0/4 pillars (no M2/COC/EPS/POL declared), H=no cycle phase/pyramid tier, B=no threshold flags |
+| alert-commander 18:03 UTC (c53 carry, last complete cycle) | 4/4 applicable | GOOD | n/a |
+| unified-agent 22:02 UTC | 7/9 | GOOD | G=partial (1915 DONE, reparse not yet run), H=partial (pyramid tier "equity" stated but phase not declared) |
+| financial-analyst | n/a (no 2026-05-14 23:00 session) | UNAUDITABLE | Infrastructure blocked (1913) |
+| market-watcher | n/a (last session 2026-05-13) | carry from c53 GOOD | DXY tool not in pkg (low) |
+| digest-predict | n/a (4-day silence) | CRITICAL/UNAUDITABLE | — |
 
 ---
 
 ## Auto-Cures Applied
 
-| # | File | Description | Evidence |
-|---|------|-------------|----------|
-| 1 | `.claude/flows/alert-commander/stage-bootstrap.md` | Added retry-once instruction + conservative-tier WARNING before news-fallback acceptance | 3-cycle evidence: c51 10:03 UTC, c52 14:02 UTC, c53 15:04 UTC — all off-hours, REGIME_SOURCE=news-fallback producing inconsistent regime vs macro snapshot |
-
----
-
-## Persisting Blockers
-
-1. **MCP gateway (1913)**: 8th cycle. F1 user-action. Desktop config refresh required.
-2. **digest-predict (1907a/b)**: 7-day silence. CRITICAL. Developer pickup status unconfirmed.
-3. **financial-analyst G/H/B skip**: Infrastructure (Desktop config). Not flow-curable.
-4. **BCTC Q1/2026 banking cohort**: Not confirmed filed as of 18:03 UTC. Watch 02:00–09:00 UTC 2026-05-15 for filings + price anomalies.
-5. **news-scout dedup API**: Self-sent signals not returned by `get_agent_signals` — 180-min gate in flow is correct but API doesn't provide the data to enforce it. Dev fix needed (API side).
-6. **Alert precision N=0/440**: Bug 2874 open. Scoring pipeline stalled.
+None this cycle. c53 cure (alert-commander stage-bootstrap.md retry-once + conservative WARNING) is confirmed present in file and was validated at 18:03 UTC c53. The 21:02 UTC failure is a different mode (full gateway down, not regime-fallback) — not addressable via flow-file cure. No 3-cycle threshold met for news-scout F/H-step yet (cycle 2).
 
 ---
 
 ## Positive Signals
 
-- news-scout c51 auto-cure dedup gate: still structurally present in stage-signals.md. API limitation is separate from the flow gate.
-- alert-commander off-hours suppression logic: correctly suppressed 1 urgent_news (FPT JV conf=0.50 < 0.60 NEUTRAL threshold) at 18:03 UTC. B/C steps working on suppression path.
-- unified-agent 4/4 pillars + REGIME_TRANSITION logged. Authoritative macro snapshot discipline maintained.
-- VN-Index 1,925 new ATH confirmed. REGIME NEUTRAL (macro_snapshot authoritative). CARRY FII_OUTFLOW_RISK.
-- 1912a Go migration: 24h smoke window running (started 2026-05-14T14:00Z). 9277 tests parity.
+- **1915-bctc-pipeline-silence DONE (2026-05-15)**: VEA + VNM Q4-2025 rows confirmed in financial_reports + pdf_extracted_text. bctcReparseJob log entry within last hour confirmed. 1909c-reparse-validation UNBLOCKED. Major uplift for FA Layer 7 G-step once 1913 resolved.
+- **1912 Go migration program COMPLETE**: All 9 services on Go stack, 9277/9277 tests parity. Signal dropped. Positive operational baseline.
+- **1916a + 1916b DONE**: VPS discover route + cafef strategy replacement shipped. BCTC discovery pipeline repaired for 10+/14 failing tickers.
+- **unified-agent 22:02 UTC GOOD**: 16/16 CB pass. VN-Index 1,925 ATH confirmed. Khối ngoại đảo chiều mua ròng. REGIME NEUTRAL (macro_snapshot authoritative).
+- **news-scout NEUTRAL carry-regime shift confirmed**: 14:20 UTC cycle correctly detected TIGHTENING→NEUTRAL shift (news-scout suppressed ATH signals under TIGHTENING, then re-fired after NEUTRAL confirmed). Threshold discipline functioning.
+- **c53 auto-cure validated**: alert-commander 18:03 UTC used get_macro_snapshot (not news-fallback) — retry-once cure is structurally sound. The 21:02 UTC failure is a separate, escalated issue (1913).
+
+---
+
+## Persisting Blockers
+
+1. **MCP gateway / 1913** (BLOCKING-F1 escalated): 10+ cycles. Multi-agent simultaneous failure c114. F1 USER ACTION — Desktop config refresh required. Blocks FA Layer 7, digest-predict, and alert-commander in off-hours cowork sessions.
+2. **digest-predict / 1907a** (CRITICAL OPS): 4-day+ silence. Linked to 1913 substrate. 1907a in Backlog with no In-Progress owner.
+3. **Alert precision N=0/441** (bug 2874): Scoring pipeline stalled. Still open, no fix this cycle.
+4. **news-scout dedup API** (1914 Backlog MEDIUM): Self-sent signals not returned. No In-Progress pick-up.
+5. **Telegram BUG channel delivery** (new finding #5): TELEGRAM_REPORT_BUG_CHANNEL_ID env var misconfiguration — BUG escalations silently dropped. Not yet in TASKS.md.
+6. **1909c-reparse-validation** (Todo, CRITICAL): UNBLOCKED post-1915. Needs ops to assign and run bctcReparseJob by 2026-05-16. No In-Progress owner.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **Watch alert-commander B-step 20:03 UTC** — does retry-once cure resolve news-fallback? First validation of c53 auto-cure.
-2. **Banking BCTC filings 02:00–09:00 UTC 2026-05-15** — ACB/BID/CTG/EIB/MBB/VCB/VPB. Watch market-watcher + alert-commander for price anomalies.
-3. **financial-analyst 23:00 UTC cycle** — if G/H/B still SKIP, confirm root cause is still Desktop config (not regression). Flag if changed.
-4. **1912a smoke window closes 2026-05-15T14:00Z** — 1912d-cutover-cleanup triggers if clean.
-5. **news-scout F/H-step** — track cycle 2 of pillar/cycle-phase gap in chain_catalyst signals.
-6. **digest-predict** — confirm developer pickup of 1907a via PM TASKS.md on next available read.
-
----
-## PO ACK
-- Read by: po
-- At: 2026-05-14T20:03:43Z (c109)
-- Tasks created:
-  - `janitor-1912` (Backlog, LOW CLEAN, code-janitor) — covers RF-1 (stock-price stale TS tests) + RF-2 (alert-engine tracked server binary) from 1912 program post-merge architect review.
-  - `1914b-log-agent-work-doc` (Backlog, LOW CHORE, agent-md-editor) — TNB finding #8 alert-commander package doc gap on two-call pattern.
-- Existing tasks covering findings:
-  - Finding #1 (MCP gateway 8th cycle) → tracked in **1913-fa-mcp-gateway-config-user-action** (CRITICAL F1 USER). No new task.
-  - Finding #2 (digest-predict 7d silence CRITICAL) → tracked in **1907a-digest-predict-silence** (CRITICAL OPS) + 1907b in archive footer. No new task.
-  - Finding #3 (alert-commander auto-cure FIRED) → POSITIVE signal, no action. Acknowledged.
-  - Finding #4 (FA G/H/B runtime skip) → same substrate as 1913. No new task.
-  - Finding #5 (BCTC Q1/2026 banking deadline TODAY 2026-05-15) → observational; will resolve via existing **1909c-reparse-validation** (HOLD for 2026-05-16 reparse). No new task.
-  - Finding #6 (news-scout dedup API limitation) → tracked in **1914-news-scout-dedup-api** (MEDIUM SPRINT-S). No new task.
-  - Finding #7 (news-scout F-step 1/4 pillars + H-step missing) → **1st cycle of evidence**, TNB protocol requires 3rd cycle before auto-cure. Monitor only; no task yet.
-  - Finding #9 (digest-predict ops c100 developer pickup unverified) → subordinate to 1907a, observational.
-- Skipped findings: none
-- Persisting blockers acknowledged (1913, 1907a, FA-skip, BCTC banking cohort, dedup API, alert precision N=0/440) — all already in TASKS.md or known.
-- Direction IMPROVING confirmed. 1912 PROGRAM COMPLETE c108 noted.
+1. **Telegram BUG channel env var** — ops must verify TELEGRAM_REPORT_BUG_CHANNEL_ID config. BUG escalations are silently failing.
+2. **1909c-reparse-validation** — bctcReparseJob must run 2026-05-16. FA Layer 7 G-step exercisable post-reparse (once 1913 also resolved). Assign In-Progress owner.
+3. **news-scout F/H-step** — track cycle 3. If chain_catalyst signals still show 0/4 pillars + no cycle phase at c55, auto-cure threshold reached → modify stage-signals.md to require pillar summary in payload.detail.
+4. **1913 BLOCKING-F1** — user desktop config refresh is the only unblock path. TNB cannot escalate further; recommend PO/user action.
+5. **digest-predict 1907a** — confirm ops/developer pickup via TASKS.md. If still Backlog at c55 → recommend explicit sprint assignment.
