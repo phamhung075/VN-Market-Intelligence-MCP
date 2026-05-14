@@ -8,3 +8,4 @@ Main terminal = router.
 - auto continue after compact
 - read docs before changing anything
 - update docs after changing anything
+- NO branches for dev — all parallel work stays on `main`. Same codebase, switching branches breaks code coherence.
