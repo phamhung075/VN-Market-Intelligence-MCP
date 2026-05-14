@@ -435,3 +435,7 @@
 
 ### Cycle 12:19 UTC
 - BLOCKED at step 0: get_cycle_bootstrap — MCP gateway unreachable (connection refused port 3000). Signal dropped. Cycle skipped.
+
+### Cycle (01:19–01:22 UTC 2026-05-14)
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst(3130), urgent_news ACB(3131)] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]

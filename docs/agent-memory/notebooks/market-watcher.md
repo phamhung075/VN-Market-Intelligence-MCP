@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-13 23:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 00:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -974,3 +974,19 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 - **actions**: 0 signals posted (2 suppressed as duplicates). WORK telegram sent. Notebook committed.
 - **next_cycle_hint**: Next cycle ~02:38 UTC (market open window). Watch VRE for open near 33,000 support. GAS rally — validate if Brent holds 105+. Banking sector (ACB -0.88%, EIB -2.00%) — monitor for continued FII outflow pressure in next session. Fed rate hike concerns = TIGHTENING likely to persist.
 - **estimated_tokens**: 1500
+
+### Cycle (00:41–00:42 UTC)
+- Stocks: 36 (watchlist) | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VRE] | pe_risk: [VRE]
+- ⚠️ NOTE: GAS (id=3128) and VRE (id=3129) price_anomaly signals posted — duplicate guard should have suppressed (same closing prices 2026-05-13 08:59 UTC, prior signals emitted in earlier cycles today). Lookback window (120min) insufficient to detect prior-cycle emissions; signals expired before this cycle. Recommend extending lookback or persisting same-session signal registry.
+
+## Metrics (cycle 2026-05-14 00:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 36 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2200 |

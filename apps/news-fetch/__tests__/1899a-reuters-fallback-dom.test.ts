@@ -81,16 +81,13 @@ mock.module('playwright', () => ({
     chromium: {
       launch: mock(async () => ({
         newContext: mock(async () => ({
+          addInitScript: mock(async () => {}),
           newPage: mock(async () => activePage),
         })),
         close: mockClose,
       })),
     },
   },
-}));
-
-mock.module('playwright-stealth', () => ({
-  default: mock(async () => {}),
 }));
 
 const { ReutersStealthFallback } = await import(
