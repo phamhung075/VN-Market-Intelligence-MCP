@@ -2,7 +2,63 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 (cycle 52) | Cycles completed: 52
+**Last updated:** 2026-05-14 (cycle 53) | Cycles completed: 53
+
+---
+
+## Cycle 53 Watch Notes (2026-05-14 ~18:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Auto-cure: 1 FIRED (alert-commander B-step retry-once)
+
+**MCP Gateway:** NOT registered — 8th consecutive cycle (c46–c53). Live probe attempted: tool not found. Task 1913: CRITICAL F1 USER ACTION (Desktop config). Notebook-evidence mode.
+
+**AUTO-CURE FIRED — alert-commander stage-bootstrap.md B-step news-fallback:**
+- File: `.claude/flows/alert-commander/stage-bootstrap.md`
+- 3-cycle evidence: c51 (10:03 UTC), c52 (14:02 UTC), c53 (15:04 UTC) — all off-hours 2h cycles, REGIME_SOURCE=news-fallback
+- Pattern: news-fallback produces TIGHTENING while macro snapshot returns NEUTRAL — systematic regime drift
+- Cure: retry-once instruction + conservative-tier WARNING added before news-fallback acceptance
+- First validation: watch alert-commander 20:03 UTC cycle
+
+**KEY FINDINGS THIS CYCLE:**
+- alert-commander 15:04 UTC: REGIME_SOURCE=news-fallback (3rd cycle — threshold crossed, auto-cure fired). 18:03 UTC cycle: correct (get_macro_snapshot used — NEUTRAL). Suppression logic correct (FPT conf=0.50 < 0.60).
+- news-scout 17:19–18:20 UTC: same VN-Index ATH + FPT JV theme repeated across 3 cycles (#3179/#3180/#3182/#3183/#3185/#3186). dedup API known limitation (self-sent signals not returned). 180-min gate in flow is structurally correct but cannot be enforced without API fix. Dev escalation noted.
+- news-scout chain_catalyst F/H-step: 1/4 pillars on investment thesis, no cycle phase/pyramid tier declared. 1st cycle of evidence — need 2 more.
+- unified-agent 18:01 UTC: Pillars 4/4, REGIME_TRANSITION logged, VN-Index 1,925 new ATH confirmed. get_portfolio_conviction timeout (held MODERATE 0.53). GOOD score 7/9.
+- financial-analyst: no 2026-05-14 session yet (~23:00 UTC cycle). Last session 2026-05-13 23:05 — G/H/B SKIP (Desktop config, 1913).
+- digest-predict: 7-day silence (2026-05-11 21:38 → now). Tasks 1907a/b open. Developer pickup unconfirmed.
+- BCTC Q1/2026 banking deadline: NOT confirmed filed as of 18:03 UTC. Watch 02:00–09:00 UTC 2026-05-15.
+- Previous handoff (c52) NOT ACK'd by PO.
+
+**METHODOLOGY SCORES (Layer 5, 9-step — c53 fresh claims):**
+- news-scout #3182 chain_catalyst: 3/7 applicable → NEEDS_ATTENTION (F=1/4 pillars, H=no phase/tier, B=no threshold flags)
+- alert-commander 18:03 suppression: 4/4 applicable → GOOD
+- unified-agent 18:01 full cycle: 7/9 → GOOD (G blocked-infra, H partial)
+
+**MARKET STATE:**
+- VN-Index: 1,925 (+1.43%) NEW ATH | REGIME: NEUTRAL (macro_snapshot authoritative) | CARRY: FII_OUTFLOW_RISK (-33bp)
+- US10Y: NEUTRAL (4.45%) | DXY: USD STABLE (98.78) | Brent: 105.52 (-2.12σ below avg, geopolitical de-escalation)
+- FPT: +4.53% (JV news), -8.0% portfolio position, conviction 0.53 declining
+- VCI: double institutional exit confirmed (VCAMDF + Phượng fund)
+- SGI Capital: >70% cash — risk-off on ATH narrow breadth
+
+**SCORES SUMMARY:**
+- alert-commander: GOOD (c53 off-hours B-step cured; 18:03 cycle correct)
+- news-scout: NEEDS_ATTENTION (dedup API limitation, F/H-step gaps cycle 1)
+- unified-agent: GOOD (7/9, 4/4 pillars)
+- market-watcher: last session 2026-05-13 — carry from c52 (GOOD)
+- financial-analyst: NEEDS_ATTENTION (7-day since last session, G/H/B SKIP infrastructure)
+- digest-predict: CRITICAL (7-day silence)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-14T18-30-00Z.json (priority: high)
+
+## Cycle — 2026-05-14 (cycle 53, ~18:30 UTC)
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEEDS_ATTENTION/IMPROVING. AUTO-CURE FIRED: alert-commander stage-bootstrap.md — retry-once + conservative-tier WARNING on B-step news-fallback (3-cycle evidence c51/c52/c53). news-scout dedup API limitation noted (self-sent signals not returned; 180-min gate in flow correct but unenforceable). news-scout F/H-step gaps: chain_catalyst signals 1/4 pillars, no cycle phase declared (cycle 1 of evidence). digest-predict 7-day silence (CRITICAL). Banking BCTC Q1/2026 not confirmed filed as of 18:03 UTC. MCP gateway 8th consecutive cycle blocked. Previous handoff NOT ACK'd by PO.
+- **actions**: AUTO-CURE applied (alert-commander/stage-bootstrap.md). Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-14T18-30-00Z.json). Notebook updated. 0 Telegram (MCP unregistered).
+- **next_cycle_hint**: (1) Validate alert-commander B-step retry-once cure at 20:03 UTC cycle. (2) Banking BCTC Q1/2026: watch 02:00–09:00 UTC 2026-05-15 for ACB/BID/CTG/EIB/MBB/VCB/VPB filings + price anomalies. (3) financial-analyst 23:00 UTC — confirm G/H/B still infra-blocked (not regression). (4) news-scout F/H-step: track cycle 2 for auto-cure targeting. (5) 1912a smoke clean 2026-05-15T14:00Z → 1912d-cutover. (6) digest-predict dev pickup — confirm via PM TASKS.md.
+- **estimated_tokens**: 10500
 
 ---
 
