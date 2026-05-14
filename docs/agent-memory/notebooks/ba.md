@@ -1,10 +1,40 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1909 (c94)
+**Last updated:** 2026-05-14 | **Sprint:** 1912a (c98)
 
 ## Current state
 
-REQ_1910 spec complete (c94). 2 sub-tasks: 1910a-ism-tool (dev-mcp-server, M), 1910b-effr-package-reg (agent-md-editor, XS). SD-1 raised (FRED ISM series IDs unconfirmed on public CSV endpoint — dev must confirm via FRED API key or alt source). D-step 3-cycle evidence confirmed — 1910b ships immediately. TASKS.md at 80L cap — PM must compact before entry.
+REQ_1912a spec complete (c98). 1912a = Phase 1 of Go migration program. Gateway Go rewrite spec. 11 ACs. 1 critical deviation flagged (D-1: /healthz absent from TS source — architect must clarify). Dev role gap: no go-capable agent exists — Option A (extend dev-api-gateway) recommended before PM sprintifies. Signal dropped to architect.
+
+## Last session summary (2026-05-14) — 1912a
+
+Sprint 1912a — api-gateway Go migration spec.
+
+Key findings from TS source inspection:
+- 5 routes enumerated: GET /health, GET /health/:service, GET /health-dashboard, ANY /api/* (verbatim proxy), ANY /:service/* (prefix-strip proxy)
+- /healthz does NOT exist in TS source — only in architect brief § 3.1 + TASKS.md. D-1 deviation raised (AC-11 blocks impl until resolved).
+- 10 services in registry: 9 probeable + 1 virtual alias (api, noProbe=true, routes /api/* to MCP verbatim).
+- Proxy timeout = 5x health timeout (10 000ms vs 2 000ms).
+- ENV vars: PORT, MCP_URL, PDF_URL, RAG_URL, TA_URL, MACRO_URL, STOCK_URL, KINH_DICH_URL, ALERT_URL, NEWS_URL.
+- 5 Vitest files confirmed: aggregate-health-service (domain unit), static-service-registry (infra unit), aggregate-health-usecase (integration), 1841a-health-dashboard (handler+HTML), 1892b-api-push-routes (proxy routing).
+- No SQLite in gateway — CGO not needed (mattn/go-sqlite3 N/A for Phase 1).
+
+11 ACs:
+- AC-1: Dockerfile golang:1.22-alpine multi-stage builds cleanly
+- AC-2: JSON parity /health + /health/:service
+- AC-3: Proxy parity /api/* and /:service/*
+- AC-4: Dashboard HTML parity
+- AC-5: go test ./... covers all 5 Vitest scenarios
+- AC-6: mcp-server 8804/8804 unchanged
+- AC-7: log/slog JSON schema documented
+- AC-8: rollback validated
+- AC-9: DDD package layout
+- AC-10: 24h smoke window before P2
+- AC-11: /healthz deviation resolved before impl
+
+3 deviations: D-1 (/healthz missing), D-2 (net/http vs chi — developer choice), D-3 (HTML template effort absorbed).
+
+No PO blockers beyond dev-role decision (Option A or B).
 
 ## Last session summary (2026-05-14) — 1910
 
