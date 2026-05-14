@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 02:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 03:23 UTC | **Status:** OPERATIONAL
+
+### Cycle (03:20–03:23 UTC) 2026-05-14
+- Items: 20 | Impacts: 10 | Signals: [urgent_news #3135 FPT, chain_catalyst #3136 IEA-oil/GAS] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: FPT +5.09% (70,700→74,300) breached +5% threshold; US markets record on tech stocks; FPT April profit +21% YoY. Regime=TIGHTENING bullish adj 9×0.7=6.3 — borderline (price_surge already independently alerted at 02:45). Filed urgent_news #3135 on price action grounds. IEA global oil reserves declining record pace, Brent 105.85; TIGHTENING+bearish adj 9×1.3=11.7 → chain_catalyst #3136 fired (cpi_pressure_risk, sectors: oil_gas/chemicals/steel). Foreign selling 14 sessions ~13,000B: #3132 already fired prior cycle. Gold volatile (drop 13/5 then rebound 14/5): no sustained >3% weekly spike → suppressed.
+- Suppressed: Foreign sell-off (duplicate of #3132); Gold spike (no confirmed >3%/week); DNNN stock fundraising (policy news, no direct watchlist impact); SSC foreign capital speech (regulatory, no threshold)
 
 ### Cycle (02:15–02:21 UTC) 2026-05-14
 - Items: 20 | Impacts: 3 | Signals: [chain_catalyst #3132 FII-outflow+US-inflation] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
