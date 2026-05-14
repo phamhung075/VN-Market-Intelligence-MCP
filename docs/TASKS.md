@@ -35,6 +35,7 @@
 ## In Progress
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+| 1915-fix-part1 | **DONE 2026-05-14 (branch task/1915-fix-part1-scan-disk-empty-watchlist, SHA 740615c2)** — scanDiskForStrandedPdfs empty-watchlist fallback + startScheduler.ts startup catch-up db injection fix. tickerFromFilename() helper added. 8 new DSE tests GREEN. tsc 0. Needs container redeploy + manual trigger to verify AC (financial_reports > 0). | CRITICAL | FIX | dev-mcp-server | — | container-redeploy |
 
 ---
 
