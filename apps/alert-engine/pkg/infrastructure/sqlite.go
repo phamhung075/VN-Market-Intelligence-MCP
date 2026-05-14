@@ -30,8 +30,19 @@ func OpenAlertDB(path string) (*sql.DB, error) {
 
 // InitAlertTables runs idempotent DDL to create tables + indexes + outcome columns.
 // Mirrors TS initAlertTables + runAlertOutcomeMigration (AC-10, AC-11).
+//
+// DDL is split into three ordered phases to guarantee correct ordering on
+// pre-migration (TS-era) DBs where alert_engine_records exists WITHOUT outcome
+// columns. Mixing CREATE INDEX referencing outcome with the base CREATE TABLE
+// block would fail on those DBs because the partial index is evaluated before
+// ALTER TABLE can add the column.
+//
+// Phase 1: base tables + non-outcome indexes
+// Phase 2: ALTER TABLE to add outcome columns (idempotent, ignores duplicate-column error)
+// Phase 3: partial index referencing outcome — safe only after Phase 2 ensures column exists
 func InitAlertTables(db *sql.DB) error {
-	ddl := `
+	// Phase 1 — base schema (no outcome columns, no outcome index).
+	phase1 := `
 	CREATE TABLE IF NOT EXISTS alert_engine_records (
 		id            INTEGER PRIMARY KEY AUTOINCREMENT,
 		stocks        TEXT NOT NULL,
@@ -40,29 +51,22 @@ func InitAlertTables(db *sql.DB) error {
 		fingerprint   TEXT NOT NULL DEFAULT '',
 		severity      TEXT NOT NULL DEFAULT 'medium',
 		triggered_at  TEXT NOT NULL,
-		sent_telegram INTEGER NOT NULL DEFAULT 0,
-		outcome       TEXT,
-		outcome_at    TEXT,
-		outcome_detail TEXT
+		sent_telegram INTEGER NOT NULL DEFAULT 0
 	);
 	CREATE INDEX IF NOT EXISTS idx_alert_engine_stocks
 		ON alert_engine_records(stocks, triggered_at);
 	CREATE INDEX IF NOT EXISTS idx_alert_engine_fingerprint
 		ON alert_engine_records(fingerprint, triggered_at);
-	CREATE INDEX IF NOT EXISTS idx_alerts_outcome_pending
-		ON alert_engine_records(outcome)
-		WHERE outcome IS NULL;
-
 	CREATE TABLE IF NOT EXISTS alert_mutes (
 		stock      TEXT PRIMARY KEY,
 		muted_until TEXT NOT NULL
 	);
 	`
-	if _, err := db.Exec(ddl); err != nil {
-		return fmt.Errorf("init alert tables: %w", err)
+	if _, err := db.Exec(phase1); err != nil {
+		return fmt.Errorf("init alert tables phase1: %w", err)
 	}
 
-	// Idempotent ALTER TABLE for outcome columns — existing DBs may lack them.
+	// Phase 2 — idempotent ALTER TABLE for outcome columns.
 	// SQLite returns "duplicate column name" if already present; we ignore that.
 	alterCols := []struct {
 		col string
@@ -85,6 +89,15 @@ func InitAlertTables(db *sql.DB) error {
 			return fmt.Errorf("alter column %s: %w", ac.col, err)
 		}
 	}
+
+	// Phase 3 — partial index on outcome, safe now that outcome column exists.
+	// "already exists" is benign (idempotent on fresh DBs).
+	if _, err := db.Exec(
+		`CREATE INDEX IF NOT EXISTS idx_alerts_outcome_pending ON alert_engine_records(outcome) WHERE outcome IS NULL`,
+	); err != nil {
+		return fmt.Errorf("init alert tables phase3 outcome index: %w", err)
+	}
+
 	return nil
 }
 

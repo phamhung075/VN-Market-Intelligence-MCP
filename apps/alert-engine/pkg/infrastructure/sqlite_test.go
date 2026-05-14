@@ -46,6 +46,75 @@ func insertTestAlert(t *testing.T, db *sql.DB, stock string, triggeredAt string)
 	return id
 }
 
+// ── AC-10: InitAlertTables pre-migration (TS-era schema) ─────────────────────
+
+// TestInitAlertTables_PreMigrationDB seeds a DB with the TS-era schema
+// (alert_engine_records WITHOUT outcome columns) and verifies that
+// InitAlertTables succeeds, adds outcome/outcome_at/outcome_detail, and
+// creates idx_alerts_outcome_pending.
+// Regression for: DDL ordering bug — partial index on outcome ran before
+// ALTER TABLE added the column, causing "no such column: outcome" on deploy.
+func TestInitAlertTables_PreMigrationDB(t *testing.T) {
+	db := freshDB(t)
+
+	// Mimic TS-era schema: table exists WITHOUT outcome columns.
+	_, err := db.Exec(`
+		CREATE TABLE alert_engine_records (
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			stocks        TEXT NOT NULL,
+			signal_types  TEXT NOT NULL DEFAULT '',
+			message       TEXT NOT NULL DEFAULT '',
+			fingerprint   TEXT NOT NULL DEFAULT '',
+			severity      TEXT NOT NULL DEFAULT 'medium',
+			triggered_at  TEXT NOT NULL,
+			sent_telegram INTEGER NOT NULL DEFAULT 0
+		)
+	`)
+	if err != nil {
+		t.Fatalf("seed pre-migration table: %v", err)
+	}
+
+	// InitAlertTables must succeed on the pre-migration schema.
+	if err := InitAlertTables(db); err != nil {
+		t.Fatalf("InitAlertTables on pre-migration DB: %v", err)
+	}
+
+	// Assert outcome, outcome_at, outcome_detail columns are present.
+	rows, err := db.Query(`PRAGMA table_info(alert_engine_records)`)
+	if err != nil {
+		t.Fatalf("PRAGMA table_info: %v", err)
+	}
+	defer rows.Close()
+	cols := make(map[string]bool)
+	for rows.Next() {
+		var cid int
+		var name, colType string
+		var notNull, pk int
+		var dflt interface{}
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dflt, &pk); err != nil {
+			t.Fatalf("scan table_info row: %v", err)
+		}
+		cols[name] = true
+	}
+	for _, want := range []string{"outcome", "outcome_at", "outcome_detail"} {
+		if !cols[want] {
+			t.Errorf("expected column %q to exist after InitAlertTables, but it is missing", want)
+		}
+	}
+
+	// Assert idx_alerts_outcome_pending exists.
+	var idxName string
+	err = db.QueryRow(
+		`SELECT name FROM sqlite_master WHERE type='index' AND name='idx_alerts_outcome_pending'`,
+	).Scan(&idxName)
+	if err != nil {
+		t.Fatalf("idx_alerts_outcome_pending not found in sqlite_master: %v", err)
+	}
+	if idxName != "idx_alerts_outcome_pending" {
+		t.Errorf("expected index name %q, got %q", "idx_alerts_outcome_pending", idxName)
+	}
+}
+
 // ── AC-10: InitAlertTables idempotent ────────────────────────────────────────
 
 func TestInitAlertTables_Idempotent(t *testing.T) {
