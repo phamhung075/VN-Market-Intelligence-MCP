@@ -1,6 +1,57 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c109 — 1916a-vps-discover-route APPROVED (b029167c)
+**Last updated:** 2026-05-14 | **Session:** c114 — 1915-fix-part1 APPROVED (66275c67)
+
+## Session 2026-05-14 c114 — 1915-fix-part1-scan-disk-empty-watchlist QA gate
+
+### TASK REPORT — 1915-fix-part1
+
+```
+date: 2026-05-14
+outcome: APPROVED
+```
+
+#### Test Results
+
+Targeted (bun test src/__tests__/1915-scan-disk-empty-watchlist.test.ts src/__tests__/1416c-hpg-bctc-disk-scan.test.ts):
+- 14 pass / 0 fail (8 DSE-01..08 + 6 1416c including 1 updated + 1 new)
+
+Full suite (bun test):
+- 9281 pass / ~36 fail (pre-existing, confirmed against 1916b baseline: 9284 pass / 45 fail — 1915 branch has fewer failures, OOM crash at tail is pre-existing Bun v1.3.13 C++ panic unrelated to this change)
+- TypeScript: 0 errors (bun tsc --noEmit + pre-push hook PASS)
+
+#### DDD Audit: PASS
+
+- bctcReparseJob.ts is interface/scheduler layer — infrastructure imports at lines 26-31 are correct and pre-existing.
+- domain/ layer unchanged. grep confirmed zero infrastructure imports in domain/.
+- New `tickerFromFilename()` and `scanDiskForStrandedPdfs()` code: pure TS logic + DB query, no new layer violations.
+
+#### Security Audit: PASS
+
+- No process.env usage in changed files. All env reads use Bun.env.
+- No hardcoded secrets, API keys, passwords.
+- SQL parameterized: `WHERE action_code = ? AND period_year = ? AND period_type = ?` (line 496-500).
+
+#### AC Coverage
+
+- DSE-01: empty watchlist + VEA PDF → returns VEA. PASS.
+- DSE-02: empty watchlist + VNM PDF → returns VNM. PASS.
+- DSE-03: empty watchlist + VEA+VNM → returns both. PASS.
+- DSE-04: empty watchlist + unparseable filename → 0 returned. PASS.
+- DSE-05: empty watchlist + already-filed VNM → 0 returned. PASS.
+- DSE-06: populated watchlist (VNM only) + both PDFs → only VNM. PASS (regression guard).
+- DSE-07: populated watchlist + already-filed → 0. PASS (regression guard).
+- DSE-08: startScheduler.ts setTimeout calls runBctcReparseWithDb(db) not runBctcReparseJob(). PASS.
+
+#### Runtime AC (ops action required)
+
+Container redeploy needed. After deploy, bctcReparseJob cron (09:30 GMT+7) or manual trigger will process VEA+VNM Q4-2025 on-disk PDFs. AC: financial_reports > 0, pdf_extracted_text > 0, bctcReparseJob log within last hour.
+
+#### Verdict: APPROVED
+
+Merge commit: `66275c67` on main. Branch deleted locally + remote.
+
+---
 
 ## Session 2026-05-14 c109 — 1916a-vps-discover-route QA gate
 
