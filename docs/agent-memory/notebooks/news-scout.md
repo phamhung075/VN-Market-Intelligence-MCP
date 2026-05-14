@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 13:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 14:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (14:20–14:22 UTC)
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3173] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3173: sector_event bullish → VIC, VHM, VRE, SSI, HCM (real_estate+securities) — VN-Index ATH lịch sử, khối ngoại đảo chiều mua ròng; regime=NEUTRAL adj_score=8
+- Suppressed: FPT Japan JV (chain 5/10 neutral, below threshold); Gold drop (no watchlist stock); VCI fund exit (impact 5/10, below urgent_news ≥8)
+- Gold: 4691.2 (falling, no spike). Brent: 105.48 (stable). No PMI data. Regime shifted TIGHTENING→NEUTRAL vs prior cycle.
 
 ### Cycle (13:20–13:22 UTC)
 - Items: 20 | Impacts: 0 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
