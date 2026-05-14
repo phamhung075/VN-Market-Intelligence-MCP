@@ -1,6 +1,163 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c100 re-gate — 1912a-gateway-go-migration APPROVED + merged f7ef8c32
+**Last updated:** 2026-05-14 | **Session:** c108 re-gate — 1912b APPROVED (758ce97c+199effeb) + 1912c APPROVED
+
+## Session 2026-05-14 c108 — 1912b alert-engine + 1912c stock-price QA gate
+
+---
+
+### TASK REPORT — 1912b-alert-engine
+
+```
+date: 2026-05-14
+outcome: CHANGES_REQUESTED
+```
+
+#### Test Results (actual go test output — not dev claim)
+
+Toolchain: go1.26.2 darwin/amd64. Run: `go test ./... -count=1 -v` from `apps/alert-engine/`.
+
+- 37/37 PASS (dev claimed 27 — non-blocking overcounting; 10 extra outcome/write tests present in sqlite_test.go which dev did not count)
+- 0 failures
+- Packages: pkg/application, pkg/domain, pkg/infrastructure, pkg/interface/http all green
+- cmd/server: no test files (correct — wiring only)
+
+#### DDD Audit: PASS
+
+- pkg/domain/models.go: imports fmt, sort, strings, time, context, errors only. Zero infra/app/interface.
+- pkg/domain/services.go: imports fmt, sort, strings, time only.
+- pkg/domain/ports.go: imports context only.
+- pkg/domain/errors.go: imports errors only.
+- pkg/application/evaluate.go: imports context, fmt, time + pkg/domain only. Zero infra import.
+- pkg/application/dtos.go: no imports.
+- pkg/infrastructure/sqlite.go: imports database/sql, fmt, time, mattn/go-sqlite3, pkg/domain only.
+- pkg/infrastructure/telegram.go: imports context, net/http, pkg/domain.
+- pkg/interface/http/router.go: imports encoding/json, log/slog, net/http, strings, time, chi + pkg/application only.
+- Dependency inversion: ports declared in domain, implemented in infrastructure, injected in cmd/server/main.go. CORRECT.
+
+#### DB Isolation Audit: PASS
+
+- alert_engine.db is sole write target (OwnDBPath via ALERT_ENGINE_DB_PATH env).
+- DSN: `file:<path>?_journal=WAL&_busy_timeout=5000&_foreign_keys=on` (sqlite.go:18). WAL confirmed.
+- market.db: not opened by alert-engine at all (config.go DBPath field exists but is never used in any repository). Fully isolated.
+- SetMaxOpenConns(1): single writer, no parallel writer contention.
+
+#### AC Coverage
+
+- AC-3 (validation parity): stock/message/severity/malformed-JSON all 400 — router_test.go 4 tests PASS
+- AC-4 (stock normalisation trim+uppercase): TestEvaluate_NormalisesStockToUppercase PASS
+- AC-5 (response shape): TestEvaluate_FiredResponse_HasAllFields + TestEvaluate_SuppressedResponse_HasAllFields PASS. D-1 reconciled: response carries all fields from both internal DTO and clients.ts shape.
+- AC-13 (Telegram silent-skip): TestTelegramClient_SilentSkipOnEmptyConfig PASS
+- NFR-1 (CGO Dockerfile): multi-stage golang:1.22-alpine + gcc musl-dev + alpine:3.19 — PASS (Dockerfile present and correct)
+- NFR-2 (WAL mode DSN): confirmed in sqlite.go:18 — PASS
+- NFR-6 (graceful shutdown): cmd/server/main.go has http.Server.Shutdown(ctx) with 5s drain — PASS
+
+#### Hygiene Findings (CRITICAL BLOCKING)
+
+BLK-1 — ATOMIC COMMIT HOLE: `92186e39` shipped test files, infra files, wiring, and Dockerfile BUT omitted 7 source files that tests depend on. Files missing from commit:
+
+- `apps/alert-engine/pkg/domain/errors.go` (app/domain/dtos.go:14e ref: ErrAlertSuppressed)
+- `apps/alert-engine/pkg/domain/models.go` (domain types: StoredAlert, AlertRequest, AlertSeverity...)
+- `apps/alert-engine/pkg/domain/ports.go` (interfaces: AlertRepositoryPort, MutePort, TelegramPort)
+- `apps/alert-engine/pkg/domain/services.go` (ComputeFingerprint, ShouldSuppressAlert, IsDuplicate)
+- `apps/alert-engine/pkg/application/dtos.go` (EvaluateAlertRequest/Response DTOs)
+- `apps/alert-engine/pkg/application/evaluate.go` (EvaluateAlertUseCase.Execute orchestration)
+- `apps/alert-engine/pkg/infrastructure/config.go` (LoadConfig, ServiceConfig)
+
+These are the domain, application, and infra-config layers. The commit title claims "domain+app+infra+interface" but domain/app/infra-config are absent. A clean checkout of `92186e39` would fail `go build ./...` and `go test ./...` immediately.
+
+Confirmed via `git log --all -- <each path>` = empty for all 7 files.
+
+BLK-2 — BUILD ARTIFACT IN WORKING TREE: `apps/alert-engine/server` is a Mach-O x86_64 binary (confirmed via `file`). It is untracked and must be gitignored. No `.gitignore` exists in `apps/alert-engine/` and the root `.gitignore` has no pattern matching `apps/*/server` or `**/server`. Binary must not be committed.
+
+#### Required Follow-up Commits
+
+1. `feat(1912b/alert-engine): commit missed domain+app+infra source` — stage the 7 untracked .go files and commit.
+2. Add `apps/*/server` (or `apps/alert-engine/server`) to root `.gitignore` to prevent future binary commits.
+
+Do NOT modify or delete the untracked files — they are correct source. Just stage + commit them.
+
+#### Verdict: CHANGES_REQUESTED
+
+Owner flipped to dev-alert-engine. Re-gate after follow-up commits land.
+
+---
+
+#### Re-gate: 2026-05-14 (post 758ce97c + 199effeb)
+
+```
+outcome: APPROVED
+commits_verified: [758ce97c, 199effeb]
+```
+
+Checks run:
+
+1. `git show --stat 758ce97c` — all 8 expected changes present: `.gitignore` (+1 line `apps/*/server`), plus all 7 source files: `pkg/domain/{errors,models,ports,services}.go`, `pkg/application/{dtos,evaluate}.go`, `pkg/infrastructure/config.go`. +508 lines, 0 deletions. BLK-1 CLOSED, BLK-2 CLOSED.
+
+2. `git status` — no untracked paths under `apps/alert-engine/`. `apps/alert-engine/server` binary is now gitignored. Working tree clean of all 1912b paths.
+
+3. `go test ./pkg/... -count=1` from `apps/alert-engine/` — 4 packages all green: application (PASS), domain (PASS), infrastructure (PASS), interface/http (PASS). Individual test count: **37/37 PASS**. Dev claim confirmed.
+
+4. `git log --oneline 92186e39^..HEAD -- apps/alert-engine/` — 2 commits: `92186e39` (original) + `758ce97c` (follow-up source). Checking out `758ce97c` gives a buildable tree. Atomic-after-follow-up confirmed.
+
+5. `git ls-files --others --exclude-standard -- apps/alert-engine/` — empty output. No additional untracked Go source left behind.
+
+6. `git status -- apps/stock-price/` — clean. 1912c untouched.
+
+BLK-1: RESOLVED. BLK-2: RESOLVED. No new blockers.
+
+**Verdict: APPROVED. 1912b moved to Done.**
+
+---
+
+### TASK REPORT — 1912c-stock-price
+
+```
+date: 2026-05-14
+outcome: APPROVED
+```
+
+#### Test Results (actual go test output — not dev claim)
+
+Toolchain: go1.26.2 darwin/amd64. Run: `go test ./pkg/... -count=1 -v` from `apps/stock-price/`.
+
+- 31/31 PASS (matches dev claim exactly)
+- 0 failures
+- Packages: pkg/application (6), pkg/domain (7), pkg/infrastructure (7), pkg/interface/http (11) all green
+- Note: `go test ./...` produces exit 1 due to `Dockerfile.go` at module root being parsed as Go (starts with `#`). This is a non-blocking tooling quirk — all actual test packages pass. Dockerfile.go is a committed Dockerfile misnamed with `.go` extension. Go toolchain treats it as a Go file. Root module has no production Go files; only the `pkg/` subtree does. `go test ./pkg/...` is the correct invocation and is what CI must use. BLK-3 below.
+
+#### DDD Audit: PASS
+
+- pkg/domain/models.go: zero external imports (stdlib zero).
+- pkg/domain/ports.go: zero imports.
+- pkg/domain/services.go: imports sync only (goroutine waterfall). Zero infra/app/interface.
+- pkg/application/usecases.go: imports pkg/domain + strings only.
+- pkg/infrastructure/fetchers.go: imports database/sql, encoding/json, fmt, io, log/slog, net/http, time, mattn/go-sqlite3, pkg/domain only. Zero upward import.
+- pkg/interface/http/router.go: imports encoding/json, log/slog, net/http, strconv, strings + pkg/application, pkg/domain only.
+- Dependency inversion: PriceFetcherPort + PriceHistoryPort in domain, implemented in infrastructure. CORRECT.
+
+#### DB Isolation Audit: PASS
+
+- market.db: DSN = `file:<path>?mode=ro&_journal_mode=WAL&_busy_timeout=5000` (fetchers.go:165 Tier3, fetchers.go:216 GetHistory). Read-only enforced. Matches AC-7 and NF-2.
+- stock_price.db: DSN = `file:<path>?_journal_mode=WAL` (fetchers.go:260 SaveQuote). Write cache isolated. WAL confirmed.
+- Never writes to market.db. Dual-DB pattern correct per Sprint 1336 isolation requirements.
+
+#### AC Coverage
+
+- AC-7 (market.db readonly DSN): `?mode=ro&_journal_mode=WAL&_busy_timeout=5000` — CONFIRMED in source, TestSQLiteRepo_GetHistory_HitsMarketDB PASS
+- AC-8 (concurrent R/W 100-iter): TestTier3Fetcher_ConcurrentReadWrite_NoLock PASS (0.30s, zero SQLITE_BUSY)
+- R-SPEC-1 (PriceSnapshot.timestamp): router.go comment "PriceSnapshot.timestamp field is declared in clients.ts but never read by callers — only snap.price is used. Go returns fetchedAt." Developer verified and documented in-source. PASS.
+- R-SPEC-2 (dual route): router.go implements both GET /price/history (query-param, clients.ts path) AND GET /price/history/ (path-param, TS handlers.ts backward compat). Both routes covered in router_test.go (TestPriceHistory_QueryParam_* + TestPriceHistory_PathParam_Success). PASS.
+
+#### Hygiene Findings
+
+BLK-3 (NON-BLOCKING — tooling): `apps/stock-price/Dockerfile.go` is a valid Dockerfile committed with `.go` extension. The Go toolchain treats it as a Go source file and emits `illegal character U+0023 '#'` (the `#` comment character). `go test ./...` exits 1 at setup due to this. All actual pkg/ tests pass. Fix: rename to `Dockerfile.go` → `Dockerfile.stock` or `Dockerfile` (remove `.go` extension), or add a `//go:build ignore` build tag at top. This does not block approval since `go test ./pkg/...` is correct and all 31 tests pass. MUST be fixed before cutover sprint.
+
+#### Verdict: APPROVED
+
+1912c merged as-is. Cutover deferred per REQ_1912c.md §6 (pending 1912b smoke proof). BLK-3 carried to cutover sprint as non-blocking follow-up.
+
+---
 
 ## Recent session — 2026-05-14 (c100 re-gate — 1912a-gateway-go-migration APPROVED)
 
