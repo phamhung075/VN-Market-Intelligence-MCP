@@ -1,8 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 17:03 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 18:03 UTC | **Sprint:** c84
 
 ## This session
+
+### Alert Cycle (18:03–18:03 UTC)
+- Signals: urgent_news ×1 (FPT id=3183 from news-scout — FPT automotive JV with Japanese automaker)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: urgent_news FPT id=3183 (conf=0.50 < NEUTRAL threshold 0.60; no price_anomaly override — zero hits within 120 min)
+- Legal/crisis: clear. Market CLOSED (off-hours 2h cycle).
+- log_agent_work id=831
 
 ### Alert Cycle (15:04–15:04 UTC)
 - Signals: 0 (agent bus empty; no active price/legal/crisis alerts)
