@@ -8,9 +8,11 @@ Before posting any `chain_catalyst` or `urgent_news`, check the last 3 hours of 
 
 ```
 recent = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "agent": "news-scout",
   "signal_type": "chain_catalyst",   # repeat for "urgent_news" if applicable
   "limit": 20
 })
+# Note: agent param required — omitting causes validation error
 ```
 
 For each candidate signal:
