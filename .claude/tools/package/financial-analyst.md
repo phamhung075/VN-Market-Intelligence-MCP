@@ -2,7 +2,7 @@
 
 **Location:** `.claude/tools/package/financial-analyst.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-05
+**Last Updated:** 2026-05-14
 
 ## How to Invoke Tools
 
@@ -92,9 +92,20 @@ and the OCF/NI forensic ratio that `get_bctc_full` does not surface.
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
-| `get_insider_signals` | Insider trading activity and positions | — |
+| `get_insider_signals` | Insider trading activity and positions | `code: string` (req), `outstandingShares: number` (req), `windowDays?: number` |
 | `get_legal_risk_signals` | Legal/prosecution/tax penalty risks | — |
 | `get_open_chain_findings` | Findings from impact chain analysis (cross-validation) | — |
+| `get_macro_snapshot` | Macro regime snapshot for B-step REGIME detection | `source?: string, regimeType?: string` |
+
+### Macro Intelligence
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_investment_clock_phase` | Investment clock cycle phase + pyramid tier match (FA H-step) | `ticker?: string` |
+
+### Sector Intelligence
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_bond_maturity_calendar` | Bond maturity schedule for credit/maturity risk context | `ticker?: string, sector?: string` |
 
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |

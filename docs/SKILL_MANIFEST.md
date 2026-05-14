@@ -3,7 +3,7 @@
 **SSOT mirror of `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`.**
 Update both files together whenever a tool is added or a skill changes.
 
-Last updated: 2026-05-14 (Task 1890a-A — added `get_cash_flow` to `financial_analyst`)
+Last updated: 2026-05-14 (Task 1890a-B — added `get_macro_snapshot`, `get_bond_maturity_calendar`, `get_investment_clock_phase` to `financial_analyst`)
 
 ---
 
@@ -52,7 +52,10 @@ Last updated: 2026-05-14 (Task 1890a-A — added `get_cash_flow` to `financial_a
     "get_recent_fixes",
     "submit_feedback",
     "log_agent_work",
-    "get_cash_flow"
+    "get_cash_flow",
+    "get_macro_snapshot",
+    "get_bond_maturity_calendar",
+    "get_investment_clock_phase"
   ],
   "market_watcher": [
     "get_cycle_bootstrap",

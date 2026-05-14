@@ -69,6 +69,9 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "submit_feedback",
     "log_agent_work",
     "get_cash_flow",
+    "get_macro_snapshot",
+    "get_bond_maturity_calendar",
+    "get_investment_clock_phase",
   ],
   market_watcher: [
     "get_cycle_bootstrap",
