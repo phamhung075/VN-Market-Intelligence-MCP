@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 03:23 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 05:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (05:19–05:22 UTC) 2026-05-14
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3141 US-macro+FII-outflow] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: US CPI 3-year high + Fed "higher for longer" → FII bán ròng 14 phiên liên tiếp >13,000 tỷ; banking sector bearish (VCB/BID/CTG/MBB/ACB/EIB/VPB indirect). Adj 9×1.3=10 → chain_catalyst #3141 fired (event_type=macro, sectors: banking/tech/securities). FPT +4.67% (price confirmed from prior cycle surge); GAS +3.06% bullish TIGHTENING adj ×0.7=4.9 → suppressed. Gold <$4,700 with "big player buying" — no sustained +3% spike → suppressed. SGI Capital >70% cash confirms risk-off. VCI fund exit (impact adj 6.5 <7) → suppressed.
+- Suppressed: GAS bullish adj 4.9 (<7); VCI fund exit adj 6.5 (<7); gold drop (<3% spike); GPMB real estate policy (no historical match, adj 4.2 <7)
 
 ### Cycle (03:20–03:23 UTC) 2026-05-14
 - Items: 20 | Impacts: 10 | Signals: [urgent_news #3135 FPT, chain_catalyst #3136 IEA-oil/GAS] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
