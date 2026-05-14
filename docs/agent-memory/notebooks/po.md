@@ -1,33 +1,42 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T20:24Z (c110 — UNBLOCK-CRITICAL 1915 BCTC pipeline silence)
+## Last updated: 2026-05-14T20:27Z (c111 — cold-start dev-team dispatch, 1915 SPIKE re-emitted)
 
 ---
 
-## Cycle 110 — 1915-bctc-pipeline-silence (UNBLOCK-CRITICAL, T-~9h from banking window)
+## Cycle 111 — Cold start dev-team flow → Step 0-PREFLIGHT + Step 1 triage
 
-**Spawn context:** main-terminal handed me an ops report directly (no pendingSignals[] file — verbal handoff via user message). Banking Q1-2026 BCTC filing window opens 2026-05-15 02:00-09:00 UTC (~6-13h from now). 7 watchlist banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) will land in SSC; pipeline must accept them.
+**Spawn context:** main-terminal cold start, ran `.claude/flows/dev-team/main.md`. JUMP path: preflight → drain-signals (empty) → pipeline-resume (idle) → Step 1 PO triage.
 
-### Ops signal payload (verbatim)
-- `financial_reports` table: 0 rows
-- `pdf_extracted_text` table: 0 rows
-- `bctcReparseJob` logs frozen 2026-04-09 (35d, no activity)
-- 2 watchlist PDFs on disk (VNM + VEA Q4-2025) never extracted
-- Last good run 2026-04-09
-- 3 ops root-cause candidates: (1) scheduler reg lost after container restarts c95-c97 / 1912c Go migration, (2) `fetchParseAndStoreBctc` swallow, (3) empty feedback queue / discovery upstream broken
+### PREFLIGHT outcome
+- `.git/HEAD.lock` present at entry (size=0B, age=51s, holder pid 43751 = `com.apple` Spotlight orphan — known recurring pattern).
+- T2 lock-size captured. lsof + ls -laT dumped to `docs/agent-memory/sessions/preflight-lsof-20260514T202457Z.log`.
+- Re-checked after 15s → age=74s (>60s threshold). `pgrep -x git` empty → no live git pid.
+- Removed `.git/HEAD.lock` per protocol. T5 `git worktree prune` no-op (all 8 worktrees locked, legitimately retained). T6 `.git/*.lock` inside worktrees sweep — none found.
+- Session HEAD.lock count: 1 (carries 1897b-carry pressure pattern, 22 cumulative occurrences — F1 USER Docker .git/ exclude bundle still pending).
 
-### Decisions
-1. **Queue `1915-bctc-pipeline-silence` as UNBLOCK-CRITICAL.** Highest priority — blocks 1909c AC-4/5, `get_bctc_ocf` tool, FA Layer 7 G-step.
-2. **SPIKE-first (2h timebox)**, not direct FIX. Three ops candidates are mutually exclusive; cannot guess. SPIKE confirms ONE root cause + emits targeted FIX as separate task. Cannot afford full SPRINT-M ceremony with T-~9h.
-3. **Zone `apps/mcp-server/`** — both `bctcReparseJob` (scheduler/financial-reports/) and `fetchParseAndStoreBctc` (application/usecases/) live there. Verified via grep.
-4. **Owner: dev-mcp-server.** Service-scoped.
-5. **Recurring-bug rule check**: 1908a/b/c + 1909a/b/c are extractor-accuracy work (same domain). This signal is **upstream pipeline silence** (no extraction happens at all) — different failure mode. NOT a recurring-bug trigger. Proceed without architect-rethink gate.
-6. **1909c-reparse-validation** stays HOLD — now blocked by 1915 in addition to calendar. Cannot exercise reparse on Q1-2026 PDFs until ingestion live.
-7. **Channel audit skipped this cycle** — MCP gateway 9th consecutive cycle blocked (1913 USER F1). Verbal ops handoff is the substrate signal per cowork-error-boundary notebook-evidence mode.
+### Step 0a drain-signals
+- `docs/signals/` root: 0 pending JSON. All 13 c110 signals already moved to `processed/`. No new substrate.
+
+### Step 0b pipeline-resume / session-gate
+- No `in_progress` row in TASKS.md. Not idle: Backlog has 8 active rows (1915 UNBLOCK-CRITICAL leads).
+- Falls through to Step 1.
+
+### Step 1 PO triage
+- **Channel audit skipped (10th consecutive cycle)** — MCP gateway 1913 USER F1 still pending. Substrate = filesystem proxies (signals/processed + recent commits + notebooks).
+- TASKS.md Backlog priority order:
+  1. **1915-bctc-pipeline-silence** — CRITICAL, deadline 2026-05-15T02:00Z (T-~5.5h from now). Banking Q1-2026 SSC window opens. Already specced as SPIKE-first (2h timebox) per c110 decision. Re-emit BATCH.
+  2. janitor-1912 (LOW CLEAN) — defer to next cycle.
+  3. 1914-news-scout-dedup-api (MEDIUM SPRINT-S) — defer.
+  4. 1914b-log-agent-work-doc (LOW CHORE) — defer.
+  5. 1913 USER F1 — user-action only, can't be dispatched.
+  6. 1907a OPS (CRITICAL) — ops-owned, no dev-team route. Defer.
+  7. 1897b-carry F1 — user-action only.
+  8. JANITOR-020/014/011 + TASK-BCTC-3 — MEDIUM, defer.
+- **Decision: re-emit 1915 SPIKE as sole BATCH entry.** WIP=0/2, T-~5.5h deadline justifies single-task focus. Other CRITICALs (1913/1907a/1897b) are USER/ops-owned, not dispatchable to dev-team.
 
 ### Recurring-bug compliance
-- 1915: 0 prior fix commits on `bctcReparseJob` registration or `fetchParseAndStoreBctc` swallow paths. Rule N/A.
-- Different failure mode than 1908/1909 (upstream ingestion vs. extractor accuracy).
+- 1915 not a recurring bug. HEAD.lock IS recurring (22 occurrences) but per c89 `1906a-headlock-cure-permanent` SHIPPED already — PREFLIGHT cure is permanent policy. F1 USER Docker .git/ exclusion is the only structural cure remaining.
 
 ### BATCH return
 ```
@@ -39,27 +48,22 @@
   mode: "spike",
   zone: "apps/mcp-server/",
   timebox: 120,
-  deadline: "2026-05-15T02:00:00Z"
+  deadline: "2026-05-15T02:00:00Z",
+  owner: "dev-mcp-server",
+  baseline_pass: 9277
 }]
 ```
-Dev-team router: spawn architect→ba→dev-mcp-server SPIKE chain immediately. SPIKE output `reports/SPIKE_1915-bctc-pipeline-silence.md` + carry-forward FIX task.
+Dev-team router (Step 2): SPIKE type → skip planning matrix → direct to developer with `feature-spike.md`; throwaway branch, findings doc only. Owner: dev-mcp-server (zone-routed).
 
 ### Signal drop
-None this cycle — task created in TASKS.md is the authoritative signal. Dev-team picks up via routine triage.
+None this cycle — TASKS.md row 1915 is the authoritative signal; dev-team picks up via BATCH return.
 
-### Carry-forward to c111+
-- 1915 SPIKE result: confirmed root cause + FIX task ID — needs PO review before merge (CRITICAL gate).
-- Post-FIX: verify 2 PDFs (VNM+VEA Q4-2025) extracted, `financial_reports`/`pdf_extracted_text` > 0, log entry within 1h.
-- 1909c-reparse-validation un-HOLD once 1915 FIX merged + banking cohort PDFs extracted.
-- 1913 USER F1 still pending (9th cycle gateway blocked).
-- janitor-1912 + 1914b-log-agent-work-doc carried (LOW, no urgency).
-- 1907a digest-predict 7d silence (CRITICAL OPS) — re-check next cycle.
+### Carry-forward to c112+
+- 1915 SPIKE result PO review gate when SPIKE_1915 report drops.
+- Post-FIX verify: 2 PDFs (VNM+VEA Q4-2025) extracted; `financial_reports`/`pdf_extracted_text` > 0; bctcReparseJob log entry within last hour.
+- 1909c-reparse-validation un-HOLD once 1915 FIX merged.
+- 1913 USER F1 (10th cycle), 1897b-carry F1 still pending — re-flag user next cycle.
+- janitor-1912 + 1914b + 1914 — backlog, pick up after 1915 ships.
 
 ### Sign-off
-c110 UNBLOCK-CRITICAL: 1 new task (1915-bctc-pipeline-silence), TASKS.md +1 row, project-stats.json refreshed (currentSprintNotes + _lastRefreshedBy). BATCH = 1 SPIKE entry (CRITICAL, deadline 02:00 UTC). PO sub-flow EXIT → main terminal routes to architect/ba/dev-mcp-server for SPIKE execution.
-
----
-
-## Cycle 109 — TNB c53 ACK + janitor queue + TASKS.md trim (carry-over)
-
-c109 housekeeping shipped: TNB c53 ACK'd, janitor-1912 + 1914b-log-agent-work-doc queued, 1912 duplicate row dropped, TASKS.md 83L→77L. WIP=0/2. Full detail in git history (notebook overwritten).
+c111 PREFLIGHT cleared HEAD.lock + drained empty signals + re-emitted 1915 BATCH. Notebook overwritten. PO sub-flow EXIT → main terminal Step 2 routes SPIKE to developer.
