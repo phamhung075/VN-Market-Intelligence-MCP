@@ -1,6 +1,26 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c90 gate — 1890a-A get_cash_flow APPROVED
+**Last updated:** 2026-05-14 | **Session:** c92 gate — 1908c totalAssets plausibility override APPROVED
+
+## Recent session — 2026-05-14 (c92 — 1908c totalAssets plausibility override APPROVED)
+
+### 1908c — totalAssets plausibility override (BCTC VAL-07 positional drift guard)
+
+Branch: fix/1908c-val07-plausibility-override. Merge commit: b6db5ef3. SHA: feb11ba6.
+
+Diff scope (relative to branch point 07a1af9a): 2 files ONLY — balanceSheetExtractor.ts (+9 lines) + 1908c test file (+289 lines). Bounded. All out-of-scope noise in `git diff main..fix/...` is explained by worktree branching from pre-c90 state (merge-base 07a1af9a = QA commit for 1890a-A); no spurious production changes staged.
+
+Guard implementation: 5-line block inserted after line 716 zero-fallback. Matches brief §5 spec verbatim — comment, `computedFromSubtotals` declaration, 3-condition check, console.warn, override assignment. Option B (upstream extractor) confirmed. `liabPlausible` mirror pattern confirmed.
+
+Pipeline: tsc 0 errors. 30 baseline PASS (042/1120/287 balance-sheet files). 8 new PASS (VNM 55.7x fires + 2 VNM assertions / DIG 2846x fires + 2 DIG assertions / VCB no-fire / FPT no-fire). VAL-07 confidence > 0 post-override verified (VNM + DIG). DDD PASS (no infra imports in domain file). Security PASS (no process.env, no hardcoded secrets). Inline OCR mock fixtures — no PDF files in repo.
+
+Commit message: no --amend. Convention-compliant (fix/1908c scope + Sprint/Task/AC trailers). Single commit on branch.
+
+TASKS.md: 1908c moved from Backlog to Done. Post-fix action (ops): DELETE VNM/DIG Q4 2025 DB rows + bctcReparseJob.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c90 — 1890a-A get_cash_flow APPROVED)
 
