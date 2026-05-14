@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 08:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 09:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (09:21–09:22 UTC) 2026-05-14
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3157 VN-ATH, urgent_news #3158 FPT-Japan-JV] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: VN-Index record high confirmed — VIC+3.98%, VHM+2.95%, VRE+3.48%, FPT+4.53%, VPB+3.24%, BID+1.75%; foreign buying reversal → #3157 chain_catalyst bullish macro (conf 0.80). FPT Japan automotive JV strategic partnership (impact 8, conf 88%) → #3158 urgent_news FPT. Gold globally below $4,700 USD (domestic still high, no +3% weekly spike → suppressed for banking). DNNN capital market policy — already covered by #3153 prior cycle. Regime shift TIGHTENING→NEUTRAL noted: geopolitical cooling (Hormuz), risk-on foreign inflow, VN market ATH. Market CLOSED at cycle run (09:10 UTC).
+- ⚠️ Note: #3157/#3158 may overlap with #3151/#3152 from 08:22 cycle — VN-ATH and FPT JV already on bus.
 
 ### Cycle (08:20–08:22 UTC) 2026-05-14
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst #3151 VN-ATH, chain_catalyst #3152 FPT-Japan-JV, chain_catalyst #3153 DNNN-dilution] | Regime: TIGHTENING | Carry: NEUTRAL
