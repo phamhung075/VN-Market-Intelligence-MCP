@@ -385,12 +385,57 @@ export async function reparseSingleWithOcrFallback(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Extract a Vietnamese stock ticker from a BCTC PDF filename without requiring
+ * a watchlist lookup. Used as a fallback when the watchlist table is empty.
+ *
+ * Strategy (in priority order):
+ *   1. "BCTC {TICKER} " prefix pattern — standard VPS filename format
+ *      e.g. "BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf" → "VNM"
+ *   2. First standalone 2–5 uppercase-letter word in the filename stem
+ *      e.g. "VEA_Q4-2025.pdf" → "VEA"
+ *      Words that are BCTC-domain noise tokens (BCTC, VN, HOP, NHAT, RIENG,
+ *      BIEN, BAO, TAI, CAO, KET, QUA, HOP, NHAT, DONG, NAM) are excluded.
+ *
+ * Returns null when no ticker can be confidently extracted.
+ */
+export function tickerFromFilename(filename: string): string | null {
+  const stem = filename.replace(/\.pdf$/i, "");
+
+  // Strategy 1: "BCTC {TICKER}" prefix
+  const bctcPrefix = stem.match(/^BCTC\s+([A-Z]{2,5})\b/i);
+  if (bctcPrefix) return bctcPrefix[1]!.toUpperCase();
+
+  // Noise tokens that should never be returned as a ticker
+  const NOISE = new Set([
+    "BCTC", "VN", "HOP", "NHAT", "RIENG", "BIEN", "BAO", "TAI",
+    "CAO", "KET", "QUA", "DONG", "NAM", "PDF",
+  ]);
+
+  // Strategy 2: first standalone uppercase 2–5 letter word
+  const words = stem.toUpperCase().split(/[^A-Z]+/);
+  for (const word of words) {
+    if (word.length >= 2 && word.length <= 5 && !NOISE.has(word)) {
+      return word;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Scan data/pdfs/ directly for BCTC PDFs that have no matching financial_reports
  * row. Called by runBctcReparseJob() when agent_feedback returns 0 rows (D-7c
  * did not run or ran without finding any stranded files).
  *
  * Does NOT write any agent_feedback rows — that remains D-7c's responsibility.
  * Returns only StrandedPayload[] for the caller to process via reparse().
+ *
+ * Empty watchlist fallback (task 1915-fix-part1): when the watchlist table has
+ * no rows at cron time (e.g. 09:30 GMT+7 on a fresh container boot), the
+ * watchlist-based codes.find() loop returns [] and every PDF is silently skipped.
+ * Fix: when codes is empty, extract the ticker directly from the filename via
+ * tickerFromFilename() so on-disk PDFs (e.g. VEA + VNM Q4-2025) are always
+ * processed regardless of watchlist state.
  *
  * @param db      - SQLite database (supports in-memory injection for tests)
  * @param pdfDir  - Override pdf directory (defaults to data/pdfs/ — injectable for tests)
@@ -413,24 +458,35 @@ export async function scanDiskForStrandedPdfs(
     return [];
   }
 
+  const watchlistEmpty = codes.length === 0;
+
   const files = readdirSync(resolvedPdfDir).filter((f) =>
     f.toLowerCase().endsWith(".pdf"),
   );
   const stranded: StrandedPayload[] = [];
 
   for (const filename of files) {
-    const upper = filename.toUpperCase();
-    // Bug 1 fix: codes from the watchlist DB may be lowercase or mixed-case
-    // (e.g. "dig", "Shb"). The regex is tested against the uppercased filename,
-    // so the code itself must also be uppercased when building the pattern.
-    const matched = codes.find((c) => {
-      const cu = c.toUpperCase();
-      const re = new RegExp(`(^|[^A-Z])${cu}([^A-Z]|$)`);
-      return re.test(upper);
-    });
-    if (!matched) continue;
-    // Normalise ticker to uppercase so downstream callers receive a consistent value
-    const ticker = matched.toUpperCase();
+    let ticker: string;
+
+    if (watchlistEmpty) {
+      // Watchlist is empty: derive ticker from filename directly (task 1915-fix-part1)
+      const extracted = tickerFromFilename(filename);
+      if (!extracted) continue;
+      ticker = extracted;
+    } else {
+      const upper = filename.toUpperCase();
+      // Bug 1 fix: codes from the watchlist DB may be lowercase or mixed-case
+      // (e.g. "dig", "Shb"). The regex is tested against the uppercased filename,
+      // so the code itself must also be uppercased when building the pattern.
+      const matched = codes.find((c) => {
+        const cu = c.toUpperCase();
+        const re = new RegExp(`(^|[^A-Z])${cu}([^A-Z]|$)`);
+        return re.test(upper);
+      });
+      if (!matched) continue;
+      // Normalise ticker to uppercase so downstream callers receive a consistent value
+      ticker = matched.toUpperCase();
+    }
 
     const yq = parseYearQuarterFromFilename(filename);
     if (!yq) continue;

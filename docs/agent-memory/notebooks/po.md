@@ -46,49 +46,29 @@
 
 ## Cycle 112 — User-injected CRITICAL: 1916-bctc-queue-enricher-scraper-broken
 
-**Spawn context:** user prompt to `.claude/flows/po/main.md` adding new CRITICAL bug to backlog alongside 1915. Ops confirmed via Docker logs 2026-05-14 20:00-20:15 UTC.
+**Spawn:** user prompt with SPIKE 1916 findings (`docs/spikes/SPIKE_1916-bctc-queue-enricher-scraper-broken.md`).
 
-### Bug summary (user-provided, ops-confirmed)
-- `bctcQueueEnricherJob` SSC portal scraper returns 0 URLs for 14/30 watchlist tickers.
-- Affected: DPM, KBC, MWG, NVL, REE, TCH, VNH + 7 others.
-- Working: VCB, FPT, DIG, BSR, DGC, HPG, SHB, VEA, VNM (12 PDFs on disk, last Apr 27-29).
-- Likely cause: SSC portal (ssc.hsx.vn) HTML structure changed → Cheerio/jsdom selectors stale.
-- Impact: Q1-2026 BCTC collection blocked for 14 tickers. Banking deadline 2026-05-15.
-- Key file: `apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts` (user said `bctcQueueEnricher.ts` — actual filename `*Job.ts`).
+### SPIKE 1916 verdict
+Original hypothesis (SSC HTML structure change → Cheerio selectors stale) **FALSIFIED**. `bctcDiscovery.ts` does not use Cheerio at all. Real root cause: **`bctcQueueEnricherJob` has NEVER worked — all 4 discovery strategies dead simultaneously since at least 2026-04-22.** The 9 "working" tickers were populated by the parallel VPS-push pipeline (`fetch-bctc.sh` + `discover-bctc-urls-browser.py`), not by the enricher.
+
+Strategy failures: S0 (VPS Playwright) — `/proxy/bctc-discover` route never deployed on `vps-proxy-server.js` + `bctcHttpFetcher.ts` never sends `X-API-Key`. S1 (SSC iboard) — NXDOMAIN since 2026-04-27. S2 (cafef) — `FinanceInfo.ashx` migrated, query params lost in 301 redirect. S3 (vietstock) — JS-rendered 404 swallowed silently.
 
 ### Triage decisions
-- **NEW row added to Backlog: 1916-bctc-queue-enricher-scraper-broken** (CRITICAL/UNBLOCK, owner dev-mcp-server, zone `apps/mcp-server/`).
-- **Concurrent with 1915 — NOT a duplicate**: 1915 = bctcReparseJob extraction-side silence (PDFs on disk, no DB rows); 1916 = bctcQueueEnricherJob discovery-side silence (NO new PDFs reaching disk for 14 tickers). Different upstream stages.
-- **No block dependency**: user explicit "do not block on 1915". Both SPIKEs run in parallel.
-- **NOT recurring-bug** vs 1908/1909-series (different module, different failure mode).
-- Mode: SPIKE first (2h timebox) — HTML structure change vs auth-block vs rate-limit unconfirmed; need raw DOM diff before committing to selector rewrite. Findings doc only.
+- **1916 parent row moved to Done** as `1916-bctc-queue-enricher-scraper-broken-SPIKE-DONE-c113` (CRITICAL SPIKE completed).
+- **Two carry-forward FIX tasks queued in Backlog:**
+  - `1916a-fix-vps-discover-route-and-apikey` (CRITICAL FIX, zone `multi` = `vps-scripts/` + `apps/mcp-server/`, owner ops + dev-mcp-server, deadline 2026-05-15T02:00:00Z). Add `/proxy/bctc-discover/:ticker?year=&quarter=` route to `vps-proxy-server.js` (shells out to existing `discover-bctc-urls-browser.py`) + inject `X-API-Key: ${Bun.env.VPS_PUSH_API_KEY}` in `bctcHttpFetcher.ts` for VPS host. 5 ACs.
+  - `1916b-fix-cafef-strategy-replacement` (HIGH FIX, zone `apps/mcp-server/`, owner dev-mcp-server, sequenced AFTER 1916a). Replace dead `s.cafef.vn/Candles/FinanceInfo.ashx` Strategy 2 with working alt or delete. 3 ACs.
+- **Sequencing:** 1916a is minimum viable fix (Strategy 0 alone delivers full enrichment); 1916b is hardening on top.
+- **Concurrent with 1915 SPIKE (still pending review)** — different upstream stage. 1916 = discovery; 1915 = extraction. Banking Q1-2026 SSC filing window 2026-05-15T02:00Z still drives both deadlines.
+- **Zone classification:** 1916a marked `multi` per po.md rule — architect must split into 2 sequenced subtasks (VPS route first, then header injection + Docker rebuild). 1916b clean single zone `apps/mcp-server/`.
 
-### project-stats.json refresh
-- `_lastRefreshedBy` updated to c112 with 1916 context.
-- `currentSprintNotes` rewritten to lead with 1916 + cross-reference 1915 + concurrent-not-blocking note.
+### project-stats.json
+- `_lastRefreshedBy` updated to c113 with SPIKE-DONE + carry-forward FIX summary.
+- `currentSprintNotes` rewritten with full strategy-by-strategy failure map + 1916a/b dispatch info.
 
-### BATCH return (added to existing 1915 SPIKE queue)
-```
-[{
-  type: "SPIKE",
-  id: "1916-bctc-queue-enricher-scraper-broken",
-  title: "bctc-queue-enricher-scraper-broken-triage",
-  question: "Is bctcQueueEnricherJob returning 0 URLs for 14/30 tickers because SSC portal HTML structure changed (Cheerio selectors stale), or is it auth-block / rate-limit / other?",
-  mode: "spike",
-  zone: "apps/mcp-server/",
-  files: ["apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"],
-  timebox: 120,
-  deadline: "2026-05-15T02:00:00Z",
-  owner: "dev-mcp-server",
-  baseline_pass: 9277,
-  concurrent_with: "1915-bctc-pipeline-silence",
-  blocks_on: null
-}]
-```
-
-### Carry-forward to c113+
-- Review 1916 SPIKE deliverable: `reports/SPIKE_1916-bctc-queue-enricher-scraper-broken.md`.
-- Post-FIX verify: bctcQueueEnricherJob returns ≥1 URL for ≥10 of 14 affected tickers on next run.
-- Track 1915 + 1916 in parallel until both ship.
-- 1909c-reparse-validation now blocked by BOTH 1915 + 1916 in addition to calendar.
+### Carry-forward to c114+
+- Dispatch 1916a immediately (architect for zone-split + BA spec) — CRITICAL deadline 2026-05-15T02:00Z (~5h from now).
+- Watch for 1915 SPIKE deliverable to surface (still pending review).
+- 1909c-reparse-validation remains HOLD, now blocked by 1915 + 1916a.
 - Pending USER F1: 1913 (FA gateway desktop config, 10th cycle), 1897b-carry (Docker .git/ exclude).
+- Background carries: janitor-1912, 1914 dedup-api, 1914b-log-agent-work-doc, 1907a digest-predict 5d silence.

@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 20:03 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 21:02 UTC | **Sprint:** c84
 
 ## This session
+
+### Alert Cycle (21:02–21:02 UTC)
+- Signals: N/A — cycle aborted at Step 0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: UNKNOWN (bootstrap failed)
+- BLOCKED: get_cycle_bootstrap unreachable after 1 retry — MCP gateway (vn-market) not responding on both attempts. send_telegram(bug) also failed (same gateway). Signal dropped to docs/signals/alert-commander-2026-05-14T21:02:05Z.json.
 
 ## Cycle — 18:03 UTC
 

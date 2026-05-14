@@ -34,22 +34,53 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 ### SPIKE 1916 — bctcQueueEnricher 0 URLs (2026-05-14, DONE)
 
 **Root cause CONFIRMED:** ALL 4 strategies dead simultaneously.
-- Strategy 0: no VPS route + no X-API-Key header → 401.
-- Strategy 1: iboard-query.ssc.vn NXDOMAIN → VPS 502.
-- Strategy 2: cafef FinanceInfo.ashx 301 redirect loses params → 0 PDFs.
-- Strategy 3: vietstock HTTP 404 → throws → [].
+- Strategy 0 (VPS Playwright /proxy/bctc-discover): route never deployed on VPS. Also bctcHttpFetcher.ts sends no X-API-Key header → 401.
+- Strategy 1 (SSC iboard): iboard-query.ssc.vn NXDOMAIN → VPS returns 502.
+- Strategy 2 (cafef FinanceInfo.ashx): 301 redirect loses params → cafef.vn HTML page with 0 PDFs.
+- Strategy 3 (vietstock): HTTP 404 → bctcHttpFetcher throws → [].
+
+**Why "9 tickers work":** Those 9 tickers already have source_url from VPS-push (fetch-bctc.sh), not from the enricher. Enricher skips rows with non-null source_url.
+
+**No Cheerio involved:** bctcDiscovery.ts uses JSON parsing + regex only. No Cheerio import.
+
+**Fix required:** (A) Add /proxy/bctc-discover/:ticker route to vps-proxy-server.js + inject X-API-Key in bctcHttpFetcher.ts. (B) Replace cafef strategy with live endpoint.
 
 **Findings doc:** docs/spikes/SPIKE_1916-bctc-queue-enricher-scraper-broken.md
 
 ---
 
+### Task 1915-fix-part1 — scanDiskForStrandedPdfs empty-watchlist fallback (2026-05-14, DONE)
+
+**Mission:** Fix `scanDiskForStrandedPdfs` returning 0 when watchlist is empty. Fix `startScheduler.ts` startup catch-up code smell (runBctcReparseJob direct call).
+
+**Changes made:**
+1. NEW `tickerFromFilename(filename)` exported helper in `bctcReparseJob.ts`:
+   - Strategy 1: `^BCTC\s+([A-Z]{2,5})\b` prefix pattern — handles VEA, VNM standard filenames
+   - Strategy 2: first standalone 2-5 uppercase word (excludes NOISE set: BCTC/VN/HOP/NHAT etc.)
+   - Returns null when no ticker extractable
+2. `scanDiskForStrandedPdfs()`: `watchlistEmpty = codes.length === 0` branch — empty path uses `tickerFromFilename()`, populated path unchanged
+3. `startScheduler.ts` L238 catch-up: `runBctcReparseWithDb(db)` replaces `runBctcReparseJob()` — eliminates fire-and-forget recordJobRun no-op
+4. `1416c-hpg-bctc-disk-scan.test.ts`: updated 1 test + added 1 test (5 total)
+
+**Tests:** 8 new DSE-01..08 in `1915-scan-disk-empty-watchlist.test.ts`. 14/14 targeted GREEN. tsc 0.
+**Commit:** `740615c2` on branch `task/1915-fix-part1-scan-disk-empty-watchlist`
+
+**AC gate (runtime):** Container redeploy needed — ops action. After deploy, VEA+VNM Q4-2025 PDFs processed on next 09:30 GMT+7 cron or manual trigger. AC: financial_reports > 0, pdf_extracted_text > 0, bctcReparseJob log within last hour.
+
+---
+
 ### SPIKE 1915 — bctc-pipeline-silence (2026-05-14, DONE)
 
-**Confirmed root cause: Candidate 3 — Empty queue / upstream broken.**
-- bctcQueueEnricher returns 0 URLs → no PDFs → bctcReparseJob no-ops.
-- 2 on-disk PDFs (VEA+VNM) not extracted because scanDiskForStrandedPdfs queries empty watchlist.
+**Confirmed root cause: Candidate 3 — Empty queue / upstream broken (two sub-causes)**
 
-**No code changes made.** Report: `docs/spikes/SPIKE_1915-bctc-pipeline-silence.md`.
+1. bctcQueueEnricher fails to find SSC source URLs for 14/30 tickers. ALL 4 strategies dead (confirmed in SPIKE 1916). bctcPdfPullJob gets 0 eligible rows → 0 PDFs downloaded → 0 feedback rows → bctcReparseJob no-ops.
+
+2. 2 PDFs on disk (VEA + VNM Q4-2025) not extracted. `scanDiskForStrandedPdfs` queries watchlist — if empty at cron time, codes=[], every PDF skipped. Fixed in 1915-fix-part1.
+
+**Eliminated:** Candidate 1 (unregistered) — boot log shows 60 cron keys. Candidate 2 (silent failure) — all error paths produce logger.warn/error.
+
+**DB state:** financial_reports = 0 rows, pdf_extracted_text = 0 rows.
+**Code smell:** startScheduler.ts L238 direct runBctcReparseJob() call — fixed in 1915-fix-part1.
 
 ---
 
