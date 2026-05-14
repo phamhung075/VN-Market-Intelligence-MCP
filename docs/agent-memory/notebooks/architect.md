@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 (c92 recurring-bug rethink) | **Sprint:** 1908c-design
+**Last updated:** 2026-05-14 10:00 UTC | **Sprint:** 1909-rubber-stamp
 
-## Last session summary (c92 — BCTC-VAL-07 / totalAssets positional drift rethink)
+## Last session summary (c94 — 1909 rubber-stamp review)
+
+Rubber-stamp review for Sprint 1909 (BCTC OCF Extractor Expansion + `get_bctc_ocf` tool).
+Authority brief: `docs/architecture-briefs/2026-05-14-bctc-val07-extractor-rethink.md`.
+All 4 BA spec-time discoveries resolved cleanly:
+- SD-1: VN CF PDFs carry numeric line codes — dual strategy (code primary + keyword fallback)
+  confirmed correct. No fallback gap.
+- SD-2: `extraction_method` is a REAL DB column (enum: pdf-parse/ocr-200/ocr-300/news_inference).
+  Omitted from `CashFlowRow` in cashFlowTool.ts (under-declaration). Dev must add to new tool's
+  row type + SELECT from DB. Do NOT hardcode "ocr_parsed".
+- SD-3: STALE — 1890a-B SHIPPED-c90 (commit 915763a2). No sequence constraint.
+- SD-4: PM action — not architect concern.
+Risk flags: R1 (extraction_method must read from DB, not hardcode); R2 (E-4 zero guard explicit).
+No new brief. APPROVED. Output: `docs/handoffs/ARCH_REVIEW_1909.md`.
+
+## Previous session summary (c92 — BCTC-VAL-07 / totalAssets positional drift rethink)
 
 Recurring-bug rule fired: tasks 1815 + 1908a = 2 fix commits on `balanceSheetExtractor.ts`.
 Root cause confirmed: `extractSplitBlockAll` maps code "270" to a page-6 sub-item value
