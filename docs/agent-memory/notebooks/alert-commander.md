@@ -1,8 +1,33 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 12:04 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 15:04 UTC | **Sprint:** c84
 
 ## This session
+
+### Alert Cycle (15:04–15:04 UTC)
+- Signals: 0 (agent bus empty; no active price/legal/crisis alerts)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL (REGIME_SOURCE=news-fallback; mixed sentiment — bullish: VN-Index record high, FDI inflow; bearish: fuel prices down, interest rate risk) | Carry: unavailable | Pivot window: false
+- Legal/crisis: clear. Market CLOSED (off-hours 2h cycle).
+- log_agent_work id=822
+
+### Alert Cycle (14:02–14:02 UTC)
+- Signals: 0 (agent bus empty; no active price/legal/crisis alerts)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING (REGIME_SOURCE=news-fallback; 8 bearish/2 bullish in 24h analysis, rising interest rate signals) | Carry: NEUTRAL | Pivot window: false
+- Legal/crisis: clear. Market CLOSED (off-hours 2h cycle).
+- log_agent_work id=820
+
+### Alert Cycle (13:03–13:03 UTC)
+- Signals: price_anomaly ×2 (FPT id=3169, VPB id=3170 from market-watcher)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: FPT id=3169 (no active price alerts; σ=3.62 < 4.0 override floor); VPB id=3170 (no active price alerts; σ=1.90 < 4.0 override floor)
+- Legal/crisis: clear. Market CLOSED (off-hours 2h cycle).
+- log_agent_work id=817
 
 ### Alert Cycle (12:03–12:04 UTC)
 - Signals: urgent_news ×1 (FPT id=3163), price_anomaly ×1 (FPT id=3165)
