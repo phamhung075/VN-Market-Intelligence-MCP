@@ -746,3 +746,68 @@ All 7 reports filed within 5h window (2026-05-13 19:07–2026-05-14 10:05 UTC):
 
 **Next cycle:** Observe 2026-05-15-digest-predict.md session stub. If full cycle writes → fire resolved. If stub or silent → developer escalation confirmed.
 
+
+---
+
+## Cycle: c108-tick3 — 1912b-cutover DEPLOY BLOCKER
+
+**Date:** 2026-05-14 20:53 UTC
+**Status:** BLOCKED — Database schema mismatch, escalation required
+**Task:** 1912b-cutover (Go migration of alert-engine)
+
+### Build Phase: SUCCESS
+- `docker-compose build alert-engine` → ✅ PASS
+- Image SHA: `48676d57e5fb`
+- Build time: ~115s (Go build inline)
+- Go binary verified: `/app/server` present in image
+- Dockerfile: Multi-stage alpine:3.20 (correct)
+
+### Container Startup Phase: FAILED
+- `docker-compose up -d alert-engine` → ✅ Container created
+- Container name: `vn-market-intelligence-mcp-alert-engine-1`
+- Command line: `/app/server` (Go binary, correct)
+- **Status after 15s: CrashLoopBackOff (restart loop)**
+
+### Error Diagnosis
+**Log evidence:**
+```json
+{
+  "time": "2026-05-14T17:52:06.754457475Z",
+  "level": "ERROR",
+  "msg": "failed to init alert tables",
+  "error": "init alert tables: no such column: outcome"
+}
+```
+
+**Root cause:** Database schema mismatch
+- Go alert-engine binary expects: `outcome` column in alert tables
+- Existing DB (alert_engine.db, from TS era): **outcome column NOT present**
+- Result: `db.exec("CREATE TABLE IF NOT EXISTS ...")` fails at schema validation
+- Container cannot start, loops indefinitely
+
+### Escalation
+**Signal written:** `docs/signals/20260514T205300Z-1912b-deploy-blocked.json`
+**Recipients:** pm, architect
+**Type:** blocker
+**Recommendation:** Do NOT roll back cutover. Schema migration needed in Go code.
+
+### Resolution Options (for architect + dev-alert-engine)
+1. **Add migration in Go init:** Detect missing column, auto-add via `ALTER TABLE` before init
+2. **Wipe alert_engine.db:** If safe (check deps), restart with clean schema
+3. **Backfill column in TS code:** Before Go cutover (too late for current cycle)
+
+### Next Steps
+- Architect/dev fix schema mismatch
+- Rebuild and redeploy
+- Ops re-run deploy steps once issue resolved
+- Smoke window deferred until container startup succeeds
+
+### Files Created
+1. `docs/agent-memory/sessions/ops-1912b-deploy-20260514T202000Z.log` — deployment log with error details
+2. `docs/signals/20260514T205300Z-1912b-deploy-blocked.json` — blocker signal
+
+### Impact
+- 1912b-cutover: **BLOCKED at deploy phase**
+- 1912c-cutover: **Dependent lock (gated on 1912b smoke pass)** — cannot proceed
+- 6h smoke gate: **Cannot start** — container must achieve healthy state first
+
