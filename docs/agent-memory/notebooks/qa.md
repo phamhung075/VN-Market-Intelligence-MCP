@@ -1,6 +1,39 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c96 gate — 1910b-effr-package-reg APPROVED
+**Last updated:** 2026-05-14 | **Session:** c99 gate — 1912a-gateway-go-migration CHANGES_REQUESTED
+
+## Recent session — 2026-05-14 (c99 — 1912a-gateway-go-migration CHANGES_REQUESTED)
+
+### 1912a — API Gateway Go Migration (Phase 1)
+
+Branch: task/1912a-gateway-go-migration. HEAD: 47eae151. 4 commits (all index-only, commit policy PASS).
+
+All source code reviewed: pkg/domain/, pkg/application/, pkg/infrastructure/, pkg/interface/http/, cmd/server/main.go, Dockerfile, go.mod, README-log-schema.md, docker-compose.yml, all 4 test files.
+
+**BLOCKING ISSUE — BLK-1 (AC-1):**
+`apps/api-gateway-go/Dockerfile:8` — `COPY go.mod go.sum ./` fails at `docker build` time. go.sum absent from git tree (correct for stdlib-only module — `go mod tidy` produces no go.sum). Confirmed via `docker build --no-cache`: ERROR `/go.sum: not found`. Fix: commit empty go.sum OR change COPY to `go.mod ./` only.
+
+**All other ACs PASS (independently verified):**
+- AC-1 (everything except go.sum): golang:1.22-alpine multi-stage, CGO_ENABLED=0, R-G3 layer-cache pattern — PASS (Dockerfile correct aside from go.sum)
+- AC-2: AggregatedHealth + ServiceHealthResult JSON field names match spec exactly (json tags: status/services/latencies/checkedAt + service/status/latencyMs/error) — PASS
+- AC-3: /api/* verbatim (NoProbe=true), /:service/* strips prefix, 404 {"error":"Unknown service: <name>"}, 502 {"error":"Upstream <name> unreachable: <err>"} — PASS
+- AC-4: /health-dashboard 200, Content-Type: text/html, 9 services in dashboardServices slice, status-up/status-down CSS, meta http-equiv="refresh" content="60", no external CDN in link/script tags — PASS
+- AC-5: go test ./... 47/47 GREEN (dev reported 37; actual higher due to subtests; all PASS) — PASS
+- AC-7: log/slog JSON middleware loggingMiddleware emits time/level/msg/method/path/status/latency_ms per request; README-log-schema.md present with sample line — PASS
+- AC-8: docker-compose has both api-gateway (4000) and api-gateway-go (4001), zero volume, stateless rollback — PASS
+- AC-9: DDD layout pkg/domain/(models/ports/services), pkg/application/, pkg/infrastructure/, pkg/interface/http/, cmd/server/ — PASS
+- AC-11: GET /healthz registered as alias to HandleHealth (same handler reference) — PASS
+- AC-6, AC-10: Deferred per dev design (post-merge deploy validation) — accepted
+
+**Scans:**
+- DDD: domain package imports: context, sync, time only — zero I/O — PASS
+- Security: no hardcoded secrets, no process.env, no SQL — PASS
+- Commit policy: all 4 commits are git commit -m (no -am/-a) — PASS
+- TS gateway untouched: git diff main apps/api-gateway/ = empty — PASS
+- mcp-server untouched: git diff main apps/mcp-server/ = empty — PASS
+- SDD-1: gateway is proxy-only, source_tier not registered — PASS
+
+Verdict: CHANGES_REQUESTED. Signal: docs/signals/2026-05-14T11-23-53Z-1912a-qa-to-dev-changes.json. Single blocking issue BLK-1. Re-gate at c100 after fix.
 
 ## Recent session — 2026-05-14 (c96 — 1910b-effr-package-reg APPROVED)
 
