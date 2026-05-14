@@ -4,12 +4,38 @@
 
 ## Current state
 
-- WIP: 0 / 2 (clean; In Progress empty)
-- **SHIPPED c89:** 1906a-headlock-cure-permanent (DONE; doc-only, merge `3538ce5b`). Recurring-bug signal drained + escalation closed. F1 USER action (Docker .git/ exclude) structural cure remains pending in 1897b-carry.
-- Backlog HIGH: 1890a (toolpkg + get_cash_flow), 1897b-carry (F1 USER + architect SPIKE; 14-occurrence evidence c87-c89 justifies PERMANENT policy classif), JANITOR-{011,014,020}, TASK-BCTC-3
+- WIP: 2 / 2 (AT CAPACITY) — In Progress: 1890a-A (CRITICAL, dev-mcp-server), 1890a-B (HIGH, agent-md-editor, blocked by A)
+- **FINALIZED c90:** 1907a-digest-predict-silence (DIAG-DONE, ops approved), 1890a-spec-expanded (SPEC-DONE, spawned A+B subtasks), 1906a-headlock-cure-permanent (DONE c89)
+- **NEW c90:** 1907b-digest-predict-cowork-trigger-investigate (LOW OPS follow-up, observational)
+- Backlog LOW: 1907b (investigation), 1897b-carry (F1 USER + architect SPIKE), JANITOR-{011,014,020}, TASK-BCTC-3
 - Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
-- **TASKS.md:** 77L (under 80L cap). 1897b-carry note refreshed with 3-cycle evidence + 1906a ref.
-- **Status:** c89 CLOSED. WIP=0. Recurring-bug policy locked. Ready for c90 cron.
+- **TASKS.md:** 80L (at cap). WIP=2. Sequencing locked: 1890a-A deploy first → 1890a-B after merge (shared manifest files).
+- **Handoffs created:** TASK_1890a-A.md, TASK_1890a-B.md, TASK_1907b-investigate.md
+- **Status:** c90 FINALIZED. WIP at capacity. BCTC Q1/2026 banking deadline (TODAY 2026-05-15) = CRITICAL PRIORITY. Ready for developer dispatch.
+
+---
+
+## Cycle 90 — 2026-05-14 c90 Finalize: 1907a DIAG + 1890a SPEC DONE, Dispatch 1890a-A + 1890a-B (WIP=2/2 CRITICAL)
+
+**Input:** QA verdicts: 1907a diagnostic complete (root cause = Claude Desktop external trigger, no code bug). 1890a spec + brief landed (5-tool audit: 1 new BUILD, 3 manifest additions, 1 doc-verify).
+
+**Decisions:**
+1. **1907a-digest-predict-silence → Done.** Diagnostic complete c90, root cause documented. Spawned follow-up 1907b-digest-predict-cowork-trigger-investigate (LOW OPS, observational).
+2. **1890a-spec-expanded → Done.** Spec-only phase complete. Split into subtasks as architect + BA recommended.
+3. **1890a-A + 1890a-B → In Progress (dispatch NOW).** CRITICAL: BCTC Q1/2026 banking deadline TODAY (2026-05-15). Both tasks execute in parallel **structurally** but MUST sequence **logically**: 1890a-A (BUILD get_cash_flow, CRITICAL) deploys first → 1890a-B (manifest edits, HIGH) follows after merge to avoid shared-file conflicts (agentBootstrap.ts, SKILL_MANIFEST.md, financial-analyst.md).
+
+**Actions:**
+- Moved 1907a to Done with c90 QA note + report ref.
+- Moved 1890a-spec-expanded to Done with spec+brief commits.
+- Moved 1890a-A + 1890a-B to In Progress. WIP becomes 2/2 (AT CAPACITY).
+- Created follow-up 1907b in Backlog (LOW priority observational task).
+- Created handoff files: TASK_1890a-A.md (BUILD get_cash_flow, blocks 1890a-B), TASK_1890a-B.md (manifest edits, depends_on 1890a-A), TASK_1907b-investigate.md (observational follow-up).
+- TASKS.md finalized at 80L (at cap). Sequencing constraint documented in both handoffs.
+- PM notebook updated (ULTRA format).
+
+**WIP Status:** 2/2 FULL. Next tier (1890a-B) held until 1890a-A merges + deploys. No new dispatch until A ships.
+
+**Dispatch Ready:** 1890a-A (dev-mcp-server) → execute immediately (CRITICAL deadline). 1890a-B queued (agent-md-editor) → start after 1890a-A merge.
 
 ---
 
