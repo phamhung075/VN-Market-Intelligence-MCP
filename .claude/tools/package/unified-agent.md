@@ -2,7 +2,7 @@
 
 **Location:** `.claude/tools/package/unified-agent.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-05
+**Last Updated:** 2026-05-14
 
 ## How to Invoke Tools
 
@@ -39,6 +39,12 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | `get_market_context` | Market snapshot, trading window, VN-Index status | — |
 | `get_market_snapshot` | Price, volume, sector sentiment, trading halt status | — |
 | `read_telegram_reports` | Unread Telegram messages and reports | — |
+| `get_macro_snapshot` | Macro regime snapshot (D-step COC) | `source?: string, regimeType?: string` |
+
+### Macro Intelligence (COC)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | — |
 
 ### Financial Analysis
 | Tool | Purpose | Key Params |

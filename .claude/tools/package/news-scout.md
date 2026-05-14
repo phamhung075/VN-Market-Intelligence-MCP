@@ -2,7 +2,7 @@
 
 **Location:** `.claude/tools/package/news-scout.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-05
+**Last Updated:** 2026-05-14
 
 ## How to Invoke Tools
 
@@ -42,6 +42,11 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_agent_signals` | Recent inter-agent signals (last 24h) | — |
+
+### US Monetary Chain
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | — |
 
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |

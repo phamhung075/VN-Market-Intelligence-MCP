@@ -3,7 +3,7 @@
 **SSOT mirror of `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`.**
 Update both files together whenever a tool is added or a skill changes.
 
-Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_analyst`; prior: 1890a-B added `get_macro_snapshot`, `get_bond_maturity_calendar`, `get_investment_clock_phase`)
+Last updated: 2026-05-14 (Task 1910b — added `get_fed_liquidity_spread` to `financial_analyst`, `news_scout`, `unified_coordinator`; prior: 1909b added `get_bctc_ocf` to `financial_analyst`)
 
 ---
 
@@ -25,7 +25,8 @@ Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_anal
     "get_legal_risk_signals",
     "get_crisis_early_warning",
     "record_evidence_fragment",
-    "log_agent_work"
+    "log_agent_work",
+    "get_fed_liquidity_spread"
   ],
   "financial_analyst": [
     "get_cycle_bootstrap",
@@ -56,7 +57,8 @@ Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_anal
     "get_macro_snapshot",
     "get_bond_maturity_calendar",
     "get_investment_clock_phase",
-    "get_bctc_ocf"
+    "get_bctc_ocf",
+    "get_fed_liquidity_spread"
   ],
   "market_watcher": [
     "get_cycle_bootstrap",
@@ -249,7 +251,8 @@ Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_anal
     "get_agent_work_log",
     "get_calibration_report",
     "get_foreign_flow",
-    "get_insider_transactions"
+    "get_insider_transactions",
+    "get_fed_liquidity_spread"
   ]
 }
 ```
@@ -269,3 +272,11 @@ Last updated: 2026-05-14 (Task 1909b — added `get_bctc_ocf` to `financial_anal
   "get_agent_signals"
 ]
 ```
+
+---
+
+## Recently registered tools
+
+| Tool | Description | Agents | Notes |
+|------|-------------|--------|-------|
+| `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | financial-analyst, news-scout, unified-coordinator | source_tier: 1 |

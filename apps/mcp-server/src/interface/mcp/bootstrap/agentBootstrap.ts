@@ -42,6 +42,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_crisis_early_warning",
     "record_evidence_fragment",
     "log_agent_work",
+    "get_fed_liquidity_spread",
   ],
   financial_analyst: [
     "get_cycle_bootstrap",
@@ -73,6 +74,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_bond_maturity_calendar",
     "get_investment_clock_phase",
     "get_bctc_ocf",
+    "get_fed_liquidity_spread",
   ],
   market_watcher: [
     "get_cycle_bootstrap",
@@ -266,6 +268,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_calibration_report",
     "get_foreign_flow",
     "get_insider_transactions",
+    "get_fed_liquidity_spread",
   ],
 };
 
