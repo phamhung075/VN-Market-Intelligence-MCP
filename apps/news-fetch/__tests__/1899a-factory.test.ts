@@ -1,12 +1,15 @@
 /**
  * Unit test — PlaywrightBrowserFactory
- * Task: 1899a-factory
+ * Task: 1899a-factory (updated 1905a: playwright-stealth removed)
  *
- * Mocks playwright (chromium.launch) and playwright-stealth so no real browser
- * is launched. Verifies the factory:
+ * Mocks playwright (chromium.launch) — no real browser launched.
+ * playwright-stealth removed in 1905a; stealth now applied via addInitScript.
+ *
+ * Verifies the factory:
  *   - calls chromium.launch with headless:true
  *   - creates a new context
- *   - applies stealth to context (not page) before newPage()
+ *   - calls addInitScript on context (inline stealth patch)
+ *   - calls addInitScript BEFORE newPage()
  *   - returns { browser, context, page }
  *   - does NOT call browser.close() itself (caller owns lifecycle)
  */
@@ -16,10 +19,12 @@ import { describe, it, expect, mock, beforeEach } from 'bun:test';
 // ── Mock objects ──────────────────────────────────────────────────────────────
 
 const mockPage = { goto: mock(async () => {}), isMock: 'page' } as const;
+const initScriptCalls: string[] = [];
 const mockContext = {
+  addInitScript: mock(async (script: string) => { initScriptCalls.push(script); }),
   newPage: mock(async () => mockPage),
   isMock: 'context',
-} as const;
+};
 const mockBrowser = {
   newContext: mock(async () => mockContext),
   close: mock(async () => {}),
@@ -27,7 +32,6 @@ const mockBrowser = {
 } as const;
 
 // Playwright mock — must shadow module resolution before factory import.
-// Bun module mocking: mock.module() replaces the module for subsequent dynamic imports.
 mock.module('playwright', () => ({
   default: {
     chromium: {
@@ -36,16 +40,7 @@ mock.module('playwright', () => ({
   },
 }));
 
-// playwright-stealth mock — records calls so we can assert invocation order.
-const stealthCalls: unknown[] = [];
-mock.module('playwright-stealth', () => ({
-  default: mock(async (ctx: unknown) => {
-    stealthCalls.push(ctx);
-  }),
-}));
-
 // ── Import factory AFTER mocks are registered ─────────────────────────────────
-// Dynamic import ensures Bun resolves the module against the registered mock.
 const { PlaywrightBrowserFactory } = await import(
   '../src/infrastructure/scrapers/playwright-browser-factory.js'
 );
@@ -54,11 +49,11 @@ const { PlaywrightBrowserFactory } = await import(
 
 describe('1899a-factory — PlaywrightBrowserFactory', () => {
   beforeEach(() => {
-    // Reset call counts before each test.
     mockBrowser.newContext.mockClear();
     mockBrowser.close.mockClear();
     mockContext.newPage.mockClear();
-    stealthCalls.length = 0;
+    mockContext.addInitScript.mockClear();
+    initScriptCalls.length = 0;
   });
 
   it('launch() returns { browser, context, page }', async () => {
@@ -85,7 +80,6 @@ describe('1899a-factory — PlaywrightBrowserFactory', () => {
   });
 
   it('launch() calls chromium.launch with headless:true', async () => {
-    // Obtain fresh reference to the mock after module resolution.
     const playwright = (await import('playwright')).default as unknown as {
       chromium: { launch: ReturnType<typeof mock> };
     };
@@ -104,41 +98,30 @@ describe('1899a-factory — PlaywrightBrowserFactory', () => {
     expect(mockBrowser.newContext).toHaveBeenCalledTimes(1);
   });
 
-  it('launch() applies stealth to context — not page', async () => {
+  it('launch() calls addInitScript on context (inline stealth patch)', async () => {
     await PlaywrightBrowserFactory.launch();
-    expect(stealthCalls).toHaveLength(1);
-    // The single stealth call must receive context, not page.
-    expect(stealthCalls[0]).toBe(mockContext);
+    expect(mockContext.addInitScript).toHaveBeenCalledTimes(1);
+    // Script must patch navigator.webdriver
+    expect(initScriptCalls[0]).toContain('webdriver');
   });
 
-  it('launch() calls stealth BEFORE newPage()', async () => {
+  it('launch() calls addInitScript BEFORE newPage()', async () => {
     const order: string[] = [];
 
-    stealthCalls.length = 0;
-    // Wrap newPage to record order.
+    mockContext.addInitScript.mockImplementation(async (_script: string) => {
+      order.push('addInitScript');
+    });
     mockContext.newPage.mockImplementation(async () => {
       order.push('newPage');
       return mockPage;
     });
 
-    mock.module('playwright-stealth', () => ({
-      default: mock(async (ctx: unknown) => {
-        stealthCalls.push(ctx);
-        order.push('stealth');
-      }),
-    }));
+    await PlaywrightBrowserFactory.launch();
 
-    // Re-import factory to pick up new stealth mock.
-    const { PlaywrightBrowserFactory: Factory2 } = await import(
-      '../src/infrastructure/scrapers/playwright-browser-factory.js'
-    );
-    await Factory2.launch();
-
-    const stealthIdx = order.indexOf('stealth');
+    const initIdx = order.indexOf('addInitScript');
     const newPageIdx = order.indexOf('newPage');
 
-    // stealth must appear before newPage in the call order.
-    expect(stealthIdx).toBeLessThan(newPageIdx);
+    expect(initIdx).toBeLessThan(newPageIdx);
   });
 
   it('launch() does NOT call browser.close()', async () => {
@@ -149,5 +132,14 @@ describe('1899a-factory — PlaywrightBrowserFactory', () => {
   it('launch() does NOT call context.newPage() more than once', async () => {
     await PlaywrightBrowserFactory.launch();
     expect(mockContext.newPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('launch() passes userAgent to newContext', async () => {
+    await PlaywrightBrowserFactory.launch();
+    const calls = mockBrowser.newContext.mock.calls as unknown as Array<[Record<string, unknown>]>;
+    expect(calls.length).toBeGreaterThan(0);
+    const opts = calls[0][0];
+    expect(typeof opts.userAgent).toBe('string');
+    expect((opts.userAgent as string).length).toBeGreaterThan(20);
   });
 });

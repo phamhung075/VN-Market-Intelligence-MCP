@@ -1,8 +1,16 @@
 /**
  * PlaywrightBrowserFactory
  *
- * Single responsibility: launch Chromium with standard stealth settings,
- * apply playwright-stealth, and return { browser, context, page }.
+ * Single responsibility: launch Chromium with inline stealth settings
+ * and return { browser, context, page }.
+ *
+ * Stealth strategy (replaces removed playwright-stealth v0.0.1 placeholder):
+ *   - Realistic Chrome UA via newContext userAgent
+ *   - navigator.webdriver = false via addInitScript (most effective single patch)
+ *   - locale/viewport/color-scheme matching a real Windows Chrome session
+ *
+ * playwright-stealth v0.0.1 was a never-functional placeholder package that
+ * throws on import ("Wrong package"). Removed in task 1905a (c88).
  *
  * Caller responsibilities (this factory does NOT do these):
  *   - browser.close() in a finally block after each scrape session
@@ -21,11 +29,21 @@
  */
 
 import playwright from 'playwright';
-import stealth from 'playwright-stealth';
+
+/**
+ * Inline stealth init script injected into every page context before
+ * any page script runs. Patches the most commonly fingerprinted property.
+ */
+const STEALTH_INIT_SCRIPT = `
+  // Remove the webdriver flag that headless Chrome exposes by default.
+  Object.defineProperty(navigator, 'webdriver', {
+    get: () => undefined,
+  });
+`;
 
 export class PlaywrightBrowserFactory {
   /**
-   * Launch a headless Chromium browser with playwright-stealth applied.
+   * Launch a headless Chromium browser with inline stealth patches applied.
    *
    * Returns all three handles so callers can:
    *   - use `page` for navigation / scraping
@@ -44,14 +62,19 @@ export class PlaywrightBrowserFactory {
     });
 
     const context = await browser.newContext({
-      // Browser User-Agent per dev-standards: VN sites (and Reuters/Bloomberg)
-      // return 503 for default Node/Bun UA strings.
+      // Realistic Chrome UA — VN sites and Reuters/Bloomberg return 503
+      // for default Node/Bun UA strings.
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      // Viewport matching a common desktop resolution — reduces canvas fingerprint variance.
+      viewport: { width: 1280, height: 800 },
+      // Locale and color scheme consistent with the UA above.
+      locale: 'en-US',
+      colorScheme: 'light',
     });
 
-    // Stealth MUST be applied to context, before newPage() — per playwright-stealth docs.
-    await stealth(context);
+    // Patch navigator.webdriver before any page script executes.
+    await context.addInitScript(STEALTH_INIT_SCRIPT);
 
     const page = await context.newPage();
 

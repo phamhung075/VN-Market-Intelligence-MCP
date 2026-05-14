@@ -25,15 +25,12 @@ import { NewsSource } from '../../domain/models.js';
 let browserCloseSpy = mock(async () => {});
 let pageContentFn: () => Promise<string> = async () => '<html></html>';
 
-mock.module('playwright-stealth', () => ({
-  default: mock(async () => {}),
-}));
-
 mock.module('playwright', () => ({
   default: {
     chromium: {
       launch: mock(async () => ({
         newContext: mock(async () => ({
+          addInitScript: mock(async () => {}),
           newPage: mock(async () => ({
             goto: mock(async () => {}),
             evaluate: mock(async (_fn: unknown) => { void _fn; }),

@@ -98,16 +98,13 @@ mock.module('playwright', () => ({
     chromium: {
       launch: mock(async () => ({
         newContext: mock(async () => ({
+          addInitScript: mock(async () => {}),
           newPage: mock(async () => activeMockPage),
         })),
         close: mockClose,
       })),
     },
   },
-}));
-
-mock.module('playwright-stealth', () => ({
-  default: mock(async () => {}),
 }));
 
 // Import scraper AFTER mocks are registered
