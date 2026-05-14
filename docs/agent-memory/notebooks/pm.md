@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 c108 | **Sprint:** c108-tick1 dispatch — 1912b-cutover sequential
+**Last updated:** 2026-05-14 (PM bookkeeping, post-1912-program-complete) | **Sprint:** 1912 Go migration CLOSED
 
 ## Current state
 
-- **WIP: 1/2 (OPEN)** — 1912b-cutover IN PROGRESS (dev-alert-engine owner) from c108 dispatch. Handoff created. Spec docs/specs/1912b-alert-engine-go-migration.md §6 + coupled scope per 1912d. QA APPROVED 37/37 pkg test. 6h smoke gate dispatched. 1912c gated on 1912b smoke pass per sequential strategy.
+- **WIP: 0/2 (CLEAN)** — 1912 Go migration program CLOSED 2026-05-14. All 4 services migrated: 1912a (api-gateway, CLOSED c106), 1912b (alert-engine, CLOSED c108), 1912c (stock-price, CLOSED c108), 1912d (cutover+cleanup, CLOSED c106). Architect post-merge SPRINT-L review PASS (commit 738b6eee). Program-complete signal: `docs/signals/20260514T182941Z-1912-go-migration-program-complete.json`. 2 non-blocking janitor flags: stock-price legacy TS tests + alert-engine tracked server binary → janitor-1912 task queued. docker-compose.yml zero Dockerfile.go refs remain. 1910a (HIGH FEATURE ISM) now eligible for dispatch; 1909c (CRITICAL OPS reparse) in Todo pending 2026-05-16 Q1-2026 PDFs.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,26 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 109 — 2026-05-14 Post-Merge Bookkeeping: 1912 Program Close (WIP=0/2 CLEAN)
+
+**Input:** Architect post-merge SPRINT-L review PASS (commit 738b6eee). Program-complete signal: `docs/signals/20260514T182941Z-1912-go-migration-program-complete.json`. All 4 services verified on Go 1.22 stack. 2 non-blocking janitor flags from architect.
+
+**Actions:**
+1. **Closed 4 cutover tasks in TASKS.md In Progress → Done:**
+   - 1912a-cutover (api-gateway, api-gateway-go retire, c106)
+   - 1912b-cutover (alert-engine, 6h smoke PASS, c108)
+   - 1912c-cutover (stock-price, 6h smoke PASS, c108)
+   - 1912d-cutover (cleanup, c106) — **NOTE:** moved to Done with parent program entry
+2. **Closed parent program row:** 1912-go-migration-program (Backlog → Done, completion date 2026-05-14).
+3. **Created janitor task:** janitor-1912 in Backlog. Scope: (1) remove apps/stock-price/__tests__/*.ts legacy bun:test files (paths ref removed src/), (2) git rm --cached apps/alert-engine/server (binary tracked before .gitignore). Priority=LOW, Size=SMALL (FIX).
+4. **Updated project-stats.json:** sprintGoal + lastUpdated reflect program closure + janitor queued.
+5. **TASKS.md final:** 44L (well under 80L cap). Backlog + Todo + Done sections. WIP=0/2 CLEAN.
+6. **PM notebook updated:** Header, current state, this cycle entry. Ready for next dev dispatch.
+
+**Status:** Bookkeeping COMPLETE. Program archive ready. Janitor task queued. WORK channel notification sent. Next dev dispatch: 1910a (HIGH FEATURE, ISM tool) eligible, or ops 1909c reparse (CRITICAL, blocked Q1-2026 PDFs awaiting 2026-05-16).
 
 ---
 

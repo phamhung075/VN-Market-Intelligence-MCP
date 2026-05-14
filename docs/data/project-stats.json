@@ -9,7 +9,7 @@
     "status": "DONE (1910b shipped 2026-05-14 c96)",
     "summary": "Sprint 1910b: get_fed_liquidity_spread package registration in financial_analyst/news_scout/unified_coordinator. Deployed c96."
   },
-  "sprintGoal": "Sprint 1912 PROGRAM COMPLETE c108: All 4 services migrated. 1912a (api-gateway) CLOSED c106. 1912b (alert-engine) CLOSED c108 — user-override compressed smoke. 1912c (stock-price) CLOSED c108 — user-override compressed smoke. 1912d (api-gateway cutover) CLOSED c106. 3 services now on Go 1.22 + CGO + mattn/go-sqlite3 + log/slog JSON. Architect post-merge review PASS. 2 low-severity janitor items flagged (RF-1: stale TS tests in stock-price, RF-2: tracked server binary in alert-engine).",
+  "sprintGoal": "Sprint 1912 PROGRAM COMPLETE 2026-05-14: All 4 services migrated to Go 1.22 + CGO + mattn/go-sqlite3 + log/slog JSON. 1912a (api-gateway) CLOSED c106. 1912b (alert-engine) CLOSED c108. 1912c (stock-price) CLOSED c108. 1912d (api-gateway cutover) CLOSED c106. Architect post-merge SPRINT-L review: PASS (commit 738b6eee). 2 non-blocking janitor flags surfaced: (1) stock-price legacy TS tests; (2) alert-engine tracked server binary. Janitor task (janitor-1912) queued. docker-compose.yml zero Dockerfile.go refs remain.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
