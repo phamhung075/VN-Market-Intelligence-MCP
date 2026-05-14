@@ -1,6 +1,57 @@
 # PO Notebook
 
-## Last updated: 2026-05-14 (c106 — 1912d cutover housekeeping, Phase 1 fully closed)
+## Last updated: 2026-05-14 (c108 — 1912b + 1912c cutover dispatch, sequential, 6h smoke)
+
+---
+
+## Cycle 108 — 1912b + 1912c cutover dispatch (sequential, 6h smoke)
+
+**Input:** user confirmed 2026-05-14 to proceed with Go-migration cutover Phase 2 (1912b alert-engine) + Phase 3 (1912c stock-price). QA APPROVED both c108: 1912b re-gate (37/37 pkg test PASS, atomic refs 92186e39 / 758ce97c / 199effeb), 1912c (31/31 PASS, AC-7/AC-8 100-iter concurrent 0 SQLITE_BUSY, non-blocking BLK-3 Dockerfile.go extension). Containers still TS (28h uptime). api-gateway already on Go (1912d c106). User addendum mid-cycle: "need update documentation and agents docs to match new change" — couple doc/agent refresh into cutover sprint per 1912d precedent, do NOT split.
+
+### Decision — Strategy
+**Sequential cutover.** 1912b first, 1912c gated on 1912b 6h smoke pass per BA spec 1912c §6 dependency. Rationale (1 line): alert-engine is the single-Dockerfile in-place rename case (higher blast radius) and runs q30s — smoke 1912b first lets stock-price (sibling `Dockerfile.go`, mechanically lighter) ride on proven evidence. Parallel was right for QA review (cheap, idempotent) but cutover mutates docker-compose + renames files — one-at-a-time isolates regressions.
+
+### Decision — Smoke window
+**6h for each phase.** Justified: (a) 1912a precedent shipped clean under user override at ~22h-of-24h, (b) alert-engine q30s × 6h = 720 cycles, more than enough to surface CGO sqlite / DDD-port regressions, (c) AC-7/AC-8 already proved 100-iter concurrency 0 SQLITE_BUSY at QA, (d) sequencing keeps total program clock bounded (~12h cutover-to-cutover-complete vs 48h if 24h each).
+
+### Decision — Coupled scope per 1912d precedent
+Per user addendum, both rows scope ALL of: (a) docker-compose swap, (b) Dockerfile rewrite to multi-stage Go 1.22 alpine + CGO, (c) `.ts` source deletion, (d) **MANDATORY agent-md-factory refresh** of `dev-alert-engine.md` + `dev-stock-price.md` (TS/Bun → Go net/http + log/slog JSON + stdlib + CGO sqlite mattn/go-sqlite3) per `feedback_agent_md_factory.md`, (e) doc-sweep TS→Go across `docs/architecture/microservice/<svc>/` + ARCHITECTURE.md + READMEs (1912d found 3 docs + 5 divergences for api-gateway — expect similar volume per service), (f) author `apps/<svc>/README-log-schema.md` mirroring 1912d, (g) `docs/references/tree-map.md` orphan check, (h) end-of-cycle `/graphify docs --update --no-viz` per `feedback_dev_doc_graphify.md`, (i) signal drop to pm+ops on complete.
+
+### Evidence gathered
+- TASKS.md L48-49 1912b/1912c QA APPROVED rows verified (existing Done section).
+- TASKS.md L10 program row updated to reflect BUILD APPROVED + CUTOVER DISPATCHED sequential.
+- Two new In-Progress rows authored: `1912b-cutover` + `1912c-cutover` (BLOCKED-by 1912b smoke).
+- Filesystem confirms `apps/alert-engine/Dockerfile` single-file (TS), `apps/stock-price/` has both `Dockerfile` (TS) + `Dockerfile.go` (Go sibling).
+- 1912d cutover audit brief `docs/architecture-briefs/2026-05-14-1912d-cutover-audit.md` exists — dev agents should consult it for cutover pattern reference.
+- Migration master brief `docs/architecture-briefs/2026-05-14-go-migration-3-services.md` covers R1 multi-stage build pattern.
+
+### WIP plan
+- BATCH = 2 In-Progress rows (`1912b-cutover` + `1912c-cutover`). WIP=2/2 — at limit but legitimate: 1912c is BLOCKED-by, so only 1 actively running at any moment.
+- 1912b-cutover dispatches dev-alert-engine.
+- 1912c-cutover dispatches dev-stock-price BUT held until 1912b smoke pass. PM should sequence accordingly.
+- 1910a-retry-ism-tool stays in Todo (deferred to next cycle when 1912 program closes).
+
+### Channel audit
+- Skipped MARKET/WORK/BUG read this cycle. Justification: user-driven single-decision dispatch cycle, full c107 + c108 context already loaded in the user prompt, no sprint-planning gap to audit.
+
+### Recurring-bug compliance
+- 1912b-cutover: 0 prior cutover commits on `apps/alert-engine/`. Rule does NOT apply.
+- 1912c-cutover: 0 prior cutover commits on `apps/stock-price/`. Rule does NOT apply.
+- 1912d precedent on api-gateway was successful (HEAD 2a92eb3f, 4ms avg, 9/9 services) — no negative pattern to escalate.
+
+### Signal drop
+- `docs/signals/20260514T200000Z-1912bc-cutover-dispatched.json` written, addressed to `pm`. Includes strategy, smoke window, coupled scope, QA approvals referenced, branch policy.
+
+### Carry-forward to c109+
+- PM dispatches dev-alert-engine for 1912b-cutover next router cycle.
+- ON 1912b smoke pass (6h post-deploy): PM dispatches dev-stock-price for 1912c-cutover.
+- ON 1912c smoke pass: PO closes 1912-go-migration-program (Phase 1+2+3 complete).
+- 1910a-retry-ism-tool ready for dev-mcp-server post-1912 program close.
+- 1909c reparse Q1-2026 PDFs awaited 2026-05-16.
+- 1913 USER F1 BCTC deadline 2026-05-15 17:00 UTC — observational.
+
+### Sign-off
+c108 DISPATCH: sequential cutover 1912b→1912c, 6h smoke each, coupled doc/agent scope per 1912d precedent + user addendum. Signal dropped to pm. PO sub-flow EXIT.
 
 ---
 
