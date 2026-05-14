@@ -1,6 +1,50 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c115 — 1916b-fix-cafef-strategy-replacement APPROVED (3732bcd9)
+**Last updated:** 2026-05-15 | **Session:** c116 — 1915-fix-part2 scanDiskForStrandedPdfs filename fallback APPROVED (6fead90d)
+
+## Session 2026-05-15 c116 — 1915-fix-part2 QA gate
+
+### TASK REPORT — 1915-fix-part2
+
+```
+date: 2026-05-15
+outcome: APPROVED
+```
+
+#### Changed files
+- `apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts` — else branch in `scanDiskForStrandedPdfs()` replaced `if (!matched) continue` with `if (matched) { ticker = ... } else { tickerFromFilename fallback }`
+- `apps/mcp-server/src/__tests__/1915-scan-disk-empty-watchlist.test.ts` — DSE-09 added; DSE-06 updated to reflect new correct behavior
+- `apps/mcp-server/src/__tests__/1416c-hpg-bctc-disk-scan.test.ts` — regression-guard test updated (HPG now picked up via filename fallback when absent from watchlist)
+
+#### Test Results
+- tsc: 0 errors (empty output = clean)
+- Targeted tests (DSE-01..09 + 1416c 6 tests): 15/15 PASS [221ms]
+- Full suite: 9307 pass / 32 fail / 38 skip across 9377 tests
+- 32 failures: ALL PRE-EXISTING — none in 1915-fix-part2 scope. Confirmed by `git show 6fead90d --stat`: only `bctcReparseJob.ts`, two test files, `TASKS.md`, handoff md, developer notebook, signal JSON modified. Failing tests are Task 178, 1343a, 1343e, Sprint 145, sub-fix-C, 1549, 1031, 1100, 1331a, 1336, 1349a, 239, stale-tickers, cron-registry, signal-T5, Bootstrap-230 — all predate 6fead90d.
+
+#### DDD: PASS
+- Zero actual `import` statements from `domain/` to `infrastructure/`. Confirmed with `grep -n "^import.*from.*infrastructure"` — all matches are comments only.
+
+#### Security: PASS
+- No `process.env` in any of the 3 modified files (Bun.env only).
+- No hardcoded secrets or API keys.
+- SQL in `scanDiskForStrandedPdfs()` at L503-507 uses parameterized query (`? AND ? AND ?`).
+
+#### AC Coverage
+- DSE-09: populated watchlist [HPG,VCB] + VNM_Q4_2025.pdf → VNM picked up via filename fallback. PASS.
+- DSE-01..08: GREEN (15/15 total).
+- 1416c: 6/6 GREEN (regression guard updated — HPG now returned via fallback when not in watchlist).
+- tsc: 0 errors. PASS.
+
+#### Merge
+- Commits already on main: `6fead90d` (fix) + `ef64d96b` (developer notebook). No branch to delete (work on main per CLAUDE.md policy).
+- TASKS.md: 1915-fix-part2 moved from Review → Done.
+
+#### Verdict: APPROVED
+- Notify PM: close 1915-fix-part2 in docs/TASKS.md.
+- Notify Ops: redeploy mcp-server container for runtime AC (VEA/VNM rows in financial_reports + pdf_extracted_text).
+
+---
 
 ## Session 2026-05-14 c115 — 1916b-fix-cafef-strategy-replacement QA gate
 

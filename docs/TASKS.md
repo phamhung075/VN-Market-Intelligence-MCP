@@ -40,13 +40,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1915-fix-part2 | **FIX-S CRITICAL** — `scanDiskForStrandedPdfs()` else-branch fallback: when `codes.find()` misses (VEA/VNM not in watchlist), fall through to `tickerFromFilename()` instead of hard `continue`. DSE-09 GREEN + DSE-01..08 GREEN + 1416c GREEN (6/6). tsc 0. DSE-06 + 1416c regression-guard updated to reflect new correct behavior. Runtime AC pending ops redeploy. | CRITICAL | FIX | qa | TASK_1915-fix-part2.md | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1915-fix-part2 | **QA APPROVED 2026-05-15** — `scanDiskForStrandedPdfs()` else-branch fallback: when `codes.find()` misses (VEA/VNM not in watchlist), fall through to `tickerFromFilename()` instead of hard `continue`. DSE-09 GREEN + DSE-01..08 GREEN + 1416c 6/6 GREEN. tsc 0. DDD PASS. Security PASS. Commits `6fead90d`+`ef64d96b` on main. Runtime AC pending ops redeploy (VEA/VNM rows in financial_reports + pdf_extracted_text). | CRITICAL | FIX | qa | 2026-05-15 |
 | 1916b-fix-cafef-strategy-replacement | **QA APPROVED 2026-05-14** — Strategy 2 (cafef.vn FinanceInfo.ashx) permanently removed. All 3 replacement candidates confirmed dead from France. `_fetchCafef` kept as deprecated no-op. 12/12 new tests GREEN (AC-1a/b, AC-2 cafef never-called spy, AC-3 regression chain). tsc 0. DDD PASS. Security PASS. Merged `3732bcd9`. | HIGH | FIX | qa | 2026-05-14 |
 | 1915-fix-part1 | **QA APPROVED 2026-05-14** — scanDiskForStrandedPdfs empty-watchlist fallback + startScheduler.ts startup catch-up db injection fix. `tickerFromFilename()` helper added. 8 new DSE-01..08 tests + 1416c updated (14/14 GREEN). tsc 0. DDD PASS. Security PASS. Merged `66275c67`. **Runtime AC FAIL post-redeploy 2026-05-15 c114** — watchlist populated (38 tickers) but VEA/VNM not in list → `codes.find()` returns undefined → PDFs skipped at L486. Incomplete fix; carry-forward → 1915-fix-part2 (extend fallback to `else if` branch). Ops also fixed real bug: `startupHelpers.ts` missing `db` arg to `runBctcReparseJob()` — landed in latest commit. | CRITICAL | FIX | qa | 2026-05-14 |
 | 1916a-fix-vps-discover-route-and-apikey | **QA APPROVED 2026-05-14** — VPS route `GET /proxy/bctc-discover/:ticker` added to `vps-proxy-server.js` (commit `1b8f8cd5`) + `bctcHttpFetcher.ts` injects `X-API-Key` for VPS host requests (commit `8f9c2d55`). 6/6 new tests GREEN. tsc 0 errors. DDD PASS. Security PASS. Merged to main `b029167c`. Post-merge runtime AC pending ops container restart: Strategy 0 no longer 401, source_url populated for ≥10/14 failing tickers. | CRITICAL | FIX | qa | 2026-05-14 |
