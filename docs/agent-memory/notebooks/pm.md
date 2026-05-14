@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 c98 | **Sprint:** c98 DISPATCH — 1912a sprintified
+**Last updated:** 2026-05-14 c108 | **Sprint:** c108-tick1 dispatch — 1912b-cutover sequential
 
 ## Current state
 
-- **WIP: 1/2 (OPEN)** — 1912a-gateway-spec IN PROGRESS (dev-api-gateway owner). Handoff TASK_1912a-gateway-go-migration.md created. Spec + architect APPROVE landed. Go competency lazy-load installed c253060bf. P2+P3 BLOCKED until 24h smoke window (AC-10).
+- **WIP: 1/2 (OPEN)** — 1912b-cutover IN PROGRESS (dev-alert-engine owner) from c108 dispatch. Handoff created. Spec docs/specs/1912b-alert-engine-go-migration.md §6 + coupled scope per 1912d. QA APPROVED 37/37 pkg test. 6h smoke gate dispatched. 1912c gated on 1912b smoke pass per sequential strategy.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,24 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 108-tick1 — 2026-05-14 c108 Dispatch: 1912b-cutover sequential (WIP=1/2)
+
+**Input:** PO signal `20260514T200000Z-1912bc-cutover-dispatched.json` — sequential strategy, 1912b first (single Dockerfile, q30s cron higher cutover risk), 1912c gated on 1912b 6h smoke pass per BA spec §6. QA APPROVED both (37/37 + 31/31 pkg test PASS). User confirmed cutover go-ahead 2026-05-14.
+
+**Recurring-bug check:** Per feedback_recurring_bug_escalation.md: 0 prior cutover commits on alert-engine zone. N/A — no escalation needed.
+
+**Actions:**
+1. **1912b-cutover status → in_progress** (TASKS.md L35): Owner=dev-alert-engine confirmed. Recurring-bug rule N/A documented.
+2. **Created dispatch signal** `docs/signals/20260514T201530Z-pm-dispatch-1912b-cutover.json` with: from=pm, to=dev-alert-engine, type=sprint-dispatch, task_id=1912b-cutover, tasks_row=docs/TASKS.md#L35, spec=docs/specs/1912b-alert-engine-go-migration.md §6 + coupled scope, smoke_gate_hours=6, smoke_pass_criteria=[/health 200, 0 SQLITE_BUSY in 6h logs, alert-engine cron rows continuous], next_action=dispatch 1912c-cutover on smoke pass, recurring_bug_check={prior_commits:0, status:N/A}.
+3. **Moved PO signal** `20260514T200000Z-1912bc-cutover-dispatched.json` → `docs/signals/processed/` via git mv.
+4. **PM notebook updated** (header, current state, cycle entry).
+
+**WIP Status:** 1/2 (OPEN). 1912c held in Backlog pending 1912b smoke gate (6h).
+
+**Status:** Dispatch COMPLETE. Signal queue ready. dev-alert-engine picks up via signal queue next cycle (dev-team flow). No spawn of dev agent per feedback_agent_autonomy.md.
 
 ---
 
