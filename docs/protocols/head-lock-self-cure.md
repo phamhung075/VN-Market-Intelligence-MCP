@@ -1,6 +1,7 @@
 # HEAD.lock Self-Cure Protocol
 
 **Zone:** cross-service/ | **Owner:** dev-team Step 0-PREFLIGHT
+**Status:** PERMANENT OPERATIONAL POLICY (reclassified 2026-05-14 — was "temporary workaround"; see § f)
 
 ---
 
@@ -148,3 +149,16 @@ Usage: replace `git commit -m "..."` with `git_commit_retry -m "..."` at any flo
 - **Skill commit steps** (notebook-write, agent-md-factory) — same substitution.
 - Retry fires **only** on `index.lock` or `HEAD.lock` in stderr. All other failures propagate immediately.
 - Rationale: Docker Desktop VirtioFS (H4 confirmed c57+c58) races git's atomic lock; 2s sleep clears the scan window. 3 retries = 6s max overhead before hard-fail.
+
+---
+
+## (f) Policy Classification
+
+**PREFLIGHT safe-remove (age>60s AND no live git pid) is permanent operational policy, not a temporary workaround.**
+
+Reclassification rationale (2026-05-14):
+- 3 consecutive cycles (c87/c88/c89) produced stale 0-byte locks aged 1800-2900s with no live git pid — identical H4 fingerprint (VirtioFS PID 51247).
+- PREFLIGHT cure succeeded in 100% of 14 occurrences across all cycles.
+- Architect brief `docs/architecture-briefs/2026-05-13-headlock-recurrence-post-F2a.md` ranked this reclassification as Recommendation #2 (immediate) and confirmed F2a was never scoped to eliminate the remaining two rw bind-mounts (`./reports`, `./docs/agent-memory`).
+
+**Structural cure:** F1 USER action — Docker Desktop → Settings → Resources → File Sharing → add exclusion `<project-root>/.git`. Eliminates the VirtioFS fd race at OS layer. Tracked in `1897b-carry` (user action, not a dev task). Until F1 ships, PREFLIGHT self-cure is the steady-state mitigation and PREFLIGHT cure events are expected normal behavior, not open incidents.
