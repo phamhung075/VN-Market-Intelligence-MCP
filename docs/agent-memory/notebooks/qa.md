@@ -1,6 +1,14 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c99 gate — 1912a-gateway-go-migration CHANGES_REQUESTED
+**Last updated:** 2026-05-14 | **Session:** c100 re-gate — 1912a-gateway-go-migration APPROVED + merged f7ef8c32
+
+## Recent session — 2026-05-14 (c100 re-gate — 1912a-gateway-go-migration APPROVED)
+
+### 1912a — Re-gate verdict: APPROVED. Merge commit: f7ef8c32.
+
+BLK-1 resolved by `dcd0a91b`: empty `apps/api-gateway-go/go.sum` committed (0 bytes). Single parent `34f960a4`, clean subject. `85046d0c` news-scout flow doc fix on branch — zero overlap with api-gateway-go scope. All previously-PASS ACs (AC-2/3/4/5/7/8/9/11 + deferred AC-6/AC-10) confirmed unregressed. No other files touched. Dockerfile L8 `COPY go.mod go.sum ./` unblocked. Merge: no-ff onto main. TASKS.md updated: 1912a-gateway-spec removed from In Progress, shipped row added, parent program row updated. Ops + router signals dropped. P2/P3 (1912b alert-engine + 1912c stock-price) remain BLOCKED on 24h smoke window.
+
+HEAD.lock F4 cure applied: age=63s, no live pid, stale lock removed per permanent policy. Working-tree restore required (prior session left staged deletions of apps/api-gateway-go/).
 
 ## Recent session — 2026-05-14 (c99 — 1912a-gateway-go-migration CHANGES_REQUESTED)
 
