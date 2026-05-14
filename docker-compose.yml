@@ -183,7 +183,7 @@ services:
   stock-price:
     build:
       context: apps/stock-price
-      dockerfile: Dockerfile.go
+      dockerfile: Dockerfile
     ports:
     - 5010:5000
     volumes:
