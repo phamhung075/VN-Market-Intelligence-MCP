@@ -1,8 +1,21 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-13 ~09:00 UTC | **Sprint:** 1881a-impl-arch-brief
+**Last updated:** 2026-05-14 04:30 UTC | **Sprint:** 1890a-spec-expanded
 
-## Last session summary (1881a-impl-arch-brief — source_tier schema decision)
+## Last session summary (1890a-spec-expanded — FA tool-package +5 tools)
+
+Brownfield audit complete. 5 tools assessed for financial-analyst SKILL_MANIFEST.
+Key finding: `get_insider_signals` already in SKILL_MANIFEST (agentBootstrap.ts:64) — doc gap only.
+`get_cash_flow` does NOT exist as MCP tool — must build. Pattern: computeAccrualsTool.ts.
+Other 3 (get_macro_snapshot, get_bond_maturity_calendar, get_investment_clock_phase) exist in
+registry but missing from `financial_analyst` manifest array — manifest + doc additions only.
+Task split: 1890a-A (dev-mcp-server, CRITICAL — BCTC banking Q1/2026 window today) +
+1890a-B (agent-md-editor, HIGH — manifest 3 additions + doc verify).
+Specs: docs/REQ_1890a.md, docs/architecture-briefs/2026-05-14-1890a-fa-tool-package.md.
+Risk R1: Subtask A must ship before 03:30 UTC FA cycle (BCTC G-step 5th cycle gap).
+Risk R4: agentBootstrap.ts line 27 requires docs/SKILL_MANIFEST.md updated in same commit.
+
+## Previous session summary (1881a-impl-arch-brief — source_tier schema decision)
 
 BLK-1 resolved. Chose option (a) JSON wrapper for text-output tools over option (b) header
 line. Rationale: FR-5 compile-time constant + AC-7 tsc enforcement only achievable with
