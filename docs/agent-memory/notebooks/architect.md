@@ -1,8 +1,33 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 08:28 UTC | **Sprint:** 1910-fred-ism+effr-pkg
+**Last updated:** 2026-05-14 (c97 — 1912 go-migration-3-services brief)
 
-## Last session summary (c94 — 1910 rubber-stamp review)
+## Last session summary (c97 — 1912 Go migration brief)
+
+Task 1912-go-migration-program. User-approved option 3 (selective Go rewrite) post-1910a stop.
+Crash evidence: `bun:sqlite` FFI teardown confirmed across QA cycles (qa.md, qa-archive, REQ_1903a).
+Pattern: JSC GC + macOS VirtioFS SHM tear on container stop = SIGABRT 134 / SIGSEGV 139 post-completion.
+
+Target services confirmed:
+- api-gateway: ~1145 LOC, 5 test files, zero native deps (hono only). Lowest risk.
+- stock-price: ~467 LOC, 2 test files, `bun:sqlite` in Tier3 fetcher (3 dynamic imports).
+- alert-engine: ~1289 LOC, 3 test files, `bun:sqlite` synchronous at startup — highest crash-avoidance ROI.
+
+None of the 3 services register MCP tools. All expose HTTP only. SDD-1 invariant automatic.
+MCP bridge: none needed — all 3 services are HTTP downstream of mcp-server. Go replaces the HTTP server.
+Recommended SQLite strategy: `mattn/go-sqlite3` (CGO, stable) over `modernc.org/sqlite` (pure-Go, 2x slower).
+
+Phase sequence: gateway (P1) → alert-engine (P2) → stock-price (P3).
+Effort: 18h best / 34h likely / 50h worst total across 3 services.
+
+Top 3 open questions for PO:
+1. Go version pin (recommended 1.22)
+2. CGO policy (mattn/go-sqlite3 vs modernc pure-Go)
+3. Log format (structured slog vs plain text)
+
+Brief: `docs/architecture-briefs/2026-05-14-go-migration-3-services.md`
+
+## Previous session summary (c94 — 1910 rubber-stamp review)
 
 Rubber-stamp review for Sprint 1910 (get_ism_subcomponents FRED tool + get_fed_liquidity_spread package reg).
 SD-1 RESOLVED: PATH (a) chosen — FRED REST API + free API key (`FRED_API_KEY` env var).
