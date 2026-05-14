@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 10:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 11:41 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1273,3 +1273,30 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - **actions**: price_anomaly signal id=3159 posted to alert-commander (FPT); WORK telegram sent
 - **next_cycle_hint**: Monitor FPT for follow-through or reversal on next open; watch VIC/VHM if VN-Index continues record run; check HVN (price_surge 04:16 vs lower close)
 - **estimated_tokens**: 9000
+
+### Cycle (11:41–11:41)
+- Stocks: 38 | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: [FPT]
+
+## Metrics (cycle 2026-05-14 11:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 1 |
+| signals_suppressed | 4 (VIC 1.46σ, VPB 1.90σ, VRE 0.81σ, VHM 0.73σ — all below 2.0σ) |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5500 |
+
+## Cycle — 11:41 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**:
+  - FPT +4.53% (3.61σ, EOD close 73,900) — confirmed anomaly; PE 13.8 (discount vs sector 17.3), ROE 28.3% >> 10.6%; volume 2.16M below avg (price-led, not volume-driven); pe_compression_risk flagged (FII exposure + US10Y RISK-OFF)
+  - VIC 1.46σ, VPB 1.90σ, VRE 0.81σ, VHM 0.73σ — broad market rally but all sub-threshold; real_estate/banking sectors +1.15%/+1.04% 1d
+  - Macro stable: supply chain normal (BDI 1,400), energy grid normal (hydro 70%), 0 chain findings in last 15m
+  - Off-hours duplicate guard: checked — earlier FPT signals at +5.09% (intraday), EOD close +4.53% is different move_pct → signal not suppressed
+- **actions**: price_anomaly signal id=3165 posted to alert-commander (FPT 3.61σ); WORK telegram sent; log_agent_work id=814
+- **next_cycle_hint**: Watch FPT for momentum continuation or reversion at next open; monitor VPB (1.90σ, borderline) and VIC news-flow (ATH catalysts); check if BCTC overdue alert (37 stocks, HIGH) escalates
+- **estimated_tokens**: 5500
