@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 11:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 14:40 UTC | **Sprint:** 1865a
 
 ## Current state
 
@@ -1300,3 +1300,64 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - **actions**: price_anomaly signal id=3165 posted to alert-commander (FPT 3.61σ); WORK telegram sent; log_agent_work id=814
 - **next_cycle_hint**: Watch FPT for momentum continuation or reversion at next open; monitor VPB (1.90σ, borderline) and VIC news-flow (ATH catalysts); check if BCTC overdue alert (37 stocks, HIGH) escalates
 - **estimated_tokens**: 5500
+
+### Cycle (12:40–12:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [VPB] | pe_risk: [FPT, VPB]
+- Anomalies: FPT +4.53% (3.62σ, id=3169 HIGH), VPB +3.24% (1.90σ, id=3170 MEDIUM/fx_pressure)
+- Sub-threshold: VIC +3.98% (1.46σ), VRE +3.48% (0.81σ, high vol), VHM +2.95%
+- Supply chain: STABLE (BDI=1,400) | Energy grid: NORMAL (hydro 70%) | Chain findings: 0 (15 min)
+- Off-hours cycle (market CLOSED 08:59 UTC) — EOD closing prices
+- Context: TIGHTENING (news-scout regime_adj=10.4); US inflation 3yr high; Fed hawkish; VN-Index new high led by VIC+VHM; GAS oil_gas HIGH alert active; BCTC Q4-2025 overdue 37 stocks
+
+## Metrics (cycle 2026-05-14 12:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 2 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
+
+### Cycle (13:40–13:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED since 08:59 UTC) — unchanged EOD closing prices
+- Suppressed (off-hours duplicate guard): FPT +4.53% id=3169 (same move_pct, already signaled 12:42); VPB +3.24% id=3170 (same move_pct, already signaled 12:42)
+- Sub-threshold (TIGHTENING 1.5σ): VIC +3.98% (1.42σ), VRE +3.48% (0.83σ), VHM +2.95% (0.75σ), GAS +2.20% (0.69σ)
+- Sector snapshot: real_estate +1.15%, tech +1.72%, banking +1.04%, steel -0.11%, utilities -0.10% (1d, only 1d data available)
+- Chain findings (120min): 4 open — FPT×2 (market-watcher), VPB×1 (market-watcher), unknown×1 (news-scout chain_catalyst bearish)
+- Context: BCTC Q4-2025 overdue 37 stocks HIGH; GAS macro_deviation HIGH (Brent -2.12σ below mean); VN-Index at new high
+
+## Metrics (cycle 2026-05-14 13:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
+
+### Cycle (14:40–14:43)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED since 08:59 UTC) — unchanged EOD closing prices
+- Suppressed (off-hours duplicate guard): FPT +4.53% id=3169 (same move_pct, signaled 12:42); VPB +3.24% id=3170 (same move_pct, signaled 12:42)
+- Sub-threshold (TIGHTENING 1.5σ): VIC +3.98% (1.42σ), VRE +3.48% (0.83σ), VHM +2.95% (0.75σ), GAS +2.20% (0.69σ)
+- Chain findings (15min): 0 open | News-scout chain_catalyst: VIC ATH+foreign buy reversal (id=3173, active)
+- Context: TIGHTENING persists; VN-Index at new high (VIC+VHM+FPT drivers); BCTC Q4-2025 overdue 37 stocks HIGH; GAS macro_deviation HIGH (Brent -2.12σ)
+
+## Metrics (cycle 2026-05-14 14:43 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 2 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |

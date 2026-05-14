@@ -2,7 +2,62 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 (cycle 51) | Cycles completed: 51
+**Last updated:** 2026-05-14 (cycle 52) | Cycles completed: 52
+
+---
+
+## Cycle 52 Watch Notes (2026-05-14 ~15:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Auto-cure: 0 applied (pending evidence)
+
+**MCP Gateway:** NOT registered — 7th consecutive cycle (c46–c52). Live probe attempted: `mcp__claude_ai_gateway__call_tool` not found. Task 1913: CRITICAL F1 USER ACTION (Desktop config). Notebook-evidence mode.
+
+**SPRINT STATUS (key discovery):**
+- Sprint 1909: SHIPPED. 1909a (extractor) APPROVED, 1909b (get_bctc_ocf tool registered, toolCount=140) APPROVED. 1909c: HOLD AC-4/5 — Q1-2026 PDFs await banking deadline 2026-05-15. bctcReparseJob triggers 2026-05-16. G-step exercisable post-reparse + Desktop fix.
+- Sprint 1910b: SHIPPED. get_fed_liquidity_spread registered in news-scout, financial-analyst, unified-coordinator (agentBootstrap.ts + 3 package docs + SKILL_MANIFEST). D-step EFFR-IORB gap addressable once Desktop config fixed.
+- Sprint 1910a: USER-STOPPED c97 — in Todo, re-triage needed.
+
+**KEY FINDINGS THIS CYCLE:**
+- financial-analyst G/H/B runtime skip: per TASKS.md 1913, tools ARE registered in agentBootstrap.ts L72-75. Root cause confirmed = Claude Desktop cowork gateway config mismatch. F1 USER ACTION — cannot auto-cure via flow file. Persists.
+- alert-commander B-step news-fallback: 2nd cycle (c51 10:03 UTC + c52 14:02 UTC). Both off-hours (2h cadence, market closed). Need 1 more cycle for auto-cure threshold. Pattern: off-hours cycles have higher news-fallback frequency.
+- news-scout c51 auto-cure dedup gate: HOLDING. Gate present in stage-signals.md. No repeat-theme false fires in c52 cycles (13:20 VN-ATH correctly suppressed, 14:22 different-theme chain_catalyst correctly fired, 12:19 different-theme correctly fired).
+- digest-predict: 6-day silence (2026-05-11 21:38 → now). Tasks 1907a (CRITICAL) + 1907b (Todo) open. No resolution.
+- BCTC Q1/2026 banking deadline: TODAY (2026-05-15 VNT = ~17:00 UTC). ACB/BID/CTG/EIB/MBB/VCB/VPB.
+- 1912a Go migration: Phase 1 DEPLOYED. 24h smoke window 2026-05-14T14:00Z → 2026-05-15T14:00Z. 9277 tests parity. 1912d-cutover queued post-smoke.
+- Alert precision: N=0/434 (bug 2874 open). HEAD.lock: 10+ occurrences (F1 user-action).
+
+**MARKET STATE (from notebooks ~14:00-15:00 UTC):**
+- VN-Index 1,919 (+1.06%) — ATH confirmed. Market CLOSED.
+- Regime: NEUTRAL (REGIME_TRANSITION confirmed 11:05 UTC — was TIGHTENING prior). Authoritative: macro_snapshot.
+- US10Y: NEUTRAL (4.48%) | DXY: USD STABLE (98.52) | Brent: ~$105 | Carry: FII_OUTFLOW_RISK (-33bp)
+- FPT: conviction 0.53 (declining), Kinh Dich BAN 56%, -8.0% position
+- Banking: VCB Q4-2025 filed. Q1-2026 cohort deadline today.
+- FII: UNKNOWN (pipeline paused since 2026-05-13)
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: GOOD (4/5 eff — B-step news-fallback at 14:02, cycle 2)
+- news-scout: GOOD (5/5 eff) — dedup gate HOLDING
+- unified-agent: GOOD (7/7 eff — Pillars 4/4, REGIME_TRANSITION logged)
+- financial-analyst: NEEDS_ATTENTION (5/7 eff — G/H SKIP runtime, 1913 user-action)
+- market-watcher: GOOD (4/5 eff — DXY tool N/A in pkg)
+- digest-predict: CRITICAL/UNAUDITABLE (6-day silence)
+- report-analyzer: n/a (no c52 session)
+
+**AUTO-CURE TRACKING:**
+- alert-commander B-step news-fallback: 2/3 cycles. Auto-cure pending 1 more cycle.
+- market-watcher off-hours regime: insufficient evidence c52. Carry tracking.
+- financial-analyst G/H: NOT flow-curable — infrastructure user-action (1913).
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-14T15-30-00Z.json (priority: high — NEEDS_ATTENTION, banking deadline)
+
+## Cycle — 2026-05-14 (cycle 52, ~15:30 UTC)
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEEDS_ATTENTION/IMPROVING. Sprints 1909/1910b SHIPPED (get_bctc_ocf + get_fed_liquidity_spread registered). news-scout auto-cure dedup gate HOLDING (5th cycle clean). alert-commander B-step news-fallback cycle 2/3. digest-predict 6-day silence (CRITICAL). BCTC Q1/2026 banking deadline TODAY (ACB/BID/CTG/EIB/MBB/VCB/VPB). financial-analyst G/H skip: 1913 F1 user-action confirmed (NOT server-side). MCP gateway 7th consecutive cycle blocked. 1912a Go migration smoke running.
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-14T15-30-00Z.json). Notebook updated. 0 auto-cures applied. Telegram blocked (MCP unregistered).
+- **next_cycle_hint**: (1) alert-commander B-step news-fallback: if off-hours cycle recurs with news-fallback → 3rd cycle → AUTO-CURE. (2) 2026-05-16: bctcReparseJob triggers → confirm 1909c AC-4 (≥30/37 non-zero OCF). Watch financial-analyst 23:00 UTC cycle attempt G-step. (3) 1912a smoke clean at 2026-05-15T14:00Z → 1912d-cutover-cleanup triggers. (4) Banking BCTC filings: watch market-watcher/alert-commander 02:00–09:00 UTC 2026-05-15 for anomalies. (5) Escalate 1913 to user if G-step still SKIP after reparse + smoke clean.
+- **estimated_tokens**: 11000
 
 ---
 
