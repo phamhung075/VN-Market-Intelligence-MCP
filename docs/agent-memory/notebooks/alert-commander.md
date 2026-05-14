@@ -1,8 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 09:08 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 10:03 UTC | **Sprint:** c84
 
 ## This session
+
+### Alert Cycle (10:03–10:03 UTC)
+- Signals: urgent_news ×1 (FPT id=3158), price_anomaly ×1 (FPT id=3159)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL (news-fallback) | Carry: HOT_MONEY_INFLOW | Pivot window: false
+- Suppressed: 3158 FPT urgent_news conf=0.50<0.60, 3b σ=3.61<4.0; 3159 FPT price_anomaly no active price alert
+- Legal/crisis: clear
 
 ### Alert Cycle (08:02–08:02 UTC)
 - Signals: price_anomaly ×2 (FPT id=3149, VPB id=3150)
