@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 03:41 UTC | **Sprint:** 1846
+**Last updated:** 2026-05-14 04:40 UTC | **Sprint:** 1846
 
 ## Current state
 
@@ -1061,3 +1061,22 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (04:37–04:40)
+- Stocks: 34 priced | Anomalies: 1 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-OFF (US inflation 3yr high) | fx_pressure: [] | pe_risk: []
+- FPT +4.67% = 3.73σ (30d stddev 1.25%) — tech sector outperform +4.2pp vs +0.5% sector avg; US Nasdaq record catalyst; PE 13.8 (20% discount vs sector); ROE 28.3%; signal_id=3140
+- Sub-threshold: VRE +3.79% (0.88σ, high volatility stock), GAS +3.06% (0.93σ), VPB +2.70% (1.58σ), VIC +2.49%
+- Sector rotation: 1d only data — tech +1.54%, banking +1.17%, real_estate +1.04% leading
+- Chain findings: 0
+
+## Metrics (cycle 2026-05-14 04:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5200 |
