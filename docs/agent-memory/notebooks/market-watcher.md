@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 20:38 UTC | **Sprint:** unknown (MCP unavailable)
+**Last updated:** 2026-05-14 22:38 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1479,3 +1479,24 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 2800 |
+
+### Cycle (22:38–22:38)
+- Stocks: 38 | Anomalies: 0 (>2.0σ, NEUTRAL) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-ON | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED). 5 signals suppressed — off-hours duplicate guard (unchanged EOD prices from 2026-05-14 08:59, signals already emitted this session).
+- Session leaders: FPT +4.53%, VIC +3.98%, VRE +3.48%, VPB +3.24%, VHM +2.95%
+- Sector leaders 1d: tech +1.72%, real_estate +1.15%, banking +1.04%
+- CARRY_REGIME=HOT_MONEY_INFLOW: tech/real_estate/banking flagged hot_money_concentration. Khối ngoại mua ròng reversal confirmed.
+- VinFast restructure catalyst (VIC) remains open — watch gap-up on next session open.
+- Chain findings: 0 new findings in last 15 min.
+
+## Metrics (cycle 2026-05-14 22:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 0 |
+| signals_suppressed | 5 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
