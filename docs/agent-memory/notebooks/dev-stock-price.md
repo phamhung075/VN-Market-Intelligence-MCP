@@ -1,6 +1,28 @@
 # dev-stock-price — Notebook
 
-Zone: `apps/stock-price/` | Stack: Go 1.22 (primary) + TS/Bun (coexist) | DB: stock_price.db (write)
+Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
+
+## Session 2026-05-14 — 1912c-cutover COMPLETE
+
+### What shipped (cutover sprint c108)
+
+Full production cutover of stock-price service from Bun/TS to Go 1.22 (CGO).
+
+**Commits:**
+- `b87382b7` — docker-compose.yml: stock-price dockerfile: Dockerfile.go (item a)
+- `54ff83ed` — BLK-3 close: Dockerfile.go→Dockerfile, 10 TS src files deleted (items b+c)
+- `dc56d508` — agent-md-factory refresh: dev-stock-price.md TS→Go (item d)
+- `18e7339e` — doc-sweep 8 files TS→Go + README-log-schema.md authored (items e+f)
+
+**Signal:** `docs/signals/20260514T181854Z-1912c-cutover-complete.json` (deploy_ready=true)
+
+**Verification:**
+- `go test ./pkg/... -count=1` → 31/31 PASS
+- `go test ./... -count=1` → CLEAN (BLK-3 closed — Dockerfile.go parse error gone)
+- tree-map.md orphan check → 0 stale TS refs
+- graphify → skipped (PEP-668 system restriction, graph.json exists from prior run)
+
+**State:** TS fully retired. Go is sole runtime. ops to `docker-compose up --build stock-price`.
 
 ## Session 2026-05-14 — 1912c Phase 3 Go Migration SHIPPED
 
