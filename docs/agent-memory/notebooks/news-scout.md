@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 06:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 07:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (07:20–07:21 UTC) 2026-05-14
+- Items: 20 | Impacts: 4 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: Gold <$4,700 large buyer accumulating (adj 10, global macro, no direct watchlist stock → suppressed). DNNN capital markets policy statement (adj 10.4, bearish securities/banking/tech — policy ambiguity, no direct watchlist name → suppressed). GPMB real estate policy document (adj 3/10 chain → suppressed). Silver surge +htrăm tấn (adj 4.9 bullish TIGHTENING ×0.7 → suppressed). Foreign sell 14 sessions already in #3141. No new signals above threshold this cycle.
+- Note: Prior cycles #3136, #3141, #3145 cover IEA-oil/CPI/FII-outflow — all key macro themes already on bus.
 
 ### Cycle (06:20–06:22 UTC) 2026-05-14
 - Items: 20 | Impacts: 5 | Signals: [chain_catalyst #3145 IEA-oil+CPI-pressure] | Regime: TIGHTENING | Carry: NEUTRAL
