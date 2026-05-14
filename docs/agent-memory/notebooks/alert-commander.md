@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 03:04 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 04:08 UTC | **Sprint:** c84
 
 ## This session
 
@@ -19,6 +19,17 @@ Off-hours cycle (01:02 UTC). 3 signals from bus: GAS price_anomaly id=3128 (σ=2
 - **VCI insider sell:** Fund chaired by Nguyễn Thanh Phượng sold all VCI shares (news_mention alert). Monitor for verified_chain escalation — insider event qualifies as always-MARKET if confirmed.
 - **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Apply NEUTRAL thresholds; include carry caveat in any MARKET bull alert.
 - **BCTC overdue:** 37 stocks overdue Q4-2025 (some 29d+). Watch for regulatory action escalation to legal_risk signal.
+
+### Alert Cycle (04:08–04:08 UTC) — 2026-05-14
+- Signals: 2 (urgent_news: FPT id=3135 from news-scout conf=0.50; price_anomaly: FPT id=3138 from market-watcher conf=0.50)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- Suppressed: urgent_news FPT id=3135 (conf=0.50 < NEUTRAL threshold 0.60; get_agent_signals price_anomaly FPT returned no results — override unconfirmed) | price_anomaly FPT id=3138 (get_alerts type=price returned no active alerts — unconfirmed)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: OPEN (20-min cycle)
+- VN-Index: 1,916.83 (+0.97%) | Kinh Dịch: Khôn(2) MUA 100%
+- Notable: HVN -6.62% (oil/FX pressure), FPT +5.09% (US Nasdaq record + April profit +21% YoY)
+- log_agent_work id=794
 
 ### Alert Cycle (03:03–03:04 UTC) — 2026-05-14
 - Signals: 1 (price_anomaly: FPT id=3134 from market-watcher)

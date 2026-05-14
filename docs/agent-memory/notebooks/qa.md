@@ -1,6 +1,18 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c89 gate — 1906a-headlock-cure-permanent APPROVED
+**Last updated:** 2026-05-14 | **Session:** c90 gate — 1890a-A get_cash_flow APPROVED
+
+## Recent session — 2026-05-14 (c90 — 1890a-A get_cash_flow APPROVED)
+
+### 1890a-A — get_cash_flow MCP tool (BCTC cash flow forensics)
+
+Files: 7 (+778 LOC). Commit fd7cbe44 cherry-picked from worktree-agent-ac33d4e901731e232.
+
+Pipeline: tsc 0 errors. 5/5 task tests PASS. Full suite: 9198 pass / 33 fail (all 33 pre-existing — watchlist count, scheduler count, ops agent structure, network errors; none in 1890a scope). DDD PASS (interface→infrastructure import is correct pattern for tools layer). Security PASS (no process.env, no hardcoded secrets, parameterized SQL). SSOT mirror PASS (SKILL_MANIFEST.md financial_analyst array matches agentBootstrap.ts literally, including get_cash_flow as last entry). Tool package PASS (Cash Flow Intelligence section present, correct output shape, R3 usage note). Source_tier invariant PASS (first field in both found + not-found envelopes). Null-safety PASS (zero and null net_profit both yield null ocf_ni_ratio). Injectable _testDb pattern PASS.
+
+Non-blocking: project-stats.json toolCount=125 is stale (was pre-existing before 1890a; registry.ts comment correctly marks #131). Not caused by this task.
+
+Verdict: APPROVED.
 
 ## Recent session — 2026-05-14 (c89 — 1906a-headlock-cure-permanent APPROVED)
 
