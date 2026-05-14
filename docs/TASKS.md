@@ -67,8 +67,7 @@
 | 1899a-tests-SHIPPED-c80 | TESTS **DONE 2026-05-13 c80**: Unit + integration suite for news-fetch. 5 unit/integration files (165 pass / 6 skip), E2E newsHeadlinesRefreshJob + scheduler job (3/3 pass). **NOTE: Job body shipped here (136L, `newsHeadlinesRefreshJob.ts`); 1899a-cron wiring-only (3 steps remain).** Commits: feat `d2818207`, nb `64c3db67`, task-md `da5d1b0f`. QA APPROVED. | MEDIUM | FEATURE | developer | 2026-05-13 |
 | 1899a-routes-SHIPPED-c79 | SCAFFOLD **DONE 2026-05-13 c79**: HTTP routes — handlers.ts (Hono router, /health + /news/reuters/headlines + /news/bloomberg/headlines). Zone: apps/news-fetch/. Commits: feat `644c8fe4`, nb `43609750`. 137/137 pass, tsc 0 errors. QA APPROVED. | MEDIUM | FEATURE | developer | 2026-05-13 |
 | CLEAN-c79-SHIPPED-c79 | CLEANUP **DONE 2026-05-13 c79**: Stale artifacts + preflight-lsof policy. (A+B) `.claire/` typo worktree orphans + gitignore (`4bdc1316`); (C) preflight-lsof log retention policy + gitignore (`cb0fdb56`). Tree-verify PASS, c2-alert OK. | MEDIUM | CHORE | code-janitor + ops | 2026-05-13 |
-| 1899a-reuters-fallback-SHIPPED-c78 | SCAFFOLD **DONE 2026-05-13 c78**: Reuters fallback — reuters-stealth.ts (Playwright DataDome stealth, FALLBACK only). Zone: apps/news-fetch/. Commits: feat `3e04dc5f`, qa `e0a5da53`. QA APPROVED. | MEDIUM | FEATURE | dev-mainserver-crawls | 2026-05-13 |
-| _(6 more tasks archived: 1898b, 1900a, 1901b, 1900b, 1899a-{app,domain}, 1901a, 1899a-{factory,reuters-rss,core}, 1899a-bloomberg, 1903a, 1898a, 1902a)_ | — | — | — | — | — |
+| _(7 more tasks archived: 1899a-reuters-fallback, 1898b, 1900a, 1901b, 1900b, 1899a-{app,domain}, 1901a, 1899a-{factory,reuters-rss,core}, 1899a-bloomberg, 1903a, 1898a, 1902a)_ | — | — | — | — | — |
 
 ---
 
