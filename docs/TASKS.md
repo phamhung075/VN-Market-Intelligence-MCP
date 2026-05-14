@@ -29,6 +29,10 @@
 
 ## In Progress
 
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+| 1905a-news-fetch-stealth-fix | FIX-HIGH (c88 from ops signal `ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z`): news-fetch startup blocked on `SyntaxError: Missing 'default' export in module 'playwright-stealth'` at `apps/news-fetch/src/infrastructure/scrapers/playwright-browser-factory.ts:24`. playwright-stealth v0.0.1 is CJS, no ESM default → Bun cannot resolve. Fix options: (a) dynamic import / require interop compatible with Bun ESM, or (b) swap for modern ESM-compatible stealth module. AC: (1) news-fetch container builds + starts healthy. (2) `/health` returns 200 on port 5008. (3) `newsHeadlinesRefreshJob` next q30m execution succeeds (no connection-refused). (4) tsc 0 errors + existing tests pass. Zone: `apps/news-fetch/`. baseline_pass: tsc + news-fetch container build + healthcheck + integration test green. Size: S. Unblocks 1904a AC4 news-freshness. | HIGH | FIX | developer | — | — |
+
 ---
 
 ## Review
