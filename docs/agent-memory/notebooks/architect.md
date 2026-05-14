@@ -1,6 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 11:02 UTC | **Sprint:** 1912a spec review
+**Last updated:** 2026-05-14 17:54 UTC | **Sprint:** 1912b-cutover blocker c108
+
+## Last session summary (c108-tick3-blocker — 1912b schema migration decision)
+
+Task: 1912b-cutover crashloop blocker. Decision: Option 1 (auto-migrate at init). ONE file edit.
+
+Root cause confirmed via docker exec + sqlite3 on live volume:
+`InitAlertTables` DDL string calls `CREATE INDEX ... ON alert_engine_records(outcome) WHERE outcome IS NULL`
+BEFORE `ALTER TABLE ADD COLUMN outcome` runs. SQLite rejects partial index on non-existent column.
+The `CREATE TABLE IF NOT EXISTS` skips silently (TS-era table already exists), then the partial index
+line fails immediately, returning `"no such column: outcome"` wrapped as `"init alert tables: ..."`.
+The ALTER TABLE block never executes.
+
+DB state: 0 rows in both tables. Zero data loss risk. Option 3 (wipe) acceptable but unnecessary.
+Option 1 wins because it's a code fix that scales to future schema deltas.
+
+Fix spec: Split single DDL `db.Exec(ddl)` into 3 ordered phases:
+- Phase 1: base CREATE TABLE + non-outcome indexes + alert_mutes
+- Phase 2: ALTER TABLE ADD COLUMN loop (existing, unchanged)
+- Phase 3: CREATE INDEX for outcome partial index (after column guaranteed present)
+
+Ignore "already exists" on Phase 3 index via new `sqliteIndexExists` helper (or string-match on error).
+
+Test: `TestInitAlertTables_PreMigrationDB` — create TS-era schema in :memory:, call InitAlertTables,
+assert outcome columns present + idx_alerts_outcome_pending in sqlite_master.
+
+Outputs:
+- Signal: docs/signals/20260514T175450Z-1912b-schema-migration-decision.json
+- Brief: docs/architecture-briefs/2026-05-14-1912b-schema-migration.md
 
 ## Last session summary (1912a spec review — APPROVE)
 
