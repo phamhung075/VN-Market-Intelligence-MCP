@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 12:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 13:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (13:20–13:22 UTC)
+- Items: 20 | Impacts: 0 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- Suppressed: VN-Index ATH cascade (chain 4/10 × TIGHTENING neutral → below threshold); FPT JV Japan (chain 5/10 neutral → below threshold)
+- Gold: 4702.4 (falling, not spiking). Brent: 104.8 (-2.12σ below avg, no CPI trigger). No PMI data. No signals fired.
 
 ### Cycle (12:19–12:21 UTC)
 - Items: 20 | Impacts: 4 | Signals: [chain_catalyst #3167] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW
