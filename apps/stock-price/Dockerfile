@@ -1,23 +1,42 @@
-# Stock Price Service — Bun/TypeScript
-# Port 5000
+# Stock Price Service — Go multi-stage build
+# CGO_ENABLED=1 required: mattn/go-sqlite3 (Tier3 SQLite cache, AC-7)
+# Pattern: apps/api-gateway/Dockerfile adapted for CGO + sqlite3
 
-FROM oven/bun:1.3.13-alpine AS builder
+# ── Stage 1: builder ─────────────────────────────────────────────────────────
+FROM golang:1.22-alpine AS builder
+
+# gcc + musl-dev are required for CGO (mattn/go-sqlite3)
+RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app
-COPY package.json bun.lock* ./
-RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile
+
+# Cache module downloads before copying source
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
 
-# ── Runtime ──
-FROM oven/bun:1.3.13-alpine
+# Build with CGO enabled; strip debug info for smaller binary
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o stock-price ./cmd/server/
+
+# ── Stage 2: minimal runtime ─────────────────────────────────────────────────
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY package.json tsconfig.json ./
+
+COPY --from=builder /app/stock-price /app/stock-price
+
+# Data directory for SQLite files (market.db r/o, stock_price.db r/w)
+# Actual DB files are mounted via Docker named volumes — do NOT bind-mount
+# (memory: project_sqlite_corruption_fix.md — named volume prevents VirtioFS corruption)
+RUN mkdir -p /app/data
 
 EXPOSE 5000
-ENV PORT=5000
 
-CMD ["bun", "run", "src/index.ts"]
+ENV PORT=5000
+ENV DB_PATH=/app/data/market.db
+ENV STOCK_PRICE_DB_PATH=/app/data/stock_price.db
+
+ENTRYPOINT ["/app/stock-price"]
