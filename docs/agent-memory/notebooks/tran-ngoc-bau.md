@@ -2,7 +2,57 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 (cycle 50) | Cycles completed: 50
+**Last updated:** 2026-05-14 (cycle 51) | Cycles completed: 51
+
+---
+
+## Cycle 51 Watch Notes (2026-05-14 ~10:45 UTC)
+
+**Status:** STABLE | Direction: IMPROVING | Auto-cure FIRED (c51)
+
+**MCP Gateway:** NOT registered — 6th consecutive cycle (c46–c51). Live probe attempted: `mcp__claude_ai_gateway__call_tool` → tool_not_found. Notebook-evidence mode. User-action item (Desktop config).
+
+**AUTO-CURE APPLIED — news-scout inter-cycle chain dedup gate:**
+- File: `.claude/flows/news-scout/stage-signals.md`
+- 3-cycle evidence: c49 (IEA/CPI #3145 overlap), c50 (proactive suppress), c51 (VN-ATH/FPT-JV #3157/#3158 overlap)
+- Cure: 180-min inter-cycle dedup gate added before any chain_catalyst/urgent_news post
+- Validation: next news-scout cycle ~11:20 UTC
+- c47 auto-cure (off-hours dedup) ROI: SUSTAINED 4th cycle
+
+**KEY FINDINGS THIS CYCLE:**
+- financial-analyst runtime B/G/H skip: package file has all 3 tools. Runtime session (2026-05-13 23:05) explicitly logged them absent. Root cause: MCP server-side registration gap, NOT package-file gap. Cannot auto-cure. Dev must verify server-side. URGENT — BCTC Q1/2026 banking deadline TOMORROW (2026-05-15).
+- alert-commander: B-step regression at 10:03 UTC (news-fallback used). Cycle 1 of evidence — tracking.
+- market-watcher: B-step regime inferred from news on 2026-05-13 off-hours cycles (2 instances). Tracking.
+- digest-predict: 5-day silence. task 1907a unresolved. Now CRITICAL gap.
+- Sprints 1909/1910: spec-complete, not deployed. D-step and OCF G-step still dark.
+- Alert precision scoring: N=0/434 — bug 2874 open.
+
+**MARKET STATE (from notebooks ~10:00 UTC):**
+- VN-Index ~1,919 (+1.06%) — new ATH confirmed
+- Regime: SPLIT (TIGHTENING → NEUTRAL shift at 09:21 UTC in news-scout; alert-commander NEUTRAL)
+- FII: UNKNOWN (pipeline paused) + foreign buying reversal signs
+- US10Y: RISK-OFF | DXY: USD STRENGTHENING | Brent: ~$106
+- VCB Q4-2025 BCTC filed 2026-05-14. Q1/2026 banking deadline TOMORROW.
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: GOOD (4/5 effective — B-step news-fallback at 10:03, cycle 1)
+- news-scout: GOOD (4/4 effective) — inter-cycle dedup AUTO-CURED c51
+- market-watcher: GOOD (3/4 effective — B-step regression 2026-05-13 off-hours)
+- unified-agent: GOOD (6/6 effective — Pillars 4/4 both cycles)
+- financial-analyst: NEEDS_ATTENTION (2/5 effective — runtime G/H/B skip, MCP server gap)
+- report-analyzer: UNAUDITABLE (no 2026-05-14 session)
+- digest-predict: UNAUDITABLE (5-day silence)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-14T10-45-00Z.json (priority: medium — STABLE with auto-cure)
+
+## Cycle — 2026-05-14 (cycle 51, ~10:45 UTC)
+
+- **cycle_date**: 2026-05-14
+- **findings**: STABLE/IMPROVING. AUTO-CURE FIRED: news-scout inter-cycle chain dedup gate (3-cycle evidence met: c49/c50/c51). financial-analyst runtime B/G/H skip: MCP server-side registration gap (package file correct — this is NOT a flow-file issue, cannot auto-cure). digest-predict 5-day silence (1907a unresolved). MCP gateway 6th consecutive cycle blocked. Alert precision N=0/434 (bug 2874). VN-Index new ATH ~1,919. BCTC Q1/2026 banking deadline TOMORROW.
+- **actions**: Auto-cure applied (stage-signals.md). Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-14T10-45-00Z.json). Notebook updated. Telegram blocked (MCP unregistered).
+- **next_cycle_hint**: (1) Validate news-scout dedup gate on next cycle (~11:20 UTC) — did it fire? (2) Confirm financial-analyst 23:00 UTC cycle — if B/G/H still SKIP after MCP server fix, escalate to auto-cure. (3) Watch alert-commander B-step: if news-fallback recurs at next cycle → 2nd cycle of evidence. (4) Confirm 1909/1910 deploy. (5) Escalate 1907a to CRITICAL for digest-predict.
+- **estimated_tokens**: 10500
 
 ---
 

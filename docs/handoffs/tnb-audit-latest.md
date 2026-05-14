@@ -1,15 +1,17 @@
-# TNB Audit — Cycle 49 — 2026-05-14 UTC
+# TNB Audit — Cycle 51 — 2026-05-14 UTC
 
-## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (financial-analyst tool package updated — 3 missing tools now present; c47 off-hours auto-cure ROI sustained; BCTC Q1/2026 banking deadline TODAY; news-scout chain dedup gap is top new finding; MCP session scope persists but is a config constraint, not a degradation)
+## Overall: STABLE
+Direction: **IMPROVING** (auto-cure fired for news-scout inter-cycle dedup gap — 3-cycle evidence met; financial-analyst package correct but runtime still skipping G/H steps; digest-predict silence continues; MCP gateway 6th consecutive cycle blocked)
 
 ---
 
 ## MCP Gateway Status
 
-MCP gateway not registered as a callable function in this Claude Code cowork session. Live probe attempted per error-boundary skill — `call_tool` is not a registered tool in this session scope. Per fail-loud protocol: this is a live probe result, not a memory assertion. Same constraint documented c46/c47/c48. `send_telegram` also blocked — report delivered via handoff file + signal file only.
+Live probe attempted per error-boundary skill (`mcp__claude_ai_gateway__call_tool` → `health_check`). Tool not registered in this session scope. Result: NOT REGISTERED — 6th consecutive cycle (c46–c51). This is a live probe result per error-boundary skill requirement, not a memory assertion.
 
-**Key change since c48:** Financial-analyst tool package (`financial-analyst.md`) now includes `get_cash_flow`, `get_macro_snapshot`, and `get_investment_clock_phase` — confirming task 1890a-spec-expanded was DEPLOYED. This resolves the B/G/H tool-gap that was the top carry blocker across 5 cycles.
+Impact: MARKET channel read blocked, signal bus direct audit blocked, Telegram dispatch blocked. All findings from notebook evidence (authorised pattern since c46).
+
+SPIKE_C86_MCP_REG per PO c86 ACK remains unresolved. User-action item. Sprints 1909/1910 in-flight do not address session scope registration — that is a Desktop config gap.
 
 ---
 
@@ -17,97 +19,120 @@ MCP gateway not registered as a callable function in this Claude Code cowork ses
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **MCP gateway not registered in TNB cowork session — 4th consecutive cycle** | infrastructure / session | HIGH | escalation | c46/c47/c48/c49. SPIKE_C86_MCP_REG per PO c86 ACK: "cowork Desktop config gap (user action)." TNB audit quality degraded: no live MARKET channel read, no signal bus audit, no Telegram dispatch. Persisting blocker until user resolves Desktop config. |
-| 2 | **News-scout: chain_catalyst chain dedup gap — same macro theme (IEA oil + US CPI) fired 3 times in ~3h window** | news-scout | medium | NEW | 06:22 UTC cycle self-noted: "#3145 may overlap with #3136 (03:23) and #3141 (05:22) — same macro theme." Cycles 03:23, 05:22, 06:22 UTC all fired chain_catalyst on IEA global oil drawdown + US CPI 3-year high. Same event = 3 signals in 3h. Flow has no inter-cycle dedup check for repeated macro themes (only intra-cycle dedup is active). |
-| 3 | **Digest-predict: 4-day silence — no session 2026-05-11 through 2026-05-14** | digest-predict | HIGH | tracking / escalation | Notebook last entry: 2026-05-11 21:38 UTC. No session on 2026-05-12, 2026-05-13, or 2026-05-14 as of 07:00 UTC. Task 1907a-digest-predict-silence (ops diagnosis) dispatched per PO c90 ACK. Daily digest is the primary user-facing morning briefing — 4-day gap is a user-value outage. |
-| 4 | **Financial-analyst: no 2026-05-14 session visible — BCTC Q1/2026 banking cohort window at risk** | financial-analyst | HIGH | tracking | financial-analyst notebook last entry: 2026-05-13 23:05 UTC. BCTC Q1/2026 deadline for ACB/BID/CTG/EIB/MBB/VCB/VPB is TODAY (2026-05-15 VNT = ~17:00 UTC 2026-05-14). Tool package now has `get_cash_flow` + `get_investment_clock_phase` — but if agent hasn't cycled yet today, the Layer 7 G-step and H-step will still be skipped for this EPS window. Next scheduled cycle: 23:00 UTC. |
-| 5 | **Alert-commander: FPT σ approaching 4.0 override floor — MARKET alert may fire on next cycle** | alert-commander | medium | tracking / NEW | alert-commander 06:03 UTC: FPT price_anomaly #3143 σ=3.73 — suppressed (no active price alerts, σ < 4.0). Carry-over: "Approaching 4.0 override floor. If σ ≥ 4.0 AND impact_score ≥ 6 on next signal → override triggers." market-watcher 06:41 UTC: FPT +3.25% (2.60σ) signal #3147 fired. US tech rally (Nasdaq record) + FPT April profit +21% YoY catalyst active. Monitor next alert-commander cycle for first MARKET fire of this session. |
-| 6 | **US10Y: RISK-OFF signal active (unified-agent 06:00 UTC) — no agent has logged explicit Layer 1.2 cross-flag** | macro-watch | low | carry | US10Y ~4.49% per c48 evidence (threshold 4.50%). Unified-agent 06:00 UTC logs US10Y_SIGNAL=RISK-OFF but no explicit "US10Y approaching/breaching 4.50% threshold" log. If 4.50% breached, all agents must log explicit cross-flag per Layer 1.2. No breach confirmed yet — carry-watch. |
-| 7 | **Financial-analyst tool package UPDATED — 1890a-spec-expanded CONFIRMED DEPLOYED** | financial-analyst | POSITIVE | tracking | `.claude/tools/package/financial-analyst.md` now contains `get_cash_flow` (G-step), `get_macro_snapshot` (B-step), `get_investment_clock_phase` (H-step), and `get_bond_maturity_calendar` (G-Bond Pillar 5.2). 5-cycle carry on B/G gaps + 1-cycle carry on H-gap are NOW RESOLVED at the tool-package level. Next financial-analyst cycle will be the first live validation of the fix. |
-| 8 | **GAS surge: 6+ consecutive cycles, Brent $105-107 sustained — no MARKET alert fired yet** | alert-commander | low | tracking | GAS +6.93% appeared across multiple cycles on 2026-05-13 (closing price unchanged, off-hours). alert-commander correctly suppressed off-hours duplicates. 06:00 UTC (market open): GAS +2.32% (sub-threshold). No MARKET alert justified — correct system behavior. |
+| 1 | **MCP gateway not registered — 6th consecutive cycle (c46–c51)** | infrastructure / session | HIGH | escalation | Live probe: `mcp__claude_ai_gateway__call_tool` not found. Same result as c46/c47/c48/c49/c50. MARKET audit, bus audit, Telegram dispatch all blocked. User-action item (Desktop config). |
+| 2 | **news-scout inter-cycle chain dedup gap — AUTO-CURE APPLIED** | news-scout | medium | AUTO-CURED c51 | 3-cycle evidence: c49 (06:22 IEA/CPI #3145 self-noted overlap), c50 (07:21 proactive suppress "all themes on bus"), c51 (09:21 VN-ATH/FPT-JV #3157/#3158 self-noted overlap with #3151/#3152 from 08:22). Pattern is systemic — not event-specific. Flow `stage-signals.md` updated with 180-min inter-cycle dedup gate before any `chain_catalyst` or `urgent_news` post. |
+| 3 | **digest-predict: 5th day silence** | digest-predict | HIGH | tracking / escalation | Last entry: 2026-05-11 21:38 UTC. Notebook shows "(no session recorded)" as current state. Now 5 days without daily digest. Task 1907a-digest-predict-silence dispatched. No resolution visible. User-facing outage escalating. |
+| 4 | **financial-analyst: runtime G/H/B step skip despite package update** | financial-analyst | HIGH | methodology gap | Package file (`financial-analyst.md`) contains `get_cash_flow`, `get_macro_snapshot`, `get_investment_clock_phase`. BUT: 2026-05-13 23:05 session explicitly logs "Layer 7: [SKIP] get_cash_flow not in package. Layer 8: [SKIP] get_investment_clock_phase not in package." This is a runtime MCP registration gap — tools are in package file but agent reports them absent at runtime. 1890a-spec-expanded package file was updated; MCP server may not have the tools registered. Dev team must verify MCP server-side registration, not just package .md. |
+| 5 | **alert-commander: regime source NEUTRAL (news-fallback) at 10:03 UTC** | alert-commander | low | regime source | 10:03 UTC cycle: "Regime: NEUTRAL (news-fallback)" — fallback path used, not `get_macro_snapshot`. This is a regression from c48/c49 where get_macro_snapshot was confirmed working. May indicate snapshot tool returned error or empty at 10:03. Not confirmed as systematic — 1st cycle of evidence. Track. |
+| 6 | **market-watcher: regime inferred from news at 19:39/21:38 UTC 2026-05-13** | market-watcher | low | regime source | 19:39 and 21:38 UTC cycles: "Regime: TIGHTENING (inferred: Fed rate hike fear/gold drop)" with note "Global Liquidity label absent from macro snapshot." c47 auto-cure fixed off-hours duplicate guard but regime source regression occurred on 2026-05-13 night cycles. Track for recurrence. |
+| 7 | **VN-Index new ATH ~1,919 confirmed — regime NEUTRAL vs TIGHTENING split persists** | macro-watch | low | carry | news-scout shifted TIGHTENING→NEUTRAL at 09:21 UTC citing "geopolitical cooling (Hormuz), risk-on foreign inflow." alert-commander using NEUTRAL. unified-agent logging TIGHTENING at 06:00, TIGHTENING at 10:00. Split is not a system error — it is a genuine regime ambiguity (global liquidity vs US-rate cycle). Any MARKET bullish alert must carry caveat acknowledging the split. |
+| 8 | **BCTC Q1/2026 banking cohort — VCB Q4-2025 filed, Q1/2026 deadline 2026-05-15 (tomorrow)** | financial-analyst | HIGH | tracking / catalyst | Unified-agent confirms VCB Q4-2025 filed 2026-05-14. ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 deadline is 2026-05-15 VNT. financial-analyst must run G-step (get_cash_flow) on VCB Q4-2025 at next cycle. If G/H steps are still skipped at runtime, the OCF forensic gate remains dark for the banking EPS window — the single biggest methodology gap per Layer 7. |
+| 9 | **Sprints 1909/1910 in-flight — not yet deployed** | infrastructure | medium | tracking | 1909 (BCTC OCF extractor + get_bctc_ocf tool) and 1910 (FRED ISM subcomponents + EFFR package-reg) are spec-complete per docs/specs/. No deployment confirmation visible in notebooks. D-step (ISM subcomponents) and G-step OCF remain dark until deployed. |
 
 ---
 
 ## Methodology Audit (Layer 5, 9-step) — by agent
 
 ```
-[Methodology] alert-commander   A=✓ B=✓ C=✓ D=✓ E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (5/5 effective, 4 n/a)
-  evidence: REGIME=NEUTRAL from get_macro_snapshot (06:03 UTC). Dedup discipline: FPT #3143 (σ=3.73<4.0) + VPB #3144 (σ=1.58) suppressed correctly. FPT carry-over logged explicitly.
-  gap: none this cycle. 1903a-labels reportedly shipped c87 — label audit blocked by MCP session scope.
+[Methodology] alert-commander   A=✓ B=? C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓
+  SCORE: GOOD (4/5 effective — B-step uncertain at 10:03 UTC: news-fallback used, not snapshot)
+  evidence: 08:02 UTC NEUTRAL regime, dedup clean (FPT σ=2.41<4.0 suppressed). 10:03 UTC NEUTRAL via news-fallback (regression). FPT σ=3.61<4.0 correctly suppressed. No MARKET fire — correct given no active price alerts and σ < 4.0 override.
+  gap: B-step regime source regression at 10:03 (news-fallback vs get_macro_snapshot). 1st cycle of evidence.
 
-[Methodology] news-scout        A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓ → GOOD (4/4 effective) but gap logged
-  evidence: TIGHTENING from get_macro_snapshot (06:20 UTC). TIGHTENING ×1.3 bearish amplification applied correctly.
-  gap B-new (finding #2): inter-cycle chain dedup absent — IEA/CPI theme repeated across 03:23, 05:22, 06:22 UTC. Same macro event → 3 chain_catalyst signals. Flow needs inter-cycle dedup check for repeated macro themes (not in current news-scout/cycle.md). Score holds GOOD this cycle; if gap persists 3 cycles → AUTO-CURE trigger.
+[Methodology] news-scout        A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=✓
+  SCORE: GOOD (4/4 effective) + AUTO-CURE APPLIED
+  evidence: Regime TIGHTENING→NEUTRAL shift at 09:21 UTC documented with explicit reasoning (Hormuz geopolitical cooling, foreign buying reversal). VN-ATH/FPT-JV signals #3157/#3158 fired with proper regime adj. Self-noted dedup overlap at 08:22/09:21 cycles — proactive quality behavior.
+  gap B-new (inter-cycle dedup): AUTO-CURED c51. stage-signals.md updated with 180-min dedup gate. Next cycle is first live validation.
 
-[Methodology] market-watcher    A=✓ B=✓ C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=n/a → GOOD (4/4 effective, 5 n/a)
-  evidence: TIGHTENING (06:41 UTC cycle). FPT +3.25% (2.60σ) signal #3147 correctly fired with pe_compression_risk=true. c47 AutoCure off-hours guard confirmed sustained (no repeat of pre-cure pattern).
-  gap: DXY/US10Y fetch still N/A (tool not in package — dev-gated carry, not a flow gap).
+[Methodology] market-watcher    A=✓ B=? C=✓ D=n/a E=n/a F=n/a G=n/a H=n/a I=n/a
+  SCORE: GOOD (3/4 effective — B-step regime inferred from news on 2026-05-13 night cycles)
+  evidence: 15:40/18:41 UTC cycles: NEUTRAL from snapshot. 19:39/21:38 UTC cycles: TIGHTENING inferred from news ("Global Liquidity label absent"). c47 auto-cure off-hours duplicate guard: WORKING (GAS/VRE suppressed at 10:03 UTC alert-commander as stale off-hours signals).
+  gap: B-step regime source regression on 2026-05-13 off-hours cycles. Not yet 3-cycle confirmed — tracking.
 
-[Methodology] unified-agent     A=✓ B=✓ C=✓ D=n/a E=n/a F=4/4 G=n/a H=✓ I=✓ → GOOD (6/6 effective, 3 n/a)
-  evidence: Pillars M2✓ COC✓ EPS✓ POL✓ — 4/4. TIGHTENING declared. FPT conviction 0.53 trend declining noted. BCTC Q1 banking urgency correctly carried over.
-  gap F (minor): POL logged ✓ but no explicit policy action cited — same as c48. Not escalated (minor, consistent).
+[Methodology] unified-agent     A=✓ B=✓ C=✓ D=n/a E=n/a F=4/4 G=n/a H=✓ I=✓
+  SCORE: GOOD (6/6 effective)
+  evidence: Pillars M2✓ COC✓ EPS✓ POL✓ — 4/4 at both 06:00 and 10:00 UTC cycles. BCTC Q1 banking urgency carried (deadline TOMORROW). FPT conviction 0.53 declining trend explicitly noted. fii_type=UNKNOWN flagged. HEAD.lock escalated. VCB Q4-2025 filing self-detected and logged.
+  gap F (minor persistent): POL logged as ✓ but no specific policy action cited. Same as c48/c49 — low severity.
 
-[Methodology] financial-analyst  — UNAUDITABLE (no 2026-05-14 session yet as of 07:00 UTC)
-  Last session: 2026-05-13 23:05 UTC. Tool package now updated. Next cycle expected ~23:00 UTC.
-  NOTE: If the 23:00 cycle fires today (2026-05-14), it will be the first post-1890a cycle. B/G/H steps should now execute. TNB c50 must verify this.
+[Methodology] financial-analyst  — PARTIALLY AUDITABLE
+  SCORE: NEEDS_ATTENTION (2/5 effective — runtime G/H/B skip despite package update)
+  Last session: 2026-05-13 23:05 UTC. Session log: "Regime: TIGHTENING (inferred from news 'nỗi lo Fed tăng lãi suất') | Max Deposit Rate: 6.00% (assumed — get_macro_snapshot not in package, data gap)."
+  A=✓ B=SKIP(runtime gap) C=✓ D=n/a E=n/a F=n/a G=SKIP(runtime gap) H=SKIP(runtime gap) I=✓
+  CRITICAL: package file has all 3 tools. Runtime session reports them absent. This means 1890a-spec-expanded package .md edit did NOT fix the problem — it is a server-side MCP tool registration gap, not a package-file gap. Dev team must verify MCP server registers `get_cash_flow`, `get_macro_snapshot`, `get_investment_clock_phase`. Cannot auto-cure this — it is infrastructure, not a flow file.
 
-[Methodology] report-analyzer   — UNAUDITABLE (no 2026-05-14 session visible)
-  Last session: 2026-05-13 (00:10 UTC). Q1/2026 banking BCTC not yet in system.
-  NOTE: If ACB/BID/CTG/EIB/MBB/VCB/VPB Q1/2026 filings arrive today, report-analyzer 02:00 UTC cycle should catch them. Gap if no session fires.
+[Methodology] report-analyzer   — UNAUDITABLE (no 2026-05-14 session visible in any notebook)
+  VCB Q4-2025 filed 2026-05-14. report-analyzer should have processed at next cycle. Not confirmed.
 
-[Methodology] digest-predict    — UNAUDITABLE (4-day silence — finding #3)
-  Task 1907a-digest-predict-silence dispatched. Awaiting ops diagnosis.
+[Methodology] digest-predict    — UNAUDITABLE (5-day silence — finding #3)
+  Task 1907a-ops. No resolution. User-facing outage.
 
-[Methodology] qa-responder      — operational (queue empty, no methodology calls to audit)
+[Methodology] qa-responder      — operational (queue empty, no methodology calls)
 ```
 
-**Scores:** GOOD=4 | NEEDS_ATTENTION=0 | CRITICAL=0 | UNAUDITABLE=3
-**Top gap pattern:** inter-cycle macro-theme dedup absent in news-scout (finding #2). 1st cycle of evidence — track for 3-cycle trigger before auto-cure.
+**Scores:** GOOD=4 | NEEDS_ATTENTION=1 | CRITICAL=0 | UNAUDITABLE=3
+**Top gap pattern:** financial-analyst runtime B/G/H skip — MCP server-side registration, not flow-file issue. Auto-cure cannot fix this; escalate to dev team.
 
 ---
 
 ## Auto-Cures Applied
 
-### c47 AutoCure ROI — SUSTAINED (3rd verification)
-Market-watcher off-hours duplicate guard continues working. 06:41 UTC: FPT +3.25% (2.60σ) — new anomaly with changed price (intraday move), correctly signalled. GAS +2.57% (0.78σ) sub-threshold, not a duplicate. Pattern clean.
+### c51 Auto-Cure — news-scout inter-cycle chain dedup gate
 
-### c49 Auto-Cures This Cycle
-**NONE applied.** News-scout chain dedup gap is on its 1st observed cycle — auto-cure requires 3+ cycles of evidence per flow. Financial-analyst package gap resolved by dev team (not a flow edit). All remaining gaps are dev-package tasks or ops diagnosis.
+**File modified:** `.claude/flows/news-scout/stage-signals.md`
+
+**Evidence (3 cycles):**
+- c49 (06:22 UTC 2026-05-14): #3145 IEA/CPI self-noted "may overlap with #3136/#3141"
+- c50 (07:21 UTC 2026-05-14): Proactively noted "all key macro themes already on bus" — no signals fired but awareness not enforced by flow
+- c51 (09:21 UTC 2026-05-14): #3157/#3158 VN-ATH/FPT-JV self-noted "may overlap with #3151/#3152 from 08:22 cycle"
+
+**Pattern:** Systemic. Same-theme signals firing 1-2 cycles apart regardless of event type. Agent notices but flow has no enforcement gate.
+
+**Cure applied:** Added inter-cycle dedup gate at top of Stage 3. Gate calls `get_agent_signals` for the last 20 chain_catalyst/urgent_news signals, checks for same event_type + overlapping sectors/ticker within 180 minutes, suppresses with explicit log if match found. Exception for direction reversal (bearish → bullish on new data).
+
+**Next validation:** news-scout next cycle (~11:20 UTC). If IEA/CPI/ATH themes recur, dedup gate should fire and suppress without agent self-noting.
+
+### Prior auto-cures — ROI tracking
+
+**c47 AutoCure (market-watcher off-hours duplicate guard):** SUSTAINED — c51 evidence: alert-commander 10:03 UTC correctly suppressed GAS/VRE stale closing-price signals. Pattern clean.
 
 ---
 
 ## Persisting Blockers
 
-- **MCP gateway session registration for TNB** — SPIKE_C86_MCP_REG per c86 PO ACK: "cowork Desktop config gap (user action)." 4th consecutive cycle (c46/c47/c48/c49). MARKET channel audit, signal bus quality check, Telegram dispatch all blocked. This is a user-action item, not dev-team actionable.
-- **Digest-predict: 4-day silence** — task 1907a-digest-predict-silence dispatched (ops diagnosis). No resolution visible yet. User-facing gap.
-- **Financial-analyst: no 2026-05-14 session** — BCTC Q1/2026 banking window active TODAY. Tool package fix deployed but not validated until next cycle fires. If 23:00 UTC cycle fires and B/G/H steps execute correctly, this blocker clears.
-- **News-scout inter-cycle chain dedup** — 1st cycle of evidence (finding #2). Not a blocker yet — tracking. Auto-cure trigger at 3 cycles.
-- **US10Y 4.49% watch** — carry from c47/c48. No breach confirmed. Carry-watch.
+- **MCP gateway session registration for TNB** — 6th consecutive cycle (c46–c51). User-action: update Cowork Desktop config. Highest-impact infra gap for audit quality.
+- **Digest-predict: 5-day silence** — task 1907a dispatched. No visible resolution. Daily digest is primary user-facing morning briefing — escalate 1907a to CRITICAL if not already.
+- **Financial-analyst runtime B/G/H skip** — Package file correct; MCP server-side registration likely missing `get_cash_flow`, `get_macro_snapshot`, `get_investment_clock_phase`. Cannot auto-cure — dev task. Urgent given BCTC Q1/2026 banking deadline TOMORROW (2026-05-15).
+- **Sprints 1909/1910** — OCF extractor + ISM/EFFR pkg-reg. In-flight per specs. D-step and G-step OCF remain dark until deployed.
+- **Alert precision scoring pipeline stalled** — unified-agent logs "N=0/434 scored" and bug 2874 open. Alert effectiveness tracking broken.
 
 ---
 
 ## Positive Signals
 
-- **Financial-analyst tool package 1890a-spec-expanded CONFIRMED DEPLOYED** — `get_cash_flow`, `get_macro_snapshot`, `get_investment_clock_phase`, `get_bond_maturity_calendar` all present in package. This resolves the top methodology carry gap (B+G+H steps skipped 5+ cycles). BCTC Q1/2026 banking window will be the first live validation.
-- **Alert-commander dedup + regime discipline strong** — 06:03 UTC cycle: FPT suppressed at σ=3.73<4.0 with explicit carry-over logging. REGIME=NEUTRAL from snapshot (not inferred). CARRY_REGIME=FII_OUTFLOW_RISK correctly tracked.
-- **Market-watcher TIGHTENING + c47 auto-cure sustained** — FPT +3.25% (2.60σ) correctly signalled as new anomaly (changed price, not off-hours duplicate). pe_compression_risk logic applied.
-- **Unified-agent Pillars 4/4 consistent** — M2/COC/EPS/POL tallied every cycle. BCTC urgency self-carried. FPT conviction trend decline self-noted.
-- **News-scout self-noting dedup gap** — At 06:22 UTC, news-scout proactively logged "#3145 may overlap with #3136/#3141" — this is the agent recognizing a methodology gap and documenting it. Quality behavior even if the fix isn't in the flow yet.
-- **VN-Index new high ~1,919 (+1.06%) on 2026-05-14 open** — Broad market recovery from 2026-05-13 selloff. FPT +4.53%, VRE +3.64%, Banks +1-2.5%. TIGHTENING regime correctly noted despite bullish price action.
+- **VN-Index new ATH ~1,919** — Broad market recovery. Foreign buying reversal on VIC/VHM/VRE/FPT confirmed at 09:21 UTC (news-scout). Pillar alignment strong (tech=TAILWIND in TIGHTENING/NEUTRAL transition).
+- **News-scout self-noting quality** — Agent proactively flagging dedup overlaps every cycle. Quality behavior even before auto-cure enforcement. Post-cure, this behavior should translate into suppression, not just awareness.
+- **Alert-commander dedup discipline** — FPT σ=3.61<4.0 correctly suppressed at 10:03. GAS/VRE stale signals correctly suppressed. No false MARKET fires.
+- **Unified-agent Pillars 4/4 consistent** — Both 06:00 and 10:00 cycles. BCTC urgency self-carried forward correctly.
+- **c47 auto-cure ROI sustained** — Off-hours duplicate guard still working after 4 cycles of verification.
+- **VCB Q4-2025 BCTC filed 2026-05-14** — First banking filing for this window. report-analyzer should process. financial-analyst must run G-step on next cycle.
 
 ---
 
 ## Recommendation to PO
 
-1. **Confirm 1890a-spec-expanded deploy is live in financial-analyst sessions** — tool package file is updated; confirm MCP server also has these tools registered and financial-analyst cowork session picks them up at next cycle. First validation window: financial-analyst 23:00 UTC cycle today.
-2. **news-scout inter-cycle chain dedup** — Watch for 2 more cycles of the same pattern. If IEA/CPI chain_catalyst fires again in the 07-09 UTC window without a new event, that is the 2nd occurrence. Auto-cure trigger at 3 occurrences: add inter-cycle dedup check to news-scout/cycle.md (check last 3h chain_catalyst signals before firing same macro theme).
-3. **digest-predict silence (task 1907a)** — 4-day gap is now a user-facing outage. Escalate 1907a ops diagnosis to HIGH priority if not already.
-4. **TNB MCP session scope** — PO c90 noted "user action." User should update Cowork Desktop config to register MCP gateway in TNB session. This remains the single highest-impact infra gap for audit quality.
-5. **US10Y threshold watch** — alert-commander should add explicit "US10Y={value}% — Layer 1.2 threshold {approaching|breached}" log step when RISK-OFF signal is active. Low effort, high auditability.
+1. **financial-analyst runtime tool gap — dev urgent.** Package .md has all 3 tools. Runtime session still reports them absent. The fix is NOT a package-file edit — it is MCP server-side tool registration verification. Before BCTC Q1/2026 banking deadline (2026-05-15), dev team must confirm `get_cash_flow`, `get_macro_snapshot`, `get_investment_clock_phase` are registered on the vn-market MCP server and callable from financial-analyst cowork session. Suggest adding a `health_check` or `list_server_tools` probe at financial-analyst bootstrap Step 0 to self-detect absent tools.
+
+2. **digest-predict silence (task 1907a)** — Now 5-day gap. Escalate to CRITICAL. Daily digest is the user's primary morning briefing. If ops diagnosis shows scheduler issue, fix scheduler. If agent issue, test agent manually.
+
+3. **news-scout inter-cycle dedup auto-cure (c51)** — Applied to stage-signals.md. Validate on next news-scout cycle (~11:20 UTC). If dedup gate fires correctly on recurring IEA/ATH/FPT themes, mark auto-cure ROI confirmed.
+
+4. **Alert precision scoring (bug 2874)** — 434 unknown outcomes, N=0 scored. Brier score and signal effectiveness are both dark. This blocks calibration tracking (TNB Layer 9 responsibility). Prioritise bug 2874 fix.
+
+5. **TNB MCP session registration** — 6th cycle blocked. Remains user-action (Cowork Desktop config). Until resolved, TNB cannot read MARKET channel, probe signal bus, or dispatch Telegram quality reports. Audit quality is permanently degraded.
 
 ---
 
 ## PO ACK
-_(pending c49 PO cycle)_
+_(pending c51 PO cycle)_
 
 ---

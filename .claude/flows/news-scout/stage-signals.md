@@ -2,6 +2,29 @@
 
 # News Scout — Stage 3: Post Signals
 
+## Inter-cycle dedup gate (Auto-cure TNB c51 — 2026-05-14)
+
+Before posting any `chain_catalyst` or `urgent_news`, check the last 3 hours of signals on the bus:
+
+```
+recent = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "signal_type": "chain_catalyst",   # repeat for "urgent_news" if applicable
+  "limit": 20
+})
+```
+
+For each candidate signal:
+1. Extract the primary `event_type` + `affected_sectors` or `stock_code` from the candidate.
+2. Check `recent` for any entry where **both** match (same event_type AND overlapping affected_sectors or same stock_code) **AND** `created_at` is within the last 180 minutes.
+3. If match found → **SUPPRESS** with log: `"[DEDUP] {signal_type} suppressed — same theme already on bus as #{prior_id} ({N} min ago). Skipping post."`
+4. If no match → proceed to post.
+
+**Threshold:** 180 minutes (3 hours). Covers intra-session recurring macro events (CPI/oil, FII-outflow, sector ATH rallies).
+
+**Exception:** If the candidate has a materially different `direction` (e.g., prior=bearish, candidate=bullish on new data) → override suppression. Log the override explicitly.
+
+---
+
 **3. Signals**
 
 Watchlist hit (breaking news) → post `urgent_news`:
