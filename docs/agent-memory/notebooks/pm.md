@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 (PM bookkeeping, post-1912-program-complete) | **Sprint:** 1912 Go migration CLOSED
+**Last updated:** 2026-05-14 (PM QA approval processing, 1916a→Done, 1916b handoff created) | **Sprint:** 1912 Go migration CLOSED | **Current:** 1916b unblocked, ready for dev-mcp-server pickup
 
 ## Current state
 
@@ -12,6 +12,23 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 110 — 2026-05-14 QA Approval Processing: 1916a→Done, 1916b Unblocked (WIP=0/2 CLEAN)
+
+**Input:** QA approval signal for 1916a (task/1916a-vps-discover-route merged to main, commit b029167c). TASK_REPORT_1916a.md filed. 1916b spec finalized in SPIKE_1916.
+
+**Actions:**
+1. **1916a moved Backlog → Done.** Updated row title to match standard naming (1916a-fix-vps-discover-route-and-apikey). Merged commit b029167c. QA APPROVED. Post-merge runtime AC (ops container restart) pending.
+2. **1916b unblocked.** Moved from Backlog to Backlog row with updated handoff pointer. Removed dependency "1916a-fix-vps-discover-route-and-apikey" (now Done). Zone confirmed: apps/mcp-server/.
+3. **Created TASK_1916b.md handoff file.** FIX-HIGH, size M, zone apps/mcp-server/. Spec: 3-candidate investigation (cafef HTML route, VNDirect API, SSC scraping) in order. ACs: (1) Strategy 2 fixed OR deleted with code comment, (2) no regression on bctcQueueEnricherJob, (3) tests updated. Sequencing: after 1916a (DONE). Owner: dev-mcp-server. Report reference: reports/TASK_REPORT_1916b.md.
+4. **TASKS.md updated.** Backlog entry for 1916b now points to docs/handoffs/TASK_1916b.md. Done section has 1916a with completion date 2026-05-14. Final TASKS.md: 47L (under 80L cap).
+5. **PM notebook updated.** Header + current state + this cycle entry (c110).
+
+**WIP Status:** 0/2 (CLEAN). 1916b ready for dev-mcp-server dispatch next cycle. No parallel work blocks 1916b.
+
+**Status:** Approval processing COMPLETE. Handoff ready. 1916b unblocked. Ready for main terminal to notify developer.
 
 ---
 
