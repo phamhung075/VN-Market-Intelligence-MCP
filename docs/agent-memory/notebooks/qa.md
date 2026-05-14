@@ -1,6 +1,26 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c87 gate — 1903-doc-pair APPROVED
+**Last updated:** 2026-05-14 | **Session:** c88 gate — 1905a-news-fetch-stealth-fix APPROVED
+
+## Recent session — 2026-05-14 (c88 — 1905a-news-fetch-stealth-fix APPROVED)
+
+### 1905a-news-fetch-stealth-fix — playwright-stealth placeholder removed, inline addInitScript stealth
+
+Branch: task/c88-1905a-news-fetch-stealth-fix. Fix commit: 502499e3. Notebook/handoff: c189b8bc. Zone: apps/news-fetch/ only (+ agent notebooks + handoff — all legitimate).
+
+Pipeline: tsc 0 errors. PASS. Full suite: 172 pass / 6 skip / 0 fail. PASS. New TDD file 1905a-playwright-browser-factory.test.ts: 6/6 GREEN. DDD PASS (no domain/app infra imports). Security PASS (no process.env, no secrets). Zone PASS — only apps/news-fetch/ production code touched; notebooks are routine rotation.
+
+AC checks all PASS:
+- playwright-stealth removed from package.json + bun.lock regenerated.
+- addInitScript present in factory, called before newPage().
+- 6 existing test mocks updated to include addInitScript.
+- Handoff mentions ops post-merge steps (rebuild + cron tick verify).
+
+Merge commit: 580771ae. Branch deleted local + remote. Report: reports/TASK_REPORT_1905a-news-fetch-stealth-fix.md. TASKS.md: 1905a moved to Done.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c87 — 1903-doc-pair APPROVED)
 
