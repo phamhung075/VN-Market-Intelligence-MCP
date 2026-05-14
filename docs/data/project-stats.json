@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "ops 1909-deploy 2026-05-14",
+  "_lastRefreshedBy": "ops 1910b-deploy 2026-05-14",
   "lastUpdated": "2026-05-14",
-  "currentSprint": 1909,
+  "currentSprint": 1910,
   "previousSprint": {
-    "number": 1890,
-    "status": "DONE",
-    "summary": "Sprint 1890: get_cash_flow tool + financial_analyst manifest update. Deployed 2026-05-14 04:26 UTC. toolCount=139."
+    "number": 1909,
+    "status": "DONE (1909a+b shipped; 1909c HOLD on Q1-2026 PDFs)",
+    "summary": "Sprint 1909: get_bctc_ocf tool (#132) + cashFlowExtractor multi-layout. Deployed 2026-05-14 09:16 UTC."
   },
-  "sprintGoal": "Sprint 1909: BCTC OCF extractor expansion (1909a) + get_bctc_ocf MCP tool (1909b). Deployed 2026-05-14 09:16 UTC. toolCount=140 (added get_bctc_ocf #132).",
+  "sprintGoal": "Sprint 1910b: get_fed_liquidity_spread package registration in financial_analyst/news_scout/unified_coordinator. Deployed 2026-05-14 c96. toolCount=140 (no new tool — manifest expansion only).",
   "testBaseline": 8804,
   "testBaselineTarget": 8804,
   "testBaselinePass": 8804,
@@ -28,8 +28,8 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1909 DEPLOY: cashFlowExtractor multi-layout + drift guard (1909a) + get_bctc_ocf tool (1909b #132) registered, financial_analyst SKILL_MANIFEST updated. All AC pass. 2026-05-14 09:16 UTC.",
-  "currentSprintNotes": "Sprint 1909 DEPLOY 2026-05-14 c95. get_bctc_ocf (#132) live; smoke test VNM Q4-2025 OCF=1,738,940 thousand VND extraction_method=pdf-parse confidence=0.75. mcp-server health=200. toolCount=140. Sprint 1910 (FRED ISM + EFFR pkg-reg) Todo for next cycle.",
+  "lastFixApplied": "1910b DEPLOY: get_fed_liquidity_spread registered in 3 agent manifests (financial_analyst/news_scout/unified_coordinator). Zero-build config-only. QA APPROVED 9/9 AC. Container rebuilt. 2026-05-14 c96.",
+  "currentSprintNotes": "Sprint 1910b DEPLOY 2026-05-14 c96. get_fed_liquidity_spread auto-cure 3-cycle threshold honored. 1909c reparse-validation HOLD AC-4/5 (Q1-2026 PDFs awaited 2026-05-15+). 1910a-ism-tool unblocked (FRED_API_KEY in .env). mcp-server health=200. toolCount=140.",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-14",
     "mcpServerHealth": "UP",
