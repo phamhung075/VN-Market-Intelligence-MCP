@@ -1,0 +1,254 @@
+// Package infrastructure — tests for Tier3 cache fetcher + SQLite repository.
+// Uses real SQLite (no mocks) per AC-8 + Task spec.
+package infrastructure_test
+
+import (
+	"database/sql"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/vn-market-intelligence/stock-price/pkg/domain"
+	"github.com/vn-market-intelligence/stock-price/pkg/infrastructure"
+)
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+// createTempDB creates a temp SQLite file with the market_prices table seeded.
+func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
+	t.Helper()
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "market.db")
+
+	db, err := sql.Open("sqlite3", dbPath+"?_journal_mode=WAL")
+	if err != nil {
+		t.Fatalf("open temp market.db: %v", err)
+	}
+	_, err = db.Exec(`CREATE TABLE market_prices (
+		code       TEXT,
+		price      REAL,
+		volume     REAL,
+		fetched_at TEXT
+	)`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("create market_prices table: %v", err)
+	}
+	// Seed VCB at 88000
+	_, err = db.Exec(
+		`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
+		"VCB", 88000.0, 2000000.0, time.Now().UTC().Format(time.RFC3339),
+	)
+	if err != nil {
+		db.Close()
+		t.Fatalf("seed VCB: %v", err)
+	}
+	db.Close()
+
+	return dbPath, func() { os.Remove(dbPath) }
+}
+
+// createTempOwnDB creates an empty temp SQLite file for stock_price.db writes.
+func createTempOwnDB(t *testing.T) (path string, cleanup func()) {
+	t.Helper()
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "stock_price.db")
+	return dbPath, func() { os.Remove(dbPath) }
+}
+
+// ── Tier3CacheFetcher tests ───────────────────────────────────────────────────
+
+func TestTier3Fetcher_CacheHit(t *testing.T) {
+	marketDB, cleanup := createTempMarketDB(t)
+	defer cleanup()
+
+	fetcher := infrastructure.NewTier3Fetcher(marketDB)
+	quote, err := fetcher.FetchPrice("VCB")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if quote == nil {
+		t.Fatal("expected quote, got nil")
+	}
+	if quote.Code != "VCB" {
+		t.Errorf("code: want VCB, got %s", quote.Code)
+	}
+	if quote.Price != 88000.0 {
+		t.Errorf("price: want 88000, got %f", quote.Price)
+	}
+	if quote.Source != domain.SourceCache {
+		t.Errorf("source: want cache, got %s", quote.Source)
+	}
+}
+
+func TestTier3Fetcher_CacheMiss(t *testing.T) {
+	marketDB, cleanup := createTempMarketDB(t)
+	defer cleanup()
+
+	fetcher := infrastructure.NewTier3Fetcher(marketDB)
+	quote, err := fetcher.FetchPrice("UNKNOWN_TICKER_XYZ")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if quote != nil {
+		t.Errorf("expected nil for cache miss, got %+v", quote)
+	}
+}
+
+func TestTier3Fetcher_DBNotExist_ReturnsNil(t *testing.T) {
+	fetcher := infrastructure.NewTier3Fetcher("/nonexistent/path/market.db")
+	quote, err := fetcher.FetchPrice("VCB")
+	// Must return nil, nil — not crash — for fail-safe waterfall
+	if err != nil {
+		t.Fatalf("expected nil error on missing DB, got: %v", err)
+	}
+	if quote != nil {
+		t.Errorf("expected nil quote on missing DB, got: %+v", quote)
+	}
+}
+
+// ── SQLitePriceHistoryRepository tests ────────────────────────────────────────
+
+func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
+	marketDB, mCleanup := createTempMarketDB(t)
+	defer mCleanup()
+	ownDB, oCleanup := createTempOwnDB(t)
+	defer oCleanup()
+
+	// Seed 3 days of history
+	db, _ := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
+	for i := 1; i <= 3; i++ {
+		db.Exec(
+			`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
+			"VCB", 88000.0+float64(i)*100, 1000000.0,
+			time.Now().Add(-time.Duration(i)*24*time.Hour).UTC().Format(time.RFC3339),
+		)
+	}
+	db.Close()
+
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	history, err := repo.GetHistory("VCB", 7)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(history) == 0 {
+		t.Error("expected non-empty history")
+	}
+}
+
+func TestSQLiteRepo_GetHistory_EmptyForUnknown(t *testing.T) {
+	marketDB, mCleanup := createTempMarketDB(t)
+	defer mCleanup()
+	ownDB, oCleanup := createTempOwnDB(t)
+	defer oCleanup()
+
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	history, err := repo.GetHistory("UNKNOWN_XYZ", 30)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(history) != 0 {
+		t.Errorf("expected empty history, got %d rows", len(history))
+	}
+}
+
+func TestSQLiteRepo_SaveQuote_Writes(t *testing.T) {
+	marketDB, mCleanup := createTempMarketDB(t)
+	defer mCleanup()
+	ownDB, oCleanup := createTempOwnDB(t)
+	defer oCleanup()
+
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	q := &domain.PriceQuote{
+		Code:      "HPG",
+		Price:     55000,
+		Volume:    3000000,
+		FetchedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	err := repo.SaveQuote(q)
+	if err != nil {
+		t.Fatalf("SaveQuote error: %v", err)
+	}
+
+	// Verify the row is readable from own DB
+	db, _ := sql.Open("sqlite3", ownDB)
+	defer db.Close()
+	var code string
+	var price float64
+	row := db.QueryRow(`SELECT code, price FROM market_prices_cache WHERE code = ?`, "HPG")
+	if scanErr := row.Scan(&code, &price); scanErr != nil {
+		t.Fatalf("row not found after SaveQuote: %v", scanErr)
+	}
+	if code != "HPG" || price != 55000 {
+		t.Errorf("unexpected row: code=%s price=%f", code, price)
+	}
+}
+
+// ── AC-8: Concurrent R/W safety — 100-iteration WAL test ─────────────────────
+
+func TestTier3Fetcher_ConcurrentReadWrite_NoLock(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping concurrent test in short mode")
+	}
+
+	marketDB, cleanup := createTempMarketDB(t)
+	defer cleanup()
+
+	// Writer: opens marketDB with full access (simulates mcp-server writes)
+	const iterations = 100
+	var writeErrors, readErrors int
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// Goroutine 1: concurrent writer on marketDB
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		db, err := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL&_busy_timeout=5000")
+		if err != nil {
+			mu.Lock()
+			writeErrors++
+			mu.Unlock()
+			return
+		}
+		defer db.Close()
+		for i := 0; i < iterations; i++ {
+			_, err := db.Exec(
+				`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
+				"VCB", 88000.0+float64(i), 2000000.0, time.Now().UTC().Format(time.RFC3339),
+			)
+			if err != nil {
+				mu.Lock()
+				writeErrors++
+				mu.Unlock()
+			}
+			time.Sleep(time.Millisecond) // slight spread
+		}
+	}()
+
+	// Goroutine 2: concurrent reader via Tier3Fetcher (readonly DSN)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fetcher := infrastructure.NewTier3Fetcher(marketDB)
+		for i := 0; i < iterations; i++ {
+			_, err := fetcher.FetchPrice("VCB")
+			if err != nil {
+				mu.Lock()
+				readErrors++
+				mu.Unlock()
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}()
+
+	wg.Wait()
+
+	if readErrors > 0 {
+		t.Errorf("AC-8: got %d read errors during concurrent R/W — expected 0", readErrors)
+	}
+}

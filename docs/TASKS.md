@@ -33,11 +33,14 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1912b-alert-engine | **PHASE 2 SPRINT-M Go migration of alert-engine** — DISPATCHED c107 PARALLEL with 1912c on `main` per user directive (no branch split — same codebase). Highest crash-avoidance ROI. Replace `bun:sqlite` with `database/sql` + `mattn/go-sqlite3` (CGO, WAL). Zone: `apps/alert-engine/`. Spec: `docs/REQ_1912b.md` (16 ACs). Brief: §3.3 §5-P2 §6 §8-R5. SDD-1 preserved. | HIGH | SPRINT-M | dev-alert-engine | TASK_1912b-alert-engine.md | — |
-| 1912c-stock-price | **PHASE 3 SPRINT-M Go migration of stock-price** — DISPATCHED c107 PARALLEL with 1912b on `main`. 3-tier fallback (Tier1/Tier2 HTTP + Tier3 SQLite cache). Replace `bun:sqlite` with `database/sql` + `mattn/go-sqlite3`. Zone: `apps/stock-price/`. Spec: `docs/REQ_1912c.md` (14 ACs). Brief: §3.2 §5-P3 §6 §8-R4. SDD-1 preserved. | HIGH | SPRINT-M | dev-stock-price | TASK_1912c-stock-price.md | — |
 
 ---
 
 ## Review
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+| 1912c-stock-price | **PHASE 3 SPRINT-M Go migration of stock-price — IMPL READY 2026-05-14** — 31/31 go test PASS. DDD strict (domain/app/infra/interface). Tier3 SQLite WAL readonly DSN. AC-8 concurrent R/W 100-iter PASS. R-SPEC-1+2 verified. Dockerfile.go CGO multi-stage. TS src coexists. Cutover pending 1912b prod proof. Zone: `apps/stock-price/`. | HIGH | SPRINT-M | qa | TASK_1912c-stock-price.md | — |
 
 ---
 ## Done
