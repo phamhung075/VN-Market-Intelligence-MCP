@@ -4,6 +4,29 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### SPIKE 1915 — bctc-pipeline-silence (2026-05-14, DONE)
+
+**Mission:** Identify root cause of bctcReparseJob silence since 2026-04-09.
+
+**Confirmed root cause: Candidate 3 — Empty queue / upstream broken (two sub-causes)**
+
+1. bctcQueueEnricher fails to find SSC source URLs for 14/30 tickers (Cheerio selector drift or geo-block). Ops docker logs confirmed: "0 URLs populated across all 14 item(s)". bctcPdfPullJob gets 0 eligible rows → 0 PDFs downloaded → 0 feedback rows → bctcReparseJob no-ops.
+
+2. 2 PDFs on disk (VEA + VNM Q4-2025) are not being extracted. Disk-scan fallback in `runBctcReparseJob` runs but `scanDiskForStrandedPdfs` queries watchlist table — if empty at cron time, returns [] and scans nothing.
+
+**Eliminated:**
+- Candidate 1 (unregistered): boot log shows "60 cron keys registered", source audit confirms L229-231 wiring intact.
+- Candidate 2 (fetchParseAndStoreBctc silent failure): all error paths produce logger.warn/error — no unlogged swallow.
+
+**Code smell found:** `startScheduler.ts` L238 startup catch-up calls `runBctcReparseJob()` directly (not `runBctcReparseWithDb(db)`), causing fire-and-forget `recordJobRun` at bctcReparseJob.ts L706 that records a success with zero work. Non-blocking but misleading.
+
+**No code changes made.** Report: `docs/spikes/SPIKE_1915-bctc-pipeline-silence.md`.
+**Next task:** 1915-fix — (a) fix disk-scan fallback for empty watchlist, (b) audit SSC Cheerio selectors.
+
+**DB state:** `financial_reports` = 0 rows, `pdf_extracted_text` = 0 rows. Container DB inaccessible via exec (API version mismatch) but host-side local DBs confirmed empty.
+
+---
+
 ### Task 1909b — get_bctc_ocf MCP tool (#132) (2026-05-14, DONE)
 
 **Mission:** New MCP tool `get_bctc_ocf(code, period_year, period_quarter)` returning OCF forensic-gate fields.
