@@ -38,3 +38,9 @@
 - **Alert scoring**: bug 2874, 441 unknowns. Scoring pipeline needs fix.
 - **China/Taiwan prediction market**: 50.5% YES ($1.8M) — geo-risk tail on FPT/VEA/GEX.
 - **FOMC Jun 18**: PMI 2/6, CPI 4/6, FOMC 18/6, SBV 24/6.
+
+### Daily Review (20:02 UTC)
+- Mode: DAILY_REVIEW | Freshness: ok (news 2.5h, slightly above 2h threshold; prices stale expected — market closed; BCTC ok) | Bugs: 0
+- System: ok | Sources degraded: Reuters, Bloomberg (blocked), Trading Economics | BID rate-limited (vnstock background)
+- Alerts 24h: 27 sent, 5 HIGH/CRITICAL, 0 unnotified | VN-Index record high (+27pts), FPT +4.53%, VIC/VHM surge
+- bctcQueueEnricher: 0 URLs for TCH/VNH — scrape stale or geo-blocked (recurring)
