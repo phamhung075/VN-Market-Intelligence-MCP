@@ -247,6 +247,14 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | exit_status | complete |
 | token_estimate | 4200 |
 
+## Cycle — 10:41 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEUTRAL regime, CARRY_REGIME=HOT_MONEY_INFLOW (FII reversed 14-session sell streak to net buy). VN-Index NEW ATH session. FPT +4.53% (3.62σ) only true anomaly — suppressed as off-hours duplicate of id=3159 (09:42 UTC, same closing price). All other movers: VIC +3.98% (1.46σ), VPB +3.24% (1.90σ), VRE +3.48% (0.81σ), VHM +2.95% (0.73σ), GAS +2.20% (0.67σ) — all below 2.0σ. Chain: FPT covered by news-scout urgent_news #3158; VIC bullish chain_catalyst #3160 (conf=0.82, VinFast restructuring).
+- **actions**: 0 signals posted (1 suppressed). WORK telegram sent. Notebook committed.
+- **next_cycle_hint**: ~14:41 UTC off-hours 4h. If prices unchanged (market still closed), FPT +4.53% will re-trigger at 3.62σ — suppress via off-hours duplicate guard (id=3159). Monitor VPB (1.90σ, borderline) and VIC ATH for any intraday pre-market moves that would break suppression. HOT_MONEY_INFLOW regime: watch banking + tech sectors for FII concentration risk next session.
+- **estimated_tokens**: 4200
+
 ## Known patterns / preferences
 
 - EOD cycle scheduled for 16:00 UTC
