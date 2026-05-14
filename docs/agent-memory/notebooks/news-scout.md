@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 05:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 06:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (06:20–06:22 UTC) 2026-05-14
+- Items: 20 | Impacts: 5 | Signals: [chain_catalyst #3145 IEA-oil+CPI-pressure] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default thresholds — no feedback]
+- Key: IEA global oil reserves declining record pace, Brent 105.95; US inflation 3-year high confirmed (Fed under pressure) → TIGHTENING × bearish adj 7×1.3=9.1 → chain_catalyst #3145 fired (cpi_pressure_risk=true, sectors: oil_gas/utilities/chemicals/real_estate). GAS +2.81% bullish exception noted in payload. Gold <$4,700 then bounce — no sustained +3% weekly spike → suppressed. DNNN capital raise via market (impact 8 bearish) — classified policy statement, ambiguous direction for securities sector → suppressed. Foreign net sell 14 sessions (adj 6.5 <7) → suppressed.
+- Suppressed: Gold spike (no confirmed >3%/week); DNNN stock policy (ambiguous); VCI fund exit adj 5; foreign sell duplicate
+- ⚠️ Note: #3145 may overlap with #3136 (03:23) and #3141 (05:22) — same macro theme. Next cycle: check recent chain_catalyst signals before re-posting IEA/inflation chain.
 
 ### Cycle (05:19–05:22 UTC) 2026-05-14
 - Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3141 US-macro+FII-outflow] | Regime: TIGHTENING | Carry: NEUTRAL
