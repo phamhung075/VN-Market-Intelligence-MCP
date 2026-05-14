@@ -4,6 +4,16 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1907a-digest-predict-silence — diagnostic (2026-05-14, DONE)
+
+**Mission:** Identify why digest-predict notebook has been silent for 3 days (last entry 2026-05-11 21:38 UTC).
+
+**Finding:** Root cause (a) — digest-predict is a cowork/Claude Desktop agent, NOT a server-side cron. Zero registration in cronConfig.ts, startScheduler.ts, or cron-registry.json. Silence is a cowork-layer invocation failure (iTerm2/manual trigger stopped). Secondary: 2026-05-12 and 2026-05-13 session stubs exist (agent opened but wrote nothing = class c partial).
+
+**No code change made.** Report: `reports/TASK_REPORT_1907a-digest-predict-silence.md`. Remediation is ops/cowork-layer (verify iTerm2 trigger + investigate why agent exited silently).
+
+---
+
 ### Task 1881a-impl-mcp — source_tier retrofit 16 tool handlers (2026-05-14, DONE)
 
 **Mission:** Retrofit `source_tier: 1|2|3` compile-time literal to 16 MCP tool handlers per architect brief (option a: JSON wrapper). AC-1 through AC-9.
