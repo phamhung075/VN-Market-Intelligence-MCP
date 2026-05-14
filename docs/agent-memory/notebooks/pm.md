@@ -1,16 +1,35 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c88
+**Last updated:** 2026-05-14 | **Sprint:** c89
 
 ## Current state
 
 - WIP: 0 / 2 (clean; In Progress empty)
-- **SHIPPED c88:** 1905a (DONE; stealth-fix code merge `580771ae` + ops deploy `166dd89f`), 1904a (DONE; AC4 unblocked via 1905a, newsHeadlinesRefreshJob verified HTTP 200)
-- Backlog HIGH: 1890a (toolpkg + get_cash_flow), 1897b-carry (worktree isolation), JANITOR-{011,014,020}, TASK-BCTC-3
-- Todo top-3 for c89: 1900c-health-probe-refine (LOW, ops), 1899a-bloomberg-test-split (LOW, dev), 1862c-E (HIGH, ops — user-blocked)
-- Blockers: 1862c-F (container-rebuild deferred), 1897b-carry (architect SPIKE pending)
-- **TASKS.md:** 75L (under 80L cap). Signal drained: `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json` → opened 1905a.
-- **Status:** c88 CLOSED. WIP=0. Ready for c89 cron at :07.
+- **SHIPPED c89:** 1906a-headlock-cure-permanent (DONE; doc-only, merge `3538ce5b`). Recurring-bug signal drained + escalation closed. F1 USER action (Docker .git/ exclude) structural cure remains pending in 1897b-carry.
+- Backlog HIGH: 1890a (toolpkg + get_cash_flow), 1897b-carry (F1 USER + architect SPIKE; 14-occurrence evidence c87-c89 justifies PERMANENT policy classif), JANITOR-{011,014,020}, TASK-BCTC-3
+- Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
+- **TASKS.md:** 77L (under 80L cap). 1897b-carry note refreshed with 3-cycle evidence + 1906a ref.
+- **Status:** c89 CLOSED. WIP=0. Recurring-bug policy locked. Ready for c90 cron.
+
+---
+
+## Cycle 89 — 2026-05-14 c89 Close: 1906a-headlock-cure-permanent DONE (recurring-bug escalation resolved)
+
+**Input:** Preflight recurring-bug escalation (HEAD.lock 3rd cycle c87/c88/c89 — 14 total occurrences). Architect brief 2026-05-13 + PO triage already complete c88. PO chose Rec #2 (PREFLIGHT permanent policy).
+
+**1906a outcome:** Developer edited `docs/protocols/head-lock-self-cure.md` (+13L): reclassified from "temporary workaround" → PERMANENT OPERATIONAL POLICY. Added § (f) Policy Classification: 3-cycle recurrence evidence, 100% cure rate (14/14), architect brief ref, structural cure tracked in 1897b-carry. Merge `3538ce5b`. QA APPROVED. No code touched.
+
+**Actions:**
+- Recurring-bug signal drained: `docs/signals/processed/2026-05-14T02-12-54Z-headlock-recurrence.json` → processed.
+- 1906a moved In Progress → Done. Routed signal to PO (escalation resolved by doc-only chore).
+- 1897b-carry note in TASKS.md refreshed: 3-cycle evidence + 1906a ref + permanent policy callout. F1 USER action remains only structural cure.
+- PM notebook updated (ULTRA).
+
+**TASKS.md:** 77L (under 80L cap). WIP=0/2 (clean).
+
+**Carry-over to c90:** 1890a (HIGH), 1897b-carry (HIGH, F1+architect), 1900c (LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3.
+
+**Status:** c89 CLOSED. Recurring-bug policy locked. Ready for c90 cron.
 
 ---
 
