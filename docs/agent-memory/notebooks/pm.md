@@ -1,16 +1,45 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c90 CLOSED
+**Last updated:** 2026-05-14 | **Sprint:** c91 ACTIVE (dispatch 2026-05-14T05:12Z)
 
 ## Current state
 
-- WIP: 0 / 2 (CLEAN) — Both 1890a-A and 1890a-B SHIPPED + DEPLOYED c90
-- **c90 CLOSED:** 1890a-A + 1890a-B SHIPPED (4 FA tools manifested incl get_cash_flow). Ops deploy successful 2026-05-14T04:26:26Z, toolCount 130→139, all 9-service fleet healthy.
-- **BCTC Q1/2026 banking window COVERED** — deadline 2026-05-15 passed with deploy. get_cash_flow tool live, 5/5 tests PASS, source_tier=1 invariant verified.
-- Backlog: 1897b-carry (F1 USER + architect, URGENT-F1), 1907b (LOW OPS observational), JANITOR-{011,014,020}, TASK-BCTC-3
+- WIP: 0 / 2 (CLEAN) — SPIKE 1908a complete, c91 dispatch ready
+- **c91 DISPATCH (2026-05-14T05:12Z):** 1908a SPIKE → Done (triage doc, no code). Carry-forward 1908b (HIGH OPS-FIX, architect-routed per recurring-bug rule).
+- **BCTC RECURRING-BUG ESCALATION:** VNM Q4 2025 low-confidence = schema drift in extractSplitBlockAll (code "270" mapped to sub-item 957M vs grand total 53T) → VAL-07 hard-fail (liab > assets*5). Prior fix 1815 (VAL-01-POSITION guard) exists; VAL-07 unprotected. Banking cohort filing window 2026-05-15 — architect rethink required before fix attempt (1908b brief expected).
+- Backlog: 1908b (HIGH OPS-FIX, architect), 1907b (LOW OPS observational), 1897b-carry (F1 USER + architect, URGENT-F1), JANITOR-{011,014,020}, TASK-BCTC-3
 - Todo: 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
-- **TASKS.md:** 58L (well under 80L cap). Archive not required.
-- **Status:** c90 CLOSED + DEPLOYED. WIP=0. Ready for c91 dispatch (1897b-carry PRIORITY, unblocks architecture).
+- **TASKS.md:** 79L (under 80L cap). Archive not required.
+- **Status:** c91 active. WIP=0/2. 1908b awaiting architect brief before dev can start.
+
+---
+
+## Cycle 91 — 2026-05-14 c91 Dispatch: 1908a-SPIKE DONE + 1908b Backlog Architect-Routed (recurring-bug rule)
+
+**Input:** dev-pdf-extractor c91 spike completion. VNM Q4 2025 low-confidence triage report filed.
+
+**Findings:**
+- Root cause = (c) extractor schema drift in `balanceSheetExtractor.ts:extractSplitBlockAll`
+- Code "270" (TONG TAI SAN) mapped to wrong sub-item value: 957M (Tài sản dài hạn khác) vs 53T grand total
+- VAL-07 hard-fail triggered (liabilities 18.8T > assets 957B * 5)
+- Systemic risk: DIG Q4 same pattern; banking cohort 2026-05-15 at risk
+- Spike mode: triage doc only, no production code merged
+
+**Recurring-bug escalation (per feedback_recurring_bug_escalation.md):**
+- Prior fix 1815 (BCTC-VAL-01-POSITION guard) protects VAL-01; VAL-07 unprotected
+- Root cause = positional extraction protocol drift (not threshold misfire)
+- Architect must rethink before new fix attempt
+- Recommended: Brief exploring Option B (plausibility override in extractBalanceSheet) vs Option A (VAL-07 downstream guard)
+
+**Actions:**
+- Moved 1908a from Todo → Done (SPIKE tag, c91 completion, report ref)
+- Created 1908b-bctc-val07-extractor-fix in Backlog, HIGH OPS-FIX, architect owner
+- TASKS.md finalized at 79L (under 80L cap)
+- PM notebook updated (current state + cycle entry)
+
+**Carry-over to c92:** 1908b (awaiting architect brief), 1907b (LOW OPS observational), 1897b-carry (URGENT-F1), 1900c (health-probe), 1899a-bloomberg-test-split, 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3.
+
+**Status:** c91 dispatched. WIP=0/2. Architect brief expected 2026-05-14 or 2026-05-15.
 
 ---
 
