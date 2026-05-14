@@ -483,9 +483,16 @@ export async function scanDiskForStrandedPdfs(
         const re = new RegExp(`(^|[^A-Z])${cu}([^A-Z]|$)`);
         return re.test(upper);
       });
-      if (!matched) continue;
-      // Normalise ticker to uppercase so downstream callers receive a consistent value
-      ticker = matched.toUpperCase();
+      if (matched) {
+        // Normalise ticker to uppercase so downstream callers receive a consistent value
+        ticker = matched.toUpperCase();
+      } else {
+        // Not in watchlist — try to extract ticker directly from filename (task 1915-fix-part2)
+        // Covers production cases where VEA/VNM have PDFs on disk but are absent from watchlist.
+        const extracted = tickerFromFilename(filename);
+        if (!extracted) continue;
+        ticker = extracted;
+      }
     }
 
     const yq = parseYearQuarterFromFilename(filename);

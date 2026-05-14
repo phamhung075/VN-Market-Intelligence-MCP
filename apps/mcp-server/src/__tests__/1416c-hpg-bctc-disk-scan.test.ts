@@ -122,12 +122,15 @@ describe("Task 1416c — scanDiskForStrandedPdfs HPG filename resolution", () =>
     expect(stranded[0]!.ticker).toBe("HPG");
   });
 
-  it("skips HPG PDF when watchlist is populated but does not contain HPG (report #2682 regression guard)", async () => {
+  it("returns HPG PDF via filename fallback when watchlist is populated but does not contain HPG", async () => {
     const { scanDiskForStrandedPdfs } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
-    // Watchlist has OTHER entries (not empty) but HPG is missing — watchlist path is active
+    // task 1915-fix-part2: when codes.find() misses (HPG not in watchlist),
+    // the fix falls through to tickerFromFilename() — HPG is now picked up regardless.
+    // The WATCHLIST_SEED fix (adding HPG) remains the canonical solution for #2682;
+    // this test now documents the additional safety-net behavior.
     const db = makeDb(false);
     db.prepare("INSERT INTO watchlist (code, exchange, domain) VALUES (?, ?, ?)").run(
       "VNM", "HOSE", "consumer",
@@ -138,10 +141,9 @@ describe("Task 1416c — scanDiskForStrandedPdfs HPG filename resolution", () =>
 
     const stranded = await scanDiskForStrandedPdfs(db, pdfDir);
 
-    // Watchlist is populated (VNM present) but HPG is absent — watchlist path is used,
-    // HPG filename does not match any code, so the file is still skipped.
-    // This mirrors the original report #2682 symptom (fixed by adding HPG to WATCHLIST_SEED).
-    expect(stranded.length).toBe(0);
+    // Watchlist is populated (VNM present) but HPG is absent — filename fallback picks up HPG.
+    expect(stranded.length).toBe(1);
+    expect(stranded[0]!.ticker).toBe("HPG");
   });
 
   it("finds HPG PDF with underscore-separated filename (FPT-style pattern)", async () => {

@@ -181,19 +181,22 @@ describe("1915 — scanDiskForStrandedPdfs: populated watchlist unchanged (regre
     }
   });
 
-  it("DSE-06: populated watchlist with VNM only — returns only VNM (VEA not in watchlist is ignored)", async () => {
+  it("DSE-06: populated watchlist with VNM only — returns both VNM (watchlist match) and VEA (filename fallback)", async () => {
     const { scanDiskForStrandedPdfs } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
+    // task 1915-fix-part2: VEA is not in watchlist but has a PDF on disk.
+    // The fix falls through to tickerFromFilename() for the miss — VEA is now returned.
     const db = makeDb(["VNM"]); // only VNM in watchlist
     writeFileSync(join(pdfDir, "BCTC VEA 31.12.2025 - RIENG - VN.pdf"), "fake");
     writeFileSync(join(pdfDir, "BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf"), "fake");
 
     const stranded = await scanDiskForStrandedPdfs(db, pdfDir);
 
-    expect(stranded.length).toBe(1);
-    expect(stranded[0]!.ticker).toBe("VNM");
+    expect(stranded.length).toBe(2);
+    const tickers = stranded.map((s) => s.ticker).sort();
+    expect(tickers).toEqual(["VEA", "VNM"]);
   });
 
   it("DSE-07: populated watchlist with VNM + matching financial_reports row → 0 returned", async () => {
@@ -212,6 +215,65 @@ describe("1915 — scanDiskForStrandedPdfs: populated watchlist unchanged (regre
     const stranded = await scanDiskForStrandedPdfs(db, pdfDir);
 
     expect(stranded.length).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DSE-09: populated watchlist — ticker NOT in watchlist falls back to filename
+// (task 1915-fix-part2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("1915 — scanDiskForStrandedPdfs: populated watchlist filename fallback (part2)", () => {
+  let tmpDir: string;
+  let pdfDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(tmpdir(), `bctc-1915-p2-${Date.now()}`);
+    pdfDir = join(tmpDir, "pdfs");
+    mkdirSync(pdfDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(tmpDir)) {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("DSE-09: populated watchlist [HPG,VCB] + VNM_Q4_2025.pdf → VNM picked up via filename fallback", async () => {
+    const { scanDiskForStrandedPdfs } = await import(
+      "../scheduler/financial-reports/bctcReparseJob.js"
+    );
+
+    // Watchlist has HPG and VCB — VNM is NOT in the watchlist
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS watchlist (
+        code TEXT PRIMARY KEY,
+        exchange TEXT,
+        domain TEXT
+      )
+    `);
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS financial_reports (
+        id TEXT PRIMARY KEY,
+        action_code TEXT NOT NULL,
+        period_year INTEGER NOT NULL,
+        period_type TEXT NOT NULL
+      )
+    `);
+    db.prepare("INSERT INTO watchlist (code, exchange, domain) VALUES (?, ?, ?)").run("HPG", "HOSE", "steel");
+    db.prepare("INSERT INTO watchlist (code, exchange, domain) VALUES (?, ?, ?)").run("VCB", "HOSE", "banking");
+
+    // VNM Q4 2025 PDF on disk — not in watchlist
+    const pdfFilename = "VNM_Q4_2025.pdf";
+    writeFileSync(join(pdfDir, pdfFilename), "fake pdf content");
+
+    const stranded = await scanDiskForStrandedPdfs(db, pdfDir);
+
+    // With the fix: codes.find() misses VNM → tickerFromFilename fallback → VNM returned
+    expect(stranded.length).toBe(1);
+    expect(stranded[0]!.ticker).toBe("VNM");
+    expect(stranded[0]!.filename).toBe(pdfFilename);
   });
 });
 
