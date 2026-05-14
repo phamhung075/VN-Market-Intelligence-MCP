@@ -14,6 +14,14 @@
  *     NOTE: iboard-query.ssc.vn is NXDOMAIN as of 2026-04-27 (dead domain).
  *     Endpoint kept for forward-compatibility if domain is restored.
  *
+ *   GET /proxy/bctc-discover/:ticker
+ *     → shells out to /root/discover-bctc-urls-browser.py <TICKER> [<YEAR> [<QUARTER>]]
+ *     → returns JSON array of discovered BCTC PDF URLs: string[]
+ *     → returns [] on script failure, empty result, or timeout (never 5xx for empty)
+ *     → Auth: X-API-Key required
+ *     → TICKER must match /^[A-Z0-9]{1,10}$/i; year/quarter are optional query params
+ *     → Added: 1916a-vps-part (fixes bctcQueueEnricherJob Strategy 0 dead route)
+ *
  *   GET /bctc-files/:code/:filename
  *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
  *     → PDFs are downloaded by mcp-server BCTC discovery (task 1822d-a);
@@ -45,6 +53,7 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config
@@ -68,6 +77,16 @@ const BCTC_FILES_PREFIX = "/bctc-files/";
 
 /** Root directory for BCTC PDF cache. Configurable via env var. */
 const BCTC_CACHE_DIR = process.env.BCTC_CACHE_DIR || "/root/bctc-cache";
+
+/**
+ * Path to the BCTC URL discovery script on the VPS.
+ * Used by /proxy/bctc-discover/:ticker (Strategy 0 for bctcQueueEnricherJob).
+ * Configurable via env var so tests / alternate installs can override.
+ */
+const BCTC_DISCOVER_SCRIPT = process.env.BCTC_DISCOVER_SCRIPT || "/root/discover-bctc-urls-browser.py";
+
+/** Prefix path for the bctc-discover endpoint. */
+const BCTC_DISCOVER_PREFIX = "/proxy/bctc-discover/";
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -132,6 +151,87 @@ function log(level, msg, extra) {
   process.stdout.write(line + "\n");
 }
 
+/**
+ * Run the BCTC URL discovery Python script and return an array of PDF URLs.
+ *
+ * The script is called as:
+ *   python3 /root/discover-bctc-urls-browser.py <TICKER> [<YEAR>] [<QUARTER>]
+ *
+ * It emits JSON to stdout: { "results": [{ "url": "...", "local_path": "..." }, ...], "error": "..." }
+ * This function parses that output and returns string[] of URL values.
+ * Returns [] on any failure (script error, timeout, parse failure, empty results).
+ *
+ * @param {string} ticker - Uppercase ticker symbol (already validated by caller)
+ * @param {string|null} year - Optional year string (e.g. "2025")
+ * @param {string|null} quarter - Optional quarter string (e.g. "4")
+ * @param {number} timeoutMs - Kill script after this many ms (default 120_000)
+ * @returns {Promise<string[]>} Array of discovered PDF URLs
+ */
+function runDiscoverScript(ticker, year, quarter, timeoutMs) {
+  return new Promise((resolve) => {
+    const args = ["python3", BCTC_DISCOVER_SCRIPT, ticker];
+    if (year) args.push(year);
+    if (quarter) args.push(quarter);
+
+    log("INFO", `bctc-discover: spawning ${args.join(" ")}`);
+
+    // spawn avoids shell interpolation — ticker already validated, but defence-in-depth
+    const child = spawn(args[0], args.slice(1), {
+      timeout: timeoutMs,
+      env: { ...process.env },
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+    child.on("close", (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
+      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
+
+      if (code !== 0) {
+        log("WARN", `bctc-discover: script exited ${code} for ${ticker}`, { stderr: stderr.slice(0, 200) });
+        resolve([]);
+        return;
+      }
+
+      if (!stdout) {
+        log("WARN", `bctc-discover: empty stdout for ${ticker}`);
+        resolve([]);
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(stdout);
+      } catch (e) {
+        log("WARN", `bctc-discover: JSON parse failed for ${ticker}`, { stdout: stdout.slice(0, 200) });
+        resolve([]);
+        return;
+      }
+
+      const results = Array.isArray(parsed.results) ? parsed.results : [];
+      const urls = results
+        .map((r) => (r && typeof r.url === "string" ? r.url : null))
+        .filter(Boolean);
+
+      if (parsed.error && urls.length === 0) {
+        log("WARN", `bctc-discover: script reported error for ${ticker}`, { error: parsed.error });
+      }
+
+      log("INFO", `bctc-discover: ${ticker} → ${urls.length} URL(s) found`);
+      resolve(urls);
+    });
+
+    child.on("error", (err) => {
+      log("ERROR", `bctc-discover: spawn error for ${ticker}`, { error: err.message });
+      resolve([]);
+    });
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Request handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,6 +258,44 @@ async function handleRequest(req, res) {
       log("WARN", `401 Unauthorized from ${req.socket.remoteAddress}`);
       return jsonResponse(res, 401, { error: "Unauthorized" });
     }
+  }
+
+  // BCTC URL discovery via discover-bctc-urls-browser.py
+  //   Incoming: GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
+  //   Shells out to: python3 /root/discover-bctc-urls-browser.py <TICKER> [<YEAR>] [<QUARTER>]
+  //   Returns: string[] of discovered PDF URLs (always 200, never 5xx for empty)
+  if (url.startsWith(BCTC_DISCOVER_PREFIX)) {
+    // Extract ticker from path: /proxy/bctc-discover/<TICKER>
+    const afterPrefix = url.slice(BCTC_DISCOVER_PREFIX.length);
+    // Split off any query string
+    const [tickerRaw] = afterPrefix.split("?");
+    const ticker = (tickerRaw || "").toUpperCase().trim();
+
+    // Validate ticker: 1-10 alphanumeric chars only (no shell injection possible via spawn, but still validate)
+    if (!/^[A-Z0-9]{1,10}$/.test(ticker)) {
+      log("WARN", `bctc-discover: invalid ticker "${ticker}" from ${req.socket.remoteAddress}`);
+      return jsonResponse(res, 400, { error: "Invalid ticker", ticker });
+    }
+
+    // Parse optional year / quarter query params
+    let year = null;
+    let quarter = null;
+    const qIdx = afterPrefix.indexOf("?");
+    if (qIdx !== -1) {
+      const qs = new URLSearchParams(afterPrefix.slice(qIdx + 1));
+      const rawYear = qs.get("year");
+      const rawQtr = qs.get("quarter");
+      // Validate: year = 4 digits, quarter = 1 digit
+      if (rawYear && /^\d{4}$/.test(rawYear)) year = rawYear;
+      if (rawQtr && /^\d$/.test(rawQtr)) quarter = rawQtr;
+    }
+
+    log("INFO", `bctc-discover: ${ticker} year=${year} quarter=${quarter} from ${req.socket.remoteAddress}`);
+
+    // Script is slow (browser automation) — allow up to 120s
+    const urls = await runDiscoverScript(ticker, year, quarter, 120_000);
+
+    return jsonResponse(res, 200, urls);
   }
 
   // SSC iboard proxy
@@ -263,10 +401,12 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
+  log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
   log("INFO", `BCTC files:       GET /bctc-files/:code/:filename (serves cached PDFs)`);
   log("INFO", `Health check:     GET /health`);
   log("INFO", `BCTC cache dir:   ${BCTC_CACHE_DIR}`);
+  log("INFO", `BCTC discover script: ${BCTC_DISCOVER_SCRIPT}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }
