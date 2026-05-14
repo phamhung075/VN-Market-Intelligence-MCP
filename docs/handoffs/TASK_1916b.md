@@ -108,3 +108,21 @@ Strategy 2 (`s.cafef.vn/Candles/FinanceInfo.ashx`) in BCTC discovery is permanen
 ---
 
 **Report:** Post-completion, file `reports/TASK_REPORT_1916b.md` with: outcome (fixed/removed), test results, regression check, any divergences from above plan.
+
+---
+
+## [Developer] Implementation Record
+
+- **Outcome:** Strategy 2 removed (AC-1b). All 3 replacement candidates confirmed dead from France (2026-05-14): (a) cafef.vn/tai-lieu-tai-chinh/\<ticker\>/bctc → 302 captcha; (b) VNDirect API → NXDOMAIN; (c) SSC via VPS → already Strategy 0. Removal path taken.
+- **Files modified:**
+  - `apps/mcp-server/src/domain/services/bctcDiscovery.ts` — removed `extractCafefUrls`, `tryFetchCafef`, `CAFEF_API_BASE`, `CAFEF_BASE`, `PDF_HREF_RE`; cafef block removed from `discoverHosePdfUrls`; `_fetchCafef` kept as deprecated no-op for backward compat; docblock updated with TASK_1916b + SPIKE_1916 refs; vietstock promoted to strategy 2
+  - `apps/mcp-server/src/__tests__/1343b-hose-pdf-discovery-red.test.ts` — Test 2 updated: cafef fallback assertion replaced with null-source assertion
+  - `apps/mcp-server/src/__tests__/FIX-bctc-url-enrichment.test.ts` — cafef success tests replaced with cafef-ignored tests (verify no-op)
+  - `apps/mcp-server/src/__tests__/FIX-bctc-ssc-vps-proxy.test.ts` — "enricher falls back to cafef" test updated to assert 0 URLs (cafef no longer in chain)
+- **Tests written:** `apps/mcp-server/src/__tests__/1916b-cafef-strategy-replacement.test.ts` — 12 tests (AC-1a VPS+SSC for DPM/VCB/HPG, AC-2 cafef never called, all-fail contract, regression chain), GREEN
+- **Git commits:** `311c8b95` — fix(bctc): remove dead cafef.vn Strategy 2 from BCTC discovery
+- **tsc status:** clean
+- **Full suite:** 76 pass / 0 fail (targeted bctc subset); 23 pass targeted task tests; tsc 0 errors
+- **Regression check:** `FIX-bctc-playwright-enrichment`, `1287-bctc-queue-enricher`, `1358b-bctc-queue-enricher-gaps`, `1112-bctc-vps-proxy`, `1111-bctc-fallback-primary` — all GREEN
+- **Docs updated:** `docs/TASKS.md` (1916b moved to Review), `docs/handoffs/TASK_1916b.md` (this record)
+- **Graphify:** skipped (no domain logic change, removal only)
