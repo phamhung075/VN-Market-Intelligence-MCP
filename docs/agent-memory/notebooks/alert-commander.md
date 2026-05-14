@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 01:02 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 03:04 UTC | **Sprint:** c84
 
 ## This session
 
@@ -14,10 +14,19 @@ Off-hours cycle (01:02 UTC). 3 signals from bus: GAS price_anomaly id=3128 (σ=2
 
 ## Carry-over (next session)
 
-- **Market open (02:00 UTC):** Watch GAS oil momentum (Brent $105.71, sector +5.57%) — first open cycle may generate new price_anomaly if session continues. Monitor VRE -6.91% for stop-loss conditions or BDS sector recovery.
-- **VCB fundamental validation:** Q4-2025 net margin compression -10.2pp noted by report-analyzer. Revenue +18.1% QoQ but net profit flat (-0.8%). Watch for verified_chain escalation.
-- **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Elevated FII reversal risk — apply NEUTRAL thresholds but note carry context in MARKET alerts.
-- **git HEAD.lock:** Commit blocked by lock from prior session (00:25 UTC). Notebook content is on disk but not committed — dev team should be aware.
+- **ACB FII pressure:** urgent_news ACB (id=3131, conf=0.50) suppressed — below NEUTRAL threshold 0.60. Foreign net sold 116M shares in one month. Watch for verified_chain if selling continues + price drops.
+- **GAS surge:** GAS +6.97% open session (81,800→87,500). Price_surge alert in system but no agent price_anomaly signal received. Monitor for σ ≥ 4.0 price_anomaly from market-watcher next cycle.
+- **VCI insider sell:** Fund chaired by Nguyễn Thanh Phượng sold all VCI shares (news_mention alert). Monitor for verified_chain escalation — insider event qualifies as always-MARKET if confirmed.
+- **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Apply NEUTRAL thresholds; include carry caveat in any MARKET bull alert.
+- **BCTC overdue:** 37 stocks overdue Q4-2025 (some 29d+). Watch for regulatory action escalation to legal_risk signal.
+
+### Alert Cycle (03:03–03:04 UTC) — 2026-05-14
+- Signals: 1 (price_anomaly: FPT id=3134 from market-watcher)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- Suppressed: FPT id=3134 (conf 0.50 < TIGHTENING threshold 0.85; σ=1.55 < 4.0; impact=5 < 6 — override failed)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING (news-fallback) | Carry: NEUTRAL | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: OPEN
 
 ### Alert Cycle (01:02–01:02 UTC) — 2026-05-14
 - Signals: 3 (price_anomaly: GAS id=3128, VRE id=3129 from market-watcher; fundamental_validation: VCB id=3125 from report-analyzer)
@@ -28,3 +37,12 @@ Off-hours cycle (01:02 UTC). 3 signals from bus: GAS price_anomaly id=3128 (σ=2
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (off-hours 2h cycle)
 - log_agent_work id=787
+
+### Alert Cycle (02:03–02:03 UTC) — 2026-05-14
+- Signals: 1 (urgent_news: ACB id=3131 from news-scout, conf=0.50)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- Suppressed: urgent_news ACB id=3131 (conf=0.50 < NEUTRAL threshold 0.60; no price_anomaly override — no active price alerts for ACB)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: OPEN (20-min cycle)
+- log_agent_work id=789
