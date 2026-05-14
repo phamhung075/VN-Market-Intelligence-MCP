@@ -16,3 +16,4 @@ dist/
 **/reports/*-evening.json
 /__pycache__/
 docs/agent-memory/sessions/preflight-lsof-*.log
+apps/*/server
