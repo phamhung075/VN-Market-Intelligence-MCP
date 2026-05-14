@@ -1080,3 +1080,17 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5200 |
+
+## Cycle — 04:40 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**:
+  - FPT +4.67% = 3.73σ — only anomaly above 2.0σ threshold; US Nasdaq record catalyst + strong fundamentals (PE 13.8 discount, ROE 28.3%)
+  - VRE/GAS/VPB all below threshold despite nominal moves (high baseline volatility)
+  - Tech sector leading 1d rotation (+1.54%); no 5d data available for CARRY_REGIME analysis
+- **actions**: signal price_anomaly FPT → alert-commander (id=3140) | WORK telegram sent
+- **next_cycle_hint**: Monitor FPT follow-through (now at 74,000 near 30d high 75,500); watch VPB (1.58σ, approaching threshold); GAS elevated on IEA supply warning
+- **estimated_tokens**: 5500
+
+Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
+- `.claude/skills/regime-extraction/SKILL.md`: `get_macro_snapshot` not in market-watcher package; fallback = infer REGIME from bootstrap MACRO block + news headlines; default NEUTRAL if ambiguous.

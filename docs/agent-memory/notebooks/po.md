@@ -1,52 +1,41 @@
 # PO Notebook
 
-## Last updated: 2026-05-14T03:14:28Z (c90 triage — BATCH(2): 1890a-spec-expanded + 1907a-digest-predict-silence)
+## Last updated: 2026-05-14T05:14:03Z (c91 triage — BATCH(1): 1908a-bctc-vnm-q4-low-confidence SPIKE)
 
 ---
 
-## Cycle 90 triage (TNB c48 handoff drain)
+## Cycle 91 triage (8 reports, WIP=0/2)
 
-### Trigger
-TNB audit-handoff signal `tnb-2026-05-14T04-30-00Z.json` (cycle 48). Overall NEEDS_ATTENTION, IMPROVING direction. FA Layer 7 G-step skip = 5th consecutive cycle; NEW H-step skip identified. BCTC banking cohort deadline TODAY. WIP 0/2 — full headroom.
+### Report disposition
+| # | Report | Disposition |
+|---|---|---|
+| 1-5 | 5× HEAD.lock stale (qa-responder/unified-agent/alert-commander 19:06→04:48) | DEDUP → 1897b-carry (F1 USER-blocked, permanent policy 1906a holds) — no new task |
+| 6 | [pollNews] 0 items 2026-05-13 13:15 (>16h old) | STALE — pre-1905a stealth fix + 1904a deploy c88 (q30m HTTP 200 verified). Auto-resolved. No task. |
+| 7 | [unified-agent] news freshness >2h 2026-05-13 22:04 | STALE — same root cause as #6. Auto-resolved by 1905a/1904a. No task. |
+| 8 | [BCTC-1345b] VNM 2025-Q4 composite=0.00 financial=0.00 2026-05-14 00:18 | ACCEPT — fresh, banking-cohort deadline TODAY. SPIKE 1908a. |
 
-### TNB rec dispositions
-| Rec | Action |
-|---|---|
-| #1 FA pkg +3 tools incl NEW `get_investment_clock_phase` (H-step) | ACCEPT — bump+expand 1890a to 5-tool scope, dispatch BA spec |
-| #2 SPIKE_C86_MCP_REG (TNB session) | NOT-ACTIONABLE — user/Cowork-Desktop config |
-| #3 BCTC banking 2026-05-15 | OBSERVATIONAL — cron wired; carry-watch |
-| #4 digest-predict 3-day silence | ACCEPT — new task 1907a (ops diagnosis) |
-| #5 US10Y 4.49% | OBSERVATIONAL — no breach |
-| #6 1903a-labels | STALE in TNB — shipped c87 (1903-doc-pair) |
-
-### Decision: BATCH(2)
-1. **1890a-spec-expanded** — HIGH CHORE → ba. Scope: 5 FA pkg tools (`get_macro_snapshot`, `get_insider_signals`, `get_bond_maturity_calendar`, `get_cash_flow`, `get_investment_clock_phase` NEW). Zone: `.claude/tools/package/financial-analyst.md` + `apps/mcp-server/`. Urgency: BCTC banking cohort filing TODAY. baseline_pass: ba spec ack + architect review trigger (build vs deprecate decisions).
-2. **1907a-digest-predict-silence** — MEDIUM OPS → ops. Diagnose 3-day silence (cron wiring vs schedule vs agent-side). Zone: `apps/mcp-server/`. baseline_pass: root-cause report; remediation = separate task if code change.
+### Decision: BATCH(1)
+1. **1908a-bctc-vnm-q4-low-confidence** — SPIKE/90min → dev-vps-crawls or pdf-extractor owner. Triage VNM Q4 zero-confidence: OCR corruption (assets<equity / margin>100% invariant) vs PDF source vs extractor schema vs threshold misfire. Zone: `apps/pdf-extractor/`. baseline_pass: root-cause category + reparse-or-fix decision.
 
 ### Items declined / deferred
-- 1897b-carry, 1862c-{E,F} — user/architect/container-blocked.
-- JANITOR-{011,014,020} — janitor cron stream.
-- TASK-BCTC-3 — dev-vps-crawls stream.
-- 1900c, 1899a-bloomberg-test-split — LOW non-blocking.
-- HEAD.lock 4th-cycle self-cure — expected per permanent policy (1906a c89). F1 USER cure remains in 1897b-carry.
-
-### Channel audit (scope-limited)
-MCP gateway unavailable in flow scope (TNB c48 pattern persists). Memory-evidence audit: no new BUG signals beyond TNB c48; commits c87→c89 clean; HEAD.lock self-cured as expected. No content errors, no wrong-cowork-actions detected.
+- Todo carry-over (1900c LOW-OPS, 1899a-bloomberg-test-split LOW-REFACTOR, 1862c-E user-blocked, 1862c-F container-rebuild-gated) — none ready.
+- 1897b-carry, JANITOR-{020,014,011}, TASK-BCTC-3, 1907b-investigate — backlog stream, lower priority than fresh BCTC quality signal.
+- pollNews + news-freshness reports (stale, pre-c88 fix verification).
 
 ### Hard-constraint compliance
-- WIP ≤ 2: PASS (0 → 2).
-- Disjoint zones: PASS — 1890a = `.claude/tools/package/` + mcp-server tool registration; 1907a = mcp-server scheduler. Different files; co-tenant in apps/mcp-server/ acceptable per dev-team zone policy (different sub-paths).
-- Zone tag on every row: PASS.
+- WIP ≤ 2: PASS (0 → 1, headroom 1 for BA spec next cycle).
 - TASKS.md ≤ 80L: PASS (76L).
-- Recurring-bug rule: N/A (1890a is pkg-addition carry, not ≥2 fix commits on same module).
+- Zone tag: PASS (apps/pdf-extractor/).
+- Recurring-bug rule: BCTC OCR has prior history (BCTC-1345b reparse job exists per reference_pdf_ocr_vps_architecture); SPIKE first to avoid premature fix — if root cause = code, NEW task with architect rethink per recurring-bug escalation rule.
+- Skip user-blocked: PASS (1862c-E, 1897b-carry skipped).
 
-### Carry-forward watchlist to c91+
-- **1890a-spec deploy** — pre-BCTC-filing window: race to ship FA pkg additions before Q1/2026 banking EPS catalyst hits report-analyzer/financial-analyst crons.
-- **1907a root-cause** — if cron unwired, code fix → new task; if config drift, runbook update.
-- **MCP gateway in TNB session** — track if Cowork Desktop config gets touched (user action).
-- **US10Y 4.49%** — threshold watch.
-- **digest-predict 4th day silence** — if 1907a not picked by c91, escalate priority MEDIUM→HIGH.
-- **HEAD.lock** — F1 USER (Docker .git/ exclusion) still only structural cure; preflight self-cure permanent policy holds.
+### Carry-forward watchlist to c92+
+- **1908a SPIKE outcome** — if OCR code fix needed, queue architect rethink before BA spec (recurring-bug escalation).
+- **BCTC banking cohort 2026-05-15** — Q1/2026 banking PDFs landing window; FA pkg (1890a) ready to consume.
+- **1907b-digest-predict-investigate** — 3-cycle observational (c91-c93).
+- **HEAD.lock pressure** — preflight self-cure permanent policy holding; F1 USER (Docker .git/ exclusion) only structural fix.
+- **News freshness** — if recurs c91+, re-open as fresh signal (current stale reports auto-resolved by 1905a/1904a).
+- **WIP headroom** — 1 slot free; reserve for BA spec from 1908a if SPIKE produces code-fix scope.
 
 ### Sign-off
-c90 BATCH(2) emitted. PO sub-flow EXITs to main terminal Step 2 (BA spec) + Step 3 (OPS dispatch). TNB handoff ACK appended. Notebook OVERWRITE complete.
+c91 BATCH(1) emitted. SPIKE-only cycle. PO sub-flow EXITs to main terminal Step 2 (SPIKE routing). Notebook OVERWRITE complete.

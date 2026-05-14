@@ -1,10 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 04:08 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 05:05 UTC | **Sprint:** c84
 
 ## This session
 
-Off-hours cycle (01:02 UTC). 3 signals from bus: GAS price_anomaly id=3128 (σ=2.46) and VRE price_anomaly id=3129 (σ=1.83) suppressed — no active price alerts and σ < 4.0 threshold; VCB fundamental_validation id=3125 informational (not in signal matrix). Legal/crisis clear. Regime: NEUTRAL (confirmed from get_macro_snapshot). CARRY_REGIME: FII_OUTFLOW_RISK (spread -0.33%). 0 MARKET alerts fired.
+Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, conf=0.50) — suppressed (no active price alerts; σ < 4.0 override floor). FPT at 74,000 VND (+4.67%) driven by US Nasdaq record on tech stocks. Legal/crisis clear. Regime: NEUTRAL. CARRY_REGIME: FII_OUTFLOW_RISK (-0.33%). 0 MARKET alerts fired.
 
 ## Patterns noticed
 
@@ -15,10 +15,20 @@ Off-hours cycle (01:02 UTC). 3 signals from bus: GAS price_anomaly id=3128 (σ=2
 ## Carry-over (next session)
 
 - **ACB FII pressure:** urgent_news ACB (id=3131, conf=0.50) suppressed — below NEUTRAL threshold 0.60. Foreign net sold 116M shares in one month. Watch for verified_chain if selling continues + price drops.
-- **GAS surge:** GAS +6.97% open session (81,800→87,500). Price_surge alert in system but no agent price_anomaly signal received. Monitor for σ ≥ 4.0 price_anomaly from market-watcher next cycle.
+- **FPT persistent surge:** FPT price_anomaly has appeared every cycle since 02:00 UTC (id=3134→3138→3140). Confidence 0.50, σ 3.73 (up from 1.55 at 03:03). Approaching 4.0 override floor. If σ ≥ 4.0 AND impact_score ≥ 6 on next signal → override triggers → MARKET alert. Catalyst: US Nasdaq record + FPT 12% US revenue exposure.
+- **GAS surge:** GAS +6.97% open session (81,800→87,500→84,300 now). Price_surge alert in system but no agent price_anomaly signal received. Monitor for σ ≥ 4.0 price_anomaly from market-watcher next cycle.
 - **VCI insider sell:** Fund chaired by Nguyễn Thanh Phượng sold all VCI shares (news_mention alert). Monitor for verified_chain escalation — insider event qualifies as always-MARKET if confirmed.
 - **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Apply NEUTRAL thresholds; include carry caveat in any MARKET bull alert.
 - **BCTC overdue:** 37 stocks overdue Q4-2025 (some 29d+). Watch for regulatory action escalation to legal_risk signal.
+
+### Alert Cycle (05:02–05:05 UTC) — 2026-05-14
+- Signals: 1 (price_anomaly: FPT id=3140 from market-watcher, conf=0.50, σ=3.73)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- Suppressed: FPT id=3140 (get_alerts type=price returned no active alerts — unconfirmed; σ=3.73 < 4.0 — override floor not met)
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: OPEN (20-min cycle)
+- log_agent_work id=796
 
 ### Alert Cycle (04:08–04:08 UTC) — 2026-05-14
 - Signals: 2 (urgent_news: FPT id=3135 from news-scout conf=0.50; price_anomaly: FPT id=3138 from market-watcher conf=0.50)
