@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-14 14:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-14 15:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (15:19–15:22 UTC)
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3175, urgent_news #3176] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3175: sector_event bullish → VIC, VHM, FPT, VRE (real_estate+tech+securities) — VN-Index lập đỉnh lịch sử +27pt, VIC +3.98%, VHM +2.95%, khối ngoại mua ròng; regime=NEUTRAL adj_score=7
+- urgent_news #3176: FPT bắt tay ông lớn ô tô Nhật Bản, kế hoạch liên doanh — FPT +4.53%; severity=medium; regime=NEUTRAL adj_score=8
+- Gold: 4694.5 (below 4700, continued downtrend since May 4). Brent: 105.69 (macro alert -2.12σ). No PMI data. No commodity triggers.
 
 ### Cycle (14:20–14:22 UTC)
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3173] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
