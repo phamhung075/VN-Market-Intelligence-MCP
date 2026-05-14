@@ -1,6 +1,45 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c108 re-gate — 1912b APPROVED (758ce97c+199effeb) + 1912c APPROVED
+**Last updated:** 2026-05-14 | **Session:** c109 — 1916a-vps-discover-route APPROVED (b029167c)
+
+## Session 2026-05-14 c109 — 1916a-vps-discover-route QA gate
+
+### TASK REPORT — 1916a-vps-discover-route
+
+```
+date: 2026-05-14
+outcome: APPROVED
+```
+
+#### Changed files
+- `vps-scripts/vps-proxy-server.js` — new `GET /proxy/bctc-discover/:ticker` route (commit 1b8f8cd5)
+- `apps/mcp-server/src/infrastructure/fetchers/bctcHttpFetcher.ts` — X-API-Key injection for VPS host (commit 8f9c2d55)
+- `apps/mcp-server/src/__tests__/1916a-bctc-http-fetcher-api-key.test.ts` — 6 new tests
+- `docker-compose.yml` — VPS_PUSH_API_KEY env documented
+
+#### Test Results
+- Targeted (1916a): 6/6 PASS
+- Full suite: 9601 pass / 38 fail — pre-existing failures confirmed (spot-checked Task 178 = fails on main too; developer claimed baseline 9277/39 fail; +324 pass from other tasks already merged, -1 fail = consistent)
+- tsc: 0 errors (pre-push hook verified)
+
+#### DDD: PASS
+- No actual import statements from domain/ to infrastructure/ or application/
+- bctcHttpFetcher.ts is infrastructure layer (correct placement)
+
+#### Security: PASS
+- No process.env in TS files (Bun.env only)
+- No hardcoded secrets (VPS_PUSH_API_KEY read from Bun.env at runtime)
+- vps-proxy-server.js uses process.env correctly (Node.js, not TS mcp-server scope)
+- docker-compose.yml documents key via comment, does not commit plaintext value
+
+#### Branch hygiene note
+- maybe-deploy-vps.sh: deploy-vinahost.sh not found at repo root — pre-existing infrastructure gap; VPS route already verified live by developer (curl 200+401)
+
+#### Verdict: APPROVED
+- Merged: b029167c (main)
+- Branch task/1916a-vps-discover-route deleted locally (remote had none)
+
+---
 
 ## Session 2026-05-14 c108 — 1912b alert-engine + 1912c stock-price QA gate
 
