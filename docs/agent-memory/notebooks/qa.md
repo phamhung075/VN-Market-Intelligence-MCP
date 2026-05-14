@@ -1,6 +1,27 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-14 | **Session:** c86 gate — AUTOCURE-C86-MW-DEDUP APPROVED
+**Last updated:** 2026-05-14 | **Session:** c87 gate — 1903-doc-pair APPROVED
+
+## Recent session — 2026-05-14 (c87 — 1903-doc-pair APPROVED)
+
+### 1903-doc-pair — stale UNVERIFIED label + macro fallback note
+
+Branch: task/c87-1903-doc-pair. Commits: d7ddca53 (doc edits) + 205c6485 (developer notebook) + 7b6a0be6 (handoff). Scope: doc/flow XS, .claude/ zone only.
+
+Pipeline: tsc 0 errors. DDD PASS. Security PASS. Zone PASS (4 files: .claude/flows, .claude/tools/package, developer notebook, handoff).
+
+AC checks all PASS:
+- write_alert_verdict UNVERIFIED label confirmed removed (line 41 clean).
+- alertVerdictTools.ts exists at apps/mcp-server/src/interface/mcp/tools/alerts/.
+- Sweep: 0 remaining UNVERIFIED labels in .claude/tools/package/*.md.
+- stage-bootstrap.md step 0b fallback note present (1 line), REGIME_SOURCE=news-fallback tag, cross-link to regime-extraction/SKILL.md.
+- tree-map line 313 references stage-bootstrap.md — no SSOT drift.
+
+Merge commit: 54e255e4. Branch deleted local + remote. Report: reports/TASK_REPORT_1903-doc-pair.md.
+
+Verdict: APPROVED.
+
+---
 
 ## Recent session — 2026-05-14 (c86 — AUTOCURE-C86-MW-DEDUP APPROVED)
 
