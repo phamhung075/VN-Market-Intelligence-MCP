@@ -215,6 +215,14 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | exit_status | complete |
 | token_estimate | 4800 |
 
+## Cycle — 06:41 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: TIGHTENING regime (IEA oil drawdown, Brent ~106, US CPI 3yr high, Fed on hold — news-scout #3145, regime_adj=9.1). FPT +3.25% (2.60σ, stddev 1.25%) anomaly — US tech rally tailwind (Nasdaq record). Tech sector otherwise flat. VIC +3.98% (1.46σ) and VPB +2.52% (1.48σ) borderline below threshold. GAS +2.57% (0.78σ) and VRE +2.58% (0.60σ) sub-threshold. Macro clean: supply chain STABLE, energy NORMAL, no chain confirmations.
+- **actions**: 1 signal posted (#3147 FPT price_anomaly → alert-commander, pe_compression_risk=true). WORK telegram sent. Notebook + commit done.
+- **next_cycle_hint**: Watch FPT if move extends (already +3.25% intraday). VIC and VPB both sitting just under 1.5σ — a further nudge triggers. Monitor oil sector (GAS) — prior 2-day rally on Brent; today's +2.57% is lower energy but still elevated. Banking sector +0.70% avg — watch for fx_pressure materialising under USD STRENGTHENING.
+- **estimated_tokens**: 8000
+
 ## Known patterns / preferences
 
 - EOD cycle scheduled for 16:00 UTC

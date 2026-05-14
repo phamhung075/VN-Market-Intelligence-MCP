@@ -2,7 +2,58 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-14 04:30 UTC (cycle 48) | Cycles completed: 48
+**Last updated:** 2026-05-14 07:15 UTC (cycle 49) | Cycles completed: 49
+
+---
+
+## Cycle 49 Watch Notes (2026-05-14 07:15 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: **IMPROVING** (1890a-spec-expanded CONFIRMED DEPLOYED — financial-analyst package now has get_cash_flow + get_macro_snapshot + get_investment_clock_phase; c47 auto-cure ROI sustained 3rd cycle; news-scout self-noting chain dedup gap; digest-predict 4-day silence escalated)
+
+**KEY CHANGE SINCE c48:**
+- financial-analyst tool package file updated with 3 missing tools + get_bond_maturity_calendar
+- This resolves B/G/H step gaps that were the #1 carry blocker for 5+ cycles
+- Next financial-analyst cycle (expected ~23:00 UTC) = first live validation
+
+**NEW FINDING — news-scout inter-cycle chain dedup absent:**
+- IEA oil drawdown + US CPI chain_catalyst fired at 03:23, 05:22, 06:22 UTC (cycles #3136, #3141, #3145)
+- Same macro event, 3 signals in ~3h
+- news-scout self-noted at 06:22: "may overlap" — agent aware, flow not guarding
+- 1st cycle of evidence — track 2 more cycles before auto-cure trigger
+
+**PERSISTING:**
+- digest-predict: 4-day silence (last entry 2026-05-11 21:38 UTC). task 1907a-digest-predict-silence active.
+- MCP gateway in TNB cowork session: 4th consecutive cycle blocked. User-action item.
+- financial-analyst: no 2026-05-14 session yet as of 07:00 UTC. BCTC Q1 banking deadline TODAY.
+
+**MACRO (from agent notebook evidence, ~06:00-07:00 UTC 2026-05-14):**
+- REGIME: TIGHTENING (news-scout, market-watcher, unified-agent) | NEUTRAL (alert-commander from get_macro_snapshot)
+- Regime split persists — macro snapshot may return NEUTRAL (Global Liquidity) while news context is TIGHTENING (US CPI 3yr high). Both signals valid in respective contexts.
+- VN-Index: ~1,919 (+1.06%) new high intraday | FPT +4.53% | VRE +3.64% recovery | GAS +2.32%
+- US10Y: RISK-OFF | FII_OUTFLOW_RISK carry persists (14 consecutive sessions net sell)
+- Brent: ~$105-107 (TIGHTENING support, IEA drawdown)
+
+**SCORES (Layer 5, 9-step):**
+- alert-commander: 5/5 effective GOOD — NEUTRAL from snapshot, dedup clean
+- news-scout: 4/4 effective GOOD (gap B-new: inter-cycle dedup — 1st cycle, not yet auto-cure)
+- market-watcher: 4/4 effective GOOD — TIGHTENING, c47 auto-cure sustained
+- unified-agent: 6/6 effective GOOD — Pillars 4/4, H-step declared
+- financial-analyst: UNAUDITABLE (no 2026-05-14 session)
+- report-analyzer: UNAUDITABLE (no 2026-05-14 session)
+- digest-predict: UNAUDITABLE (4-day silence)
+
+**AUTO-CURES THIS CYCLE:** 0 (news-scout gap: 1st occurrence, need 3 before cure)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/tnb-2026-05-14T07-15-00Z.json (priority: high — NEEDS_ATTENTION)
+
+## Cycle — 07:15 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: NEEDS_ATTENTION. 1890a-spec-expanded confirmed deployed (financial-analyst package now has get_cash_flow + get_macro_snapshot + get_investment_clock_phase + get_bond_maturity_calendar). NEW finding: news-scout inter-cycle chain dedup gap — IEA/CPI chain_catalyst fired 3x in 3h (signals #3136/#3141/#3145). 1st cycle of evidence. BCTC Q1/2026 banking deadline TODAY. digest-predict 4-day silence ongoing. MCP gateway session scope: 4th consecutive blocked cycle.
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/tnb-2026-05-14T07-15-00Z.json, priority=high). 0 auto-cures applied. Telegram blocked (MCP unavailable in session). Notebook updated.
+- **next_cycle_hint**: Track news-scout inter-cycle dedup gap for 2 more cycles (auto-cure trigger at 3). Verify financial-analyst 23:00 UTC cycle uses all 3 new tools (B/G/H steps). Confirm digest-predict 1907a ops resolution. Watch alert-commander for FPT MARKET alert if σ ≥ 4.0.
+- **estimated_tokens**: 8000
 
 ---
 
