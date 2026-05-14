@@ -1,10 +1,40 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1912a (c98)
+**Last updated:** 2026-05-14 | **Sprint:** 1912c (c107)
 
 ## Current state
 
-REQ_1912a spec complete (c98). 1912a = Phase 1 of Go migration program. Gateway Go rewrite spec. 11 ACs. 1 critical deviation flagged (D-1: /healthz absent from TS source — architect must clarify). Dev role gap: no go-capable agent exists — Option A (extend dev-api-gateway) recommended before PM sprintifies. Signal dropped to architect.
+REQ_1912c spec complete (c107). 1912c = Phase 3 of Go migration program. stock-price Go rewrite. 14 ACs. 2 spec-time clarifications flagged (R-SPEC-1: PriceSnapshot.timestamp vs fetchedAt field name; R-SPEC-2: path-param vs query-param route shape for /price/history). No PO blockers. dev-stock-price to implement.
+
+## Last session summary (2026-05-14) — 1912c
+
+Sprint 1912c — stock-price Go migration spec (Phase 3).
+
+Key findings from TS source inspection:
+- 3 routes confirmed: POST /price/fetch, GET /price/history/:code (path param), GET /health
+- 3-tier waterfall: all tiers launched concurrently via Promise.allSettled — Go port uses goroutines + channels.
+- Tier3 reads market.db (readonly) + writes to stock_price.db (isolated). TWO separate DSNs required.
+- R-SPEC-1: clients.ts PriceSnapshot.timestamp field may diverge from FetchPriceResponse.fetchedAt — developer must verify field usage at call site.
+- R-SPEC-2: handlers.ts uses GET /price/history/:code (path param) but clients.ts calls /price/history?code=X&days=N (query param). Discrepancy must be resolved before implementation.
+- saveQuote is fire-and-forget — write failure must NOT fail the request (matches TS `catch(() => void 0)` pattern).
+- market.db readonly invariant pre-exists in TS (`{ readonly: true }` on bun:sqlite) — Go must preserve via `?mode=ro` DSN.
+- 14 ACs, 2 spec-time risk findings. No PO blockers.
+
+14 ACs:
+- AC-1: Dockerfile multi-stage CGO builds cleanly
+- AC-2: /health 200 + exact JSON shape
+- AC-3: /price/fetch byte-identical JSON
+- AC-4: /price/history byte-identical JSON
+- AC-5: tier waterfall fall-through (T1-wins, T2-fallback, T3-fallback, all-fail → 404)
+- AC-6: Tier3 cache hit/miss paths + saveQuote fire-and-forget
+- AC-7: market.db readonly DSN enforced
+- AC-8: concurrent write safety on market.db (R4 mitigation)
+- AC-9: Go test parity with 2 TS Vitest files / 204 LOC / 13 scenarios
+- AC-10: mcp-server Vitest unchanged
+- AC-11: api-gateway 9/9 aggregation healthy
+- AC-12: code uppercased before fetch
+- AC-13: /price/history days validation
+- AC-14: /price/fetch missing code validation
 
 ## Last session summary (2026-05-14) — 1912a
 
