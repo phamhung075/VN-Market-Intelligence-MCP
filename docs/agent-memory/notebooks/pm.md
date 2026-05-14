@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 (PM QA approval processing, 1916a→Done, 1916b handoff created) | **Sprint:** 1912 Go migration CLOSED | **Current:** 1916b unblocked, ready for dev-mcp-server pickup
+**Last updated:** 2026-05-15 (Ops runtime AC confirmed: 1915-bctc-pipeline-silence→Done, 1909c-reparse-validation unblocked) | **Sprint:** 1912 Go migration CLOSED | **Current:** 1909c-reparse-validation UNBLOCKED, ready for Q1-2026 PDF arrival trigger
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — 1912 Go migration program CLOSED 2026-05-14. All 4 services migrated: 1912a (api-gateway, CLOSED c106), 1912b (alert-engine, CLOSED c108), 1912c (stock-price, CLOSED c108), 1912d (cutover+cleanup, CLOSED c106). Architect post-merge SPRINT-L review PASS (commit 738b6eee). Program-complete signal: `docs/signals/20260514T182941Z-1912-go-migration-program-complete.json`. 2 non-blocking janitor flags: stock-price legacy TS tests + alert-engine tracked server binary → janitor-1912 task queued. docker-compose.yml zero Dockerfile.go refs remain. 1910a (HIGH FEATURE ISM) now eligible for dispatch; 1909c (CRITICAL OPS reparse) in Todo pending 2026-05-16 Q1-2026 PDFs.
+- **WIP: 0/2 (CLEAN)** — 1915-bctc-pipeline-silence DONE (ops runtime AC confirmed 2026-05-15). VEA Q4-2025 51 pages extracted, VNM Q4-2025 61 pages extracted, financial_reports table populated. 1909c-reparse-validation NOW UNBLOCKED pending Q1-2026 BCTC PDF arrivals (banking deadline 2026-05-15 has passed). Janitor-1912 in Backlog (stock-price TS tests + alert-engine binary cleanup). docker-compose.yml zero Dockerfile.go refs remain. 1910a (HIGH FEATURE ISM) eligible for dispatch; 1909c (CRITICAL OPS) ready for Q1-2026 reparse trigger 2026-05-16+.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,22 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 112 — 2026-05-15 Ops Runtime AC Confirmed: 1915-bctc-pipeline-silence→Done, 1909c-reparse-validation UNBLOCKED (WIP=0/2 CLEAN)
+
+**Input:** Ops runtime AC PASS (2026-05-15 morning): `financial_reports` contains VEA + VNM Q4-2025 rows. `pdf_extracted_text` contains 51 pages (VEA) + 61 pages (VNM). `bctcReparseJob` log entry within last hour.
+
+**Actions:**
+1. **1915-bctc-pipeline-silence → Done (parent task).** Closed with ops AC confirmation. BCTC ingestion pipeline fully resolved. 1915-fix-part1 + 1915-fix-part2 fixes + ops redeploy all confirmed working.
+2. **1909c-reparse-validation → Unblocked (removed 1915 dependency).** AC-1/2/3 already PASS (Q4-2025 VEA/VNM sample verified). AC-4/5 proceed after Q1-2026 BCTC PDFs land at SSC. Scheduled reparse trigger 2026-05-16+.
+3. **TASKS.md updated:** 1915 row condensed to Done summary. 1909c row updated: removed HOLD marker, updated Blocked by to "—" (dependency cleared).
+4. **PM notebook updated:** header + current state + this cycle entry.
+
+**WIP Status:** 0/2 (CLEAN). No new dispatch. 1909c awaits Q1-2026 PDF arrival signal (user-triggered next banking cycle).
+
+**Status:** Ops AC confirmation processed. Pipeline verified stable. BCTC Q1/2026 banking extraction ready. Next: Q1-2026 PDFs → 1909c reparse → FA Layer 7 G-step validation.
 
 ---
 
