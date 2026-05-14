@@ -1,16 +1,34 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** c86
+**Last updated:** 2026-05-14 | **Sprint:** c87
 
 ## Current state
 
-- WIP: 0 / 2 (In Progress: empty; full headroom for next dispatch)
-- **JUST SHIPPED (c86):** AUTOCURE-C86-MW-DEDUP (dedup guard in .claude/flows/market-watcher/cycle.md), SPIKE_C86_MCP_REG (cowork agent MCP header doc-only finding)
+- WIP: 0 / 2 (clean; In Progress empty)
+- **SHIPPED c87:** 1903-doc-pair (DONE; QA approved, merged `54e255e4`), 1904a-deploy-gap-news (PARTIAL; rebuild+cron OK; playwright-stealth ESM bug escalated to c88)
 - Backlog HIGH: 1890a (toolpkg gaps + get_cash_flow), 1897b-carry (worktree isolation escalation), JANITOR-{011,014,020}, TASK-BCTC-3
-- Todo top-3 for c87: 1900c-health-probe-refine (LOW, ops), 1899a-bloomberg-test-split (LOW, dev-mainserver-crawls), 1862c-E (HIGH, ops — Cloudflare ingress user-blocked)
-- Done: 15 recent (AUTOCURE-C86 + SPIKE_C86 + 1881a-impl-{mcp,ssot} + 1888l + 1881a-impl-split + 1881a-spec + 1888-CDG)
-- **CLEAN state:** WIP=0. No blockers except user-action (1862c-E dashboard) and container-rebuild (1862c-F). Carry-over visible (1903a-labels, 1903b-doc-self-heal, 1890a, 1862c-E/F, 1897b-carry, JANITOR-{011,014,020}, TASK-BCTC-3).
-- **Status:** c86 CLOSED. TASKS.md at 67L (under cap). Ready for c87 dispatch.
+- Todo top-3 for c88: 1900c-health-probe-refine (LOW, ops), 1899a-bloomberg-test-split (LOW, dev), 1862c-E (HIGH, ops — Cloudflare user-blocked)
+- Blockers: 1862c-F (container-rebuild deferred), 1897b-carry (architect SPIKE pending)
+- **TASKS.md:** 68L (under 80L cap). Signal ref: `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json`
+- **Status:** c87 CLOSED. WIP=0. Ready for c88 cron at :07.
+
+---
+
+## Cycle 87 — 2026-05-14 c87 Post-Cycle Closure: 1903-doc-pair DONE + 1904a PARTIAL (playwright-stealth blocker → c88)
+
+**Input:** QA + ops c87 completion. Two outcomes:
+1. **1903-doc-pair (MEDIUM, CHORE, DONE):** Alert-commander [UNVERIFIED] label removed + macro-snapshot regime-fallback note added. Merge `54e255e4`. QA APPROVED.
+2. **1904a-deploy-gap-news (HIGH, OPS, PARTIAL):** MCP rebuild + scheduler verified (AC1-3 PASS). newsHeadlinesRefreshJob registered. **AC4 blocked:** news-fetch code bug (playwright-stealth ESM default import). Root: v0.0.1 CJS, Bun incompatible. Signal queued: `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json`. Job fires q30m, fails gracefully until dev fixes import. Escalation: developer responsibility (code bug).
+
+**Actions:**
+- Moved 1904a from In Progress → Done (PARTIAL) with blocker note + signal ref.
+- Moved 1903-doc-pair from In Progress → Done.
+- TASKS.md final: 68L (under 80L cap).
+- WIP: 0/2 (clean).
+
+**Carry-over to c88:** 1900c (health-probe), 1899a-bloomberg-test-split, 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3, 1890a, 1897b-carry.
+
+**Status:** c87 CLOSED. Pipeline clean. WIP=0. Ready for c88 cron dispatch at :07.
 
 ---
 

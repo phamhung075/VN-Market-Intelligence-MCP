@@ -29,9 +29,6 @@
 
 ## In Progress
 
-| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
-|---------|-------|----------|------|-------|---------|------------|
-| 1904a-deploy-gap-news | OPS-DEPLOY-GAP (c87 channel audit): Gateway uptime 39870s (~11h, start ~2026-05-13T13:00Z) predates `89ad6c4a` (1899a-cron landed c81 evening 2026-05-13). Channel evidence: msg 2875 `[pollNews] all sources 0 items` (13:15Z) + msg 2877 `news freshness >2h @po` (22:04Z). Action: `docker compose up -d --build mcp-server news-fetch` (or full stack), confirm scheduler shows `newsHeadlinesRefreshJob` registered, then re-poll WORK channel — pollNews-0 + 2h-freshness MUST clear within 1 cycle. AC: (a) container build-time > `89ad6c4a` commit ts, (b) `get_system_status` shows news-fetch healthy, (c) channel WORK shows fresh news within 2h post-rebuild. Zone: multi. | HIGH | OPS | ops | — | — |
 ---
 
 ## Review
@@ -41,6 +38,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1904a-deploy-gap-news-PARTIAL-c87 | OPS-DEPLOY-GAP **PARTIAL 2026-05-14 c87**: Gateway rebuild + MCP scheduler verified (AC1-3 PASS). Container image `2026-05-14T00:16:33Z` post-`89ad6c4a`. Scheduler shows `newsHeadlinesRefreshJob` registered (60 cron jobs total). /health OK, 138 tools. **AC4 BLOCKED:** news-fetch code bug — `SyntaxError: Missing 'default' export in module 'playwright-stealth'` at `apps/news-fetch/src/infrastructure/scrapers/playwright-browser-factory.ts:24`. Root cause: playwright-stealth v0.0.1 CJS, Bun cannot resolve ESM default. Escalated via signal `docs/signals/ops-1904a-deploy-gap-news-2026-05-14T02-20-00Z.json` for c88 developer fix. Job will fire q30m but fail gracefully until fixed. Ops responsibility ended; dev responsibility (code bug) continues. | HIGH | OPS | ops | — | 2026-05-14 |
 | 1903-doc-pair-SHIPPED-c87 | DOC-CHORE PAIRED **DONE 2026-05-14 c87**: (a) `write_alert_verdict` stale `[UNVERIFIED]` label removed from `.claude/tools/package/alert-commander.md`; sweep confirms zero remaining stale labels. (b) `get_macro_snapshot` regime-fallback note added to `.claude/flows/alert-commander/stage-bootstrap.md` step 0b with `REGIME_SOURCE=news-fallback` log tag + cross-link to `regime-extraction/SKILL.md`. Merge commit `54e255e4`. QA APPROVED. | MEDIUM | CHORE | developer | 2026-05-14 |
 | AUTOCURE-C86-MW-DEDUP | CHORE/AUTOCURE **DONE 2026-05-14 c86**: `.claude/flows/market-watcher/cycle.md` Step 4 off-hours duplicate-signal guard committed + pushed. Merge commit `b5151e1d`. QA APPROVED. Report: `reports/TASK_REPORT_AUTOCURE-C86-MW-DEDUP.md`. | HIGH | CHORE | developer | 2026-05-14 |
 | SPIKE_C86_MCP_REG | SPIKE **DONE 2026-05-14 c86**: MCP gateway session registration investigation complete. Finding: cowork agent .md `MCP:` header is documentation-only, real config in Cowork Desktop. Recommendations: (a) doc-drift fix for 9 stale headers, (b) inspect Cowork Desktop config, (c) Cloudflare tunnel 404 as separate ticket. Output: `docs/spikes/SPIKE_C86_MCP_REG.md` (116L). Merge commit `346bf916`. | HIGH | SPIKE | ops | 2026-05-14 |
