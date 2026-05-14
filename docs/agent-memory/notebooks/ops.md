@@ -1,4 +1,77 @@
-# Ops — Notebook
+## Task: c108-tick3 — 1912b-cutover Alert Engine Go Migration REDEPLOY PASS
+
+**Status:** ✅ PASS — alert-engine Go binary deployed, schema migration successful, smoke gate armed
+
+**Deploy Verdict:** ✅ Fix commit bfa93672 (3-phase DDL split) resolved DDL ordering blocker
+
+### Prior Blocker
+**Deploy attempt #1 (c108-tick2):** Failed due to DDL ordering bug
+- Schema migration tried to CREATE INDEX on `outcome` column before ALTER TABLE added the column
+- Container crashed with: `"failed to init alert tables: no such column: outcome"`
+- Escalated to architect for schema migration redesign
+
+### Architect Decision (option-1)
+**File:** `docs/signals/20260514T175450Z-1912b-schema-migration-decision.json`
+- Root cause: DDL phase ordering
+- Fix: Split InitAlertTables into 3 phases:
+  - Phase 1: CREATE TABLE + base indexes (stock, fingerprint)
+  - Phase 2: ALTER TABLE ADD COLUMN (outcome, outcome_at, outcome_detail)
+  - Phase 3: CREATE INDEX idx_alerts_outcome_pending (after outcome column guaranteed)
+- Applied via: `apps/alert-engine/pkg/infrastructure/sqlite.go`
+
+### Build & Deploy (c108-tick3)
+**Build:** ✅ SUCCESS
+- Image rebuilt: `61f43f4f17a8`
+- Go binary recompiled with fixed DDL logic
+- Build time: 85s
+
+**Container Recreation:**
+```
+docker-compose up -d --no-deps alert-engine
+```
+- ✅ Container created + started
+- ✅ No CrashLoopBackOff
+- Status: `Up 3min (healthy)`
+- Command: `/app/server` (correct)
+
+### Schema Verification
+✅ **Migration successful — no errors**
+- Startup logs: `{"time":"...","level":"INFO","msg":"alert-engine starting",...}` (no schema errors)
+- Listening: `alert-engine listening` on `:5006`
+- No "no such column: outcome" error (unlike attempt #1)
+- outcome + outcome_at + outcome_detail columns now present
+- idx_alerts_outcome_pending index created with Phase 3 DDL
+
+### 3-Min Smoke Baseline
+| Check | Result | Evidence |
+|-------|--------|----------|
+| Health endpoint | ✅ 200 OK | `{"port":5006,"service":"alert-engine","status":"ok"}` |
+| Health pings (6×q30s) | ✅ 6/6 "ok" | All returned status="ok" |
+| Container stability | ✅ Up 3min (healthy) | No restarts, no pauses |
+| Error logs (3min window) | ✅ None | No SQLITE_BUSY, panic, FATAL, ERROR |
+| Cron jobs | ✅ Expected state | No scan rows yet (depends on cron scheduler) |
+
+### Signal Emitted
+**File:** `docs/signals/20260514T180327Z-1912b-deploy-complete-smoke-armed.json`
+- Smoke gate armed: 6h window
+- Smoke gate end: 2026-05-15T00:03:30Z
+- Next action: QA final smoke at gate end → dispatch 1912c on pass
+
+### Files Modified
+1. `apps/alert-engine/pkg/infrastructure/sqlite.go` (3-phase DDL split)
+2. `apps/alert-engine/pkg/infrastructure/sqlite_test.go` (pre-migration test added)
+
+### Acceptance Criteria
+- [x] Docker build succeeds (fix DDL present)
+- [x] Container Up (not CrashLoopBackOff)
+- [x] Schema migration runs without error
+- [x] outcome column + idx_alerts_outcome_pending index created
+- [x] /health endpoint 200 OK
+- [x] No ERROR/FATAL/panic in logs
+- [x] 6h smoke gate armed → QA gate decision pending
+
+---
+
 
 **Last updated:** 2026-05-14 01:35 UTC | **Sprint:** c88 — 1905a-news-fetch-stealth-fix deployment
 
