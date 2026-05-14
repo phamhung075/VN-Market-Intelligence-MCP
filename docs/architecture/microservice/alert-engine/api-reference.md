@@ -1,6 +1,6 @@
 # alert-engine — API Reference
 
-**File:** `apps/alert-engine/src/interface/handlers.ts`
+**File:** `apps/alert-engine/pkg/interface/http/router.go`
 
 ## GET /health
 ```json

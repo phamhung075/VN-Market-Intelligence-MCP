@@ -1,6 +1,6 @@
 # Microservice: alert-engine
 
-**Language:** TypeScript / Bun
+**Language:** Go 1.22 (CGO, mattn/go-sqlite3)
 **Port:** 5006 (external + internal)
 **Role:** Signal evaluation and alert lifecycle management. Evaluates multi-source signals against adaptive thresholds, applies dedup/cooldown/grouping logic, synthesizes verified chains (2+ agent confirmations), and POSTs results to mcp-server. Owns `alert_engine.db` as local cache.
 
@@ -10,9 +10,11 @@
 
 | Layer | Path | Responsibility |
 |-------|------|----------------|
-| domain | Alert domain services (in mcp-server shared — alert-engine runs them) | alertGenerator.ts, alertCooldown.ts, alertDedup.ts, alertGrouper.ts, alertMuteChecker.ts, customAlertEvaluator.ts, convictionScorer.ts, recencyWeighter.ts, chainSynthesizer.ts |
-| infrastructure | `alert_engine.db` (sole writer, local cache), HTTP client to mcp-server | Store evaluated alerts locally before push |
-| interface | HTTP endpoints | Called by mcp-server alert scan jobs; POST results back to mcp-server |
+| domain | `pkg/domain/` | models.go, services.go (fingerprint, suppress, dedup), ports.go (AlertRepository, MutePort, TelegramPort), errors.go |
+| application | `pkg/application/` | evaluate.go (EvaluateAlertUseCase), dtos.go (EvaluateAlertRequest/Response) |
+| infrastructure | `pkg/infrastructure/` | sqlite.go (SQLiteAlertRepository, SQLiteMuteRepository, WAL mode), telegram.go (net/http POST), config.go (env loader) |
+| interface | `pkg/interface/http/` | router.go (chi, GET /health, POST /evaluate, log/slog middleware) |
+| cmd | `cmd/server/main.go` | DDD wiring: config → DB → repos → use case → router → graceful shutdown |
 
 ---
 

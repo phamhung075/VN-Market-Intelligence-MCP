@@ -1,84 +1,86 @@
 # alert-engine — Domain Model
 
+**Language:** Go 1.22 | **Package:** `pkg/domain/`
+
 ## Types
 
 ### AlertSeverity & TelegramChannel
-```typescript
-type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'
-type TelegramChannel = 'market' | 'work' | 'bug'
+```go
+type AlertSeverity string  // "low" | "medium" | "high" | "critical"
+type TelegramChannel string // "market" | "work" | "bug"
 ```
 
 ### AlertRequest
-```typescript
-interface AlertRequest {
-  stock: string
-  severity: AlertSeverity
-  message: string
-  signalTypes?: string[]
-  actionCode?: string
+```go
+type AlertRequest struct {
+    Stock       string
+    Severity    AlertSeverity
+    Message     string
+    SignalTypes []string
+    ActionCode  string
 }
 ```
 
 ### CooldownConfig
-```typescript
-interface CooldownConfig {
-  cooldownMinutes: number          // default 30
-  maxAlertsPerStockPerDay: number  // default 3
+```go
+type CooldownConfig struct {
+    CooldownMinutes         int // default 30
+    MaxAlertsPerStockPerDay int // default 3
 }
 ```
 
 ### StoredAlert (DB record)
-```typescript
-interface StoredAlert {
-  id?: number
-  stocks: string
-  signalTypes: string              // CSV format
-  message: string
-  fingerprint: string              // 8-char hex (DJB2 hash)
-  severity: AlertSeverity
-  triggeredAt: string              // ISO timestamp
-  sentToTelegram: number           // 0|1
+```go
+type StoredAlert struct {
+    ID             int64
+    Stocks         string
+    SignalTypes    string        // comma-separated
+    Message        string
+    Fingerprint    string        // 8-char hex (DJB2 hash)
+    Severity       AlertSeverity
+    TriggeredAt    string        // ISO 8601
+    SentToTelegram int           // 0 | 1
 }
 ```
 
 ### EvaluateAlertResult
-```typescript
-interface EvaluateAlertResult {
-  fired: boolean
-  cooldown_sec: number
-  reason: string
-  fingerprint?: string
+```go
+type EvaluateAlertResult struct {
+    Fired       bool
+    CooldownSec int
+    Reason      string
+    Fingerprint string
 }
 ```
 
 ## Repository Ports
 
 ### AlertRepositoryPort
-```typescript
-interface AlertRepositoryPort {
-  getRecentAlerts(stock: string, withinMinutes: number): StoredAlert[]
-  countTodayAlerts(stock: string): number
-  storeAlert(alert: Omit<StoredAlert, 'id'>): number
-  hasDuplicateFingerprint(fingerprint: string, withinMinutes: number): boolean
+```go
+type AlertRepositoryPort interface {
+    GetRecentAlerts(stock string, withinMinutes int) ([]StoredAlert, error)
+    CountTodayAlerts(stock string) (int, error)
+    StoreAlert(alert StoredAlert) (int64, error)
+    HasDuplicateFingerprint(fingerprint string, withinMinutes int) (bool, error)
 }
 ```
 
 ### MutePort
-```typescript
-interface MutePort {
-  isStockMuted(stock: string): boolean
+```go
+type MutePort interface {
+    IsStockMuted(stock string) (bool, error)
 }
 ```
 
 ### TelegramPort
-```typescript
-interface TelegramPort {
-  send(channel: TelegramChannel, text: string): Promise<boolean>
+```go
+type TelegramPort interface {
+    Send(ctx context.Context, channel TelegramChannel, text string) (bool, error)
 }
 ```
 
 ## Domain Service Functions
-- **File:** `apps/alert-engine/src/domain/services.ts`
+- **File:** `apps/alert-engine/pkg/domain/services.go`
 
 ### computeFingerprint(alert)
 - Uses DJB2 hash: `djb2(stock|sorted(signalTypes)|message[0:50])`
@@ -93,11 +95,11 @@ interface TelegramPort {
    - Signal overlap = empty signalTypes OR any signal in common
 3. **Daily cap:** count >= maxAlertsPerStockPerDay (default 3) → **suppress**
 
-Returns `{ suppress: boolean, reason: string }`
+Returns `SuppressResult{Suppress bool, Reason string}`
 
-### isDuplicate(fingerprint, recentFingerprints)
-Simple array membership check within 60-minute window.
+### IsDuplicate(fingerprint string, recentFingerprints []string) bool
+Simple slice membership check within 60-minute window.
 
-## Error Classes
-- `AlertEngineError` (base)
-- `AlertSuppressedError(reason)` — message: "Alert suppressed: {reason}"
+## Error Types
+- `AlertEngineError` (base, `pkg/domain/errors.go`)
+- `AlertSuppressedError{Reason string}` — message: "Alert suppressed: {reason}"
