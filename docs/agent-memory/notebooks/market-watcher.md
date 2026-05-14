@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 22:38 UTC | **Sprint:** current
+**Last updated:** 2026-05-14 23:38 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1500,3 +1500,22 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (23:38–23:40)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-ON | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED). All prices unchanged EOD from 2026-05-14 08:59 UTC.
+- FPT +4.53% (est. ~2.6σ) SUPPRESSED — off-hours duplicate (signal id=3188, same closing price, emitted 18:38 UTC this session).
+- VIC chain_catalyst id=3200 (news-scout 23:22 UTC): VinGroup momentum / VN-Index ATH — expires 03:22 UTC. Price 3.98% (est. ~1.4σ), sub-threshold, no price_anomaly.
+- Chain findings: 0 new (last 15 min). Open alerts: 20 (including MACRO HIGH: Gold -2.07σ, Brent -2.12σ).
+
+## Metrics (cycle 2026-05-14 23:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 1500 |
