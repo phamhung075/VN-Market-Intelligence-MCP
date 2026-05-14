@@ -1,8 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 18:03 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 19:03 UTC | **Sprint:** c84
 
 ## This session
+
+## Cycle — 18:03 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: Market CLOSED (off-hours). 1 urgent_news signal (FPT automotive JV) suppressed — conf=0.50 below NEUTRAL threshold 0.60; no price_anomaly override found. No legal/crisis hits. Regime NEUTRAL, Carry FII_OUTFLOW_RISK.
+- **actions**: record_signal_outcome(3183, suppressed) | send_telegram(work) | log_agent_work(831)
+- **next_cycle_hint**: FPT JV news still circulating — if news-scout posts updated signal with higher confidence, re-evaluate at next cycle. Monitor FII_OUTFLOW_RISK carry environment.
+- **estimated_tokens**: 6000
+- **doc_self_heal**: `.claude/tools/package/alert-commander.md` log_agent_work entry is incomplete — actual API requires two-call pattern: (1) status="running" → returns id; (2) status="completed" + id. File is read-protected; dev team fix needed.
 
 ### Alert Cycle (18:03–18:03 UTC)
 - Signals: urgent_news ×1 (FPT id=3183 from news-scout — FPT automotive JV with Japanese automaker)
@@ -169,3 +178,10 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: none
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Legal: clear | Crisis: clear | Market: CLOSED (off-hours run)
+
+### Alert Cycle (19:02–19:03 UTC)
+- Signals: 0 (bootstrap signal FPT price_anomaly id=3188 status=read — already processed by prior cycle; get_agent_signals returned no new signals)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clear | Crisis: clear | Market: CLOSED (off-hours 2h cycle)
