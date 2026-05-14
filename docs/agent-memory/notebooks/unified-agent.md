@@ -32,3 +32,6 @@ Daily Review 20:00 UTC 13/05. VN market CLOSED. System OK (0 open circuits, upti
 - **BCTC scraper**: vnstock rate-limiting CTG/PPC active — may resolve overnight. 31 tickers overdue.
 - **FII pipeline**: fii_type=UNKNOWN. Reassess when pipeline recovers.
 - **FOMC**: Jun 18 — next pivot window: PMI 2/6, CPI 4/6, FOMC 18/6, SBV 24/6.
+
+### Daily Review (00:02 UTC)
+- Mode: DAILY_REVIEW | Freshness: ok (market closed, all sources within limits) | Bugs: [HEAD.lock stale - recurring, vnstock rate-limits DLC/VRE, news freshness >2h transient resolved]

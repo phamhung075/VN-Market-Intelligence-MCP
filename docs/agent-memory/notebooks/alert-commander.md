@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-13 23:03 UTC | **Sprint:** c84
+**Last updated:** 2026-05-14 00:03 UTC | **Sprint:** c84
 
 ### Alert Cycle (23:03–23:03 UTC) — 2026-05-13
 - Signals: 0 (agent bus empty)
@@ -679,3 +679,9 @@ Market CLOSED (13:02 UTC). 0 MARKET alerts fired this cycle. Regime: NEUTRAL | C
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK | Pivot window: false (next: June 2026)
 - Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (off-hours cycle)
+
+### Alert Cycle (00:02–00:03 UTC) — 2026-05-14
+- Signals: fundamental_validation x1 (not in matrix)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false

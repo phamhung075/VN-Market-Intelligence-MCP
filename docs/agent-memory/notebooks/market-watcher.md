@@ -188,6 +188,14 @@ Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
 | exit_status | complete |
 | token_estimate | 3400 |
 
+## Cycle — 23:41 UTC
+
+- **cycle_date**: 2026-05-13
+- **findings**: TIGHTENING regime (Fed hike fears, FII 14-session net sell >13,000B VND). GAS +6.93% (2.19σ) and VRE -6.91% (1.67σ) both exceed 1.5σ threshold but suppressed as off-hours duplicates of signals #3116/#3117 emitted at 21:40 UTC (same closing prices). VHM -4.81% (1.24σ) sub-threshold. Supply chain, climate, energy — all clear.
+- **actions**: 0 signals posted (2 suppressed). WORK telegram sent. Notebook committed.
+- **next_cycle_hint**: Pre-market cycle starts 01:00 UTC. If VN market opens with gap (prices change from 81,800/33,000/152,500 VND), suppression guard will not apply — emit fresh signals. Monitor FII selling continuation and banking sector for further deterioration.
+- **estimated_tokens**: 3500
+
 ## Known patterns / preferences
 
 - EOD cycle scheduled for 16:00 UTC
