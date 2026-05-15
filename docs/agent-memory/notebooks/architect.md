@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-15 11:00 UTC | **Sprint:** SPRINT-S
+**Last updated:** 2026-05-15 12:00 UTC | **Sprint:** Sprint 1920
 
-## This session
+## This session (ARCH-1920)
+
+ARCH-1920 cadence policy brief. Brownfield scan of 10 zombie tables across schema-financial-reports.ts / schema-macro.ts / schema-alerts.ts. Key design decisions:
+
+- Cadence follows data volatility (per-domain), NOT source-tier. Source tier = metadata tag only.
+- 5 new cronConfig keys: `vnstockFundamentalsRefresh` (Mon 01:00 UTC), `vnstockTradingStatsRefresh` (daily 08:30 UTC weekdays), `bondMaturityPoller` (Sun 02:30 UTC), `commodityTrackerRefresh` (daily 06:00 UTC), `brokerSanctionsSweep` (last Fri of quarter months).
+- Shipping index wires into same `commodityTrackerRefreshJob.ts` (both write to `tracked_indicators`).
+- HIGH pre-condition for 1920d: `broker_sanctions` table missing UNIQUE(broker_name, sanction_start) — must be schema migration in same PR as job.
+- Zone assignments: vnstock → `financial-reports/`, bond/commodity → `macro/`, broker_sanctions → `news-analysis/`.
+- Failure policy: all jobs fail-loud WORK channel (not BUG — data pipeline, not code panic).
+- Risk R-1: vnstock rate-limit → `isRunning` guard mandatory in `vnstockFundamentalsJob.ts`.
+- Risk R-2: bond_maturity — BA must confirm geo-access from France before deciding VPS vs direct.
+
+Brief: `docs/architecture-briefs/2026-05-15-ARCH-1920-scheduler-cadence-policy.md`
+
+## Previous session
 
 TASK-1918b Architect design — news-scout macro snapshot package gap. Path A chosen (direct tool call), Path B (signal bus) rejected. No new code; 4-file surface: agentBootstrap.ts + SKILL_MANIFEST.md + news-scout.md + stage-bootstrap.md.
 
