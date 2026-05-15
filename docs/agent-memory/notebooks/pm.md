@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c119 (post-cycle: janitor-1912 DONE + 1914b DONE) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN (both c114 dispatch tasks completed)
+**Last updated:** 2026-05-15 c120 (PM: 1899a-bloomberg-test-split handoff complete) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN, 1899a ready for dispatch
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — Cycle c114 complete. 1914b-log-agent-work-doc DONE (commits 3b68df2c + cd01a02e). janitor-1912 DONE (commits d637ad1b + e0ad8357). No blockers. 1909c (CRITICAL OPS) ready for Q1-2026 BCTC PDF arrival 2026-05-16+. Next dispatch available.
+- **WIP: 0/2 (CLEAN)** — Cycle c120 complete. 1899a-bloomberg-test-split handoff [PM] section complete. Task ready for dev-news-fetch dispatch. 1909c (CRITICAL OPS) ready for Q1-2026 BCTC PDF arrival 2026-05-16+. Next dispatch available.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,29 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 120 — 2026-05-15 PM Decomposition: 1899a-bloomberg-test-split handoff complete (WIP=0/2 CLEAN)
+
+**Input:** Architect design complete. `docs/handoffs/TASK_1899a-bloomberg-test-split.md` § [Architect] section fully specified. Task: split 491L test file → 4 files ≤200L each, pure refactor.
+
+**Actions:**
+1. **[PM] Planning Context added to handoff** — section includes: zone (apps/news-fetch/__tests__/), 6 ACs (source deletion + 4 file creates + expect parity + test GREEN + baseline parity + tsc), files to read/create/modify, dependencies (none), risk flags (5 total: R-1 mock leak, R-2/R-3 line count tight, R-4/R-5 verify file deletion + normalizeDate mock strategy), test strategy (unit + glob + full suite + TS).
+2. **Handoff key notes:**
+   - Bun mock.module isolation is per-file — each split file MUST carry complete preamble (imports + mock.module + await import)
+   - Preamble elements trimmed per file (makeNextData → json-fallback only; PX_CONTENT → px+lifecycle only; CLEAN_CONTENT → all but normalize-date)
+   - Section comment separators removed to control line count
+   - perimeterx-lifecycle file flattens nested describes (no sub-nesting) to stay ≤200L per architect spec
+   - normalizeDate file is minimal (imports only, no mock context needed for pure function import)
+3. **TASKS.md updated** — row now shows **PM DONE c120** tag. Handoff fully specified, ready for dev-news-fetch dispatch.
+4. **PM notebook updated** — header + current state + this cycle entry. WIP=0/2 remains CLEAN.
+
+**WIP Status:** 0/2 (CLEAN). Task ready for developer pickup. No blockers.
+
+**Dispatch ready:** 1899a-bloomberg-test-split → dev-news-fetch (LOW REFACTOR, ~2h atomic task). Can dispatch immediately via main.md Step 3 (execute).
+
+**Status:** Decomposition COMPLETE. Handoff ready. Task eligible for immediate dispatch.
 
 ---
 

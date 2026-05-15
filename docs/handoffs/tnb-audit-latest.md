@@ -87,3 +87,11 @@ Notebook-evidence mode. TNB cannot perform a direct MCP probe (tool not register
 4. **alert-commander 00:02 UTC news-fallback TIGHTENING**: If pattern recurs (cycle 2 evidence at c56) → investigate whether get_macro_snapshot system-status response is a new failure mode requiring additional retry logic.
 5. **news-scout 02:19 UTC TIGHTENING vs unified-agent EASING**: Watch cycle 2 at next news-scout market-hours cycle. If regime divergence persists → log as regime-drift methodology gap (Layer 1.2 threshold crossing not applied).
 6. **FA 23:01 UTC Layer 7**: OCF/NI flagged anomalous due to extraction error — this is not a forensic gate pass. Once 1909c reparse runs, re-audit VCB/FPT/HPG OCF figures for genuine M-Score/F-Score gap.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-15T04:30:00Z
+- Tasks created: SPIKE_BCTC-3 (architect-scope hsx.vn XHR for TASK-BCTC-3, per c122 carry-forward — independent of TNB findings)
+- Skipped findings: #1 1907a digest-predict (USER-F1 blocked by 1913), #3 FA no-session (same substrate), #5 1913 BLOCKING-F1 (USER ACTION), #7 alert precision N=11/441 (no current sprint capacity, observational), #8 bctcQueueEnricher 6 stale (ops-observational post 1916a/b redeploy), #2 already auto-cured `dcf23c98` (validate next cycle), #4 + #6 cycle-1 evidence only per TNB protocol (need cycle-2 before action)
+- Direction confirmed: IMPROVING

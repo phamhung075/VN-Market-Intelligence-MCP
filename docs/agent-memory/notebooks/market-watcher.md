@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 03:42 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 04:41 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1607,3 +1607,27 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4500 |
+
+### Cycle (04:37–04:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>1.5σ TIGHTENING) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (from news-scout #3207 payload) | DXY: USD STABLE (USD/VND 26,137) | US10Y: NEUTRAL | CARRY_REGIME: HOT_MONEY_INFLOW | fx_pressure: [] | pe_risk: []
+- Adaptive thresholds: sigma=1.5σ, vol_mult=1.5x, downside_bias=true
+- GAS +3.71% (1.20σ, 30d stddev ~3.09%, vol 159.4K — LOW vs prior avg ~400K+) — below 1.5σ threshold; volume declining. Continuing multi-day rally (+12% over 30d). Brent $106.96 supportive.
+- GVR +3.59% (1.43σ, 30d stddev ~2.51%, vol 306.6K — ~1.09x prior day 281.3K) — borderline, below 1.5σ threshold; insufficient volume spike (need 1.5x). Agriculture sector +0.44%/1d.
+- NVL +3.00% (0.83σ, 30d stddev ~3.62%, vol 1.79M) — recovery from steep -22% correction last month; sub-threshold. ACB +1.97% — banking sector +0.31%/1d, sub-threshold.
+- VNH -9.09% (1,000 VND) — only 1 historical data point; sigma incalculable. HIGH alert already active (id issued at 04:00 UTC). No new price_anomaly signal emitted (existing alert covers; sigma uncalculable).
+- Sector rotation: all 16 sectors STABLE (1d only). Steel +2.22%/1d top gainer. Real estate -1.95%/1d worst. Oil/Gas +0.78%/1d. Securities +0.43%/1d.
+- Macro: Supply chain STABLE (BDI=1,400, no disruptions). Climate: May heat-risk (IDC,KBC,GEG — no watchlist impact). Energy: NORMAL (hydro ~70%, demand ~53%).
+- Chain findings: FPT neutral (news-scout #3207: JV with Japanese auto OEM, conf=0.8). FPT -0.68% — no price confirmation. No chain signal posted.
+- Open alerts: 5 (VNH HIGH, HVN MEDIUM price_surge, VRE/VIC/VHM LOW news_mention). System: OK. Market OPEN.
+
+## Metrics (cycle 2026-05-15 04:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 7000 |
