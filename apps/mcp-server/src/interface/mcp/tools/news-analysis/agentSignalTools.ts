@@ -31,6 +31,11 @@ import {
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
 import { logSignalRejection } from "../../../../infrastructure/db/signalRejectionStore.js";
+import { insertSignalQualityAudit } from "../../../../infrastructure/db/signalQualityAuditStore.js";
+import {
+  prepareSignalAuditRecord,
+  type SignalAuditContext,
+} from "../../../../domain/services/signalValidator.js";
 import { checkRegimeConfidenceThreshold } from "../../../../domain/services/regimeConfidenceThreshold.js";
 import {
   ChainCatalystFindingDataSchema,
@@ -297,6 +302,55 @@ export function registerAgentSignalTools(server: McpServer): void {
           };
 
         const id = postSignal(db, signalInput);
+
+        // Task 1920f — conditional audit write for price_confirmation / urgent_news only.
+        // Fire-and-forget: any error is swallowed; MCP response is unaffected.
+        const AUDIT_SIGNAL_TYPES = new Set(["price_confirmation", "urgent_news"]);
+        if (
+          AUDIT_SIGNAL_TYPES.has(args.signal_type) &&
+          typeof findingDataRecord["confidence"] === "number"
+        ) {
+          try {
+            const confidence = (findingDataRecord["confidence"] as number) * 100;
+
+            // FR-3: Build ValidationResult shape from finding_data
+            const validationResult = {
+              valid: (findingDataRecord["confidence"] as number) > 0,
+              confidence_score: confidence,
+              confidence_score_final: confidence,
+              confidence_penalty: 1.0,
+              source_fallback: Boolean(findingDataRecord["source_fallback"] ?? false),
+              fallback_source: typeof findingDataRecord["fallback_source"] === "string"
+                ? (findingDataRecord["fallback_source"] as string)
+                : undefined,
+              staleness_warning: false,
+              validated_at: new Date().toISOString(),
+            };
+
+            // FR-4: Build SignalAuditContext from post_agent_signal args
+            const auditContext: SignalAuditContext = {
+              signal_id: String(id),
+              signal_type: args.signal_type === "price_confirmation" ? "price" : "news",
+              fallback_tier: typeof findingDataRecord["fallback_tier"] === "number"
+                ? (findingDataRecord["fallback_tier"] as number)
+                : undefined,
+              vps_breaker_state: typeof findingDataRecord["vps_breaker_state"] === "string"
+                ? (findingDataRecord["vps_breaker_state"] as string)
+                : undefined,
+              coverage_gap: typeof findingDataRecord["coverage_gap"] === "string"
+                ? (findingDataRecord["coverage_gap"] as string)
+                : undefined,
+              price: typeof findingDataRecord["price"] === "number"
+                ? (findingDataRecord["price"] as number)
+                : undefined,
+            };
+
+            const auditRecord = prepareSignalAuditRecord(validationResult, auditContext);
+            insertSignalQualityAudit(db, auditRecord);
+          } catch (auditErr) {
+            console.warn("[post_agent_signal] audit write failed (non-fatal):", auditErr);
+          }
+        }
 
         const stockSuffix = args.stock_code ? ` [${args.stock_code}]` : "";
         const result = JSON.stringify(
