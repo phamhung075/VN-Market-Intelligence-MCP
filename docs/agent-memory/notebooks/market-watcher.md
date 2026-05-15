@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-14 23:38 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 01:40 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1519,3 +1519,44 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 1500 |
+
+### Cycle (00:38–00:40)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-ON | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED). All prices unchanged EOD from 2026-05-14 08:59 UTC.
+- FPT +4.53% (~2.68σ) SUPPRESSED — off-hours duplicate (signal id=3188, same closing price, emitted 18:38 UTC this session).
+- VIC +3.98% (~1.47σ), VRE +3.48% (~1.4σ), VPB +3.24% (~1.83σ) — all sub-2.0σ threshold, no signals.
+- New MEDIUM alert at 00:36 UTC: VCB news_mention (bond issuance 10,000 tỷ VND tier-2). Price unchanged at 61,000 (+1.50%); no price_anomaly.
+- Gold: 4,659.1 (-2.47σ below mean) — MACRO HIGH alert open (00:00 UTC). Brent 106.58 stable.
+- Chain findings: 0 (last 15 min). Open alerts: 20.
+- CARRY_REGIME=HOT_MONEY_INFLOW: tech/real_estate/banking flagged hot_money_concentration.
+
+## Metrics (cycle 2026-05-15 00:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2200 |
+
+### Cycle (01:38–01:40)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: RISK-ON | fx_pressure: [] | pe_risk: []
+- Off-hours cycle (market CLOSED). Prices unchanged EOD from 2026-05-14 08:59 UTC.
+- FPT +4.53% (~2.68σ) SUPPRESSED — off-hours duplicate (id=3188, same closing price, emitted this session)
+- New agent signal id=3203: VCB chain_catalyst (news-scout 01:22 UTC) — banking recapitalization trend (VCB Tier-2 bond issuance 10,000 tỷ VND, CTG also raised capital May 12-13). VCB price +1.50% (~0.6σ), sub-threshold, no price_anomaly.
+- Chain findings: 0 (last 15 min). CARRY_REGIME=HOT_MONEY_INFLOW: tech/real_estate/banking hot_money_concentration.
+
+## Metrics (cycle 2026-05-15 01:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 1 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2000 |

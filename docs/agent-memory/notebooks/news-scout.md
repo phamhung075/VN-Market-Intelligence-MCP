@@ -1,6 +1,26 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 22:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 01:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (01:20–01:22 UTC)
+- Items: 20 | Impacts: 7 | Signals: [chain_catalyst #3203] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3203: credit_policy bullish → VCB, BID, ACB, CTG, MBB, VPB, EIB (banking) — Vietcombank phát hành tối đa 10,000 tỷ VND trái phiếu tăng vốn cấp 2; historical: CTG also raised capital May 12-13; regime=NEUTRAL adj_score=9.0; confidence=0.86
+- DEDUP: chain_catalyst VIC/VN-Index ATH suppressed (match #3200, real_estate VinGroup, ~60min ago). FPT JV skipped (NEUTRAL direction, chain impact 5/10 below threshold).
+- NOTE: Dedup API operational — returned signal #3200 (VinGroup real_estate). VCB banking recapitalization is new theme (credit_policy, no prior match). Gold: 4627.6 (-2.47σ below mean). Brent: 106.62. No PMI data. Market CLOSED (off-hours 4h cycle).
+
+### Cycle (00:20–00:22 UTC)
+- Items: 20 | Impacts: 6 | Signals: [] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- DEDUP: chain_catalyst VIC/ATH suppressed (match #3200, 60min ago). chain_catalyst FPT/JV suppressed (match #3197, ~120min ago). Dedup API returned 3 signals this cycle (operational). 0 new signals fired.
+- NOTE: Gold 4659.1 (-2.47σ below mean 4694). Brent 106.58. VPB banking capital milestone (110,000 tỷ) assessed — confidence <0.80, skipped. No PMI data. Market CLOSED (off-hours 4h cycle).
+
+### Cycle (23:20–23:22 UTC)
+- Items: 20 | Impacts: 8 | Signals: [chain_catalyst #3200, urgent_news #3201] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3200: sector_event bullish → VIC, VHM, VRE (real_estate+securities) — Phạm Nhật Vượng wealth >10% GDP VN, VN-Index ATH, VinFast restructuring; regime=NEUTRAL adj_score=8.0; confidence=0.82
+- urgent_news #3201: FPT x Japanese auto JV → FPT; severity=medium; regime=NEUTRAL adj_score=7.0; confidence=0.88
+- NOTE: Recurring VIC/VinGroup/FPT bullish theme (overlaps #3196/#3197 from 22:21 UTC, 60min ago — within dedup window but bus returned empty; known dedup API limitation for self-sent signals). Gold: 4664.8 (-2.07σ below mean). Brent: 106.2. No PMI data. Market CLOSED (off-hours).
 
 ### Cycle (22:20–22:22 UTC)
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3196, chain_catalyst #3197] | Regime: NEUTRAL | Carry: NEUTRAL

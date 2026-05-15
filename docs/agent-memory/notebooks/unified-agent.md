@@ -1,33 +1,35 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-14 · **Cycle:** 23:01 UTC (Daily Review)
+**Last updated:** 2026-05-15 · **Cycle:** 01:00 UTC (Market + Prediction Review)
 
 ## This session
 
-Daily Review (23:01 UTC 2026-05-14). System ok. Sent daily coordination summary to WORK channel. 20 alerts fired in 24h (3 HIGH: MACRO×2, GAS×1). News freshness stale at 5.5h — already reported as performance_issue at 22:02 UTC, dedup skipped. Prices stale as expected (market closed outside 02:00–08:59 UTC window). 55 alerts pending.
+Market cycle + Prediction Review dual flow (01:00 UTC Fri 15/05). System ok. REGIME=NEUTRAL confirmed. VN-Index ATH 1,925 (14/05). BCTC Q1/2026 deadline TODAY for ACB/BID/CTG/EIB/MBB/VCB/VPB — major banking EPS catalyst at 02:00 UTC open. FPT 73,900 < 78,000 threshold — HOLD. Prediction review: 1 open claim (China/Taiwan war before GTA VI, 50.5% yes), 0 resolved → accuracy N/A. Sent WORK synthesis.
 
-## Cycle — 23:01 UTC
+## Cycle — 01:00 UTC
 
-- **cycle_date**: 2026-05-14
-- **findings**: System ok; VN-Index ATH session closed (+27pts led by VIC/VHM/FPT); news RSS still degraded (5.5h stale, previously filed); 1 outstanding BUG (msg 2889)
-- **actions**: sent_telegram(work) daily summary; notebook commit
-- **next_cycle_hint**: BCTC Q1/2026 major filing day 15/05 — pull banking sector at 02:00 UTC open; FPT 73,900 vs 78,000 threshold watch
-- **estimated_tokens**: 1500
+- **cycle_date**: 2026-05-15
+- **findings**: System ok; all circuits green; Reuters/TradingEconomics persistent (known); REGIME=NEUTRAL (no transition); VN-Index ATH 1,925; Gold -2.47σ (risk-on global rotation); VCB 10,000 tỷ subordinated bonds announced; VCI double institutional exit (VCAMDF + Phượng fund); FPT 73,900 < 78,000 threshold not breached; bctcQueueEnricher 0-URL REE/TCH/VNH recurring; vnstock rate-limit MWG/VRE transient; alert scoring N=11 (insufficient sample, need ≥20)
+- **actions**: sent_telegram(work) market+prediction synthesis; no conviction shifts (no new BCTC data yet); no bugs filed (all WARNs known/dedup)
+- **next_cycle_hint**: BCTC Q1/2026 banking due TODAY — pull get_bctc_full for VCB/VPB/BID/ACB/CTG/EIB/MBB at 02:00 UTC open. FPT watch: if fails to breach 78,000 → trigger position review.
+- **estimated_tokens**: 7000
 
 ## Patterns noticed
 
-- RSS degradation: all feeds showing 1+ failures, news freshness consistently exceeds 2h threshold — recurring, filed
-- HEAD.lock VirtioFS race: recurring on commit (c33/c52/c58+/msg2886) — ops permanent fix needed
-- Alert scoring pipeline stalled: 441 unknowns / 0 scored — bug 2874 open
-- get_portfolio_conviction: persistent server timeout across cycles
-- bctcQueueEnricher 0-URL errors for MWG/NVL/REE/TCH/VNH — recurring scrape/geo-block issue
-- REGIME: NEUTRAL confirmed multiple cycles; news-framing inflates to TIGHTENING — maintain macro_snapshot discipline
+- bctcQueueEnricher 0-URL: REE/TCH/VNH recurring across cycles — geo-block/scrape issue
+- vnstock rate-limit MWG/VRE: transient WARNs at cycle start, resolves on retry
+- HEAD.lock VirtioFS race: recurring on git commit — ops fix needed (rm .git/HEAD.lock on host)
+- get_portfolio_conviction: server timeout recurring — use last-known MODERATE 0.53
+- Alert scoring backlog: 433 unknowns / 11 scored — pipeline issue ongoing (bug 2874)
+- REGIME: NEUTRAL confirmed 3+ consecutive cycles
+- Flow file edits: .claude/flows/ blocked by VirtioFS in scheduled sessions — doc self-heal cannot apply fixes
 
 ## Carry-over (next session)
 
-- **🔴 BCTC Q1/2026 FILING 15/05**: ACB/BID/CTG/EIB/MBB/VCB/VPB — pull at 02:00 UTC open. Major EPS catalyst.
-- **FPT session 2/2**: 73,900 < 78,000 (session 1 failed threshold). No break above 78,000 → reduce position.
-- **VCB Q4-2025 filed 14/05**: Pull get_bctc_full(VCB) at open — assess conviction shift.
-- **REGIME**: NEUTRAL confirmed 2+ cycles. Recheck if Warsh/Fed tone hardens.
-- **HEAD.lock CRITICAL**: msg 2886 unclaimed >8h. Ops: `rm .git/HEAD.lock` on host — permanent fix needed.
-- **RSS staleness**: news >5h — follow up if still degraded at 01:00 cycle.
+- **🔴 BCTC Q1/2026 FILING TODAY**: ACB/BID/CTG/EIB/MBB/VCB/VPB — pull get_bctc_full at 02:00 UTC open. Major EPS catalyst for banking sector.
+- **FPT 73,900 < 78,000**: Threshold not breached 3 sessions. At 02:00 open, if still < 78,000 and no positive BCTC catalyst → trigger position reduction review.
+- **VCB bond issuance**: 10,000 tỷ subordinated bonds (Tier 2 capital) — bullish capital adequacy. Assess post-BCTC.
+- **VCI double exit**: VCAMDF + Phượng fund both fully liquidated VCI — monitor for further institutional pressure.
+- **REGIME**: NEUTRAL confirmed. Recheck if Warsh/Fed tone hardens or banking BCTC surprises.
+- **HEAD.lock CRITICAL**: Ops: rm .git/HEAD.lock on host — permanent fix needed.
+- **Doc self-heal (blocked)**: daily-review.md 2 fixes pending — VirtioFS blocks flow file edits in scheduled sessions.
