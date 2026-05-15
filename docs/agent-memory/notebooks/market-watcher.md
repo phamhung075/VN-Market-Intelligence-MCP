@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 20:01 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 20:38 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1758,3 +1758,19 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 2500 |
+
+### Cycle (20:38–20:38)
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: N/A | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- **BLOCKED at step 0:** MCP gateway unreachable — host.docker.internal DNS failure after 2 attempts
+
+## Metrics (cycle 2026-05-15 20:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 800 |

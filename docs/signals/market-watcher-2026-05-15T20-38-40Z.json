@@ -1,0 +1,8 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0 failed: MCP gateway unreachable after 2 attempts — dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving",
+  "priority": "high",
+  "createdAt": "2026-05-15T20:38:40Z"
+}
