@@ -1,8 +1,19 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 04:03 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 05:06 UTC | **Sprint:** c116
 
 ## This session
+
+### Alert Cycle (05:01–05:06 UTC)
+- Signals: agent_bus=0 | price_alerts=0 | system_alerts=5 (HIGH×1, MEDIUM×1, LOW×3)
+- Fired: 1 | Suppressed: 4 | MARKET: 1
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL (news-fallback, REGIME_SOURCE=news-fallback, conservative tier) | Carry: NEUTRAL (no data) | Pivot window: false
+- MARKET fired: VNH price_drop HIGH -9.09% (1,100→1,000 VND) [verdict:ce44b81a pending]
+- Suppressed: HVN MEDIUM price_surge (divergence 5.95% >5% discarded); VRE/VIC/VHM LOW news_mention (Dragon Capital Vin buy, below conservative NEUTRAL threshold)
+- Legal: clean | Crisis: clear | get_kinhdich_reading VNH: tool mis-routed (returned bug-fix list) — used market-wide Khôn MUA 100%
+- VN-Index: 1,921.98 (-0.18%) | Kinh Dịch: Quẻ Khôn 100% MUA
+- [WARN] get_macro_snapshot returned system status only (no Global Liquidity/Carry Spread) — conservative tier applied
 
 ### Alert Cycle (04:03–04:03 UTC)
 - Signals: agent_bus=1 (urgent_news×1) | price_alerts=0 | system_alerts=5 (HIGH×1, MEDIUM×1, LOW×3)
