@@ -1,8 +1,14 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-15 · **Cycle:** 19:56 UTC (Daily Review — BLOCKED)
+**Last updated:** 2026-05-15 · **Cycle:** 20:01 UTC (Daily Review — BLOCKED)
 
 ## This session
+
+### Daily Review (20:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: unknown (MCP unreachable) | Bugs: none observed
+- BLOCKED: MCP gateway still unreachable at 20:00 UTC window — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` (2nd consecutive blocked cycle; first at 19:56 UTC)
+- Telegram send skipped (same gateway). Notebook commit only output.
+- Carry-over: BCTC Q1 banking (ACB/BID/CTG/EIB/MBB/VCB/VPB) unconfirmed — cannot verify until MCP restored.
 
 ### Daily Review (19:56 UTC)
 - Mode: DAILY_REVIEW | Freshness: unknown (MCP unreachable) | Bugs: none observed
