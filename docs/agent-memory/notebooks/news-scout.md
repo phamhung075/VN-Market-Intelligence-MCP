@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 22:00 UTC | **Status:** MCP_UNREACHABLE
+**Last updated:** 2026-05-15 21:19 UTC | **Status:** MCP_UNREACHABLE
+
+### Cycle (21:19 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP server unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` + `zenmidi.com → 127.0.0.1 (Connection refused)`
+- Root cause: Cowork sandbox cannot reach host.docker.internal:3000 or zenmidi.com:443 (both resolve to localhost inside sandbox). Off-hours cycle (21:19 UTC, market closed).
+- No signals fired. No Telegram sent (same MCP blocked). Notebook updated as only recovery action.
 
 ### Cycle (22:00 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
