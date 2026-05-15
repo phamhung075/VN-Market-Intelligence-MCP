@@ -1,61 +1,55 @@
 # PO Notebook
 
-## Last updated: 2026-05-15T20:10:19Z · Sprint: c130 triage
+## Last updated: 2026-05-15T20:32:05Z · Sprint: c131 triage
 
 ### This session
-PREFLIGHT: HEAD.lock removed (age=65s, 0B, no live git pid). Worktree prune: clean. Signals drained: 2 new signals (market-watcher + alert-commander bug-escalation, both Docker DNS outage at 19:55–20:00 UTC). TNB c58 ACK from c129 — no new TNB handoff. Channel audit: 5 unresolved reports (2889-2893). PO triage complete. 1 UNBLOCK task created (ops).
+PREFLIGHT: HEAD.lock removed (age=329s, 0B, no live git pid — ts 20260515T202454Z). Worktree prune: clean. Signals drained: 0 new signals (inbox empty). TNB: c58 handoff still latest — c59 blocked at Step 0c (MCP gateway unreachable in Docker session). Channel audit: Telegram reports DB empty (containers can't write while Docker frozen). Agent notebooks used as channel evidence.
 
-### Channel/signal state
-- Pending signals: 2 (market-watcher + alert-commander bug-escalation → Docker DNS failure → drained and moved to processed/)
-- HEAD.lock: removed, age=65s, clean
-- MCP gateway: UP on host (zenmidi.com SSE confirmed). Docker containers BLOCKED (host.docker.internal DNS failure ~19:55 UTC)
-- TNB: c58 handoff still latest — no new c59 handoff this cycle
+### Docker state (critical — 1919)
+Docker daemon socket STILL UNRESPONSIVE (timeout after 5s on /v1.41/info). Docker Desktop process alive (PID 8152) but daemon frozen. All cowork agents blocked: news-scout ABORTED 22:00 UTC, unified-agent ABORTED 20:01 UTC, market-watcher last good cycle 2026-05-13 02:39 UTC, alert-commander last good cycle 09:04 UTC. MCP server on host UP (localhost:3000 health 200 OK, toolCount=140, uptime~16442s).
 
-### Channel audit — 5 reports (2889-2893)
-- #2889: unified-agent news RSS staleness 2026-05-14T22:02 → resolved as `monitoring` (stale, pre-existing pattern)
-- #2890: QA-responder git index.lock 04:47 → 1897b-carry USER ACTION, no new task
-- #2891: ops-vps-fetch BCTC-3a "Envoy block" report 04:57 → resolved as `duplicate` (BCTC-3 chain complete — 3b+3c DONE)
-- #2892: QA-responder git index.lock 05:47 → same as 2890, no new task
-- #2893: unified-agent push-prices invisibility 07:12 → recurring, tracked in carry-over, below dev-task threshold
+### Channel audit — evidence from notebooks (Telegram reports DB empty)
+- MARKET channel: No new alerts since 09:04 UTC (Docker DNS). Last good: GAS +5.62% MEDIUM + VCB+GAS+VIC urgent_news at 08:01 UTC. Clean pre-outage.
+- WORK channel: HEAD.lock PREFLIGHT message sent (msg_id=7724). c130 msgs confirmed: 1919 UNBLOCK dispatched to ops (c130). No new bugs from cowork (all blocked).
+- BUG channel: No new reports filed (agents can't reach MCP to file reports). Last known issue: Docker DNS error at ~19:55 UTC — already tracked in 1919.
+- Channel audit: CLEAN (no new issues — all blocked by 1919, not new bugs).
 
-### New docker DNS outage (1919) — c130 acute
-At ~19:55 UTC: ALL cron Docker agents blocked (market-watcher, alert-commander, unified-agent, news-scout, qa-responder). Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. MCP server UP on host (SSE confirmed). Docker container DNS resolver broken. New CRITICAL OPS task 1919-docker-dns-unblock created in TASKS.md Backlog. WORK notification sent (msg_id 7722). Ops must restart Docker networking.
-
-### Carry-over from c129 evaluated
-- FA 23:00 UTC daily-review: NOT yet (20:10 UTC). fa-shape-guard cycle 3 deferred to c131. FA may also be blocked by 1919 Docker DNS.
-- alert-precision-488-unknowns: no c130 data (agents blocked). HOLD.
-- news-scout 1918b off-hours: 12:19 TIGHTENING (pre-rebuild?), 14:20 shifted NEUTRAL. 1918b likely working post-rebuild.
-- 1909c-reparse-validation: no update, ops task still pending.
-- BCTC Q1-2026 banking: ACB/BID/CTG/EIB/MBB/VCB/VPB — daily-review 23:00 UTC may be blocked by 1919.
+### PO triage decisions (c131)
+- **1919-docker-dns-unblock**: CRITICAL, user action required (restart Docker Desktop). No PO leverage. Task stays in Backlog with CRITICAL priority.
+- **fa-shape-guard cycle 3**: Deferred again (c130 + c131 both blocked). Row updated in TASKS.md.
+- **alert-precision-488-unknowns**: No new data. HOLD at 488. Row updated.
+- **SPIKE_BCTC-3 Backlog row**: STALE — moved to Done (3a+3b+3c all Done 2026-05-15). Cleaned.
+- **news-scout payload.detail (Finding #1, 4th cycle unverified)**: Cannot observe (Docker blocked). Deferred c132.
+- **1862c-F**: Still blocked by container-rebuild gate.
+- **BCTC Q1-2026 banking**: FA blocked — 23:00 UTC daily-review not observable. Deferred c132.
+- **1909c-reparse-validation**: OPS task, still pending ops spot-check. Gated on Docker + FA cycle.
 
 ### TASKS.md updates this cycle
-- Added 1919-docker-dns-unblock (CRITICAL OPS, ops owner) — Docker DNS failure
-- Updated alert-precision-488-unknowns (c130 note — agents blocked, no new data)
-- Updated fa-shape-guard-watch (c130 deferred, FA 23:00 UTC may be blocked)
-- Moved TASK-BCTC-3a to Done (finding used by 3b+3c, chain complete)
-- Closed JANITOR-020/014/011 as wontfix (moved to Done, DRY claims falsified)
+- SPIKE_BCTC-3 removed from Backlog, added to Done row (chain CLOSED).
+- alert-precision-488-unknowns: updated c131 note.
+- fa-shape-guard-watch: updated c131 deferred note.
 
-### Decision on c130 BATCH
-BATCH = UNBLOCK (1919-docker-dns-unblock → ops).
-No dev-team FIX/SPRINT tasks earned this cycle.
-- 1862c-F: still blocked by container-rebuild (1862c-E-dashboard USER ACTION)
-- All TNB c58 carry-overs: gated by Docker DNS outage or FA 23:00 UTC (not yet)
-- alert-precision <550, fa-shape-guard cycle 3 deferred
+### Decision on c131 BATCH
+BATCH = NOTHING.
+- All dev-team FIX/SPRINT blocked by Docker DNS outage (container-rebuild unavailable).
+- No new TNB findings (c59 blocked).
+- No new signals, no new Telegram reports.
+- Only pending action: user restart Docker Desktop to unblock 1919.
+- 1862c-F: still Todo but blocked by container-rebuild (1862c-E-dashboard user action).
 
-## Carry-over to c131
-- **1919-docker-dns-unblock**: ops must diagnose + restart Docker networking. All agents blocked until fixed. CRITICAL.
-- **FA 23:00 UTC**: if 1919 fixed, FA daily-review may trigger fa-shape-guard cycle 3 auto-cure.
-- **news-scout 1918b validation**: confirm first off-hours cycle post-container-rebuild shows NEUTRAL (not TIGHTENING).
-- **news-scout payload.detail**: 4-cycle unverified — requires QA live bus inspection.
-- **alert-precision-488-unknowns**: check c131 count after 1919 fixed. Promote to SPIKE if >550.
-- **1909c-reparse-validation**: ops verify VNM/DIG Q4-2025 rows in DB post-1908c+1909a.
-- **BCTC Q1-2026 banking**: 23:00 UTC FA cycle — watch c131 after 1919 resolved.
-- **push-prices invisibility** (#2893): recurring — if persists 3 cycles → OPS task.
+## Carry-over to c132
+- **1919-docker-dns-unblock**: CRITICAL user action — restart Docker Desktop. EVERYTHING depends on this.
+- **fa-shape-guard cycle 3**: After Docker restored — observe FA 23:00 UTC. If wrong regime → 3-cycle threshold → auto-cure FIX for FA stage-bootstrap.md.
+- **news-scout payload.detail**: 5th cycle unverified if c132 also blocked. At 5 cycles → escalate BUG.
+- **alert-precision-488-unknowns**: Check c132 count after Docker restored. Promote to SPIKE if >550.
+- **1909c-reparse-validation**: Ops verify VNM/DIG Q4-2025 rows post-1908c+1909a.
+- **BCTC Q1-2026 banking**: FA daily-review — ACB/BID/CTG/EIB/MBB/VCB/VPB ĐÃ NỘP?
+- **1862c-F**: Unblocks after 1862c-E-dashboard user action + Docker restored.
 
 ## RETURN
 ```
-BATCH: UNBLOCK [{id: "1919-docker-dns-unblock", route_to: "ops"}]
-REASON: Docker DNS outage at ~19:55 UTC. MCP server UP on host. No dev FIX/SPRINT earned. TNB c58 carry-overs gated.
-NEXT: dev-team Step 4 post-cycle → commit + notify ops → idle
-PIPELINE: unblock dispatched to ops
+BATCH: NOTHING
+REASON: Docker DNS outage still active — all container-rebuild blocked, all cowork agents blocked, no new TNB/signals/reports. 1919 requires user restart Docker Desktop.
+NEXT: dev-team Step 4 post-cycle → commit → notify WORK idle → EXIT
+PIPELINE: idle
 ```

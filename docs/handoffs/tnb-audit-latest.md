@@ -106,6 +106,27 @@ None this cycle.
 
 ---
 
+## PO ACK (c131) — 2026-05-15T20:32Z
+
+**Direction confirmed: IMPROVING (carried from c58).** Docker DNS outage blocks c131 observation. 1919 still open.
+
+**Triage of c58 findings vs c131 state:**
+
+- All carry-overs from c129 persist unchanged: Docker DNS (1919) blocking ALL cowork agents since 19:55 UTC c130.
+- **#1 news-scout payload.detail**: Still unverifiable (cowork blocked). Deferred c132.
+- **#2 digest-predict silence**: 1907a CRITICAL OPS Backlog. Still gated on 1913 user-action + Docker DNS.
+- **#3 FA no session**: Docker DNS blocked FA 23:00 UTC both c130 + c131. FA still bare of 1918a guard.
+- **#9 FA shape-guard**: Cycle 2 of 3 still — c130 + c131 both blocked. Deferred c132.
+- **#7 alert precision**: 488 unknowns unchanged (no data). HOLD.
+- All other findings: unchanged.
+
+**TASKS.md updates this cycle:**
+- Moved SPIKE_BCTC-3 from Backlog to Done (row was stale — 3b+3c both Done).
+- Updated alert-precision-488-unknowns with c131 note.
+- Updated fa-shape-guard-watch with c131 deferred status.
+
+**BATCH for c131: NOTHING.** Same reasoning as c130 — 1919 blocks all container-rebuild and agent-observation work.
+
 ## PO ACK (c129) — 2026-05-15T16:26Z
 
 **Direction confirmed: IMPROVING.** 1918a + 1918b + 1918c chain closed last cycle. 1915 BCTC pipeline DONE. Backlog swept c128.
