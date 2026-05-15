@@ -97,3 +97,23 @@ None this cycle. All tracked patterns either resolved by TASKS.md (1918a, 1918b)
 5. **digest-predict**: PO escalate 1907a from Backlog to In-Progress. 7-day silence is user-facing gap.
 6. **FA shape-validation gate monitoring**: Watch next 2 FA sessions for `get_macro_snapshot` shape-mismatch. If REGIME wrong at c59 → auto-cure stage-bootstrap.md to add explicit guard.
 7. **GAS Kinh Dịch conflict**: Watch if Brent pulls back from $108.67. GAS resistance 90,000–92,000 VND. Kiển (39) reversal signal active.
+
+---
+
+## PO ACK (c128 — 2026-05-15T16:23:00Z)
+- Findings #1 + #2 ACK closed by c128 ship (1918a merged + 1918b QA-approved + 1918c env-gate).
+- Finding #3 (news-scout payload validation): defer — needs QA bus inspection cycle, not dev.
+- Finding #4 (digest-predict / 1907a): user-action substrate (1913); no PO leverage.
+- Finding #5 (BCTC banking unconfirmed): ops/observational; daily-review 23:00 UTC next window.
+- Finding #6 (FA no daytime session): user/ops; below 3-cycle threshold for auto-cure.
+- Finding #7 (unified-agent 3/4 pillars): borderline pass, data gap not flow gap.
+- Finding #8 (488 unknowns alert precision): queued to Backlog as MEDIUM tracking for c129+.
+- Finding #9 (1913 BLOCKING-F1): unchanged user action.
+- Finding #10 (FA shape-validation gate): 1-cycle, defer — queued MEDIUM tracking for c129+ watch.
+- Finding #11 (git index.lock H4): user/ops permanent host fix; 1897b-carry covers.
+- Finding #12 (FII fii_type=UNKNOWN): tracking only, no sprint trigger.
+- Next-Cycle Priority #2 (1909c-reparse-validation): ops owner; not dev-team material.
+- Next-Cycle Priority #4 (news-scout payload validation): QA, not dev.
+- Next-Cycle Priority #5 (digest-predict escalation): user-blocked, escalation symbolic only.
+
+Decision c129: BATCH=NOTHING. WIP=0/2 but no dev-team-eligible ready backlog. Backlog housekeeping sweep done inline (1915-bctc-pipeline-silence + janitor-1912 dup rows). 2 new monitoring entries queued (alert-precision-488 + fa-shape-guard-watch).
