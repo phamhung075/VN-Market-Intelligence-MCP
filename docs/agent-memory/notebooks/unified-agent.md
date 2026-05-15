@@ -1,8 +1,15 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-15 · **Cycle:** 09:00 UTC (Market — VN CLOSED)
+**Last updated:** 2026-05-15 · **Cycle:** 19:56 UTC (Daily Review — BLOCKED)
 
 ## This session
+
+### Daily Review (19:56 UTC)
+- Mode: DAILY_REVIEW | Freshness: unknown (MCP unreachable) | Bugs: none observed
+- BLOCKED: MCP gateway unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` (confirmed on 2 probes)
+- Telegram send skipped (same gateway). Notebook commit only output.
+
+## This session (09:00 UTC)
 
 Market cycle 09:00 UTC Fri 15/05 — post-market-close sweep. REGIME=NEUTRAL stable (no transition this cycle; EASING→NEUTRAL transition confirmed at 05:00 UTC earlier today). FPT closed 72,900 -9.22% conviction 0.49 XEM XÉT GIẢM. GAS +6.94% close (Brent $108.67 elevated). BCTC Q1 banking deadline TODAY — ACB/BID/CTG/EIB/MBB/VCB/VPB still unconfirmed at close. git index.lock recurring again (reports 2890, 2892 — H4 VirtioFS race).
 
