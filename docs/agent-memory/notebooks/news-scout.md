@@ -1,6 +1,11 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 19:56 UTC | **Status:** MCP_UNREACHABLE
+**Last updated:** 2026-05-15 22:00 UTC | **Status:** MCP_UNREACHABLE
+
+### Cycle (22:00 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP server unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`
+- Bootstrap failed. No signals fired. No Telegram (same MCP blocked).
 
 ### Cycle (19:56 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
