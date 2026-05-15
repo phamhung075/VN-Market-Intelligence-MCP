@@ -5,15 +5,21 @@
  * (quarterly financial reports) for tickers listed on the HOSE exchange.
  *
  * Strategy order (fail-fast with graceful fallback):
- *   0. VPS Playwright endpoint -- primary when BCTC_DISCOVER_URL is set.
+ *   0. hsx.vn mediafiles API -- primary (TASK-BCTC-3b, 2026-05-15).
+ *      Two-call recipe: resolve ticker → numeric ID via /l/api/v1/1/securities/stock,
+ *      then fetch BCTC PDFs via /m/api/v1/1/mediafiles/5/{id}. Accessible from France
+ *      with no VPS, no Playwright, no auth beyond static token HJ2HNS3SKICV4FNE.
+ *      HOSE-only: HNX/UPCOM tickers return empty list → falls through to strategy 1.
+ *      Only runs when _fetchHsx is supplied in DiscoverOptions.
+ *   1. VPS Playwright endpoint -- secondary when BCTC_DISCOVER_URL is set.
  *      Calls GET {BCTC_DISCOVER_URL}/{ticker}?year={y}&quarter={q} on the VPS.
  *      VPS runs discover-bctc-urls-browser.py as a subprocess (Playwright).
  *      Returns Python script JSON: { results: [{url, source, confidence}], error }.
- *   1. SSC iboard JSON API -- fallback when VPS unavailable.
+ *   2. SSC iboard JSON API -- fallback when VPS unavailable.
  *      Base URL: SSC_IBOARD_BASE_URL env var (default: https://iboard-query.ssc.vn).
  *      NOTE: iboard-query.ssc.vn is NXDOMAIN (dead domain) as of 2026-04-27.
  *      Still kept as fallback in case domain is restored.
- *   2. [REMOVED] cafef.vn document JSON API -- TASK_1916b: permanently dead.
+ *   3. [REMOVED] cafef.vn document JSON API -- TASK_1916b: permanently dead.
  *      s.cafef.vn/Candles/FinanceInfo.ashx returns HTTP 301 then redirects to
  *      cafef.vn/du-lieu/candles/financeinfo.ashx then 302 then /404.aspx. All
  *      query params are lost at the first redirect. Investigated 3 replacement
@@ -51,6 +57,15 @@
  *   - _fetchCafef kept in DiscoverOptions for backward-compat (no-op; ignored).
  *   - See SPIKE_1916 + TASK_1916b for investigation log.
  *
+ * 2026-05-15 FEATURE (TASK-BCTC-3b):
+ *   - Added Strategy 0: hsx.vn mediafiles API (new primary).
+ *     Two-call recipe confirmed HTTP 200 from France. No VPS, no Playwright.
+ *     Returns [] for HNX/UPCOM tickers; falls through to VPS Playwright (now strategy 1).
+ *   - _fetchHsx injectable added to DiscoverOptions (different arity from HttpFetchFn).
+ *   - "hsx" added to HosePdfDiscoveryResult.source union.
+ *   - Strategy numbering updated: hsx(0) → VPS Playwright(1) → SSC(2) → vietstock(3).
+ *   - See docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md § Main-Server Recon.
+ *
  * @module domain/services/bctcDiscovery
  */
 
@@ -66,8 +81,9 @@ export interface HosePdfDiscoveryResult {
    * Primary source name, or null if nothing succeeded.
    * Note: "cafef" is retained in the union for backward compatibility with existing
    * DB rows written before TASK_1916b removed Strategy 2 (2026-05-14).
+   * "hsx" added in TASK-BCTC-3b (2026-05-15) for the hsx.vn mediafiles strategy.
    */
-  source: "vps-playwright" | "ssc" | "cafef" | "vietstock" | null;
+  source: "hsx" | "vps-playwright" | "ssc" | "cafef" | "vietstock" | null;
   /** Secondary PDF URLs (from next source tried, if populated). */
   fallbackUrls?: string[];
   /** Secondary source name. */
@@ -98,6 +114,14 @@ export interface DiscoverOptions {
    * Injectable fetch overrides for unit-testing.
    * In production these are omitted and the built-in fetch helpers are used.
    */
+  /**
+   * Injectable for Strategy 0 (hsx.vn mediafiles).
+   * Different arity from HttpFetchFn — accepts (ticker, year, timeoutMs).
+   * Optional: omitting it disables Strategy 0.
+   * In production, wire fetchHsxBctcUrls from infrastructure/fetchers/hsxBctcFetcher.ts.
+   * TASK-BCTC-3b (2026-05-15).
+   */
+  _fetchHsx?: (ticker: string, year: number, timeoutMs: number) => Promise<string[]>;
   _fetchVpsPlaywright?: HttpFetchFn;
   _fetchSsc?: HttpFetchFn;
   /**
@@ -223,7 +247,34 @@ function extractVietstockUrls(html: string, _ticker: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// VPS Playwright endpoint -- Strategy 0
+// hsx.vn mediafiles -- Strategy 0
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to find PDF URLs via the hsx.vn mediafiles API.
+ *
+ * Only runs when an _fetchHsx injectable is supplied. Returns [] otherwise.
+ * HOSE tickers: resolves to numeric ID → fetches BCTC PDF list.
+ * HNX/UPCOM tickers: ID lookup returns empty list → returns [] gracefully.
+ *
+ * TASK-BCTC-3b (2026-05-15)
+ */
+async function tryFetchHsx(
+  ticker: string,
+  year: number,
+  timeout: number,
+  fetchFn: ((ticker: string, year: number, timeoutMs: number) => Promise<string[]>) | undefined,
+): Promise<string[]> {
+  if (!fetchFn) return [];
+  try {
+    return await fetchFn(ticker, year, timeout);
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// VPS Playwright endpoint -- Strategy 1 (was Strategy 0)
 // ---------------------------------------------------------------------------
 
 /**
@@ -358,10 +409,12 @@ async function tryFetchVietstock(
 /**
  * Discover BCTC PDF URLs for a HOSE-listed ticker.
  *
- * Tries three sources in order:
- *   0. VPS Playwright endpoint (when BCTC_DISCOVER_URL is set) -- highest confidence
- *   1. SSC iboard JSON API (via SSC_IBOARD_BASE_URL)
- *   2. vietstock.vn HTML scraper (rarely succeeds; all content JS-rendered)
+ * Tries four sources in order:
+ *   0. hsx.vn mediafiles API (when _fetchHsx is supplied) -- new primary (TASK-BCTC-3b)
+ *      HOSE-only. HNX/UPCOM tickers return [] and fall through to strategy 1.
+ *   1. VPS Playwright endpoint (when BCTC_DISCOVER_URL is set) -- covers all exchanges
+ *   2. SSC iboard JSON API (via SSC_IBOARD_BASE_URL) -- NXDOMAIN as of 2026-04-27
+ *   3. vietstock.vn HTML scraper (rarely succeeds; all content JS-rendered)
  *
  * Strategy 2 (cafef.vn FinanceInfo.ashx) was permanently removed in TASK_1916b
  * (2026-05-14). The endpoint is dead (301->404) and all 3 replacement candidates
@@ -385,13 +438,15 @@ export async function discoverHosePdfUrls(
   const quarter = options.quarter ?? "Q4";
 
   // Resolve fetch functions -- must be supplied by caller (no inline default).
-  // Production callers wire bctcHttpFetch from infrastructure/fetchers/bctcHttpFetcher.ts.
-  // Test callers supply stubs via _fetchVpsPlaywright / _fetchSsc / _fetchVietstock.
+  // Production callers wire bctcHttpFetch from infrastructure/fetchers/bctcHttpFetcher.ts
+  // and fetchHsxBctcUrls from infrastructure/fetchers/hsxBctcFetcher.ts.
+  // Test callers supply stubs via injectable options.
   //
-  // _fetchVpsPlaywright is optional: strategy 0 only runs when BCTC_DISCOVER_URL is set,
-  // so tests that exercise only strategies 1-2 may omit it.
+  // _fetchHsx is optional: strategy 0 only runs when the injectable is supplied.
+  // _fetchVpsPlaywright is optional: strategy 1 only runs when BCTC_DISCOVER_URL is set.
   // _fetchSsc / _fetchVietstock are always required.
   // _fetchCafef is accepted but silently ignored (deprecated, see DiscoverOptions).
+  const fetchHsx           = options._fetchHsx;
   const fetchVpsPlaywright = options._fetchVpsPlaywright;
   const fetchSsc           = options._fetchSsc;
   const fetchVietstock     = options._fetchVietstock;
@@ -403,7 +458,20 @@ export async function discoverHosePdfUrls(
     );
   }
 
-  // Strategy 0: VPS Playwright endpoint
+  // Strategy 0: hsx.vn mediafiles API (TASK-BCTC-3b, 2026-05-15)
+  // Only runs when _fetchHsx is supplied in options.
+  // HOSE-only: HNX/UPCOM tickers return [] (not an error), falls through to strategy 1.
+  const hsxUrls = await tryFetchHsx(ticker, year, timeout, fetchHsx);
+  if (hsxUrls.length > 0) {
+    return {
+      urls: hsxUrls,
+      source: "hsx",
+      fallbackUrls: [],
+      fallbackSource: null,
+    };
+  }
+
+  // Strategy 1: VPS Playwright endpoint
   // Only runs when BCTC_DISCOVER_URL is configured AND a fetch function is supplied.
   // Runs discover-bctc-urls-browser.py on the VPS as a subprocess.
   const vpsUrls = fetchVpsPlaywright
@@ -420,7 +488,7 @@ export async function discoverHosePdfUrls(
     };
   }
 
-  // Strategy 1: SSC iboard
+  // Strategy 2: SSC iboard
   const sscUrls = await tryFetchSsc(ticker, timeout, fetchSsc);
   if (sscUrls.length > 0) {
     // Best-effort fallback from vietstock (cafef removed in TASK_1916b)
@@ -433,8 +501,8 @@ export async function discoverHosePdfUrls(
     };
   }
 
-  // Strategy 2: vietstock.vn
-  // TASK_1916b: cafef.vn strategy removed. Vietstock promoted to strategy 2.
+  // Strategy 3: vietstock.vn
+  // TASK_1916b: cafef.vn strategy removed. Vietstock promoted to last resort.
   const vietstockUrls = await tryFetchVietstock(ticker, timeout, fetchVietstock);
   if (vietstockUrls.length > 0) {
     return {

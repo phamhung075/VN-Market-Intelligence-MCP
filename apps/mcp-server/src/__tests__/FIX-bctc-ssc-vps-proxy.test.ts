@@ -221,9 +221,11 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
     Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
 
     try {
+      // _fetchHsx returns [] so Strategy 0 does not intercept; VPS proxy SSC mock fires.
       const result = await runBctcQueueEnricherJob({
         db: testDb,
         discoverOptions: {
+          _fetchHsx: async () => [],
           _fetchSsc: mockVpsProxySuccess("VNM"),
           _fetchCafef: mockEmpty,
           _fetchVietstock: mockEmpty,
@@ -265,9 +267,12 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
     Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
 
     try {
+      // _fetchHsx returns [] so Strategy 0 does not intercept; cafef spy verifies
+      // cafef is still never called (TASK_1916b: cafef permanently removed from chain).
       const result = await runBctcQueueEnricherJob({
         db: testDb,
         discoverOptions: {
+          _fetchHsx: async () => [],
           _fetchSsc: mockEmpty,       // proxy returns nothing
           _fetchCafef: cafefSpy,      // deprecated no-op -- cafef never called
           _fetchVietstock: mockEmpty, // vietstock also empty

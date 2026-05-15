@@ -363,6 +363,7 @@ describe("FIX — bctcQueueEnricherJob uses VPS Playwright when BCTC_DISCOVER_UR
       const result = await runBctcQueueEnricherJob({
         db: testDb,
         discoverOptions: {
+          _fetchHsx: async () => [],
           _fetchVpsPlaywright: mockVpsPlaywrightSuccess("SHB"),
           _fetchSsc: mockEmpty,
           _fetchCafef: mockEmpty,
@@ -399,6 +400,7 @@ describe("FIX — bctcQueueEnricherJob uses VPS Playwright when BCTC_DISCOVER_UR
       const result = await runBctcQueueEnricherJob({
         db: testDb,
         discoverOptions: {
+          _fetchHsx: async () => [],
           _fetchVpsPlaywright: mockVpsNetworkFail,
           _fetchSsc: mockSscSuccess("ACB"),
           _fetchCafef: mockEmpty,

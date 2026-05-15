@@ -215,10 +215,12 @@ describe("FIX — enricher job resets MISSING placeholder source_urls to NULL", 
       VALUES (?, ?, ?, ?, ?)
     `).run("BSR", 2025, "Q1", "pending", "MISSING");
 
-    // Run enricher with a mock that will succeed if items are treated as NULL
+    // Run enricher with a mock that will succeed if items are treated as NULL.
+    // _fetchHsx returns [] to ensure Strategy 0 does not intercept so SSC mock fires.
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockSscSuccess("BID"),
         _fetchCafef: mockEmptyJson,
         _fetchVietstock: mockEmptyJson,
@@ -246,10 +248,12 @@ describe("FIX — enricher job resets MISSING placeholder source_urls to NULL", 
       VALUES (?, ?, ?, ?, ?)
     `).run("DGC", 2025, "Q1", "pending", "/test-dgc-bctc.pdf");
 
-    // /test-* is a placeholder — should be re-enriched
+    // /test-* is a placeholder — should be re-enriched.
+    // _fetchHsx returns [] so Strategy 0 does not intercept; SSC mock fires.
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockSscSuccess("DGC"),
         _fetchCafef: mockEmptyJson,
         _fetchVietstock: mockEmptyJson,
@@ -303,9 +307,11 @@ describe("FIX — enricher job propagates SSC_IBOARD_BASE_URL to discovery", () 
       });
     };
 
+    // _fetchHsx returns [] so Strategy 0 does not intercept; VPS proxy SSC mock fires.
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: vpsProxyMock,
         _fetchCafef: mockEmptyJson,
         _fetchVietstock: mockEmptyJson,

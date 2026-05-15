@@ -134,6 +134,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchSuccess(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),
@@ -156,6 +157,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchSuccess(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),
@@ -241,6 +243,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchEmpty(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),
@@ -267,6 +270,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
       db: testDb,
       batchSize: 3,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchSuccess(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),
@@ -291,6 +295,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchSuccess(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),
@@ -326,6 +331,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockFetchEmpty(),
         _fetchCafef: mockFetchEmpty(),
         _fetchVietstock: mockFetchEmpty(),

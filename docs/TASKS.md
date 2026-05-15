@@ -24,8 +24,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | TASK-BCTC-3a [ops-mainserver-fetch] | **FINDING OVERTURNED 2026-05-15** — Prior "permanent Envoy route-block" conclusion was wrong. Root cause of all 404s: (1) missing locale segment `/1/` in URL path, (2) ticker used as string instead of numeric ID. Correct URL: `GET /m/api/v1/1/mediafiles/5/{numericId}` returns HTTP 200 with BCTC PDFs directly from France. No VPS needed. Two-call recipe: (a) resolve ticker→numericId via `/l/api/v1/1/securities/stock?code={TICKER}`, (b) fetch `/m/api/v1/1/mediafiles/5/{numericId}?year={YYYY}`. Full findings + working Python recipe in `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md § Main-Server Recon`. VPS curl command that "confirmed" the block was probing the wrong URL; `/m/` service was never tested. **TASK-BCTC-3b and TASK-BCTC-3c REOPENED.** | CRITICAL | OPS | ops-mainserver-fetch | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | — |
-| 1910a-ism-tool [dev-mcp-server] | **UNBLOCKED 2026-05-15** — `FRED_API_KEY` confirmed present in `.env` (non-empty) + passed via `env_file: .env` in `docker-compose.yml` to `mcp-server`. USER-ACTION blocker resolved. New FRED ISM Manufacturing PMI sub-component tool: `fredIsmSubcomponents.ts` fetcher + `ismRegimeSignal.ts` pure domain + `getIsmSubcomponentsTool.ts` MCP handler. Wires into existing `macroIndicatorRefreshJob`. Series IDs provisional (NAPMNO/NAPMEMP/NAPMPI/NAPMBI — confirm via FRED API at build time per R1). See handoff: `docs/handoffs/TASK_1910a-ism-tool.md`. | HIGH | FEATURE | dev-mcp-server | docs/handoffs/TASK_1910a-ism-tool.md | — |
-| TASK-BCTC-3b [dev-mainserver-crawls] | **REOPENED 2026-05-15** — hsx.vn BCTC via `/m/api/v1/1/mediafiles/5/{numericId}` is accessible from ANY IP including France/main server. No VPS proxy needed. Two-call pure-HTTP recipe confirmed. Implement in `bctcDiscovery.ts` (Strategy 0 path) or as new `hsxBctcFetcher.ts`. See `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md § Main-Server Recon` for working code. | CRITICAL | FEATURE | dev-mainserver-crawls | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | — |
 | TASK-BCTC-3c [dev-mcp-server] | **REOPENED 2026-05-15** — Unblocked by TASK-BCTC-3b reopen. `bctcDiscovery.ts` needs new strategy using hsx.vn mediafiles endpoint. Can run on main server (no VPS proxy). | CRITICAL | FEATURE | dev-mcp-server | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | TASK-BCTC-3b |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
@@ -35,7 +33,9 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(WIP = 0/2; cycle complete 2026-05-15)_ | — | — | — | — | — | — |
+| _(BCTC-3b moved to Review)_ | — | — | — | — | — | — |
+| 1910a-ism-tool [dev-mcp-server] | **UNBLOCKED + DISPATCHED 2026-05-15** — `FRED_API_KEY` confirmed present in `.env` (non-empty) + passed via `env_file: .env` in `docker-compose.yml` to `mcp-server`. USER-ACTION blocker resolved. New FRED ISM Manufacturing PMI sub-component tool: `fredIsmSubcomponents.ts` fetcher + `ismRegimeSignal.ts` pure domain + `getIsmSubcomponentsTool.ts` MCP handler. Wires into existing `macroIndicatorRefreshJob`. Series IDs provisional (NAPMNO/NAPMEMP/NAPMPI/NAPMBI — confirm via FRED API at build time per R1). See handoff: `docs/handoffs/TASK_1910a-ism-tool.md`. | HIGH | FEATURE | dev-mcp-server | docs/handoffs/TASK_1910a-ism-tool.md | — |
+| _(WIP = 2/2; AT CAPACITY; cycle 2026-05-15)_ | — | — | — | — | — | — |
 
 ---
 
@@ -43,6 +43,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| TASK-BCTC-3b [dev-mcp-server] | **IMPL COMPLETE 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (hsx as Strategy 0, renumbered VPS→1, SSC→2, vietstock→3). `bctcQueueEnricherJob.ts` wired. 8 unit tests GREEN. tsc 0 errors. 9318 pass / 32 fail (all 32 pre-existing). Existing BCTC enricher tests updated with `_fetchHsx: async () => []` to prevent live hsx.vn calls. See `docs/handoffs/TASK_BCTC-3b.md`. | CRITICAL | FEATURE | qa | docs/handoffs/TASK_BCTC-3b.md | — |
 
 ---
 ## Done

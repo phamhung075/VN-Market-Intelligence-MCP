@@ -160,7 +160,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     await runBctcQueueEnricherJob({
       db,
       batchSize: 10,
-      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+      discoverOptions: { _fetchHsx: async () => [], _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
     });
 
     // Items must NOT be set to 'skipped' — they must remain 'pending'
@@ -175,7 +175,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     await runBctcQueueEnricherJob({
       db,
       batchSize: 10,
-      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+      discoverOptions: { _fetchHsx: async () => [], _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
     });
 
     const row = db
@@ -193,6 +193,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
       db,
       batchSize: 10,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchSsc: mockSscPdf("https://iboard-query.ssc.vn/static/test.pdf"),
         _fetchCafef: mockFail,
         _fetchVietstock: mockFail,
@@ -223,7 +224,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     await runBctcQueueEnricherJob({
       db,
       batchSize: 10,
-      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+      discoverOptions: { _fetchHsx: async () => [], _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
     });
 
     expect(getStatus(db, doneId)).toBe("done");

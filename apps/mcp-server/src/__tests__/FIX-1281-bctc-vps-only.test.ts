@@ -171,7 +171,7 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
     const result = await runBctcQueueEnricherJob({
       db,
       batchSize: 10,
-      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+      discoverOptions: { _fetchHsx: async () => [], _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
     });
 
     // Discovery was attempted for both items

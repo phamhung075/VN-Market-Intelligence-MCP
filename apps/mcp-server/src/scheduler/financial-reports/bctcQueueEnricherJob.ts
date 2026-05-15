@@ -33,6 +33,7 @@ import {
   type DiscoverOptions,
 } from "../../domain/services/bctcDiscovery.js";
 import { bctcHttpFetch } from "../../infrastructure/fetchers/bctcHttpFetcher.js";
+import { fetchHsxBctcUrls } from "../../infrastructure/fetchers/hsxBctcFetcher.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -148,12 +149,21 @@ export async function runBctcQueueEnricherJob(opts: {
     result.itemsProcessed++;
 
     try {
+      // Build discover options. Production defaults use fetchHsxBctcUrls for Strategy 0.
+      // When opts.discoverOptions is supplied by a caller (e.g. integration tests),
+      // _fetchHsx is only included if the caller explicitly sets it — preserving the
+      // pre-BCTC-3b behaviour for all existing tests. Only pure production runs
+      // (no discoverOptions override) wire the live hsxBctcFetcher.
       const discovery = await discoverHosePdfUrls(item.action_code, {
         timeout: DISCOVERY_TIMEOUT_MS,
+        _fetchHsx:           fetchHsxBctcUrls,
         _fetchVpsPlaywright: bctcHttpFetch,
         _fetchSsc:           bctcHttpFetch,
         _fetchCafef:         bctcHttpFetch,
         _fetchVietstock:     bctcHttpFetch,
+        // opts.discoverOptions spreads LAST and overrides any key above when present.
+        // Tests that include _fetchHsx: undefined disable Strategy 0.
+        // Tests that omit _fetchHsx entirely get the production default (live hsx.vn fetch).
         ...opts.discoverOptions,
       });
 

@@ -249,10 +249,12 @@ describe("Task 1782 — enricher marks rows url_not_found after MAX_ENRICH_ATTEM
        VALUES ('VCB', 2026, 'Q1', 'pending', NULL, 5)`,
     ).run();
 
-    // Discovery always returns empty (no URLs found)
+    // Discovery always returns empty (no URLs found). _fetchHsx returns [] so
+    // Strategy 0 does not intercept and we test the attempts gate properly.
     await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchCafef: mockFetchEmpty,
         _fetchVietstock: mockFetchEmpty,
         _fetchSsc: mockFetchEmpty,
@@ -281,6 +283,7 @@ describe("Task 1782 — enricher marks rows url_not_found after MAX_ENRICH_ATTEM
     await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchCafef: mockFetchEmpty,
         _fetchVietstock: mockFetchEmpty,
         _fetchSsc: mockFetchEmpty,
@@ -310,6 +313,7 @@ describe("Task 1782 — enricher marks rows url_not_found after MAX_ENRICH_ATTEM
     await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchCafef: mockFetchEmpty,
         _fetchVietstock: mockFetchEmpty,
         _fetchSsc: mockFetchEmpty,
@@ -338,6 +342,7 @@ describe("Task 1782 — enricher marks rows url_not_found after MAX_ENRICH_ATTEM
     const result = await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
+        _fetchHsx: async () => [],
         _fetchCafef: mockFetchEmpty,
         _fetchVietstock: mockFetchEmpty,
         _fetchSsc: mockFetchEmpty,
