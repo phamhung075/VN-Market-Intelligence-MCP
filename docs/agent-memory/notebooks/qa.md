@@ -1,6 +1,48 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c133 — 1920e-cascade-backtest-saverun CHANGES_REQUESTED
+**Last updated:** 2026-05-16 | **Session:** c134 — 1920f-signal-quality-audit CHANGES_REQUESTED
+
+## Session 2026-05-16 c134 — 1920f-signal-quality-audit
+
+### TASK REPORT — 1920f (compact)
+
+```
+date: 2026-05-16
+outcome: CHANGES_REQUESTED
+type: FIX (new infra store + interface wire)
+round: 1
+commit: bdd63efb
+```
+
+#### Pipeline
+
+- Targeted tests (1920f — 15 tests): 15 pass / 0 fail
+- Full suite: 9421 pass / 36 fail (36 pre-existing baseline, 0 regressions)
+- tsc: 2 errors (BLOCKING)
+- DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: price_confirmation → signal_type='price' row inserted
+- AC-2 PASS: urgent_news → signal_type='news' row inserted
+- AC-3 PASS: 7 non-qualifying type guard checks all false
+- AC-4 PASS: INSERT OR IGNORE dedup → COUNT=1, confidence unchanged
+- AC-5 PASS: Dropped table → no throw (try/catch in store)
+- AC-6 PASS: monthlyJob resolves with seeded rows, sendFn called once
+
+#### Blocking Issues
+
+1. `agentSignalTools.ts:331` — `auditContext: SignalAuditContext` object literal assigns `fallback_tier: number | undefined`, `vps_breaker_state: string | undefined`, `coverage_gap: string | undefined`, `price: number | undefined`. `exactOptionalPropertyTypes: true` requires conditional spread to omit key when undefined. TS2375.
+
+2. `agentSignalTools.ts:348` — `validationResult.fallback_source: string | undefined` passed as `ValidationResult` where `fallback_source?: string` requires key absence. TS2379. Same conditional spread fix.
+
+#### Notes
+
+- Both errors are new (introduced by 1920f — confirmed pre-commit file had no `SignalAuditContext`/`prepareSignalAuditRecord` references).
+- `signalQualityAuditStore.ts` itself is clean: parameterized SQL, try/catch, no process.env.
+- Fix is interface-layer only (agentSignalTools.ts lines 317-346). No domain/infra changes needed.
+
+---
 
 ## Session 2026-05-16 c133 — 1920e-cascade-backtest-saverun
 

@@ -182,3 +182,43 @@ None. No PO questions. No architect brief required.
 | AC-4 | Integration | Duplicate signal_id: COUNT=1 |
 | AC-5 | Unit | DB mock throws → MCP response has isError=false |
 | AC-6 | Integration | monthlySignalQualityAuditJob runs clean with seeded rows |
+
+---
+
+## [QA] Review Record — Round 1
+
+**Date:** 2026-05-16
+**Commit reviewed:** bdd63efb
+**Verdict:** CHANGES_REQUESTED
+
+### Pipeline
+
+- Targeted tests (1920f — 15 tests): 15 pass / 0 fail
+- Full suite: 9421 pass / 36 fail (36 pre-existing baseline, 0 regressions)
+- tsc: **2 errors (BLOCKING)**
+- DDD: PASS
+- Security: PASS (no `process.env`, no hardcoded secrets, parameterized SQL)
+
+### AC Verification
+
+- AC-1 PASS: `insertSignalQualityAudit` inserts row with `signal_type='price'` — verified directly.
+- AC-2 PASS: Row inserted with `signal_type='news'` — verified directly.
+- AC-3 PASS: Guard logic verified — non-qualifying types return `shouldWrite=false`.
+- AC-4 PASS: Duplicate `signal_id` → COUNT=1, confidence unchanged (80 not 999).
+- AC-5 PASS: Dropped table → `insertSignalQualityAudit` does not throw (try/catch confirmed).
+- AC-6 PASS: `runMonthlySignalQualityJob` resolves with seeded rows, `sendFn` called once.
+
+### Blocking Issues
+
+1. `agentSignalTools.ts:331` — `auditContext: SignalAuditContext` object literal assigns `fallback_tier: number | undefined`, `vps_breaker_state: string | undefined`, `coverage_gap: string | undefined`, `price: number | undefined` to interface fields typed as `fallback_tier?: number`, etc. With `exactOptionalPropertyTypes: true`, explicit `undefined` is not assignable to an optional field. Fix: use spread pattern to conditionally include these keys only when the value is not `undefined`.
+   - TS error: `TS2375 — Type ... is not assignable to type 'SignalAuditContext' with 'exactOptionalPropertyTypes: true'`
+
+2. `agentSignalTools.ts:348` — `validationResult` literal assigns `fallback_source: string | undefined` but `ValidationResult.fallback_source?: string` requires the key be absent (not present with `undefined`) when there is no fallback source. Fix: conditionally include `fallback_source` only when it is a string.
+   - TS error: `TS2379 — Argument of type ... is not assignable to parameter of type 'ValidationResult' with 'exactOptionalPropertyTypes: true'`
+
+### Non-Blocking Notes
+
+- AC-3 tests the guard logic by asserting the `Set.has()` check — this is a unit-level proxy. The guard is correctly wired in the handler at line 308-311.
+- `signalQualityAuditStore.ts` is clean: 100% coverage, parameterized SQL, correct try/catch.
+- DDD layer: domain called from interface (`prepareSignalAuditRecord` in handler), infra store in `infrastructure/db/` — both correct.
+- `ticker` field in `prepareSignalAuditRecord` always returns `undefined` (line 200 in `signalValidator.ts`) — not a blocker for this task, pre-existing limitation.
