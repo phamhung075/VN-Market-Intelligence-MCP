@@ -142,3 +142,22 @@ None (no PO questions). All design decisions are encoded in ARCH-1920. The schem
 | AC-6 | Unit | Fetcher throws → `sendWorkFn` spy called; no rethrow |
 | AC-7 | Integration | After first quarter run → `SELECT COUNT(*) FROM broker_sanctions` >= 5 |
 | AC-8 | Unit | `recordJobRunSpy` receives status + rows_written per run |
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/schema-alerts.ts` — Added `UNIQUE(broker_name, sanction_start)` to `broker_sanctions` DDL (AC-0). Added idempotent legacy-DB migration block (recreate-and-rename pattern for existing DBs without constraint).
+  - `apps/mcp-server/src/infrastructure/db/brokerSanctionStore.ts` — Changed plain `INSERT` to `INSERT OR IGNORE`. Fixed `lastInsertRowid` sticky-on-ignore behavior: returns `0` when `changes=0` so callers can detect ignored duplicates via `rowId > 0`.
+  - `apps/mcp-server/src/scheduler/cronConfig.ts` — Appended `brokerSanctionsSweep: Bun.env.CRON_BROKER_SANCTIONS ?? '0 8 25-31 * 5'` (FR-5).
+  - `apps/mcp-server/src/scheduler/startScheduler.ts` — Import `runBrokerSanctionsJob` + `cron.schedule(CRONS.brokerSanctionsSweep, ...)` via `jobRunRepo.wrapRun` (FR-6).
+- **Files created:**
+  - `apps/mcp-server/src/scheduler/news-analysis/brokerSanctionsJob.ts` — Quarter-guard (months 3/6/9/12), DI seam (getCurrentMonthFn/fetchFn/sendWorkFn), fail-loud WORK, INSERT OR IGNORE per sanction, null-sanctionStart rejection, default stub fetcher (FR-2..FR-4).
+  - `apps/mcp-server/src/__tests__/1920d-broker-sanctions-job.test.ts` — 8 tests covering TC-1..TC-8 (all ACs).
+- **Tests written:** `apps/mcp-server/src/__tests__/1920d-broker-sanctions-job.test.ts` — 8 tests, GREEN
+- **tsc status:** clean (0 errors)
+- **Full suite (task-scoped):** 8 pass / 0 fail
+- **Key debug note:** `INSERT OR IGNORE` in bun:sqlite returns sticky `lastInsertRowid` (previous rowid) when a row is ignored — `changes` must be checked instead. Fixed in `insertBrokerSanction()`.
+- **Docs updated:** `docs/TASKS.md` — 1920d → Done | `docs/data/project-stats.json` — cronJobCount 66→67 | `docs/handoffs/TASK_1920d.md` — this record
+- **Graphify:** skipped (no docs/**/*.md logic files impacted)

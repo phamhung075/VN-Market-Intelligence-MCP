@@ -97,6 +97,10 @@ export function initAlertsTables(db: Database): void {
   `);
 
   // ── Broker Sanctions (Task 915) ────────────────────────────────────────────
+  // Task 1920d: UNIQUE(broker_name, sanction_start) added to support INSERT OR IGNORE
+  // deduplication in the quarterly sweep job (brokerSanctionsJob.ts). The constraint
+  // is idempotent on fresh DBs (part of CREATE TABLE). Existing production DBs without
+  // the constraint are handled by the migration block below.
   db.exec(`
     CREATE TABLE IF NOT EXISTS broker_sanctions (
       id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,10 +109,57 @@ export function initAlertsTables(db: Database): void {
       sanction_end   TEXT,
       severity       TEXT NOT NULL CHECK (severity IN ('warning','suspension')),
       source         TEXT,
-      created_at     TEXT NOT NULL
+      created_at     TEXT NOT NULL,
+      UNIQUE(broker_name, sanction_start)
     );
 
     CREATE INDEX IF NOT EXISTS idx_broker_sanctions_name ON broker_sanctions(broker_name);
     CREATE INDEX IF NOT EXISTS idx_broker_sanctions_start ON broker_sanctions(sanction_start);
   `);
+
+  // Task 1920d — idempotent migration for existing production DBs created before the
+  // UNIQUE constraint was added. SQLite does not support ALTER TABLE ADD CONSTRAINT,
+  // so we use the recreate-and-rename pattern only when the constraint is absent.
+  // Detection: if sqlite_master has no unique index for (broker_name, sanction_start),
+  // recreate the table with the constraint and copy existing data.
+  {
+    const hasUnique = db
+      .prepare(
+        `SELECT COUNT(*) as n FROM sqlite_master
+         WHERE type='table'
+           AND name='broker_sanctions'
+           AND sql LIKE '%UNIQUE(broker_name, sanction_start)%'`,
+      )
+      .get() as { n: number };
+
+    if (hasUnique.n === 0) {
+      // Only runs on legacy DBs where the table exists without the constraint.
+      // The inner CREATE TABLE IF NOT EXISTS is a no-op — the real work is the
+      // ALTER-by-rename sequence below when the constraint is absent.
+      try {
+        db.exec(`
+          CREATE TABLE IF NOT EXISTS broker_sanctions_new (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            broker_name    TEXT NOT NULL,
+            sanction_start TEXT NOT NULL,
+            sanction_end   TEXT,
+            severity       TEXT NOT NULL CHECK (severity IN ('warning','suspension')),
+            source         TEXT,
+            created_at     TEXT NOT NULL,
+            UNIQUE(broker_name, sanction_start)
+          );
+          INSERT OR IGNORE INTO broker_sanctions_new
+            (id, broker_name, sanction_start, sanction_end, severity, source, created_at)
+          SELECT id, broker_name, sanction_start, sanction_end, severity, source, created_at
+          FROM broker_sanctions;
+          DROP TABLE broker_sanctions;
+          ALTER TABLE broker_sanctions_new RENAME TO broker_sanctions;
+          CREATE INDEX IF NOT EXISTS idx_broker_sanctions_name ON broker_sanctions(broker_name);
+          CREATE INDEX IF NOT EXISTS idx_broker_sanctions_start ON broker_sanctions(sanction_start);
+        `);
+      } catch {
+        // Migration already ran or table genuinely missing — safe to ignore.
+      }
+    }
+  }
 }

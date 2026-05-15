@@ -56,6 +56,7 @@ import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
+import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
@@ -727,6 +728,18 @@ export function startScheduler() {
   cron.schedule(CRONS.commodityTrackerRefresh, async () => {
     await jobRunRepo.wrapRun('commodityTrackerRefreshJob', async () => {
       const result = await runCommodityTrackerRefreshJob()
+      return { rowsWritten: result.rowsWritten }
+    })
+  }, { timezone: 'UTC' })
+
+  // Last Friday of month 08:00 UTC — Broker sanctions quarterly sweep — task 1920d
+  // Cron fires monthly (25th-31st Fri) but the job body applies a quarter-guard:
+  // only runs in March / June / September / December. Non-quarter Fridays record
+  // status='skipped' in cron_job_runs. Zero-result or fetch error → WORK alert.
+  // Requires UNIQUE(broker_name, sanction_start) — migrated in schema-alerts.ts.
+  cron.schedule(CRONS.brokerSanctionsSweep, async () => {
+    await jobRunRepo.wrapRun('brokerSanctionsSweep', async () => {
+      const result = await runBrokerSanctionsJob()
       return { rowsWritten: result.rowsWritten }
     })
   }, { timezone: 'UTC' })

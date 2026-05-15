@@ -43,7 +43,14 @@ export interface InsertBrokerSanctionInput {
 }
 
 /**
- * Insert a new sanction row. Returns the generated row id.
+ * Insert a new sanction row using INSERT OR IGNORE.
+ *
+ * Task 1920d: Changed from plain INSERT to INSERT OR IGNORE to support the
+ * UNIQUE(broker_name, sanction_start) constraint added for the quarterly sweep
+ * job. A duplicate (same broker + same sanction_start) is silently skipped —
+ * this is correct dedup behaviour for idempotent quarterly re-runs.
+ *
+ * Returns the generated row id, or 0 when the row was ignored (duplicate).
  */
 export function insertBrokerSanction(
   db: Database,
@@ -52,7 +59,7 @@ export function insertBrokerSanction(
   const createdAt = new Date().toISOString();
   const result = db
     .prepare(
-      `INSERT INTO broker_sanctions
+      `INSERT OR IGNORE INTO broker_sanctions
         (broker_name, sanction_start, sanction_end, severity, source, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
     )
@@ -64,7 +71,10 @@ export function insertBrokerSanction(
       input.source ?? null,
       createdAt,
     );
-  return Number(result.lastInsertRowid);
+  // Return the new rowid when the row was inserted, or 0 when OR IGNORE skipped
+  // a duplicate. SQLite's lastInsertRowid is sticky (returns previous rowid on
+  // ignored inserts), so we use `changes` to detect the no-op case.
+  return result.changes > 0 ? Number(result.lastInsertRowid) : 0;
 }
 
 interface BrokerSanctionRow {
