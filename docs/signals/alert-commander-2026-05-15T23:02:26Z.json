@@ -1,0 +1,8 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0 failed: vn-market MCP gateway not responding after 2 attempts (get_cycle_bootstrap)",
+  "priority": "high",
+  "createdAt": "2026-05-15T23:02:26Z"
+}

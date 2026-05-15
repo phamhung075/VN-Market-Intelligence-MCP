@@ -1,6 +1,44 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c134 — 1920f-signal-quality-audit CHANGES_REQUESTED
+**Last updated:** 2026-05-16 | **Session:** c135 — 1920g-prediction-claims APPROVED
+
+## Session 2026-05-16 c135 — 1920g-prediction-claims-auto-populate
+
+### TASK REPORT — 1920g (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FIX (scheduler wire + injectable claim insertion)
+commits: 81efd36a + fe54ed4b
+```
+
+#### Pipeline
+
+- Targeted tests (1920g — 15 tests): 15 pass / 0 fail
+- Full suite: 9738 pass / 39 fail (39 pre-existing, 0 regressions)
+- tsc: 0 errors
+- DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: TC-1 conviction=0.8 → insertClaimFn called once
+- AC-2 PASS: BUY→bullish, SELL→bearish, MONITOR/HOLD→neutral (TC-1, TC-6)
+- AC-3 PASS: resolution_date = today+7 UTC (TC-7)
+- AC-4 PASS: conviction=0.5 → insertClaimFn not called (TC-2)
+- AC-5 PASS: INSERT OR IGNORE → 1 row (TC-4)
+- AC-6 PASS: insertClaimFn throws → resolves normally (TC-5)
+- AC-7 PASS: params shape verified (TC-1)
+- Boundary TC-3 conviction=0.7 → insertClaimFn called once: PASS
+
+#### Notes
+
+- Pre-existing failures stable: 39 (was 39 in c133/c134, 0 regressions)
+- DDD pattern: insertClaimFn injected via ChainSynthesisDeps — no static top-level import from predictionClaimStore; production fallback uses dynamic import inside try/catch block
+- docs/TASKS.md: 1920g moved from Backlog to Done
+- report: reports/TASK_REPORT_1920g.md
+
+---
 
 ## Session 2026-05-16 c134 — 1920f-signal-quality-audit
 

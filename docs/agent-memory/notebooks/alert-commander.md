@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 22:02 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 23:02 UTC | **Sprint:** c116
 
 ## This session
 
@@ -339,3 +339,10 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: []
 - Regime: UNKNOWN (bootstrap unavailable)
 - BLOCKED at Step 0: vn-market MCP gateway unreachable (DNS: host.docker.internal lookup failed). Retry exhausted. BUG telegram also failed (same gateway). Signal dropped to docs/signals/alert-commander-2026-05-15T22:01:38Z.json.
+
+### Alert Cycle (23:02–23:02 UTC)
+- Signals: N/A — cycle aborted at Step 0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: UNKNOWN (bootstrap unavailable)
+- **BLOCKED**: vn-market MCP gateway not responding after 2 attempts — signal dropped to po

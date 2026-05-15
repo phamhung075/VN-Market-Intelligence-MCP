@@ -175,3 +175,32 @@ None. No PO questions. No architect brief required.
 | AC-5 | Integration | Duplicate insert = 1 row |
 | AC-6 | Unit | Mock insertClaimFn throws → errors counter unchanged |
 | AC-7 | Unit | Mock insertClaimFn received params match expected shape |
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-16
+**Reviewer:** qa
+**Verdict:** APPROVED
+
+### Pipeline Results
+- Targeted tests (`bun test 1920g-*`): 15 pass / 0 fail
+- Full suite (`bun test`): 9738 pass / 39 fail — 39 failures all pre-existing, none in 1920g files
+- TypeScript (`bun tsc --noEmit`): 0 errors
+- DDD scan: PASS — `intelligenceCycleJob` is interface/scheduler layer; `predictionClaimStore` accessed via injected `insertClaimFn` or dynamic import in production fallback; no domain→infra violation
+- Security scan: PASS — no `process.env`, no hardcoded secrets, no direct top-level infra import added
+
+### AC Verification
+- AC-1: TC-1 PASS — `insertClaimFn` called once for conviction=0.8 BUY chain
+- AC-2: TC-1/TC-6 PASS — BUY→bullish, SELL→bearish; `mapChainAction` unit tests cover all 4 inputs
+- AC-3: TC-7 PASS — `resolution_date` = today + 7 days UTC format
+- AC-4: TC-2 PASS — conviction=0.5 (below 0.7) → `insertClaimFn` not called
+- AC-5: TC-4 PASS — `insertPredictionClaim` returns 0 on duplicate (INSERT OR IGNORE)
+- AC-6: TC-5 PASS — `insertClaimFn` throws → `runChainSynthesis` resolves normally (no propagation)
+- AC-7: TC-1 PASS — captured params verified: stock, agent_id, direction, confidence, resolution_date, null target/creation_price, claim_text ≤255
+
+### Notes
+- Boundary case conviction=0.7 (TC-3): PASS — synthesis yields conviction=0.7 when base confidence=0.7 and no bonus/penalty flags; `insertClaimFn` called once
+- Pre-existing 39 failing tests: Tasks 178, 230, 239, 262, signal-T5, 1031, 1100, 1190, 1343a, 1349a, 1352a, 1331a, 1336, 1549, 183, 145, stale-tickers, 1343e — none related to 1920g
+- Commits: `81efd36a` (implementation + 15 tests), `fe54ed4b` (developer notebook)

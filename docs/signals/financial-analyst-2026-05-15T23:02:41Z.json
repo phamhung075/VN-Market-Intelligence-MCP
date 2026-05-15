@@ -1,0 +1,8 @@
+{
+  "type": "bug-escalation",
+  "agent": "financial-analyst",
+  "timestamp": "2026-05-15T23:02:41Z",
+  "error": "MCP gateway vn-market not responding — both log_agent_work and get_cycle_bootstrap failed after retry",
+  "attempts": 2,
+  "action": "cycle aborted"
+}
