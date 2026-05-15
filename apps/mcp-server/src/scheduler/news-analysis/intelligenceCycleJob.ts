@@ -129,6 +129,13 @@ export interface CycleDeps {
    * In production, defaults to the real `sendTelegramMarket` import.
    */
   sendMarketFn?: (text: string, opts?: Record<string, unknown>) => Promise<boolean>;
+  /**
+   * Task 1920g — Injectable prediction claim insert function for test isolation.
+   * When not injected, defaults to `insertPredictionClaim(db, params)` using
+   * the cycle's DB connection.
+   * Signature: (params: PredictionClaimInput) => number
+   */
+  insertClaimFn?: (params: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput) => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1043,8 +1050,11 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   // When 2+ agents have posted findings for the same stock, the chain synthesizer
   // produces a SynthesizedChain. High-conviction chains (>= 0.7) are posted back
   // as verified_chain signals for the Alert Commander.
+  // Task 1920g: insertClaimFn from CycleDeps is forwarded for test isolation.
   try {
-    await withTimeout(runChainSynthesis(), "step G chainSynthesis");
+    const chainDeps: ChainSynthesisDeps = {};
+    if (deps.insertClaimFn) chainDeps.insertClaimFn = deps.insertClaimFn;
+    await withTimeout(runChainSynthesis(chainDeps), "step G chainSynthesis");
   } catch (err) {
     // Non-fatal — chain synthesis failure should not block the cycle
     logger.warn("[intelligence-cycle] step G failed (non-fatal) — chainSynthesis", {
@@ -1145,8 +1155,50 @@ export async function runIntelligenceCycle(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Step G: Chain Synthesis helpers (Task 1920g)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Task 1920g — FR-3: Map SynthesizedChain.action to ClaimDirection.
+ *
+ * Pure function — no I/O, safe to call in tests without mocking.
+ *
+ * @param action - Chain action from synthesizeChain() output
+ * @returns "bullish" | "bearish" | "neutral"
+ */
+export function mapChainAction(action: string): "bullish" | "bearish" | "neutral" {
+  if (action === "BUY") return "bullish";
+  if (action === "SELL") return "bearish";
+  return "neutral"; // MONITOR, HOLD, WATCH, or any unknown value
+}
+
+/**
+ * Task 1920g — FR-4: Return ISO date string n days from now (UTC).
+ *
+ * Pure function — no I/O. Result format: YYYY-MM-DD.
+ *
+ * @param n - Number of days to add (e.g. 7)
+ * @returns ISO 8601 date string, e.g. "2026-05-23"
+ */
+export function isoDatePlusDays(n: number): string {
+  return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Step G: Chain Synthesis (enrichment chain extension)
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Injectable deps for runChainSynthesis (Task 1920g test isolation).
+ *
+ * @property insertClaimFn - Override for the prediction claim insert (test isolation)
+ * @property _db           - Override DB connection (test isolation — uses in-memory DB)
+ */
+export interface ChainSynthesisDeps {
+  insertClaimFn?: (params: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput) => number;
+  /** @internal Test only: inject an in-memory DB to avoid real schema.getDb() */
+  _db?: import("bun:sqlite").Database;
+}
 
 /**
  * Server-side chain synthesis.
@@ -1156,9 +1208,15 @@ export async function runIntelligenceCycle(
  * High-conviction chains (>= 0.7) are posted as verified_chain signals for
  * the Alert Commander.
  *
+ * Task 1920g: After postSignal, for conviction >= 0.7 chains, calls
+ * insertClaimFn (or the real insertPredictionClaim) to auto-populate
+ * prediction_claims. Claim write failure is non-fatal (try/catch + console.warn).
+ *
  * This runs with zero Claude API tokens — purely rule-based domain logic.
+ *
+ * @param deps - Optional injectable sub-functions for test isolation
  */
-export async function runChainSynthesis(): Promise<void> {
+export async function runChainSynthesis(deps: ChainSynthesisDeps = {}): Promise<void> {
   const { getDb } = await import("../../infrastructure/db/schema.js");
   const {
     getChainFindings,
@@ -1167,7 +1225,7 @@ export async function runChainSynthesis(): Promise<void> {
   } = await import("../../infrastructure/db/agentSignalStore.js");
   const { synthesizeChain } = await import("../../domain/services/chainSynthesizer.js");
 
-  const db = getDb();
+  const db = deps._db ?? getDb();
   const cycleId = computeCycleId();
 
   const findings = getChainFindings(db, cycleId);
@@ -1225,6 +1283,43 @@ export async function runChainSynthesis(): Promise<void> {
         chainLength: chain.chainLength,
         agents: chain.agents,
       });
+
+      // Task 1920g — FR-2: Auto-populate prediction_claims for high-conviction chains.
+      // Claim write failure is non-fatal (try/catch + console.warn). Must not throw
+      // or increment cycle errors counter (AC-6).
+      try {
+        const claimParams: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput = {
+          stock,
+          agent_id: "chain-synthesizer",
+          claim_text: chain.narrative.slice(0, 255),
+          direction: mapChainAction(chain.action),
+          target_price: null,
+          creation_price: null,
+          resolution_date: isoDatePlusDays(7),
+          confidence: chain.conviction,
+        };
+
+        if (deps.insertClaimFn) {
+          deps.insertClaimFn(claimParams);
+        } else {
+          const { insertPredictionClaim } = await import(
+            "../../infrastructure/db/predictionClaimStore.js"
+          );
+          insertPredictionClaim(db, claimParams);
+        }
+
+        logger.debug("[chainSynthesis] prediction_claim inserted", {
+          stock,
+          conviction: chain.conviction,
+          direction: claimParams.direction,
+          resolution_date: claimParams.resolution_date,
+        });
+      } catch (claimErr) {
+        console.warn(
+          `[chainSynthesis] prediction_claim insert failed for ${stock} (non-fatal):`,
+          claimErr instanceof Error ? claimErr.message : String(claimErr),
+        );
+      }
     }
   }
 
