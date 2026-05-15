@@ -114,6 +114,38 @@ Per REQ_1910.md §3.2 + ARCH_REVIEW_1910.md §1910b auto-cure gate:
 
 ---
 
+## [Developer] Implementation Notes
+
+**Date:** 2026-05-15
+**Agent:** dev-mcp-server
+**Status:** COMPLETE — zero changes required
+
+### Verification findings
+
+All 5 acceptance criteria files were already in the correct state before any edits:
+
+| File | Status | Evidence |
+|------|--------|---------|
+| `agentBootstrap.ts` — `news_scout` array | ALREADY PRESENT | `"get_fed_liquidity_spread"` at line 45, `"get_ism_subcomponents"` at line 46 |
+| `agentBootstrap.ts` — `financial_analyst` array | ALREADY PRESENT | `"get_fed_liquidity_spread"` at line 78, `"get_ism_subcomponents"` at line 79 |
+| `agentBootstrap.ts` — `unified_coordinator` array | ALREADY PRESENT | `"get_fed_liquidity_spread"` at line 273, `"get_ism_subcomponents"` at line 274 |
+| `.claude/tools/package/financial-analyst.md` | ALREADY PRESENT | Row in "Macro Intelligence" section: `get_fed_liquidity_spread \| Compute EFFR-IORB spread (carry cost proxy) \| —` |
+| `.claude/tools/package/news-scout.md` | ALREADY PRESENT | Row in "US Monetary Chain" section (dedicated section created) |
+| `.claude/tools/package/unified-agent.md` | ALREADY PRESENT | Row in "Macro Intelligence (COC)" section |
+| `docs/SKILL_MANIFEST.md` | ALREADY PRESENT | All 3 agent JSON arrays contain `"get_fed_liquidity_spread"` + table row in "Recently registered tools" with `financial-analyst, news-scout, unified-coordinator` |
+
+### Conclusion
+
+The task was completed by `agent-md-editor` at c96 2026-05-14 (see Done entry `1910b-effr-package-reg-SHIPPED-c96` in `docs/TASKS.md`). The Todo entry for `1910b-effr-package-reg` was a stale backlog row that was not cleaned up at that time.
+
+### Verification results
+
+- `bun tsc --noEmit`: 0 errors
+- `bun test --cwd apps/mcp-server`: 9430 tests pass across 848 files (exit code 0)
+- No code changes made; docs/TASKS.md updated (Todo row removed, Review row added)
+
+---
+
 ## Sequencing note
 
 1910b has NO functional code dependency on 1910a. However, both tasks modify the same agentBootstrap.ts + SKILL_MANIFEST.md files. PM sequenced: execute 1910a first → merge + deploy → then 1910b starts. This avoids merge conflict on shared files.

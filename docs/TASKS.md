@@ -24,7 +24,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | TASK-BCTC-3a [ops-mainserver-fetch] | **FINDING OVERTURNED 2026-05-15** — Prior "permanent Envoy route-block" conclusion was wrong. Root cause of all 404s: (1) missing locale segment `/1/` in URL path, (2) ticker used as string instead of numeric ID. Correct URL: `GET /m/api/v1/1/mediafiles/5/{numericId}` returns HTTP 200 with BCTC PDFs directly from France. No VPS needed. Two-call recipe: (a) resolve ticker→numericId via `/l/api/v1/1/securities/stock?code={TICKER}`, (b) fetch `/m/api/v1/1/mediafiles/5/{numericId}?year={YYYY}`. Full findings + working Python recipe in `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md § Main-Server Recon`. VPS curl command that "confirmed" the block was probing the wrong URL; `/m/` service was never tested. **TASK-BCTC-3b and TASK-BCTC-3c REOPENED.** | CRITICAL | OPS | ops-mainserver-fetch | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | — |
-| 1910b-effr-package-reg | **READY 2026-05-15** — Unblocked by 1910a completion (QA commit `ff966d5c`). Zero-build: add `get_fed_liquidity_spread` to financial_analyst (L77), news_scout (L45), unified_coordinator (L271) arrays in agentBootstrap.ts + 3 package docs (financial-analyst.md / news-scout.md / unified-agent.md) + SKILL_MANIFEST.md mirror. | HIGH | CHORE | agent-md-editor | docs/handoffs/TASK_1910b-effr-package-reg.md | — |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
 ---
@@ -41,6 +40,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1910b-effr-package-reg | **IMPL DONE 2026-05-15** — All 5 files already contain `get_fed_liquidity_spread`: agentBootstrap.ts (news_scout L45, financial_analyst L78, unified_coordinator L273), SKILL_MANIFEST.md (all 3 arrays + recently-registered table row), financial-analyst.md (Macro Intelligence section), news-scout.md (US Monetary Chain section), unified-agent.md (Macro Intelligence COC section). tsc 0 errors. 9430 tests pass. No code changes required — prior developer (1910b-effr-package-reg-SHIPPED-c96) already completed. | HIGH | CHORE | dev-mcp-server | docs/handoffs/TASK_1910b-effr-package-reg.md | — |
 
 ---
 ## Done

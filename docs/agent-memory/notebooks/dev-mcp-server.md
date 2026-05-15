@@ -4,6 +4,17 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1910b-effr-package-reg — EFFR package registration (2026-05-15, DONE)
+
+**Mission:** Add `get_fed_liquidity_spread` to financial_analyst, news_scout, unified_coordinator arrays in agentBootstrap.ts + 3 package docs + SKILL_MANIFEST.md.
+
+**Outcome:** All 5 files already correct — work completed by agent-md-editor at c96 2026-05-14 (commit `e7fd1718`). TASKS.md Todo row removed; Review row added. Handoff [Developer] section written. No code changes required.
+
+- tsc 0 errors confirmed
+- 9430 tests / 848 files — exit code 0 (both runs)
+
+---
+
 ### TASK-BCTC-3c — hsx.vn Strategy 0 E2E integration (2026-05-15, DONE)
 
 **Mission:** Integration/E2E verification — confirm Strategy 0 (hsx.vn) is wired and returns URLs through `discoverHosePdfUrls`. Write integration test.
