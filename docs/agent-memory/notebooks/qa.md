@@ -1,6 +1,40 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c117 — 1914-news-scout-dedup-api APPROVED (93b6b63d)
+**Last updated:** 2026-05-15 | **Session:** c118 — 1914b-log-agent-work-doc APPROVED
+
+## Session 2026-05-15 c118 — 1914b-log-agent-work-doc QA gate
+
+### TASK REPORT — 1914b
+
+```
+date: 2026-05-15
+outcome: APPROVED
+```
+
+#### Scope
+
+Doc-only change. Smart-Skip applied: bun test, bun tsc, DDD scan, security scan all skipped.
+Commits already on main (3b68df2c + cd01a02e). No branch to merge.
+
+#### Changed files (10 package docs + TASKS.md + handoff)
+
+- `.claude/tools/package/{alert-commander,unified-agent,financial-analyst,market-watcher,news-scout,qa-responder,report-analyzer,digest-predict,tran-ngoc-bau,po}.md` — old fictitious `action/context/signal_ids` params replaced with correct two-call recipe. report-analyzer.md example snippet fixed. po.md Usage example fixed.
+- `docs/TASKS.md` — 1914b marked Done
+- `docs/handoffs/TASK_1914b.md` — [Developer] section present
+
+#### Signature spot-check
+
+- Source: `apps/mcp-server/src/interface/mcp/tools/system/agentWorkLogTools.ts`
+- Zod schema params match recipe in all 10 files: `agent_name, id?, status, summary?, findings?, actions?`
+- Call 1 (`status="running"`) → `{ id: number }` — correct
+- Call 2 (`id + status="completed"|"error"`) → `{ ok: true, id }` — correct
+- Zero old params (`action`, `signal_ids`) remaining for `log_agent_work` — grep clean
+
+#### AC Coverage
+
+- AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS
+
+---
 
 ## Session 2026-05-15 c117 — 1914-news-scout-dedup-api QA gate
 
