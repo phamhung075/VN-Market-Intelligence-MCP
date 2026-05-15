@@ -4,6 +4,25 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### TASK-BCTC-3c — hsx.vn Strategy 0 E2E integration (2026-05-15, DONE)
+
+**Mission:** Integration/E2E verification — confirm Strategy 0 (hsx.vn) is wired and returns URLs through `discoverHosePdfUrls`. Write integration test.
+
+**Live probe results:**
+- VNM: 11 URLs (staticfile.hsx.vn), source="hsx". HTTP 200 + application/pdf confirmed.
+- HPG: 12 URLs (staticfile.hsx.vn), source="hsx".
+- VEA: 0 URLs — UPCOM ticker, genuinely absent from hsx.vn. Correct behavior.
+- ACB: 12 URLs — HNX ticker BUT hsx.vn also indexes HNX/UPCOM-cross-listed tickers. Not purely HOSE-only.
+
+**Key finding:** hsx.vn indexes more than HOSE. ACB (HNX) returns 12 URLs. VEA (UPCOM) returns 0. The empty-list path is correct — VEA requires VPS fallback.
+
+**Files created:**
+- `apps/mcp-server/src/__tests__/BCTC-3c-integration.test.ts` — 7 tests, 25 assertions
+
+**Results:** 7/7 GREEN. tsc 0 errors. 46/46 BCTC subset GREEN. Commit `859f4a62`.
+
+---
+
 ### Task 1910a — ISM Manufacturing PMI sub-component tool (2026-05-15, DONE)
 
 **Mission:** Add FRED ISM Manufacturing PMI sub-component fetcher + domain regime signal + MCP tool `get_ism_subcomponents` (#133).
