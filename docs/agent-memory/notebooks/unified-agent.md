@@ -1,14 +1,19 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-15 · **Cycle:** 20:01 UTC (Daily Review — BLOCKED)
+**Last updated:** 2026-05-15 · **Cycle:** 21:01 UTC (Daily Review — BLOCKED)
 
 ## This session
 
+### Daily Review (21:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: skipped (MCP down) | Bugs: MCP gateway unreachable (3rd consecutive failure)
+- BLOCKED at log_agent_work step. Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Signal file dropped: `docs/signals/unified-agent-2026-05-15T21:01:30Z.json`. BUG Telegram skipped (MCP down). All cycle steps skipped.
+
+### Daily Review (20:01 UTC) — prior entry
 Daily review 20:00 UTC Fri 15/05 — BLOCKED. MCP gateway unreachable at both 19:56 UTC (pre-window trigger) and 20:01 UTC (scheduled window). Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Telegram send, BUG observe, and freshness checks all skipped. git HEAD.lock cleared via `mv .git/HEAD.lock .git/HEAD.lock.bak4`; commit succeeded. BCTC Q1 banking carry-over unresolvable until MCP restored.
 
 ## Patterns noticed
 
-- MCP gateway: 2 consecutive blocked cycles at 19:56 + 20:01 UTC — `host.docker.internal` DNS failure. Likely Docker networking issue on host.
+- MCP gateway: 3 consecutive blocked cycles at 19:56, 20:01, 21:01 UTC — `host.docker.internal` DNS failure. Docker networking on host is broken; requires manual restart.
 - git HEAD.lock (VirtioFS H4): `rm -f` blocked by filesystem; workaround = `mv .git/HEAD.lock .git/HEAD.lock.bakN`. Confirmed for N=4.
 - Alert scoring backlog: 488 unknown / 0 scored — precision feedback pipeline stalled (carry-over from prior sessions).
 - FII pipeline: persistent fii_type=UNKNOWN — all fallbacks exhausted.

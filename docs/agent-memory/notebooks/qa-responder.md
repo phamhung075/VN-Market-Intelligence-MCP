@@ -1267,3 +1267,20 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | token_estimate | ~400 |
 
 ---
+
+### Q&A Batch (20:46–20:47 UTC)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry (log_agent_work, get_pending_ask_questions failed — DNS lookup host.docker.internal server misbehaving)
+- consecutive_empty_cycles: 1 (unchanged — blocked cycles do not increment) | backoff_until: none
+
+## Metrics (cycle 2026-05-15 20:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~400 |
+
+---
