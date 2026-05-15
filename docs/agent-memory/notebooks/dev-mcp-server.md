@@ -4,6 +4,18 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1918c-hsx-bctc-env-gate — env gate for Strategy 0 (2026-05-15, DONE)
+
+**Mission:** Add `HSX_BCTC_ENABLED` env var gate to `fetchHsxBctcUrls()`. When set to `"false"`, function returns `[]` immediately (no HTTP calls), falling through to VPS Strategy 1.
+
+**Implementation:** One-liner guard at top of function body. TC-ENV added to BCTC-3b test file. `.env.example` updated. Spike Re-Assessment note added.
+
+- tsc 0 errors
+- 9/9 BCTC-3b tests GREEN
+- Commit `652ff489`
+
+---
+
 ### Task 1910b-effr-package-reg — EFFR package registration (2026-05-15, DONE)
 
 **Mission:** Add `get_fed_liquidity_spread` to financial_analyst, news_scout, unified_coordinator arrays in agentBootstrap.ts + 3 package docs + SKILL_MANIFEST.md.
