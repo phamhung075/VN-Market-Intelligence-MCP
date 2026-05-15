@@ -41,7 +41,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| TASK-BCTC-3c [dev-mcp-server] | **IN REVIEW 2026-05-15** — Integration/E2E verified: (1) Live probe VNM=11 URLs, HPG=12 URLs, ACB=12 URLs (source: "hsx"). (2) PDF accessibility HTTP 200 + application/pdf confirmed. (3) Docker MCP domain-layer smoke: discoverHosePdfUrls returns source="hsx" for VNM/HPG. (4) VEA not found on hsx.vn (empty list — confirmed upstream). (5) ACB (HNX) also found on hsx.vn — not purely HOSE-only. (6) Integration test 7/7 GREEN. tsc 0 errors. | CRITICAL | FEATURE | dev-mcp-server | docs/handoffs/TASK_BCTC-3c.md | — |
+| TASK-BCTC-3c [dev-mcp-server] | **DONE 2026-05-15** — hsx.vn Strategy 0 E2E verified. Live probe: VNM=11 URLs, HPG=12 URLs (source:"hsx"). PDF accessibility HTTP 200 + application/pdf confirmed for 2 URLs. VEA (UPCOM) correctly absent from hsx.vn — falls through to VPS Strategy 1. 7/7 integration tests GREEN. tsc 0 errors. DDD PASS. Security PASS. Full suite 9673/39 (39 pre-existing unchanged). Commits 859f4a62 + 3a65b484 on main. QA report: reports/TASK_REPORT_BCTC-3c.md | CRITICAL | FEATURE | dev-mcp-server | 2026-05-15 |
 
 ---
 ## Done

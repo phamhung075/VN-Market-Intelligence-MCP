@@ -332,4 +332,34 @@ Docker container `vn-market-intelligence-mcp-mcp-server-1` confirmed healthy (Up
 
 ### Note on VEA
 
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-15
+**Round:** 1
+**Verdict:** APPROVED
+
+### Pipeline Results
+
+- Targeted (7 tests): 7 pass / 0 fail
+- Full suite: 9673 pass / 39 fail (39 pre-existing — unchanged from baseline)
+- tsc: 0 errors
+- DDD: PASS (bctcDiscovery.ts — zero infra imports; only comments reference infra paths)
+- Security: PASS (no process.env, no hardcoded secrets)
+
+### AC Verification
+
+- AC-1 PASS: 7 integration tests GREEN
+- AC-2 PASS: TC-1 — hsx.callCount=1, vps.callCount=0 (Strategy 0 fires first, wins)
+- AC-3 PASS: TC-3 — empty hsx → source:"vps-playwright" (VEA/UPCOM fallthrough confirmed)
+- AC-4 PASS: source:"hsx" shape correct: urls[], fallbackUrls:[], fallbackSource:null
+- AC-5 PASS: tsc 0 errors, DDD PASS, Security PASS
+- Baseline: 39 pre-existing failures unchanged
+
+### Merge
+
+Commits 859f4a62 + 3a65b484 already on main (no branch to merge — NO branches for dev policy).
+Report: reports/TASK_REPORT_BCTC-3c.md
+
 VEA is UPCOM-listed and absent from hsx.vn's securities database (`data.list: []`). This is expected — the fetcher correctly returns `[]` and the strategy chain falls through. VEA discovery requires VPS Playwright (Strategy 1) or SSC (Strategy 2). This is correct behavior, not a bug.

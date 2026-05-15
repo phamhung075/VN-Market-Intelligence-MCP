@@ -1,6 +1,37 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c124 — 1910a-ism-tool APPROVED (round 2)
+**Last updated:** 2026-05-15 | **Session:** c125 — TASK-BCTC-3c APPROVED (round 1)
+
+## Session 2026-05-15 c125 — TASK-BCTC-3c
+
+### TASK REPORT — BCTC-3c
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: FEATURE (test-only + domain service extension: hsx Strategy 0)
+round: 1
+```
+
+#### Pipeline
+
+- Targeted: 7/0 | Full suite: 9673 pass / 39 fail (39 pre-existing unchanged from c124 baseline)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: 7 tests GREEN (TC-1 through TC-7)
+- AC-2 PASS: TC-1 confirms Strategy 0 fires first (hsx.callCount=1, vps.callCount=0)
+- AC-3 PASS: TC-3 confirms VEA/UPCOM fallthrough — empty hsx → source:"vps-playwright"
+- AC-4 PASS: source:"hsx" shape correct; TC-5 + TC-7 validate URL domain pattern
+- AC-5 PASS: tsc 0 errors; DDD PASS (bctcDiscovery.ts — zero infra imports); Security PASS
+- Baseline: 39 pre-existing failures unchanged
+
+#### Note
+
+Working dir is on main (no branch per NO branches for dev policy). Commits 859f4a62 + 3a65b484 already on main — no merge needed. Task report: reports/TASK_REPORT_BCTC-3c.md
+
+---
 
 ## Session 2026-05-15 c124 — 1910a-ism-tool re-review
 
