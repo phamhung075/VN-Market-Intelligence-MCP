@@ -87,7 +87,8 @@ describe("1920e — cascadeBacktestJob saveRun wiring", () => {
     // saveRun must be called exactly once
     expect(savedRecords).toHaveLength(1);
 
-    const rec = savedRecords[0];
+    expect(savedRecords[0]).toBeDefined();
+    const rec = savedRecords[0]!;
     expect(rec.strategy).toBe("cascade-backtest");
     expect(rec.tradeCount).toBe(2);
 
@@ -132,7 +133,8 @@ describe("1920e — cascadeBacktestJob saveRun wiring", () => {
 
     // saveRun still called even with zero hits
     expect(savedRecords).toHaveLength(1);
-    const rec = savedRecords[0];
+    expect(savedRecords[0]).toBeDefined();
+    const rec = savedRecords[0]!;
     expect(rec.tradeCount).toBe(0);
     expect(rec.totalReturn).toBe(0);
     expect(rec.winRate).toBe(0);
@@ -224,7 +226,8 @@ describe("1920e — cascadeBacktestJob saveRun wiring", () => {
     });
 
     expect(savedRecords).toHaveLength(1);
-    const parsed = JSON.parse(savedRecords[0].resultJson);
+    expect(savedRecords[0]).toBeDefined();
+    const parsed = JSON.parse(savedRecords[0]!.resultJson);
     expect(parsed).toHaveProperty("processed");
     expect(parsed).toHaveProperty("skipped");
     expect(parsed).toHaveProperty("noData");
