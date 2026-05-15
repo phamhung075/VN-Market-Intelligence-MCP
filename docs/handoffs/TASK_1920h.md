@@ -155,3 +155,30 @@ None. No PO questions. No architect brief required.
 | AC-4 | Grep | `INSERT INTO user_requests` = 0 matches in non-test production files |
 | AC-5 | Test run | Existing test suite passes (no regression) |
 | AC-6 | tsc | 0 errors |
+
+---
+
+## [QA] Task Report — 1920h
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: CLEAN (doc-only comment additions)
+round: 1
+commit: ac32a3dc
+```
+
+### Pipeline
+
+- Targeted tests (freshness/SLA — 4 files): 54 pass / 0 fail
+- Full suite: 9695 pass / 40 fail (all 40 pre-existing — network/integration tests unrelated to 1920h; 0 regressions)
+- tsc: 0 errors | DDD: PASS | Security: PASS (no code changes — comment-only)
+
+### AC Verification
+
+- AC-1 PASS: `querySignalAges` UNION ALL in `freshnessSlaMonitorJob.ts` — 5 entries only (price/bctc/news/sbv_fx/foreign_flow). `user_requests` absent. No regression.
+- AC-2 PASS: `schema-system.ts` L243-248 — DEPRECATED comment block present above `CREATE TABLE IF NOT EXISTS user_requests` (matches FR-1 spec verbatim).
+- AC-3 PASS: `schema-system.ts` L22-26 — skips non-existence note present in module header (matches FR-2 spec verbatim).
+- AC-4 PASS: `grep -rn "INSERT INTO user_requests"` across all `apps/**/*.ts` excluding `__tests__` and `schema-system.ts` = 0 matches.
+- AC-5 PASS: 54 freshness/SLA targeted tests GREEN. Full suite 9695 pass — no regression vs pre-existing baseline.
+- AC-6 PASS: `bun tsc --noEmit` = 0 errors (doc-only change, zero type surface impact).

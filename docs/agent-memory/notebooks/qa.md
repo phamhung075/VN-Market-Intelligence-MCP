@@ -1,6 +1,41 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c128 — 1918b-news-scout-macro-snapshot-package APPROVED
+**Last updated:** 2026-05-15 | **Session:** c131 — 1920h-zombie-table-retirement APPROVED
+
+## Session 2026-05-15 c131 — 1920h-zombie-table-retirement
+
+### TASK REPORT — 1920h (compact)
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: CLEAN (doc-only — comment additions, no code changes)
+round: 1
+commit: ac32a3dc
+```
+
+#### Pipeline
+
+- Targeted tests (freshness/SLA — 4 files): 54 pass / 0 fail
+- Full suite: 9695 pass / 40 fail (40 pre-existing — network/integration unrelated; 0 regressions)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: `querySignalAges` UNION ALL — 5 entries (price/bctc/news/sbv_fx/foreign_flow). `user_requests` absent.
+- AC-2 PASS: `schema-system.ts` L243-248 — DEPRECATED comment block above `CREATE TABLE IF NOT EXISTS user_requests`.
+- AC-3 PASS: `schema-system.ts` L22-26 — skips non-existence note in module header.
+- AC-4 PASS: `INSERT INTO user_requests` grep across all production TS = 0 matches.
+- AC-5 PASS: 54 freshness targeted tests GREEN. Full suite 9695 pass — no regression.
+- AC-6 PASS: `bun tsc --noEmit` = 0 errors.
+
+#### Notes
+
+- No branch (CLAUDE.md policy: main only). Commit ac32a3dc already on main.
+- 40 fail count up 4 from c128 baseline (36 fail). All unrelated to 1920h (network/integration tests in macro-indicators service). No action needed.
+- Bun v1.3.13 macOS C++ panic on full suite run = known Bun runtime bug, exit code 0.
+
+---
 
 ## Session 2026-05-15 c128 — 1918b-news-scout-macro-snapshot-package
 
