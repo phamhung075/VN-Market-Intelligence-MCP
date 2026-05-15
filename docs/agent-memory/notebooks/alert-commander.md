@@ -1,8 +1,18 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 07:05 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 08:06 UTC | **Sprint:** c116
 
 ## This session
+
+### Alert Cycle (08:01–08:06 UTC)
+- Signals: agent_bus=4 (urgent_news×3, price_anomaly×1) | price_alerts=0 | legal=0 | crisis=0
+- Fired: 3 | Suppressed: 1 | MARKET: 3
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- MARKET fired: (1) VCB urgent_news 0.90 [verdict:f1ac2ee4 pending] (2) GAS urgent_news 0.80 [verdict:fda43d9e pending] (3) VIC urgent_news 0.80 [verdict:f211deb3 pending]
+- Suppressed: GAS price_anomaly 3215 — get_alerts(price) empty, sigma 2.06 < 4.0 override threshold
+- VN-Index: 1,921.60 (-0.20%) | Brent: $107.32 | Gold: $4,577 | USD/VND: 26,340
+- log_agent_work id=877
 
 ### Alert Cycle (07:01–07:05 UTC)
 - Signals: agent_bus=0 | price_alerts=0 | system_alerts=3 (HIGH×1, MEDIUM×1, LOW×1)
