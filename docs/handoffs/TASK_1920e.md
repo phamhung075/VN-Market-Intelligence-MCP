@@ -184,3 +184,29 @@ None. No PO questions. No architect brief required (no new service boundary, no 
 - `src/__tests__/1920e-cascade-backtest-saverun.test.ts:227` — TS2532: Object is possibly `undefined`
 
 **Fix:** Add `expect(savedRecords[0]).toBeDefined()` guard before dereferencing, then use `const rec = savedRecords[0]!;` (or `as BacktestRunRecord`). All 16 errors are in the test file only — no production code changes required.
+
+---
+
+## [QA] Review Record — Round 2
+
+**Date:** 2026-05-16
+**Fixer commit:** `6e9fccff`
+**Verdict:** APPROVED
+
+### Pipeline Results
+- Targeted tests (1920e, 5 tests): 5 pass / 0 fail
+- tsc: 0 errors
+- DDD: SKIPPED (test-only change — Smart-Skip applied)
+- Security: SKIPPED (test-only change — Smart-Skip applied)
+
+### Changes Verified
+- `apps/mcp-server/src/__tests__/1920e-cascade-backtest-saverun.test.ts` only
+- Added `expect(savedRecords[0]).toBeDefined()` guards + `savedRecords[0]!` non-null assertions
+- No production code modified
+- All 16 TS18048 blocking issues from Round 1 resolved
+
+### AC Re-verification
+All 6 ACs previously verified in Round 1 remain valid. Test-only fix did not alter logic.
+
+### Merge Status
+APPROVED — merged to main.

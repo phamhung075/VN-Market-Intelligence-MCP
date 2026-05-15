@@ -1,6 +1,32 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c135 — 1920g-prediction-claims APPROVED
+**Last updated:** 2026-05-16 | **Session:** c136 — 1920e APPROVED (re-review)
+
+## Session 2026-05-16 c136 — 1920e-backtest-runs-wiring re-review
+
+### TASK REPORT — 1920e Round 2 (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FEATURE (test-only fix — non-null assertions for noUncheckedIndexedAccess)
+fixer_commit: 6e9fccff
+```
+
+#### Pipeline
+
+- Targeted tests (1920e — 5 tests): 5 pass / 0 fail
+- tsc: 0 errors
+- DDD: SKIPPED (test-only change — Smart-Skip)
+- Security: SKIPPED (test-only change — Smart-Skip)
+
+#### Notes
+
+- Round 1 had 16 TS18048 blocking errors in test file only. Fixer added `toBeDefined()` guards + `!` assertions. All resolved.
+- No production code changed. All 6 ACs verified in Round 1 remain valid.
+- Commit already on main (no-branch policy). Docs-only commit for QA approval record.
+
+---
 
 ## Session 2026-05-16 c135 — 1920g-prediction-claims-auto-populate
 
