@@ -33,7 +33,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| janitor-1912 | JANITOR/CLEAN: RF-1 + RF-2 zones independent, single-pass. rm stale TS test files + server binary from disk (git index already clean). AC: disk artifacts removed, `go test ./...` PASS both services, no registry edits. | LOW | CLEAN | code-janitor | docs/handoffs/TASK_janitor-1912.md | — |
 
 ---
 
@@ -47,6 +46,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| janitor-1912 | **DONE 2026-05-15** — RF-1 + RF-2 disk cleanup complete. (1) Removed `apps/stock-price/__tests__/{unit/resolve-price-service.test.ts,integration/fetch-price-usecase.test.ts}` (stale Bun/TS test artifacts). (2) Removed `apps/alert-engine/server` compiled binary. Git index already clean (no tracked entries). AC-1/2 PASS: disk files absent. AC-3 PASS: git index empty. AC-4/5 PASS: `go test ./...` PASS both services (all packages green). AC-6 PASS: no registry/agent edits. tsc 0 errors. Commit `d637ad1b` on main. | LOW | CLEAN | code-janitor | 2026-05-15 |
 | 1914-news-scout-dedup-api | **QA APPROVED 2026-05-15** — `get_agent_signals` extended with optional `from_agent` sender-history filter. `GetSignalsOptions.fromAgent?: string` added; WHERE clause switches to `from_agent = ?` when set (bypasses `to_agent` axis). Read-mark side-effect guarded: fires only when `fromAgent === undefined`. MCP tool Zod schema extended with optional `from_agent` param. `stage-signals.md` dedup gate updated with `from_agent="news-scout"` + `status="all"`. 14/14 targeted GREEN (AC-6a/b/c new + 11 existing). Full suite: 9306 pass / 36 fail (all pre-existing). tsc 0. DDD PASS. Security PASS. Commits `93b6b63d` + `eefa1346` on main. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-15 |
 | 1917-telegram-bug-channel-env-fix | **OPS-DONE 2026-05-15** — `TELEGRAM_REPORT_BUG_CHANNEL_ID` env var correctly set via .env → docker-compose. Runtime verification: (AC-1) Env var resolves to -1003853842961 (valid Telegram supergroup ID format). (AC-2) Delivery test: `send_telegram(channel="bug")` delivered successfully (status=200, message_id=2388). (AC-3) Bootstrap log 22:36:52 UTC confirms all 3 channels verified. Root cause: 22:02 UTC error was transient network issue or brief API issue; no env config problem found. System operational. No code changes required. | HIGH | FIX | ops | 2026-05-15 |
 | 1915-fix-part2 | **QA APPROVED 2026-05-15** — `scanDiskForStrandedPdfs()` else-branch fallback: when `codes.find()` misses (VEA/VNM not in watchlist), fall through to `tickerFromFilename()` instead of hard `continue`. DSE-09 GREEN + DSE-01..08 GREEN + 1416c 6/6 GREEN. tsc 0. DDD PASS. Security PASS. Commits `6fead90d`+`ef64d96b` on main. Runtime AC pending ops redeploy (VEA/VNM rows in financial_reports + pdf_extracted_text). | CRITICAL | FIX | qa | 2026-05-15 |

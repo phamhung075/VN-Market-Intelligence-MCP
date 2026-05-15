@@ -91,6 +91,57 @@ No doc updates required (tree-map has no pointers to `__tests__/*.ts` files or c
 
 ---
 
+## Code-Janitor Section
+
+**EXECUTION COMPLETE 2026-05-15 05:47 UTC**
+
+### Work completed
+
+RF-1: Deleted `apps/stock-price/__tests__/unit/resolve-price-service.test.ts` and `apps/stock-price/__tests__/integration/fetch-price-usecase.test.ts` from disk. Empty `__tests__/` directory tree removed.
+
+RF-2: Deleted `apps/alert-engine/server` (compiled Go binary) from disk.
+
+### Acceptance criteria verified
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-1 | PASS | `ls apps/stock-price/__tests__/` → No such file or directory |
+| AC-2 | PASS | `ls apps/alert-engine/server` → No such file or directory |
+| AC-3 | PASS | Git index clean — both paths absent from `git ls-files` |
+| AC-4 | PASS | `cd apps/stock-price && go test ./...` → all packages ok (domain/application/infrastructure/interface/http) |
+| AC-5 | PASS | `cd apps/alert-engine && go test ./...` → all packages ok (domain/application/infrastructure/interface/http) |
+| AC-6 | PASS | No test registry, agent .md, or agentBootstrap edits in commit |
+
+### Commit
+
+Commit `d637ad1b` on main.
+
+Message:
+```
+chore(janitor-1912): remove stale TS test files + server binary from disk
+
+- Remove apps/stock-price/__tests__/{unit,integration}/*.test.ts (Bun/TS artifacts, superseded by Go tests)
+- Remove apps/alert-engine/server (compiled Go binary)
+- Verify Go test suites PASS in both services
+- Git index already clean (no-op git rm --cached)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+Commit includes two file deletions (both staged via `git rm`):
+- `apps/stock-price/__tests__/integration/fetch-price-usecase.test.ts`
+- `apps/stock-price/__tests__/unit/resolve-price-service.test.ts`
+
+The compiled binary `apps/alert-engine/server` was already gitignored (not in index) and removed from disk only.
+
+### Handoff notes
+
+- Both RF-1 and RF-2 confirmed independent (no shared dependencies, no DDD layer conflicts).
+- No docs require updates (tree-map has no pointers to `__tests__/*.ts` or compiled binaries).
+- Ready to close task and return to backlog.
+
+---
+
 ## PM Section
 
 **Dispatch:** 2026-05-15 c114 (WIP=1/2, at capacity after 1914-news-scout-dedup-api).
