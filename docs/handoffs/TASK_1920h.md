@@ -98,6 +98,47 @@ In `freshnessSlaMonitorJob.ts`, add a comment to the `querySignalAges` function 
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/mcp-server/`
+
+**Developer assigned:** dev-mcp-server
+
+**Acceptance Criteria (from BA spec, to verify in implementation):**
+- AC-1: `freshnessSlaMonitor` does NOT flag `user_requests` or `skips` as stale tables in its WORK channel output.
+- AC-2: `schema-system.ts` contains a DEPRECATED comment above the `CREATE TABLE IF NOT EXISTS user_requests` block.
+- AC-3: `schema-system.ts` contains a note documenting that `skips` is not a real table.
+- AC-4: No production code writes to `user_requests` (verified by grep: `INSERT INTO user_requests` = 0 matches outside schema and tests).
+- AC-5: Existing tests that reference `user_requests` table structure continue to pass (no schema change).
+- AC-6: `tsc` 0 errors (doc-only change, no type surface changes).
+
+**Files to read first:**
+- `apps/mcp-server/src/infrastructure/db/schema-system.ts` — user_requests and skips context
+- `apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts` — querySignalAges function
+
+**Files to create:**
+- None (doc-only changes)
+
+**Files to modify:**
+- `apps/mcp-server/src/infrastructure/db/schema-system.ts` — add DEPRECATED comment above `CREATE TABLE IF NOT EXISTS user_requests` block; add skips documentation note
+- `apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts` — add excluded-tables comment to querySignalAges header
+
+**Dependencies:** None (independent, doc-only, XS size)
+
+**Knowledge needed:**
+- CREATE TABLE IF NOT EXISTS idempotence pattern
+- Comment best practices for schema documentation
+- DEPRECATED annotation standard in codebase
+
+**Risk flags:**
+- R-1920h-1: Create IF NOT EXISTS is unchanged → existing DBs retain table structure (no risk)
+- R-1920h-2: Comment placement in schema file (above CREATE TABLE block, clear visibility)
+- R-1920h-3: Grep verification for INSERT statements (AC-4) must exclude test files and schema definition
+
+---
+
 ## Blockers
 
 None. No PO questions. No architect brief required.

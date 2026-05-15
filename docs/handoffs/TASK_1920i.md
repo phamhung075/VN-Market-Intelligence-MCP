@@ -149,9 +149,54 @@ This task MUST be merged AFTER 1920a, 1920b, 1920c, 1920d, 1920e, 1920f, 1920g. 
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/mcp-server/`
+
+**Developer assigned:** dev-mcp-server
+
+**Acceptance Criteria (from BA spec, to verify in implementation):**
+- AC-1: `querySignalAges` returns ≥12 signal type entries (5 existing + 7 new) after this task.
+- AC-2: `coverage_pct` reported in WORK daily snapshot is ≥ 83% (10/12 minimum after 1920a–g land; target 95%+ after all tasks complete).
+- AC-3: Zero-row table (e.g., `bond_maturity` before first weekly run) does NOT trigger a WORK breach alert.
+- AC-4: A real SLA breach on `commodity_prices` (age > 36h) DOES trigger a WORK alert (existing escalation behavior preserved).
+- AC-5: Existing 5 signal types retain their current SLA thresholds (no regression to existing behavior).
+- AC-6: `tsc` 0 errors.
+- AC-7: Existing test suite for `freshnessSlaMonitorJob` remains green.
+
+**Files to read first:**
+- `apps/mcp-server/src/domain/services/freshnessSlaChecker.ts` — SignalType union, SLA_THRESHOLDS map
+- `apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts` — querySignalAges function, current UNION ALL entries
+
+**Files to create:**
+- None (extending existing files)
+
+**Files to modify:**
+- `apps/mcp-server/src/domain/services/freshnessSlaChecker.ts` — extend SignalType union + SLA_THRESHOLDS map with 7 new types
+- `apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts` — extend querySignalAges with 7 new UNION ALL entries, add null guard (age_minutes = -1 for zero-row tables), add coverage_pct calculation, add daily snapshot to WORK output
+- `apps/mcp-server/src/__tests__/` — extend existing freshness SLA test + add new test for null-guard and coverage_pct
+
+**Dependencies:** Soft sequencing dependency on 1920a–g (tables must exist in schema; code can be written in parallel but WORK snapshot meaningful post-deploy)
+
+**Knowledge needed:**
+- SQLite strftime function for epoch time calculation
+- Null guard pattern (NULL → -1 sentinel)
+- Daily summary gate (track _lastSummaryDate module-level variable)
+- SLA threshold semantics (hours for age_minutes)
+
+**Risk flags:**
+- R-1920i-1: Table existence — if 1920a–g not merged, new tables have zero rows (FR-4 null guard handles this)
+- R-1920i-2: SLA threshold interpretation — commodity_prices 36h is "daily cadence + 1.5x window" (be precise in comment)
+- R-1920i-3: coverage_pct denominator — enumerate declared tables with active writers after 1920a–g (document count)
+- R-1920i-4: Daily snapshot gate — use pattern from intelligenceCycleJob (track _lastSummaryDate, reset at midnight UTC)
+
+---
+
 ## Blockers
 
-None at spec time. Soft sequencing dependency on 1920a–g is noted but does not block writing this code — it can be merged once any one of 1920a–g lands.
+Soft sequencing dependency on 1920a–g (code can be written in parallel, but WORK daily snapshot only meaningful post-deploy of those tasks).
 
 ---
 

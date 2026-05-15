@@ -113,6 +113,51 @@ Chain synthesis only produces claims when `conviction >= 0.7` AND ≥2 agents po
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/mcp-server/`
+
+**Developer assigned:** dev-mcp-server
+
+**Acceptance Criteria (from BA spec, to verify in implementation):**
+- AC-1: After a cycle run with ≥1 synthesized chain (conviction ≥ 0.7), `SELECT COUNT(*) FROM prediction_claims WHERE agent_id='chain-synthesizer'` returns ≥1.
+- AC-2: `direction` column matches `mapChainAction(chain.action)` — BUY → bullish, SELL → bearish, MONITOR/HOLD → neutral.
+- AC-3: `resolution_date` is exactly 7 days from run date (YYYY-MM-DD format).
+- AC-4: Low-conviction chains (`conviction < 0.7`) produce zero `prediction_claims` rows.
+- AC-5: `INSERT OR IGNORE` dedup: same stock + same narrative in same 7-day window = 1 row.
+- AC-6: Claim write failure does NOT cause `runChainSynthesis` to throw or cause the cycle to increment `errors`.
+- AC-7: When `insertClaimFn` is injected in tests, it is called with the correct `PredictionClaimInput` shape.
+
+**Files to read first:**
+- `apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts` — Step G location, chain synthesis output shape
+- `apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts:insertPredictionClaim` — function signature
+- `apps/mcp-server/src/domain/models/SynthesizedChain.ts` — chain shape (action, conviction, narrative)
+
+**Files to create:**
+- None (existing store + job, new helpers added inline or in domain/services)
+
+**Files to modify:**
+- `apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts` — extend `CycleDeps`, add insertClaimFn injection, wire after postSignal for high-conviction chains
+- `apps/mcp-server/src/__tests__/` — new test file covering AC-1 through AC-7
+
+**Dependencies:** None (independent work, no blocking tasks)
+
+**Knowledge needed:**
+- Chain synthesis output structure and conviction thresholds
+- Dependency injection pattern (CycleDeps pattern)
+- Helper functions: mapChainAction, isoDatePlusDays (pure functions)
+- INSERT OR IGNORE dedup behavior
+
+**Risk flags:**
+- R-1920g-1: conviction threshold 0.7 is hard-coded — ensure matches system config if exists
+- R-1920g-2: narrative truncation at 255 chars — verify DB VARCHAR fits
+- R-1920g-3: resolution_date horizon (7 days) aligns with cascade backtest window (3d–7d)
+- R-1920g-4: Claim write failure handling (try/catch with console.warn) must not affect cycle error counter
+
+---
+
 ## Blockers
 
 None. No PO questions. No architect brief required.

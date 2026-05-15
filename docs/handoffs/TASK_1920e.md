@@ -81,6 +81,50 @@ The `IBacktestResultRepository` interface is already in `domain/repositories/`. 
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/mcp-server/`
+
+**Developer assigned:** dev-mcp-server
+
+**Acceptance Criteria (from BA spec, to verify in implementation):**
+- AC-1: After a real run with `processed >= 1`, `SELECT COUNT(*) FROM backtest_runs WHERE strategy='cascade-backtest'` returns a row count > 0.
+- AC-2: `totalReturn` field in `backtest_runs` equals the mathematical mean of `price_impact_3d` values from the processed batch (round4 precision).
+- AC-3: `winRate` = (count of rows where `outcomeCorrect=1`) / processed, bounded [0,1].
+- AC-4: When `saveRun` throws, `sendWorkFn` is still called (error is swallowed with `console.warn`).
+- AC-5: Test injection — `CascadeBacktestDeps.backtestResultRepo` can be satisfied with a mock that records calls to `saveRun`.
+- AC-6: Test with `processed=0` — `saveRun` is still called with `tradeCount=0`, `totalReturn=0`, `winRate=0`.
+
+**Files to read first:**
+- `apps/mcp-server/src/scheduler/macro/cascadeBacktestJob.ts` — job loop structure, aggregate accumulators
+- `apps/mcp-server/src/domain/repositories/IBacktestResultRepository.ts` — interface definition
+- `apps/mcp-server/src/infrastructure/db/backtestResultRepo.ts` — implementation
+- `apps/mcp-server/src/domain/models/BacktestRunRecord.ts` — shape definition (if exists)
+
+**Files to create:**
+- None (existing repo interface and implementation used)
+
+**Files to modify:**
+- `apps/mcp-server/src/scheduler/macro/cascadeBacktestJob.ts` — extend `CascadeBacktestDeps` with optional `backtestResultRepo`, add aggregate loop, call `saveRun` after loop
+- `apps/mcp-server/src/__tests__/` — add or extend test file to cover AC-1 through AC-6
+
+**Dependencies:** None (no blocking tasks, independent work)
+
+**Knowledge needed:**
+- DDD layer separation (application vs infrastructure)
+- Dependency injection pattern in this codebase
+- Test strategy: mock repo, verify saveRun called with correct shape
+
+**Risk flags:**
+- R-1920e-1: totalReturn mean computation must handle empty batch (zero processed) → default 0.0
+- R-1920e-2: winRate denominator handling when outcomeCorrect is null (use explicitly 1 or 0 only)
+- R-1920e-3: Error handling (fail-silent pattern) must NOT break job flow
+- R-1920e-4: Repo injection defaults to SqliteBacktestResultRepository — ensure db instance available at job layer
+
+---
+
 ## Blockers
 
 None. No PO questions. No architect brief required (no new service boundary, no new schema).

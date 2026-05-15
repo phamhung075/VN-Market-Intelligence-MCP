@@ -122,6 +122,50 @@ The audit is gated to `price_confirmation` and `urgent_news` signal types only. 
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/mcp-server/`
+
+**Developer assigned:** dev-mcp-server
+
+**Acceptance Criteria (from BA spec, to verify in implementation):**
+- AC-1: After an agent posts a `price_confirmation` signal with `finding_data.confidence=0.8`, `SELECT COUNT(*) FROM signal_quality_audit` returns ≥1.
+- AC-2: After an `urgent_news` signal with confidence, a row exists with `signal_type='news'` in `signal_quality_audit`.
+- AC-3: Non-qualifying signal types (`chain_catalyst`, `cross_validate`, `suppress`, `verified_chain`, `fundamental_validation`) do NOT write to `signal_quality_audit`.
+- AC-4: `INSERT OR IGNORE` deduplication — posting the same `signal_id` twice results in exactly 1 row.
+- AC-5: Write failure (mock DB throwing) does NOT cause `post_agent_signal` to return `isError: true`.
+- AC-6: `monthlySignalQualityAuditJob` called with a DB seeded with ≥1 `signal_quality_audit` rows runs without error.
+
+**Files to read first:**
+- `apps/mcp-server/src/domain/services/signalValidator.ts:183` — `prepareSignalAuditRecord` function
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — `post_agent_signal` handler
+- `apps/mcp-server/src/infrastructure/db/schema-system.ts:324` — `signal_quality_audit` table definition
+
+**Files to create:**
+- `apps/mcp-server/src/infrastructure/db/signalQualityAuditStore.ts` — NEW store with `insertSignalQualityAudit(db, record)` function
+
+**Files to modify:**
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — add conditional audit write after `postSignal()`
+- `apps/mcp-server/src/__tests__/` — new test file covering AC-1 through AC-6
+
+**Dependencies:** None (independent work, no blocking tasks)
+
+**Knowledge needed:**
+- DDD layer separation (domain vs infrastructure vs interface)
+- Fire-and-forget error handling pattern
+- ValidationResult shape from signalValidator.ts
+- Signal type conditional logic (gate on `price_confirmation` or `urgent_news`)
+
+**Risk flags:**
+- R-1920f-1: finding_data is untyped — ensure mapping handles undefined/null gracefully
+- R-1920f-2: confidence scale conversion (agent 0.0–1.0 → audit 0–100) must be consistent
+- R-1920f-3: INSERT OR IGNORE dedup relies on UNIQUE(signal_id) constraint — verify schema
+- R-1920f-4: Fire-and-forget pattern must not suppress logging entirely (use console.warn on catch)
+
+---
+
 ## Blockers
 
 None. No PO questions. No architect brief required.

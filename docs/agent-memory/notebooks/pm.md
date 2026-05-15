@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c124 (PM: TASK_1918b [PM] section DONE, handoff ready for developer) | **Sprint:** 1910 macro suite + 1918 news-scout regime | **Current:** WIP 0/2 CLEAN (ready for next dispatch)
+**Last updated:** 2026-05-15 c125 (PM: SPRINT-1920 task decomposition + handoffs complete, 1920h dispatched In Progress, 1920e/f/g Todo, 1920i Blocked) | **Sprint:** 1920 scheduler cadence wiring | **Current:** WIP 1/2 (1920h IN PROGRESS)
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — Cycle c124 processing complete. TASK_1918b (architect-designed 1918b-news-scout-macro-snapshot-package) [PM] section completed. Handoff: `docs/handoffs/TASK_1918b.md` § [PM] Planning Context added with zone, blocker status (NONE), file list, dependencies, risk flags, test strategy. TASKS.md row updated: "PM DONE 2026-05-15" tag + handoff ready summary. No code blockers. Developer ready to pickup via main terminal Step 3 (execute). **NEXT DISPATCH PRIORITY: 1918b-news-scout-macro-snapshot-package (dev-mcp-server) → 2h atomic FIX task.** Full suite 9778/0 expected (no test additions). tsc 0 errors expected.
+- **WIP: 1/2 (1920h IN PROGRESS)** — Cycle c125 Sprint-1920 decomposition complete. SPRINT-1920 architect design (ARCH-1920) landed 2026-05-15. All 5 handoff specs complete (1920e/f/g/h/i) with BA requirements. PM actions: (1) Created [PM] Planning Context sections in all 5 handoff files with zone, file lists, dependencies, risk flags. (2) Updated docs/TASKS.md: 1920h → In Progress (first dispatch, XS doc-only, no risk), 1920e/f/g → Todo (ready after 1920h, S parallel independent), 1920i → Todo+Blocked (soft dep on 1920a–g, cannot merge until those tasks deploy). (3) WIP capacity = 1/2 (1920h ready for dev-mcp-server pick-up). Sequencing per BA spec: 1920h first (unblocks clean feeling), then 1920e/f/g parallel, then 1920i last. **NEXT DISPATCH: 1920h → dev-mcp-server (LOW CLEAN, ~15min, doc-only).** Expected: tsc 0 errors, no test additions.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,40 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 125 — 2026-05-15 PM Decomposition: SPRINT-1920 all 5 tasks handoff complete, 1920h dispatched (WIP=1/2)
+
+**Input:** Architect design ARCH-1920 landed 2026-05-15. BA specs complete for all 5 tasks (1920e/f/g/h/i). Task assignment per user request: "Sprint 1920 — 1920h dispatched to dev-mcp-server" + handle 1920e/f/g/i scheduling.
+
+**Actions:**
+1. **Added [PM] Planning Context to all 5 handoff files** (1920e/f/g/h/i):
+   - Zone: `apps/mcp-server/` (all tasks)
+   - Developer assigned: dev-mcp-server (all tasks)
+   - AC list from BA spec (AC-1 through AC-6/AC-7)
+   - Files to read/create/modify list
+   - Dependencies (1920e/f/g: NONE; 1920i: soft dep on 1920a/b/c)
+   - Knowledge needed + risk flags per task
+   
+2. **Updated docs/TASKS.md:**
+   - **1920h → In Progress** (row entry updated: zone + spec pointer)
+   - **1920e/f/g → Todo** (row entries cleaned up, removed "READY FOR DEV" tags)
+   - **1920i → Todo+Blocked** (row moved to Todo section, Blocked by = 1920a, 1920b, 1920c)
+   - WIP capacity = 1/2 (1920h IN PROGRESS, 1 slot free for 1920e OR 1920f OR 1920g next cycle)
+
+3. **PM notebook updated** (header + current state). Marked c125 entry with full context.
+
+**Sequencing (per BA recommendation):**
+- Tier 1: 1920h XS (doc-only, today)
+- Tier 2: 1920e/f/g S (all parallel-safe, independent files, dispatched after 1920h done or alongside next cycle)
+- Tier 3: 1920i M (can code in parallel, but merge only after 1920a–g deployed to avoid stale null-guard references)
+
+**Dispatch ready:** 1920h-zombie-table-retirement → dev-mcp-server (LOW CLEAN, ~15min, 2 file edits, no tests). Expected: tsc 0, no regressions.
+
+**WIP Status:** 1/2 (CAPACITY OPEN). 1920h In Progress. Next cycle: can dispatch 1920e OR 1920f OR 1920g (or if 1920h completes early, two of them in parallel per WIP=2 rule).
+
+**Status:** Decomposition COMPLETE. All handoffs ready. 1920h dispatched. WORK channel notification sent.
 
 ---
 
