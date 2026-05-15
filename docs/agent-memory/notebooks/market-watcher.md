@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 08:43 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 09:41 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1720,3 +1720,25 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5200 |
+
+### Cycle (09:40–09:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (4 suppressed) | Volume spikes: 0 new | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (USD/VND 26,137) | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Market CLOSED (off-hours cycle, post 08:59 UTC). All prices are EOD closing values from 2026-05-15.
+- GAS +6.94% (2.17σ) → SUPPRESSED: off-hours duplicate — same closing price, signals already emitted this session (id=3215 at 07:41, id=3219 at 08:43 UTC)
+- HPG -1.85% + volume 5.4x → SUPPRESSED: off-hours duplicate — id=3220 emitted at 08:43 UTC this session
+- NVL +3.90% + volume 3.2x → SUPPRESSED: off-hours duplicate — id=3221 emitted at 08:43 UTC this session
+- GVR +4.28% + volume 2.4x → SUPPRESSED: off-hours duplicate — id=3222 emitted at 08:43 UTC this session
+- Supply chain: STABLE (BDI=1,400, no disruptions) | Chain findings: 0 (last 15 min)
+- Context: Brent 109.12, Gold 4,550.4, USD/VND 26,137. Oil/gas sector led session (+3.94%). Banking/retail/insurance lagged. Foreign selling 800B+ VND (VPB news_mention MEDIUM alert active).
+
+## Metrics (cycle 2026-05-15 09:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 4 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
