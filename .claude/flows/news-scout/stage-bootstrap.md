@@ -10,7 +10,19 @@ call_tool(server="vn-market", tool="get_cycle_bootstrap", arguments={ "agent_nam
 
 If bootstrap fails or `market_context` missing → send BUG → STOP.
 
-**0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
+**0b. Regime**
+
+Call `get_macro_snapshot` directly:
+```
+call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+```
+
+**Shape-validation gate:** After the call, apply `isMacroSnapshotValidShape()` from `apps/mcp-server/src/interface/mcp/tools/macro/macroSnapshotGuard.ts`:
+- **Valid shape** (`text` field is a non-empty string): set `MACRO_SNAPSHOT_TEXT` to the response → pass to regime-extraction skill below. Set `REGIME_SOURCE=macro_snapshot`.
+- **Invalid shape** (missing or non-string `text` field — e.g. `{"status":"degraded","message":"..."}` system_status bleed): route to news-fallback. Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot shape mismatch — expected {text:string}, got: {actual_keys}`. Non-fatal; continue with news-fallback identical to call failure path.
+- **Call failure**: retry once. If retry also fails, derive regime hint from news context (dominant sentiment: bearish → TIGHTENING hint, bullish → EASING hint, mixed → NEUTRAL). Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot unavailable after retry — regime is estimated`.
+
+On valid shape → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME
 
 **0c. Read pending feedback from financial-analyst**

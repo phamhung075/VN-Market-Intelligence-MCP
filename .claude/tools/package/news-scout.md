@@ -42,6 +42,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_agent_signals` | Recent inter-agent signals (last 24h) | — |
+| `get_macro_snapshot` | Macro regime snapshot for 0b regime detection | `source?: string, regimeType?: string` |
 
 ### US Monetary Chain
 | Tool | Purpose | Key Params |
