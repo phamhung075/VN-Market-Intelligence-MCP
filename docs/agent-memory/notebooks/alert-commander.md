@@ -1,8 +1,17 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 08:06 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 09:04 UTC | **Sprint:** c116
 
 ## This session
+
+### Alert Cycle (09:01–09:04 UTC)
+- Signals: agent_bus=6 (urgent_news×2, price_anomaly×4) | price_alerts=0 | legal=0 | crisis=0
+- Fired: 0 | Suppressed: 6 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: GAS urgent_news 3216 conf 0.50 < 0.60, move_sigma 2.24 < 4.0 (no override) | VIC urgent_news 3217 conf 0.50 < 0.60, no price_anomaly match | GAS price_anomaly 3219 not confirmed via price alerts | HPG price_anomaly 3220 not confirmed via price alerts | NVL price_anomaly 3221 not confirmed via price alerts | GVR price_anomaly 3222 not confirmed via price alerts
+- Note: Post-market cycle (market closed 08:59 UTC). Signal 3216 record_signal_outcome returned unexpected climate risk response — manual log only.
+- log_agent_work id=880
 
 ### Alert Cycle (08:01–08:06 UTC)
 - Signals: agent_bus=4 (urgent_news×3, price_anomaly×1) | price_alerts=0 | legal=0 | crisis=0
