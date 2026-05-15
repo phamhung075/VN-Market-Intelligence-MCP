@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 04:41 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 06:41 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1631,3 +1631,54 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 7000 |
+
+### Cycle (05:38–05:41)
+- Stocks: 34 priced | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: STABLE | US10Y: RISK-OFF (gold $4,587) | fx_pressure: [] | pe_risk: []
+- Notable movers within normal range: GAS +3.71% (1.20σ), GVR +3.59% (1.40σ), NVL +3.00% (0.83σ), VNH -9.09% (insufficient history — 1 data point only)
+- Sector rotation: Real estate weakest (-1.95% 1d), Steel strongest (+2.22% 1d). All sectors labeled STABLE (insufficient 5d data)
+- No chain findings (last 15 min)
+
+## Metrics (cycle 2026-05-15 05:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
+
+## Cycle — 05:41 UTC
+
+- **cycle_date**: 2026-05-15
+- **findings**:
+  - 34/39 watchlist tickers priced (5 N/A: BDI, DLC, SIS, VDC, JSH); market OPEN
+  - All moves within 2.0σ NEUTRAL threshold: GAS +3.71% (1.20σ), GVR +3.59% (1.40σ), NVL +3.00% (0.83σ); VNH -9.09% skipped (1 data point — insufficient history)
+  - Sector rotation: real estate weakest (-1.95%), steel strongest (+2.22%), no 5d trend data available
+- **actions**: 0 price_anomaly signals posted | WORK telegram sent
+- **next_cycle_hint**: Monitor GAS (4-day rally +13.3%, watch for continued momentum or reversal); VNH -9.09% warrants watchlist review for data quality
+- **estimated_tokens**: 11 tool calls × 500 = 5500
+
+### Cycle (06:38–06:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (inferred) | DXY: USD STABLE (USD/VND 26,137) | US10Y: RISK-OFF (Gold $4,579, elevated) | fx_pressure: [] | pe_risk: []
+- Adaptive thresholds: sigma=2.0σ, vol_mult=2.0x, downside_bias=false
+- GAS +4.55% (1.40σ, 30d stddev ~3.26%, vol 324.1K — below prior avg) — below 2.0σ threshold. 4-day rally continues (+13.05% 30d). MEDIUM price_surge alert active. Brent $107.41 (+2.68σ HIGH macro alert).
+- GVR +3.31% (1.24σ, 30d stddev ~2.66%, vol 414.3K) — below threshold. Agriculture sector, bullish evidence 0.7565. 30d +12.14%.
+- VNH -9.09% (1,000 VND, HNX real_estate) — only 1 data point; sigma incalculable. Floor-price illiquid stock. HIGH alert already active. No new signal.
+- ACB +1.75%, NVL +2.10%, HPG -2.03%, FPT -1.49%, MWG -1.54% — all sub-threshold.
+- Sector 1d: Steel +1.94%, Oil&Gas +1.34%, Real estate -0.51%, Tech -0.92%, Insurance -1.19%. All 16 sectors STABLE (1d data only, insufficient 5-session trend).
+- Supply chain: STABLE (BDI=1,400, no disruptions). Open alerts: 3 (GAS MEDIUM, MACRO HIGH Brent, HVN LOW). Chain findings: 0 (last 15 min). System: OK. Market OPEN.
+
+## Metrics (cycle 2026-05-15 06:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4500 |
