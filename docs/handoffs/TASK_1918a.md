@@ -79,3 +79,25 @@ log line). References `macroSnapshotGuard.ts`.
 - [x] 10/10 unit tests GREEN
 - [x] tsc 0 errors
 - [x] No regressions in macro/dispatch regression suite (27/0)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-15
+**Round:** 1
+**Verdict:** APPROVED
+
+**Pipeline:**
+- Targeted tests (1918a): 10 pass / 0 fail
+- Full suite: 9778 pass / 0 fail (890 files, 29236 expect() calls)
+- tsc: 0 errors
+- DDD scan: PASS (no domain→infrastructure imports)
+- Security scan: PASS (no process.env, no hardcoded secrets)
+
+**AC Verification:**
+- AC-1 PASS: `macroSnapshotGuard.ts` exports `isMacroSnapshotValidShape()` at line 27
+- AC-2 PASS: stage-bootstrap.md Shape-validation gate at line 17 — fires on both attempts, routes mismatch to news-fallback
+- AC-3 PASS: 10/10 tests GREEN
+- AC-4 PASS: `{text:"..."}` accepted, `{status:"degraded"}` rejected (test line 34)
+- AC-5 PASS: tsc 0 errors, full suite stable
