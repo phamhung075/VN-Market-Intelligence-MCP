@@ -1,8 +1,30 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-15 | **Sprint:** 1914b
+**Last updated:** 2026-05-15 | **Sprint:** SPRINT-S
 
 ## Last session summary
+
+Task 1899a-bloomberg-test-split — Split `1899a-bloomberg.test.ts` (491L, untracked) into 4 files ≤200L.
+
+**What was done:**
+- Created 4 split files in `apps/news-fetch/__tests__/`:
+  - `1899a-bloomberg-dom.test.ts` — 189L, 12 expect(), DOM happy path (8 it) + maxItems (1 it)
+  - `1899a-bloomberg-json-fallback.test.ts` — 182L, 8 expect(), JSON __NEXT_DATA__ fallback (5 it)
+  - `1899a-bloomberg-perimeterx-lifecycle.test.ts` — 186L, 14 expect(), PX (2 it) + lifecycle close() (3 it) + error handling (2 it), sub-describes flattened to control line count
+  - `1899a-bloomberg-normalize-date.test.ts` — 51L, 7 expect(), pure function, no mock.module
+- Source file deleted from disk (was never committed to git — untracked)
+- Each file carries own `mock.module('playwright', ...)` + `await import(...)` preamble (Bun per-file mock isolation)
+- preamble trimmed in dom file to inline the locator logic and shorten helper function bodies to land ≤200L
+
+**Total: 29 pass / 0 fail, 41 expect() = parity. tsc 0 errors.**
+
+**Commit:** `40747a58 refactor(1899a/news-fetch): split bloomberg 491L test into 4 files ≤200L each`
+
+**Branch:** main
+
+**Note on full suite baseline:** `bun test apps/news-fetch/` = 172 pass / 0 fail. `pnpm test:all` (mcp-server) crashes Bun 1.3.13 with OOM — pre-existing issue unrelated to this change. The 9306/36 baseline from handoff refers to a prior healthy Bun run; our changes touch only `apps/news-fetch/__tests__/` (no production code, no cross-service impact).
+
+## Previous last session summary
 
 Task 1914b — Fix `log_agent_work` two-call pattern documentation in all 10 agent package files.
 
@@ -33,66 +55,6 @@ Task 1915-fix-part2 — `scanDiskForStrandedPdfs()` filename fallback for non-wa
 **Branch:** main (per CLAUDE.md: no branches for dev)
 **Runtime AC pending:** ops redeploy + `financial_reports` VEA/VNM row count > 0.
 
-## Previous last session summary
-
-Task 1916a-vps-part — add `GET /proxy/bctc-discover/:ticker` route to `vps-scripts/vps-proxy-server.js`.
-
-**Root cause (from SPIKE 1916):** `bctcQueueEnricherJob` Strategy 0 has always returned HTTP 404 because the `/proxy/bctc-discover` route was never deployed on `vps-proxy-server.js`. The route was referenced in docker-compose.yml (`BCTC_DISCOVER_URL`) and in `bctcHttpFetcher.ts` but did not exist on the VPS.
-
-**What was done:**
-- `vps-scripts/vps-proxy-server.js`:
-  - Added `require("child_process").spawn` import
-  - Added `BCTC_DISCOVER_SCRIPT` + `BCTC_DISCOVER_PREFIX` config constants
-  - Added `runDiscoverScript(ticker, year, quarter, timeoutMs)` helper — spawns `python3 /root/discover-bctc-urls-browser.py` with validated args, parses `{"results":[{"url":"..."}]}` JSON, returns `string[]`, always resolves (never rejects)
-  - Added `GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q]` route handler — validates ticker (alphanumeric, 1-10 chars), extracts optional year/quarter from query string, calls `runDiscoverScript`, returns `HTTP 200 + string[]` always
-  - Updated startup log lines to advertise new route
-  - Updated file header comment
-- Deployed to VPS via SCP + `systemctl restart vn-vps-proxy.service`
-
-**Verification results:**
-- `curl -H 'X-API-Key: <key>' http://125.212.251.27:8765/proxy/bctc-discover/VCB?year=2025&quarter=4` → HTTP 200 `[]` (script ran in ~11s, no PDFs found for VCB Q4-2025 in HNX/UPCOM/SSC-NS)
-- `curl http://125.212.251.27:8765/proxy/bctc-discover/VCB` → HTTP 401
-- `/health` still → HTTP 200
-- `/bctc-files/VCB/nonexistent.pdf` (with key) → HTTP 404 (no regression)
-
-**Note on `[]` result:** `discover-bctc-urls-browser.py VCB 2025 4` returned empty — HNX/UPCOM showed no results for VCB (listed on HOSE, not HNX/UPCOM), and SSC-NS ticker input selector was not found. This is expected behaviour — VCB's PDFs come via HOSE/congbothongtin paths that the push pipeline handles separately. The route is functionally correct. The bctcQueueEnricherJob will now reach Strategy 0 and get a valid HTTP 200 response instead of 404.
-
-**Commits:** `1b8f8cd5 feat(1916a/vps): add GET /proxy/bctc-discover/:ticker route to vps-proxy-server.js`
-**Branch:** `task/1916a-vps-discover-route`
-**No tests written:** VPS JS file, no test harness available locally for Node VPS scripts.
-**tsc:** N/A (pure JS, not TypeScript).
-
-## Previous last session summary
-
-Task 1910b-effr-package-reg — zero-build: register `get_fed_liquidity_spread` in 3 agent packages.
-
-**What was done:**
-- `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`: added `"get_fed_liquidity_spread"` to `news_scout` (L45), `financial_analyst` (L77), `unified_coordinator` (L271)
-- `.claude/tools/package/financial-analyst.md`: +1 row in Macro Intelligence section
-- `.claude/tools/package/news-scout.md`: +1 row, new "US Monetary Chain" section; Last Updated bumped
-- `.claude/tools/package/unified-agent.md`: +1 row in new "Macro Intelligence (COC)" section; Last Updated bumped
-- `docs/SKILL_MANIFEST.md`: JSON arrays updated for all 3 agents; "Recently registered tools" table +1 row; Last updated bumped
-- tsc: 0 errors (config-only, no code)
-- No code changes — pure config + docs
-
-**Commits:** c6981eb7 feat(1910/bootstrap): 1910b register get_fed_liquidity_spread in 3 agent packages
-**Branch:** `task/1910b-effr-package-registration`
-**Flag for ops:** agentBootstrap.ts edited — container rebuild required in next ops cycle.
-
-## Previous previous last session summary
-
-Task 1906a-headlock-cure-permanent — doc-only reclassification of HEAD.lock PREFLIGHT self-cure.
-
-**What was done:**
-- `docs/protocols/head-lock-self-cure.md` +13L net:
-  - Status line added to header: PERMANENT OPERATIONAL POLICY (reclassified 2026-05-14)
-  - New `§ (f) Policy Classification` — rationale, c87/c88/c89 3-cycle evidence, F1 structural cure cross-ref, `1897b-carry` tracking pointer
-- `reports/TASK_HANDOFF_1906a-headlock-cure-permanent.md` created (ULTRA)
-- No code changed, no tests, tsc gate N/A (doc-only)
-
-**Commits:** (see SHA in branch task/c89-1906a-headlock-cure-permanent)
-**Branch:** `task/c89-1906a-headlock-cure-permanent`
-
 ## Known patterns / preferences
 
 - TDD cycle is mandatory: write failing test first, then minimum code to pass.
@@ -103,7 +65,9 @@ Task 1906a-headlock-cure-permanent — doc-only reclassification of HEAD.lock PR
 - mock.module() must be declared before module import in Bun test files.
 - NEVER use `git commit -am` — greedily absorbs staged index content (C2 atomicity violation, c47 incident SHA 8bec73d3).
 - `mock.calls[0]` TS type is `[]` (empty tuple) — cast via `as unknown as Array<[T]>` for tsc compliance.
-- HEAD.lock from dead Spotlight process: verify no git process running, then `rm .git/HEAD.lock`.
+- HEAD.lock from dead Spotlight process (com.apple pid 43751): verify no git process running, then `rm .git/HEAD.lock`. Recurs frequently — permanent policy per head-lock-self-cure.md.
+- Bun 1.3.13 OOM-crashes on mcp-server full suite (RAM 2.15GB peak → panic). Not our bug. Use per-service `bun test` for regressions.
+- Test split strategy: each split file needs own mock.module + await import preamble (Bun per-file isolation). Trim preamble helpers not needed by the split group to control line count.
 
 ## Carry-over for next session
 
