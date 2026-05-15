@@ -1,11 +1,19 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-14 | **Sprint:** 1912b+1912c (c107)
+**Last updated:** 2026-05-15 | **Sprint:** 1920 (c131)
 
-## Current state
+## Current state (2026-05-15)
 
-REQ_1912b spec complete (c107). 1912b = Phase 2 of Go migration program. Alert-engine Go rewrite. 16 ACs. D-1: response shape mismatch internal DTO vs clients.ts; D-2: scheduler jobs bypass /evaluate — both developer-resolved. No PO blockers.
-REQ_1912c spec complete (c107). 1912c = Phase 3 of Go migration program. stock-price Go rewrite. 14 ACs. 2 spec-time clarifications flagged (R-SPEC-1: PriceSnapshot.timestamp vs fetchedAt field name; R-SPEC-2: path-param vs query-param route shape for /price/history). No PO blockers. dev-stock-price to implement.
+Sprint 1920 decomposition complete (c131). 5 tasks decomposed: 1920e/f/g/h/i. All specs written to docs/handoffs/TASK_1920[e-i].md. TASKS.md updated, owner=dev-mcp-server, status=Ready for Dev. WORK telegram sent.
+
+Key findings:
+- 1920e: cascadeBacktestJob has NO saveRun call. Repo method is `saveRun()` not `recordRun()`. Aggregate metrics computable from in-loop accumulator. No new files needed.
+- 1920f: `prepareSignalAuditRecord()` exists in domain (signalValidator.ts:193) but NO infrastructure store file exists. Need new `signalQualityAuditStore.ts`. Write gate: only price_confirmation + urgent_news signal types. monthlySignalQualityAuditJob queries signal_rejections (different table) — the audit is for a different downstream use (report-analyzer).
+- 1920g: intelligenceCycleJob Step G (runChainSynthesis) produces SynthesizedChain with conviction + action + narrative. Wire insertPredictionClaim after postSignal call for conviction≥0.7. mapChainAction: BUY→bullish, SELL→bearish, MONITOR/HOLD→neutral. 7-day resolution horizon.
+- 1920h: `skips` table confirmed non-existent in any schema file — only word "skips" in schema-system.ts:365 is a comment about SQLite semantics. `user_requests` exists in schema-system.ts:239, zero production writers outside schema. Option B (DEPRECATED comment) chosen — no DROP to protect live DBs.
+- 1920i: freshnessSlaMonitorJob querySignalAges uses hard-coded 5-type UNION ALL. Need to extend to 12 types post-1920a–g. Null guard for zero-row tables critical (prevents false breach on day-1 seeding). Soft sequencing dependency on 1920a–g.
+
+No PO blockers identified. No architect brief required for any of e/f/g/h/i.
 
 ## Last session summary (2026-05-14) — 1912b
 
