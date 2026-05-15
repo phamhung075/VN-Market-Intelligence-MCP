@@ -1,8 +1,41 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-14 21:02 UTC | **Sprint:** c84
+**Last updated:** 2026-05-15 00:02 UTC | **Sprint:** c84
 
 ## This session
+
+## Cycle — 00:02 UTC
+
+- **cycle_date**: 2026-05-15
+- **findings**: Market closed (off-hours 2h cycle). 2 inter-agent signals: FPT urgent_news (conf 0.50) + VCB fundamental_validation (not in matrix). get_macro_snapshot returned system status instead of regime text — news-fallback TIGHTENING (7 bearish vs 3 bullish). FPT suppressed: conf 0.50 < TIGHTENING thr 0.75, no price_anomaly override (no price_anomaly signals for FPT). Legal clean, crisis clear, no active price alerts.
+- **actions**: WORK channel status sent. log_agent_work completed (id=843). Notebook updated.
+- **next_cycle_hint**: FPT automotive joint-venture news still in bus but signal expires ~01:22 UTC. If market-hours cycle catches it, re-evaluate at NEUTRAL threshold (0.60). Monitor VN-Index reaction to FPT +4.53% at open.
+- **estimated_tokens**: 8000
+
+### Alert Cycle (00:02–00:02 UTC)
+- Signals: 2 (urgent_news×1, fundamental_validation×1)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING [news-fallback] | Carry: NEUTRAL | Pivot window: false
+- Legal: clean | Crisis: clear | Price alerts: none
+- [WARN] get_macro_snapshot unavailable — regime estimated from news context, conservative threshold applied
+- Schedule: off-hours 2h cycle
+
+## Cycle — 23:02 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: Market closed (off-hours 2h cycle). 0 inter-agent signals on bus. Legal clean, crisis clear, no price alerts. Regime NEUTRAL, carry FII_OUTFLOW_RISK (-0.33%).
+- **actions**: WORK channel status sent. log_agent_work completed (id=841). Notebook updated. Git commit skipped (index.lock conflict — concurrent process).
+- **next_cycle_hint**: Monitor for overnight news signals. Carry spread remains negative — watch FII flow indicators at market open.
+- **estimated_tokens**: 6000
+
+### Alert Cycle (23:02–23:03 UTC)
+- Signals: 0 (no inter-agent signals on bus)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: clean | Crisis: clear | Price alerts: none
+- Schedule: off-hours 2h cycle
 
 ### Alert Cycle (21:02–21:02 UTC)
 - Signals: N/A — cycle aborted at Step 0
