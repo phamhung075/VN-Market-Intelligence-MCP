@@ -153,3 +153,41 @@ The task was completed by `agent-md-editor` at c96 2026-05-14 (see Done entry `1
 1910a adds `get_ism_subcomponents` to all 3 agent arrays (lines 30/46/224). 1910b adds `get_fed_liquidity_spread` to the same arrays. Both can merge independently or via single PR after 1910a ships (no functional interaction).
 
 No new container build required unless agentBootstrap.ts edit triggers rebuild. Otherwise, changes are manifest-only + docs-only (no deploy needed until next ops cycle).
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-15
+**Agent:** qa
+**Round:** 1
+**Verdict:** APPROVED
+
+### Pipeline results
+
+| Check | Result |
+|-------|--------|
+| bun tsc --noEmit | 0 errors |
+| bun test (full suite) | 9356 pass / 36 fail (all pre-existing) |
+| DDD scan (5 changed files) | PASS — grep hit = comment only |
+| Security scan | PASS — 0 matches |
+
+### AC confirmation
+
+| AC | File | Location | Status |
+|----|------|----------|--------|
+| news_scout array | agentBootstrap.ts | L45 | PASS |
+| financial_analyst array | agentBootstrap.ts | L78 | PASS |
+| unified_coordinator array | agentBootstrap.ts | L273 | PASS |
+| Package doc row | financial-analyst.md | L104 (Macro Intelligence) | PASS |
+| Package doc row | news-scout.md | L49 (US Monetary Chain) | PASS |
+| Package doc row | unified-agent.md | L47 (Macro Intelligence COC) | PASS |
+| SKILL_MANIFEST.md | docs/SKILL_MANIFEST.md | 3 arrays + recently-registered table | PASS |
+
+### Pre-existing failures (36) — baseline match
+
+All 36 failures pre-date commit e7fd1718 (1910b ship). Representative causes: watchlist count assertions (26 tickers), scheduler config counts, signal-T5 SQLite dedup, climate tool timeout. None touch agentBootstrap, package docs, or SKILL_MANIFEST. Baseline unchanged from c124 (39→36 delta attributable to post-1910b commits).
+
+### Merge note
+
+All changes already on main (commit e7fd1718, 2026-05-14). No branch exists. No merge action required. TASKS.md updated to Done.

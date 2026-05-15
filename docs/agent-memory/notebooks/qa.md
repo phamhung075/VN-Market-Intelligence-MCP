@@ -1,6 +1,41 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c125 — TASK-BCTC-3c APPROVED (round 1)
+**Last updated:** 2026-05-15 | **Session:** c126 — 1910b-effr-package-reg APPROVED (verification-only)
+
+## Session 2026-05-15 c126 — 1910b-effr-package-reg
+
+### TASK REPORT — 1910b (verification-only, no code changes)
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: CHORE (registration-only — docs + agentBootstrap)
+round: 1
+```
+
+#### Pipeline
+
+- Full suite: 9356 pass / 36 fail (all pre-existing — watchlist count, scheduler config, signal-T5; unrelated to this task)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+- No targeted tests (zero code changes)
+
+#### AC Verification
+
+- AC-1 PASS: `get_fed_liquidity_spread` in news_scout array (agentBootstrap.ts L45)
+- AC-2 PASS: `get_fed_liquidity_spread` in financial_analyst array (agentBootstrap.ts L78)
+- AC-3 PASS: `get_fed_liquidity_spread` in unified_coordinator array (agentBootstrap.ts L273)
+- AC-4 PASS: financial-analyst.md L104 — Macro Intelligence section
+- AC-5 PASS: news-scout.md L49 — US Monetary Chain section
+- AC-6 PASS: unified-agent.md L47 — Macro Intelligence COC section
+- AC-7 PASS: SKILL_MANIFEST.md — 3 agent JSON arrays + recently-registered table row with `financial-analyst, news-scout, unified-coordinator`
+- DDD grep hit = comment line only ("NEVER import from domain/ or infrastructure/") — PASS
+- Security scan: 0 matches — PASS
+
+#### Note
+
+Task shipped at commit e7fd1718 (c96, 2026-05-14). Developer commit 4db28926 = TASKS.md + handoff only (confirmed). No merge needed; all changes already on main.
+
+---
 
 ## Session 2026-05-15 c125 — TASK-BCTC-3c
 
