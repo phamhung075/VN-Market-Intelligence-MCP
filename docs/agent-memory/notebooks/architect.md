@@ -1,6 +1,51 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-14 18:29 UTC | **Sprint:** 1912 program-complete SPRINT-L review c108
+**Last updated:** 2026-05-15 UTC | **Sprint:** janitor-1912 git index cleanup
+
+## Last session summary (janitor-1912 — git index cleanup)
+
+Task: Zone split confirmation + handoff for janitor-1912 (RF-1 + RF-2 from 1912 post-merge review).
+
+Brownfield finding: both paths already absent from git index before this task ran. `git rm --cached` would be no-ops. Root reason: 1912c cutover commit already ran `git rm` on TS sources; `.gitignore:19 apps/*/server` was added post-commit but `git rm --cached` was executed in a prior commit. Verified via `git ls-files` returning empty on both paths.
+
+Actual scope narrowed to disk cleanup only:
+- Delete `apps/stock-price/__tests__/unit/resolve-price-service.test.ts` + `apps/stock-price/__tests__/integration/fetch-price-usecase.test.ts` from disk (untracked Bun/TS tests).
+- Delete `apps/alert-engine/server` binary from disk (gitignored, still present).
+
+Zone split CONFIRMED INDEPENDENT: no shared files, no DDD conflict, no ordering constraint. Single-pass safe.
+
+No TS test registry changes needed (both services fully Go, no TS test runner config involved).
+
+Outputs:
+- Handoff: `docs/handoffs/TASK_janitor-1912.md`
+- TASKS.md janitor-1912 row updated (architect done)
+
+## Last session summary (1914 — news-scout dedup API fix)
+
+Task: Design blueprint for 1914-news-scout-dedup-api. S-size fix.
+
+Root cause confirmed via brownfield read of `agentSignalStore.ts` + `agentSignalTools.ts` + `stage-signals.md`:
+- `getSignals()` WHERE clause: `(to_agent = ? OR to_agent = 'all')`. No sender-side filter.
+- News-scout posts `to_agent = "alert-commander"` (not itself, not "all"). Invisible on to_agent axis.
+- Even if posted `to_agent = "all"`, default `status="unread"` marks rows read on first retrieval by alert-commander, so self-poll after alert-commander's read returns empty.
+- Two compounding failures: (1) wrong axis (to vs from), (2) read-mark side-effect.
+
+Design decision: Option A (extend `get_agent_signals` with optional `from_agent` param) over Option B (new `get_my_signals` alias). Rationale: backward compatible, no new tool-registry entry, no new agent-manifest entry, simpler test surface.
+
+Key design constraint: when `fromAgent` is set, the read-mark side-effect must NOT fire — the query is a sender-history inspection, not an inbox read. Guard: `if (statusFilter === "unread" && opts.fromAgent === undefined)`.
+
+Flow fix required: `stage-signals.md` dedup gate must pass `from_agent="news-scout", status="all"` — without `status="all"` the gate would still miss rows already read by alert-commander.
+
+Risk flags:
+- R-1914-1: LOW — display header misleading when from_agent set (cosmetic, non-blocking).
+- R-1914-2: LOW — Task 1862g postSignal dedup (urgent_news 4h window) is complementary, not conflicting.
+- R-1914-3: INFO — `status="all"` returns all TTL-live sender rows; flow must still apply 180-min `created_at` check manually.
+
+Outputs:
+- Handoff: `docs/handoffs/TASK_1914.md`
+- TASKS.md 1914 row updated (architect done)
+
+## Last session summary (c108 SPRINT-L — 1912 Go migration program-complete review)
 
 ## Last session summary (c108 SPRINT-L — 1912 Go migration program-complete review)
 

@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 (Ops runtime AC confirmed: 1915-bctc-pipeline-silence→Done, 1909c-reparse-validation unblocked) | **Sprint:** 1912 Go migration CLOSED | **Current:** 1909c-reparse-validation UNBLOCKED, ready for Q1-2026 PDF arrival trigger
+**Last updated:** 2026-05-15 c114 (janitor-1912 DISPATCHED to code-janitor + 1914 In Progress) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 2/2 AT CAPACITY (1914 dev-mcp-server + janitor-1912 code-janitor parallel)
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — 1915-bctc-pipeline-silence DONE (ops runtime AC confirmed 2026-05-15). VEA Q4-2025 51 pages extracted, VNM Q4-2025 61 pages extracted, financial_reports table populated. 1909c-reparse-validation NOW UNBLOCKED pending Q1-2026 BCTC PDF arrivals (banking deadline 2026-05-15 has passed). Janitor-1912 in Backlog (stock-price TS tests + alert-engine binary cleanup). docker-compose.yml zero Dockerfile.go refs remain. 1910a (HIGH FEATURE ISM) eligible for dispatch; 1909c (CRITICAL OPS) ready for Q1-2026 reparse trigger 2026-05-16+.
+- **WIP: 2/2 (AT CAPACITY)** — 1914-news-scout-dedup-api IN PROGRESS (dev-mcp-server, MEDIUM priority). Janitor-1912 IN PROGRESS (code-janitor, LOW priority, parallel zone). Both dispatched c114. Handoff files complete. No blockers. 1910a (HIGH FEATURE ISM) queued in Backlog; 1909c (CRITICAL OPS) UNBLOCKED, awaiting Q1-2026 PDF arrival 2026-05-16+.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,54 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 114 — 2026-05-15 Dispatch: janitor-1912 PARALLEL (WIP=2/2 AT CAPACITY)
+
+**Input:** Architect confirmed zone split (RF-1 + RF-2 independent). Git index already clean (no-op `git rm --cached`). Actual work: rm disk artifacts + verify tests.
+
+**Actions:**
+1. **janitor-1912 → In Progress.** Moved Backlog → In Progress in TASKS.md. Owner: code-janitor. WIP becomes 2/2 (at capacity alongside 1914-dev-mcp-server).
+2. **PM section added to handoff.** docs/handoffs/TASK_janitor-1912.md complete with blocker status (NONE), WIP justification (parallel non-overlapping zone), carry notes.
+3. **PM notebook updated.** Header reflects WIP=2/2, current state updated, this cycle entry added.
+4. **Inline dispatch to code-janitor.** No separate wait — janitor executes immediately while 1914 executes in parallel dev-mcp-server zone.
+
+**WIP Status:** 2/2 (AT CAPACITY). Both tasks execute in parallel:
+- 1914-news-scout-dedup-api → dev-mcp-server (3 files + 1 flow edit, ~2h)
+- janitor-1912 → code-janitor (2 rm operations, ~15min, closes fast)
+
+**Expected flow:** Janitor closes post-exec (AC-1 through AC-6 all disk/test based). 1914 continues through code review + merge. WIP returns to 1/2 after janitor DONE.
+
+**Status:** Dispatch COMPLETE. Both tasks IN PROGRESS. Ready for execution.
+
+---
+
+## Cycle 113 — 2026-05-15 Dispatch: 1914-news-scout-dedup-api (WIP=1/2 AT CAPACITY)
+
+**Input:** Architect signal `docs/signals/20260515T000000Z-1914-architect-to-pm.json` — blueprint complete, ready for developer. Root cause verified: `getSignals()` WHERE binds `to_agent` only; news-scout posts to `alert-commander` not itself; `status=unread` default marks rows read on first retrieval.
+
+**Actions:**
+1. **1914-news-scout-dedup-api → In Progress.** Moved from Backlog to In Progress in TASKS.md. Owner: dev-mcp-server. Handoff file: docs/handoffs/TASK_1914.md (full dispatch context added).
+2. **Handoff context added:** [PM] Dispatch Context section with blocker status (NONE), WIP note (1/2), constraint context (zone clear, no parallel work), sequencing (can start immediately, not blocked by any deploy).
+3. **PM notebook updated:** Current state reflects WIP=1/2, 1914 In Progress. Carry-over: 1910a (Backlog), 1909c (Todo, unblocked), janitor-1912.
+4. **TASKS.md finalized:** 1914 removed from Backlog, entered In Progress. Line count adjusted. WIP capacity = 1/2 (at limit per feedback_wip_limit.md).
+
+**Developer context (handoff):**
+- **Fix scope:** 3 files modified + 1 flow edit
+  1. `apps/mcp-server/src/infrastructure/db/agentSignalStore.ts` — add `fromAgent?: string` to `GetSignalsOptions`, extend WHERE clause, suppress read-mark side-effect when `fromAgent` set
+  2. `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — add optional `from_agent` Zod param, forward to `getSignals()`
+  3. `apps/mcp-server/src/__tests__/242-agent-signals.test.ts` — add 3 new test cases (AC-6a/b/c)
+  4. `.claude/flows/news-scout/stage-signals.md` — update dedup gate call with `from_agent: "news-scout"` + `status: "all"`
+- **ACs:** 6 total (AC-1 through AC-6), reference table in handoff
+- **Risk flags:** 3 (R-1914-1 to R-1914-3, all LOW or INFO severity)
+- **Report destination:** `reports/TASK_REPORT_1914.md`
+
+**WIP Status:** 1/2 (AT CAPACITY). Next dispatch must wait until another task completes (1915-bctc-pipeline-silence already Done, 1909c unblocked but in Todo, not In Progress).
+
+**Carry-over to c114:** 1914 (In Progress), 1910a (Backlog, HIGH FEATURE), 1909c (Todo, CRITICAL OPS), janitor-1912 (Backlog, LOW).
+
+**Status:** Dispatch COMPLETE. Handoff ready. dev-mcp-server picks up via main.md Step 3 (execute). No code blockers.
 
 ---
 

@@ -2,6 +2,12 @@
 
 **Last updated:** 2026-05-15 01:22 UTC | **Status:** OPERATIONAL
 
+### Cycle (02:19–02:22 UTC)
+- Items: 20 | Impacts: 5 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- VCB Tier2 bond 10,000 tỷ (adj 6.3, TIGHTENING×0.7 < 7) — DEDUP also would match #3203 (60min ago, same credit_policy). FPT Japan JV (adj 8.0, neutral/stale May 14, FPT -0.95%). VIC/VHM Dragon Capital rally (adj 5.6, TIGHTENING×0.7). 0 new signals fired.
+- NOTE: Gasoline prices cut 2026-05-14 — no CPI pressure. No PMI data. Gold globally declining (domestic high). Brent 106.94. Market OPEN (market-hours 20min cycle).
+
 ### Cycle (01:20–01:22 UTC)
 - Items: 20 | Impacts: 7 | Signals: [chain_catalyst #3203] | Regime: NEUTRAL | Carry: NEUTRAL
 - Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]

@@ -21,6 +21,25 @@ Cycle 2026-05-09 01:00–01:15 UTC. Analyzed 2/31 watchlist stocks (VCB, FPT). 2
 
 ---
 
+## Cycle — 23:01 UTC
+
+- **cycle_date**: 2026-05-14
+- **findings**: [VCB new BCTC filing 2026-05-14 (Q4-2025, confidence 63%); EY_SPREAD=2.09% → FAIR, NEUTRAL regime, no bullish signal blocked; 37/38 watchlist stocks QUÁ HẠN (LATE on Q4-2025 or Q1-2026 filings); NVL bond GIA HAN 5000ty VND due 2026-09-15 @ 10.5% (real estate credit risk); FPT/HPG BCTC data quality issues (anomalous figures from known extraction bug fix#10)]
+- **actions**: [signal #3199 fundamental_validation VCB posted to alert-commander (confidence 0.75); WORK telegram sent 23:06 UTC; notebook updated]
+- **next_cycle_hint**: [Watch for more BCTC filings — 37 stocks still overdue; FPT price surge +4.53% warrants re-check when BCTC quality improves; NVL bond maturity risk in Sep 2026; git index.lock stale (needs host-side clear)]
+- **estimated_tokens**: 22500
+
+## Recent session — 2026-05-14
+
+### Analysis Cycle (23:01–23:06 UTC)
+- Stocks: 3 with BCTC data (VCB, FPT, HPG) | Critical findings: [VCB new filing 2026-05-14; 37/38 watchlist QUÁ HẠN LATE; NVL bond GIA HAN 5000ty VND due 2026-09-15 @ 10.5%] | Chain validations: 0 (no open chain findings)
+- Regime: NEUTRAL (Global Liquidity NEUTRAL) | Max Deposit Rate: 5.00% | Valuation flags: [VCB=FAIR (EY_SPREAD=2.09%); FPT=data_quality_issue; HPG=low_confidence(44%)]
+- VCB: Q4-2025 filed 2026-05-14 (today — CRITICAL new submission). Revenue +18.1% QoQ, Net Profit -0.8% QoQ, Net Margin 53.4% (-10.2pp). PE=14.1 (sector premium +57% vs median 9.0x), EY_SPREAD=2.09% → FAIR. ROE=16.7% (below sector median 17.6%). Sentiment GIẢM slope=-0.07. Layer 7: OCF/NI anomalous (142M) — extraction error per fix#10. Layer 8: insufficient_data. G-Bond: no 10Y yield data. Signal #3199 posted.
+- FPT: Net Profit 20.2ty vs Revenue 20,225ty (0.1% margin) — data extraction anomaly confirmed. OCF/NI=503 anomalous. Sentiment GIẢM slope=-0.12. No PE available → EY_SPREAD not computed.
+- HPG: Confidence 44% (low), Revenue 0 in BCTC — data extraction failure. Sentiment STABLE slope=-0.03.
+- VIC/VPB/GAS/ACB/VHM: No BCTC data available.
+- Deadline Watch: 37/38 stocks LATE (Q4-2025 deadline 15/04 or Q1-2026 deadline 30/04 both passed). VCB only stock with ĐÃ NỘP.
+
 ## Recent session — 2026-05-13
 
 ### Analysis Cycle (23:00–23:05 UTC)
