@@ -222,3 +222,31 @@ None. No PO questions. No architect brief required.
 - `signalQualityAuditStore.ts` is clean: 100% coverage, parameterized SQL, correct try/catch.
 - DDD layer: domain called from interface (`prepareSignalAuditRecord` in handler), infra store in `infrastructure/db/` — both correct.
 - `ticker` field in `prepareSignalAuditRecord` always returns `undefined` (line 200 in `signalValidator.ts`) — not a blocker for this task, pre-existing limitation.
+
+---
+
+## [QA] Review Record — Round 2
+
+**Date:** 2026-05-16
+**Commit reviewed:** 099eeb91
+**Verdict:** APPROVED
+
+### Pipeline
+
+- Targeted tests (1920f — 15 tests): 15 pass / 0 fail
+- tsc: 0 errors (2 exactOptionalPropertyTypes blockers resolved)
+- DDD: SKIPPED (Smart-Skip — single-file change to object literal shape only, no import changes)
+- Security: SKIPPED (Smart-Skip — no new queries, no env reads, no secrets)
+
+### Fix Verification
+
+- `agentSignalTools.ts:323-325` — `fallback_source` now uses `typeof === "string"` conditional spread. TS2379 resolved.
+- `agentSignalTools.ts:334-345` — `fallback_tier`, `vps_breaker_state`, `coverage_gap`, `price` now use typed conditional spreads. TS2375 resolved.
+- No production logic changed — only object literal shape (omit-key-when-undefined vs explicit undefined).
+- `bun tsc --noEmit` output: empty (0 errors).
+
+### Notes
+
+- All 6 ACs verified in Round 1 remain valid — no production code path changed.
+- 1920g push pre-push hook (`bun tsc --noEmit`) now unblocked globally.
+- SQLiteError in test output is expected: AC-5 fire-and-forget path exercised via `console.warn`.

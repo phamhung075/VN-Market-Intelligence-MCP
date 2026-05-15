@@ -1,6 +1,34 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c136 — 1920e APPROVED (re-review)
+**Last updated:** 2026-05-16 | **Session:** c137 — 1920f APPROVED Round 2
+
+## Session 2026-05-16 c137 — 1920f-signal-quality-audit Round 2
+
+### TASK REPORT — 1920f Round 2 (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FIX (exactOptionalPropertyTypes — conditional spread)
+fixer_commit: 099eeb91
+round: 2
+```
+
+#### Pipeline
+
+- Targeted tests (1920f — 15 tests): 15 pass / 0 fail
+- tsc: 0 errors
+- DDD: SKIPPED (Smart-Skip — no import changes)
+- Security: SKIPPED (Smart-Skip — no new queries or env reads)
+
+#### Notes
+
+- TS2375 (auditContext) + TS2379 (validationResult) resolved by conditional spread at lines 323-325 and 334-345.
+- No production logic changed. All 6 ACs from Round 1 remain valid.
+- SQLiteError in test output = expected AC-5 behavior (fire-and-forget path).
+- 1920g push now unblocked — global tsc 0 errors.
+
+---
 
 ## Session 2026-05-16 c136 — 1920e-backtest-runs-wiring re-review
 
