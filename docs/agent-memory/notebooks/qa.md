@@ -1,6 +1,41 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c137 — 1920f APPROVED Round 2
+**Last updated:** 2026-05-16 | **Session:** c138 — 1920d APPROVED
+
+## Session 2026-05-16 c138 — 1920d-broker-sanctions-quarterly
+
+### TASK REPORT — 1920d (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FEATURE (broker sanctions quarterly sweep + schema migration)
+```
+
+#### Pipeline
+
+- Targeted tests (1920d — 8 tests): 8 pass / 0 fail
+- tsc: 0 errors
+- DDD: PASS — no domain imports from infrastructure
+- Security: PASS — no process.env, no hardcoded secrets, all SQL parameterized
+
+#### AC Verification
+
+- AC-0: UNIQUE(broker_name, sanction_start) in schema-alerts.ts DDL + legacy migration block confirmed
+- AC-1: CRONS.brokerSanctionsSweep = '0 8 25-31 * 5' — TC-8 GREEN
+- AC-2: Month=1 → skipped=true, fetchFn NOT called — TC-1 GREEN
+- AC-3: Month=3 → fetchFn called — TC-2 GREEN
+- AC-4: Idempotency — same (broker_name, sanction_start) run twice → COUNT=1 — TC-5 GREEN
+- AC-5: Empty SSC result in quarter month → sendWorkFn spy called — TC-6 GREEN
+- AC-6: Fetch error → sendWorkFn called, no rethrow — TC-4 GREEN
+- AC-7: result.changes > 0 guard correct; INSERT OR IGNORE confirmed in brokerSanctionStore.ts
+- AC-8: recordJobRun via jobRunRepo.wrapRun in startScheduler.ts — verified
+
+#### Notes
+
+- Default fetcher is stub (returns []) — intentional per spec; zero-result WORK alert fires on first quarterly run
+- Legacy migration: recreate-and-rename pattern; sqlite_master detection query is correct for SQLite
+- cronJobCount in project-stats.json updated 66→67
 
 ## Session 2026-05-16 c137 — 1920f-signal-quality-audit Round 2
 
