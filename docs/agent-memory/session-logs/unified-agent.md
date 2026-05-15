@@ -22,3 +22,8 @@
 - **actions**: WORK telegram sent. No conviction shifts posted. No bugs filed (foreign-flow stale is known/recurring).
 - **next_cycle_hint**: Watch FPT 70,300 — continuing decline. SGI Capital accumulation = contrarian support signal; monitor if price stabilizes. US-Iran tension → Brent sustained high → GAS tailwind. Foreign-flow data unavailable for 3+ cycles — escalate if persists at 07:30.
 - **estimated_tokens**: 13000 (26 tool calls × 500)
+
+## Cycle 2026-05-15T23:01Z — DAILY_REVIEW
+- **flow**: daily-review
+- **status**: BLOCKED
+- **note**: Cycle 23:00 — BLOCKED at step 0: MCP gateway vn-market not responding after 1 retry. log_agent_work and send_telegram both unreachable. Signal drop filed. Exiting per error boundary.

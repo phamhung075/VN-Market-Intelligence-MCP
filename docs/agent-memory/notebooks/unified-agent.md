@@ -33,3 +33,6 @@ Daily review 20:00 UTC Fri 15/05 — BLOCKED. MCP gateway unreachable at both 19
 - **VCB Tier 2 bond 10,000 tỷ**: Positive capital signal — assess post-BCTC Q1 filing.
 - **VIC Vingroup hiring 20,000 workers Phase 1**: BĐS recovery signal — monitor if sector pressure eases.
 - **GAS Kinh Dịch Kiển (39) BÁN conflict**: +6.94% close but hexagram warns reversal at 90,000–92,000 resistance. Watch if Brent pulls back below $105.
+
+### Daily Review (23:01 UTC)
+- Mode: DAILY_REVIEW | Freshness: N/A (blocked) | Bugs: MCP gateway unreachable (vn-market server not responding)
