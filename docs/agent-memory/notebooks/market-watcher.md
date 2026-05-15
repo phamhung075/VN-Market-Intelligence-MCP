@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 02:42 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 03:42 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1585,3 +1585,25 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3800 |
+
+### Cycle (03:39–03:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (inferred — macro snapshot not in pkg) | DXY: N/A | US10Y: N/A | CARRY_REGIME: HOT_MONEY_INFLOW (carry-forward) | fx_pressure: [] | pe_risk: []
+- Top movers: GAS +2.87% (0.93σ, stddev ~3.10%), ACB +1.75% (1.70σ, stddev ~1.03%), GVR +1.80% (~0.85σ), NVL +1.80% (0.50σ), VHM -1.85% (0.47σ), VIC -1.65% (~0.6σ), VRE -1.76% (0.44σ), HPG -1.29% — all sub-2.0σ
+- ACB borderline (1.70σ): bullish context — news-scout #3205 banking capital raise wave (VCB 10,000B tier-2 bonds + CTG 59.5M dividend shares, expires 05:23 UTC, regime_adj=8.0). Not signalled (below 2.0σ NEUTRAL threshold).
+- VN-Index: 1,915.89 (-0.50% intraday). Modest pullback from ATH confirmed yesterday (+27 pts session).
+- Macro: Brent $107.16, Gold $4,623.6, USD/VND 26,137. Supply chain STABLE (BDI=1,400). Energy NORMAL (~70% hydro). Climate: May heat-risk (IDC,KBC,GEG — no watchlist direct impact).
+- Sector rotation 1d: Steel +1.69%, Oil/Gas +0.83%, Securities +0.21%, Banking +0.07% | Pharma -1.01%, Real estate -0.45%, Retail -0.46%. All 16 sectors STABLE (1d only, no 5-session rotation).
+- Chain findings: 0 (last 15 min). 3 open alerts (VRE/VIC/VHM LOW news_mention — Dragon Capital ~$2B funds buying 'họ Vin').
+- Context: HOT_MONEY_INFLOW active (FII buying reversed 14-session sell streak). Banking capital raise bullish for CAR/credit capacity. Real estate pullback led by VHM -1.85%, VIC -1.65%, VRE -1.76% — sector mean-reverting after ATH.
+
+## Metrics (cycle 2026-05-15 03:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4500 |
