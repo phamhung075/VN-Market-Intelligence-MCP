@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 20:38 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 21:38 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1774,3 +1774,19 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 800 |
+
+### Cycle (21:38–21:39)
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- BLOCKED at Step 0: MCP gateway unreachable — host.docker.internal:3000 DNS error after 1 retry
+- Telegram also unreachable (same gateway). Signal dropped: docs/signals/market-watcher-2026-05-15T213852Z.json
+
+## Metrics (cycle 2026-05-15 21:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 500 |

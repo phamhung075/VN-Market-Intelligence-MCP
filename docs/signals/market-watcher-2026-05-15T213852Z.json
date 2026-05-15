@@ -1,0 +1,8 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "get_cycle_bootstrap failed — MCP gateway unreachable (host.docker.internal:3000 DNS error) after 1 retry. Cycle skipped. Telegram also unreachable via same gateway.",
+  "priority": "high",
+  "createdAt": "2026-05-15T21:38:52Z"
+}
