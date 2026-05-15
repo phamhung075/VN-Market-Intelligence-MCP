@@ -253,3 +253,83 @@ After TASK-BCTC-3c ships:
 - **Critical path:** ops-vps-fetch AC-1 → dev-vps-crawls TASK-BCTC-3b → dev-mcp-server TASK-BCTC-3c
 - **Shipping gate:** Automated e2e test PASS + no regressions in other MCP tools
 - **Deployment:** docker-compose redeploy (VPS scripts + MCP server image rebuilt if code changes)
+
+---
+
+## [Developer] Implementation Record
+
+**Date:** 2026-05-15
+**Branch:** main (task is integration/E2E verification only — no strategy changes)
+
+### Live Probe Results (AC-1 + AC-4)
+
+| Probe | Ticker | Year | URL Count | Source | Notes |
+|-------|--------|------|-----------|--------|-------|
+| `fetchHsxBctcUrls("VNM", 2025, 8000)` | VNM | 2025 | 11 | hsx.vn | HOSE — PASS |
+| `fetchHsxBctcUrls("VEA", 2025, 8000)` | VEA | 2025 | 0 | — | VEA not in hsx.vn securities DB (UPCOM) |
+| `fetchHsxBctcUrls("ACB", 2025, 8000)` | ACB | 2025 | 12 | hsx.vn | HNX — hsx.vn also indexes HNX tickers |
+| `fetchHsxBctcUrls("HPG", 2025, 8000)` | HPG | 2025 | 12 | hsx.vn | HOSE — PASS |
+
+**Finding:** hsx.vn is not exclusively HOSE. ACB (HNX) also returns results. VEA is UPCOM-listed and genuinely absent from hsx.vn. The function is not broken — VEA requires VPS fallback strategy.
+
+### PDF Accessibility (AC-3)
+
+Two URLs probed via `curl -I`:
+
+1. `https://staticfile.hsx.vn/Uploads/UploadDocuments/2440890/20260227 - VNM - BCTC HOP NHAT 2025 - DA KIEM TOAN.pdf`
+   - HTTP/1.1 200 OK, Content-Type: application/pdf, Content-Length: 3327818
+
+2. `https://staticfile.hsx.vn/Uploads/UploadDocuments/2458538/20260429 - VNM - BCTC DA SOAT XET Q1.2026 - RIENG VN.pdf`
+   - HTTP/1.1 200 OK, Content-Type: application/pdf, Content-Length: 3103011
+
+Both PDFs directly accessible from France. No auth required.
+
+### Domain Layer Smoke Test (AC-2 / AC-3)
+
+`discoverHosePdfUrls(ticker, { _fetchHsx: fetchHsxBctcUrls, ... })` tested with production fetch functions:
+- VNM: `source: "hsx"`, 11 URLs, first URL = Q1.2026 BCTC
+- HPG: `source: "hsx"`, 12 URLs, first URL = Q1.2026 BCTC
+- ACB: `source: "hsx"`, 12 URLs (HNX ticker — hsx.vn indexed)
+- VEA: `source: null`, 0 URLs (UPCOM — not indexed)
+
+Strategy 0 fires first and returns early for all hsx.vn-indexed tickers. Confirms AC-4: strategy chain unchanged.
+
+### MCP Tool Smoke Test
+
+Docker container `vn-market-intelligence-mcp-mcp-server-1` confirmed healthy (Up ~52 minutes). MCP server uses SSE transport (port 3000). Domain layer tested directly with production injected fetchers — same code path as the `discover_bctc_urls` tool handler. Results confirmed above.
+
+### Files Created
+
+- `apps/mcp-server/src/__tests__/BCTC-3c-integration.test.ts` — 7 tests, 25 assertions, GREEN
+
+### Files Modified
+
+- `docs/handoffs/TASK_BCTC-3c.md` — this section added
+- `docs/TASKS.md` — TASK-BCTC-3c moved to Review
+
+### Tests Written
+
+- `apps/mcp-server/src/__tests__/BCTC-3c-integration.test.ts`
+  - TC-1: Strategy 0 fires first, VPS never called — GREEN
+  - TC-2: `_fetchHsx` receives correct ticker/year/timeout — GREEN
+  - TC-3: Strategy 0 returns [] → Strategy 1 (VPS) fires — GREEN
+  - TC-4: `_fetchHsx` absent → Strategy 0 skipped, Strategy 1 fires — GREEN
+  - TC-5: source:"hsx" response shape validation — GREEN
+  - TC-6: All strategies empty → source null — GREEN
+  - TC-7: hsx URLs match `staticfile.hsx.vn` domain pattern — GREEN
+
+### tsc status: clean (0 errors)
+
+### Full suite (BCTC subset): 46 pass / 0 fail
+
+### Acceptance Criteria Status
+
+- [x] AC-1: Integration verified internal — no strategy chain change (Strategy 0 = hsx, confirmed)
+- [x] AC-2: `discover_bctc_urls` returns hsx.vn URLs for HOSE tickers (VNM/HPG confirmed)
+- [x] AC-3: PDF accessibility HTTP 200 + application/pdf confirmed for 2 URLs
+- [x] AC-4: No changes to strategy chain or bctcDiscovery.ts domain logic
+- [x] AC-5: tsc 0 errors, DDD PASS (test file in `__tests__/`, no infra imports in domain), Security PASS
+
+### Note on VEA
+
+VEA is UPCOM-listed and absent from hsx.vn's securities database (`data.list: []`). This is expected — the fetcher correctly returns `[]` and the strategy chain falls through. VEA discovery requires VPS Playwright (Strategy 1) or SSC (Strategy 2). This is correct behavior, not a bug.
