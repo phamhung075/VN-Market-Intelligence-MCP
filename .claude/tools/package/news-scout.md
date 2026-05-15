@@ -2,7 +2,7 @@
 
 **Location:** `.claude/tools/package/news-scout.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-14
+**Last Updated:** 2026-05-15
 
 ## How to Invoke Tools
 
@@ -56,9 +56,36 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 ### Logging & Feedback
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `log_agent_work` | Log cycle activity and news findings | `action: string, context: object, signal_ids?: string[]` |
+| `log_agent_work` | Log cycle lifecycle — **two-call pattern required** (see recipe below) | Call 1: `agent_name, status: "running"` → `{ id }`. Call 2: `agent_name, id, status: "completed"\|"error", summary?, findings?, actions?` |
 | `send_telegram` | Send message to Telegram channel | `message: string, channel: "market" \| "work" \| "bug"` |
 | `submit_feedback` | Submit feature request or bug report | `severity: "critical" \| "high" \| "medium" \| "low", title: string` |
+
+#### `log_agent_work` — Two-Call Recipe
+
+```
+// Call 1 — session START (at top of cycle, before any work)
+const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "status": "running"
+})
+// startResult → { "id": <number> }
+const logId = startResult.id
+
+// ... do cycle work ...
+
+// Call 2 — session END (at bottom of cycle, after all work)
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "news-scout",
+  "id": logId,
+  "status": "completed",
+  "summary": "one-line description of what was done",
+  "findings": "optional: signals found, alerts fired, etc.",
+  "actions": ["optional: list of actions taken"]
+})
+// Returns → { "ok": true, "id": <number> }
+```
+
+**Error path:** if cycle errors, pass `status: "error"` in Call 2 instead of `"completed"`. The `id` from Call 1 is always required for Call 2.
 
 ---
 

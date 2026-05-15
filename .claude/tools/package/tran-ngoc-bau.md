@@ -113,10 +113,37 @@ Complete index → `.claude/tools/list/INDEX.md`
 
 | Tool | Purpose |
 |------|---------|
-| `log_agent_work` | Log audit cycle activity |
+| `log_agent_work` | Log audit cycle lifecycle — **two-call pattern required** (see recipe below) |
 | `get_agent_work_log` | Read other agents' work logs |
 | `get_recent_fixes` | Check recently-fixed issues |
 | `submit_feedback` | Submit bug or feature request |
+
+#### `log_agent_work` — Two-Call Recipe
+
+```
+// Call 1 — session START (at top of cycle, before any work)
+const startResult = call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "tran-ngoc-bau",
+  "status": "running"
+})
+// startResult → { "id": <number> }
+const logId = startResult.id
+
+// ... do cycle work ...
+
+// Call 2 — session END (at bottom of cycle, after all work)
+call_tool(server="vn-market", tool="log_agent_work", arguments={
+  "agent_name": "tran-ngoc-bau",
+  "id": logId,
+  "status": "completed",
+  "summary": "one-line description of what was done",
+  "findings": "optional: signals audited, verdicts recorded, etc.",
+  "actions": ["optional: list of actions taken"]
+})
+// Returns → { "ok": true, "id": <number> }
+```
+
+**Error path:** if cycle errors, pass `status: "error"` in Call 2 instead of `"completed"`. The `id` from Call 1 is always required for Call 2.
 
 ## File System Tools
 
