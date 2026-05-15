@@ -1,6 +1,11 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 21:19 UTC | **Status:** MCP_UNREACHABLE
+**Last updated:** 2026-05-15 23:19 UTC | **Status:** MCP_UNREACHABLE
+
+### Cycle (23:19–23:19 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP server unreachable — `get_cycle_bootstrap` failed after 2 retries. BUG signal also undeliverable (server down). Cycle aborted per protocol.
+- Off-hours cycle (23:19 UTC, market closed). No signals fired. No Telegram sent. Notebook updated as only recovery action.
 
 ### Cycle (21:19 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
