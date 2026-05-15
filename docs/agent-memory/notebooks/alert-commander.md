@@ -1,8 +1,28 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 05:06 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 07:05 UTC | **Sprint:** c116
 
 ## This session
+
+### Alert Cycle (07:01–07:05 UTC)
+- Signals: agent_bus=0 | price_alerts=0 | system_alerts=3 (HIGH×1, MEDIUM×1, LOW×1)
+- Fired: 2 | Suppressed: 1 | MARKET: 2
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- MARKET fired: (1) GAS price_surge MEDIUM +5.62% [verdict:30e9025e pending] (2) MACRO Brent HIGH +2.68σ [$107.95/bbl] [verdict:993de284 pending]
+- Suppressed: HVN news_mention LOW — insufficient signal strength (LOW severity, price +0.24% no selling confirmation)
+- Legal: clean | Crisis: clear | VN-Index: 1,916.64 (-0.46%) | Kinh Dịch: Khôn (2) MUA 100%
+- log_agent_work id=871
+
+### Alert Cycle (06:02–06:04 UTC)
+- Signals: agent_bus=1 (urgent_news×1) | price_alerts=0 | legal=0 | crisis=0
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING (news-fallback, REGIME_SOURCE=news-fallback, conservative tier) | Carry: NEUTRAL (no data) | Pivot window: false
+- Suppressed: VIC urgent_news id=3209 conf=0.50 < TIGHTENING threshold 0.75 (Vingroup hiring 20k workers — Phase 1 sports city); no price_anomaly override found
+- Legal: clean | Crisis: clear | Price alerts: none
+- VN-Index: 1,917.47 (-0.41%) | Kinh Dịch: Quẻ Khôn 100% MUA
+- [WARN] get_macro_snapshot returned system status only (no Global Liquidity/Carry Spread) — TIGHTENING via news-fallback (bearish 6 vs bullish 4), conservative tier applied
 
 ### Alert Cycle (05:01–05:06 UTC)
 - Signals: agent_bus=0 | price_alerts=0 | system_alerts=5 (HIGH×1, MEDIUM×1, LOW×3)
