@@ -1,6 +1,40 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c131 — 1920h-zombie-table-retirement APPROVED
+**Last updated:** 2026-05-16 | **Session:** c132 — 1920c-commodity-tracker-scheduler APPROVED
+
+## Session 2026-05-16 c132 — 1920c-commodity-tracker-scheduler
+
+### TASK REPORT — 1920c (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FEATURE (new scheduler job)
+round: 1
+commit: d72ab005
+```
+
+#### Pipeline
+
+- Targeted tests (1920c): 7 pass / 0 fail (TC-1..TC-7 all GREEN)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: `CRONS.commodityTrackerRefresh === '0 6 * * *'` — cronConfig.ts L137
+- AC-2 PASS: `storeCommoditySnapshot` writer in `yahooFinance.ts` confirmed + called
+- AC-3 PASS: `commodity_prices_history` INSERT with `NOT EXISTS` dedup guard confirmed
+- AC-4 PASS: `fetchShippingIndices` + `storeShippingIndices` called (TC-2 GREEN)
+- AC-5 PASS: Commodity throws → shipping runs + 1 WORK alert (TC-3 GREEN)
+- AC-6 PASS: Shipping throws → commodity already written + 1 WORK alert (TC-5 GREEN)
+- AC-7 PASS: `INSERT OR REPLACE INTO commodity_prices` — idempotent (yahooFinance.ts L397)
+- AC-8 PASS: `jobRunRepo.wrapRun('commodityTrackerRefreshJob')` in startScheduler.ts L728
+
+#### Key Finding
+
+Developer called `fetchYahooFinancePrices`+`storeCommoditySnapshot` from `yahooFinance.ts` (not `commodityTracker.ts` as handoff implied). Confirmed correct — verified at source. Handoff acknowledged this discrepancy; developer resolved it correctly.
+
+---
 
 ## Session 2026-05-15 c131 — 1920h-zombie-table-retirement
 
