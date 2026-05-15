@@ -1,8 +1,12 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-15 · **Cycle:** 21:01 UTC (Daily Review — BLOCKED)
+**Last updated:** 2026-05-15 · **Cycle:** 22:03 UTC (Daily Review — BLOCKED)
 
 ## This session
+
+### Daily Review (22:03 UTC)
+- Mode: DAILY_REVIEW | Freshness: skipped (MCP down) | Bugs: MCP gateway unreachable (4th consecutive failure)
+- BLOCKED at log_agent_work step. Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Signal file dropped: `docs/signals/unified-agent-2026-05-15T22:03:35Z.json`. BUG Telegram skipped (MCP down). All cycle steps skipped.
 
 ### Daily Review (21:01 UTC)
 - Mode: DAILY_REVIEW | Freshness: skipped (MCP down) | Bugs: MCP gateway unreachable (3rd consecutive failure)
