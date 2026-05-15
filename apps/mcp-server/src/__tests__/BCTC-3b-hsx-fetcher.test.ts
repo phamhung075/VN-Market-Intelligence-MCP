@@ -134,6 +134,24 @@ describe("TASK-BCTC-3b — fetchHsxBctcUrls", () => {
   afterEach(() => {
     restoreFetch();
     urlMocks = {};
+    delete Bun.env["HSX_BCTC_ENABLED"];
+  });
+
+  // ── TC-ENV: HSX_BCTC_ENABLED=false → immediate [] without any HTTP call ──
+
+  it("TC-ENV: HSX_BCTC_ENABLED=false returns [] without making any HTTP call", async () => {
+    Bun.env["HSX_BCTC_ENABLED"] = "false";
+
+    // No mocks installed — any real fetch call would throw
+    installUrlMocks({});
+
+    const { fetchHsxBctcUrls } = await import(
+      "../infrastructure/fetchers/hsxBctcFetcher.js"
+    );
+
+    const urls = await fetchHsxBctcUrls("VNM", 2025, 5000);
+
+    expect(urls).toEqual([]);
   });
 
   // ── TC-1: HOSE ticker — ID lookup succeeds → PDFs returned ───────────────

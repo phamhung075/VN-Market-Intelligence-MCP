@@ -121,6 +121,9 @@ export async function fetchHsxBctcUrls(
   year: number,
   timeoutMs: number,
 ): Promise<string[]> {
+  // ── Env gate — set HSX_BCTC_ENABLED=false to skip Strategy 0 entirely ───
+  if (Bun.env.HSX_BCTC_ENABLED === "false") return [];
+
   // ── Step 1: resolve ticker → numeric ID ─────────────────────────────────
   const numericId = await resolveNumericId(ticker, timeoutMs);
   if (numericId === undefined) {

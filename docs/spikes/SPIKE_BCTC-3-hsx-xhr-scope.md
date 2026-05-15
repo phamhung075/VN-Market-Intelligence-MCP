@@ -519,6 +519,55 @@ The `/n/api/v1/` news endpoint does return HTTP 400 (validation error, not 404) 
 
 ---
 
+## Geo-Block Verification — 2026-05-15
+
+**Date:** 2026-05-15
+**VPS:** Vinahost 125.212.251.27 (Vietnam IP)
+**Probe:** Two corrected-URL endpoints (with `/l/api/v1/1/` locale segment) — same as main server confirmed-200 calls.
+
+### Probes Run from VPS
+
+```bash
+curl -s -o /tmp/hsx_l.json -w "%{http_code}" \
+  -H "type: HJ2HNS3SKICV4FNE" \
+  -H "Origin: https://www.hsx.vn" \
+  -H "Referer: https://www.hsx.vn/" \
+  -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
+  "https://api.hsx.vn/l/api/v1/1/securities/stock?code=VNM"
+
+curl -s -o /tmp/hsx_m.json -w "%{http_code}" \
+  -H "type: HJ2HNS3SKICV4FNE" \
+  -H "Origin: https://www.hsx.vn" \
+  -H "Referer: https://www.hsx.vn/" \
+  -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
+  "https://api.hsx.vn/m/api/v1/1/mediafiles/5/2281?pageIndex=1&pageSize=5&year=2025"
+```
+
+### Results
+
+| Endpoint | HTTP Status (VPS / Vietnam) | HTTP Status (France / main server) |
+|----------|----------------------------|--------------------------------------|
+| `GET /l/api/v1/1/securities/stock?code=VNM` | **200** | **200** |
+| `GET /m/api/v1/1/mediafiles/5/2281?pageIndex=1&pageSize=5&year=2025` | **200** (5 BCTC PDFs returned) | **200** (10 items per prior probe) |
+
+Sample from VPS `/m/` response:
+```
+items_count=5
+20260429 - VNM - BCTC DA SOAT XET Q1.2026 - RIENG VN.pdf
+20260429 - VNM - BCTC DA SOAT XET Q1.2026- HOP NHAT VN.pdf
+20260227 - VNM - BCTC HOP NHAT 2025 - DA KIEM TOAN.pdf
+```
+
+### Verdict
+
+**NOT GEO-BLOCKED — both VPS (Vietnam) and main server (France) return HTTP 200.**
+
+The corrected endpoints (`/l/api/v1/1/` and `/m/api/v1/1/`) are accessible from any IP. The prior 404 failures documented in this spike were caused exclusively by the wrong URL structure (missing locale segment `/1/` and string ticker instead of numeric ID), not by IP-based geo-restriction.
+
+**hsx.vn implementation is correct on the main server.** No VPS proxy is required for the `/l/` and `/m/` endpoints. The main server implementation can proceed as designed.
+
+---
+
 ## VPS Verification (TASK-BCTC-3a) — 2026-05-15
 
 **Date:** 2026-05-15
@@ -615,6 +664,8 @@ The `api.hsx.vn/n/api/v1/news/securities/` endpoint is not accessible from the V
 **Date:** 2026-05-15
 **Triggered by:** TASK-BCTC-3a FAIL (Envoy route-block confirmed, not geo-IP)
 **Architect:** Architect agent (SPIKE mode — findings only, no code)
+
+> **Note (1918c):** No account required. `type` header is a public static token from hsx.vn JS bundle. Set `HSX_BCTC_ENABLED=false` in `.env` to disable.
 
 ### Premise: What is the actual gap?
 
