@@ -14,10 +14,16 @@
  *   - system_changelog         — dev fix changelog (Task 233)
  *   - audit_state              — singleton state for dataAuditJob (Task 1041)
  *   - ask_queue                — /ask FIFO question queue (Task 1072)
- *   - user_requests            — /ask and /why Telegram requests (Task 238)
+ *   - user_requests            — DEPRECATED (Task 238) superseded by ask_queue (Sprint 1920)
  *   - telegram_reports         — dev Report Channel messages (Task 226)
  *   - vps_push_log             — VPS proxy observability
  *   - scheduler_locks          — distributed scheduler lock table (Task 1457)
+ *
+ * NOTE: A table named `skips` was referenced in Sprint 1920 planning as a
+ * zombie table candidate. Investigation confirmed it DOES NOT EXIST in any
+ * schema file. No CREATE TABLE, no writers, no readers. No migration needed.
+ * The word "skips" in this file (line ~365) refers to SQLite IF NOT EXISTS
+ * semantics, not a table name.
  */
 
 import type { Database } from "bun:sqlite";
@@ -234,7 +240,12 @@ export function initSystemTables(db: Database): void {
        WHERE status = 'processing'`,
   );
 
-  // ── User Requests (Task 238) ──────────────────────────────────────────────
+  // ── User Requests (Task 238) — DEPRECATED as of Sprint 1920 ─────────────
+  // Superseded by `ask_queue` (Task 1072). The /ask and /why Telegram commands
+  // were removed in Task 1063. Zero writers in production code.
+  // Retained as CREATE TABLE IF NOT EXISTS for backward-compat with existing DBs.
+  // DO NOT add new writers. Do NOT query this table. See ask_queue for replacem.
+  // freshnessSlaMonitor: excluded from coverage check (no active writer).
   db.exec(`
     CREATE TABLE IF NOT EXISTS user_requests (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,

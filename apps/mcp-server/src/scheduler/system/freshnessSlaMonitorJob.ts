@@ -45,6 +45,10 @@ export function querySignalAges(
     age_minutes: number;
   }
 
+  // Excluded from SLA monitoring (zero active writers — DEPRECATED or N/A):
+  //   - user_requests: superseded by ask_queue (Task 1063, Sprint 1920)
+  //   - skips: table does not exist in schema (Sprint 1920 investigation)
+  //
   // Table mapping (corrected from original wrong names):
   //   sbv_fx       — sbv_rates.fetched_at
   //   foreign_flow — daily_ohlcv.updated_at WHERE foreign_buy_vol IS NOT NULL
