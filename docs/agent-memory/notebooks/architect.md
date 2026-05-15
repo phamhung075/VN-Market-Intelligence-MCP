@@ -1,8 +1,10 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-15 (TASK-BCTC-3b design cycle) | **Sprint:** BCTC-3
+**Last updated:** 2026-05-15 11:00 UTC | **Sprint:** SPRINT-S
 
 ## This session
+
+TASK-1918b Architect design — news-scout macro snapshot package gap. Path A chosen (direct tool call), Path B (signal bus) rejected. No new code; 4-file surface: agentBootstrap.ts + SKILL_MANIFEST.md + news-scout.md + stage-bootstrap.md.
 
 TASK-BCTC-3b Architect design — hsx.vn BCTC discovery redesigned for main server (TypeScript) after prior "Envoy route-block" conclusion overturned by main-server recon 2026-05-15.
 

@@ -1,70 +1,61 @@
 # PO Notebook
 
-## Last updated: 2026-05-15T16:23:00Z · Sprint: c128 post-cycle / c129 triage
+## Last updated: 2026-05-15T20:10:19Z · Sprint: c130 triage
 
 ### This session
-Entered Step 4 + Step 1 triage after c128 dev-team cycle shipped 1918a (alert-commander macro-snapshot shape-guard), 1918b (news-scout get_macro_snapshot package + flow), 1918c (HSX_BCTC_ENABLED env gate). All QA-approved + merged. WIP=0/2. Zero pending signals. TNB c57 handoff landed with NEEDS_ATTENTION / direction IMPROVING — Findings #1 + #2 explicitly closed by 1918a+1918b ship. ACK appended.
+PREFLIGHT: HEAD.lock removed (age=65s, 0B, no live git pid). Worktree prune: clean. Signals drained: 2 new signals (market-watcher + alert-commander bug-escalation, both Docker DNS outage at 19:55–20:00 UTC). TNB c58 ACK from c129 — no new TNB handoff. Channel audit: 5 unresolved reports (2889-2893). PO triage complete. 1 UNBLOCK task created (ops).
 
 ### Channel/signal state
-- Pending signals: 0 (docs/signals/ only has processed/ + signals.db)
-- Worktrees: 6 locked agent worktrees (scaffolding, not CLEAN candidates per project rule)
-- TNB c57 handoff: ACK appended (12 findings + 7 priorities triaged; only 2 monitoring rows queued, rest user/ops-gated or below threshold)
+- Pending signals: 2 (market-watcher + alert-commander bug-escalation → Docker DNS failure → drained and moved to processed/)
+- HEAD.lock: removed, age=65s, clean
+- MCP gateway: UP on host (zenmidi.com SSE confirmed). Docker containers BLOCKED (host.docker.internal DNS failure ~19:55 UTC)
+- TNB: c58 handoff still latest — no new c59 handoff this cycle
 
-### Triage findings for c129
-**Closed this cycle (1918 chain):** 1918a + 1918b + 1918c.
+### Channel audit — 5 reports (2889-2893)
+- #2889: unified-agent news RSS staleness 2026-05-14T22:02 → resolved as `monitoring` (stale, pre-existing pattern)
+- #2890: QA-responder git index.lock 04:47 → 1897b-carry USER ACTION, no new task
+- #2891: ops-vps-fetch BCTC-3a "Envoy block" report 04:57 → resolved as `duplicate` (BCTC-3 chain complete — 3b+3c DONE)
+- #2892: QA-responder git index.lock 05:47 → same as 2890, no new task
+- #2893: unified-agent push-prices invisibility 07:12 → recurring, tracked in carry-over, below dev-task threshold
 
-**Still in Todo / Backlog blocked:**
-- TASK-BCTC-3a — ops-mainserver-fetch, not dev-team.
-- 1862c-E-dashboard — user-action Cloudflare ingress. Blocks 1862c-F.
-- 1862c-F — needs 5 clean cycles after E stable. Not eligible.
+### New docker DNS outage (1919) — c130 acute
+At ~19:55 UTC: ALL cron Docker agents blocked (market-watcher, alert-commander, unified-agent, news-scout, qa-responder). Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. MCP server UP on host (SSE confirmed). Docker container DNS resolver broken. New CRITICAL OPS task 1919-docker-dns-unblock created in TASKS.md Backlog. WORK notification sent (msg_id 7722). Ops must restart Docker networking.
 
-**Backlog F1/USER-gated (no PO leverage):**
-- 1913-fa-mcp-gateway-config-user-action (BLOCKING-F1).
-- 1907a-digest-predict-silence (substrate=1913, 7-day silence).
-- 1897b-carry (HEAD.lock F1 Docker .git/ exclude).
+### Carry-over from c129 evaluated
+- FA 23:00 UTC daily-review: NOT yet (20:10 UTC). fa-shape-guard cycle 3 deferred to c131. FA may also be blocked by 1919 Docker DNS.
+- alert-precision-488-unknowns: no c130 data (agents blocked). HOLD.
+- news-scout 1918b off-hours: 12:19 TIGHTENING (pre-rebuild?), 14:20 shifted NEUTRAL. 1918b likely working post-rebuild.
+- 1909c-reparse-validation: no update, ops task still pending.
+- BCTC Q1-2026 banking: ACB/BID/CTG/EIB/MBB/VCB/VPB — daily-review 23:00 UTC may be blocked by 1919.
 
-**TNB c57 Next-Cycle Priorities triage:**
-- #1 1918b QA — already done.
-- #2 1909c-reparse-validation — ops owner, banking reparse 2026-05-16. Not dev-team material.
-- #3 BCTC Q1 banking — observational.
-- #4 news-scout payload validation — QA bus inspection, not dev.
-- #5 digest-predict escalation — user-blocked, symbolic only.
-- #6 FA shape-guard — 1-cycle, queued as MEDIUM tracking for c129 watch.
-- #7 GAS Kinh Dịch conflict — observational.
+### TASKS.md updates this cycle
+- Added 1919-docker-dns-unblock (CRITICAL OPS, ops owner) — Docker DNS failure
+- Updated alert-precision-488-unknowns (c130 note — agents blocked, no new data)
+- Updated fa-shape-guard-watch (c130 deferred, FA 23:00 UTC may be blocked)
+- Moved TASK-BCTC-3a to Done (finding used by 3b+3c, chain complete)
+- Closed JANITOR-020/014/011 as wontfix (moved to Done, DRY claims falsified)
 
-**Backlog housekeeping done inline:**
-- Removed stale 1915-bctc-pipeline-silence dup row from Backlog (already in Done since c126).
-- Removed stale janitor-1912 dup row from Backlog (already in Done since c127).
-- Added 2 new MEDIUM monitoring rows: alert-precision-488-unknowns + fa-shape-guard-watch.
+### Decision on c130 BATCH
+BATCH = UNBLOCK (1919-docker-dns-unblock → ops).
+No dev-team FIX/SPRINT tasks earned this cycle.
+- 1862c-F: still blocked by container-rebuild (1862c-E-dashboard USER ACTION)
+- All TNB c58 carry-overs: gated by Docker DNS outage or FA 23:00 UTC (not yet)
+- alert-precision <550, fa-shape-guard cycle 3 deferred
 
-### Decision on c129 BATCH
-WIP=0/2 but no dev-team-eligible ready backlog:
-- All cycle-2+ patterns from TNB c55–57 have either shipped (1918a/b/c) or are user/ops/QA-gated.
-- The 2 newly queued MEDIUM rows are TRACKING / pre-spike; promote only if c130 confirms a worsening trend.
-- "Ship completion, not slices" rule + no fresh signals + no QA sign-off pending = clean idle exit.
-
-BATCH=NOTHING. Next cron tick will re-scan; if TNB c58 lands new auto-cure-ready evidence or QA/ops free up 1909c, sprint-kickoff will fire.
-
-### Action taken
-- TASKS.md: swept 2 stale dup Backlog rows (1915, janitor-1912) + added 2 monitoring rows (alert-precision-488, fa-shape-guard-watch).
-- TNB handoff: PO ACK (c128) appended.
-- WORK notification queued: post-cycle close + 1918 chain done + BATCH=NOTHING.
-
-### Telegram
-- send_telegram(work, "[POST-CYCLE c128 → c129] 1918 chain CLOSED: 1918a (alert-commander shape-guard) + 1918b (news-scout package+flow) + 1918c (HSX_BCTC env gate) all QA-approved + merged. WIP=0/2. TNB c57 IMPROVING. Backlog swept (2 stale dups removed). 2 MEDIUM monitoring rows queued: alert-precision-488-unknowns + fa-shape-guard-watch. BATCH=NOTHING for c129 — no dev-team-eligible work; remaining blockers all user/ops/QA-gated.")
-
-## Carry-over to c129
-- **TNB c58 watch:** if FA cycle next 2 sessions show REGIME-mismatch or news-fallback → promote fa-shape-guard-watch to FIX (mirror 1918a guard to FA stage-bootstrap.md).
-- **Alert-precision spike trigger:** if c130 unknowns > 550 OR scoring engine logs any error → promote alert-precision-488-unknowns to SPIKE.
-- **1909c-reparse-validation:** ops owner unassigned; banking cohort 2026-05-15 deadline passed without filings; reparse window 2026-05-16. Escalate to ops on next cycle if still unowned.
-- **digest-predict 7-day silence:** still user-blocked by 1913; if user does desktop config refresh, escalate 1907a Backlog → In-Progress.
-- **news-scout payload.detail validation:** TNB c57 3rd-cycle PENDING. Needs QA bus inspection. If TNB c58 still PENDING → escalate as BUG.
-- **GAS Kinh Dịch reversal watch:** Kiển (39) signal at 90,000–92,000 VND. Brent $108.67. Observational only.
+## Carry-over to c131
+- **1919-docker-dns-unblock**: ops must diagnose + restart Docker networking. All agents blocked until fixed. CRITICAL.
+- **FA 23:00 UTC**: if 1919 fixed, FA daily-review may trigger fa-shape-guard cycle 3 auto-cure.
+- **news-scout 1918b validation**: confirm first off-hours cycle post-container-rebuild shows NEUTRAL (not TIGHTENING).
+- **news-scout payload.detail**: 4-cycle unverified — requires QA live bus inspection.
+- **alert-precision-488-unknowns**: check c131 count after 1919 fixed. Promote to SPIKE if >550.
+- **1909c-reparse-validation**: ops verify VNM/DIG Q4-2025 rows in DB post-1908c+1909a.
+- **BCTC Q1-2026 banking**: 23:00 UTC FA cycle — watch c131 after 1919 resolved.
+- **push-prices invisibility** (#2893): recurring — if persists 3 cycles → OPS task.
 
 ## RETURN
 ```
-BATCH: NOTHING
-REASON: WIP=0/2 post-1918-chain-closure. No dev-team-eligible work in Backlog. TNB c57 Findings #1+#2 closed by ship; remaining findings/priorities are user-action (1913/1907a/1897b/1862c-E), ops-only (1909c/TASK-BCTC-3a), QA-bus (#3 #4), or below 3-cycle auto-cure threshold (alert-precision-488 + fa-shape-guard-watch queued MEDIUM tracking only). Backlog housekeeping done inline (2 stale dup rows removed). 0 pending signals. 6 locked agent worktrees (scaffolding, not CLEAN candidates).
-NEXT: dev-team Step 4 idle → send_telegram(work, "Dev loop idle.") → EXIT until next cron tick → next PO cycle scans for TNB c58 / fresh QA sign-off / promotion triggers on the 2 monitoring rows.
-PIPELINE: idle (no sprint queued; promotion-watch active on alert-precision-488 + fa-shape-guard)
+BATCH: UNBLOCK [{id: "1919-docker-dns-unblock", route_to: "ops"}]
+REASON: Docker DNS outage at ~19:55 UTC. MCP server UP on host. No dev FIX/SPRINT earned. TNB c58 carry-overs gated.
+NEXT: dev-team Step 4 post-cycle → commit + notify ops → idle
+PIPELINE: unblock dispatched to ops
 ```
