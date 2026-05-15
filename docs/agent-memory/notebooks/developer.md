@@ -2,7 +2,30 @@
 
 **Last updated:** 2026-05-16 | **Sprint:** 1920
 
-## Last session summary (1920d)
+## Last session summary (1920i)
+
+Task 1920i — Extend freshnessSlaMonitor to cover all Sprint 1920 tables.
+
+**Problem:** `freshnessSlaMonitorJob` only monitored 5 original signal types. After Sprint 1920a–g landed, 7 new tables (`vnstock_financials`, `bond_maturity`, `commodity_prices`, `broker_sanctions`, `backtest_runs`, `signal_quality_audit`, `prediction_claims`) were actively written but unmonitored. Zero-row tables (not yet seeded) would produce NULL ages causing false breach alerts.
+
+**What was done:**
+
+- `freshnessSlaChecker.ts` (domain): Extended `SignalType` union from 5 → 12 types. Added 7 entries to `DEFAULT_SLA_CONFIG`: vnstock_fundamentals (72h), bond_maturity (168h), commodity_prices (36h), broker_sanctions (2160h), backtest_runs (36h), signal_quality_audit (48h), prediction_claims (168h). Updated `checkDataFreshnessSla` to iterate all 12 types with FR-4 sentinel skip guard (`ageMinutes === -1` → debug log + skip, no breach).
+- `freshnessSlaMonitorJob.ts` (scheduler): Extended `querySignalAges` UNION ALL to 12 entries. FR-4 null guard: if `row.age_minutes === null`, set to `-1` sentinel instead of `Math.max(0, null)=0`. Defaults for original 5 changed from `0` to `-1` in initial `result` object (all empty tables return -1 now). Added `buildDailySummary()` exported function + `_lastSummaryDate` daily gate. Added `resetSummaryGate()` for test isolation. Added `sendWorkFn` 5th DI parameter to `runFreshnessSlaMonitor` (default: `sendTelegramWork`). Added `sendTelegramWork` import.
+- `schema-system.ts`: Updated `sla_breach_audit` DDL CHECK constraint from 5 → 12 signal types. Added idempotent migration for existing production DBs (recreate-and-rename pattern, detects old constraint via `sqlite_master.sql`).
+- `dataFreshnessTools.ts`: Updated `SIGNAL_QUERIES` and `signalAges` initializer with 7 new types.
+- Updated 3 existing test files (1352c, 1407b, 234) to add 7 new keys at -1 to `signalAges` objects + inject `noopSendWork` to avoid real Telegram calls.
+
+**Key debug:**
+- `sla_breach_audit` had a CHECK constraint `signal_type IN ('price','bctc','news','sbv_fx','foreign_flow')` — needed idempotent migration (SQLite can't ALTER TABLE ADD CONSTRAINT). Used recreate-and-rename same as 1920d.
+- `sendTelegramWork` default in `runFreshnessSlaMonitor` causes test timeout (5s) when the daily gate fires. Fix: `noopSendWork` injected in all tests that call `runFreshnessSlaMonitor`.
+- A-5 in 1352c needed update: old behavior was `Math.max(0, NULL) = 0`; new behavior is `-1` sentinel for all empty tables.
+
+**Commit:** `a4eac02c feat(1920/scheduler): 1920i extend freshnessSlaMonitor to cover all Sprint 1920 tables`
+
+**Total: 23 new pass / 0 fail. tsc 0 errors. 63/63 total freshness SLA tests pass.**
+
+## Previous last session summary (1920d)
 
 Task 1920d — Broker Sanctions Quarterly Sweep + Schema Migration.
 
@@ -36,142 +59,9 @@ Task 1920g — Auto-populate prediction_claims from intelligenceCycleJob.
 - Forwarded `insertClaimFn` from `CycleDeps` → `ChainSynthesisDeps` in `_runCycle` Step G.
 - 15/15 tests GREEN: TC-1..TC-7 cover all ACs.
 
-**Key debug:** cycleId format mismatch (`cycle-${ms}` vs `YYYYMMDD-HHMM`). Fixed by replicating `computeCycleId` logic in test. Also needed full `agent_signals` schema with all columns for `postSignal` feature-detection. TC-2 seeded directly (confidence=0.5, no bonus flags) to avoid confirms_direction bonus pushing conviction >= 0.7.
-
 **Commit:** `81efd36a feat(1920/scheduler): 1920g auto-populate prediction_claims from chain synthesis`
 
 **Total: 15 pass / 0 fail. tsc 0 new errors.**
-
-## Previous last session summary (1920c)
-
-Task 1920f — Activate signal_quality_audit writer.
-
-**Problem:** `prepareSignalAuditRecord()` existed in domain but no infrastructure store existed, so `signal_quality_audit` table stayed at zero rows at runtime.
-
-**What was done:**
-- Created `apps/mcp-server/src/infrastructure/db/signalQualityAuditStore.ts` — `insertSignalQualityAudit(db, record)` with INSERT OR IGNORE (UNIQUE signal_id dedup). Fire-and-forget: errors caught with `console.warn`, never re-thrown.
-- Wired in `agentSignalTools.ts` `post_agent_signal` handler after `postSignal()` call. Gate: `signal_type IN ['price_confirmation', 'urgent_news']` AND `finding_data.confidence` is a number. FR-3/FR-4 mapping: confidence × 100 (agent 0.0–1.0 → audit 0–100), `price_confirmation` → `signal_type='price'`, `urgent_news` → `signal_type='news'`.
-- Added imports: `insertSignalQualityAudit`, `prepareSignalAuditRecord`, `SignalAuditContext`.
-- Wrote 15 tests in `1920f-signal-quality-audit.test.ts` — AC-1 through AC-6. All GREEN 15/0.
-
-**Commit:** `bdd63efb feat(1920/signals): 1920f activate signal_quality_audit writer`
-
-**Total: 15 pass / 0 fail.**
-
-## Previous last session summary (1920c)
-
-Task 1920c — Commodity Tracker + Shipping Index Refresh Scheduler Job.
-
-**Problem:** `commodity_prices`/`commodity_prices_history` tables (written by `yahooFinance.ts`) and `tracked_indicators` shipping rows (written by `shippingIndex.ts`) had zero scheduler callers. Stale commodity data produces silent regime mis-classification in financial-analyst.
-
-**What was done:**
-- Created `apps/mcp-server/src/scheduler/macro/commodityTrackerRefreshJob.ts` — `runCommodityTrackerRefreshJob(opts?)` with full DI seam (`fetchCommodityFn`, `storeCommodityFn`, `fetchShippingFn`, `storeShippingFn`, `sendWorkFn`).
-- Block 1 (FR-1): calls `fetchYahooFinancePrices()` + `storeCommoditySnapshot()` — commodity_prices INSERT OR REPLACE + commodity_prices_history append.
-- Block 2 (FR-2): calls `fetchShippingIndices()` + `storeShippingIndices()` — tracked_indicators shipping rows.
-- Independent try/catch per block (FR-3): commodity failure does NOT abort shipping call and vice-versa.
-- Fail-loud WORK channel alert on any block error.
-- Added `commodityTrackerRefresh: '0 6 * * *'` to `cronConfig.ts` (FR-5).
-- Added `runCommodityTrackerRefreshJob` export to `scheduler/macro/index.ts`.
-- Wired `cron.schedule(CRONS.commodityTrackerRefresh, ...)` in `startScheduler.ts` via `jobRunRepo.wrapRun` (FR-6).
-- TODO(1920c) comment added for future db injection refactor (NFR-2).
-- Wrote 7 tests in `1920c-commodity-tracker-refresh-job.test.ts` — TC-1..TC-7 covering all ACs. All GREEN 7/7.
-
-**Note:** Spec mentions `commodityTracker.ts` as writer but the actual `commodity_prices`/`commodity_prices_history` writer is in `yahooFinance.ts` (`storeCommoditySnapshot`). Used the correct file.
-
-**Commit:** `d72ab005 feat(1920/scheduler): 1920c commodity tracker + shipping index refresh job`
-
-**Total: 7 pass / 0 fail. cronJobCount: 66, schedulerFileCount: 65.**
-
-## Previous last session summary (1920a)
-
-Task 1920a — vnstock Fundamentals + Trading Stats Scheduler Job.
-
-**Problem:** `vnstockStore.ts` has writers for 7 tables but zero scheduler callers. Data only populated on-demand via MCP tool `syncVnstockData.ts`. Tables go stale after initial seed; no periodic refresh.
-
-**What was done:**
-- Created `apps/mcp-server/src/scheduler/financial-reports/vnstockFundamentalsJob.ts` — exports `runVnstockFundamentalsJob(opts?)` and `runVnstockTradingStatsJob(opts?)` with DI seam (`tickers`, `syncFn`, `sendWorkFn`, `_resetRunningState`).
-- Two cron entry-points: `runVnstockFundamentalsJobCron()` (Mon 01:00 UTC, wrapped in `recordJobRun`) and `runVnstockTradingStatsJobCron()` (weekdays 08:30 UTC).
-- `isRunning` concurrency guard (module-level, separate per job) — prevents double-stack on 7-10min sweep.
-- Per-ticker try/catch in `runSweep()` — one failure logs warning + appends to `failed[]`, sweep continues.
-- `syncVnstockData` called sequentially per ticker (not `Promise.all`) — preserves 2500ms rate-limit delay.
-- Fail-loud WORK channel when `failed.length > 0` at sweep completion.
-- Watchlist: read from `docs/data/stock-classification.json` (same as bctcBatchSweepJob).
-- Added `vnstockFundamentalsRefresh: '0 1 * * 1'` + `vnstockTradingStatsRefresh: '30 8 * * 1-5'` to `cronConfig.ts`.
-- Wired import + two `cron.schedule` calls in `startScheduler.ts`.
-- Wrote 8 tests in `1920a-vnstock-fundamentals-job.test.ts` covering TC-1 isRunning guard, TC-2 per-ticker isolation, TC-3 sequential calls, TC-4 WORK alert, AC-1 cron expression assertions. All GREEN 8/8.
-
-**Commit:** `bb6015d5 feat(1920/scheduler): 1920a vnstock fundamentals + trading stats jobs`
-
-**Total: 8 pass / 0 fail. cronJobCount: 65, schedulerFileCount: 64.**
-
-## Previous last session summary (1920b)
-
-Task 1920b — Bond Maturity Poller scheduler job.
-
-**Problem:** `bond_maturity` table only populated by manual seed or on-demand MCP calls. Zero scheduler jobs called `upsertBond()`. Silent wrong signals for downstream agents consuming `get_bond_maturity_calendar`.
-
-**What was done:**
-- Created `apps/mcp-server/src/scheduler/macro/bondMaturityPollerJob.ts` — `runBondMaturityPollerJob(opts?)` with DI seam (`fetchFn` + `sendWorkFn`). FR-1..FR-4 implemented (upsert, zero-row WORK alert, fail-loud, recordJobRun via `jobRunRepo.wrapRun`).
-- AC-0: vnstock domain seed data (direct from France, no VPS). Uses `getUpcomingMaturities(36m)` from `bondMaturityTracker.ts` as production fetchFn until live HTTP fetcher added.
-- Added `bondMaturityPoller: '30 2 * * 0'` to `cronConfig.ts`.
-- Wired import + `cron.schedule` in `startScheduler.ts`.
-- Added export in `scheduler/macro/index.ts`.
-- Wrote 4 tests in `1920b-bond-maturity-poller.test.ts` — TC-1 success, TC-2 zero-row alert, TC-3 error no-rethrow, TC-4 upsert idempotency. All GREEN 4/4.
-
-**Commit:** `89c70d04 feat(1920/macro): 1920b bond maturity poller scheduler job`
-
-**Total: 4 pass / 0 fail. cronJobCount: 63.**
-
-## Previous last session summary
-
-Task 1918a — `get_macro_snapshot` shape guard for alert-commander stage-bootstrap.
-
-**Problem:** TNB c55 cycle-2 evidence: `get_macro_snapshot` returns `{"status":"degraded","message":"..."}` (system_status bleed) instead of `{"text":"...","fetchedAt":"...","source_tier":2}`. The retry-once logic in stage-bootstrap.md only handles call failure, not shape mismatch — so wrong-shape response is silently accepted and regime inference fails.
-
-**What was done:**
-- Created `apps/mcp-server/src/interface/mcp/tools/macro/macroSnapshotGuard.ts` — exports `isMacroSnapshotValidShape(value: unknown): boolean`. Guard: object must have `text` field of type string. All other shapes (system_status, error, null, primitive) → false.
-- Wrote test first (TDD RED): `1918a-macro-snapshot-shape-guard.test.ts` — 10 tests covering normal payload, minimal payload, `{status:degraded}` fixture (core), error payload, edge cases. Confirmed RED (module not found). Then created guard. GREEN: 10/10.
-- Updated `.claude/flows/alert-commander/stage-bootstrap.md` Step 0b: added **Shape-validation gate** paragraph. Gate applies to both initial attempt and retry. Shape mismatch → news-fallback, same path as call failure + `[WARN]` log.
-- Created `docs/handoffs/TASK_1918a.md`.
-- Updated `docs/TASKS.md` — 1918a moved to Review.
-
-**Commit:** `62697623 fix(1918a/flows): 1918a macro snapshot shape guard + stage-bootstrap gate`
-
-**Total: 10 pass / 0 fail. tsc 0 errors.**
-
-## Previous last session summary
-
-Task 1899a-bloomberg-test-split — Split `1899a-bloomberg.test.ts` (491L, untracked) into 4 files ≤200L.
-
-**What was done:**
-- Created 4 split files in `apps/news-fetch/__tests__/`:
-  - `1899a-bloomberg-dom.test.ts` — 189L, 12 expect(), DOM happy path (8 it) + maxItems (1 it)
-  - `1899a-bloomberg-json-fallback.test.ts` — 182L, 8 expect(), JSON __NEXT_DATA__ fallback (5 it)
-  - `1899a-bloomberg-perimeterx-lifecycle.test.ts` — 186L, 14 expect(), PX (2 it) + lifecycle close() (3 it) + error handling (2 it), sub-describes flattened to control line count
-  - `1899a-bloomberg-normalize-date.test.ts` — 51L, 7 expect(), pure function, no mock.module
-- Source file deleted from disk (was never committed to git — untracked)
-- Each file carries own `mock.module('playwright', ...)` + `await import(...)` preamble (Bun per-file mock isolation)
-- preamble trimmed in dom file to inline the locator logic and shorten helper function bodies to land ≤200L
-
-**Total: 29 pass / 0 fail, 41 expect() = parity. tsc 0 errors.**
-
-**Commit:** `40747a58 refactor(1899a/news-fetch): split bloomberg 491L test into 4 files ≤200L each`
-
-**Branch:** main
-
-**Note on full suite baseline:** `bun test apps/news-fetch/` = 172 pass / 0 fail. `pnpm test:all` (mcp-server) crashes Bun 1.3.13 with OOM — pre-existing issue unrelated to this change.
-
-## Previous last session summary
-
-Task 1914b — Fix `log_agent_work` two-call pattern documentation in all 10 agent package files.
-
-**Root cause:** All 10 `.claude/tools/package/*.md` files documented `log_agent_work` with a fictitious single-call signature (`action/context/signal_ids`). The actual MCP API (`agentWorkLogTools.ts`) requires: Call 1 (`status: "running"` → `{ id }`), Call 2 (`id + status: "completed"|"error"`).
-
-**What was done:** Docs-only. Table rows corrected, two-call recipe block added to each file. Broken example snippets in `report-analyzer.md` and `po.md` also fixed. All 10 files `Last Updated` bumped to 2026-05-15. `TASK_1914b.md` handoff written. 1914b moved to Done in TASKS.md.
-
-**Commit:** `3b68df2c docs(1914b/agent-doc): 1914b fix log_agent_work two-call pattern in all 10 package files`
-
-**Branch:** main
 
 ## Known patterns / preferences
 
@@ -186,6 +76,9 @@ Task 1914b — Fix `log_agent_work` two-call pattern documentation in all 10 age
 - HEAD.lock from dead Spotlight/Docker process: verify no git process running, then `rm .git/HEAD.lock`. Recurring — permanent policy per head-lock-self-cure.md.
 - Bun 1.3.13 OOM-crashes on mcp-server full suite (RAM 2.15GB peak → panic). Not our bug. Use per-service `bun test` for regressions.
 - Test split strategy: each split file needs own mock.module + await import preamble (Bun per-file isolation). Trim preamble helpers not needed by the split group to control line count.
+- Null guard / sentinel: when extending UNION ALL queries for new tables, always set default to -1 for new types in result object. Empty table → NULL from SQLite → -1 sentinel. Callers must skip -1 entries.
+- sendWorkFn DI in runFreshnessSlaMonitor: always inject noopSendWork in tests to avoid 5s Telegram timeout. Never rely on default in test context.
+- sla_breach_audit CHECK constraint migration: recreate-and-rename pattern (same as broker_sanctions in 1920d). Detect old constraint via `sqlite_master.sql.includes(...)`.
 
 ## Carry-over for next session
 
@@ -196,3 +89,4 @@ Task 1914b — Fix `log_agent_work` two-call pattern documentation in all 10 age
 - Branch `task/c88-1905a-news-fetch-stealth-fix` awaiting QA gate.
 - Branch `task/c89-1906a-headlock-cure-permanent` awaiting QA gate.
 - Branch `task/1916a-vps-discover-route` awaiting QA gate (VPS-side of 1916a).
+- 1920b TC-4 pre-existing failure (upsert idempotency) — not caused by 1920i. Pre-dates this session.
