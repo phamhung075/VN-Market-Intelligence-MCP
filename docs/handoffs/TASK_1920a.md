@@ -2,7 +2,17 @@
 
 **Sprint:** 1920 | **Tier:** 1 | **Type:** FEATURE | **Zone:** apps/mcp-server/ | **Size:** M
 **DDD Layer:** application + infrastructure | **Owner:** dev-mcp-server
-**Status:** Ready for Dev
+**Status:** In Progress (PM assigned)
+
+---
+
+## [PM] Planning Context
+
+**Developer assigned:** dev-mcp-server
+**ZONE:** apps/mcp-server/
+**Sequencing:** Parallel with 1920b/c (2 at a time, WIP=2). 1920d (broker sanctions) sequenced last due to CRITICAL schema migration pre-condition.
+**Duration estimate:** ~2h
+**Handoff:** This file is the SSOT. Accept when: file paths created, cronConfig keys added, startScheduler wiring complete, acceptance criteria tests pass.
 
 ---
 

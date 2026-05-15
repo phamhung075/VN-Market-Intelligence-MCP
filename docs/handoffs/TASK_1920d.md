@@ -2,7 +2,18 @@
 
 **Sprint:** 1920 | **Tier:** 3 | **Type:** FEATURE | **Zone:** apps/mcp-server/ | **Size:** S
 **DDD Layer:** application + infrastructure | **Owner:** dev-mcp-server
-**Status:** Ready for Dev
+**Status:** Todo (sequenced after 1920a/b/c merge)
+
+---
+
+## [PM] Planning Context
+
+**Developer assigned:** dev-mcp-server
+**ZONE:** apps/mcp-server/
+**Sequencing:** CRITICAL PRE-CONDITION (R-3): Schema migration adding `UNIQUE(broker_name, sanction_start)` + `INSERT OR IGNORE` update to `brokerSanctionStore.ts` MUST ship in SAME PR as job code. This task is sequenced last — wait for 1920a/b/c PR merge before starting 1920d.
+**Duration estimate:** ~2h (includes schema migration + job code + tests)
+**Blockers:** 1920a/b/c merge (schema must not conflict with concurrent job development)
+**Handoff:** This file is the SSOT. Accept when: schema migration file created, store function updated, job file created, cronConfig key added, startScheduler wiring complete, all acceptance criteria tests pass (AC-0 through AC-8).
 
 ---
 

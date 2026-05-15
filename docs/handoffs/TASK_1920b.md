@@ -2,7 +2,18 @@
 
 **Sprint:** 1920 | **Tier:** 1 | **Type:** FEATURE | **Zone:** apps/mcp-server/ | **Size:** S
 **DDD Layer:** application + infrastructure | **Owner:** dev-mcp-server
-**Status:** Ready for Dev
+**Status:** In Progress (PM assigned)
+
+---
+
+## [PM] Planning Context
+
+**Developer assigned:** dev-mcp-server
+**ZONE:** apps/mcp-server/
+**Sequencing:** Parallel with 1920a/c (2 at a time, WIP=2). 1920d (broker sanctions) sequenced last due to CRITICAL schema migration pre-condition.
+**AC-0 runtime check:** Verify HNX/vnstock source reachability from Docker host at implementation time. Document result as code comment. If VPS proxy required, wire via `VPS_PROXY_URL` env pattern (same as `bctcQueueEnricherJob.ts`).
+**Duration estimate:** ~1.5h
+**Handoff:** This file is the SSOT. Accept when: AC-0 check documented, file created, cronConfig key added, startScheduler wiring complete, acceptance criteria tests pass.
 
 ---
 

@@ -2,7 +2,17 @@
 
 **Sprint:** 1920 | **Tier:** 2 | **Type:** FEATURE | **Zone:** apps/mcp-server/ | **Size:** S
 **DDD Layer:** application + infrastructure | **Owner:** dev-mcp-server
-**Status:** Ready for Dev
+**Status:** In Progress (PM assigned)
+
+---
+
+## [PM] Planning Context
+
+**Developer assigned:** dev-mcp-server
+**ZONE:** apps/mcp-server/
+**Sequencing:** Parallel with 1920a/b (2 at a time, WIP=2). 1920d (broker sanctions) sequenced last due to CRITICAL schema migration pre-condition.
+**Duration estimate:** ~1.5h
+**Handoff:** This file is the SSOT. Accept when: file created, cronConfig key added, startScheduler wiring complete, acceptance criteria tests pass. Note: both commodity and shipping calls fire in same daily 06:00 UTC cron invocation but are tracked separately for error isolation.
 
 ---
 
