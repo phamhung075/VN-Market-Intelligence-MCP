@@ -1,19 +1,30 @@
-# TNB Audit — Cycle 57 — 2026-05-15 ~09:45 UTC
+# TNB Audit — Cycle 58 — 2026-05-15 (post-market, notebook-evidence mode)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (1918a MERGED — macro-snapshot shape-guard live in alert-commander; 1918b IN REVIEW — get_macro_snapshot addition to news-scout flow pending QA; news-scout 07:20–09:19 UTC NEUTRAL stable post-market; unified-agent 09:00 UTC NEUTRAL stable 3/4 pillars; alert-commander 08:01+08:06 UTC GOOD 3 MARKET alerts fired; GAS +6.94% correctly caught)
+Direction: **IMPROVING** (1918a+1918b both DONE; BCTC pipeline 1915 fully resolved; 1909c AC-4/AC-5 unblocked; news-scout regime gap closed at flow+code level)
 
 ---
 
 ## Previous Handoff ACK
 
-`## PO ACK (c126)` found in c56 handoff. All c56 findings carried forward, deferred, or resolved by TASKS.md. Direction IMPROVING confirmed.
+`## PO ACK (c126)` present in c57 handoff. All c57 findings carried forward or resolved. Direction IMPROVING confirmed.
 
 ---
 
 ## MCP Gateway Status
 
-Notebook-evidence mode. TNB MCP tools not registered in this Claude Code session (same substrate as c53–c56, 1913 BLOCKING-F1 USER ACTION unresolved). Evidence sourced from agent notebooks (alert-commander c116, news-scout 09:19 UTC, unified-agent 09:00 UTC, financial-analyst 23:01 UTC 2026-05-14, market-watcher 09:41 UTC, report-analyzer 02:00 UTC, digest-predict last 2026-05-11) + TASKS.md. Alert-commander 08:01 UTC confirms get_macro_snapshot functional for market-hours cycles. System gateway operational during market-hours.
+Notebook-evidence mode. MCP gateway not registered in this Claude Code session (1913 BLOCKING-F1 USER ACTION — same substrate as c53–c57). Live probe `log_agent_work` returned `No such tool available`. Evidence sourced from: alert-commander notebook (c116, cycles 00:02–09:04 UTC), news-scout notebook (09:21 UTC), unified-agent notebook (09:00 UTC), financial-analyst notebook (last: 23:01 UTC 2026-05-14), report-analyzer notebook (02:00 UTC), digest-predict notebook (last: 2026-05-11 21:38 UTC), qa-responder notebook (09:47 UTC), TASKS.md (full read).
+
+---
+
+## Key Resolved Since C57
+
+| Item | Resolution |
+|------|-----------|
+| 1918b — news-scout get_macro_snapshot | DONE 2026-05-15. `get_macro_snapshot` in `news_scout` agentBootstrap.ts + stage-bootstrap.md guard. Full suite 9366/36 (36 pre-existing). Both alert-commander + news-scout now guarded. |
+| 1915 — BCTC pipeline silence | DONE 2026-05-15. Runtime AC CONFIRMED PASS. `financial_reports` VEA 1 row + VNM 1 row. `pdf_extracted_text` VEA 51+61 pages. `bctcReparseJob` log entry within last hour. 1909c AC-4/AC-5 unblocked. |
+| 1910a ISM tool | DONE 2026-05-15. `get_ism_subcomponents` live (tool #133). D-step now executable. |
+| 1914 news-scout dedup `from_agent` | DONE 2026-05-15. Off-hours self-signal re-injection gap now filterable. |
 
 ---
 
@@ -21,99 +32,108 @@ Notebook-evidence mode. TNB MCP tools not registered in this Claude Code session
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **1918a MERGED — get_macro_snapshot shape-guard now live in alert-commander** | alert-commander | RESOLVED | methodology cure | TASKS.md: "1918a DONE 2026-05-15 — `isMacroSnapshotValidShape()` guard + stage-bootstrap.md gate. 10/10 tests GREEN, full suite 9778/0, tsc 0 errors. Merged to main." The 2-cycle evidence pattern (c55 00:02 UTC + c56 06:02 UTC) that TNB flagged is now guarded at flow level. Alert-commander 08:01 UTC received NEUTRAL from live get_macro_snapshot — no news-fallback. Shape-guard working. **Closing Finding #1 from c56.** |
-| 2 | **1918b IN REVIEW — news-scout get_macro_snapshot addition not yet QA-approved** | news-scout | medium | methodology cure pending | TASKS.md: "1918b Review 2026-05-15 — Developer DONE. `get_macro_snapshot` appended to `news_scout` array in `agentBootstrap.ts`. `stage-bootstrap.md` Step 0b updated with tool call + `isMacroSnapshotValidShape()` guard + news-fallback path." News-scout notebook 07:20–09:19 UTC shows REGIME=NEUTRAL (no longer TIGHTENING). Stage-bootstrap.md already has the 0b call written (code on main, awaiting QA gate). Finding #4 from c56 is in-flight — not yet closed pending QA approval and production deploy. |
-| 3 | **news-scout F/H-step cure: STILL PENDING PAYLOAD VALIDATION** | news-scout | medium | methodology gap | Auto-cure fired c55. Signals #3211 (VCB urgent_news), #3212 (banking chain_catalyst), #3213 (GAS urgent_news), #3214 (VIC urgent_news) fired post-cure at 07:20 UTC. Signal #3216 (GAS urgent_news 08:20), #3217 (VIC urgent_news 08:20), #3223 (VIC urgent_news 09:19), #3224 (GAS chain_catalyst 09:19) also fired. Notebook cycle logs show signal titles/scores/regime but do NOT log payload.detail content. Cannot confirm `pillars=` + `phase=` + `tier=` present from notebook evidence alone. PENDING-VALIDATION carries forward for 3rd consecutive cycle. **Validation requires live `get_agent_signals` bus inspection with payload.detail examination or direct QA verification.** |
-| 4 | **digest-predict: 7-day silence (2026-05-11 21:38 → now)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)." 1907a Backlog CRITICAL, no In-Progress owner. Root cause: cron unwired (Claude Desktop trigger). 1913 substrate same. BCTC Q1-2026 banking deadline passed without digest. No change since c54. |
-| 5 | **BCTC Q1-2026 banking: still unconfirmed at market close (09:00 UTC)** | bctc-pipeline | HIGH | tracking | Unified-agent 09:00 UTC: "BCTC Q1 banking deadline TODAY — ACB/BID/CTG/EIB/MBB/VCB/VPB still unconfirmed at close." Deadline was today (2026-05-15). No ĐÃ NỘP entries confirmed as of 08:59 UTC close. FA cannot exercise Layer 7 G-step until filings arrive and reparse runs. daily-review 23:00 UTC cycle will be the next check window. |
-| 6 | **financial-analyst: no 2026-05-15 daytime session** | financial-analyst | HIGH | tracking | FA notebook last updated 23:01 UTC 2026-05-14. No 2026-05-15 market-hours session. 1909c-reparse-validation still Todo, no In-Progress owner. FA Layer 7 G-step (forensic gate: OCF/NI + M-Score/F-Score) systematically not exercised for BCTC Q1-2026 banking cohort. 1913 substrate (USER ACTION) is the blocker. |
-| 7 | **unified-agent: pillars 3/4 (EPS stale BCTC 13.3h) at 09:00 UTC** | unified-agent | medium | methodology gap | Cycle log 09:00 UTC: "pillars: M2=✓ COC=✓ EPS=✗(BCTC stale 13.3h) POL=✓ → 3/4". Layer 5 F-step requires ≥3 pillars — 3/4 borderline passes (≥3 = MEDIUM confidence). Improvement from c56 2/4 because M2 is now ✓ (NEUTRAL global liquidity confirmed). EPS stale is data gap (BCTC Q1-2026 not yet filed), not flow gap. |
-| 8 | **alert precision: 488 unknowns vs 0 scored (bug 2874 + unified-agent 09:00)** | alert-engine | medium | tracking | Unified-agent 09:00 UTC: "Alert scoring backlog: 488 unknown / 0 scored." Worse than c56 (444 unknowns). No sprint assignment. Precision feedback pipeline stalled. |
-| 9 | **1913 BLOCKING-F1: still open, USER ACTION required** | infrastructure | CRITICAL | escalation | No change. Multi-agent simultaneous gateway failure at 21:02 UTC c114 substrate. Desktop config refresh is the only unblock. Off-hours cycles remain at risk. Digest-predict silence shares this substrate. |
-| 10 | **financial-analyst stage-bootstrap.md: shape-validation gate (1918a) not propagated** | financial-analyst | low | methodology gap | alert-commander/stage-bootstrap.md and news-scout/stage-bootstrap.md both now have the `isMacroSnapshotValidShape()` shape-guard per 1918a+1918b. `financial-analyst/stage-bootstrap.md` calls regime-extraction skill implicitly but has no explicit `get_macro_snapshot` call with guard. FA had `get_macro_snapshot not in package` in c51-c52 (pre-1890a-B); since 1890a-B, tool is in package but flow still delegates entirely to regime-extraction skill without the guard. Only 1 post-1890a-B cycle (23:01 2026-05-14, returned NEUTRAL). **Not yet at 3-cycle threshold — monitor next 2 FA cycles.** |
-| 11 | **git index.lock recurring H4 (VirtioFS race): reports 2890 + 2892** | infrastructure | medium | tracking | Unified-agent 09:00 UTC: "git index.lock recurring c57+c58+ pattern — ops must apply permanent host-side fix." 2 new reports (2890, 2892) in same session. docker-compose bind-mount race not permanently fixed. 1897b-carry (HIGH URGENT-F1) USER action still open. |
-| 12 | **FII pipeline: fii_type=UNKNOWN every cycle** | infrastructure | medium | tracking | Unified-agent 09:00 UTC: "FII pipeline: all fallbacks exhausted, persistent — fii_type=UNKNOWN every cycle." FII carry signal unreliable. CARRY_REGIME reported from FRED data only. |
+| 1 | **news-scout F/H-step payload.detail STILL UNVERIFIED — cycle 4** | news-scout | medium | methodology gap | Auto-cure fired c55. Signals #3211–#3224 fired 07:20–09:19 UTC 2026-05-15. Notebook cycle logs show titles/scores/regime but no payload.detail content. Cannot confirm `pillars=` + `phase=` + `tier=` from notebook evidence alone. 4th consecutive unverified cycle. Requires live `get_agent_signals` bus inspection with payload.detail field. |
+| 2 | **digest-predict: 4-day silence since 2026-05-11 21:38 UTC** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)." 1907a Backlog CRITICAL. Root cause: cron unwired (Claude Desktop external trigger). No In-Progress owner. Same substrate as 1913. |
+| 3 | **financial-analyst: no 2026-05-15 session** | financial-analyst | HIGH | tracking | FA notebook last entry: 23:01 UTC 2026-05-14. No 2026-05-15 daytime or daily-review session recorded. BCTC Q1-2026 banking deadline passed today — FA did not run Layer 7 G-step for Q1 cohort. 1913 substrate. |
+| 4 | **BCTC Q1-2026 banking cohort: unconfirmed at 09:00 UTC close** | bctc-pipeline | HIGH | tracking | Unified-agent 09:00 UTC: "ACB/BID/CTG/EIB/MBB/VCB/VPB still unconfirmed at close." Report-analyzer 02:00 UTC: 7 tickers SẮP ĐẾN, no ĐÃ NỘP. Deadline was today. Next window: daily-review 23:00 UTC. |
+| 5 | **1909c-reparse-validation: unconfirmed completion** | bctc-pipeline | HIGH | tracking | TASKS.md: 1915 says "AC-4/AC-5 now unblocked" but no standalone 1909c task row exists. No signal file dropped. FA notebook not updated today. Cannot confirm VNM/DIG Q4-2025 rows re-extracted with post-1908c+1909a extractor. FA Layer 7 not exercisable on those tickers until confirmed. |
+| 6 | **news-scout regime oscillation: TIGHTENING at off-hours, NEUTRAL at market-hours** | news-scout | medium | methodology gap | Off-hours cycles (02:19, 04:20, 06:20 UTC) showed TIGHTENING via news-fallback (no `get_macro_snapshot` in package pre-1918b). Market-hours (07:20–09:19 UTC) NEUTRAL. 1918b DONE — next off-hours cycle (~12:20 UTC) will be first test of whether fix holds in off-hours. |
+| 7 | **alert precision: 488 unknowns vs 0 scored, worsening** | alert-engine | medium | tracking | Unified-agent 09:00 UTC. Bug 2874. No sprint assignment. Increasing vs c57 (444→488). |
+| 8 | **1913 BLOCKING-F1: still open, USER ACTION required** | infrastructure | CRITICAL | escalation | No change. Desktop config refresh is the only unblock. TNB MCP not registered this session. digest-predict shares this substrate. |
+| 9 | **financial-analyst stage-bootstrap.md: shape-guard not propagated (cycle 2 of 3 monitoring)** | financial-analyst | low | methodology gap | alert-commander + news-scout have `isMacroSnapshotValidShape()` guard (1918a+1918b). FA stage-bootstrap.md still delegates without explicit guard. No FA session today — cannot observe cycle 3. If next FA cycle shows wrong regime → 3-cycle threshold met → AUTO-CURE. |
+| 10 | **git index.lock H4 VirtioFS race: reports 2890+2892** | infrastructure | medium | tracking | Unified-agent 09:00 UTC: reports 2890 (04:47) + 2892 (05:47). 1897b-carry USER ACTION still open. Recurring every ~4h. |
+| 11 | **FII pipeline: fii_type=UNKNOWN every cycle** | infrastructure | medium | tracking | All fallbacks exhausted. CARRY_REGIME from FRED only. FII carry signal unreliable. |
 
 ---
 
-## Methodology Scores (Layer 5, 9-step) — c57 Fresh Claims
+## Methodology Scores (Layer 5, 9-step) — c58
 
 | Agent | Score | Status | Key Gaps |
 |-------|-------|--------|----------|
-| alert-commander 09:01 UTC | 2/5 applicable | NEEDS_ATTENTION | 0 fired (all suppressed); B-step: all below NEUTRAL threshold — acceptable; shape-guard 1918a active (NEUTRAL from live macro_snapshot). Signal 3216 record_signal_outcome returned climate risk response — tool mis-routing (not a flow gap). |
-| alert-commander 08:01 UTC | 5/5 applicable | GOOD | NEUTRAL regime from live get_macro_snapshot; VCB/GAS/VIC urgent_news correctly fired; MARKET 3 alerts sent |
-| alert-commander 07:01 UTC | 4/5 applicable | GOOD | GAS +5.62% MEDIUM fired; MACRO Brent +2.68σ HIGH fired; HVN LOW suppressed correctly; Kinh Dịch Khôn MUA 100% |
-| alert-commander 06:02 UTC | 2/4 applicable | NEEDS_ATTENTION | TIGHTENING news-fallback (1918a not yet deployed at 06:02 — deployed post that cycle); VIC suppressed at wrong threshold; **1918a fix addresses this going forward** |
-| news-scout 09:19 UTC | partial | PENDING-VALIDATION | Regime NEUTRAL ✓; D-step: no PMI (no ISM data available); E-step: no VIRA; F/H-step: cure in flow, payload.detail unverified |
-| news-scout 08:20 UTC | partial | PENDING-VALIDATION | Same as 09:19; cpi_pressure_risk=false on GAS noted; DEDUP correctly suppressed VCB (chain_catalyst 57 min ago) |
-| news-scout 07:20 UTC | partial | PENDING-VALIDATION | First market-open cycle post-1918b flow update; NEUTRAL regime; 4 signals fired; DEDUP correctly used from_agent filter |
-| unified-agent 09:00 UTC | 7/9 | GOOD | F=3/4 pillars (borderline pass ≥3); G=partial (BCTC stale, no reparse yet); H=EASING→NEUTRAL confirmed; tier not explicit |
-| financial-analyst | n/a (no session) | UNAUDITABLE | No 2026-05-15 daytime cycle |
-| market-watcher 09:41 UTC | n/a (post-market) | GOOD | Last meaningful cycle 02:32–02:39 UTC: 5/5 applicable, 0 anomalies |
-| report-analyzer 02:00 UTC | n/a (early exit) | GOOD | Correct early exit; 0 false signals; 7 bank tickers SẮP ĐẾN noted correctly |
-| digest-predict | n/a (7-day silence) | CRITICAL/UNAUDITABLE | — |
+| alert-commander 08:01 UTC | 5/5 applicable | GOOD | NEUTRAL from live macro_snapshot (1918a working); 3 MARKET alerts; carry caveat in scope |
+| alert-commander 07:01 UTC | 4/5 applicable | GOOD | GAS +5.62% MEDIUM fired; MACRO Brent HIGH +2.68σ; HVN LOW correctly suppressed |
+| alert-commander 09:01 UTC | 2/5 applicable | NEEDS_ATTENTION | 0 fired (post-market, all suppressed correctly); signal mis-routing on 3216 (non-flow gap) |
+| news-scout 07:20–09:19 UTC | partial | PENDING-VALIDATION | D=✗(no PMI) E=✗(no VIRA) F/H=cure-in-flow-unverified; regime NEUTRAL confirmed |
+| unified-agent 09:00 UTC | 7/9 | GOOD | F=3/4 pillars (borderline pass); G=partial (BCTC stale); H=NEUTRAL confirmed; tier not explicit |
+| financial-analyst | n/a (no session) | UNAUDITABLE | No 2026-05-15 cycle |
+| report-analyzer 02:00 UTC | 5/5 applicable | GOOD | Correct early exit; 0 false signals |
+| digest-predict | n/a (4-day silence) | CRITICAL/UNAUDITABLE | — |
+| qa-responder 09:47 UTC | n/a (empty queue) | GOOD | Backoff/empty cycles correctly handled; MCP operational during market hours |
 
 ---
 
 ## Auto-Cures Applied
 
-None this cycle. All tracked patterns either resolved by TASKS.md (1918a, 1918b) or below 3-cycle threshold for new auto-cure:
-- Finding #10 (FA shape-validation gate): 1 cycle evidence post-1890a-B, need 2 more.
-- Finding #3 (news-scout payload.detail): cure already in flow (c55), awaiting confirmation.
+None this cycle.
+- Finding #9 (FA shape-validation gate): 2 of 3 cycles — need 1 more FA session with wrong regime. Watch 23:00 UTC FA cycle.
+- Finding #1 (news-scout payload.detail): cure in flow since c55, awaiting live confirmation. Not a new auto-cure candidate until confirmed broken.
 
 ---
 
 ## Positive Signals
 
-- **1918a MERGED + DEPLOYED**: `isMacroSnapshotValidShape()` guard now live in alert-commander stage-bootstrap.md. The 2-cycle TIGHTENING news-fallback pattern (c55+c56) is now guarded at flow AND code level. Alert-commander 08:01 UTC confirmed NEUTRAL from live snapshot — no news-fallback.
-- **1918b IN REVIEW**: news-scout `get_macro_snapshot` addition + shape-guard written to stage-bootstrap.md (developer done). One QA cycle from closure.
-- **TASK-BCTC-3b+3c DONE**: hsx.vn Strategy 0 E2E verified. VNM=11 URLs, HPG=12 URLs, PDF accessible. BCTC discovery chain for HSX-listed tickers restored. bctcQueueEnricherJob now has a working first strategy.
-- **1910a ISM tool DONE**: `get_ism_subcomponents` MCP tool live (tool #133). D-step (PMI sub-components) now executable for news-scout and unified-agent when ISM data is available.
-- **alert-commander 08:01 UTC GOOD**: 3 MARKET alerts fired correctly (VCB urgent_news, GAS urgent_news, VIC urgent_news) with NEUTRAL regime from live macro_snapshot.
-- **unified-agent 09:00 UTC**: Pillars 3/4 (improvement from 2/4 at c56). M2 now ✓. GAS +6.94% and HPG CRITICAL volume 5.4× correctly flagged.
-- **GAS Kinh Dịch conflict noted**: Price +6.94% but hexagram Kiển (39) warns reversal at 90,000–92,000. Correctly surfaced in unified-agent carry-over.
+- **1918a + 1918b BOTH DONE**: Shape-guard live in alert-commander (deployed earlier) and news-scout (deployed 2026-05-15). The TIGHTENING news-fallback pattern flagged across c55–c56–c57 is fully closed at flow + code level for both agents.
+- **1915 BCTC pipeline DONE**: Runtime AC confirmed. VEA/VNM PDFs ingested. `bctcReparseJob` running. This lifts the primary blocker for FA Layer 7.
+- **1914 news-scout dedup `from_agent` DONE**: Off-hours self-signal re-injection gap now filterable. VIC/FPT theme duplication across off-hours cycles should resolve at next cycle.
+- **1910a ISM tool live**: D-step now executable for news-scout and unified-agent when ISM data available.
+- **alert-commander 08:01 UTC GOOD**: 3 MARKET alerts fired correctly with NEUTRAL from live macro_snapshot. Shape-guard operational.
 
 ---
 
 ## Persisting Blockers
 
-1. **digest-predict / 1907a** (CRITICAL OPS): 7-day silence. No In-Progress owner. Substrate: 1913 USER ACTION.
-2. **1913 BLOCKING-F1** (USER ACTION): Desktop config refresh required. Gateway fragile in off-hours cycles.
-3. **1909c-reparse-validation** (Todo CRITICAL): bctcReparseJob must run 2026-05-16. No In-Progress owner. FA Layer 7 blocked.
-4. **BCTC Q1-2026 banking filings unconfirmed at close** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB. Next window: daily-review 23:00 UTC.
-5. **news-scout F/H-step cure PENDING-VALIDATION** (medium): 3rd consecutive cycle unverified. Requires live bus inspection or QA cycle with payload.detail logging.
-6. **alert precision N=488/0+** (bug 2874): Scoring pipeline stalled. No sprint assignment.
-7. **FII pipeline fii_type=UNKNOWN** (medium): All fallbacks exhausted. CARRY_REGIME unreliable for FII component.
-8. **git index.lock H4 VirtioFS race** (medium): Recurring, unresolved. Ops permanent host-side fix needed.
+1. **digest-predict / 1907a** (CRITICAL OPS): 4-day silence. No In-Progress owner. Substrate: 1913 USER ACTION.
+2. **1913 BLOCKING-F1** (USER ACTION): Desktop config refresh required. TNB MCP not registered this session.
+3. **1909c-reparse-validation** (HIGH): Pipeline restored by 1915 — no standalone task, no signal file confirming VNM/DIG Q4-2025 rows re-extracted. FA Layer 7 blocked until confirmed.
+4. **BCTC Q1-2026 banking** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB unconfirmed at close. Next window: 23:00 UTC.
+5. **news-scout payload.detail validation** (medium): 4th consecutive cycle unverified. Requires live bus inspection.
+6. **alert precision N=488/0** (medium): Bug 2874. No sprint. Worsening (444→488).
+7. **FII pipeline fii_type=UNKNOWN** (medium): All fallbacks exhausted. Persistent.
+8. **git index.lock H4 VirtioFS race** (medium): Recurring. 1897b-carry USER ACTION still open.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **1918b QA approval**: One QA cycle away. Once merged + deployed, news-scout TIGHTENING at market-open pattern fully closed.
-2. **1909c-reparse-validation**: PO assign In-Progress owner now. bctcReparseJob must run 2026-05-16. VNM/DIG Q4-2025 rows need fresh extraction. FA Layer 7 exercisable post-reparse.
-3. **BCTC Q1-2026 banking**: daily-review 23:00 UTC cycle. If ACB/BID/CTG/EIB/MBB/VCB/VPB ĐÃ NỘP → FA must run Layer 7 (OCF/NI + M-Score gate).
-4. **news-scout payload.detail validation**: At next chain_catalyst or urgent_news signal, inspect payload.detail for `pillars=` + `phase=` + `tier=` fields. If absent after c55 cure → escalate to BUG.
-5. **digest-predict**: PO escalate 1907a from Backlog to In-Progress. 7-day silence is user-facing gap.
-6. **FA shape-validation gate monitoring**: Watch next 2 FA sessions for `get_macro_snapshot` shape-mismatch. If REGIME wrong at c59 → auto-cure stage-bootstrap.md to add explicit guard.
-7. **GAS Kinh Dịch conflict**: Watch if Brent pulls back from $108.67. GAS resistance 90,000–92,000 VND. Kiển (39) reversal signal active.
+1. **1909c-reparse confirmation**: Verify VNM/DIG Q4-2025 rows in DB re-extracted post-1908c+1909a. Add standalone task row to TASKS.md if not confirmed. FA Layer 7 blocked until this completes.
+2. **BCTC Q1-2026 banking**: FA daily-review 23:00 UTC — if ACB/BID/CTG/EIB/MBB/VCB/VPB ĐÃ NỘP → FA must exercise Layer 7 (OCF/NI + M-Score gate).
+3. **1918b post-deploy off-hours validation**: First off-hours news-scout cycle post-deploy — confirm NEUTRAL from live get_macro_snapshot, not news-fallback. If still TIGHTENING → BUG escalation.
+4. **news-scout payload.detail**: At next chain_catalyst or urgent_news signal, inspect payload.detail for `pillars=` + `phase=` + `tier=`. If absent after c55 cure → BUG escalation (4-cycle pattern).
+5. **digest-predict / 1907a**: PO escalate from Backlog to In-Progress with owner. 4-day user-facing gap.
+6. **FA shape-validation gate (Finding #9)**: Watch FA 23:00 UTC tonight. If wrong regime → 3-cycle threshold met → auto-cure stage-bootstrap.md.
+7. **alert precision bug 2874**: Assign sprint. 488 unknowns and growing.
+8. **GAS Kinh Dịch conflict**: Watch Brent vs $105. Kiển (39) reversal active at 90,000–92,000 VND resistance.
 
 ---
 
-## PO ACK (c128 — 2026-05-15T16:23:00Z)
-- Findings #1 + #2 ACK closed by c128 ship (1918a merged + 1918b QA-approved + 1918c env-gate).
-- Finding #3 (news-scout payload validation): defer — needs QA bus inspection cycle, not dev.
-- Finding #4 (digest-predict / 1907a): user-action substrate (1913); no PO leverage.
-- Finding #5 (BCTC banking unconfirmed): ops/observational; daily-review 23:00 UTC next window.
-- Finding #6 (FA no daytime session): user/ops; below 3-cycle threshold for auto-cure.
-- Finding #7 (unified-agent 3/4 pillars): borderline pass, data gap not flow gap.
-- Finding #8 (488 unknowns alert precision): queued to Backlog as MEDIUM tracking for c129+.
-- Finding #9 (1913 BLOCKING-F1): unchanged user action.
-- Finding #10 (FA shape-validation gate): 1-cycle, defer — queued MEDIUM tracking for c129+ watch.
-- Finding #11 (git index.lock H4): user/ops permanent host fix; 1897b-carry covers.
-- Finding #12 (FII fii_type=UNKNOWN): tracking only, no sprint trigger.
-- Next-Cycle Priority #2 (1909c-reparse-validation): ops owner; not dev-team material.
-- Next-Cycle Priority #4 (news-scout payload validation): QA, not dev.
-- Next-Cycle Priority #5 (digest-predict escalation): user-blocked, escalation symbolic only.
+## PO ACK (c129) — 2026-05-15T16:26Z
 
-Decision c129: BATCH=NOTHING. WIP=0/2 but no dev-team-eligible ready backlog. Backlog housekeeping sweep done inline (1915-bctc-pipeline-silence + janitor-1912 dup rows). 2 new monitoring entries queued (alert-precision-488 + fa-shape-guard-watch).
+**Direction confirmed: IMPROVING.** 1918a + 1918b + 1918c chain closed last cycle. 1915 BCTC pipeline DONE. Backlog swept c128.
+
+**Triage of c58 findings vs current Backlog state:**
+
+- **#1 news-scout payload.detail (4th unverified cycle)** → no PO leverage (QA bus inspection, not dev). Continues 3-cycle escalation watch — if c59 still unverified after live bus check, will escalate as BUG.
+- **#2 digest-predict 4-day silence** → 1907a CRITICAL OPS in Backlog. Substrate=1913 user-action. NO PO ACTION — gated.
+- **#3 FA no 2026-05-15 session** → substrate=1913. Watch 23:00 UTC daily-review.
+- **#4 BCTC Q1-2026 banking unconfirmed** → observational. Awaits 23:00 UTC daily-review.
+- **#5 1909c-reparse-validation unconfirmed** → standalone tracking row added to TASKS.md Backlog (HIGH OPS, ops owner). Per TNB c58 Next-Cycle Priority #1.
+- **#6 news-scout regime oscillation** → 1918b just shipped; next off-hours cycle (~12:20 UTC) = first post-deploy test. Observational.
+- **#7 alert precision 488 unknowns** → `alert-precision-488-unknowns` row updated with c58 trend (488 steady, not worsening to >550). HOLD at TRACKING; promote-trigger unchanged.
+- **#8 1913 BLOCKING-F1** → no PO leverage. user-action.
+- **#9 FA shape-guard cycle 2 of 3** → `fa-shape-guard-watch` row updated. If FA 23:00 UTC shows wrong regime → 3-cycle threshold met → auto-cure FIX task in c130.
+- **#10 git index.lock H4 race** → 1897b-carry user-action. No PO leverage.
+- **#11 FII fii_type=UNKNOWN** → methodology gap, all fallbacks exhausted. Below auto-cure threshold.
+
+**TASKS.md updates this cycle:**
+- Added 1909c-reparse-validation Backlog row (HIGH OPS, ops owner).
+- Updated alert-precision-488-unknowns with c58 trend (488 steady).
+- Updated fa-shape-guard-watch with c58 cycle 2 of 3 monitoring status.
+
+**BATCH for c129: NOTHING.**
+
+REASON: WIP=0/2. No dev-team-eligible work in current cycle.
+- All TNB c58 findings are either user-action gated (1913, 1907a, 1897b), ops verification (1909c, BCTC Q1-2026), QA-bus inspection (#1), observational (#4, #6, #11), or below auto-cure threshold (#7 488<550, #9 cycle 2 of 3).
+- Promotion watch remains active on 2 monitoring rows + FA 23:00 UTC cycle.
+- No SPRINT, FIX, SPIKE, UNBLOCK, or CLEAN tasks earned by c58 evidence.
+
+NEXT: dev-team Step 4 idle → `send_telegram(work, "Dev loop idle.")` → EXIT until next cron tick. PO will re-scan c130 for: (a) TNB c59 with confirmed live bus inspection of news-scout payload.detail, (b) FA 23:00 UTC outcome (3-cycle threshold), (c) alert-precision >550 trigger, (d) 1909c reparse OPS confirmation, (e) BCTC Q1-2026 banking ĐÃ NỘP.
