@@ -1,6 +1,37 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 04:25 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 08:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (08:20–08:21 UTC)
+- Items: 20 | Impacts: 5 | Signals: [urgent_news #3216 GAS, urgent_news #3217 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3216: GAS — +6.94% (83,600→89,400 VND), Brent 108.06 USD; impact=9; regime=NEUTRAL adj_score=9.0; severity=high; cpi_pressure_risk=false
+- urgent_news #3217: VIC — Vingroup tuyển dụng giai đoạn 1 hơn 20,000 lao động khu đô thị thể thao quốc tế HN; impact=8; regime=NEUTRAL adj_score=8.0; severity=medium
+- DEDUP: VCB chain_catalyst suppressed — same theme already on bus as #3212 (57 min ago, banking/credit_policy/bullish). GAS/VIC clear.
+- NOTE: Regime NEUTRAL (no macro snapshot in package). Gold declining per news. Brent 108.06 elevated. No PMI data. VN market OPEN.
+
+### Cycle (07:20–07:22 UTC)
+- Items: 20 | Impacts: 9 | Signals: [urgent_news #3211 VCB, chain_catalyst #3212 banking, urgent_news #3213 GAS, urgent_news #3214 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3211: VCB — Vietcombank phát hành tối đa 10,000 tỷ trái phiếu tăng vốn cấp 2; impact=9; regime=NEUTRAL adj_score=9.0; severity=high
+- chain_catalyst #3212: credit_policy bullish → banking (VCB, ACB, BID, CTG, EIB, MBB, VPB); regime=NEUTRAL adj_score=9.0; confidence=0.82
+- urgent_news #3213: GAS — +6.94% watchlist breach trên nền Brent $107.42; impact=8; regime=NEUTRAL adj_score=8.0; severity=high; cpi_pressure_risk=true
+- urgent_news #3214: VIC — Vingroup tuyển dụng 20,000 lao động khu đô thị thể thao quốc tế HN; impact=8; regime=NEUTRAL adj_score=8.0; severity=medium
+- DEDUP: Bus clear (all prior signals >180 min old). No suppression applied. Note: VCB article (pub 00:26) and VIC article (pub 04:45) re-appear in fetch window; prior signals #3204/#3209 expired from dedup window.
+- NOTE: Regime NEUTRAL (no macro snapshot in bootstrap; FedLiquidity FRED data unpopulated). Gold declining per news ("tiếp tục lao dốc"). Brent $107.42 elevated — cpi_pressure_risk flagged on GAS signal. No PMI data. VN market OPEN 07:18 UTC.
+
+### Cycle (06:20–06:22 UTC)
+- Items: 20 | Impacts: 5 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- DEDUP/THRESHOLD: VCB Tier2 bond (raw 9, adj 6.3, TIGHTENING×0.7 < 7). VIC Vingroup 20K workers (raw 8, adj 5.6, TIGHTENING×0.7 < 7). Brent +2.68σ macro alert already on bus. FPT JV already #3207 (bus).
+- NOTE: 0 signals fired. REGIME=TIGHTENING (inferred: prior cycle + "lãi suất cao đe dọa NIM" in bootstrap; get_macro_snapshot not in package, [SKIP]). CARRY=NEUTRAL (FRED data unpopulated). Gold declining. Brent 107.95 elevated. No PMI. VN market OPEN.
+
+### Cycle (05:20–05:22 UTC)
+- Items: 20 | Impacts: 4 | Signals: [urgent_news #3209 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3209: VIC — Vingroup tuyển dụng 20.000+ lao động khu đô thị thể thao quốc tế HN giai đoạn 1; impact=8; regime=NEUTRAL adj_score=8.0; severity=high
+- DEDUP: VCB Tier2 bond banking capital suppressed (match #3205, banking sector, ~119 min ago). FPT Japan JV suppressed (match #3207, tech/FPT, ~56 min ago).
+- NOTE: Regime NEUTRAL (no FRED data; EFFR+IORB unpopulated). Gold declining domestically per news. Brent $107 elevated (no prior month baseline for >5% check). No PMI data. VN market OPEN.
 
 ### Cycle (04:20–04:25 UTC)
 - Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3207] | Regime: TIGHTENING | Carry: NEUTRAL
