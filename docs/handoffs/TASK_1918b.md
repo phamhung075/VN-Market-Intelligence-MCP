@@ -141,3 +141,25 @@ true — no DDD violations, no duplicate interfaces, no production footguns iden
 - [ ] On invalid shape (system_status bleed): `[WARN]` log + `REGIME_SOURCE=news-fallback` (non-fatal, identical to call failure path)
 - [ ] tsc 0 errors (interface-layer-only change; no type errors expected)
 - [ ] No new test file required (pure array append + flow doc text update)
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:46` — appended `"get_macro_snapshot"` to `news_scout` array after `"get_ism_subcomponents"`
+  - `docs/SKILL_MANIFEST.md:6,30-31` — mirrored append to `news_scout` JSON array; updated "Last updated" to Task 1918b
+  - `.claude/tools/package/news-scout.md:45` — added `get_macro_snapshot` row to Market Intelligence table
+  - `.claude/flows/news-scout/stage-bootstrap.md:13-24` — replaced bare Step 0b regime-extraction reference with explicit `get_macro_snapshot` call + `isMacroSnapshotValidShape()` guard + news-fallback path (mirrors alert-commander 1918a pattern)
+- **Tests written:** NONE — pure interface-layer array append + flow doc text update; no new logic
+- **Git commits:**
+  - `8d4df7a2` fix(1918b/mcp): 1918b add get_macro_snapshot to news_scout SKILL_MANIFEST (SSOT pair, atomic)
+  - `f6918cc9` fix(1918b/flow): 1918b news-scout stage-bootstrap 0b get_macro_snapshot + shape guard
+- **tsc status:** clean (0 errors)
+- **Full suite:** not run (no production code changed; tsc clean confirms no type regressions)
+- **Docs updated:**
+  - `docs/SKILL_MANIFEST.md` — news_scout array + Last updated line
+  - `.claude/tools/package/news-scout.md` — Market Intelligence table row
+  - `.claude/flows/news-scout/stage-bootstrap.md` — Step 0b regime block
+  - `docs/TASKS.md` — task status → Review
+- **Graphify:** skipped (flow/package doc changes; no domain knowledge files impacted)
