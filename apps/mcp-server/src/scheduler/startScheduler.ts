@@ -56,6 +56,7 @@ import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
+import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { CRONS } from './cronConfig.js'
@@ -683,6 +684,18 @@ export function startScheduler() {
   cron.schedule(CRONS.newsHeadlinesRefresh, async () => {
     await jobRunRepo.wrapRun('newsHeadlinesRefreshJob', async () => {
       await newsHeadlinesRefreshJob()
+    })
+  }, { timezone: 'UTC' })
+
+  // Sunday 02:30 UTC (09:30 VN) — Bond maturity poller — task 1920b
+  // Fetches upcoming TPDN (corporate bond) maturities for watchlist issuers and
+  // upserts them into bond_maturity via upsertBond() (ON CONFLICT idempotent).
+  // Zero-row result triggers WORK alert. Fail-loud on fetch error.
+  // AC-0: vnstock bond endpoint / domain seed data — direct from France (no VPS required).
+  cron.schedule(CRONS.bondMaturityPoller, async () => {
+    await jobRunRepo.wrapRun('bondMaturityPollerJob', async () => {
+      const result = await runBondMaturityPollerJob()
+      return { rowsWritten: result.rowsWritten }
     })
   }, { timezone: 'UTC' })
 

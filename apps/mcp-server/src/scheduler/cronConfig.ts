@@ -127,4 +127,6 @@ export const CRONS = {
   verdictResolutionJob:      Bun.env.CRON_VERDICT_RESOLUTION                 ?? '7 * * * *',
   /** newsHeadlinesRefresh — Bloomberg + Reuters via news-fetch service: every 30 min (task 1899a-cron) */
   newsHeadlinesRefresh:      Bun.env['CRON_NEWS_HEADLINES_REFRESH']           ?? '*/30 * * * *',
+  /** bondMaturityPoller — weekly Sunday 02:30 UTC (09:30 VN) — task 1920b */
+  bondMaturityPoller:        Bun.env.CRON_BOND_MATURITY_POLLER                 ?? '30 2 * * 0',
 }
