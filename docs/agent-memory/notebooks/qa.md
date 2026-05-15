@@ -1,6 +1,33 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c123 — 1910a-ism-tool CHANGES_REQUESTED
+**Last updated:** 2026-05-15 | **Session:** c124 — 1910a-ism-tool APPROVED (round 2)
+
+## Session 2026-05-15 c124 — 1910a-ism-tool re-review
+
+### TASK REPORT — 1910a (round 2)
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: FEATURE (infra fetcher + domain signal + MCP tool + 35 tests)
+round: 2 (post-fixer bfdaa731)
+```
+
+#### Fix Verification
+
+- `fredIsmSubcomponents.ts:262` — only `Bun.env.FRED_API_KEY` present. `process.env` fallback removed by commit bfdaa731. Diff confirmed.
+- Test file `1910a-ism-subcomponents-fetcher.test.ts` uses `process.env` only for save/restore scaffolding + mirrors set on `Bun.env` — acceptable test pattern.
+
+#### Pipeline
+
+- Targeted: 35/0 | Full suite: 9666 pass / 39 fail (all pre-existing)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### Report
+
+`reports/TASK_REPORT_1910a.md`
+
+---
 
 ## Session 2026-05-15 c123 — 1910a-ism-tool
 

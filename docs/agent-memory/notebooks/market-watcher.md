@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 07:41 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 08:43 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1699,3 +1699,24 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (08:38–08:43)
+- Stocks: 31 | Anomalies: 4 (GAS >2.0σ + vol spikes HPG/NVL/GVR) | Volume spikes: 3 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE | US10Y: NEUTRAL | fx_pressure: [] | pe_risk: []
+- GAS +6.94% (2.24σ) — oil/gas sector broad rally, Brent 108.67, 3rd strong session. Signal id=3219.
+- HPG -1.85% (1.99σ) + volume 5.4x CRITICAL (7.58M vs avg 1.4M). Distribution on down day. Signal id=3220.
+- NVL +3.90% + volume 3.2x HIGH (3.14M vs avg 968K). Bounce in downtrend (-9.9% 30d). Signal id=3221.
+- GVR +4.28% + volume 2.4x (675K vs avg 281K). Momentum continuing. Signal id=3222.
+- Macro: BDI 1400 stable, no supply chain disruptions. Energy grid NORMAL. Climate: May heat risk (IDC/KBC/GEG).
+- Sector leaders: Oil/gas +3.94%. Laggards: banking -0.62%, insurance -0.89%, retail -0.78%.
+
+## Metrics (cycle 2026-05-15 08:43 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 31 |
+| signals_emitted | 4 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5200 |

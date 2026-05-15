@@ -34,7 +34,7 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | _(BCTC-3b moved to Review)_ | — | — | — | — | — | — |
-| 1910a-ism-tool [dev-mcp-server] | **[REVIEW]** — QA CHANGES_REQUESTED fixed 2026-05-15. Removed `process.env["FRED_API_KEY"]` fallback per Bun.env-only policy (commit bfdaa731). 35/35 new tests GREEN, tsc 0 errors. `fredIsmSubcomponents.ts` fetcher + `ismRegimeSignal.ts` domain + `getIsmSubcomponentsTool.ts` (#133). Wired into `macroIndicatorRefreshJob`. NAPMNO/NAPMEMP/NAPMPI/NAPMBI series. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. | HIGH | FEATURE | dev-mcp-server | docs/handoffs/TASK_1910a-ism-tool.md | — |
+| _(1910a moved to Done)_ | — | — | — | — | — | — |
 | _(WIP = 2/2; AT CAPACITY; cycle 2026-05-15)_ | — | — | — | — | — | — |
 
 ---
@@ -50,6 +50,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1910a-ism-tool | **QA APPROVED 2026-05-15** — `fredIsmSubcomponents.ts` FRED REST fetcher (NAPMNO/NAPMEMP/NAPMPI/NAPMBI) + `ismRegimeSignal.ts` pure domain signal (EXPANDING/CONTRACTING/MIXED) + `getIsmSubcomponentsTool.ts` MCP tool #133 (source_tier=1). Wired into `macroIndicatorRefreshJob`. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. 35/35 targeted GREEN. Full suite 9666/39 (all pre-existing). tsc 0. DDD PASS. Security PASS (Bun.env-only confirmed). Fixer commit `bfdaa731` (removed `process.env` fallback). | HIGH | FEATURE | dev-mcp-server | 2026-05-15 |
 | TASK-BCTC-3b | **QA APPROVED 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (_fetchHsx port + "hsx" source union + hsx→VPS→SSC→vietstock order). `bctcQueueEnricherJob.ts` wired. 8/8 tests GREEN. 8 existing BCTC test files updated (68/0). tsc 0 errors. Full suite 9314 pass / 36 fail (all pre-existing). DDD PASS. Security PASS. Commit `9c4bc9d5` on main. | CRITICAL | FEATURE | qa | 2026-05-15 |
 | 1899a-bloomberg-test-split | **DONE 2026-05-15** — Split `1899a-bloomberg.test.ts` (491L) into 4 files ≤200L: dom(189L/12 expect), json-fallback(182L/8 expect), perimeterx-lifecycle(186L/14 expect), normalize-date(51L/7 expect). Total 41 expect() = parity. Source file deleted. 29 pass / 0 fail. tsc 0 errors. | LOW | REFACTOR | dev-mainserver-crawls | 2026-05-15 |
 | CLEAN-c120-stale-branches | **DONE 2026-05-15** — Deleted 3 local + 2 remote stale branches (all 0 unmerged commits; feature work confirmed on main). Local: `fix/1908c-val07-plausibility-override` (worktree stale lock removed), `task/1909b-get-bctc-ocf-tool` (worktree stale lock removed), `task/1910b-effr-package-registration` (no local branch existed). Remote: `origin/task/1909b-get-bctc-ocf-tool` + `origin/task/1910b-effr-package-registration` deleted. AC-1/2/3/4 PASS: `git branch -a` clean. MCP gateway degraded — WORK notification skipped per AC-5 fallback; logged here instead. | LOW | CLEAN | qa | 2026-05-15 |

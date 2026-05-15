@@ -208,3 +208,22 @@ export async function fetchFredIsmSubcomponents(
 **Verification:** tsc 0 errors. No test regression. Ready for QA re-review.
 
 **Status:** COMPLETE → Move to [REVIEW]
+
+---
+
+## [QA] Re-Review Record (Round 2)
+
+**Date:** 2026-05-15
+**Round:** 2
+**Verdict:** APPROVED
+
+**Pipeline:**
+- Targeted (35 tests): 35 pass / 0 fail
+- Full suite: 9666 pass / 39 fail (all pre-existing — infrastructure/network/chromium/missing-tables; none touch 1910a files)
+- tsc: 0 errors
+- DDD: PASS — `ismRegimeSignal.ts` zero infra imports confirmed
+- Security: PASS — `fredIsmSubcomponents.ts:262` uses only `Bun.env.FRED_API_KEY`; `process.env` fallback removed by bfdaa731; test-file save/restore scaffolding is acceptable test pattern
+
+**Blocking Issues:** None.
+
+**Report:** `reports/TASK_REPORT_1910a.md`
