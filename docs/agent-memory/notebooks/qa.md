@@ -1,6 +1,33 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c118 — 1914b-log-agent-work-doc APPROVED
+**Last updated:** 2026-05-15 | **Session:** c120 — CLEAN-c120-stale-branches DONE
+
+## Session 2026-05-15 c120 — CLEAN stale branches
+
+### CLEAN-c120-stale-branches
+
+```
+date: 2026-05-15
+outcome: DONE
+type: CLEAN (branch cleanup, no code/test scan required)
+```
+
+#### Branches processed
+
+- `fix/1908c-val07-plausibility-override` — local only, worktree stale lock (pid 83362 dead). Removed worktree with `-f -f`, deleted with `git branch -D`. Confirmed `git branch --merged main` showed it as fully merged.
+- `task/1909b-get-bctc-ocf-tool` — local + remote. Worktree stale lock (same pid 83362). Content on main via parallel commits (`d285cc68` / `a3381005` on main vs `0c0e85f8` / `2161f4e4` on branch — same timestamp/author/message, same content). Removed worktree with `-f -f`, deleted local `git branch -D`, deleted remote.
+- `task/1910b-effr-package-registration` — remote only (no local branch). Content on main (`e7fd1718` / `961c62ec`). Remote deleted.
+
+#### AC
+
+- AC-1 PASS: 3 local branches deleted
+- AC-2 PASS: 2 remote branches deleted
+- AC-3 PASS: `git branch -a` returns empty for all 5 patterns
+- AC-4 PASS: feature content confirmed on main before deletion
+- AC-5: MCP gateway degraded (1913 BLOCKING-F1) — WORK notification skipped, logged in TASKS.md instead
+- AC-6 PASS: TASKS.md updated, CLEAN-c120 marked Done
+
+---
 
 ## Session 2026-05-15 c118 — 1914b-log-agent-work-doc QA gate
 

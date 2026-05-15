@@ -1,6 +1,14 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 01:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 03:22 UTC | **Status:** OPERATIONAL
+
+### Cycle (03:20–03:22 UTC)
+- Items: 20 | Impacts: 10 | Signals: [urgent_news #3204, chain_catalyst #3205] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3204: VCB — Vietcombank phát hành tối đa 10,000 tỷ trái phiếu tăng vốn cấp 2; impact=9; regime=NEUTRAL adj_score=9.0; severity=high
+- chain_catalyst #3205: sector_event bullish → banking (VCB, CTG, BID, ACB, MBB, VPB) — sóng tăng vốn ngân hàng tuần này (CTG 05-12/13 + VCB 05-15); regime=NEUTRAL adj_score=8.0; confidence=0.78
+- DEDUP: chain_catalyst VN-Index ATH suppressed (match #3200, real_estate/VinGroup, ~119 min ago). FPT JV neutral direction skipped.
+- NOTE: Regime switched TIGHTENING→NEUTRAL vs prior cycle (02:19). CARRY_REGIME=FII_OUTFLOW_RISK (VND spread -0.33%). Brent $107.16 (elevated, >$90 threshold). Gold $4,621. No PMI data. VN market OPEN (market-hours 20min cycle).
 
 ### Cycle (02:19–02:22 UTC)
 - Items: 20 | Impacts: 5 | Signals: [] | Regime: TIGHTENING | Carry: NEUTRAL
