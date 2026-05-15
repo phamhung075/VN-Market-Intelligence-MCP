@@ -196,3 +196,15 @@ export async function fetchFredIsmSubcomponents(
 1. `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts:263` — `process.env["FRED_API_KEY"]` violates `Bun.env`-only policy (`dev-standards.md` § Coding Standards, `qa-checklist.md` § Security). Line 262 already reads `Bun.env.FRED_API_KEY`; the `?? process.env["FRED_API_KEY"]` fallback on line 263 must be removed. Correct fix: delete the `?? process.env["FRED_API_KEY"]` fallback. Tests must use `Bun.env` directly if they need to set the key.
 
 **Report:** `reports/TASK_REPORT_1910a.md`
+
+---
+
+## [Fixer] Fix Record
+
+**Date:** 2026-05-15
+**Commit:** bfdaa731 (main)
+**Fix:** Removed `?? process.env["FRED_API_KEY"]` fallback on line 263 of `fredIsmSubcomponents.ts`. Kept only `Bun.env.FRED_API_KEY` per `dev-standards.md` Bun.env-only policy.
+
+**Verification:** tsc 0 errors. No test regression. Ready for QA re-review.
+
+**Status:** COMPLETE → Move to [REVIEW]
