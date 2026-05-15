@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c114 (janitor-1912 DISPATCHED to code-janitor + 1914 In Progress) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 2/2 AT CAPACITY (1914 dev-mcp-server + janitor-1912 code-janitor parallel)
+**Last updated:** 2026-05-15 c119 (post-cycle: janitor-1912 DONE + 1914b DONE) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN (both c114 dispatch tasks completed)
 
 ## Current state
 
-- **WIP: 2/2 (AT CAPACITY)** — 1914-news-scout-dedup-api IN PROGRESS (dev-mcp-server, MEDIUM priority). Janitor-1912 IN PROGRESS (code-janitor, LOW priority, parallel zone). Both dispatched c114. Handoff files complete. No blockers. 1910a (HIGH FEATURE ISM) queued in Backlog; 1909c (CRITICAL OPS) UNBLOCKED, awaiting Q1-2026 PDF arrival 2026-05-16+.
+- **WIP: 0/2 (CLEAN)** — Cycle c114 complete. 1914b-log-agent-work-doc DONE (commits 3b68df2c + cd01a02e). janitor-1912 DONE (commits d637ad1b + e0ad8357). No blockers. 1909c (CRITICAL OPS) ready for Q1-2026 BCTC PDF arrival 2026-05-16+. Next dispatch available.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,24 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 119 — 2026-05-15 Post-cycle: Both c114 tasks DONE (WIP=0/2 CLEAN)
+
+**Input:** Cycle c114 execution complete. janitor-1912 closed (commits d637ad1b + e0ad8357). 1914b-log-agent-work-doc closed (commits 3b68df2c + cd01a02e). Both tasks marked Done in TASKS.md.
+
+**Actions:**
+1. **Post-cycle flow (dev-team/post-cycle.md) Step 4 — Scan:** No stale non-main branches remaining from failed tasks. Checked: `git branch -a` shows 10 worktree-agent-* (pre-phase-3c cleanup, harmless) + 2 old task branches (fix/1908c + task/1909b, pre-cutover). No unresolved reports. No monitoring-only guard condition triggered (WIP=0).
+2. **docs/TASKS.md updated:** In Progress section now empty with WIP marker (0/2). Both task rows moved to Done (already completed in previous cycles; now final state sync). Line count adjusted.
+3. **PM notebook updated:** Header timestamp = c119, WIP = 0/2 CLEAN. Current state reflects cycle completion. New cycle entry added documenting post-cycle state.
+4. **Step 4.5 checkpoint:** ctx = ~18% (post-cycle token usage minimal). Skip compact (ctx ≤ 25%, per flow rule). Resume Step 1 on next dispatch signal.
+
+**WIP Status:** 0/2 (CLEAN). Capacity available for next dispatch.
+
+**Next Steps:** (1) Monitor incoming signals for next dispatch signal. (2) Backlog ready: 1910a (HIGH FEATURE ISM, user-action), 1909c (CRITICAL OPS, Q1-2026 PDF arrival gate). (3) Todo queue active: BCTC-3, JANITOR-*, 1862c-* pending.
+
+**Status:** Post-cycle COMPLETE. System idle, awaiting next dispatch.
 
 ---
 
