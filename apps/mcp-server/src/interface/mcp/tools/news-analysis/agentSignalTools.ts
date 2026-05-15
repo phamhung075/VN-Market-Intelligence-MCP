@@ -320,9 +320,9 @@ export function registerAgentSignalTools(server: McpServer): void {
               confidence_score_final: confidence,
               confidence_penalty: 1.0,
               source_fallback: Boolean(findingDataRecord["source_fallback"] ?? false),
-              fallback_source: typeof findingDataRecord["fallback_source"] === "string"
-                ? (findingDataRecord["fallback_source"] as string)
-                : undefined,
+              ...(typeof findingDataRecord["fallback_source"] === "string"
+                ? { fallback_source: findingDataRecord["fallback_source"] as string }
+                : {}),
               staleness_warning: false,
               validated_at: new Date().toISOString(),
             };
@@ -331,18 +331,18 @@ export function registerAgentSignalTools(server: McpServer): void {
             const auditContext: SignalAuditContext = {
               signal_id: String(id),
               signal_type: args.signal_type === "price_confirmation" ? "price" : "news",
-              fallback_tier: typeof findingDataRecord["fallback_tier"] === "number"
-                ? (findingDataRecord["fallback_tier"] as number)
-                : undefined,
-              vps_breaker_state: typeof findingDataRecord["vps_breaker_state"] === "string"
-                ? (findingDataRecord["vps_breaker_state"] as string)
-                : undefined,
-              coverage_gap: typeof findingDataRecord["coverage_gap"] === "string"
-                ? (findingDataRecord["coverage_gap"] as string)
-                : undefined,
-              price: typeof findingDataRecord["price"] === "number"
-                ? (findingDataRecord["price"] as number)
-                : undefined,
+              ...(typeof findingDataRecord["fallback_tier"] === "number"
+                ? { fallback_tier: findingDataRecord["fallback_tier"] as number }
+                : {}),
+              ...(typeof findingDataRecord["vps_breaker_state"] === "string"
+                ? { vps_breaker_state: findingDataRecord["vps_breaker_state"] as string }
+                : {}),
+              ...(typeof findingDataRecord["coverage_gap"] === "string"
+                ? { coverage_gap: findingDataRecord["coverage_gap"] as string }
+                : {}),
+              ...(typeof findingDataRecord["price"] === "number"
+                ? { price: findingDataRecord["price"] as number }
+                : {}),
             };
 
             const auditRecord = prepareSignalAuditRecord(validationResult, auditContext);
