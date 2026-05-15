@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 01:40 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 02:42 UTC | **Sprint:** current
 
 ## Current state
 
@@ -1560,3 +1560,28 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2000 |
+
+### Cycle (02:38–02:42)
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 (>2.0σ NEUTRAL) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (USD/VND 26,137) | US10Y: RISK-ON | CARRY_REGIME: HOT_MONEY_INFLOW | fx_pressure: [] | pe_risk: []
+- Market OPEN (first session 2026-05-15, 02:38 UTC). Thresholds: σ=2.0, vol_mult=2.0x, downside_bias=false.
+- VNH -9.09% (1,000 VND) — only 1 historical data point; sigma incalculable; thin micro-cap (vol 6.9K); no signal emitted.
+- GVR +2.21% (≈0.85σ, 30d stddev ~2.60%) — sub-threshold. Bullish evidence 0.7565. Agriculture sector +0.36%/1d.
+- VRE -1.32%, BID -0.92%, GAS -0.84%, FPT -0.81%, DPM -0.74%, VIC -0.57% — all sub-threshold (high base vol or small abs move).
+- VIC -0.57%: VinFast restructure catalyst (news-scout #3200, expires 03:22 UTC) — no gap-up at open; appears fully priced or faded.
+- Session leaders: Securities (HCM +0.53%, SSI +0.71%, VCI +0.58%) +0.92%/1d | Agriculture (GVR +2.21%) +0.36%/1d | Steel (NKG +0.36%) | Utilities (PPC +0.51%, REE +0.33%)
+- Session laggards: VRE -1.32%, BID -0.92%, GAS -0.84%, FPT -0.81%
+- CARRY_REGIME=HOT_MONEY_INFLOW: tech/real_estate/banking = top 3 FII net-buy sectors → hot_money_concentration=true (session log).
+- 3 open alerts (VRE LOW, VIC LOW, VHM LOW — all news_mention Dragon Capital buying 'họ Vin'). System: OK.
+- Sector rotation: all 16 sectors STABLE (1d data only, no 5-session rotation). Chain findings: 0 (last 15 min).
+
+## Metrics (cycle 2026-05-15 02:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3800 |
