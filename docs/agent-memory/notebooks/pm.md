@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c122 (PM: TASK-BCTC-3b + 1910a-ism-tool QA APPROVED → MARK DONE + UNBLOCK BCTC-3c) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN (both tasks Done, BCTC-3c READY FOR DISPATCH)
+**Last updated:** 2026-05-15 c123 (PM: TASK-BCTC-3c marked DONE, 1910b READY FOR DISPATCH) | **Sprint:** 1910 macro suite | **Current:** WIP 0/2 CLEAN (both BCTC+ISM tasks Done, 1910b unblocked)
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — Cycle c122 processing complete. TASK-BCTC-3b (QA commit `a4766087`) + 1910a-ism-tool (QA commit `ff966d5c`) both marked Done. TASKS.md updated: In Progress section now shows WIP=0/2 READY FOR NEW ASSIGNMENTS. TASK-BCTC-3c moved Todo status with note "READY FOR DISPATCH 2026-05-15, unblocked by TASK-BCTC-3b completion". 1910b-effr-package-reg moved to Todo unblocked by 1910a completion. **HIGHEST PRIORITY NEXT: TASK-BCTC-3c (dev-mcp-server) → closes HOSE BCTC discovery chain.** Handoff file `docs/handoffs/TASK_BCTC-3c.md` fully prepared. PM section verified complete (zone, ACs, files, risk flags). Ready for developer pickup.
+- **WIP: 0/2 (CLEAN)** — Cycle c123 processing complete. TASK-BCTC-3c (QA commit `9f0bc916`) marked Done. TASKS.md updated: Review section cleared; Done section now shows both BCTC-3c + 1910a entries. 1910b-effr-package-reg moved from Todo→READY with handoff file `docs/handoffs/TASK_1910b-effr-package-reg.md` updated (depends_on: [1910a-ism-tool]). **HIGHEST PRIORITY NEXT: 1910b-effr-package-reg (agent-md-editor or dev-mcp-server) → 30min zero-build doc chore closes macro suite.** Handoff fully prepared. Ready for developer pickup.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,25 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 123 — 2026-05-15 PM Closeout: TASK-BCTC-3c QA APPROVED → MARK DONE, 1910b READY FOR DISPATCH (WIP=0/2)
+
+**Input:** TASK-BCTC-3c QA commit `9f0bc916` (approved). 1910b-effr-package-reg unblocked by 1910a (QA commit `ff966d5c`).
+
+**Actions:**
+1. **Marked TASK-BCTC-3c Done in TASKS.md** — Moved from Review → Done. Added QA commit `9f0bc916`. Note: BCTC-3 chain now closed (3b ✓ 2026-05-15, 3c ✓ 2026-05-15).
+2. **Updated 1910b handoff file** — Changed depends_on from 1909b-tool → 1910a-ism-tool. Updated sequencing note to reflect post-1910a state. Zone + all ACs already correct.
+3. **TASKS.md updated:**
+   - TASK-BCTC-3c moved Review → Done (QA commit noted).
+   - 1910b-effr-package-reg marked READY (no longer blocked).
+   - WIP = 0/2 CLEAN capacity available.
+4. **Commit:** `58889efe` (pm/c123).
+
+**Dispatch status:** 1910b-effr-package-reg ready for immediate dispatch to dev-mcp-server or agent-md-editor. 30min zero-build chore (add `get_fed_liquidity_spread` to 3 agent arrays + 3 package docs + SKILL_MANIFEST mirror).
+
+**Next step:** Developer dispatch (main terminal Step 3 execution).
 
 ---
 
