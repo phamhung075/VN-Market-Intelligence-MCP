@@ -115,5 +115,15 @@ export {
   type FetchFredEffrIorbResult,
 } from "./fredEffrIorb.js";
 
+// ── Task 1910a: FRED ISM Manufacturing sub-component fetcher ─────────────────
+export {
+  fetchFredIsmSubcomponents,
+  buildFredIsmUrl,
+  parseFredIsmJson,
+  ISM_SERIES,
+  type IsmSeriesId,
+  type IsmFetchResult,
+} from "./fredIsmSubcomponents.js";
+
 // ── Sprint 1813: BCTC discovery HTTP fetch adapter ────────────────────────────
 export { bctcHttpFetch } from "./bctcHttpFetcher.js";

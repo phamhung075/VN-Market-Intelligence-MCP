@@ -19,3 +19,5 @@ export { registerDinhGiaTools } from "./dinhGiaTools.js";
 export { registerInvestmentClockTools, registerPyramidTierTool } from "./investmentClockTools.js";
 // Task 1879b: Fed Liquidity Spread tool
 export { registerFedLiquiditySpreadTool } from "./getFedLiquiditySpreadTool.js";
+// Task 1910a: ISM sub-components tool
+export { registerGetIsmSubcomponentsTool } from "./getIsmSubcomponentsTool.js";

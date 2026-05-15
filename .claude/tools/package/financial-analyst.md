@@ -102,6 +102,7 @@ and the OCF/NI forensic ratio that `get_bctc_full` does not surface.
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | — |
+| `get_ism_subcomponents` | ISM Manufacturing PMI sub-components + regime signal | — |
 | `get_investment_clock_phase` | Investment clock cycle phase + pyramid tier match (FA H-step) | `ticker?: string` |
 
 ### Sector Intelligence

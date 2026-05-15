@@ -4,6 +4,50 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1910a — ISM Manufacturing PMI sub-component tool (2026-05-15, DONE)
+
+**Mission:** Add FRED ISM Manufacturing PMI sub-component fetcher + domain regime signal + MCP tool `get_ism_subcomponents` (#133).
+
+**Results:** 35/35 new tests GREEN. tsc 0 errors. Full suite passes (verified via chunk runs — Bun OOM on full suite is pre-existing infra issue unrelated to this task).
+
+**Files created:**
+- `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts` — FRED REST fetcher NAPMNO/NAPMEMP/NAPMPI/NAPMBI with retry + INSERT OR IGNORE
+- `apps/mcp-server/src/domain/services/macro/ismRegimeSignal.ts` — pure regime classifier: EXPANDING/CONTRACTING/MIXED
+- `apps/mcp-server/src/interface/mcp/tools/macro/getIsmSubcomponentsTool.ts` — MCP tool #133
+
+**Key patterns:**
+- `parseFredIsmJson()` exported for testability — mirrors parseFredCsvAllRows in fredEffrIorb pattern
+- `buildFredIsmUrl()` exported for testability
+- FRED REST JSON endpoint (not CSV) — required because ISM series needs API key
+- `sort_order=desc&limit=3` fetches latest 3 to handle FRED publication lag
+- T5 in fetcher tests: Bun.env and process.env both patched for API key override
+
+---
+
+### TASK-BCTC-3b — hsx.vn mediafiles Strategy 0 (2026-05-15, DONE)
+
+**Mission:** Add hsx.vn BCTC discovery as Strategy 0 in `bctcDiscovery.ts`. Two-call HTTP recipe: ticker→numericId via `/l/api/v1/1/securities/stock`, then BCTC PDFs via `/m/api/v1/1/mediafiles/5/{id}`. No VPS, no Playwright, no session.
+
+**Implementation notes:**
+- `fetchHsxBctcUrls` uses two separate `AbortController` instances (one per HTTP call). Each call has its own `clearTimeout` in `finally`.
+- `exactOptionalPropertyTypes: true` in tsconfig prevents `_fetchHsx: undefined` in test objects. Used `_fetchHsx: async () => []` pattern instead in all 8 affected test files.
+- Live hsx.vn works from France for real HOSE tickers (VNM, VCB, HPG, FPT, etc.) — existing enricher tests needed the no-op mock to avoid live interception.
+- Strategy ordering: hsx(0) → VPS Playwright(1) → SSC(2) → vietstock(3).
+- `...opts.discoverOptions` spread in enricher job stays last — test callers can still override any field including `_fetchHsx`.
+
+**Files created:**
+- `apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts`
+- `apps/mcp-server/src/__tests__/BCTC-3b-hsx-fetcher.test.ts` (8 tests)
+
+**Files modified:**
+- `apps/mcp-server/src/domain/services/bctcDiscovery.ts` — Strategy 0 + `_fetchHsx` + `"hsx"` union
+- `apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts` — wired `fetchHsxBctcUrls`
+- 8 test files — added `_fetchHsx: async () => []` to discoverOptions
+
+**Results:** 8/8 new tests GREEN. 9318 pass / 32 fail full suite (32 pre-existing). tsc 0 errors. Commit `9c4bc9d5`.
+
+---
+
 ### Task 1914 — news-scout dedup API fix (2026-05-15, DONE)
 
 **Mission:** Add `fromAgent` filter to `getSignals()` so news-scout can query its own prior posts for inter-cycle dedup.

@@ -20,6 +20,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 import { fetchFedFundsRate } from "../../infrastructure/fetchers/fredApi.js";
 import { fetchFredEffrIorb } from "../../infrastructure/fetchers/fredEffrIorb.js";
+import { fetchFredIsmSubcomponents } from "../../infrastructure/fetchers/fredIsmSubcomponents.js";
 
 
 /**
@@ -78,6 +79,18 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
       );
     } else {
       logger.warn("[macroRefresh] EFFR/IORB fetch returned null — FRED unavailable");
+    }
+
+    // Fetch ISM Manufacturing sub-component series from FRED (Task 1910a)
+    const ismResult = await fetchFredIsmSubcomponents(undefined, db);
+    if (ismResult !== null) {
+      const totalInserted = Object.values(ismResult.inserted).reduce((a, b) => a + b, 0);
+      logger.info(
+        `[macroRefresh] ISM sub-components persisted — ${totalInserted} new rows, failed: [${ismResult.failed.join(",")}]`,
+        { inserted: ismResult.inserted, failed: ismResult.failed },
+      );
+    } else {
+      logger.warn("[macroRefresh] ISM sub-components fetch returned null — FRED_API_KEY absent or unavailable");
     }
 
     // Check SLA after refresh

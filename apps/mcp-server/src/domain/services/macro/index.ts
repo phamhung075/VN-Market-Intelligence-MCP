@@ -30,3 +30,10 @@ export {
   type SpreadTrend,
   type FedLiquiditySpreadResult,
 } from "./computeFedLiquiditySpread.js";
+// Task 1910a: ISM Manufacturing regime signal
+export {
+  computeIsmRegimeSignal,
+  type IsmRegime,
+  type IsmSubcomponentInput,
+  type IsmRegimeResult,
+} from "./ismRegimeSignal.js";

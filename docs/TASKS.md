@@ -34,7 +34,7 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | _(BCTC-3b moved to Review)_ | — | — | — | — | — | — |
-| 1910a-ism-tool [dev-mcp-server] | **UNBLOCKED + DISPATCHED 2026-05-15** — `FRED_API_KEY` confirmed present in `.env` (non-empty) + passed via `env_file: .env` in `docker-compose.yml` to `mcp-server`. USER-ACTION blocker resolved. New FRED ISM Manufacturing PMI sub-component tool: `fredIsmSubcomponents.ts` fetcher + `ismRegimeSignal.ts` pure domain + `getIsmSubcomponentsTool.ts` MCP handler. Wires into existing `macroIndicatorRefreshJob`. Series IDs provisional (NAPMNO/NAPMEMP/NAPMPI/NAPMBI — confirm via FRED API at build time per R1). See handoff: `docs/handoffs/TASK_1910a-ism-tool.md`. | HIGH | FEATURE | dev-mcp-server | docs/handoffs/TASK_1910a-ism-tool.md | — |
+| 1910a-ism-tool [dev-mcp-server] | **[REVIEW]** — 35/35 new tests GREEN, tsc 0 errors. `fredIsmSubcomponents.ts` fetcher + `ismRegimeSignal.ts` domain + `getIsmSubcomponentsTool.ts` (#133). Wired into `macroIndicatorRefreshJob`. NAPMNO/NAPMEMP/NAPMPI/NAPMBI series. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. | HIGH | FEATURE | dev-mcp-server | docs/handoffs/TASK_1910a-ism-tool.md | — |
 | _(WIP = 2/2; AT CAPACITY; cycle 2026-05-15)_ | — | — | — | — | — | — |
 
 ---

@@ -45,6 +45,7 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_fed_liquidity_spread` | Compute EFFR-IORB spread (carry cost proxy) | — |
+| `get_ism_subcomponents` | ISM Manufacturing PMI sub-components + regime signal | — |
 
 ### Financial Analysis
 | Tool | Purpose | Key Params |

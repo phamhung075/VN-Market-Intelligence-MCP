@@ -142,3 +142,36 @@ export async function fetchFredIsmSubcomponents(
 ## Sequencing note
 
 1910a is independent codebase (no dependency on 1909). However, shares agentBootstrap.ts + SKILL_MANIFEST.md + package docs with 1910b. PM sequenced 1910a BEFORE 1910b to avoid merge conflicts.
+
+---
+
+## [Developer] Delivery Notes
+
+**Status:** COMPLETE — 2026-05-15
+
+**Test results:** 35/35 new tests GREEN (13 domain + 14 fetcher + 8 contract). tsc 0 errors.
+
+**Files created:**
+- `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts` — FRED REST JSON fetcher for NAPMNO/NAPMEMP/NAPMPI/NAPMBI. Retry with 1s/2s/4s backoff, INSERT OR IGNORE idempotency, FRED_API_KEY env var check.
+- `apps/mcp-server/src/domain/services/macro/ismRegimeSignal.ts` — pure function: EXPANDING (new_orders > 50 AND new_orders > prices_paid) / CONTRACTING (new_orders < 50 AND employment < 50) / MIXED. Zero infra imports confirmed by T6 DDD audit test.
+- `apps/mcp-server/src/interface/mcp/tools/macro/getIsmSubcomponentsTool.ts` — MCP tool `get_ism_subcomponents` (#133), source_tier=1 envelope.
+- `apps/mcp-server/src/__tests__/1910a-ism-regime-signal.test.ts` — 13 tests (domain, 4+ fixtures + DDD audit)
+- `apps/mcp-server/src/__tests__/1910a-ism-subcomponents-fetcher.test.ts` — 14 tests (URL builder, JSON parse, idempotency, HTTP error)
+- `apps/mcp-server/src/__tests__/1910a-ism-tool-contract.test.ts` — 8 tests (source_tier invariant, schema, no_data, partial null)
+
+**Files modified:**
+- `apps/mcp-server/src/infrastructure/fetchers/index.ts` — +fetchFredIsmSubcomponents export
+- `apps/mcp-server/src/domain/services/macro/index.ts` — +computeIsmRegimeSignal export
+- `apps/mcp-server/src/interface/mcp/tools/macro/index.ts` — +registerGetIsmSubcomponentsTool export
+- `apps/mcp-server/src/interface/mcp/tools/registry.ts` — +import + +registration (#133)
+- `apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts` — added `fetchFredIsmSubcomponents(undefined, db)` after EFFR/IORB block
+- `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts` — `"get_ism_subcomponents"` added to news_scout, financial_analyst, unified_coordinator
+- `docs/SKILL_MANIFEST.md` — +1 row (3 agents)
+- `.claude/tools/package/news-scout.md` — US Monetary Chain section
+- `.claude/tools/package/financial-analyst.md` — Macro Intelligence section
+- `.claude/tools/package/unified-agent.md` — Macro Intelligence (COC) section
+- `docs/TASKS.md` — status → [REVIEW]
+
+**Series IDs confirmed:** NAPMNO (New Orders), NAPMEMP (Employment), NAPMPI (Prices Paid), NAPMBI (Backlog). Fetcher uses `api.stlouisfed.org/fred/series/observations?series_id={ID}&api_key={KEY}&file_type=json&sort_order=desc&limit=3`. The `sort_order=desc&limit=3` ensures the latest available month is fetched even if FRED lags publication by 1–2 days.
+
+**FRED_API_KEY:** Confirmed present in `.env` and passed via `env_file: .env` in docker-compose mcp-server service.
