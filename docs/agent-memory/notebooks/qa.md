@@ -1,6 +1,42 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c121 — 1899a-bloomberg-test-split APPROVED
+**Last updated:** 2026-05-15 | **Session:** c122 — TASK-BCTC-3b APPROVED
+
+## Session 2026-05-15 c122 — TASK-BCTC-3b
+
+### TASK REPORT — BCTC-3b
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: FEATURE (new infra fetcher + domain wiring + 8 tests)
+```
+
+#### Scope
+
+Zone: `apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts` (new) + `apps/mcp-server/src/domain/services/bctcDiscovery.ts` (modified) + `apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts` (modified) + `apps/mcp-server/src/__tests__/BCTC-3b-hsx-fetcher.test.ts` (new) + 8 existing BCTC test files.
+
+Commit `9c4bc9d5` on main (no branch per NO branches for dev policy).
+
+#### AC Results
+
+- AC-1 PASS: hsxBctcFetcher.ts exists, correct signature, two-call recipe, required headers, never throws, zero domain imports
+- AC-2 PASS: bctcDiscovery.ts — _fetchHsx port, "hsx" union, Strategy 0 before VPS, docblock updated
+- AC-3 PASS: bctcQueueEnricherJob.ts — fetchHsxBctcUrls imported + wired
+- AC-4 PASS: 8/8 tests GREEN (all 8 acceptance cases)
+- AC-5 PASS: tsc 0 errors, DDD boundary intact (imports verified)
+
+#### Pipeline
+
+- Targeted: 8/0 | Modified BCTC files (8): 68/0 | Full suite: 9314 pass / 36 fail (all pre-existing)
+- Note: developer reported 9318/32; QA sees 9314/36; delta 4 = signal-T5 flaky pre-existing, unrelated
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### Report
+
+`reports/TASK_REPORT_BCTC-3b.md`
+
+---
 
 ## Session 2026-05-15 c121 — 1899a-bloomberg-test-split
 

@@ -43,13 +43,14 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| TASK-BCTC-3b [dev-mcp-server] | **IMPL COMPLETE 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (hsx as Strategy 0, renumbered VPS→1, SSC→2, vietstock→3). `bctcQueueEnricherJob.ts` wired. 8 unit tests GREEN. tsc 0 errors. 9318 pass / 32 fail (all 32 pre-existing). Existing BCTC enricher tests updated with `_fetchHsx: async () => []` to prevent live hsx.vn calls. See `docs/handoffs/TASK_BCTC-3b.md`. | CRITICAL | FEATURE | qa | docs/handoffs/TASK_BCTC-3b.md | — |
+| _(BCTC-3b moved to Done)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| TASK-BCTC-3b | **QA APPROVED 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (_fetchHsx port + "hsx" source union + hsx→VPS→SSC→vietstock order). `bctcQueueEnricherJob.ts` wired. 8/8 tests GREEN. 8 existing BCTC test files updated (68/0). tsc 0 errors. Full suite 9314 pass / 36 fail (all pre-existing). DDD PASS. Security PASS. Commit `9c4bc9d5` on main. | CRITICAL | FEATURE | qa | 2026-05-15 |
 | 1899a-bloomberg-test-split | **DONE 2026-05-15** — Split `1899a-bloomberg.test.ts` (491L) into 4 files ≤200L: dom(189L/12 expect), json-fallback(182L/8 expect), perimeterx-lifecycle(186L/14 expect), normalize-date(51L/7 expect). Total 41 expect() = parity. Source file deleted. 29 pass / 0 fail. tsc 0 errors. | LOW | REFACTOR | dev-mainserver-crawls | 2026-05-15 |
 | CLEAN-c120-stale-branches | **DONE 2026-05-15** — Deleted 3 local + 2 remote stale branches (all 0 unmerged commits; feature work confirmed on main). Local: `fix/1908c-val07-plausibility-override` (worktree stale lock removed), `task/1909b-get-bctc-ocf-tool` (worktree stale lock removed), `task/1910b-effr-package-registration` (no local branch existed). Remote: `origin/task/1909b-get-bctc-ocf-tool` + `origin/task/1910b-effr-package-registration` deleted. AC-1/2/3/4 PASS: `git branch -a` clean. MCP gateway degraded — WORK notification skipped per AC-5 fallback; logged here instead. | LOW | CLEAN | qa | 2026-05-15 |
 | 1914b-log-agent-work-doc | **DONE 2026-05-15** — Updated `log_agent_work` documentation in all 10 package files. Each now shows the correct two-call recipe: Call 1 (`status: "running"` → `{ id }`), Call 2 (`id + status: "completed"\|"error"`). Broken `action/context/signal_ids` params removed from table rows. report-analyzer.md example snippet also fixed. No source-code edits. AC-1 PASS (all 10 files show both calls). AC-2 PASS (docs only). | LOW | CHORE | developer | 2026-05-15 |

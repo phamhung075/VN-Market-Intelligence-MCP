@@ -429,3 +429,31 @@ After TASK-BCTC-3b ships:
 - **Expected completion:** 2026-05-16
 - **No blocking prerequisite** — all endpoints confirmed accessible from France 2026-05-15
 - **Handoff test:** `bun test src/__tests__/BCTC-3b-hsx-fetcher.test.ts` → all green; `tsc` 0 errors
+
+---
+
+## [QA] Review Record — 2026-05-15
+
+**verdict: APPROVED**
+
+### AC Results
+
+- AC-1 PASS: `hsxBctcFetcher.ts` exists, exports `fetchHsxBctcUrls(ticker, year, timeoutMs): Promise<string[]>`, two-call recipe correct, headers `type/Origin/Referer/User-Agent` sent, returns `[]` on all errors, never throws, zero domain imports
+- AC-2 PASS: `bctcDiscovery.ts` — `_fetchHsx` optional field present in `DiscoverOptions` (line 124), `"hsx"` in source union (line 86), Strategy 0 fires before VPS Playwright (lines 461-488), module docblock updated (lines 60-67)
+- AC-3 PASS: `bctcQueueEnricherJob.ts` — `fetchHsxBctcUrls` imported from `hsxBctcFetcher.js` (line 36), `_fetchHsx: fetchHsxBctcUrls` wired (line 159), `...opts.discoverOptions` spread last preserves test overrides
+- AC-4 PASS: 8/8 tests GREEN (TC-1 HOSE→PDFs, TC-2 non-HOSE→[], TC-3 HTTP4xx→[], TC-4 HTTP500→[], TC-5 tilde replace, TC-6 tilde-less pass-through, TC-7 strategy ordering, TC-8 hsx empty→VPS fires)
+- AC-5 PASS: tsc 0 errors; `bctcDiscovery.ts` real imports = `../utils/ansiUtils.js` only; `hsxBctcFetcher.ts` real imports = `./browserHeaders.js` only; DDD boundary intact
+
+### Pipeline
+
+- Targeted (8 tests): 8 pass / 0 fail
+- Modified BCTC test files (8 files): 68 pass / 0 fail
+- Full suite: 9314 pass / 36 fail (all 36 pre-existing — none in BCTC-3b zone)
+- Note: developer-reported 9318/32; QA observes 9314/36; delta of 4 is signal-T5 integration tests (scripts/migrations/__tests__/ — committed 2026-05-12, pre-existing flaky environment-sensitive failures, unrelated to BCTC-3b)
+- tsc: 0 errors
+- DDD: PASS (imports verified by grep)
+- Security: PASS (no process.env, no hardcoded secrets — HSX_API_TOKEN is public JS bundle constant per architect note)
+
+### Commit
+
+`9c4bc9d5` on main (no separate branch per project policy)
