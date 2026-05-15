@@ -33,13 +33,16 @@ For each candidate signal:
 **3. Signals**
 
 Watchlist hit (breaking news) → post `urgent_news`:
+<!-- AUTO-CURE TNB c55 — 2026-05-15: F/H-step gap (3-cycle evidence c53/c54/c55).
+     payload.detail must include pillar summary + cycle phase + pyramid tier (same as chain_catalyst).
+     Format: "<summary> | pillars=<M2:neutral,COC:headwind,EPS:tailwind,POL:neutral> | phase=<phase> tier=<tier>" -->
 ```
 call_tool(server="vn-market", tool="post_agent_signal", arguments={
   "from_agent": "news-scout",
   "to_agent": "alert-commander",
   "signal_type": "urgent_news",
   "stock_code": "<TICKER>",
-  "payload": { "title": "<headline>", "detail": "<summary>", "impact_score": 7 },
+  "payload": { "title": "<headline>", "detail": "<summary> | pillars=<M2:neutral,COC:headwind,EPS:tailwind,POL:neutral> | phase=<recovery|expansion|slowdown|contraction> tier=<equity|fixed_income|cash|alternative>", "impact_score": 7 },
   "ttl_minutes": 120,
   "chain_depth": 0,
   "finding_data": {
@@ -58,13 +61,21 @@ Crisis / macro catalyst → post `chain_catalyst`:
 <!-- regime is read from bootstrap macro snapshot by alert-commander, not from signal finding_data.
      ChainCatalystFindingDataSchema is strict (no .passthrough()) — extra fields are silently stripped.
      Include regime context in payload.detail instead. -->
+
+<!-- AUTO-CURE TNB c55 — 2026-05-15: F/H-step gap (3-cycle evidence c53/c54/c55).
+     Every chain_catalyst payload.detail MUST include:
+       - pillar summary: which of {M2,COC,EPS,POL} support/contradict the thesis
+       - cycle phase: Investment Clock phase (recovery/expansion/slowdown/contraction)
+       - pyramid tier: equity | fixed_income | cash | alternative
+     Omitting these fields produces a 3/7 NEEDS_ATTENTION methodology score (Layer 5, steps F and H).
+     Format: "<summary> | regime=<REGIME> regime_adj_score=<N> | pillars=<M2:neutral,COC:headwind,EPS:tailwind,POL:neutral> | phase=<recovery|expansion|slowdown|contraction> tier=<equity|fixed_income|cash|alternative>" -->
 ```
 call_tool(server="vn-market", tool="post_agent_signal", arguments={
   "from_agent": "news-scout",
   "to_agent": "all",
   "signal_type": "chain_catalyst",
   "stock_code": "<TICKER or omit>",
-  "payload": { "title": "<headline>", "detail": "<summary> | regime=<REGIME> regime_adj_score=<N>", "impact_score": 9 },
+  "payload": { "title": "<headline>", "detail": "<summary> | regime=<REGIME> regime_adj_score=<N> | pillars=<M2:neutral,COC:headwind,EPS:tailwind,POL:neutral> | phase=<recovery|expansion|slowdown|contraction> tier=<equity|fixed_income|cash|alternative>", "impact_score": 9 },
   "ttl_minutes": 120,
   "chain_depth": 0,
   "finding_data": {
