@@ -3,7 +3,7 @@
 **SSOT mirror of `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts`.**
 Update both files together whenever a tool is added or a skill changes.
 
-Last updated: 2026-05-15 (Task 1910a — added `get_ism_subcomponents` to `news_scout`, `financial_analyst`, `unified_coordinator`; prior: 1910b added `get_fed_liquidity_spread` to same 3 agents)
+Last updated: 2026-05-15 (Task 1918b — added `get_macro_snapshot` to `news_scout`; prior: 1910a added `get_ism_subcomponents` to `news_scout`, `financial_analyst`, `unified_coordinator`)
 
 ---
 
@@ -27,7 +27,8 @@ Last updated: 2026-05-15 (Task 1910a — added `get_ism_subcomponents` to `news_
     "record_evidence_fragment",
     "log_agent_work",
     "get_fed_liquidity_spread",
-    "get_ism_subcomponents"
+    "get_ism_subcomponents",
+    "get_macro_snapshot"
   ],
   "financial_analyst": [
     "get_cycle_bootstrap",

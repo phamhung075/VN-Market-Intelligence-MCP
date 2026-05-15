@@ -44,6 +44,7 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "log_agent_work",
     "get_fed_liquidity_spread",
     "get_ism_subcomponents",
+    "get_macro_snapshot",
   ],
   financial_analyst: [
     "get_cycle_bootstrap",
