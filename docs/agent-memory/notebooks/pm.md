@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c123 (PM: TASK-BCTC-3c marked DONE, 1910b READY FOR DISPATCH) | **Sprint:** 1910 macro suite | **Current:** WIP 0/2 CLEAN (both BCTC+ISM tasks Done, 1910b unblocked)
+**Last updated:** 2026-05-15 c124 (PM: TASK_1918b [PM] section DONE, handoff ready for developer) | **Sprint:** 1910 macro suite + 1918 news-scout regime | **Current:** WIP 0/2 CLEAN (ready for next dispatch)
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — Cycle c123 processing complete. TASK-BCTC-3c (QA commit `9f0bc916`) marked Done. TASKS.md updated: Review section cleared; Done section now shows both BCTC-3c + 1910a entries. 1910b-effr-package-reg moved from Todo→READY with handoff file `docs/handoffs/TASK_1910b-effr-package-reg.md` updated (depends_on: [1910a-ism-tool]). **HIGHEST PRIORITY NEXT: 1910b-effr-package-reg (agent-md-editor or dev-mcp-server) → 30min zero-build doc chore closes macro suite.** Handoff fully prepared. Ready for developer pickup.
+- **WIP: 0/2 (CLEAN)** — Cycle c124 processing complete. TASK_1918b (architect-designed 1918b-news-scout-macro-snapshot-package) [PM] section completed. Handoff: `docs/handoffs/TASK_1918b.md` § [PM] Planning Context added with zone, blocker status (NONE), file list, dependencies, risk flags, test strategy. TASKS.md row updated: "PM DONE 2026-05-15" tag + handoff ready summary. No code blockers. Developer ready to pickup via main terminal Step 3 (execute). **NEXT DISPATCH PRIORITY: 1918b-news-scout-macro-snapshot-package (dev-mcp-server) → 2h atomic FIX task.** Full suite 9778/0 expected (no test additions). tsc 0 errors expected.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,24 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 124 — 2026-05-15 PM Decomposition: TASK_1918b [PM] section complete, ready for dispatch (WIP=0/2 CLEAN)
+
+**Input:** Architect design complete. `docs/handoffs/TASK_1918b.md` § [Architect] section fully specified. Task: add `get_macro_snapshot` to news-scout SKILL_MANIFEST array (agentBootstrap.ts + docs mirror) + package doc + stage-bootstrap.md Step 0b with shape guard.
+
+**Actions:**
+1. **[PM] Planning Context added to handoff** — section includes: zone (apps/mcp-server/), blocker status (NONE), sequencing (independent, 1918a prerequisite satisfied), 4 file list (read: agentBootstrap.ts + SKILL_MANIFEST.md, modify: both + news-scout.md + stage-bootstrap.md), dependencies (none blocking), risk flags (4 total: R-1 manifest drift, R-2 step ordering, R-3 token cost, R-4 guard omission), test strategy (no new file, verify tsc 0 + flow ordering preserved + manifest pair in sync).
+2. **Handoff finalized:** All sections complete. Ready for developer hand-off.
+3. **TASKS.md updated** — row now shows **PM DONE 2026-05-15** tag + handoff-ready summary. 4-file scope annotated.
+4. **PM notebook updated** — header + current state + this cycle entry (c124). WIP=0/2 remains CLEAN.
+
+**WIP Status:** 0/2 (CLEAN). Task ready for developer pickup. No parallel work blocks 1918b.
+
+**Dispatch ready:** 1918b-news-scout-macro-snapshot-package → dev-mcp-server (HIGH FIX, ~2h atomic task). Can dispatch immediately via main.md Step 3 (execute).
+
+**Status:** Decomposition COMPLETE. Handoff ready. Task eligible for immediate dispatch.
 
 ---
 
