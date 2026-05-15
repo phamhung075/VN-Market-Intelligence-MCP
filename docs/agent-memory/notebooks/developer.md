@@ -1,8 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-15 | **Sprint:** 1915-fix-part2
+**Last updated:** 2026-05-15 | **Sprint:** 1914b
 
 ## Last session summary
+
+Task 1914b — Fix `log_agent_work` two-call pattern documentation in all 10 agent package files.
+
+**Root cause:** All 10 `.claude/tools/package/*.md` files documented `log_agent_work` with a fictitious single-call signature (`action/context/signal_ids`). The actual MCP API (`agentWorkLogTools.ts`) requires: Call 1 (`status: "running"` → `{ id }`), Call 2 (`id + status: "completed"|"error"`).
+
+**What was done:** Docs-only. Table rows corrected, two-call recipe block added to each file. Broken example snippets in `report-analyzer.md` and `po.md` also fixed. All 10 files `Last Updated` bumped to 2026-05-15. `TASK_1914b.md` handoff written. 1914b moved to Done in TASKS.md.
+
+**Commit:** `3b68df2c docs(1914b/agent-doc): 1914b fix log_agent_work two-call pattern in all 10 package files`
+
+**Branch:** main
+
+## Previous last session summary
 
 Task 1915-fix-part2 — `scanDiskForStrandedPdfs()` filename fallback for non-watchlist tickers.
 
