@@ -1,9 +1,9 @@
 ---
 sprint: 1910
 branch: task/1910b-effr-package-registration
-size: XS
-zone: .claude/tools/package/ + apps/mcp-server/src/interface/mcp/bootstrap/ + docs/
-depends_on: [1909b-tool]
+size: S
+zone: apps/mcp-server/src/interface/mcp/bootstrap/ + docs/
+depends_on: [1910a-ism-tool]
 blocks: []
 ---
 
@@ -46,8 +46,8 @@ Zero-build task: add already-shipped `get_fed_liquidity_spread` tool to three ag
 - `docs/SKILL_MANIFEST.md` — +1 row
 
 **Dependencies:**
-- `get_fed_liquidity_spread` tool (SHIPPED 1879b) — already registered in tool-registry.ts
-- 1909b-tool: must be deployed FIRST before 1910b starts (sequential per PM scheduling; shared agentBootstrap.ts file)
+- `get_fed_liquidity_spread` tool (SHIPPED 1890a) — already registered in tool-registry.ts + agentBootstrap.ts (unified_coordinator only; 1910b adds to financial_analyst + news_scout)
+- 1910a-ism-tool (DONE 2026-05-15) — unblocks 1910b (shared agentBootstrap.ts file; merge 1910a first to avoid conflicts)
 
 **Knowledge needed:**
 - Existing package doc format (review financial-analyst.md as model)
@@ -116,6 +116,8 @@ Per REQ_1910.md §3.2 + ARCH_REVIEW_1910.md §1910b auto-cure gate:
 
 ## Sequencing note
 
-1910b has NO code dependency on 1910a. However, 1909b-tool shares agentBootstrap.ts file. PM sequenced: execute 1909b first → merge + deploy → then 1910b starts. This avoids merge conflict on shared file.
+1910b has NO functional code dependency on 1910a. However, both tasks modify the same agentBootstrap.ts + SKILL_MANIFEST.md files. PM sequenced: execute 1910a first → merge + deploy → then 1910b starts. This avoids merge conflict on shared files.
+
+1910a adds `get_ism_subcomponents` to all 3 agent arrays (lines 30/46/224). 1910b adds `get_fed_liquidity_spread` to the same arrays. Both can merge independently or via single PR after 1910a ships (no functional interaction).
 
 No new container build required unless agentBootstrap.ts edit triggers rebuild. Otherwise, changes are manifest-only + docs-only (no deploy needed until next ops cycle).

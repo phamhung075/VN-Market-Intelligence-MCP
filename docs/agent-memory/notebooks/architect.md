@@ -1,33 +1,33 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-15 04:47 UTC | **Sprint:** SPIKE_BCTC-3
+**Last updated:** 2026-05-15 (TASK-BCTC-3b design cycle) | **Sprint:** BCTC-3
 
 ## This session
 
-SPIKE_BCTC-3 — hsx.vn SPA XHR endpoint analysis for HOSE BCTC no-browser discovery.
+TASK-BCTC-3b Architect design — hsx.vn BCTC discovery redesigned for main server (TypeScript) after prior "Envoy route-block" conclusion overturned by main-server recon 2026-05-15.
 
-Key findings:
-- hsx.vn React SPA uses `api.hsx.vn` microservices. BCTC documents are served by SERVICE_NEWS (`/n/api/v1`).
-- Primary endpoint: `GET https://api.hsx.vn/n/api/v1/news/securities/{TICKER}/1?pageIndex=...&startDate=...&endDate=...`
-- Auth: static header `type: HJ2HNS3SKICV4FNE` only. No login, no CSRF, no cookies required.
-- PDF URL pattern: `filePath.replace("~", "https://staticfile.hsx.vn")`
-- From France: /n/ service returns 404 (Envoy geo-restriction, x-envoy-upstream-service-time=1ms). Working services from France: /l/, /c/, /mk/.
-- From VPS (Vietnam): expected 200 — same pattern as other VN geo-restricted sources in this codebase.
-- Recommendation: new Python `fetch-hsx-bctc.py` VPS script using `requests`/`urllib`. Zero changes to `bctcDiscovery.ts` or queue enricher.
-- Prerequisite: dev must verify from VPS: `curl -H "type: HJ2HNS3SKICV4FNE" "https://api.hsx.vn/n/api/v1/news/securities/VNM/1?pageIndex=1&pageSize=5&startDate=2026-01-01&endDate=2026-05-15"`
+Key findings and design decisions:
+- Prior probe used wrong URL (`/n/api/v1/news/securities/VNM/1` — missing locale segment, string ticker instead of numeric ID). Correct endpoint: `GET /m/api/v1/1/mediafiles/5/{numericId}` returns HTTP 200 with BCTC PDFs directly from France. No VPS needed.
+- New implementation: TypeScript fetcher `hsxBctcFetcher.ts` in `infrastructure/fetchers/`. Not Python. Not VPS. Not a scheduler job.
+- Integration: new Strategy 0 in `bctcDiscovery.ts`. Current Strategy 0 (VPS Playwright) demotes to Strategy 1. Domain service contract unchanged for consumers.
+- `DiscoverOptions._fetchHsx` injectable port added (different arity from `HttpFetchFn` — three params: ticker, year, timeoutMs). `HosePdfDiscoveryResult.source` union gains `"hsx"`.
+- `bctcQueueEnricherJob.ts` wires the new fetcher; no logic changes.
+- No DB schema changes. No new scheduler job. No VPS script changes.
+- Handoff: `docs/handoffs/TASK_BCTC-3b.md` fully rewritten with Architect section. TASK-BCTC-3c updated: pure integration verification (seed queue, run enricher, confirm `staticfile.hsx.vn` URLs land + accessible). No MCP server code changes expected for 3c.
+
+Risk to monitor: static token `HJ2HNS3SKICV4FNE` in hsx.vn JS bundle. If rotated → all hsx.vn calls return 403. Monitor `source: "hsx"` success rate in enricher logs. Token is public, not a secret — do NOT put in `.env`.
 
 ## Patterns noticed
 
-- Reuters fallback split (`1899a-reuters-fallback-{dom,lifecycle,detect}.test.ts`) is the confirmed working precedent for the Bun test split pattern. Always cross-reference when splitting test files in `apps/news-fetch/__tests__/`.
+- Reuters fallback split (`1899a-reuters-fallback-{dom,lifecycle,detect}.test.ts`) is the confirmed working precedent for the Bun test split pattern.
 - Preamble line-count bloat is the recurring risk in Bun test splits: 113L preamble means any group <90L of tests will land under 200L; groups of 90-100L need trimming.
-- hsx.vn API has two routing layers: BigIP F5 (external, geo-restricted for /n/ /s/ /m/) vs direct VN access (reaches backend). Same pattern as SSC, HNX, SBV — always route via Vinahost VPS.
+- hsx.vn Envoy route-block pattern: `x-envoy-upstream-service-time: 2ms` + empty body = edge rejection (no backend contact). Contrast with working endpoints: `x-envoy-upstream-service-time: 6ms` + `cache-control: max-age=60`. This is a reliable signal for "permanently blocked by Envoy route table" vs "backend reachable."
+- When a geo-restriction hypothesis fails (VPS same 404 as France), always check if the block is at routing layer vs IP filter layer. Envoy route tables are routing-layer blocks — unbypassable from any external IP.
 
 ## Carry-over (next session)
 
-- SPIKE_BCTC-3: DONE. Spike output at `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md`. TASK-BCTC-3 ready for dev-vps-crawls. Prerequisite: VPS curl verification first. Endpoint confirmed via JS bundle analysis; needs live VPS probe before coding.
-- 1899a-bloomberg-test-split: handoff at `docs/handoffs/TASK_1899a-bloomberg-test-split.md`. Ready for dev-news-fetch. Risk R-1 (Bun mock state leak across files in same process) — developer must verify `normalizeDate` file runs clean in isolation.
-- janitor-1912: `docs/handoffs/TASK_janitor-1912.md` — RF-1 + RF-2 independent disk cleanup tasks. Ready for code-janitor.
-- 1914 news-scout dedup: `docs/handoffs/TASK_1914.md` — Option A (extend `get_agent_signals` with `from_agent` param). Guard: when `fromAgent` set, read-mark side-effect must NOT fire.
-- c40 container restart: inconclusive (pre-log). Re-evaluate if TNB flags again.
+- SPIKE_BCTC-3: FULLY CLOSED. Re-Assessment appended to `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md`. TASK-BCTC-3b/3c closed. TASK-BCTC-1 (ops) filed in `docs/TASKS.md`.
+- TASK-BCTC-1: HIGH ops — fix `TasksMax=512` + `MemoryMax=512M` in `/etc/systemd/system/vn-bctc-fetch.service`. 30 min. AC: VNM Q1/2026 Playwright discovery succeeds without pthread_create error. Owner: ops.
+- 1899a-bloomberg-test-split: handoff at `docs/handoffs/TASK_1899a-bloomberg-test-split.md`. Ready for dev-news-fetch.
 - SPIKE_006 c61: BA spec needed — scoring unification (alertAccuracy.ts + alertOutcomeScorer + verdictResolutionJob). Open Q: confirm 60% threshold denominator with user.
 - Headlock F2b + F1 (Docker .git/ exclusion): user-queue carry item.

@@ -1,56 +1,57 @@
 # PO Notebook
 
-## Last updated: 2026-05-15T04:30:00Z · Sprint: c123 (dev-team cron tick → SPIKE dispatch TASK-BCTC-3 scope)
+## Last updated: 2026-05-15T06:25:00Z · Sprint: c126 (dev-team cron tick → Step 0-PREFLIGHT + Step 1 deep triage)
 
 ### This session
-c122 closed STALE-NOOP janitors (JANITOR-020/014/011 wontfix) + NOTHING return. c123 PREFLIGHT cleared a stale HEAD.lock (age=1248s size=0B no live pid, removed safely per protocol) + worktree GC pruned 16 expired bun.lock files >24h. Both gateway and Go-gateway `/health` OK; 9/9 microservices green. Sole pending Telegram report = #2889 unified-agent News RSS staleness 4.5h (2026-05-14 22:02 UTC, ~30h ago) — cross-checked: circuit breakers all `[OK]` failures=0 right now, identical to 1911a-c97 auto-recover pattern. No fresh evidence + no actionable dev task; ops-observational.
-
-### TNB c55 read
-- Direction IMPROVING. 1914 dedup-api + 1917 BUG-channel + 1914b doc-fix all DONE 2026-05-15. F/H-step auto-cure shipped (`dcf23c98`).
-- HIGH findings: #1 digest-predict 5d silence (1907a, blocked by 1913 substrate, user-action only). #3 FA no-session today (same substrate). Both NOT dev-team actionable.
-- Medium findings: #2 cured this cycle (watch). #4/#6 TIGHTENING discordance = cycle-1 evidence only (TNB protocol: need cycle-2 before action). #7 alert precision N=11/441 bug 2874 still no sprint. #8 bctcQueueEnricher 6 stale tickers (DPM/KBC/MWG/NVL/REE/TCH) — expected to improve post-1916a/b redeploy; ops-observational.
-- TNB ACK appended `docs/handoffs/tnb-audit-latest.md` (timestamp 2026-05-15T04:30Z).
+Preflight: `.git/index.lock` size=0, age=4446s (~74min), no live git pid, com.apple Spotlight FD pid 43751 (23rd occurrence — same Spotlight VirtioFS race pattern, 1897b-carry). Lsof captured `docs/agent-memory/sessions/preflight-lsof-20260515T062456Z.log`. Lock removed. Worktree prune no-op (6 `.claude/worktrees/agent-*` active, all <24h, no expired `.lock` files). 0 pending signals in `docs/signals/` (only `processed/` + `signals.db`). 8 worktree branches on git side — parallel-session scaffolding, not CLEAN candidates.
 
 ### Step 0 channel audit
-- read_telegram_reports(status=new) → 1 report #2889 (RSS staleness MEDIUM, from unified-agent 22:02 UTC). List-unresolved same. Cross-check vs 1911a-c97 Done pattern + current circuit-breaker state = transient + auto-recovered. No new task — matches existing auto-recover pattern.
-- WORK / BUG / MARKET (10 each) returns only the same DB-tracked queue (#2889). No fresh strategy / logic / UX / regression signals.
+- `read_telegram_reports(status="new")` → same 3 reports from c125 (#2889 RSS staleness — 1911a auto-recover, #2890 index.lock cleanup — auto-cured by THIS preflight, #2891 BCTC-3a — closed wontfix).
+- `list_unresolved_reports` → same 3.
+- `get_agent_signals(agent=po, 24h)` → "Không có tín hiệu mới." (gateway behaviour notebook-mode confirmed by TNB c55).
 
-### Step 1 triage findings
-- WIP = 0/2. Backlog dev-actionable items: zero direct (1913 USER-F1, 1897b USER-F1, 1907a OPS, TASK-BCTC-3 needs scoping, 1909c OPS+calendar, 1862c-E/F OPS+container-rebuild).
-- Per c122 carry-forward explicit recommendation ("if idle again → consider SPIKE for TASK-BCTC-3 architect brief for hsx.vn SPA XHR scope"), c123 is idle on same axis → kick the SPIKE.
-- Queued `SPIKE_BCTC-3` in Backlog: architect-owned, timebox 120, output `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md`, zone `apps/mcp-server/`. Unblocks BA spec authoring path for TASK-BCTC-3 implementation later.
+### Deep triage findings (per user instruction: look deeper)
+- **WIP = 0/2. Dev-actionable backlog count = 0.**
+- **Fresh TNB c55 signal at 07:30 UTC** (dropped 02:50 local AFTER c125 PO 05:28 UTC). Handoff `docs/handoffs/tnb-audit-latest.md` already had ACK from c124 — that ACK was for the c54 00:30Z signal, NOT the fresh c55 07:30Z findings. Wrote c126 ACK supersede block.
+- **TNB c55 findings:**
+  - F1 digest-predict 5-day silence → 1907a Backlog CRITICAL, USER-F1 substrate (Claude Desktop trigger), no PO leverage
+  - F2 news-scout F/H gap → **TNB auto-cured itself** this cycle (commit `dcf23c98` in main); validation next cycle, not new task
+  - F3 FA no-session → same 1913 substrate, USER-F1
+  - F4 alert-commander 00:02Z news-fallback TIGHTENING → **cycle-1 NEW failure mode** (get_macro_snapshot returned system_status not regime text — different from c53 pattern). Per TNB protocol need cycle-2 before action
+  - F5 1913 BLOCKING-F1 → USER ACTION
+  - F6 news-scout 02:19Z TIGHTENING vs unified-agent EASING → **cycle-1 regime divergence**, need cycle-2
+  - F7 alert precision N=11/441 (bug 2874) → observational, no sprint capacity
+  - F8 bctcQueueEnricher 6 stale (DPM/KBC/MWG/NVL/REE/TCH) → ops-observational post-1916a/b redeploy
+- **Parked LOW items (c107 review):** 1907b (subordinate to USER-F1 1907a, no leverage), JANITOR-021 (tree-verify LOW — no audit signal), 1900c (docker probe refine LOW — no operational signal). All remain parked.
+- **1862c-F** (MEDIUM developer FIX) waits "5 cycles clean after 1862c-D/E stable" — 1862c-E-dashboard still user-blocked on Cloudflare ingress. Not eligible.
+- **System-auditor notebook stale** (last 2026-05-11 c2) — no fresh audit findings.
+- **TNB cycle-2 evidence still pending** across F4 (00:02Z news-fallback) and F6 (02:19Z regime divergence).
+- **Backlog Done-tagged rows still in Backlog table** (1915, SPIKE_BCTC-3, janitor-1912 dup) — janitor-1912 listed both in Backlog and Done; Backlog row already says DONE, leave for next cycle housekeeping if it persists.
 
 ### Action taken
-- docs/TASKS.md edited: SPIKE_BCTC-3 row appended after TASK-BCTC-3.
-- TNB ACK appended.
-- BATCH return = single SPIKE entry (see RETURN).
+- Preflight cured stale `.git/index.lock` (Spotlight FD orphan).
+- TNB handoff appended c126 PO ACK supersede block.
+- No TASKS.md edits — no new sprint, no closures pending, all cycle-1 evidence below action threshold.
+- WORK notification posted (preflight summary + BATCH NOTHING rationale + TNB c55 ACK).
+- BATCH return = NOTHING.
 
 ### Telegram
-- send_telegram(work, "PO c123 cron tick: WIP 0/2. Preflight cleared stale HEAD.lock + worktree GC. Channels clean (only #2889 stale-RSS auto-recover pattern, no new task). TNB IMPROVING. Dispatching SPIKE_BCTC-3 (architect → hsx.vn XHR scope, timebox 120). Carry-forward 1913/1907a/1897b user/ops-blocked.") — pending via parent terminal MCP call.
+- send_telegram(work, "[PREFLIGHT c126] index.lock removed age=4446s size=0B pid_alive=false (Spotlight FD 23rd occurrence). PO triage WIP=0/2 BATCH=NOTHING. TNB c55 ACK'd: 6/8 findings carry USER-F1/observational, F2 auto-cured (`dcf23c98` validation next cycle), F4+F6 cycle-1 new evidence below TNB protocol threshold. Returning idle.")
 
-## Carry-over to c124
-- SPIKE_BCTC-3 result expected next cycle. If findings doc exists + recommendation == "pure-XHR feasible" → queue BA spec for TASK-BCTC-3 implementation (size M or L depending on coverage). If "keep-Playwright" → close TASK-BCTC-3 wontfix (VPS Playwright already works for the 9 tickers + S0 1916a route).
-- News-scout F/H-step auto-cure validation: next chain_catalyst/urgent_news signal must contain `pillars=` + `phase=` + `tier=` in payload.detail (TNB c55 Next Priority #1).
-- alert-commander 00:02 UTC news-fallback TIGHTENING: cycle-2 evidence check (TNB Next Priority #4).
-- news-scout 02:19 UTC TIGHTENING vs unified-agent EASING regime divergence: cycle-2 check (TNB Next Priority #5).
-- 1909c-reparse-validation: ops 2026-05-16 owner needed. Currently no In-Progress assignment.
-- 1907a digest-predict + 1913 BLOCKING-F1 + 1897b HEAD.lock structural cure all remain USER-action / OPS-out-of-band.
+## Carry-over to c127
+- HEAD/index.lock recurrence count this session = 1 (24th cumulative). No architect signal (≥3/24h threshold not met by this single tick). 1897b F1 user-action remains the only structural cure.
+- Telegram report #2890 (index.lock cleanup) is now resolvable — preflight already auto-cured the lock. Claim+process next cycle if it still shows status=new.
+- **TNB c55 F2 validation:** next news-scout chain_catalyst/urgent_news signal MUST include `pillars=M2:x,COC:x,EPS:x,POL:x | phase=<phase> tier=<tier>` in payload.detail. If absent → flow not read → re-load required.
+- **TNB c55 F4 cycle-2 watch:** if alert-commander 00:02Z (or off-hours cycle) get_macro_snapshot returns system_status again instead of regime text → escalate as new failure mode requiring retry/response-format guard.
+- **TNB c55 F6 cycle-2 watch:** next news-scout market-hours cycle — if TIGHTENING again while unified-agent EASING/NEUTRAL → log regime-drift methodology gap (Layer 1.2 threshold crossing not applied).
+- 1909c-reparse-validation: SSC Q1-2026 BCTC window 2026-05-15→2026-05-20 (today opens). Watch first PDF arrival → trigger reparse. Ops owner still unassigned.
+- BCTC Q1-2026 banking deadline TODAY (2026-05-15): ACB/BID/CTG/EIB/MBB/VCB/VPB filings expected 14:00 UTC cycle. Check FA notebook.
+- Retro reminder: if c127 still idle AND TNB cycle-2 still empty for F4/F6, consider retiring stale OPS-gated rows parked >3 cycles (1907a, 1907b carry).
 
 ## RETURN
 ```
-BATCH: [
-  {
-    type: "SPIKE",
-    id: "SPIKE_BCTC-3",
-    title: "hsx-xhr-scope",
-    question: "What XHR endpoints does hsx.vn SPA call for HOSE BCTC discovery, and can they be invoked headless (curl/fetch) without Playwright?",
-    mode: "spike",
-    zone: "apps/mcp-server/",
-    timebox: 120,
-    files: ["docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md (new)"],
-    baseline_pass: 9277
-  }
-]
-NEXT: dev-team Step 2 planning → SPIKE row → spawn architect (skip ba/pm per planning matrix)
-PIPELINE: in_progress (architect spike)
+BATCH: NOTHING
+REASON: WIP=0/2; preflight auto-cured stale .git/index.lock (4446s, Spotlight FD 23rd occurrence — 1897b-carry); 0 pending signals; 3 telegram reports map to closed/F1-blocked rows; fresh TNB c55 handoff ACK'd inline — 6/8 findings USER-F1/observational, F2 already auto-cured (`dcf23c98`) validation deferred, F4+F6 cycle-1 evidence only (TNB protocol requires cycle-2 before dev action); all parked LOW items (1907b/JANITOR-021/1900c) remain below threshold; 1862c-F waits for 1862c-E-dashboard user unblock; system-auditor stale since 2026-05-11
+NEXT: dev-team Step 4 idle → send_telegram(work, "Dev loop idle.") → EXIT until next cron tick
+PIPELINE: idle
 ```
