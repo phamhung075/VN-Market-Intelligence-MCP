@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 21:38 UTC | **Sprint:** current
+**Last updated:** 2026-05-15 22:39 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1790,3 +1790,19 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 500 |
+
+### Cycle (22:39–22:39)
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: UNKNOWN | DXY: UNKNOWN | US10Y: UNKNOWN | fx_pressure: [] | pe_risk: []
+- Status: BLOCKED — MCP gateway unreachable (Step 0, 2 attempts exhausted)
+
+## Metrics (cycle 2026-05-15 22:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~300 |

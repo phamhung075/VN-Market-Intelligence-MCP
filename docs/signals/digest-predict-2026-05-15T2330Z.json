@@ -1,0 +1,8 @@
+{
+  "from": "digest-predict",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0 failed: MCP gateway unreachable after 2 attempts — 'dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving'. Daily digest NOT sent (2026-05-15 23:30 UTC cycle).",
+  "priority": "high",
+  "createdAt": "2026-05-15T23:30:00Z"
+}

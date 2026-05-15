@@ -1,0 +1,8 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0 failed: MCP gateway (vn-market) not responding after 2 attempts with 5s retry gap. send_telegram also unavailable. Cycle aborted.",
+  "priority": "high",
+  "createdAt": "2026-05-15T22:38:51Z"
+}
