@@ -1,3 +1,56 @@
+## Sprint 1920 — DB PIPELINE COMPLETENESS (active)
+
+**Status:** Active | **Scheduled:** 2026-05-15 | **Theme:** Every table feeds Cowork analysis
+
+# Goal
+
+## Vision
+Cowork agents (financial-analyst, market-watcher, news-scout, unified-agent, alert-commander) need a **complete Vietnam-market picture**. Today ~10 SQLite tables across the 9 microservices are silent zombies — schema exists but no scheduler pushes data, or the writer exists but is wired to nothing. Sprint 1920 makes every defined table active or formally retires it. After this sprint, `freshnessSlaMonitor` covers 100% of declared tables, and the data-audit job has zero "stale" findings on the Cowork-critical surface.
+
+## Sprint 1920 sub-tasks (priority order: Cowork-impact)
+
+### TIER 1 — Financial / fundamentals (highest analyst impact)
+- **1920a** — Wire `vnstockStore` upserts into a fundamentals refresh scheduler (quarterly cadence). Today `vnstockStore.ts` has writers for `vnstock_financials` / `vnstock_balance_sheet` / `vnstock_cash_flow` / `vnstock_events` / `vnstock_officers` / `vnstock_shareholders` / `vnstock_trading_stats` (7 tables) but ZERO scheduler invokes them. Financial-analyst PE/PB/ROE peer comparisons silently fall back to NULL today.
+- **1920b** — Wire `bondMaturityStore.insertBondMaturity` into a scheduled poller. `bond_maturity` table currently zero-rows; news-scout / unified-agent cannot detect upcoming bond rolls.
+
+### TIER 2 — Macro / external (regime + cycle inputs)
+- **1920c** — Wire `commodityTracker` into a scheduler. `commodity_prices` / `commodity_prices_history` have writers (also shared with `shippingIndex.ts`) but no cron — Phase-clock / regime detection in financial-analyst loses commodity input.
+
+### TIER 3 — Cowork analysis surface (alert/intelligence enrichment)
+- **1920d** — Wire `broker_sanctions` ingestion into a quarterly SSC sweep. broker-credibility tool returns empty today.
+- **1920e** — Wire `BacktestResultRepo.recordRun` into a closed-loop call from `cascadeBacktestJob` (rule-firing → outcome → backtest_runs persisted). Or formally retire backtest_runs if dual-stored elsewhere.
+
+### TIER 4 — Internal observability (system health for Cowork debugging)
+- **1920f** — Activate `signal_quality_audit` writer in `signalValidator` (currently only commented "future"). Helps QA agent + report-analyzer flag systematic agent-prompt regressions.
+- **1920g** — Activate the `prediction_claims` auto-population path (today only written from manual evidenceTools MCP call). Wire from intelligenceCycleJob output so claims accumulate without user input.
+
+### TIER 5 — Formal retirement (no analyst value)
+- **1920h** — Drop or document-as-deprecated: `skips`, `user_requests` (replaced by `ask_queue` per docs) — zero writers anywhere. Update `schema-system.ts` with explicit DEPRECATED comment block or DROP if no read path.
+
+## Scope
+IN: scheduler wiring for 10 zombie tables (or formal retirement decision), `freshnessSlaMonitor` extension, 1 architect brief on shared cadence vs per-source-tier cadence.
+OUT: rewriting fetchers (use existing infrastructure); UI changes; new microservices; backtest engine work beyond hooking the existing repo.
+
+## Success Metric
+- AC-1: Every Sprint-1920 task either ships a scheduler entry in `cronConfig.ts` OR a formal deprecation note in `schema-system.ts`.
+- AC-2: `freshnessSlaMonitor` reports `coverage_pct >= 95%` of declared tables.
+- AC-3: cowork agents financial-analyst + market-watcher each successfully query at least one of the newly-wired tables in a daily-review cycle with non-empty result.
+- AC-4: Zero "Cheerio-selector-broken-style" surprises — for every wired source, runbook + circuit-breaker + WORK channel alert on fetch failure.
+
+## Sequencing
+- 1920a / 1920c are independent (TIER 1 & 2, parallel-able).
+- 1920b / 1920d follow 1920a (share the `vpsProxyWatchdog` infrastructure).
+- 1920e / 1920f / 1920g are pure code wiring (no external HTTP) — can ship any order after Docker DNS unblocks.
+- 1920h is doc-only, can ship anytime.
+
+## Docker dependency
+Some sub-tasks (1920a/b/c/d) require redeploy to take effect. Tasks themselves can be coded today on `main`; deploy queued for next Docker restart (post-1919).
+
+## Architect brief required
+- **ARCH-1920** — Cadence policy: per-source-tier (T1/T2/T3) cadence vs per-domain (fundamentals quarterly / macro daily / news 15-min). Output → `docs/architecture-briefs/2026-05-15-db-pipeline-cadence-policy.md`. Blocks 1920a/b/c until landed.
+
+---
+
 ## Sprints 1878–1881 + ARCH-1884 — ACTIVE
 
 **Status:** Active | **Scheduled:** 2026-05-11 | **Theme:** TNB methodology infrastructure foundations

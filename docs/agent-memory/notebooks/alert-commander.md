@@ -1,8 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 09:04 UTC | **Sprint:** c116
+**Last updated:** 2026-05-15 21:04 UTC | **Sprint:** c116
 
 ## This session
+
+### Alert Cycle (21:03–21:04 UTC)
+- Signals: N/A — cycle aborted at Step 0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: UNKNOWN (bootstrap failed)
+- BLOCKED: MCP gateway unreachable — dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving (after 1 retry + 5s wait). send_telegram(bug) also failed (same gateway). Signal dropped to docs/signals/alert-commander-2026-05-15T21:03:48Z.json.
+- Schedule: off-hours 2h cycle
 
 ### Alert Cycle (09:01–09:04 UTC)
 - Signals: agent_bus=6 (urgent_news×2, price_anomaly×4) | price_alerts=0 | legal=0 | crisis=0
