@@ -23,7 +23,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 | 1909c-reparse-validation [UNBLOCKED — 1915-bctc-pipeline-silence DONE, Q1-2026 PDFs landing 2026-05-15+] | run `bctcReparseJob` on watchlist 2026-05-16; FA Layer 7 G-step PASS on ≥1 watchlist ticker captured in financial-analyst notebook (ship-completion gate per `feedback_ship_completion.md`). AC-1/2/3 PASS (pipeline verified, Q4-2025 VEA/VNM now extracted). AC-4/5 proceed after Q1-2026 BCTC PDFs land at SSC. | CRITICAL | OPS | ops | TASK_1909c-reparse-validation.md | — |
-| 1899a-bloomberg-test-split | SCAFFOLD-S: Split `1899a-bloomberg.test.ts` (494L) into 4 files ≤200L each by logical group: DOM happy path / JSON fallback / PerimeterX+lifecycle / normalizeDate helper. Non-blocking follow-up from c77 QA non-blocking note. Zone: apps/news-fetch/__tests__/. **ARCHITECT DONE 2026-05-15**: Handoff at `docs/handoffs/TASK_1899a-bloomberg-test-split.md`. Key design: preamble duplicated+trimmed per file (Bun mock isolation), normalizeDate file needs no mock.module, perimeterx-lifecycle flatten sub-describes to stay ≤200L. | LOW | REFACTOR | dev-news-fetch | docs/handoffs/TASK_1899a-bloomberg-test-split.md | — |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
 ---
@@ -32,7 +31,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(WIP = 0/2; cycle complete 2026-05-15 22:45 UTC)_ | — | — | — | — | — | — |
+| _(WIP = 0/2; cycle complete 2026-05-15)_ | — | — | — | — | — | — |
 
 ---
 
@@ -46,6 +45,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
+| 1899a-bloomberg-test-split | **DONE 2026-05-15** — Split `1899a-bloomberg.test.ts` (491L) into 4 files ≤200L: dom(189L/12 expect), json-fallback(182L/8 expect), perimeterx-lifecycle(186L/14 expect), normalize-date(51L/7 expect). Total 41 expect() = parity. Source file deleted. 29 pass / 0 fail. tsc 0 errors. | LOW | REFACTOR | dev-mainserver-crawls | 2026-05-15 |
 | CLEAN-c120-stale-branches | **DONE 2026-05-15** — Deleted 3 local + 2 remote stale branches (all 0 unmerged commits; feature work confirmed on main). Local: `fix/1908c-val07-plausibility-override` (worktree stale lock removed), `task/1909b-get-bctc-ocf-tool` (worktree stale lock removed), `task/1910b-effr-package-registration` (no local branch existed). Remote: `origin/task/1909b-get-bctc-ocf-tool` + `origin/task/1910b-effr-package-registration` deleted. AC-1/2/3/4 PASS: `git branch -a` clean. MCP gateway degraded — WORK notification skipped per AC-5 fallback; logged here instead. | LOW | CLEAN | qa | 2026-05-15 |
 | 1914b-log-agent-work-doc | **DONE 2026-05-15** — Updated `log_agent_work` documentation in all 10 package files. Each now shows the correct two-call recipe: Call 1 (`status: "running"` → `{ id }`), Call 2 (`id + status: "completed"\|"error"`). Broken `action/context/signal_ids` params removed from table rows. report-analyzer.md example snippet also fixed. No source-code edits. AC-1 PASS (all 10 files show both calls). AC-2 PASS (docs only). | LOW | CHORE | developer | 2026-05-15 |
 | janitor-1912 | **DONE 2026-05-15** — RF-1 + RF-2 disk cleanup complete. (1) Removed `apps/stock-price/__tests__/{unit/resolve-price-service.test.ts,integration/fetch-price-usecase.test.ts}` (stale Bun/TS test artifacts). (2) Removed `apps/alert-engine/server` compiled binary. Git index already clean (no tracked entries). AC-1/2 PASS: disk files absent. AC-3 PASS: git index empty. AC-4/5 PASS: `go test ./...` PASS both services (all packages green). AC-6 PASS: no registry/agent edits. tsc 0 errors. Commit `d637ad1b` on main. | LOW | CLEAN | code-janitor | 2026-05-15 |

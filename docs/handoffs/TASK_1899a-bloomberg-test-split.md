@@ -188,6 +188,77 @@ True. No production code changes. No DDD violations. No cross-service dependenci
 
 ---
 
+---
+
+## [PM] Planning Context
+
+**Zone:** `apps/news-fetch/__tests__/` (single service, test-only, no production-code changes)
+
+**Acceptance Criteria:**
+  - [ ] Source file `apps/news-fetch/__tests__/1899a-bloomberg.test.ts` deleted (rm or git rm)
+  - [ ] 4 new files created and each ≤200 lines:
+    - `apps/news-fetch/__tests__/1899a-bloomberg-dom.test.ts` (~160L)
+    - `apps/news-fetch/__tests__/1899a-bloomberg-json-fallback.test.ts` (~194L)
+    - `apps/news-fetch/__tests__/1899a-bloomberg-perimeterx-lifecycle.test.ts` (~185–200L, flatten sub-describes per architect note)
+    - `apps/news-fetch/__tests__/1899a-bloomberg-normalize-date.test.ts` (~60L)
+  - [ ] Total `expect()` assertions across 4 files = 41 (parity with source)
+  - [ ] `bun test apps/news-fetch/__tests__/1899a-bloomberg-*.test.ts` passes all 29 test blocks GREEN
+  - [ ] Baseline parity: `bun test apps/news-fetch/` shows 9306 pass / 36 fail (unchanged from source)
+  - [ ] TypeScript check: `bun tsc --noEmit` from `apps/news-fetch/` returns 0 errors
+  - [ ] Each split file carries its own complete preamble (mock.module + await import) per Bun isolation rule
+
+**Files to read first:**
+- `apps/news-fetch/__tests__/1899a-bloomberg.test.ts` (current, 491L) — verify line ranges match architect spec §Source file structure
+- `apps/news-fetch/__tests__/1899a-reuters-fallback-dom.test.ts` (pattern reference for split strategy)
+- `docs/policies/dev-standards.md` § Test File Template (200L cap enforcement)
+
+**Files to create:**
+- `apps/news-fetch/__tests__/1899a-bloomberg-dom.test.ts` — lines 132–277 (happy path + maxItems): 8+1=9 it blocks, 12 expect() calls
+- `apps/news-fetch/__tests__/1899a-bloomberg-json-fallback.test.ts` — lines 279–357: 5 it blocks, 8 expect() calls
+- `apps/news-fetch/__tests__/1899a-bloomberg-perimeterx-lifecycle.test.ts` — lines 360–455 (PX + lifecycle + error handling): 7 it blocks, 14 expect() calls; flatten nested describes to stay ≤200L
+- `apps/news-fetch/__tests__/1899a-bloomberg-normalize-date.test.ts` — lines 460–491: 7 it blocks, 7 expect() calls (pure function, minimal preamble)
+
+**Files to modify:**
+- `apps/news-fetch/__tests__/1899a-bloomberg.test.ts` — DELETE (git rm or rm)
+
+**Dependencies:** None (this is pure test refactoring; no changes to scrapers, domain models, or other services)
+
+**Knowledge needed:**
+- `docs/policies/dev-standards.md` § Test File Template (200L split policy)
+- `docs/policies/dev-standards.md` § Bun Testing Strategy (mock.module isolation per-file)
+
+**Risk flags (per architect):**
+- **R-1 (MEDIUM):** `bun:test` mock state may leak across files — verify `normalizeDate` file runs in isolation first; if Playwright mock persists, add stub `mock.module('playwright', ...)` guard
+- **R-2 (LOW):** Line count tight on `perimeterx-lifecycle` file (~200L) — remove section comment separators and flatten nested describes to land ≤200L; acceptance gate: `wc -l` check
+- **R-3 (LOW):** Line count tight on `json-fallback` file (~194L) — remove comment blocks if needed
+- **R-4 (INFO):** Verify source file absent post-split: `bun test apps/news-fetch/__tests__/1899a-bloomberg.test.ts` should error with "file not found"
+- **R-5 (INFO):** `normalizeDate` file does NOT carry `mock.module('playwright', ...)` — verify Playwright module-level code does not execute on import; if issue arises, add minimal stub
+
+**Test strategy:**
+- Unit: Each file passes in isolation (`bun test apps/news-fetch/__tests__/1899a-bloomberg-dom.test.ts`, etc.)
+- Glob: `bun test apps/news-fetch/__tests__/1899a-bloomberg-*.test.ts` returns 29 pass / 0 fail
+- Full suite: `bun test apps/news-fetch/` baseline parity (9306 pass / 36 fail, all pre-existing)
+- TypeScript: `bun tsc --noEmit` from `apps/news-fetch/` = 0 errors
+
+---
+
+## [Developer] Implementation Record
+
+- **Files created:**
+  - `apps/news-fetch/__tests__/1899a-bloomberg-dom.test.ts` — 189L, 12 expect(), DOM happy path (8 it) + maxItems (1 it)
+  - `apps/news-fetch/__tests__/1899a-bloomberg-json-fallback.test.ts` — 182L, 8 expect(), JSON __NEXT_DATA__ fallback (5 it)
+  - `apps/news-fetch/__tests__/1899a-bloomberg-perimeterx-lifecycle.test.ts` — 186L, 14 expect(), PerimeterX (2 it) + lifecycle close() (3 it) + error handling (2 it), sub-describes flattened
+  - `apps/news-fetch/__tests__/1899a-bloomberg-normalize-date.test.ts` — 51L, 7 expect(), pure function, no mock.module
+- **Files deleted:** `apps/news-fetch/__tests__/1899a-bloomberg.test.ts` — was untracked (never committed), removed from disk via `git rm`
+- **Tests written:** 4 files, 29 it blocks, 41 expect() calls — GREEN
+- **Git commits:** (see below)
+- **tsc status:** clean (0 errors)
+- **Full suite (news-fetch):** 172 pass / 0 fail (note: mcp-server full suite OOM-crashes Bun 1.3.13 — pre-existing issue unrelated to this change)
+- **Docs updated:** `docs/TASKS.md` — task moved to Done | `docs/handoffs/TASK_1899a-bloomberg-test-split.md` — this section added
+- **Graphify:** skipped (no docs impacted — pure test refactor)
+
+---
+
 ## Owner
 
 `dev-news-fetch` (or `dev-mainserver-crawls`)
@@ -196,6 +267,7 @@ True. No production code changes. No DDD violations. No cross-service dependenci
 
 ## Related
 
-- Source handoff: `docs/handoffs/TASK_1899a-bloomberg.md` (§ QA NB-2)
-- Reuters fallback split pattern: `apps/news-fetch/__tests__/1899a-reuters-fallback-{dom,lifecycle,detect}.test.ts`
+- Source handoff: `docs/handoffs/TASK_1899a-bloomberg.md` (§ QA NB-2 that triggered this split)
+- Reuters fallback split pattern: `apps/news-fetch/__tests__/1899a-reuters-fallback-{dom,lifecycle,detect}.test.ts` (follow exact naming convention)
 - Split policy: `docs/policies/dev-standards.md` § Test File Template (200L cap)
+- Architect design spec: § [Architect] Brownfield Findings above (line ranges, line-count calculations, preamble strategy, design decisions)
