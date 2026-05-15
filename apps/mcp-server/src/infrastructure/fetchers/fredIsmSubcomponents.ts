@@ -259,8 +259,7 @@ export async function fetchFredIsmSubcomponents(
   sleepFn?: (ms: number) => Promise<void>,
 ): Promise<IsmFetchResult | null> {
   const apiKey =
-    (typeof Bun !== "undefined" ? Bun.env.FRED_API_KEY : undefined) ??
-    process.env["FRED_API_KEY"];
+    (typeof Bun !== "undefined" ? Bun.env.FRED_API_KEY : undefined);
 
   if (!apiKey) {
     logger.warn(
