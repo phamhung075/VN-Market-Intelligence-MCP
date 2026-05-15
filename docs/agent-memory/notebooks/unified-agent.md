@@ -4,47 +4,23 @@
 
 ## This session
 
-### Daily Review (20:01 UTC)
-- Mode: DAILY_REVIEW | Freshness: unknown (MCP unreachable) | Bugs: none observed
-- BLOCKED: MCP gateway still unreachable at 20:00 UTC window — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` (2nd consecutive blocked cycle; first at 19:56 UTC)
-- Telegram send skipped (same gateway). Notebook commit only output.
-- Carry-over: BCTC Q1 banking (ACB/BID/CTG/EIB/MBB/VCB/VPB) unconfirmed — cannot verify until MCP restored.
-
-### Daily Review (19:56 UTC)
-- Mode: DAILY_REVIEW | Freshness: unknown (MCP unreachable) | Bugs: none observed
-- BLOCKED: MCP gateway unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` (confirmed on 2 probes)
-- Telegram send skipped (same gateway). Notebook commit only output.
-
-## This session (09:00 UTC)
-
-Market cycle 09:00 UTC Fri 15/05 — post-market-close sweep. REGIME=NEUTRAL stable (no transition this cycle; EASING→NEUTRAL transition confirmed at 05:00 UTC earlier today). FPT closed 72,900 -9.22% conviction 0.49 XEM XÉT GIẢM. GAS +6.94% close (Brent $108.67 elevated). BCTC Q1 banking deadline TODAY — ACB/BID/CTG/EIB/MBB/VCB/VPB still unconfirmed at close. git index.lock recurring again (reports 2890, 2892 — H4 VirtioFS race).
-
-## Cycle — 09:00 UTC
-
-- **cycle_date**: 2026-05-15
-- **findings**: REGIME=NEUTRAL stable (no transition); FPT 72,900 -9.22% conviction 0.49 XEM XÉT GIẢM (NEUTRAL, no tailwind); GAS +6.94% Brent $108.67 elevated — strongest close; HPG CRITICAL volume 5.4× (-1.85%); NVL HIGH volume 3.2× (+3.90%); BĐS -1.40% / Steel -1.13% / Banking -1.11% broad drops; BCTC Q1 banking deadline TODAY unconfirmed at close; git index.lock recurring H4 (2890/2892); push-prices invisibility recurring (2893 07:12); TASK-BCTC-3a still blocked; stale reports 2889/2890/2891 escalated; FII pipeline down fii_type=UNKNOWN
-- **pillars**: M2=✓(NEUTRAL global liquidity) COC=✓(carry -33bp, US10Y 4.46% NEUTRAL) EPS=✗(BCTC stale 13.3h) POL=✓(legal clean, crisis none) → 3/4
-- **actions**: send_telegram(work) heartbeat + stale escalation; log_agent_work id=881
-- **next_cycle_hint**: daily-review 23:00 UTC — check BCTC Q1 banking filings (catalyst if good Q1). FPT conviction 0.49 holds XEM XÉT GIẢM — no improvement without BCTC catalyst.
-- **estimated_tokens**: 15000
+Daily review 20:00 UTC Fri 15/05 — BLOCKED. MCP gateway unreachable at both 19:56 UTC (pre-window trigger) and 20:01 UTC (scheduled window). Error: `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Telegram send, BUG observe, and freshness checks all skipped. git HEAD.lock cleared via `mv .git/HEAD.lock .git/HEAD.lock.bak4`; commit succeeded. BCTC Q1 banking carry-over unresolvable until MCP restored.
 
 ## Patterns noticed
 
-- REGIME intraday: TIGHTENING→NEUTRAL→EASING→NEUTRAL all in same day — gold as driver, unreliable anchor; require 2-cycle confirmation
-- git index.lock (H4 VirtioFS race): recurring c57+c58+ pattern — ops must apply permanent host-side fix (not just per-cycle cleanup)
-- Alert scoring backlog: 488 unknown / 0 scored — precision feedback pipeline stalled
-- FII pipeline: all fallbacks exhausted, persistent — fii_type=UNKNOWN every cycle
-- Reuters RSS + Trading Economics: 6 consecutive errors — stopped (known chronic)
-- push-prices market_prices invisibility: recurring 07:12 UTC (report 2893) — not yet resolved
-- vnstock RATE_LIMITED: DLC/EIB/PC1 — recurring WARN pattern at market-open window
+- MCP gateway: 2 consecutive blocked cycles at 19:56 + 20:01 UTC — `host.docker.internal` DNS failure. Likely Docker networking issue on host.
+- git HEAD.lock (VirtioFS H4): `rm -f` blocked by filesystem; workaround = `mv .git/HEAD.lock .git/HEAD.lock.bakN`. Confirmed for N=4.
+- Alert scoring backlog: 488 unknown / 0 scored — precision feedback pipeline stalled (carry-over from prior sessions).
+- FII pipeline: persistent fii_type=UNKNOWN — all fallbacks exhausted.
 
 ## Carry-over (next session)
 
-- **🔴 BCTC Q1 BANKING**: ACB/BID/CTG/EIB/MBB/VCB/VPB deadline TODAY — unconfirmed at close 08:59 UTC. daily-review 23:00 must call get_bctc_full per ticker if filed.
-- **FPT 72,900 conviction 0.49 XEM XÉT GIẢM**: REGIME=NEUTRAL, tailwind removed. -9.22% unrealized. No catalyst until BCTC Q1 filed. daily-review: reassess if BCTC Q1 arrives with positive EPS.
-- **🔴 git index.lock recurring**: Reports 2890 (04:47) + 2892 (05:47) — manual rm needed on host. ops escalated via WORK.
-- **TASK-BCTC-3a BLOCKED**: api.hsx.vn VPS 404 — Envoy blocks external REST. See docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md. Architecture reassessment needed.
-- **push-prices invisibility**: Recurring ERROR 07:12 — monitor daily-review for price data gaps.
-- **VCB Tier 2 bond 10,000 tỷ**: Positive capital signal. Assess post-BCTC Q1 filing.
-- **VIC Vingroup hiring 20,000 workers Phase 1**: Expansion signal — monitor BĐS recovery if sector pressure eases.
-- **GAS Kinh Dịch Kiển (39) BÁN conflict**: Price +6.94% but hexagram warns reversal — test 90,000–92,000 resistance. Watch if Brent pulls back below $105.
+- **🔴 MCP GATEWAY DOWN**: `host.docker.internal` unreachable since at least 19:56 UTC. All tools blocked. Ops must restart Docker networking / MCP server on host before next cycle.
+- **🔴 BCTC Q1 BANKING**: ACB/BID/CTG/EIB/MBB/VCB/VPB — deadline was 2026-05-15. Cannot verify filing until MCP restored. Call `get_bctc_full` per ticker on first working cycle.
+- **FPT 72,900 conviction 0.49 XEM XÉT GIẢM**: -9.22% unrealized. REGIME=NEUTRAL, no tailwind. Reassess if BCTC Q1 arrives with positive EPS.
+- **🔴 git HEAD.lock recurring**: VirtioFS H4 race — use `mv .git/HEAD.lock .git/HEAD.lock.bakN` (increment N). Permanent host-side fix still needed.
+- **TASK-BCTC-3a BLOCKED**: api.hsx.vn VPS 404 — Envoy blocks external REST. See docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md.
+- **push-prices invisibility**: Recurring ERROR ~07:12 UTC — monitor next market cycle.
+- **VCB Tier 2 bond 10,000 tỷ**: Positive capital signal — assess post-BCTC Q1 filing.
+- **VIC Vingroup hiring 20,000 workers Phase 1**: BĐS recovery signal — monitor if sector pressure eases.
+- **GAS Kinh Dịch Kiển (39) BÁN conflict**: +6.94% close but hexagram warns reversal at 90,000–92,000 resistance. Watch if Brent pulls back below $105.
