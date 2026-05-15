@@ -1,8 +1,72 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-15 | **Sprint:** SPRINT-S
+**Last updated:** 2026-05-16 | **Sprint:** 1920
 
 ## Last session summary
+
+Task 1920c — Commodity Tracker + Shipping Index Refresh Scheduler Job.
+
+**Problem:** `commodity_prices`/`commodity_prices_history` tables (written by `yahooFinance.ts`) and `tracked_indicators` shipping rows (written by `shippingIndex.ts`) had zero scheduler callers. Stale commodity data produces silent regime mis-classification in financial-analyst.
+
+**What was done:**
+- Created `apps/mcp-server/src/scheduler/macro/commodityTrackerRefreshJob.ts` — `runCommodityTrackerRefreshJob(opts?)` with full DI seam (`fetchCommodityFn`, `storeCommodityFn`, `fetchShippingFn`, `storeShippingFn`, `sendWorkFn`).
+- Block 1 (FR-1): calls `fetchYahooFinancePrices()` + `storeCommoditySnapshot()` — commodity_prices INSERT OR REPLACE + commodity_prices_history append.
+- Block 2 (FR-2): calls `fetchShippingIndices()` + `storeShippingIndices()` — tracked_indicators shipping rows.
+- Independent try/catch per block (FR-3): commodity failure does NOT abort shipping call and vice-versa.
+- Fail-loud WORK channel alert on any block error.
+- Added `commodityTrackerRefresh: '0 6 * * *'` to `cronConfig.ts` (FR-5).
+- Added `runCommodityTrackerRefreshJob` export to `scheduler/macro/index.ts`.
+- Wired `cron.schedule(CRONS.commodityTrackerRefresh, ...)` in `startScheduler.ts` via `jobRunRepo.wrapRun` (FR-6).
+- TODO(1920c) comment added for future db injection refactor (NFR-2).
+- Wrote 7 tests in `1920c-commodity-tracker-refresh-job.test.ts` — TC-1..TC-7 covering all ACs. All GREEN 7/7.
+
+**Note:** Spec mentions `commodityTracker.ts` as writer but the actual `commodity_prices`/`commodity_prices_history` writer is in `yahooFinance.ts` (`storeCommoditySnapshot`). Used the correct file.
+
+**Commit:** pending
+
+**Total: 7 pass / 0 fail. cronJobCount: 66, schedulerFileCount: 65.**
+
+## Previous last session summary (1920a)
+
+Task 1920a — vnstock Fundamentals + Trading Stats Scheduler Job.
+
+**Problem:** `vnstockStore.ts` has writers for 7 tables but zero scheduler callers. Data only populated on-demand via MCP tool `syncVnstockData.ts`. Tables go stale after initial seed; no periodic refresh.
+
+**What was done:**
+- Created `apps/mcp-server/src/scheduler/financial-reports/vnstockFundamentalsJob.ts` — exports `runVnstockFundamentalsJob(opts?)` and `runVnstockTradingStatsJob(opts?)` with DI seam (`tickers`, `syncFn`, `sendWorkFn`, `_resetRunningState`).
+- Two cron entry-points: `runVnstockFundamentalsJobCron()` (Mon 01:00 UTC, wrapped in `recordJobRun`) and `runVnstockTradingStatsJobCron()` (weekdays 08:30 UTC).
+- `isRunning` concurrency guard (module-level, separate per job) — prevents double-stack on 7-10min sweep.
+- Per-ticker try/catch in `runSweep()` — one failure logs warning + appends to `failed[]`, sweep continues.
+- `syncVnstockData` called sequentially per ticker (not `Promise.all`) — preserves 2500ms rate-limit delay.
+- Fail-loud WORK channel when `failed.length > 0` at sweep completion.
+- Watchlist: read from `docs/data/stock-classification.json` (same as bctcBatchSweepJob).
+- Added `vnstockFundamentalsRefresh: '0 1 * * 1'` + `vnstockTradingStatsRefresh: '30 8 * * 1-5'` to `cronConfig.ts`.
+- Wired import + two `cron.schedule` calls in `startScheduler.ts`.
+- Wrote 8 tests in `1920a-vnstock-fundamentals-job.test.ts` covering TC-1 isRunning guard, TC-2 per-ticker isolation, TC-3 sequential calls, TC-4 WORK alert, AC-1 cron expression assertions. All GREEN 8/8.
+
+**Commit:** `bb6015d5 feat(1920/scheduler): 1920a vnstock fundamentals + trading stats jobs`
+
+**Total: 8 pass / 0 fail. cronJobCount: 65, schedulerFileCount: 64.**
+
+## Previous last session summary (1920b)
+
+Task 1920b — Bond Maturity Poller scheduler job.
+
+**Problem:** `bond_maturity` table only populated by manual seed or on-demand MCP calls. Zero scheduler jobs called `upsertBond()`. Silent wrong signals for downstream agents consuming `get_bond_maturity_calendar`.
+
+**What was done:**
+- Created `apps/mcp-server/src/scheduler/macro/bondMaturityPollerJob.ts` — `runBondMaturityPollerJob(opts?)` with DI seam (`fetchFn` + `sendWorkFn`). FR-1..FR-4 implemented (upsert, zero-row WORK alert, fail-loud, recordJobRun via `jobRunRepo.wrapRun`).
+- AC-0: vnstock domain seed data (direct from France, no VPS). Uses `getUpcomingMaturities(36m)` from `bondMaturityTracker.ts` as production fetchFn until live HTTP fetcher added.
+- Added `bondMaturityPoller: '30 2 * * 0'` to `cronConfig.ts`.
+- Wired import + `cron.schedule` in `startScheduler.ts`.
+- Added export in `scheduler/macro/index.ts`.
+- Wrote 4 tests in `1920b-bond-maturity-poller.test.ts` — TC-1 success, TC-2 zero-row alert, TC-3 error no-rethrow, TC-4 upsert idempotency. All GREEN 4/4.
+
+**Commit:** `89c70d04 feat(1920/macro): 1920b bond maturity poller scheduler job`
+
+**Total: 4 pass / 0 fail. cronJobCount: 63.**
+
+## Previous last session summary
 
 Task 1918a — `get_macro_snapshot` shape guard for alert-commander stage-bootstrap.
 

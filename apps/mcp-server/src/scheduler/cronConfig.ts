@@ -133,4 +133,6 @@ export const CRONS = {
   vnstockFundamentalsRefresh: Bun.env.CRON_VNSTOCK_FUNDAMENTALS               ?? '0 1 * * 1',
   /** vnstockTradingStatsRefresh — daily weekdays 08:30 UTC (post HOSE close) trading stats sweep (task 1920a) */
   vnstockTradingStatsRefresh: Bun.env.CRON_VNSTOCK_TRADING_STATS              ?? '30 8 * * 1-5',
+  /** commodityTrackerRefresh — daily 06:00 UTC commodity prices + shipping indices refresh (task 1920c) */
+  commodityTrackerRefresh:    Bun.env.CRON_COMMODITY_TRACKER                  ?? '0 6 * * *',
 }

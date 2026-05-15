@@ -49,7 +49,7 @@ import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
-import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob } from './macro/index.js'
+import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob, runCommodityTrackerRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
@@ -715,6 +715,20 @@ export function startScheduler() {
   // isRunning guard + per-ticker error isolation.
   cron.schedule(CRONS.vnstockTradingStatsRefresh, async () => {
     await runVnstockTradingStatsJobCron()
+  }, { timezone: 'UTC' })
+
+  // 06:00 UTC daily — Commodity prices + shipping indices refresh — task 1920c
+  // FR-1: fetchYahooFinancePrices + storeCommoditySnapshot (commodity_prices + history).
+  // FR-2: fetchShippingIndices + storeShippingIndices (tracked_indicators shipping rows).
+  // Independent error isolation: commodity failure does NOT abort shipping call.
+  // Fail-loud: each block sends WORK alert on error.
+  // Note: same cron expression as macroIndicatorRefresh ('0 6 * * *') — kept as SEPARATE
+  // job registration for independent cron_job_runs observability (per TASK_1920c.md spec).
+  cron.schedule(CRONS.commodityTrackerRefresh, async () => {
+    await jobRunRepo.wrapRun('commodityTrackerRefreshJob', async () => {
+      const result = await runCommodityTrackerRefreshJob()
+      return { rowsWritten: result.rowsWritten }
+    })
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
