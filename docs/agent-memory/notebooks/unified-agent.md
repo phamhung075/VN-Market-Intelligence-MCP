@@ -32,3 +32,12 @@ Market cycle 02:00 UTC Fri 15/05. REGIME_TRANSITION confirmed: NEUTRAL → EASIN
 - **VCI institutional exit**: -1.35% open, double exit complete. Avoid. Monitor for contagion to HCM/SSI.
 - **HEAD.lock CRITICAL**: Ops: rm .git/HEAD.lock on host — recurring block.
 - **bctcQueueEnricher stale expanding**: DPM/KBC/MWG/NVL/REE/TCH — file feedback if persists >48h.
+
+## Cycle — 04:00 UTC
+
+- **cycle_date**: 2026-05-15
+- **findings**: REGIME=EASING stable (no transition from 02:00 cycle). FPT 73,200 (-8.84%) conviction 0.56 adj GIỮ. BCTC Q1 banking (ACB/BID/CTG/EIB/MBB/VCB/VPB) deadline today — 0 filed as of 04:00 UTC. GAS +3.35% (Brent support), NVL +3.60%, VNH -9.09% (HIGH, BCTC overdue). Dragon Capital STRUCTURAL buy on 'họ Vin' (VIC/VHM/VRE). No legal/crisis/supply disruption. Alert scoring: N=8/451 (insufficient). get_macro_snapshot timeout (1 occurrence). FII pipeline still down.
+- **pillars**: M2=✓(EASING/gold rotation) COC=✓(carry -33bp, US10Y NEUTRAL) EPS=✓(Q1 overdue, US tech ATH) POL=✓(legal clean) → 4/4
+- **actions**: send_telegram(market) synthesis; send_telegram(work) heartbeat; log_agent_work completed; no conviction_change signal
+- **next_cycle_hint**: BCTC Q1 banking — check at 04:30 cycle. FPT watch 74,000/78,000 threshold. GAS sustained if Brent holds $107.
+- **estimated_tokens**: 9000

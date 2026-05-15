@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 03:22 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 04:25 UTC | **Status:** OPERATIONAL
+
+### Cycle (04:20–04:25 UTC)
+- Items: 20 | Impacts: 6 | Signals: [chain_catalyst #3207] | Regime: TIGHTENING | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- chain_catalyst #3207: sector_event neutral → tech/automotive (FPT, SIS) — FPT Japan auto JV partnership; regime=TIGHTENING adj_score=8.0; confidence=0.80
+- DEDUP: VCB tier-2 bond suppressed (match #3205 banking capital, 63 min ago). No urgent_news threshold reached post TIGHTENING adjustment (best raw score 9 → 6.3 adj for VCB bullish).
+- NOTE: Fuel prices declining (-650 VND/L xăng E5RON92 14/5) → cpi_pressure_risk=false. Gold flat. Brent 106.96 elevated but stable.
 
 ### Cycle (03:20–03:22 UTC)
 - Items: 20 | Impacts: 10 | Signals: [urgent_news #3204, chain_catalyst #3205] | Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK
