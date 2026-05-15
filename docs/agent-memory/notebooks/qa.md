@@ -1,6 +1,38 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c127 — 1918a-alert-commander-macro-snapshot-guard APPROVED
+**Last updated:** 2026-05-15 | **Session:** c128 — 1918b-news-scout-macro-snapshot-package APPROVED
+
+## Session 2026-05-15 c128 — 1918b-news-scout-macro-snapshot-package
+
+### TASK REPORT — 1918b
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: FIX (agentBootstrap + SKILL_MANIFEST atomic pair + flow doc + tool package)
+round: 1
+```
+
+#### Pipeline
+
+- Full suite: 9366 pass / 36 fail (36 pre-existing baseline — watchlist count, scheduler config, signal-T5; 0 regressions vs c126 baseline of 9356 pass / 36 fail; +10 pass from 1918a tests already merged)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: `agentBootstrap.ts` L47 — `"get_macro_snapshot"` present in `news_scout` array
+- AC-2 PASS: `SKILL_MANIFEST.md` L31 — `"get_macro_snapshot"` in `news_scout` JSON array; SSOT pair sorted-identical (17 entries each)
+- AC-3 PASS: `.claude/tools/package/news-scout.md` L45 — Market Intelligence table row `get_macro_snapshot | Macro regime snapshot for 0b regime detection | source?: string, regimeType?: string`
+- AC-4 PASS: `.claude/flows/news-scout/stage-bootstrap.md` L15-25 — Step 0b calls `get_macro_snapshot` with `isMacroSnapshotValidShape()` guard; invalid shape → `[WARN]` + `REGIME_SOURCE=news-fallback`; call failure → retry-once then news-fallback; regime-extraction skill invoked only on valid shape
+- AC-5 PASS: tsc 0 errors (interface-layer-only change; no type regressions)
+
+#### Notes
+
+- No new test file (pure interface-layer array append + flow prose). Consistent with handoff.
+- Bun post-run C++ panic = known Bun v1.3.13 macOS bug, not test failure (exit code 0, 9440 tests ran).
+- SSOT mirror confirmed: both arrays sorted-identical, `Last updated` line in SKILL_MANIFEST.md updated to Task 1918b.
+
+---
 
 ## Session 2026-05-15 c127 — 1918a-alert-commander-macro-snapshot-guard
 
