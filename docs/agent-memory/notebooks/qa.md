@@ -1,6 +1,50 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c116 — 1915-fix-part2 scanDiskForStrandedPdfs filename fallback APPROVED (6fead90d)
+**Last updated:** 2026-05-15 | **Session:** c117 — 1914-news-scout-dedup-api APPROVED (93b6b63d)
+
+## Session 2026-05-15 c117 — 1914-news-scout-dedup-api QA gate
+
+### TASK REPORT — 1914
+
+```
+date: 2026-05-15
+outcome: APPROVED
+```
+
+#### Changed files
+- `apps/mcp-server/src/infrastructure/db/agentSignalStore.ts` — `GetSignalsOptions.fromAgent?: string` added; WHERE clause switches to `s.from_agent = ?` exclusively when `fromAgent` is set; read-mark guard: `if (statusFilter === "unread" && opts.fromAgent === undefined && rows.length > 0)`
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — optional `from_agent` Zod param + spread into `getSignals()` opts
+- `apps/mcp-server/src/__tests__/242-agent-signals.test.ts` — AC-6a/b/c (3 new tests); 14/14 total GREEN
+- `.claude/flows/news-scout/stage-signals.md` — dedup gate updated: `from_agent="news-scout"` + `status="all"` + comment explaining 180-min manual check
+
+#### Test Results
+- tsc: 0 errors
+- 242 targeted: 14/14 PASS (11 pre-existing + 3 new AC-6a/b/c)
+- Full suite: 9306 pass / 36 fail (all pre-existing: task 178 price-history, 230 AC-4c, BCTC parseBctcReport fixtures — zero new failures)
+
+#### DDD: PASS
+- No domain→infrastructure imports found (grep on src/domain/ import statements)
+
+#### Security: PASS
+- No `process.env` in changed files
+- No hardcoded credentials or secrets
+- SQL uses parameterized queries (`db.query<RawRow, [string]>(sql).all(bindParam)`)
+
+#### Backward compat: PASS (AC-2)
+- `getSignals(db, agent)` with no opts → `recipientClause = "(s.to_agent = ? OR s.to_agent = 'all')"`, `bindParam = agent` (unchanged path)
+- AC-6b confirms inbox-only rows returned when `fromAgent` absent
+
+#### All AC: GREEN
+- AC-1: fromAgent returns self-sent rows regardless of to_agent (AC-6a)
+- AC-2: backward compat — existing inbox unchanged (existing tests + AC-6b)
+- AC-3: read-mark suppressed on sender-history path (AC-6c + guard in store)
+- AC-4: stage-signals.md dedup gate updated (from_agent + status=all)
+- AC-5: all 242 existing tests GREEN
+- AC-6a/b/c: 3 new tests GREEN
+
+#### Merge
+- Already on main — commits 93b6b63d + eefa1346
+- docs/TASKS.md updated: 1914 moved In Progress → Done
 
 ## Session 2026-05-15 c116 — 1915-fix-part2 QA gate
 
