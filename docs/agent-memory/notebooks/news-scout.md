@@ -1,6 +1,12 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 09:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 19:56 UTC | **Status:** MCP_UNREACHABLE
+
+### Cycle (19:56 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP server unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`
+- Root cause: Cowork sandbox DNS cannot resolve `host.docker.internal`. MCP server runs at `host.docker.internal:3000` (local machine). Bootstrap, news fetch, Telegram, and logging all blocked.
+- No signals fired. No Telegram sent (same MCP blocked). Notebook updated as only recovery action.
 
 ### Cycle (09:19–09:21 UTC)
 - Items: 20 | Impacts: 2 | Signals: [urgent_news #3223 VIC, chain_catalyst #3224 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
