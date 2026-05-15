@@ -2,7 +2,64 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-15 (cycle 55) | Cycles completed: 55
+**Last updated:** 2026-05-15 (cycle 56) | Cycles completed: 56
+
+---
+
+## Cycle 56 Watch Notes (2026-05-15 ~06:45 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Auto-cure: 0 applied (no new 3-cycle threshold met; 2 patterns at cycle-2 evidence)
+
+**MCP Gateway:** NOT registered in this session. Notebook-evidence mode. Alert-commander 04:03 UTC: get_macro_snapshot functional (live, NEUTRAL). Report-analyzer 02:00 UTC: gateway 7ms bootstrap. Alert-commander 06:02 UTC: get_macro_snapshot returned system-status dict (not regime text) → news-fallback TIGHTENING. Gateway operational but system-status response anomaly persists.
+
+**KEY FINDINGS THIS CYCLE:**
+- get_macro_snapshot system-status response → TIGHTENING fallback: CYCLE 2 (00:02 c55=cycle 1, 06:02 c56=cycle 2). PO ACK deferred to cycle 2 — threshold now met. Response-format guard needed in alert-commander stage-bootstrap.md.
+- news-scout get_macro_snapshot NOT IN PACKAGE: CYCLE 2 (02:19 c55=cycle 1, 06:20 c56=cycle 2). TIGHTENING at market open (06:20) while unified-agent declared NEUTRAL at 05:00. Structural gap: regime always news-inferred for news-scout. Task needed: add `get_macro_snapshot` to news-scout package.
+- news-scout F/H-step cure (c55): In flow. Signals #3204/#3205/#3207/#3209 fired post-cure. Payload.detail compliance CANNOT be confirmed from notebook evidence — payload.detail not logged in cycle notes. Carrying as PENDING-VALIDATION.
+- SPIKE_BCTC-3 OVERTURNED: hsx.vn BCTC accessible from France without VPS. GET /m/api/v1/1/mediafiles/5/{numericId} returns HTTP 200. TASK-BCTC-3b/3c REOPENED CRITICAL. Major positive.
+- unified-agent 05:00 UTC REGIME_TRANSITION EASING→NEUTRAL: Gold stabilized (4,613.6). FPT conviction 0.51 XEM XÉT GIẢM. Pillars 2/4 (M2+EPS stale BCTC).
+- BCTC Q1-2026 banking: 0 filed at 05:00 UTC despite deadline today. Expected at 14:00 UTC cycle.
+- alert-commander 04:03 + 05:01 UTC GOOD. Two clean cycles. VNH -9.09% HIGH fired correctly (05:01).
+- Previous handoff (c55) ACK'd by PO (2026-05-15T06:25:00Z).
+
+**METHODOLOGY SCORES (Layer 5, 9-step — c56):**
+- alert-commander 06:02 UTC: 2/4 → NEEDS_ATTENTION (B-step news-fallback TIGHTENING, VIC suppressed at wrong threshold)
+- alert-commander 05:01 UTC: 4/5 → GOOD
+- alert-commander 04:03 UTC: 4/4 → GOOD
+- news-scout 06:20 UTC: NEEDS_ATTENTION (get_macro_snapshot not in package, regime news-inferred, 0 signals fired TIGHTENING)
+- news-scout 03:20–05:22 UTC: PENDING-VALIDATION (cure in flow, payload.detail unverifiable from notebook)
+- unified-agent 05:00 UTC: 6/9 → NEEDS_ATTENTION (F=2/4 pillars, G=partial, H=phase declared no tier)
+- market-watcher 02:32 UTC: 5/5 → GOOD
+- report-analyzer 02:00 UTC: GOOD (early exit correct)
+- financial-analyst: UNAUDITABLE (no 2026-05-15 session)
+- digest-predict: CRITICAL/UNAUDITABLE (6-day silence)
+
+**MARKET STATE:**
+- VN-Index: 1,917.47 (-0.41%) at 06:02 UTC | REGIME: NEUTRAL (unified-agent 05:00 UTC, EASING→NEUTRAL transition)
+- Gold: 4,613.6 (stabilized, no longer -2.47σ) | Brent: 107.95 elevated | FII: OUTFLOW_RISK (-0.33%)
+- FPT: 73,400 VND (-8.59%), conviction 0.51 XEM XÉT GIẢM
+- BCTC Q1-2026 banking: 0 filed (ACB/BID/CTG/EIB/MBB/VCB/VPB, deadline 2026-05-15)
+- VNH: -9.09% price drop (HIGH alert fired, ongoing)
+
+**SCORES SUMMARY:**
+- alert-commander: GOOD (04:03+05:01 UTC), NEEDS_ATTENTION (06:02 UTC news-fallback TIGHTENING)
+- news-scout: NEEDS_ATTENTION (get_macro_snapshot not in package; cure PENDING-VALIDATION)
+- unified-agent: NEEDS_ATTENTION (6/9, 2/4 pillars)
+- financial-analyst: UNAUDITABLE (no session)
+- market-watcher: GOOD (02:32 UTC)
+- report-analyzer: GOOD (early exit)
+- digest-predict: CRITICAL (6-day silence)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/processed/tnb-2026-05-15T06-45-00Z.json (priority: high)
+
+## Cycle — 2026-05-15 (cycle 56, ~06:45 UTC)
+
+- **cycle_date**: 2026-05-15
+- **findings**: NEEDS_ATTENTION/IMPROVING. 0 auto-cures (no new 3-cycle threshold met). Two patterns now at cycle-2 evidence: (1) get_macro_snapshot system-status response → alert-commander news-fallback TIGHTENING (c55 00:02 + c56 06:02); (2) news-scout get_macro_snapshot not-in-package → TIGHTENING at market open (c55 02:19 + c56 06:20). SPIKE_BCTC-3 overturned (hsx.vn accessible from France, TASK-BCTC-3b/3c REOPENED). unified-agent EASING→NEUTRAL regime transition correct. news-scout F/H-step cure in flow but PENDING-VALIDATION (payload.detail not logged in cycle notes). digest-predict 6-day silence CRITICAL. BCTC Q1-2026 banking 0 filed at deadline (05:00 UTC). FA no 2026-05-15 session. Previous handoff ACK'd by PO.
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/processed/tnb-2026-05-15T06-45-00Z.json). Notebook updated. 0 Telegram (MCP unregistered).
+- **next_cycle_hint**: (1) Validate news-scout payload.detail for pillars+phase+tier in any post-cure chain_catalyst/urgent_news signal — requires live bus inspection. (2) PO: create task for get_macro_snapshot response-format guard in alert-commander stage-bootstrap.md. (3) PO: create task for get_macro_snapshot addition to news-scout tool package. (4) 1909c-reparse-validation: assign In-Progress owner, run bctcReparseJob 2026-05-16. (5) BCTC Q1-2026 banking filings: watch 14:00 UTC cycle. (6) FPT 73,000 VND floor watch — conviction 0.51 XEM XÉT GIẢM, REGIME now NEUTRAL.
+- **estimated_tokens**: 9800
 
 ---
 
