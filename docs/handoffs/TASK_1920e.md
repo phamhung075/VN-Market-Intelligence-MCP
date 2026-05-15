@@ -141,3 +141,46 @@ None. No PO questions. No architect brief required (no new service boundary, no 
 | AC-4 | Unit | sendWorkFn spy called even when saveRun throws |
 | AC-5 | Unit | Mock repo.saveRun receives correct BacktestRunRecord shape |
 | AC-6 | Unit | processed=0 → saveRun called with tradeCount=0 |
+
+---
+
+## [QA] Review Record — Round 1
+
+**Date:** 2026-05-16
+**Verdict:** CHANGES_REQUESTED
+**Reviewer:** qa
+
+### Pipeline Results
+- Targeted tests (1920e, 5 tests): 5 pass / 0 fail
+- Full suite: 9421 pass / 36 fail (36 pre-existing baseline, 0 regressions)
+- tsc: 16 errors (blocking — see below)
+- DDD: PASS (scheduler layer importing infrastructure is correct; no domain→infra violation)
+- Security: PASS (no process.env, no hardcoded secrets, parameterized SQL)
+
+### AC Verification
+- AC-1 PASS: `saveRun` called once after loop with `strategy="cascade-backtest"`. TC-1 verifies.
+- AC-2 PASS: `totalReturn` = mean of `[2.0, -4.0]` = `-1.0` — verified in TC-1.
+- AC-3 PASS: `winRate` = `1/2` = `0.5` for 1 outcomeCorrect=1 out of 2 processed — TC-1 verifies.
+- AC-4 PASS: `sendWorkFn` called after throwing `saveRun` — TC-3 verifies.
+- AC-5 PASS: `CascadeBacktestDeps.backtestResultRepo` accepts mock — TC-4 verifies.
+- AC-6 PASS: `processed=0` → `saveRun` called with `tradeCount=0, totalReturn=0, winRate=0` — TC-2 verifies.
+
+### Blocking Issues
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:91` — TS18048: `rec` is possibly `undefined` (`noUncheckedIndexedAccess: true` in tsconfig; `savedRecords[0]` returns `BacktestRunRecord | undefined`)
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:92` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:95` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:98` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:101` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:103` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:104` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:105` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:106` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:107` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:136` — TS18048 same (TC-2 block)
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:137` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:138` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:139` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:140` — TS18048 same
+- `src/__tests__/1920e-cascade-backtest-saverun.test.ts:227` — TS2532: Object is possibly `undefined`
+
+**Fix:** Add `expect(savedRecords[0]).toBeDefined()` guard before dereferencing, then use `const rec = savedRecords[0]!;` (or `as BacktestRunRecord`). All 16 errors are in the test file only — no production code changes required.

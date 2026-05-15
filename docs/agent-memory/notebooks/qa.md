@@ -1,6 +1,45 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c132 — 1920c-commodity-tracker-scheduler APPROVED
+**Last updated:** 2026-05-16 | **Session:** c133 — 1920e-cascade-backtest-saverun CHANGES_REQUESTED
+
+## Session 2026-05-16 c133 — 1920e-cascade-backtest-saverun
+
+### TASK REPORT — 1920e (compact)
+
+```
+date: 2026-05-16
+outcome: CHANGES_REQUESTED
+type: FEATURE (scheduler wiring + new test file)
+round: 1
+```
+
+#### Pipeline
+
+- Targeted tests (1920e — 5 tests): 5 pass / 0 fail
+- Full suite: 9421 pass / 36 fail (36 pre-existing baseline, 0 regressions)
+- tsc: 16 errors (BLOCKING — test file only)
+- DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: `saveRun` called once with `strategy="cascade-backtest"`, `tradeCount=2`.
+- AC-2 PASS: `totalReturn` = mean([2.0, -4.0]) = -1.0, verified TC-1.
+- AC-3 PASS: `winRate` = 1/2 = 0.5, verified TC-1.
+- AC-4 PASS: `sendWorkFn` called even when `saveRun` throws, verified TC-3.
+- AC-5 PASS: `backtestResultRepo` mock accepted via `CascadeBacktestDeps`, verified TC-4.
+- AC-6 PASS: `processed=0` → `saveRun` called with `tradeCount=0`, verified TC-2.
+
+#### Blocking Issues
+
+16 tsc errors in test file (`noUncheckedIndexedAccess: true`). All at `savedRecords[0]` array index access returning `BacktestRunRecord | undefined`. Lines: 91, 92, 95, 98, 101, 103-107, 136-140, 227. Fix: add `!` assertion or `toBeDefined()` guard before dereferencing. No production code changes needed.
+
+#### Notes
+
+- Production code (`cascadeBacktestJob.ts`) is clean — no tsc errors.
+- DDD note: scheduler importing infrastructure is correct per layer policy (all other scheduler/macro/* files do same).
+- 36 fail baseline unchanged from c131.
+
+---
 
 ## Session 2026-05-16 c132 — 1920c-commodity-tracker-scheduler
 
