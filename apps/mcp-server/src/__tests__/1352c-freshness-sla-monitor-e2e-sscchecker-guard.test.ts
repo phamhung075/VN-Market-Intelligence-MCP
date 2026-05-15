@@ -23,6 +23,9 @@ import type { SignalType } from "../domain/services/freshnessSlaChecker.js";
 import * as fs from "fs/promises";
 import * as path from "path";
 
+/** No-op WORK channel sender — avoids real Telegram calls in tests. */
+const noopSendWork = async (_msg: string): Promise<void> => { /* no-op */ };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +116,7 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     insertSourceRows(db, minutesAgo(0), "a1");
 
     const { spy, calls } = makeEscalateSpy();
-    const result = await runFreshnessSlaMonitor(db, spy);
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, new Date(), noopSendWork);
 
     expect(result).toEqual({ breaches: 0, recoveries: 0, escalations: 0 });
     expect(calls.length).toBe(0);
@@ -132,7 +135,7 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     // Pass a market-hours `now` so the 1407b market-hours gate does not suppress
     // price escalation. Monday 2026-04-27T04:00Z is inside 02:00–08:59 UTC window.
     const marketHoursNow = new Date("2026-04-27T04:00:00.000Z");
-    const result = await runFreshnessSlaMonitor(db, spy, undefined, marketHoursNow);
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, marketHoursNow, noopSendWork);
 
     expect(result.breaches).toBe(1);
     expect(result.escalations).toBe(1);
@@ -181,7 +184,7 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     insertSourceRows(db, minutesAgo(15), "a3");
 
     const { spy, calls } = makeEscalateSpy();
-    const result = await runFreshnessSlaMonitor(db, spy);
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, new Date(), noopSendWork);
 
     // Breach is still recorded (new audit row), but cooldown suppresses escalation
     expect(result.breaches).toBe(1);
@@ -207,7 +210,7 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     insertSourceRows(db, minutesAgo(0), "a4");
 
     const { spy, calls } = makeEscalateSpy();
-    const result = await runFreshnessSlaMonitor(db, spy);
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, new Date(), noopSendWork);
 
     expect(result.recoveries).toBe(1);
     expect(result.breaches).toBe(0);
@@ -232,18 +235,23 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
   // A-5: querySignalAges — empty tables return age=0 (NULL-safety guard)
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("A-5: querySignalAges on empty tables returns 0 for all signal types (NULL coerced by Math.max)", async () => {
-    // initDatabase() creates all 5 source tables; no rows inserted
+  it("A-5: querySignalAges on empty tables returns -1 sentinel for all signal types (Task 1920i null guard)", async () => {
+    // initDatabase() creates all source tables; no rows inserted.
+    // Task 1920i (FR-4): NULL age_minutes → -1 sentinel (not-seeded, skip SLA check).
+    // Callers must treat -1 as "skip" — not a breach.
     const db = await openFreshDb();
 
     const ages = querySignalAges(db);
 
-    // SQLite: (now - NULL) = NULL → Math.max(0, NULL) = 0
-    expect(ages.price).toBe(0);
-    expect(ages.bctc).toBe(0);
-    expect(ages.news).toBe(0);
-    expect(ages.sbv_fx).toBe(0);
-    expect(ages.foreign_flow).toBe(0);
+    // Original 5 types — also return -1 when table is empty (FR-4 null guard applies)
+    expect(ages.price).toBe(-1);
+    expect(ages.bctc).toBe(-1);
+    expect(ages.news).toBe(-1);
+    expect(ages.sbv_fx).toBe(-1);
+    expect(ages.foreign_flow).toBe(-1);
+    // Sprint 1920 new types also -1 when empty
+    expect(ages.commodity_prices).toBe(-1);
+    expect(ages.bond_maturity).toBe(-1);
   });
 });
 

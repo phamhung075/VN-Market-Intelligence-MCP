@@ -22,6 +22,9 @@ import {
 /**
  * Query definitions for each signal source's timestamp.
  * Maps signalType → SQL query returning a single `ts` column (ISO-8601 or null).
+ *
+ * Sprint 1920 additions (Task 1920i): 7 new signal types appended.
+ * NULL result (empty table) → signalAges entry stays 0 (no-op for freshness tool display).
  */
 const SIGNAL_QUERIES: Record<SignalType, { query: string; fallbackQuery?: string }> = {
   price: {
@@ -40,6 +43,28 @@ const SIGNAL_QUERIES: Record<SignalType, { query: string; fallbackQuery?: string
   },
   foreign_flow: {
     query: "SELECT MAX(fetched_at) AS ts FROM foreign_flow_daily",
+  },
+  // ── Sprint 1920 additions ──────────────────────────────────────────────────
+  vnstock_fundamentals: {
+    query: "SELECT MAX(fetched_at) AS ts FROM vnstock_financials",
+  },
+  bond_maturity: {
+    query: "SELECT MAX(updated_at) AS ts FROM bond_maturity",
+  },
+  commodity_prices: {
+    query: "SELECT MAX(fetched_at) AS ts FROM commodity_prices",
+  },
+  broker_sanctions: {
+    query: "SELECT MAX(created_at) AS ts FROM broker_sanctions",
+  },
+  backtest_runs: {
+    query: "SELECT MAX(run_at) AS ts FROM backtest_runs",
+  },
+  signal_quality_audit: {
+    query: "SELECT MAX(created_at) AS ts FROM signal_quality_audit",
+  },
+  prediction_claims: {
+    query: "SELECT MAX(created_at) AS ts FROM prediction_claims",
   },
 };
 
@@ -66,6 +91,14 @@ export async function detectDataFreshnessBreach(
     news: 0,
     sbv_fx: 0,
     foreign_flow: 0,
+    // Sprint 1920 additions — default 0 (no-breach) until first query result
+    vnstock_fundamentals: 0,
+    bond_maturity: 0,
+    commodity_prices: 0,
+    broker_sanctions: 0,
+    backtest_runs: 0,
+    signal_quality_audit: 0,
+    prediction_claims: 0,
   };
 
   // Query each signal source for current age

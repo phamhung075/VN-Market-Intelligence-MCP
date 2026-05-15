@@ -11,8 +11,32 @@
 
 /**
  * Signal source type names.
+ *
+ * Original 5 types (Task 234):
+ *   price, bctc, news, sbv_fx, foreign_flow
+ *
+ * Sprint 1920 additions (Task 1920i):
+ *   vnstock_fundamentals — monitors vnstock_financials.fetched_at (weekly; 72h SLA)
+ *   bond_maturity        — monitors bond_maturity.updated_at (weekly; 168h SLA)
+ *   commodity_prices     — monitors commodity_prices.fetched_at (daily; 36h SLA)
+ *   broker_sanctions     — monitors broker_sanctions.created_at (quarterly; 2160h SLA)
+ *   backtest_runs        — monitors backtest_runs.run_at (daily; 36h SLA)
+ *   signal_quality_audit — monitors signal_quality_audit.created_at (event-driven; 48h SLA)
+ *   prediction_claims    — monitors prediction_claims.created_at (event-driven; 168h SLA)
  */
-export type SignalType = "price" | "bctc" | "news" | "sbv_fx" | "foreign_flow";
+export type SignalType =
+  | "price"
+  | "bctc"
+  | "news"
+  | "sbv_fx"
+  | "foreign_flow"
+  | "vnstock_fundamentals"
+  | "bond_maturity"
+  | "commodity_prices"
+  | "broker_sanctions"
+  | "backtest_runs"
+  | "signal_quality_audit"
+  | "prediction_claims";
 
 /**
  * SLA breach severity classification.
@@ -54,11 +78,21 @@ export interface SignalSlaConfig {
 /**
  * Default SLA thresholds (in minutes).
  *
+ * Original 5 types (Task 234):
  * - price: 10 min (market-critical)
  * - bctc: 120 min (market hours), 360 min (off-hours)
  * - news: 30 min
  * - sbv_fx: 30 min
  * - foreign_flow: 10 min (trading-critical)
+ *
+ * Sprint 1920 additions (Task 1920i):
+ * - vnstock_fundamentals: 4320 min = 72h (quarterly data; SLA = 3 days after dispatch)
+ * - bond_maturity: 10080 min = 168h (weekly poll; SLA = 7 days)
+ * - commodity_prices: 2160 min = 36h (daily cadence + 1.5× window)
+ * - broker_sanctions: 129600 min = 2160h = 90 days (quarterly; observability only)
+ * - backtest_runs: 2160 min = 36h (daily job + 1.5× window)
+ * - signal_quality_audit: 2880 min = 48h (event-driven; tolerate quiet periods)
+ * - prediction_claims: 10080 min = 168h (weekly minimum cadence)
  */
 export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   {
@@ -82,6 +116,35 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   {
     signalType: "foreign_flow",
     defaultThresholdMinutes: 10,
+  },
+  // ── Sprint 1920 additions ─────────────────────────────────────────────────
+  {
+    signalType: "vnstock_fundamentals",
+    defaultThresholdMinutes: 72 * 60, // 4320 min = 72h
+  },
+  {
+    signalType: "bond_maturity",
+    defaultThresholdMinutes: 168 * 60, // 10080 min = 7 days
+  },
+  {
+    signalType: "commodity_prices",
+    defaultThresholdMinutes: 36 * 60, // 2160 min = 36h (daily + 1.5× window)
+  },
+  {
+    signalType: "broker_sanctions",
+    defaultThresholdMinutes: 2160 * 60, // 129600 min = 90 days (quarterly)
+  },
+  {
+    signalType: "backtest_runs",
+    defaultThresholdMinutes: 36 * 60, // 2160 min = 36h (daily + 1.5× window)
+  },
+  {
+    signalType: "signal_quality_audit",
+    defaultThresholdMinutes: 48 * 60, // 2880 min = 48h (event-driven)
+  },
+  {
+    signalType: "prediction_claims",
+    defaultThresholdMinutes: 168 * 60, // 10080 min = 7 days (weekly minimum)
   },
 ];
 
@@ -232,7 +295,10 @@ export function checkSignalSla(
 /**
  * Checks all signal types for SLA breaches.
  *
- * @param signalAges Map of signalType → ageMinutes
+ * Sentinel guard: if ageMinutes === -1 the table has zero rows (not yet seeded).
+ * These are silently skipped — no breach recorded, no escalation fired (FR-4).
+ *
+ * @param signalAges Map of signalType → ageMinutes (-1 = not seeded)
  * @param config SLA configuration (defaults to DEFAULT_SLA_CONFIG)
  * @param priorBreaches Prior SLA breach records (for recovery detection)
  * @param now Current time
@@ -248,16 +314,34 @@ export function checkDataFreshnessSla(
   const breaches: SlaCheckResult[] = [];
   const recoveries: SlaCheckResult[] = [];
 
+  // All monitored signal types (5 original + 7 Sprint-1920 additions)
   const signalTypes: SignalType[] = [
     "price",
     "bctc",
     "news",
     "sbv_fx",
     "foreign_flow",
+    "vnstock_fundamentals",
+    "bond_maturity",
+    "commodity_prices",
+    "broker_sanctions",
+    "backtest_runs",
+    "signal_quality_audit",
+    "prediction_claims",
   ];
 
   for (const signalType of signalTypes) {
     const ageMinutes = signalAges[signalType] ?? 0;
+
+    // FR-4: sentinel -1 means table has zero rows (not yet seeded).
+    // Skip entirely — do not record as breach, do not fire escalation.
+    if (ageMinutes === -1) {
+      console.debug(
+        `[sla-monitor] ${signalType}: not seeded yet (age=-1), skipping SLA check`
+      );
+      continue;
+    }
+
     const result = checkSignalSla(signalType, ageMinutes, config, now);
 
     if (result.status === "breached") {

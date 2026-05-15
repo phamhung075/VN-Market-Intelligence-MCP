@@ -135,6 +135,8 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       news: 15,
       sbv_fx: 10,
       foreign_flow: 5,
+      vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+      broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
     const result = checkDataFreshnessSla(signalAges);
@@ -176,6 +178,8 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       news: 5,
       sbv_fx: 5,
       foreign_flow: 5,
+      vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+      broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
     const resultMarketHours = checkDataFreshnessSla(signalAges, undefined, [], marketHourUTC);
@@ -239,6 +243,8 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       news: 5,
       sbv_fx: 5,
       foreign_flow: 5,
+      vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+      broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
     const result = checkDataFreshnessSla(signalAges);
@@ -281,6 +287,8 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       news: 10, // now recovered (age 10 < threshold 30)
       sbv_fx: 5,
       foreign_flow: 5,
+      vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+      broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
     const result = checkDataFreshnessSla(recoveredAges, undefined, priorBreaches);
@@ -463,6 +471,8 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       news: 25,
       sbv_fx: 28,
       foreign_flow: 8,
+      vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+      broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
     // Use a market hours timestamp (03:00 UTC = 10:00 VN)

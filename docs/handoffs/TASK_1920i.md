@@ -211,3 +211,20 @@ Soft sequencing dependency on 1920a–g (code can be written in parallel, but WO
 | AC-5 | Unit | Existing 5 signal type thresholds unchanged |
 | AC-6 | tsc | 0 errors |
 | AC-7 | Test run | Existing freshness suite green |
+
+---
+
+## [Developer] Implementation Record
+- **Files modified:**
+  - `apps/mcp-server/src/domain/services/freshnessSlaChecker.ts` — extended `SignalType` union (5→12), added 7 new entries to `DEFAULT_SLA_CONFIG`, updated `checkDataFreshnessSla` to include all 12 types with -1 sentinel skip guard (FR-4)
+  - `apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts` — extended `querySignalAges` UNION ALL (5→12 entries), null guard (-1 sentinel), `buildDailySummary()` exported, `_lastSummaryDate` daily gate, `resetSummaryGate()` test helper, `sendWorkFn` DI param added to `runFreshnessSlaMonitor`, `sendTelegramWork` import added
+  - `apps/mcp-server/src/infrastructure/db/schema-system.ts` — `sla_breach_audit` CHECK constraint extended (5→12 types) + idempotent migration for existing production DBs
+  - `apps/mcp-server/src/interface/mcp/tools/system/dataFreshnessTools.ts` — `SIGNAL_QUERIES` and `signalAges` initializer updated with 7 new types
+  - `apps/mcp-server/src/__tests__/1352c-freshness-sla-monitor-e2e-sscchecker-guard.test.ts` — A-5 updated to expect -1 sentinel; `noopSendWork` injected to all `runFreshnessSlaMonitor` calls
+  - `apps/mcp-server/src/__tests__/1407b-sla-market-hours-gate.test.ts` — `freshAges()` updated with 7 new keys at -1; `noopSendWork` injected to all 14 calls
+  - `apps/mcp-server/src/__tests__/234-vps-health-sla.test.ts` — 5 `signalAges` objects updated with 7 new keys at -1
+- **Tests written:** `apps/mcp-server/src/__tests__/1920i-freshness-sla-extension.test.ts` — 23 assertions, GREEN
+- **tsc status:** clean (0 errors)
+- **Full suite:** 63 pass / 0 fail (all freshness SLA tests); 23/23 new tests; tsc 0 errors
+- **Docs updated:** `docs/TASKS.md` — 1920i moved to Done | `docs/handoffs/TASK_1920i.md` — this record
+- **Graphify:** skipped (no new knowledge file created; existing docs updated in-place)

@@ -457,12 +457,19 @@ export function initSystemTables(db: Database): void {
       ON bctc_signal_debounce(action_code, period_key, sent_at DESC)
   `);
 
-  // ── SLA Breach Audit (Task 234) ───────────────────────────────────────────
+  // ── SLA Breach Audit (Task 234, extended Task 1920i) ─────────────────────
+  // Task 1920i: signal_type CHECK extended from 5 → 12 types.
+  // Idempotent migration: detect old constraint via sqlite_master and recreate.
   db.exec(`
     CREATE TABLE IF NOT EXISTS sla_breach_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       signal_type TEXT NOT NULL CHECK(
-        signal_type IN ('price', 'bctc', 'news', 'sbv_fx', 'foreign_flow')
+        signal_type IN (
+          'price', 'bctc', 'news', 'sbv_fx', 'foreign_flow',
+          'vnstock_fundamentals', 'bond_maturity', 'commodity_prices',
+          'broker_sanctions', 'backtest_runs', 'signal_quality_audit',
+          'prediction_claims'
+        )
       ),
       breached_at TEXT NOT NULL DEFAULT (datetime('now')),
       age_minutes INTEGER NOT NULL,
@@ -482,4 +489,54 @@ export function initSystemTables(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_sla_breach_signal_status
       ON sla_breach_audit(signal_type, status, breached_at DESC)
   `);
+
+  // Idempotent migration: if existing DB has the old 5-type CHECK constraint,
+  // recreate the table with the expanded 12-type CHECK (preserve all existing rows).
+  {
+    const oldDdl = (db.query<{ sql: string }, []>(
+      `SELECT sql FROM sqlite_master WHERE type='table' AND name='sla_breach_audit'`
+    ).get())?.sql ?? "";
+    const hasOldConstraint =
+      oldDdl.includes("'price', 'bctc', 'news', 'sbv_fx', 'foreign_flow'") &&
+      !oldDdl.includes("'vnstock_fundamentals'");
+    if (hasOldConstraint) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS sla_breach_audit_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          signal_type TEXT NOT NULL CHECK(
+            signal_type IN (
+              'price', 'bctc', 'news', 'sbv_fx', 'foreign_flow',
+              'vnstock_fundamentals', 'bond_maturity', 'commodity_prices',
+              'broker_sanctions', 'backtest_runs', 'signal_quality_audit',
+              'prediction_claims'
+            )
+          ),
+          breached_at TEXT NOT NULL DEFAULT (datetime('now')),
+          age_minutes INTEGER NOT NULL,
+          threshold_minutes INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT 'breach_open' CHECK(
+            status IN ('breach_open', 'recovered')
+          ),
+          severity TEXT NOT NULL CHECK(
+            severity IN ('HIGH', 'CRITICAL')
+          ),
+          escalation_callback_sent INTEGER DEFAULT 0,
+          recovered_at TEXT,
+          UNIQUE(signal_type, breached_at)
+        )
+      `);
+      db.exec(`
+        INSERT OR IGNORE INTO sla_breach_audit_new
+          SELECT id, signal_type, breached_at, age_minutes, threshold_minutes,
+                 status, severity, escalation_callback_sent, recovered_at
+          FROM sla_breach_audit
+      `);
+      db.exec(`DROP TABLE sla_breach_audit`);
+      db.exec(`ALTER TABLE sla_breach_audit_new RENAME TO sla_breach_audit`);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_sla_breach_signal_status
+          ON sla_breach_audit(signal_type, status, breached_at DESC)
+      `);
+    }
+  }
 }

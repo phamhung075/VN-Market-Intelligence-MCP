@@ -34,6 +34,9 @@ import {
 } from "../scheduler/system/freshnessSlaMonitorJob.js";
 import type { SignalType } from "../domain/services/freshnessSlaChecker.js";
 
+/** No-op WORK channel sender — avoids real Telegram calls in tests. */
+const noopSendWork = async (_msg: string): Promise<void> => { /* no-op */ };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants — reference times
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +92,12 @@ function makeDb(): Database {
 type SignalAges = Record<SignalType, number>;
 
 function freshAges(): SignalAges {
-  return { price: 0, bctc: 0, news: 0, sbv_fx: 0, foreign_flow: 0 };
+  return {
+    price: 0, bctc: 0, news: 0, sbv_fx: 0, foreign_flow: 0,
+    // Sprint 1920 additions — -1 sentinel = not-seeded, no breach
+    vnstock_fundamentals: -1, bond_maturity: -1, commodity_prices: -1,
+    broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
+  };
 }
 
 function staleAges(signalType: SignalType, ageMinutes: number): SignalAges {
@@ -154,7 +162,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("price", 15),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -175,7 +184,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("foreign_flow", 15),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -196,7 +206,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("bctc", 400),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -217,7 +228,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("news", 35),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -238,7 +250,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("sbv_fx", 35),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -258,7 +271,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("price", 15),
-      MARKET_HOURS_DATE
+      MARKET_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -278,7 +292,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("foreign_flow", 15),
-      MARKET_HOURS_DATE
+      MARKET_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -307,7 +322,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       freshAges(),
-      OFF_HOURS_DATE
+      OFF_HOURS_DATE,
+      noopSendWork
     );
 
     expect(result.recoveries).toBe(1);
@@ -336,7 +352,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("price", 15),
-      WEEKEND_MARKET_WINDOW
+      WEEKEND_MARKET_WINDOW,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -356,7 +373,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("foreign_flow", 15),
-      WEEKEND_MARKET_WINDOW
+      WEEKEND_MARKET_WINDOW,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -377,7 +395,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("bctc", 400),
-      WEEKEND_MARKET_WINDOW
+      WEEKEND_MARKET_WINDOW,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -397,7 +416,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("price", 15),
-      LABOUR_DAY_2026
+      LABOUR_DAY_2026,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -417,7 +437,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("foreign_flow", 15),
-      LABOUR_DAY_2026
+      LABOUR_DAY_2026,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
@@ -437,7 +458,8 @@ describe("1407b — SLA monitor market-hours gate", () => {
       db,
       spy,
       staleAges("price", 15),
-      FIRST_DAY_AFTER_HOLIDAY
+      FIRST_DAY_AFTER_HOLIDAY,
+      noopSendWork
     );
 
     expect(result.breaches).toBe(1);
