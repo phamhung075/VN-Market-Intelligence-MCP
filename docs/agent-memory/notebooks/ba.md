@@ -4,7 +4,15 @@
 
 ## Current state (2026-05-15)
 
-Sprint 1920 decomposition complete (c131). 5 tasks decomposed: 1920e/f/g/h/i. All specs written to docs/handoffs/TASK_1920[e-i].md. TASKS.md updated, owner=dev-mcp-server, status=Ready for Dev. WORK telegram sent.
+Sprint 1920 decomposition complete (c132). 9 tasks total decomposed: 1920a/b/c/d/e/f/g/h/i. Specs written to docs/handoffs/TASK_1920[a-i].md. TASKS.md updated owner=dev-mcp-server status=Ready for Dev. WORK telegram attempted — MCP gateway 404 via curl (cowork-internal only), logged here instead of incident doc.
+
+Key findings 1920a/b/c/d:
+- 1920a: Two separate crons in one file (vnstockFundamentalsRefresh Mon 01:00 UTC + vnstockTradingStatsRefresh daily 08:30 UTC weekdays). isRunning guard critical (7-10 min sweep). Per-ticker try/catch. Do NOT bypass 2500ms delay in syncVnstockData.ts.
+- 1920b: SD-1 (dev-resolvable, not PO blocker) — AC-0: dev confirms HNX/vnstock bond endpoint geo-access from France at implementation time. upsertBond() ON CONFLICT(issuer_code) already correct. Zero-row WORK alert required (downstream agents break on empty bond_maturity).
+- 1920c: Thin scheduler caller only — writers (commodityTracker.ts + shippingIndex.ts) already exist. Two call blocks with independent try/catch. NOTE: commodityTracker.ts calls getDb() directly (code-smell, non-blocking, TODO comment requested). INSERT OR REPLACE for snapshot (safe: no FK on rowid confirmed ARCH-1920 R-4).
+- 1920d: CRITICAL PRE-CONDITION — schema migration UNIQUE(broker_name, sanction_start) + INSERT OR IGNORE MUST ship same PR as job. Quarter-guard in job body ([3,6,9,12] month check). Cron 0 8 25-31 * 5 (node-cron L not supported). No VPS needed for SSC page from France.
+
+No PO blockers on any of a/b/c/d.
 
 Key findings:
 - 1920e: cascadeBacktestJob has NO saveRun call. Repo method is `saveRun()` not `recordRun()`. Aggregate metrics computable from in-loop accumulator. No new files needed.
