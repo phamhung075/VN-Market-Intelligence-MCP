@@ -8,11 +8,13 @@
 
 import { Database } from "bun:sqlite";
 import { updateOutcome } from "../../infrastructure/db/cascadeHitStore.js";
+import type { IBacktestResultRepository } from "../../domain/repositories/IBacktestResultRepository.js";
 
 export interface CascadeBacktestDeps {
   db?: Database;
   nowMsFn?: () => number;
   sendWorkFn?: (msg: string) => Promise<boolean>;
+  backtestResultRepo?: IBacktestResultRepository;
 }
 
 export interface CascadeBacktestResult {
@@ -61,8 +63,23 @@ export async function runCascadeBacktest(
     sendWorkFn = (msg: string) => sendTelegramWork(msg, { parseMode: "" });
   }
 
+  let backtestResultRepo: IBacktestResultRepository;
+  if (deps?.backtestResultRepo) {
+    backtestResultRepo = deps.backtestResultRepo;
+  } else {
+    const { SqliteBacktestResultRepository } = await import(
+      "../../infrastructure/db/backtestResultRepo.js"
+    );
+    backtestResultRepo = new SqliteBacktestResultRepository(db);
+  }
+
   let processed = 0;
   let noData = 0;
+
+  // Aggregate accumulators for backtest run record
+  const allImpacts3d: number[] = [];
+  let winCount = 0;
+  let earliestHitAt: string | null = null;
 
   // Batch fetch all pending hits older than 3 days
   const pendingRows = db
@@ -148,6 +165,14 @@ export async function runCascadeBacktest(
         outcomeCorrect,
       });
 
+      // Accumulate for backtest run record
+      allImpacts3d.push(avgImpact3d);
+      if (outcomeCorrect === 1) winCount++;
+      const hitAtDate = hit.hit_at.slice(0, 10);
+      if (earliestHitAt === null || hitAtDate < earliestHitAt) {
+        earliestHitAt = hitAtDate;
+      }
+
       processed++;
     } catch (err) {
       console.warn(
@@ -158,6 +183,44 @@ export async function runCascadeBacktest(
   }
 
   const skipped = 0; // WHERE clause pre-filters; no in-process age check
+
+  // Persist backtest run record (FR-1). Fail-silent per FR-3.
+  const today = new Date().toISOString().slice(0, 10);
+  const totalReturn =
+    allImpacts3d.length > 0
+      ? round4(allImpacts3d.reduce((a, b) => a + b, 0) / allImpacts3d.length)
+      : 0.0;
+  const maxDrawdown =
+    allImpacts3d.length > 0 ? round4(Math.min(...allImpacts3d)) : 0.0;
+  const winRate = processed > 0 ? round4(winCount / processed) : 0.0;
+
+  try {
+    backtestResultRepo.saveRun({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      strategy: "cascade-backtest",
+      startDate: earliestHitAt ?? today,
+      endDate: today,
+      runAt: new Date().toISOString(),
+      totalReturn,
+      benchmarkReturn: null,
+      maxDrawdown,
+      sharpeRatio: null,
+      winRate,
+      tradeCount: processed,
+      resultJson: JSON.stringify({
+        processed,
+        skipped,
+        noData,
+        mean3dImpact: totalReturn,
+        minImpact: maxDrawdown,
+      }),
+    });
+  } catch (err) {
+    console.warn(
+      `[cascade-backtest] saveRun failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+
   await sendWorkFn(
     `[cascade-backtest] processed=${processed} skipped=${skipped} noData=${noData}`
   );
