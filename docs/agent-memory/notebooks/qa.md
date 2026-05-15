@@ -1,6 +1,37 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c126 — 1910b-effr-package-reg APPROVED (verification-only)
+**Last updated:** 2026-05-15 | **Session:** c127 — 1918a-alert-commander-macro-snapshot-guard APPROVED
+
+## Session 2026-05-15 c127 — 1918a-alert-commander-macro-snapshot-guard
+
+### TASK REPORT — 1918a
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: FIX (shape guard utility + flow gate)
+round: 1
+```
+
+#### Pipeline
+
+- Targeted tests (1918a): 10 pass / 0 fail
+- Full suite: 9778 pass / 0 fail (890 files, 29236 expect() calls)
+- tsc: 0 errors | DDD: PASS | Security: PASS
+
+#### AC Verification
+
+- AC-1 PASS: `macroSnapshotGuard.ts` exists, exports `isMacroSnapshotValidShape()` at line 27
+- AC-2 PASS: stage-bootstrap.md line 17 — Shape-validation gate fires on both initial + retry; system_status → news-fallback
+- AC-3 PASS: 10/10 tests GREEN in `1918a-macro-snapshot-shape-guard.test.ts`
+- AC-4 PASS: `{text:"..."}` accepted, `{status:"degraded"}` rejected (confirmed test L34)
+- AC-5 PASS: tsc 0 errors, full suite stable
+
+#### Merge
+
+Committed QA record at `2ea9dd2a`. TASKS.md updated to DONE.
+
+---
 
 ## Session 2026-05-15 c126 — 1910b-effr-package-reg
 
