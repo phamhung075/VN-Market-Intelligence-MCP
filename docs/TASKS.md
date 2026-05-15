@@ -24,7 +24,8 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | TASK-BCTC-3a [ops-mainserver-fetch] | **FINDING OVERTURNED 2026-05-15** — Prior "permanent Envoy route-block" conclusion was wrong. Root cause of all 404s: (1) missing locale segment `/1/` in URL path, (2) ticker used as string instead of numeric ID. Correct URL: `GET /m/api/v1/1/mediafiles/5/{numericId}` returns HTTP 200 with BCTC PDFs directly from France. No VPS needed. Two-call recipe: (a) resolve ticker→numericId via `/l/api/v1/1/securities/stock?code={TICKER}`, (b) fetch `/m/api/v1/1/mediafiles/5/{numericId}?year={YYYY}`. Full findings + working Python recipe in `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md § Main-Server Recon`. VPS curl command that "confirmed" the block was probing the wrong URL; `/m/` service was never tested. **TASK-BCTC-3b and TASK-BCTC-3c REOPENED.** | CRITICAL | OPS | ops-mainserver-fetch | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | — |
-| TASK-BCTC-3c [dev-mcp-server] | **REOPENED 2026-05-15** — Unblocked by TASK-BCTC-3b reopen. `bctcDiscovery.ts` needs new strategy using hsx.vn mediafiles endpoint. Can run on main server (no VPS proxy). | CRITICAL | FEATURE | dev-mcp-server | docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md | TASK-BCTC-3b |
+| TASK-BCTC-3c [dev-mcp-server] | **READY FOR DISPATCH 2026-05-15** — Unblocked by TASK-BCTC-3b completion (QA commit `a4766087`). `bctcDiscovery.ts` integrates hsx.vn discovery results into MCP `discover_bctc_urls` tool. VPS XHR fetcher (TASK-BCTC-3b) provides results; dev-mcp-server exposes them through MCP interface. End-to-end test: query tool with HOSE tickers (VNM/VEA/HPG), confirm hsx.vn PDF URLs returned and accessible. **HIGHEST PRIORITY — closes the HOSE BCTC discovery chain.** | CRITICAL | FEATURE | dev-mcp-server | docs/handoffs/TASK_BCTC-3c.md | — |
+| 1910b-effr-package-reg | **UNBLOCKED 2026-05-15** — Unblocked by 1910a completion (QA commit `ff966d5c`). Zero-build: add `get_fed_liquidity_spread` to financial_analyst (L77), news_scout (L45), unified_coordinator (L271) arrays in agentBootstrap.ts + 3 package docs (financial-analyst.md / news-scout.md / unified-agent.md) + SKILL_MANIFEST.md mirror. | HIGH | CHORE | agent-md-editor | — | 1910a-ism-tool |
 | 1862c-E | OPS-HIGH: Increase SSE keepAliveTimeout 30s → 300s — eliminate heartbeat-at-timeout-boundary race on `/vn-market/sse` Cloudflare route. **STATUS SPLIT:** (a) 1862c-E-config (Done, commit 16ff50e1) — (b) 1862c-E-dashboard (In Progress, user-action: Cloudflare dashboard ingress not configured; blocks `/vn-market/sse` 404). See 1862c-D notes. | HIGH | OPS | ops | TASK_1862c-E.md | — |
 | 1862c-F | FIX-MEDIUM: SseSessionManager dead-session eviction + reconnect detection. `apps/mcp-server/src/interface/mcp/transport.ts`: structured 404 error + optional session-TTL eviction. 2 files + 5 tests + Docker rebuild. Ship after 1862c-D/E confirmed stable (5 cycles clean). | MEDIUM | FIX | developer | TASK_1862c-F.md | container-rebuild |
 ---
@@ -33,9 +34,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(BCTC-3b moved to Review)_ | — | — | — | — | — | — |
-| _(1910a moved to Done)_ | — | — | — | — | — | — |
-| _(WIP = 2/2; AT CAPACITY; cycle 2026-05-15)_ | — | — | — | — | — | — |
+| _(WIP = 0/2; READY FOR NEW ASSIGNMENTS)_ | — | — | — | — | — | — |
 
 ---
 
@@ -43,15 +42,14 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(BCTC-3b moved to Done)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
 |---------|-------|----------|------|-------|-----------|
-| 1910a-ism-tool | **QA APPROVED 2026-05-15** — `fredIsmSubcomponents.ts` FRED REST fetcher (NAPMNO/NAPMEMP/NAPMPI/NAPMBI) + `ismRegimeSignal.ts` pure domain signal (EXPANDING/CONTRACTING/MIXED) + `getIsmSubcomponentsTool.ts` MCP tool #133 (source_tier=1). Wired into `macroIndicatorRefreshJob`. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. 35/35 targeted GREEN. Full suite 9666/39 (all pre-existing). tsc 0. DDD PASS. Security PASS (Bun.env-only confirmed). Fixer commit `bfdaa731` (removed `process.env` fallback). | HIGH | FEATURE | dev-mcp-server | 2026-05-15 |
-| TASK-BCTC-3b | **QA APPROVED 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (_fetchHsx port + "hsx" source union + hsx→VPS→SSC→vietstock order). `bctcQueueEnricherJob.ts` wired. 8/8 tests GREEN. 8 existing BCTC test files updated (68/0). tsc 0 errors. Full suite 9314 pass / 36 fail (all pre-existing). DDD PASS. Security PASS. Commit `9c4bc9d5` on main. | CRITICAL | FEATURE | qa | 2026-05-15 |
+| 1910a-ism-tool | **DONE 2026-05-15** — `fredIsmSubcomponents.ts` FRED REST fetcher (NAPMNO/NAPMEMP/NAPMPI/NAPMBI) + `ismRegimeSignal.ts` pure domain signal (EXPANDING/CONTRACTING/MIXED) + `getIsmSubcomponentsTool.ts` MCP tool #133 (source_tier=1). Wired into `macroIndicatorRefreshJob`. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. 35/35 targeted GREEN. Full suite 9666/39 (all pre-existing). tsc 0. DDD PASS. Security PASS (Bun.env-only confirmed). Fixer commit `bfdaa731` (removed `process.env` fallback). QA commit: `ff966d5c`. Unblocks 1910b-effr-package-reg. | HIGH | FEATURE | dev-mcp-server | 2026-05-15 |
+| TASK-BCTC-3b | **DONE 2026-05-15** — `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (_fetchHsx port + "hsx" source union + hsx→VPS→SSC→vietstock order). `bctcQueueEnricherJob.ts` wired. 8/8 tests GREEN. 8 existing BCTC test files updated (68/0). tsc 0 errors. Full suite 9314 pass / 36 fail (all pre-existing). DDD PASS. Security PASS. Commit `9c4bc9d5` on main. QA commit: `a4766087`. Unblocks TASK-BCTC-3c (end-to-end integration verification). | CRITICAL | FEATURE | dev-mcp-server | 2026-05-15 |
 | 1899a-bloomberg-test-split | **DONE 2026-05-15** — Split `1899a-bloomberg.test.ts` (491L) into 4 files ≤200L: dom(189L/12 expect), json-fallback(182L/8 expect), perimeterx-lifecycle(186L/14 expect), normalize-date(51L/7 expect). Total 41 expect() = parity. Source file deleted. 29 pass / 0 fail. tsc 0 errors. | LOW | REFACTOR | dev-mainserver-crawls | 2026-05-15 |
 | CLEAN-c120-stale-branches | **DONE 2026-05-15** — Deleted 3 local + 2 remote stale branches (all 0 unmerged commits; feature work confirmed on main). Local: `fix/1908c-val07-plausibility-override` (worktree stale lock removed), `task/1909b-get-bctc-ocf-tool` (worktree stale lock removed), `task/1910b-effr-package-registration` (no local branch existed). Remote: `origin/task/1909b-get-bctc-ocf-tool` + `origin/task/1910b-effr-package-registration` deleted. AC-1/2/3/4 PASS: `git branch -a` clean. MCP gateway degraded — WORK notification skipped per AC-5 fallback; logged here instead. | LOW | CLEAN | qa | 2026-05-15 |
 | 1914b-log-agent-work-doc | **DONE 2026-05-15** — Updated `log_agent_work` documentation in all 10 package files. Each now shows the correct two-call recipe: Call 1 (`status: "running"` → `{ id }`), Call 2 (`id + status: "completed"\|"error"`). Broken `action/context/signal_ids` params removed from table rows. report-analyzer.md example snippet also fixed. No source-code edits. AC-1 PASS (all 10 files show both calls). AC-2 PASS (docs only). | LOW | CHORE | developer | 2026-05-15 |

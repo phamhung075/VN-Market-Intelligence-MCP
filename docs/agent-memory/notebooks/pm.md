@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c120 (PM: 1899a-bloomberg-test-split handoff complete) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN, 1899a ready for dispatch
+**Last updated:** 2026-05-15 c122 (PM: TASK-BCTC-3b + 1910a-ism-tool QA APPROVED → MARK DONE + UNBLOCK BCTC-3c) | **Sprint:** 1912 Go migration CLOSED | **Current:** WIP 0/2 CLEAN (both tasks Done, BCTC-3c READY FOR DISPATCH)
 
 ## Current state
 
-- **WIP: 0/2 (CLEAN)** — Cycle c120 complete. 1899a-bloomberg-test-split handoff [PM] section complete. Task ready for dev-news-fetch dispatch. 1909c (CRITICAL OPS) ready for Q1-2026 BCTC PDF arrival 2026-05-16+. Next dispatch available.
+- **WIP: 0/2 (CLEAN)** — Cycle c122 processing complete. TASK-BCTC-3b (QA commit `a4766087`) + 1910a-ism-tool (QA commit `ff966d5c`) both marked Done. TASKS.md updated: In Progress section now shows WIP=0/2 READY FOR NEW ASSIGNMENTS. TASK-BCTC-3c moved Todo status with note "READY FOR DISPATCH 2026-05-15, unblocked by TASK-BCTC-3b completion". 1910b-effr-package-reg moved to Todo unblocked by 1910a completion. **HIGHEST PRIORITY NEXT: TASK-BCTC-3c (dev-mcp-server) → closes HOSE BCTC discovery chain.** Handoff file `docs/handoffs/TASK_BCTC-3c.md` fully prepared. PM section verified complete (zone, ACs, files, risk flags). Ready for developer pickup.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,63 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 122 — 2026-05-15 PM Processing: TASK-BCTC-3b + 1910a-ism-tool QA APPROVED → MARK DONE + DISPATCH BCTC-3c (WIP=0/2 CLEAN)
+
+**Input:** Two QA-approved tasks:
+- **TASK-BCTC-3b:** QA commit `a4766087`. `hsxBctcFetcher.ts` created (two-call hsx.vn recipe, Strategy 0). `bctcDiscovery.ts` updated (_fetchHsx port + "hsx" source union + hsx→VPS→SSC→vietstock order). `bctcQueueEnricherJob.ts` wired. 8/8 tests GREEN. All BCTC test files updated (68/0). tsc 0 errors. Full suite 9314 pass / 36 fail (all pre-existing). DDD PASS. Security PASS. Unblocks TASK-BCTC-3c (end-to-end integration verification).
+- **1910a-ism-tool:** QA commit `ff966d5c`. `fredIsmSubcomponents.ts` FRED REST fetcher (NAPMNO/NAPMEMP/NAPMPI/NAPMBI) + `ismRegimeSignal.ts` pure domain signal (EXPANDING/CONTRACTING/MIXED) + `getIsmSubcomponentsTool.ts` MCP tool #133 (source_tier=1). Wired into `macroIndicatorRefreshJob`. agentBootstrap + SKILL_MANIFEST + 3 package docs updated. 35/35 targeted GREEN. Full suite 9666/39 (all pre-existing). tsc 0. DDD PASS. Security PASS. Unblocks 1910b-effr-package-reg.
+
+**Actions:**
+1. **Updated docs/TASKS.md:**
+   - Moved TASK-BCTC-3b from In Progress → Done section, added QA commit `a4766087` + unblock note (TASK-BCTC-3c).
+   - Moved 1910a-ism-tool from In Progress → Done section, added QA commit `ff966d5c` + unblock note (1910b-effr-package-reg).
+   - In Progress section now shows WIP=0/2 READY FOR NEW ASSIGNMENTS.
+   - Todo section updated: TASK-BCTC-3c status changed to "READY FOR DISPATCH 2026-05-15" (unblocked by TASK-BCTC-3b completion). 1910b-effr-package-reg moved to Todo with updated dependency (unblocked by 1910a).
+   - TASKS.md final: 76L (under 80L cap).
+
+2. **Verified TASK-BCTC-3c handoff:** Existing file `docs/handoffs/TASK_BCTC-3c.md` (architect-authored) already complete with:
+   - TLDR: Integrate hsx.vn BCTC discovery results into MCP `discover_bctc_urls` tool. VPS XHR fetcher (TASK-BCTC-3b) provides results; dev-mcp-server exposes them through MCP interface. E2E test: query tool with HOSE tickers (VNM/VEA/HPG), confirm hsx.vn PDF URLs returned + accessible.
+   - [PM] Planning Context: Zone (apps/mcp-server/), 5 acceptance criteria (AC-1 through AC-5), files to read/create/modify, dependencies (blocking: TASK-BCTC-3b), knowledge needed.
+   - Implementation guidance: Option A (recommended, integration internal to VPS script) + Option B (alternative, explicit route on VPS proxy).
+   - E2E test plan + manual test examples + automated test template.
+   - Risk flags (5 total) + success metrics.
+
+3. **WIP Status:** 0/2 (CLEAN). Capacity available for immediate dispatch. No parallel work blocks TASK-BCTC-3c.
+
+4. **PM notebook:** Updated header + current state + this cycle entry (c122).
+
+**Next Steps:** Developer dispatch to dev-mcp-server for TASK-BCTC-3c implementation. Highest priority — closes the HOSE BCTC discovery chain.
+
+**Status:** Processing COMPLETE. Handoff ready. TASK-BCTC-3c dispatched (TODO: main terminal to notify developer).
+
+---
+
+## Cycle 121 — 2026-05-15 PM Dispatch: TASK-BCTC-3b + 1910a-ism-tool → In Progress (WIP=2/2 AT CAPACITY)
+
+**Input:** Two tasks unblocked and ready for dispatch.
+- **TASK-BCTC-3b:** Architect design complete (2026-05-15). hsx.vn BCTC fetcher + Strategy 0 wiring. No VPS needed. `docs/handoffs/TASK_BCTC-3b.md` fully specified with AC-1 through AC-5.
+- **1910a-ism-tool:** User-action blocker resolved (FRED_API_KEY confirmed in `.env` + docker-compose.yml env_file passthrough verified). Architect design in `docs/handoffs/TASK_1910a-ism-tool.md`. Ready for dev-mcp-server implementation.
+
+**Actions:**
+1. **TASK-BCTC-3b → In Progress.** Moved Backlog → In Progress in TASKS.md. Zone: `apps/mcp-server/src/{infrastructure/fetchers/,domain/services/}`. Owner: dev-mcp-server. Blocks: TASK-BCTC-3c. No deploy blockers. Handoff fully complete (AC-1 through AC-5 specified, 6 test cases, DDD boundary enforced).
+2. **1910a-ism-tool → In Progress.** Moved Backlog → In Progress in TASKS.md. Zone: `apps/mcp-server/src/{infrastructure/fetchers/,domain/services/macro/,interface/mcp/tools/macro/}`. Owner: dev-mcp-server. Blocks: 1910b-effr-package-reg (manifest conflict). Unblocked by FRED_API_KEY env var verification (confirmed in `.env` + docker-compose.yml lines 30/46/224 via agent-md edits).
+3. **Parallel execution justified:** Both tasks assigned to dev-mcp-server but disjoint code zones:
+   - TASK-BCTC-3b: `infrastructure/fetchers/hsxBctcFetcher.ts` + `domain/services/bctcDiscovery.ts` + `scheduler/financial-reports/bctcQueueEnricherJob.ts` + tests
+   - 1910a-ism-tool: `infrastructure/fetchers/fredIsmSubcomponents.ts` + `domain/services/macro/ismRegimeSignal.ts` + `interface/mcp/tools/macro/getIsmSubcomponentsTool.ts` + scheduler macro patch + tests
+   - No file overlap. Parallel safe. Can ship independent via two PRs or single merge commit.
+4. **TASKS.md updated:** Both rows entered In Progress. WIP=2/2 AT CAPACITY. One row per task with unblock rationale + effort estimate.
+5. **PM notebook updated:** Header reflects c121, WIP=2/2. Current state updated. This cycle entry added. Carry-over: TASK-BCTC-3c (blocked, Todo), 1910b-effr (blocked, Todo).
+
+**Delivery expectations:**
+- **TASK-BCTC-3b:** ~2–3h (fetcher 1h + domain wiring 0.5h + tests 1h). Handoff test: `bun test src/__tests__/BCTC-3b-hsx-fetcher.test.ts` → all green; `tsc` 0 errors.
+- **1910a-ism-tool:** ~3h (fetcher 1h + domain regime 0.5h + tool handler + 3 test files 1.5h). Handoff test: full test suite `bun test` green; tsc 0 errors.
+
+**WIP Status:** 2/2 (AT CAPACITY). Both tasks IN PROGRESS. Next dispatch must wait until either task completes.
+
+**Status:** Dispatch COMPLETE. Both tasks ready for developer Step 3 execution.
 
 ---
 
