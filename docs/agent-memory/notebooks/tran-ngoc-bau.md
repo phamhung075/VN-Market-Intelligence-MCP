@@ -2,7 +2,63 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/tran-ngoc-bau-archive-2026-05-12.md
 
-**Last updated:** 2026-05-15 (cycle 54) | Cycles completed: 54
+**Last updated:** 2026-05-15 (cycle 55) | Cycles completed: 55
+
+---
+
+## Cycle 55 Watch Notes (2026-05-15 ~07:30 UTC)
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Auto-cure: 1 FIRED (news-scout F/H-step — stage-signals.md payload.detail extended)
+
+**MCP Gateway:** NOT registered in this session. Notebook-evidence mode. However: report-analyzer 02:00 UTC confirms "gateway operational (bootstrap 7ms)"; alert-commander 02:09 UTC fired 3 MARKET alerts. Gateway functional at market-hours sessions. Off-hours sessions remain fragile (1913 BLOCKING-F1).
+
+**KEY FINDINGS THIS CYCLE:**
+- AUTO-CURE FIRED: news-scout stage-signals.md — payload.detail template extended for chain_catalyst + urgent_news to require `pillars=` + `phase=` + `tier=`. 3-cycle evidence c53/c54/c55 confirmed (#3173–#3203 all missing F/H-step fields).
+- 1914-news-scout-dedup-api DONE (2026-05-15): from_agent filter working. Self-sent signal blind spot closed.
+- 1917-telegram-bug-channel-env-fix DONE (2026-05-15): BUG channel verified operational (AC-2 delivery test).
+- 1914b-log-agent-work-doc DONE (2026-05-15): All 10 package files corrected.
+- digest-predict: 5-day+ silence. 1907a Backlog CRITICAL, no In-Progress owner. Banking deadline passed without digest.
+- news-scout 02:19 UTC: REGIME=TIGHTENING at market open — discordant with unified-agent EASING (02:00 UTC). Possible news-fallback miscue. Cycle 1 of evidence.
+- alert-commander 00:02 UTC: get_macro_snapshot returned system_status (not regime text) → news-fallback TIGHTENING → FPT possibly false-suppressed. Different failure mode from c53 news-fallback pattern.
+- alert-commander 02:09 UTC: 3 MARKET alerts fired correctly (BCTC overdue HIGH, Gold -2.47σ HIGH, VNH -9.09% HIGH). GOOD.
+- unified-agent 02:00 UTC: REGIME_TRANSITION NEUTRAL→EASING confirmed. VN-Index 1,928.21 ATH. GOOD.
+- financial-analyst 23:01 UTC (2026-05-14): Layer 7 partially exercised — OCF/NI anomalous due to extraction error (not a true forensic gate pass). 1909c reparse still needed.
+- Previous handoff (c54) ACK'd by PO (1917 task created).
+
+**METHODOLOGY SCORES (Layer 5, 9-step — c55):**
+- news-scout #3203 (01:20 UTC, pre-cure): 3/7 → NEEDS_ATTENTION (F=0/4 pillars, H=no phase/tier) — CURED
+- alert-commander 02:09 UTC: 5/5 → GOOD
+- alert-commander 00:02 UTC: 3/4 → NEEDS_ATTENTION (B-step: news-fallback TIGHTENING → false suppression risk)
+- unified-agent 02:00 UTC: 7/9 → GOOD
+- financial-analyst: 4/7 → NEEDS_ATTENTION (G partial, H insufficient_data)
+- market-watcher 02:32 UTC: 5/5 → GOOD
+- digest-predict: CRITICAL/UNAUDITABLE (5-day silence)
+
+**MARKET STATE:**
+- VN-Index: 1,928.21 ATH | REGIME: EASING (unified-agent 02:00 UTC, gold -2.47σ + S&P ATH 7501) | CARRY: FII_OUTFLOW_RISK (-0.33%)
+- BCTC Q1-2026 banking deadline: TODAY (2026-05-15). ACB/BID/CTG/EIB/MBB/VCB/VPB — all still SẮP ĐẾN as of report-analyzer 02:00 UTC. Filings expected 14:00 UTC cycle.
+- Gold: 4619.9 (-2.47σ) | Brent: 106.94 | VNH: -9.09% price drop (caught live by alert-commander)
+- news-scout dedup: 1914 DONE — from_agent filter now operational
+
+**SCORES SUMMARY:**
+- alert-commander: GOOD (02:09 UTC market-hours), NEEDS_ATTENTION (00:02 UTC news-fallback)
+- news-scout: NEEDS_ATTENTION→CURED (F/H-step auto-cure fired; TIGHTENING at 02:19 cycle 1 of new evidence)
+- unified-agent: GOOD (7/9, EASING declared)
+- financial-analyst: NEEDS_ATTENTION (Layer 7 partial, 1909c pending)
+- market-watcher: GOOD (02:32 UTC, 0 anomalies sub-threshold EASING)
+- report-analyzer: GOOD (early exit correct)
+- digest-predict: CRITICAL (5-day silence)
+
+**HANDOFF:** docs/handoffs/tnb-audit-latest.md
+**SIGNAL:** docs/signals/processed/tnb-2026-05-15T07-30-00Z.json (priority: high)
+
+## Cycle — 2026-05-15 (cycle 55, ~07:30 UTC)
+
+- **cycle_date**: 2026-05-15
+- **findings**: NEEDS_ATTENTION/IMPROVING. AUTO-CURE FIRED: news-scout stage-signals.md — payload.detail extended for chain_catalyst + urgent_news to require pillars + phase + tier (3-cycle evidence c53/c54/c55). 1914/1917/1914b all DONE (positive). digest-predict 5-day+ silence (CRITICAL, 1907a no In-Progress owner). alert-commander 00:02 UTC: get_macro_snapshot returned system_status → news-fallback TIGHTENING (possible false FPT suppression — cycle 1 new evidence). news-scout 02:19 UTC TIGHTENING vs unified-agent 02:00 UTC EASING — regime divergence (cycle 1 of evidence). Previous handoff ACK'd by PO.
+- **actions**: AUTO-CURE applied (news-scout/stage-signals.md). Handoff written (docs/handoffs/tnb-audit-latest.md). Signal dropped (docs/signals/processed/tnb-2026-05-15T07-30-00Z.json). Notebook updated. 0 Telegram (MCP unregistered).
+- **next_cycle_hint**: (1) Validate news-scout F/H-step cure at next chain_catalyst/urgent_news signal — payload.detail must include pillars + phase + tier. (2) 1909c-reparse-validation: ops assign In-Progress, run bctcReparseJob 2026-05-16. (3) digest-predict: PO escalate 1907a to In-Progress sprint. (4) alert-commander 00:02 UTC news-fallback: watch cycle 2 at c56 — if get_macro_snapshot system-status response recurs, may need additional retry or response-format guard. (5) news-scout 02:19 TIGHTENING: watch cycle 2 at next market-open cycle. (6) BCTC Q1-2026 banking: check FA notebook at 14:00 UTC cycle for ACB/BID/CTG/EIB/MBB/VCB/VPB filings.
+- **estimated_tokens**: 10800
 
 ---
 
