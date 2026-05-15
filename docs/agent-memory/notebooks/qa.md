@@ -1,6 +1,36 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c120 — CLEAN-c120-stale-branches DONE
+**Last updated:** 2026-05-15 | **Session:** c121 — 1899a-bloomberg-test-split APPROVED
+
+## Session 2026-05-15 c121 — 1899a-bloomberg-test-split
+
+### TASK REPORT — 1899a-bloomberg-test-split
+
+```
+date: 2026-05-15
+outcome: APPROVED
+type: REFACTOR test-only
+```
+
+#### Scope
+
+Test-only zone (`apps/news-fetch/__tests__/`). Smart-Skip applied: DDD scan + security scan skipped.
+Commits already on main (40747a58 + ac8d8fcf). No branch to merge.
+
+#### AC Results
+
+- AC-1 PASS: source 1899a-bloomberg.test.ts deleted
+- AC-2 PASS: 4 files ≤200L — dom:189 / json-fallback:182 / perimeterx-lifecycle:186 / normalize-date:51
+- AC-3 PASS: expect() = 41 (12+8+7+14)
+- AC-4 PASS: bun test glob — 29 pass / 0 fail / 41 expect()
+- AC-5 PASS: news-fetch full suite 172 pass / 0 fail (baseline parity)
+- AC-6 PASS: bun tsc --noEmit — 0 errors
+
+#### Report
+
+`reports/TASK_REPORT_1899a-bloomberg-test-split.md`
+
+---
 
 ## Session 2026-05-15 c120 — CLEAN stale branches
 

@@ -259,6 +259,33 @@ True. No production code changes. No DDD violations. No cross-service dependenci
 
 ---
 
+## [QA] Review Record
+
+- **Date:** 2026-05-15
+- **Round:** 1
+- **Verdict:** APPROVED
+
+### AC Results
+
+| AC | Result | Detail |
+|----|--------|--------|
+| AC-1 source deleted | PASS | `1899a-bloomberg.test.ts` absent from disk |
+| AC-2 4 files ≤200L | PASS | dom:189 / json-fallback:182 / perimeterx-lifecycle:186 / normalize-date:51 |
+| AC-3 expect() = 41 | PASS | 12+8+7+14 = 41 |
+| AC-4 glob GREEN 29p/0f | PASS | `bun test 1899a-bloomberg-*.test.ts` — 29 pass / 0 fail / 41 expect() |
+| AC-5 baseline parity | PASS | news-fetch: 172 pass / 0 fail (matches developer baseline; mcp-server OOM pre-existing) |
+| AC-6 tsc 0 errors | PASS | `bun tsc --noEmit` clean |
+
+### Smart-Skip
+
+Test-only zone — DDD scan and security scan skipped per QA Smart-Skip policy.
+
+### Report
+
+`reports/TASK_REPORT_1899a-bloomberg-test-split.md`
+
+---
+
 ## Owner
 
 `dev-news-fetch` (or `dev-mainserver-crawls`)
