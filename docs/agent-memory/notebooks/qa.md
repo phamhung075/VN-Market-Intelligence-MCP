@@ -1,6 +1,48 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-15 | **Session:** c122 — TASK-BCTC-3b APPROVED
+**Last updated:** 2026-05-15 | **Session:** c123 — 1910a-ism-tool CHANGES_REQUESTED
+
+## Session 2026-05-15 c123 — 1910a-ism-tool
+
+### TASK REPORT — 1910a
+
+```
+date: 2026-05-15
+outcome: CHANGES_REQUESTED
+type: FEATURE (new infra fetcher + domain signal + MCP tool + 35 tests)
+round: 1
+```
+
+#### Scope
+
+Zone: `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts` (new) + `apps/mcp-server/src/domain/services/macro/ismRegimeSignal.ts` (new) + `apps/mcp-server/src/interface/mcp/tools/macro/getIsmSubcomponentsTool.ts` (new) + 3 test files (new).
+
+Commit `ee20d197` on main (no branch per NO branches for dev policy).
+
+#### AC Results
+
+- AC-1 PASS: `fredIsmSubcomponents.ts` exists, fetches 4 FRED series, uses `FRED_API_KEY`
+- AC-2 PASS: `ismRegimeSignal.ts` pure domain function, EXPANDING/CONTRACTING/MIXED logic, zero infra imports
+- AC-3 PASS: `get_ism_subcomponents` MCP tool registered (#133), source_tier=1 envelope
+- AC-4 PASS: Wired into `macroIndicatorRefreshJob` line 85, no new cron
+- AC-5 PASS: 35/35 new tests GREEN (13 domain + 14 fetcher + 8 contract)
+- AC-6 FAIL: `fredIsmSubcomponents.ts:263` uses `process.env["FRED_API_KEY"]` — Bun.env-only policy violation
+- AC-7 PASS: Full suite 9349/36 — 36 pre-existing failures unchanged
+
+#### Pipeline
+
+- Targeted: 35/0 | Full suite: 9349 pass / 36 fail (all pre-existing)
+- tsc: 0 errors | DDD: PASS | Security: FAIL (1 blocking)
+
+#### Blocking Issues
+
+1. `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts:263` — `process.env["FRED_API_KEY"]` fallback violates Bun.env-only policy. Remove `?? process.env["FRED_API_KEY"]` on line 263.
+
+#### Report
+
+`reports/TASK_REPORT_1910a.md`
+
+---
 
 ## Session 2026-05-15 c122 — TASK-BCTC-3b
 

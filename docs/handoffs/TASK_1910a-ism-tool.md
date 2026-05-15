@@ -175,3 +175,24 @@ export async function fetchFredIsmSubcomponents(
 **Series IDs confirmed:** NAPMNO (New Orders), NAPMEMP (Employment), NAPMPI (Prices Paid), NAPMBI (Backlog). Fetcher uses `api.stlouisfed.org/fred/series/observations?series_id={ID}&api_key={KEY}&file_type=json&sort_order=desc&limit=3`. The `sort_order=desc&limit=3` ensures the latest available month is fetched even if FRED lags publication by 1–2 days.
 
 **FRED_API_KEY:** Confirmed present in `.env` and passed via `env_file: .env` in docker-compose mcp-server service.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-15
+**Round:** 1
+**Verdict:** CHANGES_REQUESTED
+
+**Pipeline:**
+- Targeted (35 tests): 35 pass / 0 fail
+- Full suite: 9349 pass / 36 fail (all pre-existing)
+- tsc: 0 errors
+- DDD: PASS — `ismRegimeSignal.ts` zero infra imports confirmed
+- Security: FAIL — 1 blocking issue
+
+**Blocking Issues:**
+
+1. `apps/mcp-server/src/infrastructure/fetchers/fredIsmSubcomponents.ts:263` — `process.env["FRED_API_KEY"]` violates `Bun.env`-only policy (`dev-standards.md` § Coding Standards, `qa-checklist.md` § Security). Line 262 already reads `Bun.env.FRED_API_KEY`; the `?? process.env["FRED_API_KEY"]` fallback on line 263 must be removed. Correct fix: delete the `?? process.env["FRED_API_KEY"]` fallback. Tests must use `Bun.env` directly if they need to set the key.
+
+**Report:** `reports/TASK_REPORT_1910a.md`
