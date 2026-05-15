@@ -2,7 +2,28 @@
 
 **Last updated:** 2026-05-16 | **Sprint:** 1920
 
-## Last session summary (1920g)
+## Last session summary (1920d)
+
+Task 1920d — Broker Sanctions Quarterly Sweep + Schema Migration.
+
+**Problem:** `broker_sanctions` table had no UNIQUE constraint on `(broker_name, sanction_start)`. `insertBrokerSanction()` used plain INSERT. A quarterly sweep job running twice (Docker restart mid-window) would insert duplicate rows. No scheduler job existed to fetch SSC broker sanctions.
+
+**What was done:**
+
+- Schema migration in `schema-alerts.ts`: `broker_sanctions` DDL updated with `UNIQUE(broker_name, sanction_start)`. Idempotent legacy-DB migration via recreate-and-rename pattern (SQLite ALTER TABLE ADD CONSTRAINT not supported). Detection: `sqlite_master.sql LIKE '%UNIQUE(broker_name, sanction_start)%'` check.
+- `brokerSanctionStore.ts`: Changed plain `INSERT` to `INSERT OR IGNORE`. Fixed `lastInsertRowid` sticky behavior — `bun:sqlite` returns previous rowid (not 0) on OR IGNORE skip; now uses `result.changes > 0` to detect actual inserts.
+- Created `brokerSanctionsJob.ts` — `runBrokerSanctionsJob(opts?)` with DI seam (getCurrentMonthFn/fetchFn/sendWorkFn). Quarter-guard `[3,6,9,12].includes(currentMonth)`. Non-quarter: `skipped=true`, no WORK alert. Quarter: fetch → null-sanctionStart rejection → INSERT OR IGNORE per record. Zero-result → WORK alert. Fetch error → WORK alert, `success=false`, no rethrow. Default fetcher: stub returning `[]` (real SSC scraper deferred; zero-result alert fires on first quarterly run to notify operator).
+- `cronConfig.ts`: added `brokerSanctionsSweep: '0 8 25-31 * 5'` (FR-5).
+- `startScheduler.ts`: import + `cron.schedule(CRONS.brokerSanctionsSweep, jobRunRepo.wrapRun(...))` (FR-6).
+- 8 tests in `1920d-broker-sanctions-job.test.ts` — TC-1..TC-8. All GREEN 8/8.
+
+**Key debug:** `INSERT OR IGNORE` in bun:sqlite 1.3.13 returns STICKY `lastInsertRowid` (previous insert's rowid) when a row is ignored — NOT 0. Must check `result.changes > 0` to detect actual insertions. Also Bun in-process test runner may leave `:memory:` singleton partially shared between tests within a file → used timestamped unique broker names in TC-3 to avoid cross-test contamination.
+
+**Commit:** pending (this session)
+
+**Total: 8 pass / 0 fail. tsc 0 errors. cronJobCount: 67.**
+
+## Previous last session summary (1920g)
 
 Task 1920g — Auto-populate prediction_claims from intelligenceCycleJob.
 
