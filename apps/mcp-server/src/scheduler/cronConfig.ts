@@ -129,4 +129,8 @@ export const CRONS = {
   newsHeadlinesRefresh:      Bun.env['CRON_NEWS_HEADLINES_REFRESH']           ?? '*/30 * * * *',
   /** bondMaturityPoller — weekly Sunday 02:30 UTC (09:30 VN) — task 1920b */
   bondMaturityPoller:        Bun.env.CRON_BOND_MATURITY_POLLER                 ?? '30 2 * * 0',
+  /** vnstockFundamentalsRefresh — weekly Mon 01:00 UTC batch sweep of 6 fundamental tables (task 1920a) */
+  vnstockFundamentalsRefresh: Bun.env.CRON_VNSTOCK_FUNDAMENTALS               ?? '0 1 * * 1',
+  /** vnstockTradingStatsRefresh — daily weekdays 08:30 UTC (post HOSE close) trading stats sweep (task 1920a) */
+  vnstockTradingStatsRefresh: Bun.env.CRON_VNSTOCK_TRADING_STATS              ?? '30 8 * * 1-5',
 }

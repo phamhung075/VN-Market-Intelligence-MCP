@@ -57,6 +57,7 @@ import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
+import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { CRONS } from './cronConfig.js'
@@ -697,6 +698,23 @@ export function startScheduler() {
       const result = await runBondMaturityPollerJob()
       return { rowsWritten: result.rowsWritten }
     })
+  }, { timezone: 'UTC' })
+
+  // Monday 01:00 UTC — vnstock fundamentals weekly batch sweep — task 1920a
+  // Iterates 30-ticker watchlist; populates vnstock_financials, balance_sheet,
+  // cash_flow, events, officers, shareholders via syncVnstockData per ticker.
+  // isRunning guard prevents double-stack (7-10 min sweep). Per-ticker isolation.
+  // Fail-loud to WORK channel when any tickers fail at sweep completion.
+  cron.schedule(CRONS.vnstockFundamentalsRefresh, async () => {
+    await runVnstockFundamentalsJobCron()
+  }, { timezone: 'UTC' })
+
+  // Weekdays 08:30 UTC (15:30 VN, post HOSE close) — vnstock trading stats daily sweep — task 1920a
+  // Iterates 30-ticker watchlist; upserts vnstock_trading_stats via syncVnstockData.
+  // UNIQUE(code, date) ensures idempotency — repeated same-day runs are safe.
+  // isRunning guard + per-ticker error isolation.
+  cron.schedule(CRONS.vnstockTradingStatsRefresh, async () => {
+    await runVnstockTradingStatsJobCron()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
