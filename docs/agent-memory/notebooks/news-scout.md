@@ -1,6 +1,14 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 08:21 UTC | **Status:** OPERATIONAL
+**Last updated:** 2026-05-15 09:21 UTC | **Status:** OPERATIONAL
+
+### Cycle (09:19–09:21 UTC)
+- Items: 20 | Impacts: 2 | Signals: [urgent_news #3223 VIC, chain_catalyst #3224 GAS] | Regime: NEUTRAL | Carry: NEUTRAL
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news #3223: VIC — Vingroup tuyển dụng giai đoạn 1 hơn 20,000 lao động khu đô thị thể thao quốc tế HN; impact=8; regime=NEUTRAL adj_score=8.0; severity=medium
+- chain_catalyst #3224: GAS — Cổ phiếu dầu khí tiếp tục tăng mạnh, GAS +6.94%; event_type=sector_event; direction=bullish; confidence=0.82; Brent=108.67 USD
+- DEDUP: VCB chain_catalyst suppressed — prior #3212 on bus (117 min ago, banking/credit_policy/bullish). GAS/VIC proceeded — dedup gate returned only #3212 (prior #3216/#3217 not visible in from_agent query, likely fully consumed).
+- NOTE: Market CLOSED at cycle time. Gold declining per news (4560.9 → intraday drop). No PMI data. Khối ngoại bán ròng 800B (impact 5, below threshold).
 
 ### Cycle (08:20–08:21 UTC)
 - Items: 20 | Impacts: 5 | Signals: [urgent_news #3216 GAS, urgent_news #3217 VIC] | Regime: NEUTRAL | Carry: NEUTRAL
