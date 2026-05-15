@@ -2,7 +2,42 @@
 
 **Last updated:** 2026-05-16 | **Sprint:** 1920
 
-## Last session summary
+## Last session summary (1920g)
+
+Task 1920g — Auto-populate prediction_claims from intelligenceCycleJob.
+
+**Problem:** `insertPredictionClaim()` existed in `predictionClaimStore.ts` but had zero callers from the scheduled intelligence cycle. High-conviction chains (conviction >= 0.7) from `runChainSynthesis` were posted as signals but never recorded as prediction claims.
+
+**What was done:**
+- Exported two pure helpers from `intelligenceCycleJob.ts`: `mapChainAction()` (BUY→bullish, SELL→bearish, others→neutral) + `isoDatePlusDays(n)` (YYYY-MM-DD n days from now).
+- Added `insertClaimFn` to `CycleDeps` + new `ChainSynthesisDeps` interface (with `_db` field for test DB injection).
+- `runChainSynthesis(deps: ChainSynthesisDeps = {})` — after `postSignal` for conviction >= 0.7, calls `insertClaimFn` (or real store) with full `PredictionClaimInput`. try/catch non-fatal (console.warn only, AC-6).
+- Forwarded `insertClaimFn` from `CycleDeps` → `ChainSynthesisDeps` in `_runCycle` Step G.
+- 15/15 tests GREEN: TC-1..TC-7 cover all ACs.
+
+**Key debug:** cycleId format mismatch (`cycle-${ms}` vs `YYYYMMDD-HHMM`). Fixed by replicating `computeCycleId` logic in test. Also needed full `agent_signals` schema with all columns for `postSignal` feature-detection. TC-2 seeded directly (confidence=0.5, no bonus flags) to avoid confirms_direction bonus pushing conviction >= 0.7.
+
+**Commit:** `81efd36a feat(1920/scheduler): 1920g auto-populate prediction_claims from chain synthesis`
+
+**Total: 15 pass / 0 fail. tsc 0 new errors.**
+
+## Previous last session summary (1920c)
+
+Task 1920f — Activate signal_quality_audit writer.
+
+**Problem:** `prepareSignalAuditRecord()` existed in domain but no infrastructure store existed, so `signal_quality_audit` table stayed at zero rows at runtime.
+
+**What was done:**
+- Created `apps/mcp-server/src/infrastructure/db/signalQualityAuditStore.ts` — `insertSignalQualityAudit(db, record)` with INSERT OR IGNORE (UNIQUE signal_id dedup). Fire-and-forget: errors caught with `console.warn`, never re-thrown.
+- Wired in `agentSignalTools.ts` `post_agent_signal` handler after `postSignal()` call. Gate: `signal_type IN ['price_confirmation', 'urgent_news']` AND `finding_data.confidence` is a number. FR-3/FR-4 mapping: confidence × 100 (agent 0.0–1.0 → audit 0–100), `price_confirmation` → `signal_type='price'`, `urgent_news` → `signal_type='news'`.
+- Added imports: `insertSignalQualityAudit`, `prepareSignalAuditRecord`, `SignalAuditContext`.
+- Wrote 15 tests in `1920f-signal-quality-audit.test.ts` — AC-1 through AC-6. All GREEN 15/0.
+
+**Commit:** `bdd63efb feat(1920/signals): 1920f activate signal_quality_audit writer`
+
+**Total: 15 pass / 0 fail.**
+
+## Previous last session summary (1920c)
 
 Task 1920c — Commodity Tracker + Shipping Index Refresh Scheduler Job.
 
@@ -22,7 +57,7 @@ Task 1920c — Commodity Tracker + Shipping Index Refresh Scheduler Job.
 
 **Note:** Spec mentions `commodityTracker.ts` as writer but the actual `commodity_prices`/`commodity_prices_history` writer is in `yahooFinance.ts` (`storeCommoditySnapshot`). Used the correct file.
 
-**Commit:** pending
+**Commit:** `d72ab005 feat(1920/scheduler): 1920c commodity tracker + shipping index refresh job`
 
 **Total: 7 pass / 0 fail. cronJobCount: 66, schedulerFileCount: 65.**
 
