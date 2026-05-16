@@ -1,8 +1,19 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 22:04 UTC | **Sprint:** c143
+**Last updated:** 2026-05-16 23:02 UTC | **Sprint:** c144
 
 ## This session
+
+### Alert Cycle (23:02–23:03 UTC) — Off-Hours
+- Signals: 0 (no agent signals queued)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (Sunday/off-hours 23:02 UTC)
+- Open alerts (24h): 7 — news_mention×5 (HCM, ACV, VIC, FPT, REE — MEDIUM), macro_deviation×2 (Brent +2.56σ HIGH, Gold -2.19σ HIGH). All non-firing: no signal-bus events, market closed, news below conviction needed for TIGHTENING (no urgent_news/verified_chain/chain_catalyst on bus).
+- Macro: Brent $109.26, Gold $4,561.90, USD/VND 26,350; DXY 99.27, US10Y 4.59% (PE-compression). Source tier 2.
+- Notes: Off-hours 2h cycle. Next cycle: 01:02 UTC (Mon pre-open 02:00 UTC).
+- log_agent_work id=930
 
 ### Alert Cycle (22:02–22:04 UTC) — Off-Hours
 - Signals: 1 (urgent_news×1 HVN)

@@ -1,61 +1,44 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-17T00:42Z (c144 — investment clock live data, port 4004 fix)
+**Written:** 2026-05-17T23:05Z (c145 — LanceDB reinit, reports 2925+2926 resolved)
 
-## c144 (2026-05-16T22:25Z → 2026-05-17T00:42Z, ~2h 17min)
+## c145 (2026-05-17T22:55Z → 2026-05-17T23:05Z, ~10min)
 
 | Step | Action | Result |
 |------|--------|--------|
 | 0 PREFLIGHT | No HEAD.lock, no signals | Clean |
-| 1 PO triage | Goal updated: cowork agents >80% accuracy | New sprint initiated |
-| Investigate | Confirmed all 3 "missing" tools work via gateway | 1913 STALE-RESOLVED |
-| Investigate | Port 4004 DOWN after Docker rebuild | docker-compose dual-port fix |
-| 1923a | investment clock case-mismatch: 'Vietnam'→'vietnam' | RECOVERY returned |
-| 1924a | Wire live VN CPI 5.46% (April 2026) into macro_indicators | OVERHEAT returned |
-| 1924b | Direct DB patch cpi=5.46 applied | Immediate fix |
-| Docker rebuild ×2 | Rebuilt mcp-server with both fixes | Both ports healthy |
+| 0a drain-signals | docs/signals/ empty | Skip |
+| 1 PO triage | 2 new reports: 2925 (LanceDB), 2926 (DIG OCR) | Dispatched |
+| 1925a | LanceDB rag_entries.lance format mismatch (lance-file-4.0.0) | Drop+reinit |
+| rag-service restart | Fresh empty table, search returns {} not error | FIXED |
+| Report 2926 | DIG Q4-2025 financial confidence=0.10 | wontfix-ocr-quality |
 
-### c144 key state
+### c145 key state
 
 | Item | State |
 |------|-------|
-| Port 3000 + 4004 | Both serving 141 tools ✅ |
-| get_investment_clock_phase | Overheat (CPI=5.46 HIGH, gdpGrowth=7.4 UP) ✅ |
-| get_macro_snapshot | Live: Brent $109, Gold $4562, VND/USD 26,350 ✅ |
-| get_cash_flow | Tool accessible ✅ (1913 closed) |
-| get_cycle_bootstrap | Rich: 7 alerts, 10 news analyses, 39 prices ✅ |
-| 1913 | CLOSED STALE-RESOLVED — tools confirmed working |
-| DB tables | 59 populated, 16 empty (all accounted for) |
-| Fleet | 10/11 healthy (flaresolverr unhealthy — low-priority) |
+| rag-service LanceDB | ✅ Fresh empty table (20,631 old embeddings dropped, regenerating) |
+| search_similar_context | ✅ Returns {results:[],total:0} not error |
+| Report 2925 | ✅ Resolved (lancedb fixed) |
+| Report 2926 | ✅ Resolved (wontfix-ocr) |
+| bond_maturity | ⚠️ Still 0 — cron fires 2026-05-17 02:30 UTC (not yet) |
+| alert_engine_records | ⚠️ Still 0 — continue 5-cycle observation |
+| agent_signals | 46 (post-rebuild baseline, not 488) |
+| Fleet | 11/11 healthy (flaresolverr recovered from prev unhealthy) |
 | Pipeline | idle |
 
-### Cowork agent analysis accuracy assessment (c144)
+### LanceDB root cause (c145)
 
-| Analysis type | Status | Accuracy |
-|---|---|---|
-| Market regime (macro snapshot) | ✅ Live | HIGH |
-| Investment clock phase | ✅ Fixed (Overheat, CPI 5.46%) | HIGH |
-| BCTC analysis (get_bctc_full, get_cash_flow) | ✅ Accessible | HIGH |
-| News/sentiment (get_cycle_bootstrap) | ✅ 7 alerts, 10 analyses | HIGH |
-| Technical analysis | ✅ TA service healthy | HIGH |
-| Alert signals | ✅ 58 pending alerts | HIGH |
-| Price data | ⚠️ Stale (weekend, normal) | N/A (market closed) |
-| VN PMI | ⚠️ null (slug added, runs next job cycle) | MEDIUM |
-| insider_transactions | ❌ SSC 503 external | LOW |
-| **Overall cowork accuracy** | **>80%** | **PASS** |
+`lancedb 0.30.2` internally uses `lance-file-4.0.0`. Old `.lance` files written by lancedb ~0.6.x
+used old magic bytes `[76,65,78,67]` ("LANC") but at file offset incompatible with v4 reader.
+`len(table)` worked (manifest-based count) but vector reads failed.
+Fix: `db.drop_table('rag_entries')` → restart → table recreates on next `/index` POST.
+20,631 embeddings lost — acceptable (news articles regenerate hourly via pollNews).
 
-### c145 carry-forward
+### c146 carry-forward
 
-1. **1922f-bond-maturity**: Cron fires 2026-05-17 02:30 UTC (~2h from now). Check ≥1 row inserted.
+1. **1922f-bond-maturity**: Cron fires 2026-05-17 02:30 UTC (~3.5h from now). Check ≥1 row inserted.
 2. **1862c-F**: SseSessionManager dead-session eviction — ship when SSE 5 cycles clean.
-3. **alert-precision-488-unknowns**: Check count after post-Docker live sessions.
-4. **fa-shape-guard cycle 3**: Observe next FA weekday session.
-5. **VN PMI**: manufacturing-pmi slug added to TE scraper; will populate next macroIndicatorRefreshJob run.
-
-### Architecture note (c144)
-
-Port 4004 was served by the native Bun launchctl MCP server (com.vn-market.mcp, disabled but running).
-After Docker rebuild, the launchctl server stopped and port 4004 went dark.
-Fix: dual-port mapping `4004:3000` added to docker-compose.yml — Docker container now serves
-both :3000 (internal Docker) and :4004 (Claude Code CLI + Cloudflare tunnel cowork gateway).
-This resolves the architectural ambiguity without reactivating the deprecated launchctl server.
+3. **alert-precision**: Now 46 signals (fresh DB baseline). Monitor for scoring engine health.
+4. **1922i-alert-engine-records**: Continue 5-cycle observation.
+5. **LanceDB reindex**: Monitor `/index` calls; first news cycle will repopulate rag_entries.
