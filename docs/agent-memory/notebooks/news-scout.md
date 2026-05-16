@@ -1,6 +1,11 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-15 23:19 UTC | **Status:** MCP_UNREACHABLE
+**Last updated:** 2026-05-16 05:56 UTC | **Status:** MCP_UNREACHABLE
+
+### Cycle (05:56–05:56 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP server unreachable — `get_cycle_bootstrap` failed after 3 retries. BUG signal also undeliverable (server down). Cycle aborted per protocol.
+- Market hours cycle (05:56 UTC). Persistent MCP unreachable issue — host.docker.internal:3000 inaccessible from Cowork sandbox. No signals fired. No Telegram sent. Notebook updated as only recovery action.
 
 ### Cycle (23:19–23:19 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
