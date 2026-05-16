@@ -664,7 +664,7 @@ export async function fetchVnstockOrderBook(code: string): Promise<VnstockOrderB
 // ---------------------------------------------------------------------------
 
 const EVENTS_SCRIPT = (symbol: string) => `
-import json, sys, types
+import json, sys, io, types
 
 # ── viz mock: prevents ImportError when charting libs are absent ──────────
 _viz = types.ModuleType('vnstock.common.viz')
@@ -673,8 +673,19 @@ sys.modules.setdefault('vnstock.common.viz', _viz)
 
 try:
     from vnstock.explorer.vci.company import Company
-    comp = Company(symbol='${symbol}', show_log=False)
-    df = comp.events()
+
+    # ── stdout capture: vnstock v4 events() prints a box-drawing banner to
+    # stdout (not stderr), which runPython detects as a RATE_LIMITED signal.
+    # Capture + discard it so only our JSON reaches the caller.
+    _real_stdout = sys.stdout
+    _buf = io.StringIO()
+    sys.stdout = _buf
+    try:
+        comp = Company(symbol='${symbol}', show_log=False)
+        df = comp.events()
+    finally:
+        sys.stdout = _real_stdout  # always restore, even on error
+
     if df is None or len(df) == 0:
         print('[]')
         sys.exit(0)
