@@ -1,5 +1,37 @@
 # PO Notebook
 
+## Last updated: 2026-05-16T01:31:39Z · Sprint: 1920 COMPLETE — c133 idle cycle
+
+### c133 session summary
+
+**PREFLIGHT chain:** TNB audit file unchanged from c132 (already ACK'd at 2026-05-16T00:31:43Z). No new findings to act on. Pending signals: 13, all already moved to processed/ by router (1912 program-complete cluster + 1919 resolution cluster + TNB handoff + agents-architect SSOT brief).
+
+**Signals review (post-drain):** All 13 are state-transition / completion / blocker-resolution signals from c130-c132. Nothing in pendingSignals[] requires new dev work — they document closed sprint 1912 phases (a/b/c/d cutovers), the 1919 Docker DNS resolution by ops, and the agents-architect SSOT mapping brief (informational, no code action). All have been recorded already in notebooks and TASKS.md by c132.
+
+**Channel audit:** MCP gateway returns HTTP 404 at `https://zenmidi.com/mcp` (verified via curl). Same 1913 BLOCKING-F1 substrate — Claude Desktop config unregistered, USER ACTION only. WORK/BUG/MARKET unreadable. Documented; no fresh issues surfaced. Per channel-audit.md decision matrix, this is "infrastructure unavailable" not "no traffic" — same as c132.
+
+**No-Task Guard evaluation:**
+1. TASKS.md In-Progress: empty.
+2. TASKS.md Todo: 1862c-E (user-action Cloudflare dashboard, gated), 1862c-F (gated on 1862c-E + 5 cycles clean).
+3. TASKS.md Backlog: all monitoring (alert-precision HOLD, fa-shape-guard cycle 3 still unobservable without live agent session, 1909c DIG reparse — bctcReparseJob cron `30 9 * * *` runs automatically) or user-action (1913, 1897b-carry).
+4. No new BA specs in `docs/REQ_*.md` (last edits 2026-05-14).
+5. No new SPRINT_REPORT_*.md pending sign-off.
+6. user/Telegram unreachable (gateway 404).
+
+**PO decision:** NOTHING. No dispatchable dev work. Returning `NOTHING` to router.
+
+**Sprint 1920 close-out confirmation:** All 9 tasks QA-approved (1920a-i + ARCH-1920). project-stats.json `cronJobCount` reflects 75. `freshnessSlaMonitor` extended 5→12 tables (1920i). Production deployment of new cron entries pending — handled by ops on next Docker cycle.
+
+### Carry-over for next cycle (c134)
+
+- **1909c DIG reparse:** bctcReparseJob cron 09:30 UTC daily — next fire 2026-05-16T09:30Z will reprocess DIG Q4-2025. Verify confidence ≥ 0.6 + equity < 50,000 tỷ post-fire.
+- **fa-shape-guard cycle 3:** Watch first FA 23:00 UTC session post-1919-resolution. Threshold: if REGIME-mismatch → spawn `1921a-fa-shape-guard-propagate`. Cannot evaluate until at least one live FA session observed.
+- **alert-precision 488-unknowns:** Production count unknown; HOLD < 550 threshold until live agent generates data.
+- **1913 USER ACTION:** Claude Desktop MCP gateway config refresh — 9th blocked cycle. Channels stay degraded until user acts.
+- **1907a digest-predict:** 5-day+ MARKET digest silence. Cron unwired by design (external Claude Desktop trigger). Substrate same as 1913.
+- **1862c-F:** Ready when 1862c-E-dashboard (Cloudflare user-action) stable 5 cycles.
+- **TNB next cycle 61:** Will likely surface 1918b off-hours validation + news-scout payload.detail + FA session presence once 1913 unblocked.
+
 ## Last updated: 2026-05-16T00:31:43Z · Sprint: 1920 COMPLETE — c132 idle cycle
 
 ### c132 session summary
@@ -19,66 +51,4 @@
 - fa-shape-guard: cycle 3 NOT yet observable (all FA sessions blocked by 1919). Defer until next FA session post-restart.
 - 1909c-reparse: VNM=PASS, DIG=FAIL. Added ops action note to TASKS.md backlog.
 
-**PO decision:** NOTHING new to dispatch. No sprint — all dev work blocked (1862c-F gated on 1862c-E user-action Cloudflare dashboard, fa-shape-guard needs FA session first, 1909c needs ops not dev). Pipeline-state.json updated to idle/c132.
-
-### Carry-over for next cycle
-- 1909c DIG reparse: ops trigger bctcReparseJob for DIG, then verify confidence.
-- fa-shape-guard: watch FA 23:00 UTC first session post-1919. If REGIME-mismatch → spawn `1921a-fa-shape-guard-propagate`.
-- alert-precision: watch for unknowns > 550 on next live agent cycle.
-- 1862c-F: ready when 1862c-E-dashboard (Cloudflare user-action) confirmed stable 5 cycles.
-- 1907a digest-predict: 5-day+ silence. Next PO cycle: assign owner (ops investigation).
-
-## Last updated: 2026-05-15T21:04Z · Sprint: 1920 ARMED (DB Pipeline Completeness)
-
-### This session — user-directed sprint kickoff
-User goal: "every microservice DB table must have an active data pipeline; cowork agents need complete VN market picture." Audit + sprint plan executed despite Docker DNS still down (1919).
-
-### Audit method
-- Schema enumeration: 74 CREATE TABLE entries across `apps/mcp-server/src/infrastructure/db/schema-*.ts` (8 slices) + Go services (alert-engine adds `alert_engine_records`, `market_prices_cache`; stock-price ditto) + Python services (`pdf_documents`, `pdf_extracted_text`, `rag_entries`).
-- Writer search: regex `(INSERT|UPDATE|REPLACE)\s+(OR\s+(IGNORE|REPLACE)\s+)?(INTO\s+)?<table>` across TS/Go/Py.
-- Scheduler wiring: cross-referenced each writer with `scheduler/**/*.ts` callers + `cronConfig.ts` (59 active crons).
-
-### Findings — 10 zombie / orphan tables
-**Tier 1 fundamentals (analyst-critical):**
-- `vnstockStore` writers (7 tables: financials, balance_sheet, cash_flow, events, officers, shareholders, trading_stats) → ZERO scheduler caller. Financial-analyst PE/PB/ROE peer comparisons silently fall back to NULL.
-- `bondMaturityStore.insertBondMaturity` → no scheduler. `bond_maturity` zero-rows.
-
-**Tier 2 macro:**
-- `commodityTracker` + `shippingIndex` writers exist; no cron → `commodity_prices` stale.
-
-**Tier 3 intelligence:**
-- `brokerSanctionStore` → no scheduler caller.
-- `BacktestResultRepo.recordRun` → ZERO callers (cascadeBacktest only updates cascade_rule_hits, never persists run aggregate).
-
-**Tier 4 observability:**
-- `signal_quality_audit` → schema exists, signalValidator.ts:183 says "future-use" — no INSERT.
-- `prediction_claims` → only written from interactive evidenceTools MCP call, no autonomous cron.
-
-**Tier 5 retire:**
-- `skips` + `user_requests` → ZERO writers anywhere. `user_requests` superseded by `ask_queue` per docs.
-
-### Sprint 1920 written
-SPRINT_GOAL.md updated (top entry "Sprint 1920 — DB Pipeline Completeness"). TASKS.md Backlog gained 10 rows: ARCH-1920 (cadence brief, blocks 1920a–d), 1920a–i. Task IDs and priority/owner/zone all set. Docker dependency noted — code can ship on main today, deploy queued post-1919.
-
-### Channel audit — abbreviated (Docker DNS still down)
-- MARKET: no traffic since 09:04 UTC (1919 blocks).
-- WORK: send_telegram MCP call failed silently (curl no-output) — gateway routing affected by Docker DNS. Sprint summary is in SPRINT_GOAL.md (durable SSOT), TASKS.md, and this notebook. Will retry next cycle.
-- BUG: no new reports filed (agents can't reach MCP).
-
-### Decisions / non-decisions
-- DECISION: ship Sprint 1920 plan even with Docker frozen (codebase changes don't need running containers).
-- DECISION: did NOT decompose 1920a into 7 sub-tasks per vnstock table — single scheduler file covers all 7 (architect can re-split if needed).
-- DECISION: 1920h chose "annotate DEPRECATED" path over DROP TABLE (safer default; reversible).
-
-### Open questions for BA spec authoring
-- 1920a: quarterly cadence per ticker — coordinate with `bctcReparseJob` (post-BCTC) or independent calendar?
-- 1920b: bond source — is HSX/HNX calendar scrape-able from VPS, or another vendor?
-- 1920c: which commodity codes? — propose: BRENT, WTI, IRON_ORE, COAL, RUBBER, RICE, COFFEE, STEEL_HRC, BDI, USD_DXY (10 codes).
-- 1920d: SSC enforcement page — verify URL stability before scheduling.
-
-### Carry-over for next cycle
-- Retry WORK telegram once Docker DNS recovers (1919 user-action gate).
-- Watch for ARCH-1920 brief landing — that unblocks 1920a/b/c/d for BA decomposition.
-- 1919 still CRITICAL F1 USER ACTION (Docker Desktop restart).
-- fa-shape-guard cycle-3 observation still deferred (Docker blocked).
-- alert-precision-488-unknowns still HOLD.
+**PO decision:** NOTHING new to dispatch. No sprint — all dev work blocked. Pipeline-state.json updated to idle/c132.
