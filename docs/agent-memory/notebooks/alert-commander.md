@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 05:02 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 06:03 UTC | **Sprint:** c132
 
 ## This session
 
@@ -392,3 +392,9 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: none
 - Regime: UNKNOWN (bootstrap unavailable)
 - **BLOCKED**: vn-market MCP gateway not responding after 2 attempts — signal dropped to po
+
+### Alert Cycle (06:02–06:02 UTC)
+- Signals: urgent_news ×2 (VIC, HVN)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
