@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 04:03 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 05:02 UTC | **Sprint:** c132
 
 ## This session
+
+### Alert Cycle (05:02–05:02 UTC)
+- Signals: 0 (MCP unavailable)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: UNKNOWN (bootstrap failed)
+- Note: BLOCKED — MCP gateway unreachable (host.docker.internal DNS failure). Retried once after 5s. Signal dropped to docs/signals/. Off-hours cycle (Saturday). Market CLOSED.
 
 ### Alert Cycle (04:01–04:03 UTC)
 - Signals: 3 (urgent_news: 1, price_anomaly: 2)
