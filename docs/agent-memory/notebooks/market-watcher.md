@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 22:41 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 23:41 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2149,3 +2149,45 @@ No move_pct changes since prior cycle — all suppressed.
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3000 |
+
+### Cycle (23:38–23:41) — OFF-HOURS
+- Stocks: 38 in watchlist (33 priced, 5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (off-hours dedup) | Volume spikes: 0 | Chain confirms: 0 (0 open findings last 15 min)
+- Regime: TIGHTENING | DXY: USD STABLE (99.27) | US10Y: RISK-OFF (4.59%) | CARRY_REGIME: FII_OUTFLOW_RISK (VND -0.33%) | fx_pressure: [] (DXY not STRENGTHENING) | pe_risk: [VCB,BID,CTG,VHM,VIC,MWG,FPT,GAS — large-cap watch only, no signals to escalate]
+- Adaptive thresholds: sigma=1.5σ | vol_mult=1.5x | downside_bias=true
+- Market CLOSED (Sat 2026-05-16 23:38 UTC weekend, off-hours 4h cycle, 1h after 22:38). All prices EOD from 2026-05-15 08:59 UTC (~39h stale). Cycle_id_current: 20260516-2330.
+
+**Off-hours duplicate guard — all prior anomalies remain SUPPRESSED (same EOD closing prices, already emitted this session):**
+- GAS +6.94% → ids=3215, 3219 (05-15)
+- GVR +4.28% → id=3222 (05-15)
+- HPG -1.85% → id=3220 (05-15)
+- MWG -2.61% → id=3240 (05-16 02:46)
+- VPB -3.84% → id=3237 (05-16 02:45)
+- ACB +2.19% → id=3252 (05-16 06:40)
+- HVN aviation price_confirmation → deferred (news-scout #3272, prices unchanged)
+No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ) sub-1.5σ; no signal.
+
+**Active inbound signals (since last cycle):**
+- news-scout #3282 (chain_catalyst, all, 23:23 UTC) NEW: Dragon Capital — 3 cú hích mở chu kỳ mới TTCK VN + dự báo tăng. impact_score=9, regime=TIGHTENING regime_adj=6.3, pillars=M2:neutral/COC:headwind/EPS:tailwind/POL:neutral, phase=recovery. Bullish thesis but FII outflow risk dampens (carry -0.33%, multiplier 0.7x). No watchlist ticker — broad market signal.
+- news-scout #3283 (chain_catalyst, GAS, 23:23 UTC) NEW: Brent $109 +2.56σ + USD/VND 26,350 → CPI/SBV tightening risk. GAS hưởng lợi, HVN/VJC chịu áp lực. impact_score=8, regime=TIGHTENING regime_adj=8.0, pillars=COC:headwind/POL:headwind, phase=slowdown. GAS EOD 89.400 unchanged (Fri close) — no intraday move; price_confirmation deferred until Monday open.
+- news-scout #3272 (HVN aviation) — still open, EOD unchanged, deferred.
+- news-scout #3276 (VIC/VHM/VRE Vingroup rally) — still open, EOD unchanged, deferred.
+
+**Macro / sector / supply chain:**
+- VN-Index: 1,921.60 (-0.20%) | Kinh Dịch: Khôn (2) — MUA tích cực (100%).
+- Sector rotation (1d only — N/A 5d, weekend): Oil/Gas +3.94% leader, Steel +1.95%, Chemicals +0.37%, Electric +0.05% | Banking -0.62%, Aviation -0.52%, Tech -0.52%, Retail -0.78%, Insurance -0.89%, Auto -1.57%. All 16 sectors STABLE (no fresh trading).
+- Supply chain: STABLE (BDI=1,400, no disruptions) | Energy grid: NORMAL (hydro ~70%, demand 53%) | Climate: May early heat-risk (IDC,KBC,GEG — KBC watchlisted, no anomaly).
+- Macro: Brent 109.26 (+2.56σ persistent), Gold 4,561.9 (-2.19σ), USD/VND 26,350 (HIGH, >25,500 pressure threshold). Open alerts (24h): 7 (HCM/ACV/VIC/FPT/REE news + Brent +2.56σ + Gold -2.19σ).
+- CARRY_REGIME=FII_OUTFLOW_RISK (NOT HOT_MONEY_INFLOW) → top-3 hot-money flag not applicable.
+
+**Cycle health:** MCP gateway stable. 7 successful tool calls (log_agent_work start, get_cycle_bootstrap, get_macro_snapshot, get_open_chain_findings, get_sector_rotation, get_supply_chain_exposure, get_climate_risk_signals, get_energy_grid_signals, get_market_snapshot). No errors.
+
+## Metrics (cycle 2026-05-16 23:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 0 |
+| signals_suppressed | 7 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3100 |
