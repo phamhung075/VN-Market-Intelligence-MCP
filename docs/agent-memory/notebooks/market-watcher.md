@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 00:41 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 01:42 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1825,3 +1825,31 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3200 |
+
+### Cycle (01:39–01:42)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (3 suppressed) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (news-scout #3232/#3233, regime=TIGHTENING, M2:headwind, COC:headwind; Brent 109.24 +2.56σ; gold -2.19σ) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY: FII_OUTFLOW_RISK | fx_pressure: [banking, realty] | pe_risk: []
+- Adaptive thresholds: sigma=1.5σ | vol_mult=1.5x | downside_bias=true
+- GAS +6.94% (2.24σ, 30d stddev ~3.10%, vol 498.6K) → SUPPRESSED: off-hours duplicate — same closing price (89,400 VND, 2026-05-15 08:59 UTC), signals already emitted this session (id=3215 at 07:41, id=3219 at 08:43 UTC May 15, ~17h ago <24h)
+- GVR +4.28% (1.73σ, 30d stddev ~2.48%, vol 675.5K) → SUPPRESSED: off-hours duplicate — id=3222 emitted 08:43 UTC May 15 (<24h)
+- HPG -1.85% (1.99σ, 30d stddev ~0.93%) → SUPPRESSED: off-hours duplicate — id=3220 emitted 08:43 UTC May 15 (<24h)
+- NVL +3.90% (1.08σ, 30d stddev ~3.60%) — sub-1.5σ threshold; not signalled
+- MWG -2.61% (est. ~0.9σ) — sub-threshold
+- Market CLOSED (Saturday 2026-05-16). All prices EOD closing values from 2026-05-15 08:59 UTC.
+- Macro: Brent 109.24 (+2.56σ HIGH macro alert), Gold 4,543.6 (-2.19σ — gold crashing on USD + yield surge). USD/VND 26,137. News: "cả USD, giá dầu và lợi suất cùng tăng mạnh".
+- Supply chain: STABLE (BDI=1,400, no disruptions). Climate: May heat risk (IDC,KBC,GEG — no watchlist impact). Energy: NORMAL (hydro ~70%, demand 53%).
+- Agent signals active: news-scout #3232 VIC (Vingroup "quá nóng", Dragon Capital valuation warning, impact=7); #3233 GAS (dầu khí hot money, Brent 109.24 +2.56σ, impact=8). Both TIGHTENING context.
+- Chain findings: 0 (last 15 min, confirmed)
+- Open alerts: 20 (MACRO HIGH×2, securities HIGH×4, GAS HIGH, VIC MEDIUM, REE MEDIUM×3, VPB MEDIUM, banking/realty LOW×multiple)
+- CARRY_REGIME=FII_OUTFLOW_RISK: khối ngoại bán ròng >1,000B VND (GAS); not HOT_MONEY_INFLOW — no hot_money_concentration check
+
+## Metrics (cycle 2026-05-16 01:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 3 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 5500 |
