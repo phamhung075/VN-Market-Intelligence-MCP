@@ -214,6 +214,25 @@ Soft sequencing dependency on 1920a–g (code can be written in parallel, but WO
 
 ---
 
+## [QA] Review Record
+- **Date:** 2026-05-16
+- **Verdict:** APPROVED
+- **Round:** 1
+- **Targeted tests (1920i — 23 tests):** 23 pass / 0 fail
+- **Regression tests (1352c + 1407b + 234-vps — 32 tests):** 32 pass / 0 fail
+- **All freshness files combined (55 tests):** 55 pass / 0 fail
+- **tsc:** 0 errors
+- **DDD:** PASS — domain/services/freshnessSlaChecker.ts has zero infrastructure imports
+- **Security:** PASS — no process.env, no hardcoded secrets, all SQL parameterized
+- **AC-1:** UNION ALL returns 12 signal type keys (TC-1b GREEN)
+- **AC-2:** Zero-row table returns -1 sentinel, no breach escalation fires (TC-2d: breaches=0)
+- **AC-3:** buildDailySummary coverage_pct = (seeded/12)*100 (TC-3c: 12/12=100%)
+- **AC-4:** Daily summary gate via _lastSummaryDate, resets per UTC day (resetSummaryGate() exported)
+- **AC-5:** Original 5 thresholds unchanged — price=10, bctc=120/120/360, news=30, sbv_fx=30, foreign_flow=10 (TC-5a–e GREEN)
+- **AC-6:** sla_breach_audit migration idempotent — sqlite_master detection + recreate-rename pattern confirmed in schema-system.ts:493-541
+
+---
+
 ## [Developer] Implementation Record
 - **Files modified:**
   - `apps/mcp-server/src/domain/services/freshnessSlaChecker.ts` — extended `SignalType` union (5→12), added 7 new entries to `DEFAULT_SLA_CONFIG`, updated `checkDataFreshnessSla` to include all 12 types with -1 sentinel skip guard (FR-4)

@@ -1,6 +1,44 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c138 — 1920d APPROVED
+**Last updated:** 2026-05-16 | **Session:** c139 — 1920i APPROVED
+
+## Session 2026-05-16 c139 — 1920i-freshness-coverage-extension
+
+### TASK REPORT — 1920i (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FEATURE (freshnessSlaMonitor extended 5→12 signal types)
+```
+
+#### Pipeline
+
+- Targeted tests (1920i — 23 tests): 23 pass / 0 fail
+- Regression (1352c + 1407b + 234-vps — 32 tests): 32 pass / 0 fail
+- All freshness files combined: 55 pass / 0 fail
+- Full suite: 9414 pass / 32 fail (32 pre-existing, zero regressions from 1920i)
+- tsc: 0 errors
+- DDD: PASS — freshnessSlaChecker.ts zero infrastructure imports
+- Security: PASS — no process.env, no hardcoded credentials, all SQL parameterized
+
+#### AC Verification
+
+- AC-1: UNION ALL 12 entries in querySignalAges — TC-1b GREEN
+- AC-2: -1 sentinel for zero-row tables → no breach escalation — TC-2d: breaches=0
+- AC-3: coverage_pct = (seeded/12)*100 in buildDailySummary — TC-3c: 12/12=100%
+- AC-4: _lastSummaryDate gate (once per UTC day) + resetSummaryGate() test helper
+- AC-5: 5 original thresholds unchanged — TC-5a–e GREEN
+- AC-6: Idempotent schema migration via sqlite_master + recreate-rename pattern
+
+#### Notes
+
+- dataFreshnessTools.ts uses 0 (not -1) as default for new types in signalAges initializer — this is not a bug; MCP tool has separate per-query null handling; scope excluded FR-4 sentinel from MCP tool layer (not flagged as blocking)
+- Sprint 1920 DB Pipeline Completeness milestone: all tasks (a–i) now QA-Approved
+
+---
+
+
 
 ## Session 2026-05-16 c138 — 1920d-broker-sanctions-quarterly
 
