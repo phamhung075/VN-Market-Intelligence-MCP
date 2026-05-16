@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c142",
+  "currentSprint": "c143",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-16T21:43:16Z",
-  "updatedBy": "dev-team-c142",
-  "lastCompleted": "Cycle 142: 1909c DONE — DIG Q4-2025 BCTC reparsed (confidence 0.625→0.6875, equity corrected, FA Layer 7 unblocked). Stale worktree removed. 6 Telegram reports resolved. Pipeline idle. Next eligible: 1862c-F (FIX-MEDIUM) at c143 if SSE clean."
+  "updatedAt": "2026-05-16T22:30:00Z",
+  "updatedBy": "developer-c143",
+  "lastCompleted": "Cycle 143: 1923a DONE — Investment clock case-mismatch fix (country 'Vietnam'→'vietnam', upsert expanded). TC1-4 GREEN, tsc 0 errors. get_investment_clock_phase now returns RECOVERY. 1913 closed STALE-RESOLVED."
 }

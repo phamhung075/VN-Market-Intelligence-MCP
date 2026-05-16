@@ -65,7 +65,7 @@ function readVietnamMacroIndicators(): MacroIndicatorsRow | null {
          ORDER BY fetched_at DESC
          LIMIT 1`,
       )
-      .get("Vietnam");
+      .get("vietnam");
     return row ?? null;
   } catch (err) {
     logger.warn("[get_investment_clock_phase] could not read macro_indicators", {

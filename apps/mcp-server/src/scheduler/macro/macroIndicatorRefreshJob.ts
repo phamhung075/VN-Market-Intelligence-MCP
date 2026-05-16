@@ -67,16 +67,32 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     // itself in the macro-service container) — left null here.
     // commodity_prices table (separate) receives oil/gold via commodityTrackerRefresh.
     try {
+      // Task 1923a: use lowercase 'vietnam' to match DB SSOT (country='vietnam').
+      // Macro snapshot provides interest_rate only (sbvRefinancingRate).
+      // manufacturing_pmi, cpi, gdp_growth, inflation_rate are not exposed by
+      // /macro/snapshot — guard with null-safe coalesce so existing DB values
+      // are preserved when the snapshot doesn't carry these fields.
       db.prepare(
         `INSERT INTO macro_indicators
-           (country, interest_rate, fetched_at, last_refresh_job)
-         VALUES (?, ?, datetime('now'), datetime('now'))
+           (country, interest_rate, manufacturing_pmi, cpi, gdp_growth, inflation_rate, fetched_at, last_refresh_job)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
          ON CONFLICT(country) DO UPDATE SET
-           interest_rate    = excluded.interest_rate,
+           interest_rate    = COALESCE(excluded.interest_rate,    interest_rate),
+           manufacturing_pmi = COALESCE(excluded.manufacturing_pmi, manufacturing_pmi),
+           cpi              = COALESCE(excluded.cpi,              cpi),
+           gdp_growth       = COALESCE(excluded.gdp_growth,       gdp_growth),
+           inflation_rate   = COALESCE(excluded.inflation_rate,   inflation_rate),
            fetched_at       = excluded.fetched_at,
            last_refresh_job = excluded.last_refresh_job`
-      ).run("Vietnam", snapshot.sbvRefinancingRate ?? null);
-      logger.info("[macro-refresh-job] macro_indicators upserted for Vietnam");
+      ).run(
+        "vietnam",
+        snapshot.sbvRefinancingRate ?? null,
+        null, // manufacturing_pmi — not in macro snapshot; preserved via COALESCE
+        null, // cpi              — not in macro snapshot; preserved via COALESCE
+        null, // gdp_growth       — not in macro snapshot; preserved via COALESCE
+        null, // inflation_rate   — not in macro snapshot; preserved via COALESCE
+      );
+      logger.info("[macro-refresh-job] macro_indicators upserted for vietnam");
     } catch (upsertErr) {
       // Non-fatal: log and continue — the Telegram notification still goes out
       logger.warn(

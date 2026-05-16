@@ -1,8 +1,19 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 20:02 UTC | **Sprint:** c140
+**Last updated:** 2026-05-16 22:04 UTC | **Sprint:** c143
 
 ## This session
+
+### Alert Cycle (22:02–22:04 UTC) — Off-Hours
+- Signals: 1 (urgent_news×1 HVN)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- HVN urgent_news conf=0.50, impact=9 (bearish — VNA cuts exec pay 40-50%) → below TIGHTENING base threshold 0.60 → Suppressed: below-threshold; Step 3b override skipped (no price_anomaly within 120 min for HVN)
+- Legal: CLEAR | Crisis: CLEAR | Market: CLOSED (off-hours 22:02 UTC)
+- Macro: Brent $109.26 (+2.56σ stale HIGH), Gold $4,561.90 (-2.19σ stale HIGH), USD/VND 26,350; 58 pending alerts (no new since 04:12 UTC)
+- Notes: Off-hours cycle, no MARKET dispatch (market closed). Next cycle: 00:04 UTC.
+- log_agent_work id=927
 
 ### Alert Cycle (20:02–20:02 UTC) — Off-Hours
 - Signals: 0 (no agent signals queued)
@@ -456,3 +467,11 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - Fired: 0 | Suppressed: 2 | MARKET: 0
 - ChainCatalyst: 0 fired | 0 suppressed | event_types: none
 - Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+
+### Alert Cycle (21:02–21:04 UTC)
+- Signals: agent_bus=0 | price_alerts=0 | legal_risk=0 | crisis=0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Market: CLOSED (Saturday, off-hours 2h cycle) | Bootstrap retry: 1× (gateway connect refused → recovered)
+- log_agent_work id=923
