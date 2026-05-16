@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c116",
-  "activeTaskId": "1914-news-scout-dedup-api",
-  "nextAgent": "qa-responder",
-  "nextPrompt": "1914 awaiting QA verdict (commits 93b6b63d + eefa1346 on main, AC-1..6 per TASK_1914.md). PO c116 decision: NOTHING new (ship-completion drive). 1913 escalated URGENT-F1 -> BLOCKING-F1 + TNB invoked (signal 20260515T012600Z-1913-tnb-blocking-escalation.json). 1897b HEAD.lock structural cure remains user-action.",
-  "updatedAt": "2026-05-15T01:26:00Z",
-  "updatedBy": "po-c116",
-  "lastCompleted": "Cycle 116: PREFLIGHT HEAD.lock removed (age=4858s, pid_alive=false, com.apple Spotlight 43751 orphan FD — recurrence #42+). Signal 1914-architect-to-pm marked skipped-stale (task post-design). 1913 BLOCKING-F1 escalation + TNB signal dropped. WIP=1/2. PO EXIT no new sprint."
+  "currentSprint": "c132",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-16T00:31:43Z",
+  "updatedBy": "dev-team-c132",
+  "lastCompleted": "Cycle 132: PREFLIGHT clean (no HEAD.lock). 16 bug-escalation signals drained (all Docker DNS 1919 root cause, RESOLVED). TNB audit ACK'd. CLEAN-c130-worktree-branches DONE (8 branches + 6 worktrees cleaned). Sprint 1920 COMPLETE. No new sprint — 1862c-F gated on 1862c-E user-action, fa-shape-guard deferred (cycle 3 unobservable), 1909c DIG reparse pending ops. Monitoring: alert-precision HOLD (<550 threshold), fa-shape-guard DEFER, 1909c DIG FAIL (confidence 63%)."
 }

@@ -1,7 +1,0 @@
-{
-  "type": "bug-escalation",
-  "agent": "market-watcher",
-  "timestamp": "2026-05-15T23:38:00Z",
-  "error": "MCP server vn-market not responding after 1 retry (5s gap). Bootstrap failed. Cycle aborted per fail-loud protocol.",
-  "cycle_utc": "2026-05-15 23:38 UTC"
-}

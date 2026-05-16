@@ -1,5 +1,33 @@
 # PO Notebook
 
+## Last updated: 2026-05-16T00:31:43Z · Sprint: 1920 COMPLETE — c132 idle cycle
+
+### c132 session summary
+
+**PREFLIGHT:** HEAD.lock absent. Worktree prune ran (no output). T6: 6 stale worktree locks (all 2026-05-14, pid 83362 dead) — removed.
+
+**Signals drained:** 16 signals, all `bug-escalation` Docker DNS (1919 root cause). All moved to processed/. Fingerprints recorded in signals.db.
+
+**TNB audit ACK (2026-05-16T00:31:43Z):** Direction IMPROVING. 1919 RESOLVED (Docker force-restarted c131). 1913 still USER ACTION. DIG Q4-2025 still corrupted (confidence 63%, equity=absurd — 1908c fix NOT yet triggered for DIG via bctcReparseJob). VNM Q4-2025 PASS (confidence 94%).
+
+**Channel audit:** WORK/BUG/MARKET all showed "no new reports" — expected, agents were blocked c130/c131/c132-early by Docker DNS. System uptime 5m49s (newly restarted). Only vnstock RATE_LIMITED warnings in system errors (benign).
+
+**CLEAN-c130-worktrees DONE:** 8 branches deleted, 6 worktrees removed (stale locks cleared first). AC-1/2/3/4 PASS.
+
+**Monitoring checks:**
+- alert-precision: HOLD — production count unknown (local dev DB ~60 total). 1919 resolved so next live session will generate data. Still < 550 threshold.
+- fa-shape-guard: cycle 3 NOT yet observable (all FA sessions blocked by 1919). Defer until next FA session post-restart.
+- 1909c-reparse: VNM=PASS, DIG=FAIL. Added ops action note to TASKS.md backlog.
+
+**PO decision:** NOTHING new to dispatch. No sprint — all dev work blocked (1862c-F gated on 1862c-E user-action Cloudflare dashboard, fa-shape-guard needs FA session first, 1909c needs ops not dev). Pipeline-state.json updated to idle/c132.
+
+### Carry-over for next cycle
+- 1909c DIG reparse: ops trigger bctcReparseJob for DIG, then verify confidence.
+- fa-shape-guard: watch FA 23:00 UTC first session post-1919. If REGIME-mismatch → spawn `1921a-fa-shape-guard-propagate`.
+- alert-precision: watch for unknowns > 550 on next live agent cycle.
+- 1862c-F: ready when 1862c-E-dashboard (Cloudflare user-action) confirmed stable 5 cycles.
+- 1907a digest-predict: 5-day+ silence. Next PO cycle: assign owner (ops investigation).
+
 ## Last updated: 2026-05-15T21:04Z · Sprint: 1920 ARMED (DB Pipeline Completeness)
 
 ### This session — user-directed sprint kickoff

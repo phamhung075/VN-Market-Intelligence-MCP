@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway unreachable after retry (get_cycle_bootstrap + log_agent_work both failed × 2). send_telegram also unavailable. Cycle blocked.",
-  "priority": "high",
-  "createdAt": "2026-05-16T00:02:00Z"
-}

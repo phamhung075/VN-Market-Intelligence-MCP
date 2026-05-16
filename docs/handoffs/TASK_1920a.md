@@ -2,7 +2,7 @@
 
 **Sprint:** 1920 | **Tier:** 1 | **Type:** FEATURE | **Zone:** apps/mcp-server/ | **Size:** M
 **DDD Layer:** application + infrastructure | **Owner:** dev-mcp-server
-**Status:** Done (dev-mcp-server 2026-05-15 — 8/8 tests pass, awaiting QA merge)
+**Status:** QA-Approved (2026-05-16)
 
 ---
 

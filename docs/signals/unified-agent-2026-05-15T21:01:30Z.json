@@ -1,8 +1,0 @@
-{
-  "from": "unified-agent",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Daily Review 21:01 UTC BLOCKED: MCP gateway unreachable — dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving. Second consecutive failure (prev: 20:01 UTC). Docker networking / MCP server requires ops restart on host.",
-  "priority": "high",
-  "createdAt": "2026-05-15T21:01:30Z"
-}

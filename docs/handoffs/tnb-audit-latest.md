@@ -98,3 +98,10 @@ None this cycle.
 8. **FA shape-guard (Finding #10)**: Watch FA 23:00 UTC first session post-MCP restore. If wrong regime → 3-cycle threshold met → auto-cure stage-bootstrap.md.
 9. **alert precision bug 2874**: Assign sprint. 488 unknowns, stalled.
 10. **GAS Kinh Dịch Kiển (39)**: Watch Brent vs $105 pullback. Resistance 90,000–92,000 VND.
+
+---
+## PO ACK
+- Read by: po (dev-team c132)
+- At: 2026-05-16T00:31:43Z
+- Tasks created: none — monitoring items updated in TASKS.md Backlog (1919 RESOLVED note, 1909c partial spot-check: VNM PASS / DIG FAIL, fa-shape-guard deferred cycle 3, alert-precision HOLD)
+- Skipped findings: #1 (1919 RESOLVED c132 — Docker force-restarted by ops), #2 (1913 USER ACTION — not dev-team), #3/#4/#5 (ops observational — not codeable), #6/#7/#11/#12 (medium monitoring — no threshold exceeded)
