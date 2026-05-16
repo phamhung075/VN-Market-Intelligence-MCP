@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c139",
+  "currentSprint": "c140",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-16T06:15:00Z",
-  "updatedBy": "dev-team-c139",
-  "lastCompleted": "Cycle 139: DB pipeline sprint complete. Tasks 1920j/k/l DONE (QA approved). Commits a43ae291+5ab632e1. Fixed: getMacroSnapshot URL/method/DTO, sbvRatesJob cron, ohlcvBackfill watchlist fallback, kinhdich market-hours gate removed, sscInsider VPS proxy, vnstockBridge v4 API, vps-proxy-server 3 new routes, docker-compose 4 new env vars, Dockerfile vnstock>=4.0.3. Docker rebuild pending (ops agent). VPS deploy in progress. Monitoring: alert-precision HOLD, fa-shape-guard DEFER, 1909c DIG reparse pending. User-action blockers: 1913/1897b/1907a."
+  "updatedAt": "2026-05-16T06:45:00Z",
+  "updatedBy": "dev-team-c140",
+  "lastCompleted": "Cycle 140: 3 MCP gateway signals drained (all 1913 root cause). 1909c DIG reparse \u2014 record not found, no stale data present, task resolved. DB pipeline sprint 1920j/k/l fully shipped. User-action blockers: 1913/1897b/1907a/1862c-E remain."
 }

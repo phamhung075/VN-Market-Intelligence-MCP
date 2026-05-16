@@ -8,5 +8,9 @@
   "affected_flow": "/ask queue processing",
   "impact": "All pending /ask questions blocked until MCP server restored",
   "action_required": "Infrastructure team: verify vn-market MCP server registration and Claude Code MCP integration",
-  "createdAt": "2026-05-16T00:00:00Z"
+  "createdAt": "2026-05-16T00:00:00Z",
+  "fingerprint": "b8fbc9006f1cd695b344370b967f2dcd8fc4b4cada5df067801ee925d7a94443",
+  "processedAt": "20260516T164208Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }

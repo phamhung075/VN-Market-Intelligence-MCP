@@ -1488,3 +1488,20 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | token_estimate | ~450 |
 
 ---
+
+### Q&A Batch (17:47–17:47 UTC)
+- BLOCKED at step 1: MCP gateway unreachable (vn-market MCP server at https://zenmidi.com/mcp not accessible from automated scheduled task context — requires live MCP endpoint)
+- consecutive_empty_cycles: 2 (unchanged — blocked cycles do not increment) | backoff_until: none
+
+## Metrics (cycle 2026-05-16 17:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~550 |
+
+---

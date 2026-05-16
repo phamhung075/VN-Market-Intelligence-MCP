@@ -1,8 +1,28 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 07:03 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 18:02 UTC | **Sprint:** c140
 
 ## This session
+
+### Alert Cycle (18:02–18:02 UTC) — Off-Hours
+- Signals: 7 (news_mention×5, macro_deviation×2)
+- Fired: 0 | Suppressed: 7 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Alerts processed: HCM (news, securities/AI), ACV (news, HR), VIC (news, Vingroup bullish), FPT (news, US tech impact), Brent (+2.56σ HIGH), Gold (-2.19σ HIGH), REE (news, FLC aviation)
+- Suppressed (all): Market CLOSED (outside 02:00–08:59 UTC) — alerts below regime thresholds in off-hours. TIGHTENING regime conf≥0.85 required; news mentions insufficient. Macro deviations logged but suppressed (off-hours prudence).
+- Legal: CLEAR | Crisis: CLEAR | Market: CLOSED
+- log_agent_work id=918
+
+### Alert Cycle (17:02–17:02 UTC) — DIAGNOSTIC
+- **Status**: MCP gateway unreachable
+- **Context**: Off-hours cycle (Saturday 17:02 UTC, 10h since last successful cycle at 07:03 UTC)
+- **Attempts**: Bootstrap call failed — unable to establish MCP connection to zenmidi.com/mcp
+- **Signals**: Unable to fetch (0 queued)
+- **Fired**: 0 | Suppressed: 0 | MARKET: 0
+- **Regime**: UNKNOWN (bootstrap unavailable)
+- **Actions**: Cycle skipped per fail-loud protocol. This session logged for dev team diagnostics. Alerts held pending MCP restoration.
+- **Note**: Persistent infrastructure issue since 2026-05-14. Dev team (Sprint c140) has logged root cause 1913 — MCP gateway DNS resolution failures. Status: `host.docker.internal` lookup timeout. Previous cycle at 07:03 UTC was last successful (2 suppressed signals in TIGHTENING regime). Watchlist: 30 stocks monitored; last carry regime FII_OUTFLOW_RISK -0.33%.
 
 ### Alert Cycle (02:00–02:01 UTC) — BLOCKED
 - **Status**: BLOCKED at bootstrap stage
