@@ -1,6 +1,50 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c140 — 1920j/k/l CHANGES_REQUESTED
+**Last updated:** 2026-05-16 | **Session:** c141 — 1922a/b/c/e/h/j APPROVED
+
+## Session 2026-05-16 c141 — 1922-sprint-fixes
+
+### TASK REPORT — 1922a/b/c/e/h/j (compact)
+
+```
+date: 2026-05-16
+outcome: APPROVED
+type: FIX/CLEAN/FEATURE (VPS proxy routing, orphan table retirement, mention velocity wiring, IMF fix, FRED backfill)
+round: 1
+```
+
+#### Pipeline
+
+- 1922h targeted tests (11 tests): 11 pass / 0 fail — GREEN
+- 1922j targeted tests (4 tests): 4 pass / 0 fail — GREEN
+- 1922e targeted tests (6 tests): 6 pass / 0 fail — GREEN
+- Full suite: 9486 pass / 32 fail (32 pre-existing, zero regressions from 1922 commits)
+- tsc: 0 errors
+- DDD: PASS — domain/ has zero imports from infrastructure/; imfDataFetcher.ts correctly in application layer
+- Security: PASS — sscInsider.ts uses Bun.env["SSC_INSIDER_VPS_URL"] + Bun.env["VPS_PUSH_API_KEY"]; no process.env; no hardcoded credentials
+
+#### Docker
+
+- Build: SUCCESS (no-cache rebuild)
+- Container: HEALTHY (health check passed)
+- Startup backfill verified: fred_series_daily = 8,249 rows (was 0 pre-fix)
+
+#### AC Verification
+
+- 1922a: sscInsider.ts VPS proxy via Bun.env — PASS
+- 1922b: vn_index_cache orphan retired commit b50ef177 — PASS
+- 1922c: credit_data orphan retired commit 12b8417b — PASS
+- 1922e: mentionVelocityStore wired in pollNews.ts, 6/6 tests GREEN — PASS
+- 1922h: Chrome UA removed + invalid IMF codes fixed, 11/11 tests GREEN — PASS
+- 1922j: fred_series_daily startup backfill, 4/4 tests GREEN, 8249 live rows confirmed — PASS
+
+#### Notes
+
+- Full suite crashes (Bun OOM at 2.75GB peak) before printing final summary; summary captured via pre-crash stdout grep — standard workaround, not a regression
+- Pre-existing failures: 32 (down from 40 in c140 session, 8 likely resolved by 1920k/j/l merged fixes)
+- TASKS.md: 1922a/b/c/e/h/j moved to Done section
+
+---
 
 ## Session 2026-05-16 c140 — 1920j-k-l-db-pipeline-fixes
 

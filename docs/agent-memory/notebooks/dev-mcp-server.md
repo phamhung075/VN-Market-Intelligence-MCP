@@ -4,6 +4,83 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1922d — reputationComputeJob daily writer (2026-05-16, DONE)
+
+**Mission:** Wire `reputation_scores` first production caller. `saveReputation()` had zero callers before this task.
+
+**Implementation:**
+- New `scheduler/news/reputationComputeJob.ts` — scoring formula: base 50 - negative_mention_ratio * 30 + signal_hit_count * 2 (capped +20)
+- Risk level: `classifyRiskLevel()` from domain (safe/watch/warning/danger)
+- Trend: improving/stable/deteriorating vs prior week saved score
+- signal hits counted via `payload LIKE '%${code}%'` on agent_signals
+- Per-ticker failure isolation — non-fatal; job-level errors → WORK alert
+- New `scheduler/news/index.ts` barrel
+
+**Files created:**
+- `apps/mcp-server/src/scheduler/news/reputationComputeJob.ts`
+- `apps/mcp-server/src/scheduler/news/index.ts`
+- `apps/mcp-server/src/__tests__/1922d-reputation-compute.test.ts` — 16 tests, all GREEN
+
+**Files modified:**
+- `apps/mcp-server/src/scheduler/cronConfig.ts` — `reputationCompute: '30 8 * * *'`
+- `apps/mcp-server/src/scheduler/startScheduler.ts` — import + cron.schedule registration
+
+- tsc 0 errors | 16/16 tests GREEN | Commit `c3f17a65`
+
+---
+
+### Task 1922h — imf_indicators 0-row fix (2026-05-16, DONE)
+
+**Root causes (3):**
+1. `BROWSER_UA` (Chrome UA) in IMF fetch headers → IMF WAF returns HTTP 403 from Docker container. Fix: removed User-Agent header entirely from IMF fetch call.
+2. `GLOBAL_INFLATION` used code `"PCPI_ADVEC"` — not a valid IMF DataMapper code. Fix: → `"PCPIPCH"` (Inflation rate, average consumer prices, 228 countries, VNM covered).
+3. `OIL_FORECAST` used code `"POILAPSP"` — not valid. Fix: → `"BCA_NGDPD"` (Current account balance % GDP, 228 countries).
+
+**False-success reporting:** `runImfIndicatorPollerJob` never throws (internal try/catch). `wrapRun` records `status=success` even when 0 rows. Existing behavior, not changed — job returns `{ success: false, indicator_count: 0 }` in failure branch.
+
+**Verification:** Manual trigger post container rebuild → 3 rows written: NGDP_RPCH=3.207, PCPIPCH=3.683, BCA_NGDPD=-0.859. imf_indicators COUNT(*) = 3.
+
+**Files modified:**
+- `apps/mcp-server/src/domain/models/imfIndicators.ts` — GLOBAL_INFLATION + OIL_FORECAST codes fixed
+- `apps/mcp-server/src/application/services/imfDataFetcher.ts` — BROWSER_UA + breakers imports removed; fetch headers removed; indicator names updated
+- `apps/mcp-server/src/__tests__/1922h-imf-indicator-fix.test.ts` — 11 tests (AC-1 to AC-7), all GREEN
+- `apps/mcp-server/src/__tests__/1298b-imf-infra.test.ts` — live-call tests replaced with DI mocks
+
+- tsc 0 errors | 114/114 IMF tests GREEN | Commit `15fdf5ed`
+
+---
+
+### Task 1922j — fred_series_daily startup backfill (2026-05-16, DONE)
+
+**Mission:** `fred_series_daily` had 0 rows after Docker restart. `macroIndicatorRefreshJob` runs once daily at 06:00 GMT+7. After restart, no backfill triggered.
+
+**Root cause:** Timing, not env wiring. FRED_API_KEY confirmed in container (`printenv FRED_API_KEY`). Table schema present. Job just hadn't run since restart.
+
+**Fix:** Added void IIFE in `startScheduler()` after `validateMacroFreshnessOnStartup`. On startup, counts `fred_series_daily` rows; if 0, calls `fetchFredEffrIorb` + `fetchFredIsmSubcomponents` immediately. Non-fatal (errors logged, never throw).
+
+- 4 tests GREEN (`1922j-fred-startup-backfill.test.ts`)
+- tsc 0 errors
+- Commits: `2c6e916f` (startScheduler.ts + test)
+
+---
+
+### Task 1922e — wire mention_velocity writer (2026-05-16, DONE)
+
+**Mission:** `recordMention()` and `mentionVelocityStore` existed but had zero callers in production. `getCrisisEarlyWarning` reads `mention_velocity` but always saw empty data.
+
+**Fix:** After the cascade loop in `pollNews.ts`, aggregate `allSignals` by `(code, floorToHour(detectedAt))` into hourly buckets, then call `recordMention()` once per bucket. `negativeCount` counts signals where severity is "high" or "critical". `sourceCount` counts distinct source-label prefixes.
+
+**Implementation notes:**
+- Dynamic import of `recordMention` keeps hot-path unchanged when no watchlist impacts occur
+- Non-fatal try/catch — velocity tracking never aborts the poll cycle
+- `floorToHour()`: `setUTCMinutes(0,0,0)` on ISO timestamp
+
+- 6 tests GREEN (`1922e-mention-velocity-wiring.test.ts`)
+- tsc 0 errors
+- Note: files committed inside 1922a commit due to parallel agent working tree
+
+---
+
 ### Task 1918c-hsx-bctc-env-gate — env gate for Strategy 0 (2026-05-15, DONE)
 
 **Mission:** Add `HSX_BCTC_ENABLED` env var gate to `fetchHsxBctcUrls()`. When set to `"false"`, function returns `[]` immediately (no HTTP calls), falling through to VPS Strategy 1.

@@ -1522,3 +1522,30 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | token_estimate | ~450 |
 
 ---
+
+### Q&A Batch (19:47–19:47 UTC)
+- BLOCKED at step 1: MCP gateway unreachable from scheduled task context (no connector tools available in automation runner)
+- consecutive_empty_cycles: 3 (unchanged — blocked cycles do not increment) | backoff_until: none
+
+## Metrics (cycle 2026-05-16 19:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~200 |
+
+---
+
+## System Note (2026-05-16 19:47:37 UTC)
+
+**Issue:** QA Responder scheduled task cannot access vn-market MCP server in automated context. The MCP gateway at https://zenmidi.com/mcp requires a live Cowork or Claude Desktop session with the connector configured. Scheduled automation cannot directly invoke MCP tools.
+
+**Status:** Queue checking suspended until MCP connectivity is restored. Backoff counter remains at 3 (did not increment during blocked cycle).
+
+**Recommendation:** Either:
+1. Run QA Responder from Claude Desktop (interactive) or Cowork agent (cloud) instead of scheduled task runner
+2. Expose MCP via local HTTP endpoint that scheduled task runner can reach
