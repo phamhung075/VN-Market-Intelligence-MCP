@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-16 04:21 UTC | **Status:** OK
+**Last updated:** 2026-05-16 06:21 UTC | **Status:** OK
+
+### Cycle (06:19–06:21 UTC)
+- Items: 20 | Impacts: 5 | Signals: [urgent_news#3250/HVN, chain_catalyst#3251/trade_war] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: 1 (VIC Dragon Capital bullish, regime_adj=6.3 < threshold 7.0)
+- Key: HVN lương lãnh đạo -40-50% bearish (regime_adj=10, 2nd cycle — prior #3247 expired); trade_war chain_catalyst Shark Phú survival auction US buyers squeezing VN exporters (regime_adj=10); VIC Dragon Capital $2B re-buy suppressed (below TIGHTENING threshold); Brent $109 dedup vs #3248; Gold -2.1% no spike catalyst
+- Market: CLOSED (Sat off-hours cycle)
 
 ### Cycle (04:19–04:21 UTC)
 - Items: 20 | Impacts: 5 | Signals: [urgent_news#3246/VIC, urgent_news#3247/HVN, chain_catalyst#3248/macro] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW_RISK
