@@ -22,3 +22,7 @@
 - **FPT conviction 0.49 XEM XÉT GIẢM**: entry 72,900, -9.22% unrealized. Regime=TIGHTENING, no tailwind. Macro: US 10Y at 4.59% compresses PE. Hold reassessment until BCTC Q1 EPS data available.
 - **🔴 git HEAD.lock recurring**: VirtioFS H4 — `git_commit_retry` idiom active. Permanent F1 fix (Docker exclusion) pending user action `1897b-carry`.
 - **Macro snapshot** (2026-05-16 01:01 UTC): Brent $109.24 (tích cực GAS/PVD, áp lực HVN/VJC), Gold $4,543.60 (risk-off elevated), USD/VND 26,350 (áp lực hàng không/ô tô, tích cực HPG/VHC), US 10Y 4.59% (PE compression). Regime: TIGHTENING.
+
+### Prediction Review (03:00 UTC — late trigger / Sat)
+- Mode: PREDICTION_REVIEW | Claims: 1 open (unresolved) | Accuracy: N/A | Flags: none | Regime: TIGHTENING
+- Duplicate Saturday trigger at 03:00 UTC (no market flows on weekends). Confirmed same state as 01:00 cycle: 1 open geopolitical market "Will China invades Taiwan before GTA VI?" (endDate 2026-07-31, yesPrice 0.505), no active signals, no resolved predictions. No threshold breach. No action required.
