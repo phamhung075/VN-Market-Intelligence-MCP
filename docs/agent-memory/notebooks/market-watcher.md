@@ -1985,3 +1985,22 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5500 |
+
+### Cycle (16:39 UTC) — EOD BLOCKED
+- Status: BLOCKED at Step 0 (Bootstrap)
+- MCP gateway (vn-market) unreachable — Docker services offline
+- ⛔ Error: dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving
+- No watchlist processed; no ledger entries created; no MARKET EOD sent
+- Fail-loud protocol: bug signal dropped to docs/signals/market-watcher-2026-05-16T16-39-47Z.json
+- Action: Exit per error-boundary; escalate to dev team for Docker health check and restart
+
+## Metrics (cycle 2026-05-16 16:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 400 |
