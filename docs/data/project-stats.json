@@ -1,7 +1,7 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "po c113 — 1916 SPIKE COMPLETE 2026-05-14T20:38Z. Findings docs/spikes/SPIKE_1916-bctc-queue-enricher-scraper-broken.md confirmed all 4 enricher discovery strategies dead simultaneously (S0 VPS route never deployed + no X-API-Key; S1 iboard NXDOMAIN; S2 cafef migrated; S3 vietstock JS-rendered 404). Carry-forward FIX tasks queued: 1916a (CRITICAL multi-zone vps-scripts+apps/mcp-server, deadline 2026-05-15T02:00Z) + 1916b (HIGH apps/mcp-server, sequenced after 1916a). Original Cheerio-selector hypothesis FALSIFIED.",
+  "_lastRefreshedBy": "PM c132 — Sprint 1920 COMPLETE 2026-05-16. All 9 tasks (1920a-i + ARCH-1920) QA-approved. 8 new cron entries wired (2×vnstockFundamentals, 1×bondMaturity, 1×commodityTracker, 1×brokerSanctions, 1×signalQualityAudit, 1×intelligenceCycle + 1×freshnessSlaMonitor extension from 5→12 tables). cronJobCount 67→75. Production deployment pending 1919 Docker restart.",
   "lastUpdated": "2026-05-14",
   "currentSprint": 1912,
   "previousSprint": {
@@ -22,7 +22,7 @@
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
   "toolCount": 140,
   "schedulerFileCount": 65,
-  "cronJobCount": 67,
+  "cronJobCount": 75,
   "knowledgeFileCount": 25,
   "devAgentCount": 17,
   "analysisAgentCount": 9,

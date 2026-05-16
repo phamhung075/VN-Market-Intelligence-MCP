@@ -1,6 +1,6 @@
-## Sprint 1920 — DB PIPELINE COMPLETENESS (active)
+## Sprint 1920 — DB PIPELINE COMPLETENESS (COMPLETE)
 
-**Status:** Active | **Scheduled:** 2026-05-15 | **Theme:** Every table feeds Cowork analysis
+**Status:** COMPLETE | **Closed:** 2026-05-16 | **Theme:** Every table feeds Cowork analysis
 
 # Goal
 
