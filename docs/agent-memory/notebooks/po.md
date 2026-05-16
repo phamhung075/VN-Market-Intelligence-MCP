@@ -1,38 +1,40 @@
 # PO Notebook
 
-## Last updated: 2026-05-16T05:51:01Z · Cycle: c137 — NOTHING (Docker DNS 2x HOLD, no codeable work)
+## Last updated: 2026-05-16T15:43:12Z · Cycle: c138 — BATCH(2 dispatch + 1 QA-gate) for in-flight DB sprint work
 
-### c137 session summary
+### c138 session summary
 
-**PREFLIGHT (from router):** pendingSignals=[2 bug-escalation Docker DNS — both already resolved by ops at 05:48 UTC, ops notebook bea2bbda]. WIP=0. TNB c61 ACK'd c135 still current (no new file). MCP gateway 1913 BLOCKING-F1 → channel audit MUST be skipped. Worktree `worktree-agent-aa8dd0061c8780417` locked by live parent session pid 93207 (code already on main as `2031d8b8`) → CLEAN skipped this cycle.
+**PREFLIGHT (from router):** pendingSignals=[1 alert-commander bug-escalation 05:02 UTC MCP gateway unreachable]. Signal IS occurrence #2 of 1919 Docker DNS (already resolved by ops 05:48 UTC, file `2026-05-16T054806Z-1919-recurrence-resolved.json`). Pattern count: 2/3 in ~3.5h. NOT a new task. NOT escalated to architect yet.
 
-**Signal triage (Step 0-SIG):** Both signals are post-resolution bug reports from incident already cured by ops (Docker Desktop force-kill + restart). No PO action — signals are observational, not actionable.
+**Major discovery:** Working tree contains substantial uncommitted DB sprint work (8 modified + 2 new files, ~219 inserts):
+- `clients.ts` (getMacroSnapshot DTO realigned) — unblocks fred_series_daily + macro_indicators writes
+- `ohlcvBackfill.ts` + `ohlcvStartupProbe.ts` + `parallelServiceDispatcherJob.ts` (+ 3 test files updated) — OHLCV backfill trigger wiring
+- NEW `sbvRatesJob.ts` + tests — dedicated cron for sbv_rates table (previously silent)
+- `macroIndicatorRefreshJob.ts` write-path extended
+- Sprint goal `docs/SPRINT_GOAL.md` already covers 1920a-h (most DONE). The new work extends to 1920j/k/l.
 
-**Docker DNS recurrence pattern analysis:**
-- Incident #1 (c132): ~02:21 UTC 2026-05-16 → 1919 original
-- Incident #2 (c137): ~05:02 UTC 2026-05-16 → 1919 recurrence
-- Gap: ~2h41m. Same root cause (host.docker.internal DNS misbehaving on macOS Docker Desktop substrate).
-- Ops threshold: escalate at ≥3 in 24h.
-- Same substrate family as 1897b-carry (HEAD.lock Spotlight FD orphan) — macOS-specific Docker Desktop substrate issues that are not code-curable from this codebase.
+**TASKS.md updates this cycle:**
+- IN PROGRESS (WIP=2, at limit): `1920j-macro-snapshot-dto-alignment` (FIX HIGH) + `1920l-ohlcv-backfill-trigger` (FIX HIGH M)
+- REVIEW: `1920k-sbv-rates-dedicated-job` (FEATURE MEDIUM S — handoff to qa, work already on disk)
+- 1862c-F NOT promoted — pre-condition "5 cycles clean on 1862c-D/E" NOT met (1862c-E-dashboard still pending Cloudflare user action)
 
-**PO decision on Docker DNS pattern:** HOLD. Reasons: (a) 2-of-3 threshold not met; (b) both incidents auto-resolved by ops with no code-level fix possible (Docker Desktop / macOS networking is outside this codebase's reach); (c) creating a tracking-only task now would violate router guidance ("Do NOT create tracking-only tasks for incidents that ops already resolved with no dev action needed"). If 3rd occurrence within 24h → architect rethink on Docker Desktop reliability (cowork heartbeat, restart-watcher, alternative DNS strategy).
+**Signal triage (alert-commander 05:02 UTC):** ABSORBED into 1919-recurrence. Same root cause (Docker Desktop virtualization socket forwarding deadlock). Already resolved by ops. No new task created.
 
 **No-Task Guard sweep:**
-1. In Progress: empty. WIP=0.
-2. Todo: 1862c-E (OPS user-action — Cloudflare dashboard), 1862c-F (gated on 1862c-D/E "5 cycles clean") — neither dispatchable.
-3. Backlog open items all user-action / ops / monitoring: 1913 USER (BLOCKING-F1), 1907a OPS (CRITICAL), 1897b-carry USER (F1), 1909c-reparse OPS, alert-precision-488 MONITORING, fa-shape-guard-watch MONITORING (cycle 3/3 still unobservable — gateway blackout).
-4. No new TNB file. No new dispatchable backlog. No channel audit possible (gateway down).
+1. In Progress: 1920j + 1920l (NEW, just promoted).
+2. Todo: 1862c-E (user action), 1862c-F (gated) — neither dispatchable.
+3. Backlog blockers: 1913 USER (BLOCKING-F1), 1907a OPS CRITICAL, 1897b-carry USER (F1), 1909c-reparse OPS — all non-PO.
+4. No new TNB file. No channel audit (gateway 1913 BLOCKING-F1).
 
-**TASKS.md updates:** None (no new task; no row movements).
+**PO decision:** BATCH([1920j FIX HIGH, 1920l FIX HIGH]) → dev-mcp-server. 1920k → qa (QA-gate only). Worktree CLEAN skipped (parent session pid 93207 still live).
 
-**PO decision:** RETURN NOTHING. No codeable work. Channels effectively blackout (1913 BLOCKING-F1). Awaiting USER action on 1913 / 1897b / Cloudflare dashboard before any new code path opens.
+### Carry-over for next cycle (c139)
 
-### Carry-over for next cycle (c138)
-
-- **Docker DNS pattern watch:** Count = 2/3 in ~24h. Next router cycle that surfaces another `host.docker.internal` / MCP gateway unreachable bug-escalation signal triggers architect rethink (spawn ARCH brief for Docker Desktop reliability layer). Note: this is substrate, not codebase — likely recommendation will be observational/ops automation, not TS/Go code.
-- **1913 USER ACTION still blocking:** Channel audit, FA shape-guard cycle 3/3 observation, digest-predict revival — all gated on user refreshing Claude Desktop MCP server config / cowork gateway registration.
-- **1897b-carry F1 USER still blocking:** Docker .git/ exclude bundle. PREFLIGHT cure permanent policy (1906a) handles symptom; structural cure pending.
-- **1909c-reparse-validation OPS pending:** DIG Q4-2025 reparse trigger awaits ops session.
-- **WIP=0:** Two slots free whenever new dispatchable work appears.
-- **No worktree CLEAN this cycle:** `worktree-agent-aa8dd0061c8780417` locked by live parent session pid 93207. Already merged to main as `2031d8b8`. Reattempt CLEAN once parent session ends.
-- **No new TNB file:** c61 ACK'd c135 still current. Will re-read on next TNB write.
+- **Docker DNS pattern watch:** 2/3 in 24h. Next host.docker.internal bug-escalation triggers architect rethink. Substrate-level (macOS Docker Desktop), likely ops-automation not code.
+- **1913 USER ACTION still blocking:** Channel audit, FA shape-guard cycle 3/3, digest-predict revival — all gated.
+- **1897b-carry F1 USER still blocking:** Docker .git/ exclude.
+- **1909c-reparse OPS pending:** DIG Q4-2025 reparse trigger awaits ops session.
+- **WIP=2 (at limit):** 1920j + 1920l in flight. No new SPRINT-S/M dispatchable until one clears.
+- **1920k pending QA commit:** sbv_rates job uncommitted; qa needs to verify + commit + close.
+- **Worktree `worktree-agent-aa8dd0061c8780417`:** still locked pid 93207. Reattempt CLEAN next cycle if parent ends.
+- **SPRINT 1920 status:** Mostly DONE (a–i). j/k/l extension is closing-phase database completeness work.
