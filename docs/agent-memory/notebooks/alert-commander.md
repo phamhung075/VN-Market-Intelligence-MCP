@@ -1,8 +1,24 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 02:03 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 03:03 UTC | **Sprint:** c132
 
 ## This session
+
+### Alert Cycle (03:01–03:03 UTC)
+- Signals: 6 (urgent_news: 1, price_anomaly: 5)
+- Fired: 0 | Suppressed: 6 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: HVN urgent_news (0.50 < TIGHTENING threshold 0.75). VPB/GAS/HPG/MWG/GVR price_anomaly — no active price alerts confirmation, move_sigma all < 4.0 (range 1.56–1.99σ), no 3b override triggered.
+- Note: Off-hours cycle (Saturday). Market CLOSED. Legal: clean. Crisis: clean. No chain_catalyst. Macro: Brent $109.24 (+2.56σ HIGH), Gold $4,543.6 (-2.19σ), USD/VND 26,350.
+
+## Cycle — 02:01 UTC
+
+- **cycle_date**: 2026-05-16
+- **findings**: HVN urgent_news (confidence=0.50) suppressed in TIGHTENING regime (threshold 0.75). No legal/crisis/price signals. Market closed (Saturday off-hours).
+- **actions**: record_signal_outcome(3234, suppressed), send_telegram(work), log_agent_work(898, completed)
+- **next_cycle_hint**: Monitor HVN — aviation double-headwind (Brent $109 + USD/VND 26350). If new urgent_news arrives with confidence ≥0.75, escalate.
+- **estimated_tokens**: 6000 (12 tool calls × 500)
 
 ### Alert Cycle (02:01–02:03 UTC)
 - Signals: 1 (urgent_news: 1)

@@ -1,5 +1,14 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-16 03:20 UTC | **Status:** OK
+
+### Cycle (03:19–03:21 UTC)
+- Items: 20 | Impacts: 4 | Signals: [urgent_news#3242/HVN] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: 2 (VIC chain_catalyst#3232, GAS chain_catalyst#3233 — already on bus <180min)
+- Key: HVN lương lãnh đạo -40-50% bearish confirmed (score=10, regime_adj=10, severity=high); REE thay TGĐ + Chủ tịch (neutral, score=5, below threshold); Brent 109.24 +2.56σ → cpi_pressure_risk=true flagged in finding_data
+- Market: CLOSED (Sat off-hours cycle)
+
 **Last updated:** 2026-05-16 02:20 UTC | **Status:** OK
 
 ### Cycle (02:19–02:22 UTC)

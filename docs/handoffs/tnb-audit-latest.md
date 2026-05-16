@@ -106,3 +106,24 @@ Direction: **IMPROVING** (1919 Docker DNS RESOLVED c132; market-hours alert cycl
 8. **news-scout payload.detail**: Next live session — inspect payload.detail for pillars=/phase=/tier=. BUG escalation if still absent (6-cycle pattern).
 9. **alert precision bug 2874**: Assign sprint.
 10. **1913 TNB probe**: Next TNB session — attempt live MCP tool call to confirm 1913 status.
+
+---
+## PO ACK (c135)
+- Read by: po
+- At: 2026-05-16T03:25:57Z
+- Tasks created:
+  - `SPIKE_1921a-urgent-news-regime-enum-rethink` (Finding #2 — HIGH BUG → SPIKE) — code-evidence confirmed `UrgentNewsFindingDataSchema.regime` (signalTypes.ts:215) uses `[NEUTRAL, BULL, BEAR]` enum + wired to H3 regime-based confidence threshold logic (NEUTRAL≥0.60 / BULL≥0.50 / BEAR≥0.40 — see agentSignalTools.ts:271 + H3-urgent-news-regime-threshold.test.ts). macro_snapshot/alert-commander use disjoint enum `[TIGHTENING, NEUTRAL, EASING]` (monetary policy). Finding #2 frames this as a mismatch but the two enums encode different concepts (market-direction vs monetary-policy). Needs architect rethink: unify or rename + clarify semantics + migrate H3 thresholds. SPIKE timebox 120 min. zone: `apps/mcp-server/`.
+- Skipped findings (with reason):
+  - #1 (regime shift TIGHTENING) — tracking only, no action.
+  - #3 (digest-predict 5+ day silence) — already tracked as `1907a-digest-predict-silence` CRITICAL OPS in Backlog; same Claude Desktop external-trigger substrate as 1913. NOT codeable until USER refreshes MCP gateway config (1913 BLOCKING-F1). No new sprint action possible without F1.
+  - #4 (FA missing session 2026-05-15 23:00 UTC) — same Claude Desktop trigger substrate as 1913/1907a. FA cron unwired by design; runs on external trigger. Observational only. NOT a codeable dev task. Carry-forward to next cycle (verify FA fires post-1913-F1).
+  - #5 (FA Layer 7 OCF) — INFO: auto-cure already applied this cycle by TNB to stage-analyze.md. No action.
+  - #6 (FA Layer 8 `get_investment_clock_phase` not in package, 4 cycles) — code-evidence shows tool IS registered: agentBootstrap.ts L77 (financial_analyst[]), registry.ts L198, investmentClockTools.ts L92, stage-analyze.md L60 ("get_investment_clock_phase() → phase"). Same "not in package" wording + same 4-cycle pattern as 1913. CONCLUSION: gateway-side registration mismatch (Claude Desktop MCP config), same substrate as 1913 BLOCKING-F1. NOT a separate dev task; bundled into 1913.
+  - #7 (news-scout MCP instability 05:56 UTC) — MONITOR. Single occurrence, distinct from 1919. No promotion threshold yet (need ≥2 cycles repeat). Carry to c136 watch.
+  - #8 (payload.detail pillars/phase/tier unverified, 6 cycles) — auto-cure already applied c55 (stage-signals.md format string mandates pillars=/phase=/tier=). Verification gap is methodology audit limitation, not flow bug. No code action.
+  - #9 (BCTC Q1-2026 banking ACB/BID/CTG/EIB/MBB/VCB/VPB filing status unknown) — same FA-blocked-by-1913 substrate. report-analyzer 14:00 UTC missing same root cause (Claude Desktop trigger). Observational; FA next cycle will verify via `get_bctc_full` once 1913 unblocks. NOT codeable now.
+  - #10 (1909c DIG FAIL) — already tracked as `1909c-reparse-validation` HIGH OPS in Backlog. ops trigger pending; no new dispatch needed.
+  - #11 (alert-precision 488 unknowns) — already tracked as `alert-precision-488-unknowns` MEDIUM MONITORING in Backlog. Production count unknown; HOLD until > 550 promote threshold. No dispatch.
+  - #12/#13/#14 — known infra carry-forward (FII fii_type=UNKNOWN persistent; HEAD.lock 1897b USER ACTION; 1913 TNB MCP probe via Claude Code).
+- Direction confirmation: IMPROVING (per TNB) — 1919 resolved, cowork agents live, regime detection working with shape-guard.
+
