@@ -1,6 +1,49 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-16 | **Session:** c139 — 1920i APPROVED
+**Last updated:** 2026-05-16 | **Session:** c140 — 1920j/k/l CHANGES_REQUESTED
+
+## Session 2026-05-16 c140 — 1920j-k-l-db-pipeline-fixes
+
+### TASK REPORT — 1920j/k/l (compact)
+
+```
+date: 2026-05-16
+outcome: CHANGES_REQUESTED
+type: FIX (db population — macro snapshot DTO, sbvRatesJob, ohlcv backfill)
+round: 1
+```
+
+#### Pipeline
+
+- 1920j targeted tests (1352a — 8 tests): 8 pass / 0 fail — GREEN
+- 1920k sbvRatesJob tests: 4 pass / 1 fail — TC-5 FAIL
+- 1920l ohlcv backfill tests (1842b — 16 tests): 16 pass / 0 fail — GREEN
+- Full suite: 9457 pass / 40 fail (40 includes TC-5 new regression + pre-existing 39)
+- tsc: 1 error (TS2339 — Property 'sbvRatesRefresh' does not exist on type CRONS)
+- DDD: PASS — no domain imports from infrastructure in changed files
+- Security: PASS — no process.env, no hardcoded credentials, all SQL parameterized
+
+#### Blocking Issues
+
+1. `src/scheduler/cronConfig.ts:140` — `sbvRatesRefresh` key missing from CRONS object. Test TC-5 expects `CRONS.sbvRatesRefresh === '0 */4 * * *'`; received `undefined`. tsc error TS2339 at `sbvRatesJob.test.ts:129`.
+2. `src/scheduler/macro/index.ts:5` — `runSbvRatesRefreshJob` not exported from macro barrel. FR-6 requires export.
+3. `src/scheduler/startScheduler.ts` — `sbvRatesRefresh` job not registered. FR-6 requires `cron.schedule(CRONS.sbvRatesRefresh, ...)` + `jobRunRepo.wrapRun`.
+
+#### AC Verification
+
+- 1920j AC-1: tsc 0 errors — BLOCKED (1 error from 1920k)
+- 1920j AC-2: macroIndicatorRefreshJob 8 tests GREEN
+- 1920k AC-1: 5 sbvRatesJob tests — 4/5 GREEN, TC-5 FAIL
+- 1920k AC-2: tsc 0 — BLOCKED
+- 1920l AC-1: tsc 0 — BLOCKED; ohlcv backfill 1842b 16/16 GREEN
+
+#### Notes
+
+- All three blocking issues are 1920k omissions — single-file cronConfig.ts + 2 wiring entries
+- Pre-existing failures in full suite: 39 (same class as 1920i session — unchanged)
+- 1920j and 1920l logic is correct; blocked only by 1920k cronConfig omission
+
+---
 
 ## Session 2026-05-16 c139 — 1920i-freshness-coverage-extension
 
