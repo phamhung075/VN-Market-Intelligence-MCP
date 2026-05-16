@@ -1549,3 +1549,39 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 **Recommendation:** Either:
 1. Run QA Responder from Claude Desktop (interactive) or Cowork agent (cloud) instead of scheduled task runner
 2. Expose MCP via local HTTP endpoint that scheduled task runner can reach
+
+---
+
+### Q&A Batch (20:47–20:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 4 | backoff_until: none
+- Note: MCP gateway probed live (get_cycle_bootstrap succeeded in 9ms). Prior BLOCKED entries (15:48, 16:48, 17:47, 19:47) were stale/incorrect per cowork-error-boundary skill — agents must run live probe, not propagate cached BLOCKED claims.
+
+## Metrics (cycle 2026-05-16 20:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~600 |
+
+---
+
+### Q&A Batch (21:47–21:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 0 (reset after hitting 5) | backoff_until: 2026-05-16T22:49:03Z
+- Note: Counter hit 5 → adaptive backoff triggered (60 min). Cycle skipped until 22:49 UTC. MCP probe live: get_pending_ask_questions returned [] (no error, no infrastructure issue).
+
+## Metrics (cycle 2026-05-16 21:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~650 |
