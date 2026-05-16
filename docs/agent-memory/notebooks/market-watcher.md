@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 21:31 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 21:41 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2072,3 +2072,41 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (21:38–21:41) — OFF-HOURS
+- Stocks: 33 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 0 new (duplicate guard) | Volume spikes: 0 | Chain confirms: 0 (0 findings last 15 min)
+- Regime: TIGHTENING | DXY: USD STABLE (99.27) | US10Y: RISK-OFF (4.59%) | CARRY_REGIME: FII_OUTFLOW_RISK (VND -0.33%) | fx_pressure: [] (DXY not STRENGTHENING) | pe_risk: [VCB,BID,CTG,VHM,VIC,MWG,FPT,GAS — large-cap watch only, no signals to escalate]
+- Adaptive thresholds: sigma=1.5σ | vol_mult=1.5x | downside_bias=true
+- Market CLOSED (Saturday 2026-05-16 21:38 UTC, off-hours 4h cycle). All prices EOD from 2026-05-15 08:59 UTC (~37h stale). Cycle_id_current: 20260516-2130.
+
+**Off-hours duplicate guard — all prior anomalies remain SUPPRESSED (same EOD closing prices, already emitted this session):**
+- GAS +6.94% → ids=3215 (05-15 07:41), 3219 (05-15 08:43); dups 3238/3243 today
+- GVR +4.28% → id=3222 (05-15 08:43); dup 3241 today
+- HPG -1.85% → id=3220 (05-15 08:43); dup 3239 today
+- MWG -2.61% → id=3240 (05-16 02:46); dup 3244 today
+- VPB -3.84% → id=3237 (05-16 02:45)
+- ACB +2.19% → id=3252 (05-16 06:40)
+- NVL +3.90% (~0.87σ) → sub-1.5σ; no signal
+
+**Active inbound signals:**
+- news-scout #3272 (chain_catalyst, HVN): "Cú đúp áp lực ngành hàng không: VNA cắt lương + Brent $109 +2.56σ" — impact_score=9, regime=TIGHTENING, phase=slowdown, tier=equity. Aviation pressure (HVN/ACV) from fuel + FX + earnings. HVN/ACV EOD prices unchanged (21.350 / 44.000) — no intraday move to confirm, suppress price_confirmation per off-hours guard.
+
+**Macro / sector / supply chain:**
+- VN-Index: 1,921.60 (-0.20%) | Kinh Dịch: Khôn — MUA tích cực (100%).
+- Sector rotation (1d only — N/A 5d): Oil/Gas +3.94% leader, Steel +1.95%, Chemicals +0.37% | Banking -0.62%, Aviation -0.52%, Tech -0.52%, Retail -0.78%, Insurance -0.89%, Auto -1.57%. All 16 sectors STABLE.
+- Supply chain: STABLE (BDI=1,400, no disruptions) | Energy grid: NORMAL (hydro ~70%, demand 53%) | Climate: May early heat-risk (IDC,KBC,GEG — no watchlist impact).
+- Macro: Brent 109.26 (+2.56σ persistent), Gold 4,561.9 (-2.19σ), USD/VND 26,350 (HIGH, >25,500 pressure threshold). Open alerts (24h): 7 (HCM/ACV/VIC/FPT/REE news + Brent +2.56σ + Gold -2.19σ).
+- CARRY_REGIME=FII_OUTFLOW_RISK (NOT HOT_MONEY_INFLOW) → top-3 hot-money flag not applicable this cycle.
+
+**Cycle health:** MCP gateway recovered and stable (3 successful tool calls + 6 batch calls, no errors). Prior blocked cycles: 05:39, 16:39, 18:39, 19:40 (all gateway timeouts). Last successful: 20:42.
+
+## Metrics (cycle 2026-05-16 21:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 0 |
+| signals_suppressed | 7 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
