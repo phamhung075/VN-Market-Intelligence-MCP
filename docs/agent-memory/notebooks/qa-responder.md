@@ -1471,3 +1471,20 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | token_estimate | ~400 |
 
 ---
+
+### Q&A Batch (16:47–16:48 UTC)
+- BLOCKED at step 1: MCP gateway unreachable (vn-market MCP server not accessible from scheduled task runner — no local MCP endpoint available). Attempted via standard integration layer.
+- consecutive_empty_cycles: 2 (unchanged — blocked cycles do not increment) | backoff_until: none
+
+## Metrics (cycle 2026-05-16 16:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~450 |
+
+---
