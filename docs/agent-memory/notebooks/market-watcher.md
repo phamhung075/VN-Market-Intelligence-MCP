@@ -1,10 +1,11 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 18:39 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 19:40 UTC | **Sprint:** 2026
 
 ## Current state
 
-Last successful cycle: 2026-05-12 05:38 UTC (market OPEN, 26 stocks priced)
+Last successful cycle: 2026-05-16 06:40 UTC (market CLOSED, 31 stocks priced)
+Last attempted cycle: 2026-05-16 19:40 UTC — **BLOCKED** (MCP gateway unreachable)
 - 26/31 watchlist tickers priced (5 N/A: BDI,DLC,SIS,VDC,JSH)
 - VN-Index recovery to 1,920+ (bullish gap open vs Mon close 1,895.5)
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Oil elevated (Brent $105.11, US-Iran)
@@ -2024,3 +2025,24 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 400 |
+
+### Cycle (19:40–19:40) — BLOCKED
+
+**Status: MCP GATEWAY UNRESPONSIVE**
+- Timestamp: 2026-05-16 19:40 UTC
+- Cycle type: Off-hours (market CLOSED)
+- Probe result: `curl http://localhost:3000/health` → timeout (no response after 5s)
+- Action: Fail-loud protocol → bug-escalation signal posted, cycle halted
+- Previous failure: 2026-05-16 18:39 UTC (same gateway)
+- Total blocked cycles: 4 (05:39, 16:39, 18:39, 19:40)
+
+## Metrics (cycle 2026-05-16 19:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 0 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 50 |
