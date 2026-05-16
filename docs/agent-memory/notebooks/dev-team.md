@@ -1,5 +1,19 @@
 # dev-team notebook
 
+## Current state (c135 close — 2026-05-16T03:45Z)
+- Pipeline: 1 SPIKE dispatched and completed (SPIKE_1921a). Carry-forward: TASK_1921b (dev-mcp-server, size S, signal in inbox).
+- HEAD.lock #43 cured at PREFLIGHT (age=1360s, size=0B, no live pid).
+- TNB c61 processed: TIGHTENING regime confirmed, news-scout schema bug identified, FA auto-cure applied.
+- SPIKE_1921a finding: urgent_news Zod schema rejects TIGHTENING/EASING — silent signal loss every non-NEUTRAL cycle. Fix: migrate to TIGHTENING|NEUTRAL|EASING enum (Option B).
+- Signal in inbox: `20260516T033153Z-spike-1921a-complete.json` → picked up next cycle by PO for 1921b dispatch.
+
+## c135 cycle log
+- PREFLIGHT: HEAD.lock #43 cured (age=1360s ~23min, size=0B, no pid). Signals inbox empty.
+- Drain: skipped (inbox empty at start).
+- PO triage (c135): BATCH([SPIKE_1921a]) — TNB c61 triggered urgent_news regime enum rethink.
+- SPIKE_1921a (architect, worktree, 7001cdd9): Root cause confirmed — Zod schema `"NEUTRAL"|"BULL"|"BEAR"` rejects TIGHTENING/EASING values from news-scout. Option B recommended (migrate to TIGHTENING|NEUTRAL|EASING). 4 files to change, no DB migration. Carry-forward: TASK_1921b.
+- Post-cycle: no non-main branches. Spike signal dropped to inbox. Notebook committed.
+
 ## Current state (c134 close — 2026-05-16T02:30Z)
 - Pipeline: idle. No new signals, no in-progress tasks. PO returned NOTHING (2nd consecutive idle cycle).
 - HEAD.lock #42 cured at PREFLIGHT (age=2505s, size=0B, no live pid).
