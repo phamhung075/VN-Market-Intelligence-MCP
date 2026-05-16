@@ -1,8 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 06:03 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 07:03 UTC | **Sprint:** c132
 
 ## This session
+
+### Alert Cycle (07:01–07:03 UTC)
+- Signals: 2 (urgent_news: 1, price_anomaly: 1)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: HVN urgent_news id=3250 (conf=0.50 < TIGHTENING threshold 0.75, no price_anomaly override). ACB price_anomaly id=3252 (no active price alerts to confirm via get_alerts).
+- Note: Off-hours cycle (Saturday). Market CLOSED. Legal: clean. Crisis: clean. No chain_catalyst. Macro: Brent $109.26, Gold $4,561.90, USD/VND 26,350.
 
 ### Alert Cycle (05:02–05:02 UTC)
 - Signals: 0 (MCP unavailable)
