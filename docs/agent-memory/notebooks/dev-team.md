@@ -1,5 +1,21 @@
 # dev-team notebook
 
+## Current state (c136 close — 2026-05-16T04:52Z)
+- Pipeline: TASK_1921b SHIPPED + QA APPROVED. urgent_news regime enum fix delivered. Inbox empty.
+- HEAD.lock #44 cured at PREFLIGHT (age=2539s, size=0B, no live pid).
+- SPIKE_1921a carry-forward COMPLETE: `UrgentNewsFindingData.regime` migrated NEUTRAL|BULL|BEAR → TIGHTENING|NEUTRAL|EASING. Thresholds: TIGHTENING:0.60, NEUTRAL:0.55, EASING:0.50.
+- MCP gateway (1913 BLOCKING-F1): still unavailable (cycle 12+). All Telegram ops skipped.
+- Worktree `worktree-agent-aa8dd0061c8780417` harness-locked (T6 will clean next preflight).
+
+## c136 cycle log
+- PREFLIGHT: HEAD.lock #44 cured (age=2539s ~42min, size=0B, no pid). Signal in inbox: `20260516T033153Z-spike-1921a-complete.json` (SPIKE_1921a complete).
+- Drain: 1 signal processed (spike-complete, architect→po). Moved to processed/. DB fingerprint recorded.
+- PO triage (c136): BATCH([1921b FIX]) — spike-complete signal triggered TASK_1921b dispatch. No other actionable items. WIP=0→1.
+- TASK_1921b (dev-mcp-server, worktree `agent-aa8dd0061c8780417`, d4eb752a→cherry-pick 2031d8b8): All 4 files changed. H3 tests 15/0, 1293a 32/0. tsc 0 errors. DDD PASS. Security PASS.
+- QA gate: APPROVED 2031d8b8. All 7 ACs verified.
+- PM: TASKS.md updated (4cac7d44). 1921b DONE. SPIKE_1921a chain COMPLETE.
+- Post-cycle: no non-main branches (worktree harness-locked only). No new signals. Telegram skipped (1913).
+
 ## Current state (c135 close — 2026-05-16T03:45Z)
 - Pipeline: 1 SPIKE dispatched and completed (SPIKE_1921a). Carry-forward: TASK_1921b (dev-mcp-server, size S, signal in inbox).
 - HEAD.lock #43 cured at PREFLIGHT (age=1360s, size=0B, no live pid).
