@@ -58,6 +58,7 @@ import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
+import { runReputationComputeJob } from './news/index.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
@@ -785,6 +786,17 @@ export function startScheduler() {
     await jobRunRepo.wrapRun('brokerSanctionsSweep', async () => {
       const result = await runBrokerSanctionsJob()
       return { rowsWritten: result.rowsWritten }
+    })
+  }, { timezone: 'UTC' })
+
+  // Daily 08:30 UTC — Reputation compute job — task 1922d
+  // Iterates all watchlist tickers, aggregates 7-day mention_velocity + agent_signals,
+  // computes reputation score (0-100) and persists to reputation_scores table.
+  // Fail-loud to WORK channel on job-level error; per-ticker failures are non-fatal.
+  cron.schedule(CRONS.reputationCompute, async () => {
+    await jobRunRepo.wrapRun('reputationComputeJob', async () => {
+      const result = await runReputationComputeJob()
+      return { rowsWritten: result.tickersProcessed }
     })
   }, { timezone: 'UTC' })
 

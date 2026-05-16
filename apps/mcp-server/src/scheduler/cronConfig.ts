@@ -139,4 +139,6 @@ export const CRONS = {
   brokerSanctionsSweep:       Bun.env.CRON_BROKER_SANCTIONS                   ?? '0 8 25-31 * 5',
   /** sbvRatesRefresh — every 4 hours, SBV rates + USD/VND FX refresh (task 1920k) */
   sbvRatesRefresh:            Bun.env.CRON_SBV_RATES_REFRESH                   ?? '0 */4 * * *',
+  /** reputationComputeJob — daily 08:30 UTC, compute reputation scores for watchlist tickers (task 1922d) */
+  reputationCompute:          Bun.env.CRON_REPUTATION_COMPUTE                   ?? '30 8 * * *',
 }
