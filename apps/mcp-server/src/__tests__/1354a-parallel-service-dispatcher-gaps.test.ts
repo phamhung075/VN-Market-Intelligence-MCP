@@ -33,20 +33,19 @@ function makeDb(tickers: string[] = ["VCB", "HPG", "MWG"]): Database {
 // Happy-path stubs
 const okTA    = async () => ({ code: "VCB", trend: "TANG" as const });
 const okMacro = async () => ({
+  // Canonical fields (MacroSnapshotResponse v2 — aligned with macro-service DTO)
   vnIndex: 1280.5,
+  oilUsd: 85.3,
+  goldUsd: 2300.0,
+  usdVnd: 25100,
+  signals: [] as Array<{ indicator: string; value: number; unit: string; direction: string; impact: string }>,
+  fetchedAt: new Date().toISOString(),
+  // Legacy aliases preserved for backward compatibility
   brentPrice: 85.3,
   goldPrice: 2300.0,
-  usdVnd: 25100,
-  sbvOvernightRate: 4.5,
-  sbvRefinancingRate: 4.5,
-  sbvOfficialRate: 4.5,
-  scores: {
-    energySector: 0.5,
-    goldSector: 0.5,
-    bankingSector: 0.5,
-    realEstateSector: 0.5,
-    aviationSector: 0.5,
-  },
+  sbvOvernightRate: null,
+  sbvRefinancingRate: null,
+  sbvOfficialRate: null,
 });
 const okGateway  = async () => ({ status: "ok" as const, services: {} as Record<string, "healthy" | "unhealthy" | "unreachable"> });
 const okKinhDich = async () => ({

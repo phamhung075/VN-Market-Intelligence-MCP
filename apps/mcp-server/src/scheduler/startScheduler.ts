@@ -49,7 +49,7 @@ import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
-import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob, runCommodityTrackerRefreshJob } from './macro/index.js'
+import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
@@ -728,6 +728,17 @@ export function startScheduler() {
   cron.schedule(CRONS.commodityTrackerRefresh, async () => {
     await jobRunRepo.wrapRun('commodityTrackerRefreshJob', async () => {
       const result = await runCommodityTrackerRefreshJob()
+      return { rowsWritten: result.rowsWritten }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 4 hours — SBV rates + USD/VND FX refresh — task 1920k
+  // Fetches current VCB USD/VND official rate and SBV interest-rate fallbacks.
+  // Persists via storeSbvSnapshot() into sbv_rates table (INSERT OR REPLACE).
+  // Fail-loud to WORK channel on fetch or store error.
+  cron.schedule(CRONS.sbvRatesRefresh, async () => {
+    await jobRunRepo.wrapRun('sbvRatesRefreshJob', async () => {
+      const result = await runSbvRatesRefreshJob()
       return { rowsWritten: result.rowsWritten }
     })
   }, { timezone: 'UTC' })

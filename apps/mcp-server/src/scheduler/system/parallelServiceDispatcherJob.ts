@@ -100,7 +100,7 @@ export async function runParallelServiceDispatcher(deps?: DispatcherDeps): Promi
         return {
           status: 'ok' as const,
           duration: Date.now() - t0,
-          message: `VN-Index: ${snapshot.vnIndex.toFixed(0)}, Brent: $${snapshot.brentPrice.toFixed(2)}`,
+          message: `VN-Index: ${snapshot.vnIndex != null ? snapshot.vnIndex.toFixed(0) : "N/A"}, Brent: $${snapshot.brentPrice.toFixed(2)}`,
         };
       } catch (err) {
         throw new Error(`Macro Service: ${err instanceof Error ? err.message : String(err)}`);

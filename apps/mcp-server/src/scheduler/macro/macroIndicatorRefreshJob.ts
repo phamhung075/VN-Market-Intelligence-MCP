@@ -58,8 +58,68 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
 
     jobSuccessCount = 1;
 
-    // Log result to WORK channel
-    const msg = `Macro refresh OK — VN-Index: ${snapshot.vnIndex.toFixed(0)}, Brent: $${snapshot.brentPrice.toFixed(2)}, Gold: $${snapshot.goldPrice.toFixed(0)} [${durationMs}ms]`;
+    // Upsert key Vietnam macro indicators into macro_indicators table.
+    // This is the write path that populates the local SQLite copy from the
+    // macro-service snapshot. UNIQUE(country) constraint → ON CONFLICT UPDATE.
+    //
+    // The /macro/snapshot endpoint returns oilUsd, goldUsd, usdVnd from Yahoo Finance.
+    // sbvRefinancingRate is not exposed by this endpoint (reads from macro_indicators
+    // itself in the macro-service container) — left null here.
+    // commodity_prices table (separate) receives oil/gold via commodityTrackerRefresh.
+    try {
+      db.prepare(
+        `INSERT INTO macro_indicators
+           (country, interest_rate, fetched_at, last_refresh_job)
+         VALUES (?, ?, datetime('now'), datetime('now'))
+         ON CONFLICT(country) DO UPDATE SET
+           interest_rate    = excluded.interest_rate,
+           fetched_at       = excluded.fetched_at,
+           last_refresh_job = excluded.last_refresh_job`
+      ).run("Vietnam", snapshot.sbvRefinancingRate ?? null);
+      logger.info("[macro-refresh-job] macro_indicators upserted for Vietnam");
+    } catch (upsertErr) {
+      // Non-fatal: log and continue — the Telegram notification still goes out
+      logger.warn(
+        `[macro-refresh-job] macro_indicators upsert skipped: ${upsertErr instanceof Error ? upsertErr.message : String(upsertErr)}`
+      );
+    }
+
+    // Also persist commodity snapshot to commodity_prices table (source-keyed) so
+    // MCP tools that read commodity_prices get fresh oil/gold/FX data.
+    // Only write if at least one value is non-null to avoid empty noise rows.
+    // commodity_prices schema: PRIMARY KEY = source, named cols per commodity.
+    if (snapshot.oilUsd != null || snapshot.goldUsd != null || snapshot.usdVnd != null) {
+      try {
+        const now = new Date().toISOString();
+        db.prepare(
+          `INSERT INTO commodity_prices
+             (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+           VALUES ('macro-snapshot', ?, ?, ?, ?)
+           ON CONFLICT(source) DO UPDATE SET
+             brent_crude_usd = excluded.brent_crude_usd,
+             gold_usd_per_oz = excluded.gold_usd_per_oz,
+             usd_vnd_rate    = excluded.usd_vnd_rate,
+             fetched_at      = excluded.fetched_at`
+        ).run(
+          snapshot.oilUsd  ?? 0,
+          snapshot.goldUsd ?? 0,
+          snapshot.usdVnd  ?? 0,
+          now,
+        );
+        logger.info("[macro-refresh-job] commodity_prices upserted from macro snapshot");
+      } catch (commErr) {
+        // Non-fatal — log and continue
+        logger.warn(
+          `[macro-refresh-job] commodity_prices upsert skipped: ${commErr instanceof Error ? commErr.message : String(commErr)}`
+        );
+      }
+    }
+
+    // Log result to WORK channel.
+    // snapshot.vnIndex is nullable (macro-service may lack DB access at startup).
+    // Use canonical oilUsd/goldUsd fields; legacy brentPrice/goldPrice aliases are equal.
+    const vnIndexStr = snapshot.vnIndex != null ? snapshot.vnIndex.toFixed(0) : "N/A";
+    const msg = `Macro refresh OK — VN-Index: ${vnIndexStr}, Brent: $${snapshot.brentPrice.toFixed(2)}, Gold: $${snapshot.goldPrice.toFixed(0)} [${durationMs}ms]`;
     await sendTelegramWork(msg);
 
     // Fetch Fed Funds Rate from FRED (Task 1423b)

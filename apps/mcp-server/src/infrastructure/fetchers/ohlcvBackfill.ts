@@ -105,12 +105,27 @@ export async function runOhlcvBackfill(
   const toDate = options?.toDate ?? new Date().toISOString().slice(0, 10);
   const delayMs = options?.delayMs ?? 200;
 
-  // Collect all tickers currently in daily_ohlcv
+  // Collect tickers from daily_ohlcv. On a fresh deployment the table is empty,
+  // so fall back to the watchlist table as the authoritative ticker source.
   const existingRows = db
     .prepare<{ code: string }, []>("SELECT DISTINCT code FROM daily_ohlcv")
     .all();
+  const existingCodes = existingRows.map((r) => r.code);
+
+  let watchlistCodes: string[] = [];
+  if (existingCodes.length === 0) {
+    // Bootstrap path: daily_ohlcv is empty — seed ticker list from watchlist
+    try {
+      watchlistCodes = (
+        db.prepare<{ code: string }, []>("SELECT code FROM watchlist").all()
+      ).map((r) => r.code);
+    } catch {
+      // watchlist table absent — VNINDEX only
+    }
+  }
+
   const tickers = Array.from(
-    new Set([...existingRows.map((r) => r.code), "VNINDEX"]),
+    new Set([...existingCodes, ...watchlistCodes, "VNINDEX"]),
   );
 
   const total = tickers.length;

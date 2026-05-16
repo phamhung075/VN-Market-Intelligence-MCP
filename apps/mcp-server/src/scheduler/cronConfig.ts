@@ -137,4 +137,6 @@ export const CRONS = {
   commodityTrackerRefresh:    Bun.env.CRON_COMMODITY_TRACKER                  ?? '0 6 * * *',
   /** brokerSanctionsSweep — last Friday of month 08:00 UTC, quarter-guard in job body (task 1920d) */
   brokerSanctionsSweep:       Bun.env.CRON_BROKER_SANCTIONS                   ?? '0 8 25-31 * 5',
+  /** sbvRatesRefresh — every 4 hours, SBV rates + USD/VND FX refresh (task 1920k) */
+  sbvRatesRefresh:            Bun.env.CRON_SBV_RATES_REFRESH                   ?? '0 */4 * * *',
 }

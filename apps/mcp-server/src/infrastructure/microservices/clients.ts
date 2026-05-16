@@ -110,30 +110,79 @@ export async function computeTAIndicators(req: ComputeTARequest): Promise<Comput
 // Macro Indicators Service
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * MacroSnapshotResponse — aligned with macro-indicators service DTO
+ * (apps/macro-indicators/src/application/dtos.ts MacroSnapshotResponse).
+ *
+ * Historical field aliases (brentPrice, goldPrice, sbvRefinancingRate) are
+ * preserved as optional computed getters so callers that reference them
+ * continue to work without changes.
+ */
 export interface MacroSnapshotResponse {
-  vnIndex: number;
+  /** VNINDEX level (null if unavailable) */
+  vnIndex: number | null;
+  /** Brent/crude oil price in USD/barrel (null if unavailable) */
+  oilUsd: number | null;
+  /** Gold price in USD/oz (null if unavailable) */
+  goldUsd: number | null;
+  /** USD/VND exchange rate (null if unavailable) */
+  usdVnd: number | null;
+  /** Macro price signals array */
+  signals: Array<{
+    indicator: string;
+    value: number;
+    unit: string;
+    direction: string;
+    impact: string;
+  }>;
+  fetchedAt: string;
+  // Legacy aliases — populated by getMacroSnapshot() for backward compatibility
+  /** @deprecated use oilUsd */
   brentPrice: number;
+  /** @deprecated use goldUsd */
   goldPrice: number;
-  usdVnd: number;
-  sbvOvernightRate: number;
-  sbvRefinancingRate: number;
-  sbvOfficialRate: number;
-  scores: {
-    energySector: number;
-    goldSector: number;
-    bankingSector: number;
-    realEstateSector: number;
-    aviationSector: number;
-  };
+  /** @deprecated use signals or macro_indicators table */
+  sbvRefinancingRate: number | null;
+  sbvOvernightRate: number | null;
+  sbvOfficialRate: number | null;
 }
 
 export async function getMacroSnapshot(): Promise<MacroSnapshotResponse> {
-  const url = `${BASE_URLS.macro}/snapshot`;
-  const response = await fetchWithRetry(url, { method: 'GET' });
+  // Macro service registers POST /macro/snapshot (handlers.ts line 21)
+  const url = `${BASE_URLS.macro}/macro/snapshot`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
   if (!response.ok) {
     throw new Error(`[Macro Service] ${response.status}: ${await response.text()}`);
   }
-  return response.json();
+  const raw = await response.json() as {
+    vnIndex?: number | null;
+    oilUsd?: number | null;
+    goldUsd?: number | null;
+    usdVnd?: number | null;
+    signals?: MacroSnapshotResponse['signals'];
+    fetchedAt?: string;
+  };
+
+  // Normalise + inject legacy alias fields so macroIndicatorRefreshJob.ts
+  // and other callers can use either the new or old field names.
+  return {
+    vnIndex: raw.vnIndex ?? null,
+    oilUsd: raw.oilUsd ?? null,
+    goldUsd: raw.goldUsd ?? null,
+    usdVnd: raw.usdVnd ?? null,
+    signals: raw.signals ?? [],
+    fetchedAt: raw.fetchedAt ?? new Date().toISOString(),
+    // Legacy aliases
+    brentPrice: raw.oilUsd ?? 0,
+    goldPrice: raw.goldUsd ?? 0,
+    sbvRefinancingRate: null,   // not exposed by macro-service /macro/snapshot
+    sbvOvernightRate: null,
+    sbvOfficialRate: null,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

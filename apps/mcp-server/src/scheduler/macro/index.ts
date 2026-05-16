@@ -2,4 +2,5 @@ export { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from "./mac
 export { runMarketEarningYieldJob } from "./marketEarningYieldJob.js";
 export { runBondMaturityPollerJob } from "./bondMaturityPollerJob.js";
 export { runCommodityTrackerRefreshJob } from "./commodityTrackerRefreshJob.js";
+export { runSbvRatesRefreshJob } from "./sbvRatesJob.js";
 
