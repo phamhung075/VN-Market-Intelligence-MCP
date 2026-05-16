@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 19:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 20:39 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2046,3 +2046,28 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 50 |
+
+### Cycle (20:39–20:42) — OFF-HOURS RECOVERY
+- **Status**: ✅ COMPLETE (MCP gateway recovered)
+- Timestamp: 2026-05-16 20:39 UTC
+- Cycle type: Off-hours (market CLOSED)
+- Stocks priced: 38 watchlist | EOD prices (2026-05-15 08:59) [STALE]
+- Anomalies monitored: 3 (GAS +6.94%, GVR +4.28%, NVL +3.90%) — all sub-2σ range given 30d volatility
+- **Off-hours duplicate guard active**: GAS, GVR, NVL moves flagged as already-signaled EOD prices (same move_pct, no intraday change). Signals SUPPRESSED per cycle.md safety rule to avoid noise.
+- Regime: NEUTRAL | DXY: N/A | US10Y: N/A | fx_pressure: [] | pe_risk: []
+- GAS context: Oil sector +3.94% (1d avg), Brent 109.26 (+0.00% from macro snapshot), bullish sentiment 0.633, trading volume 498.6K
+- Macro: Brent 109.26, Gold 4,561.9, USD/VND 26,137 (unchanged). Supply chain STABLE (BDI 1,400). Energy: N/A. Climate: May heat-risk ongoing.
+- Open alerts (24h): 7 MEDIUM/HIGH (HCM news, ACV news, VIC news, FPT tech-sector, REE news, macro: Brent +2.56σ, Gold -2.19σ)
+- Chain findings: 0 (last 15 min, market closed)
+- Context: Off-hours scan post-market-close. No pre-market volatility detected. Next market open: 2026-05-16 02:00 UTC (6h ahead)
+
+## Metrics (cycle 2026-05-16 20:42 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 0 |
+| signals_suppressed | 3 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
