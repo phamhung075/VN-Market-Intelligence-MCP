@@ -2,17 +2,18 @@
  * Regime-Based Confidence Threshold — pure domain function, no I/O.
  *
  * Enforces minimum confidence thresholds for urgent_news signals based on the
- * current market regime. Under benign regimes (NEUTRAL) the bar is highest;
- * under stressed regimes (BEAR) the bar is lower so more signals pass.
+ * current monetary-policy regime (from get_macro_snapshot Global Liquidity
+ * classification). Under tightening regimes the bar is highest; under easing
+ * regimes the bar is lower so more signals pass.
  *
  * Rules:
- *   NEUTRAL → urgent_news requires confidence >= 0.60
- *   BULL    → urgent_news requires confidence >= 0.50
- *   BEAR    → urgent_news requires confidence >= 0.40
+ *   TIGHTENING → urgent_news requires confidence >= 0.60
+ *   NEUTRAL    → urgent_news requires confidence >= 0.55
+ *   EASING     → urgent_news requires confidence >= 0.50
  *
- * Missing regime defaults to NEUTRAL (strictest). Missing confidence is treated
- * as "not supplied" and passes through — schema validation handles required
- * field enforcement separately.
+ * Missing regime defaults to NEUTRAL (0.55 threshold). Missing confidence is
+ * treated as "not supplied" and passes through — schema validation handles
+ * required field enforcement separately.
  *
  * Only urgent_news signals are subject to regime thresholds. All other signal
  * types pass unconditionally.
@@ -27,9 +28,9 @@
  * Keys are normalised to uppercase for comparison.
  */
 export const REGIME_THRESHOLDS: Record<string, number> = {
-  NEUTRAL: 0.60,
-  BULL: 0.50,
-  BEAR: 0.40,
+  TIGHTENING: 0.60,
+  NEUTRAL: 0.55,
+  EASING: 0.50,
 } as const;
 
 /** Default regime when caller does not supply one. */
@@ -42,7 +43,7 @@ export interface RegimeThresholdInput {
   signal_type: string;
   /** Confidence value in [0, 1], or undefined when field was not supplied. */
   confidence: number | undefined;
-  /** Market regime string, e.g. "NEUTRAL" | "BULL" | "BEAR". Case-insensitive. */
+  /** Monetary-policy regime string, e.g. "TIGHTENING" | "NEUTRAL" | "EASING". Case-insensitive. */
   regime: string | undefined;
 }
 

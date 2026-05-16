@@ -342,6 +342,50 @@ describe("1293a: Signal Type Safety", () => {
       const result = UrgentNewsFindingDataSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
+
+    it("should accept NEUTRAL as valid regime value", () => {
+      const payload = {
+        headline: "Market event",
+        source: "reuters",
+        severity: "high",
+        regime: "NEUTRAL",
+      };
+      const result = UrgentNewsFindingDataSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject BULL as regime value (invalid after migration to monetary-policy enum)", () => {
+      const payload = {
+        headline: "Market event",
+        source: "reuters",
+        severity: "high",
+        regime: "BULL",
+      };
+      const result = UrgentNewsFindingDataSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept TIGHTENING as valid regime value", () => {
+      const payload = {
+        headline: "Market event",
+        source: "reuters",
+        severity: "high",
+        regime: "TIGHTENING",
+      };
+      const result = UrgentNewsFindingDataSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept EASING as valid regime value", () => {
+      const payload = {
+        headline: "Market event",
+        source: "reuters",
+        severity: "high",
+        regime: "EASING",
+      };
+      const result = UrgentNewsFindingDataSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("Type guard integration", () => {

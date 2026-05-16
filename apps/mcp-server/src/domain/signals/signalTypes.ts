@@ -192,16 +192,17 @@ export interface UrgentNewsFindingData {
   /**
    * Optional: confidence in the news assessment, range [0.0, 1.0].
    * Used by regime-based threshold enforcement in post_agent_signal.
-   * Under NEUTRAL regime: requires >= 0.60. BULL: >= 0.50. BEAR: >= 0.40.
+   * Under TIGHTENING regime: requires >= 0.60. NEUTRAL: >= 0.55. EASING: >= 0.50.
    */
   confidence?: number;
 
   /**
-   * Optional: market regime at signal time — NEUTRAL | BULL | BEAR.
+   * Optional: monetary-policy regime at signal time — TIGHTENING | NEUTRAL | EASING
+   * (from get_macro_snapshot Global Liquidity classification).
    * Used with `confidence` to enforce regime-based posting thresholds.
-   * Absent or unknown values are treated as NEUTRAL (strictest threshold).
+   * Absent or unknown values are treated as NEUTRAL (0.55 threshold).
    */
-  regime?: "NEUTRAL" | "BULL" | "BEAR";
+  regime?: "TIGHTENING" | "NEUTRAL" | "EASING";
 }
 
 export const UrgentNewsFindingDataSchema = z.object({
@@ -212,7 +213,7 @@ export const UrgentNewsFindingDataSchema = z.object({
   catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
   time_to_price_move: z.number().min(0).optional(),
   confidence: z.number().min(0).max(1).optional(),
-  regime: z.enum(["NEUTRAL", "BULL", "BEAR"]).optional(),
+  regime: z.enum(["TIGHTENING", "NEUTRAL", "EASING"]).optional(),
 });
 
 // ── CrossValidateFindingData ───────────────────────────────────────────────────
