@@ -1,5 +1,5 @@
 /**
- * Muasamcong Fetcher — Task 248
+ * Muasamcong Fetcher — Task 248 + Task B (VPS proxy support)
  *
  * Scrapes public procurement results from muasamcong.mpi.gov.vn
  * and maps winning contractors to related listed stocks.
@@ -8,13 +8,35 @@
  *
  * Contract-to-stock mapping logic lives in mapContractToStocks (exported for testing).
  * Never throws: returns [] on any error.
+ *
+ * VPS proxy (Task B): muasamcong.mpi.gov.vn is geo-blocked outside Vietnam.
+ * Set MUASAMCONG_VPS_PROXY_URL=http://<vps-ip>:8765/proxy?url=<encoded>
+ * or MUASAMCONG_VPS_PROXY_URL=http://<vps-ip>:8765/muasamcong to route through VPS.
+ * When env var is unset the fetcher hits the origin directly (works from inside VN).
  */
 
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
 import { BROWSER_UA } from "./browserHeaders.js";
 
-const MUASAMCONG_URL =
+const MUASAMCONG_ORIGIN =
   "https://muasamcong.mpi.gov.vn/web/guest/home-page-new-ver2/-/thauthau/ket-qua-chon-nha-thau";
+
+/**
+ * Resolve the URL to use for fetching muasamcong.mpi.gov.vn.
+ *
+ * Priority:
+ *   1. MUASAMCONG_VPS_PROXY_URL env var (VPS proxy configured by ops)
+ *   2. Origin URL directly (works from within Vietnam)
+ *
+ * The VPS proxy is needed from France because muasamcong.mpi.gov.vn
+ * returns 404 for non-VN IP addresses.
+ */
+export function getMuasamcongUrl(): string {
+  return (
+    (typeof Bun !== "undefined" ? Bun.env["MUASAMCONG_VPS_PROXY_URL"] : undefined) ??
+    MUASAMCONG_ORIGIN
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -203,6 +225,10 @@ const defaultHttpClient: HttpClient = {
  * Fetch public procurement contracts from muasamcong.mpi.gov.vn.
  * Never throws — returns [] on any error.
  *
+ * Uses getMuasamcongUrl() to resolve VPS proxy vs origin.
+ * From France the origin returns 404 — set MUASAMCONG_VPS_PROXY_URL
+ * to route through the Vinahost VPS.
+ *
  * @param httpClient - Optional HTTP client (injected in tests)
  * @returns Array of parsed PublicContract objects
  */
@@ -210,9 +236,10 @@ export async function fetchPublicContracts(
   httpClient?: HttpClient,
 ): Promise<PublicContract[]> {
   const client = httpClient ?? defaultHttpClient;
+  const url = getMuasamcongUrl();
 
   try {
-    const html = await client.get(MUASAMCONG_URL);
+    const html = await client.get(url);
     return parseContractsFromHtml(html);
   } catch (err) {
     console.error("[fetchPublicContracts] Failed to fetch muasamcong:", err);

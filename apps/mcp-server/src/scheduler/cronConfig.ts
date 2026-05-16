@@ -141,4 +141,6 @@ export const CRONS = {
   sbvRatesRefresh:            Bun.env.CRON_SBV_RATES_REFRESH                   ?? '0 */4 * * *',
   /** reputationComputeJob — daily 08:30 UTC, compute reputation scores for watchlist tickers (task 1922d) */
   reputationCompute:          Bun.env.CRON_REPUTATION_COMPUTE                   ?? '30 8 * * *',
+  /** publicContractsJob — weekly Mon 03:00 UTC, scrape muasamcong.mpi.gov.vn procurement results (Task B) */
+  publicContractsRefresh:     Bun.env['CRON_PUBLIC_CONTRACTS']                  ?? '0 3 * * 1',
 }

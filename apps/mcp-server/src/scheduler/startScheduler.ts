@@ -59,6 +59,7 @@ import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { runDailyDashboardJob } from './system/dailyDashboardJob.js'
 import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
 import { runReputationComputeJob } from './news/index.js'
+import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
@@ -797,6 +798,20 @@ export function startScheduler() {
     await jobRunRepo.wrapRun('reputationComputeJob', async () => {
       const result = await runReputationComputeJob()
       return { rowsWritten: result.tickersProcessed }
+    })
+  }, { timezone: 'UTC' })
+
+  // Monday 03:00 UTC — Public contracts weekly scrape — Task B
+  // Fetches government procurement award results from muasamcong.mpi.gov.vn.
+  // Geo-blocked outside Vietnam: set MUASAMCONG_VPS_PROXY_URL to route via Vinahost VPS.
+  // Fail-loud to WORK channel when store errors occur; fetch-empty is silent.
+  cron.schedule(CRONS.publicContractsRefresh, async () => {
+    await jobRunRepo.wrapRun('publicContractsJob', async () => {
+      const result = await runPublicContractsJob()
+      if (result.fetched > 0) {
+        log(`[public-contracts] fetched=${result.fetched} inserted=${result.rowsWritten}`)
+      }
+      return { rowsWritten: result.rowsWritten }
     })
   }, { timezone: 'UTC' })
 
