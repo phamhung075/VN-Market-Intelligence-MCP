@@ -203,9 +203,15 @@ export async function runVerdictResolutionJobCron(
       // Fetch baseline price (oldest close in last 2 days)
       const priceAtFire = await fetchHistory(row.ticker, 2);
       if (priceAtFire === null) {
+        // Mark unresolvable to stop hourly retry storm (non-HOSE tickers never have prices)
+        await store.updateVerdict(row.id, {
+          verdict: "false_positive",
+          detail: "price-fetch-failed:unresolvable",
+          resolvedAt: now.toISOString(),
+        });
         await telegramSender(
           "bug",
-          "[verdictResolutionJob] No baseline price for " + row.ticker + " firedAt=" + row.firedAt
+          "[verdictResolutionJob] No baseline price for " + row.ticker + " firedAt=" + row.firedAt + " — marked unresolvable"
         );
         result.errors++;
         continue;
@@ -214,9 +220,15 @@ export async function runVerdictResolutionJobCron(
       // Fetch live close price
       const priceAtResolution = await fetchPrice(row.ticker);
       if (priceAtResolution === null) {
+        // Mark unresolvable to stop hourly retry storm
+        await store.updateVerdict(row.id, {
+          verdict: "false_positive",
+          detail: "price-fetch-failed:unresolvable",
+          resolvedAt: now.toISOString(),
+        });
         await telegramSender(
           "bug",
-          "[verdictResolutionJob] Price fetch failed for " + row.ticker + " firedAt=" + row.firedAt
+          "[verdictResolutionJob] Price fetch failed for " + row.ticker + " firedAt=" + row.firedAt + " — marked unresolvable"
         );
         result.errors++;
         continue;

@@ -246,7 +246,7 @@ describe("Task 1863b — verdictResolutionJob (file-store backed)", () => {
   });
 
   // ── AC-8 / 1863f-AC-10: fail-loud on fetchPrice returning null ───────────
-  it("fetchPrice null → BUG telegram sent, row stays pending, errors++", async () => {
+  it("fetchPrice null → marked unresolvable, BUG sent, errors++ (Task 1926a)", async () => {
     const row = makeVerdict({ id: "r8", ticker: "TCB", direction: "bullish" });
     const deps = buildDeps([row], null, 100);
 
@@ -255,12 +255,13 @@ describe("Task 1863b — verdictResolutionJob (file-store backed)", () => {
     expect(result.rowsEvaluated).toBe(1);
     expect(result.rowsResolved).toBe(0);
     expect(result.errors).toBe(1);
-    expect(deps.updated.length).toBe(0);
+    expect(deps.updated.length).toBe(1);
+    expect(deps.updated[0]?.verdict).toBe("false_positive");
     expect(deps.bugs.length).toBeGreaterThan(0);
     expect(deps.bugs[0]).toContain("TCB");
   });
 
-  it("fetchHistory null → BUG telegram sent, row stays pending", async () => {
+  it("fetchHistory null → marked unresolvable, BUG sent once (Task 1926a)", async () => {
     const row = makeVerdict({ id: "r9", ticker: "VCB", direction: "bearish" });
     const deps = buildDeps([row], 100, null);
 
@@ -268,8 +269,44 @@ describe("Task 1863b — verdictResolutionJob (file-store backed)", () => {
 
     expect(result.rowsResolved).toBe(0);
     expect(result.errors).toBe(1);
-    expect(deps.bugs.length).toBeGreaterThan(0);
+    expect(deps.bugs.length).toBe(1);
     expect(deps.bugs[0]).toContain("VCB");
+    expect(deps.bugs[0]).toContain("unresolvable");
+    // Row marked false_positive — will not be retried next hour
+    const updated = deps.updated[0];
+    expect(updated?.verdict).toBe("false_positive");
+    expect(updated?.detail).toBe("price-fetch-failed:unresolvable");
+    expect(updated?.resolvedAt).toBeTruthy();
+  });
+
+  it("fetchPrice null → marked unresolvable, BUG sent once (Task 1926a)", async () => {
+    const row = makeVerdict({ id: "r10", ticker: "VNH", direction: "bullish" });
+    const deps = buildDeps([row], null, 100);
+
+    const result = await runVerdictResolutionJobCron(deps);
+
+    expect(result.rowsResolved).toBe(0);
+    expect(result.errors).toBe(1);
+    expect(deps.bugs.length).toBe(1);
+    expect(deps.bugs[0]).toContain("VNH");
+    expect(deps.bugs[0]).toContain("unresolvable");
+    const updated = deps.updated[0];
+    expect(updated?.verdict).toBe("false_positive");
+    expect(updated?.detail).toBe("price-fetch-failed:unresolvable");
+  });
+
+  it("unresolvable row not retried on second run (Task 1926a idempotency)", async () => {
+    // After first failure, verdict=false_positive → filter excludes it on next run
+    const row = makeVerdict({ id: "r11", ticker: "MACRO_GOLD", direction: "bullish",
+      verdict: "false_positive", detail: "price-fetch-failed:unresolvable" });
+    const deps = buildDeps([row], null, null);
+
+    const result = await runVerdictResolutionJobCron(deps);
+
+    // false_positive is not "pending" → filtered out → 0 evaluated
+    expect(result.rowsEvaluated).toBe(0);
+    expect(result.errors).toBe(0);
+    expect(deps.bugs.length).toBe(0);
   });
 
   // ── AC-9: multiple signals in one batch ───────────────────────────────────
