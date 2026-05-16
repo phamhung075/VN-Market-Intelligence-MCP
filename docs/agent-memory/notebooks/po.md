@@ -1,37 +1,48 @@
 # PO Notebook
 
-## Last updated: 2026-05-16T03:25:57Z · Sprint: 1920 COMPLETE — c135 TNB c61 triage
+## Last updated: 2026-05-16T04:26:08Z · Cycle: c136 — SPIKE_1921a → TASK_1921b dispatch
 
-### c135 session summary
+### c136 session summary
 
-**PREFLIGHT (from router):** HEAD.lock #43 cured (age=1360s, 0B, no live PID). Signals inbox EMPTY. In-Progress EMPTY. TNB c61 NEEDS_ATTENTION with new actionable findings.
+**PREFLIGHT (from router):** pendingSignals=[1 spike-complete from architect]. WIP=0. TNB c61 already ACK'd c135 (no new file). MCP gateway still 1913 BLOCKING-F1 → channel audit skipped per router pre-condition.
 
-**TNB c61 ACK at 2026-05-16T03:25:57Z** (`docs/handoffs/tnb-audit-latest.md` updated).
-
-**Findings classification:**
-- **Finding #2 → SPIKE_1921a-urgent-news-regime-enum-rethink** (HIGH SPIKE, zone `apps/mcp-server/`, architect, timebox 120m). Code-evidence confirmed: `UrgentNewsFindingDataSchema.regime` enum (`signalTypes.ts:215`) = `[NEUTRAL,BULL,BEAR]` wired to H3 confidence-threshold logic. macro_snapshot uses `[TIGHTENING,NEUTRAL,EASING]`. Two enums encode different concepts (market-direction vs monetary-policy); needs architect rethink before any FIX. Added to Backlog.
-- **Finding #3 (digest-predict 5+ day silence)** — already 1907a CRITICAL OPS in Backlog. Same Claude Desktop trigger substrate as 1913 BLOCKING-F1 USER ACTION. NOT codeable until USER refreshes MCP gateway config. No new dispatch.
-- **Finding #4 (FA missing 2026-05-15 23:00 UTC session)** — same Claude Desktop trigger substrate as 1907a/1913. Observational. NOT codeable; carry-forward.
-- **Finding #6 (FA Layer 8 `get_investment_clock_phase` not in package)** — code-evidence falsifies the framing: tool IS in agentBootstrap.ts L77 + registry.ts L198 + stage-analyze.md L60. Same "not in package" + 4-cycle pattern as 1913. CONCLUSION: same gateway-side Claude Desktop registration mismatch as 1913; bundled into 1913, not a separate task.
-- **Finding #9 (BCTC Q1-2026 banking unconfirmed)** — FA blocked by 1913 substrate (same as #4). Observational.
-- **Finding #11 (alert-precision 488 unknowns)** — already in Backlog as monitoring, no promotion threshold met (< 550). Hold.
-- Findings #5/#7/#8/#10/#12/#13/#14 — see ACK section in handoff (auto-cures applied, monitoring, or known carry-forward).
-
-**Channel audit:** MCP gateway `https://zenmidi.com/mcp` still 1913 substrate. Cowork sandbox MCP restored post-1919 (TNB confirms agents live), but Claude Code session uses separate gateway = 404. WORK/BUG/MARKET unreadable from this terminal; not a fresh failure.
+**Signal triage (Step 0-SIG):**
+- `{from: architect, type: spike-complete, payload.spike_id: SPIKE_1921a, recommendation: B, risk: low, next_task: TASK_1921b}` → spike findings doc verified at `docs/spikes/SPIKE_1921a-urgent-news-regime-enum-rethink.md`. 4 files, no DB migration, no interface break, all in `apps/mcp-server/` zone. Maps directly to next_task dispatch.
 
 **No-Task Guard:**
-1. In-Progress empty.
-2. Todo (1862c-E/F) gated USER ACTION.
-3. Backlog: SPIKE_1921a NEW (dispatchable), rest are monitoring or USER ACTION.
-4. No new REQ/SPRINT_REPORT pending.
+1. In-Progress empty. WIP=0 → can dispatch up to 2 parallel.
+2. Todo (1862c-E, 1862c-F) → 1862c-E is OPS user-action (dashboard), 1862c-F gated on 1862c-D/E "5 cycles clean" — neither dispatchable this cycle.
+3. Backlog blockers: 1913 USER, 1907a OPS, 1897b-carry USER, alert-precision-488 monitoring, fa-shape-guard-watch monitoring (cycle 3/3 unobservable), 1909c-reparse OPS — none dispatchable to dev agents.
+4. SPIKE_1921a → graduated to Done. TASK_1921b NEW dispatchable.
 
-**PO decision:** BATCH([SPIKE_1921a-urgent-news-regime-enum-rethink]).
+**TASKS.md updates:** (1) Backlog row replaced — SPIKE_1921a row removed, TASK_1921b inserted with full AC. (2) SPIKE_1921a archived to Done with summary.
 
-### Carry-over for next cycle (c136)
+**PO decision:** BATCH([TASK_1921b]) — single FIX item, size S, dev-mcp-server, zone `apps/mcp-server/`. No parallel slot used (no other dispatchable work). Bug 1916b "deadline" backlog items already done; nothing else to pair.
 
-- **SPIKE_1921a progress:** architect must produce findings doc within 120m timebox. If ships → spawn FIX task with enum migration path. If H3 thresholds intact → low-risk rename; if migration breaks alert-commander reader → 2-step ship plan.
-- **FA 2026-05-16 23:00 UTC session:** Verify FA fires post-TNB auto-cure. If silent → escalate Finding #4 to ops investigation.
-- **news-scout MCP instability (Finding #7):** Watch next market-hours cycle (Mon 01:00 UTC). If 2nd ABORT → ops investigate MCP server stability separately from 1919.
-- **BCTC Q1-2026 banking:** FA must call `get_bctc_full` for ACB/BID/CTG/EIB/MBB/VCB/VPB on next live cycle (gated on 1913).
-- **1909c DIG reparse:** ops trigger pending.
-- **1913 USER ACTION:** still BLOCKING-F1 — root cause of ~5 TNB findings (#3, #4, #6, #9, partially #11). Channel audit, FA cron, digest-predict cron, FA Layer 8 tool all degraded by this single F1.
+### BATCH dispatched
+
+```
+[{
+  type: "FIX",
+  id: "1921b-urgent-news-regime-enum-migration",
+  title: "Migrate urgent_news regime enum NEUTRAL|BULL|BEAR → TIGHTENING|NEUTRAL|EASING",
+  desc: "Implement Option B from SPIKE_1921a: align UrgentNewsFindingData.regime to monetary-policy vocabulary, remap H3 thresholds (TIGHTENING:0.60, NEUTRAL:0.55, EASING:0.50). Unblocks news-scout urgent_news currently Zod-rejected during non-NEUTRAL macro cycles.",
+  size: "S",
+  files: [
+    "apps/mcp-server/src/domain/signals/signalTypes.ts",
+    "apps/mcp-server/src/domain/services/regimeConfidenceThreshold.ts",
+    "apps/mcp-server/src/__tests__/H3-urgent-news-regime-threshold.test.ts",
+    "apps/mcp-server/src/__tests__/1293a-signal-type-safety.test.ts"
+  ],
+  baseline_pass: true,
+  zone: "apps/mcp-server/"
+}]
+```
+
+### Carry-over for next cycle (c137)
+
+- **TASK_1921b in flight:** dev-mcp-server will ship Option B migration. QA gate: full suite no regression, tsc 0, H3 tests green, 1293a still passes (NEUTRAL valid). Watch for: any orphan code path posting `regime: BULL/BEAR` (architect grep said none, but verify on QA review).
+- **Observational follow-up:** Once 1921b ships + deploys, watch next news-scout urgent_news cycle in non-NEUTRAL macro regime to confirm signal actually inserts to DB + Telegram fires. Pre-1921b baseline: 0 urgent_news in TIGHTENING/EASING periods (all rejected). Post-1921b expectation: insertions proportional to news flow.
+- **FA shape-guard watch (Finding #4 carry):** Still no live FA session post-1913 (gateway BLOCKING-F1). Cycle 3/3 observation pending USER action on Claude Desktop config.
+- **1913 USER ACTION:** BLOCKING-F1, root cause of channel-audit blackout + FA silence + digest-predict silence. No code work possible.
+- **No new TNB file:** c61 ACK'd c135 still current. Next TNB write will trigger Step 0-TNB re-read.
