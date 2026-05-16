@@ -1,5 +1,15 @@
 # dev-team notebook
 
+## Current state (c138 close — 2026-05-16T06:30Z)
+- Pipeline: idle (3rd consecutive). Inbox empty, no new signals.
+- HEAD.lock #46 cured at PREFLIGHT (age=1290s, size=0B, no live pid).
+- Worktree-agent-aa8dd0061c8780417 still locked (pid 93207 live session). Skip CLEAN.
+- MCP gateway (1913 BLOCKING-F1): cycle 14+.
+
+## c138 cycle log
+- PREFLIGHT: HEAD.lock #46 cured. Inbox empty. Worktree prune clean.
+- Session gate: inbox empty + pendingSignals=[] + WIP=0 → idle EXIT.
+
 ## Current state (c137 close — 2026-05-16T05:55Z)
 - Pipeline: idle. Docker DNS 2nd recurrence (05:02 UTC) resolved by ops at 05:48 UTC. No codeable work.
 - HEAD.lock #45 cured at PREFLIGHT (age=1286s, size=0B, no live pid). index.lock also cured (Spotlight, age=1825s).
