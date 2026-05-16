@@ -1,0 +1,8 @@
+{
+  "from": "report-analyzer",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Bootstrap failed after 2 attempts: MCP gateway (vn-market) not responding. Full cycle blocked, no earnings analysis performed.",
+  "priority": "high",
+  "createdAt": "2026-05-16T00:08:10Z"
+}
