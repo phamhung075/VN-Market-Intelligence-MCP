@@ -14,6 +14,12 @@
  *     NOTE: iboard-query.ssc.vn is NXDOMAIN as of 2026-04-27 (dead domain).
  *     Endpoint kept for forward-compatibility if domain is restored.
  *
+ *   GET /proxy/ssc-insider
+ *     → forwards to https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx
+ *     → returns the HTML response verbatim (text/html)
+ *     → Auth: X-API-Key required
+ *     → Added: 1922a (fixes insider_transactions 0 rows — SSC portal geo-blocked from France)
+ *
  *   GET /proxy/bctc-discover/:ticker
  *     → shells out to /root/discover-bctc-urls-browser.py <TICKER> [<YEAR> [<QUARTER>]]
  *     → returns JSON array of discovered BCTC PDF URLs: string[]
@@ -67,6 +73,16 @@ const IBOARD_UPSTREAM = "https://iboard-query.ssc.vn";
 
 /** Allowed proxy prefix path. Only this path is proxied. */
 const SSC_PROXY_PREFIX = "/proxy/ssc-iboard";
+
+/**
+ * SSC insider transaction portal URL — geo-blocked outside Vietnam.
+ * Proxied at /proxy/ssc-insider (Task 1922a).
+ */
+const SSC_INSIDER_UPSTREAM =
+  "https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx";
+
+/** Path for the SSC insider proxy endpoint. */
+const SSC_INSIDER_PROXY_PATH = "/proxy/ssc-insider";
 
 /**
  * Static file serving for cached BCTC PDFs.
@@ -298,6 +314,30 @@ async function handleRequest(req, res) {
     return jsonResponse(res, 200, urls);
   }
 
+  // SSC insider transaction portal proxy (Task 1922a)
+  //   Incoming: GET /proxy/ssc-insider
+  //   Upstream: https://congbothongtin.ssc.gov.vn/.../ketquagiaodich.jspx
+  //   Returns:  HTML page verbatim (text/html)
+  if (url === SSC_INSIDER_PROXY_PATH || url.startsWith(SSC_INSIDER_PROXY_PATH + "?")) {
+    log("INFO", `SSC insider proxy: GET ${SSC_INSIDER_UPSTREAM}`);
+
+    try {
+      const body = await fetchUpstream(SSC_INSIDER_UPSTREAM, 15_000);
+      const payload = Buffer.from(body, "utf8");
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": payload.byteLength,
+        "X-Proxy-Source": "congbothongtin.ssc.gov.vn",
+      });
+      res.end(payload);
+      log("INFO", `SSC insider proxy OK: ${payload.byteLength}B`);
+    } catch (err) {
+      log("ERROR", "SSC insider proxy FAIL", { error: err.message });
+      jsonResponse(res, 502, { error: "Bad gateway", detail: err.message });
+    }
+    return;
+  }
+
   // SSC iboard proxy
   //   Incoming: /proxy/ssc-iboard/dcm/financials/ticker/<TICKER>
   //   Upstream: https://iboard-query.ssc.vn/dcm/financials/ticker/<TICKER>
@@ -402,6 +442,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
+  log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
   log("INFO", `BCTC files:       GET /bctc-files/:code/:filename (serves cached PDFs)`);
   log("INFO", `Health check:     GET /health`);

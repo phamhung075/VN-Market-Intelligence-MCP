@@ -1,8 +1,12 @@
 /**
- * SSC Insider Fetcher — Task 249
+ * SSC Insider Fetcher — Task 249 / geo-block fix Task 1922a
  *
  * Scrapes insider transaction disclosures from the SSC (State Securities Commission)
  * portal: congbothongtin.ssc.gov.vn
+ *
+ * The SSC portal is geo-blocked outside Vietnam. Requests are routed through the
+ * Vinahost VPS proxy (/proxy/ssc-insider) which forwards to the real SSC portal
+ * from within Vietnam.
  *
  * Layer: infrastructure/fetchers — HTTP I/O only, no domain logic
  * Never throws: returns [] on any error.
@@ -11,8 +15,14 @@
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
 import { BROWSER_UA } from "./browserHeaders.js";
 
+/**
+ * VPS proxy URL for the SSC insider portal.
+ * Routes through Vinahost Vietnam VPS to bypass geo-block from France.
+ * Override via SSC_INSIDER_VPS_URL env var (useful in tests or alternate VPS).
+ */
 const SSC_INSIDER_URL =
-  "https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx";
+  Bun.env["SSC_INSIDER_VPS_URL"] ??
+  "http://125.212.251.27:8765/proxy/ssc-insider";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -112,9 +122,16 @@ function parseInsiderHtml(html: string): RawInsiderRow[] {
 
 const defaultHttpClient: HttpClient = {
   async get(url: string): Promise<string> {
-    const resp = await fetch(url, {
-      headers: { "User-Agent": BROWSER_UA },
-    });
+    const headers: Record<string, string> = { "User-Agent": BROWSER_UA };
+
+    // Attach VPS API key when routing through the VPS proxy.
+    // VPS_PUSH_API_KEY is the same key used by all other VPS proxy consumers.
+    const apiKey = Bun.env["VPS_PUSH_API_KEY"];
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+
+    const resp = await fetch(url, { headers });
     if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
     return resp.text();
   },

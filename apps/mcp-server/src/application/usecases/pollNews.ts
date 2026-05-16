@@ -1138,6 +1138,78 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       }
     }
 
+    // Task 1922e — Wire mention_velocity writer.
+    // After building all signals, aggregate raw news_mention signals by
+    // (code, floorHour) and call recordMention() once per ticker per hour.
+    // This feeds getCrisisEarlyWarning's spike detection with live data.
+    //
+    // Aggregation covers ALL signals (including insider_trading) for completeness,
+    // since every signal represents an article that mentioned the ticker.
+    // negativeCount: count signals where the entry sentiment was bearish.
+    // sourceCount: number of distinct source hostnames in this hour window.
+    try {
+      // Build hourly buckets: key = "CODE::2026-05-16T10:00:00.000Z"
+      const hourlyBuckets = new Map<string, {
+        code: string;
+        hour: string;
+        mentionCount: number;
+        negativeCount: number;
+        sources: Set<string>;
+      }>();
+
+      // Snap a timestamp to the start of the UTC hour (ISO format)
+      function floorToHour(isoTs: string): string {
+        const d = new Date(isoTs);
+        d.setUTCMinutes(0, 0, 0);
+        return d.toISOString();
+      }
+
+      for (const sig of allSignals) {
+        const hour = floorToHour(sig.detectedAt ?? new Date().toISOString());
+        const bucketKey = `${sig.actionCode}::${hour}`;
+        const existing = hourlyBuckets.get(bucketKey);
+        // Determine if signal is negative (bearish sentiment)
+        const isNegative = sig.severity === "high" || sig.severity === "critical";
+        // Derive source domain from the original entry (best-effort via message)
+        const sourceHost = sig.message?.split(" — ")[0]?.slice(0, 40) ?? "unknown";
+        if (existing) {
+          existing.mentionCount += 1;
+          if (isNegative) existing.negativeCount += 1;
+          existing.sources.add(sourceHost);
+        } else {
+          hourlyBuckets.set(bucketKey, {
+            code: sig.actionCode,
+            hour,
+            mentionCount: 1,
+            negativeCount: isNegative ? 1 : 0,
+            sources: new Set([sourceHost]),
+          });
+        }
+      }
+
+      if (hourlyBuckets.size > 0) {
+        const { recordMention } = await import("../../infrastructure/db/mentionVelocityStore.js");
+        for (const bucket of hourlyBuckets.values()) {
+          recordMention(db, {
+            code: bucket.code,
+            hour: bucket.hour,
+            mentionCount: bucket.mentionCount,
+            negativeCount: bucket.negativeCount,
+            sourceCount: bucket.sources.size,
+          });
+        }
+        logger.debug("[pollNews] mention_velocity updated", {
+          buckets: hourlyBuckets.size,
+          codes: [...new Set([...hourlyBuckets.values()].map((b) => b.code))],
+        });
+      }
+    } catch (velErr) {
+      // Non-fatal — velocity tracking must never abort the poll cycle
+      logger.warn("[pollNews] mention_velocity write failed (non-fatal)", {
+        error: velErr instanceof Error ? velErr.message : String(velErr),
+      });
+    }
+
     // Deduplicate signals: merge multiple news_mention for the same stock
     // into a single signal with the highest-confidence entry's message.
     // This prevents 30× "news_mention" spam when many articles mention the same stock.
