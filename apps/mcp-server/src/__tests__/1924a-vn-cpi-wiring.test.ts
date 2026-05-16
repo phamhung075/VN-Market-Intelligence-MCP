@@ -1,17 +1,21 @@
 // apps/mcp-server/src/__tests__/1924a-vn-cpi-wiring.test.ts
 // Task 1924a — Parse + wire live VN CPI into macro_indicators
+// Task 1927a — Parse + wire live VN manufacturing PMI from /macro/external
 //
 // TC1: parseCpiFromText("...5.46 percent...") → 5.46
 // TC2: parseCpiFromText("...increased to 4.65 percent...") → 4.65
 // TC3: parseCpiFromText("") → null
 // TC4: investment clock with cpi=5.46 → inflationSignal='HIGH', phase depends on growth signal
 // TC5: macroIndicatorRefreshJob upserts parsed cpi value (mock getMacroExternal returning 5.46)
+// TC6: parsePmiFromText("...fell to 47.50 in April...") → 47.50
+// TC7: parsePmiFromText("...rose to 50.30 in March...") → 50.30
+// TC8: parsePmiFromText("") → null
 
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeAll, mock } from "bun:test";
 import { initDatabase, getDb } from "../infrastructure/db/schema.js";
 import { classifyInvestmentClockPhase } from "../domain/services/macro/investmentClock.js";
-import { parseCpiFromText } from "../scheduler/macro/macroIndicatorRefreshJob.js";
+import { parseCpiFromText, parsePmiFromText } from "../scheduler/macro/macroIndicatorRefreshJob.js";
 
 describe("Task 1924a — VN CPI Wiring", () => {
   let db: ReturnType<typeof getDb>;
@@ -103,5 +107,24 @@ describe("Task 1924a — VN CPI Wiring", () => {
     expect(row?.cpi).toBe(5.46);
     // gdp_growth preserved from original row via COALESCE (excluded.gdp_growth is null)
     expect(row?.gdp_growth).toBe(7.4);
+  });
+
+  // ── TC6: Parse PMI from TE description (fell to X) ────────────────────────
+  it("TC6: parsePmiFromText('...fell to 47.50 in April...') → 47.50", () => {
+    const text =
+      "Manufacturing PMI in Vietnam fell to 47.50 in April of 2026 from 48.30 in March.";
+    expect(parsePmiFromText(text)).toBe(47.5);
+  });
+
+  // ── TC7: Parse PMI from TE description (rose to X) ───────────────────────
+  it("TC7: parsePmiFromText('...rose to 50.30 in March...') → 50.30", () => {
+    const text =
+      "Manufacturing PMI in Vietnam rose to 50.30 in March of 2026 from 47.80 in February.";
+    expect(parsePmiFromText(text)).toBe(50.3);
+  });
+
+  // ── TC8: Empty string → null ──────────────────────────────────────────────
+  it("TC8: parsePmiFromText('') → null", () => {
+    expect(parsePmiFromText("")).toBeNull();
   });
 });

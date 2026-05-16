@@ -39,7 +39,29 @@ import { fetchFredIsmSubcomponents } from "../../infrastructure/fetchers/fredIsm
 export function parseCpiFromText(text: string): number | null {
   if (!text) return null;
   const m = text.match(/(\d+\.?\d*)\s*percent/i);
-  return m ? parseFloat(m[1]) : null;
+  return m ? parseFloat(m[1]!) : null;
+}
+
+/**
+ * Parses a numeric PMI value from a TradingEconomics text description.
+ *
+ * Example input: "Manufacturing PMI in Vietnam fell to 47.50 in April from 48.30 in March of 2026."
+ * Returns 47.50 (first decimal number after a directional/positional word).
+ *
+ * Returns null if no match found or text is empty.
+ */
+export function parsePmiFromText(text: string): number | null {
+  if (!text) return null;
+  // Match "to X.Y", "at X.Y", "was X.Y", "is X.Y" — decimal preferred
+  const decimal = text.match(/(?:to|at|was|is)\s+(\d+\.\d+)/i);
+  if (decimal) return parseFloat(decimal[1]!);
+  // Fallback: first standalone decimal number in PMI plausible range (25-80)
+  const any = text.match(/\b(\d{2}\.\d+)\b/);
+  if (any) {
+    const v = parseFloat(any[1]!);
+    if (v >= 25 && v <= 80) return v;
+  }
+  return null;
 }
 
 /**
@@ -56,6 +78,25 @@ function parseCpiFromExternal(
     const cpiEntry = te.data?.['inflation_cpi'];
     if (!cpiEntry) return null;
     return parseCpiFromText(cpiEntry.latestValue as string);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extracts the numeric manufacturing PMI from a /macro/external response envelope.
+ * Path: sources.tradingEconomics.data.manufacturing_pmi.latestValue
+ * Returns null on any missing/invalid path.
+ */
+function parsePmiFromExternal(
+  ext: Awaited<ReturnType<typeof getMacroExternal>>
+): number | null {
+  try {
+    const te = ext?.sources?.tradingEconomics;
+    if (!te || te.status !== 'ok') return null;
+    const pmiEntry = te.data?.['manufacturing_pmi'];
+    if (!pmiEntry) return null;
+    return parsePmiFromText(pmiEntry.latestValue as string);
   } catch {
     return null;
   }
@@ -97,10 +138,16 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     // Task 1924a: parse CPI from TradingEconomics text description.
     const extData = await getMacroExternal();
     const parsedCpi = parseCpiFromExternal(extData);
+    const parsedPmi = parsePmiFromExternal(extData);
     if (parsedCpi !== null) {
       logger.info(`[macro-refresh-job] parsed VN CPI from /macro/external: ${parsedCpi}%`);
     } else {
       logger.warn("[macro-refresh-job] VN CPI parse failed or /macro/external unavailable — DB value preserved via COALESCE");
+    }
+    if (parsedPmi !== null) {
+      logger.info(`[macro-refresh-job] parsed VN manufacturing PMI from /macro/external: ${parsedPmi}`);
+    } else {
+      logger.warn("[macro-refresh-job] VN PMI parse failed or /macro/external unavailable — DB value preserved via COALESCE");
     }
 
     const durationMs = Date.now() - startTime;
@@ -136,7 +183,7 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
       ).run(
         "vietnam",
         snapshot.sbvRefinancingRate ?? null,
-        null,       // manufacturing_pmi — not in macro snapshot; preserved via COALESCE
+        parsedPmi,  // manufacturing_pmi — from /macro/external TE parse (null preserved via COALESCE)
         parsedCpi,  // cpi — from /macro/external parse (null preserved via COALESCE if unavailable)
         null,       // gdp_growth       — not in macro snapshot; preserved via COALESCE
         null,       // inflation_rate   — not in macro snapshot; preserved via COALESCE

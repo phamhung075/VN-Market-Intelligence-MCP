@@ -70,6 +70,8 @@ if (!fred.isAvailable()) {
 export default {
   port: PORT,
   fetch: app.fetch,
+  // External scraper max budget: TE 65s + calendar 30s + margin → 120s minimum
+  idleTimeout: 120,
 };
 
 console.log(`macro-indicators running on port ${PORT}`);
