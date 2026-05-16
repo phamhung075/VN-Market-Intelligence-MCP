@@ -4,6 +4,16 @@
 
 ## This session
 
+### Alert Cycle (02:00–02:01 UTC) — BLOCKED
+- **Status**: BLOCKED at bootstrap stage
+- **Error**: MCP gateway unreachable — host.docker.internal DNS resolution failed
+- **Retry**: One retry attempt made, identical error returned
+- **Signals**: 0 (unable to fetch)
+- **Fired**: 0 | Suppressed: 0 | MARKET: 0
+- **Regime**: UNKNOWN (bootstrap failed before regime extraction)
+- **Actions**: Bug escalation signal dropped to docs/signals/alert-commander-2026-05-16T02.json. Cycle exited per fail-loud protocol.
+- **Note**: Scheduled cycle triggered (market hours schedule, off-hours fallback 2h interval). MCP connection failure blocks all downstream stages. See fail-loud protocol: error-boundary rule. Awaiting ops/dev team pickup via signal file.
+
 ### Alert Cycle (07:01–07:03 UTC)
 - Signals: 2 (urgent_news: 1, price_anomaly: 1)
 - Fired: 0 | Suppressed: 2 | MARKET: 0

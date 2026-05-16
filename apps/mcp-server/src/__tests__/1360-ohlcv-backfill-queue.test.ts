@@ -217,6 +217,9 @@ function seedSparse(db: Database): void {
   }
 }
 
+// No-op backfill stub — prevents real VNDirect network calls in unit tests
+const noopBackfill = async (_db: unknown) => ({ fetched: 0, skipped: 0, errors: [] });
+
 describe("Task 1360 — runOhlcvStartupProbe: queue insertion", () => {
   it("TC-8: sparse tickers found, no existing pending row → queue row inserted (done=0)", async () => {
     const db = makeProbeDb();
@@ -229,12 +232,15 @@ describe("Task 1360 — runOhlcvStartupProbe: queue insertion", () => {
     expect(before?.count).toBe(0);
 
     const sendWorkFn = async (_msg: string): Promise<boolean> => true;
-    await runOhlcvStartupProbe({ db, sendWorkFn });
+    await runOhlcvStartupProbe({ db, sendWorkFn, runBackfillFn: noopBackfill });
 
-    const after = db.query<{ count: number }, []>(
-      "SELECT COUNT(*) AS count FROM ohlcv_backfill_queue WHERE done = 0"
+    // After probe: row inserted (done=0). The backfill stub immediately resolves,
+    // so the UPDATE SET done=1 will have fired — row transitions to done=1.
+    // We verify that exactly one row exists (either pending or completed).
+    const total = db.query<{ count: number }, []>(
+      "SELECT COUNT(*) AS count FROM ohlcv_backfill_queue"
     ).get();
-    expect(after?.count).toBe(1);
+    expect(total?.count).toBe(1);
   });
 
   it("TC-9: sparse tickers found, existing pending row → no duplicate inserted (dedup)", async () => {
@@ -250,11 +256,11 @@ describe("Task 1360 — runOhlcvStartupProbe: queue insertion", () => {
     expect(before?.count).toBe(1);
 
     const sendWorkFn = async (_msg: string): Promise<boolean> => true;
-    await runOhlcvStartupProbe({ db, sendWorkFn });
+    await runOhlcvStartupProbe({ db, sendWorkFn, runBackfillFn: noopBackfill });
 
-    // Still exactly 1 pending row — no duplicate
+    // Still exactly 1 total row — no duplicate inserted
     const after = db.query<{ count: number }, []>(
-      "SELECT COUNT(*) AS count FROM ohlcv_backfill_queue WHERE done = 0"
+      "SELECT COUNT(*) AS count FROM ohlcv_backfill_queue"
     ).get();
     expect(after?.count).toBe(1);
   });

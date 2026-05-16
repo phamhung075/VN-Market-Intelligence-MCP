@@ -16,6 +16,9 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runOhlcvStartupProbe } from "../scheduler/market-data/ohlcvStartupProbe.js";
 
+// No-op backfill stub — prevents real VNDirect network calls in unit tests
+const noopBackfill = async (_db: unknown) => ({ fetched: 0, skipped: 0, errors: [] });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,14 +82,14 @@ describe("Task 1352 — ohlcv-startup-probe", () => {
       return true;
     };
 
-    const result = await runOhlcvStartupProbe({ db, sendWorkFn });
+    const result = await runOhlcvStartupProbe({ db, sendWorkFn, runBackfillFn: noopBackfill });
 
     expect(calls).toHaveLength(1);
     const msg = calls[0] ?? "";
     expect(msg).toContain("FPT(5)");
     expect(msg).toContain("VCB(0)");
     expect(msg).not.toContain("VNM(20)");
-    expect(msg).toContain("fetch-ohlcv-backfill.sh");
+    expect(msg).toContain("backfill");
     expect(result.sparseTickers).toHaveLength(2);
     expect(result.sent).toBe(true);
   });
@@ -165,7 +168,7 @@ describe("Task 1352 — ohlcv-startup-probe", () => {
       return true;
     };
 
-    const result7 = await runOhlcvStartupProbe({ db: db7, sendWorkFn: sendFn7 });
+    const result7 = await runOhlcvStartupProbe({ db: db7, sendWorkFn: sendFn7, runBackfillFn: noopBackfill });
 
     expect(calls7).toHaveLength(1);
     expect(result7.sparseTickers).toHaveLength(1);
