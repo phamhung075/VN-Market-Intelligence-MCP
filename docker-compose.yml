@@ -22,6 +22,7 @@ services:
       DB_PATH: /app/data/market.db
       SSC_IBOARD_BASE_URL: http://125.212.251.27:8765/proxy/ssc-iboard
       BCTC_DISCOVER_URL: http://125.212.251.27:8765/proxy/bctc-discover
+      MUASAMCONG_VPS_PROXY_URL: http://125.212.251.27:8765/proxy/muasamcong
       PDF_EXTRACTOR_URL: http://pdf-extractor:5001
       VPS_HOST: 125.212.251.27
       VPS_SSH_USER: root

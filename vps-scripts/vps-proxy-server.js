@@ -20,6 +20,13 @@
  *     → Auth: X-API-Key required
  *     → Added: 1922a (fixes insider_transactions 0 rows — SSC portal geo-blocked from France)
  *
+ *   GET /proxy/muasamcong
+ *     → forwards to https://muasamcong.mpi.gov.vn[?path=<path>]
+ *     → accepts optional ?path= query param appended to upstream URL
+ *     → returns the HTML response verbatim (text/html)
+ *     → Auth: X-API-Key required
+ *     → Added: muasamcong (Vietnamese government procurement portal)
+ *
  *   GET /proxy/bctc-discover/:ticker
  *     → shells out to /root/discover-bctc-urls-browser.py <TICKER> [<YEAR> [<QUARTER>]]
  *     → returns JSON array of discovered BCTC PDF URLs: string[]
@@ -83,6 +90,15 @@ const SSC_INSIDER_UPSTREAM =
 
 /** Path for the SSC insider proxy endpoint. */
 const SSC_INSIDER_PROXY_PATH = "/proxy/ssc-insider";
+
+/**
+ * Muasamcong (Vietnamese government procurement portal) upstream base URL.
+ * Geo-blocked outside Vietnam. Proxied at /proxy/muasamcong.
+ */
+const MUASAMCONG_UPSTREAM = "https://muasamcong.mpi.gov.vn";
+
+/** Path for the muasamcong proxy endpoint. */
+const MUASAMCONG_PROXY_PATH = "/proxy/muasamcong";
 
 /**
  * Static file serving for cached BCTC PDFs.
@@ -338,6 +354,34 @@ async function handleRequest(req, res) {
     return;
   }
 
+  // Muasamcong procurement portal proxy
+  //   Incoming: GET /proxy/muasamcong[?path=<path>]
+  //   Upstream: https://muasamcong.mpi.gov.vn[<path>]
+  //   Returns:  HTML page verbatim (text/html)
+  if (url === MUASAMCONG_PROXY_PATH || url.startsWith(MUASAMCONG_PROXY_PATH + "?")) {
+    const qs = new URLSearchParams(url.includes("?") ? url.slice(url.indexOf("?") + 1) : "");
+    const appendPath = qs.get("path") || "";
+    const upstreamUrl = `${MUASAMCONG_UPSTREAM}${appendPath}`;
+
+    log("INFO", `Muasamcong proxy: GET ${upstreamUrl}`);
+
+    try {
+      const body = await fetchUpstream(upstreamUrl, 15_000);
+      const payload = Buffer.from(body, "utf8");
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": payload.byteLength,
+        "X-Proxy-Source": "muasamcong.mpi.gov.vn",
+      });
+      res.end(payload);
+      log("INFO", `Muasamcong proxy OK: ${payload.byteLength}B`);
+    } catch (err) {
+      log("ERROR", "Muasamcong proxy FAIL", { error: err.message });
+      jsonResponse(res, 502, { error: "Bad gateway", detail: err.message });
+    }
+    return;
+  }
+
   // SSC iboard proxy
   //   Incoming: /proxy/ssc-iboard/dcm/financials/ticker/<TICKER>
   //   Upstream: https://iboard-query.ssc.vn/dcm/financials/ticker/<TICKER>
@@ -443,6 +487,7 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
+  log("INFO", `Muasamcong:       GET /proxy/muasamcong[?path=<path>] (proxies muasamcong.mpi.gov.vn)`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
   log("INFO", `BCTC files:       GET /bctc-files/:code/:filename (serves cached PDFs)`);
   log("INFO", `Health check:     GET /health`);
