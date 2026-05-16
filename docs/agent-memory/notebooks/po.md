@@ -1,48 +1,38 @@
 # PO Notebook
 
-## Last updated: 2026-05-16T04:26:08Z · Cycle: c136 — SPIKE_1921a → TASK_1921b dispatch
+## Last updated: 2026-05-16T05:51:01Z · Cycle: c137 — NOTHING (Docker DNS 2x HOLD, no codeable work)
 
-### c136 session summary
+### c137 session summary
 
-**PREFLIGHT (from router):** pendingSignals=[1 spike-complete from architect]. WIP=0. TNB c61 already ACK'd c135 (no new file). MCP gateway still 1913 BLOCKING-F1 → channel audit skipped per router pre-condition.
+**PREFLIGHT (from router):** pendingSignals=[2 bug-escalation Docker DNS — both already resolved by ops at 05:48 UTC, ops notebook bea2bbda]. WIP=0. TNB c61 ACK'd c135 still current (no new file). MCP gateway 1913 BLOCKING-F1 → channel audit MUST be skipped. Worktree `worktree-agent-aa8dd0061c8780417` locked by live parent session pid 93207 (code already on main as `2031d8b8`) → CLEAN skipped this cycle.
 
-**Signal triage (Step 0-SIG):**
-- `{from: architect, type: spike-complete, payload.spike_id: SPIKE_1921a, recommendation: B, risk: low, next_task: TASK_1921b}` → spike findings doc verified at `docs/spikes/SPIKE_1921a-urgent-news-regime-enum-rethink.md`. 4 files, no DB migration, no interface break, all in `apps/mcp-server/` zone. Maps directly to next_task dispatch.
+**Signal triage (Step 0-SIG):** Both signals are post-resolution bug reports from incident already cured by ops (Docker Desktop force-kill + restart). No PO action — signals are observational, not actionable.
 
-**No-Task Guard:**
-1. In-Progress empty. WIP=0 → can dispatch up to 2 parallel.
-2. Todo (1862c-E, 1862c-F) → 1862c-E is OPS user-action (dashboard), 1862c-F gated on 1862c-D/E "5 cycles clean" — neither dispatchable this cycle.
-3. Backlog blockers: 1913 USER, 1907a OPS, 1897b-carry USER, alert-precision-488 monitoring, fa-shape-guard-watch monitoring (cycle 3/3 unobservable), 1909c-reparse OPS — none dispatchable to dev agents.
-4. SPIKE_1921a → graduated to Done. TASK_1921b NEW dispatchable.
+**Docker DNS recurrence pattern analysis:**
+- Incident #1 (c132): ~02:21 UTC 2026-05-16 → 1919 original
+- Incident #2 (c137): ~05:02 UTC 2026-05-16 → 1919 recurrence
+- Gap: ~2h41m. Same root cause (host.docker.internal DNS misbehaving on macOS Docker Desktop substrate).
+- Ops threshold: escalate at ≥3 in 24h.
+- Same substrate family as 1897b-carry (HEAD.lock Spotlight FD orphan) — macOS-specific Docker Desktop substrate issues that are not code-curable from this codebase.
 
-**TASKS.md updates:** (1) Backlog row replaced — SPIKE_1921a row removed, TASK_1921b inserted with full AC. (2) SPIKE_1921a archived to Done with summary.
+**PO decision on Docker DNS pattern:** HOLD. Reasons: (a) 2-of-3 threshold not met; (b) both incidents auto-resolved by ops with no code-level fix possible (Docker Desktop / macOS networking is outside this codebase's reach); (c) creating a tracking-only task now would violate router guidance ("Do NOT create tracking-only tasks for incidents that ops already resolved with no dev action needed"). If 3rd occurrence within 24h → architect rethink on Docker Desktop reliability (cowork heartbeat, restart-watcher, alternative DNS strategy).
 
-**PO decision:** BATCH([TASK_1921b]) — single FIX item, size S, dev-mcp-server, zone `apps/mcp-server/`. No parallel slot used (no other dispatchable work). Bug 1916b "deadline" backlog items already done; nothing else to pair.
+**No-Task Guard sweep:**
+1. In Progress: empty. WIP=0.
+2. Todo: 1862c-E (OPS user-action — Cloudflare dashboard), 1862c-F (gated on 1862c-D/E "5 cycles clean") — neither dispatchable.
+3. Backlog open items all user-action / ops / monitoring: 1913 USER (BLOCKING-F1), 1907a OPS (CRITICAL), 1897b-carry USER (F1), 1909c-reparse OPS, alert-precision-488 MONITORING, fa-shape-guard-watch MONITORING (cycle 3/3 still unobservable — gateway blackout).
+4. No new TNB file. No new dispatchable backlog. No channel audit possible (gateway down).
 
-### BATCH dispatched
+**TASKS.md updates:** None (no new task; no row movements).
 
-```
-[{
-  type: "FIX",
-  id: "1921b-urgent-news-regime-enum-migration",
-  title: "Migrate urgent_news regime enum NEUTRAL|BULL|BEAR → TIGHTENING|NEUTRAL|EASING",
-  desc: "Implement Option B from SPIKE_1921a: align UrgentNewsFindingData.regime to monetary-policy vocabulary, remap H3 thresholds (TIGHTENING:0.60, NEUTRAL:0.55, EASING:0.50). Unblocks news-scout urgent_news currently Zod-rejected during non-NEUTRAL macro cycles.",
-  size: "S",
-  files: [
-    "apps/mcp-server/src/domain/signals/signalTypes.ts",
-    "apps/mcp-server/src/domain/services/regimeConfidenceThreshold.ts",
-    "apps/mcp-server/src/__tests__/H3-urgent-news-regime-threshold.test.ts",
-    "apps/mcp-server/src/__tests__/1293a-signal-type-safety.test.ts"
-  ],
-  baseline_pass: true,
-  zone: "apps/mcp-server/"
-}]
-```
+**PO decision:** RETURN NOTHING. No codeable work. Channels effectively blackout (1913 BLOCKING-F1). Awaiting USER action on 1913 / 1897b / Cloudflare dashboard before any new code path opens.
 
-### Carry-over for next cycle (c137)
+### Carry-over for next cycle (c138)
 
-- **TASK_1921b in flight:** dev-mcp-server will ship Option B migration. QA gate: full suite no regression, tsc 0, H3 tests green, 1293a still passes (NEUTRAL valid). Watch for: any orphan code path posting `regime: BULL/BEAR` (architect grep said none, but verify on QA review).
-- **Observational follow-up:** Once 1921b ships + deploys, watch next news-scout urgent_news cycle in non-NEUTRAL macro regime to confirm signal actually inserts to DB + Telegram fires. Pre-1921b baseline: 0 urgent_news in TIGHTENING/EASING periods (all rejected). Post-1921b expectation: insertions proportional to news flow.
-- **FA shape-guard watch (Finding #4 carry):** Still no live FA session post-1913 (gateway BLOCKING-F1). Cycle 3/3 observation pending USER action on Claude Desktop config.
-- **1913 USER ACTION:** BLOCKING-F1, root cause of channel-audit blackout + FA silence + digest-predict silence. No code work possible.
-- **No new TNB file:** c61 ACK'd c135 still current. Next TNB write will trigger Step 0-TNB re-read.
+- **Docker DNS pattern watch:** Count = 2/3 in ~24h. Next router cycle that surfaces another `host.docker.internal` / MCP gateway unreachable bug-escalation signal triggers architect rethink (spawn ARCH brief for Docker Desktop reliability layer). Note: this is substrate, not codebase — likely recommendation will be observational/ops automation, not TS/Go code.
+- **1913 USER ACTION still blocking:** Channel audit, FA shape-guard cycle 3/3 observation, digest-predict revival — all gated on user refreshing Claude Desktop MCP server config / cowork gateway registration.
+- **1897b-carry F1 USER still blocking:** Docker .git/ exclude bundle. PREFLIGHT cure permanent policy (1906a) handles symptom; structural cure pending.
+- **1909c-reparse-validation OPS pending:** DIG Q4-2025 reparse trigger awaits ops session.
+- **WIP=0:** Two slots free whenever new dispatchable work appears.
+- **No worktree CLEAN this cycle:** `worktree-agent-aa8dd0061c8780417` locked by live parent session pid 93207. Already merged to main as `2031d8b8`. Reattempt CLEAN once parent session ends.
+- **No new TNB file:** c61 ACK'd c135 still current. Will re-read on next TNB write.
