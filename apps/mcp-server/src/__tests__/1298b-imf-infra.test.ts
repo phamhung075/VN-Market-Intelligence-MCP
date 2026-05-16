@@ -15,7 +15,7 @@
  * NOTE: No live HTTP calls. fetchLatestImfIndicators tested via DB fallback path only.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { readFileSync } from "fs";
 import path from "path";
 
@@ -24,9 +24,24 @@ import {
   storeImfIndicators,
   getLatestImfIndicators,
   fetchLatestImfIndicators,
+  imfBreaker,
 } from "../application/services/imfDataFetcher.js";
 import { runImfIndicatorPollerJob } from "../scheduler/market-data/imfIndicatorPollerJob.js";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
+
+// ── Mock fetch so tests do not make live HTTP calls (Task 1922h fix) ──────────
+// The IMF API now returns 200 without Chrome UA, causing live-call tests to
+// exceed the 5s Bun test timeout. Mock fetch to simulate circuit-breaker open
+// so AC-4 / AC-5 tests exercise the DB fallback path, as was the original intent.
+const originalFetch = globalThis.fetch;
+mock.module("node:fetch", () => ({})); // no-op — Bun uses globalThis.fetch
+function mockFetchReject(): void {
+  const stub = async (): Promise<never> => { throw new Error("fetch mocked — offline for test"); };
+  globalThis.fetch = Object.assign(stub, { preconnect: () => {} }) as unknown as typeof fetch;
+}
+function restoreFetch(): void {
+  globalThis.fetch = originalFetch;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,12 +130,17 @@ describe("AC-4: imfDataFetcher production safety", () => {
     // Pre-populate DB so fallback has data if HTTP fails
     await storeImfIndicators([makeIndicator({ code: "TEST_FETCH_FALLBACK_1298B" })]);
 
+    // Mock fetch to avoid live HTTP calls — test exercises the DB fallback path
+    imfBreaker.reset();
+    mockFetchReject();
     let threw = false;
     let result: ImfIndicator[] = [];
     try {
       result = await fetchLatestImfIndicators();
     } catch {
       threw = true;
+    } finally {
+      restoreFetch();
     }
 
     expect(threw).toBe(false);
@@ -182,12 +202,21 @@ describe("AC-5: imfIndicatorPoller cron registration", () => {
     expect(entry!["enabled"]).toBe(true);
   });
 
-  it("runImfIndicatorPollerJob() returns success shape without throwing", async () => {
+  it("runImfIndicatorPollerJob() returns success shape without throwing (DI mock)", async () => {
+    // Use DI overrides to avoid live HTTP calls — tests the job wrapper contract
     let threw = false;
     let result: Awaited<ReturnType<typeof runImfIndicatorPollerJob>> | undefined;
 
     try {
-      result = await runImfIndicatorPollerJob();
+      result = await runImfIndicatorPollerJob({
+        fetchFn: async () => [makeIndicator()],
+        storeFn: async () => {},
+        classifyFn: () => ({
+          sentiment: 0.1, confidence: 0.80,
+          classification: "imf_bullish" as const,
+          reasoning: "stub", sectorImpacts: [],
+        }),
+      });
     } catch {
       threw = true;
     }
@@ -198,25 +227,38 @@ describe("AC-5: imfIndicatorPoller cron registration", () => {
     expect(typeof result!.indicator_count).toBe("number");
   });
 
-  it("runImfIndicatorPollerJob() success path: indicator_count >= 0 when success=true", async () => {
-    const result = await runImfIndicatorPollerJob();
-    if (result.success) {
-      expect(result.indicator_count).toBeGreaterThanOrEqual(0);
-      // sentiment field present on success
-      expect(result.sentiment).toBeDefined();
-    }
+  it("runImfIndicatorPollerJob() success path: indicator_count >= 0 when success=true (DI mock)", async () => {
+    const result = await runImfIndicatorPollerJob({
+      fetchFn: async () => [makeIndicator({ value: 3.2 })],
+      storeFn: async () => {},
+      classifyFn: () => ({
+        sentiment: 0.2, confidence: 0.85,
+        classification: "imf_bullish" as const,
+        reasoning: "stub", sectorImpacts: [],
+      }),
+    });
+    expect(result.success).toBe(true);
+    expect(result.indicator_count).toBeGreaterThanOrEqual(0);
+    // sentiment field present on success
+    expect(result.sentiment).toBeDefined();
   });
 
-  it("runImfIndicatorPollerJob() failure path: returns { success: false, error: string, indicator_count: 0 }", async () => {
-    // In test env without live IMF API the job may fail gracefully
-    // If it actually succeeded (test machine has network), skip failure assertions
-    const result = await runImfIndicatorPollerJob();
-    if (!result.success) {
-      expect(typeof result.error).toBe("string");
-      expect(result.error!.length).toBeGreaterThan(0);
-      expect(result.indicator_count).toBe(0);
-    }
-    // Either way — must not have thrown (verified by outer try/catch in prior test)
+  it("runImfIndicatorPollerJob() failure path: returns { success: false, error: string, indicator_count: 0 } (DI mock)", async () => {
+    // fetchFn returns [] → early-exit → success:false
+    const result = await runImfIndicatorPollerJob({
+      fetchFn: async () => [],
+      storeFn: async () => {},
+      classifyFn: () => ({
+        sentiment: 0, confidence: 0.5,
+        classification: "imf_neutral" as const,
+        reasoning: "stub", sectorImpacts: [],
+      }),
+    });
+    expect(result.success).toBe(false);
+    expect(typeof result.error).toBe("string");
+    expect(result.error!.length).toBeGreaterThan(0);
+    expect(result.indicator_count).toBe(0);
+    // Must not have thrown
     expect(typeof result.success).toBe("boolean");
   });
 });

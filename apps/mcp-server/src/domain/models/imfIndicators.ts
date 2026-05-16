@@ -55,15 +55,16 @@ export const IMF_INDICATORS = {
   VN_GROWTH_FORECAST: "NGDP_RPCH_VNM", // Vietnam GDP growth %
 
   // Monetary policy
-  GLOBAL_INFLATION: "PCPI_ADVEC",      // Advanced economy CPI %
+  GLOBAL_INFLATION: "PCPIPCH",         // Inflation rate, average consumer prices (global %)
   EM_INFLATION: "PCPI_EM",             // EM inflation %
 
   // Trade & capital flows
   FDI_OUTLOOK: "FDI_SCORE",            // FDI sentiment (ordinal 0–100)
   USD_STRENGTH: "DXY_IMF_PROXY",       // USD index equivalent
 
-  // Commodity
-  OIL_FORECAST: "POILAPSP",            // Oil price forecast $/barrel
+  // Commodity / external balance
+  OIL_FORECAST: "BCA_NGDPD",          // Current account balance (% of GDP) — IMF DataMapper
+  // NOTE: POILAPSP and PCPI_ADVEC are not valid IMF DataMapper codes (Task 1922h fix).
 } as const;
 
 export type ImfIndicatorKey = keyof typeof IMF_INDICATORS;

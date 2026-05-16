@@ -16,9 +16,7 @@
  */
 
 import { getDb } from "../../infrastructure/db/schema.js";
-import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
-import { BROWSER_UA } from "../../infrastructure/fetchers/browserHeaders.js";
 import {
   calculateConfidenceDecay,
   IMF_INDICATORS,
@@ -154,8 +152,8 @@ function parseImfApiResponse(
 export async function fetchLatestImfIndicators(): Promise<ImfIndicator[]> {
   const indicatorsToFetch = [
     { key: "WORLD_GROWTH", name: "Global GDP Growth (%)" },
-    { key: "GLOBAL_INFLATION", name: "Advanced Economy CPI (%)" },
-    { key: "OIL_FORECAST", name: "Oil Price Forecast ($/barrel)" },
+    { key: "GLOBAL_INFLATION", name: "Global Inflation, Average Consumer Prices (%)" },
+    { key: "OIL_FORECAST", name: "Current Account Balance (% of GDP)" },
   ] as const;
 
   const results: ImfIndicator[] = [];
@@ -173,11 +171,11 @@ export async function fetchLatestImfIndicators(): Promise<ImfIndicator[]> {
       // Circuit breaker + fetch
       const raw = await imfBreaker.execute(async () => {
         const url = buildImfApiUrl(code);
+        // NOTE: IMF DataMapper WAF blocks requests with a browser User-Agent
+        // (Chrome UA → HTTP 403). Send no User-Agent or Accept override so the
+        // API treats the request as a plain API client and returns 200 JSON.
+        // Task 1922h root-cause fix.
         const response = await fetch(url, {
-          headers: {
-            "User-Agent": BROWSER_UA,
-            Accept: "application/json",
-          },
           signal: AbortSignal.timeout(15_000),
         });
         if (!response.ok) {
