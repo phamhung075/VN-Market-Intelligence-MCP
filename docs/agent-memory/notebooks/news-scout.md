@@ -1,5 +1,13 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-16 02:20 UTC | **Status:** OK
+
+### Cycle (02:19–02:22 UTC)
+- Items: 20 | Impacts: 8 | Signals: [urgent_news#3236/HVN] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: 2 (VIC chain_catalyst#3232, GAS chain_catalyst#3233 — already on bus <180min)
+- Key: HVN lương lãnh đạo -40-50% (bearish, score=9); VIC/GAS already covered prior cycle
+
 **Last updated:** 2026-05-16 05:56 UTC | **Status:** MCP_UNREACHABLE
 
 ### Cycle (05:56–05:56 UTC) — ABORTED
@@ -203,3 +211,11 @@ Fetched 20 articles (post-market close cycle, 11:22 UTC). VN-Index confirmed all
 ## Estimated tokens
 
 ~7500 (15 tool calls × 500)
+
+### Cycle (01:19–01:22 UTC 2026-05-16)
+- Items: 20 | Impacts: 3 | Signals: [urgent_news, chain_catalyst x2] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (spread -0.33%)
+- Feedback: 0 accepted / 0 rejected | Filter hints: [FILTER_HINT_urgent_news=default, FILTER_HINT_chain_catalyst=default]
+- urgent_news HVN id=3234: salary cut 40-50% leadership, regime_adj_score=10 (bearish×1.3)
+- chain_catalyst VIC id=3232: Vingroup "quá nóng" Dragon Capital warning, regime_adj_score=7.0 (bullish×0.7)
+- chain_catalyst GAS id=3233: Sốt dòng tiền dầu khí, Brent $109 +2.56σ, hot_money_risk=true, regime_adj_score=10 (bearish×1.3)
+- Suppressed: 0 | urgent_news regime field: BULL/BEAR/NEUTRAL enum (not TIGHTENING) — schema note logged

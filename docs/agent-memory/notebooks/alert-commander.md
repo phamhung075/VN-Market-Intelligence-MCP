@@ -1,8 +1,16 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 01:02 UTC | **Sprint:** c132
+**Last updated:** 2026-05-16 02:03 UTC | **Sprint:** c132
 
 ## This session
+
+### Alert Cycle (02:01–02:03 UTC)
+- Signals: 1 (urgent_news: 1)
+- Fired: 0 | Suppressed: 1 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Suppressed: HVN urgent_news confidence=0.50 < TIGHTENING threshold 0.75. No price_anomaly override available.
+- Note: Off-hours cycle (Saturday). Market CLOSED. Legal: clean. Crisis: clean.
 
 ### Alert Cycle (01:02–01:02 UTC)
 - Signals: 0 (agent bus empty; price alerts: 0; legal: 0; crisis: 0)
