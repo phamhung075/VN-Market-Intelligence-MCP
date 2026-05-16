@@ -50,6 +50,8 @@ import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob, runCommodityTrackerRefreshJob, runSbvRatesRefreshJob } from './macro/index.js'
+import { fetchFredEffrIorb } from '../infrastructure/fetchers/fredEffrIorb.js'
+import { fetchFredIsmSubcomponents } from '../infrastructure/fetchers/fredIsmSubcomponents.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
@@ -598,6 +600,37 @@ export function startScheduler() {
   void validateMacroFreshnessOnStartup().catch((err) => {
     log(`[macro-startup-validation] error: ${err instanceof Error ? err.message : String(err)}`)
   })
+
+  // Task 1922j — Startup backfill: populate fred_series_daily when empty.
+  // macroIndicatorRefreshJob runs once daily at 06:00 GMT+7; after a Docker restart
+  // the table is empty until the next scheduled run. Backfill immediately on startup
+  // to ensure EFFR/IORB and ISM data are always available after container restarts.
+  void (async () => {
+    try {
+      const db = getDb()
+      const row = db.prepare(
+        `SELECT COUNT(*) AS cnt FROM fred_series_daily`
+      ).get() as { cnt: number } | null
+      if ((row?.cnt ?? 0) === 0) {
+        log('[startup-backfill] fred_series_daily empty — running EFFR/IORB backfill')
+        const result = await fetchFredEffrIorb(undefined, db)
+        if (result !== null) {
+          log(`[startup-backfill] EFFR/IORB: ${result.effrRows} EFFR + ${result.iorbRows} IORB rows inserted`)
+        } else {
+          log('[startup-backfill] EFFR/IORB fetch returned null — FRED temporarily unavailable')
+        }
+        const ismResult = await fetchFredIsmSubcomponents(undefined, db)
+        if (ismResult !== null) {
+          const total = Object.values(ismResult.inserted).reduce((a, b) => a + b, 0)
+          log(`[startup-backfill] ISM sub-components: ${total} rows inserted, failed: [${ismResult.failed.join(',')}]`)
+        } else {
+          log('[startup-backfill] ISM fetch returned null — FRED_API_KEY absent or unavailable')
+        }
+      }
+    } catch (err) {
+      log(`[startup-backfill] fred_series_daily backfill error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  })()
 
   // Every 1 min — Foreign flow fallback fetcher — task 1290
   // Resilience loop: if VPS is down, cache/SSE keeps daily_ohlcv updated
