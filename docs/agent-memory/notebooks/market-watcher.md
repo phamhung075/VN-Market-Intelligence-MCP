@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 01:42 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 02:47 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1853,3 +1853,34 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 5500 |
+
+### Cycle (02:38–02:47)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 5 detected (2 valid new, 3 erroneous duplicate) | Volume spikes: 0 new | Chain confirms: 3 (GAS bearish, VIC bullish, HVN urgent_news×2)
+- Regime: TIGHTENING (Brent 109.24 +2.56σ, gold -2.19σ, "USD+dầu+lợi suất tăng mạnh") | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [VPB] | pe_risk: [GAS, HPG, VPB, MWG]
+- Market CLOSED (Saturday 2026-05-16, off-hours cycle). All prices EOD from 2026-05-15 08:59 UTC.
+
+**Valid new signals (not previously emitted at this EOD move_pct):**
+- **VPB -3.84% (1.87σ)** → signal #3237 → alert-commander [MEDIUM→HIGH, downside_bias]. Actual EOD close (-3.84%) larger than bootstrap estimate (-2.13%). May 15 session cycles used NEUTRAL 2.0σ threshold — VPB at 1.87σ not triggered; 01:39 cycle used bootstrap figure 2.13% → 1.04σ estimate (missed). 30d stddev ~2.05%. fx_pressure=true (banking + USD STRENGTHENING). pe_compression_risk=true. FII_OUTFLOW_RISK context.
+- **MWG -2.61% (1.88σ)** → signal #3240 → alert-commander [MEDIUM→HIGH, downside_bias]. First signal on this EOD price. May 15 session used NEUTRAL 2.0σ — MWG (1.88σ) was below threshold. Under TIGHTENING 1.5σ, legitimate new anomaly. 30d stddev ~1.39%. Retail sector -0.78% 1d. No fx_pressure. pe_compression_risk=true. Context: "ba cổ phiếu bị tự doanh bán ròng gần 600 tỷ".
+
+**Erroneous duplicates (posted in error — 24h threshold NOT yet met):**
+- ⚠️ GAS +6.94% (1.99σ) → signal #3238 posted in ERROR. Prior signals #3215 (07:41 May 15) + #3219 (08:43 May 15) only ~18-19h elapsed at 02:46 UTC — 24h NOT met. Should be SUPPRESSED.
+- ⚠️ HPG -1.85% (1.99σ) → signal #3239 posted in ERROR. Prior signal #3220 (08:43 May 15) ~18h elapsed — 24h NOT met.
+- ⚠️ GVR +4.28% (1.56σ) → signal #3241 posted in ERROR. Prior signal #3222 (08:43 May 15) ~18h elapsed — 24h NOT met.
+- Root cause: cycle assumed incorrect time (~14:xx UTC vs actual 02:46 UTC). Alert-commander should note #3238/#3239/#3241 as erroneous duplicates.
+
+- Sector rotation: Oil/Gas +3.94% 1d (leader), Steel +1.95%, Chemicals +0.37% | Banking -0.62%, Retail -0.78%, Insurance -0.89%, Auto -1.57%. All 16 sectors STABLE (1d only, no 5-session rotation).
+- Supply chain: STABLE (BDI=1,400). Chain findings (120min): VIC bullish chain_catalyst (#3232), GAS bearish chain_catalyst (#3233), HVN urgent_news (#3234, #3236).
+- Macro: Brent 109.24 (+2.56σ HIGH), Gold 4,543.6 (-2.19σ HIGH), USD/VND 26,137. Energy: NORMAL. Climate: May heat-risk (IDC/KBC/GEG — no watchlist impact).
+- CARRY_REGIME=FII_OUTFLOW_RISK: not HOT_MONEY_INFLOW — no hot_money_concentration check.
+
+## Metrics (cycle 2026-05-16 02:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 5 (2 valid: #3237 VPB, #3240 MWG; 3 erroneous dup: #3238 GAS, #3239 HPG, #3241 GVR) |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 8500 |

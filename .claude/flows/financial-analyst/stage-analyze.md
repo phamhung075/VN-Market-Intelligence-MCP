@@ -33,6 +33,12 @@ G-Bond regime change check (Pillar 5.2):
 
 IF empty/no data → log: "Layer 7: no cash flow data for {ticker} — Layer 7 skipped" → continue (non-fatal)
 
+IF data returned BUT flagged as extraction_error OR anomalous (e.g. OCF=142M alongside NI in billions, or OCF/NI ratio > 50x or < 0.01x) → treat as unreliable, do NOT silently skip the gate. Instead apply manual accrual fallback:
+- Compute `accrual_ratio = (NI - OCF) / abs(NI)` using best available NI from get_bctc_full
+- If `abs(accrual_ratio) > 0.30` → set `earnings_quality_warn=true`, log: "Layer 7 fallback: OCF anomalous (extraction_error), accrual_ratio={value} — earnings quality WARN"
+- If `abs(accrual_ratio) <= 0.30` → set `earnings_quality_warn=false`, log: "Layer 7 fallback: OCF anomalous but accrual within bounds"
+- Never log "Layer 7 skipped" when NI data is available — the forensic gate must always be passed or explicitly failed with a recorded reason
+
 IF data returned — compute per quarter: `accrual = NI - OCF`
 - `divergence_flag = |OCF - NI| / |NI| > 0.30 AND OCF < NI for ≥2 consecutive quarters`
 - IF divergence_flag → append to verdict: "earnings quality WARN: NI>OCF divergence ≥2 consecutive qtrs" → `earnings_quality_warn=true`
