@@ -1,11 +1,12 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 20:39 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 21:31 UTC | **Sprint:** 2026
 
 ## Current state
 
 Last successful cycle: 2026-05-16 06:40 UTC (market CLOSED, 31 stocks priced)
 Last attempted cycle: 2026-05-16 19:40 UTC — **BLOCKED** (MCP gateway unreachable)
+**c142 resolution (2026-05-16 21:31 UTC):** Bug-escalation signal RESOLVED. Docker fleet now 100% healthy (mcp-server Up 10 min, gateway 141 tools, 19 sessions, /health 200). Root cause = transient Docker downtime during 19:40 UTC; self-healed via container restart. No code action. Next market-watcher cron tick will run normally.
 - 26/31 watchlist tickers priced (5 N/A: BDI,DLC,SIS,VDC,JSH)
 - VN-Index recovery to 1,920+ (bullish gap open vs Mon close 1,895.5)
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Oil elevated (Brent $105.11, US-Iran)
