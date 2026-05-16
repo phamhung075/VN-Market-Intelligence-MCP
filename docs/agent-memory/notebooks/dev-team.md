@@ -1,5 +1,19 @@
 # dev-team notebook
 
+## Current state (c137 close — 2026-05-16T05:55Z)
+- Pipeline: idle. Docker DNS 2nd recurrence (05:02 UTC) resolved by ops at 05:48 UTC. No codeable work.
+- HEAD.lock #45 cured at PREFLIGHT (age=1286s, size=0B, no live pid). index.lock also cured (Spotlight, age=1825s).
+- Docker DNS: 2 incidents today (02:21 + 05:02 UTC). HOLD until 3rd occurrence → architect SPIKE.
+- WIP: 0/2. Worktree-agent-aa8dd0061c8780417 locked by live session — skip CLEAN this cycle.
+- MCP gateway (1913 BLOCKING-F1): cycle 13+. All Telegram ops skipped.
+
+## c137 cycle log
+- PREFLIGHT: HEAD.lock #45 cured (age=1286s, size=0B, no pid). index.lock #1 cured (Spotlight com.apple 75631, age=1825s).
+- Drain: 2 signals processed (both Docker DNS 1919-recurrence, resolved by ops). Inbox empty.
+- Ops: Docker Desktop force-restart at 05:48 UTC. All 12 containers Up+healthy. DNS resolves. Notebook bea2bbda.
+- PO triage (c137): NOTHING — Docker DNS HOLD (2/3 threshold). All backlog user-action/monitoring. Notebook af245d3f.
+- Post-cycle: no non-main branches (worktree locked by live session, skip). No new signals.
+
 ## Current state (c136 close — 2026-05-16T04:52Z)
 - Pipeline: TASK_1921b SHIPPED + QA APPROVED. urgent_news regime enum fix delivered. Inbox empty.
 - HEAD.lock #44 cured at PREFLIGHT (age=2539s, size=0B, no live pid).
