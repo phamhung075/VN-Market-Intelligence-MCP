@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 03:41 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 04:43 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1908,4 +1908,31 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | signals_suppressed | 0 (guard failed) |
 | market_alerts_fired | 0 |
 | exit_status | complete (with errors) |
+| token_estimate | 6500 |
+
+### Cycle (04:41–04:43)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 5 detected (all SUPPRESSED) | Volume spikes: 0 | Chain confirms: 0 new (11 open findings, 120min window)
+- Regime: TIGHTENING (Brent 109.24 +2.56σ; gold -2.19σ; news-scout id=3248 regime=TIGHTENING, M2/COC headwinds, phase=slowdown, tier=cash) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [banking, realty] | pe_risk: []
+- Adaptive thresholds: sigma=1.5σ | vol_mult=1.5x | downside_bias=true
+- Market CLOSED (Saturday 2026-05-16, off-hours 4h cycle). All prices EOD from 2026-05-15 08:59 UTC.
+- GAS +6.94% (2.06σ, 30d stddev ~3.37%, vol 498.6K) → SUPPRESSED: off-hours duplicate — same closing price (89,400 VND), signals emitted this session (id=3215 at 07:41 May 15; id=3219 at 08:43 May 15; erroneous dups #3238/#3243 in prior cycles)
+- GVR +4.28% (1.66σ, 30d stddev ~2.58%, vol 675.5K) → SUPPRESSED: off-hours duplicate — same closing price (37,750 VND), signal emitted this session (id=3222 at 08:43 May 15; erroneous dup #3241 at 02:46 UTC today)
+- MWG -2.61% (1.74σ, 30d stddev ~1.50%, vol 669.2K) → SUPPRESSED: off-hours duplicate — same closing price (82,000 VND), signal emitted this session (id=3240 at 02:46 UTC today; erroneous dup #3244 at 03:41 UTC)
+- HPG -1.85% (1.99σ, 30d stddev ~0.93%, vol 7.58M ~5.4x avg) → SUPPRESSED: off-hours duplicate — same closing price (26,550 VND), signal emitted this session (id=3220 at 08:43 May 15; erroneous dup #3239 at 02:45 UTC today)
+- VPB -2.13% (bootstrap; actual EOD -3.84% per prior cycle notes) → SUPPRESSED: signal #3237 emitted at 02:45 UTC today
+- NVL +3.90% (~0.87σ, 30d stddev ~4.48%) — sub-1.5σ threshold; no signal
+- Sector rotation (1d only): Oil/Gas +3.94% (leader), Steel +1.95%, Chemicals +0.37% | Banking -0.62%, Retail -0.78%, Insurance -0.89%, Auto -1.57%. All 16 sectors STABLE (1d data, no 5-session trend).
+- Supply chain: STABLE (BDI=1,400, no disruptions)
+- Chain findings (120min): 11 open across 8 groups — VPB #3237 (valid, market-watcher), GAS #3238 (erroneous dup), HPG #3239 (dup), MWG #3240 (valid) + #3244 (dup), GVR #3241 (dup), HVN #3242+#3247 (news-scout urgent_news: Quyền Tổng giám đốc appointed), VIC #3246 (news-scout urgent_news: Dragon Capital bullish commentary), unknown #3248 (news-scout chain_catalyst: Brent $109 →CPI→SBV tightening risk, impact=9, bearish)
+- ✅ Corrective action applied: notebook tail read BEFORE emitting to catch prior-session signals not visible in bootstrap agent_signals[] — guard correctly triggered this cycle
+
+## Metrics (cycle 2026-05-16 04:43 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 5 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
 | token_estimate | 6500 |
