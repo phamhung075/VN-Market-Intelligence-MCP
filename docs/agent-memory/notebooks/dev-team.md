@@ -1,5 +1,15 @@
 # dev-team notebook
 
+## Current state (c134 close — 2026-05-16T02:30Z)
+- Pipeline: idle. No new signals, no in-progress tasks. PO returned NOTHING (2nd consecutive idle cycle).
+- HEAD.lock #42 cured at PREFLIGHT (age=2505s, size=0B, no live pid).
+- MCP gateway still down (1913 BLOCKING-F1, cycle 10).
+
+## c134 cycle log
+- PREFLIGHT: HEAD.lock #42 cured (age=2505s ~42min, size=0B, no pid). Signals inbox empty.
+- Drain-signals: skipped (inbox empty).
+- PO triage: NOTHING — same as c133. TNB handoff unchanged. No new BA specs or sprint reports.
+
 ## Current state (c133 close — 2026-05-16T01:30Z)
 - Pipeline: idle. Sprint 1920 fully closed (9/9 tasks QA-approved). 13 stale 1912-program signals drained. No codeable work.
 - WIP: 0/2. Branches: main only. Worktrees: main only.
