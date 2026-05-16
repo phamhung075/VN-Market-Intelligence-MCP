@@ -1,8 +1,28 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-16 | **Sprint:** 1920
+**Last updated:** 2026-05-17 | **Sprint:** 1923
 
-## Last session summary (1920i)
+## Last session summary (1923a)
+
+Task 1923a — Investment clock case-mismatch fix + macroIndicatorRefreshJob full-field upsert.
+
+**Problem:** `get_investment_clock_phase` always returned `insufficient_data`. Two bugs:
+1. `investmentClockTools.ts` queried `WHERE country = 'Vietnam'` (capital V); DB has `'vietnam'` (lowercase) — SQLite `=` is case-sensitive.
+2. `macroIndicatorRefreshJob.ts` upserted with `country='Vietnam'` creating a SECOND row instead of updating the existing one. Also only wrote `interest_rate`, leaving PMI/CPI/GDP/inflation_rate untouched.
+
+**What was done:**
+- `investmentClockTools.ts` L68: `"Vietnam"` → `"vietnam"`.
+- `macroIndicatorRefreshJob.ts` upsert: country key `"Vietnam"` → `"vietnam"`. INSERT columns expanded to include `manufacturing_pmi`, `cpi`, `gdp_growth`, `inflation_rate`. ON CONFLICT SET uses `COALESCE(excluded.X, X)` for all macro fields — null-safe (snapshot doesn't provide these; existing DB values are preserved when snapshot sends null).
+- New test file `1923a-investment-clock-case-fix.test.ts`: TC1 (row found with lowercase key), TC2 (uppercase returns null / lowercase finds row), TC3 (RECOVERY phase: gdpGrowth=7.4 UP, CPI=2.84 LOW), TC4 (upsert creates single row, no duplicate). 4/4 GREEN.
+- TASKS.md: 1913 CLOSED STALE-RESOLVED, 1923a DONE.
+- pipeline-state.json: status=idle, c143.
+
+**Commit:** `7a0adfdc fix(1923a): investment clock — lowercase country key + refresh all macro fields`
+
+**Full suite: 9533 pass / 37 fail (37 pre-existing baseline — all BCTC fixture failures, 0 regressions). tsc 0 errors.**
+
+## Previous last session summary (1920i)
+
 
 Task 1920i — Extend freshnessSlaMonitor to cover all Sprint 1920 tables.
 
