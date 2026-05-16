@@ -13,6 +13,15 @@
  * The union of all columns is: code, date, open, high, low, close,
  * volume, updated_at, foreign_buy_vol, foreign_sell_vol, foreign_net_vol,
  * put_through_vol.
+ *
+ * NOTE: A table named `vn_index_cache` was classified as a zombie orphan in
+ * Sprint 1922 (Task 1922b). Investigation confirmed it has NO CREATE TABLE
+ * definition in any schema file and ZERO production writers or readers in
+ * any .ts/.js file. It exists only in the live market.db from an abandoned
+ * cache design referenced in docs/architecture/1842a-backtesting-engine.md
+ * (Phase 2 VNINDEX time-series, never implemented). No migration needed.
+ * freshnessSlaMonitor: excluded from coverage check (no active writer).
+ * DO NOT add new writers. DO NOT query this table.
  */
 
 import type { Database } from "bun:sqlite";

@@ -54,6 +54,10 @@ export function querySignalAges(
   // Excluded from SLA monitoring (zero active writers — DEPRECATED or N/A):
   //   - user_requests: superseded by ask_queue (Task 1063, Sprint 1920)
   //   - skips: table does not exist in schema (Sprint 1920 investigation)
+  //   - vn_index_cache: orphan from abandoned 1842a cache design — no schema def,
+  //       zero writers (Sprint 1922, Task 1922b)
+  //   - credit_data: orphan from deleted SBV credit growth code — no schema def,
+  //       zero writers (Sprint 1922, Task 1922c)
   //
   // Table mapping (original 5):
   //   sbv_fx       — sbv_rates.fetched_at
