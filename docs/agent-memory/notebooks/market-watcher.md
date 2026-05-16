@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-15 22:39 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 00:41 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1806,3 +1806,22 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~300 |
+
+### Cycle (00:38–00:41)
+- Stocks: 34 | Anomalies: 0 (all suppressed) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: UNKNOWN | US10Y: UNKNOWN | fx_pressure: [] | pe_risk: []
+- GAS +6.94% (2.17σ) → SUPPRESSED: off-hours duplicate — same closing price (2026-05-15 08:59), signals emitted at 07:41 (id=3215) + 08:43 (id=3219) UTC May 15, ~16.9h ago (<24h)
+- HPG -1.85%, NVL +3.90%, GVR +4.28% → SUPPRESSED: off-hours duplicates — ids=3220/3221/3222 emitted 08:43 UTC May 15 (<24h)
+- Supply chain: STABLE (BDI=1,400, no disruptions) | Chain findings: 0 (last 15 min)
+- Context: Brent 109.24 (+2.56σ HIGH macro alert), Gold 4,543.6 (-2.19σ), USD/VND 26,137. Oil/gas sector led (+3.94% 1d). VN-Index 1,921.60 (-0.20%). System OK. Market CLOSED.
+
+## Metrics (cycle 2026-05-16 00:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 0 |
+| signals_suppressed | 4 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3200 |
