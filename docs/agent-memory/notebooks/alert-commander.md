@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-15 23:02 UTC | **Sprint:** c116
+**Last updated:** 2026-05-16 01:02 UTC | **Sprint:** c132
 
 ## This session
+
+### Alert Cycle (01:02–01:02 UTC)
+- Signals: 0 (agent bus empty; price alerts: 0; legal: 0; crisis: 0)
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
+- Note: Off-hours cycle (Saturday). Market CLOSED. No actionable signals. Macro context: Brent +2.56σ (109.24), Gold -2.19σ (4543.6), FII_OUTFLOW_RISK carry.
 
 ### Alert Cycle (21:03–21:04 UTC)
 - Signals: N/A — cycle aborted at Step 0
