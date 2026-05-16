@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 06:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 18:39 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1995,6 +1995,26 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 - Action: Exit per error-boundary; escalate to dev team for Docker health check and restart
 
 ## Metrics (cycle 2026-05-16 16:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 400 |
+
+### Cycle (18:39 UTC) — OFF-HOURS BLOCKED
+- Status: BLOCKED at Step 0 (Bootstrap)
+- MCP gateway (vn-market) unreachable — localhost:3000 no response (timeout 5s)
+- ⛔ Error: curl http://localhost:3000/health → connection refused
+- No watchlist processed; no signals evaluated; no WORK sent
+- Fail-loud protocol: bug signal dropped to docs/signals/market-watcher-2026-05-16T18-39-45Z.json
+- Context: Off-hours cycle (18:39 UTC, market closed). Previous successful cycle: 06:40 UTC. Previous blocked cycles: 05:39 UTC (MCP), 16:39 UTC EOD (MCP).
+- Action: Exit per error-boundary; dev team Docker health check required
+
+## Metrics (cycle 2026-05-16 18:39 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
