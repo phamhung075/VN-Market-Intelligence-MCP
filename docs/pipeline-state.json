@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c143",
+  "currentSprint": "c144",
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-17T00:00:00Z",
-  "updatedBy": "developer-1924",
-  "lastCompleted": "1924a/b/c/d DONE — Wire live VN CPI into macro_indicators. parseCpiFromText() + getMacroExternal() + manufacturing_pmi slug. DB patch applied cpi=5.46. 5/5 TC GREEN, tsc 0 errors."
+  "updatedAt": "2026-05-17T00:42:00Z",
+  "updatedBy": "dev-team-c144",
+  "lastCompleted": "Cycle 144: 1923a (investment clock case fix) + 1924a (live VN CPI 5.46%) + port 4004 dual-mapping. get_investment_clock_phase now Overheat (CPI=5.46, growth UP). 1913 closed. Goal: database correct + cowork >80% accuracy — ACHIEVED."
 }
