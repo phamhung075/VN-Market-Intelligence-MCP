@@ -15,6 +15,15 @@
  *   - pharma_events             — pharma regulatory events (Task 1046)
  *   - kinhdich_readings         — Kinh Dich hexagram readings (Task 1047)
  *   - hexagram_transitions      — hexagram transition statistics
+ *
+ * NOTE: A table named `credit_data` was classified as a zombie orphan in
+ * Sprint 1922 (Task 1922c). Investigation confirmed it has NO CREATE TABLE
+ * definition in any schema file and ZERO production writers or readers in
+ * any .ts/.js/.sql file. It exists only in the live market.db from code
+ * that was subsequently deleted (likely SBV credit growth data, never
+ * connected to a live data source). No migration needed.
+ * freshnessSlaMonitor: excluded from coverage check (no active writer).
+ * DO NOT add new writers. DO NOT query this table.
  */
 
 import type { Database } from "bun:sqlite";
