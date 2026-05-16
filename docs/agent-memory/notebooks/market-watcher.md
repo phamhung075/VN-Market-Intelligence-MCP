@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 02:47 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-16 03:41 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -1884,3 +1884,28 @@ Doc self-heal: 1 item noted (skill file protected, cannot edit directly)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 8500 |
+
+### Cycle (03:38–03:41)
+- Stocks: 34 priced (5 N/A: BDI,DLC,SIS,VDC,JSH) | Anomalies: 2 emitted in ERROR (duplicate guard failure) | Volume spikes: 0 | Chain confirms: 0 (last 15 min)
+- Regime: TIGHTENING | DXY: USD STRENGTHENING | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: [GAS]
+- Market CLOSED (Saturday 2026-05-16, off-hours cycle). All prices EOD from 2026-05-15 08:59 UTC.
+
+**⚠️ Erroneous duplicates (duplicate guard bypassed — agent_signals:[] in bootstrap masked own prior signals):**
+- ⚠️ GAS +6.94% → signal #3243 posted in ERROR. Prior signals: #3215 (07:41 May 15, ~20h elapsed), #3238 (02:47 May 16, ~54 min elapsed). Same EOD closing price, 24h NOT met. Alert-commander should discard #3243.
+- ⚠️ MWG -2.61% → signal #3244 posted in ERROR. Prior signal #3240 (02:47 May 16, ~54 min elapsed). Same EOD closing price, 24h NOT met. Alert-commander should discard #3244.
+- Root cause: `get_cycle_bootstrap` returned `agent_signals:[]` even though market-watcher had just posted signals in the prior cycle (~54 min ago). Bootstrap agent_signals buffer does not reflect own-agent signals within short windows. Per-session notebook check was not performed before emitting.
+- Corrective action: Future off-hours cycles MUST read own notebook tail before emitting, not rely solely on agent_signals from bootstrap.
+
+- Sector rotation: Oil/Gas +3.94% (leader), Steel +1.95% | Banking -0.62%, Auto -1.57%. Supply chain: STABLE (BDI=1,400). Chain findings (15 min): 0.
+- Macro: Brent 109.24 (+2.56σ), Gold 4,543.6 (-2.19σ), USD/VND 26,137. Context unchanged from prior cycle.
+
+## Metrics (cycle 2026-05-16 03:41 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 34 |
+| signals_emitted | 2 (both erroneous: #3243 GAS dup, #3244 MWG dup) |
+| signals_suppressed | 0 (guard failed) |
+| market_alerts_fired | 0 |
+| exit_status | complete (with errors) |
+| token_estimate | 6500 |
