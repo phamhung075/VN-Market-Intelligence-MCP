@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "active",
+  "status": "idle",
   "currentSprint": "c142",
-  "activeTaskId": "1909c-reparse-validation",
-  "nextAgent": "ops",
-  "nextPrompt": "Trigger bctcReparseJob for DIG Q4-2025 specifically, then verify get_bctc_full DIG Q4 2025 shows confidence >= 0.6 and equity < 50,000 ty VND",
-  "updatedAt": "2026-05-16T21:31:12Z",
-  "updatedBy": "po-c142",
-  "lastCompleted": "Cycle 141: SPRINT-1922 closed (59 tables populated). Cycle 142 triage: market-watcher 19:40 UTC bug-escalation RESOLVED (Docker self-healed, fleet healthy 141 tools 19 sessions). Dispatching 1909c-reparse-validation (HIGH OPS — DIG Q4-2025 reparse). 1862c-F held one more cycle (1862c-E dashboard still user-action)."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-16T21:43:16Z",
+  "updatedBy": "dev-team-c142",
+  "lastCompleted": "Cycle 142: 1909c DONE — DIG Q4-2025 BCTC reparsed (confidence 0.625→0.6875, equity corrected, FA Layer 7 unblocked). Stale worktree removed. 6 Telegram reports resolved. Pipeline idle. Next eligible: 1862c-F (FIX-MEDIUM) at c143 if SSE clean."
 }
