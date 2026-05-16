@@ -1,44 +1,65 @@
 # PO Notebook
 
-## Last updated: 2026-05-16T18:25:57Z · Cycle: c140 — 1920j/k/l swept to Done + SPRINT-1922 self-initiated (empty-tables sweep)
+## Last updated: 2026-05-16T22:00:00Z · Cycle: c141 — SPRINT-1922 COMPLETE (empty-tables sweep)
 
-### c140 session summary
+### c141 session summary
 
-**Channel audit:** SKIPPED — MCP gateway still unreachable (localhost:4004 /mcp + /health both no response). Same 1913 BLOCKING-F1 substrate as c138/c139. Per fail-loud + boundary rules: do NOT investigate (1913 owns it).
+**Channel audit:** SKIPPED — MCP gateway still unreachable (1913 BLOCKING-F1 user-action substrate). 12+ cycles cumulative. Per fail-loud + boundary rules: do NOT investigate (1913 owns it).
 
-**State reconciliation (key correction vs router preflight):**
-- Tasks 1920j/k/l were ALREADY committed in c138 (commit `cead304d` 18:38Z + chore `159eaa64`). Working tree is clean of those code files.
-- Docker fleet ALREADY rebuilt 17:37 UTC (48 min uptime), all 11 containers healthy (mcp-server, flaresolverr, macro-indicators, kinh-dich-service, news-fetch, technical-analysis, rag-service, stock-price, alert-engine, pdf-extractor, api-gateway + mcp-gateway).
-- TASKS.md needed housekeeping only: 1920j/k/l were stamped "QA APPROVED" but never physically moved from In Progress/Review → Done columns. **DONE this cycle.**
+**Sprint 1922 — Empty Tables Sweep — CLOSED this cycle:**
+- **Goal (c140 self-initiated):** "all tables populated, no useless table"
+- **Before:** ~20 tables had data, 52+ empty
+- **After:** 59 tables populated, 16 remaining empty — all accounted for
 
-**Sprint 1922 self-initiated (per user goal "all tables populated, no useless table"):**
-Live DB audit (router preflight) identified 10 empty tables. Classified each + opened 9 carry-forward tasks + 1 SPIKE on architect:
-- SPIKE_1922 (architect, scope: classify 10 tables A/B/C/D)
-- 1922a insider_transactions verify (dev-mcp-server, HIGH, FIX)
-- 1922b vn_index_cache classify (likely orphan from 1842a abandoned design, CLEAN)
-- 1922c credit_data classify (likely orphan, no schema/code, CLEAN)
-- 1922d reputation_scores writer (ba+architect, FEATURE M — store exists, no producer)
-- 1922e mention_velocity writer (ba+architect, FEATURE M — store exists, no producer)
-- 1922f bond_maturity observe (ops, weekly cron next tick 2026-05-17)
-- 1922g pharma_events verify (ops+architect, monthly cron last fired 2026-05-01)
-- 1922h imf_indicators verify (dev-mcp-server, FIX S — every 6h cron silent)
-- 1922i alert_engine_records observe (ops, no defect — observational 5 cycles)
-- 1922j macro_indicators FRED verify (ops, observe next 6h cron tick post-1920j)
+**Shipped this cycle (commits on main, oldest → newest):**
+- `f5443212` SPIKE_1922 findings doc (architect)
+- `b50ef177` 1922b — vn_index_cache orphan retired
+- `12b8417b` 1922c — credit_data orphan retired
+- `8f55c978` 1922a — sscInsider VPS proxy route (SSC portal externally 503, proxy ready)
+- `15fdf5ed` 1922h — IMF indicators 3-bug fix (UA header + invalid codes) → 3 rows
+- `2c6e916f` 1922j FRED startup backfill → 8,249 rows + 1922e mention_velocity wiring
+- `c3f17a65` 1922d reputationComputeJob daily writer (08:30 UTC)
+- `a04fce54` + `5dddcc03` vnstock_events 3-bug fix → 1,247 events
+- `7f300f9e` publicContractsJob weekly Mon 03:00 UTC (public_contracts)
+- `38bc09ba` muasamcong VPS proxy route + env var wiring
+- `aceba3a5` ops drain: docker-compose ALERT_ENGINE_DB_PATH + SSC_INSIDER_VPS_URL env; 10 dead 0B .db files deleted
 
-**Dispatch order (next cycle c141):**
-1. SPIKE_1922 to architect first (gates 1922a/b/c/d/e/g/h scope)
-2. 1922a + 1922h can run parallel (different services, dev-mcp-server FIX bucket)
-3. 1922f/i/j are pure observe — ops queue, no spec needed
+**16 remaining empty tables — classified (no new dev tasks):**
 
-**PO decision:** 1 SPIKE + 9 tasks added to Todo. WIP unchanged (0 In Progress after sweep).
+| Table | Status | Action |
+|---|---|---|
+| alert_engine_records | Legitimate — no alerts fired yet | 1922i observe 5 cycles |
+| alert_mutes | User-configured | None |
+| backtest_runs | Analyst action needed | None |
+| bond_maturity | Cron Sun 02:30 UTC | 1922f observe 2026-05-17 |
+| broker_sanctions | Quarterly cron — next June | None |
+| credit_data | Orphan retired | None |
+| custom_alert_rules | User-configured | None |
+| insider_transactions | SSC gov portal 503 externally | Monitor recovery |
+| mention_velocity | Fires on next news signals | None |
+| pharma_events | Monthly cron June 1 | 1922g observe |
+| portfolio_targets | User-configured | None |
+| price_alerts | User-configured | None |
+| public_contracts | Weekly Mon 03:00 UTC, first 2026-05-18 | None |
+| reputation_scores | Daily cron 08:30 UTC tomorrow | None |
+| signal_quality_audit | Fires during cowork weekday sessions | None |
+| vn_index_cache | Orphan retired | None |
 
-### Carry-over for next cycle (c141)
+**Housekeeping this cycle:**
+- TASKS.md compacted from 125 → 75 lines (archived all 2026-05-14/15 Done rows to git history rollup row; sprint-1920 + Go-migration 1912 closed)
+- 1922d moved from Todo (had DONE label) into Done table
+- 3 new Done rows added (vnstock_events, public_contracts, muasamcong proxy)
+- SPRINT-1922 program row added at top of Done
 
-- **1913 USER F1 STILL BLOCKING** — MCP gateway unreachable. Channel audits will remain SKIPPED until user refreshes Claude Desktop MCP config. Cycle count: 11+ now ~13.
+### Carry-over for next cycle (c142)
+
+- **1913 USER F1 STILL BLOCKING** — MCP gateway unreachable; channel audits remain SKIPPED until user refreshes Claude Desktop MCP config. ~12 cycles.
 - **1897b-carry F1 USER** — Docker .git/ exclude still pending.
 - **1907a digest-predict CRITICAL OPS** — observe.
-- **1909c DIG reparse** — dispatched c139 to ops; verify next cycle confidence ≥ 0.6 and equity < 50,000 tỷ.
-- **SPRINT 1922 IS PRIMARY BACKLOG** — dev-team next cycle should pull SPIKE_1922 first.
-- **Post-1920j FRED verification (1922j)** — first scheduled tick is next 6h boundary from 17:37 UTC = 23:37 UTC tonight or 05:37 UTC. Promote 1922j to In Progress on first observed tick.
-- **Worktree CLEAN deferred** — still parent-pid concern, push to c142+.
-- **No commit of working tree** — only notebooks/analysis-briefs/docker-compose dirty bits; not PO scope, leave for dev-team housekeeping.
+- **1909c DIG reparse** — still showing equity=10T (absurd); ops trigger needed.
+- **Sprint 1922 observation triggers ready:**
+  - 1922f bond_maturity → 2026-05-17 02:30 UTC cron tick
+  - 1922i alert_engine_records → 5-cycle 24h-market-hours observation
+  - 1922j FRED 6h cron, mention_velocity hourly cron — verify rows tick up
+- **Worktree CLEAN deferred** — still parent-pid concern, push to c143+.
+- **Next sprint idea (not yet self-initiated):** observe c142 channel-audit data once 1913 lifts; the SLA-coverage gap on `signal_quality_audit` + remaining 0-row tables could seed sprint-1923 if persistent gaps surface.
