@@ -147,6 +147,56 @@ export interface MacroSnapshotResponse {
   sbvOfficialRate: number | null;
 }
 
+/**
+ * MacroExternalResponse — partial shape of /macro/external envelope.
+ * Only the fields needed by macroIndicatorRefreshJob are typed here.
+ * The full shape is defined in macro-indicators FetchExternalMacroUseCase.
+ */
+export interface MacroExternalResponse {
+  sources: {
+    tradingEconomics?: {
+      status: string;
+      data?: Record<string, { latestValue: string; [key: string]: unknown } | null>;
+    };
+    imf?: {
+      status: string;
+      data?: { NGDP_RPCH?: unknown; [key: string]: unknown };
+    };
+    worldBank?: {
+      status: string;
+      data?: { gdpGrowthRate?: number | null; [key: string]: unknown };
+    };
+    [key: string]: unknown;
+  };
+  fetchedAt: string;
+  summary: { ok: number; failed: number; totalLatencyMs: number };
+}
+
+/**
+ * Calls macro-indicators /macro/external endpoint.
+ * Never throws — returns null on any error so callers use COALESCE fallback.
+ */
+export async function getMacroExternal(): Promise<MacroExternalResponse | null> {
+  const url = `${BASE_URLS.macro}/macro/external`;
+  try {
+    const response = await fetchWithRetry(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      logger.warn(`[getMacroExternal] non-ok response: ${response.status}`);
+      return null;
+    }
+    return response.json() as Promise<MacroExternalResponse>;
+  } catch (err) {
+    logger.warn(
+      `[getMacroExternal] failed: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return null;
+  }
+}
+
 export async function getMacroSnapshot(): Promise<MacroSnapshotResponse> {
   // Macro service registers POST /macro/snapshot (handlers.ts line 21)
   const url = `${BASE_URLS.macro}/macro/snapshot`;

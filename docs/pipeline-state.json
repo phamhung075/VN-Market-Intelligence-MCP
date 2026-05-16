@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-16T22:30:00Z",
-  "updatedBy": "developer-c143",
-  "lastCompleted": "Cycle 143: 1923a DONE — Investment clock case-mismatch fix (country 'Vietnam'→'vietnam', upsert expanded). TC1-4 GREEN, tsc 0 errors. get_investment_clock_phase now returns RECOVERY. 1913 closed STALE-RESOLVED."
+  "updatedAt": "2026-05-17T00:00:00Z",
+  "updatedBy": "developer-1924",
+  "lastCompleted": "1924a/b/c/d DONE — Wire live VN CPI into macro_indicators. parseCpiFromText() + getMacroExternal() + manufacturing_pmi slug. DB patch applied cpi=5.46. 5/5 TC GREEN, tsc 0 errors."
 }

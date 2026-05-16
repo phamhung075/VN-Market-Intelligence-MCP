@@ -12,7 +12,7 @@
  */
 
 import { getDb } from "../../infrastructure/db/schema.js";
-import { getMacroSnapshot } from "../../infrastructure/microservices/clients.js";
+import { getMacroSnapshot, getMacroExternal } from "../../infrastructure/microservices/clients.js";
 import { freshnessSlaChecker, detectStartupStaleData } from "../../domain/services/macroIndicatorSla.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import type { Database } from "bun:sqlite";
@@ -22,6 +22,44 @@ import { fetchFedFundsRate } from "../../infrastructure/fetchers/fredApi.js";
 import { fetchFredEffrIorb } from "../../infrastructure/fetchers/fredEffrIorb.js";
 import { fetchFredIsmSubcomponents } from "../../infrastructure/fetchers/fredIsmSubcomponents.js";
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parsing helpers — exported for unit tests (Task 1924a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parses a numeric percent value from a TradingEconomics text description.
+ *
+ * Example input:
+ *   "Inflation Rate in Vietnam increased to 5.46 percent in April from 4.65 percent..."
+ * Returns 5.46 (the first number followed by " percent").
+ *
+ * Returns null if no match found or text is empty.
+ */
+export function parseCpiFromText(text: string): number | null {
+  if (!text) return null;
+  const m = text.match(/(\d+\.?\d*)\s*percent/i);
+  return m ? parseFloat(m[1]) : null;
+}
+
+/**
+ * Extracts the numeric CPI from a /macro/external response envelope.
+ * Path: sources.tradingEconomics.data.inflation_cpi.latestValue
+ * Returns null on any missing/invalid path.
+ */
+function parseCpiFromExternal(
+  ext: Awaited<ReturnType<typeof getMacroExternal>>
+): number | null {
+  try {
+    const te = ext?.sources?.tradingEconomics;
+    if (!te || te.status !== 'ok') return null;
+    const cpiEntry = te.data?.['inflation_cpi'];
+    if (!cpiEntry) return null;
+    return parseCpiFromText(cpiEntry.latestValue as string);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Wraps sendTelegramWork to match the expected callback signature.
@@ -54,6 +92,17 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
   try {
     // Call macro-service microservice
     const snapshot = await getMacroSnapshot();
+
+    // Fetch live VN CPI/GDP from /macro/external (separate call, non-blocking on failure).
+    // Task 1924a: parse CPI from TradingEconomics text description.
+    const extData = await getMacroExternal();
+    const parsedCpi = parseCpiFromExternal(extData);
+    if (parsedCpi !== null) {
+      logger.info(`[macro-refresh-job] parsed VN CPI from /macro/external: ${parsedCpi}%`);
+    } else {
+      logger.warn("[macro-refresh-job] VN CPI parse failed or /macro/external unavailable — DB value preserved via COALESCE");
+    }
+
     const durationMs = Date.now() - startTime;
 
     jobSuccessCount = 1;
@@ -87,10 +136,10 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
       ).run(
         "vietnam",
         snapshot.sbvRefinancingRate ?? null,
-        null, // manufacturing_pmi — not in macro snapshot; preserved via COALESCE
-        null, // cpi              — not in macro snapshot; preserved via COALESCE
-        null, // gdp_growth       — not in macro snapshot; preserved via COALESCE
-        null, // inflation_rate   — not in macro snapshot; preserved via COALESCE
+        null,       // manufacturing_pmi — not in macro snapshot; preserved via COALESCE
+        parsedCpi,  // cpi — from /macro/external parse (null preserved via COALESCE if unavailable)
+        null,       // gdp_growth       — not in macro snapshot; preserved via COALESCE
+        null,       // inflation_rate   — not in macro snapshot; preserved via COALESCE
       );
       logger.info("[macro-refresh-job] macro_indicators upserted for vietnam");
     } catch (upsertErr) {

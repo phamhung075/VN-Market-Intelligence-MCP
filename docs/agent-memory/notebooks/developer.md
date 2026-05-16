@@ -1,6 +1,21 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-17 | **Sprint:** 1923
+**Last updated:** 2026-05-17 | **Sprint:** 1924
+
+## Last session summary (1924a/b/c/d)
+
+Task 1924 — Wire live VN CPI into macro_indicators from /macro/external.
+
+**Problem:** Investment clock showed Recovery (CPI=2.84 — 14 months stale). Live VN CPI is 5.46% (April 2026) from TradingEconomics text. With CPI=5.46 > 3.0, correct phase is Overheat (UP growth + HIGH inflation).
+
+**What was done:**
+- `clients.ts`: Added `getMacroExternalResponse` interface + `getMacroExternal()` function — calls `POST /macro/external`, never throws (returns null on error), used for CPI/GDP parsing.
+- `macroIndicatorRefreshJob.ts`: Exported `parseCpiFromText(text)` — regex `(\d+\.?\d*)\s*percent/i`, first match → float, empty/no-match → null. Added `parseCpiFromExternal()` helper. Job now calls `getMacroExternal()` after `getMacroSnapshot()`; `parsedCpi` passed to upsert (replaces hardcoded null). COALESCE preserves existing DB value if parse returns null.
+- `trading-economics-vn.ts` + `trading_economics_fetch.py`: Added `manufacturing_pmi: 'manufacturing-pmi'` slug to both `VN_TE_SLUGS` / `VN_SLUGS` dicts.
+- 1924b DB patch: `docker exec ... UPDATE macro_indicators SET cpi=5.46` → 1 row updated, confirmed live.
+- New test `1924a-vn-cpi-wiring.test.ts`: TC1 (5.46%), TC2 (4.65%), TC3 (empty→null), TC4 (investment clock CPI=5.46→HIGH→Overheat), TC5 (upsert cpi=5.46 persists, gdp_growth preserved via COALESCE). 5/5 GREEN. tsc 0 errors.
+- TASKS.md: 1924a/b/c/d DONE row added.
+- pipeline-state.json: status=idle.
 
 ## Last session summary (1923a)
 

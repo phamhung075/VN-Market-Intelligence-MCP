@@ -47,6 +47,7 @@ VN_SLUGS: dict[str, str] = {
     "unemployment":          "unemployment-rate",
     "fdi":                   "foreign-direct-investment",
     "industrial_production": "industrial-production",
+    "manufacturing_pmi":     "manufacturing-pmi",
 }
 
 BROWSE_HEADERS = {

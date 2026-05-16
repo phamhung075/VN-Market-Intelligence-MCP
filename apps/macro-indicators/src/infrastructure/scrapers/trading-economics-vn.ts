@@ -31,6 +31,7 @@ export const VN_TE_SLUGS: Record<string, string> = {
   unemployment:          'unemployment-rate',
   fdi:                   'foreign-direct-investment',
   industrial_production: 'industrial-production',
+  manufacturing_pmi:     'manufacturing-pmi',
 };
 
 /** Absolute path to the Python fetch helper. */
