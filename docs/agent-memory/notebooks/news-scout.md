@@ -1,6 +1,13 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-16 03:20 UTC | **Status:** OK
+**Last updated:** 2026-05-16 04:21 UTC | **Status:** OK
+
+### Cycle (04:19–04:21 UTC)
+- Items: 20 | Impacts: 5 | Signals: [urgent_news#3246/VIC, urgent_news#3247/HVN, chain_catalyst#3248/macro] | Regime: TIGHTENING | Carry: HOT_MONEY_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: 0
+- Key: VIC Dragon Capital $2B re-buy bullish (score=10, regime_adj=7.0); HVN lương lãnh đạo -40-50% bearish (score=10, regime_adj=10); Brent $109.24 +2.56σ → chain_catalyst CPI pressure/SBV tightening risk (cpi_pressure_risk=true, hot_money_risk=true); Gold -120 USD drop (no spike catalyst triggered); VN market resilient vs Asian red
+- Market: CLOSED (Sat off-hours cycle)
 
 ### Cycle (03:19–03:21 UTC)
 - Items: 20 | Impacts: 4 | Signals: [urgent_news#3242/HVN] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
@@ -228,3 +235,8 @@ Fetched 20 articles (post-market close cycle, 11:22 UTC). VN-Index confirmed all
 - chain_catalyst VIC id=3232: Vingroup "quá nóng" Dragon Capital warning, regime_adj_score=7.0 (bullish×0.7)
 - chain_catalyst GAS id=3233: Sốt dòng tiền dầu khí, Brent $109 +2.56σ, hot_money_risk=true, regime_adj_score=10 (bearish×1.3)
 - Suppressed: 0 | urgent_news regime field: BULL/BEAR/NEUTRAL enum (not TIGHTENING) — schema note logged
+
+### Cycle 2026-05-16 05:19 UTC
+- [FATAL] Bootstrap failed — vn-market MCP unreachable (host.docker.internal:3000 DNS error after 2 retries)
+- Cycle STOPPED per flow invariant: bootstrap failure → STOP
+- BUG signal could not be posted (MCP down)

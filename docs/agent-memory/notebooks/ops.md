@@ -1435,3 +1435,152 @@ SLA monitor + macro-refresh + imf-poller + session-tool-usage active
 
 ---
 
+
+---
+
+## Task: Docker DNS Recurrence RESOLVED — 1919-recurrence 2026-05-16
+
+**Date:** 2026-05-16 05:02–05:48 UTC
+**Status:** ✅ RESOLVED — Docker DNS failure fixed, all containers healthy, DNS verified
+**Incident:** Recurring docker socket hang (same pattern as 1919 incident ~3 hours prior, 2026-05-16 02:21 UTC)
+
+### Incident Summary
+
+**Alert:** alert-commander signal at 05:02 UTC
+```
+"Step 0 failed: MCP gateway unreachable — dial tcp: lookup host.docker.internal on 127.0.0.11:53: 
+server misbehaving (retried once after 5s)"
+```
+
+**Root Cause:** Docker Desktop virtualization socket forwarding deadlock
+- VM console logs showed: `init.socketforward context deadline exceeded on /run/guest-services/filesystem-event.sock`
+- Docker CLI unresponsive (`docker ps` hanging indefinitely)
+- Docker processes still running but socket communication frozen
+
+**Recurrence Pattern:**
+- First incident: 2026-05-16 02:21 UTC (ops c108-docker-force-restart)
+- Second incident: 2026-05-16 05:02 UTC (3.5 hours later)
+- Same root cause: virtiofs socket forwarding timeout loop in Docker VM
+- Suggests systemic Docker Desktop instability under current macOS/Docker version
+
+### Diagnostic Steps (05:02–05:26 UTC)
+
+1. **Process Check** ✅
+   - `pgrep -l Docker` → 4 Docker processes running
+   - Socket file exists: `/Users/admin/.docker/run/docker.sock`
+
+2. **Responsiveness Test** ✅
+   - `docker ps` with 5s timeout → No response (command hung)
+   - Conclusion: Socket is responsive at filesystem level but daemon unresponsive at API layer
+
+3. **VM Console Logs** ✅
+   - Reviewed `/Users/admin/Library/Containers/com.docker.docker/Data/log/vm/console.log`
+   - Latest entries: Repeated `init.socketforward context deadline exceeded` (05:07–05:26 UTC window)
+   - No successful socket creation after failed attempts
+
+### Recovery Actions (05:26–05:48 UTC)
+
+#### Step 1: Force-Kill Docker
+```bash
+pkill -9 Docker
+sleep 2
+pgrep -l Docker → (no output — all killed)
+```
+
+#### Step 2: Reopen Docker Desktop
+```bash
+open -a Docker
+sleep 60 (waited for daemon boot)
+```
+
+#### Step 3: Verify Daemon Responsiveness
+```bash
+i=0; until [ -S /Users/admin/.docker/run/docker.sock ] 2>/dev/null; do 
+  ((i++)); [ $i -gt 40 ] && exit 1; sleep 1; done
+→ Socket ready after ~40s
+```
+
+#### Step 4: Container Health Verification
+**Command:** `docker ps --format "table {{.Names}}\t{{.Status}}"`
+
+**Result:** ✅ ALL 12 CONTAINERS UP AND HEALTHY
+
+| Service | Status | Health |
+|---------|--------|--------|
+| vn-mcp-server | Up About a minute | ✓ healthy |
+| vn-api-gateway | Up About a minute | ✓ healthy |
+| vn-alert-engine | Up About a minute | ✓ healthy |
+| vn-stock-price | Up About a minute | ✓ healthy |
+| vn-technical-analysis | Up About a minute | ✓ healthy |
+| vn-macro-indicators | Up About a minute | ✓ healthy |
+| vn-kinh-dich-service | Up About a minute | ✓ healthy |
+| vn-pdf-extractor | Up About a minute | ✓ healthy |
+| vn-rag-service | Up About a minute | ✓ healthy |
+| vn-news-crawler | Up About a minute | ✓ healthy |
+| vn-flaresolverr | Up About a minute | ✓ healthy |
+| mcp-gateway | Up About a minute | ✓ healthy |
+
+#### Step 5: DNS Verification
+```bash
+docker run --rm alpine nslookup host.docker.internal
+→ Name: host.docker.internal
+→ Address: 192.168.65.254 (IPv4)
+→ Address: fdc4:f303:9324::254 (IPv6)
+```
+
+**Result:** ✅ DNS PASS — host.docker.internal resolves correctly
+
+### Signal Emitted
+
+**File:** `docs/signals/processed/2026-05-16T054806Z-1919-recurrence-resolved.json`
+
+**Contents:**
+```json
+{
+  "incident_id": "1919-recurrence",
+  "timestamp": "2026-05-16T05:48:06Z",
+  "title": "Docker DNS recurrence RESOLVED",
+  "severity": "CRITICAL_RESOLVED",
+  "root_cause": "Docker Desktop virtualization socket forwarding deadlock",
+  "fix_applied": "Force kill + fresh Docker Desktop restart",
+  "containers_status": { "total": 12, "healthy": 12 },
+  "dns_verification": { "status": "PASS", "resolution": "host.docker.internal=192.168.65.254" }
+}
+```
+
+### Analysis
+
+**Systemic Issue Flagged:**
+- 2 Docker DNS incidents in 3.5 hours suggests macOS Docker Desktop instability
+- Socket forwarding timeouts in virtiofs mount causing cascading failures
+- Each incident requires manual force-kill + restart (~15 min recovery time)
+- Escalation recommended if pattern continues (≥3 times in 24h)
+
+**Pattern Similar to 1919:**
+- Both incidents: init.socketforward hang → socket communication frozen → API unresponsive
+- Both fixed by: pkill -9 Docker → open -a Docker → 60s wait for startup
+- Both verified: docker ps + nslookup test
+
+### Next Steps
+
+1. **Monitor:** Watch for 3rd incident in next 24h window
+2. **If recurrence ≥3 times in 24h:**
+   - Escalate to architect for Docker Desktop upgrade/configuration review
+   - Consider container orchestration platform upgrade (Docker Compose → Podman/K3s)
+   - May indicate deeper macOS kernel / Docker Desktop virtualization issue
+3. **Alert-commander:** Should now be able to reach MCP gateway (DNS resolved, socket working)
+
+### Acceptance Criteria
+
+| AC | Requirement | Status | Evidence |
+|----|-------------|--------|----------|
+| AC-1 | Docker Socket Responsive | ✅ PASS | `docker ps` returns container list |
+| AC-2 | All 12 Containers Healthy | ✅ PASS | All showing "Up (healthy)" |
+| AC-3 | DNS host.docker.internal Works | ✅ PASS | nslookup returns IPv4+IPv6 |
+| AC-4 | alert-commander Can Reach Gateway | ✅ PASS (inferred) | MCP gateway container Up, DNS verified |
+| AC-5 | No Manual Intervention Left | ✅ PASS | All systems operational, ready for next cycle |
+
+**Cycle Time:** 2026-05-16 05:02–05:48 UTC (46 minutes, including 1-minute restart wait)
+
+---
+
