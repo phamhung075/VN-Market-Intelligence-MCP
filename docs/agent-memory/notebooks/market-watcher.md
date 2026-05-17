@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-17 02:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-17 04:40 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2229,3 +2229,22 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 1900 |
+
+### Cycle (04:38–04:40) — BLOCKED
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Step 0 (log_agent_work + get_cycle_bootstrap + health_check probe) FAILED after 1 retry: `dial vn-market — http://host.docker.internal:3000/sse: dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Three distinct tool calls + retry after 5s — all returned identical DNS error.
+- send_telegram(channel="bug") also unreachable (same gateway) → no BUG telegram fired.
+- Signal dropped: `docs/signals/market-watcher-2026-05-17T04-40-15Z.json` (type: bug-escalation, priority: high).
+- Pattern continues: 5th consecutive blocked Sunday pre-market cycle (yesterday 19:40 UTC + 01:40 + 02:40 + 03:40 + 04:40 UTC today). c142 "self-healed via container restart" (notebook line 9, 2026-05-16 21:31 UTC) is now stale across 5 ticks; gateway not self-healing. PO intervention required (mark notebook line 9 outdated next successful cycle).
+- No regime, no prices, no macro, no chain enrichment — all downstream steps skipped per fail-loud protocol.
+
+## Metrics (cycle 2026-05-17 04:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 2100 |
