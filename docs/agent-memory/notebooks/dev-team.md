@@ -1,20 +1,25 @@
 # dev-team notebook
 
-## Current state (c159 close — 2026-05-17T10:27Z)
-- PREFLIGHT: HEAD.lock absent. Worktree prune clean.
-- Drain-signals: inbox empty (0 signals).
-- New artifacts: WORK_STATUS.md + reports/news-scout-cycle-2026-05-17.md — Cowork scheduled task failure, MCP gateway still down. Both deleted (noise, incorrect analysis claiming news-scout isn't a Cowork agent).
-- PO triage (c159): NOTHING — all remaining tasks require Docker Desktop restart (1928a F1 USER). Gateway-independent code backlog exhausted (1862c-F c156, 1930b c157 both done).
-- Session gate: idle EXIT. No codeable work.
-- USER ACTION STILL PENDING: 1928a Docker Desktop restart (F1). After restart: prioritize 1929a (alerts table) + 1922i (alert_engine_records count) + 1930b live verify.
+## Current state (c159 post-Docker-restart — 2026-05-17T11:05Z)
+- Docker restart complete. All 12 containers Up+healthy (mcp-server, alert-engine, rag-service, etc.).
+- MCP gateway port 3000: healthy (141 tools, 53 sessions, uptime ~2h pre-existed restart).
+- API gateway port 4000: all 9 services OK.
+- 1928a DONE: extra_hosts fix applied to /Users/admin/Documents/Claude/Projects/mcp server gatway/docker-compose.yml. Container recreated. host.docker.internal=192.168.65.254 in /etc/hosts. Virtiofs DNS no longer a single point of failure.
+- 1929a RESOLVED: alerts table healthy (516 rows, fresh 09:07 UTC data). Prior "malformed" error was transient virtiofs I/O.
+- 1930a RESOLVED: verdictResolutionJob rows_written=0 both today runs (09:07+10:07 UTC). 1926a fix held.
+- 1930b LIVE VERIFY PASS: FPT net_profit=20,225 / operating_cf=10,189,002 → ~504x (guard suppresses). VCB Q4 operating_cf=1.2e15 (extraction bug) → ~1.42e8 (guard suppresses). Unit mismatch confirmed.
+- 1930c RESOLVED: rag-service healthy, no LENC errors, 1925a drop+reinit held.
+- 1922i ROOT CAUSE FOUND: alert_engine_records=0 because evaluateAlert() in clients.ts:423 is dead code. taAlertScanJob/bbAlertScanJob write to market.db.alerts only (Alert Commander pipeline). Go alert-engine /evaluate never called in production. Escalated to architect as SPIKE-1933a.
+- Signal emitted: 2026-05-17T11-00-01Z-spike-1933a-alert-engine-wiring.json
 
 ## c159 cycle log
 - PREFLIGHT: HEAD.lock absent. Prune clean.
 - Drain: inbox empty (0 signals).
-- Artifacts: Cowork news-scout scheduled task failure produced WORK_STATUS.md (root) + reports/news-scout-cycle-2026-05-17.md — deleted. Confirms MCP gateway still down (same 1928a root cause).
+- Artifacts: Cowork news-scout scheduled task failure produced WORK_STATUS.md (root) + reports/news-scout-cycle-2026-05-17.md — deleted. Confirms MCP gateway still down (same 1928a root cause at that point).
 - PO triage: NOTHING — blocked backlog only.
 - Session gate: idle EXIT.
-- Post-cycle: no non-main branches. Telegram unavailable (gateway down). Notebook written.
+- POST-DOCKER-RESTART (user action): Actioned all 5 blocked tasks — see current state above.
+- TASKS.md updates: 1928a/1929a/1930a/1930c DONE. 1922i → SPIKE-1933a. 1930b verified.
 
 ## Current state (c158 close — 2026-05-17T10:15Z)
 - PREFLIGHT: HEAD.lock #49 cured (age=655s, size=0B, no live pid). Worktree prune clean.
