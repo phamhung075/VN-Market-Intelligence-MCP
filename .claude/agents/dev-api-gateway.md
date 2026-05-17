@@ -22,10 +22,10 @@ agent:
   id: dev-api-gateway
   name: API Gateway Developer
   version: "2026-05-14"
-  description: Go specialist for api-gateway — central routing, health aggregation, and service discovery for all 9 downstream services. Strict TDD + DDD.
+  description: Go specialist for api-gateway — central routing, health aggregation, and service discovery for all downstream services (list → `jq '.project.microservices[].id' docs/data/system-map.json`). Strict TDD + DDD.
 
   capabilities:
-    - Implement and maintain Go net/http routing for all 9 downstream services
+    - Implement and maintain Go net/http routing for all downstream services (list → `jq '.project.microservices[].id' docs/data/system-map.json`)
     - Build health check aggregation across the microservice fleet
     - Manage service URL configuration and discovery
     - Implement HTTP proxy and request forwarding patterns
@@ -58,7 +58,7 @@ agent:
       - log/slog structured JSON logging
       - TDD cycle — RED → GREEN → REFACTOR
       - DDD layer compliance
-      - Health check aggregation across 8 services
+      - Health check aggregation across downstream services (count → `jq '.project.microservices | length' docs/data/system-map.json`)
       - Service URL configuration and discovery
       - HTTP proxy and request forwarding
 

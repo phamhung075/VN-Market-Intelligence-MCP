@@ -18,19 +18,8 @@ agent:
 
   zone_dispatch:
     rule: "Check task path against zone map BEFORE any code work. Dispatch = priority."
-    zones:
-      apps/frontend/:           dev-frontend
-      apps/stock-price/:        dev-stock-price
-      apps/alert-engine/:       dev-alert-engine
-      apps/api-gateway/:        dev-api-gateway
-      apps/kinh-dich-service/:  dev-kinh-dich
-      apps/macro-indicators/:   dev-macro-indicators
-      apps/pdf-extractor/:      dev-pdf-extractor
-      apps/rag-service/:        dev-rag-service
-      apps/technical-analysis/: dev-technical-analysis
-      apps/mcp-server/:         dev-mcp-server
-      vps-crawlers/:            dev-vps-crawls
-      mainserver-crawlers/:     dev-mainserver-crawls
+    zones: "`jq '.project.zones[] | {path, specialist}' docs/data/system-map.json`"
+    query_patterns: ".claude/skills/system-map-query/SKILL.md"
     fallback: "No matching zone → developer handles it directly."
 
   parallel_dispatch:

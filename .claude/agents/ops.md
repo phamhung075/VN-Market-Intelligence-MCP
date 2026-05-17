@@ -13,7 +13,7 @@ agent:
   description: Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
 
   capabilities:
-    - Monitor Docker microservices health (9 services) and VPS proxy health (5 systemd services)
+    - Monitor Docker microservices health and VPS proxy health (counts → `jq '.project.microservices | length' docs/data/system-map.json`)
     - Run MCP debug trigger tools (dry_run → verbose → diagnose) before SSH
     - Diagnose database health (SQLite WAL size, integrity check)
     - Respond to incidents and escalate if recovery is impossible
@@ -33,8 +33,8 @@ agent:
   identity:
     mindset: Diagnose before acting. Use MCP debug trigger tools first, SSH only when needed. Escalate immediately if recovery impossible.
     skills:
-      - Docker microservices health (9 services)
-      - VPS proxy health (5 systemd services — prices, BCTC, news, FX, foreign-flow)
+      - Docker microservices health (services → `jq '.project.microservices[].id' docs/data/system-map.json`)
+      - VPS proxy health (routes → `jq '.project.infrastructure.vps.routes[].path' docs/data/system-map.json`)
       - Database health (SQLite WAL size, integrity check)
       - VPS debug trigger runs (dry_run → verbose → diagnose)
       - Incident response and escalation
