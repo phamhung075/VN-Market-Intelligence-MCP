@@ -71,3 +71,25 @@ Zone health: WorldBank adapter unblocked; parallel dispatch pattern now consiste
 **Branch:** `task/calendar-source-10s-timeout` — commit c8f63afc.
 
 Zone health: calendar timeout capped at 10s; withTimeout + Promise.all pattern verified; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY
+
+### Session 2026-05-17 — Calendar timeout 10s → 5s + Docker rebuild
+
+**Task:** Reduce calendar timeout to 5s (was 10s in source, but Docker container was still running 30s stale image). Live endpoint confirmed `latencyMs: 30001` before fix.
+
+**Root cause (two-part):**
+1. Prior commit had already set source to 10_000, but Docker container had not been rebuilt — running stale image from before any fix.
+2. Task spec required reducing further to 5_000 since endpoint is permanently unreachable.
+
+**Fix:**
+- `DEFAULT_TIMEOUTS.calendar: 10_000 → 5_000` in `fetch-external-macro.ts`
+- Updated JSDoc comment chain: 30s → 10s → 5s with rationale
+- Test assertions updated: `toBe(5_000)`, slow-calendar stub 15s → 10s, budget 10_000 → 5_000
+- Docker image rebuilt + container recreated (`docker compose build + up -d`)
+
+**Verification:** `localhost:5004/external` → `"calendar": { "status": "timeout", "latencyMs": 5001 }`. Page load reduced from ~30s to ≤5s.
+
+**Tests:** 105 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated). Test runtime ~11s (halved from ~21s).
+
+**Commits:** 681d0482 (fix), 2198fc16 (docs)
+
+Zone health: calendar hard cap at 5s; Docker container rebuilt + verified via live endpoint; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY
