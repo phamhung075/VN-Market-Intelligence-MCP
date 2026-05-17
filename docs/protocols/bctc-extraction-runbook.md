@@ -9,12 +9,12 @@
 ## Architecture: Pull-Based (current as of 2026-04-27)
 
 ```
-VPS (125.212.251.27:8765)
+VPS ($VINAHOST_IP:8765)  ← jq '.project.infrastructure.vps | {host, port}' docs/data/system-map.json
   └─ /bctc-files/<filename>  ← HTTP endpoint, auth: X-API-Key
 
 mcp-server container
   └─ bctcPdfPullJob (every 30 min)
-       └─ polls bctc_vps_queue WHERE source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'
+       └─ polls bctc_vps_queue WHERE source_url LIKE 'http://$VINAHOST_IP:8765/bctc-files/%'
        └─ downloads PDF → saves /app/data/pdfs/<TICKER>_<YEAR>_Q<N>.pdf
        └─ calls runBctcReparseJob (extraction trigger)
        └─ marks queue row 'done'
@@ -66,7 +66,7 @@ for r in cur.fetchall(): print(r[0], r[1][:120])
 
 ### C. Ops agent false positive: "44/45 url=MISSING"
 - **Cause:** Ops agent checks `bctc_vps_queue.source_url` for SSC portal URLs — these are irrelevant
-- **Reality:** Pull-based rows use `http://125.212.251.27:8765/bctc-files/` prefix
+- **Reality:** Pull-based rows use `http://$VINAHOST_IP:8765/bctc-files/` prefix (VPS host → `jq '.project.infrastructure.vps.host' docs/data/system-map.json`)
 - **Correct check:** Look at PDFs on disk + feedback table + OCR availability
 
 ---

@@ -143,7 +143,7 @@ MAIN TERMINAL (Do)                      ✗ NEVER
 
 ## Universal-Entry Invariant
 
-Every one of the 35 agents has `.claude/flows/<agent>/main.md` — main terminal's spawn prompt is always `run .claude/flows/<agent>/main.md`. Dev-microservice agents (`dev-mcp-server`, `dev-api-gateway`, `dev-stock-price`, `dev-technical-analysis`, `dev-macro-indicators`, `dev-kinh-dich`, `dev-alert-engine`, `dev-pdf-extractor`, `dev-rag-service`) have **pointer** main.md files that redirect to the shared `.claude/flows/developer/microservice-main.md` — keeps the dispatcher contract uniform, lets specialists share the same TDD/DDD/zone-restriction recipe.
+Every agent (count → `jq '.project.agents | length' docs/data/system-map.json`) has `.claude/flows/<agent>/main.md` — main terminal's spawn prompt is always `run .claude/flows/<agent>/main.md`. Dev-microservice agents (`dev-mcp-server`, `dev-api-gateway`, `dev-stock-price`, `dev-technical-analysis`, `dev-macro-indicators`, `dev-kinh-dich`, `dev-alert-engine`, `dev-pdf-extractor`, `dev-rag-service`) have **pointer** main.md files that redirect to the shared `.claude/flows/developer/microservice-main.md` — keeps the dispatcher contract uniform, lets specialists share the same TDD/DDD/zone-restriction recipe.
 
 ---
 
@@ -155,7 +155,8 @@ Every one of the 35 agents has `.claude/flows/<agent>/main.md` — main terminal
 - `±` optional / conditional spawn
 - `MAIN` = main terminal — the only permanent switch
 
-**20 workflows · 35 agents · 1 router · 3 Telegram channels (MARKET / WORK / BUG) · 2 signal mechanisms (sync RETURN + async docs/signals/*.json).**
+**1 router · 3 Telegram channels (MARKET / WORK / BUG) · 2 signal mechanisms (sync RETURN + async docs/signals/*.json).**
+Agent count → `jq '.project.agents | length' docs/data/system-map.json`
 
 ---
 

@@ -13,7 +13,7 @@ The `send_telegram(channel="bug")` MCP tool AUTOMATICALLY:
    - If found: returns `msgId = -1` with message: "BUG report suppressed — duplicate category already open within 4h"
 
 2. **Sends to BUG channel** if NOT duplicate
-   - Posts message to `TELEGRAM_REPORT_BUG_CHANNEL_ID` Telegram group
+   - Posts message to the BUG channel (env var → `jq '.project.channels[] | select(.id=="bug") | .env_var' docs/data/system-map.json`)
    - Returns `msgId > 0` (Telegram message ID)
 
 3. **Stores in SQLite**
@@ -32,11 +32,13 @@ The `send_telegram(channel="bug")` MCP tool AUTOMATICALLY:
 
 ## Channels Separated
 
+Channel → env var mapping → `jq '.project.channels[] | {id, env_var, purpose}' docs/data/system-map.json`
+
 ```
 send_telegram channels:
-  - "market"  → TELEGRAM_INFO_MARKET_GROUP_ID (user-facing alerts)
-  - "work"    → TELEGRAM_INFO_WORK_CHANNEL_ID (dev status)
-  - "bug"     → TELEGRAM_REPORT_BUG_CHANNEL_ID (dev reports, stored in DB)
+  - "market"  → user-facing alerts
+  - "work"    → dev status
+  - "bug"     → dev reports, stored in DB
 ```
 
 Only "bug" channel messages are stored in `telegram_reports` table.

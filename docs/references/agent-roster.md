@@ -62,6 +62,7 @@ All share tool package: `.claude/tools/package/developer.md`
 | Dev Alert Engine | `dev-alert-engine.md` | `apps/alert-engine/` | Sonnet | `docs/architecture/microservice/alert-engine/` |
 | Dev PDF Extractor | `dev-pdf-extractor.md` | `apps/pdf-extractor/` | Sonnet | `docs/architecture/microservice/pdf-extractor/` |
 | Dev RAG Service | `dev-rag-service.md` | `apps/rag-service/` | Sonnet | `docs/architecture/microservice/rag-service/` |
+| Dev Frontend | `dev-frontend.md` | `apps/frontend/` | Sonnet | `docs/architecture/microservice/frontend/` |
 
 ## Crawl Pipeline Agents (Claude Code CLI — source recon + scraper implementation)
 
@@ -117,27 +118,33 @@ Every task has a progressive context file at `docs/handoffs/TASK_NNN.md`. Agents
 ## Two-Team Architecture
 
 ```
-ANALYSIS TEAM (Claude Cowork — 9 agents, cloud)
+ANALYSIS TEAM (Claude Cowork — cloud)
   Serves user with investment intelligence
-  → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID) = user-facing alerts/answers
-  → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID) = team status
-  → BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID) = problem reports
+  → MARKET channel = user-facing alerts/answers
+  → WORK channel   = team status
+  → BUG channel    = problem reports
         ↓ WORK + BUG
 DEV TEAM (Claude Code CLI — local cron, every 1h)
   Reads BUG → auto-fixes → pushes to main
   → WORK: fix-shipped notices, sprint summaries
-  → Restart: docker-compose (no hot reload, deterministic lockstep restart of 9 services)
+  → Restart: docker-compose (no hot reload, deterministic lockstep restart)
 ```
+
+Channel env vars → `jq '.project.channels[] | {id, env_var, purpose}' docs/data/system-map.json`
+Agent counts → `docs/data/project-stats.json`
 
 **Analysis Team count:** 9 agents — see `docs/data/project-stats.json#analysisAgentCount`.
 
 ## Three-Channel Rules
 
-| Channel | Env Var | Who Writes | Never Write |
-|---------|---------|------------|-------------|
-| MARKET | `TELEGRAM_INFO_MARKET_GROUP_ID` | Alert Commander (alerts), Digest & Predict (digests), QA Responder (/ask answers) | Internal dev reports, agent feedback |
-| WORK | `TELEGRAM_INFO_WORK_CHANNEL_ID` | Dev Team, Unified Coordinator, all agents (status) | User-facing analysis |
-| BUG | `TELEGRAM_REPORT_BUG_CHANNEL_ID` | All analysis agents via `submit_feedback` | Anything not a bug |
+Channel env vars and allowed senders → `jq '.project.channels[]' docs/data/system-map.json`
+Query patterns → `.claude/skills/system-map-query/SKILL.md`
+
+| Channel | Who Writes | Never Write |
+|---------|------------|-------------|
+| MARKET | Alert Commander (alerts), Digest & Predict (digests), QA Responder (/ask answers) | Internal dev reports, agent feedback |
+| WORK | Dev Team, Unified Coordinator, all agents (status) | User-facing analysis |
+| BUG | All analysis agents via `submit_feedback` | Anything not a bug |
 
 Dev Team claims BUG reports, processes, deletes (keeps channel clean).
 

@@ -28,22 +28,15 @@ Manual launchctl commands — DEPRECATED (old monolithic server was decommission
 
 ## Microservices Architecture (Phase 3 — Current)
 
-9 Docker services + Shared SQLite database:
-
+Service list with ports and languages → SSOT:
+```bash
+jq '[.project.microservices[] | {id, port, language, runtime}]' docs/data/system-map.json
 ```
-MCP Server (port 3000)          TypeScript/Bun
-├─ API Gateway (port 4000)      Go
-├─ Stock Price (port 5000)      TypeScript/Bun
-├─ PDF Extractor (port 5001)    Python/FastAPI
-├─ RAG Service (port 5002)      Python/FastAPI
-├─ Technical Analysis (port 5003) TypeScript/Bun
-├─ Macro Indicators (port 5004) TypeScript/Bun
-├─ Kinh Dich Service (port 5005) TypeScript/Bun
-└─ Alert Engine (port 5006)     TypeScript/Bun
+Query patterns → `.claude/skills/system-map-query/SKILL.md`
 
-Shared Database: /data/market.db (SQLite)
-VPS Data Pipeline: Vinahost VPS → zenmidi.com → docker-compose services
-```
+Databases → `jq '.project.infrastructure.databases[]' docs/data/system-map.json`
+
+VPS Data Pipeline: Vinahost VPS (`$VINAHOST_IP`) → docker-compose services
 
 ---
 

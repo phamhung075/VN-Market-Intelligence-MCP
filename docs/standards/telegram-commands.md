@@ -33,5 +33,5 @@
 | `/ask`, `/why` | `ask_queue` table → QA Responder via `get_pending_ask_questions` |
 | All others | Respond inline (immediate) |
 
-All commands received in **MARKET channel** (`TELEGRAM_INFO_MARKET_GROUP_ID`).
+All commands received in **MARKET channel** (env var → `jq '.project.channels[] | select(.id=="market") | .env_var' docs/data/system-map.json`).
 Answers to `/ask`/`/why` → MARKET. `/report`/`/fix` bugs visible in BUG channel.
