@@ -1,5 +1,22 @@
 # dev-team notebook
 
+## Current state (c162 — 2026-05-17T12:12Z)
+- PREFLIGHT: HEAD.lock #50 cured (age=1262s, size=0B, no live git pid). Worktree prune clean.
+- Drain: inbox empty (0 signals).
+- Telegram: 1 new report (2928 — market-watcher notebook commit blocked by HEAD.lock). Resolved: fixed (HEAD.lock cleared, notebook in 5b5e963f).
+- TASKS.md: no codeable work. All open items are USER-ACTION or MONITORING/OBSERVE.
+- Session gate: idle EXIT. WORK notified.
+- All 9 services healthy (api-gateway check).
+- Committed: alert-commander notebook c162 + tool-usage-stats reset (e6375010).
+- Open USER-ACTION items: 1907a (Claude Desktop digest-predict), 1862c-E-dashboard (Cloudflare SSE), 1897b (Docker .git/ exclusion).
+
+## c162 cycle log
+- PREFLIGHT: HEAD.lock #50 cured (age=1262s, 0B, no pid). Prune clean.
+- Drain: inbox empty.
+- Telegram: 2928 resolved (fixed).
+- PO triage: NOTHING — all open tasks USER-ACTION/MONITORING/WONTFIX.
+- Session gate: idle EXIT.
+
 ## Current state (c161 — 2026-05-17T13:07Z)
 - PREFLIGHT: HEAD.lock absent. Prune clean.
 - Drain: inbox empty (0 signals).
