@@ -193,10 +193,16 @@ function toPricePoint(item: unknown): PricePoint | null {
 
 /**
  * Price history for a ticker.
- * Endpoint: GET /price/history?code=<ticker>
+ * Endpoint: GET /stock/price/history?code=<ticker>
+ * Response shape: { code: string, history: DailyOHLCV[] }
  */
 export async function fetchPriceHistory(code: string): Promise<PricePoint[]> {
-  const raw = await apiGet<unknown>(`/price/history?code=${encodeURIComponent(code)}`);
-  if (!Array.isArray(raw)) return [];
-  return raw.map(toPricePoint).filter((p): p is PricePoint => p !== null);
+  const raw = await apiGet<unknown>(`/stock/price/history?code=${encodeURIComponent(code)}`);
+  const items: unknown[] =
+    raw !== null && typeof raw === "object" && Array.isArray((raw as Record<string, unknown>)["history"])
+      ? ((raw as Record<string, unknown>)["history"] as unknown[])
+      : Array.isArray(raw)
+        ? raw
+        : [];
+  return items.map(toPricePoint).filter((p): p is PricePoint => p !== null);
 }
