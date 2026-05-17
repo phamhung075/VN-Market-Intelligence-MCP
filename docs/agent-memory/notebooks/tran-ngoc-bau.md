@@ -3,7 +3,15 @@
 > Archived prior to 2026-05-12 → docs/agent-memory/archives/tran-ngoc-bau-archive-2026-05-12.md
 > Cycles 53–58 archived in prior overwrites.
 
-**Last updated:** 2026-05-16 (cycle 62) | Cycles completed: 62
+**Last updated:** 2026-05-17 (cycle 63) | Cycles completed: 63
+
+---
+
+## This session (cycle 63, 2026-05-17)
+
+BLOCKED at Step 0c. 1913 BLOCKING-F1 — 9th consecutive cycle. MCP gateway unreachable from Claude Code session (mcp__vn-market__* = "No such tool available"). Per bootstrap.md gateway-down rule: no file-evidence fallback. Cycle aborted. Previous handoff c62 NOT ACK'd by PO (c135 ACK was for c61 only). Signal file written. No Telegram sent (MCP required). 0 auto-cures.
+
+**Status:** BLOCKED (MCP DOWN) | Direction: STABLE (unchanged) | Auto-cures: 0
 
 ---
 
@@ -45,6 +53,14 @@ File-evidence audit (Claude Code session, MCP probe not attempted). New findings
 - **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Notebook overwritten. Signal file written (docs/signals/tnb-2026-05-16T00-00-00Z.json). 0 Telegram (MCP unregistered). 0 auto-cures.
 - **next_cycle_hint**: (1) Resolve 1919 Docker DNS first — blocks all cowork. (2) Resolve 1913 — blocks TNB. (3) Once MCP live: confirm 1909c-reparse, BCTC Q1 banking, 1918b off-hours, news-scout payload.detail (now 5-cycle threshold → BUG), digest-predict sprint assignment.
 - **estimated_tokens**: 7500
+
+## Cycle — 2026-05-17 (cycle 63)
+
+- **cycle_date**: 2026-05-17
+- **findings**: BLOCKED at Step 0c. 1913 BLOCKING-F1 (9th consecutive cycle). MCP gateway "No such tool available" for all three bootstrap calls (log_agent_work, get_macro_snapshot, get_system_status). Gateway-down rule applied — no file-evidence fallback per bootstrap.md. Previous handoff c62 NOT ACK'd by PO (c135 ACK covered c61 only). All c62 carry-overs persist unchanged.
+- **actions**: Signal file written (docs/signals/processed/tnb-2026-05-17T00-00-00Z.json). Notebook updated. 0 Telegram (MCP unreachable). 0 auto-cures.
+- **next_cycle_hint**: (1) Resolve 1913 — TNB MCP via Claude Code is the primary blocker for 9 cycles. (2) PO ACK c62 handoff still missing. (3) All c62 carry-overs apply — digest-predict CRITICAL, FA missing sessions, BCTC Q1 banking, SPIKE_1921a, 05:XX UTC MCP instability pattern (monitor Mon 01:00 UTC).
+- **estimated_tokens**: 3500
 
 ## Cycle — 2026-05-16 (cycle 62)
 

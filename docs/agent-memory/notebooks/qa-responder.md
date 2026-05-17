@@ -1659,3 +1659,23 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~1000 |
+
+---
+
+### Q&A Batch (02:47–02:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 1) | backoff_until: 2026-05-16T22:49:03Z (expired; cycle.md only resets line when queue has items at step 1; queue unreachable)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry. Error: `dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`.
+- Two independent live probes failed (probe 1: log_agent_work, probe 2: get_pending_ask_questions). Per cowork-error-boundary Memory-as-Truth: ignored 00:48Z/01:48Z BLOCKED notebook claims; performed fresh live probes; verdict is current.
+- Third consecutive BLOCKED cycle. BUG telegram suppressed (telegram MCP = same unreachable gateway, would fail). Dropped signal: docs/signals/qa-responder-2026-05-17T02-48-36Z.json. EXIT per cowork-error-boundary.
+
+## Metrics (cycle 2026-05-17 02:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~900 |
