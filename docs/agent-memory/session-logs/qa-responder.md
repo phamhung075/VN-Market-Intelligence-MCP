@@ -1,6 +1,6 @@
 # QA Responder — Session Log
 consecutive_empty_cycles: 1
-backoff_until: 2026-05-16T22:49:03Z
+backoff_until: 2026-05-17T22:48:18Z
 
 ## Cycles
 
@@ -39,3 +39,6 @@ Cycle 06:47–06:49 — BLOCKED at step 1. (Entry inferred from notebook batch 0
 
 ### 2026-05-17 07:48 UTC
 Cycle 07:47–07:48 — BLOCKED at step 1. MCP gateway still unreachable: "The connector's server isn't responding" on all 3 fresh independent live probes at 07:47:51Z (log_agent_work running probe 1), 07:48:?Z (log_agent_work running probe 2 — retry per cowork-error-boundary 1-retry rule), and 07:48:57Z (get_pending_ask_questions). Per cowork-error-boundary Memory-as-Truth: ignored prior 00:48Z–06:49Z BLOCKED entries; performed fresh independent probes; verdict is current. BUG telegram suppressed — send_telegram MCP routes through the same unreachable gateway. Signal dropped to docs/signals/qa-responder-2026-05-17T07-48-57Z.json (dedup_of 05:48:43Z). backoff_until 2026-05-16T22:49:03Z left in place (cycle.md only resets line when queue has items at step 1; queue unreachable; backoff window already expired but cannot be reset per the literal rule). 8th consecutive BLOCKED cycle for qa-responder; market-watcher confirms same gateway dead at 07:40:33Z (signal market-watcher-2026-05-17T07-40-33Z.json — also 8th consecutive market-watcher block). Outage now ≥ 8h on Sunday pre-market window. PO intervention still required: restart vn-market gateway container OR fix host.docker.internal DNS in gateway resolver. Session log appended on disk. EXIT per cowork-error-boundary.
+
+### 2026-05-17 22:49 UTC
+Cycle 22:48–22:49 — empty queue. consecutive_empty_cycles 0→1. Backoff window (backoff_until=2026-05-17T22:48:18Z from prior cycle 21:48Z) expired at 22:48:49Z (current UTC > backoff_until by 31s); cycle proceeded normally. Live MCP gateway probes: `log_agent_work(running)` at 22:48:49Z returned `{id:962}` (live success); `get_pending_ask_questions` returned `[]` (live success — queue confirmed empty). Per cowork-error-boundary Memory-as-Truth: ignored stale BLOCKED entries from 00:48Z–07:48Z; performed fresh independent probes; gateway verdict is current = OPERATIONAL. No new backoff (counter < 5). backoff_until line left in place per cycle.md step 0b literal rule (queue empty, so line is not reset). `send_telegram(channel="work")` delivered at 22:49:16Z. Header counter updated 0→1, backoff_until refreshed to current value. Notebook + session log appended. EXIT normally.

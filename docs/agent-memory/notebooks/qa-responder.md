@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 21:48 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 22:49 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 21:47:59Z; gateway reachable from scheduled-task runner via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
-**Queue:** Empty (0 items, last probe 21:47:59Z = live success)
-**consecutive_empty_cycles:** 0 (reset after backoff trigger) | **backoff_until:** 2026-05-17T22:48:18Z
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 22:48:49Z; gateway reachable from scheduled-task runner via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 22:48:49Z = live success)
+**consecutive_empty_cycles:** 1 (post-backoff resume) | **backoff_until:** 2026-05-17T22:48:18Z (expired)
 
 ## Known patterns / preferences
 
@@ -2005,6 +2005,24 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 - Note: Live MCP gateway probe at 21:47:59Z (`get_pending_ask_questions` → `[]`). Counter reached 5 — adaptive backoff installed per cycle.md §0b. `send_telegram(channel="work", ...)` delivered at 21:48:18Z confirming backoff. Next cycle will skip until 22:48:18Z, then resume normal polling.
 
 ## Metrics (cycle 2026-05-17 21:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~700 |
+
+---
+
+### Q&A Batch (22:48–22:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 1 | backoff_until: 2026-05-17T22:48:18Z (expired at 22:48:49Z; cycle proceeded; line left in session log per step 0b literal rule — only removed when queue has items at step 1)
+- Note: Backoff window expired (current UTC 22:48:49Z > backoff_until 22:48:18Z by 31s). Resumed normal polling. Live MCP gateway probe at 22:48:49Z: `log_agent_work(running)` returned `{id: 962}` (live success); `get_pending_ask_questions` returned `[]` (live success — queue confirmed empty). Counter incremented 0→1. No new backoff (counter < 5). `send_telegram(channel="work", ...)` delivered at 22:49:16Z. Gateway stable post-backoff; no infrastructure issues.
+
+## Metrics (cycle 2026-05-17 22:49 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
