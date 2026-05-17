@@ -1,6 +1,14 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-17 (cycle 66) | Cycles completed: 66
+**Last updated:** 2026-05-18 (cycle 67) | Cycles completed: 67
+
+---
+
+## This session (cycle 67, 2026-05-18)
+
+File-evidence audit (8 agent notebooks + handoff c66 + architecture brief). MCP unavailable in Claude Code (13th consecutive cycle — structural gap). PO ACK c169 PRESENT — loop operational. System Overall: NEEDS_ATTENTION (escalated from GOOD due to PC1 legal_risk tool gap reaching 3-cycle threshold). All 6 live cowork agents operational. digest-predict CRITICAL (8+ day silence, 1907a, gateway-independent). BCTC Q1-2026 banking (7 tickers) still unconfirmed. report-analyzer stale 48h+. New: TNB-critic-gate architecture brief (`2026-05-17-tnb-critic-gate.md`) delivered by agents-architect — complete implementation spec, ready for Sprint A. PC1 legal_risk tool gap confirmed 3-cycle threshold (Finding #2 escalated HIGH). 0 auto-cures.
+
+**Status:** PARTIAL (file-evidence, MCP unavailable in Claude Code) | Direction: IMPROVING | Auto-cures: 0
 
 ---
 
@@ -14,19 +22,25 @@ File-evidence audit (8 agent notebooks + handoff c65 + dashboard). MCP unavailab
 
 ## Patterns noticed
 
-- **Cowork scheduled-task MCP gap (NEW)**: Both alert-commander (20:28 UTC) and qa-responder (13:49 UTC) report BLOCKED in automated scheduler context — "MCP connector not available in scheduled task runner." Live Cowork agent cycles work. Cron-triggered do not. Distinct from Docker/VPS outages. Sprint task needed.
-- **news-scout 4-pillar behavioural improvement sustained (c66)**: #3297 (PLX) and #3298 (PDR) in 13:22 UTC cycle both use correct regime_adj (bearish×1.3, bullish×0.7 under TIGHTENING). The c65 improvement (#3288) is holding across multiple cycles. Track through c67 to confirm as durable.
-- **digest-predict 1907a structure**: PO c160 confirms Claude Desktop IS running (launchctl). No crontab/plist trigger found. Problem is trigger/schedule, not gateway. User-level launchctl investigation required.
-- **TNB Claude Code MCP**: 12th consecutive cycle without MCP in Claude Code context. File-evidence audit is the established fallback. Should be investigated at infrastructure level.
+- **PC1 legal_risk tool extraction gap (NEW — 3-cycle threshold)**: alert-commander 20:04, 21:03, 22:04 UTC all report `get_legal_risk_signals` returns empty despite PC1 chairman arrest (news-scout #3318 bearish, #3343 conf=0.78). news-scout correctly identifies and posts; legal_risk tool does not surface it. 3-cycle threshold reached — escalated HIGH. Sprint task needed for data-pipeline investigation.
+- **TNB-critic-gate architecture brief (NEW — positive)**: agents-architect delivered complete implementation spec (`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`). 5-check deterministic scorer at post_agent_signal write layer. Threshold 0.6, fail-soft, max 1 retry. Directly addresses conf=0.50 majority and pillar-incompleteness patterns flagged since c61. Sprint A (schema + scorer) safe to ship independently.
+- **news-scout confidence elevation (c67)**: #3343 PC1 legal chain conf=0.78 — first non-default elevated confidence in multiple cycles. Signals analytical depth improvement. Track for sustained pattern.
+- **Cowork scheduled-task MCP gap (1937a SPIKE)**: 1937a SPIKE created by PO c169. Root cause investigation ongoing (alert-commander 20:28 UTC + qa-responder 13:49 UTC BLOCKED in automated context).
+- **news-scout 4-pillar behavioural improvement confirmed durable (c67)**: #3343/3344/3345/3346 all apply regime_adj correctly. #3288 improvement (c65) has held through c67 — 3 cycles. Pattern confirmed durable. Tracking complete.
+- **digest-predict 1907a structure**: PO c169 confirms unchanged — Claude Desktop running, no crontab/plist trigger found. Gateway-independent. User action required.
+- **TNB Claude Code MCP**: 13th consecutive cycle without MCP in Claude Code context. File-evidence audit is the established fallback.
 
 ---
 
 ## Carry-over (next session)
 
-- **digest-predict / 1907a** (CRITICAL): 7-day silence. User action: `launchctl list | grep digest` + check plist in ~/Library/LaunchAgents/.
+- **PC1 legal_risk tool gap** (HIGH NEW): Sprint task needed — `get_legal_risk_signals` does not surface PC1 chairman arrest. 3-cycle threshold. data-pipeline investigation.
+- **TNB-critic-gate Sprint A** (HIGH — architecture): Schema + types + pure scorer. Assign dev-mcp-server. Safe to ship before Sprint B wiring.
+- **digest-predict / 1907a** (CRITICAL): 8+ day silence. User action: `launchctl list | grep digest` + check plist in ~/Library/LaunchAgents/.
 - **BCTC Q1-2026 banking** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB — FA + report-analyzer get_bctc_full on Monday 02:00 UTC cycle.
 - **FA OCF verification** (MEDIUM): Confirm get_cash_flow plausible post-1930b in next FA live session.
-- **Cowork scheduler MCP gap** (MEDIUM): Alert-commander + qa-responder automated cycles BLOCKED. Sprint task needed.
-- **news-scout 14:19 UTC transient** (LOW): Monitor 15:XX UTC alert-commander to confirm resolved or new episode.
+- **report-analyzer recovery** (MEDIUM): Confirm live session at 02:00 UTC Monday (gateway now operational).
+- **Cowork scheduler MCP gap / 1937a** (MEDIUM): SPIKE in Backlog. Root cause investigation.
+- **market-watcher 19:38 UTC BLOCKED** (LOW): Single incident — monitor c68 for recurrence.
 - **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER action pending.
-- **TNB Claude Code MCP** (MEDIUM): 12th cycle. Infrastructure investigation needed.
+- **TNB Claude Code MCP** (MEDIUM): 13th cycle. Infrastructure investigation needed.

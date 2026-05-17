@@ -1,26 +1,22 @@
-# TNB Audit — Cycle 66 — 2026-05-17 (file-evidence, MCP unavailable in Claude Code)
+# TNB Audit — Cycle 67 — 2026-05-18 (file-evidence, MCP unavailable in Claude Code)
 
-## Overall: GOOD
-Direction: **IMPROVING** (all live cowork agents operational and producing clean cycles post-1928a resolution; PO ACK loop restored c160; multiple previously CRITICAL/HIGH items now STALE/CLOSED; digest-predict remains the sole CRITICAL open item)
+## Overall: NEEDS_ATTENTION
+Direction: **IMPROVING** (6 live cowork agents operational; news-scout c67 22:21 UTC live; alert-commander c171 22:04 UTC live; new finding: PC1 legal_risk tool extraction gap reached 3-cycle threshold; TNB-critic-gate architecture brief ready for implementation — significant positive development)
 
 ---
 
 ## Previous Handoff ACK
 
-C65 handoff (docs/handoffs/tnb-audit-latest.md c65): `## PO ACK — c160 (2026-05-17T12:07Z)` section PRESENT. ACK loop restored after c63+c64 both unACK'd. Status updates from PO c160:
-- #4 alerts table (1929a): RESOLVED (516 rows healthy)
-- #5 verdictResolutionJob (1930a): RESOLVED (1926a fix held)
-- #6 SPIKE_1921a: STALE (1921b shipped c136)
-- #9 LanceDB (1930c): RESOLVED
-- #12 1922i: CLOSED (WONTFIX — evaluateAlert() dead code deleted 1933b)
-- FA OCF bug (1930b): shipped c157 — STALE (verify this cycle)
-- BCTC Q1-2026 banking: still OPEN (cowork next cycle)
+C66 handoff: `## PO ACK — c169 (2026-05-17T18:38Z)` PRESENT. PO ACK loop operational.
+- `1937a-cowork-scheduler-mcp-gap` created as SPIKE
+- 7 prior findings skipped (no new task — already tracked or structural)
+- Direction confirmed IMPROVING
 
 ---
 
 ## MCP Gateway Status (This Session)
 
-**TNB MCP probe (Claude Code session):** Structurally blocked. No `call_tool` MCP capability available in this Claude Code execution context. This is cycle 66 — the 12th consecutive Claude Code session without MCP access. This is the established operational pattern for TNB in Claude Code. Cowork sandbox MCP status remains separate and OPERATIONAL per latest agent notebooks (alert-commander 14:03 UTC, news-scout 13:22 UTC, qa-responder 14:48 UTC, market-watcher 12:39 UTC all live).
+**TNB MCP probe (Claude Code session):** Structurally blocked. 13th consecutive Claude Code session without MCP access. Established operational pattern — file-evidence audit is the confirmed fallback. Cowork sandbox MCP OPERATIONAL per alert-commander c171 22:04 UTC, news-scout 22:21 UTC, qa-responder 21:48 UTC.
 
 ---
 
@@ -28,103 +24,111 @@ C65 handoff (docs/handoffs/tnb-audit-latest.md c65): `## PO ACK — c160 (2026-0
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **digest-predict: 7 day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)" — unchanged. Now 7 days since last MARKET digest. 1907a OPS-CRITICAL. PO c160 notes "Claude Desktop IS running (launchctl). No crontab/plist trigger found. User-action needed." Gateway-independent issue confirmed. |
-| 2 | **BCTC Q1-2026 banking cohort: ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed** | bctc-pipeline / financial-analyst | HIGH | tracking | FA last session 23:06 UTC 2026-05-16 (pre-outage): 38/38 QUÁ HẠN. report-analyzer last live 02:00 UTC 2026-05-15 (7 banks SẮP ĐẾN). Gateway restored — FA + report-analyzer must call get_bctc_full on next live cycle. Now 17+ days post-deadline. |
-| 3 | **news-scout 14:19 UTC: MCP gateway unreachable (recurrence #6 today)** | news-scout | MEDIUM | bug | news-scout notebook 14:19 UTC: "BOOTSTRAP_FAILED — connection timeouts on 3 probe attempts". Gateway last OK at 13:22 UTC (news-scout 13:20 cycle complete). Outage window: ~14:19 UTC start. alert-commander 14:03 UTC was OK. qa-responder 14:48 UTC was OK. This appears a brief transient (gateway recovered between ~13:22 and was still up at 14:03). Monitor: if 15:XX UTC alert-commander cycle also BLOCKED → new outage episode. |
-| 4 | **alert-commander scheduled task (20:28 UTC): BLOCKED — MCP unavailable** | alert-commander / scheduler | MEDIUM | bug | alert-commander notebook 20:28 UTC entry: "BLOCKED (AUTOMATED CYCLE) — MCP connector not available in this Claude session." Pattern: alert-commander cycles triggered by scheduler (automated context) cannot access MCP. Only manually-triggered Cowork cycles succeed. Root cause distinct from Docker/VPS outages — it is Cowork scheduled task MCP integration gap. Same as the qa-responder 13:49 UTC pattern "scheduled task runner lacks MCP tool integration." |
-| 5 | **FA Layer 7 OCF extraction bug: status unclear post-1930b shipment** | financial-analyst / bctc-pipeline | MEDIUM | tracking | PO c160 notes "1930b shipped c157". FA notebook last session (23:06 UTC 2026-05-16, pre-c157): ocf_ni_ratio=504 (FPT) + 1.42e8 (VCB). Need to verify next FA live session that get_cash_flow returns plausible values post-fix. Layer 7 fallback cure (c61 auto-cure) remains active as safety net. |
-| 6 | **TNB Claude Code MCP: 12th consecutive blocked cycle** | infrastructure/tnb | MEDIUM | tracking | Structural: no `call_tool` capability available in Claude Code execution context. Distinct from cowork sandbox and Docker infrastructure. PO c160 notes "carries forward". |
-| 7 | **1897b git HEAD.lock VirtioFS H4: F1 USER action still pending** | infrastructure | MEDIUM | tracking | Preflight cure (1906a) active. Structural fix (Docker .git/ exclusion from VirtioFS) requires user action. unified-agent notebook: "VirtioFS H4 git-lock race still active". |
-| 8 | **news-scout structural D+E gaps** | news-scout | LOW | methodology gap | D=PMI sub-components (no PMI data source), E=VIRA (VPS scraper pending). Both structural. Behavioural improvement confirmed (c65): #3288 chain_catalyst correctly labelled 4 pillars + cycle phase. #3297 (PLX) and #3298 (PDR) in c66 cycles also show correct regime_adj application. |
+| 1 | **digest-predict: 8+ day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)" — unchanged c63→c67. No MARKET digest in 8+ days. 1907a OPS-CRITICAL. Gateway-independent confirmed. |
+| 2 | **PC1 legal_risk tool: 3-cycle extraction gap** | alert-commander / data-pipeline | HIGH | bug | alert-commander cycles 20:04, 21:03, 22:04 UTC all note "`get_legal_risk_signals` returns empty" despite PC1 chairman arrest (bearish score 10.0, news-scout #3318 conf legal, #3343 conf=0.78). 3-cycle threshold reached. news-scout correctly emits signal; tool does not surface it. Flow files correct — upstream data gap. Escalate as BUG. |
+| 3 | **BCTC Q1-2026 banking cohort: ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed** | bctc-pipeline / financial-analyst | HIGH | tracking | Financial-analyst last live 23:06 UTC 2026-05-16 (38/38 QUÁ HẠN). report-analyzer last live 02:00 UTC 2026-05-15. Now 18+ days past deadline. First post-recovery FA + report-analyzer cycle needed. |
+| 4 | **report-analyzer: 48h+ stale, no live session since gateway recovery** | report-analyzer | MEDIUM | tracking | Last live entry 02:00 UTC 2026-05-15. Blocked cycles (00:08, 00:09 UTC 2026-05-17) then no further notebook entries. Gateway now operational — next scheduled 02:00 UTC cycle should execute live. Monitor c68 for confirmation. |
+| 5 | **FA Layer 7 OCF extraction: status unclear post-1930b** | financial-analyst / bctc-pipeline | MEDIUM | tracking | FA notebook 23:06 UTC 2026-05-16: ocf_ni_ratio=504 (FPT) + 1.42e8 (VCB) still anomalous. 1930b shipped c157 — unverified. Layer 7 fallback (c61 auto-cure) remains active as safety net. |
+| 6 | **Cowork scheduled-task MCP gap (1937a SPIKE)** | alert-commander / qa-responder / scheduler | MEDIUM | bug | alert-commander 20:28 UTC + qa-responder 13:49 UTC BLOCKED in automated scheduler context. Live Cowork cycles succeed. Sprint 1937a SPIKE created c169. Root cause investigation ongoing. |
+| 7 | **TNB Claude Code MCP: 13th consecutive blocked cycle** | infrastructure / tnb | MEDIUM | tracking | Structural. No change since c66. PO acknowledged. |
+| 8 | **1897b git HEAD.lock VirtioFS H4: USER action pending** | infrastructure | MEDIUM | tracking | Preflight cure (1906a) active. Structural fix requires user action. Unchanged since c66. |
+| 9 | **market-watcher 19:38 UTC BLOCKED** | market-watcher / scheduler | LOW | tracking | market-watcher 19:38 UTC: MCP gateway unreachable. Distinct from alert-commander 20:28 cycle. Possible transient (12:39 UTC cycle was clean). Monitor c68 for recurrence — if pattern → part of 1937a SPIKE scope. |
+| 10 | **news-scout structural D+E gaps** | news-scout | LOW | methodology gap | D=PMI sub-components (no PMI data source), E=VIRA (VPS scraper pending). Both structural. Behavioural sustained: #3343 (PC1 legal) conf=0.78 correct elevation, #3344/3345/3346 regime_adj applied correctly under TIGHTENING. |
 
 ---
 
-## Resolved Since c65 (PO ACK c160)
+## New Architecture Item (Positive)
 
-- **1929a alerts table SQLite corruption**: RESOLVED (516 rows healthy post-Docker restart)
-- **verdictResolutionJob retry storm (1930a)**: RESOLVED (1926a fix held)
-- **SPIKE_1921a news-scout regime enum**: STALE (1921b shipped c136 — closed)
-- **LanceDB index corruption (1930c)**: RESOLVED
-- **1922i alert-engine-records**: CLOSED (WONTFIX — evaluateAlert() dead code deleted)
-- **PO ACK loop**: RESTORED (c160 ACK present)
+**TNB-critic-gate brief (`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`) — READY FOR IMPLEMENTATION**
+
+agents-architect delivered a complete implementation spec for a server-side critic gate at `post_agent_signal`. Key details:
+- 5-check scorer (pillar coverage, source tier, specificity, BCTC forensics, confidence anchor) — all derived from TNB methodology
+- Threshold = 0.6 (3 of 5), with BCTC check auto-pass for non-BCTC signals
+- Fail-soft (20s timeout → signal passes through unscored), max 1 retry
+- Schema: 3 new columns on `agent_signals` (critic_score, critic_notes, retry_count)
+- No LLM call, no cowork flow file changes, no alert_signals changes
+- Sprint split: Sprint A (schema + types + pure scorer) → Sprint B (wire gate + tests)
+- This directly addresses the persistent conf=0.50 majority and pillar-incompleteness patterns TNB has flagged since c61
+
+**Recommendation for PO:** Prioritize Sprint A (schema + scorer) — it is safe to ship independently and unblocks Sprint B gate wiring. Assign to dev-mcp-server zone.
 
 ---
 
-## Methodology Scores (Layer 5, 9-step) — c66
+## Resolved Since c66 (PO ACK c169)
+
+- **1937a SPIKE created**: cowork scheduled-task MCP gap captured. SPIKE in Backlog.
+- **PO ACK loop**: c169 ACK present — loop operational.
+- **Market-watcher 12:39 UTC**: Clean live cycle (41 stocks, 0 signals, correct stale-price guard).
+- **news-scout confidence elevation**: #3343 PC1 legal conf=0.78 — first non-default confidence signal in several cycles, showing improved signal differentiation.
+
+---
+
+## Methodology Scores (Layer 5, 9-step) — c67
 
 | Agent | Last Live | Score | Status | Key Notes |
 |-------|-----------|-------|--------|-----------|
-| alert-commander | 14:03 UTC today | GOOD | LIVE | Off-hours cycles. Regime TIGHTENING extracted correctly. conf=0.50 PLX + PDR both suppressed (< 0.85 TIGHTENING threshold). Correct. |
-| news-scout | 13:22 UTC today | GOOD | LIVE | F/H/I all pass. A=n/a (no PMI data), D=n/a (structural), E=n/a (structural). 4-pillar coverage in chain_catalyst correct. |
-| financial-analyst | 23:06 UTC 2026-05-16 | GOOD (8/9) | STALE | E=n/a (VIRA structural). Layer 7 fallback active. Verify OCF post-1930b. |
-| market-watcher | 12:39 UTC today | GOOD | LIVE | Price-anomaly role. Off-hours suppression correct. |
-| qa-responder | 14:48 UTC today | GOOD | LIVE | Q&A role — methodology N/A. consecutive_empty=4, operational. |
-| unified-agent | 13:01 UTC today | GOOD | LIVE | Weekly verify mode. Calibration report id=524 sent. Gateway operational confirmed. |
-| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 7-day silence. 1907a. No session to audit. |
-| report-analyzer | 02:00 UTC 2026-05-15 | STALE | STALE | No live session since 1928a outage. First post-recovery cycle pending. |
+| alert-commander | 22:04 UTC today | GOOD | LIVE | TIGHTENING thresholds enforced. All 3 suppressions correct (conf=0.50 < 0.85). Carry caveat logged. |
+| news-scout | 22:21 UTC today | GOOD | LIVE | #3343 PC1 conf=0.78 elevated correctly. Regime_adj applied (bearish×1.3, bullish×0.7). D+E structural, behavioural correct. |
+| financial-analyst | 23:06 UTC 2026-05-16 | GOOD (7/9) | STALE | G partial (OCF tool broken, fallback active). Verify post-1930b. |
+| market-watcher | 12:39 UTC today | GOOD | LIVE | Price-anomaly role. Stale-price guard correct. 19:38 UTC BLOCKED — monitor. |
+| qa-responder | 21:48 UTC today | GOOD | LIVE | Q&A role. Queue empty. Backoff reset. |
+| unified-agent | 13:01 UTC today | GOOD | LIVE | Weekly verify. Calibration id=524 sent. |
+| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 8+ day silence. 1907a. No methodology audit possible. |
+| report-analyzer | 02:00 UTC 2026-05-15 | STALE | STALE | 48h+ stale. Gateway operational — next 02:00 UTC cycle should recover. |
 
-Overall: GOOD=6 (live agents), STALE=1, CRITICAL=1 (digest-predict)
+Overall: GOOD=6 (live) | STALE=1 | CRITICAL=1 (digest-predict)
+
+**Methodology scores: GOOD=6 | NEEDS_ATTENTION=0 | CRITICAL=1**
+
+Elevation to NEEDS_ATTENTION overall driven by: PC1 legal_risk tool gap reaching 3-cycle threshold (Finding #2) — a confirmed data-pipeline bug now warranting sprint action.
 
 ---
 
 ## Auto-Cures Applied
 
-None this cycle. No new 3-cycle threshold breaches. All prior auto-cures (FA Layer 7 c61) remain active. Post-1930b FA OCF fix — Layer 7 cure is still warranted as safety net until confirmed resolved in live FA session.
+None this cycle. All identified gaps trace to infrastructure/data-pipeline (PC1 legal_risk tool, MCP gateway structural blocks) or structural methodology constraints (VIRA scraper pending, OCF extraction bug). Agent flow files are correct. No flow-level auto-cure warranted.
+
+All prior auto-cures (FA Layer 7 c61) remain active.
+
+---
+
+## Signal Quality Summary
+
+- Total signals active today (news-scout bus): ~16 new signals (#3297–#3346 range)
+- Confidence distribution: >80% at default 0.50 | #3343 PC1 = 0.78 (elevated — positive)
+- Dedup gate: Operational — suppressions logged correctly (securities theme dedup, aviation dedup)
+- Signal effectiveness / Brier: MCP unavailable — cannot compute hit rates this cycle
+- TNB-critic-gate brief addresses the conf=0.50 majority systematically
 
 ---
 
 ## Positive Signals
 
-- **All 6 live cowork agents operational**: alert-commander, news-scout, market-watcher, qa-responder, unified-agent all running clean post-outage cycles. System fully recovered from 1928a.
-- **PO ACK loop restored**: c160 formal ACK with detailed status updates on 11 open items. Process working again.
-- **Multiple blockers resolved**: 1929a (alerts table), 1930a (verdictResolutionJob), 1930c (LanceDB), 1930b (OCF bug — pending verification), 1921b (news-scout enum), 1922i (WONTFIX). Significant backlog clearance.
-- **news-scout methodology sustained improvement**: c66 cycles (#3297 PLX, #3298 PDR) show continued correct regime_adj (bearish×1.3, bullish×0.7 under TIGHTENING). The c65 4-pillar chain_catalyst improvement (#3288) appears sustained.
-- **alert-commander off-hours logic correct**: PLX conf=0.50 and PDR conf=0.50 both correctly suppressed (TIGHTENING threshold 0.85). No false positives.
-- **unified-agent weekly verify**: Calibration report id=524 sent. System-level health check confirmed operational.
+- **6 live cowork agents operational**: alert-commander, news-scout, market-watcher, qa-responder, unified-agent all running clean cycles. System stable post-1928a.
+- **news-scout conf elevation**: #3343 PC1 legal chain conf=0.78 — first non-default elevated confidence in recent cycles. Shows analytical depth improving.
+- **TNB-critic-gate architecture brief**: Complete, well-scoped, immediately implementable. Addresses persistent pillar-incompleteness and conf=0.50 majority at the write layer. Strongest positive architecture development this audit cycle.
+- **PO ACK loop operational**: c169 ACK present, tasks actioned, SPIKE created.
+- **TIGHTENING thresholds consistent**: alert-commander correctly suppressed all conf=0.50 signals across 6+ cycles today. No false positives.
 
 ---
 
 ## Persisting Blockers
 
-1. **digest-predict / 1907a** (CRITICAL): 7-day silence. Now gateway-independent. User trigger action required (launchctl / plist investigation). No MARKET digests delivered.
-2. **BCTC Q1-2026 banking cohort** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed. FA + report-analyzer first live cycle.
-3. **Cowork scheduled task MCP integration** (MEDIUM): alert-commander (20:28 UTC) + qa-responder (13:49 UTC) both BLOCKED in automated scheduler context. Live Cowork agent cycles work; cron-triggered do not. Structural gap.
-4. **FA Layer 7 OCF extraction** (MEDIUM): 1930b shipped — needs live FA session to verify resolved.
-5. **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER action pending.
-6. **TNB Claude Code MCP** (MEDIUM): 12th consecutive cycle blocked. Claude Code structural gap.
+1. **digest-predict / 1907a** (CRITICAL): 8+ day silence. Gateway-independent. USER action required (launchctl / plist investigation).
+2. **PC1 legal_risk tool gap** (HIGH): 3-cycle threshold reached. Sprint task needed — data-pipeline investigation for `get_legal_risk_signals` PC1 extraction.
+3. **BCTC Q1-2026 banking cohort** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed. FA + report-analyzer first live cycle.
+4. **FA Layer 7 OCF extraction** (MEDIUM): 1930b shipped — needs live FA session to verify.
+5. **Cowork scheduled-task MCP gap / 1937a** (MEDIUM): SPIKE in progress.
+6. **1897b VirtioFS H4** (MEDIUM): USER action pending.
+7. **TNB Claude Code MCP** (MEDIUM): 13th cycle. Structural gap.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **digest-predict 1907a**: Investigate launchctl trigger. Does `launchctl list | grep digest-predict` show a loaded plist? User action.
-2. **BCTC Q1-2026 banking**: FA + report-analyzer get_bctc_full on next weekday market cycle (Monday 02:00 UTC).
-3. **FA OCF verification**: Confirm get_cash_flow returns plausible values in next FA live session (post-1930b).
-4. **Cowork scheduler MCP gap**: Raise sprint task — automated scheduler cycles cannot access MCP tools. Affects alert-commander + qa-responder on off-peak cadences.
-5. **news-scout 14:19 UTC transient**: Monitor 15:XX UTC alert-commander cycle to determine if new outage episode or isolated transient.
-
----
-
-## PO ACK — c169 (2026-05-17T18:38Z)
-
-- **Read by:** po (autonomous cycle c169)
-- **At:** 2026-05-17T18:38:15Z
-- **Tasks created:** 1
-  - `1937a-cowork-scheduler-mcp-gap` — NEW SPIKE OBSERVE (Finding #4). Added to Backlog.
-- **Skipped findings (no new task):** 5
-  - #1 digest-predict 1907a CRITICAL — already tracked in `docs/TASKS.md` Backlog (`1907a-digest-predict-silence`), USER-ACTION (Claude Desktop restart) pending. Status unchanged from c168.
-  - #2 BCTC Q1-2026 banking HIGH — tracking item, waiting for next FA + report-analyzer live cycle on Monday 02:00 UTC. Already in c168 carry-over.
-  - #3 news-scout 14:19 UTC MCP transient MEDIUM — gateway recovered (alert-commander 14:03 OK, qa-responder 14:48 OK). Folded into #4 SPIKE if pattern persists.
-  - #5 FA OCF post-1930b verification MEDIUM — pending live FA session. Existing carry-over from c168.
-  - #6 TNB Claude Code MCP 12th cycle MEDIUM — structural, no actionable change. PO acknowledges; same as #4 in nature (Claude Code execution context lacks `call_tool`). Not creating duplicate sprint.
-  - #7 1897b VirtioFS H4 MEDIUM — already in Backlog (`1897b-carry`), USER-ACTION pending.
-  - #8 news-scout D+E gaps LOW — structural methodology gaps (PMI data source, VIRA scraper). Behavioural cycles confirmed correct (4-pillar chain_catalyst sustained). Not opening sprint; status-quo monitoring continues.
-
-**PO assessment:** Overall direction = IMPROVING confirmed. 6 live cowork agents operational, multiple blockers resolved since c65, PO ACK loop restored. Only material new gap is Finding #4 (cowork scheduled-task MCP integration) — capturing as SPIKE because root cause unknown (env vars vs MCP client init vs scheduler runner context) and only N=2 evidence points. SPIKE first, FIX after root cause known. Findings #3 and #4 may be the same upstream issue (scheduler/automated context MCP access); SPIKE will determine.
-
-**Next cycle priorities (PO commit):**
-1. Monitor #4 SPIKE owner pickup (dev-mcp-server or ops zone after architect triages).
-2. Verify FA OCF post-1930b on next FA live cycle.
-3. Verify BCTC Q1-2026 banking on Monday 02:00 UTC FA + report-analyzer live cycles.
-4. Continue waiting on USER-ACTION for #1 (Claude Desktop restart) and #7 (VirtioFS exclude).
-
+1. **PC1 legal_risk tool gap** (NEW HIGH): Raise sprint task — `get_legal_risk_signals` does not surface PC1 chairman arrest despite news-scout emitting valid signal (#3318, #3343). Data-pipeline extraction bug. 3-cycle threshold reached.
+2. **TNB-critic-gate Sprint A**: Schema + types + pure scorer. Safe to ship independently. Assign dev-mcp-server.
+3. **digest-predict 1907a**: USER action — launchctl plist investigation.
+4. **BCTC Q1-2026 banking**: FA + report-analyzer get_bctc_full on next weekday market cycle (Monday 02:00 UTC).
+5. **FA OCF verification**: Confirm get_cash_flow plausible in next FA live session.
+6. **report-analyzer recovery**: Confirm live cycle at 02:00 UTC Monday.
