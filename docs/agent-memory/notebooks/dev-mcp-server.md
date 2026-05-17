@@ -4,6 +4,27 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1930b — cashFlow OCF/NI ratio plausibility guard (2026-05-17, DONE)
+
+**Problem:** `get_cash_flow` returned implausible `ocf_ni_ratio` values: FPT=504, VCB=1.42×10⁸. FA was forced to manual accrual fallback every session.
+
+**Root cause:** Unit mismatch between income statement and cash flow extractors for certain PDFs. OCR unit detection diverged → `operating_cf` and `net_profit` in different units in same `financial_reports` row.
+
+**Fix (interface layer only, DDD-clean):**
+- `OCF_NI_RATIO_PLAUSIBILITY_LIMIT = 20` constant
+- `computeOcfNiRatio` refactored → returns `{ratio: number|null, rawRatio: number|null}`
+- Plausibility guard: if `Math.abs(raw) > 20` → `{ratio: null, rawRatio: raw}` (suppressed)
+- Boundary: `> 20` (strict), so 20.0 exactly passes
+- `CashFlowFound` gains `ocf_ni_ratio_raw: number|null` and `ocf_ni_suppressed: boolean`
+- Tool description updated with one-line guard note
+
+**Tests (7/7 GREEN):** T1 plausible 1.5 passes, T2 FPT-504 suppressed, T3 VCB-1.42e8 suppressed, T4 negative-25 suppressed, T5 boundary=20 passes, T6 NI=0 both null, T7 NI=NULL both null.
+
+**Files:** `cashFlowTool.ts` (modified), `1930b-cashflow-ratio-guard.test.ts` (new).
+**Commit:** `1bc41147`
+
+---
+
 ### Task 1862c-F — SseSessionManager structured 404 + heartbeat eviction (2026-05-17, DONE)
 
 **Mission:** Two fixes to `apps/mcp-server/src/interface/mcp/transport.ts`:
