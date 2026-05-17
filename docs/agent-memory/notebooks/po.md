@@ -1,49 +1,35 @@
 # PO Notebook
 
-## Last updated: 2026-05-17T09:16:08Z · Cycle: c156 — triage, gateway still down, 1862c-F dispatched
+## Last updated: 2026-05-17T17:37:54Z · Cycle: c167 — merge & sign-off (fetch-ops sprint)
 
-### c156 session summary
+### c167 session summary
 
-**Spawn context:** c156 triage. MCP gateway DOWN — `send_telegram` unavailable. Filesystem signals + TASKS.md only.
+**Spawn context:** User-directed PO sign-off on `task/calendar-source-10s-timeout` (14 commits) after dev-team Fetch Ops bug-fix session. All fixes complete, tests pass.
 
-**Pending signals (drained to processed/):**
-- `market-watcher-2026-05-17T08-41-01Z.json` — bug-escalation HIGH, gateway unreachable, cycle aborted
-- `qa-responder-2026-05-17T08-48-53Z.json` — bug-escalation HIGH, 9th consecutive blocked cycle, recommends Docker restart + extra_hosts fix
-- Both = duplicates of URGENT-F1 **1928a**. No new tasks warranted.
+**Merge executed:**
+- Branch `task/calendar-source-10s-timeout` (14 commits) → `main` via `--no-ff` merge commit `3af610a0`.
+- Task branch deleted post-merge.
+- Zones covered: `news-fetch` (Reuters+Bloomberg), `macro-indicators` (calendar timeout), `frontend` (hydration + MacroPanel shape), plus 4 notebook chores.
+- Main now 7 commits ahead of origin/main (not pushed — user discretion).
 
-**TASKS.md updates this cycle:**
-- 1931a-frontend-scaffold-harden — removed from Todo, added to Done (commits ecda4fc2 + 0e443e03).
-- 1932a-frontend-dashboard-pages — new Done entry (commit 5945475e). 4 pages: server/fetch/vps/db. Zero MCP coupling.
-- 1862c-F — moved Todo → In Progress. Re-framed: gateway-independent code phase, dev runs build/tsc/vitest locally, Docker rebuild deferred. 5 ACs added. Hold-clause on 1862c-E-dashboard downgraded — code can land without live SSE verification.
-- 1930b — zone path corrected: `cashFlowTools.ts` → `cashFlowTool.ts` (singular; actual location `apps/mcp-server/src/interface/mcp/tools/financial-reports/cashFlowTool.ts`). Marked DEV-ABLE NOW: pure code fix, Docker rebuild only needed for live verification.
+**TASKS.md updates:**
+- `news-bugs-reuters-bloomberg-fix` Review → Done (3af610a0 merge).
+- New Done entries for `1936-frontend-hydration-clientimstamp`, `macro-calendar-timeout-cap`, `1934-macropanel-data-shape` (separating the 4 distinct fixes for audit traceability).
+- New OBSERVE task `calendar-source-replacement` (LOW, dev-macro-indicators) — calendar endpoint permanently unreachable, needs replacement-or-wontfix decision.
+- Review queue now empty.
 
-**WIP after dispatch:** 1 In Progress (1862c-F, developer). Within limit.
+**Signal dashboard read:**
+- `## po` row `tnb-20260517T150000` NEW — Overall GOOD direction IMPROVING. Marked READ via this notebook ACK. PO c160 status carries forward (all major blockers cleared except 1907a digest-predict CRITICAL + 1897b USER F1 Docker exclude).
 
-**Signal output:** `docs/signals/2026-05-17T09-16-08Z-po-c156-triage.json` (type `po-triage-complete`) replaces Telegram broadcast.
+**Channel audit:** MCP `read_telegram_reports` not available in Claude Code session (12th consecutive cycle per TNB c66). Substituted with: signal dashboard + processed signals review + dev notebooks (dev-frontend c1934-1936, dev-macro-indicators c1936). All show clean cycles, tests green, Docker rebuild done for macro.
 
-**Channel audit:** Cannot read MARKET/WORK/BUG telegram channels — gateway down. Substituted with filesystem signal review (DASHBOARD.md empty, processed/ folder shows uniform gateway-down pattern across all 9 qa-responder cycles + market-watcher).
+**WIP after merge:** 0 In Progress. Review empty. Backlog stable.
 
-### Productive parallel tracks while gateway dark
+### Carry-over for next cycle
 
-1. **Frontend zone** (`apps/frontend/`) — zero MCP coupling. 1931a + 1932a shipped this c155→c156 window. dev-frontend continues parallel work.
-2. **MCP code-only fixes** — build/tsc/vitest run locally without Docker. 1862c-F (transport.ts) dispatched. 1930b (cashFlowTool.ts) queued next.
-3. **Architect / agent-md** — non-coding, gateway-independent.
-
-### Blocked tracks (need 1928a resolution)
-
-- 1929a alerts-table-corruption (HIGH)
-- 1930a verdict-retry-recurrence (MEDIUM)
-- 1930c lancedb-recorruption (MEDIUM)
-- 1922i alert-engine-records-observe (MEDIUM)
-- Live verification of any landed code fix (1862c-F SSE behavior, 1930b OCF values, etc.)
-
-### Carry-over for next cycle (c157)
-
-- **1928a USER F1 — Docker Desktop restart** still pending. Every cowork cycle continues to fail. Outage ≥9h, Sunday pre-market.
-- **1862c-F dev progress** — check if developer landed code + green tests. If done → Review, queue 1930b dispatch next.
-- **1930b** — next dispatch slot when WIP frees up. dev-mcp-server, pure code phase, live verify deferred.
-- **1862c-E-dashboard** (USER, Cloudflare) — still blocks live SSE verification but no longer blocks 1862c-F code work.
-- **1907a digest-predict** CRITICAL OPS — observe.
-- **Frontend dev-frontend** — productive parallel track, monitor for next risk flags.
-- **Post-Docker-restart cascade** (in order): 1929a alerts-table → 1930b OCF live verify → 1930a verdict retry → 1922i alert-engine records → 1930c LanceDB.
-- **TNB c64 follow-ups** — re-evaluate priority once Docker up.
+- **1907a digest-predict** CRITICAL OPS — 7-day silence. Still USER-ACTION (Claude Desktop MCP connector in scheduled tasks). No PO action available.
+- **1897b USER F1** — Docker .git/ VirtioFS exclude. Still USER-ACTION.
+- **calendar-source-replacement** OBSERVE — surface to architect or product if calendar feature still required, else wontfix.
+- **BCTC Q1-2026 banking cohort** (TNB c66 finding #2) — FA + report-analyzer must call `get_bctc_full` on next live cycle to verify the 7-bank coverage.
+- **Push to origin/main** — main now 7 commits ahead. User-discretion (no auto-push policy).
+- **Bloomberg "articles []" residual** — RSS fallback was added in this merge (bloomberg-rss.ts); next news-fetch live cycle should confirm whether `/news/bloomberg/headlines` returns populated array. If still `[]` → new FIX task.

@@ -17,6 +17,7 @@
 ## Todo
 | 1862c-E | OPS-HIGH: SSE keepAliveTimeout fix. (a) E-config Done (commit 16ff50e1). (b) E-dashboard **USER-ACTION**: Cloudflare dashboard ingress for `/vn-market/sse` not configured → 404. User must configure Cloudflare tunnel ingress. | HIGH | OPS | user | TASK_1862c-E.md | — |
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
+| calendar-source-replacement | **OBSERVE** — calendar source endpoint permanently unreachable (capped at 5s timeout, never succeeds). Need replacement evaluation: alternative calendar API or wontfix decision. AC: identify replacement source URL OR mark calendar feature wontfix. Carry-over from c167 fetch-ops session. | LOW | OBSERVE | dev-macro-indicators | — | — |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
 
 ---
@@ -33,12 +34,16 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| news-bugs-reuters-bloomberg-fix | **FIX: Reuters 0 headlines + Bloomberg 502** — (1) `reuters-rss.ts`: dead `feeds.reuters.com` URL replaced with Google News RSS (`reuters+business+news`). Live confirmed: 15 articles, error: null. (2) `handlers.ts`: added 3 warn log points when RSS primary fails/empty, and when stealth fallback also returns 0. (3) `index.ts`: `idleTimeout: 0` to prevent Bun 10s idle timeout killing Playwright (was causing empty reply → 502 at api-gateway). 8 regression tests added. 180/180 pass. Docker rebuilt + redeployed. QA: verify `GET /news/reuters/headlines` returns ≥1 article; verify `GET /news/bloomberg/headlines` returns 200 JSON (not 502). Bloomberg articles [] is a separate selector issue — 502 is the reported bug and is fixed. | HIGH | FIX | qa | — | — |
+| _(empty)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
+| news-bugs-reuters-bloomberg-fix | **DONE 2026-05-17 c167** — Reuters dead URL + Bloomberg 502 fix merged to main via `chore(merge): task/calendar-source-10s-timeout` (3af610a0). reuters-rss.ts → Google News RSS (15 articles confirmed), handlers.ts → 3 warn log points, index.ts → `idleTimeout: 0`. 8 regression tests added, 180/180 pass. Bloomberg RSS fallback (`bloomberg-rss.ts`) added in same merge (replaces stale DOM selector). Docker rebuilt + redeployed. | HIGH | FIX | dev-mcp-server | 2026-05-17 |
+| 1936-frontend-hydration-clientimstamp | **DONE 2026-05-17 c167** — Frontend hydration mismatch on timestamp containers. Replaced `suppressHydrationWarning` workaround with proper `ClientTimestamp` component (deferred render until client mount). Test: `1936-client-timestamp.test.tsx`. Commits e945f9ea + 1a463888. | MEDIUM | FIX | dev-frontend | 2026-05-17 |
+| macro-calendar-timeout-cap | **DONE 2026-05-17 c167** — Calendar source timeout: 30s → 10s → 5s (endpoint permanently unreachable). Prevents calendar from blocking macroRefresh cycles. Doc refs updated. Commits c8f63afc + 681d0482 + 2198fc16. Follow-up `calendar-source-replacement` queued for source-replacement evaluation. | MEDIUM | FIX | dev-macro-indicators | 2026-05-17 |
+| 1934-macropanel-data-shape | **DONE 2026-05-17 c167** — MacroPanel was reading `source/status` fields that don't exist; switched to `sources+summary` per actual gateway response shape. Test: `1934-macro-panel.test.ts`. Commit e4baf96a. | MEDIUM | FIX | dev-frontend | 2026-05-17 |
 | 1933b-delete-evaluateAlert-dead-code | **DONE c160** — Deleted `evaluateAlert()`, `AlertEvaluateRequest`, `AlertEvaluateResponse` from `apps/mcp-server/src/infrastructure/microservices/clients.ts`. Zero callers confirmed (grep-verified). SPIKE-1933a WONTFIX: market.db.alerts → Alert Commander is canonical; Go alert-engine reserved for future stop-loss. tsc 0 errors. | MEDIUM | FIX | dev-mcp-server | 2026-05-17 |
 | 1928a/1929a/1930a/1930c | **DONE c159** — 1928a extra_hosts fix (virtiofs DNS), 1929a alerts table healthy (516 rows), 1930a verdictResolutionJob rows_written=0 (1926a held), 1930c rag-service healthy (LENC not recurring). | HIGH | OPS | ops | 2026-05-17 |
 | 1862c-F | **DONE c156** — SseSessionManager structured 404 + heartbeat eviction. 5/5 tests GREEN. | MEDIUM | FIX | developer | 2026-05-17 |
