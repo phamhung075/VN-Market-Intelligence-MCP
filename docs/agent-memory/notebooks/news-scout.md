@@ -1,5 +1,22 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 16:21 UTC | **Status:** OK (market closed)
+
+### Cycle (16:19–16:21 UTC)
+- Items: 20 | Impacts: 11 (impact≥6) | Signals: [urgent_news #3310/GAS, chain_catalyst #3311/PLX, chain_catalyst #3312/securities] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread | Filter hints: [default — no feedback tuning]
+- Cycle status: COMPLETE | Log ID: 949 | Signal IDs: 3310, 3311, 3312
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33%, Brent=$109.26, Gold=$4,561.9, USD/VND=26,350
+- Dedup gate (180min window): 0 suppressions (bus was empty)
+- Top high-impact items analyzed:
+  * #1 [COUNTRY] [BULLISH] "Nhóm dầu khí dậy sóng kéo VN-Index, GAS tăng trần" (9/10 impact, oil_gas, direct watchlist GAS) → urgent_news #3310 posted (regime_adj=6.3 under TIGHTENING×0.7, cpi_pressure_risk=true)
+  * #2 [GLOBAL] [BEARISH] "Cổ phiếu PLX bốc hơi 40% từ đỉnh" (6/10 impact, 82% confidence, stock PLX) → chain_catalyst #3311 posted (event_type=earnings/sector_event, regime_adj=7.8 under TIGHTENING×1.3, bearish signal strength elevated)
+  * #3 [COUNTRY] [BULLISH] "Chứng khoán dự báo tiếp đà tăng — Dragon Capital 3 cú hích" (9/10 impact, securities+tech sectors) → chain_catalyst #3312 posted (regime_adj=6.3 under TIGHTENING×0.7, hot_money_risk=true, COC headwind caveat on FII outflow pressure)
+- Historical context (Stage 1b): 1/3 search_similar_context returned match (Dragon Capital prior analysis, VIC context); 3/3 searches for PC1/PLX/Phát Đạt empty
+- Notes: Market CLOSED (off-hours 16:21 UTC Friday). No PMI data. No gold >3% spike. No commodity >5% moves (Brent stable @109.26). Prices are stale (>24h). Cold off-hours cycle but GAS impact chain + PLX crisis warranted urgent_news/catalyst posts.
+
+---
+
 **Last updated:** 2026-05-17 14:20 UTC | **Status:** BOOTSTRAP_FAILED (MCP gateway unreachable)
 
 ### Cycle 2026-05-17 14:19 UTC (OFF-HOURS)
