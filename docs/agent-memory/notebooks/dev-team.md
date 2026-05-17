@@ -1,5 +1,21 @@
 # dev-team notebook
 
+## Current state (c159 close — 2026-05-17T10:27Z)
+- PREFLIGHT: HEAD.lock absent. Worktree prune clean.
+- Drain-signals: inbox empty (0 signals).
+- New artifacts: WORK_STATUS.md + reports/news-scout-cycle-2026-05-17.md — Cowork scheduled task failure, MCP gateway still down. Both deleted (noise, incorrect analysis claiming news-scout isn't a Cowork agent).
+- PO triage (c159): NOTHING — all remaining tasks require Docker Desktop restart (1928a F1 USER). Gateway-independent code backlog exhausted (1862c-F c156, 1930b c157 both done).
+- Session gate: idle EXIT. No codeable work.
+- USER ACTION STILL PENDING: 1928a Docker Desktop restart (F1). After restart: prioritize 1929a (alerts table) + 1922i (alert_engine_records count) + 1930b live verify.
+
+## c159 cycle log
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: inbox empty (0 signals).
+- Artifacts: Cowork news-scout scheduled task failure produced WORK_STATUS.md (root) + reports/news-scout-cycle-2026-05-17.md — deleted. Confirms MCP gateway still down (same 1928a root cause).
+- PO triage: NOTHING — blocked backlog only.
+- Session gate: idle EXIT.
+- Post-cycle: no non-main branches. Telegram unavailable (gateway down). Notebook written.
+
 ## Current state (c158 close — 2026-05-17T10:15Z)
 - PREFLIGHT: HEAD.lock #49 cured (age=655s, size=0B, no live pid). Worktree prune clean.
 - Drain-signals: inbox empty (0 signals).
