@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 19:02 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 21:03 UTC | **Sprint:** c171
 
 ## This session
 
@@ -143,4 +143,43 @@
 - **No Telegram dispatch** — MARKET/WORK channels not updated
 - **Log entry:** This cycle was triggered automatically per schedule but could not proceed
 - **System note:** Alert Commander requires MCP connector configured in Cowork app. Without it, scheduled cycles will repeatedly fail. Current workaround: manual trigger from Cowork web interface with MCP pre-connected, or configure MCP in desktop app settings
+
+### Alert Cycle (20:04–20:05 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — prior 11:01 / 20:28 BLOCKED entries above were phantom incidents written without a live probe; flagged for TNB audit)
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false (nextPivotWindow=June 2026)
+- **Macro:** Brent 109.26 | Gold 4561.9 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.27 STABLE
+- **Market:** CLOSED (Saturday 20:04 UTC, outside 02:00–08:59 UTC Mon–Fri trading window)
+- **Signals (count by type):** urgent_news=1 (PLX) | chain_catalyst=1 (GAS) | verified_chain=0 | price_anomaly=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 2 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 1 suppressed | event_types: [macro/currency cascade]
+- **Suppression detail:**
+  - [Suppressed] PLX urgent_news id=3324 conf=0.50 — below TIGHTENING bearish urgent_news threshold 0.75; no PLX price_anomaly available for override (PLX not on watchlist anyway; spillover-to-FPT angle speculative)
+  - [ChainCatalyst suppressed] GAS id=3325 event=macro/currency dir=neutral-mixed conf=0.50 → 0.50 < TIGHTENING threshold 0.85 → suppressed
+- **Open alerts:** 0 (system_status: 0 alerts pending)
+- **Legal:** clear | **Crisis:** clear | **Price alerts:** none active
+- **WORK dispatch:** posted (20:04 UTC) — "2 signals, Fired 0 / Suppressed 2 / MARKET 0"
+- **Tool calls this cycle:** 11 (log_agent_work×2, get_cycle_bootstrap, get_macro_snapshot, get_macro_calendar, get_market_context, get_alerts, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals×2, record_signal_outcome×2, send_telegram×1)
+- **log_agent_work id=956**
+- **Off-hours assessment:** Cycle ran during market closure (Saturday) on off-hours 2h cadence. No actionable signals reached TIGHTENING regime thresholds. PLX 40% crash story is bearish-noteworthy but news-scout pushed it at low conviction (0.50) with status="read" already, and PLX not on watchlist — appropriate to suppress until verified_chain confirmation. GAS chain_catalyst is genuinely interesting (TIGHTENING + Brent>$109 + VND weakness benefiting GAS/PVD), but 0.50 confidence is well below 0.85 TIGHTENING bar; if news-scout escalates or financial-analyst cross-validates → MARKET-worthy.
+- **Next cycle:** 22:04 UTC (off-hours 2h cadence)
+- **Notable carry-over:** PC1 chairman arrest news still showing in 6h context (bearish score 10.0, 2026-05-17 14:11) but `get_legal_risk_signals` still returns empty — signal extraction gap persists; news-scout/financial-analyst should emit legal_risk signal. Same gap flagged in prior session carry-over.
+
+### Alert Cycle (21:03–21:04 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + calendar all green)
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false (nextPivotWindow=June 2026)
+- **Macro:** Brent 109.26 | Gold 4561.9 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.27 STABLE
+- **Market:** CLOSED (Sunday 21:03 UTC, outside 02:00–08:59 UTC Mon–Fri trading window)
+- **Signals (count by type):** urgent_news=1 (HPG) | chain_catalyst=0 | verified_chain=0 | price_anomaly=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 1 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Suppression detail:**
+  - [Suppressed] HPG urgent_news id=3330 conf=0.50 — below TIGHTENING bullish urgent_news threshold 0.75; price_anomaly override check returned no recent HPG anomalies → no override; HPG already on watchlist but news/USD-tailwind angle needs verified_chain confirmation
+- **Open alerts:** 0 (system_status: 0 alerts pending)
+- **Legal:** clear | **Crisis:** clear | **Price alerts:** none active
+- **WORK dispatch:** posted (21:03 UTC) — "1 signal, Fired 0 / Suppressed 1 / MARKET 0"
+- **Tool calls this cycle:** 10 (log_agent_work×1 start, get_cycle_bootstrap, get_macro_snapshot, get_macro_calendar, get_alerts, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals×1, record_signal_outcome×1, send_telegram×1)
+- **log_agent_work id=958**
+- **Off-hours assessment:** Cycle ran during market closure (Sunday) on off-hours 2h cadence. HPG steel-export-tailwind story is genuinely interesting under USD/VND 26,350 + Brent $109 backdrop, but news-scout pushed at 0.50 conviction — well below TIGHTENING 0.75 bar for bullish urgent_news. No price_anomaly to override. Correct outcome to suppress and await verified_chain or fundamental confirmation from financial-analyst.
+- **Next cycle:** 23:03 UTC (off-hours 2h cadence)
+- **Notable carry-over:** PC1 chairman arrest news (bearish score 10.0, 14:11) still surfaces in 6h context but `get_legal_risk_signals` returns empty — signal-extraction gap persists across 3+ cycles. news-scout/financial-analyst should emit legal_risk signal. Flagged for the third consecutive cycle.
 
