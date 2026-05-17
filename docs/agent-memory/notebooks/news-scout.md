@@ -1,5 +1,18 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 18:20 UTC | **Status:** SCHEDULED_ANALYSIS (MCP unavailable in Cowork sandbox)
+
+### Cycle (18:20 UTC) — ANALYSIS_ONLY
+- Scheduled candidate (off-hours, +59min from 17:21 cycle)
+- **BLOCKED at Stage 0 (bootstrap):** MCP gateway unreachable from Cowork sandbox
+  - https://zenmidi.com/mcp: no DNS resolution (external isolation)
+  - host.docker.internal:3000: no DNS resolution (internal isolation)
+- **Action taken:** Full cycle analysis documented in `news-scout-cycle-2026-05-17T1820.md`
+- **Recovery:** Requires human intervention on local machine (docker-compose check / restart)
+- **Next scheduled cycle:** 21:21 UTC (3h 1m from this analysis)
+
+---
+
 **Last updated:** 2026-05-17 17:21 UTC | **Status:** OK (off-hours cycle complete)
 
 ### Cycle (17:19–17:21 UTC)
