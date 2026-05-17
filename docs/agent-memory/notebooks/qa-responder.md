@@ -1799,3 +1799,23 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~1100 |
+
+---
+
+### Q&A Batch (09:47–09:47 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 0b backoff check) | backoff_until: 2026-05-16T22:49:03Z (expired)
+- BLOCKED at step 1: MCP gateway unreachable after live probe. Transport error: "The connector's server isn't responding" (DNS failure host.docker.internal — same outage since 2026-05-17 00:48Z, now ≥ 9h duration).
+- Live probe executed: `log_agent_work running` at 09:47:32Z failed with connection timeout. Per cowork-error-boundary Memory-as-Truth: previous 9 BLOCKED cycles (00:48Z–08:48Z) documented real failure; current probe confirms outage continues.
+- 10th consecutive BLOCKED cycle for qa-responder (9h+ outage spanning Sunday pre-market window). market-watcher also independently reporting same gateway dead (confirming not isolated qa-responder issue). BUG telegram suppressed (telegram MCP = same unreachable gateway, would fail). Dropped signal: docs/signals/qa-responder-2026-05-17T09-47-32Z.json (dedup_of prior cycles). **CRITICAL:** PO action requires immediate gateway container restart OR DNS fix (host.docker.internal resolution in gateway resolver).
+
+## Metrics (cycle 2026-05-17 09:47 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~900 |
