@@ -1,16 +1,19 @@
 /**
- * MCP Tool: get_cash_flow — Task 1890a-A
+ * MCP Tool: get_cash_flow — Task 1890a-A (guard added 1930b)
  *
  * Returns the full 4-line cash flow statement for a given VN stock ticker
  * plus the OCF/NI forensic ratio required by the FA G-step.
  *
  * Fields returned:
- *   operating_cf   — operating cash flow (VND millions)
- *   investing_cf   — investing cash flow (VND millions)
- *   financing_cf   — financing cash flow (VND millions)
- *   capex          — capital expenditure (VND millions, negative = outflow)
- *   free_cash_flow — FCF = operating_cf + capex (VND millions)
- *   ocf_ni_ratio   — operating_cf / net_profit (null if net_profit === 0 or null)
+ *   operating_cf      — operating cash flow (VND millions)
+ *   investing_cf      — investing cash flow (VND millions)
+ *   financing_cf      — financing cash flow (VND millions)
+ *   capex             — capital expenditure (VND millions, negative = outflow)
+ *   free_cash_flow    — FCF = operating_cf + capex (VND millions)
+ *   ocf_ni_ratio      — operating_cf / net_profit (null if net_profit === 0 or null,
+ *                       or if |raw ratio| > OCF_NI_RATIO_PLAUSIBILITY_LIMIT)
+ *   ocf_ni_ratio_raw  — unguarded ratio (null only if not computable)
+ *   ocf_ni_suppressed — true when raw ratio exists but exceeded plausibility limit
  *
  * JSON envelope:
  *   { source_tier: 1, code, period, quarter, ...fields }
@@ -41,13 +44,17 @@ interface CashFlowRow {
   free_cash_flow: number | null;
 }
 
+// ── Plausibility limit ────────────────────────────────────────────────────────
+
+const OCF_NI_RATIO_PLAUSIBILITY_LIMIT = 20;
+
 // ── Output envelope ───────────────────────────────────────────────────────────
 
 interface CashFlowFound {
   source_tier: 1;
   found: true;
   code: string;
-  period: string;         // e.g. "Q1/2025"
+  period: string;              // e.g. "Q1/2025"
   period_year: number;
   period_quarter: number | null;
   operating_cf: number | null;
@@ -56,6 +63,8 @@ interface CashFlowFound {
   capex: number | null;
   free_cash_flow: number | null;
   ocf_ni_ratio: number | null;
+  ocf_ni_ratio_raw: number | null;
+  ocf_ni_suppressed: boolean;
 }
 
 interface CashFlowNotFound {
@@ -99,13 +108,26 @@ export type GetCashFlowOutput = {
 
 // ── OCF/NI ratio helper ───────────────────────────────────────────────────────
 
+interface OcfNiResult {
+  ratio: number | null;
+  rawRatio: number | null;
+}
+
 function computeOcfNiRatio(
   operating_cf: number | null,
   net_profit: number | null,
-): number | null {
-  if (operating_cf === null || net_profit === null) return null;
-  if (net_profit === 0) return null;
-  return operating_cf / net_profit;
+): OcfNiResult {
+  if (operating_cf === null || net_profit === null) {
+    return { ratio: null, rawRatio: null };
+  }
+  if (net_profit === 0) {
+    return { ratio: null, rawRatio: null };
+  }
+  const raw = operating_cf / net_profit;
+  if (Math.abs(raw) > OCF_NI_RATIO_PLAUSIBILITY_LIMIT) {
+    return { ratio: null, rawRatio: raw };
+  }
+  return { ratio: raw, rawRatio: raw };
 }
 
 // ── Period label helper ───────────────────────────────────────────────────────
@@ -200,7 +222,12 @@ export function buildGetCashFlowHandler(
       };
     }
 
-    const ocf_ni_ratio = computeOcfNiRatio(row.operating_cf, row.net_profit);
+    const { ratio: ocf_ni_ratio, rawRatio: ocf_ni_ratio_raw } =
+      computeOcfNiRatio(row.operating_cf, row.net_profit);
+
+    // Suppressed = raw is computable but exceeded the plausibility limit
+    const ocf_ni_suppressed =
+      ocf_ni_ratio_raw !== null && ocf_ni_ratio === null;
 
     const envelope: CashFlowFound = {
       source_tier: 1,
@@ -215,6 +242,8 @@ export function buildGetCashFlowHandler(
       capex: row.capex,
       free_cash_flow: row.free_cash_flow,
       ocf_ni_ratio,
+      ocf_ni_ratio_raw,
+      ocf_ni_suppressed,
     };
 
     return {
@@ -230,7 +259,9 @@ export function registerGetCashFlowTool(server: McpServer): void {
     "get_cash_flow",
     "Return the full 4-line cash flow statement for a VN stock ticker. " +
       "Fields: operating_cf, investing_cf, financing_cf, capex, free_cash_flow (all VND millions). " +
-      "Forensic field: ocf_ni_ratio = operating_cf / net_profit (null if net_profit is zero or null). " +
+      "Forensic fields: ocf_ni_ratio = operating_cf / net_profit (null if net_profit is zero or null); " +
+      "ocf_ni_ratio is null when |raw_ratio| > 20 (data quality guard); use ocf_ni_ratio_raw to inspect suppressed values. " +
+      "ocf_ni_suppressed=true when raw ratio exists but exceeded the plausibility limit. " +
       "Use for FA G-step: OCF vs NI forensic check. " +
       "Call AFTER get_bctc_full (not instead of it) — get_bctc_full provides sentiment + comparison; " +
       "get_cash_flow provides full CF statement + OCF/NI ratio for accrual forensics. " +
