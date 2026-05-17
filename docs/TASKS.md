@@ -35,7 +35,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1862c-F | SseSessionManager dead-session eviction + reconnect detection in `apps/mcp-server/src/interface/mcp/transport.ts`. Structured 404 error + session-TTL eviction. **c156 PO DISPATCH** — gateway-independent code work, dev runs build/tsc/vitest locally, Docker rebuild deferred until 1928a resolves. AC: (1) 404 returns structured `{error:"session_not_found"}`, (2) TTL eviction removes dead sessions, (3) 5 tests added & passing, (4) tsc 0 errors, (5) no regressions in full vitest suite. | MEDIUM | FIX | developer | TASK_1862c-F.md | — |
+| 1862c-F | **DONE c156 commit c52982af** — SseSessionManager structured 404 `{error:"session_not_found",sessionId}` + heartbeat eviction (dead session removed from Map + interval cleared). 5/5 tests GREEN. tsc 0 errors. No regressions. | MEDIUM | FIX | developer | TASK_1862c-F.md | — |
 
 ---
 
