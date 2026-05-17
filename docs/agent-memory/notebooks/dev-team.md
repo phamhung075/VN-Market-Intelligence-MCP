@@ -1,5 +1,20 @@
 # dev-team notebook
 
+## Current state (c156 close — 2026-05-17T09:30Z)
+- PREFLIGHT: HEAD.lock #48 cured (age=520s, size=0B, no live pid). Worktree prune clean.
+- Drain-signals: 2 signals (market-watcher + qa-responder, bug-escalation HIGH, MCP gateway down 9th+ consecutive block). All Telegram ops skipped (gateway down).
+- PO triage (c156): BATCH([1862c-F FIX]) — SSE session eviction, gateway-independent code work. 1930b queued next slot. 1932a marked Done.
+- TASK_1862c-F (dev-mcp-server): Structured 404 `{error:"session_not_found",sessionId}` + heartbeat eviction (dead session removed from Map + interval cleared). 5/5 tests GREEN, tsc 0 errors, no regressions. Commits: c52982af + b04b5df1 + 2850dcf6.
+- USER ACTION STILL PENDING: 1928a Docker Desktop restart (F1). All cowork agents dark. 4 Docker-gated tasks remain blocked.
+- Productive parallel tracks: frontend (1932a 4 dashboards — done), MCP code-only fixes (1862c-F — done).
+
+## c156 cycle log
+- PREFLIGHT: HEAD.lock #48 cured (age=520s, size=0B, no pid). Worktree prune clean.
+- Drain-signals: 2 signals processed (routed-to-po). Both confirm MCP gateway outage ≥9h.
+- PO triage: 1862c-F dispatched (gateway-independent). 1932a Done. WIP=0→1 during execution.
+- TASK_1862c-F (dev-mcp-server): AC1+AC2 production fixes, 5 tests GREEN, tsc clean. Done.
+- Post-cycle: Telegram unavailable. Notebook written.
+
 ## Current state (c155 close — 2026-05-17T08:13Z)
 - Pipeline: 1931a DONE. apps/frontend/ scaffold hardened (5 risk flags closed).
 - HEAD.lock #47 cured at PREFLIGHT (age=1300s, size=0B, no live pid). lsof captured.
