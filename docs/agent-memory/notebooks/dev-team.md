@@ -1,5 +1,22 @@
 # dev-team notebook
 
+## Current state (c170 — 2026-05-17T19:44Z)
+- PREFLIGHT: HEAD.lock cleared (age=2930s c170 start; second HEAD.lock age=293s removed during commit). Prune clean.
+- Drain: po-signoff-c169 (NOTHING/idle) processed → signals/processed/.
+- New signal: market-watcher-mcp-unavailable-20260517T193800Z.json found during drain (market-watcher blocked by wrong MCP URL).
+- PO triage (c170): BATCH — 1938a-cowork-mcp-url-fix (HIGH FIX, cross-service/).
+- Root cause identified: `https://zenmidi.com/mcp` has no cloudflared route → 404. Correct: `https://zenmidi.com/vn-market/mcp`.
+- Execute: developer handled directly (cross-service/ zone). 15 files updated. Commit: 88920963.
+- 1937a SPIKE resolved. 1938a DONE.
+- ACTION REQUIRED FOR USER: Reload Claude Desktop (Cmd+R) for cowork workspace changes to take effect.
+
+## c170 cycle log
+- PREFLIGHT: HEAD.lock cleared (age=2930s + second occurrence age=293s during commit).
+- Drain: c169 signal processed. market-watcher bug signal found + moved to processed.
+- PO triage: BATCH 1938a (root cause of 1937a: wrong MCP URL).
+- Execute: developer — 15 files updated, committed 88920963.
+- WORK notification sent.
+
 ## Current state (c169 — 2026-05-17T18:40Z)
 - PREFLIGHT: HEAD.lock absent. Prune clean.
 - Drain: 0 signals. 0 pending signals.
