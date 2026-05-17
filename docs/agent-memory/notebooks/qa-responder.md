@@ -1679,3 +1679,23 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~900 |
+
+---
+
+### Q&A Batch (03:48–03:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 1) | backoff_until: 2026-05-16T22:49:03Z (expired; cycle.md only resets line when queue has items at step 1; queue unreachable)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry. Error: `dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`.
+- Three independent live probes failed (probe 1: log_agent_work running; probe 2: log_agent_work running retry; probe 3: get_pending_ask_questions). Per cowork-error-boundary Memory-as-Truth: ignored 00:48Z/01:48Z/02:48Z BLOCKED notebook claims; performed fresh live probes; verdict is current.
+- 4th consecutive BLOCKED cycle for qa-responder. market-watcher also reports same gateway down at 03:40Z (signal: market-watcher-2026-05-17T03-40-49Z.json). BUG telegram suppressed (telegram MCP = same unreachable gateway, would fail). Dropped signal: docs/signals/qa-responder-2026-05-17T03-48-54Z.json. EXIT per cowork-error-boundary.
+
+## Metrics (cycle 2026-05-17 03:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~1500 |
