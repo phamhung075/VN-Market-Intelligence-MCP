@@ -28,13 +28,16 @@ export type McpServerFactory = () => McpServer;
 export class SseSessionManager {
   private readonly sessions = new Map<string, SSEServerTransport>();
   private readonly heartbeatIntervals = new Map<string, ReturnType<typeof setInterval>>();
-  private readonly HEARTBEAT_INTERVAL = 30_000; // 30 seconds
+  private readonly HEARTBEAT_INTERVAL: number;
 
   constructor(
     private readonly createServer: McpServerFactory,
     private readonly log: Logger,
     private readonly pathPrefix: string = "", // Cloudflare path prefix (e.g. "/vn-market")
-  ) {}
+    _heartbeatIntervalMs: number = 30_000, // Overridable in tests; default 30s
+  ) {
+    this.HEARTBEAT_INTERVAL = _heartbeatIntervalMs;
+  }
 
   /**
    * Handles GET /sse — opens an SSE stream and registers the session.
@@ -69,6 +72,9 @@ export class SseSessionManager {
           error: err instanceof Error ? err.message : String(err),
         });
         clearInterval(heartbeatInterval);
+        this.sessions.delete(sessionId);
+        this.heartbeatIntervals.delete(sessionId);
+        this.log.info("[SseSessionManager] Session evicted after heartbeat failure", { sessionId });
       }
     }, this.HEARTBEAT_INTERVAL);
 
@@ -106,7 +112,7 @@ export class SseSessionManager {
 
     if (!transport) {
       res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: `Session not found: ${sessionId}` }));
+      res.end(JSON.stringify({ error: "session_not_found", sessionId }));
       return;
     }
 
