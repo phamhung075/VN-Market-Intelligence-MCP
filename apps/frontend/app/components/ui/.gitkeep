@@ -1,0 +1,3 @@
+# shadcn/ui components are added here via `npx shadcn-ui@latest add <component>`.
+# Do NOT hand-write component primitives — always use the CLI.
+# First components to add: button, card, badge, table (needed for market dashboard).
