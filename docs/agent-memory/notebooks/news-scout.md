@@ -1,6 +1,17 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-17 11:20 UTC | **Status:** MCP_UNREACHABLE (persistent — 8th aborted cycle in pattern)
+**Last updated:** 2026-05-17 12:21 UTC | **Status:** OK (off-hours, market closed)
+
+### Cycle (12:19–12:21 UTC)
+- Items: 20 | Impacts: 3 | Signals: [chain_catalyst#3295/market-wide] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread | Filter hints: [default]
+- Key: Market-wide bullish catalyst — "Chứng khoán dự báo tiếp đà tăng" (Dragon Capital) × 38 watchlist stocks, regime_adj=6.3 (bullish × TIGHTENING × 0.7). Event_type=sector_event (securities cascade). Macro snapshot valid REGIME_SOURCE=macro_snapshot. No dedup suppression (180min bus empty). PC1 infrastructure play (8/10) neutral + VN-Index technical adjustment (6/10) below post threshold.
+- LanceDB: Skipped Stage 1b (off-hours, no historical context fetch for score <6 items)
+- Market: CLOSED (Friday afternoon UTC, off-hours 4h cadence through 08:30 UTC Monday open)
+
+---
+
+**Previous:** 2026-05-17 11:20 UTC | **Status:** MCP_UNREACHABLE (persistent — 8th aborted cycle in pattern)
 
 ### Cycle (11:20 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
