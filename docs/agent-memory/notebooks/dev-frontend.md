@@ -132,3 +132,25 @@
 
 ## Zone health
 Tier 1-4 complete. 45/45 tests GREEN. tsc clean. All 11 bugs resolved. | HEALTHY
+
+## Cycle 1934 — 2026-05-17 (MacroPanel data-shape fix)
+
+### Bug fixed
+MacroPanel only showed timestamp — rich data never rendered.
+Root cause: component read `macro.source` and `macro.status` (both `undefined`).
+Actual API shape: `{ fetchedAt, sources: { worldBank, yahoo, fred, cnbc, tradingEconomics, calendar }, summary: { ok, failed, totalLatencyMs } }`.
+
+### Files changed
+- app/domain/market.ts — added MacroSourceEntry, MacroSourceRow, MacroSummary interfaces + parseMacroSources() pure fn (backward-compat, additive)
+- app/routes/dashboard.fetch.tsx — MacroPanel rewritten to render per-source table (6 rows), summary counts, fetchedAt timestamp
+- app/__tests__/1934-macro-panel.test.ts — 9 assertions: domain type acceptance, parseMacroSources (null, empty, 6 rows, ok/failed rows, error field)
+
+### Test result
+- Vitest: 55/55 PASS (6 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+e4baf96a fix(frontend): MacroPanel reads sources+summary instead of missing source/status
+
+## Zone health
+Tier 1-4 complete. 55/55 tests GREEN. tsc clean. MacroPanel now renders full 6-source table. | HEALTHY
