@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-17T20:38:03Z
+
+**Brief:** `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`
+
+Cowork agents write signals directly to agent_signals with no quality gate; designed a deterministic TNB critic gate (5-check rule-based scorer, 0.6 threshold, 1 retry, 20s timeout, fail-soft) inserted at the MCP tool layer via a new postSignalWithCriticGate() wrapper — no cowork flow changes required, 3 new DB columns (critic_score, critic_notes, retry_count), 8 numbered implementation steps for agent-father.
+
+**Signal dropped:** `docs/signals/2026-05-17T203803Z-tnb-critic-gate.json` → agent-father
+
+---
+
 ## 2026-05-14T16:59:39Z
 
 **Brief:** `docs/architecture-briefs/2026-05-14-ssot-data-location-mapping.md`
