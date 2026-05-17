@@ -75,7 +75,7 @@ For each candidate tool, answer ALL 5 questions:
 
 ### Step 1 — Get authoritative tool list
 ```
-Read docs/data/tool-registry.json   ← 123 active tools (source of truth)
+Read docs/data/tool-registry.json   ← active tools (count → `jq '.toolCount' docs/data/project-stats.json`)
 ```
 
 ### Step 2 — Build usage matrix

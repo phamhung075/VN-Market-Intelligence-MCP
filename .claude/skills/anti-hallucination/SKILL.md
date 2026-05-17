@@ -52,6 +52,6 @@ Step 2: Is tool name in my flow/cycle doc?
   NO  → DO NOT CALL. Log [SKIP].
 ```
 
-**SSOT for tool names:** `.claude/tools/list/` (116 files). If a name has no matching file there, it does not exist.
+**SSOT for tool names:** `.claude/tools/list/` (count → `jq '.toolCount' docs/data/project-stats.json` files). If a name has no matching file there, it does not exist.
 
 **Root cause:** Agents pattern-match tool names from training data or adjacent names. This creates phantom calls that fail silently or trigger false bug reports.
