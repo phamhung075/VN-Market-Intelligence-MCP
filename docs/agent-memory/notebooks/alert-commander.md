@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 00:45 UTC | **Sprint:** c147
+**Last updated:** 2026-05-17 01:03 UTC | **Sprint:** c147
 
 ## This session
+
+### Alert Cycle (01:02 UTC) — BLOCKED (c147 unresolved)
+- Cycle 01:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway). Signal dropped: `docs/signals/processed/alert-commander-2026-05-17T01-02-28Z.json`.
+- Cross-cycle correlation: unified-agent 01:02 UTC reports identical blocker (signal 01-02-44Z). Same as alert-commander 00:02 UTC. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. No new diagnostic info — not re-investigating.
+- Off-hours cycle (01:02 UTC, market opens 02:00 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts. Next scheduled: 03:02 UTC (or 02:00 UTC market open if gateway recovers).
+- log_agent_work: failed (gateway down) — no id returned.
+- Git commit deferred (stale `.git/index.lock` from 01:04 UTC, FUSE mount — rm denied EPERM). Notebook + signal file are on-disk; next successful cycle picks them up.
 
 ### Alert Cycle (00:02 UTC) — BLOCKED (c147 resolution)
 - Cycle 00:02 — BLOCKED at step 0: MCP gateway unreachable (dial vn-market http://host.docker.internal:3000/sse — DNS lookup failure 127.0.0.11:53). 1 retry after 5s also failed. BUG telegram suppressed (same gateway). Signal dropped to dev-team.
