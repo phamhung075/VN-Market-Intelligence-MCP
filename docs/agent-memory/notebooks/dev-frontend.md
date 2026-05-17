@@ -154,3 +154,28 @@ e4baf96a fix(frontend): MacroPanel reads sources+summary instead of missing sour
 
 ## Zone health
 Tier 1-4 complete. 55/55 tests GREEN. tsc clean. MacroPanel now renders full 6-source table. | HEALTHY
+
+## Cycle 1935 — 2026-05-17 (hydration fix — all dashboard routes)
+
+### Bugs fixed
+- Bug 2 (root cause): All timestamp container elements now carry `suppressHydrationWarning` — not just the innermost text `<span>`. React walks up the element tree: a suppressed child does NOT suppress the parent. Missing `suppressHydrationWarning` on outer `<span>` / `<p>` / `<div>` wrappers caused the full hydration cascade on every page load.
+- Bug 1 (consequence): NavLink navigation restored — it was broken by the hydration failure forcing React to full client render.
+
+### Files changed
+- app/routes/dashboard.fetch.tsx — outer `<span>` in FetchDashboard + outer `<div>` in MacroPanel
+- app/routes/dashboard.db.tsx — outer `<span>` in DbDashboard + outer `<div>` wrapping publishedAt in HeadlineTable
+- app/routes/dashboard.server.tsx — outer `<p>` in ServerDashboard
+- app/routes/dashboard.vps.tsx — outer `<span>` in VpsDashboard
+
+### Rule learned
+React hydration suppression is per-element, not inherited downward. Every ancestor that contains locale-formatted text (or whose children differ between SSR and CSR) must carry `suppressHydrationWarning` — even static label siblings ("Last updated:") inside the same container count as part of the element's children.
+
+### Test result
+- Vitest: 55/55 PASS (no new tests needed — structural prop change only)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+1a463888 fix(frontend): add suppressHydrationWarning to all timestamp container elements
+
+## Zone health
+Tier 1-4 complete. 55/55 tests GREEN. tsc clean. All hydration errors resolved, NavLink navigation working. | HEALTHY
