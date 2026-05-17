@@ -2,12 +2,12 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 05:48 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 06:49 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** BLOCKED — vn-market MCP gateway unreachable (6h+ outage, 6 consecutive blocked cycles)
-**Queue:** Unknown (last live probe 05:48 UTC = connector no-response)
+**Status:** BLOCKED — vn-market MCP gateway unreachable (7h+ outage, 7 consecutive blocked cycles)
+**Queue:** Unknown (last live probe 06:47:42Z–06:49:00Z = connector no-response)
 **consecutive_empty_cycles:** 0 (cannot increment — queue unreachable) | **backoff_until:** 2026-05-16T22:49:03Z (expired; not reset — cycle.md only resets when queue has items at step 1)
 
 ## Known patterns / preferences
@@ -1739,3 +1739,23 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~1400 |
+
+---
+
+### Q&A Batch (06:47–06:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 1) | backoff_until: 2026-05-16T22:49:03Z (expired; cycle.md only resets line when queue has items at step 1; queue unreachable)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry. Transport error: "The connector's server isn't responding" (same outage class as 00:48Z–05:48Z `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`).
+- Three fresh independent live probes this cycle (06:47:42Z `log_agent_work running`; 06:47:50Z `log_agent_work running` retry; 06:48:05Z `get_cycle_bootstrap`; 06:48:30Z `get_pending_ask_questions`) — all returned identical no-response error. Per cowork-error-boundary Memory-as-Truth: ignored 00:48Z–05:48Z BLOCKED notebook entries; performed fresh live probes; verdict is current.
+- 7th consecutive BLOCKED cycle for qa-responder. market-watcher independently confirms same gateway dead at 06:40:41Z (signal market-watcher-2026-05-17T06-40-41Z.json — also 7th consecutive; 05:40Z escalation routed-to-po at 06:21:12Z, no remediation). BUG telegram suppressed (telegram MCP = same unreachable gateway, would fail; dedup against prior 6 cycles per cowork-error-boundary). Dropped signal: docs/signals/qa-responder-2026-05-17T06-49-28Z.json (dedup_of qa-responder-2026-05-17T05-48-43Z.json). Outage now ≥ 7h spanning Sunday pre-market window. PO action: restart vn-market gateway container OR fix host.docker.internal DNS in gateway resolver. EXIT per cowork-error-boundary.
+
+## Metrics (cycle 2026-05-17 06:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~1200 |
