@@ -64,7 +64,11 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 2. If zero issues (Overall: GOOD, no auto-cures, no blockers), still write with empty Findings table + filled Positive signals.
 
-3. **Signal dev-team** — drop signal file `docs/signals/tnb-{ISO timestamp}.json`:
+3. **Write to dashboard** → skill: `.claude/skills/signal-dashboard/SKILL.md` (§ WRITE + § PRUNE)
+   - Append row to `## po` section: `type=audit-handoff | summary="Overall: {GOOD|NEEDS_ATTENTION|CRITICAL}" | payload=docs/handoffs/tnb-audit-latest.md`
+   - Run PRUNE after append (remove DONE rows).
+
+4. **Signal dev-team** — drop signal file `docs/signals/tnb-{ISO timestamp}.json`:
    ```json
    {
      "from": "tran-ngoc-bau",

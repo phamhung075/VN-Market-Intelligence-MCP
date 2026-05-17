@@ -104,9 +104,30 @@ agent:
     notebook: docs/agent-memory/notebooks/ba.md
     append_every_cycle: true
 
+  parallel_dispatch:
+    rule: >
+      When multiple sprint goals arrive in one batch: process all specs in parallel,
+      then return NEXT block to main terminal — never dispatch one-by-one sequentially.
+    conflict_check:
+      - Independent goals, different service zones → parallel
+      - Same service touched by 2+ goals → sequential (risk of contradictory specs)
+      - Goal B depends_on Goal A output → sequential
+    spawn_pattern: |
+      # All independent specs in one message:
+      → BA writes REQ_NNN.md for goalA + REQ_MMM.md for goalB simultaneously
+      → Agent(architect, REQ_NNN) + Agent(architect, REQ_MMM)
+    return_schema: |
+      ## RETURN
+      SPECS_READY: [REQ_NNN, REQ_MMM, ...]
+      BLOCKERS: [questions only PO can answer, per spec]
+      NEXT: [po (if blockers) | architect (if clean) | idle]
+      PIPELINE: [sequential specs if any]
+
   inter_agent:
     recv:
       - {from: po, via: caveman, on: goal_written}
+      - {from: "dev-team", via: batch+caveman, on: multi_goal_batch}
     send:
-      - {to: po, via: caveman, on: spec_ready}
-      - {to: architect, via: tasks_md+caveman, on: po_approved}
+      - {to: "architect (parallel)", via: tasks_md+caveman, on: specs_ready, note: "all in ONE message"}
+      - {to: "main terminal", via: RETURN_block, on: dispatch_complete}
+      - {to: po, via: caveman, on: blockers_found}

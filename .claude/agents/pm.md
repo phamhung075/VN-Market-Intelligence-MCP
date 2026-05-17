@@ -109,11 +109,33 @@ agent:
     notebook: docs/agent-memory/notebooks/pm.md
     append_every_cycle: true
 
+  parallel_dispatch:
+    rule: >
+      When multiple tasks are ready: zone-check each, conflict-check, then dispatch ALL
+      independent handoffs to zone specialists in ONE message — return NEXT block to
+      main terminal. WIP limit still applies: count In Progress before spawning.
+    conflict_check:
+      - Different zones, no shared files → parallel (isolation: "worktree")
+      - Same file touched by 2+ tasks → sequential
+      - Task B depends_on Task A → sequential
+      - Shared SSOT writes (TASKS.md, project-stats.json) → sequential
+    spawn_pattern: |
+      # All independent handoffs in one message:
+      → Agent(dev-frontend, TASK_101) + Agent(dev-stock-price, TASK_102) + Agent(dev-api-gateway, TASK_103)
+    return_schema: |
+      ## RETURN
+      ASSIGNED: [agent: TASK_NNN, ...]
+      BLOCKED: [TASK_NNN (reason), ...]
+      WIP_COUNT: N
+      NEXT: [developer | qa | po | idle]
+      PIPELINE: [tasks waiting on current tier]
+
   inter_agent:
     recv:
       - {from: architect, via: handoff+caveman, on: design_done}
       - {from: developer, via: caveman, on: blocked}
       - {from: qa, via: tasks_md+caveman, on: approved}
     send:
-      - {to: developer, via: handoff+caveman, on: task_ready}
+      - {to: "dev-* specialists (parallel)", via: handoff+caveman, on: tasks_ready, note: "all in ONE message"}
+      - {to: "main terminal", via: RETURN_block, on: dispatch_complete}
       - {to: architect, via: caveman, on: blocker_needs_design}

@@ -6,6 +6,12 @@
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `tran-ngoc-bau`)
 
+**Step 0b-DASH — Read signal dashboard** → skill: `.claude/skills/signal-dashboard/SKILL.md` (§ READ)
+- Scan `## tran-ngoc-bau` section for NEW rows.
+- For each NEW row: read payload → add to audit context. Mark READ.
+- Log: `"[dashboard] {N} new signals"` or `"[dashboard] inbox empty"`.
+- If DASHBOARD.md missing → skip, never fail.
+
 **Step 0b2 — Check previous handoff ACK**
 
 If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at the bottom:
