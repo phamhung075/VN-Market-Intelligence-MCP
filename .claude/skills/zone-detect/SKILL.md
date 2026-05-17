@@ -1,25 +1,27 @@
 ---
 name: zone-detect
 description: >
-  SSOT zone→specialist routing table for all 9 microservice zones.
+  Zone→specialist routing logic for all microservice zones.
   2-step inference: explicit path hint → grep files list → Tier-3 fallback.
   Load when routing a task to a dev-* specialist or reporting zone-missing.
 ---
 
-## Zone → Specialist Table (canonical)
+## Zone → Specialist Table
 
-| Zone path | Hint keywords | dev-* specialist |
-|---|---|---|
-| `apps/mcp-server/` | MCP tool, cron, market orchestration | `dev-mcp-server` |
-| `apps/api-gateway/` | HTTP routing, gateway, health aggregation | `dev-api-gateway` |
-| `apps/stock-price/` | price fallback, VPS bridge, quote agg | `dev-stock-price` |
-| `apps/technical-analysis/` | RSI, MACD, BB, indicator math | `dev-technical-analysis` |
-| `apps/macro-indicators/` | SBV FX, commodity, macro trend | `dev-macro-indicators` |
-| `apps/kinh-dich-service/` | hexagram, I-Ching, kinh dich | `dev-kinh-dich` |
-| `apps/alert-engine/` | dedup, cooldown, Telegram dispatch | `dev-alert-engine` |
-| `apps/pdf-extractor/` | BCTC, OCR, Vietnamese parse | `dev-pdf-extractor` |
-| `apps/rag-service/` | embeddings, LanceDB, semantic search | `dev-rag-service` |
-| cross-service / root / scripts/ | multi-zone or root-level | `developer` (generic) |
+Data lives in SSOT — do not hardcode here. Query at runtime:
+
+```bash
+# All zones with specialists
+jq '[.project.zones[] | {zone: .path, specialist, keywords}]' docs/data/system-map.json
+
+# Specialist for a specific zone
+jq '.project.zones[] | select(.id=="mcp-server") | .specialist' docs/data/system-map.json
+
+# Match keyword to zone
+jq '.project.zones[] | select(.keywords[] | test("MACD"))' docs/data/system-map.json
+```
+
+See full query patterns → `.claude/skills/system-map-query/SKILL.md`
 
 ## 2-Step Inference Logic
 

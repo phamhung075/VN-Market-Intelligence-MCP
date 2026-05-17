@@ -1,7 +1,9 @@
 {
   "_maintained_by": "developer",
-  "_trigger": "after adding/removing MCP tool, update count + list",
+  "_ssot": "docs/data/system-map.json — canonical tool list. This file keeps categories for backward-compat audit tooling only.",
+  "_trigger": "after adding/removing MCP tool, update BOTH this file AND docs/data/system-map.json#project.microservices[id=mcp-server].tools",
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
+  "_jq_ssot": "jq '.project.microservices[] | select(.id==\"mcp-server\") | .tools | length' docs/data/system-map.json",
   "lastUpdated": "2026-05-03",
   "toolCount": 125,
   "_note": "2026-05-13: 1888-CDG-C — toolCount reconciled to categories tools[] sum (canonical array). 2026-05-03: Task 1845c — get_backtest_runs + get_backtest_run (+2 → 125). Task 1842d — run_backtest (+1 → 123). 2026-04-30: Task 1796 sync — +9 net tools. 2026-04-26: FIX-VPS-DEBUG-TRIGGERS → 113. 2026-04-23: Task 1300a/b added agent memory tools → 107.",

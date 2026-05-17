@@ -85,7 +85,9 @@ CLAUDE.md (root — always loaded)
 │   ├── .claude/skills/token-economy/policies.md (Part 1: 15 writing techniques, MCP task templates, quick workflow)
 │   └── .claude/skills/token-economy/compress.md (Part 2: /compress command, CLI usage, compression rules)
 │
-├── .claude/skills/zone-detect/SKILL.md (zone→specialist routing: 9-zone table + Tier-1/2/3 inference; SSOT for architect + dev-team execute-tier)
+├── .claude/skills/zone-detect/SKILL.md (zone→specialist routing: Tier-1/2/3 inference logic; zone table data → system-map.json#zones)
+│
+├── .claude/skills/system-map-query/SKILL.md (jq query patterns for system-map.json — load when agent needs service/agent/zone/channel/source/watchlist data)
 │
 ├── .claude/skills/semble-search/SKILL.md (code search decision guide: when Semble vs Grep/Glob/Read)
 │
@@ -214,7 +216,9 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
 │
-├── docs/data/project-stats.json (sprint number, counts — volatile, root-level stats)
+├── docs/data/project-stats.json (sprint number, test counts — volatile, sprint-cycle state)
+│
+├── docs/data/system-map.json (structural SSOT — services, agents, tools, crons, zones, channels, data_sources, watchlist — query via jq; skill: .claude/skills/system-map-query/SKILL.md)
 │
 ├── docs/data/system-auditor-known-issues.json (dedup state: fingerprints of reported issues — volatile)
 │
@@ -356,10 +360,11 @@ Workflow-map autonomy fixes — extract reusable sub-flows so multiple callers d
 | File | Maintained by | Trigger |
 |------|--------------|---------|
 | `docs/signals/signals.db` | dev-team flow (Step 0a) — sole writer; all other agents read-only | Each drain cycle (INSERT + DELETE prune) |
-| `docs/data/tool-registry.json` | Developer | After adding/removing MCP tool |
-| `docs/data/cron-registry.json` | Developer | After adding/removing scheduler |
-| `docs/data/stock-classification.json` | Market-Analyst / PO | Watchlist change, sector update |
-| `docs/data/project-stats.json` | PM / System-Auditor | Sprint start/end, count change |
+| `docs/data/system-map.json` | Developer / PM / System-Auditor | Service/agent/zone/channel/source/watchlist change — primary SSOT |
+| `docs/data/tool-registry.json` | Developer | After adding/removing MCP tool — also update system-map.json |
+| `docs/data/cron-registry.json` | Developer | After adding/removing scheduler — also update system-map.json |
+| `docs/data/stock-classification.json` | Market-Analyst / PO | Watchlist change → also update system-map.json watchlist[] |
+| `docs/data/project-stats.json` | PM / System-Auditor | Sprint start/end, test count change (sprint-volatile state only) |
 | `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
@@ -392,7 +397,14 @@ Auto-file rules: patterns that trigger `→ docs/archive/`:
 ## Drift Detection (System-Auditor)
 
 On every run, verify:
-1. `docs/data/tool-registry.json`.toolCount matches `grep -c registerTool src/interface/mcp/tools/*.ts`
-2. `docs/data/cron-registry.json`.schedulerFileCount matches `ls src/scheduler/*.ts | grep -v "^jobs\.ts$" | grep -v "/jobs\.ts" | wc -l` (includes summaryJobs.ts, excludes jobs.ts orchestrator)
-3. No knowledge `.md` file contains hardcoded counts (numbers that should be in JSON)
-4. All pointers in this tree resolve (target file exists)
+1. `docs/data/system-map.json` mcp-server tools[] length matches `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+2. `docs/data/system-map.json` mcp-server crons[] length matches `docs/data/cron-registry.json`.schedulerFileCount
+3. `docs/data/tool-registry.json`.toolCount matches system-map.json tools[] length
+4. No knowledge `.md` file contains hardcoded counts (numbers that should be in JSON)
+5. All pointers in this tree resolve (target file exists)
+
+**jq shortcuts:**
+```bash
+jq '.project.microservices[] | select(.id=="mcp-server") | {tools: (.tools|length), crons: (.crons|length)}' docs/data/system-map.json
+jq '[.project.agents[] | .type] | group_by(.) | map({type: .[0], count: length})' docs/data/system-map.json
+```

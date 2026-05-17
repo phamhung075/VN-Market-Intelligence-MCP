@@ -1,7 +1,9 @@
 {
   "_maintained_by": "developer",
-  "_trigger": "after adding/removing scheduler file, update count + list",
+  "_ssot": "docs/data/system-map.json — canonical cron list. This file kept for backward-compat only.",
+  "_trigger": "after adding/removing scheduler job, update BOTH this file AND docs/data/system-map.json#project.microservices[id=mcp-server].crons",
   "_definition": "schedulerFileCount = jobs[] array length (registered scheduler entries in this file); excludes orchestrators (jobs.ts, index.ts, cronConfig.ts, startScheduler.ts, startupHelpers.ts)",
+  "_jq_ssot": "jq '.project.microservices[] | select(.id==\"mcp-server\") | .crons | length' docs/data/system-map.json",
   "lastUpdated": "2026-05-13",
   "schedulerFileCount": 62,
   "jobs": [

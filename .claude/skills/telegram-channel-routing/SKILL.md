@@ -1,53 +1,38 @@
 ---
 name: telegram-channel-routing
 description: >
-  SSOT for Telegram channel routing. Every send_telegram call MUST specify
-  channel= explicitly. Agents reference this skill to know which channel
-  to use for each message type.
+  Rules for Telegram channel routing. Every send_telegram call MUST specify
+  channel= explicitly. Channel detail data lives in system-map.json.
 ---
 
-## Telegram Channel Routing — SSOT
+## Rules (logic — never changes)
 
-**Rule: EVERY `send_telegram` call MUST include `channel=` explicitly. Never omit, never guess.**
+**EVERY `send_telegram` call MUST include `channel=` explicitly. Never omit, never guess.**
 
-### Channels
-
-| Channel | Purpose | Who sends |
-|---------|---------|-----------|
-| `market` | User-facing alerts, digests, EOD reports | alert-commander, digest-predict, market-watcher (EOD only) |
-| `work` | Agent cycle status, heartbeats, quality reports | ALL agents (end-of-cycle status) |
-| `bug` | Errors, failures, incidents | ANY agent on error |
-
-### Rules
-
-1. **MARKET** — reserved for actionable user content:
-   - Alert-commander verified alerts
-   - Digest-predict daily/weekly/monthly digests
-   - Market-watcher EOD summaries
-   - **NEVER** send errors, status, or heartbeats to MARKET
-
-2. **WORK** — agent operational status:
-   - `[Agent Name] HH:MM UTC — summary of cycle`
-   - Every agent sends ONE work status per cycle
-   - Quality reports (tran-ngoc-bau)
-   - Dev team build/task updates
-
-3. **BUG** — errors only:
-   - Before sending: `get_recent_fixes(limit=20)` — skip if already fixed
-   - Format: `[Agent Name] ⚠️ SEVERITY\n  Issue: ... | Impact: ... | Status: ...`
-   - **NEVER** send errors to MARKET or WORK
+1. **`market`** — actionable user content only: verified alerts, digests, EOD summaries. **NEVER** errors/status/heartbeats.
+2. **`work`** — agent operational status: `[Agent Name] HH:MM UTC — summary`. ONE per cycle.
+3. **`bug`** — errors only. Check `get_recent_fixes(limit=20)` first — skip if already fixed.
 
 ### Call Pattern
-
 ```
-send_telegram(channel="work", message="[Agent] HH:MM UTC — ...")
+send_telegram(channel="work",   message="[Agent] HH:MM UTC — ...")
 send_telegram(channel="market", message="...")
-send_telegram(channel="bug", message="[Agent] ⚠️ ...")
+send_telegram(channel="bug",    message="[Agent] ⚠️ SEVERITY\n  Issue: ... | Impact: ... | Status: ...")
 ```
 
 ### Anti-Pattern (FORBIDDEN)
+```
+send_telegram(message="...")           ← missing channel
+send_telegram(channel="market", ...)  ← for status/errors
+```
 
+## Channel Detail Data (env vars, allowed senders, rules)
+
+Query from SSOT:
+```bash
+jq '.project.channels[]' docs/data/system-map.json
+jq '.project.channels[] | select(.id=="market") | .allowed_senders' docs/data/system-map.json
+jq '.project.channels[] | select(.id=="bug") | .env_var' docs/data/system-map.json
 ```
-send_telegram(message="...")          ← missing channel = WRONG
-send_telegram(channel="market", ...) ← for status = WRONG channel
-```
+
+See full query patterns → `.claude/skills/system-map-query/SKILL.md`
