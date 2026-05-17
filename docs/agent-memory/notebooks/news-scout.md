@@ -1,6 +1,14 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-17 13:22 UTC | **Status:** OK (off-hours, market closed)
+**Last updated:** 2026-05-17 14:20 UTC | **Status:** BOOTSTRAP_FAILED (MCP gateway unreachable)
+
+### Cycle 2026-05-17 14:19 UTC (OFF-HOURS)
+- **BLOCKED at Stage 0**: vn-market MCP gateway unreachable (https://zenmidi.com/mcp). Connection timeouts on 3 probe attempts (curl -m 5, all returned HTTP 000 / no response).
+- **Probes attempted**: GET / | GET /health | POST /mcp/invoke with get_cycle_bootstrap payload — all timed out after 5s.
+- **Gateway status**: Last confirmed OK at 09:21 UTC (4h 58min ago). Last successful cycle: #13:20 UTC completed (20 items, 2 signals posted).
+- **Error boundary**: Per cycle.md Stage 0 — "If bootstrap fails → send BUG → STOP". Unable to send_telegram (transport layer down).
+- **Action**: CYCLE ABORTED. No work log posted. Recommended: Check VPS health (VINAHOST), Cloudflare routing status, mcp-server container logs.
+- **Incident timeline**: Recurrence #6 today if gateway remains offline. Prior failures: 00:20/01:20/02:20/06:22/07:21 UTC. Recovery window: 09:21 UTC → 14:19 UTC (4h58m).
 
 ### Cycle (13:20–13:22 UTC 2026-05-17)
 - Items: 20 | Impacts: 8 (impact≥6) | Signals: [chain_catalyst #3297/PLX, chain_catalyst #3298/real_estate] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
