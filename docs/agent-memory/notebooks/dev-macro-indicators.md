@@ -47,3 +47,27 @@ Zone health: FRED adapter unblocked; 3 new tests covering parallel dispatch; Wor
 **Docs updated:** infrastructure.md (WorldBank adapter section), testing.md (counts + WorldBank test table).
 
 Zone health: WorldBank adapter unblocked; parallel dispatch pattern now consistent with FRED; 93 pass / 12 skip / 0 fail | HEALTHY
+
+### Session 2026-05-17 — Calendar source 10s hard cap
+
+**Task:** Reduce calendar source timeout from 30s to 10s to prevent 63s hang blocking entire `/macro/external` fetch.
+
+**Root cause:** `DEFAULT_TIMEOUTS.calendar` was 30_000ms. The CF Python subprocess can stall far beyond the expected warmup window, causing `Promise.race` to wait the full 30s (or longer if the process eventually completes). Observed: `status: "timeout"`, `totalLatencyMs: 62700ms`.
+
+**Fix:** `DEFAULT_TIMEOUTS.calendar: 30_000 → 10_000` in `fetch-external-macro.ts`. Also:
+- Exported `DEFAULT_TIMEOUTS` (was `const`, now `export const`) for test assertions
+- Typed as `Required<SourceTimeouts>` — removed non-null `!` assertions from constructor merge
+- Updated module-level JSDoc to document 10s cap + rationale
+
+**Tests added (3 new in fetch-external-macro.test.ts):**
+- `DEFAULT_TIMEOUTS.calendar === 10_000` — asserts constant directly
+- slow calendar (15s stub) timed out at 10s budget — latencyMs ≥ 10_000
+- other 5 sources complete normally while calendar pending
+
+**Result:** 105 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated). Test runtime ~21s (3 new 10s timeout tests dominate).
+
+**Docs updated:** usecases.md (FetchExternalMacroUseCase section + timeout table), testing.md (+test group table, updated counts), infrastructure.md (InvestingCalendarAdapter section with 10s hard cap note).
+
+**Branch:** `task/calendar-source-10s-timeout` — commit c8f63afc.
+
+Zone health: calendar timeout capped at 10s; withTimeout + Promise.all pattern verified; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY
