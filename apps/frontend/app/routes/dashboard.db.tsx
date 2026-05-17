@@ -52,6 +52,18 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 }
 
 // --------------------------------------------------------------------------
+// Helpers
+// --------------------------------------------------------------------------
+
+function toUserFriendlyError(raw: string): string {
+  if (raw.includes("ApiError") || raw.includes("404") || raw.includes("failed")) {
+    const source = raw.split(":")[0]?.trim() ?? "Source";
+    return `${source}: data temporarily unavailable`;
+  }
+  return raw;
+}
+
+// --------------------------------------------------------------------------
 // Components
 // --------------------------------------------------------------------------
 
@@ -188,7 +200,7 @@ function HeadlineTable({ headlines }: { headlines: Headline[] }) {
             <div className="mt-0.5 flex gap-3 text-xs text-slate-500">
               {h.source && <span>{h.source}</span>}
               {h.publishedAt && (
-                <span>
+                <span suppressHydrationWarning>
                   {new Date(h.publishedAt).toLocaleString("vi-VN", {
                     timeZone: "Asia/Ho_Chi_Minh",
                   })}
@@ -211,17 +223,23 @@ export default function DbDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Database Report</h1>
         <span className="text-xs text-slate-500">
-          Loaded{" "}
-          {new Date(fetchedAt).toLocaleString("vi-VN", {
-            timeZone: "Asia/Ho_Chi_Minh",
-          })}
+          Last updated:{" "}
+          <span suppressHydrationWarning>
+            {new Date(fetchedAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+          </span>
         </span>
       </div>
 
       {errors.length > 0 && (
-        <div className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300 space-y-1">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300 space-y-1"
+        >
           {errors.map((e, idx) => (
-            <p key={idx}>{e}</p>
+            <p key={idx}>{toUserFriendlyError(e)}</p>
           ))}
         </div>
       )}

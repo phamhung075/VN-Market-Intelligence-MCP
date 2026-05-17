@@ -2,7 +2,7 @@
  * Dashboard layout route — shared nav for all /dashboard/* child routes.
  * Uses Remix nested routing: each child renders inside <Outlet />.
  */
-import { Outlet, NavLink } from "@remix-run/react";
+import { Outlet, NavLink, Link } from "@remix-run/react";
 
 const NAV_ITEMS = [
   { to: "/dashboard/server", label: "Services" },
@@ -17,10 +17,27 @@ export default function DashboardLayout() {
       {/* Top nav */}
       <nav className="border-b border-slate-700 bg-slate-800 px-6 py-3">
         <div className="flex items-center gap-6">
-          <span className="font-bold tracking-tight text-slate-100">
+          <Link
+            to="/"
+            className="font-bold tracking-tight text-slate-100 hover:text-slate-300"
+          >
             VN Market Intelligence
-          </span>
+          </Link>
           <div className="flex gap-1">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                [
+                  "rounded px-3 py-1.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-slate-700 text-slate-100"
+                    : "text-slate-400 hover:bg-slate-700 hover:text-slate-200",
+                ].join(" ")
+              }
+            >
+              Home
+            </NavLink>
             {NAV_ITEMS.map(({ to, label }) => (
               <NavLink
                 key={to}

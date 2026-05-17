@@ -104,17 +104,22 @@ export default function ServerDashboard() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300">
-          Service unreachable — {error}
+        <div
+          role="alert"
+          className="mb-4 rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300"
+        >
+          Service unreachable — please try again later.
         </div>
       )}
 
       {checkedAt && (
         <p className="mb-4 text-xs text-slate-500">
-          Last checked:{" "}
-          {new Date(checkedAt).toLocaleString("vi-VN", {
-            timeZone: "Asia/Ho_Chi_Minh",
-          })}
+          Last updated:{" "}
+          <span suppressHydrationWarning>
+            {new Date(checkedAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+          </span>
         </p>
       )}
 

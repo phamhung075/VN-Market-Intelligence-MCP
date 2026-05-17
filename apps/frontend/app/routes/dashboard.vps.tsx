@@ -104,10 +104,12 @@ export default function VpsDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">VPS Proxy Health</h1>
         <span className="text-xs text-slate-500">
-          Checked{" "}
-          {new Date(fetchedAt).toLocaleString("vi-VN", {
-            timeZone: "Asia/Ho_Chi_Minh",
-          })}
+          Last updated:{" "}
+          <span suppressHydrationWarning>
+            {new Date(fetchedAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+          </span>
         </span>
       </div>
 
@@ -161,10 +163,12 @@ export default function VpsDashboard() {
                     {row.error ? (
                       <span className="text-red-400">{row.error}</span>
                     ) : row.health?.checkedAt ? (
-                      new Date(row.health.checkedAt).toLocaleTimeString(
-                        "vi-VN",
-                        { timeZone: "Asia/Ho_Chi_Minh" },
-                      )
+                      <span suppressHydrationWarning>
+                        {new Date(row.health.checkedAt).toLocaleTimeString(
+                          "vi-VN",
+                          { timeZone: "Asia/Ho_Chi_Minh" },
+                        )}
+                      </span>
                     ) : (
                       "—"
                     )}

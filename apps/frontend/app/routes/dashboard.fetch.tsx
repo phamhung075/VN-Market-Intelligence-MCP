@@ -61,6 +61,23 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 }
 
 // --------------------------------------------------------------------------
+// Helpers
+// --------------------------------------------------------------------------
+
+/**
+ * Strips raw API paths from error messages to avoid leaking internal routes.
+ * "Reuters: ApiError: GET /news/reuters/headlines failed: 404 Not Found"
+ * → "Reuters: data temporarily unavailable"
+ */
+function toUserFriendlyError(raw: string): string {
+  if (raw.includes("ApiError") || raw.includes("404") || raw.includes("failed")) {
+    const source = raw.split(":")[0]?.trim() ?? "Source";
+    return `${source}: data temporarily unavailable`;
+  }
+  return raw;
+}
+
+// --------------------------------------------------------------------------
 // Components
 // --------------------------------------------------------------------------
 
@@ -95,7 +112,7 @@ function HeadlineList({
             )}
           </p>
           {h.publishedAt && (
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-slate-500" suppressHydrationWarning>
               {new Date(h.publishedAt).toLocaleString("vi-VN", {
                 timeZone: "Asia/Ho_Chi_Minh",
               })}
@@ -123,8 +140,8 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
       )}
       {macro.fetchedAt && (
         <div className="flex gap-2">
-          <span className="text-slate-500">Fetched:</span>
-          <span className="text-slate-200">
+          <span className="text-slate-500">Last updated:</span>
+          <span className="text-slate-200" suppressHydrationWarning>
             {new Date(String(macro.fetchedAt)).toLocaleString("vi-VN", {
               timeZone: "Asia/Ho_Chi_Minh",
             })}
@@ -156,17 +173,23 @@ export default function FetchDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Fetch Operations</h1>
         <span className="text-xs text-slate-500">
-          Loaded{" "}
-          {new Date(fetchedAt).toLocaleString("vi-VN", {
-            timeZone: "Asia/Ho_Chi_Minh",
-          })}
+          Last updated:{" "}
+          <span suppressHydrationWarning>
+            {new Date(fetchedAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+          </span>
         </span>
       </div>
 
       {errors.length > 0 && (
-        <div className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300 space-y-1">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300 space-y-1"
+        >
           {errors.map((e, idx) => (
-            <p key={idx}>{e}</p>
+            <p key={idx}>{toUserFriendlyError(e)}</p>
           ))}
         </div>
       )}
@@ -176,8 +199,8 @@ export default function FetchDashboard() {
         {/* Reuters */}
         <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
           <h2 className="mb-3 font-semibold text-slate-300">
-            Reuters Headlines
-            <span className="ml-2 text-xs font-normal text-slate-500">
+            Reuters Headlines{" "}
+            <span aria-hidden="true" className="ml-1 text-xs font-normal text-slate-500">
               ({reuters.length})
             </span>
           </h2>
@@ -187,8 +210,8 @@ export default function FetchDashboard() {
         {/* Bloomberg */}
         <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
           <h2 className="mb-3 font-semibold text-slate-300">
-            Bloomberg Headlines
-            <span className="ml-2 text-xs font-normal text-slate-500">
+            Bloomberg Headlines{" "}
+            <span aria-hidden="true" className="ml-1 text-xs font-normal text-slate-500">
               ({bloomberg.length})
             </span>
           </h2>

@@ -78,11 +78,28 @@ export async function fetchServiceHealth(service: string): Promise<ServiceHealth
   const raw = await apiGet<unknown>(`/health/${service}`);
   if (raw !== null && typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
+    // Accept both camelCase and snake_case / alternative field names from the gateway.
+    const latency =
+      typeof obj["latency"] === "number"
+        ? obj["latency"]
+        : typeof obj["latencyMs"] === "number"
+          ? obj["latencyMs"]
+          : typeof obj["latency_ms"] === "number"
+            ? obj["latency_ms"]
+            : undefined;
+    const checkedAt =
+      typeof obj["checkedAt"] === "string"
+        ? obj["checkedAt"]
+        : typeof obj["checked_at"] === "string"
+          ? obj["checked_at"]
+          : typeof obj["timestamp"] === "string"
+            ? obj["timestamp"]
+            : undefined;
     return {
       service,
       status: isServiceStatus(obj["status"]) ? obj["status"] : "down",
-      latency: typeof obj["latency"] === "number" ? obj["latency"] : undefined,
-      checkedAt: typeof obj["checkedAt"] === "string" ? obj["checkedAt"] : undefined,
+      latency,
+      checkedAt,
       error: typeof obj["error"] === "string" ? obj["error"] : undefined,
     };
   }
