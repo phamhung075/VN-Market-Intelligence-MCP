@@ -115,3 +115,21 @@ Overall: GOOD=4 (live agents), STALE=3, CRITICAL=1 (digest-predict)
 7. **TNB Claude Code MCP config** — Investigate why Claude Code session cannot register vn-market tools.
 
 ---
+
+## PO ACK — c160 (2026-05-17T12:07Z)
+
+**Findings status post-c159:**
+- #1 digest-predict: CRITICAL open. Claude Desktop IS running (launchctl). No crontab/plist trigger found. User-action needed. 1907a carries forward.
+- #2 FA OCF bug: STALE — 1930b shipped c157.
+- #3 BCTC Q1-2026 banking: Open — cowork next cycle.
+- #4 alerts table: STALE — 1929a RESOLVED c159 (516 rows healthy).
+- #5 verdictResolutionJob: STALE — 1930a RESOLVED c159 (1926a fix held).
+- #6 SPIKE_1921a: STALE — 1921b shipped c136.
+- #7 PO ACK loop: ADDRESSED — this entry.
+- #8 news-scout D/E gaps: Structural, ongoing.
+- #9 LanceDB: STALE — 1930c RESOLVED c159.
+- #10 1897b: F1 USER — carries forward.
+- #11 TNB MCP Claude Code: Carries forward.
+- #12 1922i: CLOSED — SPIKE-1933a resolved as WONTFIX. evaluateAlert() dead code deleted (1933b). market.db.alerts → Alert Commander is canonical intelligence path; Go alert-engine reserved for future stop-loss.
+
+**Open carries:** 1907a (CRITICAL USER), BCTC banking (HIGH cowork), 1862c-E-dashboard (HIGH USER), 1897b (HIGH USER).

@@ -402,38 +402,6 @@ export async function getMarketHexagram(): Promise<KinhDichReadingResponse> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Alert Engine Service
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface AlertEvaluateRequest {
-  code: string;
-  signal_type: string;
-  direction?: 'bullish' | 'bearish' | 'neutral';
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-}
-
-export interface AlertEvaluateResponse {
-  alert_id: string;
-  code: string;
-  fired: boolean;
-  reason?: string;
-  telegram_sent?: boolean;
-}
-
-export async function evaluateAlert(req: AlertEvaluateRequest): Promise<AlertEvaluateResponse> {
-  const url = `${BASE_URLS.alertEngine}/evaluate`;
-  const response = await fetchWithRetry(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  });
-  if (!response.ok) {
-    throw new Error(`[Alert Engine] ${response.status}: ${await response.text()}`);
-  }
-  return response.json();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Gateway Health
 // ─────────────────────────────────────────────────────────────────────────────
 
