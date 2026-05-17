@@ -1,6 +1,10 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-17 04:21 UTC | **Status:** MCP_UNREACHABLE (persistent — 5th aborted cycle in pattern)
+**Last updated:** 2026-05-17 05:21 UTC | **Status:** MCP_UNREACHABLE (persistent — 6th aborted cycle in pattern)
+
+### Cycle (05:21 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- BLOCKED at Step 0 (get_cycle_bootstrap): `dial vn-market — host.docker.internal:3000/sse → DNS server misbehaving`. Probe + retry identical. BUG telegram attempt via same gateway also failed (expected). Signal dropped: docs/signals/news-scout-2026-05-17T05-21-04Z.json. EXIT per error boundary. Pattern unchanged since 2026-05-16 19:56 UTC — local Docker mcp-server or zenmidi.com gateway DNS still broken. No human fix between 04:21Z and 05:21Z cycles.
 
 ### Cycle (04:21 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
@@ -295,3 +299,18 @@ Fetched 20 articles (post-market close cycle, 11:22 UTC). VN-Index confirmed all
 
 ### Cycle 2026-05-17 02:20 UTC
 - Cycle 02:20 — BLOCKED at step 0: gateway unreachable (dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed: "server misbehaving"). Live probe (2x get_cycle_bootstrap) returned identical error. Signal file dropped: docs/signals/news-scout-2026-05-17T02-20-33Z.json. BUG telegram skipped per dedup (3rd recurrence today: 00:20 / 01:20 / 02:20; send_telegram on same gateway). **Escalation needed**: infra-level DNS / host.docker.internal resolution for MCP container. EXIT.
+
+### Cycle 2026-05-17 06:22 UTC
+- Cycle 06:22 — BLOCKED at step 0: vn-market MCP gateway unreachable (https://zenmidi.com/mcp — connector reports "server isn't responding"). Live probes: get_cycle_bootstrap (x3), health_check (x1), get_system_health (x1) — all returned identical transport error. 4th recurrence today (prior: 00:20 / 01:20 / 02:20 UTC); incident now spans ~6h. Signal file dropped: docs/signals/processed/news-scout-2026-05-17T06-22Z.json. BUG telegram skipped per dedup (same module/issue; send_telegram rides same broken gateway). **Escalation reaffirmed**: gateway has been down across 4 consecutive scheduled cycles — needs PO/dev attention to verify VPS health, Cloudflare routing, and host.docker.internal DNS for the MCP container. EXIT.
+
+### Cycle 2026-05-17 07:21 UTC
+- Cycle 07:21 — BLOCKED at step 0: vn-market MCP gateway unreachable (https://zenmidi.com/mcp — connector reports "server isn't responding"). Live probes: get_cycle_bootstrap (x3), health_check (x1), send_telegram (x1) — all returned identical transport error. 5th recurrence today (prior: 00:20 / 01:20 / 02:20 / 06:22 UTC); incident now spans ~7h. Signal file dropped: docs/signals/news-scout-2026-05-17T07-21-54Z.json. BUG telegram skipped per dedup (same module/issue; send_telegram rides same broken gateway). **Escalation reaffirmed**: gateway down across 5 consecutive scheduled cycles — PO/dev intervention required. EXIT.
+
+### Cycle 2026-05-17 09:21 UTC
+- Items: 20 | Impacts: 9 (impact≥6) | Signals: [chain_catalyst #3288] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default — no prior feedback]
+- Gateway RESTORED after 7h outage (prior: 00:20/01:20/02:20/06:22/07:21 UTC all BLOCKED).
+- Off-hours cycle (Sunday). Macro: VND carry -0.33%, UST10Y 4.59% risk-off, Brent $109, USD/VND 26350.
+- Top: Dragon Capital "3 cú hích" (raw 8 bullish → adj 5.6 under TIGHTENING×0.7) posted as chain_catalyst with COC headwind caveat (M2:neutral,COC:headwind,EPS:tailwind,POL:neutral; phase=recovery tier=equity).
+- Skipped: PC1 chairman arrest (impact 5 neutral, utilities — below threshold); PLX -40% (not in watchlist); steel "cháy hàng" (no specific watchlist ticker named); Shark Phú export pressure (no historical context, anecdotal).
+- Dedup: no prior news-scout signals on bus in 180m window — clean post.
