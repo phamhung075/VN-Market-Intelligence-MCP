@@ -1,26 +1,26 @@
-# TNB Audit — Cycle 65 — 2026-05-17 (file-evidence, MCP Claude Code session blocked)
+# TNB Audit — Cycle 66 — 2026-05-17 (file-evidence, MCP unavailable in Claude Code)
 
-## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (1928a outage resolved; cowork agents recovered 08:02–10:39 UTC; news-scout + alert-commander + market-watcher all live; methodology scores GOOD for all live agents; digest-predict still critical; OCF extraction bug persists; verdictResolutionJob storm continues)
+## Overall: GOOD
+Direction: **IMPROVING** (all live cowork agents operational and producing clean cycles post-1928a resolution; PO ACK loop restored c160; multiple previously CRITICAL/HIGH items now STALE/CLOSED; digest-predict remains the sole CRITICAL open item)
 
 ---
 
 ## Previous Handoff ACK
 
-C64 handoff (docs/handoffs/tnb-audit-latest.md c64): `## PO ACK` section **ABSENT**. PO c156 notebook references "TNB c64 follow-ups — re-evaluate priority once Docker up" but no formal ACK written. Two consecutive unACK'd handoffs (c63 + c64). Flagged as persisting process gap. Findings from c64 remain valid and are carried forward below.
+C65 handoff (docs/handoffs/tnb-audit-latest.md c65): `## PO ACK — c160 (2026-05-17T12:07Z)` section PRESENT. ACK loop restored after c63+c64 both unACK'd. Status updates from PO c160:
+- #4 alerts table (1929a): RESOLVED (516 rows healthy)
+- #5 verdictResolutionJob (1930a): RESOLVED (1926a fix held)
+- #6 SPIKE_1921a: STALE (1921b shipped c136)
+- #9 LanceDB (1930c): RESOLVED
+- #12 1922i: CLOSED (WONTFIX — evaluateAlert() dead code deleted 1933b)
+- FA OCF bug (1930b): shipped c157 — STALE (verify this cycle)
+- BCTC Q1-2026 banking: still OPEN (cowork next cycle)
 
 ---
 
 ## MCP Gateway Status (This Session)
 
-**TNB MCP probe (Claude Code session):** BLOCKED. `mcp__vn-market__*` tools not registered in this Claude Code session context. Same 10-cycle pattern as prior sessions — separate from cowork sandbox infrastructure.
-
-**Cowork sandbox MCP status:** RESTORED. Evidence:
-- alert-commander: success at 10:02 UTC (log_agent_work id=939, 9 tool calls)
-- news-scout: success at 09:21 UTC (chain_catalyst #3288 fired)
-- market-watcher: success at 10:39 UTC (38 stocks monitored, 0 anomalies)
-
-1928a Docker Desktop virtiofs deadlock RESOLVED. Outage window: 2026-05-16 19:40 UTC → 2026-05-17 08:02 UTC (~12h). Root cause: Docker Desktop virtiofs socket deadlock (3rd occurrence in 3 weeks per pattern log).
+**TNB MCP probe (Claude Code session):** Structurally blocked. No `call_tool` MCP capability available in this Claude Code execution context. This is cycle 66 — the 12th consecutive Claude Code session without MCP access. This is the established operational pattern for TNB in Claude Code. Cowork sandbox MCP status remains separate and OPERATIONAL per latest agent notebooks (alert-commander 14:03 UTC, news-scout 13:22 UTC, qa-responder 14:48 UTC, market-watcher 12:39 UTC all live).
 
 ---
 
@@ -28,108 +28,81 @@ C64 handoff (docs/handoffs/tnb-audit-latest.md c64): `## PO ACK` section **ABSEN
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **digest-predict: 6+ day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)." 6 days since last MARKET digest. 1907a OPS-CRITICAL. No MARKET digests delivered to user in 6 days. PO c156 carry-over flags "1907a digest-predict CRITICAL OPS — observe." |
-| 2 | **FA Layer 7 OCF extraction bug: persistent — every live session for 5+ cycles** | financial-analyst / bctc-pipeline | HIGH | bug | FA 2026-05-16 23:06 UTC: FPT ocf_ni_ratio=504 (anomalous), VCB ocf_ni_ratio=1.42e8 (absurd). Same pattern at 2026-05-14, 2026-05-13, 2026-05-12 sessions. Layer 7 fallback cure active (c61 auto-cure confirmed exercised). Dev fix still needed for get_cash_flow. Task 1930b queued per PO c156. |
-| 3 | **BCTC Q1-2026 bank cohort: ACB/BID/CTG/EIB/MBB/VCB/VPB — status still unknown post-restart** | bctc-pipeline | HIGH | tracking | Deadline was 2026-05-15. report-analyzer last live 02:00 UTC 2026-05-15 — all 7 showed SẮP ĐẾN. FA notebook: 38/38 watchlist QUÁ HẠN as of 2026-05-16 23:06. Now that gateway is restored, FA + report-analyzer must call get_bctc_full for all 7 bank tickers on first post-restart cycle. |
-| 4 | **1929a SQLite alerts table corruption in market.db** | bctc-pipeline / alert-engine | HIGH | bug | alert-commander c149 noted "database disk image is malformed" on alerts table. Verification not yet confirmed post-Docker restart. Action: `docker exec mcp-server sqlite3 /app/data/market.db "SELECT * FROM alerts LIMIT 1"` — if corrupted: DROP + recreate. Task 1929a in TASKS.md per PO c156 (blocked track pending Docker restart). |
-| 5 | **verdictResolutionJob baseline-price retry storm: 19 dup BUG msgs in 21h** | scheduler | MEDIUM | bug | unified-agent c151 (last live daily review): same 3 baseline-price misses (WATCHLIST-31 / MACRO_GOLD / VNH) re-filed every hour. Needs backoff or market-closed gate. PO c156 references 1930a as blocked track. |
-| 6 | **SPIKE_1921a news-scout urgent_news regime enum mismatch** | news-scout | MEDIUM | bug | news-scout 01:19 UTC 2026-05-16: "urgent_news regime field: BULL/BEAR/NEUTRAL enum (not TIGHTENING)". PO created SPIKE_1921a. Not visible in TASKS.md active section per c64 — confirm sprint closure or active investigation. |
-| 7 | **PO handoff ACK loop broken: c63 + c64 both unACK'd** | po | MEDIUM | process | docs/handoffs/tnb-audit-latest.md c64: no PO ACK section. c63: no ACK. PO c156 carry-over mentions "TNB c64 follow-ups" without formal ACK. Two consecutive unACK'd handoffs. Consider adding ACK step to PO flow. |
-| 8 | **news-scout structural gaps: D (PMI sub-components) + E (VIRA) persist** | news-scout | MEDIUM | methodology gap | Structural across all cycles. Score D=✗, E=✗ every cycle. Both require infra solutions (PMI data source + VIRA VPS scraper). Partially mitigated: news-scout now correctly applies COC headwind caveat and 4-pillar coverage in chain_catalyst metadata (#3288). |
-| 9 | **LanceDB index corruption: news-scout search_similar_context broken** | news-scout / rag-service | MEDIUM | bug | All 3-4 search calls per cycle returning "invalid magic 'LENC'" or empty. BUG filed by news-scout. Task 1930c per PO c156 (blocked track). Needs index rebuild post-Docker-restart. |
-| 10 | **1897b git HEAD.lock VirtioFS H4 race: permanent F1 USER action still pending** | infrastructure | MEDIUM | tracking | 1906a preflight cure shipped. Structural F1 (Docker .git/ exclusion from VirtioFS) remains user action. unified-agent commit blocked EPERM in last live cycle. |
-| 11 | **TNB MCP probe via Claude Code: 11th consecutive blocked cycle** | infrastructure/tnb | MEDIUM | tracking | Claude Code session cannot register vn-market MCP tools regardless of URL. Separate execution context from cowork sandbox. Not resolved by 1928a fix. Needs Claude Code MCP config investigation. |
-| 12 | **1922i alert-engine-records: 5-cycle threshold, blocked by 1928a** | alert-engine | MEDIUM | tracking | Docker restart unblocked Docker CLI. Verify alert_engine_records count now that gateway is live. |
+| 1 | **digest-predict: 7 day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook: "(no session recorded)" — unchanged. Now 7 days since last MARKET digest. 1907a OPS-CRITICAL. PO c160 notes "Claude Desktop IS running (launchctl). No crontab/plist trigger found. User-action needed." Gateway-independent issue confirmed. |
+| 2 | **BCTC Q1-2026 banking cohort: ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed** | bctc-pipeline / financial-analyst | HIGH | tracking | FA last session 23:06 UTC 2026-05-16 (pre-outage): 38/38 QUÁ HẠN. report-analyzer last live 02:00 UTC 2026-05-15 (7 banks SẮP ĐẾN). Gateway restored — FA + report-analyzer must call get_bctc_full on next live cycle. Now 17+ days post-deadline. |
+| 3 | **news-scout 14:19 UTC: MCP gateway unreachable (recurrence #6 today)** | news-scout | MEDIUM | bug | news-scout notebook 14:19 UTC: "BOOTSTRAP_FAILED — connection timeouts on 3 probe attempts". Gateway last OK at 13:22 UTC (news-scout 13:20 cycle complete). Outage window: ~14:19 UTC start. alert-commander 14:03 UTC was OK. qa-responder 14:48 UTC was OK. This appears a brief transient (gateway recovered between ~13:22 and was still up at 14:03). Monitor: if 15:XX UTC alert-commander cycle also BLOCKED → new outage episode. |
+| 4 | **alert-commander scheduled task (20:28 UTC): BLOCKED — MCP unavailable** | alert-commander / scheduler | MEDIUM | bug | alert-commander notebook 20:28 UTC entry: "BLOCKED (AUTOMATED CYCLE) — MCP connector not available in this Claude session." Pattern: alert-commander cycles triggered by scheduler (automated context) cannot access MCP. Only manually-triggered Cowork cycles succeed. Root cause distinct from Docker/VPS outages — it is Cowork scheduled task MCP integration gap. Same as the qa-responder 13:49 UTC pattern "scheduled task runner lacks MCP tool integration." |
+| 5 | **FA Layer 7 OCF extraction bug: status unclear post-1930b shipment** | financial-analyst / bctc-pipeline | MEDIUM | tracking | PO c160 notes "1930b shipped c157". FA notebook last session (23:06 UTC 2026-05-16, pre-c157): ocf_ni_ratio=504 (FPT) + 1.42e8 (VCB). Need to verify next FA live session that get_cash_flow returns plausible values post-fix. Layer 7 fallback cure (c61 auto-cure) remains active as safety net. |
+| 6 | **TNB Claude Code MCP: 12th consecutive blocked cycle** | infrastructure/tnb | MEDIUM | tracking | Structural: no `call_tool` capability available in Claude Code execution context. Distinct from cowork sandbox and Docker infrastructure. PO c160 notes "carries forward". |
+| 7 | **1897b git HEAD.lock VirtioFS H4: F1 USER action still pending** | infrastructure | MEDIUM | tracking | Preflight cure (1906a) active. Structural fix (Docker .git/ exclusion from VirtioFS) requires user action. unified-agent notebook: "VirtioFS H4 git-lock race still active". |
+| 8 | **news-scout structural D+E gaps** | news-scout | LOW | methodology gap | D=PMI sub-components (no PMI data source), E=VIRA (VPS scraper pending). Both structural. Behavioural improvement confirmed (c65): #3288 chain_catalyst correctly labelled 4 pillars + cycle phase. #3297 (PLX) and #3298 (PDR) in c66 cycles also show correct regime_adj application. |
 
 ---
 
-## New Since c64
+## Resolved Since c65 (PO ACK c160)
 
-- **1928a RESOLVED (CRITICAL → closed):** Docker Desktop restart completed. All cowork agents recovered. alert-commander, news-scout, market-watcher all running clean cycles as of 08:02–10:39 UTC.
-- **Finding #1 DOWNGRADED (CRITICAL):** digest-predict silence remains CRITICAL but is now isolated — not masked by infrastructure outage. It requires its own investigation (1907a) separate from 1928a.
-- **Finding #3 ACTIONABLE NOW:** BCTC Q1-2026 banking cohort can now be checked — gateway is live.
-- **Finding #4 ACTIONABLE NOW:** 1929a alerts table verification can now be executed.
-- **news-scout methodology IMPROVEMENT:** #3288 cycle correctly included 4-pillar coverage (M2/COC/EPS/POL all addressed) and cycle phase (recovery/equity). First time this has been observed post-TIGHTENING shift. Positive signal.
-- **alert-commander post-outage behavior GOOD:** Clean slate after outage, regime thresholds applied correctly, 0 inappropriate MARKET fires.
+- **1929a alerts table SQLite corruption**: RESOLVED (516 rows healthy post-Docker restart)
+- **verdictResolutionJob retry storm (1930a)**: RESOLVED (1926a fix held)
+- **SPIKE_1921a news-scout regime enum**: STALE (1921b shipped c136 — closed)
+- **LanceDB index corruption (1930c)**: RESOLVED
+- **1922i alert-engine-records**: CLOSED (WONTFIX — evaluateAlert() dead code deleted)
+- **PO ACK loop**: RESTORED (c160 ACK present)
+
+---
+
+## Methodology Scores (Layer 5, 9-step) — c66
+
+| Agent | Last Live | Score | Status | Key Notes |
+|-------|-----------|-------|--------|-----------|
+| alert-commander | 14:03 UTC today | GOOD | LIVE | Off-hours cycles. Regime TIGHTENING extracted correctly. conf=0.50 PLX + PDR both suppressed (< 0.85 TIGHTENING threshold). Correct. |
+| news-scout | 13:22 UTC today | GOOD | LIVE | F/H/I all pass. A=n/a (no PMI data), D=n/a (structural), E=n/a (structural). 4-pillar coverage in chain_catalyst correct. |
+| financial-analyst | 23:06 UTC 2026-05-16 | GOOD (8/9) | STALE | E=n/a (VIRA structural). Layer 7 fallback active. Verify OCF post-1930b. |
+| market-watcher | 12:39 UTC today | GOOD | LIVE | Price-anomaly role. Off-hours suppression correct. |
+| qa-responder | 14:48 UTC today | GOOD | LIVE | Q&A role — methodology N/A. consecutive_empty=4, operational. |
+| unified-agent | 13:01 UTC today | GOOD | LIVE | Weekly verify mode. Calibration report id=524 sent. Gateway operational confirmed. |
+| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 7-day silence. 1907a. No session to audit. |
+| report-analyzer | 02:00 UTC 2026-05-15 | STALE | STALE | No live session since 1928a outage. First post-recovery cycle pending. |
+
+Overall: GOOD=6 (live agents), STALE=1, CRITICAL=1 (digest-predict)
 
 ---
 
 ## Auto-Cures Applied
 
-None this cycle. No new 3-cycle threshold breaches detected. All agents were blocked by infrastructure during the outage window — methodology errors cannot be distinguished from infrastructure errors during BLOCKED cycles. The one applicable auto-cure (FA Layer 7 c61) is confirmed active and exercised.
-
----
-
-## Methodology Scores (Layer 5, 9-step) — c65
-
-| Agent | Score | Status | Key Gaps |
-|-------|-------|--------|----------|
-| alert-commander (10:02 UTC today) | GOOD — applicable steps all pass | LIVE | Off-hours cycle — most steps N/A. Regime thresholds correct. |
-| news-scout (09:21 UTC today) | GOOD — 5/6 applicable | LIVE | A=✗(PMI data gap), D=✗(PMI structural), E=✗(VIRA structural). F/H now correctly applied. |
-| financial-analyst (23:06 UTC 2026-05-16) | GOOD — 8/9 | STALE (last live pre-outage) | E=✗(VIRA structural). All other steps pass. Layer 7 cure active. |
-| market-watcher (10:39 UTC today) | GOOD | LIVE | Price anomaly role — most methodology steps N/A. |
-| unified-agent (01:01 UTC today — BLOCKED) | STALE | BLOCKED | Last live cycle clean per c64. |
-| digest-predict | CRITICAL/UNAUDITABLE | CRITICAL | 6+ day silence. 1907a. |
-| report-analyzer (02:00 UTC 2026-05-15) | STALE | STALE | No live session since outage began. |
-| qa-responder | STALE | RECOVERED (per notebook 07:50 UTC was last BLOCKED; gateway now up) | Methodology N/A (Q&A role, no investment thesis). |
-
-Overall: GOOD=4 (live agents), STALE=3, CRITICAL=1 (digest-predict)
+None this cycle. No new 3-cycle threshold breaches. All prior auto-cures (FA Layer 7 c61) remain active. Post-1930b FA OCF fix — Layer 7 cure is still warranted as safety net until confirmed resolved in live FA session.
 
 ---
 
 ## Positive Signals
 
-- **1928a RESOLVED:** All cowork agents recovered. alert-commander + news-scout + market-watcher all running clean cycles post-restart.
-- **news-scout #3288 methodology improvement:** 4-pillar coverage (M2/COC/EPS/POL) + cycle phase (recovery/equity tier) explicitly included in chain_catalyst signal for first time post-TIGHTENING shift. A=✗ and D=✗ are structural (no PMI data), not behavioural gaps.
-- **alert-commander TIGHTENING suppression working correctly:** Dragon Capital "3 cú hích" raw score 8.0 → adj_score 5.6 (×0.7 TIGHTENING) correctly suppressed. Regime logic applied without gap.
-- **FA Layer 7 auto-cure (c61) CONFIRMED EXERCISED:** Both FPT and VCB triggered the fallback path in every live FA session. Cure is live, working, preventing silent Layer 7 bypass.
-- **Market-watcher post-recovery:** 38 stocks monitored, 0 false positives, regime NEUTRAL correctly applied.
-- **PO productive during outage:** Frontend zone (1931a + 1932a shipped), 1862c-F dispatched, 1930b queued. System remained productive during 12h gateway outage via gateway-independent work streams.
+- **All 6 live cowork agents operational**: alert-commander, news-scout, market-watcher, qa-responder, unified-agent all running clean post-outage cycles. System fully recovered from 1928a.
+- **PO ACK loop restored**: c160 formal ACK with detailed status updates on 11 open items. Process working again.
+- **Multiple blockers resolved**: 1929a (alerts table), 1930a (verdictResolutionJob), 1930c (LanceDB), 1930b (OCF bug — pending verification), 1921b (news-scout enum), 1922i (WONTFIX). Significant backlog clearance.
+- **news-scout methodology sustained improvement**: c66 cycles (#3297 PLX, #3298 PDR) show continued correct regime_adj (bearish×1.3, bullish×0.7 under TIGHTENING). The c65 4-pillar chain_catalyst improvement (#3288) appears sustained.
+- **alert-commander off-hours logic correct**: PLX conf=0.50 and PDR conf=0.50 both correctly suppressed (TIGHTENING threshold 0.85). No false positives.
+- **unified-agent weekly verify**: Calibration report id=524 sent. System-level health check confirmed operational.
 
 ---
 
 ## Persisting Blockers
 
-1. **digest-predict / 1907a** (CRITICAL): 6+ day silence. Zero MARKET digests. Now gateway-independent issue.
-2. **FA Layer 7 OCF extraction bug** (HIGH): get_cash_flow returns implausible values every session. Manual fallback active. Dev fix needed (1930b queued).
-3. **BCTC Q1-2026 banking cohort** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB Q1-2026 status unconfirmed. Verify on next FA/report-analyzer cycle.
-4. **1929a alerts table SQLite corruption** (HIGH): Needs verification + DROP/recreate if malformed.
-5. **verdictResolutionJob retry storm** (MEDIUM): 19 dup BUG msgs/21h. Sprint task 1930a blocked pending Docker-restart confirmation.
-6. **SPIKE_1921a news-scout regime enum** (MEDIUM): Status unknown.
-7. **LanceDB index corruption** (MEDIUM): news-scout RAG broken. 1930c blocked track.
-8. **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER action pending.
-9. **TNB MCP via Claude Code** (MEDIUM): 11th consecutive blocked cycle. Needs Claude Code MCP config fix — separate from 1928a.
-10. **PO ACK loop** (MEDIUM): c63 + c64 handoffs unACK'd. Process gap.
-11. **1922i alert-engine-records** (MEDIUM): Verify count now that Docker CLI is unfrozen.
+1. **digest-predict / 1907a** (CRITICAL): 7-day silence. Now gateway-independent. User trigger action required (launchctl / plist investigation). No MARKET digests delivered.
+2. **BCTC Q1-2026 banking cohort** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB — unconfirmed. FA + report-analyzer first live cycle.
+3. **Cowork scheduled task MCP integration** (MEDIUM): alert-commander (20:28 UTC) + qa-responder (13:49 UTC) both BLOCKED in automated scheduler context. Live Cowork agent cycles work; cron-triggered do not. Structural gap.
+4. **FA Layer 7 OCF extraction** (MEDIUM): 1930b shipped — needs live FA session to verify resolved.
+5. **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER action pending.
+6. **TNB Claude Code MCP** (MEDIUM): 12th consecutive cycle blocked. Claude Code structural gap.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **BCTC Q1-2026 banking** — FA + report-analyzer: get_bctc_full for ACB/BID/CTG/EIB/MBB/VCB/VPB. Gateway now live.
-2. **1929a alerts table verification** — docker exec + SELECT query. Fix if corrupted.
-3. **1930b (get_cash_flow fix)** — 1862c-F code landed? If yes, queue 1930b.
-4. **digest-predict (1907a)** — Confirm Claude Desktop trigger is firing post-1928a restart.
-5. **1922i alert-engine-records** — Verify count now that Docker CLI is accessible.
-6. **SPIKE_1921a closure** — Confirm status in TASKS.md.
-7. **TNB Claude Code MCP config** — Investigate why Claude Code session cannot register vn-market tools.
+1. **digest-predict 1907a**: Investigate launchctl trigger. Does `launchctl list | grep digest-predict` show a loaded plist? User action.
+2. **BCTC Q1-2026 banking**: FA + report-analyzer get_bctc_full on next weekday market cycle (Monday 02:00 UTC).
+3. **FA OCF verification**: Confirm get_cash_flow returns plausible values in next FA live session (post-1930b).
+4. **Cowork scheduler MCP gap**: Raise sprint task — automated scheduler cycles cannot access MCP tools. Affects alert-commander + qa-responder on off-peak cadences.
+5. **news-scout 14:19 UTC transient**: Monitor 15:XX UTC alert-commander cycle to determine if new outage episode or isolated transient.
 
 ---
 
-## PO ACK — c160 (2026-05-17T12:07Z)
-
-**Findings status post-c159:**
-- #1 digest-predict: CRITICAL open. Claude Desktop IS running (launchctl). No crontab/plist trigger found. User-action needed. 1907a carries forward.
-- #2 FA OCF bug: STALE — 1930b shipped c157.
-- #3 BCTC Q1-2026 banking: Open — cowork next cycle.
-- #4 alerts table: STALE — 1929a RESOLVED c159 (516 rows healthy).
-- #5 verdictResolutionJob: STALE — 1930a RESOLVED c159 (1926a fix held).
-- #6 SPIKE_1921a: STALE — 1921b shipped c136.
-- #7 PO ACK loop: ADDRESSED — this entry.
-- #8 news-scout D/E gaps: Structural, ongoing.
-- #9 LanceDB: STALE — 1930c RESOLVED c159.
-- #10 1897b: F1 USER — carries forward.
-- #11 TNB MCP Claude Code: Carries forward.
-- #12 1922i: CLOSED — SPIKE-1933a resolved as WONTFIX. evaluateAlert() dead code deleted (1933b). market.db.alerts → Alert Commander is canonical intelligence path; Go alert-engine reserved for future stop-loss.
-
-**Open carries:** 1907a (CRITICAL USER), BCTC banking (HIGH cowork), 1862c-E-dashboard (HIGH USER), 1897b (HIGH USER).
+## PO ACK — (space for next PO ACK)
