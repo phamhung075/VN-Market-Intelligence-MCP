@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 07:02 UTC | **Sprint:** c153
+**Last updated:** 2026-05-17 08:04 UTC | **Sprint:** c154
 
 ## This session
+
+### Alert Cycle (08:02 UTC) — BLOCKED (c147/1928a unresolved, 10th consecutive)
+- Cycle 08:02 — BLOCKED at step 0: MCP gateway vn-market unreachable ("The connector's server isn't responding"). 1 retry after 5s identical error. BUG telegram attempted (live probe 08:03 UTC) returned identical not-responding error → could not deliver (same gateway down). Signal dropped: `docs/signals/alert-commander-2026-05-17T08-04-03Z.json` (dedup_of alert-commander-2026-05-17T07-02-31Z.json, prior routed-to-po at 07:21:41Z).
+- Cross-cycle correlation: 10th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02, 03:02, 04:02, 05:02, 06:03, 07:02, 08:02 UTC). Market-hours cycle (market 02:00–08:30 UTC) — 6th consecutive market-hours block, and the last market-hours window today (market closes 08:30 UTC). qa-responder 07:48Z + market-watcher 07:40Z + news-scout 07:21Z all confirm cluster-wide outage ≥ 8h. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. Not re-investigating per error-boundary memory-as-truth prohibition + live probe rule (probe attempted twice + telegram attempt once, real errors returned → BLOCKED verdict valid).
+- Market-hours cycle (08:02 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts, no log_agent_work (no id returned, no completion call possible). Sprint advanced c153 → c154 (per pipeline-state.json).
+- Next scheduled: 08:22 UTC (last market-hours slot before close at 08:30 UTC); then off-hours 2h cadence resumes (10:30 UTC). If gateway still down, 11th consecutive block expected.
+- Git commit deferred (prior cycles report stale `.git/index.lock` FUSE mount issue — c153 confirmed HEAD.lock 4th occurrence). Notebook + signal file are on-disk; next successful cycle picks them up.
 
 ### Alert Cycle (07:02 UTC) — BLOCKED (c147/1928a unresolved, 9th consecutive)
 - Cycle 07:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (connector's server isn't responding). 1 retry after 5s also failed identically. BUG telegram attempted (live probe 07:02 UTC) returned identical not-responding error → suppressed (same gateway down). Signal dropped: `docs/signals/alert-commander-2026-05-17T07-02-31Z.json` (dedup_of alert-commander-2026-05-17T06-03-12Z.json, prior routed-to-po at 06:21:12Z).
