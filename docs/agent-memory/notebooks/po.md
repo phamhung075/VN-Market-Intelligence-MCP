@@ -1,30 +1,49 @@
 # PO Notebook
 
-## Last updated: 2026-05-16T21:31:12Z · Cycle: c142 — triage + 1909c dispatch
+## Last updated: 2026-05-17T09:16:08Z · Cycle: c156 — triage, gateway still down, 1862c-F dispatched
 
-### c142 session summary
+### c156 session summary
 
-**Spawn context:** dev-team Step 1 PO triage. 1 pendingSignal (market-watcher bug-escalation 19:40 UTC).
+**Spawn context:** c156 triage. MCP gateway DOWN — `send_telegram` unavailable. Filesystem signals + TASKS.md only.
 
-**Channel audit:** Skipped live read — gateway-bootstrap UX gap (1913 substrate). Compensated via Docker health probe + processed-signal history. Docker fleet 100% healthy (mcp-server Up 10 min, 141 tools, 19 sessions, /health 200, uptime 663s). Stable for next cycle.
+**Pending signals (drained to processed/):**
+- `market-watcher-2026-05-17T08-41-01Z.json` — bug-escalation HIGH, gateway unreachable, cycle aborted
+- `qa-responder-2026-05-17T08-48-53Z.json` — bug-escalation HIGH, 9th consecutive blocked cycle, recommends Docker restart + extra_hosts fix
+- Both = duplicates of URGENT-F1 **1928a**. No new tasks warranted.
 
-**Signal triage:**
-- market-watcher 19:40 UTC bug-escalation → **RESOLVED**. Transient Docker downtime, self-healed by restart. Distinct from 1913 (cowork-gateway URL mismatch). Notebook header updated, Done row 1923-mw-gateway-19h40-transient added to TASKS.md.
+**TASKS.md updates this cycle:**
+- 1931a-frontend-scaffold-harden — removed from Todo, added to Done (commits ecda4fc2 + 0e443e03).
+- 1932a-frontend-dashboard-pages — new Done entry (commit 5945475e). 4 pages: server/fetch/vps/db. Zero MCP coupling.
+- 1862c-F — moved Todo → In Progress. Re-framed: gateway-independent code phase, dev runs build/tsc/vitest locally, Docker rebuild deferred. 5 ACs added. Hold-clause on 1862c-E-dashboard downgraded — code can land without live SSE verification.
+- 1930b — zone path corrected: `cashFlowTools.ts` → `cashFlowTool.ts` (singular; actual location `apps/mcp-server/src/interface/mcp/tools/financial-reports/cashFlowTool.ts`). Marked DEV-ABLE NOW: pure code fix, Docker rebuild only needed for live verification.
 
-**Batch decision (returning to dev-team):**
-1. **1909c-reparse-validation** (HIGH OPS, DIG Q4-2025 reparse) → dispatch ops this cycle. Promoted Todo → In Progress.
-2. **1862c-F** held one more cycle — spec requires "5 cycles clean" post-D/E. E-dashboard remains user-action; F is independent code change but conservative wait preserves AC fidelity. Re-evaluate c143.
-3. **Observation tasks 1922f/g/i** — no action (cron-bound).
-4. **1913 / 1907a / 1897b-carry / 1862c-E-dashboard** — user-action only, no spawn.
+**WIP after dispatch:** 1 In Progress (1862c-F, developer). Within limit.
 
-WIP limit: 1 In Progress (1909c). OK.
+**Signal output:** `docs/signals/2026-05-17T09-16-08Z-po-c156-triage.json` (type `po-triage-complete`) replaces Telegram broadcast.
 
-### Carry-over for next cycle (c143)
+**Channel audit:** Cannot read MARKET/WORK/BUG telegram channels — gateway down. Substituted with filesystem signal review (DASHBOARD.md empty, processed/ folder shows uniform gateway-down pattern across all 9 qa-responder cycles + market-watcher).
 
-- **1909c-reparse-validation result** — verify ops report confidence ≥ 0.6 + equity < 50,000 tỷ for DIG Q4 2025; if PASS → close + unblock FA Layer 7 DIG; if FAIL → spawn 1909d diagnostic.
-- **1862c-F** ship-decision — if c142 + c143 stay clean (no SSE 404/dead-session signals), authorise developer to ship the eviction code regardless of dashboard track.
-- **1913 USER F1** — still blocking channel audits + FA gateway tools (~13 cycles).
-- **1897b-carry F1 USER** — Docker .git/ exclude pending.
-- **1907a digest-predict CRITICAL OPS** — observe.
-- **Sprint 1922 observation triggers**: 1922f bond_maturity → tomorrow 2026-05-17 02:30 UTC cron; 1922i alert_engine_records → 5 cycles 24h market hours; verify 1922j FRED 6h + 1922e mention_velocity hourly tick.
-- **Worktree CLEAN** — deferred again.
+### Productive parallel tracks while gateway dark
+
+1. **Frontend zone** (`apps/frontend/`) — zero MCP coupling. 1931a + 1932a shipped this c155→c156 window. dev-frontend continues parallel work.
+2. **MCP code-only fixes** — build/tsc/vitest run locally without Docker. 1862c-F (transport.ts) dispatched. 1930b (cashFlowTool.ts) queued next.
+3. **Architect / agent-md** — non-coding, gateway-independent.
+
+### Blocked tracks (need 1928a resolution)
+
+- 1929a alerts-table-corruption (HIGH)
+- 1930a verdict-retry-recurrence (MEDIUM)
+- 1930c lancedb-recorruption (MEDIUM)
+- 1922i alert-engine-records-observe (MEDIUM)
+- Live verification of any landed code fix (1862c-F SSE behavior, 1930b OCF values, etc.)
+
+### Carry-over for next cycle (c157)
+
+- **1928a USER F1 — Docker Desktop restart** still pending. Every cowork cycle continues to fail. Outage ≥9h, Sunday pre-market.
+- **1862c-F dev progress** — check if developer landed code + green tests. If done → Review, queue 1930b dispatch next.
+- **1930b** — next dispatch slot when WIP frees up. dev-mcp-server, pure code phase, live verify deferred.
+- **1862c-E-dashboard** (USER, Cloudflare) — still blocks live SSE verification but no longer blocks 1862c-F code work.
+- **1907a digest-predict** CRITICAL OPS — observe.
+- **Frontend dev-frontend** — productive parallel track, monitor for next risk flags.
+- **Post-Docker-restart cascade** (in order): 1929a alerts-table → 1930b OCF live verify → 1930a verdict retry → 1922i alert-engine records → 1930c LanceDB.
+- **TNB c64 follow-ups** — re-evaluate priority once Docker up.
