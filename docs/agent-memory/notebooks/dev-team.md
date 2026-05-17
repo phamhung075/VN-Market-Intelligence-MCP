@@ -1,5 +1,19 @@
 # dev-team notebook
 
+## Current state (c158 close — 2026-05-17T10:15Z)
+- PREFLIGHT: HEAD.lock #49 cured (age=655s, size=0B, no live pid). Worktree prune clean.
+- Drain-signals: inbox empty (0 signals).
+- PO triage (c158): NOTHING — all remaining tasks require Docker Desktop restart (1928a F1 USER) or user Cloudflare action (1862c-E-dashboard). Gateway-independent code backlog exhausted (1862c-F c156, 1930b c157 both done).
+- Session gate: idle EXIT. No codeable work.
+- USER ACTION STILL PENDING: 1928a Docker Desktop restart (F1). After restart: prioritize 1929a (alerts table) + 1922i (alert_engine_records count) + 1930b live verify.
+
+## c158 cycle log
+- PREFLIGHT: HEAD.lock #49 cured (age=655s, 0B, no pid). Prune clean.
+- Drain: inbox empty.
+- PO triage: NOTHING — blocked backlog only. 1930b confirmed Done.
+- Session gate: idle EXIT.
+- Post-cycle: no non-main branches. No signals. Telegram unavailable. Notebook written.
+
 ## Current state (c157 close — 2026-05-17T11:58Z)
 - PREFLIGHT: HEAD.lock absent. Worktree prune clean.
 - Drain-signals: 1 signal (po-c156-triage → routed-to-po). Inbox now empty.
