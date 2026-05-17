@@ -1,37 +1,37 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T00:00Z | **Sprint:** c173 (dev-team orchestration)
+**Last updated:** 2026-05-18T00:10Z | **Sprint:** c174
 
-## Last session summary (c173 — dev-team loop)
+## Last session summary (c174 — dev-team orchestration)
 
-**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. Cycle c173.
+**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. Cycle c174.
 
-**Preflight:** HEAD.lock found (age=2838s, no live git pid). Removed. Log: `docs/agent-memory/sessions/preflight-lsof-20260518T000000Z.log`. Worktree prune: clean.
+**Preflight:** HEAD.lock absent. Worktree prune: clean. No expired locks.
 
 **Drain signals (0a):**
-- `po-signoff-c169.json` + `po-signoff-c170.json` — both already in signals_processed DB (c169=routed-to-po, c170=skipped-duplicate). Moved to `processed/`.
+- `tnb-2026-05-18T00-00-00Z.json` — new signal, fingerprint `ef165b285...`, routed-to-po. Moved to `processed/`. DB INSERT OK.
 
-**Pipeline state check (0b):**
-- State = idle (stale activeTask=1939a cleared). 1939a/b DONE per QA c142/c143 (commits 21dddcfe + a611d911). Pipeline reset to idle/c173.
+**Pipeline state check (0b):** idle — no in_progress task.
 
-**PO Triage (Step 1):**
-- TNB: c169 ACK is latest (2026-05-17T18:38Z). No new audit.
-- pendingSignals[]: empty.
-- Channel audit: Claude Code MCP blocked (established pattern). No phantom reports.
-- TASKS.md:
-  - 1939a/b: moved from Todo → Done (QA c142/c143 APPROVED).
-  - calendar-source-replacement: OBSERVE, no action.
-  - 1922g-pharma-events-source-verify: blocked until 2026-06-01.
-  - Backlog: all USER-ACTION or MONITORING — no dev action.
-- No new architecture briefs (last: 2026-05-17).
-- No new signals.
+**PO Triage (Step 1 → c174):**
+- TNB c67 audit processed. Finding #2 (PC1 legal_risk, HIGH, 3-cycle threshold) → new task 1940a.
+- TNB-critic-gate already DONE (1939a/b). Not re-filed.
+- 1907a (CRITICAL, digest-predict) → USER-ACTION, already tracked.
+- BATCH: [{type: FIX, id: 1940a-pc1-legal-risk-tool-gap, zone: apps/mcp-server/}]
 
-**Session gate:** No actionable dev tasks after TASKS.md cleanup. IDLE EXIT.
+**Step 3 (Execute) — dev-mcp-server dispatched:**
+- Branch: `task/1940a-pc1-legal-risk-tool-gap`
+- Root cause: `get_legal_risk_signals` only queried `alerts` table; PC1 legal_risk in `agent_signals`
+- Fix: `queryAgentSignalsTable()` added to `legalRiskTools.ts`
+- 7 new tests GREEN, 68 total (245+240+signal-integration) GREEN
+- tsc 0 errors
+- Commits: 80873d1c (fix) + 56210908 (notebook/handoff)
+- Status: REVIEW → awaiting QA
 
-**Pipeline state:** idle/c173.
+**Pipeline state:** branch task/1940a-pc1-legal-risk-tool-gap, in REVIEW.
 
 ## Previous sessions (archived context)
 
+Last session (c173): idle EXIT, TASKS.md cleanup (1939a/b Done).
 Last session (c172): 1939a/b QA in progress, IDLE EXIT.
-
-Last code sprint: 1938a c170 — config files (MCP URL fix). Before that: 1936b hydration fixes (dev-frontend).
+Last code sprint: 1939a/b (TNB critic gate) — dev-mcp-server c172.
