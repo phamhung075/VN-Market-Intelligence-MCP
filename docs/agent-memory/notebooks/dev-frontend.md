@@ -74,5 +74,34 @@
 - Vitest: 3/3 PASS (001-api-client.test.ts)
 - Playwright: not run in CI (requires live dev server)
 
+## Cycle 1932a — 2026-05-17 (4 dashboard pages)
+
+### New files
+- app/domain/health.ts — ServiceStatus, GatewayHealthResponse, ServiceHealth, ServiceRow
+- app/domain/news.ts — Headline, NewsSource
+- app/domain/market.ts — extended with PricePoint, MacroData
+- app/lib/api/client.ts — added 5 typed fetch functions (fetchServiceHealth, fetchReutersHeadlines, fetchBloombergHeadlines, fetchMacroExternal, fetchPriceHistory) with unknown+type-guard defensive mapping
+- app/__tests__/1932a-api-health.test.ts (7 tests)
+- app/__tests__/1932b-api-news.test.ts (11 tests)
+- app/__tests__/1932c-api-market.test.ts (12 tests)
+- app/routes/dashboard.tsx — shared layout with NavLink nav bar
+- app/routes/dashboard.server.tsx — /dashboard/server (9 service health table)
+- app/routes/dashboard.fetch.tsx — /dashboard/fetch (Reuters + Bloomberg + macro)
+- app/routes/dashboard.vps.tsx — /dashboard/vps (VPS proxy health for 4 services)
+- app/routes/dashboard.db.tsx — /dashboard/db (price history table + headlines)
+- app/root.tsx — dashboard quick-nav links added
+- app/routes/_index.tsx — dashboard card links added to home page
+
+### Test result
+- Vitest: 33/33 PASS (4 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Patterns used
+- Promise.allSettled() for parallel fetch with per-source error isolation
+- unknown + type guards (no `any`) in all API response parsers
+- SSR-first: all data fetched in loader, no client-side state
+- Error resilience: every loader catches ApiError and returns { error: string }
+- Remix nested routing: dashboard.tsx layout + 4 child routes via Outlet
+
 ## Zone health
-Tier 1-3 complete, all harden criteria met, tsc clean, unit tests GREEN. | HEALTHY
+Tier 1-4 complete. 33/33 tests GREEN. tsc clean. 4 dashboard pages live. | HEALTHY
