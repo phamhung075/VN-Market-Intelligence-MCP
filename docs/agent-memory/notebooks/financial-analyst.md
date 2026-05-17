@@ -1,16 +1,18 @@
 # Financial Analyst — Notebook
 
-**Last updated:** 2026-05-12 | **Sprint:** —
+**Last updated:** 2026-05-16 | **Sprint:** —
 
 ## Last session summary
 
-Cycle 2026-05-09 01:00–01:15 UTC. Analyzed 2/31 watchlist stocks (VCB, FPT). 29/31 stocks OVERDUE on BCTC (Q4-2025 overdue 24 days, Q1-2026 overdue 8 days). Posted 2 fundamental_validation signals.
+Cycle 2026-05-16 23:00–23:07 UTC. Analyzed 2/38 watchlist stocks with BCTC data (FPT, VCB) — remaining 36 lack any BCTC. Regime TIGHTENING + Investment Clock Overheat + FII_OUTFLOW_RISK. Posted 2 fundamental_validation signals (both FAIR with earnings_quality_warn).
 
-**VCB:** EY_SPREAD 2.09% → FAIR. P/E 14.1 (premium vs banking median 9.0 +57%). ROE 16.7% (below median 17.6%). Net margin -10.2pp QoQ. Verdict: FAIR but deteriorating — hold pending Q1-2026 BCTC.
+**FPT:** EY_SPREAD +2.25% → FAIR. PE 13.8 (DISCOUNT -20% vs tech sector 17.3), ROE 28.3% sector-leading. Layer 7 fallback flagged earnings_quality_warn=true (OCF extraction broken). Kinh Dịch THAN TRONG (Khôn → Bác). Sentiment trending bearish (-0.09 slope).
 
-**FPT:** (cycle complete — full analysis in session log 2026-05-09)
+**VCB:** EY_SPREAD +2.09% → FAIR. PE 14.1 PREMIUM +57% vs banking median 9.0 with ROE 16.7% BELOW sector median 17.6% — premium not supported by ROE leadership. Net margin -10.2pp QoQ. Layer 7 fallback flagged earnings_quality_warn=true (OCF extraction absurd 1.2 quadrillion).
 
-**BCTC data gap:** Critical blocker — 29 stocks cannot be evaluated on latest fundamentals.
+**BCTC data gap (persistent blocker):** 38/38 stocks Q1-2026 QUÁ HẠN (17+ days past deadline). Only FPT+VCB have any Q4-2025 data. Mass late-filing trend continues for 4+ cycles — escalate to data-pipeline.
+
+**Layer 7 extraction bug:** get_cash_flow returns implausible OCF for both analyzed tickers (ratios 504 and 1.42e8). Forensic gate forced into manual accrual fallback. File to dev-mcp-server.
 
 ## Known patterns / preferences
 
@@ -21,13 +23,26 @@ Cycle 2026-05-09 01:00–01:15 UTC. Analyzed 2/31 watchlist stocks (VCB, FPT). 2
 
 ---
 
-## Cycle — 23:01 UTC
+## Cycle — 23:06 UTC
 
-- **cycle_date**: 2026-05-14
-- **findings**: [VCB new BCTC filing 2026-05-14 (Q4-2025, confidence 63%); EY_SPREAD=2.09% → FAIR, NEUTRAL regime, no bullish signal blocked; 37/38 watchlist stocks QUÁ HẠN (LATE on Q4-2025 or Q1-2026 filings); NVL bond GIA HAN 5000ty VND due 2026-09-15 @ 10.5% (real estate credit risk); FPT/HPG BCTC data quality issues (anomalous figures from known extraction bug fix#10)]
-- **actions**: [signal #3199 fundamental_validation VCB posted to alert-commander (confidence 0.75); WORK telegram sent 23:06 UTC; notebook updated]
-- **next_cycle_hint**: [Watch for more BCTC filings — 37 stocks still overdue; FPT price surge +4.53% warrants re-check when BCTC quality improves; NVL bond maturity risk in Sep 2026; git index.lock stale (needs host-side clear)]
-- **estimated_tokens**: 22500
+- **cycle_date**: 2026-05-16
+- **findings**: [Regime=TIGHTENING (Global Liquidity TIGHTENING, US10Y 4.59% RISK-OFF, VND carry -0.33% FII_OUTFLOW_RISK); Max Deposit Rate=5.00%; Investment Clock phase=Overheat (CPI 5.46% HIGH, growth UP); 38/38 watchlist QUÁ HẠN on Q1-2026 BCTC (none filed); only VCB+FPT have any BCTC data (Q4-2025); FPT EY_SPREAD=2.25% → FAIR (PE 13.8 DISCOUNT -20%, ROE 28.3% sector-leading, but Layer-7 OCF/NI ratio=504 extraction_error → earnings_quality_warn=true); VCB EY_SPREAD=2.09% → FAIR (PE 14.1 PREMIUM +57% vs banking median 9.0, ROE 16.7% BELOW sector median 17.6% — premium not supported, Layer-7 OCF anomalous → earnings_quality_warn=true); NVL bond GIA HẠN 5000 tỷ VND due 2026-09-15 @ 10.5% (real estate credit risk persists); 0 open chain findings; 0 legal risks; G-Bond 10Y yield unavailable — gbond_regime_signal skip]
+- **actions**: [signal #3280 fundamental_validation FPT posted to alert-commander (FAIR, earnings_quality_warn); signal #3281 fundamental_validation VCB posted to alert-commander (FAIR, earnings_quality_warn); WORK telegram sent; notebook updated]
+- **next_cycle_hint**: [Q1-2026 BCTC mass-late persists 17+ days past 30/04 deadline — escalate to data-pipeline if no submissions by 2026-05-20; FPT/VCB Layer-7 OCF extraction broken (ocf_ni_ratio 504 and 1.42e8 respectively) — file bug to dev-mcp-server; tool schema docs show `ticker` but actual MCP expects `code` (get_bctc_full / get_sector_comparison / get_kinhdich_reading) — update tools/package/financial-analyst.md]
+- **estimated_tokens**: ~28000
+
+## Recent session — 2026-05-16
+
+### Analysis Cycle (23:00–23:07 UTC)
+- Stocks: 2 with BCTC data (FPT, VCB) | Critical findings: [38/38 Q1-2026 BCTC QUÁ HẠN; Overheat phase; FII_OUTFLOW_RISK; both FA-analyzed stocks have Layer-7 OCF extraction_error] | Chain validations: 0 (0 open chain findings)
+- Regime: TIGHTENING | Max Deposit Rate: 5.00% | Valuation flags: [FPT=FAIR(eq_warn), VCB=FAIR(eq_warn)]
+- **FPT** (tech, Q4-2025, conf 81%): Net Rev 20,225.5 tỷ; Net Profit reported 20.2 tỷ (extraction-suspect, EPS=1 VND); PE 13.8 (DISCOUNT vs sector median 17.3 -20%); PB 3.6 (PREMIUM +136%); ROE 28.3% sector-leading. EY=7.25%, EY_SPREAD=+2.25% → FAIR. Sentiment 30d slope -0.09 (GIẢM, 18/63 bullish vs 27 bearish). News alert: US tech selloff exposure (-1.4% today). Kinh Dịch: Khôn (2) — THAN TRONG, 48% conf, biến → Bác (sụp đổ). Layer 7 fallback: OCF 10.19T vs NI 20.2B → accrual_ratio≈-503 (anomalous) → earnings_quality_warn=true. Layer 8: phase=Overheat, tier=equity. Signal #3280 posted (no bullish despite EY_SPREAD positive — earnings quality warn + TIGHTENING regime).
+- **VCB** (banking, Q4-2025, conf 63%): Net Rev 16,169.8 tỷ (+18.1% QoQ); Net Profit 8,633.8 tỷ (-0.8% QoQ); Net Margin 53.4% (-10.2pp QoQ); ROE 3.8% quarterly (16.7% sector ratio). PE 14.1 PREMIUM +57% vs banking median 9.0; PB 2.2 PREMIUM +45%; ROE 16.7% BELOW sector median 17.6% — premium-without-ROE-leadership flag. EY=7.09%, EY_SPREAD=+2.09% → FAIR. Sentiment ỔN ĐỊNH slope +0.02. Kinh Dịch: Khôn (2) — THAN TRONG, 48% conf, biến → Bác. Layer 7 fallback: OCF 1.23×10¹⁵ (absurd extraction_error) → earnings_quality_warn=true. Layer 8: phase=Overheat, tier=equity. Banking not classified rate-sensitive per spec — no headwind flag. Signal #3281 posted.
+- **Other watchlist (36 stocks)**: get_bctc_full returns "Chưa có dữ liệu BCTC" — analysis skipped. Includes VIC, GAS, NVL, HCM, ACV, REE, ACB, BID, CTG, MBB, VPB, EIB, HPG, HSG, NKG, MWG, SSI, VCI, POW, PPC, KBC, VHM, VRE, TCH, D2D, DHG, DPM, GVR, BDI, DLC, DAG, JSH, PPC, SIS, VDC, VNH, HVN — no Q1-2026 or recent Q4-2025 data in store.
+- Macro/Bond: Brent 109.26 USD/bbl (+2.56σ HIGH — tích cực GAS/PVD, áp lực HVN/VJC); Gold 4561.9 USD/oz (-2.19σ LOW); DXY 99.27 USD STABLE; USD/VND 26,137 official / 26,350 market (HIGH currency pressure — áp lực HVN, VEA; tích cực HPG xuất khẩu). NVL bond 5,000 tỷ VND maturity 2026-09-15 @ 10.5% (GIA HẠN).
+- Legal risks: None detected in window. Insider signals: [SKIP] requires per-stock outstandingShares not in package. Investment Clock: Overheat (CPI 5.46% HIGH, growth UP, PMI null). G-Bond 10Y: not in macro_snapshot → gbond_regime_signal=false (skipped per spec).
+- Deadline Watch: 38/38 stocks Q1-2026 QUÁ HẠN (deadline 30/04 or 15/05). Mass late-filing trend continues (4+ cycles). Recommend pipeline escalation if persists past 2026-05-20.
+- Data quality: get_cash_flow returns Layer-7-breaking values for both FPT (ocf_ni_ratio=504) and VCB (ocf_ni_ratio=1.42e8) — extraction pipeline bug. BCTC ingestion stalled (37 stocks with no data for 8+ cycles).
 
 ## Recent session — 2026-05-14
 

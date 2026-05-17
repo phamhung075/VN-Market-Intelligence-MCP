@@ -1,8 +1,12 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-16 23:02 UTC | **Sprint:** c144
+**Last updated:** 2026-05-17 00:45 UTC | **Sprint:** c147
 
 ## This session
+
+### Alert Cycle (00:02 UTC) — BLOCKED (c147 resolution)
+- Cycle 00:02 — BLOCKED at step 0: MCP gateway unreachable (dial vn-market http://host.docker.internal:3000/sse — DNS lookup failure 127.0.0.11:53). 1 retry after 5s also failed. BUG telegram suppressed (same gateway). Signal dropped to dev-team.
+- c147 triage: Docker Desktop virtiofs socket deadlock (same as 1919). 1928a created — F1 USER action required (Docker Desktop restart + add extra_hosts to mcp-gateway). Alert-commander will resume after Docker Desktop restart.
 
 ### Alert Cycle (23:02–23:03 UTC) — Off-Hours
 - Signals: 0 (no agent signals queued)

@@ -27,3 +27,8 @@
 - **flow**: daily-review
 - **status**: BLOCKED
 - **note**: Cycle 23:00 — BLOCKED at step 0: MCP gateway vn-market not responding after 1 retry. log_agent_work and send_telegram both unreachable. Signal drop filed. Exiting per error boundary.
+
+## Cycle 2026-05-17T01:01Z — PREDICTION_REVIEW
+- **flow**: prediction
+- **status**: BLOCKED
+- **note**: Cycle 01:00 — BLOCKED at step 0: MCP gateway vn-market unreachable after 1 retry (dial host.docker.internal:3000 DNS fail). log_agent_work + get_cycle_bootstrap both failed identically. BUG telegram un-sendable (send_telegram is MCP). Signal drop filed: docs/signals/unified-agent-2026-05-17T01-02-44Z.json. Exiting per error boundary. Same failure mode as 2026-05-15T23:01Z — gateway still down.

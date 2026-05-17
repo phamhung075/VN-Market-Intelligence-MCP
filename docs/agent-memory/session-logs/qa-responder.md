@@ -1,5 +1,5 @@
 # QA Responder — Session Log
-consecutive_empty_cycles: 0
+consecutive_empty_cycles: 1
 backoff_until: 2026-05-16T22:49:03Z
 
 ## Cycles
@@ -12,3 +12,9 @@ Cycle 20:47–20:48 — empty queue. consecutive_empty_cycles: 4. MCP probe live
 
 ### 2026-05-16 21:49 UTC
 Cycle 21:47–21:49 — empty queue. consecutive_empty_cycles incremented 4→5 → backoff triggered. backoff_until=2026-05-16T22:49:03Z (current UTC + 60 min, computed from `date -u`). Counter reset to 0. MCP probe via get_pending_ask_questions returned [] (live success — no infrastructure issue).
+
+### 2026-05-16 23:49 UTC
+Cycle 23:48–23:49 — backoff window expired (now 23:48Z > backoff_until 22:49:03Z). Resumed cycle. get_pending_ask_questions returned [] (live success). consecutive_empty_cycles 0→1. No new backoff (counter < 5). WORK telegram sent. backoff_until line left in place per cycle.md step 0b literal rule (only remove when queue has items). Git commit deferred — .git/HEAD.lock still stuck (cannot lock ref 'HEAD'), same condition as prior cycles. Notebook + session log appended on disk; no BUG telegram (filesystem issue, not MCP).
+
+### 2026-05-17 00:48 UTC
+Cycle 00:47–00:48 — BLOCKED at step 1. MCP gateway unreachable: `dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. Two consecutive live probes failed (no stale-claim risk — real infra error). Cannot send BUG telegram (telegram is same MCP). Signal dropped to docs/signals/qa-responder-2026-05-17T00-48-40Z.json. Notebook + session log appended on disk. EXIT.

@@ -1,6 +1,29 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-16 06:21 UTC | **Status:** OK
+**Last updated:** 2026-05-16 23:24 UTC | **Status:** OK (LanceDB partial — 1/3 search_similar_context returned, 2/3 empty)
+
+### Cycle (23:20–23:24 UTC)
+- Items: 20 | Impacts: 9 | Signals: [chain_catalyst#3282/securities+tech, chain_catalyst#3283/GAS] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed (dedup ≤180min): HVN urgent_news (vs #3271, ~2h ago), HVN aviation chain_catalyst (vs #3272, ~2h ago), VIC Vingroup bullish chain_catalyst (vs #3276, ~1h ago)
+- Key: Posted (1) Dragon Capital "ba cú hích" + bullish forecast as broad-market chain_catalyst (securities/tech, regime_adj=6.3) — distinct from VIC-specific #3276; (2) Brent $109 +2.56σ + USD/VND 26,350 → CPI/SBV tightening macro chain_catalyst with stock=GAS (regime_adj=8.0, cpi_pressure_risk=true) — distinct event_type=macro from aviation-focused #3272. Gold falling (no spike rule trigger). No PMI articles. Macro snapshot valid, REGIME_SOURCE=macro_snapshot. LanceDB returned 1/3 (HVN); VIC and oil_gas queries empty.
+- Market: CLOSED (Sat night UTC, off-hours 4h cadence)
+
+### Cycle (22:20–22:24 UTC)
+- Items: 20 | Impacts: 11 | Signals: [chain_catalyst#3276/VIC] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: HVN urgent_news (dedup vs #3271, 1min ago), HVN chain_catalyst (dedup vs #3272, 1min ago), Dragon Capital ba cú hích bullish 8 (regime_adj=5.6), Sốt dòng tiền dầu khí 8 (regime_adj=5.6), Shark Phú export squeeze 8 (no clear watchlist mapping)
+- Key: VIC/Vingroup "quá nóng nhưng không vô lý" cafef bullish (score=10, regime_adj=7.0, hot_money_risk=true) — first VIC catalyst since #3246 expired. HVN double-hit suppressed (just posted by prior 21:20 cycle). Brent $109.26 +2.56σ already chained into #3272. Macro snapshot valid, REGIME_SOURCE=macro_snapshot.
+- LanceDB: 4/4 search_similar_context failed again (invalid magic 'LENC') — index file corrupted, needs rebuild
+- Market: CLOSED (Sat night UTC, off-hours 4h cadence)
+
+### Cycle (21:20–21:22 UTC)
+- Items: 20 | Impacts: 9 | Signals: [urgent_news#3271/HVN, chain_catalyst#3272/aviation] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 accepted / 0 rejected | Filter hints: [default]
+- Suppressed: VIC bullish 9 (regime_adj=6.3 < 7), Dragon Capital ba cú hích bullish 8 (regime_adj=5.6), stocks tiếp đà tăng bullish 9 (regime_adj=6.3), Bitcoin 7 (off-watchlist), Shark Phú export squeeze bearish 8 (no clear watchlist hit)
+- Key: HVN double-hit — lương lãnh đạo -40-50% (cafef) + Brent $109.26 +2.56σ + USD/VND 26,350 → urgent_news (severity=high) + chain_catalyst (aviation, cpi_pressure_risk=true). Macro snapshot valid, REGIME_SOURCE=macro_snapshot.
+- LanceDB issue: 3/3 search_similar_context calls failed (LanceError: invalid magic 'LENC'). Feedback submitted via submit_feedback (BUG channel push failed — TELEGRAM_REPORT_BUG_CHANNEL_ID may be misconfigured). Stage 1b skipped, non-fatal.
+- Market: CLOSED (Sat off-hours, 4h cadence)
 
 ### Cycle (06:19–06:21 UTC)
 - Items: 20 | Impacts: 5 | Signals: [urgent_news#3250/HVN, chain_catalyst#3251/trade_war] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
@@ -247,3 +270,6 @@ Fetched 20 articles (post-market close cycle, 11:22 UTC). VN-Index confirmed all
 - [FATAL] Bootstrap failed — vn-market MCP unreachable (host.docker.internal:3000 DNS error after 2 retries)
 - Cycle STOPPED per flow invariant: bootstrap failure → STOP
 - BUG signal could not be posted (MCP down)
+
+### Cycle 2026-05-17 00:20 UTC
+- Cycle 00:20 — BLOCKED at step 0: gateway unreachable (dial vn-market — host.docker.internal:3000 DNS lookup failed). Live probe (health_check + get_cycle_bootstrap retry) returned same error. Signal file dropped: docs/signals/news-scout-2026-05-17T00-20-56Z.json. BUG telegram skipped — same module unreachable; recurrence of 2026-05-16 incident.

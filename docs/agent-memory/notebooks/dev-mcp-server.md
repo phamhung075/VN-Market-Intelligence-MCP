@@ -4,6 +4,59 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task A + B — Empty tables investigation (2026-05-16)
+
+**Task A — signal_quality_audit (0 rows): LEGITIMATE, no fix needed**
+- `signalQualityAuditStore.ts` IS wired — called from `agentSignalTools.ts` line 349.
+- Fires inside `post_agent_signal` MCP tool for `price_confirmation` and `urgent_news` signal types only, and only when `finding_data.confidence` is numeric.
+- NOT called from any scheduler job — only cowork agents trigger it during market analysis cycles.
+- Saturday = no cowork agents running = 0 rows is correct. Table will populate on weekday market sessions.
+- No action taken.
+
+**Task B — public_contracts writer: IMPLEMENTED**
+- Root cause: `fetchPublicContracts` existed but no job persisted results to DB.
+- muasamcong.mpi.gov.vn returns 404 from France → geo-blocked. VPS proxy required.
+- Files created:
+  - `apps/mcp-server/src/infrastructure/db/publicContractsStore.ts` — INSERT with (title, award_date) dedup
+  - `apps/mcp-server/src/scheduler/market-data/publicContractsJob.ts` — DI-injectable job, fail-loud
+  - `apps/mcp-server/src/__tests__/taskB-public-contracts-job.test.ts` — 10 tests, all GREEN
+- Files modified:
+  - `muasamcong.ts` — added `getMuasamcongUrl()` + `MUASAMCONG_VPS_PROXY_URL` env support
+  - `cronConfig.ts` — `publicContractsRefresh: CRON_PUBLIC_CONTRACTS ?? '0 3 * * 1'`
+  - `startScheduler.ts` — job registered via `jobRunRepo.wrapRun`
+- Ops action needed: set `MUASAMCONG_VPS_PROXY_URL=http://<vps-ip>:8765/muasamcong` in Docker env.
+- Commit: `7f300f9e`
+
+
+### Task 1922 — vnstock_events production write path (2026-05-16, DONE)
+
+**Mission:** Wire vnstock_events INSERT which was missing from the production pipeline.
+
+**Root cause diagnosis:**
+1. `storeEvents()` and `fetchVnstockEvents()` existed — pipeline was wired in `syncVnstockData.ts` (line 356-362).
+2. vnstock v4.0.3 upgrade broke `Vnstock().stock()` path: `vnstock.common.viz` raises `ImportError` when charting libs absent.
+3. For all other methods (officers, shareholders, etc.) they had 493/56 rows because they were last inserted 2026-04-15 BEFORE the v4 upgrade.
+4. Events-specific: EVENTS_SCRIPT used old v3 column names (`event_date`, `event_name`, `event_type`) but v4 API returns `public_date`, `event_title_en`, `event_code`.
+5. Second bug: `events()` call prints a box-drawing banner to **stdout** (not stderr) — `runPython` detected box-drawing as `RATE_LIMITED` sentinel → `storeEvents()` received string instead of array.
+
+**Fixes applied:**
+- `EVENTS_SCRIPT`: bypass `Vnstock()` wrapper → use `Company` directly with viz mock (`sys.modules.setdefault`)
+- Capture stdout during `Company.events()` call to discard the banner
+- Map v4 columns: `public_date→eventDate`, `event_title_en→eventName`, `event_code→eventType`, fallback chain for v3 compat
+
+**Verification:** 150 events for FPT/VCB/HPG (50 each) after manual sync.
+
+**Files modified:**
+- `apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts` — EVENTS_SCRIPT rewrite (2 commits)
+
+**Files created:**
+- `apps/mcp-server/src/__tests__/1922-vnstock-events.test.ts` — 22 tests, all GREEN
+
+- tsc 0 errors | 22/22 tests GREEN | Commits `a04fce54`, `5dddcc03`
+- Full watchlist sweep running in background
+
+---
+
 ### Task 1922d — reputationComputeJob daily writer (2026-05-16, DONE)
 
 **Mission:** Wire `reputation_scores` first production caller. `saveReputation()` had zero callers before this task.

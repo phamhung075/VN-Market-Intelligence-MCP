@@ -1602,3 +1602,40 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~300 |
+
+---
+
+### Q&A Batch (23:48–23:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 1 | backoff_until: 2026-05-16T22:49:03Z (expired; left in header per cycle.md step 0b literal rule)
+- Note: Backoff window expired (23:48Z > 22:49:03Z) → cycle resumed. get_pending_ask_questions returned [] (live success, no infrastructure issue).
+
+## Metrics (cycle 2026-05-16 23:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~700 |
+
+---
+
+### Q&A Batch (00:47–00:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 1) | backoff_until: 2026-05-16T22:49:03Z (expired)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry. Error: `dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`.
+- Live probe failed twice → real infrastructure error (not stale notebook claim). Cannot send BUG telegram (gateway is the same MCP). Dropped signal file. EXIT per cowork-error-boundary.
+
+## Metrics (cycle 2026-05-17 00:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~1200 |

@@ -1,51 +1,52 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-17T01:40Z (c146 — 1926a verdictResolutionJob retry storm fix)
+**Written:** 2026-05-17T00:45Z (c147 — 1927a PMI fix + gateway DNS signals)
 
-## c146 (2026-05-17T23:20Z → 2026-05-17T01:40Z, ~20min)
+## c147 (2026-05-17T00:07Z → 2026-05-17T00:45Z, ~38min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock (1034s, 0B, no pid) + index.lock (395s) + main.lock (1718s) — all stale | All removed |
-| 0a drain-signals | docs/signals/ empty | Skip |
-| 1 PO triage | 26 new reports: 20× verdictResolutionJob retry storm, 4× wontfix-timing, 2× monitoring | Dispatched 1926a |
-| 1926a | verdictResolutionJob: `fetchHistory/fetchPrice null` → row never updated → hourly retry storm | Fixed |
-| Fix | Mark `false_positive` + `detail:"price-fetch-failed:unresolvable"` on first miss | Row excluded next run |
-| Tests | 19/19 GREEN (1863b suite), 24/24 GREEN (1863b+1863d), tsc 0 errors | PASS |
-| Docker | mcp-server rebuilt + restarted | 3000+4004 healthy, 141 tools |
-| Reports | All 26 reports resolved (batch) | 0 new remaining |
+| 0 PREFLIGHT | HEAD.lock (753s, 0B, no pid) | Removed |
+| 0a drain-signals | 3 signals: alert-commander/news-scout/report-analyzer — all gateway DNS fail | Processed → routed-to-po |
+| 1 PO triage | No new Telegram reports. Signals = 1 root cause (1928a) | 1927a shipped + 1928a created |
+| 1927a | PMI always null: (1) idleTimeout 10s kills /macro/external (2) no PMI extraction | Fixed both |
+| Tests | 8/8 GREEN (1924a+PMI), tsc 0 errors | PASS |
+| Docker | Builds running in background (stalled by Docker DNS deadlock) | Pending |
+| 1928a | F1 USER: Docker Desktop restart + add extra_hosts to mcp-gateway | Created Todo |
 
-### c146 key state
+### c147 key state
 
 | Item | State |
 |------|-------|
-| verdictResolutionJob retry storm | ✅ Fixed — unresolvable rows marked false_positive immediately |
-| Port 3000 + 4004 | ✅ 141 tools healthy |
-| All 26 reports | ✅ Resolved (1926a fixed + batch wontfix) |
-| bond_maturity | ⚠️ Still 0 — cron fires 02:30 UTC (~1h from now) |
-| alert_engine_records | ⚠️ Still 0 — continue 5-cycle observation |
-| agent_signals | 50 (growing normally) |
-| LanceDB | ✅ Fresh empty table from c145 — reindexing via news cycles |
-| Fleet | 11/11 healthy |
+| 1927a manufacturing PMI fix | ✅ Committed `8d4716b7` — idleTimeout 120s + parsePmiFromText |
+| Docker builds (macro-indicators + mcp-server) | ⚠️ Pending — Docker CLI hung (DNS deadlock) |
+| mcp-gateway DNS (host.docker.internal) | 🔴 FAIL — virtiofs socket deadlock, F1 USER needed |
+| Cowork agents (alert-commander, news-scout, report-analyzer) | 🔴 Blocked since 00:02 UTC |
+| bond_maturity | ⚠️ Still 0 — cron fires 02:30 UTC (~1.75h from now) |
+| alert_engine_records | ⚠️ Still 0 — observation cycle 3/5 |
+| agent_signals | 53 (growing) |
+| LanceDB | Regenerating via news cycles |
+| Fleet | 11/11 healthy (local), mcp-gateway DNS broken |
 
-### 1926a root cause (c146)
+### 1927a root cause (c147)
 
-verdictResolutionJob.ts line 204: when `fetchHistory()` returned null, only logged BUG + `continue`.
-Row stayed `verdict="pending"` → picked up again by filter every hourly run → 20 BUG reports in 16h.
-Tickers MACRO_GOLD/VNH/WATCHLIST-31 have no entries in stock_price DB (non-HOSE).
-Fix: `store.updateVerdict(id, {verdict:"false_positive", detail:"price-fetch-failed:unresolvable", resolvedAt:now})`.
-`verdict !== "pending"` filter excludes it permanently. One BUG telegram only.
+Two issues compounded:
+1. `Bun.serve` default `idleTimeout=10s` killed `/macro/external` HTTP response at 10s while TE scraper runs for 65s → mcp-server saw "Remote end closed connection" → `extData` null → PMI never received. Fix: `idleTimeout: 120` in `apps/macro-indicators/src/index.ts`.
+2. `macroIndicatorRefreshJob.ts` only extracted CPI from external response via `parseCpiFromExternal`. No equivalent for PMI. Fix: added `parsePmiFromText()` + `parsePmiFromExternal()`, wired into upsert.
 
-### Stale git locks (c146)
+### 1928a: mcp-gateway DNS recurring deadlock
 
-Three stale locks cleared: HEAD.lock (1034s), index.lock (395s), main.lock (1718s).
-All 0B, no live git PIDs. Pattern consistent with background bun test runner holding lock briefly.
-No escalation (< 3 in 24h session boundary).
+Pattern: `host.docker.internal` DNS in mcp-gateway fails every 3-5h → all cowork agents blocked.
+Root cause: Docker Desktop virtiofs socket forwarding deadlock (filesystem-event.sock context deadline exceeded).
+Previous fixes: `pkill -9 Docker` + `open -a Docker` at c132 (02:21 UTC) and 05:48 UTC.
+Current state: deadlocked again at 00:02 UTC (c147 start).
+Structural fix needed: add `extra_hosts: host-gateway` to mcp-gateway container to bypass DNS entirely.
+Requires: (1) Docker Desktop restart (F1 USER), (2) inspect mcp-gateway launch config, (3) add extra_hosts.
 
-### c147 carry-forward
+### c148 carry-forward
 
-1. **1922f-bond-maturity**: Cron fires 02:30 UTC (~1h). Verify ≥1 row after tick.
-2. **1922i-alert-engine-records**: Continue 5-cycle observation (still 0).
-3. **1862c-F**: SseSessionManager dead-session eviction — 5 cycles clean check.
-4. **LanceDB reindex**: Monitor rag-service /index calls; embeddings regenerating.
-5. **VN PMI**: Check if manufacturing-pmi populated by daily macro refresh.
+1. **1928a**: F1 USER Docker Desktop restart → find mcp-gateway compose/run config → add extra_hosts
+2. **1927a Docker rebuild**: After Docker restart, `docker-compose up -d --build macro-indicators mcp-server`
+3. **1922f-bond-maturity**: Cron fires 02:30 UTC. Verify ≥1 row after tick.
+4. **1922i-alert-engine-records**: Cycle 3/5 observation.
+5. **LanceDB**: Monitor growth of rag_entries.
