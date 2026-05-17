@@ -14,7 +14,7 @@ All routes live in `apps/frontend/app/routes/`.
 | `dashboard.fetch.tsx` | `/dashboard/fetch` | `GET /news/reuters/headlines`, `GET /news/bloomberg/headlines`, `GET /macro/external` |
 | `dashboard.db.tsx` | `/dashboard/db` | `GET /stock/price/history?code=VNINDEX`, `GET /news/reuters/headlines` |
 | `dashboard.vps.tsx` | `/dashboard/vps` | `GET /health/<service>` × 4 (news, macro, stock, pdf) |
-| `dashboard.analysis.tsx` | `/dashboard/analysis` | `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × N, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators`, `GET /mcp/api/signals/stock/:code?limit=10` |
+| `dashboard.analysis.tsx` | `/dashboard/analysis` | `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × 8, `GET /stock/price/batch?tickers=…`, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators`, `GET /mcp/api/signals/stock/:code?limit=10`, `GET /mcp/api/signals/stock/:code?limit=5&type=chain_catalyst` |
 
 ### Loader pattern
 
@@ -72,26 +72,54 @@ Source: `apps/frontend/app/components/ClientTimestamp.tsx:70`
 
 ## Analysis Dashboard — Stock Detail Panel (`dashboard.analysis.tsx`)
 
-When `?stock=CODE` is present in the URL, the loader fetches four data sources in parallel via `Promise.allSettled()`:
+### Stock Selector (StockSelector)
 
-1. `GET /kinh-dich/reading/:code` — Kinh Dịch reading (required)
-2. `GET /stock/price/history?code&days=90` — 90-day OHLCV (required)
-3. `POST /ta/ta/indicators` body `{ code, date: "YYYY-MM-DD" }` — TA snapshot (non-fatal, null on failure)
-4. `GET /mcp/api/signals/stock/:code?limit=10` — per-stock agent signals (non-fatal, null on failure)
+Always visible at the top of the analysis page. Renders all 30 active watchlist tickers as clickable badges grouped by sector label. Selected ticker is highlighted blue. Clicking navigates to `?stock=XXX`; clicking the selected badge navigates to `.` (deselects).
 
-Non-fatal fetches set `detail.ta = null` or `detail.signals = null` respectively; the UI degrades gracefully.
+Sector groups are derived from `groupBySector(WATCHLIST_STOCKS)` — a pure function in `app/domain/market.ts`.
+
+### Watchlist Overview Grid (WatchlistOverviewGrid)
+
+Visible only when no `?stock=` param is present. Shows all 30 active stocks as tile cards grouped by sector. Each tile shows ticker, company, exchange badge, last close price + change %, signal count. Tiles use `WatchlistTileData` from `fetchWatchlistPrices()`. Degrades gracefully: if price fetch fails, tiles show "Không có giá".
+
+### Loader — always-on fetches (both selected and overview modes)
+
+1. `GET /kinh-dich/market` — overall market hexagram
+2. `POST /macro/snapshot` — macro signals (oil, gold, FX)
+3. `GET /kinh-dich/reading/:code` × 8 (KD_SAMPLE_TICKERS) — sample KD overview table
+4. `GET /stock/price/batch?tickers=<all_active_tickers>` — lightweight tiles (non-fatal, returns `{}` on error)
+
+### Loader — selected stock fetches (only when `?stock=CODE`)
+
+5. `GET /kinh-dich/reading/:code` — reading for selected stock (required)
+6. `GET /stock/price/history?code&days=90` — 90-day OHLCV (required)
+7. `POST /ta/ta/indicators` body `{ code, date: "YYYY-MM-DD" }` — TA snapshot (non-fatal, null on failure)
+8. `GET /mcp/api/signals/stock/:code?limit=10` — per-stock agent signals (non-fatal, null on failure)
+9. `GET /mcp/api/signals/stock/:code?limit=5&type=chain_catalyst` — cascade macro signals (non-fatal, [] on failure)
+
+Non-fatal fetches set `detail.ta = null`, `detail.signals = null`, or `detail.cascadeSignals = []` respectively; the UI degrades gracefully.
 
 The `/mcp/api/signals/stock/:code` endpoint is served by the mcp-server (routed via api-gateway proxy: `/mcp/*` → `http://mcp-server:3000`). It queries the `agent_signals` table filtered by `stock_code`, ordered by `created_at DESC`.
 
 ### Detail panel layout
 
 ```
+[SectorPeersBar — peer tickers in same sector with direction badges]
 [Chart — full width (StockChart, 560px)]
 [AnalysisDecision — full width, colored background]
 [InfoSourcePanel — full width, 5-row data source table]
+[MacroImpactPanel — cascade macro signals for this stock]
 [StockSignalsPanel — full width, agent signals table (last 10)]
 [Kinh Dịch column | Price table column]
 ```
+
+### SectorPeersBar
+
+Rendered immediately below the stock detail header. Queries `WATCHLIST_STOCKS` for stocks sharing the same `sector` value as the selected stock. Each peer shows: ticker (blue, clickable to `?stock=PEER`) + direction arrow + changePct%. Uses `WatchlistTileData` from the batch price fetch (already in loader; no extra HTTP call).
+
+### MacroImpactPanel
+
+Shows cascade agent signals (`signal_type = 'chain_catalyst'`) for the selected stock. Format: reasoning text + BULLISH/BEARISH label + confidence % + date. Falls back to "No macro cascade in 24h" when the array is empty.
 
 ### `computeDecision` scoring
 

@@ -63,6 +63,31 @@ Tests for `ClientTimestamp` and `ClientTimeString` components (`app/components/C
 - React hooks tested with `@testing-library/react` `render` + `act` — no Remix context needed for component-level tests
 - Remix Vite plugin preamble check patched in `app/__tests__/setup.ts` via `window.__vite_plugin_react_preamble_installed__ = true`
 
+### `app/__tests__/1937-ta-snapshot.test.ts` — 6 tests
+Tests `fetchTASnapshot` API function:
+- POST request shape and response mapping
+- Error propagation on non-ok response
+
+### `app/__tests__/1937-decision-logic.test.ts` — 10 tests
+Tests `computeDecision` pure function from `dashboard.analysis.tsx`:
+- All 5 score bands (MUA MẠNH / MUA / GIỮ / BÁN / BÁN MẠNH)
+- TA trend impact, RSI thresholds, KD signal variants, price trend delta
+
+### `app/__tests__/1938-stock-signals.test.ts` — 12 tests
+Tests `fetchStockSignals` API function:
+- Response mapping from snake_case DB rows to `AgentSignal` domain objects
+- `confidence_score` normalisation 0–100 → 0.0–1.0
+- Direction extraction from `finding_data`, `payload`, and fallback
+- Empty/null input graceful handling
+
+### `app/__tests__/1939-watchlist.test.ts` — 16 tests
+Tests for Task 1939 — watchlist navigation:
+- `WATCHLIST_STOCKS` constant: at least 30 active entries, all required fields present, canonical tickers included
+- `groupBySector()`: groups by sector key, excludes inactive by default, `includeInactive` option, empty input
+- `fetchWatchlistPrices()`: `{ quotes: Record<...> }` envelope shape, flat array shape, HTTP error returns `{}`, empty map on no data
+- `fetchCascadeSignals()`: cascade signals mapping, empty array on no signals, empty array on API error
+- `WatchlistTileData` type shape: required fields, direction values
+
 ## Known Gaps
 
 - No Playwright e2e tests run in CI (requires live dev server on port 3001)
@@ -71,7 +96,8 @@ Tests for `ClientTimestamp` and `ClientTimeString` components (`app/components/C
 
 ## Coverage Notes
 
-- API service layer (Tier 3): 100% of exported functions covered
-- Domain helpers (`parseMacroSources`, `toUserFriendlyError`): covered
+- API service layer (Tier 3): 100% of exported functions covered (105 tests)
+- Domain helpers (`parseMacroSources`, `toUserFriendlyError`, `groupBySector`, `WATCHLIST_STOCKS`): covered
 - Client-only components (`ClientTimestamp`, `ClientTimeString`): covered
 - Route loaders: not directly tested (integration concern)
+- `computeDecision` scoring logic: fully covered (5 bands × multiple conditions)
