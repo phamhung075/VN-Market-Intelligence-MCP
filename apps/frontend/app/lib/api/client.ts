@@ -271,7 +271,7 @@ export async function fetchTASnapshot(code: string): Promise<TASnapshot> {
 // Stock signals
 // --------------------------------------------------------------------------
 
-import type { AgentSignal } from "~/domain/market";
+import type { AgentSignal, SignalAccuracy } from "~/domain/market";
 
 /**
  * Map one raw DB row (snake_case) to an AgentSignal domain object.
@@ -310,9 +310,81 @@ function toAgentSignal(row: unknown): AgentSignal | null {
 }
 
 /**
+ * Parse a raw API response envelope into AgentSignal[].
+ * If the response contains an `accuracy` map (Sprint B), attaches the matching
+ * accuracy entry to each signal row where signal_type matches a key.
+ *
+ * Exported so it can be unit-tested without mocking fetch.
+ */
+export function parseAccuracyFromResponse(
+  data: Record<string, unknown>,
+): AgentSignal[] {
+  const rawItems: unknown[] = Array.isArray(data["signals"])
+    ? (data["signals"] as unknown[])
+    : [];
+
+  // accuracy map is optional — absent when Sprint B is not yet deployed
+  const accuracyMap: Record<string, SignalAccuracy> | null =
+    data["accuracy"] !== null &&
+    typeof data["accuracy"] === "object" &&
+    !Array.isArray(data["accuracy"])
+      ? (data["accuracy"] as Record<string, SignalAccuracy>)
+      : null;
+
+  return rawItems.map((row) => {
+    const signal = toAgentSignal(row);
+    if (signal === null) return null;
+
+    if (accuracyMap !== null) {
+      const acc = accuracyMap[signal.signalType];
+      if (
+        acc !== undefined &&
+        acc !== null &&
+        typeof acc === "object" &&
+        "sample_count" in acc
+      ) {
+        signal.accuracy = acc;
+      }
+      // if signalType not in map → accuracy stays undefined
+    }
+
+    return signal;
+  }).filter((s): s is AgentSignal => s !== null);
+}
+
+/**
+ * Badge colour + label for a given SignalAccuracy.
+ *
+ * Rules (from Sprint C brief):
+ * - sample_count < 3  → grey "New"
+ * - accuracy_rate null  → grey "New"
+ * - accuracy_rate >= 0.70 → green e.g. "70%"
+ * - accuracy_rate 0.40–0.69 → amber e.g. "55%"
+ * - accuracy_rate < 0.40 → red "Low"
+ *
+ * Exported for unit-testing badge logic independently of React.
+ */
+export function accuracyBadgeProps(acc: SignalAccuracy): {
+  color: "green" | "amber" | "red" | "grey";
+  label: string;
+} {
+  if (acc.sample_count < 3 || acc.accuracy_rate === null) {
+    return { color: "grey", label: "New" };
+  }
+  const rate = acc.accuracy_rate;
+  if (rate >= 0.7) {
+    return { color: "green", label: `${Math.round(rate * 100)}%` };
+  }
+  if (rate >= 0.4) {
+    return { color: "amber", label: `${Math.round(rate * 100)}%` };
+  }
+  return { color: "red", label: "Low" };
+}
+
+/**
  * Per-stock agent signals.
  * Endpoint: GET /mcp/api/signals/stock/:code?limit=10
- * Response shape: { signals: RawSignalRow[] }
+ * Response shape (Sprint B+): { signals: RawSignalRow[], accuracy?: { [signal_type]: { accuracy_rate, sample_count } } }
  *
  * The call goes through api-gateway: /mcp/* → mcp-server (port 3000).
  * Non-fatal — callers should catch and treat as null on failure.
@@ -321,13 +393,8 @@ export async function fetchStockSignals(code: string, limit = 10): Promise<Agent
   const raw = await apiGet<unknown>(
     `/mcp/api/signals/stock/${encodeURIComponent(code)}?limit=${limit}`,
   );
-  const items: unknown[] =
-    raw !== null &&
-    typeof raw === "object" &&
-    Array.isArray((raw as Record<string, unknown>)["signals"])
-      ? ((raw as Record<string, unknown>)["signals"] as unknown[])
-      : [];
-  return items.map(toAgentSignal).filter((s): s is AgentSignal => s !== null);
+  if (raw === null || typeof raw !== "object") return [];
+  return parseAccuracyFromResponse(raw as Record<string, unknown>);
 }
 
 // --------------------------------------------------------------------------

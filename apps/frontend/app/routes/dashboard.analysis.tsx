@@ -17,6 +17,7 @@ import {
   fetchTASnapshot,
   fetchWatchlistPrices,
   fetchCascadeSignals,
+  accuracyBadgeProps,
   type WatchlistTileData,
 } from "~/lib/api/client";
 import type {
@@ -1031,6 +1032,34 @@ function signalTypeLabel(signalType: string): string {
   }
 }
 
+/**
+ * Render an accuracy badge inline.
+ * - absent accuracy → dash
+ * - sample_count < 3 → grey "New"
+ * - rate >= 0.70 → green
+ * - rate 0.40–0.69 → amber
+ * - rate < 0.40 → red "Low"
+ */
+function AccuracyBadge({ accuracy }: { accuracy: AgentSignal["accuracy"] }) {
+  if (accuracy === undefined) {
+    return <span className="text-slate-600">—</span>;
+  }
+  const { color, label } = accuracyBadgeProps(accuracy);
+  const colorClass =
+    color === "green"
+      ? "bg-green-100 text-green-800"
+      : color === "amber"
+        ? "bg-yellow-100 text-yellow-800"
+        : color === "red"
+          ? "bg-red-100 text-red-800"
+          : "bg-slate-700 text-slate-400"; // grey
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${colorClass}`}>
+      {label}
+    </span>
+  );
+}
+
 function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
   return (
     <div className="border-b border-slate-700 px-4 py-4">
@@ -1050,7 +1079,8 @@ function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
                 <th className="py-1.5 text-left pr-3 font-medium">Time</th>
                 <th className="py-1.5 text-left pr-3 font-medium">Source</th>
                 <th className="py-1.5 text-left pr-3 font-medium">Direction</th>
-                <th className="py-1.5 text-left pr-4 font-medium">Confidence</th>
+                <th className="py-1.5 text-left pr-3 font-medium">Confidence</th>
+                <th className="py-1.5 text-left pr-4 font-medium">Accuracy</th>
                 <th className="py-1.5 text-left font-medium">Why</th>
               </tr>
             </thead>
@@ -1071,8 +1101,11 @@ function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
                     <td className={`py-1.5 pr-3 font-semibold ${dir.cls}`}>
                       {dir.text}
                     </td>
-                    <td className={`py-1.5 pr-4 font-semibold ${conf.cls}`}>
+                    <td className={`py-1.5 pr-3 font-semibold ${conf.cls}`}>
                       {conf.text}
+                    </td>
+                    <td className="py-1.5 pr-4">
+                      <AccuracyBadge accuracy={sig.accuracy} />
                     </td>
                     <td className="py-1.5 text-slate-300 max-w-xs truncate" title={sig.reasoning}>
                       {sig.reasoning || <span className="text-slate-600 italic">—</span>}

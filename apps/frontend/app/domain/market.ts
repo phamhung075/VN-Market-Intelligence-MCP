@@ -137,8 +137,23 @@ export interface MacroSnapshot {
 // --------------------------------------------------------------------------
 
 /**
+ * Accuracy stats for a single signal_type, returned by the upgraded
+ * GET /api/signals/stock/:code endpoint (Sprint B of outcome feedback loop).
+ *
+ * accuracy_rate: null when sample_count < 3 (insufficient history).
+ * sample_count: number of resolved outcomes (correct + incorrect, excludes neutral).
+ */
+export interface SignalAccuracy {
+  accuracy_rate: number | null;
+  sample_count: number;
+}
+
+/**
  * A per-stock agent signal row from the agent_signals table.
  * Returned by GET /mcp/api/signals/stock/:code
+ *
+ * accuracy is optional — present only when the endpoint has been upgraded to
+ * Sprint B (outcome feedback loop). Treat absence as "no history yet".
  */
 export interface AgentSignal {
   id: number;
@@ -148,6 +163,8 @@ export interface AgentSignal {
   confidence: number;       // normalised 0.0–1.0 (converted from DB integer 0–100)
   reasoning: string;        // human-readable explanation
   createdAt: string;        // ISO/SQLite datetime string
+  /** Present when the endpoint returns Sprint B accuracy data. Absence = no history. */
+  accuracy?: SignalAccuracy;
 }
 
 // --------------------------------------------------------------------------
