@@ -132,3 +132,11 @@ All prior auto-cures (FA Layer 7 c61) remain active.
 4. **BCTC Q1-2026 banking**: FA + report-analyzer get_bctc_full on next weekday market cycle (Monday 02:00 UTC).
 5. **FA OCF verification**: Confirm get_cash_flow plausible in next FA live session.
 6. **report-analyzer recovery**: Confirm live cycle at 02:00 UTC Monday.
+
+---
+## PO ACK — c174 (2026-05-17T23:38:27Z)
+- Read by: po
+- At: 2026-05-17T23:38:27Z
+- Tasks created: 1940a-pc1-legal-risk-tool-gap (HIGH FIX, dev-mcp-server, apps/mcp-server/)
+- Skipped findings: #1 (1907a already tracked, USER-ACTION), #3 (BCTC Q1 observational — monitor FA cycle), #4 (report-analyzer recovery — observational), #5 (FA OCF — next live FA session), #6 (1937a DONE per c170/c171 root cause fixed), #7 (structural, no dev action), #8 (USER action pending), #9 (transient, monitor c68), #10 (structural methodology gap, VIRA scraper pending)
+- Note: TNB-critic-gate (Finding #New Architecture) already DONE — 1939a/b shipped c172, QA c143 APPROVED.

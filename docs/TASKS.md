@@ -15,6 +15,7 @@
 ---
 
 ## Todo
+| 1940a-pc1-legal-risk-tool-gap | **FIX** — `get_legal_risk_signals` returns empty for PC1 despite news-scout emitting valid signals (#3318 conf=legal, #3343 conf=0.78 chairman arrest). 3-cycle threshold reached (alert-commander 20:04, 21:03, 22:04 UTC 2026-05-17). Data-pipeline extraction bug. AC: `get_legal_risk_signals("PC1")` returns ≥1 signal with chairman arrest context OR root cause documented + alternative signal path identified. Zone: `apps/mcp-server/`. | HIGH | FIX | dev-mcp-server | — | — |
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
 | calendar-source-replacement | **OBSERVE** — calendar source endpoint permanently unreachable (capped at 5s timeout, never succeeds). Need replacement evaluation: alternative calendar API or wontfix decision. AC: identify replacement source URL OR mark calendar feature wontfix. Carry-over from c167 fetch-ops session. | LOW | OBSERVE | dev-macro-indicators | — | — |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
