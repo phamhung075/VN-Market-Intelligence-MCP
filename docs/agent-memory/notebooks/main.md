@@ -1,37 +1,37 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-17T03:25Z (c150 — 1922i escalated, Docker CLI still hung)
+**Written:** 2026-05-17T04:24Z (c151 — Docker CLI still hung, all blocked F1 USER)
 
-## c150 (2026-05-17T03:07Z → 2026-05-17T03:25Z, ~18min)
+## c151 (2026-05-17T04:07Z → 2026-05-17T04:24Z, ~17min)
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | No HEAD.lock | Worktree prune (no output) |
-| 0a drain-signals | 3 signal files | All 1928a DNS root cause, DB + moved to processed/ |
-| 0b pipeline-resume | idle, c149 complete | Fall through |
-| 1 PO triage | 3 signals (1928a dup), 1922i cycle 5/5 threshold | 1922i escalated to FIX |
-| Session gate | Docker CLI still hung, all tasks need Docker restart | Idle |
+| 0 PREFLIGHT | HEAD.lock (1833s, 0B, no pid) | Removed |
+| 0a drain-signals | 3 signal files | All 1928a DNS dup, DB + moved to processed/ |
+| 0b pipeline-resume | idle, c150 complete | Fall through |
+| Docker CLI probe | `docker ps` timeout 8s | STILL_HUNG — virtiofs deadlock persists |
+| Session gate | All tasks blocked on Docker CLI | Idle |
 
-### c150 key state
+### c151 key state
 
 | Item | State |
 |------|-------|
-| 1928a (mcp-gateway extra_hosts) | 🔴 F1 USER — Docker Desktop restart pending |
-| 1929a (alerts table corrupted) | 🔴 HIGH — market.db alerts pages malformed, blocked on Docker CLI |
-| 1927a Docker rebuild | ⚠️ PMI fix code committed, images not rebuilt (Docker CLI hung) |
-| 1922i alert-engine-records | 🔴 ESCALATED to FIX (cycle 5/5) — verify after Docker restart |
-| mcp-server (port 3000) | ✅ 141 tools |
-| alert-engine (port 5006) | ✅ /health 200 |
-| All 6 cowork agents | 🔴 Blocked (host.docker.internal DNS) since 00:02 UTC — 5 consecutive cycles |
+| 1928a (mcp-gateway DNS) | 🔴 F1 USER — alert-commander 6th consecutive block |
+| 1929a (alerts table corrupt) | 🔴 HIGH — blocked on Docker CLI |
+| 1927a (PMI rebuild) | ⚠️ Code committed, not deployed — blocked |
+| 1922i (alert_engine_records) | 🔴 ESCALATED — can't verify without Docker exec |
+| Docker CLI | 🔴 Hung since c147 — virtiofs socket deadlock |
+| MCP server port 3000 | ✅ 141 tools, uptime ~4.8h |
+| Zone-scan Sunday | ⏳ Started 03:00-05:00 UTC — separate Claude sessions |
 
-### F1 USER priority queue (after Docker Desktop restart)
+### c152 carry-forward
 
-1. `docker-compose up -d --build macro-indicators mcp-server` (1927a PMI)
-2. `docker exec mcp-server sqlite3 /app/data/market.db "DROP TABLE alerts; DROP TABLE alert_mutes; DROP TABLE custom_alert_rules; DROP TABLE price_alerts;"` then `docker restart mcp-server` (1929a alerts)
-3. `docker exec alert-engine sqlite3 /app/data/alert_engine.db "SELECT COUNT(*) FROM alert_engine_records"` (1922i verify)
-4. Find mcp-gateway launch config → add extra_hosts: host-gateway (1928a structural fix)
-
-### c151 carry-forward
-
-- All 4 items above if Docker Desktop has been restarted
-- Otherwise: next productive cycle waits on F1 USER
+Same as c150/c151 — all blocked on F1 USER Docker Desktop restart:
+```
+pkill -9 Docker && open -a Docker
+```
+After restart (4 items in order):
+1. `docker-compose up -d --build macro-indicators mcp-server`
+2. Fix alerts table: DROP alerts/alert_mutes/custom_alert_rules/price_alerts → `docker restart mcp-server`
+3. `docker exec alert-engine sqlite3 /app/data/alert_engine.db "SELECT COUNT(*) FROM alert_engine_records"`
+4. Find mcp-gateway launch config → add extra_hosts: host-gateway
