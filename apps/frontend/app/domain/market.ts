@@ -88,3 +88,46 @@ export function parseMacroSources(macro: MacroData | null): MacroSourceRow[] {
     error: entry.error,
   }));
 }
+
+// --------------------------------------------------------------------------
+// Kinh Dich types
+// --------------------------------------------------------------------------
+
+/** Market-level hexagram reading from GET /kinh-dich/market */
+export interface KinhDichMarket {
+  hexagram: number;
+  name: string;
+  trend: string;
+  signal: string;
+  confidence: number;
+  timestamp: string;
+}
+
+/** Per-stock hexagram reading from GET /kinh-dich/reading/:code */
+export interface KinhDichReading extends KinhDichMarket {
+  stock: string;
+  actionNote?: string;
+  overallReading?: string;
+}
+
+// --------------------------------------------------------------------------
+// Macro snapshot types
+// --------------------------------------------------------------------------
+
+export interface MacroSignal {
+  indicator: string;
+  value: number;
+  unit: string;
+  direction: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
+  impact: "HIGH" | "MEDIUM" | "LOW" | string;
+}
+
+/** Macro snapshot from POST /macro/snapshot */
+export interface MacroSnapshot {
+  vnIndex: number | null;
+  oilUsd: number | null;
+  goldUsd: number | null;
+  usdVnd: number | null;
+  signals: MacroSignal[];
+  fetchedAt: string;
+}

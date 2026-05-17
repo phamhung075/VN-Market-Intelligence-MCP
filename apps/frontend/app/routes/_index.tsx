@@ -40,6 +40,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 }
 
 const NAV_ITEMS = [
+  { to: "/dashboard/analysis", label: "Analysis" },
   { to: "/dashboard/server", label: "Services" },
   { to: "/dashboard/fetch", label: "Fetch Ops" },
   { to: "/dashboard/vps", label: "VPS Proxy" },
@@ -47,6 +48,7 @@ const NAV_ITEMS = [
 ] as const;
 
 const DASHBOARD_LINKS = [
+  { to: "/dashboard/analysis", label: "Market Analysis", desc: "Kinh Dịch signals + macro indicators" },
   { to: "/dashboard/server", label: "Service Health", desc: "9 microservice status + latency" },
   { to: "/dashboard/fetch", label: "Fetch Operations", desc: "Reuters, Bloomberg, macro snapshot" },
   { to: "/dashboard/vps", label: "VPS Proxy", desc: "Vietnam proxy health per service" },

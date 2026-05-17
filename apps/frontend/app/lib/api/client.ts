@@ -219,3 +219,46 @@ export async function fetchPriceHistory(code: string): Promise<PricePoint[]> {
         : [];
   return items.map(toPricePoint).filter((p): p is PricePoint => p !== null);
 }
+
+// --------------------------------------------------------------------------
+// Kinh Dich
+// --------------------------------------------------------------------------
+
+import type { KinhDichMarket, KinhDichReading, MacroSnapshot } from "~/domain/market";
+
+/**
+ * Overall market hexagram reading.
+ * Endpoint: GET /kinh-dich/market
+ */
+export async function fetchKinhDichMarket(): Promise<KinhDichMarket> {
+  return apiGet<KinhDichMarket>("/kinh-dich/market");
+}
+
+/**
+ * Per-stock hexagram reading.
+ * Endpoint: GET /kinh-dich/reading/:code
+ */
+export async function fetchKinhDichReading(code: string): Promise<KinhDichReading> {
+  return apiGet<KinhDichReading>(`/kinh-dich/reading/${encodeURIComponent(code)}`);
+}
+
+// --------------------------------------------------------------------------
+// Macro snapshot
+// --------------------------------------------------------------------------
+
+/**
+ * Macro signals snapshot (oil, gold, FX directions).
+ * Endpoint: POST /macro/snapshot
+ */
+export async function fetchMacroSnapshot(): Promise<MacroSnapshot> {
+  const url = `${API_GATEWAY_URL}/macro/snapshot`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: "{}",
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, `POST /macro/snapshot failed: ${response.status}`);
+  }
+  return response.json() as Promise<MacroSnapshot>;
+}
