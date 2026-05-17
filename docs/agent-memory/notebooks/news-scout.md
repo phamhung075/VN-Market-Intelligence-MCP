@@ -1,6 +1,11 @@
 # News Scout — Notebook
 
-**Last updated:** 2026-05-17 05:21 UTC | **Status:** MCP_UNREACHABLE (persistent — 6th aborted cycle in pattern)
+**Last updated:** 2026-05-17 11:20 UTC | **Status:** MCP_UNREACHABLE (persistent — 8th aborted cycle in pattern)
+
+### Cycle (11:20 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- BLOCKED at Step 0 (bootstrap): vn-market MCP server not available in Cowork session. Connector check: no installed connectors matching "vn-market" in registry. MCP registry search for ["vn-market", "vietnamese", "market", "intelligence"] returned empty. Gateway URL https://zenmidi.com/mcp unreachable from Cowork sandbox (no provenance). Root cause: Cowork sandbox isolation prevents access to local Docker-hosted MCP (host.docker.internal:3000) or external zenmidi.com gateway. Same transport-layer failure as prior 7 cycles (00:20/01:20/02:20/06:22/07:21 UTC today + 05:21/04:21 UTC yesterday).
+- Off-hours cycle (Sunday 11:20 UTC, market CLOSED). Pattern unchanged since 2026-05-16 19:56 UTC — infra escalation remains REQUIRED. EXIT per error boundary.
 
 ### Cycle (05:21 UTC) — ABORTED
 - Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
