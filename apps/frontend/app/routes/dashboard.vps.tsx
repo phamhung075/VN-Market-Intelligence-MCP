@@ -8,6 +8,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { fetchServiceHealth } from "~/lib/api/client";
 import type { ServiceHealth } from "~/domain/health";
+import { ClientTimestamp, ClientTimeString } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "VPS Proxy Health — VN Market Intelligence" },
@@ -103,13 +104,9 @@ export default function VpsDashboard() {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">VPS Proxy Health</h1>
-        <span className="text-xs text-slate-500" suppressHydrationWarning>
+        <span className="text-xs text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(fetchedAt).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={fetchedAt} />
         </span>
       </div>
 
@@ -163,12 +160,7 @@ export default function VpsDashboard() {
                     {row.error ? (
                       <span className="text-red-400">{row.error}</span>
                     ) : row.health?.checkedAt ? (
-                      <span suppressHydrationWarning>
-                        {new Date(row.health.checkedAt).toLocaleTimeString(
-                          "vi-VN",
-                          { timeZone: "Asia/Ho_Chi_Minh" },
-                        )}
-                      </span>
+                      <ClientTimeString iso={row.health.checkedAt} />
                     ) : (
                       "—"
                     )}

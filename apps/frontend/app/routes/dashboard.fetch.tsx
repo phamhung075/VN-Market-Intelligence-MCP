@@ -14,6 +14,7 @@ import {
 import type { Headline } from "~/domain/news";
 import type { MacroData } from "~/domain/market";
 import { parseMacroSources } from "~/domain/market";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "Fetch Operations — VN Market Intelligence" },
@@ -113,11 +114,10 @@ function HeadlineList({
             )}
           </p>
           {h.publishedAt && (
-            <p className="mt-0.5 text-xs text-slate-500" suppressHydrationWarning>
-              {new Date(h.publishedAt).toLocaleString("vi-VN", {
-                timeZone: "Asia/Ho_Chi_Minh",
-              })}
-            </p>
+            <ClientTimestamp
+              iso={h.publishedAt}
+              className="mt-0.5 block text-xs text-slate-500"
+            />
           )}
         </li>
       ))}
@@ -139,13 +139,12 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
     <div className="space-y-3 text-sm">
       {/* Timestamp */}
       {macro.fetchedAt && (
-        <div className="flex gap-2 text-xs" suppressHydrationWarning>
+        <div className="flex gap-2 text-xs">
           <span className="text-slate-500">Last updated:</span>
-          <span className="text-slate-400" suppressHydrationWarning>
-            {new Date(String(macro.fetchedAt)).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp
+            iso={String(macro.fetchedAt)}
+            className="text-slate-400"
+          />
         </div>
       )}
 
@@ -213,13 +212,9 @@ export default function FetchDashboard() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Fetch Operations</h1>
-        <span className="text-xs text-slate-500" suppressHydrationWarning>
+        <span className="text-xs text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(fetchedAt).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={fetchedAt} />
         </span>
       </div>
 

@@ -9,6 +9,7 @@ import { useLoaderData } from "@remix-run/react";
 import { fetchPriceHistory, fetchReutersHeadlines } from "~/lib/api/client";
 import type { PricePoint } from "~/domain/market";
 import type { Headline } from "~/domain/news";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "Database Report — VN Market Intelligence" },
@@ -197,14 +198,10 @@ function HeadlineTable({ headlines }: { headlines: Headline[] }) {
                 h.title
               )}
             </p>
-            <div className="mt-0.5 flex gap-3 text-xs text-slate-500" suppressHydrationWarning>
+            <div className="mt-0.5 flex gap-3 text-xs text-slate-500">
               {h.source && <span>{h.source}</span>}
               {h.publishedAt && (
-                <span suppressHydrationWarning>
-                  {new Date(h.publishedAt).toLocaleString("vi-VN", {
-                    timeZone: "Asia/Ho_Chi_Minh",
-                  })}
-                </span>
+                <ClientTimestamp iso={h.publishedAt} />
               )}
             </div>
           </div>
@@ -222,13 +219,9 @@ export default function DbDashboard() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Database Report</h1>
-        <span className="text-xs text-slate-500" suppressHydrationWarning>
+        <span className="text-xs text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(fetchedAt).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={fetchedAt} />
         </span>
       </div>
 
