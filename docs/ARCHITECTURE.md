@@ -34,18 +34,10 @@ vn-market-intelligence/         ← pnpm workspace root
 
 ## Services (Phase 3 — Production)
 
-| Service | Port | Language | Status |
-|---------|------|----------|--------|
-| mcp-server | 3000 | TypeScript/Bun | ✅ Running |
-| api-gateway | 4000 | Go | ✅ Running |
-| stock-price | 5010:5000 | Go 1.22 (CGO) | ✅ Running |
-| pdf-extractor | 5001 | Python/FastAPI | ✅ Running |
-| rag-service | 5002 | Python/FastAPI | ✅ Running |
-| technical-analysis | 5003 | TypeScript/Bun | ✅ Running |
-| macro-indicators | 5004 | TypeScript/Bun | ✅ Running |
-| kinh-dich-service | 5005 | TypeScript/Bun | ✅ Running |
-| alert-engine | 5006 | Go 1.22 (CGO) | ✅ Running |
-| news-fetch | 5008 | TypeScript/Bun | ✅ Running |
+Service list, ports, languages → SSOT:
+```bash
+jq '[.project.microservices[] | {id, port, language, runtime}]' docs/data/system-map.json
+```
 
 **Database isolation (single-writer):**
 - `market.db` — WRITE: mcp-server only | READ: technical-analysis, macro-indicators, kinh-dich-service (readonly:true)
