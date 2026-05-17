@@ -335,28 +335,28 @@ describe('FetchExternalMacroUseCase — new envelope contract', () => {
     });
   });
 
-  describe('calendar per-source timeout — 10s hard cap', () => {
-    it('DEFAULT_TIMEOUTS.calendar is 10_000ms (hard cap to prevent 63s hang)', () => {
-      expect(DEFAULT_TIMEOUTS.calendar).toBe(10_000);
+  describe('calendar per-source timeout — 5s hard cap', () => {
+    it('DEFAULT_TIMEOUTS.calendar is 5_000ms (hard cap: permanently unreachable endpoint)', () => {
+      expect(DEFAULT_TIMEOUTS.calendar).toBe(5_000);
     });
 
-    it('calendar source times out when fetch exceeds 10s budget', async () => {
-      // Calendar stub resolves in 15s — must be cut off at ~10s
+    it('calendar source times out when fetch exceeds 5s budget', async () => {
+      // Calendar stub resolves in 10s — must be cut off at ~5s
       const useCase = new FetchExternalMacroUseCase(
         makeWorldBank(),
         makeYahoo(),
         makeCnbc(),
         makeTradingEconomics(),
         makeFred(),
-        makeSlowCalendar(15_000),
-        { calendar: 10_000 },
+        makeSlowCalendar(10_000),
+        { calendar: 5_000 },
       );
 
       const result = await useCase.execute();
       expect(result.sources.calendar.status).toBe('timeout');
-      // latencyMs must be >= 10s budget
-      expect(result.sources.calendar.latencyMs).toBeGreaterThanOrEqual(10_000);
-    }, 15_000);
+      // latencyMs must be >= 5s budget
+      expect(result.sources.calendar.latencyMs).toBeGreaterThanOrEqual(5_000);
+    }, 10_000);
 
     it('slow calendar does not block other sources — others complete while calendar is pending', async () => {
       const useCase = new FetchExternalMacroUseCase(
@@ -365,8 +365,8 @@ describe('FetchExternalMacroUseCase — new envelope contract', () => {
         makeCnbc(),
         makeTradingEconomics(),
         makeFred(),
-        makeSlowCalendar(15_000),
-        { calendar: 10_000 },
+        makeSlowCalendar(10_000),
+        { calendar: 5_000 },
       );
 
       const result = await useCase.execute();
@@ -379,7 +379,7 @@ describe('FetchExternalMacroUseCase — new envelope contract', () => {
       expect(result.sources.yahoo.status).toBe('ok');
       expect(result.sources.cnbc.status).toBe('ok');
       expect(result.sources.tradingEconomics.status).toBe('ok');
-    }, 15_000);
+    }, 10_000);
   });
 
   describe('FRED not available', () => {

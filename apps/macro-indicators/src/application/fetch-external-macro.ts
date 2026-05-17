@@ -45,10 +45,12 @@ import { DEFAULT_SYMBOLS, DEFAULT_CNBC_SYMBOLS } from '../domain/defaults.js';
  *   cnbc:            35s (6 dotted symbols, parallel ~2s in practice)
  *   tradingEconomics: 65s (7 slugs, parallel ~4-6s; slug pages are heavier)
  *
- * 2026-05-17: calendar reduced from 30s → 10s.
+ * 2026-05-17: calendar reduced from 30s → 10s → 5s.
  *   Observed hang: ~63s (totalLatencyMs: 62700ms, status: "timeout").
  *   Root cause: subprocess can stall far beyond 30s CF warmup estimate.
- *   10s hard cap prevents calendar from blocking the entire macro fetch.
+ *   10s cap introduced 2026-05-17; further reduced to 5s same day because
+ *   the calendar endpoint is permanently unreachable — shorter timeout
+ *   reduces page-load wait from ~30s to ~5s.
  *   The other 5 sources (worldBank, yahoo, fred, cnbc, tradingEconomics)
  *   are never blocked — all 6 run concurrently via Promise.all(withTimeout).
  */
@@ -58,7 +60,7 @@ export const DEFAULT_TIMEOUTS: Required<SourceTimeouts> = {
   cnbc:             35_000,  // Python subprocess + 6 parallel quote fetches
   tradingEconomics: 65_000,  // Python subprocess + 7 parallel TE page fetches
   fred:              8_000,
-  calendar:         10_000,  // Hard cap: 10s prevents 63s hang (2026-05-17)
+  calendar:          5_000,  // Hard cap: 5s — endpoint permanently unreachable (2026-05-17)
 };
 
 export interface SourceTimeouts {
