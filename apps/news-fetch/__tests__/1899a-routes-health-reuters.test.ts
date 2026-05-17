@@ -1,13 +1,13 @@
 /**
- * Route tests — /health + /news/reuters/headlines (1899a-routes)
+ * Route tests — /health + /reuters/headlines (1899a-routes)
  *
  * Coverage:
  *   1. GET /health — 200, correct JSON shape, content-type
- *   2. POST /news/reuters/headlines — RSS success (no fallback invoked, maxItems passed)
- *   3. POST /news/reuters/headlines — fallback: RSS error → Playwright invoked
- *   4. POST /news/reuters/headlines — fallback: RSS empty → Playwright invoked
- *   5. POST /news/reuters/headlines — defaults (no body → maxItems=15)
- *   6. POST /news/reuters/headlines — scraper throws → 500
+ *   2. POST /reuters/headlines — RSS success (no fallback invoked, maxItems passed)
+ *   3. POST /reuters/headlines — fallback: RSS error → Playwright invoked
+ *   4. POST /reuters/headlines — fallback: RSS empty → Playwright invoked
+ *   5. POST /reuters/headlines — defaults (no body → maxItems=15)
+ *   6. POST /reuters/headlines — scraper throws → 500
  */
 
 import { describe, it, expect, mock } from 'bun:test';
@@ -124,10 +124,10 @@ describe('1899a-routes — GET /health', () => {
   });
 });
 
-describe('1899a-routes — POST /news/reuters/headlines success', () => {
+describe('1899a-routes — POST /reuters/headlines success', () => {
   it('returns 200 with FetchResult', async () => {
     const app = createRouter(rssStub(REUTERS_SUCCESS), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    const res = await post(app, '/news/reuters/headlines', { maxItems: 5 });
+    const res = await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(res.status).toBe(200);
     const body = (await res.json()) as FetchResult;
     expect(body.method).toBe('rss');
@@ -138,59 +138,59 @@ describe('1899a-routes — POST /news/reuters/headlines success', () => {
     const rss = rssStub(REUTERS_SUCCESS);
     const fb = fallbackStub(REUTERS_FALLBACK_SUCCESS);
     const app = createRouter(rss, fb, bloombergStub());
-    await post(app, '/news/reuters/headlines', { maxItems: 5 });
+    await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(fb.fetchHeadlines).not.toHaveBeenCalled();
   });
 
   it('passes maxItems to RSS port', async () => {
     const rss = rssStub(REUTERS_SUCCESS);
     const app = createRouter(rss, fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    await post(app, '/news/reuters/headlines', { maxItems: 7 });
+    await post(app, '/reuters/headlines', { maxItems: 7 });
     expect(rss.fetchHeadlines).toHaveBeenCalledWith(7);
   });
 
   it('defaults maxItems to 15 when body omitted', async () => {
     const rss = rssStub(REUTERS_SUCCESS);
     const app = createRouter(rss, fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    await post(app, '/news/reuters/headlines');
+    await post(app, '/reuters/headlines');
     expect(rss.fetchHeadlines).toHaveBeenCalledWith(15);
   });
 });
 
-describe('1899a-routes — POST /news/reuters/headlines fallback: RSS error', () => {
+describe('1899a-routes — POST /reuters/headlines fallback: RSS error', () => {
   it('returns fallback FetchResult when RSS error != null', async () => {
     const app = createRouter(rssStub(REUTERS_ERROR), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    const body = (await (await post(app, '/news/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
+    const body = (await (await post(app, '/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
     expect(body.method).toBe('playwright-stealth');
   });
 
   it('invokes fallback when RSS error != null', async () => {
     const fb = fallbackStub(REUTERS_FALLBACK_SUCCESS);
     const app = createRouter(rssStub(REUTERS_ERROR), fb, bloombergStub());
-    await post(app, '/news/reuters/headlines', { maxItems: 5 });
+    await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(fb.fetchHeadlines).toHaveBeenCalled();
   });
 });
 
-describe('1899a-routes — POST /news/reuters/headlines fallback: RSS empty', () => {
+describe('1899a-routes — POST /reuters/headlines fallback: RSS empty', () => {
   it('returns fallback FetchResult when RSS articles.length === 0', async () => {
     const app = createRouter(rssStub(REUTERS_EMPTY), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    const body = (await (await post(app, '/news/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
+    const body = (await (await post(app, '/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
     expect(body.method).toBe('playwright-stealth');
   });
 
   it('invokes fallback when RSS articles.length === 0', async () => {
     const fb = fallbackStub(REUTERS_FALLBACK_SUCCESS);
     const app = createRouter(rssStub(REUTERS_EMPTY), fb, bloombergStub());
-    await post(app, '/news/reuters/headlines', { maxItems: 5 });
+    await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(fb.fetchHeadlines).toHaveBeenCalled();
   });
 });
 
-describe('1899a-routes — POST /news/reuters/headlines error handling', () => {
+describe('1899a-routes — POST /reuters/headlines error handling', () => {
   it('returns 500 JSON when Reuters scraper throws', async () => {
     const app = createRouter(throwingStub('network timeout'), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergStub());
-    const res = await post(app, '/news/reuters/headlines', { maxItems: 5 });
+    const res = await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(res.status).toBe(500);
     const body = (await res.json()) as Record<string, unknown>;
     expect(body.error).toBeDefined();

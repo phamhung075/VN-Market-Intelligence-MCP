@@ -27,11 +27,11 @@ func NewStaticServiceRegistry(urls map[string]string) *StaticServiceRegistry {
 		"pdf":       {Name: "pdf", BaseURL: get("pdf", "http://pdf-extractor:5001"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
 		"rag":       {Name: "rag", BaseURL: get("rag", "http://rag-service:5002"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
 		"ta":        {Name: "ta", BaseURL: get("ta", "http://technical-analysis:5003"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
-		"macro":     {Name: "macro", BaseURL: get("macro", "http://macro-indicators:5004"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
+		"macro":     {Name: "macro", BaseURL: get("macro", "http://macro-indicators:5004"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs, ProxyTimeoutMs: 120000},
 		"stock":     {Name: "stock", BaseURL: get("stock", "http://stock-price:5000"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
 		"kinh-dich": {Name: "kinh-dich", BaseURL: get("kinh-dich", "http://kinh-dich-service:5005"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
 		"alert":     {Name: "alert", BaseURL: get("alert", "http://alert-engine:5006"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
-		"news":      {Name: "news", BaseURL: get("news", "http://news-fetch:5008"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs},
+		"news":      {Name: "news", BaseURL: get("news", "http://news-fetch:5008"), HealthPath: "/health", TimeoutMs: defaultTimeoutMs, ProxyTimeoutMs: 120000},
 		// Virtual alias: /api/* routes to MCP server with full path preserved.
 		// noProbe=true: excluded from active health probes.
 		"api": {Name: "api", BaseURL: get("api", mcpURL), HealthPath: "/health", TimeoutMs: defaultTimeoutMs, NoProbe: true},

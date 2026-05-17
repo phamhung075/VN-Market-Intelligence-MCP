@@ -29,9 +29,10 @@ type AggregatedHealth struct {
 
 // ServiceConfig holds the configuration for a single downstream service.
 type ServiceConfig struct {
-	Name        string
-	BaseURL     string
-	HealthPath  string
-	TimeoutMs   int64
-	NoProbe     bool // virtual alias services: excluded from health probes
+	Name           string
+	BaseURL        string
+	HealthPath     string
+	TimeoutMs      int64
+	ProxyTimeoutMs int64 // overrides TimeoutMs*5 for slow scrapers; 0 = use default
+	NoProbe        bool  // virtual alias services: excluded from health probes
 }

@@ -173,11 +173,11 @@ export interface MacroExternalResponse {
 }
 
 /**
- * Calls macro-indicators /macro/external endpoint.
+ * Calls macro-indicators /external endpoint.
  * Never throws — returns null on any error so callers use COALESCE fallback.
  */
 export async function getMacroExternal(): Promise<MacroExternalResponse | null> {
-  const url = `${BASE_URLS.macro}/macro/external`;
+  const url = `${BASE_URLS.macro}/external`;
   try {
     const response = await fetchWithRetry(url, {
       method: 'POST',
@@ -198,8 +198,7 @@ export async function getMacroExternal(): Promise<MacroExternalResponse | null> 
 }
 
 export async function getMacroSnapshot(): Promise<MacroSnapshotResponse> {
-  // Macro service registers POST /macro/snapshot (handlers.ts line 21)
-  const url = `${BASE_URLS.macro}/macro/snapshot`;
+  const url = `${BASE_URLS.macro}/snapshot`;
   const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

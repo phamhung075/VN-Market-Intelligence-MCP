@@ -344,8 +344,11 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	r2.URL.Path = downstreamPath
 	r2.Host = targetBase.Host
 
-	// Set proxy timeout via context
-	timeoutMs := svc.TimeoutMs * 5 // proxy timeout = 5x health timeout
+	// Set proxy timeout via context — use ProxyTimeoutMs override when set.
+	timeoutMs := svc.ProxyTimeoutMs
+	if timeoutMs == 0 {
+		timeoutMs = svc.TimeoutMs * 5
+	}
 	ctx := r2.Context()
 	cancel := func() {}
 	if timeoutMs > 0 {

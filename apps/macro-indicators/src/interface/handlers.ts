@@ -18,7 +18,7 @@ export function createRouter(
     c.json({ status: 'ok', service: 'macro-indicators', port: 5004 }),
   );
 
-  app.post('/macro/snapshot', async (c) => {
+  app.post('/snapshot', async (c) => {
     try {
       const result = await useCase.execute({});
       return c.json(result);
@@ -36,7 +36,7 @@ export function createRouter(
    * HTTP 502 — ALL sources failed or timed out (no data available).
    * execute() never throws; envelope shape is guaranteed.
    */
-  app.post('/macro/external', async (c) => {
+  app.post('/external', async (c) => {
     const result = await externalUseCase.execute();
     if (result.summary.ok === 0) {
       return c.json(result, 502);
@@ -45,7 +45,7 @@ export function createRouter(
   });
 
   /** GET convenience alias — trigger external macro fetch. */
-  app.get('/macro/external', async (c) => {
+  app.get('/external', async (c) => {
     const result = await externalUseCase.execute();
     if (result.summary.ok === 0) {
       return c.json(result, 502);
@@ -54,7 +54,7 @@ export function createRouter(
   });
 
   /** Fetch international institutional data: ADB KIDB + IMF WEO. */
-  app.post('/macro/external/adb', async (c) => {
+  app.post('/external/adb', async (c) => {
     try {
       const result = await internationalUseCase.execute();
       return c.json({ adbKidb: result.adbKidb, fetchedAt: result.fetchedAt });
@@ -63,7 +63,7 @@ export function createRouter(
     }
   });
 
-  app.post('/macro/external/imf', async (c) => {
+  app.post('/external/imf', async (c) => {
     try {
       const result = await internationalUseCase.execute();
       return c.json({ imfWeo: result.imfWeo, fetchedAt: result.fetchedAt });
@@ -73,7 +73,7 @@ export function createRouter(
   });
 
   /** Fetch both ADB KIDB + IMF WEO together. */
-  app.post('/macro/external/international', async (c) => {
+  app.post('/external/international', async (c) => {
     try {
       const result = await internationalUseCase.execute();
       return c.json(result);
@@ -82,7 +82,7 @@ export function createRouter(
     }
   });
 
-  app.get('/macro/external/international', async (c) => {
+  app.get('/external/international', async (c) => {
     try {
       const result = await internationalUseCase.execute();
       return c.json(result);

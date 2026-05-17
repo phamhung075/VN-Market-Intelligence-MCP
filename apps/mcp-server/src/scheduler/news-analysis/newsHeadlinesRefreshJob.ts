@@ -107,7 +107,7 @@ export async function newsHeadlinesRefreshJob(): Promise<void> {
   logger.debug('[newsHeadlinesRefreshJob] cycle start');
 
   // Bloomberg first, Reuters second (per handoff spec)
-  const bloombergResult = await fetchFromNewsFetch('/news/bloomberg/headlines');
+  const bloombergResult = await fetchFromNewsFetch('/bloomberg/headlines');
   if (bloombergResult) {
     if (bloombergResult.error) {
       logger.warn('[newsHeadlinesRefreshJob] bloomberg returned error', {
@@ -118,7 +118,7 @@ export async function newsHeadlinesRefreshJob(): Promise<void> {
     }
   }
 
-  const reutersResult = await fetchFromNewsFetch('/news/reuters/headlines');
+  const reutersResult = await fetchFromNewsFetch('/reuters/headlines');
   if (reutersResult) {
     if (reutersResult.error) {
       logger.warn('[newsHeadlinesRefreshJob] reuters returned error', {

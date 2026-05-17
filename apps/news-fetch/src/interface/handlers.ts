@@ -2,11 +2,11 @@
  * News Fetch Microservice — Hono HTTP Router
  *
  * Routes:
- *   GET  /health                          → liveness probe
- *   POST /news/reuters/headlines          → Reuters RSS primary + Playwright fallback
- *   GET  /news/reuters/headlines          → convenience GET alias
- *   POST /news/bloomberg/headlines        → Bloomberg Playwright only (no fallback)
- *   GET  /news/bloomberg/headlines        → convenience GET alias
+ *   GET  /health                    → liveness probe
+ *   POST /reuters/headlines         → Reuters RSS primary + Playwright fallback
+ *   GET  /reuters/headlines         → convenience GET alias
+ *   POST /bloomberg/headlines       → Bloomberg Playwright only (no fallback)
+ *   GET  /bloomberg/headlines       → convenience GET alias
  *
  * DDD: interface layer — imports from application/ (use cases) only.
  * Scrapers are injected via createRouter() to enable unit testing without
@@ -63,9 +63,9 @@ export function createRouter(
     return rssResult;
   }
 
-  // ── POST /news/reuters/headlines ───────────────────────────────────────────
+  // ── POST /reuters/headlines ────────────────────────────────────────────────
 
-  app.post('/news/reuters/headlines', async (c) => {
+  app.post('/reuters/headlines', async (c) => {
     try {
       const body = (await c.req.json<{ maxItems?: number }>().catch(() => ({} as { maxItems?: number })));
       const maxItems = typeof body.maxItems === 'number' ? body.maxItems : 15;
@@ -80,9 +80,9 @@ export function createRouter(
     }
   });
 
-  // ── GET /news/reuters/headlines (alias) ────────────────────────────────────
+  // ── GET /reuters/headlines (alias) ────────────────────────────────────────
 
-  app.get('/news/reuters/headlines', async (c) => {
+  app.get('/reuters/headlines', async (c) => {
     try {
       const raw = c.req.query('maxItems');
       const maxItems = raw !== undefined ? parseInt(raw, 10) : 15;
@@ -104,9 +104,9 @@ export function createRouter(
     return useCase.execute(maxItems);
   }
 
-  // ── POST /news/bloomberg/headlines ────────────────────────────────────────
+  // ── POST /bloomberg/headlines ─────────────────────────────────────────────
 
-  app.post('/news/bloomberg/headlines', async (c) => {
+  app.post('/bloomberg/headlines', async (c) => {
     try {
       const body = (await c.req.json<{ maxItems?: number }>().catch(() => ({} as { maxItems?: number })));
       const maxItems = typeof body.maxItems === 'number' ? body.maxItems : 10;
@@ -121,9 +121,9 @@ export function createRouter(
     }
   });
 
-  // ── GET /news/bloomberg/headlines (alias) ─────────────────────────────────
+  // ── GET /bloomberg/headlines (alias) ─────────────────────────────────────
 
-  app.get('/news/bloomberg/headlines', async (c) => {
+  app.get('/bloomberg/headlines', async (c) => {
     try {
       const raw = c.req.query('maxItems');
       const maxItems = raw !== undefined ? parseInt(raw, 10) : 10;
