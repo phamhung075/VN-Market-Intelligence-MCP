@@ -1,21 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 09:02 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 10:02 UTC | **Sprint:** c154
 
 ## This session
 
-### Alert Cycle (09:02 UTC) — RECOVERED (gateway back online after 10-cycle outage)
-- Off-hours 2h cycle (Sunday, market closed all day). Bootstrap succeeded first attempt — `get_cycle_bootstrap` returned market_context + system_status + agent_signals (empty bus). Macro snapshot shape-valid (`text` field present, source_tier=2).
-- Signals: agent_bus=0 | price_alerts=0 | legal_risk=0 | crisis=0 | news_mention=0
-- Fired: 0 | Suppressed: 0 | MARKET: 0
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
-- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false | US10Y: 4.59% (RISK-OFF) | DXY: 99.27 (STABLE)
-- Legal: clear | Crisis: clear | Market: CLOSED (Sunday — no trading window today)
-- WORK dispatch: status posted (09:02 UTC, 0 signals)
-- log_agent_work id=936
-- **Outage recovery note:** Previous 10 consecutive cycles (2026-05-16 23:02 UTC → 2026-05-17 08:02 UTC) were blocked at Step 0 with vn-market gateway unreachable. This cycle (09:02 UTC) is the first successful bootstrap since the outage began. Task 1928a (Docker Desktop restart + mcp-gateway extra_hosts) appears resolved. System status: 58 alerts pending (carried from before outage), last alert 2026-05-16 04:12, last analysis 2026-05-16 20:06 — analysis pipeline has been stale ~13h during outage.
-- Tool calls this cycle: 8 (log_agent_work × 2, get_cycle_bootstrap, get_macro_snapshot, get_macro_calendar, get_alerts, get_legal_risk_signals, get_crisis_early_warning, send_telegram) → estimated_tokens ~4000
-- Next cycle: 11:02 UTC (off-hours 2h cadence, market closed Sunday)
+### Alert Cycle (10:02 UTC) — Off-hours, market closed
+- Off-hours 2h cycle (Saturday early morning, market CLOSED). Bootstrap succeeded — `get_cycle_bootstrap` returned market_context + system_status + agent_signals (0 pending).
+- Signals: agent_bus=0 | price_alerts=0 | legal_risk=0 | crisis=0 | price_anomaly=0
+- Open alerts: 4 (all LOW priority news mentions: VIC, VHM, HCM, HVN)
+- Fired: 0 | Suppressed: 4 (low-priority news) | MARKET: 0
+- ChainCatalyst: 0 | Regime confidence: unable to extract (off-hours, prices stale)
+- Market snapshot: VN-Index -0.20% (stale from 2026-05-15 08:59), 33 prices stale (>24h)
+- Kinh Dịch: KHÔN (2) = BUY signal (100% confidence)
+- Legal: clear | Crisis: clear
+- WORK dispatch: status posted (10:02 UTC, off-hours suppression, 0 signals fired)
+- log_agent_work id=939
+- **Off-hours assessment:** Cycle ran during market closure window and off-hours. No actionable signals. 4 news mentions are routine market commentary (Vingroup sector view, housing policy, aviation carbon costs) — all LOW severity. Kinh Dịch is BUY but price data is stale; cannot validate with fresh market data until next market open (02:00 UTC Monday).
+- Tool calls this cycle: 9 (log_agent_work×2, get_cycle_bootstrap, get_legal_risk_signals, get_crisis_early_warning, get_alerts×1, get_market_snapshot, get_agent_signals, send_telegram) → estimated_tokens ~3500
+- Next cycle: 12:02 UTC (off-hours 2h cadence)
 
 ## Patterns noticed
 
