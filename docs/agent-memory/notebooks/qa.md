@@ -1,6 +1,28 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-17 | **Session:** c143 — round-2 QA: getAccuracyContextTool try/catch + cron-registry — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c174 — 1940a PC1 legal-risk dual-source fix — APPROVED
+
+## Session 2026-05-18 c174 — 1940a PC1 legal-risk tool gap
+
+### TASK REPORT — 1940a (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FIX (interface layer — legalRiskTools.ts dual-source query)
+round: 1
+commit: 80873d1c
+```
+
+#### Pipeline
+
+- 1940a suite: 7/7 GREEN
+- 245 + 240 + 244 + 250 suites: 61 pass / 0 fail
+- tsc: 0 errors
+- DDD: PASS — interface layer importing infra (correct per DDD rules)
+- Security: PASS — no process.env, no hardcoded secrets, SQL parameterized
+
+---
 
 ## Session 2026-05-17 c143 — round-2 fix verification (commit a611d911)
 
