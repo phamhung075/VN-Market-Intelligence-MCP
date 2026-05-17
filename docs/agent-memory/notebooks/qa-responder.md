@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 20:49 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 21:48 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 20:48:33Z; prior notebook claims that scheduled-task runner lacked MCP access were incorrect — gateway IS reachable from cron context via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
-**Queue:** Empty (0 items, last probe 20:48:33Z = live success)
-**consecutive_empty_cycles:** 4 | **backoff_until:** none
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 21:47:59Z; gateway reachable from scheduled-task runner via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 21:47:59Z = live success)
+**consecutive_empty_cycles:** 0 (reset after backoff trigger) | **backoff_until:** 2026-05-17T22:48:18Z
 
 ## Known patterns / preferences
 
@@ -1996,3 +1996,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~650 |
+
+---
+
+### Q&A Batch (21:47–21:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 5 → BACKOFF SET | backoff_until: 2026-05-17T22:48:18Z (reset counter to 0)
+- Note: Live MCP gateway probe at 21:47:59Z (`get_pending_ask_questions` → `[]`). Counter reached 5 — adaptive backoff installed per cycle.md §0b. `send_telegram(channel="work", ...)` delivered at 21:48:18Z confirming backoff. Next cycle will skip until 22:48:18Z, then resume normal polling.
+
+## Metrics (cycle 2026-05-17 21:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~700 |
