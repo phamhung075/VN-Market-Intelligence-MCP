@@ -51,12 +51,25 @@
 | `fetchVnMacroBatch` (parallel) | all-ok: 7 results non-empty / one-fail: fdi_inflows=[], others non-empty / timing: all 7 dispatched within 30ms window |
 | `VN_INDICATORS` catalog | 7 entries, known codes present |
 
+### FetchExternalMacroUseCase
+**File:** `apps/macro-indicators/__tests__/unit/fetch-external-macro.test.ts`
+
+| Test group | Cases |
+|------------|-------|
+| `all-ok` | all sources return ok / fetchedAt ISO / ok sources carry data |
+| `one-fail` | worldBank throws → failed + error msg / others still ok |
+| `one-timeout` | worldBank slow 5s, 100ms budget → timeout / latencyMs ≥ budget / slow calendar 15s, 10s budget → timeout |
+| `all-fail` | summary.ok=0, summary.failed=6, all status=failed |
+| `FRED not available` | isAvailable=false → no crash |
+| `handler response contract` | execute() never throws |
+| **calendar 10s hard cap** | `DEFAULT_TIMEOUTS.calendar === 10_000` / slow calendar times out / other 5 sources succeed while calendar pending |
+
 ## Run Commands
 ```bash
 cd apps/macro-indicators && bun test
 cd apps/macro-indicators && bun tsc --noEmit
 ```
 
-## Current counts (2026-05-13)
-- Total tests: 105 (93 pass, 12 skip, 0 fail)
-- `bun test` runtime: ~640ms (all unit, parallel mock execution)
+## Current counts (2026-05-17)
+- Total tests: 118 (105 pass, 12 skip, 1 fail pre-existing world-bank mock issue)
+- `bun test` runtime: ~21s (dominated by 3 calendar timeout tests at 10s each)

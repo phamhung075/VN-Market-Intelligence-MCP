@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, mock } from 'bun:test';
-import { FetchExternalMacroUseCase } from '../../src/application/fetch-external-macro.js';
+import { FetchExternalMacroUseCase, DEFAULT_TIMEOUTS } from '../../src/application/fetch-external-macro.js';
 import type {
   WorldBankMacroPort,
   WorldBankDataPoint,
@@ -333,6 +333,53 @@ describe('FetchExternalMacroUseCase — new envelope contract', () => {
         expect(src.status).toBe('failed');
       }
     });
+  });
+
+  describe('calendar per-source timeout — 10s hard cap', () => {
+    it('DEFAULT_TIMEOUTS.calendar is 10_000ms (hard cap to prevent 63s hang)', () => {
+      expect(DEFAULT_TIMEOUTS.calendar).toBe(10_000);
+    });
+
+    it('calendar source times out when fetch exceeds 10s budget', async () => {
+      // Calendar stub resolves in 15s — must be cut off at ~10s
+      const useCase = new FetchExternalMacroUseCase(
+        makeWorldBank(),
+        makeYahoo(),
+        makeCnbc(),
+        makeTradingEconomics(),
+        makeFred(),
+        makeSlowCalendar(15_000),
+        { calendar: 10_000 },
+      );
+
+      const result = await useCase.execute();
+      expect(result.sources.calendar.status).toBe('timeout');
+      // latencyMs must be >= 10s budget
+      expect(result.sources.calendar.latencyMs).toBeGreaterThanOrEqual(10_000);
+    }, 15_000);
+
+    it('slow calendar does not block other sources — others complete while calendar is pending', async () => {
+      const useCase = new FetchExternalMacroUseCase(
+        makeWorldBank(),
+        makeYahoo(),
+        makeCnbc(),
+        makeTradingEconomics(),
+        makeFred(),
+        makeSlowCalendar(15_000),
+        { calendar: 10_000 },
+      );
+
+      const result = await useCase.execute();
+
+      // Calendar timed out
+      expect(result.sources.calendar.status).toBe('timeout');
+
+      // All other sources succeeded despite calendar slowness
+      expect(result.sources.worldBank.status).toBe('ok');
+      expect(result.sources.yahoo.status).toBe('ok');
+      expect(result.sources.cnbc.status).toBe('ok');
+      expect(result.sources.tradingEconomics.status).toBe('ok');
+    }, 15_000);
   });
 
   describe('FRED not available', () => {

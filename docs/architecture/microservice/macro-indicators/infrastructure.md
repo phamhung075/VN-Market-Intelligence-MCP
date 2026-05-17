@@ -97,6 +97,14 @@ One indicator failure returns `[]` for that key; others are unaffected.
 | `imports_usd` | NE.IMP.GNFS.CD | Imports of goods and services (US$) |
 | `unemployment` | SL.UEM.TOTL.ZS | Unemployment, total (% of labor force) |
 
+## InvestingCalendarAdapter
+- **File:** `apps/macro-indicators/src/infrastructure/scrapers/investing-economic-calendar.ts`
+- Implements `InvestingCalendarPort`
+- Uses Python subprocess + Cloudflare bypass (curl_cffi session warmup)
+- **Per-source timeout (orchestrator level):** `10 000ms` hard cap — set in `FetchExternalMacroUseCase.DEFAULT_TIMEOUTS.calendar`
+  - Reduced from 30s → 10s on 2026-05-17 after observing 63s hang (`totalLatencyMs: 62700ms`)
+  - The subprocess can stall far beyond the expected CF warmup window; the hard cap prevents it blocking the other 5 sources
+
 ## Environment Variables
 ```
 PORT         → 5004
