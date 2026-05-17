@@ -8,6 +8,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { fetchGatewayHealth } from "~/lib/api/client";
 import type { ServiceRow } from "~/domain/health";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "Service Health — VN Market Intelligence" },
@@ -115,11 +116,7 @@ export default function ServerDashboard() {
       {checkedAt && (
         <p className="mb-4 text-xs text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(checkedAt).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={checkedAt} />
         </p>
       )}
 

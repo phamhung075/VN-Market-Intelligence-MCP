@@ -132,3 +132,87 @@
 
 ## Zone health
 Tier 1-4 complete. 45/45 tests GREEN. tsc clean. All 11 bugs resolved. | HEALTHY
+
+## Cycle 1934 — 2026-05-17 (MacroPanel data-shape fix)
+
+### Bug fixed
+MacroPanel only showed timestamp — rich data never rendered.
+Root cause: component read `macro.source` and `macro.status` (both `undefined`).
+Actual API shape: `{ fetchedAt, sources: { worldBank, yahoo, fred, cnbc, tradingEconomics, calendar }, summary: { ok, failed, totalLatencyMs } }`.
+
+### Files changed
+- app/domain/market.ts — added MacroSourceEntry, MacroSourceRow, MacroSummary interfaces + parseMacroSources() pure fn (backward-compat, additive)
+- app/routes/dashboard.fetch.tsx — MacroPanel rewritten to render per-source table (6 rows), summary counts, fetchedAt timestamp
+- app/__tests__/1934-macro-panel.test.ts — 9 assertions: domain type acceptance, parseMacroSources (null, empty, 6 rows, ok/failed rows, error field)
+
+### Test result
+- Vitest: 55/55 PASS (6 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+e4baf96a fix(frontend): MacroPanel reads sources+summary instead of missing source/status
+
+## Zone health
+Tier 1-4 complete. 55/55 tests GREEN. tsc clean. MacroPanel now renders full 6-source table. | HEALTHY
+
+## Cycle 1935 — 2026-05-17 (hydration fix — all dashboard routes)
+
+### Bugs fixed
+- Bug 2 (root cause): All timestamp container elements now carry `suppressHydrationWarning` — not just the innermost text `<span>`. React walks up the element tree: a suppressed child does NOT suppress the parent. Missing `suppressHydrationWarning` on outer `<span>` / `<p>` / `<div>` wrappers caused the full hydration cascade on every page load.
+- Bug 1 (consequence): NavLink navigation restored — it was broken by the hydration failure forcing React to full client render.
+
+### Files changed
+- app/routes/dashboard.fetch.tsx — outer `<span>` in FetchDashboard + outer `<div>` in MacroPanel
+- app/routes/dashboard.db.tsx — outer `<span>` in DbDashboard + outer `<div>` wrapping publishedAt in HeadlineTable
+- app/routes/dashboard.server.tsx — outer `<p>` in ServerDashboard
+- app/routes/dashboard.vps.tsx — outer `<span>` in VpsDashboard
+
+### Rule learned
+React hydration suppression is per-element, not inherited downward. Every ancestor that contains locale-formatted text (or whose children differ between SSR and CSR) must carry `suppressHydrationWarning` — even static label siblings ("Last updated:") inside the same container count as part of the element's children.
+
+### Test result
+- Vitest: 55/55 PASS (no new tests needed — structural prop change only)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+1a463888 fix(frontend): add suppressHydrationWarning to all timestamp container elements
+
+## Zone health
+Tier 1-4 complete. 55/55 tests GREEN. tsc clean. All hydration errors resolved, NavLink navigation working. | HEALTHY
+
+## Cycle 1936 — 2026-05-17 (ClientTimestamp — root hydration fix)
+
+### Root cause confirmed
+suppressHydrationWarning on individual elements does NOT prevent root-level hydration cascade.
+React still detects mismatch at the root when toLocaleString("vi-VN", {timeZone}) differs
+between Node SSR (no ICU locale data) and browser V8 (full ICU), which triggers
+"the entire root will switch to client rendering" on every page load.
+
+### Fix: client-only rendering pattern
+New component: app/components/ClientTimestamp.tsx
+- ClientTimestamp: SSR="...", after mount=toLocaleString("vi-VN", {timeZone})
+- ClientTimeString: SSR="...", after mount=toLocaleTimeString("vi-VN", {timeZone})
+Both export a <span> — zero hydration mismatch possible at any tree level.
+
+### Files changed
+- app/components/ClientTimestamp.tsx — new component (two exports)
+- app/routes/dashboard.fetch.tsx — replaced 3 toLocaleString calls, removed all suppressHydrationWarning
+- app/routes/dashboard.db.tsx — replaced 2 toLocaleString calls, removed all suppressHydrationWarning
+- app/routes/dashboard.server.tsx — replaced 1 toLocaleString call, removed all suppressHydrationWarning
+- app/routes/dashboard.vps.tsx — replaced 1 toLocaleString + 1 toLocaleTimeString, removed all suppressHydrationWarning
+- app/__tests__/1936-client-timestamp.test.tsx — 6 new tests (component render + className + empty ISO)
+- app/__tests__/setup.ts — added window.__vite_plugin_react_preamble_installed__=true to enable .tsx component tests
+
+### Docs created
+- docs/architecture/microservice/frontend/testing.md
+- docs/architecture/microservice/frontend/api-reference.md
+
+### Test result
+- Vitest: 61/61 PASS (7 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+e945f9ea fix(1936/frontend): replace suppressHydrationWarning with ClientTimestamp component
+
+## Zone health
+Tier 1-4 complete. 61/61 tests GREEN. tsc clean. React hydration errors eliminated at root level. | HEALTHY

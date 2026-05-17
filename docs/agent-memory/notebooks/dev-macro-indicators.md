@@ -47,3 +47,49 @@ Zone health: FRED adapter unblocked; 3 new tests covering parallel dispatch; Wor
 **Docs updated:** infrastructure.md (WorldBank adapter section), testing.md (counts + WorldBank test table).
 
 Zone health: WorldBank adapter unblocked; parallel dispatch pattern now consistent with FRED; 93 pass / 12 skip / 0 fail | HEALTHY
+
+### Session 2026-05-17 — Calendar source 10s hard cap
+
+**Task:** Reduce calendar source timeout from 30s to 10s to prevent 63s hang blocking entire `/macro/external` fetch.
+
+**Root cause:** `DEFAULT_TIMEOUTS.calendar` was 30_000ms. The CF Python subprocess can stall far beyond the expected warmup window, causing `Promise.race` to wait the full 30s (or longer if the process eventually completes). Observed: `status: "timeout"`, `totalLatencyMs: 62700ms`.
+
+**Fix:** `DEFAULT_TIMEOUTS.calendar: 30_000 → 10_000` in `fetch-external-macro.ts`. Also:
+- Exported `DEFAULT_TIMEOUTS` (was `const`, now `export const`) for test assertions
+- Typed as `Required<SourceTimeouts>` — removed non-null `!` assertions from constructor merge
+- Updated module-level JSDoc to document 10s cap + rationale
+
+**Tests added (3 new in fetch-external-macro.test.ts):**
+- `DEFAULT_TIMEOUTS.calendar === 10_000` — asserts constant directly
+- slow calendar (15s stub) timed out at 10s budget — latencyMs ≥ 10_000
+- other 5 sources complete normally while calendar pending
+
+**Result:** 105 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated). Test runtime ~21s (3 new 10s timeout tests dominate).
+
+**Docs updated:** usecases.md (FetchExternalMacroUseCase section + timeout table), testing.md (+test group table, updated counts), infrastructure.md (InvestingCalendarAdapter section with 10s hard cap note).
+
+**Branch:** `task/calendar-source-10s-timeout` — commit c8f63afc.
+
+Zone health: calendar timeout capped at 10s; withTimeout + Promise.all pattern verified; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY
+
+### Session 2026-05-17 — Calendar timeout 10s → 5s + Docker rebuild
+
+**Task:** Reduce calendar timeout to 5s (was 10s in source, but Docker container was still running 30s stale image). Live endpoint confirmed `latencyMs: 30001` before fix.
+
+**Root cause (two-part):**
+1. Prior commit had already set source to 10_000, but Docker container had not been rebuilt — running stale image from before any fix.
+2. Task spec required reducing further to 5_000 since endpoint is permanently unreachable.
+
+**Fix:**
+- `DEFAULT_TIMEOUTS.calendar: 10_000 → 5_000` in `fetch-external-macro.ts`
+- Updated JSDoc comment chain: 30s → 10s → 5s with rationale
+- Test assertions updated: `toBe(5_000)`, slow-calendar stub 15s → 10s, budget 10_000 → 5_000
+- Docker image rebuilt + container recreated (`docker compose build + up -d`)
+
+**Verification:** `localhost:5004/external` → `"calendar": { "status": "timeout", "latencyMs": 5001 }`. Page load reduced from ~30s to ≤5s.
+
+**Tests:** 105 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated). Test runtime ~11s (halved from ~21s).
+
+**Commits:** 681d0482 (fix), 2198fc16 (docs)
+
+Zone health: calendar hard cap at 5s; Docker container rebuilt + verified via live endpoint; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY

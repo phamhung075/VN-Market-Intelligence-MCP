@@ -33,7 +33,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| news-bugs-reuters-bloomberg-fix | **FIX: Reuters 0 headlines + Bloomberg 502** — (1) `reuters-rss.ts`: dead `feeds.reuters.com` URL replaced with Google News RSS (`reuters+business+news`). Live confirmed: 15 articles, error: null. (2) `handlers.ts`: added 3 warn log points when RSS primary fails/empty, and when stealth fallback also returns 0. (3) `index.ts`: `idleTimeout: 0` to prevent Bun 10s idle timeout killing Playwright (was causing empty reply → 502 at api-gateway). 8 regression tests added. 180/180 pass. Docker rebuilt + redeployed. QA: verify `GET /news/reuters/headlines` returns ≥1 article; verify `GET /news/bloomberg/headlines` returns 200 JSON (not 502). Bloomberg articles [] is a separate selector issue — 502 is the reported bug and is fixed. | HIGH | FIX | qa | — | — |
 
 ---
 ## Done

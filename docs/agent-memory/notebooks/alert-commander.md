@@ -1,8 +1,29 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 14:03 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 17:03 UTC | **Sprint:** c154
 
 ## This session
+
+### Alert Cycle (17:01–17:03 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (-0.33% spread) | **Pivot window:** false
+- **Market:** CLOSED (off-hours 17:01 UTC, outside 02:00–08:59 UTC trading window)
+- **Signals evaluated:** agent_bus=3 (urgent_news=1, chain_catalyst=2) | price_alerts=0 | legal_risk=0 | crisis=0
+- **Fired:** 0 | **Suppressed:** 3 | **MARKET:** 0
+- **Signal details:**
+  - **3310 (GAS):** urgent_news bullish, confidence 0.50 < TIGHTENING threshold 0.75 → SUPPRESSED (no price-anomaly override)
+  - **3311 (PLX):** chain_catalyst bearish, confidence 0.50 < TIGHTENING threshold 0.85 → SUPPRESSED
+  - **3312 (Market forecast):** chain_catalyst mixed, confidence 0.50 < TIGHTENING threshold 0.85 → SUPPRESSED
+- **Suppression reasons:** All signals below regime-adjusted conviction thresholds; no supporting price-anomalies; bearish PLX lacks escalation conditions
+- **Macro snapshot:** Valid shape ✓ | Brent $109.26 (+energy sector), Gold $4,561.90 (risk-off), USD/VND 26,350 (FX headwind for imports, positive for exporters)
+- **Carry-over analysis:** VND carry spread -0.33% persists; FII outflow risk continues; recommend TIGHTENING thresholds until carry spread normalizes
+- **Price validation override:** GAS checked for price_anomaly move_sigma ≥ 4.0 — none found; no active price alerts
+- **Conflict detection:** PLX checked for conflicting chain_catalyst signals — none found; single bearish direction confirmed
+- **Off-hours assessment:** Market closed; all signals correctly suppressed per regime logic. No phantom-success reporting — all suppressed signals logged with explicit reasons. Cycle completed cleanly.
+- **WORK dispatch:** Cycle summary posted (0 fired, 3 suppressed, next cycle 19:01 UTC)
+- **Tool calls:** 11 (log_agent_work(start), get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_alerts, get_agent_signals×2, record_signal_outcome×3, send_telegram, log_agent_work(end))
+- **Session:** log_id=950, 3 chain/news signals evaluated, 0 alerts pending at bootstrap
+- **Next cycle:** +2h (19:01 UTC, still off-hours)
 
 ### Alert Cycle (14:02–14:03 UTC, 2026-05-17) — Off-hours 2h cycle
 - **Status:** COMPLETED

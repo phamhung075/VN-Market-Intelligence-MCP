@@ -13,6 +13,8 @@ import {
 } from "~/lib/api/client";
 import type { Headline } from "~/domain/news";
 import type { MacroData } from "~/domain/market";
+import { parseMacroSources } from "~/domain/market";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "Fetch Operations — VN Market Intelligence" },
@@ -112,11 +114,10 @@ function HeadlineList({
             )}
           </p>
           {h.publishedAt && (
-            <p className="mt-0.5 text-xs text-slate-500" suppressHydrationWarning>
-              {new Date(h.publishedAt).toLocaleString("vi-VN", {
-                timeZone: "Asia/Ho_Chi_Minh",
-              })}
-            </p>
+            <ClientTimestamp
+              iso={h.publishedAt}
+              className="mt-0.5 block text-xs text-slate-500"
+            />
           )}
         </li>
       ))}
@@ -130,35 +131,74 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
       <p className="text-sm text-slate-500">No macro data available.</p>
     );
   }
+
+  const rows = parseMacroSources(macro);
+  const summary = macro.summary;
+
   return (
-    <div className="space-y-2 text-sm">
-      {macro.source && (
-        <div className="flex gap-2">
-          <span className="text-slate-500">Source:</span>
-          <span className="text-slate-200">{String(macro.source)}</span>
-        </div>
-      )}
+    <div className="space-y-3 text-sm">
+      {/* Timestamp */}
       {macro.fetchedAt && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 text-xs">
           <span className="text-slate-500">Last updated:</span>
-          <span className="text-slate-200" suppressHydrationWarning>
-            {new Date(String(macro.fetchedAt)).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp
+            iso={String(macro.fetchedAt)}
+            className="text-slate-400"
+          />
         </div>
       )}
-      {macro.status && (
-        <div className="flex gap-2">
-          <span className="text-slate-500">Status:</span>
-          <span
-            className={
-              macro.status === "ok" ? "text-green-400" : "text-yellow-400"
-            }
-          >
-            {String(macro.status)}
+
+      {/* Summary counts */}
+      {summary && (
+        <div className="flex gap-4 text-xs">
+          <span className="text-green-400">{summary.ok} ok</span>
+          <span className={summary.failed > 0 ? "text-red-400" : "text-slate-500"}>
+            {summary.failed} failed
           </span>
+          {summary.totalLatencyMs !== undefined && (
+            <span className="text-slate-500">
+              {(summary.totalLatencyMs / 1000).toFixed(1)}s total
+            </span>
+          )}
         </div>
+      )}
+
+      {/* Per-source table */}
+      {rows.length > 0 ? (
+        <table className="w-full border-collapse text-xs">
+          <thead>
+            <tr className="border-b border-slate-700">
+              <th className="py-1 text-left font-medium text-slate-400">Source</th>
+              <th className="py-1 text-left font-medium text-slate-400">Status</th>
+              <th className="py-1 text-right font-medium text-slate-400">Latency</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name} className="border-b border-slate-800">
+                <td className="py-1.5 text-slate-300 capitalize">
+                  {row.name}
+                </td>
+                <td className="py-1.5">
+                  {row.status === "ok" ? (
+                    <span className="text-green-400">ok</span>
+                  ) : (
+                    <span className="text-red-400" title={row.error ?? "failed"}>
+                      {row.error ? `failed: ${row.error}` : "failed"}
+                    </span>
+                  )}
+                </td>
+                <td className="py-1.5 text-right text-slate-400">
+                  {row.latencyMs !== undefined
+                    ? `${row.latencyMs}ms`
+                    : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="text-slate-500">No source details available.</p>
       )}
     </div>
   );
@@ -174,11 +214,7 @@ export default function FetchDashboard() {
         <h1 className="text-2xl font-bold text-slate-100">Fetch Operations</h1>
         <span className="text-xs text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(fetchedAt).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={fetchedAt} />
         </span>
       </div>
 

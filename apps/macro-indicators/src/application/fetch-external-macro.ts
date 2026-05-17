@@ -11,7 +11,8 @@
  *
  * All 6 sources run concurrently via Promise.allSettled.
  * Each source has an independent per-source timeout (default: 8s for fast scrapers,
- * 30s for calendar which uses a Python subprocess + CF session warmup).
+ * 10s for calendar — hard cap introduced 2026-05-17 to prevent the 63s hang
+ * observed when the CF subprocess stalls beyond its expected warmup window).
  * A timed-out source is marked status='timeout'; it never blocks the others.
  *
  * Contract: execute() NEVER throws. Always returns ExternalMacroEnvelope.
@@ -43,14 +44,23 @@ import { DEFAULT_SYMBOLS, DEFAULT_CNBC_SYMBOLS } from '../domain/defaults.js';
  *   yahoo:           50s (11 symbols, parallel ~4s in practice)
  *   cnbc:            35s (6 dotted symbols, parallel ~2s in practice)
  *   tradingEconomics: 65s (7 slugs, parallel ~4-6s; slug pages are heavier)
+ *
+ * 2026-05-17: calendar reduced from 30s → 10s → 5s.
+ *   Observed hang: ~63s (totalLatencyMs: 62700ms, status: "timeout").
+ *   Root cause: subprocess can stall far beyond 30s CF warmup estimate.
+ *   10s cap introduced 2026-05-17; further reduced to 5s same day because
+ *   the calendar endpoint is permanently unreachable — shorter timeout
+ *   reduces page-load wait from ~30s to ~5s.
+ *   The other 5 sources (worldBank, yahoo, fred, cnbc, tradingEconomics)
+ *   are never blocked — all 6 run concurrently via Promise.all(withTimeout).
  */
-const DEFAULT_TIMEOUTS: SourceTimeouts = {
+export const DEFAULT_TIMEOUTS: Required<SourceTimeouts> = {
   worldBank:         8_000,
   yahoo:            50_000,  // Python subprocess + 11 parallel symbol fetches
   cnbc:             35_000,  // Python subprocess + 6 parallel quote fetches
   tradingEconomics: 65_000,  // Python subprocess + 7 parallel TE page fetches
   fred:              8_000,
-  calendar:         30_000,  // Python subprocess + CF warmup
+  calendar:          5_000,  // Hard cap: 5s — endpoint permanently unreachable (2026-05-17)
 };
 
 export interface SourceTimeouts {
@@ -150,12 +160,12 @@ export class FetchExternalMacroUseCase {
     timeouts?: SourceTimeouts,
   ) {
     this.timeouts = {
-      worldBank:        timeouts?.worldBank        ?? DEFAULT_TIMEOUTS.worldBank!,
-      yahoo:            timeouts?.yahoo            ?? DEFAULT_TIMEOUTS.yahoo!,
-      cnbc:             timeouts?.cnbc             ?? DEFAULT_TIMEOUTS.cnbc!,
-      tradingEconomics: timeouts?.tradingEconomics ?? DEFAULT_TIMEOUTS.tradingEconomics!,
-      fred:             timeouts?.fred             ?? DEFAULT_TIMEOUTS.fred!,
-      calendar:         timeouts?.calendar         ?? DEFAULT_TIMEOUTS.calendar!,
+      worldBank:        timeouts?.worldBank        ?? DEFAULT_TIMEOUTS.worldBank,
+      yahoo:            timeouts?.yahoo            ?? DEFAULT_TIMEOUTS.yahoo,
+      cnbc:             timeouts?.cnbc             ?? DEFAULT_TIMEOUTS.cnbc,
+      tradingEconomics: timeouts?.tradingEconomics ?? DEFAULT_TIMEOUTS.tradingEconomics,
+      fred:             timeouts?.fred             ?? DEFAULT_TIMEOUTS.fred,
+      calendar:         timeouts?.calendar         ?? DEFAULT_TIMEOUTS.calendar,
     };
   }
 

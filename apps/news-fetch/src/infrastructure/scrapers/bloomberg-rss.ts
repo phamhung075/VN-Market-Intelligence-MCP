@@ -1,7 +1,20 @@
 /**
- * ReutersRssScraper — PRIMARY path for Reuters news headlines
+ * BloombergRssScraper — PRIMARY path for Bloomberg news headlines
  *
- * Implements ReutersNewsPort via plain HTTP fetch + XML parse.
+ * Bloomberg has no public RSS feed. bloomberg.com returns HTTP 403 on direct
+ * scrape. `[data-component="headline"]` selector was the previous DOM approach
+ * but Bloomberg's PerimeterX blocks Playwright on the first navigation —
+ * resulting in articles: [] consistently.
+ *
+ * Solution (same pattern as Reuters):
+ *   Google News RSS search for "bloomberg markets news" reliably returns
+ *   Bloomberg-sourced articles from news.google.com without anti-bot blocking.
+ *   Verified live 2026-05-17: ~100 items returned including Bloomberg.com URLs.
+ *
+ * Fallback (when error != null OR articles empty): bloomberg-stealth.ts
+ *   — that decision belongs to handlers.ts, not here.
+ *
+ * Implements BloombergNewsPort via plain HTTP fetch + XML parse.
  * No browser, no Playwright. RAM: ~30–50 MB per scrape.
  *
  * Failure handling:
@@ -10,28 +23,22 @@
  *   - Empty feed    → FetchResult { error: null, articles: [] }  (not an error)
  *   - Network error → FetchResult { error: message, articles: [] }
  *
- * Fallback (when error != null OR articles empty): reuters-stealth.ts
- * — that decision belongs to the use-case / cron dispatcher, not here.
- *
  * DDD: infrastructure layer — imports only from domain.
  */
 
-import type { ReutersNewsPort } from '../../domain/repositories.js';
+import type { BloombergNewsPort } from '../../domain/repositories.js';
 import { NewsSource, type Article, type FetchResult } from '../../domain/models.js';
 
 /**
- * feeds.reuters.com was decommissioned in 2020 — DNS no longer resolves.
- * Replacement: Google News RSS search for "reuters business news", sourced from
- * reuters.com results. Returns ~100 items; no time restriction needed because
- * Google News naturally surfaces recent articles first.
+ * Google News RSS for Bloomberg markets and finance news.
  *
- * The `when:24h+allinurl:reuters.com` variant was tested and returned 0 items
- * (Google News query syntax changed). The keyword search reliably returns ≥ 50
- * Reuters-sourced articles and matches the same pattern used in the mcp-server
- * infrastructure/fetchers/reuters.ts fallback.
+ * The query "bloomberg markets finance" consistently returns articles sourced
+ * from bloomberg.com (verified 2026-05-17, ~100 items per fetch).
+ * Mirrors the reuters-rss.ts approach which replaced the dead feeds.reuters.com
+ * endpoint with the same Google News RSS pattern.
  */
-const REUTERS_RSS_URL =
-  'https://news.google.com/rss/search?q=reuters+business+news&ceid=US:en&hl=en-US&gl=US';
+const BLOOMBERG_RSS_URL =
+  'https://news.google.com/rss/search?q=bloomberg+markets+finance&ceid=US:en&hl=en-US&gl=US';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -42,22 +49,22 @@ const FETCH_TIMEOUT_MS = 10_000;
 // Public class
 // ---------------------------------------------------------------------------
 
-export class ReutersRssScraper implements ReutersNewsPort {
-  async fetchHeadlines(maxItems: number = 15): Promise<FetchResult> {
+export class BloombergRssScraper implements BloombergNewsPort {
+  async fetchHeadlines(maxItems: number = 10): Promise<FetchResult> {
     const fetchedAt = new Date().toISOString();
 
     let text: string;
 
     try {
-      const resp = await fetch(REUTERS_RSS_URL, {
+      const resp = await fetch(BLOOMBERG_RSS_URL, {
         headers: { 'User-Agent': BROWSER_UA },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
 
       if (!resp.ok) {
-        console.warn(`[reuters-rss] HTTP error ${resp.status}`);
+        console.warn(`[bloomberg-rss] HTTP error ${resp.status}`);
         return {
-          source: NewsSource.REUTERS,
+          source: NewsSource.BLOOMBERG,
           articles: [],
           fetchedAt,
           method: 'rss',
@@ -68,9 +75,9 @@ export class ReutersRssScraper implements ReutersNewsPort {
       text = await resp.text();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[reuters-rss] fetch failed: ${msg}`);
+      console.warn(`[bloomberg-rss] fetch failed: ${msg}`);
       return {
-        source: NewsSource.REUTERS,
+        source: NewsSource.BLOOMBERG,
         articles: [],
         fetchedAt,
         method: 'rss',
@@ -85,9 +92,9 @@ export class ReutersRssScraper implements ReutersNewsPort {
       articles = parseRssXml(text, fetchedAt, maxItems);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[reuters-rss] parse failed: ${msg}`);
+      console.warn(`[bloomberg-rss] parse failed: ${msg}`);
       return {
-        source: NewsSource.REUTERS,
+        source: NewsSource.BLOOMBERG,
         articles: [],
         fetchedAt,
         method: 'rss',
@@ -96,11 +103,11 @@ export class ReutersRssScraper implements ReutersNewsPort {
     }
 
     if (articles.length === 0) {
-      console.info('[reuters-rss] feed returned 0 items');
+      console.info('[bloomberg-rss] feed returned 0 items');
     }
 
     return {
-      source: NewsSource.REUTERS,
+      source: NewsSource.BLOOMBERG,
       articles,
       fetchedAt,
       method: 'rss',
@@ -120,11 +127,9 @@ export class ReutersRssScraper implements ReutersNewsPort {
  * regex-based extraction if DOMParser is unavailable (test environment).
  */
 function parseRssXml(xml: string, fetchedAt: string, maxItems: number): Article[] {
-  // Bun 1.x ships DOMParser as a global per the WinterCG spec.
   if (typeof DOMParser !== 'undefined') {
     return parseDom(xml, fetchedAt, maxItems);
   }
-  // Fallback for environments where DOMParser is not available (Node, some test runners).
   return parseRegex(xml, fetchedAt, maxItems);
 }
 
@@ -132,7 +137,6 @@ function parseDom(xml: string, fetchedAt: string, maxItems: number): Article[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, 'text/xml');
 
-  // Check for parse error (DOMParser signals errors via a <parsererror> element)
   const parseErr = doc.querySelector('parsererror');
   if (parseErr) {
     throw new Error(`XML parse error: ${parseErr.textContent?.slice(0, 120) ?? 'unknown'}`);
@@ -148,7 +152,7 @@ function buildArticle(item: Element, fetchedAt: string): Article {
   const pubDate = item.querySelector('pubDate')?.textContent?.trim() ?? null;
 
   return {
-    source: NewsSource.REUTERS,
+    source: NewsSource.BLOOMBERG,
     headline,
     url: rawUrl !== '' ? rawUrl : null,
     publishedAt: pubDate ? normalizeRfcDate(pubDate) : null,
@@ -165,7 +169,6 @@ function buildArticle(item: Element, fetchedAt: string): Article {
  */
 function parseRegex(xml: string, fetchedAt: string, maxItems: number): Article[] {
   const items: Article[] = [];
-  // Match each <item>...</item> block (non-greedy, dotall via [\s\S])
   const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
   let match: RegExpExecArray | null;
 
@@ -177,7 +180,7 @@ function parseRegex(xml: string, fetchedAt: string, maxItems: number): Article[]
     const pubDate = extractTag(block, 'pubDate');
 
     items.push({
-      source: NewsSource.REUTERS,
+      source: NewsSource.BLOOMBERG,
       headline,
       url: rawUrl && rawUrl !== '' ? rawUrl : null,
       publishedAt: pubDate ? normalizeRfcDate(pubDate) : null,
@@ -191,14 +194,12 @@ function parseRegex(xml: string, fetchedAt: string, maxItems: number): Article[]
 
 /** Extract the text content (or CDATA) of the first matching XML tag. */
 function extractTag(xml: string, tag: string): string | null {
-  // Match <tag>value</tag> or <tag><![CDATA[value]]></tag>
   const re = new RegExp(
     `<${tag}[^>]*>(?:\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>|([\\s\\S]*?))<\\/${tag}>`,
     'i',
   );
   const m = re.exec(xml);
   if (!m) return null;
-  // Group 1 = CDATA content; group 2 = plain text
   return (m[1] ?? m[2] ?? '').trim();
 }
 
@@ -207,13 +208,12 @@ function extractTag(xml: string, tag: string): string | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Convert an RFC 2822 date string (Reuters standard) to ISO 8601.
+ * Convert an RFC 2822 date string to ISO 8601.
  *
  * Example input:  "Mon, 13 May 2026 14:30:00 GMT"
  * Example output: "2026-05-13T14:30:00.000Z"
  *
- * Returns null if parsing fails — callers treat null publishedAt as
- * "date unknown", not as an error.
+ * Returns null if parsing fails.
  */
 export function normalizeRfcDate(rfcDate: string): string | null {
   try {
