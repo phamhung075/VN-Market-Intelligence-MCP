@@ -20,3 +20,20 @@ No new earnings today. 7 tickers (ACB, BID, CTG, EIB, MBB, VCB, VPB) have Q1-202
 - Bootstrap: FAILED (MCP gateway not responding after 2 attempts)
 - Earnings: N/A | Processed: none | Signals: 0
 - Status: BLOCKED — cycle exited at Step 0
+
+### Analysis Cycle (00:09 UTC — BLOCKED)
+- Bootstrap: FAILED (live probe: `dial vn-market: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`) — 1 retry after 5s also failed
+- BUG telegram: FAILED (same gateway)
+- get_recent_fixes dedup: FAILED (same gateway)
+- Signal dropped: docs/signals/report-analyzer-2026-05-17T00-09-17Z.json (bug-escalation → po)
+- Earnings: N/A | Processed: none | Signals: 0
+- Status: BLOCKED — cycle exited at Step 0 per fail-loud protocol
+- Note: alert-commander already escalated same incident at 00:02:20Z (docs/signals/alert-commander-2026-05-17T00-02-20Z.json). Live probe re-confirmed per memory-as-truth rule — did not skip based on prior log.
+
+## Cycle — 00:09 UTC
+
+- **cycle_date**: 2026-05-17
+- **findings**: MCP gateway (vn-market) unreachable at 02:00 UTC scheduled run; same outage as 00:02 / 00:08 UTC entries; live probe re-confirmed down
+- **actions**: bug-escalation signal dropped (report-analyzer-2026-05-17T00-09-17Z.json); no earnings analysis performed; BUG telegram attempt blocked by same gateway
+- **next_cycle_hint**: Q1-2026 bank filings (ACB, BID, CTG, EIB, MBB, VCB, VPB) deadline was 15/05 — once gateway recovers, prioritize get_earnings_calendar to catch any ĐÃ NỘP backlog
+- **estimated_tokens**: 1500 (3 failed MCP attempts × 500)
