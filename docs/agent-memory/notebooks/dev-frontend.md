@@ -268,3 +268,42 @@ be30270b feat(frontend): add StockSignalsPanel — agent signals per stock in de
 
 ## Zone health
 Tier 1-4 complete. 89/89 tests GREEN. tsc clean. StockSignalsPanel wired into stock detail, showing why a stock has signals. | HEALTHY
+
+## Cycle 1939 — 2026-05-17 (watchlist navigation — all 30 tickers)
+
+### Features shipped
+1. StockSelector — compact ticker badges for all 30 active watchlist stocks grouped by 10 sector labels. Top of analysis page. Selected ticker highlighted blue; clicking navigates to ?stock=XXX; clicking selected badge deselects.
+2. WatchlistOverviewGrid — 30 tile cards grouped by sector (visible when no ?stock= param). Each tile: ticker + company + exchange badge + close price + direction arrow + changePct% + signal count badge. Degrades gracefully when batch price unavailable.
+3. MacroImpactPanel — cascade agent signals (signal_type=chain_catalyst) for selected stock. Shows reasoning + BULLISH/BEARISH label + confidence + date. Fallback "No macro cascade in 24h" when empty.
+4. SectorPeersBar — peer tickers in same sector below stock detail header. Links to ?stock=PEER with direction + changePct. Uses existing watchlistTiles data (no extra HTTP call).
+
+### Domain additions (app/domain/market.ts)
+- WatchlistStock interface
+- WATCHLIST_STOCKS const (33 entries, 30 active) — mirrors system-map.json
+- groupBySector() pure function with includeInactive option
+- GroupBySectorOptions interface
+
+### API layer additions (app/lib/api/client.ts)
+- WatchlistTileData interface (ticker, close, changePct, direction, signalCount)
+- fetchWatchlistPrices(tickers[]) — GET /stock/price/batch?tickers=...; handles { quotes: {} } envelope and flat array shapes; non-fatal returns {}
+- fetchCascadeSignals(code, limit=5) — GET /mcp/api/signals/stock/:code?limit=5&type=chain_catalyst; reuses toAgentSignal mapper; non-fatal returns []
+
+### Loader changes (dashboard.analysis.tsx)
+- Always fetches: fetchWatchlistPrices(ACTIVE_TICKERS) — non-fatal
+- Selected stock: fetchCascadeSignals added to 4-way allSettled → now 5-way
+- selectedStockInfo: WatchlistStock | null — look up company/sector for header + peers
+- watchlistTiles: Record<string, WatchlistTileData> passed to StockDetailPanel for SectorPeersBar
+
+### Files created
+- app/__tests__/1939-watchlist.test.ts — 16 tests
+
+### Test result
+- Vitest: 105/105 PASS (11 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commits
+- 53357dac feat(frontend): watchlist stock selector, overview grid, macro impact, sector peers
+- 3fc0371f docs(frontend): update api-reference + testing, create domain-model
+
+## Zone health
+Tier 1-4 complete. 105/105 tests GREEN. tsc clean. All 30 watchlist stocks navigable; sector grouping, macro cascade panel, and peer comparison bar shipped. | HEALTHY
