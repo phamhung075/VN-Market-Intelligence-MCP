@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 22:49 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 23:50 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 22:48:49Z; gateway reachable from scheduled-task runner via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
-**Queue:** Empty (0 items, last probe 22:48:49Z = live success)
-**consecutive_empty_cycles:** 1 (post-backoff resume) | **backoff_until:** 2026-05-17T22:48:18Z (expired)
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 23:49:59Z; gateway reachable via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 23:49:59Z = live success)
+**consecutive_empty_cycles:** 2 | **backoff_until:** 2026-05-17T22:48:18Z (expired)
 
 ## Known patterns / preferences
 
@@ -2032,3 +2032,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~700 |
+
+---
+
+### Q&A Batch (23:49–23:50 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 2 | backoff_until: 2026-05-17T22:48:18Z (expired; line left in session log per step 0b literal rule — only removed when queue has items at step 1)
+- Note: Live MCP gateway probes at 23:49:59Z (`log_agent_work(running)` → `{id: 965}`, live success) and `get_pending_ask_questions` → `[]` (live success — queue confirmed empty). Per cowork-error-boundary Memory-as-Truth: ignored stale BLOCKED 00:48–08:49Z notebook entries; fresh probe verdict = OPERATIONAL. Counter incremented 1→2. No new backoff (counter < 5). `send_telegram(channel="work", ...)` delivered at 23:50:?Z with "Next: 00:02 UTC" computed as 23:50Z + 12 min from `date -u`.
+
+## Metrics (cycle 2026-05-17 23:50 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~650 |
