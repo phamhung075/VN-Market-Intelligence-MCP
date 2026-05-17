@@ -331,6 +331,122 @@ export async function fetchStockSignals(code: string, limit = 10): Promise<Agent
 }
 
 // --------------------------------------------------------------------------
+// Watchlist batch prices
+// --------------------------------------------------------------------------
+
+/**
+ * Lightweight data for a single tile in the watchlist overview grid.
+ * Intentionally minimal — close price, direction, change %, signal count.
+ */
+export interface WatchlistTileData {
+  ticker: string;
+  close: number;
+  changePct: number;
+  direction: "up" | "down" | "flat";
+  signalCount: number;
+}
+
+function toWatchlistTileData(ticker: string, raw: unknown): WatchlistTileData | null {
+  if (raw === null || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  const close = typeof obj["close"] === "number" ? obj["close"] : null;
+  if (close === null) return null;
+  const changePct = typeof obj["changePct"] === "number" ? obj["changePct"] : 0;
+  const rawDir = typeof obj["direction"] === "string" ? obj["direction"] : "";
+  const direction: "up" | "down" | "flat" =
+    rawDir === "up" ? "up" : rawDir === "down" ? "down" : "flat";
+  const signalCount = typeof obj["signalCount"] === "number" ? obj["signalCount"] : 0;
+  const resolvedTicker = typeof obj["ticker"] === "string" ? obj["ticker"] : ticker;
+  return { ticker: resolvedTicker, close, changePct, direction, signalCount };
+}
+
+/**
+ * Batch lightweight price + signal-count fetch for the watchlist overview grid.
+ * Endpoint: GET /stock/price/batch?tickers=VNM,FPT,...
+ * Response: { quotes: Record<ticker, { close, changePct, direction }> }
+ *   OR flat array of quote objects.
+ *
+ * Non-fatal: returns {} on any error so the overview degrades gracefully.
+ */
+export async function fetchWatchlistPrices(
+  tickers: string[],
+): Promise<Record<string, WatchlistTileData>> {
+  if (tickers.length === 0) return {};
+  const url = `${API_GATEWAY_URL}/stock/price/batch?tickers=${encodeURIComponent(tickers.join(","))}`;
+  let raw: unknown;
+  try {
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!response.ok) {
+      throw new ApiError(response.status, `GET /stock/price/batch failed: ${response.status}`);
+    }
+    raw = await response.json();
+  } catch {
+    return {};
+  }
+
+  const result: Record<string, WatchlistTileData> = {};
+
+  // Shape 1: { quotes: Record<ticker, obj> }
+  if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    const quotesMap = obj["quotes"];
+    if (quotesMap !== null && typeof quotesMap === "object" && !Array.isArray(quotesMap)) {
+      for (const [ticker, val] of Object.entries(quotesMap as Record<string, unknown>)) {
+        const tile = toWatchlistTileData(ticker, val);
+        if (tile) result[ticker] = tile;
+      }
+      return result;
+    }
+  }
+
+  // Shape 2: flat array of quote objects
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (item !== null && typeof item === "object") {
+        const obj = item as Record<string, unknown>;
+        const ticker = typeof obj["ticker"] === "string" ? obj["ticker"] : null;
+        if (ticker) {
+          const tile = toWatchlistTileData(ticker, item);
+          if (tile) result[ticker] = tile;
+        }
+      }
+    }
+    return result;
+  }
+
+  return {};
+}
+
+// --------------------------------------------------------------------------
+// Cascade signals (macro → stock impact)
+// --------------------------------------------------------------------------
+
+/**
+ * Fetch cascade-type agent signals for a stock.
+ * These show which macro events recently triggered a cascade impact for this stock.
+ * Endpoint: GET /mcp/api/signals/stock/:code?limit=5&type=chain_catalyst
+ *
+ * Reuses the same toAgentSignal mapper as fetchStockSignals.
+ * Non-fatal: returns [] on any error.
+ */
+export async function fetchCascadeSignals(code: string, limit = 5): Promise<AgentSignal[]> {
+  try {
+    const raw = await apiGet<unknown>(
+      `/mcp/api/signals/stock/${encodeURIComponent(code)}?limit=${limit}&type=chain_catalyst`,
+    );
+    const items: unknown[] =
+      raw !== null &&
+      typeof raw === "object" &&
+      Array.isArray((raw as Record<string, unknown>)["signals"])
+        ? ((raw as Record<string, unknown>)["signals"] as unknown[])
+        : [];
+    return items.map(toAgentSignal).filter((s): s is AgentSignal => s !== null);
+  } catch {
+    return [];
+  }
+}
+
+// --------------------------------------------------------------------------
 // Macro snapshot
 // --------------------------------------------------------------------------
 

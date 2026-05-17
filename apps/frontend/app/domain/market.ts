@@ -151,6 +151,88 @@ export interface AgentSignal {
 }
 
 // --------------------------------------------------------------------------
+// Watchlist types
+// --------------------------------------------------------------------------
+
+/**
+ * A stock entry from the canonical watchlist in docs/data/system-map.json.
+ * These are embedded at build time — never call the filesystem at runtime.
+ */
+export interface WatchlistStock {
+  ticker: string;
+  company: string;
+  sector: string;
+  exchange: "HOSE" | "HNX" | "UPCOM" | string;
+  active: boolean;
+  note?: string;
+}
+
+/**
+ * Canonical watchlist — mirrors docs/data/system-map.json project.watchlist.
+ * Source of truth for all 30+ tickers tracked across 10 sectors.
+ * Active = true only; VEA removed in sprint-054.
+ */
+export const WATCHLIST_STOCKS: WatchlistStock[] = [
+  { ticker: "VNM", company: "Vinamilk", sector: "Agriculture / Dairy", exchange: "HOSE", active: true },
+  { ticker: "FPT", company: "FPT Corp", sector: "Tech / IT outsourcing", exchange: "HOSE", active: true },
+  { ticker: "VCB", company: "Vietcombank", sector: "Banking", exchange: "HOSE", active: true },
+  { ticker: "HPG", company: "Hoa Phat Group", sector: "Steel", exchange: "HOSE", active: true },
+  { ticker: "VEA", company: "VEAM Corp", sector: "Automotive (Honda/Toyota/Ford JV)", exchange: "UPCOM", active: false, note: "Removed sprint-054" },
+  { ticker: "BID", company: "BIDV", sector: "Banking", exchange: "HOSE", active: true },
+  { ticker: "SHB", company: "Saigon-Hanoi Bank", sector: "Banking", exchange: "HNX", active: true },
+  { ticker: "EIB", company: "Eximbank", sector: "Banking", exchange: "HOSE", active: true },
+  { ticker: "VHM", company: "Vinhomes", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "VIC", company: "Vingroup", sector: "Real estate / Conglomerate", exchange: "HOSE", active: true },
+  { ticker: "KBC", company: "Kinh Bac City", sector: "Real estate / Industrial zone", exchange: "HOSE", active: true },
+  { ticker: "HUT", company: "Tasco", sector: "Real estate / Infrastructure", exchange: "HNX", active: true },
+  { ticker: "DIG", company: "DIC Corp", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "DXG", company: "Dat Xanh Group", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "KDH", company: "Khang Dien House", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "PDR", company: "Phat Dat Real Estate", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "NVL", company: "No Va Land", sector: "Real estate", exchange: "HOSE", active: true },
+  { ticker: "VRE", company: "Vincom Retail", sector: "Real estate / Retail REIT", exchange: "HOSE", active: true },
+  { ticker: "MSN", company: "Masan Group", sector: "Food / Beverage / Retail", exchange: "HOSE", active: true },
+  { ticker: "FRT", company: "FPT Retail", sector: "Retail / Electronics", exchange: "HOSE", active: true },
+  { ticker: "KDC", company: "Kido Group", sector: "Food / Beverage", exchange: "HOSE", active: true },
+  { ticker: "SAB", company: "Sabeco", sector: "Food / Beverage (Beer)", exchange: "HOSE", active: true },
+  { ticker: "DPM", company: "Phu My Fertilizer", sector: "Agriculture / Chemicals", exchange: "HOSE", active: true },
+  { ticker: "SSI", company: "SSI Securities", sector: "Securities", exchange: "HOSE", active: true },
+  { ticker: "VIX", company: "VIX Securities", sector: "Securities", exchange: "HOSE", active: true },
+  { ticker: "VND", company: "VNDirect Securities", sector: "Securities", exchange: "HOSE", active: true },
+  { ticker: "VCI", company: "Viet Capital Securities", sector: "Securities", exchange: "HOSE", active: true },
+  { ticker: "DGC", company: "Duc Giang Chemicals", sector: "Chemicals / Phosphate", exchange: "HOSE", active: true },
+  { ticker: "VJC", company: "VietJet Air", sector: "Aviation / Low-cost carrier", exchange: "HOSE", active: true },
+  { ticker: "GEX", company: "Gelex Group", sector: "Utilities / Electrical", exchange: "HOSE", active: true },
+  { ticker: "BSR", company: "Binh Son Refinery", sector: "Oil & Gas / Refinery", exchange: "UPCOM", active: true },
+  { ticker: "DAG", company: "Da Nang Rubber Group", sector: "Machinery / Industrial", exchange: "HOSE", active: true },
+  { ticker: "DBC", company: "Dabaco", sector: "Agriculture / Livestock", exchange: "HOSE", active: true },
+];
+
+/** Options for groupBySector */
+export interface GroupBySectorOptions {
+  includeInactive?: boolean;
+}
+
+/**
+ * Group watchlist stocks by sector label.
+ * By default only active stocks are included.
+ * Pure function — safe for loaders and tests.
+ */
+export function groupBySector(
+  stocks: WatchlistStock[],
+  options: GroupBySectorOptions = {},
+): Record<string, WatchlistStock[]> {
+  const { includeInactive = false } = options;
+  const filtered = includeInactive ? stocks : stocks.filter((s) => s.active);
+  const groups: Record<string, WatchlistStock[]> = {};
+  for (const stock of filtered) {
+    if (!groups[stock.sector]) groups[stock.sector] = [];
+    groups[stock.sector].push(stock);
+  }
+  return groups;
+}
+
+// --------------------------------------------------------------------------
 // Technical Analysis types
 // --------------------------------------------------------------------------
 

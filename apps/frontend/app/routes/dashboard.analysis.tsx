@@ -1,6 +1,8 @@
 /**
  * /dashboard/analysis — Agent market analysis.
- * Sections: Kinh Dịch market signal, macro signals, stock table, detail panel.
+ * Sections: Stock selector (all 30 watchlist tickers grouped by sector),
+ *           Watchlist overview grid (when no ?stock=),
+ *           Kinh Dịch market signal, macro signals, stock table, detail panel.
  * ?stock=CODE — loads full Kinh Dịch reading + 90-day OHLCV for chart rendering.
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
@@ -13,6 +15,9 @@ import {
   fetchPriceHistory,
   fetchStockSignals,
   fetchTASnapshot,
+  fetchWatchlistPrices,
+  fetchCascadeSignals,
+  type WatchlistTileData,
 } from "~/lib/api/client";
 import type {
   AgentSignal,
@@ -22,6 +27,11 @@ import type {
   MacroSignal,
   PricePoint,
   TASnapshot,
+  WatchlistStock,
+} from "~/domain/market";
+import {
+  WATCHLIST_STOCKS,
+  groupBySector,
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { StockChart } from "~/components/charts/StockChart";
@@ -30,16 +40,22 @@ export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
 ];
 
-// Representative cross-sector sample shown in the overview table
-const OVERVIEW_TICKERS = [
-  "FPT", "VNM", "HPG", "VCB", "MSN", "TCB", "VIC", "SSI",
-] as const;
+// Active watchlist tickers only (VEA excluded)
+const ACTIVE_TICKERS = WATCHLIST_STOCKS.filter((s) => s.active).map((s) => s.ticker);
+
+// Representative sample for the KD overview table (top 8 cross-sector picks)
+const KD_SAMPLE_TICKERS = ["FPT", "VNM", "HPG", "VCB", "MSN", "VIC", "SSI", "VJC"] as const;
+
+// --------------------------------------------------------------------------
+// Domain interfaces
+// --------------------------------------------------------------------------
 
 interface StockDetail {
   reading: KinhDichReading;
   prices: PricePoint[];
   ta: TASnapshot | null;
   signals: AgentSignal[] | null;
+  cascadeSignals: AgentSignal[];
 }
 
 interface LoaderData {
@@ -47,11 +63,17 @@ interface LoaderData {
   readings: KinhDichReading[];
   snapshot: MacroSnapshot | null;
   selectedStock: string | null;
+  selectedStockInfo: WatchlistStock | null;
   detail: StockDetail | null;
   detailError: string | null;
+  watchlistTiles: Record<string, WatchlistTileData>;
   errors: string[];
   fetchedAt: string;
 }
+
+// --------------------------------------------------------------------------
+// Loader
+// --------------------------------------------------------------------------
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -59,12 +81,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const errors: string[] = [];
 
-  // Base data — always fetched
+  // Base data — always fetched in parallel
   const [marketResult, snapshotResult, ...readingResults] =
     await Promise.allSettled([
       fetchKinhDichMarket(),
       fetchMacroSnapshot(),
-      ...OVERVIEW_TICKERS.map((t) => fetchKinhDichReading(t)),
+      ...KD_SAMPLE_TICKERS.map((t) => fetchKinhDichReading(t)),
     ]);
 
   const market =
@@ -81,22 +103,32 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .map((r) => (r.status === "fulfilled" ? r.value : null))
     .filter((r): r is KinhDichReading => r !== null);
 
+  // Watchlist tile prices — lightweight batch fetch (non-fatal → {})
+  let watchlistTiles: Record<string, WatchlistTileData> = {};
+  try {
+    watchlistTiles = await fetchWatchlistPrices(ACTIVE_TICKERS);
+  } catch {
+    // non-fatal — overview cards show "—" for price
+  }
+
   // Detail — only when a stock is selected
   let detail: StockDetail | null = null;
   let detailError: string | null = null;
 
   if (selectedStock) {
-    const [readingRes, priceRes, taRes, signalsRes] = await Promise.allSettled([
+    const [readingRes, priceRes, taRes, signalsRes, cascadeRes] = await Promise.allSettled([
       fetchKinhDichReading(selectedStock),
-      fetchPriceHistory(selectedStock, 90), // 90 days for indicator charts
-      fetchTASnapshot(selectedStock),       // TA non-fatal — null on failure
-      fetchStockSignals(selectedStock, 10), // signals non-fatal — null on failure
+      fetchPriceHistory(selectedStock, 90),     // 90 days for indicator charts
+      fetchTASnapshot(selectedStock),            // TA non-fatal — null on failure
+      fetchStockSignals(selectedStock, 10),      // signals non-fatal — null on failure
+      fetchCascadeSignals(selectedStock, 5),     // cascade macro impact — non-fatal
     ]);
 
     if (readingRes.status === "fulfilled" && priceRes.status === "fulfilled") {
       const ta = taRes.status === "fulfilled" ? taRes.value : null;
       const signals = signalsRes.status === "fulfilled" ? signalsRes.value : null;
-      detail = { reading: readingRes.value, prices: priceRes.value, ta, signals };
+      const cascadeSignals = cascadeRes.status === "fulfilled" ? cascadeRes.value : [];
+      detail = { reading: readingRes.value, prices: priceRes.value, ta, signals, cascadeSignals };
     } else {
       detailError =
         readingRes.status === "rejected"
@@ -105,13 +137,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
+  // Find watchlist metadata for selected stock (sector, company name)
+  const selectedStockInfo = selectedStock
+    ? WATCHLIST_STOCKS.find((s) => s.ticker === selectedStock) ?? null
+    : null;
+
   return json<LoaderData>({
     market,
     readings,
     snapshot,
     selectedStock,
+    selectedStockInfo,
     detail,
     detailError,
+    watchlistTiles,
     errors,
     fetchedAt: new Date().toISOString(),
   });
@@ -159,6 +198,15 @@ function indicatorLabel(indicator: string): string {
   }
 }
 
+function directionArrow(direction: "up" | "down" | "flat" | string): {
+  symbol: string;
+  cls: string;
+} {
+  if (direction === "up") return { symbol: "↑", cls: "text-green-400" };
+  if (direction === "down") return { symbol: "↓", cls: "text-red-400" };
+  return { symbol: "—", cls: "text-slate-500" };
+}
+
 // --------------------------------------------------------------------------
 // Section shell
 // --------------------------------------------------------------------------
@@ -185,6 +233,294 @@ function SectionCard({
         </h2>
       </div>
       <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Stock Selector — ticker badges grouped by sector (Priority 1)
+// --------------------------------------------------------------------------
+
+/**
+ * Compact row of clickable ticker badges for all 30 watchlist stocks.
+ * Grouped by sector. Selected stock is highlighted in blue.
+ * Clicking a badge navigates to ?stock=XXX.
+ */
+function StockSelector({ selectedStock }: { selectedStock: string | null }) {
+  const sectorGroups = groupBySector(WATCHLIST_STOCKS);
+  const sectorNames = Object.keys(sectorGroups).sort();
+
+  return (
+    <div className="space-y-3">
+      {sectorNames.map((sector) => {
+        const stocks = sectorGroups[sector];
+        return (
+          <div key={sector} className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
+            <span className="shrink-0 w-40 text-xs text-slate-500 pt-0.5 truncate" title={sector}>
+              {sector}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {stocks.map((s) => {
+                const isSelected = s.ticker === selectedStock;
+                return (
+                  <Link
+                    key={s.ticker}
+                    to={isSelected ? "." : `?stock=${s.ticker}`}
+                    className={`rounded px-2 py-0.5 text-xs font-mono font-semibold transition-colors ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+                    }`}
+                    title={`${s.company} — ${s.exchange}`}
+                  >
+                    {s.ticker}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Watchlist Overview Grid — all 30 stocks as tiles (Priority 2)
+// --------------------------------------------------------------------------
+
+/**
+ * Single tile card: ticker + company + last price + direction + signal count.
+ * Clicking navigates to ?stock=XXX to load full detail.
+ */
+function WatchlistTile({
+  stock,
+  tile,
+}: {
+  stock: WatchlistStock;
+  tile: WatchlistTileData | undefined;
+}) {
+  const arrow = tile ? directionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+  const hasPrice = tile !== undefined;
+
+  return (
+    <Link
+      to={`?stock=${stock.ticker}`}
+      className="group block rounded-lg border border-slate-700 bg-slate-800/60 p-3 hover:border-blue-600 hover:bg-slate-800 transition-colors"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-sm font-bold text-blue-400 group-hover:text-blue-300">
+          {stock.ticker}
+        </span>
+        <span className="rounded bg-slate-700 px-1.5 py-0.5 text-xs text-slate-400">
+          {stock.exchange}
+        </span>
+      </div>
+
+      {/* Company name */}
+      <p className="mt-0.5 text-xs text-slate-500 truncate" title={stock.company}>
+        {stock.company}
+      </p>
+
+      {/* Price + direction */}
+      <div className="mt-2 flex items-baseline justify-between">
+        {hasPrice ? (
+          <>
+            <span suppressHydrationWarning className="text-sm font-semibold text-slate-100">
+              {tile.close.toLocaleString("vi-VN")}
+            </span>
+            <span className={`text-xs font-semibold ${arrow.cls}`}>
+              {arrow.symbol}{" "}
+              {tile.changePct > 0 ? "+" : ""}
+              {tile.changePct.toFixed(1)}%
+            </span>
+          </>
+        ) : (
+          <span className="text-xs text-slate-600">Không có giá</span>
+        )}
+      </div>
+
+      {/* Signal count badge */}
+      {hasPrice && tile.signalCount > 0 && (
+        <div className="mt-1.5 flex items-center gap-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+          <span className="text-xs text-slate-400">
+            {tile.signalCount} signal{tile.signalCount > 1 ? "s" : ""}
+          </span>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function WatchlistOverviewGrid({
+  tiles,
+}: {
+  tiles: Record<string, WatchlistTileData>;
+}) {
+  const activeStocks = WATCHLIST_STOCKS.filter((s) => s.active);
+  const sectorGroups = groupBySector(WATCHLIST_STOCKS);
+  const sectorNames = Object.keys(sectorGroups).sort();
+
+  const totalWithPrice = activeStocks.filter((s) => tiles[s.ticker] !== undefined).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Summary bar */}
+      <div className="flex items-center gap-4 text-xs text-slate-500">
+        <span>{activeStocks.length} cổ phiếu</span>
+        <span>·</span>
+        <span>{sectorNames.length} nhóm ngành</span>
+        {totalWithPrice > 0 && (
+          <>
+            <span>·</span>
+            <span className="text-green-500">{totalWithPrice} có giá</span>
+          </>
+        )}
+        {totalWithPrice === 0 && (
+          <>
+            <span>·</span>
+            <span className="text-slate-600">Giá chưa khả dụng — click mã để xem chi tiết</span>
+          </>
+        )}
+      </div>
+
+      {/* Sector groups */}
+      {sectorNames.map((sector) => {
+        const stocks = sectorGroups[sector];
+        return (
+          <div key={sector}>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              {sector}
+            </h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {stocks.map((s) => (
+                <WatchlistTile key={s.ticker} stock={s} tile={tiles[s.ticker]} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Sector Peers Bar — siblings in same sector (Priority 4)
+// --------------------------------------------------------------------------
+
+function SectorPeersBar({
+  currentTicker,
+  sector,
+  tiles,
+}: {
+  currentTicker: string;
+  sector: string | null;
+  tiles: Record<string, WatchlistTileData>;
+}) {
+  if (!sector) return null;
+
+  const peers = WATCHLIST_STOCKS.filter(
+    (s) => s.active && s.sector === sector && s.ticker !== currentTicker,
+  );
+
+  if (peers.length === 0) return null;
+
+  return (
+    <div className="border-b border-slate-700 px-4 py-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        Cùng ngành — {sector}
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {peers.map((peer) => {
+          const tile = tiles[peer.ticker];
+          const arrow = tile ? directionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+          return (
+            <Link
+              key={peer.ticker}
+              to={`?stock=${peer.ticker}`}
+              className="flex items-center gap-1.5 rounded border border-slate-700 bg-slate-800 px-2 py-1 hover:border-slate-500 transition-colors"
+            >
+              <span className="font-mono text-xs font-semibold text-blue-400">
+                {peer.ticker}
+              </span>
+              {tile ? (
+                <span className={`text-xs font-semibold ${arrow.cls}`}>
+                  {arrow.symbol} {tile.changePct > 0 ? "+" : ""}{tile.changePct.toFixed(1)}%
+                </span>
+              ) : (
+                <span className="text-xs text-slate-600">—</span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Macro Impact Panel — cascade signals showing macro → stock linkage (Priority 3)
+// --------------------------------------------------------------------------
+
+function MacroImpactPanel({
+  cascadeSignals,
+  stock,
+}: {
+  cascadeSignals: AgentSignal[];
+  stock: string;
+}) {
+  return (
+    <div className="border-b border-slate-700 px-4 py-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+        Tác động Macro — {stock}
+      </h3>
+
+      {cascadeSignals.length === 0 ? (
+        <p className="text-xs text-slate-500">
+          Không có cascade macro cho {stock} trong 24h qua.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {cascadeSignals.map((sig) => {
+            const isBullish = sig.direction === "BULLISH";
+            const isBearish = sig.direction === "BEARISH";
+            const dirCls = isBullish
+              ? "text-green-400"
+              : isBearish
+                ? "text-red-400"
+                : "text-slate-400";
+            const borderCls = isBullish
+              ? "border-green-800"
+              : isBearish
+                ? "border-red-800"
+                : "border-slate-700";
+
+            return (
+              <div
+                key={sig.id}
+                className={`rounded border bg-slate-800/60 px-3 py-2 ${borderCls}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs text-slate-300 leading-relaxed flex-1">
+                    {sig.reasoning || "Cascade macro event"}
+                  </p>
+                  <span className={`shrink-0 text-xs font-semibold ${dirCls}`}>
+                    {isBullish ? "↑ BULLISH" : isBearish ? "↓ BEARISH" : sig.direction}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+                  <span>{Math.round(sig.confidence * 100)}% tin cậy</span>
+                  <span suppressHydrationWarning>
+                    {sig.createdAt ? new Date(sig.createdAt.replace(" ", "T") + "Z").toLocaleDateString("vi-VN") : "—"}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -272,7 +608,7 @@ function MacroSignalPanel({ snapshot }: { snapshot: MacroSnapshot }) {
 }
 
 // --------------------------------------------------------------------------
-// Stock table + selector
+// Stock table + search
 // --------------------------------------------------------------------------
 
 function StockTable({
@@ -822,13 +1158,17 @@ function MiniPriceTable({ prices }: { prices: PricePoint[] }) {
 function StockDetailPanel({
   detail,
   stock,
+  stockInfo,
   snapshot,
+  watchlistTiles,
 }: {
   detail: StockDetail;
   stock: string;
+  stockInfo: WatchlistStock | null;
   snapshot: MacroSnapshot | null;
+  watchlistTiles: Record<string, WatchlistTileData>;
 }) {
-  const { reading, prices, ta, signals } = detail;
+  const { reading, prices, ta, signals, cascadeSignals } = detail;
 
   return (
     <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 overflow-hidden">
@@ -836,6 +1176,9 @@ function StockDetailPanel({
       <div className="flex items-center justify-between border-b border-blue-800 bg-blue-950 px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="font-mono text-xl font-bold text-blue-300">{stock}</span>
+          {stockInfo && (
+            <span className="text-xs text-slate-400">{stockInfo.company}</span>
+          )}
           <span className={`text-sm font-semibold ${signalColor(reading.signal)}`}>
             {reading.signal}
           </span>
@@ -845,6 +1188,13 @@ function StockDetailPanel({
           ✕ đóng
         </Link>
       </div>
+
+      {/* Sector peers bar — quick comparison with siblings */}
+      <SectorPeersBar
+        currentTicker={stock}
+        sector={stockInfo?.sector ?? null}
+        tiles={watchlistTiles}
+      />
 
       {/* Chart — full width, client-only render */}
       <div className="border-b border-slate-700">
@@ -856,6 +1206,9 @@ function StockDetailPanel({
 
       {/* Info source panel — contributing data sources */}
       <InfoSourcePanel ta={ta} reading={reading} prices={prices} snapshot={snapshot} />
+
+      {/* Macro impact panel — cascade macro → sector → stock linkage */}
+      <MacroImpactPanel cascadeSignals={cascadeSignals} stock={stock} />
 
       {/* Agent signals — why this stock has been flagged */}
       <StockSignalsPanel signals={signals} />
@@ -926,14 +1279,18 @@ export default function AnalysisDashboard() {
     readings,
     snapshot,
     selectedStock,
+    selectedStockInfo,
     detail,
     detailError,
+    watchlistTiles,
     errors,
     fetchedAt,
   } = useLoaderData<typeof loader>();
 
+  const hasWatchlistPrices = Object.keys(watchlistTiles).length > 0;
+
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="max-w-6xl space-y-6">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Market Analysis</h1>
@@ -953,7 +1310,54 @@ export default function AnalysisDashboard() {
         </div>
       )}
 
-      {/* Kinh Dịch market signal */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Stock Selector — all 30 tickers grouped by sector (Priority 1)     */}
+      {/* ------------------------------------------------------------------ */}
+      <SectionCard
+        title="Chọn cổ phiếu"
+        subtitle={`${WATCHLIST_STOCKS.filter((s) => s.active).length} mã · 10 nhóm ngành`}
+      >
+        <StockSelector selectedStock={selectedStock} />
+
+        {/* Quick free-text search below the sector grid */}
+        <div className="mt-4 border-t border-slate-700 pt-4">
+          <StockSearchForm defaultValue={selectedStock ?? ""} />
+        </div>
+      </SectionCard>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* When no stock selected: show watchlist overview grid (Priority 2)  */}
+      {/* ------------------------------------------------------------------ */}
+      {!selectedStock && (
+        <SectionCard
+          title="Watchlist — Tổng quan"
+          subtitle="30 cổ phiếu · click để xem chi tiết"
+        >
+          <WatchlistOverviewGrid tiles={watchlistTiles} />
+        </SectionCard>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* When a stock IS selected: show full analysis panel                 */}
+      {/* ------------------------------------------------------------------ */}
+      {selectedStock && detailError && (
+        <div className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300">
+          {detailError}
+        </div>
+      )}
+      {selectedStock && detail && (
+        <StockDetailPanel
+          detail={detail}
+          stock={selectedStock}
+          stockInfo={selectedStockInfo}
+          snapshot={snapshot}
+          watchlistTiles={watchlistTiles}
+        />
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Kinh Dịch market signal — always visible                           */}
+      {/* ------------------------------------------------------------------ */}
       <SectionCard title="Kinh Dịch — Tín hiệu thị trường" subtitle="tổng quan">
         {market ? (
           <KinhDichMarketPanel market={market} />
@@ -971,27 +1375,12 @@ export default function AnalysisDashboard() {
         )}
       </SectionCard>
 
-      {/* Stock table + selector */}
+      {/* KD overview table for sample tickers */}
       <SectionCard
-        title="Kinh Dịch — Cổ phiếu"
-        subtitle="chọn mã để xem chi tiết"
+        title="Kinh Dịch — Cổ phiếu mẫu"
+        subtitle="8 mã đại diện · chọn mã bằng bảng selector ở trên"
       >
-        {/* Search any ticker */}
-        <div className="mb-4">
-          <StockSearchForm defaultValue={selectedStock ?? ""} />
-        </div>
-
         <StockTable readings={readings} selectedStock={selectedStock} />
-
-        {/* Detail panel */}
-        {selectedStock && detailError && (
-          <div className="mt-4 rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300">
-            {detailError}
-          </div>
-        )}
-        {selectedStock && detail && (
-          <StockDetailPanel detail={detail} stock={selectedStock} snapshot={snapshot} />
-        )}
       </SectionCard>
     </div>
   );
