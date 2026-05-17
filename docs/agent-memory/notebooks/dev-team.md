@@ -1,5 +1,17 @@
 # dev-team notebook
 
+## Current state (c166 — 2026-05-17T16:10Z)
+- PREFLIGHT: HEAD.lock #53 cured (age=1281s, size=0B, no live pid). Prune clean.
+- Drain: 0 signals. MCP unavailable (scheduled session env). 0 Telegram reports.
+- TASKS.md: no codeable work. USER-ACTION items only.
+- Recent: route fix shipped (377aefbf) — /news and /macro 404s via gateway resolved.
+- Session gate: idle EXIT.
+
+## c166 cycle log
+- PREFLIGHT: HEAD.lock #53 cured. Prune clean.
+- Drain: empty. MCP down.
+- Session gate: idle EXIT.
+
 ## Current state (c165 — 2026-05-17T15:12Z)
 - PREFLIGHT: no locks. Prune clean.
 - Drain: 0 signals. 0 new Telegram reports. Working tree clean.
