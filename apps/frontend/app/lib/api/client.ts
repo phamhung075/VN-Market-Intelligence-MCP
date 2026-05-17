@@ -119,9 +119,16 @@ import type { Headline } from "~/domain/news";
 function toHeadline(item: unknown): Headline | null {
   if (item === null || typeof item !== "object") return null;
   const obj = item as Record<string, unknown>;
-  if (typeof obj["title"] !== "string") return null;
+  // Article (news-fetch) uses `headline`; generic schemas may use `title`.
+  const title =
+    typeof obj["title"] === "string"
+      ? obj["title"]
+      : typeof obj["headline"] === "string"
+        ? obj["headline"]
+        : null;
+  if (title === null) return null;
   return {
-    title: obj["title"],
+    title,
     url: typeof obj["url"] === "string" ? obj["url"] : undefined,
     publishedAt: typeof obj["publishedAt"] === "string" ? obj["publishedAt"] : undefined,
     source: typeof obj["source"] === "string" ? obj["source"] : undefined,
@@ -130,8 +137,14 @@ function toHeadline(item: unknown): Headline | null {
 }
 
 function parseHeadlines(raw: unknown): Headline[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map(toHeadline).filter((h): h is Headline => h !== null);
+  // Handle FetchResult envelope: { source, articles: Article[], fetchedAt, method, error }
+  const items: unknown[] =
+    raw !== null && typeof raw === "object" && Array.isArray((raw as Record<string, unknown>)["articles"])
+      ? ((raw as Record<string, unknown>)["articles"] as unknown[])
+      : Array.isArray(raw)
+        ? raw
+        : [];
+  return items.map(toHeadline).filter((h): h is Headline => h !== null);
 }
 
 /**

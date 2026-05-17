@@ -18,7 +18,7 @@ import (
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-// createTempDB creates a temp SQLite file with the market_prices table seeded.
+// createTempDB creates a temp SQLite file with market_prices and daily_ohlcv tables seeded.
 func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 	t.Helper()
 	dir := t.TempDir()
@@ -38,14 +38,29 @@ func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 		db.Close()
 		t.Fatalf("create market_prices table: %v", err)
 	}
-	// Seed VCB at 88000
+	_, err = db.Exec(`CREATE TABLE daily_ohlcv (
+		code       TEXT    NOT NULL,
+		date       TEXT    NOT NULL,
+		open       REAL    NOT NULL,
+		high       REAL    NOT NULL,
+		low        REAL    NOT NULL,
+		close      REAL    NOT NULL,
+		volume     REAL    NOT NULL DEFAULT 0,
+		updated_at TEXT    NOT NULL,
+		PRIMARY KEY (code, date)
+	)`)
+	if err != nil {
+		db.Close()
+		t.Fatalf("create daily_ohlcv table: %v", err)
+	}
+	// Seed VCB current price in market_prices (for Tier3 cache fetcher tests)
 	_, err = db.Exec(
 		`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
 		"VCB", 88000.0, 2000000.0, time.Now().UTC().Format(time.RFC3339),
 	)
 	if err != nil {
 		db.Close()
-		t.Fatalf("seed VCB: %v", err)
+		t.Fatalf("seed VCB market_prices: %v", err)
 	}
 	db.Close()
 
@@ -119,13 +134,14 @@ func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 	ownDB, oCleanup := createTempOwnDB(t)
 	defer oCleanup()
 
-	// Seed 3 days of history
+	// Seed 3 days of OHLCV history into daily_ohlcv (source of truth for history)
 	db, _ := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
+	now := time.Now().UTC()
 	for i := 1; i <= 3; i++ {
+		day := now.Add(-time.Duration(i) * 24 * time.Hour).Format("2006-01-02")
 		db.Exec(
-			`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
-			"VCB", 88000.0+float64(i)*100, 1000000.0,
-			time.Now().Add(-time.Duration(i)*24*time.Hour).UTC().Format(time.RFC3339),
+			`INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			"VCB", day, 87900.0, 88500.0, 87500.0, 88000.0+float64(i)*100, 1000000.0, now.Format(time.RFC3339),
 		)
 	}
 	db.Close()
@@ -137,6 +153,9 @@ func TestSQLiteRepo_GetHistory_HitsMarketDB(t *testing.T) {
 	}
 	if len(history) == 0 {
 		t.Error("expected non-empty history")
+	}
+	if len(history) != 3 {
+		t.Errorf("expected 3 rows, got %d", len(history))
 	}
 }
 

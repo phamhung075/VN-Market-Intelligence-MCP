@@ -1,7 +1,7 @@
 /**
  * /dashboard/db — Database data report.
- * Shows: stock price history (VN-INDEX), recent news headlines with timestamps.
- * Data sources: GET /price/history?code=VN-INDEX, GET /news/reuters/headlines.
+ * Shows: stock price history (VNINDEX), recent news headlines with timestamps.
+ * Data sources: GET /stock/price/history?code=VNINDEX, GET /news/reuters/headlines.
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => [
   { title: "Database Report — VN Market Intelligence" },
 ];
 
-const DEFAULT_TICKER = "VN-INDEX";
+const DEFAULT_TICKER = "VNINDEX";
 
 interface LoaderData {
   prices: PricePoint[];

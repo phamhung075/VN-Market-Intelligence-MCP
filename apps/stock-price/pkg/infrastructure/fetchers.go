@@ -221,18 +221,11 @@ func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]doma
 	defer db.Close()
 
 	rows, err := db.Query(
-		`SELECT
-		   date(fetched_at)  AS day,
-		   MIN(price)        AS low,
-		   MAX(price)        AS high,
-		   AVG(price)        AS close,
-		   AVG(price)        AS open,
-		   SUM(volume)       AS volume
-		 FROM market_prices
+		`SELECT date, open, high, low, close, volume
+		 FROM daily_ohlcv
 		 WHERE code = ?
-		   AND fetched_at >= date('now', ? || ' days')
-		 GROUP BY date(fetched_at)
-		 ORDER BY day ASC`,
+		   AND date >= date('now', ? || ' days')
+		 ORDER BY date ASC`,
 		code, fmt.Sprintf("-%d", days),
 	)
 	if err != nil {
