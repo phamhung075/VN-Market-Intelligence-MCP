@@ -40,6 +40,7 @@ import { runFranceSummary } from './briefings/franceSummaryJob.js'
 import { runAlertScanParallel } from './alerts/alertScanParallelJob.js'
 import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
 import { runSignalOutcomeJobCron } from './alerts/signalOutcomeJob.js'
+import { runSignalOutcomeResolutionJobCron } from './alerts/signalOutcomeResolutionJob.js'
 import { runAlertOutcomeJobCron } from './alerts/alertOutcomeJob.js'
 import { runVerdictResolutionJobCron } from './alerts/verdictResolutionJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
@@ -813,6 +814,13 @@ export function startScheduler() {
       }
       return { rowsWritten: result.rowsWritten }
     })
+  }, { timezone: 'UTC' })
+
+  // Every hour at minute=17 UTC — Signal outcome resolution — 2026-05-17 feedback loop
+  // Resolves T+24h and T+48h pending rows in signal_outcomes by comparing entry vs resolution price.
+  // Minute=17 avoids pile-up with minute=0/7 cluster (cronHealthAlert, imfPoller, verdictResolution).
+  cron.schedule(CRONS.signalOutcomeResolution, () => {
+    runSignalOutcomeResolutionJobCron().catch(console.error);
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)

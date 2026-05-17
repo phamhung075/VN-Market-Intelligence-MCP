@@ -28,6 +28,7 @@ import type { Database } from "bun:sqlite";
 import { z } from "zod";
 import { detectEarningsConflict } from "../../domain/services/earningsConflictDetector.js";
 import { scoreWithTnbCritic, type CriticInput, type CriticResult } from "../../domain/services/tnbCriticScorer.js";
+import { seedSignalOutcome } from "./signalOutcomeStore.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -288,6 +289,39 @@ function deserializeChainRow(row: RawChainRow): ChainFinding {
  * @returns     The newly created row ID (positive integer)
  */
 export function postSignal(db: Database, input: PostSignalInput): number {
+  const signalId = _postSignalInner(db, input);
+  // Outcome feedback loop: seed a pending signal_outcomes row for directional signals.
+  // Only when insert succeeded (signalId > 0) and a stock_code is present.
+  if (signalId > 0) {
+    const resolvedStockCodeForSeed =
+      !input.stockCode || input.stockCode === "unknown" ? null : input.stockCode;
+    if (resolvedStockCodeForSeed) {
+      const fd = (input.findingData ?? {}) as Record<string, unknown>;
+      const rawDirection =
+        typeof fd["direction"] === "string" ? fd["direction"] :
+        typeof fd["catalyst_direction"] === "string" ? fd["catalyst_direction"] :
+        null;
+      if (rawDirection) {
+        const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+        try {
+          seedSignalOutcome(db, signalId, {
+            stockCode: resolvedStockCodeForSeed,
+            signalType: input.signalType,
+            fromAgent: input.fromAgent,
+            predictedDirection: rawDirection,
+            createdAt: now,
+          });
+        } catch {
+          // seedSignalOutcome failure must never throw from postSignal
+        }
+      }
+    }
+  }
+  return signalId;
+}
+
+/** Internal implementation — extracted so postSignal can wrap with outcome seeding. */
+function _postSignalInner(db: Database, input: PostSignalInput): number {
   const {
     fromAgent,
     toAgent,

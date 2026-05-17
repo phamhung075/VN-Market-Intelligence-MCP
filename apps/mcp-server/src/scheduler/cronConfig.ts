@@ -143,4 +143,7 @@ export const CRONS = {
   reputationCompute:          Bun.env.CRON_REPUTATION_COMPUTE                   ?? '30 8 * * *',
   /** publicContractsJob — weekly Mon 03:00 UTC, scrape muasamcong.mpi.gov.vn procurement results (Task B) */
   publicContractsRefresh:     Bun.env['CRON_PUBLIC_CONTRACTS']                  ?? '0 3 * * 1',
+  /** signalOutcomeResolution — hourly T+24h / T+48h outcome resolution (2026-05-17 feedback loop)
+   *  Minute=17 avoids pile-up with minute=0 cluster (cronHealthAlert, macroIndicator, etc.) */
+  signalOutcomeResolution:    Bun.env.CRON_SIGNAL_OUTCOME_RESOLUTION             ?? '17 * * * *',
 }

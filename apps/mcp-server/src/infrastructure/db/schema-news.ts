@@ -268,4 +268,33 @@ export function initNewsTables(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_rejections_created_at
       ON signal_rejections(created_at DESC);
   `);
+
+  // ── Signal Outcomes (2026-05-17 outcome feedback loop) ────────────────────
+  // Captures T+24h and T+48h price verification for every directional signal.
+  // Seeded immediately after agent_signals INSERT via seedSignalOutcome().
+  // Resolved hourly by signalOutcomeResolutionJob scanning pending rows.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS signal_outcomes (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      signal_id           INTEGER NOT NULL REFERENCES agent_signals(id),
+      stock_code          TEXT    NOT NULL,
+      signal_type         TEXT    NOT NULL,
+      from_agent          TEXT    NOT NULL,
+      predicted_direction TEXT    NOT NULL,
+      price_at_signal     REAL    DEFAULT NULL,
+      price_at_24h        REAL    DEFAULT NULL,
+      price_at_48h        REAL    DEFAULT NULL,
+      outcome_24h         TEXT    NOT NULL DEFAULT 'pending',
+      outcome_48h         TEXT    NOT NULL DEFAULT 'pending',
+      checked_at          TEXT    DEFAULT NULL,
+      created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_signal_outcomes_signal_id
+      ON signal_outcomes(signal_id);
+    CREATE INDEX IF NOT EXISTS idx_signal_outcomes_stock_code
+      ON signal_outcomes(stock_code, signal_type);
+    CREATE INDEX IF NOT EXISTS idx_signal_outcomes_created_at
+      ON signal_outcomes(created_at);
+  `);
 }

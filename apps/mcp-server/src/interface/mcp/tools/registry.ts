@@ -99,6 +99,7 @@ import { registerFedLiquiditySpreadTool } from "./macro/getFedLiquiditySpreadToo
 import { registerGetCashFlowTool } from "./financial-reports/cashFlowTool.js"; // Task 1890a-A: get_cash_flow (#131)
 import { registerGetBctcOcfTool } from "./financial-reports/getBctcOcfTool.js"; // Task 1909b: get_bctc_ocf (#132)
 import { registerGetIsmSubcomponentsTool } from "./macro/getIsmSubcomponentsTool.js"; // Task 1910a: get_ism_subcomponents (#133)
+import { registerGetAccuracyContextTool } from "./news-analysis/getAccuracyContextTool.js"; // 2026-05-17: get_accuracy_context (#134)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -202,4 +203,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerGetCashFlowTool,              // Task 1890a-A: get_cash_flow (#131)
   registerGetBctcOcfTool,               // Task 1909b: get_bctc_ocf (#132)
   registerGetIsmSubcomponentsTool,      // Task 1910a: get_ism_subcomponents (#133)
+  registerGetAccuracyContextTool,       // 2026-05-17: get_accuracy_context (#134)
 ];

@@ -45,6 +45,7 @@ import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
+import { getAccuracyStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -911,7 +912,7 @@ export async function createBunServer(
     // Returns last N agent_signals rows for a specific stock_code.
     // Non-authenticated — read-only query, no sensitive data.
     if (method === "GET" && pathname.startsWith("/api/signals/stock/")) {
-      const code = decodeURIComponent(pathname.slice("/api/signals/stock/".length).split("?")[0]);
+      const code = decodeURIComponent((pathname.slice("/api/signals/stock/".length).split("?")[0]) ?? "");
       const limitParam = url.searchParams.get("limit");
       const limit = Math.min(Math.max(1, parseInt(limitParam ?? "10", 10) || 10), 50);
 
@@ -989,8 +990,27 @@ export async function createBunServer(
           };
         });
 
+        // Build accuracy map: one entry per distinct signal_type in returned signals.
+        // Guard: if signal_outcomes table does not exist yet, skip accuracy key.
+        let accuracy: Record<string, { accuracy_rate: number | null; sample_count: number }> = {};
+        try {
+          db.prepare("SELECT id FROM signal_outcomes LIMIT 0").all();
+          // Table exists — query accuracy stats for this stock
+          const accuracyRows = getAccuracyStats(db, { stockCode: code, days: 30 });
+          const distinctTypes = [...new Set(signals.map((s) => s.signal_type))];
+          for (const signalType of distinctTypes) {
+            const row = accuracyRows.find((r) => r.signal_type === signalType);
+            accuracy[signalType] = {
+              accuracy_rate: row?.accuracy_rate ?? null,
+              sample_count: row?.sample_count ?? 0,
+            };
+          }
+        } catch {
+          // signal_outcomes table absent — skip accuracy map
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ signals, code, count: signals.length }));
+        res.end(JSON.stringify({ signals, code, count: signals.length, accuracy }));
       } catch (err) {
         log.error("[signals/stock] query error", { error: err instanceof Error ? err.message : String(err) });
         res.writeHead(500, { "Content-Type": "application/json" });

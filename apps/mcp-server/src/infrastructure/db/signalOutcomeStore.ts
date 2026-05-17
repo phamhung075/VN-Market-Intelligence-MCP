@@ -1,0 +1,431 @@
+/**
+ * signalOutcomeStore.ts — Signal outcome feedback loop (2026-05-17)
+ *
+ * Manages the signal_outcomes table: seeding, resolution, and accuracy stats.
+ *
+ * Functions:
+ *   - seedSignalOutcome()      — insert pending outcome row after signal write
+ *   - resolveSignalOutcomes()  — hourly scan that fetches prices and classifies outcomes
+ *   - getAccuracyStats()       — per-(stock_code, signal_type) accuracy aggregation
+ *
+ * Price strategy: queries market_prices_history (Option A) first; falls back to
+ * the stock-price service HTTP API (Option B) when intraday data is absent
+ * (weekend/holiday gap).
+ *
+ * DDD layer: infrastructure/db — may import from domain/.
+ * MUST NOT import from application/ or interface/.
+ */
+
+import type { Database } from "bun:sqlite";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+export interface SeedSignalOutcomeInput {
+  stockCode: string;
+  signalType: string;
+  fromAgent: string;
+  predictedDirection: string; // normalised to uppercase before insert
+  createdAt: string;          // ISO-8601 UTC (YYYY-MM-DD HH:MM:SS format matching SQLite)
+}
+
+/** Accuracy stats for one (stock_code, signal_type) group. */
+export interface SignalAccuracyStats {
+  signal_type: string;
+  stock_code: string;
+  /** correct + incorrect only (neutral excluded). */
+  sample_count: number;
+  /** correct / (correct + incorrect), or null when sample_count < 3. */
+  accuracy_rate: number | null;
+  avg_confidence_when_correct: number | null;
+  avg_confidence_when_incorrect: number | null;
+  last_evaluated_at: string | null;
+}
+
+export interface ResolveOutcomesResult {
+  evaluated24h: number;
+  evaluated48h: number;
+  resolved: number;
+  skipped: number;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/** Normalise direction string to uppercase BULLISH / BEARISH / NEUTRAL. */
+function normaliseDirection(raw: unknown): string {
+  if (typeof raw !== "string") return "NEUTRAL";
+  const upper = raw.toUpperCase().trim();
+  if (upper === "BULLISH" || upper === "BUY" || upper === "UP" || upper === "LONG") return "BULLISH";
+  if (upper === "BEARISH" || upper === "SELL" || upper === "DOWN" || upper === "SHORT") return "BEARISH";
+  return "NEUTRAL";
+}
+
+/**
+ * Classify outcome from pct change and predicted direction.
+ * Uses 1.0% threshold (from architecture brief §3).
+ */
+function classifyOutcome(pct: number, direction: string): "correct" | "incorrect" | "neutral" {
+  if (Math.abs(pct) < 1.0) return "neutral";
+  if (direction === "BULLISH") {
+    return pct >= 1.0 ? "correct" : "incorrect";
+  }
+  if (direction === "BEARISH") {
+    return pct <= -1.0 ? "correct" : "incorrect";
+  }
+  return "neutral"; // NEUTRAL direction → always neutral
+}
+
+/**
+ * Fetch price from market_prices_history for a ±30 min window around a given time.
+ * Returns null when no data is found (weekend/holiday gap).
+ */
+function fetchPriceFromHistory(
+  db: Database,
+  code: string,
+  refTime: string,
+  offsetMinutesBefore: number,
+  offsetMinutesAfter: number,
+): number | null {
+  // Build window boundaries via SQLite datetime arithmetic
+  const lowerRow = db
+    .prepare<{ t: string }, [string, string]>(
+      `SELECT datetime(?, ?) AS t`,
+    )
+    .get(refTime, `-${offsetMinutesBefore} minutes`);
+  const upperRow = db
+    .prepare<{ t: string }, [string, string]>(
+      `SELECT datetime(?, ?) AS t`,
+    )
+    .get(refTime, `+${offsetMinutesAfter} minutes`);
+
+  const lower = lowerRow?.t;
+  const upper = upperRow?.t;
+  if (!lower || !upper) return null;
+
+  const row = db
+    .prepare<{ avg_price: number | null }, [string, string, string]>(
+      `SELECT AVG(price) AS avg_price
+         FROM market_prices_history
+        WHERE code = ?
+          AND fetched_at >= ?
+          AND fetched_at <= ?`,
+    )
+    .get(code, lower, upper);
+  return row?.avg_price ?? null;
+}
+
+/**
+ * Fetch price from stock-price service (Option B fallback).
+ * GET http://stock-price:5000/price/history?code=X&days=3
+ * Returns close price for the trading day closest to targetDate.
+ *
+ * Returns null on any error (network, parse, or no matching day).
+ */
+async function fetchPriceFromStockService(
+  code: string,
+  targetDate: string, // YYYY-MM-DD
+): Promise<number | null> {
+  const baseUrl = Bun.env.STOCK_PRICE_SERVICE_URL ?? "http://stock-price:5000";
+  try {
+    const res = await fetch(`${baseUrl}/price/history?code=${encodeURIComponent(code)}&days=3`);
+    if (!res.ok) return null;
+    const data = await res.json() as { date: string; close: number }[];
+    if (!Array.isArray(data) || data.length === 0) return null;
+
+    // Find the row with date closest to targetDate
+    const target = new Date(targetDate).getTime();
+    let best: { date: string; close: number } | null = null;
+    let bestDiff = Infinity;
+    for (const row of data) {
+      if (typeof row.close !== "number") continue;
+      const diff = Math.abs(new Date(row.date).getTime() - target);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = row;
+      }
+    }
+    // Only use if within 2 calendar days
+    if (best && bestDiff <= 2 * 86_400_000) return best.close;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ── seedSignalOutcome ──────────────────────────────────────────────────────
+
+/**
+ * Insert a pending outcome row into signal_outcomes immediately after a signal write.
+ *
+ * Skips insert when:
+ *   - predictedDirection normalises to NEUTRAL
+ *   - stockCode is null/empty
+ *
+ * Baseline price is deferred to the first hourly resolution scan (no HTTP call here).
+ *
+ * @param db       - Active bun:sqlite Database connection
+ * @param signalId - Newly inserted agent_signals row ID
+ * @param input    - Seed parameters derived from PostSignalInput
+ */
+export function seedSignalOutcome(
+  db: Database,
+  signalId: number,
+  input: SeedSignalOutcomeInput,
+): void {
+  const direction = normaliseDirection(input.predictedDirection);
+  if (direction === "NEUTRAL") return; // NEUTRAL signals excluded (no directional claim)
+  if (!input.stockCode) return;
+
+  // Guard: signal_outcomes table may not yet exist on very old DBs
+  try {
+    db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
+  } catch {
+    return; // table absent — migration guard, silently skip
+  }
+
+  db.prepare(`
+    INSERT INTO signal_outcomes
+      (signal_id, stock_code, signal_type, from_agent, predicted_direction, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    signalId,
+    input.stockCode,
+    input.signalType,
+    input.fromAgent,
+    direction,
+    input.createdAt,
+  );
+}
+
+// ── resolveSignalOutcomes ──────────────────────────────────────────────────
+
+/**
+ * Hourly cron scan: find pending outcome rows past their window and resolve them.
+ *
+ * For windowHours = 24: finds rows where outcome_24h = 'pending' AND created_at <= now - 24h.
+ * For windowHours = 48: finds rows where outcome_48h = 'pending' AND created_at <= now - 48h.
+ *
+ * Price lookup strategy:
+ *   Option A: market_prices_history ±30 min around the target time offset.
+ *   Option B: stock-price service daily OHLCV when Option A returns null.
+ *
+ * @param db          - Active bun:sqlite Database connection
+ * @param windowHours - 24 or 48
+ */
+export async function resolveSignalOutcomes(
+  db: Database,
+  windowHours: 24 | 48,
+): Promise<ResolveOutcomesResult> {
+  // Guard: table may not exist
+  try {
+    db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
+  } catch {
+    return { evaluated24h: 0, evaluated48h: 0, resolved: 0, skipped: 0 };
+  }
+
+  const outcomeCol = windowHours === 24 ? "outcome_24h" : "outcome_48h";
+  const priceCol   = windowHours === 24 ? "price_at_24h" : "price_at_48h";
+
+  interface PendingRow {
+    id: number;
+    signal_id: number;
+    stock_code: string;
+    signal_type: string;
+    predicted_direction: string;
+    price_at_signal: number | null;
+    created_at: string;
+    outcome_24h: string;
+    outcome_48h: string;
+  }
+
+  const rows = db
+    .prepare<PendingRow, []>(
+      `SELECT id, signal_id, stock_code, signal_type, predicted_direction,
+              price_at_signal, created_at, outcome_24h, outcome_48h
+         FROM signal_outcomes
+        WHERE ${outcomeCol} = 'pending'
+          AND created_at <= datetime('now', '-${windowHours} hours')
+        ORDER BY id ASC`,
+    )
+    .all();
+
+  let resolved = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    // 1. Fetch baseline price if not yet stored
+    let baseline = row.price_at_signal;
+    if (baseline === null) {
+      baseline = fetchPriceFromHistory(db, row.stock_code, row.created_at, 15, 15);
+      // Widen to +60 min if 30-min window is empty
+      if (baseline === null) {
+        baseline = fetchPriceFromHistory(db, row.stock_code, row.created_at, 0, 60);
+      }
+      if (baseline !== null) {
+        db.prepare(`UPDATE signal_outcomes SET price_at_signal = ? WHERE id = ?`)
+          .run(baseline, row.id);
+      }
+    }
+
+    if (baseline === null || baseline === 0) {
+      skipped++;
+      continue;
+    }
+
+    // 2. Fetch T+Nh price
+    // Option A: market_prices_history ±30 min window
+    const offsetCenter = windowHours * 60; // minutes
+    let resPrice: number | null = fetchPriceFromHistory(
+      db, row.stock_code, row.created_at,
+      -offsetCenter + 30, // startOffset relative to created_at: -(-T + 30) → T - 30
+      offsetCenter + 30,  // endOffset: T + 30
+    );
+
+    // More precise: use datetime modifiers correctly — compute target timestamp
+    // SQLite datetime arithmetic: target = created_at + windowHours hours
+    const targetRow = db
+      .prepare<{ target_ts: string }, [string, number]>(
+        `SELECT datetime(?, '+' || ? || ' hours') AS target_ts`,
+      )
+      .get(row.created_at, windowHours);
+    const targetTs = targetRow?.target_ts ?? null;
+
+    if (targetTs) {
+      resPrice = fetchPriceFromHistory(db, row.stock_code, targetTs, 30, 30);
+    }
+
+    // Option B fallback: stock-price service
+    if (resPrice === null && targetTs) {
+      const targetDate = targetTs.slice(0, 10); // YYYY-MM-DD
+      resPrice = await fetchPriceFromStockService(row.stock_code, targetDate);
+    }
+
+    if (resPrice === null) {
+      skipped++;
+      continue;
+    }
+
+    const pct = ((resPrice - baseline) / baseline) * 100;
+    const outcome = classifyOutcome(pct, row.predicted_direction);
+
+    // Determine if both windows are now resolved after this update
+    const otherCol = windowHours === 24 ? "outcome_48h" : "outcome_24h";
+    const otherResolved = row[otherCol as keyof PendingRow] !== "pending";
+
+    const checkedAt = otherResolved
+      ? new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "")
+      : null;
+
+    db.prepare(`
+      UPDATE signal_outcomes
+         SET ${priceCol} = ?,
+             ${outcomeCol} = ?,
+             checked_at = COALESCE(checked_at, ?)
+       WHERE id = ?
+    `).run(resPrice, outcome, checkedAt, row.id);
+
+    resolved++;
+  }
+
+  return {
+    evaluated24h: windowHours === 24 ? rows.length : 0,
+    evaluated48h: windowHours === 48 ? rows.length : 0,
+    resolved,
+    skipped,
+  };
+}
+
+// ── getAccuracyStats ───────────────────────────────────────────────────────
+
+/** Options for filtering accuracy stats. */
+export interface GetAccuracyStatsOpts {
+  stockCode?: string;
+  signalType?: string;
+  /** Look-back window in days (default 30). */
+  days?: number;
+}
+
+/**
+ * Aggregate accuracy stats per (signal_type, stock_code) from signal_outcomes.
+ *
+ * Uses outcome_24h as the primary accuracy window.
+ * Excludes NEUTRAL predicted_direction rows from calculations.
+ * Groups with sample_count < 3 have accuracy_rate = null.
+ *
+ * @param db   - Active bun:sqlite Database connection
+ * @param opts - Optional filters (stockCode, signalType, days)
+ * @returns    Array of SignalAccuracyStats — one per (signal_type, stock_code) group
+ */
+export function getAccuracyStats(
+  db: Database,
+  opts: GetAccuracyStatsOpts = {},
+): SignalAccuracyStats[] {
+  const days = opts.days ?? 30;
+
+  // Guard: table may not exist
+  try {
+    db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
+  } catch {
+    return [];
+  }
+
+  const conditions: string[] = [
+    `so.predicted_direction != 'NEUTRAL'`,
+    `so.created_at >= datetime('now', '-${days} days')`,
+  ];
+  const params: (string | number)[] = [];
+
+  if (opts.stockCode) {
+    conditions.push(`so.stock_code = ?`);
+    params.push(opts.stockCode);
+  }
+  if (opts.signalType) {
+    conditions.push(`so.signal_type = ?`);
+    params.push(opts.signalType);
+  }
+
+  const where = conditions.join(" AND ");
+
+  type Row = {
+    signal_type: string;
+    stock_code: string;
+    sample_count: number;
+    accuracy_rate: number | null;
+    avg_confidence_when_correct: number | null;
+    avg_confidence_when_incorrect: number | null;
+    last_evaluated_at: string | null;
+  };
+
+  const rows = db
+    .prepare<Row, (string | number)[]>(
+      `SELECT
+         so.signal_type,
+         so.stock_code,
+         COUNT(CASE WHEN so.outcome_24h IN ('correct','incorrect') THEN 1 END) AS sample_count,
+         CAST(
+           SUM(CASE WHEN so.outcome_24h = 'correct' THEN 1.0 ELSE 0 END) /
+           NULLIF(COUNT(CASE WHEN so.outcome_24h IN ('correct','incorrect') THEN 1 END), 0)
+         AS REAL) AS accuracy_rate,
+         AVG(CASE WHEN so.outcome_24h = 'correct'   THEN s.confidence_score END) AS avg_confidence_when_correct,
+         AVG(CASE WHEN so.outcome_24h = 'incorrect' THEN s.confidence_score END) AS avg_confidence_when_incorrect,
+         MAX(so.checked_at) AS last_evaluated_at
+       FROM signal_outcomes so
+       JOIN agent_signals s ON s.id = so.signal_id
+       WHERE ${where}
+       GROUP BY so.signal_type, so.stock_code
+       HAVING sample_count >= 3
+       ORDER BY accuracy_rate ASC`,
+    )
+    .all(...params) as Row[];
+
+  return rows.map((r) => ({
+    signal_type: r.signal_type,
+    stock_code: r.stock_code,
+    sample_count: r.sample_count,
+    // accuracy_rate is already null when sample_count < 3 (HAVING clause)
+    // but add explicit null guard for safety
+    accuracy_rate: r.sample_count >= 3 ? (r.accuracy_rate ?? null) : null,
+    avg_confidence_when_correct: r.avg_confidence_when_correct ?? null,
+    avg_confidence_when_incorrect: r.avg_confidence_when_incorrect ?? null,
+    last_evaluated_at: r.last_evaluated_at ?? null,
+  }));
+}
