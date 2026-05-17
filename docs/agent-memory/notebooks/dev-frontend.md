@@ -179,3 +179,40 @@ React hydration suppression is per-element, not inherited downward. Every ancest
 
 ## Zone health
 Tier 1-4 complete. 55/55 tests GREEN. tsc clean. All hydration errors resolved, NavLink navigation working. | HEALTHY
+
+## Cycle 1936 — 2026-05-17 (ClientTimestamp — root hydration fix)
+
+### Root cause confirmed
+suppressHydrationWarning on individual elements does NOT prevent root-level hydration cascade.
+React still detects mismatch at the root when toLocaleString("vi-VN", {timeZone}) differs
+between Node SSR (no ICU locale data) and browser V8 (full ICU), which triggers
+"the entire root will switch to client rendering" on every page load.
+
+### Fix: client-only rendering pattern
+New component: app/components/ClientTimestamp.tsx
+- ClientTimestamp: SSR="...", after mount=toLocaleString("vi-VN", {timeZone})
+- ClientTimeString: SSR="...", after mount=toLocaleTimeString("vi-VN", {timeZone})
+Both export a <span> — zero hydration mismatch possible at any tree level.
+
+### Files changed
+- app/components/ClientTimestamp.tsx — new component (two exports)
+- app/routes/dashboard.fetch.tsx — replaced 3 toLocaleString calls, removed all suppressHydrationWarning
+- app/routes/dashboard.db.tsx — replaced 2 toLocaleString calls, removed all suppressHydrationWarning
+- app/routes/dashboard.server.tsx — replaced 1 toLocaleString call, removed all suppressHydrationWarning
+- app/routes/dashboard.vps.tsx — replaced 1 toLocaleString + 1 toLocaleTimeString, removed all suppressHydrationWarning
+- app/__tests__/1936-client-timestamp.test.tsx — 6 new tests (component render + className + empty ISO)
+- app/__tests__/setup.ts — added window.__vite_plugin_react_preamble_installed__=true to enable .tsx component tests
+
+### Docs created
+- docs/architecture/microservice/frontend/testing.md
+- docs/architecture/microservice/frontend/api-reference.md
+
+### Test result
+- Vitest: 61/61 PASS (7 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+e945f9ea fix(1936/frontend): replace suppressHydrationWarning with ClientTimestamp component
+
+## Zone health
+Tier 1-4 complete. 61/61 tests GREEN. tsc clean. React hydration errors eliminated at root level. | HEALTHY
