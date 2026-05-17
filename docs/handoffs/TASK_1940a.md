@@ -56,3 +56,17 @@ Root cause identified by dev-mcp-server:
 3. `bun test src/__tests__/245-mcp-tools-039.test.ts` → 9/9 GREEN (no regression)
 4. `bun tsc --noEmit` → 0 errors
 5. Merge to main if all pass.
+
+---
+
+## [QA] Review Record — c174
+
+- **Date:** 2026-05-17T23:45Z
+- **Round:** 1
+- **Pipeline:**
+  - 1940a suite: 7/7 GREEN
+  - 245 + 240 + 244 + 250 suites: 61 pass / 0 fail
+  - tsc: 0 errors
+  - DDD: PASS — legalRiskTools.ts is interface layer, infra imports correct
+  - Security: PASS — no process.env, no hardcoded secrets, SQL parameterized
+- **Verdict:** APPROVED
