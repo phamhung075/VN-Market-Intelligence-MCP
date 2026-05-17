@@ -40,11 +40,51 @@ export interface PricePoint {
   volume?: number;
 }
 
+/** A single source entry inside MacroData.sources */
+export interface MacroSourceEntry {
+  status: "ok" | "failed" | string;
+  latencyMs?: number;
+  data?: Record<string, unknown>;
+  error?: string;
+}
+
+/** A flattened row used by MacroPanel for display */
+export interface MacroSourceRow {
+  name: string;
+  status: "ok" | "failed" | string;
+  latencyMs?: number;
+  error?: string;
+}
+
+/** Macro summary counts */
+export interface MacroSummary {
+  ok: number;
+  failed: number;
+  totalLatencyMs?: number;
+}
+
 /** Macro external data snapshot from GET /macro/external */
 export interface MacroData {
-  source?: string;
   fetchedAt?: string;
+  sources?: Record<string, MacroSourceEntry>;
+  summary?: MacroSummary;
+  /** Legacy fields — kept for backward-compat; real shape uses sources+summary */
+  source?: string;
   status?: string;
   indicators?: Record<string, unknown>;
   [key: string]: unknown;
+}
+
+/**
+ * Flatten MacroData.sources into display rows for MacroPanel.
+ * Pure function — safe to use in tests and loaders.
+ */
+export function parseMacroSources(macro: MacroData | null): MacroSourceRow[] {
+  if (!macro?.sources) return [];
+  return Object.entries(macro.sources).map(([name, entry]) => ({
+    name,
+    status: entry.status,
+    latencyMs: entry.latencyMs,
+    error: entry.error,
+  }));
 }
