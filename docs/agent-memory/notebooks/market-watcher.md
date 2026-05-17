@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-16 23:41 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-17 01:40 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2191,3 +2191,22 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3100 |
+
+### Cycle (01:38–01:40) — BLOCKED
+- Stocks: 0 | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Step 0 (get_cycle_bootstrap) FAILED after 1 retry: `dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed (server misbehaving)`. Live probes at 01:38 + 01:39 UTC both failed.
+- send_telegram unreachable (same gateway) → no BUG telegram fired.
+- Signal dropped: `docs/signals/market-watcher-2026-05-17T01-40-17Z.json` (dedup_of news-scout-2026-05-17T01-20-43Z still unprocessed).
+- Pattern: gateway DNS-resolution failure recurring — news-scout 01:20 UTC (this session), market-watcher 19:40 UTC yesterday (c142 reported "self-healed" but is failing again 4h after pre-market window resumed). The "c142 resolution" note on line 9 is stale; PO should treat this as ongoing.
+- No regime, no prices, no macro fetched — all downstream steps skipped per fail-loud protocol.
+
+## Metrics (cycle 2026-05-17 01:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 1800 |
