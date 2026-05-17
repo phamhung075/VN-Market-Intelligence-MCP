@@ -3,7 +3,15 @@
 > Archived prior to 2026-05-12 → docs/agent-memory/archives/tran-ngoc-bau-archive-2026-05-12.md
 > Cycles 53–58 archived in prior overwrites.
 
-**Last updated:** 2026-05-17 (cycle 63) | Cycles completed: 63
+**Last updated:** 2026-05-17 (cycle 64) | Cycles completed: 64
+
+---
+
+## This session (cycle 64, 2026-05-17)
+
+BLOCKED at Step 0c. MCP unreachable from Claude Code session (10th consecutive cycle). File-evidence audit performed (8 agent notebooks + TASKS.md). NEW CRITICAL: 1928a Docker Desktop virtiofs deadlock — all cowork agents dark since ~19:56 UTC 2026-05-16 (10+ hours). Port 3000 fully timing out at c152. Docker CLI frozen. Monday VN market open (02:00 UTC 2026-05-18) at risk with zero alert coverage. 1929a NEW: SQLite `alerts` table corruption in market.db. digest-predict now 6+ days silent. F1 USER action required: `pkill -9 Docker && open -a Docker`. Previous handoffs c62+c63 both unACK'd by PO. No auto-cures. Handoff written (c64). Signal file dropped.
+
+**Status:** BLOCKED (MCP DOWN) + CRITICAL (1928a infra) | Direction: DEGRADING | Auto-cures: 0
 
 ---
 
@@ -23,28 +31,27 @@ File-evidence audit (Claude Code session, MCP probe not attempted). New findings
 
 ## Patterns noticed
 
-- **~05:XX UTC MCP instability window**: 2nd consecutive Saturday occurrence (05:02 alert-commander + 05:19 news-scout on 2026-05-16; 05:56 news-scout on previous Saturday). Recovery within 1h each time. Watch for 3rd occurrence (Mon weekday or next Sat) — if confirmed, promote to ops investigation.
-- **alert-commander market-hours quality improving**: NEUTRAL regime cycles 07:01–08:06 UTC firing correctly (GAS surge, MACRO Brent, VCB/GAS/VIC urgent_news). TIGHTENING suppression cycles 01:00–04:00 UTC clean (HVN conf=0.50 < 0.75 threshold).
-- **Regime swing 2026-05-16**: TIGHTENING (01:00–04:00 UTC off-hours) → NEUTRAL (07:00+ UTC market-hours). news-scout correctly reflects this via get_macro_snapshot; alert-commander applies correct thresholds per regime.
-- **FA Layer 7 auto-cure (c61)**: Confirmed in stage-analyze.md lines 36-41. Pending exercise — FA must run a session with OCF anomaly data to verify code path is hit.
-- **news-scout schema mismatch (SPIKE_1921a)**: PO dispatched investigation c135. Under active review. Carry forward until sprint closure confirmed.
-- digest-predict: 5+ day silence. CRITICAL. No change.
-- news-scout payload.detail: 7th consecutive unverified cycle. Monitoring limitation — cure applied c55 in flow file.
+- **1928a virtiofs deadlock pattern**: 3rd occurrence in 3 weeks (1919 resolved 2026-05-16, now 1928a same root cause). Docker Desktop virtiofs socket deadlock is a recurring structural failure. Each episode lasts 10+ hours. Only fix = Docker Desktop restart. Pattern: virtiofs socket timeout → host.docker.internal DNS fails → port 3000 stops forwarding → Docker CLI freezes. Structural cure (extra_hosts: host-gateway) still not applied — that is the permanent fix per 1928a task.
+- **alert-commander last-live TIGHTENING quality**: 23:02 UTC 2026-05-16 (before outage). HVN conf=0.50 correctly suppressed (< 0.75 threshold). Regime logic correct when gateway up.
+- **FA Layer 7 auto-cure (c61) CONFIRMED EXERCISED**: FPT ocf_ni_ratio=504 + VCB ocf_ni_ratio=1.42e8 both triggered the fallback path in 2026-05-16 FA session. Cure is live and working. The underlying extraction bug (get_cash_flow) still needs dev fix.
+- **news-scout last-live (23:20 UTC 2026-05-16)**: 2 correct chain_catalyst signals. LanceDB index corrupted (LENC magic invalid) — non-fatal, signals still fired without RAG context.
+- **digest-predict**: 6+ day silence. CRITICAL. No structural change.
+- **SPIKE_1921a** (news-scout regime enum): Created by PO c135. Status unclear — not visible in TASKS.md active sprint section. Track.
 
 ## Carry-over (next session)
 
-- **~05:XX UTC MCP instability** (HIGH ESCALATING): 2nd occurrence confirmed. Promote to ops investigation if 3rd occurrence (any cycle Mon–Fri 01:00 UTC or next Sat 05:XX UTC). Pattern: ~05:00–06:00 UTC window, Docker DNS or MCP server process crash.
-- **digest-predict / 1907a** (CRITICAL): 5+ day silence. PO assign sprint owner now. No change.
-- **FA missing sessions** (HIGH): 2026-05-15 + pending 2026-05-16 23:00 UTC. External trigger substrate (1913). Monitor next 23:00 UTC cycle.
-- **BCTC Q1-2026 banking** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB Q1-2026 filing status unknown. FA must call get_bctc_full per ticker at next session.
-- **SPIKE_1921a news-scout regime enum** (HIGH): Under PO investigation. Track sprint closure.
-- **1909c-reparse DIG FAIL** (HIGH): Sprint task in Backlog. Unchanged.
-- **FA Layer 7 auto-cure verification** (medium): stage-analyze.md lines 36-41 confirmed in place. Verify cure hits at next FA session with OCF anomaly data.
-- **FA Layer 8 missing tool** (medium per PO c135): get_investment_clock_phase bundled into 1913. Not separate task.
-- **news-scout payload.detail** (medium): 7th cycle unverified. Monitoring limitation — cure applied c55. No new BUG unless live probe confirms cure absent.
-- **alert precision bug 2874** (medium): 488 unknowns. No sprint. Assign.
-- **1913 TNB probe** (medium): Next session — attempt live MCP tool call. If Claude Code session can reach zenmidi.com:443 (external), 1913 may be partially resolved for TNB context.
-- **GAS technical watch**: GAS surge +5.62% at 07:01 UTC confirmed real (NEUTRAL regime, MARKET fired correctly). Brent at $107+ elevation. Monitor CPI pressure cascade if Brent > $110 next week.
+- **1928a Docker Desktop restart** (CRITICAL F1 USER): Must run `pkill -9 Docker && open -a Docker` before Monday 02:00 UTC. All cowork agents dark.
+- **1929a alerts table corruption** (HIGH): Verify after restart. DROP/recreate if malformed.
+- **digest-predict / 1907a** (CRITICAL): 6+ day silence. No MARKET digests. Gated on Docker restart.
+- **BCTC Q1-2026 banking** (HIGH): ACB/BID/CTG/EIB/MBB/VCB/VPB Q1-2026 unconfirmed. FA + report-analyzer first post-restart call.
+- **FA Layer 7 OCF extraction bug** (HIGH): get_cash_flow returns implausible values. Dev fix needed. Sprint task not yet confirmed in TASKS.md.
+- **1922i alert-engine-records** (MEDIUM): Blocked by Docker CLI freeze. Verify count after restart.
+- **SPIKE_1921a news-scout regime enum** (MEDIUM): Confirm active sprint or closed.
+- **verdictResolutionJob retry storm** (MEDIUM): 19 dup BUG msgs/21h. Sprint task needed for backoff.
+- **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER pending. Preflight cure active.
+- **LanceDB index corruption** (MEDIUM): news-scout search_similar_context broken. Index rebuild needed.
+- **TNB MCP via Claude Code** (MEDIUM): 10th consecutive blocked cycle. Separate from cowork sandbox issue.
+- **PO ACK loop** (LOW): c62 + c63 handoffs unACK'd. Verify PO reads handoff after Docker restart.
 
 ## Cycle — 2026-05-16 (cycle 60)
 
@@ -53,6 +60,14 @@ File-evidence audit (Claude Code session, MCP probe not attempted). New findings
 - **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md). Notebook overwritten. Signal file written (docs/signals/tnb-2026-05-16T00-00-00Z.json). 0 Telegram (MCP unregistered). 0 auto-cures.
 - **next_cycle_hint**: (1) Resolve 1919 Docker DNS first — blocks all cowork. (2) Resolve 1913 — blocks TNB. (3) Once MCP live: confirm 1909c-reparse, BCTC Q1 banking, 1918b off-hours, news-scout payload.detail (now 5-cycle threshold → BUG), digest-predict sprint assignment.
 - **estimated_tokens**: 7500
+
+## Cycle — 2026-05-17 (cycle 64)
+
+- **cycle_date**: 2026-05-17
+- **findings**: BLOCKED Step 0c (10th consecutive). File-evidence audit: 8 agent notebooks + TASKS.md. NEW CRITICAL 1928a — Docker Desktop virtiofs deadlock, all cowork dark ~19:56 UTC 2026-05-16 onward (10+ hours). Port 3000 fully timing out (c152). Docker CLI frozen. 1929a NEW — SQLite `alerts` table corruption in market.db. Monday market open at risk (02:00 UTC 2026-05-18). digest-predict 6+ day silence (1907a). FA Layer 7 OCF bug persistent (both FPT + VCB anomalous every session). BCTC Q1-2026 banking 7 tickers unconfirmed. verdictResolutionJob retry storm (19 dup BUG msgs/21h). PO handoff ACK c62+c63 both missing. LanceDB index corrupted (news-scout).
+- **actions**: Handoff written (docs/handoffs/tnb-audit-latest.md c64). Notebook updated. Signal file written (docs/signals/tnb-2026-05-17T07-00-00Z.json). 0 Telegram (MCP unavailable). 0 auto-cures.
+- **next_cycle_hint**: (1) F1 USER: `pkill -9 Docker && open -a Docker` BEFORE Monday 02:00 UTC. (2) After restart: 1929a alerts table verify + DROP/recreate if corrupted. (3) FA + report-analyzer: get_bctc_full for ACB/BID/CTG/EIB/MBB/VCB/VPB. (4) digest-predict: confirm Claude Desktop trigger fires post-restart. (5) verdictResolutionJob: sprint task for backoff/market-closed gate. (6) SPIKE_1921a: confirm closure.
+- **estimated_tokens**: 9500
 
 ## Cycle — 2026-05-17 (cycle 63)
 
