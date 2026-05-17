@@ -1,6 +1,33 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-17 | **Session:** c142 — TNB critic gate + outcome feedback loop + accuracy badge — CHANGES_REQUESTED
+**Last updated:** 2026-05-17 | **Session:** c143 — round-2 QA: getAccuracyContextTool try/catch + cron-registry — APPROVED
+
+## Session 2026-05-17 c143 — round-2 fix verification (commit a611d911)
+
+### TASK REPORT — outcome feedback loop fix (compact)
+
+```
+date: 2026-05-17
+outcome: APPROVED
+type: FIX (try/catch + cron-registry sync)
+round: 2
+commit: a611d911
+```
+
+#### Pipeline
+
+- accuracy-context-tool.test.ts: 8 pass / 0 fail — GREEN
+- tsc apps/mcp-server: 0 errors
+- DDD: PASS — interface tool imports only infrastructure (no domain/ imports)
+- Security: PASS — no process.env, no hardcoded secrets
+
+#### Verification
+
+- `getAccuracyContextTool.ts:87` — try/catch correctly placed as outermost wrapper of entire handler body (lines 87–125 inside try, lines 126–129 in catch). No double-wrapping.
+- Catch path returns `{ content: [{ type: "text" as const, text: \`Error: ...\` }] }` — correct MCP content shape.
+- `cron-registry.json` — JSON valid. `signalOutcomeResolution` entry has schedule, name, file, desc — consistent schema with other scheduler entries (signalOutcomeJob, verdictResolutionJob pattern).
+
+---
 
 ## Session 2026-05-17 c142 — TNB critic gate + outcome feedback loop + accuracy badge
 
