@@ -103,7 +103,7 @@ export default function VpsDashboard() {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">VPS Proxy Health</h1>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500" suppressHydrationWarning>
           Last updated:{" "}
           <span suppressHydrationWarning>
             {new Date(fetchedAt).toLocaleString("vi-VN", {

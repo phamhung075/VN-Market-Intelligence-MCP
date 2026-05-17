@@ -197,7 +197,7 @@ function HeadlineTable({ headlines }: { headlines: Headline[] }) {
                 h.title
               )}
             </p>
-            <div className="mt-0.5 flex gap-3 text-xs text-slate-500">
+            <div className="mt-0.5 flex gap-3 text-xs text-slate-500" suppressHydrationWarning>
               {h.source && <span>{h.source}</span>}
               {h.publishedAt && (
                 <span suppressHydrationWarning>
@@ -222,7 +222,7 @@ export default function DbDashboard() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Database Report</h1>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500" suppressHydrationWarning>
           Last updated:{" "}
           <span suppressHydrationWarning>
             {new Date(fetchedAt).toLocaleString("vi-VN", {

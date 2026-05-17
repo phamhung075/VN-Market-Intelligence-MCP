@@ -139,7 +139,7 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
     <div className="space-y-3 text-sm">
       {/* Timestamp */}
       {macro.fetchedAt && (
-        <div className="flex gap-2 text-xs">
+        <div className="flex gap-2 text-xs" suppressHydrationWarning>
           <span className="text-slate-500">Last updated:</span>
           <span className="text-slate-400" suppressHydrationWarning>
             {new Date(String(macro.fetchedAt)).toLocaleString("vi-VN", {
@@ -213,7 +213,7 @@ export default function FetchDashboard() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Fetch Operations</h1>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500" suppressHydrationWarning>
           Last updated:{" "}
           <span suppressHydrationWarning>
             {new Date(fetchedAt).toLocaleString("vi-VN", {

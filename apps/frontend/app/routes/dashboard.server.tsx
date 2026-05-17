@@ -113,7 +113,7 @@ export default function ServerDashboard() {
       )}
 
       {checkedAt && (
-        <p className="mb-4 text-xs text-slate-500">
+        <p className="mb-4 text-xs text-slate-500" suppressHydrationWarning>
           Last updated:{" "}
           <span suppressHydrationWarning>
             {new Date(checkedAt).toLocaleString("vi-VN", {
