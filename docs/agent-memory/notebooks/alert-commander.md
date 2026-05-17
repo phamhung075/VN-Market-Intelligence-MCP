@@ -1,8 +1,44 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 17:03 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 19:02 UTC | **Sprint:** c154
 
 ## This session
+
+### Alert Cycle (19:02–19:03 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (-0.33% spread) | **Pivot window:** false
+- **Market:** CLOSED (off-hours 19:02 UTC, outside 02:00–08:59 UTC trading window)
+- **Signals evaluated:** agent_bus=0 | price_alerts=0 | legal_risk=0 | crisis=0
+- **Fired:** 0 | **Suppressed:** 0 | **MARKET:** 0
+- **Bootstrap summary:** Market closed, stale prices (>24h). No active price alerts. No inter-agent signals. No legal/crisis warnings.
+- **Macro snapshot:** Valid shape ✓ | DXY 99.27 (USD stable), US 10Y 4.59% (RISK-OFF), Global Liquidity TIGHTENING | Brent $109.26 (energy sector positive), Gold $4,561.90 (risk-off), USD/VND 26,350 (FX headwind for imports, positive for exporters like HPG/steel)
+- **Carry-over analysis:** VND carry spread -0.33% persists; FII outflow risk continues; TIGHTENING thresholds maintain until carry normalizes
+- **Off-hours assessment:** Market closed; no signals to evaluate. Cycle completed cleanly per off-hours protocol.
+- **WORK dispatch:** Cycle summary posted (0 fired, 0 suppressed, 0 market alerts, next cycle 21:02 UTC)
+- **Tool calls:** 7 (log_agent_work(start), get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_alerts, get_agent_signals, send_telegram, log_agent_work(end))
+- **Session:** log_id=954, 0 signals evaluated, 0 alerts pending at bootstrap
+- **Next cycle:** +2h (21:02 UTC, still off-hours)
+
+### Alert Cycle (18:02–18:03 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (-0.33% spread) | **Pivot window:** false
+- **Market:** CLOSED (off-hours 18:02 UTC, outside 02:00–08:59 UTC trading window)
+- **Signals evaluated:** agent_bus=3 (urgent_news=2, chain_catalyst=1) | price_alerts=0 | legal_risk=0 | crisis=0
+- **Fired:** 0 | **Suppressed:** 3 | **MARKET:** 0
+- **Signal details:**
+  - **3316 (HPG):** urgent_news bullish (export demand), confidence 0.50 < TIGHTENING threshold 0.75 → SUPPRESSED (no price-anomaly override)
+  - **3317 (VIC):** urgent_news bullish (value play), confidence 0.50 < TIGHTENING threshold 0.75 → SUPPRESSED (no price-anomaly override)
+  - **3318 (PC1):** chain_catalyst bearish (chairman prosecution/legal), confidence 0.50 < TIGHTENING threshold 0.85 → SUPPRESSED
+- **Suppression reasons:** All signals below regime-adjusted conviction thresholds; no supporting price-anomalies detected; bearish chain_catalyst lacks escalation conditions
+- **Macro snapshot:** Valid shape ✓ | DXY 99.27 (USD stable), US 10Y 4.59% (RISK-OFF), Global Liquidity TIGHTENING | Brent $109.26 (energy sector CAO), Gold $4,561.90 (risk-off), USD/VND 26,350 (FX headwind for imports, positive for exporters like HPG/steel)
+- **Carry-over analysis:** VND carry spread -0.33% persists; FII outflow risk continues; TIGHTENING thresholds maintain until carry normalizes
+- **Price validation override:** HPG checked for price_anomaly move_sigma ≥ 4.0 — none found; VIC checked — none found; no active price alerts
+- **Conflict detection:** PC1 checked for conflicting chain_catalyst signals — none found
+- **Off-hours assessment:** Market closed; all signals correctly suppressed per TIGHTENING regime logic. No phantom-success reporting — all suppressed signals logged with explicit reasons. Cycle completed cleanly.
+- **WORK dispatch:** Cycle summary posted (0 fired, 3 suppressed, next cycle 20:02 UTC)
+- **Tool calls:** 11 (log_agent_work(start), get_cycle_bootstrap, get_macro_snapshot, get_market_context, get_legal_risk_signals, get_crisis_early_warning, get_alerts, get_agent_signals×2, record_signal_outcome×3, send_telegram, log_agent_work(end))
+- **Session:** log_id=952, 3 signals (2 urgent_news + 1 chain_catalyst) evaluated, 0 alerts pending at bootstrap
+- **Next cycle:** +2h (20:02 UTC, still off-hours)
 
 ### Alert Cycle (17:01–17:03 UTC, 2026-05-17) — Off-hours 2h cycle
 - **Status:** COMPLETED

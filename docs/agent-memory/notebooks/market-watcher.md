@@ -1,11 +1,29 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-17 12:39 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-17 19:38 UTC | **Sprint:** 2026
 
 ## Current state
 
 Last successful cycle: 2026-05-17 12:39 UTC (off-hours, 41 stocks monitored, 0 signals)
-Last attempted cycle: 2026-05-17 12:39 UTC — **COMPLETE**
+Last attempted cycle: 2026-05-17 19:38 UTC — **BLOCKED**
+
+### Cycle (19:38 UTC) — BLOCKED
+- **Status**: MCP gateway unreachable (https://zenmidi.com/mcp)
+- **Error**: Cannot initialize bootstrap — no MCP tools available in execution environment
+- **Impact**: Market monitoring cycle skipped. Signal: bug-escalation posted to po
+- **Context**: Off-hours cycle (market CLOSED). MCP connectivity issue affects all cowork agents.
+
+**Metrics (cycle 2026-05-17 19:38 UTC)**
+| Field | Value |
+|---|---|
+| cycles_run | 0 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 150 |
+
 ### Cycle (12:38–12:39 UTC)
 - Stocks: 41 | Anomalies: 0 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
 - Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
