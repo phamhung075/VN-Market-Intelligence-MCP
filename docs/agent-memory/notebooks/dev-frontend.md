@@ -240,3 +240,31 @@ Tier 1-4 complete. 61/61 tests GREEN. tsc clean. React hydration errors eliminat
 
 ### Zone health
 Tier 1-4 complete. 77/77 tests GREEN. tsc clean. Stock detail panel now shows Decision + Info Source sections. | HEALTHY
+
+## Cycle 1938 — 2026-05-17 (StockSignalsPanel — per-stock agent signals)
+
+### New features
+- `AgentSignal` domain interface in `app/domain/market.ts` — stockCode, signalType, direction, confidence (0-1), reasoning, createdAt
+- `fetchStockSignals(code, limit)` in `app/lib/api/client.ts` — GET /mcp/api/signals/stock/:code?limit=10, maps snake_case DB rows to AgentSignal, normalises confidence_score 0-100 → 0.0-1.0, extracts direction from finding_data priority chain
+- mcp-server: GET /api/signals/stock/:code endpoint in `apps/mcp-server/src/interface/mcp/server.ts` — schema-evolution guards for confidence_score and finding_data columns, direction extraction from finding_data.direction / catalyst_direction / payload.direction
+- `StockSignalsPanel` component inline in `dashboard.analysis.tsx` — table with time (HH:mm today / MM-DD HH:mm), source badge, coloured direction, confidence %, reasoning; null-safe with graceful fallback messages
+- loader extended: signals fetched in parallel via 4-way `Promise.allSettled()`; `StockDetail.signals: AgentSignal[] | null` added
+
+### Files modified
+- apps/frontend/app/domain/market.ts — AgentSignal type added
+- apps/frontend/app/lib/api/client.ts — fetchStockSignals + toAgentSignal added
+- apps/frontend/app/routes/dashboard.analysis.tsx — loader + StockSignalsPanel + StockDetailPanel wiring
+- apps/mcp-server/src/interface/mcp/server.ts — GET /api/signals/stock/:code route
+
+### Files created
+- apps/frontend/app/__tests__/1938-stock-signals.test.ts — 12 tests
+
+### Test result
+- Vitest: 89/89 PASS (10 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+be30270b feat(frontend): add StockSignalsPanel — agent signals per stock in detail view
+
+## Zone health
+Tier 1-4 complete. 89/89 tests GREEN. tsc clean. StockSignalsPanel wired into stock detail, showing why a stock has signals. | HEALTHY

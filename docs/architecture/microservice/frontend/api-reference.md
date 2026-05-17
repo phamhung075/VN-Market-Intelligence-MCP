@@ -14,7 +14,7 @@ All routes live in `apps/frontend/app/routes/`.
 | `dashboard.fetch.tsx` | `/dashboard/fetch` | `GET /news/reuters/headlines`, `GET /news/bloomberg/headlines`, `GET /macro/external` |
 | `dashboard.db.tsx` | `/dashboard/db` | `GET /stock/price/history?code=VNINDEX`, `GET /news/reuters/headlines` |
 | `dashboard.vps.tsx` | `/dashboard/vps` | `GET /health/<service>` × 4 (news, macro, stock, pdf) |
-| `dashboard.analysis.tsx` | `/dashboard/analysis` | `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × N, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators` |
+| `dashboard.analysis.tsx` | `/dashboard/analysis` | `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × N, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators`, `GET /mcp/api/signals/stock/:code?limit=10` |
 
 ### Loader pattern
 
@@ -72,13 +72,16 @@ Source: `apps/frontend/app/components/ClientTimestamp.tsx:70`
 
 ## Analysis Dashboard — Stock Detail Panel (`dashboard.analysis.tsx`)
 
-When `?stock=CODE` is present in the URL, the loader fetches three data sources in parallel via `Promise.allSettled()`:
+When `?stock=CODE` is present in the URL, the loader fetches four data sources in parallel via `Promise.allSettled()`:
 
 1. `GET /kinh-dich/reading/:code` — Kinh Dịch reading (required)
 2. `GET /stock/price/history?code&days=90` — 90-day OHLCV (required)
 3. `POST /ta/ta/indicators` body `{ code, date: "YYYY-MM-DD" }` — TA snapshot (non-fatal, null on failure)
+4. `GET /mcp/api/signals/stock/:code?limit=10` — per-stock agent signals (non-fatal, null on failure)
 
-TA fetch failure is non-fatal: `detail.ta = null` is valid and the UI degrades gracefully (shows "—" for TA rows).
+Non-fatal fetches set `detail.ta = null` or `detail.signals = null` respectively; the UI degrades gracefully.
+
+The `/mcp/api/signals/stock/:code` endpoint is served by the mcp-server (routed via api-gateway proxy: `/mcp/*` → `http://mcp-server:3000`). It queries the `agent_signals` table filtered by `stock_code`, ordered by `created_at DESC`.
 
 ### Detail panel layout
 
@@ -86,6 +89,7 @@ TA fetch failure is non-fatal: `detail.ta = null` is valid and the UI degrades g
 [Chart — full width (StockChart, 560px)]
 [AnalysisDecision — full width, colored background]
 [InfoSourcePanel — full width, 5-row data source table]
+[StockSignalsPanel — full width, agent signals table (last 10)]
 [Kinh Dịch column | Price table column]
 ```
 
@@ -122,6 +126,32 @@ fetchTASnapshot(code: string): Promise<TASnapshot>
 ```
 
 Located in `app/lib/api/client.ts`. Response shape defined in `app/domain/market.ts` as `TASnapshot`.
+
+### `fetchStockSignals`
+
+```ts
+fetchStockSignals(code: string, limit?: number): Promise<AgentSignal[]>
+// GET /mcp/api/signals/stock/:code?limit=10
+```
+
+Located in `app/lib/api/client.ts`. Maps raw snake_case DB rows to `AgentSignal` domain objects. Normalises `confidence_score` (0–100 integer) → `confidence` (0.0–1.0 float). Extracts `direction` from `finding_data.direction` / `finding_data.catalyst_direction` / `payload.direction` in priority order.
+
+`AgentSignal` domain type is defined in `app/domain/market.ts`.
+
+### `StockSignalsPanel`
+
+Renders below `InfoSourcePanel` in the stock detail panel. Shows a table of the last 10 agent signals for a stock.
+
+| Column | Content |
+|---|---|
+| Time | HH:mm if today, MM-DD HH:mm otherwise |
+| Source | Signal type badge (human-readable: "cascade", "news", "BCTC", etc.) |
+| Direction | BULLISH↑ (green) / BEARISH↓ (red) / NEUTRAL (slate) |
+| Confidence | % with colour: ≥70% green, 40–69% amber, <40% slate |
+| Why | `reasoning` text (truncated with tooltip) |
+
+If `signals === null`: shows "Unavailable" message.
+If `signals.length === 0`: shows "No signals recorded for this stock yet."
 
 ## UI Components (shadcn/ui primitives)
 
