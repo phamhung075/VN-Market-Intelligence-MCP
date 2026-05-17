@@ -307,3 +307,32 @@ Tier 1-4 complete. 89/89 tests GREEN. tsc clean. StockSignalsPanel wired into st
 
 ## Zone health
 Tier 1-4 complete. 105/105 tests GREEN. tsc clean. All 30 watchlist stocks navigable; sector grouping, macro cascade panel, and peer comparison bar shipped. | HEALTHY
+
+## Cycle 1940 — 2026-05-17 (accuracy badge — Sprint C outcome feedback loop)
+
+### Features shipped
+- `SignalAccuracy` interface in `app/domain/market.ts` — accuracy_rate (null when <3 samples), sample_count
+- Optional `accuracy?: SignalAccuracy` field added to `AgentSignal` — defensive, Sprint B may not be live
+- `parseAccuracyFromResponse(data)` exported from `client.ts` — parses accuracy map from endpoint envelope, attaches per-signal; signals unchanged when accuracy field absent
+- `accuracyBadgeProps(acc)` exported from `client.ts` — pure badge colour/label helper for testability
+- `fetchStockSignals()` updated to use `parseAccuracyFromResponse` — backward compatible
+- `AccuracyBadge` component inline in `dashboard.analysis.tsx` — renders badge or "—" dash
+- `StockSignalsPanel` updated — new `Accuracy` column after `Confidence`; badge: green ≥70%, amber 40–69%, red <40%, grey "New" <3 samples, dash when accuracy absent
+
+### Files modified
+- apps/frontend/app/domain/market.ts — SignalAccuracy type + optional accuracy on AgentSignal
+- apps/frontend/app/lib/api/client.ts — parseAccuracyFromResponse + accuracyBadgeProps + updated fetchStockSignals
+- apps/frontend/app/routes/dashboard.analysis.tsx — AccuracyBadge component + Accuracy column in StockSignalsPanel
+
+### Files created
+- apps/frontend/app/__tests__/1940-accuracy-badge.test.ts — 19 tests
+
+### Test result
+- Vitest: 124/124 PASS (12 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+02498d60 feat(frontend): accuracy badge on StockSignalsPanel — Sprint C outcome feedback
+
+## Zone health
+Tier 1-4 complete. 124/124 tests GREEN. tsc clean. Accuracy badge on StockSignalsPanel — defensive Sprint B/C boundary, full threshold coverage. | HEALTHY

@@ -162,9 +162,51 @@ fetchStockSignals(code: string, limit?: number): Promise<AgentSignal[]>
 // GET /mcp/api/signals/stock/:code?limit=10
 ```
 
-Located in `app/lib/api/client.ts`. Maps raw snake_case DB rows to `AgentSignal` domain objects. Normalises `confidence_score` (0–100 integer) → `confidence` (0.0–1.0 float). Extracts `direction` from `finding_data.direction` / `finding_data.catalyst_direction` / `payload.direction` in priority order.
+Located in `app/lib/api/client.ts`. Calls `parseAccuracyFromResponse()` on the raw envelope.
 
-`AgentSignal` domain type is defined in `app/domain/market.ts`.
+**Response envelope (Sprint B+):**
+```json
+{
+  "signals": [...],
+  "accuracy": {
+    "chain_catalyst":  { "accuracy_rate": 0.7, "sample_count": 10 },
+    "urgent_news":     { "accuracy_rate": 0.37, "sample_count": 8 }
+  },
+  "code": "VCB",
+  "count": 10
+}
+```
+
+If `accuracy` key is absent (Sprint B not yet deployed), signals are returned unchanged with `accuracy: undefined`.
+
+Maps raw snake_case DB rows to `AgentSignal` domain objects. Normalises `confidence_score` (0–100 integer) → `confidence` (0.0–1.0 float).
+
+### `parseAccuracyFromResponse` (exported helper)
+
+```ts
+parseAccuracyFromResponse(data: Record<string, unknown>): AgentSignal[]
+```
+
+Pure-ish function. Parses `data.signals` into `AgentSignal[]`. If `data.accuracy` is a non-null object, attaches the matching `SignalAccuracy` entry to each signal where `signal.signalType === accuracyKey`. Signals with no matching key get `accuracy: undefined`. Exported for unit-testing without mocking fetch.
+
+### `accuracyBadgeProps` (exported helper)
+
+```ts
+accuracyBadgeProps(acc: SignalAccuracy): { color: "green" | "amber" | "red" | "grey"; label: string }
+```
+
+Badge colour + label derivation rules:
+
+| Condition | Color | Label |
+|---|---|---|
+| `sample_count < 3` or `accuracy_rate === null` | grey | "New" |
+| `accuracy_rate >= 0.70` | green | e.g. "70%" |
+| `0.40 <= accuracy_rate < 0.70` | amber | e.g. "55%" |
+| `accuracy_rate < 0.40` | red | "Low" |
+
+Exported for unit-testing badge logic independently of React.
+
+`AgentSignal` and `SignalAccuracy` domain types are defined in `app/domain/market.ts`.
 
 ### `StockSignalsPanel`
 
@@ -176,7 +218,15 @@ Renders below `InfoSourcePanel` in the stock detail panel. Shows a table of the 
 | Source | Signal type badge (human-readable: "cascade", "news", "BCTC", etc.) |
 | Direction | BULLISH↑ (green) / BEARISH↓ (red) / NEUTRAL (slate) |
 | Confidence | % with colour: ≥70% green, 40–69% amber, <40% slate |
+| Accuracy | Badge from `AccuracyBadge` component — absent = "—", green/amber/red/grey per `accuracyBadgeProps` |
 | Why | `reasoning` text (truncated with tooltip) |
+
+Accuracy badge colours (Tailwind):
+- green: `bg-green-100 text-green-800` — ≥70% accuracy
+- amber: `bg-yellow-100 text-yellow-800` — 40–69%
+- red: `bg-red-100 text-red-800` — <40%
+- grey: `bg-slate-700 text-slate-400` — insufficient samples (New)
+- dash: `text-slate-600` — accuracy field absent (Sprint B not deployed)
 
 If `signals === null`: shows "Unavailable" message.
 If `signals.length === 0`: shows "No signals recorded for this stock yet."

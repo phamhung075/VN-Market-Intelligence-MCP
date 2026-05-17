@@ -88,6 +88,25 @@ Tests for Task 1939 — watchlist navigation:
 - `fetchCascadeSignals()`: cascade signals mapping, empty array on no signals, empty array on API error
 - `WatchlistTileData` type shape: required fields, direction values
 
+### `app/__tests__/1940-accuracy-badge.test.ts` — 19 tests
+Tests for Task 1940 — accuracy badge (Sprint C outcome feedback loop):
+- `parseAccuracyFromResponse`: accuracy map attached to signal when present (chain_catalyst, urgent_news, fundamental_validation)
+- `parseAccuracyFromResponse`: no match in accuracy map → `accuracy: undefined`
+- `parseAccuracyFromResponse`: accuracy field absent → all signals have `accuracy: undefined`
+- `parseAccuracyFromResponse`: empty signals list → empty array
+- `parseAccuracyFromResponse`: non-object accuracy field treated as absent
+- `parseAccuracyFromResponse`: base signal fields intact when accuracy absent
+- `accuracyBadgeProps`: green for rate ≥ 0.70 with sufficient samples
+- `accuracyBadgeProps`: amber for rate 0.40–0.69
+- `accuracyBadgeProps`: amber for rate exactly 0.40
+- `accuracyBadgeProps`: red for rate < 0.40
+- `accuracyBadgeProps`: red for rate = 0
+- `accuracyBadgeProps`: grey "New" for sample_count < 3 regardless of rate
+- `accuracyBadgeProps`: grey "New" for sample_count = 0
+- `accuracyBadgeProps`: grey "New" for null accuracy_rate with sample_count < 3
+- `fetchStockSignals`: signals without accuracy when endpoint returns no accuracy map
+- `fetchStockSignals`: accuracy attached when Sprint B accuracy field present
+
 ## Known Gaps
 
 - No Playwright e2e tests run in CI (requires live dev server on port 3001)
@@ -96,8 +115,9 @@ Tests for Task 1939 — watchlist navigation:
 
 ## Coverage Notes
 
-- API service layer (Tier 3): 100% of exported functions covered (105 tests)
+- API service layer (Tier 3): 100% of exported functions covered (124 tests)
 - Domain helpers (`parseMacroSources`, `toUserFriendlyError`, `groupBySector`, `WATCHLIST_STOCKS`): covered
 - Client-only components (`ClientTimestamp`, `ClientTimeString`): covered
 - Route loaders: not directly tested (integration concern)
 - `computeDecision` scoring logic: fully covered (5 bands × multiple conditions)
+- `parseAccuracyFromResponse` + `accuracyBadgeProps`: fully covered (19 tests)

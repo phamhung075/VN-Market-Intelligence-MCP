@@ -177,6 +177,22 @@ Source: `apps/frontend/app/domain/market.ts:95–111`
 
 ---
 
+### `SignalAccuracy`
+
+Accuracy stats for a single `signal_type`, attached to `AgentSignal` when the Sprint B
+outcome feedback loop endpoint is deployed.
+
+```ts
+interface SignalAccuracy {
+  accuracy_rate: number | null;  // null when sample_count < 3 (insufficient history)
+  sample_count: number;          // correct + incorrect outcomes (excludes NEUTRAL signals)
+}
+```
+
+Source: `apps/frontend/app/domain/market.ts` (SignalAccuracy section)
+
+---
+
 ### `AgentSignal`
 
 Per-stock agent signal row from the `agent_signals` DB table.
@@ -190,8 +206,13 @@ interface AgentSignal {
   confidence: number;     // normalised 0.0–1.0 (DB stores 0–100 integer)
   reasoning: string;
   createdAt: string;      // ISO or SQLite "YYYY-MM-DD HH:MM:SS" string
+  accuracy?: SignalAccuracy;  // present only when Sprint B endpoint is deployed
 }
 ```
+
+`accuracy` is optional and defensive: callers must not assume its presence.
+It is populated by `parseAccuracyFromResponse()` in `client.ts` when the endpoint
+returns an `accuracy` map keyed by `signal_type`.
 
 Signal type label mapping (for UI display):
 - `chain_catalyst` → "cascade" (macro cascade event)
@@ -203,7 +224,7 @@ Signal type label mapping (for UI display):
 - `verified_chain` → "verified"
 - `signal_feedback` → "feedback"
 
-Source: `apps/frontend/app/domain/market.ts:143–151`
+Source: `apps/frontend/app/domain/market.ts` (AgentSignal section)
 
 ---
 
