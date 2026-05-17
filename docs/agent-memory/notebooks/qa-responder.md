@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 07:50 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 10:48 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** BLOCKED — vn-market MCP gateway unreachable (7h+ outage, 7 consecutive blocked cycles)
-**Queue:** Unknown (last live probe 06:47:42Z–06:49:00Z = connector no-response)
-**consecutive_empty_cycles:** 0 (cannot increment — queue unreachable) | **backoff_until:** 2026-05-16T22:49:03Z (expired; not reset — cycle.md only resets when queue has items at step 1)
+**Status:** RECOVERED — vn-market MCP gateway reachable (outage ended ~2026-05-17 10:47Z)
+**Queue:** Empty (0 items, last probe 10:48:08Z = live success)
+**consecutive_empty_cycles:** 1 | **backoff_until:** none (prior backoff 2026-05-16T22:49:03Z expired and cleared)
 
 ## Known patterns / preferences
 
@@ -1819,3 +1819,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | ~900 |
+
+---
+
+### Q&A Batch (10:47–10:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 1 | backoff_until: none (prior backoff 2026-05-16T22:49:03Z expired; removed from state at step 0b since queue reachable)
+- Note: Gateway recovered. Live probes at 10:47:44Z (log_agent_work), 10:47:50Z (get_pending_ask_questions) both succeeded. Queue returned [] (empty, no error). Market context available. Adaptive backoff line removed per step 0b when queue accessible.
+
+## Metrics (cycle 2026-05-17 10:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~650 |
