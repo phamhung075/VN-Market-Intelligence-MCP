@@ -907,6 +907,98 @@ export async function createBunServer(
       return;
     }
 
+    // ── GET /api/signals/stock/:code — per-stock agent signals for frontend ────
+    // Returns last N agent_signals rows for a specific stock_code.
+    // Non-authenticated — read-only query, no sensitive data.
+    if (method === "GET" && pathname.startsWith("/api/signals/stock/")) {
+      const code = decodeURIComponent(pathname.slice("/api/signals/stock/".length).split("?")[0]);
+      const limitParam = url.searchParams.get("limit");
+      const limit = Math.min(Math.max(1, parseInt(limitParam ?? "10", 10) || 10), 50);
+
+      if (!code) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Missing stock code" }));
+        return;
+      }
+
+      try {
+        // Check which optional columns exist (schema evolution guard)
+        let hasConfidenceScore = false;
+        let hasFindingData = false;
+        try {
+          db.prepare("SELECT confidence_score FROM agent_signals LIMIT 0").all();
+          hasConfidenceScore = true;
+        } catch { /* column absent — older schema */ }
+        try {
+          db.prepare("SELECT finding_data FROM agent_signals LIMIT 0").all();
+          hasFindingData = true;
+        } catch { /* column absent */ }
+
+        const confidenceCol = hasConfidenceScore ? ", confidence_score" : "";
+        const findingCol = hasFindingData ? ", finding_data" : "";
+
+        type SignalRow = {
+          id: number;
+          stock_code: string | null;
+          signal_type: string;
+          payload: string;
+          created_at: string;
+          confidence_score?: number;
+          finding_data?: string | null;
+        };
+
+        const rows = db
+          .prepare<SignalRow, [string, number]>(
+            `SELECT id, stock_code, signal_type, payload, created_at${confidenceCol}${findingCol}
+             FROM agent_signals
+             WHERE stock_code = ?
+             ORDER BY created_at DESC
+             LIMIT ?`,
+          )
+          .all(code, limit) as SignalRow[];
+
+        // Shape each row for the frontend: extract direction + detail from payload/finding_data
+        const signals = rows.map((row) => {
+          let payload: Record<string, unknown> = {};
+          let findingData: Record<string, unknown> = {};
+          try { payload = JSON.parse(row.payload) as Record<string, unknown>; } catch {}
+          if (row.finding_data) {
+            try { findingData = JSON.parse(row.finding_data) as Record<string, unknown>; } catch {}
+          }
+
+          const direction =
+            typeof findingData["direction"] === "string" ? findingData["direction"] :
+            typeof findingData["catalyst_direction"] === "string" ? findingData["catalyst_direction"] :
+            typeof payload["direction"] === "string" ? payload["direction"] :
+            "NEUTRAL";
+
+          const detail =
+            typeof payload["detail"] === "string" ? payload["detail"] :
+            typeof findingData["summary"] === "string" ? findingData["summary"] :
+            typeof payload["title"] === "string" ? payload["title"] :
+            "";
+
+          return {
+            id: row.id,
+            stock_code: row.stock_code,
+            signal_type: row.signal_type,
+            direction,
+            confidence_score: row.confidence_score ?? 50,
+            detail,
+            created_at: row.created_at,
+          };
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ signals, code, count: signals.length }));
+      } catch (err) {
+        log.error("[signals/stock] query error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
     // ── Task 1361: POST /api/ohlcv-backfill-done — VPS signals backfill complete ──
     if (method === "POST" && pathname === "/api/ohlcv-backfill-done") {
       const apiKey = Bun.env.VPS_PUSH_API_KEY;

@@ -11,9 +11,11 @@ import {
   fetchKinhDichReading,
   fetchMacroSnapshot,
   fetchPriceHistory,
+  fetchStockSignals,
   fetchTASnapshot,
 } from "~/lib/api/client";
 import type {
+  AgentSignal,
   KinhDichMarket,
   KinhDichReading,
   MacroSnapshot,
@@ -37,6 +39,7 @@ interface StockDetail {
   reading: KinhDichReading;
   prices: PricePoint[];
   ta: TASnapshot | null;
+  signals: AgentSignal[] | null;
 }
 
 interface LoaderData {
@@ -83,15 +86,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let detailError: string | null = null;
 
   if (selectedStock) {
-    const [readingRes, priceRes, taRes] = await Promise.allSettled([
+    const [readingRes, priceRes, taRes, signalsRes] = await Promise.allSettled([
       fetchKinhDichReading(selectedStock),
       fetchPriceHistory(selectedStock, 90), // 90 days for indicator charts
       fetchTASnapshot(selectedStock),       // TA non-fatal — null on failure
+      fetchStockSignals(selectedStock, 10), // signals non-fatal — null on failure
     ]);
 
     if (readingRes.status === "fulfilled" && priceRes.status === "fulfilled") {
       const ta = taRes.status === "fulfilled" ? taRes.value : null;
-      detail = { reading: readingRes.value, prices: priceRes.value, ta };
+      const signals = signalsRes.status === "fulfilled" ? signalsRes.value : null;
+      detail = { reading: readingRes.value, prices: priceRes.value, ta, signals };
     } else {
       detailError =
         readingRes.status === "rejected"
@@ -638,6 +643,116 @@ function InfoSourcePanel({
 }
 
 // --------------------------------------------------------------------------
+// Stock signals panel
+// --------------------------------------------------------------------------
+
+/**
+ * Format a SQLite/ISO datetime string for compact display.
+ * If the date portion equals today, show only HH:mm.
+ * Otherwise show MM-DD HH:mm.
+ */
+function formatSignalTime(createdAt: string): string {
+  // SQLite stores "YYYY-MM-DD HH:MM:SS"; convert to a valid ISO string
+  const iso = createdAt.includes("T") ? createdAt : createdAt.replace(" ", "T") + "Z";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return createdAt;
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const signalDateStr = iso.slice(0, 10);
+  const hhmm = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
+
+  if (signalDateStr === todayStr) return hhmm;
+  const mmdd = iso.slice(5, 10); // "MM-DD"
+  return `${mmdd} ${hhmm}`;
+}
+
+function directionLabel(direction: string): { text: string; cls: string } {
+  const d = direction.toUpperCase();
+  if (d === "BULLISH") return { text: "BULLISH↑", cls: "text-green-400" };
+  if (d === "BEARISH") return { text: "BEARISH↓", cls: "text-red-400" };
+  return { text: direction || "NEUTRAL", cls: "text-slate-400" };
+}
+
+function confidenceLabel(confidence: number): { text: string; cls: string } {
+  const pct = Math.round(confidence * 100);
+  const text = `${pct}%`;
+  if (pct >= 70) return { text, cls: "text-green-400" };
+  if (pct >= 40) return { text, cls: "text-amber-400" };
+  return { text, cls: "text-slate-400" };
+}
+
+function signalTypeLabel(signalType: string): string {
+  switch (signalType) {
+    case "chain_catalyst": return "cascade";
+    case "urgent_news": return "news";
+    case "price_anomaly": return "price";
+    case "cross_validate": return "validate";
+    case "fundamental_validation": return "BCTC";
+    case "price_confirmation": return "confirm";
+    case "verified_chain": return "verified";
+    case "signal_feedback": return "feedback";
+    default: return signalType;
+  }
+}
+
+function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
+  return (
+    <div className="border-b border-slate-700 px-4 py-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+        Signals (last 10)
+      </h3>
+
+      {signals === null ? (
+        <p className="text-xs text-slate-500">Unavailable — signal endpoint did not respond.</p>
+      ) : signals.length === 0 ? (
+        <p className="text-xs text-slate-500">No signals recorded for this stock yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-700 text-slate-400">
+                <th className="py-1.5 text-left pr-3 font-medium">Time</th>
+                <th className="py-1.5 text-left pr-3 font-medium">Source</th>
+                <th className="py-1.5 text-left pr-3 font-medium">Direction</th>
+                <th className="py-1.5 text-left pr-4 font-medium">Confidence</th>
+                <th className="py-1.5 text-left font-medium">Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              {signals.map((sig) => {
+                const dir = directionLabel(sig.direction);
+                const conf = confidenceLabel(sig.confidence);
+                return (
+                  <tr key={sig.id} className="border-b border-slate-800 last:border-0">
+                    <td suppressHydrationWarning className="py-1.5 pr-3 font-mono text-slate-400 whitespace-nowrap">
+                      {formatSignalTime(sig.createdAt)}
+                    </td>
+                    <td className="py-1.5 pr-3">
+                      <span className="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300">
+                        {signalTypeLabel(sig.signalType)}
+                      </span>
+                    </td>
+                    <td className={`py-1.5 pr-3 font-semibold ${dir.cls}`}>
+                      {dir.text}
+                    </td>
+                    <td className={`py-1.5 pr-4 font-semibold ${conf.cls}`}>
+                      {conf.text}
+                    </td>
+                    <td className="py-1.5 text-slate-300 max-w-xs truncate" title={sig.reasoning}>
+                      {sig.reasoning || <span className="text-slate-600 italic">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
 // Detail panel
 // --------------------------------------------------------------------------
 
@@ -713,7 +828,7 @@ function StockDetailPanel({
   stock: string;
   snapshot: MacroSnapshot | null;
 }) {
-  const { reading, prices, ta } = detail;
+  const { reading, prices, ta, signals } = detail;
 
   return (
     <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 overflow-hidden">
@@ -741,6 +856,9 @@ function StockDetailPanel({
 
       {/* Info source panel — contributing data sources */}
       <InfoSourcePanel ta={ta} reading={reading} prices={prices} snapshot={snapshot} />
+
+      {/* Agent signals — why this stock has been flagged */}
+      <StockSignalsPanel signals={signals} />
 
       {/* Bottom: Kinh Dịch + Price table side-by-side */}
       <div className="grid gap-0 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">

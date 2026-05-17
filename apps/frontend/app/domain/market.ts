@@ -133,6 +133,24 @@ export interface MacroSnapshot {
 }
 
 // --------------------------------------------------------------------------
+// Agent signals types
+// --------------------------------------------------------------------------
+
+/**
+ * A per-stock agent signal row from the agent_signals table.
+ * Returned by GET /mcp/api/signals/stock/:code
+ */
+export interface AgentSignal {
+  id: number;
+  stockCode: string;
+  signalType: string;       // e.g. "chain_catalyst", "urgent_news", "price_anomaly"
+  direction: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
+  confidence: number;       // normalised 0.0–1.0 (converted from DB integer 0–100)
+  reasoning: string;        // human-readable explanation
+  createdAt: string;        // ISO/SQLite datetime string
+}
+
+// --------------------------------------------------------------------------
 // Technical Analysis types
 // --------------------------------------------------------------------------
 

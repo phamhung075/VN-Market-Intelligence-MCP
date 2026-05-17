@@ -268,6 +268,69 @@ export async function fetchTASnapshot(code: string): Promise<TASnapshot> {
 }
 
 // --------------------------------------------------------------------------
+// Stock signals
+// --------------------------------------------------------------------------
+
+import type { AgentSignal } from "~/domain/market";
+
+/**
+ * Map one raw DB row (snake_case) to an AgentSignal domain object.
+ * Handles both the direct `detail` column and the JSON `payload.detail` fallback.
+ */
+function toAgentSignal(row: unknown): AgentSignal | null {
+  if (row === null || typeof row !== "object") return null;
+  const obj = row as Record<string, unknown>;
+
+  const id = typeof obj["id"] === "number" ? obj["id"] : null;
+  const stockCode = typeof obj["stock_code"] === "string" ? obj["stock_code"] : null;
+  if (id === null || stockCode === null) return null;
+
+  const signalType = typeof obj["signal_type"] === "string" ? obj["signal_type"] : "unknown";
+  const direction = typeof obj["direction"] === "string" ? obj["direction"] : "NEUTRAL";
+
+  // confidence_score is stored as integer 0–100 in the DB; normalise to 0.0–1.0
+  const rawScore = typeof obj["confidence_score"] === "number" ? obj["confidence_score"] : 0;
+  const confidence = rawScore / 100;
+
+  // reasoning comes from the top-level `detail` column or falls back to
+  // the `payload` JSON field (older rows store it inside the payload blob)
+  let reasoning = "";
+  if (typeof obj["detail"] === "string") {
+    reasoning = obj["detail"];
+  } else if (typeof obj["payload"] === "string") {
+    try {
+      const p = JSON.parse(obj["payload"]) as Record<string, unknown>;
+      if (typeof p["detail"] === "string") reasoning = p["detail"];
+    } catch { /* leave empty */ }
+  }
+
+  const createdAt = typeof obj["created_at"] === "string" ? obj["created_at"] : "";
+
+  return { id, stockCode, signalType, direction, confidence, reasoning, createdAt };
+}
+
+/**
+ * Per-stock agent signals.
+ * Endpoint: GET /mcp/api/signals/stock/:code?limit=10
+ * Response shape: { signals: RawSignalRow[] }
+ *
+ * The call goes through api-gateway: /mcp/* → mcp-server (port 3000).
+ * Non-fatal — callers should catch and treat as null on failure.
+ */
+export async function fetchStockSignals(code: string, limit = 10): Promise<AgentSignal[]> {
+  const raw = await apiGet<unknown>(
+    `/mcp/api/signals/stock/${encodeURIComponent(code)}?limit=${limit}`,
+  );
+  const items: unknown[] =
+    raw !== null &&
+    typeof raw === "object" &&
+    Array.isArray((raw as Record<string, unknown>)["signals"])
+      ? ((raw as Record<string, unknown>)["signals"] as unknown[])
+      : [];
+  return items.map(toAgentSignal).filter((s): s is AgentSignal => s !== null);
+}
+
+// --------------------------------------------------------------------------
 // Macro snapshot
 // --------------------------------------------------------------------------
 
