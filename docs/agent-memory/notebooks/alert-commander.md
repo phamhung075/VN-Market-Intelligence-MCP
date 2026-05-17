@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 01:03 UTC | **Sprint:** c147
+**Last updated:** 2026-05-17 02:03 UTC | **Sprint:** c148
 
 ## This session
+
+### Alert Cycle (02:02 UTC) — BLOCKED (c147/1928a unresolved, 4th consecutive)
+- Cycle 02:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway down — live attempt 02:03 UTC returned identical dial error). Signal dropped: `docs/signals/alert-commander-2026-05-17T02-03-43Z.json` (dedup_of qa-responder 01-48-37Z).
+- Cross-cycle correlation: 4th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02 UTC). Market opened at 02:00 UTC — first market-hours cycle of the day blocked. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. Not re-investigating per error-boundary memory-as-truth prohibition + live probe rule (probe attempted, real error returned → BLOCKED verdict valid).
+- Market-hours cycle (02:02 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts. Next scheduled: 02:22 UTC (every 20 min during market hours).
+- log_agent_work: failed (gateway down) — no id returned, no completion call possible.
+- Git commit deferred (prior cycles report stale `.git/index.lock` FUSE mount issue). Notebook + signal file are on-disk; next successful cycle picks them up.
 
 ### Alert Cycle (01:02 UTC) — BLOCKED (c147 unresolved)
 - Cycle 01:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway). Signal dropped: `docs/signals/processed/alert-commander-2026-05-17T01-02-28Z.json`.
