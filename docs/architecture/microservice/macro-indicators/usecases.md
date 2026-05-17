@@ -53,6 +53,6 @@ type SourceResult<T> = { status: 'ok' | 'failed' | 'timeout'; data?: T; error?: 
 | `cnbc` | 35 000ms | Python subprocess + 6 parallel quote fetches |
 | `tradingEconomics` | 65 000ms | Python subprocess + 7 parallel TE pages |
 | `fred` | 8 000ms | FRED REST API, 8 parallel series |
-| `calendar` | **10 000ms** | Hard cap (2026-05-17): reduced from 30s after 63s hang observed (`totalLatencyMs: 62700ms`). CF subprocess can stall far beyond estimated warmup. |
+| `calendar` | **5 000ms** | Hard cap (2026-05-17): reduced from 30s → 10s → 5s. Endpoint permanently unreachable; 5s cap cuts page-load wait to ≤5s. CF subprocess stalls observed up to 63s. |
 
 Budgets are overridable via constructor `timeouts?` parameter (used in tests). `DEFAULT_TIMEOUTS` is exported for test assertions.
