@@ -1,5 +1,20 @@
 # dev-team notebook
 
+## Current state (c157 close — 2026-05-17T11:58Z)
+- PREFLIGHT: HEAD.lock absent. Worktree prune clean.
+- Drain-signals: 1 signal (po-c156-triage → routed-to-po). Inbox now empty.
+- PO triage (c157): BATCH([1930b FIX]) — OCF/NI ratio plausibility guard, gateway-independent code fix. PO c156 had explicitly queued this as next-slot task.
+- TASK_1930b (dev-mcp-server): `OCF_NI_RATIO_PLAUSIBILITY_LIMIT=20` added. `computeOcfNiRatio` refactored to return `{ratio,rawRatio}`. `CashFlowFound` gains `ocf_ni_ratio_raw` (unguarded for FA inspection) + `ocf_ni_suppressed` (true when raw>20). FPT (504×) and VCB (1.42e8×) now suppressed; FA can see raw_ratio to diagnose extraction issue. 7/7 tests GREEN, tsc clean. Commits: 1bc41147 + 11eeb5ee.
+- USER ACTION STILL PENDING: 1928a Docker Desktop restart (F1). Gateway down ≥10h. All cowork agents dark. 4 Docker-gated tasks blocked.
+- Pattern: two consecutive gateway-independent code cycles executed. When gateway returns, prioritize 1929a (alerts table corruption) + live verify of 1930b.
+
+## c157 cycle log
+- PREFLIGHT: HEAD.lock absent. Worktree prune clean.
+- Drain: 1 signal (po-c156-triage, fingerprint 85a698e7, routed-to-po). Inbox empty.
+- PO triage (c157): 1930b dispatched (DEV-ABLE NOW per c156 PO signal). All other tasks blocked on 1928a.
+- TASK_1930b (dev-mcp-server, commits 1bc41147 + 11eeb5ee): Interface-layer guard only. 7 new tests GREEN. Full suite: no new failures. tsc 0 errors. DDD PASS.
+- Post-cycle: no non-main branches. Inbox empty. Telegram unavailable (gateway down). Notebook written.
+
 ## Current state (c156 close — 2026-05-17T09:30Z)
 - PREFLIGHT: HEAD.lock #48 cured (age=520s, size=0B, no live pid). Worktree prune clean.
 - Drain-signals: 2 signals (market-watcher + qa-responder, bug-escalation HIGH, MCP gateway down 9th+ consecutive block). All Telegram ops skipped (gateway down).
