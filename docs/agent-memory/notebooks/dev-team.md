@@ -1,5 +1,19 @@
 # dev-team notebook
 
+## Current state (c164 — 2026-05-17T14:12Z)
+- PREFLIGHT: HEAD.lock #52 cured (age=1208s, size=0B, no live pid). index.lock absent. Prune clean.
+- Drain: 1 signal — `qa-responder-mcp-unavailable-20260517T134905Z.json` (type=bug-escalation, severity=critical). NEW fingerprint. Processed → DB + moved to processed/. Result: routed-to-po.
+- Telegram: 0 new reports.
+- PO triage (inline): signal = same root cause as 1907a (ALL cowork scheduled tasks lack MCP). Updated 1907a to reflect full scope (5 agents confirmed blocked: digest-predict, market-watcher, alert-commander, qa-responder, news-scout). No new codeable task — user action required.
+- Committed: cowork notebooks (alert-commander/news-scout) + signal processed + TASKS.md update.
+- Session gate: idle EXIT.
+
+## c164 cycle log
+- PREFLIGHT: HEAD.lock #52 cured. Prune clean.
+- Drain: 1 signal (qa-responder MCP unavailable). Fingerprint NEW. Processed to DB + moved.
+- PO inline triage: 1907a updated (pattern confirmed: 5 agents blocked in scheduled tasks).
+- Session gate: idle EXIT.
+
 ## Current state (c163 — 2026-05-17T13:12Z)
 - PREFLIGHT: HEAD.lock #51 cured (age=2871s, size=0B, no live pid). index.lock also cured (age=1281s). Prune clean.
 - Drain: inbox empty (0 signals). No new Telegram reports.

@@ -1,5 +1,22 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 13:22 UTC | **Status:** OK (off-hours, market closed)
+
+### Cycle (13:20–13:22 UTC 2026-05-17)
+- Items: 20 | Impacts: 8 (impact≥6) | Signals: [chain_catalyst #3297/PLX, chain_catalyst #3298/real_estate] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread | Filter hints: [default — no feedback tuning]
+- Cycle status: COMPLETE | Log ID: 946 | Signal IDs: 3297, 3298
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33%, Brent=$109.26, Gold=$4,561.9, USD/VND=26,320
+- Top high-impact items analyzed:
+  * #1 [GLOBAL] [BEARISH] PLX -40% from peak (9/10 impact, impact_chain confidence=82%) → chain_catalyst #3297 posted (event_type=sector_event, affected_stock=[PLX], regime_adj=8.2)
+  * #2 [COUNTRY] [BULLISH] "Chứng khoán dự báo tiếp đà tăng" (9/10 impact, securities sector) → SUPPRESSED per dedup (signal #3295 on bus from prior cycle, same theme, created_at within 180min window)
+  * #3 [COUNTRY] [BULLISH] Phát Đạt capital increase +11.9T (8/10 impact, real_estate) → chain_catalyst #3298 posted (event_type=earnings, affected_stock=[PDR], regime_adj=6.8)
+  * #4 [COUNTRY] [NEUTRAL] PC1 utilities mega-project (8/10 impact) → impact_chain returned 10 entries, HVN/ACV bullish indirect impacts (4/10 each), but dedup gate not suppressed (different event_type/sectors vs bus)
+- Dedup gate (180min window): 1 suppression (securities #3295), 2 new posts (PLX sector_event, real_estate earnings)
+- Notes: No PMI data in fetch. No gold spike >3%. No commodity >5% moves (Brent stable @109.26). Gold falling per market outlook. LanceDB stage 1b skipped (no fetch for items <6 impact per schedule). Market CLOSED (off-hours).
+
+---
+
 **Last updated:** 2026-05-17 12:21 UTC | **Status:** OK (off-hours, market closed)
 
 ### Cycle (12:19–12:21 UTC)

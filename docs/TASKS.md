@@ -9,7 +9,7 @@
 |---------|-------|----------|------|-------|---------|------------|
 | alert-precision-488-unknowns | **MONITORING**: Post-DB-rebuild agent_signals=46 (fresh DB). HOLD until ≥550. From TNB c58 Finding #8 + bug 2874. | MEDIUM | TRACKING | — | — | — |
 | fa-shape-guard-watch | **MONITORING**: Next observation = first post-restart FA live session. Auto-cure trigger: REGIME-mismatch or news-fallback → spawn 1921a-fa-shape-guard-propagate. If NEUTRAL macro_snapshot → close. | MEDIUM | TRACKING | — | — | — |
-| 1907a-digest-predict-silence | **CRITICAL** (c160 update): 6+ day silence since 2026-05-11 21:38 UTC. Claude Desktop IS running (launchctl confirmed). No crontab/plist trigger found — digest-predict runs via Claude Desktop internal scheduler. **USER-ACTION**: Open Claude Desktop → verify digest-predict scheduled task is active and scheduled. | CRITICAL | OPS | user | — | — |
+| 1907a-digest-predict-silence | **CRITICAL** (c163 update): 6+ day silence since 2026-05-11 21:38 UTC. Pattern now confirmed: ALL cowork scheduled tasks lack MCP access (digest-predict silent, market-watcher/alert-commander/qa-responder/news-scout all blocked in scheduled sessions). Root cause: MCP connector not configured in Claude Desktop scheduled task environment. **USER-ACTION**: Open Claude Desktop → verify MCP connector is enabled in scheduled task settings, OR trigger manually from Cowork web interface with MCP pre-connected. | CRITICAL | OPS | user | — | — |
 | 1897b-carry | F1 USER: Docker .git/ exclude bundle + VirtioFS structural fix. PREFLIGHT cure permanent policy (1906a c89). F1 USER action (Docker .git/ exclusion) is the only structural cure. Brief: `docs/architecture-briefs/2026-05-13-headlock-recurrence-post-F2a.md`. | HIGH | URGENT-F1 | user | — | — |
 
 ---
