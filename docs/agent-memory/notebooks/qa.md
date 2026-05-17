@@ -1,5 +1,41 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-17 | **Session:** c142 — TNB critic gate + outcome feedback loop + accuracy badge — CHANGES_REQUESTED
+
+## Session 2026-05-17 c142 — TNB critic gate + outcome feedback loop + accuracy badge
+
+### TASK REPORT — 1938/1939/1940 (compact)
+
+```
+date: 2026-05-17
+outcome: CHANGES_REQUESTED
+type: FEATURE (tnb critic gate, signal outcome store, accuracy badge)
+round: 1
+```
+
+#### Pipeline
+
+- tnb-critic targeted tests (49 tests): 49 pass / 0 fail — GREEN
+- outcome feedback loop targeted tests (26 tests): 26 pass / 0 fail — GREEN
+- frontend accuracy badge tests (19 tests via vitest): 19 pass / 0 fail — GREEN
+- Full mcp-server suite: 9169 pass / 267 fail (267 pre-existing, zero regressions from new commits)
+- Full frontend vitest suite: 124 pass / 0 fail — GREEN
+- tsc mcp-server: 0 errors
+- tsc frontend: 0 errors
+- DDD: PASS — tnbCriticScorer.ts pure domain, no infrastructure imports
+- Security: PASS — no process.env, no hardcoded secrets, all SQL parameterized
+
+#### Blocking Issues
+
+1. `apps/mcp-server/src/interface/mcp/tools/news-analysis/getAccuracyContextTool.ts:86` — MCP tool handler `async (params) => { ... }` has no try/catch block. QA checklist requires every handler wrapped in try/catch. All other tool handlers in codebase follow this pattern.
+
+#### Notes
+
+- Full suite pre-existing failures: 267 (all fail in isolation, unrelated to new commits). Previous session noted 32 — the actual count is higher due to watchlist count drift (1343a expects 26 tickers, watchlist expanded to 30) and Bun OOM masking failures in previous session.
+- Frontend tests must be run with `npx vitest run` (not `bun test`) — test uses vi.stubGlobal not available in bun:test.
+
+---
+
 **Last updated:** 2026-05-16 | **Session:** c141 — 1922a/b/c/e/h/j APPROVED
 
 ## Session 2026-05-16 c141 — 1922-sprint-fixes
