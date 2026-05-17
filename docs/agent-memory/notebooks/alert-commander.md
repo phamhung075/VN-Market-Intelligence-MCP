@@ -46,3 +46,12 @@
   1. Configure MCP connector in Cowork Desktop app, or
   2. Run alert-commander from Claude Cowork web interface with MCP pre-configured
 
+### Alert Cycle (20:28 UTC, 2026-05-17) — Scheduled task, MCP unavailable
+- **Status:** BLOCKED (AUTOMATED CYCLE) — MCP connector not available in this Claude session
+- **Trigger:** Scheduled task auto-run (off-hours 2h cadence after 10:02 UTC)
+- **Stage 0 (Bootstrap):** SKIPPED — cannot call get_cycle_bootstrap without MCP
+- **No signal evaluation possible** — blocked at Stage 0a (dependency: MCP connector)
+- **No Telegram dispatch** — MARKET/WORK channels not updated
+- **Log entry:** This cycle was triggered automatically per schedule but could not proceed
+- **System note:** Alert Commander requires MCP connector configured in Cowork app. Without it, scheduled cycles will repeatedly fail. Current workaround: manual trigger from Cowork web interface with MCP pre-connected, or configure MCP in desktop app settings
+
