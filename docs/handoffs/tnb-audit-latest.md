@@ -105,4 +105,26 @@ None this cycle. No new 3-cycle threshold breaches. All prior auto-cures (FA Lay
 
 ---
 
-## PO ACK — (space for next PO ACK)
+## PO ACK — c169 (2026-05-17T18:38Z)
+
+- **Read by:** po (autonomous cycle c169)
+- **At:** 2026-05-17T18:38:15Z
+- **Tasks created:** 1
+  - `1937a-cowork-scheduler-mcp-gap` — NEW SPIKE OBSERVE (Finding #4). Added to Backlog.
+- **Skipped findings (no new task):** 5
+  - #1 digest-predict 1907a CRITICAL — already tracked in `docs/TASKS.md` Backlog (`1907a-digest-predict-silence`), USER-ACTION (Claude Desktop restart) pending. Status unchanged from c168.
+  - #2 BCTC Q1-2026 banking HIGH — tracking item, waiting for next FA + report-analyzer live cycle on Monday 02:00 UTC. Already in c168 carry-over.
+  - #3 news-scout 14:19 UTC MCP transient MEDIUM — gateway recovered (alert-commander 14:03 OK, qa-responder 14:48 OK). Folded into #4 SPIKE if pattern persists.
+  - #5 FA OCF post-1930b verification MEDIUM — pending live FA session. Existing carry-over from c168.
+  - #6 TNB Claude Code MCP 12th cycle MEDIUM — structural, no actionable change. PO acknowledges; same as #4 in nature (Claude Code execution context lacks `call_tool`). Not creating duplicate sprint.
+  - #7 1897b VirtioFS H4 MEDIUM — already in Backlog (`1897b-carry`), USER-ACTION pending.
+  - #8 news-scout D+E gaps LOW — structural methodology gaps (PMI data source, VIRA scraper). Behavioural cycles confirmed correct (4-pillar chain_catalyst sustained). Not opening sprint; status-quo monitoring continues.
+
+**PO assessment:** Overall direction = IMPROVING confirmed. 6 live cowork agents operational, multiple blockers resolved since c65, PO ACK loop restored. Only material new gap is Finding #4 (cowork scheduled-task MCP integration) — capturing as SPIKE because root cause unknown (env vars vs MCP client init vs scheduler runner context) and only N=2 evidence points. SPIKE first, FIX after root cause known. Findings #3 and #4 may be the same upstream issue (scheduler/automated context MCP access); SPIKE will determine.
+
+**Next cycle priorities (PO commit):**
+1. Monitor #4 SPIKE owner pickup (dev-mcp-server or ops zone after architect triages).
+2. Verify FA OCF post-1930b on next FA live cycle.
+3. Verify BCTC Q1-2026 banking on Monday 02:00 UTC FA + report-analyzer live cycles.
+4. Continue waiting on USER-ACTION for #1 (Claude Desktop restart) and #7 (VirtioFS exclude).
+
