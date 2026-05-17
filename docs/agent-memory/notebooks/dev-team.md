@@ -1,5 +1,23 @@
 # dev-team notebook
 
+## Current state (c160 — 2026-05-17T12:07Z)
+- PREFLIGHT: HEAD.lock absent. Worktree prune clean.
+- Drain: 2 signals (SPIKE-1933a brief_complete + TNB c65 audit-handoff). Both NEW, dual-record written to signals.db.
+- TNB c65 ACK written. Most findings stale (resolved c159). Open carries: 1907a (CRITICAL USER), BCTC banking (cowork), 1862c-E-dashboard (USER), 1897b (USER).
+- SPIKE-1933a → WONTFIX: evaluateAlert() dead code deleted from clients.ts:423 (interfaces + function, ~27 lines). ZERO callers confirmed by grep. Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine /evaluate reserved for future stop-loss use case.
+- 1933b: dead code deletion complete. tsc 0 errors. 31/31 targeted tests GREEN (1307-ta-alert-scan + 1309-bb-alert-scan + 1309c-parallel + 1930b-cashflow-ratio-guard). Full suite: Bun 1.3.13 OOM/C++ crash (known upstream bug, unrelated to changes).
+- TASKS.md: cleaned to 65 lines (< 80 limit). Archived stale Backlog entries (CLEAN-c130, 1919, 1913, 1918a, 1918b). Todo collapsed (DONE items promoted to Done). 1922i → WONTFIX. In Progress empty.
+- 1907a-digest-predict: Claude Desktop IS running (launchctl confirmed). No crontab/plist trigger. Digest-predict runs via Claude Desktop internal scheduler. USER-ACTION required: verify scheduled task in Claude Desktop.
+- No codeable work remaining. All open tasks are USER-ACTION, cowork, or monitoring.
+
+## c160 cycle log
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: 2 signals processed (SPIKE-1933a + TNB c65). Both NEW. Moved to processed/.
+- PO triage: BATCH([1933b FIX — dead code cleanup]). TNB c65 ACK written.
+- TASK_1933b (dev-mcp-server): evaluateAlert/AlertEvaluateRequest/AlertEvaluateResponse deleted from clients.ts. tsc 0 errors. 31 targeted tests GREEN. SPIKE-1933a WONTFIX.
+- TASKS.md: 65 lines. Backlog pruned. Todo collapsed.
+- Session gate: no codeable work → idle EXIT.
+
 ## Current state (c159 post-Docker-restart — 2026-05-17T11:05Z)
 - Docker restart complete. All 12 containers Up+healthy (mcp-server, alert-engine, rag-service, etc.).
 - MCP gateway port 3000: healthy (141 tools, 53 sessions, uptime ~2h pre-existed restart).
