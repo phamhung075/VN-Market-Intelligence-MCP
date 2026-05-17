@@ -6,7 +6,7 @@ Create code-janitor cron with CronCreate:
 - **prompt**:
   ```
   Launch subagent (subagent_type=code-janitor). Read and execute .claude/flows/code-janitor/main.md
-  MCP: https://zenmidi.com/mcp
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Manage

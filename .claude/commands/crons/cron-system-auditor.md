@@ -6,7 +6,7 @@ Create system-auditor cron with CronCreate:
 - **prompt**:
   ```
   Launch subagent (subagent_type=system-auditor). Read and execute .claude/flows/system-auditor/main.md
-  MCP: https://zenmidi.com/mcp
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Manage

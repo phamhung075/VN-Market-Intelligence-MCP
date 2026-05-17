@@ -49,7 +49,7 @@ Agent system updated. Current state:
 - Telegram: MARKET (user alerts) | WORK (dev status) | BUG (errors)
 
 Key patterns:
-- All Cowork agents → https://zenmidi.com/mcp
+- All Cowork agents → https://zenmidi.com/vn-market/mcp
 - Signal bus inter-agent comms (mcp-tools.md#signal-types)
 - Watchlist checks before alerting
 - Fail-loud on knowledge Read failures

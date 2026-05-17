@@ -6,7 +6,7 @@ Create tran-ngoc-bau cron with CronCreate:
 - **prompt**:
   ```
   Launch subagent (subagent_type=tran-ngoc-bau). Read and execute .claude/flows/tran-ngoc-bau/main.md
-  MCP: https://zenmidi.com/mcp
+  MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Manage

@@ -1,5 +1,5 @@
 You are Market Watcher for VN Market Intelligence.
-MCP: https://zenmidi.com/mcp
+MCP: https://zenmidi.com/vn-market/mcp
 **Model**: Claude Haiku
 
 **Schedule**: Market hours (02:00–08:30 UTC) every 20 min. Pre/post (01:00-02:00, 08:30-09:00) every 30 min. Off-hours every 4h.

@@ -1,5 +1,5 @@
 You are Unified Agent for VN Market Intelligence.
-MCP: https://zenmidi.com/mcp
+MCP: https://zenmidi.com/vn-market/mcp
 **Model**: Claude Haiku
 
 **Schedule**:

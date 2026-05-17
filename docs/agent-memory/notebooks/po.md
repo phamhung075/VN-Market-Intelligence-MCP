@@ -1,44 +1,45 @@
 # PO Notebook
 
-## Last updated: 2026-05-17T18:38:15Z · Cycle: c169 — TNB c66 ACK + 1937a SPIKE filed
+## Last updated: 2026-05-17T19:41:47Z · Cycle: c170 — 1938a MCP URL fix filed
 
-### c169 session summary
+### c170 session summary
 
-**Spawn context:** dev-team cycle c169 triage. pendingSignals drained, HEAD.lock absent, branch main. JUMP TO tnb-audit.
+**Spawn context:** dev-team cycle c170. PREFLIGHT PASS (HEAD.lock cleared at 19:37 UTC). Signal drained: po-signoff-c169.json (NOTHING/idle, moved to processed/). pendingSignals[] = empty.
 
-**Step 0-TNB:** TNB handoff `docs/handoffs/tnb-audit-latest.md` (c66) read. Overall: **GOOD / IMPROVING**. 6 live cowork agents operational. Multiple blockers resolved since c65 (1929a, 1930a, 1930c, 1930b shipped, 1921b, 1922i WONTFIX). PO ACK loop restored c160. Signal dashboard row marked READ.
+**Step 0-TNB:** TNB c66 already ACK'd at 18:38:15Z (c169). No new handoff since then. Skipping re-ACK.
 
-**TNB findings triage (8 total):**
-- **#1 digest-predict 1907a CRITICAL** — already in Backlog. USER-ACTION (Claude Desktop restart). Skip.
-- **#2 BCTC Q1-2026 banking HIGH** — carry-over. Awaiting Monday 02:00 UTC FA + report-analyzer cycle. Skip.
-- **#3 news-scout 14:19 UTC MCP transient MEDIUM** — fold into #4 if recurs.
-- **#4 Cowork scheduler MCP gap MEDIUM** — NEW. **Filed `1937a-cowork-scheduler-mcp-gap` SPIKE** (architect, 2h time-box). N=2 evidence (alert-commander 20:28 UTC + qa-responder 13:49 UTC). Root cause unknown.
-- **#5 FA OCF post-1930b MEDIUM** — pending live FA session. Skip.
-- **#6 TNB Claude Code MCP MEDIUM** — structural, ongoing. Skip.
-- **#7 1897b VirtioFS H4 MEDIUM** — already in Backlog (`1897b-carry`). USER-ACTION. Skip.
-- **#8 news-scout D+E gaps LOW** — structural methodology (no PMI source, VIRA scraper pending). Skip.
+**Signal dashboard:** tnb-20260517T150000 row = READ (c169). Dashboard clean.
 
-**Channel audit:** Claude Code execution context lacks `call_tool` MCP capability (TNB c66 confirms 12th consecutive cycle). Did not fabricate channel reads. dev-team Step 0 pendingSignals already empty + no user reports forwarded → channels treated as clean for triage purposes. Anti-hallucination protocol respected (no phantom reports).
+**Channel audit:** Claude Code execution context lacks MCP call_tool capability (established pattern, cycle 13). Cannot read Telegram channels directly. Anti-hallucination protocol: no phantom reports.
 
-**No-Task Guard outcome:**
+**New user signal — zenmidi.com/mcp probe:**
+- User passed `MCP: https://zenmidi.com/mcp` as c170 context.
+- Probed: GET + POST `https://zenmidi.com/mcp` → HTTP 404 (Cloudflare, no route in cloudflared config).
+- Confirmed: cloudflared config maps `/vn-market/mcp` and `/vn-market/sse` but NOT `/mcp`.
+- Confirmed: `https://zenmidi.com/vn-market/sse` → HTTP 200 (working).
+- Found: 15 files use wrong URL `https://zenmidi.com/mcp`:
+  - 9 × cowork-workspace-team-claude-desktop/*.md
+  - 5 × .claude/commands/crons/cron-{dev-team,system-auditor,claude-manager-helper,code-janitor,agent-father,tran-ngoc-bau}.md
+  - 1 × .claude/flows/cowork-refactory-expert/main.md
+- Root cause of 1937a confirmed: scheduled cowork tasks reference wrong MCP URL → 404 → "MCP connector not available". news-scout notebook 18:20 UTC: "https://zenmidi.com/mcp: no DNS resolution (external isolation)".
+- Correct URL: `https://zenmidi.com/vn-market/mcp` (used by cron-news-scout.md and cron-unified-agent.md which work correctly).
+
+**Task filed:** 1938a-cowork-mcp-url-fix (HIGH FIX, zone: cross-service/, owner: developer). Added to Todo in TASKS.md.
+
+**No-Task Guard:**
 - In Progress: empty
 - Review: empty
-- Backlog: 5 items (4 USER-ACTION/TRACKING + new 1937a SPIKE)
-- Todo: 3 OBSERVE/WONTFIX items (all dated triggers)
-- Decision: **NOTHING (idle EXIT)** — 1937a SPIKE filed for next cycle architect pickup, not a same-cycle dispatch (root cause unknown).
+- Todo: 1938a HIGH FIX → dispatch immediately (FIX skips planning, direct to execute)
+- Backlog: 5 items (4 USER-ACTION/TRACKING + 1937a SPIKE)
 
-**Signal written:** `docs/signals/po-signoff-c169.json` (decision=NOTHING, batch=[], TNB ACK summary, pipeline=idle).
-
-**Git state:** main branch, 7 commits ahead of origin/main (unchanged since c167 — push at user discretion). Working tree has `docs/agent-memory/notebooks/alert-commander.md` modified by another agent's cycle (not my concern).
+**BATCH decision:** BATCH([{type: FIX, id: 1938a-cowork-mcp-url-fix, zone: cross-service/}])
 
 ### Carry-over for next cycle
 
-- **1907a digest-predict** CRITICAL OPS — USER-ACTION (Claude Desktop MCP restart) still pending.
+- **1907a digest-predict** CRITICAL — USER-ACTION (Claude Desktop MCP restart) still pending. After 1938a ships, 1937a root cause resolved — digest-predict may also recover if wrong URL was the blocker.
 - **1897b USER F1** — USER-ACTION (Docker .git/ VirtioFS exclude) still pending.
-- **1937a-cowork-scheduler-mcp-gap** SPIKE (NEW) — architect pickup. If N≥3 recurrence in next cycle reports → promote to HIGH FIX.
-- **BCTC Q1-2026 banking** (TNB #2) — Monday 02:00 UTC FA + report-analyzer cycles must call `get_bctc_full` for 7-bank coverage verification.
-- **FA OCF post-1930b** — next live FA session verifies `get_cash_flow` plausibility.
-- **1936b-hydration-verify-clean-restart** — awaiting user clean-restart verification (carry from c168).
-- **calendar-source-replacement** OBSERVE — surface to architect or wontfix.
-- **Push to origin/main** — 7 commits pending, user discretion.
-- **alert-precision-488-unknowns** + **fa-shape-guard-watch** — monitoring continues.
+- **1937a-cowork-scheduler-mcp-gap** SPIKE — root cause identified (wrong MCP URL). Architect should close SPIKE after 1938a ships.
+- **BCTC Q1-2026 banking** — Monday 02:00 UTC FA + report-analyzer cycles.
+- **FA OCF post-1930b** — next live FA session.
+- **calendar-source-replacement** OBSERVE — no action this cycle.
+- **alert-precision-488-unknowns** + **fa-shape-guard-watch** — monitoring.
