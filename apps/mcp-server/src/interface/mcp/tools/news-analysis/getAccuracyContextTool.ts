@@ -84,44 +84,50 @@ export function registerGetAccuracyContextTool(server: McpServer): void {
     "Minimum 3 resolved signals required for any rate to appear.",
     GetAccuracyContextSchema.shape,
     async (params) => {
-      const { stock_code, signal_types } = params;
-      const db = getDb();
+      try {
+        const { stock_code, signal_types } = params;
+        const db = getDb();
 
-      let rows = getAccuracyStats(db, { stockCode: stock_code, days: 30 });
+        let rows = getAccuracyStats(db, { stockCode: stock_code, days: 30 });
 
-      // Filter to requested signal types if provided
-      if (signal_types && signal_types.length > 0) {
-        rows = rows.filter((r) => signal_types.includes(r.signal_type));
+        // Filter to requested signal types if provided
+        if (signal_types && signal_types.length > 0) {
+          rows = rows.filter((r) => signal_types.includes(r.signal_type));
+        }
+
+        const message = buildCalibrationNudge(stock_code, rows, signal_types);
+
+        // Return summary stats + message
+        // When multiple types requested, aggregate across all rows for the top-level fields
+        const totalSamples = rows.reduce((sum, r) => sum + r.sample_count, 0);
+        const qualifiedRows = rows.filter((r) => r.accuracy_rate !== null);
+        const overallRate =
+          qualifiedRows.length > 0
+            ? qualifiedRows.reduce((sum, r) => sum + (r.accuracy_rate ?? 0), 0) /
+              qualifiedRows.length
+            : null;
+
+        const result = {
+          stock_code,
+          signal_types: signal_types ?? null,
+          accuracy_rate: overallRate !== null ? Math.round(overallRate * 100) / 100 : null,
+          sample_count: totalSamples,
+          breakdown: rows.map((r) => ({
+            signal_type: r.signal_type,
+            accuracy_rate: r.accuracy_rate,
+            sample_count: r.sample_count,
+          })),
+          message,
+        };
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text" as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+        };
       }
-
-      const message = buildCalibrationNudge(stock_code, rows, signal_types);
-
-      // Return summary stats + message
-      // When multiple types requested, aggregate across all rows for the top-level fields
-      const totalSamples = rows.reduce((sum, r) => sum + r.sample_count, 0);
-      const qualifiedRows = rows.filter((r) => r.accuracy_rate !== null);
-      const overallRate =
-        qualifiedRows.length > 0
-          ? qualifiedRows.reduce((sum, r) => sum + (r.accuracy_rate ?? 0), 0) /
-            qualifiedRows.length
-          : null;
-
-      const result = {
-        stock_code,
-        signal_types: signal_types ?? null,
-        accuracy_rate: overallRate !== null ? Math.round(overallRate * 100) / 100 : null,
-        sample_count: totalSamples,
-        breakdown: rows.map((r) => ({
-          signal_type: r.signal_type,
-          accuracy_rate: r.accuracy_rate,
-          sample_count: r.sample_count,
-        })),
-        message,
-      };
-
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-      };
     },
   );
 }
