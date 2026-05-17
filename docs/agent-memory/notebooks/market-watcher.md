@@ -1,11 +1,11 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-17 04:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-17 10:39 UTC | **Sprint:** 2026
 
 ## Current state
 
-Last successful cycle: 2026-05-16 06:40 UTC (market CLOSED, 31 stocks priced)
-Last attempted cycle: 2026-05-16 19:40 UTC — **BLOCKED** (MCP gateway unreachable)
+Last successful cycle: 2026-05-17 10:39 UTC (off-hours, 38 stocks monitored, 0 signals)
+Last attempted cycle: 2026-05-17 10:39 UTC — **SUCCESS** (off-hours monitoring)
 **c142 resolution (2026-05-16 21:31 UTC):** Bug-escalation signal RESOLVED. Docker fleet now 100% healthy (mcp-server Up 10 min, gateway 141 tools, 19 sessions, /health 200). Root cause = transient Docker downtime during 19:40 UTC; self-healed via container restart. No code action. Next market-watcher cron tick will run normally.
 - 26/31 watchlist tickers priced (5 N/A: BDI,DLC,SIS,VDC,JSH)
 - VN-Index recovery to 1,920+ (bullish gap open vs Mon close 1,895.5)
@@ -2248,3 +2248,47 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | blocked |
 | token_estimate | 2100 |
+
+### Cycle (09:39–09:40) — RECOVERED
+- Stocks: 35 watchlist (33 priced STALE from Fri 2026-05-15 close, 2 N/A) | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING (from news-scout sig#3288, regime_adj_score=5.6) | DXY: n/a (not in bootstrap) | US10Y: RISK-OFF (UST10Y 4.59%) | Carry: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Adaptive thresholds: sigma_threshold=1.5σ, volume_multiplier=1.5x, downside_bias=true
+- Macro: Brent 109.26, Gold 4561.9, USD/VND 26137 (oil elevated)
+- Open alerts (24h): 4 LOW [VIC, VHM, HCM, HVN — all news_mention]; 62 pending system-wide
+- Chain findings (last 15min): 0
+- **Gateway RECOVERED** — first successful bootstrap since 02:32 UTC (broke 4 cycles: 01:40/02:40/03:40/04:40 — all blocked on `host.docker.internal` DNS). c142 note (line 9) was stale; gateway returned at 09:39 UTC. No code action taken by this cycle; PO may still want to investigate root cause of the 7h outage window.
+- Off-hours weekend (Sunday) + market CLOSED + all prices STALE → per AutoCure c47, NO new price_anomaly signals emitted; per-stock fetches skipped (no fresh moves possible).
+
+## Metrics (cycle 2026-05-17 09:40 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 35 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2500 |
+
+### Cycle (10:38–10:39) — Off-Hours Monitoring
+- Stocks: 38 watchlist (33 priced STALE from Thu 2026-05-15 close, 5 N/A) | Anomalies: 0 (all <2.0σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL (off-hours, limited macro) | DXY: USD STABLE (USD/VND 26137 unchanged) | US10Y: NEUTRAL (no realtime data) | Carry: NEUTRAL | fx_pressure: [] | pe_risk: []
+- Adaptive thresholds: sigma_threshold=2.0σ (NEUTRAL regime), volume_multiplier=2.0x
+- Macro: Brent 109.26 (+0.00%), Gold 4561.9 (+0.00%), USD/VND 26137 stable
+- Sector rotation: all 16 sectors STABLE. Oil/Gas +3.94% 5d/1d (strongest). Retail/Consumer -0.78% (weakest). No sector rotations detected.
+- Top watchlist movers: GAS +6.94% (off-close price data from May 15), NVL +3.90%, GVR +4.28% — all below threshold (within ±7% range)
+- Chain findings (last 15min): 0
+- Open alerts (24h): 4 LOW [VIC, VHM, HCM, HVN — all news_mention type]; 62 pending system-wide
+- **Off-hours duplicate guard applied**: Market CLOSED (Sunday 10:38 UTC outside 02:00-08:59 Mon-Fri window). All prices stale from May 15 session. No new intraday moves to detect. Per AutoCure c47: same closing price as prior session → signals suppressed (SKIP signal, log as SUPPRESSED).
+- No new signals emitted. WORK status sent. Cycle completed successfully.
+
+## Metrics (cycle 2026-05-17 10:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
