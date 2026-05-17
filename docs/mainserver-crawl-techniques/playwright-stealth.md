@@ -11,7 +11,8 @@
 
 1. **Primary (DataDome / PX passive):** Playwright + `playwright-stealth` plugin with realistic viewport, geolocation, and human-behavior simulation (mouse movement, scroll, timing jitter). Effective for PerimeterX passive phase (Bloomberg).
 2. **Alternative for DataDome (stronger):** `camoufox` — Firefox-based anti-detect browser that patches fingerprints at the C++ level (not JS injection). More robust against DataDome JA4 checks. Maintained but experimental as of 2026-05 due to Firefox version lag.
-3. **Fallback for Reuters:** Reuters RSS feed (`https://feeds.reuters.com/reuters/businessNews`) — no bot protection, XML, try this first before investing in full Playwright stealth.
+3. **Fallback for Reuters:** Reuters RSS via Google News RSS (feeds.reuters.com decommissioned 2020). Use: `https://news.google.com/rss/search?q=reuters+business+news&ceid=US:en&hl=en-US&gl=US`
+4. **Bloomberg IMPORTANT (2026-05-17):** `[data-component="headline"]` selector is STALE. PerimeterX blocks Playwright DOM extraction on bloomberg.com — returns articles:[] always. Use Google News RSS as primary: `https://news.google.com/rss/search?q=bloomberg+markets+finance&ceid=US:en&hl=en-US&gl=US`. BloombergStealth demoted to FALLBACK only (invoked if RSS returns 0 items). Verified live: RSS returns ~100 articles, no anti-bot blocking.
 
 **Always close browser context after each fetch** to free RAM.
 
@@ -85,7 +86,13 @@ def fetch_with_playwright_stealth(url: str, wait_for: str = "networkidle") -> di
             browser.close()  # ALWAYS close — releases ~350MB RAM
 
 def fetch_bloomberg_headlines(max_articles: int = 10) -> dict:
-    """Fetch Bloomberg public headlines using Playwright stealth."""
+    """
+    Fetch Bloomberg public headlines using Playwright stealth.
+
+    IMPORTANT (2026-05-17): [data-component="headline"] selector is STALE.
+    PerimeterX blocks DOM extraction — this scraper returns articles:[] always.
+    Use BloombergRssScraper (Google News RSS) as PRIMARY. This is FALLBACK only.
+    """
     result = fetch_with_playwright_stealth("https://www.bloomberg.com/markets")
     if result["status"] != "ok":
         return result
@@ -93,6 +100,8 @@ def fetch_bloomberg_headlines(max_articles: int = 10) -> dict:
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(result["data"], "lxml")
     headlines = []
+    # [data-component="headline"] is stale as of 2026-05 — PerimeterX blocks DOM.
+    # Attempt anyway as fallback in case PerimeterX passive phase allows it.
     for el in soup.select("[data-component='headline']")[:max_articles]:
         headlines.append(el.text.strip())
 
@@ -101,7 +110,6 @@ def fetch_bloomberg_headlines(max_articles: int = 10) -> dict:
     if next_data_el:
         try:
             next_data = json.loads(next_data_el.string)
-            # Extract stories if available in pageProps
             page_props = next_data.get("props", {}).get("pageProps", {})
             if "stories" in page_props:
                 for story in page_props["stories"][:max_articles]:
@@ -117,18 +125,24 @@ def fetch_bloomberg_headlines(max_articles: int = 10) -> dict:
     }
 ```
 
-### Reuters RSS Fallback (preferred for Reuters — no bot protection)
+### Reuters + Bloomberg RSS (preferred — no bot protection, lightest technique)
+
+Google News RSS is the primary for both Reuters and Bloomberg. No browser needed.
 
 ```python
 import xml.etree.ElementTree as ET
 import requests
 from datetime import datetime, timezone
 
-REUTERS_RSS = "https://feeds.reuters.com/reuters/businessNews"
+# feeds.reuters.com was decommissioned 2020 — use Google News RSS instead
+REUTERS_RSS = "https://news.google.com/rss/search?q=reuters+business+news&ceid=US:en&hl=en-US&gl=US"
+
+# bloomberg.com returns HTTP 403 direct; [data-component="headline"] is stale
+BLOOMBERG_RSS = "https://news.google.com/rss/search?q=bloomberg+markets+finance&ceid=US:en&hl=en-US&gl=US"
 
 def fetch_reuters_rss(max_items: int = 15) -> dict:
     """
-    Fetch Reuters business news via RSS — no bot protection.
+    Fetch Reuters business news via Google News RSS — no bot protection.
     Use this BEFORE attempting Playwright stealth on reuters.com.
     """
     try:
@@ -175,8 +189,9 @@ def fetch_reuters_rss(max_items: int = 15) -> dict:
 
 - **playwright-stealth (JS-level patching):** Declining effectiveness against DataDome in 2026. DataDome validates JA4 TLS fingerprint + HTTP/2 frame ordering which JS patches cannot fix. May fail on heavily monitored sites.
 - **Camoufox (C++ level):** Stronger than playwright-stealth for DataDome, but as of 2026-05 has a maintenance gap and experimental releases — test before production use.
-- **Bloomberg paywall:** Only public/free headlines are accessible regardless of stealth technique. Full article content requires subscription.
-- **Reuters DataDome:** `x-dd-b: 3` (hard block) may require residential proxies in addition to stealth browser. Try RSS feed first.
+- **Bloomberg `[data-component="headline"]` STALE (2026-05-17):** PerimeterX blocks Playwright DOM extraction — selector returns 0 elements. Bloomberg Playwright scraper demoted to fallback; Google News RSS is primary.
+- **Bloomberg paywall:** Only public/free headlines are accessible regardless of technique. Full article content requires subscription.
+- **Reuters DataDome:** `x-dd-b: 3` (hard block) may require residential proxies in addition to stealth browser. Use Google News RSS first.
 - Headless detection: some advanced systems detect headless via `navigator.webdriver`, `window.chrome`, GPU rendering absence. playwright-stealth patches these but not at protocol level.
 - RAM is significant — close browser immediately after fetch. Do not run multiple Playwright instances concurrently without ops RAM budget approval.
 - Container memory: each concurrent Playwright instance = ~400-500MB. With 2 concurrent instances = ~900MB committed. Flag ops before adding second concurrent headless scraper.

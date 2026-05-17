@@ -26,7 +26,14 @@ export interface ReutersNewsPort {
 /**
  * Port contract for the Bloomberg news scraper.
  *
- * Implementation: bloomberg-stealth.ts (Playwright stealth, PerimeterX passive bypass).
+ * Primary implementation: bloomberg-rss.ts (Google News RSS, no bot protection).
+ *   bloomberg.com returns HTTP 403 on direct fetch; [data-component="headline"]
+ *   DOM selector is stale (PerimeterX blocks Playwright → articles:[] always).
+ *   Google News RSS for "bloomberg markets finance" returns ~100 Bloomberg-sourced
+ *   articles without anti-bot blocking (verified 2026-05-17).
+ *
+ * Fallback implementation: bloomberg-stealth.ts (Playwright stealth, PerimeterX passive bypass).
+ *   Invoked when RSS primary returns error or 0 articles.
  */
 export interface BloombergNewsPort {
   /**

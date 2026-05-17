@@ -8,19 +8,27 @@
  *   GET  /health
  *   POST /news/reuters/headlines   (RSS primary + Playwright fallback)
  *   GET  /news/reuters/headlines   (alias)
- *   POST /news/bloomberg/headlines (Playwright only)
+ *   POST /news/bloomberg/headlines (RSS primary + Playwright stealth fallback)
  *   GET  /news/bloomberg/headlines (alias)
+ *
+ * Bloomberg fix (2026-05-17):
+ *   Previous: BloombergStealth only — [data-component="headline"] selector stale,
+ *   PerimeterX blocks Playwright DOM extraction → articles: [] always.
+ *   Fix: BloombergRssScraper (Google News RSS) as primary — same technique as
+ *   Reuters. BloombergStealth demoted to fallback.
  */
 
 import { createRouter } from './interface/handlers.js';
 import { ReutersRssScraper } from './infrastructure/scrapers/reuters-rss.js';
 import { ReutersStealthFallback } from './infrastructure/scrapers/reuters-stealth.js';
+import { BloombergRssScraper } from './infrastructure/scrapers/bloomberg-rss.js';
 import { BloombergStealth } from './infrastructure/scrapers/bloomberg-stealth.js';
 
 // ── Composition root — wire scrapers into router ──────────────────────────────
 export const app = createRouter(
   new ReutersRssScraper(),
   new ReutersStealthFallback(),
+  new BloombergRssScraper(),
   new BloombergStealth(),
 );
 

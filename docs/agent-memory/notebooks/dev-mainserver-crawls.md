@@ -1,6 +1,39 @@
 # dev-mainserver-crawls — Notebook
 
-**Last updated:** 2026-05-17T16:55Z | **Sprint:** news-bugs (c80)
+**Last updated:** 2026-05-17T19:10Z | **Sprint:** news-bugs (c81)
+
+---
+
+## This session (cycle 9 — c81 2026-05-17T19:10Z)
+
+Task: Fix Bloomberg `articles: []` — stale `[data-component="headline"]` selector.
+
+**Root cause confirmed:**
+- Bloomberg's PerimeterX blocks Playwright DOM extraction: `[data-component="headline"]` returns 0 elements every time.
+- `__NEXT_DATA__` fallback also yields nothing (PerimeterX challenge prevents full page load).
+- Direct `WebFetch` to bloomberg.com returns HTTP 403.
+- This is a fundamental anti-bot block — no DOM selector fix is viable.
+
+**Fix applied (2026-05-17):**
+- Same pattern as Reuters (c80): replace Playwright primary with Google News RSS.
+- RSS URL: `https://news.google.com/rss/search?q=bloomberg+markets+finance&ceid=US:en&hl=en-US&gl=US`
+- Verified live: RSS returns ~100 articles from bloomberg.com, no anti-bot blocking.
+- `BloombergStealth` demoted to FALLBACK (invoked if RSS returns error or 0 items).
+
+**Implemented:**
+- `apps/news-fetch/src/infrastructure/scrapers/bloomberg-rss.ts` — new `BloombergRssScraper` class implementing `BloombergNewsPort` via Google News RSS. Same XML parse pattern as reuters-rss.ts. source=BLOOMBERG, method=rss, confidence=HIGH. ~175L.
+- `apps/news-fetch/src/interface/handlers.ts` — Bloomberg route updated from single-path to RSS primary + stealth fallback (same pattern as Reuters). `createRouter` now takes 4 ports (rss, fallback, bloombergRss, bloombergStealth).
+- `apps/news-fetch/src/index.ts` — composition root updated: imports `BloombergRssScraper`, wires 4-arg `createRouter`.
+- `apps/news-fetch/src/domain/repositories.ts` — `BloombergNewsPort` comment updated to document RSS primary + stealth fallback.
+- `docs/mainserver-crawl-techniques/playwright-stealth.md` — updated with Bloomberg selector stale finding, Google News RSS URLs for both Reuters and Bloomberg, known limits updated.
+- `apps/news-fetch/__tests__/bloomberg-rss.test.ts` — 29 new tests: happy path, maxItems, missing link, bad date, HTTP errors (5 status codes), network throws, empty feed, RSS URL regression guards (not bloomberg.com, uses news.google.com, contains bloomberg), normalizeRfcDate.
+- `apps/news-fetch/__tests__/1899a-routes-bloomberg.test.ts` — updated: 4-arg createRouter, new RSS success + fallback tests (RSS error → stealth invoked, RSS empty → stealth invoked, stealth-also-fails path).
+- `apps/news-fetch/__tests__/1899a-routes-health-reuters.test.ts` — updated: 4-arg createRouter throughout.
+- Full test suite: 209 pass, 0 fail (was 180 — +29 new tests). tsc: 0 errors.
+- Docker rebuilt and redeployed: `docker compose build news-fetch && docker compose up -d news-fetch`.
+- Live verified: `GET /bloomberg/headlines?maxItems=5` → `{source:"bloomberg", method:"rss", error:null, articles:[5 articles]}`.
+
+**RAM note:** BloombergStealth (~400-500MB) now only invoked as fallback, not on every request. Normal operation runs at ~30-50MB (RSS). RAM pressure on news-fetch container significantly reduced.
 
 ---
 
@@ -171,7 +204,7 @@ New routes: POST /macro/external/adb, POST /macro/external/imf, POST /macro/exte
 | adb-kidb | apps/macro-indicators/ | spa-xhr-intercept Phase 2 | ~15MB | wired | live confirmed 2026-05-13 |
 | imf-weo | apps/macro-indicators/ | open-api-key | ~5MB | wired | live confirmed 2026-05-13 |
 | reuters-news | apps/news-fetch/ | rss (Google News RSS) + playwright-stealth (fallback) | ~30-50MB RSS / ~400-500MB fallback | LIVE — 15 articles confirmed | c80 2026-05-17 |
-| bloomberg-news | apps/news-fetch/ | playwright-stealth | ~400-500MB | 502 FIXED (idleTimeout:0) — articles [] pending selector fix | c80 2026-05-17 |
+| bloomberg-news | apps/news-fetch/ | rss (Google News RSS) + playwright-stealth (fallback) | ~30-50MB RSS / ~400-500MB fallback | LIVE — 5 articles confirmed, method=rss | c81 2026-05-17 |
 
 ---
 
