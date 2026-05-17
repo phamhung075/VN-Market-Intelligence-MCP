@@ -27,6 +27,7 @@
 import type { Database } from "bun:sqlite";
 import { z } from "zod";
 import { detectEarningsConflict } from "../../domain/services/earningsConflictDetector.js";
+import { scoreWithTnbCritic, type CriticInput, type CriticResult } from "../../domain/services/tnbCriticScorer.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -153,6 +154,21 @@ export interface PostSignalInput {
    * Dedup is only applied when BOTH stock_code AND direction are present.
    */
   dedupWindowMinutes?: number;
+  /**
+   * TNB critic gate — persisted score from CriticResult (0.0–1.0 or null for timeout).
+   * Set by postSignalWithCriticGate(); not required when calling postSignal() directly.
+   */
+  critic_score?: number | null;
+  /**
+   * TNB critic gate — one-sentence verdict or critique text from CriticResult.notes.
+   * Set by postSignalWithCriticGate(); not required when calling postSignal() directly.
+   */
+  critic_notes?: string | null;
+  /**
+   * TNB critic gate — 0 = no retry; 1 = one retry occurred (pass or fail-soft).
+   * Set by postSignalWithCriticGate(); not required when calling postSignal() directly.
+   */
+  retry_count?: number;
 }
 
 /**
@@ -292,6 +308,9 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     kinhDichConfidence = null, // Task 1328c
     agentSignalsMajority = null, // Task 1328c
     dedupWindowMinutes: rawDedupWindowMinutes, // Task 1862g: undefined = use type-aware default
+    critic_score = undefined, // TNB critic gate
+    critic_notes = undefined, // TNB critic gate
+    retry_count = 0, // TNB critic gate
   } = input;
 
   // Task 1862g: resolve dedup window.
@@ -454,6 +473,16 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
   })();
 
+  // TNB critic gate columns
+  const hasCriticColumns = (() => {
+    try {
+      db.prepare("SELECT critic_score, critic_notes, retry_count FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   if (hasChainColumns) {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
     const expires = ttlMinutes != null ? expiresAt(ttlMinutes) : null;
@@ -463,6 +492,42 @@ export function postSignal(db: Database, input: PostSignalInput): number {
       if (hasSignalClassColumn) {
         if (hasValidationColumns) {
           if (hasContextColumns) {
+            if (hasCriticColumns) {
+              const stmt = db.prepare(`
+                INSERT INTO agent_signals
+                  (from_agent, to_agent, signal_type, stock_code, payload, status,
+                   created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+                   causal_root_id, causal_root_label, signal_class, confidence_score, validated_at,
+                   news_sentiment, kinh_dich_confidence, agent_signals_majority,
+                   critic_score, critic_notes, retry_count)
+                VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `);
+              const result = stmt.run(
+                fromAgent,
+                toAgent,
+                signalType,
+                resolvedStockCode,
+                JSON.stringify(payload),
+                now,
+                expires ?? expiresAt(ttlMinutes ?? 120),
+                cycleId ?? null,
+                JSON.stringify(findingData),
+                causalRef,
+                chainDepth,
+                causalRootId,
+                causalRootLabel,
+                signalClass,
+                confidence_score,
+                validatedAtValue,
+                newsSentiment ?? null,
+                kinhDichConfidence ?? null,
+                agentSignalsMajority ?? null,
+                critic_score !== undefined ? critic_score : null,
+                critic_notes !== undefined ? critic_notes : null,
+                retry_count,
+              );
+              return Number(result.lastInsertRowid);
+            }
             const stmt = db.prepare(`
               INSERT INTO agent_signals
                 (from_agent, to_agent, signal_type, stock_code, payload, status,
@@ -1281,3 +1346,157 @@ export function migrateUnknownStockCodes(db: Database): Promise<void> {
     }
   });
 }
+
+// ── postSignalWithCriticGate ──────────────────────────────────────────────────
+
+/** Default timeout for the TNB critic gate in milliseconds. */
+export const CRITIC_TIMEOUT_MS = 20_000;
+
+/**
+ * Options for postSignalWithCriticGate.
+ * Primarily used for testing — allows injecting a custom scorer and timeout.
+ */
+export interface PostSignalWithGateOptions {
+  /**
+   * Number of retries already attempted. Pass 1 to force write-through regardless
+   * of score (max 1 retry enforced by the gate).
+   * Default: 0
+   */
+  retryCount?: number;
+  /**
+   * Injectable scorer function (for testing). Defaults to scoreWithTnbCritic.
+   * Must return a Promise<CriticResult>.
+   */
+  _scoreFn?: (input: CriticInput) => Promise<CriticResult> | CriticResult;
+  /**
+   * Timeout in milliseconds before gate fails-soft. Defaults to CRITIC_TIMEOUT_MS (20s).
+   */
+  _timeoutMs?: number;
+}
+
+/** Return type for postSignalWithCriticGate. */
+export interface PostSignalGateResult {
+  /**
+   * The newly inserted signal ID (positive integer).
+   * Returns -1 when the gate rejected the signal on first attempt (retry pending).
+   */
+  signalId: number;
+  /**
+   * The CriticResult produced by the gate.
+   * null when the gate was bypassed (timeout/error) — signal passes through unscored.
+   */
+  criticResult: CriticResult | null;
+}
+
+/**
+ * TNB Critic Gate wrapper for postSignal().
+ *
+ * Runs the TNB critic scorer before DB write. Implements retry protocol and
+ * fail-soft timeout as specified in the architecture brief.
+ *
+ * Protocol:
+ *   - score >= 0.6 → write, retry_count=0
+ *   - score < 0.6 AND retryCount=0 → return signalId=-1 with critique (do NOT write)
+ *   - score < 0.6 AND retryCount=1 → write regardless (fail-soft), retry_count=1
+ *   - timeout (20s) or error → write with critic_score=null, retry_count=0
+ *
+ * @param db      - Active bun:sqlite Database connection
+ * @param input   - Signal parameters (same as PostSignalInput)
+ * @param opts    - Optional: retryCount, _scoreFn (testing), _timeoutMs (testing)
+ * @returns       PostSignalGateResult with signalId and criticResult
+ */
+export async function postSignalWithCriticGate(
+  db: Database,
+  input: PostSignalInput,
+  opts: PostSignalWithGateOptions = {},
+): Promise<PostSignalGateResult> {
+  const retryCount = opts.retryCount ?? 0;
+  const timeoutMs = opts._timeoutMs ?? CRITIC_TIMEOUT_MS;
+  const scoreFn = opts._scoreFn ?? ((ci: CriticInput) => scoreWithTnbCritic(ci));
+
+  // Build CriticInput from PostSignalInput
+  const criticInput: CriticInput = {
+    fromAgent: input.fromAgent,
+    signalType: input.signalType,
+    stockCode: input.stockCode ?? null,
+    payload: input.payload as CriticInput["payload"],
+    findingData: (input.findingData ?? {}) as Record<string, unknown>,
+  };
+
+  // Run critic gate with timeout — fail-soft on timeout or error
+  let criticResult: CriticResult;
+  let timedOut = false;
+  try {
+    const timeoutPromise = new Promise<CriticResult>((resolve) => {
+      const timer = setTimeout(() => {
+        resolve({
+          pass: true, // fail-soft: let signal through
+          score: -1, // sentinel: -1 = timeout, never persisted as-is
+          notes: "critic gate timeout — signal passed through unscored",
+          timedOut: true,
+        });
+      }, timeoutMs);
+      // Prevent timer from blocking process exit in tests
+      if (typeof timer === "object" && "unref" in timer) {
+        (timer as NodeJS.Timeout).unref();
+      }
+    });
+
+    criticResult = await Promise.race([
+      Promise.resolve(scoreFn(criticInput)),
+      timeoutPromise,
+    ]);
+
+    if (criticResult.timedOut) {
+      timedOut = true;
+    }
+  } catch (err) {
+    // Any unexpected error in critic = fail-soft
+    criticResult = {
+      pass: true,
+      score: -1,
+      notes: `critic gate error: ${err instanceof Error ? err.message : String(err)}`,
+      timedOut: true,
+    };
+    timedOut = true;
+  }
+
+  // Timeout path: write signal with critic_score=null
+  if (timedOut) {
+    const signalId = postSignal(db, {
+      ...input,
+      critic_score: null,
+      critic_notes: criticResult.notes,
+      retry_count: retryCount,
+    });
+    return { signalId, criticResult: null };
+  }
+
+  // Pass path: score >= threshold → write immediately
+  if (criticResult.pass) {
+    const signalId = postSignal(db, {
+      ...input,
+      critic_score: criticResult.score,
+      critic_notes: criticResult.notes,
+      retry_count: retryCount,
+    });
+    return { signalId, criticResult };
+  }
+
+  // Fail path, first attempt (retryCount=0): return critique, do NOT write
+  if (retryCount === 0) {
+    return { signalId: -1, criticResult };
+  }
+
+  // Fail path, after retry (retryCount=1): write regardless — fail-soft
+  const signalId = postSignal(db, {
+    ...input,
+    critic_score: criticResult.score,
+    critic_notes: criticResult.notes,
+    retry_count: 1,
+  });
+  return { signalId, criticResult };
+}
+
+// Re-export scorer types for callers that import from this module
+export type { CriticInput, CriticResult };

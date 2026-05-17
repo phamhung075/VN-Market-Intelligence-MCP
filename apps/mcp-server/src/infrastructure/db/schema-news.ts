@@ -97,6 +97,11 @@ export function initNewsTables(db: Database): void {
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN kinh_dich_confidence REAL`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN agent_signals_majority TEXT`); } catch {}
 
+  // TNB critic gate columns
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN critic_score REAL DEFAULT NULL`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN critic_notes TEXT DEFAULT NULL`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN retry_count INTEGER DEFAULT 0`); } catch {}
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);

@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 18:48 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 20:49 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (continuous operation since 2026-05-17 10:47Z recovery)
-**Queue:** Empty (0 items, last probe 17:48:11Z = live success)
-**consecutive_empty_cycles:** 2 | **backoff_until:** none
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 20:48:33Z; prior notebook claims that scheduled-task runner lacked MCP access were incorrect — gateway IS reachable from cron context via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 20:48:33Z = live success)
+**consecutive_empty_cycles:** 4 | **backoff_until:** none
 
 ## Known patterns / preferences
 
@@ -1978,3 +1978,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~500 |
+
+---
+
+### Q&A Batch (20:48–20:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 4 | backoff_until: none
+- Note: Live MCP gateway access CONFIRMED from scheduled-task runner. `get_pending_ask_questions` returned `[]` (live success at 20:48:33Z). `send_telegram(channel="work", ...)` delivered with "Message sent to WORK channel." response at 20:49:23Z. Prior cycle notes (18:48, 19:47) claiming the cron runner lacked MCP connectivity were factually wrong — the call_tool gateway (server="vn-market") is reachable from cron context. Counter incremented to 4. Adaptive backoff triggers at 5 — next empty cycle will install a 60-min backoff_until.
+
+## Metrics (cycle 2026-05-17 20:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~650 |

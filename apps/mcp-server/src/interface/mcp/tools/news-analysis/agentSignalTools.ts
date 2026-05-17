@@ -20,7 +20,7 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
-  postSignal,
+  postSignalWithCriticGate,
   getSignals,
   recordOutcome,
   getSignalEffectiveness,
@@ -196,6 +196,7 @@ export function registerAgentSignalTools(server: McpServer): void {
       finding_data: z.record(z.unknown()).optional().describe("Structured finding metrics: { confidence, direction, event_type, validates, confirms_direction, volume_above_average, summary, ... }"),
       causal_ref: z.coerce.number().int().optional().describe("ID of parent signal this finding builds on"),
       chain_depth: z.coerce.number().int().min(0).max(3).optional().default(0).describe("Chain depth: 0=catalyst, 1=validation, 2=confirmation, 3=synthesis"),
+      retry_count: z.coerce.number().int().min(0).max(1).optional().default(0).describe("TNB critic gate retry counter. 0 = first attempt (default); 1 = retry after critic feedback."),
     },
     async (args) => {
       try {
@@ -301,7 +302,39 @@ export function registerAgentSignalTools(server: McpServer): void {
               : {}),
           };
 
-        const id = postSignal(db, signalInput);
+        // TNB critic gate: run scorer before DB write.
+        // On first-attempt failure (score < 0.6, retry_count=0), returns signalId=-1
+        // with critique text for the source agent to revise and retry.
+        const gateResult = await postSignalWithCriticGate(db, signalInput, {
+          retryCount: args.retry_count ?? 0,
+        });
+
+        const { signalId: id, criticResult } = gateResult;
+
+        // Critic gate rejected on first attempt — return critique, do NOT write
+        if (id === -1 && criticResult !== null && !criticResult.pass) {
+          const stockSuffix = args.stock_code ? ` [${args.stock_code}]` : "";
+          const critiqueResponse = JSON.stringify(
+            {
+              success: false,
+              signal_id: null,
+              critic_pass: false,
+              critic_score: criticResult.score,
+              critique: criticResult.critique ?? criticResult.notes,
+              retry_count_remaining: 1,
+              message:
+                `Signal rejected by TNB critic gate${stockSuffix}. ` +
+                `Score: ${criticResult.score.toFixed(1)}/1.0. ` +
+                `Revise payload addressing the critique gap and call post_agent_signal again with retry_count=1.`,
+            },
+            null,
+            2,
+          );
+          console.info(`[post_agent_signal] Critic gate rejected: ${criticResult.critique ?? criticResult.notes}`);
+          return {
+            content: [{ type: "text" as const, text: critiqueResponse }],
+          };
+        }
 
         // Task 1920f — conditional audit write for price_confirmation / urgent_news only.
         // Fire-and-forget: any error is swallowed; MCP response is unaffected.
@@ -353,12 +386,19 @@ export function registerAgentSignalTools(server: McpServer): void {
         }
 
         const stockSuffix = args.stock_code ? ` [${args.stock_code}]` : "";
+        const criticSuffix =
+          criticResult !== null
+            ? `, critic_score=${criticResult.score.toFixed(1)}`
+            : ", critic_score=null (timeout)";
+
         const result = JSON.stringify(
           {
             success: true,
             signal_id: id,
             cycle_id: cycleId,
-            message: `Signal posted to ${args.to_agent}: ${args.signal_type}${stockSuffix} (id=${id}, ttl=${args.ttl_minutes}m, cycle=${cycleId})`,
+            critic_pass: criticResult?.pass ?? null,
+            critic_score: criticResult?.score ?? null,
+            message: `Signal posted to ${args.to_agent}: ${args.signal_type}${stockSuffix} (id=${id}, ttl=${args.ttl_minutes}m, cycle=${cycleId}${criticSuffix})`,
           },
           null,
           2,

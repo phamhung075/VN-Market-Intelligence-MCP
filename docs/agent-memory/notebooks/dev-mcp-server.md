@@ -4,6 +4,37 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### TNB Critic Gate — Sprint A + B (2026-05-17, DONE)
+
+**Brief:** `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`
+
+**What was built:**
+- Sprint A: Schema migration (3 cols: `critic_score REAL`, `critic_notes TEXT`, `retry_count INTEGER` on `agent_signals`); `tnbCriticScorer.ts` — pure deterministic scorer (5 checks × 0.2, threshold 0.6); `PostSignalInput` extended with critic fields; `postSignal()` extended with critic columns in deepest INSERT path.
+- Sprint B: `postSignalWithCriticGate()` in `agentSignalStore.ts` — implements retry protocol (max 1), fail-soft timeout (20s default, injectable); `post_agent_signal` MCP tool now calls gate instead of `postSignal` directly; `retry_count` param added to tool schema.
+
+**Scorer checks:**
+1. Pillar coverage: detail includes money supply / cost of capital / profit / policy
+2. Source tier: no Facebook/Zalo/Reddit as primary
+3. Specificity: title+detail >= 80 chars, no vague phrases
+4. BCTC forensics: only for fundamental_validation — requires m_score/f_score/accruals_flag/btn_check
+5. Confidence anchor: impact_score >= 3 OR findingData.confidence_score > 0.5
+
+**Tests:** 32/32 scorer tests GREEN + 17/17 gate tests GREEN = 49 total.
+**Type check:** 1 pre-existing error in server.ts (line 914, unrelated). My files: 0 errors.
+
+**Files:**
+- `apps/mcp-server/src/domain/services/tnbCriticScorer.ts` (NEW)
+- `apps/mcp-server/src/infrastructure/db/agentSignalStore.ts` (extended)
+- `apps/mcp-server/src/infrastructure/db/schema-news.ts` (3 critic columns added)
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` (gate wired)
+- `apps/mcp-server/src/__tests__/tnb-critic-scorer.test.ts` (NEW, 32 tests)
+- `apps/mcp-server/src/__tests__/tnb-critic-gate.test.ts` (NEW, 17 tests)
+- `.claude/tools/list/post_agent_signal.md` (doc updated)
+
+Zone health: TNB critic gate wired end-to-end; schema migration additive-safe; no existing tests broken; 49 new tests GREEN | HEALTHY
+
+---
+
 ### Task 1930b — cashFlow OCF/NI ratio plausibility guard (2026-05-17, DONE)
 
 **Problem:** `get_cash_flow` returned implausible `ocf_ni_ratio` values: FPT=504, VCB=1.42×10⁸. FA was forced to manual accrual fallback every session.
