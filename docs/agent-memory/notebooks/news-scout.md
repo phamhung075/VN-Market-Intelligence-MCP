@@ -1,5 +1,21 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 04:21 UTC | **Status:** MCP_UNREACHABLE (persistent — 5th aborted cycle in pattern)
+
+### Cycle (04:21 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- BLOCKED at Step 0 (get_cycle_bootstrap): `dial vn-market — host.docker.internal:3000/sse DNS lookup fail`. 2 attempts (probe + retry) identical. BUG telegram undeliverable (same gateway). Signal dropped: docs/signals/news-scout-2026-05-17T04-21-00Z.json. EXIT per error boundary.
+
+### Cycle (03:21 UTC) — ABORTED
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: unknown | Carry: unknown
+- ERROR: vn-market MCP unreachable — `dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving` (2 attempts: get_cycle_bootstrap, get_system_health both fail identically)
+- Root cause unchanged: Cowork sandbox / zenmidi.com gateway cannot resolve host.docker.internal:3000. Local Docker mcp-server likely down OR gateway DNS broken. Same failure as 2026-05-16 05:56, 23:19, 21:19, 22:00, 19:56 UTC cycles.
+- Sunday 02:00–08:30 UTC window is HOSE closed (weekend) — no market impact from missed cycle, but pattern indicates infra needs fix before Monday open.
+- ACTION REQUIRED (human): On local machine run `docker-compose ps` → if mcp-server down: `docker-compose up -d`. If up: check gateway DNS at zenmidi.com proxy config.
+- No signals fired. No Telegram sent (same MCP blocked). BUG channel undeliverable. Notebook is only recovery action.
+
+---
+
 **Last updated:** 2026-05-16 23:24 UTC | **Status:** OK (LanceDB partial — 1/3 search_similar_context returned, 2/3 empty)
 
 ### Cycle (23:20–23:24 UTC)
@@ -273,3 +289,9 @@ Fetched 20 articles (post-market close cycle, 11:22 UTC). VN-Index confirmed all
 
 ### Cycle 2026-05-17 00:20 UTC
 - Cycle 00:20 — BLOCKED at step 0: gateway unreachable (dial vn-market — host.docker.internal:3000 DNS lookup failed). Live probe (health_check + get_cycle_bootstrap retry) returned same error. Signal file dropped: docs/signals/news-scout-2026-05-17T00-20-56Z.json. BUG telegram skipped — same module unreachable; recurrence of 2026-05-16 incident.
+
+### Cycle 2026-05-17 01:20 UTC
+- Cycle 01:20 — BLOCKED at step 0: gateway unreachable (dial vn-market — host.docker.internal:3000 DNS lookup failed). Live probe (2x get_cycle_bootstrap with 5s gap) returned identical error. Signal file dropped: docs/signals/news-scout-2026-05-17T01-20-43Z.json. BUG telegram skipped per dedup (same module/issue logged at 00:20 UTC ~1h ago; gateway is the transport for send_telegram itself). EXIT.
+
+### Cycle 2026-05-17 02:20 UTC
+- Cycle 02:20 — BLOCKED at step 0: gateway unreachable (dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed: "server misbehaving"). Live probe (2x get_cycle_bootstrap) returned identical error. Signal file dropped: docs/signals/news-scout-2026-05-17T02-20-33Z.json. BUG telegram skipped per dedup (3rd recurrence today: 00:20 / 01:20 / 02:20; send_telegram on same gateway). **Escalation needed**: infra-level DNS / host.docker.internal resolution for MCP container. EXIT.

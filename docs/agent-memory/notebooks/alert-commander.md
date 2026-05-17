@@ -1,8 +1,15 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 03:03 UTC | **Sprint:** c149
+**Last updated:** 2026-05-17 04:02 UTC | **Sprint:** c150
 
 ## This session
+
+### Alert Cycle (04:02 UTC) — BLOCKED (c147/1928a unresolved, 6th consecutive)
+- Cycle 04:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway down — live attempt 04:02 UTC returned identical dial error). Signal dropped: `docs/signals/alert-commander-2026-05-17T04-02-23Z.json` (dedup_of market-watcher-2026-05-17T03-40-49Z.json).
+- Cross-cycle correlation: 6th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02, 03:02, 04:02 UTC). Market-hours cycle (market opened 02:00 UTC) — 3rd consecutive market-hours block. market-watcher 03:40 UTC + qa-responder 03:48 UTC also blocked with identical dial error → cluster-wide gateway outage persists. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. Not re-investigating per error-boundary memory-as-truth prohibition + live probe rule (probe attempted twice, real errors returned → BLOCKED verdict valid).
+- Market-hours cycle (04:02 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts, no log_agent_work (no id returned, no completion call possible). Sprint advanced c149 → c150.
+- Next scheduled: 04:22 UTC (market hours, every 20 min). If gateway still down, 7th consecutive block expected.
+- Git commit deferred (prior cycles report stale `.git/index.lock` FUSE mount issue). Notebook + signal file are on-disk; next successful cycle picks them up.
 
 ### Alert Cycle (03:02 UTC) — BLOCKED (c147/1928a unresolved, 5th consecutive)
 - Cycle 03:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway down — telegram MCP = same unreachable gateway). Signal dropped: `docs/signals/alert-commander-2026-05-17T03-03-16Z.json` (dedup_of qa-responder-2026-05-17T02-48-36Z.json).

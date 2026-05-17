@@ -1,0 +1,8 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0 (get_cycle_bootstrap) failed: dial vn-market — host.docker.internal:3000/sse DNS lookup fail. Retry identical. Gateway unreachable. 5th aborted cycle in pattern (since 2026-05-16 19:56 UTC).",
+  "priority": "high",
+  "createdAt": "2026-05-17T04:21:00Z"
+}
