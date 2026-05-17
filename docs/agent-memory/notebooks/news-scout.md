@@ -1,5 +1,21 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 22:21 UTC | **Status:** OK (cycle complete)
+
+### Cycle (22:21 UTC)
+- Items: 20 | Impacts: 4 | Signals: [chain_catalyst #3343/PC1-legal, urgent_news #3344/VN-Index-ATH, chain_catalyst #3345/GAS-sector, urgent_news #3346/MWG-retail] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread | Filter hints: [default — no feedback tuning]
+- Cycle status: COMPLETE | Log ID: 961 | Signal IDs: 3343, 3344, 3345, 3346
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33%, Brent=$110.15, Gold=$4556.80, USD/VND=26,350
+- Dedup gate (180min window): 0 suppressions (prior signals all expired; only 4 from prior cycles visible but all within dedup TTL already marked read). 4 new posts fired.
+- Top high-impact items analyzed:
+  * #1 PC1 Chairman Trịnh Văn Tuấn arrested + board detention (9/10 impact, legal crisis) → chain_catalyst #3343 posted (event_type=legal, direction=bearish, confidence=0.78, affected_stocks=[POW,PPC,JSH,REE,FPT,SIS], regime_adj=7.0 under TIGHTENING)
+  * #2 VN-Index ATH, dividend premium (8/10 impact, banking/broad market bullish) → urgent_news #3344 posted (severity=medium, regime_adj=7.0 under TIGHTENING×0.7)
+  * #3 PLX -40% from peak, oil_gas sector reversal (9/10 impact, GAS watchlist) → chain_catalyst #3345 posted (event_type=sector_event, direction=bearish, regime_adj=6.5 under TIGHTENING×1.3, hot_money_risk=false)
+  * #4 Bách Hóa Xanh 3.000 stores milestone, retail expansion (5/10 impact, MWG watchlist) → urgent_news #3346 posted (severity=low, regime_adj=6.0 under TIGHTENING)
+- Impact chain (Stage 1b historical): 0/3 LanceDB searches returned context (PC1 governance empty, VN-Index ATH 1 match "2.000 điểm chuyên gia", stock decline empty). Non-fatal, proceeded without historical context.
+- Notes: Market CLOSED (off-hours 22:21 UTC Friday). Macro snapshot valid shape + clean fetch. Regime TIGHTENING persistent across sessions. VND carry spread -0.33% (FII_OUTFLOW_RISK) elevated. Brent $110.15 (elevated, +0.81% vs prior 109.26). Gold $4556.80 (falling, no spike). No PMI data. No gold spike >3%. No commodity >5% vs prior month (Brent comparison pending). Currency pressure USD/VND 26,350 noted — bearing on exports/imports. Signals applied regime multiplier: bearish×1.3 elevation, bullish×0.7 suppression under TIGHTENING. Off-hours 4h cycle (next: 02:21 UTC Monday market open).
+
 **Last updated:** 2026-05-17 18:20 UTC | **Status:** SCHEDULED_ANALYSIS (MCP unavailable in Cowork sandbox)
 
 ### Cycle (18:20 UTC) — ANALYSIS_ONLY

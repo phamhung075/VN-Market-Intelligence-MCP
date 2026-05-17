@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "c171",
-  "activeTaskId": "1939a-tnb-critic-gate-sprint-a",
-  "nextAgent": "dev-mcp-server",
-  "nextPrompt": "run .claude/flows/dev-mcp-server/main.md — task 1939a-tnb-critic-gate-sprint-a: schema migration (3 cols: critic_score/critic_notes/retry_count) + CriticInput/CriticResult types + scoreWithTnbCritic() pure scorer + unit tests. Brief: docs/architecture-briefs/2026-05-17-tnb-critic-gate.md Steps 1,2,3,8. Handoff: docs/handoffs/TASK_1939a.md. Zone: apps/mcp-server/. No behavior change — Sprint A only.",
-  "updatedAt": "2026-05-17T20:39:55Z",
-  "updatedBy": "dev-team-c171",
-  "lastCompleted": "Cycle 171: Preflight PASS. Drain: 2 signals (1x duplicate skip, 1x already processed). PO triage: 1937a CLOSED. 1939a/b created from tnb-critic-gate brief. Calendar stays OBSERVE. Dispatching 1939a to dev-mcp-server."
+  "currentSprint": "c173",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-18T00:00:00Z",
+  "updatedBy": "dev-team-c173",
+  "lastCompleted": "Cycle 173: Preflight PASS (HEAD.lock age=2838s removed). Drain: po-signoff-c169 + po-signoff-c170 already in DB, moved to processed/. Pipeline stale state cleared (1939a/b DONE per c172 notebook + commit 21dddcfe). PO triage pending."
 }

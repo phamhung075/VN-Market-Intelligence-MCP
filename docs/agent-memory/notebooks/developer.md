@@ -1,33 +1,37 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-17T21:37Z | **Sprint:** c172 (dev-team orchestration)
+**Last updated:** 2026-05-18T00:00Z | **Sprint:** c173 (dev-team orchestration)
 
-## Last session summary (c172 — dev-team loop)
+## Last session summary (c173 — dev-team loop)
 
-**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. QA (ac3d38895ced696be) running validation on TNB critic gate (21dddcfe), outcome feedback loop (dc19bb5b), accuracy badge (02498d60). Cycle c172.
+**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. Cycle c173.
 
-**Preflight:** HEAD.lock found (age=1873s, size=0, no live git pid). Removed. Log: `docs/agent-memory/sessions/preflight-lsof-20260517T213705Z.log`. Worktree prune: clean.
+**Preflight:** HEAD.lock found (age=2838s, no live git pid). Removed. Log: `docs/agent-memory/sessions/preflight-lsof-20260518T000000Z.log`. Worktree prune: clean.
 
 **Drain signals (0a):**
-- `2026-05-17T204433Z-outcome-feedback-loop.json` — `brief_complete` from agents-architect (outcome feedback loop brief). Already implemented (commits dc19bb5b + 02498d60). Processed as `already-implemented`. Moved to `processed/`. DB fingerprint inserted.
-- `po-signoff-c169.json` + `po-signoff-c170.json` — already processed in earlier sessions (1938a DONE, c169 idle).
+- `po-signoff-c169.json` + `po-signoff-c170.json` — both already in signals_processed DB (c169=routed-to-po, c170=skipped-duplicate). Moved to `processed/`.
 
 **Pipeline state check (0b):**
-- State = idle. activeTask = 1939a. But 1939a/1939b both DONE (commit 21dddcfe shipped Sprint A + B together).
-- QA currently validating: 1939a/1939b (TNB critic gate) + outcome feedback loop + accuracy badge.
+- State = idle (stale activeTask=1939a cleared). 1939a/b DONE per QA c142/c143 (commits 21dddcfe + a611d911). Pipeline reset to idle/c173.
 
-**TASKS.md Todo analysis:**
-- 1939a/1939b: in QA (do not duplicate)
-- calendar-source-replacement: OBSERVE, no action
-- 1922g-pharma-events-source-verify: blocked until 2026-06-01
-- No new actionable dev tasks
+**PO Triage (Step 1):**
+- TNB: c169 ACK is latest (2026-05-17T18:38Z). No new audit.
+- pendingSignals[]: empty.
+- Channel audit: Claude Code MCP blocked (established pattern). No phantom reports.
+- TASKS.md:
+  - 1939a/b: moved from Todo → Done (QA c142/c143 APPROVED).
+  - calendar-source-replacement: OBSERVE, no action.
+  - 1922g-pharma-events-source-verify: blocked until 2026-06-01.
+  - Backlog: all USER-ACTION or MONITORING — no dev action.
+- No new architecture briefs (last: 2026-05-17).
+- No new signals.
 
-**Session gate:** all Todo items in QA review or OBSERVE. pendingSignals empty after drain. IDLE EXIT.
+**Session gate:** No actionable dev tasks after TASKS.md cleanup. IDLE EXIT.
 
-**Pipeline state:** updated to idle (no change needed — already idle).
+**Pipeline state:** idle/c173.
 
 ## Previous sessions (archived context)
 
-Last session (c171): 1939a/1939b created from tnb-critic-gate brief, 1937a closed, calendar OBSERVE. Pipeline dispatched 1939a to dev-mcp-server.
+Last session (c172): 1939a/b QA in progress, IDLE EXIT.
 
-Last code sprint: 1938a c170 — config files only (MCP URL fix). Before that: 1936b hydration fixes (dev-frontend).
+Last code sprint: 1938a c170 — config files (MCP URL fix). Before that: 1936b hydration fixes (dev-frontend).

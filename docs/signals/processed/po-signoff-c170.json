@@ -34,12 +34,6 @@
       "size": "S"
     }
   ],
-  "notes": "Root cause of 1937a identified from user-supplied MCP URL context. zenmidi.com/mcp returns 404 \u2014 cloudflared has no route for /mcp, only /vn-market/mcp and /vn-market/sse. 15 files use wrong URL. Correct URL confirmed: https://zenmidi.com/vn-market/mcp (cron-news-scout.md + cron-unified-agent.md use this correctly and work). FIX skips planning \u2014 direct to execute.",
-  "pipeline": "execute",
-  "_processed": {
-    "fingerprint": "8ddbca0714618a30439452497daf3d1230cf6dddc3e4a5027da2cead78941e3b",
-    "processedAt": "2026-05-17T20:00:00Z",
-    "processedBy": "dev-team-c171",
-    "result": "skipped-duplicate"
-  }
+  "notes": "Root cause of 1937a identified from user-supplied MCP URL context. zenmidi.com/mcp returns 404 — cloudflared has no route for /mcp, only /vn-market/mcp and /vn-market/sse. 15 files use wrong URL. Correct URL confirmed: https://zenmidi.com/vn-market/mcp (cron-news-scout.md + cron-unified-agent.md use this correctly and work). FIX skips planning — direct to execute.",
+  "pipeline": "execute"
 }

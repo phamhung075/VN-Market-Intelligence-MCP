@@ -1,8 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 21:03 UTC | **Sprint:** c171
+**Last updated:** 2026-05-17 22:05 UTC | **Sprint:** c171
 
 ## This session
+
+### Alert Cycle (22:04–22:05 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (-0.33% spread) | **Pivot window:** false (next: June 2026)
+- **Market:** CLOSED (off-hours 22:04 UTC, outside 02:00–08:59 UTC trading window)
+- **Signals:** agent_bus=3 (1 urgent_news + 2 chain_catalyst) | price_alerts=0 | legal_risk=0 | crisis=0
+- **Fired:** 0 | **Suppressed:** 3 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 2 suppressed | event_types: [sector_reversal (GAS bearish), macro_catalyst (bullish)]
+- **Suppressed signals:**
+  - #3335 chain_catalyst GAS bearish conf=0.50 < TIGHTENING 0.85 (PLX -40% sector contagion)
+  - #3336 urgent_news VIC bullish conf=0.50 < TIGHTENING 0.75 (Dragon Capital forgotten stocks) — no price_anomaly override
+  - #3337 chain_catalyst macro bullish conf=0.50 < TIGHTENING 0.85 (Dragon Capital 3 catalysts new cycle)
+- **Macro snapshot:** Valid shape ✓ | DXY 99.27, US 10Y 4.59% RISK-OFF, Global Liquidity TIGHTENING | Brent $109.26, Gold $4,561.90, USD/VND 26,350
+- **Outcomes recorded:** signal_id 3335/3336/3337 → suppressed | suppress signal posted (id=3342, cycle 20260517-2200)
+- **Verdict:** none (0 alerts fired → no write_alert_verdict needed)
 
 ### Alert Cycle (19:02–19:03 UTC, 2026-05-17) — Off-hours 2h cycle
 - **Status:** COMPLETED
