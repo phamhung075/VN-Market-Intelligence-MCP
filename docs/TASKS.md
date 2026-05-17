@@ -25,7 +25,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1940a-pc1-legal-risk-tool-gap | **FIX** — `get_legal_risk_signals` queries `alerts` table only, missing signals in `agent_signals` (where news-scout posts `signal_type=legal_risk`). PC1 chairman arrest not surfaced despite 3 cycles of evidence. Fix: also query `agent_signals` for `legal_risk` type. Zone: `apps/mcp-server/`. | HIGH | FIX | dev-mcp-server | — | — |
+| _(empty)_ | — | — | — | — | — | — |
 
 ---
 
@@ -33,7 +33,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| 1940a-pc1-legal-risk-tool-gap | **REVIEW** — Fix: `get_legal_risk_signals` now queries `agent_signals` (signal_type=legal_risk) in addition to `alerts`. PC1 chairman arrest signals (#3318/#3343) now surfaced. 7 new tests GREEN. branch: `task/1940a-pc1-legal-risk-tool-gap`. | HIGH | FIX | dev-mcp-server | — | — |
 
 ---
 ## Done
