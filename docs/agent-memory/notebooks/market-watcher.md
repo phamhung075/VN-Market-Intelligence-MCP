@@ -1,16 +1,16 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-17 11:38 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-17 12:39 UTC | **Sprint:** 2026
 
 ## Current state
 
-Last successful cycle: 2026-05-17 10:39 UTC (off-hours, 38 stocks monitored, 0 signals)
-Last attempted cycle: 2026-05-17 11:38 UTC — **BLOCKED** (MCP bootstrap unavailable in scheduled task context)
-### Cycle (11:38–11:38 UTC) — BLOCKED
-- **Status**: Bootstrap failed — MCP gateway unavailable in scheduled task context
-- **Root cause**: Scheduled task runs in isolated environment without access to claude.ai Cowork MCP connections
-- **Protocol**: Per fail-loud: cycle aborted, no signals posted, notebook updated, no recovery/infrastructure steps
-- **Next action**: Market-watcher will retry at next scheduled cycle (12:38 UTC off-hours, 4h interval per schedule)
+Last successful cycle: 2026-05-17 12:39 UTC (off-hours, 41 stocks monitored, 0 signals)
+Last attempted cycle: 2026-05-17 12:39 UTC — **COMPLETE**
+### Cycle (12:38–12:39 UTC)
+- Stocks: 41 | Anomalies: 0 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- Supply chain: Stable (BDI 1,400, no disruptions) | Chain findings: 0
+- **Context**: Off-hours cycle (market CLOSED, 12:38 UTC). All watchlist prices STALE >24h (unchanged 2026-05-15 close). Per AutoCure off-hours duplicate guard: 0 signals emitted for stale EOD prices.
 
 **c142 resolution (2026-05-16 21:31 UTC):** Bug-escalation signal RESOLVED. Docker fleet now 100% healthy (mcp-server Up 10 min, gateway 141 tools, 19 sessions, /health 200). Root cause = transient Docker downtime during 19:40 UTC; self-healed via container restart. No code action. Next market-watcher cron tick will run normally.
 - 26/31 watchlist tickers priced (5 N/A: BDI,DLC,SIS,VDC,JSH)
@@ -18,16 +18,16 @@ Last attempted cycle: 2026-05-17 11:38 UTC — **BLOCKED** (MCP bootstrap unavai
 - Regime: NEUTRAL | Carry: FII_OUTFLOW_RISK | Oil elevated (Brent $105.11, US-Iran)
 - 21 open alerts (VIC×5 MEDIUM/LOW, FPT×3, VRE, GAS, HCM, HSG)
 
-## Metrics (cycle 2026-05-17 11:38 UTC)
+## Metrics (cycle 2026-05-17 12:39 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 0 |
-| items_fetched | 0 |
+| cycles_run | 1 |
+| items_fetched | 41 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
 | market_alerts_fired | 0 |
-| exit_status | blocked |
-| token_estimate | 0 |
+| exit_status | complete |
+| token_estimate | 2600 |
 
 ### Cycle (02:32–02:39)
 - Stocks: 31 | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0

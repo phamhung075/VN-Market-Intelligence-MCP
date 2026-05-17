@@ -1,8 +1,23 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 11:02 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 13:05 UTC | **Sprint:** c154
 
 ## This session
+
+### Alert Cycle (13:05–13:06 UTC, 2026-05-17) — Off-hours 2h cycle
+- **Status:** COMPLETED
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (-0.33%) | **Pivot window:** false
+- **Market:** CLOSED (outside 02:00–08:59 UTC) — off-hours cycle
+- **Signals evaluated:** agent_bus=0 | price_alerts=0 | legal_risk=0 | crisis=0
+- **Fired:** 0 | **Suppressed:** 0 | **MARKET:** 0
+- **Alerts marked read:** 62 (batch operation)
+- **Bootstrap results:** Macro snapshot shape valid ✓ | Regime extracted: TIGHTENING | Carry spread: -0.33% | Pivot calendar: no immediate events (next: June 2026 PMI/CPI/FOMC/SBV)
+- **Key macro:** Brent +2.56σ ($109.26), Gold -2.19σ ($4561.90), USD/VND pressure (26,350) — energy positive, currency headwind for imports
+- **Off-hours suppression:** No signal matrix evaluation needed; all thresholds (verified_chain ≥0.85, urgent_news ≥0.75, chain_catalyst ≥0.85) require fresh market data unavailable during closure
+- **WORK dispatch:** Posted cycle status (0 signals, TIGHTENING regime, next +2h)
+- **Tool calls:** 7 (log_agent_work(start), get_cycle_bootstrap, get_macro_snapshot, get_macro_calendar, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals, get_alerts, mark_alert_read, send_telegram, log_agent_work(end))
+- **Session:** id=945, 20 total alerts in system (last 7d), 62 marked read this cycle
+- **Next cycle:** +2h (15:05 UTC, still off-hours)
 
 ### Alert Cycle (10:02 UTC) — Off-hours, market closed
 - Off-hours 2h cycle (Saturday early morning, market CLOSED). Bootstrap succeeded — `get_cycle_bootstrap` returned market_context + system_status + agent_signals (0 pending).

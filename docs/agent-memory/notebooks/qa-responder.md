@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 10:48 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 12:48 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** RECOVERED — vn-market MCP gateway reachable (outage ended ~2026-05-17 10:47Z)
-**Queue:** Empty (0 items, last probe 10:48:08Z = live success)
-**consecutive_empty_cycles:** 1 | **backoff_until:** none (prior backoff 2026-05-16T22:49:03Z expired and cleared)
+**Status:** OPERATIONAL — vn-market MCP gateway stable (continuous operation since 2026-05-17 10:47Z recovery)
+**Queue:** Empty (0 items, last probe 12:48:01Z = live success)
+**consecutive_empty_cycles:** 3 | **backoff_until:** none
 
 ## Known patterns / preferences
 
@@ -1854,3 +1854,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~550 |
+
+---
+
+### Q&A Batch (12:48–12:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 3 | backoff_until: none
+- Note: Scheduled task execution. get_pending_ask_questions returned [] (empty, no error). Market context available. Gateway stable post-recovery.
+
+## Metrics (cycle 2026-05-17 12:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~700 |

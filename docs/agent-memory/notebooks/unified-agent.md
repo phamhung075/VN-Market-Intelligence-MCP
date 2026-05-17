@@ -4,6 +4,13 @@
 
 ## This session
 
+### Weekly Verification (13:01 UTC)
+- Mode: WEEKLY_VERIFY | Digest sent: no (not yet — scheduled 16:00 UTC) | Sunday bugs: none | Calibration report: yes (id=524, 13:00:01 UTC)
+- MCP gateway vn-market operational ✓ (log_id=944)
+- Checked `get_unreviewed_market_messages`: 10 messages found, most recent from calibration-report (today 13:00:01). Digest-predict scheduled for 16:00 UTC — expected, not yet sent.
+- Checked BUG channel `read_telegram_reports`: no new bugs reported
+- Current time 13:01 UTC < 17:00 UTC threshold → no escalation triggered yet. Will check digest-predict delivery after 16:00 UTC.
+
 ### Prediction Review (01:01 UTC) — BLOCKED
 - Mode: PREDICTION_REVIEW | Claims: n/a | Accuracy: n/a | Flags: [GATEWAY_DOWN] | Regime at prediction: n/a
 - MCP gateway vn-market unreachable on first probe AND 1 retry: `dial host.docker.internal:3000` DNS lookup fail. Neither `log_agent_work` nor `get_cycle_bootstrap` succeeded → no log session id, no bootstrap payload.
