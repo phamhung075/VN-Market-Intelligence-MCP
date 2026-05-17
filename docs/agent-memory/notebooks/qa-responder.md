@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-17 01:49 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-17 04:48 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** Running (in backoff window)
-**Queue:** Empty (last live probe 21:49 UTC)
-**consecutive_empty_cycles:** 0 | **backoff_until:** 2026-05-16T22:49:03Z
+**Status:** BLOCKED — vn-market MCP gateway unreachable (5h+ outage, 5 consecutive blocked cycles)
+**Queue:** Unknown (last live probe 04:48 UTC = DNS error)
+**consecutive_empty_cycles:** 0 (cannot increment — queue unreachable) | **backoff_until:** 2026-05-16T22:49:03Z (expired; not reset — cycle.md only resets when queue has items at step 1)
 
 ## Known patterns / preferences
 
@@ -1690,6 +1690,26 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 - 4th consecutive BLOCKED cycle for qa-responder. market-watcher also reports same gateway down at 03:40Z (signal: market-watcher-2026-05-17T03-40-49Z.json). BUG telegram suppressed (telegram MCP = same unreachable gateway, would fail). Dropped signal: docs/signals/qa-responder-2026-05-17T03-48-54Z.json. EXIT per cowork-error-boundary.
 
 ## Metrics (cycle 2026-05-17 03:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~1500 |
+
+---
+
+### Q&A Batch (04:47–04:48 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: n/a (cycle blocked at step 1) | backoff_until: 2026-05-16T22:49:03Z (expired; cycle.md only resets line when queue has items at step 1; queue unreachable)
+- BLOCKED at step 1: MCP gateway unreachable after 1 retry. Error: `dial vn-market: Get "http://host.docker.internal:3000/sse": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`.
+- Two fresh independent live probes at 04:47:44Z and 04:48:00Z (probe 1: log_agent_work running; probe 2: get_pending_ask_questions) both returned the identical real DNS error. Per cowork-error-boundary Memory-as-Truth: ignored 00:48Z/01:48Z/02:48Z/03:48Z BLOCKED notebook entries; performed fresh live probes; verdict is current.
+- 5th consecutive BLOCKED cycle for qa-responder. market-watcher also confirms same gateway dead at 04:40:15Z (signal market-watcher-2026-05-17T04-40-15Z.json). BUG telegram suppressed (telegram MCP = same unreachable gateway). Dropped signal: docs/signals/qa-responder-2026-05-17T04-48-12Z.json. Outage now ≥ 5h on Sunday pre-market. PO action: restart vn-market gateway / verify host.docker.internal mapping. EXIT per cowork-error-boundary.
+
+## Metrics (cycle 2026-05-17 04:48 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |

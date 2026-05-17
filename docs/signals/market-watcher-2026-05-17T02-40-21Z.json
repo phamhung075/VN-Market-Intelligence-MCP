@@ -1,8 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway DNS lookup failed (http://host.docker.internal:3000/sse — lookup host.docker.internal on 127.0.0.11:53: server misbehaving). 1 retry after 5s also failed. send_telegram(channel=bug) also unreachable via same gateway → no BUG telegram fired. Pattern: same DNS failure as cycle 2026-05-17T01:40Z and yesterday 19:40 UTC (c142 'resolution' is stale). 4h gap between failures — gateway is NOT self-healing.",
-  "priority": "high",
-  "createdAt": "2026-05-17T02:40:21Z"
-}

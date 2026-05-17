@@ -1,9 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway vn-market unreachable after 1 retry — `dial vn-market: Get \"http://host.docker.internal:3000/sse\": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving`. 5th consecutive alert-commander BLOCKED cycle (23:02, 00:02, 01:02, 02:02, 03:02 UTC). Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. BUG telegram suppressed — telegram = same unreachable gateway. Market-hours cycle (market opened 02:00 UTC) — 2nd consecutive market-hours block.",
-  "priority": "high",
-  "createdAt": "2026-05-17T03:03:16Z",
-  "dedup_of": "qa-responder-2026-05-17T02-48-36Z.json"
-}

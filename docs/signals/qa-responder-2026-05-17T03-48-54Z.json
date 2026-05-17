@@ -1,8 +1,0 @@
-{
-  "from": "qa-responder",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 1 failed: gateway unreachable after probe (dial vn-market: Get \"http://host.docker.internal:3000/sse\": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving). Three independent live probes failed (log_agent_work running, log_agent_work running retry, get_pending_ask_questions) — verdict not from cached/notebook state. 4th consecutive BLOCKED cycle for qa-responder (00:48Z, 01:48Z, 02:48Z, 03:48Z). market-watcher reports same gateway down at 03:40Z. send_telegram unreachable (same gateway) — no BUG telegram fired. PO intervention required to restart vn-market MCP gateway.",
-  "priority": "high",
-  "createdAt": "2026-05-17T03:48:54Z"
-}

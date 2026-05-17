@@ -1,9 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed (server misbehaving) after 1 retry. Live probe at 01:38 + 01:39 UTC both failed. Duplicate of news-scout-2026-05-17T01-20-43Z (still unprocessed in queue). 3rd consecutive market-watcher block within 6h (notebook line 5 references c142 false-resolution at 2026-05-16 21:31).",
-  "priority": "high",
-  "createdAt": "2026-05-17T01:40:17Z",
-  "dedup_of": "news-scout-2026-05-17T01-20-43Z.json"
-}

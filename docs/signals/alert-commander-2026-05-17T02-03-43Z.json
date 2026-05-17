@@ -1,9 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: dial vn-market — http://host.docker.internal:3000/sse DNS lookup (127.0.0.11:53) server misbehaving. 1 retry after 5s also failed. BUG telegram suppressed (same gateway down). 4th consecutive alert-commander block within 4h (00:02, 01:02, 02:02 UTC) — Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending per c147 triage.",
-  "priority": "high",
-  "createdAt": "2026-05-17T02:03:43Z",
-  "dedup_of": "qa-responder-2026-05-17T01-48-37Z.json"
-}
