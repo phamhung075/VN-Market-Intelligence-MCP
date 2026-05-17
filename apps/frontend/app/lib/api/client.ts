@@ -243,6 +243,31 @@ export async function fetchKinhDichReading(code: string): Promise<KinhDichReadin
 }
 
 // --------------------------------------------------------------------------
+// Technical Analysis snapshot
+// --------------------------------------------------------------------------
+
+import type { TASnapshot } from "~/domain/market";
+
+/**
+ * Single-point TA indicators for a stock.
+ * Endpoint: POST /ta/ta/indicators
+ * Body: { code: string; date: string } — date is today in ISO format (YYYY-MM-DD)
+ */
+export async function fetchTASnapshot(code: string): Promise<TASnapshot> {
+  const today = new Date().toISOString().slice(0, 10);
+  const url = `${API_GATEWAY_URL}/ta/ta/indicators`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ code, date: today }),
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, `POST /ta/ta/indicators failed: ${response.status}`);
+  }
+  return response.json() as Promise<TASnapshot>;
+}
+
+// --------------------------------------------------------------------------
 // Macro snapshot
 // --------------------------------------------------------------------------
 

@@ -11,12 +11,15 @@ import {
   fetchKinhDichReading,
   fetchMacroSnapshot,
   fetchPriceHistory,
+  fetchTASnapshot,
 } from "~/lib/api/client";
 import type {
   KinhDichMarket,
   KinhDichReading,
   MacroSnapshot,
+  MacroSignal,
   PricePoint,
+  TASnapshot,
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { StockChart } from "~/components/charts/StockChart";
@@ -33,6 +36,7 @@ const OVERVIEW_TICKERS = [
 interface StockDetail {
   reading: KinhDichReading;
   prices: PricePoint[];
+  ta: TASnapshot | null;
 }
 
 interface LoaderData {
@@ -79,13 +83,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let detailError: string | null = null;
 
   if (selectedStock) {
-    const [readingRes, priceRes] = await Promise.allSettled([
+    const [readingRes, priceRes, taRes] = await Promise.allSettled([
       fetchKinhDichReading(selectedStock),
       fetchPriceHistory(selectedStock, 90), // 90 days for indicator charts
+      fetchTASnapshot(selectedStock),       // TA non-fatal — null on failure
     ]);
 
     if (readingRes.status === "fulfilled" && priceRes.status === "fulfilled") {
-      detail = { reading: readingRes.value, prices: priceRes.value };
+      const ta = taRes.status === "fulfilled" ? taRes.value : null;
+      detail = { reading: readingRes.value, prices: priceRes.value, ta };
     } else {
       detailError =
         readingRes.status === "rejected"
@@ -361,6 +367,277 @@ function StockSearchForm({ defaultValue }: { defaultValue?: string }) {
 }
 
 // --------------------------------------------------------------------------
+// Decision logic
+// --------------------------------------------------------------------------
+
+interface DecisionResult {
+  label: string;
+  textColor: string;
+  bgColor: string;
+  reasons: string[];
+}
+
+export function computeDecision(
+  ta: TASnapshot | null,
+  reading: KinhDichReading,
+  prices: PricePoint[],
+): DecisionResult {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // TA trend
+  if (ta) {
+    if (ta.trend === "BULLISH") {
+      score += 2;
+      reasons.push("TA: BULLISH");
+    } else if (ta.trend === "BEARISH") {
+      score -= 2;
+      reasons.push("TA: BEARISH");
+    } else {
+      reasons.push("TA: NEUTRAL");
+    }
+
+    // RSI
+    if (ta.rsi !== null) {
+      const rsi = ta.rsi;
+      reasons.push(`RSI: ${rsi.toFixed(1)}`);
+      if (rsi < 30) {
+        score += 1; // oversold — recovery potential
+      } else if (rsi >= 30 && rsi < 50) {
+        score += 1; // oversold recovery zone
+      } else if (rsi > 70) {
+        score -= 1; // overbought
+      }
+      // 50–70: neutral, no adjustment
+    }
+  }
+
+  // Kinh Dịch signal
+  const sig = reading.signal.toUpperCase();
+  if (sig.includes("MUA")) {
+    score += 2;
+    reasons.push(`KD: ${reading.signal}`);
+  } else if (sig.includes("BÁN") || sig.includes("BAN")) {
+    score -= 2;
+    reasons.push(`KD: ${reading.signal}`);
+  } else if (sig.includes("THẬN TRỌNG") || sig.includes("THAN TRONG")) {
+    score -= 1;
+    reasons.push(`KD: ${reading.signal}`);
+  } else {
+    reasons.push(`KD: ${reading.signal}`);
+  }
+
+  // Price trend — last close vs 5 sessions ago
+  if (prices.length >= 5) {
+    const last = prices[prices.length - 1].close;
+    const prev5 = prices[prices.length - 5].close;
+    const deltaPct = ((last - prev5) / prev5) * 100;
+    if (deltaPct > 0) {
+      score += 1;
+      reasons.push(`Giá +${deltaPct.toFixed(1)}% (5 phiên)`);
+    } else if (deltaPct < 0) {
+      score -= 1;
+      reasons.push(`Giá ${deltaPct.toFixed(1)}% (5 phiên)`);
+    }
+  }
+
+  // Map score to label + colors
+  if (score >= 4) {
+    return { label: "MUA MẠNH", textColor: "text-green-400", bgColor: "bg-green-950", reasons };
+  }
+  if (score >= 2) {
+    return { label: "MUA", textColor: "text-green-300", bgColor: "bg-green-900/30", reasons };
+  }
+  if (score >= -1) {
+    return { label: "GIỮ", textColor: "text-yellow-400", bgColor: "bg-yellow-900/20", reasons };
+  }
+  if (score >= -3) {
+    return { label: "BÁN", textColor: "text-red-300", bgColor: "bg-red-900/30", reasons };
+  }
+  return { label: "BÁN MẠNH", textColor: "text-red-400", bgColor: "bg-red-950", reasons };
+}
+
+// --------------------------------------------------------------------------
+// Decision panel component
+// --------------------------------------------------------------------------
+
+function AnalysisDecision({
+  ta,
+  reading,
+  prices,
+}: {
+  ta: TASnapshot | null;
+  reading: KinhDichReading;
+  prices: PricePoint[];
+}) {
+  const decision = computeDecision(ta, reading, prices);
+
+  return (
+    <div className={`border-b border-slate-700 px-4 py-4 ${decision.bgColor}`}>
+      <div className="flex flex-wrap items-center gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            Quyết định
+          </p>
+          <span className={`text-2xl font-bold ${decision.textColor}`}>
+            {decision.label}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {decision.reasons.map((r, i) => (
+            <span
+              key={i}
+              className="rounded bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300"
+            >
+              {r}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Info source panel component
+// --------------------------------------------------------------------------
+
+function InfoSourcePanel({
+  ta,
+  reading,
+  prices,
+  snapshot,
+}: {
+  ta: TASnapshot | null;
+  reading: KinhDichReading;
+  prices: PricePoint[];
+  snapshot: MacroSnapshot | null;
+}) {
+  // Build rows from available data
+  const rows: { source: string; indicator: string; value: React.ReactNode }[] = [];
+
+  // Price row
+  if (prices.length > 0) {
+    const last = prices[prices.length - 1];
+    const sessions = prices.length;
+    let priceDelta: React.ReactNode = null;
+    if (prices.length >= 2) {
+      const prev = prices[prices.length - 2].close;
+      const pct = ((last.close - prev) / prev) * 100;
+      priceDelta = (
+        <span className={pct > 0 ? "text-green-400" : pct < 0 ? "text-red-400" : "text-slate-400"}>
+          {pct > 0 ? "↑" : pct < 0 ? "↓" : "—"}{Math.abs(pct).toFixed(1)}%
+        </span>
+      );
+    }
+    rows.push({
+      source: "Stock Price",
+      indicator: `${sessions} phiên`,
+      value: (
+        <span className="text-slate-200">
+          {last.close.toLocaleString("vi-VN")} {priceDelta}
+        </span>
+      ),
+    });
+  }
+
+  // TA rows
+  if (ta) {
+    rows.push({
+      source: "TA service",
+      indicator: "RSI(14)",
+      value: (
+        <span className="text-slate-200">
+          {ta.rsi !== null ? ta.rsi.toFixed(1) : "—"}
+          {" · "}
+          <span className={ta.trend === "BULLISH" ? "text-green-400" : ta.trend === "BEARISH" ? "text-red-400" : "text-slate-400"}>
+            {ta.trend}
+          </span>
+        </span>
+      ),
+    });
+    if (ta.macd !== null) {
+      const hist = ta.macd.histogram;
+      rows.push({
+        source: "TA service",
+        indicator: "MACD",
+        value: (
+          <span className={hist > 0 ? "text-green-400" : hist < 0 ? "text-red-400" : "text-slate-400"}>
+            {hist > 0 ? "+" : ""}{hist.toFixed(3)} ({hist > 0 ? "tăng" : hist < 0 ? "giảm" : "ngang"})
+          </span>
+        ),
+      });
+    } else {
+      rows.push({ source: "TA service", indicator: "MACD", value: <span className="text-slate-500">—</span> });
+    }
+  } else {
+    rows.push({ source: "TA service", indicator: "RSI(14)", value: <span className="text-slate-500">—</span> });
+    rows.push({ source: "TA service", indicator: "MACD", value: <span className="text-slate-500">—</span> });
+  }
+
+  // Kinh Dịch row
+  rows.push({
+    source: "Kinh Dịch",
+    indicator: `Quẻ #${reading.hexagram}`,
+    value: (
+      <span className="text-slate-200">
+        <span className={`font-semibold ${signalColor(reading.signal)}`}>{reading.signal}</span>
+        {" · "}
+        {confidencePct(reading.confidence)}
+      </span>
+    ),
+  });
+
+  // Macro row — highest impact signal
+  if (snapshot && snapshot.signals.length > 0) {
+    const impactRank = (s: MacroSignal) =>
+      s.impact === "HIGH" ? 3 : s.impact === "MEDIUM" ? 2 : 1;
+    const topSignal = [...snapshot.signals].sort((a, b) => impactRank(b) - impactRank(a))[0];
+    rows.push({
+      source: "Macro",
+      indicator: indicatorLabel(topSignal.indicator),
+      value: (
+        <span className="text-slate-200">
+          <span className={topSignal.direction === "BULLISH" ? "text-green-400" : topSignal.direction === "BEARISH" ? "text-red-400" : "text-slate-400"}>
+            {topSignal.direction}
+          </span>
+          {" · "}
+          <span className="text-slate-400">{topSignal.impact}</span>
+        </span>
+      ),
+    });
+  }
+
+  return (
+    <div className="border-b border-slate-700 px-4 py-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+        Nguồn dữ liệu
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-700 text-xs text-slate-400">
+              <th className="py-1.5 text-left pr-4 font-medium">Nguồn</th>
+              <th className="py-1.5 text-left pr-4 font-medium">Chỉ số</th>
+              <th className="py-1.5 text-left font-medium">Giá trị</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i} className="border-b border-slate-800 last:border-0">
+                <td className="py-1.5 pr-4 text-xs text-slate-500">{row.source}</td>
+                <td className="py-1.5 pr-4 text-xs text-slate-400">{row.indicator}</td>
+                <td className="py-1.5 text-xs">{row.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
 // Detail panel
 // --------------------------------------------------------------------------
 
@@ -430,11 +707,13 @@ function MiniPriceTable({ prices }: { prices: PricePoint[] }) {
 function StockDetailPanel({
   detail,
   stock,
+  snapshot,
 }: {
   detail: StockDetail;
   stock: string;
+  snapshot: MacroSnapshot | null;
 }) {
-  const { reading, prices } = detail;
+  const { reading, prices, ta } = detail;
 
   return (
     <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 overflow-hidden">
@@ -456,6 +735,12 @@ function StockDetailPanel({
       <div className="border-b border-slate-700">
         <StockChart prices={prices} height={560} />
       </div>
+
+      {/* Decision panel — synthesized buy/sell/hold */}
+      <AnalysisDecision ta={ta} reading={reading} prices={prices} />
+
+      {/* Info source panel — contributing data sources */}
+      <InfoSourcePanel ta={ta} reading={reading} prices={prices} snapshot={snapshot} />
 
       {/* Bottom: Kinh Dịch + Price table side-by-side */}
       <div className="grid gap-0 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
@@ -587,7 +872,7 @@ export default function AnalysisDashboard() {
           </div>
         )}
         {selectedStock && detail && (
-          <StockDetailPanel detail={detail} stock={selectedStock} />
+          <StockDetailPanel detail={detail} stock={selectedStock} snapshot={snapshot} />
         )}
       </SectionCard>
     </div>

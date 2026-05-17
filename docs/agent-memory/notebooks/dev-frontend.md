@@ -216,3 +216,27 @@ e945f9ea fix(1936/frontend): replace suppressHydrationWarning with ClientTimesta
 
 ## Zone health
 Tier 1-4 complete. 61/61 tests GREEN. tsc clean. React hydration errors eliminated at root level. | HEALTHY
+
+## Cycle 1937 — 2026-05-17 (Info Source + Decision panel on stock detail)
+
+### New features
+- `fetchTASnapshot(code)` — POST /ta/ta/indicators, returns TASnapshot, non-fatal (null on failure)
+- `computeDecision(ta, reading, prices)` — pure scoring function, exported for tests
+- `AnalysisDecision` component — colored banner: MUA MẠNH / MUA / GIỮ / BÁN / BÁN MẠNH + reasons chips
+- `InfoSourcePanel` component — 5-row table: Stock Price, TA RSI, TA MACD, Kinh Dịch, Macro top signal
+- `StockDetailPanel` — updated layout: Chart → Decision → InfoSource → KD/Price table
+
+### Files modified
+- apps/frontend/app/lib/api/client.ts — added fetchTASnapshot (POST /ta/ta/indicators)
+- apps/frontend/app/routes/dashboard.analysis.tsx — loader + 3 new components + updated StockDetailPanel
+
+### Files created
+- apps/frontend/app/__tests__/1937-ta-snapshot.test.ts (6 tests)
+- apps/frontend/app/__tests__/1937-decision-logic.test.ts (10 tests)
+
+### Test result
+- Vitest: 77/77 PASS (9 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Zone health
+Tier 1-4 complete. 77/77 tests GREEN. tsc clean. Stock detail panel now shows Decision + Info Source sections. | HEALTHY

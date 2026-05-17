@@ -14,6 +14,7 @@ All routes live in `apps/frontend/app/routes/`.
 | `dashboard.fetch.tsx` | `/dashboard/fetch` | `GET /news/reuters/headlines`, `GET /news/bloomberg/headlines`, `GET /macro/external` |
 | `dashboard.db.tsx` | `/dashboard/db` | `GET /stock/price/history?code=VNINDEX`, `GET /news/reuters/headlines` |
 | `dashboard.vps.tsx` | `/dashboard/vps` | `GET /health/<service>` × 4 (news, macro, stock, pdf) |
+| `dashboard.analysis.tsx` | `/dashboard/analysis` | `GET /kinh-dich/market`, `POST /macro/snapshot`, `GET /kinh-dich/reading/:code` × N, `GET /stock/price/history?code&days=90`, `POST /ta/ta/indicators` |
 
 ### Loader pattern
 
@@ -68,6 +69,59 @@ Renders time-only via `toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh
 Used in `dashboard.vps.tsx` for per-row `checkedAt` cells.
 
 Source: `apps/frontend/app/components/ClientTimestamp.tsx:70`
+
+## Analysis Dashboard — Stock Detail Panel (`dashboard.analysis.tsx`)
+
+When `?stock=CODE` is present in the URL, the loader fetches three data sources in parallel via `Promise.allSettled()`:
+
+1. `GET /kinh-dich/reading/:code` — Kinh Dịch reading (required)
+2. `GET /stock/price/history?code&days=90` — 90-day OHLCV (required)
+3. `POST /ta/ta/indicators` body `{ code, date: "YYYY-MM-DD" }` — TA snapshot (non-fatal, null on failure)
+
+TA fetch failure is non-fatal: `detail.ta = null` is valid and the UI degrades gracefully (shows "—" for TA rows).
+
+### Detail panel layout
+
+```
+[Chart — full width (StockChart, 560px)]
+[AnalysisDecision — full width, colored background]
+[InfoSourcePanel — full width, 5-row data source table]
+[Kinh Dịch column | Price table column]
+```
+
+### `computeDecision` scoring
+
+Pure function exported from the route for testability.
+
+| Condition | Score |
+|---|---|
+| TA trend BULLISH | +2 |
+| TA trend BEARISH | −2 |
+| KD signal contains "MUA" | +2 |
+| KD signal contains "BÁN" | −2 |
+| KD signal contains "THẬN TRỌNG" | −1 |
+| RSI 30–50 | +1 |
+| RSI > 70 | −1 |
+| RSI < 30 | +1 (oversold recovery) |
+| close[-1] > close[-5] | +1 |
+| close[-1] < close[-5] | −1 |
+
+| Score | Label | Color |
+|---|---|---|
+| ≥ 4 | MUA MẠNH | text-green-400 bg-green-950 |
+| 2–3 | MUA | text-green-300 bg-green-900/30 |
+| −1–1 | GIỮ | text-yellow-400 bg-yellow-900/20 |
+| −2–−3 | BÁN | text-red-300 bg-red-900/30 |
+| ≤ −4 | BÁN MẠNH | text-red-400 bg-red-950 |
+
+### `fetchTASnapshot`
+
+```ts
+fetchTASnapshot(code: string): Promise<TASnapshot>
+// POST /ta/ta/indicators { code, date: "YYYY-MM-DD" }
+```
+
+Located in `app/lib/api/client.ts`. Response shape defined in `app/domain/market.ts` as `TASnapshot`.
 
 ## UI Components (shadcn/ui primitives)
 
