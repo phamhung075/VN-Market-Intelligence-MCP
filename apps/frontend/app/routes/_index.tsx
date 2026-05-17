@@ -2,6 +2,7 @@
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, NavLink } from "@remix-run/react";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { fetchGatewayHealth, type GatewayHealth } from "~/lib/api/client";
 
 export const meta: MetaFunction = () => {
@@ -105,11 +106,7 @@ export default function Index() {
         <h1 className="text-3xl font-bold tracking-tight text-slate-100">{message}</h1>
         <p className="text-sm text-slate-500">
           Last updated:{" "}
-          <span suppressHydrationWarning>
-            {new Date(timestamp).toLocaleString("vi-VN", {
-              timeZone: "Asia/Ho_Chi_Minh",
-            })}
-          </span>
+          <ClientTimestamp iso={timestamp} />
         </p>
         {gateway && (
           <p className="text-sm text-slate-400">

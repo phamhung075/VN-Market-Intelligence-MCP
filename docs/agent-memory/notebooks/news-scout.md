@@ -1,5 +1,25 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 17:21 UTC | **Status:** OK (off-hours cycle complete)
+
+### Cycle (17:19–17:21 UTC)
+- Items: 20 | Impacts: 8 (impact≥6) | Signals: [urgent_news #3316/HPG, urgent_news #3317/VIC, chain_catalyst #3318/PC1-utilities] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread | Filter hints: [default — no feedback tuning]
+- Cycle status: COMPLETE | Log ID: 951 | Signal IDs: 3316, 3317, 3318
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33%, Brent=$109.26, Gold=$4,561.9, USD/VND=26,350
+- Dedup gate (180min window): 3 suppressions (Bill Gates securities overlap with #3312, Dragon Capital 3-catalyst overlap with #3312, BAF profit forecast already covered); 3 new posts (HPG steel, VIC real_estate, PC1 crisis)
+- Top high-impact items analyzed:
+  * #1 [GLOBAL] [BEARISH] "Cổ phiếu PLX bốc hơi 40% từ đỉnh" (9/10 impact) — SUPPRESSED: already posted as chain_catalyst #3311 in prior cycle
+  * #2 [COUNTRY] [BULLISH] "One steel stock unexpectedly 'cháy hàng' despite losses" (8/10 impact, steel sector) → urgent_news #3316 posted for HPG (regime_adj=8.0 under TIGHTENING×1.0, export positive signal)
+  * #3 [COUNTRY] [BULLISH] "Dragon Capital CEO names forgotten real estate stocks — VIC" (8/10 impact, VIC direct mention) → urgent_news #3317 posted (regime_adj=6.5 under TIGHTENING×0.7, value play thesis)
+  * #4 [COUNTRY] [BEARISH] "PC1 Chairman arrested, emergency delegation notice" (6-8/10 impact, utilities/construction legal crisis) → chain_catalyst #3318 posted (event_type=legal, regime_adj=6.5, bearish direction, affected_stocks=[POW,PPC])
+- Suppressed by dedup (within 180min window):
+  * Bill Gates charity fund selling Microsoft but investing Vietnam securities (7/10 impact) — matches #3312 securities catalyst (same theme, within 180m)
+  * Agriseco names 5 high-dividend stocks (8/10 impact) — generic securities advice, overlaps #3310/#3312
+  * BAF profit forecast explode 485% (8/10 impact) — earnings theme, awaiting historical context LanceDB (dedup skipped due to no match)
+- Historical context (Stage 1b): 0/3 search_similar_context returned match (PLX, PDR, Dragon Capital — all LanceDB empty); no historical context prepended
+- Notes: Market CLOSED (off-hours 17:21 UTC Friday). No PMI data. No gold >3% spike. No commodity >5% moves (Brent stable @$109.26). Prices are stale (>24h from 08:59 UTC). Off-hours cycle showing strong continued watchlist interest in real_estate (VIC) + steel (HPG) sectors + utilities crisis (PC1). Carry regime FII_OUTFLOW_RISK persists — currency pressure 26,350 affecting importers (aviation, automotive) while benefiting exporters (steel HPG).
+
 **Last updated:** 2026-05-17 16:21 UTC | **Status:** OK (market closed)
 
 ### Cycle (16:19–16:21 UTC)

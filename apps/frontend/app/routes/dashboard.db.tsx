@@ -143,22 +143,22 @@ function PriceTable({
               }`}
             >
               <td className="px-3 py-2 font-mono text-slate-300">{p.date}</td>
-              <td className="px-3 py-2 text-right font-semibold text-slate-100">
+              <td suppressHydrationWarning className="px-3 py-2 text-right font-semibold text-slate-100">
                 {p.close.toLocaleString("vi-VN")}
               </td>
-              <td className="px-3 py-2 text-right text-slate-400">
+              <td suppressHydrationWarning className="px-3 py-2 text-right text-slate-400">
                 {p.open != null ? p.open.toLocaleString("vi-VN") : "—"}
               </td>
-              <td className="px-3 py-2 text-right text-green-400">
+              <td suppressHydrationWarning className="px-3 py-2 text-right text-green-400">
                 {p.high != null ? p.high.toLocaleString("vi-VN") : "—"}
               </td>
-              <td className="px-3 py-2 text-right text-red-400">
+              <td suppressHydrationWarning className="px-3 py-2 text-right text-red-400">
                 {p.low != null ? p.low.toLocaleString("vi-VN") : "—"}
               </td>
               <td className="px-3 py-2 text-right">
                 <PriceDirectionBadge close={p.close} open={p.open} />
               </td>
-              <td className="px-3 py-2 text-right text-slate-400">
+              <td suppressHydrationWarning className="px-3 py-2 text-right text-slate-400">
                 {p.volume != null ? p.volume.toLocaleString("vi-VN") : "—"}
               </td>
             </tr>

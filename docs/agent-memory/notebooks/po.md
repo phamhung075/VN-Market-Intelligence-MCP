@@ -1,35 +1,33 @@
 # PO Notebook
 
-## Last updated: 2026-05-17T17:37:54Z · Cycle: c167 — merge & sign-off (fetch-ops sprint)
+## Last updated: 2026-05-17T17:45:38Z · Cycle: c168 — triage idle + hydration observation
 
-### c167 session summary
+### c168 session summary
 
-**Spawn context:** User-directed PO sign-off on `task/calendar-source-10s-timeout` (14 commits) after dev-team Fetch Ops bug-fix session. All fixes complete, tests pass.
+**Spawn context:** dev-team cycle c168 triage. pendingSignals drained, no new Telegram reports. User reported new observation via Chrome extension: 12 React hydration errors on Fetch Ops page after c167 ClientTimestamp fix shipped.
 
-**Merge executed:**
-- Branch `task/calendar-source-10s-timeout` (14 commits) → `main` via `--no-ff` merge commit `3af610a0`.
-- Task branch deleted post-merge.
-- Zones covered: `news-fetch` (Reuters+Bloomberg), `macro-indicators` (calendar timeout), `frontend` (hydration + MacroPanel shape), plus 4 notebook chores.
-- Main now 7 commits ahead of origin/main (not pushed — user discretion).
+**Triage decision:** NOTHING (idle) + 1 OBSERVE task added.
 
-**TASKS.md updates:**
-- `news-bugs-reuters-bloomberg-fix` Review → Done (3af610a0 merge).
-- New Done entries for `1936-frontend-hydration-clientimstamp`, `macro-calendar-timeout-cap`, `1934-macropanel-data-shape` (separating the 4 distinct fixes for audit traceability).
-- New OBSERVE task `calendar-source-replacement` (LOW, dev-macro-indicators) — calendar endpoint permanently unreachable, needs replacement-or-wontfix decision.
-- Review queue now empty.
+**Hydration error assessment:**
+- c167 ClientTimestamp component fix is structurally correct (defer render → client mount eliminates timestamp SSR/CSR drift).
+- User did NOT verify against a clean `bun run dev` restart — session had been HMR-thrashed for multiple hours during the fix.
+- Vite dev HMR stale-module artifact is the dominant hypothesis (old module versions retained in memory; new ClientTimestamp not bound on already-mounted instances).
+- No production impact (React full client render fallback). Prod SSR build not exercised in this dev session.
+- Spawning FIX now = chasing phantom. Cheaper insurance: encode clean-restart verification as OBSERVE task; promote to FIX only on persistence evidence.
 
-**Signal dashboard read:**
-- `## po` row `tnb-20260517T150000` NEW — Overall GOOD direction IMPROVING. Marked READ via this notebook ACK. PO c160 status carries forward (all major blockers cleared except 1907a digest-predict CRITICAL + 1897b USER F1 Docker exclude).
+**TASKS.md update:**
+- Added `1936b-hydration-verify-clean-restart` (LOW OBSERVE, owner=user) under Todo.
 
-**Channel audit:** MCP `read_telegram_reports` not available in Claude Code session (12th consecutive cycle per TNB c66). Substituted with: signal dashboard + processed signals review + dev notebooks (dev-frontend c1934-1936, dev-macro-indicators c1936). All show clean cycles, tests green, Docker rebuild done for macro.
+**Signal written:** `docs/signals/po-signoff-c168.json` (decision NOTHING, batch=[], notes hydration OBSERVE plan).
 
-**WIP after merge:** 0 In Progress. Review empty. Backlog stable.
+**Git state:** main 7 commits ahead of origin/main (unchanged from c167). User-discretion push.
 
 ### Carry-over for next cycle
 
-- **1907a digest-predict** CRITICAL OPS — 7-day silence. Still USER-ACTION (Claude Desktop MCP connector in scheduled tasks). No PO action available.
-- **1897b USER F1** — Docker .git/ VirtioFS exclude. Still USER-ACTION.
-- **calendar-source-replacement** OBSERVE — surface to architect or product if calendar feature still required, else wontfix.
-- **BCTC Q1-2026 banking cohort** (TNB c66 finding #2) — FA + report-analyzer must call `get_bctc_full` on next live cycle to verify the 7-bank coverage.
-- **Push to origin/main** — main now 7 commits ahead. User-discretion (no auto-push policy).
-- **Bloomberg "articles []" residual** — RSS fallback was added in this merge (bloomberg-rss.ts); next news-fetch live cycle should confirm whether `/news/bloomberg/headlines` returns populated array. If still `[]` → new FIX task.
+- **1907a digest-predict** CRITICAL OPS — still USER-ACTION (Claude Desktop MCP connector).
+- **1897b USER F1** — still USER-ACTION (Docker .git/ VirtioFS exclude).
+- **1936b-hydration-verify-clean-restart** OBSERVE — awaiting user clean-restart verification. If reported persistent → spawn FIX with browser console capture (network tab + React DevTools component diff).
+- **calendar-source-replacement** OBSERVE — surface to architect or wontfix.
+- **BCTC Q1-2026 banking cohort** (TNB c66 #2) — next FA live cycle should call `get_bctc_full` for 7-bank coverage verification.
+- **Bloomberg "articles []" residual** — RSS fallback shipped in c167 merge; next news-fetch live cycle confirms population.
+- **Push to origin/main** — 7 commits pending, user discretion.
