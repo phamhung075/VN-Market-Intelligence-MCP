@@ -1,5 +1,19 @@
 # dev-team notebook
 
+## Current state (c161 — 2026-05-17T13:07Z)
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: inbox empty (0 signals).
+- TASKS.md: no codeable work. All open items are USER-ACTION or MONITORING/OBSERVE.
+- Session gate: idle EXIT.
+- Parallel commits landed from cowork agents since c160: b3d9ce18 (ARCHITECTURE.md), 7987d247 (news-scout notebook), 642b7114 (frontend scaffold files), a1405881 (signals drain), 1a8c5007 (signal-dashboard skill), 7f52a859 (cowork notebooks).
+- Open USER-ACTION items for user: 1907a (Claude Desktop digest-predict), 1862c-E-dashboard (Cloudflare SSE ingress), 1897b (Docker .git/ exclusion).
+
+## c161 cycle log
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: inbox empty.
+- PO triage: NOTHING — all open tasks are USER-ACTION, MONITORING, or OBSERVE.
+- Session gate: idle EXIT.
+
 ## Current state (c160 — 2026-05-17T12:07Z)
 - PREFLIGHT: HEAD.lock absent. Worktree prune clean.
 - Drain: 2 signals (SPIKE-1933a brief_complete + TNB c65 audit-handoff). Both NEW, dual-record written to signals.db.
