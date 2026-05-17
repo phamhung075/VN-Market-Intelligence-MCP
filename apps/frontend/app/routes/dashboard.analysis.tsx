@@ -1,11 +1,11 @@
 /**
  * /dashboard/analysis — Agent market analysis.
  * Sections: Kinh Dịch market signal, macro signals, stock table, detail panel.
- * ?stock=CODE — loads full Kinh Dịch reading + price history for that ticker.
+ * ?stock=CODE — loads full Kinh Dịch reading + 90-day OHLCV for chart rendering.
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, Form, useSearchParams } from "@remix-run/react";
+import { useLoaderData, Link, Form } from "@remix-run/react";
 import {
   fetchKinhDichMarket,
   fetchKinhDichReading,
@@ -19,6 +19,7 @@ import type {
   PricePoint,
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { StockChart } from "~/components/charts/StockChart";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -80,7 +81,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (selectedStock) {
     const [readingRes, priceRes] = await Promise.allSettled([
       fetchKinhDichReading(selectedStock),
-      fetchPriceHistory(selectedStock),
+      fetchPriceHistory(selectedStock, 90), // 90 days for indicator charts
     ]);
 
     if (readingRes.status === "fulfilled" && priceRes.status === "fulfilled") {
@@ -436,7 +437,7 @@ function StockDetailPanel({
   const { reading, prices } = detail;
 
   return (
-    <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 space-y-0 overflow-hidden">
+    <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-blue-800 bg-blue-950 px-4 py-3">
         <div className="flex items-center gap-3">
@@ -444,12 +445,19 @@ function StockDetailPanel({
           <span className={`text-sm font-semibold ${signalColor(reading.signal)}`}>
             {reading.signal}
           </span>
+          <span className="text-xs text-slate-500">{prices.length} phiên</span>
         </div>
         <Link to="." className="text-xs text-slate-400 hover:text-slate-200">
           ✕ đóng
         </Link>
       </div>
 
+      {/* Chart — full width, client-only render */}
+      <div className="border-b border-slate-700">
+        <StockChart prices={prices} height={560} />
+      </div>
+
+      {/* Bottom: Kinh Dịch + Price table side-by-side */}
       <div className="grid gap-0 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
         {/* Kinh Dịch details */}
         <div className="p-4 space-y-3">
@@ -493,7 +501,7 @@ function StockDetailPanel({
           )}
         </div>
 
-        {/* Price history */}
+        {/* Recent price table */}
         <div className="p-4 space-y-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Lịch sử giá — 7 phiên gần nhất

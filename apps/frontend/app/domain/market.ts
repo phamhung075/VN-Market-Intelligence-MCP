@@ -131,3 +131,18 @@ export interface MacroSnapshot {
   signals: MacroSignal[];
   fetchedAt: string;
 }
+
+// --------------------------------------------------------------------------
+// Technical Analysis types
+// --------------------------------------------------------------------------
+
+/** Single-point TA snapshot from POST /ta/ta/indicators */
+export interface TASnapshot {
+  code: string;
+  rsi: number | null;
+  macd: { line: number; signal: number; histogram: number } | null;
+  movingAverages: { ma5: number | null; ma20: number | null; ma50: number | null };
+  bollingerBands: { upper: number; mid: number; lower: number } | null;
+  trend: "BULLISH" | "BEARISH" | "NEUTRAL";
+  computedAt: string;
+}

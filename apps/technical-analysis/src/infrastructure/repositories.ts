@@ -24,16 +24,15 @@ export class SQLitePriceRepository implements PriceHistoryRepository {
   async getHistory(code: string, days: number): Promise<CandleStick[]> {
     const rows = this.db.query<PriceRow, [string, number]>(
       `SELECT
-         date(fetched_at) AS day,
-         MIN(price)       AS low,
-         MAX(price)       AS high,
-         AVG(price)       AS close,
-         AVG(price)       AS open,
-         SUM(volume)      AS volume
-       FROM market_prices
+         date      AS day,
+         open,
+         high,
+         low,
+         close,
+         volume
+       FROM daily_ohlcv
        WHERE code = ?
-         AND fetched_at >= date('now', ? || ' days')
-       GROUP BY date(fetched_at)
+         AND date >= date('now', ? || ' days')
        ORDER BY day ASC`,
     ).all(code, -days);
 
