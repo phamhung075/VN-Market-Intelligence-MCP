@@ -102,7 +102,7 @@ for r in cur.fetchall(): print(r)
 
 ## False Positive: `url=MISSING` in bctc_vps_queue
 
-`url=MISSING` rows are from the OLD push-based flow and are irrelevant. Pull-based rows have `source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'`. Do not trigger `enrich-bctc-urls.sh` based on this.
+`url=MISSING` rows are from the OLD push-based flow and are irrelevant. Pull-based rows have `source_url LIKE 'http://$VINAHOST_IP:8765/bctc-files/%'` (VPS host → `jq '.project.infrastructure.vps.host' docs/data/system-map.json`). Do not trigger `enrich-bctc-urls.sh` based on this.
 
 **Notebook write** → `docs/agent-memory/notebooks/ops.md`
 

@@ -31,18 +31,15 @@ NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 **Why:** rebuilds can collateral-damage neighbour services (port re-binding, network race). c71 incident (2026-05-13): `--force-recreate macro-indicators` for FRED activation knocked mcp-server gateway port 3000; 3 cowork agents + dev-team blocked ~50 min before detection. Single-service success in isolation ≠ fleet healthy.
 
 **Procedure (run after EVERY rebuild, before declaring success):**
+
+Service port list → `jq '.project.microservices[] | {id, port}' docs/data/system-map.json`
+Query patterns → `.claude/skills/system-map-query/SKILL.md`
+
 ```bash
-docker-compose ps                                    # all 9 services Up? note any Restarting/Exit
+docker-compose ps                                    # all services Up? note any Restarting/Exit
 docker port mcp-server 3000                          # gateway port still bound?
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/health      # expect 200
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5004/health      # macro-indicators
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5001/health      # technical-analysis
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5002/health      # stock-price
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5003/health      # api-gateway
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5005/health      # kinh-dich
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5006/health      # alert-engine
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5007/health      # pdf-extractor
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5008/health      # rag-service (if up)
+# curl health check each service at its port from system-map.json:
+jq -r '.project.microservices[] | "curl -s -o /dev/null -w \"%{http_code}\\n\" http://localhost:\(.port)/health  # \(.id)"' docs/data/system-map.json
 ```
 
 **Pass:** all containers `Up`, port 3000 bound, all `/health` return 200.

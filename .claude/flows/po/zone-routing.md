@@ -10,17 +10,13 @@ Single SSOT for zone assignment — every FIX/SPRINT-* task entry MUST resolve t
 
 Resolve `zone:` for every FIX/SPRINT entry using this table before writing the task:
 
-| Hint in BUG message / affected file | Zone | dev-* specialist |
+Zone→specialist data → `jq '.project.zones[]' docs/data/system-map.json`
+Query patterns → `.claude/skills/system-map-query/SKILL.md`
+
+Match hint keywords against `.keywords[]` in each zone entry to pick `path` and `specialist`. Fallback rows:
+
+| Hint | Zone | Specialist |
 |---|---|---|
-| MCP tool / cron / market orchestration / `apps/mcp-server/` path | `apps/mcp-server/` | dev-mcp-server |
-| HTTP routing / gateway / health agg / `apps/api-gateway/` | `apps/api-gateway/` | dev-api-gateway |
-| price fallback / VPS bridge / quote agg / `apps/stock-price/` | `apps/stock-price/` | dev-stock-price |
-| RSI / MACD / BB / indicator math / `apps/technical-analysis/` | `apps/technical-analysis/` | dev-technical-analysis |
-| SBV FX / commodity / macro trend / `apps/macro-indicators/` | `apps/macro-indicators/` | dev-macro-indicators |
-| hexagram / I-Ching / kinh dich / `apps/kinh-dich-service/` | `apps/kinh-dich-service/` | dev-kinh-dich |
-| dedup / cooldown / Telegram dispatch / `apps/alert-engine/` | `apps/alert-engine/` | dev-alert-engine |
-| BCTC / OCR / Vietnamese parse / `apps/pdf-extractor/` | `apps/pdf-extractor/` | dev-pdf-extractor |
-| embeddings / LanceDB / semantic search / `apps/rag-service/` | `apps/rag-service/` | dev-rag-service |
 | cross-service / root / scripts/ / Docker / shared infra | `cross-service/` | generic developer |
 | affects 2+ apps/ subtrees | `multi` | architect must split |
 
