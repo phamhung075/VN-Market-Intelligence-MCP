@@ -19,7 +19,19 @@
 import type { ReutersNewsPort } from '../../domain/repositories.js';
 import { NewsSource, type Article, type FetchResult } from '../../domain/models.js';
 
-const REUTERS_RSS_URL = 'https://feeds.reuters.com/reuters/businessNews';
+/**
+ * feeds.reuters.com was decommissioned in 2020 — DNS no longer resolves.
+ * Replacement: Google News RSS search for "reuters business news", sourced from
+ * reuters.com results. Returns ~100 items; no time restriction needed because
+ * Google News naturally surfaces recent articles first.
+ *
+ * The `when:24h+allinurl:reuters.com` variant was tested and returned 0 items
+ * (Google News query syntax changed). The keyword search reliably returns ≥ 50
+ * Reuters-sourced articles and matches the same pattern used in the mcp-server
+ * infrastructure/fetchers/reuters.ts fallback.
+ */
+const REUTERS_RSS_URL =
+  'https://news.google.com/rss/search?q=reuters+business+news&ceid=US:en&hl=en-US&gl=US';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';

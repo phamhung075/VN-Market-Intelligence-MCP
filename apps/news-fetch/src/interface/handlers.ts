@@ -56,8 +56,21 @@ export function createRouter(
 
     // Fallback: RSS error or empty feed → try Playwright stealth
     if (rssResult.error != null || rssResult.articles.length === 0) {
+      if (rssResult.error != null) {
+        console.warn('[reuters/headlines] RSS primary failed, invoking stealth fallback', {
+          rssError: rssResult.error,
+        });
+      } else {
+        console.warn('[reuters/headlines] RSS primary returned 0 articles, invoking stealth fallback');
+      }
       const fallbackUseCase = new FetchReutersHeadlinesUseCase(fallbackPort);
-      return fallbackUseCase.execute(maxItems);
+      const fallbackResult = await fallbackUseCase.execute(maxItems);
+      if (fallbackResult.articles.length === 0) {
+        console.warn('[reuters/headlines] stealth fallback also returned 0 articles', {
+          fallbackError: fallbackResult.error ?? 'none',
+        });
+      }
+      return fallbackResult;
     }
 
     return rssResult;

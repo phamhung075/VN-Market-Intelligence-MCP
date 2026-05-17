@@ -27,9 +27,23 @@ export const app = createRouter(
 // ── Server binding (skipped when imported in tests) ───────────────────────────
 const PORT = parseInt(Bun.env.PORT ?? '5008', 10);
 
+/**
+ * idleTimeout: 0 = no idle timeout.
+ *
+ * Bloomberg and Reuters stealth scrapers use Playwright with a 30-second page
+ * navigation timeout. Bun's default idleTimeout is 10 seconds, which causes the
+ * server to close the connection before Playwright returns — producing an empty
+ * reply that the api-gateway surfaces as 502 Bad Gateway.
+ *
+ * Setting idleTimeout to 0 disables the idle timeout entirely. The Playwright
+ * scrapers have their own timeouts (PAGE_TIMEOUT_MS = 25–30 s) plus an outer
+ * try/catch, so requests will always resolve without relying on the server-level
+ * idle timeout for termination.
+ */
 export default {
   port: PORT,
   fetch: app.fetch,
+  idleTimeout: 0,
 };
 
 console.log(`news-fetch running on port ${PORT}`);
