@@ -56,8 +56,130 @@ export interface GatewayHealth {
   status: "ok" | "degraded" | "down";
   services: Record<string, "ok" | "degraded" | "down">;
   timestamp: string;
+  latencies?: Record<string, number>;
+  checkedAt?: string;
 }
 
 export async function fetchGatewayHealth(): Promise<GatewayHealth> {
   return apiGet<GatewayHealth>("/health");
+}
+
+// --------------------------------------------------------------------------
+// Service health
+// --------------------------------------------------------------------------
+
+import type { ServiceHealth } from "~/domain/health";
+
+/**
+ * Per-service health detail.
+ * Endpoint: GET /health/:service
+ */
+export async function fetchServiceHealth(service: string): Promise<ServiceHealth> {
+  const raw = await apiGet<unknown>(`/health/${service}`);
+  if (raw !== null && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    return {
+      service,
+      status: isServiceStatus(obj["status"]) ? obj["status"] : "down",
+      latency: typeof obj["latency"] === "number" ? obj["latency"] : undefined,
+      checkedAt: typeof obj["checkedAt"] === "string" ? obj["checkedAt"] : undefined,
+      error: typeof obj["error"] === "string" ? obj["error"] : undefined,
+    };
+  }
+  return { service, status: "down" };
+}
+
+function isServiceStatus(v: unknown): v is "ok" | "degraded" | "down" {
+  return v === "ok" || v === "degraded" || v === "down";
+}
+
+// --------------------------------------------------------------------------
+// News headlines
+// --------------------------------------------------------------------------
+
+import type { Headline } from "~/domain/news";
+
+function toHeadline(item: unknown): Headline | null {
+  if (item === null || typeof item !== "object") return null;
+  const obj = item as Record<string, unknown>;
+  if (typeof obj["title"] !== "string") return null;
+  return {
+    title: obj["title"],
+    url: typeof obj["url"] === "string" ? obj["url"] : undefined,
+    publishedAt: typeof obj["publishedAt"] === "string" ? obj["publishedAt"] : undefined,
+    source: typeof obj["source"] === "string" ? obj["source"] : undefined,
+    summary: typeof obj["summary"] === "string" ? obj["summary"] : undefined,
+  };
+}
+
+function parseHeadlines(raw: unknown): Headline[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(toHeadline).filter((h): h is Headline => h !== null);
+}
+
+/**
+ * Reuters headlines.
+ * Endpoint: GET /news/reuters/headlines
+ */
+export async function fetchReutersHeadlines(): Promise<Headline[]> {
+  const raw = await apiGet<unknown>("/news/reuters/headlines");
+  return parseHeadlines(raw);
+}
+
+/**
+ * Bloomberg headlines.
+ * Endpoint: GET /news/bloomberg/headlines
+ */
+export async function fetchBloombergHeadlines(): Promise<Headline[]> {
+  const raw = await apiGet<unknown>("/news/bloomberg/headlines");
+  return parseHeadlines(raw);
+}
+
+// --------------------------------------------------------------------------
+// Macro data
+// --------------------------------------------------------------------------
+
+import type { MacroData } from "~/domain/market";
+
+/**
+ * External macro snapshot.
+ * Endpoint: GET /macro/external
+ */
+export async function fetchMacroExternal(): Promise<MacroData> {
+  const raw = await apiGet<unknown>("/macro/external");
+  if (raw !== null && typeof raw === "object") {
+    return raw as MacroData;
+  }
+  return { status: "unavailable" };
+}
+
+// --------------------------------------------------------------------------
+// Price history
+// --------------------------------------------------------------------------
+
+import type { PricePoint } from "~/domain/market";
+
+function toPricePoint(item: unknown): PricePoint | null {
+  if (item === null || typeof item !== "object") return null;
+  const obj = item as Record<string, unknown>;
+  if (typeof obj["close"] !== "number") return null;
+  return {
+    date: typeof obj["date"] === "string" ? obj["date"] : "",
+    code: typeof obj["code"] === "string" ? obj["code"] : "",
+    open: typeof obj["open"] === "number" ? obj["open"] : undefined,
+    high: typeof obj["high"] === "number" ? obj["high"] : undefined,
+    low: typeof obj["low"] === "number" ? obj["low"] : undefined,
+    close: obj["close"],
+    volume: typeof obj["volume"] === "number" ? obj["volume"] : undefined,
+  };
+}
+
+/**
+ * Price history for a ticker.
+ * Endpoint: GET /price/history?code=<ticker>
+ */
+export async function fetchPriceHistory(code: string): Promise<PricePoint[]> {
+  const raw = await apiGet<unknown>(`/price/history?code=${encodeURIComponent(code)}`);
+  if (!Array.isArray(raw)) return [];
+  return raw.map(toPricePoint).filter((p): p is PricePoint => p !== null);
 }
