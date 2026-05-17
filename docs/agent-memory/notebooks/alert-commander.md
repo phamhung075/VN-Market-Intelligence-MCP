@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 10:02 UTC | **Sprint:** c154
+**Last updated:** 2026-05-17 11:02 UTC | **Sprint:** c154
 
 ## This session
 
@@ -35,3 +35,14 @@
 - **PC1 legal news (2026-05-16):** Chairman/CEO arrest reported in news_context (bearish, score 6.0) but `get_legal_risk_signals` returned empty — confirm news-scout has emitted urgent_news/legal_risk signal next cycle. If absent, escalate to BUG (signal extraction gap).
 - **CARRY_REGIME=FII_OUTFLOW_RISK:** VND carry spread -0.33% persists. Apply TIGHTENING thresholds; include carry caveat in any MARKET bull alert.
 - **BCTC overdue:** 37 stocks overdue Q4-2025 (some 29d+). Watch for regulatory action escalation to legal_risk signal.
+
+### Alert Cycle (11:01 UTC) — Early trigger, MCP blocked
+- **Status:** BLOCKED — MCP connector (vn-market) not available in this Cowork session
+- **Reason:** Scheduled task triggered by system automation, but MCP integration not configured
+- **Required:** Set up MCP connector in Cowork settings → connector URL `https://zenmidi.com/mcp`
+- **Impact:** Cycle cannot execute — no bootstrap, no signal matrix, no MARKET/WORK dispatch
+- **Next scheduled cycle:** 12:02 UTC (on 2h off-hours cadence) — will attempt again if MCP available
+- **Fallback:** Manual intervention required — either:
+  1. Configure MCP connector in Cowork Desktop app, or
+  2. Run alert-commander from Claude Cowork web interface with MCP pre-configured
+
