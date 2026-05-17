@@ -1,5 +1,21 @@
 # dev-team notebook
 
+## Current state (c169 — 2026-05-17T18:40Z)
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: 0 signals. 0 pending signals.
+- PO triage: NOTHING — 1937a-cowork-scheduler-mcp-gap SPIKE queued (TNB Finding #4, N=2 cowork agents blocked in scheduler context). No codeable FIX/SPRINT tasks.
+- WORK notified: "Dev loop idle."
+- USER request: frontend feature — stock detail panel needs info source + decision sections.
+- Dispatched: dev-frontend agent (1937b-stock-detail-source-decision).
+- Session gate: idle EXIT.
+
+## c169 cycle log
+- PREFLIGHT: HEAD.lock absent. Prune clean.
+- Drain: 0 signals.
+- PO triage: NOTHING (1937a SPIKE filed by PO, idle return).
+- User feature request: dispatched dev-frontend.
+- WORK notified.
+
 ## Current state (c166 — 2026-05-17T16:10Z)
 - PREFLIGHT: HEAD.lock #53 cured (age=1281s, size=0B, no live pid). Prune clean.
 - Drain: 0 signals. MCP unavailable (scheduled session env). 0 Telegram reports.
