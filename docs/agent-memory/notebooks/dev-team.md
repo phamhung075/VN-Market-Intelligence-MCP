@@ -1,5 +1,16 @@
 # dev-team notebook
 
+## Current state (c165 — 2026-05-17T15:12Z)
+- PREFLIGHT: no locks. Prune clean.
+- Drain: 0 signals. 0 new Telegram reports. Working tree clean.
+- TASKS.md: no codeable work.
+- Session gate: idle EXIT.
+
+## c165 cycle log
+- PREFLIGHT: clean.
+- Drain: empty.
+- Session gate: idle EXIT.
+
 ## Current state (c164 — 2026-05-17T14:12Z)
 - PREFLIGHT: HEAD.lock #52 cured (age=1208s, size=0B, no live pid). index.lock absent. Prune clean.
 - Drain: 1 signal — `qa-responder-mcp-unavailable-20260517T134905Z.json` (type=bug-escalation, severity=critical). NEW fingerprint. Processed → DB + moved to processed/. Result: routed-to-po.
