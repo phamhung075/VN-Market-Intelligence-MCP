@@ -1,8 +1,22 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 04:02 UTC | **Sprint:** c150
+**Last updated:** 2026-05-17 07:02 UTC | **Sprint:** c153
 
 ## This session
+
+### Alert Cycle (07:02 UTC) — BLOCKED (c147/1928a unresolved, 9th consecutive)
+- Cycle 07:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (connector's server isn't responding). 1 retry after 5s also failed identically. BUG telegram attempted (live probe 07:02 UTC) returned identical not-responding error → suppressed (same gateway down). Signal dropped: `docs/signals/alert-commander-2026-05-17T07-02-31Z.json` (dedup_of alert-commander-2026-05-17T06-03-12Z.json, prior routed-to-po at 06:21:12Z).
+- Cross-cycle correlation: 9th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02, 03:02, 04:02, 05:02, 06:03, 07:02 UTC). Market-hours cycle (market opened 02:00 UTC) — 5th consecutive market-hours block. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending — dev-team-c153 confirms Docker CLI still hung, all ports timing out, HEAD.lock stale (4th occurrence). Not re-investigating per error-boundary memory-as-truth prohibition + live probe rule (probe attempted twice, real errors returned → BLOCKED verdict valid).
+- Market-hours cycle (07:02 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts, no log_agent_work (no id returned, no completion call possible). Sprint c153 (per pipeline-state.json updated 06:12 UTC by dev-team-c153).
+- Next scheduled: 07:22 UTC (market hours, every 20 min). Market closes 08:30 UTC — at most 4 more market-hours cycles today before off-hours 2h cadence resumes. If gateway still down, 10th consecutive block expected.
+- Git commit deferred (prior cycles report stale `.git/index.lock` FUSE mount issue — c153 confirms HEAD.lock 4th occurrence). Notebook + signal file are on-disk; next successful cycle picks them up.
+
+### Alert Cycle (05:02 UTC) — BLOCKED (c147/1928a unresolved, 7th consecutive)
+- Cycle 05:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram attempted (live probe 05:02 UTC) returned identical dial error → suppressed (same gateway down). Signal dropped: `docs/signals/alert-commander-2026-05-17T05-02-30Z.json` (dedup_of qa-responder-2026-05-17T04-48-12Z.json).
+- Cross-cycle correlation: 7th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02, 03:02, 04:02, 05:02 UTC). Market-hours cycle (market opened 02:00 UTC) — 4th consecutive market-hours block. news-scout 04:21 UTC + market-watcher 04:40 UTC + qa-responder 04:48 UTC also blocked with identical dial error → cluster-wide gateway outage persists into Sunday 05:02 UTC. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. Not re-investigating per error-boundary memory-as-truth prohibition + live probe rule (probe attempted twice, real errors returned → BLOCKED verdict valid).
+- Market-hours cycle (05:02 UTC). No tool calls succeeded → no signals processed, no MARKET dispatch, no verdicts, no log_agent_work (no id returned, no completion call possible). Sprint c151 (unchanged by this cycle — pipeline-state last updated 04:24 UTC by dev-team-c151).
+- Next scheduled: 05:22 UTC (market hours, every 20 min). If gateway still down, 8th consecutive block expected.
+- Git commit deferred (prior cycles report stale `.git/index.lock` FUSE mount issue). Notebook + signal file are on-disk; next successful cycle picks them up.
 
 ### Alert Cycle (04:02 UTC) — BLOCKED (c147/1928a unresolved, 6th consecutive)
 - Cycle 04:02 — BLOCKED at step 0: MCP gateway vn-market unreachable (dial http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). 1 retry after 5s also failed. BUG telegram suppressed (same gateway down — live attempt 04:02 UTC returned identical dial error). Signal dropped: `docs/signals/alert-commander-2026-05-17T04-02-23Z.json` (dedup_of market-watcher-2026-05-17T03-40-49Z.json).
@@ -518,3 +532,10 @@ Market-hours cycle (05:02 UTC). 1 signal: FPT price_anomaly id=3140 (σ=3.73, co
 - Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false
 - Market: CLOSED (Saturday, off-hours 2h cycle) | Bootstrap retry: 1× (gateway connect refused → recovered)
 - log_agent_work id=923
+
+### Alert Cycle (06:03–06:03 UTC)
+- Signals: N/A — cycle aborted at Step 0
+- Fired: 0 | Suppressed: 0 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: none
+- Regime: UNKNOWN (bootstrap unavailable)
+- **BLOCKED at Step 0**: vn-market MCP gateway not responding (log_agent_work + get_cycle_bootstrap + send_telegram all failed identically after 1 retry). 8th consecutive alert-commander block since 2026-05-16T23:02Z. Signal dropped: docs/signals/alert-commander-2026-05-17T06-03-12Z.json (dedup_of alert-commander-2026-05-17T05-02-30Z.json, already routed-to-po at 05:21:30Z).
