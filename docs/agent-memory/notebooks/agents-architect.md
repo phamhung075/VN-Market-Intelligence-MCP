@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-17T20:44:33Z
+
+**Brief:** `docs/architecture-briefs/2026-05-17-outcome-feedback-loop.md`
+
+No mechanism to verify whether cowork agent signals (BULLISH/BEARISH/NEUTRAL) actually matched price movement; designed a full outcome feedback loop — `signal_outcomes` table (T+24h/T+48h price verification), hourly resolution cron job using `market_prices_history` with stock-price service fallback, accuracy stats query per signal_type + stock_code, `get_accuracy_context` MCP tool for cowork self-calibration, and accuracy badge extension on the existing `/api/signals/stock/:code` endpoint + frontend `dashboard.analysis.tsx`.
+
+**Signal dropped:** `docs/signals/2026-05-17T204433Z-outcome-feedback-loop.json` → agent-father
+
+---
+
 ## 2026-05-17T20:38:03Z
 
 **Brief:** `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`
