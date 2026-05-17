@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1862c-F — SseSessionManager structured 404 + heartbeat eviction (2026-05-17, DONE)
+
+**Mission:** Two fixes to `apps/mcp-server/src/interface/mcp/transport.ts`:
+1. AC-1: 404 error body changed from `{error:"Session not found: <id>"}` to `{error:"session_not_found",sessionId}` — fixed code for reliable client-side comparison.
+2. AC-2: Heartbeat failure catch block now also calls `this.sessions.delete(sessionId)` + `this.heartbeatIntervals.delete(sessionId)` + eviction log — prevents zombie sessions in the Map after client disconnect.
+
+**Testability addition:** `SseSessionManager` constructor gets optional 4th param `_heartbeatIntervalMs` (default 30_000) — overridable in tests to fire at 5ms, avoiding fake timers. Pattern aligns with existing DI approach in the project.
+
+**Test file:** `apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts` — 5 tests, bun:test + `mock.module()`.
+- T1: 404 body shape `{error:"session_not_found",sessionId}`
+- T2: error field is exact code (not interpolated string)
+- T3: heartbeat failure evicts from sessions Map (sessionCount drops 1→0)
+- T4: heartbeat interval cleared after failure (no second-tick log calls)
+- T5: handleMessage to evicted sessionId returns 404
+
+**Results:** 5/5 GREEN. tsc 0 errors. Pre-existing 230-bootstrap AC-4c failure confirmed unrelated.
+**Commits:** `c52982af` (transport + test), `b04b5df1` (TASKS.md)
+
+---
+
 ### Task A + B — Empty tables investigation (2026-05-16)
 
 **Task A — signal_quality_audit (0 rows): LEGITIMATE, no fix needed**
