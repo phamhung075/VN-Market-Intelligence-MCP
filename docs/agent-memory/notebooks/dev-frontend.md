@@ -103,5 +103,32 @@
 - Error resilience: every loader catches ApiError and returns { error: string }
 - Remix nested routing: dashboard.tsx layout + 4 child routes via Outlet
 
+## Cycle 1933 — 2026-05-17 (11-bug fix cycle)
+
+### Bugs fixed
+- BUG 1: suppressHydrationWarning on all timestamp <span> elements (5 pages)
+- BUG 2: Hidden ghost <nav> removed from root.tsx App() — no more duplicate nav in DOM
+- BUG 3: Brand "VN Market Intelligence" is now <Link to="/"> in dashboard.tsx
+- BUG 4: Raw ApiError paths stripped via toUserFriendlyError() in fetch + db routes
+- BUG 5: role="alert" aria-live="polite" on all red error banner divs
+- BUG 6: fetchServiceHealth in client.ts accepts latencyMs/latency_ms/checked_at/timestamp aliases
+- BUG 7: "Reuters Headlines (0)" — space before count badge (aria-hidden)
+- BUG 8: ErrorBoundary now renders inner div only — no nested <html><head><body>
+- BUG 9: ErrorBoundary includes <Link to="/">Return Home</Link>
+- BUG 10: All timestamp labels standardised to "Last updated:"
+- BUG 11: Home page (_index.tsx) now renders full top nav bar matching dashboard.tsx
+
+### New test file
+- app/__tests__/1933-bug-fixes.test.ts (12 tests)
+  - toUserFriendlyError: 5 assertions
+  - fetchServiceHealth alias tolerance: 7 assertions
+
+### Test result
+- Vitest: 45/45 PASS (5 test files)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+72f325e0 fix(1933/frontend): fix 11 UI bugs — hydration, nav, ARIA, error UX
+
 ## Zone health
-Tier 1-4 complete. 33/33 tests GREEN. tsc clean. 4 dashboard pages live. | HEALTHY
+Tier 1-4 complete. 45/45 tests GREEN. tsc clean. All 11 bugs resolved. | HEALTHY
