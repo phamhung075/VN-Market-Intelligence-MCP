@@ -96,3 +96,21 @@ The recovery row at L108 says "Verify CronList shows correct schedule" without s
 
 Fix required before APPROVED:
 - BLOCK-1: `chef-pipeline-runbook.md:13-18` — clarify registered cron = `29 * * * *` (hourly); dispatch windows are internal routing. Update L108 recovery row. Update size-justification to 127L+.
+
+---
+
+## [Fixer] Fix Record
+
+**round:** 1
+**date:** 2026-05-18
+**commit:** 1d425787
+
+- **Issues fixed:**
+  - L3: Updated size-justification from `95L` to `128L`
+  - L20: Added clarification line explaining registered cron is `29 * * * *` (hourly), and table values are dispatch time-windows inside `.claude/flows/unified-agent/main.md`
+  - L110: Updated recovery action to explicitly verify `CronList shows \`29 * * * *\` for unified-agent`
+- **File touched:** 1 (docs/protocols/chef-pipeline-runbook.md)
+- **Verification:** No TypeScript source changed; markdown-only commit. Fix verified against QA BLOCK-1 spec — all 3 edits applied at exact lines.
+- **Status:** READY FOR QA RE-RUN
+
+**NEXT: qa** — re-verify chef-pipeline-runbook.md on branch main.
