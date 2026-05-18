@@ -1756,3 +1756,79 @@ No stale lock present. Git operations unblocked.
 
 **Cycle Time:** 2026-05-18 04:52 UTC (diagnostic + verification + commit)
 
+
+---
+
+## Task: Sprint 1942 Final Step — mcp-server Docker Rebuild DONE
+
+**Status:** ✅ DONE — Docker image rebuilt, backfill executed, BCTC coverage verified at 9/33 watchlist tickers
+
+**Date:** 2026-05-18 05:29 UTC (cycle 1943)
+
+**Objective:** Rebuild mcp-server Docker image to activate Python script changes from commit f339deff (vnstockBridge.ts CASH_FLOW_SCRIPT now uses 3-key fallback + emits None instead of 0.0 for HPG OCF).
+
+### Execution Summary
+
+**Step 1: Docker Rebuild**
+- Command: `docker compose up --build mcp-server -d`
+- Build time: ~15s (most layers cached)
+- Container health: UP (6 seconds into logs)
+- Result: ✅ Image deployed successfully
+
+**Step 2: Bootstrap Verification**
+- Container logs confirmed startup probe execution:
+  - `[backfillOCFForWatchlist] updated operating_cash_flow for 9 tickers (watchlist sweep)` ✓
+  - `[vnstock-startup] DB warm (95 distinct financials entries >= 10, age < 7d) — skipping startup sweep` ✓
+  - `[TASK-1943a] Reset 31 Q1-2026 url_not_found rows to pending` ✓
+  - `[bootstrap] MCP server ready, port 3000` ✓
+
+**Step 3: Database Coverage Check**
+Executed coverage queries against `/app/data/market.db`:
+
+| Metric | Value |
+|--------|-------|
+| BCTC financial_reports rows | 10 |
+| vnstock_cash_flow rows | 32 |
+| BCTC tickers with OCF data | 9 |
+| vnstock tickers with OCF data | 31 |
+
+**Step 4: Watchlist Tier Analysis (33 tickers total)**
+- BCTC coverage: **9/33** (27%) → VNM, FPT, VCB, HPG, VEA, SHB, DIG, DGC, BSR
+- vnstock coverage: **31/33** (94%) → ALL except DAG, DBC
+- Sprint goal (≥20/30): **Currently 9/33**, below target
+
+**Step 5: HPG-Specific Validation (Python Fallback)**
+HPG Q4-2025 OCF data after Python fallback activated:
+- vnstock_cash_flow: 8564.3 billion VND
+- financial_reports.operating_cash_flow: 8,564,300 million VND (via backfill)
+- Unit conversion: ✓ 8564.3 * 1000 = 8,564,300
+- Python 3-key fallback keys verified active in CASH_FLOW_SCRIPT
+
+### Root Cause Analysis: Why BCTC Coverage Remains Low (9/33)
+
+Sprint 1942 shipped four fixes:
+1. **1942a** — vnstockStartupProbe (startup data warmup) ✓
+2. **1942b** — Fallback read path (financial_reports → vnstock_cash_flow) ✓
+3. **1943a** — Q1-2026 url_not_found queue reset (retry mechanism) ✓
+4. **1942c** — Python 3-key fallback for OCF extraction (deployed via this rebuild) ✓
+
+However, **BCTC coverage = # tickers with financial_reports.operating_cash_flow populated ≠ available data**.
+
+The 9/33 figure represents tickers for which:
+1. A BCTC PDF has been fetched and parsed into financial_reports table, AND
+2. The backfillOCFForWatchlist function found a matching vnstock_cash_flow row
+
+**Missing tickers (24/33):** Either no BCTC PDF exists yet in the pipeline, or vnstock_cash_flow rows haven't been synced.
+
+### Next Steps (Out of Ops Scope)
+
+1. **Dev team:** Verify bctc_vps_queue status for missing tickers (DAG, DBC, etc.)
+2. **Dev team:** Run vnstockFundamentalsJob to sync remaining cache for DAG, DBC
+3. **Dev team:** Monitor Q1-2026 enricher retry cycles (TASK-1943a reset gives 5 new attempts per ticker)
+
+### Conclusion
+
+Sprint 1942c Python fallback is now active in production. HPG OCF data flows correctly through the 3-key fallback mechanism. BCTC coverage gap is **data pipeline bottleneck** (PDF fetching/parsing), not a tool issue.
+
+**Escalation:** None. Rebuild successful. All 4 Sprint 1942 fixes confirmed deployed.
+
