@@ -335,51 +335,50 @@ describe('FetchExternalMacroUseCase — new envelope contract', () => {
     });
   });
 
-  describe('calendar per-source timeout — 5s hard cap', () => {
-    it('DEFAULT_TIMEOUTS.calendar is 5_000ms (hard cap: permanently unreachable endpoint)', () => {
-      expect(DEFAULT_TIMEOUTS.calendar).toBe(5_000);
+  describe('calendar — wontfix NullCalendarAdapter (2026-05-18)', () => {
+    it('DEFAULT_TIMEOUTS.calendar is 0 — NullCalendarAdapter needs no budget', () => {
+      expect(DEFAULT_TIMEOUTS.calendar).toBe(0);
     });
 
-    it('calendar source times out when fetch exceeds 5s budget', async () => {
-      // Calendar stub resolves in 10s — must be cut off at ~5s
+    it('calendar source returns ok with [] when NullCalendarAdapter is wired', async () => {
       const useCase = new FetchExternalMacroUseCase(
         makeWorldBank(),
         makeYahoo(),
         makeCnbc(),
         makeTradingEconomics(),
         makeFred(),
-        makeSlowCalendar(10_000),
-        { calendar: 5_000 },
+        makeCalendar([]),  // NullCalendarAdapter equivalent — returns [] immediately
       );
 
       const result = await useCase.execute();
-      expect(result.sources.calendar.status).toBe('timeout');
-      // latencyMs must be >= 5s budget
-      expect(result.sources.calendar.latencyMs).toBeGreaterThanOrEqual(5_000);
-    }, 10_000);
+      expect(result.sources.calendar.status).toBe('ok');
+      expect(result.sources.calendar.data).toEqual([]);
+      expect(result.sources.calendar.latencyMs).toBeLessThan(100);
+    });
 
-    it('slow calendar does not block other sources — others complete while calendar is pending', async () => {
+    it('slow calendar still does not block other sources', async () => {
+      // Verify the isolation guarantee still holds even with slow calendar stub
       const useCase = new FetchExternalMacroUseCase(
         makeWorldBank(),
         makeYahoo(),
         makeCnbc(),
         makeTradingEconomics(),
         makeFred(),
-        makeSlowCalendar(10_000),
-        { calendar: 5_000 },
+        makeSlowCalendar(5000),
+        { calendar: 100 },  // short budget to force timeout in test
       );
 
       const result = await useCase.execute();
 
-      // Calendar timed out
+      // Calendar timed out (slow stub, 100ms budget)
       expect(result.sources.calendar.status).toBe('timeout');
 
-      // All other sources succeeded despite calendar slowness
+      // All other sources succeeded
       expect(result.sources.worldBank.status).toBe('ok');
       expect(result.sources.yahoo.status).toBe('ok');
       expect(result.sources.cnbc.status).toBe('ok');
       expect(result.sources.tradingEconomics.status).toBe('ok');
-    }, 10_000);
+    }, 3000);
   });
 
   describe('FRED not available', () => {

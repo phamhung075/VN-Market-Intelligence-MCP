@@ -24,7 +24,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| calendar-source-replacement | **IN PROGRESS c175** — calendar source endpoint permanently unreachable (5s timeout, never succeeds). Evaluate replacement source OR mark wontfix. AC: replacement adapter implemented OR dead adapter removed from macroRefresh cycle. | LOW | OBSERVE/FIX | dev-macro-indicators | docs/handoffs/calendar-source-replacement.md | — |
+| calendar-source-replacement | **WONTFIX 2026-05-18** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. Commits on task/calendar-source-replacement. | LOW | OBSERVE/FIX | dev-macro-indicators | docs/handoffs/calendar-source-replacement.md | — |
 
 ---
 

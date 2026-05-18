@@ -72,6 +72,31 @@ Zone health: WorldBank adapter unblocked; parallel dispatch pattern now consiste
 
 Zone health: calendar timeout capped at 10s; withTimeout + Promise.all pattern verified; 105 pass / 12 skip / 1 pre-existing fail | HEALTHY
 
+### Session 2026-05-18 — Calendar wontfix: NullCalendarAdapter
+
+**Task:** calendar-source-replacement — evaluate replacement for dead investing.com calendar or remove cleanly.
+
+**Decision:** Wontfix — Option B. No viable free replacement for Vietnam economic calendar events found. Trading Economics already integrated as a separate adapter. All other alternatives (IMF, World Bank, Alpha Vantage) don't provide VN event timing without auth.
+
+**Fix:**
+- Created `NullCalendarAdapter` (implements `InvestingCalendarPort`, returns `[]` instantly) in `investing-economic-calendar.ts`
+- Deprecated `InvestingCalendarAdapter` in same file (dead code, retained as historical reference)
+- `DEFAULT_TIMEOUTS.calendar: 5_000 → 0` in `fetch-external-macro.ts`
+- `index.ts` wired `NullCalendarAdapter` instead of `InvestingCalendarAdapter`
+- `idleTimeout: 120 → 90` (calendar no longer adds to max budget)
+
+**Tests:** 4 new in `investing-economic-calendar.test.ts`:
+- NullCalendarAdapter returns [] immediately
+- countryId arg ignored
+- resolves in under 50ms
+- DEFAULT_TIMEOUTS.calendar === 0
+
+**Result:** 103 pass / 12 skip / 1 pre-existing fail. Test runtime 11s → ~1s (5s calendar timeout stubs eliminated).
+
+**Commit:** d0884c78
+
+Zone health: calendar dead endpoint fully removed from macroRefresh cycle; NullCalendarAdapter zero-cost; test runtime halved to ~1s; 103 pass / 12 skip / 1 pre-existing fail | HEALTHY
+
 ### Session 2026-05-17 — Calendar timeout 10s → 5s + Docker rebuild
 
 **Task:** Reduce calendar timeout to 5s (was 10s in source, but Docker container was still running 30s stale image). Live endpoint confirmed `latencyMs: 30001` before fix.

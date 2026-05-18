@@ -58,11 +58,21 @@
 |------------|-------|
 | `all-ok` | all sources return ok / fetchedAt ISO / ok sources carry data |
 | `one-fail` | worldBank throws → failed + error msg / others still ok |
-| `one-timeout` | worldBank slow 5s, 100ms budget → timeout / latencyMs ≥ budget / slow calendar 10s, 5s budget → timeout |
+| `one-timeout` | worldBank slow 5s, 100ms budget → timeout / latencyMs ≥ budget / slow calendar 5s, 100ms budget → timeout |
 | `all-fail` | summary.ok=0, summary.failed=6, all status=failed |
 | `FRED not available` | isAvailable=false → no crash |
 | `handler response contract` | execute() never throws |
-| **calendar 5s hard cap** | `DEFAULT_TIMEOUTS.calendar === 5_000` / slow calendar times out / other 5 sources succeed while calendar pending |
+| **calendar wontfix null adapter** | `DEFAULT_TIMEOUTS.calendar === 0` / NullCalendarAdapter returns ok+[] immediately / slow-calendar stub still does not block other sources |
+
+### NullCalendarAdapter (wontfix 2026-05-18)
+**File:** `apps/macro-indicators/__tests__/unit/scrapers/investing-economic-calendar.test.ts`
+
+| Test | Assertion |
+|------|-----------|
+| implements port, returns [] | `fetchCalendar()` → `[]` |
+| countryId arg ignored | `fetchCalendar('35')` → `[]` |
+| resolves in under 50ms | no network, no subprocess |
+| DEFAULT_TIMEOUTS.calendar === 0 | no budget needed for null adapter |
 
 ## Run Commands
 ```bash
@@ -70,6 +80,6 @@ cd apps/macro-indicators && bun test
 cd apps/macro-indicators && bun tsc --noEmit
 ```
 
-## Current counts (2026-05-17)
-- Total tests: 118 (105 pass, 12 skip, 1 fail pre-existing world-bank mock issue)
-- `bun test` runtime: ~11s (dominated by 3 calendar timeout tests at 5s each — halved from 21s)
+## Current counts (2026-05-18)
+- Total tests: 116 (103 pass, 12 skip, 1 fail pre-existing world-bank mock issue)
+- `bun test` runtime: ~1.1s (calendar timeout tests replaced with null-adapter tests — runtime no longer dominated by 5s stubs)

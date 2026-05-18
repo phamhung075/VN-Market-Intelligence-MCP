@@ -10,7 +10,7 @@
  *   - cnbc-world-markets         (header-rotation, ~5MB)
  *   - trading-economics-vn       (header-rotation, ~5MB)
  *   - fred-macro                 (open-api-key, ~5MB — requires FRED_API_KEY)
- *   - investing-economic-calendar (cloudflare-managed-bypass, ~25MB)
+ *   - investing-economic-calendar (NullCalendarAdapter — wontfix 2026-05-18, ~0MB)
  *   - adb-kidb                   (spa-xhr-intercept Phase 2, direct API, ~15MB)
  *   - imf-weo                    (open-api-key, api.imf.org SDMX 3.0, ~5MB)
  * Total external RAM: ~70MB — within 1.5GB container budget (post-resize).
@@ -26,7 +26,7 @@ import { YahooFxIndicesAdapter } from './infrastructure/scrapers/yahoo-finance-f
 import { CnbcWorldMarketsAdapter } from './infrastructure/scrapers/cnbc-world-markets.js';
 import { TradingEconomicsVnAdapter } from './infrastructure/scrapers/trading-economics-vn.js';
 import { FredMacroAdapter } from './infrastructure/scrapers/fred-macro.js';
-import { InvestingCalendarAdapter } from './infrastructure/scrapers/investing-economic-calendar.js';
+import { NullCalendarAdapter } from './infrastructure/scrapers/investing-economic-calendar.js';
 import { AdbKidbAdapter } from './infrastructure/scrapers/adb-kidb.js';
 import { ImfWeoAdapter } from './infrastructure/scrapers/imf-weo.js';
 import { createRouter } from './interface/handlers.js';
@@ -46,7 +46,9 @@ const yahooFx = new YahooFxIndicesAdapter();
 const cnbc = new CnbcWorldMarketsAdapter();
 const tradingEconomics = new TradingEconomicsVnAdapter();
 const fred = new FredMacroAdapter();
-const calendar = new InvestingCalendarAdapter();
+// Wontfix 2026-05-18: investing.com endpoint permanently unreachable. NullCalendarAdapter
+// returns [] immediately — zero CPU/RAM/time cost per macroRefresh cycle.
+const calendar = new NullCalendarAdapter();
 
 const externalUseCase = new FetchExternalMacroUseCase(
   worldBank, yahooFx, cnbc, tradingEconomics, fred, calendar,
@@ -70,8 +72,8 @@ if (!fred.isAvailable()) {
 export default {
   port: PORT,
   fetch: app.fetch,
-  // External scraper max budget: TE 65s + calendar 30s + margin → 120s minimum
-  idleTimeout: 120,
+  // External scraper max budget: TE 65s + margin → 90s minimum (calendar=NullAdapter → 0)
+  idleTimeout: 90,
 };
 
 console.log(`macro-indicators running on port ${PORT}`);

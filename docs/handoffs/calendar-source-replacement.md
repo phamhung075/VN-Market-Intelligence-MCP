@@ -60,3 +60,59 @@ Evaluate alternatives. Decision required: either:
 
 Task moved to In Progress 2026-05-18 c175. Dispatched to dev-macro-indicators.
 Branch: `task/calendar-source-replacement` (already exists on remote — merge status confirmed).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** macro-indicators
+- **Zone:** apps/macro-indicators/
+- **Decision:** Option B — Wontfix. No viable free replacement source for Vietnam economic calendar events exists without authentication. investing.com permanently blocked by Cloudflare Turnstile v2. Trading Economics already integrated as separate adapter.
+- **Files modified:**
+  - `apps/macro-indicators/src/infrastructure/scrapers/investing-economic-calendar.ts` — Added `NullCalendarAdapter` (implements `InvestingCalendarPort`, returns `[]` immediately). Deprecated `InvestingCalendarAdapter` (dead code, retained as historical reference). Python helper `investing_calendar_fetch.py` retained as reference, not executed.
+  - `apps/macro-indicators/src/application/fetch-external-macro.ts` — `DEFAULT_TIMEOUTS.calendar: 5_000 → 0`. Updated JSDoc with wontfix note.
+  - `apps/macro-indicators/src/index.ts` — Wire `NullCalendarAdapter` instead of `InvestingCalendarAdapter`. `idleTimeout: 120 → 90` (calendar no longer adds to max budget).
+  - `apps/macro-indicators/__tests__/unit/scrapers/investing-economic-calendar.test.ts` — Replaced FetchExternalMacroUseCase tests with 4 NullCalendarAdapter tests.
+  - `apps/macro-indicators/__tests__/unit/fetch-external-macro.test.ts` — Updated calendar timeout describe: `DEFAULT_TIMEOUTS.calendar === 0`, null-adapter returns ok+[] immediately, isolation test.
+  - `docs/architecture/microservice/macro-indicators/infrastructure.md` — Updated InvestingCalendarAdapter section to NullCalendarAdapter wontfix section.
+  - `docs/architecture/microservice/macro-indicators/testing.md` — Updated counts, calendar test table, added NullCalendarAdapter test table.
+  - `docs/TASKS.md` — calendar-source-replacement → WONTFIX.
+- **Tests written:** 4 new in `investing-economic-calendar.test.ts` — all GREEN
+- **Type check:** pre-existing TS errors in unrelated test files (adb-kidb, fred-macro, imf-weo, world-bank-macro) — not introduced by this change; my files type-clean
+- **Service tests:** 103 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated) — no regressions
+- **Docs updated:** infrastructure.md (InvestingCalendarAdapter → NullCalendarAdapter wontfix section), testing.md (counts + test tables updated)
+- **Git commits:** d0884c78 (fix), 1ebe3039 (notebook)
+
+---
+
+## RETURN
+DONE: Wontfix implementation complete — SERVICE=macro-indicators, CHANGED=[investing-economic-calendar.ts, fetch-external-macro.ts, index.ts, 2 test files, 2 docs], NEW_PASS=4, type-check clean (my files)
+NEXT: qa | run full QA pipeline on branch task/calendar-source-replacement
+HANDOFF: docs/handoffs/calendar-source-replacement.md
+PIPELINE: continue
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-18
+**Verdict:** APPROVED
+**Round:** 1
+
+### Pipeline Results
+- Targeted tests (investing-economic-calendar.test.ts): 4 pass / 0 fail — GREEN
+- Targeted tests (fetch-external-macro.test.ts): 14 pass / 0 fail — GREEN
+- Full macro-indicators suite: 103 pass / 12 skip / 1 fail (pre-existing: trading-economics-vn VN_TE_SLUGS length mismatch — confirmed on main)
+- tsc: pre-existing errors in adb-kidb, fred-macro, imf-weo, world-bank-macro test files (confirmed identical on main — not introduced by this task). Changed files: type-clean.
+- DDD: PASS — NullCalendarAdapter in infrastructure/, index.ts is composition root (expected infra imports), no domain→infra violations
+- Security: PASS — no process.env introduced, no hardcoded secrets
+
+### Notes
+- Pre-existing `process.env` in `index.ts` (lines for PORT + DB_PATH) confirmed on main — not introduced by this task
+- Dead `InvestingCalendarAdapter` class retained as historical reference per handoff spec — correct
+- `DEFAULT_TIMEOUTS.calendar = 0` correctly eliminates 5s dead-wait per macroRefresh cycle
+- `idleTimeout: 120 → 90` is correct (calendar no longer contributes to cycle budget)
+- All 4 new tests are meaningful: no-arg, with-arg (countryId), performance (<50ms), timeout value
+
+### Merge
+chore(macro-indicators): merge task/calendar-source-replacement — wontfix NullCalendarAdapter
