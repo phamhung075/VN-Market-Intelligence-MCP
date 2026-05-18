@@ -633,6 +633,8 @@ export async function runBctcReparseJob(
     db?: Database;
     notify?: (message: string) => Promise<unknown>;
     reparseFn?: (payload: StrandedPayload) => Promise<boolean>;
+    /** Override PDF directory for disk scan (injectable for tests). */
+    pdfDir?: string;
   } = {},
 ): Promise<ReparseRunResult> {
   const db = options.db ?? getDb();
@@ -734,27 +736,41 @@ export async function runBctcReparseJob(
     }
   }
 
-  // 1196: Disk-scan fallback — process on-disk PDFs when D-7c has no feedback rows
-  if (rows.length === 0) {
-    const diskStranded = await scanDiskForStrandedPdfs(db);
-    logger.info("[bctc-reparse-job] disk-scan fallback", { found: diskStranded.length });
-    for (const payload of diskStranded) {
-      let success = false;
-      try {
-        success = await reparse(payload);
-      } catch (err) {
-        logger.warn("[bctc-reparse-job] disk-scan reparse threw", {
-          ticker: payload.ticker,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-      if (success) {
-        result.resolved++;
-      } else {
-        result.failed++;
-      }
-      result.examined++;
+  // 1196 / 1945d: Disk scan runs unconditionally (not just when feedback rows = 0).
+  // GAP-A fix: freshly-pushed PDFs (EIB/DHG Q1-2026) stored between D-7c audit
+  // runs were silently skipped when other feedback rows existed. Now we always
+  // scan for on-disk unextracted PDFs, deduplicating against filenames already
+  // processed from feedback rows above.
+  const processedFilenames = new Set<string>(
+    rows
+      .map((r) => parseStrandedDetail(r.detail))
+      .filter((p): p is StrandedPayload => p !== null)
+      .map((p) => p.filename),
+  );
+
+  const diskStranded = await scanDiskForStrandedPdfs(db, options.pdfDir);
+  const freshDisk = diskStranded.filter((p) => !processedFilenames.has(p.filename));
+  logger.info("[bctc-reparse-job] disk-scan", {
+    found: diskStranded.length,
+    fresh: freshDisk.length,
+    skippedAlreadyInFeedback: diskStranded.length - freshDisk.length,
+  });
+  for (const payload of freshDisk) {
+    let success = false;
+    try {
+      success = await reparse(payload);
+    } catch (err) {
+      logger.warn("[bctc-reparse-job] disk-scan reparse threw", {
+        ticker: payload.ticker,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
+    if (success) {
+      result.resolved++;
+    } else {
+      result.failed++;
+    }
+    result.examined++;
   }
 
   logger.info("[bctc-reparse-job] cycle complete", {

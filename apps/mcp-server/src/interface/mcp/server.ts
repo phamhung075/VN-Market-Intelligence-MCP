@@ -706,14 +706,23 @@ export async function createBunServer(
            DO UPDATE SET status = 'fetching', source_url = ?, attempts = attempts + 1, last_attempt = datetime('now')`,
         ).run(actionCode, periodYear, periodQuarter, sourceUrl, sourceUrl);
 
-        // Fire-and-forget: trigger BCTC parse pipeline
+        // Fire-and-forget: trigger BCTC text extraction + parse pipeline.
+        // Task 1945d GAP-B fix: the previous implementation called
+        // fetchParseAndStoreBctc with only pdfUrl (no pdfTextOverride), which
+        // caused it to try downloading from the SSC/VPS URL without auth headers.
+        // The geo-blocked download failed silently → financial_reports never written.
+        // Fix: extract text locally first via triggerPushBctcExtraction (same
+        // pattern as bctcPdfPullJob.triggerExtraction), then call pipeline with
+        // pdfTextOverride so the network download step is fully bypassed.
         setImmediate(async () => {
           try {
-            const { fetchParseAndStoreBctc } = await import("../../application/usecases/fetchParseAndStoreBctc.js");
-            await fetchParseAndStoreBctc({
+            const { triggerPushBctcExtraction } = await import("../../scheduler/financial-reports/pushBctcExtraction.js");
+            await triggerPushBctcExtraction({
               actionCode,
               year: periodYear,
-              quarter: periodQuarter as any,
+              quarter: periodQuarter as "Q1" | "Q2" | "Q3" | "Q4",
+              filePath: pdfPath,
+              filename,
               pdfUrl: sourceUrl || `file://${pdfPath}`,
             });
             db.prepare(

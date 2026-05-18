@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1945d — BCTC reparse pipeline gap (2026-05-18, DONE)
+
+**Root causes (two gaps):**
+- GAP-A: `runBctcReparseJob` called `scanDiskForStrandedPdfs` ONLY when `agent_feedback` returned 0 rows. Freshly-pushed PDFs (EIB/DHG Q1-2026 at 08:22Z) were skipped for 18+ h when other feedback rows existed.
+- GAP-B: `push-bctc-pdf` `setImmediate` called `fetchParseAndStoreBctc({..., pdfUrl: sourceUrl})` without `pdfTextOverride`. Pipeline tried downloading from geo-blocked SSC/VPS URL → empty text → `financial_reports` never written.
+
+**Fix (3 production files + 1 test):**
+- `bctcReparseJob.ts`: disk scan now runs unconditionally; `pdfDir` option added to interface; `processedFilenames` Set deduplicates feedback-row filenames.
+- `pushBctcExtraction.ts` (NEW): `triggerPushBctcExtraction(params)` with injectable deps — OCR via `extractAndStorePdfPagesWithRetry` + `getCachedPdfText` + `fetchParseAndStoreBctc` with `pdfTextOverride`. Same pattern as `bctcPdfPullJob.triggerExtraction`.
+- `server.ts`: `push-bctc-pdf` `setImmediate` now calls `triggerPushBctcExtraction` instead of raw pipeline.
+- `1945d-reparse-pipeline-gap.test.ts` (NEW): 12 tests — TC-1 filename parse, TC-2 disk scan, TC-3 AC-3 unconditional, TC-4 injection contract.
+
+**Part B root cause (6/7 banks, outside zone):** VPS discover returns SSC URLs, not VPS bctc-files/ URLs. `bctcPdfPullJob` only pulls from `VPS_BCTC_BASE_URL`. VPS has not yet fetched these 6 banks' PDFs. Follow-up needed in dev-vps-crawls if VPS doesn't self-resolve.
+
+**Tests:** 12/12 GREEN. tsc 0 errors. Commit: `159b0888`.
+
+Zone health: push-bctc-pdf extraction now geo-block-proof (pdfTextOverride path); bctcReparseJob disk scan unconditional; 12 new tests cover AC-3 regression | HEALTHY
+
+---
+
 ### Task 1946a — Add PLX to watchlist for crisis detection coverage (2026-05-18, DONE)
 
 **Root cause:** PLX absent from all 3 SSoT sources (`system-map.json`, `mcp.config.json`, `seedWatchlist.ts`) → never in SQLite `watchlist` table → `get_crisis_early_warning` silently skipped PLX evaluation. Confirmed via SPIKE_1946.
