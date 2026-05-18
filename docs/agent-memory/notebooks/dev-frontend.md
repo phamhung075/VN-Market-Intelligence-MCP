@@ -1,7 +1,9 @@
 # dev-frontend notebook
 
 ## Status
-2026-05-17 — Task 1931a complete. All 5 risk flags closed.
+2026-05-18 — Task 1945b-frontend complete. 20/20 tests GREEN. 144/144 full suite GREEN. 0 tsc errors.
+
+## 2026-05-17 — Task 1931a complete. All 5 risk flags closed.
 
 ## Tech stack (confirmed)
 - Framework: Remix 2 (Vite plugin)

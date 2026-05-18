@@ -17,11 +17,15 @@ import {
   fetchTASnapshot,
   fetchWatchlistPrices,
   fetchCascadeSignals,
+  fetchAccuracyDigest,
+  deriveAccuracyDigestState,
+  digestRateColor,
   accuracyBadgeProps,
   type WatchlistTileData,
 } from "~/lib/api/client";
 import type {
   AgentSignal,
+  AccuracyDigestStats,
   KinhDichMarket,
   KinhDichReading,
   MacroSnapshot,
@@ -44,6 +48,9 @@ export const meta: MetaFunction = () => [
 // Active watchlist tickers only (VEA excluded)
 const ACTIVE_TICKERS = WATCHLIST_STOCKS.filter((s) => s.active).map((s) => s.ticker);
 
+// Seeding window end date — 1945b-signal-outcomes-seed-window AC.
+const ACCURACY_SEEDING_WINDOW_END = "2026-05-25";
+
 // Representative sample for the KD overview table (top 8 cross-sector picks)
 const KD_SAMPLE_TICKERS = ["FPT", "VNM", "HPG", "VCB", "MSN", "VIC", "SSI", "VJC"] as const;
 
@@ -63,6 +70,7 @@ interface LoaderData {
   market: KinhDichMarket | null;
   readings: KinhDichReading[];
   snapshot: MacroSnapshot | null;
+  accuracyDigest: AccuracyDigestStats | null;
   selectedStock: string | null;
   selectedStockInfo: WatchlistStock | null;
   detail: StockDetail | null;
@@ -83,10 +91,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const errors: string[] = [];
 
   // Base data — always fetched in parallel
-  const [marketResult, snapshotResult, ...readingResults] =
+  const [marketResult, snapshotResult, accuracyResult, ...readingResults] =
     await Promise.allSettled([
       fetchKinhDichMarket(),
       fetchMacroSnapshot(),
+      fetchAccuracyDigest(30),
       ...KD_SAMPLE_TICKERS.map((t) => fetchKinhDichReading(t)),
     ]);
 
@@ -99,6 +108,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     snapshotResult.status === "fulfilled"
       ? snapshotResult.value
       : (errors.push(`Macro snapshot: ${String(snapshotResult.reason)}`), null);
+
+  const accuracyDigest =
+    accuracyResult.status === "fulfilled" ? accuracyResult.value : null;
 
   const readings = readingResults
     .map((r) => (r.status === "fulfilled" ? r.value : null))
@@ -147,6 +159,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     market,
     readings,
     snapshot,
+    accuracyDigest,
     selectedStock,
     selectedStockInfo,
     detail,
@@ -206,6 +219,131 @@ function directionArrow(direction: "up" | "down" | "flat" | string): {
   if (direction === "up") return { symbol: "↑", cls: "text-green-400" };
   if (direction === "down") return { symbol: "↓", cls: "text-red-400" };
   return { symbol: "—", cls: "text-slate-500" };
+}
+
+// --------------------------------------------------------------------------
+// Accuracy Digest Card (Sprint 1945b)
+// --------------------------------------------------------------------------
+
+/**
+ * System-level accuracy digest card — 6 states.
+ * Displays top-3 / bottom-3 signal types by accuracy rate.
+ * Non-fatal — shows graceful degradation on null data or errors.
+ */
+function AccuracyDigestCard({
+  data,
+  seedingWindowEnd,
+}: {
+  data: AccuracyDigestStats | null;
+  seedingWindowEnd: string;
+}) {
+  const state = deriveAccuracyDigestState(data);
+
+  if (state === "loading") {
+    return (
+      <div className="space-y-3">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="flex justify-between gap-4">
+            <div className="h-5 w-24 bg-slate-800 animate-pulse rounded" />
+            <div className="h-5 w-16 bg-slate-800 animate-pulse rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (state === "empty") {
+    return (
+      <p className="text-sm text-slate-400">
+        No accuracy data yet. Signal outcomes are being seeded — check back after {seedingWindowEnd}.
+      </p>
+    );
+  }
+
+  if (state === "all-neutral") {
+    return (
+      <p className="text-sm text-slate-400">
+        All resolved outcomes are neutral — no directional accuracy measurable yet. ({data!.neutralOnlyRows} neutral outcomes recorded)
+      </p>
+    );
+  }
+
+  if (state === "insufficient-sample") {
+    return (
+      <p className="text-sm text-slate-400">
+        No signal types have ≥3 resolved samples yet. ({data!.totalResolved} resolved rows recorded — tracking in progress)
+      </p>
+    );
+  }
+
+  // Partial or normal state — render table
+  const displayRows = data!.bySignalType;
+  const topThree = displayRows.slice(0, 3);
+  const bottomThree = displayRows.slice(-3).reverse();
+  const uniqueRows = Array.from(
+    new Map([...topThree, ...bottomThree].map((r) => [r.signal_type, r])).values(),
+  );
+  void uniqueRows; // used for dedup reference; columns rendered separately
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-4 text-xs">
+        {/* Top-3 column */}
+        <div>
+          <p className="text-slate-500 font-semibold mb-2">Best</p>
+          {topThree.map((row) => (
+            <div
+              key={row.signal_type}
+              className="flex justify-between gap-2 py-1 border-b border-slate-700"
+            >
+              <span className="truncate">{row.signal_type}</span>
+              <span className={`font-mono font-semibold ${digestRateColor(row.rate)}`}>
+                {(row.rate * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom-3 column */}
+        <div>
+          <p className="text-slate-500 font-semibold mb-2">Worst</p>
+          {bottomThree.map((row) => (
+            <div
+              key={row.signal_type}
+              className="flex justify-between gap-2 py-1 border-b border-slate-700"
+            >
+              <span className="truncate">{row.signal_type}</span>
+              <span className={`font-mono font-semibold ${digestRateColor(row.rate)}`}>
+                {(row.rate * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer row */}
+      <div className="mt-4 pt-2 border-t border-slate-700 text-xs text-slate-400">
+        {data!.overallRate === null ? (
+          <p>
+            System: n/a{" "}
+            <span className="text-slate-600">(need 10+ resolved)</span>
+          </p>
+        ) : (
+          <p>
+            System:{" "}
+            <span className="font-semibold text-slate-200">
+              {(data!.overallRate * 100).toFixed(1)}%
+            </span>{" "}
+            <span className="text-slate-600">
+              ({data!.totalCorrect.toLocaleString("vi-VN")} /{" "}
+              {data!.totalResolved.toLocaleString("vi-VN")} total)
+            </span>{" "}
+            · {data!.newStocksCount} stocks still seeding
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // --------------------------------------------------------------------------
@@ -1311,6 +1449,7 @@ export default function AnalysisDashboard() {
     market,
     readings,
     snapshot,
+    accuracyDigest,
     selectedStock,
     selectedStockInfo,
     detail,
@@ -1414,6 +1553,14 @@ export default function AnalysisDashboard() {
         subtitle="8 mã đại diện · chọn mã bằng bảng selector ở trên"
       >
         <StockTable readings={readings} selectedStock={selectedStock} />
+      </SectionCard>
+
+      {/* Signal Accuracy digest — always visible, non-fatal */}
+      <SectionCard title="Signal Accuracy" subtitle="30d · top-3 / bottom-3">
+        <AccuracyDigestCard
+          data={accuracyDigest}
+          seedingWindowEnd={ACCURACY_SEEDING_WINDOW_END}
+        />
       </SectionCard>
     </div>
   );

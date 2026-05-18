@@ -168,6 +168,39 @@ export interface AgentSignal {
 }
 
 // --------------------------------------------------------------------------
+// Accuracy digest types (system-level, Sprint 1945b)
+// --------------------------------------------------------------------------
+
+/**
+ * Per-signal-type row in the system accuracy digest.
+ * signal_types with ≥ 3 resolved samples only.
+ */
+export interface SignalTypeAccuracyDigest {
+  signal_type: string;
+  correct: number;
+  total: number;
+  /** correct / total (0–1). */
+  rate: number;
+}
+
+/**
+ * System-level accuracy digest response.
+ * Mirrors SystemAccuracyDigestStats from signalOutcomeStore.ts
+ * plus server-side generatedAt timestamp.
+ */
+export interface AccuracyDigestStats {
+  totalResolved: number;
+  totalCorrect: number;
+  /** null when totalResolved < 10 */
+  overallRate: number | null;
+  bySignalType: SignalTypeAccuracyDigest[];
+  newStocksCount: number;
+  /** Rows with outcome_24h='neutral' AND predicted_direction!='NEUTRAL' */
+  neutralOnlyRows: number;
+  generatedAt: string; // ISO-8601
+}
+
+// --------------------------------------------------------------------------
 // Watchlist types
 // --------------------------------------------------------------------------
 

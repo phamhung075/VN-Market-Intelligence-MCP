@@ -519,6 +519,54 @@ export async function fetchCascadeSignals(code: string, limit = 5): Promise<Agen
 }
 
 // --------------------------------------------------------------------------
+// Accuracy digest (system-level, Sprint 1945b)
+// --------------------------------------------------------------------------
+
+import type { AccuracyDigestStats } from "~/domain/market";
+
+/**
+ * System-level accuracy digest.
+ * Endpoint: GET /mcp/api/accuracy/digest?days=30
+ * Non-fatal — callers should catch and treat as null on failure.
+ */
+export async function fetchAccuracyDigest(days = 30): Promise<AccuracyDigestStats | null> {
+  try {
+    const raw = await apiGet<unknown>(`/mcp/api/accuracy/digest?days=${days}`);
+    if (raw === null || typeof raw !== "object") return null;
+    return raw as AccuracyDigestStats;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Derive UI state from accuracy digest response.
+ * Used for state discriminator in AccuracyDigestCard.
+ * Extracted for testability (pure function, no React dependency).
+ */
+export function deriveAccuracyDigestState(
+  data: AccuracyDigestStats | null,
+): "loading" | "empty" | "all-neutral" | "insufficient-sample" | "partial" | "normal" {
+  if (data === null) return "loading";
+  if (data.totalResolved === 0 && data.neutralOnlyRows === 0) return "empty";
+  if (data.totalResolved === 0 && data.neutralOnlyRows > 0) return "all-neutral";
+  if (data.bySignalType.length === 0 && data.totalResolved > 0) return "insufficient-sample";
+  if (data.bySignalType.length >= 1 && data.bySignalType.length < 3) return "partial";
+  return "normal";
+}
+
+/**
+ * Colour class for a digest row rate value.
+ * Mirrors accuracyBadgeProps() thresholds exactly.
+ * Exported for unit-testing independently of React.
+ */
+export function digestRateColor(rate: number): string {
+  if (rate >= 0.7) return "text-green-400";
+  if (rate >= 0.4) return "text-amber-400";
+  return "text-red-400";
+}
+
+// --------------------------------------------------------------------------
 // Macro snapshot
 // --------------------------------------------------------------------------
 
