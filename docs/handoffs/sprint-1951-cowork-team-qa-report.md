@@ -119,3 +119,59 @@ The old `cowork-dispatcher/main.md` (Step 3) says "stop silently — no log, no 
 BLOCKED — do not merge. Three blocking issues require fixer action and architect decision on BLOCK-1 cron realignment.
 
 Signal: `docs/signals/qa-1951-cowork-team-changes-requested.json`
+
+---
+
+## [QA Round 2] — 2026-05-18 — APPROVED
+
+**Commit verified:** `2519d8a9`
+**Fixer signal:** `docs/signals/fixer-1951-block1-block2-block3-applied.json`
+**Architect decision:** `docs/architecture-briefs/2026-05-18-cowork-team-command.md` §11
+
+### BLOCK-1 — Chef cron realignment: RESOLVED
+
+All three chef slots confirmed updated in `docs/data/cowork-schedule.json`:
+- `chef-morning`: `15 5 * * 1-5` | VN 12:15 | minute :15 → window [13,17] ✓
+- `chef-eod`: `45 8 * * 1-5` | VN 15:45 | minute :45 → window [43,47] ✓
+- `chef-evening`: `45 19 * * *` | VN 02:45+1 | minute :45 → window [43,47] ✓
+
+`docs/standards/cron-jobs.md` L116-119 matches new strings with correct VN/France local times.
+`docs/protocols/chef-pipeline-runbook.md` updated accordingly.
+`docs/data/cowork-schedule-skipped.json` deleted — confirmed absent on disk.
+Grep of old cron strings (`23 5`, `37 8`, `37 19`) across `docs/` returns only historical documents (architecture-briefs, prior QA reports, ops notebook working memory) — zero hits in live operational files.
+
+### BLOCK-2 — Sprint deliverables committed: RESOLVED
+
+`git log --diff-filter=A` confirms all three primary files added in `2519d8a9`:
+- `.claude/commands/cowork-team.md` — dev-team pattern shape (≤10 words, points to flow)
+- `.claude/flows/cowork-team/main.md` — 6-step dispatcher: Step 1 UTC resolve, Step 2 load schedule, Step 3 match ±2min, Step 4 silent exit, Step 4b collision guard, Step 5 parallel fan-out, Step 6 telemetry
+- `.claude/commands/crons/cron-cowork-team.md` — `*/15 * * * *`, recurring=true, durable=true
+
+`docs/standards/cron-jobs.md` — cowork-team row present at L126 in Dev-Team table (`*/15 * * * *`).
+`docs/references/workflow-map.md` — cowork-team note at L170.
+
+### BLOCK-3 — Old artifacts removed: RESOLVED
+
+`git log --diff-filter=D` confirms deleted in `2519d8a9`:
+- `.claude/flows/cowork-dispatcher/main.md`
+- `docs/data/cowork-dispatcher-trigger.json`
+
+`ls` check: `.claude/flows/cowork-dispatcher/` does not exist. `docs/data/cowork-dispatcher-trigger.json` does not exist.
+
+### Content sanity (round-2 spot checks — no regressions found)
+
+- `cowork-team/main.md` Steps 3-5: match algorithm (±2min, day-of-week, sub-hourly `*/15` expansion) present and correct. Parallel fan-out R1-R4 all coded.
+- `cowork-team.md`: correct 6-word pattern.
+- `cron-cowork-team.md`: `*/15 * * * *`, recurring=true, durable=true.
+- No new issues introduced.
+
+### Router obligations (post-approval)
+
+1. **CronCreate registration** — `*/15 * * * *` pointing to prompt `Launch subagent (subagent_type=cowork-team). Read and execute .claude/commands/cowork-team.md` (see `.claude/commands/crons/cron-cowork-team.md` for full spec).
+2. **24h parallel-run** — keep existing 12 RemoteTriggers active alongside cowork-team (trigger IDs listed in `docs/architecture-briefs/2026-05-18-cowork-team-command.md` §8).
+3. **AC-6 rollback gate** — any double-published MARKET dish during parallel-run → delete the new master cron immediately and open SPIKE-1951b.
+4. **After 24h with zero double-publish** — delete 12 RemoteTriggers with `trigger_status: pending_delete` per brief §8 table.
+
+**Verdict: APPROVED. No blocking issues remain.**
+
+Signal: `docs/signals/qa-1951-approved.json`
