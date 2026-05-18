@@ -1,6 +1,10 @@
-- **Last updated:** 2026-05-18 · **Sprint:** current
+- **Last updated:** 2026-05-18 05:20 · **Sprint:** current
 
-## This session (2026-05-18 04:22–04:24 UTC)
+## This session (2026-05-18 05:20–05:21 UTC)
+
+Market hours cycle (02:00–08:59 UTC). 20 articles fetched, 8 high-impact items. Posted 2 signals: chain_catalyst #3383 (PLX -40% crash, event_type=crisis, direction=bearish, severity critical, regime=TIGHTENING+carry headwind, hot_money_risk=true), urgent_news #3384 (GAS watchlist confirm, oil_gas sector bullish despite macro headwinds). Macro snapshot valid (Brent 111.06, Gold 4541.20, USD/VND 26,350), regime=TIGHTENING confirmed, carry_spread=-0.33% (FII_OUTFLOW_RISK). No PMI data this cycle. Zero unread feedback signals from financial-analyst. Dedup gate passed both signals — PLX crisis new theme, GAS breakout different timing/confidence vs prior #3376.
+
+## Previous session (2026-05-18 04:22–04:24 UTC)
 
 Monday cycle, VN market OPEN. 20 articles fetched, 9 impact≥6. Posted 1 urgent_news #3376 (GAS +5.15% breakout, Brent $111 +2.91σ catalyst, severity=high, regime_adj_score=6.3 after TIGHTENING×0.7). Macro chain_catalyst candidate (Brent/carry/USD/VND squeeze) SUPPRESSED via inter-cycle dedup vs prior signal #3365 on bus (~1h ago, same theme, same direction on macro). Dragon Capital "bỏ quên" VIC theme deduped vs prior #3288. PC1 chairman arrest (impact 5-6 neutral) — not in watchlist, sector ripple noted last cycle.
 
