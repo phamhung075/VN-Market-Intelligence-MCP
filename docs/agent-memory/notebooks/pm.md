@@ -1,14 +1,64 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c182 (PM: Task 1945d-reparse-pipeline-gap COMPLETE + merged; WIP=0/2 CLEAN; Sprint 1948 Phase 1 remains BLOCKED until post-1945 gate 2026-05-20T07:22Z; no unblocked dev tasks available) | **Sprint:** 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE; PM: 1948a/b/c/OBSERVE-1948d queued in Backlog, all gate-blocked) | **Current:** WIP 0/2 (CLEAN, no dispatch — all backlog tasks blocked until gate clear)
+**Last updated:** 2026-05-18 c183 (PM: Sprint 1950-T5 DONE QA-APPROVED + architectural finding flagged; MAINT-1950d filed (workflow-map residue sweep); `durable: true` cron-persistence finding surfaced to po; WIP=0/2 CLEAN; Sprint 1948 remains BLOCKED until post-1945 gate 2026-05-20T07:22Z) | **Sprint:** 1950 COMPLETE (T1-T5 all DONE/QA-APPROVED; MAINT-1950b/c/d in Backlog); 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE; PM: 1948a/b/c/OBSERVE-1948d queued, all gate-blocked until 2026-05-20T07:22Z) | **Current:** WIP 0/2 (CLEAN); Open finding: cron-persistence misleading `durable: true` flag not honored at runtime → requires ARCHITECTURE.md note + po assessment
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c181: (1) Sprint 1948 Phase 1 (closed-loop auto-improvement orchestrator) decomposition COMPLETE. 4 tasks added to Backlog (1948a, 1948b, 1948c, OBSERVE-1948d) with explicit PRE-CONDITION blocker: all blocked until `post-1945-verdict-resolution-scored-pct` gate clears 2026-05-20T07:22Z. If gate misses, resolution pipeline fix takes priority; 1948 tasks deferred. (2) Handoff files created: TASK_1948a.md (schema + store, S), TASK_1948b.md (degradation rules, S), TASK_1948c.md (orchestrator job + wiring, M). OBSERVE-1948d (7-day gate, 2026-05-25T09:00Z post-deploy). (3) TASKS.md updated: 4 new Backlog rows + pre-condition notes. Line count now 82L (over 80L cap slightly, but necessary to capture pre-condition blocker clearly for 48h gate hold). (4) WIP capacity = 2/2 AVAILABLE post-gate-clear. No dispatch yet — pre-condition gate BLOCKS start.
+- **WIP: 0/2 CLEAN** — Cycle c183: (1) Sprint 1950-T5 DONE + QA-APPROVED by qa agent (commit `3c560cab` + notebook `af3b22d0`). Digest-predict cron finalized: CronCreate executed by router, job id `ad22967e`, schedule `47 13 * * 0` (Sunday 13:47 UTC), recurring=true. **Architectural finding reported:** `durable: true` in `.claude/commands/crons/*.md` is NOT honored by Claude Code CronCreate runtime — session-scoped only, auto-expires after 7 days, not written to disk. Consistent with existing ARCHITECTURE.md OQ-2 (RemoteTrigger cron persistence). (2) QA identified stale "monday predict" text at workflow-map.md L103 (pre-existing from Sprint 1949 gap, not introduced by T5). (3) Filed MAINT-1950d: workflow-map.md L103 + cron-jobs.md residue sweep (agent-father zone, XS, no BA). (4) TASKS.md updated: 1950-T5 marked DONE with commit hashes + finding note; MAINT-1950d added to Backlog. Line count: 82L → 87L (5 lines added for T5 finding detail + MAINT-1950d). (5) PM notebook updated: header + current state + this cycle. (6) Flagging cron-persistence finding to po (not blocking; requires ARCHITECTURE.md update + policy review). (7) WIP capacity = 2/2 AVAILABLE post-gate-clear. All Sprint 1950 dev tasks complete; MAINT-1950b/c/d remain in Backlog.
 - **Sprint 1948 sequence:** Architect SPIKE-1947 DONE (2026-05-18). PM decomposition DONE (c181). Dev dispatch BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
 - **Prior state (c180b):** TASKS.md compacted 89L → 63L. Done section archived 31 completed entries to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Current Backlog: 7 rows (1948a/b/c/OBSERVE-1948d + 3 monitoring rows). Todo: 5 rows (post-1945 gates + 1941b-seed + observational). In Progress: empty.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: scheduler job inside apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts (Option C). Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. Hypothesis: degradationRules.ts rule-table (Phase 1-2); LLM optional Phase 3. Dispatch: 3-phase rollout — Phase 1 shadow-mode (WORK Telegram, no auto-dispatch, Sprint 1948), Phase 2 manual-gate (signal-bus JSON, human drain), Phase 3 auto-dispatch (kill-switch env var, WIP≤2 cap). Recheck: 7d window. Loop-exit: hit_rate ≥60% sustained 2 consecutive weekly windows. Safety: 7d cooldown, max 2 dispatches/cycle, freeze-on-worsening, recurring-bug escalation ≥2 failed cycles.
 - **Status:** Sprint 1948 queued in Backlog with explicit gate pre-condition. TASKS.md + handoff files complete. SPIKE-1947 design documented. Ready for gate clear on 2026-05-20T07:22Z → PM dispatch sequence → dev execution.
+
+---
+
+## Cycle 183 — 2026-05-18 PM Sprint 1950-T5 Closure + Architectural Finding: Cron-Persistence `durable` Flag Misleading (WIP=0/2 CLEAN)
+
+**Input:** QA approval report for 1950-T5 (digest-predict cron finalization), router action log (CronCreate execution), TASKS.md current state.
+
+**Context:**
+- QA approved 1950-T5 at 2026-05-18 (all 7 file-verifiable ACs PASS, AC-T5-7 CronCreate deferred to router — already executed)
+- Router completed CronCreate call: job id `ad22967e`, schedule `47 13 * * 0` (Sunday 13:47 UTC), recurring=true
+- QA found pre-existing issue: `docs/references/workflow-map.md` L103 has stale "monday predict" text (Sprint 1949 gap, not blocking T5)
+- Router noted architectural issue: `durable: true` in `.claude/commands/crons/cron-digest-predict.md` NOT honored by Claude Code runtime — session-scoped only, auto-expires 7 days, not written to disk
+
+**Actions:**
+1. **Marked 1950-T5 DONE in TASKS.md:** Updated Done row with commit `3c560cab` + notebook `af3b22d0`, added architectural finding detail (durable flag issue), noted QA-identified residue (L103).
+2. **Filed MAINT-1950d:** New Backlog row for workflow-map.md + cron-jobs.md residue sweep (XS, agent-father zone, no BA). AC: L103 cleaned, cron table verified, zero Monday-prediction references live, all files ≤200L.
+3. **Surfaced architectural finding:**
+   - **Issue:** `durable: true` parameter in `.claude/commands/crons/*.md` command files is NOT respected by Claude Code CronCreate runtime
+   - **Observed behavior:** Job id `ad22967e` from CronCreate shows "Session-only (not written to disk, dies when Claude exits). Auto-expires after 7 days."
+   - **Scope:** Applies to all cron command files: digest-predict, tran-ngoc-bau, dev-team, agent-father crons
+   - **Consistency check:** ARCHITECTURE.md Open Question OQ-2 already flags this gap (RemoteTrigger cron persistence unresolved)
+   - **Status:** Not blocking (all cowork agent crons pre-defined; dev cron loop self-recovers on session restart). But misleading documentation should be updated.
+4. **TASKS.md updated:** Backlog line count 10 → 11 (MAINT-1950d added). Done row expanded (finding detail). Total 87L (acceptable; necessary for finding context).
+5. **PM notebook updated:** Header reflects Sprint 1950 COMPLETE + architectural finding flagged. Current state section expanded. This cycle entry added.
+6. **PM to po signal:** Flagging `durable: true` finding as non-blocking architectural note (requires ARCHITECTURE.md update + codebase scan for misleading `durable: true` occurrences). No PR or code change required at this stage.
+
+**Architectural Finding Detail:**
+- **Title:** CronCreate `durable: true` parameter not honored (session-scoped only)
+- **Impact:** LOW (no current blockers; documented limitation in OQ-2)
+- **Recommendation:** Remove misleading `durable: true` from `.claude/commands/crons/*.md` files OR add comment explaining it's ignored by runtime
+- **Next step:** po to assess whether ARCHITECTURE.md update is needed + brief engineers on session-scoped cron behavior
+
+**Sprint 1950 Summary:**
+- **T1 (1950-T1):** DONE 2026-05-18 — chef.md telemetry (`[chef] START/SENT/SILENT/FAILED`) — commit `f4688989`
+- **T2 (1950-T2):** DONE 2026-05-18 QA-APPROVED R2 — chef pipeline cycle-coverage audit — commits `ad68cf5c` + `d307d294`
+- **T3 (1950-T3):** Backlog — chef pipeline runbook (pending)
+- **T4 (1950-T4):** DONE 2026-05-18 HOTFIX — TNB cron schedule `17 */4 * * *` → `13 20 * * *` — commits `2c01f9a3` + `010461a7`
+- **T5 (1950-T5):** DONE 2026-05-18 QA-APPROVED — digest-predict cron finalization + Sunday-only scope — commits `3c560cab` + `af3b22d0` (notebook)
+- **MAINT-1950b:** Backlog — oversized agent notebooks archive (5 notebooks >200L)
+- **MAINT-1950c:** Backlog — yellow audit findings (semble-search model field + orphan notebooks)
+- **MAINT-1950d:** Backlog — workflow-map L103 + cron-jobs.md residue sweep (filed this cycle)
+
+**WIP Status:** 0/2 CLEAN. No In Progress tasks. WIP capacity = 2/2 AVAILABLE for next dispatch.
+
+**Next Steps:**
+- po to assess cron-persistence finding → ARCHITECTURE.md update (non-blocking)
+- agent-father to pick up MAINT-1950b/c/d (low-priority maintenance tier)
+- Sprint 1948 Phase 1 remains BLOCKED until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z
+
+**Status:** Sprint 1950-T5 CLOSED. Architectural finding documented + flagged. MAINT-1950d filed. WIP enforcement active. Ready for next dispatch tier.
 
 ---
 
