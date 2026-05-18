@@ -1,6 +1,31 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c179 — 1941d FPT net_profit OCR fix — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c180 — 1942a startup backfill probe — APPROVED
+
+## Session 2026-05-18 c180 — 1942a vnstock startup backfill probe
+
+### TASK REPORT — 1942a (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FEATURE (scheduler/interface — vnstockStartupProbe.ts injectable probe, startScheduler.ts IIFE wiring)
+round: 1
+merge commit: chore(1942/mcp-server): merge task/1942a-startup-backfill-probe
+```
+
+#### Pipeline
+
+- Task tests (6): 6/6 GREEN — T1 cold DB, T2 stale, T3 warm skip, T4 DB error safe fallback, T5 delay=90000ms, T6 missing table catch
+- Full suite: 9612 pass / 328 fail / 49 skip — main baseline 9606/328, +6 new, 0 regressions
+- tsc: 0 errors (pre-push hook passed)
+- DDD: PASS — vnstockStartupProbe.ts in scheduler/financial-reports/ (interface layer), no domain→infra imports
+- Security: PASS — no process.env, no hardcoded secrets
+- AC-7: PASS — no _resetRunningState in probe or wiring (grep returned nothing)
+- AC-10: PASS — vnstockFundamentalsJob.ts untouched (git diff main empty)
+- NFR-1 deviation: developer extracted probe to separate file (injectable deps pattern) instead of inline IIFE — accepted, improves testability, no AC violation
+
+---
 
 ## Session 2026-05-18 c179 — 1941d FPT net_profit OCR API bridge
 
