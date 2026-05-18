@@ -2,6 +2,41 @@
 
 **Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c196 — 1950-T3 chef pipeline runbook — CHANGES_REQUESTED
 
+## Session 2026-05-18 c197 — 1950-T3 chef pipeline runbook Round 2 (APPROVED)
+
+### TASK REPORT — 1950-T3 round 2 (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit reviewed: 1d425787 (fix — on main)
+type: DOCS (XS) — BLOCK-1 fix: registered cron clarification
+zone: docs/protocols/chef-pipeline-runbook.md
+round: 2
+```
+
+#### BLOCK-1 Verification
+
+| Fix point | Result |
+|-----------|--------|
+| L3: size-justification updated to 128L | PASS |
+| L20: clarification line — `29 * * * *` registered cron, table = dispatch windows | PASS |
+| L110: recovery row — "Verify CronList shows `29 * * * *` for unified-agent" | PASS |
+
+- New issues: none
+- Scope: 1 file, Markdown-only
+- Pipeline: N/A (docs-only, Smart-Skip applies)
+
+## Cycle — 2026-05-18 c197
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T3 Round 2 — all 3 BLOCK-1 fix points verified at exact line locations. No new issues. Docs-only.
+- **actions**: APPROVED. [QA Round 2] record appended to docs/handoffs/sprint-1950-T3-qa-report.md. Notebook updated.
+- **next_cycle_hint**: pm to mark T3 Done in TASKS.md and close Sprint 1950 if all tasks complete.
+- **estimated_tokens**: 1800
+
+---
+
 ## Session 2026-05-18 c196 — 1950-T3 chef pipeline runbook (CHANGES_REQUESTED)
 
 ### TASK REPORT — 1950-T3 (compact)

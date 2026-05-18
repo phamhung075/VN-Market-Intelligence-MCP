@@ -114,3 +114,35 @@ Fix required before APPROVED:
 - **Status:** READY FOR QA RE-RUN
 
 **NEXT: qa** — re-verify chef-pipeline-runbook.md on branch main.
+
+---
+
+## [QA Round 2] Review Record
+
+**round:** 2
+**verdict:** APPROVED
+**reviewer:** qa
+**date:** 2026-05-18
+**commit reviewed:** 1d425787
+**blocking:** 0
+**non-blocking:** 0
+
+### BLOCK-1 Verification
+
+| Fix point | Required | Actual | Result |
+|-----------|----------|--------|--------|
+| L3 size-justification | `128L` (updated from `95L`) | Line 3: `<!-- size-justification: 128L` | PASS |
+| L20 clarification line | State registered cron = `29 * * * *`; table values are dispatch time-windows in main.md | Line 20: "The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `.claude/flows/unified-agent/main.md` — the cron fires each hour and exits immediately outside these windows." | PASS |
+| L110 recovery action | "Verify CronList shows `29 * * * *` for unified-agent" | Line 110: "Verify CronList shows `29 * * * *` for unified-agent." | PASS |
+
+### Pipeline
+
+- bun test / tsc: N/A — docs-only change, no TypeScript source
+- DDD scan: N/A — Markdown only
+- Security scan: N/A — no source code
+- Scope: 1 file (docs/protocols/chef-pipeline-runbook.md) — in-scope
+- New issues introduced: none
+
+### Outcome
+
+All 3 BLOCK-1 fix points verified at exact locations. No new issues. APPROVED.
