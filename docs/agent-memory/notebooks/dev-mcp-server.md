@@ -4,6 +4,22 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1942b — cashFlowTool fallback read path + backfillOCFForWatchlist (2026-05-18, DONE)
+
+**Root cause / goal:** cashFlowTool returned `{ found: false }` for 27/30 watchlist tickers with zero `financial_reports` rows (no BCTC PDF OCR). Added COALESCE-style fallback: if COUNT = 0, query `vnstock_cash_flow` + `vnstock_financials` directly.
+
+**Implementation (2 files):**
+- `cashFlowTool.ts`: COUNT check before primary path. `buildFallbackResponse()` helper: period filter (year+quarter/year-only/latest DESC), ×1000 unit conversion, `data_source: "vnstock_direct"`, `loading: true` for cold DB UX (EC-1), partial result for missing vnstock_financials (EC-3), quarter=0 excluded (EC-4). `CashFlowFound.data_source` + `CashFlowNotFound.loading?` fields added.
+- `schema-financial-reports.ts`: `backfillOCFForWatchlist(db)` reads `docs/data/stock-classification.json`, loops tickers, calls `bridgeOCFToFinancialReports()`, logs INFO with count. EC-6 (unreadable file → WARN + return). `bridgeOCFToFinancialReports` now returns `number` (changes). Added `node:fs` + `logger` imports. Called in `initFinancialReportsTables()` after `backfillAllNetProfit()`.
+
+**Tests:** 10/10 new tests GREEN (`1942b-cashflow-fallback-path.test.ts`). 50/50 cashflow regression suite GREEN. 0 tsc errors. `1890a-get-cash-flow.test.ts` updated to add vnstock tables to makeTestDb().
+
+**Design note:** TC8-TC10 use real stock-classification.json (project root) rather than module mocks — avoids `using` keyword type incompatibility with Bun's `mock.module()` returning `void`.
+
+Zone health: COALESCE fallback consistent with existing tool layer; Architect R-7 pragmatic decision respected (fallback SELECT in interface layer); bridgeOCFToFinancialReports return type extended cleanly | HEALTHY
+
+---
+
 ### Task 1943a — BCTC Q1-2026 queue reset + batch sweep diagnosis + auto-retry (2026-05-18, DONE)
 
 **Root cause / goal:** 31 bctc_vps_queue rows stuck at url_not_found for Q1-2026 (MAX_ENRICH_ATTEMPTS=5 exhausted). bctcBatchSweepJob zero runs in cron_job_runs. No auto-retry policy for parked rows.

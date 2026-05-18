@@ -43,6 +43,29 @@ function makeTestDb(): InstanceType<typeof Database> {
       operating_cash_flow   REAL,
       net_profit_api_bridge REAL
     );
+    CREATE TABLE vnstock_cash_flow (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      code             TEXT    NOT NULL,
+      year_report      INTEGER NOT NULL,
+      quarter          INTEGER NOT NULL,
+      operating_cf_bn  REAL,
+      investing_cf_bn  REAL,
+      financing_cf_bn  REAL,
+      net_cf_bn        REAL,
+      source           TEXT    NOT NULL DEFAULT 'vnstock',
+      fetched_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(code, year_report, quarter, source)
+    );
+    CREATE TABLE vnstock_financials (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      code             TEXT    NOT NULL,
+      year_report      INTEGER NOT NULL,
+      quarter          INTEGER NOT NULL,
+      net_profit_bn    REAL,
+      source           TEXT    NOT NULL DEFAULT 'vnstock',
+      fetched_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(code, year_report, quarter, source)
+    );
   `);
   return db;
 }
