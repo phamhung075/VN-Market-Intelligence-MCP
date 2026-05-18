@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** Sprint 1944
+**Last updated:** 2026-05-18 10:00 UTC | **Sprint:** Sprint 1945
 
-## This session (ARCH-1944)
+## This session (SPIKE-1945)
+
+SPIKE-1945 verdict-resolution no-baseline — FIXABLE BUG confirmed.
+
+Root cause: `defaultFetchHistory()` in `verdictResolutionJob.ts` (L119–122) reads
+`snaps[0].price` from `getPriceHistory()` result. Go `/price/history` endpoint returns
+`{code: string, history: DailyOHLCV[]}` envelope (not `PriceSnapshot[]` array). At runtime:
+`snaps[0]` = `undefined` → `TypeError: Cannot read properties of undefined` → catch block
+returns `null` → "price-fetch-failed:unresolvable" guard fires on every baseline fetch.
+
+This explains 100% of the ~520 unscored verdicts and the 19-BUG-msgs/21h storm (TNB c68 #7).
+The `false_positive` label from Sprint 1926a is incorrect for these rows (direction never
+evaluated). Sprint 1336 SQLite isolation has no impact on this path.
+
+Child task 1945a scoped: fix `getPriceHistory` return type in `clients.ts` + update
+`defaultFetchHistory` unwrapping + audit all callers. Goal: `scored_pct ≥ 60%` post-deploy.
+
+Key finding: Go response has `DailyOHLCV.close` (not `.price`). Correct baseline field is
+`envelope.history[0].close` (history ordered ASC by date from Go query L223).
+
+Spike doc: `docs/spikes/SPIKE_1945-verdict-resolution-no-baseline.md`
+
+## Previous session (ARCH-1944)
 
 Zone-split brief for Sprint 1944 bctcQueueEnricher fix.
 
