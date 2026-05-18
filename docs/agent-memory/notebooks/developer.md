@@ -1,6 +1,36 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T00:55Z | **Sprint:** c175 — DISPATCHED
+**Last updated:** 2026-05-18T03:15Z | **Sprint:** 1941a — DONE, REVIEW
+
+## Last session summary (1941a — L7 OCF guard deploy-verify)
+
+**Task:** 1941a — FA cycle 2026-05-17 23:04 UTC reports VCB OCF=1.23e15 and FPT raw=503.
+
+**Root cause found:**
+- `financial_reports` table has two OCF columns: `operating_cf` (OCR, corrupted) and `operating_cash_flow` (API bridge Task 1878a, correct)
+- `cashFlowTool.ts` was only selecting `operating_cf` — the corrupted column
+- VCB: OCR=1.23e15 (raw VND not ÷1M), API bridge=9,947,260 triệu → ratio 1.15 (plausible)
+- FPT: OCR=10,189,002 (unit mismatch), API bridge=4,108,450 triệu → ratio still suppressed (NI=20,225 is a separate extraction bug — revenue stored as profit; vnstock shows NI=2,509.52 tỷ)
+
+**Fix applied:**
+- `cashFlowTool.ts`: `effectiveOcf = operating_cash_flow ?? operating_cf`
+- Added `ocf_source: "api_bridge" | "ocr"` to envelope
+- 5 new tests in `1941a-ocf-api-bridge-preference.test.ts`
+- Updated `makeTestDb()` DDL in 1890a + 1930b to include `operating_cash_flow` column
+
+**Results:**
+- 17 cashflow tests pass (5 new + 12 existing)
+- tsc clean
+- Docker rebuilt + redeployed, verified live in container
+- Branch: `task/1941a-ocf-api-bridge-cashflow-tool`
+- Commit: `b0791eaf`
+
+**Open issue (out of scope):**
+- FPT `net_profit=20,225` in `financial_reports` is wrong (OCR parsed revenue as profit). Correct NI ≈ 2,509,520 triệu from vnstock. Even with correct OCF (4,108,450), ratio ≈ 1.64 would pass — but DB data isn't there yet. File as separate extraction bug.
+
+**Pipeline state:** REVIEW. TASKS.md updated. QA to review.
+
+---
 
 ## Last session summary (c175 — dev-team orchestration)
 
@@ -34,41 +64,10 @@
 
 ---
 
-## Last session summary (c174 — dev-team orchestration)
-
-**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. Cycle c174.
-
-**Preflight:** HEAD.lock absent. Worktree prune: clean.
-
-**Drain signals (0a):**
-- `tnb-2026-05-18T00-00-00Z.json` — new signal (audit-handoff), fingerprint inserted, routed-to-po. Moved to `processed/`.
-
-**Pipeline state (0b):** idle.
-
-**PO Triage (Step 1):**
-- TNB c67 audit: Finding #2 (PC1 legal_risk, HIGH, 3-cycle) → 1940a filed.
-- TNB-critic-gate already DONE (1939a/b). Not refiled.
-- 1907a (digest-predict CRITICAL) → USER-ACTION, already tracked.
-- BATCH: [{type: FIX, id: 1940a, zone: apps/mcp-server/}]
-
-**Execute (Step 3) — dispatched to dev-mcp-server:**
-- Root cause: `get_legal_risk_signals` only queried `alerts` table; PC1 legal_risk in `agent_signals`
-- Fix: `queryAgentSignalsTable()` added, dual-source merge
-- 7 new tests GREEN, 61 regression tests GREEN, tsc 0 errors
-- Commits: 80873d1c (fix) + 56210908 (notebook/handoff) + a0aeb2e7 (dev-team notebook) + e0f2299d (QA review)
-
-**QA (c174):**
-- 1940a APPROVED — all pipeline checks pass
-- Merged to main via no-ff: `chore(c174/mcp-server): merge task/1940a-pc1-legal-risk-tool-gap`
-- Branch deleted, pushed to origin (pre-push tsc OK)
-
-**TASKS.md:** 1940a moved to Done. Review=empty, In Progress=empty.
-
-**Pipeline state:** idle/c174 COMPLETE.
-
 ## Previous sessions (archived context)
 
 c173: idle EXIT, 1939a/b QA in progress.
 c172: 1939a/b QA in progress, IDLE EXIT.
 c170: 1938a (MCP URL fix) shipped.
 c174: 1940a (PC1 legal_risk dual-source) shipped. QA APPROVED.
+1941a: cashFlowTool OCF API-bridge preference fix. VCB Layer-7 now plausible. QA pending.

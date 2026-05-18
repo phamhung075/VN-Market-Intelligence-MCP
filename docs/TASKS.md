@@ -15,6 +15,8 @@
 ---
 
 ## Todo
+| 1941b-signal-outcomes-seed-window | **Sprint 1941 TIER 2** — 7-day OBSERVE on `signal_outcomes` seeding. AC by 2026-05-25: ≥30 resolved rows (outcome_24h ∈ correct/incorrect/neutral) across ≥3 distinct `signal_type` values. Failure mode → bug task to dev-mcp-server (seed path broken in postSignal wrapper). No code change unless escalation triggers. | MEDIUM | OBSERVE | ops | — | 2026-05-25 |
+| BA-1941c | **Sprint 1941 TIER 3** — Write requirement spec for `accuracyDigestJob` (daily WORK telegram digest). Vision in docs/SPRINT_GOAL.md § Sprint 1941 TIER 3. Inputs: existing `getAccuracyStats({days: 30})` from outcome-feedback-loop brief. Output: 1 new file `apps/mcp-server/src/scheduler/digest/accuracyDigestJob.ts`, 1 cron entry `0 7 * * *`, 1 smoke test, format spec for the WORK telegram body (top-3 / bottom-3, insufficient_data fallback). | LOW | BA-SPEC | ba | — | — |
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
 
@@ -32,7 +34,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| 1941a-l7-ocf-guard-deploy-verify | **Sprint 1941 TIER 1** — Root cause: cashFlowTool.ts was reading `operating_cf` (OCR column, corrupted: VCB=1.23e15, FPT unit-mismatch). Fix: prefer `operating_cash_flow` (API bridge, Task 1878a) when not null. VCB now 9,947,260 triệu VND, ratio=1.15 passes guard. FPT now 4,108,450 triệu VND (still suppressed — NI extraction bug separate). 5 new tests + existing 17 cashflow tests GREEN. Docker rebuilt + redeployed. | HIGH | FIX | dev-mcp-server | docs/handoffs/1941a.md | — |
 
 ---
 ## Done
