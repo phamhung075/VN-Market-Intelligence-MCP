@@ -1,4 +1,4 @@
-<!-- size-justification: ~130L — single dispatcher flow; Steps 1-6 are all inline (no sub-flows warranted at this size); error boundary + telemetry + collision guard each require full inline spec to be auditable without lazy-loading additional files. -->
+<!-- size-justification: ~90L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js (Sprint 1951 follow-up: keeps flow scannable; full matcher is one node script call). Error boundary + telemetry + collision guard remain inline for auditability. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -16,75 +16,25 @@ Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/
 ## Step 1 — Resolve current UTC
 
 ```bash
-date -u "+%M %H %d %m %u"
+NOW_ISO=$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
-Format: `<minute> <hour> <dom> <month> <dow_iso>` (dow_iso: 1=Mon…7=Sun).
-Save as NOW_FIELDS. Save ISO timestamp as NOW_ISO (`date -u +%Y%m%dT%H%M%SZ`).
+Save as NOW_ISO. Slot-matcher script reads the system clock directly — no field parsing needed.
 
 ---
 
-## Step 2 — Load + parse schedule
+## Step 2+3 — Match enabled slots (single call)
 
 ```bash
-cat docs/data/cowork-schedule.json
+MATCHES=$(node .claude/scripts/cowork-match-slots.js)
 ```
 
-On parse error (malformed JSON / file missing / <50 chars):
-- `send_telegram(channel=work, "[cowork-team] schedule.json parse failed: <error>")`
-- Write `docs/signals/cowork-team-${NOW_ISO}-error.json` → `{from:"cowork-team", to:"po", type:"schedule-parse-error", payload:{error:"<msg>"}, createdAt:"${NOW_ISO}"}`
-- EXIT immediately. Do NOT proceed.
+Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns JSON array of `{slot_id, agent, flow_path, cron, trigger_prompt}`.
 
----
-
-## Step 3 — Match enabled slots (cron ±2min)
-
-Run node inline to evaluate which slots are due:
-
-```bash
-node -e "
-const fs = require('fs');
-const sched = JSON.parse(fs.readFileSync('docs/data/cowork-schedule.json','utf8'));
-
-const [M,H,DOM,MON,DOWI] = process.argv.slice(1).map(Number);
-// ISO weekday 1=Mon..7=Sun → cron DOW 0=Sun..6=Sat
-const DOW = DOWI === 7 ? 0 : DOWI;
-
-function field(expr, val) {
-  if (expr === '*') return true;
-  if (expr.includes(',')) return expr.split(',').map(Number).includes(val);
-  if (expr.startsWith('*/')) return val % parseInt(expr.slice(2)) === 0;
-  if (expr.includes('-')) {
-    const [a,b] = expr.split('-').map(Number);
-    return val >= a && val <= b;
-  }
-  return parseInt(expr) === val;
-}
-
-function dowMatch(expr, dow) {
-  if (expr === '*') return true;
-  return field(expr, dow) || (dow === 0 && field(expr, 7));
-}
-
-function cronMatches(cron) {
-  const [cm, ch, cdom, cmon, cdow] = cron.split(' ');
-  for (let d = -2; d <= 2; d++) {
-    let m = M + d, h = H;
-    if (m < 0)  { m += 60; h--; }
-    if (m >= 60) { m -= 60; h++; }
-    if (h < 0 || h >= 24) continue;
-    if (field(cm,m) && field(ch,h) && field(cdom,DOM) && field(cmon,MON) && dowMatch(cdow,DOW))
-      return true;
-  }
-  return false;
-}
-
-const hits = sched.slots.filter(sl => sl.enabled && !sl._disabled_by && cronMatches(sl.cron));
-process.stdout.write(JSON.stringify(hits));
-" $NOW_FIELDS 2>&1
-```
-
-Save JSON array as MATCHES. On node error → jump to **Error Guard** (Step 5).
+**On script error** (non-zero exit / non-JSON output / schedule.json missing):
+- `send_telegram(channel=work, "[cowork-team] slot-matcher failed: <stderr first line>")`
+- Write `docs/signals/cowork-team-${NOW_ISO}-error.json` → `{from:"cowork-team", to:"po", type:"matcher-error", payload:{error:"<msg>"}, createdAt:"${NOW_ISO}"}`
+- EXIT immediately.
 
 ---
 
