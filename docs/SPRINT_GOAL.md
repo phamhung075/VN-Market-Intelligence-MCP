@@ -1,3 +1,84 @@
+## Sprint 1947 — CLOSED-LOOP AUTO-IMPROVEMENT (ACTIVE)
+
+**Status:** Active | **Opened:** 2026-05-18T08:56Z | **Theme:** Convert the passive accuracy-monitoring surface (signal_outcomes + alert_accuracy + AccuracyDigestStats + OBSERVE gates) into an active detect → hypothesize → fix → recheck → loop closed-loop self-improvement system.
+
+# Goal
+
+## Vision
+The user request (verbatim 2026-05-18): _"add to goal — compare system to real result with historic analysis for auto improve recheck and improve continue loop workflow"_.
+
+Sprints 1926a + 1941b + 1945a-b shipped the **measurement primitives**: every signal gets a verdict (`signal_outcomes` table, 24h lookback resolver), every signal type accumulates accuracy stats (`alert_accuracy` table), and the dashboard renders top-3/bottom-3 (`AccuracyDigestStats` + `AccuracyDigestCard`). What is STILL MISSING is the **active control loop** on top:
+
+1. **Detect** — Read accuracy history, detect signal types whose `hit_rate` is degrading (regression vs prior 7d/30d window) or coverage gaps (stocks with N signals but 0 resolved verdicts).
+2. **Hypothesize** — Generate improvement hypotheses (e.g., "alert-engine PMI threshold too low → false positives in regime=overheat", "news-scout chain_catalyst TTL too short → expires before verdict").
+3. **Dispatch** — Auto-spawn FIX tasks via the existing signal-bus (`docs/signals/{agent-id}-{ISO}.json` → PO picks up).
+4. **Recheck** — After fix deploys, re-measure the same metric over a fresh window; if hit_rate did not improve → re-hypothesize.
+5. **Loop** — Continue indefinitely on a daily/weekly cadence.
+
+Today the six OBSERVE gates carried out of Sprint 1946 are passive — a human reads them and maybe files a follow-up. This sprint asks: can we replace the human-in-the-loop with a `selfImproveOrchestratorJob` that reads `alert_accuracy`, applies a degradation policy, and posts a `dev-team-signal` for the gap?
+
+This is **architectural in scope** — the design must decide: (a) is the orchestrator a new microservice or a scheduler job inside `apps/mcp-server`?, (b) does it auto-dispatch FIX tasks to dev-team or only post `signal_quality_audit` rows for PO triage?, (c) what is the safety gate (avoid runaway auto-fix storms — must respect WIP≤2)?, (d) does the recheck window equal the cron cadence of the affected job, or a fixed N-cycle wait?
+
+**Sprint 1947 must NOT ship code yet.** Sprint 1947 ships an ARCHITECT brief + READ-ONLY SPIKE that scopes the system. Sprint 1948 will ship the minimum-viable loop based on the brief's recommendation.
+
+## Sprint 1947 sub-tasks
+
+### TIER 1 — Architect-led design (the anchor)
+- **SPIKE-1947 — Closed-loop auto-improvement system design.**
+  Owner: architect. Time-box 3h. Output: `docs/spikes/SPIKE_1947-closed-loop-auto-improvement.md` + `docs/architecture-briefs/2026-05-18-closed-loop-auto-improvement.md`.
+
+  Questions to answer:
+  1. **Where does the loop live?** Options: (a) new microservice `apps/self-improve/`, (b) scheduler job inside `apps/mcp-server/src/scheduler/jobs/selfImproveOrchestratorJob.ts`, (c) cowork agent (`agent: self-improver`). Trade-offs: speed-of-iteration vs DDD purity vs token cost.
+  2. **What metric is the loop trigger?** Candidates: `alert_accuracy.hit_rate` regression ≥10pp week-over-week, `signal_outcomes.scored_pct` drop ≥10pp, per-stock `agent_signals` count with 0 resolved verdicts, `signal_quality_audit` row count rising.
+  3. **What is the detection policy?** Hard threshold (e.g., hit_rate <40% over ≥30 samples → flag) or rolling-mean delta?
+  4. **What is the hypothesis generator?** Rule-based table lookup (signal_type → likely-cause) or an LLM call (cowork agent self-reflection)?
+  5. **Auto-dispatch vs human-gate?** Option (a) auto-spawn FIX tasks via signal-bus respecting WIP≤2. Option (b) post `signal_quality_audit` rows for PO triage (no auto-dispatch). The user request implies (a) but the recurring-bug-escalation rule (≥2 fix commits same module → architect rethink) implies safety gates needed.
+  6. **What is the recheck cadence?** N cycles of the affected job? Fixed 48h window? Until next OBSERVE gate fires?
+  7. **What is the loop-exit / convergence criterion?** Hit_rate ≥X% sustained over Y windows? Max-N-iterations (declare WONTFIX)?
+  8. **What pre-existing primitives are reusable?** signal_outcomes, alert_accuracy, AccuracyDigestStats endpoint, signal-bus, OBSERVE gate pattern, recurring-bug-escalation rule. The brief must explicitly map each loop step to an existing component or a new one.
+  9. **Safety: how does the loop avoid runaway?** WIP cap, max-iterations-per-signal-type, kill-switch env var, OBSERVE-only "shadow mode" before going live.
+  10. **Phasing.** Sprint 1948 minimum-viable scope: detect-only (no auto-dispatch, just log to `signal_quality_audit` + Telegram WORK)? Detect + manual-dispatch via PO? Full auto-loop?
+
+  **AC:** Spike doc identifies architecture + writes architect brief recommending phasing for Sprint 1948. Brief includes: decision tree (microservice vs job vs agent), metric+threshold table, hypothesis-generator design (rule table OR LLM agent spec), safety-gate design, phased rollout (shadow → manual-dispatch → auto-dispatch).
+
+### TIER 2 — Observation gates (carried from Sprint 1946 — no new work)
+- All six existing OBSERVE gates run unchanged:
+  - `post-1944-financial-reports-q1-2026` (gate 2026-05-18T12:00Z — ~3h from sprint open)
+  - `post-1942-fa-verify` (~23Z tonight)
+  - `post-1945-verdict-resolution-scored-pct` (2026-05-20T07:22Z)
+  - `post-1945-bug-storm-silence` (2026-05-20T07:22Z)
+  - `1941b-signal-outcomes-seed-window` (2026-05-25)
+  - `1922g-pharma-events-source-verify` (2026-06-01)
+
+  These gates ARE the empirical input that SPIKE-1947's design must read. If `post-1945-scored-pct` fires "scored_pct ≥60%" cleanly at 2026-05-20 → that becomes the spike's reference data showing the measurement substrate works. If it misses → spike has live evidence of the gap the auto-improve loop must close.
+
+## Scope
+IN: 1 architect SPIKE (time-boxed 3h, read-only diagnostic + design brief). 6 passive OBSERVE gates carrying from Sprint 1946.
+OUT: Any code change. Any new microservice scaffolding. Any auto-dispatch wiring. Cowork agent definition changes. New cron jobs. Schema migrations. The whole point of the spike is to decide what to build BEFORE building.
+
+## Success Metric
+- **AC-1 (PRIMARY):** SPIKE-1947 doc + ARCH-1947 brief both committed within 48h of sprint open (target 2026-05-20T08:00Z, aligning with the post-1945 OBSERVE gate so the spike can reference fresh data).
+- **AC-2:** Brief recommends a phased Sprint 1948 scope (detect-only → manual-dispatch → auto-dispatch) with concrete file/zone targets for the first phase.
+- **AC-3:** Brief explicitly maps each loop step (detect / hypothesize / dispatch / recheck / loop) to either an existing primitive or a new component with naming + DDD layer.
+- **AC-4:** Brief includes a safety section: WIP cap mechanism, max-iterations-per-signal-type, kill-switch, shadow-mode rollout.
+- **AC-5:** SPIKE-1947 reviews the six carry-over OBSERVE gates and proposes which ones can be retired once the loop is live (and which stay as belt-and-suspenders monitoring).
+
+## Sequencing
+1. SPIKE-1947 runs first and last in Sprint 1947 — it IS the sprint deliverable.
+2. The six OBSERVE gates run passively in the background; their outputs feed SPIKE-1947's empirical data section but do not block the spike.
+3. Sprint 1948 (next sprint) picks up the brief's recommended Phase 1 scope as its anchor.
+
+## Architect brief required
+- **ARCH-1947** is the architect's design output (not a pre-spike brief). The brief IS the spike's deliverable. No separate scoping brief is needed before SPIKE-1947 starts — the user request itself is the scoping input.
+
+## Carry-forwards monitored (not in-scope this sprint)
+- 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP) — CRITICAL but blocked on user.
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock) — F1 USER-PERMANENT.
+- alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550)
+- fa-shape-guard-watch MONITORING (next post-restart FA live session)
+
+---
+
 ## Sprint 1946 — CRISIS DETECTION COVERAGE GAP (DONE)
 
 **Status:** DONE | **Closed:** 2026-05-18T08:40Z | **Theme:** Diagnose whether `get_crisis_early_warning` is supposed to cover individual-stock -30%+ crashes, or only systemic/macro crises — TNB c69 finding #2.

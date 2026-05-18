@@ -1,15 +1,22 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "PO Sprint 1946 close-out + post-sprint monitoring window — 2026-05-18T08:40Z. Sprint 1946 CLOSED (SPIKE-1946 + 1946a both QA-approved; PLX added to all 3 watchlist SSoTs + frontend + 7 tests GREEN; Docker rebuild dispatched to ops). No Sprint 1947 opened — all Backlog rows are USER-ACTION blocked (1907a + 1897b) or MONITORING. WIP=0. Six OBSERVE gates active (post-1944 12:00Z today, post-1942 ~23Z tonight, post-1945-scored-pct + bug-storm 2026-05-20T07:22Z, 1941b 2026-05-25, 1922g 2026-06-01). post-1944 gate progress: 6/7 banking source_url populated, EIB Q1-2026 PDF fetched 08:22Z, financial_reports still 0 rows (reparse pending).",
+  "_lastRefreshedBy": "PO Sprint 1947 OPEN — 2026-05-18T08:56Z. User-triggered new goal: 'compare system to real result with historic analysis for auto improve recheck and improve continue loop workflow'. Sprint 1947 anchor = SPIKE-1947 (architect, 3h time-box) — closed-loop auto-improvement system design. AC-1 by 2026-05-20T08:00Z (aligned with post-1945-scored-pct OBSERVE gate). Sprint 1948 will ship the brief's Phase 1 scope. WIP=1 (SPIKE-1947 In Todo, architect not yet started). Six OBSERVE gates continue passively. Sprint 1946 CLOSED 08:40Z (previousSprint).",
   "lastUpdated": "2026-05-18",
-  "currentSprint": null,
+  "currentSprint": {
+    "number": 1947,
+    "status": "ACTIVE (SPIKE-1947 in Todo; architect not yet started)",
+    "opened": "2026-05-18T08:56Z",
+    "theme": "Closed-loop auto-improvement system design",
+    "anchorTask": "SPIKE-1947",
+    "userRequest": "compare system to real result with historic analysis for auto improve recheck and improve continue loop workflow"
+  },
   "previousSprint": {
     "number": 1946,
     "status": "DONE (SPIKE-1946 + 1946a QA-approved 2026-05-18; PLX added to watchlist; Docker rebuild dispatched)",
     "summary": "Sprint 1946: Crisis detection coverage gap closed. PLX added to all 3 watchlist SSoTs (system-map.json, mcp.config.json, seedWatchlist.ts) + frontend domain/market.ts. SPIKE confirmed root cause = PLX absent from watchlist table (not architectural scope issue). 7 new tests GREEN + 1343a stale-count fixes. R-1 honored (Sprint 1945 zone untouched)."
   },
-  "sprintGoal": "Sprint 1946 CLOSED 2026-05-18T08:40Z. No active sprint; 6 OBSERVE gates carried into monitoring window. Next sprint will open when (a) first OBSERVE gate fires a follow-up task, (b) TNB next cycle produces new findings, or (c) Backlog USER-ACTIONs resolve (1907a digest-predict + 1897b VirtioFS).",
+  "sprintGoal": "Sprint 1947 ACTIVE 2026-05-18T08:56Z. Anchor: SPIKE-1947 — architect read-only design of closed-loop auto-improvement system (detect → hypothesize → dispatch → recheck → loop). User request: turn passive accuracy-monitoring (signal_outcomes + alert_accuracy + AccuracyDigestStats + 6 OBSERVE gates) into an active self-improving control loop. Sprint 1947 ships ARCH brief only; Sprint 1948 will pick up Phase 1 implementation.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
@@ -33,8 +40,8 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1946 CLOSED c185 (2026-05-18T08:40Z) — SPIKE-1946 architect confirmed PLX-absent-from-watchlist root cause; 1946a shipped PLX entry across 3 SSoT sources + frontend + 7 GREEN tests; Docker rebuild dispatched to ops. WIP=0.",
-  "currentSprintNotes": "c185 (2026-05-18T08:40Z): Sprint 1946 CLOSED. WIP=0. Post-sprint monitoring window active with 6 OBSERVE gates. Next decision point = post-1944 gate at 12:00Z today (≥3 banking Q1-2026 rows in financial_reports). Current state: 6/7 banking source_url populated, EIB Q1-2026 PDF fetched 08:22Z to VPS, financial_reports rows still 0 (bctcReparseJob pending). If 0 rows at 12:00Z → spawn 1945d-reparse-pipeline-gap bug task to dev-mcp-server. Backlog has no actionable items (all USER-ACTION blocked or MONITORING).",
+  "lastFixApplied": "Sprint 1947 OPENED c186 (2026-05-18T08:56Z) — anchor SPIKE-1947 (architect 3h time-box) on user request to build closed-loop auto-improvement system (detect → hypothesize → dispatch → recheck → loop). AC-1 by 2026-05-20T08:00Z. WIP=1 (SPIKE in Todo).",
+  "currentSprintNotes": "c186 (2026-05-18T08:56Z): Sprint 1947 OPEN. Anchor = SPIKE-1947 (architect design brief, no code). WIP=1. Aligned with post-1945-scored-pct OBSERVE gate (2026-05-20T07:22Z) so spike can reference fresh accuracy data. Six existing OBSERVE gates continue passively. Sprint 1947 deliverable = ARCH brief recommending Sprint 1948 Phase 1 scope (likely shadow-mode detect-only orchestrator). Open questions in spike: host (microservice vs job vs agent), metric trigger, hypothesis generator (rule table vs LLM), auto-dispatch vs human-gate, safety/runaway prevention.",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-18",
     "mcpServerHealth": "healthy",

@@ -1,39 +1,38 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T08:40:00Z · Cycle: c185 — Sprint 1946 close-out + observation gate review
+## Last updated: 2026-05-18T08:56:00Z · Cycle: c186 — Sprint 1947 OPEN (user goal: closed-loop auto-improvement)
 
-### c185 session summary
+### c186 session summary
 
-**Spawn context:** User-triggered PO flow run. Sprint 1946 reported complete (SPIKE-1946 DONE, 1946a DONE QA-approved; ops Docker rebuild in flight separately).
+**Spawn context:** User-triggered PO flow via Stop-hook feedback. New goal request (verbatim): "add to goal — compare system to real result with historic analysis for auto improve recheck and improve continue loop workflow". WIP=0 (slot open), Backlog had no actionable items, six OBSERVE gates carrying from Sprint 1946.
 
-**Actions taken:**
-- **A — Sprint 1946 CLOSED.** SPRINT-1946 row added to TASKS.md Done. SPRINT_GOAL.md Sprint 1946 section flipped Active → DONE with outcome summary + open observation gates. project-stats.json `currentSprint: null`, `previousSprint: {number: 1946, ...}`, sprintGoal/notes refreshed.
-- **B — OBSERVE gates reviewed.**
-  - `post-1944-financial-reports-q1-2026` (gate 12:00Z today): pipeline progressing — 6/7 banking source_url populated (ACB/BID/CTG/MBB/VCB/VPB pending fetch from staticfile.hsx.vn), EIB status=`done` (PDF fetched 08:22Z to VPS bctc-files/). financial_reports Q1-2026 still 0 rows (bctcReparseJob has not run since 2026-05-17T08:53Z). **DEFER** to next cycle — pre-deadline + active progress. TASKS.md row note updated. If 0 rows at 12:00Z → spawn 1945d-reparse-pipeline-gap to dev-mcp-server.
-  - `post-1942-fa-verify` (~23Z tonight): not triggerable. LEAVE.
-  - `post-1945-verdict-resolution-scored-pct` (2026-05-20T07:22Z): not triggerable. LEAVE.
-  - `post-1945-bug-storm-silence` (2026-05-20T07:22Z): not triggerable. LEAVE.
-- **C — TNB signal moved.** `tnb-2026-05-18T07:00:00Z.json` → `docs/signals/processed/`. DASHBOARD.md po row status READ → DONE (with payload pointer to processed/).
-- **D — Sprint 1947 triage: NO SPRINT.** Backlog scan:
-  - alert-precision-488-unknowns: MONITORING (HOLD until ≥550 agent_signals)
-  - fa-shape-guard-watch: MONITORING (next post-restart FA live session)
-  - 1907a-digest-predict-silence: USER-ACTION pending (Claude Desktop restart)
-  - 1897b-carry: USER-ACTION pending (Docker .git/ exclusion for VirtioFS)
-  No actionable backlog → WIP stays 0. Channel/file audit: MCP healthy (44 sessions / 4628s uptime / 142 tools). No fresh BUG/MARKET signal demanding new task.
+**Assessment of request:**
+- Maps to a 5-step active control loop: detect (read accuracy history) → hypothesize (gap → likely cause) → dispatch (auto-spawn FIX tasks) → recheck (re-measure) → loop.
+- Existing primitives are the building blocks: `signal_outcomes` (1926a) + `alert_accuracy` (1945a) + `AccuracyDigestStats` endpoint + `AccuracyDigestCard` frontend (1945b) + six OBSERVE gates. User is asking for the **active loop on top** of the measurement substrate.
+- Architectural scope — design decisions (host: microservice vs job vs agent; auto-dispatch vs human-gate; safety/runaway prevention; phasing) cannot be spec'd directly. Routing per flow rule (c): spawn architect spike first.
 
-**Rationale for not opening Sprint 1947:** All Backlog items are USER-ACTION blocked or pure observation. Six OBSERVE gates already provide the monitoring surface for the next 13 days. Opening a sprint with no actionable work = WIP inflation for show. PO discipline = wait for either (a) gate-triggered follow-up, (b) TNB new finding, (c) USER unblock of 1907a/1897b.
+**Decision: Open Sprint 1947 with SPIKE-1947 as anchor.**
+- Sprint 1947 is design-only; no code ships. Output = SPIKE doc + architect brief recommending Sprint 1948 Phase 1 scope.
+- Time-box: 3h (vs SPIKE-1946's 2h — wider scope).
+- Deadline 2026-05-20T08:00Z, aligning with the post-1945-scored-pct OBSERVE gate so the spike can read fresh accuracy data as empirical input.
+- WIP=1 (within ≤2 cap).
 
 **Files updated this cycle:**
-- `docs/TASKS.md` — SPRINT-1946 close row in Done; post-1944 gate note refreshed with c185 progress.
-- `docs/SPRINT_GOAL.md` — Sprint 1946 flipped DONE; original vision preserved.
-- `docs/data/project-stats.json` — currentSprint=null, previousSprint=1946 DONE, lastFixApplied + currentSprintNotes refreshed.
-- `docs/signals/DASHBOARD.md` — tnb-20260518T070000 row DONE; timestamp 08:40Z.
-- `docs/signals/processed/tnb-2026-05-18T07:00:00Z.json` — moved.
+- `docs/SPRINT_GOAL.md` — Sprint 1947 section prepended above Sprint 1946 DONE. Full vision, 10 design questions, 5 ACs, sequencing, scope IN/OUT.
+- `docs/TASKS.md` — `SPIKE-1947` row added to Todo (HIGH SPIKE, architect, deadline 2026-05-20T08:00Z).
+- `docs/data/project-stats.json` — `currentSprint` set to 1947 (active), `previousSprint` stays 1946 (DONE), `sprintGoal` + `lastFixApplied` + `currentSprintNotes` refreshed for c186.
+- This notebook overwritten.
+
+**Notes on scope discipline:**
+- Six existing OBSERVE gates carry through unchanged. SPIKE-1947 must READ them as input data, not modify or re-scope them.
+- The user request implies auto-dispatch. The recurring-bug-escalation rule (≥2 fix commits same module → architect rethink) implies safety gates needed. Brief must reconcile both.
+- Phased rollout (shadow → manual-dispatch → auto-dispatch) is the obvious safe path; spike will recommend Sprint 1948 starts with shadow-mode.
 
 ### Carry-over for next cycle
 
-- **Highest-priority watch:** `post-1944-financial-reports-q1-2026` at 12:00Z today (3.5h from c185 close). If financial_reports Q1-2026 = 0 rows at gate time → IMMEDIATE FIX task 1945d-reparse-pipeline-gap (dev-mcp-server zone, focus: bctcReparseJob not running on fetched PDFs since 2026-05-17). EIB PDF at `http://125.212.251.27:8765/bctc-files/EIB/...` is the canary — if it doesn't land in financial_reports by 12:00Z, the parse half of the pipeline is the gap, not discovery.
-- **Next gate after 12:00Z:** FA live cycle ~23Z (post-1942-fa-verify). AC: ≥20/30 BCTC analyses (was 3/38 pre-1942). 1942b shipped 94% coverage so this should pass.
-- **48h gates:** post-1945-scored-pct + bug-storm at 2026-05-20T07:22Z.
+- **Highest priority:** SPIKE-1947 needs architect pickup. Routing: when a cron tick or user prompt re-enters PO/dev-team flow, the SPIKE-1947 row in Todo is the next task. Architect spawn should follow standard dispatch.
+- **Concurrent gate:** `post-1944-financial-reports-q1-2026` fires at 12:00Z today (~3h after sprint open). If financial_reports Q1-2026 = 0 rows → spawn 1945d-reparse-pipeline-gap to dev-mcp-server. This will push WIP to 2 (still within cap).
+- **Concurrent gate:** `post-1942-fa-verify` (~23Z tonight). Likely passes (1942b shipped 94% cashflow coverage).
+- **48h gates:** post-1945-scored-pct + bug-storm at 2026-05-20T07:22Z. These coincide with SPIKE-1947 AC-1 deadline. If scored_pct ≥60% → spike has positive reference data. If miss → spike has live evidence of the gap the auto-loop must close.
 - **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart), 1897b (Docker .git/ exclusion). Both still pending in Backlog.
-- **WIP discipline:** 0 active sprints, 6 passive OBSERVE gates. PO is on standby until gate-trigger or new TNB cycle.
+- **WIP:** 1 (SPIKE-1947). Will rise to 2 if 1945d fires at 12:00Z gate.
