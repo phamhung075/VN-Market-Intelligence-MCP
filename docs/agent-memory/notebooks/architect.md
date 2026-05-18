@@ -1,8 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-15 12:00 UTC | **Sprint:** Sprint 1920
+**Last updated:** 2026-05-18 | **Sprint:** Sprint 1944
 
-## This session (ARCH-1920)
+## This session (ARCH-1944)
+
+Zone-split brief for Sprint 1944 bctcQueueEnricher fix.
+
+Brownfield scan overturned both root causes stated in the task brief:
+
+1. VPS route `/proxy/bctc-discover/:ticker` — already landed in repo (commit `1b8f8cd5`). Not missing.
+2. `bctcHttpFetcher.ts` X-API-Key injection — already landed (commits `8f9c2d55`/`0d248b00`), 6 unit tests covering AC-1..6.
+
+New root cause found: **response shape mismatch**. VPS `runDiscoverScript()` returns `string[]` but `extractVpsPlaywrightUrls()` in `bctcDiscovery.ts` expects `{results:[{url,source,confidence}],error}`. Fix goes in `vps-proxy-server.js` (wrap output in envelope). This is Risk R-1 in the brief.
+
+Child tasks:
+- 1944a-vps (dev-vps-crawls, S): wrap shape + deploy-vinahost.sh
+- 1944a-mcp (dev-mcp-server, S): verify wiring + add guarded live-probe test
+
+cafef Strategy 2 was already fully removed in TASK_1916b. 1944b scope revised to type-cleanup only (`_fetchCafef` field removal + comment update).
+
+Brief: `docs/architecture-briefs/2026-05-18-vps-bctc-discover-route-zone-split.md`
+
+## Previous session (ARCH-1942c)
+
+TASK-1942c HPG OCF all-zeros — brownfield design complete.
+
+Scenario B root cause confirmed: `CASH_FLOW_SCRIPT` single key `'Net cash inflows/outflows from operating activities'` in `vnstockBridge.ts` (L844) uses `g()` helper which returns `float(0 or 0) = 0.0` on key-miss, not NULL. Same pattern in `FINANCE_SCRIPT` for NI key.
+
+Scenario A root cause confirmed: `cashFlowExtractor.ts` missing `"sản xuất kinh doanh"` label variant in `P_OPERATING_CF`. The `fv()` variadic alt-patterns mechanism already supports adding it with zero risk.
+
+Both fixes ship in same PR — independent, no conflict. Domain type change: `VnstockCashFlow.operatingCashFlow: number | null` (safe — all downstream callers use SQLite `?` placeholder or null-check the outer object).
+
+Key precedent: `BALANCE_SHEET_SCRIPT` already has multi-key fallback pattern (L776-782: `if short_debt == 0 and long_debt == 0: long_debt = g('Convertible...')`). This is the model for the CASH_FLOW_SCRIPT fix.
+
+Handoff: `docs/handoffs/1942c-ba-spec.md`
+
+## Previous session (ARCH-1920/BCTC-3b)
 
 ARCH-1920 cadence policy brief. Brownfield scan of 10 zombie tables across schema-financial-reports.ts / schema-macro.ts / schema-alerts.ts. Key design decisions:
 
