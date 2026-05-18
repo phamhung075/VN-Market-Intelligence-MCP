@@ -1,0 +1,41 @@
+{
+  "_generated": "2026-05-18",
+  "_by": "cowork-dispatcher build (Sprint 1951)",
+  "_criteria": "Skip if: enabled=false OR _disabled_by set OR agent_id missing from system-map OR flow_path missing OR cron not 5-field",
+  "_note": "Off-minute slots (chef-morning :23, chef-eod :37, chef-evening :37) pass validation but will be missed by the ±2min dispatcher window — router should realign their cron to 15-min grid in a follow-up.",
+  "skipped": [
+    {
+      "slot_id": "digest-monday-predict",
+      "reason": "enabled=false + _disabled_by set",
+      "detail": "Sprint 1950-T5 — Monday window removed per Sprint 1949-T5 weekly-only scope",
+      "trigger_id": null,
+      "remediation": "Re-enable slot + remove _disabled_by when Monday predict window is restored"
+    }
+  ],
+  "warnings": [
+    {
+      "slot_id": "chef-morning",
+      "cron": "23 5 * * 1-5",
+      "issue": "OFF_MINUTE_ALIGNMENT: minute=23 not on 15-min grid (:00/:15/:30/:45); dispatcher ±2min window will miss this slot",
+      "remediation": "Change cron to '15 5 * * 1-5' or '30 5 * * 1-5' to align with dispatcher grid"
+    },
+    {
+      "slot_id": "chef-eod",
+      "cron": "37 8 * * 1-5",
+      "issue": "OFF_MINUTE_ALIGNMENT: minute=37 not on 15-min grid; dispatcher ±2min window will miss this slot",
+      "remediation": "Change cron to '30 8 * * 1-5' or '45 8 * * 1-5' to align with dispatcher grid"
+    },
+    {
+      "slot_id": "chef-evening",
+      "cron": "37 19 * * *",
+      "issue": "OFF_MINUTE_ALIGNMENT: minute=37 not on 15-min grid; dispatcher ±2min window will miss this slot",
+      "remediation": "Change cron to '30 19 * * *' or '45 19 * * *' to align with dispatcher grid"
+    }
+  ],
+  "tally": {
+    "total": 17,
+    "enabled_valid": 16,
+    "skipped": 1,
+    "warnings": 3
+  }
+}

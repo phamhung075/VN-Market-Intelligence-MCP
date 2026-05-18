@@ -1,18 +1,18 @@
 {
   "_ssot": "docs/data/cowork-schedule.json",
-  "_maintained_by": "agent-father (via architect brief only \u2014 see docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md)",
-  "_runtime": "claude.ai RemoteTrigger \u2014 one independent trigger per slot. NOT a Claude Desktop CronCreate dispatcher. Claude Desktop cannot spawn subagents.",
+  "_maintained_by": "agent-father (via architect brief only — see docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md)",
+  "_runtime": "claude.ai RemoteTrigger — one independent trigger per slot. NOT a Claude Desktop CronCreate dispatcher. Claude Desktop cannot spawn subagents.",
   "_query": "jq '.slots[] | select(.enabled)' docs/data/cowork-schedule.json",
   "_notes": {
-    "spike_1951a_oq1": "SUPPORTED \u2014 step (*/15), range (2-8), combined (*/15 2-8) all supported. Extended syntax (L,W,?) not supported.",
-    "spike_1951a_oq2": "UNKNOWN \u2014 No documented workspace-level limit in public docs. Test with 17 triggers or contact Anthropic support.",
+    "spike_1951a_oq1": "SUPPORTED — step (*/15), range (2-8), combined (*/15 2-8) all supported. Extended syntax (L,W,?) not supported.",
+    "spike_1951a_oq2": "UNKNOWN — No documented workspace-level limit in public docs. Test with 17 triggers or contact Anthropic support.",
     "spike_1951a_oq3": "ANSWERED 2026-05-18 via live API call. RemoteTrigger is a SEPARATE MCP tool (not CronCreate with remote:true). Tool: RemoteTrigger action=create. Required body fields: name, cron_expression, job_config.ccr.environment_id=env_011CV1yonRDFUhYhGEdkVwqj, job_config.ccr.events=[{prompt}], session_context.model, session_context.sources=[{git_repository:{url:VN-Market-repo}}], mcp_connections=[vn-market MCP], enabled_plugins=[], persist_session=false. Current workspace trigger count: 3 (qa-responder + 2 vault). Sprint 1951 adds 17 = 20 total.",
     "spike_1951a_date": "2026-05-18"
   },
   "_open_questions": [
-    "OQ-1: ANSWERED \u2014 RemoteTrigger supports full cron range/step syntax (e.g. '*/15 2-8 * * 1-5'). See spike_1951a_oq1.",
-    "OQ-2: UNKNOWN \u2014 No documented workspace-level limit. Test with 17 triggers. See spike_1951a_oq2.",
-    "OQ-3: ANSWERED \u2014 Separate RemoteTrigger MCP tool, not CronCreate. environment_id=env_011CV1yonRDFUhYhGEdkVwqj. See spike_1951a_oq3."
+    "OQ-1: ANSWERED — RemoteTrigger supports full cron range/step syntax (e.g. '*/15 2-8 * * 1-5'). See spike_1951a_oq1.",
+    "OQ-2: UNKNOWN — No documented workspace-level limit. Test with 17 triggers. See spike_1951a_oq2.",
+    "OQ-3: ANSWERED — Separate RemoteTrigger MCP tool, not CronCreate. environment_id=env_011CV1yonRDFUhYhGEdkVwqj. See spike_1951a_oq3."
   ],
   "slots": [
     {
@@ -28,7 +28,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_019nwLpkYELqFdE1DZaRhPUk"
+      "trigger_id": "trig_019nwLpkYELqFdE1DZaRhPUk",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "chef-intraday",
@@ -43,7 +45,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_015M6yJMwShWmVcm6XNpVQ3U"
+      "trigger_id": "trig_015M6yJMwShWmVcm6XNpVQ3U",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "chef-eod",
@@ -55,10 +59,12 @@
       "trigger_prompt": "run .claude/flows/unified-agent/chef.md  slot=chef-eod",
       "dish_type": "eod_dish",
       "guaranteed": true,
-      "depends_on": "foreignFlowAlertJob:08:13:UTC \u2014 24-min gate; signal written to DB before this trigger fires",
+      "depends_on": "foreignFlowAlertJob:08:13:UTC — 24-min gate; signal written to DB before this trigger fires",
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_011HNsRMNiQwa3vNwN1b9Anh"
+      "trigger_id": "trig_011HNsRMNiQwa3vNwN1b9Anh",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "chef-evening",
@@ -70,10 +76,12 @@
       "trigger_prompt": "run .claude/flows/unified-agent/chef.md  slot=chef-evening",
       "dish_type": "evening_preview",
       "guaranteed": true,
-      "depends_on": "macroIndicatorRefreshJob:19:13:UTC \u2014 24-min gate; FRED macro data written to DB before this trigger fires",
+      "depends_on": "macroIndicatorRefreshJob:19:13:UTC — 24-min gate; FRED macro data written to DB before this trigger fires",
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01CLotVE4XinDFxM2jErUCir"
+      "trigger_id": "trig_01CLotVE4XinDFxM2jErUCir",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "digest-sunday",
@@ -88,7 +96,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_014GzK19w1ZNpwnRjA91ce3P"
+      "trigger_id": "trig_014GzK19w1ZNpwnRjA91ce3P",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "digest-monday-predict",
@@ -102,7 +112,7 @@
       "guaranteed": false,
       "depends_on": null,
       "enabled": false,
-      "_disabled_by": "Sprint 1950-T5 \u2014 Monday window removed per Sprint 1949-T5 weekly-only scope",
+      "_disabled_by": "Sprint 1950-T5 — Monday window removed per Sprint 1949-T5 weekly-only scope",
       "last_fired": null,
       "trigger_id": null
     },
@@ -119,7 +129,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01LpUxJ98v2aK22FqLSBtL1G"
+      "trigger_id": "trig_01LpUxJ98v2aK22FqLSBtL1G",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "financial-analyst-morning",
@@ -134,7 +146,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01Du7kZ59vzagGh5GvkTY3Gi"
+      "trigger_id": "trig_01Du7kZ59vzagGh5GvkTY3Gi",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "financial-analyst-midday",
@@ -149,7 +163,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_011JSNKJEMs5fQwGCmLUkuWT"
+      "trigger_id": "trig_011JSNKJEMs5fQwGCmLUkuWT",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "news-scout-market",
@@ -180,7 +196,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01Mooo3zi5MFysRAWsHwaztd"
+      "trigger_id": "trig_01Mooo3zi5MFysRAWsHwaztd",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "news-scout-sentiment",
@@ -195,7 +213,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_016gauuJbAhdbzNcA3LYCFSh"
+      "trigger_id": "trig_016gauuJbAhdbzNcA3LYCFSh",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "market-watcher-market",
@@ -242,7 +262,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01W62B3yS7AERMwsGrap4e7U"
+      "trigger_id": "trig_01W62B3yS7AERMwsGrap4e7U",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "market-watcher-eod",
@@ -257,7 +279,9 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01PUAqNa8gMWRjc6DWqcV7xh"
+      "trigger_id": "trig_01PUAqNa8gMWRjc6DWqcV7xh",
+      "_superseded_by": "cowork-dispatcher",
+      "trigger_status": "pending_delete"
     },
     {
       "slot_id": "alert-commander-market",
