@@ -1,7 +1,27 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1951 / 1951b — cowork-team master cron dispatcher DONE)
-**Sprint:** 1951 Phase 2 (1951b DONE — cowork-team pivot implemented)
+**Last updated:** 2026-05-18 (Sprint 1951 / 1951h — market-watcher prepost dispatch DONE)
+**Sprint:** 1951 Phase 2 (1951h DONE — prepost window + threshold floor)
+
+## This Session — 2026-05-18 (Sprint 1951 / 1951h market-watcher prepost)
+
+**Task: 1951h — market-watcher prepost dispatch (Option 2: reuse cycle.md with prepost floor)**
+
+Source: PO decision brief `docs/signals/po-1951-prepost-decision.json`.
+Decision: reuse cycle.md (DRY, no prepost.md duplicate). Add prepost row to dispatcher + threshold floor.
+
+Files edited:
+- `.claude/flows/market-watcher/main.md` — added prepost row (01:00-02:00 + 08:31-15:55 UTC Mon-Fri) routing to cycle.md with mode=prepost; evaluation order: market first, then prepost, then EOD, then EXIT
+- `.claude/flows/market-watcher/cycle.md` — added prepost floor after regime adaptive-threshold block: sigma_threshold=max(σ,2.5), volume_multiplier=max(v,2.5x)
+
+AC trace:
+- AC-1: prepost slot now matched (01:00-02:00 + 08:31-15:55 UTC Mon-Fri) → cycle.md dispatched, not BLOCKED
+- AC-2: mode=prepost → floor lifts sigma to ≥2.5σ and volume to ≥2.5x regardless of regime
+- AC-3: channel rule unchanged (MARKET=EOD only in cycle.md header, gatherer policy intact)
+- AC-4: off-hours duplicate guard (Step 4, AutoCure 2026-05-14 TNB c47) untouched — still suppresses same-close re-emissions
+- AC-5: next */30 prepost fire will hit the new row → return DONE not BLOCKED
+
+---
 
 ## This Session — 2026-05-18 (Sprint 1951 / 1951b cowork-team master cron)
 

@@ -29,6 +29,14 @@ EASING     → sigma_threshold=2.5σ | volume_multiplier=2.5x | downside_bias=fa
 NEUTRAL    → sigma_threshold=2.0σ | volume_multiplier=2.0x | downside_bias=false
 ```
 
+Prepost floor (apply after regime block, no tool call):
+```
+if mode=prepost:
+  sigma_threshold    = max(sigma_threshold, 2.5)   # suppress illiquid-hour noise
+  volume_multiplier  = max(volume_multiplier, 2.5x) # suppress illiquid-hour noise
+```
+Rationale: pre/post-market liquidity is thin; regime thresholds as low as 1.5σ/1.5x would over-fire on unchanged EOD prices. The floor lifts both parameters to the EASING-equivalent level regardless of regime. Off-hours duplicate guard (Step 4, AutoCure 2026-05-14 TNB c47) continues to suppress same-closing-price re-emissions independently.
+
 **1. Price analysis** (stocks with moves > adaptive sigma_threshold):
 `get_price_history(code)` 30d | `get_sector_comparison(code)` stock vs sector? | `get_patterns(stockCode, eventKeyword)` | `get_technical_indicators(code)` RSI/BB/MACD | `get_ticker_intelligence(code)` growth/quality
 
