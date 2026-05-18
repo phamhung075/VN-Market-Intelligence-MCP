@@ -1,0 +1,33 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "brief-complete",
+  "priority": "high",
+  "createdAt": "2026-05-18T17:02:06Z",
+  "slug": "cowork-master-scheduler",
+  "brief": "docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md",
+  "payload": "Master scheduler brief ready. Replaces ~17 scattered cowork cron blocks with ONE cowork-scheduler agent reading docs/data/cowork-schedule.json SSOT. 5-phase execution: Phase 1 create SSOT+agent+flow, Phase 2 strip schedule blocks from 7 agent .md files, Phase 3 wire watchdog in dev-team drain-signals.md, Phase 4 health observability, Phase 5 docs cascade. 8 ACs defined. New files: docs/data/cowork-schedule.json + .claude/agents/cowork-scheduler.md + .claude/flows/cowork-scheduler/main.md. Sprint 1949 timing gates preserved exactly (foreignFlow 08:13→chef 08:37, macroRefresh 19:13→chef 19:37). Scheduler cron: 3,13,18,33,48 past each hour.",
+  "action_required": "PO: open sprint task → assign to agent-father. Phase 1 first (parallel-safe, no breakage). Phase 2 only after Phase 1 validated 24h.",
+  "implementor": "agent-father",
+  "estimated_size": "SPRINT-M",
+  "files_created": [
+    "docs/data/cowork-schedule.json",
+    ".claude/agents/cowork-scheduler.md",
+    ".claude/flows/cowork-scheduler/main.md"
+  ],
+  "files_edited": [
+    ".claude/agents/unified-agent.md",
+    ".claude/agents/news-scout.md",
+    ".claude/agents/alert-commander.md",
+    ".claude/agents/tran-ngoc-bau.md",
+    ".claude/agents/digest-predict.md",
+    ".claude/agents/financial-analyst.md",
+    "docs/agents/market-watcher/knowledge.md",
+    ".claude/flows/dev-team/drain-signals.md",
+    "docs/data/system-map.json",
+    "docs/references/agent-roster.md",
+    "docs/ARCHITECTURE.md",
+    "docs/data/cron-registry.json",
+    "docs/data/project-stats.json"
+  ]
+}

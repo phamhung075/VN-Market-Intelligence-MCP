@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T17:02:06Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`
+
+~17 cowork cron blocks scattered across 7 agent .md files evaporate on session end and make dependency ordering brittle; designed a master cowork-scheduler agent (haiku, bash-first gate, <1s NOOP exit) reading a single `docs/data/cowork-schedule.json` SSOT, with a 5-phase migration preserving Sprint 1949 timing gates exactly and a dev-team drain-signals watchdog for failure detection.
+
+**Signal dropped:** `docs/signals/agents-architect-2026-05-18T170206Z-cowork-master-scheduler.json` → po
+
+---
+
 ## 2026-05-18T15:54:51Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-cowork-reorder-and-cook-schedule.md`
