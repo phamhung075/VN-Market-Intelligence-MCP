@@ -1,3 +1,50 @@
+## Sprint 1942 — WATCHLIST FUNDAMENTALS COVERAGE (ACTIVE)
+
+**Status:** Active | **Opened:** 2026-05-18 | **Theme:** Lift FA coverage from 3/30 to ≥20/30 watchlist tickers
+
+# Goal
+
+## Vision
+Sprint 1941 shipped the OCF guard + accuracy digest + FPT net-profit fix — but the financial-analyst (FA) only has BCTC data for **3/30 watchlist stocks** (VCB, FPT, HPG). The other 27 stocks return "Chưa có dữ liệu" for 5+ FA cycles in a row. The 1941a OCF-guard COALESCE only helps where `operating_cash_flow` (vnstock API bridge) is populated — and 1878a wired the schema column but no scheduler back-fills it for the broader watchlist. Net effect: 90% of the watchlist runs the FA pillar with NULL fundamentals, so PE/PB/ROE peer comparisons fall back to medians, kinh_dich runs without earnings input, and Layer 7 forensic gate is dead-on-arrival. Sprint 1942 fixes the coverage gap so the methodology infrastructure built in Sprints 1878–1941 actually fires across the watchlist.
+
+## Sprint 1942 sub-tasks (priority: highest FA-coverage gain per ticket)
+
+### TIER 1 — Watchlist BCTC + API-bridge back-fill (the analyst blocker)
+- **1942a** — Wire `vnstockStore` quarterly fundamentals back-fill into a scheduler that runs against the **full 30-ticker watchlist** (not just whoever happened to be in vnstock cache). Today `vnstockStore.ts` has writers for 7 tables but no cron actually iterates the watchlist. AC: after one cron tick, `vnstock_financials` + `vnstock_balance_sheet` + `vnstock_cash_flow` each have ≥25/30 watchlist rows for the latest quarter present in vnstock upstream. Carry-forwards Sprint 1920a scope but scoped to watchlist breadth, not all tables.
+- **1942b** — Extend the 1878a OCF API-bridge back-fill (`operating_cash_flow` column on `financial_reports`) to the full watchlist on a recurring cadence (not one-shot). Today 1941a's COALESCE only helps tickers whose `operating_cash_flow` is populated; the bridge job needs to iterate watchlist + recent N quarters every cron tick. AC: ≥25/30 watchlist tickers have non-null `operating_cash_flow` for at least Q4-2025 after one tick. Companion to 1942a (different storage path: BCTC store vs vnstock store).
+
+### TIER 2 — Sibling-extraction fixes uncovered by 1941d
+- **1942c** — `cashFlowTool` HPG case: returns all-zero (net_rev=0, EPS=0, OCF=0) even though VCB/FPT extract non-zero. Same shape as 1941d (net_profit) but on a different ticker + different columns. Spec required from BA on the extraction-vs-bridge fallthrough policy for HPG steel sector BCTC layout. AC: `get_cash_flow("HPG")` returns non-null non-zero values for at least net_revenue + operating_cash_flow on the latest filed quarter.
+
+### TIER 3 — Surface accuracy badges in frontend (consume 1941c output)
+- **1942d** — Frontend dashboard page: render the daily `accuracyDigestJob` output (top-3 / bottom-3 signal accuracies) as a card on the dashboard root. Backend digest text now lives in WORK telegram only; user wants visual surface. AC: `apps/frontend/app/routes/_index.tsx` (or new `dashboard.accuracy.tsx`) renders top-3/bottom-3 from a new gateway endpoint that calls `getSystemAccuracyDigestStats`. Wires the closed-loop signal-feedback into user-visible output. Optional if 1942a/b take the whole sprint.
+
+## Scope
+IN: 2 scheduler/job wiring tasks (1942a, 1942b), 1 extraction-bug FIX (1942c), 1 frontend rendering task (1942d, optional).
+OUT: New BCTC fetchers (use existing infrastructure), new microservices, methodology brief work (1885/1886 still blocked), TNB-critic-gate downstream evolution.
+
+## Success Metric
+- **AC-1 (PRIMARY):** financial-analyst next live cycle (post-deploy of 1942a+1942b) reports ≥20/30 watchlist tickers with non-empty BCTC analysis instead of "Chưa có dữ liệu". Baseline = 3/30. Target = 20/30. Stretch = 25/30.
+- **AC-2:** Zero Layer-7 OCF anomaly flags fired on tickers that have `operating_cash_flow` populated (the COALESCE path must actually fire). VCB/FPT specifically must no longer flip `earnings_quality_warn=true` on the bridge path.
+- **AC-3:** `get_cash_flow("HPG")` returns non-null non-zero net_revenue + OCF for at least the latest filed quarter.
+- **AC-4 (if shipped):** Dashboard renders accuracy digest top-3/bottom-3 card with live data from gateway.
+
+## Sequencing
+- 1942a + 1942b are independent — parallel-able once architects approve cadence + watchlist source-of-truth (use `docs/data/system-map.json` watchlist key, not hardcoded).
+- 1942c depends on the 1942b API-bridge populating HPG's `operating_cash_flow` first to verify the COALESCE path works before chasing the OCR extraction.
+- 1942d is independent of all backend tasks — frontend zone, can ship anytime.
+
+## Architect brief required
+- **ARCH-1942** — Cadence + ordering policy for watchlist back-fill: quarterly batch vs continuous polling vs on-demand? Output → `docs/architecture-briefs/2026-05-18-watchlist-fundamentals-cadence.md`. Blocks 1942a + 1942b until landed (lightweight — should be a 2-page brief).
+
+## Carry-forwards monitored (not in-scope this sprint)
+- 1941b OBSERVE gate 2026-05-25 (signal_outcomes seeding window)
+- 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP)
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock)
+- alert-precision-488-unknowns MONITORING (HOLD until ≥550)
+
+---
+
 ## Sprint 1920 — DB PIPELINE COMPLETENESS (COMPLETE)
 
 **Status:** COMPLETE | **Closed:** 2026-05-16 | **Theme:** Every table feeds Cowork analysis

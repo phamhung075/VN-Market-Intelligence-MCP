@@ -1,43 +1,40 @@
 # PO Notebook
 
-## Last updated: 2026-05-17T23:38:27Z · Cycle: c174 — 1940a PC1 legal_risk FIX filed
+## Last updated: 2026-05-18T02:44Z · Cycle: c180 — Sprint 1942 self-initiated
 
-### c174 session summary
+### c180 session summary
 
-**Spawn context:** dev-team cycle c174. Preflight PASS (no HEAD.lock). Signal drained: tnb-2026-05-18T00-00-00Z.json (new, routed-to-po, fingerprint inserted into signals.db).
+**Spawn context:** Self-initiated post-1941 closure. WIP=0/2 CLEAN. 2 dev slots open. User passed assessment context (1941 dev complete, 1941b OBSERVE gate 2026-05-25, user-action blocked: 1907a + 1897b).
 
-**Step 0-TNB: TNB c67 audit (2026-05-18)**
-- Overall: NEEDS_ATTENTION, direction IMPROVING
-- Finding #2 (HIGH, 3-cycle threshold): PC1 legal_risk tool gap — `get_legal_risk_signals` returns empty despite news-scout #3318/#3343 with conf=0.78. New task: 1940a-pc1-legal-risk-tool-gap.
-- Finding #1 (CRITICAL): digest-predict 8+ day silence → already tracked as 1907a (USER-ACTION).
-- Finding #3 (HIGH): BCTC Q1-2026 banking cohort unconfirmed → observational, FA cycle self-recovers, no new dev task.
-- Findings #4-10: structural/tracking items, all covered by existing tasks or USER-ACTION.
-- TNB-critic-gate (New Architecture item): already DONE — 1939a/b shipped c172, QA c143 APPROVED.
-- ACK appended to docs/handoffs/tnb-audit-latest.md.
+**Channel audit (file-based — Claude Code session no MCP):**
+- MARKET: 1907a digest-predict 8+ day silence (USER-ACTION pending — no PO action)
+- WORK: alert-commander/news-scout/market-watcher/financial-analyst all reporting normal off-hours cycles
+- BUG: 1 fresh signal — alert-commander HEADLOCK c52 stale .git/index.lock (1897b USER-ACTION pattern, no new task needed)
 
-**Channel audit:**
-- MCP gateway reachable (SSE 200 confirmed). tool/list requires SSE protocol — not accessible via bash context. Structural block (13th cycle, established pattern).
-- Code-state audit: last 30 commits clean. No regression. No deploy-gap.
+**Highest-impact gap identified (cross-referenced FA notebook 5+ cycles):**
+- **27/30 watchlist tickers have ZERO BCTC data** ("Chưa có dữ liệu" for 5+ FA cycles)
+- Sprint 1878a wired `operating_cash_flow` schema column but no scheduler back-fills it across watchlist
+- Sprint 1920a (vnstockStore quarterly refresh) was specced but never shipped — picks back up here
+- Net effect: 1941a OCF COALESCE + 1941d net_profit bridge + Layer 7 forensic gate ALL only help 3/30 stocks today
+- HPG `get_cash_flow` all-zero (distinct extraction bug from 1941d FPT)
 
-**No-Task Guard:**
-- In Progress: empty
-- Todo: 1940a HIGH FIX → dispatch immediately (FIX skips planning)
-- Backlog: all USER-ACTION or MONITORING — no dev action
+**Sprint 1942 self-initiated — WATCHLIST FUNDAMENTALS COVERAGE:**
+- 1942a: vnstockStore quarterly back-fill scheduler (watchlist breadth, not single-ticker)
+- 1942b: `operating_cash_flow` API-bridge recurring back-fill (was one-shot in 1878a)
+- 1942c: HPG `get_cash_flow` all-zero extraction fix (sequenced after 1942b validates bridge path)
+- 1942d (optional): frontend dashboard accuracy-badge card (consumes 1941c digest)
 
-**BATCH:** [{type: FIX, id: 1940a-pc1-legal-risk-tool-gap, zone: apps/mcp-server/, owner: dev-mcp-server}]
+**Primary AC:** FA next live cycle reports ≥20/30 watchlist with non-empty BCTC (baseline 3/30, target 20, stretch 25).
 
-**Positive signals:**
-- 6 cowork agents operational (alert-commander, news-scout, market-watcher, qa-responder, unified-agent, qa-responder)
-- TNB-critic-gate DONE (1939a/b)
-- news-scout conf elevation: #3343 PC1 conf=0.78 (first non-default elevated confidence in recent cycles)
+**Architect brief required:** ARCH-1942 — cadence policy (quarterly batch vs continuous polling). Blocks 1942a + 1942b. Should be lightweight 2-page brief.
+
+**Files updated this cycle:**
+- docs/SPRINT_GOAL.md (Sprint 1942 prepended)
+- docs/TASKS.md (Todo: ARCH-1942 + BA-1942a/b/c/d added; stale BA-1941c entry removed)
 
 ### Carry-over for next cycle
-
-- **1907a digest-predict** CRITICAL — USER-ACTION still pending.
-- **1897b USER F1** — USER-ACTION (Docker .git/ VirtioFS exclude) still pending.
-- **1940a PC1 legal_risk** — dispatched to dev-mcp-server this cycle.
-- **BCTC Q1-2026 banking** — monitor FA + report-analyzer cycles (next weekday 02:00 UTC).
-- **FA OCF post-1930b** — verify in next live FA session.
-- **calendar-source-replacement** OBSERVE — no action.
-- **alert-precision-488-unknowns** + **fa-shape-guard-watch** — monitoring.
-- **1937a-cowork-scheduler-mcp-gap** — root cause fixed (1938a), monitor for full resolution.
+- **ARCH-1942 dispatch:** spawn architect for cadence brief next
+- **1941b OBSERVE:** gate 2026-05-25, monitor signal_outcomes resolved count
+- **1907a + 1897b USER-ACTION:** still pending — no PO action
+- **alert-precision-488-unknowns + fa-shape-guard-watch:** monitoring
+- **calendar-source-replacement DONE** — observe macroRefresh runtime improvement
