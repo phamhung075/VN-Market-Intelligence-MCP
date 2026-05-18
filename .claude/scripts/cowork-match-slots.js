@@ -13,7 +13,8 @@ const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
 const now = new Date();
-const M = now.getUTCMinutes();
+const actualM = now.getUTCMinutes();
+const M = Math.floor(actualM / 15) * 15; // nominal tick: round down to nearest 15-min boundary
 const H = now.getUTCHours();
 const DOM = now.getUTCDate();
 const MON = now.getUTCMonth() + 1;
