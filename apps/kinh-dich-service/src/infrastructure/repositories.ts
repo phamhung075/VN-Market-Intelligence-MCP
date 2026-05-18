@@ -76,10 +76,10 @@ export class SQLitePriceScoreRepository implements PriceScorePort {
     try {
       const rows = this.db
         .prepare<PriceRow, [string, number]>(`
-          SELECT price AS close, 0 AS volume
-          FROM market_prices_history
+          SELECT close, volume
+          FROM daily_ohlcv
           WHERE code = ?
-          ORDER BY fetched_at DESC
+          ORDER BY date DESC
           LIMIT ?
         `)
         .all(stockCode, days);
