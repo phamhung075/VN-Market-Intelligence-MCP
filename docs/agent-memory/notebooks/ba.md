@@ -1,8 +1,21 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** BA-1942d (c2)
+**Last updated:** 2026-05-18 | **Sprint:** 1950-T1 (c3)
 
-## Current state (2026-05-18)
+## Current state (2026-05-18) — Sprint 1950-T1
+
+REQ_1950 spec complete. Chef WORK-channel telemetry — spec written to `docs/handoffs/REQ_1950.md`. TASKS.md 1950-T1 updated with BA spec link. No PO blockers. NEXT: agent-father (XS/S doc-only patch to chef.md — no architect brief needed).
+
+Key decisions:
+- ENTRY fires immediately after Bootstrap, before Step 0 GATHER reads.
+- CLOSE (success) fires at end of Step 8, after notebook append — not after MARKET send in Step 7. Rationale: LOG is the definitive end-of-cycle marker.
+- CLOSE (silent) replaces the free-form intraday zero-cluster string in Step 1 with standardised format. Same send_telegram call location, string changes only.
+- FAILED wraps Steps 0–7 only. Step 8 LOG is outside the try block (housekeeping must not suppress the FAILED signal). Step 8 failures fall through to cowork-boundary default error rule.
+- `cycle_id` = `chef-{dish_type}-{YYYYMMDDTHHmmZ}` constructed once at ENTRY, reused in CLOSE/FAILED — enables T2 grep-based pairing.
+- Intraday `convergence_detected` field present on SENT only (not SILENT — by definition false; not included to keep SILENT line compact).
+- No PO blockers. All fields derivable from existing chef.md inputs.
+
+## Prior state (2026-05-18) — BA-1942d (c2)
 
 BA-1942d spec complete. Accuracy digest frontend card — spec written to `docs/REQ_1945b-accuracy-digest-frontend-card.md`. Task 1945b added to Todo (FEATURE, dev-frontend + dev-api-gateway). BA-1942d moved to Done.
 
