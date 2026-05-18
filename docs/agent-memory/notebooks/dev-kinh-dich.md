@@ -25,3 +25,18 @@ Zone: `apps/kinh-dich-service/` | Stack: TS/Bun | DB: market.db (read)
 - `src/__tests__/unit/kinh-dich-service.test.ts` — 8 new RED→GREEN tests
 
 Zone health: test coverage expanded, 3 structural bugs fixed, fallback path verified | HEALTHY
+
+### 2026-05-18 — Fix identical hexagram #2 Khôn for all stocks
+
+**Task:** All stocks returned hexagram #2 Khôn with 38% confidence.
+
+**Root cause:** `SQLitePriceScoreRepository.computeScores()` queried `market_prices_history` (intraday 1-min ticks, all same price within a session). With identical prices, all 6 dimension scores computed to exactly 0.0 → all THIEU_AM → all Yin → Khôn #2.
+
+**Fix (1 file, 3 lines):** Changed SQL in `computeScores()` from `SELECT price AS close, 0 AS volume FROM market_prices_history … ORDER BY fetched_at DESC` to `SELECT close, volume FROM daily_ohlcv … ORDER BY date DESC`. The `PriceRow` interface already matched (`close`, `volume`) — no type change needed.
+
+**Verification:** 30/30 tests pass, tsc clean. Docker rebuild needed to deploy (`docker compose build kinh-dich-service && docker compose up -d kinh-dich-service`).
+
+**Files changed:**
+- `src/infrastructure/repositories.ts` — SQL table + columns fixed
+
+Zone health: SQL fix applied, scores now use real daily closing prices, different stocks will produce different hexagrams | HEALTHY
