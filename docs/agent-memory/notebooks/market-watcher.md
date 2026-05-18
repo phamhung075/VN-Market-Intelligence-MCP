@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 02:43 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 03:42 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2352,3 +2352,21 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 4200 |
+
+### Cycle (03:38–03:42 UTC)
+- Stocks: 38 | Anomalies: 1 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
+- Movers: MWG -2.68% (1.70σ, sector -1.34%) → signal 3375 | GAS +3.36% (1.12σ, high vol) | DPM +2.04% | VRE -1.76% | HVN -1.41% | KBC -1.56% | HCM +1.57%
+- CARRY_REGIME=FII_OUTFLOW_RISK — banking/realty broadly red (BID -1.16, CTG -1.26, VHM -1.01, VRE -1.76)
+- Open alerts confirmed: GAS price_surge (MEDIUM), Brent +2.91σ (HIGH), Gold -3.58σ (CRITICAL)
+
+## Metrics (cycle 2026-05-18 03:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 12000 |
