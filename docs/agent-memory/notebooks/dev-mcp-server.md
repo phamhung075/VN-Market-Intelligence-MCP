@@ -4,6 +4,18 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1948e-A — Add "legal_risk" to SignalTypeSchema enum (2026-05-18, DONE)
+
+**Change:** `agentSignalStore.ts:49` — `"legal_risk"` added to `SignalTypeSchema` z.enum. One-line additive change, zero DB migration. Enum is validation-only; `agent_signals.signal_type` column is TEXT NOT NULL (accepts any string).
+
+**Tests:** 3/3 GREEN (TC1 schema accepts legal_risk, TC3 all 9 existing types, TC4 unknown_type rejected). tsc 0 errors. Regression: +1 pass, 0 new failures.
+
+**Unblocks:** 1948e-B (stage-signals.md dispatch block for news-scout).
+
+Zone health: SignalTypeSchema now includes legal_risk; PC1 legal_risk signals no longer Zod-rejected at MCP layer | HEALTHY
+
+---
+
 ### Task 1945d — BCTC reparse pipeline gap (2026-05-18, DONE)
 
 **Root causes (two gaps):**
