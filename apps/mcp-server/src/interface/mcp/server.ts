@@ -45,7 +45,7 @@ import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
-import { getAccuracyStats } from "../../infrastructure/db/signalOutcomeStore.js";
+import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1015,6 +1015,27 @@ export async function createBunServer(
         log.error("[signals/stock] query error", { error: err instanceof Error ? err.message : String(err) });
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
+    // ── GET /api/accuracy/digest — system-level accuracy digest for frontend ─
+    // Returns getSystemAccuracyDigestStats aggregated over `days` look-back.
+    // Non-authenticated — read-only, no sensitive data.
+    // days param: integer, default 30, clamped [1, 90] (R-4).
+    if (method === "GET" && pathname === "/api/accuracy/digest") {
+      const daysParam = url.searchParams.get("days");
+      const _daysParsed = parseInt(daysParam ?? "30", 10);
+      const days = Math.min(Math.max(isNaN(_daysParsed) ? 30 : _daysParsed, 1), 90);
+      try {
+        const stats = getSystemAccuracyDigestStats(db, days);
+        const body = { ...stats, generatedAt: new Date().toISOString() };
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(body));
+      } catch (err) {
+        log.error("[accuracy/digest] query error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "internal error" }));
       }
       return;
     }

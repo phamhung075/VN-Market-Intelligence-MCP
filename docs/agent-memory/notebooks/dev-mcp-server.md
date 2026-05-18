@@ -4,6 +4,22 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1945b-backend — GET /api/accuracy/digest HTTP handler (2026-05-18, DONE)
+
+**Goal:** Add `GET /api/accuracy/digest?days=N` HTTP handler to `server.ts` after line 1020. Reuse `getSystemAccuracyDigestStats` already existing at `signalOutcomeStore.ts:380`.
+
+**Implementation (2 files):**
+- `server.ts`: Import extended + handler inserted. Bug found: spec expression `|| 30` treats `days=0` as falsy → defaults to 30. Fixed to `isNaN` guard so `days=0` correctly clamps to 1 (R-4 lower bound). Handler: `isNaN` guard → clamp [1,90] → call function → spread + `generatedAt` → 200, or catch → 500.
+- `1945b-accuracy-digest-handler.test.ts` (NEW): 6 tests. `mock.module` + mutable delegate pattern (same as 1397c). Dynamic `await import()` for `createBunServer` after mock registration. All 4 signalOutcomeStore exports stubbed to avoid contamination errors. Tests: TC-1 shape+ISO, TC-2 clamp-hi (999→90), TC-3 clamp-lo (0→1), TC-4 absent→30, TC-5 throw→500, TC-6 zero-struct→200.
+
+**Key finding:** `mock.module` in Bun is scoped per worker. Contamination only when explicitly passing multiple files on CLI. In full `bun test` run, each file gets own worker → no contamination. Baseline 302 failures → 296 (6 new passes).
+
+**Tests:** 6/6 GREEN. tsc 0 errors. Commit: (see git log).
+
+Zone health: new HTTP endpoint live at `/api/accuracy/digest`; R-4 clamping correct; zero-struct path confirmed; 1945b-frontend unblocked | HEALTHY
+
+---
+
 ### Task 1945a — Fix verdictResolutionJob baseline-price shape mismatch (2026-05-18, DONE)
 
 **Root cause:** `getPriceHistory()` in `clients.ts` returned `PriceSnapshot[]` but Go returns `PriceHistoryEnvelope { code, history: DailyOHLCV[] }`. `defaultFetchHistory()` called `snaps[0].price` → TypeError → null → 100% of verdicts marked `false_positive:unresolvable`. ~520 alerts unscored, `scored_pct ≈ 36%`.
