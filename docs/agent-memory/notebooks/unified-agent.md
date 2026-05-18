@@ -1,42 +1,29 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-17T01:03Z · **Cycle:** Prediction Review (01:00 UTC) — BLOCKED
+**Last updated:** 2026-05-18T01:03Z · **Cycle:** Prediction Review (01:00 UTC)
 
 ## This session
 
-### Weekly Verification (13:01 UTC)
-- Mode: WEEKLY_VERIFY | Digest sent: no (not yet — scheduled 16:00 UTC) | Sunday bugs: none | Calibration report: yes (id=524, 13:00:01 UTC)
-- MCP gateway vn-market operational ✓ (log_id=944)
-- Checked `get_unreviewed_market_messages`: 10 messages found, most recent from calibration-report (today 13:00:01). Digest-predict scheduled for 16:00 UTC — expected, not yet sent.
-- Checked BUG channel `read_telegram_reports`: no new bugs reported
-- Current time 13:01 UTC < 17:00 UTC threshold → no escalation triggered yet. Will check digest-predict delivery after 16:00 UTC.
-
-### Prediction Review (01:01 UTC) — BLOCKED
-- Mode: PREDICTION_REVIEW | Claims: n/a | Accuracy: n/a | Flags: [GATEWAY_DOWN] | Regime at prediction: n/a
-- MCP gateway vn-market unreachable on first probe AND 1 retry: `dial host.docker.internal:3000` DNS lookup fail. Neither `log_agent_work` nor `get_cycle_bootstrap` succeeded → no log session id, no bootstrap payload.
-- BUG telegram impossible (`send_telegram` is itself an MCP tool on the same down gateway). Dedup probe (`get_recent_fixes`) likewise unreachable.
-- Signal dropped: `docs/signals/unified-agent-2026-05-17T01-02-44Z.json` (priority high, type bug-escalation, to po).
-- Same failure mode as Sat 2026-05-15T23:01Z DAILY_REVIEW. Gateway has not recovered in ~26h. Permanent fix still pending.
-- Exited per cowork-error-boundary. No prediction-accuracy compute performed this cycle.
-
-## This session (prior — preserved)
-
-Daily review fired at Sat 23:00 UTC. MCP live-probe succeeded (log_id=931). Sent WORK summary; observed 20 new BUG reports (19 × `verdictResolutionJob` no-baseline-price loop, 1 × qa-responder git-lock LOW); filed LOW perf-feedback for news 2.9h > 2h threshold; notebook on disk but commit blocked by recurring VirtioFS `.git/index.lock` + `HEAD.lock` EPERM (already filed BUG #2894 by qa-responder at 00:48 UTC — dedup-blocked).
+### Prediction Review (01:01 UTC)
+- Mode: PREDICTION_REVIEW | Claims (resolved): 0 | Open markets: 1 | Accuracy: n/a (no resolved claims this window) | Flags: [] | Regime at review: TIGHTENING
+- MCP gateway vn-market **operational** (live probe: `log_agent_work` start id=969, `get_prediction_markets` ok, `get_macro_snapshot` ok). Previous 2026-05-17 GATEWAY_DOWN claim superseded by live probe per cowork-error-boundary § Memory-as-Truth Prohibition.
+- `get_prediction_markets()` returned 1 open market (`0x7b49…0f11` "China invades Taiwan before GTA VI", endDate 2026-07-31, yesPrice 0.505, signalCount 0, no active signals). Nothing resolved → no accuracy comparison possible this cycle.
+- Threshold note: regime currently TIGHTENING → if/when resolutions appear, apply <40% accuracy floor (DAMPENING baseline already reduces expectations).
+- No feedback submitted (no accuracy breach to flag).
 
 ## Patterns noticed
 
-- `verdictResolutionJob` retry storm: same 3 baseline-price misses (WATCHLIST-31 / MACRO_GOLD / VNH) re-filed every hour since 02:07 UTC = 19 duplicate BUG msgs in 21h. Needs backoff or market-closed gate on dev side.
-- News RSS aggregate freshness (2.9h) lags individual source success ("7m ago"). Suggests scheduler-side gap, not source outage.
-- VNH BCTC scrape persistently returns 0 URLs (every refresh since 22:45 UTC) — source-specific, not pipeline-wide.
-- VirtioFS H4 git-lock race still active despite HEADLOCK-c52 hotfix on 2026-05-12; permanent F1 (Docker File-Sharing exclude `.git`) still pending.
+- Polymarket relevance pool stayed at 1 market and signalCount=0 — geopolitical-tail prediction with weak mapping to VN watchlist (FPT/VEA/GEX). Investigate whether mapping is over-tagging or whether news-scout/digest-predict should widen the relevance filter.
+- Doc conflict: `flows/unified-agent/prediction.md` says "append" to notebook, but `skills/notebook-write` mandates full overwrite. Treat notebook-write as SSOT (more recent, more emphatic). → doc-self-heal candidate.
 
 ## Carry-over (next session)
 
-- **🟡 verdictResolutionJob no-baseline-price loop** — 19 duplicate BUG msgs in 21h. Needs Dev Team: backoff on repeat OR skip-when-market-closed gate. Files: scheduler/verdictResolutionJob.
-- **🟡 News RSS lag** — 2.9h aggregate vs 7m per-source. Possible RSS scheduler gap. Feedback filed this cycle.
-- **🔴 BCTC Q1 BANKING** — ACB/BID/CTG/EIB/MBB/VCB/VPB filing deadline was 2026-05-15. Call `get_bctc_full` per ticker on first weekday market cycle (Mon 02:00 UTC).
-- **🔴 git HEAD.lock + index.lock recurring (VirtioFS H4)** — `git_commit_retry` idiom not effective from sandbox (EPERM on unlink). Permanent F1 fix `1897b-carry` still pending user action.
-- **🟡 VNH BCTC scrape empty** — bctcQueueEnricher 0 URLs every cycle since 22:45 UTC. Source-side, not pipeline.
+- **🟢 Gateway recovery confirmed 2026-05-18T01:00Z** — supersedes 2026-05-17 GATEWAY_DOWN flag. No further escalation needed unless next probe fails.
+- **🟡 verdictResolutionJob no-baseline-price loop** — last seen 2026-05-17 (19 dup BUG msgs in 21h). Re-check on next market cycle whether the storm is still active after the 26h gateway outage; if yes, Dev Team handoff still owed.
+- **🟡 News RSS lag** — 2.9h aggregate vs 7m per-source. LOW perf-feedback already filed 2026-05-16; no new action this cycle.
+- **🔴 BCTC Q1 BANKING (ACB/BID/CTG/EIB/MBB/VCB/VPB)** — filing deadline 2026-05-15 passed. First weekday market cycle (Mon 2026-05-18 02:00 UTC, next slot) must call `get_bctc_full` per ticker.
+- **🔴 VirtioFS H4 git-lock race** — `git_commit_retry` ineffective from sandbox (EPERM on unlink). Permanent F1 (Docker File-Sharing exclude `.git`) still pending user action. This cycle's notebook commit may hit the same race.
+- **🟡 VNH BCTC scrape empty** — re-verify next market cycle (source-side, not pipeline).
 - **FPT conviction 0.49 XEM XÉT GIẢM** — entry 72,900, last close 72,900 (stale). Hold reassessment until BCTC Q1 EPS available.
-- **Macro snapshot (2026-05-16 01:01 UTC, still latest):** Brent $109.24 (+2.56σ HIGH alert), Gold $4,543.60 (-2.19σ HIGH alert), USD/VND 26,137, US 10Y 4.59%. Regime: TIGHTENING.
-- **Cycle metrics:** 6 MCP calls × 500 ≈ 3,000 estimated tokens.
+- **Doc self-heal candidate**: prediction.md "append" vs notebook-write "overwrite" — fix prediction.md to reference end-cycle skill rather than re-specify a conflicting notebook step.
+- **Cycle metrics:** 4 MCP calls × 500 ≈ 2,000 estimated tokens.
