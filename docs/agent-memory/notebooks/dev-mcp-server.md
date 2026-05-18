@@ -4,6 +4,18 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1948e-B — Legal Risk Dispatch Block in stage-signals.md (2026-05-18, DONE)
+
+**Change:** `.claude/flows/news-scout/stage-signals.md` — Legal Risk Signal Dispatch block inserted before `urgent_news` (line 35 vs line 98). Trigger: `detectLegalRisk()` non-empty OR prosecution keywords + stock code. Dedup: 360-min window on (stock_code, signal_type="legal_risk"). Confidence: prosecution/asset_freeze=0.95, tax/license=0.85, investigation=0.70. ttl_minutes=360. No verdictResolutionJob contact.
+
+**Tests:** 5/5 GREEN (TC1 detect PC1 khởi tố, TC2 post+query roundtrip, TC2b dedup guard, TC3 confidence map, TC4 AC-8 regression). tsc 0 errors. Commits: `ddff5105` (flow+test), `5dd6cac3` (docs).
+
+**Key finding:** SQLite `datetime('now')` stores as `YYYY-MM-DD HH:MM:SS` (no T/Z). Test dedup check must use `datetime('now', '-N minutes')` not `.toISOString()` for reliable comparison. postSignal() dedup requires `direction` field — legal_risk dedup uses a separate query-only approach (no direction required).
+
+Zone health: news-scout now has a legal_risk dispatch path; PC1 prosecution events will be routed to agent_signals bus + alert-commander; dedup prevents 20-min cycle re-fires | HEALTHY
+
+---
+
 ### Task 1948e-A — Add "legal_risk" to SignalTypeSchema enum (2026-05-18, DONE)
 
 **Change:** `agentSignalStore.ts:49` — `"legal_risk"` added to `SignalTypeSchema` z.enum. One-line additive change, zero DB migration. Enum is validation-only; `agent_signals.signal_type` column is TEXT NOT NULL (accepts any string).
