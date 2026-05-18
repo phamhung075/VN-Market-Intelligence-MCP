@@ -128,10 +128,22 @@ All 3 MAINTs bundled into one chore commit (doc/notebook hygiene).
 
 ---
 
+## Keep (maintenance) — 2026-05-18 ~19:00 UTC
+- Trigger: manual (MAINT-1950b/c/d bundle)
+- Agents scanned: 5 notebooks (ops, market-watcher, qa-responder, pm, alert-commander)
+- Auto-fixes: 3 (ops.md truncated to 54L; WORK.md removed stale placeholder; semble-search model field confirmed present)
+- Escalations: 0
+- Orphans found: 0 (news-scout cycle orphans already in archive; WORK.md removed)
+- Lesson: When notebooks are already truncated by concurrent agents, archives exist — verify live file state before writing. workflow-map/cron-jobs were already clean from T5 fix; grep confirmed zero stale residue in live docs.
+
+---
+
 ## Patterns Noticed
 
 - Concurrent agents modify TASKS.md mid-session — re-read before staging.
 - HEAD SHA changes between calls when concurrent agents commit — `git diff` before stage.
 - TASKS.md cap: rotate Done rows to TASKS_ARCHIVE.md when file grows large.
 - Cron file edits do NOT auto-refresh live cron — CronDelete + CronCreate required same session.
+- Archive files may exist from earlier same-day sessions — check before creating duplicates.
+- Live notebooks may already be truncated by prior sessions; always check actual wc -l first.
 - Notebook archival: copy full file first, then overwrite with slim version — never truncate in-place without backup.
