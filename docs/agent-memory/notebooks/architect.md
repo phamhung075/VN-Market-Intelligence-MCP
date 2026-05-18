@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 06:34 UTC | **Sprint:** Sprint 1945b
+**Last updated:** 2026-05-18 08:15 UTC | **Sprint:** SPIKE-1946
 
-## This session (ARCH-1945b)
+## This session (SPIKE-1946)
+
+PLX -40% crash crisis detection gap diagnosis. Read-only, 2h timebox.
+
+Root cause: PLX absent from `watchlist` SQLite table. `get_crisis_early_warning` hard-filters to `SELECT code FROM watchlist` (crisisTools.ts L55) → PLX never enters velocity evaluation. Three seed sources all lack PLX: `docs/data/system-map.json`, `apps/mcp-server/mcp.config.json`, `seedWatchlist.ts` WATCHLIST_SEED.
+
+Tool architecture confirmed correct for its scope: velocity-spike detector (2× 24h baseline), not price-crash detector. alert-commander calls it every cycle (stage-bootstrap.md Step 2) — tool is active, not passive.
+
+news-scout chain_catalyst path covers non-watchlist stocks (uses stockAliases.ts + detectStocksInText) but is probabilistic (TTL ~120 min, regime confidence threshold). Signal #3383 (PLX bearish crisis, 05:20 UTC) deduped at 06:20 UTC news-scout cycle; may have expired before 07:07 UTC alert-commander cycle (RC-3 = design trade-off, not bug).
+
+Verdict: FIX. Child task 1946a: add PLX to 3 files (system-map.json + mcp.config.json + seedWatchlist.ts), 1 new unit test, idempotent seed test. Zone: apps/mcp-server/ + docs/data/.
+
+TASKS.md: SPIKE-1946 Todo → Done, 1946a added to Todo.
+Spike doc: `docs/spikes/SPIKE_1946-crisis-detection-plx-gap.md`
+
+## Previous session (ARCH-1945b)
 
 Accuracy digest frontend card brief. Multi-zone: `apps/mcp-server/` + `apps/frontend/`.
 
