@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 00:03 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 03:02 UTC | **Sprint:** c173
 
 ## This session
 
@@ -207,3 +207,31 @@
 - Suppressions: urgent_news#3344 (VN-Index ATH, conf 0.50<0.75 TIGHTENING bullish thr); urgent_news#3346 (MWG Bach Hoa Xanh, conf 0.50<0.75 TIGHTENING bullish thr)
 - Notes: fundamental_validation signals from financial-analyst (VCB/FPT/HPG) not in MARKET matrix → WORK-routed; 0 legal_risk / 0 crisis_velocity / 0 price_anomaly
 - Macro: REGIME_SOURCE=macro_snapshot (shape OK); DXY 99.36; UST10Y 4.59%; USD/VND 26350; Brent 110.65; Gold 4544.80
+
+### Alert Cycle (03:02 UTC 2026-05-18) — Market-hours 20m cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + calendar + legal + crisis all green)
+- **Market:** OPEN (VN trading window 02:00–08:59 UTC)
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** true (nextPivotWindow=June 2026 in 14d)
+- **Macro:** Brent 111.25 | Gold 4537.6 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.37 STABLE | REGIME_SOURCE=macro_snapshot (shape OK)
+- **Signals (count by type):** price_anomaly=4 (DPM/GAS/HVN/REE) | urgent_news=0 | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 4 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Suppression detail:**
+  - [Suppressed] DPM price_anomaly id=3368 conf=0.50 — move 1.75σ noted as TIGHTENING breach by market-watcher, but no get_alerts confirmation AND no payload.impact_score for Step 3b override → below TIGHTENING bar
+  - [Suppressed] GAS price_anomaly id=3369 conf=0.50 — move 1.35σ (below 1.5σ TIGHTENING threshold per market-watcher's own note); emitted for chain confirmation but no financial-analyst verified_chain yet
+  - [Suppressed] HVN price_anomaly id=3370 conf=0.50 — bearish in TIGHTENING (downside_bias=true) on USD/VND + Brent fuel pressure, but move 0.86σ well below 1.5σ; no get_alerts confirmation, no impact_score
+  - [Suppressed] REE price_anomaly id=3371 conf=0.50 — market-watcher flagged z=-4.27σ as CRITICAL (>3σ); however payload.impact_score absent → Step 3b override cannot apply per strict reading; no get_alerts confirmation. Genuine downside risk; flagged in carry-over for next-cycle escalation if financial-analyst issues verified_chain or price re-confirms
+- **Open alerts:** 4 (GAS price_surge MEDIUM 02:02; 3× MACRO deviations — Brent +2.91σ HIGH 01:15, Gold -3.58σ CRITICAL 00:45, Brent +2.05σ HIGH 23:30 yesterday). Macro alerts are regime inputs (already reflected in TIGHTENING extraction), not stock-level signals → no MARKET firing
+- **Legal:** clear | **Crisis:** clear | **Price alerts (get_alerts):** none active
+- **WORK dispatch:** posted (03:02 UTC) — "4 signals, Fired 0 / Suppressed 4 / Next 03:22 UTC"
+- **Tool calls this cycle:** 13 (log_agent_work×1 start, get_cycle_bootstrap, get_macro_snapshot, get_macro_calendar, get_alerts, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals×1, record_signal_outcome×4, send_telegram×1)
+- **log_agent_work id=977**
+- **Decisions made autonomously:**
+  - Treated REE z=-4.27σ as suppression-worthy despite "CRITICAL ALERT" string in payload — market-watcher's textual escalation is informational; matrix requires either get_alerts confirmation OR Step 3b override fields (move_sigma≥4.0 AND impact_score≥6), the latter unavailable
+  - Did not call write_alert_verdict (no MARKET alerts fired)
+  - Did not mark_alert_read on the 4 open alerts (owned by upstream market-watcher engine)
+- **Carry-over for next cycle:**
+  - REE crash escalation watch: if financial-analyst posts verified_chain on REE OR if z-score persists with impact_score populated next cycle → MARKET-CRITICAL fire
+  - DPM/GAS/HVN price_anomaly carrying open until expiresAt (04:42 UTC) — if conviction boosted by chain confirmation, escalate
+  - 4 stale MACRO open alerts in queue (Brent×2 / Gold×1 / GAS price_surge) — regime-input duplicates, market-watcher should age out
+  - PC1 chairman arrest legal_risk gap from 2026-05-16 still unfilled (5+ consecutive cycles) — news-scout/financial-analyst should emit legal_risk signal
