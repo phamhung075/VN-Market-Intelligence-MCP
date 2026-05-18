@@ -1,8 +1,48 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 07:07 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 09:02 UTC | **Sprint:** c173
 
 ## This session
+
+### Alert Cycle (09:00–09:02 UTC, 2026-05-18) — Off-hours 2h cycle (post-market close)
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
+- **Market:** CLOSED (outside 02:00–08:59 UTC trading window, now 09:00 UTC post-close)
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false
+- **Macro:** Brent 110.06 | Gold 4557.80 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.10 STABLE | REGIME_SOURCE=macro_snapshot (shape OK ✓)
+- **Kinh Dịch:** Khôn (2) = MUA (bullish 100%)
+- **Signals (count by type):** price_anomaly=5 (BID/PLX/VHM/VRE/MWG) | urgent_news=1 (PLX crash 40%) | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 5 | **Suppressed:** 1 | **MARKET:** 5
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Signal detail:**
+  - [FIRED] BID bullish price_anomaly +5.47% (banking resilience override, evidence_bullish 0.77)
+  - [FIRED] PLX bullish price_anomaly +6.99% (oil_gas surge 2.0σ, Brent $110+ tailwind)
+  - [FIRED] VHM bearish price_anomaly -2.53% to -3.80% (real estate sector -1.29% avg, PE compression TIGHTENING regime)
+  - [FIRED] VRE bearish price_anomaly -2.65% to -4.12% (real estate sector weakness, FII exit risk)
+  - [FIRED] MWG bearish price_anomaly -3.66% (retail collapse, consumer discretionary under pressure)
+  - [Suppressed] PLX urgent_news (crash 40%, conf 0.50 < TIGHTENING threshold 0.75) — conflicting with price_anomaly surge; marked SUPPRESSED per phantom-success guard
+- **MARKET dispatch:** 5 alerts fired to MARKET channel (consolidated digest, >3 pending rule). Format: Vietnamese with TIGHTENING regime caveats appended to bullish signals.
+- **Verdicts recorded:** BID (pending, bullish 0.77), PLX (pending, bullish 0.65), VHM (pending, bearish 0.68), VRE (pending, bearish 0.70), MWG (pending, bearish 0.72)
+- **WORK dispatch:** posted (09:00 UTC) — "5 signals, Fired 5 / Suppressed 1 / Regime TIGHTENING, Carry FII_OUTFLOW_RISK (-0.33%)"
+- **Tool calls this cycle:** 20 (log_agent_work×2 [start+end], get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals×2 [BID/PLX], get_alerts, write_alert_verdict×5, record_signal_outcome×1, send_telegram×2)
+- **log_agent_work id=995**
+- **Decisions made autonomously:**
+  - TIGHTENING regime: bullish urgent_news ≥0.75 threshold applied; PLX 0.50 < 0.75 → suppressed (news-scout push low-conviction; conflicted by own 6.99% surge signal)
+  - Price-anomaly override: BID evidence_bullish 0.77 > 0.50 base confidence → OVERRIDE triggered (banking resilience confirmed in HIGH alert despite sector -0.94% avg)
+  - Real estate sector: confirmed in bootstrap alerts (11 mã -1.29% avg) → FIRE both VHM/VRE as confirmed sector weakness (FII outflow -0.33% carry spread evidence)
+  - Retail collapse: MWG -3.66% retail sector -1.16% → FIRE as sector-level downside
+  - Oil gas surge: PLX +6.99% leads sector +5.99% on Brent $110+ → FIRE as commodity rotation (off-hours cycle but prices valid through 08:59 close snapshot)
+  - TIGHTENING regime caveat appended to BID/PLX bullish alerts (Vietnamese: "Lưu ý: Tín hiệu mua trong môi trường thắt chặt...")
+  - >3 pending rule: 22 alerts in bootstrap → send consolidated MARKET digest (not individual sends)
+- **Legal:** clear (no signals) | **Crisis:** clear (no signals) | **Price validation:** none triggered (bootstrap alerts already confirmed)
+- **Carry-over for next cycle:**
+  - BID banking resilience under TIGHTENING: next cycle watch for FII flow reversal or macro-relief signal (US yields, carry spread normalization)
+  - PLX oil_gas rotation: Brent >$110 sustained; watch for GAS/PVD follow-on or financial-analyst energy chain confirmation
+  - Real estate sector weakness: VHM/VRE/VIC all under pressure; if -2.0% threshold breached again next cycle → consider "position-danger" CRITICAL escalation
+  - MWG retail: -3.66% single day; watch for 2-day downtrend pattern or verified_chain retail-analyst escalation
+  - PC1 legal_risk gap: Chairman arrest news (2026-05-16) still surfaces in recent analysis context; `get_legal_risk_signals` empty — signal extraction gap persists 7+ consecutive cycles
+- **Next cycle:** 11:00 UTC (off-hours 2h cadence, market still closed)
+
+## This session (continued)
 
 ### Alert Cycle (08:02 UTC 2026-05-18) — Market-hours 20m cycle
 - **Status:** BLOCKED — MCP infrastructure unavailable
