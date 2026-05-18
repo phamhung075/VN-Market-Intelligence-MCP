@@ -4,6 +4,27 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1944a-mcp — VPS BCTC Discover live probe test (2026-05-18, DONE)
+
+**Goal:** Add VPS_INTEGRATION-guarded integration test for BCTC discover endpoint. Verify env wiring. No production code changes.
+
+**Implementation (1 test file + 1 docs fix):**
+- `1944a-vps-live-probe.test.ts` (NEW): 5 tests total — 2 guard tests always run (CI-safe), 3 live tests guarded with `VPS_INTEGRATION=true` (LIVE-1: no HTTP 401, LIVE-2: response shape `{results:Array, error:null|string}`, LIVE-3: direct fetch with API key confirms no 401). Live tests use `it.skip` when guard absent.
+- `.env.example`: Added `VPS_PUSH_API_KEY=` entry with comment (was missing — field used by bctcHttpFetcher.ts since commit 8f9c2d55 but not documented in example).
+
+**Wiring verified (read-only):**
+- `VPS_PUSH_API_KEY` — present in `.env` line 13, referenced in `bctcHttpFetcher.ts` + `server.ts`. Added to `.env.example`.
+- `BCTC_DISCOVER_URL` — confirmed in `docker-compose.yml` line 25 (`http://125.212.251.27:8765/proxy/bctc-discover`).
+- `VPS_HOST` — confirmed in `docker-compose.yml` line 28.
+
+**Tests:** 2 pass / 3 skip (CI) — 0 fail. 1916a 6/6 GREEN. 56/56 cashflow+bctc regression GREEN. tsc 0 errors.
+
+**Design note:** Live probe does not block on 1944a-vps deploy — LIVE-2 accepts empty `results[]` before shape fix is deployed. Once 1944a-vps lands, `VPS_INTEGRATION=true bun test 1944a-vps-live-probe` will verify full end-to-end chain.
+
+Zone health: integration test infrastructure established for VPS live probes; env.example now complete for VPS auth; no production drift introduced | HEALTHY
+
+---
+
 ### Task 1942c — HPG get_cash_flow all-zeros fix (2026-05-18, DONE)
 
 **Root cause / goal:** HPG `get_cash_flow()` returning `operating_cf=0`/null and `net_income=0`. Root cause: CASH_FLOW_SCRIPT single-key lookup returned 0.0 when VCI steel-sector column key differs from standard key; FINANCE_SCRIPT same issue for NI. Also: steel-sector OCR label "sản xuất kinh doanh" not covered by cashFlowExtractor.
