@@ -90,3 +90,29 @@ DONE: Wontfix implementation complete — SERVICE=macro-indicators, CHANGED=[inv
 NEXT: qa | run full QA pipeline on branch task/calendar-source-replacement
 HANDOFF: docs/handoffs/calendar-source-replacement.md
 PIPELINE: continue
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-18
+**Verdict:** APPROVED
+**Round:** 1
+
+### Pipeline Results
+- Targeted tests (investing-economic-calendar.test.ts): 4 pass / 0 fail — GREEN
+- Targeted tests (fetch-external-macro.test.ts): 14 pass / 0 fail — GREEN
+- Full macro-indicators suite: 103 pass / 12 skip / 1 fail (pre-existing: trading-economics-vn VN_TE_SLUGS length mismatch — confirmed on main)
+- tsc: pre-existing errors in adb-kidb, fred-macro, imf-weo, world-bank-macro test files (confirmed identical on main — not introduced by this task). Changed files: type-clean.
+- DDD: PASS — NullCalendarAdapter in infrastructure/, index.ts is composition root (expected infra imports), no domain→infra violations
+- Security: PASS — no process.env introduced, no hardcoded secrets
+
+### Notes
+- Pre-existing `process.env` in `index.ts` (lines for PORT + DB_PATH) confirmed on main — not introduced by this task
+- Dead `InvestingCalendarAdapter` class retained as historical reference per handoff spec — correct
+- `DEFAULT_TIMEOUTS.calendar = 0` correctly eliminates 5s dead-wait per macroRefresh cycle
+- `idleTimeout: 120 → 90` is correct (calendar no longer contributes to cycle budget)
+- All 4 new tests are meaningful: no-arg, with-arg (countryId), performance (<50ms), timeout value
+
+### Merge
+chore(macro-indicators): merge task/calendar-source-replacement — wontfix NullCalendarAdapter
