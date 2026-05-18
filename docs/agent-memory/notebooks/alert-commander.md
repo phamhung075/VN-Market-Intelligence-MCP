@@ -1,8 +1,36 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 06:03 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 07:07 UTC | **Sprint:** c173
 
 ## This session
+
+### Alert Cycle (07:05–07:07 UTC, 2026-05-18) — Market-hours 20m cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
+- **Market:** OPEN (VN trading window 02:00–08:59 UTC) — market hours 20m cycle
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false
+- **Macro:** Brent 111.13 | Gold 4547.80 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.18 STABLE | REGIME_SOURCE=macro_snapshot (shape OK ✓)
+- **Signals (count by type):** price_surge=5 (GVR/BID/DPM/GAS×2) | macro_deviation=3 (Brent×2, Gold CRITICAL) | urgent_news=0 | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 8 | **Suppressed:** 0 | **MARKET:** 8
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Alert dispatch:** 8 unread alerts fired in consolidated MARKET message (price surges + macro deviations with TIGHTENING regime caveat). All alerts marked read + verdicts recorded (GVR/GAS/BID/DPM bullish; MACRO bearish).
+- **Open alerts after dispatch:** 0 (all 8 marked read)
+- **Legal:** clear (get_legal_risk_signals: no signals) | **Crisis:** clear (get_crisis_early_warning: no signals)
+- **WORK dispatch:** posted (07:07 UTC) — "8 signals, Fired 8 / Suppressed 0 / MARKET 8 / Regime TIGHTENING, Carry FII_OUTFLOW_RISK (-0.33%)"
+- **Tool calls this cycle:** 14 (log_agent_work×2 [start+end], get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_alerts, mark_alert_read×8 batch, record_signal_outcome×4, write_alert_verdict×3, send_telegram×2)
+- **log_agent_work id=990**
+- **Decisions made autonomously:**
+  - TIGHTENING regime: price_surge confirmed via get_alerts = automatic CRITICAL; no conviction threshold needed
+  - Macro deviations (Brent HIGH, Gold CRITICAL) escalated as position-danger / regime input
+  - Consolidated 8 unread alerts into single MARKET digest (>3 pending → send_alert_digest pattern)
+  - Appended TIGHTENING regime caveat to each alert (bullish signals require higher conviction chains in tight money environment)
+  - Kinh Dich reading: Khôn (2) = BUY 100% — bullish confirmation for price surges
+- **Carry-over for next cycle:**
+  - All 8 alerts fired and marked read; next cycle will have clean bootstrap
+  - GAS +5.15% move (2 instances) + Brent $111+ energy sector tailwind — watch for follow-on energy rotation or financial-analyst chain confirmation
+  - Gold CRITICAL -3.58σ (4498.8 USD/oz) — extreme low signal; risk-off environment persisting; verify carry spread normalize or escalate
+  - Regime TIGHTENING continues; carry spread -0.33% persistent FII outflow risk
+  - PC1 chairman arrest legal_risk gap from 2026-05-16 still unfilled (6+ consecutive cycles now) — escalate to news-scout/financial-analyst for signal emission
+- **Next cycle:** 07:25 UTC (market hours 20m cadence)
 
 ### Alert Cycle (06:02–06:03 UTC, 2026-05-18) — Market-hours 20m cycle
 - **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
