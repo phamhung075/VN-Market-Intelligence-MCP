@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-18 01:50 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-18 02:49 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 01:49:49Z; gateway reachable via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
-**Queue:** Empty (0 items, last probe 01:49:49Z = live success)
-**consecutive_empty_cycles:** 4 | **backoff_until:** none (prior backoff 2026-05-17T22:48:18Z expired)
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 02:49:37Z; gateway reachable via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 02:49:37Z = live success)
+**consecutive_empty_cycles:** 0 (reset after counter hit 5) | **backoff_until:** 2026-05-18T03:49:37Z
 
 ## Known patterns / preferences
 
@@ -2077,6 +2077,24 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 - Note: Cowork fallback execution (custom qa-responder subagent unavailable). Live MCP probe at 01:49:49Z: `get_pending_ask_questions` -> [] (queue empty, live success). Notebook header showed counter=2 but prior 00:50 UTC entry showed counter=3 -> trusted notebook entry per Memory-as-Truth; corrected counter to 4 (3+1) and resent WORK message correction at 01:50 UTC. Counter < 5, no backoff trigger.
 
 ## Metrics (cycle 2026-05-18 01:50 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~700 |
+
+---
+
+### Q&A Batch (02:49–02:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 5 → BACKOFF SET (reset counter to 0) | backoff_until: 2026-05-18T03:49:37Z
+- Note: Live MCP gateway probes at 02:49:11Z (`date -u` anchor), 02:49:?Z (`log_agent_work(running)` → `{id: 976}`, live success), and `get_pending_ask_questions` → `[]` (live success — queue confirmed empty). Counter incremented 4→5; per cycle.md §0b, set backoff_until = 02:49:37Z + 60min = 2026-05-18T03:49:37Z and reset counter to 0. Per cowork-error-boundary Memory-as-Truth: ignored stale BLOCKED claims; fresh probe verdict = OPERATIONAL. `send_telegram(channel="work", ...)` delivered confirming backoff. Next scheduled cycle (~03:01 UTC) will hit backoff guard at step 0b and skip; next active polling resumes after 03:49:37Z.
+
+## Metrics (cycle 2026-05-18 02:49 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
