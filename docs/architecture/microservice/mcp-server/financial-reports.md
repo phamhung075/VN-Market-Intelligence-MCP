@@ -1,7 +1,7 @@
 # Tool Group: financial-reports (mcp-server)
 
 **Module path:** `src/interface/mcp/tools/financial-reports/`
-**Scheduler:** `src/scheduler/financial-reports/` (2 jobs)
+**Scheduler:** `src/scheduler/financial-reports/` (2 cron jobs + 1 startup probe)
 **Domain services:** `src/domain/services/financial-reports/` — balanceSheetExtractor, incomeStatementExtractor, cashFlowExtractor, ratioComputer (22 ratios), periodDeltaComputer (QoQ/YoY), bctcValidator, earningsCalendar, priceNewsValidator
 
 Individual tool signatures: `.claude/tools/list/<tool>.md`
@@ -26,6 +26,7 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 |-----|---------|---------|
 | `bctcOverdueCheckJob` | Daily | Alert on overdue BCTC filings (threshold from earnings calendar) |
 | `bctcReparseJob` | On-demand / 6h | Re-parse previously stored PDFs with improved extractor |
+| `vnstockStartupProbe` | Once on startup (+90s delay) | Detects cold/stale vnstock_fetch_log (< 10 codes or > 7d old) → fires `runVnstockFundamentalsJob()`. Non-fatal. |
 
 ---
 
