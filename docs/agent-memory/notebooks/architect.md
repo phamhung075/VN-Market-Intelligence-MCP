@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 10:00 UTC | **Sprint:** Sprint 1945
+**Last updated:** 2026-05-18 06:34 UTC | **Sprint:** Sprint 1945b
 
-## This session (SPIKE-1945)
+## This session (ARCH-1945b)
+
+Accuracy digest frontend card brief. Multi-zone: `apps/mcp-server/` + `apps/frontend/`.
+
+Key brownfield findings:
+- `getSystemAccuracyDigestStats(db, days)` already fully implemented at `signalOutcomeStore.ts:380`. Has table guard returning zero struct. Already imported in `server.ts:48` (extends existing import with one added symbol).
+- Handler insertion: after `server.ts:1020` (end of GET /api/signals/stock/:code), before line 1022 (POST /api/ohlcv-backfill-done).
+- SectionCard insertion: after `dashboard.analysis.tsx:1417` (end of "Kinh Dịch — Cổ phiếu mẫu"), before line 1418 (`</div>`).
+- Api-gateway confirmed: `/mcp/*` catch-all routes to `mcp-server:3000` (registry.go:26). No gateway code change.
+- No `fetchAccuracyDigest` exists yet — new function after line 519 of `client.ts`.
+- New types `AccuracyDigestStats` + `SignalTypeAccuracyDigest` in `domain/market.ts` after line 168.
+- Export `deriveAccuracyDigestState()` helper from `client.ts` for unit testability.
+
+6 states (BA spec §5 table counts Loading/null as distinct from Empty): null, empty, all-neutral, insufficient-sample, partial, normal.
+
+R-4: days param SQL template literal — handler clamps [1,90] BEFORE calling function. Critical sequencing.
+R-5: SPIKE-1945 isolation — do NOT touch verdictResolutionJob.ts or alert_accuracy tables.
+
+Brief: `docs/architecture-briefs/2026-05-18-accuracy-digest-frontend-card.md`
+TASKS.md: ARCH-1945b added to Done, 1945b already in Todo.
+
+## Previous session (SPIKE-1945)
 
 SPIKE-1945 verdict-resolution no-baseline — FIXABLE BUG confirmed.
 
