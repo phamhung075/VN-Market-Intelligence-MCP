@@ -37,6 +37,8 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 3. 22 financial ratios: P/E, P/B, ROE, ROA, EBITDA, D/E, current ratio, quick ratio, gross margin, operating margin, net margin, asset turnover, inventory turnover, debt service coverage, interest coverage, working capital, capex ratio, free cash flow, dividend yield, EPS, book value/share, enterprise value.
 4. periodDeltaComputer: QoQ (quarter-on-quarter) and YoY (year-on-year) deltas computed on-the-fly.
 5. VPS BCTC pipeline is PULL-based: VPS pulls queue (`bctc_vps_queue` table) → downloads → pushes back. MCP never initiates PDF downloads.
+6. `push-bctc-pdf` extraction: when VPS pushes a PDF via `POST /api/push-bctc-pdf`, extraction uses `triggerPushBctcExtraction` (`scheduler/financial-reports/pushBctcExtraction.ts`) — OCR via `extractAndStorePdfPagesWithRetry` + `pdfTextOverride` to `fetchParseAndStoreBctc`. Direct URL download is bypassed (geo-blocked; Task 1945d GAP-B fix).
+7. `bctcReparseJob` disk scan: runs unconditionally every cycle (not just when `agent_feedback` is empty). Fresh PDFs stored between D-7c audit runs are picked up without 18+ h wait (Task 1945d GAP-A fix). Deduplicates with feedback-row filenames to avoid double-processing.
 
 ---
 
