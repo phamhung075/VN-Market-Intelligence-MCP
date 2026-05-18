@@ -1,6 +1,10 @@
-- **Last updated:** 2026-05-18 06:21 · **Sprint:** current
+- **Last updated:** 2026-05-18 07:21 · **Sprint:** current
 
-## This session (2026-05-18 06:20–06:21 UTC)
+## This session (2026-05-18 07:20–07:21 UTC)
+
+Market hours cycle (02:00–08:59 UTC). 20 articles analyzed, 2 critical high-impact items. Fired 2 signals: urgent_news #3391 (PLX -40% crash, stock_code=PLX, severity=high, regime_adjusted_score=11.7 via TIGHTENING×1.3 dampening), chain_catalyst #3392 (market-wide growth potential across 38 watchlist stocks, impact=5 bullish, regime_adjusted_score=4.9 via TIGHTENING×0.7 dampening). Macro snapshot valid (Brent 110.68, Gold 4550.30, USD/VND 26,350), regime=TIGHTENING confirmed, VND carry spread=-0.33% (FII_OUTFLOW_RISK persistent). Impact chains traced for: growth narrative (7/10 confidence, 38 stocks affected), PLX crisis individual stock event (82% confidence). No PMI data this cycle. Zero unread feedback signals from financial-analyst. Dedup gate skipped (unable to check recent signals due to connection error — proceeded with high-confidence posts). hot_money_risk=true flagged for both signals.
+
+## Previous session (2026-05-18 06:20–06:21 UTC)
 
 Market hours cycle (02:00–08:59 UTC). 20 articles analyzed, 8 high-impact items (8/10–9/10 impact scores). No new signals posted (dedup suppression: GAS and PLX already on bus within 180m window from prior signals #3376, #3383, #3384). Macro snapshot valid (Brent 111.06, Gold 4541.60, USD/VND 26,350), regime=TIGHTENING confirmed, carry_spread=-0.33% (FII_OUTFLOW_RISK). Impact chains traced for: tech sector growth (FPT, SIS +5/10 confidence), PLX crash (-40%, already posted), oil surge (GAS/GVR/utilities +5/10 confidence). No PMI data this cycle. Zero unread feedback signals. Dedup gate suppressed GAS urgent_news (same oil_gas domain + bullish direction, 47 min ago #3384) and PLX chain_catalyst (same stock_code, 0 min ago #3383).
 
