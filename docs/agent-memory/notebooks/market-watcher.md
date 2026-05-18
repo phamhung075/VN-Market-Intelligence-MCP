@@ -1,11 +1,29 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 04:45 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 05:39 UTC | **Sprint:** 2026
 
 ## Current state
 
-Last successful cycle: 2026-05-17 12:39 UTC (off-hours, 41 stocks monitored, 0 signals)
-Last attempted cycle: 2026-05-17 19:38 UTC — **BLOCKED**
+Last successful cycle: 2026-05-18 05:39 UTC (market hours, 33 stocks monitored, 1 signal)
+Last attempted cycle: 2026-05-17 19:38 UTC — **BLOCKED** (resolved)
+
+### Cycle (05:39–05:40 UTC)
+- Stocks: 33 | Anomalies: 1 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: [MWG]
+- Supply chain: Stable (BDI 1,400, no disruptions) | Energy: Oil elevated (Brent $111.25)
+- **Signals**: MWG -3.05% (2.83σ downside in TIGHTENING, FII_OUTFLOW_RISK carry regime)
+- **Context**: Market OPEN hours (05:39 UTC). Macro: Global TIGHTENING, VND carry -0.33% (FII outflow risk). GAS sector rally +5.92% (oil support), MWG retail underperformance (-3.05% vs sector -1.28%).
+
+**Metrics (cycle 2026-05-18 05:39 UTC)**
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 33 |
+| signals_emitted | 1 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 3500 |
 
 ### Cycle (19:38 UTC) — BLOCKED
 - **Status**: MCP gateway unreachable (https://zenmidi.com/mcp)
