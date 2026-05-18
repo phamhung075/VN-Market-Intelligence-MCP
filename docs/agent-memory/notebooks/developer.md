@@ -1,6 +1,38 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T00:20Z | **Sprint:** c174 — COMPLETE
+**Last updated:** 2026-05-18T00:55Z | **Sprint:** c175 — DISPATCHED
+
+## Last session summary (c175 — dev-team orchestration)
+
+**Context from main terminal:** MCP URL `https://zenmidi.com/vn-market/mcp`. Cycle c175.
+
+**Preflight:** HEAD.lock present (age=2677s, size=0B, no live pid). Removed. Worktree prune: clean.
+
+**Notebook sweep:** Committed cowork agent notebooks that sandbox blocked during c167-c174 (alert-commander, report-analyzer, financial-analyst, news-scout + tool-usage-stats + tnb signal cleanup).
+
+**Drain signals (0a):** No JSON signal files. DASHBOARD.md po-section row already READ (c169).
+
+**Telegram reports resolved:**
+- #2929 pollNews 0-items: wontfix-transient (gateway outage window 14-18 UTC c167, self-healed)
+- #2930/#2931/#2932: wontfix-sandbox (HEAD.lock EPERM in Cowork — expected, documented at #2894)
+
+**Pipeline state (0b):** idle.
+
+**PO Triage (Step 1):**
+- No new TNB audit signal.
+- No new JSON signals.
+- Only actionable TODO: `calendar-source-replacement` (LOW/OBSERVE, zone: dev-macro-indicators)
+- BATCH: [{type: OBSERVE/FIX, id: calendar-source-replacement, zone: apps/macro-indicators/}]
+
+**Execute (Step 3):**
+- Dispatched `calendar-source-replacement` to dev-macro-indicators
+- Handoff created: `docs/handoffs/calendar-source-replacement.md`
+- TASKS.md updated: moved to In Progress
+- WORK telegram sent.
+
+**Pipeline state:** c175 DISPATCHED. Waiting for dev-macro-indicators return.
+
+---
 
 ## Last session summary (c174 — dev-team orchestration)
 
