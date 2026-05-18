@@ -1,8 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 08:15 UTC | **Sprint:** SPIKE-1946
+**Last updated:** 2026-05-18 09:45 UTC | **Sprint:** SPIKE-1947
 
-## This session (SPIKE-1946)
+## This session (SPIKE-1947)
+
+Closed-loop auto-improvement system design. Read-only, 3h timebox.
+
+**Host decision:** Option C — scheduler job inside `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts`. Rationale: direct SQLite access to `market.db` (single-writer satisfied — job runs inside mcp-server process), follows `monthlySignalQualityJob.ts` + `accuracyDigestJob.ts` precedent, zero new Docker services. New microservice (Option A) rejected: cross-service DB read violation. Cowork agent (Option B) rejected for Phase 1: token cost + hypothesis quality unproven on new system.
+
+**Detection policy:** Two-window comparison of `getAccuracyStats(db, {days:7})` vs `getAccuracyStats(db, {days:30})`. Degraded = delta ≥ 10pp with ≥3 samples in both windows. Persistently-low = baseline_rate < 40% with ≥10 samples. Min sample threshold = 10 for dispatch.
+
+**New components:**
+- `domain/services/degradationRules.ts` — pure rule-lookup table, zero imports, DDD domain layer
+- `infrastructure/db/improveCheckStore.ts` — snapshot write/read for recheck baseline
+- `infrastructure/db/schema-system.ts` — `improve_check_log` table (add to initSystemTables)
+- `scheduler/audits/selfImproveOrchestratorJob.ts` — cron entry point, 09:00 UTC daily
+
+**Key reuse:** `getAccuracyStats()` (already in signalOutcomeStore.ts) is the ONLY query needed for detection. `cron_job_runs.wrapRun()` pattern for dedup. `sendTelegramWork()` for WORK channel.
+
+**Phasing:** Phase 1 (Sprint 1948) = shadow mode (log + WORK Telegram, no dispatch). Phase 2 = manual-gate via signal-bus JSON. Phase 3 = auto-dispatch with kill-switch env var.
+
+**OBSERVE gates:** 3 of 6 can retire once Phase 1 stable: post-1945-verdict-resolution-scored-pct, post-1945-bug-storm-silence, 1941b-signal-outcomes-seed-window. Keep: 1922g-pharma, post-1944-financial-reports, post-1942-fa-verify (data source liveness, not accuracy-loop scope).
+
+**Decision: YES — proceed to Sprint 1948 Phase 1.** Pre-condition: post-1945-verdict-resolution-scored-pct gate must clear 2026-05-20T07:22Z before 1948a starts.
+
+Spike: `docs/spikes/SPIKE_1947-auto-improve-loop.md`
+Brief: `docs/architecture-briefs/2026-05-18-closed-loop-auto-improvement.md`
+TASKS.md: SPIKE-1947 Todo → Done.
+
+## Previous session (SPIKE-1946)
 
 PLX -40% crash crisis detection gap diagnosis. Read-only, 2h timebox.
 
