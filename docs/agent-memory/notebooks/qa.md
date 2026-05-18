@@ -1,6 +1,30 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c175 — calendar-source-replacement wontfix — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c176 — 1941a OCF API bridge cashflow tool — APPROVED
+
+## Session 2026-05-18 c176 — 1941a OCF API-bridge cashflow tool
+
+### TASK REPORT — 1941a (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FIX (interface — cashFlowTool COALESCE operating_cash_flow ?? operating_cf)
+round: 1
+merge commit: chore(1941/mcp-server): merge task/1941a-ocf-api-bridge-cashflow-tool
+```
+
+#### Pipeline
+
+- Cashflow tests (17): 17 pass / 0 fail (1941a × 5 + 1890a × 7 + 1930b × 8) — GREEN
+- TDD: confirmed RED on main cashFlowTool (4 of 5 1941a tests fail), GREEN after fix
+- Full suite: 9592 pass / 328 fail / 49 skip — matches main exactly (no regression)
+- tsc: 0 errors (clean)
+- DDD: PASS — infrastructure import at interface/mcp layer (permitted)
+- Security: PASS — parameterized SQL (line 217), no process.env, no secrets
+- FPT net_profit=20,225: pre-existing OCR extraction bug, confirmed on main, documented as out-of-scope (file separately)
+
+---
 
 ## Session 2026-05-18 c175 — calendar-source-replacement wontfix
 
