@@ -124,6 +124,11 @@ const P_OPERATING_CF_BANK =
   /lu[ồo]ng\s+ti[ềe]n\s+thu[ầa]n\s+t[ừu]\s+ho[ạa]t\s+[đd][ộo]ng\s+kinh\s+doanh/i;
 const F_OPERATING_CF_BANK =
   /luong\s+tien\s+thuan\s+tu\s+hoat\s+dong\s+kinh\s+doanh/i;
+// E-2b: steel/manufacturing label variant "sản xuất kinh doanh"
+const P_OPERATING_CF_MFG =
+  /l[ưu]u\s+chuy[ểe]n\s+ti[ềe]n\s+thu[ầa]n\s+t[ừu]\s+ho[ạa]t\s+[đd][ộo]ng\s+s[ảa]n\s+xu[ấa]t\s+kinh\s+doanh/i;
+const F_OPERATING_CF_MFG =
+  /luu\s+chuyen\s+tien\s+thuan\s+tu\s+hoat\s+dong\s+san\s+xuat\s+kinh\s+doanh/i;
 
 // II. Investing activities
 const P_CAPEX = /ti[ềe]n\s+chi\s+mua\s+s[ắa]m\s+TSC[ĐD]/i;
@@ -579,6 +584,7 @@ export function extractCashFlow(rawText: string): CashFlowStatement {
   let operatingCF = fv(
     P_OPERATING_CF, F_OPERATING_CF, "20",
     [P_OPERATING_CF_BANK, F_OPERATING_CF_BANK],
+    [P_OPERATING_CF_MFG, F_OPERATING_CF_MFG],   // E-2b: steel/manufacturing sector
   );
 
   // Drift override on operatingCF: subtotal sum = profitBeforeTax + D&A + WC changes + interestPaid + incomeTaxPaid

@@ -392,7 +392,13 @@ try:
     r = ratio.iloc[0] if ratio is not None and len(ratio) > 0 else None
 
     rev = float(last.get('Revenue (Bn. VND)', 0) or 0)
-    net = float(last.get('Attributable to parent company', 0) or 0)
+    _ni_keys = [
+        'Attributable to parent company',
+        'Net Profit After Tax (Bn. VND)',
+        'Lợi nhuận sau thuế',
+    ]
+    _ni_raw = next((last.get(k) for k in _ni_keys if last.get(k) not in (None, 0)), None)
+    net = float(_ni_raw) if _ni_raw is not None else 0  # keep 0 for ratio math; None only when truly absent
 
     # Ratios - handle multi-level columns
     pe = pb = roe = roa = de = npm = 0.0
@@ -841,7 +847,14 @@ try:
     def g(key, default=0):
         v = last.get(key, default)
         return float(v or 0)
-    operating = g('Net cash inflows/outflows from operating activities') / 1e9
+    # Fallback keys: VCI column name varies by sector (banking, steel, tech)
+    _ocf_keys = [
+        'Net cash inflows/outflows from operating activities',
+        'Lưu chuyển tiền thuần từ hoạt động kinh doanh',
+        'Net Cash From Operating Activities',
+    ]
+    operating_raw = next((last.get(k) for k in _ocf_keys if last.get(k) not in (None, 0)), None)
+    operating = float(operating_raw) / 1e9 if operating_raw is not None else None
     investing = g('Net Cash Flows from Investing Activities') / 1e9
     financing = g('Cash flows from financial activities') / 1e9
     net = g('Net increase/decrease in cash and cash equivalents') / 1e9
@@ -849,7 +862,7 @@ try:
         'code': '${symbol}',
         'yearReport': int(last.get('yearReport', 0)),
         'quarter': int(last.get('lengthReport', 0)),
-        'operatingCashFlow': round(operating, 2),
+        'operatingCashFlow': round(operating, 2) if operating is not None else None,
         'investingCashFlow': round(investing, 2),
         'financingCashFlow': round(financing, 2),
         'netCashFlow': round(net, 2),

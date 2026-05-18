@@ -83,7 +83,7 @@ export interface VnstockCashFlow {
   code: string;
   yearReport: number;
   quarter: number;
-  operatingCashFlow: number; // billion VND
+  operatingCashFlow: number | null; // billion VND (null when VCI key absent)
   investingCashFlow: number;
   financingCashFlow: number;
   netCashFlow: number;

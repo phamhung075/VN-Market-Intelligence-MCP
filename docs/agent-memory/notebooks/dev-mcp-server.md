@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1942c — HPG get_cash_flow all-zeros fix (2026-05-18, DONE)
+
+**Root cause / goal:** HPG `get_cash_flow()` returning `operating_cf=0`/null and `net_income=0`. Root cause: CASH_FLOW_SCRIPT single-key lookup returned 0.0 when VCI steel-sector column key differs from standard key; FINANCE_SCRIPT same issue for NI. Also: steel-sector OCR label "sản xuất kinh doanh" not covered by cashFlowExtractor.
+
+**Diagnostic (FR-1):** Scenario B confirmed — `financial_reports` has 0 rows for HPG. `vnstock_cash_flow` also empty (no prior fetch).
+
+**Implementation (3 files + 1 test):**
+- `vnstockBridge.ts`: CASH_FLOW_SCRIPT — replaced single key with 3-key `_ocf_keys` fallback + `next()` sentinel; `operatingCashFlow: round(operating, 2) if operating is not None else None` (NULL policy). FINANCE_SCRIPT — same 3-key `_ni_keys` fallback; `net = 0` kept for ratio math when all keys absent.
+- `cashFlowExtractor.ts`: Added `P_OPERATING_CF_MFG` + `F_OPERATING_CF_MFG` constants (steel/manufacturing OCR label "sản xuất kinh doanh"). Wired as 3rd `altPatterns` entry in `fv()` call for `operatingCF`.
+- `vnstockTypes.ts`: `VnstockCashFlow.operatingCashFlow: number → number | null`.
+- `1942c-hpg-cashflow-fix.test.ts` (NEW): 6 tests (T1-T6) — all GREEN.
+
+**Tests:** 6/6 new GREEN. 50/50 cashflow regression suite (1941a + 1941d + 1942b + 1909a) GREEN. 0 tsc errors.
+
+**Design note:** NULL policy for OCF (stores None when all 3 keys absent) is honest over 0.0. EC-1 documented in T6: genuine 0.0 in DB returns `operating_cf: 0`. Docker rebuild needed for Python script changes to take effect in container.
+
+Zone health: CASH_FLOW_SCRIPT now sector-agnostic (3 VCI key variants); cashFlowExtractor covers steel-sector OCR layout; type honest about missing OCF | HEALTHY
+
+---
+
 ### Task 1942b — cashFlowTool fallback read path + backfillOCFForWatchlist (2026-05-18, DONE)
 
 **Root cause / goal:** cashFlowTool returned `{ found: false }` for 27/30 watchlist tickers with zero `financial_reports` rows (no BCTC PDF OCR). Added COALESCE-style fallback: if COUNT = 0, query `vnstock_cash_flow` + `vnstock_financials` directly.
