@@ -1,6 +1,49 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c193 — 1950-T2 re-verification — APPROVED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c194 — 1950-T4 TNB cron hotfix — APPROVED
+
+## Session 2026-05-18 c194 — 1950-T4 TNB cron hotfix (APPROVED)
+
+### TASK REPORT — 1950-T4 (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commits reviewed: 2c01f9a3 (fix) + 010461a7 (notebook)
+type: HOTFIX (XS) — TNB cron schedule alignment
+zone: .claude/commands/crons/cron-tran-ngoc-bau.md
+round: 1
+```
+
+#### Checks
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-T4-1 | cron-tran-ngoc-bau.md L3 = `13 20 * * *` | PASS |
+| AC-T4-2 | grep `17 */4 * * *` — zero active TNB refs | PASS |
+| AC-T4-3 | cron-jobs.md L128 = `13 20 * * *` unchanged | PASS |
+| AC-T4-4 | CronCreate ID unrecorded — NB, not blocking | NB |
+| AC-T4-5 | Next fire 2026-05-19T20:13Z | DEFERRED |
+
+#### Notes
+
+- QA report: docs/handoffs/sprint-1950-T4-qa-report.md
+- NB-2: CronCreate executed per agent-father report, new_job_id=TBD. Router should verify CronList shows `13 20 * * *` for TNB; CronCreate if absent.
+- NB-3: Live verification deferred to 2026-05-19T20:13Z — monitor WORK for `[tnb-audit]` START + no false-positive chef-coverage-low BUG.
+- TASKS.md T4 row already Done (pm commit 4bbf49ce). No additional TASKS.md update needed.
+- Deadline: shipped 2c01f9a3 at 19:24 UTC, deadline was 20:17Z — MET with 53 min margin.
+
+## Cycle — 2026-05-18 c194
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T4 all file-side ACs PASS. NB-2 (CronCreate ID unrecorded) flagged for router follow-up, not blocking. Scope clean (1 Markdown line + TASKS.md + signal). SSOT regression check clean.
+- **actions**: QA report written to docs/handoffs/sprint-1950-T4-qa-report.md, notebook updated
+- **next_cycle_hint**: agent-father to proceed with T5 (digest-predict cron alignment). Router should verify CronList for TNB `13 20 * * *` before next 20:13Z slot.
+- **estimated_tokens**: 2800
+
+---
+
+## Session 2026-05-18 c193 — 1950-T2 re-verification — APPROVED
 
 ## Session 2026-05-18 c193 — 1950-T2 re-verification (APPROVED)
 
