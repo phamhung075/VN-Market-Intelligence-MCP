@@ -851,6 +851,84 @@
 
 **TASKS.md:** 77L (under 80L cap). WIP=0/2 (clean).
 
+---
+
+## Cycle 1948e — 2026-05-18 PM SPIKE-1948e Decomposition: Legal Risk Signal Pipeline Fix
+
+**Context:** Architect (SPIKE-1948e) completed root-cause review of PC1 legal_risk signal gap. Three-layer cascade identified: (1) PRIMARY: `SignalTypeSchema` missing `"legal_risk"` enum member in `agentSignalStore.ts:39-49` → Zod rejects `post_agent_signal(signal_type: "legal_risk")` before DB write; (2) SECONDARY: `stage-signals.md` (news-scout flow) has no `legal_risk` dispatch path → agent recognises legal events but cannot route them; (3) CONTRIBUTING: PC1 absent from primary watchlist → treated as low-priority sector ripple.
+
+**Fix sizing:** Architect recommended Size S: Fix A (1-line enum addition) + Fix B (flow dispatch block with 6h dedup). Optional Fix C: PC1 watchlist addition (identical scope to 1946a).
+
+**PM decomposition:**
+1. Created atomic handoff files:
+   - `TASK_1948e-A.md` (enum add, 20 min, 4 ACs, test TC1/TC3/TC4)
+   - `TASK_1948e-B.md` (flow dispatch, 25 min, 8 ACs, test TC2 integration)
+   - `TASK_1948e-C.md` (optional watchlist, 20 min, 8 ACs, identical to 1946a pattern)
+
+2. Updated TASKS.md Backlog:
+   - Removed `1948e-fix` (parent task)
+   - Added `1948e-A` (MEDIUM, dev-mcp-server, no gate)
+   - Added `1948e-B` (MEDIUM, dev-mcp-server, depends on 1948e-A)
+   - Added `1948e-C` (LOW optional, deferred judgment to sprint planning)
+
+3. Sequencing:
+   - 1948e-A: independent, primary blocker (Zod enum)
+   - 1948e-B: depends on 1948e-A (enum must exist before flow dispatches it)
+   - 1948e-C: optional, can be concurrent or deferred to cycle 2
+
+4. WIP impact:
+   - Current WIP = 0/2 (clean). Assigning 1948e-A → WIP = 1/2 (dev-mcp-server zone).
+   - 1948e-B deferred until 1948e-A merges (chain dependency).
+   - 1948e-C deferred to PM discretion (low priority, separate concern).
+
+5. Gate status:
+   - No 1945 window contamination risk (Fix A is schema-only, no verdictResolutionJob contact).
+   - Sprint 1948 (1948a/b/c/d) remains BLOCKED until 2026-05-20T07:22Z gate clears.
+   - 1948e-A/B/C are independent of 1945 gate (no blocking condition).
+
+6. TASKS.md metrics:
+   - Backlog: 1948e-A/B/C rows added (3 rows)
+   - Table length: +3 rows (now 80L, at cap)
+   - Archive trigger: None (no Done entries pruned)
+   - WIP: 0/2 (ready for 1948e-A assignment)
+
+**Status:** PM decomposition COMPLETE. Handoff files created (3 files, 980L total). TASKS.md updated (Backlog now 80L). Ready for dev-mcp-server dispatch.
+
+**Files:**
+- `docs/handoffs/TASK_1948e-A.md` — schema enum addition (primary blocker)
+- `docs/handoffs/TASK_1948e-B.md` — flow dispatch block (secondary fix, depends on 1948e-A)
+- `docs/handoffs/TASK_1948e-C.md` — optional watchlist (deferred, low priority)
+
+**Action:** 1948e-A → dispatch to dev-mcp-server. No blockers. WIP will be 1/2 post-dispatch. 1948e-B queued on 1948e-A merge. 1948e-C deferred per PM discretion.
+
+---
+
+## Next Steps (Post-PM Dispatch)
+
+1. Main terminal spawns `developer` with `run .claude/flows/developer/main.md` + `TASK_1948e-A.md` context
+2. Developer commits code to `task/1948e-a-legal-risk-schema-enum` branch
+3. Developer opens PR for QA review
+4. QA approves, dev merges, WIP decrements to 0/2
+5. PM unblocks 1948e-B (queue for next cycle or concurrent dispatch)
+
+---
+
+## Cycle c91+ Status (Post-1948e-A merge)
+
+**WIP:** 0/2 (post-merge) → ready for 1948e-B dispatch
+**Ready:** 1948e-B (flow dispatch, depends on 1948e-A merge confirmation)
+**Pipeline:** 1948e-C (optional, PM discretion to queue or defer)
+**Blockers:** None
+
+---
+
+## Cycle c90+ Status
+
+**WIP:** 0/2 (pre-dispatch) → will be 1/2 post-1948e-A assignment
+**Ready:** 1948e-A (primary fix, no blockers) — ASSIGNED next cycle
+**Pipeline:** 1948e-B (queued on 1948e-A merge), 1948e-C (optional deferred)
+**Blockers:** None (1948a/b/c/d blocked until 2026-05-20T07:22Z, not relevant to 1948e tasks)
+
 **Carry-over to c90:** 1890a (HIGH), 1897b-carry (HIGH, F1+architect), 1900c (LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F}, JANITOR-{011,014,020}, TASK-BCTC-3.
 
 **Status:** c89 CLOSED. Recurring-bug policy locked. Ready for c90 cron.
@@ -958,3 +1036,29 @@
 - export_backtest_run_csv is the only MCP tool in the codebase that returns raw CSV (not JSON). This is intentional per ARCH_1846.md §4 — must not be "fixed" to JSON in review.
 - toolCount watermark in registry.ts comment previously diverged from actual toolCount. 1846b will bring actual count to 125 (slots #123-#125 filled). Developer should update the comment watermark to 125 in the registry entry.
 - Option C equity curve recomputation is a direct copy of lines 302-307 in backtestEngine.ts. If tests show floating-point divergence, check sort order (localeCompare on exitDate ISO strings).
+
+---
+
+## Cycle 182 — 2026-05-18 c182 SSOT Update: 1950-T2 Closure Stamped (QA-APPROVED R2)
+
+**Input:** QA final APPROVED signal (commit `dd579775`) on 1950-T2. Developer fixer had submitted `d307d294` (pipeline_degraded fix). PM duty: sync TASKS.md row with both commit hashes + R2 verdict.
+
+**Actions:**
+- Read docs/TASKS.md fresh (no cache).
+- Checked git log: agent-father T4 hotfix already landed (`2c01f9a3` at 2026-05-18 20:17Z UTC, before PM cycle).
+- Updated 1950-T2 row: stamped both commits (`ad68cf5c` feat + `d307d294` fixer), added QA-APPROVED (R2) verdict to title, AC checklist confirmed full ✓.
+- Commit: `4bbf49ce` (chore: TASKS updated).
+
+**T4 Status Check:**
+- T4 done (hotfix to cron schedule landed).
+- T2 done (QA approved).
+- T1 done (prep committed).
+- T3 pending (runbook task).
+- T5 pending (digest-predict scope fix).
+- MAINT-1950b pending (notebook archival — agent-father owns, not PM action).
+- MAINT-1950c pending (yellow audit fixes — agent-father owns).
+
+**WIP Status:** 0/2 (clean). Sprints 1950 pipeline ready for next dispatch tier (T3/T5 to agent-father, if PO approves priority).
+
+**Status:** Cycle 182 CLOSED. TASKS.md consistent with live commits. T2 gate resolved.
+
