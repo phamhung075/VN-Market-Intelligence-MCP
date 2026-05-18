@@ -6,6 +6,27 @@ Active board → `TASKS.md`
 
 ---
 
+## Archive — Added 2026-05-18 by PO c200 (Sprint 1949/1950/1951a-d rotation)
+
+**Period:** 2026-05-18 | **Rows archived:** 11 (Sprint 1949/1950/1951a-d Done rows — sprints closed, freeing TASKS.md headroom for new Sprint 1952 Backlog entries)
+
+| Task ID | Title | Priority | Type | Owner | Completed |
+|---------|-------|----------|------|-------|-----------|
+| SPIKE-1951d | DONE 2026-05-18 PO — Option C accepted (hourly fallback for 4 sub-hourly slots); brief §2.4 updated; follow-up 1951e. | HIGH | SPIKE | po | 2026-05-18 |
+| 1951a | DONE 2026-05-18 PARTIAL — 12/16 RemoteTriggers created; 4 failed (cron <1h rejected); commits bb4ed0c3 + 2cc526a2. | HIGH | TASK | agent-father | 2026-05-18 |
+| MAINT-1950b | DONE 2026-05-18 — Archived 5 oversized agent notebooks (>200L cap) to docs/archive/notebooks/. Live notebooks truncated to ≤200L. | LOW | MAINT | agent-father | 2026-05-18 |
+| MAINT-1950c | DONE 2026-05-18 — semble-search YAML model field added; 2 orphan news-scout notebooks moved to archive. | LOW | MAINT | agent-father | 2026-05-18 |
+| MAINT-1950d | DONE 2026-05-18 — Cleaned workflow-map.md L103 stale "monday predict" residue; verified cron-jobs.md SSOT unchanged. | LOW | MAINT | agent-father | 2026-05-18 |
+| SPIKE-1951a | DONE 2026-05-18 — Resolved OQ-1/OQ-2/OQ-3; RemoteTrigger MCP tool identified; Sprint 1951 Phase 1 unblocked. | HIGH | SPIKE | claude-code-guide | 2026-05-18 |
+| 1950-T3 | DONE 2026-05-18 QA — Chef pipeline runbook (128L) created in docs/protocols/. Closes Sprint 1950. Commits 0e3c96c9 + 1d425787. | LOW | TASK | agent-father | 2026-05-18 |
+| 1950-T5 | DONE 2026-05-18 QA — digest-predict cron 47 13 * * 0 Sunday + scope cleanup; CronCreate job ad22967e; MAINT-1950d dispatched for L103 residue. | MEDIUM | FIX | agent-father | 2026-05-18 |
+| 1950-T4 | DONE 2026-05-18 HOTFIX — TNB cron daily 20:13 UTC (was every 4h); commit 2c01f9a3. | HIGH | HOTFIX | agent-father | 2026-05-18 |
+| 1950-T2 | DONE 2026-05-18 QA R2 — Chef pipeline cycle-coverage check added to TNB audit Phase 0.5; commits ad68cf5c + d307d294. | MEDIUM | TASK | agent-father | 2026-05-18 |
+| 1950-T1 | DONE 2026-05-18 — Chef.md ENTRY/CLOSE/FAILED telemetry; commit f4688989. Unblocks 1950-T2. | HIGH | TASK | agent-father | 2026-05-18 |
+| MAINT-1949a | DONE 2026-05-18 — system-map.json cron descriptions synced (foreignFlowAlertJob 08:13, macroIndicatorRefreshJob 19:13). Commit 8cef3e24. | LOW | CHORE | agent-father | 2026-05-18 |
+
+---
+
 ## Archive — Added 2026-05-18 by PM (c180+ Done rotation)
 
 **Period:** 2026-05-16 → 2026-05-18 | **Rows archived:** 31 (Done entries rotated from active TASKS.md)
