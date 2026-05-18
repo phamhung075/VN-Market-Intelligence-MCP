@@ -1,3 +1,116 @@
+## Sprint 1949 — COWORK REORDER: CHEF + GATHERERS (TNB 6-LAYER SYNTHESIS)
+
+**Status:** DONE | **Opened:** 2026-05-18T16:14Z | **Closed:** 2026-05-18T20:30Z | **Theme:** Convert 9 cowork agents from "9 prep-cooks, 0 chef" → 1 chef (unified-agent walks TNB 6 layers + writes synthesized 2–4 paragraph dishes to MARKET) + 4 gatherers (signals-only) + 2 event-only (alert-commander event firing + qa-responder /ask) + 1 weekly (digest-predict Sunday) + 1 auditor (tran-ngoc-bau audits chef narrative). Net MARKET writers drop 4→3; daily atom-dumps drop ~10/day → 3–5 dishes/day.
+
+## Completion Summary
+
+**QA Report:** `docs/handoffs/sprint-1949-qa-report.md` (2026-05-18, all 10 checks PASS)
+
+**Commits:** `d4d5d0cf` (Phase 1), `9848bf49` (Phase 2/3/5/6/7), `44aa791a` (Phase 4)
+
+**Status:** All 11 sub-tasks (1949-T1..T11) DONE. Core deliverables shipped:
+- unified-agent promoted to CHEF with 8-step TNB recipe and 5-slot daily schedule
+- market-watcher/news-scout/financial-analyst/report-analyzer reframed as gatherers (signals-only)
+- alert-commander narrowed to event-only firing (3-condition + 4-condition gate)
+- digest-predict scoped to Sunday 13:47 UTC (weekly-only)
+- tran-ngoc-bau reframed as chef narrative auditor (daily 20:13 UTC, TNB layer-walk verification)
+- foreignFlowAlertJob rewired to 08:13 UTC (24min before EOD chef), macroIndicatorRefreshJob to 19:13 UTC (24min before evening chef)
+- All docs synchronized: cron-jobs.md, alert-policy.md, workflow-map.md
+- TDD: 9 new TC + 22 zone tests + 1133 regression = 9220/9506 pass (286 pre-existing failures)
+
+**Non-blocking observation:** system-map.json cron descriptions for `foreignFlowAlertJob` ("09:30 UTC M-F") and `macroIndicatorRefreshJob` ("0 6 * * *") are stale informational text. cronConfig.ts and cron-jobs.md are correct; see maintenance task below.
+
+# Goal
+
+## Vision
+User verdict 2026-05-18 after reviewing MARKET messages 522–531: _"data is on all sources but all separate like pieces, no value — system cannot use data like materials for cook good result."_
+
+Concrete evidence — garbage-unit prices published (VNH/DAG/REE at -99.9% ≈ 1đ; ID 528), 49 alerts/24h with "Ngân hàng giảm đồng loạt" repeated 7x and real-estate cascade 11x (ID 531), alert-commander started 2-layer fusion then reverted to atom-list (ID 530), banking sell-pressure story had 6 ingredients (cascade, FII 700B targeting ACB, BID distribution surge dupe, banking BCTC overdue, TIGHTENING regime) published as 6 separate dumps never fused (ID 527), HSG RSI=13.2 buried mid-list in morning-briefing (no convergence detection).
+
+Architect (`agents-architect`, brief `docs/architecture-briefs/2026-05-18-cowork-reorder-and-cook-schedule.md`, signal `2026-05-18T15:54:51Z`) diagnosed root cause and prescribed the fix: 9 cowork agents reordered into 1-chef + 4-gatherers + 2-event-only + 1-weekly + 1-auditor pattern. `unified-agent` becomes the CHEF, walking the TNB 6-layer methodology (Layer 1 data discipline → Layer 2+3 US/VN economic stacks → Layer 4 4-pillar valuation → Layer 5 Kinh Dịch overlay → Layer 6 gap catalogue) at 3 guaranteed dishes/day (Morning 05:23 UTC / EOD 08:37 UTC / Evening 19:37 UTC) plus conditional intraday convergence scans (XX:13 during VN market hours, silent if <3 fresh signals converge). `alert-commander` narrows to event-only (3-condition rule + 4-condition rule from `alert-policy.md`); `digest-predict` shrinks to Sunday weekly only; `market-watcher`/`news-scout`/`financial-analyst`/`report-analyzer` become gatherers (write to `docs/signals/` only, no MARKET); `tran-ngoc-bau` audits chef narrative for TNB layer-walk completeness; `qa-responder` unchanged.
+
+**Critical gate (architect-mandated):** Phase 1 `unified-agent.md` MARKET write flip (`write: false` → `write: true`) MUST land BEFORE Phase 4 (`dev-mcp-server` scheduler cron rewiring deploys foreignFlowAlertJob 08:13 UTC + macroIndicatorRefreshJob 19:13 UTC). Without the flag flip, chef cron jobs fire but `unified-agent` rejects MARKET writes → going-dark window. Phase 4 is gated on Phase 1 GATE (chef successfully publishes ≥1 dish to MARKET).
+
+**Why this matters for the user:** dishes are anchored to user-relevant clocks — morning coffee France 07:23 CEST (VN lunch 12:23), EOD France 10:37 CEST (VN 15:37), evening France 21:37 CEST (VN 02:37 next). User in France (GMT+2) reads VN market intelligence at breakfast / coffee / bedtime moments without parsing 10 atom dumps.
+
+## Sprint 1949 sub-tasks (11 atomic, gate-ordered)
+
+### PHASE 1 — Chef online first (agent-father zone: `.claude/agents/` + `.claude/flows/`)
+- **1949-T1 — `unified-agent.md` rewrite + `flows/unified-agent/chef.md` creation (THE CRITICAL GATE).** Size=M. Zone=`.claude/agents/` + `.claude/flows/unified-agent/`. Owner: agent-father. Changes: (a) role rewritten to CHEF; (b) `market: write: true` (was `false`); `rule: never` removed; (c) `not_my_job` block: remove "never sends to MARKET"; (d) schedule block replaced with 5-slot table (05:23 morning, 02-08:XX:13 intraday convergence scan, 08:37 EOD, 19:37 evening, plus existing hourly health check); (e) `lazy_load` adds `docs/standards/tnb-methodology.md`, `docs/standards/market-analysis.md`, `docs/references/kinh-dich-layer.md`, `docs/policies/alert-policy.md`; (f) NEW file `flows/unified-agent/chef.md` implements the 8-step TNB recipe from brief §6 (GATHER → CLUSTER → LAYER 1 → LAYER 2+3 → LAYER 4 → LAYER 5 → LAYER 6 → WRITE DISH → LOG); (g) `flows/unified-agent/main.md` adds dispatch routing for the new chef windows. **Convergence rule from brief §7:** ≥2 distinct signal types same ticker 24h | ≥3 signals same sector 24h | macro-micro contradiction | severity=CRITICAL or RSI outside 2-sigma. Intraday scan silent-exit if 0 cluster qualifies. **GATE — must pass before Phase 4 starts:** chef publishes ≥1 dish to MARKET on next scheduled tick post-deploy (verified by reading MARKET channel + checking `unified-agent.md` does not throw "MARKET write denied").
+
+- **1949-T2 — `market-watcher.md` MARKET write removed + `flows/market-watcher/eod.md` patched.** Size=S. Zone=`.claude/agents/` + `.claude/flows/market-watcher/`. Owner: agent-father. Changes: (a) `market: write: false`; (b) `rule: batch4_eod_only` → `rule: never`; (c) description updated to gatherer-only ("writes `docs/signals/price_anomaly_*.json` only"); (d) `flows/market-watcher/eod.md` removes `send_telegram(channel="market")` step — writes signal only. **AC:** market-watcher next EOD cycle (08:37 UTC?) produces signal file in `docs/signals/` with zero MARKET write.
+
+- **1949-T3 — `news-scout.md` comment-only clarification (no flow change).** Size=XS. Zone=`.claude/agents/`. Owner: agent-father. Already has `market: write: false`; add comment in description: "alert-digest signal output feeds chef (`unified-agent`) input, NOT MARKET." Pure annotation. **AC:** description string contains the new clarification; no behavioral change.
+
+**PHASE 1 GATE:** After T1+T2+T3 ship and agent-father confirms via diff that `unified-agent.md` has `market: write: true`, the chef must successfully publish ≥1 MARKET dish on the next scheduled tick (05:23 / 08:37 / 19:37 UTC). Verified by tran-ngoc-bau audit OR direct channel read. Phase 4 (`dev-mcp-server`) is BLOCKED until this gate passes.
+
+### PHASE 2 — alert-commander narrowed to event-only (agent-father, AFTER Phase 1 GATE)
+- **1949-T4 — `alert-commander.md` event-only + `flows/alert-commander/cycle.md` patched.** Size=S. Zone=`.claude/agents/` + `.claude/flows/alert-commander/`. Owner: agent-father. Changes: (a) cron expression changes from `*/15 2-8 * * 1-5` + `0 */2 * * *` to event-only (the brief proposes "(event) on-condition" — implemented as scheduler triggering only when 3-condition or 4-condition rule fires from `docs/policies/alert-policy.md`; expression may be `*/15 2-8 * * 1-5` retained as schedule but `cycle.md` gates entire flow on the rule); (b) description updated to "fires only on position-danger + watchlist-opp"; (c) NEW constraint `no_cycle_headers: true`; (d) `flows/alert-commander/cycle.md` removes cycle-header send_telegram block; gates entire flow on 3-condition rule (position-danger) or 4-condition rule (watchlist-opp); exits silently if neither fires. **GATE:** must not start before Phase 1 GATE passes (no dark period — chef has been live ≥1 dish). **AC:** alert-commander next cycle sends 0 MARKET messages absent firing condition; sends exactly 1 message when condition fires (≤140 chars urgent format).
+
+### PHASE 3 — digest-predict scoped to Sunday weekly only (agent-father)
+- **1949-T5 — `digest-predict.md` daily + monthly removed; weekly moved to `47 13 * * 0`.** Size=S. Zone=`.claude/agents/`. Owner: agent-father. Changes: (a) remove `daily_digest` cron `30 15 * * *`; (b) remove `monthly` cron; (c) keep `weekly_digest` but move to `47 13 * * 0` (Sunday 13:47 UTC = Sunday 20:47 VN = Sunday 15:47 France); (d) update `monday_predict` to drop daily responsibilities. **AC:** digest-predict produces 0 daily MARKET messages; produces exactly 1 calibration + portfolio-thesis dish on Sunday 13:47 UTC.
+
+### PHASE 4 — Cron rewiring (dev-mcp-server zone: `apps/mcp-server/`, GATED ON PHASE 1)
+- **1949-T6 — `foreignFlowAlertJob.ts` cron 09:30 → 08:13 UTC.** Size=S. Zone=`apps/mcp-server/`. Owner: dev-mcp-server. Changes: `apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts` schedule changes from current to `13 8 * * 1-5` (08:13 UTC). Rationale: chef EOD dish reads at 08:37 UTC = 24min later (safe read window). **GATE:** BLOCKED until Phase 1 GATE clears (`unified-agent.md market: write: true` confirmed deployed and chef published ≥1 MARKET dish). **AC:** `foreignFlowAlertJob` first run is at 08:13 UTC next weekday post-deploy; result available in `docs/signals/` before 08:37 UTC. Cron test in `cronConfig.test.ts`-equivalent verifies new expression.
+
+- **1949-T7 — `macroIndicatorRefreshJob.ts` US macro refresh confirms `13 19 * * *` (19:13 UTC) slot.** Size=S. Zone=`apps/mcp-server/`. Owner: dev-mcp-server. Changes: `apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts` — add or confirm a refresh tick at 19:13 UTC (24min before evening chef at 19:37 UTC). If a different cron already covers this purpose at a different minute, retune to `13 19 * * *`. **GATE:** same Phase 1 GATE. **AC:** macroIndicatorRefreshJob has a 19:13 UTC slot; verified in cronConfig + integration test.
+
+- **1949-T8 — `cronConfig.ts` env-var defaults updated for T6 + T7.** Size=S. Zone=`apps/mcp-server/`. Owner: dev-mcp-server. Changes: `apps/mcp-server/src/scheduler/cronConfig.ts` env-var defaults for `FOREIGN_FLOW_ALERT_CRON` (or equivalent) and `MACRO_INDICATOR_REFRESH_CRON` updated to `13 8 * * 1-5` and `13 19 * * *` respectively. `.env.example` updated to match. **GATE:** same Phase 1 GATE. **AC:** env-var defaults match new schedule; existing tests pass; new unit test verifies defaults.
+
+### PHASE 5 — Audit target updated (agent-father)
+- **1949-T9 — `tran-ngoc-bau.md` audits chef narrative + cron moved to `13 20 * * *`.** Size=S. Zone=`.claude/agents/` + `.claude/flows/tran-ngoc-bau/`. Owner: agent-father. Changes: (a) `tran-ngoc-bau.md` description/audit scope updated from "audits MARKET atoms" → "audits chef narrative for TNB layer walk completeness (all 6 layers walked, business context cited, gap catalogue applied)"; (b) cron moved from `0 13 * * *` → `13 20 * * *` (20:13 UTC, 1h36min after evening chef at 19:37 UTC + 1h after last gatherer settle); (c) `flows/tran-ngoc-bau/main.md` updates audit target. **AC:** tran-ngoc-bau next run audits the 3 daily dishes (Morning/EOD/Evening of prior 24h) for TNB layer completeness; produces audit row in WORK channel only (no MARKET write).
+
+### PHASE 6 — Gatherer business-context fields (agent-father)
+- **1949-T10 — `financial-analyst.md` + `report-analyzer.md` signal output spec adds business-context fields.** Size=S. Zone=`.claude/agents/`. Owner: agent-father. Changes: both agents' signal output specs require new fields per TNB foundational philosophy — `product` (1 sentence on what the company sells), `customer` (1 sentence on who buys), `ops` (1 sentence on operating posture), `mgmt` (1 sentence on management track record). Chef cites these in narrative. **AC:** signal output schema updated in both agent .md files; example signal block in description includes the 4 fields.
+
+### PHASE 7 — Documentation updates (agent-father or pm)
+- **1949-T11 — `docs/standards/cron-jobs.md` + `docs/policies/alert-policy.md` + `docs/references/workflow-map.md` updates.** Size=S. Zone=`docs/`. Owner: agent-father (preferred — already touching agent system). Changes: (a) `docs/standards/cron-jobs.md` adds new chef cron table entries (5 slots), updates tran-ngoc-bau from `0 13` → `13 20`, updates foreignFlowAlertJob from `09:30` → `08:13`; (b) `docs/policies/alert-policy.md` adds "Alert Commander Exclusivity" section clarifying cycle headers removed + event-only rule formalized; (c) `docs/references/workflow-map.md` updates `unified-agent` row to "Reads all cowork signals → writes MARKET chef dishes 3x/day" and removes "MARKET (eod only)" from `market-watcher` row. **AC:** all 3 doc files contain new entries; `/graphify docs --update --no-viz` run post-edit; no orphan references.
+
+## Scope
+**IN:** 11 atomic tasks (8 agent-father, 3 dev-mcp-server). 5 agent .md rewrites + 1 NEW chef.md flow + 3 existing flow patches + 3 scheduler .ts edits + 3 docs updates. Phase-gated execution: Phase 1 → Phase 2/3 (parallel after gate) → Phase 4 (parallel after gate) → Phase 5/6/7 (parallel cleanup). No new agents created; no new microservices; no Docker rebuild this sprint (cron config reload sufficient).
+
+**OUT:** New cowork agents; new microservices; rewriting alert-policy.md 3-condition + 4-condition rules (use existing); rebuilding kinh-dich/TNB knowledge files (use existing `docs/standards/tnb-methodology.md`); frontend changes; Docker rebuild (cron reload only); changes to `apps/mcp-server/src/scheduler/audits/` (Sprint 1948 zone untouched — let it stabilise behind its gate).
+
+## Success Metric (acceptance criteria from architect brief §10)
+- **AC-1:** MARKET receives ≤5 messages/day on average weekday (3 guaranteed dishes + ≤2 intraday events).
+- **AC-2:** Each chef dish is 2–4 paragraphs containing explicit TNB layer citations (at minimum: regime, US stack, VN stack, ≥1 pillar, Kinh Dịch).
+- **AC-3:** Intraday scan produces 0 MARKET messages on days when no convergence cluster qualifies.
+- **AC-4:** No atom-list dumps to MARKET (verified by tran-ngoc-bau audit: no message is a plain bulleted ticker list without narrative paragraphs).
+- **AC-5:** tran-ngoc-bau audit confirms TNB layer walk: all 6 layers present or gap explicitly flagged.
+- **AC-6:** alert-commander fires ≤1 MARKET message/ticker/day outside the 3-condition or 4-condition rules (from alert-policy.md).
+- **AC-7:** `foreignFlowAlertJob` result available in `docs/signals/` before EOD chef fires at 08:37 UTC.
+- **AC-8 (PO-added):** Sprint 1948 (closed-loop auto-improvement Phase 1) zone (`apps/mcp-server/src/scheduler/audits/`) untouched by this sprint — no scope creep.
+
+## Sequencing (gate-ordered, from brief §9)
+1. **PHASE 1 (T1, T2, T3):** agent-father FIRST. T1 is the critical-path task. T2+T3 can run parallel with T1.
+2. **PHASE 1 GATE:** chef publishes ≥1 MARKET dish post-deploy. Verified by tran-ngoc-bau audit OR direct channel read OR PO check.
+3. **PHASE 2 (T4):** agent-father, AFTER Phase 1 GATE clears. Cannot run before T1 confirmed live (no dark window).
+4. **PHASE 3 (T5):** agent-father, parallel-able with T4 (independent zone of cron change).
+5. **PHASE 4 (T6, T7, T8):** dev-mcp-server, AFTER Phase 1 GATE clears (parallel with T4+T5).
+6. **PHASE 5 (T9):** agent-father, after T1 (audit target depends on chef being live).
+7. **PHASE 6 (T10):** agent-father, parallel any phase (gatherer schema extension is independent).
+8. **PHASE 7 (T11):** agent-father or pm, last (documentation reflects shipped state).
+
+## Architect brief reference
+- **Brief:** `docs/architecture-briefs/2026-05-18-cowork-reorder-and-cook-schedule.md` (agents-architect, 2026-05-18T15:54:51Z).
+- **Signal:** `docs/signals/processed/2026-05-18T155451Z-cowork-reorder-and-cook-schedule.json` (moved by PO this cycle).
+
+## Cross-sprint coexistence
+- **Sprint 1948** (closed-loop auto-improvement Phase 1) remains QUEUED behind `post-1945-verdict-resolution-scored-pct` gate (2026-05-20T07:22Z). Sprint 1949 zone (`.claude/agents/` + `.claude/flows/` + cron files in `apps/mcp-server/src/scheduler/{market-data,macro}/`) is DISJOINT from Sprint 1948 zone (`apps/mcp-server/src/scheduler/audits/` + `domain/` + new DB schema slice). Both sprints can run in parallel without WIP collision once Sprint 1948 unblocks at the gate.
+- **SPIKE-1948e** (architect, PC1 legal_risk pipeline review) is DONE; child task **1948e-A** is DONE; **1948e-B** is in-flight on branch `task/1948e-b-legal-risk-dispatch`. Sprint 1949 does NOT touch `flows/news-scout/stage-signals.md` — disjoint from 1948e-B.
+
+## Carry-forwards monitored (not in-scope this sprint)
+- **GATE 2026-05-20T07:22Z:** `post-1945-verdict-resolution-scored-pct` + `post-1945-bug-storm-silence` (Sprint 1948 unlock gate).
+- **GATE 2026-05-25T09:00Z:** OBSERVE-1948d (Sprint 1948 shadow-mode 7d gate) + 1941b-signal-outcomes-seed-window.
+- **GATE 2026-06-01:** 1922g-pharma-events-source-verify.
+- 1907a USER-ACTION (Claude Desktop restart) — CRITICAL but user-blocked.
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS) — F1 USER-PERMANENT.
+- alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550).
+- fa-shape-guard-watch MONITORING (next post-restart FA live session).
+- TNB-critic-gate brief (`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`) — agent-father queue, not Sprint 1949 scope (overlaps in zone but addresses different gap: news-scout signal-type registration). Surface separately after Sprint 1949 ships.
+
+---
+
 ## Sprint 1948 — CLOSED-LOOP AUTO-IMPROVEMENT PHASE 1 (QUEUED — GATE-BLOCKED)
 
 **Status:** Queued (all tasks BLOCKED) | **Opens:** 2026-05-20T07:22Z (gate clear) | **Theme:** Ship the shadow-mode minimum-viable detect+log loop recommended by SPIKE-1947 ARCH brief. No auto-dispatch yet; Phase 1 is detect-only + WORK Telegram + `improve_check_log` snapshot writes.
