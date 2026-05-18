@@ -5,7 +5,7 @@ Create cowork-team master cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=cowork-team). Read and execute .claude/commands/cowork-team.md
+  Read and execute .claude/flows/cowork-team/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
