@@ -26,10 +26,12 @@ Save as NOW_ISO. Slot-matcher script reads the system clock directly — no fiel
 ## Step 2+3 — Match enabled slots (single call)
 
 ```bash
-MATCHES=$(node .claude/scripts/cowork-match-slots.js)
+RAW=$(node .claude/scripts/cowork-match-slots.js)
+MATCHES=$(echo "$RAW" | jq '.slots')
+DRIFT_MIN=$(echo "$RAW" | jq '.drift_min')
 ```
 
-Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns JSON array of `{slot_id, agent, flow_path, cron, trigger_prompt}`.
+Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
 
 **On script error** (non-zero exit / non-JSON output / schedule.json missing):
 - `send_telegram(channel=work, "[cowork-team] slot-matcher failed: <stderr first line>")`
@@ -40,7 +42,7 @@ Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork
 
 ## Step 4 — Silent exit if no matches
 
-If MATCHES is `[]` or empty:
+If MATCHES is `[]` or empty (i.e. `jq 'length == 0'` on the slots array):
 - Write silent telemetry signal (Step 6, `silent: true`).
 - EXIT. No WORK message, no spawns.
 
@@ -101,6 +103,7 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
     "matched_slots": [<slot_ids from MATCHES>],
     "spawned": [<flow_paths of successfully spawned slots>],
     "silent": <true if MATCHES empty, false otherwise>,
+    "drift_min": ${DRIFT_MIN},
     "errors": [<{slot_id, error} per failed spawn>]
   },
   "priority": "low",

@@ -59,4 +59,6 @@ const hits = sched.slots
     trigger_prompt: sl.trigger_prompt
   }));
 
-process.stdout.write(JSON.stringify(hits));
+const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
+
+process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
