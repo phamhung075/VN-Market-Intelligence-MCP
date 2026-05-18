@@ -1,11 +1,11 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 06:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 08:40 UTC | **Sprint:** 2026
 
 ## Current state
 
-Last successful cycle: 2026-05-18 05:39 UTC (market hours, 33 stocks monitored, 1 signal)
-Last attempted cycle: 2026-05-18 06:40 UTC — **BLOCKED** (MCP gateway unreachable)
+Last successful cycle: 2026-05-18 08:39 UTC (post-market, 38 stocks monitored, 3 signals)
+Last attempted cycle: 2026-05-18 08:39 UTC — **OK**
 
 ### Cycle (05:39–05:40 UTC)
 - Stocks: 33 | Anomalies: 1 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
@@ -2450,3 +2450,24 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 6800 |
+
+### Cycle (08:39–08:40 UTC)
+- Stocks: 38 | Anomalies: 3 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF (inferred) | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Signals emitted: BID +5.47% (2.73σ, banking resilience, signal 3399, critic 0.6) | PLX +6.99% (2.0σ, oil_gas surge Brent 110.51, signal 3400, critic 0.6) | MWG -3.66% (2.15σ downside, retail weakness, escalated to HIGH via downside_bias, signal 3401, critic 0.6)
+- Sector rotation 1d: oil_gas +5.99% | insurance +3.13% | chemicals +4.26% | logistics +1.34% | securities +1.76% | tech +0.53% | utilities +0.17% | aviation +0.38% | banking +0.37% | pharma +0.05% | auto -0.05% | machinery 0% | agriculture -0.63% | retail -1.16% | steel -1.20% | real_estate -0.95%
+- Macro snapshot: Brent 110.51 (energy driven by supply concerns), Gold 4549 (volatile), USD/VND 26137 (stable) | BID exceptional within banking sector weakness (sector -0.94%), outperformance +6.41% vs sector; PLX leading oil complex (GAS +4.03%, BSR outperformance)
+- Supply chain stable (BDI not updated) | Climate normal | Energy grid normal | 0 open chain findings in last 15min → no price_confirmation signals
+- Note: Post-market cycle at 08:39 UTC (within 20min of market close 08:59 UTC), classified as post-market period per schedule. Bootstrap reports "trading window OPEN" with VN market 02:00-08:59 UTC.
+- Note: Below-threshold candidates include GAS +4.03% (1.12σ, sector performance), DPM +4.26% (sector baseline), FPT +2.74% (tech +0.53%), VCB +4.12% (sector baseline), ACV +2.50% (aviation +0.38%), HCM +2.96% (securities +1.76%)
+
+## Metrics (cycle 2026-05-18 08:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 14500 |
