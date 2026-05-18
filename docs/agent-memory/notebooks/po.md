@@ -1,41 +1,38 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T17:18Z · Cycle: c194 — Sprint 1950 SCOPE EXPANSION (audit-driven hotfixes)
+## Last updated: 2026-05-18T17:40Z · Cycle: c195 — Sprint 1950 substantive close + Sprint 1951 spike open
 
-### c194 session summary
+### c195 session summary
 
-**Spawn:** Urgent triage. system-auditor commit `b47ccb67` (`docs/handoffs/agent-definitions-audit-2026-05-18.md`) found 3 CRITICAL + 2 YELLOW in agent definitions.
+**Spawn:** User-routed triage pass with full context (Sprint 1950 T1/T2/T4/T5 done, T3 done mid-cycle, MAINT pending, two architect briefs ready for Sprint 1951).
 
-**Audit findings → triage decisions:**
-1. **TNB cron mismatch** (`17 */4` actual vs `13 20` documented) → folded as **1950-T4 HOTFIX**. Couples to 1950-T2 just-shipped (commit `ad68cf5c`): T2's chef-coverage check expects daily 20:13 — will fire false-positive BUGs 6x/day on off-cadence :17 ticks. Must ship before 2026-05-18T20:17Z.
-2. **digest-predict cron MISSING + scope conflict** → folded as **1950-T5 FIX**. Create cron-digest-predict.md `47 13 * * 0` + strip daily/Monday/monthly rows from flow main.md (keep Sunday only, per Sprint 1949-T5).
-3. **5 oversized notebooks** (ops 2510L, market-watcher 2500L, qa-responder 2313L, pm 1038L, alert-commander 579L) → **MAINT-1950b LOW**. Archive to `docs/archive/notebooks/`. Not blocking.
-4. YELLOW (semble-search `model:` field + orphan news-scout-cycle notebooks) → **MAINT-1950c LOW**. Pure hygiene.
-
-**Master scheduler brief (cowork-master-scheduler):** Held for Sprint 1951. SPRINT-M scope (new cowork-scheduler agent + SSOT json + 5 phases) — independent of audit findings. agents-architect signal `2026-05-18T17:02:06Z` parked.
-
-**In-flight verification:**
-- 1950-T1 ✅ APPROVED qa commit `ef1ec748`, agent-father commit `f4688989`.
-- 1950-T2 ✅ DONE agent-father commit `ad68cf5c` (just-shipped, signal `2026-05-18T17:15:14Z`).
-- 1950-T3 ⏳ pending agent-father (runbook doc, LOW).
-- 1950-T4 ⏳ NEW URGENT (cron hotfix, HIGH, deadline 20:17Z).
-- 1950-T5 ⏳ NEW (digest-predict, MEDIUM).
-- MAINT-1950b/c ⏳ NEW LOW (drain when agent-father idle).
+**Decisions filed:**
+1. **Sprint 1951 start = HOLD** until OQ-1/2/3 resolved. Brief §2.3 gates Phase 1 on these answers (cron range/step syntax, max trigger count, exact API call). Spawning 17 RemoteTriggers without verified syntax = phantom-success risk.
+2. **SPIKE-1951a CREATED** — claude-code-guide zone, 120min time-box. Output: append `_notes` to `docs/data/cowork-schedule.json` + 1-page findings to brief §2.3.
+3. **Sprint 1950 substantive closure REACHED** — T3 already DONE mid-cycle (TASKS.md L55, runbook created). T1+T2+T3+T4+T5 all closed. Only MAINT-1950b/c/d remain (LOW, non-blocking hygiene).
+4. **MAINT-1950b + MAINT-1950c** — left in Backlog. Drain next agent-father idle. WIP=0 currently; no need to dispatch right now (SPIKE-1951a is HIGH and consumes one slot).
+5. **MAINT-1950d** — keep deferred behind 1950b/c.
+6. **1948e-C (PC1 watchlist)** — KEEP DEFERRED. LOW, optional. Revisit only after 1948a/b/c gate clears 2026-05-20T07:22Z.
+7. **price_anomaly signal** — informational ACK only, already in processed/. Chef consumes on next Evening Preview slot (19:37 UTC).
+8. **Architect briefs v1 vs v2** — v2 supersedes v1, same file path. Only RemoteTrigger-per-slot model in scope.
 
 **Files updated this cycle:**
-- `docs/TASKS.md` — 4 new Backlog rows (1950-T4 HIGH HOTFIX, 1950-T5 MEDIUM FIX, MAINT-1950b LOW, MAINT-1950c LOW).
-- `docs/SPRINT_GOAL.md` — Sprint 1950 header expanded with scope-expansion summary table + SAFE-COEXISTENCE rule.
-- `docs/signals/po-2026-05-18T17-18-00Z-1950-scope-expansion.json` — request to BA for light spec on T4+T5 (MAINT skip BA per PO judgment).
+- `docs/TASKS.md` — added SPIKE-1951a Backlog row (HIGH, claude-code-guide). 77L total (under 80L cap).
+- `docs/handoffs/tnb-audit-latest.md` — PO ACK c194b appended with full decision rationale.
+- `docs/agent-memory/notebooks/po.md` — this notebook (overwrite per skill).
 
-**Decision rationale:** T4 fold-in vs HOTFIX-outside-sprint — chose fold because T4 directly enables T2 to function correctly; one logical unit. T5 fold-in vs architect-escalation — mechanical alignment to Sprint 1949-T5 already-architected decision; no scope question. MAINT defer — token-economy real but non-destructive.
+**Rationale captured:**
+- Sprint 1951 brief is sound architecture but gated on runtime verification. Pre-commit verification via SPIKE-1951a is cheap (≤2h) and removes Phase 1 implementation risk.
+- MAINT-* deferral is acceptable: notebook size violations cost ongoing tokens but don't degrade correctness; semble-search YAML missing `model:` is cosmetic; workflow-map L103 residue is documentation hygiene. None block Sprint 1951.
+- T3 closing mid-cycle is the correct fast-path: it was XS and pre-staged, agent-father consumed it before this PO triage completed. Detected via TASKS.md mid-cycle re-read.
 
 ### Carry-over for next cycle
 
-- **WATCH 2026-05-18T20:17Z:** If 1950-T4 not shipped, expect 1 false-positive `chef-coverage-low` BUG from TNB. Acknowledge as audit-trail confirmation T4 was needed; do NOT escalate.
-- **WATCH 2026-05-19T05:23Z:** First guaranteed chef dish (Morning slot). With T1+T2 shipped, expect ≥2 WORK Telegrams (`[chef] START` + `[chef] SENT|SILENT`). Verify next cycle.
-- **WATCH 2026-05-19T20:13Z:** First TNB audit cycle on correct schedule (after T4 ships). Should report chef-coverage = 3/3 if Morning + EOD + Evening all fired. If T4 NOT shipped → TNB still on :17 cadence, coverage check unreliable until T4 lands.
-- **GATE 2026-05-20T07:22Z:** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence (UNCHANGED). Sprint 1948 still blocked. Decision point in 38h.
-- **Sprint 1951 candidate:** cowork-master-scheduler brief (`docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`) — SPRINT-M, 5-phase, replaces ~17 scattered cron blocks with 1 cowork-scheduler agent reading `docs/data/cowork-schedule.json` SSOT. Open after Sprint 1950 closes (T3+T4+T5+MAINT all DONE).
-- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart for digest-predict MCP), 1897b (Docker .git/ exclusion VirtioFS). T5 closes digest-predict scope side; 1907a still needs user.
-- **Recurring-bug counter:** chef pipeline 3 patches this sprint (T1 telemetry, T2 coverage audit, T4 cron fix). Not architect-escalation territory yet — patches are different files in different zones, all derive from one architect brief (`2026-05-18-cowork-reorder-and-cook-schedule.md`). If a 4th chef-touching FIX lands → reconsider.
-- **Signal lifecycle:** processed 3 inbox signals (agent-father T1-done, agent-father T2-done, qa T1-approved). agents-architect cowork-master-scheduler READ-only (parked for Sprint 1951). 1 gatherer signal (`price_anomaly_20260518T1637.json`) left for chef.
+- **WATCH 2026-05-19T05:23Z:** First guaranteed chef Morning dish. Sprint 1950 telemetry expects ≥2 WORK Telegrams (`[chef] START` + `[chef] SENT|SILENT`). If dish silent → T1/T2 instrumentation failure → bug task.
+- **WATCH 2026-05-19T20:13Z:** First TNB audit on corrected 13 20 schedule (post-T4). Chef coverage check should report 3/3 or flag specific missing slots.
+- **GATE 2026-05-20T07:22Z:** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence. Sprint 1948 unblocks IF gate clears. 38h from now.
+- **SPIKE-1951a return:** Expect findings appended to brief §2.3 + `_notes` field in cowork-schedule.json. After return → cut Sprint 1951 T1 (RemoteTrigger creation) if syntax supports `*/15`+`2-8`; else expand Phase 1 scope decomposition.
+- **MAINT drain:** When agent-father idle, dispatch MAINT-1950b first (token-economy gain), then MAINT-1950c (hygiene), then MAINT-1950d (docs residue).
+- **Recurring-bug counter:** chef pipeline = 3 patches in Sprint 1950 (T1 telemetry + T2 coverage + T4 cron). Same architect brief root, different zones — NOT escalation. Counter resets at next sprint.
+- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart), 1897b (Docker VirtioFS .git/ exclusion).
+- **Signal lifecycle:** processed pm-1950-T5-closed.json (informational, no action). Architect v2 brief signal already READ in dashboard. inbox clean.

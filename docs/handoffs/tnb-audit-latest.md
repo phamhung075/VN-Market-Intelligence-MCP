@@ -143,3 +143,38 @@ Architecture brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` is r
 4. **1945d-reparse-pipeline-gap**: Is dev sprint in execution? When is first reparse expected?
 5. **PC1 legal_risk gap**: Should architect create a spike for legal_risk signal extraction review?
 6. **digest-predict 1907a**: USER action still pending.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-18T15:37:52Z
+- Tasks created: SPIKE-1948e (PC1 legal_risk pipeline review, architect, 2h time-box, independent of Sprint 1948 gate — architect zone, not dev-mcp-server)
+- Skipped findings:
+  - #1 digest-predict (CRITICAL): USER-action blocker 1907a-digest-predict-silence already in Backlog. Unchanged.
+  - #2 post-1943a BCTC (HIGH-tracking): Stale info — RESOLVED 2026-05-18 by 1945d-reparse-pipeline-gap (QA-approved). kinh-dich also rebuilt post-audit (commit e0f61600). No action.
+  - #3 news-scout Docker-down 16:39 UTC (HIGH): FALSE ALARM confirmed — Docker verified healthy (12 containers up/healthy at 20:00Z). Same cowork-sandbox pattern as prior cycles, already escalated to architect via 1897b-carry signal. No ops action.
+  - #4 post-1945a verdictResolutionJob (MEDIUM): OBSERVE gate 2026-05-20T07:22Z still open. PHASE 1 GATE for Sprint 1948. No action — monitor only.
+  - #5 post-1942c HPG OCF (MEDIUM): OBSERVE gate ~23:00 UTC tonight (FA next cycle). No action — monitor only.
+  - #7 market-watcher 10:37 SKIPPED (LOW): Correct off-hours protocol. Acknowledge.
+  - #8 TNB Claude Code MCP (MEDIUM): Structural, USER-action 1897b VirtioFS pending. Unchanged.
+  - #9 news-scout D+E gaps (LOW): TNB-critic-gate brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` already ready for agent-father queue. Out of PO sprint scope.
+  - report-analyzer stale 3d: Expected (no new filings since 2026-05-15). NEEDS_ATTENTION-tracking only; no task — auto-resolves when next filing arrives.
+- Positive signals acknowledged: 7 live cowork agents, alert-commander TIGHTENING discipline, news-scout dedup gate operational, PO ACK loop functional, 1938a MCP URL propagated.
+
+## PO ACK — c194b (Sprint 1950 follow-through + Sprint 1951 SPIKE gate)
+- Read by: po
+- At: 2026-05-18T17:40:15Z
+- Spawn context: Sprint 1950 status check + Sprint 1951 readiness review. Triggers: (a) pm signal `pm-1950-T5-closed.json` confirms T1/T2/T4/T5 DONE, WIP=0; (b) agents-architect brief v2 `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md` ready but blocked on OQ-1/OQ-2/OQ-3; (c) gatherer signal `price_anomaly_20260518T1637.json` already in processed/ — informational only.
+- Decisions:
+  1. **Sprint 1951 start = HOLD** until OQ-1/OQ-2/OQ-3 resolved AND Sprint 1950 fully closed. Reason: brief Section 2.3 explicitly gates Phase 1 on these answers; shipping triggers without knowing whether `*/15` or `2-8` cron syntax works is a phantom-success risk. Spike runs NOW in parallel — does not block 1950 close.
+  2. **SPIKE-1951a CREATED** (NEW Backlog row) — claude-code-guide zone, time-box 2h, answers OQ-1 (cron syntax) / OQ-2 (max trigger count) / OQ-3 (exact API call). Output: append `_notes` field to `docs/data/cowork-schedule.json` + 1-page findings appended to brief. If full cron syntax unsupported → expand brief Phase 1 scope decomposition.
+  3. **1950-T3 → ALREADY DONE** (mid-cycle update detected: TASKS.md L55 moved T3 to Done — `docs/protocols/chef-pipeline-runbook.md` created, referenced from `docs/standards/cron-jobs.md`). Sprint 1950 substantive scope complete. Only MAINT-* low-priority drain remains.
+  4. **MAINT-1950b + MAINT-1950c → DISPATCH NEXT CYCLE** (WIP=2, both agent-father, different zones — MAINT-1950b=`docs/agent-memory/notebooks/`+`docs/archive/notebooks/`, MAINT-1950c=`.claude/agents/`+`docs/agent-memory/notebooks/`). Both LOW priority; safe to drain at next agent-father idle window. MAINT-1950d deferred behind these two.
+  5. **1948e-C (PC1 watchlist) → KEEP DEFERRED**. LOW, optional. Revisit only after 1948a/b/c gate clears (2026-05-20T07:22Z) and only if cycle space.
+  6. **price_anomaly signal**: ACK'd as informational. Already in processed/. Chef will consume on next Evening Preview slot (19:37 UTC).
+  7. **Architect brief v1 vs v2**: v1 signal (`2026-05-18T155451Z`) superseded by v2 (`2026-05-18T171520Z`). Both point to same brief file. No conflict — only v2 architecture (RemoteTrigger-per-slot) is in scope.
+- Tasks created: SPIKE-1951a (claude-code-guide zone)
+- Tasks dispatched: 1950-T3 (agent-father), MAINT-1950b (agent-father)
+- Skipped findings: All c71 findings already ACK'd in prior c71 PO ACK block (above). No new findings to re-triage.
+- Sprint 1950 substantive closure: REACHED (T1+T2+T3+T4+T5 all DONE). MAINT-1950b/c/d remain as low-priority hygiene drain; no operational urgency.
+- Sprint 1951 kickoff ETA: After SPIKE-1951a returns (≤2h). MAINT drain can run in parallel — does not gate Sprint 1951. Earliest Phase 1 trigger creation: as soon as SPIKE-1951a answers land in brief §2.3.
