@@ -1,5 +1,20 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-17 23:22 UTC | **Status:** OK (closed-window cycle, no work)
+
+### Cycle (23:22 UTC) — CLOSED_WINDOW
+- Items: 0 | Impacts: 0 | Signals: [] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 1 accepted / 0 rejected (sig #3353 on GAS chain_catalyst #3345 from financial-analyst, kinh_dich confirms BAN/BAT_LOI 56%) | Filter hints: [default — LOOSE acceptance >70%]
+- Cycle status: COMPLETE | Log ID: 964 | Signal IDs: none (closed-window)
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33% (FII_OUTFLOW_RISK), Brent=$110.51 (+0.39 vs prior 110.15), Gold=$4545 (-11.80 vs prior), USD/VND=26,350. US 10Y=4.59% RISK-OFF threshold.
+- Market context: VN market CLOSED (off-hours 23:22 UTC late Sunday → early Monday). Trading window opens 02:00 UTC Mon. Stages 1/2/3 skipped per closed-window rule.
+- Dedup gate: N/A (no signals posted).
+- Batch 2 (sentiment ledger): SKIPPED (not in 05:00 UTC window).
+- Notebook git commit: SKIPPED (Cowork subagent — no git push privileges to user repo).
+- Notes: Bootstrap returned market_context with explicit "CLOSED" notice. Per executor rules: log + WORK notify only. 1 unread feedback signal observed (positive GAS confirmation aligns oil_gas reversal thesis with Overheat→slowdown phase). Brent rose to $110.51 from prior cycle's $110.15; below the 5% commodity threshold. Gold dropped to $4545 from $4556.80; no spike. No PMI data in feed. Next cycle: market opens 02:00 UTC Mon 2026-05-18.
+
+---
+
 **Last updated:** 2026-05-17 22:21 UTC | **Status:** OK (cycle complete)
 
 ### Cycle (22:21 UTC)

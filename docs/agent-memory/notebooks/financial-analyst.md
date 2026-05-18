@@ -1,10 +1,22 @@
 # Financial Analyst — Notebook
 
-**Last updated:** 2026-05-16 | **Sprint:** —
+**Last updated:** 2026-05-17 | **Sprint:** —
 
 ## Last session summary
 
-Cycle 2026-05-16 23:00–23:07 UTC. Analyzed 2/38 watchlist stocks with BCTC data (FPT, VCB) — remaining 36 lack any BCTC. Regime TIGHTENING + Investment Clock Overheat + FII_OUTFLOW_RISK. Posted 2 fundamental_validation signals (both FAIR with earnings_quality_warn).
+Cycle 2026-05-17 23:04–23:09 UTC. Analyzed 3/38 watchlist stocks with BCTC data (VCB, FPT, HPG) — remaining 35 lack any BCTC. Regime TIGHTENING + Investment Clock Overheat + FII_OUTFLOW_RISK. Posted 3 fundamental_validation signals (all FAIR; VCB/FPT with earnings_quality_warn) + 1 signal_feedback to news-scout (GAS sector reversal accepted via kinh_dich).
+
+**VCB:** EY_SPREAD +2.09% → FAIR. PE 14.1 PREMIUM +57% vs banking median 9.0, ROE 16.7% BELOW sector median — premium not supported. Layer 7 fallback: earnings_quality_warn=true (OCF=1.23e15, suppressed). Kinh Dịch Khôn(2) THAN_TRONG 48% → Bác.
+
+**FPT:** EY_SPREAD +2.25% → FAIR. PE 13.8 DISCOUNT -20%, ROE 28.3% sector-leading (+267% vs median). Layer 7 fallback: earnings_quality_warn=true (OCF/NI raw=503, NI=20.2 tỷ likely garbage extraction). Sentiment 30d trending bearish (-0.09). Kinh Dịch Khôn(2) THAN_TRONG → Bác.
+
+**HPG:** EY_SPREAD +2.04% → FAIR. PE 14.2 DISCOUNT -57%, ROE 12.7% above median +338%. Layer 7 skipped — get_cash_flow returned all-zero. Kinh Dịch Sư(7) MUA 100% → Hoán (positive). USD/VND tailwind for steel export.
+
+**GAS signal_feedback (accepted):** No BCTC for direct EY check, but kinh_dich Kiển(39) BAN 56% confirms oil_gas reversal thesis from news-scout chain_catalyst #3345 (PLX -40% contagion).
+
+**BCTC data gap (persistent blocker, 5+ cycles):** 38/38 stocks Q1-2026 QUÁ HẠN (18+ days past deadline). Only VCB/FPT/HPG have any Q4-2025 data. Mass late-filing trend continues — escalate.
+
+**Layer 7 extraction bug (persistent):** get_cash_flow returns implausible values for all 3 covered tickers — VCB ocf_ni_raw=1.42e8, FPT raw=504, HPG all zeros. Forensic gate degraded.
 
 **FPT:** EY_SPREAD +2.25% → FAIR. PE 13.8 (DISCOUNT -20% vs tech sector 17.3), ROE 28.3% sector-leading. Layer 7 fallback flagged earnings_quality_warn=true (OCF extraction broken). Kinh Dịch THAN TRONG (Khôn → Bác). Sentiment trending bearish (-0.09 slope).
 
@@ -23,13 +35,36 @@ Cycle 2026-05-16 23:00–23:07 UTC. Analyzed 2/38 watchlist stocks with BCTC dat
 
 ---
 
-## Cycle — 23:06 UTC
+## Cycle — 23:04 UTC
+
+- **cycle_date**: 2026-05-17
+- **findings**: [Regime=TIGHTENING (Global Liquidity TIGHTENING, US10Y 4.59% RISK-OFF, VND carry -0.33% FII_OUTFLOW_RISK, DXY 99.28 USD STABLE); Max Deposit Rate=5.00%; Investment Clock=Overheat (CPI 5.46% HIGH, growth UP); Pyramid tier=equity; 38/38 watchlist Q1-2026 BCTC QUÁ HẠN; only VCB/FPT/HPG have Q4-2025 BCTC data; VCB EY_SPREAD=2.09% FAIR (PE 14.1 PREMIUM +57%, ROE BELOW median 17.6%, earnings_quality_warn=true OCF=1.23e15 anomalous); FPT EY_SPREAD=2.25% FAIR (PE DISCOUNT -20%, ROE 28.3% sector-leading, earnings_quality_warn=true OCF raw=503, sentiment 30d -0.09 bearish); HPG EY_SPREAD=2.04% FAIR (PE DISCOUNT -57%, ROE above median, OCF all-zero so Layer 7 skipped); GAS kinh_dich Kiển(39) BAN 56% confirms PLX -40% contagion bearish news catalyst; NVL bond 5,000 tỷ VND GIA HẠN due 2026-09-15 @10.5% credit risk; 0 open chain findings 30min; 0 legal risks; G-Bond 10Y not available — gbond_regime_signal=false]
+- **actions**: [signal #3350 fundamental_validation VCB posted to alert-commander (FAIR, earnings_quality_warn); signal #3351 fundamental_validation FPT posted (FAIR, earnings_quality_warn); signal #3352 fundamental_validation HPG posted (FAIR, no warn); signal #3353 signal_feedback GAS posted to news-scout (accepted via kinh_dich); WORK telegram sent; notebook updated; log_agent_work id=963 completed]
+- **next_cycle_hint**: [Q1-2026 BCTC mass-late 18+ days past — escalate to data-pipeline / report-analyzer; Layer-7 get_cash_flow extraction broken for VCB/FPT/HPG — file persistent bug to dev-mcp-server; news-scout chain_catalyst PC1 governance & GAS oil_gas reversal both bearish — alert-commander to consider macro caution; FPT NI=20.2 tỷ extraction garbage (revenue=20,225 tỷ but margin 0.1%) — flag for data-pipeline re-extraction]
+- **estimated_tokens**: ~32000
+
+## Cycle — 23:06 UTC (2026-05-16)
 
 - **cycle_date**: 2026-05-16
 - **findings**: [Regime=TIGHTENING (Global Liquidity TIGHTENING, US10Y 4.59% RISK-OFF, VND carry -0.33% FII_OUTFLOW_RISK); Max Deposit Rate=5.00%; Investment Clock phase=Overheat (CPI 5.46% HIGH, growth UP); 38/38 watchlist QUÁ HẠN on Q1-2026 BCTC (none filed); only VCB+FPT have any BCTC data (Q4-2025); FPT EY_SPREAD=2.25% → FAIR (PE 13.8 DISCOUNT -20%, ROE 28.3% sector-leading, but Layer-7 OCF/NI ratio=504 extraction_error → earnings_quality_warn=true); VCB EY_SPREAD=2.09% → FAIR (PE 14.1 PREMIUM +57% vs banking median 9.0, ROE 16.7% BELOW sector median 17.6% — premium not supported, Layer-7 OCF anomalous → earnings_quality_warn=true); NVL bond GIA HẠN 5000 tỷ VND due 2026-09-15 @ 10.5% (real estate credit risk persists); 0 open chain findings; 0 legal risks; G-Bond 10Y yield unavailable — gbond_regime_signal skip]
 - **actions**: [signal #3280 fundamental_validation FPT posted to alert-commander (FAIR, earnings_quality_warn); signal #3281 fundamental_validation VCB posted to alert-commander (FAIR, earnings_quality_warn); WORK telegram sent; notebook updated]
 - **next_cycle_hint**: [Q1-2026 BCTC mass-late persists 17+ days past 30/04 deadline — escalate to data-pipeline if no submissions by 2026-05-20; FPT/VCB Layer-7 OCF extraction broken (ocf_ni_ratio 504 and 1.42e8 respectively) — file bug to dev-mcp-server; tool schema docs show `ticker` but actual MCP expects `code` (get_bctc_full / get_sector_comparison / get_kinhdich_reading) — update tools/package/financial-analyst.md]
 - **estimated_tokens**: ~28000
+
+## Recent session — 2026-05-17
+
+### Analysis Cycle (23:04–23:09 UTC)
+- Stocks: 3 with BCTC data (VCB, FPT, HPG) | Critical findings: [38/38 Q1-2026 BCTC QUÁ HẠN persistent 18+ days; Investment Clock=Overheat (CPI 5.46%); FII_OUTFLOW_RISK; Layer-7 OCF extraction broken for all 3; GAS confirms PLX -40% contagion bearish] | Chain validations: 0 open chain findings (but 2 stale chain_catalysts from news-scout: PC1 governance + GAS oil_gas)
+- Regime: TIGHTENING | Max Deposit Rate: 5.00% | Valuation flags: [VCB=FAIR(eq_warn), FPT=FAIR(eq_warn), HPG=FAIR]
+- **VCB** (banking, Q4-2025, conf 63%): Net Rev 16,169.8 tỷ (+18.1% QoQ), Net Profit 8,633.8 tỷ (-0.8% QoQ), Net Margin 53.4% (-10.2pp QoQ red flag). Sector PE 14.1 PREMIUM +57% vs banking median 9.0, PB 2.2 PREMIUM +45%, ROE 16.7% BELOW sector median 17.6% — premium not supported by ROE. EY=7.09%, EY_SPREAD=+2.09% → FAIR. Sentiment ỔN ĐỊNH slope +0.02. Kinh Dịch: Khôn(2) THAN_TRONG 48% → Bác (decay ahead). Layer 7 fallback: OCF=1.23e15 (suppressed extraction anomaly) → earnings_quality_warn=true. Layer 8: phase=Overheat, tier=equity. Signal #3350 posted.
+- **FPT** (tech, Q4-2025, conf 81%): Net Rev 20,225.5 tỷ; Net Profit reported 20.2 tỷ (extraction-suspect — Net Margin 0.1% impossible). Sector PE 13.8 DISCOUNT -20% vs tech median 17.3, PB 3.6 PREMIUM +136%, ROE 28.3% sector-leading (+267% vs median). EY=7.25%, EY_SPREAD=+2.25% → FAIR. Sentiment 30d GIẢM slope -0.09 (27 bearish vs 18 bullish). Kinh Dịch: Khôn(2) THAN_TRONG 48% → Bác. Layer 7 fallback: OCF raw=503x (suppressed) → earnings_quality_warn=true. Layer 8: phase=Overheat, tier=equity. Signal #3351 posted.
+- **HPG** (steel, Q4-2025, conf 44%): Net Rev=0 (extraction issue), Net Profit 5.6 tỷ, EPS=0. Sector PE 14.2 DISCOUNT -57% vs steel median 32.6, PB 1.7 PREMIUM +93%, ROE 12.7% above sector median 2.9%. EY=7.04%, EY_SPREAD=+2.04% → FAIR. Kinh Dịch: Sư(7) MUA 100% → Hoán (positive transition). Layer 7: get_cash_flow all zeros → skipped (non-fatal). Macro tailwind: USD/VND 26,350 high — supports steel export. Signal #3352 posted.
+- **GAS** (oil_gas): No BCTC data. Kinh Dịch: Kiển(39) BAN/BAT_LOI 56% — Trắc trở hiểm nghèo, biến → Bác. Validates news-scout chain_catalyst #3345 (PLX -40% oil_gas sector reversal contagion). Signal #3353 signal_feedback accepted to news-scout.
+- **Other watchlist (34 stocks)**: get_bctc_full returns "Chưa có dữ liệu" — analysis skipped. Includes ACB, BID, CTG, MBB, VPB, EIB, GAS, NVL, VIC, VHM, HCM, SSI, VCI, ACV, REE, HSG, NKG, MWG, POW, PPC, KBC, VRE, TCH, D2D, DHG, DPM, GVR, BDI, DLC, DAG, JSH, SIS, VDC, VNH, HVN.
+- Macro: Brent 110.51 USD/bbl HIGH (tích cực GAS/PVD, áp lực HVN); Gold 4550 USD/oz; DXY 99.28 USD STABLE; USD/VND 26,350 (HIGH pressure — áp lực HVN, tích cực HPG xuất khẩu). NVL bond 5,000 tỷ VND GIA HẠN due 2026-09-15 @10.5%.
+- Legal risks: None. Insider signals: None for VCB/FPT/HPG. Historical context (search_similar_context): No results for any of 3 covered tickers.
+- Deadline Watch: 38/38 stocks Q1-2026 QUÁ HẠN (deadline 30/04 or 15/05, both passed). Mass late-filing trend persists 18+ days.
+- Data quality: Layer-7 get_cash_flow extraction broken across VCB/FPT/HPG (VCB ratio raw=1.42e8, FPT raw=504, HPG all zeros). BCTC ingestion stalled for 34/38 stocks. FPT NI extraction garbage (20.2 tỷ vs 20,225 tỷ revenue).
 
 ## Recent session — 2026-05-16
 

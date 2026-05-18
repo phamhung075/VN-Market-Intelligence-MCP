@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-17 22:05 UTC | **Sprint:** c171
+**Last updated:** 2026-05-18 00:03 UTC | **Sprint:** c173
 
 ## This session
 
@@ -198,3 +198,12 @@
 - **Next cycle:** 23:03 UTC (off-hours 2h cadence)
 - **Notable carry-over:** PC1 chairman arrest news (bearish score 10.0, 14:11) still surfaces in 6h context but `get_legal_risk_signals` returns empty — signal-extraction gap persists across 3+ cycles. news-scout/financial-analyst should emit legal_risk signal. Flagged for the third consecutive cycle.
 
+
+### Alert Cycle (00:03 UTC 2026-05-18)
+- Signals: 5 total (urgent_news×2, fundamental_validation×3)
+- Fired: 0 | Suppressed: 2 | MARKET: 0
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: []
+- Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: true (June 2026 in 14d)
+- Suppressions: urgent_news#3344 (VN-Index ATH, conf 0.50<0.75 TIGHTENING bullish thr); urgent_news#3346 (MWG Bach Hoa Xanh, conf 0.50<0.75 TIGHTENING bullish thr)
+- Notes: fundamental_validation signals from financial-analyst (VCB/FPT/HPG) not in MARKET matrix → WORK-routed; 0 legal_risk / 0 crisis_velocity / 0 price_anomaly
+- Macro: REGIME_SOURCE=macro_snapshot (shape OK); DXY 99.36; UST10Y 4.59%; USD/VND 26350; Brent 110.65; Gold 4544.80
