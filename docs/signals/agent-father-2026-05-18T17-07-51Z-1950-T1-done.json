@@ -1,0 +1,18 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "type": "task-done",
+  "payload": {
+    "task_id": "1950-T1",
+    "sprint": 1950,
+    "title": "Chef WORK-channel telemetry on every cycle",
+    "commit": "f4688989",
+    "file_patched": ".claude/flows/unified-agent/chef.md",
+    "ba_spec": "docs/handoffs/REQ_1950.md",
+    "summary": "ENTRY + CLOSE (success + silent) + FAILED telemetry added. try block wraps Steps 0–7. Step 8 outside try. cycle_id constructed once at ENTRY, reused verbatim. 1950-T2 unblocked.",
+    "next": "qa — verify AC-1 through AC-7 against REQ_1950.md before 2026-05-19T05:23Z",
+    "unblocks": ["1950-T2"]
+  },
+  "priority": "high",
+  "createdAt": "2026-05-18T17:07:51Z"
+}

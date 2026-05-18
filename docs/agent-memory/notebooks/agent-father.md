@@ -1,6 +1,47 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1949 Phase 2/3/5/6/7)
+**Last updated:** 2026-05-18 (Sprint 1950 / 1950-T1 chef telemetry)
+**Sprint:** 1950 / T1 Chef WORK-channel telemetry
+
+## This Session — 2026-05-18 (Sprint 1950 / 1950-T1)
+
+**Task: 1950-T1 — Chef WORK-channel telemetry patch**
+
+File patched: `.claude/flows/unified-agent/chef.md` (192L → 248L after patch)
+Commit: `f4688989`
+BA spec read: `docs/handoffs/REQ_1950.md` (commit 4099ed23)
+
+Changes applied:
+- **ENTRY Telemetry** section inserted between Bootstrap and Step 0 GATHER:
+  - `cycle_id = chef-{$DISH_TYPE}-{YYYYMMDDTHHmmZ}` constructed from slot fire time (not wall-clock)
+  - `send_telegram(work, "[chef] START {dish_type} | slot={slot_utc} | cycle={cycle_id}")`
+  - try block begins here, wrapping Steps 0–7 inclusive
+- **Step 1 CLUSTER** intraday silent-exit string replaced:
+  - Old: `"Intraday scan: 0 clusters — silent exit"` (free-form)
+  - New: `"[chef] SILENT intraday | slot={slot_utc} | cycle={cycle_id} | clusters=0"` (standardised)
+  - try block exits cleanly on silent path (no exception needed)
+- **Step 8 LOG** — try block boundary note added: Step 8 is OUTSIDE the try block per BA spec
+- **CLOSE Telemetry (success)** section added after Step 8 notebook append:
+  - `send_telegram(work, "[chef] SENT {dish_type} | slot={slot_utc} | cycle={cycle_id} | clusters={N} | convergence={true|false}")`
+  - `convergence_detected` field present on SENT only (absent on SILENT, absent on FAILED)
+- **FAILED Telemetry** section added as catch block:
+  - `send_telegram(work, "[chef] FAILED ...")` + `send_telegram(bug, "[chef] {reason}")` + EXIT non-zero
+  - No MARKET dish. No Step 8 notebook append on failure path.
+
+TASKS.md updates:
+- 1950-T1 removed from Backlog, added to Done with commit + BA-spec link
+- 1950-T2 unblocked (Blocked-by field cleared from "1950-T1" to "—")
+
+Signal written: `docs/signals/agent-father-2026-05-18T17-07-51Z-1950-T1-done.json` → to=po, NEXT=qa
+
+Validation:
+- BA spec §1 step boundaries: ENTRY after Bootstrap before GATHER ✓, CLOSE success after Step 8 notebook append ✓, CLOSE silent at Step 1 zero-cluster gate ✓, FAILED wraps Steps 0–7 only ✓
+- BA spec §3 message formats: all four formats match exactly ✓
+- BA spec §4 schema: cycle_id constructed once at ENTRY reused verbatim ✓, convergence_detected on SENT only ✓
+- cowork-boundary FAILED path: WORK + BUG + EXIT non-zero ✓, no retry ✓
+
+---
+
 **Sprint:** 1949 / T4+T5+T9+T10+T11 cowork-reorder Phase 2/3/5/6/7
 
 ## This Session — 2026-05-18 (Sprint 1949 Phase 2/3/5/6/7)
