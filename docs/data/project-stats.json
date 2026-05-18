@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "PM c178 — Sprint 1941 TIER 1 COMPLETE. Tasks 1941a (L7 OCF guard deploy) + 1941c (accuracyDigestJob) QA-approved 2026-05-18. Task 1941b in OBSERVE (7d seed window, gate 2026-05-25). Task 1941d FPT net_profit OCR bug QA running. cronJobCount 75→76 (accuracyDigestJob 0 7 * * *). Task 1941c AC-1..12 coverage: getSystemAccuracyDigestStats 4-query pattern + buildAccuracyDigestText telegram formatter. Scheduler file count now 64 (task 1941c added).",
+  "_lastRefreshedBy": "Developer close-out — Sprint 1942 COMPLETE 2026-05-18. All 4 BCTC expansion tasks QA-approved: 1942a (vnstockStartupProbe), 1942b (cashFlowTool fallback path), 1942c (vnstockBridge 3-key OCF fallback + MFG label), 1943a (BCTC queue reset + auto-retry). get_cash_flow coverage 31/33 = 94% (goal ≥20/30 ACHIEVED). toolCount 140→142 per Docker logs post-rebuild.",
   "lastUpdated": "2026-05-18",
-  "currentSprint": 1912,
+  "currentSprint": 1942,
   "previousSprint": {
-    "number": 1910,
-    "status": "DONE (1910b shipped 2026-05-14 c96)",
-    "summary": "Sprint 1910b: get_fed_liquidity_spread package registration in financial_analyst/news_scout/unified_coordinator. Deployed c96."
+    "number": 1941,
+    "status": "DONE (1941a+1941c+1941d QA-approved 2026-05-18; 1941b in OBSERVE 7d seed window gate 2026-05-25)",
+    "summary": "Sprint 1941: L7 OCF guard deploy (1941a), accuracy digest job (1941c), FPT net_profit OCR bridge fix (1941d). cronJobCount 75→76."
   },
-  "sprintGoal": "Sprint 1912 PROGRAM COMPLETE 2026-05-14: All 4 services migrated to Go 1.22 + CGO + mattn/go-sqlite3 + log/slog JSON. 1912a (api-gateway) CLOSED c106. 1912b (alert-engine) CLOSED c108. 1912c (stock-price) CLOSED c108. 1912d (api-gateway cutover) CLOSED c106. Architect post-merge SPRINT-L review: PASS (commit 738b6eee). 2 non-blocking janitor flags surfaced: (1) stock-price legacy TS tests; (2) alert-engine tracked server binary. Janitor task (janitor-1912) queued. docker-compose.yml zero Dockerfile.go refs remain.",
+  "sprintGoal": "Sprint 1942 COMPLETE 2026-05-18: Expand BCTC get_cash_flow coverage from 3/30 → ≥20/30 tickers. Achieved 31/33 = 94% via vnstock_cash_flow fallback path (1942b). Supporting tasks: 1942a vnstockStartupProbe, 1942c HPG OCF all-zeros fix, 1943a BCTC queue reset + grace-period auto-retry. financial_reports.operating_cash_flow: 9/33 (OCR pipeline backlog, ongoing). vnstock_cash_flow fallback: 31/33.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
@@ -20,7 +20,7 @@
   "smoke_window_1912a_planned_end": "2026-05-15T14:00:00Z",
   "smoke_window_1912a_status": "USER-OVERRIDE-CLOSED-EARLY c105 (~22h short, cutover executed cleanly)",
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
-  "toolCount": 140,
+  "toolCount": 142,
   "schedulerFileCount": 64,
   "cronJobCount": 76,
   "knowledgeFileCount": 25,
