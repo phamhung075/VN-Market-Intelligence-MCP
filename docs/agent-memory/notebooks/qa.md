@@ -96,7 +96,62 @@ round: 1
 - **next_cycle_hint**: Ops agent should `docker-compose build mcp-server && docker-compose up -d mcp-server` to deploy GAP-A+GAP-B fixes; verify bctcReparseJob picks up EIB+DHG PDFs on next cycle
 - **estimated_tokens**: 9200
 
+## Session 2026-05-18 — Sprint 1949 QA gate
+
+### TASK REPORT — Sprint 1949 (full)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commits: d4d5d0cf (Phase 1) + 9848bf49 (Phase 2/3/5/6/7) + 44aa791a (Phase 4)
+type: FEAT — cowork reorder, chef pipeline, gatherer demotion, cron rewiring
+zone: .claude/agents/ + .claude/flows/ + apps/mcp-server/src/scheduler/ + docs/
+round: 1
+```
+
+#### Pipeline
+
+- Zone tests (1949 + 1133): 22/22 GREEN — 9 new TC-1..TC-9 + 13 1133 regression [387ms]
+- Full suite: 9220 pass / 286 fail (pre-existing baseline; consistent with prior sessions 279-350)
+- tsc: 0 errors
+- DDD: PASS — scheduler/infra imports correct DDD pattern; domain/ clean
+- Security: PASS — no process.env in changed files; no hardcoded secrets
+
+#### 10 Acceptance Checks
+
+| Check | Result |
+|---|---|
+| 1. Phase 1 GATE invariant (unified-agent market:write:true, rule:chef_dishes_only) | PASS |
+| 2. MARKET allowed_senders consistency (system-map.json vs agent permissions) | PASS |
+| 3. Signal-bus symmetry (receives_from / sends_to / business-context fields) | PASS |
+| 4. Chef recipe present (chef.md 8-step, convergence rule 4 triggers, silent-exit gate) | PASS |
+| 5. Cron off-minute hygiene (no :00/:17/:30; 24min gaps confirmed by TC-5/TC-6) | PASS |
+| 6. Alert-commander narrowed (event_only, no_cycle_headers, 140-char, no off-hours) | PASS |
+| 7. Digest-predict shrunk (daily/monthly removed, weekly 47 13 * * 0) | PASS |
+| 8. TNB auditor reframe (chef narrative audit, 6-layer, cron 13 20 * * *) | PASS |
+| 9. Tests pass (22/22 zone GREEN, 9220 full suite, tsc 0) | PASS |
+| 10. Docs consistency (workflow-map, alert-policy, cron-jobs.md) | PASS |
+
+#### Non-blocking observations
+
+- system-map.json cron descriptions for foreignFlowAlertJob + macroIndicatorRefreshJob are stale (descriptive only; SSOT is cronConfig.ts which is correct). Recommend fix next maintenance cycle.
+
+#### Notes
+
+- All 3 commits already on main. No branch merge required.
+- QA report written to docs/handoffs/sprint-1949-qa-report.md
+
+## Cycle — 2026-05-18 Sprint 1949
+
+- **cycle_date**: 2026-05-18
+- **findings**: Sprint 1949 all GREEN — 22/22 zone tests, full suite baseline stable, tsc clean, DDD clean, security clean; all 10 acceptance checks PASS
+- **actions**: QA report written, notebook updated, commit staged
+- **next_cycle_hint**: Deploy docker-compose restart to pick up new cron schedule (foreignFlow 08:13, macroRefresh 19:13). Monitor first morning dish (05:23 UTC) and first EOD dish (08:37 UTC) for correct publish. system-map.json cron descriptions should be updated in next maintenance pass.
+- **estimated_tokens**: 11500
+
 ## Carry-over
 
 - Ops agent: `docker-compose build mcp-server && docker-compose up -d mcp-server` — deploy 1945d fixes (disk scan unconditional + triggerPushBctcExtraction)
 - Ops agent (from c188): `docker-compose build mcp-server && docker-compose up -d mcp-server` then `seedWatchlist` + verify PLX row in live DB
+- Ops agent (from Sprint 1949): `docker-compose up -d mcp-server` — activate new cron schedule (foreignFlow 08:13, macroRefresh 19:13); no rebuild needed (cron config reload)
+- Maintenance: update system-map.json cron descriptions for foreignFlowAlertJob (09:30→08:13) and macroIndicatorRefreshJob (0 6→13 19)
