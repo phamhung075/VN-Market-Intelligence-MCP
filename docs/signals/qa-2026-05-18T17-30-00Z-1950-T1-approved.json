@@ -1,0 +1,22 @@
+{
+  "from": "qa",
+  "to": "po",
+  "type": "qa-approved",
+  "payload": {
+    "task_id": "1950-T1",
+    "sprint": 1950,
+    "title": "Chef WORK-channel telemetry on every cycle",
+    "commit": "f4688989",
+    "verdict": "APPROVED",
+    "report": "docs/handoffs/sprint-1950-T1-qa-report.md",
+    "non_negotiables": "7/7 PASS",
+    "acs": "7/7 PASS",
+    "blocking_issues": 0,
+    "observations": ["docs/TASKS.md:54 — Done row missing commit hash f4688989 (non-blocking, traceability intact)"],
+    "deadline_safe": true,
+    "deadline": "2026-05-19T05:23Z",
+    "next": "agent-father — 1950-T2 (TNB audit chef-cycle coverage check) now unblocked and ready for implementation"
+  },
+  "priority": "high",
+  "createdAt": "2026-05-18T17:30:00Z"
+}

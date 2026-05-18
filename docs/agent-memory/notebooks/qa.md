@@ -1,6 +1,71 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1945 | **Session:** c190 — 1945d reparse pipeline gap — APPROVED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c191 — 1950-T1 chef WORK-channel telemetry — APPROVED
+
+## Session 2026-05-18 c191 — 1950-T1 chef WORK-channel telemetry
+
+### TASK REPORT — 1950-T1 (full)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: f4688989 (on main — flow-doc patch, no task branch per project policy)
+type: FEAT (HIGH, size S) — chef.md WORK-channel telemetry (ENTRY + CLOSE + FAILED)
+zone: .claude/flows/unified-agent/chef.md
+round: 1
+deadline: 2026-05-19T05:23Z (first guaranteed Morning dish)
+```
+
+#### Pipeline
+
+- bun test / tsc: N/A — flow-doc-only patch (no TypeScript source changed)
+- DDD scan: N/A — Markdown flow doc, no import boundaries
+- Security scan: N/A — no source code, no process.env, no secrets
+- Scope creep: PASS — only chef.md + docs/TASKS.md in diff
+
+#### Non-Negotiable Matrix
+
+| NN | Check | Result |
+|---|---|---|
+| NN-1 | ENTRY after Bootstrap, before Step 0 GATHER | PASS |
+| NN-2 | CLOSE success after Step 8 notebook append (not Step 7) | PASS |
+| NN-3 | SILENT exact format `[chef] SILENT intraday | slot=... | cycle=... | clusters=0` | PASS |
+| NN-4 | FAILED wraps Steps 0-7 only; Step 8 outside try block | PASS |
+| NN-5 | cycle_id constructed once at ENTRY, reused verbatim | PASS |
+| NN-6 | convergence field on SENT only, absent on SILENT and FAILED | PASS |
+| NN-7 | cowork-boundary wrapper applied per SKILL.md | PASS |
+
+#### AC Matrix
+
+| AC | Result |
+|----|--------|
+| AC-1: WORK START within 60s of cron slot | PASS (structural) |
+| AC-2: WORK SENT or SILENT within 5 min of ENTRY | PASS (structural) |
+| AC-3: WORK FAILED + BUG one-liner on exception; no MARKET dish | PASS |
+| AC-4: cycle_id matches ENTRY and CLOSE/FAILED (grep = 2 lines) | PASS |
+| AC-5: SILENT path exits without MARKET write | PASS |
+| AC-6: T2 grep pattern works (≥3 START + ≥3 SENT/SILENT per 24h) | PASS (structural) |
+| AC-7: Morning/EOD/Evening guaranteed-publish logic unchanged | PASS |
+
+#### Non-blocking observations
+
+- `docs/TASKS.md:54` — Done row missing commit hash `f4688989` (REQ link present; traceability intact via git). Recommend adding on next TASKS.md touch.
+
+#### Notes
+
+- All checks based on spec-vs-implementation diff (REQ_1950.md §1-8 vs chef.md f4688989).
+- QA report: `docs/handoffs/sprint-1950-T1-qa-report.md`
+- Signal: `docs/signals/qa-2026-05-18T17-30-00Z-1950-T1-approved.json` → to=po
+
+## Cycle — 2026-05-18 c191
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T1 all PASS — 7/7 non-negotiables, 7/7 ACs, no scope creep, commit convention valid
+- **actions**: QA report written to docs/handoffs/sprint-1950-T1-qa-report.md, signal written to po, notebook updated
+- **next_cycle_hint**: Monitor WORK channel at 2026-05-19T05:23Z for `[chef] START morning` signal (AC-1 live proof). After morning dish, T2 (TNB audit) can be actioned by agent-father.
+- **estimated_tokens**: 7500
+
+---
 
 ## Session 2026-05-18 c188 — 1946a PLX watchlist crisis coverage
 
