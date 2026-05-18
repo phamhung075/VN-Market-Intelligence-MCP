@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T20:25:54Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-cowork-team-command.md` §11 (BLOCK-1 resolution)
+
+QA-caught dead-zone bug: chef-morning (:23), chef-eod (:37), chef-evening (:37) fall outside ±2min of any :00/:15/:30/:45 boundary; approved Decision A — realign to `15 5`, `45 8`, `45 19` — minimal touch, no window change, QA-verified dependency margins both widen (24 min → 32 min on eod/evening).
+
+**Signal dropped:** `docs/signals/agents-architect-1951-block1-decision.json` → fixer
+
+---
+
 ## 2026-05-18T20:11:09Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-cowork-team-command.md`

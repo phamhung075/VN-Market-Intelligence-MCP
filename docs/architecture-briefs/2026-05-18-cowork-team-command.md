@@ -228,3 +228,36 @@ All fail-loud calls follow [fail-loud-protocol.md](../protocols/fail-loud-protoc
 **OQ-1 (OPEN):** Does the cowork-team flow use `subagent_type` as the spawn mechanism (same as dev-team), or does it use a different spawn primitive? Confirm with agent-father before implementation — the spawn call shape determines whether `agent_id` in schema maps 1:1 to `subagent_type`.
 
 **OQ-2 (OPEN):** The ±2min jitter window may produce false matches if two distinct slots have crons that both fall within ±2min of a :00/:15/:30/:45 boundary (e.g. `chef-morning` at :23 is never within ±2min of :15 or :30, so no collision). Agent-father should add a collision-detection log in the flow: if two slots match the same fire window AND same `agent_id`, log a warning. Currently no such collision exists in the 16-slot inventory, but the guard prevents future schema drift.
+
+---
+
+## 11. BLOCK-1 Resolution (2026-05-18)
+
+**QA report:** `docs/handoffs/sprint-1951-cowork-team-qa-report.md` BLOCK-1
+
+**Decision: A — Realign chef crons to the 15-min grid.**
+
+| slot_id | old cron | new cron | shift |
+|---|---|---|---|
+| `chef-morning` | `23 5 * * 1-5` | `15 5 * * 1-5` | −8 min |
+| `chef-eod` | `37 8 * * 1-5` | `45 8 * * 1-5` | +8 min |
+| `chef-evening` | `37 19 * * *` | `45 19 * * *` | +8 min |
+
+**Reasoning (5 lines):**
+
+Option A is the only fix that keeps the ±2min window unchanged and touches only 3 cron strings. Option B (widen to ±5min) risks false matches and requires a full 16-slot collision re-audit. Option C (*/5 master cron) triples router cycles and multiplies silent-exit telemetry noise 3×. The QA-verified dependency margins are sound: `chef-eod` at :45 gives 32 min after `foreignFlowAlertJob` at `13 8` (was 24 min — safer, not worse). `chef-morning` at :15 is 8 min earlier than :23 — no upstream dependency exists before 05:00 UTC on weekdays. `chef-evening` at :45 is 8 min later than :37 — `macroRefresh` gate at `19:13` gives 32 min margin (was 24 min — safe).
+
+**Files fixer must update in the same commit as BLOCK-2 and BLOCK-3:**
+- `docs/data/cowork-schedule.json` — update `cron` field for 3 slots; also update `§1 schedule table` reference crons in this brief (below).
+- `docs/standards/cron-jobs.md` — update chef-morning/eod/evening rows to new cron expressions.
+- `docs/references/chef-pipeline-runbook.md` — update telemetry expectations for chef slot fire times.
+
+**Updated §1 schedule table (corrected crons):**
+
+| slot_id | new cron | VN local | note |
+|---|---|---|---|
+| `chef-morning` | `15 5 * * 1-5` | 12:15 ICT Mon-Fri | was :23, realigned |
+| `chef-eod` | `45 8 * * 1-5` | 15:45 ICT Mon-Fri | was :37, realigned |
+| `chef-evening` | `45 19 * * *` | 02:45+1 ICT daily | was :37, realigned |
+
+All other slots unchanged. ±2min window remains canonical.
