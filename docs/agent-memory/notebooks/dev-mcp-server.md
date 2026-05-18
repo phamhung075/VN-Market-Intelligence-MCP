@@ -4,6 +4,24 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1944b — Remove dead BCTC discovery strategies (SSC/vietstock) (2026-05-18, DONE)
+
+**Goal:** Remove SSC iboard (NXDOMAIN) and vietstock (HTTP 404) from `bctcDiscovery.ts`. Cafef already removed in TASK_1916b. Strategy chain post-fix: hsx(0) → VPS Playwright(1) → null.
+
+**Implementation (2 production files + 12 test files):**
+- `bctcDiscovery.ts`: Removed `extractSscUrls`, `extractVietstockUrls`, `tryFetchSsc`, `tryFetchVietstock`, `getSscIboardBase()`, `VIETSTOCK_BASE`. Removed SSC/vietstock dispatch from `discoverHosePdfUrls`. Deprecated `_fetchSsc` + `_fetchVietstock` in `DiscoverOptions` (accepted for compat, never invoked). Updated module docblock + JSDoc. Also removed the `!fetchSsc || !fetchVietstock` guard.
+- `bctcQueueEnricherJob.ts`: Removed `_fetchSsc: bctcHttpFetch`, `_fetchCafef: bctcHttpFetch`, `_fetchVietstock: bctcHttpFetch` from production default wiring.
+- 11 test files updated: assertions `source === "ssc"` → `source === null` or VPS path. Tests that populated URLs via `_fetchSsc` mock switched to `_fetchHsx` or `_fetchVpsPlaywright`.
+- `1944a-vps-live-probe.test.ts`: Added `LIVE-4` test (AC-5): `VPS_INTEGRATION=true` guard, calls `discoverHosePdfUrls` with live `bctcHttpFetch` against VCB Q1/2026, asserts `source === "vps-playwright"` and `urls.length ≥ 1`.
+
+**Cafef verification:** Confirmed already removed in TASK_1916b — `tryFetchCafef`, `extractCafefUrls` absent from codebase; `_fetchCafef` is a pre-existing no-op.
+
+**Tests:** 142 BCTC tests GREEN (138 pass / 4 skip in VPS_INTEGRATION guard). tsc 0 errors. Commit: `61494107`.
+
+Zone health: bctcDiscovery.ts lean (2 live strategies); no dead code calling NXDOMAIN endpoints; 11 test files updated to reflect post-removal semantics | HEALTHY
+
+---
+
 ### Task 1944a-mcp — VPS BCTC Discover live probe test (2026-05-18, DONE)
 
 **Goal:** Add VPS_INTEGRATION-guarded integration test for BCTC discover endpoint. Verify env wiring. No production code changes.
