@@ -64,7 +64,8 @@ import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
-import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
+import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
+import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { CRONS } from './cronConfig.js'
@@ -831,6 +832,24 @@ export function startScheduler() {
   cron.schedule(CRONS.accuracyDigest, async () => {
     await jobRunRepo.wrapRun('accuracyDigestJob', () => runAccuracyDigest({ db }))
   }, { timezone: 'UTC' })
+
+  // Task 1942a — Startup backfill probe: populate vnstock fundamentals tables
+  // when the DB is empty or stale after a cold Docker restart.
+  // The Monday cron (vnstockFundamentalsRefresh Mon 01:00 UTC) only fires once
+  // weekly; after a restart the tables may be empty for up to 7 days.
+  // Guard: COUNT(DISTINCT code WHERE data_type='financials') < 10  → cold DB
+  //        last fetched_at > 7 days ago                           → stale data
+  //        Otherwise                                              → skip
+  // _isFundamentalsRunning in vnstockFundamentalsJob handles overlap with the
+  // Monday cron — no second lock is needed here (AC-7).
+  void (async () => {
+    await runVnstockStartupProbe({
+      getDb,
+      runJob: () => runVnstockFundamentalsJob(),
+      scheduleDelay: (ms: number) => new Promise<void>((res) => setTimeout(res, ms)),
+      log,
+    })
+  })()
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
 }
