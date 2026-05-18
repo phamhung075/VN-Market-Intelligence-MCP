@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-15 c125 (PM: SPRINT-1920 task decomposition + handoffs complete, 1920h dispatched In Progress, 1920e/f/g Todo, 1920i Blocked) | **Sprint:** 1920 scheduler cadence wiring | **Current:** WIP 1/2 (1920h IN PROGRESS)
+**Last updated:** 2026-05-18 c174 (PM: calendar-source-replacement → DONE, WIP=0/2 CLEAN, queued next task) | **Sprint:** 1920 scheduler cadence wiring (completed), alert-precision-series active | **Current:** WIP 0/2 CLEAN
 
 ## Current state
 
-- **WIP: 1/2 (1920h IN PROGRESS)** — Cycle c125 Sprint-1920 decomposition complete. SPRINT-1920 architect design (ARCH-1920) landed 2026-05-15. All 5 handoff specs complete (1920e/f/g/h/i) with BA requirements. PM actions: (1) Created [PM] Planning Context sections in all 5 handoff files with zone, file lists, dependencies, risk flags. (2) Updated docs/TASKS.md: 1920h → In Progress (first dispatch, XS doc-only, no risk), 1920e/f/g → Todo (ready after 1920h, S parallel independent), 1920i → Todo+Blocked (soft dep on 1920a–g, cannot merge until those tasks deploy). (3) WIP capacity = 1/2 (1920h ready for dev-mcp-server pick-up). Sequencing per BA spec: 1920h first (unblocks clean feeling), then 1920e/f/g parallel, then 1920i last. **NEXT DISPATCH: 1920h → dev-mcp-server (LOW CLEAN, ~15min, doc-only).** Expected: tsc 0 errors, no test additions.
+- **WIP: 0/2 CLEAN** — Cycle c174 calendar-source-replacement QA approved, merged to main, task marked DONE. NullCalendarAdapter wired, 103/103 active tests pass, tsc clean on touched files, DDD PASS. No downstream tasks blocked by this fix (it was WONTFIX outcome, not a blocker remover). Next cycle: Check if any high-priority monitoring tasks or cascading fixes needed, or initiate next sprint tier if ready. WIP capacity = 2/2 AVAILABLE.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,33 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 174 — 2026-05-18 PM Task Closure: calendar-source-replacement → DONE (WIP=0/2 CLEAN)
+
+**Input:** QA handoff from qa agent (task/calendar-source-replacement branch merged to main). Approval summary:
+- NullCalendarAdapter wired successfully
+- 103/103 active tests pass (no new failures)
+- tsc clean on touched files
+- DDD PASS (no pattern violations)
+- 1 pre-existing fail on main (trading-economics-vn.test.ts:143 VN_TE_SLUGS length) — not introduced by this task
+- Task report written: reports/TASK_REPORT_calendar-source-replacement.md
+- Handoff docs: docs/handoffs/calendar-source-replacement.md
+
+**Actions:**
+1. **Marked calendar-source-replacement DONE in docs/TASKS.md** — Moved In Progress → Done. Updated row with completion date 2026-05-18 + type WONTFIX + QA approval note c174.
+2. **Checked downstream blockers** — calendar-source-replacement was marked LOW/WONTFIX from start (not a fix, but an acceptance that no replacement exists). No other tasks depend on it; no unblocks generated.
+3. **WIP status updated** — In Progress section now empty (WIP = 0/2). Capacity = 2/2 AVAILABLE for next dispatch.
+4. **PM notebook updated** — Header timestamp c174, current state section, this cycle entry.
+
+**Next steps:** 
+- Check Backlog + Todo for next high-priority tasks to queue per WIP=2 rule
+- Monitor alert-precision-488-unknowns (TRACKING, holds until ≥550 agent_signals)
+- Possible dispatch candidates: None currently in Backlog with clear handoff. All Todo entries are observational or blocked (1922g 2026-06-01 future, 1922i WONTFIX). 
+- Options: (1) Wait for architect brief on backlog items, (2) Scan for observational task readiness
+
+**Status:** Closure COMPLETE. System idle, awaiting architect brief or next sprint signal. WIP=0/2 CLEAN.
 
 ---
 

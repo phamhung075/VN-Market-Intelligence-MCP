@@ -24,7 +24,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| calendar-source-replacement | **WONTFIX 2026-05-18** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. Commits on task/calendar-source-replacement. | LOW | OBSERVE/FIX | dev-macro-indicators | docs/handoffs/calendar-source-replacement.md | — |
+| _(empty)_ | — | — | — | — | — | — |
 
 ---
 
@@ -38,6 +38,7 @@
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
+| calendar-source-replacement | **DONE 2026-05-18 c174/QA-c174** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. 103/103 active tests pass, tsc clean on touched files, DDD PASS. NullCalendarAdapter wired. Report: reports/TASK_REPORT_calendar-source-replacement.md. Merged task/calendar-source-replacement to main. | LOW | WONTFIX | dev-macro-indicators | 2026-05-18 |
 | 1940a-pc1-legal-risk-tool-gap | **DONE 2026-05-18 c174/QA-c174** — `get_legal_risk_signals` now dual-source: queries both `alerts` AND `agent_signals` (signal_type=legal_risk). Root cause: PC1 chairman arrest signals (#3318/#3343, conf=0.78) were in agent_signals but tool never read there. Fix: `queryAgentSignalsTable()` in legalRiskTools.ts (interface layer, DDD-clean). TC4: null stock_code (broad) signals also returned. 7 new tests GREEN, 61-test regression suite GREEN, tsc 0 errors. QA c174 APPROVED. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
 | 1939a-tnb-critic-gate-sprint-a | **DONE 2026-05-17 c172/QA-c142** — TNB Critic Gate Sprint A+B shipped together in commit 21dddcfe: tnbCriticScorer.ts (pure domain scorer, 5 checks × 0.2, threshold 0.6), schema-news 3 new cols (critic_score/critic_notes/retry_count), postSignalWithCriticGate() wrapper, post_agent_signal MCP tool wired. 49 scorer+gate tests GREEN. QA c142 CHANGES_REQUESTED → fix a611d911 (try/catch + cron-registry) → QA c143 APPROVED. | HIGH | SPRINT-S | dev-mcp-server | 2026-05-17 |
 | 1939b-tnb-critic-gate-sprint-b | **DONE 2026-05-17 c172/QA-c142** — Shipped together with 1939a in commit 21dddcfe. Sprint B scope complete: postSignalWithCriticGate() + post_agent_signal tool wire + INSERT path extension + 17 gate tests GREEN. See 1939a entry. | HIGH | SPRINT-S | dev-mcp-server | 2026-05-17 |
