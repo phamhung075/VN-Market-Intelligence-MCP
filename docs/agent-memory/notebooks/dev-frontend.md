@@ -336,3 +336,22 @@ Tier 1-4 complete. 105/105 tests GREEN. tsc clean. All 30 watchlist stocks navig
 
 ## Zone health
 Tier 1-4 complete. 124/124 tests GREEN. tsc clean. Accuracy badge on StockSignalsPanel — defensive Sprint B/C boundary, full threshold coverage. | HEALTHY
+
+## Cycle 1941 — 2026-05-18 (Bug fix — process.env crash in browser bundle)
+
+### Bugs fixed
+- Bug 1 (Critical): `ReferenceError: process is not defined` — `client.ts` line 17 used bare `process.env.API_GATEWAY_URL` which crashes when Vite includes the module in the browser bundle. Replaced with `typeof process !== "undefined"` guard + bracket notation access. All real call sites are inside Remix loaders (SSR/Node) so the fallback string is never reached at runtime.
+- Bug 2 (Cascading): React hydration mismatch caused by Bug 1. Fixed as consequence of Bug 1. ClientTimestamp component (`app/components/ClientTimestamp.tsx`) was already correct — uses useState(null) + useEffect pattern, renders "..." on SSR.
+
+### Files changed
+- apps/frontend/app/lib/api/client.ts — lines 14-22: typeof process guard replaces bare process.env call
+
+### Test result
+- Vitest: 124/124 PASS (no new tests — pure defensive guard, existing 001-api-client.test.ts covers the mock)
+- tsc --noEmit: CLEAN (0 errors)
+
+### Commit
+ffdc73b8 fix(frontend): guard process.env in client.ts against browser bundle crash
+
+## Zone health
+Tier 1-4 complete. 124/124 tests GREEN. tsc clean. process.env crash eliminated; hydration errors fully resolved. | HEALTHY
