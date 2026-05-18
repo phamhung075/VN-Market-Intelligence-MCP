@@ -1,5 +1,5 @@
 /**
- * MCP Tool: get_cash_flow — Task 1890a-A (guard added 1930b, API-bridge fix 1941a)
+ * MCP Tool: get_cash_flow — Task 1890a-A (guard added 1930b, API-bridge fix 1941a, NI bridge 1941d)
  *
  * Returns the full 4-line cash flow statement for a given VN stock ticker
  * plus the OCF/NI forensic ratio required by the FA G-step.
@@ -9,6 +9,11 @@
  *   2. operating_cf (OCR/PDF extraction fallback)
  *   ocf_source field indicates which was used: "api_bridge" | "ocr"
  *
+ * NI source priority (Task 1941d):
+ *   1. net_profit_api_bridge (vnstock API bridge — written by bridgeNetProfitToFinancialReports)
+ *   2. net_profit (OCR/PDF extraction fallback — often wrong, e.g. FPT Q4/2025 revenue stored as NI)
+ *   ni_source field indicates which was used: "api_bridge" | "ocr"
+ *
  * Fields returned:
  *   operating_cf      — effective operating cash flow (VND millions): API bridge if available, else OCR
  *   investing_cf      — investing cash flow (VND millions)
@@ -16,6 +21,7 @@
  *   capex             — capital expenditure (VND millions, negative = outflow)
  *   free_cash_flow    — FCF = operating_cf + capex (VND millions)
  *   ocf_source        — "api_bridge" when operating_cash_flow used, "ocr" when falling back
+ *   ni_source         — "api_bridge" when net_profit_api_bridge used, "ocr" when falling back
  *   ocf_ni_ratio      — operating_cf / net_profit (null if net_profit === 0 or null,
  *                       or if |raw ratio| > OCF_NI_RATIO_PLAUSIBILITY_LIMIT)
  *   ocf_ni_ratio_raw  — unguarded ratio (null only if not computable)
@@ -48,8 +54,10 @@ interface CashFlowRow {
   financing_cf: number | null;
   capex: number | null;
   free_cash_flow: number | null;
-  /** Task 1878a API bridge: vnstock-sourced OCF in triệu VND. Preferred over operating_cf. */
+  /** Task 1878a API bridge: vnstock-sourced OCF in trieu VND. Preferred over operating_cf. */
   operating_cash_flow: number | null;
+  /** Task 1941d API bridge: vnstock-sourced NI in trieu VND. Preferred over net_profit (OCR often wrong). */
+  net_profit_api_bridge: number | null;
 }
 
 // ── Plausibility limit ────────────────────────────────────────────────────────
@@ -62,7 +70,7 @@ interface CashFlowFound {
   source_tier: 1;
   found: true;
   code: string;
-  period: string;              // e.g. "Q1/2025"
+  period: string;
   period_year: number;
   period_quarter: number | null;
   operating_cf: number | null;
@@ -72,6 +80,8 @@ interface CashFlowFound {
   free_cash_flow: number | null;
   /** Task 1941a: "api_bridge" when operating_cash_flow column used, "ocr" when falling back */
   ocf_source: "api_bridge" | "ocr";
+  /** Task 1941d: "api_bridge" when net_profit_api_bridge column used, "ocr" when falling back */
+  ni_source: "api_bridge" | "ocr";
   ocf_ni_ratio: number | null;
   ocf_ni_ratio_raw: number | null;
   ocf_ni_suppressed: boolean;
@@ -100,7 +110,7 @@ const InputSchema = z.object({
   period: z
     .enum(["Q1", "Q2", "Q3", "Q4"])
     .optional()
-    .describe("Quarter filter: Q1–Q4. Omit to return the latest available quarter."),
+    .describe("Quarter filter: Q1-Q4. Omit to return the latest available quarter."),
   year: z
     .coerce.number()
     .int()
@@ -176,7 +186,7 @@ export function buildGetCashFlowHandler(
 
     const { ticker, period, year } = parsed.data;
 
-    // Map "Q1" → 1, etc.
+    // Map "Q1" -> 1, etc.
     const quarterNum = period ? parseInt(period.slice(1), 10) : null;
 
     // Build query: filter by ticker + optional year/quarter
@@ -207,7 +217,8 @@ export function buildGetCashFlowHandler(
         financing_cf,
         capex,
         free_cash_flow,
-        operating_cash_flow
+        operating_cash_flow,
+        net_profit_api_bridge
       FROM financial_reports
       WHERE ${whereClause}
       ORDER BY period_year DESC, period_quarter DESC
@@ -241,8 +252,17 @@ export function buildGetCashFlowHandler(
     const ocfSource: "api_bridge" | "ocr" =
       row.operating_cash_flow !== null ? "api_bridge" : "ocr";
 
+    // Task 1941d: prefer API-bridge NI over OCR net_profit for OCF/NI ratio.
+    // net_profit_api_bridge (Task 1941d) is vnstock-sourced and correct.
+    // net_profit (PDF/OCR) can be wrong -- FPT Q4/2025: revenue stored as NI (20,225
+    // trieu instead of correct 2,509,520 trieu), keeping ratio falsely suppressed at 203x.
+    const effectiveNi: number | null =
+      row.net_profit_api_bridge !== null ? row.net_profit_api_bridge : row.net_profit;
+    const niSource: "api_bridge" | "ocr" =
+      row.net_profit_api_bridge !== null ? "api_bridge" : "ocr";
+
     const { ratio: ocf_ni_ratio, rawRatio: ocf_ni_ratio_raw } =
-      computeOcfNiRatio(effectiveOcf, row.net_profit);
+      computeOcfNiRatio(effectiveOcf, effectiveNi);
 
     // Suppressed = raw is computable but exceeded the plausibility limit
     const ocf_ni_suppressed =
@@ -261,6 +281,7 @@ export function buildGetCashFlowHandler(
       capex: row.capex,
       free_cash_flow: row.free_cash_flow,
       ocf_source: ocfSource,
+      ni_source: niSource,
       ocf_ni_ratio,
       ocf_ni_ratio_raw,
       ocf_ni_suppressed,
@@ -281,11 +302,13 @@ export function registerGetCashFlowTool(server: McpServer): void {
       "Fields: operating_cf, investing_cf, financing_cf, capex, free_cash_flow (all VND millions). " +
       "operating_cf uses the vnstock API bridge value when available (ocf_source='api_bridge'), " +
       "otherwise falls back to OCR/PDF extraction (ocf_source='ocr'). " +
+      "NI for ratio uses net_profit_api_bridge (vnstock, ni_source='api_bridge') when available, " +
+      "otherwise falls back to OCR net_profit (ni_source='ocr'). " +
       "Forensic fields: ocf_ni_ratio = operating_cf / net_profit (null if net_profit is zero or null); " +
       "ocf_ni_ratio is null when |raw_ratio| > 20 (data quality guard); use ocf_ni_ratio_raw to inspect suppressed values. " +
       "ocf_ni_suppressed=true when raw ratio exists but exceeded the plausibility limit. " +
       "Use for FA G-step: OCF vs NI forensic check. " +
-      "Call AFTER get_bctc_full (not instead of it) — get_bctc_full provides sentiment + comparison; " +
+      "Call AFTER get_bctc_full (not instead of it) -- get_bctc_full provides sentiment + comparison; " +
       "get_cash_flow provides full CF statement + OCF/NI ratio for accrual forensics. " +
       "On no-row-found: returns { source_tier: 1, found: false, code, period }. " +
       "Defaults: latest available quarter when period/year are omitted.",
@@ -298,7 +321,7 @@ export function registerGetCashFlowTool(server: McpServer): void {
       period: z
         .enum(["Q1", "Q2", "Q3", "Q4"])
         .optional()
-        .describe("Quarter: Q1–Q4. Omit for latest."),
+        .describe("Quarter: Q1-Q4. Omit for latest."),
       year: z
         .coerce.number()
         .int()

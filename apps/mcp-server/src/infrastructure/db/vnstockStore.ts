@@ -15,7 +15,7 @@
 
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
-import { bridgeOCFToFinancialReports } from "./schema-financial-reports.js";
+import { bridgeOCFToFinancialReports, bridgeNetProfitToFinancialReports } from "./schema-financial-reports.js";
 import type {
   VnstockFinancials,
   VnstockTradingStats,
@@ -342,6 +342,9 @@ export function storeFinancials(f: VnstockFinancials): void {
     f.nim, f.npl, f.source, f.fetchedAt,
   );
   markFetched(f.code, "financials");
+  // Task 1941d: lift net_profit_bn into financial_reports.net_profit_api_bridge
+  // so cashFlowTool prefers the API value over OCR extraction for OCF/NI ratio.
+  bridgeNetProfitToFinancialReports(getDb(), f.code);
 }
 
 // Cached column-presence flag — production DBs predate the `date` column

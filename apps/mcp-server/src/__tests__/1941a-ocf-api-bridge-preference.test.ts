@@ -38,17 +38,18 @@ function makeTestDb(): InstanceType<typeof Database> {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE financial_reports (
-      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-      action_code          TEXT    NOT NULL,
-      period_year          INTEGER NOT NULL,
-      period_quarter       INTEGER,
-      net_profit           REAL,
-      operating_cf         REAL,
-      investing_cf         REAL,
-      financing_cf         REAL,
-      capex                REAL,
-      free_cash_flow       REAL,
-      operating_cash_flow  REAL
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code           TEXT    NOT NULL,
+      period_year           INTEGER NOT NULL,
+      period_quarter        INTEGER,
+      net_profit            REAL,
+      operating_cf          REAL,
+      investing_cf          REAL,
+      financing_cf          REAL,
+      capex                 REAL,
+      free_cash_flow        REAL,
+      operating_cash_flow   REAL,
+      net_profit_api_bridge REAL
     );
   `);
   return db;
