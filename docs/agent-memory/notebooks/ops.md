@@ -51,3 +51,37 @@ Sprint 1949 cron rewiring (commit `44aa791a`) landed before this restart. Contai
 **Status:** DONE — PLX added to watchlist, toolCount=142, watchlist.count=39
 
 **AC:** All 7 criteria met (rebuild ✓, health 200 ✓, PLX in DB ✓, count 39 ✓, MCP responding ✓, bug signal processed ✓, project-stats updated ✓)
+
+## Sprint 1951 Phase 1 — 24h Smoke-Test Monitoring (2026-05-18 setup)
+
+**Status:** In Progress — monitoring window 2026-05-19 00:00 UTC to 2026-05-20 00:00 UTC
+
+**Objective:** Validate ≥3 RemoteTrigger ticks fire at expected times with correct agent sessions + zero MARKET duplicate dishes (idempotency check).
+
+**3 Guaranteed-Slot Triggers (Live 2026-05-18):**
+1. `chef-morning` (trig_019nwLpkYELqFdE1DZaRhPUk): `23 5 * * 1-5` = **05:23 UTC Mon-Fri**
+2. `chef-eod` (trig_011HNsRMNiQwa3vNwN1b9Anh): `37 8 * * 1-5` = **08:37 UTC Mon-Fri**
+3. `tnb-audit` (trig_01LpUxJ98v2aK22FqLSBtL1G): `13 20 * * *` = **20:13 UTC daily**
+
+**Next Expected Ticks (UTC):**
+- 2026-05-18 20:13 — tnb-audit (tonight, ~4h from setup)
+- 2026-05-19 05:23 — chef-morning (tomorrow, first weekday tick)
+- 2026-05-19 08:37 — chef-eod (tomorrow)
+
+**Verification Plan:**
+1. **WORK channel scan:** Search for `[chef] START`, `[chef] SENT`, `[chef] SILENT`, `[tnb]` patterns at/within 5min of expected tick times.
+2. **Agent session trace:** Confirm session_id + unified-agent or tran-ngoc-bau session launched (via WORK telemetry).
+3. **MARKET idempotency:** Grep MARKET for duplicate `morning_dish` / `eod_dish` within same 24h window (zero duplicates = PASS).
+4. **Tick documentation:** WORK Telegram per tick: `[ops/1951b-smoke] <slot_id> fired <timestamp> → <agent> session <id> → <dish_type>`
+
+**Monitoring Details:**
+- tnb-audit pattern: `[tnb]` prefix + expected time 20:13 UTC (audits last chef cycle)
+- chef pattern: `[chef] START <dish_type> | cycle=chef-<type>-<TS>` = entry; `[chef] SENT <dish_type>` = MARKET publish success
+- Silent exit OK: `[chef] SILENT intraday` only (morning/eod/evening must always publish)
+
+**Carry-over state:**
+- Infrastructure stable (all 11 containers healthy)
+- 12/16 RemoteTriggers created (4 rejected API min-interval <1h constraint)
+- Cron schedule SSOT: `docs/data/cowork-schedule.json` with trigger_id + cron confirmed
+
+**Next step:** Keep TASK_1951b **In Progress**. Close only after ≥3 ticks verified (1951c persistence gate depends on this).
