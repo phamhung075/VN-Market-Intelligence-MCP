@@ -1,5 +1,45 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-18 | **Session:** c184 — 1942c HPG cashflow all-zeros fix — APPROVED
+
+## Session 2026-05-18 c184 — 1942c HPG cashflow all-zeros fix
+
+### TASK REPORT — 1942c (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: f339deff
+type: FIX (infra/fetchers + domain/services + domain/models)
+zone: apps/mcp-server/
+round: 1
+```
+
+#### Pipeline
+
+- Zone tests (1942c): 6/6 GREEN
+- Regression suite (1941a + 1941d + 1942b + 1909a): 44/44 GREEN
+- Full suite: 9225 pass / 275 fail (275 pre-existing env failures — Telegram down, chromium missing, VPS unreachable; 0 in cashflow scope)
+- tsc: 0 errors
+- DDD: PASS — no domain→infrastructure imports
+- Security: PASS — no process.env, no hardcoded secrets
+
+#### AC Matrix
+
+| AC | Result |
+|----|--------|
+| AC-1 1942c 6/6 | PASS |
+| AC-2 regression 44/44 | PASS |
+| AC-3 operatingCashFlow: number\|null | PASS |
+| AC-4 next() sentinel 3-key fallback | PASS |
+| AC-5 P_OPERATING_CF_MFG + F_OPERATING_CF_MFG wired | PASS |
+| AC-6 tsc 0 errors | PASS |
+| AC-7 DDD clean | PASS |
+
+Commit f339deff already on main. No task branch (developer merged directly). TASKS.md 1942c → DONE.
+
+---
+
 **Last updated:** 2026-05-18 | **Session:** c183 — kinh-dich-name-fix hexagram diacritics + fallback path + wrong table — APPROVED
 
 ## Session 2026-05-18 c183 — kinh-dich-name-fix hexagram names + fallback path + wrong table
