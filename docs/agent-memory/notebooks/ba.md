@@ -1,8 +1,40 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-15 | **Sprint:** 1920 (c131)
+**Last updated:** 2026-05-18 | **Sprint:** BA-1942d (c2)
 
-## Current state (2026-05-15)
+## Current state (2026-05-18)
+
+BA-1942d spec complete. Accuracy digest frontend card — spec written to `docs/REQ_1945b-accuracy-digest-frontend-card.md`. Task 1945b added to Todo (FEATURE, dev-frontend + dev-api-gateway). BA-1942d moved to Done.
+
+Key findings:
+- `getSystemAccuracyDigestStats()` is in `signalOutcomeStore.ts` (infra/db) — called only by cron job today, NO HTTP route exists yet.
+- New HTTP route needed: `GET /api/accuracy/digest?days=N` in mcp-server server.ts (same pattern as `/api/signals/stock/:code`). api-gateway already proxies `/mcp/*` verbatim — no gateway code change.
+- Frontend placement: existing `dashboard.analysis.tsx` page, new SectionCard below "Kinh Dịch — Cổ phiếu mẫu". No new route file.
+- 5 states mapped: empty / all-neutral / insufficient-sample / partial / normal. Discriminator: `totalResolved` vs `neutralOnlyRows` vs `bySignalType.length` — mirrors AC-3/AC-8 logic from cron job.
+- Seeding window constraint: `signal_outcomes` data expected ≥2026-05-25. Empty state must show this date as a constant (not hardcoded in JSX — passed as prop/constant from loader).
+- Colour thresholds ≥0.70 green / 0.40–0.69 amber / <0.40 red — must match `accuracyBadgeProps()` in `client.ts` (lines 372–387).
+- `days` clamp: 1–90, default 30. Frontend always sends 30.
+- Non-fatal: accuracy fetch failure must not block Analysis page render (Promise.allSettled arm).
+
+## Prior state (2026-05-18)
+
+Sprint 1942c spec complete (c1). HPG get_cash_flow all-zeros fix.
+
+Two-scenario root cause documented:
+- Scenario A: HPG has financial_reports rows but operating_cash_flow=NULL because OCR label miss ("sản xuất kinh doanh" variant) AND/OR bridgeOCFToFinancialReports found no matching vnstock_cash_flow period.
+- Scenario B: HPG has zero financial_reports rows (1942b fallback fires), but vnstock_cash_flow.operating_cf_bn=0.0 because CASH_FLOW_SCRIPT key 'Net cash inflows/outflows from operating activities' absent in HPG VCI columns.
+
+Key code invariants confirmed:
+- storeCashFlow() calls bridgeOCFToFinancialReports() immediately after INSERT — so if vnstock_cash_flow is populated, bridge fires synchronously.
+- buildFallbackResponse() in cashFlowTool.ts multiplies operating_cf_bn * 1000 — 0.0 propagates as 0, not null.
+- CASH_FLOW_SCRIPT uses a single hardcoded column key — no fallback keys for steel sector.
+- FINANCE_SCRIPT uses 'Attributable to parent company' for NI — may be absent for HPG VCI response.
+
+No PO blockers. SD-1: developer must run FR-1 SQL diagnostic first to determine A vs B.
+Owner: dev-mcp-server. Size: S. No sequence dependency on 1942a/b.
+TASKS.md at 89L (>80L cap) — PM must compact before adding rows.
+
+## Prior state (2026-05-15)
 
 Sprint 1920 decomposition complete (c132). 9 tasks total decomposed: 1920a/b/c/d/e/f/g/h/i. Specs written to docs/handoffs/TASK_1920[a-i].md. TASKS.md updated owner=dev-mcp-server status=Ready for Dev. WORK telegram attempted — MCP gateway 404 via curl (cowork-internal only), logged here instead of incident doc.
 
