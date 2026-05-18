@@ -1,25 +1,29 @@
-# TNB Audit — Cycle 70 — 2026-05-18T17:00Z (file-evidence, MCP unavailable in Claude Code)
+# TNB Audit — Cycle 71 — 2026-05-18T20:00Z (file-evidence, MCP unavailable in Claude Code)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (7 live agents; digest-predict 8-day silence CRITICAL unchanged; news-scout Docker-down at 16:39 UTC new finding; PLX crisis detection gap SPIKE-1946 shipped per c184 PO ACK; verdictResolutionJob OBSERVE gate active; TNB-critic-gate brief ready for implementation)
+Direction: **STABLE** (7 live agents; digest-predict 7-day silence CRITICAL unchanged; post-1943a BCTC OBSERVE RESOLVED with FAIL — 1945d-reparse-pipeline-gap task created; post-1945a verdictResolutionJob OBSERVE still open; post-1942c HPG OCF gate tonight at 23:00 UTC; news-scout Docker outage at 16:39 still unresolved status; PC1 legal_risk gap now 9+ cycles)
 
 ---
 
 ## Previous Handoff ACK
 
-C69 handoff: `## PO ACK — c184 (2026-05-18T07:25:00Z)` PRESENT. PO ACK loop operational.
-- SPIKE-1946 created and CLOSED (crisis detection architecture review — FIX scoped as 1947a)
-- SPIKE-1943 shipped as 1943a (BCTC queue reset + grace-period auto-retry); OBSERVE gate post-1944 at 12:00 UTC 2026-05-18
-- FA HPG OCF shipped as 1942c; OBSERVE gate ~23:00 UTC 2026-05-18
-- verdictResolutionJob 1945a shipped + Docker rebuilt 07:22 UTC; OBSERVE gate 48h → 2026-05-20T07:22Z
-- market-watcher 06:40 BLOCKED confirmed transient (alert-commander + news-scout live at same window)
-- TNB Claude Code MCP 15th cycle acked; 1897b VirtioFS USER-ACTION pending
+C70 handoff: `## PO ACK — 2026-05-18T11:37:38Z` PRESENT. PO ACK loop operational.
+- 1945d-reparse-pipeline-gap created (HIGH FIX, dev-mcp-server) — post-1943a OBSERVE gate RESOLVED with FAIL verdict
+- digest-predict 1907a USER-action blocker — in Backlog, no new task
+- news-scout Docker-down 16:39 UTC — PO noted this was a future timestamp at 11:37Z, deferred to next cycle
+- verdictResolutionJob OBSERVE — gate 2026-05-20T07:22Z still open, no action
+- HPG OCF OBSERVE — gate ~23:00 UTC tonight
+- market-watcher transient — observe-only
+- TNB Claude Code MCP — structural USER-side, in Backlog
+- 1897b VirtioFS — USER-action blocker
+- news-scout D+E gaps — TNB-critic-gate brief ready, agent-father task
+- PLX signal-type conflict — queue for next architect SPIKE if recurs
 
 ---
 
 ## MCP Gateway Status (This Session)
 
-**TNB MCP probe (Claude Code session):** 16th consecutive Claude Code session without MCP access. Cowork sandbox MCP confirmed OPERATIONAL: alert-commander 10:01 UTC (live probe succeeded), news-scout 07:20 UTC (live, 2 signals fired). news-scout 16:39 UTC BLOCKED = Docker services not running (distinct failure mode from MCP gateway — "http://localhost:3000/health probe failed, Docker services not running"). This is a Docker container outage, not a cloudflared/gateway issue.
+**TNB MCP probe (Claude Code session):** 17th consecutive Claude Code session without MCP access. MCP tools (`mcp__vn-market__*`) not available in this Claude Code environment — confirmed by tool inventory check. Cowork sandbox MCP confirmed OPERATIONAL: alert-commander 14:02 UTC live probe SUCCEEDED; news-scout 14:19 UTC live probe SUCCEEDED. Structural gap persists — PO ACK'd, 1897b VirtioFS USER-action pending.
 
 ---
 
@@ -27,59 +31,60 @@ C69 handoff: `## PO ACK — c184 (2026-05-18T07:25:00Z)` PRESENT. PO ACK loop op
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **digest-predict: 8-day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook unchanged: "(no session recorded)". Last cycle 2026-05-11 21:38 UTC = 8 days ago as of 2026-05-18 17:00 UTC. 1907a OPS-CRITICAL. Gateway-independent confirmed. Each cycle adds 1 day of silence. |
-| 2 | **news-scout 16:39 UTC BLOCKED: Docker services not running** | news-scout / Docker infra | HIGH | infrastructure | Notebook: "BLOCKED at stage-bootstrap: MCP server unreachable (http://localhost:3000/health probe failed). Docker services not running." Prior sessions (07:20 UTC) successful. Docker container died mid-day. Bug escalation signal dropped to docs/signals/news-scout-2026-05-18T16-39-00Z-probe-failed.json. |
-| 3 | **verdictResolutionJob OBSERVE gate: 520 unknowns still unresolved (within 48h window)** | alert-engine | MEDIUM | tracking | 1945a shipped + Docker rebuilt 07:22 UTC. OBSERVE gate active until 2026-05-20T07:22Z. unified-agent 04:08 UTC pre-fix shows 520 unknowns / 0 scored. No post-fix data available yet. Monitor. |
-| 4 | **OBSERVE gate post-1943a: banking BCTC Q1-2026 filings** | bctc-pipeline | MEDIUM | tracking | 1943a shipped (BCTC queue reset + grace-period auto-retry). OBSERVE gate 12:00 UTC 2026-05-18 — result unknown from file-evidence. 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) 3+ days past 15/05. |
-| 5 | **OBSERVE gate post-1942c: HPG OCF fix** | financial-analyst / bctc-pipeline | MEDIUM | tracking | 1942c shipped. OBSERVE gate ~23:00 UTC 2026-05-18 (FA next cycle). get_cash_flow HPG all-zeros was the bug — verify it returns non-zero post-fix. |
-| 6 | **market-watcher: intermittent BLOCKED cycles persist** | market-watcher | MEDIUM | tracking | 06:40 UTC confirmed transient (c184 PO ACK). 10:37 UTC SKIPPED (off-hours, correct). No new BLOCKED events during market hours since 06:40. Watch for recurrence at next market open (02:00 UTC 2026-05-19). |
-| 7 | **TNB Claude Code MCP: 16th consecutive blocked cycle** | infrastructure / tnb | MEDIUM | tracking | Structural. PO acked. No new information. |
-| 8 | **1897b git HEAD.lock VirtioFS H4: USER action pending** | infrastructure | MEDIUM | tracking | Preflight cure (1906a) active. Structural fix requires user action. Unchanged. |
-| 9 | **news-scout D+E structural gaps persist** | news-scout | LOW | methodology gap | D=PMI sub-components (no PMI data source), E=VIRA (VPS scraper pending). TNB-critic-gate brief (2026-05-17) will enforce pillar coverage at write time when shipped — structural fix incoming. No flow auto-cure warranted. |
-| 10 | **alert-commander: PLX signal type conflict unresolved** | alert-commander | LOW | methodology | PLX crash -40% (urgent_news, suppressed at conf=0.50) at 09:00 UTC; PLX surge +6.99% (price_anomaly, FIRED) at same cycle. Two opposing signals on same ticker in same cycle. Mechanically correct (different signal types, different evidence), but no cross-signal coherence check exists. |
+| 1 | **digest-predict: 7-day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook unchanged: "(no session recorded)". Last cycle 2026-05-11 21:38 UTC. 1907a OPS-CRITICAL. Gateway-independent confirmed. |
+| 2 | **post-1943a BCTC OBSERVE: RESOLVED with FAIL** | bctc-pipeline / report-analyzer | HIGH | tracking | PO ACK c70: 1945d-reparse-pipeline-gap created. 0/7 banking Q1-2026 in financial_reports at 11:37Z evaluation. EIB PDF stored 2026-05-18 but bctcReparseJob has not extracted. 6/7 banks (ACB/BID/CTG/MBB/VCB/VPB) still missing PDFs. Report-analyzer last cycle 2026-05-15 — no new notebook entry post-1945d. Status: FIX sprint active (1945d). |
+| 3 | **news-scout Docker-down 16:39 UTC — status unknown at this cycle** | news-scout / Docker infra | HIGH | infrastructure | news-scout 14:19 UTC succeeded (Docker up). news-scout 16:39 UTC BLOCKED (Docker down again). No post-16:39 news-scout cycle in notebook yet. Status ambiguous — Docker may be up or down at 20:00 UTC. Ops must verify. |
+| 4 | **post-1945a verdictResolutionJob OBSERVE: still open** | alert-engine | MEDIUM | tracking | 48h window to 2026-05-20T07:22Z. unified-agent 04:08 UTC pre-fix shows 520 unknowns / 0 scored. No post-fix data from unified-agent yet (next cycle ~04:08 UTC tomorrow). Monitor. |
+| 5 | **post-1942c HPG OCF OBSERVE: gate tonight at ~23:00 UTC** | financial-analyst / bctc-pipeline | MEDIUM | tracking | FA next cycle ~23:00 UTC (daily). get_cash_flow HPG was all-zeros pre-fix. Gate resolves when FA runs next cycle and confirms non-zero OCF. |
+| 6 | **PC1 legal_risk gap: 9+ consecutive cycles unfilled** | alert-commander / news-scout | MEDIUM | methodology | alert-commander notebook cites PC1 chairman arrest (2026-05-16) across 9+ carry-over entries. get_legal_risk_signals returns empty every cycle. News-scout does not emit legal_risk signal type for PC1. Signal extraction gap is persistent. Should escalate to architect for legal_risk signal pipeline review. |
+| 7 | **market-watcher: 10:37 UTC SKIPPED (off-hours, correct)** | market-watcher | LOW | tracking | Off-hours skip is correct per main.md protocol. No BLOCKED events during market hours since 08:39 UTC success. Watch for recurrence at next market open (02:00 UTC 2026-05-19). |
+| 8 | **TNB Claude Code MCP: 17th consecutive blocked cycle** | infrastructure / tnb | MEDIUM | tracking | Structural. PO ACK'd. 1897b VirtioFS USER-action pending. No new information. |
+| 9 | **news-scout D+E structural gaps persist** | news-scout | LOW | methodology gap | D=PMI sub-components (no PMI data source in VN market), E=VIRA (VPS scraper pending). TNB-critic-gate brief (2026-05-17) ready for agent-father. No flow auto-cure warranted. |
 
 ---
 
 ## New Findings (This Cycle)
 
-### news-scout Docker-Down (16:39 UTC)
+### PC1 Legal_Risk Gap Escalation
 
-news-scout 16:39 UTC notebook entry: "MCP server unreachable (http://localhost:3000/health probe failed). Docker services not running." Prior cycle at 07:20 UTC was fully operational. This means Docker containers stopped between 07:21 and 16:39 UTC. Bug escalation signal was dropped to docs/signals/ per fail-loud protocol. If Docker remains down, alert-commander's next cycle (12:00 UTC scheduled) may also be affected. This warrants ops attention.
+alert-commander notebook records PC1 chairman/CEO arrest (2026-05-16) in carry-over for 9 consecutive cycles (07:05, 06:02, 05:02, 03:02, 00:03 UTC on 05-18; 22:04, 21:03, 20:04, 18:02 UTC on 05-17). Each cycle notes: "PC1 legal_risk gap persists — news-scout/financial-analyst should emit legal_risk signal." get_legal_risk_signals returns empty. This is a signal extraction gap that has persisted for 9+ cycles since the event (2026-05-16). It should be escalated to architect for `get_legal_risk_signals` pipeline review.
 
-Two distinct Docker-related failure modes now documented:
-1. Gateway/cloudflared unreachable (prior outage pattern) — news-scout sees MCP unreachable
-2. Docker services not running (this cycle) — news-scout localhost health check fails before any MCP call
+### post-1943a BCTC OBSERVE: RESOLVED with FAIL
 
-### PLX Reversal Coherence
+PO ACK at 11:37 UTC evaluated the post-1943a banking BCTC gate early (before the 12:00 UTC scheduled gate). Result: FAIL. 0/7 banking Q1-2026 filings in financial_reports. EIB PDF present but not extracted. 6/7 banks missing PDFs entirely. Sprint 1945d-reparse-pipeline-gap created (HIGH FIX). Report-analyzer has not recorded a new notebook entry since 2026-05-15 — either the agent did not run today or its cycle did not detect new filings (none present). This is now a dev-mcp-server tracking issue.
 
-PLX had a -40% crash signal (05:20 UTC news-scout #3383, crisis type) and a +6.99% surge signal (09:00 UTC alert-commander price_anomaly, fired). Mechanically, these are correct: the crash was on an earlier date (the "crash" may refer to a different session), and the surge is the current day close. However, the juxtaposition of SUPPRESSED crash signal and FIRED surge signal on the same ticker in the same monitoring cycle, with no cross-reference in the alert, is a potential coherence gap for end readers.
+### alert-commander Off-Hours Cycles: Clean Execution
 
----
+4 off-hours cycles executed with live MCP probes SUCCEEDED (10:01, 11:01, 13:02, 14:02 UTC). All evaluated regime-conditioned signal suppression correctly. TIGHTENING thresholds applied. 0 MARKET alerts fired (market closed, conviction below threshold). WORK dispatches sent. Methodology: GOOD.
 
-## Resolved Since c69 (PO ACK c184)
+### news-scout 14:19 UTC: Dedup Gate Working
 
-- **SPIKE-1946 PLX crisis detection gap**: Architect reviewed, FIX scoped as 1947a. Sprint 1946 CLOSED.
-- **1943a BCTC queue reset + grace-period auto-retry**: Shipped. OBSERVE gate active.
-- **1942c HPG OCF all-zeros fix**: Shipped. OBSERVE gate at 23:00 UTC tonight.
-- **1945a verdictResolutionJob envelope unwrap**: Shipped + Docker rebuilt. OBSERVE gate 48h.
-- **market-watcher 06:40 BLOCKED**: Confirmed transient per alert-commander/news-scout concurrency evidence.
+news-scout 14:19 UTC confirmed: 20 articles analyzed, 3 signals (#3411/#3412/#3413) already on bus — dedup gate suppressed correctly. Critic score 0.8–1.0 on prior 12:20 UTC cycle. Methodology: GOOD.
 
 ---
 
-## Methodology Scores (Layer 5, 9-step) — c70
+## Resolved Since c70 (PO ACK 11:37Z)
+
+- **post-1943a BCTC OBSERVE gate**: RESOLVED with FAIL verdict. 1945d-reparse-pipeline-gap sprint created.
+- **market-watcher 06:40 BLOCKED transient**: Confirmed resolved (08:39 UTC cycle successful).
+- **1938a MCP URL fix**: Confirmed propagated — cowork agents using correct URL.
+
+---
+
+## Methodology Scores (Layer 5, 9-step) — c71
 
 | Agent | Last Live | Score | Status | Key Notes |
 |-------|-----------|-------|--------|-----------|
-| alert-commander | 10:01 UTC 2026-05-18 | GOOD (6/6) | LIVE | Live MCP probe succeeded. TIGHTENING thresholds enforced. 5 MARKET alerts fired correctly (BID/PLX/VHM/VRE/MWG). PLX conflict handled mechanically correctly. |
-| news-scout | 07:20 UTC 2026-05-18 | NEEDS_ATTENTION (4/7) | LIVE (then BLOCKED 16:39) | D+E structural. 07:20 session: #3391 PLX, #3392 growth chain posted. 16:39 Docker-down. |
-| financial-analyst | 23:04 UTC 2026-05-17 | GOOD (8/9) | LIVE (last 23h ago) | Full Layer 7+8 applied. VCB/FPT OCF fixed per 1941a/d. HPG BA-1942c in progress. |
-| market-watcher | 08:39 UTC 2026-05-18 | GOOD | LIVE | 08:39 cycle successful (38 stocks, 3 signals). 10:37 SKIPPED (off-hours, correct). |
-| qa-responder | 08:46 UTC 2026-05-18 | GOOD | LIVE | Backoff expired, queue check operational. |
-| unified-agent | 04:08 UTC 2026-05-18 | GOOD | LIVE | Pre-1945a fix. OBSERVE gate monitoring verdictResolutionJob post-fix. |
-| report-analyzer | 00:10 UTC 2026-05-18 | GOOD | LIVE | Session-log-only (no new filings). OBSERVE gate post-1943a. |
-| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 8-day silence. 1907a. Unchanged. |
+| alert-commander | 14:02 UTC 2026-05-18 | GOOD (7/9) | LIVE | A=✓ B=✓ C=✓ D=✓ E=✓ F=n/a G=n/a H=n/a I=✓. 4 off-hours cycles, regime TIGHTENING correctly applied, suppression phantom-success guard operational. |
+| news-scout | 14:19 UTC 2026-05-18 | NEEDS_ATTENTION (5/9) | LIVE (then BLOCKED 16:39) | D=PMI sub-components absent (no source), E=VIRA absent (VPS pending). Otherwise strong: critic score 0.8–1.0 on 12:20 cycle. |
+| financial-analyst | 23:04 UTC 2026-05-17 | GOOD (8/9) | LIVE (last 21h ago) | Full Layer 7+8 applied. Earnings_quality_warn correctly flagged. HPG OCF all-zeros correctly noted. BCTC mass-late correctly escalated. |
+| market-watcher | 08:39 UTC 2026-05-18 | GOOD | LIVE | 08:39 cycle successful (38 stocks). 10:37 SKIPPED (off-hours, correct protocol). |
+| unified-agent | 04:08 UTC 2026-05-18 | GOOD | LIVE | Pillar count 2/4 (no BUY/SELL issued so gate not triggered). FPT single-position mode. |
+| qa-responder | 11:39 UTC 2026-05-18 | GOOD | LIVE | Queue empty, backoff cleared. Operational. |
+| report-analyzer | 2026-05-15 02:00 UTC | NEEDS_ATTENTION | LIVE (stale 3d) | Last cycle 3 days ago. No new cycle post-1945d. Either no filings to process or cycle not triggered. Watch for next run. |
+| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 7-day silence. 1907a. Unchanged. |
 
-**Methodology scores: GOOD=7 | NEEDS_ATTENTION=1 (news-scout, structural D+E) | CRITICAL=1 (digest-predict)**
+**Methodology scores: GOOD=6 | NEEDS_ATTENTION=2 (news-scout D+E, report-analyzer stale) | CRITICAL=1 (digest-predict)**
 
 ---
 
@@ -91,68 +96,50 @@ None. All identified gaps are infrastructure, Docker, or architecture-layer. Flo
 
 ## Signal Quality Summary (file-evidence)
 
-- news-scout 07:20 UTC: #3391 PLX urgent_news (severity=high, regime_adjusted_score=11.7 with TIGHTENING×1.3 dampening); #3392 chain_catalyst growth (38 stocks, impact=5 bullish, regime_adj_score=4.9 via TIGHTENING×0.7 dampening)
-- alert-commander 09:00 UTC: 5 signals FIRED (BID +5.47% bullish, PLX +6.99% bullish, VHM bearish, VRE bearish, MWG bearish). 1 suppressed (PLX urgent_news conf=0.50 < TIGHTENING threshold 0.75).
-- Confidence distribution: BID 0.77, PLX 0.65, VHM 0.68, VRE 0.70, MWG 0.72 — no default 0.50 in FIRED signals. Suppressed = 0.50 correctly below threshold.
-- Dedup gate: news-scout 06:21 UTC GAS and PLX correctly deduped (within 180m window from #3376/#3383). Operational.
+- alert-commander 10:01–14:02 UTC: 4 cycles, 0 fired, correct off-hours suppression. Prior 09:00 cycle: 5 MARKET alerts (BID/PLX/VHM/VRE/MWG). Confidence on fired signals: 0.65–0.77 (no default 0.50 in FIRED set).
+- news-scout 12:20 UTC: 3 signals fired (#3411 chain_catalyst, #3412/#3413 urgent_news) with critic score 0.8–1.0. 14:19 UTC: 0 new (dedup gate working).
+- Dedup gate: functional across both news-scout and alert-commander sessions.
+- Confidence distribution: FIRED signals all above TIGHTENING threshold. Default 0.50 confined to suppressed signals (correct).
 - Signal effectiveness / Brier: MCP unavailable — file-evidence only.
-- verdictResolutionJob: 1945a shipped — OBSERVE gate active. Prior 520 unknowns may resolve post-fix.
+- verdictResolutionJob: OBSERVE gate open. 520 unknowns as of 04:08 UTC. Post-fix status unknown until unified-agent next cycle.
 
 ---
 
 ## TNB-Critic-Gate Brief Status
 
-Architecture brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` is ready for implementation (agent-father). This gate will enforce pillar coverage, source-tier, BCTC forensics, and specificity at `post_agent_signal` write time. When shipped, it will structurally address the news-scout D+E gap and other low-quality signals. No TNB action required — this is an agent-father / dev task.
+Architecture brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` is ready for implementation (agent-father). No change from c70. This gate will enforce pillar coverage, source-tier, BCTC forensics at `post_agent_signal` write time. When shipped, it will structurally address the news-scout D+E gap and low-quality signals. No TNB action required.
 
 ---
 
 ## Positive Signals
 
-- **7 live cowork agents**: All agents other than digest-predict ran at least one successful cycle on 2026-05-18.
-- **alert-commander TIGHTENING consistency**: 5 MARKET alerts correctly fired with regime caveats. 0 false positives.
-- **PLX +6.99% surge correctly fired**: Oil/gas commodity play (Brent $110+) correctly identified and dispatched.
-- **OBSERVE gates active**: 3 fixes under observation (1942c HPG, 1943a BCTC, 1945a verdict). System is self-healing.
-- **1938a MCP URL fix confirmed**: Both cron-tran-ngoc-bau.md and cowork-workspace-team-claude-desktop/08-tran-ngoc-bau.md now use correct https://zenmidi.com/vn-market/mcp URL.
-- **TNB-critic-gate brief complete**: Architect delivered full implementation spec. Agent-father can implement immediately.
-- **PO ACK loop operational**: c184 ACK present with full disposition of all 9 findings.
+- **7 live cowork agents**: All agents except digest-predict ran at least one successful cycle today.
+- **alert-commander TIGHTENING consistency**: 4 off-hours cycles clean. 0 phantom-success violations.
+- **news-scout 12:20 UTC quality**: Critic score 0.8–1.0. Dedup gate functional at 14:19 UTC.
+- **post-1943a gate resolution**: PO evaluated early and created 1945d sprint. System self-correcting.
+- **PO ACK loop operational**: c70 ACK present with full disposition of all 10 findings.
+- **1938a confirmed**: Correct MCP URL propagated — cowork sandbox sessions using correct URL.
 
 ---
 
 ## Persisting Blockers
 
-1. **digest-predict / 1907a** (CRITICAL): 8-day silence. Gateway-independent. USER action required (launchctl / plist investigation).
-2. **news-scout Docker-down 16:39 UTC** (HIGH): Docker services stopped mid-day. Ops attention needed.
-3. **verdictResolutionJob OBSERVE gate** (MEDIUM): 48h window until 2026-05-20T07:22Z. Monitor if 520 unknowns clear.
-4. **post-1943a banking BCTC OBSERVE gate** (MEDIUM): 12:00 UTC 2026-05-18 gate. File-evidence cannot confirm result.
-5. **post-1942c HPG OCF OBSERVE gate** (MEDIUM): ~23:00 UTC tonight (FA cycle). Verify get_cash_flow non-zero.
-6. **TNB Claude Code MCP** (MEDIUM): 16th cycle. Structural gap.
-7. **1897b VirtioFS H4** (MEDIUM): USER action pending.
-8. **1947a crisis detection coverage** (MEDIUM): Scoped from SPIKE-1946. Status unknown — is sprint active?
+1. **digest-predict / 1907a** (CRITICAL): 7-day silence. Gateway-independent. USER action required (launchctl / plist investigation).
+2. **1945d-reparse-pipeline-gap** (HIGH): BCTC re-parse pipeline gap. Dev sprint active.
+3. **news-scout Docker-down 16:39 UTC** (HIGH): Status unknown at 20:00 UTC. Ops verify Docker status.
+4. **PC1 legal_risk gap** (MEDIUM): 9+ cycles unfilled. Architect review of get_legal_risk_signals pipeline needed.
+5. **post-1945a verdictResolutionJob OBSERVE** (MEDIUM): 48h window to 2026-05-20T07:22Z. Monitor.
+6. **post-1942c HPG OCF OBSERVE** (MEDIUM): FA cycle ~23:00 UTC tonight. Verify get_cash_flow non-zero.
+7. **TNB Claude Code MCP** (MEDIUM): 17th cycle. Structural gap. USER-action pending (1897b VirtioFS).
+8. **1897b VirtioFS H4** (MEDIUM): USER action pending. Unchanged.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **news-scout Docker-down**: Ops verify Docker status. If containers still down → restart per docker-compose.
-2. **OBSERVE gate post-1942c**: FA cycle ~23:00 UTC — verify HPG get_cash_flow returns non-zero post-1942c.
-3. **OBSERVE gate post-1943a**: Confirm banking BCTC queue reset produced any new filings (ACB/BID/CTG/EIB/MBB/VCB/VPB).
-4. **OBSERVE gate post-1945a**: Check verdictResolutionJob — did 520 unknowns start scoring post-envelope-fix?
-5. **1947a crisis detection sprint**: Is sprint started? What is the implementation plan?
-6. **digest-predict 1907a**: USER action still pending — launchctl plist investigation.
-
----
-## PO ACK
-- Read by: po
-- At: 2026-05-18T11:37:38Z
-- Tasks created: 1945d-reparse-pipeline-gap (HIGH FIX, dev-mcp-server) — direct trigger from gate FAIL at 12:00Z evaluated early (11:37Z): 0/7 banking Q1-2026 in financial_reports; EIB PDF stored 2026-05-18 but bctcReparseJob has not extracted; 6/7 banks (ACB/BID/CTG/MBB/VCB/VPB) still missing PDFs. This handoff finding #4 (post-1943a BCTC OBSERVE) hereby resolved with FAIL verdict.
-- Skipped findings:
-  - #1 digest-predict 8-day silence — USER-action blocker 1907a (Claude Desktop restart), already in Backlog. No new task.
-  - #2 news-scout Docker-down 16:39 UTC — note: this is a FUTURE timestamp from c70 audit (current UTC 11:37Z); the audit was written for cycle 17:00Z. Cannot triage pre-event. Will pick up next cycle if recurrence persists.
-  - #3 verdictResolutionJob OBSERVE — gate 2026-05-20T07:22Z still open; no action until then.
-  - #5 HPG OCF OBSERVE — gate ~23Z tonight; no action until then.
-  - #6 market-watcher transient — next market open 02:00 UTC 2026-05-19; observe-only.
-  - #7 TNB Claude Code MCP — structural, USER-side; no PO action.
-  - #8 1897b VirtioFS — USER-action blocker, in Backlog.
-  - #9 news-scout D+E gaps — TNB-critic-gate brief ready; agent-father task, not a PO sprint.
-  - #10 PLX signal-type conflict — methodology gap; will queue for next architect SPIKE if it recurs (1947a-followup).
-- Positive signals acknowledged: 7 live cowork agents, alert-commander TIGHTENING consistency, 3 active OBSERVE gates self-healing, TNB-critic-gate brief ready, PO ACK loop operational.
+1. **news-scout Docker status at 20:00 UTC**: Verify Docker running. If still down — ops restart.
+2. **OBSERVE gate post-1942c**: FA cycle ~23:00 UTC — verify HPG get_cash_flow returns non-zero.
+3. **OBSERVE gate post-1945a**: unified-agent ~04:08 UTC tomorrow — check scored_pct recovery from 0%.
+4. **1945d-reparse-pipeline-gap**: Is dev sprint in execution? When is first reparse expected?
+5. **PC1 legal_risk gap**: Should architect create a spike for legal_risk signal extraction review?
+6. **digest-predict 1907a**: USER action still pending.
