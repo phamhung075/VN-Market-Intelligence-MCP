@@ -37,7 +37,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| 1941c | **Daily accuracy WORK digest job** — accuracyDigestJob cron (0 7 * * *) + getSystemAccuracyDigestStats + buildAccuracyDigestText. 7/7 tests GREEN. AC-1..12 covered. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/1941c.md | — |
 
 ---
 ## Done
