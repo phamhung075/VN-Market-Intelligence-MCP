@@ -1,9 +1,27 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1950 / T5 digest-predict cron alignment + scope cleanup)
-**Sprint:** 1950 / T5
+**Last updated:** 2026-05-18 (Sprint 1950 / T3 chef pipeline runbook — closes sprint)
+**Sprint:** 1950 / T3
 
-## This Session — 2026-05-18 (Sprint 1950 / T5 digest-predict alignment)
+## This Session — 2026-05-18 (Sprint 1950 / T3 chef pipeline runbook)
+
+**Task: 1950-T3 — Chef pipeline operator runbook**
+
+Files created/changed:
+- NEW `docs/protocols/chef-pipeline-runbook.md` (95L) — 3 sections: cron schedule, telemetry meanings, recovery procedure
+- EDIT `docs/standards/cron-jobs.md` — added runbook reference line under Chef Cook Schedule heading
+- EDIT `docs/TASKS.md` — 1950-T3 moved Backlog → Done
+
+Runbook covers:
+- Section 1: Cron schedule table (4 dish types + TNB audit slot), references cron-jobs.md as SSOT
+- Section 2: START/SENT/SILENT/FAILED telemetry field definitions with grep patterns
+- Section 3: Diagnosis steps + recovery action table + manual re-run instructions + TNB false-positive auto-clear
+
+T3 is the documentation deliverable that closes Sprint 1950 (T1/T2/T4/T5 all prior QA-APPROVED).
+
+---
+
+## This Session (prior) — 2026-05-18 (Sprint 1950 / T5 digest-predict alignment)
 
 **Task: 1950-T5 — digest-predict cron alignment + scope cleanup**
 

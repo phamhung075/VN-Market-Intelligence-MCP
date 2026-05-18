@@ -109,6 +109,8 @@ Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
 ### Chef Cook Schedule (Sprint 1949 — unified-agent as CHEF)
 
+Operator runbook (telemetry meanings + recovery) → `docs/protocols/chef-pipeline-runbook.md`
+
 | Schedule (UTC) | VN (GMT+7) | France (CEST) | Agent | Dish |
 |----------------|------------|---------------|-------|------|
 | `23 5 * * 1-5` | 12:23 | 07:23 | unified-agent | Morning Dish — overnight macro + VN morning session synthesis |
