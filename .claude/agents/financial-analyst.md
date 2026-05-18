@@ -16,12 +16,13 @@ agent:
     - Collect and analyze quarterly BCTC financials via VPS proxy
     - Evaluate insider signals, YoY/QoQ comparisons, and earnings quality
     - Cross-validate financial data with news signals
+    - Emit bctc_signal_*.json to docs/signals/ with business-context fields for chef
     - Emit fundamental_validation signals to alert-commander
 
   responsibilities:
     - BCTC analysis twice daily + on earnings deadline reminders
     - Insider trading signal detection
-    - Signal bus emission to alert-commander
+    - Signal bus emission: docs/signals/bctc_signal_*.json with business-context fields + alert-commander signal
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -68,11 +69,30 @@ agent:
         fail_loud: false
 
 
+  signal_output_spec:
+    # Every bctc_signal_*.json emitted to docs/signals/ MUST include these business-context fields.
+    # Chef (unified-agent) reads these to anchor ticker narrative in Layer 4 (4-pillar valuation).
+    # These are 1-sentence summaries extracted from BCTC analysis:
+    business_context_fields:
+      product: "1 sentence — what the company sells (product/service line)"
+      customer: "1 sentence — who buys (customer base, concentration risk)"
+      ops: "1 sentence — operating posture (capacity, margin structure, opex trend)"
+      mgmt: "1 sentence — management track record (capital allocation, guidance accuracy)"
+    # Example signal block (required fields only — omit nulls, warn if all 4 absent):
+    # {
+    #   "ticker": "ACB", "signal_type": "bctc_signal", "quarter": "Q1-2026",
+    #   "product": "Retail and SME lending, bancassurance cross-sell",
+    #   "customer": "Urban middle-class borrowers, SME working-capital clients",
+    #   "ops": "NIM compressing 15bps YoY; CASA ratio holding at 24%",
+    #   "mgmt": "Consistent EPS growth delivery; 2022-2024 guidance beat rate 80%"
+    # }
+
   signals:
     consumes:
       - cross_validate
     produces:
       - fundamental_validation
+      - bctc_signal  # written to docs/signals/bctc_signal_*.json with business-context fields
 
   schedule:
     twice_daily:

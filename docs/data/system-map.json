@@ -4,7 +4,7 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "service add/remove, agent add/remove, data-source change, channel/zone change, watchlist change",
   "_migrated_from": ["docs/data/tool-registry.json", "docs/data/cron-registry.json", ".claude/skills/zone-detect/SKILL.md", ".claude/skills/telegram-channel-routing/SKILL.md", "docs/data/stock-classification.json#watchlist"],
-  "lastUpdated": "2026-05-17",
+  "lastUpdated": "2026-05-18",
   "project": {
     "name": "vn-market-intelligence",
 
@@ -338,9 +338,15 @@
       {
         "id": "market",
         "env_var": "TELEGRAM_MARKET_CHAT_ID",
-        "purpose": "user-facing alerts, digests, EOD reports",
-        "allowed_senders": ["alert-commander", "digest-predict", "market-watcher"],
-        "rules": ["NEVER send errors/status/heartbeats here", "Only actionable content"]
+        "purpose": "user-facing chef dishes (narrative synthesis), event alerts, weekly calibration, /ask answers",
+        "allowed_senders": ["unified-agent", "alert-commander", "digest-predict", "qa-responder"],
+        "sender_rules": {
+          "unified-agent": "Chef — 3 guaranteed daily dishes (Morning 05:23/EOD 08:37/Evening 19:37 UTC) + conditional intraday. Narrative 2-4 paragraphs. TNB 6-layer walk.",
+          "alert-commander": "Event-only — position-danger (3-condition) or watchlist-opportunity (4-condition) ONLY. ≤140 chars. Silent exit otherwise.",
+          "digest-predict": "Weekly Sunday 13:47 UTC calibration + portfolio thesis only. No daily digest.",
+          "qa-responder": "/ask FIFO queue replies only."
+        },
+        "rules": ["NEVER send errors/status/heartbeats here", "Only actionable content", "market-watcher REMOVED as sender — writes docs/signals/ only"]
       },
       {
         "id": "work",

@@ -1,7 +1,75 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18T00:00:00Z
-**Sprint:** 1949 / T1+T2+T3 cowork-reorder chef+gatherers
+**Last updated:** 2026-05-18 (Sprint 1949 Phase 2/3/5/6/7)
+**Sprint:** 1949 / T4+T5+T9+T10+T11 cowork-reorder Phase 2/3/5/6/7
+
+## This Session — 2026-05-18 (Sprint 1949 Phase 2/3/5/6/7)
+
+**Tasks: 1949-T4, T5, T9, T10, T11**
+
+T4 (alert-commander.md — event-only + cycle.md gated):
+- version: 2026-05-18
+- description: "Event-only sender. Fires to MARKET ONLY when position-danger (3-condition) or watchlist-opportunity (4-condition) rule fires. No cycle headers. No scheduled MARKET posts. Silent exit otherwise."
+- `market: rule: exclusive_sender` → `rule: event_only`
+- `work: rule: cycle_status_only` → `rule: errors_only` (no cycle headers on clean cycles)
+- Added `no_cycle_headers: true` + `urgent_format_max_chars: 140` constraints
+- Removed `off_hours` schedule slot (event-only model has no off-hours value)
+- `sends_to` trigger: `alert_verified_and_threshold_met` → `position_danger_or_watchlist_opportunity_condition_met`
+- `.claude/flows/alert-commander/cycle.md` updated: firing gate table added at top; dispatch table adds inline gate step; WORK step 4b removed from post-fire (no cycle headers)
+
+T5 (digest-predict.md — Sunday weekly only):
+- version: 2026-05-18
+- description: "Sunday weekly calibration + portfolio thesis only. Daily digest role removed — unified-agent (chef) owns daily narrative dishes. Monthly digest removed."
+- capabilities: removed daily/monthly; added "weekly calibration digest" + "Sunday only" qualifier
+- responsibilities: "Daily digest at 15:30 UTC" → "Sunday weekly calibration + portfolio thesis at 13:47 UTC"
+- not_my_job: added "Daily narrative market dishes — that is unified-agent (chef)'s job" + "Monthly or ad-hoc digests — removed from scope"
+- `market: rule: briefings_and_digests_only` → `rule: weekly_sunday_only`
+- schedule: removed `daily_digest` (cron: 30 15 * * *) + removed `monthly` (cron: 0 0 1 * *); `weekly_digest` cron moved `0 16 * * 0` → `47 13 * * 0` (Sun 13:47 UTC = Sun 20:47 VN / 15:47 France)
+- monday_predict: note updated (no digest, no MARKET post — prediction claims only)
+- inter_agent trigger: `monday_prediction + weekly_digest` (monthly removed)
+
+T9 (tran-ngoc-bau.md — audit target reframe + cron moved):
+- version: 2026-05-18
+- description: reframed from "audits MARKET atoms" to "Chef narrative auditor — reads 3 daily MARKET dishes from unified-agent, verifies all 6 TNB layers walked, business context cited, gap catalogue applied"
+- capabilities: replaced atom-audit list with layer-walk completeness check (6 layers), business context citation check, gap catalogue check
+- responsibilities: "Daily quality audit of all cowork agent outputs" → "Daily audit of the 3 chef dishes"
+- not_my_job: added "Auditing raw atom-list messages or individual gatherer outputs independently"
+- schedule: `cron: "13 20 * * *"` (20:13 UTC = 03:13 VN next / 22:13 France) — moved from old `0 13 * * *`
+- identity.mindset: refocused on layer-walk discipline (all 6 layers per dish)
+- `.claude/flows/tran-ngoc-bau/main.md` updated: audit target section replaced with dish-level 6-layer check table; input updated to "Telegram MARKET chef dishes (last 3)"; phase labels updated
+
+T10 (financial-analyst.md + report-analyzer.md — business-context fields):
+- Both agents: capabilities + responsibilities updated to reference docs/signals/ output with business-context fields
+- `signal_output_spec` block added to both agents with 4 required fields: product / customer / ops / mgmt (1 sentence each)
+- Example signal block included in each with concrete field values
+- signals.produces: added `bctc_signal` (financial-analyst) and `fundamental` (report-analyzer) to document the JSON output type
+
+T11 (docs — workflow-map + alert-policy + system-map):
+- `docs/references/workflow-map.md` "Who Does What" table:
+  - unified-agent row: cron updated (05:23/intraday :13/08:37/19:37 UTC), writes "MARKET chef dishes 3x/day + conditional intraday; WORK coordination"
+  - market-watcher row: MARKET write removed; "docs/signals/price_anomaly* only (no MARKET write)"
+  - alert-commander row: "event-driven (cron gate)" + "MARKET (position-danger or watchlist-opp ONLY — ≤140 chars; silent exit otherwise)"
+  - digest-predict row: "weekly Sunday 13:47 UTC + monday predict" + "Sunday calibration + portfolio thesis only; daily removed"
+  - tran-ngoc-bau row: "daily cron 20:13 UTC", MARKET "dishes (last 3)", WORK "audit row (TNB layer-walk completeness score per dish)"
+  - financial-analyst + report-analyzer rows: business-context fields noted
+- `docs/policies/alert-policy.md`: Alert Commander Exclusivity section updated — added unified-agent to named exceptions; added "Alert Commander Event Scope" sub-section with 2-event gate table + no_cycle_headers constraint
+- `docs/data/system-map.json`: channels.market.allowed_senders updated to ["unified-agent", "alert-commander", "digest-predict", "qa-responder"] (market-watcher removed); sender_rules map added; lastUpdated: 2026-05-18
+
+Files modified (11 total):
+- .claude/agents/alert-commander.md
+- .claude/flows/alert-commander/cycle.md
+- .claude/agents/digest-predict.md
+- .claude/agents/tran-ngoc-bau.md
+- .claude/flows/tran-ngoc-bau/main.md
+- .claude/agents/financial-analyst.md
+- .claude/agents/report-analyzer.md
+- docs/references/workflow-map.md
+- docs/policies/alert-policy.md
+- docs/data/system-map.json
+- docs/agent-memory/notebooks/agent-father.md (this file)
+
+Cascade check: no renames; inter_agent routing symmetric; tran-ngoc-bau sends_to WORK only (MARKET write=false unchanged); financial-analyst + report-analyzer remain gatherers.
+Validation: YAML valid in all agent files; guide-compliant; versions updated; no orphan refs.
 
 ## This Session — 2026-05-18 (Sprint 1949 Phase 1)
 

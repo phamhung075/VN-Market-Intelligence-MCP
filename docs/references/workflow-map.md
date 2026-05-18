@@ -96,14 +96,14 @@ W20 BUG channel feedback loop
 | `fixer` | qa CHANGES_REQUESTED | [QA] blocking lines | minimum-diff commits, [Fixer] section, → qa |
 | `ops` | bug, infra, demand | ssh, docker, get_system_status, vps triggers | BUG/WORK channel, log_fix, escalate |
 | `news-scout` | cron 15min/60min | fetch_and_analyze, fetch_news_smart | docs/signals/news_impact*, notebook |
-| `market-watcher` | cron 5min/2h | get_market_snapshot, anomaly tools | docs/signals/price_anomaly*, MARKET (eod only) |
-| `financial-analyst` | cron 2x daily | get_bctc_full, compare_financials | docs/signals/bctc_signal*, notebook |
-| `report-analyzer` | event/cron | quarterly BCTC parse | docs/signals/fundamental_*, ledger update |
-| `alert-commander` | cron 10–30min, signal-driven | get_agent_signals, get_alerts | MARKET channel (alerts only) |
-| `digest-predict` | daily/weekly/monday/monthly | aggregated cowork output | MARKET channel (digests) |
+| `market-watcher` | cron 5min/2h | get_market_snapshot, anomaly tools | docs/signals/price_anomaly* only (no MARKET write) |
+| `financial-analyst` | cron 2x daily | get_bctc_full, compare_financials | docs/signals/bctc_signal* (with business-context fields: product/customer/ops/mgmt), notebook |
+| `report-analyzer` | event/cron | quarterly BCTC parse | docs/signals/fundamental_* (with business-context fields: product/customer/ops/mgmt), ledger update |
+| `alert-commander` | event-driven (cron gate) | get_agent_signals, get_alerts | MARKET (position-danger or watchlist-opp ONLY — ≤140 chars; silent exit otherwise) |
+| `digest-predict` | weekly Sunday 13:47 UTC + monday predict | weekly calibration signals | MARKET (Sunday calibration + portfolio thesis only; daily removed) |
 | `qa-responder` | cron 12min | ask_queue (FIFO), MCP, web | MARKET channel (replies) |
-| `unified-agent` | cron hourly | all cowork outputs, predictions | WORK channel, prediction store |
-| `tran-ngoc-bau` | daily cron | MARKET 50msgs, agent notebooks, tnb-methodology | docs/handoffs/tnb-audit-latest.md, docs/signals/tnb-* |
+| `unified-agent` | cron 05:23 / intraday :13 / 08:37 / 19:37 UTC M-F | all docs/signals/* (last 24h), get_market_hexagram, get_macro_snapshot | MARKET chef dishes 3x/day (Morning/EOD/Evening) + conditional intraday; WORK coordination |
+| `tran-ngoc-bau` | daily cron 20:13 UTC | MARKET chef dishes (last 3), unified-agent notebook, gatherer signals, tnb-methodology | WORK audit row (TNB layer-walk completeness score per dish) |
 | `system-auditor` | cron daily | memory, sqlite, logs | BUG (new anomalies only) |
 | `code-janitor` | cron 3h | code grep, schema files | TASKS or signal → po |
 | `claude-manager-helper` | cron | CLAUDE.md, MEMORY.md, docs/ | edits, prunes, commits |

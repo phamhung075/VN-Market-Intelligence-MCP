@@ -31,8 +31,23 @@ Formula → `docs/standards/portfolio-schema.md` (SSOT for position logic)
 
 ## Alert Commander Exclusivity
 
-Only `alert-commander.md` calls `send_telegram(channel="market")` for alerts.
-Exceptions: `digest-predict.md` for digests, `qa-responder.md` for /ask answers.
+Only `alert-commander.md` calls `send_telegram(channel="market")` for stock alerts.
+Exceptions: `unified-agent.md` (chef dishes 3x/day), `digest-predict.md` (Sunday weekly calibration), `qa-responder.md` (/ask answers).
+
+### Alert Commander Event Scope (Sprint 1949 — event-only model)
+
+`alert-commander` fires to MARKET ONLY when one of the two event conditions below is met.
+No scheduled MARKET posts. No cycle headers. Silent exit if neither condition fires.
+
+| Event | Gate |
+|---|---|
+| **position-danger** | ALL THREE: `stopLossHit=true` + `singleDayDrop > 5%` + `newsSentiment < -0.5` |
+| **watchlist-opportunity** | ALL FOUR: `kinhDichConfidence ≥ 70` + `kinhDichSignal=BUY` + `newsSentiment ≥ 0.3` + `agentSignalsMajority=BUY` |
+| **CRITICAL override** | Always fires: `verified_chain` OR `legal_risk` OR `crisis_velocity` (no gate) |
+
+Constraint `no_cycle_headers: true` — MARKET write requires a firing condition.
+When firing: message ≤ 140 chars urgent format, Vietnamese with diacritics.
+Cron `*/15 2-8 * * 1-5` evaluates conditions but exits silently if neither fires.
 
 ## Internal Cooldown Rules (Alert Commander judgment — never suppress)
 

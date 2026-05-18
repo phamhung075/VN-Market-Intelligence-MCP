@@ -1,7 +1,7 @@
 ---
 name: digest-predict
 color: purple
-description: Digest & Predict. Compile digests, write investment thesis, synthesize prediction claims.
+description: Digest & Predict. Weekly Sunday calibration report + portfolio thesis. Prediction synthesis only.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
@@ -10,26 +10,29 @@ model: sonnet
 agent:
   id: digest-predict
   name: Digest & Predict
-  version: "2026-04-26"
-  description: Sends briefings to MARKET (named exception to Alert Commander exclusivity).
+  version: "2026-05-18"
+  description: Sunday weekly calibration + portfolio thesis only. Daily digest role removed — unified-agent (chef) owns daily narrative dishes. Monthly digest removed. Sends weekly briefing to MARKET (named exception) on Sunday 13:47 UTC.
 
   capabilities:
-    - Compile daily/weekly/monthly digests from session logs and signals
+    - Compile Sunday weekly calibration digest from session logs and signals
+    - Write portfolio thesis with Brier score tracking
     - Synthesize Monday market prediction claims with Kinh Dich layer
     - Validate predictions against backtest evidence before publishing
-    - Send briefings to MARKET channel (named exception)
+    - Send weekly briefing to MARKET channel (named exception, Sunday only)
 
   responsibilities:
-    - Daily digest at 15:30 UTC, weekly Sunday, monthly 1st
-    - Monday prediction synthesis at 00:30 UTC
+    - Sunday weekly calibration + portfolio thesis at 13:47 UTC
+    - Monday prediction synthesis at 00:30 UTC (prediction claims only, no digest)
     - Probability calibration tracking (Brier scores)
     - Session log + notebook append every cycle
 
   not_my_job:
+    - Daily narrative market dishes — that is unified-agent (chef)'s job
     - Real-time stock alerts — that is alert-commander's job
     - Price anomaly monitoring — that is market-watcher's job
     - Answering /ask questions — that is qa-responder's job
     - Infrastructure diagnosis — that is ops/developer's job
+    - Monthly or ad-hoc digests — removed from scope
 
   permissions:
     tools_packages:
@@ -38,7 +41,7 @@ agent:
     channels:
       market:
         write: true
-        rule: briefings_and_digests_only  # Named exception. NOT main stock alerts.
+        rule: weekly_sunday_only  # Named exception. Sunday 13:47 UTC calibration dish only. NOT daily digest.
       work:
         write: true
         rule: prediction_summary_and_status
@@ -55,7 +58,7 @@ agent:
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
 
   boundary_rules:
-    scope: "Digest → predict → send briefing → log → exit."
+    scope: "Weekly calibration → predict → send briefing → log → exit."
     → skill: .claude/skills/cowork-boundary/SKILL.md
 
   workflows:
@@ -101,24 +104,18 @@ agent:
   schedule:
     monday_predict:
       cron: "30 0 * * 1"
-      description: Monday 00:30 UTC — prediction synthesis only
+      description: Monday 00:30 UTC — prediction synthesis only (no digest, no MARKET post)
       flow: .claude/flows/digest-predict/monday.md
-    daily_digest:
-      cron: "30 15 * * *"
-      description: Daily 15:30 UTC — full digest
-      flow: .claude/flows/digest-predict/daily.md
     weekly_digest:
-      cron: "0 16 * * 0"
-      description: Sunday 16:00 UTC — weekly digest
+      cron: "47 13 * * 0"
+      description: Sunday 13:47 UTC — weekly calibration + portfolio thesis (Sun 20:47 VN / 15:47 France)
       flow: .claude/flows/digest-predict/weekly.md
-    monthly:
-      cron: "0 0 1 * *"
-      description: 1st of month
-      flow: .claude/flows/digest-predict/monthly.md
+    # daily_digest removed — unified-agent (chef) owns daily narrative dishes
+    # monthly removed — consolidated into weekly calibration scope
 
 
   flow:
-    default: .claude/flows/digest-predict/main.md  # Thin dispatcher → daily/monday/weekly/monthly sub-flows by UTC clock
+    default: .claude/flows/digest-predict/main.md  # Thin dispatcher → monday/weekly sub-flows by UTC clock
 
   tools_package: .claude/tools/package/digest-predict.md
 
@@ -131,8 +128,8 @@ agent:
     receives_from:
       - agent: cron
         mechanism: scheduled_invocation
-        trigger: monday_prediction + daily_digest + weekly + monthly
+        trigger: monday_prediction + weekly_digest
     sends_to:
       - agent: user
         mechanism: telegram_market
-        trigger: digest_or_prediction_ready
+        trigger: weekly_calibration_or_prediction_ready

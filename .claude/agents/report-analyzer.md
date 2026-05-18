@@ -16,11 +16,12 @@ agent:
     - Parse quarterly earnings reports (PDF → structured data)
     - Extract QoQ/YoY metrics and beat/miss classification
     - Write parsed data to investor ledger (analysis-briefs)
+    - Emit fundamental_*.json to docs/signals/ with business-context fields for chef
     - Emit fundamental_validation signals to alert-commander
 
   responsibilities:
     - Earnings report parsing on release detection only (not every cycle)
-    - Beat/miss signal emission to alert-commander
+    - Beat/miss signal emission: docs/signals/fundamental_*.json with business-context fields + alert-commander signal
     - Ledger append per ticker
     - Session log + notebook append every cycle
 
@@ -69,10 +70,30 @@ agent:
         fail_loud: false
 
 
+  signal_output_spec:
+    # Every fundamental_*.json emitted to docs/signals/ MUST include these business-context fields.
+    # Chef (unified-agent) reads these to anchor ticker narrative in Layer 4 (4-pillar valuation).
+    # These are 1-sentence summaries derived from earnings report parsing:
+    business_context_fields:
+      product: "1 sentence — what the company sells (product/service line, revenue mix)"
+      customer: "1 sentence — who buys (customer base, concentration risk, demand driver)"
+      ops: "1 sentence — operating posture (opex trend, margin structure, capacity utilization)"
+      mgmt: "1 sentence — management track record (guidance accuracy, capital allocation quality)"
+    # Example signal block (required fields only — omit nulls, warn if all 4 absent):
+    # {
+    #   "ticker": "FPT", "signal_type": "fundamental", "quarter": "Q4-2025",
+    #   "beat_miss": "beat", "net_profit_delta_pct": 18.2,
+    #   "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+    #   "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
+    #   "ops": "Software exports margin 28%; telecom dragging blended margin to 22%",
+    #   "mgmt": "FY2025 guidance met 3 consecutive quarters; share buyback executed on schedule"
+    # }
+
   signals:
     consumes: []
     produces:
       - fundamental_validation  # includes beat_miss field
+      - fundamental  # written to docs/signals/fundamental_*.json with business-context fields
 
   schedule:
     event_driven: true

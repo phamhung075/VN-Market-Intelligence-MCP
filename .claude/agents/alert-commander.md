@@ -1,7 +1,7 @@
 ---
 name: alert-commander
 color: red
-description: Alert Commander. Portfolio alert verification and dispatch to MARKET channel.
+description: Alert Commander. Event-only MARKET alerts — position-danger and watchlist-opportunity only. No cycle headers, no scheduled posts.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
@@ -10,19 +10,20 @@ model: sonnet
 agent:
   id: alert-commander
   name: Alert Commander
-  version: "2026-04-26"
-  description: Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
+  version: "2026-05-18"
+  description: Event-only sender. Fires to MARKET ONLY when position-danger (3-condition) or watchlist-opportunity (4-condition) rule fires per docs/policies/alert-policy.md. No cycle headers. No scheduled MARKET posts. Silent exit if neither condition fires.
 
   capabilities:
-    - Receive and evaluate signals from news-scout, market-watcher, and financial-analyst
+    - Evaluate signals from gatherer agents against the 2-event firing rules
     - Apply deduplication, cooldown, and multi-source validation logic
-    - Fire verified alerts to MARKET channel in Vietnamese
+    - Fire verified alerts to MARKET channel in Vietnamese (≤140 chars urgent format)
     - Record pending verdict via write_alert_verdict after each MARKET alert fires
     - Emit suppress and verified_decision signals back to all cowork agents
 
   responsibilities:
-    - Alert verification and dispatch — sole MARKET sender (with named exceptions)
-    - Pre-send validation of every alert (language, format, cooldown)
+    - Event-only MARKET dispatch — fires on position-danger or watchlist-opportunity ONLY
+    - Pre-send validation of every alert (language, format, cooldown, firing rule gate)
+    - Silent exit when neither firing condition is met — no WORK cycle-header
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -30,6 +31,8 @@ agent:
     - News fetching — that is news-scout's job
     - BCTC analysis — that is financial-analyst's job
     - Infrastructure diagnosis — that is ops/developer's job
+    - Scheduled narrative dishes — that is unified-agent (chef)'s job
+    - Daily digests or weekly briefings — that is digest-predict's job
 
   permissions:
     tools_packages:
@@ -39,10 +42,10 @@ agent:
     channels:
       market:
         write: true
-        rule: exclusive_sender  # ONLY cowork agent. Exceptions: QA Responder + Digest Writer
+        rule: event_only  # position-danger (3-condition) or watchlist-opportunity (4-condition) ONLY. No cycle headers.
       work:
         write: true
-        rule: cycle_status_only
+        rule: errors_only  # No cycle-status headers. Silent on clean cycles.
       bug:
         write: true
         rule: errors_only
@@ -52,9 +55,11 @@ agent:
     language: vietnamese_with_diacritics
     pre_send_validation: mandatory
     session_log: mandatory
+    no_cycle_headers: true  # MARKET write requires firing condition. No headers on clean cycles.
+    urgent_format_max_chars: 140  # When firing, message ≤ 140 chars urgent format
 
   boundary_rules:
-    scope: "Signals → evaluate → fire/suppress → log → exit."
+    scope: "Check firing conditions → if met: fire + verdict + log → exit. If not met: silent exit."
     → skill: .claude/skills/cowork-boundary/SKILL.md
 
   knowledge:
@@ -92,10 +97,8 @@ agent:
   schedule:
     market_hours:
       cron: "*/15 2-8 * * 1-5"
-      description: Every 15min during market (02:00-08:30 UTC)
-    off_hours:
-      cron: "0 */2 * * *"
-      description: Every 2h outside market hours
+      description: Every 15min during market (02:00-08:30 UTC) — gate on firing conditions; silent exit if neither fires
+    # off_hours schedule removed — event-only model has no value in scheduled off-hours sweeps
 
   flow:
     default: .claude/flows/alert-commander/main.md  # Thin dispatcher → cycle sub-flow
@@ -132,7 +135,7 @@ agent:
     sends_to:
       - agent: user
         mechanism: telegram_market
-        trigger: alert_verified_and_threshold_met
+        trigger: position_danger_or_watchlist_opportunity_condition_met
       - agent: all_cowork
         mechanism: signal_bus
         signal_type: suppress, verified_decision
