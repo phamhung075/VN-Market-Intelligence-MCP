@@ -1,4 +1,19 @@
-## Sprint 1946 — CRISIS DETECTION COVERAGE GAP (SPIKE) (ACTIVE)
+## Sprint 1946 — CRISIS DETECTION COVERAGE GAP (DONE)
+
+**Status:** DONE | **Closed:** 2026-05-18T08:40Z | **Theme:** Diagnose whether `get_crisis_early_warning` is supposed to cover individual-stock -30%+ crashes, or only systemic/macro crises — TNB c69 finding #2.
+
+**Outcome:** SHIPPED. SPIKE-1946 confirmed root cause = PLX absent from `watchlist` table → `get_crisis_early_warning` never evaluated PLX. Architectural scope of the tool was correct (velocity-spike detector for in-universe stocks); fix was minimum-viable watchlist seed extension. 1946a shipped PLX entry across 3 SSoT sources (`docs/data/system-map.json`, `mcp.config.json`, `apps/mcp-server/src/infrastructure/db/seedWatchlist.ts`) plus frontend `apps/frontend/app/domain/market.ts`. 7 new tests in `1946a-plx-watchlist-crisis-coverage.test.ts` validate seed presence + velocity ratio ≥2.0 → crisisIndicators contains PLX + below-threshold negative test + idempotency. Pre-existing 1343a stale-count failures (from 1876a-A6 not updating row counts) also fixed: 26→34 rows, domain set 11→13, HNX assertion corrected. All 49 watchlist/crisis tests GREEN. tsc 0 errors. Docker rebuild dispatched to ops (separate agent in flight). R-1 honored: Sprint 1945 zone (`verdictResolutionJob.ts` + alert_accuracy tables) untouched.
+
+**Open observation gates (carried into post-sprint monitoring window):**
+- `post-1944-financial-reports-q1-2026` gate 2026-05-18T12:00Z (6 of 7 banking source_url populated; EIB fetched; reparse pending)
+- `post-1942-fa-verify` gate ~23Z tonight
+- `post-1945-verdict-resolution-scored-pct` + `post-1945-bug-storm-silence` both 2026-05-20T07:22Z
+- `1941b-signal-outcomes-seed-window` 2026-05-25
+- `1922g-pharma-events-source-verify` 2026-06-01
+
+---
+
+## Sprint 1946 ORIGINAL VISION (preserved for traceability)
 
 **Status:** Active | **Opened:** 2026-05-18T07:24Z | **Theme:** Diagnose whether `get_crisis_early_warning` is supposed to cover individual-stock -30%+ crashes, or only systemic/macro crises — TNB c69 finding #2.
 
