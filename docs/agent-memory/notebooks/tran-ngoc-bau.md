@@ -1,47 +1,44 @@
 # Tran Ngoc Bau — Working Notebook
 
-**Last updated:** 2026-05-18 (cycle 68) | Cycles completed: 68
+**Last updated:** 2026-05-18 (cycle 69) | Cycles completed: 69
 
 ---
 
-## This session (cycle 68, 2026-05-18)
+## This session (cycle 69, 2026-05-18)
 
-File-evidence audit (8 agent notebooks + handoff c67 + dashboard). MCP unavailable in Claude Code (14th consecutive cycle — structural gap). PO ACK c174 PRESENT — loop operational. System Overall: NEEDS_ATTENTION (digest-predict 9+ day silence; BCTC Q1-2026 banking 3 days past 15/05 secondary deadline). All 7 live cowork agents operational — report-analyzer RECOVERED at 00:10 UTC 2026-05-18. TNB-critic-gate confirmed live: signal #3362 critic_score=0.8 on news-scout bus (1939a/b operational). PC1 legal_risk gap (1940a) in sprint pipeline. 0 auto-cures.
+File-evidence audit (8 agent notebooks + handoff c68 + dashboard). MCP unavailable in Claude Code (15th consecutive cycle). PO ACK c181 PRESENT — SPIKE-1943 created (BCTC banking cohort), 1940a CLOSED, 1941a/d shipped. 7 live cowork agents. New finding: PLX -40% crash not independently detected by crisis_velocity pipeline (get_crisis_early_warning returned "no signals" when alert-commander checked). Digest-predict 7-day silence (corrected from "9+" — last session 2026-05-11 = 7 days). 0 auto-cures. market-watcher 05:39 UTC successful; 06:40 BLOCKED (execution-env specific, not gateway down).
 
-**Status:** PARTIAL (file-evidence, MCP unavailable in Claude Code) | Direction: IMPROVING | Auto-cures: 0
+**Status:** PARTIAL (file-evidence, MCP unavailable in Claude Code) | Direction: STABLE | Auto-cures: 0
 
 ---
 
 ## Patterns noticed
 
-- **TNB-critic-gate live (c68 — confirmed)**: Signal #3362 (news-scout, 01:25 UTC 2026-05-18) carries critic_score=0.8. First evidence 1939a/b is operational at the post_agent_signal write layer. Directly addresses conf=0.50 majority flagged since c61.
-- **PC1 legal_risk tool gap (1940a in sprint)**: Task created by PO c174. alert-commander still observing empty `get_legal_risk_signals` in post-c174 cycles. Sprint fix in pipeline — track resolution.
-- **report-analyzer recovery (c68 — positive)**: 00:10 UTC 2026-05-18 live cycle confirmed. Gateway 5ms bootstrap. Session-log-only (correct — no new filings). STALE status from c67 resolved.
-- **BCTC Q1-2026 banking secondary deadline passed**: 7 banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) now 3 days past 15/05 deadline with 0 filings. report-analyzer flagging for 14:00 UTC recheck. If still absent → SSC ingestion lag ticket.
-- **news-scout confidence elevation sustained (c68)**: #3362 PC1 legal conf=0.80 follows #3343 conf=0.78. Two consecutive elevated signals. Sustained improvement — pattern durable.
-- **1937a DONE**: Cowork scheduled-task MCP gap root-cause fixed. No new BLOCKED incidents in automated context after fix.
-- **digest-predict 1907a**: 9+ day silence. Gateway-independent. User action required.
-- **TNB Claude Code MCP**: 14th consecutive cycle without MCP in Claude Code context. File-evidence audit is the established fallback.
+- **PLX crisis detection gap (c69 — new)**: Signal #3383 typed as event_type=crisis at conf=0.50 reached alert-commander. get_crisis_early_warning returned "no signals" — crisis_velocity pipeline did not independently fire on PLX -40% single-session crash. Architecture question: does crisis_velocity cover individual stock crashes or only systemic crises? Escalated to PO/architect.
+- **conf=0.50 majority persists (#3376-3385)**: TNB-critic-gate confirmed live on #3362 (c68) but c69 signals (#3376-3385) not showing critic_score in notebook entries. Unclear if gate applies to all signal types or only chain_catalyst/news-scout. Monitor.
+- **market-watcher execution-env BLOCKED pattern**: 06:40 UTC BLOCKED vs 05:39 UTC successful — gateway NOT down (alert-commander + news-scout live at 06:02/06:21). Scheduling-specific environment issue. Watch for recurrence.
+- **digest-predict correction**: "9+ days" in c68 was imprecise. Last session 2026-05-11 21:38 UTC = 7 days ago as of 2026-05-18. Still CRITICAL but correct count matters for PO decision-making.
+- **1941a/d OCF fix**: VCB and FPT OCF extractions fixed. FA Layer 7 coverage improving. HPG BA-1942c still Todo.
 
 ---
 
 ## Carry-over (next session)
 
-- **digest-predict / 1907a** (CRITICAL): 9+ day silence. User action: `launchctl list | grep digest` + check plist in ~/Library/LaunchAgents/.
-- **BCTC Q1-2026 banking** (HIGH): report-analyzer 14:00 UTC cycle — if still 0 filings for ACB/BID/CTG/EIB/MBB/VCB/VPB, file SSC ingestion lag feedback to PO.
-- **PC1 legal_risk tool gap / 1940a** (HIGH): Sprint in pipeline. Monitor dev-mcp-server fix. Verify `get_legal_risk_signals` returns PC1 once shipped.
-- **FA OCF verification** (MEDIUM): Confirm get_cash_flow plausible post-1930b in next FA live session (23:00 UTC tonight). FPT NI extraction also needs re-extraction verification.
-- **market-watcher fresh cycle** (MEDIUM): Confirm live post-1937a fix — no fresh cycle logged since 12:39 UTC 2026-05-17 in available evidence.
-- **1897b git HEAD.lock VirtioFS H4** (MEDIUM): F1 USER action pending.
-- **TNB Claude Code MCP** (MEDIUM): 14th cycle. Infrastructure investigation needed.
-- **verdictResolutionJob no-baseline-price loop** (LOW): Check if BUG storm still active after gateway stabilisation.
+- **digest-predict / 1907a** (CRITICAL): 7-day silence. User action: launchctl plist investigation.
+- **PLX crisis detection gap** (HIGH): New c69 finding. PO/architect to determine if crisis_velocity should cover individual -30%+ stock crashes. If yes → architecture task.
+- **SPIKE-1943 BCTC banking cohort** (HIGH): Monitor PO's diagnosis result. If SSC ingestion lag confirmed → dev ticket.
+- **FA HPG OCF / BA-1942c** (MEDIUM): Track dev-mcp-server fix. Verify get_cash_flow for HPG returns non-zero post-fix.
+- **market-watcher 06:40 BLOCKED** (MEDIUM): If pattern recurs in next market-hours cycle → escalate. Single occurrence = observation only.
+- **verdictResolutionJob 1926a** (LOW): 520 unknowns at 04:08 UTC. PO skipped (1926a shipped). Check if stall resolves in next unified-agent cycle.
+- **TNB Claude Code MCP** (MEDIUM): 15th cycle. Structural gap.
+- **1897b VirtioFS H4** (MEDIUM): USER action pending.
 
 ---
 
-## Cycle — 03:00 UTC
+## Cycle — 07:00 UTC
 
 - **cycle_date**: 2026-05-18
-- **findings**: [Overall=NEEDS_ATTENTION. Digest-predict 9+ day silence (CRITICAL/1907a). BCTC Q1-2026 banking 3 days past 15/05 secondary deadline — 0 filings. TNB-critic-gate live: #3362 critic_score=0.8. report-analyzer RECOVERED. 7 live agents. 1940a in sprint. 0 auto-cures.]
-- **actions**: [Handoff written docs/handoffs/tnb-audit-latest.md. Dashboard updated (tnb-20260518T030000 NEW → po). Signal file docs/signals/tnb-2026-05-18T03:00:00Z.json created. Notebook overwritten.]
-- **next_cycle_hint**: [report-analyzer 14:00 UTC — check bank Q1 filings. FA 23:00 UTC — verify OCF post-1930b. market-watcher — confirm fresh cycle. 1940a — monitor PC1 legal_risk tool fix.]
+- **findings**: [Overall=NEEDS_ATTENTION. digest-predict 7-day silence (CRITICAL/1907a). PLX -40% crisis not detected by crisis_velocity (HIGH — new). SPIKE-1943 in progress (banking BCTC). 7 live agents. market-watcher 06:40 BLOCKED (env-specific). 0 auto-cures. 1940a CLOSED, 1941a/d shipped, verdictResolutionJob 1926a shipped (monitor).]
+- **actions**: [Handoff written docs/handoffs/tnb-audit-latest.md. Dashboard updated (tnb-20260518T070000 NEW → po). Signal file docs/signals/tnb-2026-05-18T07:00:00Z.json created. Notebook overwritten. WORK telegram composed (not sent — MCP unavailable in Claude Code).]
+- **next_cycle_hint**: [PLX crisis detection gap — architect/PO response. SPIKE-1943 resolution. FA 23:00 UTC — verify VCB+FPT OCF post-1941a/d, HPG timeline. market-watcher next market-hours cycle — BLOCKED recurring?. verdictResolutionJob — resolved or reopen.]
 - **estimated_tokens**: 0 (no MCP tool calls — file-evidence audit only)
