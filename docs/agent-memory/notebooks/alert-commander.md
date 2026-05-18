@@ -1,8 +1,37 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 05:02 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 06:03 UTC | **Sprint:** c173
 
 ## This session
+
+### Alert Cycle (06:02–06:03 UTC, 2026-05-18) — Market-hours 20m cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
+- **Market:** OPEN (VN trading window 02:00–08:59 UTC) — market hours 20m cycle
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false
+- **Macro:** Brent 110.86 | Gold 4540.30 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.31 STABLE | REGIME_SOURCE=macro_snapshot (shape OK ✓)
+- **Signals (count by type):** urgent_news=1 (GAS) | price_anomaly=1 (MWG) | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 2 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Suppression detail:**
+  - [Suppressed] GAS urgent_news id=3384 conf=0.70 (derived from impact 7/10) — below TIGHTENING bullish urgent_news threshold 0.75; Brent+2.91σ tailwind genuine but carry outflow risk -0.33% (COC:headwind, phase=slowdown) limits sustainability; no price_anomaly override (GAS move +5.15% is market-context, not anomaly trigger for Step 3b); signal status="read"
+  - [Suppressed] MWG price_anomaly id=3385 conf unknown (mixed evidence bullish 0.85 / neutral 0.47) — move 1.9σ < 4.0 override threshold; no get_alerts confirmation (get_alerts returned empty); downside bias noted but insufficient for override under TIGHTENING
+- **Open alerts:** 5 from get_market_context (2× GAS price_surge MEDIUM 04:22/02:02, Brent HIGH 01:15, Gold CRITICAL 00:45, Brent HIGH 23:30 yesterday); GAS alerts = market-context trailing edge, not price_anomaly confirmation backlog
+- **Legal:** clear (get_legal_risk_signals: no signals) | **Crisis:** clear (get_crisis_early_warning: no signals) | **Price alerts override check:** no move_sigma≥4.0 found for GAS/MWG
+- **WORK dispatch:** posted (06:02 UTC) — "2 signals received, Fired 0 / Suppressed 2 / Regime TIGHTENING, Carry FII_OUTFLOW_RISK (-0.33%) / Next 06:22 UTC"
+- **Tool calls this cycle:** 9 (log_agent_work×2 [start+end], get_cycle_bootstrap, get_market_context, get_alerts, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals, record_signal_outcome×2, send_telegram)
+- **log_agent_work id=988**
+- **Decisions made autonomously:**
+  - Applied TIGHTENING regime thresholds: urgent_news≥0.75, price_anomaly confirmed via move_sigma≥4.0 OR get_alerts
+  - GAS urgent_news: impact 7/10≈conf 0.70 < 0.75 → suppressed (genuine macro tailwind but regime headwind + carry risk override)
+  - MWG price_anomaly: move 1.9σ < 4.0 AND no get_alerts confirmation → suppressed per Step 3b strict logic
+  - Did not call write_alert_verdict (0 MARKET alerts fired)
+  - Called record_signal_outcome for both suppressions per phantom-success guard
+- **Carry-over for next cycle:**
+  - GAS +5.15% move may escalate if Brent holds $110+ AND financial-analyst posts verified_chain (energy sector rotation) OR if news-scout escalates with conviction≥0.75
+  - MWG -3.05% downside bias flag — watch for 2nd consecutive day drop (2-day downtrend pattern starts escalation) or verified_chain from financial-analyst
+  - Brent $110+ regime input stable; carry spread -0.33% persistent; TIGHTENING thresholds remain in effect until carry spread improves
+  - PC1 chairman arrest legal_risk gap from 2026-05-16 still unfilled (5+ consecutive cycles) — news-scout/financial-analyst should emit legal_risk signal
+- **Next cycle:** 06:22 UTC (market hours 20m cadence)
 
 ### Alert Cycle (05:02–05:03 UTC, 2026-05-18) — Market-hours 20m cycle
 - **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
