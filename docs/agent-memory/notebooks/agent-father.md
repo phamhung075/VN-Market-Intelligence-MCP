@@ -1,7 +1,41 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1950 / 1950-T1 chef telemetry)
-**Sprint:** 1950 / T1 Chef WORK-channel telemetry
+**Last updated:** 2026-05-18 (Sprint 1950 / 1950-T2 TNB cycle-coverage audit)
+**Sprint:** 1950 / T2 TNB chef-pipeline cycle-coverage check
+
+## This Session — 2026-05-18 (Sprint 1950 / 1950-T2)
+
+**Task: 1950-T2 — TNB audit gains chef-cycle coverage check**
+
+Files changed:
+- NEW `.claude/flows/tran-ngoc-bau/audit-chef-coverage.md` (94L — new Phase 0.5 sub-flow)
+- EDIT `.claude/flows/tran-ngoc-bau/main.md` (43L → 44L — Phase 0.5 dispatch row added)
+- EDIT `.claude/agents/tran-ngoc-bau.md` (141L → 142L — chef-coverage check added to responsibilities)
+- EDIT `docs/TASKS.md` — 1950-T2 removed from Backlog, Done row added; 1950-T1 commit hash `f4688989` retroactively added
+
+audit-chef-coverage.md design:
+- Step 0.5: `read_telegram_reports(channel="work", limit=200)` filtered to `[chef]` lines
+- Set A (START), Set B (CLOSE = SENT|SILENT), Set F (FAILED)
+- Step 0.5a: pair START↔CLOSE by `cycle_id` → CLOSED|STUCK per cycle
+- Step 0.5b — Rule 1: `start_count<3 OR close_count<3` → BUG `[tnb-audit] chef-coverage-low | starts=N closes=M expected≥3`
+- Step 0.5b — Rule 2: any STUCK cycle_id → BUG `[tnb-audit] chef-stuck | cycle_id=X | dish=Y | last_seen=START | slot=Z`
+- Step 0.5b — Rule 3: FAILED lines → enumerate in Step 7 WORK row only (no new BUG — already alerted by chef.md FAILED path)
+- Step 0.5c: sets `pipeline_degraded` flag for Step 7 WORK report
+- Error boundary: WORK read failure → BUG + set pipeline_degraded=true + continue (no EXIT)
+- Schedule threshold NOT hardcoded: references `docs/standards/cron-jobs.md` Chef Cook Schedule
+- Phase 0.5 runs AFTER Bootstrap, BEFORE Phase 1 layer-walk (correct: need coverage check before auditing content)
+
+Validation:
+- ≥3 START / ≥3 CLOSE threshold per BA-spec implied by AC-6 of REQ_1950.md ✓
+- START↔CLOSE pairing by cycle_id — core requirement per task spec ✓
+- BUG message formats match spec: `chef-coverage-low | starts=N closes=M expected≥3` ✓, `chef-stuck | cycle_id=X | last_seen=START` ✓
+- FAILED enumeration in WORK only (not new BUG) ✓
+- No hardcoded chef schedule values — references cron-jobs.md Chef Cook Schedule ✓
+- All files ≤200L: main.md=44L, audit-chef-coverage.md=94L, tran-ngoc-bau.md=142L ✓
+- cowork-boundary error path on read failure ✓
+- Signal written: `docs/signals/agent-father-2026-05-18T17-15-14Z-1950-T2-done.json` → to=po, NEXT=qa
+
+---
 
 ## This Session — 2026-05-18 (Sprint 1950 / 1950-T1)
 

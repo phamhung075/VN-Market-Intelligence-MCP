@@ -37,6 +37,7 @@ Audit row to WORK (layer completeness score per dish) | Flow corrections (auto-c
 | Phase | Step(s) | Sub-flow |
 |---|---|---|
 | Bootstrap | 0a, 0b, 0b2, 0c | `→ Run sub-flow: ./bootstrap.md` |
+| Phase 0.5: Chef pipeline cycle-coverage | Step 0.5 | `→ Run sub-flow: ./audit-chef-coverage.md` |
 | Phase 1–2: Chef dishes + Layer Walk | Steps 1–4 | `→ Run sub-flow: ./audit-market.md` |
 | Phase 2.5: Business context + Methodology | Step 4b | `→ Run sub-flow: ./audit-methodology.md` |
 | Phase 3: Signal Quality (gatherer outputs) | Step 5 | `→ Run sub-flow: ./audit-signals.md` |

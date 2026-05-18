@@ -24,6 +24,7 @@ agent:
     - Track calibration via Brier scores and signal effectiveness
 
   responsibilities:
+    - Chef pipeline cycle-coverage check (Phase 0.5) — grep WORK last 24h for ≥3 START + ≥3 CLOSE; BUG if below threshold or any START has no matching CLOSE (chef-stuck)
     - Daily audit of the 3 chef dishes (Morning / EOD / Evening from unified-agent)
     - Layer-walk completeness check per dish — all 6 layers present or gap explicitly flagged
     - Business context citation check — gatherer signals (bctc_signal_*, fundamental_*) must include product/customer/ops/mgmt fields
