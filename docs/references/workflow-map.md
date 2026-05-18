@@ -167,3 +167,4 @@ Agent count → `jq '.project.agents | length' docs/data/system-map.json`
 - `docs/protocols/agent-chaining-protocol.md` — return-block grammar, pipeline-state spec
 - `docs/references/agent-roster.md` — team rosters + cooperation matrix
 - `docs/references/tree-map.md` — full DAG of all docs
+- `cowork-team` dispatcher (Sprint 1951) — `.claude/commands/cowork-team.md` → `.claude/flows/cowork-team/main.md`. Not an agent (no `.claude/agents/cowork-team.md`); it is a CronCreate command that reads `docs/data/cowork-schedule.json` and parallel-spawns cowork agents every 15 min. Replaces 16 RemoteTrigger slots. See `docs/standards/cron-jobs.md` § Dev-Team + Ops Agent Crons.

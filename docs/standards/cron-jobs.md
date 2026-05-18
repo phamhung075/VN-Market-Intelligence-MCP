@@ -113,16 +113,17 @@ Operator runbook (telemetry meanings + recovery) → `docs/protocols/chef-pipeli
 
 | Schedule (UTC) | VN (GMT+7) | France (CEST) | Agent | Dish |
 |----------------|------------|---------------|-------|------|
-| `23 5 * * 1-5` | 12:23 | 07:23 | unified-agent | Morning Dish — overnight macro + VN morning session synthesis |
+| `15 5 * * 1-5` | 12:15 | 07:15 | unified-agent | Morning Dish — overnight macro + VN morning session synthesis |
 | `13 2-8 * * 1-5` | XX:13 | XX:13 | unified-agent | Intraday convergence scan — silent if no cluster qualifies |
-| `37 8 * * 1-5` | 15:37 | 10:37 | unified-agent | EOD Dish — all settle data + foreign flow (signal available from 08:13) |
-| `37 19 * * *` | 02:37+1 | 21:37 | unified-agent | Evening Preview — US/EU session + tomorrow setup |
+| `45 8 * * 1-5` | 15:45 | 10:45 | unified-agent | EOD Dish — all settle data + foreign flow (signal available from 08:13) |
+| `45 19 * * *` | 02:45+1 | 21:45 | unified-agent | Evening Preview — US/EU session + tomorrow setup |
 | `47 13 * * 0` | 20:47 Sun | 15:47 Sun | digest-predict | Weekly calibration + portfolio thesis |
 
 ### Dev-Team + Ops Agent Crons
 
 | Schedule (UTC) | Agent | Model | Frequency rationale |
 |----------------|-------|-------|---------------------|
+| `*/15 * * * *` | cowork-team (master dispatcher) | mixed | Every 15 min. Reads `docs/data/cowork-schedule.json`, matches cron ±2min, parallel-spawns all due cowork agents. Replaces 16 RemoteTrigger slots (Sprint 1951). Silent exit if no slots due. |
 | `7 * * * *` | dev-team (po→ba→architect→pm→developer→qa→fixer→ops) | mixed (sonnet/haiku) | Hourly. Calls individual agents in sequence. **Ops runs last (~30s baseline health check)**. Total 45-min cap. |
 | `0 */6 * * *` | code-janitor | haiku | Every 6h. Mechanical grep — haiku sufficient. Early-exit if 0 src/ commits in 6h. |
 | `0 16 * * *` | system-auditor | sonnet | 1x/day 23:00 VN. Early-exit if 0 commits in 24h. |

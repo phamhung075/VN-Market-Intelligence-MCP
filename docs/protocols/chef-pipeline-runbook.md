@@ -12,10 +12,10 @@ Full schedule → `docs/standards/cron-jobs.md` § Chef Cook Schedule (SSOT).
 
 | Schedule (UTC) | VN (GMT+7) | Dish type | Agent |
 |----------------|------------|-----------|-------|
-| `23 5 * * 1-5` | 12:23 | `morning` | unified-agent |
+| `15 5 * * 1-5` | 12:15 | `morning` | unified-agent |
 | `13 2-8 * * 1-5` | XX:13 | `intraday` | unified-agent |
-| `37 8 * * 1-5` | 15:37 | `eod` | unified-agent |
-| `37 19 * * *` | 02:37+1 | `evening` | unified-agent |
+| `45 8 * * 1-5` | 15:45 | `eod` | unified-agent |
+| `45 19 * * *` | 02:45+1 | `evening` | unified-agent |
 
 The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `.claude/flows/unified-agent/main.md` — the cron fires each hour and exits immediately outside these windows.
 
