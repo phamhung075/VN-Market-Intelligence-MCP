@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "Developer close-out — Sprint 1942 COMPLETE 2026-05-18. All 4 BCTC expansion tasks QA-approved: 1942a (vnstockStartupProbe), 1942b (cashFlowTool fallback path), 1942c (vnstockBridge 3-key OCF fallback + MFG label), 1943a (BCTC queue reset + auto-retry). get_cash_flow coverage 31/33 = 94% (goal ≥20/30 ACHIEVED). toolCount 140→142 per Docker logs post-rebuild.",
+  "_lastRefreshedBy": "Ops rebuild — Sprint 1945 COMPLETE 2026-05-18. All code merged: 1945a (getPriceHistory envelope unwrap fix verdictResolutionJob.ts + clients.ts), 1945b-backend (GET /api/accuracy/digest HTTP handler), 1945b-frontend (AccuracyDigestCard component). mcp-server rebuilt + healthy. /api/accuracy/digest live. toolCount remains 142 (endpoint not separately countable as tool). scored_pct recovery expected within 48h.",
   "lastUpdated": "2026-05-18",
-  "currentSprint": 1942,
+  "currentSprint": 1945,
   "previousSprint": {
-    "number": 1941,
-    "status": "DONE (1941a+1941c+1941d QA-approved 2026-05-18; 1941b in OBSERVE 7d seed window gate 2026-05-25)",
-    "summary": "Sprint 1941: L7 OCF guard deploy (1941a), accuracy digest job (1941c), FPT net_profit OCR bridge fix (1941d). cronJobCount 75→76."
+    "number": 1942,
+    "status": "DONE (1942a+1942b+1942c+1943a QA-approved 2026-05-18)",
+    "summary": "Sprint 1942: BCTC expansion — get_cash_flow coverage 3/30 → 31/33 (94%). vnstockStartupProbe + fallback path + HPG OCF fix + queue reset + grace-period auto-retry."
   },
-  "sprintGoal": "Sprint 1942 COMPLETE 2026-05-18: Expand BCTC get_cash_flow coverage from 3/30 → ≥20/30 tickers. Achieved 31/33 = 94% via vnstock_cash_flow fallback path (1942b). Supporting tasks: 1942a vnstockStartupProbe, 1942c HPG OCF all-zeros fix, 1943a BCTC queue reset + grace-period auto-retry. financial_reports.operating_cash_flow: 9/33 (OCR pipeline backlog, ongoing). vnstock_cash_flow fallback: 31/33.",
+  "sprintGoal": "Sprint 1945 COMPLETE 2026-05-18: Verdict resolution scoring envelope fix (1945a — getPriceHistory unwrap) + accuracy digest backend handler (1945b-backend) + frontend card (1945b-frontend). QA-approved all 3 tiers. Docker rebuild active.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
@@ -28,18 +28,19 @@
   "analysisAgentCount": 9,
   "microserviceAgentCount": 9,
   "_agentCountReconciled": "2026-05-12 main-terminal audit: report-analyzer moved to Analysis Team (chaining-protocol + agent file = cowork). devAgentCount = roster Dev Team rows (incl. semble-search skill proxy). analysisAgentCount = roster Analysis Team rows. microserviceAgentCount = roster Microservice rows. Filesystem total = 17 + 9 + 9 = 35.",
-  "totalTasksDone": 559,
+  "totalTasksDone": 560,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1912d c105-c106: Go cutover SHIPPED (5 commits, HEAD 2a92eb3f). USER OVERRIDE cut smoke ~22h early. TS gateway retired, Go primary host:4000, module renamed api-gateway-go→api-gateway. 9/9 services healthy 4ms avg. Doc/agent sweep complete (47 files: 16 TS deletions + 17 Go renames + docker-compose + 13 docs + dev-api-gateway agent switched + 5 Go-vs-doc divergences corrected).",
-  "currentSprintNotes": "c113 (2026-05-14T20:38Z): 1916 SPIKE COMPLETE — findings in docs/spikes/SPIKE_1916-bctc-queue-enricher-scraper-broken.md. ROOT CAUSE REVISED: bctcQueueEnricherJob has NEVER worked — all 4 discovery strategies dead. (S0) VPS Playwright route /proxy/bctc-discover never deployed on vps-proxy-server.js + bctcHttpFetcher.ts does not inject X-API-Key. (S1) SSC iboard NXDOMAIN since 2026-04-27. (S2) cafef FinanceInfo.ashx migrated 301→404 with query params lost. (S3) vietstock BCTC pages return JS-rendered 404. The 9 'working' tickers (VCB/FPT/DIG/BSR/DGC/HPG/SHB/VEA/VNM, 12 PDFs Apr 27-29) had source_url populated by parallel VPS-push pipeline (fetch-bctc.sh + discover-bctc-urls-browser.py), NOT by enricher. Zero Cheerio selector staleness. Carry-forward FIX tasks queued: **1916a-fix-vps-discover-route-and-apikey** (CRITICAL FIX, zone:multi vps-scripts+apps/mcp-server, owner ops+dev-mcp-server, deadline 2026-05-15T02:00Z — add /proxy/bctc-discover/:ticker route to vps-proxy-server.js + inject X-API-Key in bctcHttpFetcher.ts) + **1916b-fix-cafef-strategy-replacement** (HIGH FIX, zone apps/mcp-server, owner dev-mcp-server, sequenced after 1916a — replace dead cafef Strategy 2 or delete). 1916a is minimum viable fix; 1916b is hardening. **Concurrent with 1915 SPIKE (still pending review) — different upstream stage. 1916 = discovery side; 1915 = extraction side.** Sprint 1912 program-complete background carries: janitor-1912, 1914 dedup-api, 1914b-log-agent-work-doc, 1913 USER F1 (FA gateway desktop config, 10th cycle pending), 1907a digest-predict 5d silence (ops). 1909c reparse stays HOLD — now blocked by 1915 + 1916a in addition to calendar.",
+  "lastFixApplied": "1945 c118: Verdict scoring envelope fix SHIPPED (3 tasks merged: 1945a getPriceHistory unwrap in verdictResolutionJob.ts + clients.ts, 1945b-backend GET /api/accuracy/digest, 1945b-frontend AccuracyDigestCard). mcp-server Docker rebuild complete, all microservices healthy, /api/accuracy/digest endpoint live, scored_pct recovery expected within 48h.",
+  "currentSprintNotes": "c118 (2026-05-18T07:22Z): Sprint 1945 Docker rebuild COMPLETE. Container health: healthy. Endpoint /api/accuracy/digest responding. toolCount: 142. cronJobCount: 76. All services initialized. Verdict resolution envelope fix active (verdictResolutionJob.ts getPriceHistory fix allows envelope unwrap to complete — ~520 alerts awaiting scoring expected to transit within 48h based on alert cron schedule).",
   "infrastructureStatus": {
-    "lastUpdated": "2026-05-14",
-    "mcpServerHealth": "UP",
+    "lastUpdated": "2026-05-18",
+    "mcpServerHealth": "healthy",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "lastSuccessfulCycle": "2026-05-14T09:16:00Z"
+    "toolCount": 142,
+    "lastSuccessfulCycle": "2026-05-18T07:22:00Z"
   }
 }
