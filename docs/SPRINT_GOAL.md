@@ -1,6 +1,89 @@
-## Sprint 1944 — VPS BCTC DISCOVERY REPAIR (ACTIVE)
+## Sprint 1945 — VERDICT RESOLUTION RECOVERY + FRONTEND ACCURACY DIGEST (ACTIVE)
 
-**Status:** Active | **Opened:** 2026-05-18T05:34Z | **Theme:** Restore the BCTC source_url ingestion pipeline so banking Q1-2026 cohort + 27 watchlist tickers stop accumulating `url_not_found`
+**Status:** Active | **Opened:** 2026-05-18T06:23Z | **Theme:** Restore alert-accuracy signal (520→<200 unknowns, scored_pct 36%→≥60%) and unblock BA-1942d frontend card now that Sprint 1944 has stabilised the BCTC ingestion path.
+
+# Goal
+
+## Vision
+Sprint 1944 closed: BCTC pipeline restored end-to-end (banking 7/7 source_url populated, enricher cycling, dead strategies removed). Sprint 1942 closed: get_cash_flow coverage 31/33 = 94%. The next ceiling is **the closed-loop intelligence quality measurement** — unified-agent reports `alert_accuracy` stuck at `scored_pct=36% (520 unknown / 0 hit / 0 miss)` across 2026-05-17 → 2026-05-18 cycles. This means: even though signals fire and verdicts are written, `verdictResolutionJob` cannot resolve them to hit/miss because **historical baseline prices are missing** for the watchlist symbols at signal-fire-time.
+
+The recurring-bug protocol trips at 3 instances:
+- **TNB c68 finding #7** (2026-05-18): verdictResolutionJob no-baseline-price loop, 19 dup BUG msgs in 21h.
+- **unified-agent 04:01 UTC 2026-05-18**: `alert_accuracy scored_pct=36% with 520 unknowns over 30d → resolution job likely still stalled per prior cycle carry-over. Same root cause as 2026-05-17 BUG msgs.`
+- **1926a (DONE c146)** silenced the BUG storm via `false_positive` marking but did NOT restore the baseline-price ingestion that would let the job legitimately resolve verdicts.
+
+1926a was a band-aid (suppress the BUG noise); the underlying signal is "alert-accuracy measurement is broken" — every cowork agent reads `scored_pct` to calibrate their own confidence thresholds, and a stuck-at-36% measurement is poisoning the whole feedback loop.
+
+In parallel, **BA-1942d** (accuracy digest frontend card) is now unblocked post-Sprint-1944. Sprint 1941c shipped `getSystemAccuracyDigestStats` — the gateway endpoint + frontend card are the consumer side of the same accuracy pipeline. Land them together: if the resolver is fixed, the card has data to render; if the card lands first against a 36% pipeline, it visualises the bug.
+
+## Sprint 1945 sub-tasks (priority order)
+
+### TIER 1 — Diagnose + fix verdict resolution baseline (closed-loop intelligence repair)
+- **SPIKE-1945 — Root-cause why `verdictResolutionJob` cannot resolve baseline prices for 520 alerts.**
+  Time-box 2h. Output: `docs/spikes/SPIKE_1945-verdict-resolution-no-baseline.md`. Questions to answer:
+  1. Where does `verdictResolutionJob` read baseline prices from? (Likely `market_prices_history` or `stock_price.db`.)
+  2. For the 520 unknown verdicts, what's their `signal_emitted_at` timestamp distribution? Is the baseline-fetch reading the wrong source for that window?
+  3. Did the SQLite corruption fix Sprint 1336 (`stock_price.db` isolation) change the path that `verdictResolutionJob` queries? Possibly a stale FQN.
+  4. Is `1926a`'s `false_positive` marking correct here (no baseline EVER available → genuinely unresolvable), or are we masking a fixable upstream lag (price not yet ingested when verdict runs, but available a few hours later)?
+  Owner: architect (read-only diagnostic).
+  AC: Spike doc identifies root cause + recommended FIX task (e.g., 1945a-fix-baseline-source, 1945a-retry-grace-period, or 1945a-rebackfill-historical-prices). If conclusion is "1926a is correct, 520 unknowns are genuinely unresolvable" then **propose deletion of the unresolvable rows** and a back-off retry policy so the storm cannot recur.
+
+- **1945a — FIX (FROM SPIKE).**
+  Owner: dev-mcp-server. Scope sized from SPIKE-1945. Estimated S/M.
+  AC: After 1 verdict-resolution cycle post-fix, `alert_accuracy.scored_pct` rises ≥10pp OR `unknowns_30d` drops by ≥100. Zero new BUG channel noise from `verdictResolutionJob`.
+
+### TIER 2 — Frontend accuracy digest card (BA-1942d, now unblocked)
+- **BA-1942d — Write requirement spec for accuracy digest frontend card.**
+  Owner: ba. Re-priority MEDIUM (was LOW under Sprint 1944).
+  AC: spec covers (a) frontend route + component shape, (b) gateway endpoint contract for top-3/bottom-3 from `getSystemAccuracyDigestStats`, (c) loading/empty states (must handle "0 hit / 0 miss" gracefully — no division-by-zero), (d) acceptance criteria. Output: `docs/REQ_NNN-accuracy-digest-frontend-card.md` style.
+- **1945b — IMPLEMENTATION (FROM BA SPEC).**
+  Owner: dev-frontend + dev-api-gateway. Sized from BA spec. Estimated M.
+  Sequencing: lands after BA-1942d + 1945a (so the card has clean data to render).
+  AC: card renders on dashboard; backed by gateway endpoint backed by `getSystemAccuracyDigestStats`; loading/empty/error states all exercised.
+
+### TIER 3 — Observation gates (no code, passive)
+- **post-1942-fa-verify** (gate ~23:00 UTC 2026-05-18) — already in Todo. If next FA cycle reports ≥20/30 BCTC analyses → close. If still ≤19 → spawn `1945c-fa-docker-deploy-gap` bug task to dev-mcp-server.
+- **post-1944-financial-reports-q1-2026** (NEW gate, +1-3 cycles from 1944c sign-off ~10:00 UTC 2026-05-18). 1944c smoke shows banking 7/7 source_url populated but financial_reports Q1-2026 = 0 rows. Reparse pipeline expected to populate within 1-3 enricher+sweep cycles (30-90 min). If 0 rows after 3 cycles → spawn `1945d-reparse-pipeline-gap` bug task to dev-mcp-server.
+- **1941b OBSERVE** gate 2026-05-25 (signal_outcomes ≥30 resolved rows). No PO action this sprint.
+- **1922g OBSERVE** gate 2026-06-01 (pharma_events cron tick).
+
+## Scope
+IN: 1 spike (root-cause), 1 fix from spike, 1 BA spec (re-priority of BA-1942d), 1 frontend impl from spec, 2 observation gates.
+OUT: refactoring the alert engine; new alert types; backfilling old verdicts beyond what the fix mandates; new BCTC pipeline work; new microservices.
+
+## Success Metric
+- **AC-1 (PRIMARY):** `alert_accuracy.scored_pct` rises from 36% to ≥60% within 24h of 1945a deploy. `unknowns_30d` drops from ~520 to ≤200.
+- **AC-2:** Zero new `[bug] verdictResolutionJob` Telegram messages for 48h post-1945a deploy.
+- **AC-3:** Frontend accuracy digest card renders top-3/bottom-3 from real data (not placeholder). Empty-state handled gracefully when `total_scored < 20` (insufficient sample).
+- **AC-4:** SPIKE-1945 doc committed + 1945a's root-cause justification documented in the FIX commit message.
+
+## Sequencing
+1. SPIKE-1945 first (2h time-box; architect read-only).
+2. BA-1942d re-spawn in parallel with SPIKE-1945 (no dependency).
+3. 1945a (FIX from spike) — needs SPIKE-1945 done.
+4. 1945b (frontend card) — needs BA-1942d done AND 1945a done (so card has real data).
+5. TIER 3 observation gates run passively.
+
+## Architect brief required
+- **SPIKE-1945** itself is the architect output (read-only root-cause diagnosis). No separate ARCH brief required.
+
+## Carry-forwards monitored (not in-scope this sprint)
+- 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP)
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock)
+- alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550)
+- fa-shape-guard-watch MONITORING (next post-restart FA live session)
+
+---
+
+## Sprint 1944 — VPS BCTC DISCOVERY REPAIR (DONE)
+
+**Status:** DONE | **Closed:** 2026-05-18T06:23Z | **Theme:** Restore the BCTC source_url ingestion pipeline so banking Q1-2026 cohort + 27 watchlist tickers stop accumulating `url_not_found`
+
+**Outcome:** SHIPPED. All 4 tasks QA-approved 2026-05-18 (ARCH-1944, 1944a-vps, 1944a-mcp, 1944b, 1944c). Smoke report: `reports/TASK_REPORT_1944c.md` — PASS on all 5 ACs. Banking cohort 7/7 source_url populated (100%). VPS proxy returns `{results:[{url,source,confidence}],error}` envelope. X-API-Key injection verified. Dead strategies (SSC/vietstock) removed; strategy chain now `hsx(0) → VPS Playwright(1) → null`. Docker container rebuilt; enricher cycling at 05:45 + 06:15 UTC. financial_reports.Q1-2026 = 0 rows currently — reparse pipeline expected to populate within 1-3 cycles (carry-forward as `post-1944-financial-reports-q1-2026` observation gate in Sprint 1945).
+
+---
+
+## Sprint 1944 ORIGINAL VISION (preserved for traceability)
 
 # Goal
 
