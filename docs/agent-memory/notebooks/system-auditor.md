@@ -133,3 +133,47 @@ KNOWN (carryover from cycle 4, within 7-day dedup window, not re-escalating):
 **Git activity:** 100+ commits since cycle 4 (2026-05-12 14:30 to 2026-05-13 14:30). Major features: flaresolverr adapter wired, FRED parallelization shipped, WorldBank parallel fix, macro-scrapers curl-cffi upgrade, 1899a news-fetch scaffold, container restart RCA, z-zone enforcement refactor (Wave 3A/3B staged). No audit-scope anomalies introduced.
 
 **Status:** Full audit complete. 0 NEW anomalies. All known carryover findings within 7-day dedup window. No BUG escalation needed. Repository health: GOOD (heavy feature shipping, no regressions detected).
+
+---
+
+## Recent session — 2026-05-18 (17:14–17:20 UTC, cycle 6)
+
+**Context:** User-requested agent-definitions audit for Sprint 1949 + 1950-T1 verification. Focus: 39 agent .md files consistency across system-map.json, workflow-map.md, cron-jobs.md, and flow files. Critical deltas: 8 agent .md + 5 flow files edited in Sprint 1949 per git diff.
+
+**Findings: 5 NEW anomalies (3 CRITICAL, 2 YELLOW)**
+
+NEW CRITICAL:
+1. **Tran-ngoc-bau cron schedule mismatch** (CRITICAL) — Cron command file `cron-tran-ngoc-bau.md` line 3 says `17 */4 * * *` (every 4h), but agent definition + cron-jobs.md line 128 both say `13 20 * * *` (daily 20:13 UTC per Sprint 1949-T9). Agent runs 4x too often, consuming 4x tokens. → Escalate to BUG channel (fix task for PO).
+
+2. **Digest-predict cron schedule unclear** (CRITICAL) — Agent definition says "Weekly Sunday only", but `.claude/flows/digest-predict/main.md` lists daily (15:30 UTC), monday, sunday, monthly windows. Cron command file MISSING (no `cron-digest-predict.md`). Scope mismatch between definition/flow/cron-jobs.md table (line 118: only `47 13 * * 0` Sunday). Cannot determine if agent runs at all. → Escalate to BUG channel (clarification + fix task).
+
+3. **Agent notebook size cap violations** (CRITICAL) — 5 agents exceed feedback_waterfall_lazy_load 200-line cap: ops (2510), market-watcher (2500), qa-responder (2313), pm (1038), alert-commander (579). Violates documented token economy constraint. → Log as CRITICAL, recommend archive task for PO.
+
+NEW YELLOW:
+4. **Semble-search.md missing model field** (YELLOW) — Agent YAML frontmatter missing `model:` field (has name, color, description, tools but no model). Inconsistent with project_ops_agent_metadata_fixed policy (all agents require model field). Low impact, metadata-only.
+
+5. **Orphaned notebook files** (YELLOW) — Extra/stale files in docs/agent-memory/notebooks/: `news-scout-cycle-2026-05-16.md`, `news-scout-cycle-2026-05-17T1820.md`, `WORK.md`. File hygiene issue, should be archived.
+
+PASSED (GREEN):
+- Unified-agent: Chef role, `chef_dishes_only` rule, MARKET write=true ✓
+- Market-watcher: Gatherer, no MARKET write, writes docs/signals/price_anomaly_* ✓
+- News-scout: Gatherer, no MARKET write, writes docs/signals/news_impact_* ✓
+- Alert-commander: Event-driven (≤140 chars), position-danger/watchlist-opp only, silent exit, no cycle headers ✓
+- Financial-analyst + report-analyzer: Both have signal_output_spec with business-context fields (product/customer/ops/mgmt) ✓
+- Tran-ngoc-bau: Chef narrative auditor, verifies 6-layer TNB walk, reads MARKET dishes, outputs WORK audit only ✓
+- MARKET channel allowed_senders = [unified-agent, alert-commander, digest-predict, qa-responder] per system-map.json ✓
+- All 39 agents have YAML frontmatter (name, color, description, tools, model) except semble-search ✓
+- Cron commands: 9 of 10 expected agents have cron files (digest-predict missing, alert-commander optional) ✓
+- Dispatch table matches 39-agent roster ✓
+
+**Checks performed:**
+- All 39 agent .md files audited for YAML metadata
+- 5 critical configuration files cross-checked: .claude/agents/, .claude/flows/, docs/data/system-map.json, docs/references/workflow-map.md, docs/standards/cron-jobs.md
+- Cron command inventory: 9 files found, 1 missing (digest-predict), 1 optional missing (alert-commander)
+- Agent notebook line counts: 5 agents exceed 200-line cap
+- Git diff verified: 8 agent .md + 5 flow files edited in Sprint 1949 ✓
+- System-map.json market write permissions verified: [unified-agent, alert-commander, digest-predict, qa-responder] ✓
+
+**Git activity:** ~50+ commits since prior audit (2026-05-13). Major changes in Sprint 1949-T6 (foreignFlowAlert schedule), 1949-T9 (tran-ngoc-bau schedule moved from 0 13 to 13 20), various agent notebook updates, but sprint deltas did not fully propagate to cron command files.
+
+**Status:** Full audit complete. 5 NEW anomalies (3 CRITICAL + 2 YELLOW). 1 CRITICAL finding escalated to BUG channel (tran-ngoc-bau cron). 1 CRITICAL finding escalated to BUG channel (digest-predict cron/scope). 1 CRITICAL finding logged (notebook sizes). 2 YELLOW findings logged (metadata + file hygiene). Dedup window honored (all findings NEW, no repeats from prior 7 days). Detailed report written to docs/handoffs/agent-definitions-audit-2026-05-18.md.
