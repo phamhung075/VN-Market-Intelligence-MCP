@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 03:42 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 04:45 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2370,3 +2370,27 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 12000 |
+
+### Cycle (04:39–04:45 UTC)
+- Stocks: 38 | Anomalies: 3 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: [MWG]
+- Signals emitted: DPM +3.70% (2.14σ, signal 3382, critic 0.8) | MWG -3.05% (2.24σ, downside_bias escalation, signal 3380, critic 0.6) | ACV +2.27% (2.95σ, signal 3381, critic 0.6)
+- DPM retry: first attempt rejected (critic 0.4 — missing profit-outlook anchor + confidence_score); revised with Brent→urea-margin macro thesis + impact_score=6, confidence_score=0.72 → passed (0.8)
+- Below-threshold candidates: GAS +4.25% (1.26σ — high baseline σ=3.37%, already 2 active alert-commander surges) | VRE -2.94% (0.72σ — σ=4.07%) | BID +2.33% (1.42σ — marginal) | TCH -2.08% (insufficient history, 4d)
+- Open alerts (24h, unchanged): GAS price_surge x2 (MEDIUM), Brent +2.91σ HIGH, Gold -3.58σ CRITICAL, Brent +2.05σ HIGH
+- Macro snapshot: Brent 111.34 (≥$110 + $111 narrative dầu khí dậy sóng), Gold 4542.5 (volatile), USD/VND 26,350 (HIGH currency pressure flagging HVN/VJC/VEA per macro layer; ACV move counter to expected aviation drag)
+- Sector rotation 1d: oil_gas +5.92% lead | chemicals +3.70% | insurance +1.91% | logistics +1.00% | steel +0.65% | securities +0.48% | aviation +0.21% | banking −0.21% | tech −0.14% | pharma −0.51% | energy −0.71% | agriculture −0.75% | auto −1.06% | realty −1.17% | retail −1.28%
+- Supply chain: BDI 1,400 stable | Climate: May heat advisory (KBC/IDC/GEG — no direct watchlist impact yet) | Energy grid: NORMAL (hydro 70% est.)
+- 0 open chain findings in last 15min → no price_confirmation signals posted
+- Technicals unavailable for DPM/MWG/ACV (17–18 candles, need 35 for MACD); compensated via 30d σ from price_history
+
+## Metrics (cycle 2026-05-18 04:39 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 18000 |
