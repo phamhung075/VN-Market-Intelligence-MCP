@@ -16,7 +16,6 @@
 
 ## Todo
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
-| calendar-source-replacement | **OBSERVE** — calendar source endpoint permanently unreachable (capped at 5s timeout, never succeeds). Need replacement evaluation: alternative calendar API or wontfix decision. AC: identify replacement source URL OR mark calendar feature wontfix. Carry-over from c167 fetch-ops session. | LOW | OBSERVE | dev-macro-indicators | — | — |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
 
 ---
@@ -25,7 +24,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| calendar-source-replacement | **IN PROGRESS c175** — calendar source endpoint permanently unreachable (5s timeout, never succeeds). Evaluate replacement source OR mark wontfix. AC: replacement adapter implemented OR dead adapter removed from macroRefresh cycle. | LOW | OBSERVE/FIX | dev-macro-indicators | docs/handoffs/calendar-source-replacement.md | — |
 
 ---
 
