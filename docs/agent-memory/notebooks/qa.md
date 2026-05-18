@@ -1,6 +1,29 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c174 — 1940a PC1 legal-risk dual-source fix — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c175 — calendar-source-replacement wontfix — APPROVED
+
+## Session 2026-05-18 c175 — calendar-source-replacement wontfix
+
+### TASK REPORT — calendar-source-replacement (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FIX / WONTFIX (infrastructure — NullCalendarAdapter)
+round: 1
+merge commit: chore(macro-indicators): merge task/calendar-source-replacement
+```
+
+#### Pipeline
+
+- NullCalendarAdapter tests (4): 4/4 GREEN
+- fetch-external-macro tests: 14/14 GREEN
+- Full macro-indicators suite: 103 pass / 12 skip / 1 fail (pre-existing: trading-economics-vn VN_TE_SLUGS length — confirmed on main)
+- tsc: pre-existing errors in adb-kidb/fred-macro/imf-weo/world-bank-macro test files (confirmed on main). Changed files type-clean.
+- DDD: PASS — no domain→infra violations, index.ts is composition root
+- Security: PASS — no process.env introduced, no hardcoded secrets
+
+---
 
 ## Session 2026-05-18 c174 — 1940a PC1 legal-risk tool gap
 
