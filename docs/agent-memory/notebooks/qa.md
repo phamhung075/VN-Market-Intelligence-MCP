@@ -1,5 +1,56 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-18 | **Session:** c186 — 1945b-backend GET /api/accuracy/digest endpoint — APPROVED
+
+## Session 2026-05-18 c186 — 1945b-backend GET /api/accuracy/digest endpoint
+
+### TASK REPORT — 1945b-backend (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: ec9b1f34 (on main, no separate task branch)
+type: FEATURE (interface/mcp/server.ts + __tests__)
+zone: apps/mcp-server/
+round: 1
+```
+
+#### Pipeline
+
+- Zone tests (1945b): 6/6 GREEN (154ms)
+- tsc: 0 errors
+- DDD: PASS — test file imports infra (permitted in __tests__/); no domain→infra violation
+- Security: PASS — no process.env, no hardcoded secrets; R-4 neutralised at call site
+
+#### AC Matrix
+
+| AC | Result |
+|----|--------|
+| AC-1 200 with totalResolved/bySignalType/generatedAt shape | PASS |
+| AC-2 days clamped [1,90]: 999→90, 0→1, absent→30 | PASS |
+| AC-3 DB error returns 500 { error: "internal error" } | PASS |
+| AC-4 Zero-struct returns 200 with empty bySignalType | PASS |
+| AC-5 tsc 0 errors | PASS |
+| AC-6 All 6 test cases GREEN | PASS |
+
+#### Notes
+
+- Commit ec9b1f34 already on main (developer merged directly, no task branch)
+- R-4 security: days clamped before getSystemAccuracyDigestStats call; template literal in signalOutcomeStore.ts safe (integer [1,90] only)
+- TASKS.md 1945b-backend row updated to QA-APPROVED
+- WORK channel notified: "[QA] 07:13 UTC — feat(mcp-server): 1945b-backend SHIPPED — GET /api/accuracy/digest endpoint live. 6/6 GREEN, tsc 0 errors, R-4 mitigated."
+- reports/TASK_REPORT_1945b-backend.md updated with QA Review Record
+
+## Cycle — 07:13 UTC
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1945b-backend handler correct — days clamped [1,90] via isNaN guard, R-4 neutralised, 6 tests all GREEN
+- **actions**: TASKS.md QA-APPROVED, WORK Telegram sent, task report updated, notebook updated
+- **next_cycle_hint**: 1945b-frontend unblocked — backend endpoint live at GET /api/accuracy/digest?days=N
+- **estimated_tokens**: 6500
+
+---
+
 **Last updated:** 2026-05-18 | **Session:** c185 — 1945a getPriceHistory envelope unwrap fix — APPROVED
 
 ## Session 2026-05-18 c185 — 1945a getPriceHistory envelope unwrap fix

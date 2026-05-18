@@ -50,7 +50,20 @@ Implemented `GET /api/accuracy/digest?days=N` HTTP handler in `apps/mcp-server/s
 
 ---
 
-## Acceptance Criteria
+## QA Review Record
+
+**Verdict:** APPROVED
+**QA run date:** 2026-05-18
+**Reviewer:** qa agent
+
+### Pipeline
+
+- Zone tests (1945b): 6/6 GREEN
+- tsc: 0 errors
+- DDD: PASS — test file imports from infrastructure (permitted in `__tests__/`); no domain→infra violation
+- Security: PASS — no process.env, no hardcoded secrets in handler block; R-4 neutralised
+
+### AC Matrix
 
 | AC | Status | Evidence |
 |----|--------|---------|
@@ -60,6 +73,10 @@ Implemented `GET /api/accuracy/digest?days=N` HTTP handler in `apps/mcp-server/s
 | AC-4: Zero-struct response returns 200 | PASS | TC-6 |
 | AC-5: tsc 0 errors | PASS | `bun tsc --noEmit` clean |
 | AC-6: All 6 test cases GREEN | PASS | `6 pass, 0 fail` |
+
+### Security Note — R-4
+
+`days` is clamped via `Math.min(Math.max(isNaN(_daysParsed) ? 30 : _daysParsed, 1), 90)` before being passed to `getSystemAccuracyDigestStats(db, days)`. The template-literal interpolation in `signalOutcomeStore.ts` (lines 411, 434, 451, 466) is therefore safe — only integers in [1,90] can reach it. R-4 risk neutralised at call site.
 
 ---
 
