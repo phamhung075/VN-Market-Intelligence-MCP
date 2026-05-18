@@ -1,0 +1,46 @@
+{
+  "from": "qa",
+  "to": "fixer",
+  "type": "changes-requested",
+  "payload": {
+    "sprint": "1951",
+    "status": "changes_requested",
+    "next_agent": "fixer",
+    "report_path": "docs/handoffs/sprint-1951-cowork-team-qa-report.md",
+    "blocking": [
+      {
+        "id": "BLOCK-1",
+        "severity": "CRITICAL",
+        "summary": "chef-morning (:23), chef-eod (:37), chef-evening (:37) are dead-zone minutes — ±2min window from master :00/:15/:30/:45 never captures them. 3 guaranteed chef dishes will not fire.",
+        "files": ["docs/data/cowork-schedule.json", "docs/data/cowork-schedule-skipped.json"],
+        "action": "Architect must approve cron realignment. Preferred: chef-morning → 15 5, chef-eod → 45 8, chef-evening → 45 19. All within operational windows.",
+        "architect_decision_required": true
+      },
+      {
+        "id": "BLOCK-2",
+        "severity": "HIGH",
+        "summary": "3 primary files untracked + 2 doc diffs uncommitted. Sprint 1951 deliverable not in version control.",
+        "files": [
+          ".claude/commands/cowork-team.md",
+          ".claude/flows/cowork-team/main.md",
+          ".claude/commands/crons/cron-cowork-team.md",
+          "docs/standards/cron-jobs.md",
+          "docs/references/workflow-map.md"
+        ],
+        "action": "Commit all 5 files in one feat(1951/scheduler) commit."
+      },
+      {
+        "id": "BLOCK-3",
+        "severity": "MEDIUM",
+        "summary": "Stale .claude/flows/cowork-dispatcher/main.md committed — old RemoteTrigger approach, pending_register trigger spec. Creates dual-dispatcher confusion and registration risk.",
+        "files": [
+          ".claude/flows/cowork-dispatcher/main.md",
+          "docs/data/cowork-dispatcher-trigger.json"
+        ],
+        "action": "Delete cowork-dispatcher/main.md and cowork-dispatcher-trigger.json, or mark both as deprecated with clear header."
+      }
+    ]
+  },
+  "priority": "high",
+  "createdAt": "20260518T202350Z"
+}

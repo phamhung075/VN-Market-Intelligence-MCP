@@ -1,5 +1,55 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-18 | **Sprint:** 1951 | **Session:** c199 — Sprint 1951 cowork-team — CHANGES_REQUESTED
+
+## Session 2026-05-18 c199 — Sprint 1951 cowork-team (CHANGES_REQUESTED)
+
+### TASK REPORT — Sprint 1951 (compact)
+
+```
+date: 2026-05-18
+outcome: CHANGES_REQUESTED
+type: FEAT — cowork-team master cron dispatcher (replaces 16 RemoteTrigger slots)
+zone: .claude/commands/, .claude/flows/cowork-team/, .claude/commands/crons/, docs/data/, docs/standards/, docs/references/
+round: 1
+```
+
+#### AC Matrix
+
+| AC | Description | Verdict |
+|----|-------------|---------|
+| AC-1 | command file exists | PARTIAL (untracked) |
+| AC-2 | flow file exists | PARTIAL (untracked) |
+| AC-3 | cron registered | DEFERRED (runtime) |
+| AC-4 | sub-hourly slots fire | PASS |
+| AC-5 | silent cycles no noise | PASS (impl) |
+| AC-6 | idempotency | PASS |
+| AC-7 | telemetry schema | PASS |
+| AC-8 | RemoteTrigger deletion | DEFERRED |
+| AC-9 | schedule.json fields | PASS |
+| AC-10 | cron-jobs.md row | PARTIAL (uncommitted) |
+
+#### Blocking Issues
+
+- BLOCK-1: chef-morning (:23), chef-eod (:37), chef-evening (:37) are dead-zone minutes — 7-8min gap from nearest ±2min master window. 3 guaranteed dishes NEVER FIRE. Architect must approve cron realignment.
+- BLOCK-2: .claude/commands/cowork-team.md, .claude/flows/cowork-team/main.md, .claude/commands/crons/cron-cowork-team.md are UNTRACKED. docs/standards/cron-jobs.md + workflow-map.md diffs uncommitted. Not persisted.
+- BLOCK-3: Stale .claude/flows/cowork-dispatcher/main.md + docs/data/cowork-dispatcher-trigger.json (status: pending_register) committed via cdb556bd — dual-dispatcher confusion.
+
+#### Non-blocking
+
+- NB-1: OQ-2 collision guard fires 20+ WORK messages/weekday (market-watcher multi-slot). High noise but non-blocking per brief §5 R3.
+- NB-2: Brief AC-5 example (03:00 UTC weekday = silent) is factually wrong. Impl correct.
+
+## Cycle — 2026-05-18 c199
+
+- **cycle_date**: 2026-05-18
+- **findings**: Sprint 1951 — BLOCK-1 critical (dead-zone chef slots), BLOCK-2 high (untracked files), BLOCK-3 medium (stale committed flow). Smart-Skip applied (Markdown + JSON only, no TypeScript). Cron match algo verified via Python simulation.
+- **actions**: CHANGES_REQUESTED. Report at docs/handoffs/sprint-1951-cowork-team-qa-report.md. Signal at docs/signals/qa-1951-cowork-team-changes-requested.json.
+- **next_cycle_hint**: Fixer — BLOCK-2 (commit) + BLOCK-3 (delete/deprecate cowork-dispatcher) are straightforward. BLOCK-1 requires architect decision on cron realignment for 3 chef slots. QA re-run needed after all 3 blocks resolved.
+- **estimated_tokens**: 5800
+
+---
+
 **Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c198 — MAINT-1950b/c/d archival + sweep — APPROVED
 
 ## Session 2026-05-18 c198 — MAINT-1950b/c/d (APPROVED)
