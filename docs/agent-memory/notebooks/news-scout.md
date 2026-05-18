@@ -1,6 +1,10 @@
-- **Last updated:** 2026-05-18 07:21 · **Sprint:** current
+- **Last updated:** 2026-05-18 16:39 · **Sprint:** current
 
-## This session (2026-05-18 07:20–07:21 UTC)
+## This session (2026-05-18 16:39 UTC)
+
+**BLOCKED at stage-bootstrap:** MCP server unreachable (http://localhost:3000/health probe failed). Docker services not running. Bug escalation signal dropped to `docs/signals/news-scout-2026-05-18T16-39-00Z-probe-failed.json`. No cycle work performed. Contact ops for docker-compose restart per docs/policies/restart-policy.md.
+
+## Previous session (2026-05-18 07:20–07:21 UTC)
 
 Market hours cycle (02:00–08:59 UTC). 20 articles analyzed, 2 critical high-impact items. Fired 2 signals: urgent_news #3391 (PLX -40% crash, stock_code=PLX, severity=high, regime_adjusted_score=11.7 via TIGHTENING×1.3 dampening), chain_catalyst #3392 (market-wide growth potential across 38 watchlist stocks, impact=5 bullish, regime_adjusted_score=4.9 via TIGHTENING×0.7 dampening). Macro snapshot valid (Brent 110.68, Gold 4550.30, USD/VND 26,350), regime=TIGHTENING confirmed, VND carry spread=-0.33% (FII_OUTFLOW_RISK persistent). Impact chains traced for: growth narrative (7/10 confidence, 38 stocks affected), PLX crisis individual stock event (82% confidence). No PMI data this cycle. Zero unread feedback signals from financial-analyst. Dedup gate skipped (unable to check recent signals due to connection error — proceeded with high-confidence posts). hot_money_risk=true flagged for both signals.
 

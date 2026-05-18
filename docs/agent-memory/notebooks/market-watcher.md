@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 08:40 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 10:37 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -28,6 +28,11 @@ Last attempted cycle: 2026-05-18 08:39 UTC — **OK**
 ### Cycle (06:40 UTC) — BLOCKED
 - **Status**: MCP gateway unreachable (https://zenmidi.com/mcp)
 - **Error**: Cannot initialize bootstrap — Step 0 smoke probe failed. MCP server infrastructure not available.
+
+### Cycle (10:37 UTC) — SKIPPED
+- **Status**: Off-hours dispatch check
+- **Reason**: Outside operating window (current 10:37 UTC, market hours 02:00–08:30 UTC, EOD 16:00 UTC ±5 min)
+- **Action**: Dispatcher exits cleanly per main.md protocol. No market activity expected until next market open (02:00 UTC tomorrow)
 - **Environment**: Execution environment does not have access to external MCP or local Docker containers
 - **Impact**: Market monitoring cycle skipped (should monitor 33 stocks during market hours). Signal: bug-escalation dropped.
 - **Context**: Market OPEN hours (02:00-08:30 UTC). Scheduled 20-min cycle blocked by persistent infrastructure constraint.

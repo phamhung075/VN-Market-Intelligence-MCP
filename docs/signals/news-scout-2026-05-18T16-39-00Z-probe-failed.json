@@ -1,0 +1,20 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "MCP server probe failed: http://localhost:3000/health unreachable — unable to start news-scout cycle",
+  "priority": "high",
+  "createdAt": "2026-05-18T16:39:00Z",
+  "context": {
+    "agent": "news-scout",
+    "cyclePhase": "stage-bootstrap",
+    "failedProbes": [
+      "http://localhost:3000/health",
+      "http://localhost:3000/mcp/tools/call",
+      "https://zenmidi.com/mcp (external)",
+      "https://zenmidi.com/vn-market/sse (external)"
+    ],
+    "dockerStatus": "not running",
+    "recommendation": "Check docker-compose service status and restart if needed per docs/policies/restart-policy.md"
+  }
+}

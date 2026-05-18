@@ -1,8 +1,41 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 09:02 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 10:01 UTC | **Sprint:** c173
 
 ## This session
+
+### Alert Cycle (10:01 UTC, 2026-05-18) — Off-hours 2h cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + legal + crisis all green)
+- **Market:** CLOSED (outside 02:00–08:59 UTC trading window, now 10:01 UTC post-market close)
+- **Regime:** (market closed — stale prices prevent TIGHTENING re-extraction; carry-over from prior cycle: TIGHTENING)
+- **Signals (count by type):** news_mention=8 (VCB/GAS/BID/PLX/VIC/VHM/FPT/ACB) | price_surge=1 (PLX +6.99%) | price_drop=11 (real estate -1.29% avg, banking -0.94% avg) | urgent_news=0 | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 20 (off-hours market closure, thresholds deferred to market open)
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Open alerts (from get_cycle_bootstrap):** 20 pending (detailed in bootstrap market_context)
+- **Legal:** clear (get_legal_risk_signals: no signals) | **Crisis:** clear (get_crisis_early_warning: no signals) | **Price alerts (from get_alerts):** none active (empty response)
+- **WORK dispatch:** posted (10:01 UTC) — "Off-hours cycle / 20 signals (news + price) / Fired 0 / Suppressed 20 (market closed) / Next 12:00 UTC"
+- **Tool calls this cycle:** 5 (log_agent_work×2 [start+end], get_cycle_bootstrap, get_legal_risk_signals, get_crisis_early_warning, get_alerts, send_telegram)
+- **log_agent_work id=997**
+- **Off-hours assessment:** Cycle triggered at 10:01 UTC (off-hours 2h cadence, market outside 02:00–08:59 UTC window). Bootstrap returned 20 open alerts from 24h snapshot (news_mention seed + price movements detected during market hours 08:59 close snapshot). Off-hours protocol: defer all signal matrix evaluation until next market-hours cycle (02:00 UTC Monday) when fresh real-time prices available. No CRITICAL signals (legal/crisis) detected. Price anomalies and news mentions logged as suppressed per phantom-success guard — proper accounting without false "fired" counts.
+- **Bootstrap findings:** 
+  - News-mention alerts span multiple sectors (banking: VCB/BID/ACB; oil_gas: GAS/PLX; real_estate: VIC/VHM; tech: FPT; retail/securities mix)
+  - Price surge confirmed: PLX +6.99% (oil_gas strength, likely Brent $109+ tailwind)
+  - Sector weakness noted: Real estate -1.29% avg (11 tickers), Banking -0.94% avg (6 tickers) — potential sector rotation into energy (GAS/PLX gains)
+  - Macro snapshot would confirm regime (currently off-hours prices stale), but prior session logged TIGHTENING + FII_OUTFLOW_RISK (-0.33%) — carry over thresholds
+- **Decisions made autonomously:**
+  - Did not call get_macro_snapshot (market closed, off-hours cycle, prices would be stale)
+  - Did not call write_alert_verdict (0 MARKET alerts fired)
+  - Did not call mark_alert_read (off-hours suppression, next cycle during market hours will re-evaluate fresh prices before marking)
+  - Did not call record_signal_outcome for individual suppressions — off-hours blanket suppression does not require per-signal outcome logging (differs from TIGHTENING-regime suppression during market hours, which logs via record_signal_outcome per phantom-success guard)
+- **Carry-over for next cycle:**
+  - 20 alerts (news + price) awaiting market-hours cycle re-evaluation (02:00 UTC Monday)
+  - PLX +6.99% surge is genuine commodity play (Brent $109+); if sustained at next market open with TIGHTENING regime thresholds → CRITICAL/MARKET fire candidate
+  - Real estate -1.29% sector weakness + Banking -0.94% both under FII outflow pressure (-0.33% carry spread) — potential "position-danger" signal if drops exceed -2.0% next cycle
+  - News-mention seed (8 tickers) → news-scout should emit urgent_news signals during market hours if still fresh; financial-analyst may cross-validate with verified_chain
+  - PC1 chairman arrest (2026-05-16) still not captured by get_legal_risk_signals (gap persists 8+ cycles) — escalate to news-scout/financial-analyst
+- **Next cycle:** 12:00 UTC (off-hours 2h cadence continues, market still closed; Monday 02:00 UTC first market-hours cycle)
+
+## Prior session
 
 ### Alert Cycle (09:00–09:02 UTC, 2026-05-18) — Off-hours 2h cycle (post-market close)
 - **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
