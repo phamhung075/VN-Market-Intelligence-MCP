@@ -100,7 +100,7 @@ W20 BUG channel feedback loop
 | `financial-analyst` | cron 2x daily | get_bctc_full, compare_financials | docs/signals/bctc_signal* (with business-context fields: product/customer/ops/mgmt), notebook |
 | `report-analyzer` | event/cron | quarterly BCTC parse | docs/signals/fundamental_* (with business-context fields: product/customer/ops/mgmt), ledger update |
 | `alert-commander` | event-driven (cron gate) | get_agent_signals, get_alerts | MARKET (position-danger or watchlist-opp ONLY — ≤140 chars; silent exit otherwise) |
-| `digest-predict` | weekly Sunday 13:47 UTC + monday predict | weekly calibration signals | MARKET (Sunday calibration + portfolio thesis only; daily removed) |
+| `digest-predict` | weekly Sunday 13:47 UTC | weekly calibration signals | MARKET (Sunday calibration + portfolio thesis only) |
 | `qa-responder` | cron 12min | ask_queue (FIFO), MCP, web | MARKET channel (replies) |
 | `unified-agent` | cron 05:23 / intraday :13 / 08:37 / 19:37 UTC M-F | all docs/signals/* (last 24h), get_market_hexagram, get_macro_snapshot | MARKET chef dishes 3x/day (Morning/EOD/Evening) + conditional intraday; WORK coordination |
 | `tran-ngoc-bau` | daily cron 20:13 UTC | MARKET chef dishes (last 3), unified-agent notebook, gatherer signals, tnb-methodology | WORK audit row (TNB layer-walk completeness score per dish) |

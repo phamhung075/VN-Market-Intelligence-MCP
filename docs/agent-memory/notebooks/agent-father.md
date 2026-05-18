@@ -1,7 +1,7 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1950 / T3 chef pipeline runbook — closes sprint)
-**Sprint:** 1950 / T3
+**Last updated:** 2026-05-18 (Sprint 1950 / MAINT-1950b+c+d — notebook archival + YELLOW fixes + workflow-map sweep)
+**Sprint:** 1950 / MAINT
 
 ## This Session — 2026-05-18 (Sprint 1950 / T3 chef pipeline runbook)
 
@@ -105,9 +105,33 @@ Signal: `docs/signals/agent-father-2026-05-18T17-15-14Z-1950-T2-done.json`
 
 ---
 
+## This Session — 2026-05-18 (Sprint 1950 / MAINT-1950b+c+d)
+
+**Tasks: MAINT-1950b + MAINT-1950c + MAINT-1950d — doc/notebook hygiene bundle**
+
+MAINT-1950b (notebook archival):
+- Archived 5 oversized notebooks to `docs/archive/notebooks/<agent>-2026-05-18.md`
+- Live notebooks rewritten to current cycle + carry-over: ops 2510L→53L, market-watcher 2500L→79L, qa-responder 2313L→56L, pm 1167L→64L, alert-commander 579L→48L
+- All ≤200L waterfall lazy-load cap (AC met)
+
+MAINT-1950c (YELLOW audit findings):
+- Added `model: claude-haiku-4-5` to `.claude/agents/semble-search.md` frontmatter
+- Moved orphan news-scout-cycle notebooks (05-16 + 05-17T1820) to `docs/archive/notebooks/`
+- WORK.md assessed as valid status file (not notebook), retained
+
+MAINT-1950d (residue sweep):
+- Fixed `docs/references/workflow-map.md` L103: removed "+ monday predict" from digest-predict row
+- Verified `docs/standards/cron-jobs.md` L120: `47 13 * * 0` unchanged (correct)
+- Grep: zero live "monday predict" references remaining
+
+All 3 MAINTs bundled into one chore commit (doc/notebook hygiene).
+
+---
+
 ## Patterns Noticed
 
 - Concurrent agents modify TASKS.md mid-session — re-read before staging.
 - HEAD SHA changes between calls when concurrent agents commit — `git diff` before stage.
 - TASKS.md cap: rotate Done rows to TASKS_ARCHIVE.md when file grows large.
 - Cron file edits do NOT auto-refresh live cron — CronDelete + CronCreate required same session.
+- Notebook archival: copy full file first, then overwrite with slim version — never truncate in-place without backup.
