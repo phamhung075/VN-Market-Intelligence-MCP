@@ -185,6 +185,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
   });
 
   it("processes items and populates source_url on discovery success", async () => {
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     const db = makeDb();
     insertRow(db, "VNM", "pending", null);
     insertRow(db, "ACB", "pending", null);
@@ -193,10 +194,10 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
       db,
       batchSize: 10,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscPdf("https://iboard-query.ssc.vn/static/test.pdf"),
-        _fetchCafef: mockFail,
-        _fetchVietstock: mockFail,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockSscPdf("https://iboard-query.ssc.vn/static/test.pdf"), // deprecated no-op
+        _fetchCafef: mockFail,     // deprecated no-op
+        _fetchVietstock: mockFail, // deprecated no-op
       },
     });
 

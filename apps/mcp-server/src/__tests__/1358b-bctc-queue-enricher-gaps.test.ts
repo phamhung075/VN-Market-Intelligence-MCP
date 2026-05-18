@@ -129,15 +129,16 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
   // ENR-1: source_url = 'MISSING' placeholder is included by WHERE clause
   // ---------------------------------------------------------------------------
   it("ENR-1: 'MISSING' source_url is treated as needing enrichment", async () => {
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     insertQueueItem(testDb, "FPT", 2025, "Q4", "MISSING");
 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockFetchSuccess(),
-        _fetchCafef: mockFetchEmpty(),
-        _fetchVietstock: mockFetchEmpty(),
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/fpt-bctc.pdf"],
+        _fetchSsc: mockFetchSuccess(),   // deprecated no-op
+        _fetchCafef: mockFetchEmpty(),   // deprecated no-op
+        _fetchVietstock: mockFetchEmpty(), // deprecated no-op
       },
     });
 
@@ -145,22 +146,23 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     expect(result.urlsPopulated).toBe(1);
 
     const item = getQueueItem(testDb, "FPT");
-    expect(item?.source_url).toBe("https://ssc.gov.vn/test.pdf");
+    expect(item?.source_url).toBe("https://hsx.example.com/fpt-bctc.pdf");
   });
 
   // ---------------------------------------------------------------------------
   // ENR-2: source_url LIKE '/test-%' placeholder is included by WHERE clause
   // ---------------------------------------------------------------------------
   it("ENR-2: '/test-...' source_url placeholder is treated as needing enrichment", async () => {
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     insertQueueItem(testDb, "FPT", 2025, "Q4", "/test-fpt-q4-2025");
 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockFetchSuccess(),
-        _fetchCafef: mockFetchEmpty(),
-        _fetchVietstock: mockFetchEmpty(),
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/fpt-bctc.pdf"],
+        _fetchSsc: mockFetchSuccess(),   // deprecated no-op
+        _fetchCafef: mockFetchEmpty(),   // deprecated no-op
+        _fetchVietstock: mockFetchEmpty(), // deprecated no-op
       },
     });
 
@@ -170,7 +172,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const item = getQueueItem(testDb, "FPT");
     // Placeholder must be replaced with the discovered URL
     expect(item?.source_url).not.toBe("/test-fpt-q4-2025");
-    expect(item?.source_url).toBe("https://ssc.gov.vn/test.pdf");
+    expect(item?.source_url).toBe("https://hsx.example.com/fpt-bctc.pdf");
   });
 
   // ---------------------------------------------------------------------------
@@ -262,6 +264,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
   // ENR-6: batchSize override smaller than DEFAULT_BATCH_SIZE (20)
   // ---------------------------------------------------------------------------
   it("ENR-6: batchSize:3 processes only 3 of 10 pending items", async () => {
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     for (let i = 1; i <= 10; i++) {
       insertQueueItem(testDb, `CODE${String(i).padStart(2, "0")}`, 2025, "Q4", null);
     }
@@ -270,10 +273,10 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
       db: testDb,
       batchSize: 3,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockFetchSuccess(),
-        _fetchCafef: mockFetchEmpty(),
-        _fetchVietstock: mockFetchEmpty(),
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockFetchSuccess(),   // deprecated no-op
+        _fetchCafef: mockFetchEmpty(),   // deprecated no-op
+        _fetchVietstock: mockFetchEmpty(), // deprecated no-op
       },
     });
 
@@ -288,6 +291,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
   // ENR-7: mixed queue — NULL + MISSING processed; real-URL items excluded
   // ---------------------------------------------------------------------------
   it("ENR-7: WHERE clause excludes real-URL items, processes NULL and MISSING", async () => {
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     insertQueueItem(testDb, "FPT", 2025, "Q4", null);                             // needs enrichment
     insertQueueItem(testDb, "VCB", 2025, "Q4", "MISSING");                        // needs enrichment
     insertQueueItem(testDb, "HPG", 2025, "Q4", "https://real-existing.pdf");      // already populated
@@ -295,10 +299,10 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockFetchSuccess(),
-        _fetchCafef: mockFetchEmpty(),
-        _fetchVietstock: mockFetchEmpty(),
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockFetchSuccess(),   // deprecated no-op
+        _fetchCafef: mockFetchEmpty(),   // deprecated no-op
+        _fetchVietstock: mockFetchEmpty(), // deprecated no-op
       },
     });
 
@@ -309,12 +313,12 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
     const hpg = getQueueItem(testDb, "HPG");
     expect(hpg?.source_url).toBe("https://real-existing.pdf");
 
-    // FPT and VCB must now have real URLs
+    // FPT and VCB must now have real URLs (from hsx mock)
     const fpt = getQueueItem(testDb, "FPT");
-    expect(fpt?.source_url).toBe("https://ssc.gov.vn/test.pdf");
+    expect(fpt?.source_url).toBe("https://hsx.example.com/bctc.pdf");
 
     const vcb = getQueueItem(testDb, "VCB");
-    expect(vcb?.source_url).toBe("https://ssc.gov.vn/test.pdf");
+    expect(vcb?.source_url).toBe("https://hsx.example.com/bctc.pdf");
   });
 
   // ---------------------------------------------------------------------------

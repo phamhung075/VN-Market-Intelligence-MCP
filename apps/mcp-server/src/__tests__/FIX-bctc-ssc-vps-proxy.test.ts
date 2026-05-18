@@ -73,120 +73,74 @@ function capturingFetch(urls: string[]): HttpFetchFn {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// A. Request URL shape when SSC_IBOARD_BASE_URL is the VPS proxy
+// A. TASK_1944b: SSC strategy removed — _fetchSsc is never called
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX-bctc-ssc-vps-proxy — A: request URL shape via VPS proxy", () => {
-  it("builds URL as <VPS_PROXY_BASE>/dcm/financials/ticker/<TICKER>", async () => {
+describe("FIX-bctc-ssc-vps-proxy — A/B/C: SSC removed (TASK_1944b) — _fetchSsc never invoked", () => {
+  it("_fetchSsc is never called even when SSC_IBOARD_BASE_URL is set (strategy removed)", async () => {
+    // TASK_1944b: SSC strategy permanently removed. SSC_IBOARD_BASE_URL is no longer consulted.
     const captured: string[] = [];
     const prev = Bun.env["SSC_IBOARD_BASE_URL"];
     Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
 
     try {
       await discoverHosePdfUrls("VCB", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchSsc: capturingFetch(captured),  // deprecated no-op
+        _fetchCafef: mockEmpty,               // deprecated no-op
+        _fetchVietstock: mockEmpty,           // deprecated no-op
       });
     } finally {
       if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
       else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
     }
 
-    expect(captured.length).toBeGreaterThan(0);
-    expect(captured[0]).toBe(
-      `${VPS_PROXY_BASE}/dcm/financials/ticker/VCB`,
-    );
+    // SSC strategy removed → capturingFetch never called
+    expect(captured.length).toBe(0);
   });
 
-  it("VPS proxy URL uses port 8765 (not 80 or 3000)", async () => {
-    const captured: string[] = [];
+  it("result is empty when only SSC mock is provided (SSC removed — no active strategy)", async () => {
+    // TASK_1944b: SSC removed. Without VPS/hsx injectables → source = null.
     const prev = Bun.env["SSC_IBOARD_BASE_URL"];
     Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
 
     try {
-      await discoverHosePdfUrls("FPT", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+      const result = await discoverHosePdfUrls("FPT", {
+        _fetchSsc: mockVpsProxySuccess("FPT"), // deprecated no-op
+        _fetchCafef: mockEmpty,                // deprecated no-op
+        _fetchVietstock: mockEmpty,            // deprecated no-op
       });
+
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     } finally {
       if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
       else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
     }
-
-    expect(captured[0]).toContain(":8765");
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// B. Proxy path segment structure
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("FIX-bctc-ssc-vps-proxy — B: proxy path segment structure", () => {
-  it("proxy base path contains /proxy/ssc-iboard segment", async () => {
-    const captured: string[] = [];
-    const prev = Bun.env["SSC_IBOARD_BASE_URL"];
-    Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
-
-    try {
-      await discoverHosePdfUrls("HPG", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
-      });
-    } finally {
-      if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
-      else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
-    }
-
-    expect(captured[0]).toContain("/proxy/ssc-iboard/");
-    expect(captured[0]).toContain("/dcm/financials/ticker/");
   });
 
-  it("VPS IP 125.212.251.27 appears in the request URL", async () => {
-    const captured: string[] = [];
-    const prev = Bun.env["SSC_IBOARD_BASE_URL"];
-    Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
-
-    try {
-      await discoverHosePdfUrls("MSN", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
-      });
-    } finally {
-      if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
-      else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
-    }
-
-    expect(captured[0]).toContain("125.212.251.27");
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// C. Ticker upper-case + URL encoding
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("FIX-bctc-ssc-vps-proxy — C: ticker normalisation", () => {
-  it("lower-case ticker is upper-cased in proxy request URL", async () => {
-    const captured: string[] = [];
-    const prev = Bun.env["SSC_IBOARD_BASE_URL"];
-    Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
+  it("lower-case ticker passed to VPS Playwright (ticker normalisation preserved)", async () => {
+    // Verify ticker upper-casing still works in the VPS Playwright path.
+    const capturedVps: string[] = [];
+    const prev = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
     try {
       await discoverHosePdfUrls("vcb", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchVpsPlaywright: async (url, _timeout) => {
+          capturedVps.push(url);
+          return JSON.stringify({ results: [], error: null });
+        },
+        _fetchSsc: mockEmpty,     // deprecated no-op
+        _fetchCafef: mockEmpty,   // deprecated no-op
+        _fetchVietstock: mockEmpty, // deprecated no-op
       });
     } finally {
-      if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
-      else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
+      if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prev;
     }
 
-    expect(captured[0]).toContain("/VCB");
-    expect(captured[0]).not.toContain("/vcb");
+    expect(capturedVps[0]).toContain("VCB");
+    expect(capturedVps[0]).not.toContain("/vcb/");
   });
 });
 
@@ -211,24 +165,29 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
     closeDb();
   });
 
-  it("enricher writes iboard PDF URL when VPS proxy mock returns data", async () => {
+  it("enricher writes PDF URL via VPS Playwright mock (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC removed. Route through VPS Playwright mock instead.
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
       VALUES (?, ?, ?, ?, ?)
     `).run("VNM", 2025, "Q1", "pending", null);
 
-    const prev = Bun.env["SSC_IBOARD_BASE_URL"];
-    Bun.env["SSC_IBOARD_BASE_URL"] = VPS_PROXY_BASE;
+    const prev = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
     try {
-      // _fetchHsx returns [] so Strategy 0 does not intercept; VPS proxy SSC mock fires.
       const result = await runBctcQueueEnricherJob({
         db: testDb,
         discoverOptions: {
           _fetchHsx: async () => [],
-          _fetchSsc: mockVpsProxySuccess("VNM"),
-          _fetchCafef: mockEmpty,
-          _fetchVietstock: mockEmpty,
+          _fetchVpsPlaywright: async (_url, _timeout) =>
+            JSON.stringify({
+              results: [{ url: "https://owa.hnx.vn/ftp/vnm-bctc-q1.pdf", source: "HNX", confidence: 0.9 }],
+              error: null,
+            }),
+          _fetchSsc: mockVpsProxySuccess("VNM"), // deprecated no-op
+          _fetchCafef: mockEmpty,                 // deprecated no-op
+          _fetchVietstock: mockEmpty,             // deprecated no-op
         },
       });
 
@@ -243,8 +202,8 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
       expect(row.source_url).toMatch(/\.pdf$/i);
       expect(row.source_url).toContain("vnm-bctc-q1.pdf");
     } finally {
-      if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
-      else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
+      if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prev;
     }
   });
 
@@ -295,27 +254,28 @@ describe("FIX-bctc-ssc-vps-proxy — D: enricher writes source_url via VPS proxy
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// E. VINAHOST_IP substitution in docker-compose SSC_IBOARD_BASE_URL value
+// E. TASK_1944b: SSC_IBOARD_BASE_URL no longer consulted — strategy removed
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX-bctc-ssc-vps-proxy — E: SSC_IBOARD_BASE_URL accepts any host:port", () => {
-  it("env var with a different host:port is used verbatim", async () => {
+describe("FIX-bctc-ssc-vps-proxy — E: SSC_IBOARD_BASE_URL no longer consulted (TASK_1944b)", () => {
+  it("SSC_IBOARD_BASE_URL has no effect — _fetchSsc never called regardless of env var", async () => {
+    // TASK_1944b: SSC strategy removed. SSC_IBOARD_BASE_URL env var is inert.
     const captured: string[] = [];
     const prev = Bun.env["SSC_IBOARD_BASE_URL"];
     Bun.env["SSC_IBOARD_BASE_URL"] = "http://10.0.0.1:9999/proxy/ssc-iboard";
 
     try {
       await discoverHosePdfUrls("BID", {
-        _fetchSsc: capturingFetch(captured),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchSsc: capturingFetch(captured),  // deprecated no-op
+        _fetchCafef: mockEmpty,               // deprecated no-op
+        _fetchVietstock: mockEmpty,           // deprecated no-op
       });
     } finally {
       if (prev === undefined) delete Bun.env["SSC_IBOARD_BASE_URL"];
       else Bun.env["SSC_IBOARD_BASE_URL"] = prev;
     }
 
-    expect(captured[0]).toContain("10.0.0.1:9999");
-    expect(captured[0]).toContain("/proxy/ssc-iboard/dcm/financials/ticker/BID");
+    // SSC strategy gone → capturingFetch never called → no URLs
+    expect(captured.length).toBe(0);
   });
 });

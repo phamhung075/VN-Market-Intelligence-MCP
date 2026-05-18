@@ -104,27 +104,25 @@ describe("1916b AC-1a — Strategy 0 (VPS) returns PDFs for DPM/VCB/HPG", () => 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AC-1b: Strategy 1 (SSC) succeeds for DPM, VCB, HPG (VPS absent)
+// AC-1b (TASK_1944b update): SSC removed — _fetchSsc is now a deprecated no-op
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("1916b AC-1b — Strategy 1 (SSC) returns PDFs for DPM/VCB/HPG when VPS absent", () => {
+describe("1916b AC-1b — _fetchSsc is deprecated no-op (TASK_1944b: SSC removed)", () => {
   const tickers = ["DPM", "VCB", "HPG"];
 
   for (const ticker of tickers) {
-    it(`${ticker} — SSC strategy returns ≥1 PDF URL`, async () => {
-      // No _fetchVpsPlaywright → strategy 0 skipped (BCTC_DISCOVER_URL absent scenario)
+    it(`${ticker} — _fetchSsc never invoked, source = null when only SSC provided`, async () => {
+      // TASK_1944b: SSC strategy removed. _fetchSsc is a backward-compat no-op.
+      // Without VPS or hsx, no live strategy → source = null.
       const result = await discoverHosePdfUrls(ticker, {
-        _fetchSsc: mockSscPdfResponse(ticker),
-        _fetchCafef: mockEmpty,        // deprecated, must be ignored
-        _fetchVietstock: mockEmptyHtml,
+        _fetchSsc: mockSscPdfResponse(ticker), // deprecated no-op
+        _fetchCafef: mockEmpty,                // deprecated, must be ignored
+        _fetchVietstock: mockEmptyHtml,        // deprecated no-op
       });
 
-      expect(result.source).toBe("ssc");
-      expect(result.urls.length).toBeGreaterThan(0);
-      result.urls.forEach((url) => {
-        expect(url).toMatch(/^https?:\/\//);
-        expect(url.toLowerCase()).toMatch(/\.pdf$/);
-      });
+      // SSC removed → no live strategy → null
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     });
   }
 });
@@ -181,8 +179,9 @@ describe("1916b AC-2 — all-strategies-fail returns null source (contract prese
 // Regression: VPS primary with SSC fallback
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("1916b regression — VPS primary with SSC fallback chain", () => {
-  it("VPS wins, SSC is stored as fallback (not cafef)", async () => {
+describe("1916b regression — VPS primary (TASK_1944b: SSC fallback removed)", () => {
+  it("VPS wins, fallbackSource is null (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. VPS wins → no fallback strategy → fallbackSource null.
     const origUrl = typeof Bun !== "undefined" ? Bun.env["BCTC_DISCOVER_URL"] : undefined;
     if (typeof Bun !== "undefined") {
       Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
@@ -191,16 +190,16 @@ describe("1916b regression — VPS primary with SSC fallback chain", () => {
     try {
       const result = await discoverHosePdfUrls("VCB", {
         _fetchVpsPlaywright: mockVpsPdfResponse("VCB"),
-        _fetchSsc: mockSscPdfResponse("VCB"),
-        _fetchCafef: mockEmpty,  // deprecated
-        _fetchVietstock: mockEmptyHtml,
+        _fetchSsc: mockSscPdfResponse("VCB"), // deprecated no-op
+        _fetchCafef: mockEmpty,               // deprecated
+        _fetchVietstock: mockEmptyHtml,       // deprecated no-op
       });
 
       expect(result.source).toBe("vps-playwright");
       expect(result.urls.length).toBeGreaterThan(0);
-      // Fallback should be SSC, not cafef
-      expect(result.fallbackSource).toBe("ssc");
-      expect(result.fallbackUrls?.length).toBeGreaterThan(0);
+      // SSC removed → no fallback strategy
+      expect(result.fallbackSource).toBeNull();
+      expect(result.fallbackUrls).toHaveLength(0);
     } finally {
       if (typeof Bun !== "undefined") {
         if (origUrl === undefined) {
@@ -212,16 +211,17 @@ describe("1916b regression — VPS primary with SSC fallback chain", () => {
     }
   });
 
-  it("SSC wins, vietstock fallback attempted (cafef no longer in chain)", async () => {
+  it("all deprecated strategies (SSC/vietstock) no longer return PDFs (TASK_1944b)", async () => {
+    // TASK_1944b: SSC + vietstock removed. When only deprecated injectables are supplied → null.
     const result = await discoverHosePdfUrls("HPG", {
-      _fetchSsc: mockSscPdfResponse("HPG"),
-      _fetchCafef: mockEmpty,
-      _fetchVietstock: mockEmptyHtml,  // vietstock has nothing
+      _fetchSsc: mockSscPdfResponse("HPG"),   // deprecated no-op
+      _fetchCafef: mockEmpty,                  // deprecated
+      _fetchVietstock: mockEmptyHtml,          // deprecated no-op
     });
 
-    expect(result.source).toBe("ssc");
-    expect(result.urls.length).toBeGreaterThan(0);
-    // fallbackSource is null (vietstock returned nothing, cafef no longer tried)
+    // All active strategies absent → null
+    expect(result.source).toBeNull();
+    expect(result.urls).toHaveLength(0);
     expect(result.fallbackSource).toBeNull();
   });
 });

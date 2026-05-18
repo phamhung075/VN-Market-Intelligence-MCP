@@ -163,3 +163,48 @@ describe("Task 1944a-mcp — VPS live probe (VPS_INTEGRATION guard)", () => {
     TIMEOUT_MS + 2_000,
   );
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1944b — Strategy 0 live verification (VPS Playwright)
+// AC-5: one live test for Strategy 0 returning ≥1 URL for VCB or DPM
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Task 1944b — Strategy 0 (VPS Playwright) live verification", () => {
+  itLive(
+    "LIVE-4 (1944b): discoverHosePdfUrls Strategy 1 (VPS) returns ≥1 PDF URL for VCB Q1/2026",
+    async () => {
+      // AC-5: after dead SSC/vietstock strategies removed, Strategy 1 (VPS Playwright)
+      // must return ≥1 URL for VCB Q1/2026 when the live VPS is reachable.
+      // This test is the canonical end-to-end chain: bctcHttpFetch → VPS → {results,[...]}
+      // → extractVpsPlaywrightUrls → ≥1 .pdf URL.
+      const { bctcHttpFetch } = await import("../infrastructure/fetchers/bctcHttpFetcher.js");
+      const { discoverHosePdfUrls } = await import("../domain/services/bctcDiscovery.js");
+
+      const prevUrl = Bun.env["BCTC_DISCOVER_URL"];
+      Bun.env["BCTC_DISCOVER_URL"] = `http://${VPS_HOST}:${VPS_PORT}/proxy/bctc-discover`;
+
+      try {
+        const result = await discoverHosePdfUrls("VCB", {
+          _fetchVpsPlaywright: bctcHttpFetch,
+          year: 2026,
+          quarter: "Q1",
+          timeout: TIMEOUT_MS,
+        });
+
+        // Strategy 0 (VPS Playwright) must be the source
+        expect(result.source).toBe("vps-playwright");
+        // Must return at least one PDF URL
+        expect(result.urls.length).toBeGreaterThanOrEqual(1);
+        // All URLs must be valid PDFs
+        for (const url of result.urls) {
+          expect(url.toLowerCase()).toMatch(/\.pdf$/);
+          expect(url).toMatch(/^https?:\/\//);
+        }
+      } finally {
+        if (prevUrl === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+        else Bun.env["BCTC_DISCOVER_URL"] = prevUrl;
+      }
+    },
+    TIMEOUT_MS + 5_000,
+  );
+});

@@ -125,6 +125,8 @@ describe("FIX — discoverHosePdfUrls uses BCTC_DISCOVER_URL as primary strategy
   });
 
   it("skips VPS Playwright strategy when BCTC_DISCOVER_URL is not set", async () => {
+    // TASK_1944b: SSC strategy removed. When VPS is not configured and hsx not supplied,
+    // all strategies are skipped → source = null.
     const vpsCallCount = { n: 0 };
     const vpsMock: HttpFetchFn = async (url, timeout) => {
       vpsCallCount.n++;
@@ -137,53 +139,58 @@ describe("FIX — discoverHosePdfUrls uses BCTC_DISCOVER_URL as primary strategy
     try {
       const result = await discoverHosePdfUrls("VCB", {
         _fetchVpsPlaywright: vpsMock,
-        _fetchSsc: mockSscSuccess("VCB"),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchSsc: mockSscSuccess("VCB"),   // deprecated no-op
+        _fetchCafef: mockEmpty,              // deprecated no-op
+        _fetchVietstock: mockEmpty,          // deprecated no-op
       });
 
-      // VPS strategy skipped — SSC strategy succeeds
+      // VPS strategy skipped (no BCTC_DISCOVER_URL) + SSC/vietstock removed → no result
       expect(vpsCallCount.n).toBe(0);
-      expect(result.source).toBe("ssc");
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     } finally {
       if (prevDiscover !== undefined) Bun.env["BCTC_DISCOVER_URL"] = prevDiscover;
     }
   });
 
-  it("falls back to SSC when VPS Playwright returns empty results", async () => {
+  it("returns empty when VPS Playwright returns empty results (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. VPS empty + no other live strategy → source = null.
     const prev = Bun.env["BCTC_DISCOVER_URL"];
     Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
     try {
       const result = await discoverHosePdfUrls("FAKE", {
         _fetchVpsPlaywright: mockVpsPlaywrightEmpty,
-        _fetchSsc: mockSscSuccess("FAKE"),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchSsc: mockSscSuccess("FAKE"),  // deprecated no-op
+        _fetchCafef: mockEmpty,              // deprecated no-op
+        _fetchVietstock: mockEmpty,          // deprecated no-op
       });
 
-      expect(result.source).toBe("ssc");
-      expect(result.urls.length).toBeGreaterThan(0);
+      // SSC removed → all strategies exhausted → null
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     } finally {
       if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
       else Bun.env["BCTC_DISCOVER_URL"] = prev;
     }
   });
 
-  it("falls back to SSC when VPS Playwright endpoint is unreachable", async () => {
+  it("returns empty when VPS Playwright endpoint is unreachable (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. VPS network fail + no other live strategy → source = null.
     const prev = Bun.env["BCTC_DISCOVER_URL"];
     Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
     try {
       const result = await discoverHosePdfUrls("ACB", {
         _fetchVpsPlaywright: mockVpsNetworkFail,
-        _fetchSsc: mockSscSuccess("ACB"),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+        _fetchSsc: mockSscSuccess("ACB"),  // deprecated no-op
+        _fetchCafef: mockEmpty,             // deprecated no-op
+        _fetchVietstock: mockEmpty,         // deprecated no-op
       });
 
-      expect(result.source).toBe("ssc");
-      expect(result.urls.length).toBeGreaterThan(0);
+      // VPS unreachable + SSC removed → no fallback → null
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     } finally {
       if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
       else Bun.env["BCTC_DISCOVER_URL"] = prev;
@@ -387,7 +394,8 @@ describe("FIX — bctcQueueEnricherJob uses VPS Playwright when BCTC_DISCOVER_UR
     }
   });
 
-  it("falls back to SSC when VPS Playwright fails", async () => {
+  it("populates no source_url when VPS Playwright fails (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. VPS failure → no fallback → item stays pending.
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
       VALUES (?, ?, ?, ?, ?)
@@ -402,21 +410,21 @@ describe("FIX — bctcQueueEnricherJob uses VPS Playwright when BCTC_DISCOVER_UR
         discoverOptions: {
           _fetchHsx: async () => [],
           _fetchVpsPlaywright: mockVpsNetworkFail,
-          _fetchSsc: mockSscSuccess("ACB"),
-          _fetchCafef: mockEmpty,
-          _fetchVietstock: mockEmpty,
+          _fetchSsc: mockSscSuccess("ACB"),  // deprecated no-op
+          _fetchCafef: mockEmpty,             // deprecated no-op
+          _fetchVietstock: mockEmpty,         // deprecated no-op
         },
       });
 
+      // VPS fails + SSC removed → 0 URLs → source_url stays null
       expect(result.itemsProcessed).toBe(1);
-      expect(result.urlsPopulated).toBe(1);
+      expect(result.urlsPopulated).toBe(0);
 
       const row = testDb.query(
         "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'ACB'"
       ).get() as { source_url: string | null };
 
-      expect(row.source_url).not.toBeNull();
-      expect(row.source_url).toMatch(/\.pdf$/i);
+      expect(row.source_url).toBeNull();
     } finally {
       if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
       else Bun.env["BCTC_DISCOVER_URL"] = prev;

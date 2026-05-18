@@ -82,62 +82,56 @@ async function mockEmptyJson(_url: string, _timeout: number): Promise<string> {
 // Tests — discoverHosePdfUrls: SSC_IBOARD_BASE_URL env override
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX — discoverHosePdfUrls uses SSC_IBOARD_BASE_URL env override", () => {
-  it("SSC strategy builds URL from SSC_IBOARD_BASE_URL when set", async () => {
-    const capturedUrls: string[] = [];
+// TASK_1944b: SSC strategy permanently removed. _fetchSsc is now a deprecated no-op.
+// The SSC_IBOARD_BASE_URL env override is no longer consulted at runtime.
+// These tests document the post-removal state.
 
+describe("TASK_1944b — _fetchSsc deprecated no-op (SSC iboard removed)", () => {
+  it("_fetchSsc is silently ignored — SSC strategy never invoked", async () => {
+    // TASK_1944b: _fetchSsc is accepted for backward-compat but never called.
+    const sscCallCount = { n: 0 };
     const mockFetch: HttpFetchFn = async (url, _timeout) => {
-      capturedUrls.push(url);
+      sscCallCount.n++;
       return JSON.stringify({
         data: [{ fileUrl: "https://vps-proxy.example.com/iboard/vcb-bctc.pdf" }],
       });
     };
 
-    // Override env var to simulate VPS proxy routing
-    const originalBase = Bun.env["SSC_IBOARD_BASE_URL"];
+    const result = await discoverHosePdfUrls("VCB", {
+      _fetchSsc: mockFetch,       // deprecated no-op
+      _fetchCafef: mockEmptyJson, // deprecated no-op
+      _fetchVietstock: mockEmptyJson, // deprecated no-op
+    });
+
+    // SSC removed → _fetchSsc never called → no URLs
+    expect(sscCallCount.n).toBe(0);
+    expect(result.urls).toHaveLength(0);
+    expect(result.source).toBeNull();
+  });
+
+  it("SSC_IBOARD_BASE_URL env var is no longer consulted (strategy removed)", async () => {
+    // TASK_1944b: env var accepted but strategy is dead.
+    const prevBase = Bun.env["SSC_IBOARD_BASE_URL"];
     Bun.env["SSC_IBOARD_BASE_URL"] = "https://vps-proxy.example.com/iboard";
 
     try {
       const result = await discoverHosePdfUrls("VCB", {
-        _fetchSsc: mockFetch,
+        _fetchSsc: async () =>
+          JSON.stringify({ data: [{ fileUrl: "https://vps-proxy.example.com/iboard/vcb-bctc.pdf" }] }),
         _fetchCafef: mockEmptyJson,
         _fetchVietstock: mockEmptyJson,
       });
 
-      // The fetch URL must use SSC_IBOARD_BASE_URL, not the hardcoded domain
-      expect(capturedUrls.length).toBeGreaterThan(0);
-      expect(capturedUrls[0]).toContain("vps-proxy.example.com/iboard");
-      expect(result.urls.length).toBeGreaterThan(0);
-      expect(result.source).toBe("ssc");
+      // No SSC call happens despite env var being set
+      expect(result.urls).toHaveLength(0);
+      expect(result.source).toBeNull();
     } finally {
-      if (originalBase === undefined) {
+      if (prevBase === undefined) {
         delete Bun.env["SSC_IBOARD_BASE_URL"];
       } else {
-        Bun.env["SSC_IBOARD_BASE_URL"] = originalBase;
+        Bun.env["SSC_IBOARD_BASE_URL"] = prevBase;
       }
     }
-  });
-
-  it("falls back to hardcoded iboard domain when SSC_IBOARD_BASE_URL not set", async () => {
-    const capturedUrls: string[] = [];
-
-    const mockFetch: HttpFetchFn = async (url, _timeout) => {
-      capturedUrls.push(url);
-      throw new Error("ENOTFOUND");
-    };
-
-    delete Bun.env["SSC_IBOARD_BASE_URL"];
-
-    const result = await discoverHosePdfUrls("VCB", {
-      _fetchSsc: mockFetch,
-      _fetchCafef: mockEmptyJson,
-      _fetchVietstock: mockEmptyJson,
-    });
-
-    expect(capturedUrls.length).toBeGreaterThan(0);
-    expect(capturedUrls[0]).toContain("iboard-query.ssc.vn");
-    expect(result.urls).toHaveLength(0);
-    expect(result.source).toBeNull();
   });
 });
 
@@ -205,6 +199,7 @@ describe("FIX — enricher job resets MISSING placeholder source_urls to NULL", 
   });
 
   it("items with source_url='MISSING' are treated as NULL (re-queued for enrichment)", async () => {
+    // TASK_1944b: SSC removed. Use VPS Playwright mock to populate URLs.
     // Insert items that have MISSING placeholder (legacy bad state)
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
@@ -215,62 +210,87 @@ describe("FIX — enricher job resets MISSING placeholder source_urls to NULL", 
       VALUES (?, ?, ?, ?, ?)
     `).run("BSR", 2025, "Q1", "pending", "MISSING");
 
-    // Run enricher with a mock that will succeed if items are treated as NULL.
-    // _fetchHsx returns [] to ensure Strategy 0 does not intercept so SSC mock fires.
-    const result = await runBctcQueueEnricherJob({
-      db: testDb,
-      discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("BID"),
-        _fetchCafef: mockEmptyJson,
-        _fetchVietstock: mockEmptyJson,
-      },
-    });
+    const prev = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
-    // MISSING items should be discovered (treated as pending with null URL)
-    expect(result.itemsProcessed).toBe(2);
-    expect(result.urlsPopulated).toBe(2);
+    try {
+      // Run enricher with VPS mock (SSC removed — use Strategy 1 instead).
+      const result = await runBctcQueueEnricherJob({
+        db: testDb,
+        discoverOptions: {
+          _fetchHsx: async () => [],
+          _fetchVpsPlaywright: async (_url, _timeout) =>
+            JSON.stringify({
+              results: [{ url: "https://owa.hnx.vn/bctc/bid-q1-2025.pdf", source: "HNX", confidence: 0.9 }],
+              error: null,
+            }),
+          _fetchSsc: mockSscSuccess("BID"),   // deprecated no-op
+          _fetchCafef: mockEmptyJson,          // deprecated no-op
+          _fetchVietstock: mockEmptyJson,      // deprecated no-op
+        },
+      });
 
-    const items = testDb.query(
-      "SELECT action_code, source_url FROM bctc_vps_queue ORDER BY action_code"
-    ).all() as Array<{ action_code: string; source_url: string | null }>;
+      // MISSING items should be discovered (treated as pending with null URL)
+      expect(result.itemsProcessed).toBe(2);
+      expect(result.urlsPopulated).toBe(2);
 
-    for (const item of items) {
-      expect(item.source_url).not.toBeNull();
-      expect(item.source_url).not.toBe("MISSING");
-      expect(item.source_url).toMatch(/\.pdf$/i);
+      const items = testDb.query(
+        "SELECT action_code, source_url FROM bctc_vps_queue ORDER BY action_code"
+      ).all() as Array<{ action_code: string; source_url: string | null }>;
+
+      for (const item of items) {
+        expect(item.source_url).not.toBeNull();
+        expect(item.source_url).not.toBe("MISSING");
+        expect(item.source_url).toMatch(/\.pdf$/i);
+      }
+    } finally {
+      if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prev;
     }
   });
 
   it("items with source_url='/test-*' placeholders are also reset for enrichment", async () => {
+    // TASK_1944b: SSC removed. Use VPS Playwright mock to populate URLs.
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
       VALUES (?, ?, ?, ?, ?)
     `).run("DGC", 2025, "Q1", "pending", "/test-dgc-bctc.pdf");
 
-    // /test-* is a placeholder — should be re-enriched.
-    // _fetchHsx returns [] so Strategy 0 does not intercept; SSC mock fires.
-    const result = await runBctcQueueEnricherJob({
-      db: testDb,
-      discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("DGC"),
-        _fetchCafef: mockEmptyJson,
-        _fetchVietstock: mockEmptyJson,
-      },
-    });
+    const prev = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
-    // /test-* placeholder items should be treated as needing enrichment
-    expect(result.itemsProcessed).toBe(1);
-    expect(result.urlsPopulated).toBe(1);
+    try {
+      // /test-* is a placeholder — should be re-enriched via VPS (SSC removed).
+      const result = await runBctcQueueEnricherJob({
+        db: testDb,
+        discoverOptions: {
+          _fetchHsx: async () => [],
+          _fetchVpsPlaywright: async (_url, _timeout) =>
+            JSON.stringify({
+              results: [{ url: "https://owa.hnx.vn/bctc/dgc-q1-2025.pdf", source: "HNX", confidence: 0.9 }],
+              error: null,
+            }),
+          _fetchSsc: mockSscSuccess("DGC"),  // deprecated no-op
+          _fetchCafef: mockEmptyJson,         // deprecated no-op
+          _fetchVietstock: mockEmptyJson,     // deprecated no-op
+        },
+      });
 
-    const item = testDb.query(
-      "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'DGC'"
-    ).get() as { source_url: string | null };
+      // /test-* placeholder items should be treated as needing enrichment
+      expect(result.itemsProcessed).toBe(1);
+      expect(result.urlsPopulated).toBe(1);
 
-    expect(item.source_url).not.toBeNull();
-    expect(item.source_url).not.toContain("/test-");
-    expect(item.source_url).toMatch(/^https?:\/\//);
+      const item = testDb.query(
+        "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'DGC'"
+      ).get() as { source_url: string | null };
+
+      expect(item.source_url).not.toBeNull();
+      expect(item.source_url).not.toContain("/test-");
+      expect(item.source_url).toMatch(/^https?:\/\//);
+    } finally {
+      if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prev;
+    }
   });
 });
 
@@ -295,36 +315,43 @@ describe("FIX — enricher job propagates SSC_IBOARD_BASE_URL to discovery", () 
     closeDb();
   });
 
-  it("enricher populates source_url when mock SSC via VPS returns PDF", async () => {
+  it("enricher populates source_url when VPS Playwright mock returns PDF", async () => {
+    // TASK_1944b: SSC removed. Route enrichment through VPS Playwright mock.
     testDb.prepare(`
       INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url)
       VALUES (?, ?, ?, ?, ?)
     `).run("VNM", 2025, "Q1", "pending", null);
 
-    const vpsProxyMock: HttpFetchFn = async (_url, _timeout) => {
-      return JSON.stringify({
-        data: [{ fileUrl: "https://vps.example.com/vnm-bctc-q1-2025.pdf" }],
+    const prev = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
+
+    try {
+      const result = await runBctcQueueEnricherJob({
+        db: testDb,
+        discoverOptions: {
+          _fetchHsx: async () => [],
+          _fetchVpsPlaywright: async (_url, _timeout) =>
+            JSON.stringify({
+              results: [{ url: "https://vps.example.com/vnm-bctc-q1-2025.pdf", source: "HNX", confidence: 0.9 }],
+              error: null,
+            }),
+          _fetchSsc: mockSscSuccess("VNM"),  // deprecated no-op
+          _fetchCafef: mockEmptyJson,         // deprecated no-op
+          _fetchVietstock: mockEmptyJson,     // deprecated no-op
+        },
       });
-    };
 
-    // _fetchHsx returns [] so Strategy 0 does not intercept; VPS proxy SSC mock fires.
-    const result = await runBctcQueueEnricherJob({
-      db: testDb,
-      discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: vpsProxyMock,
-        _fetchCafef: mockEmptyJson,
-        _fetchVietstock: mockEmptyJson,
-      },
-    });
+      expect(result.itemsProcessed).toBe(1);
+      expect(result.urlsPopulated).toBe(1);
 
-    expect(result.itemsProcessed).toBe(1);
-    expect(result.urlsPopulated).toBe(1);
+      const row = testDb.query(
+        "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'VNM'"
+      ).get() as { source_url: string | null };
 
-    const row = testDb.query(
-      "SELECT source_url FROM bctc_vps_queue WHERE action_code = 'VNM'"
-    ).get() as { source_url: string | null };
-
-    expect(row.source_url).toContain("vnm-bctc-q1-2025.pdf");
+      expect(row.source_url).toContain("vnm-bctc-q1-2025.pdf");
+    } finally {
+      if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prev;
+    }
   });
 });

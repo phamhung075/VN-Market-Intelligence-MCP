@@ -113,7 +113,8 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
 
   // TC-2: Items with NULL source_url get discovery attempted;
   //       on success, source_url is populated and items remain 'pending'
-  it("populates source_url when SSC discovery succeeds", async () => {
+  //       TASK_1944b: SSC removed — use _fetchHsx to provide the PDF URL.
+  it("populates source_url when hsx discovery succeeds (SSC removed TASK_1944b)", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
     insertQueueItem(testDb, "HPG", 2025, "Q1", null);
@@ -121,10 +122,10 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("VCB"),
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockSscSuccess("VCB"),  // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
       },
     });
 
@@ -147,17 +148,18 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
   });
 
   // TC-3: Items that already have source_url are ignored (query filters them out)
+  // TASK_1944b: SSC removed — use _fetchHsx to provide the PDF URL.
   it("ignores items that already have source_url", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q1", "https://ssc.gov.vn/vcb-existing.pdf");
+    insertQueueItem(testDb, "VCB", 2025, "Q1", "https://hsx.example.com/vcb-existing.pdf");
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("FPT"),
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/fpt-bctc.pdf"],
+        _fetchSsc: mockSscSuccess("FPT"),  // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
       },
     });
 
@@ -166,13 +168,14 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
     expect(result.urlsPopulated).toBe(1);
 
     const vcb = getQueueItems(testDb).find(i => i.action_code === "VCB");
-    expect(vcb?.source_url).toBe("https://ssc.gov.vn/vcb-existing.pdf");
+    expect(vcb?.source_url).toBe("https://hsx.example.com/vcb-existing.pdf");
 
     const fpt = getQueueItems(testDb).find(i => i.action_code === "FPT");
     expect(fpt?.source_url).toMatch(/\.pdf$/i);
   });
 
   // TC-4: Batch dequeue limit (max 20 per run) — uses default batchSize=20
+  // TASK_1944b: SSC removed — use _fetchHsx to provide the PDF URL.
   it("respects batchSize — only processes up to batchSize items", async () => {
     for (let i = 1; i <= 30; i++) {
       insertQueueItem(testDb, `CODE${String(i).padStart(3, "0")}`, 2025, "Q1", null);
@@ -182,10 +185,10 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
       db: testDb,
       batchSize: 20,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("CODE"),
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockSscSuccess("CODE"),  // deprecated no-op
+        _fetchCafef: mockFetchEmpty,         // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,     // deprecated no-op
       },
     });
 
@@ -223,6 +226,7 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
   });
 
   // TC-6: Idempotency — re-running on already-populated items doesn't process them again
+  // TASK_1944b: SSC removed — use _fetchHsx to provide the PDF URL.
   it("is idempotent — items with source_url are not re-processed", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
 
@@ -230,10 +234,10 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
     const result1 = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("VCB"),
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/vcb-bctc.pdf"],
+        _fetchSsc: mockSscSuccess("VCB"),  // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
       },
     });
     expect(result1.itemsProcessed).toBe(1);
@@ -243,10 +247,10 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
     const result2 = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess("VCB"),
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/vcb-bctc.pdf"],
+        _fetchSsc: mockSscSuccess("VCB"),  // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
       },
     });
     expect(result2.itemsProcessed).toBe(0);

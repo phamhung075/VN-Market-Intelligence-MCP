@@ -59,24 +59,38 @@ async function mockFetchEmptyHtml(_url: string, _timeout: number): Promise<strin
 
 describe("1343b — HOSE PDF Discovery", () => {
 
-  // Test 1: SSC API returns PDF URLs for HOSE tickers
-  it("should discover PDF URLs from SSC for HOSE-listed tickers", async () => {
+  // Test 1: VPS Playwright returns PDF URLs for HOSE tickers (TASK_1944b: SSC removed)
+  it("should discover PDF URLs via VPS Playwright for HOSE-listed tickers", async () => {
+    // TASK_1944b: SSC strategy removed. Use VPS Playwright mock instead.
     const hoseTickersSample = ["BID", "EIB", "FPT", "VCB", "HPG", "VNM", "SBT"];
 
-    for (const ticker of hoseTickersSample) {
-      const pdfUrl = `https://iboard-query.ssc.vn/static/${ticker.toLowerCase()}-bctc-q4-2025.pdf`;
-      const result = await discoverHosePdfUrls(ticker, {
-        _fetchSsc: mockSscFetch(pdfUrl),
-        _fetchCafef: mockFetchEmptyHtml,
-        _fetchVietstock: mockFetchEmptyHtml,
-      });
+    const prevUrl = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
-      expect(result).toBeDefined();
-      expect(result.urls?.length).toBeGreaterThan(0);
-      expect(result.source).toBe("ssc");
-      result.urls?.forEach(url => {
-        expect(url).toMatch(/\.pdf$/i);
-      });
+    try {
+      for (const ticker of hoseTickersSample) {
+        const pdfUrl = `https://owa.hnx.vn/ftp/${ticker.toLowerCase()}-bctc-q4-2025.pdf`;
+        const result = await discoverHosePdfUrls(ticker, {
+          _fetchVpsPlaywright: async (_url, _timeout) =>
+            JSON.stringify({
+              results: [{ url: pdfUrl, source: "HNX", confidence: 0.9 }],
+              error: null,
+            }),
+          _fetchSsc: mockSscFetch(pdfUrl),    // deprecated no-op
+          _fetchCafef: mockFetchEmptyHtml,     // deprecated no-op
+          _fetchVietstock: mockFetchEmptyHtml, // deprecated no-op
+        });
+
+        expect(result).toBeDefined();
+        expect(result.urls?.length).toBeGreaterThan(0);
+        expect(result.source).toBe("vps-playwright");
+        result.urls?.forEach(url => {
+          expect(url).toMatch(/\.pdf$/i);
+        });
+      }
+    } finally {
+      if (prevUrl === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prevUrl;
     }
   });
 
@@ -97,20 +111,34 @@ describe("1343b — HOSE PDF Discovery", () => {
     expect(result.urls).toHaveLength(0);
   });
 
-  // Test 3: Source attribution
-  it("should include source attribution in result", async () => {
+  // Test 3: Source attribution (TASK_1944b: SSC/vietstock removed — only hsx/vps-playwright valid)
+  it("should include source attribution from VPS Playwright in result", async () => {
+    // TASK_1944b: SSC/cafef/vietstock removed. Only hsx and vps-playwright are live sources.
     const ticker = "VCB";
-    const pdfUrl = `https://iboard-query.ssc.vn/static/vcb-bctc-q4-2025.pdf`;
+    const pdfUrl = `https://owa.hnx.vn/ftp/vcb-bctc-q4-2025.pdf`;
 
-    const result = await discoverHosePdfUrls(ticker, {
-      _fetchSsc: mockSscFetch(pdfUrl),
-      _fetchCafef: mockFetchEmptyHtml,
-      _fetchVietstock: mockFetchEmptyHtml,
-    });
+    const prevUrl = Bun.env["BCTC_DISCOVER_URL"];
+    Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
-    expect(result.source).toBeDefined();
-    expect(result.source).not.toBeNull();
-    expect(["ssc", "cafef", "vietstock"]).toContain(result.source as string);
+    try {
+      const result = await discoverHosePdfUrls(ticker, {
+        _fetchVpsPlaywright: async (_url, _timeout) =>
+          JSON.stringify({
+            results: [{ url: pdfUrl, source: "HNX", confidence: 0.9 }],
+            error: null,
+          }),
+        _fetchSsc: mockSscFetch(pdfUrl),    // deprecated no-op
+        _fetchCafef: mockFetchEmptyHtml,     // deprecated no-op
+        _fetchVietstock: mockFetchEmptyHtml, // deprecated no-op
+      });
+
+      expect(result.source).toBeDefined();
+      expect(result.source).not.toBeNull();
+      expect(["hsx", "vps-playwright"]).toContain(result.source as string);
+    } finally {
+      if (prevUrl === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
+      else Bun.env["BCTC_DISCOVER_URL"] = prevUrl;
+    }
   });
 
   // Test 4: Return empty gracefully if all sources fail

@@ -173,22 +173,15 @@ describe("TASK-1943a AC-2 — enricher processes reset pending rows", () => {
        VALUES ('ACB', 2026, 'Q1', 'pending', 0)`,
     ).run();
 
-    // Mock: SSC returns a URL for any ticker
-    const mockSscAny = async (url: string, _timeout: number): Promise<string> => {
-      // Extract ticker from URL pattern if possible; return a generic URL
-      return JSON.stringify({
-        data: [{ fileUrl: `https://iboard-query.ssc.vn/static/bctc.pdf` }],
-      });
-    };
-
+    // TASK_1944b: SSC removed. Use _fetchHsx to provide the PDF URL.
     const result = await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscAny,
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
-        _fetchVpsPlaywright: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/bctc.pdf"],
+        _fetchSsc: mockFetchEmpty,          // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
+        _fetchVpsPlaywright: mockFetchEmpty, // VPS returns empty → hsx wins
       },
     });
 
@@ -323,20 +316,15 @@ describe("TASK-1943a AC-4 — grace-period auto-retry policy", () => {
        VALUES ('VCB', 2026, 'Q1', 'url_not_found', 5, datetime('now', '-8 days'))`,
     ).run();
 
-    // Mock: discovery succeeds this time
-    const mockSscSuccess = async (_url: string, _timeout: number): Promise<string> =>
-      JSON.stringify({
-        data: [{ fileUrl: "https://iboard-query.ssc.vn/static/vcb-bctc.pdf" }],
-      });
-
+    // TASK_1944b: SSC removed. Mock: discovery succeeds via _fetchHsx.
     const result = await runBctcQueueEnricherJob({
       db,
       discoverOptions: {
-        _fetchHsx: async () => [],
-        _fetchSsc: mockSscSuccess,
-        _fetchCafef: mockFetchEmpty,
-        _fetchVietstock: mockFetchEmpty,
-        _fetchVpsPlaywright: mockFetchEmpty,
+        _fetchHsx: async (_ticker, _year, _timeout) => ["https://hsx.example.com/vcb-bctc.pdf"],
+        _fetchSsc: mockFetchEmpty,          // deprecated no-op
+        _fetchCafef: mockFetchEmpty,        // deprecated no-op
+        _fetchVietstock: mockFetchEmpty,    // deprecated no-op
+        _fetchVpsPlaywright: mockFetchEmpty, // VPS returns empty → hsx wins
       },
     });
 

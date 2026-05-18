@@ -221,9 +221,7 @@ export async function runBctcQueueEnricherJob(opts: {
         timeout: DISCOVERY_TIMEOUT_MS,
         _fetchHsx:           fetchHsxBctcUrls,
         _fetchVpsPlaywright: bctcHttpFetch,
-        _fetchSsc:           bctcHttpFetch,
-        _fetchCafef:         bctcHttpFetch,
-        _fetchVietstock:     bctcHttpFetch,
+        // SSC (_fetchSsc), cafef (_fetchCafef), vietstock (_fetchVietstock) removed TASK_1944b/TASK_1916b.
         // opts.discoverOptions spreads LAST and overrides any key above when present.
         // Tests that include _fetchHsx: undefined disable Strategy 0.
         // Tests that omit _fetchHsx entirely get the production default (live hsx.vn fetch).

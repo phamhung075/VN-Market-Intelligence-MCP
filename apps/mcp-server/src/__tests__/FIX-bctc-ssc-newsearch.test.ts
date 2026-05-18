@@ -385,7 +385,8 @@ describe("FIX-bctc-ssc-newsearch — E: SSC title patterns matched for each quar
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-bctc-ssc-newsearch — F: SanGiaoDiv 404 is transparent to TS callers", () => {
-  it("falls back to SSC iboard when VPS network fails (VPS script broken)", async () => {
+  it("returns empty when VPS network fails (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. VPS network fail → no fallback → source = null.
     const prev = Bun.env["BCTC_DISCOVER_URL"];
     Bun.env["BCTC_DISCOVER_URL"] = "http://125.212.251.27:8765/proxy/bctc-discover";
 
@@ -395,15 +396,14 @@ describe("FIX-bctc-ssc-newsearch — F: SanGiaoDiv 404 is transparent to TS call
         _fetchSsc: async (_u, _t) =>
           JSON.stringify({
             data: [{ fileUrl: "https://iboard-query.ssc.vn/static/bid-bctc.pdf" }],
-          }),
-        _fetchCafef: mockEmpty,
-        _fetchVietstock: mockEmpty,
+          }),             // deprecated no-op
+        _fetchCafef: mockEmpty,     // deprecated no-op
+        _fetchVietstock: mockEmpty, // deprecated no-op
       });
 
-      // VPS errored → SSC iboard picked up the slack
-      expect(result.source).toBe("ssc");
-      expect(result.urls).toHaveLength(1);
-      expect(result.urls[0]).toContain("bid-bctc.pdf");
+      // VPS errored + SSC removed → no fallback strategy
+      expect(result.source).toBeNull();
+      expect(result.urls).toHaveLength(0);
     } finally {
       if (prev === undefined) delete Bun.env["BCTC_DISCOVER_URL"];
       else Bun.env["BCTC_DISCOVER_URL"] = prev;

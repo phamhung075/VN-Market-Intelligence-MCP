@@ -81,18 +81,18 @@ describe("Task 1778 — discoverHosePdfUrls junk guard integration", () => {
     ]);
   };
 
-  it("4. Junk VPS response falls through to SSC strategy and returns PDF URL", async () => {
+  it("4. Junk VPS response returns empty result (SSC removed TASK_1944b)", async () => {
+    // TASK_1944b: SSC strategy removed. Junk VPS → VPS extracts [] → no other live strategy.
     const result = await discoverHosePdfUrls("FPT", {
       _fetchVpsPlaywright: junkResponse,
-      _fetchSsc: validSscResponse,
-      _fetchCafef: async () => "[]",
-      _fetchVietstock: async () => "",
+      _fetchSsc: validSscResponse,  // deprecated no-op
+      _fetchCafef: async () => "[]", // deprecated no-op
+      _fetchVietstock: async () => "",// deprecated no-op
     });
 
-    // Should fall through to SSC and succeed
-    expect(result.source).toBe("ssc");
-    expect(result.urls).toHaveLength(1);
-    expect(result.urls[0]).toContain("FPT-Q4-2025.pdf");
+    // Junk VPS + SSC removed → all strategies exhausted → null
+    expect(result.source).toBeNull();
+    expect(result.urls).toHaveLength(0);
   });
 
   it("5. All sources return junk → { urls: [], source: null }", async () => {

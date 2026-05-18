@@ -15,10 +15,9 @@
  *      Calls GET {BCTC_DISCOVER_URL}/{ticker}?year={y}&quarter={q} on the VPS.
  *      VPS runs discover-bctc-urls-browser.py as a subprocess (Playwright).
  *      Returns Python script JSON: { results: [{url, source, confidence}], error }.
- *   2. SSC iboard JSON API -- fallback when VPS unavailable.
- *      Base URL: SSC_IBOARD_BASE_URL env var (default: https://iboard-query.ssc.vn).
- *      NOTE: iboard-query.ssc.vn is NXDOMAIN (dead domain) as of 2026-04-27.
- *      Still kept as fallback in case domain is restored.
+ *   2. [REMOVED] SSC iboard JSON API -- TASK_1944b: permanently dead 2026-05-18.
+ *      iboard-query.ssc.vn is NXDOMAIN since 2026-04-27. Returns 502/[] for every
+ *      ticker via the VPS proxy. No restoration expected. See SPIKE_1916.
  *   3. [REMOVED] cafef.vn document JSON API -- TASK_1916b: permanently dead.
  *      s.cafef.vn/Candles/FinanceInfo.ashx returns HTTP 301 then redirects to
  *      cafef.vn/du-lieu/candles/financeinfo.ashx then 302 then /404.aspx. All
@@ -28,7 +27,9 @@
  *        (b) VNDirect document API -- NXDOMAIN from France
  *        (c) SSC via VPS -- already covered by Strategy 0
  *      All failed. Strategy 0 (VPS-routed Playwright) is sufficient. See SPIKE_1916.
- *   3. vietstock.vn HTML scraper -- fallback 2 (rarely succeeds; JS-rendered).
+ *   4. [REMOVED] vietstock.vn HTML scraper -- TASK_1944b: permanently dead 2026-05-18.
+ *      finance.vietstock.vn/<ticker>/bao-cao-tai-chinh returns HTTP 404 for every
+ *      ticker. bctcHttpFetcher throws on !res.ok → caught as []. See SPIKE_1916.
  *
  * Design:
  * - Accepts injectable HTTP fetch functions for full testability (ports pattern).
@@ -39,6 +40,7 @@
  * 2026-04-27 FIX (branch fix/bctc-url-enrichment):
  *   - Added SSC_IBOARD_BASE_URL env override so VPS proxy can be used for
  *     iboard API calls (iboard-query.ssc.vn is NXDOMAIN from France).
+ *     NOTE: SSC strategy fully removed in TASK_1944b (2026-05-18) — NXDOMAIN permanent.
  *   - Replaced cafef HTML scraper with s.cafef.vn JSON API (FinanceInfo endpoint).
  *     The /[ticker]/bao-cao-tai-chinh.chn pattern returned HTTP 404; the financial
  *     docs section on cafef renders entirely via JavaScript -- no static PDF hrefs.
@@ -123,13 +125,25 @@ export interface DiscoverOptions {
    */
   _fetchHsx?: (ticker: string, year: number, timeoutMs: number) => Promise<string[]>;
   _fetchVpsPlaywright?: HttpFetchFn;
+  /**
+   * @deprecated TASK_1944b: Strategy 2 (SSC iboard) permanently removed 2026-05-18.
+   * iboard-query.ssc.vn is NXDOMAIN — returns [] for every ticker. See SPIKE_1916.
+   * This field is accepted for backward-compat so existing callers do not break,
+   * but it is never invoked. Pass any value or omit entirely.
+   */
   _fetchSsc?: HttpFetchFn;
   /**
-   * @deprecated TASK_1916b: Strategy 2 (cafef.vn FinanceInfo.ashx) permanently removed.
+   * @deprecated TASK_1916b: Strategy 3 (cafef.vn FinanceInfo.ashx) permanently removed.
    * This field is accepted for backward-compat so existing test callers do not break,
    * but it is never invoked. Pass any value or omit entirely.
    */
   _fetchCafef?: HttpFetchFn;
+  /**
+   * @deprecated TASK_1944b: Strategy 4 (vietstock.vn) permanently removed 2026-05-18.
+   * finance.vietstock.vn returns HTTP 404 for every ticker — JS-rendered, no PDF hrefs.
+   * This field is accepted for backward-compat so existing callers do not break,
+   * but it is never invoked. Pass any value or omit entirely.
+   */
   _fetchVietstock?: HttpFetchFn;
 }
 
@@ -162,24 +176,8 @@ function getBctcDiscoverUrl(): string | undefined {
   return typeof Bun !== "undefined" ? Bun.env["BCTC_DISCOVER_URL"] : undefined;
 }
 
-/**
- * Resolve the SSC iboard API base URL at call time.
- *
- * Reads SSC_IBOARD_BASE_URL env var on every invocation so that:
- *   1. Tests can override Bun.env["SSC_IBOARD_BASE_URL"] after module import.
- *   2. Production can hot-swap the proxy without restarting (env reload).
- *
- * Default: https://iboard-query.ssc.vn
- * Override: SSC_IBOARD_BASE_URL=https://vps-proxy.example.com/iboard
- */
-function getSscIboardBase(): string {
-  return (typeof Bun !== "undefined" ? Bun.env["SSC_IBOARD_BASE_URL"] : undefined) ??
-    "https://iboard-query.ssc.vn";
-}
-
-// TASK_1916b: CAFEF_API_BASE and CAFEF_BASE removed. Strategy 2 dead. See module docblock.
-
-const VIETSTOCK_BASE = "https://finance.vietstock.vn";
+// TASK_1916b: CAFEF_API_BASE and CAFEF_BASE removed. Strategy 3 dead. See module docblock.
+// TASK_1944b: VIETSTOCK_BASE, SSC_IBOARD_BASE_URL, getSscIboardBase() removed. Strategies 2+4 dead.
 
 // TASK_1916b: PDF_HREF_RE removed -- was only used by extractCafefUrls (now deleted).
 
@@ -187,64 +185,14 @@ const VIETSTOCK_BASE = "https://finance.vietstock.vn";
 // Per-source extraction helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Extracts PDF URLs from the SSC iboard JSON API response.
- *
- * The iboard API at <SSC_IBOARD_BASE>/dcm/financials/ticker/<TICKER>
- * returns a JSON array of disclosure documents, each with a fileUrl field
- * pointing to a downloadable PDF. Filters for BCTC (annual/quarterly reports).
- */
-function extractSscUrls(raw: string, _ticker: string): string[] {
-  const check = stripAnsiJunk(raw);
-  if (check.junk || check.isNull) return [];
-  try {
-    const data = JSON.parse(check.cleaned) as unknown;
-
-    // iboard returns { data: [...] } or an array directly
-    const items: unknown[] = Array.isArray(data)
-      ? data
-      : (data as Record<string, unknown>)?.data instanceof Array
-        ? ((data as Record<string, unknown>).data as unknown[])
-        : [];
-
-    const iboardBase = getSscIboardBase();
-    const urls: string[] = [];
-    for (const item of items) {
-      if (typeof item !== "object" || item === null) continue;
-      const rec = item as Record<string, unknown>;
-      const fileUrl = rec.fileUrl ?? rec.file_url ?? rec.url ?? rec.pdfUrl;
-      if (typeof fileUrl === "string" && fileUrl.toLowerCase().endsWith(".pdf")) {
-        // Normalise to absolute URL
-        const absolute = fileUrl.startsWith("http") ? fileUrl : `${iboardBase}${fileUrl}`;
-        urls.push(absolute);
-      }
-    }
-    return urls;
-  } catch {
-    // JSON parse failure -- not an iboard JSON response
-    return [];
-  }
-}
-
-// TASK_1916b: extractCafefUrls removed -- Strategy 2 (cafef.vn FinanceInfo.ashx)
+// TASK_1916b: extractCafefUrls removed -- Strategy 3 (cafef.vn FinanceInfo.ashx)
 // permanently dead (301->404). See module docblock and SPIKE_1916 for full diagnosis.
 
-/**
- * Extracts PDF URLs from vietstock.vn HTML response.
- * Looks for anchor hrefs ending in .pdf.
- */
-function extractVietstockUrls(html: string, _ticker: string): string[] {
-  const urls: string[] = [];
-  const re = /href=["']([^"']*\.pdf)["']/gi;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(html)) !== null) {
-    const href = match[1];
-    if (href === undefined) continue;
-    const absolute = href.startsWith("http") ? href : `${VIETSTOCK_BASE}${href}`;
-    urls.push(absolute);
-  }
-  return urls;
-}
+// TASK_1944b: extractSscUrls removed -- Strategy 2 (SSC iboard) permanently dead
+// 2026-05-18. iboard-query.ssc.vn is NXDOMAIN. Returns [] for every ticker. See SPIKE_1916.
+
+// TASK_1944b: extractVietstockUrls removed -- Strategy 4 (vietstock.vn) permanently dead
+// 2026-05-18. finance.vietstock.vn returns HTTP 404 for every ticker. See SPIKE_1916.
 
 // ---------------------------------------------------------------------------
 // hsx.vn mediafiles -- Strategy 0
@@ -358,49 +306,13 @@ async function tryFetchVpsPlaywright(
 // Per-source fetch strategies
 // ---------------------------------------------------------------------------
 
-/**
- * Try to find PDF URLs via the SSC iboard JSON API.
- *
- * The base URL is resolved at call time from SSC_IBOARD_BASE_URL env var.
- * When running geo-blocked (France), set SSC_IBOARD_BASE_URL to a VPS proxy
- * that forwards /dcm/financials/ticker/<TICKER> to iboard-query.ssc.vn.
- *
- * Returns empty array on any error (network, parse, HTTP error).
- */
-async function tryFetchSsc(
-  ticker: string,
-  timeout: number,
-  fetchFn: HttpFetchFn,
-): Promise<string[]> {
-  const base = getSscIboardBase();
-  const url = `${base}/dcm/financials/ticker/${encodeURIComponent(ticker.toUpperCase())}`;
-  try {
-    const raw = await fetchFn(url, timeout);
-    return extractSscUrls(raw, ticker);
-  } catch {
-    return [];
-  }
-}
+// TASK_1916b: tryFetchCafef removed -- Strategy 3 permanently dead. See module docblock.
 
-// TASK_1916b: tryFetchCafef removed -- Strategy 2 permanently dead. See module docblock.
+// TASK_1944b: tryFetchSsc removed -- Strategy 2 (SSC iboard) permanently dead 2026-05-18.
+// iboard-query.ssc.vn is NXDOMAIN since 2026-04-27. Returns [] for every ticker. See SPIKE_1916.
 
-/**
- * Try to find PDF URLs from vietstock.vn financial section.
- * Returns empty array on any error.
- */
-async function tryFetchVietstock(
-  ticker: string,
-  timeout: number,
-  fetchFn: HttpFetchFn,
-): Promise<string[]> {
-  const url = `${VIETSTOCK_BASE}/${ticker.toUpperCase()}/bao-cao-tai-chinh`;
-  try {
-    const html = await fetchFn(url, timeout);
-    return extractVietstockUrls(html, ticker);
-  } catch {
-    return [];
-  }
-}
+// TASK_1944b: tryFetchVietstock removed -- Strategy 4 (vietstock.vn) permanently dead 2026-05-18.
+// finance.vietstock.vn returns HTTP 404 for every ticker. JS-rendered, no PDF hrefs. See SPIKE_1916.
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -409,19 +321,17 @@ async function tryFetchVietstock(
 /**
  * Discover BCTC PDF URLs for a HOSE-listed ticker.
  *
- * Tries four sources in order:
- *   0. hsx.vn mediafiles API (when _fetchHsx is supplied) -- new primary (TASK-BCTC-3b)
+ * Tries two live sources in order (dead strategies removed in TASK_1944b):
+ *   0. hsx.vn mediafiles API (when _fetchHsx is supplied) -- primary (TASK-BCTC-3b)
  *      HOSE-only. HNX/UPCOM tickers return [] and fall through to strategy 1.
  *   1. VPS Playwright endpoint (when BCTC_DISCOVER_URL is set) -- covers all exchanges
- *   2. SSC iboard JSON API (via SSC_IBOARD_BASE_URL) -- NXDOMAIN as of 2026-04-27
- *   3. vietstock.vn HTML scraper (rarely succeeds; all content JS-rendered)
  *
- * Strategy 2 (cafef.vn FinanceInfo.ashx) was permanently removed in TASK_1916b
- * (2026-05-14). The endpoint is dead (301->404) and all 3 replacement candidates
- * failed from France. See SPIKE_1916 for investigation log.
+ * Removed strategies:
+ *   2. [REMOVED TASK_1944b] SSC iboard JSON API -- iboard-query.ssc.vn NXDOMAIN since 2026-04-27
+ *   3. [REMOVED TASK_1916b] cafef.vn FinanceInfo.ashx -- 301->404, all replacements dead
+ *   4. [REMOVED TASK_1944b] vietstock.vn HTML scraper -- HTTP 404 for every ticker
  *
  * The first source that returns >= 1 PDF URL wins (primary result).
- * The next source that also returns URLs is stored as fallback.
  *
  * For unknown/fake tickers (all sources return empty): returns
  * { urls: [], source: null, fallbackUrls: [], fallbackSource: null }.
@@ -444,19 +354,9 @@ export async function discoverHosePdfUrls(
   //
   // _fetchHsx is optional: strategy 0 only runs when the injectable is supplied.
   // _fetchVpsPlaywright is optional: strategy 1 only runs when BCTC_DISCOVER_URL is set.
-  // _fetchSsc / _fetchVietstock are always required.
-  // _fetchCafef is accepted but silently ignored (deprecated, see DiscoverOptions).
+  // _fetchSsc / _fetchCafef / _fetchVietstock are deprecated no-ops (TASK_1944b / TASK_1916b).
   const fetchHsx           = options._fetchHsx;
   const fetchVpsPlaywright = options._fetchVpsPlaywright;
-  const fetchSsc           = options._fetchSsc;
-  const fetchVietstock     = options._fetchVietstock;
-
-  if (!fetchSsc || !fetchVietstock) {
-    throw new Error(
-      "[bctcDiscovery] fetch functions must be supplied via DiscoverOptions. " +
-      "Use bctcHttpFetch from infrastructure/fetchers/bctcHttpFetcher.ts as the production default.",
-    );
-  }
 
   // Strategy 0: hsx.vn mediafiles API (TASK-BCTC-3b, 2026-05-15)
   // Only runs when _fetchHsx is supplied in options.
@@ -478,40 +378,17 @@ export async function discoverHosePdfUrls(
     ? await tryFetchVpsPlaywright(ticker, year, quarter, timeout, fetchVpsPlaywright)
     : [];
   if (vpsUrls.length > 0) {
-    // Best-effort fallback from SSC
-    const sscUrls = await tryFetchSsc(ticker, timeout, fetchSsc);
     return {
       urls: vpsUrls,
       source: "vps-playwright",
-      fallbackUrls: sscUrls,
-      fallbackSource: sscUrls.length > 0 ? "ssc" : null,
-    };
-  }
-
-  // Strategy 2: SSC iboard
-  const sscUrls = await tryFetchSsc(ticker, timeout, fetchSsc);
-  if (sscUrls.length > 0) {
-    // Best-effort fallback from vietstock (cafef removed in TASK_1916b)
-    const vietstockUrls = await tryFetchVietstock(ticker, timeout, fetchVietstock);
-    return {
-      urls: sscUrls,
-      source: "ssc",
-      fallbackUrls: vietstockUrls,
-      fallbackSource: vietstockUrls.length > 0 ? "vietstock" : null,
-    };
-  }
-
-  // Strategy 3: vietstock.vn
-  // TASK_1916b: cafef.vn strategy removed. Vietstock promoted to last resort.
-  const vietstockUrls = await tryFetchVietstock(ticker, timeout, fetchVietstock);
-  if (vietstockUrls.length > 0) {
-    return {
-      urls: vietstockUrls,
-      source: "vietstock",
       fallbackUrls: [],
       fallbackSource: null,
     };
   }
+
+  // Strategy 2 (SSC iboard): REMOVED TASK_1944b — iboard-query.ssc.vn NXDOMAIN since 2026-04-27. See SPIKE_1916.
+  // Strategy 3 (cafef.vn): REMOVED TASK_1916b — endpoint dead (301→404). See SPIKE_1916.
+  // Strategy 4 (vietstock.vn): REMOVED TASK_1944b — HTTP 404 for every ticker. See SPIKE_1916.
 
   // All strategies failed
   return {
