@@ -1,29 +1,35 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-05-18T01:03Z · **Cycle:** Prediction Review (01:00 UTC)
+**Last updated:** 2026-05-18T04:08Z · **Cycle:** Market 04:01 UTC (Mon 03:30/04:30 slot)
 
 ## This session
 
-### Prediction Review (01:01 UTC)
-- Mode: PREDICTION_REVIEW | Claims (resolved): 0 | Open markets: 1 | Accuracy: n/a (no resolved claims this window) | Flags: [] | Regime at review: TIGHTENING
-- MCP gateway vn-market **operational** (live probe: `log_agent_work` start id=969, `get_prediction_markets` ok, `get_macro_snapshot` ok). Previous 2026-05-17 GATEWAY_DOWN claim superseded by live probe per cowork-error-boundary § Memory-as-Truth Prohibition.
-- `get_prediction_markets()` returned 1 open market (`0x7b49…0f11` "China invades Taiwan before GTA VI", endDate 2026-07-31, yesPrice 0.505, signalCount 0, no active signals). Nothing resolved → no accuracy comparison possible this cycle.
-- Threshold note: regime currently TIGHTENING → if/when resolutions appear, apply <40% accuracy floor (DAMPENING baseline already reduces expectations).
-- No feedback submitted (no accuracy breach to flag).
+### Coordination Cycle (04:01–04:08 UTC)
+- Mode: MARKET | System: ok (16 CBs OK, 0 open, foreign-flow fallback WARN = known recurring, all RSS green, DB 145MB)
+- Alerts open (24h): 4 (GAS price_surge +5.15%, Brent +2.91σ HIGH, Gold -3.58σ CRITICAL, Brent +2.05σ HIGH) — all pre-existing, no new
+- Regime: TIGHTENING (unchanged from 01:01 prediction cycle) | US10Y 4.59% RISK-OFF | DXY 99.33 STABLE | CARRY -0.33% FII_OUTFLOW_RISK
+- Portfolio: 1 position FPT 5,000 @ 80,300, MV 367M VND, P&L -8.6% | VaR(95%) -0.3% | Heat: Bình thường
+- ALIGNMENT_SCORE: 1.0 (FPT tech_export = TAILWIND under TIGHTENING) — no misalignment warning
+- Rebalancing: no targets set (analyst workflow owns target_allocation)
+- Conviction shifts: 0 (FPT 0.42 MODERATE "XEM XÉT GIẢM" — already flagged prior cycle; Kinh Dịch Kiển BÁN tiêu cực)
+- Events: no triggers fired (earnings calendar unchanged — all Q1 overdue, already known; no new insider/policy/supply/sector-rotation/Kinh-Dich events)
+- Quality: alert_accuracy N<20 → insufficient_sample=true (520 unknown / 0 hit / 0 miss — scored_pct 36%). signal_effectiveness: 3 agent types, 19 total signals, 0 fired/confirmed — pipeline stall on resolution scoring, NOT precision issue
+- Unreviewed market messages (10): morning briefing + EOD reports + weekly portfolio + user_ask_reply digests — all sent, none stale-stale
+- WORK heartbeat sent
+- Pillars: M2=✗ (no SBV money-supply data in cycle) COC=✓ (carry -33bp, US10Y 4.59% RISK-OFF) EPS=✓ (FPT P&L -8.6% proxy; BCTC Q1 still overdue) POL=✗ (no legal/crisis signals fired) → 2/4. No BUY/SELL/HOLD recommendation issued → pillar gate not triggered.
 
 ## Patterns noticed
 
-- Polymarket relevance pool stayed at 1 market and signalCount=0 — geopolitical-tail prediction with weak mapping to VN watchlist (FPT/VEA/GEX). Investigate whether mapping is over-tagging or whether news-scout/digest-predict should widen the relevance filter.
-- Doc conflict: `flows/unified-agent/prediction.md` says "append" to notebook, but `skills/notebook-write` mandates full overwrite. Treat notebook-write as SSOT (more recent, more emphatic). → doc-self-heal candidate.
+- alert_accuracy stuck at scored_pct=36% with 520 unknowns over 30d → resolution job (`verdictResolutionJob`) likely still stalled per prior cycle carry-over. Same root cause as 2026-05-17 BUG msgs.
+- foreign-flow-job fallback exhausted on every poll (every minute since 04:01 UTC) — same WARN cycle. Source upstream broken; fallback chain produces empty. Not new; ops already aware.
+- Portfolio remains single-ticker (FPT only) — any sector rotation insight has zero portfolio actionability until user adds positions. Stand-by mode appropriate.
 
 ## Carry-over (next session)
 
-- **🟢 Gateway recovery confirmed 2026-05-18T01:00Z** — supersedes 2026-05-17 GATEWAY_DOWN flag. No further escalation needed unless next probe fails.
-- **🟡 verdictResolutionJob no-baseline-price loop** — last seen 2026-05-17 (19 dup BUG msgs in 21h). Re-check on next market cycle whether the storm is still active after the 26h gateway outage; if yes, Dev Team handoff still owed.
-- **🟡 News RSS lag** — 2.9h aggregate vs 7m per-source. LOW perf-feedback already filed 2026-05-16; no new action this cycle.
-- **🔴 BCTC Q1 BANKING (ACB/BID/CTG/EIB/MBB/VCB/VPB)** — filing deadline 2026-05-15 passed. First weekday market cycle (Mon 2026-05-18 02:00 UTC, next slot) must call `get_bctc_full` per ticker.
-- **🔴 VirtioFS H4 git-lock race** — `git_commit_retry` ineffective from sandbox (EPERM on unlink). Permanent F1 (Docker File-Sharing exclude `.git`) still pending user action. This cycle's notebook commit may hit the same race.
-- **🟡 VNH BCTC scrape empty** — re-verify next market cycle (source-side, not pipeline).
-- **FPT conviction 0.49 XEM XÉT GIẢM** — entry 72,900, last close 72,900 (stale). Hold reassessment until BCTC Q1 EPS available.
-- **Doc self-heal candidate**: prediction.md "append" vs notebook-write "overwrite" — fix prediction.md to reference end-cycle skill rather than re-specify a conflicting notebook step.
-- **Cycle metrics:** 4 MCP calls × 500 ≈ 2,000 estimated tokens.
+- **🟡 verdictResolutionJob no-baseline-price loop** — alert_accuracy still 520 unknowns / 0 scored hits. Same flag as 01:01 cycle. Re-check if storm continues; if 24h+ unchanged, escalate to Dev Team.
+- **🟡 foreign-flow-job recurring fallback exhausted** — every-minute WARN since cycle start. Upstream source dead; ops aware. No new BUG escalation (would dup).
+- **🔴 BCTC Q1 BANKING + ALL WATCHLIST QUÁ HẠN** — 38 tickers Q1/2026 overdue (banking 3 days, others 18 days). Filing-side issue, not pipeline. `get_bctc_full` per ticker still owed when filings appear.
+- **🟡 FPT conviction 0.42 XEM XÉT GIẢM** — Kinh Dịch Kiển BÁN tiêu cực. Position -8.6% P&L. Hold reassessment until Q1 BCTC available. Reg-fit: tech_export TAILWIND under TIGHTENING gives 1.1× mult but EPS signal still missing.
+- **🟢 MCP gateway operational** — 14 MCP calls succeeded; 1 transient error on get_portfolio_conviction recovered after 1× retry.
+- **🟡 get_portfolio_conviction transient error** — single failure mid-cycle: "connector's server isn't responding"; succeeded on 1× retry. Watch for repeat.
+- **Cycle metrics:** 14 MCP calls × 500 ≈ 7,000 estimated tokens.
