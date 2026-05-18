@@ -1,6 +1,30 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c176 — 1941c accuracy digest job — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c179 — 1941d FPT net_profit OCR fix — APPROVED
+
+## Session 2026-05-18 c179 — 1941d FPT net_profit OCR API bridge
+
+### TASK REPORT — 1941d (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FIX (infrastructure/interface — net_profit OCR extraction bug, API bridge COALESCE)
+round: 1
+merge commit: chore(1941/mcp-server): merge task/1941d-fpt-netprofit-ocr-fix
+```
+
+#### Pipeline
+
+- Cashflow tests (24): 24/24 GREEN (1941d×7 + 1890a×7 + 1930b×5 + 1941a×5)
+- Full suite: 9180 pass / 276 fail / 31 skip — 276 pre-existing; +1 vs developer baseline is flaky timing test
+- tsc: 4 errors on branch (1941c-accuracy-digest divergence artifact, absent on main — confirmed resolved post-merge, pre-push hook passed)
+- DDD: PASS — bridge fns in infrastructure/db/, COALESCE in interface/mcp/tools/
+- Security: PASS — parameterized SQL (schema-financial-reports.ts:392 ?-binding), no process.env, no secrets
+- Migration: PASS — additive ALTER TABLE only, idempotent colNames.has guard (schema-financial-reports.ts:87)
+- NOTE: was reading from `main` initially (git branch showed task branch but cwd was main after prior stash). Re-ran all checks after correct checkout.
+
+---
 
 ## Session 2026-05-18 c176 — 1941c accuracy digest job
 
