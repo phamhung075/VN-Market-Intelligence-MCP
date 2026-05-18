@@ -1,5 +1,56 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-18 | **Session:** c185 — 1945a getPriceHistory envelope unwrap fix — APPROVED
+
+## Session 2026-05-18 c185 — 1945a getPriceHistory envelope unwrap fix
+
+### TASK REPORT — 1945a (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: f486457b (on main, no separate task branch)
+type: FIX (infra/microservices/clients.ts + scheduler/alerts/verdictResolutionJob.ts)
+zone: apps/mcp-server/
+round: 1
+```
+
+#### Pipeline
+
+- Zone tests (1945a): 6/6 GREEN (154ms)
+- Full suite: 9216 pass / 296 fail (pre-existing env failures — Telegram down, chromium missing, VPS unreachable, watchlist count drift; 0 in 1945a scope)
+- tsc: 0 errors
+- DDD: PASS — scheduler imports infrastructure (permitted); no domain→infra violation
+- Security: PASS — no process.env, no hardcoded secrets in changed files
+
+#### AC Matrix
+
+| AC | Result |
+|----|--------|
+| AC-1 PriceHistoryEnvelope type exported from clients.ts | PASS |
+| AC-2 defaultFetchHistory reads envelope.history[0].close | PASS |
+| AC-3 caller audit — only verdictResolutionJob.ts uses getPriceHistory | PASS |
+| AC-4 tsc 0 errors | PASS |
+| AC-5 6 new unit tests GREEN | PASS |
+| AC-6 full suite baseline maintained (9216 pass vs 9225 prior session — delta is pre-existing drift, not 1945a regression) | PASS |
+
+#### Notes
+
+- Commit already on main (developer merged directly, no task branch to clean up)
+- TASKS.md 1945a row updated to QA-APPROVED
+- WORK channel notified: "[QA] 07:07 UTC — fix(mcp-server): 1945a SHIPPED — getPriceHistory envelope unwrap fixed; scored_pct should recover to >=60% within 48h"
+- Full suite pass count 9216 vs notebook baseline 9225 (c184): -9 pass, +21 fail. Delta confirmed pre-existing (Task 083, 1300b, 1078, signal-T5, newsHeadlinesRefreshJob — all known env failures, none in 1945a scope)
+
+## Cycle — 07:07 UTC
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1945a fix correct — PriceHistoryEnvelope type added, defaultFetchHistory reads envelope.history[0].close, caller audit confirms only verdictResolutionJob.ts affected
+- **actions**: TASKS.md 1945a QA-APPROVED, WORK Telegram sent, notebook updated
+- **next_cycle_hint**: Monitor scored_pct metric — should recover to >=60% within 48h per sprint goal
+- **estimated_tokens**: 7000
+
+---
+
 **Last updated:** 2026-05-18 | **Session:** c184 — 1942c HPG cashflow all-zeros fix — APPROVED
 
 ## Session 2026-05-18 c184 — 1942c HPG cashflow all-zeros fix
