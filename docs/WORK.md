@@ -1,5 +1,10 @@
 
 ---
+## [Developer] 2026-05-18 — Task 1941a: cashFlowTool OCF API-bridge preference fix
+
+`get_cash_flow` now reads `operating_cash_flow` (vnstock API bridge) before `operating_cf` (OCR/PDF). VCB Layer-7 ratio fixed: 1.23e15 → 9,947,260 triệu VND, OCF/NI ratio = 1.15 (passes guard). FPT OCF fixed (4,108,450); ratio still suppressed due to separate NI OCR extraction bug. 17 cashflow tests pass. Docker rebuilt.
+
+---
 ## [Digest & Predict] 2026-05-05 21:32 UTC — DAILY digest ABORTED (bootstrap unreachable)
 
 **Trigger**: scheduled `vn-digest-writer` (daily 15:30 UTC slot, fired ~6h late at 21:32 UTC).
