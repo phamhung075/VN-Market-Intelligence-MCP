@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c178 (PM: 1941c → DONE, project-stats +1 cronJobCount, TASKS.md verified, WIP=1/2) | **Sprint:** 1941 (1941a DONE, 1941b OBSERVE, 1941c DONE, 1941d QA) | **Current:** WIP 1/2 (1941d QA in flight)
+**Last updated:** 2026-05-18 c179 (PM: 1941d → DONE QA-APPROVED, Sprint 1941 dev COMPLETE, WIP=0/2 CLEAN) | **Sprint:** 1941 CLOSED DEV (1941a DONE, 1941c DONE, 1941d DONE, 1941b OBSERVE gate 2026-05-25) | **Current:** WIP 0/2 (ready for dispatch)
 
 ## Current state
 
-- **WIP: 1/2 (1941d QA in flight)** — Cycle c178: 1941c (accuracyDigestJob daily WORK digest) QA APPROVED, merged to main c177, marked DONE. 7/7 task tests GREEN (22 assertions), full suite 9187 pass (no regression). cronJobCount +1 (schedule 0 7 * * * UTC). getSystemAccuracyDigestStats 4-query pattern + buildAccuracyDigestText formatter. 1941d QA currently running (FPT net_profit OCR extraction bug fix). 1941b in OBSERVE (7d seed window, gate 2026-05-25). Sprint 1941 Tier 1 complete (1941a + 1941c). WIP capacity = 1/2 AVAILABLE. Wait for 1941d QA before next dispatch.
+- **WIP: 0/2 CLEAN** — Cycle c179: 1941d (FPT net_profit OCR fix) QA APPROVED + MERGED to main. 24 cashflow tests GREEN (7 new + 17 regression), tsc clean, DDD PASS, security PASS. ni_source column + bridgeNetProfitToFinancialReports() wired into cashFlowTool COALESCE. FPT Q4/2025 ratio 1.6371 (passes guard). Sprint 1941 dev work COMPLETE: 1941a DONE (L7 OCF guard), 1941c DONE (accuracyDigestJob daily digest), 1941d DONE (net_profit bridge). 1941b in OBSERVE (7d seed window, gate 2026-05-25, not a code blocker). WIP capacity = 2/2 AVAILABLE for next dispatch. No blockers. Ready to pull next high-priority backlog task.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,43 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 179 — 2026-05-18 PM Sprint 1941 Closure: 1941d → DONE (QA-APPROVED + MERGED), Sprint 1941 dev COMPLETE (WIP=0/2 CLEAN)
+
+**Input:** QA handoff from qa agent. Approval summary (1941d):
+- FPT net_profit OCR extraction fix + ni_source column + bridgeNetProfitToFinancialReports() domain service
+- cashFlowTool COALESCE prefers net_profit_api_bridge (from dedicated column) when available
+- FPT Q4/2025 OCR=20,225 → bridge=2,509,520 triệu VND, ratio 1.6371 (passes guard)
+- 7 new tests + 17 regression tests = 24 cashflow tests GREEN
+- tsc clean, DDD PASS, Security PASS
+- Branch task/1941d-fpt-netprofit-ocr-fix merged to main, task deleted
+- Report: reports/TASK_REPORT_1941d.md
+
+**Actions:**
+1. **Marked 1941d DONE in docs/TASKS.md** — Updated row with QA-APPROVED tag, merged note, report reference. Row now reflects completion date 2026-05-18.
+2. **Sprint 1941 closure verification:**
+   - **1941a DONE** ✓ (L7 OCF guard deploy-verify, VCB 1.23e15 → 9.9M, FPT OCF fixed to 4.1M)
+   - **1941c DONE** ✓ (accuracyDigestJob daily WORK digest, 0 7 * * * UTC, 7/7 tests GREEN)
+   - **1941d DONE** ✓ (FPT net_profit OCR extraction fix, ni_source bridge column, 24 tests GREEN)
+   - **1941b OBSERVE** (7d signal_outcomes seeding window, gate 2026-05-25, AC: ≥30 resolved rows across ≥3 signal_type values — no code dispatch needed, monitoring-only)
+   - **Sprint 1941 dev work is COMPLETE.** Mark sprint closed in notation.
+3. **WIP Status:** 0/2 CLEAN (no In Progress tasks). Capacity = 2/2 AVAILABLE for next dispatch.
+4. **TASKS.md updated:** 1941d row marked DONE with merged tag. No new task entry added (1941b is observational, not a code task).
+5. **PM notebook updated:** Header reflects Sprint 1941 CLOSED DEV, WIP=0/2 CLEAN, ready for next dispatch. Current state + this cycle entry added.
+
+**Next steps:**
+- 1941b observation: ops monitors signal_outcomes rows until 2026-05-25 gate. AC: ≥30 resolved (outcome_24h ∈ correct/incorrect/neutral) across ≥3 signal_type values. Failure mode → bug task to dev-mcp-server (seed path broken). No dispatch unless escalation.
+- WIP capacity = 2/2 AVAILABLE. Dispatch next highest-priority unblocked task from Backlog/Todo.
+- **PIPELINE CANDIDATES:**
+  - Backlog: alert-precision-488-unknowns (TRACKING, holds until ≥550 agent_signals), 1907a-digest-predict-silence (CRITICAL OPS, user-action blocked)
+  - Todo: 1941b-signal-outcomes-seed-window (OBSERVE, no code), 1922g-pharma-events-source-verify (OBSERVE 2026-06-01), 1922i-alert-engine-records (WONTFIX)
+  - No high-priority dispatch candidates ready unless architect brief arrives
+
+**Blockers:** None. 1941b gate (2026-05-25) non-blocking on dev workflow.
+
+**Status:** Sprint 1941 dev COMPLETE. WIP=0/2 CLEAN. Awaiting architect brief or next sprint signal for dispatch.
 
 ---
 
