@@ -4,6 +4,25 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1942a — vnstock startup backfill probe (2026-05-18, DONE → REVIEW)
+
+**Root cause / goal:** Cold Docker restart leaves vnstock_financials empty until Monday 01:00 UTC cron. Probe fills the gap.
+
+**Implementation:**
+- `vnstockStartupProbe.ts` (NEW): injectable deps pattern (`getDb`, `runJob`, `scheduleDelay`, `log`). Guard: COUNT(DISTINCT code WHERE data_type='financials') < 10 OR last fetched_at > 7 days → fire job after 90s delay. Non-fatal: all errors caught + job fires anyway (FR-6 safe fallback).
+- `startScheduler.ts`: added import for `runVnstockFundamentalsJob` + `runVnstockStartupProbe`; wired IIFE after accuracyDigest block.
+- AC-7 confirmed: no `_resetRunningState` in probe. `_isFundamentalsRunning` in job handles Monday cron overlap.
+
+**Tests (6/6 GREEN):** T1 cold DB fires job, T2 stale >7d fires job, T3 warm skips, T4 DB error caught + job fires anyway, T5 delay=90000ms, T6 missing table caught + fires.
+
+**Key design decision:** extracted into separate module (`vnstockStartupProbe.ts`) with injectable deps rather than inline IIFE. Enables clean unit tests without module-level mocking. Pattern matches ohlcvStartupProbe.ts.
+
+**Commits:** `b1293a56` (feat)
+
+Zone health: startup probe pattern consistent with EFFR + ohlcv probes; DDD layers respected (probe in scheduler/financial-reports, not domain); 100% branch coverage on probe | HEALTHY
+
+---
+
 ### Task 1941c — Daily accuracy WORK digest job (2026-05-18, DONE → REVIEW)
 
 **Root cause / goal:** Signal outcome feedback loop (Sprint 1941). Wire a daily 07:00 UTC cron job that reads `signal_outcomes`, computes 30-day accuracy stats, and sends a top-3/bottom-3 signal type breakdown to the WORK Telegram channel.

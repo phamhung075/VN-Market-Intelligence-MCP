@@ -202,3 +202,27 @@ AC-8 through AC-11 are integration tests (can be verified manually after cold re
 ---
 
 **Task created:** 2026-05-18 | **PM:** Claude (Project Manager) | **Handoff source:** docs/handoffs/1942a-ba-spec.md
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/startScheduler.ts` — added import for `runVnstockFundamentalsJob` + `runVnstockStartupProbe`; wired startup probe IIFE after accuracyDigest cron block
+  - `apps/mcp-server/src/scheduler/financial-reports/vnstockStartupProbe.ts` — NEW: injectable probe module with `runVnstockStartupProbe(deps)` function
+  - `docs/architecture/microservice/mcp-server/financial-reports.md` — updated scheduler job count + added vnstockStartupProbe entry
+- **Tests written:** `apps/mcp-server/src/__tests__/1942a-startup-backfill-probe.test.ts` — 6 assertions, all GREEN
+  - T1: cold DB (count < 10) → fires job
+  - T2: stale data (> 7 days) → fires job
+  - T3: warm DB (>= 10 codes, age < 7d) → skips job
+  - T4: DB query error caught — server does not crash, job fires anyway (FR-6)
+  - T5: scheduleDelay called with exactly 90000ms
+  - T6: missing vnstock_fetch_log table → catches error, fires job
+- **Git commits:** `b1293a56` feat(1942a): add vnstock startup backfill probe after cold Docker restart
+- **Type check:** clean (0 errors)
+- **Service tests:** 6 pass / 0 fail (new tests) | 23 pass / 0 fail (1942a + 1920a + 1922j + 1352 combined) | Full suite exit 0
+- **Docs updated:** `docs/architecture/microservice/mcp-server/financial-reports.md` — scheduler job count updated
+- **AC-7 verified:** No `_resetRunningState` in probe block (code review confirmed)
+- **Design note:** Extracted probe into `vnstockStartupProbe.ts` (injectable deps pattern) rather than inline IIFE, enabling clean unit tests without module-level mocking. startScheduler.ts wires production deps.
