@@ -7,13 +7,12 @@
  *   3. cnbc-world-markets    (header-rotation, ~5MB)
  *   4. trading-economics-vn  (header-rotation, ~5MB)
  *   5. fred-macro            (open-api-key, ~5MB — conditional on FRED_API_KEY)
- *   6. investing-economic-calendar (cloudflare-managed-bypass, ~25MB)
+ *   6. investing-economic-calendar (NullCalendarAdapter — wontfix 2026-05-18)
  *
  * All 6 sources run concurrently via Promise.allSettled.
- * Each source has an independent per-source timeout (default: 8s for fast scrapers,
- * 10s for calendar — hard cap introduced 2026-05-17 to prevent the 63s hang
- * observed when the CF subprocess stalls beyond its expected warmup window).
+ * Each source has an independent per-source timeout (default: 8s for fast scrapers).
  * A timed-out source is marked status='timeout'; it never blocks the others.
+ * calendar budget is 0ms — NullCalendarAdapter returns [] immediately.
  *
  * Contract: execute() NEVER throws. Always returns ExternalMacroEnvelope.
  * HTTP 200 when ≥1 source succeeded; HTTP 502 only when ALL sources failed
@@ -51,6 +50,8 @@ import { DEFAULT_SYMBOLS, DEFAULT_CNBC_SYMBOLS } from '../domain/defaults.js';
  *   10s cap introduced 2026-05-17; further reduced to 5s same day because
  *   the calendar endpoint is permanently unreachable — shorter timeout
  *   reduces page-load wait from ~30s to ~5s.
+ * 2026-05-18: wontfix — NullCalendarAdapter replaces InvestingCalendarAdapter.
+ *   NullCalendarAdapter returns [] immediately; calendar budget is now 0ms.
  *   The other 5 sources (worldBank, yahoo, fred, cnbc, tradingEconomics)
  *   are never blocked — all 6 run concurrently via Promise.all(withTimeout).
  */
@@ -60,7 +61,7 @@ export const DEFAULT_TIMEOUTS: Required<SourceTimeouts> = {
   cnbc:             35_000,  // Python subprocess + 6 parallel quote fetches
   tradingEconomics: 65_000,  // Python subprocess + 7 parallel TE page fetches
   fred:              8_000,
-  calendar:          5_000,  // Hard cap: 5s — endpoint permanently unreachable (2026-05-17)
+  calendar:              0,  // Wontfix 2026-05-18: NullCalendarAdapter returns [] instantly
 };
 
 export interface SourceTimeouts {

@@ -97,13 +97,19 @@ One indicator failure returns `[]` for that key; others are unaffected.
 | `imports_usd` | NE.IMP.GNFS.CD | Imports of goods and services (US$) |
 | `unemployment` | SL.UEM.TOTL.ZS | Unemployment, total (% of labor force) |
 
-## InvestingCalendarAdapter
+## NullCalendarAdapter (wontfix 2026-05-18)
 - **File:** `apps/macro-indicators/src/infrastructure/scrapers/investing-economic-calendar.ts`
 - Implements `InvestingCalendarPort`
-- Uses Python subprocess + Cloudflare bypass (curl_cffi session warmup)
-- **Per-source timeout (orchestrator level):** `5 000ms` hard cap — set in `FetchExternalMacroUseCase.DEFAULT_TIMEOUTS.calendar`
-  - Reduced 30s → 10s → 5s on 2026-05-17: endpoint permanently unreachable; 5s cap limits page-load to ≤5s
-  - The subprocess can stall far beyond the expected CF warmup window; the hard cap prevents it blocking the other 5 sources
+- **Status:** Wontfix — investing.com/economic-calendar permanently unreachable from Docker container. Cloudflare Turnstile v2 JS challenge blocks all bypass attempts (FlareSolverr v3.4.6, curl_cffi chrome124/136).
+- **Current behavior:** `NullCalendarAdapter` — returns `[]` immediately with zero CPU/RAM cost.
+- **Per-source timeout (orchestrator level):** `0ms` — `DEFAULT_TIMEOUTS.calendar = 0`; NullCalendarAdapter resolves instantly.
+- **History:**
+  - 2026-05-13: FlareSolverr smoke test passed (1.53MB HTML, 5s) — initial hope
+  - 2026-05-13: Subsequent calls always timeout — endpoint permanently blocked
+  - 2026-05-17: Timeout cap reduced 30s → 10s → 5s to limit cycle blocking
+  - 2026-05-18: Wontfix — `InvestingCalendarAdapter` (deprecated) replaced by `NullCalendarAdapter`
+- **InvestingCalendarPort + EconomicCalendarEvent types retained** in `domain/repositories.ts` for future use.
+- **Python helper retained** (`investing_calendar_fetch.py`) as historical reference; not executed.
 
 ## Environment Variables
 ```
