@@ -101,3 +101,31 @@ Sprint 1948 (closed-loop auto-improvement Phase 1) remains BLOCKED on independen
 
 ACB/BID/CTG/MBB/VCB/VPB: `bctc_vps_queue` has `source_url` but no PDF stored. The VPS discover endpoint (`BCTC_DISCOVER_URL`) may be returning SSC URLs (not VPS bctc-files/ URLs). `bctcPdfPullJob` only pulls from `source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'`. If source_urls are SSC URLs, `bctcPdfPullJob` skips them (auth/geo-block). This is a VPS-side gap — the VPS playwright scripts have not yet fetched these 6 banks' PDFs to bctc-files/. Outside mcp-server zone. If VPS fetch doesn't complete, a follow-up task for dev-vps-crawls would be needed.
 
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-18
+- **Round:** 1
+- **Verdict:** APPROVED
+
+### Pipeline
+
+- Zone tests (1945d): 12/12 GREEN [134ms]
+- Full suite: 9682 pass / 350 fail (pre-existing baseline; +12 net new passes from 1945d)
+- tsc: 0 errors
+- DDD: PASS — no domain->infra imports; scheduler/interface importing infra is correct per DDD layer rules
+- Security: PASS — no hardcoded secrets; process.env at server.ts:195 is pre-existing (CLOUDFLARE_PATH_PREFIX, not in 1945d diff)
+
+### AC Matrix
+
+| AC | Result |
+|----|--------|
+| AC-3: 1945d test file with ≥1 test asserting disk scan picks up freshly-stored PDF and inserts financial_reports row | PASS — 12 tests, TC-3 directly covers AC-3 |
+| tsc clean | PASS |
+| No regression in existing BCTC tests | PASS — 1196 pre-existing failure confirmed not introduced by 1945d |
+
+### Merge commit
+
+`chore(1945/bctc): merge task/1945d-reparse-pipeline-gap`
+
