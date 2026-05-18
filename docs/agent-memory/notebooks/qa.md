@@ -1,6 +1,55 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c195 — 1950-T5 digest-predict cron alignment — APPROVED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c196 — 1950-T3 chef pipeline runbook — CHANGES_REQUESTED
+
+## Session 2026-05-18 c196 — 1950-T3 chef pipeline runbook (CHANGES_REQUESTED)
+
+### TASK REPORT — 1950-T3 (compact)
+
+```
+date: 2026-05-18
+outcome: CHANGES_REQUESTED
+commit reviewed: 0e3c96c9 (docs — on main, no task branch per project policy)
+type: DOCS (XS) — chef pipeline operator runbook
+zone: docs/protocols/chef-pipeline-runbook.md + docs/standards/cron-jobs.md + docs/TASKS.md
+round: 1
+```
+
+#### AC Matrix
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-T3-1 | runbook file exists | PASS |
+| AC-T3-2 | Section 1 cron schedule reference | PASS |
+| AC-T3-3 | Section 2 WORK telemetry field guide (START/SENT/SILENT/FAILED) | PASS |
+| AC-T3-4 | Section 3 recovery procedure | PASS |
+| AC-T3-5 | cron-jobs.md reference pointer added | PASS |
+| AC-T3-6 | TASKS.md T3 Done stamp | PASS |
+
+#### Blocking Issue
+
+- BLOCK-1: `chef-pipeline-runbook.md:13-18` — §1 cron table presents dispatch windows as cron expressions (`23 5 * * 1-5` etc.). Actual registered cron is `29 * * * *` (hourly). On-call running CronList will find only `29 * * * *` — none of the listed expressions exist as cron objects. Recovery row L108 says "Verify CronList shows correct schedule" without specifying what that schedule is. Fix: add one clarifying line to §1; update L108 recovery row with `29 * * * *`.
+
+#### Non-Blocking
+
+- NB-1: `chef-pipeline-runbook.md:3` — size-justification 95L; actual 127L. Update when BLOCK-1 fix applied.
+- NB-2: REQ_1950.md §T3 section was never authored; TASKS.md row served as de-facto spec.
+
+#### T1/T4 Cross-Checks
+
+- All 4 telemetry formats match REQ_1950 §3 + chef.md L207/213: PASS
+- TNB cron `13 20 * * *` at L22: PASS
+- digest-predict `47 13 * * 0`: out of scope for chef runbook — no violation
+
+## Cycle — 2026-05-18 c196
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T3 — 6/6 ACs PASS on content; BLOCK-1 on cron table accuracy (dispatch windows presented as cron expressions; actual registered cron `29 * * * *` not stated). 2 non-blocking notes.
+- **actions**: CHANGES_REQUESTED issued. QA report written to docs/handoffs/sprint-1950-T3-qa-report.md. Notebook updated.
+- **next_cycle_hint**: Fixer: 1-line fix to chef-pipeline-runbook.md §1 + L108 + L3 size-justification update. Tiny change — re-QA rapid.
+- **estimated_tokens**: 3400
+
+---
 
 ## Session 2026-05-18 c195 — 1950-T5 digest-predict cron + scope alignment (APPROVED)
 
