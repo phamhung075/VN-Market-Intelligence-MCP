@@ -34,12 +34,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1941a-l7-ocf-guard-deploy-verify | **Sprint 1941 TIER 1** — Root cause: cashFlowTool.ts was reading `operating_cf` (OCR column, corrupted: VCB=1.23e15, FPT unit-mismatch). Fix: prefer `operating_cash_flow` (API bridge, Task 1878a) when not null. VCB now 9,947,260 triệu VND, ratio=1.15 passes guard. FPT now 4,108,450 triệu VND (still suppressed — NI extraction bug separate). 5 new tests + existing 17 cashflow tests GREEN. Docker rebuilt + redeployed. | HIGH | FIX | dev-mcp-server | docs/handoffs/1941a.md | — |
+| _(empty)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
+| 1941a-l7-ocf-guard-deploy-verify | **DONE 2026-05-18 QA** — cashFlowTool.ts now prefers `operating_cash_flow` (vnstock API bridge, Task 1878a) over `operating_cf` (OCR/PDF) via COALESCE. VCB: corrupted 1.23e15 → 9,947,260 triệu VND, ratio=1.15 (passes guard). FPT OCF fixed to 4,108,450 triệu (ratio still suppressed — NI=20,225 is separate OCR bug, filed separately). 5 new tests + 12 regression tests GREEN (17 total). tsc clean. Report: reports/TASK_REPORT_1941a.md. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
 | calendar-source-replacement | **DONE 2026-05-18 c174/QA-c174** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. 103/103 active tests pass, tsc clean on touched files, DDD PASS. NullCalendarAdapter wired. Report: reports/TASK_REPORT_calendar-source-replacement.md. Merged task/calendar-source-replacement to main. | LOW | WONTFIX | dev-macro-indicators | 2026-05-18 |
 | 1940a-pc1-legal-risk-tool-gap | **DONE 2026-05-18 c174/QA-c174** — `get_legal_risk_signals` now dual-source: queries both `alerts` AND `agent_signals` (signal_type=legal_risk). Root cause: PC1 chairman arrest signals (#3318/#3343, conf=0.78) were in agent_signals but tool never read there. Fix: `queryAgentSignalsTable()` in legalRiskTools.ts (interface layer, DDD-clean). TC4: null stock_code (broad) signals also returned. 7 new tests GREEN, 61-test regression suite GREEN, tsc 0 errors. QA c174 APPROVED. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
 | 1939a-tnb-critic-gate-sprint-a | **DONE 2026-05-17 c172/QA-c142** — TNB Critic Gate Sprint A+B shipped together in commit 21dddcfe: tnbCriticScorer.ts (pure domain scorer, 5 checks × 0.2, threshold 0.6), schema-news 3 new cols (critic_score/critic_notes/retry_count), postSignalWithCriticGate() wrapper, post_agent_signal MCP tool wired. 49 scorer+gate tests GREEN. QA c142 CHANGES_REQUESTED → fix a611d911 (try/catch + cron-registry) → QA c143 APPROVED. | HIGH | SPRINT-S | dev-mcp-server | 2026-05-17 |
