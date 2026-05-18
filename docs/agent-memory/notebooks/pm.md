@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c185 (PM: Sprint 1951 Phase 1 PLANNED → DISPATCHED. Tasks 1951a/b/c created + handoffs written. TASKS.md updated. WIP=3/2 OVER (1951a+1951b+1951c = 3 tasks, but 1951b+1951c blocked on prior tier, so effective WIP-ready=1). 1951a ready for agent-father; 1951b ops OBSERVE; 1951c close-gate. Sprint 1948 still blocked until 2026-05-20T07:22Z) | **Sprint:** 1951 Phase 1 OPEN (1951a→1951b→1951c, T0+24h+gate); 1950 CLOSED (T1-T5 all DONE); 1948 QUEUED-BLOCKED (gate: 2026-05-20T07:22Z) | **Current:** WIP 1/2 ACTIVE (1951a dispatched, 1951b/c await completion); NEXT tier: agent-father (1951a implementation)
+**Last updated:** 2026-05-18 c186 (PM: MAINT-1950b/c/d CLOSED. Sprint 1950 FULLY DONE (T1-T5 + MAINT-b/c/d all QA-APPROVED, commit d5c78d45). Sprint 1951 Phase 1 dispatched (1951a active, 1951b/c blocked). Sprint 1948 gate-watch 2026-05-20T07:22Z active) | **Sprint:** 1951 Phase 1 OPEN (1951a→1951b→1951c); 1950 FULLY CLOSED; 1948 QUEUED-BLOCKED (gate: 2026-05-20T07:22Z) | **Current:** WIP 1/2 ACTIVE (1951a dispatched); NEXT: po (gate-watch 2026-05-20T07:22Z or Sprint 1951 progression)
 
 > Prior history archived → `docs/archive/notebooks/pm-2026-05-18.md`
 
@@ -10,6 +10,24 @@
 - **Sprint 1950 Closure Summary:** T1=chef.md telemetry; T2=chef cycle-coverage audit (QA R2); T3=chef runbook (QA R2); T4=TNB cron hotfix; T5=digest-predict cron finalization (QA-APPROVED). Architectural finding from T5: `durable: true` in cron command files not honored by runtime (low-impact; documented in OQ-2).
 - **Sprint 1948 sequence:** BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: selfImproveOrchestratorJob.ts. Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. 3-phase rollout (shadow → manual-gate → auto-dispatch). Safety: 7d cooldown, max 2/cycle, freeze-on-worsening.
+
+---
+
+## Cycle 186 — 2026-05-18 PM Sprint 1950 FULL CLOSURE (MAINT-1950b/c/d QA-APPROVED)
+
+**Input:** QA report final APPROVED on MAINT-1950b/c/d (commit d5c78d45). Verdict: APPROVED (NB-1 noted: WORK.md is Telegram channel, non-blocking).
+
+**Actions:**
+1. Moved MAINT-1950b/c/d from Backlog to Done in TASKS.md (all 3 rows stamped "DONE 2026-05-18 QA-APPROVED", commit d5c78d45 added).
+2. Updated PM notebook header: Sprint 1950 now FULLY CLOSED (T1-T5 + MAINT-b/c/d).
+3. WIP assessment: 1/2 ACTIVE (1951a dispatched, awaiting agent-father). 1951b+1951c blocked on prior tier (proper sequencing).
+4. Sprint 1948 gate-watch: 2026-05-20T07:22Z confirmed active. No new action pending until gate clears.
+
+**Sprint Closure Summary:**
+- Sprint 1950: T1 (chef.md telemetry) + T2 (coverage audit QA R2) + T3 (chef runbook QA R2) + T4 (TNB cron hotfix) + T5 (digest-predict finalization QA) + MAINT-b/c/d (waterfall cleanup) = **6 tasks, ALL DONE**.
+- Architectural note: cron `durable: true` flag not honored at runtime (session-scoped only). Documented as OQ-2 in ARCHITECTURE.md.
+
+**Return Status:** WIP 1/2 CLEAN. NEXT: po (monitor gate-watch 2026-05-20T07:22Z for Sprint 1948 unblock OR assess Sprint 1951 progression).
 
 ---
 

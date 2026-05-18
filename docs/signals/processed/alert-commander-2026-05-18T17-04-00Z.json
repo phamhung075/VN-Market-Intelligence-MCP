@@ -1,0 +1,35 @@
+{
+  "from": "alert-commander",
+  "cycleAt": "2026-05-18T17:04:00Z",
+  "window": "off-hours-2h",
+  "marketStatus": "closed",
+  "regime": {
+    "REGIME": "TIGHTENING",
+    "CARRY_REGIME": "FII_OUTFLOW_RISK",
+    "CARRY_SPREAD": -0.33,
+    "pivot_window_active": false,
+    "nextPivotWindow": "June 2026"
+  },
+  "signalsEvaluated": [
+    { "id": 3427, "type": "urgent_news", "ticker": "VCB", "conviction": 0.50, "regimeThreshold": 0.75, "decision": "suppressed_below_threshold" },
+    { "id": 3428, "type": "urgent_news", "ticker": "BID", "conviction": 0.50, "regimeThreshold": 0.75, "decision": "suppressed_below_threshold" },
+    { "id": 3429, "type": "urgent_news", "ticker": "PLX", "conviction": 0.50, "regimeThreshold": 0.75, "decision": "suppressed_below_threshold" },
+    { "id": 3430, "type": "urgent_news", "ticker": "NVL", "conviction": 0.50, "regimeThreshold": 0.75, "decision": "suppressed_below_threshold" },
+    { "id": 3431, "type": "urgent_news", "ticker": "ACB", "conviction": 0.50, "regimeThreshold": 0.75, "decision": "suppressed_below_threshold" }
+  ],
+  "criticalOverrides": {
+    "verified_chain": false,
+    "legal_risk": false,
+    "crisis_velocity": false,
+    "chain_catalyst": false
+  },
+  "firingGate": {
+    "position_danger": { "met": false, "reason": "no_position_danger_signals_no_live_price_drops_market_closed" },
+    "watchlist_opportunity": { "met": false, "reason": "no_kinhdich_reading_no_bullish_signal_majority" },
+    "critical_override": { "met": false, "reason": "no_verified_chain_no_legal_risk_no_crisis_velocity" }
+  },
+  "outcome": "silent-exit",
+  "marketAlertSent": false,
+  "tickers": [],
+  "notes": "Off-hours 2h cycle. TIGHTENING regime raises urgent_news threshold to 0.75; all 5 signals at 0.50 fall below. No CRITICAL types present. Silent exit per no_cycle_headers policy. No MARKET write, no WORK header."
+}

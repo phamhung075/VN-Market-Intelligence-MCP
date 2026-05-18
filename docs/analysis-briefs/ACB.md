@@ -17,6 +17,7 @@
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-18 16:00 | Close: 23.000 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: Foreign fund exit signals, -1.29% bearish sector rotation
 2026-05-12 16:00 | Close: 22,700 VND | RSI: N/A | Vol: 10.94M (179% avg) | YoY: N/A
 
 

@@ -1,6 +1,39 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T18:02Z · Cycle: c197 — Sprint 1951 in flight, durable-finding assessed
+## Last updated: 2026-05-18T19:20Z · Cycle: c198 — SPIKE-1951d decided (Option C, hourly cadence)
+
+### c198 session summary
+
+**Spawn:** Architect/PM dispatched SPIKE-1951d decision request after 1951a partial completion (12/16 RemoteTriggers created; 4 sub-hourly slots rejected by API min-interval=1h).
+
+**Decision:** **Option C — accept hourly cadence.**
+
+Rationale (recorded for next-cycle audit):
+1. **Pipeline integrity preserved.** 12 working triggers already cover every `guaranteed: true` slot (chef-morning/eod/evening, tnb-audit, digest-sunday) + financial-analyst x2 + 5 non-guaranteed off-hours. The 4 failing slots are supplemental market-hours gatherers (`guaranteed: false`) — no MARKET dish depends on them.
+2. **Option A self-defeating.** CronCreate fallback is session-scoped → re-introduces F1 (the failure Sprint 1951 was built to eliminate). Rejected.
+3. **Option B unproven.** Self-requeue/watchdog pattern is undocumented; building it inside the 1945 stabilisation window (gate 2026-05-20T07:22Z) doubles risk surface. Rejected.
+4. **Frequency cost acceptable.** Hourly vs 15-min during market hours means 7 hits/day vs 28 for news-scout supplements. News urgency is already covered by `news-scout-sentiment 0 5` (pre-market batch) + `news-scout-offhours 0 */4` (every 4h). Alert-commander market-hours hourly aligns with hourly gatherer cadence — no informational gap.
+5. **Architecture cleanliness.** One trigger model (RemoteTrigger only), no hybrid CronCreate+RemoteTrigger architecture, no second SPOF.
+
+**Files updated this cycle:**
+- `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md` — added §2.4 "SPIKE-1951d Finding: Sub-hourly API Constraint" with decision + rationale.
+- `docs/TASKS.md` — moved SPIKE-1951d from Backlog to Done (79L, under 80L cap). Added task 1951e (agent-father, XS) to Backlog.
+- `docs/agent-memory/notebooks/po.md` — this cycle entry.
+
+**WORK Telegram:** SENT (message_id 8043) — one-liner decision + 1951e filing notice.
+
+### Carry-over for next cycle
+
+- **WATCH 2026-05-19T05:23Z** — first chef-morning RemoteTrigger fire (Sprint 1951 AC-4 smoke #1). Independent of 1951e.
+- **WATCH 1951e execution** — agent-father picks up 1951e. Expected output: 4 new `trigger_id` values in `cowork-schedule.json`, `trigger_error` field removed for all 4. Validate cron strings exactly: `0 2-8 * * 1-5` (news-scout-market, market-watcher-market, alert-commander-market) + `0 * * * 1-5` (market-watcher-prepost — note: hourly all hours Mon-Fri, NOT `0 */2`; brief says hourly is acceptable per Option C wording; if agent-father proposes `0 */2` for prepost defer to their judgement — PM/architect can confirm). If agent-father misreads as `0 */2 * * 1-5` (every 2h), that is also acceptable per Option C scope — no rejection.
+- **GATE 2026-05-20T07:22Z** — 1948a/b/c unblock window. Unchanged.
+- **Brief §2.4 review:** the §2.4 paragraph adds clarification that OQ-1 finding "syntax accepted" was misleading; runtime min-interval=1h is the binding constraint. Architects spawning future RemoteTrigger work must read §2.4, not just §2.3.
+- **WIP discipline:** Current WIP = 1951b (OBSERVE), 1951c (TASK). 1951e enters Backlog — not promoted. If agent-father has capacity after 1951c handoff, promote 1951e to In Progress (XS task, single-session work). WIP cap respected.
+- **Recurring-bug counter:** No new patches this cycle. Sprint 1951 architecture decision, not a bug fix. Counter unchanged.
+
+### Historical (preserved from c197)
+
+c197 confirmed Sprint 1951 (no override), prioritised 1951 over 1948 gate-watch, assessed `durable: true` finding (no separate brief — rides 1951→1955 chain), filed pre-1955 stopgap note for `cron-jobs.md` (already in 1951c handoff). All carry-over items from c197 remain active unless contradicted above.
 
 ### c197 session summary
 

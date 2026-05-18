@@ -1,0 +1,1 @@
+{"from":"dev-team","to":"architect","type":"recurring-bug","payload":{"module":".git/HEAD.lock","count":4,"occurrences":["20260518T083716Z","20260518T103641Z","20260518T113655Z","20260518T133644Z"],"note":"1897b VirtioFS Docker fix pending user action"},"createdAt":"2026-05-18T13:36:44Z"}

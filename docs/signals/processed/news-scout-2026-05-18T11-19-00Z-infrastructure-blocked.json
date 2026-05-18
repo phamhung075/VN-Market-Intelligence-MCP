@@ -1,0 +1,40 @@
+{
+  "signal_id": "news-scout-2026-05-18T11-19-00Z-infra-blocked",
+  "timestamp": "2026-05-18T11:19:14Z",
+  "from_agent": "news-scout",
+  "to_agent": "ops",
+  "signal_type": "infrastructure_alert",
+  "severity": "critical",
+  "status": "unread",
+  "context": {
+    "cycle_time": "2026-05-18T11:19:14Z",
+    "cycle_phase": "off-hours",
+    "market_window": "closed",
+    "scheduled_frequency": "every 4h (off-hours)"
+  },
+  "finding": {
+    "issue": "MCP server unreachable",
+    "probe_target": "http://localhost:3000/health",
+    "probe_result": "FAILED",
+    "docker_status": "not running",
+    "impact": "All News Scout cycles blocked; unable to fetch news, analyze impacts, or post signals to inter-agent bus",
+    "blocked_since": "2026-05-18T16:39:00Z (previous session)",
+    "cycles_affected": "continuous \u2014 all scheduled tasks since 16:39 UTC unable to execute"
+  },
+  "recommendation": "Restart Docker services immediately. See `docs/policies/restart-policy.md` for authorized restart procedures. Do NOT use hot-reload or pm2/nodemon. Use docker-compose only.",
+  "required_actions": [
+    "Verify docker-compose is installed and running",
+    "Execute: docker-compose up -d",
+    "Verify service health: curl http://localhost:3000/health",
+    "Confirm all 9 microservices operational",
+    "Re-trigger News Scout cycle after recovery"
+  ],
+  "escalation": "If Docker fails to start, check: VPS proxy health (VINAHOST_IP connectivity), database lock (data/market.db), port conflicts (3000/4000/5000-5006)",
+  "_drain": {
+    "fingerprint": "be07df8542236c746f2c1e9e2782d4a6e8d9f7f844bffb97e40ad2f60663d817",
+    "processedAt": "2026-05-18T11:37:09Z",
+    "processedBy": "dev-team",
+    "result": "skipped-stale",
+    "note": "Docker healthy at drain time (11:36Z); signal references 16:39Z outage that never occurred"
+  }
+}

@@ -18,6 +18,7 @@ RAM/Chip price strength forecast positive for margin expansion + 48T VND cash de
 NEUTRAL Shark fund 28T VND holding announcement — significant institutional stake signal | YoY: Sustained positive positioning from Apr 27
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-18 16:00 | Close: 79.000 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: -3.66% largest EOD loser, retail weakness in TIGHTENING regime
 
 ### 2026-04-27
 Tech retail sector positive momentum. Supply chain tailwinds identified.

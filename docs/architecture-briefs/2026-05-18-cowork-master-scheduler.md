@@ -68,6 +68,34 @@ This makes RemoteTrigger the correct primitive for the cowork schedule: **17 ind
 
 Agent-father must verify these before implementing Sprint 1951 T1. If full cron syntax is unsupported, Phase 1 scope changes (more triggers needed for range/step decomposition).
 
+### 2.3 SPIKE-1951a Findings
+
+**Date:** 2026-05-18
+**OQ-1 (cron range/step syntax):** SUPPORTED — Claude Code's CronCreate tool accepts standard 5-field cron expressions with full support for step syntax (`*/15`), ranges (`2-8`), and range+step combinations (`*/15 2-8`). Per https://code.claude.com/docs/en/scheduled-tasks.md, "All fields support wildcards (*), single values (5), steps (*/15), ranges (1-5), and comma-separated lists (1,15,30)." Extended syntax (L, W, ?) is not supported.
+
+**OQ-2 (max trigger count):** UNKNOWN — No documented limit found in public Claude Code or Claude Platform documentation. Routines (cloud-based scheduled tasks) have a daily per-account cap on runs (not trigger count), and GitHub triggers have per-routine hourly caps, but no workspace-level maximum on trigger definitions was found. Desktop scheduled tasks and Cloud Routines documentation do not specify a cap. Recommendation: Contact Anthropic support for confirmation, or test with 17 triggers and monitor for errors.
+
+**OQ-3 (exact API call syntax):** ANSWERED (2026-05-18, live RemoteTrigger API call). RemoteTrigger is a **separate MCP tool** — NOT `CronCreate` with a `remote: true` flag. The tool is `RemoteTrigger` with `action='create'` and a body containing:
+- `name`: display name for the trigger
+- `cron_expression`: standard 5-field cron string
+- `job_config.ccr.environment_id`: `env_011CV1yonRDFUhYhGEdkVwqj` (VN-Market project environment ID)
+- `job_config.ccr.events`: array with one event containing the full prompt text
+- `session_context.model`: model string (e.g. `claude-sonnet-4-6`)
+- `session_context.sources`: `[{"git_repository": {"url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP"}}]`
+- `mcp_connections`: array of MCP server connections (uuid, name, url) — must include vn-market MCP server for cowork triggers
+- `enabled_plugins`: array for marketplace plugins (may be empty `[]`)
+- `persist_session`: `false`
+
+Current trigger count in workspace: **3** (qa-responder + 2 vault maintenance triggers). Sprint 1951 proposes adding 17 more = **20 total**.
+
+**Phase 1 impact:** OQ-1, OQ-2 (partial), and OQ-3 all addressed. No trigger decomposition needed (OQ-1 affirmative). OQ-2 remains unverified but low risk (17 triggers, validate via test run). OQ-3 resolved — agent-father must use `RemoteTrigger` tool (not `CronCreate`) with environment ID `env_011CV1yonRDFUhYhGEdkVwqj` for all 17 trigger creations.
+
+### 2.4 SPIKE-1951d Finding: Sub-hourly API Constraint (2026-05-18)
+
+- **Constraint discovered at create-time (1951a):** RemoteTrigger API enforces an undocumented **minimum 1-hour cron interval** at runtime. SPIKE-1951a OQ-1 confirmed `*/15 2-8` syntax was *accepted by validation*, but actual `action=create` returns HTTP 400 for any cron firing >1/hr. The 4 affected supplemental slots: `news-scout-market`, `market-watcher-market`, `market-watcher-prepost`, `alert-commander-market` (all `guaranteed: false`).
+- **PO decision (SPIKE-1951d):** **Option C — accept hourly cadence**. Rationale: 12/16 working triggers cover all `guaranteed: true` slots + off-hours gatherers. The 4 sub-hourly slots are supplemental market-hours gatherers (not pipeline-critical). Option A (CronCreate fallback) is self-defeating — it re-introduces F1 session-evaporation, the very failure Sprint 1951 was built to eliminate. Option B (self-requeue watchdog) is unproven and adds risk during the 1945 stabilisation window. Cost of Option C: news/prices/alerts during VN market hours now run hourly instead of every 15-30 min — non-guaranteed, additive gatherers, no MARKET dish degradation.
+- **Follow-up:** Sprint 1951e (agent-father, size XS) recreates the 4 slots at hourly cadence (`0 2-8 * * 1-5` for market-hours, `0 * * * 1-5` for prepost) and updates `cowork-schedule.json` cron fields. OQ-1 finding text in §2.3 should be flagged as "syntax accepted, runtime min-interval = 1h" in any future architect work.
+
 ---
 
 ## 3. Architecture Design (v2 — RemoteTrigger-per-Slot)
@@ -371,4 +399,4 @@ Tasks for agent-father:
 | qa-responder schedule accidentally removed | Low | AC-7 grep explicitly exempts qa-responder; Phase 2 task list does not include qa-responder.md |
 | One RemoteTrigger silently stops firing | Medium | Layer 2 last_fired watchdog (Phase 4) detects overdue guaranteed slots within 2h |
 | Sprint 1949 cron expressions drift after Phase 2 | Low | cowork-schedule.json is SSOT; agent .md removal is one-way; any future schedule change goes through time-table + RemoteTrigger update |
-| OQ-1/2/3 block Phase 1 entirely | Medium | PO should gate Sprint 1951 T1 on agent-father answering OQs first (one-day spike if needed). |
+| OQ-1/2/3 block Phase 1 entirely | LOW (resolved) | OQ-1 ANSWERED (cron syntax supported). OQ-3 ANSWERED (RemoteTrigger tool, env_id known). OQ-2 still unverified but non-blocking — proceed with 17 triggers. |

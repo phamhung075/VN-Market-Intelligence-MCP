@@ -17,6 +17,7 @@
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-18 16:00 | Close: 45,300 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: +5.47% SOE rotation inflow
 2026-05-12 16:00 | Close: 41,750 VND | RSI: N/A | Vol: 6.21M (185% avg) | YoY: N/A
 
 

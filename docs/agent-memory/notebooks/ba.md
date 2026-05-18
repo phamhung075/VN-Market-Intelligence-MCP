@@ -1,8 +1,17 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950-T1 (c3)
+**Last updated:** 2026-05-18 | **Sprint:** 1950-T4+T5 (c4)
 
-## Current state (2026-05-18) — Sprint 1950-T1
+## Current state (2026-05-18) — Sprint 1950-T4 + T5
+
+REQ_1950.md extended with §T4 + §T5 (light specs, cron infrastructure fixes). No PO blockers on either. Signal: `docs/signals/ba-2026-05-18T1730Z-1950-T4-T5-specs.json`. NEXT: agent-father (T4 urgent first — deadline 20:17Z).
+
+Key findings:
+- T4 verified: `cron-tran-ngoc-bau.md` L3 is indeed `17 */4 * * *` (audit confirmed). Single-line fix + CronCreate re-registration. No other stale references found in 9-file cron inventory.
+- T5 verified: `cron-digest-predict.md` confirmed MISSING from `.claude/commands/crons/` (9 files, no digest-predict). Flow main.md has 4 dispatch windows — only Sunday row survives. Agent.md has Monday responsibility residual — strip it. Sub-flows (daily/monday/monthly) stay on disk per PO explicit decision.
+- MAINT-1950b/c: BA confirms PO judgment — purely mechanical, no spec needed. Direct to agent-father.
+
+## Prior state (2026-05-18) — Sprint 1950-T1 (c3)
 
 REQ_1950 spec complete. Chef WORK-channel telemetry — spec written to `docs/handoffs/REQ_1950.md`. TASKS.md 1950-T1 updated with BA spec link. No PO blockers. NEXT: agent-father (XS/S doc-only patch to chef.md — no architect brief needed).
 

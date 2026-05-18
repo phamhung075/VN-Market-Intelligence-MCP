@@ -24,6 +24,7 @@ Signal: fundamental_validation #3125 | Confidence: 0.65
 ## [News Scout] Headlines & Sentiment
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-05-18 16:00 | Close: 63,200 VND | RSI: N/A | Vol: 18.88M (1018% avg) | YoY: N/A | Anomaly: Volume spike amid SOE rotation
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 61,000 VND | RSI: N/A(16c) | Vol: 561.2K (N/A% avg) | YoY: N/A

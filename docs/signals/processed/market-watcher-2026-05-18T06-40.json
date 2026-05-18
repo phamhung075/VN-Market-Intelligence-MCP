@@ -1,0 +1,23 @@
+{
+  "from_agent": "market-watcher",
+  "signal_type": "bug-escalation",
+  "timestamp": "2026-05-18T06:40:49Z",
+  "severity": "high",
+  "issue": "MCP bootstrap failed — infrastructure unavailable",
+  "details": {
+    "step": "0-smoke-probe",
+    "attempted_tool": "get_cycle_bootstrap",
+    "server": "vn-market",
+    "error": "MCP gateway unreachable (https://zenmidi.com/mcp). Local MCP server (localhost:3000) does not respond. Docker containers not running.",
+    "environment": "scheduled-task execution",
+    "market_context": "market-hours cycle (02:00-08:30 UTC) — should monitor 33 watchlist stocks"
+  },
+  "action_taken": [
+    "notebook updated with blocked status",
+    "signal dropped to docs/signals/",
+    "cycle skipped"
+  ],
+  "impact": "market-watching cycle blocked, no price anomaly detection, no alerts to alert-commander",
+  "requires_ops": true,
+  "to_agent": "ops"
+}
