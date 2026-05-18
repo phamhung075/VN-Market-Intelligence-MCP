@@ -2397,3 +2397,70 @@ const result = db.query('SELECT code, exchange, domain FROM watchlist WHERE code
 ---
 
 **Cycle End:** Sprint 1946a Docker rebuild + PLX seeding COMPLETE. Ops agent returning to standby.
+
+---
+
+## Task: kinh-dich-service Docker rebuild — 2026-05-18
+
+**Status:** ✅ DONE — Container rebuilt with hexagram name fix (commit abf5ef2d)
+
+**Root Cause:** 
+- Commit abf5ef2d (kinh-dich-name-fix) landed on main after last Docker rebuild (1b3d6c00 from task 1944c)
+- Live container was running old code with hexagram name fallback bug → all names resolved to "Cần"
+
+**What Was Fixed (abf5ef2d):**
+1. `apps/kinh-dich-service/src/domain/services.ts` — All 64 QUE_META hexagram names corrected from ASCII to Vietnamese diacritics (e.g., "Khôn", "Kiền", "Truân")
+2. `apps/kinh-dich-service/src/application/usecases.ts` — Fallback path now uses `QUE_META.find(q => q.id === stored.hexagram_number)` instead of placeholder score
+3. `apps/kinh-dich-service/src/infrastructure/repositories.ts` — SQLitePriceScoreRepository queries `market_prices_history` with correct columns
+
+### Execution (17:09–17:10 UTC 2026-05-18)
+
+**Step 1: Verify Commit**
+- Confirmed commit abf5ef2d in git history ✅
+
+**Step 2: Docker Rebuild**
+```bash
+docker-compose up -d --build kinh-dich-service
+# Result: Built image sha256:3639bb6437410d3ec81bfe286ae429b392ffb291794fc5cee9d875249d627200
+# Container recreated and started
+```
+
+**Step 3: Container Health Verification**
+- Status: Up 44 seconds (healthy) ✅
+- Port: 0.0.0.0:5005->5005/tcp ✅
+
+**Step 4: Smoke Test**
+```
+curl http://localhost:5005/reading/HPG
+Response: {
+  "stock": "HPG",
+  "hexagram": 2,
+  "name": "Khôn",  ← ✅ Correct Vietnamese diacritic (was "Cần" before)
+  "trend": "TRUNG TÍNH",
+  ...
+}
+```
+
+**Step 5: Post-Rebuild 9-Service Health Check**
+```
+docker-compose ps                    # All 11 containers Up ✅
+docker port mcp-server 3000          # Port still bound 0.0.0.0:3000 ✅
+Health checks (all return 200):       # All microservices healthy ✅
+  - mcp-server (3000)
+  - api-gateway (4000)
+  - technical-analysis (5003)
+  - macro-indicators (5004)
+  - kinh-dich-service (5005)
+  - alert-engine (5006)
+  - pdf-extractor (5001)
+  - rag-service (5002)
+  - stock-price (5010)
+  - news-fetch (5008)
+```
+
+**Outcome:**
+- ✅ Kinh-dich-service running with fixed hexagram names
+- ✅ No collateral damage to other services
+- ✅ All 11 containers healthy, gateway port 3000 bound, all `/health` returning 200
+- ✅ Ready for production
+
