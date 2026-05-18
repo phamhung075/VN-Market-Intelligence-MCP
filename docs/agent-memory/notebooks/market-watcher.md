@@ -1,11 +1,11 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 05:39 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 06:40 UTC | **Sprint:** 2026
 
 ## Current state
 
 Last successful cycle: 2026-05-18 05:39 UTC (market hours, 33 stocks monitored, 1 signal)
-Last attempted cycle: 2026-05-17 19:38 UTC — **BLOCKED** (resolved)
+Last attempted cycle: 2026-05-18 06:40 UTC — **BLOCKED** (MCP gateway unreachable)
 
 ### Cycle (05:39–05:40 UTC)
 - Stocks: 33 | Anomalies: 1 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
@@ -24,6 +24,25 @@ Last attempted cycle: 2026-05-17 19:38 UTC — **BLOCKED** (resolved)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 3500 |
+
+### Cycle (06:40 UTC) — BLOCKED
+- **Status**: MCP gateway unreachable (https://zenmidi.com/mcp)
+- **Error**: Cannot initialize bootstrap — Step 0 smoke probe failed. MCP server infrastructure not available.
+- **Environment**: Execution environment does not have access to external MCP or local Docker containers
+- **Impact**: Market monitoring cycle skipped (should monitor 33 stocks during market hours). Signal: bug-escalation dropped.
+- **Context**: Market OPEN hours (02:00-08:30 UTC). Scheduled 20-min cycle blocked by persistent infrastructure constraint.
+- **Action**: Notebook updated. Signal posted to `docs/signals/` for ops escalation.
+
+**Metrics (cycle 2026-05-18 06:40 UTC)**
+| Field | Value |
+|---|---|
+| cycles_run | 0 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | 150 |
 
 ### Cycle (19:38 UTC) — BLOCKED
 - **Status**: MCP gateway unreachable (https://zenmidi.com/mcp)
