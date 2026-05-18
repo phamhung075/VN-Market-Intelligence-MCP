@@ -334,6 +334,152 @@ export async function resolveSignalOutcomes(
   };
 }
 
+// ── getSystemAccuracyDigestStats ───────────────────────────────────────────
+
+/** Per-signal-type accuracy, aggregated across all stocks (min 3 resolved samples). */
+export interface SignalTypeAccuracy {
+  signal_type: string;
+  correct: number;
+  total: number;
+  /** correct / total, already computed (0–1). */
+  rate: number;
+}
+
+/**
+ * System-level accuracy digest stats for the WORK daily Telegram digest.
+ *
+ * `neutralOnlyRows` is CRITICAL: distinguishes AC-3 (graceful skip — empty table)
+ * from AC-8 (all-neutral short digest — rows exist but none directionally resolved).
+ */
+export interface SystemAccuracyDigestStats {
+  /** correct + incorrect rows only (neutral excluded). */
+  totalResolved: number;
+  totalCorrect: number;
+  /** null when totalResolved < 10. */
+  overallRate: number | null;
+  /** Signal types with ≥ 3 resolved samples; rate = correct/total. */
+  bySignalType: SignalTypeAccuracy[];
+  /** Stocks with < 3 resolved rows across all signal types. */
+  newStocksCount: number;
+  /** Rows with outcome_24h='neutral' AND predicted_direction!='NEUTRAL'. AC-8 discriminator. */
+  neutralOnlyRows: number;
+}
+
+/**
+ * Compute system-wide accuracy digest stats over the past `days` days.
+ *
+ * Uses 4 separate SQLite queries (architect design decision FR-2): each allows
+ * the SQLite planner to optimise independently, avoiding CTE planner confusion.
+ *
+ * Index coverage: idx_signal_outcomes_created_at, idx_signal_outcomes_stock_code.
+ * Expected runtime: ≤200 ms on 50k-row table (AC-10).
+ *
+ * @param db   - Active bun:sqlite Database connection
+ * @param days - Look-back window in days (default 30)
+ */
+export function getSystemAccuracyDigestStats(
+  db: Database,
+  days = 30,
+): SystemAccuracyDigestStats {
+  const zero: SystemAccuracyDigestStats = {
+    totalResolved: 0,
+    totalCorrect: 0,
+    overallRate: null,
+    bySignalType: [],
+    newStocksCount: 0,
+    neutralOnlyRows: 0,
+  };
+
+  // Guard: table may not exist
+  try {
+    db.prepare(`SELECT id FROM signal_outcomes LIMIT 0`).all();
+  } catch {
+    return zero;
+  }
+
+  try {
+    // Query 1: Per-signal-type aggregation (GROUP BY signal_type, HAVING total >= 3)
+    type SigRow = { signal_type: string; correct: number; total: number };
+    const sigRows = db
+      .prepare<SigRow, []>(
+        `SELECT
+           signal_type,
+           COUNT(CASE WHEN outcome_24h = 'correct' THEN 1 END) AS correct,
+           COUNT(CASE WHEN outcome_24h IN ('correct','incorrect') THEN 1 END) AS total
+         FROM signal_outcomes
+         WHERE predicted_direction != 'NEUTRAL'
+           AND created_at >= datetime('now', '-${days} days')
+         GROUP BY signal_type
+         HAVING total >= 3
+         ORDER BY signal_type`,
+      )
+      .all();
+
+    const bySignalType: SignalTypeAccuracy[] = sigRows.map((r) => ({
+      signal_type: r.signal_type,
+      correct: r.correct,
+      total: r.total,
+      rate: r.total > 0 ? r.correct / r.total : 0,
+    }));
+
+    // Query 2: System-level totals
+    type TotalsRow = { totalResolved: number; totalCorrect: number };
+    const totals = db
+      .prepare<TotalsRow, []>(
+        `SELECT
+           COUNT(CASE WHEN outcome_24h IN ('correct','incorrect') THEN 1 END) AS totalResolved,
+           COUNT(CASE WHEN outcome_24h = 'correct' THEN 1 END) AS totalCorrect
+         FROM signal_outcomes
+         WHERE predicted_direction != 'NEUTRAL'
+           AND created_at >= datetime('now', '-${days} days')`,
+      )
+      .get() ?? { totalResolved: 0, totalCorrect: 0 };
+
+    const totalResolved = totals.totalResolved;
+    const totalCorrect = totals.totalCorrect;
+    const overallRate = totalResolved >= 10 ? totalCorrect / totalResolved : null;
+
+    // Query 3: New stocks count (< 3 resolved rows)
+    type NewStocksRow = { newStocksCount: number };
+    const newStocksRow = db
+      .prepare<NewStocksRow, []>(
+        `SELECT COUNT(*) AS newStocksCount
+         FROM (
+           SELECT stock_code
+           FROM signal_outcomes
+           WHERE predicted_direction != 'NEUTRAL'
+             AND created_at >= datetime('now', '-${days} days')
+           GROUP BY stock_code
+           HAVING COUNT(CASE WHEN outcome_24h IN ('correct','incorrect') THEN 1 END) < 3
+         )`,
+      )
+      .get() ?? { newStocksCount: 0 };
+
+    // Query 4: Neutral-only rows (AC-8 discriminator)
+    type NeutralRow = { neutralOnlyRows: number };
+    const neutralRow = db
+      .prepare<NeutralRow, []>(
+        `SELECT COUNT(*) AS neutralOnlyRows
+         FROM signal_outcomes
+         WHERE outcome_24h = 'neutral'
+           AND predicted_direction != 'NEUTRAL'
+           AND created_at >= datetime('now', '-${days} days')`,
+      )
+      .get() ?? { neutralOnlyRows: 0 };
+
+    return {
+      totalResolved,
+      totalCorrect,
+      overallRate,
+      bySignalType,
+      newStocksCount: newStocksRow.newStocksCount,
+      neutralOnlyRows: neutralRow.neutralOnlyRows,
+    };
+  } catch {
+    return zero;
+  }
+}
+
 // ── getAccuracyStats ───────────────────────────────────────────────────────
 
 /** Options for filtering accuracy stats. */

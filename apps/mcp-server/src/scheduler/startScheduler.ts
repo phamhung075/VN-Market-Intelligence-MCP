@@ -63,6 +63,7 @@ import { runReputationComputeJob } from './news/index.js'
 import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
+import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron } from './financial-reports/vnstockFundamentalsJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
@@ -821,6 +822,14 @@ export function startScheduler() {
   // Minute=17 avoids pile-up with minute=0/7 cluster (cronHealthAlert, imfPoller, verdictResolution).
   cron.schedule(CRONS.signalOutcomeResolution, () => {
     runSignalOutcomeResolutionJobCron().catch(console.error);
+  }, { timezone: 'UTC' })
+
+  // Daily 07:00 UTC — Signal accuracy WORK digest — task 1941c
+  // Computes 30-day accuracy stats from signal_outcomes, formats top-3/bottom-3
+  // signal type breakdown, sends to WORK channel. DB-backed dedup guard prevents
+  // duplicate sends on day boundary (survives server restarts).
+  cron.schedule(CRONS.accuracyDigest, async () => {
+    await jobRunRepo.wrapRun('accuracyDigestJob', () => runAccuracyDigest({ db }))
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)

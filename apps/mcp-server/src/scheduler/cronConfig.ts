@@ -146,4 +146,8 @@ export const CRONS = {
   /** signalOutcomeResolution — hourly T+24h / T+48h outcome resolution (2026-05-17 feedback loop)
    *  Minute=17 avoids pile-up with minute=0 cluster (cronHealthAlert, macroIndicator, etc.) */
   signalOutcomeResolution:    Bun.env.CRON_SIGNAL_OUTCOME_RESOLUTION             ?? '17 * * * *',
+  /** accuracyDigest — daily 07:00 UTC signal accuracy digest to WORK channel (task 1941c)
+   *  Fires after VN market open (02:00 UTC) and before Paris open (08:00 UTC).
+   *  Collision check: 07:00 UTC is free (cronHealthAlert=00:00, macroIndicator=06:00). */
+  accuracyDigest:             Bun.env.CRON_ACCURACY_DIGEST                        ?? '0 7 * * *',
 }
