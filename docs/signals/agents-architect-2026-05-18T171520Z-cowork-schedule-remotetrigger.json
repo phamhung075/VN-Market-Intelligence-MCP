@@ -1,0 +1,64 @@
+{
+  "signal_id": "agents-architect-2026-05-18T171520Z-cowork-schedule-remotetrigger",
+  "from": "agents-architect",
+  "to": "po",
+  "timestamp": "2026-05-18T17:15:20Z",
+  "type": "brief_complete",
+  "priority": "high",
+  "subject": "Sprint 1951 ready — Cowork Schedule RemoteTrigger model (v2 brief)",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md",
+    "ssot_written": "docs/data/cowork-schedule.json",
+    "key_constraint": "Claude Desktop cannot spawn subagents — cowork-scheduler dispatcher agent is eliminated. Architecture replaced with 17 independent RemoteTriggers, one per cowork slot.",
+    "sprint_recommendation": "Sprint 1951",
+    "phases": [
+      {
+        "phase": 1,
+        "name": "RemoteTrigger creation",
+        "prerequisite": "Agent-father resolves OQ-1/OQ-2/OQ-3 (RemoteTrigger cron syntax, count limit, API call) — one-day spike if needed",
+        "tasks": [
+          "Validate docs/data/cowork-schedule.json (17 rows)",
+          "Create 17 RemoteTriggers in claude.ai from cowork-schedule.json rows",
+          "Smoke-test persistence across session close"
+        ],
+        "ac": "17 triggers registered, 3 test ticks verified (morning chef, EOD chef, TNB audit)"
+      },
+      {
+        "phase": 2,
+        "name": "Remove schedule blocks from agent .md files",
+        "tasks": [
+          "unified-agent.md — 4 slots",
+          "news-scout.md — 3 slots",
+          "alert-commander.md — 1 slot",
+          "tran-ngoc-bau.md — 1 slot",
+          "digest-predict.md — 2 slots",
+          "financial-analyst.md — 1 slot",
+          "docs/agents/market-watcher/knowledge.md — 4 slots"
+        ],
+        "ac": "grep -r 'schedule:' .claude/agents/ | grep -v qa-responder returns empty"
+      },
+      {
+        "phase": 3,
+        "name": "Dev-team watchdog",
+        "tasks": ["Edit drain-signals.md — add cowork_watchdog block"]
+      },
+      {
+        "phase": 4,
+        "name": "last_fired observability",
+        "tasks": ["Add last_fired write step to guaranteed-slot agent flows"]
+      },
+      {
+        "phase": 5,
+        "name": "Docs cascade",
+        "tasks": ["cron-registry.json, ARCHITECTURE.md, cron-jobs.md updates"]
+      }
+    ],
+    "eliminated": "cowork-scheduler agent — do NOT create .claude/agents/cowork-scheduler.md or its flow",
+    "sprint_1950_impact": "None — T2 (chef) and T3 (pending) are not touched. Chef .md schedule blocks removed only in Phase 2 after RemoteTriggers are verified in Phase 1.",
+    "open_questions_blocking_phase1": [
+      "OQ-1: RemoteTrigger cron range/step syntax support (*/15, 2-8)",
+      "OQ-2: Max RemoteTrigger count per workspace",
+      "OQ-3: Exact RemoteTrigger creation API/tool call"
+    ]
+  }
+}

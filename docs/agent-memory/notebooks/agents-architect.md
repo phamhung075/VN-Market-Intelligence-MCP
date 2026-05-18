@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T17:15:20Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md` (v2 revision)
+
+User constraint invalidated the cowork-scheduler dispatcher design: Claude Desktop cannot spawn subagents via Agent tool (Claude Code SDK only). Refactored architecture to 17 independent RemoteTriggers (one per slot) each running the target agent's flow directly, with `docs/data/cowork-schedule.json` (written) as the SSOT time-table; cowork-scheduler agent eliminated; 3 open questions (OQ-1/2/3) on RemoteTrigger cron syntax flagged for agent-father to resolve before Sprint 1951 T1.
+
+**Signal dropped:** `docs/signals/agents-architect-2026-05-18T171520Z-cowork-schedule-remotetrigger.json` → po
+
+---
+
 ## 2026-05-18T17:02:06Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`
