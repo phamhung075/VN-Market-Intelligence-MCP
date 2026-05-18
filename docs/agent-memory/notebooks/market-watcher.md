@@ -2431,3 +2431,22 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 18000 |
+
+### Cycle (07:38–07:40 UTC)
+- Stocks: 38 | Anomalies: 3 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: [VHM, VRE]
+- Signals emitted: BID +5.01% (1.62σ, banking resilience despite TIGHTENING, signal 3395, critic 0.6) | VHM -3.80% (1.54σ downside, PE compression risk RISK-OFF regime, signal 3396, critic 0.6) | VRE -4.12% (1.67σ downside, real estate sector weakness, signal 3397, critic 0.6)
+- Sector rotation 1d: oil_gas +5.74% (GAS +4.03%, outperforming energy leads) | chemicals +4.81% (DPM aligned) | banking +0.13% (BID outperformance +4.88% vs sector) | real_estate -1.36% (VHM/VRE underperformance on FII exit pressure)
+- Macro: USD/VND 26,350 (HIGH currency pressure), Brent 110.72 stable, Gold 4545.6 flat | Energy grid NORMAL (hydro 70%) | Supply chain stable (BDI 1,400) | Climate: May heatwave risk (no watchlist impact) | Open chain findings: 0
+- Below-threshold candidates: GAS +4.03% (1.12σ, sector leader but within threshold) | DPM +4.81% (sector baseline, neutral signal) | FPT +2.19% (tech sector weak, -0.14%) | MWG -3.66% (retail sector weak, -1.23%)
+
+## Metrics (cycle 2026-05-18 07:38 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 38 |
+| signals_emitted | 3 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 6800 |
