@@ -267,15 +267,31 @@ export async function fetchStockPrice(req: FetchPriceRequest): Promise<PriceSnap
   return response.json();
 }
 
+/** Go stock-price service /price/history response envelope.
+ * Source: apps/stock-price/pkg/application/usecases.go PriceHistoryResponse.
+ * DailyOHLCV fields: date, open, high, low, close, volume (no `.price` field).
+ */
+export interface PriceHistoryEnvelope {
+  code: string;
+  history: Array<{
+    date: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume?: number;
+  }>;
+}
+
 export async function getPriceHistory(
   req: PriceHistoryRequest
-): Promise<PriceSnapshot[]> {
+): Promise<PriceHistoryEnvelope> {
   const url = `${BASE_URLS.stockPrice}/price/history?code=${req.code}&days=${req.days ?? 30}`;
   const response = await fetchWithRetry(url, { method: 'GET' });
   if (!response.ok) {
     throw new Error(`[Stock Price Service] ${response.status}: ${await response.text()}`);
   }
-  return response.json();
+  return response.json() as Promise<PriceHistoryEnvelope>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

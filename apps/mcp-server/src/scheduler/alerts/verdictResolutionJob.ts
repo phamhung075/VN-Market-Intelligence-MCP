@@ -106,7 +106,11 @@ async function defaultFetchPrice(ticker: string): Promise<number | null> {
 /**
  * Default history fetcher — wraps getPriceHistory from clients.ts.
  * Returns the oldest close price in the window as baseline.
- * Returns null if service throws or returns empty array.
+ * Returns null if service throws or returns empty history.
+ *
+ * Fix (1945a): Go /price/history returns PriceHistoryEnvelope { code, history: DailyOHLCV[] }.
+ * The previous code treated the response as PriceSnapshot[] (flat array), causing
+ * snaps[0] = undefined → TypeError → null → "price-fetch-failed:unresolvable" for every verdict.
  */
 async function defaultFetchHistory(
   ticker: string,
@@ -116,10 +120,11 @@ async function defaultFetchHistory(
     "../../infrastructure/microservices/clients.js"
   );
   try {
-    const snaps = await getPriceHistory({ code: ticker, days });
-    if (!snaps || snaps.length === 0) return null;
-    // Oldest first — use first element as baseline at fire time
-    return (snaps[0] as { price: number }).price;
+    const envelope = await getPriceHistory({ code: ticker, days });
+    const history = envelope.history;
+    if (!history || history.length === 0) return null;
+    // Go returns ORDER BY date ASC — history[0] is the oldest date, used as baseline
+    return history[0]!.close;
   } catch {
     return null;
   }

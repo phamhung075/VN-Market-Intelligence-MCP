@@ -4,6 +4,23 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1945a — Fix verdictResolutionJob baseline-price shape mismatch (2026-05-18, DONE)
+
+**Root cause:** `getPriceHistory()` in `clients.ts` returned `PriceSnapshot[]` but Go returns `PriceHistoryEnvelope { code, history: DailyOHLCV[] }`. `defaultFetchHistory()` called `snaps[0].price` → TypeError → null → 100% of verdicts marked `false_positive:unresolvable`. ~520 alerts unscored, `scored_pct ≈ 36%`.
+
+**Fix (2 production files + 1 test file):**
+- `clients.ts`: Added `PriceHistoryEnvelope` export interface. Changed `getPriceHistory()` return type from `PriceSnapshot[]` to `PriceHistoryEnvelope`. Fetch body returns envelope as-is.
+- `verdictResolutionJob.ts`: `defaultFetchHistory()` now reads `envelope.history[0].close` instead of `(snaps[0] as {price}).price`. Added JSDoc noting fix + root cause.
+- `1945a-verdict-resolution-envelope.test.ts` (NEW): 6 tests — envelope shape, empty history, null envelope, correct `.close` baseline extraction.
+
+**Caller audit:** Only caller in all of `apps/mcp-server/src/` is `verdictResolutionJob.ts`. `portfolioRiskCalculator.ts` and `priceHistoryTools.ts` read from SQLite, not `getPriceHistory()`. `signalOutcomeStore.ts` has a separate direct fetch to `/price/history` (out of scope).
+
+**Tests:** 6/6 new GREEN. 19/19 existing 1863b verdict resolution tests GREEN. tsc 0 errors.
+
+Zone health: `getPriceHistory` now type-safe with Go envelope; `defaultFetchHistory` correctly extracts baseline close; ~520 unscored alerts will be scored on next hourly cron tick after deploy | HEALTHY
+
+---
+
 ### Task 1944b — Remove dead BCTC discovery strategies (SSC/vietstock) (2026-05-18, DONE)
 
 **Goal:** Remove SSC iboard (NXDOMAIN) and vietstock (HTTP 404) from `bctcDiscovery.ts`. Cafef already removed in TASK_1916b. Strategy chain post-fix: hsx(0) → VPS Playwright(1) → null.
