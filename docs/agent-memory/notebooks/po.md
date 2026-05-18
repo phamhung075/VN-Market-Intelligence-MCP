@@ -1,45 +1,43 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T21:15Z · Cycle: c202 — fire-drift signal triage + cutover block
+## Last updated: 2026-05-18T21:38Z · Cycle: c204 — dev-team signal-batch drain + stale-branch verification
 
-### c202 session summary
+### c204 session summary
 
-**Spawn:** User-directed signal triage. Input: `docs/signals/cowork-team-1951-fire-drift-detected.json` (architectural-concern, HIGH, from cowork-team to PO 2026-05-18T21:07Z). Evidence: two consecutive master-cron fires drifted ~7min past nominal tick (20:52Z vs 20:45Z; 21:07Z vs 21:00Z), defeating matcher's `now ±2min` window in `.claude/scripts/cowork-match-slots.js`. Hypothesis: CronCreate jobs fire only when REPL idle — Claude mid-query at nominal tick → deferred fire.
+**Spawn:** dev-team triage handoff with 11 pendingSignals. Triage context flagged `task/calendar-source-10s-timeout` as potential stale-branch CLEAN candidate.
 
-**Routing decision:** Signal type `architectural-concern` not in standard table; signal explicitly asks PO to consult architects-architect. Per agents-architect role (designs comms / improvements; outputs briefs; agent-father implements), opened SPIKE for architect to pick A/B/C/D + follow-on FIX task gated on the brief. Did NOT pre-pick Option B despite signal recommendation — that's architect's call.
+**Signal disposition (11 total):**
+1. **`agents-architect/brief_complete` — SPIKE-1951f drift-fix brief.** Already actioned by c202/c203 chain: SPIKE-1951f row in TASKS.md marked DONE (architect committed `b55ea5c8`-equivalent), 1951g implementation DONE (cowork-match-slots.js nominal-tick rounding LANDED), brief at `docs/architecture-briefs/2026-05-18-spike-1951f-fire-drift-fix.md` is SSOT. Per `triage-signals.md` table: brief targets `.claude/scripts/` already implemented → no new task creation. ACK only, signal drained.
+2. **10× `cowork-team/cowork-fire` telemetry** (20:46Z–21:36Z). Master dispatcher healthy on all 10 fires: `silent=false`, `errors=[]`, drift 6-7 min within 14-min tolerance (post-1951g safety margin). Matched slots include `market-watcher-prepost` at 21:01Z, 21:31Z, 21:36Z. Per `triage-signals.md` table: low-priority cowork signals to PO are "rarely actionable; default skip with notebook log". Drained.
 
-**Updates applied (TASKS.md):**
-1. **SPIKE-1951f-fire-drift-resolution (NEW Backlog, HIGH).** Architect picks A/B/C/D. Time-box 2h. Output: brief + AC including collision rule, parallel-run idempotency interaction, jitter-budget margin, regression test plan. Zone=`.claude/scripts/` + `.claude/flows/cowork-team/`.
-2. **1951g (NEW Backlog, HIGH FIX, dev-mcp-server).** Implements chosen option after SPIKE-1951f brief lands. Zone=`.claude/`. BLOCKED on SPIKE-1951f.
-3. **1951b (In Progress).** Added **AC-7 CUTOVER-BLOCK**: 1951d cutover gate held until 1951g merges, regardless of AC-6 idempotency outcome. AC-6 evaluation continues (parallel-run still produces useful "no-double-publish" data since lane B publishes nothing during drift). Priority bumped MEDIUM→HIGH. Handoff `TASK_1951b.md` updated with full root-cause section + drift evidence table + next-steps trail.
-4. **1951d (Backlog).** Block list updated: now depends on `1951b AC-6 PASS + 1951g + 2026-05-19T20:34Z window close`.
+**Design-gap follow-up (already in flight from c203):** The latest cowork-fire spawned `market-watcher-prepost` → `main.md` dispatcher → silent EXIT (no prepost branch). c203 already authored:
+- TASKS.md 1951h row (HIGH FIX, agent-father, XS, zone=`.claude/flows/market-watcher/`)
+- Decision signal `docs/signals/po-1951-prepost-decision.json` (Option 2: reuse cycle.md with mode=prepost, sigma-floor 2.5σ)
+- agent-father spawned background (c203 job `b03ijif8m`) to implement
+No re-dispatch needed this cycle.
 
-**Signal disposition:** Moved `cowork-team-1951-fire-drift-detected.json` → `docs/signals/processed/`. Router note (kept master cron `ed39cbcf` active during parallel-run) ACK — no production gap because legacy RemoteTriggers still cover slots during 24h window.
+**Stale-branch CLEAN check (`task/calendar-source-10s-timeout`):** **NEGATIVE — branch is NOT stale.** Verified via reflog: branch already merged into main via `3af610a0` ("merge task/calendar-source-10s-timeout: news + macro + frontend fixes") and PO sign-off committed `876de0ec` (c167 cycle). Local branch already deleted. Triage context note was wrong — no CLEAN task needed.
 
-**Architectural reasoning (for SPIKE input):**
-- Option A (widen ±10min): brittle — adjacent `*/15` ticks at :00 and :15 would overlap (matcher hits both at :07), forcing a new dedup rule. Spec leakage.
-- Option B (nominal-tick rounding): minimum diff — change `M = now.getUTCMinutes()` to `M = Math.floor(now.getUTCMinutes() / 15) * 15` for `*/15` matching, OR a more general "round down to next active slot expression". Keeps ±2min window semantics intact. **Risk:** breaks if cron has non-`*/15` minute fields (e.g., explicit `13`). Architect must spec the rounding granularity precisely.
-- Option C (per-slot CronCreate): loses master-dispatch architecture; sub-hourly RemoteTrigger collision returns (was the original 1951 driver). Effectively rolls back the pivot.
-- Option D: e.g. dispatcher self-records nominal target on fire + re-runs matcher with that target. Heavier. Probably overkill.
-
-**Files modified this cycle:**
-- `docs/TASKS.md` — +SPIKE-1951f, +1951g (Backlog); 1951b body rewritten with AC-7; 1951d body+block-list updated. Capacity 74L → 76L (cap=80).
-- `docs/handoffs/TASK_1951b.md` — appended AC-7 section: source signal, evidence table, root-cause, cutover decision, next-steps.
-- `docs/signals/cowork-team-1951-fire-drift-detected.json` → `docs/signals/processed/` (moved).
+**Updates applied:**
 - `docs/agent-memory/notebooks/po.md` — this entry (overwrite per skill).
+- No TASKS.md changes (1951h already present from c203; no other actionable signals).
 
-**WIP discipline:** WIP=2 unchanged (1951b OBSERVE + 1951c blocked on 1951b). SPIKE-1951f waiting for architect bandwidth; 1951g waiting for SPIKE.
+**WIP discipline:** WIP=2 unchanged (1951b OBSERVE + 1951c blocked on 1951b). 1951h queued HIGH in Backlog under agent-father (in flight). Backlog `1948a/b/c` remains gate-blocked until 2026-05-20T07:22Z. SPIKE-1952a/b/d + 1952c + 1952e remain queued for architect bandwidth.
 
-**WORK Telegram:** SEND on commit — one-liner: Cowork master-cron fires ~7min late (drift exceeds jitter spec). Cutover 1951d BLOCKED until SPIKE-1951f (architect) + 1951g (fix) land. AC-7 added to 1951b. Signal processed.
+**No dev dispatch this cycle:** Dev WIP=0 but no actionable unblocked backlog tasks. 1948a/b/c gated. SPIKE-1952a/b/d need architect first. 1952c gated to 2026-05-25. 1952e gated on Sprint 1948 stability. 1951h already in flight under agent-father.
+
+**WORK Telegram:** SEND on commit — one-liner: PO c204 drained 11 dev-team signals (1 brief ACK + 10 cowork-fire telemetry healthy). 1951h already in flight (c203 agent-father). Stale-branch CLEAN candidate verified merged — no action.
 
 ### Carry-over for next cycle
 
-- **Architect queue priority (UPDATED):** **SPIKE-1951f-fire-drift-resolution (HIGH, urgent — blocks cutover at 2026-05-19T20:34Z)** comes ahead of SPIKE-1952a/b/d and 1952e. SPIKE-1951f should land within 2h of architect spawn.
-- **WATCH 2026-05-19T05:15Z** — chef-morning master-dispatch tick 2/3. Under drift, expect silent-exit (no MARKET dish from lane B). Lane A (legacy RemoteTrigger) should still publish — AC-6 remains evaluable as "lane A unique, lane B silent" = no duplicate (idempotency holds trivially).
-- **WATCH 2026-05-19T08:45Z** — chef-eod tick 3/3. Same prediction as above.
-- **WATCH 2026-05-19T20:34Z** — 24h window CLOSES. Likely outcome: AC-6 PASS (because lane B never publishes), AC-7 FAIL (because 1951g not yet merged). Cutover blocked; possibly need a follow-up re-validation sprint after 1951g lands.
+- **Architect queue priority:** SPIKE-1952a (tnb-layer-rubric) → SPIKE-1952b (convergence-detector) → SPIKE-1952d (macro-regime-classifier). No urgency vs 1951 chain. All gate on Sprint 1948 stability for downstream FIX work.
+- **Agent-father queue:** 1951h (in flight from c203). Then 1951c (master dispatcher verification + docs + SPIKE-durable, blocked on 1951b).
+- **WATCH 2026-05-19T01:00Z+** — first prepost tick after 1951h lands. AC-5 verification: dispatcher returns DONE not BLOCKED.
+- **WATCH 2026-05-19T05:15Z** — chef-morning master-dispatch tick 2/3 (post drift fix). Expect both lanes publish — verify zero double-publish (AC-6 evidence).
+- **WATCH 2026-05-19T08:45Z** — chef-eod tick 3/3. Same prediction.
+- **WATCH 2026-05-19T20:34Z** — 24h window CLOSES. Likely outcome: AC-6 PASS → 1951d cutover unblocked.
 - **WATCH 2026-05-18T23:00Z** — FA cycle: verify HPG `get_cash_flow` non-zero (post-1942c gate). Pass → auto-close in Todo.
 - **GATE 2026-05-20T07:22Z** — post-1945-verdict-resolution-scored-pct + bug-storm silence. Unblocks 1948a/b/c chain.
 - **GATE 2026-05-25** — 1939 critic-gate stability window. Unblocks 1952c business-context-mandatory.
 - **USER-action blockers:** 1907a (Claude Desktop restart), 1897b (Docker VirtioFS `.git/`). Unchanged.
-- **WIP discipline:** strict cap=2. Do NOT promote SPIKE-1951f/1951g into In Progress until 1951c clears OR until 1951b closes its OBSERVE column (AC-6 verdict locked).
+- **WIP discipline:** strict cap=2. Do NOT promote 1951h into In Progress until 1951c clears OR 1951b closes OBSERVE column (AC-6 verdict locked).
