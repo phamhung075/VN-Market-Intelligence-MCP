@@ -34,6 +34,7 @@ Validation:
 - All files ≤200L: main.md=44L, audit-chef-coverage.md=94L, tran-ngoc-bau.md=142L ✓
 - cowork-boundary error path on read failure ✓
 - Signal written: `docs/signals/agent-father-2026-05-18T17-15-14Z-1950-T2-done.json` → to=po, NEXT=qa
+- Commit: `ad68cf5c`
 
 ---
 
