@@ -1,6 +1,6 @@
 # Chef Pipeline Runbook
 
-<!-- size-justification: 95L — operational reference: cron schedule table + telemetry key + recovery procedure. Three discrete sections; atomic manual for on-call diagnosis. -->
+<!-- size-justification: 128L — operational reference: cron schedule table + telemetry key + recovery procedure. Three discrete sections; atomic manual for on-call diagnosis. -->
 
 > Lazy-load this file when: diagnosing missed chef dishes, reading WORK telemetry, recovering a stuck or silent chef slot.
 
@@ -16,6 +16,8 @@ Full schedule → `docs/standards/cron-jobs.md` § Chef Cook Schedule (SSOT).
 | `13 2-8 * * 1-5` | XX:13 | `intraday` | unified-agent |
 | `37 8 * * 1-5` | 15:37 | `eod` | unified-agent |
 | `37 19 * * *` | 02:37+1 | `evening` | unified-agent |
+
+The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `.claude/flows/unified-agent/main.md` — the cron fires each hour and exits immediately outside these windows.
 
 Minimum guaranteed dishes per weekday: 3 (morning + eod + evening). Intraday fires every hour 02–08 UTC but exits silently when 0 clusters qualify.
 
@@ -105,7 +107,7 @@ Emitted when an unhandled exception exits Steps 0–7. A companion one-liner als
 
 | Symptom | Likely cause | Action |
 |---------|-------------|--------|
-| No START at slot time | Cron not registered / session restarted | Re-register via CronCreate from `.claude/commands/crons/cron-unified-agent.md`. Verify CronList shows correct schedule. |
+| No START at slot time | Cron not registered / session restarted | Re-register via CronCreate from `.claude/commands/crons/cron-unified-agent.md`. Verify CronList shows `29 * * * *` for unified-agent. |
 | FAILED with `timeout` reason | MCP tool timeout (common: `get_market_hexagram`, `get_macro_snapshot`) | Re-run chef manually for the missed dish type: spawn unified-agent with `$DISH_TYPE=<type>`. Chef will publish a late dish. |
 | FAILED with `read_telegram` or `send_telegram` reason | Telegram MCP unreachable | Check MCP server health (`http://localhost:3000/sse`). Restart Docker if down: `docker compose restart`. |
 | START present but no CLOSE (stuck) | Chef session may still be running | Wait 5 min. If still no CLOSE, the session likely died mid-cycle. Re-run manually. |
