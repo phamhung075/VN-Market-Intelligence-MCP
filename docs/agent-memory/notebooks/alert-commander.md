@@ -1,8 +1,42 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 03:02 UTC | **Sprint:** c173
+**Last updated:** 2026-05-18 05:02 UTC | **Sprint:** c173
 
 ## This session
+
+### Alert Cycle (05:02–05:03 UTC, 2026-05-18) — Market-hours 20m cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
+- **Market:** OPEN (VN trading window 02:00–08:59 UTC) — market hours cycle
+- **Regime:** TIGHTENING | **Carry:** HOT_MONEY_OUTFLOW (CARRY_SPREAD=-0.33%) | **Pivot window:** false
+- **Macro:** Brent 111.19 | Gold 4546.30 | USD/VND 26,350 (CAO) | US10Y 4.59% RISK-OFF | DXY 99.32 STABLE | REGIME_SOURCE=macro_snapshot (shape OK ✓)
+- **Signals (count by type):** urgent_news=1 (GAS) | price_anomaly=3 (MWG/ACV/DPM) | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 4 | **MARKET:** 0
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Suppression detail:**
+  - [Suppressed] GAS urgent_news id=3376 conf=50% — below TIGHTENING bullish urgent_news threshold 0.75 (needs ≥75%); Brent+2.91σ tailwind but carry outflow risk noted in payload ("dòng tiền không bền vững")
+  - [Suppressed] MWG price_anomaly id=3380 conf=50% — move 2.24σ downside (downside_bias=true, priority escalation noted); no move_sigma≥4.0 confirmation from get_agent_signals; no get_alerts confirmation
+  - [Suppressed] ACV price_anomaly id=3381 conf=50% — move 2.95σ upside (stock volatility σ≈0.77%, unusual spike); no move_sigma≥4.0; no get_alerts confirmation; upside in TIGHTENING + carry outflow context needs deeper validation
+  - [Suppressed] DPM price_anomaly id=3382 conf=72% — move 2.14σ on urea margin tailwind (Brent $111 → cost pass-through); highest confidence of the batch but still requires move_sigma≥4.0 or get_alerts confirmation for override; no payload.impact_score populated
+- **Open alerts:** 5 (GAS price_surge MEDIUM 04:22; GAS price_surge MEDIUM 02:02; Macro Brent HIGH 01:15; Macro Gold CRITICAL 00:45; Macro Brent HIGH 23:30 yesterday). GAS alerts = price_anomaly signal confirmation backlog (market-watcher fire → get_alerts returns pending). Macro alerts = regime inputs (already reflected in TIGHTENING).
+- **Legal:** clear (get_legal_risk_signals: no signals) | **Crisis:** clear (get_crisis_early_warning: no signals) | **Price alerts override check:** no move_sigma≥4.0 found for MWG/ACV/DPM
+- **WORK dispatch:** posted (05:02 UTC) — "4 signals, Fired 0 / Suppressed 4 (all below TIGHTENING thresholds) / Regime TIGHTENING, Carry HOT_MONEY_OUTFLOW (-0.33%) / Next 05:22 UTC"
+- **Tool calls this cycle:** 13 (log_agent_work×2 [start+end], get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals×3 [MWG/ACV/DPM], send_telegram, record_signal_outcome—not called [0 fired])
+- **log_agent_work id=984**
+- **Decisions made autonomously:**
+  - Applied TIGHTENING regime thresholds: urgent_news≥0.75, price_anomaly confirmed via move_sigma≥4.0 OR get_alerts
+  - GAS urgent_news: 50%<75% → suppressed (carry outflow caveat noted in payload)
+  - MWG/ACV/DPM price_anomalies: all <75% confidence and no move_sigma≥4.0 confirmation → suppressed per strict Step 3b
+  - DPM highest confidence (72%) among anomalies but payload missing impact_score field → cannot trigger Step 3b override (requires both move_sigma≥4.0 AND impact_score≥6)
+  - Did not call write_alert_verdict (0 MARKET alerts fired)
+  - Did not call record_signal_outcome (0 suppression outcome logging — suppressed signals logged in step 3/3b/3c only if they had reached threshold+failed override, per phantom-success guard)
+  - GAS + DPM carry tailwind/macro context genuine but conviction insufficient; awaiting financial-analyst cross-validation or market-watcher escalation with impact_score populated
+- **Carry-over for next cycle:**
+  - GAS +5.15% move may escalate if Brent holds $110+ and financial-analyst posts verified_chain (energy sector rotation)
+  - MWG -3.05% downside bias flag — watch for 2nd consecutive day drop (2-day pattern starts escalation)
+  - ACV 2.95σ upside anomaly — unusual for low-volatility aviation stock; if repeated next cycle + news catalyst → investigate
+  - DPM urea margin tailwind genuine but needs impact_score field populated by market-watcher for Step 3b override
+  - Brent $111 regime input stable; carry spread -0.33% persistent; TIGHTENING thresholds remain in effect
+- **Next cycle:** 05:22 UTC (market hours 20m cadence)
 
 ### Alert Cycle (22:04–22:05 UTC, 2026-05-17) — Off-hours 2h cycle
 - **Status:** COMPLETED
