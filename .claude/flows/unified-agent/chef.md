@@ -22,6 +22,24 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
 
 ---
 
+## ENTRY Telemetry
+
+Immediately after Bootstrap, before any GATHER reads:
+
+1. Construct `cycle_id = chef-{$DISH_TYPE}-{YYYYMMDDTHHmmZ}` from `$DISH_TYPE` and slot fire time (not wall-clock). Example: `chef-morning-20260519T0523Z`.
+2. Emit:
+   ```
+   send_telegram(channel="work", message="[chef] START {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id}")
+   ```
+3. Store `cycle_id` and `slot_utc` in session state — reused verbatim in CLOSE and FAILED messages.
+
+> Error boundary → skill: `.claude/skills/cowork-boundary/SKILL.md`
+>
+> **try block begins here — wraps Steps 0 through 7 inclusive.**
+> Any unhandled exception exits the try block: emit FAILED (see FAILED Telemetry section below), then EXIT non-zero. No MARKET dish. No Step 8.
+
+---
+
 ## Step 0 — GATHER
 
 Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish logged in notebook).
@@ -54,7 +72,13 @@ Group signals by ticker, then by sector.
 | Macro-micro contradiction | A macro signal contradicts the micro signal for a watchlist ticker (e.g. TIGHTENING regime + active BUY alert on VCB) |
 | Extreme individual signal | Any signal with `severity=CRITICAL` OR any TA reading outside 2-sigma (RSI < 15 or > 85) |
 
-**Intraday gate:** if `$DISH_TYPE == intraday` AND 0 clusters qualify → `send_telegram(channel="work", "Intraday scan: 0 clusters — silent exit")` → return `DONE: intraday-silent | PIPELINE: complete` and EXIT. No MARKET message.
+**Intraday gate:** if `$DISH_TYPE == intraday` AND 0 clusters qualify →
+```
+send_telegram(channel="work", message="[chef] SILENT intraday | slot={slot_utc} | cycle={cycle_id} | clusters=0")
+```
+→ return `DONE: intraday-silent | PIPELINE: complete` and EXIT. No MARKET message.
+
+> Note: this is the CLOSE (silent) telemetry. `slot_utc` and `cycle_id` are from ENTRY session state. The try block ends here for the silent path — EXIT after this send.
 
 **Morning/EOD/Evening:** always continue even if 0 clusters (publish regime-state update at minimum).
 
@@ -172,6 +196,37 @@ No atom lists. No bullet-point ticker dumps. Every MARKET message is a narrative
    ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+
+> **try block ends at end of Step 7 (WRITE DISH / send_telegram market).** Step 8 runs outside the try block — its errors fall through to cowork-boundary default rule (1 retry → BUG Telegram → EXIT).
+
+## CLOSE Telemetry (success)
+
+After notebook append above, emit:
+
+```
+send_telegram(channel="work", message="[chef] SENT {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id} | clusters={N} | convergence={true|false}")
+```
+
+Fields:
+- `cycle_id` and `slot_utc` — from ENTRY session state (verbatim, no reconstruction)
+- `N` — count of clusters that qualified in Step 1
+- `convergence` — `true` if ≥1 cluster qualified in Step 1, `false` if 0 clusters (Morning/EOD/Evening publish with 0 clusters is still a SENT, not SILENT)
+
+---
+
+## FAILED Telemetry
+
+Catch block (handles any unhandled exception from Steps 0–7):
+
+1. ```
+   send_telegram(channel="work", message="[chef] FAILED {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id} | reason={failure_reason}")
+   ```
+   `failure_reason` = exception message or tool name that raised, one line, no newlines.
+2. ```
+   send_telegram(channel="bug", message="[chef] {failure_reason}")
+   ```
+   Per cowork-boundary on_error rule.
+3. EXIT non-zero. No partial MARKET dish. Do NOT proceed to Step 8.
 
 ---
 
