@@ -1,5 +1,52 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c198 — MAINT-1950b/c/d archival + sweep — APPROVED
+
+## Session 2026-05-18 c198 — MAINT-1950b/c/d (APPROVED)
+
+### TASK REPORT — MAINT-1950b/c/d (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit reviewed: d5c78d45
+type: MAINT — notebook archival + YELLOW fixes + workflow-map sweep
+zone: notebooks/ + docs/archive/ + docs/references/ + docs/standards/ + .claude/agents/
+round: 1
+```
+
+#### AC Matrix
+
+| AC | Check | Result |
+|----|-------|--------|
+| 1950b: ops.md ≤200L | 53L | PASS |
+| 1950b: market-watcher.md ≤200L | 79L | PASS |
+| 1950b: qa-responder.md ≤200L | 56L | PASS |
+| 1950b: pm.md ≤200L | 89L | PASS |
+| 1950b: alert-commander.md ≤200L | 48L | PASS |
+| 1950b: 5 archive files at docs/archive/notebooks/*-2026-05-18.md | ALL PRESENT | PASS |
+| 1950c: semble-search.md model: claude-haiku-4-5 | L4 confirmed | PASS |
+| 1950c: news-scout-cycle-2026-05-16.md exists | confirmed | PASS |
+| 1950c: news-scout-cycle-2026-05-17T1820.md exists | confirmed | PASS |
+| 1950c: WORK.md retained | file not found at notebooks/WORK.md | NB-1 |
+| 1950d: workflow-map.md L103 no "monday predict" | "weekly Sunday 13:47 UTC" | PASS |
+| 1950d: cron-jobs.md L120 = `47 13 * * 0` | confirmed | PASS |
+| 1950d: grep "monday predict" docs/ (excl. archive+notebooks) = 0 | only admin task text | PASS |
+
+#### Non-Blocking
+
+- NB-1: WORK.md not found at docs/agent-memory/notebooks/WORK.md — AC intent unverifiable; no functional impact (WORK is Telegram channel, not a file). Not blocking.
+
+## Cycle — 2026-05-18 c198
+
+- **cycle_date**: 2026-05-18
+- **findings**: MAINT-1950b/c/d — all hard ACs PASS. NB-1: WORK.md AC unverifiable (file absent, no functional impact). Smart-Skip applied (docs-only, no TypeScript).
+- **actions**: APPROVED. QA report written to docs/handoffs/sprint-1950-MAINT-qa-report.md. Notebook updated.
+- **next_cycle_hint**: pm to close MAINT-1950b/c/d rows in TASKS.md.
+- **estimated_tokens**: 2800
+
+---
+
 **Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c196 — 1950-T3 chef pipeline runbook — CHANGES_REQUESTED
 
 ## Session 2026-05-18 c197 — 1950-T3 chef pipeline runbook Round 2 (APPROVED)
