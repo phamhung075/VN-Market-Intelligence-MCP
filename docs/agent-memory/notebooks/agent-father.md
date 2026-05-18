@@ -1,9 +1,40 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1950 / 1950-T4 TNB cron hotfix)
-**Sprint:** 1950 / T4 HOTFIX
+**Last updated:** 2026-05-18 (Sprint 1950 / T5 digest-predict cron alignment + scope cleanup)
+**Sprint:** 1950 / T5
 
-## This Session — 2026-05-18 (Sprint 1950 / 1950-T4 HOTFIX)
+## This Session — 2026-05-18 (Sprint 1950 / T5 digest-predict alignment)
+
+**Task: 1950-T5 — digest-predict cron alignment + scope cleanup**
+
+Root cause: Sprint 1949-T5 scoped digest-predict to weekly Sunday-only, but (1) cron command file was missing, (2) flow main.md still had daily/monday/monthly dispatch rows, (3) agent.md still listed Monday responsibility.
+
+Files changed:
+- NEW `.claude/commands/crons/cron-digest-predict.md` — `47 13 * * 0`, recurring=true, durable=true
+- EDIT `.claude/flows/digest-predict/main.md` — stripped to Sunday-only dispatch; 3 stale rows removed
+- EDIT `.claude/agents/digest-predict.md` — Monday responsibility + schedule block + inter_agent trigger removed; 3 startup lazy-load triggers fixed (waterfall policy)
+- EDIT `docs/data/cowork-schedule.json` — digest-monday-predict slot disabled (enabled: false)
+
+CronCreate: agent-father has no MCP tools; cron file created as registration artifact. QA must invoke CronCreate from the cron command file to arm the live cron — flagged as AC-T5-7 open item.
+
+SSOT verification:
+- `docs/standards/cron-jobs.md` L118: `47 13 * * 0` — unchanged (PASS)
+- sub-flow files daily.md/monday.md/monthly.md: still on disk (PASS)
+- grep `30 13 * * *`: only REQ_1950.md spec text (not live code) — PASS
+
+AC check:
+- AC-T5-1: PASS — cron file exists with `47 13 * * 0`, recurring=true, durable=true
+- AC-T5-2: PASS — cron-jobs.md L118 unchanged
+- AC-T5-3: PASS — flow dispatch table = 1 active Sunday window
+- AC-T5-4: PASS — no routing rows to daily/monday/monthly
+- AC-T5-5: PASS — daily.md, monday.md, monthly.md on disk
+- AC-T5-6: PASS — no live Monday responsibility in agent.md
+- AC-T5-7: DEFERRED — CronCreate requires MCP; QA to execute from cron command file
+- AC-T5-8: PASS — `30 13 * * *` only in REQ_1950.md spec text (not live files)
+
+---
+
+## This Session (prior) — 2026-05-18 (Sprint 1950 / 1950-T4 HOTFIX)
 
 **Task: 1950-T4 — TNB cron schedule hotfix**
 

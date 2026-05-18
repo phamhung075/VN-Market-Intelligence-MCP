@@ -91,7 +91,8 @@
       "dish_type": "monday_predict",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
+      "_disabled_by": "Sprint 1950-T5 — Monday window removed per Sprint 1949-T5 weekly-only scope",
       "last_fired": null
     },
     {

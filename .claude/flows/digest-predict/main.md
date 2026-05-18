@@ -8,19 +8,16 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 | Window | Sub-flow |
 |---|---|
-| Daily 15:30 UTC (≈ 22:30 VN) | `.claude/flows/digest-predict/daily.md` |
-| Monday 00:30 UTC (≈ 07:30 VN Mon) | `.claude/flows/digest-predict/monday.md` |
-| Sunday 13:00 UTC | `.claude/flows/digest-predict/weekly.md` |
-| 1st of month 13:00 UTC | `.claude/flows/digest-predict/monthly.md` |
+| Sunday 13:47 UTC (≈ 20:47 VN) — cron `47 13 * * 0` | `.claude/flows/digest-predict/weekly.md` |
 | Any other time | EXIT (no work outside scheduled windows) |
 
-**Precedence** when multiple match same instant: monthly > weekly > monday > daily.
+**Note:** Daily, Monday, and monthly windows removed per Sprint 1949-T5 weekly-only scope. Sub-flow files `daily.md`, `monday.md`, `monthly.md` retained on disk as audit trail (not routed).
 
 ## Steps
 
 1. Read current UTC time, weekday, and day-of-month.
-2. Apply precedence; if no window matches → return `DONE: outside-window | PIPELINE: complete` and EXIT.
-3. Read and execute the matched sub-flow end-to-end.
+2. If Sunday and hour=13 and minute=47 (±5 min tolerance) → execute weekly sub-flow. All other times → return `DONE: outside-window | PIPELINE: complete` and EXIT.
+3. Read and execute `.claude/flows/digest-predict/weekly.md` end-to-end.
 4. Return that sub-flow's RETURN block verbatim.
 
 This dispatcher MUST NOT write digests itself — sub-flows own the work.

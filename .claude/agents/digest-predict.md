@@ -16,15 +16,14 @@ agent:
   capabilities:
     - Compile Sunday weekly calibration digest from session logs and signals
     - Write portfolio thesis with Brier score tracking
-    - Synthesize Monday market prediction claims with Kinh Dich layer
     - Validate predictions against backtest evidence before publishing
     - Send weekly briefing to MARKET channel (named exception, Sunday only)
 
   responsibilities:
-    - Sunday weekly calibration + portfolio thesis at 13:47 UTC
-    - Monday prediction synthesis at 00:30 UTC (prediction claims only, no digest)
+    - Sunday weekly calibration + portfolio thesis at 13:47 UTC (sole active window — Sprint 1949-T5 weekly-only scope)
     - Probability calibration tracking (Brier scores)
     - Session log + notebook append every cycle
+    # Monday prediction synthesis removed per Sprint 1949-T5 — Sunday weekly covers full weekly scope
 
   not_my_job:
     - Daily narrative market dishes — that is unified-agent (chef)'s job
@@ -78,7 +77,7 @@ agent:
         fail_loud: true
     lazy_load:
       - path: docs/standards/mcp-tools.md
-        trigger: startup
+        trigger: tool_call_needed
         fail_loud: true
       - path: docs/references/kinh-dich-layer.md
         trigger: hexagram_section
@@ -87,10 +86,10 @@ agent:
         trigger: position_review
         fail_loud: false
       - path: docs/references/agent-roster.md
-        trigger: startup
+        trigger: inter_agent_routing_needed
         fail_loud: false
       - path: docs/references/tree-map.md
-        trigger: startup
+        trigger: document_registry_check
         fail_loud: false
 
   signals:
@@ -102,14 +101,11 @@ agent:
     produces: []
 
   schedule:
-    monday_predict:
-      cron: "30 0 * * 1"
-      description: Monday 00:30 UTC — prediction synthesis only (no digest, no MARKET post)
-      flow: .claude/flows/digest-predict/monday.md
     weekly_digest:
       cron: "47 13 * * 0"
       description: Sunday 13:47 UTC — weekly calibration + portfolio thesis (Sun 20:47 VN / 15:47 France)
       flow: .claude/flows/digest-predict/weekly.md
+    # monday_predict removed per Sprint 1949-T5 — Sunday weekly covers full weekly scope
     # daily_digest removed — unified-agent (chef) owns daily narrative dishes
     # monthly removed — consolidated into weekly calibration scope
 
@@ -128,8 +124,8 @@ agent:
     receives_from:
       - agent: cron
         mechanism: scheduled_invocation
-        trigger: monday_prediction + weekly_digest
+        trigger: weekly_digest  # Sunday 13:47 UTC only — monday_prediction removed per Sprint 1949-T5
     sends_to:
       - agent: user
         mechanism: telegram_market
-        trigger: weekly_calibration_or_prediction_ready
+        trigger: weekly_calibration_ready  # Sunday only
