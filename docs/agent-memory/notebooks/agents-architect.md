@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T15:54:51Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-cowork-reorder-and-cook-schedule.md`
+
+4 cowork agents writing parallel dump streams to MARKET (evidenced by messages 527-531: garbage prices, 49 deduped alerts, identical cascade repeats, 6 banking ingredients never fused, RSI=13.2 buried mid-list); reordered 9 cowork agents to chef/gatherer architecture — unified-agent becomes CHEF walking TNB 6 layers on 3 scheduled dishes/day, alert-commander narrowed to event-only, market-watcher and news-scout to signal-only gatherers.
+
+**Signal dropped:** `docs/signals/2026-05-18T155451Z-cowork-reorder-and-cook-schedule.json` → agent-father + dev-mcp-server + pm
+
+---
+
 ## 2026-05-17T20:44:33Z
 
 **Brief:** `docs/architecture-briefs/2026-05-17-outcome-feedback-loop.md`
