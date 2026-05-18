@@ -1832,3 +1832,39 @@ Sprint 1942c Python fallback is now active in production. HPG OCF data flows cor
 
 **Escalation:** None. Rebuild successful. All 4 Sprint 1942 fixes confirmed deployed.
 
+
+---
+
+## Task: post-1942-fa-verify — FA BCTC Coverage Post-Deploy Monitor
+
+**Status:** 🔄 MONITORING — Background script active until 2026-05-19 01:00 UTC
+
+**Trigger Event:** Sprint 1942 BCTC fallback deployed 2026-05-18. FA's last live cycle was 2026-05-17 23:04 UTC (BEFORE deploy). Tonight's FA cycle (~23:00 UTC 2026-05-18) = first post-1942 verification.
+
+**Baseline State (2026-05-18 05:40 UTC):**
+- FA notebook mtime: 1779059416 (2026-05-17 23:04 UTC)
+- Last reported BCTC coverage: 3/38 watchlist stocks (VCB, FPT, HPG)
+- mcp-server health: ✅ running, healthy, uptime 11m
+- Docker compose state: operational
+
+**Success Criteria:**
+- FA reports ≥20/30 BCTC analyses post-1942 → Close task as DONE
+- If still 3/38 or similar (≤19 analyses) → Create bug task `1944d-fa-docker-deploy-gap` (HIGH FIX, dev-mcp-server)
+- If no FA cycle by 2026-05-19 01:00 UTC → OBSERVE-TIMEOUT (FA scheduling issue)
+
+**Monitor Script Details:**
+- Location: `/tmp/monitor_fa_post_1942.sh`
+- Polling interval: 5 minutes
+- Active window: 2026-05-18 22:55 UTC → 2026-05-19 01:00 UTC
+- Log file: `/tmp/fa_monitor_session.log`
+
+**Expected FA Cycle Timing:**
+- Expected fire: 2026-05-18 ~23:00 UTC (in ~17h 20m from baseline)
+- Monitor starts polling: 2026-05-18 22:55 UTC
+- Timeout threshold: 2026-05-19 01:00 UTC (2 hours post-fire)
+
+**Next Actions:**
+1. Monitor will poll FA notebook mtime every 5 minutes starting 22:55 UTC
+2. On notebook change, parse "## Last session summary" for "Analyzed X/Y" pattern
+3. Report outcome to WORK channel + update TASKS.md
+
