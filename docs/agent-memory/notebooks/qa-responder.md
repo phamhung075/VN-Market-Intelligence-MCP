@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-18 11:39 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-18 15:47 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** BACKOFF CLEARED — proceeding normally
-**Queue:** Empty (11:39 UTC check)
-**consecutive_empty_cycles:** 1 | **backoff_until:** none
+**Status:** BACKOFF ACTIVE — 5 consecutive empty cycles triggered 1h backoff window
+**Queue:** Empty (15:47 UTC check)
+**consecutive_empty_cycles:** 0 | **backoff_until:** 2026-05-18T16:46:55Z
 
 ## Known patterns / preferences
 
@@ -2270,6 +2270,22 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 - Scheduled automated task execution (14:48 UTC cycle). Time anchor: 2026-05-18T14:48:09Z. Per cycle.md §0b: no active backoff. Queue check successful — MCP gateway responsive. Queue confirmed empty at step 1 (`get_pending_ask_questions()` returned []). Counter incremented 3→4. Per cycle.md §1: no threshold hit (5 required for backoff). WORK notification sent to WORK channel.
 
 ## Metrics (cycle 2026-05-18 14:48 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~400 |
+
+### Q&A Batch (15:46–15:47 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 4 → 5 → BACKOFF SET | backoff_until: 2026-05-18T16:46:55Z (reset counter to 0)
+- Scheduled automated task execution (15:46 UTC cycle). Time anchor: 2026-05-18T15:46:55Z. Per cycle.md §0b: no active backoff. Queue check successful — MCP gateway responsive. Queue confirmed empty at step 1 (`get_pending_ask_questions()` returned []). Counter incremented 4→5. Per cycle.md §1: threshold hit (5 consecutive empty cycles). Backoff window set for 60 minutes from current time: 2026-05-18T16:46:55Z. Counter reset to 0. WORK notification sent.
+
+## Metrics (cycle 2026-05-18 15:47 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
