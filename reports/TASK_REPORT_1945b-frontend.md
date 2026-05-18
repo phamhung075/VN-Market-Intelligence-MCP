@@ -115,3 +115,36 @@ Test groups:
 | `apps/frontend/app/lib/api/client.ts` | +52 lines — fetch helper + state deriver + colour helper |
 | `apps/frontend/app/routes/dashboard.analysis.tsx` | +135 lines — constant, types, loader, component, SectionCard |
 | `apps/frontend/app/__tests__/1945b-accuracy-digest-card.test.ts` | NEW — 20 test cases |
+
+---
+
+## [QA] Review Record
+
+**date:** 2026-05-18
+**round:** 1
+**verdict:** APPROVED
+
+### Pipeline
+- Zone tests (1945b-frontend): 20/20 GREEN (10ms)
+- Full suite: 144/144 GREEN — 13 test files, 0 regressions
+- tsc: 0 errors
+
+### DDD: PASS
+- `domain/market.ts` has ZERO actual imports from `app/lib/api/` or `app/components/`
+- Header comment line 3 references the rule; no import statements present
+
+### Security: PASS
+- No `process.env` in route, domain, or test files
+- Pre-existing `process.env` in `client.ts:19-21` is guarded with `typeof process !== "undefined"` — predates this task, documented in file header as Remix/Vite SSR necessity
+- `ACCURACY_SEEDING_WINDOW_END = "2026-05-25"` is a module-level string constant — NOT fetched from env or backend (confirmed at `dashboard.analysis.tsx:52`)
+- No hardcoded credentials, API keys, or secrets in changed files
+
+### AC Matrix
+| AC | Result |
+|----|--------|
+| AC-1: 5/6 UI states render correctly (seeding/empty/insufficient/partial/full + fetch-failure) | PASS |
+| AC-2: Fetch failure → null → card shows loading state, page does not crash | PASS |
+| AC-3: digestRateColor green ≥0.70, amber 0.40–0.69, red <0.40 | PASS |
+| AC-4: accuracy_rate=null (sample_count<3) → insufficient-sample state path | PASS |
+| AC-5: ACCURACY_SEEDING_WINDOW_END is module-level constant at tsx:52, not JSX literal | PASS |
+| AC-7: 20/20 new tests GREEN | PASS |
