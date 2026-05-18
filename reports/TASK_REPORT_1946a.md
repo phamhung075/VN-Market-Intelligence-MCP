@@ -65,3 +65,42 @@ Total:                                        49 pass, 0 fail
 ## Side Fix
 
 11 pre-existing test failures in `1343a-watchlist-restore.test.ts` were caused by Task 1876a-A6 adding 7 high-vol tickers to `WATCHLIST_SEED` without updating the test assertions. These stale counts (26, 11 sectors, no-HNX) were updated to their correct values (34, 13 sectors, HNX present via VNH) as part of this task to restore baseline green.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-18
+**QA Agent:** qa (c188)
+**Verdict:** APPROVED
+**Round:** 1
+
+### Pipeline Results
+
+| Check | Result |
+|-------|--------|
+| Zone tests (1946a + 1343a) | 22/22 GREEN (339ms) — 7/7 new + 15/15 restored |
+| tsc --noEmit | 0 errors |
+| Full suite baseline (pre-commit) | 9239 pass / 280 fail |
+| Full suite post-commit | 9240 pass / 279 fail (+1 pass, -1 fail — net improvement) |
+| DDD scan (domain→infra imports) | PASS — 0 violations in changed files |
+| Security scan (process.env / secrets) | PASS — 0 violations in production files |
+
+### AC Verification (QA)
+
+| AC | QA Result |
+|----|-----------|
+| AC-1: PLX in system-map.json with active=true, exchange=HOSE, sector="Oil & Gas / Petroleum Retail" | PASS — confirmed via jq |
+| AC-2: PLX in mcp.config.json .market.watchlist (position 31, after BSR) | PASS — confirmed via jq |
+| AC-3: PLX in seedWatchlist.ts WATCHLIST_SEED (line 39, domain=oil_gas) | PASS — confirmed via grep |
+| AC-4: velocity ratio ≥2.0 → PLX in crisisIndicators (unit test GREEN) | PASS — 1946a test 7/7 |
+| AC-5: tsc 0 errors | PASS |
+| AC-6: 7 new tests GREEN + 1343a restored GREEN | PASS |
+| Cross-check: frontend market.ts PLX entry matches system-map.json | PASS — ticker/exchange/sector/active identical |
+
+### Notes
+
+- No task branch — commit 5762ce2d landed directly on main
+- Pre-existing 279 failures confirmed identical pattern to pre-commit baseline (network/infra/chromium-missing) — zero regressions from this commit
+- 1343a: 15 tests pass (not 26 — "26" referred to DB row count in the test assertions, not test count)
+- Ops agent dispatched for Docker rebuild + seedWatchlist live injection

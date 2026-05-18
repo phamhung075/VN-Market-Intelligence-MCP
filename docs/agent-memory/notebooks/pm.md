@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c180 (PM: Sprint 1942 dev handoff complete — TASK_1942a + TASK_1942b ready-for-dev, docs/TASKS.md updated, WIP=0/2 CLEAN) | **Sprint:** 1942 READY-FOR-DEV (BA-1942a + BA-1942b specs → TASK_1942a + TASK_1942b handoff files) | **Current:** WIP 0/2 (dispatch queue)
+**Last updated:** 2026-05-18 c180b (PM: TASK_1942c decomposed from architect design + handoff created) | **Sprint:** 1942 READY-FOR-DEV (ARCH-1942 → BA-1942a/b/c → TASK_1942a/b/c handoff files) | **Current:** WIP 0/2 (ready for dispatch)
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c180: Sprint 1942 decomposition COMPLETE. ARCH-1942 → BA-1942a + BA-1942b → TASK_1942a + TASK_1942b handoff files created. Docs/TASKS.md updated: both tasks in Todo/Ready-for-Dev state. TASK_1942a (S, startup probe, single-file). TASK_1942b (M, cashflow fallback + backfill, 2-file, depends on 1942a). WIP capacity = 2/2 AVAILABLE for dispatch to dev-mcp-server. No blockers. Ready to notify developer.
+- **WIP: 0/2 CLEAN** — Cycle c180: (1) Sprint 1942 decomposition COMPLETE (prior action: ARCH-1942 → BA-1942a + BA-1942b → TASK_1942a + TASK_1942b handoff files created). (2) TASKS.md compacted: 89L → 63L. Archived 31 Done entries (1941c, 1941a, calendar-source-replacement, 1940a, 1939a/b, 1937a, 1938a, 1862c-E, 1936b, news-bugs-reuters-bloomberg-fix, 1936, macro-calendar-timeout-cap, 1934, 1933b, 1928a/1929a/1930a/1930c, 1862c-F, 1930b, 1932a, 1931a, 1922f, 1927a, 1926a, 1925a, 1924a/b/c/d, 1923a, 1909c) to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Notebook updated. WIP capacity = 2/2 AVAILABLE for dispatch to dev-mcp-server. No blockers.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,26 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 180b — 2026-05-18 PM TASKS.md Compaction: Done rotation archive (63L under 80L cap, WIP=0/2 CLEAN)
+
+**Input:** docs/TASKS.md at 89 lines (over 80L invariant). Request: archive completed Done entries, keep only 3 most recent + Backlog/Todo unchanged.
+
+**Actions:**
+1. **Identified Done entries:** 31 total rows in Done section spanning c141-c161. Newest 3: 1943a (2026-05-18), SPIKE-1943 (2026-05-18), 1941d (2026-05-18). Rest from 2026-05-16 to 2026-05-17 range.
+2. **Archive to TASKS_ARCHIVE.md:** Created new header "Archive — Added 2026-05-18 by PM (c180+ Done rotation)" with table of 31 archived rows + completion dates. Archive file now has comprehensive record spanning cycles c141-c180.
+3. **Updated docs/TASKS.md:** Replaced 31 Done rows with single collapsible line: "_(Older Done entries ... archived → docs/TASKS_ARCHIVE.md; pre-c141 history in git)_". Kept header comment (80 char line) + 3 active rows (1943a, SPIKE-1943, 1941d). Done section now 4 rows (header + 3 data + archive pointer).
+4. **Line count verification:** 89L → 63L (26 lines saved, now UNDER 80L cap by 17 lines). No data loss — complete history in archive.
+5. **Backlog/Todo/In Progress/Review:** Unchanged. Deferred section unchanged.
+6. **PM notebook updated:** Header line updated to reflect compaction action. Current state section updated. Cycle 180b entry added (this cycle).
+
+**Archive file updated:** docs/TASKS_ARCHIVE.md now has new "Archive — Added 2026-05-18" section with full 31-row table + period header.
+
+**WIP Status:** 0/2 CLEAN. No new blockers. All pending items in Todo remain active.
+
+**Status:** Compaction COMPLETE. TASKS.md at 63L (under cap). Archive captures all rotated entries with full context. Notebook updated. Ready for next dispatch cycle.
 
 ---
 
@@ -67,6 +87,44 @@
 **Blockers:** None. All design resolved. Handoff files complete. Ready to execute.
 
 **Status:** Sprint 1942 decomposition COMPLETE. WIP=0/2 CLEAN. Dispatch queue: TASK_1942a → TASK_1942b (sequential due to data dependency). Next: developer pickup notification.
+
+---
+
+## Cycle 180c — 2026-05-18 PM TASK_1942c Decomposition: ARCH design → handoff (WIP=0/2 CLEAN)
+
+**Input:** BA spec `docs/handoffs/1942c-ba-spec.md` containing [Architect] Brownfield Findings section (L317–563). PM task: decompose architect design into atomic handoff TASK_1942c.md.
+
+**Context:**
+- BA spec 1942c authored by BA agent (HPG `get_cash_flow()` all-zeros bug root-cause analysis)
+- Architect reviewed + added brownfield diagnosis (verified paths, design decisions, exact change surface L317–563)
+- Spec includes dual Scenario A/B paths (OCR label variant vs Python key fallback), both fixes ship together (independent)
+- No blockers. All requirements + design decisions complete and documented.
+
+**Actions:**
+1. **Handoff file created:** `docs/handoffs/TASK_1942c.md` (302L)
+   - Summary: HPG OCF fix via Python fallback keys + steel-sector OCR label variant
+   - Acceptance criteria (AC-1..AC-7): derived from BA spec + verified against cashFlowTool behavior
+   - Files to modify (3): vnstockBridge.ts (CASH_FLOW_SCRIPT + FINANCE_SCRIPT fallback keys), cashFlowExtractor.ts (add MFG pattern), vnstockTypes.ts (operatingCashFlow: number | null)
+   - New test file: 1942c-hpg-cashflow-fix.test.ts (6 tests: T1-T2 Scenario B, T3-T5 Scenario A + regressions, T6 edge case EC-1)
+   - Implementation sequence: 11 steps (FR-1 diagnostic SQL → Python diagnostic → code updates → tests → data sync → server restart → verification)
+   - Risk mitigation table (R-1..R-4)
+   - Handoff checklist (15 steps)
+
+2. **Updated docs/TASKS.md:**
+   - Changed TASK_1942c row status from "**ARCH DONE 2026-05-18**" to "**HANDOFF READY**"
+   - Updated handoff reference from `docs/handoffs/1942c-ba-spec.md` (BA spec) to `docs/handoffs/TASK_1942c.md` (PM handoff)
+   - TASK_1942c now row #4 in Todo section (after 1942b, inherits depends_on: 1942b)
+   - TASKS.md still at 63L (no new rows, only status update)
+
+3. **WIP Status:** 0/2 CLEAN. Handoff ready. No blockers. dev-mcp-server can pick up TASK_1942c after TASK_1942b ships (sequential due to design: 1942b adds fallback path structure, 1942c fixes HPG specifics within that path).
+
+4. **PM notebook updated:** Header reflects c180b completed. This cycle entry (180c) added. Current state summary unchanged (WIP=0/2 still correct).
+
+**Dispatch readiness:** TASK_1942c handoff ready. Sequence: dev-mcp-server picks up 1942a (no deps) → 1942b (depends 1942a) → 1942c (depends 1942b). All three can be in dev queue; 1942b starts after 1942a ships, 1942c starts after 1942b ships.
+
+**Blockers:** None. Handoff complete. Ready to notify dev-mcp-server.
+
+**Status:** TASK_1942c decomposed. Handoff file created. TASKS.md updated. WIP=0/2 CLEAN. Ready for dev dispatch.
 
 ---
 
