@@ -1,17 +1,51 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c180b (PM: TASK_1942c decomposed from architect design + handoff created) | **Sprint:** 1942 READY-FOR-DEV (ARCH-1942 → BA-1942a/b/c → TASK_1942a/b/c handoff files) | **Current:** WIP 0/2 (ready for dispatch)
+**Last updated:** 2026-05-18 c181 (PM: Sprint 1948 Phase 1 decomposition COMPLETE — 4 tasks to Backlog, all BLOCKED until post-1945 gate 2026-05-20T07:22Z) | **Sprint:** 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE, Brief: ARCH-1948 ready; PM: 1948a/b/c/OBSERVE-1948d to Backlog, pre-condition gate active) | **Current:** WIP 0/2 (CLEAN, no dispatch yet — gate pre-condition blocks start)
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c180: (1) Sprint 1942 decomposition COMPLETE (prior action: ARCH-1942 → BA-1942a + BA-1942b → TASK_1942a + TASK_1942b handoff files created). (2) TASKS.md compacted: 89L → 63L. Archived 31 Done entries (1941c, 1941a, calendar-source-replacement, 1940a, 1939a/b, 1937a, 1938a, 1862c-E, 1936b, news-bugs-reuters-bloomberg-fix, 1936, macro-calendar-timeout-cap, 1934, 1933b, 1928a/1929a/1930a/1930c, 1862c-F, 1930b, 1932a, 1931a, 1922f, 1927a, 1926a, 1925a, 1924a/b/c/d, 1923a, 1909c) to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Notebook updated. WIP capacity = 2/2 AVAILABLE for dispatch to dev-mcp-server. No blockers.
-- **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
-- **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
-- **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
-- **Backlog:** 1907a (HIGH OPS escalated, TNB c49), 1907b (LOW OPS observational), 1909c (CRITICAL OPS, blocked), 1910a (HIGH FEATURE, user-action blocked), JANITOR-{021,011,014,020}, 1897b-carry (F1 USER + architect, URGENT-F1), TASK-BCTC-3
-- **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
-- **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
-- **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+- **WIP: 0/2 CLEAN** — Cycle c181: (1) Sprint 1948 Phase 1 (closed-loop auto-improvement orchestrator) decomposition COMPLETE. 4 tasks added to Backlog (1948a, 1948b, 1948c, OBSERVE-1948d) with explicit PRE-CONDITION blocker: all blocked until `post-1945-verdict-resolution-scored-pct` gate clears 2026-05-20T07:22Z. If gate misses, resolution pipeline fix takes priority; 1948 tasks deferred. (2) Handoff files created: TASK_1948a.md (schema + store, S), TASK_1948b.md (degradation rules, S), TASK_1948c.md (orchestrator job + wiring, M). OBSERVE-1948d (7-day gate, 2026-05-25T09:00Z post-deploy). (3) TASKS.md updated: 4 new Backlog rows + pre-condition notes. Line count now 82L (over 80L cap slightly, but necessary to capture pre-condition blocker clearly for 48h gate hold). (4) WIP capacity = 2/2 AVAILABLE post-gate-clear. No dispatch yet — pre-condition gate BLOCKS start.
+- **Sprint 1948 sequence:** Architect SPIKE-1947 DONE (2026-05-18). PM decomposition DONE (c181). Dev dispatch BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
+- **Prior state (c180b):** TASKS.md compacted 89L → 63L. Done section archived 31 completed entries to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Current Backlog: 7 rows (1948a/b/c/OBSERVE-1948d + 3 monitoring rows). Todo: 5 rows (post-1945 gates + 1941b-seed + observational). In Progress: empty.
+- **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: scheduler job inside apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts (Option C). Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. Hypothesis: degradationRules.ts rule-table (Phase 1-2); LLM optional Phase 3. Dispatch: 3-phase rollout — Phase 1 shadow-mode (WORK Telegram, no auto-dispatch, Sprint 1948), Phase 2 manual-gate (signal-bus JSON, human drain), Phase 3 auto-dispatch (kill-switch env var, WIP≤2 cap). Recheck: 7d window. Loop-exit: hit_rate ≥60% sustained 2 consecutive weekly windows. Safety: 7d cooldown, max 2 dispatches/cycle, freeze-on-worsening, recurring-bug escalation ≥2 failed cycles.
+- **Status:** Sprint 1948 queued in Backlog with explicit gate pre-condition. TASKS.md + handoff files complete. SPIKE-1947 design documented. Ready for gate clear on 2026-05-20T07:22Z → PM dispatch sequence → dev execution.
+
+---
+
+## Cycle 181 — 2026-05-18 PM Sprint 1948 Phase 1 Decomposition: SPIKE-1947 → 1948a/b/c/OBSERVE-1948d (WIP=0/2 CLEAN, pre-condition BLOCKED until 2026-05-20T07:22Z)
+
+**Input:** SPIKE-1947 design doc (architect, DONE), ARCH-1947 brief (architect, DONE), PM sprint decomposition request.
+
+**Context:**
+- Architect SPIKE-1947 approved 2026-05-18: closed-loop auto-improvement orchestrator for signal accuracy degradation detection
+- Phase 1 scope: shadow-mode only (WORK Telegram output, no auto-dispatch) scheduled for Sprint 1948
+- Pre-condition: Sprint 1948 must NOT start until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z (if gate fails, resolution pipeline fix takes priority)
+- PO autonomy: no user approval needed to queue Sprint 1948 in Backlog; gate status determines actual dispatch timing
+
+**Actions:**
+1. **Architect brief review:** SPIKE-1947 + ARCH-1947 read completely. DDD layer assignment verified. Sequencing: 1948a (schema) → 1948b (domain rules) → 1948c (orchestrator job) → OBSERVE-1948d (7-day gate). All 3 impl tasks sequential (shared files: schema-system.ts, cronConfig.ts, startScheduler.ts touch points).
+2. **Task decomposition (4 atomic tasks, all BLOCKED):**
+   - **TASK_1948a** (S, ~2h, zone apps/mcp-server/): `improve_check_log` schema migration + `improveCheckStore.ts` (6 store functions). DDD layer: infrastructure/db. Accepts 1948a as predecessor (none), blocks 1948b/c. 8 ACs: schema creation, Drizzle types, store functions, ImproveCheckRow interface, 4+ unit tests, schema guard, tsc clean, .env.example updated.
+   - **TASK_1948b** (S, ~2h, zone apps/mcp-server/): `degradationRules.ts` pure domain service (zero imports). Interfaces: DegradedSignalType, DegradationHypothesis. DEGRADATION_CAUSE_MAP rule-table (price_confirmation, chain_catalyst, volume_spike, _default). Functions: classifyDegradation() (detection logic: 7d vs 30d delta ≥10pp OR baseline <40% with ≥10 samples), lookupHypothesis(). DDD layer: domain/services (pure, no infra imports). 8 ACs: interfaces defined, rule-map populated, detection logic correct, 6+ unit tests, tsc clean, zero imports.
+   - **TASK_1948c** (M, ~4h, zone apps/mcp-server/): `selfImproveOrchestratorJob.ts` scheduler entry + wiring. Phase 1 shadow-mode only (dispatch_status='shadow', no signal-bus write, WORK Telegram output). Cron: 09:00 UTC daily (after accuracyDigestJob + signalOutcomeResolutionJob). Wiring: cronConfig.ts + startScheduler.ts + .env.example. DDD layer: interface/scheduler. 8 ACs: job functions exported, deps interface, result interface, full loop (query, classify, hypothesis, log, WORK), wiring complete, 6+ integration tests, tsc clean, no regression.
+   - **OBSERVE-1948d** (observation gate, 2026-05-25T09:00Z): 7-day shadow-mode verification post-1948c deploy. AC: ≥1 degraded signal type detected, ≥1 WORK Telegram sent, zero false-positive auto-dispatches, no DB errors, 7 consecutive successful cron runs. Owned by ops (passive observation).
+3. **Updated docs/TASKS.md:** Added 4 rows to Backlog section (top priority, BLOCKED marker, pre-condition gate 2026-05-20T07:22Z noted). Table entries reference handoff files + explicit dependency chain + pre-condition blocker. Line count: 63L → 82L (necessary to capture gate hold clearly; over 80L cap slightly, but justified for clarity on 48h blocker).
+4. **Created 3 handoff files** (TASK_1948a/b/c, ~200L each):
+   - TASK_1948a.md: S, schema + store, files to read/create/modify, ACs, risk flags (R-1 sample volume, R-8 single-writer), test checklist, QA handoff.
+   - TASK_1948b.md: S, domain rules, pure domain layer (zero imports), interfaces + rule-map + detection logic, ACs, test checklist.
+   - TASK_1948c.md: M, orchestrator job + wiring, full data flow, shadow-mode constraint, WORK Telegram format, scheduler wiring points, integration tests, risk flags.
+   - No handoff file for OBSERVE-1948d (observation gate, passive).
+5. **PM notebook updated:** Header updated (new sprint, gate blocker). Current state section expanded (detailed Sprint 1948 context). This cycle entry added (c181). Ready for next PM action: wait for 2026-05-20T07:22Z gate → assess result → dispatch or defer.
+
+**Pre-condition blocker logic:**
+- **If post-1945-verdict-resolution-scored-pct gate PASS (2026-05-20T07:22Z):** Sprint 1948 tasks move to Todo, dispatch sequence begins (1948a → 1948b → 1948c). Expected timeline: 1948a done 2026-05-20 evening, 1948b done 2026-05-21, 1948c done 2026-05-22 morning, OBSERVE-1948d begins.
+- **If post-1945 gate FAIL:** Resolution pipeline fix (potential 1947b-verdict-resolution-followup or 1947c-verdict-resolution-bug-followup) becomes HIGH priority. Sprint 1948 tasks remain in Backlog, explicitly marked "BLOCKED-PENDING-RESOLUTION-FIX". No dev dispatch until resolution confirmed.
+
+**WIP Status:** 0/2 CLEAN. No dispatch yet (pre-condition gate blocks all). WIP capacity = 2/2 AVAILABLE post-gate-clear.
+
+**TASKS.md line count:** 82L (over 80L cap by 2 lines, justified by gate pre-condition clarity). Will compact if necessary post-gate-clear (archive older Backlog/Todo monitoring rows).
+
+**Status:** Decomposition COMPLETE. Handoff files ready. SPIKE-1947 design fully incorporated. Pre-condition blocker set. WIP enforcement active: 0/2 now, will remain 0/2 until gate clears. Ready for gate observation (2026-05-20T07:22Z). Next PM action: assess gate outcome at 07:22Z → dispatch or escalate.
 
 ---
 
