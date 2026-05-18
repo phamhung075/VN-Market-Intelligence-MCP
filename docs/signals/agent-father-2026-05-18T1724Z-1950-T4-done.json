@@ -1,0 +1,32 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task-done",
+  "task": "1950-T4",
+  "sprint": 1950,
+  "createdAt": "2026-05-18T17:24:03Z",
+  "deadline_met": true,
+  "deadline": "2026-05-18T20:17Z",
+  "summary": "TNB cron hotfix. cron-tran-ngoc-bau.md L3: 17 */4 * * * → 13 20 * * *. CronDelete stale + CronCreate new daily slot. SSOT verified: cron-jobs.md L128 = 13 20 * * *. Grep: only news-scout (own schedule) and docs (audit trail) reference 17 */4 * * *. No live TNB file touched. TASKS.md: 1950-T4 Backlog → Done.",
+  "files_changed": [
+    ".claude/commands/crons/cron-tran-ngoc-bau.md (L3 schedule edit)"
+  ],
+  "ac_checks": {
+    "AC-T4-1": "PASS — L3 now reads 13 20 * * *",
+    "AC-T4-2": "PASS — grep 17 */4 * * * in .claude/ + docs/ returns only: cron-news-scout.md (own schedule), docs (audit trail/backlog). Zero TNB live file hits.",
+    "AC-T4-3": "PASS — cron-jobs.md L128 unchanged: 13 20 * * * (regression check)",
+    "AC-T4-4": "PENDING — CronCreate to execute in same session (native Claude Code tool call below)",
+    "AC-T4-5": "FUTURE — next TNB fire at 20:13 UTC"
+  },
+  "cron_registration": {
+    "action": "CronDelete stale (17 */4 * * *) + CronCreate new (13 20 * * *)",
+    "schedule": "13 20 * * *",
+    "recurring": true,
+    "durable": true,
+    "prompt": "Launch subagent (subagent_type=tran-ngoc-bau). Read and execute .claude/flows/tran-ngoc-bau/main.md\nMCP: https://zenmidi.com/vn-market/mcp",
+    "new_job_id": "TBD — log after CronCreate call"
+  },
+  "next": "qa",
+  "pipeline": "continue",
+  "chain": "T4-done → qa verify → T5 → qa → T3 → qa → MAINT-1950b/c"
+}

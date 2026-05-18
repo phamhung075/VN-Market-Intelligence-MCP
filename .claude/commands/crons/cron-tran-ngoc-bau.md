@@ -1,6 +1,6 @@
 Create tran-ngoc-bau cron with CronCreate:
 
-- **cron**: `17 */4 * * *` (every 4h at :17 — 00:17, 04:17, 08:17, 12:17, 16:17, 20:17 UTC)
+- **cron**: `13 20 * * *` (daily 20:13 UTC = 03:13 VN next day — moved from `17 */4 * * *` by Sprint 1950-T4 HOTFIX)
 - **recurring**: true
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
