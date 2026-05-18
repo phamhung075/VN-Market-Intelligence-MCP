@@ -36,12 +36,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1941d-fpt-net-profit-ocr-bug | **FPT net_profit API bridge fix** — net_profit_api_bridge column + bridgeNetProfitToFinancialReports() + cashFlowTool COALESCE + ni_source field. FPT ratio: 20225 OCR → 2509520 bridge, ratio 1.6371 (passes guard). 7 new tests GREEN, 24 cashflow tests GREEN, tsc clean, Docker deployed. | MEDIUM | FIX | dev-mcp-server | docs/handoffs/1941d.md | — |
+| _(empty)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
+| 1941d-fpt-net-profit-ocr-bug | **DONE 2026-05-18 QA** — net_profit_api_bridge column + bridgeNetProfitToFinancialReports() + cashFlowTool COALESCE + ni_source. FPT Q4/2025 OCR=20,225 → bridge=2,509,520 triệu VND, ratio 1.6371 (passes guard). 7 new tests + 17 regression = 24 cashflow tests GREEN, tsc clean (branch-divergence tsc errors resolve on merge), DDD PASS, security PASS. Report: reports/TASK_REPORT_1941d.md. | MEDIUM | FIX | dev-mcp-server | 2026-05-18 |
 | 1941a-l7-ocf-guard-deploy-verify | **DONE 2026-05-18 QA** — cashFlowTool.ts now prefers `operating_cash_flow` (vnstock API bridge, Task 1878a) over `operating_cf` (OCR/PDF) via COALESCE. VCB: corrupted 1.23e15 → 9,947,260 triệu VND, ratio=1.15 (passes guard). FPT OCF fixed to 4,108,450 triệu (ratio still suppressed — NI=20,225 is separate OCR bug, filed separately). 5 new tests + 12 regression tests GREEN (17 total). tsc clean. Report: reports/TASK_REPORT_1941a.md. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
 | calendar-source-replacement | **DONE 2026-05-18 c174/QA-c174** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. 103/103 active tests pass, tsc clean on touched files, DDD PASS. NullCalendarAdapter wired. Report: reports/TASK_REPORT_calendar-source-replacement.md. Merged task/calendar-source-replacement to main. | LOW | WONTFIX | dev-macro-indicators | 2026-05-18 |
 | 1940a-pc1-legal-risk-tool-gap | **DONE 2026-05-18 c174/QA-c174** — `get_legal_risk_signals` now dual-source: queries both `alerts` AND `agent_signals` (signal_type=legal_risk). Root cause: PC1 chairman arrest signals (#3318/#3343, conf=0.78) were in agent_signals but tool never read there. Fix: `queryAgentSignalsTable()` in legalRiskTools.ts (interface layer, DDD-clean). TC4: null stock_code (broad) signals also returned. 7 new tests GREEN, 61-test regression suite GREEN, tsc 0 errors. QA c174 APPROVED. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
