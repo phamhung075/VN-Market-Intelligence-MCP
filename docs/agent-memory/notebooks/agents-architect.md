@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T21:22:22Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-spike-1951f-fire-drift-fix.md`
+
+Root cause of cowork-team master cron fire-drift: matcher window anchored on actual fire minute rather than nominal tick, so 7+ min CronCreate jitter slides the ±2 window past all slot targets. Option B chosen — 2-line nominal-tick rounding fix (`M = Math.floor(actualM/15)*15`) tolerates up to 14 min drift with zero adjacent-tick collision risk; unblocks 1951g (implementation) and 1951d (cutover).
+
+**Signal dropped:** `docs/signals/agents-architect-spike-1951f-fix.json` → agent-father
+
+---
+
 ## 2026-05-18T20:25:54Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-cowork-team-command.md` §11 (BLOCK-1 resolution)
