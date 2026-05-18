@@ -112,3 +112,14 @@ The fix scope is small: one conditional block added to `auto-cure-and-handoff.md
 - Issues: 1 blocking (BLOCK-1), 3 non-blocking (NB-1 doc gap, NB-2 inherited deferred, NB-3 informational)
 - Reviewed: ad68cf5c + 1283c602
 - QA agent: qa | 2026-05-18
+
+---
+
+## [Fixer] Fix Record
+
+- **Issues fixed:** BLOCK-1 — pipeline_degraded flag now consumed by Step 7 WORK template
+- **File:** `.claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md` (Line 18)
+- **Change:** Added conditional `{IF pipeline_degraded=true: PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}}` to Step 7 WORK message template
+- **Verification:** File size 95 lines (within 200L limit); no TypeScript compilation needed; template syntax matches existing conditional pattern
+- **Signal:** `docs/signals/fixer-2026-05-18T17-22-31Z-1950-T2-fix.json`
+- **Commit:** `d307d294` — fix(flows/tran-ngoc-bau): pipeline_degraded surfaces in step 7 work row [1950-T2]
