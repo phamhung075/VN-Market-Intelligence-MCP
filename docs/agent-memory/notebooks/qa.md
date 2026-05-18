@@ -1,6 +1,35 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c176 — 1941a OCF API bridge cashflow tool — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c176 — 1941c accuracy digest job — APPROVED
+
+## Session 2026-05-18 c176 — 1941c accuracy digest job
+
+### TASK REPORT — 1941c (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+type: FEATURE (scheduler/digest — accuracyDigestJob + getSystemAccuracyDigestStats + buildAccuracyDigestText)
+round: 1
+merge strategy: cherry-pick d524ede8+4 onto main (branch had 1941d commits on top, not in scope)
+qa sign-off commit: 44301391
+```
+
+#### Pipeline
+
+- Task tests (1941c): 7/7 pass (22 assertions) — GREEN
+- Full suite: 9187 pass / 275 fail / 31 skip — matches main exactly (no regression)
+- tsc: 0 errors (clean)
+- DDD: PASS — `import type` from infra in application/usecases is type-only, established codebase pattern (5 other usecases do same); scheduler/digest imports infra+app (correct interface layer direction)
+- Security: PASS — no process.env, no hardcoded secrets, `days` param is TypeScript `number` (no SQL injection risk)
+- neutralOnlyRows field: present in interface (line 365) + query 4 (line 459) — AC-3/AC-8 discrimination verified
+- _running guard: module-scope (line 30), correct per R-3
+- alreadySentToday: DB-backed, fail-open, survives restarts
+- Cron collision check: devTeamHeartbeat (0 7 * * 0) fires same time Sundays — independent async jobs, no shared resource, not a blocking concern
+- cron-registry.json: accuracyDigestJob added, schedulerFileCount 63 → 64
+- Note: stash/pop sequence during baseline run caused working tree corruption (1941c files missing); restored from commit d524ede8 before full suite run
+
+---
 
 ## Session 2026-05-18 c176 — 1941a OCF API-bridge cashflow tool
 
