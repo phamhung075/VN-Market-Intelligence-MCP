@@ -123,3 +123,30 @@ The fix scope is small: one conditional block added to `auto-cure-and-handoff.md
 - **Verification:** File size 95 lines (within 200L limit); no TypeScript compilation needed; template syntax matches existing conditional pattern
 - **Signal:** `docs/signals/fixer-2026-05-18T17-22-31Z-1950-T2-fix.json`
 - **Commit:** `d307d294` — fix(flows/tran-ngoc-bau): pipeline_degraded surfaces in step 7 work row [1950-T2]
+
+---
+
+## [QA] Re-verification Record — Round 2
+
+- **Round:** 2 (re-verification of BLOCK-1 fix)
+- **Commits reviewed:** ad68cf5c (feat) + d307d294 (fix) + 9c8000f0 (chore/notes)
+- **QA agent:** qa | 2026-05-18T17:23Z
+
+### Checks performed
+
+| Check | Result | Evidence |
+|---|---|---|
+| Line 18 conditional present | PASS | auto-cure-and-handoff.md:18 confirmed `{IF pipeline_degraded=true: PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}}` |
+| Variable names match producer | PASS | audit-chef-coverage.md defines `start_count` (line 21), `close_count` (line 25), `stuck_count` (line 79), `pipeline_degraded` (lines 82, 92) — all four match consumer line 18 exactly |
+| Syntax convention | PASS | `{IF var=val: ...}` is self-consistent with the `{variable}` substitution pattern throughout the template; no conflicting pattern in codebase; unambiguous for agent reading |
+| File size ≤200L | PASS | 95 lines confirmed via wc -l |
+| Scope creep | PASS | Diff touches only: auto-cure-and-handoff.md (1 line), fixer.md notebook (11 lines), fixer signal json (21 lines) — no other production files modified |
+| Producer-consumer link intact | PASS | audit-chef-coverage.md Step 0.5c (line 82) sets `pipeline_degraded=true`; Step 0.5 (lines 21/25) assigns `start_count`/`close_count`; Step 0.5a logs `stuck_count` (line 78) — all written before Phase 1 layer-walk, consumed by Step 7 |
+| 8/9 non-negotiables (previously passing) | PASS | No changes to any file that affects NN-1 through NN-7; NN-6 file sizes unchanged for main.md/tran-ngoc-bau.md; NN-8 now PASS (conditional present) |
+| NN-8 re-evaluated | PASS | Step 7 WORK template now emits PIPELINE DEGRADED line when flag=true; silent when false — correct behaviour per spec |
+
+### Verdict: APPROVED
+
+BLOCK-1 resolved. All 9 non-negotiables PASS. All 8 ACs PASS. No scope creep. No regression risk (flow-doc only, no TypeScript source changed).
+
+**Commits comprising T2:** ad68cf5c (feat) + d307d294 (fix). Both on main per project policy (no task branches for flow-doc patches). No merge commit needed.

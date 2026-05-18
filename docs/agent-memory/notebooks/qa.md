@@ -1,6 +1,48 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c192 — 1950-T2 TNB audit chef-coverage check — CHANGES_REQUESTED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c193 — 1950-T2 re-verification — APPROVED
+
+## Session 2026-05-18 c193 — 1950-T2 re-verification (APPROVED)
+
+### TASK REPORT — 1950-T2 round 2 (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commits reviewed: ad68cf5c (feat) + d307d294 (fix) + 9c8000f0 (chore/notes)
+type: FEAT+FIX — TNB audit Phase 0.5 chef-coverage check + BLOCK-1 fix
+zone: .claude/flows/tran-ngoc-bau/ (flow-doc only, no TypeScript)
+round: 2 (re-verification)
+```
+
+#### Checks
+
+| Check | Result |
+|---|---|
+| Line 18 conditional present | PASS |
+| Variable name match (all 4) | PASS |
+| Syntax convention | PASS |
+| File size ≤200L (95L) | PASS |
+| Scope creep | PASS |
+| Producer-consumer link | PASS |
+| NN-1 through NN-7 (prev passing, no regression) | PASS |
+| NN-8 re-evaluated | PASS |
+
+#### Notes
+
+- QA report updated: docs/handoffs/sprint-1950-T2-qa-report.md (Round 2 record appended)
+- Signal: docs/signals/qa-2026-05-18T17-23-53Z-1950-T2-final.json → to=pm
+- Note: {IF var=val: ...} is unique in codebase (no prior instance to compare) but self-consistent with {variable} substitution pattern; unambiguous
+
+## Cycle — 2026-05-18 c193
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T2 round 2 — all 9 NNs PASS, all 8 ACs PASS, scope clean. BLOCK-1 fully resolved.
+- **actions**: QA report updated (APPROVED verdict), signal written to pm, notebook updated
+- **next_cycle_hint**: pm marks T2 Done in TASKS.md (both commits ad68cf5c + d307d294); T3 path (agent-father, chef runbook) unblocks after T4/T5 ship
+- **estimated_tokens**: 3800
+
+---
 
 ## Session 2026-05-18 c192 — 1950-T2 TNB audit chef-coverage check
 

@@ -1,0 +1,13 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "qa-approved",
+  "sprint": "1950",
+  "task": "1950-T2",
+  "verdict": "APPROVED",
+  "round": 2,
+  "summary": "1950-T2 APPROVED — BLOCK-1 resolved, all 9 non-negotiables + 8 ACs PASS. Commits: ad68cf5c (feat) + d307d294 (fix). Flow-doc only, no TypeScript source touched.",
+  "report": "docs/handoffs/sprint-1950-T2-qa-report.md",
+  "next": "pm — mark T2 Done in TASKS.md (both commits ad68cf5c + d307d294); then unblock T3 path (agent-father) after T4/T5 ship",
+  "createdAt": "2026-05-18T17:23:53Z"
+}
