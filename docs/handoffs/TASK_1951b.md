@@ -9,7 +9,7 @@ blocks: [1951c]
 
 ## TLDR
 
-Run 24h parallel-run validation window (with existing agent .md `schedule:` blocks still active). Verify ≥3 RemoteTrigger ticks fire at expected times with correct agent sessions launched. Smoke-check targets: chef-morning 05:23 UTC, chef-eod 08:37 UTC, tnb-audit 20:13 UTC. Document smoke results in WORK channel.
+Run 24h parallel-run validation window. **Window:** 2026-05-18T20:34Z → 2026-05-19T20:34Z. Both lanes active: 12 legacy RemoteTriggers (status=`pending_delete`) + master CronCreate `2da3291e` (`*/15 * * * *` cowork-team dispatcher). Verify ≥3 ticks fire at the realigned 15-min grid (chef-morning **05:15Z**, chef-eod **08:45Z**, tnb-audit 20:13Z — tick 1/3 already CONFIRMED 2026-05-18T20:30Z c199). **AC-6 gate:** zero MARKET double-published dishes across the 24h window. On PASS → unblocks 1951c (dispatcher verify + docs + durable=true SPIKE) AND 1951d (delete 12 legacy RemoteTriggers).
 
 ## [PM] Planning Context
 
@@ -17,13 +17,13 @@ Run 24h parallel-run validation window (with existing agent .md `schedule:` bloc
 - `ops` (observational — no code changes, only monitoring + reporting)
 
 ### Acceptance Criteria
-- [ ] **AC-1 (24h window):** Validation window runs 2026-05-19 00:00 UTC to 2026-05-20 00:00 UTC (or 48h if needed). Existing agent `.md` `schedule:` blocks remain active during window (Phase 2 has NOT run).
-- [ ] **AC-2 (≥3 smoke-test ticks):** At least 3 RemoteTrigger ticks fire correctly during window with correct agent session launched and notebook + WORK trace evidencing the firing:
-  - chef-morning RemoteTrigger fires at 2026-05-19 05:23 UTC → unified-agent session launches → morning_dish published to MARKET
-  - chef-eod RemoteTrigger fires at 2026-05-19 08:37 UTC → unified-agent session launches → eod_dish published to MARKET
-  - tnb-audit RemoteTrigger fires at 2026-05-19 20:13 UTC → tran-ngoc-bau session launches → daily_audit published to WORK
-- [ ] **AC-3 (no regression — AC-6 gate):** No MARKET duplicate dish is published in the 24h window (chef idempotency check — double-fire from CronCreate + RemoteTrigger must not corrupt content). If any duplicate detected, stop validation, report to PM, and Phase 1 rolls back (delete 17 new triggers).
-- [ ] **AC-4 (documentation):** WORK Telegram captures timestamp + agent session + output summary for each of the 3 smoke-test ticks. Example: `[ops/1951b-smoke] chef-morning fired 2026-05-19T05:23:42Z → unified-agent session abc123 → MARKET morning_dish published (lines 5000–5042)`.
+- [ ] **AC-1 (24h window):** Parallel-run window 2026-05-18T20:34Z → 2026-05-19T20:34Z. Both lanes remain active throughout: (a) 12 legacy RemoteTriggers (status `pending_delete`), (b) master CronCreate `2da3291e` (`*/15 * * * *`) dispatching via `.claude/flows/cowork-team/main.md`.
+- [ ] **AC-2 (≥3 ticks verified at realigned grid):** At least 3 dispatch ticks fire correctly with correct agent session launched + WORK trace:
+  - tnb-audit at 2026-05-18T20:13Z → tran-ngoc-bau session → WORK daily_audit. **CONFIRMED 2026-05-18T20:30Z c199.**
+  - chef-morning at 2026-05-19T**05:15Z** (was 05:23Z; BLOCK-1 realignment) → unified-agent session → MARKET morning_dish ≤10min post-START.
+  - chef-eod at 2026-05-19T**08:45Z** (was 08:37Z; BLOCK-1 realignment) → unified-agent session → MARKET eod_dish ≤10min post-START.
+- [ ] **AC-3 / AC-6 (zero double-publish):** Zero MARKET duplicate dishes across the 24h window. Both lanes firing the same slot must NOT produce a second dish (chef idempotency must hold). Any duplicate → STOP validation, freeze 1951d, escalate to PM, Phase 1 rolls back (delete the master CronCreate, keep 12 legacy RemoteTriggers).
+- [ ] **AC-4 (documentation):** WORK Telegram captures timestamp + agent session + output summary for each tick. Example: `[ops/1951b] chef-morning fired 2026-05-19T05:15:42Z (master-dispatch) → unified-agent session abc123 → MARKET morning_dish (msg id N)`.
 
 ### Files to read first
 - `docs/SPRINT_GOAL.md` §Success Metric — AC-4 (smoke success) + AC-6 (no parallel-run regression)
@@ -79,10 +79,18 @@ None — observational only. All changes recorded in WORK Telegram + OBSERVATION
 
 | # | Slot | Expected Time (UTC) | Status | Evidence |
 |---|------|---------------------|--------|----------|
-| 1 | tnb-audit | 2026-05-18T20:13Z | **CONFIRMED** 2026-05-18T19:38Z PO c199 | tnb-audit RemoteTrigger fired at 20:13Z UTC; signal written to dashboard at 20:30Z (`tnb-20260518T203000`); audit handoff `docs/handoffs/tnb-audit-latest.md` populated. Session ID not captured in this validation pass (file-evidence only); cowork sandbox confirmed alive via TNB c72 self-report. |
-| 2 | chef-morning | 2026-05-19T05:23Z | PENDING | Watch unified-agent session + MARKET morning_dish ≤10 min post-START. |
-| 3 | chef-eod | 2026-05-19T08:37Z | PENDING | Watch unified-agent session + MARKET eod_dish ≤10 min post-START. |
+| 1 | tnb-audit | 2026-05-18T20:13Z | **CONFIRMED** 2026-05-18T20:30Z PO c199 | tnb-audit fired 20:13Z; signal written to dashboard at 20:30Z (`tnb-20260518T203000`); audit handoff `docs/handoffs/tnb-audit-latest.md` populated. File-evidence only; cowork sandbox confirmed alive via TNB c72 self-report. |
+| 2 | chef-morning | 2026-05-19T**05:15Z** (BLOCK-1 realigned from 05:23Z) | PENDING | Watch unified-agent session + MARKET morning_dish ≤10 min post-START. |
+| 3 | chef-eod | 2026-05-19T**08:45Z** (BLOCK-1 realigned from 08:37Z) | PENDING | Watch unified-agent session + MARKET eod_dish ≤10 min post-START. |
 
-**1951b status: IN PROGRESS — DO NOT CLOSE.** Tick 1 of 3 verified. Idempotency check ongoing (no MARKET duplicate detected this cycle).
+**Idempotency / AC-6 — Zero double-publish tracker (24h window 2026-05-18T20:34Z → 2026-05-19T20:34Z):**
 
-**Acceptance path:** all 3 ticks must confirm + no MARKET duplicate dish in 24h window. Next PO assessment at chef-morning slot (2026-05-19T05:23Z).
+| Slot | Lane A (legacy RemoteTrigger) | Lane B (master CronCreate dispatch) | Duplicate? |
+|------|------------------------------|-------------------------------------|------------|
+| tnb-audit | tick 20:13Z observed | dispatch at next */15 tick after 20:13Z | TBD — no duplicate noted in first observation; continue watching across window |
+| chef-morning | pending 05:15Z | pending 05:15Z (matched ±2min by dispatcher) | PENDING |
+| chef-eod | pending 08:45Z | pending 08:45Z (matched ±2min by dispatcher) | PENDING |
+
+**1951b status: IN PROGRESS — DO NOT CLOSE.** Tick 1 of 3 verified. AC-6 zero-double-publish gate not yet evaluable (no chef tick yet in window).
+
+**Acceptance path:** all 3 ticks confirmed + zero MARKET duplicate dish across 24h window. Next PO assessment at chef-morning slot 2026-05-19T05:15Z; AC-6 closes 2026-05-19T20:34Z. On PASS → 1951c + 1951d unblocked.

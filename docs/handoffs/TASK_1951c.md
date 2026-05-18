@@ -9,7 +9,12 @@ blocks: []
 
 ## TLDR
 
-Verify all 17 RemoteTriggers survive a Claude Desktop session close + reopen cycle (the entire point of the migration). One human-loop step: close desktop session, wait 30s, reopen workspace. Call `RemoteTrigger action=list` to confirm all 17 still registered. Update `docs/standards/cron-jobs.md` reference to RemoteTrigger model. Close Phase 1.
+**SUPERSEDED BY ARCH PIVOT 2026-05-18.** Original AC ("17 RemoteTriggers survive session close+reopen") no longer applicable — agents-architect replaced per-slot RemoteTrigger model with a single master CronCreate `*/15 * * * *` dispatcher (`cdb556bd`, `2519d8a9`). New AC:
+1. Verify master CronCreate `2da3291e` fires correctly and `.claude/flows/cowork-team/main.md` dispatches the right agent set per `docs/data/cowork-schedule.json` UTC ±2min match.
+2. Update `docs/standards/cron-jobs.md` Cowork Schedule section to document the master-dispatcher model (remove stale 17-RemoteTrigger references).
+3. **Open SPIKE** on `durable=true` non-persistence — known 1950-T5 finding: CronCreate is session-only despite the flag, master cron disappears across Claude Desktop restart. Architecture question requires architect investigation.
+
+Blocked on 1951b passing AC-6 (zero double-publish).
 
 ## [PM] Planning Context
 
@@ -17,17 +22,18 @@ Verify all 17 RemoteTriggers survive a Claude Desktop session close + reopen cyc
 - `.claude/` (agent infrastructure)
 - `docs/data/` + `docs/standards/` (SSOT + reference docs)
 
-### Acceptance Criteria
-- [ ] **AC-1 (session-close survival):** All 17 RemoteTriggers survive Claude Desktop session close. Verified by: close all workspace windows, wait 30s, reopen workspace, call `RemoteTrigger action=list` and confirm all 17 triggers still appear in the list (≥20 total triggers, all with names matching slot_id).
-- [ ] **AC-2 (re-fire after close):** After session close+reopen, the next scheduled RemoteTrigger tick fires normally (within expected time window, no session-scoped evaporation). Spot-check by capturing one trigger firing post-reopen in WORK.
-- [ ] **AC-3 (docs updated):** `docs/standards/cron-jobs.md` Cowork Schedule section is updated to reference RemoteTrigger model (replace any stale CronCreate references). Include cron schedule table with all 17 slots + trigger names.
-- [ ] **AC-4 (Phase 1 gate cleared):** All AC-1 through AC-6 from SPRINT_GOAL.md are PASS. Handoff note documents final status.
+### Acceptance Criteria (POST-PIVOT)
+- [ ] **AC-1 (dispatcher correctness):** Master CronCreate `2da3291e` (`*/15 * * * *`) fires on schedule AND `.claude/flows/cowork-team/main.md` correctly resolves the active slot set by matching `docs/data/cowork-schedule.json` `cron` fields against current UTC ±2min. Verified by at least 2 observed `*/15` ticks during work hours where the dispatched agent set matches the schedule for that minute.
+- [ ] **AC-2 (docs updated):** `docs/standards/cron-jobs.md` Cowork Schedule section rewritten to document the master-dispatcher model — single CronCreate row, pointer to `docs/data/cowork-schedule.json` SSOT, removal of any "17 RemoteTriggers" or per-slot CronCreate references. Mention legacy-RemoteTrigger 24h cutover note (1951d will delete them).
+- [ ] **AC-3 (SPIKE filed):** New SPIKE task entered in Backlog — `SPIKE-1951f-durable-true-noncompliance` (or similar) — questioning why CronCreate `durable=true` does not persist the cron across Claude Desktop session close (1950-T5 finding). Architect-owned, 3h time-box, output = brief on whether RemoteTrigger-of-the-master-cron, or different durability mechanism, is required.
+- [ ] **AC-4 (Phase 1 gate cleared):** 1951b AC-6 (zero double-publish) PASS; 1951c AC-1+AC-2+AC-3 PASS. Handoff note documents final status. 1951d gate is independent and tracked separately.
 
 ### Files to read first
-- `docs/SPRINT_GOAL.md` §Success Metric — AC-5 (session-persistence gate — the whole point)
-- `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md` §Phase 1 implementation notes
-- `docs/data/cowork-schedule.json` (17-slot inventory reference)
-- `docs/standards/cron-jobs.md` (current Cowork Schedule section — update with RemoteTrigger info)
+- `docs/architecture-briefs/2026-05-18-cowork-team-command.md` — master-dispatcher design + 12 legacy RemoteTrigger IDs (§8)
+- `.claude/commands/cowork-team.md` + `.claude/flows/cowork-team/main.md` — dispatcher logic
+- `.claude/commands/crons/cron-cowork-team.md` — master CronCreate registration prompt
+- `docs/data/cowork-schedule.json` — slot SSOT (cron fields drive the ±2min match)
+- `docs/standards/cron-jobs.md` — current Cowork Schedule section to rewrite
 
 ### Files to modify
 - `docs/standards/cron-jobs.md` — update Cowork Schedule section (or create new section) to document RemoteTrigger model + 17-slot table with slot_id, cron, agent, trigger_id

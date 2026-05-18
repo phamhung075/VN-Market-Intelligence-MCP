@@ -1,46 +1,44 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T20:00Z · Cycle: c200 — Sprint 1952 backlog planning (analysis-quality 5-item brief)
+## Last updated: 2026-05-18T20:39Z · Cycle: c201 — Sprint 1951 master-dispatcher pivot reconciliation
 
-### c200 session summary
+### c201 session summary
 
-**Spawn:** User-driven planning cycle. Input: 5 highest-leverage analysis-quality items (feedback loop / TNB rubric / triangulation / business-context / regime classifier). Output: prioritised dispositions, Backlog entries, Done rotation.
+**Spawn:** User-driven reconciliation cycle. Context: in a prior idle session, agents-architect → agent-father → qa → fixer → qa chain shipped a master-dispatcher pivot (commits `cdb556bd`, `2519d8a9`, `af32cb9d`) that supersedes the original 17-RemoteTrigger plan. Master CronCreate `2da3291e` (`*/15 * * * *`) now reads `docs/data/cowork-schedule.json` and parallel-spawns agents matching current UTC ±2min. Resolves API_MIN_INTERVAL entirely. TASKS.md had stale 1951b/c entries + an obsolete 1951e backlog row.
 
-**Step 0 — pre-flight:** N/A (user input bypasses signal dashboard). TASKS.md was 79L at cap-1 — required Done rotation before new entries.
+**Step 0 — pre-flight:** N/A (user-driven reconciliation; signal dashboard pruned, timestamp bumped 19:41Z → 20:38Z).
 
-**Dispositions:**
-1. **Feedback loop / Brier** — Sprint 1948 Phase 1 already covers shadow-mode degradation detection (gate-blocked 2026-05-20T07:22Z). Per-agent Brier weighting is Phase 2 extension NOT in current brief. Filed as `1952e-brier-per-agent-weighting` SPIKE for architect, pre-cond = Sprint-1948-stable + 1941b seed window.
-2. **TNB 6-layer rubric** — needs ARCH brief (rubric schema, retry mechanism, table extension). Filed `SPIKE-1952a-tnb-layer-rubric` HIGH architect 3h timebox.
-3. **Cross-source triangulation** — multi-zone (alert-engine reads mcp-server agent_signals), needs ARCH brief. Filed `SPIKE-1952b-convergence-detector` HIGH architect 3h timebox.
-4. **Business-context coverage** — incremental extension of 1939 critic-gate, direct PM. Filed `1952c-business-context-mandatory` MEDIUM dev-mcp-server, pre-block until 2026-05-25 (post-1939 stability gate).
-5. **Macro regime classifier** — finer 3-axis overlay on existing macro_snapshot. Needs ARCH brief (rules vs LLM, gate semantics, backward-compat). Filed `SPIKE-1952d-macro-regime-classifier` MEDIUM architect 3h timebox.
+**Updates applied:**
+1. **1951e (Backlog → Done as SUPERSEDED).** Hourly RemoteTrigger fallback for 4 sub-hourly slots no longer needed — master-dispatcher handles sub-hourly locally. Moved as a single SUPERSEDED row in Done.
+2. **1951b (In Progress, IN PROGRESS retained).** New AC: 24h parallel-run window 2026-05-18T20:34Z → 2026-05-19T20:34Z, both lanes active (12 legacy RemoteTriggers status `pending_delete` + master CronCreate). Chef times realigned per BLOCK-1: chef-morning **05:15Z** (was 05:23Z), chef-eod **08:45Z** (was 08:37Z), tnb-audit unchanged at 20:13Z. Tick 1/3 (tnb-audit 20:30Z) already CONFIRMED. **AC-6 gate added:** zero MARKET double-publish across window.
+3. **1951c (In Progress, blocked on 1951b retained).** Original 17-RemoteTrigger persistence AC SUPERSEDED. New AC: verify master CronCreate `2da3291e` correctness + dispatcher matching logic; rewrite `docs/standards/cron-jobs.md` Cowork section to master-dispatcher model; file SPIKE on `durable=true` non-persistence (open architectural question from 1950-T5).
+4. **1951d (NEW Backlog).** Parallel-run cutover: after 24h window + zero double-publish PASS, CronDelete 12 legacy RemoteTriggers (IDs in `docs/architecture-briefs/2026-05-18-cowork-team-command.md §8`), update `cowork-schedule.json` trigger fields, emit router signal. Size=XS. Owner=ops. Blocked on 1951b AC-6 PASS + window close.
 
-**Done rotation:** 12 rows archived to `docs/TASKS_ARCHIVE.md` § "Added 2026-05-18 by PO c200" (Sprint 1949/1950/1951a-d closed). TASKS.md: 79L → 73L (after +5 Backlog rows). Pointer row added in Done section.
+**TASKS.md capacity:** 73L → 74L (cap=80). 1951e moved Backlog→Done (-1 Backlog, +1 Done); 1951d added (+1 Backlog). Net +1 row.
 
-**WIP discipline:** WIP=2 unchanged (1951b OBSERVE + 1951c blocked). All new entries land in Backlog. No new dev dispatch this cycle.
+**Handoff updates:**
+- `docs/handoffs/TASK_1951b.md` — TLDR + AC + observation log + AC-6 zero-double-publish tracker table.
+- `docs/handoffs/TASK_1951c.md` — TLDR + AC + Files-to-read repointed to master-dispatcher artifacts.
 
-**Architect queue:** 3 SPIKE tasks (1952a, 1952b, 1952d) now in Backlog — architect picks up by priority (1952a/1952b HIGH first, 1952d MEDIUM after).
+**WIP discipline:** WIP=2 unchanged (1951b OBSERVE + 1951c blocked on 1951b). 1951d sits in Backlog blocked on 1951b's AC-6 gate. No new dev dispatch this cycle.
 
 **Files modified this cycle:**
-- `docs/TASKS.md` — rotated 12 Done rows; added 5 new Backlog entries (1952a/b/c/d/e); 73L.
-- `docs/TASKS_ARCHIVE.md` — new archive section "Added 2026-05-18 by PO c200" with 12 archived rows.
+- `docs/TASKS.md` — 1951e row replaced by 1951d (Backlog); 1951b + 1951c bodies rewritten; 1951e (SUPERSEDED) row inserted in Done.
+- `docs/handoffs/TASK_1951b.md` — TLDR + AC + observation log + new AC-6 tracker.
+- `docs/handoffs/TASK_1951c.md` — TLDR + AC (POST-PIVOT) + Files-to-read.
+- `docs/signals/DASHBOARD.md` — timestamp bumped.
 - `docs/agent-memory/notebooks/po.md` — this entry (overwrite per skill).
 
-**Files NOT touched (intentional):**
-- `docs/SPRINT_GOAL.md` — Sprint 1948 still QUEUED behind gate; Sprint 1952 has no active dev work yet (3 SPIKEs pending architect pickup).
-
-**WORK Telegram:** SEND on commit — one-liner: Sprint 1952 backlog seeded (5 analysis-quality items dispatched: 3 SPIKE → architect, 1 PM-direct gate-blocked, 1 Phase-2 SPIKE pre-cond on 1948).
+**WORK Telegram:** SEND on commit — one-liner: Sprint 1951 reconciled to master-dispatcher pivot. 1951e SUPERSEDED-DONE; 1951b new AC-6 zero-double-publish gate (window ends 2026-05-19T20:34Z); 1951c new AC (dispatcher verify + docs + durable=true SPIKE); 1951d added (12-RemoteTrigger cutover, ops, gated on 1951b PASS).
 
 ### Carry-over for next cycle
 
+- **WATCH 2026-05-19T05:15Z** — chef-morning master-dispatch fire = 1951b tick 2/3. AC-6 idempotency check (no MARKET duplicate vs legacy lane).
+- **WATCH 2026-05-19T08:45Z** — chef-eod master-dispatch fire = 1951b tick 3/3. On confirm → 1951b → Review queue for QA.
+- **WATCH 2026-05-19T20:34Z** — 24h window CLOSES. If zero MARKET duplicate dish observed across window → 1951b AC-6 PASS → 1951c + 1951d unblock simultaneously.
 - **WATCH 2026-05-18T23:00Z** — FA cycle: verify HPG `get_cash_flow` non-zero (post-1942c gate). Pass → auto-close in Todo.
-- **WATCH 2026-05-19T00:00Z** — news-scout offhours slot. If `list_connectors()` empty 2nd time → counter=2. 3rd within 24h → file `SPIKE-1951f-cowork-session-mcp-autoconnect`.
-- **WATCH 2026-05-19T05:23Z** — chef-morning RemoteTrigger fire = 1951b tick 2/3. AC-3 idempotency check.
-- **WATCH 2026-05-19T08:37Z** — chef-eod RemoteTrigger fire = 1951b tick 3/3. On confirm → 1951b → Review for QA; 1951c unblocks.
 - **GATE 2026-05-20T07:22Z** — post-1945-verdict-resolution-scored-pct + bug-storm silence. Clears unblocks 1948a/b/c chain.
 - **GATE 2026-05-25** — 1939 critic-gate stability window. Clears unblocks 1952c business-context-mandatory.
-- **Architect queue:** SPIKE-1952a (TNB rubric, HIGH), SPIKE-1952b (convergence, HIGH), SPIKE-1952d (regime classifier, MEDIUM), 1952e (Brier, MEDIUM pre-cond). Architect picks 1952a + 1952b first.
-- **1951e (BACKLOG)** — agent-father pickup after 1951b ticks 2/3 + 3/3 confirm.
+- **Architect queue (unchanged from c200):** SPIKE-1952a (TNB rubric, HIGH), SPIKE-1952b (convergence, HIGH), SPIKE-1952d (regime classifier, MEDIUM), 1952e (Brier, MEDIUM pre-cond). New SPIKE to be filed during 1951c work: `SPIKE-1951f-durable-true-noncompliance`.
 - **USER-action blockers:** 1907a (Claude Desktop restart), 1897b (Docker VirtioFS `.git/`). Unchanged.
-- **Recurring-bug counter:** unchanged.
-- **WIP discipline:** strict cap=2. Do NOT promote any 1952* SPIKE until architect has bandwidth + 1951b closes.
+- **WIP discipline:** strict cap=2. Do NOT promote any 1952* SPIKE until architect has bandwidth + 1951b closes + 1951c clears.
