@@ -12,14 +12,6 @@ const path = require('path');
 const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
-const now = new Date();
-const actualM = now.getUTCMinutes();
-const M = Math.floor(actualM / 15) * 15; // nominal tick: round down to nearest 15-min boundary
-const H = now.getUTCHours();
-const DOM = now.getUTCDate();
-const MON = now.getUTCMonth() + 1;
-const DOW = now.getUTCDay(); // 0=Sun..6=Sat
-
 function field(expr, val) {
   if (expr === '*') return true;
   if (expr.includes(',')) return expr.split(',').map(Number).includes(val);
@@ -36,7 +28,23 @@ function dowMatch(expr, dow) {
   return field(expr, dow) || (dow === 0 && field(expr, 7));
 }
 
-function cronMatches(cron) {
+// cronMatches: exported for testing. Accepts cron string + optional time context object.
+// When ctx is omitted the function reads the system clock (production path).
+// ctx shape: { actualM, H, DOM, MON, DOW }  (all UTC, DOW 0=Sun..6=Sat)
+function cronMatches(cron, ctx) {
+  let actualM, H, DOM, MON, DOW;
+  if (ctx) {
+    ({ actualM, H, DOM, MON, DOW } = ctx);
+  } else {
+    const now = new Date();
+    actualM = now.getUTCMinutes();
+    H       = now.getUTCHours();
+    DOM     = now.getUTCDate();
+    MON     = now.getUTCMonth() + 1;
+    DOW     = now.getUTCDay();
+  }
+  const M = Math.floor(actualM / 15) * 15; // nominal tick: round down to nearest 15-min boundary
+
   const [cm, ch, cdom, cmon, cdow] = cron.split(' ');
   for (let d = -2; d <= 2; d++) {
     let m = M + d, h = H;
@@ -49,16 +57,27 @@ function cronMatches(cron) {
   return false;
 }
 
-const hits = sched.slots
-  .filter(sl => sl.enabled && !sl._disabled_by && cronMatches(sl.cron))
-  .map(sl => ({
-    slot_id: sl.slot_id,
-    agent: sl.agent,
-    flow_path: sl.flow_path,
-    cron: sl.cron,
-    trigger_prompt: sl.trigger_prompt
-  }));
+// matchSlots: exported for testing. Accepts schedule object + optional time context.
+function matchSlots(schedule, ctx) {
+  return schedule.slots
+    .filter(sl => sl.enabled && !sl._disabled_by && cronMatches(sl.cron, ctx))
+    .map(sl => ({
+      slot_id: sl.slot_id,
+      agent: sl.agent,
+      flow_path: sl.flow_path,
+      cron: sl.cron,
+      trigger_prompt: sl.trigger_prompt
+    }));
+}
 
-const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
+// Run directly (not required as a module)
+if (require.main === module) {
+  const now = new Date();
+  const actualM = now.getUTCMinutes();
+  const M = Math.floor(actualM / 15) * 15; // nominal tick: round down to nearest 15-min boundary
+  const hits = matchSlots(sched);
+  const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
+  process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
+}
 
-process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
+module.exports = { cronMatches, matchSlots, field, dowMatch };
