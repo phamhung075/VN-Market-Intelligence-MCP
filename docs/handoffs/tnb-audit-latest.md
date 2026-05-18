@@ -139,3 +139,20 @@ Architecture brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` is r
 4. **OBSERVE gate post-1945a**: Check verdictResolutionJob — did 520 unknowns start scoring post-envelope-fix?
 5. **1947a crisis detection sprint**: Is sprint started? What is the implementation plan?
 6. **digest-predict 1907a**: USER action still pending — launchctl plist investigation.
+
+---
+## PO ACK
+- Read by: po
+- At: 2026-05-18T11:37:38Z
+- Tasks created: 1945d-reparse-pipeline-gap (HIGH FIX, dev-mcp-server) — direct trigger from gate FAIL at 12:00Z evaluated early (11:37Z): 0/7 banking Q1-2026 in financial_reports; EIB PDF stored 2026-05-18 but bctcReparseJob has not extracted; 6/7 banks (ACB/BID/CTG/MBB/VCB/VPB) still missing PDFs. This handoff finding #4 (post-1943a BCTC OBSERVE) hereby resolved with FAIL verdict.
+- Skipped findings:
+  - #1 digest-predict 8-day silence — USER-action blocker 1907a (Claude Desktop restart), already in Backlog. No new task.
+  - #2 news-scout Docker-down 16:39 UTC — note: this is a FUTURE timestamp from c70 audit (current UTC 11:37Z); the audit was written for cycle 17:00Z. Cannot triage pre-event. Will pick up next cycle if recurrence persists.
+  - #3 verdictResolutionJob OBSERVE — gate 2026-05-20T07:22Z still open; no action until then.
+  - #5 HPG OCF OBSERVE — gate ~23Z tonight; no action until then.
+  - #6 market-watcher transient — next market open 02:00 UTC 2026-05-19; observe-only.
+  - #7 TNB Claude Code MCP — structural, USER-side; no PO action.
+  - #8 1897b VirtioFS — USER-action blocker, in Backlog.
+  - #9 news-scout D+E gaps — TNB-critic-gate brief ready; agent-father task, not a PO sprint.
+  - #10 PLX signal-type conflict — methodology gap; will queue for next architect SPIKE if it recurs (1947a-followup).
+- Positive signals acknowledged: 7 live cowork agents, alert-commander TIGHTENING consistency, 3 active OBSERVE gates self-healing, TNB-critic-gate brief ready, PO ACK loop operational.

@@ -50,7 +50,7 @@ OUT: Phase 2 manual-gate dispatch (next sprint after 1948 observation clears); P
 - 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock) — F1 USER-PERMANENT.
 - alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550)
 - fa-shape-guard-watch MONITORING (next post-restart FA live session)
-- `post-1944-financial-reports-q1-2026` gate at 2026-05-18T12:00Z (independent OBSERVE)
+- ~~`post-1944-financial-reports-q1-2026` gate at 2026-05-18T12:00Z~~ — **FAILED 2026-05-18T11:37Z (c189)**: 0/7 banking Q1-2026 rows; EIB PDF stored but not reparsed; 6/7 banks still no PDF. FIX `1945d-reparse-pipeline-gap` dispatched to dev-mcp-server (HIGH, In Progress). Recurring-bug watch armed: 3rd BCTC-pipeline patch this sprint cycle.
 - `post-1942-fa-verify` gate ~23Z tonight (independent OBSERVE)
 - `1941b-signal-outcomes-seed-window` gate 2026-05-25 (independent OBSERVE)
 - `1922g-pharma-events-source-verify` gate 2026-06-01 (independent OBSERVE)

@@ -25,7 +25,6 @@
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
 | post-1942-fa-verify | **MONITOR** — Verify FA next live cycle (~23:00 UTC tonight) reports ≥20/30 BCTC analyses (was 3/38 pre-1942). If still 3/38 → deploy-gap bug task to dev-mcp-server (Docker rebuild). Auto-close on observation. | MEDIUM | OBSERVE | ops | — | 2026-05-19 |
-| post-1944-financial-reports-q1-2026 | **MONITOR — c185 progress (2026-05-18T08:39Z)**: pipeline progressing. bctc_vps_queue Q1-2026 banking: 6/7 have source_url populated (ACB/BID/CTG/MBB/VCB/VPB pending fetch from staticfile.hsx.vn); EIB status=`done` (PDF fetched 08:22Z to VPS bctc-files/). financial_reports Q1-2026 still 0 rows (last parse 2026-05-17T08:53Z — bctcReparseJob has not run on EIB PDF yet). Gate 12:00Z. AC: ≥3 banks have Q1-2026 row by 12:00 UTC 2026-05-18. If 0 rows at 12:00Z → spawn 1945d-reparse-pipeline-gap bug task to dev-mcp-server. | MEDIUM | OBSERVE | ops | — | 2026-05-18T12:00Z |
 
 ---
 
@@ -33,7 +32,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| _(empty)_ | — | — | — | — | — | — |
+| 1945d-reparse-pipeline-gap | **FIX HIGH** — post-1944 OBSERVE gate FAILED 2026-05-18T11:37Z (evaluated 23min before 12:00Z deadline): 0/7 banking Q1-2026 rows in `financial_reports` (AC required ≥3). Diagnostic via MCP: VCB latest is 2025-Q4; EIB Q1-2026 PDF (12.1MB) stored 2026-05-18 in BCTC PDF storage but `bctcReparseJob` has NOT extracted to `financial_reports`; DHG Q1-2026 PDF also stored without reparse. 6/7 banks (ACB/BID/CTG/MBB/VCB/VPB) still no PDF stored — VPS PDF discovery still failing for these despite 1943a/1944a deploy. Two-part fix scope: (a) bctcReparseJob trigger gap — why does it not pick up freshly-stored EIB+DHG Q1-2026 PDFs? Investigate cron cadence + idempotency guard + queue join logic. (b) source_url discovery still empty for 6/7 banks — was 1944a really effective vs reported "6/7 source_url populated" at c185? Verify `bctc_vps_queue.source_url` post-08:39Z. AC: ≥3 banking Q1-2026 rows in financial_reports OR documented root-cause + scoped follow-up. Zone=apps/mcp-server/. Recurring-bug check: ≥2 fix commits on BCTC pipeline this sprint cycle (1943a, 1944a, now 1945d) — if 1945d fails verification, architect rethink REQUIRED before any further patch. | HIGH | FIX | dev-mcp-server | docs/handoffs/TASK_1945d.md | — |
 
 ---
 
