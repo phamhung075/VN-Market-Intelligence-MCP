@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-18T20:11:09Z
+
+**Brief:** `docs/architecture-briefs/2026-05-18-cowork-team-command.md`
+
+RemoteTrigger-per-slot model hit two walls (API_MIN_INTERVAL blocks 4 sub-hourly slots; Claude Desktop cannot spawn subagents); designed a dev-team-pattern master cron — single `*/15 CronCreate` in Claude Code CLI running `.claude/commands/cowork-team.md`, which reads `docs/data/cowork-schedule.json`, matches `currentUTC ±2min`, and parallel-spawns all due agents — deleting 12 RemoteTriggers after 24h parallel-run with idempotency guard.
+
+**Signal dropped:** `docs/signals/agents-architect-1951-cowork-team-brief.json` → agent-father
+
+---
+
 ## 2026-05-18T17:15:20Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md` (v2 revision)
