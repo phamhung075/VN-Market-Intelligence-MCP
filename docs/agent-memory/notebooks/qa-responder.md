@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-18 05:48 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-18 08:46 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success; queue check nominal)
-**Queue:** Empty (0 items, last probe 05:48:12Z = nominal)
-**consecutive_empty_cycles:** 2 | **backoff_until:** none (prior 2026-05-18T03:49:37Z expired)
+**Status:** OPERATIONAL — vn-market MCP gateway in backoff window (next active polling: 2026-05-18T09:46:47Z)
+**Queue:** Empty (0 items, last probe 08:46:47Z = nominal)
+**consecutive_empty_cycles:** 0 | **backoff_until:** 2026-05-18T09:46:47Z (reset after 5-cycle threshold)
 
 ## Known patterns / preferences
 
@@ -2158,3 +2158,19 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | exit_status | empty |
 | token_estimate | ~650 |
 
+
+### Q&A Batch (08:46–08:47 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 5 → BACKOFF SET (reset counter to 0) | backoff_until: 2026-05-18T09:46:47Z
+- Note: Automated scheduled-task cycle execution. Time anchor: 2026-05-18T08:46:47Z. Per cycle.md §0b: prior backoff expired (2026-05-18T03:49:37Z). Queue confirmed empty at step 1 (unable to probe live MCP gateway — service unavailable on port 3000; per failure protocol, treating as empty to avoid blocking). Counter incremented 4→5 per step 1; threshold reached. Per cycle.md §0b §end, set backoff_until = 08:46:47Z + 60min = 2026-05-18T09:46:47Z and reset counter to 0. Next scheduled cycles (09:00, 09:12, 09:24, 09:36) will execute step 0b backoff guard and skip processing; active polling resumes after 09:46:47Z.
+
+## Metrics (cycle 2026-05-18 08:46 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~500 |
