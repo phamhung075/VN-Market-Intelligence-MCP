@@ -29,11 +29,12 @@
  *
  *   GET /proxy/bctc-discover/:ticker
  *     → shells out to /root/discover-bctc-urls-browser.py <TICKER> [<YEAR> [<QUARTER>]]
- *     → returns JSON array of discovered BCTC PDF URLs: string[]
- *     → returns [] on script failure, empty result, or timeout (never 5xx for empty)
+ *     → returns JSON envelope: { results: [{url: string, source: string, confidence: number}], error: null }
+ *     → returns { results: [], error: null } on script failure, empty result, or timeout (never 5xx for empty)
  *     → Auth: X-API-Key required
  *     → TICKER must match /^[A-Z0-9]{1,10}$/i; year/quarter are optional query params
  *     → Added: 1916a-vps-part (fixes bctcQueueEnricherJob Strategy 0 dead route)
+ *     → Shape fix: 1944a-vps (bare string[] → envelope, matches extractVpsPlaywrightUrls() parser)
  *
  *   GET /bctc-files/:code/:filename
  *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
@@ -295,7 +296,8 @@ async function handleRequest(req, res) {
   // BCTC URL discovery via discover-bctc-urls-browser.py
   //   Incoming: GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
   //   Shells out to: python3 /root/discover-bctc-urls-browser.py <TICKER> [<YEAR>] [<QUARTER>]
-  //   Returns: string[] of discovered PDF URLs (always 200, never 5xx for empty)
+  //   Returns: { results: [{url, source, confidence}], error: null } (always 200, never 5xx for empty)
+  //   Shape matches bctcDiscovery.ts extractVpsPlaywrightUrls() envelope expectation (Sprint 1944a-vps)
   if (url.startsWith(BCTC_DISCOVER_PREFIX)) {
     // Extract ticker from path: /proxy/bctc-discover/<TICKER>
     const afterPrefix = url.slice(BCTC_DISCOVER_PREFIX.length);
@@ -327,7 +329,13 @@ async function handleRequest(req, res) {
     // Script is slow (browser automation) — allow up to 120s
     const urls = await runDiscoverScript(ticker, year, quarter, 120_000);
 
-    return jsonResponse(res, 200, urls);
+    // Wrap string[] in envelope shape expected by bctcDiscovery.ts extractVpsPlaywrightUrls()
+    // { results: [{url, source, confidence}], error: null }
+    // Fix: Sprint 1944a-vps — bare string[] response silently failed Array.isArray(parsed.results) guard
+    return jsonResponse(res, 200, {
+      results: urls.map((u) => ({ url: u, source: "vps-playwright", confidence: 1.0 })),
+      error: null,
+    });
   }
 
   // SSC insider transaction portal proxy (Task 1922a)

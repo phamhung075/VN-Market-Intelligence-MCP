@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-05-13T09:30Z | **Sprint:** hsx-bctc-contract-fix
+**Last updated:** 2026-05-18T06:00Z | **Sprint:** 1944a-vps
 
 ---
 
@@ -48,6 +48,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-05-18T06:00Z | vps-proxy-server.js | envelope-shape-fix | 1944a-vps DONE — `/proxy/bctc-discover/:ticker` now returns `{results:[{url,source,confidence}],error:null}` envelope. Deployed SCP + systemctl restart. Health 200 OK. 401 without key. Shape confirmed via curl (results=[] acceptable — script runs ~120s). |
 | 2026-05-13 | all 5 sources | reverse-documentation | Bootstrap catalog complete. 4 technique docs written. |
 | 2026-05-13 | hsx-bctc | live probe + triage | HNX endpoint confirmed working for HNX tickers; HOSE path blocked; triage doc at docs/vps-sources/hsx-bctc/triage.md |
 | 2026-05-13 | hsx-bctc (TASK-BCTC-2) | live verification | NVB Q1/2026: PASS — 1 PDF URL returned (confidence 0.9). VEA Q1/2026: empty (UPCOM, not yet filed or SSC needed). HNX endpoint fully operational. |
