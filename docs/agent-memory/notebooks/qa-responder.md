@@ -2,13 +2,13 @@
 
 > Archived prior to 2026-05-12 → docs/agent-memory/archive/qa-responder-archive-2026-05-12.md
 
-**Last updated:** 2026-05-18 02:49 UTC | **Sprint:** 1876a
+**Last updated:** 2026-05-18 04:49 UTC | **Sprint:** 1876a
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 02:49:37Z; gateway reachable via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
-**Queue:** Empty (0 items, last probe 02:49:37Z = live success)
-**consecutive_empty_cycles:** 0 (reset after counter hit 5) | **backoff_until:** 2026-05-18T03:49:37Z
+**Status:** OPERATIONAL — vn-market MCP gateway stable (live success at 04:48:36Z; gateway reachable via `mcp__5c86b49b-31d2-4d59-9a28-5ebff9feea73__call_tool` with server="vn-market")
+**Queue:** Empty (0 items, last probe 04:48:36Z = live success)
+**consecutive_empty_cycles:** 1 | **backoff_until:** none (prior 2026-05-18T03:49:37Z expired)
 
 ## Known patterns / preferences
 
@@ -2104,3 +2104,21 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~700 |
+
+---
+
+### Q&A Batch (04:48–04:49 UTC)
+- Questions: 0 | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 1 | backoff_until: none (prior 2026-05-18T03:49:37Z expired at 03:49:37Z, ~59 min before cycle start)
+- Note: First cycle since 02:49 UTC backoff window expired (cron skipped 03:00–03:48 ticks per §0b backoff guard; 04:00/04:12/04:24/04:36 ticks did not fire in this scheduled-task runner — no notebook entries). Live MCP gateway probes at 04:48:36Z (`date -u` anchor), `log_agent_work(running)` → `{id: 983}` (live success), `get_pending_ask_questions` → `[]` (live success — queue confirmed empty). Counter reset 0→1 after 02:49 backoff trigger. No new backoff (counter < 5). `send_telegram(channel="work", ...)` delivered at 04:49:21Z with "Next: 05:01 UTC" computed as 04:49Z + 12 min from `date -u`. Gateway stable post-backoff; no infrastructure issues.
+
+## Metrics (cycle 2026-05-18 04:49 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | empty |
+| token_estimate | ~600 |
