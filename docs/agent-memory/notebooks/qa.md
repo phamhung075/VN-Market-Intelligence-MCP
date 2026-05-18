@@ -1,6 +1,67 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c191 — 1950-T1 chef WORK-channel telemetry — APPROVED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c192 — 1950-T2 TNB audit chef-coverage check — CHANGES_REQUESTED
+
+## Session 2026-05-18 c192 — 1950-T2 TNB audit chef-coverage check
+
+### TASK REPORT — 1950-T2 (full)
+
+```
+date: 2026-05-18
+outcome: CHANGES_REQUESTED
+commits reviewed: ad68cf5c (feat) + 1283c602 (chore/notebook)
+type: FEAT (MEDIUM, size XS) — Phase 0.5 chef pipeline cycle-coverage sub-flow
+zone: .claude/flows/tran-ngoc-bau/ + .claude/agents/tran-ngoc-bau.md
+round: 1
+```
+
+#### Pipeline
+
+- bun test / tsc: N/A — flow-doc + agent-md patch only, no TypeScript source changed
+- DDD scan: N/A — Markdown only
+- Security scan: N/A — no source code
+- Scope creep: PASS — 4 files, all in scope
+
+#### Non-Negotiable Matrix
+
+| NN | Check | Result |
+|---|---|---|
+| NN-1 | Phase 0.5 fires AFTER Bootstrap, BEFORE layer-walk | PASS |
+| NN-2 | START↔CLOSE pairing by cycle_id | PASS |
+| NN-3a | Rule 1 BUG format exact match | PASS |
+| NN-3b | Rule 2 BUG per stuck cycle, format exact match | PASS |
+| NN-3c | Rule 3 FAILED → WORK only, no new BUG | PASS |
+| NN-4 | Threshold ≥3 cites cron-jobs.md (not hardcoded) | PASS |
+| NN-5 | Error boundary: WORK read fails → BUG + pipeline_degraded + CONTINUE | PASS |
+| NN-6 | All files ≤200L (94/44/142L) | PASS |
+| NN-7 | SSOT/DRY: no drift risk from cron-jobs.md | PASS |
+| NN-8 | pipeline_degraded flag changes Step 7 WORK output | FAIL |
+
+#### Blocking Issue
+
+- BLOCK-1: `auto-cure-and-handoff.md:15-25` — Step 7 WORK template has no conditional on `pipeline_degraded`. Flag set in audit-chef-coverage.md but never consumed. Step 7 output identical in healthy and degraded runs.
+
+#### Non-blocking observations
+
+- NB-1: REQ_1950.md has no §T2 section; T2 ACs not formally documented
+- NB-2: convergence= vs convergence_detected deferred (T1 carry-over, no T2 impact)
+- NB-3: guaranteed_ok=false + stuck_count>0 → pipeline_degraded=true is logically correct
+
+#### Notes
+
+- QA report: docs/handoffs/sprint-1950-T2-qa-report.md
+- Signal: docs/signals/qa-2026-05-18T17-19-42Z-1950-T2.json → to=fixer
+- Fix: add pipeline_degraded conditional to auto-cure-and-handoff.md Step 7 template
+
+## Cycle — 2026-05-18 c192
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T2 — 8/9 non-negotiables PASS; NN-8 FAIL (pipeline_degraded not consumed in Step 7 template). 7/8 ACs PASS; AC-T2-8 FAIL (same root cause). 1 blocking issue.
+- **actions**: QA report written, signal written to fixer, notebook updated
+- **next_cycle_hint**: Fixer adds 1 conditional block to auto-cure-and-handoff.md Step 7. Tiny fix — re-QA should be rapid. After fix, re-verify: grep "pipeline_degraded" in auto-cure-and-handoff.md must return ≥1 hit in Step 7 section.
+- **estimated_tokens**: 6200
+
+---
 
 ## Session 2026-05-18 c191 — 1950-T1 chef WORK-channel telemetry
 

@@ -1,0 +1,16 @@
+{
+  "from": "qa",
+  "to": "fixer",
+  "type": "changes-requested",
+  "sprint": "1950",
+  "task": "1950-T2",
+  "verdict": "CHANGES_REQUESTED",
+  "round": 1,
+  "blocking_issues": 1,
+  "summary": "pipeline_degraded flag set in audit-chef-coverage.md but not consumed in auto-cure-and-handoff.md Step 7 template — Step 7 WORK output identical whether pipeline_degraded=true or false",
+  "report": "docs/handoffs/sprint-1950-T2-qa-report.md",
+  "fix_file": ".claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md",
+  "fix_line": "15-25",
+  "priority": "normal",
+  "createdAt": "2026-05-18T17:19:42Z"
+}
