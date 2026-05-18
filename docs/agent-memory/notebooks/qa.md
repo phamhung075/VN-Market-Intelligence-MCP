@@ -1,6 +1,36 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c180 — 1942a startup backfill probe — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c181 — 1943a BCTC Q1-2026 queue reset + auto-retry — APPROVED
+
+## Session 2026-05-18 c181 — 1943a BCTC Q1-2026 queue reset + batch sweep diagnostic + auto-retry
+
+### TASK REPORT — 1943a (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: 3a3a5d61
+type: FIX (schema-financial-reports.ts + bctcQueueEnricherJob.ts + bctcBatchSweepJob.ts)
+round: 1
+```
+
+#### Pipeline
+
+- Task tests (16): 16/16 GREEN — AC-1 thru AC-4 all PASS (idempotent reset, period scope guard, sweep root-cause doc, grace-period WHERE clause with attempts<6 cap)
+- Full suite: 9219 pass / 275 fail / 8 errors — baseline (parent commit bae63582): 9219 pass / 275 fail / 8 errors — 0 regressions, +16 new tests
+- tsc: 0 errors
+- DDD: PASS — schema-financial-reports.ts (infrastructure), enricher/sweepJob (interface/scheduler), no domain→infra violations
+- Security: PASS — no process.env, no hardcoded secrets, parameterized SQL only
+- _resetRunningState: NOT introduced in any TASK-1943a file (pre-existing in vnstockFundamentalsJob.ts only)
+
+#### AC Verdicts
+
+- AC-1: PASS — resetQ1UrlNotFound(db) correct SQL, idempotent (0 on second call), returns changes count
+- AC-2: PASS — scope WHERE period_year=2026 AND period_quarter='Q1' only; Q4-2025 rows untouched
+- AC-3: PASS — console.log diagnostic at bctcBatchSweepJob.ts:320; wrapRun key 'bctcBatchSweepJob' verified correct in startScheduler.ts:282; root cause documented in JSDoc
+- AC-4: PASS — COMBINED_SQL Arm 2: status='url_not_found' AND last_attempt IS NOT NULL AND last_attempt < datetime('now', '-7 days') AND attempts < 6
+
+---
 
 ## Session 2026-05-18 c180 — 1942a vnstock startup backfill probe
 
