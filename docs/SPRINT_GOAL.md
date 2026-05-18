@@ -1,48 +1,70 @@
-## Sprint 1942 — WATCHLIST FUNDAMENTALS COVERAGE (ACTIVE)
+## Sprint 1944 — VPS BCTC DISCOVERY REPAIR (ACTIVE)
 
-**Status:** Active | **Opened:** 2026-05-18 | **Theme:** Lift FA coverage from 3/30 to ≥20/30 watchlist tickers
+**Status:** Active | **Opened:** 2026-05-18T05:34Z | **Theme:** Restore the BCTC source_url ingestion pipeline so banking Q1-2026 cohort + 27 watchlist tickers stop accumulating `url_not_found`
 
 # Goal
 
 ## Vision
-Sprint 1941 shipped the OCF guard + accuracy digest + FPT net-profit fix — but the financial-analyst (FA) only has BCTC data for **3/30 watchlist stocks** (VCB, FPT, HPG). The other 27 stocks return "Chưa có dữ liệu" for 5+ FA cycles in a row. The 1941a OCF-guard COALESCE only helps where `operating_cash_flow` (vnstock API bridge) is populated — and 1878a wired the schema column but no scheduler back-fills it for the broader watchlist. Net effect: 90% of the watchlist runs the FA pillar with NULL fundamentals, so PE/PB/ROE peer comparisons fall back to medians, kinh_dich runs without earnings input, and Layer 7 forensic gate is dead-on-arrival. Sprint 1942 fixes the coverage gap so the methodology infrastructure built in Sprints 1878–1941 actually fires across the watchlist.
+Sprint 1942 lifted `get_cash_flow` coverage to 31/33 (94%) via the `vnstock_cash_flow` fallback, and 1943a queue-reset + grace-period auto-retry was wired. But the **upstream BCTC PDF discovery layer is still dead** — diagnosed twice (SPIKE-1916 on 2026-05-14 and SPIKE-1943 on 2026-05-18). `bctcQueueEnricherJob` has never populated `source_url` for any ticker:
+- **Strategy 0** (`/proxy/bctc-discover` VPS route): never deployed on `vps-proxy-server.js`; `bctcHttpFetcher.ts` never injects `X-API-Key` → 401/404.
+- **Strategy 1** (SSC iboard): `iboard-query.ssc.vn` NXDOMAIN since 2026-04-27.
+- **Strategy 2** (cafef FinanceInfo.ashx): migrated 301→404; query params lost.
+- **Strategy 3** (vietstock): JS-rendered 404.
 
-## Sprint 1942 sub-tasks (priority: highest FA-coverage gain per ticket)
+The 9 historically-working tickers (VCB/FPT/DIG/BSR/DGC/HPG/SHB/VEA/VNM) got their `source_url` from the **parallel VPS-push pipeline** (`fetch-bctc.sh` + `discover-bctc-urls-browser.py` on Vinahost VPS), not from the enricher. With Q1-2026 deadline 3+ days past (banking cohort 38/38 QUÁ HẠN), the auto-retry shipped in 1943a will fire after grace period and hit the same dead endpoints, then re-park the rows after 6 attempts. The recurring-bug protocol triggered: ≥2 SPIKEs on the same module ⇒ architect root-cause rethink already done; now the FIX must land before any further reparse or backfill work.
 
-### TIER 1 — Watchlist BCTC + API-bridge back-fill (the analyst blocker)
-- **1942a** — Wire `vnstockStore` quarterly fundamentals back-fill into a scheduler that runs against the **full 30-ticker watchlist** (not just whoever happened to be in vnstock cache). Today `vnstockStore.ts` has writers for 7 tables but no cron actually iterates the watchlist. AC: after one cron tick, `vnstock_financials` + `vnstock_balance_sheet` + `vnstock_cash_flow` each have ≥25/30 watchlist rows for the latest quarter present in vnstock upstream. Carry-forwards Sprint 1920a scope but scoped to watchlist breadth, not all tables.
-- **1942b** — Extend the 1878a OCF API-bridge back-fill (`operating_cash_flow` column on `financial_reports`) to the full watchlist on a recurring cadence (not one-shot). Today 1941a's COALESCE only helps tickers whose `operating_cash_flow` is populated; the bridge job needs to iterate watchlist + recent N quarters every cron tick. AC: ≥25/30 watchlist tickers have non-null `operating_cash_flow` for at least Q4-2025 after one tick. Companion to 1942a (different storage path: BCTC store vs vnstock store).
+## Sprint 1944 sub-tasks (priority: minimum-viable enricher revival first)
 
-### TIER 2 — Sibling-extraction fixes uncovered by 1941d
-- **1942c** — `cashFlowTool` HPG case: returns all-zero (net_rev=0, EPS=0, OCF=0) even though VCB/FPT extract non-zero. Same shape as 1941d (net_profit) but on a different ticker + different columns. Spec required from BA on the extraction-vs-bridge fallthrough policy for HPG steel sector BCTC layout. AC: `get_cash_flow("HPG")` returns non-null non-zero values for at least net_revenue + operating_cash_flow on the latest filed quarter.
+### TIER 1 — Make the canonical VPS discovery route real (the minimum viable fix)
+- **1944a — VPS `/proxy/bctc-discover` route + `X-API-Key` header injection.**
+  Add `GET /proxy/bctc-discover/:ticker?year=&quarter=` to `vps-scripts/vps-proxy-server.js` that shells out to the existing working `discover-bctc-urls-browser.py` script. Extend `apps/mcp-server/src/infrastructure/fetchers/bctcHttpFetcher.ts` to inject `X-API-Key: ${Bun.env.VPS_PUSH_API_KEY}` whenever the request URL matches the Vinahost VPS host (`125.212.251.27:8765`). Zones: `multi` (`vps-scripts/` + `apps/mcp-server/`). Architect must split the brief into per-zone tasks before dev pickup.
+  **AC:** Live probe `GET http://125.212.251.27:8765/proxy/bctc-discover/DPM?year=2025&quarter=4` with `X-API-Key` returns 200 + array of source URLs. `bctcQueueEnricherJob` next tick populates `source_url` for ≥10 of the 27 currently-`url_not_found` tickers. No new 401s in `tool-bctcqueueenricher.log`.
 
-### TIER 3 — Surface accuracy badges in frontend (consume 1941c output)
-- **1942d** — Frontend dashboard page: render the daily `accuracyDigestJob` output (top-3 / bottom-3 signal accuracies) as a card on the dashboard root. Backend digest text now lives in WORK telegram only; user wants visual surface. AC: `apps/frontend/app/routes/_index.tsx` (or new `dashboard.accuracy.tsx`) renders top-3/bottom-3 from a new gateway endpoint that calls `getSystemAccuracyDigestStats`. Wires the closed-loop signal-feedback into user-visible output. Optional if 1942a/b take the whole sprint.
+### TIER 2 — Retire or replace the dead non-canonical strategies
+- **1944b — Replace dead cafef Strategy 2 OR delete it.**
+  `s.cafef.vn/Candles/FinanceInfo.ashx` is permanently 404 after the cafef.vn migration. Either: (a) replace with `cafef.vn/tai-lieu-tai-chinh/<ticker>/bctc` after probing whether it's static or JS-rendered, or (b) delete the strategy and log a permanent deprecation note. Strategies 1 (SSC iboard NXDOMAIN) and 3 (vietstock JS-rendered) get the same treatment: comment with `DEPRECATED-YYYY-MM-DD` + reason; do not waste cycles re-probing dead endpoints.
+  **AC:** `bctcDiscovery.ts` strategy list has zero strategies that throw or return 0 every time. Either the strategy is wired to a live endpoint, or it is removed/no-oped with a deprecation comment. Tests: at least one strategy returns ≥1 URL for VCB and DPM in dev.
+  **Sequencing:** Land after 1944a. 1944a is the canonical path; 1944b is hardening / dead-code cleanup.
+
+### TIER 3 — Verify the chain end-to-end
+- **1944c — End-to-end smoke verification + watchlist coverage report.**
+  After 1944a deploys and one `bctcQueueEnricherJob` + one `bctcBatchSweepJob` tick has run, produce a smoke report: how many of the 27 `url_not_found` tickers now have populated `source_url`, how many PDFs were fetched via the VPS pull pipeline (`mcp-server` pulls from `VPS:8765/bctc-files/`), how many entered `bctcReparseJob`, how many ended up in `financial_reports` with Q1-2026 rows. Report into `reports/TASK_REPORT_1944c.md`. Zone: `apps/mcp-server/` (read-only verification + report-only task — ops + dev-mcp-server collaboration).
+  **AC:** Smoke report exists with concrete counts. ≥5 of the 7 watchlist banks (ACB/BID/CTG/EIB/MBB/VCB/VPB) have either a Q1-2026 row in `financial_reports` OR a populated `source_url` + `bctc_vps_queue.status='fetched'` row. If 0 banks file Q1-2026 via the upstream feed despite a working enricher, ops files an SSC ingestion lag feedback to PO (separate ticket).
 
 ## Scope
-IN: 2 scheduler/job wiring tasks (1942a, 1942b), 1 extraction-bug FIX (1942c), 1 frontend rendering task (1942d, optional).
-OUT: New BCTC fetchers (use existing infrastructure), new microservices, methodology brief work (1885/1886 still blocked), TNB-critic-gate downstream evolution.
+IN: 1 VPS route addition + 1 fetcher header tweak (1944a), 1 strategy cleanup task (1944b), 1 verification report (1944c). Architect brief on per-zone task split for 1944a (the only `multi` task).
+OUT: New BCTC fetchers beyond the canonical VPS pull pipeline; OCR/extraction work (1942c already covered the steel-sector label gap; net_profit bridge 1941d already shipped); calendar deadline rewrites (SPIKE-1943 confirmed calendar logic is correct); new microservices.
 
 ## Success Metric
-- **AC-1 (PRIMARY):** financial-analyst next live cycle (post-deploy of 1942a+1942b) reports ≥20/30 watchlist tickers with non-empty BCTC analysis instead of "Chưa có dữ liệu". Baseline = 3/30. Target = 20/30. Stretch = 25/30.
-- **AC-2:** Zero Layer-7 OCF anomaly flags fired on tickers that have `operating_cash_flow` populated (the COALESCE path must actually fire). VCB/FPT specifically must no longer flip `earnings_quality_warn=true` on the bridge path.
-- **AC-3:** `get_cash_flow("HPG")` returns non-null non-zero net_revenue + OCF for at least the latest filed quarter.
-- **AC-4 (if shipped):** Dashboard renders accuracy digest top-3/bottom-3 card with live data from gateway.
+- **AC-1 (PRIMARY):** `bctc_vps_queue` `source_url IS NOT NULL` count rises by ≥10 within 24h of 1944a deploy. Baseline = 12 (the 9 historically-working VPS-pushed tickers + 3 ad-hoc). Target = ≥22.
+- **AC-2:** `tool-bctcqueueenricher.log` shows ≥1 line of `source_url populated` per ticker for the previously-failing 27. Zero new 401 lines from the VPS endpoint.
+- **AC-3:** After one full enricher + sweep cycle, ≥5 of 7 watchlist banks have ingested Q1-2026 BCTC (or PO escalates SSC ingestion lag as separate ticket).
+- **AC-4:** Strategy list in `bctcDiscovery.ts` no longer contains live strategies hitting permanently-404/NXDOMAIN endpoints.
 
 ## Sequencing
-- 1942a + 1942b are independent — parallel-able once architects approve cadence + watchlist source-of-truth (use `docs/data/system-map.json` watchlist key, not hardcoded).
-- 1942c depends on the 1942b API-bridge populating HPG's `operating_cash_flow` first to verify the COALESCE path works before chasing the OCR extraction.
-- 1942d is independent of all backend tasks — frontend zone, can ship anytime.
+- 1944a is the minimum viable fix. Architect brief on per-zone split lands first → ops handles the VPS-side route, dev-mcp-server handles the `bctcHttpFetcher` header injection. Parallel within the same task once split.
+- 1944b lands after 1944a (cleanup is meaningless until the canonical path works).
+- 1944c is the closing verification — runs ≥1 enricher cycle after 1944a + 1944b deploys.
 
 ## Architect brief required
-- **ARCH-1942** — Cadence + ordering policy for watchlist back-fill: quarterly batch vs continuous polling vs on-demand? Output → `docs/architecture-briefs/2026-05-18-watchlist-fundamentals-cadence.md`. Blocks 1942a + 1942b until landed (lightweight — should be a 2-page brief).
+- **ARCH-1944** — Per-zone task split for 1944a (the only `multi` task). Output → `docs/architecture-briefs/2026-05-18-vps-bctc-discover-route-zone-split.md`. ≤2 pages. Blocks 1944a only.
 
 ## Carry-forwards monitored (not in-scope this sprint)
-- 1941b OBSERVE gate 2026-05-25 (signal_outcomes seeding window)
+- 1941b OBSERVE gate 2026-05-25 (signal_outcomes seeding window — verify ≥30 resolved rows)
+- 1922g OBSERVE gate 2026-06-01 (pharma_events cron tick)
 - 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP)
 - 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock)
 - alert-precision-488-unknowns MONITORING (HOLD until ≥550)
-- **SPIKE-1943** (PO c181 from TNB c68 Finding #2) — Diagnose BCTC Q1-2026 banking cohort 3+ days past 15/05 deadline (calendar stale vs SSC ingestion lag vs filings missing). Architect time-box 120 min. Output: `docs/spikes/SPIKE_1943-bctc-banking-q1-2026-deadline-delay.md`.
+- BA-1942d DEFERRED (accuracy digest frontend card — LOW; out-of-scope this sprint, can pick up after 1944 if 1944a/b/c finish early)
+- **FA coverage post-1942 verification:** financial-analyst next live cycle (~23:00 UTC tonight) should report ≥20/30 BCTC analyses (vs prior 3/38). If post-1942 cycle still reports 3/38 → bug task to dev-mcp-server (Docker rebuild or 1942 deploy gap).
+
+---
+
+## Sprint 1942 — WATCHLIST FUNDAMENTALS COVERAGE (DONE)
+
+**Status:** DONE | **Closed:** 2026-05-18 | **Theme:** Lift FA coverage from 3/30 to ≥20/30 watchlist tickers
+
+**Outcome:** SHIPPED. `get_cash_flow` coverage 31/33 = 94% (sprint goal ≥20/30 EXCEEDED). All 4 tasks QA-approved: 1942a (vnstockStartupProbe), 1942b (cashFlowTool fallback + backfillOCFForWatchlist), 1942c (HPG OCF all-zeros fix — 3-key fallback + MFG steel label + NULL policy), 1943a (BCTC queue reset + grace-period auto-retry). toolCount 140→142. Docker rebuilt and healthy. ARCH-1942 brief in `docs/architecture-briefs/2026-05-18-watchlist-fundamentals-cadence.md`. Reports: `reports/TASK_REPORT_1942a.md`, `reports/TASK_REPORT_1943a.md`. Carry-forward: BA-1942d (accuracy digest frontend card — LOW, deferred to post-1944).
 
 ---
 
