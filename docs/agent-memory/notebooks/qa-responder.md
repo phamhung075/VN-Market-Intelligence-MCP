@@ -6,9 +6,9 @@
 
 ## Current state
 
-**Status:** OPERATIONAL — vn-market MCP gateway in backoff window (next active polling: 2026-05-18T09:46:47Z)
-**Queue:** Empty (0 items, last probe 08:46:47Z = nominal)
-**consecutive_empty_cycles:** 0 | **backoff_until:** 2026-05-18T09:46:47Z (reset after 5-cycle threshold)
+**Status:** BACKOFF EXPIRED — next cycle proceeding (backoff_until 09:46:47Z < current 10:46:46Z)
+**Queue:** Unknown (MCP gateway not accessible in scheduled-task context)
+**consecutive_empty_cycles:** 0 (reset at 08:46 trigger) | **backoff_until:** 2026-05-18T09:46:47Z (expired, will be cleared on next successful probe)
 
 ## Known patterns / preferences
 
@@ -2192,3 +2192,22 @@ Verdict: APPROVED. Report: reports/TASK_REPORT_1876a-A6.md.
 | market_alerts_fired | 0 |
 | exit_status | empty |
 | token_estimate | ~400 |
+
+---
+
+### Q&A Batch (10:46–10:46 UTC)
+- Questions: N/A | Recurring: 0 | Escalations: 0
+- consecutive_empty_cycles: 0 | backoff_until: 2026-05-18T09:46:47Z (EXPIRED)
+- BLOCKED at step 0a→1: Scheduled-task context — MCP gateway (vn-market server) not accessible. No `call_tool(server="vn-market", ...)` available in this runner. Backoff guard passed (09:46:47Z < 10:46:46Z). Per fail-loud protocol: unable to proceed without MCP connectivity. Cycle halted; awaiting manual intervention or dev-team notification to restore gateway.
+- Note: This is a scheduled automated task run. Time anchor: 2026-05-18T10:46:46Z. Backoff successfully expired (duration: ~60 min from 08:46:47Z threshold). Counter remains at 0 (would be incremented to 1 if queue successfully probed empty). No backoff triggered this cycle. No WORK message sent (cycle blocked at infrastructure check). Recommendation: Verify `docker-compose ps | grep mcp-server` and restart if needed.
+
+## Metrics (cycle 2026-05-18 10:46 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 0 |
+| signals_emitted | 0 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | blocked |
+| token_estimate | ~450 |
