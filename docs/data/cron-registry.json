@@ -4,8 +4,8 @@
   "_trigger": "after adding/removing scheduler job, update BOTH this file AND docs/data/system-map.json#project.microservices[id=mcp-server].crons",
   "_definition": "schedulerFileCount = jobs[] array length (registered scheduler entries in this file); excludes orchestrators (jobs.ts, index.ts, cronConfig.ts, startScheduler.ts, startupHelpers.ts)",
   "_jq_ssot": "jq '.project.microservices[] | select(.id==\"mcp-server\") | .crons | length' docs/data/system-map.json",
-  "lastUpdated": "2026-05-17",
-  "schedulerFileCount": 63,
+  "lastUpdated": "2026-05-18",
+  "schedulerFileCount": 64,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -69,7 +69,8 @@
     { "schedule": "30 23 * * *", "name": "dailyDashboard", "file": "src/scheduler/dailyDashboardJob.ts", "desc": "Daily dashboard aggregation at 23:30 GMT+7 every day — after evening + periodic summaries (task 1854a)" },
     { "schedule": "7 * * * *", "name": "verdictResolutionJob", "file": "src/scheduler/verdictResolutionJob.ts", "desc": "Hourly alert verdict resolver at minute=7 — resolves pending alert-verdicts.json entries against price data (task 1863b, Sprint 1867)" },
     { "schedule": "*/30 * * * *", "name": "walCheckpoint", "file": "src/scheduler/walCheckpointJob.ts", "desc": "SQLite WAL checkpoint: every 30 min FULL (live hours) + TRUNCATE+backup at 03-05 UTC (task 1329a)" },
-    { "schedule": "17 * * * *", "name": "signalOutcomeResolution", "file": "src/scheduler/alerts/signalOutcomeResolutionJob.ts", "desc": "Hourly signal outcome resolution at minute 17 — resolves agent signal outcomes for 24h and 48h windows (2026-05-17)" }
+    { "schedule": "17 * * * *", "name": "signalOutcomeResolution", "file": "src/scheduler/alerts/signalOutcomeResolutionJob.ts", "desc": "Hourly signal outcome resolution at minute 17 — resolves agent signal outcomes for 24h and 48h windows (2026-05-17)" },
+    { "schedule": "0 7 * * *", "name": "accuracyDigestJob", "file": "src/scheduler/digest/accuracyDigestJob.ts", "desc": "Daily 07:00 UTC signal accuracy WORK digest — 30-day accuracy stats, top-3/bottom-3 signal types, DB dedup guard (task 1941c)" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]

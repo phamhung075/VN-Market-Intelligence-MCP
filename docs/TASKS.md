@@ -37,12 +37,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1941c | **Daily accuracy WORK digest job** — accuracyDigestJob cron (0 7 * * *) + getSystemAccuracyDigestStats + buildAccuracyDigestText. 7/7 tests GREEN. AC-1..12 covered. | MEDIUM | FEATURE | dev-mcp-server | docs/handoffs/1941c.md | — |
+_(empty)_ | — | — | — | — | — | — |
 
 ---
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Completed |
+| 1941c | **DONE 2026-05-18 QA** — accuracyDigestJob cron (0 7 * * *) + getSystemAccuracyDigestStats (4-query pattern) + buildAccuracyDigestText. 7/7 tests GREEN (22 assertions). AC-1..12 covered. tsc 0 errors. DDD PASS, Security PASS. No regression (9187 pass, matches main). cron-registry.json updated. Report: reports/TASK_REPORT_1941c.md. | MEDIUM | FEATURE | dev-mcp-server | 2026-05-18 |
 | 1941a-l7-ocf-guard-deploy-verify | **DONE 2026-05-18 QA** — cashFlowTool.ts now prefers `operating_cash_flow` (vnstock API bridge, Task 1878a) over `operating_cf` (OCR/PDF) via COALESCE. VCB: corrupted 1.23e15 → 9,947,260 triệu VND, ratio=1.15 (passes guard). FPT OCF fixed to 4,108,450 triệu (ratio still suppressed — NI=20,225 is separate OCR bug, filed separately). 5 new tests + 12 regression tests GREEN (17 total). tsc clean. Report: reports/TASK_REPORT_1941a.md. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
 | calendar-source-replacement | **DONE 2026-05-18 c174/QA-c174** — No viable free replacement for VN economic calendar. InvestingCalendarAdapter replaced with NullCalendarAdapter (returns [] immediately). DEFAULT_TIMEOUTS.calendar=0. macroRefresh cycle no longer wastes 5s on dead endpoint. 4 new tests. 103/103 active tests pass, tsc clean on touched files, DDD PASS. NullCalendarAdapter wired. Report: reports/TASK_REPORT_calendar-source-replacement.md. Merged task/calendar-source-replacement to main. | LOW | WONTFIX | dev-macro-indicators | 2026-05-18 |
 | 1940a-pc1-legal-risk-tool-gap | **DONE 2026-05-18 c174/QA-c174** — `get_legal_risk_signals` now dual-source: queries both `alerts` AND `agent_signals` (signal_type=legal_risk). Root cause: PC1 chairman arrest signals (#3318/#3343, conf=0.78) were in agent_signals but tool never read there. Fix: `queryAgentSignalsTable()` in legalRiskTools.ts (interface layer, DDD-clean). TC4: null stock_code (broad) signals also returned. 7 new tests GREEN, 61-test regression suite GREEN, tsc 0 errors. QA c174 APPROVED. | HIGH | FIX | dev-mcp-server | 2026-05-18 |
