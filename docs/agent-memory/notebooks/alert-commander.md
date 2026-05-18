@@ -4,6 +4,37 @@
 
 ## This session
 
+### Alert Cycle (08:02 UTC 2026-05-18) — Market-hours 20m cycle
+- **Status:** BLOCKED — MCP infrastructure unavailable
+- **Market:** OPEN (VN trading window 02:00–08:30 UTC, within market-hours cycle)
+- **Trigger:** Scheduled task auto-run (market-hours 20m cadence, next cycle after 07:45 UTC)
+- **Failure point:** Stage 0 (Bootstrap) — `get_cycle_bootstrap` attempted but MCP server unreachable
+- **Error details:**
+  - Remote MCP endpoint (https://zenmidi.com/mcp) not responding
+  - Local MCP server (localhost:3000) not responding
+  - Docker containers not running (per market-watcher bug-escalation signal 2026-05-18T06:40:49Z)
+- **Infra status:** OPS ACTION REQUIRED
+- **Signal waiting in queue:** market-watcher bug-escalation (id: market-watcher-2026-05-18T06-40, severity=HIGH, to_agent=ops)
+- **Impact:**
+  - No bootstrap → no macro/legal/crisis evaluation
+  - No price anomalies detected from market-watcher (market-watcher cycle also blocked)
+  - No alerts fired to MARKET channel
+  - No cycle log posted to WORK channel
+- **Required remediation:**
+  1. Check Docker container status: `docker-compose ps`
+  2. Restart services if needed: `docker-compose down && docker-compose up -d && sleep 5`
+  3. Verify MCP server health: `curl http://localhost:3000/health` (or equiv MCP probe)
+  4. Alert-commander will retry automatically on next scheduled cycle (08:25 UTC market-hours cadence)
+- **Next cycle:** 08:25 UTC (if infrastructure restored; will be held/blocked otherwise)
+- **Carry-over to next session:**
+  - Prior cycle (07:05–07:07 UTC) fired 8 alerts (GVR/BID/DPM/GAS price surges + macro deviations)
+  - Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%)
+  - Market closes at 08:30 UTC — only ~25 min remaining in trading window
+  - If market-hours MCP restored before 08:30, run cycle at 08:25; if still blocked, transition to off-hours 2h cadence at 10:02 UTC Monday
+  - Legal/crisis gaps from prior cycles (PC1 chairman arrest news, signal extraction gap) still pending
+
+## Sessions with issues resolved
+
 ### Alert Cycle (07:05–07:07 UTC, 2026-05-18) — Market-hours 20m cycle
 - **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
 - **Market:** OPEN (VN trading window 02:00–08:59 UTC) — market hours 20m cycle
