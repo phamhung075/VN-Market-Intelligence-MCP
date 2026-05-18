@@ -1,8 +1,41 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-18 14:02 UTC | **Sprint:** 1948 (QUEUED)
+**Last updated:** 2026-05-18 15:01 UTC | **Sprint:** 1948 (QUEUED)
 
 ## This session
+
+### Alert Cycle (15:01–15:01 UTC, 2026-05-18) — Off-hours 2h cycle
+- **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
+- **Market:** CLOSED (outside 02:00–08:59 UTC trading window, now 15:01 UTC off-hours)
+- **Regime:** TIGHTENING | **Carry:** FII_OUTFLOW_RISK (CARRY_SPREAD=-0.33%) | **Pivot window:** false
+- **Macro:** Brent 109.98 | Gold 4548.20 | USD/VND 26,327 (CAO) | US10Y 4.60% RISK-OFF | DXY 99.08 STABLE | REGIME_SOURCE=macro_snapshot (shape OK ✓)
+- **Signals (count by type):** agent_bus=0 (no inter-agent signals) | price_alerts=0 (get_alerts type="price" returned empty) | news_mention=20 (from bootstrap market_context 24h snapshot) | urgent_news=0 | chain_catalyst=0 | verified_chain=0 | legal_risk=0 | crisis_velocity=0
+- **Fired:** 0 | **Suppressed:** 0 (no signals passed regime matrix evaluation)
+- **ChainCatalyst:** 0 fired | 0 suppressed | event_types: []
+- **Signal evaluation (TIGHTENING regime):**
+  - 20× news_mention (various bullish/bearish): agent_signals returned "no new signals" — evaluated against bootstrap snapshot, below thresholds → no dispatches
+  - 1× price_surge (PLX +6.99% at 08:40 UTC): included in news_mention context but no separate urgent_news/verified_chain signals present
+- **Price validation override:** Not triggered (no price_anomaly alerts, market closed, prices stale >6h)
+- **Legal:** clear (get_legal_risk_signals: no signals) | **Crisis:** clear (get_crisis_early_warning: no signals)
+- **WORK dispatch:** posted (15:01 UTC) — "[Alert Commander] 15:01 UTC — 0 signals\nFired: 0 | Suppressed: 0 | Next: 15:21 UTC\n\nRegime: TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Market: CLOSED"
+- **Tool calls this cycle:** 8 (log_agent_work(start), get_cycle_bootstrap, get_macro_snapshot, get_legal_risk_signals, get_crisis_early_warning, get_agent_signals, get_alerts, send_telegram, log_agent_work(end))
+- **log_agent_work id=1006**
+- **Off-hours assessment:** Cycle triggered at 15:01 UTC (off-hours 2h cadence, market closed outside 02:00–08:30 UTC window). Bootstrap found 20 news_mention alerts in 24h snapshot but no inter-agent signals (news-scout/financial-analyst signals empty). TIGHTENING regime confirmed. All bootstrap news context evaluated — no signals crossed regime thresholds. Price PLX surge (+6.99%) is positive commodity signal but isolated; would require verified_chain from financial-analyst to escalate. No action required; continue monitoring.
+- **Decisions made autonomously:**
+  - Did not fire any MARKET alerts (0 qualifying signals)
+  - Did not call write_alert_verdict (0 alerts fired)
+  - Did not call mark_alert_read (0 alerts evaluated for firing)
+  - Did not call record_signal_outcome (0 signal outcomes)
+  - Did not call get_macro_calendar (pivot_window=false per macro snapshot)
+  - Did not call price-validation override logic (market closed)
+- **Carry-over for next cycle:**
+  - Continue monitoring VN-Index recovery trend (last 7 weeks up, big4/oil leading)
+  - Watch banking sector state-owned buying wave (VCB +4.12%, BID +5.47% at close) — if sustained + urgent_news upgrade → potential MARKET alert next market-hours cycle
+  - Monitor oil_gas on Brent >$110 tailwind (GAS +4.03%, PLX +6.99%) — may qualify for chain_catalyst next cycle
+  - Real estate under FII pressure (VHM -2.53%, VRE -2.65%) — escalate to financial-analyst if moves >2% persist
+- **Next cycle:** 15:21 UTC (continuing off-hours 2h cadence while market closed; first market-hours cycle Monday 02:00 UTC)
+
+## Previous sessions
 
 ### Alert Cycle (14:02–14:03 UTC, 2026-05-18) — Off-hours 2h cycle
 - **Status:** COMPLETED (live MCP probe SUCCEEDED — bootstrap + macro + legal + crisis all green)
