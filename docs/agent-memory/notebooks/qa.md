@@ -1,6 +1,43 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c181 — 1943a BCTC Q1-2026 queue reset + auto-retry — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c182 — 1942b cashFlowTool fallback read path + backfillOCFForWatchlist — APPROVED
+
+## Session 2026-05-18 c182 — 1942b cashFlowTool fallback read path + backfillOCFForWatchlist
+
+### TASK REPORT — 1942b (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: bae63582 (already on main)
+type: FEATURE (interface/mcp/tools + infrastructure/db)
+round: 1
+```
+
+#### Pipeline
+
+- Task tests (10): 10/10 GREEN — TC1-TC10 all PASS
+- Cashflow suite (50): 50/50 GREEN (1942b×10 + 1890a×5 + 1909a, 044, 1930b, 1941 suites)
+- Full suite: 9219 pass / 275 fail / 31 skip — baseline (post-1943a on main): 9219/275 — 0 regressions, +10 new tests
+- tsc: 0 errors
+- DDD: PASS — infra import in interface tool is established codebase pattern (Architect R-7 approved); no domain→infra violations
+- Security: PASS — all SQL parameterized (.prepare().get() pattern), no process.env, no hardcoded secrets
+
+#### AC Verdicts
+
+- AC-1 (primary path unchanged): PASS — data_source="financial_reports" + TC1 GREEN
+- AC-2 (fallback activates on zero FR rows): PASS — COUNT check at cashFlowTool.ts:352-357 + TC2 GREEN
+- AC-3 (data_source field): PASS — CashFlowFound type line 103, set at lines 309/461 + TC1/TC2 GREEN
+- AC-4 (unit conversion ×1000): PASS — lines 278-285 in fallback + TC4 GREEN (100→100000)
+- AC-5 (cold DB loading:true): PASS — cashFlowTool.ts:251-259 + TC3 GREEN
+- AC-6 (capex/FCF null in fallback): PASS — lines 302-303 + TC2 GREEN
+- AC-7 (7 period filter cases): PASS — 3-branch logic lines 209-216 + TC5/TC6/TC7 GREEN
+- AC-8 (integration signal): INTEGRATION ONLY — deferred per spec (needs 1942a probe live)
+- EC-1 thru EC-6: all PASS (see TASK_REPORT_1942b.md for detail)
+
+---
+
+## Session 2026-05-18 c181 — 1943a BCTC Q1-2026 queue reset + auto-retry — APPROVED
 
 ## Session 2026-05-18 c181 — 1943a BCTC Q1-2026 queue reset + batch sweep diagnostic + auto-retry
 
