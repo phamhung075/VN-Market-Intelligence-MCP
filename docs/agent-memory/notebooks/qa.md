@@ -1,6 +1,35 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Session:** c182 — 1942b cashFlowTool fallback read path + backfillOCFForWatchlist — APPROVED
+**Last updated:** 2026-05-18 | **Session:** c183 — kinh-dich-name-fix hexagram diacritics + fallback path + wrong table — APPROVED
+
+## Session 2026-05-18 c183 — kinh-dich-name-fix hexagram names + fallback path + wrong table
+
+### TASK REPORT — kinh-dich-name-fix (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit: abf5ef2d
+type: FIX (domain/services.ts + application/usecases.ts + infrastructure/repositories.ts)
+zone: apps/kinh-dich-service/
+round: 1
+```
+
+#### Pipeline
+
+- Zone tests (30/30): 30/30 GREEN across 2 files (unit + integration)
+- Full suite: Bun OOM crash (pre-existing bun 1.3.13 runtime issue on 9k+ test corpus, not code regression) — verified zone + adjacent services pass
+- tsc: 0 errors (kinh-dich-service tsconfig clean; project-wide clean)
+- DDD: PASS — domain/services.ts imports only domain/models.js (zero infra/app imports)
+- Security: PASS — no hardcoded secrets, no process.env in changed files (config.ts process.env is pre-existing, not in this commit)
+
+#### Bug Verdicts
+
+- Bug 1 (QUE_META names): PASS — #7=Sư, #8=Tỷ, #23=Bác, #39=Kiển, #52=Cấn confirmed. No plain ASCII entries found via grep.
+- Bug 2 (fallback path): PASS — usecases.ts:53-54 resolves storedMeta from QUE_META.find(q => q.id === stored.hexagram_number); return uses storedName.
+- Bug 3 (wrong table): PASS — repositories.ts:78-85 queries market_prices_history with price AS close, fetched_at ORDER BY.
+
+---
 
 ## Session 2026-05-18 c182 — 1942b cashFlowTool fallback read path + backfillOCFForWatchlist
 
