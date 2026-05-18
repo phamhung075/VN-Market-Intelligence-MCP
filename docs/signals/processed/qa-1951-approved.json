@@ -1,0 +1,29 @@
+{
+  "from": "qa",
+  "to": "router",
+  "type": "qa_approved",
+  "sprint": "1951",
+  "round": 2,
+  "commit": "2519d8a9",
+  "verdict": "APPROVED",
+  "next_router_action": "register-cron",
+  "payload": {
+    "cron": "*/15 * * * *",
+    "command": ".claude/commands/cowork-team.md",
+    "cron_spec": ".claude/commands/crons/cron-cowork-team.md",
+    "parallel_run_hours": 24,
+    "remote_triggers_pending_delete": 12,
+    "trigger_ids_ref": "docs/architecture-briefs/2026-05-18-cowork-team-command.md#8",
+    "rollback_gate": "any double-published MARKET dish during parallel-run \u2192 delete new master cron + open SPIKE-1951b"
+  },
+  "blocks_resolved": [
+    "BLOCK-1",
+    "BLOCK-2",
+    "BLOCK-3"
+  ],
+  "createdAt": "2026-05-18T23:00:00Z",
+  "fingerprint": "5530b522c24a710af88a219a07c4b2c77bdd802781ce27be9df306d111fe42de",
+  "processedAt": "2026-05-18T20:38:04Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

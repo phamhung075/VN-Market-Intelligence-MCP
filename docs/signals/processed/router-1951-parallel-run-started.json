@@ -1,0 +1,51 @@
+{
+  "from": "router",
+  "sprint": "1951",
+  "topic": "cowork-team master cron registered \u2014 24h parallel-run started",
+  "ts": "2026-05-18T20:34:02Z",
+  "status": "active",
+  "cron": {
+    "id": "ed39cbcf",
+    "schedule": "*/15 * * * *",
+    "recurring": true,
+    "durable_requested": true,
+    "runtime_reported": "session-only \u2014 runtime flagged not-written-to-disk despite durable=true; needs follow-up investigation, does not block parallel-run",
+    "prompt": "Read and execute .claude/flows/cowork-team/main.md",
+    "registered_via": ".claude/commands/crons/cron-cowork-team.md spec"
+  },
+  "parallel_run_window": {
+    "start": "2026-05-18T20:34:02Z",
+    "end": "2026-05-19T20:34:02Z",
+    "duration_hours": 24,
+    "purpose": "verify zero double-publish in MARKET channel before deleting 12 legacy RemoteTriggers",
+    "rollback_gate_ac6": "any double-published MARKET dish \u2192 CronDelete ed39cbcf + open SPIKE-1951b idempotency-guard"
+  },
+  "legacy_remotetriggers": {
+    "kept_active": "12 triggers listed in docs/architecture-briefs/2026-05-18-cowork-team-command.md \u00a78 with trigger_status=pending_delete",
+    "delete_after": "2026-05-19T20:34:02Z (if zero double-publish observed during window)"
+  },
+  "monitoring_targets": [
+    "2026-05-19T05:15Z chef-morning first fire (new cron time after BLOCK-1 realignment)",
+    "2026-05-19T08:45Z chef-eod first fire",
+    "2026-05-19T20:13Z tnb daily audit (unchanged)",
+    "MARKET channel watch for any duplicate dish within parallel-run window"
+  ],
+  "next_router_action": "monitor MARKET channel; on 2026-05-19T20:34:02Z with zero double-publish, CronDelete the 12 legacy RemoteTriggers and emit router-1951-cutover-complete signal",
+  "open_items": [
+    "durable=true runtime behavior \u2014 investigate why CronCreate reported session-only despite durable flag",
+    "Carry-over chef-morning smoke from po cycle c197 originally targeted 05:23Z; new fire time is 05:15Z (BLOCK-1 realignment shifted -8min)"
+  ],
+  "references": {
+    "brief": "docs/architecture-briefs/2026-05-18-cowork-team-command.md",
+    "qa_round2_report": "docs/handoffs/sprint-1951-cowork-team-qa-report.md",
+    "fixer_signals": [
+      "docs/signals/fixer-1951-block1-block2-block3-applied.json",
+      "docs/signals/fixer-1951-cron-prompt-fix.json"
+    ],
+    "qa_approval": "docs/signals/qa-1951-approved.json"
+  },
+  "fingerprint": "15898e947e92762bf28624312ccc0bb241e5aa59934c2cc076634a84d9f8f65d",
+  "processedAt": "2026-05-18T20:38:04Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

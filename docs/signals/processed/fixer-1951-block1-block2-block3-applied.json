@@ -1,0 +1,72 @@
+{
+  "from": "fixer",
+  "to": "qa",
+  "type": "fix_applied",
+  "sprint": "1951",
+  "blocks": [
+    "BLOCK-1",
+    "BLOCK-2",
+    "BLOCK-3"
+  ],
+  "status": "done",
+  "createdAt": "2026-05-18T22:45:00Z",
+  "commit": "2519d8a9",
+  "summary": "All three blocks applied in single commit",
+  "block_1_fixes": {
+    "description": "Realigned 3 off-minute chef crons to 15-min grid",
+    "changes": {
+      "chef-morning": {
+        "old": "23 5 * * 1-5",
+        "new": "15 5 * * 1-5",
+        "shift_minutes": -8,
+        "vn_time": "12:15 (was 12:23)"
+      },
+      "chef-eod": {
+        "old": "37 8 * * 1-5",
+        "new": "45 8 * * 1-5",
+        "shift_minutes": 8,
+        "vn_time": "15:45 (was 15:37)"
+      },
+      "chef-evening": {
+        "old": "37 19 * * *",
+        "new": "45 19 * * *",
+        "shift_minutes": 8,
+        "vn_time": "02:45+1 (was 02:37+1)"
+      }
+    },
+    "files_modified": [
+      "docs/data/cowork-schedule.json",
+      "docs/standards/cron-jobs.md",
+      "docs/protocols/chef-pipeline-runbook.md"
+    ],
+    "files_deleted": [
+      "docs/data/cowork-schedule-skipped.json"
+    ]
+  },
+  "block_2_fixes": {
+    "description": "Committed Sprint 1951 cowork-team dispatcher deliverables",
+    "files_added": [
+      ".claude/commands/cowork-team.md",
+      ".claude/flows/cowork-team/main.md",
+      ".claude/commands/crons/cron-cowork-team.md"
+    ],
+    "files_modified": [
+      "docs/standards/cron-jobs.md",
+      "docs/references/workflow-map.md"
+    ]
+  },
+  "block_3_fixes": {
+    "description": "Removed Sprint 1951a stale cowork-dispatcher artifacts",
+    "files_deleted": [
+      ".claude/flows/cowork-dispatcher/main.md",
+      "docs/data/cowork-dispatcher-trigger.json"
+    ],
+    "directory_deleted": ".claude/flows/cowork-dispatcher/"
+  },
+  "next_action": "qa | re-verify sprint-1951 gate",
+  "notes": "All blocks applied per architect decision \u00a711. Commit message follows convention. Dependency margins verified by QA: chef-eod at :45 gives 32min after foreignFlowAlertJob (was 24min); chef-evening at :45 gives 32min after macroRefresh gate (was 24min); chef-morning at :15 has no upstream dependency before 05:00 UTC.",
+  "fingerprint": "bb579abaf101e93fbf39e8f1ddf7f76d981f8475c496101ca0e8196b0723a5f6",
+  "processedAt": "2026-05-18T20:38:04Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

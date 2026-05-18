@@ -1,0 +1,30 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "impl-complete",
+  "payload": {
+    "sprint": "1951",
+    "status": "done",
+    "files_created": [
+      ".claude/commands/cowork-team.md",
+      ".claude/flows/cowork-team/main.md",
+      ".claude/commands/crons/cron-cowork-team.md"
+    ],
+    "files_updated": [
+      "docs/data/cowork-schedule.json",
+      "docs/standards/cron-jobs.md",
+      "docs/references/workflow-map.md"
+    ],
+    "next_agent": "qa",
+    "ac_count": 10,
+    "open_questions_resolved": 2,
+    "oq1": "Spawn primitive = subagent_type (Agent tool), agent_id maps 1:1 to subagent_type. Inline decision comment in flow.",
+    "oq2": "Collision-detection guard added in Step 4b of flow \u2014 WARNING to WORK if >=2 slots share same agent_id, no spawn blocking. Inline decision comment in flow."
+  },
+  "priority": "normal",
+  "createdAt": "20260518T201740Z",
+  "fingerprint": "8f3f4921ca1004cab05afcf838482848f0478d0f797373e86f79fd302ab10c05",
+  "processedAt": "2026-05-18T20:38:04Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

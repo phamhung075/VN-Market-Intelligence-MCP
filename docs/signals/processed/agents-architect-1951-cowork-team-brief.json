@@ -1,0 +1,29 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief-complete",
+  "payload": {
+    "status": "done",
+    "brief_path": "docs/architecture-briefs/2026-05-18-cowork-team-command.md",
+    "sprint": "1951",
+    "slug": "cowork-team-command",
+    "summary": "Pivot from per-slot RemoteTrigger to dev-team-pattern master cron. Single */15 CronCreate + cowork-team.md slash command reads cowork-schedule.json, matches current UTC +/-2min, parallel-spawns all matching agents. Resolves API_MIN_INTERVAL blockage on 4 sub-hourly slots. Includes schema additions, match algorithm, parallel-spawn rules, idempotency guard, cutover plan (delete 12 RemoteTriggers after 24h parallel-run), telemetry spec, 9 failure modes, 10 ACs.",
+    "ac_count": 10,
+    "next_agent": "agent-father",
+    "files_to_create": [
+      ".claude/commands/cowork-team.md",
+      ".claude/flows/cowork-team/main.md"
+    ],
+    "files_to_modify": [
+      "docs/data/cowork-schedule.json",
+      "docs/standards/cron-jobs.md"
+    ],
+    "open_questions": 2
+  },
+  "priority": "high",
+  "createdAt": "2026-05-18T20:11:09Z",
+  "fingerprint": "6ebf22e69830ea992eadfdc753d224c5f85342ac3e81adde1152757dbc4e8682",
+  "processedAt": "2026-05-18T20:38:04Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}
