@@ -1,6 +1,48 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1951 | **Session:** c199 — Sprint 1951 cowork-team — CHANGES_REQUESTED
+**Last updated:** 2026-05-18 | **Sprint:** 1951 | **Session:** c200 — Sprint 1951 cowork-team Round 2 — APPROVED
+
+## Session 2026-05-18 c200 — Sprint 1951 cowork-team Round 2 (APPROVED)
+
+### TASK REPORT — Sprint 1951 Round 2 (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit reviewed: 2519d8a9
+type: FIX — all 3 BLOCK items resolved
+round: 2
+```
+
+#### Verification Summary
+
+| Block | Check | Result |
+|-------|-------|--------|
+| BLOCK-1 | chef-morning cron → `15 5 * * 1-5` in cowork-schedule.json | PASS |
+| BLOCK-1 | chef-eod cron → `45 8 * * 1-5` in cowork-schedule.json | PASS |
+| BLOCK-1 | chef-evening cron → `45 19 * * *` in cowork-schedule.json | PASS |
+| BLOCK-1 | cron-jobs.md L116-119 chef table matches new strings + VN times | PASS |
+| BLOCK-1 | chef-pipeline-runbook.md updated | PASS |
+| BLOCK-1 | cowork-schedule-skipped.json deleted | PASS |
+| BLOCK-1 | Dead-zone math: :15 in [13,17] ✓; :45 in [43,47] ✓ | PASS |
+| BLOCK-1 | Grep old cron strings in live operational files: 0 hits | PASS |
+| BLOCK-2 | .claude/commands/cowork-team.md in git (added 2519d8a9) | PASS |
+| BLOCK-2 | .claude/flows/cowork-team/main.md in git (6-step dispatcher) | PASS |
+| BLOCK-2 | .claude/commands/crons/cron-cowork-team.md in git (*/15, recurring, durable) | PASS |
+| BLOCK-2 | cron-jobs.md cowork-team row at L126 | PASS |
+| BLOCK-2 | workflow-map.md Related note at L170 | PASS |
+| BLOCK-3 | .claude/flows/cowork-dispatcher/main.md deleted in 2519d8a9 | PASS |
+| BLOCK-3 | docs/data/cowork-dispatcher-trigger.json deleted in 2519d8a9 | PASS |
+| BLOCK-3 | .claude/flows/cowork-dispatcher/ directory absent on disk | PASS |
+| Content | cowork-team/main.md 6-step dispatcher logic intact | PASS |
+| Content | cowork-team.md dev-team pattern shape | PASS |
+| Content | cron-cowork-team.md */15, recurring=true, durable=true | PASS |
+
+- **actions**: APPROVED. [QA Round 2] section written to docs/handoffs/sprint-1951-cowork-team-qa-report.md. Signal emitted: docs/signals/qa-1951-approved.json. next_router_action=register-cron.
+- **next_cycle_hint**: Router: CronCreate */15 * * * * → cowork-team. Start 24h parallel-run with 12 RemoteTriggers. AC-6 rollback gate active.
+- **estimated_tokens**: 4200
+
+---
 
 ## Session 2026-05-18 c199 — Sprint 1951 cowork-team (CHANGES_REQUESTED)
 

@@ -1,7 +1,33 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1951 / 1951a — 12 RemoteTriggers created, 4 failed min-1h constraint)
-**Sprint:** 1951 Phase 1 (1951a DONE, 1951b active)
+**Last updated:** 2026-05-18 (Sprint 1951 / 1951b — cowork-team master cron dispatcher DONE)
+**Sprint:** 1951 Phase 2 (1951b DONE — cowork-team pivot implemented)
+
+## This Session — 2026-05-18 (Sprint 1951 / 1951b cowork-team master cron)
+
+**Task: 1951b — cowork-team master cron dispatcher (dev-team pattern transfer)**
+
+Source: handoff from agents-architect (`docs/architecture-briefs/2026-05-18-cowork-team-command.md`).
+Pivot reason: RemoteTrigger API_MIN_INTERVAL blocks sub-hourly slots; Claude Desktop cannot spawn subagents.
+Solution: single `*/15 * * * *` CronCreate in Claude Code CLI, reads schedule.json, parallel-spawns.
+
+Files created:
+- `.claude/commands/cowork-team.md` (AC-1)
+- `.claude/flows/cowork-team/main.md` (AC-2 — match algo + parallel-spawn + telemetry + collision guard)
+- `.claude/commands/crons/cron-cowork-team.md` (AC-3 registration template)
+
+Files updated:
+- `docs/data/cowork-schedule.json` — added agent_id + parallel_group to all 17 slots; updated _runtime + _maintained_by
+- `docs/standards/cron-jobs.md` — added cowork-team row to Dev-Team + Ops Agent Crons table
+- `docs/references/workflow-map.md` — added cowork-team note to Related section
+
+OQ-1 resolved: agent_id → subagent_type (Agent tool). Same as dev-team pattern. Documented inline.
+OQ-2 resolved: collision-detection guard in Step 4b — WARNING to WORK, never blocks spawns.
+
+Signal: `docs/signals/agent-father-1951-cowork-team-impl.json`
+AC-3 pending: router must register the actual CronCreate (agent-father does NOT register crons).
+
+---
 
 ## This Session — 2026-05-18 (Sprint 1951 / 1951a RemoteTrigger creation)
 
