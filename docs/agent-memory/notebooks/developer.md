@@ -1,6 +1,25 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T04:10Z | **Cycle:** c176 | **Sprint:** 1941 — WIP audit
+**Last updated:** 2026-05-18T05:00Z | **Cycle:** c177 | **Sprint:** 1941 — idle drain
+
+## Session c177 — Preflight + drain + idle
+
+**Preflight:** NO HEAD.lock. Worktree prune: clean. No worktree lock dir. PASS.
+
+**Drain signals (0a):** One JSON signal in docs/signals/: `alert-commander-2026-05-18T02-06-30Z.json` (type=bug-escalation, index.lock EPERM from cowork mount — recurring wontfix-sandbox pattern). DASHBOARD.md: no new entries.
+
+**Telegram reports (status=new):**
+- #2933 (alert-commander): index.lock EPERM at 02:06 UTC — wontfix-sandbox, matches #2894. Processed.
+- #2934 (unified-agent): FPT net_profit=20,225 ty BCTC corruption — duplicate of 1941d (QA in flight). Processed.
+
+**Zone conflict check:**
+- 1941d zone: `apps/mcp-server/src/infrastructure/db/` + `interface/mcp/tools/financial-reports/`
+- Both reports resolve to 1941d zone — no separate task possible without conflict.
+- No other signals or Todo tasks in non-conflicting zones.
+
+**Decision:** IDLE. WIP=1/2 (1941d QA slot). No open dev slot dispatch possible. WORK notified.
+
+---
 
 ## Session c176 — WIP audit + signal routing
 
