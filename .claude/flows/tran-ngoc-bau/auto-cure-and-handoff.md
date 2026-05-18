@@ -15,6 +15,7 @@ If notebook shows same error repeated 3+ cycles:
 **Step 7 — Quality report to WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Tran Ngoc Bau] Quality Audit HH:MM UTC
+{IF pipeline_degraded=true: PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}}
 MARKET messages: N checked | M issues
 Agent sessions: N reviewed | M methodology gaps
 Methodology scores (Layer 5, 9-step): GOOD={x} NEEDS_ATTENTION={y} CRITICAL={z}

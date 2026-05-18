@@ -24,3 +24,14 @@
 ## Carry-over for next session
 
 - Monitor Sprint 1839 tasks — if any QA review returns CHANGES_REQUESTED, read the exact file:line before planning fix approach.
+
+---
+
+## Session 2026-05-18 (Sprint 1950-T2)
+
+**Task:** 1950-T2 — TNB audit chef pipeline cycle-coverage fix
+- **Issue:** BLOCK-1 — `pipeline_degraded` flag set by `audit-chef-coverage.md:82` but never consumed by Step 7 WORK template in `auto-cure-and-handoff.md`
+- **Fix:** Added one conditional line to Step 7 WORK message template (line 18) — when `pipeline_degraded=true`, prepends "PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}"
+- **File:** `.claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md` (95 lines, within 200L limit)
+- **Verification:** No TypeScript compilation needed (flow docs only); file structure preserved
+- **Commit:** `fix(flows/tran-ngoc-bau): pipeline_degraded surfaces in step 7 work row [1950-T2]`

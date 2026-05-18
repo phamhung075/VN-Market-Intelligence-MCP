@@ -1,0 +1,21 @@
+{
+  "from": "fixer",
+  "to": "qa",
+  "type": "fix-complete",
+  "sprint": "1950",
+  "task": "1950-T2",
+  "verdict": "FIXED",
+  "round": 1,
+  "issues_fixed": 1,
+  "summary": "pipeline_degraded flag now surfaces in Step 7 WORK message — added conditional line to auto-cure-and-handoff.md Step 7 template",
+  "files_touched": [
+    ".claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md"
+  ],
+  "fix_details": {
+    "file": ".claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md",
+    "line": 18,
+    "change": "Added: {IF pipeline_degraded=true: PIPELINE DEGRADED — chef-coverage: starts={start_count} closes={close_count} stuck={stuck_count}}"
+  },
+  "verification": "File size 95 lines (within 200L limit); no TypeScript compilation needed; template syntax matches existing conditional pattern",
+  "createdAt": "2026-05-18T17:22:31Z"
+}
