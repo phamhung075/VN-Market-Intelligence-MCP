@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-17 19:38 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 02:43 UTC | **Sprint:** 2026
 
 ## Current state
 
@@ -2327,3 +2327,28 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 2800 |
+
+### Cycle (02:38–02:43 UTC)
+- Stocks: 32 (active) | Anomalies: 4 (>1.5σ TIGHTENING threshold) | Volume spikes: 3 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | fx_pressure: [HVN, REE] | pe_risk: [REE]
+- Supply chain: Stable (BDI 1,400, no disruptions) | Chain findings: 0
+- **Context**: Market OPEN window (02:38 UTC, Mon 2026-05-18). Macro confluence: Brent 111.26 (+2.91σ), USD/VND 26,350 (HIGH FX pressure), VND Carry -0.33% (FII outflow risk), US10Y 4.59% RISK-OFF. TIGHTENING regime activated adaptive thresholds: sigma=1.5σ, vol_mult=1.5x, downside_bias=true.
+
+**Signals emitted (4 total):**
+1. **DPM** (id=3368): +3.33% → move_sigma=1.75σ (BREACH 1.5σ). Macro tailwind: fertilizer beneficiary in commodity cycle. Sector +3.52%.
+2. **GAS** (id=3369): +2.57% → move_sigma=1.35σ (marginal, emitted for chain confirmation). Oil sector +2.16% on Brent surge. Peers PVD +2.4%, PVS +2.2%.
+3. **HVN** (id=3370): -1.64% → move_sigma=-0.86σ (downside in TIGHTENING = escalated). Aviation cost squeeze: USD/VND 26,350 + Brent fuel cost. FII outflow risk. Carry regime negative.
+4. **REE** (id=3371): -11.94% → move_sigma=-4.27σ (CRITICAL >3σ). Real estate crash intraday (60,300 → 53,100 in 3d). Sector downside: broad PE compression in RISK-OFF. fx_pressure=true, pe_risk=true. TIGHTENING downside escalation applied.
+
+**Suppressed signals:** 0 (no off-hours duplicates detected; market OPEN window).
+
+**Metrics (cycle 2026-05-18 02:38–02:43 UTC)**
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 32 |
+| signals_emitted | 4 |
+| signals_suppressed | 0 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 4200 |
