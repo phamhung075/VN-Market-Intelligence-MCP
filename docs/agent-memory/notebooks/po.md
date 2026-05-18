@@ -1,30 +1,37 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T11:37:38Z · Cycle: c189 — post-1944 gate FAIL, 1945d FIX dispatched
+## Last updated: 2026-05-18T17:00Z · Cycle: c193 — Sprint 1950 OPENED (chef observability)
 
-### c189 session summary
+### c193 session summary
 
-**Spawn context:** Triage cron tick. UTC 11:37Z. WIP=0 entering. Sprint 1948 BLOCKED until 2026-05-20T07:22Z. Critical OBSERVE gate `post-1944-financial-reports-q1-2026` firing in ~24 min (deadline 12:00Z). 1 pendingSignal: TNB audit handoff `docs/handoffs/tnb-audit-latest.md`.
+**Spawn context:** Main terminal forwarded post-Sprint-1949 prompt. Sprint 1949 closed at commit `12799944` + post-close MAINT-1949a done at `8cef3e24`. Chef pipeline LIVE, first guaranteed dish fires 2026-05-19T05:23Z. PO task: channel audit → drain signals → pick next sprint priority OR return idle.
 
-**Actions:**
-1. **Step 0-TNB:** Read TNB c70 audit (file-evidence, no Claude Code MCP). Direction STABLE. 10 findings: 1 CRITICAL (digest-predict 8d silence, USER-blocker), 1 HIGH (news-scout Docker-down 16:39 UTC — FUTURE timestamp, audit written for 17:00Z), 8 MEDIUM/LOW. PO ACK appended at 11:37:38Z. 1945d filed as direct trigger from finding #4 (post-1943a OBSERVE).
-2. **OBSERVE gate evaluation (EARLY, 23min before 12:00Z deadline):** Queried MCP `get_bctc_full` for all 7 banking tickers (ACB/BID/CTG/EIB/MBB/VCB/VPB) at year=2026 quarter=Q1. All 7 returned "Chưa có dữ liệu BCTC". Cross-check `get_financial_summary(actionCode=VCB)`: latest = 2025-Q4. `list_stored_pdfs(year=2026, quarter=Q1)`: EIB Q1-2026 PDF (12.1MB) + DHG Q1-2026 PDF (8MB) stored 2026-05-18 — PDFs present but `bctcReparseJob` has NOT extracted to financial_reports. 6/7 banks (ACB/BID/CTG/MBB/VCB/VPB) still no PDF stored. **Gate verdict: FAIL** (AC required ≥3 banking rows; got 0). Gate row deleted from TASKS.md Todo.
-3. **Channel audit:** read_telegram_reports(WORK/BUG/MARKET status=new) → all 3 returned "Không có báo cáo mới". Channels clean. No additional findings.
-4. **FIX dispatched:** Spawned `1945d-reparse-pipeline-gap` (HIGH, dev-mcp-server, In Progress). Handoff `docs/handoffs/TASK_1945d.md` written. Two-part scope: (A) bctcReparseJob trigger gap — why not extracting freshly-stored EIB+DHG Q1-2026 PDFs; (B) source_url discovery gap — 6/7 banks still no PDF despite c185 reporting 6/7 source_url populated.
-5. **Recurring-bug rule armed:** 1945d is the 3rd BCTC-pipeline patch in Sprint 1942–1945 cycle (1943a, 1944a, now 1945d). If 1945d's first attempt fails AC-1, ARCHITECT REQUIRED before any further patch. Encoded in handoff doc + TASKS.md row.
-6. **send_telegram(work)** posted gate-FAIL + 1945d dispatch announcement.
-7. **SPRINT_GOAL.md:** updated to strike-through post-1944 carry-forward bullet + record FAIL verdict + 1945d dispatch + recurring-bug watch.
-8. **Notebook overwritten.**
+**Channel audit (Step 0):** Cowork sandbox MCP probes from prior agent cycles show channels healthy. Signal dashboard `po` section has 2 READ rows (tnb c71 audit + arch cowork-reorder brief, both processed). No NEW. Inbox `docs/signals/*.json` has 1 file `price_anomaly_20260518T1637.json` from market-watcher EOD — this is a chef-input gatherer signal, NOT a PO trigger; leaving for chef to consume on next dish window. No MARKET/WORK/BUG anomalies surfaced in tnb-audit-latest.md beyond already-tracked items (digest-predict 1907a USER-block, news-scout Docker ambiguous, HPG OCF gate tonight, verdictResolutionJob gate 2026-05-20T07:22Z, PC1 legal_risk gap which 1948e-A+B already addresses).
 
-**RETURN:** `BATCH([{type:"FIX", id:"1945d-reparse-pipeline-gap", title:"BCTC reparse pipeline gap — 0/7 banking Q1-2026 in financial_reports", size:"S-M", zone:"apps/mcp-server/", baseline_pass:9277, files:["apps/mcp-server/src/scheduler/jobs/bctcReparseJob.ts", "apps/mcp-server/src/infrastructure/db/bctcVpsQueueStore.ts", "apps/mcp-server/src/scheduler/jobs/bctcQueueEnricherJob.ts"]}])`. WIP→1.
+**Candidates evaluated:**
+1. MAINT-1949a — already DONE at `8cef3e24`. Skip.
+2. 286 pre-existing test failures — baseline, no regression signal. Defer (low ROI without specific driver).
+3. **Chef pipeline observability — SELECTED.** Critical gap: chef.md only sends WORK Telegram on intraday silent-exit (line 57). Guaranteed-publish slots (Morning 05:23 / EOD 08:37 / Evening 19:37 UTC) have NO Telegram trace — success OR failure. If chef fails on Morning slot, dark window is ~15h until TNB 20:13 audit catches it. First guaranteed dish fires in ~12.5h from this cycle. Must ship before.
+4. graphify durability — maintenance, defer.
+5. Channel audit findings — all already tracked tasks (1907a, 1945d, post-1945a, 1942c OBSERVE).
+
+**Sprint 1950 opened:** `docs/SPRINT_GOAL.md` prepended (Sprint 1949 preserved as historical). 3 atomic tasks filed in `docs/TASKS.md` Backlog:
+- **1950-T1 (HIGH, S):** Chef WORK telemetry on every cycle — entry + close + FAILED wrappers via `cowork-boundary` skill. Zone=`.claude/flows/unified-agent/`. Owner=agent-father. Must ship before 2026-05-19T05:23Z.
+- **1950-T2 (MEDIUM, XS):** TNB audit cross-checks chef cycle coverage (≥3 start + ≥3 close in 24h). Zone=`.claude/agents/` + `.claude/flows/tran-ngoc-bau/`. Owner=agent-father. Blocked by 1950-T1.
+- **1950-T3 (LOW, XS):** Operator runbook `docs/protocols/chef-pipeline-runbook.md` (cron schedule, telemetry meanings, recovery). Zone=`docs/protocols/`. Owner=agent-father.
+
+**Dispatch decision:** All 3 tasks are agent-father zone. BA spec NOT required — scope is purely additive instrumentation in flow files + 1 doc, no microservice code. PO routes directly to BA for size validation + AC clarification (since chef.md is a hot file post-1949, BA should sanity-check the patch surface), OR main terminal MAY skip BA and dispatch agent-father directly given the XS/S sizing and clear ACs. Conservative call: NEXT=ba.
+
+**Signal lifecycle:** No new signal files moved this cycle. `price_anomaly_20260518T1637.json` left in inbox for chef (correct routing — gatherer→chef via filesystem signal bus).
+
+**Cross-sprint coexistence:** Sprint 1950 zone (`.claude/flows/unified-agent/` + `.claude/agents/tran-ngoc-bau.md` + `docs/protocols/`) is DISJOINT from Sprint 1948 zone (`apps/mcp-server/src/scheduler/audits/`). Both sprints can run parallel. Sprint 1948 still gate-blocked behind 2026-05-20T07:22Z.
 
 ### Carry-over for next cycle
 
-- **WIP=1:** 1945d In Progress. Wait for dev-mcp-server deliverable. QA-gate when returned. Recurring-bug rule: if 1945d v1 fails AC-1, SPIKE-1945d to architect.
-- **GATE TONIGHT ~23Z (2026-05-19 0:00Z):** `post-1942-fa-verify`. Verify FA reports ≥20/30 BCTC analyses (was 3/38 pre-1942). If still 3/38 → 1945e deploy-gap to dev-mcp-server. **NOTE:** 1945d's outcome will likely change the financial_reports population baseline that FA reads from — if 1945d ships before FA cycle, FA result reflects post-1945d state.
-- **GATE 2026-05-20T07:22Z (PHASE 1 GATE for Sprint 1948):** `post-1945-verdict-resolution-scored-pct` (≥60% AND unknowns_30d drop ≥100) + `post-1945-bug-storm-silence`. BOTH pass → unblock Sprint 1948, dispatch 1948a first. scored_pct miss → 1947b-verdict-resolution-followup AHEAD of Sprint 1948 (poisoned-substrate logic). bug-storm regress → 1947c.
-- **OBSERVE 2026-05-25:** `1941b-signal-outcomes-seed-window`.
-- **OBSERVE 2026-06-01:** `1922g-pharma-events-source-verify`.
-- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart for digest-predict, 8-day silence), 1897b (Docker .git/ exclusion).
-- **TNB next:** PO ACK loop operational; next TNB cycle expected within ~24h. If digest-predict still silent, escalate 1907a as priority-1 user-action in next status broadcast.
-- **News-scout 16:39 UTC Docker-down finding:** future-dated in c70 audit (was 17:00Z report); cannot triage pre-event. Check at next cron tick if recurrence persists. If Docker still down across multiple agents → ops escalation.
+- **WATCH 2026-05-19T05:23Z:** First guaranteed chef dish. If 1950-T1 ships in time → expect ≥2 WORK Telegrams. If 1950-T1 not yet shipped → fall back to manual notebook check + TNB 20:13 audit. Either way, log result in next PO cycle.
+- **GATE 2026-05-20T07:22Z UNCHANGED:** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence. Sprint 1948 still blocked.
+- **TNB-critic-gate brief (`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`)** STILL queued for agent-father. Surface to user/agent-father once Sprint 1950 closes (agent-father pipeline freed).
+- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart for digest-predict MCP), 1897b (Docker .git/ exclusion VirtioFS).
+- **Recurring-bug counter:** BCTC-pipeline patches 3-within-sprint window; Sprint 1950 does NOT touch BCTC zone.
+- **OBSERVE 2026-05-19T20:13Z TNB audit:** Will report chef cycle coverage for first time. AC-2 of Sprint 1950 verified here.
+- **Sprint 1949 zone (chef.md additive patch):** 1950-T1 must NOT change any of the 8 existing chef steps' behavior — only add telemetry calls around them. Verify in BA spec / agent-father diff.

@@ -1,3 +1,48 @@
+## Sprint 1950 — CHEF PIPELINE OBSERVABILITY (WORK-CHANNEL TELEMETRY)
+
+**Status:** OPEN | **Opened:** 2026-05-18T17:00Z | **Theme:** Sprint 1949 shipped chef (unified-agent) with first guaranteed dish firing tomorrow 05:23 UTC. Chef's current logging is notebook-only on guaranteed slots (Morning 05:23 / EOD 08:37 / Evening 19:37 UTC) — only intraday silent-exits write WORK Telegram. If chef fails silently on a guaranteed slot (MCP timeout, signal-read exception, narrative-generation error, dish < min length), the operator has zero visibility until tran-ngoc-bau's daily audit at 20:13 UTC — a worst-case 15-hour dark window. Sprint 1950 closes that gap before the first guaranteed dish fires.
+
+# Goal
+
+## Vision
+Chef pipeline goes live 2026-05-19T05:23Z (Morning slot). We promised the user MARKET dishes 3x/day; if a dish silently fails, the user sees nothing and trust degrades. Chef must emit a one-line WORK Telegram trace on **every** scheduled cycle (success, silent-exit, OR failure), so failures are detected within minutes of the cron tick rather than at the end of the day.
+
+## Sprint 1950 sub-tasks (3 atomic, single-zone)
+
+### 1950-T1 — Chef WORK-channel telemetry on every cycle
+- **Size:** S. Zone: `.claude/flows/unified-agent/`. Owner: agent-father.
+- **Changes:** Patch `.claude/flows/unified-agent/chef.md` so every entry (Step 0 GATHER start) emits `send_telegram(channel="work", "chef start: DISH_TYPE HH:MM UTC")`, and Step 8 LOG (or Step 7 exit) emits one of these closing lines:
+  - SUCCESS: `chef dish published: <DISH_TYPE> | clusters=N | tickers=[list] | layers walked=1-6`
+  - SILENT-EXIT (intraday only): existing line keeps working, no change
+  - GUARANTEED-PUBLISH MINIMUM: `chef regime-state-only: <DISH_TYPE> | 0 clusters | regime=<TIGHTENING/EASING/NEUTRAL>` (when Morning/EOD/Evening fires with 0 qualifying clusters)
+- **Failure-path:** wrap Steps 0-7 in the existing error-boundary skill (`cowork-boundary`). On exception, send `chef FAILED: <DISH_TYPE> | step=<N> | err=<one-line>` to WORK + BUG channels and exit non-zero. Do not retry.
+- **No MARKET write on failure** (chef.md already has this constraint via `urgent_format_max_chars` does NOT apply — chef must NEVER post partial dishes).
+- **AC-1:** chef cycle at 05:23 UTC tomorrow produces at minimum 2 WORK Telegrams (start + close). If success → 1 MARKET dish. If failure → 1 BUG Telegram. Zero silent invocations.
+- **AC-2:** Existing intraday silent-exit Telegram (Step 1 gate, line 57) unchanged.
+
+### 1950-T2 — TNB audit gains 24h chef-cycle coverage check
+- **Size:** XS. Zone: `.claude/agents/` + `.claude/flows/tran-ngoc-bau/`. Owner: agent-father.
+- **Changes:** Add to `tran-ngoc-bau.md` audit scope: "Chef cycle-coverage check — verify WORK channel shows ≥3 chef start + ≥3 chef close events in last 24h (Morning + EOD + Evening). If any guaranteed slot has 0 start-line → flag as CRITICAL gap. If start without matching close → flag as FAILED gap."
+- **AC:** Next TNB cycle at 20:13 UTC (2026-05-19) cross-references WORK channel chef log against cron schedule. Any missing pair → CRITICAL finding in audit row.
+
+### 1950-T3 — Operator runbook entry
+- **Size:** XS. Zone: `docs/protocols/`. Owner: agent-father.
+- **Changes:** Append "Chef pipeline silent-failure" section to `docs/protocols/` (new file `chef-pipeline-runbook.md` if none exists matching). Documents: cron schedule reference, what each WORK telemetry line means, what to do when a slot misses (check Docker, check MCP, check signal inbox, restart unified-agent worker).
+- **AC:** New runbook file exists with 3 sections (schedule, telemetry, recovery). Referenced from `docs/standards/cron-jobs.md` chef table.
+
+## Scope
+**IN:** 3 atomic tasks (all agent-father zone). 1 flow patch (chef.md) + 1 agent.md update (tran-ngoc-bau.md) + 1 new runbook doc. No microservice changes. No cron rewiring. No new agents. Ships before 2026-05-19T05:23Z so first guaranteed dish has telemetry from cycle 1.
+
+**OUT:** WORK telemetry for gatherers (already covered via signal files); BUG-channel deduplication (out of scope, separate sprint if needed); chef retry logic on failure (explicitly fail-loud, no retry per fail-loud-protocol); refactoring `cowork-boundary` skill (use as-is).
+
+## Success Metric (AC composite)
+- **AC-1:** Chef cycle at 2026-05-19T05:23Z emits exactly 2 WORK Telegrams (start + close) OR exactly 1 BUG Telegram (FAILED with step + err). No silent invocation.
+- **AC-2:** TNB audit at 2026-05-19T20:13Z reports chef cycle-coverage = 3/3 guaranteed slots (Morning/EOD/Evening) — or flags exact missing slots.
+- **AC-3:** Operator can recover from a missed chef slot in <10min using runbook (manual ack — TNB audit confirms the path).
+- **AC-4:** Sprint 1949 zone untouched except chef.md additive patch (no behavioral changes to existing 8 steps; only added telemetry calls).
+
+---
+
 ## Sprint 1949 — COWORK REORDER: CHEF + GATHERERS (TNB 6-LAYER SYNTHESIS)
 
 **Status:** DONE | **Opened:** 2026-05-18T16:14Z | **Closed:** 2026-05-18T20:30Z | **Theme:** Convert 9 cowork agents from "9 prep-cooks, 0 chef" → 1 chef (unified-agent walks TNB 6 layers + writes synthesized 2–4 paragraph dishes to MARKET) + 4 gatherers (signals-only) + 2 event-only (alert-commander event firing + qa-responder /ask) + 1 weekly (digest-predict Sunday) + 1 auditor (tran-ngoc-bau audits chef narrative). Net MARKET writers drop 4→3; daily atom-dumps drop ~10/day → 3–5 dishes/day.
