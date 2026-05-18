@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "Ops rebuild — Sprint 1945 COMPLETE 2026-05-18. All code merged: 1945a (getPriceHistory envelope unwrap fix verdictResolutionJob.ts + clients.ts), 1945b-backend (GET /api/accuracy/digest HTTP handler), 1945b-frontend (AccuracyDigestCard component). mcp-server rebuilt + healthy. /api/accuracy/digest live. toolCount remains 142 (endpoint not separately countable as tool). scored_pct recovery expected within 48h.",
+  "_lastRefreshedBy": "PO Sprint 1945 sign-off + Sprint 1946 kickoff — 2026-05-18T07:25Z. Sprint 1945 CLOSED (1945a + 1945b-backend + 1945b-frontend all QA-approved; Docker rebuilt 07:22Z healthy; 142 tools / 76 cron / 6 sessions). Sprint 1946 OPEN — single SPIKE-1946 on crisis detection coverage gap (TNB c69 #2: PLX -40% crash did not trigger get_crisis_early_warning). Architect 2h time-box. Six OBSERVE gates active (post-1944 12:00Z, post-1942 ~23Z, post-1945-scored-pct + bug-storm 48h, 1941b 2026-05-25, 1922g 2026-06-01). WIP=1.",
   "lastUpdated": "2026-05-18",
-  "currentSprint": 1945,
+  "currentSprint": 1946,
   "previousSprint": {
-    "number": 1942,
-    "status": "DONE (1942a+1942b+1942c+1943a QA-approved 2026-05-18)",
-    "summary": "Sprint 1942: BCTC expansion — get_cash_flow coverage 3/30 → 31/33 (94%). vnstockStartupProbe + fallback path + HPG OCF fix + queue reset + grace-period auto-retry."
+    "number": 1945,
+    "status": "DONE (1945a + 1945b-backend + 1945b-frontend QA-approved 2026-05-18; Docker rebuilt healthy)",
+    "summary": "Sprint 1945: Verdict resolution recovery (getPriceHistory envelope unwrap) + accuracy digest backend (GET /api/accuracy/digest) + frontend AccuracyDigestCard. scored_pct recovery within 48h via post-1945 OBSERVE gates."
   },
-  "sprintGoal": "Sprint 1945 COMPLETE 2026-05-18: Verdict resolution scoring envelope fix (1945a — getPriceHistory unwrap) + accuracy digest backend handler (1945b-backend) + frontend card (1945b-frontend). QA-approved all 3 tiers. Docker rebuild active.",
+  "sprintGoal": "Sprint 1946 ACTIVE 2026-05-18: Crisis detection coverage gap diagnosis (SPIKE-1946 architect read-only, 2h time-box). PLX -40% crash did not trigger get_crisis_early_warning despite news-scout chain_catalyst #3383 catching it — decide FIX/NO-OP. Plus 6 OBSERVE gates carried from Sprints 1941/1942/1944/1945.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
@@ -33,8 +33,8 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1945 c118: Verdict scoring envelope fix SHIPPED (3 tasks merged: 1945a getPriceHistory unwrap in verdictResolutionJob.ts + clients.ts, 1945b-backend GET /api/accuracy/digest, 1945b-frontend AccuracyDigestCard). mcp-server Docker rebuild complete, all microservices healthy, /api/accuracy/digest endpoint live, scored_pct recovery expected within 48h.",
-  "currentSprintNotes": "c118 (2026-05-18T07:22Z): Sprint 1945 Docker rebuild COMPLETE. Container health: healthy. Endpoint /api/accuracy/digest responding. toolCount: 142. cronJobCount: 76. All services initialized. Verdict resolution envelope fix active (verdictResolutionJob.ts getPriceHistory fix allows envelope unwrap to complete — ~520 alerts awaiting scoring expected to transit within 48h based on alert cron schedule).",
+  "lastFixApplied": "Sprint 1945 SHIPPED c118 (2026-05-18T07:22Z Docker rebuild healthy). Sprint 1946 OPENED c184 (2026-05-18T07:25Z) — SPIKE-1946 single architect task on crisis detection coverage gap, no dev code. WIP=1.",
+  "currentSprintNotes": "c184 (2026-05-18T07:25Z): Sprint 1945 CLOSED, Sprint 1946 OPEN. SPIKE-1946 (architect, 2h time-box) on TNB c69 #2: get_crisis_early_warning did not fire for PLX -40% crash (news-scout chain_catalyst #3383 did). Output → docs/spikes/SPIKE_1946-crisis-detection-coverage.md → FIX/NO-OP recommendation. R-1: do NOT touch Sprint 1945 zone (verdictResolutionJob.ts + alert_accuracy tables). Six OBSERVE gates active.",
   "infrastructureStatus": {
     "lastUpdated": "2026-05-18",
     "mcpServerHealth": "healthy",

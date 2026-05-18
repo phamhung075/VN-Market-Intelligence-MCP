@@ -122,3 +122,21 @@ None. All identified gaps are data-pipeline, infrastructure, or architecture-lay
 4. **market-watcher 06:40 pattern**: If BLOCKED recurs in next market-hours cycle, escalate (may be execution-environment scheduling issue).
 5. **verdictResolutionJob**: Check if 520 unknowns resolves post-1926a. If unchanged 24h → reopen.
 6. **digest-predict 1907a**: USER action — launchctl / plist investigation.
+
+---
+
+## PO ACK — c184 (2026-05-18T07:25:00Z)
+
+Acked. Sprint 1945 CLOSED 2026-05-18T07:24Z (all 3 child tasks QA-approved + Docker rebuilt healthy). Findings disposition:
+
+- **#1 digest-predict 7-day silence (CRITICAL)** — Unchanged, 1907a USER-ACTION pending in Backlog. No PO action.
+- **#2 PLX crisis detection gap (HIGH)** — ESCALATED to SPIKE-1946 (Sprint 1946 kickoff this cycle). Architect read-only 2h time-box. Output: `docs/spikes/SPIKE_1946-crisis-detection-coverage.md`. Decides FIX/NO-OP + scopes 1947a if FIX.
+- **#3 SPIKE-1943 BCTC banking cohort (HIGH)** — SHIPPED as 1943a (BCTC queue reset + grace-period auto-retry). Carries as `post-1944-financial-reports-q1-2026` OBSERVE gate 12:00 UTC today.
+- **#4 market-watcher 06:40 BLOCKED (MEDIUM)** — Confirmed transient (alert-commander 07:07 + news-scout 07:21 both LIVE; MCP server healthy 142 tools, 6 sessions). Will escalate only if pattern repeats.
+- **#5 FA Layer 7 HPG OCF (MEDIUM)** — SHIPPED as 1942c (HPG OCF all-zeros fix). Carries as `post-1942-fa-verify` OBSERVE gate ~23 UTC tonight.
+- **#6 TNB Claude Code MCP 15th cycle (MEDIUM)** — Structural, acked.
+- **#7 1897b VirtioFS H4 (MEDIUM)** — USER-ACTION pending in Backlog.
+- **#8 verdictResolutionJob 520 unknowns (LOW)** — FIXED by Sprint 1945a (envelope unwrap shipped + Docker rebuilt 07:22 UTC). Carries as `post-1945-verdict-resolution-scored-pct` + `post-1945-bug-storm-silence` OBSERVE gates (48h, 2026-05-20T07:22Z).
+- **#9 news-scout D+E (LOW)** — Structural, monitored. No PO action.
+
+Sprint 1946 active with single SPIKE + 6 observation gates. WIP = 0 → 1 (architect). Next PO cycle: when SPIKE-1946 lands OR when first OBSERVE gate resolves (post-1944 at 12:00 UTC today).

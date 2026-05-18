@@ -1,4 +1,76 @@
-## Sprint 1945 — VERDICT RESOLUTION RECOVERY + FRONTEND ACCURACY DIGEST (ACTIVE)
+## Sprint 1946 — CRISIS DETECTION COVERAGE GAP (SPIKE) (ACTIVE)
+
+**Status:** Active | **Opened:** 2026-05-18T07:24Z | **Theme:** Diagnose whether `get_crisis_early_warning` is supposed to cover individual-stock -30%+ crashes, or only systemic/macro crises — TNB c69 finding #2.
+
+# Goal
+
+## Vision
+TNB c69 (2026-05-18 07:00 UTC) raised a new methodology gap: PLX dropped -40% in a single session (signal #3383 typed `chain_catalyst` event_type=crisis by news-scout), and yet `get_crisis_early_warning` returned "no signals" when alert-commander queried it at 06:03 UTC. A -40% single-session crash on a watchlist stock is crisis-velocity territory by any reasonable definition — either the tool was always scoped narrower than its name implies (systemic-only), or the tool has a data-lag, or PLX falls outside coverage. We do not know which, and "we do not know" on a CRISIS tool is the worst possible state — alert-commander will silently under-report similar events again. TNB has explicitly escalated this to PO/architect.
+
+This is **not a band-aid sprint** — no dev code, no new tool yet. It is a pure architect-led SPIKE to decide: (a) does crisis_velocity need expansion to cover individual-stock crashes ≥-30%/-40%, (b) is the gap really in news-scout's chain_catalyst pipeline (which DID catch PLX) and so crisis_velocity is correctly scoped to macro/systemic, or (c) is there a data-coverage gap (PLX not in the crisis_velocity universe). Whatever the spike concludes, the output is a FIX or NO-OP recommendation with concrete scope. PO will spawn the FIX as Sprint 1947 once the spike is in hand.
+
+## Sprint 1946 sub-tasks
+
+### TIER 1 — Single SPIKE (architect read-only)
+- **SPIKE-1946 — Crisis detection coverage gap diagnosis.**
+  Owner: architect. Time-box 2h. Output: `docs/spikes/SPIKE_1946-crisis-detection-coverage.md`.
+  Questions to answer:
+  1. Where is `get_crisis_early_warning` implemented, and what data source(s) does it read? (Likely `crisis_velocity` table or a derived view inside `apps/mcp-server`.)
+  2. What is the intended scope — systemic/macro crisis only (e.g., VN-Index drawdown, FII outflow tipping, banking sector contagion) or also individual-stock -30%/-40% events?
+  3. Was PLX in the crisis_velocity coverage universe at 06:03 UTC 2026-05-18, and if yes — why did it not register? If no — should it be?
+  4. Is news-scout's `chain_catalyst event_type=crisis` (which DID catch PLX into signal #3383 at 05:21 UTC) the canonical individual-stock crash path, with `get_crisis_early_warning` correctly scoped narrower? If so → no code change, just document the scoping in `docs/standards/mcp-tools.md`.
+  5. If a fix is warranted: minimum viable scope (extend crisis_velocity ingestion to single-stock -X% events? add an `individual_stock_crash` row type? new tool `get_stock_crash_warning`?).
+  **AC:** Spike doc identifies root cause + recommended FIX/NO-OP path. If FIX → child task scoped (1947a-...) with clear zone (`apps/mcp-server/` likely). If NO-OP → doc update committed in `docs/standards/mcp-tools.md` + the spike itself is the artifact.
+
+### TIER 2 — Observation gates (no code, passive — carried over from Sprint 1945)
+- **post-1945-verdict-resolution-scored-pct** (NEW gate, 48h from 1945a deploy = ~07:22 UTC 2026-05-20). AC-1 from Sprint 1945: `alert_accuracy.scored_pct` rises ≥60% AND `unknowns_30d` drops by ≥100. If not achieved by 2026-05-20T08:00Z → re-open as 1947b-verdict-resolution-followup (HIGH FIX).
+- **post-1945-bug-storm-silence** (NEW gate, 48h). AC-2: zero new `[bug] verdictResolutionJob` Telegram messages for 48h post-1945a deploy. If any new bug msg before 2026-05-20T08:00Z → 1947c-verdict-resolution-bug-followup.
+- **post-1944-financial-reports-q1-2026** (gate 12:00 UTC 2026-05-18 = ~4.5h away). Pre-existing Todo carries over unchanged.
+- **post-1942-fa-verify** (gate ~23:00 UTC 2026-05-18). Pre-existing Todo carries over unchanged.
+- **1941b OBSERVE** gate 2026-05-25 (signal_outcomes ≥30 resolved). No PO action this sprint.
+- **1922g OBSERVE** gate 2026-06-01 (pharma_events cron tick).
+
+## Scope
+IN: 1 spike (architect read-only, 2h time-box), 4 observation gates (2 new from 1945 sign-off, 2 pre-existing).
+OUT: any code change before SPIKE-1946 concludes; new alert types; reworking crisis_velocity ingestion (gated on spike conclusion); new microservices; touching anything in `apps/mcp-server/scheduler/alerts/` (Sprint 1945 just shipped there — let it stabilise).
+
+## Success Metric
+- **AC-1 (PRIMARY):** SPIKE-1946 doc committed to `docs/spikes/SPIKE_1946-crisis-detection-coverage.md` within 24h, with clear FIX/NO-OP recommendation.
+- **AC-2:** If FIX recommended → child task (1947a) scoped with zone + AC, queued in TASKS.md Todo for next sprint.
+- **AC-3:** If NO-OP recommended → `docs/standards/mcp-tools.md` updated to document the scoping of `get_crisis_early_warning` (systemic vs individual-stock), and news-scout's `chain_catalyst event_type=crisis` confirmed as the canonical individual-stock crash path.
+- **AC-4 (gating):** Sprint 1945 observation gates resolve cleanly: scored_pct ≥60%, bug-storm silent, banking Q1-2026 populated, FA ≥20/30. Any miss → follow-up task scoped under Sprint 1947.
+
+## Sequencing
+1. SPIKE-1946 runs in parallel with observation gates (no dependency).
+2. Observation gate `post-1944-financial-reports-q1-2026` resolves at 12:00 UTC today (decides 1945d need).
+3. Observation gate `post-1942-fa-verify` resolves at ~23 UTC tonight (decides 1945c need).
+4. Observation gates `post-1945-*` resolve at ~07:22 UTC 2026-05-20 (decides 1947b/c need).
+5. SPIKE-1946 conclusion → Sprint 1947 scoping decision.
+
+## Architect brief required
+- **SPIKE-1946** IS the architect output (read-only diagnostic). No separate ARCH brief required.
+
+## Carry-forwards monitored (not in-scope this sprint)
+- 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP) — CRITICAL but blocked on user.
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock) — F1 USER-PERMANENT.
+- alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550)
+- fa-shape-guard-watch MONITORING (next post-restart FA live session)
+
+---
+
+## Sprint 1945 — VERDICT RESOLUTION RECOVERY + FRONTEND ACCURACY DIGEST (DONE)
+
+**Status:** DONE | **Closed:** 2026-05-18T07:24Z | **Theme:** Restore alert-accuracy signal (520→<200 unknowns, scored_pct 36%→≥60%) and unblock BA-1942d frontend card now that Sprint 1944 has stabilised the BCTC ingestion path.
+
+**Outcome:** SHIPPED. All 3 child tasks (1945a, 1945b-backend, 1945b-frontend) QA-APPROVED 2026-05-18. SPIKE-1945 + BA-1942d + ARCH-1945b + PM-1945b breakdown all DONE. Docker rebuilt 07:22 UTC, container healthy, 142 tools, 76 cron jobs.
+- **1945a:** `getPriceHistory` envelope unwrap in `verdictResolutionJob.ts` + `clients.ts`. 6 new unit tests GREEN. Root cause: Go `/price/history` returns `{code, history: DailyOHLCV[]}` envelope but TS code was reading `snaps[0].price` as `PriceSnapshot[]`. Fixed `defaultFetchHistory()` to read `envelope.history[0].close`. Eliminates silent TypeError → null → `false_positive:unresolvable` path that was preventing ~520 alerts from being scored.
+- **1945b-backend:** `GET /api/accuracy/digest?days=N` handler in `server.ts` after line 1020. Days clamped [1,90] using `isNaN` guard (R-4 mitigated). 6 tests GREEN.
+- **1945b-frontend:** `AccuracyDigestCard` SectionCard in `dashboard.analysis.tsx` after Kinh Dịch card. 6 UI states (loading/empty/all-neutral/insufficient-sample/partial/normal). 20 tests GREEN, full suite 144/144.
+- **Open observation gates (carried into Sprint 1946):** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence (both at 2026-05-20T07:22Z). scored_pct recovery expected within 48h based on alert cron cadence.
+
+---
+
+## Sprint 1945 ORIGINAL VISION (preserved for traceability)
 
 **Status:** Active | **Opened:** 2026-05-18T06:23Z | **Theme:** Restore alert-accuracy signal (520→<200 unknowns, scored_pct 36%→≥60%) and unblock BA-1942d frontend card now that Sprint 1944 has stabilised the BCTC ingestion path.
 
