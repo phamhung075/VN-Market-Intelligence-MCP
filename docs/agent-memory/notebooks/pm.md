@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c179 (PM: 1941d → DONE QA-APPROVED, Sprint 1941 dev COMPLETE, WIP=0/2 CLEAN) | **Sprint:** 1941 CLOSED DEV (1941a DONE, 1941c DONE, 1941d DONE, 1941b OBSERVE gate 2026-05-25) | **Current:** WIP 0/2 (ready for dispatch)
+**Last updated:** 2026-05-18 c180 (PM: Sprint 1942 dev handoff complete — TASK_1942a + TASK_1942b ready-for-dev, docs/TASKS.md updated, WIP=0/2 CLEAN) | **Sprint:** 1942 READY-FOR-DEV (BA-1942a + BA-1942b specs → TASK_1942a + TASK_1942b handoff files) | **Current:** WIP 0/2 (dispatch queue)
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c179: 1941d (FPT net_profit OCR fix) QA APPROVED + MERGED to main. 24 cashflow tests GREEN (7 new + 17 regression), tsc clean, DDD PASS, security PASS. ni_source column + bridgeNetProfitToFinancialReports() wired into cashFlowTool COALESCE. FPT Q4/2025 ratio 1.6371 (passes guard). Sprint 1941 dev work COMPLETE: 1941a DONE (L7 OCF guard), 1941c DONE (accuracyDigestJob daily digest), 1941d DONE (net_profit bridge). 1941b in OBSERVE (7d seed window, gate 2026-05-25, not a code blocker). WIP capacity = 2/2 AVAILABLE for next dispatch. No blockers. Ready to pull next high-priority backlog task.
+- **WIP: 0/2 CLEAN** — Cycle c180: Sprint 1942 decomposition COMPLETE. ARCH-1942 → BA-1942a + BA-1942b → TASK_1942a + TASK_1942b handoff files created. Docs/TASKS.md updated: both tasks in Todo/Ready-for-Dev state. TASK_1942a (S, startup probe, single-file). TASK_1942b (M, cashflow fallback + backfill, 2-file, depends on 1942a). WIP capacity = 2/2 AVAILABLE for dispatch to dev-mcp-server. No blockers. Ready to notify developer.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,61 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 180 — 2026-05-18 PM Sprint 1942 Decomposition: ARCH-1942 → TASK_1942a + TASK_1942b (WIP=0/2 CLEAN, ready for dispatch)
+
+**Input:** ARCH-1942 brief (architect), BA-1942a + BA-1942b specs (ba), docs/TASKS.md, PM dispatcher.
+
+**Context:** 
+- PO self-initiated Sprint 1942 (commit 67907e71) — watchlist fundamentals coverage expansion
+- Architect delivered ARCH-1942 brief (2026-05-18): 2-gap diagnosis (vnstock startup probe missing + cashFlowTool needs fallback read path for non-OCR tickers)
+- BA delivered BA-1942a (startup probe spec, 200L) + BA-1942b (fallback read path + backfill spec, 265L)
+- Both BA specs complete, no blockers, all design decisions resolved by architect brief
+
+**Actions:**
+1. **Task decomposition (PM atomic tasks):**
+   - **TASK_1942a** (Startup Backfill Probe): 
+     - Size: S (single-file, ~50 lines)
+     - Zone: apps/mcp-server/ (interface/scheduler layer)
+     - Files: `apps/mcp-server/src/scheduler/startScheduler.ts` only
+     - Scope: Add IIFE probe after `startScheduler()` def. Guard: `COUNT(DISTINCT code WHERE data_type='financials') < 10` OR `last fetch > 7 days` → fire `runVnstockFundamentalsJob()` after 90s delay. Pattern: copy EFFR backfill IIFE (lines 608-637 in same file).
+     - Acceptance: 11 testable criteria (AC-1..AC-11): unit tests (cold DB guard, delay, error handling, idempotency) + integration (≥20 tickers populated post-restart).
+     - No dependencies.
+   
+   - **TASK_1942b** (cashFlowTool Fallback + OCF Backfill):
+     - Size: M (2-file, ~100 lines total)
+     - Zone: apps/mcp-server/ (interface/mcp/tools + infrastructure/db layers)
+     - Files: `apps/mcp-server/src/interface/mcp/tools/financial-reports/cashFlowTool.ts` + `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts`
+     - Primary scope: Add COALESCE-style fallback in cashFlowTool.ts — if financial_reports=empty for ticker, query vnstock_cash_flow + vnstock_financials directly. Apply unit conversion (tỷ→triệu ×1000). Synthesize response with `data_source: "vnstock_direct"`. Reuse `computeOcfNiRatio()` unchanged.
+     - Secondary scope: Add `backfillOCFForWatchlist()` to schema-financial-reports.ts, call in migration block after `backfillAllNetProfit()`. Reads watchlist from `docs/data/stock-classification.json`, calls `bridgeOCFToFinancialReports()` per ticker, logs count.
+     - Acceptance: 14 testable criteria (AC-1..AC-8 primary + AC-B1..AC-B6 secondary): unit tests (fallback logic, unit conversion, period filters, backfill idempotency) + integration (≥20/30 tickers return found=true after 1942a probe).
+     - Depends_on: TASK_1942a (startup probe must populate vnstock tables before integration testing).
+     - Blocks: TASK_1942c (HPG cash flow fix, sequenced after 1942b).
+
+2. **Created handoff files:**
+   - `docs/handoffs/TASK_1942a.md` (218L): planning context, acceptance criteria, files-to-read/modify, BA spec summary, test notes
+   - `docs/handoffs/TASK_1942b.md` (321L): planning context, acceptance criteria, COALESCE decision tree, unit conversion table, backfillOCFForWatchlist pattern, edge cases, test notes
+   - Both files follow PM handoff template (FRONTMATTER + TLDR + Planning Context + Implementation Notes + Success Criteria + Testing + Constraints + Developer-ready summary)
+
+3. **Updated docs/TASKS.md:**
+   - Moved BA-1942a + BA-1942b from Todo to Done section (now marked `**DONE 2026-05-18** — Spec written`)
+   - Added TASK_1942a to Todo section: `| 1942a | **READY-FOR-DEV 2026-05-18** — ... | HIGH | TASK | dev-mcp-server | docs/handoffs/TASK_1942a.md | ARCH-1942 |`
+   - Added TASK_1942b to Todo section: `| 1942b | **READY-FOR-DEV 2026-05-18** — ... | HIGH | TASK | dev-mcp-server | docs/handoffs/TASK_1942b.md | 1942a |` (depends_on=1942a)
+   - BA-1942c + BA-1942d remain in Todo (sequenced after 1942b for 1942c)
+
+4. **WIP Status:** 0/2 CLEAN. Both handoff files ready. No blockers. dev-mcp-server can pick up 1942a immediately (no external dependencies); 1942b waits for 1942a completion (data dependency: vnstock tables must be populated).
+
+5. **PM notebook updated:** Header + current state section reflect Sprint 1942 ready-for-dev state. This cycle entry added.
+
+**QA Gate:** N/A (PM decomposition step, no code to review).
+
+**Dispatch:** Ready to notify dev-mcp-server via WORK channel. Tier 1: TASK_1942a (parallel, independent). Tier 2: TASK_1942b (after 1942a ships). Optional Tier 3: BA-1942c (after 1942b).
+
+**Blockers:** None. All design resolved. Handoff files complete. Ready to execute.
+
+**Status:** Sprint 1942 decomposition COMPLETE. WIP=0/2 CLEAN. Dispatch queue: TASK_1942a → TASK_1942b (sequential due to data dependency). Next: developer pickup notification.
 
 ---
 
