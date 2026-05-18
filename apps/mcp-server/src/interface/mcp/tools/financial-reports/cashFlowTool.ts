@@ -1,15 +1,21 @@
 /**
- * MCP Tool: get_cash_flow — Task 1890a-A (guard added 1930b)
+ * MCP Tool: get_cash_flow — Task 1890a-A (guard added 1930b, API-bridge fix 1941a)
  *
  * Returns the full 4-line cash flow statement for a given VN stock ticker
  * plus the OCF/NI forensic ratio required by the FA G-step.
  *
+ * OCF source priority (Task 1941a):
+ *   1. operating_cash_flow (vnstock API bridge — written by bridgeOCFToFinancialReports)
+ *   2. operating_cf (OCR/PDF extraction fallback)
+ *   ocf_source field indicates which was used: "api_bridge" | "ocr"
+ *
  * Fields returned:
- *   operating_cf      — operating cash flow (VND millions)
+ *   operating_cf      — effective operating cash flow (VND millions): API bridge if available, else OCR
  *   investing_cf      — investing cash flow (VND millions)
  *   financing_cf      — financing cash flow (VND millions)
  *   capex             — capital expenditure (VND millions, negative = outflow)
  *   free_cash_flow    — FCF = operating_cf + capex (VND millions)
+ *   ocf_source        — "api_bridge" when operating_cash_flow used, "ocr" when falling back
  *   ocf_ni_ratio      — operating_cf / net_profit (null if net_profit === 0 or null,
  *                       or if |raw ratio| > OCF_NI_RATIO_PLAUSIBILITY_LIMIT)
  *   ocf_ni_ratio_raw  — unguarded ratio (null only if not computable)
@@ -42,6 +48,8 @@ interface CashFlowRow {
   financing_cf: number | null;
   capex: number | null;
   free_cash_flow: number | null;
+  /** Task 1878a API bridge: vnstock-sourced OCF in triệu VND. Preferred over operating_cf. */
+  operating_cash_flow: number | null;
 }
 
 // ── Plausibility limit ────────────────────────────────────────────────────────
@@ -62,6 +70,8 @@ interface CashFlowFound {
   financing_cf: number | null;
   capex: number | null;
   free_cash_flow: number | null;
+  /** Task 1941a: "api_bridge" when operating_cash_flow column used, "ocr" when falling back */
+  ocf_source: "api_bridge" | "ocr";
   ocf_ni_ratio: number | null;
   ocf_ni_ratio_raw: number | null;
   ocf_ni_suppressed: boolean;
@@ -196,7 +206,8 @@ export function buildGetCashFlowHandler(
         investing_cf,
         financing_cf,
         capex,
-        free_cash_flow
+        free_cash_flow,
+        operating_cash_flow
       FROM financial_reports
       WHERE ${whereClause}
       ORDER BY period_year DESC, period_quarter DESC
@@ -222,8 +233,16 @@ export function buildGetCashFlowHandler(
       };
     }
 
+    // Task 1941a: prefer API-bridge OCF over OCR OCF.
+    // operating_cash_flow (Task 1878a) is vnstock-sourced and correct.
+    // operating_cf (PDF/OCR) is often corrupted (VCB=1.23e15, FPT unit mismatch).
+    const effectiveOcf: number | null =
+      row.operating_cash_flow !== null ? row.operating_cash_flow : row.operating_cf;
+    const ocfSource: "api_bridge" | "ocr" =
+      row.operating_cash_flow !== null ? "api_bridge" : "ocr";
+
     const { ratio: ocf_ni_ratio, rawRatio: ocf_ni_ratio_raw } =
-      computeOcfNiRatio(row.operating_cf, row.net_profit);
+      computeOcfNiRatio(effectiveOcf, row.net_profit);
 
     // Suppressed = raw is computable but exceeded the plausibility limit
     const ocf_ni_suppressed =
@@ -236,11 +255,12 @@ export function buildGetCashFlowHandler(
       period: periodLabel(row.period_year, row.period_quarter),
       period_year: row.period_year,
       period_quarter: row.period_quarter,
-      operating_cf: row.operating_cf,
+      operating_cf: effectiveOcf,
       investing_cf: row.investing_cf,
       financing_cf: row.financing_cf,
       capex: row.capex,
       free_cash_flow: row.free_cash_flow,
+      ocf_source: ocfSource,
       ocf_ni_ratio,
       ocf_ni_ratio_raw,
       ocf_ni_suppressed,
@@ -259,6 +279,8 @@ export function registerGetCashFlowTool(server: McpServer): void {
     "get_cash_flow",
     "Return the full 4-line cash flow statement for a VN stock ticker. " +
       "Fields: operating_cf, investing_cf, financing_cf, capex, free_cash_flow (all VND millions). " +
+      "operating_cf uses the vnstock API bridge value when available (ocf_source='api_bridge'), " +
+      "otherwise falls back to OCR/PDF extraction (ocf_source='ocr'). " +
       "Forensic fields: ocf_ni_ratio = operating_cf / net_profit (null if net_profit is zero or null); " +
       "ocf_ni_ratio is null when |raw_ratio| > 20 (data quality guard); use ocf_ni_ratio_raw to inspect suppressed values. " +
       "ocf_ni_suppressed=true when raw ratio exists but exceeded the plausibility limit. " +
