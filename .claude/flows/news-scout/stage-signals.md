@@ -32,6 +32,69 @@ For each candidate signal:
 
 **3. Signals**
 
+### Legal Risk Signal Dispatch
+
+Legal risk event detected (prosecution / asset freeze / investigation) in article for watchlist or reference ticker →
+
+**Trigger condition (either):**
+- `legalRiskDetector.detectLegalRisk(articleText, watchlistCodes)` returns non-empty result, OR
+- Article text matches any `CRIMINAL_PROSECUTION_KEYWORDS` (from `policyImpactMapper.ts`) AND `detectStocksInText()` resolves ≥1 watchlist/reference-stock code (e.g. PC1 from `referenceStocks.utilities`)
+
+**Step 1 — Dedup check:**
+Query recent `agent_signals` for matching `(stock_code, signal_type = "legal_risk")` within 360 minutes:
+
+```
+dedup_check = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "agent": "news-scout",
+  "from_agent": "news-scout",
+  "status": "all"
+})
+# Manual check: scan returned rows for same stock_code + signal_type="legal_risk"
+# within last 360 minutes using created_at.
+# 360 min = 6h TTL — legal proceedings evolve slowly, no need for per-cycle repost.
+```
+
+- If duplicate found within 360 min → **SUPPRESS** with log: `"[DEDUP] legal_risk suppressed — same (stock_code, legal_risk) already on bus within 360 min. Skipping post."`
+- If no duplicate → proceed to Step 2
+
+**Step 2 — Classify risk level:**
+
+| Risk type | Confidence |
+|-----------|-----------|
+| `prosecution` / `asset_freeze` | 0.95 |
+| `tax_penalty` / `license_revocation` | 0.85 |
+| `investigation` / `litigation` / `anti_dumping` | 0.70 |
+
+Use `legalRiskSignal.riskType` (from `detectLegalRisk()`) to look up the confidence score above.
+
+**Step 3 — Post signal:**
+
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "news-scout",
+  "to_agent": "alert-commander",
+  "signal_type": "legal_risk",
+  "stock_code": "<TICKER resolved by detectStocksInText()>",
+  "payload": {
+    "title": "<headline>",
+    "detail": "<riskType> — <matched patterns joined by ', '> — <source>"
+  },
+  "ttl_minutes": 360,
+  "finding_data": {
+    "title": "<headline>",
+    "detail": "<riskType> — <matched patterns joined by ', '>",
+    "confidence_score": <0.95 | 0.85 | 0.70>
+  }
+})
+```
+
+**Notes:**
+- `ttl_minutes: 360` — legal events are durable; signal expires after 6 h to prevent stale alerts
+- Do NOT contact `verdictResolutionJob.ts` or `alert_accuracy` tables — legal_risk signals are not scored by the verdict pipeline
+- Multiple risk types in one article → one `post_agent_signal` call per distinct `riskType` (deduplicated by type)
+
+---
+
 Watchlist hit (breaking news) → post `urgent_news`:
 <!-- AUTO-CURE TNB c55 — 2026-05-15: F/H-step gap (3-cycle evidence c53/c54/c55).
      payload.detail must include pillar summary + cycle phase + pyramid tier (same as chain_catalyst).
