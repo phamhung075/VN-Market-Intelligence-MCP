@@ -226,3 +226,18 @@ AC-8 through AC-11 are integration tests (can be verified manually after cold re
 - **Docs updated:** `docs/architecture/microservice/mcp-server/financial-reports.md` — scheduler job count updated
 - **AC-7 verified:** No `_resetRunningState` in probe block (code review confirmed)
 - **Design note:** Extracted probe into `vnstockStartupProbe.ts` (injectable deps pattern) rather than inline IIFE, enabling clean unit tests without module-level mocking. startScheduler.ts wires production deps.
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-18
+- **Round:** 1
+- **Verdict:** APPROVED
+- **Task tests:** 6 pass / 0 fail
+- **Full suite:** 9612 pass / 328 fail / 49 skip (main baseline: 9606/328 — +6 new, 0 regressions)
+- **tsc:** 0 errors
+- **DDD:** PASS — probe in scheduler/financial-reports/ (interface layer), no domain→infra imports
+- **Security:** PASS — no process.env, no hardcoded secrets, parameterized SQL
+- **AC-1 through AC-11:** all PASS (see reports/TASK_REPORT_1942a.md for details)
+- **Merge commit:** chore(1942/mcp-server): merge task/1942a-startup-backfill-probe
