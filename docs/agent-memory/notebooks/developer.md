@@ -1,6 +1,48 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T03:15Z | **Sprint:** 1941a — DONE, REVIEW
+**Last updated:** 2026-05-18T05:00Z | **Cycle:** c177 | **Sprint:** 1941 — idle drain
+
+## Session c177 — Preflight + drain + idle
+
+**Preflight:** NO HEAD.lock. Worktree prune: clean. No worktree lock dir. PASS.
+
+**Drain signals (0a):** One JSON signal in docs/signals/: `alert-commander-2026-05-18T02-06-30Z.json` (type=bug-escalation, index.lock EPERM from cowork mount — recurring wontfix-sandbox pattern). DASHBOARD.md: no new entries.
+
+**Telegram reports (status=new):**
+- #2933 (alert-commander): index.lock EPERM at 02:06 UTC — wontfix-sandbox, matches #2894. Processed.
+- #2934 (unified-agent): FPT net_profit=20,225 ty BCTC corruption — duplicate of 1941d (QA in flight). Processed.
+
+**Zone conflict check:**
+- 1941d zone: `apps/mcp-server/src/infrastructure/db/` + `interface/mcp/tools/financial-reports/`
+- Both reports resolve to 1941d zone — no separate task possible without conflict.
+- No other signals or Todo tasks in non-conflicting zones.
+
+**Decision:** IDLE. WIP=1/2 (1941d QA slot). No open dev slot dispatch possible. WORK notified.
+
+---
+
+## Session c176 — WIP audit + signal routing
+
+**Preflight:** NO HEAD.lock. Worktree prune: clean (no output). No worktree locks. PASS.
+
+**Drain signals (0a):** No JSON files in docs/signals/. DASHBOARD.md present (no new signals).
+
+**Telegram reports:** All resolved (highest ID=2932, all wontfix/fixed). Zero new/unresolved reports.
+
+**WIP audit:**
+- Slot claim "BA writing 1941c": STALE. BA spec `docs/handoffs/1941c-ba-spec.md` is COMPLETE (status=Review). TASKS.md correctly shows owner=architect, "SPEC READY FOR REVIEW". Does NOT occupy a dev slot.
+- Slot claim "1941d FPT net_profit OCR fix": Branch `task/1941d-fpt-netprofit-ocr-fix` exists at main HEAD (0 commits ahead). No handoff file written. Dev hasn't started implementation.
+- Effective dev slots occupied: 0 active implementation. 1941d branch exists but is dormant (no handoff, no commits).
+
+**Routing:**
+- BA-1941c: BA spec ready — routing note to architect (no dev slot needed, no dispatch required — just TASKS.md note already correct).
+- 1941d: branch exists, no handoff. PM created it but dev hasn't started. WIP=0 from dev perspective.
+
+**Decision:** Per user constraint WIP=2/2 do NOT spawn developer tasks. BA-1941c needs architect review (Todo → architect). 1941d needs handoff before dev can start. Neither requires dev-team to spawn a specialist right now. Send WORK: idle with WIP noted.
+
+**Pipeline state:** c176 IDLE. WORK notified.
+
+---
 
 ## Last session summary (1941a — L7 OCF guard deploy-verify)
 

@@ -72,11 +72,21 @@ export function initFinancialReportsTables(db: Database): void {
 
     // ── Task 1878a: OCF bridge column (vnstock API-grade, quarterly only) ───
     // Separate from existing `operating_cf` (BCTC OCR/PDF extraction).
-    // Unit: triệu VND (millions) — consistent with all other scalar columns.
+    // Unit: trieu VND (millions) — consistent with all other scalar columns.
     // NULLABLE: not every ticker has vnstock cash-flow history.
     if (!colNames.has("operating_cash_flow")) {
       db.exec(
         "ALTER TABLE financial_reports ADD COLUMN operating_cash_flow REAL",
+      );
+    }
+
+    // ── Task 1941d: net_profit API bridge column ─────────────────────────────
+    // Separate from existing `net_profit` (BCTC OCR/PDF extraction, often wrong).
+    // Populated from vnstock_financials.net_profit_bn * 1000 (ty -> trieu).
+    // Unit: trieu VND (millions). NULLABLE: not every ticker has vnstock data.
+    if (!colNames.has("net_profit_api_bridge")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN net_profit_api_bridge REAL",
       );
     }
   } catch {
@@ -267,6 +277,10 @@ export function initFinancialReportsTables(db: Database): void {
   // are covered automatically on every server start (idempotent UPDATE is a
   // no-op when values already populated). Simpler than a separate CLI command.
   backfillAllOCF(db);
+
+  // ── Task 1941d: backfill net_profit_api_bridge on migration ──────────────
+  // Mirrors backfillAllOCF strategy. Idempotent UPDATE from vnstock_financials.
+  backfillAllNetProfit(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -280,8 +294,8 @@ export function initFinancialReportsTables(db: Database): void {
  * (single UPDATE covers all, historical rows included). Simpler than tracking
  * just-inserted quarter; idempotent (repeated calls = same result).
  *
- * Unit conversion: vnstock_cash_flow.operating_cf_bn is tỷ VND (billions).
- *                  financial_reports.operating_cash_flow is triệu VND (millions).
+ * Unit conversion: vnstock_cash_flow.operating_cf_bn is ty VND (billions).
+ *                  financial_reports.operating_cash_flow is trieu VND (millions).
  *                  Multiply by 1000.0.
  *
  * Skips:
@@ -332,5 +346,69 @@ export function backfillAllOCF(db: Database): void {
     .all();
   for (const { code } of tickers) {
     bridgeOCFToFinancialReports(db, code);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Task 1941d — Net Profit Bridge mapper
+// ---------------------------------------------------------------------------
+
+/**
+ * bridgeNetProfitToFinancialReports — lifts vnstock quarterly NI into financial_reports.
+ *
+ * Strategy: update ALL quarters for the ticker on each call. Idempotent.
+ *
+ * Unit conversion: vnstock_financials.net_profit_bn is ty VND (billions).
+ *                  financial_reports.net_profit_api_bridge is trieu VND (millions).
+ *                  Multiply by 1000.0.
+ *
+ * Root cause context (Task 1941d): FPT Q4/2025 OCR extracted revenue as net_profit
+ * (financial_reports.net_profit=20,225 trieu vs correct 2,509,520 trieu).
+ * cashFlowTool COALESCEs net_profit_api_bridge over net_profit for OCF/NI ratio.
+ *
+ * Skips:
+ *   - Annual rows in financial_reports (period_quarter IS NULL)
+ *   - vnstock_financials rows where quarter = 0 (annual)
+ *
+ * @param db     Database instance (injected — supports in-memory test DBs)
+ * @param ticker Stock code (e.g. "FPT")
+ */
+export function bridgeNetProfitToFinancialReports(
+  db: Database,
+  ticker: string,
+): void {
+  db.prepare(
+    `UPDATE financial_reports
+     SET net_profit_api_bridge = (
+       SELECT vf.net_profit_bn * 1000.0
+       FROM vnstock_financials vf
+       WHERE vf.code        = financial_reports.action_code
+         AND vf.year_report = financial_reports.period_year
+         AND vf.quarter     = financial_reports.period_quarter
+         AND vf.quarter BETWEEN 1 AND 4
+       ORDER BY vf.fetched_at DESC
+       LIMIT 1
+     )
+     WHERE financial_reports.action_code    = ?
+       AND financial_reports.period_quarter IS NOT NULL`,
+  ).run(ticker);
+}
+
+/**
+ * backfillAllNetProfit — one-shot backfill for all tickers in vnstock_financials.
+ *
+ * Iterates all distinct codes in vnstock_financials and calls
+ * bridgeNetProfitToFinancialReports for each. Idempotent.
+ *
+ * @param db Database instance
+ */
+export function backfillAllNetProfit(db: Database): void {
+  const tickers = db
+    .prepare<{ code: string }, []>(
+      "SELECT DISTINCT code FROM vnstock_financials",
+    )
+    .all();
+  for (const { code } of tickers) {
+    bridgeNetProfitToFinancialReports(db, code);
   }
 }

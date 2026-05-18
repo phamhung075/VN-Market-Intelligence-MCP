@@ -1,5 +1,26 @@
 # News Scout — Notebook
 
+**Last updated:** 2026-05-18 01:25 UTC | **Status:** OK (cycle complete — pre-open analysis)
+
+### Cycle (01:25 UTC) — PRE_OPEN
+- Items: 20 | Impacts: 4 chain entries (PC1 utilities × 4 stocks) | Signals: [chain_catalyst #3362/PC1-legal] | Regime: TIGHTENING | Carry: FII_OUTFLOW_RISK
+- Feedback: 0 unread (bootstrap.agent_signals=[]) | Filter hints: [default — no tuning]
+- Cycle status: COMPLETE | Log ID: 971 | Signal IDs: 3362 (critic_score=0.8)
+- Macro snapshot: Valid shape, REGIME_SOURCE=macro_snapshot. Global Liquidity=TIGHTENING, VND carry=-0.33% (FII_OUTFLOW_RISK), Brent=$111.12, Gold=$4504.70, USD/VND=26,350. US 10Y=4.59% RISK-OFF threshold.
+- Market context: VN market CLOSED (01:25 UTC, opens 02:00 UTC Mon 2026-05-18). 3 macro alerts open (Brent +2.91σ HIGH, Gold -3.58σ CRITICAL/EXTREME, Brent again HIGH 23:30).
+- Dedup gate (180min window): 0 suppressions. Prior signal #3337 (Dragon Capital bullish tech/securities) does not overlap with PC1 bearish utilities/construction event_type.
+- Top high-impact items analyzed:
+  * #1 PC1 Chairman Trịnh Văn Tuấn + key personnel indicted (impact 8/10 source, multiple chain articles incl. emergency delegation + mega electricity projects context) → chain_catalyst #3362 posted (event_type=legal, direction=bearish, confidence=0.8, affected_stocks=[POW,PPC,JSH,REE], affected_sectors=[utilities,construction], regime_adj_score=10 under TIGHTENING×1.3, hot_money_risk=true)
+  * #2 PLX -40% from peak / oil_gas divergence (source impact 9/10 bearish, but impact_chain reads BULLISH for oil_gas via Brent>$100 macro overlay) → SUPPRESSED: source/chain direction conflict; GAS already +6.94%; risk of misleading signal. Logged for monitoring only.
+  * #3 Dragon Capital "forgotten" bullish call on VIC (impact 8/10) → SUPPRESSED: regime-adjusted 8×0.7=5.6 < chain_catalyst threshold 7; also overlaps thematically with prior signal #3337.
+  * #4 BAF profit forecast +485% (impact 8/10, agriculture) → SUPPRESSED: BAF not in watchlist; regime-adjusted 5.6 < threshold.
+- Stage 1b historical context: search_similar_context returned 1 result for PC1 governance (self-match, same article from earlier ingestion), 0 for PLX. Non-fatal.
+- Batch 2 (sentiment ledger): SKIPPED (not in 05:00 UTC window — currently 01:25 UTC).
+- Notebook git commit: SKIPPED (Cowork subagent — no git push privileges to user repo).
+- Notes: Pre-market cycle. PC1 governance crisis is the dominant news theme this cycle, continuing from prior 22:21 UTC cycle where #3343 was already posted on same theme. However prior signal #3343 is now >3h old (180min dedup window expired), so re-posting #3362 is intentional refresh ahead of market open at 02:00 UTC. TIGHTENING regime + carry -0.33% + Brent extreme high = stacked headwinds for risk assets. Next cycle: 02:00 UTC market open (every 15min cadence resumes).
+
+---
+
 **Last updated:** 2026-05-17 23:22 UTC | **Status:** OK (closed-window cycle, no work)
 
 ### Cycle (23:22 UTC) — CLOSED_WINDOW
