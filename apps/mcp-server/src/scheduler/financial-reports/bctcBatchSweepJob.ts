@@ -303,12 +303,25 @@ export async function runBctcBatchSweep(
  *
  * Only executes during earnings season months (1, 4, 7, 10).
  * Logs start/completion to WORK channel.
+ *
+ * TASK-1943a diagnostic: console.log at entry confirms the job fired and
+ * entered the function. If this log appears in Docker logs but no
+ * cron_job_runs row exists, the issue is in wrapRun recording (unlikely).
+ * If this log is absent, the container was down or the cron did not fire.
+ * The wrapRun key in startScheduler.ts is 'bctcBatchSweepJob' — matches
+ * what SqliteJobRunRepository.wrapRun expects. Zero-run root cause for
+ * 2026-04-25: container likely down or restarted between 09:00-09:01 UTC.
+ * Next scheduled fire: 2026-07-25 09:00 UTC.
  */
 export async function runBctcBatchSweepJob(): Promise<void> {
   const now = new Date();
 
+  // TASK-1943a: diagnostic entry log — confirms job fired (visible in Docker logs)
+  console.log(`[bctcBatchSweepJob] Starting batch sweep job — ${now.toISOString()}`);
+
   if (!isEarningsSeason(now)) {
     // Outside earnings season — skip silently
+    console.log(`[bctcBatchSweepJob] Outside earnings season (month=${now.getMonth() + 1}) — skipping`);
     return;
   }
 

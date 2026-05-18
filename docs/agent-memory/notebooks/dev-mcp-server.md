@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1943a — BCTC Q1-2026 queue reset + batch sweep diagnosis + auto-retry (2026-05-18, DONE)
+
+**Root cause / goal:** 31 bctc_vps_queue rows stuck at url_not_found for Q1-2026 (MAX_ENRICH_ATTEMPTS=5 exhausted). bctcBatchSweepJob zero runs in cron_job_runs. No auto-retry policy for parked rows.
+
+**FIX A:** `resetQ1UrlNotFound(db)` in schema-financial-reports.ts — idempotent UPDATE (status=pending, attempts=0 WHERE url_not_found AND year=2026 AND quarter=Q1). Called from initFinancialReportsTables() after backfillAllNetProfit(). Returns change count.
+
+**FIX B (diagnostic):** Added `console.log('[bctcBatchSweepJob] Starting...')` at entry of runBctcBatchSweepJob. Root cause documented: wrapRun key 'bctcBatchSweepJob' in startScheduler.ts is CORRECT (no mismatch). Zero-run = container likely down at 2026-04-25 09:00 UTC. Next scheduled fire: 2026-07-25 09:00 UTC. Added seasons skip log too.
+
+**FIX C:** Extended bctcQueueEnricherJob.ts WHERE clause with Arm 2 (grace-period): `status='url_not_found' AND last_attempt IS NOT NULL AND last_attempt < datetime('now', '-7 days') AND attempts < 6`. Graceful fallback to Arm 1 only when `last_attempt` column absent (older test schemas). Also updated `updateStmt` to `SET source_url=?, status='pending'` so grace-period rows are re-queued for PDF pull.
+
+**Tests:** 16 new tests in `BCTC-1943-queue-reset-and-retry.test.ts` — AC-1 (4 tests), AC-2 (3), AC-3 (4), AC-4 (5). All GREEN. 87 total BCTC enricher/sweep tests pass.
+
+**Key gotcha:** makeMinimalDb() in 1782 test lacks last_attempt column → fallback logic needed in enricher query. Fixed with "no such column: last_attempt" catch → Arm 1 only fallback.
+
+**Files changed:** schema-financial-reports.ts, bctcQueueEnricherJob.ts, bctcBatchSweepJob.ts, BCTC-1943-queue-reset-and-retry.test.ts (new), TASKS.md
+
+Zone health: queue reset idempotent; grace-period prevents permanent blindspots; batch sweep has diagnostics | HEALTHY
+
+---
+
 ### Task 1942a — vnstock startup backfill probe (2026-05-18, DONE → REVIEW)
 
 **Root cause / goal:** Cold Docker restart leaves vnstock_financials empty until Monday 01:00 UTC cron. Probe fills the gap.

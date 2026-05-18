@@ -15,8 +15,10 @@
  *   - vnstock_fetch_log
  */
 
+import * as fs from "node:fs";
 import type { Database } from "bun:sqlite";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
+import { logger } from "../logger.js";
 
 export function initFinancialReportsTables(db: Database): void {
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
@@ -281,6 +283,17 @@ export function initFinancialReportsTables(db: Database): void {
   // ── Task 1941d: backfill net_profit_api_bridge on migration ──────────────
   // Mirrors backfillAllOCF strategy. Idempotent UPDATE from vnstock_financials.
   backfillAllNetProfit(db);
+
+  // ── Task 1942b: backfill OCF for watchlist tickers on migration ───────────
+  // Covers the 30 watchlist tickers regardless of whether they appear in
+  // vnstock_cash_flow. Idempotent. Safe on startup: EC-6 handled internally.
+  backfillOCFForWatchlist(db);
+
+  // ── TASK-1943a: reset Q1-2026 url_not_found rows to pending ───────────────
+  // 31 bctc_vps_queue rows exhausted MAX_ENRICH_ATTEMPTS=5 without finding PDF
+  // URLs. Resetting to pending/attempts=0 allows the enricher to retry.
+  // Idempotent: no-op after first run (rows already pending). Safe on startup.
+  resetQ1UrlNotFound(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -308,8 +321,8 @@ export function initFinancialReportsTables(db: Database): void {
 export function bridgeOCFToFinancialReports(
   db: Database,
   ticker: string,
-): void {
-  db.prepare(
+): number {
+  const result = db.prepare(
     `UPDATE financial_reports
      SET operating_cash_flow = (
        SELECT vcf.operating_cf_bn * 1000.0
@@ -324,6 +337,7 @@ export function bridgeOCFToFinancialReports(
      WHERE financial_reports.action_code    = ?
        AND financial_reports.period_quarter IS NOT NULL`,
   ).run(ticker);
+  return result.changes;
 }
 
 /**
@@ -411,4 +425,95 @@ export function backfillAllNetProfit(db: Database): void {
   for (const { code } of tickers) {
     bridgeNetProfitToFinancialReports(db, code);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Task 1942b — Watchlist OCF backfill (SSOT: docs/data/stock-classification.json)
+// ---------------------------------------------------------------------------
+
+/**
+ * backfillOCFForWatchlist — bridges OCF to financial_reports for every ticker
+ * in the 30-ticker watchlist SSOT.
+ *
+ * Reads `docs/data/stock-classification.json`, iterates all tickers, and calls
+ * `bridgeOCFToFinancialReports(db, ticker)` for each. Idempotent: the underlying
+ * UPDATE sets the same value on repeat runs (no INSERT, no duplicates).
+ *
+ * N = tickers for which the UPDATE touched ≥1 row in financial_reports.
+ * This will be 0 for fresh DBs and grow as BCTC OCR adds more tickers.
+ *
+ * EC-6: if stock-classification.json is unreadable, logs WARN and returns early
+ * without throwing. Server startup must not crash due to a missing file.
+ *
+ * @param db Database instance
+ */
+export function backfillOCFForWatchlist(db: Database): void {
+  try {
+    const raw = fs.readFileSync("docs/data/stock-classification.json", "utf-8");
+    const classification = JSON.parse(raw) as {
+      watchlist: Array<{ ticker: string }>;
+    };
+    const tickers: Array<{ ticker: string }> = classification.watchlist ?? [];
+
+    let count = 0;
+    for (const { ticker } of tickers) {
+      const changes = bridgeOCFToFinancialReports(db, ticker);
+      if (changes > 0) count++;
+    }
+
+    logger.info(
+      `[backfillOCFForWatchlist] updated operating_cash_flow for ${count} tickers (watchlist sweep)`,
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.warn(`[backfillOCFForWatchlist] failed to read stock-classification.json: ${msg}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// TASK-1943a — Q1-2026 url_not_found queue reset
+// ---------------------------------------------------------------------------
+
+/**
+ * resetQ1UrlNotFound — reset Q1-2026 url_not_found rows to pending.
+ *
+ * All 31 bctc_vps_queue rows with status='url_not_found' for Q1-2026 hit
+ * MAX_ENRICH_ATTEMPTS=5 without finding a PDF URL. This function resets them
+ * to pending/attempts=0 so the enricher picks them up on next cycle.
+ *
+ * Called automatically from initFinancialReportsTables() after each startup.
+ *
+ * Idempotent: rows already in 'pending' state are unaffected (WHERE status=
+ * 'url_not_found' matches nothing on repeat calls). Safe to run multiple times.
+ *
+ * Scope: Q1-2026 only. Other periods (Q4-2025, Q2-2026, etc.) are untouched.
+ *
+ * @param db Database instance
+ * @returns Number of rows changed (0 on repeat calls = idempotent)
+ */
+export function resetQ1UrlNotFound(db: Database): number {
+  let changes = 0;
+  try {
+    const result = db
+      .prepare(
+        `UPDATE bctc_vps_queue
+         SET status = 'pending', attempts = 0
+         WHERE status = 'url_not_found'
+           AND period_year = 2026
+           AND period_quarter = 'Q1'`,
+      )
+      .run();
+
+    changes = result.changes;
+
+    if (changes > 0) {
+      logger.info(
+        `[TASK-1943a] Reset ${changes} Q1-2026 url_not_found rows to pending`,
+      );
+    }
+  } catch {
+    // bctc_vps_queue may not exist yet on a fresh DB — silently skip
+  }
+
+  return changes;
 }

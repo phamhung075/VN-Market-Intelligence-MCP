@@ -95,36 +95,96 @@ export async function runBctcQueueEnricherJob(opts: {
 
   // ── Query items awaiting enrichment ──────────────────────────────────────
   //
-  // Treats the following source_url values as "needs enrichment":
-  //   - NULL (never populated)
+  // Selects rows that need a discovery pass:
+  //
+  // Arm 1 — Normal pending items (source_url missing or placeholder):
+  //   - source_url IS NULL (never populated)
   //   - 'MISSING' (placeholder written by earlier bad runs)
   //   - '/test-...' (placeholder written by test-seeding scripts)
   //   - 'https://congbothongtin.ssc.gov.vn/test...' (stub seeded before VPS
   //     resolves real URLs — FIX 1405b)
+  //   - status = 'pending'
+  //
+  // Arm 2 — TASK-1943a: Grace-period auto-retry for url_not_found rows:
+  //   - status = 'url_not_found' (exhausted MAX_ENRICH_ATTEMPTS previously)
+  //   - last_attempt IS NOT NULL AND last_attempt < datetime('now', '-7 days')
+  //     (grace period expired — SSC may have published late filings)
+  //   - attempts < 6 (MAX_ENRICH_ATTEMPTS + 1 cap prevents infinite churn)
+  //
+  // Effect: rows permanently parked at url_not_found after 7+ days get one
+  // more discovery pass. If still no URL → re-marked url_not_found (expected).
+  // This prevents permanent calendar blindspots when SSC is slow to publish.
   //
   let queueItems: Array<{ id: number; action_code: string; attempts: number }> = [];
+
+  // Primary query includes both Arm 1 (normal pending) and Arm 2 (grace-period retry).
+  // Falls back to Arm 1 only if last_attempt column is absent (e.g. older schema).
+  const ARM1_ONLY_SQL = `
+    SELECT id, action_code, attempts
+    FROM bctc_vps_queue
+    WHERE (
+      source_url IS NULL
+      OR source_url = 'MISSING'
+      OR source_url LIKE '/test-%'
+      OR source_url LIKE 'https://congbothongtin.ssc.gov.vn/test%'
+    )
+    AND status = 'pending'
+    ORDER BY created_at ASC
+    LIMIT ?`;
+
+  const COMBINED_SQL = `
+    SELECT id, action_code, attempts
+    FROM bctc_vps_queue
+    WHERE (
+      (
+        (
+          source_url IS NULL
+          OR source_url = 'MISSING'
+          OR source_url LIKE '/test-%'
+          OR source_url LIKE 'https://congbothongtin.ssc.gov.vn/test%'
+        )
+        AND status = 'pending'
+      )
+      OR (
+        status = 'url_not_found'
+        AND last_attempt IS NOT NULL
+        AND last_attempt < datetime('now', '-7 days')
+        AND attempts < 6
+      )
+    )
+    ORDER BY created_at ASC
+    LIMIT ?`;
 
   try {
     queueItems = db
       .query<{ id: number; action_code: string; attempts: number }, [number]>(
-        `SELECT id, action_code, attempts
-         FROM bctc_vps_queue
-         WHERE (
-           source_url IS NULL
-           OR source_url = 'MISSING'
-           OR source_url LIKE '/test-%'
-           OR source_url LIKE 'https://congbothongtin.ssc.gov.vn/test%'
-         )
-         AND status = 'pending'
-         ORDER BY created_at ASC
-         LIMIT ?`,
+        COMBINED_SQL,
       )
       .all(batchSize);
   } catch (err) {
-    logger.warn("[bctcQueueEnricher] Query failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return result;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("no such column: last_attempt")) {
+      // Older schema without last_attempt column — fall back to Arm 1 only.
+      // This handles test DBs with simplified schemas and pre-migration DBs.
+      logger.debug("[bctcQueueEnricher] last_attempt column absent — grace-period arm disabled");
+      try {
+        queueItems = db
+          .query<{ id: number; action_code: string; attempts: number }, [number]>(
+            ARM1_ONLY_SQL,
+          )
+          .all(batchSize);
+      } catch (fallbackErr) {
+        logger.warn("[bctcQueueEnricher] Query failed", {
+          error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+        });
+        return result;
+      }
+    } else {
+      logger.warn("[bctcQueueEnricher] Query failed", {
+        error: msg,
+      });
+      return result;
+    }
   }
 
   if (queueItems.length === 0) {
@@ -132,8 +192,11 @@ export async function runBctcQueueEnricherJob(opts: {
   }
 
   // ── Prepare update statements ─────────────────────────────────────────────
+  // TASK-1943a: also reset status to 'pending' so grace-period url_not_found
+  // rows (selected via Arm 2 query) are re-queued for the PDF pull job when
+  // a source_url is found. For normal pending rows this is a no-op (already pending).
   const updateStmt = db.prepare<void, [string, number]>(
-    `UPDATE bctc_vps_queue SET source_url = ? WHERE id = ?`,
+    `UPDATE bctc_vps_queue SET source_url = ?, status = 'pending' WHERE id = ?`,
   );
   // Task 1782: increment attempts on every no-URL run so the max-attempts gate
   // can fire and mark exhausted rows as 'url_not_found'.
