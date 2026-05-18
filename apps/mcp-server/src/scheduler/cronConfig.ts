@@ -62,8 +62,8 @@ export const CRONS = {
   predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
   /** Calibration report: Sunday 13:00 UTC (20:00 VN) — task 1128, Sprint 060 */
   calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '0 13 * * 0',
-  /** Foreign flow alert: daily 09:30 UTC (16:30 VN) weekdays — task 1133, Sprint 061 */
-  foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '30 9 * * 1-5',
+  /** Foreign flow alert: 08:13 UTC (15:13 VN) weekdays — task 1133, Sprint 061; moved 09:30→08:13 by Sprint 1949-T6 (EOD chef reads at 08:37, 24min window) */
+  foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '13 8 * * 1-5',
   /** Insider SSC disclosure check: daily 01:00 UTC (08:00 VN) Mon-Sun — task 1143, Sprint 063 */
   insiderCheck:           Bun.env.CRON_INSIDER_CHECK               ?? '0 1 * * *',
   /** Pipeline watchdog: every 30 min 24/7 — task 1190, Sprint 076 */
@@ -100,8 +100,8 @@ export const CRONS = {
   vnIndexRefresh:         Bun.env.CRON_VN_INDEX_REFRESH                   ?? '*/5 2-8 * * 1-5',
   /** freshnessSlaMonitor — data freshness SLA check every 30 min (task 234) */
   freshnessSlaMonitor:    Bun.env.CRON_FRESHNESS_SLA_MONITOR              ?? '*/30 * * * *',
-  /** macroIndicatorRefreshJob — daily macro indicator refresh at 06:00 GMT+7 (task 239) */
-  macroIndicatorRefresh:  Bun.env.CRON_MACRO_INDICATOR_REFRESH            ?? '0 6 * * *',
+  /** macroIndicatorRefreshJob — 19:13 UTC daily (02:13 VN next day / 21:13 France); moved 06:00 GMT+7→19:13 UTC by Sprint 1949-T7 (24min before Evening Preview chef at 19:37 UTC) */
+  macroIndicatorRefresh:  Bun.env.CRON_MACRO_INDICATOR_REFRESH            ?? '13 19 * * *',
   /** Foreign flow fallback fetcher: every minute (60 seconds) — task 1290 */
   foreignFlowFetch:       Bun.env.CRON_FOREIGN_FLOW_FETCH                  ?? '*/1 * * * *',
   /** Monthly signal quality audit: 1st of month 00:00 UTC — task 1295c */

@@ -441,10 +441,10 @@ export function startScheduler() {
     await runCalibrationReportWithDb(db)
   }, { timezone: 'UTC' })
 
-  // Weekdays 09:30 UTC (16:30 VN) — Foreign flow alert scan — task 1133, Sprint 061
+  // Weekdays 08:13 UTC (15:13 VN) — Foreign flow alert scan — task 1133, Sprint 061 (rescheduled Sprint 1949-T6)
+  // Moved from 09:30 → 08:13 UTC so EOD chef (08:37 UTC) has the signal in hand (24min window).
   // Scans watchlist for HIGH-severity smart-money foreign flow signals.
   // Inserts alert rows + evidence fragments. Digest sent to WORK only.
-  // Alert Commander handles MARKET escalation via readUnnotifiedAlerts pipeline.
   cron.schedule(CRONS.foreignFlowAlert, async () => {
     try {
       await runForeignFlowAlertJobCron()
@@ -591,9 +591,9 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // 06:00 GMT+7 daily — Macro indicator refresh — task 239, Sprint 239
-  // Fetches and stores macro indicators from Yahoo/SBV/GSO with multi-source fallback.
-  // Runs before morning briefing (08:00) to ensure fresh macro data for daily briefing.
+  // 19:13 UTC daily — Macro indicator refresh — task 239, Sprint 239 (rescheduled Sprint 1949-T7)
+  // Moved from 06:00 GMT+7 → 19:13 UTC so Evening Preview chef (19:37 UTC) has fresh US-session data.
+  // Fetches Yahoo/SBV/GSO macro indicators, FRED EFFR/IORB, ISM sub-components.
   cron.schedule(CRONS.macroIndicatorRefresh, async () => {
     await jobRunRepo.wrapRun('macroIndicatorRefreshJob', async () => {
       await macroIndicatorRefreshJob()

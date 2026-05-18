@@ -174,9 +174,9 @@ function makeNoopTelegram(): { overrides: TelegramOverridesFF; workCalls: string
 describe("Task 1133 — foreignFlowAlertJob", () => {
 
   describe("AC-7: CRONS key", () => {
-    it("CRONS.foreignFlowAlert = '30 9 * * 1-5' (09:30 UTC = 16:30 VN weekdays)", () => {
-      // Env override or default
-      const expected = Bun.env.CRON_FOREIGN_FLOW_ALERT ?? "30 9 * * 1-5";
+    it("CRONS.foreignFlowAlert = '13 8 * * 1-5' (08:13 UTC = 15:13 VN weekdays — Sprint 1949-T6)", () => {
+      // Env override or default (rescheduled from 09:30 UTC → 08:13 UTC by Sprint 1949-T6)
+      const expected = Bun.env.CRON_FOREIGN_FLOW_ALERT ?? "13 8 * * 1-5";
       expect(CRONS.foreignFlowAlert).toBe(expected);
     });
   });

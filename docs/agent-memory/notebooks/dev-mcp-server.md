@@ -4,6 +4,33 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Sprint 1949 Phase 4 — Cron Rewiring (2026-05-18, DONE)
+
+**Tasks: 1949-T6, T7, T8 — foreignFlowAlert + macroIndicatorRefresh rescheduled**
+
+- **T6** `foreignFlowAlertJob.ts`: comment updated to `08:13 UTC`. `cronConfig.ts`: `foreignFlowAlert` default changed `30 9 * * 1-5` → `13 8 * * 1-5`. Rationale: EOD chef fires at 08:37 UTC; job must be available 24min prior.
+- **T7** `macroIndicatorRefreshJob.ts`: comment updated. `cronConfig.ts`: `macroIndicatorRefresh` default changed `0 6 * * *` → `13 19 * * *`. Rationale: Evening Preview chef fires at 19:37 UTC; US-session macro data available by 19:13 UTC.
+- **T8** `cronConfig.ts` + `.env.example` env-var defaults updated. `startScheduler.ts` comments updated for both registrations.
+
+**Tests (9/9 GREEN, 0 fail):**
+- TC-1: foreignFlowAlert default = `13 8 * * 1-5`
+- TC-2: env override respected (CRON_FOREIGN_FLOW_ALERT)
+- TC-3: macroIndicatorRefresh default = `13 19 * * *`
+- TC-4: env override respected (CRON_MACRO_INDICATOR_REFRESH)
+- TC-5: foreignFlowAlert fires 24min before EOD chef (gap ≥ 10min)
+- TC-6: macroIndicatorRefresh fires 24min before Evening Preview (gap ≥ 10min)
+- TC-7: foreignFlowAlert minute field is clean (not :00/:17/:30/interval)
+- TC-8: macroIndicatorRefresh minute field is clean
+- TC-9: foreignFlowAlert is weekday-only (`1-5`)
+
+**Updated existing test:** `1133-foreign-flow-alert-job.test.ts` AC-7 updated to new default `13 8 * * 1-5`.
+**Docs updated:** `cron-jobs.md` (foreignFlowAlert entry + macroIndicatorRefresh section + chef cook schedule table added), `cron-registry.json` (both jobs updated), `.env.example` (two new entries).
+**tsc:** 0 errors.
+
+Zone health: foreignFlowAlert now fires at 08:13 UTC (was 09:30); macroIndicatorRefresh now fires at 19:13 UTC (was 06:00 GMT+7); both 24min before chef cook slots; off-minute hygiene compliant | HEALTHY
+
+---
+
 ### Task 1948e-B — Legal Risk Dispatch Block in stage-signals.md (2026-05-18, DONE)
 
 **Change:** `.claude/flows/news-scout/stage-signals.md` — Legal Risk Signal Dispatch block inserted before `urgent_news` (line 35 vs line 98). Trigger: `detectLegalRisk()` non-empty OR prosecution keywords + stock code. Dedup: 360-min window on (stock_code, signal_type="legal_risk"). Confidence: prosecution/asset_freeze=0.95, tax/license=0.85, investigation=0.70. ttl_minutes=360. No verdictResolutionJob contact.

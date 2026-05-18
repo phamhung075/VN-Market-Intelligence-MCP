@@ -295,7 +295,7 @@ export async function runForeignFlowAlertJob(
  * Cron-callable wrapper for the foreign flow alert job.
  *
  * Wraps runForeignFlowAlertJob in recordJobRun for observability.
- * Used by jobs.ts at 09:30 UTC (16:30 VN) on weekdays.
+ * Used by jobs.ts at 08:13 UTC (15:13 VN) on weekdays (rescheduled Sprint 1949-T6; was 09:30 UTC).
  */
 export async function runForeignFlowAlertJobCron(): Promise<void> {
   const database = await defaultGetDb();

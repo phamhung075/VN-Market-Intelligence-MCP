@@ -38,7 +38,7 @@ Live data → `docs/data/cron-registry.json`
 | 19:00 UTC Sunday (02:00 VN Mon) | `baseRateComputationJob` — weekly recompute of per-signal-type base rates for calibration | 1122 |
 | 16:30 UTC daily (23:30 VN) | `predictionResolutionJob` — resolves prediction claims whose horizon has expired; computes Brier score | 1125 |
 | 13:00 UTC Sunday (20:00 VN) | `calibrationReportJob` — weekly Brier score calibration report + Telegram digest to WORK | 1128 |
-| 09:30 UTC M-F (16:30 VN) | `foreignFlowAlertJob` — daily foreign flow smart-money scan; fires HIGH alerts + evidence fragments | 1133 |
+| 08:13 UTC M-F (15:13 VN) | `foreignFlowAlertJob` — daily foreign flow smart-money scan; fires HIGH alerts + evidence fragments (moved from 09:30 → 08:13 UTC by Sprint 1949-T6; EOD chef reads at 08:37 UTC, 24min window) | 1133 |
 | 01:00 UTC daily (08:00 VN) | `insiderCheckJob` — SSC insider transaction check + streak detection + evidence fragments | 1143 |
 
 ## Signal Verdict Resolution
@@ -72,7 +72,7 @@ Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 
 ## Macro Indicator Refresh Job — FRED Fetchers
 
-`macroIndicatorRefreshJob` (schedule: `CRON_MACRO_INDICATOR_REFRESH`, default `0 6 * * *`) calls:
+`macroIndicatorRefreshJob` (schedule: `CRON_MACRO_INDICATOR_REFRESH`, default `13 19 * * *` — rescheduled Sprint 1949-T7; was `0 6 * * *`) fires at 19:13 UTC (02:13 VN next day / 21:13 France), 24min before Evening Preview chef at 19:37 UTC. Calls:
 
 | Fetcher | FRED Series | Storage | Task |
 |---------|-------------|---------|------|
@@ -107,13 +107,25 @@ Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
 ## Claude Code Agent Crons (CronCreate — session-scoped)
 
+### Chef Cook Schedule (Sprint 1949 — unified-agent as CHEF)
+
+| Schedule (UTC) | VN (GMT+7) | France (CEST) | Agent | Dish |
+|----------------|------------|---------------|-------|------|
+| `23 5 * * 1-5` | 12:23 | 07:23 | unified-agent | Morning Dish — overnight macro + VN morning session synthesis |
+| `13 2-8 * * 1-5` | XX:13 | XX:13 | unified-agent | Intraday convergence scan — silent if no cluster qualifies |
+| `37 8 * * 1-5` | 15:37 | 10:37 | unified-agent | EOD Dish — all settle data + foreign flow (signal available from 08:13) |
+| `37 19 * * *` | 02:37+1 | 21:37 | unified-agent | Evening Preview — US/EU session + tomorrow setup |
+| `47 13 * * 0` | 20:47 Sun | 15:47 Sun | digest-predict | Weekly calibration + portfolio thesis |
+
+### Dev-Team + Ops Agent Crons
+
 | Schedule (UTC) | Agent | Model | Frequency rationale |
 |----------------|-------|-------|---------------------|
 | `7 * * * *` | dev-team (po→ba→architect→pm→developer→qa→fixer→ops) | mixed (sonnet/haiku) | Hourly. Calls individual agents in sequence. **Ops runs last (~30s baseline health check)**. Total 45-min cap. |
 | `0 */6 * * *` | code-janitor | haiku | Every 6h. Mechanical grep — haiku sufficient. Early-exit if 0 src/ commits in 6h. |
 | `0 16 * * *` | system-auditor | sonnet | 1x/day 23:00 VN. Early-exit if 0 commits in 24h. |
 | `30 17 * * 1,4` | claude-manager-helper | sonnet | 2x/week (Mon+Thu 00:30 VN). Early-exit if 0 context file changes in 3 days. |
-| `0 13 * * *` | tran-ngoc-bau quality audit | sonnet | 1x/day 20:00 VN. Audits MARKET messages, agent sessions, signal quality. Full MCP access for data rechecking. |
+| `13 20 * * *` | tran-ngoc-bau quality audit | sonnet | 1x/day 03:13 VN next day. Audits chef narrative for TNB layer walk completeness (moved from `0 13 * * *` by Sprint 1949-T9). |
 | `*/10 2-8 * * 1-5` | ops-emergency (escalation hook) | haiku | Market hours, 10-min cadence. **Only runs if VPS watchdog flags issue.** Otherwise silent observer. |
 
 **Token economy rules applied:**
