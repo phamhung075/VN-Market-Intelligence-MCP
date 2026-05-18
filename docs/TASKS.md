@@ -7,6 +7,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1941d-fpt-net-profit-ocr-bug | **FPT Q4/2025 net_profit extraction bug:** financial_reports.net_profit=20,225 (stored in triệu VND) but vnstock_financials.net_profit_bn=2,509.52 (billions). Revenue mistakenly stored as profit in OCR extraction pipeline. Impacts 1941a OCF/NI ratio calculation (still suppressed despite correct OCF from API bridge). Fix scope: `apps/mcp-server/src/domain/services/financial-reports/` extract logic + `incomeStatementExtractor.ts` net_profit line detection. Root cause investigation: positional mapping drift (similar to 1908c VAL-07 issue). Effort: M. Zone: apps/mcp-server/. | MEDIUM | FIX | dev-mcp-server | — | — |
 | alert-precision-488-unknowns | **MONITORING**: Post-DB-rebuild agent_signals=46 (fresh DB). HOLD until ≥550. From TNB c58 Finding #8 + bug 2874. | MEDIUM | TRACKING | — | — | — |
 | fa-shape-guard-watch | **MONITORING**: Next observation = first post-restart FA live session. Auto-cure trigger: REGIME-mismatch or news-fallback → spawn 1921a-fa-shape-guard-propagate. If NEUTRAL macro_snapshot → close. | MEDIUM | TRACKING | — | — | — |
 | 1907a-digest-predict-silence | **CRITICAL** (c168 update): `vn-market` MCP server (`http://localhost:3000/sse`) added to `claude_desktop_config.json` mcpServers. **USER-ACTION: restart Claude Desktop** to load new MCP config. After restart, scheduled cowork tasks will have vn-market MCP access. Verify by checking digest-predict runs again. | CRITICAL | OPS | user | — | — |
@@ -27,6 +28,8 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | _(empty)_ | — | — | — | — | — | — |
+
+---
 
 ---
 

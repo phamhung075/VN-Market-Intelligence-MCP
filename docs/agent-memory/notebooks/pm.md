@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c174 (PM: calendar-source-replacement → DONE, WIP=0/2 CLEAN, queued next task) | **Sprint:** 1920 scheduler cadence wiring (completed), alert-precision-series active | **Current:** WIP 0/2 CLEAN
+**Last updated:** 2026-05-18 c175 (PM: 1941a → DONE, 1941d filed (FPT net_profit OCR bug), WIP=0/2 CLEAN) | **Sprint:** 1941 (1941a DONE, 1941b OBSERVE, 1941c BA-SPEC) | **Current:** WIP 0/2 CLEAN
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c174 calendar-source-replacement QA approved, merged to main, task marked DONE. NullCalendarAdapter wired, 103/103 active tests pass, tsc clean on touched files, DDD PASS. No downstream tasks blocked by this fix (it was WONTFIX outcome, not a blocker remover). Next cycle: Check if any high-priority monitoring tasks or cascading fixes needed, or initiate next sprint tier if ready. WIP capacity = 2/2 AVAILABLE.
+- **WIP: 0/2 CLEAN** — Cycle c175: 1941a (L7 OCF Guard Deploy-Verify) QA APPROVED, merged to main, marked DONE. cashFlowTool.ts now prefers `operating_cash_flow` (vnstock API bridge) over `operating_cf` (OCR/PDF). VCB fixed (1.23e15 → 9,947,260), ratio=1.15 passes guard. FPT OCF fixed (→4,108,450) but NI extraction bug (20,225 instead of 2,509,520) remains. Filed 1941d-fpt-net-profit-ocr-bug in Backlog (MEDIUM FIX). 1941b (OBSERVE window) + 1941c (BA-SPEC) remain in Todo. No blockers. WIP capacity = 2/2 AVAILABLE.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,37 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 175 — 2026-05-18 PM Task Closure + Backlog: 1941a → DONE, 1941d filed (WIP=0/2 CLEAN)
+
+**Input:** QA handoff from qa agent. Approval summary (1941a):
+- cashFlowTool.ts prefers `operating_cash_flow` (vnstock API bridge, Task 1878a) over `operating_cf` (OCR/PDF) via COALESCE
+- VCB Q4/2025: corrupted 1.23e15 → 9,947,260 triệu VND, ocf_ni_ratio now 1.15 (passes guard)
+- FPT Q4/2025: OCF fixed to 4,108,450 triệu, but NI=20,225 is separate OCR bug (revenue mistaken for profit)
+- 5 new tests + 12 regression tests GREEN (17 total cashflow tests)
+- tsc clean, DDD PASS, Security PASS
+- Report: reports/TASK_REPORT_1941a.md
+
+**Actions:**
+1. **Marked 1941a DONE in docs/TASKS.md** — Moved to Done section (already there from prior cycle). No downstream blockers (fix completed, guard now functions correctly).
+2. **Filed 1941d-fpt-net-profit-ocr-bug in Backlog** — MEDIUM FIX, zone=apps/mcp-server/, root cause: positional extraction protocol drift in incomeStatementExtractor.ts (similar to 1908c VAL-07 pattern). Impact: despite correct OCF from API bridge, FPT's ratio remains suppressed due to NI extraction error. Effort M. Added to Backlog top (highest priority of monitoring items).
+3. **Checked Sprint 1941 remaining items:**
+   - **1941b-signal-outcomes-seed-window** (Todo, OBSERVE): 7-day observation window. AC: ≥30 resolved rows (outcome_24h values) across ≥3 signal_type values by 2026-05-25. No code change required; monitoring task. Blocker gate = 2026-05-25 deadline.
+   - **BA-1941c** (Todo, BA-SPEC): Requirement spec for `accuracyDigestJob` (daily WORK telegram digest). Not blocked; waiting BA to write spec. Owner=BA. Inputs: `getAccuracyStats({days:30})`, output: daily cron job + telegram format spec.
+4. **WIP Status:** 0/2 CLEAN. No In Progress tasks. Capacity = 2/2 AVAILABLE for next dispatch.
+5. **TASKS.md updated:** Backlog entry for 1941d added; line count now 84L (acceptable for new task + 1941a row). Todo section unchanged (1941b + BA-1941c remain).
+6. **PM notebook updated:** Header + current state + this cycle entry.
+
+**Next steps:**
+- 1941b observation: ops monitors until 2026-05-25 (AC gate), no dispatch needed.
+- 1941c: BA drafts spec next cycle. If spec complete, queue for dev dispatch (estimated S task, ~1.5h).
+- 1941d: Ready for dev-mcp-server once high-priority tasks clear. Effort M, parallel with 1941c (different zones: BA-spec vs dev-impl).
+
+**Dispatch ready:** None immediately (1941b is monitoring-only, 1941c awaits BA spec). WIP capacity available. Can pull next high-priority backlog task if architect brief available.
+
+**Status:** Closure COMPLETE. Sprint 1941 Tier 1 (1941a) shipped. Tier 2 (1941b observe) + Tier 3 (1941c spec) sequenced. New bug (1941d) filed. System idle, awaiting BA spec or architect brief for next dispatch.
 
 ---
 
