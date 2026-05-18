@@ -1,8 +1,35 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 09:45 UTC | **Sprint:** SPIKE-1947
+**Last updated:** 2026-05-18 20:15 UTC | **Sprint:** SPIKE-1948e
 
-## This session (SPIKE-1947)
+## This session (SPIKE-1948e)
+
+PC1 legal_risk signal pipeline review. Read-only, 2h timebox.
+
+**Root cause (three-point cascade):**
+1. `SignalTypeSchema` in `agentSignalStore.ts:39-49` has 9 values — `"legal_risk"` is absent. Any `post_agent_signal(signal_type: "legal_risk")` call is Zod-rejected before DB write.
+2. `stage-signals.md` defines only `urgent_news` + `chain_catalyst` dispatch paths. No `legal_risk` dispatch block exists. news-scout notebook (04:22 UTC 2026-05-18) confirms: "PC1 chairman arrest — not in watchlist, sector ripple noted." Agent recognised the event but took no signal action.
+3. PC1 absent from primary watchlist (`mcp.config.json` L44-58, `WATCHLIST_SEED`) — present only in `referenceStocks.utilities` and `sectorPeers.ts`. Contributing factor to low-urgency classification, not the proximate cause.
+
+**What already works (confirmed intact):**
+- `legalRiskDetector.ts` pattern library covers `khởi tố` / `bắt tạm giam` — correct, no keyword changes needed
+- `get_legal_risk_signals` read side already queries `agent_signals` (Task 1940a) — correct
+- `schema-news.ts` `agent_signals.signal_type TEXT` — no DB-level constraint, neutral to fix
+- `policyImpactMapper.ts` recognises prosecution as `legal_risk` PolicyType with `CRIMINAL_PROSECUTION_KEYWORDS` — reusable as classification guidance in Fix B
+
+**Fix sizing: S (both changes)**
+- Fix A: add `"legal_risk"` to `SignalTypeSchema` enum (1-line, `agentSignalStore.ts`)
+- Fix B: add `legal_risk` dispatch block to `stage-signals.md` with 6h dedup guard
+
+**Key risk R-1:** dedup — legal events must not re-post every 20-min news-scout cycle. Remedy: 6h dedup guard on same `stock_code` + `signal_type = "legal_risk"`.
+**Key risk R-3:** 1945 stabilisation window — Fix A touches `agentSignalStore.ts` only. Zero contact with `verdictResolutionJob.ts` or `alert_accuracy` tables. Window safe.
+
+Child task filed: **1948e-fix** (Todo, MEDIUM, dev-mcp-server).
+Spike: `docs/spikes/SPIKE_1948e-pc1-legal-risk-pipeline.md`
+Brief: `docs/architecture-briefs/2026-05-18-legal-risk-signal-pipeline.md`
+TASKS.md: SPIKE-1948e Todo → Done; 1948e-fix added to Backlog.
+
+## Previous session (SPIKE-1947)
 
 Closed-loop auto-improvement system design. Read-only, 3h timebox.
 
