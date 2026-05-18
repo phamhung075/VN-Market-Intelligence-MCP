@@ -50,6 +50,16 @@ Live data → `docs/data/cron-registry.json`
 Source: `apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts`
 Verdict lifecycle → `docs/policies/alert-policy.md` (Signal Verdict Lifecycle section)
 
+## Signal Outcome Feedback Loop
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `17 * * * *` (hourly) | `signalOutcomeResolutionJob` — resolves T+24h / T+48h pending rows in `signal_outcomes`; compares entry vs resolution price; classifies correct/incorrect/neutral | 1941 |
+| `0 7 * * *` (daily 07:00 UTC) | `accuracyDigestJob` — computes 30-day accuracy from `signal_outcomes`; formats top-3/bottom-3 signal types + new stocks count; sends to WORK channel. AC-3 skip when empty; AC-8 short digest when all-neutral. DB-backed dedup via `cron_job_runs` | 1941c |
+
+Source: `apps/mcp-server/src/scheduler/digest/accuracyDigestJob.ts`
+Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |
