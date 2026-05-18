@@ -81,3 +81,12 @@ Branch: `task/calendar-source-replacement` (already exists on remote — merge s
 - **Type check:** pre-existing TS errors in unrelated test files (adb-kidb, fred-macro, imf-weo, world-bank-macro) — not introduced by this change; my files type-clean
 - **Service tests:** 103 pass / 12 skip / 1 pre-existing fail (world-bank mock, unrelated) — no regressions
 - **Docs updated:** infrastructure.md (InvestingCalendarAdapter → NullCalendarAdapter wontfix section), testing.md (counts + test tables updated)
+- **Git commits:** d0884c78 (fix), 1ebe3039 (notebook)
+
+---
+
+## RETURN
+DONE: Wontfix implementation complete — SERVICE=macro-indicators, CHANGED=[investing-economic-calendar.ts, fetch-external-macro.ts, index.ts, 2 test files, 2 docs], NEW_PASS=4, type-check clean (my files)
+NEXT: qa | run full QA pipeline on branch task/calendar-source-replacement
+HANDOFF: docs/handoffs/calendar-source-replacement.md
+PIPELINE: continue
