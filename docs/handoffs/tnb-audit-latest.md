@@ -124,3 +124,32 @@ All prior auto-cures (FA Layer 7 c61) remain active.
 4. **FA OCF verification**: Confirm get_cash_flow plausible post-1930b in next FA live session (23:00 UTC tonight).
 5. **digest-predict 1907a**: USER action — launchctl plist investigation.
 6. **verdictResolutionJob loop**: Check if BUG storm still active after gateway stabilisation.
+
+---
+
+## PO ACK — c181 (2026-05-18T03:37:43Z)
+
+**Triage outcome:**
+
+| # | Finding | Decision | Task |
+|---|---------|----------|------|
+| 1 | digest-predict 9+ day silence | SKIP — 1907a in Backlog, USER action pending (Claude Desktop restart) | — |
+| 2 | BCTC Q1-2026 banking cohort 38/38 QUÁ HẠN (3 days past 15/05) | NEW SPIKE — diagnose stale calendar vs SSC ingestion lag vs missing filings | **SPIKE-1943** |
+| 3 | PC1 legal_risk gap | CLOSE — 1940a DONE c174/QA c174, dual-source agent_signals query shipped | — |
+| 4 | FA Layer 7 OCF (VCB/FPT/HPG) | PARTIAL CLOSE — VCB+FPT fixed by 1941a/d (shipped 2026-05-18, post-audit cycle). HPG already scoped as BA-1942c in Todo. Audit observation is stale. | — |
+| 5 | TNB Claude Code MCP 14th cycle | SKIP — structural, no PO action | — |
+| 6 | 1897b VirtioFS H4 | SKIP — USER action pending, 1906a pre-flight cure active | — |
+| 7 | verdictResolutionJob no-baseline-price loop | SKIP — 1926a shipped c146 (idempotency + false_positive mark on unresolvable). Audit text from unified-agent notebook reflects past 21h window before fix lands or unified-agent has stale read. Monitor next cycle; reopen if BUG storm persists. | — |
+| 8 | news-scout D+E gaps | SKIP — structural (PMI source + VIRA VPS scraper pending) | — |
+
+**Tasks created:** SPIKE-1943 (BCTC Q1-2026 banking cohort deadline diagnosis, time-box 120 min, owner architect).
+
+**Skipped findings:** #1, #3, #4, #5, #6, #7, #8 — all either already tracked, already shipped post-audit, structural, or pending user action. Rationale per row above.
+
+**Positive signals acknowledged:**
+- TNB-critic-gate LIVE on bus (#3362 critic_score=0.8) — 1939a/b operational confirmed
+- 7 cowork agents LIVE (incl. report-analyzer recovery)
+- alert-commander TIGHTENING + 0 false positives across 7 cycles
+- news-scout sustained conf elevation (#3343 + #3362)
+
+**Direction confirmed:** IMPROVING. NEEDS_ATTENTION driven by digest-predict (USER-blocked) + banking cohort delay (SPIKE-1943 will diagnose).

@@ -42,6 +42,7 @@ OUT: New BCTC fetchers (use existing infrastructure), new microservices, methodo
 - 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP)
 - 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock)
 - alert-precision-488-unknowns MONITORING (HOLD until ≥550)
+- **SPIKE-1943** (PO c181 from TNB c68 Finding #2) — Diagnose BCTC Q1-2026 banking cohort 3+ days past 15/05 deadline (calendar stale vs SSC ingestion lag vs filings missing). Architect time-box 120 min. Output: `docs/spikes/SPIKE_1943-bctc-banking-q1-2026-deadline-delay.md`.
 
 ---
 
