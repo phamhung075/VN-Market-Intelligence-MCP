@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c181 (PM: Sprint 1948 Phase 1 decomposition COMPLETE — 4 tasks to Backlog, all BLOCKED until post-1945 gate 2026-05-20T07:22Z) | **Sprint:** 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE, Brief: ARCH-1948 ready; PM: 1948a/b/c/OBSERVE-1948d to Backlog, pre-condition gate active) | **Current:** WIP 0/2 (CLEAN, no dispatch yet — gate pre-condition blocks start)
+**Last updated:** 2026-05-18 c182 (PM: Task 1945d-reparse-pipeline-gap COMPLETE + merged; WIP=0/2 CLEAN; Sprint 1948 Phase 1 remains BLOCKED until post-1945 gate 2026-05-20T07:22Z; no unblocked dev tasks available) | **Sprint:** 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE; PM: 1948a/b/c/OBSERVE-1948d queued in Backlog, all gate-blocked) | **Current:** WIP 0/2 (CLEAN, no dispatch — all backlog tasks blocked until gate clear)
 
 ## Current state
 
@@ -9,6 +9,48 @@
 - **Prior state (c180b):** TASKS.md compacted 89L → 63L. Done section archived 31 completed entries to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Current Backlog: 7 rows (1948a/b/c/OBSERVE-1948d + 3 monitoring rows). Todo: 5 rows (post-1945 gates + 1941b-seed + observational). In Progress: empty.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: scheduler job inside apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts (Option C). Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. Hypothesis: degradationRules.ts rule-table (Phase 1-2); LLM optional Phase 3. Dispatch: 3-phase rollout — Phase 1 shadow-mode (WORK Telegram, no auto-dispatch, Sprint 1948), Phase 2 manual-gate (signal-bus JSON, human drain), Phase 3 auto-dispatch (kill-switch env var, WIP≤2 cap). Recheck: 7d window. Loop-exit: hit_rate ≥60% sustained 2 consecutive weekly windows. Safety: 7d cooldown, max 2 dispatches/cycle, freeze-on-worsening, recurring-bug escalation ≥2 failed cycles.
 - **Status:** Sprint 1948 queued in Backlog with explicit gate pre-condition. TASKS.md + handoff files complete. SPIKE-1947 design documented. Ready for gate clear on 2026-05-20T07:22Z → PM dispatch sequence → dev execution.
+
+---
+
+## Cycle 182 — 2026-05-18 PM Task Completion + Status Return: 1945d DONE, No Unblocked Tasks, WIP=0/2 CLEAN
+
+**Input:** Task 1945d-reparse-pipeline-gap report (APPROVED, merged to main), TASKS.md current state, Sprint 1948 pre-condition gate status.
+
+**Context:**
+- Developer completed 1945d (BCTC extraction pipeline gaps: disk scan unconditional + push extraction wiring) 2026-05-18 morning
+- QA approved cycle c190, committed task report + TASKS.md update
+- Task merged to main (commit 72203965)
+- Current WIP = 0/2 (In Progress section empty)
+- All backlog tasks (1948a/b/c) gate-blocked until post-1945-verdict-resolution-scored-pct clears 2026-05-20T07:22Z
+
+**Actions:**
+1. **Task 1945d status:** Already marked Done in TASKS.md (line 51: `1945d-reparse-pipeline-gap | **DONE 2026-05-18 QA-APPROVED**`). No TASKS.md update needed.
+2. **Backlog analysis (no unblocked tasks):**
+   - 1948a: BLOCKED until 2026-05-20T07:22Z (post-1945 gate) — PRE-CONDITION in place
+   - 1948b: BLOCKED until 2026-05-20T07:22Z (post-1945 gate) + depends_on 1948a
+   - 1948c: BLOCKED until 2026-05-20T07:22Z (post-1945 gate) + depends_on 1948a + 1948b
+   - OBSERVE-1948d: Blocked until 1948c deployment + 2026-05-25T09:00Z gate
+   - No alternative backlog tasks available for dev dispatch
+3. **Todo/Monitoring assessment:**
+   - post-1945-verdict-resolution-scored-pct: OBSERVE gate, not a dev task (ops-owned)
+   - post-1945-bug-storm-silence: OBSERVE gate, not a dev task (ops-owned)
+   - 1941b-signal-outcomes-seed-window: OBSERVE gate until 2026-05-25 (ops-owned)
+   - 1922g-pharma-events-source-verify: OBSERVE gate, next tick 2026-06-01 (ops-owned)
+   - 1922i-alert-engine-records: WONTFIX (dead code already removed)
+   - post-1942-fa-verify: OBSERVE gate until 2026-05-19 (ops-owned)
+4. **Deferred items:** No atomic dev tasks in Deferred section (1887, 1892a-ops AC-3, TNB-c39 all non-dev or waiting on other sprints)
+5. **WIP enforcement:** 0/2 CLEAN. No dispatch possible until gate clears.
+6. **PM notebook updated:** Header + current state section updated to reflect c182 status. This cycle entry added.
+
+**Return Status:**
+- DONE: 1945d-reparse-pipeline-gap (already merged + marked Done, no action needed)
+- BLOCKED: All Backlog tasks (1948a/b/c/OBSERVE-1948d) until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z
+- WIP_COUNT: 0/2 (CLEAN, max capacity 2 available post-gate-clear)
+- NEXT: po (wait for gate observation + assess result at 2026-05-20T07:22Z)
+- PIPELINE: blocked (pre-condition gate BLOCKS all dev dispatch)
+- GATE_DEADLINE: 2026-05-20T07:22Z (48h post-1945a deploy, post-1945-verdict-resolution-scored-pct AC-1 observation)
+
+**Status:** WIP enforcement active. All dev tasks gate-blocked. Waiting for 2026-05-20T07:22Z gate decision. No developer action available until gate clears. Next PM cycle: assess gate outcome → dispatch or escalate.
 
 ---
 
