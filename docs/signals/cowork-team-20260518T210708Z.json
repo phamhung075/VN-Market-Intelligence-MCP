@@ -1,0 +1,14 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260518T210708Z",
+    "matched_slots": [],
+    "spawned": [],
+    "silent": true,
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260518T210708Z"
+}

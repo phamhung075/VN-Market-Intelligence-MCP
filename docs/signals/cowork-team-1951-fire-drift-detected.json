@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "sprint": "1951",
+  "type": "architectural-concern",
+  "topic": "master cron fires ~7min after nominal tick — breaks ±2min match window",
+  "createdAt": "2026-05-18T21:07:08Z",
+  "priority": "high",
+  "evidence": {
+    "fire_1": {
+      "nominal_tick": "2026-05-18T20:45:00Z",
+      "actual_fire": "2026-05-18T20:52:10Z",
+      "drift_min": 7.2
+    },
+    "fire_2": {
+      "nominal_tick": "2026-05-18T21:00:00Z",
+      "actual_fire": "2026-05-18T21:07:08Z",
+      "drift_min": 7.1
+    }
+  },
+  "root_cause_hypothesis": "CronCreate docs say jobs fire only while REPL is idle, and recurring jitter is up to 10% of period (1.5min for */15). Observed 7min drift exceeds jitter spec — likely caused by Claude being mid-query at nominal tick, deferring fire until idle.",
+  "impact": "All */15 slots in cowork-schedule.json fire at :00,:15,:30,:45. Matcher window at the deferred fire time (e.g. :07) is [05-09] which never contains :00. Every fire produces silent-exit even when slots should match. The dispatcher will never actually spawn agents at the drift rate observed.",
+  "options_for_architect": [
+    "A. Widen matcher window to ±10min (covers 7min drift but creates overlap between adjacent ticks — needs collision rule reconsidered)",
+    "B. Use nominal-tick rounding: round current minute down to nearest 15 to compute the intended tick, then match against that minute ±2. This handles drift cleanly.",
+    "C. Drop master-cron pattern — fall back to per-slot CronCreate (loses sub-hourly RemoteTrigger advantage but each slot fires independently with own jitter)",
+    "D. Other"
+  ],
+  "recommendation": "Option B — minimum-diff fix in .claude/scripts/cowork-match-slots.js. Architect should decide.",
+  "router_action": "kept master cron ed39cbcf active for now; legacy RemoteTriggers still cover slots during 24h parallel-run — no production gap. But cutover at 2026-05-19T20:34Z must be blocked until drift is resolved.",
+  "references": {
+    "brief": "docs/architecture-briefs/2026-05-18-cowork-team-command.md",
+    "parallel_run_signal": "docs/signals/router-1951-parallel-run-started.json",
+    "telemetry_samples": [
+      "docs/signals/cowork-team-20260518T205210Z.json",
+      "docs/signals/cowork-team-20260518T210708Z.json"
+    ]
+  }
+}
