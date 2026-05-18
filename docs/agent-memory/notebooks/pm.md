@@ -1,10 +1,10 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c175 (PM: 1941a → DONE, 1941d filed (FPT net_profit OCR bug), WIP=0/2 CLEAN) | **Sprint:** 1941 (1941a DONE, 1941b OBSERVE, 1941c BA-SPEC) | **Current:** WIP 0/2 CLEAN
+**Last updated:** 2026-05-18 c178 (PM: 1941c → DONE, project-stats +1 cronJobCount, TASKS.md verified, WIP=1/2) | **Sprint:** 1941 (1941a DONE, 1941b OBSERVE, 1941c DONE, 1941d QA) | **Current:** WIP 1/2 (1941d QA in flight)
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c175: 1941a (L7 OCF Guard Deploy-Verify) QA APPROVED, merged to main, marked DONE. cashFlowTool.ts now prefers `operating_cash_flow` (vnstock API bridge) over `operating_cf` (OCR/PDF). VCB fixed (1.23e15 → 9,947,260), ratio=1.15 passes guard. FPT OCF fixed (→4,108,450) but NI extraction bug (20,225 instead of 2,509,520) remains. Filed 1941d-fpt-net-profit-ocr-bug in Backlog (MEDIUM FIX). 1941b (OBSERVE window) + 1941c (BA-SPEC) remain in Todo. No blockers. WIP capacity = 2/2 AVAILABLE.
+- **WIP: 1/2 (1941d QA in flight)** — Cycle c178: 1941c (accuracyDigestJob daily WORK digest) QA APPROVED, merged to main c177, marked DONE. 7/7 task tests GREEN (22 assertions), full suite 9187 pass (no regression). cronJobCount +1 (schedule 0 7 * * * UTC). getSystemAccuracyDigestStats 4-query pattern + buildAccuracyDigestText formatter. 1941d QA currently running (FPT net_profit OCR extraction bug fix). 1941b in OBSERVE (7d seed window, gate 2026-05-25). Sprint 1941 Tier 1 complete (1941a + 1941c). WIP capacity = 1/2 AVAILABLE. Wait for 1941d QA before next dispatch.
 - **c95 DISPATCH (2026-05-14T04:00Z):** Sprint 1909a/b execution complete + APPROVED. Both entered In Progress c94, both shipped + QA gate passed c95. 1909a (cashFlowExtractor.ts multi-layout + VAL-07 protection, 45 fixtures). 1909b (get_bctc_ocf tool, 8 tests / 29 assertions, architect SD-2 honored). Container rebuild queued post-c95.
 - **BCTC OCF (Sprint 1909):** Bottleneck item from TNB c50 #1. Banking deadline 2026-05-15 COVERED by 1908c (deployed c92) + 1890a (deployed c90). 1909 extends OCF analysis layer 7 gate (NI vs OCF ratio).
 - **FRED ISM + EFFR package (Sprint 1910):** TNB c50 #2 + #3 bundled. 1910a requires FRED API key (free registration). 1910b auto-cure 3-cycle threshold (D-step carry evidence FA/UA/NS c05-c14). Sequenced after 1909b to avoid merge conflicts.
@@ -12,6 +12,44 @@
 - **Todo:** 1910b (HIGH CHORE, sequential after 1909b), 1900c (health-probe, LOW), 1899a-bloomberg-test-split (LOW), 1862c-{E,F} (OPS, user-blocked)
 - **TASKS.md:** 73L (compact: archived 18 pre-c80 tasks + 1903a stale note). WIP=2/2. No blockers.
 - **Status:** c94 DISPATCH COMPLETE. 1909a + 1909b in In Progress. Handoff files created. PM ready for dev-team flow Step 3 execution.
+
+---
+
+## Cycle 178 — 2026-05-18 PM Post-QA: 1941c → DONE, project-stats reconciled (WIP=1/2)
+
+**Input:** QA handoff from qa agent. Approval summary (1941c):
+- accuracyDigestJob cron entry (0 7 * * * UTC) wired to scheduler
+- getSystemAccuracyDigestStats 4-query pattern: returns {signal_types, top3_best, top3_worst, daily_accuracy}
+- buildAccuracyDigestText formatter generates Telegram-safe WORK digest (top-3 signal types + insufficient_data fallback)
+- 7/7 new task tests GREEN (22 assertions)
+- Full suite 9187 pass (matches main, no regression)
+- tsc 0 errors, DDD PASS, Security PASS
+- cron-registry.json updated: accuracyDigestJob entry added, schedulerFileCount 63 → 64 (per QA c177 commit 44301391)
+- Report: reports/TASK_REPORT_1941c.md
+
+**Actions:**
+1. **Verified 1941c DONE in docs/TASKS.md** — Already moved to Done by QA (commit 44301391). Completion date 2026-05-18. No further TASKS.md change needed.
+2. **Reconciled project-stats.json metadata:**
+   - lastUpdated: "2026-05-14" → "2026-05-18" (reflects 1941 tier 1 completion)
+   - _lastRefreshedBy: Updated to c178 note (Sprint 1941 progress, cronJobCount 75→76)
+   - schedulerFileCount: 65 → 64 (reconciled with cron-registry.json count per QA audit)
+   - cronJobCount: 75 → 76 (added accuracyDigestJob, 1941c)
+3. **Sprint 1941 status update:**
+   - Tier 1 (1941a + 1941c) = DONE (both QA-approved 2026-05-18)
+   - Tier 2 (1941b signal_outcomes seeding) = OBSERVE (7d window, gate 2026-05-25, no code dispatch)
+   - Tier 3 (1941c BA spec) = DONE by developer (was miscategorized as "BA-SPEC" in Todo — already completed as part of 1941c implementation)
+   - Tier 3+ (1941d FPT net_profit OCR bug) = QA in flight (task/1941d-fpt-netprofit-ocr-fix branch)
+4. **WIP Status:** 1/2 OCCUPIED (1941d QA running). Capacity = 1/2 AVAILABLE. No new developer dispatch until 1941d QA resolves.
+5. **PM notebook updated:** Header, current state, this cycle entry.
+
+**Next steps:**
+- 1941b observation: ops monitors signal_outcomes rows until 2026-05-25. AC: ≥30 resolved rows (outcome_24h ∈ correct/incorrect/neutral) across ≥3 signal_type values. No dispatch needed.
+- 1941d QA: Await approval. If APPROVED, merge to main + mark DONE. If CHANGES_REQUESTED, developer fixes + resubmits.
+- After 1941d QA: WIP capacity = 2/2 AVAILABLE. Can dispatch next high-priority backlog task or architect brief task.
+
+**Blockers:** None. 1941b gate (2026-05-25) non-blocking.
+
+**Status:** Post-QA closure COMPLETE. Sprint 1941 Tier 1 shipped. Metrics reconciled. Awaiting 1941d QA. System idle at 1/2 WIP.
 
 ---
 
