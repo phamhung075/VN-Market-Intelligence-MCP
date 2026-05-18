@@ -93,4 +93,28 @@ None — observational only. All changes recorded in WORK Telegram + OBSERVATION
 
 **1951b status: IN PROGRESS — DO NOT CLOSE.** Tick 1 of 3 verified. AC-6 zero-double-publish gate not yet evaluable (no chef tick yet in window).
 
-**Acceptance path:** all 3 ticks confirmed + zero MARKET duplicate dish across 24h window. Next PO assessment at chef-morning slot 2026-05-19T05:15Z; AC-6 closes 2026-05-19T20:34Z. On PASS → 1951c + 1951d unblocked.
+**Acceptance path:** all 3 ticks confirmed + zero MARKET duplicate dish across 24h window. Next PO assessment at chef-morning slot 2026-05-19T05:15Z; AC-6 closes 2026-05-19T20:34Z. On PASS → 1951c unblocked.
+
+---
+
+## AC-7 — CUTOVER BLOCKER (added 2026-05-18T21:15Z by PO c202)
+
+**Source signal:** `docs/signals/processed/cowork-team-1951-fire-drift-detected.json` (cowork-team 2026-05-18T21:07Z).
+
+**Finding:** Master cron `2da3291e` (`*/15 * * * *`) is firing ~7min after each nominal tick instead of within the ±2min jitter spec (CronCreate docs: max 10% / ~1.5min for `*/15`). Two consecutive fires confirmed:
+
+| Nominal tick | Actual fire | Drift |
+|--------------|-------------|-------|
+| 2026-05-18T20:45:00Z | 2026-05-18T20:52:10Z | 7.2 min |
+| 2026-05-18T21:00:00Z | 2026-05-18T21:07:08Z | 7.1 min |
+
+Root-cause hypothesis: CronCreate jobs only fire while REPL is idle. If Claude is mid-query at nominal tick, the fire is deferred until idle — observed deferral ~7min.
+
+**Impact:** `.claude/scripts/cowork-match-slots.js` matches `now ±2min` against cron expressions. When fire happens at :07, the window is `[05–09]`, which never includes `:00` (the nominal `*/15` slot). Every fire silent-exits without spawning any agent. AC-6 idempotency observation is uncorrupted (lane B never publishes), but **no master-dispatched chef tick will ever reach MARKET** under current matcher logic.
+
+**Cutover decision:** 1951d (delete 12 legacy RemoteTriggers) is held until SPIKE-1951f architect decision lands and 1951g fix merges. AC-6 PASS alone is INSUFFICIENT — it only proves "lane B publishes nothing", not "lane B publishes correctly".
+
+**Next steps:**
+1. SPIKE-1951f → architects-architect (HIGH) — pick option A/B/C/D; recommendation in signal is Option B (nominal-tick rounding in matcher).
+2. 1951g → dev-mcp-server (HIGH, blocked on SPIKE-1951f) — implement chosen option + regression test reproducing the :07 drift case.
+3. After 1951g merges → ops re-runs ≥1 chef-master tick at realigned grid in the residual window (if any). If window already closed, open a follow-up 24h re-validation sprint.
