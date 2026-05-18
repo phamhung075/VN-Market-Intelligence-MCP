@@ -1,4 +1,80 @@
-## Sprint 1947 — CLOSED-LOOP AUTO-IMPROVEMENT (ACTIVE)
+## Sprint 1948 — CLOSED-LOOP AUTO-IMPROVEMENT PHASE 1 (QUEUED — GATE-BLOCKED)
+
+**Status:** Queued (all tasks BLOCKED) | **Opens:** 2026-05-20T07:22Z (gate clear) | **Theme:** Ship the shadow-mode minimum-viable detect+log loop recommended by SPIKE-1947 ARCH brief. No auto-dispatch yet; Phase 1 is detect-only + WORK Telegram + `improve_check_log` snapshot writes.
+
+# Goal
+
+## Vision
+SPIKE-1947 (architect, committed `b55ea5c8` 2026-05-18) decided the closed-loop auto-improvement system architecture: host = scheduler job inside `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts` (Option C, direct SQLite access, no new Docker service). Detection rule: 7d vs 30d `accuracy_rate` delta ≥10pp OR baseline <40% with ≥10 samples per signal_type. Hypothesis: rule-table `degradationRules.ts` in domain layer (Phase 1-2); LLM agent optional Phase 3 via signal-bus. Dispatch: 3-phase rollout — Phase 1 shadow (this sprint), Phase 2 manual-gate (signal-bus JSON, human drain), Phase 3 auto-dispatch (kill-switch `SELF_IMPROVE_AUTO_DISPATCH=false`, WIP≤2 cap). Recheck: 7-day post-dispatch window, before/after `accuracy_rate` delta. Loop-exit: `hit_rate ≥60%` sustained 2 consecutive weekly windows. Safety: cooldown 7d per signal_type, max 2 dispatches/cycle, freeze-on-worsening, recurring-bug escalation after 2 failed cycles.
+
+Sprint 1948 ships Phase 1 (shadow only). PM has filed 4 atomic tasks in Backlog (1948a, 1948b, 1948c, OBSERVE-1948d). ALL ARE BLOCKED until `post-1945-verdict-resolution-scored-pct` gate clears at 2026-05-20T07:22Z. PO will not dispatch any dev work until the gate clears with `scored_pct ≥60%` AND `unknowns_30d` drop ≥100 — without that, the resolution-pipeline fix takes priority over auto-improvement Phase 1 (Phase 1 reads `alert_accuracy.accuracy_rate` and a broken upstream poisons the loop).
+
+## Sprint 1948 sub-tasks (queued, blocked)
+
+### TIER 1 — DB + domain + scheduler wiring (the anchor)
+- **1948a — `improve_check_log` schema + `improveCheckStore.ts`.** Size=S. Zone=apps/mcp-server/. DB migration adds `improve_check_log` to `schema-system.ts` + Drizzle types + 6 store functions (insert, getPending, update, getRecentCheck, etc). Unit tests cover insert, getPending, update, getRecentCheck, schema guard. Owner: dev-mcp-server.
+- **1948b — `degradationRules.ts` domain service (pure).** Size=S. Zone=apps/mcp-server/. `DegradedSignalType` + `DegradationHypothesis` interfaces, `DEGRADATION_CAUSE_MAP` rule-table, `classifyDegradation()` + `lookupHypothesis()`. Detection logic = SPIKE-1947 rule (7d vs 30d delta ≥10pp OR baseline <40% with ≥10 samples). Unit tests: degraded / not-degraded / insufficient-sample / null-rates / persistently-low / neutral. Depends on 1948a. Owner: dev-mcp-server.
+- **1948c — `selfImproveOrchestratorJob.ts` scheduler entry + wiring + integration tests.** Size=M. Zone=apps/mcp-server/. Shadow-mode only: no signal-bus write, WORK Telegram output only. Detection loop: 7d/30d accuracy-rate delta, coverage-gap query, hypothesis lookup, `improve_check_log` snapshot write. Phase 1 AC: ≥1 degraded signal type detected → exactly 1 WORK Telegram; zero degradation → clean exit; 6+ tests. Wiring: `CRONS.selfImproveOrchestrator` in cronConfig.ts + startScheduler.ts + .env.example. Depends on 1948a + 1948b. Owner: dev-mcp-server.
+
+### TIER 2 — Post-deploy observation gate
+- **OBSERVE-1948d — 7-day shadow-mode verification (gate 2026-05-25T09:00Z, post-deploy assumed 2026-05-20T09:00Z).** AC: ≥1 degraded signal type detected (`improve_check_log.dispatch_status='shadow'`), ≥1 WORK Telegram sent with detection details, zero false-positive auto-dispatches (Phase 1 is shadow-only), no DB errors, `cron_job_runs` shows 7 consecutive successful runs. Owner: ops.
+
+## Pre-conditions (gates)
+- **post-1945-verdict-resolution-scored-pct** at 2026-05-20T07:22Z — `alert_accuracy.scored_pct ≥60%` AND `unknowns_30d` drop ≥100. If miss → resolution-pipeline fix (1947b-followup) takes priority over Sprint 1948; Sprint 1948 deferred until next sprint cycle.
+- **post-1945-bug-storm-silence** at 2026-05-20T07:22Z — zero new `[bug] verdictResolutionJob` Telegram messages 48h post-1945a deploy. Miss → 1947c-followup.
+
+If both gates clear, PO unblocks 1948a/b/c on 2026-05-20T07:22Z+ and the sprint enters In-Progress.
+
+## Scope
+IN: 3 dev tasks (1948a S, 1948b S, 1948c M) + 1 OBSERVE gate. All within `apps/mcp-server/` zone. Shadow-mode only (no signal-bus, no auto-dispatch).
+OUT: Phase 2 manual-gate dispatch (next sprint after 1948 observation clears); Phase 3 auto-dispatch (gated on Phase 2 success); new microservices; signal-bus writes; OBSERVE-gate retirement (3 of 6 retire candidates per SPIKE-1947 — deferred to Phase 1 sign-off).
+
+## Success Metric
+- **AC-1 (PRIMARY):** 1948a + 1948b + 1948c all QA-approved within 48h of unblock. ≥1 `improve_check_log` row written in Shadow mode per detection cycle.
+- **AC-2:** WORK Telegram fires when degradation detected (visible end-to-end signal).
+- **AC-3:** Zero auto-dispatches (Phase 1 must be shadow-only — any signal-bus JSON write = AC failure).
+- **AC-4:** 7-day OBSERVE gate (OBSERVE-1948d) clears with 7 consecutive cron runs.
+- **AC-5:** Recurring-bug-escalation rule respected — if 1948c fails twice with same root cause, escalate to architect before re-spawning fix.
+
+## Sequencing
+1. **BLOCKED.** Wait for gate clear at 2026-05-20T07:22Z. No dev dispatch until then.
+2. 1948a first (DB schema + store) → 1948b (domain service, pure) → 1948c (scheduler wiring + integration).
+3. OBSERVE-1948d gate fires 2026-05-25T09:00Z (7d post-1948c deploy).
+
+## Architect brief reference
+- **ARCH brief:** `docs/architecture-briefs/2026-05-18-closed-loop-auto-improvement.md` (SPIKE-1947 output, committed `b55ea5c8` 2026-05-18).
+- **Spike:** `docs/spikes/SPIKE_1947-auto-improve-loop.md`.
+
+## Carry-forwards monitored (not in-scope this sprint)
+- 1907a USER-ACTION (Claude Desktop restart for digest-predict MCP) — CRITICAL but blocked on user.
+- 1897b USER-ACTION (Docker .git/ exclusion for VirtioFS HEAD.lock) — F1 USER-PERMANENT.
+- alert-precision-488-unknowns MONITORING (HOLD until agent_signals ≥550)
+- fa-shape-guard-watch MONITORING (next post-restart FA live session)
+- `post-1944-financial-reports-q1-2026` gate at 2026-05-18T12:00Z (independent OBSERVE)
+- `post-1942-fa-verify` gate ~23Z tonight (independent OBSERVE)
+- `1941b-signal-outcomes-seed-window` gate 2026-05-25 (independent OBSERVE)
+- `1922g-pharma-events-source-verify` gate 2026-06-01 (independent OBSERVE)
+
+---
+
+## Sprint 1947 — CLOSED-LOOP AUTO-IMPROVEMENT DESIGN (DONE)
+
+**Status:** DONE | **Closed:** 2026-05-18T09:09Z | **Theme:** Convert the passive accuracy-monitoring surface (signal_outcomes + alert_accuracy + AccuracyDigestStats + OBSERVE gates) into an active detect → hypothesize → fix → recheck → loop closed-loop self-improvement system.
+
+**Outcome:** SHIPPED. SPIKE-1947 (architect, time-boxed 3h) closed-loop auto-improvement system designed end-to-end. Single anchor task DONE QA-APPROVED architect-committed `b55ea5c8` 2026-05-18. All 5 ACs met:
+- **AC-1 (PRIMARY):** Spike doc + ARCH brief both committed (`docs/spikes/SPIKE_1947-auto-improve-loop.md` + `docs/architecture-briefs/2026-05-18-closed-loop-auto-improvement.md`).
+- **AC-2:** Phased Sprint 1948 scope recommended: Phase 1 shadow-mode `selfImproveOrchestratorJob.ts` (detect + WORK Telegram + `improve_check_log` writes, no auto-dispatch). PM has decomposed into 4 atomic tasks filed in Backlog.
+- **AC-3:** Loop step → component mapping done (detect → `accuracy_rate` queries via `signalOutcomeStore`; hypothesize → rule-table `degradationRules.ts` in domain layer; dispatch → Phase 2 signal-bus + Phase 3 auto-dispatch with kill-switch; recheck → 7-day post-dispatch window; loop → cron cadence).
+- **AC-4:** Safety section complete — WIP≤2 cap, max 2 dispatches/cycle, cooldown 7d per signal_type, kill-switch `SELF_IMPROVE_AUTO_DISPATCH=false`, freeze-on-worsening, recurring-bug-escalation after 2 failed cycles, shadow → manual-gate → auto-dispatch phased rollout.
+- **AC-5:** Of 6 carry-over OBSERVE gates, 3 candidates for retirement once Phase 1 proves stable (verdict-resolution-scored-pct + bug-storm-silence + 1941b-seed-window absorbed by orchestrator).
+
+**Host decision (Option C):** Scheduler job inside `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts` — direct SQLite access, no new Docker service. Rejected alternatives: new microservice (DDD overhead, deploy cost) + cowork agent (token cost, latency).
+
+**Sprint outcome:** Sprint 1948 unblocked from a scoping/design standpoint. Implementation gate-blocked separately on `post-1945-verdict-resolution-scored-pct` (2026-05-20T07:22Z) so Phase 1 reads a clean `alert_accuracy` substrate.
+
+---
+
+## Sprint 1947 ORIGINAL VISION (preserved for traceability)
 
 **Status:** Active | **Opened:** 2026-05-18T08:56Z | **Theme:** Convert the passive accuracy-monitoring surface (signal_outcomes + alert_accuracy + AccuracyDigestStats + OBSERVE gates) into an active detect → hypothesize → fix → recheck → loop closed-loop self-improvement system.
 
