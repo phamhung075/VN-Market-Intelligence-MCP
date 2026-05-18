@@ -1,14 +1,67 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-18 c183 (PM: Sprint 1950-T5 DONE QA-APPROVED + architectural finding flagged; MAINT-1950d filed (workflow-map residue sweep); `durable: true` cron-persistence finding surfaced to po; WIP=0/2 CLEAN; Sprint 1948 remains BLOCKED until post-1945 gate 2026-05-20T07:22Z) | **Sprint:** 1950 COMPLETE (T1-T5 all DONE/QA-APPROVED; MAINT-1950b/c/d in Backlog); 1948 QUEUED-BLOCKED (Architect: SPIKE-1947 DONE; PM: 1948a/b/c/OBSERVE-1948d queued, all gate-blocked until 2026-05-20T07:22Z) | **Current:** WIP 0/2 (CLEAN); Open finding: cron-persistence misleading `durable: true` flag not honored at runtime → requires ARCHITECTURE.md note + po assessment
+**Last updated:** 2026-05-18 c184 (PM: Sprint 1950-T3 QA-APPROVED R2 → CLOSED. All T1-T5 DONE. Signal written. TASKS.md stamped. MAINT-1950b/c/d in Backlog. WIP=0/2 CLEAN. Sprint 1948 gate-blocked until 2026-05-20T07:22Z) | **Sprint:** 1950 CLOSED (T1-T5 all DONE/QA-APPROVED; MAINT-1950b/c/d in Backlog); 1948 QUEUED-BLOCKED (gate: 2026-05-20T07:22Z) | **Current:** WIP 0/2 CLEAN; NEXT tier: agent-father (MAINT-1950b/c/d low-priority) or po (Sprint 1948 gate monitoring)
 
 ## Current state
 
-- **WIP: 0/2 CLEAN** — Cycle c183: (1) Sprint 1950-T5 DONE + QA-APPROVED by qa agent (commit `3c560cab` + notebook `af3b22d0`). Digest-predict cron finalized: CronCreate executed by router, job id `ad22967e`, schedule `47 13 * * 0` (Sunday 13:47 UTC), recurring=true. **Architectural finding reported:** `durable: true` in `.claude/commands/crons/*.md` is NOT honored by Claude Code CronCreate runtime — session-scoped only, auto-expires after 7 days, not written to disk. Consistent with existing ARCHITECTURE.md OQ-2 (RemoteTrigger cron persistence). (2) QA identified stale "monday predict" text at workflow-map.md L103 (pre-existing from Sprint 1949 gap, not introduced by T5). (3) Filed MAINT-1950d: workflow-map.md L103 + cron-jobs.md residue sweep (agent-father zone, XS, no BA). (4) TASKS.md updated: 1950-T5 marked DONE with commit hashes + finding note; MAINT-1950d added to Backlog. Line count: 82L → 87L (5 lines added for T5 finding detail + MAINT-1950d). (5) PM notebook updated: header + current state + this cycle. (6) Flagging cron-persistence finding to po (not blocking; requires ARCHITECTURE.md update + policy review). (7) WIP capacity = 2/2 AVAILABLE post-gate-clear. All Sprint 1950 dev tasks complete; MAINT-1950b/c/d remain in Backlog.
+- **WIP: 0/2 CLEAN** — Cycle c184: (1) Sprint 1950-T3 marked DONE QA-APPROVED R2 in TASKS.md (commits `0e3c96c9` initial + `1d425787` fixer BLOCK-1 fix). (2) All Sprint 1950 T1-T5 tasks now DONE. (3) Signal written: `docs/signals/pm-1950-T3-closed.json` (closure record + sprint assessment). (4) TASKS.md updated: 1950-T3 row stamped with commits + full context. (5) MAINT-1950b/c/d remain in Backlog (low-priority maintenance tier). (6) PM notebook updated: header + current state. (7) WIP capacity = 2/2 AVAILABLE. Sprint 1950 CLOSED.
+- **Sprint 1950 Closure Summary:** All 5 tasks (T1-T5) DONE. T1=chef.md telemetry; T2=chef cycle-coverage audit (QA R2); T3=chef runbook (QA R2); T4=TNB cron hotfix; T5=digest-predict cron finalization (QA-APPROVED). Maintenance items (MAINT-1950b/c/d) in Backlog, not blocking Sprint 1950 closure. Architectural finding from T5: `durable: true` in cron command files not honored by runtime (low-impact; documented in OQ-2).
 - **Sprint 1948 sequence:** Architect SPIKE-1947 DONE (2026-05-18). PM decomposition DONE (c181). Dev dispatch BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
 - **Prior state (c180b):** TASKS.md compacted 89L → 63L. Done section archived 31 completed entries to TASKS_ARCHIVE.md. Retained 3 most recent: 1943a, SPIKE-1943, 1941d. Current Backlog: 7 rows (1948a/b/c/OBSERVE-1948d + 3 monitoring rows). Todo: 5 rows (post-1945 gates + 1941b-seed + observational). In Progress: empty.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: scheduler job inside apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts (Option C). Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. Hypothesis: degradationRules.ts rule-table (Phase 1-2); LLM optional Phase 3. Dispatch: 3-phase rollout — Phase 1 shadow-mode (WORK Telegram, no auto-dispatch, Sprint 1948), Phase 2 manual-gate (signal-bus JSON, human drain), Phase 3 auto-dispatch (kill-switch env var, WIP≤2 cap). Recheck: 7d window. Loop-exit: hit_rate ≥60% sustained 2 consecutive weekly windows. Safety: 7d cooldown, max 2 dispatches/cycle, freeze-on-worsening, recurring-bug escalation ≥2 failed cycles.
-- **Status:** Sprint 1948 queued in Backlog with explicit gate pre-condition. TASKS.md + handoff files complete. SPIKE-1947 design documented. Ready for gate clear on 2026-05-20T07:22Z → PM dispatch sequence → dev execution.
+- **Status:** Sprint 1950 CLOSED. Sprint 1948 queued in Backlog with explicit gate pre-condition. Ready for gate clear on 2026-05-20T07:22Z → PM dispatch sequence → dev execution.
+
+---
+
+## Cycle 184 — 2026-05-18 PM Sprint 1950-T3 QA-APPROVED R2 → CLOSED + Sprint 1950 Full Assessment (WIP=0/2 CLEAN, Sprint 1950 CLOSED)
+
+**Input:** QA approval report for 1950-T3 Round 2 (APPROVED verdict), TASKS.md current state, Sprint 1950 completion assessment.
+
+**Context:**
+- QA approved 1950-T3 at Round 2 (BLOCK-1 fix by fixer agent verified at exact lines: L3 size 95L→128L, L20 clarification on registered cron 29****/hourly vs dispatch windows, L110 recovery action CronList check)
+- All 5 Sprint 1950 tasks now DONE: T1 telemetry, T2 cycle-coverage audit (QA R2), T3 runbook (QA R2), T4 TNB cron hotfix, T5 digest-predict cron finalization (QA-APPROVED)
+- MAINT-1950b/c/d remain in Backlog (low-priority, non-blocking)
+- WIP = 0/2 CLEAN
+
+**Actions:**
+1. **Marked 1950-T3 DONE in TASKS.md:** Stamped row with both commits (`0e3c96c9` initial + `1d425787` fixer BLOCK-1 fix), QA Round 2 verdict, full context (cron clarification, recovery procedure, runbook size 128L).
+2. **Signal written:** `docs/signals/pm-1950-T3-closed.json` — closure record containing: task status, QA verdict, all commits, file deliverables, full Sprint 1950 summary (T1-T5 done status), MAINT items in Backlog, next actions, WIP status.
+3. **Sprint 1950 Assessment:**
+   - **Status:** CLOSED — All 5 core tasks (T1-T5) DONE.
+   - **Task completion:**
+     - T1 (1950-T1): DONE — chef.md telemetry entry (`[chef] START/SENT/SILENT/FAILED`), commit `f4688989`
+     - T2 (1950-T2): DONE QA-APPROVED R2 — chef pipeline cycle-coverage audit, commits `ad68cf5c` + `d307d294` (fixer pipeline_degraded fix)
+     - T3 (1950-T3): DONE QA-APPROVED R2 — chef pipeline runbook (128L), commits `0e3c96c9` + `1d425787` (fixer BLOCK-1 fix)
+     - T4 (1950-T4): DONE HOTFIX — TNB cron schedule fix `17 */4 * * *` → `13 20 * * *`, commit `2c01f9a3`
+     - T5 (1950-T5): DONE QA-APPROVED — digest-predict cron finalization + Sunday-only scope, commits `3c560cab` + `af3b22d0` (notebook)
+   - **Maintenance (Backlog, non-blocking):**
+     - MAINT-1950b: Archive oversized agent notebooks (5 notebooks >200L, per waterfall lazy-load cap)
+     - MAINT-1950c: Semble-search model field + orphan notebooks cleanup
+     - MAINT-1950d: workflow-map.md L103 + cron-jobs.md residue sweep (filed c183)
+4. **PM notebook updated:** Header reflects Sprint 1950 CLOSED status. Current state section updated. This cycle (c184) entry added.
+5. **TASKS.md updated:** 1950-T3 row stamped with full closure context + commit hashes. Line count acceptable (necessary for commit traceability).
+
+**Sprint 1950 Closure Criteria — ALL MET:**
+- All T1-T5 tasks: DONE ✓
+- QA approval on T2 + T3: APPROVED ✓
+- All commits merged to main: yes ✓
+- Documentation updated: yes (chef-pipeline-runbook.md, cron-jobs.md reference, TASKS.md) ✓
+- Maintenance items filed (MAINT-1950b/c/d): yes ✓
+- WIP enforced (0/2 CLEAN): yes ✓
+
+**MAINT-1950b/c/d Disposition:**
+- Non-critical (audit findings, housekeeping)
+- Backlog items eligible for next agent-father or low-priority tier dispatch
+- Do NOT block Sprint 1950 closure
+
+**Next Actions:**
+1. **Agent-father:** Pick up MAINT-1950b/c/d from Backlog (low-priority maintenance tier; can be done in parallel or spread across off-hours cycles)
+2. **PO/Gate monitoring:** Watch post-1945-verdict-resolution-scored-pct gate (2026-05-20T07:22Z) for Sprint 1948 Phase 1 unblock decision
+3. **PM:** Monitor gate outcome → if PASS, dispatch 1948a/b/c/OBSERVE-1948d sequence; if FAIL, escalate resolution pipeline fix to dev-mcp-server
+
+**WIP Status:** 0/2 CLEAN. WIP capacity = 2/2 AVAILABLE for next tier.
+
+**Status:** Sprint 1950 CLOSED. All closure criteria MET. Ready for next tier (agent-father MAINT or po gate monitoring).
 
 ---
 

@@ -1,0 +1,52 @@
+{
+  "signal_id": "pm-1950-T3-closed",
+  "timestamp": "2026-05-18T23:45:00Z",
+  "sender": "pm",
+  "type": "task_closure",
+  "subject": "Sprint 1950-T3 QA-APPROVED R2 — Chef Pipeline Runbook Closure + Sprint 1950 Assessment",
+  "body": {
+    "task": "1950-T3",
+    "task_name": "Chef Pipeline Runbook",
+    "sprint": "1950",
+    "status": "DONE",
+    "qa_verdict": "APPROVED",
+    "qa_round": 2,
+    "commits": [
+      {
+        "hash": "0e3c96c9",
+        "agent": "agent-father",
+        "description": "Initial runbook: docs/protocols/chef-pipeline-runbook.md"
+      },
+      {
+        "hash": "1d425787",
+        "agent": "fixer",
+        "description": "BLOCK-1 fix: clarify registered cron 29****/hourly vs dispatch time-windows; update size comment 95L→128L"
+      }
+    ],
+    "file_deliverables": [
+      "docs/protocols/chef-pipeline-runbook.md (128L)",
+      "docs/standards/cron-jobs.md (reference line updated)"
+    ],
+    "sprint_1950_completion": {
+      "status": "CLOSED",
+      "all_tasks_done": true,
+      "summary": {
+        "T1": "DONE 2026-05-18 — chef.md telemetry entry (commit f4688989)",
+        "T2": "DONE 2026-05-18 QA-APPROVED R2 — chef pipeline cycle-coverage audit (commits ad68cf5c + d307d294)",
+        "T3": "DONE 2026-05-18 QA-APPROVED R2 — chef pipeline runbook (commits 0e3c96c9 + 1d425787)",
+        "T4": "DONE 2026-05-18 HOTFIX — TNB cron schedule fix 17*/4→13 20 (commit 2c01f9a3)",
+        "T5": "DONE 2026-05-18 QA-APPROVED — digest-predict cron finalization + Sunday-only (commits 3c560cab + af3b22d0)"
+      },
+      "maintenance_items_in_backlog": [
+        "MAINT-1950b: archive oversized agent notebooks (5 notebooks >200L)",
+        "MAINT-1950c: semble-search model field + orphan notebooks",
+        "MAINT-1950d: workflow-map.md L103 + cron-jobs.md residue sweep"
+      ]
+    },
+    "next_actions": {
+      "immediate": "Agent-father to begin MAINT-1950b/c/d (low-priority, non-blocking maintenance tier)",
+      "gate_dependent": "Sprint 1948 Phase 1 remains BLOCKED until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z"
+    },
+    "wip_status": "0/2 CLEAN. WIP capacity = 2/2 AVAILABLE post-gate-clear."
+  }
+}
