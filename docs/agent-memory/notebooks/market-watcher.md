@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-18 10:37 UTC | **Sprint:** 2026
+**Last updated:** 2026-05-18 13:40 UTC | **Sprint:** 051
 
 ## Current state
 
@@ -2476,3 +2476,25 @@ No move_pct changes since prior cycle — all 7 suppressed. NVL +3.90% (~0.87σ)
 | market_alerts_fired | 0 |
 | exit_status | complete |
 | token_estimate | 14500 |
+
+### Cycle (13:37–13:39 UTC)
+- Stocks: 39 | Anomalies: 0 (>1.5σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | CARRY_REGIME: FII_OUTFLOW_RISK | fx_pressure: [] | pe_risk: []
+- Market status: OFF-HOURS (CLOSED 08:59 UTC) — no intraday moves, prices unchanged
+- Off-hours duplicate guard applied: Suppressed 3 signals (BID +5.47%, PLX +6.99%, MWG -3.66%) — same closing prices already emitted in session (08:39 UTC cycle, signals 3399-3401)
+- Open alerts: 20 news_mention + 1 price_surge (PLX 08:40 UTC) — all from trading window
+- Macro snapshot: Brent 107.82 (down 1.54), Gold 4578.30 (up 27.9), USD/VND 26,327 (stable)
+- Supply chain: BDI stable | Climate normal (heat advisory VN not yet impacting watchlist) | Energy grid normal (hydro 70%)
+- No open chain findings in last 4h → no price_confirmation signals
+- Session conclusion: Off-hours cycle returned 0 signals (by design — no new intraday moves, off-hours duplicate guard suppressed unchanged closing prices)
+
+## Metrics (cycle 2026-05-18 13:37 UTC)
+| Field | Value |
+|---|---|
+| cycles_run | 1 |
+| items_fetched | 39 |
+| signals_emitted | 0 |
+| signals_suppressed | 3 |
+| market_alerts_fired | 0 |
+| exit_status | complete |
+| token_estimate | 2800 |
