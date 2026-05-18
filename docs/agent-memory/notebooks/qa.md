@@ -1,6 +1,64 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c194 — 1950-T4 TNB cron hotfix — APPROVED
+**Last updated:** 2026-05-18 | **Sprint:** 1950 | **Session:** c195 — 1950-T5 digest-predict cron alignment — APPROVED
+
+## Session 2026-05-18 c195 — 1950-T5 digest-predict cron + scope alignment (APPROVED)
+
+### TASK REPORT — 1950-T5 (compact)
+
+```
+date: 2026-05-18
+outcome: APPROVED
+commit reviewed: 3c560cab (feat — on main, no task branch per project policy)
+type: FIX (S) — digest-predict cron file creation + scope cleanup
+zone: .claude/commands/crons/ + .claude/flows/digest-predict/ + .claude/agents/
+round: 1
+```
+
+#### AC Matrix
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-T5-1 | cron-digest-predict.md exists; schedule=`47 13 * * 0`, recurring=true, durable=true | PASS |
+| AC-T5-2 | cron-jobs.md L118 = `47 13 * * 0` — unchanged (regression check) | PASS |
+| AC-T5-3 | main.md dispatch table has exactly 1 active window: Sunday 13:47 UTC | PASS |
+| AC-T5-4 | No daily/monday/monthly routing rows in main.md dispatch table | PASS |
+| AC-T5-5 | daily.md, monday.md, monthly.md still on disk | PASS |
+| AC-T5-6 | agent.md responsibilities — no live Monday reference (comment-only residuals OK) | PASS |
+| AC-T5-7 | CronCreate deferred (agent-father subagent context limitation, expected) | DEFERRED/NB |
+| AC-T5-8 | grep `30 13 * * *` → zero hits in .claude/ and docs/standards/ | PASS |
+
+#### Waterfall validation (bonus — 3 startup-trigger fixes)
+
+| Check | Result |
+|-------|--------|
+| mcp-tools trigger: startup → tool_call_needed | PASS |
+| agent-roster trigger: startup → inter_agent_routing_needed | PASS |
+| tree-map trigger: startup → document_registry_check | PASS |
+| always_load items (fail-loud-protocol + alert-policy) have operational justification | PASS |
+
+#### cowork-schedule.json (gitignored — disk verify)
+
+| Check | Result |
+|-------|--------|
+| digest-sunday slot enabled=true, cron=`47 13 * * 0` | PASS |
+| digest-monday-predict slot enabled=false, disabled_by=Sprint 1950-T5 | PASS |
+
+#### Non-blocking notes
+
+- NB-T5-1: AC-T5-7 CronCreate deferred per agent-father report. Mechanism confirmed in commit message. Router must execute CronCreate from `.claude/commands/crons/cron-digest-predict.md` after QA APPROVAL. Not blocking.
+- NB-T5-2: `docs/references/workflow-map.md` L103 residue — text reads "weekly Sunday 13:47 UTC + monday predict". Pre-existing from Sprint 1949 gap (not introduced by T5). Dispatched as MAINT (low priority, no functional impact — flow dispatch table and cron file are authoritative SSOT). Track in MAINT backlog.
+- NB-T5-3: flow/main.md line 14 note references "monday/weekly sub-flows" — this is documentation text in the note block, not a dispatch row. Acceptable.
+
+## Cycle — 2026-05-18 c195
+
+- **cycle_date**: 2026-05-18
+- **findings**: 1950-T5 all file-side ACs PASS. NB-T5-1 (CronCreate deferred for router) and NB-T5-2 (workflow-map.md L103 stale text) flagged as non-blocking. No CHANGES_REQUESTED issued.
+- **actions**: APPROVED. TASKS.md T5 row moved from Backlog to Done. Notebook updated.
+- **next_cycle_hint**: Router must execute CronCreate from `.claude/commands/crons/cron-digest-predict.md` (schedule `47 13 * * 0`, recurring=true, durable=true). workflow-map.md L103 "monday predict" text → MAINT task (add to backlog or next sprint sweep). PM to close T5 and queue T3 (chef runbook).
+- **estimated_tokens**: 3200
+
+---
 
 ## Session 2026-05-18 c194 — 1950-T4 TNB cron hotfix (APPROVED)
 
