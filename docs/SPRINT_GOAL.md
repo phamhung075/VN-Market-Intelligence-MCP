@@ -1,6 +1,22 @@
-## Sprint 1950 — CHEF PIPELINE OBSERVABILITY (WORK-CHANNEL TELEMETRY)
+## Sprint 1950 — CHEF PIPELINE OBSERVABILITY (WORK-CHANNEL TELEMETRY) + AUDIT-DRIVEN CRON HOTFIXES
 
-**Status:** OPEN | **Opened:** 2026-05-18T17:00Z | **Theme:** Sprint 1949 shipped chef (unified-agent) with first guaranteed dish firing tomorrow 05:23 UTC. Chef's current logging is notebook-only on guaranteed slots (Morning 05:23 / EOD 08:37 / Evening 19:37 UTC) — only intraday silent-exits write WORK Telegram. If chef fails silently on a guaranteed slot (MCP timeout, signal-read exception, narrative-generation error, dish < min length), the operator has zero visibility until tran-ngoc-bau's daily audit at 20:13 UTC — a worst-case 15-hour dark window. Sprint 1950 closes that gap before the first guaranteed dish fires.
+**Status:** OPEN | **Opened:** 2026-05-18T17:00Z | **Scope expanded:** 2026-05-18T17:18Z (folded audit findings #1 + #2 + #3 + YELLOW from `docs/handoffs/agent-definitions-audit-2026-05-18.md` commit `b47ccb67`) | **Theme:** Sprint 1949 shipped chef (unified-agent) with first guaranteed dish firing tomorrow 05:23 UTC. Chef's current logging is notebook-only on guaranteed slots (Morning 05:23 / EOD 08:37 / Evening 19:37 UTC) — only intraday silent-exits write WORK Telegram. If chef fails silently on a guaranteed slot, the operator has zero visibility until tran-ngoc-bau's daily audit at 20:13 UTC — a worst-case 15-hour dark window. Sprint 1950 closes that gap before the first guaranteed dish fires. **Scope expansion 17:18Z:** system-auditor surfaced 3 CRITICAL findings — TNB cron mismatch (fires 6x/day instead of once 20:13 UTC, Sprint 1949-T9 reschedule never landed in the cron command file), digest-predict cron MISSING + flow dispatch contradicts Sprint 1949-T5 weekly-only scope, and 5 oversized notebooks. T4 (HOTFIX) coupled to T2 just-shipped — without T4, T2's new chef-coverage BUG fires 6x/day starting :17 ticks. T5 also urgent: digest-predict may not be scheduled at all. T4 ships TODAY before 20:17Z; T5 same-cycle; MAINT-1950b/c queued for low-priority drain.
+
+## Scope expansion summary (2026-05-18T17:18Z)
+
+| Task | Folded into 1950 | Reason |
+|------|------------------|--------|
+| 1950-T4 (HOTFIX) | YES — coupled to T2 just-shipped | TNB cron `17 */4 * * *` → `13 20 * * *`. Without T4, T2's chef-coverage check fires false-positive BUGs 6x/day. Single-line edit. |
+| 1950-T5 (FIX) | YES — coupled to Sprint 1949-T5 weekly-only scope | Missing cron-digest-predict.md command + flow main.md still routes daily/monthly/monday. Two-file edit. |
+| MAINT-1950b | YES — low priority drain | Archive 5 oversized notebooks under 200L cap. Pure maintenance. |
+| MAINT-1950c | YES — low priority drain | semble-search `model:` field + orphan news-scout-cycle notebooks. Pure hygiene. |
+| Master scheduler brief (`docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`) | NO — held for Sprint 1951 | SPRINT-M scope (cowork-scheduler agent + SSOT + 5 phases). Independent of audit findings. Phase 1 only after 1950 closes. |
+
+## Sprint 1950 SAFE-COEXISTENCE rule
+- 1950-T4 must ship BEFORE next TNB cron tick at 2026-05-18T20:17Z otherwise T2's just-deployed coverage check fires a false-positive BUG storm (it expects 20:13 daily, sees an off-cadence 20:17 tick instead). After T4 fix, TNB next runs at 2026-05-19T20:13Z (24h gap is fine — chef coverage check has 24h sliding window).
+- 1950-T5 has no time gate but should ship same cycle (digest-predict next Sunday window is 2026-05-24T13:47Z — ample buffer, but cron command MISSING means we don't even know if it'd fire).
+- MAINT-1950b/c are queueable for next cycle (token cost ongoing but not destructive).
+
 
 # Goal
 

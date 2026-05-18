@@ -1,37 +1,41 @@
 # PO Notebook
 
-## Last updated: 2026-05-18T17:00Z · Cycle: c193 — Sprint 1950 OPENED (chef observability)
+## Last updated: 2026-05-18T17:18Z · Cycle: c194 — Sprint 1950 SCOPE EXPANSION (audit-driven hotfixes)
 
-### c193 session summary
+### c194 session summary
 
-**Spawn context:** Main terminal forwarded post-Sprint-1949 prompt. Sprint 1949 closed at commit `12799944` + post-close MAINT-1949a done at `8cef3e24`. Chef pipeline LIVE, first guaranteed dish fires 2026-05-19T05:23Z. PO task: channel audit → drain signals → pick next sprint priority OR return idle.
+**Spawn:** Urgent triage. system-auditor commit `b47ccb67` (`docs/handoffs/agent-definitions-audit-2026-05-18.md`) found 3 CRITICAL + 2 YELLOW in agent definitions.
 
-**Channel audit (Step 0):** Cowork sandbox MCP probes from prior agent cycles show channels healthy. Signal dashboard `po` section has 2 READ rows (tnb c71 audit + arch cowork-reorder brief, both processed). No NEW. Inbox `docs/signals/*.json` has 1 file `price_anomaly_20260518T1637.json` from market-watcher EOD — this is a chef-input gatherer signal, NOT a PO trigger; leaving for chef to consume on next dish window. No MARKET/WORK/BUG anomalies surfaced in tnb-audit-latest.md beyond already-tracked items (digest-predict 1907a USER-block, news-scout Docker ambiguous, HPG OCF gate tonight, verdictResolutionJob gate 2026-05-20T07:22Z, PC1 legal_risk gap which 1948e-A+B already addresses).
+**Audit findings → triage decisions:**
+1. **TNB cron mismatch** (`17 */4` actual vs `13 20` documented) → folded as **1950-T4 HOTFIX**. Couples to 1950-T2 just-shipped (commit `ad68cf5c`): T2's chef-coverage check expects daily 20:13 — will fire false-positive BUGs 6x/day on off-cadence :17 ticks. Must ship before 2026-05-18T20:17Z.
+2. **digest-predict cron MISSING + scope conflict** → folded as **1950-T5 FIX**. Create cron-digest-predict.md `47 13 * * 0` + strip daily/Monday/monthly rows from flow main.md (keep Sunday only, per Sprint 1949-T5).
+3. **5 oversized notebooks** (ops 2510L, market-watcher 2500L, qa-responder 2313L, pm 1038L, alert-commander 579L) → **MAINT-1950b LOW**. Archive to `docs/archive/notebooks/`. Not blocking.
+4. YELLOW (semble-search `model:` field + orphan news-scout-cycle notebooks) → **MAINT-1950c LOW**. Pure hygiene.
 
-**Candidates evaluated:**
-1. MAINT-1949a — already DONE at `8cef3e24`. Skip.
-2. 286 pre-existing test failures — baseline, no regression signal. Defer (low ROI without specific driver).
-3. **Chef pipeline observability — SELECTED.** Critical gap: chef.md only sends WORK Telegram on intraday silent-exit (line 57). Guaranteed-publish slots (Morning 05:23 / EOD 08:37 / Evening 19:37 UTC) have NO Telegram trace — success OR failure. If chef fails on Morning slot, dark window is ~15h until TNB 20:13 audit catches it. First guaranteed dish fires in ~12.5h from this cycle. Must ship before.
-4. graphify durability — maintenance, defer.
-5. Channel audit findings — all already tracked tasks (1907a, 1945d, post-1945a, 1942c OBSERVE).
+**Master scheduler brief (cowork-master-scheduler):** Held for Sprint 1951. SPRINT-M scope (new cowork-scheduler agent + SSOT json + 5 phases) — independent of audit findings. agents-architect signal `2026-05-18T17:02:06Z` parked.
 
-**Sprint 1950 opened:** `docs/SPRINT_GOAL.md` prepended (Sprint 1949 preserved as historical). 3 atomic tasks filed in `docs/TASKS.md` Backlog:
-- **1950-T1 (HIGH, S):** Chef WORK telemetry on every cycle — entry + close + FAILED wrappers via `cowork-boundary` skill. Zone=`.claude/flows/unified-agent/`. Owner=agent-father. Must ship before 2026-05-19T05:23Z.
-- **1950-T2 (MEDIUM, XS):** TNB audit cross-checks chef cycle coverage (≥3 start + ≥3 close in 24h). Zone=`.claude/agents/` + `.claude/flows/tran-ngoc-bau/`. Owner=agent-father. Blocked by 1950-T1.
-- **1950-T3 (LOW, XS):** Operator runbook `docs/protocols/chef-pipeline-runbook.md` (cron schedule, telemetry meanings, recovery). Zone=`docs/protocols/`. Owner=agent-father.
+**In-flight verification:**
+- 1950-T1 ✅ APPROVED qa commit `ef1ec748`, agent-father commit `f4688989`.
+- 1950-T2 ✅ DONE agent-father commit `ad68cf5c` (just-shipped, signal `2026-05-18T17:15:14Z`).
+- 1950-T3 ⏳ pending agent-father (runbook doc, LOW).
+- 1950-T4 ⏳ NEW URGENT (cron hotfix, HIGH, deadline 20:17Z).
+- 1950-T5 ⏳ NEW (digest-predict, MEDIUM).
+- MAINT-1950b/c ⏳ NEW LOW (drain when agent-father idle).
 
-**Dispatch decision:** All 3 tasks are agent-father zone. BA spec NOT required — scope is purely additive instrumentation in flow files + 1 doc, no microservice code. PO routes directly to BA for size validation + AC clarification (since chef.md is a hot file post-1949, BA should sanity-check the patch surface), OR main terminal MAY skip BA and dispatch agent-father directly given the XS/S sizing and clear ACs. Conservative call: NEXT=ba.
+**Files updated this cycle:**
+- `docs/TASKS.md` — 4 new Backlog rows (1950-T4 HIGH HOTFIX, 1950-T5 MEDIUM FIX, MAINT-1950b LOW, MAINT-1950c LOW).
+- `docs/SPRINT_GOAL.md` — Sprint 1950 header expanded with scope-expansion summary table + SAFE-COEXISTENCE rule.
+- `docs/signals/po-2026-05-18T17-18-00Z-1950-scope-expansion.json` — request to BA for light spec on T4+T5 (MAINT skip BA per PO judgment).
 
-**Signal lifecycle:** No new signal files moved this cycle. `price_anomaly_20260518T1637.json` left in inbox for chef (correct routing — gatherer→chef via filesystem signal bus).
-
-**Cross-sprint coexistence:** Sprint 1950 zone (`.claude/flows/unified-agent/` + `.claude/agents/tran-ngoc-bau.md` + `docs/protocols/`) is DISJOINT from Sprint 1948 zone (`apps/mcp-server/src/scheduler/audits/`). Both sprints can run parallel. Sprint 1948 still gate-blocked behind 2026-05-20T07:22Z.
+**Decision rationale:** T4 fold-in vs HOTFIX-outside-sprint — chose fold because T4 directly enables T2 to function correctly; one logical unit. T5 fold-in vs architect-escalation — mechanical alignment to Sprint 1949-T5 already-architected decision; no scope question. MAINT defer — token-economy real but non-destructive.
 
 ### Carry-over for next cycle
 
-- **WATCH 2026-05-19T05:23Z:** First guaranteed chef dish. If 1950-T1 ships in time → expect ≥2 WORK Telegrams. If 1950-T1 not yet shipped → fall back to manual notebook check + TNB 20:13 audit. Either way, log result in next PO cycle.
-- **GATE 2026-05-20T07:22Z UNCHANGED:** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence. Sprint 1948 still blocked.
-- **TNB-critic-gate brief (`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md`)** STILL queued for agent-father. Surface to user/agent-father once Sprint 1950 closes (agent-father pipeline freed).
-- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart for digest-predict MCP), 1897b (Docker .git/ exclusion VirtioFS).
-- **Recurring-bug counter:** BCTC-pipeline patches 3-within-sprint window; Sprint 1950 does NOT touch BCTC zone.
-- **OBSERVE 2026-05-19T20:13Z TNB audit:** Will report chef cycle coverage for first time. AC-2 of Sprint 1950 verified here.
-- **Sprint 1949 zone (chef.md additive patch):** 1950-T1 must NOT change any of the 8 existing chef steps' behavior — only add telemetry calls around them. Verify in BA spec / agent-father diff.
+- **WATCH 2026-05-18T20:17Z:** If 1950-T4 not shipped, expect 1 false-positive `chef-coverage-low` BUG from TNB. Acknowledge as audit-trail confirmation T4 was needed; do NOT escalate.
+- **WATCH 2026-05-19T05:23Z:** First guaranteed chef dish (Morning slot). With T1+T2 shipped, expect ≥2 WORK Telegrams (`[chef] START` + `[chef] SENT|SILENT`). Verify next cycle.
+- **WATCH 2026-05-19T20:13Z:** First TNB audit cycle on correct schedule (after T4 ships). Should report chef-coverage = 3/3 if Morning + EOD + Evening all fired. If T4 NOT shipped → TNB still on :17 cadence, coverage check unreliable until T4 lands.
+- **GATE 2026-05-20T07:22Z:** post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence (UNCHANGED). Sprint 1948 still blocked. Decision point in 38h.
+- **Sprint 1951 candidate:** cowork-master-scheduler brief (`docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`) — SPRINT-M, 5-phase, replaces ~17 scattered cron blocks with 1 cowork-scheduler agent reading `docs/data/cowork-schedule.json` SSOT. Open after Sprint 1950 closes (T3+T4+T5+MAINT all DONE).
+- **USER-ACTION blockers unchanged:** 1907a (Claude Desktop restart for digest-predict MCP), 1897b (Docker .git/ exclusion VirtioFS). T5 closes digest-predict scope side; 1907a still needs user.
+- **Recurring-bug counter:** chef pipeline 3 patches this sprint (T1 telemetry, T2 coverage audit, T4 cron fix). Not architect-escalation territory yet — patches are different files in different zones, all derive from one architect brief (`2026-05-18-cowork-reorder-and-cook-schedule.md`). If a 4th chef-touching FIX lands → reconsider.
+- **Signal lifecycle:** processed 3 inbox signals (agent-father T1-done, agent-father T2-done, qa T1-approved). agents-architect cowork-master-scheduler READ-only (parked for Sprint 1951). 1 gatherer signal (`price_anomaly_20260518T1637.json`) left for chef.
