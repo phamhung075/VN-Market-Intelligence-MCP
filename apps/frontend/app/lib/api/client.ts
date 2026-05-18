@@ -11,10 +11,15 @@
  *   4. Only then wire into a Remix loader
  */
 
+// Server-side: use Docker service name via env (API_GATEWAY_URL=http://api-gateway:4000 in Docker)
+// Client-side: never — all API calls must go through Remix loaders (SSR).
+// Guard against `process` being undefined when Vite bundles this module into the browser
+// chunk (e.g. tree-shaking misses a re-export path). All real call sites live inside Remix
+// loader functions which execute on Node, so this fallback is never reachable at runtime.
 const API_GATEWAY_URL =
-  // Server-side: use Docker service name via env (API_GATEWAY_URL=http://api-gateway:4000 in Docker)
-  // Client-side: never — all API calls must go through Remix loaders (SSR)
-  process.env.API_GATEWAY_URL ?? "http://localhost:4000";
+  typeof process !== "undefined" && process.env["API_GATEWAY_URL"]
+    ? process.env["API_GATEWAY_URL"]
+    : "http://localhost:4000";
 
 export class ApiError extends Error {
   constructor(
