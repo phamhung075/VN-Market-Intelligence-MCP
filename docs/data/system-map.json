@@ -405,6 +405,7 @@
       { "ticker": "VJC", "company": "VietJet Air",           "sector": "Aviation / Low-cost carrier",     "exchange": "HOSE", "active": true },
       { "ticker": "GEX", "company": "Gelex Group",           "sector": "Utilities / Electrical",         "exchange": "HOSE", "active": true },
       { "ticker": "BSR", "company": "Binh Son Refinery",     "sector": "Oil & Gas / Refinery",            "exchange": "UPCOM","active": true },
+      { "ticker": "PLX", "company": "Petrolimex",            "sector": "Oil & Gas / Petroleum Retail",    "exchange": "HOSE", "active": true },
       { "ticker": "DAG", "company": "Da Nang Rubber Group",  "sector": "Machinery / Industrial",          "exchange": "HOSE", "active": true },
       { "ticker": "DBC", "company": "Dabaco",                "sector": "Agriculture / Livestock",         "exchange": "HOSE", "active": true }
     ]

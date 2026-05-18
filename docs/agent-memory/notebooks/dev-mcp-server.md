@@ -4,6 +4,26 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1946a — Add PLX to watchlist for crisis detection coverage (2026-05-18, DONE)
+
+**Root cause:** PLX absent from all 3 SSoT sources (`system-map.json`, `mcp.config.json`, `seedWatchlist.ts`) → never in SQLite `watchlist` table → `get_crisis_early_warning` silently skipped PLX evaluation. Confirmed via SPIKE_1946.
+
+**Fix (6 files):**
+- `docs/data/system-map.json`: PLX added to `.project.watchlist[]` after BSR.
+- `mcp.config.json` (root): PLX added to `.market.watchlist` array after BSR.
+- `seedWatchlist.ts`: `{ code: "PLX", exchange: "HOSE", domain: "oil_gas" }` added after GAS. Header counts updated 33→34.
+- `apps/frontend/app/domain/market.ts`: PLX added to `WATCHLIST_STOCKS` after BSR.
+- `1946a-plx-watchlist-crisis-coverage.test.ts` (NEW): 7 tests — seed presence, velocity spike, below-threshold, idempotency.
+- `1343a-watchlist-restore.test.ts`: Fixed 11 pre-existing stale-count failures (1876a-A6 left 26→33 without updating tests; now 34). Side fix only.
+
+**Key finding:** `getCrisisEarlyWarning` iterates `stockCodes` param (not DB watchlist) — test must inject low baseline before current-hour spike to produce ratio ≥2.0 (getBaseline includes current hour in AVG window).
+
+**Tests:** 49/49 GREEN (was 38/49 with pre-existing 1343a failures). tsc 0 errors.
+
+Zone health: PLX now seeded at every startup via UPSERT; crisis early warning will evaluate PLX velocity on next call. | HEALTHY
+
+---
+
 ### Task 1945b-backend — GET /api/accuracy/digest HTTP handler (2026-05-18, DONE)
 
 **Goal:** Add `GET /api/accuracy/digest?days=N` HTTP handler to `server.ts` after line 1020. Reuse `getSystemAccuracyDigestStats` already existing at `signalOutcomeStore.ts:380`.

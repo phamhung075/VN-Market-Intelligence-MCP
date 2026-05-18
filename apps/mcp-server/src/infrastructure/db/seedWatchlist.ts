@@ -20,8 +20,8 @@ import type { Database } from "bun:sqlite";
 import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Watchlist seed data — 33 tickers, 12 sectors
-//   - 26 standard tickers (Sprint 054 user config)
+// Watchlist seed data — 34 tickers, 12 sectors
+//   - 27 standard tickers (Sprint 054 user config + PLX added Task 1946a)
 //   - 7 high-vol tickers added Task 1876a-A6 (Sprint 1869 high-vol tier)
 // Default thresholds: dropPct=-3, risePct=5, impactScore=5
 // migrateWatchlistThresholds() promotes high-vol to -9.0 on every startup.
@@ -36,6 +36,7 @@ export interface WatchlistSeedEntry {
 export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   // Oil & Gas
   { code: "GAS", exchange: "HOSE",  domain: "oil_gas" },
+  { code: "PLX", exchange: "HOSE",  domain: "oil_gas" }, // Petrolimex — petroleum retail, HOSE (Task 1946a)
   // Agriculture / Rubber
   { code: "GVR", exchange: "HOSE",  domain: "agriculture" }, // Vietnam Rubber Group — cao su, not petroleum
   // Banking
@@ -95,7 +96,7 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Upserts 32 watchlist tickers with default alert thresholds.
+ * Upserts 34 watchlist tickers with default alert thresholds.
  * Uses ON CONFLICT(code) DO UPDATE to be idempotent.
  *
  * Default thresholds (from Sprint 054 user config):

@@ -53,7 +53,8 @@
       "DGC",
       "VJC",
       "GEX",
-      "BSR"
+      "BSR",
+      "PLX"
     ],
     "referenceStocks": {
       "banking":       ["VCB", "BID", "CTG", "TCB", "MBB", "VPB", "ACB", "SHB", "EIB", "STB", "HDB", "TPB"],
