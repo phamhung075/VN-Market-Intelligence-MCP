@@ -149,3 +149,38 @@ Architecture brief `docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` read
 5. **SPIKE-1948e progress**: Any architect findings on PC1 / legal_risk pipeline?
 6. **digest-predict 1907a**: USER action still pending.
 7. **Monday market open**: Watch BID +5.47%, PLX +6.99%, MWG -3.66% carry-over signals from market-watcher.
+
+---
+
+## PO ACK — c199 — 2026-05-18T19:38Z
+
+**Findings disposition:**
+
+1. **digest-predict 8-day silence (CRITICAL)** — ACK, NO PO ACTION. 1907a is a USER-action blocker (Claude Desktop restart to load vn-market MCP). PO cannot fix. Already tracked in TASKS.md Backlog. Telegram BUG channel already escalated by prior cycles. Carry.
+
+2. **news-scout 19:33 UTC BLOCKED — cowork session MCP disconnect (NEW HIGH)** — DECISION: **NO architect spike yet. WATCH for 2nd occurrence.** Rationale:
+   - This is the **1st distinct event** of session-spawn-without-MCP (the 16:39 UTC event was a different class — Docker false alarm cleared by PO c71 ACK). Single occurrence is insufficient signal for a 2h architect time-box per recurring-bug-escalation protocol (`feedback_recurring_bug_escalation.md` requires ≥2 same-module recurrences before architect rethink).
+   - **Auto-cure path exists:** next news-scout slot (offhours `0 */4`) at ~2026-05-19T00:00Z will re-test. If MCP connects normally, this was a transient session-spawn race condition (likely Docker stack still warming on cron tick) — close as transient.
+   - **Trigger condition for SPIKE:** if news-scout slots BLOCK with empty `list_connectors()` ≥2 more times in next 24h (independent cron-tick spawns) → file `SPIKE-1951f-cowork-session-mcp-autoconnect` (architect, 2h time-box). For now: monitor only.
+   - WATCH item added to carry-over.
+
+3. **post-1942c HPG OCF OBSERVE (MEDIUM)** — ACK, NO PO ACTION. Already in TASKS.md Todo as `post-1942-fa-verify`. FA cycle ~23:00 UTC tonight will resolve. Auto-close on pass; auto-task on fail per existing handoff. Carry.
+
+4. **post-1945a verdictResolutionJob OBSERVE (MEDIUM)** — ACK, NO PO ACTION. Already in TASKS.md Todo as `post-1945-verdict-resolution-scored-pct`. Gate 2026-05-20T07:22Z. This gate also gates Sprint 1948 dispatch. Carry.
+
+5. **PC1 legal_risk gap 10+ cycles (MEDIUM)** — ACK, NO PO ACTION. SPIKE-1948e DONE 2026-05-18; child fixes 1948e-A + 1948e-B already merged. 1948e-C (PC1 to primary watchlist) deferred LOW per TASKS.md. Methodology gap is structural — closes once next news-scout legal-keyword event tests Fix A+B path end-to-end. No new TNB action.
+
+6. **1945d-reparse-pipeline-gap (MEDIUM)** — ACK, NO PO ACTION. Code DONE 2026-05-18 QA-APPROVED. TNB note is stale by ~1 cycle. EIB+DHG will extract on next bctcReparseJob cycle (hourly cron); report-analyzer notebook will reflect post-extraction. Auto-close once first non-empty extraction lands. Carry.
+
+7. **TNB Claude Code MCP 18th cycle (MEDIUM)** — ACK, NO PO ACTION. 1897b USER-action pending (Docker VirtioFS `.git/` exclusion). Structural gap, repeatedly ACK'd. Carry.
+
+8. **news-scout D+E structural gaps (LOW)** — ACK. TNB-critic-gate brief 2026-05-17 ready for agent-father pickup. No PO action — architect-layer fix.
+
+**Sprint state — no changes this ACK:**
+- WIP=2 at cap (1951b OBSERVE in progress, 1951c HIGH blocked on 1951b). No new dispatch.
+- Backlog: 1951e (XS, agent-father), 1948a/b/c (gate-blocked 2026-05-20T07:22Z), 1948e-C (LOW deferred).
+- TNB tick 1/3 confirmed (20:13Z UTC 2026-05-18). Recorded in TASK_1951b.md.
+
+**No new sprint, no new spike, no batch emission.** Carry continues. Next PO cycle will assess: (a) 23:00Z FA HPG OCF result, (b) 00:00Z news-scout offhours MCP-connectivity re-test, (c) 05:23Z chef-morning tick 2/3.
+
+— PO c199

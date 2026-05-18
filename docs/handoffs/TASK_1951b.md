@@ -72,3 +72,17 @@ None — observational only. All changes recorded in WORK Telegram + OBSERVATION
 - ≥3 smoke-test ticks verified (chef-morning, chef-eod, tnb-audit) ✓
 - No MARKET duplicate dishes detected (idempotency) ✓
 - All 3 ticks traced in WORK Telegram ✓
+
+---
+
+## Observation Log — Smoke-Test Tick Tracker
+
+| # | Slot | Expected Time (UTC) | Status | Evidence |
+|---|------|---------------------|--------|----------|
+| 1 | tnb-audit | 2026-05-18T20:13Z | **CONFIRMED** 2026-05-18T19:38Z PO c199 | tnb-audit RemoteTrigger fired at 20:13Z UTC; signal written to dashboard at 20:30Z (`tnb-20260518T203000`); audit handoff `docs/handoffs/tnb-audit-latest.md` populated. Session ID not captured in this validation pass (file-evidence only); cowork sandbox confirmed alive via TNB c72 self-report. |
+| 2 | chef-morning | 2026-05-19T05:23Z | PENDING | Watch unified-agent session + MARKET morning_dish ≤10 min post-START. |
+| 3 | chef-eod | 2026-05-19T08:37Z | PENDING | Watch unified-agent session + MARKET eod_dish ≤10 min post-START. |
+
+**1951b status: IN PROGRESS — DO NOT CLOSE.** Tick 1 of 3 verified. Idempotency check ongoing (no MARKET duplicate detected this cycle).
+
+**Acceptance path:** all 3 ticks must confirm + no MARKET duplicate dish in 24h window. Next PO assessment at chef-morning slot (2026-05-19T05:23Z).
