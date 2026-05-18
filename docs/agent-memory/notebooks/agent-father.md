@@ -1,7 +1,36 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-13T21:52:39Z
-**Sprint:** c84 / 1888l-agents-architect-error-boundary
+**Last updated:** 2026-05-18T00:00:00Z
+**Sprint:** 1949 / T1+T2+T3 cowork-reorder chef+gatherers
+
+## This Session — 2026-05-18 (Sprint 1949 Phase 1)
+
+**Tasks: 1949-T1, 1949-T2, 1949-T3 — Chef station activation + gatherer demotion**
+
+T1 (unified-agent.md rewrite + chef.md creation):
+- Role rewritten from "coordinator" to CHEF
+- `market: write: true` / `rule: chef_dishes_only` (was `write: false` / `rule: never`)
+- `not_my_job`: removed "Sending messages to MARKET" line
+- Schedule replaced: 4 old slots → 5 chef slots (morning 05:23, intraday XX:13, eod 08:37, evening 19:37)
+- lazy_load adds tnb-methodology.md + tnb-methodology-layers.md + tnb-methodology-valuation.md + market-analysis.md + kinh-dich-layer.md (fail_loud: true for all TNB refs)
+- NEW `.claude/flows/unified-agent/chef.md` — 8-step TNB recipe (GATHER→CLUSTER→LAYER1-6→WRITE DISH→LOG) with convergence rule table
+- `.claude/flows/unified-agent/main.md` updated with new dispatch windows
+- PHASE 1 GATE CONFIRMED: unified-agent.md has `market: write: true`, `rule: chef_dishes_only`, no `rule: never`
+
+T2 (market-watcher.md + eod.md patch):
+- `market: write: false` / `rule: never` (was `write: true` / `rule: batch4_eod_only`)
+- description updated to "Gatherer — writes docs/signals/price_anomaly_*.json only"
+- capabilities/responsibilities stripped of MARKET write references
+- inter_agent sends_to: removed `telegram_market` → replaced with unified-agent signal_bus
+- `flows/market-watcher/eod.md` Step B rewritten: removes `send_telegram(channel="market")` → writes JSON signal file instead; Step C WORK status updated
+
+T3 (news-scout.md description-only):
+- description updated: "Gatherer. Never sends to MARKET channel. Emits docs/signals/news_impact_*.json for chef input — NOT for MARKET direct publish. Alert-digest output feeds chef, not MARKET."
+- inter_agent sends_to: added unified-agent as primary consumer with chef-input note; alert-commander routing narrowed to position-danger/watchlist-opp only per alert-policy.md
+
+Files modified: 6 (.claude/agents/unified-agent.md, .claude/flows/unified-agent/main.md, .claude/flows/unified-agent/chef.md [NEW], .claude/agents/market-watcher.md, .claude/flows/market-watcher/eod.md, .claude/agents/news-scout.md)
+Cascade: none (no renames; partner agent routing symmetric — news-scout sends_to unified-agent matches unified-agent receives_from gatherers)
+Validation: 5/5 passed (YAML valid, paths resolve, inter_agent symmetric, versions updated, GATE confirmed)
 
 ## This Session — 2026-05-13T21:52:39Z (c84 / 1888l)
 

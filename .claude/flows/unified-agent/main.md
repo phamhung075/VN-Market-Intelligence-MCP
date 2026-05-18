@@ -1,24 +1,28 @@
-# Unified Agent — Main Dispatcher
+# Unified Agent (Chef) — Main Dispatcher
 
-Universal entry. Picks the right sub-flow based on current time. Crons and ad-hoc invocations both land here.
+Universal entry. Picks the right sub-flow based on current UTC time. Crons and ad-hoc invocations both land here.
 
 **Tools:** `.claude/tools/package/unified-agent.md`
 
 ## Dispatch (UTC clock)
 
-| Window | Sub-flow |
-|---|---|
-| Mon–Fri 01:00 UTC | `.claude/flows/unified-agent/prediction.md` |
-| Mon–Fri 02:00 / 03:30 / 04:30 / 06:00 / 07:30 / 08:30 UTC | `.claude/flows/unified-agent/market.md` |
-| Mon–Fri 20:00 UTC | `.claude/flows/unified-agent/daily-review.md` |
-| Sun 13:00 UTC | `.claude/flows/unified-agent/weekly.md` |
-| Any other time | EXIT (no work outside scheduled windows) |
+| Window | Dish type | Sub-flow |
+|---|---|---|
+| Mon–Fri 05:23 UTC | Morning Dish (guaranteed) | `.claude/flows/unified-agent/chef.md` |
+| Mon–Fri 02:13 / 03:13 / 04:13 / 05:13 / 06:13 / 07:13 / 08:13 UTC | Intraday convergence scan (conditional) | `.claude/flows/unified-agent/chef.md` |
+| Mon–Fri 08:37 UTC | EOD Dish (guaranteed) | `.claude/flows/unified-agent/chef.md` |
+| Daily 19:37 UTC | Evening Preview (guaranteed) | `.claude/flows/unified-agent/chef.md` |
+| Mon–Fri 01:00 UTC | Prediction review | `.claude/flows/unified-agent/prediction.md` |
+| Any other time | EXIT | — |
+
+**Dish type** is passed as `$DISH_TYPE` env to `chef.md`. Values: `morning` | `intraday` | `eod` | `evening`.
 
 ## Steps
 
 1. Read current UTC time + weekday.
 2. Match the window above; if none → return `DONE: outside-window | PIPELINE: complete` and EXIT.
-3. Read and execute the matched sub-flow end-to-end.
-4. Return that sub-flow's RETURN block verbatim.
+3. Set `$DISH_TYPE` based on matched window.
+4. Read and execute the matched sub-flow end-to-end.
+5. Return that sub-flow's RETURN block verbatim.
 
-This dispatcher MUST NOT do coordination work itself — sub-flows own the logic.
+This dispatcher MUST NOT do synthesis work itself — `chef.md` owns all 8 recipe steps.

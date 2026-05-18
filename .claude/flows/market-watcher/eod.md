@@ -10,9 +10,9 @@
 `get_watchlist()` | EOD prices + RSI + volume
 
 ## Output
-Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
+Ledger entries in `docs/analysis-briefs/{TICKER}.md` | Signal file `docs/signals/price_anomaly_<YYYYMMDDTHHMM>.json`
 
-> Channel rule: MARKET = signal-grade EOD per ticker (ticker + direction + conviction). "Write complete / ledger updated" operational notices → WORK, not MARKET.
+> Channel rule: market-watcher is a GATHERER. No MARKET writes. Chef (unified-agent) reads the signal file at 08:37 UTC EOD dish. All MARKET writes are chef's responsibility.
 
 ---
 
@@ -26,30 +26,42 @@ YYYY-MM-DD 16:00 | Close: {price} VND | RSI: {rsi} | Vol: {volume} ({vs_avg_pct}
 ```
 Write fails → `send_telegram(channel="bug")` immediately, still proceed to B.
 
-**B. MARKET EOD** — per ticker:
-```
-{TICKER} — EOD YYYY-MM-DD
-Price: {price} VND ({daily_change}, YoY {yoy_change}) | Vol: {volume} | RSI: {rsi}
-Sentiment: {sentiment} | Insider: {insider_activity}
-→ Action: {brief_action}
-📖 docs/analysis-briefs/{TICKER}.md
-```
-`send_telegram(channel="market")`
+**B. SIGNAL FILE** — write `docs/signals/price_anomaly_<YYYYMMDDTHHMM>.json`:
 
-> **Message size:** Telegram enforces a 4000-char limit. With >=20 tickers the full watchlist exceeds this. Split into multiple messages (e.g. gainers / flat+decliners) rather than one call per ticker.
+```json
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "<ISO8601>",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "{TICKER}",
+      "price": {price},
+      "daily_change_pct": {daily_change},
+      "yoy_change_pct": {yoy_change},
+      "volume": {volume},
+      "vs_avg_pct": {vs_avg_pct},
+      "rsi": {rsi},
+      "sentiment": "{last_news_scout_entry}",
+      "insider_activity": "{get_insider_signals result or 'no activity'}",
+      "brief_action": "{Hold|Buy on dip|Reduce|Watch}",
+      "regime_flag": "{TIGHTENING|EASING|NEUTRAL}",
+      "anomaly": {true|false},
+      "anomaly_reason": "{reason or null}"
+    }
+  ]
+}
+```
 
 Rules:
-- `{brief_action}` max 10 words: Hold / Buy on dip / Reduce / Watch
-  - `REGIME=TIGHTENING` + action=`Buy on dip` → append `"(Thiên thời bất lợi — xác nhận trước khi mua)"`
-  - `REGIME=EASING` + action=`Buy on dip` → append `"(Thiên thời thuận — carry tích cực)"`
-  - `REGIME=TIGHTENING` + action=`Reduce` → append `"(Thiên thời bất lợi — ưu tiên phòng thủ)"`
-- `{sentiment}` = last [News Scout] entry
-- `{insider_activity}` = `get_insider_signals(code="{TICKER}")` or "no activity" (requires `code`; `outstandingShares` auto-fetched)
+- `brief_action` max 10 words; regime_flag from current macro regime
+- `insider_activity` = `get_insider_signals(code="{TICKER}")` or "no activity"
 - Skip weekends + market holidays
+- File written atomically; chef reads at 08:37 UTC (24min settle window)
 
 **C. WORK status** — `send_telegram(channel="work", message=...)`:
 ```
-[Market Watcher EOD] 16:00 UTC — N tickers processed | Ledger: N written, M failed | MARKET summary sent
+[Market Watcher EOD] HH:MM UTC — N tickers processed | Ledger: N written, M failed | Signal file: docs/signals/price_anomaly_<ts>.json written
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

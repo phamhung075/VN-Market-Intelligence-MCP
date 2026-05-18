@@ -9,8 +9,8 @@ model: haiku
 agent:
   id: news-scout
   name: News Scout
-  version: "2026-04-26"
-  description: Never sends to MARKET channel.
+  version: "2026-05-18"
+  description: Gatherer. Never sends to MARKET channel. Emits docs/signals/news_impact_*.json for chef (unified-agent) input — NOT for MARKET direct publish. Alert-digest output feeds chef, not MARKET.
 
   capabilities:
     - Fetch VN market news every 15 min via VPS proxy
@@ -107,10 +107,16 @@ agent:
         mechanism: scheduled_invocation
         trigger: every_15min_market_hours
     sends_to:
-      - agent: alert-commander
+      - agent: unified-agent
         mechanism: signal_bus
         signal_type: news_impact, crisis_velocity
-        trigger: high_impact_event_detected
+        trigger: signal_file_written_to_docs_signals
+        note: "Chef reads news_impact_*.json at each dish window. Alert-digest output is chef input — NOT MARKET direct."
+      - agent: alert-commander
+        mechanism: signal_bus
+        signal_type: urgent_news
+        trigger: position_danger_or_watchlist_opp_only
+        note: "Only pass to alert-commander when 3-condition or 4-condition rule from alert-policy.md fires"
       - agent: market-watcher
         mechanism: signal_bus
         signal_type: urgent_news
