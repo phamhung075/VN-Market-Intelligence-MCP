@@ -77,3 +77,27 @@ This is the 3rd BCTC-pipeline patch within Sprint 1942–1945 (1943a queue reset
 ## Sprint context
 
 Sprint 1948 (closed-loop auto-improvement Phase 1) remains BLOCKED on independent gate `post-1945-verdict-resolution-scored-pct` (2026-05-20T07:22Z). 1945d does not affect that gate. WIP rises to 1 (1945d only). All other Sprint 1948 tasks stay in Backlog.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts` — GAP-A fix: disk scan unconditional + `pdfDir` injectable option; `options.pdfDir` passed to `scanDiskForStrandedPdfs`; processedFilenames dedup set
+  - `apps/mcp-server/src/interface/mcp/server.ts` — GAP-B fix: `setImmediate` in `push-bctc-pdf` now calls `triggerPushBctcExtraction` instead of raw `fetchParseAndStoreBctc`
+- **Files created:**
+  - `apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts` — new module: `triggerPushBctcExtraction(params)` with injectable deps (extractPages, getCache, runPipeline); production wired to `extractAndStorePdfPagesWithRetry` + `getCachedPdfText` + `fetchParseAndStoreBctc`
+  - `apps/mcp-server/src/__tests__/1945d-reparse-pipeline-gap.test.ts` — 12 tests: TC-1 filename parse, TC-2 disk scan stranded, TC-3 AC-3 unconditional disk scan, TC-4 push extraction injection contract
+- **Tests written:** 1945d-reparse-pipeline-gap.test.ts — 12 assertions, GREEN
+- **Git commits:** `159b0888 fix(1945/bctc): reparse pipeline gap — disk scan + push extraction`
+- **Type check:** clean
+- **Service tests:** 12 new pass / 0 fail; existing 75 BCTC tests GREEN; 1 pre-existing failure in 1196 (task 1915-fix-part2 broke watchlist-only guard — not introduced by 1945d)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/financial-reports.md` — invariants 6+7 added (push-bctc-pdf extraction path, bctcReparseJob disk scan unconditional)
+- **Graphify:** skipped (doc update is additive to existing invariants section only)
+
+### Root cause analysis (Part B — 6/7 banks)
+
+ACB/BID/CTG/MBB/VCB/VPB: `bctc_vps_queue` has `source_url` but no PDF stored. The VPS discover endpoint (`BCTC_DISCOVER_URL`) may be returning SSC URLs (not VPS bctc-files/ URLs). `bctcPdfPullJob` only pulls from `source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'`. If source_urls are SSC URLs, `bctcPdfPullJob` skips them (auth/geo-block). This is a VPS-side gap — the VPS playwright scripts have not yet fetched these 6 banks' PDFs to bctc-files/. Outside mcp-server zone. If VPS fetch doesn't complete, a follow-up task for dev-vps-crawls would be needed.
+
