@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, mock } from 'bun:test';
-import { computeReading, classifyNguHanh } from '../../domain/services.js';
+import { computeReading, classifyNguHanh, QUE_META } from '../../domain/services.js';
 import { ReadingUseCase, MarketHexagramUseCase } from '../../application/usecases.js';
 import type { KinhDichRepositoryPort, PriceScorePort } from '../../domain/repositories.js';
 import { HexagramNotFoundError, InsufficientDataError } from '../../domain/errors.js';
@@ -123,6 +123,93 @@ describe('ReadingUseCase', () => {
     await expect(useCase.execute({ stockCode: 'UNKNOWN', days: 30 })).rejects.toThrow(
       HexagramNotFoundError,
     );
+  });
+});
+
+// ── Hexagram name lookup — bug fix verification ───────────────────────────────
+
+describe('QUE_META Vietnamese names', () => {
+  it('hexagram #7 is "Sư"', () => {
+    const entry = QUE_META.find((q) => q.id === 7);
+    expect(entry?.name).toBe('Sư');
+  });
+
+  it('hexagram #8 is "Tỷ"', () => {
+    const entry = QUE_META.find((q) => q.id === 8);
+    expect(entry?.name).toBe('Tỷ');
+  });
+
+  it('hexagram #23 is "Bác"', () => {
+    const entry = QUE_META.find((q) => q.id === 23);
+    expect(entry?.name).toBe('Bác');
+  });
+
+  it('hexagram #39 is "Kiển"', () => {
+    const entry = QUE_META.find((q) => q.id === 39);
+    expect(entry?.name).toBe('Kiển');
+  });
+
+  it('hexagram #52 is "Cấn"', () => {
+    const entry = QUE_META.find((q) => q.id === 52);
+    expect(entry?.name).toBe('Cấn');
+  });
+
+  it('all 64 hexagrams are present and have non-empty names', () => {
+    expect(QUE_META).toHaveLength(64);
+    for (const q of QUE_META) {
+      expect(q.name.length).toBeGreaterThan(0);
+      expect(q.name).not.toBe('');
+    }
+  });
+});
+
+// ── Fallback path name correctness ────────────────────────────────────────────
+
+describe('ReadingUseCase fallback name', () => {
+  it('fallback path returns name matching stored hexagram_number, not placeholder computation', async () => {
+    // hexagram #39 = Kiển — verify fallback returns correct name
+    const repo = makeRepo({
+      getLatestReading: mock(() => ({
+        hexagram_number: 39,
+        bien_que_number: 38,
+        trading_signal: 'GIU (tiêu cực)',
+        confidence: 0.45,
+      })),
+    });
+    const useCase = new ReadingUseCase(repo, makePricePort(null));
+    const result = await useCase.execute({ stockCode: 'FPT', days: 30 });
+    expect(result.hexagram).toBe(39);
+    expect(result.name).toBe('Kiển');
+  });
+
+  it('fallback name for hexagram #7 is "Sư", not "Can"', async () => {
+    const repo = makeRepo({
+      getLatestReading: mock(() => ({
+        hexagram_number: 7,
+        bien_que_number: 8,
+        trading_signal: 'GIU (trung tính)',
+        confidence: 0.3,
+      })),
+    });
+    const useCase = new ReadingUseCase(repo, makePricePort(null));
+    const result = await useCase.execute({ stockCode: 'HPG', days: 30 });
+    expect(result.hexagram).toBe(7);
+    expect(result.name).toBe('Sư');
+  });
+
+  it('fallback name for hexagram #23 is "Bác", not "Can"', async () => {
+    const repo = makeRepo({
+      getLatestReading: mock(() => ({
+        hexagram_number: 23,
+        bien_que_number: 24,
+        trading_signal: 'BAN (tiêu cực)',
+        confidence: 0.6,
+      })),
+    });
+    const useCase = new ReadingUseCase(repo, makePricePort(null));
+    const result = await useCase.execute({ stockCode: 'MSN', days: 30 });
+    expect(result.hexagram).toBe(23);
+    expect(result.name).toBe('Bác');
   });
 });
 

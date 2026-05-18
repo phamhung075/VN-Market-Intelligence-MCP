@@ -5,7 +5,7 @@
  * No direct I/O — only ports.
  */
 
-import { computeReading } from '../domain/services.js';
+import { computeReading, QUE_META } from '../domain/services.js';
 import type { KinhDichRepositoryPort, PriceScorePort } from '../domain/repositories.js';
 import type { ReadingRequest, ReadingResponse, MarketReadingResponse } from './dtos.js';
 import { InsufficientDataError, HexagramNotFoundError } from '../domain/errors.js';
@@ -45,7 +45,14 @@ export class ReadingUseCase {
       throw new HexagramNotFoundError(code);
     }
 
-    // Build a minimal response from stored reading
+    // Build a minimal response from stored reading.
+    // Use QUE_META to resolve the correct name for stored.hexagram_number — do NOT
+    // compute a fresh reading with placeholder scores because the placeholder scores
+    // always resolve to the same hexagram (not the stored one), causing the wrong name
+    // to appear for every stock.
+    const storedMeta = QUE_META.find((q) => q.id === stored.hexagram_number);
+    const storedName = storedMeta?.name ?? `Que ${stored.hexagram_number}`;
+
     const markov = this.repo.getMarkovData(stored.hexagram_number);
     const fallbackScores = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; // neutral placeholder
     const reading = computeReading(code, fallbackScores, markov);
@@ -53,7 +60,7 @@ export class ReadingUseCase {
     return {
       stock: code,
       hexagram: stored.hexagram_number,
-      name: reading.queChiNh.name,
+      name: storedName,
       trend: reading.queChiNh.trend,
       signal: stored.trading_signal ?? reading.queChiNh.tradingSignal,
       confidence: stored.confidence ?? reading.queChiNh.confidence,
