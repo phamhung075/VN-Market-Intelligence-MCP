@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-19T17:16:00Z
+
+**Brief:** `docs/architecture-briefs/2026-05-19-system-auditor-scope-expansion.md`
+
+Current system-auditor is blind to the 9-service Docker stack, 27 data sources, and DB write distributions — six silent failure classes from the 1953 BCTC fire exposed the gap. Designed 3 new audit dimensions (A: microservice runtime, B: data fetch integrity, C: DB write integrity), 60 concrete checks with check_ids, 3-tier cadence (30min/4h/daily 02:00 UTC), 4 typed signal shapes, and a 7-file implementation checklist for agent-father (sequence: 7d→7c→7a→7b→7e→7f).
+
+**Signal dropped:** `docs/signals/agents-architect-system-auditor-scope-expansion.json` → agent-father
+
+---
+
 ## 2026-05-19T15:11:38Z
 
 **Brief:** `docs/architecture-briefs/2026-05-19-data-fusion-gap.md`

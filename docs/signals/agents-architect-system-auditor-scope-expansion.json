@@ -1,0 +1,21 @@
+{
+  "id": "agents-architect-system-auditor-scope-expansion",
+  "ts": "2026-05-19T17:16:00Z",
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "brief": "docs/architecture-briefs/2026-05-19-system-auditor-scope-expansion.md",
+  "slug": "system-auditor-scope-expansion",
+  "summary": "system-auditor scope expanded to cover 3 new audit dimensions: (A) microservice runtime health — 9 Docker services, container tooling, inter-service connectivity; (B) data fetch integrity — 27 sources vs expected cadence, VPS proxy health, BCTC URL shape; (C) DB write integrity — row distributions, watchlist coverage, schema sentinels, cross-table consistency. 31+13+16 concrete checks catalogued. 3-tier cadence (Tier-1 30min, Tier-2 4h, Tier-3 daily 02:00 UTC). 4 typed signal shapes defined. 7-file implementation checklist ready.",
+  "implementation_sequence": ["7d", "7c", "7a", "7b", "7e", "7f"],
+  "files_to_change": [
+    ".claude/agents/system-auditor.md",
+    ".claude/flows/system-auditor/main.md",
+    ".claude/tools/package/system-auditor.md",
+    "docs/data/system-map.json",
+    "docs/protocols/system-audit-runbook.md"
+  ],
+  "priority": "HIGH",
+  "triggered_by": "1953-sprint-bctc-pipeline-silent-failures",
+  "status": "READY"
+}
