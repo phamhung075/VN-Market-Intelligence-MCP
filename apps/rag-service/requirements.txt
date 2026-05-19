@@ -1,5 +1,11 @@
 # RAG Service — Python dependencies
 #
+# CPU-only torch: avoids nvidia-cudnn-cu13 CUDA wheels (no GPU on macOS Docker).
+# Install torch first from PyTorch CPU index before sentence-transformers resolves it.
+# Sprint 1956c fix — ops signal ops-1956b-recovery-retry.json
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+
 # Production
 fastapi>=0.110.0
 uvicorn[standard]>=0.29.0

@@ -21,8 +21,14 @@ RUN apt-get update -qq && \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
+# CPU-only torch: PyTorch CPU wheel index added in requirements.txt (sprint 1956c).
+# Trust download.pytorch.org so the --extra-index-url in requirements.txt resolves.
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
+RUN pip3 install --no-cache-dir \
+      --trusted-host pypi.org \
+      --trusted-host files.pythonhosted.org \
+      --trusted-host download.pytorch.org \
+      -r requirements.txt
 
 # Copy application
 COPY . .
