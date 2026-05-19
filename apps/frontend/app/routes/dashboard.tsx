@@ -6,7 +6,7 @@ import { Outlet, NavLink, Link } from "@remix-run/react";
 
 const NAV_ITEMS = [
   { to: "/dashboard/analysis", label: "Analysis" },
-  { to: "/dashboard/server", label: "Services" },
+  { to: "/dashboard/services", label: "Services" },
   { to: "/dashboard/fetch", label: "Fetch Ops" },
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/db", label: "Database" },

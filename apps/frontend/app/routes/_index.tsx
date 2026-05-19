@@ -41,7 +41,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 
 const NAV_ITEMS = [
   { to: "/dashboard/analysis", label: "Analysis" },
-  { to: "/dashboard/server", label: "Services" },
+  { to: "/dashboard/services", label: "Services" },
   { to: "/dashboard/fetch", label: "Fetch Ops" },
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/db", label: "Database" },
@@ -49,7 +49,7 @@ const NAV_ITEMS = [
 
 const DASHBOARD_LINKS = [
   { to: "/dashboard/analysis", label: "Market Analysis", desc: "Kinh Dịch signals + macro indicators" },
-  { to: "/dashboard/server", label: "Service Health", desc: "9 microservice status + latency" },
+  { to: "/dashboard/services", label: "Service Health", desc: "9 microservice status + latency" },
   { to: "/dashboard/fetch", label: "Fetch Operations", desc: "Reuters, Bloomberg, macro snapshot" },
   { to: "/dashboard/vps", label: "VPS Proxy", desc: "Vietnam proxy health per service" },
   { to: "/dashboard/db", label: "Database Report", desc: "Price history, alert engine, headlines" },
