@@ -85,3 +85,88 @@ Sprint 1949 cron rewiring (commit `44aa791a`) landed before this restart. Contai
 - Cron schedule SSOT: `docs/data/cowork-schedule.json` with trigger_id + cron confirmed
 
 **Next step:** Keep TASK_1951b **In Progress**. Close only after ≥3 ticks verified (1951c persistence gate depends on this).
+
+## Sprint 1951d — VPS BCTC Pipeline Diagnostic (2026-05-19)
+
+**Status:** DIAGNOSED — Root cause identified, escalation to dev-team required
+
+**Problem Statement:** Cowork agents report BCTC data for only 3 of 34 watchlist stocks. Q1-2026 filings are 19 days overdue (deadline 2026-04-30, current 2026-05-19).
+
+**Diagnostic Summary:**
+- VPS service `vn-bctc-fetch.service` is running (up 5+ days)
+- API connectivity to MCP server is working (queue pulls every 6h)
+- Disk usage healthy (24% used, 18GB available)
+- Upstream sources reachable (SSC, HNX, UPCOM all HTTP 200)
+- **BUT:** Discovery script has critical pattern-matching bug preventing ANY PDF detection
+
+**Root Cause:** `discover-bctc-urls-browser.py` on VPS has pattern-matching bug
+- Function `matches_quarter_and_year()` looks for: `['q1', 'quý 1', 'quy 1', ...]` (no leading zero)
+- SSC NewsSearch returns titles with: `'quý 01'`, `'quý 02'`, etc. (with leading zero)
+- Result: All quarter-year matches fail validation, even though SSC rows ARE found
+- Example: "Báo cáo tài chính Hợp nhất quý 01 năm 2026" (ACB Q1/2026) → skipped with error "no PDF found"
+
+**Evidence:**
+1. Service logs show "SKIP -- no PDF found" for ALL 34 queue items (CTG, D2D, DAG, GVR, HCM, etc.)
+2. Cache dir `/root/bctc-cache/` has 39 ticker dirs; only 3 contain PDFs (VCB, HPG, BID from Q4.2025)
+3. Last successful fetch was 2026-04-29; since then zero PDFs for any ticker
+4. Python pattern test: `matches_quarter_and_year('báo cáo ... quý 01 năm 2026', 'Q1', 2026)` → **False** (bug confirmed)
+5. Would return **True** if source used `'quý 1'` format (without zero)
+
+**Secondary Issue:** jq parse error at end of fetch log
+- Last line: `jq: parse error: Invalid numeric literal at line 1, column 6`
+- Context: appears after 2026-05-19T02:29:06Z FETCH START
+- Likely cause: QUEUE variable empty/truncated or unquoted in jq pipeline
+- Impact: Blocks second cycle; service restarts but repeats same cycle indefinitely
+- **Note:** This is lower priority — pattern-matching bug is the blocker
+
+**Blockers for Data Ingestion:**
+1. **discover-bctc-urls-browser.py pattern fix** — Must add 'quý 01', 'quý 02', etc. to patterns list
+2. **fetch-bctc.sh jq error** — Debug QUEUE variable handling
+3. **19-day backlog** — After fix, service will need to re-discover + pull all 34 Q1/2026 filings
+
+**File Locations:**
+- VPS script: `/root/discover-bctc-urls-browser.py` (Python 3, NOT in repo)
+- VPS shell: `/root/fetch-bctc.sh` (not in repo, but mirror exists at `vps-scripts/fetch-bctc.sh`)
+- Service unit: `/etc/systemd/system/vn-bctc-fetch.service`
+- Log file: `/var/log/vn-bctc-fetch.log`
+
+**Coordination:**
+- dev-pdf-extractor responsible for MCP-side pull + OCR (downstream of this fix)
+- This diagnostic is VPS-side only (push → queue fill)
+- Failure point: upstream of MCP (PDFs never reach VPS push endpoint)
+
+**Next Actions:**
+1. Dev team: Fix discover script patterns, deploy to VPS via `scripts/deploy-vinahost.sh`
+2. Dev team: Test fix on one ticker (e.g., ACB Q1/2026)
+3. Ops: Monitor next 6-hour cycle for successful PDF fetches
+4. Escalation channel: WORK (dev-team) + BUG (incident tracking)
+
+**Diagnostic Output:** `docs/signals/ops-1951d-vps-bctc-diagnostic.json`
+
+---
+
+## Recent tasks (2026-05-19)
+
+### Sprint 1953b — Docker Rebuild + OCR Verification (09:50 UTC)
+
+**Status:** BLOCKED — Infrastructure OK, code defect found
+
+Sprint 1953b (commit `eb0766ab`) added poppler-utils + tesseract-ocr + tesseract-ocr-vie to mcp-server Dockerfile for in-container OCR extraction.
+
+**Steps completed:**
+1. Docker rebuild: PASS (156 sec, all deps installed)
+2. OCR binary verify: PASS (`/usr/bin/pdftoppm`, `/usr/bin/tesseract` present)
+3. Vietnamese lang: PASS (`tesseract --list-langs | grep vie` → vie)
+4. Container deploy: PASS (healthy, 142 tools registered, health check passing)
+5. OCR extraction retry on GAS/EIB/DHG/FPT Q1-2026: **FAIL**
+
+**Blocker:** EPIPE (broken pipe) crash at pdfOcrWorker.ts:176 during Tesseract text streaming. Occurs on every OCR extraction attempt for large PDFs (36-76 pages). Process crashes, container restarts, bctc_vps_queue entries remain 'pending'.
+
+**Root cause diagnosis:** Stream handling defect in pdfOcrWorker.ts when piping Tesseract output for multi-page PDFs. Suspected: (a) improper lifecycle mgmt, (b) buffer overflow, (c) child process signal handling.
+
+**Signal file:** `docs/signals/ops-1953b-deploy-verify.json` (full verification results, stack traces, database state)
+
+**Escalation:** dev-mcp-server sprint 1953b — pdfOcrWorker.ts EPIPE fix required before retry.
+
+**Infrastructure state:** All 11 Docker containers healthy. mcp-server running normally outside of OCR jobs. No VPS/DB/network issues.
+
