@@ -1,5 +1,48 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-19 | **Sprint:** 1951e | **Session:** c210 — Sprint 1951e chef-synthesize — APPROVED
+
+## Session 2026-05-19 c210 — Sprint 1951e chef-synthesize (APPROVED)
+
+Verified commit c3106559. .md-only change — bun test + tsc + DDD + security skipped per Smart-Skip.
+14 checks PASS | 1 advisory (Step 6.5 = 16 lines vs ≤15; non-blocking) | 0 blockers.
+Report: `docs/handoffs/sprint-1951e-chef-synthesize-qa-report.md`
+Signal: `docs/signals/qa-1951e-approved.json`
+
+---
+
+## Session 2026-05-19 c203 — Sprint 1951c team-boundary (APPROVED)
+
+### TASK REPORT — Sprint 1951c (compact)
+
+```
+date: 2026-05-19
+outcome: APPROVED
+commit reviewed: 1480a8df
+files: 3 .md + 1 .json (no TypeScript)
+type: FEAT — dev-team/cowork-team boundary rules + signal-dashboard drain
+```
+
+#### Checks
+
+| Check | Result |
+|---|---|
+| dev-team/main.md Team Boundary section (≤20L, caveman) | PASS (13L) |
+| cowork-team/main.md Team Boundary section (≤20L, caveman) | PASS (12L) |
+| drain-signals.md Step 0a-D before 0a-0 | PASS (L11 vs L20) |
+| cowork-team/main.md Step 0a before Step 1 | PASS (L28 vs L37) |
+| Both drains use signal-dashboard skill READ protocol | PASS |
+| Both drains never fail-loud on missing DASHBOARD | PASS |
+| ops type in system-map.json = "ops" | PASS |
+| bun tsc --noEmit | 0 errors |
+| bun test failures | pre-existing (same 3 fails on parent commit); 0 new |
+
+- **actions**: APPROVED. Report: docs/handoffs/sprint-1951c-team-boundary-qa-report.md. Signal: docs/signals/qa-1951c-approved.json.
+- **next_cycle_hint**: idle. Next session validates spawn-ban via runtime trial.
+- **estimated_tokens**: 3200
+
+---
+
 **Last updated:** 2026-05-19 | **Sprint:** 1951b | **Session:** c202 — Sprint 1951b Round 2 — APPROVED
 
 ## Session 2026-05-19 c202 — Sprint 1951b Round 2 (APPROVED)
