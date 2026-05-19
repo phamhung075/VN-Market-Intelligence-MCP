@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-19T15:11:38Z
+
+**Brief:** `docs/architecture-briefs/2026-05-19-data-fusion-gap.md`
+
+Chef dishes are ingredient-lists, not cooked narratives. Root cause: (1) only price_anomaly signals are file-materialized — news/BCTC signals travel via MCP DB only, so chef CLUSTER step is effectively single-source; (2) no canonical cross-source event model exists; (3) Step 7 WRITE DISH lacks a causal-chain synthesis requirement. Fix A (insert SYNTHESIZE step) + Fix D (per-claim citation requirement) are low-effort agent-father actions in chef.md. Fix B (file materialization) + Fix C (signal-fusion-rules.md standard) are sprint tasks for po.
+
+**Signal dropped:** `docs/signals/agents-architect-1951e-data-fusion-brief.json` → agent-father
+
+---
+
 ## 2026-05-19T04:50:00Z
 
 **Brief append:** `docs/architecture-briefs/2026-05-19-cowork-tool-packages.md` §12 — Notebook Write Capability

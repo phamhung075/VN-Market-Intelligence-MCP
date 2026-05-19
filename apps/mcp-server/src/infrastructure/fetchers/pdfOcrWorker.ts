@@ -83,6 +83,7 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
     const ppmChunks: Buffer[] = [];
     const tessChunks: Buffer[] = [];
     let resolved = false;
+    let tessExited = false;
 
     function done(text: string) {
       if (!resolved) {
@@ -91,10 +92,25 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
       }
     }
 
-    // Pipe pdftoppm stdout → tesseract stdin
+    // Task 1953b-2: Suppress benign EPIPE on tess.stdin so an early tesseract
+    // exit does not propagate an unhandled error that crashes the Bun process.
+    // Any error other than EPIPE is re-thrown so genuine failures surface.
+    tess.stdin.on("error", (err: NodeJS.ErrnoException) => {
+      if (err.code !== "EPIPE") {
+        logger.warn("[ocr] tess.stdin non-EPIPE error: " + err.message, { code: err.code });
+      }
+      // EPIPE is benign: tess exited before ppm finished sending — handled below.
+    });
+
+    // Pipe pdftoppm stdout → tesseract stdin with writable guard (Task 1953b-2)
     ppm.stdout.on("data", (chunk: Buffer) => {
       ppmChunks.push(chunk);
-      tess.stdin.write(chunk);
+      // Guard: only write if tesseract stdin is still open.
+      // tessExited flag is set in tess 'close' handler (synchronous before this fires
+      // on the same tick in most cases, but the writable check is the hard gate).
+      if (!tessExited && tess.stdin.writable && !tess.stdin.destroyed) {
+        tess.stdin.write(chunk);
+      }
     });
 
     ppm.stderr.on("data", () => {}); // swallow
@@ -105,7 +121,10 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
         done("");
         return;
       }
-      tess.stdin.end();
+      // End tess.stdin only if it is still open (tess may have already exited)
+      if (!tessExited && tess.stdin.writable && !tess.stdin.destroyed) {
+        tess.stdin.end();
+      }
     });
 
     ppm.on("error", () => {
@@ -118,6 +137,12 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
     tess.stderr.on("data", () => {}); // swallow
 
     tess.on("close", () => {
+      tessExited = true;
+      // Task 1953b-2: destroy tess.stdin to prevent any in-flight ppm writes
+      // from blocking or triggering EPIPE after this point.
+      if (!tess.stdin.destroyed) {
+        tess.stdin.destroy();
+      }
       const text = Buffer.concat(tessChunks).toString("utf-8").trim();
       done(text);
     });
