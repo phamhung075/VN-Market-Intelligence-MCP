@@ -170,3 +170,56 @@ Sprint 1953b (commit `eb0766ab`) added poppler-utils + tesseract-ocr + tesseract
 
 **Infrastructure state:** All 11 Docker containers healthy. mcp-server running normally outside of OCR jobs. No VPS/DB/network issues.
 
+
+### Sprint 1956 — Multi-Service Build Failure (22:30 UTC)
+
+**Status:** ESCALATION REQUIRED — Code fix needed in frontend app
+
+**Problem Statement:** Only mcp-server running. Attempted `docker compose up -d` to start 10 other services failed at frontend image build.
+
+**Incident Timeline:**
+- 22:10 UTC: Received CRITICAL alert: "8 microservices not running, only mcp-server up"
+- 22:15 UTC: Attempted recovery: `docker compose up -d`
+- 22:16 UTC: Build failed with exit code 1 at frontend Dockerfile RUN npm run build stage
+
+**Root Cause — Remix Code Split Violation:**
+The file `apps/frontend/app/routes/dashboard.server.tsx` violates Remix v7+ route semantics. In Remix, files with `.server.tsx` suffix in the routes/ directory indicate server-only code that should NOT be bundled for the client. However, dashboard.server.tsx is being imported by client-side code during the vite build phase.
+
+**Vite Error Details:**
+```
+[commonjs--resolver] Server-only module referenced by client
+'./dashboard.server.tsx' imported by 'app/routes/dashboard.server.tsx?__remix-build-client-route'
+See https://remix.run/docs/en/main/guides/vite#splitting-up-client-and-server-code
+```
+
+**Diagnostic Output:**
+- Attempted recovery: `docker compose up -d 2>&1 | tail -40` (exit 1)
+- Post-up status: only mcp-server running (1/11 services)
+- Services not started: pdf-extractor, rag-service, technical-analysis, macro-indicators, stock-price, api-gateway, kinh-dich-service, alert-engine, news-fetch, frontend, flaresolverr
+- Build failure file: `apps/frontend/app/routes/dashboard.server.tsx`
+
+**Why Ops Cannot Fix This:**
+- This is a **code defect**, not an infrastructure issue
+- Remix route structure must be fixed in source code
+- File naming convention conflict: dashboard.server.tsx should either be (a) renamed to not use .server.tsx pattern if it's a public route, or (b) moved out of routes/ if it's truly server-only
+- Ops cannot rewrite application code
+
+**Escalation Path:**
+1. **Escalate to:** dev-team (frontend developer)
+2. **Required action:** Fix Remix route structure in apps/frontend/app/routes/
+3. **Signal file:** docs/signals/ops-1956-multi-service-recovery.json
+4. **Blocking:** YES — all 10 backend services cannot start until frontend builds successfully
+
+**Recovery After Code Fix:**
+Once frontend code is fixed and committed:
+1. Ops will re-run: `docker compose up -d`
+2. All 11 services will build and start
+3. Health check verification will follow
+
+**Current Infrastructure State:**
+- mcp-server: healthy (3000:3000)
+- All 10 other services: not started (waiting for frontend build fix)
+- Docker volumes: market_data initialized
+- No VPS/DB/network issues
+
+**Next Step:** Escalate to developer for route structure refactoring.

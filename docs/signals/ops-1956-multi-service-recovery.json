@@ -1,0 +1,106 @@
+{
+  "signal_id": "ops-1956-multi-service-recovery",
+  "timestamp": "2026-05-19T22:30:00Z",
+  "severity": "CRITICAL",
+  "incident_type": "multi-service_build_failure",
+  "root_cause": "frontend_remix_build_failure",
+
+  "services_summary": {
+    "total_defined": 11,
+    "running_before": 1,
+    "running_after": 1,
+    "failed_to_start": 10
+  },
+
+  "service_status": [
+    {
+      "name": "mcp-server",
+      "status": "running",
+      "health": "healthy",
+      "notes": "Was already running; no change"
+    },
+    {
+      "name": "frontend",
+      "status": "failed_to_build",
+      "reason": "Remix server-only module violation in dashboard.server.tsx",
+      "error": "Server-only module './dashboard.server.tsx' imported by client-side code",
+      "file": "apps/frontend/app/routes/dashboard.server.tsx",
+      "docker_build_exit": 1
+    },
+    {
+      "name": "pdf-extractor",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "rag-service",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "technical-analysis",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "macro-indicators",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "stock-price",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "api-gateway",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "kinh-dich-service",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "alert-engine",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "news-fetch",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    },
+    {
+      "name": "flaresolverr",
+      "status": "not_started",
+      "reason": "docker compose up failed early due to frontend build failure"
+    }
+  ],
+
+  "diagnosis": {
+    "trigger": "docker compose up -d",
+    "failure_point": "frontend image build (Dockerfile RUN npm run build)",
+    "vite_error": "Build failed in 115ms — Remix plugin rejected server-only module import",
+    "code_issue": true,
+    "infrastructure_issue": false,
+    "recovery_type": "code_fix_required",
+    "escalation": "MANDATORY — developer must fix Remix code splitting"
+  },
+
+  "attempted_fixes": [
+    {
+      "action": "docker compose up -d 2>&1",
+      "result": "FAILED",
+      "exit_code": 1,
+      "root_cause": "frontend Dockerfile npm run build exited with code 1"
+    }
+  ],
+
+  "required_action": "Developer sprint to fix Remix route structure. File dashboard.server.tsx cannot be both a route file AND use server-only semantics in Remix v7+.",
+
+  "blocking": true,
+  "unrecoverable_via_ops": true,
+  "recommendation": "Escalate to dev-team for code fix. Ops cannot resolve code split violations."
+}
