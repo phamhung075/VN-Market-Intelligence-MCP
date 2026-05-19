@@ -156,7 +156,7 @@ call_tool(
 call_tool(
   server: "vn-market",
   tool: "get_financial_summary",
-  arguments: { "code": "HPG" }
+  arguments: { "actionCode": "HPG" }
 )
 ```
 **Returns:** `{ ticker, eps, pe, roe, debt_ratio, ... }`
