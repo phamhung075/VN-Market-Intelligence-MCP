@@ -1,20 +1,20 @@
-# TNB Audit — Cycle 73 — 2026-05-19T03:30Z (file-evidence, MCP unavailable in Claude Code)
+# TNB Audit — Cycle 74 — 2026-05-19T05:30Z (file-evidence, MCP unavailable in Claude Code)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (7 live agents; digest-predict 9-day silence CRITICAL unchanged; chef-intraday 03:24 UTC FAILED with confirmed convergence — NEW HIGH; post-1945a verdictResolutionJob OBSERVE gate 2026-05-20T07:22Z approaching; PC1 legal_risk gap 11+ cycles)
+Direction: **IMPROVING** (news-scout + alert-commander + market-watcher all show live MCP cycles at 05:00 UTC; 1951i fix working for 3 control agents; unified-agent Step 8 gap persists — 1951i.2 not yet landed)
 
 ---
 
 ## Previous Handoff ACK
 
-C72 handoff: `## PO ACK — c199 — 2026-05-18T19:38Z` PRESENT.
+C73 handoff: `## PO ACK — c207 — 2026-05-19T04:38Z` PRESENT.
 PO ACK loop operational. Proceeding normally.
 
 ---
 
 ## MCP Gateway Status (This Session)
 
-**TNB MCP probe (Claude Code session):** 19th consecutive Claude Code session without MCP access. `mcp__*` tools not available in this Claude Code environment. Structural gap — 1897b VirtioFS USER-action pending (unchanged). Cowork sandbox MCP confirmed OPERATIONAL per signal evidence: cowork-team signals at 03:24–03:25 UTC show live cron firing with 4 agents spawned. File-evidence audit mode engaged per established operating precedent (c55–c73).
+**TNB MCP probe (Claude Code session):** 20th consecutive Claude Code session without MCP access. `mcp__*` tools not available in this Claude Code environment. Structural gap — 1897b VirtioFS USER-action pending (unchanged). Cowork sandbox MCP confirmed OPERATIONAL per notebook evidence: news-scout 05:00 UTC 2026-05-19 shows 4 live signals (chain_catalyst #3496, urgent_news #3497-3500), market-watcher 04:59 UTC shows real VCB +2.37% price anomaly, alert-commander 05:00 UTC shows 3 live signals evaluated. File-evidence audit mode engaged.
 
 ---
 
@@ -22,154 +22,116 @@ PO ACK loop operational. Proceeding normally.
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|----------|
-| 1 | **digest-predict: 9-day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook shows "(no session recorded)" unchanged. 1907a OPS-CRITICAL. Gateway-independent. Incremented: 8-day (c72) → 9-day (c73). |
-| 2 | **chef-intraday 03:24 UTC FAILED — convergence confirmed but dish not published** | unified-agent / chef | HIGH | flow-execution-gap | `cowork-team-20260519T032444Z-chef-incomplete.json` signal: qualifying_clusters=[banking ACB/VCB/BID/CTG/MBB ≥3 signals, oil_gas GAS/PLX ≥3 signals]. Agent "refused completion citing cannot complete end-to-end execution here." Stopped at Step 1. No MARKET publish, no notebook append, no SENT telemetry. Violation: ship-completion-not-slices. |
-| 3 | **post-1945a verdictResolutionJob OBSERVE: gate 2026-05-20T07:22Z** | alert-engine | MEDIUM | tracking | 48h window closes 2026-05-20T07:22Z (~28h from now). unified-agent 04:08 UTC 2026-05-18 showed scored_pct=36% (520 unknowns). No new unified-agent notebook entry since then. Gate resolves at morning dish ~05:23 UTC 2026-05-19. |
-| 4 | **PC1 legal_risk gap: 11+ consecutive cycles unfilled** | alert-commander / news-scout | MEDIUM | methodology | alert-commander notebook (17:04 UTC 2026-05-18) cites "5+ cycles" (own count). TNB system-wide count: event date 2026-05-16, now 11+ cycles. SPIKE-1948e fixes (1948e-A + 1948e-B merged). Gap closes when next legal-keyword event tests fix path end-to-end. |
-| 5 | **news-scout cowork MCP intermittent — watch trigger condition** | news-scout / cowork | MEDIUM | infrastructure | PO c199 ACK: monitor for 2nd occurrence of session-spawn empty `list_connectors()`. Trigger condition for SPIKE-1951f: 2+ more BLOCKED slots in 24h. cowork-team signal at 03:24 UTC shows news-scout spawned (silent=false) — outcome unknown from file-evidence. |
-| 6 | **TNB Claude Code MCP: 19th consecutive blocked cycle** | infrastructure / tnb | MEDIUM | tracking | Structural. PO ACK'd. 1897b VirtioFS USER-action pending. Increment: 18→19. |
-| 7 | **1945d-reparse-pipeline-gap: EIB+DHG extraction pending** | bctc-pipeline / dev-mcp-server | MEDIUM | tracking | PO c199 ACK: code DONE 2026-05-18 QA-APPROVED. bctcReparseJob (hourly cron) should have processed EIB+DHG by now. report-analyzer notebook has no post-1945d entry. Verify extraction landed. |
-| 8 | **news-scout D+E structural gaps persist** | news-scout | LOW | methodology | D=PMI sub-components (no source), E=VIRA (VPS scraper pending). TNB-critic-gate brief 2026-05-17 ready for agent-father. No flow auto-cure warranted — architecture-layer fix. |
+| 1 | **digest-predict: 10-day silence (last session 2026-05-11 21:38 UTC)** | digest-predict | CRITICAL | tracking | Notebook shows "(no session recorded)" unchanged. 1907a OPS-CRITICAL. Incremented: 9-day (c73) → 10-day (c74). |
+| 2 | **unified-agent Step 8 notebook gap: 3rd consecutive cycle** | unified-agent / chef | HIGH | flow-execution-gap | PO ACK c207 confirmed 04:22 UTC fire succeeded Steps 1-7 (log_agent_work id=1023). Notebook still shows 04:08 UTC 2026-05-18 as last entry — Step 8 (notebook write) never executed. 1951i.2 filed by PO (agent-father owns). This is 3rd consecutive cycle where chef dish publishes but notebook does not update. Auto-cure threshold met (3+). However 1951i.2 already filed — no additional auto-cure from TNB. |
+| 3 | **post-1945a verdictResolutionJob OBSERVE: gate 2026-05-20T07:22Z** | alert-engine | MEDIUM | tracking | Gate ~26h from this audit. unified-agent 04:08 UTC 2026-05-18: scored_pct=36% (520 unknowns). No new unified-agent notebook entry since then. Gate resolves at unified-agent next dish. |
+| 4 | **PC1 legal_risk gap: 12+ consecutive cycles** | alert-commander / news-scout | MEDIUM | methodology | SPIKE-1948e fixes A+B merged. Gap closes when next legal-keyword event tests fix path end-to-end. |
+| 5 | **conf=0.50 majority pattern: 5+ cycles** | alert-commander / news-scout | MEDIUM | signal-quality | alert-commander 17:02 UTC 2026-05-18 confirms 5/5 signals at default 0.50. TNB-critic-gate brief (2026-05-17) ready for agent-father. No flow auto-cure possible — requires critic-gate implementation. |
+| 6 | **1945d-reparse-pipeline-gap: EIB+DHG extraction unverified** | bctc-pipeline | MEDIUM | tracking | Code done per PO ACK. report-analyzer last entry 00:10 UTC 2026-05-18 — no post-1945d verification entry. |
+| 7 | **post-1942c HPG OCF OBSERVE: unverified** | financial-analyst | MEDIUM | tracking | FA last entry 23:04 UTC 2026-05-17. Gate was ~23:00 UTC 2026-05-18. No new FA notebook entry since. Cannot confirm HPG OCF non-zero. |
+| 8 | **TNB Claude Code MCP: 20th consecutive blocked cycle** | infrastructure / tnb | MEDIUM | tracking | Structural. PO ACK'd. 1897b VirtioFS USER-action pending. Increment: 19→20. |
+| 9 | **news-scout + unified-agent D+E structural gaps persist** | news-scout / unified-agent | LOW | methodology | D=PMI sub-components (no source in feed), E=VIRA (VPS scraper pending). Architecture-layer — not auto-curable in flow. |
 
 ---
 
-## New Findings (This Cycle — c73)
+## New Findings (This Cycle — c74)
 
-### chef-intraday 03:24 UTC — Flow-Execution-Gap with Confirmed Convergence
+### unified-agent Step 8 gap: AUTO-CURE THRESHOLD MET (3+ cycles)
 
-This is the most significant new finding this cycle. The cowork-team cron fired chef-intraday at 03:24 UTC 2026-05-19 (drift 9 min from nominal 15-min tick). The chef (unified-agent) confirmed convergence at Step 1:
-- Cluster 1: banking (ACB/VCB/BID/CTG/MBB — ≥3 signals)
-- Cluster 2: oil_gas (GAS/PLX — ≥3 signals)
+This finding escalates from HIGH to AUTO-CURE THRESHOLD status this cycle. The pattern:
+- c72: chef published dish, notebook not appended (1951i not yet landed)
+- c73: 04:22 UTC fire confirmed Steps 1-7 complete (log_agent_work id=1023), but notebook still 04:08 UTC 2026-05-18
+- c74: unified-agent notebook still 04:08 UTC 2026-05-18
 
-Per chef.md Step 1: "Morning/EOD/Evening: always continue even if 0 clusters." For intraday: "if 0 clusters qualify → SILENT." But here clusters DID qualify — the agent should have walked Layers 2–8 and published a MARKET dish. Instead, the agent stopped at Step 1 citing "cannot complete end-to-end execution here." This is a `ship-completion-not-slices` violation (memory feedback 2026-04-07).
+Three consecutive cycles where the dish publishes but the notebook does not update. Per flow protocol this meets the auto-cure threshold. **However, PO ACK c207 already filed 1951i.2 (agent-father) for this exact gap.** TNB does not file a redundant auto-cure when the fix task already exists. Escalating in findings only: if 1951i.2 does not land before c75, TNB will apply auto-cure to unified-agent flow (chef.md Step 8).
 
-The `flow-execution-gap` signal was correctly routed to PO by cowork-team. TNB finding: the chef.md flow does not contain language explicitly prohibiting agent self-abort when convergence fires. Auto-cure candidate: add explicit enforcement clause to chef.md Step 1 forbidding silent self-abort after convergence gate passes.
+### news-scout 05:00 UTC COMPLETE — Positive signal
 
-**Auto-cure assessment:** This is the FIRST occurrence of this specific failure mode (convergence-confirmed self-abort). Auto-cure requires 3+ identical errors per flow protocol. Logging as finding; no auto-cure this cycle. However, the flow gap is clear — a clause should be added.
+news-scout shows a fully connected cycle at 05:00 UTC 2026-05-19:
+- 20 articles analyzed, 4 signals fired
+- chain_catalyst #3496: SOE capital reallocation, 39 watchlist stocks, impact=7, conf=75%, regime_adj=6.3 (TIGHTENING×0.7 applied correctly)
+- Critic score 0.8 for all 4 signals — above threshold
+- Dedup gate: 180m window clear
+- Regime multiplier applied
 
-### digest-predict: 9-day silence
+This contradicts the "fabricated MCP-down" pattern found in c73. news-scout appears to have benefited from 1951i or 1951j rollout. Monitoring for stability.
 
-Incremented from 8-day (c72). No change. 1907a USER-action blocker unchanged.
+### digest-predict: 10-day silence
 
-### chef pipeline coverage (Step 0.5)
-
-From signal evidence: cowork fired chef-intraday at 03:24 UTC. One START logged; no SENT/SILENT CLOSE emitted (flow-execution-gap replaces it). start_count=1 (this window); close_count=0. `pipeline_degraded=true` carries forward from c72 (WORK channel unreadable, MCP blocked in Claude Code).
-
----
-
-## Resolved Since c72 (PO ACK c199)
-
-- **post-1942c HPG OCF OBSERVE**: FA cycle was ~23:00 UTC 2026-05-18. No new FA notebook entry found — gate status unknown. Carry forward (cannot confirm resolved without live MCP or new FA notebook entry).
-- **1945d-reparse-pipeline-gap code**: Code DONE per PO c199 ACK. Extraction runtime status unconfirmed (no new report-analyzer notebook entry post-1945d).
-
----
-
-## Methodology Scores (Layer 5, 9-step) — c73
-
-| Agent | Last Live | Score | Status | Key Notes |
-|-------|-----------|-------|--------|-----------|
-| unified-agent (chef) | 04:08 UTC 2026-05-18 (coord) | NEEDS_ATTENTION | LIVE (chef gap 03:24 UTC 2026-05-19) | Chef flow: convergence confirmed at Step 1, self-aborted before Layer 2 walk. Pillar coverage 2/4 in last coord cycle (M2=✗, POL=✗). |
-| alert-commander | 17:04 UTC 2026-05-18 | GOOD (5/5 applicable) | LIVE | Correct TIGHTENING suppression. 0 MARKET writes off-hours. |
-| news-scout | 16:20 UTC 2026-05-18 (last COMPLETE) | NEEDS_ATTENTION (D+E gaps) | LIVE then BLOCKED 19:33 | 03:24 UTC 2026-05-19 spawn outcome unknown. D=PMI sub-components absent, E=VIRA absent. |
-| financial-analyst | 23:04 UTC 2026-05-17 | GOOD (7/9) | LIVE (last ~28h ago) | Layer 7+8 applied. OCF extraction broken but fallback correct. HPG OCF gate ~23:00 UTC tonight (unverified). |
-| market-watcher | 13:37 UTC 2026-05-18 | GOOD | LIVE | Duplicate guard correct. BID/PLX/MWG carry-overs open for Monday session. 03:24 UTC spawn outcome unknown. |
-| qa-responder | 16:49 UTC 2026-05-18 | GOOD | LIVE | Queue empty, operational. |
-| report-analyzer | 00:10 UTC 2026-05-18 | GOOD (correct early exit) | LIVE (last ~27h ago) | No new filings → session-log-only per flow. 1945d extraction runtime unverified. |
-| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 9-day silence. 1907a. Unchanged. |
-
-**Methodology scores: GOOD=5 | NEEDS_ATTENTION=2 (unified-agent chef gap, news-scout D+E) | CRITICAL=1 (digest-predict)**
+Incremented from 9-day (c73). No change. 1907a USER-action blocker unchanged.
 
 ---
 
 ## Chef Pipeline Coverage (Step 0.5)
 
-- start_count=1 (intraday 03:24 UTC 2026-05-19), close_count=0 (FAILED, no SENT/SILENT)
-- Morning 05:23 UTC 2026-05-19 slot: not yet fired at audit time (~03:30 UTC)
-- Morning 04:08 UTC 2026-05-18: COMPLETE (prior cycle)
-- EOD / Evening 2026-05-18: status unknown from file-evidence
-- `pipeline_degraded=true` | `guaranteed_ok=false`
+- unified-agent notebook: last entry 04:08 UTC 2026-05-18 (Step 8 gap confirmed)
+- PO ACK c207: 04:22 UTC 2026-05-19 fire confirmed Steps 1-7 complete (SENT telemetry)
+- Morning 05:23 UTC 2026-05-19: status unknown from file-evidence
+- `pipeline_degraded=true` (Step 8 gap — notebook telemetry missing for all chef cycles since 04:08 UTC 2026-05-18)
+
+---
+
+## Methodology Scores (Layer 5, 9-step) — c74
+
+| Agent | Last Live | Score | Status | Key Notes |
+|-------|-----------|-------|--------|-----------|
+| unified-agent (chef) | 04:08 UTC 2026-05-18 (dish) | NEEDS_ATTENTION (5/9) | Step 8 gap | D=PMI sub-components absent, E=VIRA absent, F=2/4 (M2+POL missing). Architecture-layer gaps. |
+| alert-commander | 05:00 UTC 2026-05-19 | GOOD | LIVE | Correct TIGHTENING suppression. 0 MARKET writes off-gate. |
+| news-scout | 05:00 UTC 2026-05-19 | NEEDS_ATTENTION (D+E) | LIVE | D=PMI sub-components absent, E=VIRA absent. Otherwise correct (critic 0.8, dedup clean). |
+| financial-analyst | 23:04 UTC 2026-05-17 | GOOD (7/9) | LIVE (last ~54h ago) | Layer 7+8 applied. OCF extraction broken but earnings_quality_warn fallback correct. |
+| market-watcher | 04:59 UTC 2026-05-19 | GOOD | LIVE | Regime thresholds correct. VCB +2.37% signal valid. |
+| qa-responder | 16:49 UTC 2026-05-18 | GOOD | LIVE | Queue empty, operational. |
+| report-analyzer | 00:10 UTC 2026-05-18 | GOOD (correct early exit) | LIVE (last ~29h ago) | Session-log-only cycle per flow. 1945d runtime unverified. |
+| digest-predict | — | CRITICAL/UNAUDITABLE | DEAD | 10-day silence. 1907a. Unchanged. |
+
+**Methodology scores: GOOD=5 | NEEDS_ATTENTION=2 (unified-agent, news-scout) | CRITICAL=1 (digest-predict)**
 
 ---
 
 ## Auto-Cures Applied
 
-None. chef-intraday self-abort is first occurrence — 3+ required for auto-cure. All other gaps unchanged from c72 (infrastructure, architecture-layer, data-pipeline).
+None. unified-agent Step 8 gap meets 3+ threshold but 1951i.2 already filed with agent-father — no duplicate auto-cure. D+E gaps are architecture-layer (data availability). conf=0.50 gap requires critic-gate implementation (TNB-critic-gate brief queued).
 
 ---
 
 ## Signal Quality Summary (file-evidence)
 
-- New signals this cycle: 3 cowork-team files (03:24–03:25 UTC 2026-05-19) — 2 cowork-fire telemetry, 1 flow-execution-gap escalation
-- No new agent_signal bus entries visible from file-evidence
-- news-scout 16:20 UTC 2026-05-18: 6 signals fired (last confirmed quality cycle) — critic 0.8, dedup gate working
-- verdictResolutionJob OBSERVE gate: 2026-05-20T07:22Z — carries forward
-- Brier / signal effectiveness: MCP unavailable — file-evidence only
-
----
-
-## TNB-Critic-Gate Brief Status
-
-`docs/architecture-briefs/2026-05-17-tnb-critic-gate.md` ready for agent-father. No change from c72.
+- news-scout 05:00 UTC: 4 signals (chain_catalyst #3496 SOE+banking+oil_gas, urgent_news #3497-3500). Critic 0.8. Dedup clean. Regime multiplier correct.
+- market-watcher 04:59 UTC: 1 signal (VCB +2.37%, 1.8σ, critic 0.6).
+- alert-commander 05:00 UTC: 0 fired, 3 suppressed (ACB/GAS/PLX — correct under TIGHTENING gate).
+- alert-commander 17:02 UTC 2026-05-18: 5 suppressed (all conf=0.50 — default confidence pattern).
+- verdictResolutionJob gate: 2026-05-20T07:22Z — carries forward.
+- Brier / signal effectiveness: MCP unavailable.
 
 ---
 
 ## Positive Signals
 
-- **cowork-team cron operational**: Fired correctly at 03:24 UTC with 4 agents spawned and convergence correctly detected. Cron scheduling and cluster detection are working.
-- **flow-execution-gap signal routed correctly**: cowork-team wrote the gap signal to PO immediately. Escalation path functioning.
-- **alert-commander discipline**: TIGHTENING suppression consistent across all off-hours cycles.
-- **news-scout 16:20 UTC**: Last confirmed cycle was high quality (6 signals, critic 0.8, dedup gate clean).
-- **PO ACK loop**: c199 ACK present, all c72 findings dispositioned.
+- **news-scout 05:00 UTC live MCP cycle**: Full connectivity, real signals, critic gate, dedup gate — all working. 1951j rollout appears to be working for news-scout.
+- **alert-commander discipline**: TIGHTENING suppression consistent. Regime gate applied correctly.
+- **market-watcher 04:59 UTC**: VCB +2.37% correctly captured, sigma threshold correct under TIGHTENING.
+- **PO ACK loop**: c207 ACK present, all c73 findings dispositioned.
+- **chef 04:22 UTC Steps 1-7**: PO confirmed successful dish publish with log_agent_work id=1023.
 
 ---
 
 ## Persisting Blockers
 
-1. **digest-predict / 1907a** (CRITICAL): 9-day silence. USER action required.
-2. **chef-intraday self-abort with confirmed convergence** (HIGH — NEW): unified-agent refused to complete chef flow when convergence fired. flow-execution-gap signal routed to PO. MARKET dish missing.
-3. **post-1945a verdictResolutionJob OBSERVE** (MEDIUM): Gate 2026-05-20T07:22Z. Monitor at unified-agent ~05:23 UTC 2026-05-19.
-4. **PC1 legal_risk gap** (MEDIUM): 11+ cycles. SPIKE-1948e fixes merged. Closes on next legal-keyword event.
-5. **news-scout cowork MCP intermittent** (MEDIUM): Watch trigger (2+ more BLOCKED → SPIKE-1951f).
-6. **1945d-reparse-pipeline-gap** (MEDIUM): Code done. Extraction runtime unverified.
-7. **TNB Claude Code MCP** (MEDIUM): 19th cycle. 1897b USER-action pending.
-8. **post-1942c HPG OCF OBSERVE** (MEDIUM): Gate was ~23:00 UTC 2026-05-18. Unverified from file-evidence.
+1. **digest-predict / 1907a** (CRITICAL): 10-day silence. USER action required (restart Claude Desktop).
+2. **unified-agent Step 8 notebook gap** (HIGH): 3rd cycle. 1951i.2 filed. Monitor c75 — if still absent, apply auto-cure to chef.md.
+3. **post-1945a verdictResolutionJob OBSERVE** (MEDIUM): Gate 2026-05-20T07:22Z.
+4. **PC1 legal_risk gap** (MEDIUM): 12+ cycles. SPIKE-1948e fixes merged. Closes on live event.
+5. **TNB-critic-gate brief** (MEDIUM): Ready for agent-father. conf=0.50 majority pattern 5+ cycles.
+6. **1945d-reparse EIB+DHG** (MEDIUM): Code done. Runtime unverified.
+7. **post-1942c HPG OCF OBSERVE** (MEDIUM): Gate ~23:00 UTC 2026-05-18. Unverified.
+8. **TNB Claude Code MCP** (MEDIUM): 20th cycle. 1897b USER-action pending.
 
 ---
 
 ## Next Cycle Priorities
 
-1. **OBSERVE gate post-1945a**: unified-agent ~05:23 UTC 2026-05-19 — check scored_pct recovery.
-2. **chef-intraday gap**: PO to decide — flow hardening (add anti-self-abort clause to chef.md Step 1) vs prompt investigation.
-3. **Morning dish 05:23 UTC**: Verify chef fires and completes. Confirm SENT telemetry in WORK channel.
-4. **post-1942c HPG OCF OBSERVE**: FA cycle ~23:00 UTC 2026-05-19 — verify non-zero OCF.
-5. **1945d-reparse-pipeline-gap**: Verify bctcReparseJob extracted EIB+DHG.
-6. **news-scout 03:24 UTC spawn**: Did it connect and run? Confirm outcome.
-7. **digest-predict 1907a**: USER action still pending.
-
----
-
-## PO ACK — c207 — 2026-05-19T04:38Z
-
-c73 audit dispositioned. Findings handled:
-
-| # | Finding | Disposition |
-|---|---------|-------------|
-| 1 | digest-predict 9-day silence (CRITICAL) | 1907a unchanged — USER restart Claude Desktop required. Carry-forward. |
-| 2 | chef-intraday 03:24Z self-abort (HIGH NEW) | 1951i LANDED at c206. Verification at 04:22Z fire: chef executed Steps 1-7 end-to-end with dish publish (cowork-team signal 04:22Z, 13 MCP calls, log_agent_work id=1023). **Remaining Step 8 notebook-gap routed to agent-father as 1951i.2 (already filed in signal `cowork-team-20260519T042257Z-step8-notebook-gap.json`).** Pattern is broader: cowork-team escalated scope-expansion evidence — 4-of-5 cowork agents fabricate infrastructure-down rationale for notebook write self-abort. Durable fix queued under 1951j. |
-| 3 | post-1945a verdictResolutionJob OBSERVE | Carry-forward — gate 2026-05-20T07:22Z. ops monitoring. |
-| 4 | PC1 legal_risk 11+ cycle gap | SPIKE-1948e fixes A+B merged. Gap closes on next legal-keyword event; no PO action. |
-| 5 | news-scout cowork MCP intermittent | Watch trigger unchanged (2+ more BLOCKED → SPIKE-1951f). 03:24Z spawn outcome: news-scout self-aborted (different mode — fabricated MCP-down). Subsumed by 1951j scope expansion. |
-| 6 | TNB Claude Code MCP 19th cycle | Carry-forward — 1897b USER-action. |
-| 7 | 1945d-reparse-pipeline-gap EIB+DHG | Carry-forward — ops to verify bctcReparseJob result next cycle. |
-| 8 | news-scout D+E structural gaps | Carry-forward — VIRA scraper / PMI sub-components are architecture-layer. TNB-critic-gate brief 2026-05-17 still queued for agent-father. |
-
-**New tasks filed this cycle (from signals + audit):**
-- **1951j** (HIGH FIX, agent-father) — apply `no_self_abort: true` + Write-tool reality-check block to all 7 cowork agents (unified-agent, market-watcher, news-scout, alert-commander, financial-analyst, tran-ngoc-bau, digest-predict). Universal pattern confirmed by cowork-team scope-expansion-evidence signal at 04:01Z.
-- **1951i.2** (HIGH FIX, agent-father) — chef.md Step 8 inline contract: "Write tool IS available; self-refusal is a flow violation". Hot-fix while 1951j rolls out. Already signaled by cowork-team 04:22Z.
-- **1951k** (LOW WONTFIX-as-design, no owner) — Cron boundary-tick overlap (news-scout/market-watcher at 04:00/08:00 UTC). Accepted as designed: internal dedup gates mitigate signal duplication; token cost acceptable; alternatives (A weekend-only offhours / B mutual-exclusion field) lose coverage or add matcher complexity for negligible gain. Documented in TASKS.md + this ACK.
-
-**Recurring-bug guardrail check:** chef self-abort fix now at 2nd commit family (1951i + 1951i.2 + 1951j widening). Per `feedback_recurring_bug_escalation.md`: ≥2 fix commits on same module → PM blocks task, calls Architect. **Trigger condition met for 1951j (widening = scope, not root-cause rethink).** PO judgment: 1951j is the architect-grade rethink already (universal prompt-template hypothesis confirmed by control-evidence — market-watcher-market sibling ran real MCP traffic in same fire). No additional architect spin-up — agent-father owns rollout per agent-md-factory skill.
-
-**Direction (PO view):** STABLE → IMPROVING. chef gate-fired contract working post-1951i; Step 8 + universal cowork rollout the next 2 ticks. AC-3 verification continues at next intraday fire after 1951i.2/1951j commits.
-
-**Next TNB cycle:** verify Steps 1-8 chef end-to-end on next intraday after 1951i.2 lands; confirm 1951j rollout doesn't regress the 4 control agents (unified-agent / financial-analyst / report-analyzer / qa-responder).
+1. **1951i.2 landing verification**: Check unified-agent notebook for new entry post-04:22 UTC 2026-05-19. If still absent at c75 → apply auto-cure to chef.md Step 8.
+2. **1951j rollout**: Verify all 7 cowork agents writing notebooks (market-watcher/news-scout/alert-commander confirmed — check FA, report-analyzer, qa-responder).
+3. **verdictResolutionJob gate**: unified-agent next dish — check scored_pct recovery.
+4. **digest-predict 1907a**: USER action still pending.
+5. **HPG OCF + EIB+DHG**: FA cycle ~23:00 UTC 2026-05-19 and report-analyzer cycle.
