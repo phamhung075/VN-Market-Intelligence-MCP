@@ -1,0 +1,81 @@
+{
+  "from": "dev-mcp-server",
+  "to": "ops",
+  "type": "implementation-complete",
+  "task_ids": ["1953c", "1953b-2"],
+  "sprint": "1953",
+  "title": "Recovery: 1953c batch-sweep backfill + 1953f/1953b-2 EPIPE handler in pdfOcrWorker",
+  "timestamp": "2026-05-19T00:00:00Z",
+
+  "orphan_files_decision": {
+    "test_file": {
+      "path": "apps/mcp-server/src/__tests__/1953c-batch-sweep-registration-audit.test.ts",
+      "decision": "KEEP",
+      "rationale": "Complete, 8/8 GREEN, covers TC-1..TC-6b (cron expression, wrapRun key contract, sweep callback, earnings-season guard, all-quarter coverage). Meaningful regression protection.",
+      "status": "committed in this bundle"
+    },
+    "pdfOcrWorker": {
+      "path": "apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts",
+      "decision": "KEEP",
+      "rationale": "The prior agent already applied the EPIPE fix. The modification addresses the 1953b-2 / 1953f EPIPE blocker. Fix verified complete (see pdfOcrWorker_epipe_fix below).",
+      "status": "committed in this bundle"
+    }
+  },
+
+  "fix_1953c": {
+    "root_cause": "Container was down at 2026-04-25T09:00 UTC. Job IS correctly registered in startScheduler.ts. No code wiring bug. Next auto-fire: 2026-07-25T09:00:00Z.",
+    "files": [
+      {
+        "path": "apps/mcp-server/src/__tests__/1953c-batch-sweep-registration-audit.test.ts",
+        "action": "new (untracked orphan → committed)",
+        "tests": 8,
+        "status": "GREEN"
+      },
+      {
+        "path": "apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts",
+        "action": "new",
+        "description": "One-shot Q1-2026 BCTC queue backfill. INSERT OR IGNORE for all watchlist tickers. Idempotent. Callable via: bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts"
+      }
+    ],
+    "backfill_command": "bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts",
+    "backfill_trigger": "ops runs AFTER 1953b container rebuilt + EPIPE fix deployed. bctcQueueEnricherJob + bctcPdfPullJob then process automatically."
+  },
+
+  "fix_1953b2_epipe": {
+    "crash_location": "pdfOcrWorker.ts:176 (old line numbering) — tess.stdin.write(chunk) after tesseract process exited",
+    "symptom": "EPIPE broken-pipe crash on multi-page PDFs (36-76 pages). Container restarts. GAS/EIB/DHG/FPT Q1-2026 OCR never completes.",
+    "fix_applied": {
+      "description": "Three-layer EPIPE guard in ocrOnePage()",
+      "layer_1": "tess.stdin.on('error', ...) — swallows EPIPE silently; re-logs any other error code via logger.warn",
+      "layer_2": "writable guard in ppm.stdout 'data' handler — only writes to tess.stdin if !tessExited && tess.stdin.writable && !tess.stdin.destroyed",
+      "layer_3": "tess 'close' handler sets tessExited=true and calls tess.stdin.destroy() to close any in-flight write path immediately",
+      "approach": "Minimal — no refactor of worker architecture. Targeted stream lifecycle hardening."
+    },
+    "files": [
+      {
+        "path": "apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts",
+        "action": "modified (prior-agent orphan → committed)",
+        "lines_affected": "95-148 (ocrOnePage function)"
+      }
+    ]
+  },
+
+  "test_results": {
+    "1953c_suite": "8 pass / 0 fail",
+    "type_check": "0 errors (bun tsc --noEmit)"
+  },
+
+  "commit_message": "fix(sprint-1953c+f): bctcBatchSweep backfill helper + EPIPE handler in pdfOcrWorker",
+
+  "next": {
+    "action": "ops",
+    "steps": [
+      "1. Rebuild container (docker compose build mcp-server) — includes Dockerfile OCR deps from 1953b",
+      "2. docker compose up -d mcp-server",
+      "3. Verify: docker run --rm mcp-server:latest which pdftoppm tesseract",
+      "4. Run backfill: docker exec <container> bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts",
+      "5. Retry OCR: trigger bctcReparseJob for GAS, EIB, DHG, FPT — verify no EPIPE crash, financial_reports rows appear",
+      "6. Monitor: docker logs --tail 100 <container> | grep ocr — should see page-by-page progress, no EPIPE"
+    ]
+  }
+}
