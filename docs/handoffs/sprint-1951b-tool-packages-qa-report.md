@@ -140,3 +140,47 @@ Part C: PASS
 ## Verdict: CHANGES_REQUESTED
 
 3 blocking issues. BLOCK-2 and BLOCK-3 require architect confirmation before fixer can act (phantom vs deprecated tool determination). BLOCK-1 is a trivial path fix.
+
+---
+
+## [QA Round 2] Review Record
+
+```
+date: 2026-05-19
+sprint: 1951b
+commits: 1b0c9d19 (BLOCK-1 pre-fix), 3bff3e32 (BLOCK-2 fix)
+files_changed: 1
+round: 2
+outcome: APPROVED
+```
+
+### Re-verification
+
+**BLOCK-1 — `.claude/skills/anti-hallucination/SKILL.md:70`**
+
+Grep result: `70: - NO \`docs/TASKS.md\`, NO \`docs/handoffs/\` files`
+
+Path present is `docs/TASKS.md` (correct). `docs/tasks/TASKS.md` is ABSENT. Fixer's claim is verified: BLOCK-1 was already correct at commit `1b0c9d19` before Round 1 ran. Round-1 finding was a phantom read (misread of the forbidden-target list vs the no-write list). No fix was needed or applied. STATUS: CLEAR.
+
+**BLOCK-2 — `.claude/tools/list/financial-reports.md:309`**
+
+Line 309 now reads: `get_financial_summary — Single-period snapshot — prefer get_bctc_full for full OCR-backed KPI coverage`
+
+The `(legacy)` annotation is replaced. dev-mcp-server confirms tool is live at `apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:227`. Annotation is now accurate. STATUS: FIXED — CLEAR.
+
+**BLOCK-3 — `docs/architecture/microservice/mcp-server/market-data_marketContext.md`**
+
+Fixer correctly took no action. dev-mcp-server confirms `get_macro_snapshot` is live at `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:451`. The "Replaces" language in the doc describes a compound convenience pattern, not tool retirement. No edit was needed. STATUS: NO-OP CONFIRMED — CLEAR.
+
+**NB-1 — system-map.json jq path**
+
+Fixer skipped (correct — non-blocking). jq expression in brief needs adjustment; field exists and is functional. No merge gate impact.
+
+### Pipeline
+
+- bun test / tsc: SKIP (Smart-Skip — Markdown + JSON only, zero TypeScript changed)
+- DDD scan: SKIP
+- Security scan: SKIP
+- New issues: none
+
+### Verdict: APPROVED

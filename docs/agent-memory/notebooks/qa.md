@@ -1,5 +1,35 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-19 | **Sprint:** 1951b | **Session:** c202 — Sprint 1951b Round 2 — APPROVED
+
+## Session 2026-05-19 c202 — Sprint 1951b Round 2 (APPROVED)
+
+### TASK REPORT — Sprint 1951b Round 2 (compact)
+
+```
+date: 2026-05-19
+outcome: APPROVED
+commits reviewed: 1b0c9d19 (BLOCK-1 pre-fix), 3bff3e32 (BLOCK-2 fix)
+files: 1
+type: FIX — misleading (legacy) annotation on get_financial_summary
+round: 2
+```
+
+#### Re-verification Summary
+
+| Block | Result |
+|-------|--------|
+| BLOCK-1: anti-hallucination/SKILL.md:70 path | PHANTOM — was already `docs/TASKS.md` (correct); Round-1 was a misread |
+| BLOCK-2: financial-reports.md:309 annotation | FIXED — "(legacy)" → accurate single-period snapshot description |
+| BLOCK-3: get_macro_snapshot no-op | CONFIRMED — tool live at macroTools.ts:451; no doc edit needed |
+| NB-1: system-map.json jq path | SKIPPED by fixer (correct — non-blocking) |
+
+- **actions**: APPROVED. [QA Round 2] appended to docs/handoffs/sprint-1951b-tool-packages-qa-report.md. Signal: docs/signals/qa-1951b-approved.json.
+- **next_cycle_hint**: Live-cycle. Trigger alert-commander cowork agent to verify notebook write works end-to-end.
+- **estimated_tokens**: 2800
+
+---
+
 **Last updated:** 2026-05-19 | **Sprint:** 1951b | **Session:** c201 — Sprint 1951b tool-packages — CHANGES_REQUESTED
 
 ## Session 2026-05-19 c201 — Sprint 1951b tool-packages (CHANGES_REQUESTED)
