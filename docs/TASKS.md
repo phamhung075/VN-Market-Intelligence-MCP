@@ -39,6 +39,7 @@
 | 1922g-pharma-events-source-verify | **OBSERVE** — `pharma_events` empty. `davPharmacyJob` cron `0 6 1 * *`. Next tick = 2026-06-01 06:00 UTC. AC: check status + row count after tick. | LOW | OBSERVE | ops | — | 2026-06-01 |
 | 1922i-alert-engine-records | **WONTFIX c160 (SPIKE-1933a resolved)** — alert_engine_records always 0: evaluateAlert() dead code deleted (1933b). Architecture: market.db.alerts → Alert Commander = canonical intelligence path. Go alert-engine (/evaluate) reserved for future stop-loss use case. | MEDIUM | WONTFIX | — | — | — |
 | post-1942-fa-verify | **MONITOR** — Verify FA next live cycle (~23:00 UTC tonight) reports ≥20/30 BCTC analyses (was 3/38 pre-1942). If still 3/38 → deploy-gap bug task to dev-mcp-server (Docker rebuild). Auto-close on observation. | MEDIUM | OBSERVE | ops | — | 2026-05-19 |
+| OBSERVE-1953g | **Sprint 1953 AC-3 — 48h financial_reports coverage check.** Gate: 2026-05-21T02:30Z (after 2nd daily bctcReparseJob tick post-deploy). Deploy verified 2026-05-19T19:14Z (EPIPE fix working, OCR no crashes, bctc_vps_queue_pending=103). EIB/DHG under-extracted (3/40 and 3/36 pages — likely image-heavy scanned PDFs). AC: `SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1'` ≥ 26. If pass → Sprint 1953 COMPLETE. If fail → open 1953e (SSC/VPS URL fix) AND 1953h (EIB/DHG low-extraction diagnostic). Note: bctcReparseJob runs daily 02:30Z UTC; first post-deploy run is 2026-05-20T02:30Z, second is 2026-05-21T02:30Z. | HIGH | OBSERVE | ops | — | 2026-05-21T02:30Z |
 
 ---
 

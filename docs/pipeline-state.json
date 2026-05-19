@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "dispatch",
-  "currentSprint": "c210",
-  "activeTaskId": "1953b-2-deploy",
-  "nextAgent": "ops",
-  "nextPrompt": "DEPLOY 1953b-2+1953c — OCR EPIPE fix (commit 6c442373, merged 13c8addd) + 1953c backfill script are committed and ready. Steps: (1) docker compose build mcp-server — includes Dockerfile OCR deps from 1953b + EPIPE fix from 1953b-2; (2) docker compose up -d mcp-server; (3) verify: docker run --rm mcp-server:latest which pdftoppm tesseract; (4) run backfill: docker exec <container> bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts (or apps/mcp-server/scripts/backfill-bctc-q1-2026.ts); (5) retry OCR: trigger bctcReparseJob for GAS, EIB, DHG, FPT — verify no EPIPE crash, financial_reports rows appear; (6) monitor: docker logs --tail 100 <container> | grep ocr — should see page-by-page progress, no EPIPE. Signal: docs/signals/processed/dev-mcp-server-1953cf-recovery.json. Branch: task/1953b-2-ocr-epipe-fix (merge to main after deploy verify).",
-  "updatedAt": "2026-05-19T15:45:00Z",
-  "updatedBy": "dev-team-c210",
-  "lastCompleted": "Cycle 210 (dev-team): Drained 6 signals. 1953b-2 DONE (6c442373/13c8addd) — EPIPE 3-layer guard in ocrOnePage(). 1953c DONE (backfill script added). 1951e-chef-synthesize DONE QA-APPROVED (c3106559). Two cowork-fire low-priority signals archived. TASKS.md updated: 1953b-2 moved to Done, 1951e-chef-synthesize Done row added, In Progress now empty. Dispatching ops for docker rebuild + OCR verify + backfill. OBSERVE-1951b ends 20:34Z (still active). Gates: 1948 phase 1 blocked until 2026-05-20T07:22Z."
+  "status": "idle",
+  "currentSprint": "c211",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-19T19:20:00Z",
+  "updatedBy": "dev-team-c211",
+  "lastCompleted": "Cycle 211 (dev-team): PREFLIGHT clean (no HEAD.lock). Drained 3 signals (agent-father impl-done, agents-architect brief_complete, ops-1953cf-deploy-verify). Pipeline-resume triggered (ops ran, status=dispatch→ops, 19:14Z signal). Ops deploy VERIFIED: EPIPE fix confirmed working, OCR no crashes, bctc_vps_queue_pending=103, financial_reports=0 rows (expected — bctcReparseJob scheduled 02:30Z UTC). EIB/DHG under-extracted (3 pages each). OBSERVE-1953g added to Todo (gate 2026-05-21T02:30Z). OBSERVE-1951b still active (ends 20:34Z, ~74min). Pipeline idle — next action time-gated (1948 gate 2026-05-20T07:22Z, 1951d cutover gate 2026-05-19T20:34Z)."
 }
