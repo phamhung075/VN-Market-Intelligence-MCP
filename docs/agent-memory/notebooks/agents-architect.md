@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-19T04:25:29Z
+
+**Brief:** `docs/architecture-briefs/2026-05-19-cowork-tool-packages.md`
+
+Cowork tool package audit (Sprint 1951b): 10/11 agents have valid `.claude/tools/package/<agent>.md` files with correct `server="vn-market"` gateway grammar; market-analyst package is severely incomplete (7 tools used in its flow are missing from its package); anti-discovery enforcement clause is absent from the anti-hallucination skill and the tran-ngoc-bau package. Agent-father to fix 4 files; qa to validate 100% tool coverage in Phase 3.
+
+**Signal dropped:** `docs/signals/agents-architect-1951b-tool-packages-brief.json` → agent-father
+
+---
+
 ## 2026-05-18T21:22:22Z
 
 **Brief:** `docs/architecture-briefs/2026-05-18-spike-1951f-fire-drift-fix.md`
