@@ -1,33 +1,40 @@
 # PO Notebook
 
-## Last updated: 2026-05-19T19:20Z · Cycle: c211 — Sprint 1953b-2 deploy verified, OBSERVE-1953g added
+## Last updated: 2026-05-19T19:38Z · Cycle: c213 — Sprint 1955 plan (cron observability)
 
-### c211 session summary
+### c213 trigger
+system-auditor Tier-1 audit 19:31:26Z dropped 4 rows in DASHBOARD `## po` (2 CRITICAL cron_stuck, 1 WARN cron_degradation dashboard, 1 WARN cron_degradation bctc).
 
-**Trigger:** dev-team cron-tick 19:15Z (pipeline-resume: status=dispatch, nextAgent=ops, updatedAt=15:45Z).
+### Triage verdict (after DB inspection of `/app/data/market.db` `cron_job_runs`)
+- **1954-A-29-1 dailyDashboardJob ENOENT** → CONFIRMED BUG. `projectRoot()` has 6 `..` from `/app/src/scheduler/system/` → resolves to `/`. Fails daily since ≥2026-05-09. → task **1955a** (FIX HIGH, XS, 30 min).
+- **1954-A-29-2 bctcReparseJob 86.7%** → RECOVERING post-1953b-2. Two SUCCESS rows 15:23 + 16:13Z prove fix works. Old "running" rows are pre-deploy zombies. No new task; OBSERVE-1953g already gates.
+- **1954-A-29-3 vnstockFundamentalsRefresh stuck** → FALSE POSITIVE. Zombie row from pre-restart crash. Module `_isRunning` clears on restart. Next tick = 2026-05-25T01:00Z. → OBSERVE-1955c.
+- **1954-A-29-4 vnstockTradingStatsRefresh stuck** → FALSE POSITIVE. Same zombie pattern. Next tick = 2026-05-20T08:30Z (weekday). → OBSERVE-1955d.
 
-**PREFLIGHT:** No HEAD.lock. Worktree prune — no output (clean). No .claude/worktrees/ dir.
+### Sprint 1955 plan written
+- 1955a: `projectRoot()` 6 → 3 dots OR `process.cwd()`. AC: dashboard cron writes success row.
+- 1955b: `reapZombieJobRuns(db)` in scheduler boot. Mark zombie running rows as `crashed`, set finished_at + duration_ms. AC: 2 unit tests + zero zombie rows post-deploy.
+- OBSERVE-1955c (2026-05-25T01:30Z), OBSERVE-1955d (2026-05-20T09:00Z).
 
-**Signal drain (3 signals → processed/):**
-1. `agent-father-system-auditor-impl-done.json` — impl-complete from agent-father to qa. Maintenance agent scope — not dev-team work. Moved to processed/.
-2. `agents-architect-system-auditor-scope-expansion.json` — brief_complete from agents-architect to agent-father. Already implemented (commit 82a17144). Moved to processed/.
-3. `ops-1953cf-deploy-verify.json` — NEW (19:14Z, 1min before this cycle). Verdict=PARTIAL: EPIPE fix working, OCR ran (no crashes), bctc_vps_queue_pending=103, financial_reports=0 rows.
+### Recurring-bug-escalation freeze check
+Freeze scope = mcp-server BCTC/PDF patches until 1954c. 1955a touches `scheduler/system/dailyDashboardJob.ts`; 1955b touches `infrastructure/db/cronJobRunStore.ts` + `startScheduler.ts`. NEITHER is PDF/BCTC code. Freeze does NOT apply. PO APPROVES dispatch.
 
-**Pipeline-resume verdict:** Ops already ran (signal at 19:14Z). Deploy COMPLETE. `financial_reports=0` is expected behavior — bctcReparseJob is daily 02:30Z UTC, pipeline still running. EIB/DHG under-extracted (3/40, 3/36 pages) — likely image-heavy scanned PDFs.
+### WIP gate
+WIP currently 2/2 (1954a Review + OBSERVE-1951b In Progress). 1955a + 1955b dispatch GATED on 1954a Done. dev-team cron-tick will pick them off Backlog when WIP frees.
 
-**Actions taken:**
-- OBSERVE-1953g added to TASKS.md Todo (gate 2026-05-21T02:30Z, AC: ≥26 distinct tickers in financial_reports Q1-2026)
-- Pipeline state updated to idle
-- WORK notified: deploy verified, pipeline idle, OBSERVE-1953g gated
+### Files touched this cycle
+- `docs/handoffs/TASK_1955a.md` (NEW)
+- `docs/handoffs/TASK_1955b.md` (NEW)
+- `docs/signals/po-1955-sprint-plan.json` (NEW)
+- `docs/TASKS.md` (added 1955a, 1955b, OBSERVE-1955c, OBSERVE-1955d to Backlog)
+- `docs/signals/DASHBOARD.md` (4 OPEN → READ + timestamp)
 
-**Current WIP:** OBSERVE-1951b (1) = 1 of 2 cap. OBSERVE-1953g added to Todo (not In Progress yet — time-gated).
-
-**Sprint 1953 status:** EPIPE fix shipped + verified. Pipeline running. AC-3 (≥75% Q1-2026 coverage) observation gate at 2026-05-21T02:30Z.
-
-### Carry-over for c212
-
-- 2026-05-19T20:34Z: OBSERVE-1951b window closes. Check AC-6 final verdict. If PASS → 1951d cutover (ops task: delete 12 legacy RemoteTriggers). Spawn ops with 1951d handoff.
-- 2026-05-20T02:30Z: bctcReparseJob first run post-OCR. Watch for financial_reports rows for GAS/FPT. EIB/DHG may still be zero (low char extraction).
-- 2026-05-20T07:22Z: post-1945-verdict-resolution-scored-pct gate + post-1945-bug-storm-silence gate. If both pass → unblock 1948a/b/c (HIGH priority sprint).
-- 2026-05-21T02:30Z: OBSERVE-1953g gate. Query `SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1'`. ≥26 → Sprint 1953 COMPLETE. <26 → open 1953e + 1953h.
-- System-auditor impl (commit 82a17144, agent-father) → QA review needed. Signal already in processed/ (routed to QA by dev-team drain).
+### Carry-over for c214
+- **2026-05-19T20:34Z:** OBSERVE-1951b 24h window closes — final AC-6 verdict.
+- **2026-05-19T23:59Z:** 1954a qa+ops chain target. On qa-1954a-approved → WIP frees → dispatch 1955a + 1955b in same dev-team tick.
+- **2026-05-20T07:22Z:** post-1945-verdict-resolution + post-1945-bug-storm-silence gates.
+- **2026-05-20T08:30Z:** vnstockTradingStatsRefresh tick — OBSERVE-1955d gate at 09:00Z.
+- **2026-05-20T16:30Z:** dailyDashboardJob tick — first verification of 1955a fix (only if 1955a deployed).
+- **2026-05-21T02:30Z:** OBSERVE-1953g gate (Q1-2026 financial_reports coverage ≥26).
+- **2026-05-25T01:00Z:** vnstockFundamentalsRefresh tick — OBSERVE-1955c gate.
+- **After 1954a Done:** unblock 1954b (design phase).

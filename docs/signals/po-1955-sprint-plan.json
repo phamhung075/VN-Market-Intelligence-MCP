@@ -1,0 +1,96 @@
+{
+  "schema": "po.sprint_plan.v1",
+  "sprint": 1955,
+  "from": "po",
+  "to": "dev-team",
+  "generated_at": "2026-05-19T19:38:00Z",
+  "trigger": "system-auditor Tier-1 audit 2026-05-19T19:31:26Z — 4 anomalies (2 CRITICAL cron stuck, 2 WARN degradations)",
+  "theme": "Cron observability hygiene + dailyDashboardJob path fix",
+  "anchor_briefs": [
+    "docs/signals/DASHBOARD.md (po inbox: 1954-A-29-1..4)"
+  ],
+  "triage_summary": {
+    "1954-A-29-1": {
+      "raw": "dailyDashboardJob ENOENT /docs/data/project-stats.json (0/3 success)",
+      "verdict": "CONFIRMED BUG — projectRoot() has 6 '..' segments, resolves to / not /app. Daily failure since ≥2026-05-09.",
+      "action": "task 1955a (FIX, HIGH)"
+    },
+    "1954-A-29-2": {
+      "raw": "bctcReparseJob 86.7% success (13/90 fails)",
+      "verdict": "RECOVERING post-1953b-2 deploy. 2 recent successes (2026-05-19T15:23 + 16:13Z). Failures are pre-EPIPE-fix zombie rows.",
+      "action": "no new task — OBSERVE-1953g already gates this. Zombie rows reaped by 1955b."
+    },
+    "1954-A-29-3": {
+      "raw": "vnstockFundamentalsRefresh stuck running 40h+ (CRITICAL)",
+      "verdict": "FALSE POSITIVE — zombie row from pre-restart crash. Next scheduled tick = 2026-05-25T01:00Z (Mon weekly). Module _isRunning flag cleared by restart.",
+      "action": "1955b reaps zombie row. OBSERVE-1955c verifies 2026-05-25 fire."
+    },
+    "1954-A-29-4": {
+      "raw": "vnstockTradingStatsRefresh stuck running 40h+ (CRITICAL)",
+      "verdict": "FALSE POSITIVE — same zombie pattern. Next tick = 2026-05-20T08:30Z (weekday).",
+      "action": "1955b reaps zombie row. OBSERVE-1955d verifies 2026-05-20 fire."
+    }
+  },
+  "tasks": [
+    {
+      "id": "1955a",
+      "title": "dailyDashboardJob projectRoot() path fix",
+      "priority": "HIGH",
+      "type": "FIX",
+      "size": "XS",
+      "owner": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "handoff": "docs/handoffs/TASK_1955a.md",
+      "estimate_min": 30,
+      "depends_on": null
+    },
+    {
+      "id": "1955b",
+      "title": "cron_job_runs zombie-row reap on scheduler startup",
+      "priority": "MEDIUM",
+      "type": "FIX",
+      "size": "S",
+      "owner": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "handoff": "docs/handoffs/TASK_1955b.md",
+      "estimate_min": 90,
+      "depends_on": null
+    },
+    {
+      "id": "OBSERVE-1955c",
+      "title": "vnstockFundamentalsRefresh next scheduled fire (2026-05-25T01:00Z)",
+      "priority": "MEDIUM",
+      "type": "OBSERVE",
+      "owner": "ops",
+      "gate": "2026-05-25T01:30Z",
+      "ac": "cron_job_runs new row 2026-05-25 01:00 status=success OR error (NOT running with NULL finished_at)"
+    },
+    {
+      "id": "OBSERVE-1955d",
+      "title": "vnstockTradingStatsRefresh next scheduled fire (2026-05-20T08:30Z)",
+      "priority": "MEDIUM",
+      "type": "OBSERVE",
+      "owner": "ops",
+      "gate": "2026-05-20T09:00Z",
+      "ac": "cron_job_runs new row 2026-05-20 08:30 status=success OR error (NOT running with NULL finished_at)"
+    }
+  ],
+  "recurring_bug_escalation_check": {
+    "freeze_active": true,
+    "freeze_scope": "apps/mcp-server PDF / BCTC patches until 1954c lands",
+    "this_sprint_overlap": "NONE — 1955a touches dailyDashboardJob (scheduler/system/), 1955b touches cronJobRunStore.ts (infrastructure/db/). Neither is BCTC/PDF code. Freeze does not apply.",
+    "approved_by": "po c213"
+  },
+  "wip_after_dispatch": {
+    "current": "1954a (Review) + OBSERVE-1951b (In Progress)",
+    "limit": 2,
+    "1955a_dispatch": "blocked until 1954a Done (WIP=2). Dispatch 1955a after qa-1954a-approved signal lands.",
+    "1955b_dispatch": "blocked until 1954a Done (WIP cap). Same gate as 1955a."
+  },
+  "next_actions": [
+    "PO updates TASKS.md (4 new rows: 1955a, 1955b, OBSERVE-1955c, OBSERVE-1955d).",
+    "PO marks DASHBOARD rows 1954-A-29-1..4 as READ (signal processed).",
+    "PO updates notebook c213 with sprint 1955 plan.",
+    "PO commits and exits. Next dev-team cron-tick picks up 1955a from Backlog when WIP allows."
+  ]
+}
