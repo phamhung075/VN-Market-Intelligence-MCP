@@ -168,3 +168,45 @@ Use .claude/tools/list/INDEX.md to find tool names at design time only.
 | EDIT | `.claude/tools/package/tran-ngoc-bau.md` | Add anti-discovery clause (2 lines) |
 | EDIT | `docs/data/system-map.json` | Add `"mcp_server_name": "vn-market"` to mcp-server microservice entry |
 | VERIFY | All 11 packages: `**Tools:**` header present in flow | qa validates in Phase 3 |
+
+---
+
+## 12. Notebook Write Capability — Missing Write/Edit in 8 of 9 Cowork Agent Frontmatter
+
+### 12a. Requirement Confirmed
+
+`notebook-write` skill (`.claude/skills/notebook-write/SKILL.md`) explicitly mandates **`Write` tool — full overwrite** every cycle (not append). `cowork-end-cycle` calls this skill as Step 2 for all cowork agents. Verified in `market-watcher/cycle.md` Step 5 (notebook write) and the `End of cycle → cowork-end-cycle` terminal step. The agent itself executes the `Write` call — there is no router or dispatcher intermediary. Each agent writes its own notebook directly.
+
+Sub-finding: `market-watcher/cycle.md` Step 5 says "APPEND ONLY — each cycle adds a new Cycle block" — this contradicts the canonical `notebook-write` skill (overwrite). This flow-level drift must be corrected as part of the frontmatter fix.
+
+### 12b. Decision — Add Write + Edit to 8 agents
+
+All 8 agents listed below must receive `Write` and `Edit` in their frontmatter `tools:` field. Scope must be documented in the agent description field as the minimal write surface.
+
+**Forbidden write targets (explicitly document in each agent's description or a shared scope-guard note):**
+- `docs/tasks/TASKS.md`, any `docs/handoffs/` file
+- Any `.claude/agents/*.md` or `.claude/flows/*.md`
+- Any `docs/data/system-map.json`, `docs/data/schedule.json`
+- Any file outside `docs/agent-memory/notebooks/<own-id>.md` and `docs/signals/<signal-file>.json`
+
+Telegram signal files (`docs/signals/`) are already covered by the signal-bus tool (`post_agent_signal` MCP call) — agents do NOT write those directly. So the only permitted `Write`/`Edit` target per agent is its own notebook.
+
+### 12c. Agent-Father Action List
+
+| Agent | File to edit | Frontmatter delta |
+|---|---|---|
+| alert-commander | `.claude/agents/alert-commander.md` | Add `Write`, `Edit` to `tools:` list; add scope note to `description:` |
+| news-scout | `.claude/agents/news-scout.md` | Same |
+| market-watcher | `.claude/agents/market-watcher.md` | Same — also fix cycle.md Step 5: change APPEND → Write (overwrite per notebook-write skill) |
+| financial-analyst | `.claude/agents/financial-analyst.md` | Same |
+| digest-predict | `.claude/agents/digest-predict.md` | Same |
+| unified-agent | `.claude/agents/unified-agent.md` | Same |
+| report-analyzer | `.claude/agents/report-analyzer.md` | Same |
+| qa-responder | `.claude/agents/qa-responder.md` | Same |
+
+Scope note template (add to each agent's `description:` field, one line):
+```
+Writes only to docs/agent-memory/notebooks/<id>.md (cycle log, full overwrite). No other filesystem writes permitted.
+```
+
+`tran-ngoc-bau` already has `Write`/`Edit` — no change needed.
