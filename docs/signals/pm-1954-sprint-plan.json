@@ -1,0 +1,120 @@
+{
+  "from": "pm",
+  "to": "po",
+  "type": "sprint-plan-ready",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-05-19-bctc-write-chain-rca.md",
+    "sprintNumber": 1954,
+    "status": "BACKLOG pending — 1954a ready as HOTFIX today; 1954b→1954f sequenced per brief §5",
+    "theme": "BCTC write-chain RCA — architectural-rot consolidation",
+    "tasks": [
+      {
+        "task_id": "1954a",
+        "title": "CRITICAL HOTFIX — backfillBctcQ12026 column-name fix",
+        "priority": "CRITICAL",
+        "type": "HOTFIX",
+        "owner": "dev-mcp-server",
+        "depends_on": null,
+        "estimate": "2h",
+        "ship_today": true,
+        "unblock": "Queue seeding for all 30 watchlist tickers in next 15min enricher cycle",
+        "fileReference": "apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts:53-54",
+        "acBullets": [
+          "backfillBctcQ12026.ts compiles, tsc 0 errors",
+          "Unit test validates INSERT against actual schema (action_code/period_year/period_quarter)",
+          "Manual backfill run produces ≥1 queue row with correct column names"
+        ]
+      },
+      {
+        "task_id": "1954b",
+        "title": "OCR-completion ACK token + writer contract definition",
+        "priority": "HIGH",
+        "type": "TASK",
+        "owner": "dev-mcp-server",
+        "depends_on": null,
+        "estimate": "3h",
+        "designPhase": true,
+        "acBullets": [
+          "Decision doc appended to brief (ocr_completion_ack table vs batch_id + transactional barrier)",
+          "Writer contract defined: Stage 2 inserts completion-ack ONLY after ALL page rows committed",
+          "Stage 3 cache-read contract: check ack before returning null",
+          "Next tasks (1954c, 1954d) reference this contract in code reviews"
+        ]
+      },
+      {
+        "task_id": "1954c",
+        "title": "Consolidate 4 queue-entry paths to single owner",
+        "priority": "HIGH",
+        "type": "TASK",
+        "owner": "dev-mcp-server",
+        "depends_on": "1954b",
+        "estimate": "4h",
+        "acBullets": [
+          "All 4 entry paths (backfill, push-endpoint, enricher, reparse-disk-scan) write to bctc_vps_queue with identical row shape",
+          "Integration test: push endpoint + enricher + backfill all load queue, pull job processes all",
+          "Zero duplicate queue writes per filename per 24h window"
+        ]
+      },
+      {
+        "task_id": "1954d",
+        "title": "Per-page OCR timeout + DPI escalation for scanned PDFs",
+        "priority": "HIGH",
+        "type": "TASK",
+        "owner": "dev-mcp-server",
+        "depends_on": "1954c",
+        "estimate": "4h",
+        "acBullets": [
+          "Inter-page yield reduced to 200ms (was 2s)",
+          "Adaptive timeout: if page ≤5 chars, re-run with DPI 600 (doubled)",
+          "EIB/DHG re-extraction yields ≥15/40 and ≥15/36 pages respectively (≥40% vs 8% baseline)",
+          "GAS/FPT extraction time reduced by ≥30%",
+          "Confidence distribution: ≥50% of pages high-confidence"
+        ]
+      },
+      {
+        "task_id": "1954e",
+        "title": "Backfill + reparse stranded PDFs with new writer chain",
+        "priority": "HIGH",
+        "type": "TASK",
+        "owner": "dev-mcp-server",
+        "depends_on": "1954d",
+        "estimate": "1h",
+        "manualExecution": true,
+        "acBullets": [
+          "Script at apps/mcp-server/scripts/backfill-bctc-q1-2026-finalize.ts executes idempotently",
+          "bctc_vps_queue rows processed via consolidated 1954c path",
+          "SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1' ≥ 26 distinct tickers"
+        ]
+      },
+      {
+        "task_id": "1954f",
+        "title": "QA VERIFY — Q1-2026 financial_reports coverage",
+        "priority": "MEDIUM",
+        "type": "OBSERVE",
+        "owner": "qa",
+        "depends_on": "1954e + 48h observation",
+        "estimate": "OBSERVE (automated)",
+        "acBullets": [
+          "SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1' ≥ 26 of 34 tickers",
+          "Zero extraction errors in bctcReparseJob cron logs",
+          "Per-ticker validation_status: ≥60% 'validated', ≤15% 'low_confidence'"
+        ]
+      }
+    ],
+    "totalEstimate": "≤3 days (1 day HOTFIX + 2 days structural)",
+    "sequencingNotes": "1954a ships today independently. 1954b→1954f sequence strictly: ACK token → single owner → DPI escalation → backfill → QA verify. No parallel tasks.",
+    "recurringBugEscalation": {
+      "flag": true,
+      "reason": "3rd fix commit to mcp-server/BCTC in 24h (1953b rebuild, 1953c+f EPIPE guard, 1954a column names)",
+      "action": "Freeze further patches until 1954c (consolidation) lands per feedback_recurring_bug_escalation.md",
+      "policyReference": "docs/feedback/feedback_recurring_bug_escalation.md"
+    },
+    "briefEvidence": {
+      "section": "§5 Sprint Plan",
+      "fileRef": "docs/architecture-briefs/2026-05-19-bctc-write-chain-rca.md"
+    },
+    "nextStep": "PO: sign-off + schedule 1954a for immediate pickup (target ship today 2026-05-19); coordinate 1954b→1954f with dev-mcp-server team lead"
+  },
+  "createdAt": "2026-05-19T00:00:00Z",
+  "createdBy": "pm"
+}

@@ -1,24 +1,26 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "_lastRefreshedBy": "PO Sprint 1947 CLOSED — 2026-05-18T09:09Z. SPIKE-1947 DONE (architect committed `b55ea5c8`) — closed-loop auto-improvement system design complete. All 5 ACs met. Host = scheduler job in `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts` (Option C, direct SQLite). Phased rollout: shadow → manual-gate → auto-dispatch. Sprint 1948 PM-decomposed (1948a S, 1948b S, 1948c M, OBSERVE-1948d) and QUEUED in Backlog — all gate-blocked until post-1945-verdict-resolution-scored-pct clears 2026-05-20T07:22Z. WIP=0 (no actionable tasks until gate). Six OBSERVE gates continue passively. previousSprint = 1947 (DONE).",
+  "_lastRefreshedBy": "PM Sprint 1954 created 2026-05-19. CRITICAL HOTFIX 1954a unblocks queue seeding for all 30 watchlist tickers (backfillBctcQ12026 column-name fix, ship today). Structural tasks 1954b→1954f sequence per architect brief §5: consolidate 4 write paths → define ACK token → DPI escalation → backfill stranded PDFs → QA verify. Recurring-bug-escalation flag: 3rd BCTC fix in 24h (1953b, 1953c+f, 1954a). WIP=0 (awaiting PO sign-off). previousSprint = 1948 (QUEUED, gate-blocked until 2026-05-20T07:22Z).",
   "lastUpdated": "2026-05-18",
   "currentSprint": {
-    "number": 1948,
-    "status": "QUEUED (all 4 tasks BLOCKED until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z)",
-    "opened": "2026-05-18T09:09Z (queued, pending gate)",
-    "theme": "Closed-loop auto-improvement Phase 1 — shadow-mode detect + WORK Telegram + improve_check_log writes (no auto-dispatch)",
-    "anchorTask": "1948c (selfImproveOrchestratorJob.ts), depends on 1948a (improve_check_log schema/store) + 1948b (degradationRules.ts domain)",
-    "preConditionGate": "post-1945-verdict-resolution-scored-pct at 2026-05-20T07:22Z — scored_pct ≥60% AND unknowns_30d drop ≥100",
+    "number": 1954,
+    "status": "BACKLOG pending (1954a ready to ship as HOTFIX today; 1954b→1954f sequence gates on 1954a completion)",
+    "opened": "2026-05-19T00:00Z",
+    "theme": "BCTC write-chain RCA — architectural-rot consolidation (4→1 queue paths) + OCR cache-miss retry + DPI escalation for scanned PDFs",
+    "anchorTask": "1954a (HOTFIX backfillBctcQ12026 column names, ship today, unblocks all tickers); structural tasks 1954b→1954f sequence per brief §5",
+    "preConditionGate": "None for 1954a (safe today). 1954b→1954d gates on prior task completion. 1954f observes 48h post-1954e.",
     "wip": 0,
-    "userRequest": "compare system to real result with historic analysis for auto improve recheck and improve continue loop workflow"
+    "userRequest": "architect brief §5 sprint plan per recurring-bug-escalation: 3rd BCTC fix in 24h requires structural rethink before new patches",
+    "recurringBugEscalationFlag": true,
+    "escalationReason": "3rd fix commit to mcp-server/BCTC in 24h (1953b rebuild, 1953c+f EPIPE guard, 1954a column names) — freeze further patches until 1954c (consolidation) lands per feedback_recurring_bug_escalation.md"
   },
   "previousSprint": {
-    "number": 1947,
-    "status": "DONE (SPIKE-1947 architect-committed `b55ea5c8` 2026-05-18, all 5 ACs met)",
-    "summary": "Sprint 1947: Closed-loop auto-improvement system DESIGN. Single anchor SPIKE-1947 (architect, 3h time-box) delivered spike doc + ARCH brief recommending Phase 1 scheduler-job architecture (Option C) inside apps/mcp-server. Phased rollout: Phase 1 shadow (Sprint 1948) → Phase 2 manual-gate signal-bus → Phase 3 auto-dispatch with kill-switch. Detection rule: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples per signal_type. Hypothesis: rule-table degradationRules.ts in domain layer. Safety: WIP≤2, cooldown 7d per signal_type, kill-switch env var, freeze-on-worsening, recurring-bug-escalation. 3 of 6 OBSERVE gates can retire once Phase 1 stable."
+    "number": 1948,
+    "status": "QUEUED (all 4 tasks BLOCKED until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z)",
+    "summary": "Sprint 1948: Closed-loop auto-improvement Phase 1 — shadow-mode. PM-decomposed into 4 tasks (1948a improve_check_log schema, 1948b degradationRules.ts domain, 1948c selfImproveOrchestratorJob.ts scheduler entry, OBSERVE-1948d 7d shadow gate). All gate-blocked until post-1945-verdict-resolution-scored-pct clears; frozen to prevent false-positive triggers on dirty alert_accuracy substrate."
   },
-  "sprintGoal": "Sprint 1948 QUEUED 2026-05-18T09:09Z (all tasks BLOCKED until gate). Anchor: 1948c selfImproveOrchestratorJob.ts shadow-mode (depends on 1948a improve_check_log schema + 1948b degradationRules.ts domain). Phase 1 ships SPIKE-1947 brief's shadow-mode recommendation: detect 7d vs 30d accuracy_rate delta + coverage-gap + hypothesis lookup + improve_check_log snapshot writes + WORK Telegram. NO auto-dispatch (Phase 2). NO signal-bus write (Phase 2). Pre-condition: post-1945-verdict-resolution-scored-pct gate must clear 2026-05-20T07:22Z — without clean alert_accuracy substrate, Phase 1 would poison its own input.",
+  "sprintGoal": "Sprint 1954 BACKLOG 2026-05-19. Architect directive per brief §4: (b) architectural-rot consolidation. (1) HOTFIX 1954a: backfillBctcQ12026 column-name fix (ship today, unblocks queue seeding for all 30 tickers). (2) Structural sequence 1954b→1954f: define OCR ACK token + consolidate 4 queue paths to single pull-job owner + DPI escalation for scanned PDFs + backfill stranded PDFs + QA verify. Estimate: 1 day hotfix + 2 days structural = ≤3 days total. Recurring-bug-escalation: freeze further BCTC patches until 1954c (consolidation) lands.",
   "testBaseline": 9277,
   "testBaselineTarget": 9277,
   "testBaselinePass": 9277,
