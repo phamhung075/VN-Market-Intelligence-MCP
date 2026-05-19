@@ -1,0 +1,72 @@
+{
+  "signal_id": "ops-1956b-recovery-retry",
+  "timestamp": "2026-05-19T22:45:00Z",
+  "agent": "ops",
+  "sprint": 1956,
+  "type": "recovery_retry_result",
+  "severity": "CRITICAL_PARTIAL_RECOVERY",
+
+  "recovery_summary": {
+    "attempt": "docker compose up -d --build (post dev-frontend fix)",
+    "frontend_fix_verified": true,
+    "frontend_build_success": true,
+    "services_running": "1/11",
+    "services_targetted": 11,
+    "blocking_issue": "rag-service pip hash mismatch"
+  },
+
+  "service_status": {
+    "running": [
+      {
+        "name": "mcp-server",
+        "state": "running",
+        "status": "Up 9 minutes (healthy)"
+      }
+    ],
+    "failed_to_start": [
+      {
+        "name": "rag-service",
+        "reason": "Dockerfile build failure during pip install",
+        "error": "nvidia-cudnn-cu13==9.20.0.48 — hash mismatch between expected and downloaded",
+        "expected_sha256": "0c45dd8eeb50b603f07995b1b300c62ffe6a1980482b82b3bcf94a4ca9d49304",
+        "got_sha256": "cd28ec7df1882087b9deb60e7df1284a4cebce893ebab7ba9f9d4bb2a11100ae",
+        "root_cause": "Transitive CUDA dependency (torch >= 1.11.0 → nvidia-cudnn-cu13) PyPI hash mismatch",
+        "escalation_required": true
+      }
+    ],
+    "not_started": [
+      "pdf-extractor",
+      "technical-analysis",
+      "macro-indicators",
+      "stock-price",
+      "api-gateway",
+      "kinh-dich-service",
+      "alert-engine",
+      "news-fetch",
+      "flaresolverr"
+    ]
+  },
+
+  "diagnosis": {
+    "frontend_code_fix": "VERIFIED — dev-frontend commits d4fa8648 + 5482e329 resolved Remix route violation",
+    "frontend_build_result": "SUCCESS — dashboard.server.tsx renamed to dashboard.services.tsx, nav links patched, tsc clean",
+    "docker_compose_failure": "NEW BLOCKER — rag-service Dockerfile pip install failed on NVIDIA CUDA transitive dependency hash",
+    "issue_type": "DEPENDENCY_LOCK (not code split)",
+    "issue_location": "apps/rag-service/requirements.txt → transitive torch → nvidia-cudnn-cu13",
+    "ops_recovery_scope": "OUTSIDE (requires dev to update dependency pins or relax hash checks)",
+    "unrecoverable_via_ops": true
+  },
+
+  "action_chain": {
+    "1_frontend_fix": "COMPLETE ✓",
+    "2_retry_docker_up": "PARTIAL ✓ (frontend ok, rag-service blocked)",
+    "3_next_action": "ESCALATE to dev-mcp-server for nvidia-cudnn-cu13 hash resolution"
+  },
+
+  "escalation": {
+    "target": "dev-mcp-server",
+    "reason": "CUDA pip hash mismatch during rag-service build — outside ops scope",
+    "signal_type": "dependency_resolution_required",
+    "blocking": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "qa-approved",
+  "sprint": "1951c",
+  "payload": {
+    "verdict": "APPROVED",
+    "commit": "1480a8df",
+    "report": "docs/handoffs/sprint-1951c-team-boundary-qa-report.md",
+    "checks_passed": ["dev-team-boundary", "cowork-team-boundary", "drain-signal-steps", "ops-classification"],
+    "tsc": "0 errors",
+    "test_failures": "pre-existing — no new failures from 1480a8df"
+  },
+  "priority": "normal",
+  "createdAt": "2026-05-19T07:00:00Z"
+}

@@ -1,0 +1,38 @@
+{
+  "id": "ops-1954a-backfill-done",
+  "timestamp": "2026-05-19T22:13:30Z",
+  "agent": "ops",
+  "task_id": "1954a",
+  "status": "success",
+  "action": "manual_container_backfill",
+  "details": {
+    "backfill_script": "apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts",
+    "execution": {
+      "command": "docker compose exec -T mcp-server bun run /app/src/scheduler/financial-reports/backfillBctcQ12026.ts",
+      "exit_code": 0,
+      "output": "Inserted 19 / 33 rows (14 already present — INSERT OR IGNORE skipped them)"
+    },
+    "verification": {
+      "query": "SELECT COUNT(*), status FROM bctc_vps_queue WHERE period_year=2026 AND period_quarter='Q1' GROUP BY status",
+      "result": [
+        {
+          "cnt": 5,
+          "status": "done"
+        },
+        {
+          "cnt": 53,
+          "status": "pending"
+        }
+      ],
+      "verification_passed": true
+    }
+  },
+  "acceptance_criteria": {
+    "ac_3_manual_backfill": {
+      "rows_inserted": 19,
+      "total_q1_2026_pending": 53,
+      "schema_match_verified": true,
+      "result": "PASS"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "signal_id": "dev-rag-service-1956c-cuda-fix",
+  "timestamp": "2026-05-19T23:30:00Z",
+  "agent": "dev-rag-service",
+  "sprint": 1956,
+  "task": "1956c",
+  "type": "build_fix_complete",
+  "severity": "RESOLVED",
+
+  "fix": {
+    "option_chosen": 3,
+    "description": "CPU-only torch via PyTorch CPU wheel index — eliminates all CUDA transitive deps",
+    "files_changed": [
+      "apps/rag-service/requirements.txt",
+      "apps/rag-service/Dockerfile"
+    ],
+    "requirements_txt_change": "Added --extra-index-url https://download.pytorch.org/whl/cpu and torch==2.5.1+cpu before sentence-transformers",
+    "dockerfile_change": "Added --trusted-host download.pytorch.org to pip3 install command",
+    "rationale": "Single-user macOS Docker — no NVIDIA GPU. CUDA wheels (nvidia-cudnn-cu13) serve no purpose and caused hash mismatch. CPU torch resolves sentence-transformers dependency without any CUDA wheel."
+  },
+
+  "build_result": {
+    "status": "SUCCESS",
+    "torch_installed": "torch-2.5.1+cpu",
+    "nvidia_cudnn_cu13_present": false,
+    "pip_install_duration_s": 145,
+    "total_build_duration_s": 970,
+    "image_tag": "vn-market-intelligence-mcp-rag-service:latest",
+    "image_manifest": "sha256:008de34756ab5a591d1eca462a9cdb3a1039611367acf741976fa6741b01588e"
+  },
+
+  "commit": "af0d798b",
+  "branch": "main",
+  "refs_signal": "ops-1956b-recovery-retry.json",
+
+  "next_action": {
+    "target": "ops",
+    "action": "docker compose up -d --build for full 11/11 stack verification",
+    "rag_service_build": "READY — image pre-built and cached"
+  }
+}

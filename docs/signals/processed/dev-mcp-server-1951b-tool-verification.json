@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-05-19T00:00:00Z",
+  "task": "1951b",
+  "agent": "dev-mcp-server",
+  "purpose": "Ground-truth tool-name verification for QA BLOCK-2 and BLOCK-3 on Sprint 1951",
+  "block_2_get_financial_summary": {
+    "exists": true,
+    "source_path": "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:227",
+    "registration_pattern": "server.tool(\"get_financial_summary\", ...)",
+    "recommended_action": "keep",
+    "reasoning": "Live server.tool() registration confirmed at reports.ts line 227. Tool returns formatted key metrics (revenue, profit, EPS, ROE, ROA, margins, D/E). The '(legacy)' annotation in .claude/tools/list/financial-reports.md:309 is a doc-layer hint to prefer get_bctc_full for full KPI coverage, NOT a retirement signal. The tool is still explicitly listed and tested in 230-remove-dead-tools.test.ts:123-124 with assertion 'get_financial_summary in registry'. No replacement is warranted — the tool serves a narrower single-period snapshot use case distinct from get_bctc_full (which covers multi-period OCR extraction). If the '(legacy)' label is causing confusion, the fixer should clarify the label to 'single-period snapshot — prefer get_bctc_full for full OCR coverage' rather than removing it."
+  },
+  "block_3_get_macro_snapshot": {
+    "exists": true,
+    "source_path": "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:451",
+    "registration_pattern": "server.tool(\"get_macro_snapshot\", ...)",
+    "recommended_action": "keep",
+    "reasoning": "Live server.tool() registration confirmed at macroTools.ts line 451. Tool fetches live commodity prices (Brent, gold, USD/VND) from Yahoo Finance and SBV rates — it is a live-fetch tool, NOT a DB-read stub. The knowledge doc statement at market-data_marketContext.md:80 ('Replaces: get_watchlist + get_market_snapshot + get_macro_snapshot + ...') describes get_market_context as a compound convenience tool that AGGREGATES the 5 underlying calls in one round-trip. 'Replaces' means agents should call get_market_context instead of making 5 separate calls at session start — it does NOT mean get_macro_snapshot is retired. The underlying tool remains live, tested, and referenced in package docs (market-analyst.md:70, news-scout.md:45, qa-responder.md:56, financial-analyst.md:99). No replacement needed. Knowledge doc is not outdated — 'replaces' is correctly scoped to 'compound convenience pattern' context, not tool lifecycle."
+  }
+}

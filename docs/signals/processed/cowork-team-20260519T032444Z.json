@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260519T032444Z",
+    "nominal_tick_min": 15,
+    "drift_min": 9,
+    "matched_slots": ["chef-intraday", "news-scout-market", "market-watcher-market", "alert-commander-market"],
+    "spawned": [
+      ".claude/flows/unified-agent/chef.md",
+      ".claude/flows/news-scout/main.md",
+      ".claude/flows/market-watcher/main.md",
+      ".claude/flows/alert-commander/main.md"
+    ],
+    "silent": false,
+    "errors": []
+  },
+  "priority": "normal",
+  "createdAt": "20260519T032444Z"
+}

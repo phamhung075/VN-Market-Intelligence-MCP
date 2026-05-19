@@ -1,0 +1,151 @@
+{
+  "diagnostic_id": "1951d-mcp-server-side",
+  "agent": "dev-pdf-extractor",
+  "generated_at": "2026-05-19T07:10:00Z",
+  "scope": "mcp-server source + local DB + pull-side logs (no VPS-side overlap)",
+
+  "bctc_reparse_job_status": {
+    "schedule": "09:30 VN daily (02:30 UTC)",
+    "last_run": "2026-05-19T04:40:03Z",
+    "last_run_status": "success",
+    "cron_registry_entry": "bctcReparseJob — daily at 09:30 VN",
+    "is_running": true,
+    "note": "Job runs daily as scheduled. 3 stranded feedback rows exist (EIB, FPT, DHG Q1-2026) with reparse_attempts=2 each — extraction failed twice. Root cause: pdftoppm + tesseract both MISSING from container, and all 3 Q1-2026 PDFs are image-based (not text-native). pdf-parse tier returns <100 chars, OCR cache is empty, DPI-300 retry cannot run without pdftoppm. bctcReparseJob correctly escalated to attempts=2 but cannot resolve without OCR toolchain."
+  },
+
+  "bctc_pdf_pull_job_status": {
+    "schedule": "every 30 min",
+    "last_run": "2026-05-19T06:30:00Z",
+    "last_run_status": "success (0 downloaded)",
+    "critical_bug": "bctcPdfPullJob only processes rows WHERE source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'. The 34 pending Q1-2026 rows have staticfile.hsx.vn SSC portal URLs — these are NEVER picked up. The job runs every 30 min and returns 0 downloads every time. This is the primary blocker for 34 of 43 pending queue rows."
+  },
+
+  "bctc_queue_enricher_status": {
+    "schedule": "every 15 min",
+    "last_run": "2026-05-19T06:46:02Z",
+    "last_run_status": "success (0 rows enriched)",
+    "note": "Enricher correctly targets rows WHERE source_url IS NULL. The 34 rows with SSC portal URLs already have source_url populated — enricher skips them (correct behavior). The 9 rows with NULL source_url ARE being processed by enricher but result in 0 enriched (VPS not responding for those tickers, or geo-blocked)."
+  },
+
+  "bctc_batch_sweep_status": {
+    "schedule": "0 9 25 1,4,7,10 * (09:00 UTC on 25th Jan/Apr/Jul/Oct)",
+    "last_run": "NEVER — no cron_job_runs records for bctcBatchSweep",
+    "note": "Expected to run 2026-04-25 09:00 UTC for Q1-2026 sweep. Zero records in cron_job_runs. Either the job was not registered in the scheduler at that time, or it ran but did not call recordJobRun."
+  },
+
+  "database_coverage": {
+    "db": "market.db (mcp-server container: /app/data/market.db)",
+    "financial_reports_total_stocks": 9,
+    "q1_2026_filings": 0,
+    "q4_2025_filings": 9,
+    "stocks_with_q4_2025": ["BSR","DGC","DIG","FPT","HPG","SHB","VCB","VEA","VNM"],
+    "watchlist_total": 39,
+    "watchlist_with_any_filing": 9,
+    "watchlist_no_filing": 30
+  },
+
+  "bctc_vps_queue_state": {
+    "total_rows": 83,
+    "pending": 43,
+    "done": 12,
+    "url_not_found": 28,
+    "pending_breakdown": {
+      "ssc_portal_url": 34,
+      "null_url": 9,
+      "vps_url": 0
+    },
+    "last_successful_pull": "2026-05-18T14:25:37Z (GAS Q1-2026)",
+    "done_q1_2026": ["GAS","FPT","EIB","DHG"],
+    "done_q4_2025_and_earlier": ["VCB-Q4-2025","VCB-Q1-2025","BSR-Q4-2025","DGC-Q4-2025","DIG-Q4-2025","HPG-Q4-2025"],
+    "url_not_found_count_q4_2025": 28,
+    "critical_observation": "All 34 pending rows with SSC portal URLs have attempts=0 and last_attempt=NULL — the pull job has never touched them once since creation (2026-04-30). They have been sitting idle for 19 days."
+  },
+
+  "ocr_toolchain": {
+    "pdftoppm": "MISSING from container",
+    "tesseract": "MISSING from container",
+    "impact": "Any image-based (scanned) PDF cannot be extracted. Q1-2026 PDFs for DHG (8MB), EIB (13MB), GAS (17MB), FPT (2.6MB) confirmed image-based. OCR cache is empty for all 4. bctcReparseJob fails silently after 2 attempts.",
+    "q4_2025_note": "Q4-2025 extractions succeeded because those PDFs were text-native (pdf-parse path, no OCR needed). BSR/DGC used ocr_pdf extraction_method — those must have had cached OCR from an earlier container state."
+  },
+
+  "watchlist_coverage_by_class": {
+    "never_filed": 31,
+    "stale_filing_q4_2025_only": 2,
+    "extraction_failed_pulled_no_row": 4,
+    "has_q1_2026": 0
+  },
+
+  "missing_tickers_classified": {
+    "ACB": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "ACV": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "BDI": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "BID": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "CTG": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "D2D": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "DAG": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "DHG": "extraction_failed — PDF pulled 2026-05-18, on disk, image-based, no OCR tools, reparse_attempts=2",
+    "DLC": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "DPM": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "EIB": "extraction_failed — PDF pulled 2026-05-18, on disk, image-based, no OCR tools, reparse_attempts=2",
+    "GAS": "extraction_failed — PDF pulled 2026-05-18, on disk, image-based (17MB), no OCR tools",
+    "GVR": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "HCM": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "HPG": "stale_filing — Q4-2025 exists; Q1-2026 in queue (SSC URL), never pulled",
+    "HSG": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "HVN": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "JSH": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "KBC": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "MBB": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "MWG": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "NKG": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "NVL": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "PLX": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "POW": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "PPC": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "REE": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "SIS": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "SSI": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "TCH": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "VCB": "stale_filing — Q4-2025+Q1-2025 exists; Q1-2026 in queue (SSC URL), never pulled",
+    "VCI": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "VDC": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "VHM": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "VIC": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "VNH": "never_filed — Q1-2026 in queue (null URL), not discovered",
+    "VPB": "never_filed — Q1-2026 in queue (SSC URL), never pulled",
+    "VRE": "never_filed — Q1-2026 in queue (SSC URL), never pulled"
+  },
+
+  "primary_blocker": "mcp-server-not-pulling-from-vps",
+
+  "blocker_detail": "Two independent blockers compounding: (1) ARCHITECTURE GAP — bctcPdfPullJob only pulls rows with VPS-format URLs (http://125.212.251.27:8765/bctc-files/...). 34 pending Q1-2026 rows have SSC portal URLs (staticfile.hsx.vn). No job is wired to download from SSC portal directly. These rows have been idle for 19 days with attempts=0. The VPS must cache these files first (ops scope) OR the pull job needs to also handle SSC portal URLs directly. (2) OCR TOOLCHAIN MISSING — pdftoppm and tesseract absent from mcp-server container. The 4 PDFs already pulled (GAS/FPT/EIB/DHG Q1-2026) are all image-based. Without OCR tools, extraction always fails. Q4-2025 succeeded because those were text-native (pdf-parse path).",
+
+  "secondary_blockers": [
+    "bctcBatchSweep never ran (no cron_job_runs record) — would have bulk-queued Q1-2026 via VPS",
+    "9 queue rows have null source_url — queueEnricher cannot discover SSC URL (likely geo-blocked from host or VPS not serving those tickers)",
+    "28 Q4-2025 rows marked url_not_found — VPS never had those files either"
+  ],
+
+  "remediation_target": "OPS: ensure VPS caches all 34 SSC-URL PDFs at /bctc-files/ so bctcPdfPullJob can pick them up; AND ops/mcp-server Dockerfile must re-add poppler-utils + tesseract-ocr to container for image PDF extraction",
+
+  "bugs_to_flag_to_po": [
+    {
+      "bug": "bctcPdfPullJob dead-end for SSC-URL rows",
+      "description": "34 pending rows with valid staticfile.hsx.vn URLs have been idle 19 days. bctcPdfPullJob only queries WHERE source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'. SSC portal rows are permanently skipped unless VPS caches them. If the VPS cannot reach SSC (geo-block from VPS side is ops scope), these rows will never clear without a code change to also download from SSC URLs directly.",
+      "file": "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts:L238",
+      "severity": "critical"
+    },
+    {
+      "bug": "pdftoppm + tesseract missing from mcp-server container",
+      "description": "Runbook says poppler-utils was added to Dockerfile (2026-04-27). Currently both are absent. Either the Dockerfile change was not deployed, or the container was rebuilt from a stale image. Without these, all image-based PDFs fail extraction silently.",
+      "file": "apps/mcp-server/Dockerfile",
+      "severity": "critical"
+    },
+    {
+      "bug": "bctcBatchSweep never ran for Q1-2026 season (April 25)",
+      "description": "No record in cron_job_runs for bctcBatchSweepJob. The job was scheduled for 2026-04-25 09:00 UTC. Either not registered in scheduler at that time, or recordJobRun was not called. This was the only mechanism for bulk-queuing Q1-2026 filings with VPS URLs.",
+      "file": "apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts",
+      "severity": "high"
+    }
+  ]
+}

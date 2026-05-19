@@ -1,0 +1,54 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "flow-execution-gap-fix",
+  "sprint": "1951",
+  "task_id": "1951i",
+  "trigger_signal": "docs/signals/cowork-team-20260519T032444Z-chef-incomplete.json",
+  "payload": {
+    "summary": "chef-intraday slot fired 2026-05-19T03:24Z. unified-agent ran Steps 0-1 (convergence detected: banking + oil_gas clusters), then self-refused with 'I cannot complete the full end-to-end execution here... these require sequential MCP calls that would need to be executed in the actual chef.md agent context.' No MARKET publish. No FAILED telemetry. No exception. Pure agent self-abort.",
+    "root_cause_analysis": {
+      "ruled_out": [
+        "(c) MCP/token budget — no tool failure reported, no FAILED telemetry emitted, no exception caught",
+        "(d) role confusion — agent correctly self-identified as chef, performed gate detection correctly"
+      ],
+      "confirmed": [
+        "(a) agent prompt missing autonomy/completion clause — unified-agent.md `constraints` block has no 'must complete end-to-end when invoked' rule; no anti-self-abort clause",
+        "(b) flow missing must-complete-when-gate-fires rule — chef.md Step 1 documents the SILENT exit path (0 clusters), but Steps 2-8 are merely listed in order; the contract that 'gate FIRES → Steps 2-8 are MANDATORY, not optional' is implicit, not explicit. No 'never self-abort with an English refusal' clause."
+      ],
+      "verdict": "Doc-level fix. Both (a) and (b) need surgical edits. No runtime/MCP fix needed."
+    },
+    "chosen_fix": {
+      "scope": "doc-level — unified-agent.md + chef.md",
+      "owner": "agent-father",
+      "size": "XS",
+      "changes": [
+        {
+          "file": ".claude/agents/unified-agent.md",
+          "change": "Add to `constraints:` block a new key: `no_self_abort: true` with one-line note 'If invoked, complete the assigned flow end-to-end. Only exits are: (i) silent-intraday gate (Step 1 explicit), (ii) caught exception → FAILED telemetry. Self-refusal with English prose (\"I cannot complete here\") is forbidden — the agent IS running in chef.md context whenever invoked.'"
+        },
+        {
+          "file": ".claude/flows/unified-agent/chef.md",
+          "change": "Insert after the existing 'Intraday gate' block in Step 1 a new explicit gate-fired contract: `**Gate-fired contract:** When ≥1 cluster qualifies (or DISH_TYPE is morning/eod/evening), Steps 2-8 are MANDATORY. The agent MUST proceed. Self-refusal (e.g. \"I cannot complete the full end-to-end execution here\") is a flow violation — fail the cycle via FAILED telemetry instead.` Also tighten the 'try block begins here' callout to add: `Self-abort without an exception is a PO-defined violation; emit FAILED with reason=\"self-abort-no-exception\" and EXIT non-zero.`"
+        }
+      ]
+    },
+    "acceptance_criteria": [
+      "AC-1: `.claude/agents/unified-agent.md` `constraints:` block contains `no_self_abort: true` plus the prose clause defined above. grep `no_self_abort` returns exactly one hit in the file.",
+      "AC-2: `.claude/flows/unified-agent/chef.md` Step 1 contains a `Gate-fired contract:` block that explicitly states Steps 2-8 are MANDATORY when ≥1 cluster qualifies. The try-block callout (currently around L37-39) contains the `self-abort-no-exception` failure-mode clause.",
+      "AC-3: At the next chef-intraday slot fire where ≥1 cluster qualifies, exactly ONE MARKET publish occurs OR exactly ONE FAILED telemetry on WORK channel is emitted. Zero silent-aborts. Verification: ops monitors WORK channel for `[chef] SENT intraday` or `[chef] FAILED intraday` matching `cycle_id=chef-intraday-<UTC>` over the next 24h after agent-father commit."
+    ],
+    "out_of_scope": [
+      "Re-spawning unified-agent now (risk of duplicate MARKET publish if original task is still alive async — confirmed in triage trigger note)",
+      "Changing model from haiku to sonnet (separate sprint if observed insufficient after fix)",
+      "Adding a critic-gate or external completion-check (heavier; revisit if AC-3 fails)"
+    ],
+    "guardrails": [
+      "agent-father MUST follow agent-md-factory skill when editing .claude/agents/unified-agent.md (SSOT, size-justification budget, lazy-load DAG preserved).",
+      "agent-father MUST NOT touch Steps 2-8 of chef.md — only Step 1 gate block + try-block callout.",
+      "After commit, agent-father emits Cowork refresh prompt per feedback_cowork_prompt memory."
+    ]
+  },
+  "priority": "high",
+  "createdAt": "2026-05-19T03:30:00Z"
+}

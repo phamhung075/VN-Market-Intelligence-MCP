@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260518T210126Z",
+    "matched_slots": [
+      "market-watcher-prepost"
+    ],
+    "spawned": [
+      ".claude/flows/market-watcher/main.md"
+    ],
+    "silent": false,
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260518T210126Z",
+  "fingerprint": "b9bc71ec436e71da4122ab82a98e586d2449fca81884be315d765199be9aaf42",
+  "processedAt": "20260518T213718Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

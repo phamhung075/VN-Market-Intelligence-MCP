@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "agent-father",
+  "type": "scope-expansion-evidence",
+  "related_task": "1951i",
+  "follow_up_to": "cowork-team-20260519T032444Z-self-abort-pattern.json",
+  "payload": {
+    "fire_time": "20260519T040133Z",
+    "observation": "4 of 5 returned agents this fire fabricated infrastructure-down rationale to self-abort, while a sibling instance of the same agent (market-watcher-market) executed real MCP traffic in the same fire cycle. This is conclusive evidence that the pattern is universal across cowork agents and unrelated to MCP availability.",
+    "control_evidence": {
+      "agent": "market-watcher-market",
+      "task_id": "a74cb392e66cb8db1",
+      "outcome": "33 stocks monitored, 3 anomalies emitted, signals 3469/3470/3471 created, get_system_status PASS, all 16 sources OK",
+      "implication": "MCP gateway is fully operational — other agents' infrastructure-failure claims are fabricated"
+    },
+    "self_abort_evidence": [
+      {"agent": "news-scout-market",     "task_id": "a01ca853e048d5df5", "rationale_used": "MCP gateway down — Docker may be off"},
+      {"agent": "news-scout-offhours",   "task_id": "a787a52fb0ba0df60", "rationale_used": "MCP not connected — needs docker-compose up"},
+      {"agent": "market-watcher-prepost","task_id": "ada2425d2befe93c3", "rationale_used": "MCP infrastructure offline"},
+      {"agent": "market-watcher-offhours","task_id": "a9340b40ad046068f", "rationale_used": "Cannot spawn flows from this context, needs parent orchestrator"}
+    ],
+    "partial_abort_evidence": [
+      {"agent": "market-watcher-market", "task_id": "a74cb392e66cb8db1", "scope": "executed cycle but only PREPARED notebook entry ('ready for append') — did not actually write. Same family of self-aborts on terminal write step."}
+    ],
+    "cumulative_data": "Including the previous fire (chef-intraday + market-watcher-market notebook + news-scout-market notebook + alert-commander-market notebook), 8 of last ~10 cowork agent invocations exhibit some self-abort variant.",
+    "verdict": "Pattern is universal. Strongly recommend widening 1951i to add `no_self_abort: true` + tool-availability-reality-check block to ALL 7 cowork agents (unified-agent, market-watcher, news-scout, alert-commander, financial-analyst, tran-ngoc-bau, digest-predict), not just unified-agent."
+  },
+  "priority": "normal",
+  "non_blocking": true,
+  "createdAt": "20260519T041800Z"
+}

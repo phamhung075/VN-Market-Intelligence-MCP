@@ -1,0 +1,18 @@
+{
+  "from": "ops",
+  "to": "po",
+  "type": "investigation-result",
+  "topic": "durable=true CronCreate persistence",
+  "findings": {
+    "scheduled_tasks_file_exists": false,
+    "file_path_project": ".claude/scheduled_tasks.json (NOT FOUND)",
+    "file_path_home": "~/.claude/scheduled_tasks.json (NOT FOUND)",
+    "file_found_instead": ".claude/scheduled_tasks.lock (lock file only, no data file)",
+    "lock_file_contents": "{\"sessionId\":\"343729f3-b532-410a-b775-d7ee166c924f\",\"pid\":85576,\"procStart\":\"Sun May 17 17:34:17 2026\",\"acquiredAt\":1779039290498}",
+    "persistence_model_detected": "session-scoped task storage in ~/.claude/tasks/<sessionId>/",
+    "verdict": "SESSION-ONLY (not truly persisted across restarts)",
+    "evidence": "Extensive search found: (1) NO scheduled_tasks.json file in project .claude or home ~/.claude; (2) Only .claude/scheduled_tasks.lock exists (session lock, not data); (3) Actual task data stored per-session in ~/.claude/tasks/<sessionId>/ directories (48 sessions found, each with .highwatermark and .lock files); (4) CronCreate tool docs claim durable=true persists to scheduled_tasks.json, but this file does not exist; (5) Lock file references current sessionId, confirming task scope is session-level."
+  },
+  "recommendation": "CronCreate durable=true flag is misleading—tasks survive only within current session. For true persistence across restarts, tasks must be stored in permanent location outside .claude/tasks/<sessionId>/ or explicitly exported to git-tracked config file.",
+  "createdAt": "2026-05-18T21:35:56Z"
+}

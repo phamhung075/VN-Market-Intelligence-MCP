@@ -1,0 +1,41 @@
+{
+  "from": "architect",
+  "to": "fixer",
+  "type": "verdict",
+  "slug": "architect-1951b-block2-block3-verdict",
+  "sprint": "1951b",
+  "in_response_to": "qa-1951b-changes-requested",
+  "createdAt": "2026-05-19T00:00:00Z",
+  "verdicts": {
+    "BLOCK-2": {
+      "id": "BLOCK-2",
+      "question": "Does get_financial_summary still exist on the vn-market MCP server?",
+      "answer": "YES — confirmed live",
+      "evidence": "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:228 — server.tool('get_financial_summary', ...) registered with actionCode/year/quarter params. Task 085.",
+      "action_taken": "Created .claude/tools/list/get_financial_summary.md (tool list stub with correct schema)",
+      "fix_for_fixer": "No package edit required. Stub file created. Verify INDEX.md includes get_financial_summary entry if the index is maintained alphabetically.",
+      "status": "RESOLVED"
+    },
+    "BLOCK-3": {
+      "id": "BLOCK-3",
+      "question": "Does get_macro_snapshot still exist, or was it removed when get_market_context was introduced?",
+      "answer": "YES — confirmed live and NOT superseded at the registration level",
+      "evidence": "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:452 — server.tool('get_macro_snapshot', ...) still registered. marketContextTools.ts:55 confirms get_market_context CALLS get_macro_snapshot internally — it is a compound wrapper, not a replacement. Both tools co-exist.",
+      "action_taken": "Created .claude/tools/list/get_macro_snapshot.md (tool list stub with correct schema). Stub documents the get_market_context relationship: preferred for session-start; get_macro_snapshot for focused macro-only queries.",
+      "fix_for_fixer": "No package edit required. Stub file created. market-analyst.md line 69 listing is correct — get_macro_snapshot is a valid direct call. Verify INDEX.md includes get_macro_snapshot entry.",
+      "status": "RESOLVED"
+    }
+  },
+  "files_created": [
+    ".claude/tools/list/get_financial_summary.md",
+    ".claude/tools/list/get_macro_snapshot.md"
+  ],
+  "risk_flags": [
+    {
+      "id": "RF-1",
+      "severity": "LOW",
+      "note": "market-analyst.md line 159 passes 'code' as the argument key for get_financial_summary, but the MCP server schema uses 'actionCode'. If an agent copies that example verbatim it will pass the wrong param name. The stub uses 'actionCode' (correct). Fixer should align the package example at line 159 to use 'actionCode'."
+    }
+  ],
+  "no_action_needed": ["BLOCK-1 is fixer-owned (anti-hallucination SKILL.md path fix), no architect input required"]
+}

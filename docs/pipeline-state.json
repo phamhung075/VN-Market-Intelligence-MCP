@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "c211",
-  "activeTaskId": null,
+  "status": "in_progress",
+  "currentSprint": "c212",
+  "activeTaskId": "1955a+1951d",
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-19T19:20:00Z",
-  "updatedBy": "dev-team-c211",
-  "lastCompleted": "Cycle 211 (dev-team): PREFLIGHT clean (no HEAD.lock). Drained 3 signals (agent-father impl-done, agents-architect brief_complete, ops-1953cf-deploy-verify). Pipeline-resume triggered (ops ran, status=dispatch→ops, 19:14Z signal). Ops deploy VERIFIED: EPIPE fix confirmed working, OCR no crashes, bctc_vps_queue_pending=103, financial_reports=0 rows (expected — bctcReparseJob scheduled 02:30Z UTC). EIB/DHG under-extracted (3 pages each). OBSERVE-1953g added to Todo (gate 2026-05-21T02:30Z). OBSERVE-1951b still active (ends 20:34Z, ~74min). Pipeline idle — next action time-gated (1948 gate 2026-05-20T07:22Z, 1951d cutover gate 2026-05-19T20:34Z)."
+  "updatedAt": "2026-05-19T20:59:00Z",
+  "updatedBy": "dev-team-c212",
+  "lastCompleted": "Cycle 212 (dev-team): PREFLIGHT clean. Drained 12 signals (1954a-done, 1956-multi-service-recovery, po-1955-sprint-plan, qa-1954a-approved, architect-bctc-rca, dev-frontend-1956, dev-rag-1956c, ops-1956b/d, pm-1954, po-1954-signoff — all stale/resolved). Gate check: OBSERVE-1951b CLOSED at 20:34Z (AC-6 PASS, zero double-publish). 1951d cutover UNBLOCKED → Todo. TASKS.md updated: OBSERVE-1951b→Done, Sprint-1956→Done (11/11 services), 1954a AC-3 PASS closed, stale 1953b-2 Backlog entry removed, SPIKE-1951f/1951g/1951k archived. TASKS.md=80 lines (invariant MET). Dispatching: dev-mcp-server→1955a (HIGH FIX: dailyDashboardJob path) + ops→1951d (XS: cutover 12 RemoteTriggers). WIP=2/2."
 }

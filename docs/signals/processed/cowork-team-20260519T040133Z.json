@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260519T040133Z",
+    "nominal_tick_min": 0,
+    "drift_min": 1,
+    "matched_slots": [
+      "news-scout-market",
+      "news-scout-offhours",
+      "market-watcher-market",
+      "market-watcher-prepost",
+      "market-watcher-offhours",
+      "alert-commander-market"
+    ],
+    "collisions": [
+      {"agent_id": "news-scout", "slots": ["news-scout-market", "news-scout-offhours"]},
+      {"agent_id": "market-watcher", "slots": ["market-watcher-market", "market-watcher-prepost", "market-watcher-offhours"]}
+    ],
+    "spawned": [
+      ".claude/flows/news-scout/main.md (×2)",
+      ".claude/flows/market-watcher/main.md (×3)",
+      ".claude/flows/alert-commander/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "notes": "04:00 UTC boundary triggers overlap between market (*/15 2-8) and offhours (0 */4) cron exprs. Prepost (*/30 weekdays) also fires at minute 0. Per R3 all spawn — agents use internal dedup."
+  },
+  "priority": "normal",
+  "createdAt": "20260519T040133Z"
+}

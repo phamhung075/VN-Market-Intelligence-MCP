@@ -1,6 +1,21 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-19T00:00Z | **Cycle:** c178 | **Sprint:** 1952 — chef-intraday MCP URL fix
+**Last updated:** 2026-05-19T20:59Z | **Cycle:** c212 | **Sprint:** dev-team orchestration tick
+
+## Session c212 — Dev-Team Orchestration (JUMP-TO: drain-signals → PO triage → dispatch)
+
+**Preflight:** NO HEAD.lock. Worktree prune: clean. PASS.
+
+**Gate assessment (20:59Z):**
+- OBSERVE-1951b: CLOSED (gate was 20:34Z, 25 min past). AC-6 PASS → 1951d UNBLOCKED.
+- 1948 gate: 2026-05-20T07:22Z — future, still blocked.
+- OBSERVE-1953g: 2026-05-21T02:30Z — future, observing.
+
+**Drain signals (12):** All stale/resolved — moved to processed/. No new PO triage needed (already planned via po-1955-sprint-plan.json signal).
+
+**TASKS.md updates:** OBSERVE-1951b→Done, Sprint-1956→Done (11/11), 1954a AC-3 PASS, stale Backlog entries removed, TASKS.md=80 lines.
+
+**Dispatch:** dev-mcp-server→1955a (HIGH FIX dailyDashboardJob path) + ops→1951d (cutover 12 RemoteTriggers). WIP=2/2.
 
 ## Session c178 — Task 1952f (chef-intraday trigger_prompt MCP URL)
 

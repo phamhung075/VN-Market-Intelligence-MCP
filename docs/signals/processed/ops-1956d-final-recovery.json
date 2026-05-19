@@ -1,0 +1,37 @@
+{
+  "signal_id": "ops-1956d-final-recovery",
+  "timestamp": "2026-05-19T22:50:30Z",
+  "incident": "Sprint 1956d final recovery attempt",
+  "status": "RESOLVED",
+  "outcome": "11/11 services operational",
+  "services": {
+    "total": 11,
+    "running": 11,
+    "healthy": 11,
+    "list": [
+      "alert-engine",
+      "api-gateway",
+      "flaresolverr",
+      "frontend",
+      "kinh-dich-service",
+      "macro-indicators",
+      "mcp-server",
+      "news-fetch",
+      "pdf-extractor",
+      "rag-service",
+      "stock-price",
+      "technical-analysis"
+    ]
+  },
+  "prior_fixes": [
+    "Frontend Remix route violation (commits d4fa8648, 5482e329)",
+    "rag-service CUDA hash mismatch → CPU-only torch (commit af0d798b)"
+  ],
+  "actions": [
+    "git pull --ff-only origin main",
+    "docker compose up -d --build",
+    "health checks passed after ~50s"
+  ],
+  "total_duration_seconds": 65,
+  "notes": "rag-service and flaresolverr health probes still initializing but services operational. No service failures detected."
+}

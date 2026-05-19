@@ -1,0 +1,127 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "sprint-plan",
+  "sprint_id": "1953",
+  "title": "BCTC Q1-2026 ingestion remediation — 5 blocker fix sequence",
+  "createdAt": "2026-05-19T07:25:00Z",
+  "priority": "high",
+  "diagnostics_in": [
+    "docs/signals/ops-1951d-vps-bctc-diagnostic.json",
+    "docs/signals/dev-pdf-extractor-1951d-pipeline-diagnostic.json"
+  ],
+  "watchlist_coverage_now_pct": 26,
+  "q1_2026_filings_overdue_days": 19,
+
+  "decisions": {
+    "a_sequence_reasoning": "Pattern bug (#1) is upstream root — without VPS discovering PDFs, no other fix matters for the 34 SSC-URL rows. OCR (#4) is independent parallel track for 4 already-pulled PDFs (GAS/EIB/DHG/FPT). Sweep (#5) is next-quarter insurance, not Q1-2026 critical. URL-filter widening (#3) is moot if #1 caches PDFs at /bctc-files/ — defer as fallback. #2 jq error LOW, bundle with #1.",
+    "b_vps_script_repo_location": "discover-bctc-urls-browser.py is VPS-ONLY (not in repo). fetch-bctc.sh IS in repo at vps-scripts/fetch-bctc.sh. deploy-vinahost.sh at scripts/deploy-vinahost.sh handles VPS service deploy but does NOT push discover-bctc-urls-browser.py. Owner dev-vps-crawls must either (i) add discover script to repo + extend deploy-vinahost.sh, OR (ii) SSH-edit on VPS (faster, lower risk for 1-line fix). PO recommends (ii) for speed + (i) as follow-up CLEAN task.",
+    "c_sprint_scoping": "ONE sprint (1953). 'Ship completion' = Q1-2026 watchlist coverage ≥75%. Split tasks for parallelism (1953a + 1953d run concurrent), not for slicing.",
+    "d_acceptance_criterion": "Within 48h of last task deploy: ≥75% (26 of 34) watchlist tickers have Q1-2026 row in financial_reports table. Verification query: SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1'."
+  },
+
+  "task_sequence": [
+    {
+      "id": "1953a",
+      "priority": "CRITICAL",
+      "owner": "dev-vps-crawls",
+      "title": "Fix discover-bctc-urls-browser.py zero-padded quarter pattern + fetch-bctc.sh jq error",
+      "scope": "1-line fix to matches_quarter_and_year() patterns array: add 'quý 01','quý 02','quý 03','quý 04' (or regex r'qu[yý] 0?[1-4]'). Bundle with fetch-bctc.sh jq guard (QUEUE empty check before pipe). SSH directly to Vinahost /root/ for speed. Follow-up CLEAN task to commit discover script to repo.",
+      "files": [
+        "/root/discover-bctc-urls-browser.py (VPS-only)",
+        "vps-scripts/fetch-bctc.sh (repo + VPS)"
+      ],
+      "verification": "python3 /root/discover-bctc-urls-browser.py ACB 2026 Q1 returns JSON with .results[0].url pointing to PDF. After 6h auto-cycle, /root/bctc-cache/ACB/ has Q1-2026 PDF.",
+      "size": "S",
+      "zone": "vps",
+      "blocks": ["1953c", "1953e"]
+    },
+    {
+      "id": "1953b",
+      "priority": "CRITICAL",
+      "owner": "ops",
+      "title": "Restore poppler-utils + tesseract-ocr in mcp-server container",
+      "scope": "Verify apps/mcp-server/Dockerfile has poppler-utils + tesseract-ocr in apt-get install line (runbook claims 2026-04-27 add — confirm not lost in rebuild). Rebuild + redeploy container. Re-trigger bctcReparseJob for 3 stranded feedback rows (EIB/FPT/DHG Q1-2026) + GAS.",
+      "files": [
+        "apps/mcp-server/Dockerfile"
+      ],
+      "verification": "docker exec mcp-server which pdftoppm && which tesseract returns paths. bctcReparseJob next cycle extracts ≥1 of 4 stranded Q1-2026 PDFs to financial_reports row.",
+      "size": "S",
+      "zone": "apps/mcp-server/",
+      "parallel_with": ["1953a"]
+    },
+    {
+      "id": "1953c",
+      "priority": "HIGH",
+      "owner": "dev-pdf-extractor",
+      "title": "Audit bctcBatchSweepJob registration + recordJobRun wiring",
+      "scope": "Why no cron_job_runs record for 2026-04-25 09:00 UTC kickoff? Two hypotheses: (i) job not registered in startScheduler.ts at that time, (ii) recordJobRun not called. Audit src/scheduler/financial-reports/bctcBatchSweepJob.ts + cronConfig.ts + startScheduler.ts. Fix wiring if broken. Add unit test asserting recordJobRun is called.",
+      "files": [
+        "apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts",
+        "apps/mcp-server/src/scheduler/cronConfig.ts",
+        "apps/mcp-server/src/scheduler/startScheduler.ts"
+      ],
+      "verification": "Manual trigger of bctcBatchSweepJob writes 1 row to cron_job_runs with status='success'. Q2-2026 sweep 2026-07-25 will fire correctly.",
+      "size": "S",
+      "zone": "apps/mcp-server/",
+      "blocked_by": ["1953a"],
+      "note": "Not Q1-2026-critical — 1953a recovers Q1 via existing enricher loop. This is Q2+ insurance."
+    },
+    {
+      "id": "1953d",
+      "priority": "MEDIUM",
+      "owner": "dev-vps-crawls",
+      "title": "CLEAN — commit discover-bctc-urls-browser.py to vps-scripts/ + extend deploy-vinahost.sh",
+      "scope": "Pull /root/discover-bctc-urls-browser.py from VPS into vps-scripts/discover-bctc-urls-browser.py. Add scp line in deploy-vinahost.sh. Eliminates VPS-only drift risk for future fixes.",
+      "files": [
+        "vps-scripts/discover-bctc-urls-browser.py (new)",
+        "scripts/deploy-vinahost.sh"
+      ],
+      "verification": "scripts/deploy-vinahost.sh idempotent re-deploy leaves /root/discover-bctc-urls-browser.py byte-identical to repo copy.",
+      "size": "XS",
+      "zone": "cross-service/",
+      "blocked_by": ["1953a"]
+    },
+    {
+      "id": "1953e",
+      "priority": "LOW-FALLBACK",
+      "owner": "dev-pdf-extractor",
+      "title": "FALLBACK — widen bctcPdfPullJob URL filter OR fix enricher to rewrite SSC→VPS URLs",
+      "scope": "ONLY trigger this task if 1953a verification at 48h shows >5 SSC-URL queue rows still pending. Option A: widen bctcPdfPullJob.ts:238 SQL to handle both VPS and SSC URLs (downloads SSC directly host-side — risk: geo-block from host). Option B: fix bctcQueueEnricher to rewrite SSC URLs into VPS-format once VPS caches the file (lower risk).",
+      "files": [
+        "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
+        "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricher.ts"
+      ],
+      "verification": "After fix: 0 SSC-URL queue rows with attempts=0 after 24h. All pending rows touched by pull job.",
+      "size": "M",
+      "zone": "apps/mcp-server/",
+      "trigger_condition": "1953a deployed AND 48h observation shows >5 idle SSC-URL rows"
+    }
+  ],
+
+  "acceptance_criteria": {
+    "sprint_done_when_all_met": [
+      "AC-1: 1953a deployed — python3 /root/discover-bctc-urls-browser.py ACB 2026 Q1 returns valid PDF URL (pattern fix verified).",
+      "AC-2: 1953b deployed — docker exec mcp-server which pdftoppm && which tesseract both return paths.",
+      "AC-3: At 48h post-AC-1+AC-2 deploy: SELECT COUNT(DISTINCT stock_code) FROM financial_reports WHERE period_year=2026 AND period_quarter='Q1' >= 26 (≥75% of 34-stock watchlist).",
+      "AC-4: 1953c — cron_job_runs has ≥1 row for bctcBatchSweepJob after manual trigger.",
+      "AC-5: 1953d — vps-scripts/discover-bctc-urls-browser.py exists in repo + deploy-vinahost.sh deploys it.",
+      "AC-6 (conditional): If 1953e triggered → 0 SSC-URL queue rows with attempts=0 at 24h."
+    ]
+  },
+
+  "parallelism": {
+    "wave_1_concurrent": ["1953a", "1953b"],
+    "wave_2_after_1953a_verify": ["1953c", "1953d"],
+    "wave_3_conditional": ["1953e"]
+  },
+
+  "risk_notes": [
+    "1953a SSH-direct edit creates short-term drift between repo and VPS — 1953d closes that window.",
+    "1953b Dockerfile claims OCR deps added 2026-04-27 — if true, container was rebuilt from stale image. Verify build cache / image tag.",
+    "1953e Option A (host-side SSC download) risks geo-block — that's why all VN sources go through Vinahost VPS (see memory: project_bctc_vps_proxy.md). Option B preferred.",
+    "Per CLAUDE.md 'Ship completion, not slices': do not declare sprint DONE until AC-3 coverage gate (≥75%) is met."
+  ],
+
+  "next_action": "Dispatch dev-vps-crawls with 1953a (lowest-risk, highest-impact, unblocks 34 tickers, ~30min SSH edit + verification)."
+}

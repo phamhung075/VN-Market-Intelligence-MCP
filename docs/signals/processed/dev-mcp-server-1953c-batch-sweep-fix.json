@@ -1,0 +1,78 @@
+{
+  "from": "dev-mcp-server",
+  "to": "ops",
+  "type": "implementation-complete",
+  "task_id": "1953c",
+  "sprint": "1953",
+  "title": "bctcBatchSweepJob registration audit — no wiring bug found + backfill script added",
+  "timestamp": "2026-05-19T00:00:00Z",
+
+  "investigation": {
+    "hypothesis_A_register_missing": "FALSE — job is imported at line 30 and registered at lines 281-285 in startScheduler.ts",
+    "hypothesis_B_cron_wrong": "FALSE — '0 9 25 1,4,7,10 *' is valid cron syntax for 09:00 UTC on 25th of Jan/Apr/Jul/Oct. April 25 = Q1 kickoff, confirmed correct.",
+    "hypothesis_C_env_disabled": "FALSE — no CRON_BCTC_BATCH_SWEEP in docker-compose.yml. No env override.",
+    "hypothesis_D_job_missing": "FALSE — apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts exists with full implementation.",
+    "root_cause": "Container was down or restarted between 2026-04-25 09:00-09:01 UTC. The 1-minute cron window was missed. No code bug. Confirmed by 1943a investigation (notebook entry Sprint 1943a)."
+  },
+
+  "findings": {
+    "job_file": "apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts",
+    "scheduler_import_line": 30,
+    "scheduler_registration_lines": "281-285",
+    "cron_expression": "0 9 25 1,4,7,10 *",
+    "cron_env_key": "CRON_BCTC_BATCH_SWEEP",
+    "wrap_run_key": "bctcBatchSweepJob",
+    "wiring_correct": true,
+    "next_auto_fire": "2026-07-25T09:00:00Z",
+    "isEarningsSeason_months": [1, 4, 7, 10],
+    "all_four_quarters_covered": true
+  },
+
+  "fix": {
+    "option": "A (register-missing) — NOT APPLICABLE. Registration was always correct.",
+    "actual_fix": "Added 8 unit tests in 1953c-batch-sweep-registration-audit.test.ts to lock cron expression, wrapRun key convention, sweep callback execution, earnings-season gate, and all-quarter coverage.",
+    "backfill_script": "apps/mcp-server/scripts/backfill-bctc-q1-2026.ts",
+    "backfill_behavior": "INSERT OR IGNORE into bctc_vps_queue for all 33 watchlist tickers at year=2026 quarter=Q1 status=pending. Idempotent — safe to run multiple times.",
+    "backfill_url_format": "http://125.212.251.27:8765/bctc-files/<TICKER>/<TICKER>_2026_Q1.pdf (placeholder — enricher updates to real discovered filename)",
+    "backfill_trigger": "ops runs after 1953b container redeploy: bun scripts/backfill-bctc-q1-2026.ts"
+  },
+
+  "files_changed": [
+    {
+      "path": "apps/mcp-server/src/__tests__/1953c-batch-sweep-registration-audit.test.ts",
+      "action": "new",
+      "tests": 8,
+      "status": "GREEN"
+    },
+    {
+      "path": "apps/mcp-server/scripts/backfill-bctc-q1-2026.ts",
+      "action": "new",
+      "description": "One-shot Q1-2026 BCTC queue backfill script — INSERT OR IGNORE, idempotent"
+    },
+    {
+      "path": "docs/TASKS.md",
+      "action": "updated",
+      "description": "1953c row marked DONE with findings summary"
+    }
+  ],
+
+  "no_changes_to": [
+    "apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts",
+    "apps/mcp-server/src/scheduler/cronConfig.ts",
+    "apps/mcp-server/src/scheduler/startScheduler.ts"
+  ],
+
+  "test_results": {
+    "new_tests": "8 pass / 0 fail (1953c-batch-sweep-registration-audit.test.ts)",
+    "regression_1841b": "19 pass / 0 fail",
+    "regression_1943": "16 pass / 0 fail",
+    "type_check": "0 errors"
+  },
+
+  "next": {
+    "action": "ops | trigger backfill after 1953b container redeploy lands",
+    "command": "bun apps/mcp-server/scripts/backfill-bctc-q1-2026.ts",
+    "prerequisite": "1953b container with OCR deps rebuilt and running",
+    "after_backfill": "bctcQueueEnricherJob (every 15 min) + bctcPdfPullJob (every 30 min) will process the queued rows automatically"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260519T043618Z",
+    "nominal_tick_min": 30,
+    "drift_min": 6,
+    "matched_slots": [
+      "news-scout-market",
+      "market-watcher-market",
+      "market-watcher-prepost",
+      "alert-commander-market"
+    ],
+    "collisions": [
+      {"agent_id": "market-watcher", "slots": ["market-watcher-market", "market-watcher-prepost"]}
+    ],
+    "spawned": [
+      ".claude/flows/news-scout/main.md",
+      ".claude/flows/market-watcher/main.md (×2 — market + prepost)",
+      ".claude/flows/alert-commander/main.md"
+    ],
+    "silent": false,
+    "errors": [],
+    "notes": "Spawn prompts again include explicit notebook-Write reminder (log_agent_work ≠ .md append) per pending 1951i.2 signal. Bus carries 7 fresh signals (3472-3478) from prior 04:22 fire — alert-commander has real material to evaluate firing gates against."
+  },
+  "priority": "normal",
+  "createdAt": "20260519T043620Z"
+}

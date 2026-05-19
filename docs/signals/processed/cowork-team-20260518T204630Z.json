@@ -10,5 +10,9 @@
     "errors": []
   },
   "priority": "low",
-  "createdAt": "20260518T204630Z"
+  "createdAt": "20260518T204630Z",
+  "fingerprint": "60a34f2b99f1afbf399cfba4cf467808b5faa0e679bccfcf52d2cb83f07d6d5b",
+  "processedAt": "20260518T213718Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }
