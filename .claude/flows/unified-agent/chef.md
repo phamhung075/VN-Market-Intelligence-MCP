@@ -165,15 +165,37 @@ Apply fixes before Step 7. If a gap cannot be fixed (missing data) → flag expl
 
 ---
 
+## Step 6.5 — SYNTHESIZE (causal chain — mandatory before WRITE DISH)
+
+For each qualifying cluster (from Step 1), write ONE causal-chain sentence in this exact form:
+
+```
+[global event] → [VN macro propagation] → [sector reaction] → [ticker: end state]
+```
+
+Example: "Fed hawkish hold → VND carry pressure +0.4σ → banking sector net-sell by foreigners → VCB price +4.12% on SOE inflow contradicts the macro signal."
+
+Rules:
+- One sentence per qualifying cluster. No exceptions — if no global event is identifiable, start from VN macro.
+- If any link in the chain is missing (no data for that level), write the chain with an explicit gap marker: `[gap: <what is missing>]` at the missing position AND set conviction to LOW for that cluster regardless of pillar score.
+- Example with gap: "[gap: no US macro signal in cycle] → VND carry -33bp FII_OUTFLOW_RISK → banking sector under pressure → [gap: no news_impact for VCB] — conviction LOW."
+- If conf=0.50 on all signals for a cluster (uncertain source baseline), label: `[uncertain-source baseline]` after the ticker state and treat as LOW conviction.
+- Store all chain sentences in session state — they become the mandatory spine of paragraph 2 in Step 7.
+
+---
+
 ## Step 7 — WRITE DISH
 
 **Format:** 2–4 narrative paragraphs in Vietnamese with full diacritics.
 
 **Structure:**
 1. **Regime context** — market hexagram state + macro regime (TIGHTENING/EASING/NEUTRAL) + US/VN stack summary
-2. **Sector/ticker thesis** — qualifying clusters, pillar alignment, convergence evidence cited
+2. **Sector/ticker thesis** — qualifying clusters, pillar alignment, convergence evidence cited. Open this paragraph with the causal-chain sentence(s) from Step 6.5 verbatim. Then expand with supporting detail.
 3. **Kinh Dịch overlay** — hexagram states for key tickers; reversal signals if any
 4. **Action signal or watch** — high-conviction: clear action signal; medium: watch trigger; low: no recommendation
+
+**Citation Discipline (paragraph 2 — TNB-auditable):**
+Every claim in paragraph 2 MUST cite at least one of: signal ID (e.g. `#3350`), source file (e.g. `price_anomaly_20260518T1637`), or source_tier (`tier-1`). Citation format: inline parenthetical immediately after the claim — e.g. "VCB volume 10x average (#3350, price_anomaly_20260518T1637)". Claims without citations are a FLOW VIOLATION — self-correct by adding the citation or downgrading the claim to "unverified observation" and reducing conviction.
 
 **Metadata to include in dish:**
 - TNB layers walked: cite by number (Layer 1–6)
