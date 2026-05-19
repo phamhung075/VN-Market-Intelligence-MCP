@@ -223,3 +223,11 @@ Once frontend code is fixed and committed:
 - No VPS/DB/network issues
 
 **Next Step:** Escalate to developer for route structure refactoring.
+
+**EXACT FIX REQUIRED:**
+1. Rename `apps/frontend/app/routes/dashboard.server.tsx` → `apps/frontend/app/routes/dashboard.services.tsx` (or `dashboard.health.tsx`)
+2. Update navigation link in `apps/frontend/app/routes/dashboard.tsx` line 9: `{ to: "/dashboard/server", label: "Services" }` → `{ to: "/dashboard/services", label: "Services" }`
+3. Commit + push
+4. Ops will retry: `docker compose up -d` and all 11 services will start
+
+**Rationale:** In Remix v7+, the `.server` suffix in route filenames is reserved to indicate server-only code that should never reach the browser. Since `dashboard.server.tsx` exports a default React component (which MUST run in the browser), it violates this convention. The fix is to rename it to a non-reserved name like `dashboard.services.tsx`.
