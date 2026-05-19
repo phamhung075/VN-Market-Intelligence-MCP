@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-05-18T06:00Z | **Sprint:** 1944a-vps
+**Last updated:** 2026-05-19T07:15Z | **Sprint:** 1953a
 
 ---
 
@@ -22,7 +22,7 @@ Zone: dev-zone (VPS scraper code)
 | vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | healthy end-to-end (245 items 200 OK) | 2026-05-13 |
 | vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | healthy (101 items upserted) | 2026-05-13 |
 | hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
-| hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | FAILING: TasksMax=32 kills Chromium | 2026-05-13 |
+| hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | OPERATIONAL — Q1/2026 BCTC flowing. ACB Q1 PASS (1953a pattern fix). | 2026-05-19 |
 
 ---
 
@@ -48,6 +48,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-05-19T07:15Z | discover-bctc-urls-browser.py | pattern-fix + repo-sync | 1953a DONE — zero-padded quý 01..04 patterns added to matches_quarter_and_year(). fetch-bctc.sh jq guard added. ACB Q1/2026 SUCCESS HTTP 200. Script committed to repo as vps-scripts/discover-bctc-urls-browser.py. deploy-vinahost.sh extended. Commit d946699b. |
 | 2026-05-18T06:00Z | vps-proxy-server.js | envelope-shape-fix | 1944a-vps DONE — `/proxy/bctc-discover/:ticker` now returns `{results:[{url,source,confidence}],error:null}` envelope. Deployed SCP + systemctl restart. Health 200 OK. 401 without key. Shape confirmed via curl (results=[] acceptable — script runs ~120s). |
 | 2026-05-13 | all 5 sources | reverse-documentation | Bootstrap catalog complete. 4 technique docs written. |
 | 2026-05-13 | hsx-bctc | live probe + triage | HNX endpoint confirmed working for HNX tickers; HOSE path blocked; triage doc at docs/vps-sources/hsx-bctc/triage.md |
@@ -72,6 +73,28 @@ Zone: dev-zone (VPS scraper code)
 
 - TASK-BCTC-1: ops — increase TasksMax=512 + MemoryMax=512M in vn-bctc-fetch.service
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
+
+---
+
+## Key Findings — 2026-05-19T07:15Z Sprint 1953a Pattern Fix
+
+### SSC Zero-Padded Quarter Format
+- SSC NewsSearch returns titles in format "quý 01 năm 2026" (zero-padded month, e.g. 01, 02, 03, 04)
+- Old matches_quarter_and_year() only had "quý 1" — no leading zero — so ALL Q1/2026 matches failed
+- Fix: added q0 = q.zfill(2) and full set of zero-padded patterns alongside existing ones
+- Tested: ACB Q1/2026 — row 0 "Báo cáo tài chính Hợp nhất quý 01 năm 2026" now matches
+- PDF confirmed: 8,061,984 bytes, pushed HTTP 200
+
+### fetch-bctc.sh jq Parse Error (Fix B)
+- Cause: if QUEUE API returns malformed JSON, `echo "$QUEUE" | jq -c '.queue[]'` exits with parse error
+- set -euo pipefail causes script to exit silently — no log line written
+- Fix: validate JSON with `jq -e '.queue'` before the while loop
+- Now logs "FAIL: queue response is not valid JSON" if API returns bad response
+
+### Repo Sync (1953d collapsed into 1953a)
+- discover-bctc-urls-browser.py was VPS-only before this sprint
+- Now in vps-scripts/discover-bctc-urls-browser.py — tracked in repo
+- deploy-vinahost.sh section 2 now scp's it to /root/ on next deploy
 
 ---
 
