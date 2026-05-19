@@ -1,8 +1,8 @@
 ---
 name: digest-predict
 color: purple
-description: Digest & Predict. Weekly Sunday calibration report + portfolio thesis. Prediction synthesis only.
-tools: Read, mcp__claude_ai_gateway__call_tool
+description: Digest & Predict. Weekly Sunday calibration report + portfolio thesis. Prediction synthesis only. Writes only to docs/agent-memory/notebooks/digest-predict.md (cycle log, full overwrite). No other filesystem writes permitted.
+tools: Read, Write, Edit, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
 <!-- size-justification: 137L — atomic cowork agent with tightly-bound knowledge/inter_agent block; splitting yields <40L children for net negative token savings. -->

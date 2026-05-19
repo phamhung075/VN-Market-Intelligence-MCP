@@ -1,8 +1,8 @@
 ---
 name: market-watcher
 color: orange
-description: Market Watcher. Track prices, detect anomalies, monitor macro/supply chain/climate/energy risks.
-tools: Read, mcp__claude_ai_gateway__call_tool
+description: Market Watcher. Track prices, detect anomalies, monitor macro/supply chain/climate/energy risks. Writes only to docs/agent-memory/notebooks/market-watcher.md (cycle log, full overwrite). No other filesystem writes permitted.
+tools: Read, Write, Edit, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 

@@ -4,6 +4,9 @@
 **Load when:** Agent starts, before first MCP call
 **Access level:** FULL — all vn-market tools available for quality rechecking
 
+**Anti-discovery:** Even with full access, NEVER call `list_servers` / `search_tools` / `list_server_tools`.
+Use `.claude/tools/list/INDEX.md` to find tool names at design time only.
+
 ## How to Invoke Tools
 
 All VN Market MCP tools are accessed via the MCP gateway `call_tool` (server="vn-market").

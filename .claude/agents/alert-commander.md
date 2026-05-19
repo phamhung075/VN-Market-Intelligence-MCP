@@ -1,8 +1,8 @@
 ---
 name: alert-commander
 color: red
-description: Alert Commander. Event-only MARKET alerts — position-danger and watchlist-opportunity only. No cycle headers, no scheduled posts.
-tools: Read, mcp__claude_ai_gateway__call_tool
+description: Alert Commander. Event-only MARKET alerts — position-danger and watchlist-opportunity only. No cycle headers, no scheduled posts. Writes only to docs/agent-memory/notebooks/alert-commander.md (cycle log, full overwrite). No other filesystem writes permitted.
+tools: Read, Write, Edit, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
 <!-- size-justification: 138L — atomic cowork agent with tightly-bound signal conviction matrix, regime tables, and channel routing; splitting yields <30L children for net negative token savings. -->

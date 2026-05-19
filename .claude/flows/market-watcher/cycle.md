@@ -91,7 +91,7 @@ Schema: `PriceAnomalyFindingDataSchema` in `apps/mcp-server/src/domain/signals/s
 
 Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
-**5. Notebook commit** — append to `docs/agent-memory/notebooks/market-watcher.md` (APPEND ONLY — each cycle adds a new `### Cycle` block):
+**5. Notebook commit** — Write (full overwrite) `docs/agent-memory/notebooks/market-watcher.md` per skill: `.claude/skills/notebook-write/SKILL.md`. Read existing notebook first to recover any `## Carry-over` items, then overwrite with fresh cycle body (target ≤50L, hard cap 80L):
 
 > Invariant: timestamp = current UTC, never future, never speculative. (UTC guard — Sprint 1865a pattern)
 
@@ -100,8 +100,7 @@ Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStd
 - NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
 - If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing
 
-### Header update (required every cycle)
-Before appending the `### Cycle` block, update line 3 of the notebook:
+### Notebook header (include in overwrite body, line 3)
 ```
 **Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
 ```

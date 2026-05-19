@@ -55,3 +55,19 @@ Step 2: Is tool name in my flow/cycle doc?
 **SSOT for tool names:** `.claude/tools/list/` (count → `jq '.toolCount' docs/data/project-stats.json` files). If a name has no matching file there, it does not exist.
 
 **Root cause:** Agents pattern-match tool names from training data or adjacent names. This creates phantom calls that fail silently or trigger false bug reports.
+
+---
+
+### Rule 6 — Anti-Discovery Enforcement
+
+6. Tool calls limited to those in your package file (`.claude/tools/package/<agent>.md`).
+   NEVER call `list_servers` / `search_tools` / `list_server_tools` at runtime — these are prohibited.
+   Anti-discovery violation = hard-fail immediately. No retry.
+   If a needed tool is not in your package → `post_agent_signal(to="po", signal_type="bug-escalation",
+   payload="Tool <name> missing from package — cannot proceed")` → EXIT cycle.
+
+**Forbidden write targets (cowork agents):**
+- NO `docs/tasks/TASKS.md`, NO `docs/handoffs/` files
+- NO `.claude/agents/*.md` or `.claude/flows/*.md`
+- NO `docs/data/system-map.json`, NO `docs/data/schedule.json`
+- ONLY permitted: `docs/agent-memory/notebooks/<own-id>.md` + `docs/signals/<signal-file>.json`

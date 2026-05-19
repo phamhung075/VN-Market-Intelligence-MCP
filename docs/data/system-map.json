@@ -11,6 +11,7 @@
     "microservices": [
       {
         "id": "mcp-server",
+        "mcp_server_name": "vn-market",
         "language": "ts",
         "runtime": "bun",
         "port": 3000,
