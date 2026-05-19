@@ -3,9 +3,9 @@
   "status": "in_progress",
   "currentSprint": "c212",
   "activeTaskId": "1955a+1951d",
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-19T20:59:00Z",
+  "nextAgent": "dev-mcp-server+ops",
+  "nextPrompt": "dev-mcp-server: run .claude/flows/dev-mcp-server/main.md for Task 1955a (dailyDashboardJob projectRoot fix, handoff docs/handoffs/TASK_1955a.md). ops: run .claude/flows/ops/main.md for Task 1951d (CronDelete 12 RemoteTriggers per docs/architecture-briefs/2026-05-18-cowork-team-command.md §8, create cowork-master-cron-runbook.md).",
+  "updatedAt": "2026-05-19T21:05:00Z",
   "updatedBy": "dev-team-c212",
-  "lastCompleted": "Cycle 212 (dev-team): PREFLIGHT clean. Drained 12 signals (1954a-done, 1956-multi-service-recovery, po-1955-sprint-plan, qa-1954a-approved, architect-bctc-rca, dev-frontend-1956, dev-rag-1956c, ops-1956b/d, pm-1954, po-1954-signoff — all stale/resolved). Gate check: OBSERVE-1951b CLOSED at 20:34Z (AC-6 PASS, zero double-publish). 1951d cutover UNBLOCKED → Todo. TASKS.md updated: OBSERVE-1951b→Done, Sprint-1956→Done (11/11 services), 1954a AC-3 PASS closed, stale 1953b-2 Backlog entry removed, SPIKE-1951f/1951g/1951k archived. TASKS.md=80 lines (invariant MET). Dispatching: dev-mcp-server→1955a (HIGH FIX: dailyDashboardJob path) + ops→1951d (XS: cutover 12 RemoteTriggers). WIP=2/2."
+  "lastCompleted": "Cycle 212 (dev-team): PREFLIGHT clean. Drained 12 signals (all stale/resolved). OBSERVE-1951b CLOSED (gate 20:34Z passed, AC-6 PASS). Sprint-1956 incident RESOLVED (11/11 services). 1954a AC-3 PASS (ops backfill 19 rows). TASKS.md trimmed to 80 lines. Dispatching parallel: dev-mcp-server→1955a (HIGH FIX) + ops→1951d (cutover, gate cleared). WIP=2/2. Commit a205c61c."
 }
