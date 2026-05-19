@@ -1,6 +1,19 @@
 <!-- size-justification: 167L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
+## Team Boundary (Sprint 1951c)
+
+This flow spawns ONLY dev-team agents:
+- **dev-core:** po, ba, architect, pm, developer, qa, fixer
+- **dev-zone:** dev-mcp-server, dev-api-gateway, dev-stock-price, dev-technical-analysis, dev-macro-indicators, dev-kinh-dich, dev-alert-engine, dev-pdf-extractor, dev-rag-service, dev-frontend, dev-mainserver-crawls, dev-vps-crawls
+- **ops** (type: ops) — shared infra lane; spawned on infra incident, not a cowork agent
+
+NEVER spawn cowork-team agents (news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, report-analyzer, qa-responder, market-analyst) from this flow.
+
+Cross-team work (e.g. cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The cowork-team flow reads the dashboard at its next cycle.
+
+Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
+
 ## Input
 `read_telegram_reports(status="new")` | Unresolved reports: `WHERE resolution NOT IN ('fixed','wontfix','duplicate') AND status='processed'` | docs/TASKS.md | git log (last 30 commits) | `git branch`
 
@@ -20,7 +33,7 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 | Spawn context | JUMP TO | Detail file |
 |---|---|---|
 | Cold start / cron tick | `preflight` | inline below |
-| HEAD.lock cleared / preflight pass | `drain-signals` | `drain-signals.md` |
+| HEAD.lock cleared / preflight pass | `drain-signals` | `drain-signals.md` (includes Step 0a-D: DASHBOARD.md cross-team drain) |
 | Pipeline resume (`in_progress`) | `pipeline-resume` | inline below |
 | FIX / direct task | `execute` | `execute-tier.md` |
 | Post-execution verification only | `post-cycle` | `post-cycle.md` |

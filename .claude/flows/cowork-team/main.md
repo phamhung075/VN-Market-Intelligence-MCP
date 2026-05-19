@@ -2,6 +2,18 @@
 
 # cowork-team — Master Cron Dispatcher
 
+## Team Boundary (Sprint 1951c)
+
+This dispatcher spawns ONLY cowork-team agents per `docs/data/cowork-schedule.json`:
+- **scheduled:** news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau
+- **demand-spawnable:** report-analyzer, qa-responder, market-analyst
+
+NEVER spawn dev-team agents (po, ba, architect, pm, developer, qa, fixer, dev-*, ops) from this dispatcher.
+
+Cross-team work (e.g. a cowork agent finds a code bug or needs a dev-team action): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The dev-team flow drains the dashboard (Step 0a-D in `drain-signals.md`) at its next cycle.
+
+Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
+
 Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/data/cowork-schedule.json`, matches current UTC ±2min, parallel-spawns all matching agents in one message block.
 
 <!-- decision: OQ-1 — Spawn primitive shape. Confirmed: same subagent_type pattern as dev-team. The `agent_id` field in cowork-schedule.json maps 1:1 to subagent_type in the Agent tool call. Spawn prompt = "run <flow_path>  slot=<slot_id>" (mirrors existing trigger_prompt field). No new spawn primitive needed — Claude Code CLI Agent tool is the mechanism, identical to how dev-team spawns po/ba/architect etc. -->
@@ -10,6 +22,15 @@ Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/
 
 **SSOT:** `docs/data/cowork-schedule.json`
 **Fail-loud protocol:** `docs/protocols/fail-loud-protocol.md`
+
+---
+
+## Step 0a — Drain `docs/signals/DASHBOARD.md` (cross-team inbox)
+
+Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
+Find all cowork-addressed sections (po, tran-ngoc-bau, unified-agent, alert-commander).
+Collect `status=NEW` rows → load payloads → route to matching agent slot at Step 5 or log for PO.
+Mark each processed row `NEW → READ`. If DASHBOARD.md missing → log `"[cowork-team] dashboard skip"` and continue. Never fail-loud on this step.
 
 ---
 

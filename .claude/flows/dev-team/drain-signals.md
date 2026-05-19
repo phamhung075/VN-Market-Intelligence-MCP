@@ -8,6 +8,15 @@ Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` | DB degradat
 
 ---
 
+**0a-D — Drain `docs/signals/DASHBOARD.md` (cross-team inbox):**
+
+Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
+Find `## po` section (or any dev-team-addressed section). Collect `status=NEW` rows.
+For each NEW row: load payload if present → append to `pendingSignals[]` with `source="dashboard"` → mark `NEW → READ`.
+If DASHBOARD.md missing or no dev-team section → log `"[dev-team] dashboard skip"` and continue. Never fail-loud on this step.
+
+---
+
 **0a-0 — Open signals.db:**
 ```
 db_path = docs/signals/signals.db

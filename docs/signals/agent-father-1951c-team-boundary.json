@@ -1,0 +1,25 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "boundary-enforced",
+  "sprint": "1951c",
+  "payload": {
+    "summary": "Team boundary rules added to dev-team and cowork-team dispatcher flows",
+    "files_changed": [
+      ".claude/flows/dev-team/main.md",
+      ".claude/flows/dev-team/drain-signals.md",
+      ".claude/flows/cowork-team/main.md"
+    ],
+    "changes": {
+      "dev_team_main": "Added ## Team Boundary section (≤20L): allowed dev-core + dev-zone + ops agents; NEVER cowork; NEVER maintenance. DASHBOARD.md cross-team pointer added.",
+      "dev_team_drain_signals": "Added Step 0a-D: DASHBOARD.md drain at cycle start using signal-dashboard skill § READ.",
+      "cowork_team_main": "Added ## Team Boundary section (≤20L): allowed scheduled + demand-spawnable cowork agents only; NEVER dev-team; NEVER maintenance. Added Step 0a: DASHBOARD.md drain before Step 1."
+    },
+    "ops_resolution": "ops type='ops' in system-map.json — NOT in cowork-schedule.json. Documented as shared infra lane in dev-team boundary only. Cowork agents escalate infra via DASHBOARD.md signal → dev-team routes to ops.",
+    "dashboard_drain_verified": true,
+    "dev_team_dashboard_step": "Step 0a-D in drain-signals.md",
+    "cowork_team_dashboard_step": "Step 0a in cowork-team/main.md"
+  },
+  "priority": "normal",
+  "createdAt": "2026-05-19T04:53:55Z"
+}
