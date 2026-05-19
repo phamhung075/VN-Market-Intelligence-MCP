@@ -43,7 +43,7 @@
       "agent_id": "unified-agent",
       "parallel_group": "chef",
       "flow_path": ".claude/flows/unified-agent/chef.md",
-      "trigger_prompt": "run .claude/flows/unified-agent/chef.md  slot=chef-intraday",
+      "trigger_prompt": "run .claude/flows/unified-agent/chef.md  slot=chef-intraday\nMCP: https://zenmidi.com/vn-market/mcp",
       "dish_type": "convergence_scan",
       "guaranteed": false,
       "depends_on": null,

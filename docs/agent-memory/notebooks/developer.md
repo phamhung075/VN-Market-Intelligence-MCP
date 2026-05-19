@@ -1,6 +1,23 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-18T05:00Z | **Cycle:** c177 | **Sprint:** 1941 — idle drain
+**Last updated:** 2026-05-19T00:00Z | **Cycle:** c178 | **Sprint:** 1952 — chef-intraday MCP URL fix
+
+## Session c178 — Task 1952f (chef-intraday trigger_prompt MCP URL)
+
+**Task:** 1952f — Append MCP URL to `chef-intraday` trigger_prompt in `docs/data/cowork-schedule.json`.
+
+**Root cause confirmed:** cowork-team/main.md Step 5 spawns unified-agent using `trigger_prompt` verbatim. The field lacked `\nMCP: https://zenmidi.com/vn-market/mcp`. Unified-agent exited without tools.
+
+**Narrowest-fix analysis:**
+- `news-scout-market`, `market-watcher-market`, `alert-commander-market` → `trigger_error: "API_MIN_INTERVAL"`, no `trigger_id`, produce results via master dispatcher already. NOT modified.
+- Only `chef-intraday` has the failure. One field change.
+
+**Files changed:**
+- `docs/data/cowork-schedule.json` — `chef-intraday.trigger_prompt` appended `\nMCP: https://zenmidi.com/vn-market/mcp`
+- `docs/TASKS.md` — 1952f added to Done
+- `docs/agent-memory/notebooks/developer.md` — this update
+
+**Pipeline state:** c178 DONE. Commit on main.
 
 ## Session c177 — Preflight + drain + idle
 
