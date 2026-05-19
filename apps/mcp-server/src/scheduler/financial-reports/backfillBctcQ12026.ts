@@ -51,15 +51,15 @@ export function backfillBctcQ12026(db = getDb()): number {
 
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO bctc_vps_queue
-      (ticker, year, quarter, source_url, status, attempts, created_at)
+      (action_code, period_year, period_quarter, source_url, status, attempts, created_at)
     VALUES
-      (?, 2026, 'Q1', ?, 'pending', 0, datetime('now'))
+      (?, ?, ?, ?, ?, ?, datetime('now'))
   `);
 
   let inserted = 0;
   for (const ticker of tickers) {
     const placeholderUrl = `${PLACEHOLDER_URL_BASE}/${ticker}/${ticker}_2026_Q1.pdf`;
-    const result = stmt.run(ticker, placeholderUrl) as { changes: number };
+    const result = stmt.run(ticker, 2026, "Q1", placeholderUrl, "pending", 0) as { changes: number };
     inserted += result.changes;
   }
 
