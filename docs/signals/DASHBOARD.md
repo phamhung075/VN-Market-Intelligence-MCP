@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-19T20:50Z (system-auditor Tier-1 — 2026-05-19 20:50 UTC: CRITICAL outage RESOLVED; 11/11 containers UP)_
+_Updated: 2026-05-19T21:02Z (system-auditor Tier-1 — 2026-05-19 21:02 UTC: HEALTHY; 9/9 core services UP; 1 CRON persistent error)_
 
 ---
 
