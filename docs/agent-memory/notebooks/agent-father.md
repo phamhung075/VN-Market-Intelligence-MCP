@@ -1,113 +1,33 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-18 (Sprint 1951 / 1951h — market-watcher prepost dispatch DONE)
-**Sprint:** 1951 Phase 2 (1951h DONE — prepost window + threshold floor)
+**Last updated:** 2026-05-19 | **Sprint:** 1951b (tool packages + notebook-write capability)
 
-## This Session — 2026-05-18 (Sprint 1951 / 1951h market-watcher prepost)
+## This Session — 2026-05-19 (Sprint 1951b cowork tool packages)
 
-**Task: 1951h — market-watcher prepost dispatch (Option 2: reuse cycle.md with prepost floor)**
+**Task: 1951b — cowork tool-packages + notebook-write capability**
 
-Source: PO decision brief `docs/signals/po-1951-prepost-decision.json`.
-Decision: reuse cycle.md (DRY, no prepost.md duplicate). Add prepost row to dispatcher + threshold floor.
+Source: architect brief `docs/architecture-briefs/2026-05-19-cowork-tool-packages.md` + signal `docs/signals/agents-architect-1951b-tool-packages-brief.json`.
 
-Files edited:
-- `.claude/flows/market-watcher/main.md` — added prepost row (01:00-02:00 + 08:31-15:55 UTC Mon-Fri) routing to cycle.md with mode=prepost; evaluation order: market first, then prepost, then EOD, then EXIT
-- `.claude/flows/market-watcher/cycle.md` — added prepost floor after regime adaptive-threshold block: sigma_threshold=max(σ,2.5), volume_multiplier=max(v,2.5x)
+Files edited (13, single commit 80768093):
+- `.claude/tools/package/market-analyst.md` — full rewrite; 7 missing tools added with full gateway grammar + anti-discovery + failure modes
+- `.claude/skills/anti-hallucination/SKILL.md` — Rule 6 appended: anti-discovery hard-fail + forbidden write targets
+- `.claude/tools/package/tran-ngoc-bau.md` — anti-discovery clause added per brief §8
+- `docs/data/system-map.json` — `mcp_server_name: "vn-market"` added to mcp-server microservice entry
+- `.claude/agents/alert-commander.md`, `news-scout.md`, `market-watcher.md`, `financial-analyst.md`, `digest-predict.md`, `unified-agent.md`, `report-analyzer.md`, `qa-responder.md` — Write+Edit added to tools:; scope note added to description:
+- `.claude/flows/market-watcher/cycle.md` — Step 5 APPEND-ONLY drift fixed → Write (full overwrite)
 
-AC trace:
-- AC-1: prepost slot now matched (01:00-02:00 + 08:31-15:55 UTC Mon-Fri) → cycle.md dispatched, not BLOCKED
-- AC-2: mode=prepost → floor lifts sigma to ≥2.5σ and volume to ≥2.5x regardless of regime
-- AC-3: channel rule unchanged (MARKET=EOD only in cycle.md header, gatherer policy intact)
-- AC-4: off-hours duplicate guard (Step 4, AutoCure 2026-05-14 TNB c47) untouched — still suppresses same-close re-emissions
-- AC-5: next */30 prepost fire will hit the new row → return DONE not BLOCKED
+OQ-1 carried forward: `get_financial_summary` existence in vn-market — qa must verify.
+OQ-2 carried forward: `macro_*` tool name convention — qa must verify against `.claude/tools/list/`.
+Signal emitted: `docs/signals/agent-father-1951b-tool-packages-impl.json`.
 
----
+## Carry-over
 
-## This Session — 2026-05-18 (Sprint 1951 / 1951b cowork-team master cron)
-
-**Task: 1951b — cowork-team master cron dispatcher (dev-team pattern transfer)**
-
-Source: handoff from agents-architect (`docs/architecture-briefs/2026-05-18-cowork-team-command.md`).
-Pivot reason: RemoteTrigger API_MIN_INTERVAL blocks sub-hourly slots; Claude Desktop cannot spawn subagents.
-Solution: single `*/15 * * * *` CronCreate in Claude Code CLI, reads schedule.json, parallel-spawns.
-
-Files created:
-- `.claude/commands/cowork-team.md` (AC-1)
-- `.claude/flows/cowork-team/main.md` (AC-2 — match algo + parallel-spawn + telemetry + collision guard)
-- `.claude/commands/crons/cron-cowork-team.md` (AC-3 registration template)
-
-Files updated:
-- `docs/data/cowork-schedule.json` — added agent_id + parallel_group to all 17 slots; updated _runtime + _maintained_by
-- `docs/standards/cron-jobs.md` — added cowork-team row to Dev-Team + Ops Agent Crons table
-- `docs/references/workflow-map.md` — added cowork-team note to Related section
-
-OQ-1 resolved: agent_id → subagent_type (Agent tool). Same as dev-team pattern. Documented inline.
-OQ-2 resolved: collision-detection guard in Step 4b — WARNING to WORK, never blocks spawns.
-
-Signal: `docs/signals/agent-father-1951-cowork-team-impl.json`
-AC-3 pending: router must register the actual CronCreate (agent-father does NOT register crons).
-
----
-
-## This Session — 2026-05-18 (Sprint 1951 / 1951a RemoteTrigger creation)
-
-**Task: 1951a — Create 16 RemoteTriggers for cowork schedule**
-
-Result: PARTIAL SUCCESS (12/16 created, 4 failed)
-
-Triggers created (12):
-- chef-morning: trig_019nwLpkYELqFdE1DZaRhPUk
-- chef-intraday: trig_015M6yJMwShWmVcm6XNpVQ3U
-- chef-eod: trig_011HNsRMNiQwa3vNwN1b9Anh
-- chef-evening: trig_01CLotVE4XinDFxM2jErUCir
-- digest-sunday: trig_014GzK19w1ZNpwnRjA91ce3P
-- tnb-audit: trig_01LpUxJ98v2aK22FqLSBtL1G
-- financial-analyst-morning: trig_01Du7kZ59vzagGh5GvkTY3Gi
-- financial-analyst-midday: trig_011JSNKJEMs5fQwGCmLUkuWT
-- news-scout-offhours: trig_01Mooo3zi5MFysRAWsHwaztd
-- news-scout-sentiment: trig_016gauuJbAhdbzNcA3LYCFSh
-- market-watcher-offhours: trig_01W62B3yS7AERMwsGrap4e7U
-- market-watcher-eod: trig_01PUAqNa8gMWRjc6DWqcV7xh
-
-Failed (4) — new API constraint discovered:
-- news-scout-market (*/15 2-8 * * 1-5): API min-interval=1h, rejected
-- market-watcher-market (*/15 2-8 * * 1-5): API min-interval=1h, rejected
-- market-watcher-prepost (*/30 * * * 1-5): API min-interval=1h, rejected
-- alert-commander-market (*/15 2-8 * * 1-5): API min-interval=1h, rejected
-
-Key finding: RemoteTrigger API enforces minimum 1-hour interval (not documented in SPIKE-1951a).
-SPIKE-1951a only verified syntax support, not API runtime constraint.
-Sub-hourly slots need workaround: either CronCreate session-based fallback or hourly+watchdog.
-
-Technical: Used `claude -p --allowedTools RemoteTrigger --model claude-haiku-4-5` subprocess
-to call RemoteTrigger. Native Claude Code tool accessible when tengu_surreal_dali flag enabled.
-Drifted trigger (news-scout-market `0 2-8 * * 1-5`) created by model silently — disabled.
-
-Files: EDIT docs/data/cowork-schedule.json (trigger_id + trigger_error per slot), EDIT docs/TASKS.md
-Commit: bb4ed0c3
-
----
-
-## Carry-over (Sprint 1950 T1-T5 + MAINT-b/c/d)
-
-All 2026-05-18 Sprint 1950 tasks DONE. See git log for commits:
-- 1950-T1 chef.md telemetry (f4688989)
-- 1950-T2 coverage audit (ad68cf5c + d307d294)
-- 1950-T3 chef runbook (0e3c96c9 + 1d425787)
-- 1950-T4 TNB cron hotfix (2c01f9a3)
-- 1950-T5 digest-predict finalization (3c560cab + af3b22d0)
-- MAINT-b/c/d notebook archival + YELLOW fixes (d5c78d45)
-
----
+- OQ-1: get_financial_summary — needs qa verification against live tool list
+- OQ-2: macro_* naming convention — needs qa verification
 
 ## Patterns Noticed
 
-- Concurrent agents modify TASKS.md mid-session — re-read before staging.
-- HEAD SHA changes between calls when concurrent agents commit — `git diff` before stage.
-- TASKS.md cap: rotate Done rows to TASKS_ARCHIVE.md when file grows large.
-- Cron file edits do NOT auto-refresh live cron — CronDelete + CronCreate required same session.
-- Archive files may exist from earlier same-day sessions — check before creating duplicates.
-- Live notebooks may already be truncated by prior sessions; always check actual wc -l first.
-- Notebook archival: copy full file first, then overwrite with slim version — never truncate in-place without backup.
-- RemoteTrigger: must use claude CLI subprocess, not Bash directly. Haiku model may silently drift cron — verify.
-- API min-interval=1h enforced at runtime — test constraints empirically, don't rely on syntax-only SPIKE findings.
+- docs/data/ may have a gitignore rule applied by other tools; use `git add -f` for tracked files that surface the warning.
+- Concurrent agents leave pre-staged files (TASKS.md, notebooks, schedule.json) — always check `git status` before staging to avoid polluting the sprint commit.
+- market-watcher cycle.md had both Step 5 label AND "Header update" block referencing APPEND — both needed fixing.
+- agent-md-factory skill does not exist as a file in this repo; pattern is applied from memory rule.
