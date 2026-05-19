@@ -1,5 +1,50 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-19 | **Sprint:** 1951b | **Session:** c201 — Sprint 1951b tool-packages — CHANGES_REQUESTED
+
+## Session 2026-05-19 c201 — Sprint 1951b tool-packages (CHANGES_REQUESTED)
+
+### TASK REPORT — Sprint 1951b (compact)
+
+```
+date: 2026-05-19
+outcome: CHANGES_REQUESTED
+commit reviewed: 80768093
+files: 13
+type: FEAT — tool packages, anti-hallucination Rule 6, notebook-write capability, market-watcher drift fix
+round: 1
+```
+
+#### Part Results
+
+| Part | Check | Result |
+|------|-------|--------|
+| A1 | market-analyst.md 7 tools with server/args/example/failure | PASS |
+| A2 | anti-hallucination Rule 6 present + forbidden targets | PARTIAL (path wrong) |
+| A3 | tran-ngoc-bau.md anti-discovery clause | PASS |
+| A4 | system-map.json mcp_server_name: vn-market | PASS |
+| B | All 8 agents Write+Edit in tools + scope description | PASS |
+| C | market-watcher cycle.md Step 5 — APPEND-ONLY removed, notebook-write ref | PASS |
+| D/OQ-1 | get_financial_summary — no tools/list definition file (phantom) | BLOCK |
+| D/OQ-2 | get_macro_snapshot — no tools/list definition file (may be deprecated) | BLOCK |
+
+#### Blocking Issues
+
+- BLOCK-1: `.claude/skills/anti-hallucination/SKILL.md:70` — TASKS.md path wrong (`docs/tasks/TASKS.md` → real path is `docs/TASKS.md`). Fixer: 1-char fix.
+- BLOCK-2: `.claude/tools/package/market-analyst.md:141` — `get_financial_summary` phantom tool (no tools/list definition, marked legacy). Architect must confirm existence before fixer can act.
+- BLOCK-3: `.claude/tools/package/market-analyst.md:69` — `get_macro_snapshot` no tools/list definition; `market-data_marketContext.md:80` shows superseded by `get_market_context`. Architect must confirm.
+
+#### Non-Blocking
+
+- NB-1: system-map.json `mcp_server_name` field present but jq path in brief is wrong (field is nested, not at `.services."mcp-server"`).
+- NB-2: `get_bctc_full` documented in financial-reports.md, no standalone .md — non-blocking.
+
+- **actions**: CHANGES_REQUESTED. Report at docs/handoffs/sprint-1951b-tool-packages-qa-report.md. Signal at docs/signals/qa-1951b-changes-requested.json.
+- **next_cycle_hint**: BLOCK-1 = fixer trivial (1 path string). BLOCK-2 + BLOCK-3 need architect decision first (tool existence on vn-market server). Route to architect before fixer for BLOCK-2/3.
+- **estimated_tokens**: 5200
+
+---
+
 **Last updated:** 2026-05-18 | **Sprint:** 1951 | **Session:** c200 — Sprint 1951 cowork-team Round 2 — APPROVED
 
 ## Session 2026-05-18 c200 — Sprint 1951 cowork-team Round 2 (APPROVED)

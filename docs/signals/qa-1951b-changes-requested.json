@@ -1,0 +1,56 @@
+{
+  "from": "qa",
+  "to": "fixer",
+  "type": "changes-requested",
+  "slug": "qa-1951b-changes-requested",
+  "sprint": "1951b",
+  "commit_reviewed": "80768093",
+  "createdAt": "2026-05-19T00:00:00Z",
+  "verdict": "CHANGES_REQUESTED",
+  "round": 1,
+  "payload": {
+    "report": "docs/handoffs/sprint-1951b-tool-packages-qa-report.md",
+    "blocking_issues": [
+      {
+        "id": "BLOCK-1",
+        "severity": "HIGH",
+        "file": ".claude/skills/anti-hallucination/SKILL.md",
+        "line": 70,
+        "issue": "Wrong TASKS.md path: 'docs/tasks/TASKS.md' does not exist. Real path is 'docs/TASKS.md'. Forbidden target rule fails to protect the real file.",
+        "fix": "Change 'docs/tasks/TASKS.md' to 'docs/TASKS.md' on line 70.",
+        "owner": "fixer"
+      },
+      {
+        "id": "BLOCK-2",
+        "severity": "HIGH",
+        "file": ".claude/tools/package/market-analyst.md",
+        "line": 141,
+        "issue": "get_financial_summary documented as active tool but has no .claude/tools/list/get_financial_summary.md. Referenced as '(legacy)' in financial-reports.md:309 only. Phantom tool — will cause MCP errors if called.",
+        "fix": "Architect must confirm tool existence on vn-market server. If exists: add tools/list/get_financial_summary.md. If absent: remove from market-analyst package, document alternative (get_bctc_full covers KPIs).",
+        "owner": "architect"
+      },
+      {
+        "id": "BLOCK-3",
+        "severity": "HIGH",
+        "file": ".claude/tools/package/market-analyst.md",
+        "line": 69,
+        "issue": "get_macro_snapshot listed as primary macro tool but has no .claude/tools/list/get_macro_snapshot.md. market-data_marketContext.md:80 shows it was superseded by get_market_context compound tool. Package may direct agents to a deprecated/removed tool.",
+        "fix": "Architect must confirm: (a) does get_macro_snapshot still exist on vn-market server? If yes: add tools/list/get_macro_snapshot.md. If no: replace with get_market_context in market-analyst package.",
+        "owner": "architect"
+      }
+    ],
+    "non_blocking": [
+      {
+        "id": "NB-1",
+        "note": "system-map.json mcp_server_name exists under microservice entry (functional PASS). Brief jq path .services.mcp-server.mcp_server_name returns null — path in brief is wrong but field is present."
+      },
+      {
+        "id": "NB-2",
+        "note": "get_bctc_full has no standalone get_bctc_full.md in tools/list but is fully documented in financial-reports.md. Non-blocking."
+      }
+    ],
+    "parts_passing": ["A1_7tools_present", "A2_rule6_present", "A3_tran-ngoc-bau_anti-discovery", "A4_mcp_server_name", "B_all_8_agents_Write_Edit", "C_market-watcher_no_APPEND-ONLY"],
+    "architect_decision_needed": true,
+    "architect_question": "BLOCK-2: does get_financial_summary exist on vn-market MCP server? BLOCK-3: does get_macro_snapshot still exist or was it removed when get_market_context was introduced?"
+  }
+}
