@@ -61,7 +61,7 @@ for r in cur.fetchall(): print(r[0], r[1][:120])
 ### B. `pdftoppm` missing → OCR silently disabled
 - **Symptom:** `isOcrAvailable()` returns false; scanned PDFs produce 0 chars with no retry
 - **Fix:** `docker exec mcp-server-1 apt-get install -y poppler-utils`
-- **Permanent fix:** Already added to `apps/mcp-server/Dockerfile` (2026-04-27)
+- **Permanent fix:** Added to `apps/mcp-server/Dockerfile` (2026-05-19, sprint 1953b). The 2026-04-27 runbook claim was aspirational — the Dockerfile header comment stated "tesseract and poppler are skipped" and the apt-get install block never included these packages until 1953b.
 - **Note:** `isOcrAvailable()` is module-level cached — container restart needed after install
 
 ### C. Ops agent false positive: "44/45 url=MISSING"
@@ -112,7 +112,7 @@ console.log(JSON.stringify(r));
 | `apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts` | Extracts text, runs pipeline for stranded PDFs |
 | `apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts` | pdftoppm + tesseract OCR, SQLite cache |
 | `apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts` | Full parse→store pipeline |
-| `apps/mcp-server/Dockerfile` | Must include `poppler-utils` for pdftoppm |
+| `apps/mcp-server/Dockerfile` | Must include `poppler-utils` (pdftoppm) + `tesseract-ocr` + `tesseract-ocr-vie` (sprint 1953b) |
 
 ---
 

@@ -1,0 +1,57 @@
+{
+  "signal_id": "dev-mcp-server-1953b-dockerfile-ocr",
+  "agent": "dev-mcp-server",
+  "sprint": "1953b",
+  "generated_at": "2026-05-19T00:00:00Z",
+  "task": "Restore poppler-utils + tesseract OCR deps in mcp-server Dockerfile",
+
+  "diagnosis": {
+    "runbook_claim": "poppler-utils was added to Dockerfile on 2026-04-27",
+    "actual_state_before_patch": "ASPIRATIONAL — the Dockerfile header comment at line 4 explicitly read 'tesseract and poppler are skipped — PDF OCR falls back to the pdf-extractor microservice'. The apt-get install block contained only: python3, python3-pip, python3-dev, build-essential, fonts-liberation, libxss1, curl. Neither poppler-utils nor tesseract-ocr were ever present.",
+    "conclusion": "Missing from Dockerfile (not a build/cache issue). The 2026-04-27 runbook claim was aspirational, not actual. The package was never added to the apt-get install line.",
+    "impact": "All image-based (scanned) PDFs fail extraction silently. GAS/EIB/DHG/FPT Q1-2026 PDFs (all image-based, 2.6–17MB) have reparse_attempts=2 each with no extracted financial_reports rows."
+  },
+
+  "dockerfile_before_state": {
+    "header_comment_line_4": "# NOTE: tesseract and poppler are skipped — PDF OCR falls back to the",
+    "header_comment_line_5": "# pdf-extractor microservice.",
+    "apt_get_packages": ["python3", "python3-pip", "python3-dev", "build-essential", "fonts-liberation", "libxss1", "curl"],
+    "ocr_packages_present": false
+  },
+
+  "dockerfile_after_diff": {
+    "removed_from_header": [
+      "# NOTE: tesseract and poppler are skipped — PDF OCR falls back to the",
+      "# pdf-extractor microservice."
+    ],
+    "added_to_apt_get_install": ["poppler-utils", "tesseract-ocr", "tesseract-ocr-vie"],
+    "layer_pattern": "Single RUN apt-get update && apt-get install -y --no-install-recommends ... && rm -rf /var/lib/apt/lists/* (unchanged pattern, packages appended)",
+    "files_changed": [
+      "apps/mcp-server/Dockerfile",
+      "docs/protocols/bctc-extraction-runbook.md"
+    ]
+  },
+
+  "local_verify_output": "needs ops verify — Docker not available for build verification in this agent context",
+
+  "ops_verification_steps": [
+    "docker build -f apps/mcp-server/Dockerfile -t mcp-server:1953b . (run from monorepo root, build context is .)",
+    "docker run --rm mcp-server:1953b which pdftoppm tesseract",
+    "  → expected: /usr/bin/pdftoppm and /usr/bin/tesseract (both must print paths)",
+    "docker run --rm mcp-server:1953b tesseract --list-langs | grep vie",
+    "  → expected: vie (Vietnamese OCR model present)",
+    "After container rebuild + redeploy, trigger reparse:",
+    "  docker exec vn-market-mcp-server-1 bun -e \"const { runBctcReparseJob } = await import('./src/scheduler/financial-reports/bctcReparseJob.js'); const r = await runBctcReparseJob(); console.log(JSON.stringify(r));\"",
+    "  → expected: ≥1 of GAS/EIB/DHG/FPT Q1-2026 PDFs extracted to financial_reports"
+  ],
+
+  "runbook_correction": {
+    "file": "docs/protocols/bctc-extraction-runbook.md",
+    "section": "Known Failure Modes — B. pdftoppm missing",
+    "corrected": "2026-04-27 claim marked as aspirational. Actual fix applied 2026-05-19 sprint 1953b."
+  },
+
+  "commit_hash": "pending — see git log after commit",
+
+  "next": "NEXT: ops | rebuild mcp-server container + verify pdftoppm/tesseract present + retry bctcReparseJob on GAS/EIB/DHG/FPT"
+}

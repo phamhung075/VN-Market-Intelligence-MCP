@@ -1,8 +1,6 @@
 # ── VN Market Intelligence MCP Server ─────────────────────────────────────
 # Runtime: Bun (glibc build, required by @lancedb and better-sqlite3 native binaries)
 # Build context: monorepo root (docker-compose.yml sets context: .)
-# NOTE: tesseract and poppler are skipped — PDF OCR falls back to the
-# pdf-extractor microservice.
 # python3 + vnstock are REQUIRED: vnstockBridge.ts spawns python3 subprocess
 # to call the VCI backend for prices, financials, officers, and news.
 # Chromium: installed via Ubuntu apt at runtime if chromium-browser snap is
@@ -40,6 +38,9 @@ RUN apt-get update -qq && \
       fonts-liberation \
       libxss1 \
       curl \
+      poppler-utils \
+      tesseract-ocr \
+      tesseract-ocr-vie \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Python packages — vnstock for VCI backend data ───────────────────────
