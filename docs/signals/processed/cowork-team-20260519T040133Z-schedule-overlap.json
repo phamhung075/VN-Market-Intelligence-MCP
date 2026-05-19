@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "schedule-design-observation",
+  "payload": {
+    "fire_time": "20260519T040133Z",
+    "observation": "At 04:00 UTC weekday boundary, 3 cron expressions overlap for the same agent_ids:",
+    "overlaps": [
+      {
+        "agent": "news-scout",
+        "competing_slots": [
+          {"slot_id": "news-scout-market", "cron": "*/15 2-8 * * 1-5"},
+          {"slot_id": "news-scout-offhours", "cron": "0 */4 * * *"}
+        ],
+        "boundary_minutes_per_day": [0, 240, 480]
+      },
+      {
+        "agent": "market-watcher",
+        "competing_slots": [
+          {"slot_id": "market-watcher-market", "cron": "*/15 2-8 * * 1-5"},
+          {"slot_id": "market-watcher-prepost", "cron": "*/30 * * * 1-5"},
+          {"slot_id": "market-watcher-offhours", "cron": "0 */4 * * *"}
+        ],
+        "boundary_minutes_per_day": "3x daily overlap at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00"
+      }
+    ],
+    "impact": "Wasteful spawns — same agent runs 2-3x at boundary ticks. Internal dedup gates mitigate signal duplication but consume tokens. R3 (allow multi-fire) means dispatcher cannot deduplicate.",
+    "recommendation_options": [
+      "A. Add exclusion logic to cron expressions (e.g., offhours = `0 */4 * * 0,6` for weekends-only, market = `*/15 2-8 * * 1-5` unchanged)",
+      "B. Add mutual-exclusion field to cowork-schedule.json (e.g., `priority` — lower-priority slot skips when higher fires) — requires matcher script update",
+      "C. Accept overlap as-is — agents already dedupe; token cost acceptable. Document in brief §5 R3 as expected behavior."
+    ],
+    "non_blocking": true,
+    "suggested_sprint": "1951k (after 1951i lands)"
+  },
+  "priority": "low",
+  "createdAt": "20260519T040133Z"
+}

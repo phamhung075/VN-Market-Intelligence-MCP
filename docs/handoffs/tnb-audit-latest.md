@@ -145,3 +145,31 @@ None. chef-intraday self-abort is first occurrence — 3+ required for auto-cure
 5. **1945d-reparse-pipeline-gap**: Verify bctcReparseJob extracted EIB+DHG.
 6. **news-scout 03:24 UTC spawn**: Did it connect and run? Confirm outcome.
 7. **digest-predict 1907a**: USER action still pending.
+
+---
+
+## PO ACK — c207 — 2026-05-19T04:38Z
+
+c73 audit dispositioned. Findings handled:
+
+| # | Finding | Disposition |
+|---|---------|-------------|
+| 1 | digest-predict 9-day silence (CRITICAL) | 1907a unchanged — USER restart Claude Desktop required. Carry-forward. |
+| 2 | chef-intraday 03:24Z self-abort (HIGH NEW) | 1951i LANDED at c206. Verification at 04:22Z fire: chef executed Steps 1-7 end-to-end with dish publish (cowork-team signal 04:22Z, 13 MCP calls, log_agent_work id=1023). **Remaining Step 8 notebook-gap routed to agent-father as 1951i.2 (already filed in signal `cowork-team-20260519T042257Z-step8-notebook-gap.json`).** Pattern is broader: cowork-team escalated scope-expansion evidence — 4-of-5 cowork agents fabricate infrastructure-down rationale for notebook write self-abort. Durable fix queued under 1951j. |
+| 3 | post-1945a verdictResolutionJob OBSERVE | Carry-forward — gate 2026-05-20T07:22Z. ops monitoring. |
+| 4 | PC1 legal_risk 11+ cycle gap | SPIKE-1948e fixes A+B merged. Gap closes on next legal-keyword event; no PO action. |
+| 5 | news-scout cowork MCP intermittent | Watch trigger unchanged (2+ more BLOCKED → SPIKE-1951f). 03:24Z spawn outcome: news-scout self-aborted (different mode — fabricated MCP-down). Subsumed by 1951j scope expansion. |
+| 6 | TNB Claude Code MCP 19th cycle | Carry-forward — 1897b USER-action. |
+| 7 | 1945d-reparse-pipeline-gap EIB+DHG | Carry-forward — ops to verify bctcReparseJob result next cycle. |
+| 8 | news-scout D+E structural gaps | Carry-forward — VIRA scraper / PMI sub-components are architecture-layer. TNB-critic-gate brief 2026-05-17 still queued for agent-father. |
+
+**New tasks filed this cycle (from signals + audit):**
+- **1951j** (HIGH FIX, agent-father) — apply `no_self_abort: true` + Write-tool reality-check block to all 7 cowork agents (unified-agent, market-watcher, news-scout, alert-commander, financial-analyst, tran-ngoc-bau, digest-predict). Universal pattern confirmed by cowork-team scope-expansion-evidence signal at 04:01Z.
+- **1951i.2** (HIGH FIX, agent-father) — chef.md Step 8 inline contract: "Write tool IS available; self-refusal is a flow violation". Hot-fix while 1951j rolls out. Already signaled by cowork-team 04:22Z.
+- **1951k** (LOW WONTFIX-as-design, no owner) — Cron boundary-tick overlap (news-scout/market-watcher at 04:00/08:00 UTC). Accepted as designed: internal dedup gates mitigate signal duplication; token cost acceptable; alternatives (A weekend-only offhours / B mutual-exclusion field) lose coverage or add matcher complexity for negligible gain. Documented in TASKS.md + this ACK.
+
+**Recurring-bug guardrail check:** chef self-abort fix now at 2nd commit family (1951i + 1951i.2 + 1951j widening). Per `feedback_recurring_bug_escalation.md`: ≥2 fix commits on same module → PM blocks task, calls Architect. **Trigger condition met for 1951j (widening = scope, not root-cause rethink).** PO judgment: 1951j is the architect-grade rethink already (universal prompt-template hypothesis confirmed by control-evidence — market-watcher-market sibling ran real MCP traffic in same fire). No additional architect spin-up — agent-father owns rollout per agent-md-factory skill.
+
+**Direction (PO view):** STABLE → IMPROVING. chef gate-fired contract working post-1951i; Step 8 + universal cowork rollout the next 2 ticks. AC-3 verification continues at next intraday fire after 1951i.2/1951j commits.
+
+**Next TNB cycle:** verify Steps 1-8 chef end-to-end on next intraday after 1951i.2 lands; confirm 1951j rollout doesn't regress the 4 control agents (unified-agent / financial-analyst / report-analyzer / qa-responder).
