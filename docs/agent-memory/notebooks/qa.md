@@ -1,5 +1,40 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-19 | **Sprint:** 1954a | **Session:** c211 — Task 1954a hotfix round-1 — APPROVED
+
+## Session 2026-05-19 c211 — Task 1954a hotfix column-name fix (APPROVED)
+
+### TASK REPORT — 1954a (compact)
+
+```
+date: 2026-05-19
+outcome: APPROVED
+commit reviewed: 2a5cc2a7
+files: 1 (backfillBctcQ12026.ts:52-62, 3 lines changed)
+type: HOTFIX — INSERT column names renamed to match schema DDL
+round: 1
+zone: apps/mcp-server/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| AC-1: bun tsc --noEmit | PASS (0 errors, 0 output) |
+| AC-2: full suite no regressions | PASS (9712 pass / 348 fail; file has 0 test callers) |
+| AC-3: ops container manual backfill | DEFERRED to ops |
+| Schema match (7 columns vs DDL) | PASS — all columns + types verified |
+| DDD: scheduler importing infra/db | PASS (correct DDD layer) |
+| Security: Bun.env, parameterized SQL | PASS |
+| Diff scope: 1 file only | PASS — no scope creep |
+| Commit message convention | PASS — fix(1954a/mcp-server): correct type+scope |
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1954a.md. Signal: docs/signals/qa-1954a-approved.json. TASKS.md: 1954a moved from Review → Done. WIP freed for 1955a + 1955b dispatch.
+- **next_cycle_hint**: ops must close AC-3 (docker compose exec mcp-server bun run backfillBctcQ12026.ts, verify ≥1 row with correct columns). pm may now dispatch 1955a (dailyDashboardJob projectRoot fix) + 1955b (zombie cron_job_runs reap) — both were WIP-gated on 1954a-done.
+- **estimated_tokens**: 3600
+
+---
+
 **Last updated:** 2026-05-19 | **Sprint:** 1951e | **Session:** c210 — Sprint 1951e chef-synthesize — APPROVED
 
 ## Session 2026-05-19 c210 — Sprint 1951e chef-synthesize (APPROVED)

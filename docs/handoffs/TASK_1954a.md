@@ -151,3 +151,63 @@ HANDOFF: docs/handoffs/TASK_1954a.md
 SIGNAL:  docs/signals/dev-mcp-server-1954a-impl-done.json
 ```
 
+---
+
+## [QA] Review Record — Round 1
+
+- **Date:** 2026-05-19
+- **Reviewer:** qa
+- **Commit reviewed:** `2a5cc2a7`
+- **Round:** 1
+- **Verdict:** APPROVED
+
+### AC Verification
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-1 | tsc 0 errors (`bun tsc --noEmit` in `apps/mcp-server/`) | PASS — 0 output, exit 0 |
+| AC-2 | No regressions — full suite baseline preserved | PASS — 9712 pass / 348 fail (within documented range 279–350; no new failures attributable to this change; file has zero test-suite callers) |
+| AC-3 | Manual backfill in container (≥1 row with correct columns) | DEFERRED to ops per verification chain |
+
+### Pipeline Results
+
+| Check | Result |
+|-------|--------|
+| bun tsc --noEmit | 0 errors |
+| bun test (full suite) | 9712 pass / 348 fail / 53 skip — baseline variance, no regression |
+| Diff scope | 1 file, 3 lines changed — exactly as specified |
+| DDD scan | PASS — `scheduler/` importing `infrastructure/db/` is correct DDD pattern; `src/domain/` has zero infra imports (verified) |
+| Security scan | PASS — uses `Bun.env` (not `process.env`); VPS IP is documented architecture endpoint, not a secret; all SQL uses parameterized queries (`?` placeholders); no hardcoded credentials |
+
+### Schema Match Verification (AC-1 manual check)
+
+Confirmed column-by-column against `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts:122-133`:
+
+| INSERT column | Schema column | Type | Match |
+|---|---|---|---|
+| `action_code` | `action_code TEXT NOT NULL` | TEXT | PASS |
+| `period_year` | `period_year INTEGER NOT NULL` | INTEGER | PASS — bound as `2026` (number) |
+| `period_quarter` | `period_quarter TEXT NOT NULL` | TEXT | PASS — bound as `'Q1'` (string) |
+| `source_url` | `source_url TEXT` | TEXT | PASS |
+| `status` | `status TEXT NOT NULL DEFAULT 'pending'` | TEXT | PASS |
+| `attempts` | `attempts INTEGER NOT NULL DEFAULT 0` | INTEGER | PASS — bound as `0` (number) |
+| `created_at` | `created_at TEXT NOT NULL DEFAULT (datetime('now'))` | TEXT | PASS — uses SQL `datetime('now')` |
+
+UNIQUE constraint `(action_code, period_year, period_quarter)` — INSERT OR IGNORE semantics correctly handle idempotency.
+
+### Non-Blocking Notes
+
+- Bun runtime crash (OOM/C++ exception) occurred after test summary printed. This is a known Bun v1.3.13 issue on large test suites with high RSS (2.04GB peak). Not attributable to the change.
+- No new tests authored for this hotfix — acceptable per handoff §AC-1: "a unit test is welcome but not strictly required for the hotfix".
+
+### Next Step (ops AC-3)
+
+```
+NEXT: ops | run one-shot manual backfill in container:
+  docker compose exec mcp-server bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts
+  then: SELECT action_code, period_year, period_quarter, status, attempts FROM bctc_vps_queue LIMIT 5;
+  verify: ≥1 new row with action_code=ticker, period_year=2026, period_quarter='Q1', status='pending', attempts=0
+HANDOFF: docs/handoffs/TASK_1954a.md
+SIGNAL:  docs/signals/qa-1954a-approved.json
+```
+
