@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-API_URL="https://zenmidi.com/api/push-bctc-pdf"
-QUEUE_URL="https://zenmidi.com/api/bctc-fetch-queue?skip_enrichment=true"
+API_URL="https://zenmidi.com/vn-market/api/push-bctc-pdf"
+QUEUE_URL="https://zenmidi.com/vn-market/api/bctc-fetch-queue?skip_enrichment=true"
 API_KEY="38955a0a253435cdaa44f5a705ad925d1ec756585a66fe5494dcd867b6d34197"
 LOG="/var/log/vn-bctc-fetch.log"
 MAX_PDF_BYTES=52428800
@@ -35,6 +35,12 @@ if [ "$TOTAL" = "0" ] || [ "$TOTAL" = "null" ] || [ -z "$TOTAL" ]; then
 fi
 
 # Step 2: Process each queue item
+# Fix B (Sprint-1953a): guard against invalid/empty JSON before piping to jq
+if ! echo "$QUEUE" | jq -e '.queue' > /dev/null 2>&1; then
+  echo "$(date -u) FAIL: queue response is not valid JSON -- skipping cycle" >> "$LOG"
+  exit 1
+fi
+
 echo "$QUEUE" | jq -c '.queue[]' | while IFS= read -r ITEM; do
   CODE=$(echo "$ITEM" | jq -r '.action_code')
   YEAR=$(echo "$ITEM" | jq -r '.period_year')

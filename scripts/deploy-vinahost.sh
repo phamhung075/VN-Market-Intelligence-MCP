@@ -92,6 +92,8 @@ sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-bctc.sh
 $SCP vps-scripts/fetch-bctc-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-bctc-loop.sh
 $SCP vps-scripts/vn-bctc-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-fetch.service
+# Sprint-1953d: deploy discover script (VPS-only before 1953a; now tracked in repo)
+$SCP vps-scripts/discover-bctc-urls-browser.py ${VH_USER}@${VH_IP}:/root/discover-bctc-urls-browser.py
 rm "$TMP"
 
 $SSH << 'BCTCEOF'
