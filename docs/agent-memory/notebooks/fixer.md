@@ -48,3 +48,23 @@
 - **Verification:** Markdown-only commit; no TypeScript source changed. All 3 edits applied exactly per QA BLOCK-1 spec.
 - **Commit:** `fix(docs/protocols): clarify unified-agent cron registration and recovery steps [1950-T3]`
 - **Status:** Handoff appended; NEXT: qa for re-verification
+
+## Session 2026-05-19 (Sprint 1951b, Round 1)
+
+**Task:** Sprint 1951b — Tool packages QA CHANGES_REQUESTED (3 blocks)
+- **BLOCK-1:** `.claude/skills/anti-hallucination/SKILL.md:70` — wrong TASKS.md path
+  - **Status:** ALREADY_FIXED in prior commit `1b0c9d19` — path correctly shows `docs/TASKS.md` (not `docs/tasks/TASKS.md`)
+  - **Verification:** Grep confirms no other instances of wrong path in skill or siblings
+- **BLOCK-2:** `.claude/tools/list/financial-reports.md:309` — misleading "(legacy)" annotation on `get_financial_summary`
+  - **Issue:** Label suggested tool was retired, but dev-mcp-server confirms tool is live and tested in `apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:227`
+  - **Fix:** Relabeled `(legacy)` to clearer text: "Single-period snapshot — prefer get_bctc_full for full OCR-backed KPI coverage"
+  - **Reasoning:** Tool serves narrower single-period snapshot use case distinct from get_bctc_full (multi-period OCR extraction). Not retired, complementary.
+  - **File:** `.claude/tools/list/financial-reports.md` (1 line changed, line 309)
+  - **Commit:** `fix(sprint-1951b): reword legacy annotation on get_financial_summary` (3bff3e32)
+- **BLOCK-3:** `docs/architecture/microservice/mcp-server/market-data_marketContext.md:80` — `get_macro_snapshot` semantics
+  - **Status:** NO_CHANGE_NEEDED. dev-mcp-server confirms tool is live (macroTools.ts:451). Knowledge doc is correct: get_market_context is a convenience compound aggregating 5 calls; underlying tools remain active.
+- **NB-1:** Architecture brief jq path — marked non-blocking; brief doesn't contain the broken path reference (not applicable)
+- **Test status:** SKIP — markdown-only changes, zero TypeScript code modified per QA smart-skip rule
+- **Scope:** ≤2 files (only financial-reports.md edited; anti-hallucination already fixed in prior session)
+- **Verification:** No regressions — markdown-only commit, no side effects
+- **Status:** Signal created `docs/signals/fixer-1951b-blocks-applied.json`; NEXT: qa for re-verification on Sprint 1951b gate
