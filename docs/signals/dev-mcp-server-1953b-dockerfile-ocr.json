@@ -51,7 +51,7 @@
     "corrected": "2026-04-27 claim marked as aspirational. Actual fix applied 2026-05-19 sprint 1953b."
   },
 
-  "commit_hash": "pending — see git log after commit",
+  "commit_hash": "eb0766ab",
 
   "next": "NEXT: ops | rebuild mcp-server container + verify pdftoppm/tesseract present + retry bctcReparseJob on GAS/EIB/DHG/FPT"
 }

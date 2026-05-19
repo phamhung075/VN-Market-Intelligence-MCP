@@ -4,6 +4,55 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Sprint 1953b — Restore OCR deps in Dockerfile (2026-05-19, DONE)
+
+**Task:** Restore `poppler-utils` + `tesseract-ocr` + `tesseract-ocr-vie` to `apps/mcp-server/Dockerfile`. Reassigned from ops (no Write/Edit tools).
+
+**Diagnosis:**
+- Runbook claimed "poppler-utils added 2026-04-27" — ASPIRATIONAL, not actual.
+- Dockerfile header line 4 explicitly read: "tesseract and poppler are skipped — PDF OCR falls back to the pdf-extractor microservice."
+- apt-get install block never contained OCR packages. Pure missing-from-Dockerfile case (not a build-cache issue).
+- Impact: GAS/EIB/DHG/FPT Q1-2026 (all image-based, 2.6–17MB) fail silently at bctcReparseJob Tier 3 (reparse_attempts=2 each).
+
+**Fix (3 files):**
+- `apps/mcp-server/Dockerfile`: Removed aspirational header comment. Added `poppler-utils`, `tesseract-ocr`, `tesseract-ocr-vie` to `apt-get install -y --no-install-recommends` block. Single-layer pattern maintained (`rm -rf /var/lib/apt/lists/*`).
+- `docs/protocols/bctc-extraction-runbook.md`: Corrected 2026-04-27 claim → actual fix date 2026-05-19 sprint 1953b. Updated Key Files table to include tesseract packages.
+- `docs/signals/dev-mcp-server-1953b-dockerfile-ocr.json` (NEW): Full diagnostic + before/after diff + ops verification steps.
+
+**No tests needed:** Dockerfile-only change. No TypeScript code modified. tsc unchanged.
+
+**Commit:** `eb0766ab`
+
+**Ops verification steps (ops must run after container rebuild):**
+1. `docker build -f apps/mcp-server/Dockerfile -t mcp-server:1953b . (context = monorepo root)`
+2. `docker run --rm mcp-server:1953b which pdftoppm tesseract` → both must print paths
+3. `docker run --rm mcp-server:1953b tesseract --list-langs | grep vie` → must show `vie`
+4. Re-trigger bctcReparseJob for GAS/EIB/DHG/FPT stranded rows
+
+Zone health: Dockerfile now has full OCR toolchain; bctcReparseJob Tier 3 (pdftoppm+tesseract) will be available after container rebuild; runbook corrected | HEALTHY (pending ops rebuild)
+
+---
+
+### Sprint 1951b — Tool Verification (2026-05-19, DONE — read-only)
+
+**Task:** QA BLOCK-2 + BLOCK-3 ground-truth verification for tool-packages commit.
+
+**BLOCK-2 `get_financial_summary`:**
+- EXISTS. `server.tool("get_financial_summary", ...)` at `apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:227`.
+- The `(legacy)` label in `.claude/tools/list/financial-reports.md:309` is a doc preference hint for `get_bctc_full`, NOT a retirement marker. `230-remove-dead-tools.test.ts:123` explicitly asserts tool is in registry.
+- Decision: **keep**. Fixer should clarify `(legacy)` label only if confusion persists.
+
+**BLOCK-3 `get_macro_snapshot`:**
+- EXISTS. `server.tool("get_macro_snapshot", ...)` at `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:451`.
+- Knowledge doc `market-data_marketContext.md:80` "Replaces: ... get_macro_snapshot ..." describes `get_market_context` as a compound convenience aggregator — "replaces" = agents use single call instead of 5, NOT tool retirement.
+- Tool is referenced in 4 package docs (market-analyst, news-scout, qa-responder, financial-analyst). Live, tested (089-tool-macro.test.ts, 1881a, 1903a).
+- Decision: **keep**. Knowledge doc is not outdated — semantics are "use compound instead of 5 individual calls".
+
+**Signal written:** `docs/signals/dev-mcp-server-1951b-tool-verification.json`
+**No code changes made.**
+
+---
+
 ### Sprint 1949 Phase 4 — Cron Rewiring (2026-05-18, DONE)
 
 **Tasks: 1949-T6, T7, T8 — foreignFlowAlert + macroIndicatorRefresh rescheduled**
