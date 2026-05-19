@@ -306,7 +306,7 @@ Danh sách theo dõi trống
 ## Related Tools
 
 - `list_stored_pdfs` — Check which PDFs are available on VPS
-- `get_financial_summary` — Detailed single-period snapshot (legacy)
+- `get_financial_summary` — Single-period snapshot — prefer get_bctc_full for full OCR-backed KPI coverage
 - `compare_financials` — Explicit YoY/QoQ comparison (legacy)
 
 ---
