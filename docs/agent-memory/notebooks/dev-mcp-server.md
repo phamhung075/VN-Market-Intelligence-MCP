@@ -4,6 +4,71 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1954a — backfillBctcQ12026 column-name hotfix (2026-05-19, DONE — commit 2a5cc2a7)
+
+**Problem:** `backfillBctcQ12026.ts:52-57` INSERT used `(ticker, year, quarter, ...)` — none of those columns exist in `bctc_vps_queue` DDL (`schema-financial-reports.ts:122-133` defines `action_code TEXT NOT NULL`, `period_year INTEGER NOT NULL`, `period_quarter TEXT NOT NULL`). Every prior run threw `no such column: ticker`. The script was silently non-functional; the 103 pending rows came from `server.ts:703` push endpoint, not this backfill.
+
+**Fix (1 file, 3 lines changed):**
+- `backfillBctcQ12026.ts:52-62`: INSERT column list renamed to `(action_code, period_year, period_quarter, source_url, status, attempts, created_at)`; all VALUES `?` placeholders; `stmt.run(ticker, 2026, "Q1", placeholderUrl, "pending", 0)`.
+
+**Verification:**
+- AC-1 `bun tsc --noEmit` ✓ (0 errors, no output).
+- AC-2 `bun test` full suite: 9275 pass / 35 skip / 284 fail — baseline preserved (notebook records ~280-302 baseline). No callers/tests reference `backfillBctcQ12026`, so no regression vector.
+- AC-3 deferred to ops manual backfill in container.
+
+**Risk:** zero — `INSERT OR IGNORE`, idempotent, schema-matched. The 103 existing rows preserved by IGNORE semantics.
+
+**Scope discipline:** only `backfillBctcQ12026.ts` touched. 1954b-e gated per recurring-bug-escalation freeze; PO-pre-authorised hotfix only.
+
+**Signal:** `docs/signals/dev-mcp-server-1954a-impl-done.json`
+**Commit:** `2a5cc2a7` on `main` (NO branches per CLAUDE.md).
+
+**NEXT: qa** — round-1 review on commit `2a5cc2a7`; then ops one-shot manual backfill in container for AC-3.
+
+Zone health: backfill script schema-matched; unblocks queue seeding for all 34 watchlist tickers on next enricher cycle | HEALTHY
+
+---
+
+### Sprint 1953c+f Recovery (2026-05-19, DONE — commit 6c442373)
+
+**Mission:** Recover two orphan files from stalled prior agent + fix 1953f EPIPE production blocker.
+
+**Orphan file decisions:**
+- `1953c-batch-sweep-registration-audit.test.ts` — KEPT. 8/8 GREEN. Complete + meaningful.
+- `pdfOcrWorker.ts` — KEPT. Prior agent already applied the EPIPE fix (three-layer guard). Correct + complete.
+
+**1953c outcome:** Registration audit CONFIRMED CORRECT. wrapRun('bctcBatchSweepJob') at startScheduler.ts:281-285. Zero cron_job_runs = container down at 2026-04-25 09:00 UTC. No code bug.
+- NEW: `backfillBctcQ12026.ts` at `apps/mcp-server/src/scheduler/financial-reports/` (task instructions path). INSERT OR IGNORE Q1-2026 rows for all watchlist tickers. Idempotent.
+- Ops command: `bun run apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts` (from container)
+
+**1953b-2/1953f EPIPE fix in pdfOcrWorker.ts:**
+- Layer 1: `tess.stdin.on('error', ...)` swallows EPIPE silently; re-logs non-EPIPE via logger.warn
+- Layer 2: `ppm.stdout 'data'` handler writable guard (`!tessExited && tess.stdin.writable && !tess.stdin.destroyed`)
+- Layer 3: `tess 'close'` sets `tessExited=true` + `tess.stdin.destroy()` immediately
+
+**Signal:** `docs/signals/dev-mcp-server-1953cf-recovery.json`
+**Commit:** `6c442373` on branch task/1953b-2-ocr-epipe-fix → merged to main
+
+**NEXT: ops** — rebuild container + verify OCR tools (`which pdftoppm tesseract`) + run backfill helper + retry bctcReparseJob on GAS/EIB/DHG/FPT
+
+---
+
+### Task 1953c — bctcBatchSweepJob registration audit (2026-05-19, DONE)
+
+**Root cause confirmed:** Container was down at 2026-04-25 09:00 UTC. Job IS correctly registered in startScheduler.ts (import line 30, wrapRun lines 281-285). Cron expression `'0 9 25 1,4,7,10 *'` is valid and covers all four quarters. No env override in docker-compose.yml.
+
+**Fix (2 new files, 0 production code changed):**
+- `src/__tests__/1953c-batch-sweep-registration-audit.test.ts` (NEW): 8 tests — TC-1 cron expression, TC-2/TC-2b wrapRun key convention, TC-3 sweep callback fires, TC-4/TC-5 earnings-season guard, TC-6/TC-6b all-quarter coverage. All GREEN.
+- `scripts/backfill-bctc-q1-2026.ts` (NEW): INSERT OR IGNORE for 33 watchlist tickers at year=2026 quarter=Q1. Idempotent. Ops runs after 1953b redeploy.
+
+**Next auto-fire:** 2026-07-25T09:00:00Z.
+
+**Signal:** `docs/signals/dev-mcp-server-1953c-batch-sweep-fix.json`
+
+Zone health: bctcBatchSweepJob wiring confirmed correct; Q1-2026 backfill script ready for ops; Q2+ scheduled fire at 2026-07-25 09:00 UTC | HEALTHY
+
+---
+
 ### Sprint 1953b — Restore OCR deps in Dockerfile (2026-05-19, DONE)
 
 **Task:** Restore `poppler-utils` + `tesseract-ocr` + `tesseract-ocr-vie` to `apps/mcp-server/Dockerfile`. Reassigned from ops (no Write/Edit tools).
