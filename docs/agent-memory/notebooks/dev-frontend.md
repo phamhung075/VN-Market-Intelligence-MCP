@@ -357,3 +357,28 @@ ffdc73b8 fix(frontend): guard process.env in client.ts against browser bundle cr
 
 ## Zone health
 Tier 1-4 complete. 124/124 tests GREEN. tsc clean. process.env crash eliminated; hydration errors fully resolved. | HEALTHY
+
+## Cycle 1956 — 2026-05-19 (emergency route rename — Remix .server suffix violation)
+
+### Fix
+- Remix v7+ rejects `.server` suffix in route filenames that also export a React component (code-split violation).
+- `dashboard.server.tsx` (exports loader + default component) → renamed to `dashboard.services.tsx` via `git mv`.
+- Nav links `/dashboard/server` → `/dashboard/services` updated in 2 files.
+
+### Files changed
+- apps/frontend/app/routes/dashboard.server.tsx → dashboard.services.tsx (git mv)
+- apps/frontend/app/routes/dashboard.tsx — NAV_ITEMS[1].to updated
+- apps/frontend/app/routes/_index.tsx — NAV_ITEMS[1].to + DASHBOARD_LINKS[1].to updated
+
+### Test result
+- tsc --noEmit: CLEAN (0 errors)
+- No new tests — mechanical rename, zero logic change
+
+### Commit
+d4fa8648 fix(frontend/1956): rename dashboard.server.tsx → dashboard.services.tsx
+
+### Signal emitted
+docs/signals/dev-frontend-1956-route-rename.json
+
+## Zone health
+Tier 1-4 complete. 124/124 tests GREEN. tsc clean. Remix build blocker resolved; docker-compose retry unblocked for ops. | HEALTHY
