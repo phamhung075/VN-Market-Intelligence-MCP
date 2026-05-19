@@ -37,6 +37,11 @@ Immediately after Bootstrap, before any GATHER reads:
 >
 > **try block begins here — wraps Steps 0 through 7 inclusive.**
 > Any unhandled exception exits the try block: emit FAILED (see FAILED Telemetry section below), then EXIT non-zero. No MARKET dish. No Step 8.
+>
+> **Failure modes that must produce FAILED telemetry (not silent exit):**
+> - `tool-error` — MCP tool raised an exception after 1 retry
+> - `signal-read-fail` — docs/signals/ unreadable or empty when signals expected
+> - `self-abort-no-exception` — agent chose to stop mid-flow without an exception (e.g. English self-refusal prose). Emit `FAILED` with `reason="self-abort-no-exception"`. This is a PO-defined violation; it must be observable on WORK channel.
 
 ---
 
@@ -79,6 +84,8 @@ send_telegram(channel="work", message="[chef] SILENT intraday | slot={slot_utc} 
 → return `DONE: intraday-silent | PIPELINE: complete` and EXIT. No MARKET message.
 
 > Note: this is the CLOSE (silent) telemetry. `slot_utc` and `cycle_id` are from ENTRY session state. The try block ends here for the silent path — EXIT after this send.
+
+**Gate-fired contract:** When ≥1 cluster qualifies (or `$DISH_TYPE` is `morning` / `eod` / `evening`), Steps 2–8 are MANDATORY. The agent MUST proceed through all steps and publish. Self-refusal — any English prose such as "I cannot complete the full end-to-end execution here" or "these require sequential MCP calls" — is a flow violation. If an unrecoverable blocker is hit, emit `FAILED` telemetry with `reason="<actual error>"` and EXIT non-zero. There is no third path between SENT and FAILED.
 
 **Morning/EOD/Evening:** always continue even if 0 clusters (publish regime-state update at minimum).
 
@@ -183,6 +190,8 @@ No atom lists. No bullet-point ticker dumps. Every MARKET message is a narrative
 ---
 
 ## Step 8 — LOG
+
+> **Write-tool contract:** The Write tool IS available in this agent. Self-refusal here (e.g. "I cannot directly write to the file" or "I'll compose the append that should be made") is a flow violation — use the Write tool and proceed.
 
 1. Mark all consumed signal files as processed (append `"processed": true` or move to `docs/signals/processed/`).
 2. Append to notebook `docs/agent-memory/notebooks/unified-agent.md`:

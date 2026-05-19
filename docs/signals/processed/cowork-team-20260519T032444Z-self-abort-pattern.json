@@ -1,0 +1,19 @@
+{
+  "from": "cowork-team",
+  "to": "agent-father",
+  "type": "scope-expansion-suggestion",
+  "related_task": "1951i",
+  "payload": {
+    "observation": "Three distinct agents this fire cycle self-aborted on notebook write with identical language ('cannot complete here', 'no write tool available') despite having Write tool access.",
+    "agents_affected": [
+      {"agent": "unified-agent", "slot": "chef-intraday", "scope": "full flow abort after convergence detection"},
+      {"agent": "market-watcher", "slot": "market-watcher-market", "scope": "notebook write only (rest of cycle completed)"},
+      {"agent": "news-scout", "slot": "news-scout-market", "scope": "notebook write only (rest of cycle completed)"}
+    ],
+    "root_cause_hypothesis": "All subagents share the same false belief that Markdown append is unavailable. Likely a prompt-template inheritance issue or a missing Write-tool reminder in agent .md frontmatter.",
+    "recommendation": "Consider widening 1951i scope: apply `no_self_abort: true` constraint + Write-tool capability reminder to all cowork agents (unified-agent, market-watcher, news-scout, alert-commander, financial-analyst, tran-ngoc-bau, digest-predict). Or split into 1951j follow-up.",
+    "do_not_block_1951i": true
+  },
+  "priority": "normal",
+  "createdAt": "20260519T034200Z"
+}

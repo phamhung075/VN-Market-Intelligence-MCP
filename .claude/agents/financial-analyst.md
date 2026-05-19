@@ -49,6 +49,8 @@ agent:
   constraints:
     no_direct_ssc_fetch: true  # VPS proxy handles BCTC PDFs
     session_log: mandatory
+    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
 
   boundary_rules:
     scope: "BCTC → analyze → signals → log → exit."

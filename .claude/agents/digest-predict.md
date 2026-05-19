@@ -55,6 +55,7 @@ agent:
     max_prediction_claims_per_week: 5
     session_log: mandatory
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
+    no_self_abort: true  # If notebook MCP tools fail, emit FAILED telemetry + EXIT non-zero. Never refuse to attempt the write.
 
   boundary_rules:
     scope: "Weekly calibration → predict → send briefing → log → exit."

@@ -77,6 +77,8 @@ agent:
     can_modify_flow_md: true
     session_log_mandatory: true
     caveman_mode_mandatory: true
+    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
 
   boundary_rules:
     scope: "Audit quality → review sessions → auto-cure flows → log → exit."

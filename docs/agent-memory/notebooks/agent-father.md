@@ -1,8 +1,29 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-19 | **Sprint:** 1951b (tool packages + notebook-write capability)
+**Last updated:** 2026-05-19 | **Sprint:** 1951j (cowork self-abort fix — no_self_abort + Write-tool contract)
 
-## This Session — 2026-05-19 (Sprint 1951b cowork tool packages)
+## This Session — 2026-05-19 (Task 1951j — cowork self-abort pattern fix)
+
+**Task: 1951j — no_self_abort + Write-tool contract across all 7 cowork agents**
+
+Source: signals `cowork-team-20260519T032444Z-self-abort-pattern.json` + `cowork-team-20260519T042257Z-step8-notebook-gap.json`.
+
+Files edited (8, single commit):
+- `.claude/flows/unified-agent/chef.md` — Step 8 inline Write-tool contract added (hotfix for "cannot directly write to the file" behavior)
+- `.claude/agents/market-watcher.md` — `no_self_abort: true` + `write_tool_available: true` added to constraints
+- `.claude/agents/news-scout.md` — `no_self_abort: true` + `write_tool_available: true` added
+- `.claude/agents/alert-commander.md` — `no_self_abort: true` + `write_tool_available: true` added
+- `.claude/agents/financial-analyst.md` — `no_self_abort: true` + `write_tool_available: true` added
+- `.claude/agents/tran-ngoc-bau.md` — `no_self_abort: true` + `write_tool_available: true` added
+- `.claude/agents/digest-predict.md` — `no_self_abort: true` added (Write tool excluded — uses MCP tools per `never_use_write_tool: true`)
+- `docs/TASKS.md` — 1951j added to Done; 1952f/g archived to batch entry
+
+Signals moved to `docs/signals/processed/`.
+
+Note: unified-agent already had `no_self_abort: true` from Sprint 1951i — not modified.
+Note: digest-predict gets `no_self_abort` only (no `write_tool_available`) because it has `never_use_write_tool: true` — its notebook writes go through MCP tools, not Write tool.
+
+## Previous Session — 2026-05-19 (Sprint 1951b cowork tool packages)
 
 **Task: 1951b — cowork tool-packages + notebook-write capability**
 

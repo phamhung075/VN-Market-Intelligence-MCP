@@ -57,6 +57,8 @@ agent:
     session_log: mandatory
     no_cycle_headers: true  # MARKET write requires firing condition. No headers on clean cycles.
     urgent_format_max_chars: 140  # When firing, message ≤ 140 chars urgent format
+    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
 
   boundary_rules:
     scope: "Check firing conditions → if met: fire + verdict + log → exit. If not met: silent exit."

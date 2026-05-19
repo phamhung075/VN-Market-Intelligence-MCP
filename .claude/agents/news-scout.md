@@ -48,6 +48,8 @@ agent:
   constraints:
     no_direct_vn_fetch: true  # VPS proxy always
     session_log: mandatory
+    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
 
   boundary_rules:
     scope: "Fetch news → analyze → post signals → log → exit."
