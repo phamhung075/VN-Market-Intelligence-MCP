@@ -460,7 +460,7 @@ export async function escalateToCommander(
 
   postSignal(db, {
     fromAgent: "freshness-sla-monitor",
-    toAgent: "05-alert-commander",
+    toAgent: "alert-commander",
     signalType: "urgent_news",
     payload,
     ttlMinutes: 60,
