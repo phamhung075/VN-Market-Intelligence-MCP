@@ -101,3 +101,9 @@ Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-dev
   - 1960d smoke (commit 335dda54): 10/10 PASS (qa-1960d-approved.json).
   - Model 2 (agent-self heartbeat): TTL=3600s for sprint-task, TTL=1800s for dashboard-row. Heartbeat every 5 min by the running agent.
   - pipeline-state.json relationship: AUGMENT only (status/nextAgent/updatedAt preserved — task-lock does not replace pipeline-state).
+- Phase 4 SHIPPED 2026-05-20: dispatcher-wrap (outer Agent() claim before spawn, release after spawn returns).
+  - 1962c (7 sites, commits 592fe1c4..5ecf426c): S1 execute-tier, S2/S3/S4 main.md, S5 developer, S6 ba, S7 pm wired.
+  - 1962d smoke (commit 404f2f8e): 10/10 PASS (multi-router collision prevention validated).
+  - Audit (commit 25d2d3d9): 0 FAILs, 5 WARNs resolved in 1962e cleanup (9d245315).
+  - Model 1 (dispatcher holds outer claim): owner_agent = dispatcher identity; inner self-claim (Phase 3) kept as-is.
+  - Cross-link: `.claude/skills/dispatch-claim/SKILL.md` — full dispatcher-wrap pattern reference.
