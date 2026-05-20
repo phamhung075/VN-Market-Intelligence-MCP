@@ -264,3 +264,41 @@
 
 ---
 
+
+---
+
+### Sprint 1958 — Disk Relief (20:31 UTC) [COMPLETE]
+
+**Status:** RESOLVED — 26GB recovered, system now healthy
+
+**RCA context:** 1958 RCA found that 97% disk + RAG async-startup deadlock caused stack-recovery hang. Post-recovery, disk remained at 98% /Users filesystem, blocking all cron operations (ENOSPC risk).
+
+**Disk state before:**
+- `/dev/disk1s1` (System): 98% full, 6GB free (CRITICAL)
+- `/` (boot): 70% full, 6GB free (at threshold)
+- Docker buildx cache: 33.32GB (unreclaimed)
+
+**Actions taken (safe-first order):**
+1. `docker image prune -a -f` → 444.2MB reclaimed
+2. `docker volume prune -f` → 0B (no dangling volumes, good)
+3. `docker builder prune -a -f` → **26.5GB reclaimed** (massive buildx cache cleanup)
+
+**Disk state after:**
+- `/dev/disk1s1` (System): 85% full, 32GB free ✓
+- `/` (boot): 30% full, 32GB free ✓
+- **Headroom achieved: +26GB (well above 15GB threshold)**
+
+**Service health (post-cleanup):**
+- All 13 Docker services healthy (11 app + mcp-gateway + mcp-server)
+- Gateway health endpoint: 200 OK, all 9 services green
+- No service degradation; containers did not restart
+
+**Data directory integrity:**
+- lancedb: 29GB (untouched, healthy)
+- models: 922MB (untouched)
+- logs: 162MB (normal)
+- pdfs-local: 113MB (untouched)
+- No user data deleted
+
+**Timeline:** 4 min. SAFE, no service impact, no data loss.
+

@@ -1,0 +1,56 @@
+{
+  "signal_id": "ops-1958-disk-relief",
+  "timestamp": "2026-05-20T20:31:26Z",
+  "agent": "ops",
+  "sprint": "1958",
+  "task": "disk-relief",
+  "status": "COMPLETE",
+  "summary": "Disk relief completed — 26GB recovered via Docker buildx cache cleanup",
+  "actions": [
+    {
+      "action": "docker image prune -a -f",
+      "reclaimed_mb": 444.2,
+      "status": "success"
+    },
+    {
+      "action": "docker volume prune -f",
+      "reclaimed_mb": 0,
+      "status": "success (no dangling volumes)"
+    },
+    {
+      "action": "docker builder prune -a -f",
+      "reclaimed_mb": 26500,
+      "status": "success"
+    }
+  ],
+  "disk_before": {
+    "system_used_pct": 98,
+    "system_free_gb": 6,
+    "boot_used_pct": 70,
+    "boot_free_gb": 6
+  },
+  "disk_after": {
+    "system_used_pct": 85,
+    "system_free_gb": 32,
+    "boot_used_pct": 30,
+    "boot_free_gb": 32
+  },
+  "total_recovered_gb": 26.5,
+  "target_headroom_gb": 15,
+  "achieved_headroom_gb": 32,
+  "headroom_status": "EXCEEDED",
+  "service_health": {
+    "total_services": 13,
+    "healthy_services": 13,
+    "status": "all_green"
+  },
+  "data_integrity": {
+    "lancedb_gb": 29,
+    "models_mb": 922,
+    "logs_mb": 162,
+    "pdfs_local_mb": 113,
+    "user_data_affected": false
+  },
+  "timeline_minutes": 4,
+  "notes": "Safe cleanup — no service restarts, no data loss. System now healthy for cron operations."
+}
