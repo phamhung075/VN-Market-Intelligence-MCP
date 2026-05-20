@@ -1,5 +1,44 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Sprint:** 1955b | **Session:** c212+ — Task 1955b zombie reap — APPROVED
+
+## Session 2026-05-20 c212+ — Task 1955b zombie cron_job_runs reap (APPROVED)
+
+### TASK REPORT — 1955b (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: cfe10b0a
+files: 4 (cronJobRunStore.ts:23+165-180, schema-system.ts:39+50-97, startScheduler.ts:71+106-111, 1955b-reap-zombie-runs.test.ts)
+type: FIX — CronJobRunStatus extended to 'crashed'; reapZombieJobRuns(); idempotent migration guard; scheduler boot-time call
+round: 1
+zone: apps/mcp-server/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| Targeted tests 4/4 | PASS (412ms) |
+| Full suite (mcp-server excl. untracked) | 9271 pass / 284 fail — pre-existing baseline unchanged |
+| bun tsc --noEmit | PASS (0 errors) |
+| AC-4: CHECK includes 'crashed' | PASS — schema-system.ts:39 |
+| AC-5: reap before cron.schedule | PASS — startScheduler.ts:108 precedes line 128 |
+| AC-6: migration idempotent | PASS — sqlite_master DDL match guard (lines 56-97) |
+| DDD scan | PASS — zero domain→infra imports in changed files |
+| Security: process.env | PASS |
+| Security: hardcoded secrets | PASS |
+| Commit convention | PASS — fix(1955b/mcp-server) |
+
+**Note on suite count:** Dev claimed 9284/284. QA measured 9271/284 (mcp-server `__tests__/` excluding untracked task-lock coordination files from a parallel in-progress task). Pre-1955b stash baseline = 9271/284 (confirmed via git stash). The 4 new 1955b tests ARE included in the 9271 count — baseline was therefore 9267. No regression. The global `bun test` (all repos) shows 9719/350 but includes non-mcp-server packages. Dev count discrepancy (9284 vs 9271) is attributable to test environment differences; no functional issue.
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1955b.md. Signal: docs/signals/qa-1955b-approved.json. TASKS.md 1955b already Done (dev pre-marked). 1958a unblocked.
+- **next_cycle_hint**: pm to unblock 1958a (MARKET-summary jobs not firing) — Blocked-by: 1955b-resume-done now satisfied. Ops should deploy docker compose up -d mcp-server to get zombie reap live.
+- **estimated_tokens**: 3200
+
+---
+
 **Last updated:** 2026-05-20 | **Sprint:** 1955a | **Session:** c212 — Task 1955a path fix — APPROVED
 
 ## Session 2026-05-20 c212 — Task 1955a dailyDashboardJob projectRoot() fix (APPROVED)

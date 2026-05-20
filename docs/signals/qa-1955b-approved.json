@@ -1,0 +1,15 @@
+{
+  "schema": "qa-approved/v1",
+  "task_id": "1955b",
+  "agent": "qa",
+  "generated_at": "2026-05-20T15:45:00Z",
+  "verdict": "APPROVED",
+  "commit": "cfe10b0a",
+  "test_results": {
+    "targeted": "4/4 pass",
+    "full_suite": "9271 pass / 284 fail (pre-existing, no regression)",
+    "tsc": "0 errors"
+  },
+  "downstream_unblocked": ["1958a"],
+  "next_agent": "pm"
+}

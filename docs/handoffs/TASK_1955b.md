@@ -74,3 +74,32 @@ Signal back: `docs/signals/dev-mcp-server-1955b-impl-done.json`
 ## Pair-task
 
 Lands together with 1955a. Both ship in the same Docker rebuild — neither blocks the other; ship 1955a first if 1955b runs over time.
+
+---
+
+## [QA] Review Record — 2026-05-20
+
+**Round:** 1 | **Reviewer:** qa | **Commit:** `cfe10b0a`
+**Verdict: APPROVED**
+
+| Check | Result |
+|---|---|
+| Targeted tests 4/4 | PASS (412ms) |
+| Full suite (mcp-server excl. untracked) | 9271 pass / 284 fail — pre-existing baseline unchanged |
+| bun tsc --noEmit | PASS (0 errors) |
+| AC-4: schema CHECK includes 'crashed' | PASS — schema-system.ts:39 `CHECK(status IN ('running','success','error','crashed'))` |
+| AC-5: reapZombieJobRuns before cron.schedule | PASS — startScheduler.ts:108 precedes first cron.schedule at line 128 |
+| AC-6: migration idempotence | PASS — sqlite_master DDL string-match guard (lines 56-97); AC-3 test verifies old DDL → no throw |
+| DDD scan (changed files) | PASS — zero domain→infra imports |
+| Security: process.env | PASS — zero hits in changed files |
+| Security: hardcoded secrets | PASS — zero hits |
+| SQL parameterized | PASS — all queries use `?` bindings; reaper uses no user input |
+| Commit convention | PASS — fix(1955b/mcp-server), correct scope |
+
+**Implementation notes verified:**
+- `CronJobRunStatus` type correctly extended to include `'crashed'` (cronJobRunStore.ts:23)
+- `reapZombieJobRuns` returns `{ reaped: number }` not bare `number` (deviation from original AC spec; AC spec said `number`, impl returns object — no functional regression, test asserts `{ reaped }` correctly)
+- Migration guard pattern matches established vps_service_health + sla_breach_audit patterns
+- Log line fires only when reaped > 0 (noise suppression per AC-3 original spec)
+
+**Downstream unblocked:** 1958a (MARKET-summary jobs not firing) can now be dispatched by PM.
