@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-21 00:00 UTC | **Sprint:** 1962a
+**Last updated:** 2026-05-21 00:00 UTC | **Sprint:** 1962-audit
 
-## This session (2026-05-21 — Task-lock dispatcher-wrap brief)
+## This session (2026-05-21 — 1962 task_id format audit)
+
+16-site read-only audit (9 inner 1960c + 7 outer 1962c). Result: WARN — 0 FAILs, 5 WARNs.
+Two-tier defense structurally intact. All C1 inner/outer pairs use identical `"task:" + task_id` prefix.
+Brief: `docs/architecture-briefs/2026-05-21-task-id-format-audit.md`. Signal: `docs/signals/architect-1962-audit-done.json`. Commit: `25d2d3d9`.
+
+**5 WARNs (all auto-fixable, no redesign):**
+- WARN-1 C5: `sprint-signoff.md` Reject path — no explicit release (TTL fallback only, 3600s gap)
+- WARN-2 C4: `qa/main.md:67` — `→ call task_claim(task_id, ...)` abbreviated positional syntax
+- WARN-3 C4: `drain-signals.md:36` — `call_tool("task_release", ...)` missing `server=` param
+- WARN-4 C4: `agent-father/edit-apply.md:53,74` — heartbeat + release both use abbreviated form
+- WARN-5 C4: `dev-team/main.md:184-185` — S4 inline table uses positional task_claim() shorthand
+
+WARN-1 has highest operational risk if sprint durations exceed 3600s. All others are documentation grammar.
+Follow-up: Sprint-1963-optional (defer to next refactor cycle per audit recommendation).
+
+## Previous session (2026-05-21 — Task-lock dispatcher-wrap brief)
 
 Sprint 1962 task 1962a. Designed Model 1 dispatcher-wrap (outer claim around Agent() spawn) as additive guard on top of Phase 3 Model 2 self-claim. Brief: `docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md`. Signal: `docs/signals/architect-1962a-brief-done.json`.
 
