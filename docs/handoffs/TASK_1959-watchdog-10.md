@@ -95,3 +95,27 @@ watchdog-3 already added +920 MB to the rag-service image. This cleanup adds 0 M
 **Signal:** `docs/signals/dev-rag-service-1959-watchdog-10.json` emitted (next=qa)
 
 **Next:** ops rebuild (`docker compose up -d --build rag-service`) + 60s smoke, then QA verify ACs 2-5.
+
+---
+
+## [QA] Review Record — 2026-05-20T23:41:00Z
+
+**Verdict:** APPROVED
+**Round:** 1
+**Commit reviewed:** `5466c84b`
+**Report:** `reports/TASK_REPORT_1959-watchdog-10.md`
+**Signal:** `docs/signals/qa-1959-watchdog-10-approved.json`
+
+| Check | Result |
+|-------|--------|
+| Diff matches claim: 1 file, 2 lines, `/app/data/models` token only | PASS |
+| No other `/app/data/<subpath>` mkdir remains (volume policy w-9) | PASS |
+| `EMBEDDING_CACHE_DIR=/opt/model-cache` unchanged (line 63 final override; `docker compose config` confirms) | PASS |
+| `docker compose config rag-service` parses clean | PASS |
+| Model pre-bake step (`RUN SentenceTransformer` → `/opt/model-cache`, lines 54-59) intact | PASS |
+
+**Notes:**
+- Intermediate `ENV EMBEDDING_CACHE_DIR=/app/data/models` at line 41 is pre-existing from watchdog-3, superseded by line 63. Harmless; not in scope of this XS cleanup.
+- AC-10-2..5 pending ops rebuild + smoke (GATE: ops must not rebuild before this APPROVED signal).
+
+**NEXT:** ops — `scripts/preflight-disk.sh` → `docker compose up -d --build rag-service` → 60s smoke (health + search). AC-10-2..5 close on smoke pass.

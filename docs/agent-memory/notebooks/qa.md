@@ -1,5 +1,40 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Task:** 1959-watchdog-10 | **Session:** c224+ — Dockerfile dead-code cleanup QA — APPROVED
+
+## Session 2026-05-20 c224+ — Task 1959-watchdog-10 rag-service Dockerfile cleanup (APPROVED)
+
+### TASK REPORT — 1959-watchdog-10 (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: 5466c84b
+files: apps/rag-service/Dockerfile (2 lines: comment + mkdir)
+type: CLEANUP — drop /app/data/models token from RUN mkdir-p (dead remnant from watchdog-3)
+round: 1
+zone: apps/rag-service/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| Diff matches claim: 1 Dockerfile file, 2 lines, /app/data/models token only | PASS |
+| No other /app/data/<subpath> mkdir remains (volume policy w-9) | PASS |
+| EMBEDDING_CACHE_DIR=/opt/model-cache unchanged (line 63 final override) | PASS |
+| docker compose config rag-service parses clean | PASS |
+| Model pre-bake (RUN SentenceTransformer → /opt/model-cache, lines 54-59) intact | PASS |
+| bun test / tsc | N/A — Python service, mechanical cleanup, no tests required |
+| DDD / security | N/A — Dockerfile only, no TypeScript source |
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1959-watchdog-10.md. Report: reports/TASK_REPORT_1959-watchdog-10.md. Signal: docs/signals/qa-1959-watchdog-10-approved.json. DASHBOARD row 1959-watchdog-10 → QA-PASS. TASKS.md Done row added.
+- **note**: Stale intermediate `ENV EMBEDDING_CACHE_DIR=/app/data/models` at Dockerfile:41 pre-exists from watchdog-3; superseded by line 63. Harmless, out of scope. Not a blocker.
+- **next_cycle_hint**: ops — `scripts/preflight-disk.sh` check → `docker compose up -d --build rag-service` → 60s smoke (health + search vingroup). Closes AC-10-2..5. No QA re-run needed after smoke (AC-10-1 is the only code-review AC; ops closes remainder).
+- **estimated_tokens**: 2200
+
+---
+
 **Last updated:** 2026-05-20 | **Task:** 1959-watchdog-5 | **Session:** c223 — Disk-usage alert cron QA — APPROVED
 
 ## Session 2026-05-20 c223 — Task 1959-watchdog-5 disk-usage alert cron (APPROVED)
