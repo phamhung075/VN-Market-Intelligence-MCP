@@ -1,4 +1,5 @@
 # Ops — Notebook
+**Last updated:** 2026-05-20 22:48 UTC | **Sprint:** 1959 (watchdog-1 complete)
 **Last updated:** 2026-05-20 22:15 UTC | **Sprint:** 1958 (RCA complete)
 **Last updated:** 2026-05-20 09:45 UTC | **Sprint:** 1951d (cutover partial)
 
@@ -395,4 +396,42 @@
 **Signal:** docs/signals/ops-1958-rca-2.json (COMPLETE, detailed findings)
 
 **Time:** 30 min investigation (on budget)
+
+
+---
+
+## Sprint 1959 — Watchdog Hardening Batch
+
+### Task 1959-watchdog-1 — Pre-flight Disk Check (22:47 UTC) [COMPLETE]
+
+**Status:** DONE — All 5 ACs passed
+
+**Summary:** Created pre-flight disk validation script to prevent RAG cold-start hang under disk pressure (<15 GB free). Script blocks `docker compose up -d` with clear error message and remediation hint.
+
+**Deliverables:**
+1. `scripts/preflight-disk.sh` — Bash script with portable `df -g` (macOS + Linux compatible)
+   - Checks free disk on /var/lib/docker or / fallback
+   - Threshold: 15 GB (enforces minimum per 1958 RCA findings)
+   - Exit code 0 if healthy, 1 if constrained
+   - Error message includes `docker builder prune + docker image prune` hint
+
+2. `docs/protocols/docker-deployment-runbook.md` — New deployment guide with:
+   - Pre-flight section at top
+   - Script invocation example: `scripts/preflight-disk.sh`
+   - Reference to 1958-rca signal with rationale
+   - Deploy section with health check
+   - Troubleshooting for RAG hangs + disk pressure scenarios
+
+3. `docs/signals/ops-1959-watchdog-1.json` — Signal file with all 5 ACs marked PASS + commit hash (784905da)
+
+**Acceptance Criteria:**
+- AC-1: Script executable (-rwxr-xr-x) ✓
+- AC-2: Healthy test (33GB free): exit 0 + "OK: Docker disk has 33GB free (≥15GB threshold)." ✓
+- AC-3: Low-disk test (THRESHOLD_GB=100): exit 1 + "ERROR: Docker disk has 33GB free, need ≥100GB. Run disk-relief: ..." ✓
+- AC-4: Runbook Pre-flight section + 1958-rca link ✓
+- AC-5: Signal with commit hash 784905da + LITE commit subject ✓
+
+**Commit:** 784905da "feat(ops/1959-watchdog-1): pre-flight disk check script for docker compose up"
+
+**Timeline:** 10 minutes (script creation, testing, docs, signal, commit)
 

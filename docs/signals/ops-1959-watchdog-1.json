@@ -1,12 +1,13 @@
 {
   "id": "ops-1959-watchdog-1",
   "type": "task_complete",
-  "timestamp": "2026-05-20T22:47:00Z",
+  "timestamp": "2026-05-20T22:48:00Z",
   "sprint": 1959,
   "owner": "ops",
   "task_id": "1959-watchdog-1",
   "title": "Pre-flight disk check script for docker compose up",
   "status": "DONE",
+  "commit_hash": "784905dafad0cd39c931a4bc58272cdbfb3f6e1a",
   "acceptance_criteria": {
     "AC-1": "scripts/preflight-disk.sh exists and is executable",
     "AC-2": "Manual healthy test: script exits 0 + prints OK message",
@@ -32,8 +33,8 @@
       "evidence": "docs/protocols/docker-deployment-runbook.md created with Pre-flight section at top, script path, 1958-rca rationale link"
     },
     "AC-5": {
-      "status": "PENDING",
-      "note": "Will be updated after commit"
+      "status": "PASS",
+      "evidence": "Commit 784905dafad0cd39c931a4bc58272cdbfb3f6e1a with subject 'feat(ops/1959-watchdog-1): pre-flight disk check script for docker compose up'"
     }
   },
   "deliverables": [
