@@ -1,8 +1,42 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-18 20:15 UTC | **Sprint:** SPIKE-1948e
+**Last updated:** 2026-05-20 19:00 UTC | **Sprint:** 1960a
 
-## This session (2026-05-19 — BCTC write-chain RCA)
+## This session (2026-05-20 — Phase 3 task-lock dev-team wiring brief)
+
+Sprint 1960 task 1960a kickoff per `docs/signals/po-1960-signoff.json`. Phase 3 design refinement — wire `task_claim`/`task_heartbeat`/`task_release` into PO+PM+developer+dev-*+QA+agent-father+fixer flows. Brief: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md`.
+
+**Key design resolutions:**
+- **Model 2 (agent-self heartbeat) chosen** — agents heartbeat at flow-step boundaries (TDD loops, QA pipeline entry) rather than wall-clock timer. No master polling needed because dev-team chain shares `owner_session` UUID within one Claude Code session.
+- **Developer is PRIMARY claimer**, not PM. CLAIM at flow Pre-code step 2b (after branch checkout, before file reads). Matches the in_progress transition timing.
+- **Developer does NOT release on RETURN**; QA inherits same-session lock and releases atomically at `git push origin main`. Avoids TTL gap during QA→fixer→QA round trips. Brief §4.4 explicit ("Lock handoff to QA — same session, no release needed").
+- **Migration logic on claim-fail**: read `docs/pipeline-state.json`. If `activeTaskId == task_id` AND `nextAgent == calling_agent` AND `current_holder.owner_agent == calling_agent` AND `heartbeat_at > 5min stale` → logical takeover detected → EXIT cycle (`PIPELINE: blocked, reason: stale-lock-takeover`). Next 15-min cron tick retries naturally. NO new MCP tool needed.
+- **TTLs**: sprint-task 3600s (developer/qa/architect/agent-father primary), 1800s (ba/pm/fixer shorter overrides), dashboard-row 1800s. Cowork-slot 900s (Phase 2, unchanged).
+
+**Critical correction to PO signoff audit:** all 12 dev-* agents inherit `tools_package: .claude/tools/package/developer.md` (verified via grep). Developer.md already lists the 3 task-lock tools. **Zero dev-* package edits needed in Phase 3.** PO signoff implied otherwise; brief §5 corrects.
+
+**Tool-package delta (12 EDITs only):** po, pm, architect, ba, qa, fixer, agent-father, ops, system-auditor, cowork-refactory-expert, code-janitor, idea-forge. ops + system-auditor get `task_list_held` only (audit-read). qa + agent-father get all 4 tools.
+
+**File-path matrix (9 flow edits, each with one-line snippet for agent-father 1960c mechanical edit):**
+- po/sprint-kickoff.md §4.1 (claim umbrella after step 4)
+- po/sprint-signoff.md §4.2 (release umbrella in Approve branch)
+- pm/main.md §4.3 (heartbeat after step 3c + step 4)
+- developer/main.md §4.4 (claim 2b + heartbeat TDD + lock-handoff comment)
+- developer/microservice-main.md §4.5 (same pattern; claim after step 6, before step 7)
+- qa/main.md §4.6 (heartbeat before bun test, release before git checkout main)
+- fixer/main.md §4.7 (heartbeat after step 2 git status)
+- agent-father/edit-apply.md §4.8 (claim 5a + heartbeat 7b + release 8b)
+- dev-team/drain-signals.md §4.9 (dashboard-row claim before NEW→READ + immediate release after row consumed)
+
+**Implementation order for 1960c (§8):** packages → skill update → drain-signals → developer flows (paired) → qa → fixer → pm → po → agent-father (last because agent-father edits its own flow).
+
+**Failure-mode table §6** has 9 entries (P3-F1 through P3-F9). All paths degrade to (a) duplicate work, (b) one cron-tick delay, or (c) BUG telegram. No data-loss scenario. Task-lock is advisory, not hard gate.
+
+**Test plan for QA 1960d §7:** 7 scenarios — T1 race claim / T2 heartbeat TTL extension / T3 stolen-lock detection / T4 dashboard dual-drain / T5 pipeline-state coexistence / T6 cross-agent heartbeat / T7 concurrent stale-steal race. Each maps to 1960d AC.
+
+Signal emitted: `docs/signals/architect-1960a-brief-done.json` → po, pm, agent-father, qa. PM 1960b is now unblocked to finalize the sprint plan reading the brief.
+
+## Previous session (2026-05-19 — BCTC write-chain RCA)
 
 Trigger: ≥3 fix commits on BCTC chain in 24h. Recurring-bug escalation.
 
