@@ -46,4 +46,6 @@ zone: apps/mcp-server/
 - NB-2: tsc errors (coordinationStore.ts/coordinationTools.ts) are pre-existing from commit 79ac45e9 — not introduced by 1958a. Tracked separately.
 
 ### Merge Status
-Approved. APPROVED merge to main. AC-3 live observation gate deferred to ops 2026-05-21T09:00Z.
+Approved. Commits e6dc85db (QA output) + 12017809 (notebook) on local main. Push to remote BLOCKED by pre-push tsc hook on pre-existing errors in coordinationStore.ts/coordinationTools.ts (commit 79ac45e9 — NOT 1958a files). Remote main is behind at bef8e9cf. This is a pre-existing defect blocking all local→remote pushes since 79ac45e9. A separate fixer task is required to fix coordinationStore.ts exactOptionalPropertyTypes errors to unblock push.
+
+AC-3 live observation gate deferred to ops 2026-05-21T09:00Z.

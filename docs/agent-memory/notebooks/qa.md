@@ -32,7 +32,7 @@ zone: apps/mcp-server/
 | Security: process.env, secrets | PASS |
 
 - **actions**: APPROVED. [QA] Review Record appended to TASK_1958a.md. Signals: qa-1958a-approved.json + qa-1958a-architect-followup.json. pipeline-state nextAgent=pm. Report: reports/TASK_REPORT_1958a.md.
-- **next_cycle_hint**: pm marks 1958a Done. ops deploys docker compose up -d mcp-server then verifies AC-3 at 2026-05-21T09:00Z (cron_job_runs ≥1 success row per all 5 jobs). architect to review qa-1958a-architect-followup.json re OHLCV 5h startup backfill.
+- **next_cycle_hint**: pm marks 1958a Done. ops deploys docker compose up -d mcp-server then verifies AC-3 at 2026-05-21T09:00Z (cron_job_runs ≥1 success row per all 5 jobs). architect to review qa-1958a-architect-followup.json re OHLCV 5h startup backfill. BLOCKER: pre-push hook blocking remote push due to pre-existing tsc errors in coordinationStore.ts/coordinationTools.ts (commit 79ac45e9) — separate fixer task needed to fix exactOptionalPropertyTypes errors before any local main commits can reach remote.
 - **estimated_tokens**: 4200
 
 ---
