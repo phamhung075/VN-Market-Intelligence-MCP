@@ -1,0 +1,33 @@
+{
+  "from": "agent-father",
+  "to": "pm",
+  "type": "phase_complete",
+  "priority": "high",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-05-20-task-lock-system.md",
+    "phase": 1,
+    "slug": "task-lock-phase1",
+    "commit": "79ac45e9",
+    "smoke_verdict": "PASS (9/9 steps)",
+    "tests": {
+      "passed": 29,
+      "failed": 0,
+      "files": [
+        "apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts",
+        "apps/mcp-server/src/__tests__/task-lock-coordination-tools.test.ts"
+      ]
+    },
+    "files_created_count": 8,
+    "files_modified_count": 11,
+    "tools_added": ["task_claim", "task_heartbeat", "task_release", "task_list_held"],
+    "tool_count_before": 142,
+    "tool_count_after": 146,
+    "summary": "coordination.db migration + coordinationStore.ts (claim/heartbeat/release/list) + coordinationTools.ts (4 MCP tools) + registry wiring + 29 tests + smoke script + protocol doc + skill + tool packages updated for 8 agents",
+    "phases_remaining": [
+      "Phase 2: cowork-team slot locking (.claude/flows/cowork-team/main.md Step 4.6)",
+      "Phase 3: dev-team drain + sprint-task locking (drain-signals.md + developer flow)"
+    ],
+    "next": "pm | plan Phase 2 cowork-team integration as sprint task — tool infra ready, no flow changes needed in Phase 1"
+  },
+  "createdAt": "2026-05-20T18:15:00Z"
+}

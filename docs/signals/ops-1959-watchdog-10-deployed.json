@@ -1,0 +1,45 @@
+{
+  "schema": "agent-signal/v1",
+  "agent": "ops",
+  "task_id": "1959-watchdog-10",
+  "title": "rag-service rebuild + smoke deployment verified",
+  "status": "PASS",
+  "timestamp": "2026-05-20T23:50:32Z",
+  "sprint": 1959,
+  "zone": "ops",
+  "context": {
+    "task_name": "Cleanup rag-service Dockerfile /app/data/models mkdir remnant",
+    "parent_dev_task": "1959-watchdog-10 AC-10-1 (dev-rag-service code cleanup)",
+    "procedure": "preflight → build → start → health-check → smoke-tests → env-verify"
+  },
+  "results": {
+    "preflight_disk_free_gb": 23,
+    "preflight_status": "PASS",
+    "build_exit_code": 0,
+    "build_status": "PASS",
+    "container_restart_duration_seconds": 9,
+    "container_health_status": "healthy",
+    "health_check_status": "PASS",
+    "health_endpoint_response": {
+      "status": "ok",
+      "service": "rag-service"
+    },
+    "search_endpoint_status": "PASS",
+    "search_endpoint_response": {
+      "results": [],
+      "total": 0
+    },
+    "embedding_cache_dir": "/opt/model-cache",
+    "embedding_cache_dir_status": "VERIFIED",
+    "model_prebake_intact": true,
+    "no_shadow_mkdir": true
+  },
+  "ac_results": {
+    "AC-10-2": "PASS",
+    "AC-10-3": "PASS",
+    "AC-10-4": "PASS",
+    "AC-10-5": "PASS"
+  },
+  "next": "po",
+  "notes": "All 4 ops acceptance criteria passed. No regressions detected. Docker named volume correctly mounted, no /app/data/models shadow directory created. Task ready to close."
+}

@@ -1,0 +1,130 @@
+{
+  "from": "pm",
+  "to": ["agent-father", "qa"],
+  "type": "plan_complete",
+  "sprint": 1962,
+  "phase": "3.5",
+  "createdAt": "2026-05-21T00:15:00Z",
+  "createdBy": "pm",
+  "status": "READY_FOR_IMPLEMENTATION",
+  "brief_reference": "docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md",
+  "handoff_file": "docs/handoffs/TASK_1962-dispatcher-wrap.md",
+  "decomposition_summary": {
+    "total_spawn_sites": 7,
+    "spawn_sites": [
+      {
+        "site_id": "S1",
+        "task_id": "1962c-1",
+        "file": ".claude/flows/dev-team/execute-tier.md",
+        "lines": "33-38",
+        "priority": "HIGHEST",
+        "commit_grouping": "solo"
+      },
+      {
+        "site_id": "S2",
+        "task_id": "1962c-2",
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "122",
+        "priority": "HIGH",
+        "commit_grouping": "grouped_2+3+4"
+      },
+      {
+        "site_id": "S3",
+        "task_id": "1962c-3",
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "134",
+        "priority": "MEDIUM",
+        "commit_grouping": "grouped_2+3+4"
+      },
+      {
+        "site_id": "S4",
+        "task_id": "1962c-4",
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "150-151",
+        "priority": "HIGH",
+        "commit_grouping": "grouped_2+3+4"
+      },
+      {
+        "site_id": "S5",
+        "task_id": "1962c-5",
+        "file": ".claude/agents/developer.md",
+        "lines": "37",
+        "priority": "HIGH",
+        "commit_grouping": "solo"
+      },
+      {
+        "site_id": "S6",
+        "task_id": "1962c-6",
+        "file": ".claude/agents/ba.md",
+        "lines": "118",
+        "priority": "MEDIUM",
+        "commit_grouping": "solo"
+      },
+      {
+        "site_id": "S7",
+        "task_id": "1962c-7",
+        "file": ".claude/agents/pm.md",
+        "lines": "124",
+        "priority": "HIGHEST",
+        "commit_grouping": "solo"
+      }
+    ]
+  },
+  "commit_plan": {
+    "total_commits": 5,
+    "commits": [
+      {
+        "commit_id": "1962c-1",
+        "subject": "chore(pm/1962c-1): dispatcher-wrap S1 execute-tier parallel fan-out",
+        "file": ".claude/flows/dev-team/execute-tier.md",
+        "spawn_sites": ["S1"]
+      },
+      {
+        "commit_id": "1962c-2+3+4",
+        "subject": "chore(pm/1962c-2+3+4): dispatcher-wrap S2/S3/S4 three main.md hunks",
+        "file": ".claude/flows/dev-team/main.md",
+        "spawn_sites": ["S2", "S3", "S4"]
+      },
+      {
+        "commit_id": "1962c-5",
+        "subject": "chore(pm/1962c-5): dispatcher-wrap S5 developer multi-zone fan-out",
+        "file": ".claude/agents/developer.md",
+        "spawn_sites": ["S5"]
+      },
+      {
+        "commit_id": "1962c-6",
+        "subject": "chore(pm/1962c-6): dispatcher-wrap S6 ba architect fan-out",
+        "file": ".claude/agents/ba.md",
+        "spawn_sites": ["S6"]
+      },
+      {
+        "commit_id": "1962c-7",
+        "subject": "chore(pm/1962c-7): dispatcher-wrap S7 pm dev-specialist fan-out",
+        "file": ".claude/agents/pm.md",
+        "spawn_sites": ["S7"]
+      }
+    ]
+  },
+  "next_tasks": {
+    "1962c_through_n": "agent-father implements 5 commits per plan",
+    "1962d": "qa smoke test (depends on 1962c-1 through 1962c-7 merged)",
+    "1962e": "docs + MEMORY.md updates (depends on 1962d PASS)"
+  },
+  "tasks_md_updates": {
+    "action": "COMPLETE",
+    "changes": [
+      "1962b moved to [PLAN READY] in Todo section",
+      "1962c-1 through 1962c-7 in Todo section with full AC details",
+      "1962d in Todo section with QA smoke test AC",
+      "1962e in Todo section with docs AC",
+      "c220 Done row standardized format",
+      "1955a+1955b Done rows standardized format"
+    ]
+  },
+  "wip_status": {
+    "current_in_progress": 0,
+    "wip_limit": 2,
+    "capacity_for_dispatch": "2 independent tasks can be assigned now"
+  },
+  "signal_disposition": "Ready for dev-team router Step 3 dispatch → agent-father (1962c-1 through 1962c-7 parallel assignment)"
+}

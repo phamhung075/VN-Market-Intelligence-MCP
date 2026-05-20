@@ -1,0 +1,45 @@
+{
+  "from": "pm",
+  "to": ["po", "architect", "dev-team"],
+  "type": "plan-blocked",
+  "sprint": 1962,
+  "task": "1962b",
+  "priority": "high",
+  "createdAt": "2026-05-20T22:30:00Z",
+  "createdBy": "pm (c194)",
+  "status": "BLOCKED_ON_PREREQ",
+  "blocker": {
+    "missing_prereq": "1962a brief (architect)",
+    "expected_file": "docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md",
+    "expected_signal": "docs/signals/architect-1962a-brief-done.json",
+    "evidence_checked_at": "2026-05-20T22:30:00Z",
+    "evidence": [
+      "ls docs/signals/architect-1962a-brief-done.json → not found",
+      "ls docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md → not found",
+      "grep 1962a docs/signals/*.json → only po-1962-signoff.json (the kickoff signal) — no architect activity",
+      "task_heartbeat(task:1962a) → ok=false (no active architect lock)"
+    ]
+  },
+  "po_dispatch_request": {
+    "action": "Spawn architect with `run .claude/flows/architect/main.md` referencing docs/signals/po-1962-signoff.json § dispatch_plan.1962a",
+    "rationale": "PO signoff at commit 5a4f40a5 listed 1962a/1962b/1962c-n/1962d/1962e but only 1962b was dispatched (this cycle, by user). 1962a (architect brief, prereq of 1962b) appears not to have been spawned — coverage gap in sprint kickoff fan-out.",
+    "context_for_architect": "Full kickoff_constraints_1962a in po-1962-signoff.json (7 spawn sites identified, Model 1 dispatcher-wrap design, no Phase 4, brief target path fixed, signal target path fixed, sprint-task TTL=3600s)."
+  },
+  "pm_retry_plan": {
+    "behavior": "exit-and-retry-next-cycle (per task spec)",
+    "rationale": "task_heartbeat(task:1962a) returned ok=false → architect not in flight → polling 60s loop would spin indefinitely. Cleaner to release task:1962b lock so peer router can re-pick after architect brief lands. Cycle-bounded session.",
+    "task_release": "task:1962b released by pm at 2026-05-20T22:30Z (ok=true)",
+    "retry_trigger": "Next PM dispatch via cowork-team/dev-team that sees docs/signals/architect-1962a-brief-done.json present. PM will then read brief + emit docs/handoffs/TASK_1962-dispatcher-wrap.md + docs/signals/pm-1962b-plan-done.json."
+  },
+  "wip_status": {
+    "pm_wip": "0/2 CLEAN (no plan emitted, no row-level handoffs created)",
+    "sprint_1962_pipeline": "BLOCKED at 1962a (architect prereq missing)"
+  },
+  "no_drift_from_po_signoff": {
+    "spawn_sites_to_be_planned": 7,
+    "expected_handoff_path": "docs/handoffs/TASK_1962-dispatcher-wrap.md",
+    "expected_signal_on_completion": "docs/signals/pm-1962b-plan-done.json",
+    "task_id_template": "1962c-1 ... 1962c-7 (one per spawn site) + 1962d + 1962e",
+    "zone": ".claude/"
+  }
+}

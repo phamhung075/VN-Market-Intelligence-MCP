@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260520T084936Z",
+    "matched_slots": ["chef-eod", "news-scout-market", "market-watcher-market", "alert-commander-market"],
+    "spawned": [],
+    "silent": true,
+    "drift_min": 4,
+    "errors": [],
+    "warnings": [
+      "SKIPPED spawn: prior dispatcher cycle 20260520T084857Z (47s earlier) already spawned the identical 4 slots — all 4 background agents still in flight. Re-spawning would cause MARKET-channel double-publish (AC-6 violation)."
+    ],
+    "notes": [
+      "Manual back-to-back dispatcher invocations within the same ±2min window collapse to one cycle. The first cycle holds the lock implicitly via the still-running agents."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260520T084936Z"
+}

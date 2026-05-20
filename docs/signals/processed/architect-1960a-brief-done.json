@@ -1,0 +1,37 @@
+{
+  "from": "architect",
+  "to": ["po", "pm", "agent-father", "qa"],
+  "type": "brief-complete",
+  "payload": {
+    "sprint": 1960,
+    "task": "1960a",
+    "deliverable": "docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md",
+    "status": "READY_FOR_IMPLEMENTATION",
+    "ac_coverage": {
+      "heartbeat_ownership_model_and_ttls": "§1 — Model 2 (agent-self heartbeat) default; TTL table per task_kind + per-agent overrides (sprint-task 3600s primary, dashboard-row 1800s, per-agent overrides for ba/pm/fixer = 1800s)",
+      "claim_heartbeat_release_callpoints_per_agent": "§2 + §4 — full matrix for po, pm, developer, dev-*, qa, fixer, agent-father; exact file path + step boundary per row",
+      "pipeline_state_relationship_and_migration": "§3 — AUGMENT not replace; migration heuristic on first claim-fail (own-agent + own-task + heartbeat>5min stale → EXIT cycle, next cron retries); no new MCP tool needed",
+      "exact_insertion_point_per_flow_file": "§4.1–§4.9 — 9 flow files, anchor + one-line code snippet each, agent-father can edit mechanically",
+      "tool_package_delta": "§5 — 12 packages to EDIT (po, pm, architect, ba, qa, fixer, agent-father, ops, system-auditor, cowork-refactory-expert, code-janitor, idea-forge); ZERO dev-* package edits needed (all 12 dev-* inherit via developer.md which already has tools — correction to PO signoff audit)",
+      "phase_3_failure_mode_table": "§6 — 9 modes (P3-F1 through P3-F9): heartbeat fail, stolen lock, pipeline-state desync, TTL expiry mid-merge, PO race, lock orphan, dashboard crash, migration false-positive, umbrella crash",
+      "test_plan_for_qa_1960d": "§7 — 7 scenarios (T1 race claim, T2 heartbeat extends TTL, T3 stolen lock detection, T4 dashboard dual-drain, T5 pipeline-state coexistence, T6 cross-agent heartbeat, T7 concurrent stale-steal); each maps to 1960d AC"
+    },
+    "key_decisions": [
+      "Model 2 (agent-self heartbeat) — no master polling; heartbeat at flow-step boundaries not wall-clock",
+      "TTL=3600 sprint-task / TTL=1800 dashboard-row per PO signoff; per-agent overrides where natural (ba/pm/fixer=1800)",
+      "Developer is PRIMARY claimer for task:<task_id> (matches in_progress transition timing). PO claims task:<sprint_id> umbrella separately.",
+      "Developer DOES NOT release on RETURN — QA inherits same-session lock and releases atomically at git push origin main. Avoids TTL gap during QA→fixer round trips.",
+      "Migration logic centralised in .claude/skills/task-lock/SKILL.md — single SSOT, no per-flow duplication",
+      "No new MCP tools required for Phase 3 — pure flow + tool-package wiring + skill update",
+      "dev-* tool packages NOT EDITED — all 12 inherit from developer.md (verified via grep tools_package: across .claude/agents/dev-*.md)",
+      "Implementation order (§8): tool packages → skill update → drain-signals → developer flows → qa → fixer → pm → po → agent-father (last because agent-father edits its own flow)"
+    ],
+    "delta_corrections_to_po_signoff": [
+      "PO signoff audit said dev-* packages need editing; reality is all 12 dev-* inherit via developer.md which already has the tools (zero dev-* package edits needed)",
+      "PO signoff said 'developer + dev-* → HEARTBEAT every 5min + RELEASE on RETURN'; brief refines to 'developer CLAIM + HEARTBEAT, QA RELEASE on APPROVED merge' — same-session lock-handoff avoids TTL gap in dev→qa→fixer round trips"
+    ],
+    "next_owner": "pm",
+    "next_action": "PM reads brief + emits docs/signals/pm-1960-sprint-plan.json with task breakdown for 1960c (agent-father wiring), referencing brief §4 insertion points + §5 package list + §8 implementation order"
+  },
+  "createdAt": "2026-05-20T19:00:21Z"
+}

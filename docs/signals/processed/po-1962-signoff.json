@@ -1,0 +1,171 @@
+{
+  "from": "po",
+  "to": ["architect", "pm", "agent-father", "qa", "dev-team"],
+  "type": "sprint-plan",
+  "sprint": 1962,
+  "priority": "high",
+  "theme": "Task-lock dispatcher-wrap — close multi-router race on Agent(subagent_type=...) fan-out",
+  "createdAt": "2026-05-20T22:10:00Z",
+  "createdBy": "po (c222)",
+  "trigger": {
+    "source": "dev-team gap report c221 close",
+    "verbatim": "drain-signals.md Step 0a-D and cowork-team Step 4.6 already use task_claim. NOT using: execute-tier dispatcher and Agent(subagent_type=...) fan-out for sprint-task agents (qa CLEAN, dev-alert-engine FIX, dev-mcp-server FIX, 1961a/1961b ops dispatch). Multi-Claude window → two routers can both pick the same task_id from a stale signal and dispatch twice. Phase 1 went live at c219; tools are callable now — excuse gone. PO held 1961d (protocol patch). Flag to PO c221 for WIRE-task-claim-into-execute-tier.",
+    "phase_1_live_since": "2026-05-20T19:41Z (commit 42f81d43, container digest sha256:598b94c7)",
+    "phase_3_live_since": "2026-05-20T19:45Z (Sprint 1961 close, commit b78b2817)",
+    "model_2_self_claim_in_place": true,
+    "what_is_missing": "outer (dispatcher-side) claim around Agent() spawn. With self-claim only, two parallel routers BOTH spawn the same task_id; second agent self-claim fails (good) but the parallel Agent() call already burned a session + initial tokens before its self-claim resolved."
+  },
+  "scope_decision": {
+    "rationale": "1961d protocol patch shipped Deployment-Verified Ritual + 5-col Phase Availability table — protocol amendment NOT needed in 1962. Architect's job is to design the dispatcher-wrap pattern (Model 1: caller holds outer claim around spawn, releases after spawn returns or on spawn failure) consistent with the existing brief docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md. Agent-self heartbeat from Model 2 (Phase 3 SHIPPED) remains in place — outer wrap is ADDITIVE guard, not a replacement.",
+    "protocol_amendment_needed": false,
+    "protocol_amendment_reason": "task-lock-protocol.md § Claim Grammar already supports composition (multiple consecutive claims with same task_id by same owner_agent become idempotent current_holder match). Architect confirms in brief; if conflict surfaces, raise back to PO for protocol § Dispatcher-Wrap subsection."
+  },
+  "brief_target": "docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md",
+  "pm_target": "docs/handoffs/TASK_1962-dispatcher-wrap.md",
+  "dispatch_plan": {
+    "1962a": {
+      "agent": "architect",
+      "size": "S",
+      "deliverable": "Architecture brief at docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md",
+      "must_cover": [
+        "Inventory of ALL Agent(subagent_type=...) spawn sites that emit sprint-task work (use grep output already gathered by PO — see § identified_spawn_sites below)",
+        "Model 1 dispatcher-wrap design: caller holds claim around spawn, releases after spawn returns OR if spawn fails. TTL ≤ sprint-task TTL (3600s).",
+        "Same task_id pattern: outer claim MUST use `task:<task_id>` matching the agent's self-claim (Model 2) — current_holder check then resolves second claim as idempotent same-session OR cross-session collision SKIP",
+        "Decision: for sprint-task kind, does the agent self-claim become a no-op (idempotent owner match) OR is it removed entirely? Architect picks one and justifies. PM scopes; agent-father implements per architect.",
+        "Owner-agent identity rule: outer claim owner_agent = dispatcher identity (e.g. `dev-team-router` or the dispatcher's parent agent name) NOT the spawned agent. Inner self-claim (if kept) keeps original owner_agent (e.g. `developer`, `qa`). This permits same-task_id chain without false collision.",
+        "Failure modes: spawn returns error → outer dispatcher releases lock immediately, allowing peer to retry. Spawn hangs → TTL expiry (3600s) is fallback.",
+        "DO NOT retroactively claim in-flight agents (race risk per dev-team flag c221).",
+        "Migration order: pure dispatcher .md edits (no code, no MCP changes); agent-side self-claim stays AS-IS during rollout; remove or no-op self-claim ONLY after one full cycle observation."
+      ],
+      "must_not": [
+        "Do NOT propose Phase 4 or new MCP tool — Phase 1 4-tool surface is sufficient",
+        "Do NOT remove Model 2 agent-self heartbeat (kept for crash recovery during long sprint-task runs)",
+        "Do NOT amend docs/protocols/task-lock-protocol.md unless conflict found — flag back to PO if so"
+      ],
+      "depends_on": [],
+      "deliverable_signal": "docs/signals/architect-1962a-brief-done.json (type=brief_complete)",
+      "estimate": "2h"
+    },
+    "1962b": {
+      "agent": "pm",
+      "size": "S",
+      "deliverable": "Row-level plan at docs/handoffs/TASK_1962-dispatcher-wrap.md decomposing 1962a brief into one task per spawn site (each = one commit), with files/AC/dependencies/zone field",
+      "must_cover": [
+        "One row per Agent(subagent_type=...) spawn site touched (estimated 6–8 sites from PO's audit)",
+        "Each row carries: task_id (1962c-1, 1962c-2, ...), files, AC, conventional-commit subject template, zone: .claude/",
+        "Sequencing: pure-flow .md edits → no parallelism concern (different files); ONE commit per file enforces atomicity (rationale: c47 commit-hygiene policy)",
+        "1962d (qa smoke) AC explicitly tests: two parallel Agent dispatches with same task_id → expect one claimed=true, one claimed=false; one Agent body executes, one exits with SKIP collision telegram",
+        "1962e (agent-father docs): update .claude/skills/task-lock/SKILL.md Phase Status to note dispatcher-wrap shipped, append MEMORY.md index entry"
+      ],
+      "depends_on": ["1962a"],
+      "deliverable_signal": "docs/signals/pm-1962b-plan-done.json (type=plan_complete)",
+      "estimate": "1h"
+    },
+    "1962c_through_n": {
+      "agent": "agent-father",
+      "size": "M (one commit per spawn site)",
+      "deliverable": "Wiring commits across identified dispatcher sites — list emitted by 1962b",
+      "depends_on": ["1962b"],
+      "estimate": "2h"
+    },
+    "1962d": {
+      "agent": "qa",
+      "size": "S",
+      "deliverable": "Multi-router collision smoke: two parallel Agent dispatches with same task_id → exactly one claimed=true",
+      "depends_on": ["1962c_through_n merged"],
+      "estimate": "1h"
+    },
+    "1962e": {
+      "agent": "agent-father",
+      "size": "XS",
+      "deliverable": "Doc updates: .claude/skills/task-lock/SKILL.md Phase Status, docs/agent-memory/MEMORY.md index entry",
+      "depends_on": ["1962d PASS"],
+      "estimate": "0.5h"
+    }
+  },
+  "identified_spawn_sites": {
+    "_note": "PO grep audit 2026-05-20T22:00Z — architect 1962a MUST verify each site is still present and decide WRAP vs SKIP. Architect may discover additional sites.",
+    "sprint_task_spawn_sites": [
+      {
+        "file": ".claude/flows/dev-team/execute-tier.md",
+        "lines": "33-35",
+        "context": "Tier-parallel: Agent(dev-stock-price, taskA) + Agent(dev-alert-engine, taskB); Agent(qa, taskA) + Agent(qa, taskB); Agent(fixer, taskA) + Agent(fixer, taskB)",
+        "kind": "sprint-task",
+        "wrap_priority": "HIGHEST — main collision vector per gap report"
+      },
+      {
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "122",
+        "context": "Pipeline resume — spawn nextAgent immediately",
+        "kind": "sprint-task",
+        "wrap_priority": "HIGH — resume-from-state race window"
+      },
+      {
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "134",
+        "context": "Step 1 PO Triage — Spawn po",
+        "kind": "sprint-task (po triage)",
+        "wrap_priority": "MEDIUM — po triage is itself the sprint planner, low duplication risk but include for symmetry"
+      },
+      {
+        "file": ".claude/flows/dev-team/main.md",
+        "lines": "150-151",
+        "context": "UNBLOCK spawn {route_to} | CLEAN spawn qa",
+        "kind": "sprint-task",
+        "wrap_priority": "HIGH — qa CLEAN explicitly flagged in gap report"
+      },
+      {
+        "file": ".claude/agents/developer.md",
+        "lines": "37",
+        "context": "Agent(dev-frontend, taskA) + Agent(dev-stock-price, taskB) + Agent(dev-api-gateway, taskC)",
+        "kind": "sprint-task",
+        "wrap_priority": "HIGH — agent-defn-level fan-out, runs whenever developer agent picks multi-zone work"
+      },
+      {
+        "file": ".claude/agents/ba.md",
+        "lines": "118",
+        "context": "Agent(architect, REQ_NNN) + Agent(architect, REQ_MMM)",
+        "kind": "sprint-task",
+        "wrap_priority": "MEDIUM — ba parallel arch fan-out"
+      },
+      {
+        "file": ".claude/agents/pm.md",
+        "lines": "124",
+        "context": "Agent(dev-frontend, TASK_101) + Agent(dev-stock-price, TASK_102) + Agent(dev-api-gateway, TASK_103)",
+        "kind": "sprint-task",
+        "wrap_priority": "HIGHEST — pm is the primary planner that fans out to multiple dev-* agents; gap report specifically calls out dev-alert-engine FIX + dev-mcp-server FIX dispatch"
+      }
+    ],
+    "_excluded": "Ops dispatcher (.claude/flows/ops/main.md) does not use Agent(subagent_type) fan-out — it directly calls Bash/docker commands. Architect to confirm. Cowork-team Step 4.6 already wrapped (Phase 2 SHIPPED — leave alone)."
+  },
+  "kickoff_constraints_1962a": [
+    "Architect MUST verify all 7 spawn sites listed above are still present + decide which to wrap",
+    "Architect MUST NOT propose Phase 4 or new MCP tools — Phase 1 surface sufficient",
+    "Architect MUST output ZONE: .claude/ in handoff (multi-flow zone)",
+    "Architect MUST reference docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md as predecessor brief (do not duplicate, link)",
+    "Architect MUST cite docs/protocols/task-lock-protocol.md § Claim Grammar as the contract surface used by dispatcher-wrap (no protocol changes expected)",
+    "Architect MUST output brief at the exact path docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md and drop signal docs/signals/architect-1962a-brief-done.json on completion",
+    "1962a TTL = 3600s (sprint-task) — architect calls task_claim with task_id=task:1962a on start, task_release on completion (Phase 3 self-claim ritual)"
+  ],
+  "hard_constraints_carried": [
+    "main branch only — no feature branches at sprint-plan layer",
+    "AUGMENT existing Phase 3 self-claim (1960c) — do NOT remove agent-side claims",
+    "Outer claim TTL ≤ inner claim TTL (3600s for sprint-task)",
+    "DO NOT retroactively claim in-flight agents per dev-team c221 note",
+    "Bash calls < 30s",
+    "Each spawn-site fix = one commit, conventional-commit format with Sprint:/Task:/AC: trailers"
+  ],
+  "phase_status_inheritance": {
+    "phase_1": "SHIPPED + LIVE-VERIFIED 2026-05-20 (4 MCP tools callable on gateway, image digest sha256:598b94c7)",
+    "phase_2": "SHIPPED + LIVE-VERIFIED 2026-05-20 (cowork-team Step 4.6 slot-locking)",
+    "phase_3": "SHIPPED + LIVE-VERIFIED 2026-05-20 (sprint-task + dashboard-row agent-side self-claim across 8 flow .md files)",
+    "phase_3_5_this_sprint": "Sprint 1962 — dispatcher-wrap outer claim ADDITIVE to Phase 3"
+  },
+  "exit_criteria": {
+    "ac_1962a": "Brief file exists at docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md with spawn-site inventory + Model 1 wrap design + no-op-vs-remove decision",
+    "ac_1962b": "Row-level plan at docs/handoffs/TASK_1962-dispatcher-wrap.md with N rows (one per spawn site) + 1962d + 1962e",
+    "ac_1962c_n": "Each spawn site shows outer task_claim/task_release around Agent() call in the corresponding .md file",
+    "ac_1962d": "qa-1962d-approved.json signal: two parallel Agent dispatches with same task_id → exactly one claimed=true, one SKIP collision telegram captured",
+    "ac_1962e": "task-lock SKILL.md Phase Status shows dispatcher-wrap row; MEMORY.md project index entry added"
+  }
+}

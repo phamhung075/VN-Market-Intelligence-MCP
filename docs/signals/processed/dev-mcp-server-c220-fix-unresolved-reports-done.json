@@ -1,0 +1,24 @@
+{
+  "from": "dev-mcp-server",
+  "to": "qa",
+  "type": "task-complete",
+  "priority": "high",
+  "createdAt": "2026-05-20T20:00:00Z",
+  "payload": {
+    "task": "FIX-listunresolvedreports-tool-registration",
+    "sprint": "c220",
+    "case": "a",
+    "resolved_tool_name": "list_unresolved_reports",
+    "description": "Tool IS implemented and registered. Callers in dev-team/main.md, dev-team/post-cycle.md, po/main.md used wrong camelCase 'listUnresolvedReports()' instead of MCP tool name 'list_unresolved_reports'. Fixed 4 occurrences in flow files.",
+    "files_changed": [
+      ".claude/flows/dev-team/main.md",
+      ".claude/flows/dev-team/post-cycle.md",
+      ".claude/flows/po/main.md"
+    ],
+    "tool_verified": "list_unresolved_reports exists in telegramReportTools.ts + registry.ts + live server (toolCount=146)",
+    "tests_pass": "12/12 mcp-drift-list-unresolved-reports.test.ts GREEN",
+    "tsc_errors": 0,
+    "deploy_needed": false,
+    "baseline_after": 9277
+  }
+}

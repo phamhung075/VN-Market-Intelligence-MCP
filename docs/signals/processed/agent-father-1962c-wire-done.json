@@ -1,0 +1,70 @@
+{
+  "from": "agent-father",
+  "to": ["qa", "pm", "dev-team"],
+  "type": "wire_complete",
+  "sprint": 1962,
+  "task": "1962c",
+  "description": "Outer task_claim/task_release wired at all 7 spawn sites (S1-S7) per row-level plan",
+  "commits": [
+    {
+      "id": "1962c-1",
+      "sha": "592fe1c4",
+      "file": ".claude/flows/dev-team/execute-tier.md",
+      "site": "S1",
+      "subject": "chore(pm/1962c-1): dispatcher-wrap S1 execute-tier parallel fan-out"
+    },
+    {
+      "id": "1962c-2+3+4",
+      "sha": "348443d1",
+      "file": ".claude/flows/dev-team/main.md",
+      "site": "S2, S3, S4",
+      "subject": "chore(pm/1962c-2+3+4): dispatcher-wrap S2/S3/S4 three main.md hunks"
+    },
+    {
+      "id": "1962c-5",
+      "sha": "587f4265",
+      "file": ".claude/agents/developer.md",
+      "site": "S5",
+      "subject": "chore(pm/1962c-5): dispatcher-wrap S5 developer multi-zone fan-out"
+    },
+    {
+      "id": "1962c-6",
+      "sha": "7ae26e3b",
+      "file": ".claude/agents/ba.md",
+      "site": "S6",
+      "subject": "chore(pm/1962c-6): dispatcher-wrap S6 ba architect fan-out"
+    },
+    {
+      "id": "1962c-7",
+      "sha": "5ecf426c",
+      "file": ".claude/agents/pm.md",
+      "site": "S7",
+      "subject": "chore(pm/1962c-7): dispatcher-wrap S7 pm dev-specialist fan-out"
+    }
+  ],
+  "verification": {
+    "all_claim_release_pairs_present": true,
+    "dispatcher_identities": {
+      "S1": "dev-team",
+      "S2": "dev-team",
+      "S3": "dev-team",
+      "S4": "dev-team",
+      "S5": "developer",
+      "S6": "ba",
+      "S7": "pm"
+    },
+    "ttl_values": {
+      "S1": 3600,
+      "S2": 3600,
+      "S3": 1800,
+      "S4": 3600,
+      "S5": 3600,
+      "S6": 3600,
+      "S7": 3600
+    },
+    "inner_self_claim_untouched": true,
+    "phase3_preserved": true
+  },
+  "next": "1962d — QA smoke test (T1: double-dispatch sim, T2: outer-release-then-inner-claim, T3: cross-owner-agent)",
+  "timestamp": "2026-05-20T00:00:00Z"
+}

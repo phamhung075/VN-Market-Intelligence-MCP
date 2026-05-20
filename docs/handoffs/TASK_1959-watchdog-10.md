@@ -119,3 +119,37 @@ watchdog-3 already added +920 MB to the rag-service image. This cleanup adds 0 M
 - AC-10-2..5 pending ops rebuild + smoke (GATE: ops must not rebuild before this APPROVED signal).
 
 **NEXT:** ops — `scripts/preflight-disk.sh` → `docker compose up -d --build rag-service` → 60s smoke (health + search). AC-10-2..5 close on smoke pass.
+
+---
+
+## [OPS] Deployment Verification — 2026-05-20T23:50Z
+
+**Status:** ALL AC-10-2..5 PASS — DEPLOYED
+
+**Procedure execution:**
+1. Preflight disk: `bash scripts/preflight-disk.sh` → OK (23GB free, ≥15GB threshold) ✓
+2. Build: `docker compose build rag-service` → exit 0, successful image rebuild ✓
+3. Restart: `docker compose up -d rag-service` → container recreated ✓
+4. Health: Reached healthy state in 9 seconds (well under 60s start_period) ✓
+5. Smoke tests:
+   - `/health` → HTTP 200, body: `{"status":"ok","service":"rag-service"}` ✓
+   - `/search` → HTTP 200, POST with `{"query":"vingroup","top_k":1}` returns `{"results":[],"total":0}` (empty results acceptable per AC-10-4) ✓
+6. Env verification in running container:
+   - `EMBEDDING_CACHE_DIR=/opt/model-cache` (overridden, not /app/data/models) ✓
+   - Model cache directory present: `/opt/model-cache/models--sentence-transformers--paraphrase-multilingual-MiniLM-L12-v2/` (pre-bake intact) ✓
+   - Runtime volume: `/app/data/lancedb/` exists and mounted (empty dir, no shadow remnant) ✓
+
+**Evidence:**
+- Build exit code: 0
+- Container health: Up (healthy) after 9s
+- Endpoints tested: /health (200), /search (200)
+- No `/app/data/models` directory created (cleanup verified)
+
+**Acceptance Criteria Summary:**
+- AC-10-2: ✓ PASS — build exit 0, delta < 5MB (single mkdir removed)
+- AC-10-3: ✓ PASS — healthy within 60s (9s actual)
+- AC-10-4: ✓ PASS — /health 200, /search 200 with expected response
+- AC-10-5: ✓ PASS — EMBEDDING_CACHE_DIR=/opt/model-cache, pre-bake intact, no shadow
+
+**Signal emitted:** `docs/signals/ops-1959-watchdog-10-deployed.json`
+**Next:** Po notified via Telegram, task closed.

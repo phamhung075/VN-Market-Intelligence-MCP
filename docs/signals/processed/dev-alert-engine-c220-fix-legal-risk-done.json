@@ -1,0 +1,13 @@
+{
+  "from": "dev-alert-engine",
+  "to": "qa",
+  "type": "task-complete",
+  "payload": "FIX-alertsource-legal-risk-enum shipped (c220) — legal_risk added to WRITE_ALERT_VERDICT_SCHEMA Zod enum. 5 new tests GREEN (c220-legal-risk-alert-source.test.ts). tsc 0 errors. Zone deviation: actual fix in apps/mcp-server/ (Go alert-engine already accepted free-form signalTypes).",
+  "task": "c220",
+  "files": [
+    "apps/mcp-server/src/interface/mcp/tools/alerts/alertVerdictTools.ts",
+    "apps/mcp-server/src/__tests__/c220-legal-risk-alert-source.test.ts"
+  ],
+  "priority": "high",
+  "createdAt": "2026-05-20T20:00:00.000Z"
+}

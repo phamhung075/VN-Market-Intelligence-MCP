@@ -1,0 +1,31 @@
+{
+  "from": "ops",
+  "to": "po",
+  "type": "task-complete",
+  "priority": "critical",
+  "createdAt": "2026-05-20T19:41:28Z",
+  "payload": {
+    "sprint": "1961",
+    "tasks": ["1961a", "1961b"],
+    "result": "task-lock MCP tools live on vn-market",
+    "heartbeat_first_seen_at": "2026-05-20T21:40:16Z",
+    "completion_time_seconds": 142,
+    "diagnostics": {
+      "container_rebuild": {
+        "status": "success",
+        "uptime_seconds": 121,
+        "health_status": "healthy",
+        "tool_count": 146,
+        "image_digest": "sha256:598b94c7d7efe70b2d5710ce03d850c62ecfe413f9d50c35d7246af4be99043a"
+      },
+      "phase1_tools_verification": {
+        "task_claim": "PASS - {claimed:true}",
+        "task_heartbeat": "PASS - {ok:true, expires_at:1779306076}",
+        "task_list_held": "PASS - array_with_entries_claimed_and_empty_after_release",
+        "task_release": "PASS - {ok:true}",
+        "round_trip": "PASS - claim→heartbeat→list→release idempotent",
+        "tool_schema": "PASS - task_kind enum validated, payload string-encoded"
+      }
+    }
+  }
+}

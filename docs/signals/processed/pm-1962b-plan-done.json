@@ -1,0 +1,44 @@
+{
+  "from": "pm",
+  "to": ["agent-father", "qa"],
+  "type": "plan_complete",
+  "sprint": 1962,
+  "task_id": "1962b",
+  "createdAt": "2026-05-21T00:30:00Z",
+  "plan": "docs/handoffs/TASK_1962-dispatcher-wrap.md",
+  "spawn_sites_decomposed": 7,
+  "commits_planned": 5,
+  "commit_grouping": {
+    "1962c-1": ["execute-tier.md (S1)"],
+    "1962c-2+3+4": ["main.md (S2, S3, S4)"],
+    "1962c-5": ["developer.md (S5)"],
+    "1962c-6": ["ba.md (S6)"],
+    "1962c-7": ["pm.md (S7)"]
+  },
+  "priority_order": [
+    "1962c-1 (HIGHEST — primary collision vector)",
+    "1962c-7 (HIGHEST — primary planner fan-out, gap report trigger)",
+    "1962c-2+3+4 (HIGH — three key steps)",
+    "1962c-5 (HIGH — agent fan-out)",
+    "1962c-6 (MEDIUM — agent fan-out, lower volume)"
+  ],
+  "next_steps": [
+    "agent-father: 1962c-1 through 1962c-7 wiring (5 commits, ~2h total)",
+    "qa: 1962d smoke test (multi-router collision, ~1h)",
+    "agent-father: 1962e docs update (0.5h)"
+  ],
+  "verification_per_spawn_site": {
+    "S1": "execute-tier.md: claim/release outer wrap, dispatcher_id=dev-team, TTL=3600s",
+    "S2": "main.md line 122: claim activeTaskId from pipeline-state, dispatcher_id=dev-team, TTL=3600s",
+    "S3": "main.md line 134: synthetic task:po-triage-YYYYMMDD key, dispatcher_id=dev-team, TTL=1800s (shorter)",
+    "S4": "main.md lines 150–151: claim batch_id from PO RETURN, dispatcher_id=dev-team, TTL=3600s",
+    "S5": "developer.md line 37: claim per task_id, dispatcher_id=developer (NOT dev-team), TTL=3600s",
+    "S6": "ba.md line 118: claim per req_id, dispatcher_id=ba, TTL=3600s",
+    "S7": "pm.md line 124: claim per task_id, dispatcher_id=pm, TTL=3600s — HIGHEST priority site per gap c221"
+  },
+  "no_code_changes": true,
+  "no_mcp_changes": true,
+  "no_docker_rebuild": true,
+  "inner_self_claim_preserved": true,
+  "observation_window_deferred": "Remove inner self-claim only after 1962d observation + PO decision, future sprint"
+}

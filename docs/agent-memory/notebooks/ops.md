@@ -464,3 +464,35 @@
 - This deployment closes the runtime-detection gap for disk pressure incidents (1958-RCA context)
 - No other services affected; pure TypeScript change, no image rebuild needed
 
+
+---
+
+## 2026-05-20T23:50Z — Task 1959-watchdog-10 deployment ops cycle
+
+**Task:** 1959-watchdog-10 AC-10-2..5 ops rebuild + smoke (rag-service Dockerfile cleanup)
+
+**Context:** Dev-rag-service cleaned `/app/data/models` token from Dockerfile (AC-10-1 QA-PASS). Ops zone: verify rebuild, smoke, env integrity.
+
+**Execution:**
+1. Preflight: `preflight-disk.sh` → 23GB free ✓
+2. Rebuild: `docker compose build rag-service` → exit 0, image 3.43GB (same size, mkdir delta <1MB) ✓
+3. Start: `docker compose up -d rag-service` → container recreated ✓
+4. Health: 9s → healthy (start_period 30s via watchdog-2 already applied) ✓
+5. Smoke: /health (200, {"status":"ok"}), /search (200, empty array valid) ✓
+6. Env: EMBEDDING_CACHE_DIR=/opt/model-cache (NOT /app/data/models), model cache intact ✓
+
+**Results:**
+- AC-10-2: build exit 0 ✓
+- AC-10-3: healthy 9s ✓
+- AC-10-4: /health + /search both 200 ✓
+- AC-10-5: env + cache verified ✓
+
+**Status:** PASS — task-lock claim released, signal emitted, Telegram sent to WORK.
+
+**Notes:**
+- Port testing: handoff says port 8001 but Dockerfile/docker-compose use 5002 — tested on correct port
+- Search returns empty results (no data loaded yet) — acceptable per AC-10-4 "or proper empty array"
+- No regression: /app/data/lancedb exists (named volume mounts correctly), /app/data/models not created
+- Dockerfile line 37 now: `RUN mkdir -p /app/data/lancedb` (clean, no shadow remnant)
+
+**Next:** PO gets signal + Telegram notification. Task moves to Done.
