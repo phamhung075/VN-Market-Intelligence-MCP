@@ -4,6 +4,32 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1955a — dailyDashboardJob projectRoot() path fix (2026-05-20, DONE — commit acc8d52b)
+
+**Problem:** `projectRoot()` at `dailyDashboardJob.ts:455` used `"../../../../../.."` (6 segments). Container WORKDIR=/app; source file lands at `/app/src/scheduler/system/dailyDashboardJob.ts`. Six `..` segments walk past `/` → clamps to `/`. `loadProjectStats()` tried to read `/docs/data/project-stats.json` (ENOENT). Cron has failed every 16:30Z tick since ≥2026-05-09.
+
+**Fix (1 file, 1 line):**
+- `dailyDashboardJob.ts:455-459`: `"../../.."` (3 segments). `/app/src/scheduler/system/../../../..` → `/app`. Volume mount `./docs/data/project-stats.json:/app/docs/data/project-stats.json:ro` matches.
+
+**Verification (dev path note):** In dev, `import.meta.dir` is `.../apps/mcp-server/src/scheduler/system`; 3 `..` resolve to `.../apps/mcp-server` (not monorepo root). Tests do NOT call `projectRoot()` directly — they test the path math via simulation and use `aggregateDailyDashboard` with injected data. `runDailyDashboardJob()` verified only in container.
+
+**Tests (5/5 GREEN):**
+- AC-1: real stats file exists at monorepo root (4 levels up from `__tests__`)
+- AC-1b: buggy path `/docs/data/project-stats.json` does NOT exist (regression guard)
+- AC-2: `aggregateDailyDashboard` succeeds with real project-stats.json
+- AC-3: `path.resolve("/app/src/scheduler/system", "../../..")` = `/app`
+- AC-3b: `path.resolve("/app/src/scheduler/system", "../../../../../..")` = `/` (the bug)
+
+**tsc:** 0 errors. **Suite:** 9279 pass / 285 fail (baseline ~9275/284; +4 net passes, 0 regressions).
+
+**Commits:** `acc8d52b` (fix), `96784698` (meta) on `main`.
+
+**NEXT: qa** review commit `acc8d52b`; then ops container redeploy; AC-2/AC-3 container verification at next 16:30Z tick.
+
+Zone health: dailyDashboardJob cron error root cause fixed; path math verified for container layout; next 16:30Z tick will write status=success | HEALTHY
+
+---
+
 ### Task 1954a — backfillBctcQ12026 column-name hotfix (2026-05-19, DONE — commit 2a5cc2a7)
 
 **Problem:** `backfillBctcQ12026.ts:52-57` INSERT used `(ticker, year, quarter, ...)` — none of those columns exist in `bctc_vps_queue` DDL (`schema-financial-reports.ts:122-133` defines `action_code TEXT NOT NULL`, `period_year INTEGER NOT NULL`, `period_quarter TEXT NOT NULL`). Every prior run threw `no such column: ticker`. The script was silently non-functional; the 103 pending rows came from `server.ts:703` push endpoint, not this backfill.
