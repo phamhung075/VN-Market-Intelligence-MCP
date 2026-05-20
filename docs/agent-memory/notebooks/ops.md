@@ -435,3 +435,32 @@
 
 **Timeline:** 10 minutes (script creation, testing, docs, signal, commit)
 
+
+---
+
+### Sprint 1959-watchdog-5 — Disk-Usage Alert Cron Deployment (21:31:50 UTC) [COMPLETE]
+
+**Status:** OPS-DEPLOYED + VERIFIED
+
+**Action taken:**
+- Pulled commit 8d0f41e0 (QA APPROVED, diskUsageAlertJob added)
+- Executed `docker-compose up -d --no-deps mcp-server` (rolling restart, code reloaded)
+- Verified container restart: mcp-server UP, health HEALTHY
+- Verified cron registration: diskUsageAlertJob in cronConfig.ts (line 157), wired startScheduler.ts (line 879-880)
+- Next scheduled fire: 2026-05-20T21:47:00Z (minute=47 every hour)
+- LanceDB volume size: 69 MB (below 20 GB threshold)
+
+**Outcome:**
+- Disk-usage watchdog LIVE and ready to alert BUG channel if lancedb exceeds 20 GB threshold
+- 6h cooldown prevents alert spam on sustained over-threshold condition
+- All AC-4-1 through AC-4-4 acceptance criteria verified post-QA
+- No alert will fire on first run (disk healthy) — this is EXPECTED and CORRECT per watchdog design
+- Deployment signal: docs/signals/ops-1959-watchdog-5-deployed.json
+- Handoff updated with [OPS] deployment record
+
+**Notes:**
+- Handoff context mentioned "lancedb ~29GB" as design rationale; actual Docker volume currently 69 MB
+- Watchdog-4 (compaction cron) unlocks 2026-05-22T21:00Z and may push size down further
+- This deployment closes the runtime-detection gap for disk pressure incidents (1958-RCA context)
+- No other services affected; pure TypeScript change, no image rebuild needed
+
