@@ -1,133 +1,172 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-20 04:18 UTC | **Cycle:** TIER-1 | **Sprint:** 1956
+**Last updated:** 2026-05-20 04:18 UTC | **Current Tier:** TIER-2 | **Sprint:** 1956
 
-## Current state
+## Status Summary
 
-**TIER-1 AUDIT CYCLE COMPLETE — HEALTHY**
+**TIER-2 AUDIT CYCLE COMPLETE — DEGRADED**
 
-All 9 core Docker microservices operational. Health endpoints all responding 200. No new anomalies detected. One persistent cron error (dailyDashboardJob path issue) documented in prior cycles — dedup-skipped per 7-day window.
+Data freshness sweep detected 3 NEW critical/warn anomalies:
+- **1 CRITICAL:** BCTC SLA breached (329 min vs 120 min, 2.74x over)
+- **2 WARN:** BCTC VPS stale (21h, marked STALE), vn-news-fetch unhealthy
 
-**Status Summary:**
-- All 9 core services: UP and healthy
-- Health endpoints: 9/9 responding HTTP 200
-- Restart count: 0 (mcp-server)
-- Memory pressure: Not available (docker stats timeout — non-critical)
-- Cron health: >99% success rate overall; 1 known persistent error (dedup-skipped)
+Plus 2 zombie cron rows persisting from prior cycle (vnstockFundamentalsRefresh, vnstockTradingStatsRefresh stuck running 20h+).
 
 ---
 
-## Tier-1 Audit — 2026-05-20 04:18:05 UTC
+## Tier-2 Audit — 2026-05-20 04:18:02 UTC
 
-### Container Status (A-01 through A-11)
-✓ PASS: All 9 core services UP
-- mcp-server: UP (healthy)
-- api-gateway: UP (healthy)
-- stock-price: UP (healthy)
-- technical-analysis: UP (healthy)
-- macro-indicators: UP (healthy)
-- kinh-dich-service: UP (healthy)
-- alert-engine: UP (healthy)
-- pdf-extractor: UP (healthy)
-- news-fetch: UP (healthy)
-- rag-service: UP (healthy)
-- frontend: Not responding to health check (expected; frontend is UI-only, no HTTP health endpoint)
+**Scope:** Cron fire gaps, per-source fetch freshness, VPS proxy health, news/signal freshness.
 
-### Health Endpoints (A-12 through A-20)
-✓ PASS: All 9 core services respond to HTTP /health
-- mcp-server:3000 → HTTP 200 (status: ok, uptime 1h50m58s)
-- api-gateway:4000 → HTTP 200 (all sub-services ok)
-- stock-price:5010 → HTTP 200 (port: 5000, service: stock-price, status: ok)
-- technical-analysis:5003 → HTTP 200 (status: ok)
-- macro-indicators:5004 → HTTP 200 (status: ok)
-- kinh-dich-service:5005 → HTTP 200 (status: ok)
-- alert-engine:5006 → HTTP 200 (port: 5006, service: alert-engine, status: ok)
-- pdf-extractor:5001 → HTTP 200 (status: ok)
-- rag-service:5002 → HTTP 200 (status: ok)
-- news-fetch:5008 → HTTP 200 (status: ok, port: 5008)
+### Cron Fire Check (A-29)
+From get_cron_health():
+- intelligenceCycleJob: running (last_run 04:15, gap 3m, OK)
+- predictionMarketPollJob: last_run 03:00 (gap 1h 18m, OK)
+- bctcReparseJob: last_run 2026-05-19 22:49:44 (success_rate 87.1%, OK)
+- **vnstockFundamentalsRefresh: STUCK (running=true, last_run 2026-05-18 01:00, 27h+ elapsed, success_rate 0%)**
+- **vnstockTradingStatsRefresh: STUCK (running=true, last_run 2026-05-18 08:30, 20h+ elapsed, success_rate 0%)**
+- Foreign flow fallback: running normally (last 1min)
+- **dailyDashboardJob: DEDUP-SKIPPED (known path error ENOENT /docs/data/project-stats.json, last run 2026-05-17, dedup key seen in 7d window)**
 
-### Restart Count (A-21)
-✓ PASS: mcp-server RestartCount = 0 (≤2)
+### Per-Source Fetch Freshness (B-01 through B-12)
 
-### Memory Pressure (A-30)
-⚠ TIMEOUT: docker stats --no-stream timed out (non-critical for Tier-1)
+**Price/VPS sources:**
+- ssc-iboard: last push 2026-05-20 04:18:27Z (0 min age) — ✓ PASS
+- foreign-flow: last push 2026-05-20 04:18:36Z (0 min age) — ✓ PASS
+- yahoo-finance: last update within SLA — ✓ PASS
 
-### MCP System Status
-✓ PASS: MCP gateway reachable, all circuit breakers OK (0 open)
-- Uptime: 1h 50m 58s
-- WAL size: 7.45 MB (healthy, <10MB)
-- Unresolved WARN errors: 10 (mostly vnstock rate-limits + foreign-flow fallback; known transient)
-- DB path: /app/data/market.db (147.91 MB)
-- Trading window: VN market OPEN (02:00–08:59 UTC)
+**News/VPS sources:**
+- news-vps: ⚠ **WARN — service unhealthy (uptime 1h 1m, marked unhealthy in get_vps_service_health())**
+- sbv-vps: last push 2026-05-20 03:58:27Z (OK) — ✓ PASS
 
-### Cron Health Status
-✓ PASS: 60+ cron jobs tracked, >99% success rate overall
-✓ PASS: Critical jobs firing on schedule:
-  - intelligenceCycleJob: last_run 2026-05-20 04:15, success_rate 99.0% (RUNNING)
-  - predictionMarketPollJob: last_run 2026-05-20 03:00, success_rate 100%
-  - bctcReparseJob: last_run 2026-05-19 22:49:44, success_rate 87.1%
-  - alertScanParallelJob: last_run 2026-05-20 04:15, success_rate 100%
-  - vpsServiceHealthJob: last_run 2026-05-20 04:15, success_rate 100%
+**BCTC sources (critical):**
+- **bctc-push: ⚠ WARN — VPS stale (last push 2026-05-19 07:05:07Z, 21.2h ago, marked STALE, only 1 push in 24h)**
+- **bctc-discover: ✗ CRITICAL — SLA breached (329 min age vs 120 min SLA, 2.74x over). Last bctc update 2026-05-19 05:49Z (~5.5h ago)**
 
-⚠ WARN: Persistent cron error (known from prior cycles, DEDUP-SKIPPED)
-- dailyDashboardJob: 0% success rate (3 runs, all failed)
-  - last_run: 2026-05-17 16:30 (>3 days ago)
-  - error: ENOENT: no such file or directory, open '/docs/data/project-stats.json'
-  - **Root cause:** Path misconfiguration in cron job (should be `/app/docs/data/project-stats.json`)
-  - **Dedup key:** `cron_job_error:dailyDashboardJob:A-29`
-  - **Status:** Documented in prior cycle; task 1955a assigned; dedup-skipped 2026-05-20
+**Macro/indicators:**
+- sbv: last_run 2026-05-18 16:00 (OK)
+- macro indicator refresh: last_run 2026-05-17 23:00 (OK)
 
-ℹ INFO: Zombie cron rows (no new runs in >72h, likely stale state records):
-  - vnstockFundamentalsRefresh: last_run 2026-05-18 01:00 (>2.5 days ago), running=true, success_rate 0.0%
-  - vnstockTradingStatsRefresh: last_run 2026-05-18 08:30 (>2 days ago), running=true, success_rate 0.0%
-  - (dedup-skipped from prior cycles)
+### VPS Proxy Health (B-06, B-07)
 
-### Anomaly Summary
-- **Total anomalies detected:** 0 (NEW, THIS CYCLE)
-- **Dedup-skipped:** 1 (dailyDashboardJob path error — seen in prior 7d window)
-- **CRITICAL:** 0
-- **WARN:** 0 (NEW)
-- **INFO:** 0 (zombie rows dedup-skipped)
+From get_vps_proxy_health():
+- prices: ok (last push 04:18:27, 0 errors in 24h)
+- news: ok (last push 04:18:00, 0 errors in 24h)
+- sbv: ok (last push 03:58:27, 0 errors in 24h)
+- **bctc: STALE (last push 2026-05-19 07:05:07, flagged STALE)**
+- foreign-flow: ok (last push 04:18:36)
 
-### Overall Status
-- **Tier-1 Completion:** SUCCESS ✓
-- **Container health:** HEALTHY (9/9 core up)
-- **Health endpoints:** HEALTHY (9/9 responding)
-- **Cron health:** HEALTHY (no NEW failures; all critical jobs firing)
-- **Memory/restart:** HEALTHY (restart=0, memory check timeout non-critical)
-- **System overall:** HEALTHY
+From get_vps_service_health():
+- vn-bctc-fetch: healthy
+- vn-foreign-flow: healthy
+- **vn-news-fetch: UNHEALTHY (uptime 1h 1m)**
+- vn-price-fetch: healthy
+- vn-sbv-fetch: healthy
+- Summary: 4 healthy, **1 unhealthy**
 
-### Wall Time
-- Duration: ~10s (target: <120s) ✓
+### Rate Limits (B-12)
+From get_rate_limit_status():
+- All 11 sources ready (0s wait)
+- No source at 100% → ✓ PASS
 
-### Dedup Index (7-day window)
+### SLA Status (B-10)
 
-**Dedup keys present from prior 7d:**
-- `cron_job_error:dailyDashboardJob:A-29` — WARN — first seen 2026-05-17 19:31 (dedup-skipped this cycle, no new BUG write)
-- `cron_stuck:vnstockFundamentalsRefresh:A-29` — INFO — zombie row (dedup-skipped)
-- `cron_stuck:vnstockTradingStatsRefresh:A-29` — INFO — zombie row (dedup-skipped)
+From get_sla_status():
+| Signal | Age | SLA | Status |
+|---|---|---|---|
+| price | 0 min | 10 min | ok |
+| bctc | **329 min** | **120 min** | **BREACHED** |
+| news | 0 min | 30 min | ok |
+| sbv_fx | 4 min | 30 min | ok |
+| foreign_flow | 0 min | 10 min | ok |
 
-**No NEW anomalies to escalate.**
+Summary: 4 ok, **1 BREACHED (CRITICAL)**
+
+### DB Freshness Spot Checks (C-06, C-07)
+
+Unable to execute docker exec sqlite3 queries (sqlite3 not in container), but get_alerts() shows:
+- 100 alerts in last 7 days ✓ PASS (indicates news_articles + agent_signals active)
+
+### Macro Snapshot
+From get_macro_snapshot():
+- DXY: 99.30 (USD STABLE)
+- US 10Y: 4.67% (RISK-OFF)
+- VND Spread: -0.33% (FII_OUTFLOW_RISK)
+- Crude: 110.35 (energy sector positive)
+- Gold: 4469.00 (risk-off signal)
+- FX: USD/VND 26,329 (high pressure)
+
+No anomalies in macro inputs.
 
 ---
 
-## Session Timeline
+## Anomaly Summary — Tier-2
 
-- **2026-05-19 20:07:54 UTC:** Prior Tier-1 audit — CRITICAL OUTAGE (8 containers down, MCP unreachable)
-- **2026-05-19 20:48:xx UTC:** Automated recovery (containers restarted)
-- **2026-05-19 20:50:39 UTC:** Tier-1 audit — RECOVERY CONFIRMED (all 11 UP)
-- **2026-05-19 21:02:34 UTC:** Tier-1 audit — STEADY STATE (9/9 core services healthy)
-- **2026-05-20 04:18:05 UTC:** Current Tier-1 audit — STEADY STATE CONFIRMED (9/9 core services healthy, no new anomalies)
+**NEW ANOMALIES THIS CYCLE:**
+- **C: BCTC SLA breached** (329/120 min, 2.74x over) — severity CRITICAL
+- **W: BCTC VPS stale** (21h ago, marked STALE) — severity WARN
+- **W: vn-news-fetch unhealthy** (VPS service down) — severity WARN
+
+**Total NEW:** 3 (1 CRITICAL, 2 WARN)
+
+**DEDUP-SKIPPED:**
+- dailyDashboardJob ENOENT (path error, known from 2026-05-17 19:31, 7d window active)
+- vnstockFundamentalsRefresh stuck (zombie row, known from 2026-05-19, OBSERVE-1955c gate 2026-05-25)
+- vnstockTradingStatsRefresh stuck (zombie row, known from 2026-05-19, OBSERVE-1955d gate 2026-05-20)
+
+**Dedup-skipped:** 3 (from prior 7d window)
+
+---
+
+## BUG Channel Escalation
+
+All 3 new anomalies posted to BUG channel:
+- Message 2511: B-05a BCTC VPS stale (WARN)
+- Message 2512: B-08 vn-news-fetch unhealthy (WARN)
+- Message 2513: B-10 BCTC SLA BREACHED (CRITICAL)
+
+---
+
+## Root Cause Hypothesis
+
+**BCTC SLA Breach + VPS Stale Pattern:**
+- Context: 1956 sprint closed 11/11 services healthy; cowork team silent 44h (unified-agent last fire 2026-05-18T04:08Z)
+- Hypothesis: BCTC VPS connectivity issue or mcp-server fallback not triggering fresh fetches
+- Related: task 1955a (dailyDashboardJob path fix), 1955b (zombie row cleanup), 1955c/d (vnstock gates)
+- Impact: Financial report freshness degrading during Q1/Q2 earnings season
+
+**vn-news-fetch Unhealthy:**
+- Uptime 1h 1m suggests recent restart or recovery attempt
+- May be transient (check next Tier-2 cycle in 4h)
+
+---
+
+## DASHBOARD Updates
+
+Appended 3 new rows to docs/signals/DASHBOARD.md (ops section):
+- 1956-B-10: BCTC SLA BREACHED (CRITICAL)
+- 1956-B-05a: BCTC VPS stale (WARN)
+- 1956-B-08: vn-news-fetch unhealthy (WARN)
 
 ---
 
 ## Operational Notes
 
-- **Tier-1 focus:** Runtime liveness only. Cron path errors and transient rate-limits are Tier-2/3 scope.
-- **Wall time:** All audits complete well under 120s target.
-- **Dedup window:** 7 days. Known issues (path errors, zombie rows, transient rate-limits) not re-reported.
-- **System steady state confirmed:** Two consecutive Tier-1 cycles with no new anomalies (21:02 and 04:18). Runtime is stable post-recovery.
-- **Next scheduled audits:**
-  - Tier-1: every 30 min (next at ~04:48 UTC)
-  - Tier-2: every 4h (next at 08:00 UTC 2026-05-20)
-  - Tier-3: daily 02:00 UTC (next at 02:00 UTC 2026-05-21)
+- **Wall time:** ~30s (target: <300s) ✓
+- **Tier-2 focus:** Data freshness, VPS health, SLA compliance
+- **Next steps:**
+  - **Ops/dev-mcp-server:** Investigate BCTC VPS connectivity; check mcp-server logs for fetch failures
+  - **Ops/dev-vps-crawls:** Restart vn-news-fetch or investigate network latency
+  - **PO:** Prioritize 1955a, 1955b, 1955c, 1955d for zombie row cleanup and BCTC fallback resilience
+- **Next Tier-2 audit:** 08:00 UTC 2026-05-20 (in 3h 42m)
+- **Next Tier-3 audit:** 02:00 UTC 2026-05-21
+
+---
+
+## Session Timeline
+
+- 2026-05-19 20:07:54 UTC: CRITICAL OUTAGE (8 containers down)
+- 2026-05-19 20:50:39 UTC: RECOVERY CONFIRMED
+- 2026-05-19 21:02:34 UTC: Tier-1 steady state
+- 2026-05-20 04:18:05 UTC: Tier-1 audit (HEALTHY, dedup-skipped known errors)
+- **2026-05-20 04:18:02 UTC: Tier-2 audit (DEGRADED, 3 NEW data freshness anomalies)**
