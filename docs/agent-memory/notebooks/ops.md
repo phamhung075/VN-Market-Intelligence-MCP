@@ -350,3 +350,49 @@
 
 ---
 
+
+---
+
+## Sprint 1958 RCA-2 — Outage Window Forensics (22:45 UTC) [COMPLETE]
+
+**Status:** DONE
+
+**Investigation window:** 2026-05-19 04:32Z – 2026-05-20 19:59Z (15.5 hours)
+
+**Scope:** RCA-phase-1 documented the 69-sec degradation (20:05–20:06Z, RAG cold-start hang under disk pressure), but left a gap: why were 9 services already DOWN at 19:59Z? This investigation closed the gap.
+
+**Key findings:**
+
+1. **NOT AN OUTAGE — Normal Deployment Sequence**
+   - 04:32Z–19:59Z was not a crash or degradation
+   - Container timestamps show: mcp-server created 2026-05-20T19:39:25Z, other 10 services created 2026-05-20T20:05:21Z
+   - The 04:32Z "checkpoint" in RCA timeline was descriptive, not chronological
+   - Timeline corrected: mcp-server solo for 26 min (expected state), then all services started at 20:05Z
+
+2. **Hypothesis Verification (all 5 ruled out)**
+   - A) macOS sleep/Docker pause: no events in kernel logs
+   - B) Manual `docker compose down`: no git commits or operator logs
+   - C) Docker daemon restart: logs show uninterrupted operation
+   - D) OOM/VM resource pressure: mcp-server memory normal, ran 26 min solo healthy
+   - E) SHM tear/containerd corruption: no panic logs, mcp-server stable
+
+3. **Restart Policy Audit**
+   - All 11 services have identical `restart: unless-stopped`
+   - No asymmetry found (Hypothesis A's primary suspect ruled out)
+   - Restart policy played no role; timing was key (services starting fresh at 20:05Z hit RAG hang, not pre-started mcp-server)
+
+4. **Log Freshness**
+   - Docker daemon logs fresh (latest 2026-05-20T22:34Z)
+   - macOS system journal within 48h window
+   - Container timestamps current and intact
+   - **Verdict: LOGS FRESH — no rotation; evidence available**
+
+**Outcome:**
+- No watchdog expansion needed
+- Existing 1958-watchdog-1 through -6 sufficient (disk pressure + RAG cold-start focus)
+- Documentation improvement recommended: clarify deployment playbook to distinguish intentional solo phases (expected) from unintended degradation (requires RCA)
+
+**Signal:** docs/signals/ops-1958-rca-2.json (COMPLETE, detailed findings)
+
+**Time:** 30 min investigation (on budget)
+
