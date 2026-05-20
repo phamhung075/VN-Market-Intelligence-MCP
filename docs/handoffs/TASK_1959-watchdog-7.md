@@ -57,7 +57,7 @@ This task takes that audit recommendation and lands the symmetric fix. Same shap
 - **Zone:** apps/mcp-server/ (infra config)
 - **Files modified:** docker-compose.yml:401 — flaresolverr healthcheck start_period 30s → 60s
 - **Tests written:** NONE (XS infra config change — no test suite changes per task boundary)
-- **Git commits:** TBD (fix(ops/1959-watchdog-7): bump flaresolverr healthcheck start_period 30s→60s)
+- **Git commits:** fd292896 fix(ops/1959-watchdog-7): bump flaresolverr healthcheck start_period 30s→60s
 - **Type check:** N/A (no TS changes)
 - **Service tests:** N/A
 - **Docs updated:** docs/signals/dev-mcp-server-1959-watchdog-7.json | docs/signals/DASHBOARD.md | docs/TASKS.md | docs/handoffs/TASK_1959-watchdog-7.md | docs/agent-memory/notebooks/dev-mcp-server.md
