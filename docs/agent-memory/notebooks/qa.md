@@ -1,6 +1,22 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-20 | **Task:** CLEAN-1953b-2-ocr-epipe-fix | **Session:** c220 — Stale branch cleanup — DONE
+**Last updated:** 2026-05-20 | **Task:** 1962d | **Session:** c222 — Task-lock dispatcher-wrap QA smoke — 3/3 PASS
+
+## Session 2026-05-20 c222 — 1962d Task-lock dispatcher-wrap QA smoke (3/3 PASS)
+
+**MCP server:** vn-market | **Tools confirmed:** task_claim, task_heartbeat, task_release, task_list_held
+**Protocol:** JSON-RPC over SSE (POST to /vn-market/messages?sessionId=...)
+
+T1 (double-dispatch collision): PASS — router-B claim returned claimed=false, current_holder=router-A, owner unchanged.
+T2 (outer-release then inner-claim handoff): PASS — claim succeeded after release, owner transitioned dev-team→developer.
+T3 (cross-owner sequential): PASS — all 3 rounds (dev-team, developer, pm) claimed/released without false collision.
+
+Self-claim task:1962d: claimed at 20:28Z, released at 20:35Z, release ok=true.
+Signal written: docs/signals/qa-1962d-smoke-done.json
+
+Next: 1962e — agent-father doc updates (SKILL.md Phase Status + MEMORY.md index).
+
+---
 
 ## Session 2026-05-20 c220 — CLEAN-1953b-2-ocr-epipe-fix (DONE)
 
