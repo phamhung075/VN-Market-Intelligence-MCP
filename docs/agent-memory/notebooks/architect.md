@@ -1,8 +1,31 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-20 19:00 UTC | **Sprint:** 1960a
+**Last updated:** 2026-05-21 00:00 UTC | **Sprint:** 1962a
 
-## This session (2026-05-20 — Phase 3 task-lock dev-team wiring brief)
+## This session (2026-05-21 — Task-lock dispatcher-wrap brief)
+
+Sprint 1962 task 1962a. Designed Model 1 dispatcher-wrap (outer claim around Agent() spawn) as additive guard on top of Phase 3 Model 2 self-claim. Brief: `docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md`. Signal: `docs/signals/architect-1962a-brief-done.json`.
+
+**Brownfield findings:**
+- All 7 PO-identified spawn sites verified present at stated line numbers.
+- ops/main.md confirmed Agent()-free (bash/docker commands only). Excluded correctly by PO.
+- drain-signals.md + cowork-team/main.md already wrapped (Phase 2). Leave untouched.
+- No additional sites beyond PO audit.
+
+**Key design decisions:**
+- Inner self-claim (Model 2, Phase 3): KEEP AS-IS. Outer wrap is additive. Remove only after 1962d observation window.
+- Owner-agent identity: outer = dispatcher (dev-team / developer / ba / pm), inner = spawned agent. Different `owner_agent` values on same `task_id` key permits serial claim/release without false collision.
+- PO triage (S3) uses synthetic date-scoped key `task:po-triage-<YYYYMMDD>` (no existing task_id at triage time). TTL=1800s.
+- Pipeline resume (S2) uses `task:` + `pipeline-state.json.activeTaskId`. Migration-check (stale-lock-takeover) path from task-lock SKILL applies if claimed=false here.
+- Parallel batch pattern: claim each task_id before spawning, collect which passed, spawn only those in one message, release all after spawn returns.
+- Transition window (outer release → inner claim): <2s window, 15min cron interval — statistically negligible. No additional mechanism.
+- No Docker rebuild needed — all edits are .md orchestration layer only.
+
+**S2+S3+S4 same file:** main.md has three separate edit hunks (pipeline-resume, po-triage, UNBLOCK/CLEAN). PM (1962b) may group into one commit per c47 policy (one file = one commit).
+
+Signal emitted: `docs/signals/architect-1962a-brief-done.json` → pm, agent-father, qa. PM 1962b unblocked.
+
+## Previous session (2026-05-20 — Phase 3 task-lock dev-team wiring brief)
 
 Sprint 1960 task 1960a kickoff per `docs/signals/po-1960-signoff.json`. Phase 3 design refinement — wire `task_claim`/`task_heartbeat`/`task_release` into PO+PM+developer+dev-*+QA+agent-father+fixer flows. Brief: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md`.
 
