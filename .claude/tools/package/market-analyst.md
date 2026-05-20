@@ -227,3 +227,18 @@ call_tool(
 | market | write | analysis_reports_only |
 | work | write | cycle_status_only |
 | bug | write | escalations_only |
+
+---
+
+## Task-Lock Coordination Tools (Phase 2 Ready)
+
+Tool ready — flow-level claim/heartbeat wiring lands in Phase 2/3 (not yet active in cycle.md).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_claim` | Claim a coordination lock before exclusive work | `task_id, task_kind, owner_agent, ttl_seconds?, payload?` |
+| `task_heartbeat` | Renew a held lock every 5 min (prove-alive) | `task_id` |
+| `task_release` | Release lock on completion | `task_id` |
+| `task_list_held` | List held locks for debug/audit | `kind?, owner_agent?, expired?` |
+
+Full protocol: `docs/protocols/task-lock-protocol.md` | Skill: `.claude/skills/task-lock/SKILL.md`
