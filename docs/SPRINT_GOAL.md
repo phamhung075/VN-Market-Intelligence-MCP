@@ -1,40 +1,54 @@
-# Sprint 1961 Goal — TASK-LOCK PHASE 1 DEPLOYMENT GAP (HOTFIX)
+# Sprint 1958 Goal — DOCKER-COMPOSE STACK OUTAGE (CRITICAL INCIDENT)
 
-**Status:** CLOSED 2026-05-20T19:45Z | **Opened:** 2026-05-20T19:33Z | **Closed by:** po (c221) | **Theme:** Restore Phase 1 task-lock MCP tools on the live `vn-market` gateway.
+**Status:** OPEN 2026-05-20T20:10Z | **Trigger:** system-auditor Tier-1 (19:59Z + 20:02:23Z reconfirmation) | **Severity:** CRITICAL — 10 of 11 microservices DOWN | **Slot reuse note:** Sprint 1958 slot was previously held by `po-1958-bctc-stale-triage.json` (OBSERVE-only, no sprint opened) and by a separately-scoped `1958a` cron-firing fix (DONE 2026-05-20, qa commit `84c2b375`). This sprint reopens 1958 for the **stack outage scope** with disambiguated task IDs.
 
-## Outcome — 4/4 TASKS DONE, SPRINT COMPLETE
+## Incident Snapshot
 
-All ACs met. The "code committed ≠ live availability" deployment-gap class of failure that allowed Sprints 1955 + 1960 to declare phases SHIPPED against a stale container is now closed at both the runtime (container rebuilt + verified) and protocol (Deployment-verified Ritual encoded in `docs/protocols/task-lock-protocol.md`) levels.
+- **Reported:** system-auditor Tier-1 audit 2026-05-20T19:59:48Z, reconfirmed 20:02:23Z (DASHBOARD row `1958-A-01`).
+- **Symptom:** `docker ps` shows only `mcp-server` (Up 23m) + `frontend` running. 9 microservices NOT RUNNING: api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch.
+- **Surface health:** mcp-server itself responsive (DB OK, 16 circuits green, all 79 cron jobs firing, VPS HTTPS reachable). Tier-2 freshness sweep ran HEALTHY — outage is **inter-service plane**, not data plane.
+- **Blocks:** inter-service checks A-25→A-28 cannot run; alert-engine + pdf-extractor + rag-service silent.
+- **Dispatch already in flight:** ops actioning recovery in parallel with this sprint open.
 
-### Tasks Completed
+## Sprint Goal
 
-- **1961a** ✅ ops — `docker compose up -d --build mcp-server`. Container `vn-market-intelligence-mcp-mcp-server-1` Up healthy, 146 tools registered, scheduler clean. Image digest `sha256:598b94c7d7efe70b2d5710ce03d850c62ecfe413f9d50c35d7246af4be99043a`. Notebook commit `42f81d43`.
-- **1961b** ✅ ops — 4 Phase 1 task-lock tools live-smoked on `vn-market` gateway via `mcp__claude_ai_gateway__call_tool`. `task_claim` → `task_heartbeat` → `task_list_held` → `task_release` round-trip verified. All 4 return non-error responses. Signal: `docs/signals/ops-1961ab-done.json`.
-- **1961c** ✅ qa — re-ran Phase 2 smoke (9 cases via `scripts/smoke-task-lock-phase2.ts`) + Phase 3 smoke (10 cases from commit `1997da7a`) against LIVE MCP gateway. **19/19 PASS** + 9 grep checks + 2 pipeline state checks + 1 MCP grammar check. Approval signal: `docs/signals/qa-1961c-approved.json`. Commit `3bb94db3`.
-- **1961d** ✅ po (sibling c220) — patched `docs/protocols/task-lock-protocol.md`: Phase Availability table extended 3→5 cols (added `Container-rebuild SHA` + `Gateway-tools-callable date`), added `## Deployment-verified Ritual` section citing this sprint's gap. c221 backfilled `_pending_` cells with concrete values (`b144f560` rebuild SHA, `2026-05-20` callable date) at sprint-close. Signal: `docs/signals/po-1961d-protocol-patched.json`.
+Restore 11/11 microservices to operational state, determine root cause of the 10-service drop, and close the **detection gap** (Tier-1 runs every 30 min; a 30-min blind window on a 10-service outage is unacceptable for a CRITICAL incident).
 
-## Acceptance Criteria — Final Status
+## Tasks
 
-| AC | Description | Result |
-|----|-------------|--------|
-| AC-1 | `docker ps` shows `mcp-server-1` Up < 5 min, healthy | ✅ PASS (Up 121s, image digest pinned) |
-| AC-2 | 4 Phase 1 tools live on gateway, real claim/release round-trip | ✅ PASS (1961b ops signal) |
-| AC-3 | Phase 2 (9) + Phase 3 (10) live smoke = 19/19 | ✅ PASS (qa-1961c-approved) |
-| AC-4 | Protocol patched with deployment-verified column + ritual | ✅ PASS (po-1961d-protocol-patched, c221 backfill) |
-| AC-5 | `docs/signals/po-1961-close.json` emitted with all ACs PASS | ✅ PASS (this sprint-close cycle) |
+| ID | Title | Priority/Size | Owner | Status | Depends |
+|----|-------|---------------|-------|--------|---------|
+| 1958-recovery | Immediate stack recovery — restore 10 missing microservices | HIGH / M | ops | **DONE** (2026-05-20T20:06:31Z, recovery time 4 min) | — |
+| 1958-rca | Root-cause analysis — WHY did the stack lose 10 services? | HIGH / S | ops or developer | **TODO** (unblocked) | — |
+| 1958-watchdog | Prevention — fast healthcheck cron (≥2 services down → BUG + auto-recover) | MEDIUM / M | dev-mcp-server | BACKLOG | independent |
 
-## Lesson Encoded
+## Acceptance Criteria (sprint-level)
 
-**Source code registration ≠ live availability.** Any sprint that lands MCP-tool or coordination-logic commits MUST rebuild the affected container AND probe the live gateway before the closing agent flips the phase to shipped. This is now SSOT in `docs/protocols/task-lock-protocol.md § Deployment-verified Ritual` and the Phase Availability table's last two columns (`Container-rebuild SHA`, `Gateway-tools-callable date`) physically cannot be populated without the ritual being followed.
+- **AC-1 (recovery):** `docker ps` shows 11/11 containers Up + healthy; health endpoints A-12→A-20 all return 200 within 5 min of recovery action.
+- **AC-2 (rca):** Written RCA in `docs/architecture-briefs/2026-05-20-stack-outage-rca.md` identifying the exact cause (OOM / manual stop / failed update / power cycle / docker daemon crash) with evidence from `docker events`, `dockerd` logs, macOS system journal, and the outage window (between last known healthy state and 19:59:48Z first detection).
+- **AC-3 (watchdog):** New cron job firing every 5 min that counts running containers vs expected (11); on `running < 9` emit BUG Telegram + attempt `docker compose up -d` (idempotent); detection latency reduced from 30 min → ≤5 min.
+- **AC-4 (close):** All 3 tasks Done + `po-1958-stack-outage-close.json` emitted + DASHBOARD row `1958-A-01` flipped from OPEN → RESOLVED + lesson encoded.
 
-The 11h F3 fallback window experienced by cowork-team between Sprint 1960 close and Sprint 1961a rebuild is the negative example that made the protocol patch necessary.
+## Constraints / Boundary
 
-## Cross-References Amended
+- **1958-recovery NOT blocked on anything** — ops mid-recovery, this sprint formalizes the work in-flight, does not gate it.
+- **1958-rca chained to 1958-recovery** — need to know what was broken before investigating why.
+- **1958-watchdog independent** — prevention work can start any time; non-blocking on recovery + RCA.
+- **WIP cap 2/2 dev-zone respected** — ops + investigation are different lanes. dev-mcp-server slot for 1958-watchdog only fires when dev-zone has capacity.
+- **Existing OBSERVE gates preserved unchanged:** OBSERVE-1953g, OBSERVE-1957d, OBSERVE-1955c, OBSERVE-1955d, OBSERVE-1907a-verify, OBSERVE-1951d-verify, post-1945-* — all unrelated to stack outage, no interference.
 
-- `docs/signals/po-1955-close.json` — `deployment_verified_addendum` field added (Phase 2 re-verified via 1961c).
-- `docs/signals/po-1960-close.json` — `deployment_verified_addendum` field added (Phase 3 re-verified via 1961c; original 1960d smoke marked INVALID against stale image).
-- `docs/TASKS.md` Sprint-1955-Phase2 + Sprint-1960 Done rows both annotated with the 1961c addendum pointer.
+## Hypothesis Bench (input to 1958-rca, not pre-judging)
+
+The system-auditor notebook reports mcp-server alone is Up 23m as of 20:02:23Z. That points to a stack-wide event between ~19:30Z (still healthy implied by 19:14Z deploy verify trail in 1953g) and ~19:39Z (mcp-server restart 23m before 20:02). Candidate causes for the RCA to enumerate + reject:
+
+1. **Manual `docker compose down` / partial stop** — most common, leaves daemon alive but services off.
+2. **Docker daemon restart on macOS** — would have killed all containers; mcp-server being Up 23m alone is odd under this hypothesis unless docker-compose policy `restart: unless-stopped` only on mcp-server.
+3. **Failed rolling update / rebuild** — Sprint 1961a was a rebuild but only of mcp-server (2026-05-20 21:36Z claimed in ops notebook, but that timestamp is in the future relative to the 20:02:23Z audit — possible clock drift; needs verification).
+4. **OOM / resource exhaustion** — would show in `dmesg` / Docker desktop logs.
+5. **VirtualMachine SHM teardown** — historically caused SQLite corruption; could here have torn other containers.
+
+1958-rca must rule each in or out with evidence.
 
 ## Next
 
-Sprint 1961 closed cleanly. No carry-over tasks generated by this sprint. The next sprint will self-initiate from market/dev signals via the normal cron-loop / channel-audit / pendingSignals[] triage path.
+Three task rows added to `docs/TASKS.md` Backlog. Signal `docs/signals/po-1958-stack-outage-sprint.json` emitted. DASHBOARD row `1958-A-01` updated with sprint pointer. Sprint will self-close once all 3 ACs verified by the closing PO cycle.

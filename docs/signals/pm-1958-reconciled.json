@@ -1,0 +1,60 @@
+{
+  "from": "pm",
+  "to": "router",
+  "type": "sprint_reconciliation",
+  "priority": "high",
+  "createdAt": "2026-05-20T20:20:00Z",
+  "cycle": "c222",
+  "sprint_id": "1958",
+  "scope": "Reconcile stale PO snapshot (c222 20:10:00Z) with actual ops recovery state (20:06:31Z)",
+  "root_cause": "PO sprint formalization at 20:10:00Z used stale 4-min-old incident snapshot. Ops completed 1958-recovery at 20:06:31Z per signal docs/signals/ops-1958a-stack-recovered.json (CRITICAL recovery signal, 4-min recovery time, all 11/11 services UP + health 200).",
+  "reconciliation_actions": [
+    {
+      "action": "1958-recovery status flip",
+      "from": "IN PROGRESS",
+      "to": "DONE (2026-05-20T20:06:31Z)",
+      "evidence": "docs/signals/ops-1958a-stack-recovered.json timestamp 20:06:31.594965963Z",
+      "file_updated": "docs/TASKS.md line 10"
+    },
+    {
+      "action": "1958-rca dependency unblock",
+      "from": "BLOCKED on 1958-recovery-done",
+      "to": "unblocked (depends → nil)",
+      "reason": "Recovery gate cleared; investigation can start now",
+      "file_updated": "docs/TASKS.md line 11"
+    },
+    {
+      "action": "DASHBOARD row 1958-A-01 status flip",
+      "from": "SPRINTED (IN PROGRESS)",
+      "to": "RESOLVED (recovery complete)",
+      "payload": "Recovery signal + ops-1958a timestamp + 4-min recovery time",
+      "file_updated": "docs/signals/DASHBOARD.md ops section"
+    },
+    {
+      "action": "SPRINT_GOAL.md task status update",
+      "from": "1958-recovery IN PROGRESS, 1958-rca BLOCKED",
+      "to": "1958-recovery DONE, 1958-rca TODO (unblocked)",
+      "file_updated": "docs/SPRINT_GOAL.md task table"
+    }
+  ],
+  "wip_check": {
+    "dev_zone": "0/2 (1958a Done, 1959a Done — slot available for 1958-watchdog when dev-mcp-server ready)",
+    "ops_lane": "separate from dev-zone WIP; 1958-recovery complete, 1958-rca in ops investigation",
+    "conflict_check": "PASS — no WIP regression, OBSERVE gates preserved unchanged"
+  },
+  "preserved_constraints": [
+    "OBSERVE-1953g (2026-05-21T02:30Z) — unchanged",
+    "OBSERVE-1957d (2026-05-23T07:05Z) — unchanged",
+    "OBSERVE-1955c (2026-05-25T01:30Z) — unchanged",
+    "OBSERVE-1955d (2026-05-20T09:00Z) — unchanged",
+    "OBSERVE-1907a-verify (2026-05-24T14:30Z) — unchanged",
+    "OBSERVE-1951d-verify (2026-05-21T08:30Z) — unchanged",
+    "post-1945-* gates — unchanged"
+  ],
+  "next_steps": [
+    "1958-rca investigation begins immediately (ops + architect brief §§RCA scope)",
+    "1958-watchdog (dev-mcp-server) queued for dev-zone dispatch when slot available",
+    "Sprint 1958 goal timeline reset: completion on 1958-rca finish + 1958-watchdog deploy + 1958-A-01 RESOLVED flip"
+  ],
+  "commit_message": "PM reconciliation: 1958-recovery DONE 2026-05-20T20:06:31Z, unblock 1958-rca, DASHBOARD+SPRINT_GOAL updated"
+}
