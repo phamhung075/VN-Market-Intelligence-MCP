@@ -1,56 +1,67 @@
 # PO Notebook
 
-## Last updated: 2026-05-20T20:10Z · Cycle: c222 — Sprint 1958 OPEN (stack outage)
+## Last updated: 2026-05-20T20:40Z · Cycle: c223 — Sprint 1958 CLOSED + Sprint 1959 OPEN (watchdog hardening)
 
-### c222 trigger
-CRITICAL incident: system-auditor Tier-1 reports 10 of 11 microservices DOWN (19:59:48Z + 20:02:23Z reconfirm). Only mcp-server + frontend Up. T2 freshness sweep ran HEALTHY — outage is inter-service plane, not data plane. Ops already mid-recovery (task 1958-recovery in flight). My job this cycle: formalize Sprint 1958 around the in-flight work + add the two follow-ups (RCA + watchdog).
+### c223 trigger
+Sprint 1958 mid-checkpoint reconciliation. Phase-1 of incident response burned through cleanly (recovery + disk-relief + RCA + RCA-2 + watchdog-2 all DONE). External validation: system-auditor T1 `a50c08a3` shows 11/11 UP HEALTHY, prior CRITICAL `1958-A-01` flipped to RESOLVED. Decision needed: accept watchdog-7 (flaresolverr symmetric fix flagged by watchdog-2 audit), pick next dispatch slate, decide whether to keep accumulating watchdogs under 1958 or pivot to 1959.
 
-### Slot disambiguation (why 1958 not 1959+)
-The 1958 sprint slot was effectively free:
-- `po-1958-bctc-stale-triage.json` (2026-05-20T04:23Z) was OBSERVE-only, no sprint opened.
-- Existing Done row `1958a` (qa 84c2b375) was a separately-scoped cron-firing fix (5 MARKET-summary jobs not firing), not a multi-task sprint open.
+### Decisions taken
+1. **watchdog-7 ACCEPTED** — flaresolverr 30→60s start_period, symmetric trivial XS edit to watchdog-2 (`dev-mcp-server-1958-watchdog-2.json` audit flagged it).
+2. **Sprint 1958 CLOSED → Sprint 1959 OPENED** — incident-response sprint closes cleanly with external validation; hardening batch gets its own sprint for cognitive separation + clean ACs.
+3. **Dispatch slate cycle-1** (3 parallel, respects WIP 2/2 per zone + separate ops lane):
+   - ops → 1959-watchdog-1 (S, pre-flight disk script)
+   - dev-mcp-server → 1959-watchdog-7 (XS, flaresolverr bump)
+   - dev-rag-service → 1959-watchdog-3 (S, pre-bake embedding model — safe NOW with 32 GB free)
+4. **HOLDs**: watchdog-5 (queues after watchdog-7), watchdog-4 (queues after watchdog-3 + 48h soak), watchdog-6 (deep hold, 7d soak after watchdog-3+4).
+5. **OBSERVE gates** — all 9 preserved unchanged (none touch watchdog/disk/RAG scope).
+6. **Backlog idle (1954a/1955a/1955b) — STALE NOTE.** All three already DONE. Nothing to pick up.
 
-To avoid numeric collision with the prior 1958a, this sprint uses descriptive task suffixes: 1958-recovery / 1958-rca / 1958-watchdog. Dashboard anchor `1958-A-01` keeps user mental model intact.
+### Rationale for sprint pivot (not just continuing 1958)
+1958 has natural close shape: 5 tasks done with external validation. Continuing to accumulate 5+ watchdogs under 1958 conflates "incident response" with "hardening campaign" and muddies the close ACs. Separate sprint = clean acceptance criteria + clear post-mortem boundary + simpler narrative.
 
-### Sprint structure
-- **1958-recovery (HIGH/M, ops, IN PROGRESS)** — docker compose up -d + verify 11/11 + capture evidence pack for RCA. Already dispatched.
-- **1958-rca (HIGH/S, ops, BLOCKED on recovery)** — Why did 10 services drop while mcp-server + frontend survived? Output: brief at `docs/architecture-briefs/2026-05-20-stack-outage-rca.md`. Hypothesis bench in SPRINT_GOAL.md (manual stop / daemon restart / failed update / OOM / VirtualMachine teardown). Asymmetric survival of mcp-server suggests restart-policy differential — first hypothesis to check.
-- **1958-watchdog (MEDIUM/M, dev-mcp-server, BACKLOG)** — 5-min container-count cron closes the 30-min detection gap. Independent of recovery + RCA.
+### Rationale for not queuing all watchdogs at once
+Disk currently healthy (32 GB free) — but parallel image rebuilds across all dev zones is exactly how the original 26 GB build-cache problem started. One image-modifying watchdog per zone at a time; sequence the rest. watchdog-1 (pre-flight gate) will enforce this discipline once shipped.
 
 ### Files touched this cycle
-- `docs/SPRINT_GOAL.md` (overwrite — Sprint 1958 stack outage)
-- `docs/TASKS.md` (3 new Backlog rows at top)
-- `docs/signals/DASHBOARD.md` (row 1958-A-01: OPEN → SPRINTED + sprint pointer)
-- `docs/signals/po-1958-stack-outage-sprint.json` (NEW)
+- `docs/SPRINT_GOAL.md` (OVERWRITE — close 1958, open 1959)
+- `docs/TASKS.md` (1958-* rows DONE, 6 new 1959-watchdog-* rows in Backlog)
+- `docs/signals/DASHBOARD.md` (1958-A-01 RESOLVED → CLOSED, 1959-DISPATCH row added)
+- `docs/handoffs/TASK_1959-watchdog-1.md` (NEW)
+- `docs/handoffs/TASK_1959-watchdog-7.md` (NEW)
+- `docs/handoffs/TASK_1959-watchdog-3.md` (NEW)
+- `docs/signals/po-1958-mid-checkpoint.json` (NEW — sprint close + open + dispatch slate)
 - `docs/agent-memory/notebooks/po.md` (this file, OVERWRITE)
 
-### Constraints honored
-- WIP cap 2/2 dev-zone: current dev-zone empty (1958a + 1959a Done); 1958-watchdog has capacity when dev-mcp-server picks up. Ops + investigation lanes separate.
-- 1958-recovery NOT blocked on this sprint open — ops already moving.
-- 1958-rca chained on recovery (need to know what was broken before why).
-- 1958-watchdog independent — prevention work.
-- Existing OBSERVE gates preserved unchanged (1953g, 1957d, 1955c, 1955d, 1907a-verify, 1951d-verify, post-1945-*).
+### Sprint 1959 AC (close criteria for future cycle)
+- AC-1: watchdog-1 script lands + documented in deployment runbook
+- AC-2: watchdog-7 flaresolverr bumped + 3-of-3 smoke PASS
+- AC-3: watchdog-3 model pre-baked + cold-start < 30s
+- AC-4: watchdog-5 disk-usage alert cron green 12 ticks
+- AC-5: watchdog-4 LanceDB compaction cron green ≥1 success in 7d
+- AC-6: watchdog-6 (LOW, may DEFER — async lifespan) shipped OR explicit defer rationale
+- AC-7: po-1959-close.json + DASHBOARD `1958-A-01` row RESOLVED → CLOSED + MEMORY.md lesson
 
-### Sprint AC (close criteria for c223+ closing cycle)
-- AC-1: 11/11 Up + health 200 (1958-recovery)
-- AC-2: RCA brief published, hypotheses ruled in/out (1958-rca)
-- AC-3: watchdog cron live, first 12 ticks green (1958-watchdog)
-- AC-4: po-1958-stack-outage-close.json + DASHBOARD row RESOLVED
+### Carry-over for c224+
+- Watch for `docs/signals/ops-1959-watchdog-1.json` (cycle-1 ship)
+- Watch for `docs/signals/dev-mcp-server-1959-watchdog-7.json` (cycle-1 ship)
+- Watch for `docs/signals/dev-rag-service-1959-watchdog-3.json` (cycle-1 ship)
+- When any ships → queue cycle-2 successor (watchdog-5 after -7; watchdog-4 after -3 + 48h)
+- watchdog-6 deep-held; only consider after watchdog-3+4 stable 7d
+- If a 2nd outage hits with same cold-start fingerprint during sprint → escalate to architect for structural rethink
 
-### Carry-over for c223
-- Watch for ops `docs/signals/ops-1958-recovery-done.json` — once present, dispatch ba/architect for 1958-rca brief intake.
-- Watch for system-auditor next Tier-1 (~next 30-min cadence) — should show 11/11 if 1958-recovery completes in time.
-- If recovery stretches >1h, escalate priority of 1958-rca and consider parallel architect involvement for emergency triage.
-- 1958-watchdog spec might benefit from architect brief if RCA reveals non-trivial cause (e.g., docker daemon flakiness needs deeper guard than just process count); defer architect ask until 1958-rca returns.
+### Standing OBSERVE gates (unchanged from c222)
+- 2026-05-20T07:22Z: post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence (already past; ops to read next cycle)
+- 2026-05-20T09:00Z: OBSERVE-1955d (vnstockTradingStatsRefresh, today)
+- 2026-05-21T02:30Z: OBSERVE-1953g (Q1-2026 BCTC coverage ≥ 26)
+- 2026-05-21T08:30Z: OBSERVE-1951d-verify (24h cowork cycle)
+- 2026-05-23T07:05Z: OBSERVE-1957d (BCTC VPS push cadence)
+- 2026-05-24T14:30Z: OBSERVE-1907a-verify (digest-sunday natural fire)
+- 2026-05-25T01:30Z: OBSERVE-1955c (vnstockFundamentalsRefresh)
+- 2026-05-25: 1941b-signal-outcomes-seed-window
+- 2026-06-01: 1922g-pharma-events-source-verify
 
-### Standing OBSERVE gates (unchanged from c221)
-- 2026-05-21T02:30Z: OBSERVE-1953g (Q1-2026 BCTC coverage ≥26).
-- 2026-05-21T08:30Z: OBSERVE-1951d-verify (24h cowork cycle).
-- 2026-05-21T09:00Z: Sprint 1958a (cron-firing, prior scope) ops AC-3 — note: this gate may now be at risk if 5 MARKET-summary jobs run inside the down microservices. Worth cross-checking after 1958-recovery returns.
-- 2026-05-23T07:05Z: OBSERVE-1957d (BCTC VPS push cadence).
-- 2026-05-24T13:47Z: digest-sunday natural fire → OBSERVE-1907a-verify 14:30Z.
-- 2026-05-25T01:00Z / 08:30Z: OBSERVE-1955c / 1955d.
-- 2026-05-25: post-1939-critic-gate-stable window for 1952c.
-
-### Meta-note
-The 1958 slot reuse is documented at three levels: SPRINT_GOAL.md (top of file), signal `slot_reuse_disclosure` field, and this notebook. Any agent reading any of these picks up the disambiguation. The descriptive task-ID suffix pattern (1958-recovery vs 1958a) is the structural enforcement — no other agent can collide accidentally.
+### Lessons encoded for future PO cycles
+- L1: Incident sprint generates a hardening backlog → pivot to new sprint, don't accumulate under incident.
+- L2: Symmetric trivial fixes flagged during one watchdog's audit become candidate next watchdogs automatically.
+- L3: Disk-relief enables image-modifying hardening immediately — don't defer once headroom is available.
+- L4: RCA-phase-2 can reframe incident scope retroactively (04:32–19:59Z was not an outage at all).
