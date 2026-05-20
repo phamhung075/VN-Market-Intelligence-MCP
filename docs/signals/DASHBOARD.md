@@ -32,7 +32,7 @@ _Updated: 2026-05-20T04:18Z (system-auditor Tier-2 audit — 3 NEW data freshnes
 | 1956-B-10 | 2026-05-20T04:18Z | system-auditor | data_stale | **CRITICAL** BCTC SLA breached: 329 min age vs 120 min SLA (2.74x over). Last update >5.5h ago. Trust score erosion in Q1/Q2 earnings window. | OPEN | dev-mcp-server zone |
 | 1956-B-05a | 2026-05-20T04:18Z | system-auditor | data_stale | BCTC VPS proxy stale 21h (marked STALE). Only 1 push in 24h. Possible VPS unavailability or network degradation. | OPEN | dev-mcp-server zone |
 | 1956-B-08 | 2026-05-20T04:18Z | system-auditor | data_stale | vn-news-fetch VPS service UNHEALTHY (uptime 1h 1m). News fetch may be degraded despite recent push timestamp. | OPEN | dev-vps-crawls zone |
-| 1957a | 2026-05-20T00:00Z | po | sprint-open | HOT-FIRE: reinstate 12 legacy cowork RemoteTriggers (see po-1957-cowork-scheduler.json for trigger_ids). MARKET silent ~44h. Dispatch immediately. | NEW | docs/signals/po-1957-cowork-scheduler.json |
+| 1957a | 2026-05-20T00:00Z | ops | remote-trigger-reactivation | 12 legacy cowork RemoteTriggers reactivated from pending_delete → active. cowork-schedule.json SSOT updated. Next fire times: chef-intraday 02:13Z, chef-morning 05:15Z, tnb-audit 20:13Z, more (see ops-1957a-triggers-reactivated.json). | DONE | docs/signals/ops-1957a-triggers-reactivated.json |
 | 1957c | 2026-05-20T00:00Z | po | sprint-open | Re-block 1951d cutover (docs/TASKS.md edit only) — gated on 1957b-done | NEW | docs/signals/po-1957-cowork-scheduler.json |
 
 ## agent-father
