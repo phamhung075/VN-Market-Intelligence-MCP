@@ -58,6 +58,19 @@ Write: docs/sprints/SPRINT_XXX_summary.md
 | market | read | trend_monitoring |
 | bug | read | escalation_tracking |
 
+## Task-Lock Coordination Tools (Phase 3 — ACTIVE)
+
+Flow-level wiring per `.claude/flows/pm/main.md` (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 2 + 4).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_claim` | Claim sprint-task lock (if needed) | `task_id, task_kind, owner_agent, ttl_seconds?, payload?` |
+| `task_heartbeat` | Renew umbrella lock at plan-emit (step 3d) and in_progress transition (step 4b) | `task_id` |
+| `task_release` | Release on completion (owner-session scoped) | `task_id` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load when implementing locks).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
 ## Escalation Rules
 
 If same module appears in ≥2 fix commits:

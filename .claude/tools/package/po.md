@@ -91,6 +91,19 @@ send_telegram(channel="work", message="Sprint XXX kickoff...")
 | market | write | sprint_planning_only |
 | bug | read | escalation_detection |
 
+## Task-Lock Coordination Tools (Phase 3 — ACTIVE)
+
+Flow-level wiring per `.claude/flows/po/sprint-kickoff.md` + `.claude/flows/po/sprint-signoff.md` (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 2 + 4).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_claim` | Claim sprint umbrella lock at kickoff | `task_id, task_kind, owner_agent, ttl_seconds?, payload?` |
+| `task_heartbeat` | Renew held lock at flow-step boundaries | `task_id` |
+| `task_release` | Release on sprint-signoff (owner-session scoped) | `task_id` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load when implementing locks).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
 ## Pipeline Resume Gate
 
 **Before any agent runs:**

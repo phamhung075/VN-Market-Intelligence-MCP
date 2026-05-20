@@ -78,6 +78,17 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_system_status
 
 **Anti-discovery constraint:** NEVER use `list_servers`, `search_tools`, or `list_server_tools` at runtime. All tools above are pre-catalogued and must be called directly.
 
+## Task-Lock Audit Tools (Phase 3 — ACTIVE)
+
+Read-only audit only — never writes locks (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 5).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_list_held` | Audit current lock state (expired=true to surface orphans) | `kind?, owner_agent?, expired?` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load for audit context).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
 ## Bash Check Grammar
 
 ```bash

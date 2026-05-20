@@ -73,6 +73,19 @@ Write: /docs/bug-fixes/BUG_NNNN_summary.md
 | work | write | blocker_escalation_only |
 | market | read | none |
 
+## Task-Lock Coordination Tools (Phase 3 — ACTIVE)
+
+Flow-level wiring per `.claude/flows/fixer/main.md` (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 4.7).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_claim` | Re-claim if stolen-lock detected during heartbeat | `task_id, task_kind, owner_agent, ttl_seconds?, payload?` |
+| `task_heartbeat` | Heartbeat at trigger entry (step 2b — after branch confirm) | `task_id` |
+| `task_release` | Release if re-claimed (fixer owns until QA re-entry) | `task_id` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load when implementing locks).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
 ## Post-Fix Verification
 
 After every fix:

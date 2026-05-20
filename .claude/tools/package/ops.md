@@ -63,6 +63,20 @@ For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.m
 
 ---
 
+## Task-Lock Coordination Tools (Phase 3 — ACTIVE)
+
+For stuck-lock incident response (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 5).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_list_held` | List/audit current or expired locks across fleet | `kind?, owner_agent?, expired?` |
+| `task_release` | Force-release orphaned lock within own session | `task_id` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load for incident diagnosis).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
+---
+
 ## Architecture Overview
 
 ### 9-Service Docker Deployment

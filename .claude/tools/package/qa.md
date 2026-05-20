@@ -73,6 +73,20 @@ compare_backtest_runs(run_ids=["test-run-1", "test-run-2"])
 | bug | write | regression_reports_only |
 | market | read | none |
 
+## Task-Lock Coordination Tools (Phase 3 — ACTIVE)
+
+Flow-level wiring per `.claude/flows/qa/main.md` (see also `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 2 + 4.6).
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `task_claim` | Re-claim if lock stolen before QA pipeline entry | `task_id, task_kind, owner_agent, ttl_seconds?, payload?` |
+| `task_heartbeat` | Renew lock at pipeline entry (before bun test full suite) | `task_id` |
+| `task_release` | Release before git checkout main (approved branch — final owner) | `task_id` |
+| `task_list_held` | Audit stale locks when debugging multi-session race | `kind?, owner_agent?, expired?` |
+
+Skill: `.claude/skills/task-lock/SKILL.md` (lazy-load when implementing locks).
+Protocol: `docs/protocols/task-lock-protocol.md`.
+
 ## Release Checklist
 
 Before marking release ready:
