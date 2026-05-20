@@ -1,8 +1,18 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-20 | **Sprint:** 1957b (cron-cowork-team skill + cowork-master-cron-runbook)
+**Last updated:** 2026-05-20 | **Sprint:** task-lock Phase 1 + 1957b
 
-## This Session — 2026-05-20 (Task 1957b — cowork master-cron skill + runbook)
+## This Session — 2026-05-20 (Task task-lock-phase1 — coordination.db + 4 MCP tools)
+
+**Task:** Phase 1 of task-lock system per architect brief `docs/architecture-briefs/2026-05-20-task-lock-system.md`
+
+**Commit:** `79ac45e9` | Tests: 29 pass / 0 fail | Smoke: 9/9 PASS | toolCount: 142→146
+
+Files created (8): coordination.db migration, coordinationStore.ts, coordinationTools.ts, 2 test files, task-lock-protocol.md, skill, smoke-task-lock.ts
+Files modified (11): registry.ts, system/index.ts, 8 tool packages, mcp-tools.md
+NEXT: pm plan Phase 2 (cowork-slot flow wiring) + Phase 3 (sprint-task drain)
+
+## Previous Session — 2026-05-20 (Task 1957b — cowork master-cron skill + runbook)
 
 **Task: 1957b — Phase-1 completion artefacts for cowork master-scheduler**
 
