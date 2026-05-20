@@ -36,7 +36,7 @@ export function initSystemTables(db: Database): void {
       job_name     TEXT NOT NULL,
       started_at   TEXT NOT NULL,
       finished_at  TEXT,
-      status       TEXT NOT NULL CHECK(status IN ('running','success','error')),
+      status       TEXT NOT NULL CHECK(status IN ('running','success','error','crashed')),
       rows_written  INTEGER,
       error_msg    TEXT,
       duration_ms  INTEGER
@@ -46,6 +46,55 @@ export function initSystemTables(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_cron_job_runs_job_started
       ON cron_job_runs(job_name, started_at DESC)
   `);
+
+  // Migration guard (Task 1955b): if the existing table has the old CHECK constraint
+  // that does not include 'crashed', recreate the table preserving all existing rows.
+  //
+  // Detection strategy: string-match the old constraint substring in the DDL from
+  // sqlite_master. This is the same pattern used for vps_service_health (lines ~405-437)
+  // and sla_breach_audit (lines ~495-541) — robust against whitespace variations.
+  {
+    const ddlRow = db
+      .query<{ sql: string }, []>(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='cron_job_runs'",
+      )
+      .get();
+
+    const oldDdl = ddlRow?.sql ?? "";
+    // Old DDL contains 'running','success','error' but NOT 'crashed'
+    const hasOldConstraint =
+      oldDdl.includes("'running'") &&
+      oldDdl.includes("'success'") &&
+      oldDdl.includes("'error'") &&
+      !oldDdl.includes("'crashed'");
+
+    if (hasOldConstraint) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS cron_job_runs_new (
+          id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          job_name     TEXT NOT NULL,
+          started_at   TEXT NOT NULL,
+          finished_at  TEXT,
+          status       TEXT NOT NULL CHECK(status IN ('running','success','error','crashed')),
+          rows_written  INTEGER,
+          error_msg    TEXT,
+          duration_ms  INTEGER
+        )
+      `);
+      db.exec(`
+        INSERT OR IGNORE INTO cron_job_runs_new
+          SELECT id, job_name, started_at, finished_at, status,
+                 rows_written, error_msg, duration_ms
+          FROM cron_job_runs
+      `);
+      db.exec(`DROP TABLE cron_job_runs`);
+      db.exec(`ALTER TABLE cron_job_runs_new RENAME TO cron_job_runs`);
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_cron_job_runs_job_started
+          ON cron_job_runs(job_name, started_at DESC)
+      `);
+    }
+  }
 
   // ── Agent Feedback (Task 1022) ────────────────────────────────────────────
   db.exec(`

@@ -20,7 +20,7 @@ import type { Database } from "bun:sqlite";
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Valid status values for a cron_job_runs row. */
-export type CronJobRunStatus = "running" | "success" | "error";
+export type CronJobRunStatus = "running" | "success" | "error" | "crashed";
 
 /** Raw SQLite row from the cron_job_runs table. */
 export interface CronJobRunRow {
@@ -143,6 +143,40 @@ export function purgeOldCronJobRuns(
     .run(jobName, `-${retentionDays}`);
 
   return result.changes;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// reapZombieJobRuns
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mark all orphaned running rows as 'crashed'.
+ *
+ * A zombie row is one where status='running' AND finished_at IS NULL — it was
+ * never closed because the process crashed or was killed before the job
+ * completed. Called once after initDatabase(), before any cron registration.
+ *
+ * Only the reaper writes status='crashed'. `updateCronJobRunEnd` intentionally
+ * keeps its status param narrowed to 'success' | 'error'.
+ *
+ * @param db  Database connection
+ * @returns   { reaped: number } — count of rows updated
+ */
+export function reapZombieJobRuns(db: Database): { reaped: number } {
+  const result = db
+    .prepare(
+      `UPDATE cron_job_runs
+       SET status      = 'crashed',
+           finished_at = datetime('now'),
+           duration_ms = CAST(ROUND(
+             (julianday('now') - julianday(started_at)) * 86400000
+           ) AS INTEGER)
+       WHERE status = 'running'
+         AND finished_at IS NULL`,
+    )
+    .run();
+
+  return { reaped: result.changes };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -68,6 +68,7 @@ import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstoc
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
+import { reapZombieJobRuns } from '../infrastructure/db/cronJobRunStore.js'
 import { CRONS } from './cronConfig.js'
 import {
   log,
@@ -101,6 +102,13 @@ export function startScheduler() {
   // Task 1839a Phase 2: single DB init; jobRunRepo replaces per-job calls.
   const db = getDb()
   const jobRunRepo = new SqliteJobRunRepository(db)
+
+  // Task 1955b: reap zombie cron_job_runs rows left behind by prior process crashes.
+  // Must run BEFORE any cron registration so newly-registered jobs see a clean slate.
+  const { reaped } = reapZombieJobRuns(db)
+  if (reaped > 0) {
+    log(`[startup] reaped ${reaped} zombie cron_job_runs row(s) → status=crashed`)
+  }
 
   // Startup probe — ohlcv data completeness check (task 1353, Sprint 119).
   // Fire-and-forget: alerts WORK channel if any watchlist ticker has < 8
