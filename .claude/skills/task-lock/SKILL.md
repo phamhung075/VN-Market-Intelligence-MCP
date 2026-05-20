@@ -88,6 +88,10 @@ Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-dev
 
 ## Phase Status (as of 2026-05-20)
 
-- Phase 1 SHIPPED: tools ready, flow wiring pending
-- Phase 2 SHIPPED: cowork-slot wiring (cowork-team Step 4.6 slot-locking)
-- Phase 3 SHIPPED: sprint-task + dashboard-row wiring (Sprint 1960, rows 1960c-1 through 1960c-8)
+- Phase 1 SHIPPED 2026-05-20: coordination.db + 4 MCP tools (task_claim, task_heartbeat, task_release, task_list_held). Commits: 79ac45e9, b3d6ff80.
+- Phase 2 SHIPPED 2026-05-20: cowork-slot wiring (cowork-team Step 4.6 slot-locking). Final commit: 9357ac38.
+- Phase 3 SHIPPED 2026-05-20: sprint-task + dashboard-row wiring across dev-team flows.
+  - 1960c (10 commits: 448eb7f3, 2a099357, 5e7ada82, dd5e5689, f0687912, a68fb93d, 00a0dd1b, 340a8e39, fa950e08, 31c47ea5): 8 flow .md files wired + tool packages updated.
+  - 1960d smoke (commit 335dda54): 10/10 PASS (qa-1960d-approved.json).
+  - Model 2 (agent-self heartbeat): TTL=3600s for sprint-task, TTL=1800s for dashboard-row. Heartbeat every 5 min by the running agent.
+  - pipeline-state.json relationship: AUGMENT only (status/nextAgent/updatedAt preserved — task-lock does not replace pipeline-state).
