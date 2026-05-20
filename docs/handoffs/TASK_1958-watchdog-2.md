@@ -148,3 +148,19 @@ curl http://localhost:3001/        # frontend
 ## Acceptance Sign-Off
 
 Confirm: (1) compose file edited + deployed, (2) healthcheck timing test PASS, (3) cold-start recovery <4 min, (4) no regressions to other services.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** docker-compose (root)
+- **Zone:** apps/mcp-server/ (owns docker-compose.yml)
+- **Files modified:** `docker-compose.yml:116` — `start_period: 30s` → `start_period: 60s` (rag-service healthcheck)
+- **Tests written:** N/A (infra config change, no code)
+- **Git commits:** see commit below
+- **Type check:** N/A (YAML only)
+- **Service tests:** N/A
+- **Deployment:** `docker compose up -d rag-service` — container recreated, healthy at 27s
+- **Smoke test:** /health 200, /search POST returns HPG BCTC result, gateway /health 200 — PASS
+- **Docs updated:** `docs/signals/dev-mcp-server-1958-watchdog-2.json`, `docs/TASKS.md`, `docs/signals/DASHBOARD.md`, `docs/agent-memory/notebooks/dev-mcp-server.md`
+- **Start_period audit:** flaresolverr 30s flagged for follow-up (Chromium cold-start risk under disk pressure)

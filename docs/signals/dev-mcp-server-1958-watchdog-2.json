@@ -1,0 +1,32 @@
+{
+  "signal_id": "dev-mcp-server-1958-watchdog-2",
+  "task": "1958-watchdog-2",
+  "agent": "dev-mcp-server",
+  "timestamp": "2026-05-20T20:36:19Z",
+  "status": "DONE",
+  "change": {
+    "file": "docker-compose.yml",
+    "service": "rag-service",
+    "field": "healthcheck.start_period",
+    "before": "30s",
+    "after": "60s"
+  },
+  "deployment": {
+    "command": "docker compose up -d rag-service",
+    "result": "Container recreated + started",
+    "healthy_at_seconds": 27,
+    "status": "Up (healthy)"
+  },
+  "smoke_test": {
+    "rag_service_health": "HTTP 200 — {\"status\":\"ok\",\"service\":\"rag-service\"}",
+    "rag_search_roundtrip": "HTTP 200 — results[0].action_code=HPG, distance=0.694",
+    "gateway_health": "HTTP 200"
+  },
+  "start_period_audit": {
+    "mcp_server": "10s — OK (fast TS/Bun startup)",
+    "pdf_extractor": "15s — OK (lightweight Python/FastAPI)",
+    "news_fetch": "30s — marginal (2.5GB Node service); no timeout evidence yet",
+    "flaresolverr": "30s — FLAG: Chromium-based cold-start may exceed 30s under disk pressure; recommend follow-up task to bump 30s→60s"
+  },
+  "next": "qa"
+}

@@ -4,6 +4,25 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1958-watchdog-2 — RAG healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
+
+**Change:** `docker-compose.yml` line 116: `start_period: 30s` → `start_period: 60s` for rag-service healthcheck.
+
+**Deployment:** `docker compose up -d rag-service` — container recreated + started. rag-service healthy at 27s post-restart.
+
+**Smoke test:** /health 200, /search POST returns HPG BCTC result (distance=0.694), gateway /health 200.
+
+**Start_period audit (optional):**
+- mcp-server 10s, pdf-extractor 15s — fine (fast startup services)
+- news-fetch 30s — marginal (2.5GB Node, no timeout evidence)
+- flaresolverr 30s — flagged: Chromium cold-start under disk pressure likely exceeds 30s; recommend follow-up watchdog task bump to 60s
+
+**Signal:** `docs/signals/dev-mcp-server-1958-watchdog-2.json`
+
+Zone health: RAG healthcheck no longer times out on disk-pressure cold-start; flaresolverr has same latent risk (flagged for PM) | HEALTHY
+
+---
+
 ### Task FIX-listunresolvedreports — c220 caller name fix (2026-05-20, DONE)
 
 **Diagnosis:** Case (a) — tool `list_unresolved_reports` was already implemented in `telegramReportTools.ts` (line 357) and registered via `registerTelegramReportTools` in `registry.ts` (line 145). Live server health confirmed toolCount=146. The bug was in 4 flow file lines that used camelCase pseudocode `listUnresolvedReports()` instead of MCP tool name `list_unresolved_reports`.
