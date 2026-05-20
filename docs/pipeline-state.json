@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": null,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-20T08:30:51Z",
-  "updatedBy": "po-c216",
-  "lastCompleted": "po c216: reset stale pipeline-state — qa already approved 1955a in commit bef8e9cf and moved row to Done; reset to idle before signal drain. Previous content (qa nextAgent for 1955a) was redundant. Triage continues in this cycle."
+  "status": "review",
+  "currentSprint": "1955b",
+  "activeTaskId": "1955b",
+  "nextAgent": "qa",
+  "nextPrompt": "QA verify 1955b — zombie cron_job_runs reap. Commit cfe10b0a. AC: (1) tsc 0 errors PASS; (2) 4 new tests GREEN (AC-1 reaper happy path, AC-2 idempotence×2, AC-3 migration); (3) full suite 9284+ pass; (4) schema-system.ts CHECK includes 'crashed'; (5) startScheduler.ts calls reapZombieJobRuns(db) before cron registration. Signal: docs/signals/dev-mcp-server-1955b-impl-done.json",
+  "updatedAt": "2026-05-20T12:30:00Z",
+  "updatedBy": "dev-mcp-server",
+  "lastCompleted": "dev-mcp-server 1955b: CHECK extended + migration guard + reaper + startScheduler wiring. commit cfe10b0a. 4 tests GREEN, tsc 0 errors."
 }
