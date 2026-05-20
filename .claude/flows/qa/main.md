@@ -57,6 +57,16 @@ After pre-checks (project-root, notebook-read, Smart-Skip), jump to the labelled
 
 <!-- jump:pipeline -->
 ## Pipeline
+
+**Heartbeat sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+if hb.ok == false:
+  // Lock stolen — developer's session terminated before QA ran in this session
+  send_telegram(channel="bug", "[qa] lock stolen on " + task_id + " — re-claiming for QA review")
+  → call task_claim(task_id, "sprint-task", "qa", 3600) — proceed even if claim fails (QA is non-mutating until merge)
+```
+
 ```bash
 git checkout task/NNN-kebab-description
 bun test src/__tests__/NNN-*.test.ts
@@ -92,10 +102,16 @@ verdict: APPROVED | CHANGES_REQUESTED
 ## Approval
 
 <!-- jump:approved -->
-**APPROVED**: append `[QA] Review Record` → merge + push + clean → return.
+**APPROVED**: append `[QA] Review Record` → release sprint-task lock → merge + push + clean → return.
 Merge commit subject must follow `docs/policies/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
 If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.
 QA non-merge commits with sprint scope (digit in scope) MUST carry `Task:` trailer.
+
+**Release sprint-task lock** (last step before merge — atomic with TASKS.md status update):
+```
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+// Proceed with merge regardless of ok value — release is best-effort cleanup
+```
 ```bash
 git checkout main
 git merge --no-ff task/NNN-kebab-description -m "chore(<sprint>/<area>): merge task/NNN-<title>"
