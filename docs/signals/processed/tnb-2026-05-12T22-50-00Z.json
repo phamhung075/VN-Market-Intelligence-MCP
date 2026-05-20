@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "high",
-  "createdAt": "2026-05-12T22:50:00Z",
-  "summary": "Cycle 43: NEEDS_ATTENTION, MIXED. CRITICAL: 3rd container restart in <24h confirms Sprint 1896c-impl insufficient — escalate to architect for re-RCA. POSITIVES: alert-commander fired 8-alert MARKET digest at 22:02 UTC (first in days); news-scout now explicitly applying methodology v2026-05-11.2 with regime_adj_score multipliers; PO ACK'd c42 in 28 min (fastest yet)."
-}

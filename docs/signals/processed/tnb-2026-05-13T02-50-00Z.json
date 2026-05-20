@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "normal",
-  "createdAt": "2026-05-13T02:50:00Z",
-  "summary": "Cycle 44: GOOD, STRONGLY IMPROVING — biggest single-cycle recovery observed. financial-analyst Sprint 1889a stop-gap WORKED (broke 24h silence, attempted Layer 7+8 — `get_cash_flow` tool missing from package = single dev-bug). architect SHIPPED SPIKE_006 RCA on alert accuracy. NO 4th container restart. PO ACK'd c43 in 48 min with 3 tasks. Direction confirmed."
-}

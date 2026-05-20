@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
-  "currentSprint": "c213",
-  "activeTaskId": "1955a",
-  "nextAgent": "qa",
-  "nextPrompt": "qa: run QA pipeline on commit acc8d52b (task 1955a — dailyDashboardJob projectRoot() fix). Handoff: docs/handoffs/TASK_1955a.md. 5/5 tests GREEN, tsc 0 errors. After QA approval: ops redeploy container to activate fix.",
-  "updatedAt": "2026-05-20T04:35:00Z",
-  "updatedBy": "dev-mcp-server-c213",
-  "lastCompleted": "dev-mcp-server: 1955a impl done — commit acc8d52b. projectRoot() reduced from 6 to 3 '..' segments. 5 tests GREEN (AC-3 container path verified). tsc 0 errors. 9279 pass / 285 fail (baseline preserved)."
+  "status": "idle",
+  "currentSprint": null,
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-20T08:30:51Z",
+  "updatedBy": "po-c216",
+  "lastCompleted": "po c216: reset stale pipeline-state — qa already approved 1955a in commit bef8e9cf and moved row to Done; reset to idle before signal drain. Previous content (qa nextAgent for 1955a) was redundant. Triage continues in this cycle."
 }

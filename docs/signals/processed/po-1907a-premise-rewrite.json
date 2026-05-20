@@ -1,0 +1,24 @@
+{
+  "from": "po",
+  "to": "router",
+  "type": "task-resolution",
+  "task_id": "1907a-digest-predict-silence",
+  "verdict": "PREMISE-WRONG",
+  "payload": {
+    "original_premise_c168": "vn-market MCP added to claude_desktop_config.json, user must restart Claude Desktop",
+    "premise_falsity": [
+      "claude_desktop_config.json does NOT gate cowork MCP — cowork agents run on claude.ai server-side via RemoteTriggers, not local Claude Desktop",
+      "mcp__claude_ai_gateway__call_tool routes through claude.ai gateway (verified by user via CLI test to WORK channel)",
+      "config inspection: only sequential-thinking entry present, no vn-market entry — proves config was never the gate"
+    ],
+    "actual_root_cause": "digest-sunday RemoteTrigger (trig_014GzK19w1ZNpwnRjA91ce3P, cron '47 13 * * 0') in pending_delete state during 1951d cutover prep, missed Sun 2026-05-10 + 2026-05-17 natural fires",
+    "already_fixed_by": "Sprint 1957a (2026-05-20T00:00Z) — RemoteTrigger reactivated, trigger_status='active'",
+    "anomaly_note": "2026-05-11 Mon 21:38Z notebook entry was ad-hoc manual invocation (no Monday cron in active schedule; digest-monday-predict disabled by Sprint 1950-T5)",
+    "decision": "wait for Sun 2026-05-24T13:47Z natural fire (option d). Manual one-shot rejected — mid-week calibration window incomplete = degraded Brier output.",
+    "verification_gate": "OBSERVE-1907a-verify (2026-05-24T14:30Z)",
+    "no_code_change": true,
+    "no_config_change": true
+  },
+  "priority": "medium",
+  "createdAt": "2026-05-20T05:04:25Z"
+}

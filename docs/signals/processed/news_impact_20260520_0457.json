@@ -1,0 +1,90 @@
+{
+  "cycle_id": "20260520-0457",
+  "timestamp": "2026-05-20T04:57:00Z",
+  "agent": "news-scout",
+  "market_state": "OPEN",
+  "regime": "TIGHTENING",
+  "carry_regime": "HOT_MONEY_OUTFLOW",
+  "signals": [
+    {
+      "signal_id": 3531,
+      "signal_type": "chain_catalyst",
+      "event_type": "macro",
+      "direction": "bearish",
+      "title": "Gold selloff — 3-month low (-2.46σ) signals risk-off / hot-money outflow risk",
+      "summary": "Gold price 4463 USD/oz at 3-month lows; major liquidation event detected. In TIGHTENING regime (negative VND carry -0.33%, Fed 5.33%, US 10Y 4.67%) this signals hot-money exit risk. Broad FII outflow tail risk to banking/BVH names.",
+      "impact_score": 10.0,
+      "confidence": 0.89,
+      "affected_sectors": ["banking", "real_estate"],
+      "affected_stocks": ["ACB", "MBB", "VCB", "VPB", "BID", "CTG", "EIB"],
+      "source": "macro_snapshot",
+      "pillars": {
+        "M2": "restrictive",
+        "COC": "headwind",
+        "EPS": "neutral",
+        "POL": "neutral"
+      },
+      "cycle_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "hot_money_risk": true,
+      "gdp_warning_signal": false,
+      "ttl_minutes": 120,
+      "critic_score": 0.8
+    }
+  ],
+  "suppressed_signals": [
+    {
+      "signal_type": "urgent_news",
+      "stock_code": "FPT",
+      "title": "FPT analyst buy call — analyst target +24% from 2-year low",
+      "reason": "Confidence 0.84 < TIGHTENING conviction threshold 0.75 (feedback from alert-commander); cost-of-capital headwind reduces bullish conviction in tight-liquidity regime",
+      "base_impact": 7.0,
+      "regime_adjusted_impact": 4.9,
+      "confidence": 0.84,
+      "threshold_applied": "urgent_news ≥7 in TIGHTENING"
+    },
+    {
+      "signal_type": "urgent_news",
+      "stock_code": "POW",
+      "title": "PC1 Q1 earnings +86% YoY — bullish for utilities sector",
+      "reason": "Confidence 0.50 < TIGHTENING conviction threshold 0.75; indirect/sector-level impact only; FII outflow pressure dampens utility conviction",
+      "base_impact": 4.0,
+      "regime_adjusted_impact": 2.8,
+      "confidence": 0.50,
+      "threshold_applied": "urgent_news ≥7 in TIGHTENING"
+    }
+  ],
+  "macro_context": {
+    "Brent_crude_USD_bbl": 110.70,
+    "gold_USD_oz": 4463.20,
+    "USD_VND": 26329.0,
+    "US_10Y_yield_pct": 4.67,
+    "Fed_funds_rate_est_pct": 5.33,
+    "VND_carry_spread_pct": -0.33,
+    "global_liquidity": "TIGHTENING"
+  },
+  "watchlist_summary": {
+    "total_tickers": 39,
+    "high_impact_events": 3,
+    "signals_fired": 1,
+    "signals_suppressed": 2,
+    "sectors_affected": ["banking", "real_estate", "tech", "utilities", "oil_gas"]
+  },
+  "prior_cycle_signals": {
+    "note": "4 signals from prior cycle (04:37 UTC) still active on signal bus",
+    "active_ids": [3522, 3523, 3524, 3525],
+    "expiry_times": [
+      "3522 (FPT urgent_news): 2026-05-20T06:22:00Z",
+      "3523 (POW urgent_news): 2026-05-20T06:22:00Z",
+      "3524 (VPB legal_risk): 2026-05-20T06:22:00Z",
+      "3525 (delisting chain_catalyst): 2026-05-20T06:22:00Z"
+    ]
+  },
+  "next_cycle_monitoring": {
+    "gold_floor_critical": "If 4463 USD/oz breaks <4400, expect acceleration of FII outflows → escalate banking sector alerts",
+    "banking_volume_watch": "If VCB/MBB/ACB drop >3% intraday on heavy volume, escalate to macro crisis urgent_news signal",
+    "vpb_legal_resolution": "Watch for regulatory follow-up; if escalates, legal_risk signal reposted at next cycle",
+    "fpt_price_action": "Monitor for breakdown <70 VND (invalidates analyst call); tech sector pressure until US 10Y < 4.50%",
+    "utilities_cascade": "If Q1 earnings cascade (POW/PPC/JSH/REE sector winners) materializes, escalate to sector bullish catalyst"
+  }
+}

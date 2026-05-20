@@ -1,0 +1,30 @@
+{
+  "schema": "signal/v1",
+  "signal_type": "impl_done",
+  "from_agent": "dev-mcp-server",
+  "to_agent": "qa",
+  "task_id": "1955a",
+  "sprint": "c213",
+  "generated_at": "2026-05-20T04:35:00Z",
+  "summary": "dailyDashboardJob projectRoot() path fix implemented",
+  "details": {
+    "commit": "acc8d52b",
+    "branch": "main",
+    "files_modified": [
+      "apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts"
+    ],
+    "files_created": [
+      "apps/mcp-server/src/__tests__/1955a-daily-dashboard-project-root.test.ts"
+    ],
+    "fix_summary": "Reduced '..' segment count from 6 to 3 in projectRoot(). From /app/src/scheduler/system/ → 3 steps reach /app (container WORKDIR). Was resolving to / (filesystem root) due to 6 segments past 3-level container path.",
+    "tests": "5/5 GREEN",
+    "tsc": "0 errors",
+    "baseline": "9279 pass / 285 fail (+4 net new passes, 0 regressions)",
+    "ac_status": {
+      "AC-1": "PASS — path math correct (3 segments reach /app)",
+      "AC-2": "PENDING — container redeploy needed for written:true verification",
+      "AC-3": "PENDING — next 16:30Z cron tick after redeploy"
+    }
+  },
+  "next_action": "qa: review commit acc8d52b, verify tests + tsc, approve for ops redeploy"
+}

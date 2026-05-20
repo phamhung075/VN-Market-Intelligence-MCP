@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "normal",
-  "createdAt": "2026-05-12T18:50:00Z",
-  "summary": "Cycle 42: GOOD, STRONGLY IMPROVING. PO ACK'd c41 in 38 min (fastest observed). Sprint 1862c-D Reuters/TE SHIPPED (multi-cycle blocker). Sprint 1896c-impl SHIPPED (container RCA). Dev-team c47→c51. NEW: unified-agent header drift, market-watcher duplicate headers, RSS counter still climbing post-restart. financial-analyst silent 20h."
-}
