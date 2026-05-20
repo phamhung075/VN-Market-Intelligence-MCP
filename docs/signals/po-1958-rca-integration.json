@@ -1,0 +1,191 @@
+{
+  "signal_id": "po-1958-rca-integration",
+  "timestamp": "2026-05-20T22:30:00Z",
+  "agent": "pm",
+  "incident_id": "1958",
+  "classification": "sprint_integration",
+  "severity": "high",
+  "status": "complete",
+  "title": "Sprint 1958 RCA Integration — PO Stall Recovery + Task Expansion",
+  "context": {
+    "stall_event": "PO agent stalled at 600s (stream watchdog) mid-execution during RCA integration cycle (c222)",
+    "stall_time": "2026-05-20T20:10Z–2026-05-20T22:30Z (140 min stall)",
+    "stall_reason": "Stream watchdog timeout during SPRINT_GOAL.md + po.md notebook overwrite + DASHBOARD update cycle",
+    "recovery_method": "PM (project manager agent) extracted PO intent from uncommitted SPRINT_GOAL.md + po.md notebook, completed paperwork, emitted signal",
+    "disclosure": "This is post-stall reconciliation. All decisions below were extracted from PO's partial files; PM did not re-scope or override PO intent. See 'decision_source' field per item."
+  },
+  "po_stall_artifacts": {
+    "partial_files_modified": [
+      "docs/SPRINT_GOAL.md (modified, 69 lines)",
+      "docs/agent-memory/notebooks/po.md (modified, 57 lines)"
+    ],
+    "partial_files_not_modified": [
+      "docs/TASKS.md (never touched by PO)",
+      "docs/signals/DASHBOARD.md (never updated by PO)",
+      "docs/signals/po-1958-rca-integration.json (never emitted by PO)"
+    ]
+  },
+  "decisions_captured": {
+    "1958_rca_status": {
+      "scope": "PARTIAL — recovery-hang complete, outage-window gap identified",
+      "decision_source": "SPRINT_GOAL.md line 25, po.md line 17",
+      "detail": "Recovery-hang RCA (docs/signals/ops-1958-rca.json) explains disk pressure + RAG hang at 20:05:22Z. Does NOT explain original 04:32Z→19:59Z drop. Gap split to separate task 1958-rca-2.",
+      "action": "TASKS.md row 1958-rca status updated to PARTIAL with note; 1958-rca-2 task created"
+    },
+    "1958_watchdog_decomposition": {
+      "scope": "6 sub-tasks (1958-watchdog-1 through -6)",
+      "decision_source": "SPRINT_GOAL.md lines 28–33, ops-1958-rca.json hardening_recommendations",
+      "detail": "PO expanded single 1958-watchdog row into 6 concrete tasks: watchdog-1 (pre-flight disk), watchdog-2 (RAG start_period), watchdog-3 (pre-bake model), watchdog-4 (LanceDB compaction), watchdog-5 (disk-usage alert), watchdog-6 (async-ify lifespan). Priorities: HIGH×2 (watchdog-1,-2), MEDIUM×3 (watchdog-3,-4,-5), LOW×1 (watchdog-6).",
+      "action": "TASKS.md expanded with 6 rows; DASHBOARD.md ops section shows 8 new rows (1 disk-relief + 1 rca-2 + 6 watchdog)"
+    },
+    "1958_disk_relief_scope": {
+      "scope": "HIGH/S, ops, IN PROGRESS — immediate vacuum LanceDB, rotate logs, prune docker images",
+      "decision_source": "SPRINT_GOAL.md line 26, po.md line 15–16",
+      "detail": "PO marked as 'TODO (dispatched in parallel with watchdog work)'. PM interpreted as IN PROGRESS status + parallel dispatch (not sequential blocker). Goal: restore ≥15GB free, unblock watchdog-1 + watchdog-3.",
+      "action": "TASKS.md row 1958-disk-relief status set to IN PROGRESS; marked blocker for watchdog-1/-3; handoff created TASK_1958-disk-relief.md"
+    },
+    "1958_rca_2_scope": {
+      "scope": "MEDIUM/S, ops, TODO — investigation gap (docker events + macOS journal 04:32Z–19:59Z)",
+      "decision_source": "SPRINT_GOAL.md lines 14, 27, 56–64 (hypothesis bench); po.md line 17",
+      "detail": "PO scoped Option A: investigate original outage-window gap (select 5 hypotheses: sleep/daemon-restart/OOM/SHM-tear/manual-stop). Logs fresh (rotate window <24h). Output: brief append + verdict.",
+      "action": "TASKS.md row 1958-rca-2 created TODO Backlog; handoff TASK_1958-rca-2.md created with 5-point hypothesis checklist"
+    },
+    "wip_cap_honor": {
+      "scope": "Dev-zone 2/2 WIP cap respected",
+      "decision_source": "SPRINT_GOAL.md line 50, po.md line 28",
+      "detail": "Current dev-zone empty (1958a Done); watchdog-1/-2 (dev-mcp-server), watchdog-3/-4/-6 (dev-rag-service) will proceed as capacity permits. Ops + investigation lanes (rca-2, disk-relief) separate.",
+      "action": "TASKS.md rows placed in Backlog with explicit blocker tree; PM enforces 2/2 cap at dispatch"
+    },
+    "observe_gates_preserved": {
+      "scope": "Unchanged: 1953g, 1957d, 1955c, 1955d, 1907a-verify, 1951d-verify, post-1945-*",
+      "decision_source": "SPRINT_GOAL.md line 54, po.md line 32",
+      "detail": "All existing OBSERVE gates unaffected by Sprint 1958 RCA integration. No inference changes.",
+      "action": "No TASKS.md changes to existing OBSERVE rows"
+    }
+  },
+  "tasks_created_by_pm": {
+    "count": 8,
+    "list": [
+      {
+        "task_id": "1958-rca-2",
+        "title": "Investigation gap — docker events + macOS journal 04:32Z–19:59Z",
+        "handoff_file": "docs/handoffs/TASK_1958-rca-2.md",
+        "priority": "MEDIUM/S",
+        "owner": "ops"
+      },
+      {
+        "task_id": "1958-disk-relief",
+        "title": "IMMEDIATE — vacuum LanceDB, rotate logs, prune docker images; restore ≥15GB free",
+        "handoff_file": "docs/handoffs/TASK_1958-disk-relief.md",
+        "priority": "HIGH/S",
+        "owner": "ops",
+        "status": "IN_PROGRESS"
+      },
+      {
+        "task_id": "1958-watchdog-1",
+        "title": "Pre-flight disk check before docker compose up -d (fail-fast if free < 15GB)",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-1.md",
+        "priority": "HIGH/S",
+        "owner": "ops"
+      },
+      {
+        "task_id": "1958-watchdog-2",
+        "title": "Bump rag-service healthcheck start_period 30s → 60s",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-2.md",
+        "priority": "HIGH/XS",
+        "owner": "dev-mcp-server"
+      },
+      {
+        "task_id": "1958-watchdog-3",
+        "title": "Pre-bake sentence-transformers model in Dockerfile (avoid first-run HF download)",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-3.md (created by PM outline; dev-rag-service to detail)",
+        "priority": "MEDIUM/S",
+        "owner": "dev-rag-service"
+      },
+      {
+        "task_id": "1958-watchdog-4",
+        "title": "LanceDB compaction / archival cron (reclaim disk weekly)",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-4.md (created by PM outline; dev-rag-service to detail)",
+        "priority": "MEDIUM/M",
+        "owner": "dev-rag-service"
+      },
+      {
+        "task_id": "1958-watchdog-5",
+        "title": "Disk-usage alert cron (BUG Telegram when /app/data/lancedb > 20GB)",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-5.md (created by PM outline; dev-mcp-server to detail)",
+        "priority": "MEDIUM/S",
+        "owner": "dev-mcp-server"
+      },
+      {
+        "task_id": "1958-watchdog-6",
+        "title": "Async-ify RAG lifespan handler (model load in thread pool)",
+        "handoff_file": "docs/handoffs/TASK_1958-watchdog-6.md (created by PM outline; dev-rag-service to detail)",
+        "priority": "LOW/M",
+        "owner": "dev-rag-service"
+      }
+    ]
+  },
+  "files_updated": [
+    "docs/TASKS.md — TASKS Backlog section expanded with 8 new rows (1958-rca-2, 1958-disk-relief, 1958-watchdog-1 through -6); 1958-rca row status updated to PARTIAL",
+    "docs/signals/DASHBOARD.md — ops section rows added: 1958-rca-2, 1958-disk-relief, 1958-watchdog-1 through -6 (8 new rows); 1958-RCA row updated with phase delineation",
+    "docs/handoffs/TASK_1958-rca-2.md — new handoff file with 5-point hypothesis checklist, investigation scope, brief append requirement",
+    "docs/handoffs/TASK_1958-disk-relief.md — new handoff file with immediate relief work items (docker prune, log rotation, LanceDB vacuum)",
+    "docs/handoffs/TASK_1958-watchdog-1.md — new handoff file with bash script + runbook integration",
+    "docs/handoffs/TASK_1958-watchdog-2.md — new handoff file with docker-compose.yml edit (30s→60s)"
+  ],
+  "files_not_created_yet": [
+    "docs/handoffs/TASK_1958-watchdog-3.md — outline provided in TASKS.md; dev-rag-service to detail during assignment",
+    "docs/handoffs/TASK_1958-watchdog-4.md — outline provided in TASKS.md; dev-rag-service to detail during assignment",
+    "docs/handoffs/TASK_1958-watchdog-5.md — outline provided in TASKS.md; dev-mcp-server to detail during assignment",
+    "docs/handoffs/TASK_1958-watchdog-6.md — outline provided in TASKS.md; dev-rag-service to detail during assignment"
+  ],
+  "paperwork_completion_summary": {
+    "scope_extracted_from": [
+      "SPRINT_GOAL.md (uncommitted PO draft, lines 1–69)",
+      "po.md notebook (uncommitted PO draft, lines 1–57)",
+      "ops-1958-rca.json (published signal with 6-item hardening_recommendations)"
+    ],
+    "pm_actions": [
+      "Parsed PO intent: 6 watchdog sub-tasks, disk-relief parallel dispatch, rca-2 Option A scope",
+      "Updated TASKS.md Backlog with 8 new rows (rca-2, disk-relief, watchdog 1–6); marked 1958-rca PARTIAL",
+      "Created 4 detailed handoff files (rca-2, disk-relief, watchdog-1, watchdog-2)",
+      "Outlined 4 additional handoffs in TASKS.md for dev specialist assignment (watchdog-3 through -6)",
+      "Updated DASHBOARD.md ops section with 8 new rows + rca status update",
+      "Emitted this signal: po-1958-rca-integration.json (decision record + stall recovery disclosure)"
+    ],
+    "pm_did_not_do": [
+      "Create detailed handoff files for watchdog-3/-4/-5/-6 (dev specialists will detail during assignment)",
+      "Make architectural changes or override PO intent",
+      "Dispatch any tasks (that is developer dispatcher's job next cycle)"
+    ]
+  },
+  "next_steps": {
+    "immediate": [
+      "Developer dispatcher reads this signal + updated TASKS.md",
+      "Ops begins 1958-disk-relief (parallel track, no blocker)"
+    ],
+    "within_2h": [
+      "Ops completes 1958-disk-relief (≥15GB free confirmed)",
+      "Dev-mcp-server claims 1958-watchdog-2 (trivial 30s→60s edit) + deploys",
+      "Ops begins 1958-rca-2 investigation (logs fresh, rotate window <24h)"
+    ],
+    "within_4h": [
+      "Ops publishes 1958-rca-2 brief append (outage-window verdict) or signed-off 'logs unavailable'",
+      "Sprint 1958 RCA complete (two-phase: recovery-hang DONE, outage-window done)"
+    ],
+    "watchdog_backlog_queue": [
+      "All 6 watchdog tasks enter Backlog after disk-relief confirms ≥15GB free",
+      "Dev-zone WIP cap enforced: max 2 in-flight dev-mcp-server + dev-rag-service at a time",
+      "Blocker dependencies: watchdog-1/-3 wait on disk-relief; others independent"
+    ]
+  },
+  "escalation_note": "No architectural blockers identified. All RCA scope + watchdog tasks are operational design scope (scripts, config, cron, container tweaks). No re-design required unless 1958-rca-2 reveals second outage root cause that contradicts recovery-hang hypothesis (unlikely).",
+  "metadata": {
+    "pm_agent": "pm",
+    "recovery_timestamp": "2026-05-20T22:30:00Z",
+    "po_stall_duration_minutes": 140,
+    "decision_capture_method": "manual extraction from uncommitted files",
+    "ssot_update_timestamp": "2026-05-20T22:30:00Z",
+    "commit_subject": "chore(pm/1958): resume PO stalled RCA integration — expand watchdog × 6, scope disk-relief + rca-2, mark 1958-rca PARTIAL"
+  }
+}

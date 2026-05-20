@@ -1,5 +1,21 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Task:** CLEAN-1953b-2-ocr-epipe-fix | **Session:** c220 — Stale branch cleanup — DONE
+
+## Session 2026-05-20 c220 — CLEAN-1953b-2-ocr-epipe-fix (DONE)
+
+Pre-flight (3/3 PASS):
+- `git log main..task/1953b-2-ocr-epipe-fix` → empty (0 commits ahead)
+- `git ls-remote origin task/1953b-2-ocr-epipe-fix` → empty (no remote)
+- `git worktree list | grep 1953b-2-ocr` → empty (no worktree)
+
+Action: `git branch -D task/1953b-2-ocr-epipe-fix` — branch deleted (was at `6c442373`).
+Post-verify: `git branch | grep 1953b-2-ocr` → empty. Confirmed.
+TASKS.md: CLEAN row added to Done section.
+Telegram: sent to work channel.
+
+---
+
 **Last updated:** 2026-05-20 | **Sprint:** 1961c | **Session:** c214 — Sprint 1961c Phase 2+3 live smoke re-validation — APPROVED
 
 ## Session 2026-05-20 c214 — Sprint 1961c Phase 2+3 smoke re-validation (APPROVED)

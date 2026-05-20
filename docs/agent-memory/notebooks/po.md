@@ -1,42 +1,56 @@
 # PO Notebook
 
-## Last updated: 2026-05-20T19:45Z · Cycle: c221 — Sprint 1961 sprint-close DONE
+## Last updated: 2026-05-20T20:10Z · Cycle: c222 — Sprint 1958 OPEN (stack outage)
 
-### c221 trigger
-Sprint 1961 (Phase 1 task-lock deployment-gap HOTFIX) ready for close. All 4 tasks done with evidence verified: 1961a/b ops rebuild + live tools, 1961c qa 19/19 live smoke, 1961d po protocol patch (sibling c220). My job this cycle: sprint-close ritual end-to-end. Sibling c220-triage (dev-team dispatch) ran in parallel and returned a 3-entry BATCH — that work is theirs, not mine; I only handle sprint-close artifacts.
+### c222 trigger
+CRITICAL incident: system-auditor Tier-1 reports 10 of 11 microservices DOWN (19:59:48Z + 20:02:23Z reconfirm). Only mcp-server + frontend Up. T2 freshness sweep ran HEALTHY — outage is inter-service plane, not data plane. Ops already mid-recovery (task 1958-recovery in flight). My job this cycle: formalize Sprint 1958 around the in-flight work + add the two follow-ups (RCA + watchdog).
 
-### What shipped this cycle
-- **`docs/protocols/task-lock-protocol.md`** — backfilled the 3 `_pending_` placeholder cells in the Phase Availability table with concrete values for all three phases: Container-rebuild SHA = `b144f560` (the latest commit touching `apps/mcp-server/` before the 1961a rebuild fired — what the rebuild actually compiled), Gateway-tools-callable date = `2026-05-20`, image digest `sha256:598b94c7…` pinned in Phase 1 row. The table now reads as a deployed contract, not a promise.
-- **`docs/SPRINT_GOAL.md`** — overwritten with Sprint 1961 CLOSED status, outcome summary, AC table (5/5 PASS), lesson encoded section, cross-references amended list. Next-sprint pointer says "self-initiate from cron".
-- **`docs/signals/po-1961-close.json`** (NEW) — sprint-close signal modelled on `po-1960-close.json` schema. Carries: 4 task entries, key_evidence pointers (qa-1961c-approved, po-1961d-protocol-patched, ops commit 42f81d43, qa commit 3bb94db3, rebuild SHA b144f560, image digest), 5 AC verdicts, phase_status now SHIPPED + LIVE-VERIFIED for all three phases, lesson_encoded one-liner, carry_over=None.
-- **`docs/signals/po-1955-close.json`** + **`docs/signals/po-1960-close.json`** — `deployment_verified_addendum` field appended to each (per c220 carry-over: amend prior sprint-close artifacts with a pointer to the 1961c live re-verification + protocol table reference). Signals are append-friendly JSON, not sealed; addendum lives inside payload alongside original fields.
-- **`docs/TASKS.md`** — 1961c + 1961d removed from Backlog; new Sprint-1961 SPRINT-CLOSE row + individual 1961c/1961d Done rows inserted at top of Done section. Sprint-1955-Phase2 + Sprint-1960 Done rows annotated with 1961c addendum pointer in the description text.
+### Slot disambiguation (why 1958 not 1959+)
+The 1958 sprint slot was effectively free:
+- `po-1958-bctc-stale-triage.json` (2026-05-20T04:23Z) was OBSERVE-only, no sprint opened.
+- Existing Done row `1958a` (qa 84c2b375) was a separately-scoped cron-firing fix (5 MARKET-summary jobs not firing), not a multi-task sprint open.
+
+To avoid numeric collision with the prior 1958a, this sprint uses descriptive task suffixes: 1958-recovery / 1958-rca / 1958-watchdog. Dashboard anchor `1958-A-01` keeps user mental model intact.
+
+### Sprint structure
+- **1958-recovery (HIGH/M, ops, IN PROGRESS)** — docker compose up -d + verify 11/11 + capture evidence pack for RCA. Already dispatched.
+- **1958-rca (HIGH/S, ops, BLOCKED on recovery)** — Why did 10 services drop while mcp-server + frontend survived? Output: brief at `docs/architecture-briefs/2026-05-20-stack-outage-rca.md`. Hypothesis bench in SPRINT_GOAL.md (manual stop / daemon restart / failed update / OOM / VirtualMachine teardown). Asymmetric survival of mcp-server suggests restart-policy differential — first hypothesis to check.
+- **1958-watchdog (MEDIUM/M, dev-mcp-server, BACKLOG)** — 5-min container-count cron closes the 30-min detection gap. Independent of recovery + RCA.
 
 ### Files touched this cycle
-- `docs/protocols/task-lock-protocol.md` (Phase Availability table backfill, all 3 rows × last-2 cols)
-- `docs/SPRINT_GOAL.md` (full overwrite — Sprint 1961 closed)
-- `docs/signals/po-1961-close.json` (NEW)
-- `docs/signals/po-1955-close.json` (deployment_verified_addendum)
-- `docs/signals/po-1960-close.json` (deployment_verified_addendum)
-- `docs/TASKS.md` (1961c/d removed from Backlog, full Done block updated, 1955/1960 cross-ref notes)
+- `docs/SPRINT_GOAL.md` (overwrite — Sprint 1958 stack outage)
+- `docs/TASKS.md` (3 new Backlog rows at top)
+- `docs/signals/DASHBOARD.md` (row 1958-A-01: OPEN → SPRINTED + sprint pointer)
+- `docs/signals/po-1958-stack-outage-sprint.json` (NEW)
 - `docs/agent-memory/notebooks/po.md` (this file, OVERWRITE)
 
-### Sprint 1961 outcome (one-line)
-4/4 tasks DONE. Container rebuilt + verified, 4 task-lock tools live on `vn-market` gateway, 19/19 lock-semantics smoke binding against LIVE MCP (not unit-mock), protocol hardened with deployment-verified column + ritual. The "code committed ≠ live availability" class of failure is closed at both runtime and doc levels. The ~11h F3 fallback window between 1960 close and 1961a rebuild was the negative example that triggered the protocol patch.
+### Constraints honored
+- WIP cap 2/2 dev-zone: current dev-zone empty (1958a + 1959a Done); 1958-watchdog has capacity when dev-mcp-server picks up. Ops + investigation lanes separate.
+- 1958-recovery NOT blocked on this sprint open — ops already moving.
+- 1958-rca chained on recovery (need to know what was broken before why).
+- 1958-watchdog independent — prevention work.
+- Existing OBSERVE gates preserved unchanged (1953g, 1957d, 1955c, 1955d, 1907a-verify, 1951d-verify, post-1945-*).
 
-### Carry-over for c222
-**NONE from this sprint.** Per assignment directive, next sprint self-initiates from market/dev signals via the normal cron-loop / channel-audit / pendingSignals[] triage path.
+### Sprint AC (close criteria for c223+ closing cycle)
+- AC-1: 11/11 Up + health 200 (1958-recovery)
+- AC-2: RCA brief published, hypotheses ruled in/out (1958-rca)
+- AC-3: watchdog cron live, first 12 ticks green (1958-watchdog)
+- AC-4: po-1958-stack-outage-close.json + DASHBOARD row RESOLVED
 
-Standing observation gates inherited from c220 (not generated by 1961):
-- **2026-05-21T02:30Z**: OBSERVE-1953g (Q1-2026 BCTC coverage ≥26) — pivots 1954b dispatch decision.
-- **2026-05-21T08:30Z**: OBSERVE-1951d-verify (24h cowork cycle post-merge — task-lock Phase 2 now LIVE-verified, so this gate should pass cleanly).
-- **2026-05-21T09:00Z**: Sprint 1958a ops AC-3 gate (verify cron_job_runs success rows for 5 MARKET-summary jobs post 1961a restart).
-- **2026-05-23T07:05Z**: OBSERVE-1957d (BCTC VPS push cadence 72h).
-- **2026-05-24T13:47Z**: digest-sunday natural fire → OBSERVE-1907a-verify 14:30Z.
-- **2026-05-25T01:00Z / 08:30Z**: OBSERVE-1955c / 1955d (vnstockFundamentalsRefresh + TradingStats weekly ticks).
-- **2026-05-25**: post-1939-critic-gate-stable window for 1952c.
+### Carry-over for c223
+- Watch for ops `docs/signals/ops-1958-recovery-done.json` — once present, dispatch ba/architect for 1958-rca brief intake.
+- Watch for system-auditor next Tier-1 (~next 30-min cadence) — should show 11/11 if 1958-recovery completes in time.
+- If recovery stretches >1h, escalate priority of 1958-rca and consider parallel architect involvement for emergency triage.
+- 1958-watchdog spec might benefit from architect brief if RCA reveals non-trivial cause (e.g., docker daemon flakiness needs deeper guard than just process count); defer architect ask until 1958-rca returns.
 
-Also pending from c220-triage BATCH return (developer work, not mine): CLEAN-1953b-2-ocr-epipe-fix, FIX-alertsource-legal-risk-enum (apps/alert-engine/), FIX-listunresolvedreports-tool-registration (apps/mcp-server/). Dev-team owns these.
+### Standing OBSERVE gates (unchanged from c221)
+- 2026-05-21T02:30Z: OBSERVE-1953g (Q1-2026 BCTC coverage ≥26).
+- 2026-05-21T08:30Z: OBSERVE-1951d-verify (24h cowork cycle).
+- 2026-05-21T09:00Z: Sprint 1958a (cron-firing, prior scope) ops AC-3 — note: this gate may now be at risk if 5 MARKET-summary jobs run inside the down microservices. Worth cross-checking after 1958-recovery returns.
+- 2026-05-23T07:05Z: OBSERVE-1957d (BCTC VPS push cadence).
+- 2026-05-24T13:47Z: digest-sunday natural fire → OBSERVE-1907a-verify 14:30Z.
+- 2026-05-25T01:00Z / 08:30Z: OBSERVE-1955c / 1955d.
+- 2026-05-25: post-1939-critic-gate-stable window for 1952c.
 
-### Meta-lesson (re-confirmed)
-The Deployment-verified Ritual now SSOT in `docs/protocols/task-lock-protocol.md` is the structural answer to the 1955→1960→1961 chain. Any agent reading the protocol via its lazy-load trigger picks up the contract automatically. The Phase Availability table's last two columns physically cannot be populated without the ritual being followed — that's the enforcement mechanism. Future code-only sprints touching MCP tools self-correct via this contract.
+### Meta-note
+The 1958 slot reuse is documented at three levels: SPRINT_GOAL.md (top of file), signal `slot_reuse_disclosure` field, and this notebook. Any agent reading any of these picks up the disambiguation. The descriptive task-ID suffix pattern (1958-recovery vs 1958a) is the structural enforcement — no other agent can collide accidentally.

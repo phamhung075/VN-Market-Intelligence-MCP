@@ -1,0 +1,149 @@
+{
+  "from": "po",
+  "to": "router",
+  "type": "sprint_open",
+  "priority": "critical",
+  "createdAt": "2026-05-20T20:10:00Z",
+  "cycle": "c222",
+  "sprint_id": "1958",
+  "sprint_theme": "Docker-compose stack outage (10 of 11 microservices DOWN) — recovery + RCA + detection-gap closure",
+  "trigger": {
+    "source": "system-auditor",
+    "tier": "T1",
+    "audit_ts_primary": "2026-05-20T19:59:48Z",
+    "audit_ts_reconfirm": "2026-05-20T20:02:23Z",
+    "dashboard_row": "1958-A-01",
+    "dedup_key": "microservice_degraded:docker-compose-stack:A-01"
+  },
+  "incident_snapshot": {
+    "up_services": ["mcp-server", "frontend"],
+    "down_services": [
+      "api-gateway",
+      "stock-price",
+      "technical-analysis",
+      "macro-indicators",
+      "kinh-dich-service",
+      "alert-engine",
+      "pdf-extractor",
+      "rag-service",
+      "news-fetch"
+    ],
+    "mcp_server_state": "Up 23m, healthy, 16 circuits green, 79 cron jobs firing, DB OK, VPS HTTPS reachable",
+    "data_plane_state": "HEALTHY per T2 freshness sweep — outage is inter-service plane only",
+    "blocks": ["inter-service checks A-25→A-28", "alert-engine silent", "pdf-extractor + rag-service silent"]
+  },
+  "slot_reuse_disclosure": {
+    "prior_1958_uses": [
+      {
+        "id": "po-1958-bctc-stale-triage.json",
+        "date": "2026-05-20T04:23Z",
+        "scope": "BCTC stale Tier-2 triage",
+        "decision": "OBSERVE_ONLY, no sprint opened, slot left free"
+      },
+      {
+        "id": "1958a (cron-firing)",
+        "date": "2026-05-20",
+        "scope": "5 MARKET-summary cron jobs not firing — event-loop starvation fix",
+        "status": "DONE qa commit 84c2b375"
+      }
+    ],
+    "this_use": {
+      "scope": "docker-compose stack outage — different scope from both prior uses",
+      "disambiguation": "Task IDs use descriptive suffixes (1958-recovery / 1958-rca / 1958-watchdog) to avoid numeric collision with prior 1958a"
+    },
+    "why_not_1959_plus": "1958 slot was held only by an OBSERVE ruling (no sprint opened) plus one Done task; the sprint slot itself remained free. Reusing 1958 keeps the user's mental anchor with the dashboard row 1958-A-01."
+  },
+  "tasks": [
+    {
+      "id": "1958-recovery",
+      "title": "Immediate docker-compose stack recovery",
+      "priority": "HIGH",
+      "size": "M",
+      "owner": "ops",
+      "status": "IN_PROGRESS",
+      "depends_on": [],
+      "ac": [
+        "docker ps shows 11/11 Up",
+        "health endpoints A-12→A-20 return 200",
+        "pre-recovery evidence pack captured for 1958-rca",
+        "signal ops-1958-recovery-done.json emitted"
+      ],
+      "note": "Dispatched in parallel — sprint open formalizes work in flight, does not gate it"
+    },
+    {
+      "id": "1958-rca",
+      "title": "Root-cause analysis: why did the stack lose 10 services?",
+      "priority": "HIGH",
+      "size": "S",
+      "owner": "ops",
+      "status": "BLOCKED",
+      "depends_on": ["1958-recovery-done"],
+      "hypothesis_bench": [
+        "Manual docker compose down / partial stop",
+        "Docker daemon restart on macOS",
+        "Failed rolling update / rebuild (Sprint 1961a rebuilt only mcp-server)",
+        "OOM / resource exhaustion",
+        "Docker Desktop VirtualMachine SHM teardown"
+      ],
+      "evidence_surfaces": [
+        "dockerd.log",
+        "docker events --since",
+        "macOS system journal (com.docker.docker subsystem)",
+        "docker-compose.yml restart policies per service",
+        "Docker Desktop VM state"
+      ],
+      "ac": [
+        "docs/architecture-briefs/2026-05-20-stack-outage-rca.md exists",
+        "single root cause OR explicit multi-cause verdict",
+        "each hypothesis ruled in/out with evidence",
+        "feeds 1958-watchdog spec if applicable"
+      ]
+    },
+    {
+      "id": "1958-watchdog",
+      "title": "Fast container-count watchdog cron (≥2 services down → BUG + auto-recover)",
+      "priority": "MEDIUM",
+      "size": "M",
+      "owner": "dev-mcp-server",
+      "status": "BACKLOG",
+      "depends_on": [],
+      "rationale": "Tier-1 30-min cadence is too slow for a CRITICAL multi-service outage; 5-min container-count cron closes the detection gap from ≤30 min to ≤5 min",
+      "ac": [
+        "dockerStackWatchdogJob fires every 5 min",
+        "unit test: 3-services-down → BUG emitted + recovery attempted",
+        "unit test: all-up → clean exit no Telegram",
+        "integration test: short stop of 2 sidecars → recovery in ≤10 min",
+        "first 12 ticks success in cron_job_runs"
+      ]
+    }
+  ],
+  "constraints": {
+    "wip_cap_check": "dev-zone 2/2 cap — current dev-zone is empty (1958a Done, 1959a Done); 1958-watchdog can claim slot when dev-mcp-server picks up",
+    "ops_lane_separate": "ops + investigation lanes are independent of dev-zone WIP",
+    "preserved_observe_gates": [
+      "OBSERVE-1953g (2026-05-21T02:30Z)",
+      "OBSERVE-1957d (2026-05-23T07:05Z)",
+      "OBSERVE-1955c (2026-05-25T01:30Z)",
+      "OBSERVE-1955d (2026-05-20T09:00Z, may already have fired)",
+      "OBSERVE-1907a-verify (2026-05-24T14:30Z)",
+      "OBSERVE-1951d-verify (2026-05-21T08:30Z)",
+      "post-1945-verdict-resolution-scored-pct (2026-05-20T07:22Z, likely fired)",
+      "post-1945-bug-storm-silence (2026-05-20T07:22Z, likely fired)"
+    ],
+    "recurring_bug_escalation_check": "Not triggered — this is the first stack outage in current sprint window; no prior fix commits to docker-compose orchestration"
+  },
+  "sprint_acceptance_criteria": [
+    "AC-1: 11/11 microservices Up + health 200 (closes 1958-recovery)",
+    "AC-2: RCA brief published with single or multi-cause verdict + evidence (closes 1958-rca)",
+    "AC-3: dockerStackWatchdogJob live, first 12 ticks green (closes 1958-watchdog)",
+    "AC-4: po-1958-stack-outage-close.json emitted + DASHBOARD row 1958-A-01 RESOLVED"
+  ],
+  "next_review": "2026-05-20T21:00:00Z (post 1958-recovery return — check evidence pack + decide whether to fast-track 1958-rca)",
+  "files_touched": [
+    "docs/SPRINT_GOAL.md (overwrite — Sprint 1958 stack outage)",
+    "docs/TASKS.md (3 new Backlog rows: 1958-recovery, 1958-rca, 1958-watchdog)",
+    "docs/signals/DASHBOARD.md (row 1958-A-01: OPEN → SPRINTED, sprint reference added)",
+    "docs/signals/po-1958-stack-outage-sprint.json (this file, NEW)",
+    "docs/agent-memory/notebooks/po.md (overwrite c222 entry)"
+  ]
+}

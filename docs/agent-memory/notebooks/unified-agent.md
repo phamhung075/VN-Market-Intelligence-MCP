@@ -43,3 +43,14 @@
 - **🟢 MCP gateway operational** — 14 MCP calls succeeded; 1 transient error on get_portfolio_conviction recovered after 1× retry.
 - **🟡 get_portfolio_conviction transient error** — single failure mid-cycle: "connector's server isn't responding"; succeeded on 1× retry. Watch for repeat.
 - **Cycle metrics:** 14 MCP calls × 500 ≈ 7,000 estimated tokens.
+
+### Chef Dish — evening 19:37 UTC (2026-05-20T1937Z)
+- Clusters qualified: 2 (banking sector + oil_gas sector)
+- Tickers covered: VCB, ACB, MBB, CTG, BID (banking); GAS, PLX (oil_gas); FPT (tech contradiction)
+- Layers walked: 1-6 (state transitions on USD/VND 26,355 > 25,500; US Fed 5.33% + US10Y 4.57% TIGHTENING stack; VN carry -0.33% outflow pressure; 4-pillar mapping banking 2/4, oil_gas 2/4; Kinh Dich VNINDEX Khon + VCB Tý+Lao Ám recovery + FPT/GAS Kien overbought warnings; gaps on BCTC Q1 + SBV CPI/FX)
+- Signals consumed: macro_snapshot_20260520T1946 (tier=2), market_context_bootstrap (tier=2), kinh_dich_market (tier=3), kinh_dich_vcb/fpt/gas (tier=3), news_mention ACB/MBB/CTG/HPG/GAS/PLX/FPT/VIC/VHM (tier=2), fiingroup_valuation (tier=2)
+- Dish published: YES | Convergence: TRUE (2 clusters)
+- Conviction: MEDIUM across all clusters (2/4 pillars banking, 2/4 oil_gas; gaps on money supply SBV + BCTC Q1 overdue)
+- Key finding: Macro-Kinh-Dich contradiction — VNINDEX Khon (buy signal 100%) vs FII outflow (carry -0.33%) + Fed tight (5.33%) vs VCB Lao Ám recovery signal vs GAS/FPT Lao Duong overbought warnings. Pivot point: Fed signal at 20:30 UTC tonight (US market open)
+- Action: WATCH (no action today — giai doan "tiep nhan"/Khon phase, await US confirmation tomorrow for direction)
+- Pillar gaps: BCTC Q1 overdue 3d banking, SBV CPI/FX data missing = confidence limited to MEDIUM, not HIGH

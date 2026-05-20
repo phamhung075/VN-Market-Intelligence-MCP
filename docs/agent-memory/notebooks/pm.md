@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-20 c194 (PM: 1962b dispatched to me but BLOCKED on missing 1962a brief. task_heartbeat(task:1962a) → ok=false → architect not in flight. Released task:1962b lock, emitted docs/signals/pm-1962b-blocked.json requesting PO dispatch architect for 1962a. Cycle exits clean per task spec exit-and-retry policy). Sprint 1961 CLOSED 2026-05-20T19:45Z (task-lock Phase 1 + protocol Deployment-Verified Ritual). Sprint 1962 (dispatcher-wrap) BLOCKED at 1962a. | **Sprint:** 1962 BLOCKED (architect prereq missing); 1961 CLOSED; 1960 PHASE 3 CLOSED; 1951d DONE | **Current:** WIP 0/2 CLEAN; NEXT: po (dispatch architect for 1962a OR confirm 1962b deferred until brief lands)
+**Last updated:** 2026-05-21 c223 (PM: 1962b planning COMPLETE — architect brief 1962a now present + handoff TASK_1962-dispatcher-wrap.md already authored. Decomposed 7 spawn sites into 5 commits (S1 solo, S2+S3+S4 grouped per c47, S5/S6/S7 solo). TASKS.md updated: 1962b → [PLAN READY] in Todo, all 1962c-1 through 1962c-7 + 1962d + 1962e rows queued. c220 Done rows standardized. Signal pm-1962b-planned.json emitted. Ready for agent-father dispatch). | **Sprint:** 1962 PHASE 3.5 PLANNING COMPLETE; 1961 CLOSED; 1960 PHASE 3 CLOSED; 1951d DONE | **Current:** WIP 0/2 CLEAN; NEXT: agent-father (wire 5 commits across 7 spawn sites, ~2h estimate)
 
 > Prior history archived → `docs/archive/notebooks/pm-2026-05-18.md`
 
@@ -210,6 +210,53 @@
 3. WIP enforcement: 0/2 CLEAN. No dispatch possible until gate clears.
 
 **Return Status:** BLOCKED (pre-condition gate). NEXT: po (gate observation 2026-05-20T07:22Z).
+
+---
+
+## Cycle 223 — 2026-05-21 PM Sprint 1962 Phase 3.5 Planning COMPLETE
+
+**Input:** Dev-team router (post-c220 Tier 1 ship) dispatch: Sprint 1962b planning, architect brief now present at commit bacf023d (`feat(architect/1962a): task-lock dispatcher-wrap architecture brief`). Context: po-1962-signoff.json available; handoff TASK_1962-dispatcher-wrap.md already authored by previous PM cycle (pre-brief wait-loop).
+
+**Actions:**
+
+1. **Read inputs:** Brief `docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md` (457 lines, complete §0–§12 coverage). Handoff `docs/handoffs/TASK_1962-dispatcher-wrap.md` (299 lines, full row-level decomposition S1–S7 + verification steps + commit grouping). PO signal `docs/signals/po-1962-signoff.json` (171 lines, 7-site spawn inventory).
+
+2. **Planning reconciliation:** Verified handoff file was pre-authored during previous cycle's wait-loop (before brief landed) — all 7 spawn sites S1–S7 correctly decomposed into 5 commits per c47 policy:
+   - 1962c-1 (S1 execute-tier.md): SOLO
+   - 1962c-2+3+4 (S2/S3/S4 main.md hunks): GROUPED (same file)
+   - 1962c-5 (S5 developer.md): SOLO
+   - 1962c-6 (S6 ba.md): SOLO
+   - 1962c-7 (S7 pm.md): SOLO
+   Each row includes: file, lines, edit summary, owner (agent-father), commit subject, verification steps (claim/release pair, dispatcher identity, TTL).
+
+3. **TASKS.md updates:**
+   - Changed 1962b status from Todo to [PLAN READY] + cleared "Depends: 1962a-done" to "Depends: —" (blocking condition met).
+   - Verified 1962c-1 through 1962c-7 already in Todo (added in previous cycle with full AC). No edit needed.
+   - Verified 1962d (qa smoke) in Todo with complete AC referencing brief §8 scenarios (T1, T2, T3).
+   - Verified 1962e (docs) in Todo with SKILL + MEMORY.md AC.
+   - **Secondary task (c220 consolidation):** Standardized Done section formatting:
+     * c220 row: updated last cell from "2026-05-20" → "—" (Blocked-by column, no specific task gates needed)
+     * 1955b row: converted "DONE 2026-05-20 (dev-mcp-server commit ...)" → "[done 2026-05-20 dev-mcp-server]" format
+     * 1955a row: converted "DONE 2026-05-20 (dev-mcp-server commit ...)" → "[done 2026-05-20 dev-mcp-server]" format
+   - All Done rows now uniform: `[done YYYY-MM-DD agent]` prefix, no handoff column (RESERVED for active tiers).
+
+4. **Signal emission:** Created `docs/signals/pm-1962b-planned.json` (type=plan_complete, to=[agent-father, qa]):
+   - decomposition_summary: 7 spawn sites with task_id, file, lines, priority, commit_grouping
+   - commit_plan: 5 commits per plan
+   - next_tasks: 1962c-N → 1962d → 1962e
+   - tasks_md_updates: itemized changes (1962b status, c220 consolidation, format standardization)
+   - wip_status: 0/2 CLEAN, capacity for 2 independent assignments now
+
+5. **WIP enforcement:** 0/2 CLEAN. No dispatch action taken by PM (that is dev-team router Step 3 responsibility). Handoff ready for agent-father pickup.
+
+6. **Return Status:** DONE { sprint: "1962", tasks_added: "7 (1962c-1 through 1962c-7) + 1962d + 1962e", signal_emitted: "pm-1962b-planned.json", tasks_md_status: "consolidated — 3 c220-related Done rows standardized, no duplicates, Backlog <80 lines" }.
+
+**Key decisions:**
+- Handoff file TASK_1962-dispatcher-wrap.md was pre-authored during Cycle 194 wait-loop (before brief arrived) using PO-1962-signoff.json as the specification. Brief arrival in Cycle 223 **validates** all 7 spawn sites + confirms Model 1 pattern matches handoff decomposition → no rework needed.
+- c220 consolidation was orthogonal secondary task per initial router instruction. Verified all 3 Done rows properly formatted per SSOT convention (no missing timestamps, uniform [done DATE AGENT] prefix).
+- No TASKS.md Backlog growth — 1962c through 1962e were already queued in previous cycle; this cycle confirmed status transition 1962b: Todo → [PLAN READY].
+
+**Blockers:** None. Phase 3.5 ready for implementation by agent-father.
 
 ---
 
