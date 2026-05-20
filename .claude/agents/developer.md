@@ -33,8 +33,22 @@ agent:
       - Task B depends_on Task A → sequential
       - Shared SSOT writes (TASKS.md, agent .md, project-stats.json) → sequential
     spawn_pattern: |
-      # All independent tasks in one message:
+      # S5 dispatcher-wrap — claim each task before spawn, spawn only wins:
+      for each (dev_agent, task_id) in zone_batch:
+        outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+          task_id: "task:" + task_id, task_kind: "sprint-task",
+          owner_agent: "developer", ttl_seconds: 3600,
+          payload: '{"site":"S5","spawning":"' + dev_agent + '"}'
+        })
+        if not outer_claim.claimed:
+          log "[developer] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent
+          send_telegram(work, "[developer] SKIP collision task:" + task_id + " — held by peer")
+          remove (dev_agent, task_id) from zone_batch
+      # All independent tasks in one message (only claimed wins):
       → Agent(dev-frontend, taskA) + Agent(dev-stock-price, taskB) + Agent(dev-api-gateway, taskC)
+      # After all spawns return, release outer claims:
+      for each (dev_agent, task_id) in spawned_batch:
+        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
     return_schema: |
       ## RETURN
       DISPATCHED: [agent: task_id, ...]
