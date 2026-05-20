@@ -1,0 +1,11 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task-done",
+  "payload": {
+    "task": "1955a",
+    "commit": "8b23795a",
+    "next": "1955b qa multi-session smoke"
+  },
+  "createdAt": "2026-05-20T16:53:49Z"
+}
