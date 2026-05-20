@@ -1,8 +1,8 @@
 # Sprint 1959 Goal — WATCHDOG HARDENING BATCH (post-1958 stack outage)
 
-**Status:** OPEN — cycle-3 dispatch 2026-05-20T21:27Z | **Predecessor:** Sprint 1958 (incident response) CLOSED 2026-05-20T20:40Z | **Severity:** HIGH (preventive hardening — no live incident) | **Sign-off:** po-1958-close.json + po-1958-mid-checkpoint.json + po-1959-cycle-2.json + po-1959-cycle-3.json
+**Status:** OPEN-IN-SOAK — cycle-3 active work fully shipped 2026-05-20T21:40Z (w-9 ratified + w-10 dev-done in QA) | **Predecessor:** Sprint 1958 (incident response) CLOSED 2026-05-20T20:40Z | **Severity:** HIGH (preventive hardening — no live incident) | **Sign-off:** po-1958-close.json + po-1958-mid-checkpoint.json + po-1959-cycle-2.json + po-1959-cycle-3.json + po-1959-w9-ratified.json
 
-**Close-out decision (cycle-3, 2026-05-20T21:27Z):** Sprint 1959 STAYS OPEN until watchdog-4 ships post-2026-05-22T21:00Z gate. The 48 h soak window is intentional pre-condition design, not idle time — closing now and reopening Sprint-1961-watchdog-finale fragments cognitive thread for no gain. Cycle-3 adds 2 XS follow-on tasks from watchdog-8 audit (standing policy + Dockerfile remnant cleanup).
+**Close-out decision (cycle-3, 2026-05-20T21:27Z, reaffirmed 2026-05-20T21:40Z):** Sprint 1959 STAYS OPEN until watchdog-4 ships post-2026-05-22T21:00Z gate. The 48 h soak window is intentional pre-condition design, not idle time — closing now and reopening Sprint-1961-watchdog-finale fragments cognitive thread for no gain. Cycle-3 adds 2 XS follow-on tasks from watchdog-8 audit (standing policy w-9 ratified + Dockerfile remnant cleanup w-10 in QA). Soak-window pre-condition is the only thing left between now and 2026-05-22T21:00Z unlock.
 
 ---
 
@@ -37,10 +37,10 @@
 | 1959-watchdog-1 | Pre-flight disk check before `docker compose up -d` (fail-fast if free < 15 GB) | HIGH / S | ops | ops/scripts | **DONE 2026-05-20** (commit `784905da`) | — |
 | 1959-watchdog-3 | Pre-bake sentence-transformers model in `apps/rag-service/Dockerfile` | MEDIUM / S | dev-rag-service | apps/rag-service/ | **DONE 2026-05-20T21:01Z** (commit `66255410`; +920 MB image; cold-start 11–16 s; zero HF fetch) | 1958-disk-relief (DONE) |
 | 1959-watchdog-7 | Bump `flaresolverr` healthcheck `start_period` 30s → 60s (symmetric to watchdog-2; Chromium cold-start same risk profile as RAG) | HIGH / XS | dev-mcp-server | apps/mcp-server/ (owns compose) | **DONE 2026-05-20T22:50Z** (commit `fd292896`; 3-of-3 restart smoke 11/13/11 s) | — |
-| 1959-watchdog-5 | Disk-usage alert cron (BUG Telegram when `/app/data/lancedb` > 20 GB) | MEDIUM / S | dev-mcp-server | apps/mcp-server/ | **DONE+QA-PASS 2026-05-20** (commit `edafce4f`; 9/9 tests; cronJobCount 76→77; alert fires by design at next hourly tick — lancedb 29 GB > 20 GB) | — |
+| 1959-watchdog-5 | Disk-usage alert cron (BUG Telegram when `/app/data/lancedb` > 20 GB) | MEDIUM / S | dev-mcp-server | apps/mcp-server/ | **DONE+QA-PASS+OPS-DEPLOYED 2026-05-20** (commit `edafce4f`; ops `ab9c9a90`; 9/9 tests; cronJobCount 76→77; ops measured `/app/data` = 69 MB at deploy — well below 20 GB — alert runs SILENTLY at :47 UTC ticks by design + nominal disk state. Prior PO note "alert WILL fire on first tick" SUPERSEDED.) | — |
 | 1959-watchdog-8 | Named-volume shadow audit (read-only) — `market_data`-mounted services scanned for Dockerfile assets baked under `/app/data/*`. | LOW / S | architect | multi (read-only) | **DONE 2026-05-21T00:30Z** (commit `a8a66bd1`; 2 CONFIRMED SHADOWs latent-risk only; brief `docs/architecture-briefs/2026-05-21-named-volume-shadow-audit.md`; threshold ≥ 3 for Sprint 1960-volume-shadow-remediation NOT reached) | — |
-| 1959-watchdog-9 | **NEW cycle-3** — Standing policy doc `docs/standards/dockerfile-volume-policy.md` (`/opt/<service>-assets/` convention; never bake under `/app/data/*`). Converts watchdog-8 finding into a forward guard. | LOW / XS | architect | docs/standards/ | **DISPATCH-NOW** (cycle-3) | watchdog-8 done |
-| 1959-watchdog-10 | **NEW cycle-3** — Cleanup rag-service Dockerfile remnant `RUN mkdir -p /app/data/lancedb /app/data/models` → drop `/app/data/models` (no-op post-watchdog-3). One-line edit + rebuild + 60 s smoke. | LOW / XS | dev-rag-service | apps/rag-service/ | **DISPATCH-NOW** (cycle-3; safe — 32 GB free, no other rebuild in flight) | watchdog-3 done |
+| 1959-watchdog-9 | **NEW cycle-3** — Standing policy doc `docs/standards/dockerfile-volume-policy.md` (`/opt/<service>-assets/` convention; never bake under `/app/data/*`). Converts watchdog-8 finding into a forward guard. | LOW / XS | architect | docs/standards/ | **DONE+PO-RATIFIED 2026-05-20T21:40Z** (commit `59e043fa`; 59 L ≤ 60 AC; cross-linked from tree-map.md + docker-deployment-runbook.md Related; AC-9-1..4 all PASS; signal `docs/signals/po-1959-w9-ratified.json`) | watchdog-8 done |
+| 1959-watchdog-10 | **NEW cycle-3** — Cleanup rag-service Dockerfile remnant `RUN mkdir -p /app/data/lancedb /app/data/models` → drop `/app/data/models` (no-op post-watchdog-3). One-line edit + rebuild + 60 s smoke. | LOW / XS | dev-rag-service | apps/rag-service/ | **DEV-DONE in QA** (commit `5466c84b`; QA owns row until APPROVE; PO does not touch) | watchdog-3 done |
 | 1959-watchdog-4 | LanceDB compaction / archival cron (reclaim disk weekly) | MEDIUM / M | dev-rag-service | apps/rag-service/ | HOLD (unlock 2026-05-22T21:00Z — 48 h post-watchdog-3 ship) | watchdog-3 |
 | 1959-watchdog-6 | Async-ify RAG lifespan handler (model load in thread pool) | LOW / M | dev-rag-service | apps/rag-service/ | DEEP HOLD (gates on watchdog-3 + watchdog-4 both stable 7 d) | watchdog-3, watchdog-4 |
 
@@ -49,12 +49,12 @@
 - **AC-1 (watchdog-1):** PASS — `scripts/preflight-disk.sh` exists, executable, tested healthy + threshold-override, documented in `docs/protocols/docker-deployment-runbook.md`. Commit `784905da`.
 - **AC-2 (watchdog-7):** PASS — `docker-compose.yml` `flaresolverr.healthcheck.start_period` = 60 s; 3-of-3 restart smoke PASS (11/13/11 s); API status=ok. Commit `fd292896`.
 - **AC-3 (watchdog-3):** PASS — `apps/rag-service/Dockerfile` bakes model into `/opt/model-cache` (outside named-volume shadow); image +920 MB; cold-start 11–16 s; zero HF fetches (`HF_HUB_OFFLINE=1`). Commit `66255410`.
-- **AC-4 (watchdog-5):** PASS — `diskUsageAlertJob.ts` registered in `cronConfig.ts` (`47 * * * *`); 9/9 unit tests GREEN; 12-tick under-threshold smoke = 0 Telegrams; over-threshold smoke fires exactly one BUG message; 6 h cooldown verified. QA APPROVED. Commit `edafce4f`.
+- **AC-4 (watchdog-5):** PASS — `diskUsageAlertJob.ts` registered in `cronConfig.ts` (`47 * * * *`); 9/9 unit tests GREEN; 12-tick under-threshold smoke = 0 Telegrams; over-threshold smoke fires exactly one BUG message; 6 h cooldown verified. QA APPROVED. Commit `edafce4f`. Ops DEPLOYED `ab9c9a90`. Runtime correction: `/app/data` measured 69 MB at deploy (Docker volume), well below 20 GB — alert runs SILENTLY at :47 UTC ticks BY DESIGN + nominal disk state (prior PO note "alert WILL fire" superseded).
 - **AC-5 (watchdog-4):** PENDING — LanceDB compaction cron registered (weekly Mon 02:00Z); `cron_job_runs` ≥ 1 success within 7 d; LanceDB `du -sh` ≤ 25 GB after first run. Gates until 2026-05-22T21:00Z (48 h post-watchdog-3).
 - **AC-6 (watchdog-6):** DEEP HOLD — RAG lifespan offloaded to `asyncio.to_thread()`; cold-start API 200 within 5 s. Gates on watchdog-3 + watchdog-4 stable for 7 d.
 - **AC-8 (watchdog-8):** PASS — `docs/architecture-briefs/2026-05-21-named-volume-shadow-audit.md` exists; 9 services inventoried (2 CONFIRMED SHADOW, 2 SAFE, 5 OUT-OF-VOLUME); verdict + recommendation present. Commit `a8a66bd1`.
-- **AC-9 (watchdog-9 NEW):** PENDING — `docs/standards/dockerfile-volume-policy.md` exists; ≤ 60 L; cross-linked from `docs/references/tree-map.md`. Dispatch cycle-3.
-- **AC-10 (watchdog-10 NEW):** PENDING — `apps/rag-service/Dockerfile` mkdir line trimmed; rebuild + 60 s smoke PASS (`/health` 200 + `/search` returns results). Dispatch cycle-3.
+- **AC-9 (watchdog-9 NEW):** PASS — `docs/standards/dockerfile-volume-policy.md` exists (59 L ≤ 60); cross-linked from `docs/references/tree-map.md` (standards + Write Ownership) + `docs/protocols/docker-deployment-runbook.md` Related. Commit `59e043fa`. PO ratified 2026-05-20T21:40Z (`docs/signals/po-1959-w9-ratified.json`).
+- **AC-10 (watchdog-10 NEW):** DEV-DONE / IN-QA — `apps/rag-service/Dockerfile` mkdir line trimmed (commit `5466c84b`); QA owns final verdict before ops rebuild + 60 s smoke.
 - **AC-7 (close):** All tasks DONE OR explicitly deferred with rationale + `po-1959-close.json` emitted + DASHBOARD ops section pruned of `1958-A-01` (RESOLVED → CLOSED), lesson encoded in MEMORY.md.
 
 ### Constraints / Boundary
@@ -82,12 +82,12 @@ SHIPPED (cycle-2):
   - architect         → 1959-watchdog-8   DONE 2026-05-21T00:30Z   commit a8a66bd1  (2 CONFIRMED SHADOWs latent-risk; threshold ≥3 not reached)
 ```
 
-### Dispatch Slate — Cycle 3 (this PO cycle, 2026-05-20T21:27Z)
+### Dispatch Slate — Cycle 3 (CLOSED 2026-05-20T21:40Z — all active dev work shipped)
 
 ```
-DISPATCH SLATE (Sprint 1959 cycle-3):
-  - architect         → 1959-watchdog-9   (XS, standing Dockerfile volume policy doc — converts watchdog-8 lesson into forward guard)
-  - dev-rag-service   → 1959-watchdog-10  (XS, cleanup /app/data/models mkdir remnant + 60 s smoke — closes latent shadow remnant)
+SHIPPED (Sprint 1959 cycle-3):
+  - architect         → 1959-watchdog-9   DONE+PO-RATIFIED 2026-05-20T21:40Z  commit 59e043fa  (policy 59 L; AC-9-1..4 PASS; bonus cross-link in docker-deployment-runbook)
+  - dev-rag-service   → 1959-watchdog-10  DEV-DONE in QA               commit 5466c84b  (QA owns until APPROVE → ops rebuild)
 
 HOLD (cycle-4 candidate, unlocks 2026-05-22T21:00Z):
   - dev-rag-service   → 1959-watchdog-4   (LanceDB compaction cron — 48 h soak post-watchdog-3)
@@ -95,14 +95,13 @@ HOLD (cycle-4 candidate, unlocks 2026-05-22T21:00Z):
 DEEP HOLD (cycle-5):
   - dev-rag-service   → 1959-watchdog-6   (after watchdog-3 + watchdog-4 stable 7 d)
 
-RATIONALE:
-  1. Sprint close-out decision: STAY OPEN until watchdog-4 ships. 48 h soak is design, not idle. Closing/reopening = artificial sprint churn for no cognitive gain.
-  2. Disk healthy (32 GB free). watchdog-10 triggers ONE rebuild (rag-service, ~0 MB delta vs watchdog-3). Safe under disk discipline. watchdog-9 is docs-only, no rebuild.
-  3. WIP cap 2/2 dev-zone respected: architect 1 slot (watchdog-9 docs), dev-rag-service 1 slot (watchdog-10), dev-mcp-server 0 (idle, awaiting cycle-4 if any).
-  4. watchdog-9 routes to architect (policy authoring, cross-link tree-map). Separate lane from dev-rag-service.
-  5. watchdog-10 = XS Dockerfile diff + rebuild. Pre-flight disk script (watchdog-1) gates it automatically.
-  6. NO additional backlog interleave this cycle: (a) chef-morning verification implicit in OBSERVE-1953g + OBSERVE-1907a-verify; (b) OBSERVE-1955d 09:00Z today already past — ops auto-sweep next cycle; (c) no other Todo with ready owners + cleared gates.
-  7. By-design alert this cycle: disk-usage cron will emit BUG on first hourly tick (lancedb 29 GB > 20 GB). NOT a fault. Do NOT queue lancedb compaction prematurely — that's watchdog-4's gated job at 2026-05-22T21:00Z.
+RATIONALE (closure):
+  1. Cycle-3 close: w-9 RATIFIED, w-10 DEV-DONE in QA. Once w-10 QA-PASS lands + ops rebuilds, cycle-3 is fully shipped.
+  2. Sprint STAYS OPEN until watchdog-4 ships post-2026-05-22T21:00Z. 48 h soak = intentional pre-condition design. No new dispatch until then.
+  3. Disk-usage alert (w-5) runs SILENTLY at :47 UTC ticks — ops measured /app/data = 69 MB at deploy, well below 20 GB. Prior PO cycle-3 note "alert WILL fire" SUPERSEDED. Silent + correct is the actual outcome.
+  4. Idle-window guidance (48 h): NO non-watchdog interleave. T1/T2 audit crons continue self-driving.
+  5. OBSERVE gates intact: 1953g 2026-05-21T02:30Z + 1951d-verify 2026-05-21T08:30Z + 1957d 2026-05-23T07:05Z + 1907a-verify 2026-05-24T14:30Z + 1955c 2026-05-25T01:30Z. No new OBSERVE entries from cycle-3.
+  6. Recurring-bug-escalation policy unchanged: BCTC freeze in force; 1954c is the next structural unlock.
 ```
 
 ### Hypothesis Bench — Watchdog Adequacy Question
@@ -120,9 +119,9 @@ If H-1959-1 AND H-1959-2 hold, sprint 1959 closes cleanly. If a 2nd outage hits 
 ## Next
 
 - Cycle-1 SHIPPED (3 watchdogs DONE: 1, 7, 3).
-- Cycle-2 SHIPPED (2 tasks DONE: 5 + QA-PASS, 8).
-- Cycle-3 dispatched 2026-05-20T21:27Z: watchdog-9 (architect docs) + watchdog-10 (dev-rag-service cleanup).
+- Cycle-2 SHIPPED (2 tasks DONE: 5 + QA-PASS + OPS-DEPLOYED, 8).
+- Cycle-3 SHIPPED (2 tasks): watchdog-9 DONE+PO-RATIFIED 2026-05-20T21:40Z (`59e043fa`); watchdog-10 DEV-DONE in QA (`5466c84b`) — QA owns until APPROVE → ops rebuild.
 - Cycle-4 unlocks 2026-05-22T21:00Z (48 h post-watchdog-3 soak): watchdog-4 (LanceDB compaction).
 - Cycle-5 deep hold: watchdog-6 (after watchdog-3 + watchdog-4 stable 7 d).
-- Signals emitted this cycle: `docs/signals/po-1959-cycle-3.json` (cycle-3 dispatch + close-out decision documented).
+- Signals emitted this cycle: `docs/signals/po-1959-cycle-3.json` + `docs/signals/po-1959-w9-ratified.json`.
 - Sprint 1959 self-closes once watchdog-4 ships + soak verifies + DASHBOARD ops section pruned + `po-1959-close.json` emitted.

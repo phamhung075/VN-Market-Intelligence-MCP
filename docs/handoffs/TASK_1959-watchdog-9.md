@@ -55,3 +55,30 @@ On done, emit `docs/signals/architect-1959-watchdog-9.json`:
   "next": "po"
 }
 ```
+
+---
+
+## [PO] Ratification Record
+
+- **Date:** 2026-05-20T21:40:28Z
+- **Verdict:** RATIFIED — DONE
+- **Commit reviewed:** 59e043fa — `docs(standards/1959-watchdog-9): dockerfile volume-shadow policy`
+- **Signal ratified:** `docs/signals/architect-1959-watchdog-9.json`
+- **Emitted signal:** `docs/signals/po-1959-w9-ratified.json`
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| AC-9-1 | PASS | `docs/standards/dockerfile-volume-policy.md` has rule (`/opt/<service>-assets/`) + rationale (named-volume shadow failure mode) + canonical pattern + audit-trigger (code-review checklist) + precedent (watchdog-3 commit `66255410`) + audit-ref link |
+| AC-9-2 | PASS | `docs/references/tree-map.md` lists new file in standards block + Write Ownership |
+| AC-9-3 | PASS | 59 lines (wc -l confirmed) ≤ 60 |
+| AC-9-4 | PASS | Commit subject `docs(standards/1959-watchdog-9): dockerfile volume-shadow policy` |
+
+**Bonus cross-link (above-AC):** `docs/protocols/docker-deployment-runbook.md` Related section now points to the new policy doc. Architect went one step further than spec required — accepted, ratified, no rework.
+
+**Sprint position post-ratification:**
+- Cycle-3 active dev work fully shipped (w-9 RATIFIED + w-10 DEV-DONE in QA)
+- Sprint 1959 STAYS OPEN until watchdog-4 ships post-2026-05-22T21:00Z gate (48 h soak is design, not idle)
+- TASKS.md Done section already has w-9 row (architect appended on close)
+- Dashboard row 1959-watchdog-9 flipped → DONE
+
+**Next:** PO idle until either (a) QA-PASS on w-10 arrives → confirm + ops rebuild, OR (b) 2026-05-22T21:00Z gate triggers cycle-4 (watchdog-4 LanceDB compaction).

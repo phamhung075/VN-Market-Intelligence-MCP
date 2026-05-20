@@ -98,7 +98,7 @@ watchdog-5 is **pure TypeScript** — no Dockerfile change, no image rebuild req
 
 - **Non-blocking:** NB-1 — notify-failed path does not advance lastAlertAt (correct retry-on-outage design).
 - **Cron note:** `'47 * * * *'` intentional deviation from `'0 * * * *'` spec; avoids pile-up. ACCEPTED.
-- **Alert-fires-immediately note:** lancedb ~29GB > 20GB default. EXPECTED per handoff. Not a bug.
+- **Alert-fires-immediately note:** lancedb ~29GB > 20GB default. EXPECTED per handoff. Not a bug. **SUPERSEDED at ops deploy:** ops measured `/app/data` at 69 MB (Docker volume), well below 20 GB. Alert runs SILENTLY at :47 UTC ticks — that is the correct nominal outcome.
 - **Report:** `reports/TASK_REPORT_1959-watchdog-5.md`
 - **Signal:** `docs/signals/qa-1959-watchdog-5-approved.json`
 
@@ -120,3 +120,13 @@ watchdog-5 is **pure TypeScript** — no Dockerfile change, no image rebuild req
   - No image rebuild was needed (pure TypeScript mounted code).
   - No other services affected by this deployment.
 
+
+---
+
+## [PO] Cycle-3 Reconciliation Note (2026-05-20T21:40Z)
+
+The earlier PO cycle-3 expectation "disk-usage alert WILL fire on first hourly tick (lancedb 29 GB > 20 GB)" is **SUPERSEDED** by the actual ops deploy measurement: `/app/data` = 69 MB (Docker named-volume `market_data` measured via `docker volume inspect`). Watchdog-5 will run SILENTLY at every `:47 * * * *` tick — that is the correct nominal outcome, not a fault.
+
+Why the gap: the original 29 GB figure was a `du -sh` reading inside the dev-host filesystem during 1958-RCA; the production Docker named volume hosts a much smaller dataset (LanceDB segments not yet hydrated to the 29 GB peak observed during the 1958 incident). Watchdog-5 still guards against future growth — when LanceDB does climb back above 20 GB, the BUG Telegram + 6 h cooldown protect against alert storms. The 20 GB default threshold remains correct; no env override needed.
+
+Cross-refs: `docs/SPRINT_GOAL.md` AC-4 corrected; `docs/signals/DASHBOARD.md` ops row already accurate; `docs/agent-memory/notebooks/po.md` Watchpoints section corrected.
