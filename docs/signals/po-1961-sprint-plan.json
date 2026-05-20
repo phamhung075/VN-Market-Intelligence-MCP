@@ -1,0 +1,57 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "sprint-plan",
+  "sprint": 1961,
+  "priority": "critical",
+  "theme": "Task-lock Phase 1 deployment gap HOTFIX",
+  "trigger_signal": "docs/signals/cowork-team-20260520T190639Z-error.json",
+  "trigger_summary": "cowork-team dispatcher F3 fallback engaged 2026-05-20T19:06Z — task_claim/task_release/task_list_held tools NOT found on live vn-market MCP gateway, despite source code present + registered in registry.ts and TASKS.md marking Phase 1/2/3 SHIPPED.",
+  "root_cause": "Container vn-market-intelligence-mcp-mcp-server-1 was last restarted ~2026-05-20T08:30Z (Up 11h at sprint open). Sprint 1959a commit b144f560 (tsc fix that unblocks coordination build) landed AFTER. Runtime image is stale relative to main HEAD.",
+  "tasks": [
+    {
+      "id": "1961a",
+      "owner": "ops",
+      "size": "XS",
+      "priority": "CRITICAL",
+      "type": "HOTFIX",
+      "action": "docker compose up -d --build mcp-server",
+      "ac": "container Up < 5 min, healthy"
+    },
+    {
+      "id": "1961b",
+      "owner": "ops",
+      "size": "XS",
+      "depends_on": "1961a",
+      "priority": "CRITICAL",
+      "action": "MCP smoke 4 Phase 1 tools live",
+      "ac": "task_claim, task_heartbeat, task_release, task_list_held all respond without 'Tool not found'"
+    },
+    {
+      "id": "1961c",
+      "owner": "qa",
+      "size": "S",
+      "depends_on": "1961b",
+      "priority": "HIGH",
+      "action": "Re-run Phase 2 smoke (9) + Phase 3 smoke (10) against live MCP",
+      "ac": "19/19 PASS"
+    },
+    {
+      "id": "1961d",
+      "owner": "po",
+      "size": "XS",
+      "depends_on": "1961c",
+      "priority": "HIGH",
+      "action": "Patch docs/protocols/task-lock-protocol.md L109 + add Deployment verification ritual",
+      "ac": "file committed, referenced in po-1961-close.json"
+    }
+  ],
+  "amend_after_sprint": [
+    {
+      "file": "docs/agent-memory/notebooks/po.md",
+      "note": "Sprint 1955 + Sprint 1960 close notes amended with 'deployment-verified 2026-05-20' entry once 1961c PASS"
+    }
+  ],
+  "estimated_total": "~1h",
+  "createdAt": "20260520T193501Z"
+}

@@ -23,7 +23,8 @@
     "qa_signal": "docs/signals/qa-1955b-approved.json",
     "ac_coverage": "5/5 PASS — exactly-one claim per slot, spawn count = slots, zero residual locks, loser-skip log, all_held telemetry",
     "next_phase": "Phase 3 dashboard-row + sprint-task locks — defer to demand",
-    "multi_session_collision_risk": "fully resolved end-to-end"
+    "multi_session_collision_risk": "fully resolved end-to-end",
+    "deployment_verified_addendum": "2026-05-20T19:45Z (Sprint 1961c): Phase 2 lock semantics verified against LIVE MCP gateway post-1961a container rebuild — 9/9 smoke PASS. Original 1955b smoke (2026-05-20) ran against a stale 11h container that lacked the registered tools. See docs/protocols/task-lock-protocol.md Phase Availability table for the full Container-rebuild SHA + Gateway-tools-callable date."
   },
   "createdAt": "2026-05-20T19:05:00Z"
 }

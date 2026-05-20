@@ -104,11 +104,30 @@ Always call `task_release` in the completion path. If the agent crashes, TTL exp
 
 ## Phase Availability
 
-| Phase | What ships | Status |
-|-------|-----------|--------|
-| Phase 1 | DB + 4 MCP tools (`task_claim`, `task_heartbeat`, `task_release`, `task_list_held`) | SHIPPED (2026-05-20) |
-| Phase 2 | cowork-team slot locking (main.md Step 4.6) | Pending sprint task |
-| Phase 3 | dev-team drain + sprint-task locking | Pending sprint task |
+A phase is **NOT shipped** until the last two columns are populated. Source-code registration ≠ live availability — container age must be checked (see Deployment-verified ritual below).
+
+| Phase | What ships | Code-committed SHA | Smoke-pass date | Container-rebuild SHA | Gateway-tools-callable date |
+|-------|-----------|--------------------|-----------------|-----------------------|-----------------------------|
+| Phase 1 | DB + 4 MCP tools (`task_claim`, `task_heartbeat`, `task_release`, `task_list_held`) | b144f560 (Sprint 1959a tsc fix) | 2026-05-20 (1961b live MCP probe — image digest sha256:598b94c7) | b144f560 (rebuilt 2026-05-20T19:41Z via Sprint 1961a, image digest sha256:598b94c7d7efe70b2d5710ce03d850c62ecfe413f9d50c35d7246af4be99043a) | 2026-05-20 |
+| Phase 2 | cowork-team slot locking (main.md Step 4.6) | 8b23795a (Sprint 1955a) | 2026-05-20 (1961c live re-smoke 9/9 PASS) | b144f560 (Sprint 1961a rebuild) | 2026-05-20 |
+| Phase 3 | dev-team drain + sprint-task locking | 448eb7f3…31c47ea5 (Sprint 1960c, 10 commits) | 2026-05-20 (1961c live re-smoke 10/10 PASS) | b144f560 (Sprint 1961a rebuild) | 2026-05-20 |
 
 Agents calling these tools in Phases 2/3 MUST load this protocol doc first.
 Skill shortcut: `.claude/skills/task-lock/SKILL.md`
+
+---
+
+## Deployment-verified Ritual
+
+**Why:** Sprint 1961 deployment gap — Phase 1 tools registered in `registry.ts:103,208` (commit `b144f560`) but the live `mcp-server` container was 11h old at Sprint 1960 close, predating the tsc fix that unblocked the coordination build. Sprint 1960 declared 10/10 smoke PASS against a stale image while gateway tools were uncallable; cowork-team ran F3 fallback for ~11h.
+
+**Rule:** Source code registration ≠ live availability. Container age MUST be checked.
+
+After any sprint that adds/modifies MCP tools or coordination logic, **before** marking the sprint Done, the closing agent MUST:
+
+1. Run `docker compose up -d --build <affected-service>` — OR document in the sprint-close signal why no rebuild is required (e.g. doc-only change).
+2. Verify the container reports `Up <minutes>` (not hours) and `healthy` via `docker compose ps`.
+3. Call each new/modified tool against the live gateway via `mcp__claude_ai_gateway__call_tool` and record the actual response in the sprint-close signal.
+4. Only then populate the **Container-rebuild SHA** and **Gateway-tools-callable date** columns in the Phase Availability table above and mark the phase shipped.
+
+Smoke against the developer's local build or against a container older than the latest relevant commit is **not** a valid sign-off.

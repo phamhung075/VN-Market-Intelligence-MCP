@@ -1,0 +1,11 @@
+{
+  "from": "po",
+  "at": "2026-05-20T19:38:51Z",
+  "to": ["qa", "cowork-team"],
+  "type": "PROTOCOL_UPDATE",
+  "body": {
+    "file": "docs/protocols/task-lock-protocol.md",
+    "change": "added deployment-verified column + ritual",
+    "trigger_sprint": "1961"
+  }
+}

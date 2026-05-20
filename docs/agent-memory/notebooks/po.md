@@ -1,46 +1,42 @@
 # PO Notebook
 
-## Last updated: 2026-05-20T19:05Z · Cycle: c218 — Sprint 1955 Phase 2 CLOSE + Sprint 1954 audit
+## Last updated: 2026-05-20T19:45Z · Cycle: c221 — Sprint 1961 sprint-close DONE
 
-### c218 trigger
-User directive: close Sprint 1955 (Phase 2 cowork-slot locking shipped end-to-end) and audit Sprint 1954 BCTC chain status post-compact. QA approval signal `docs/signals/qa-1955b-approved.json` confirms 1955b 9/9 smoke PASS.
+### c221 trigger
+Sprint 1961 (Phase 1 task-lock deployment-gap HOTFIX) ready for close. All 4 tasks done with evidence verified: 1961a/b ops rebuild + live tools, 1961c qa 19/19 live smoke, 1961d po protocol patch (sibling c220). My job this cycle: sprint-close ritual end-to-end. Sibling c220-triage (dev-team dispatch) ran in parallel and returned a 3-entry BATCH — that work is theirs, not mine; I only handle sprint-close artifacts.
 
-### Sprint 1955 — CLOSED COMPLETE
-All 4 tasks DONE in TASKS.md Backlog (rows 10–13):
-- **1955a** DONE — Step 4.6 slot-lock claim in `.claude/flows/cowork-team/main.md` (commit `8b23795a`)
-- **1955b** DONE — multi-session smoke 9/9 PASS via `scripts/smoke-task-lock-phase2.ts` (commits `aaa4a06d`, `e4f3abdb`)
-- **1955c** DONE — task-lock tools verified across 10 cowork tool packages (commit `d10112a3`)
-- **1955d** DONE — cron-jobs collision-safety note + MEMORY.md index entry (commits `f38608f5`, `0d518efe`)
-
-QA AC coverage: 5/5 PASS (exactly-one claim per slot, spawn count = slots, zero residual `cowork-slot` locks after release, loser-skip log emitted, `all_held=true` telemetry verified). DDD scan PASS, security scan PASS, tsc 0 errors.
-
-**Multi-session collision risk = fully resolved end-to-end.**
-
-Sign-off signal: `docs/signals/po-1955-close.json` (this cycle).
-Next phase: Phase 3 (dev-team dashboard-row + sprint-task locks) — defer to demand.
-
-### Sprint 1954 audit (Phase B)
-- `git log --grep='1954' --since=24h` shows: `1954a` hotfix landed at commit `2a5cc2a7` (2026-05-19) with QA approval + ops AC-3 PASS (19/33 rows inserted, 14 skipped via OR IGNORE, 53 pending Q1-2026 rows verified). Row in TASKS.md ## Done.
-- `1954b–f` correctly remain BLOCKED in Backlog per structural sequence: 1954b (writer-contract design) → 1954c (4-paths consolidation) → 1954d (DPI escalation) → 1954e (backfill) → 1954f (QA verify). PO gate on 1954b (kick off 2026-05-20 allowed, design-only) is intact. 1954c freeze (recurring-bug-escalation) remains active until 1954c approved.
-- **Recurring-bug rule check:** only ONE 1954-prefixed fix commit on mcp-server module in the last 24h (`2a5cc2a7`). Threshold (≥2) NOT triggered. No architect freeze required.
-- **Verdict: `1954a = DONE`. Next = `wait` — no dispatch needed.** Next active gate is OBSERVE-1953g 2026-05-21T02:30Z (Q1-2026 financial_reports coverage ≥26). If that passes, 1954 may close without firing 1954b-f. If it fails, then dispatch dev-mcp-server to kick off 1954b (writer-contract design) per the existing PO gate.
+### What shipped this cycle
+- **`docs/protocols/task-lock-protocol.md`** — backfilled the 3 `_pending_` placeholder cells in the Phase Availability table with concrete values for all three phases: Container-rebuild SHA = `b144f560` (the latest commit touching `apps/mcp-server/` before the 1961a rebuild fired — what the rebuild actually compiled), Gateway-tools-callable date = `2026-05-20`, image digest `sha256:598b94c7…` pinned in Phase 1 row. The table now reads as a deployed contract, not a promise.
+- **`docs/SPRINT_GOAL.md`** — overwritten with Sprint 1961 CLOSED status, outcome summary, AC table (5/5 PASS), lesson encoded section, cross-references amended list. Next-sprint pointer says "self-initiate from cron".
+- **`docs/signals/po-1961-close.json`** (NEW) — sprint-close signal modelled on `po-1960-close.json` schema. Carries: 4 task entries, key_evidence pointers (qa-1961c-approved, po-1961d-protocol-patched, ops commit 42f81d43, qa commit 3bb94db3, rebuild SHA b144f560, image digest), 5 AC verdicts, phase_status now SHIPPED + LIVE-VERIFIED for all three phases, lesson_encoded one-liner, carry_over=None.
+- **`docs/signals/po-1955-close.json`** + **`docs/signals/po-1960-close.json`** — `deployment_verified_addendum` field appended to each (per c220 carry-over: amend prior sprint-close artifacts with a pointer to the 1961c live re-verification + protocol table reference). Signals are append-friendly JSON, not sealed; addendum lives inside payload alongside original fields.
+- **`docs/TASKS.md`** — 1961c + 1961d removed from Backlog; new Sprint-1961 SPRINT-CLOSE row + individual 1961c/1961d Done rows inserted at top of Done section. Sprint-1955-Phase2 + Sprint-1960 Done rows annotated with 1961c addendum pointer in the description text.
 
 ### Files touched this cycle
-- `docs/signals/po-1955-close.json` (NEW)
+- `docs/protocols/task-lock-protocol.md` (Phase Availability table backfill, all 3 rows × last-2 cols)
+- `docs/SPRINT_GOAL.md` (full overwrite — Sprint 1961 closed)
+- `docs/signals/po-1961-close.json` (NEW)
+- `docs/signals/po-1955-close.json` (deployment_verified_addendum)
+- `docs/signals/po-1960-close.json` (deployment_verified_addendum)
+- `docs/TASKS.md` (1961c/d removed from Backlog, full Done block updated, 1955/1960 cross-ref notes)
 - `docs/agent-memory/notebooks/po.md` (this file, OVERWRITE)
-- `docs/TASKS.md` (Sprint 1955 close header in ## Done — moved 1955a–d completion summary)
 
-### Carry-over for c219
-- **2026-05-20T09:00Z** (passed): OBSERVE-1955d (vnstockTradingStatsRefresh tick).
-- **2026-05-20T16:30Z**: dailyDashboardJob old-1955a AC-4 ops OBSERVE.
+### Sprint 1961 outcome (one-line)
+4/4 tasks DONE. Container rebuilt + verified, 4 task-lock tools live on `vn-market` gateway, 19/19 lock-semantics smoke binding against LIVE MCP (not unit-mock), protocol hardened with deployment-verified column + ritual. The "code committed ≠ live availability" class of failure is closed at both runtime and doc levels. The ~11h F3 fallback window between 1960 close and 1961a rebuild was the negative example that triggered the protocol patch.
+
+### Carry-over for c222
+**NONE from this sprint.** Per assignment directive, next sprint self-initiates from market/dev signals via the normal cron-loop / channel-audit / pendingSignals[] triage path.
+
+Standing observation gates inherited from c220 (not generated by 1961):
 - **2026-05-21T02:30Z**: OBSERVE-1953g (Q1-2026 BCTC coverage ≥26) — pivots 1954b dispatch decision.
+- **2026-05-21T08:30Z**: OBSERVE-1951d-verify (24h cowork cycle post-merge — task-lock Phase 2 now LIVE-verified, so this gate should pass cleanly).
+- **2026-05-21T09:00Z**: Sprint 1958a ops AC-3 gate (verify cron_job_runs success rows for 5 MARKET-summary jobs post 1961a restart).
 - **2026-05-23T07:05Z**: OBSERVE-1957d (BCTC VPS push cadence 72h).
-- **2026-05-24T13:47Z**: digest-sunday natural fire — OBSERVE-1907a-verify 14:30Z.
-- **2026-05-25T01:00Z**: OBSERVE-1955c old (vnstockFundamentalsRefresh).
+- **2026-05-24T13:47Z**: digest-sunday natural fire → OBSERVE-1907a-verify 14:30Z.
+- **2026-05-25T01:00Z / 08:30Z**: OBSERVE-1955c / 1955d (vnstockFundamentalsRefresh + TradingStats weekly ticks).
 - **2026-05-25**: post-1939-critic-gate-stable window for 1952c.
-- **Phase 3 preview**: after Phase 2 holds 24h-48h, evaluate Phase 3 of task-lock (dev-team dashboard-row + sprint-task) — defer per `next_phase` directive in po-1955-close signal.
 
-### Watch
-- 24h post-`8b23795a` (cowork-team Step 4.6 deploy): `docs/signals/` should show ZERO duplicate `cowork-fire` signals for same slot at same nominal_tick. If duplicates persist, re-open Phase 2.
-- Sprint 1958a in Review (dev-mcp-server commit `84c2b375` — alertDigest+summary cron recoverMissedExecutions fix). QA gate is in flight; not PO action this cycle.
-- DASHBOARD ## po has 5 RESOLVED/READ rows from c213–c215 cycles; no NEW rows since c216 drain. Nothing to process this cycle.
+Also pending from c220-triage BATCH return (developer work, not mine): CLEAN-1953b-2-ocr-epipe-fix, FIX-alertsource-legal-risk-enum (apps/alert-engine/), FIX-listunresolvedreports-tool-registration (apps/mcp-server/). Dev-team owns these.
+
+### Meta-lesson (re-confirmed)
+The Deployment-verified Ritual now SSOT in `docs/protocols/task-lock-protocol.md` is the structural answer to the 1955→1960→1961 chain. Any agent reading the protocol via its lazy-load trigger picks up the contract automatically. The Phase Availability table's last two columns physically cannot be populated without the ritual being followed — that's the enforcement mechanism. Future code-only sprints touching MCP tools self-correct via this contract.

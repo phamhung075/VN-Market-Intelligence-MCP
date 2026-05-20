@@ -14,7 +14,8 @@
       "phase_2": "SHIPPED 2026-05-20",
       "phase_3": "SHIPPED 2026-05-20"
     },
-    "memory_updated": "project_task_lock_complete.md + MEMORY.md index"
+    "memory_updated": "project_task_lock_complete.md + MEMORY.md index",
+    "deployment_verified_addendum": "2026-05-20T19:45Z (Sprint 1961c): Phase 3 lock semantics verified against LIVE MCP gateway post-1961a container rebuild — 10/10 smoke PASS. Original 1960d smoke (2026-05-20) ran against a stale 11h container — INVALID. Live re-validation closes the gap. See docs/protocols/task-lock-protocol.md Phase Availability table for the full Container-rebuild SHA + Gateway-tools-callable date."
   },
   "priority": "high",
   "createdAt": "2026-05-20T00:00:00Z"
