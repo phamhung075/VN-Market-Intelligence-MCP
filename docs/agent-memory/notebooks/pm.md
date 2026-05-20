@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-20 c193 (PM: 1951d PROCESSED — ops cutover COMPLETE, AC-2 platform caveat documented, AC-3 observation queued as OBSERVE-1951d-verify). Phase 3 task-lock dev-team wiring planned: 1960c broken into 8 atomic rows. 1960a/1960b/1960c in autonomous progress (agent-father). 1948a/1948b/1948c blocked on 2026-05-20T07:22Z gate. 1954b awaiting PO recurring-bug-escalation decision. | **Sprint:** 1960 PHASE 3 IN-PROGRESS; 1951d DONE (1-day observation pending); 1959a COMPLETE; 1958a CLOSED | **Current:** WIP 0/2 CLEAN; NEXT: qa picks up OBSERVE-1951d-verify (gate 2026-05-21T08:30Z); po monitors 1960a/1960c + architect brief + agent-father progress
+**Last updated:** 2026-05-20 c194 (PM: 1962b dispatched to me but BLOCKED on missing 1962a brief. task_heartbeat(task:1962a) → ok=false → architect not in flight. Released task:1962b lock, emitted docs/signals/pm-1962b-blocked.json requesting PO dispatch architect for 1962a. Cycle exits clean per task spec exit-and-retry policy). Sprint 1961 CLOSED 2026-05-20T19:45Z (task-lock Phase 1 + protocol Deployment-Verified Ritual). Sprint 1962 (dispatcher-wrap) BLOCKED at 1962a. | **Sprint:** 1962 BLOCKED (architect prereq missing); 1961 CLOSED; 1960 PHASE 3 CLOSED; 1951d DONE | **Current:** WIP 0/2 CLEAN; NEXT: po (dispatch architect for 1962a OR confirm 1962b deferred until brief lands)
 
 > Prior history archived → `docs/archive/notebooks/pm-2026-05-18.md`
 
@@ -10,6 +10,31 @@
 - **Sprint 1950 Closure Summary:** T1=chef.md telemetry; T2=chef cycle-coverage audit (QA R2); T3=chef runbook (QA R2); T4=TNB cron hotfix; T5=digest-predict cron finalization (QA-APPROVED). Architectural finding from T5: `durable: true` in cron command files not honored by runtime (low-impact; documented in OQ-2).
 - **Sprint 1948 sequence:** BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: selfImproveOrchestratorJob.ts. Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. 3-phase rollout (shadow → manual-gate → auto-dispatch). Safety: 7d cooldown, max 2/cycle, freeze-on-worsening.
+
+---
+
+## Cycle 194 — 2026-05-20 PM Sprint 1962b BLOCKED on missing 1962a brief — exit-and-retry
+
+**Input:** User dispatch via main terminal `run .claude/flows/pm/main.md` for task 1962b. Context: po-1962-signoff.json at commit `5a4f40a5` (Sprint 1962 dispatcher-wrap, kickoff 2026-05-20T22:10Z). Task spec required: WAIT for `docs/signals/architect-1962a-brief-done.json` before producing plan — poll OR exit-and-retry-next-cycle if not ready after 4h.
+
+**Actions:**
+1. **Read inputs:** flow main.md, pm notebook, po-1962-signoff.json (full kickoff signal w/ 7 identified spawn sites + dispatch_plan.1962b § must_cover list).
+2. **task_claim:** `task:1962b` claimed (kind=sprint-task, owner_agent=pm, ttl=3600) → ok=true.
+3. **Architect-brief presence check:** `ls docs/signals/architect-1962a-brief-done.json` → ENOENT. `ls docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md` → ENOENT. `grep 1962a docs/signals/*.json` → only the PO signoff (kickoff signal) — no architect activity since kickoff.
+4. **Architect-in-flight check:** `task_heartbeat(task:1962a)` → `ok=false, expires_at=0` → architect lock has never been claimed → architect agent NOT in flight.
+5. **Decision: exit-and-retry-next-cycle.** Rationale: polling 60s loop against a never-started agent would spin indefinitely; PM main-terminal cycle is bounded. Cleaner to release task:1962b lock and signal the dispatch gap so peer router (po/cowork-team/dev-team) can spawn the architect on the next cycle.
+6. **task_release:** `task:1962b` released → ok=true.
+7. **Emitted signal:** `docs/signals/pm-1962b-blocked.json` (type=plan-blocked, recipients=po/architect/dev-team, includes evidence log + po_dispatch_request stanza + pm_retry_plan stanza + no_drift_from_po_signoff stanza preserving the 7-spawn-site + handoff path + signal path contract).
+8. **No TASKS.md edits, no handoff files created** — by design. PM must NOT pre-author a handoff plan without the architect brief (task spec hard constraint).
+9. **WIP enforcement:** 0/2 CLEAN. Nothing dispatched. No drift from po-1962-signoff.json.
+
+**Key decisions:**
+- Did NOT emit a DRAFT plan (cycle-192-style) because task spec was explicit: WAIT for brief, do not produce plan before it lands. Different from Sprint 1960 cycle where PO signal explicitly allowed parallel draft.
+- Did NOT poll for 4h. `task_heartbeat(task:1962a)` returning ok=false is strong evidence architect was never spawned — polling unbounded against a non-running prereq is wasteful.
+- Did NOT escalate to architect directly. Routing constitution: PM does not dispatch architect peer-to-peer; only PO/dev-team dispatches sprint-tier agents. Signal addresses both for redundancy.
+- Same-cycle re-entry is safe: when PM is next dispatched and brief is present, the row-level plan can be produced in one pass against po-1962-signoff.json § dispatch_plan.1962b.must_cover (5 numbered items) reconciled with the architect brief insertion-point inventory.
+
+**Return Status:** PIPELINE: blocked | NEXT: po | reason: architect 1962a not dispatched, prereq missing for 1962b. Recipients of blocked signal: po (primary, dispatch action), architect (FYI), dev-team (FYI).
 
 ---
 

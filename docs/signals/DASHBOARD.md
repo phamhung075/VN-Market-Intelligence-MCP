@@ -8,6 +8,7 @@ _Updated: 2026-05-20T08:30Z (po c216 — drained 11 signals to processed/, prune
 ## po
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
+| 1962-B-01 | 2026-05-20T22:30:00Z | pm | plan_blocked | Sprint 1962b BLOCKED — architect 1962a brief MISSING (file + signal absent, task_heartbeat(task:1962a) ok=false → architect never spawned). PM released task:1962b, exits cycle. Need PO to dispatch architect for 1962a. | OPEN | docs/signals/pm-1962b-blocked.json — full evidence + po_dispatch_request stanza; 7 spawn sites already inventoried in po-1962-signoff.json |
 | 1954-A-RECOVERY | 2026-05-19T20:50:39Z | system-auditor | runtime_recovery | CRITICAL outage RESOLVED: 8 containers down at 20:07 UTC → all 11 UP at 20:50 UTC. Likely automated recovery or ops action. | RESOLVED | Containers restarted cleanly; health endpoints responding; MCP connectivity restored; all services operational |
 | 1954-A-29-1 | 2026-05-19T19:31:26Z | system-auditor | cron_degradation | dailyDashboardJob failing: ENOENT /docs/data/project-stats.json, 0% success | READ | po c213 → task 1955a (FIX projectRoot() path) |
 | 1954-A-29-2 | 2026-05-19T19:31:26Z | system-auditor | cron_degradation | bctcReparseJob 86.7% success (13 failures/90 runs) | READ | po c213 → no new task (OBSERVE-1953g gates, 1955b reaps zombie rows) |
