@@ -28,11 +28,33 @@ Batches of type SPIKE carry `mode: "spike"` — the spawned developer (or dev-* 
 
 ## Per-Tier Parallel Spawn
 
-All independent tasks in one message:
+**Dispatcher-wrap (Phase 3.5):** Before spawning any agent in a tier batch, claim each task first. Spawn only claimed tasks. Release all after the batch returns.
+
 ```
+# Step 1 — Claim each task in the tier batch:
+for each (agent, task_id) in tier_batch:
+  outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id:     "task:" + task_id,
+    task_kind:   "sprint-task",
+    owner_agent: "dev-team",
+    ttl_seconds: 3600,
+    payload:     '{"site":"S1","spawning":"' + agent + '"}'
+  })
+  if not outer_claim.claimed:
+    log "[dev-team] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent
+    send_telegram(work, "[dev-team] SKIP collision task:" + task_id + " — held by peer session")
+    remove (agent, task_id) from tier_batch
+
+# Step 2 — Spawn only claimed tasks in one message:
 → Agent(dev-stock-price, taskA) + Agent(dev-alert-engine, taskB)   # devs parallel
 → Agent(qa, taskA) + Agent(qa, taskB)                               # QA parallel (different branches)
 → Agent(fixer, taskA) + Agent(fixer, taskB)                         # fixer if needed
+# (only tasks that passed claim check above are included)
+
+# Step 3 — After all spawns in tier return (success OR failure), release outer claims:
+for each (agent, task_id) in spawned_batch:
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+  # ok=false is acceptable (TTL expired or inner self-claim already released)
 ```
 
 **Worktree isolation:** add `isolation: "worktree"` to each Agent call. Main terminal merges worktree branches (fast-forward if disjoint) after tier returns. See `docs/architecture-briefs/2026-05-12-sprint-parallel-isolation.md`. Sequential MANDATORY until c44 pass (Phase 3); Phase 4 relaxes after c44+c45.
