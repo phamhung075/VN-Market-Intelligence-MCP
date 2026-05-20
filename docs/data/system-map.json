@@ -3,11 +3,16 @@
   "_note": "Structural SSOT — services, agents, zones, channels, sources, watchlist. Sprint/test volatile state → project-stats.json. Query: jq '<path>' docs/data/system-map.json",
   "_maintained_by": "PM / system-auditor",
   "_trigger": "service add/remove, agent add/remove, data-source change, channel/zone change, watchlist change",
-  "_migrated_from": ["docs/data/tool-registry.json", "docs/data/cron-registry.json", ".claude/skills/zone-detect/SKILL.md", ".claude/skills/telegram-channel-routing/SKILL.md", "docs/data/stock-classification.json#watchlist"],
+  "_migrated_from": [
+    "docs/data/tool-registry.json",
+    "docs/data/cron-registry.json",
+    ".claude/skills/zone-detect/SKILL.md",
+    ".claude/skills/telegram-channel-routing/SKILL.md",
+    "docs/data/stock-classification.json#watchlist"
+  ],
   "lastUpdated": "2026-05-19",
   "project": {
     "name": "vn-market-intelligence",
-
     "microservices": [
       {
         "id": "mcp-server",
@@ -18,114 +23,458 @@
         "external_port": 3000,
         "zone": "apps/mcp-server",
         "tools": [
-          "add_to_watchlist", "answer_ask_question", "append_session_record",
-          "batch_review_market_messages", "bctc_skip_queue_item", "claim_telegram_report",
-          "close_position", "compare_financials", "compare_stocks", "create_prediction_claim",
-          "delete_price_alert", "diagnose_foreign_flow_circuit_breaker", "explain_hexagram",
-          "fetch_and_analyze", "generate_market_summary", "get_agent_signals",
-          "get_agent_work_log", "get_alert_accuracy", "get_alerts", "get_analysis_history",
-          "get_backtest_run", "get_backtest_runs", "get_bctc_full", "get_bond_maturity_calendar",
-          "get_broker_credibility", "get_calibration_report", "get_carry_trade_signal",
-          "get_cascade_metrics", "get_cascade_outcomes", "get_climate_risk_signals",
-          "get_correlation_matrix", "get_credit_flow_signal", "get_crisis_early_warning",
-          "get_cron_health", "get_cycle_bootstrap", "get_earnings_calendar",
-          "get_energy_grid_signals", "get_evidence_summary", "get_financial_summary",
-          "get_foreign_flow", "get_hexagram_history", "get_imf_signals", "get_insider_signals",
-          "get_insider_transactions", "get_kinhdich_reading", "get_label_accuracy_report",
-          "get_legal_risk_signals", "get_macro_calendar", "get_macro_snapshot",
-          "get_market_context", "get_market_hexagram", "get_market_message_digest",
-          "get_market_snapshot", "get_market_summary", "get_memory_files",
-          "get_open_chain_findings", "get_patterns", "get_pending_ask_questions",
-          "get_performance_attribution", "get_pharma_signals", "get_pipeline_health",
-          "get_policy_signals", "get_portfolio_conviction", "get_portfolio_risk",
-          "get_positions", "get_prediction_accuracy", "get_prediction_markets",
-          "get_price_history", "get_public_contracts", "get_rate_limit_status",
-          "get_rebalancing_signals", "get_recent_fixes", "get_sector_comparison",
-          "get_sector_rotation", "get_sentiment_trend", "get_signal_effectiveness",
-          "get_signal_rejection_summary", "get_sla_status", "get_supply_chain_exposure",
-          "get_system_status", "get_target_allocation", "get_technical_indicators",
-          "get_ticker_intelligence", "get_transition_probabilities",
-          "get_unreviewed_market_messages", "get_user_positions_for_analysis",
-          "get_vps_proxy_health", "get_vps_service_health", "get_watchlist",
-          "get_yield_spread_signal", "list_alert_rules", "list_stored_pdfs",
-          "log_agent_work", "log_fix", "manage_alert_mute", "mark_alert_read",
-          "post_agent_signal", "process_telegram_report", "read_bctc_pdf",
-          "read_telegram_reports", "record_evidence_fragment", "record_signal_outcome",
-          "remove_from_watchlist", "reset_foreign_flow_circuit_breaker",
-          "restart_vps_service", "review_market_message", "run_backtest",
-          "run_hexagram_backtest", "run_impact_chain", "run_qa_responder",
-          "search_memory_by_trigger", "search_similar_context", "send_alert_digest",
-          "send_telegram", "sequential_market_analysis", "set_position", "set_price_alert",
-          "submit_feedback", "trigger_bctc_vps_fetch", "trigger_foreign_flow_vps_fetch",
-          "trigger_news_vps_fetch", "trigger_price_vps_fetch", "trigger_sbv_vps_fetch",
-          "update_memory_file", "update_thresholds"
+          "add_to_watchlist",
+          "answer_ask_question",
+          "append_session_record",
+          "batch_review_market_messages",
+          "bctc_skip_queue_item",
+          "claim_telegram_report",
+          "close_position",
+          "compare_financials",
+          "compare_stocks",
+          "create_prediction_claim",
+          "delete_price_alert",
+          "diagnose_foreign_flow_circuit_breaker",
+          "explain_hexagram",
+          "fetch_and_analyze",
+          "generate_market_summary",
+          "get_agent_signals",
+          "get_agent_work_log",
+          "get_alert_accuracy",
+          "get_alerts",
+          "get_analysis_history",
+          "get_backtest_run",
+          "get_backtest_runs",
+          "get_bctc_full",
+          "get_bond_maturity_calendar",
+          "get_broker_credibility",
+          "get_calibration_report",
+          "get_carry_trade_signal",
+          "get_cascade_metrics",
+          "get_cascade_outcomes",
+          "get_climate_risk_signals",
+          "get_correlation_matrix",
+          "get_credit_flow_signal",
+          "get_crisis_early_warning",
+          "get_cron_health",
+          "get_cycle_bootstrap",
+          "get_earnings_calendar",
+          "get_energy_grid_signals",
+          "get_evidence_summary",
+          "get_financial_summary",
+          "get_foreign_flow",
+          "get_hexagram_history",
+          "get_imf_signals",
+          "get_insider_signals",
+          "get_insider_transactions",
+          "get_kinhdich_reading",
+          "get_label_accuracy_report",
+          "get_legal_risk_signals",
+          "get_macro_calendar",
+          "get_macro_snapshot",
+          "get_market_context",
+          "get_market_hexagram",
+          "get_market_message_digest",
+          "get_market_snapshot",
+          "get_market_summary",
+          "get_memory_files",
+          "get_open_chain_findings",
+          "get_patterns",
+          "get_pending_ask_questions",
+          "get_performance_attribution",
+          "get_pharma_signals",
+          "get_pipeline_health",
+          "get_policy_signals",
+          "get_portfolio_conviction",
+          "get_portfolio_risk",
+          "get_positions",
+          "get_prediction_accuracy",
+          "get_prediction_markets",
+          "get_price_history",
+          "get_public_contracts",
+          "get_rate_limit_status",
+          "get_rebalancing_signals",
+          "get_recent_fixes",
+          "get_sector_comparison",
+          "get_sector_rotation",
+          "get_sentiment_trend",
+          "get_signal_effectiveness",
+          "get_signal_rejection_summary",
+          "get_sla_status",
+          "get_supply_chain_exposure",
+          "get_system_status",
+          "get_target_allocation",
+          "get_technical_indicators",
+          "get_ticker_intelligence",
+          "get_transition_probabilities",
+          "get_unreviewed_market_messages",
+          "get_user_positions_for_analysis",
+          "get_vps_proxy_health",
+          "get_vps_service_health",
+          "get_watchlist",
+          "get_yield_spread_signal",
+          "list_alert_rules",
+          "list_stored_pdfs",
+          "log_agent_work",
+          "log_fix",
+          "manage_alert_mute",
+          "mark_alert_read",
+          "post_agent_signal",
+          "process_telegram_report",
+          "read_bctc_pdf",
+          "read_telegram_reports",
+          "record_evidence_fragment",
+          "record_signal_outcome",
+          "remove_from_watchlist",
+          "reset_foreign_flow_circuit_breaker",
+          "restart_vps_service",
+          "review_market_message",
+          "run_backtest",
+          "run_hexagram_backtest",
+          "run_impact_chain",
+          "run_qa_responder",
+          "search_memory_by_trigger",
+          "search_similar_context",
+          "send_alert_digest",
+          "send_telegram",
+          "sequential_market_analysis",
+          "set_position",
+          "set_price_alert",
+          "submit_feedback",
+          "trigger_bctc_vps_fetch",
+          "trigger_foreign_flow_vps_fetch",
+          "trigger_news_vps_fetch",
+          "trigger_price_vps_fetch",
+          "trigger_sbv_vps_fetch",
+          "update_memory_file",
+          "update_thresholds"
         ],
         "crons": [
-          { "name": "intelligenceCycle",         "schedule": "*/15 min",                       "desc": "Main engine: news+prices+cascade+alerts" },
-          { "name": "predictionMarketPoll",       "schedule": "*/30 min",                       "desc": "Polymarket fetch + signal detection" },
-          { "name": "weatherCheck",               "schedule": "*/6h",                           "desc": "Typhoon season climate check" },
-          { "name": "askQueueCheck",              "schedule": "*/12 min",                       "desc": "/ask FIFO queue trigger" },
-          { "name": "vpsProxyWatchdog",           "schedule": "*/10 min market",                "desc": "VPS proxy liveness — observe only" },
-          { "name": "morningBriefing",            "schedule": "08:00 VN M-F",                   "desc": "Daily briefing: macro + conviction" },
-          { "name": "marketOpen",                 "schedule": "09:00 VN M-F",                   "desc": "Market open scan + price alerts" },
-          { "name": "bctcOverdueCheck",           "schedule": "09:00 VN daily",                 "desc": "BCTC overdue alert" },
-          { "name": "bctcReparseJob",             "schedule": "09:30 VN daily",                 "desc": "Re-parse recently added BCTC PDFs" },
-          { "name": "marketClose",                "schedule": "15:30 VN M-F",                   "desc": "Market close snapshot" },
-          { "name": "sscCheck",                   "schedule": "20:00 VN daily",                 "desc": "SSC nightly BCTC check" },
-          { "name": "alertDigest",                "schedule": "21:00 VN M-F",                   "desc": "Nightly alert digest" },
-          { "name": "eveningSummary",             "schedule": "22:30 VN M-F",                   "desc": "Evening market summary" },
-          { "name": "dailySummary",               "schedule": "22:30 VN daily",                 "desc": "Daily summary generation" },
-          { "name": "patternWatch",               "schedule": "22:30 VN Sunday",                "desc": "Weekly pattern watch" },
-          { "name": "dataAuditDaily",             "schedule": "23:00 VN daily",                 "desc": "Data integrity audit" },
-          { "name": "weeklyPortfolioReport",      "schedule": "23:00 VN Sunday",                "desc": "Portfolio + weekly summary" },
-          { "name": "dataAuditWeekly",            "schedule": "01:00 VN Sunday",                "desc": "Deep weekly audit" },
-          { "name": "devTeamHeartbeat",           "schedule": "07:00 UTC Sunday",               "desc": "System health + observability report" },
-          { "name": "cronHealthAlert",            "schedule": "daily",                          "desc": "Alert WORK when any job success_rate < 80%" },
-          { "name": "predictionOutcome",          "schedule": "08:00 UTC Sunday",               "desc": "Prediction signal evaluation" },
-          { "name": "davPharmacyCheck",           "schedule": "1st monthly 06:00 VN",           "desc": "DAV drug approval check" },
-          { "name": "calibrationReportJob",       "schedule": "13:00 UTC Sunday",               "desc": "Weekly Brier score calibration report" },
-          { "name": "foreignFlowAlertJob",        "schedule": "08:13 UTC M-F",                  "desc": "Daily foreign flow smart-money scan" },
-          { "name": "insiderCheckJob",            "schedule": "01:00 UTC daily",                "desc": "Daily SSC insider transaction check" },
-          { "name": "evidenceAccumulator",        "schedule": "16:00 UTC daily",                "desc": "Nightly evidence fragment accumulation" },
-          { "name": "baseRateComputation",        "schedule": "19:00 UTC Sunday",               "desc": "Weekly Bayesian base-rate recompute" },
-          { "name": "predictionResolution",       "schedule": "16:30 UTC daily",                "desc": "Daily prediction claim auto-resolution" },
-          { "name": "pipelineWatchdog",           "schedule": "*/30 min",                       "desc": "Stale news pipeline detection" },
-          { "name": "franceSummaryJob",           "schedule": "*/30 6-8 UTC M-F",               "desc": "France morning VN digest to MARKET channel" },
-          { "name": "taAlertScanJob",             "schedule": "*/15 min market",                "desc": "RSI(14) overbought/oversold intraday scan" },
-          { "name": "bbAlertScanJob",             "schedule": "*/15 min market",                "desc": "BB20 upper/lower breakout scan" },
-          { "name": "taAlertNotifierJob",         "schedule": "*/15 min market",                "desc": "Deliver unnotified TA alerts to MARKET channel" },
-          { "name": "ohlcvDailyAggregatorJob",    "schedule": "0 16 UTC M-F",                   "desc": "Aggregate intraday ticks into daily_ohlcv" },
-          { "name": "ohlcvStartupProbe",          "schedule": "startup",                        "desc": "Detect sparse OHLCV tickers on server start" },
-          { "name": "ohlcvStalenessCheckJob",     "schedule": "15 8 * * 1-5",                   "desc": "OHLCV staleness check weekdays" },
-          { "name": "cascadeBacktestJob",         "schedule": "20:30 UTC daily",                "desc": "Daily cascade rule backtest" },
-          { "name": "walCheckpointAlert",         "schedule": "helper",                         "desc": "WAL stuck Telegram alert helper" },
-          { "name": "macroIndicatorRefreshJob",   "schedule": "19:13 UTC daily",                "desc": "Macro indicator daily refresh (yahoo→sbv→gso)" },
-          { "name": "trackSessionToolUsage",      "schedule": "0 */8 * * *",                    "desc": "Session tool usage snapshot (8h TTL)" },
-          { "name": "imfIndicatorPoller",         "schedule": "0 */6 * * *",                    "desc": "IMF economic indicator poll every 6h" },
-          { "name": "bctcQueueEnricher",          "schedule": "*/15 * * * *",                   "desc": "BCTC queue enricher: enrich pending rows" },
-          { "name": "bctcPdfPull",                "schedule": "*/30 * * * *",                   "desc": "BCTC PDF pull from VPS cache" },
-          { "name": "summaryDaily",               "schedule": "30 22 * * *",                    "desc": "Daily periodic summary at 22:30 GMT+7" },
-          { "name": "summaryWeekly",              "schedule": "0 23 * * 0",                     "desc": "Weekly summary at 23:00 GMT+7 Sunday" },
-          { "name": "summaryMonthly",             "schedule": "30 0 1 * *",                     "desc": "Monthly summary on 1st" },
-          { "name": "summaryQuarterly",           "schedule": "0 1 1 1,4,7,10 *",              "desc": "Quarterly summary Jan/Apr/Jul/Oct 1st" },
-          { "name": "summaryYearly",              "schedule": "0 2 2 1 *",                      "desc": "Yearly summary Jan 2nd" },
-          { "name": "signalOutcomeJob",           "schedule": "30 8 * * 1-5",                   "desc": "Resolve agent_signals outcomes daily weekdays" },
-          { "name": "priceUpdateWatchdog",        "schedule": "*/10 2-8 * * 1-5",               "desc": "Price staleness detection VN market hours" },
-          { "name": "vpsServiceHealth",           "schedule": "*/5 * * * *",                    "desc": "VPS service health polling every 5 min" },
-          { "name": "vnIndexRefresh",             "schedule": "*/5 2-8 * * 1-5",                "desc": "VNINDEX upsert every 5 min market hours" },
-          { "name": "freshnessSlaMonitor",        "schedule": "*/30 * * * *",                   "desc": "Data freshness SLA check every 30 min" },
-          { "name": "foreignFlowFetch",           "schedule": "*/1 * * * *",                    "desc": "Foreign flow fallback fetcher every minute" },
-          { "name": "monthlySignalQualityAudit",  "schedule": "0 0 1 * *",                      "desc": "Monthly signal quality audit on 1st" },
-          { "name": "bctcBatchSweep",             "schedule": "0 9 25 1,4,7,10 *",             "desc": "BCTC batch sweep quarterly on 25th" },
-          { "name": "integrityCheck",             "schedule": "0 2 * * 0",                      "desc": "DB integrity check weekly Sunday" },
-          { "name": "marketEarningYield",         "schedule": "30 9 * * 1-5",                   "desc": "Market earning yield daily 16:30 VN" },
-          { "name": "alertOutcomeJob",            "schedule": "45 8 * * 1-5",                   "desc": "Daily alert outcome resolver weekdays" },
-          { "name": "dailyDashboard",             "schedule": "30 23 * * *",                    "desc": "Daily dashboard aggregation 23:30 GMT+7" },
-          { "name": "verdictResolutionJob",       "schedule": "7 * * * *",                      "desc": "Hourly alert verdict resolver at minute=7" },
-          { "name": "walCheckpoint",              "schedule": "*/30 * * * *",                   "desc": "SQLite WAL checkpoint every 30 min" },
-          { "name": "systemAuditTier1",          "schedule": "*/30 * * * *",                   "desc": "system-auditor Tier-1: container + health ping every 30 min" },
-          { "name": "systemAuditTier2",          "schedule": "0 */4 * * *",                    "desc": "system-auditor Tier-2: data freshness sweep every 4h" },
-          { "name": "systemAuditTier3",          "schedule": "0 2 * * *",                      "desc": "system-auditor Tier-3: deep DB integrity daily 02:00 UTC" }
+          {
+            "name": "intelligenceCycle",
+            "schedule": "*/15 min",
+            "desc": "Main engine: news+prices+cascade+alerts"
+          },
+          {
+            "name": "predictionMarketPoll",
+            "schedule": "*/30 min",
+            "desc": "Polymarket fetch + signal detection"
+          },
+          {
+            "name": "weatherCheck",
+            "schedule": "*/6h",
+            "desc": "Typhoon season climate check"
+          },
+          {
+            "name": "askQueueCheck",
+            "schedule": "*/12 min",
+            "desc": "/ask FIFO queue trigger"
+          },
+          {
+            "name": "vpsProxyWatchdog",
+            "schedule": "*/10 min market",
+            "desc": "VPS proxy liveness — observe only"
+          },
+          {
+            "name": "morningBriefing",
+            "schedule": "08:00 VN M-F",
+            "desc": "Daily briefing: macro + conviction"
+          },
+          {
+            "name": "marketOpen",
+            "schedule": "09:00 VN M-F",
+            "desc": "Market open scan + price alerts"
+          },
+          {
+            "name": "bctcOverdueCheck",
+            "schedule": "09:00 VN daily",
+            "desc": "BCTC overdue alert"
+          },
+          {
+            "name": "bctcReparseJob",
+            "schedule": "09:30 VN daily",
+            "desc": "Re-parse recently added BCTC PDFs"
+          },
+          {
+            "name": "marketClose",
+            "schedule": "15:30 VN M-F",
+            "desc": "Market close snapshot"
+          },
+          {
+            "name": "sscCheck",
+            "schedule": "20:00 VN daily",
+            "desc": "SSC nightly BCTC check"
+          },
+          {
+            "name": "alertDigest",
+            "schedule": "21:00 VN M-F",
+            "desc": "Nightly alert digest"
+          },
+          {
+            "name": "eveningSummary",
+            "schedule": "22:30 VN M-F",
+            "desc": "Evening market summary"
+          },
+          {
+            "name": "dailySummary",
+            "schedule": "22:30 VN daily",
+            "desc": "Daily summary generation"
+          },
+          {
+            "name": "patternWatch",
+            "schedule": "22:30 VN Sunday",
+            "desc": "Weekly pattern watch"
+          },
+          {
+            "name": "dataAuditDaily",
+            "schedule": "23:00 VN daily",
+            "desc": "Data integrity audit"
+          },
+          {
+            "name": "weeklyPortfolioReport",
+            "schedule": "23:00 VN Sunday",
+            "desc": "Portfolio + weekly summary"
+          },
+          {
+            "name": "dataAuditWeekly",
+            "schedule": "01:00 VN Sunday",
+            "desc": "Deep weekly audit"
+          },
+          {
+            "name": "devTeamHeartbeat",
+            "schedule": "07:00 UTC Sunday",
+            "desc": "System health + observability report"
+          },
+          {
+            "name": "cronHealthAlert",
+            "schedule": "daily",
+            "desc": "Alert WORK when any job success_rate < 80%"
+          },
+          {
+            "name": "predictionOutcome",
+            "schedule": "08:00 UTC Sunday",
+            "desc": "Prediction signal evaluation"
+          },
+          {
+            "name": "davPharmacyCheck",
+            "schedule": "1st monthly 06:00 VN",
+            "desc": "DAV drug approval check"
+          },
+          {
+            "name": "calibrationReportJob",
+            "schedule": "13:00 UTC Sunday",
+            "desc": "Weekly Brier score calibration report"
+          },
+          {
+            "name": "foreignFlowAlertJob",
+            "schedule": "08:13 UTC M-F",
+            "desc": "Daily foreign flow smart-money scan"
+          },
+          {
+            "name": "insiderCheckJob",
+            "schedule": "01:00 UTC daily",
+            "desc": "Daily SSC insider transaction check"
+          },
+          {
+            "name": "evidenceAccumulator",
+            "schedule": "16:00 UTC daily",
+            "desc": "Nightly evidence fragment accumulation"
+          },
+          {
+            "name": "baseRateComputation",
+            "schedule": "19:00 UTC Sunday",
+            "desc": "Weekly Bayesian base-rate recompute"
+          },
+          {
+            "name": "predictionResolution",
+            "schedule": "16:30 UTC daily",
+            "desc": "Daily prediction claim auto-resolution"
+          },
+          {
+            "name": "pipelineWatchdog",
+            "schedule": "*/30 min",
+            "desc": "Stale news pipeline detection"
+          },
+          {
+            "name": "franceSummaryJob",
+            "schedule": "*/30 6-8 UTC M-F",
+            "desc": "France morning VN digest to MARKET channel"
+          },
+          {
+            "name": "taAlertScanJob",
+            "schedule": "*/15 min market",
+            "desc": "RSI(14) overbought/oversold intraday scan"
+          },
+          {
+            "name": "bbAlertScanJob",
+            "schedule": "*/15 min market",
+            "desc": "BB20 upper/lower breakout scan"
+          },
+          {
+            "name": "taAlertNotifierJob",
+            "schedule": "*/15 min market",
+            "desc": "Deliver unnotified TA alerts to MARKET channel"
+          },
+          {
+            "name": "ohlcvDailyAggregatorJob",
+            "schedule": "0 16 UTC M-F",
+            "desc": "Aggregate intraday ticks into daily_ohlcv"
+          },
+          {
+            "name": "ohlcvStartupProbe",
+            "schedule": "startup",
+            "desc": "Detect sparse OHLCV tickers on server start"
+          },
+          {
+            "name": "ohlcvStalenessCheckJob",
+            "schedule": "15 8 * * 1-5",
+            "desc": "OHLCV staleness check weekdays"
+          },
+          {
+            "name": "cascadeBacktestJob",
+            "schedule": "20:30 UTC daily",
+            "desc": "Daily cascade rule backtest"
+          },
+          {
+            "name": "walCheckpointAlert",
+            "schedule": "helper",
+            "desc": "WAL stuck Telegram alert helper"
+          },
+          {
+            "name": "macroIndicatorRefreshJob",
+            "schedule": "19:13 UTC daily",
+            "desc": "Macro indicator daily refresh (yahoo→sbv→gso)"
+          },
+          {
+            "name": "trackSessionToolUsage",
+            "schedule": "0 */8 * * *",
+            "desc": "Session tool usage snapshot (8h TTL)"
+          },
+          {
+            "name": "imfIndicatorPoller",
+            "schedule": "0 */6 * * *",
+            "desc": "IMF economic indicator poll every 6h"
+          },
+          {
+            "name": "bctcQueueEnricher",
+            "schedule": "*/15 * * * *",
+            "desc": "BCTC queue enricher: enrich pending rows"
+          },
+          {
+            "name": "bctcPdfPull",
+            "schedule": "*/30 * * * *",
+            "desc": "BCTC PDF pull from VPS cache"
+          },
+          {
+            "name": "summaryDaily",
+            "schedule": "30 22 * * *",
+            "desc": "Daily periodic summary at 22:30 GMT+7"
+          },
+          {
+            "name": "summaryWeekly",
+            "schedule": "0 23 * * 0",
+            "desc": "Weekly summary at 23:00 GMT+7 Sunday"
+          },
+          {
+            "name": "summaryMonthly",
+            "schedule": "30 0 1 * *",
+            "desc": "Monthly summary on 1st"
+          },
+          {
+            "name": "summaryQuarterly",
+            "schedule": "0 1 1 1,4,7,10 *",
+            "desc": "Quarterly summary Jan/Apr/Jul/Oct 1st"
+          },
+          {
+            "name": "summaryYearly",
+            "schedule": "0 2 2 1 *",
+            "desc": "Yearly summary Jan 2nd"
+          },
+          {
+            "name": "signalOutcomeJob",
+            "schedule": "30 8 * * 1-5",
+            "desc": "Resolve agent_signals outcomes daily weekdays"
+          },
+          {
+            "name": "priceUpdateWatchdog",
+            "schedule": "*/10 2-8 * * 1-5",
+            "desc": "Price staleness detection VN market hours"
+          },
+          {
+            "name": "vpsServiceHealth",
+            "schedule": "*/5 * * * *",
+            "desc": "VPS service health polling every 5 min"
+          },
+          {
+            "name": "vnIndexRefresh",
+            "schedule": "*/5 2-8 * * 1-5",
+            "desc": "VNINDEX upsert every 5 min market hours"
+          },
+          {
+            "name": "freshnessSlaMonitor",
+            "schedule": "*/30 * * * *",
+            "desc": "Data freshness SLA check every 30 min"
+          },
+          {
+            "name": "foreignFlowFetch",
+            "schedule": "*/1 * * * *",
+            "desc": "Foreign flow fallback fetcher every minute"
+          },
+          {
+            "name": "monthlySignalQualityAudit",
+            "schedule": "0 0 1 * *",
+            "desc": "Monthly signal quality audit on 1st"
+          },
+          {
+            "name": "bctcBatchSweep",
+            "schedule": "0 9 25 1,4,7,10 *",
+            "desc": "BCTC batch sweep quarterly on 25th"
+          },
+          {
+            "name": "integrityCheck",
+            "schedule": "0 2 * * 0",
+            "desc": "DB integrity check weekly Sunday"
+          },
+          {
+            "name": "marketEarningYield",
+            "schedule": "30 9 * * 1-5",
+            "desc": "Market earning yield daily 16:30 VN"
+          },
+          {
+            "name": "alertOutcomeJob",
+            "schedule": "45 8 * * 1-5",
+            "desc": "Daily alert outcome resolver weekdays"
+          },
+          {
+            "name": "dailyDashboard",
+            "schedule": "30 23 * * *",
+            "desc": "Daily dashboard aggregation 23:30 GMT+7"
+          },
+          {
+            "name": "verdictResolutionJob",
+            "schedule": "7 * * * *",
+            "desc": "Hourly alert verdict resolver at minute=7"
+          },
+          {
+            "name": "walCheckpoint",
+            "schedule": "*/30 * * * *",
+            "desc": "SQLite WAL checkpoint every 30 min"
+          },
+          {
+            "name": "systemAuditTier1",
+            "schedule": "*/30 * * * *",
+            "desc": "system-auditor Tier-1: container + health ping every 30 min"
+          },
+          {
+            "name": "systemAuditTier2",
+            "schedule": "0 */4 * * *",
+            "desc": "system-auditor Tier-2: data freshness sweep every 4h"
+          },
+          {
+            "name": "systemAuditTier3",
+            "schedule": "0 2 * * *",
+            "desc": "system-auditor Tier-3: deep DB integrity daily 02:00 UTC"
+          }
         ]
       },
       {
@@ -229,7 +578,6 @@
         "crons": []
       }
     ],
-
     "infrastructure": {
       "vps": {
         "provider": "vinahost",
@@ -239,13 +587,41 @@
         "purpose": "geo-blocked VN source proxy",
         "auth": "X-API-Key header (VPS_PUSH_API_KEY from .env)",
         "routes": [
-          { "path": "/proxy/ssc-iboard",          "source_id": "ssc-iboard",     "desc": "VN price discovery (iboard SSC)" },
-          { "path": "/proxy/bctc-discover/:ticker","source_id": "bctc-discover",  "desc": "BCTC financial report URL discovery" },
-          { "path": "/proxy/muasamcong",           "source_id": "muasamcong",     "desc": "Government procurement data" },
-          { "path": "/bctc-files/",               "source_id": "bctc-push",      "desc": "BCTC PDF file pull endpoint (push pipeline)" },
-          { "path": "/proxy/foreign-flow",         "source_id": "foreign-flow",   "desc": "Foreign investor buy/sell flow" },
-          { "path": "/proxy/sbv",                  "source_id": "sbv-vps",        "desc": "SBV FX rates (geo-blocked path)" },
-          { "path": "/proxy/news",                 "source_id": "news-vps",       "desc": "VN news sources (geo-blocked)" }
+          {
+            "path": "/proxy/ssc-iboard",
+            "source_id": "ssc-iboard",
+            "desc": "VN price discovery (iboard SSC)"
+          },
+          {
+            "path": "/proxy/bctc-discover/:ticker",
+            "source_id": "bctc-discover",
+            "desc": "BCTC financial report URL discovery"
+          },
+          {
+            "path": "/proxy/muasamcong",
+            "source_id": "muasamcong",
+            "desc": "Government procurement data"
+          },
+          {
+            "path": "/bctc-files/",
+            "source_id": "bctc-push",
+            "desc": "BCTC PDF file pull endpoint (push pipeline)"
+          },
+          {
+            "path": "/proxy/foreign-flow",
+            "source_id": "foreign-flow",
+            "desc": "Foreign investor buy/sell flow"
+          },
+          {
+            "path": "/proxy/sbv",
+            "source_id": "sbv-vps",
+            "desc": "SBV FX rates (geo-blocked path)"
+          },
+          {
+            "path": "/proxy/news",
+            "source_id": "news-vps",
+            "desc": "VN news sources (geo-blocked)"
+          }
         ]
       },
       "docker": {
@@ -253,171 +629,903 @@
         "total_services": 12,
         "core_services": 11,
         "shared_volume": "market_data",
-        "infrastructure_services": ["flaresolverr"]
+        "infrastructure_services": [
+          "flaresolverr"
+        ]
       },
       "databases": [
-        { "id": "market",       "engine": "sqlite",  "path": "/app/data/market.db",        "used_by": ["mcp-server", "technical-analysis", "macro-indicators", "kinh-dich-service", "stock-price"] },
-        { "id": "stock_price",  "engine": "sqlite",  "path": "/app/data/stock_price.db",   "used_by": ["stock-price"] },
-        { "id": "alert_engine", "engine": "sqlite",  "path": "/app/data/alert_engine.db",  "used_by": ["alert-engine"] },
-        { "id": "pdf_extractor","engine": "sqlite",  "path": "/app/data/pdf_extractor.db", "used_by": ["pdf-extractor"] },
-        { "id": "rag_service",  "engine": "sqlite",  "path": "/app/data/rag_service.db",   "used_by": ["rag-service"] },
-        { "id": "rag_vectors",  "engine": "lancedb", "path": "/app/data/lancedb",          "used_by": ["rag-service"] }
+        {
+          "id": "market",
+          "engine": "sqlite",
+          "path": "/app/data/market.db",
+          "used_by": [
+            "mcp-server",
+            "technical-analysis",
+            "macro-indicators",
+            "kinh-dich-service",
+            "stock-price"
+          ]
+        },
+        {
+          "id": "stock_price",
+          "engine": "sqlite",
+          "path": "/app/data/stock_price.db",
+          "used_by": [
+            "stock-price"
+          ]
+        },
+        {
+          "id": "alert_engine",
+          "engine": "sqlite",
+          "path": "/app/data/alert_engine.db",
+          "used_by": [
+            "alert-engine"
+          ]
+        },
+        {
+          "id": "pdf_extractor",
+          "engine": "sqlite",
+          "path": "/app/data/pdf_extractor.db",
+          "used_by": [
+            "pdf-extractor"
+          ]
+        },
+        {
+          "id": "rag_service",
+          "engine": "sqlite",
+          "path": "/app/data/rag_service.db",
+          "used_by": [
+            "rag-service"
+          ]
+        },
+        {
+          "id": "rag_vectors",
+          "engine": "lancedb",
+          "path": "/app/data/lancedb",
+          "used_by": [
+            "rag-service"
+          ]
+        },
+        {
+          "id": "coordination",
+          "engine": "sqlite",
+          "path": "/app/data/coordination.db",
+          "used_by": [
+            "mcp-server"
+          ],
+          "purpose": "cross-session agent task lock coordination"
+        }
       ]
     },
-
     "agents": [
-      { "id": "developer",              "type": "dev-core" },
-      { "id": "fixer",                  "type": "dev-core" },
-      { "id": "architect",              "type": "dev-core" },
-      { "id": "ba",                     "type": "dev-core" },
-      { "id": "pm",                     "type": "dev-core" },
-      { "id": "po",                     "type": "dev-core" },
-      { "id": "qa",                     "type": "dev-core" },
-      { "id": "agent-father",           "type": "dev-core" },
-      { "id": "agents-architect",       "type": "dev-core" },
-      { "id": "code-janitor",           "type": "dev-core" },
-      { "id": "cowork-refactory-expert","type": "dev-core" },
-      { "id": "idea-forge",             "type": "dev-core" },
-      { "id": "system-auditor",         "type": "dev-core" },
-      { "id": "claude-manager-helper",  "type": "dev-core" },
-      { "id": "tran-ngoc-bau",          "type": "dev-core" },
-      { "id": "semble-search",          "type": "dev-core" },
-      { "id": "dev-mcp-server",         "type": "dev-zone", "zone": "apps/mcp-server" },
-      { "id": "dev-api-gateway",        "type": "dev-zone", "zone": "apps/api-gateway" },
-      { "id": "dev-stock-price",        "type": "dev-zone", "zone": "apps/stock-price" },
-      { "id": "dev-technical-analysis", "type": "dev-zone", "zone": "apps/technical-analysis" },
-      { "id": "dev-macro-indicators",   "type": "dev-zone", "zone": "apps/macro-indicators" },
-      { "id": "dev-kinh-dich",          "type": "dev-zone", "zone": "apps/kinh-dich-service" },
-      { "id": "dev-alert-engine",       "type": "dev-zone", "zone": "apps/alert-engine" },
-      { "id": "dev-pdf-extractor",      "type": "dev-zone", "zone": "apps/pdf-extractor" },
-      { "id": "dev-rag-service",        "type": "dev-zone", "zone": "apps/rag-service" },
-      { "id": "dev-frontend",           "type": "dev-zone", "zone": "apps/frontend" },
-      { "id": "dev-mainserver-crawls",  "type": "dev-zone", "zone": "apps/mcp-server" },
-      { "id": "dev-vps-crawls",         "type": "dev-zone", "zone": "apps/mcp-server" },
-      { "id": "alert-commander",        "type": "cowork" },
-      { "id": "digest-predict",         "type": "cowork" },
-      { "id": "financial-analyst",      "type": "cowork" },
-      { "id": "market-analyst",         "type": "cowork" },
-      { "id": "market-watcher",         "type": "cowork" },
-      { "id": "news-scout",             "type": "cowork" },
-      { "id": "qa-responder",           "type": "cowork" },
-      { "id": "report-analyzer",        "type": "cowork" },
-      { "id": "unified-agent",          "type": "cowork" },
-      { "id": "ops",                    "type": "ops" },
-      { "id": "ops-mainserver-fetch",   "type": "ops" },
-      { "id": "ops-vps-fetch",          "type": "ops" }
+      {
+        "id": "developer",
+        "type": "dev-core"
+      },
+      {
+        "id": "fixer",
+        "type": "dev-core"
+      },
+      {
+        "id": "architect",
+        "type": "dev-core"
+      },
+      {
+        "id": "ba",
+        "type": "dev-core"
+      },
+      {
+        "id": "pm",
+        "type": "dev-core"
+      },
+      {
+        "id": "po",
+        "type": "dev-core"
+      },
+      {
+        "id": "qa",
+        "type": "dev-core"
+      },
+      {
+        "id": "agent-father",
+        "type": "dev-core"
+      },
+      {
+        "id": "agents-architect",
+        "type": "dev-core"
+      },
+      {
+        "id": "code-janitor",
+        "type": "dev-core"
+      },
+      {
+        "id": "cowork-refactory-expert",
+        "type": "dev-core"
+      },
+      {
+        "id": "idea-forge",
+        "type": "dev-core"
+      },
+      {
+        "id": "system-auditor",
+        "type": "dev-core"
+      },
+      {
+        "id": "claude-manager-helper",
+        "type": "dev-core"
+      },
+      {
+        "id": "tran-ngoc-bau",
+        "type": "dev-core"
+      },
+      {
+        "id": "semble-search",
+        "type": "dev-core"
+      },
+      {
+        "id": "dev-mcp-server",
+        "type": "dev-zone",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "dev-api-gateway",
+        "type": "dev-zone",
+        "zone": "apps/api-gateway"
+      },
+      {
+        "id": "dev-stock-price",
+        "type": "dev-zone",
+        "zone": "apps/stock-price"
+      },
+      {
+        "id": "dev-technical-analysis",
+        "type": "dev-zone",
+        "zone": "apps/technical-analysis"
+      },
+      {
+        "id": "dev-macro-indicators",
+        "type": "dev-zone",
+        "zone": "apps/macro-indicators"
+      },
+      {
+        "id": "dev-kinh-dich",
+        "type": "dev-zone",
+        "zone": "apps/kinh-dich-service"
+      },
+      {
+        "id": "dev-alert-engine",
+        "type": "dev-zone",
+        "zone": "apps/alert-engine"
+      },
+      {
+        "id": "dev-pdf-extractor",
+        "type": "dev-zone",
+        "zone": "apps/pdf-extractor"
+      },
+      {
+        "id": "dev-rag-service",
+        "type": "dev-zone",
+        "zone": "apps/rag-service"
+      },
+      {
+        "id": "dev-frontend",
+        "type": "dev-zone",
+        "zone": "apps/frontend"
+      },
+      {
+        "id": "dev-mainserver-crawls",
+        "type": "dev-zone",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "dev-vps-crawls",
+        "type": "dev-zone",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "alert-commander",
+        "type": "cowork"
+      },
+      {
+        "id": "digest-predict",
+        "type": "cowork"
+      },
+      {
+        "id": "financial-analyst",
+        "type": "cowork"
+      },
+      {
+        "id": "market-analyst",
+        "type": "cowork"
+      },
+      {
+        "id": "market-watcher",
+        "type": "cowork"
+      },
+      {
+        "id": "news-scout",
+        "type": "cowork"
+      },
+      {
+        "id": "qa-responder",
+        "type": "cowork"
+      },
+      {
+        "id": "report-analyzer",
+        "type": "cowork"
+      },
+      {
+        "id": "unified-agent",
+        "type": "cowork"
+      },
+      {
+        "id": "ops",
+        "type": "ops"
+      },
+      {
+        "id": "ops-mainserver-fetch",
+        "type": "ops"
+      },
+      {
+        "id": "ops-vps-fetch",
+        "type": "ops"
+      }
     ],
-
     "data_sources": [
-      { "id": "ssc-iboard",                "proxy": "vps",            "category": "price",      "geo_blocked": true,  "vps_path": "/proxy/ssc-iboard",              "expected_cadence_hours": 0.25,  "stale_threshold_hours": 0.5  },
-      { "id": "bctc-discover",             "proxy": "vps",            "category": "bctc",       "geo_blocked": true,  "vps_path": "/proxy/bctc-discover/:ticker",   "expected_cadence_hours": 168,   "stale_threshold_hours": 168  },
-      { "id": "muasamcong",                "proxy": "vps",            "category": "procurement","geo_blocked": true,  "vps_path": "/proxy/muasamcong",              "expected_cadence_hours": 24,    "stale_threshold_hours": 72   },
-      { "id": "bctc-push",                 "proxy": "vps_push",       "category": "bctc",       "geo_blocked": true,  "vps_path": "/bctc-files/", "desc": "VPS fetches PDFs; mcp-server pulls on schedule", "expected_cadence_hours": 168, "stale_threshold_hours": 168 },
-      { "id": "foreign-flow",              "proxy": "vps",            "category": "flow",       "geo_blocked": true,  "vps_path": "/proxy/foreign-flow",            "expected_cadence_hours": 0.0167,"stale_threshold_hours": 0.5, "market_hours_only": true },
-      { "id": "sbv-vps",                   "proxy": "vps",            "category": "macro",      "geo_blocked": true,  "vps_path": "/proxy/sbv",                     "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "news-vps",                  "proxy": "vps",            "category": "news",       "geo_blocked": true,  "vps_path": "/proxy/news",                    "expected_cadence_hours": 1,     "stale_threshold_hours": 3    },
-      { "id": "fred",                      "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "fred-effr-iorb",            "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "fred-ism-subcomponents",    "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "newsapi",                   "proxy": "direct",         "category": "news",       "geo_blocked": false, "expected_cadence_hours": 1,     "stale_threshold_hours": 3    },
-      { "id": "reuters",                   "proxy": "direct",         "category": "news",       "geo_blocked": false, "expected_cadence_hours": 1,     "stale_threshold_hours": 3    },
-      { "id": "yahoo-finance",             "proxy": "direct",         "category": "price",      "geo_blocked": false, "expected_cadence_hours": 0.25,  "stale_threshold_hours": 0.5  },
-      { "id": "trading-economics",         "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "trading-economics-chromium","proxy": "direct_chromium","category": "macro",      "geo_blocked": false, "desc": "Chromium-based scrape, main server only", "expected_cadence_hours": 6, "stale_threshold_hours": 24 },
-      { "id": "polymarket",                "proxy": "direct",         "category": "sentiment",  "geo_blocked": false, "expected_cadence_hours": 0.5,   "stale_threshold_hours": 2    },
-      { "id": "sbv",                       "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "sbv-circular",              "proxy": "direct",         "category": "regulatory", "geo_blocked": false, "expected_cadence_hours": 24,    "stale_threshold_hours": 72   },
-      { "id": "vneconomy-rss",             "proxy": "direct",         "category": "news",       "geo_blocked": false, "expected_cadence_hours": 1,     "stale_threshold_hours": 3    },
-      { "id": "vnexpress-rss",             "proxy": "direct",         "category": "news",       "geo_blocked": false, "expected_cadence_hours": 1,     "stale_threshold_hours": 3    },
-      { "id": "weather-vn",                "proxy": "direct",         "category": "climate",    "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "hydrological",              "proxy": "direct",         "category": "climate",    "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   },
-      { "id": "hose",                      "proxy": "direct",         "category": "exchange",   "geo_blocked": false, "expected_cadence_hours": 24,    "stale_threshold_hours": 26   },
-      { "id": "hnx",                       "proxy": "direct",         "category": "exchange",   "geo_blocked": false, "expected_cadence_hours": 24,    "stale_threshold_hours": 26   },
-      { "id": "congbao",                   "proxy": "direct",         "category": "regulatory", "geo_blocked": false, "expected_cadence_hours": 24,    "stale_threshold_hours": 72   },
-      { "id": "dav-pharmacy",              "proxy": "direct",         "category": "sector",     "geo_blocked": false, "expected_cadence_hours": 720,   "stale_threshold_hours": 840  },
-      { "id": "shipping-index",            "proxy": "direct",         "category": "macro",      "geo_blocked": false, "expected_cadence_hours": 6,     "stale_threshold_hours": 24   }
+      {
+        "id": "ssc-iboard",
+        "proxy": "vps",
+        "category": "price",
+        "geo_blocked": true,
+        "vps_path": "/proxy/ssc-iboard",
+        "expected_cadence_hours": 0.25,
+        "stale_threshold_hours": 0.5
+      },
+      {
+        "id": "bctc-discover",
+        "proxy": "vps",
+        "category": "bctc",
+        "geo_blocked": true,
+        "vps_path": "/proxy/bctc-discover/:ticker",
+        "expected_cadence_hours": 168,
+        "stale_threshold_hours": 168
+      },
+      {
+        "id": "muasamcong",
+        "proxy": "vps",
+        "category": "procurement",
+        "geo_blocked": true,
+        "vps_path": "/proxy/muasamcong",
+        "expected_cadence_hours": 24,
+        "stale_threshold_hours": 72
+      },
+      {
+        "id": "bctc-push",
+        "proxy": "vps_push",
+        "category": "bctc",
+        "geo_blocked": true,
+        "vps_path": "/bctc-files/",
+        "desc": "VPS fetches PDFs; mcp-server pulls on schedule",
+        "expected_cadence_hours": 168,
+        "stale_threshold_hours": 168
+      },
+      {
+        "id": "foreign-flow",
+        "proxy": "vps",
+        "category": "flow",
+        "geo_blocked": true,
+        "vps_path": "/proxy/foreign-flow",
+        "expected_cadence_hours": 0.0167,
+        "stale_threshold_hours": 0.5,
+        "market_hours_only": true
+      },
+      {
+        "id": "sbv-vps",
+        "proxy": "vps",
+        "category": "macro",
+        "geo_blocked": true,
+        "vps_path": "/proxy/sbv",
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "news-vps",
+        "proxy": "vps",
+        "category": "news",
+        "geo_blocked": true,
+        "vps_path": "/proxy/news",
+        "expected_cadence_hours": 1,
+        "stale_threshold_hours": 3
+      },
+      {
+        "id": "fred",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "fred-effr-iorb",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "fred-ism-subcomponents",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "newsapi",
+        "proxy": "direct",
+        "category": "news",
+        "geo_blocked": false,
+        "expected_cadence_hours": 1,
+        "stale_threshold_hours": 3
+      },
+      {
+        "id": "reuters",
+        "proxy": "direct",
+        "category": "news",
+        "geo_blocked": false,
+        "expected_cadence_hours": 1,
+        "stale_threshold_hours": 3
+      },
+      {
+        "id": "yahoo-finance",
+        "proxy": "direct",
+        "category": "price",
+        "geo_blocked": false,
+        "expected_cadence_hours": 0.25,
+        "stale_threshold_hours": 0.5
+      },
+      {
+        "id": "trading-economics",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "trading-economics-chromium",
+        "proxy": "direct_chromium",
+        "category": "macro",
+        "geo_blocked": false,
+        "desc": "Chromium-based scrape, main server only",
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "polymarket",
+        "proxy": "direct",
+        "category": "sentiment",
+        "geo_blocked": false,
+        "expected_cadence_hours": 0.5,
+        "stale_threshold_hours": 2
+      },
+      {
+        "id": "sbv",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "sbv-circular",
+        "proxy": "direct",
+        "category": "regulatory",
+        "geo_blocked": false,
+        "expected_cadence_hours": 24,
+        "stale_threshold_hours": 72
+      },
+      {
+        "id": "vneconomy-rss",
+        "proxy": "direct",
+        "category": "news",
+        "geo_blocked": false,
+        "expected_cadence_hours": 1,
+        "stale_threshold_hours": 3
+      },
+      {
+        "id": "vnexpress-rss",
+        "proxy": "direct",
+        "category": "news",
+        "geo_blocked": false,
+        "expected_cadence_hours": 1,
+        "stale_threshold_hours": 3
+      },
+      {
+        "id": "weather-vn",
+        "proxy": "direct",
+        "category": "climate",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "hydrological",
+        "proxy": "direct",
+        "category": "climate",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      },
+      {
+        "id": "hose",
+        "proxy": "direct",
+        "category": "exchange",
+        "geo_blocked": false,
+        "expected_cadence_hours": 24,
+        "stale_threshold_hours": 26
+      },
+      {
+        "id": "hnx",
+        "proxy": "direct",
+        "category": "exchange",
+        "geo_blocked": false,
+        "expected_cadence_hours": 24,
+        "stale_threshold_hours": 26
+      },
+      {
+        "id": "congbao",
+        "proxy": "direct",
+        "category": "regulatory",
+        "geo_blocked": false,
+        "expected_cadence_hours": 24,
+        "stale_threshold_hours": 72
+      },
+      {
+        "id": "dav-pharmacy",
+        "proxy": "direct",
+        "category": "sector",
+        "geo_blocked": false,
+        "expected_cadence_hours": 720,
+        "stale_threshold_hours": 840
+      },
+      {
+        "id": "shipping-index",
+        "proxy": "direct",
+        "category": "macro",
+        "geo_blocked": false,
+        "expected_cadence_hours": 6,
+        "stale_threshold_hours": 24
+      }
     ],
-
     "channels": [
       {
         "id": "market",
         "env_var": "TELEGRAM_MARKET_CHAT_ID",
         "purpose": "user-facing chef dishes (narrative synthesis), event alerts, weekly calibration, /ask answers",
-        "allowed_senders": ["unified-agent", "alert-commander", "digest-predict", "qa-responder"],
+        "allowed_senders": [
+          "unified-agent",
+          "alert-commander",
+          "digest-predict",
+          "qa-responder"
+        ],
         "sender_rules": {
           "unified-agent": "Chef — 3 guaranteed daily dishes (Morning 05:23/EOD 08:37/Evening 19:37 UTC) + conditional intraday. Narrative 2-4 paragraphs. TNB 6-layer walk.",
           "alert-commander": "Event-only — position-danger (3-condition) or watchlist-opportunity (4-condition) ONLY. ≤140 chars. Silent exit otherwise.",
           "digest-predict": "Weekly Sunday 13:47 UTC calibration + portfolio thesis only. No daily digest.",
           "qa-responder": "/ask FIFO queue replies only."
         },
-        "rules": ["NEVER send errors/status/heartbeats here", "Only actionable content", "market-watcher REMOVED as sender — writes docs/signals/ only"]
+        "rules": [
+          "NEVER send errors/status/heartbeats here",
+          "Only actionable content",
+          "market-watcher REMOVED as sender — writes docs/signals/ only"
+        ]
       },
       {
         "id": "work",
         "env_var": "TELEGRAM_WORK_CHAT_ID",
         "purpose": "agent cycle status, heartbeats, quality reports",
-        "allowed_senders": ["all"],
+        "allowed_senders": [
+          "all"
+        ],
         "format": "[Agent Name] HH:MM UTC — summary"
       },
       {
         "id": "bug",
         "env_var": "TELEGRAM_BUG_CHAT_ID",
         "purpose": "errors, failures, incidents",
-        "allowed_senders": ["all"],
-        "rules": ["Check get_recent_fixes(limit=20) before sending — skip if already fixed", "Format: [Agent] SEVERITY\\nIssue: ... | Impact: ... | Status: ..."]
+        "allowed_senders": [
+          "all"
+        ],
+        "rules": [
+          "Check get_recent_fixes(limit=20) before sending — skip if already fixed",
+          "Format: [Agent] SEVERITY\\nIssue: ... | Impact: ... | Status: ..."
+        ]
       }
     ],
-
     "zones": [
-      { "id": "mcp-server",        "path": "apps/mcp-server/",        "specialist": "dev-mcp-server",        "keywords": ["MCP tool", "cron", "market orchestration", "scheduler", "fetcher"] },
-      { "id": "api-gateway",       "path": "apps/api-gateway/",       "specialist": "dev-api-gateway",       "keywords": ["HTTP routing", "gateway", "health aggregation", "service discovery"] },
-      { "id": "stock-price",       "path": "apps/stock-price/",       "specialist": "dev-stock-price",       "keywords": ["price fallback", "VPS bridge", "quote agg", "stock price"] },
-      { "id": "technical-analysis","path": "apps/technical-analysis/","specialist": "dev-technical-analysis","keywords": ["RSI", "MACD", "BB", "Bollinger", "indicator", "TA"] },
-      { "id": "macro-indicators",  "path": "apps/macro-indicators/",  "specialist": "dev-macro-indicators",  "keywords": ["SBV FX", "commodity", "macro trend", "yield", "EFFR"] },
-      { "id": "kinh-dich-service", "path": "apps/kinh-dich-service/", "specialist": "dev-kinh-dich",         "keywords": ["hexagram", "I-Ching", "kinh dich", "divination"] },
-      { "id": "alert-engine",      "path": "apps/alert-engine/",      "specialist": "dev-alert-engine",      "keywords": ["dedup", "cooldown", "Telegram dispatch", "alert", "signal"] },
-      { "id": "pdf-extractor",     "path": "apps/pdf-extractor/",     "specialist": "dev-pdf-extractor",     "keywords": ["BCTC", "OCR", "Vietnamese parse", "PDF", "financial report"] },
-      { "id": "rag-service",       "path": "apps/rag-service/",       "specialist": "dev-rag-service",       "keywords": ["embeddings", "LanceDB", "semantic search", "RAG", "vector"] },
-      { "id": "news-fetch",        "path": "apps/news-fetch/",        "specialist": "developer",             "keywords": ["news fetch", "playwright", "chromium", "headless scrape"] },
-      { "id": "frontend",          "path": "apps/frontend/",          "specialist": "dev-frontend",          "keywords": ["UI", "dashboard", "frontend", "React", "web"] },
-      { "id": "cross-service",     "path": "scripts/",                "specialist": "developer",             "keywords": ["multi-zone", "root-level", "cross-service", "infrastructure"] }
+      {
+        "id": "mcp-server",
+        "path": "apps/mcp-server/",
+        "specialist": "dev-mcp-server",
+        "keywords": [
+          "MCP tool",
+          "cron",
+          "market orchestration",
+          "scheduler",
+          "fetcher"
+        ]
+      },
+      {
+        "id": "api-gateway",
+        "path": "apps/api-gateway/",
+        "specialist": "dev-api-gateway",
+        "keywords": [
+          "HTTP routing",
+          "gateway",
+          "health aggregation",
+          "service discovery"
+        ]
+      },
+      {
+        "id": "stock-price",
+        "path": "apps/stock-price/",
+        "specialist": "dev-stock-price",
+        "keywords": [
+          "price fallback",
+          "VPS bridge",
+          "quote agg",
+          "stock price"
+        ]
+      },
+      {
+        "id": "technical-analysis",
+        "path": "apps/technical-analysis/",
+        "specialist": "dev-technical-analysis",
+        "keywords": [
+          "RSI",
+          "MACD",
+          "BB",
+          "Bollinger",
+          "indicator",
+          "TA"
+        ]
+      },
+      {
+        "id": "macro-indicators",
+        "path": "apps/macro-indicators/",
+        "specialist": "dev-macro-indicators",
+        "keywords": [
+          "SBV FX",
+          "commodity",
+          "macro trend",
+          "yield",
+          "EFFR"
+        ]
+      },
+      {
+        "id": "kinh-dich-service",
+        "path": "apps/kinh-dich-service/",
+        "specialist": "dev-kinh-dich",
+        "keywords": [
+          "hexagram",
+          "I-Ching",
+          "kinh dich",
+          "divination"
+        ]
+      },
+      {
+        "id": "alert-engine",
+        "path": "apps/alert-engine/",
+        "specialist": "dev-alert-engine",
+        "keywords": [
+          "dedup",
+          "cooldown",
+          "Telegram dispatch",
+          "alert",
+          "signal"
+        ]
+      },
+      {
+        "id": "pdf-extractor",
+        "path": "apps/pdf-extractor/",
+        "specialist": "dev-pdf-extractor",
+        "keywords": [
+          "BCTC",
+          "OCR",
+          "Vietnamese parse",
+          "PDF",
+          "financial report"
+        ]
+      },
+      {
+        "id": "rag-service",
+        "path": "apps/rag-service/",
+        "specialist": "dev-rag-service",
+        "keywords": [
+          "embeddings",
+          "LanceDB",
+          "semantic search",
+          "RAG",
+          "vector"
+        ]
+      },
+      {
+        "id": "news-fetch",
+        "path": "apps/news-fetch/",
+        "specialist": "developer",
+        "keywords": [
+          "news fetch",
+          "playwright",
+          "chromium",
+          "headless scrape"
+        ]
+      },
+      {
+        "id": "frontend",
+        "path": "apps/frontend/",
+        "specialist": "dev-frontend",
+        "keywords": [
+          "UI",
+          "dashboard",
+          "frontend",
+          "React",
+          "web"
+        ]
+      },
+      {
+        "id": "cross-service",
+        "path": "scripts/",
+        "specialist": "developer",
+        "keywords": [
+          "multi-zone",
+          "root-level",
+          "cross-service",
+          "infrastructure"
+        ]
+      }
     ],
-
     "watchlist": [
-      { "ticker": "VNM", "company": "Vinamilk",              "sector": "Agriculture / Dairy",              "exchange": "HOSE", "active": true },
-      { "ticker": "FPT", "company": "FPT Corp",              "sector": "Tech / IT outsourcing",           "exchange": "HOSE", "active": true },
-      { "ticker": "VCB", "company": "Vietcombank",           "sector": "Banking",                         "exchange": "HOSE", "active": true },
-      { "ticker": "HPG", "company": "Hoa Phat Group",        "sector": "Steel",                           "exchange": "HOSE", "active": true },
-      { "ticker": "VEA", "company": "VEAM Corp",             "sector": "Automotive (Honda/Toyota/Ford JV)","exchange": "UPCOM","active": false, "note": "Removed sprint-054" },
-      { "ticker": "BID", "company": "BIDV",                  "sector": "Banking",                         "exchange": "HOSE", "active": true },
-      { "ticker": "SHB", "company": "Saigon-Hanoi Bank",     "sector": "Banking",                         "exchange": "HNX",  "active": true },
-      { "ticker": "EIB", "company": "Eximbank",              "sector": "Banking",                         "exchange": "HOSE", "active": true },
-      { "ticker": "VHM", "company": "Vinhomes",              "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "VIC", "company": "Vingroup",              "sector": "Real estate / Conglomerate",      "exchange": "HOSE", "active": true },
-      { "ticker": "KBC", "company": "Kinh Bac City",         "sector": "Real estate / Industrial zone",   "exchange": "HOSE", "active": true },
-      { "ticker": "HUT", "company": "Tasco",                 "sector": "Real estate / Infrastructure",    "exchange": "HNX",  "active": true },
-      { "ticker": "DIG", "company": "DIC Corp",              "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "DXG", "company": "Dat Xanh Group",        "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "KDH", "company": "Khang Dien House",      "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "PDR", "company": "Phat Dat Real Estate",  "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "NVL", "company": "No Va Land",            "sector": "Real estate",                     "exchange": "HOSE", "active": true },
-      { "ticker": "VRE", "company": "Vincom Retail",         "sector": "Real estate / Retail REIT",       "exchange": "HOSE", "active": true },
-      { "ticker": "MSN", "company": "Masan Group",           "sector": "Food / Beverage / Retail",        "exchange": "HOSE", "active": true },
-      { "ticker": "FRT", "company": "FPT Retail",            "sector": "Retail / Electronics",            "exchange": "HOSE", "active": true },
-      { "ticker": "KDC", "company": "Kido Group",            "sector": "Food / Beverage",                 "exchange": "HOSE", "active": true },
-      { "ticker": "SAB", "company": "Sabeco",                "sector": "Food / Beverage (Beer)",          "exchange": "HOSE", "active": true },
-      { "ticker": "DPM", "company": "Phu My Fertilizer",     "sector": "Agriculture / Chemicals",         "exchange": "HOSE", "active": true },
-      { "ticker": "SSI", "company": "SSI Securities",        "sector": "Securities",                      "exchange": "HOSE", "active": true },
-      { "ticker": "VIX", "company": "VIX Securities",        "sector": "Securities",                      "exchange": "HOSE", "active": true },
-      { "ticker": "VND", "company": "VNDirect Securities",   "sector": "Securities",                      "exchange": "HOSE", "active": true },
-      { "ticker": "VCI", "company": "Viet Capital Securities","sector": "Securities",                     "exchange": "HOSE", "active": true },
-      { "ticker": "DGC", "company": "Duc Giang Chemicals",   "sector": "Chemicals / Phosphate",           "exchange": "HOSE", "active": true },
-      { "ticker": "VJC", "company": "VietJet Air",           "sector": "Aviation / Low-cost carrier",     "exchange": "HOSE", "active": true },
-      { "ticker": "GEX", "company": "Gelex Group",           "sector": "Utilities / Electrical",         "exchange": "HOSE", "active": true },
-      { "ticker": "BSR", "company": "Binh Son Refinery",     "sector": "Oil & Gas / Refinery",            "exchange": "UPCOM","active": true },
-      { "ticker": "PLX", "company": "Petrolimex",            "sector": "Oil & Gas / Petroleum Retail",    "exchange": "HOSE", "active": true },
-      { "ticker": "DAG", "company": "Da Nang Rubber Group",  "sector": "Machinery / Industrial",          "exchange": "HOSE", "active": true },
-      { "ticker": "DBC", "company": "Dabaco",                "sector": "Agriculture / Livestock",         "exchange": "HOSE", "active": true }
+      {
+        "ticker": "VNM",
+        "company": "Vinamilk",
+        "sector": "Agriculture / Dairy",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "FPT",
+        "company": "FPT Corp",
+        "sector": "Tech / IT outsourcing",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VCB",
+        "company": "Vietcombank",
+        "sector": "Banking",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "HPG",
+        "company": "Hoa Phat Group",
+        "sector": "Steel",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VEA",
+        "company": "VEAM Corp",
+        "sector": "Automotive (Honda/Toyota/Ford JV)",
+        "exchange": "UPCOM",
+        "active": false,
+        "note": "Removed sprint-054"
+      },
+      {
+        "ticker": "BID",
+        "company": "BIDV",
+        "sector": "Banking",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "SHB",
+        "company": "Saigon-Hanoi Bank",
+        "sector": "Banking",
+        "exchange": "HNX",
+        "active": true
+      },
+      {
+        "ticker": "EIB",
+        "company": "Eximbank",
+        "sector": "Banking",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VHM",
+        "company": "Vinhomes",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VIC",
+        "company": "Vingroup",
+        "sector": "Real estate / Conglomerate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "KBC",
+        "company": "Kinh Bac City",
+        "sector": "Real estate / Industrial zone",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "HUT",
+        "company": "Tasco",
+        "sector": "Real estate / Infrastructure",
+        "exchange": "HNX",
+        "active": true
+      },
+      {
+        "ticker": "DIG",
+        "company": "DIC Corp",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "DXG",
+        "company": "Dat Xanh Group",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "KDH",
+        "company": "Khang Dien House",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "PDR",
+        "company": "Phat Dat Real Estate",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "NVL",
+        "company": "No Va Land",
+        "sector": "Real estate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VRE",
+        "company": "Vincom Retail",
+        "sector": "Real estate / Retail REIT",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "MSN",
+        "company": "Masan Group",
+        "sector": "Food / Beverage / Retail",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "FRT",
+        "company": "FPT Retail",
+        "sector": "Retail / Electronics",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "KDC",
+        "company": "Kido Group",
+        "sector": "Food / Beverage",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "SAB",
+        "company": "Sabeco",
+        "sector": "Food / Beverage (Beer)",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "DPM",
+        "company": "Phu My Fertilizer",
+        "sector": "Agriculture / Chemicals",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "SSI",
+        "company": "SSI Securities",
+        "sector": "Securities",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VIX",
+        "company": "VIX Securities",
+        "sector": "Securities",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VND",
+        "company": "VNDirect Securities",
+        "sector": "Securities",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VCI",
+        "company": "Viet Capital Securities",
+        "sector": "Securities",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "DGC",
+        "company": "Duc Giang Chemicals",
+        "sector": "Chemicals / Phosphate",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "VJC",
+        "company": "VietJet Air",
+        "sector": "Aviation / Low-cost carrier",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "GEX",
+        "company": "Gelex Group",
+        "sector": "Utilities / Electrical",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "BSR",
+        "company": "Binh Son Refinery",
+        "sector": "Oil & Gas / Refinery",
+        "exchange": "UPCOM",
+        "active": true
+      },
+      {
+        "ticker": "PLX",
+        "company": "Petrolimex",
+        "sector": "Oil & Gas / Petroleum Retail",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "DAG",
+        "company": "Da Nang Rubber Group",
+        "sector": "Machinery / Industrial",
+        "exchange": "HOSE",
+        "active": true
+      },
+      {
+        "ticker": "DBC",
+        "company": "Dabaco",
+        "sector": "Agriculture / Livestock",
+        "exchange": "HOSE",
+        "active": true
+      }
     ]
   }
 }

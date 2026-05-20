@@ -2,7 +2,7 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "_lastRefreshedBy": "PM Sprint 1954 created 2026-05-19. CRITICAL HOTFIX 1954a unblocks queue seeding for all 30 watchlist tickers (backfillBctcQ12026 column-name fix, ship today). Structural tasks 1954b→1954f sequence per architect brief §5: consolidate 4 write paths → define ACK token → DPI escalation → backfill stranded PDFs → QA verify. Recurring-bug-escalation flag: 3rd BCTC fix in 24h (1953b, 1953c+f, 1954a). WIP=0 (awaiting PO sign-off). previousSprint = 1948 (QUEUED, gate-blocked until 2026-05-20T07:22Z).",
-  "lastUpdated": "2026-05-18",
+  "lastUpdated": "2026-05-20",
   "currentSprint": {
     "number": 1954,
     "status": "BACKLOG pending (1954a ready to ship as HOTFIX today; 1954b→1954f sequence gates on 1954a completion)",
@@ -31,7 +31,7 @@
   "smoke_window_1912a_planned_end": "2026-05-15T14:00:00Z",
   "smoke_window_1912a_status": "USER-OVERRIDE-CLOSED-EARLY c105 (~22h short, cutover executed cleanly)",
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
-  "toolCount": 142,
+  "toolCount": 146,
   "schedulerFileCount": 64,
   "cronJobCount": 76,
   "knowledgeFileCount": 25,
@@ -51,7 +51,7 @@
     "mcpServerHealth": "healthy",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "toolCount": 142,
+    "toolCount": 146,
     "lastSuccessfulCycle": "2026-05-18T07:22:00Z"
   }
 }

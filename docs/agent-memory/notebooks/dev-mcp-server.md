@@ -4,6 +4,22 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1959a — exactOptionalPropertyTypes tsc fix (2026-05-20, DONE — commit b144f560)
+
+**Root Cause:** Commit 79ac45e9 (task-lock Phase 1) introduced 3 `exactOptionalPropertyTypes` violations + 2 `noUncheckedIndexedAccess`/cast errors in test files. Pre-push hook was blocking ALL remote pushes (18 local commits stuck).
+
+**Fix (4 files, type-only):**
+- `coordinationStore.ts:272` — `{ claimed: false, current_holder: holderRow ?? undefined }` → ternary omitting key when null (Option A)
+- `coordinationTools.ts:108` — `ttl_seconds` spread conditionally via `...(ttl_seconds !== undefined ? { ttl_seconds } : {})`
+- `coordinationTools.ts:204` — `kind`, `owner_agent`, `expired` spread conditionally in listHeldTasks call
+- Test files: `locks[0]!` non-null assertions + `as unknown as` intermediate cast
+
+**Results:** tsc 0 errors, 9330 pass / 283 fail (AC: ≥9287 / ≤284), `git push origin main` succeeded (bef8e9cf → b144f560). All 1958a artifacts now on remote.
+
+**NEXT: qa** — verify commit b144f560 against ACs.
+
+---
+
 ### Task 1958a — alertDigestJob + summaryJob:daily startup catchup + recoverMissedExecutions (2026-05-20, IMPL DONE — commit 84c2b375)
 
 **Root Cause:** Event-loop starvation (5h OHLCV backfill at startup / bctcReparseJob zombies) caused node-cron to miss cron windows at 14:00 UTC (alertDigestJob) and 15:30 UTC (summaryJob:daily). `recoverMissedExecutions=false` (node-cron default) means missed windows are permanently skipped. These 2 jobs had NO startup catchup, unlike morningBriefingJob/eveningSummaryJob/franceSummaryJob.

@@ -45,7 +45,6 @@
 ---
 
 ## Todo
-| 1951d | **Sprint 1951 Phase 1 parallel-run cutover — GATE CLEARED 2026-05-20** — Unblocked by 1957b (cron-cowork-team skill + cowork-master-cron-runbook deployed). Cutover will delete 12 legacy RemoteTriggers once master `*/15 CronCreate` + session-start re-registration are in place. POST-CUTOVER RUNBOOK: (a) Session-start: invoke `.claude/skills/cron-cowork-team/SKILL.md` to re-register master `*/15 * * * *` CronCreate; (b) Session-exit detection: no cowork signals >20 min market hours → re-register; (c) CLAUDE.md hook pointer to skill. Runbook: `docs/protocols/cowork-master-cron-runbook.md`. Then: CronDelete 12 legacy RemoteTriggers. Update SSOT: `trigger_id=null`, `trigger_status='deleted'` for 12 slots. Emit router signal confirming cutover. AC: (1) SSOT updated; (2) 12 legacy RemoteTriggers deleted via MCP; (3) cowork cycle fires within 2h post-merge; (4) signal confirms cutover. Size=XS. Zone=`.claude/` + `docs/data/`. Owner=ops. | MEDIUM | TASK | ops | — | — |
 | post-1945-verdict-resolution-scored-pct | **Sprint 1945 AC-1 OBSERVE** — gate 2026-05-20T07:22Z (48h post-1945a deploy). AC: `alert_accuracy.scored_pct` rises ≥60% AND `unknowns_30d` drops by ≥100 (was 36%/520 pre-1945a). If miss → 1947b-verdict-resolution-followup (HIGH FIX, dev-mcp-server). | HIGH | OBSERVE | ops | — | 2026-05-20T07:22Z |
 | post-1945-bug-storm-silence | **Sprint 1945 AC-2 OBSERVE** — gate 2026-05-20T07:22Z (48h). AC: zero new `[bug] verdictResolutionJob` Telegram messages for 48h post-1945a deploy. Any new msg → 1947c-verdict-resolution-bug-followup. | MEDIUM | OBSERVE | ops | — | 2026-05-20T07:22Z |
 | 1941b-signal-outcomes-seed-window | **Sprint 1941 TIER 2** — 7-day OBSERVE on `signal_outcomes` seeding. AC by 2026-05-25: ≥30 resolved rows (outcome_24h ∈ correct/incorrect/neutral) across ≥3 distinct `signal_type` values. Failure mode → bug task to dev-mcp-server (seed path broken in postSignal wrapper). No code change unless escalation triggers. | MEDIUM | OBSERVE | ops | — | 2026-05-25 |
@@ -63,6 +62,8 @@
 ---
 
 ## Review
+
+| 1951d | **[in-progress 2026-05-20 ops dispatch]** Sprint 1951 Phase 1 parallel-run cutover — Delete 12 legacy RemoteTriggers, update SSOT (cowork-schedule.json trigger_status='deleted'), verify cowork cycle fires post-merge. Gate 1957b CLEARED. Runbook: `docs/protocols/cowork-master-cron-runbook.md`. AC: (1) SSOT updated; (2) 12 legacy RemoteTriggers deleted via MCP; (3) cowork cycle fires within 2h post-merge; (4) signal confirms cutover. Handoff: `docs/handoffs/TASK_1951d.md` | MEDIUM | TASK | ops | docs/handoffs/TASK_1951d.md | — |
 
 ---
 ## Done

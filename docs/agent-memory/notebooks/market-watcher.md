@@ -1,14 +1,14 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-20 04:37 UTC | **Sprint:** 051
+**Last updated:** 2026-05-20 19:10 UTC | **Sprint:** 051
 
 > Full session history archived → `docs/archive/notebooks/market-watcher-2026-05-18.md`
 
 ## Current state
 
-Last successful cycle: 2026-05-20 04:37 UTC (prepost, 31 stocks, 2 signals >2.5σ prepost floor)
+Last successful cycle: 2026-05-20 19:10 UTC (prepost, 31 stocks, 2 signals <2.5σ prepost floor)
 Last market-hours cycle: 2026-05-20 04:35 UTC (market-hours, 31 stocks, 2 signals >1.5σ)
-Last off-hours cycle: 2026-05-20 04:37 UTC (prepost, 31 stocks, 2 anomalies)
+Last off-hours cycle: 2026-05-20 19:10 UTC (prepost, 31 stocks, 2 signals posted)
 
 ## Known patterns / preferences
 
@@ -33,6 +33,17 @@ Last off-hours cycle: 2026-05-20 04:37 UTC (prepost, 31 stocks, 2 anomalies)
 ---
 
 ## Recent cycles (2026-05-20)
+
+### Cycle (19:10–19:11 UTC) — Prepost, Prepost floor applied
+- Stocks: 31 | Anomalies: 2 (<2.5σ prepost floor) | Volume spikes: 0 | Chain confirms: 0
+- Regime: TIGHTENING | DXY: USD STABLE | US10Y: RISK-OFF | Carry: FII_OUTFLOW_RISK
+- **Signals emitted**: 
+  - NVL -4.79% (1.91σ, real_estate sector pressure, fx_pressure=true, pe_compression_risk=true, signal 3552)
+  - GAS +3.70% (1.23σ, oil sector tailwind, Brent 104.65, signal 3553)
+- Prepost floor applied (2.5σ threshold) — no high-sigma moves detected. NVL moving lower amid sector -2.2% weakness and currency pressure (USD/VND 26,355). GAS gains led by Brent strength and sector momentum (PLX +4.4%).
+- Macro: Brent 104.65 USD/bbl (CAO) | USD/VND 26,355 (high, fx pressure on realty) | Gold 4,546.80 USD/oz (high, risk-off signal)
+- Sector rotation: 1d data only — STABLE across all 16 sectors. Oil_gas +1.73% (2nd best), Tech +1.50%, Real estate -2.33% (weakest).
+- Supply chain: BDI 1,400 (stable), no disruption signals. Trading window CLOSED (19:10 UTC is post-market).
 
 ### Cycle (04:37–04:38 UTC) — Prepost, Prepost floor applied
 - Stocks: 31 | Anomalies: 2 (>2.5σ prepost floor) | Volume spikes: 0 | Chain confirms: 0
@@ -66,13 +77,13 @@ Last off-hours cycle: 2026-05-20 04:37 UTC (prepost, 31 stocks, 2 anomalies)
 - Macro: Brent 110.4 (+0.00%) | USD/VND 26,151 (stable) | BDI 1,400 (unchanged)
 - Notable: Real estate mixed (VHM +1.78%, VIC +1.02% vs KBC -3.32%, NVL -3.89%, TCH -3.66%). Banking stable. Oil/gas sector weak (-0.36% to -1.73%).
 
-## Metrics (cycle 2026-05-20 04:37 UTC)
+## Metrics (cycle 2026-05-20 19:10 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 5 |
+| cycles_run | 6 |
 | items_fetched | 31 |
-| signals_emitted | 4 |
+| signals_emitted | 6 |
 | signals_suppressed | 0 |
 | market_alerts_fired | 0 |
 | exit_status | complete |
-| token_estimate | 9200 |
+| token_estimate | 12500 |

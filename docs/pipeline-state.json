@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "approved",
-  "currentSprint": "1959a",
-  "activeTaskId": "1959a",
-  "nextAgent": "pm",
-  "nextPrompt": "TASK 1959a QA-APPROVED — commit b144f560. tsc 0 errors, 29/0 coordination tests, remote HEAD confirmed. Mark 1959a Done in TASKS.md (already done by QA). All 1958a + 1959a artifacts on remote. Pipeline unblocked.",
-  "updatedAt": "2026-05-20T21:00:00Z",
-  "updatedBy": "qa",
-  "lastCompleted": "Sprint 1959a APPROVED — exactOptionalPropertyTypes tsc fix (commit b144f560). QA verified: tsc 0 errors, 29/0 coordination tests, remote HEAD b144f560 confirmed. TASKS.md updated."
+  "status": "idle",
+  "currentSprint": "1960c",
+  "activeTaskId": null,
+  "nextAgent": "idle",
+  "nextPrompt": "PM: 1959a is DONE + APPROVED. Agent-father is autonomously executing 1960c (Phase 3 flows + tool-packages). Dispatch: 1951d (ops cutover, gate cleared 2026-05-20) is next actionable Todo task. 1948a/1948b/1948c remain BLOCKED on post-1945-verdict-resolution-scored-pct gate (no signal yet). 1954b awaits PO decision per recurring-bug-escalation policy. WIP=0.",
+  "updatedAt": "2026-05-20T21:15:00Z",
+  "updatedBy": "pm",
+  "lastCompleted": "Sprint 1959a DONE — coordinationStore+coordinationTools exactOptionalPropertyTypes fix (commit 6c4e0f8a / b144f560 remote). 1960a architect brief DONE (commit ce938a71). 1960b PM plan DONE (commit 707f6e74). 1960c autonomous in-progress (commits 448eb7f3 + 2a099357)."
 }
