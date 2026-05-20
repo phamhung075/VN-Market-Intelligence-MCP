@@ -119,7 +119,24 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 <!-- jump:pipeline-resume -->
 ## Step 0b — Pipeline Resume + Session Gate
 
-- `in_progress` AND `nextAgent` AND `updatedAt < 24h` → spawn `nextAgent` immediately. JUMP TO `execute`.
+- `in_progress` AND `nextAgent` AND `updatedAt < 24h` → dispatcher-wrap then spawn `nextAgent`. JUMP TO `execute`.
+  ```
+  # S2 dispatcher-wrap:
+  bare_task_id = pipeline_state.activeTaskId   # read from docs/pipeline-state.json
+  resume_key   = "task:" + bare_task_id
+  outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id: resume_key, task_kind: "sprint-task",
+    owner_agent: "dev-team", ttl_seconds: 3600,
+    payload: '{"site":"S2","spawning":"' + nextAgent + '"}'
+  })
+  if not outer_claim.claimed:
+    log "[dev-team] SKIP pipeline resume " + resume_key + " — held by peer session"
+    # fall through to Step 1 (do NOT spawn)
+  else:
+    Agent(nextAgent, context...)
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
+    JUMP TO execute
+  ```
 - `in_progress` AND `updatedAt ≥ 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.
 - `"idle"` or missing → fall through to Step 1.
 
@@ -131,9 +148,26 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 <!-- jump:po-triage -->
 ## Step 1 — PO Triage
 
+```
+# S3 dispatcher-wrap — dedup guard before PO spawn:
+triage_key  = "task:po-triage-" + $(date -u +"%Y%m%d")   # e.g. task:po-triage-20260521
+outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: triage_key, task_kind: "sprint-task",
+  owner_agent: "dev-team", ttl_seconds: 1800,
+  payload: '{"site":"S3","spawning":"po"}'
+})
+if not outer_claim.claimed:
+  log "[dev-team] SKIP PO triage — already running in peer session"
+  JUMP TO end   # do NOT spawn po
+# Claim succeeded — spawn PO:
+```
 → Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/TASKS.md`, `git log --oneline -30`, `git branch`
 → PO contract: `.claude/flows/po/main.md` § Role in dev-team flow
 → Return: `NOTHING` (→ idle EXIT) | `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
+```
+# After PO spawn returns:
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_key })
+```
 
 ---
 
@@ -147,8 +181,8 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 | SPRINT-S | architect → pm | each reads own flow |
 | SPRINT-M | ba → architect → pm | sequential |
 | SPRINT-L | ba → architect → pm; post-merge architect review | sequential |
-| UNBLOCK | spawn `{route_to}` | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
-| CLEAN | spawn `qa` with branch list | qa flow handles cleanup → EXIT |
+| UNBLOCK | S4: `outer_claim=task_claim("task:"+batch_id,"dev-team",ttl=3600)`; if claimed: spawn `{route_to}` + `task_release`; else: log SKIP → EXIT | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
+| CLEAN | S4: `outer_claim=task_claim("task:"+batch_id,"dev-team",ttl=3600)`; if claimed: spawn `qa` with branch list + `task_release`; else: log SKIP → EXIT | qa flow handles cleanup → EXIT |
 
 Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into handoff/RETURN per task. Step 3 zone-routes by this field. Agent contracts: each agent's `flows/<agent>/main.md` § Role in dev-team flow.
 
