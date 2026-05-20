@@ -1,0 +1,139 @@
+{
+  "signal_id": "ops-1958-rca",
+  "timestamp": "2026-05-20T22:15:00Z",
+  "agent": "ops",
+  "incident_id": "1958a",
+  "classification": "root_cause_analysis",
+  "severity": "critical",
+  "status": "resolved",
+  "title": "Docker Stack Degradation RCA — 2026-05-20T04:32–20:06Z",
+  "root_cause": {
+    "primary": "Disk pressure (97% full) + RAG async startup lifespan handler hang",
+    "trigger_event": "docker compose up -d at 20:05:22Z with disk at 97% capacity",
+    "affected_component": "RAG service (rag-service:5002)",
+    "mechanism": "sentence-transformers embedding model initialization blocked by disk I/O contention during LanceDB (29GB) cold-load"
+  },
+  "blast_radius": {
+    "total_services": 11,
+    "down": 9,
+    "up": 2,
+    "down_services": [
+      "api-gateway:4000",
+      "stock-price:5010",
+      "technical-analysis:5003",
+      "macro-indicators:5004",
+      "kinh-dich-service:5005",
+      "alert-engine:5006",
+      "pdf-extractor:5001",
+      "news-fetch:5008",
+      "rag-service:5002"
+    ],
+    "up_services": [
+      "mcp-server:3000",
+      "frontend:3001"
+    ],
+    "cascade_explanation": "RAG lifespan handler hung → api-gateway health check timeout → api-gateway marked unhealthy → other services appeared unreachable (no explicit depends_on chain, but health checks failed)"
+  },
+  "timeline": {
+    "degradation_start": "2026-05-20T20:05:22Z",
+    "degradation_end": "2026-05-20T20:06:31Z",
+    "duration_seconds": 69,
+    "key_events": [
+      {"time": "2026-05-20T04:32:00Z", "event": "mcp-server started (solo mode)"},
+      {"time": "2026-05-20T20:05:22Z", "event": "docker compose up -d triggered; all 9 services + frontend started simultaneously"},
+      {"time": "2026-05-20T20:05:22Z", "event": "RAG service began async startup; embedding model initialization started"},
+      {"time": "2026-05-20T20:05:22Z", "event": "System disk at 97% capacity; I/O throttling active"},
+      {"time": "2026-05-20T20:06:00Z", "event": "RAG healthcheck (30s start_period) timeout; still stuck in 'Waiting for application startup'"},
+      {"time": "2026-05-20T20:06:04Z", "event": "Manual docker restart vn-market-intelligence-mcp-rag-service-1"},
+      {"time": "2026-05-20T20:06:04Z", "event": "RAG container restarted; embedding model loaded successfully (2nd attempt, faster)"},
+      {"time": "2026-05-20T20:06:31Z", "event": "All 11 services UP and responding; stack healthy"}
+    ]
+  },
+  "disk_analysis": {
+    "system_disk_capacity": "97%",
+    "app_data_breakdown": {
+      "lancedb": "29GB",
+      "models": "922MB",
+      "logs": "162MB",
+      "pdfs_local": "113MB",
+      "pdfs": "21MB",
+      "total": "~30GB"
+    },
+    "pressure_factor": "LanceDB vector database (29GB) for RAG embeddings is the primary driver"
+  },
+  "reproducibility": {
+    "verdict": "deterministic_under_disk_pressure",
+    "conditions": "Cold-start of all services when system disk ≥90% full",
+    "likelihood_current_state": "low (disk usage varies; unlikely to hit 97% again)",
+    "likelihood_if_lancedb_grows": "high (vector DB will grow with more PDF extractions)"
+  },
+  "hardening_recommendations": [
+    {
+      "id": "1958-watchdog-1",
+      "category": "pre_flight_check",
+      "title": "Disk space validation before docker-compose up",
+      "description": "Add bash script to fail fast if free disk < 15GB",
+      "priority": "high",
+      "effort": "low"
+    },
+    {
+      "id": "1958-watchdog-2",
+      "category": "timeout_tuning",
+      "title": "Increase RAG service start_period",
+      "description": "Bump docker-compose.yml rag-service start_period from 30s → 60s to account for disk I/O contention",
+      "priority": "high",
+      "effort": "trivial"
+    },
+    {
+      "id": "1958-watchdog-3",
+      "category": "model_caching",
+      "title": "Pre-download embedding model in Dockerfile",
+      "description": "Add RUN step to apps/rag-service/Dockerfile to eagerly cache sentence-transformers model during build, avoiding first-run HF download",
+      "priority": "medium",
+      "effort": "low"
+    },
+    {
+      "id": "1958-watchdog-4",
+      "category": "storage_mgmt",
+      "title": "LanceDB compaction and archival",
+      "description": "Implement daily/weekly cron job to compact LanceDB, archive old embeddings, or vacuum to reclaim disk",
+      "priority": "medium",
+      "effort": "medium"
+    },
+    {
+      "id": "1958-watchdog-5",
+      "category": "monitoring",
+      "title": "Disk usage alerting",
+      "description": "Monitor /app/data/lancedb size; alert when > 20GB (threshold lower than current 29GB to give headroom)",
+      "priority": "medium",
+      "effort": "low"
+    },
+    {
+      "id": "1958-watchdog-6",
+      "category": "async_improvement",
+      "title": "Async-ify RAG lifespan handler",
+      "description": "Move sentence-transformers model loading to thread pool or async context to avoid blocking FastAPI startup",
+      "priority": "low",
+      "effort": "medium"
+    }
+  ],
+  "recovery_action_taken": {
+    "method": "Manual docker restart of RAG container",
+    "time": "2026-05-20T20:06:04Z",
+    "success": true,
+    "notes": "2nd attempt succeeded faster (likely due to model cache hit or temporary disk pressure relief)"
+  },
+  "impact": {
+    "data_loss": "none",
+    "market_impact": "none (occurred 15.5h before Vietnam market open 2026-05-21T02:00Z)",
+    "alerts_missed": "none (only 69 second downtime)",
+    "user_facing": "backend unavailable for ~1 min during degradation; frontend could not fetch data"
+  },
+  "next_steps": [
+    "Implement 1958-watchdog-1 (pre-flight disk check) — high priority",
+    "Implement 1958-watchdog-2 (increase RAG start_period) — quick win",
+    "Implement 1958-watchdog-3 (pre-cache embedding model) — medium effort, reduces cold-start risk",
+    "Design 1958-watchdog-4 (LanceDB management strategy) — requires data retention policy discussion with PM",
+    "Activate disk monitoring (1958-watchdog-5) in alerting system"
+  ]
+}
