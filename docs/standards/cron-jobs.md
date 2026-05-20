@@ -131,6 +131,8 @@ Operator runbook (telemetry meanings + recovery) → `docs/protocols/chef-pipeli
 | `13 20 * * *` | tran-ngoc-bau quality audit | sonnet | 1x/day 03:13 VN next day. Audits chef narrative for TNB layer walk completeness (moved from `0 13 * * *` by Sprint 1949-T9). |
 | `*/10 2-8 * * 1-5` | ops-emergency (escalation hook) | haiku | Market hours, 10-min cadence. **Only runs if VPS watchdog flags issue.** Otherwise silent observer. |
 
+**cowork-team collision-safety (Sprint 1955 Phase 2):** Each matched slot is wrapped in `task_claim(task_kind=cowork-slot, ttl_seconds=900)` before spawning. If a second terminal fires the same nominal_tick, `task_claim` returns `claimed=false` and that slot is silently skipped — no duplicate cowork spawn. Model 1: master holds lock, no agent heartbeat, 15-min TTL auto-expires. Full protocol: `docs/protocols/task-lock-protocol.md`.
+
 **Token economy rules applied:**
 - All cron prompts are minimal (~20 words) — agent `.md` has full instructions
 - All agents have Early Exit guards — skip full scan when no changes detected
