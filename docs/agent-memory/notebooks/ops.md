@@ -1,5 +1,5 @@
 # Ops — Notebook
-
+**Last updated:** 2026-05-20 22:15 UTC | **Sprint:** 1958 (RCA complete)
 **Last updated:** 2026-05-20 09:45 UTC | **Sprint:** 1951d (cutover partial)
 
 > Full session history archived → `docs/archive/notebooks/ops-2026-05-20.md`
