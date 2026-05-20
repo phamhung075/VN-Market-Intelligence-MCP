@@ -4,6 +4,21 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task FIX-listunresolvedreports — c220 caller name fix (2026-05-20, DONE)
+
+**Diagnosis:** Case (a) — tool `list_unresolved_reports` was already implemented in `telegramReportTools.ts` (line 357) and registered via `registerTelegramReportTools` in `registry.ts` (line 145). Live server health confirmed toolCount=146. The bug was in 4 flow file lines that used camelCase pseudocode `listUnresolvedReports()` instead of MCP tool name `list_unresolved_reports`.
+
+**Files fixed (flow files only, no code changes):**
+- `.claude/flows/dev-team/main.md` lines 18 + 134
+- `.claude/flows/dev-team/post-cycle.md` line 18
+- `.claude/flows/po/main.md` line 20
+
+**Results:** 12/12 mcp-drift tests GREEN, tsc 0 errors, no container rebuild needed.
+
+**Signal:** `docs/signals/dev-mcp-server-c220-fix-unresolved-reports-done.json` → qa
+
+---
+
 ### Task 1959a — exactOptionalPropertyTypes tsc fix (2026-05-20, DONE — commit b144f560)
 
 **Root Cause:** Commit 79ac45e9 (task-lock Phase 1) introduced 3 `exactOptionalPropertyTypes` violations + 2 `noUncheckedIndexedAccess`/cast errors in test files. Pre-push hook was blocking ALL remote pushes (18 local commits stuck).

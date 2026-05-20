@@ -17,7 +17,7 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 > Canonical orchestration: `.claude/flows/dev-team/main.md`
 
 **Called from:** dev-team Step 1 — triage all inputs and classify work
-**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `listUnresolvedReports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch`
+**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `list_unresolved_reports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch`
 **Produces:** `NOTHING` (→ idle EXIT) or `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])` where type ∈ {FIX, SPIKE, SPRINT-S, SPRINT-M, SPRINT-L, UNBLOCK, CLEAN}
 **Hand off to:** main terminal — routes batch by type into Step 2 (planning) or Step 3 (direct FIX)
 **Composes with:** architect/ba/pm in Step 2 (never directly — main terminal is the router)

@@ -15,7 +15,7 @@ log: "[dev-team] Expired {result.expired} monitoring reports"
 **4.1 — Post-execution checks:**
 1. Non-main branches remain → add CLEAN batch → Step 1.
 2. `read_telegram_reports(status="new").length > 0` → `send_telegram(work, "Found N new report(s)")` → Step 1.
-3. `listUnresolvedReports()` non-monitoring count > 0 → `send_telegram(work, "Found N unresolved")` → Step 1.
+3. `list_unresolved_reports()` non-monitoring count > 0 → `send_telegram(work, "Found N unresolved")` → Step 1.
 4. **Monitoring-only guard (C-6):** ALL unresolved are monitoring → `send_telegram(work, "N in monitoring — no action.")` → archive + exit. (Prevents infinite loop.)
 5. **Archive resolved** (fixed/wontfix/duplicate): `process_telegram_report(id, delete_telegram_message=true)` for each.
 6. Nothing remaining → `send_telegram(work, "Dev loop idle.")` → EXIT.

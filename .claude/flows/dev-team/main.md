@@ -15,7 +15,7 @@ Cross-team work (e.g. cowork agent reports a code bug): write a signal row to `d
 Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
 
 ## Input
-`read_telegram_reports(status="new")` | Unresolved reports: `WHERE resolution NOT IN ('fixed','wontfix','duplicate') AND status='processed'` | docs/TASKS.md | git log (last 30 commits) | `git branch`
+`read_telegram_reports(status="new")` | `list_unresolved_reports()` | docs/TASKS.md | git log (last 30 commits) | `git branch`
 
 ## Output
 Tasks executed → docs/TASKS.md updated → WORK notified
@@ -131,7 +131,7 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 <!-- jump:po-triage -->
 ## Step 1 — PO Triage
 
-→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `listUnresolvedReports()`, `docs/TASKS.md`, `git log --oneline -30`, `git branch`
+→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/TASKS.md`, `git log --oneline -30`, `git branch`
 → PO contract: `.claude/flows/po/main.md` § Role in dev-team flow
 → Return: `NOTHING` (→ idle EXIT) | `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
 
