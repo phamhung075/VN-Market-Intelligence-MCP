@@ -4,7 +4,7 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
-### Task 1958a — alertDigestJob + summaryJob:daily startup catchup + recoverMissedExecutions (2026-05-20, IMPL DONE)
+### Task 1958a — alertDigestJob + summaryJob:daily startup catchup + recoverMissedExecutions (2026-05-20, IMPL DONE — commit 84c2b375)
 
 **Root Cause:** Event-loop starvation (5h OHLCV backfill at startup / bctcReparseJob zombies) caused node-cron to miss cron windows at 14:00 UTC (alertDigestJob) and 15:30 UTC (summaryJob:daily). `recoverMissedExecutions=false` (node-cron default) means missed windows are permanently skipped. These 2 jobs had NO startup catchup, unlike morningBriefingJob/eveningSummaryJob/franceSummaryJob.
 

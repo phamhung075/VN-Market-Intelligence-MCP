@@ -3,7 +3,7 @@
   "task": "1958a",
   "agent": "dev-mcp-server",
   "timestamp": "2026-05-20T17:00:00Z",
-  "commit": "TBD",
+  "commit": "84c2b375",
   "ac_status": {
     "AC-1": "PASS — RCA documented in TASK_1958a.md Findings section: event-loop starvation + missing recoverMissedExecutions + missing startup catchups",
     "AC-2": "PASS — fix deploys idempotently: recoverMissedExecutions fires at most once per missed window; alreadySentToday() dedup guard in alertDigestJob prevents double-send; summaryJob:daily has no dedup but expression matches only once/day so at most one recovery fire",
