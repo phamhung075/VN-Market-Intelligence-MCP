@@ -1,0 +1,54 @@
+{
+  "from": "po",
+  "to": "router",
+  "type": "triage-decision",
+  "priority": "medium",
+  "createdAt": "2026-05-20T04:23:00Z",
+  "cycle": "c215",
+  "subject": "Triage 3 Tier-2 anomalies (B-10 CRITICAL, B-05a WARN, B-08 WARN) — DECISION: OBSERVE, no Sprint 1958, do not inject into 1957",
+  "decision": "OBSERVE_ONLY",
+  "sprint_new": null,
+  "sprint_inject": null,
+  "rationale": [
+    "Tier-3 deep-DB integrity audit (2026-05-20T04:20Z, ~2 minutes after Tier-2) RE-CLASSIFIED the same BCTC anomaly as B-06 WARN (21h age, within 168h weekly SLA, well below the 120-min critical SLA Tier-2 used). Tier-3 explicitly notes 'End of Q2 earnings window — no discovery activity normal'.",
+    "Tier-3 confirmed C-03 (BCTC Q1 2026 ≥26) ACCUMULATING + C-04 low_confidence in normal range + C-10 pdf_extractor 87.1% success + C-11 146 runs/7d + C-16 zero stale-pending-BCTC >72h. The write chain is alive; only the inbound VPS discovery rate is quiet.",
+    "B-10's '120 min SLA' is a Tier-2 cadence heuristic that doesn't model earnings-window seasonality. Tier-3's 168h SLA is the structural one. B-10 == B-05a == B-06 — single underlying phenomenon, three different framings.",
+    "B-08 vn-news-fetch UNHEALTHY (uptime 1h 1m) was already self-recovering by Tier-3 — C-06 news_articles 'fresh (42s)' confirms write path alive. Transient container restart, not a bug.",
+    "Root cause of cowork silence is NOT BCTC fetch chain. Diagnostic in po c214 notebook: cowork silence = session-scoped master CronCreate evaporated. 1957a (12 RemoteTriggers reactivated, ops signal completed 00:00Z) is the actual fix and is propagating now. First MARKET verification window: 2026-05-20T05:15Z chef-morning (≤53min away)."
+  ],
+  "evidence_anti_root_cause_link": {
+    "claim": "BCTC stale is NOT same root cause as cowork silence",
+    "proof": [
+      "Cowork silence root = RemoteTrigger SSOT slots all last_fired=null + session-scoped CronCreate; fix = 1957a (DONE)",
+      "BCTC discovery root = VPS push cadence (1 push in 24h) during earnings-quiet window; Tier-3 confirms write chain downstream is healthy and accumulating",
+      "1957a triggers do NOT call BCTC fetch — they call cowork agents (chef/tnb/news-scout/etc) which consume already-written intelligence",
+      "Therefore: fixing 1957a does NOT mechanically unblock BCTC discovery. They are independent zones."
+    ]
+  },
+  "decision_does_fixing_1957a_unblock_bctc": false,
+  "decision_does_bctc_need_immediate_dispatch": false,
+  "observation_gates_covering_this": [
+    "OBSERVE-1953g (2026-05-21T02:30Z) — Q1-2026 financial_reports coverage ≥26 (covers BCTC write-chain health)",
+    "Sprint 1954 backlog (1954b→1954f) — already structured to consolidate BCTC write chain when dispatched (gated by 1954a-verified, which is Done)",
+    "system-auditor Tier-1 next cycle ~04:50Z (in <30 min) — re-checks VPS push cadence; will dedup if still stale, will alert if cadence drops further",
+    "system-auditor Tier-2 next cycle 06:00Z — re-runs full freshness sweep"
+  ],
+  "dashboard_actions": [
+    "B-10 row → reassign from ops section: mark READ + payload 'po c215 → OBSERVE (Tier-3 reclassified to B-06 WARN, earnings-window-quiet; coverage gate 1953g 2026-05-21T02:30Z)'",
+    "B-05a row → mark READ + payload 'po c215 → OBSERVE (same root as B-10/B-06; VPS push cadence normal for late-May earnings-quiet window)'",
+    "B-08 row → mark READ + payload 'po c215 → OBSERVE (transient container restart; Tier-3 C-06 confirms news write-path fresh at 42s)'"
+  ],
+  "tasks_md_actions": [
+    "No new task entries. No injection into Sprint 1957.",
+    "Append OBSERVE-1957d to Backlog tracking BCTC VPS push cadence next 72h (auto-close if push count rises OR Q1-2026 coverage ≥26 lands; escalate to 1958 only if both gates miss)."
+  ],
+  "wip_check": "WIP=0/2 (1957a Done, 1957b not yet dispatched-by-router but signal exists, 1957c pending 1957b). No collision. Cap not breached.",
+  "recurring_bug_escalation_check": "Not triggered. Zero fix commits to BCTC code in this cycle — observation only. Freeze (until 1954c) still applies to PATCHES, not to observations.",
+  "next_review": "2026-05-20T06:00:00Z (post-Tier-2 audit + 1957a 2h verification window check)",
+  "files_touched": [
+    "docs/signals/po-1958-bctc-stale-triage.json (this file)",
+    "docs/TASKS.md (append OBSERVE-1957d)",
+    "docs/signals/DASHBOARD.md (3 OPEN → READ with payload)",
+    "docs/agent-memory/notebooks/po.md (overwrite c215)"
+  ]
+}

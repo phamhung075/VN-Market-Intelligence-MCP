@@ -1,0 +1,43 @@
+{
+  "from": "agent-father",
+  "to": ["po", "ops"],
+  "type": "task-complete",
+  "priority": "high",
+  "sprint": "1957",
+  "task": "1957b",
+  "createdAt": "2026-05-20T00:00:00Z",
+  "status": "done",
+  "summary": "Phase-1 completion artefacts built: cron-cowork-team skill + cowork-master-cron-runbook + CLAUDE.md pointer.",
+  "deliverables": [
+    {
+      "file": ".claude/skills/cron-cowork-team/SKILL.md",
+      "status": "created",
+      "description": "Session-start hook. Idempotent CronCreate registration for */15 master dispatcher. Includes CronList detect (no-op if present), CronCreate with durable:true, post-verify, and CronDelete admin section."
+    },
+    {
+      "file": "docs/protocols/cowork-master-cron-runbook.md",
+      "status": "created",
+      "description": "Operational runbook. Covers: architecture summary, silence-detection signatures (chef >6h, alert-commander >24h, no signals >20min), session-start procedure, Layer B recovery flow, Layer A RemoteTrigger recovery, diagnostic commands, escalation criteria, 5-test sanity checklist, prevention guidance."
+    },
+    {
+      "file": "CLAUDE.md",
+      "status": "updated",
+      "description": "1-line /cron-cowork-team pointer added under new Skills section in Defaults block."
+    }
+  ],
+  "acceptance_verified": [
+    "AC-1: Skill present at .claude/skills/cron-cowork-team/SKILL.md — idempotent (CronList check step 1, create only if absent).",
+    "AC-2: Skill second invocation = no-op by design (Step 1 exits if existing entry found).",
+    "AC-3: Runbook has Session-start procedure (§3), Silence-detection rules (§2), Recovery flow (§4), Sanity tests (§8).",
+    "AC-4: CLAUDE.md has /cron-cowork-team pointer under Skills section.",
+    "AC-5: Signal file emitted (this file).",
+    "AC-6: DASHBOARD.md + TASKS.md updated (1957b → DONE, 1957c unblocked).",
+    "AC-7: Notebook overwritten."
+  ],
+  "next_action": "ops: execute 1957c (add 1957b-done to 1951d Blocked-by in docs/TASKS.md). This signal = 1957b-done gate cleared.",
+  "do_not_touch": [
+    "12 RemoteTriggers (ops 1957a stopgap — active, do not modify)",
+    "1951d cutover plan (blocked on 1957c)",
+    "BCTC anomalies (separate PO triage)"
+  ]
+}

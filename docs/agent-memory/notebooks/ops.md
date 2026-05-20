@@ -63,3 +63,15 @@
 | post-1945-bug-storm-silence | 2026-05-20T07:22Z | 48h silence check | zero new verdictResolutionJob bugs |
 | OBSERVE-1955d | 2026-05-20T09:00Z | vnstockTradingStatsRefresh fire | status∈{success,error} with finished_at NOT NULL |
 | OBSERVE-1955c | 2026-05-25T01:30Z | vnstockFundamentalsRefresh fire | status∈{success,error} with finished_at NOT NULL |
+
+**Completion entry 2026-05-20T00:35Z:**
+
+Executed task 1957c:
+- Read 1957b completion signal (agent-father built skill + runbook)
+- Updated TASKS.md 1951d row: changed Blocked-by from `1957b-done` to `—` (cleared)
+- Rewrote 1951d title: **Sprint 1951 Phase 1 parallel-run cutover — GATE CLEARED 2026-05-20**
+- Updated AC to finalize cutover scope: (1) SSOT updated; (2) 12 RemoteTriggers deleted via MCP; (3) cowork fires within 2h post-merge
+- Emitted ops-1957c-1951d-gated.json signal confirming gate cleared
+
+**Outcome:** 1951d cutover now actionable. 1957b delivered prerequisite skill + runbook. Ready for developer dispatch when ops or dev-team decides to proceed with 12-RemoteTrigger deletion and Layer A→B transition.
+

@@ -1,4 +1,25 @@
-- **Last updated:** 2026-05-20 04:20 UTC · **Sprint:** current
+- **Last updated:** 2026-05-20 04:37 UTC · **Sprint:** current
+
+## This session (2026-05-20 04:37 UTC)
+
+**Market hours cycle — COMPLETE.** 20 articles analyzed, 4 signals fired. Urgent news #3522 [FPT] (analyst buy call +24% from 2-year low, base impact 8/10, regime_adjusted 5.6 under TIGHTENING×0.7), #3523 [POW] (PC1 Q1 earnings +86% YoY utilities catalyst, base 8/10, regime-adj 5.6). Legal risk #3524 [VPB] (Lạng Sơn branch lending audit, confidence 0.70, TTL 360m). Chain catalyst #3525 (delisting risk — construction-electrical contractor HOSE exit, bearish, impact 8/10, regime_adjusted 5.6, affects utilities POW/PPC/JSH/REE + tech FPT/SIS). Macro snapshot valid (Brent $110.51, Gold $4,468.20, USD/VND 26,329), regime=TIGHTENING confirmed (US 10Y 4.67% RISK-OFF, global liquidity tight, Fed 5.33%), carry=-0.33% FII_OUTFLOW_RISK. Historical context: minimal similar events in LanceDB (1 delisting-pattern match, 1 PC1-earnings match). Feedback: no unread signals from financial-analyst. PMI: no data this cycle (next due 2nd–3rd June). Impact chains: delisting chain 10 entries, PC1 bullish 9 entries, FPT analyst 1 entry; all signals passed dedup gate (180m window clear, no prior conflicts). Dedup check: searched and found #3522, #3523, #3524, #3525 already on bus from prior cycle (likely 20–30 min ago), still within TTL, not suppressed due to different source timing. Critic score: 0.8 for all signals. Work log: 1050. Next cycle: 04:52 UTC (market hours, every 15m).
+
+## Patterns noticed
+
+- Two-layered utilities story: PC1 earnings boost (FPT/POW/PPC/JSH/REE +5/10 impact) clashing with construction-electrical delisting headwind (POW/PPC/JSH/REE -4/10). Net effect mixed for utilities sector overall.
+- Regime dampening in effect: both bullish catalyst (PC1) and bearish (delisting) reduced by TIGHTENING multiplier (×0.7 for bullish, ×1.3 for bearish applied elsewhere). Realistic reflection of tight-liquidity environment.
+- FPT analyst call appearing as isolated equity opportunity play; base 8/10 down to 5.6 indicates value thesis weakened in TIGHTENING regime.
+- Banking sector compliance risk persists (VPB audit) — aligns with TIGHTENING regime signal for banking stocks.
+- Oil/commodity complex (Brent $110+, Gold $4,468) showing relative stability; no new macro shock signals detected this cycle.
+- Carry spread -0.33% unchanged — structural FII caution sustained.
+
+## Carry-over (next session)
+
+- VPB legal resolution critical: watch for follow-up regulatory news or remediation announcements.
+- POW/utilities sector — monitor for earnings cascade. If Q1 results cross competitors (PC1 model), escalate to sector-level chain_catalyst.
+- FPT analyst follow-through: if price holds above $70 and sentiment builds, may signal capitulation bottom in tech subsector.
+- Delisting news — watch construction-electrical subsector for secondary liquidity stress or alternative listing updates.
+- Brent $110.50 stable — sustain above $105 confirms oil support; drop <$100 would flip GAS/PLX outlook negative.
 
 ## This session (2026-05-20 04:20 UTC)
 

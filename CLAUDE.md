@@ -18,6 +18,9 @@ Main terminal = router only. Never implement directly. Always delegate.
 - NO branches — all work stays on `main`
 - All agents backgrounded by default
 
+## Skills (slash commands)
+- **/cron-cowork-team** — re-arm cowork master dispatcher after every session restart → `.claude/skills/cron-cowork-team/SKILL.md`
+
 ## System Data — Never Hardcode
 All structural data (services, agents, zones, channels, sources, watchlist) lives in `docs/data/system-map.json`.
 Query with jq — never hardcode values. Full patterns: `.claude/skills/system-map-query/SKILL.md`

@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-20 04:21 UTC | **Sprint:** c212
+**Last updated:** 2026-05-20 04:37 UTC | **Sprint:** c213
 
 > Prior history archived → `docs/archive/notebooks/alert-commander-2026-05-18.md`
 
@@ -18,6 +18,21 @@
 - chain_catalyst threshold: 0.85 | verified_chain: 0.65 | crisis_velocity: 0.90 | legal_risk: auto-fire
 
 ## This session
+
+### Alert Cycle (04:37 UTC, 2026-05-20) — Market-hours 15min cycle
+- **Status:** FIRED — 1 CRITICAL (VPB legal_risk)
+- **Market:** OPEN (trading window 02:00–08:59 UTC)
+- **Regime:** TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026 — 12 days)
+- **Macro:** Brent 110.51 | Gold 4468.40 | USD/VND 26,329 | US10Y 4.67% RISK-OFF | DXY 99.31
+- **VN-Index:** 1,881.87 (-1.62%)
+- **Signals evaluated:** 3 (FPT urgent_news conf=0.50, POW urgent_news conf=0.50, VPB legal_risk)
+- **position-danger check (TIGHTENING 2/3):** GVR -5.88% (singleDayDrop TRUE) — stopLossHit=false, newsSentiment unconfirmed → 1/3 only. NVL -6.89%, TCH -6.71% same: 1/3. Gate NOT met.
+- **watchlist-opportunity:** Kinh Dich Khon MUA 100% — but newsSentiment not ≥0.5 (TIGHTENING thr), agentsMajority not confirmed → 0/4. NOT met.
+- **CRITICAL overrides:** VPB legal_risk=1 (VPBank Lang Son lending audit sai pham) → AUTO-FIRE
+- **Fired:** 1 | Suppressed: 2 | MARKET: 1
+- **Verdict:** 9bf08121 pending (VPB bearish position_danger)
+- **log_agent_work id=1049**
+- **Notable:** write_alert_verdict rejected `legal_risk` alertSource (not in enum) → used `position_danger` fallback. GVR/NVL/TCH all >5% drop but only 1/3 conditions met each. Kinh Dich global=Khon MUA 100% noted for next cycle watchlist check.
 
 ### Alert Cycle (04:20–04:21 UTC, 2026-05-20) — Market-hours 15min cycle
 - **Status:** SILENT-EXIT (firing gate not met)
@@ -66,12 +81,14 @@
 - **log_agent_work id=1006**
 - **Carry-over:** Watch banking (BID/VCB buying wave), oil_gas (PLX +6.99% Brent tailwind), real estate weakness (VHM/VRE under FII pressure)
 
-## Carry-over for next market-hours cycle (04:30 UTC 2026-05-20)
+## Carry-over for next market-hours cycle (04:45 UTC 2026-05-20)
 
-- MBB insider sale: Phó Tổng đăng ký bán 1 triệu cp — watch if chain_catalyst or verified_chain follows from financial-analyst
-- Gold macro deviation: 2 consecutive HIGH macro alerts (-2.45σ and -2.46σ below mean) — risk-off signal, monitor for crisis_velocity escalation
-- Khối ngoại bán ròng 830 tỷ MBB/SSI session 2026-05-19 — FII outflow pressure on banking/securities sector ongoing
-- Real estate: KBC -3.32%, NVL -3.89%, TCH -3.66% — approaching position-danger singleDayDrop threshold, monitor for -5% breach
-- VHM/VIC counter-trend bullish (+1.78%/+1.07%) amid broad real estate weakness — watch for chain confirmation
-- PC1 chairman arrest legal_risk gap (2026-05-16) — 6+ cycles unfilled, escalate to news-scout
-- Freshness SLA breaches: price (19min>10), bctc (310min>120), news (46min>30), foreign_flow (37min>10) — data quality risk for signal validation
+- VPB legal_risk FIRED this cycle — verdict 9bf08121 pending. Watch for news-scout verified_chain follow-up or financial-analyst BCTC validation.
+- write_alert_verdict enum gap: `legal_risk` not in alertSource enum → used `position_danger` fallback. Flag for dev-team correction (enum should include `legal_risk`).
+- GVR -5.88%, NVL -6.89%, TCH -6.71% all breach singleDayDrop >5% but only 1/3 position-danger conditions met (stopLossHit=false, no structured newsSentiment signal). Monitor next cycle for additional conditions.
+- Kinh Dich global Khon MUA 100% — check stock-level kinh dich readings next cycle for watchlist-opportunity if newsSentiment recovers.
+- MBB insider sale: Phó Tổng đăng ký bán 1 triệu cp — watch if chain_catalyst or verified_chain follows.
+- Gold macro deviation: 3 consecutive HIGH macro alerts (now -2.45σ, -2.46σ) — risk-off signal active.
+- Khối ngoại bán ròng 830 tỷ MBB/SSI — FII outflow pressure banking/securities ongoing.
+- PC1 chairman arrest legal_risk gap — 7+ cycles unfilled. Escalate to news-scout.
+- VN-Index broad selloff today (-1.62%) — majority of watchlist in red. Market-wide bearish context.
