@@ -31,6 +31,9 @@ If neither is supplied, infer from the caller prompt.
 3. Read and execute that sub-flow end-to-end.
 4. Return its RETURN block verbatim.
 
+**Task-lock for cross-cutting work** → load skill: `.claude/skills/task-lock/SKILL.md`
+When dispatching `edit` or `create` (cross-cutting agent lifecycle tasks), claim is wired in the sub-flow (`edit-apply.md` steps 5a/7b/8b). This dispatcher does not claim — sub-flows own their locks.
+
 This file MUST NOT do agent-lifecycle work itself — it only dispatches.
 
 ## Reference

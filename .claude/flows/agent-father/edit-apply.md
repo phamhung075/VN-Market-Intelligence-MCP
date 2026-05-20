@@ -2,6 +2,19 @@
 
 # Agent Father — Edit: Apply Phase (Steps 5–8)
 
+**5a. Claim cross-cutting task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + task_id,
+  task_kind:   "sprint-task",
+  owner_agent: "agent-father",
+  ttl_seconds: 3600,
+  payload:     '{"task_title":"' + change_description + '","files":' + JSON.stringify(target_files) + '}'
+})
+if not result.claimed:
+  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+```
+
 **5. Apply edits**
 
 Use `Edit` tool (not Write) for existing files. For each edit:
@@ -37,6 +50,9 @@ Re-read all edited files and run checks:
 - [ ] `inter_agent` routing is symmetric with partner agents
 - [ ] Version date updated to today
 
+**7b. Heartbeat lock** → `call_tool("task_heartbeat", {task_id: "task:" + task_id})`
+if hb.ok == false: → stolen-lock protocol per skill
+
 **8. Diff summary**
 
 Produce human-readable summary:
@@ -54,6 +70,8 @@ Produce human-readable summary:
 ### Cascade Updates
 - (none) | Updated partner agent X routing
 ```
+
+**8b. Release lock** → `call_tool("task_release", {task_id: "task:" + task_id})`
 
 ---
 
