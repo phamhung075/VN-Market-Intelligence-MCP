@@ -4,6 +4,22 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1959-watchdog-7 — flaresolverr healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
+
+**Change:** `docker-compose.yml` line 401: `start_period: 30s` → `start_period: 60s` for flaresolverr healthcheck.
+
+**Deployment:** `docker compose up -d flaresolverr` — container recreated + started. Initial healthy at 18s.
+
+**Smoke test (3 restarts):** 11s / 13s / 11s — all healthy well within 60s. flaresolverr API POST status=ok, solution_status=200. Gateway /health 200.
+
+**Signal:** `docs/signals/dev-mcp-server-1959-watchdog-7.json`
+
+**Unblocks:** 1959-watchdog-5 (dev-mcp-server slot now free).
+
+Zone health: flaresolverr start_period hardened to 60s; Chromium cold-start risk eliminated; all ACs PASS | HEALTHY
+
+---
+
 ### Task 1958-watchdog-2 — RAG healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
 
 **Change:** `docker-compose.yml` line 116: `start_period: 30s` → `start_period: 60s` for rag-service healthcheck.

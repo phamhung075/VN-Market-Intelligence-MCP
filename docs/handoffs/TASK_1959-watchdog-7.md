@@ -51,3 +51,16 @@ This task takes that audit recommendation and lands the symmetric fix. Same shap
 - Predecessor (DONE): `docs/signals/dev-mcp-server-1958-watchdog-2.json` (rag-service 30→60)
 - Sprint goal: `docs/SPRINT_GOAL.md` (Sprint 1959 head)
 - Mid-checkpoint signal: `docs/signals/po-1958-mid-checkpoint.json`
+
+## [Developer] Implementation Record
+- **Service:** mcp-server (docker-compose.yml owner)
+- **Zone:** apps/mcp-server/ (infra config)
+- **Files modified:** docker-compose.yml:401 — flaresolverr healthcheck start_period 30s → 60s
+- **Tests written:** NONE (XS infra config change — no test suite changes per task boundary)
+- **Git commits:** TBD (fix(ops/1959-watchdog-7): bump flaresolverr healthcheck start_period 30s→60s)
+- **Type check:** N/A (no TS changes)
+- **Service tests:** N/A
+- **Docs updated:** docs/signals/dev-mcp-server-1959-watchdog-7.json | docs/signals/DASHBOARD.md | docs/TASKS.md | docs/handoffs/TASK_1959-watchdog-7.md | docs/agent-memory/notebooks/dev-mcp-server.md
+- **Deployment:** docker compose up -d flaresolverr — initial healthy at 18s; 3-of-3 restart smoke PASS (11s/13s/11s)
+- **Smoke test:** flaresolverr API POST status=ok, solution_status=200; gateway /health 200
+- **Graphify:** skipped (no docs/architecture impacted)

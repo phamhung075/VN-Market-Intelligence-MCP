@@ -1,0 +1,40 @@
+{
+  "task": "1959-watchdog-7",
+  "status": "DONE",
+  "agent": "dev-mcp-server",
+  "ts": "2026-05-20T22:50Z",
+  "change": {
+    "file": "docker-compose.yml",
+    "service": "flaresolverr",
+    "field": "healthcheck.start_period",
+    "before": "30s",
+    "after": "60s",
+    "line": 401
+  },
+  "deployment": {
+    "command": "docker compose up -d flaresolverr",
+    "initial_healthy_seconds": 18,
+    "gateway_health": 200
+  },
+  "smoke_test": {
+    "restart_1_seconds": 11,
+    "restart_2_seconds": 13,
+    "restart_3_seconds": 11,
+    "all_healthy_within_60s": true,
+    "ac4_headroom_demonstrated": true,
+    "flaresolverr_api": {
+      "url": "http://localhost:8191/v1",
+      "status": "ok",
+      "solution_status": 200
+    }
+  },
+  "acceptance_criteria": {
+    "AC-1": "PASS — docker-compose.yml flaresolverr start_period = 60s",
+    "AC-2": "PASS — rolling restart deployed, container Up + healthy",
+    "AC-3": "PASS — 3-of-3 restart smoke healthy within 60s (11s/13s/11s)",
+    "AC-4": "PASS — all restarts healthy well under 60s (headroom >48s)",
+    "AC-5": "PASS — commit message fix(ops/1959-watchdog-7): bump flaresolverr healthcheck start_period 30s→60s"
+  },
+  "unblocks": ["1959-watchdog-5"],
+  "next": "po"
+}
