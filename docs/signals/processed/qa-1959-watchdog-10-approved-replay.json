@@ -1,0 +1,23 @@
+{
+  "schema": "qa-signal/v1",
+  "agent": "qa",
+  "task_id": "1959-watchdog-10",
+  "title": "Cleanup /app/data/models mkdir remnant",
+  "verdict": "APPROVED",
+  "timestamp": "2026-05-20T23:41:00Z",
+  "sprint": 1959,
+  "commit_reviewed": "5466c84b",
+  "files_reviewed": ["apps/rag-service/Dockerfile"],
+  "checks": {
+    "diff_matches_claim": "PASS — 1 Dockerfile file, 2 lines (comment+mkdir), /app/data/models token removed only",
+    "volume_policy_w9": "PASS — /app/data/lancedb only remaining mkdir; no COPY /app/data/; /opt/model-cache correct",
+    "embedding_cache_dir": "PASS — ENV EMBEDDING_CACHE_DIR=/opt/model-cache at line 63; docker compose config confirms /opt/model-cache",
+    "docker_compose_config": "PASS — parses cleanly, no errors",
+    "model_prebake_intact": "PASS — RUN SentenceTransformer to /opt/model-cache at lines 54-59 fully present and untouched"
+  },
+  "ac_pass": ["AC-10-1"],
+  "ac_pending_ops_rebuild": ["AC-10-2", "AC-10-3", "AC-10-4", "AC-10-5"],
+  "notes": "Intermediate stale ENV EMBEDDING_CACHE_DIR=/app/data/models at line 41 is pre-existing from watchdog-3 and harmless (superseded by line 63 final value). Not in scope. Ops must rebuild + smoke before AC-10-2..5 can close.",
+  "gate": "OPS REBUILD GATED ON THIS APPROVAL — do not rebuild before QA APPROVE",
+  "next": "ops"
+}
