@@ -18,3 +18,4 @@ export { registerNewsDebugTriggerTool } from "./newsDebugTriggerTool.js";
 export { registerSbvDebugTriggerTool } from "./sbvDebugTriggerTool.js";
 export { registerForeignFlowDebugTriggerTool } from "./foreignFlowDebugTriggerTool.js";
 export { registerSmartCompactTool } from "./smartCompactTool.js";
+export { registerCoordinationTools } from "./coordinationTools.js";

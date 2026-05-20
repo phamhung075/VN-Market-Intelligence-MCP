@@ -100,6 +100,7 @@ import { registerGetCashFlowTool } from "./financial-reports/cashFlowTool.js"; /
 import { registerGetBctcOcfTool } from "./financial-reports/getBctcOcfTool.js"; // Task 1909b: get_bctc_ocf (#132)
 import { registerGetIsmSubcomponentsTool } from "./macro/getIsmSubcomponentsTool.js"; // Task 1910a: get_ism_subcomponents (#133)
 import { registerGetAccuracyContextTool } from "./news-analysis/getAccuracyContextTool.js"; // 2026-05-17: get_accuracy_context (#134)
+import { registerCoordinationTools } from "./system/coordinationTools.js"; // Task task-lock Phase 1: task_claim, task_heartbeat, task_release, task_list_held (#135-#138)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -204,4 +205,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerGetBctcOcfTool,               // Task 1909b: get_bctc_ocf (#132)
   registerGetIsmSubcomponentsTool,      // Task 1910a: get_ism_subcomponents (#133)
   registerGetAccuracyContextTool,       // 2026-05-17: get_accuracy_context (#134)
+  registerCoordinationTools,             // Task task-lock Phase 1: task_claim (#135), task_heartbeat (#136), task_release (#137), task_list_held (#138)
 ];

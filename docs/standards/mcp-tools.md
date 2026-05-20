@@ -92,6 +92,10 @@ Full removed list → `docs/data/tool-registry.json` → `removed`
 | Tool | Purpose | REQ | Added |
 |------|---------|-----|-------|
 | `validate_signal_price` | Validate signal price vs live market snapshot (±5% tolerance) | 230 | 2026-04-21 |
+| `task_claim` | Claim a coordination lock before exclusive work. Returns `{claimed, stolen?, current_holder?}`. Use before any cowork-slot, sprint-task, or dashboard-row. TTL default 3600s. | task-lock Phase 1 | 2026-05-20 |
+| `task_heartbeat` | Renew a held lock (prove-alive). Call every 5 min during long tasks. Returns `{ok, expires_at}`. ok=false = lock stolen → abort. | task-lock Phase 1 | 2026-05-20 |
+| `task_release` | Release a lock on completion. Scoped to calling session. Returns `{ok}`. ok=false is acceptable (already expired). | task-lock Phase 1 | 2026-05-20 |
+| `task_list_held` | List held locks for debug/audit. Filters: kind, owner_agent, expired. Returns `{locks[], count}`. Read-only. | task-lock Phase 1 | 2026-05-20 |
 
 ## Mandatory Agent Patterns
 

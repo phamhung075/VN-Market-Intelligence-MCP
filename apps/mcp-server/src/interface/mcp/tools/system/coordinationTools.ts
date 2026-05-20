@@ -1,0 +1,215 @@
+/**
+ * Coordination Tools — Task-Lock System Phase 1
+ *
+ * 4 MCP tools for cross-session agent coordination:
+ *   1. task_claim        — Claim a lock before exclusive work
+ *   2. task_heartbeat    — Renew a held lock (prove-alive)
+ *   3. task_release      — Release a lock on completion
+ *   4. task_list_held    — List current locks for debugging
+ *
+ * Session UUID injection:
+ *   owner_session is stamped server-side from the MCP transport session context.
+ *   Agents pass owner_agent (their name); the server adds owner_session.
+ *
+ *   The McpServer SDK does not expose a stable per-call session ID via
+ *   RequestHandlerExtra in the current version. As a safe fallback, we derive
+ *   a stable discriminator from process.pid + server startup timestamp.
+ *   This correctly discriminates between different OS processes (terminal sessions)
+ *   while being deterministic within a single process lifetime.
+ *
+ *   Phase 2: when the SDK exposes sessionId on RequestHandlerExtra, replace
+ *   SERVER_SESSION_ID with the per-request transport session UUID.
+ *
+ * Security note (brief §6):
+ *   owner_session is NEVER taken from caller input — always server-injected.
+ *   Callers pass owner_agent only. This prevents session spoofing.
+ *
+ * @module interface/mcp/tools/system/coordinationTools
+ */
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import {
+  claimTask,
+  heartbeatTask,
+  releaseTask,
+  listHeldTasks,
+  type TaskKind,
+} from "../../../../infrastructure/db/coordinationStore.js";
+
+// ---------------------------------------------------------------------------
+// Server-side session discriminator
+//
+// Stable within this process; distinct from other OS processes (sessions).
+// A new Claude Code terminal = new process = new pid = different discriminator.
+// ---------------------------------------------------------------------------
+
+const SERVER_SESSION_ID: string = (() => {
+  const pid = process.pid;
+  const startMs = Date.now();
+  // Format: "pid-<pid>-ts-<startupTimestamp>" — human-readable for BUG logs
+  return `pid-${pid}-ts-${startMs}`;
+})();
+
+// ---------------------------------------------------------------------------
+// Tool registration
+// ---------------------------------------------------------------------------
+
+/**
+ * Register all 4 coordination tools on the MCP server.
+ *
+ * @param server The McpServer instance to register tools on.
+ */
+export function registerCoordinationTools(server: McpServer): void {
+
+  // ── task_claim ──────────────────────────────────────────────────────────
+  server.tool(
+    "task_claim",
+    "Claim a coordination lock before starting exclusive work. Returns whether " +
+      "the claim succeeded and, on failure, who currently holds the lock. " +
+      "Use before any work that must not run concurrently across multiple Claude Code sessions: " +
+      "cowork-slot (15-min scheduler slots), sprint-task (TASKS.md rows), dashboard-row (DASHBOARD.md rows). " +
+      "Call task_release when work completes. Call task_heartbeat every 5 min for long tasks.",
+    {
+      task_id: z
+        .string()
+        .min(1)
+        .describe(
+          "Globally unique lock ID. Format per §1: cowork-slot:<slot_id>:<nominal_tick>, " +
+            "task:<task_id>, dash:<recipient>:<row_id>",
+        ),
+      task_kind: z
+        .enum(["cowork-slot", "sprint-task", "dashboard-row"])
+        .describe("Lock category. One of: cowork-slot | sprint-task | dashboard-row"),
+      owner_agent: z
+        .string()
+        .min(1)
+        .describe(
+          "Agent name claiming this lock, e.g. 'cowork-team', 'dev-mcp-server', 'alert-commander'",
+        ),
+      ttl_seconds: z
+        .number()
+        .int()
+        .min(60)
+        .max(86400)
+        .optional()
+        .describe(
+          "Lock TTL in seconds. Default: 3600 (1h). Min: 60. Max: 86400. " +
+            "Use 900 for cowork-slot (one scheduler cycle), 3600 for sprint-task.",
+        ),
+      payload: z
+        .string()
+        .optional()
+        .describe(
+          "Optional JSON string with context: {slot_id?, task_title?, row_hash?, notes?}",
+        ),
+    },
+    async ({ task_id, task_kind, owner_agent, ttl_seconds, payload }) => {
+      const result = claimTask({
+        task_id,
+        task_kind: task_kind as TaskKind,
+        owner_session: SERVER_SESSION_ID,
+        owner_agent,
+        ttl_seconds,
+        payload: payload ?? null,
+      });
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  // ── task_heartbeat ──────────────────────────────────────────────────────
+  server.tool(
+    "task_heartbeat",
+    "Renew a held lock to prove the owning session is still alive. " +
+      "Call every 5 minutes during long-running tasks. " +
+      "A missed heartbeat after ttl_seconds allows the next claimer to steal the lock. " +
+      "Returns ok=false if the lock was not found or was stolen by another session (crash recovery). " +
+      "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal.",
+    {
+      task_id: z
+        .string()
+        .min(1)
+        .describe("The task_id of the lock to heartbeat. Must match what was passed to task_claim."),
+    },
+    async ({ task_id }) => {
+      const result = heartbeatTask(task_id, SERVER_SESSION_ID);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  // ── task_release ────────────────────────────────────────────────────────
+  server.tool(
+    "task_release",
+    "Release a coordination lock on task completion. " +
+      "Scoped to the calling session — cannot release another session's lock. " +
+      "Returns ok=false if the lock was not found or already expired/stolen (not an error — " +
+      "TTL expiry is the fallback recovery). Safe to call in finally blocks.",
+    {
+      task_id: z
+        .string()
+        .min(1)
+        .describe("The task_id of the lock to release. Must match what was passed to task_claim."),
+    },
+    async ({ task_id }) => {
+      const result = releaseTask(task_id, SERVER_SESSION_ID);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  // ── task_list_held ──────────────────────────────────────────────────────
+  server.tool(
+    "task_list_held",
+    "List currently held task locks. For debugging, auditing, and stale-lock monitoring. " +
+      "Does not modify any locks. Use to inspect which sessions are active and what work is claimed.",
+    {
+      kind: z
+        .enum(["cowork-slot", "sprint-task", "dashboard-row"])
+        .optional()
+        .describe("Filter by task_kind. Omit to return all kinds."),
+      owner_agent: z
+        .string()
+        .optional()
+        .describe("Filter by owner_agent name. Omit to return all agents."),
+      expired: z
+        .boolean()
+        .optional()
+        .describe(
+          "If true, return only locks where expires_at < now (stale locks). " +
+            "If false, return only active locks. Omit to return all.",
+        ),
+    },
+    async ({ kind, owner_agent, expired }) => {
+      const result = listHeldTasks({ kind, owner_agent, expired });
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+}
