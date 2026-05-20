@@ -29,6 +29,19 @@ OUT: [what we're NOT doing]
 
 **4.** Create BA task: `| BA-NNN | Requirement Spec for Vision NNN | pending | BA | — |`
 
+**4b.** Claim sprint umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + sprint_id,
+  task_kind:   "sprint-task",
+  owner_agent: "po",
+  ttl_seconds: 3600,
+  payload:     '{"sprint_id":"' + sprint_id + '","stage":"kickoff"}'
+})
+if not result.claimed:
+  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+```
+
 **5.** Return:
 ```
 ## RETURN

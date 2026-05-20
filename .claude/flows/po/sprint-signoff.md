@@ -10,7 +10,13 @@
 
 Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent market output) to validate the merged work behaves end-to-end.
 
-- **Approve** → update `docs/TASKS.md` + `docs/SPRINT_GOAL.md` (mark sprint Done) → return:
+- **Approve** → update `docs/TASKS.md` + `docs/SPRINT_GOAL.md` (mark sprint Done) → release umbrella lock → return:
+
+  **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+  ```
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + sprint_id })
+  // ok=false is acceptable (TTL already expired across long sprint)
+  ```
   ```
   ## RETURN
   DONE: Sprint NNN signed off
