@@ -1,0 +1,21 @@
+{
+  "schema": "agent-signal/v1",
+  "signal_id": "architect-1959-watchdog-9",
+  "from": "architect",
+  "to": ["po"],
+  "type": "task_complete",
+  "task_id": "1959-watchdog-9",
+  "sprint": "1959",
+  "generated_at": "2026-05-20T21:35:57Z",
+  "files_created": ["docs/standards/dockerfile-volume-policy.md"],
+  "files_modified": [
+    "docs/references/tree-map.md",
+    "docs/protocols/docker-deployment-runbook.md",
+    "docs/TASKS.md",
+    "docs/signals/DASHBOARD.md",
+    "docs/agent-memory/notebooks/architect.md"
+  ],
+  "ac_pass": ["AC-9-1", "AC-9-2", "AC-9-3", "AC-9-4"],
+  "notes": "Policy doc 59L (≤60L AC). Rule + named-volume shadow failure mode (RAG cycle-1 watchdog-3 incident) + canonical pattern + code-review checklist. Cross-linked from tree-map.md standards section and docker-deployment-runbook.md Related.",
+  "next": "po"
+}

@@ -50,6 +50,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/standards/telegram-commands.md (bot commands: 11 commands, /ask /why behavior, command routing)
 │
+├── docs/standards/dockerfile-volume-policy.md (baked-asset placement: /opt/<service>-assets/ rule, named-volume shadow failure mode, code-review checklist — Sprint 1959 watchdog-9)
+│
 ├── docs/protocols/ask-queue-protocol.md (queue logic: FIFO flow, DB schema, escalation, failure protocol)
 │
 ├── docs/protocols/smart-compact-protocol.md (index: context management, hook thresholds, auto-compact)
@@ -376,6 +378,7 @@ Workflow-map autonomy fixes — extract reusable sub-flows so multiple callers d
 | `docs/policies/qa-checklist.md` | QA / Architect | After QA rule change |
 | `docs/protocols/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
 | `docs/references/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
+| `docs/standards/dockerfile-volume-policy.md` | Architect | After new named-volume pattern or shadow failure mode discovered |
 | `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
 | `docs/ARCHITECTURE.md` | Architect | After service topology or conflict resolution change |

@@ -1,8 +1,14 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-21 00:30 UTC | **Sprint:** 1959-watchdog-8
+**Last updated:** 2026-05-20 21:35 UTC | **Sprint:** 1959-watchdog-9
 
-## This session (2026-05-21 — Named-volume shadow audit 1959-watchdog-8)
+## This session (2026-05-20 — 1959-watchdog-9 standing volume policy)
+
+Docs-only task. Created `docs/standards/dockerfile-volume-policy.md` (59L) codifying the `/opt/<service>-assets/` convention as canonical location for service-baked artifacts. Core content: rule + named-volume shadow failure mode (RAG watchdog-3 incident, commit `66255410`) + canonical Dockerfile pattern + code-review rejection checklist. Cross-linked from `docs/references/tree-map.md` (standards section + Write Ownership table) and `docs/protocols/docker-deployment-runbook.md` Related section. AC-9-1..4 all PASS.
+
+Signal: `docs/signals/architect-1959-watchdog-9.json` → po. DASHBOARD 1959-watchdog-9 flipped DISPATCHED→DONE.
+
+## Previous session (2026-05-21 — Named-volume shadow audit 1959-watchdog-8)
 
 Read-only audit. 9 services inspected (all `market_data`-mounted). Result: 2 CONFIRMED SHADOWs, 2 SAFE, 5 OUT-OF-VOLUME.
 

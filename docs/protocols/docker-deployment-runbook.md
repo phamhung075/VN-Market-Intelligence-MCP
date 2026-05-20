@@ -107,3 +107,4 @@ If any service fails with I/O errors or ENOSPC:
 
 - RCA: `docs/signals/ops-1958-rca.json`
 - Disk relief signal: `docs/signals/ops-1958-disk-relief.json`
+- Dockerfile volume policy: `docs/standards/dockerfile-volume-policy.md` (baked-asset placement rules — named-volume shadow prevention)
