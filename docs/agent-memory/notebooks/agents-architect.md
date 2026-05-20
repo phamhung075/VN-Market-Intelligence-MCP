@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-20T08:54:19Z
+
+**Brief:** `docs/architecture-briefs/2026-05-20-task-lock-system.md`
+
+Multi-session collision risk: two Claude Code sessions can fire the same cowork-slot, drain the same dashboard row, or claim the same sprint task concurrently. Designed a new `coordination.db` (7th SQLite DB, isolated from market data) with a single `task_locks` table covering three discriminated lock kinds (cowork-slot / sprint-task / dashboard-row). Race-free atomic claim via INSERT OR IGNORE + stale-steal UPDATE with WHERE expires_at < now. Four MCP tools (task_claim, task_heartbeat, task_release, task_list_held). 3-phase rollout: Phase 1 (DB + tools only) routes to agent-father for immediate implementation; Phases 2+3 (flow integration) via pm sprint tasks.
+
+**Signal dropped:** `docs/signals/task-lock-system-20260520.json` → agent-father
+
+---
+
 ## 2026-05-19T17:16:00Z
 
 **Brief:** `docs/architecture-briefs/2026-05-19-system-auditor-scope-expansion.md`
