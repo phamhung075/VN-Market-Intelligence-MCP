@@ -73,3 +73,31 @@ watchdog-5 is **pure TypeScript** — no Dockerfile change, no image rebuild req
 - **Graphify:** skipped (no docs/architecture touched)
 - **Smoke results:** threshold=1/usage=2 → alert-sent PASS; threshold=100/usage=29 → ok PASS
 - **Env override:** `DISK_ALERT_THRESHOLD_GB` validated (1→1, 100→100 at module load)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-20
+- **Verdict:** APPROVED (round 1)
+- **Commit reviewed:** edafce4f
+
+| Check | Result |
+|-------|--------|
+| bun test 1959-watchdog-5 (9 tests) | 9/9 PASS [207ms] |
+| bun test regression (1959+1958+1955a, 34 tests) | 34/34 PASS [417ms] |
+| bun tsc --noEmit | 0 errors |
+| DDD scan (scheduler→infra imports) | PASS — correct DDD layer |
+| Security: process.env | PASS — Bun.env only |
+| Security: hardcoded secrets | PASS — none |
+| Commit convention | PASS — feat(mcp-server/1959-watchdog-5) + Task: + AC: trailers |
+| AC-4-1: cron registered + wired | PASS |
+| AC-4-2: BUG Telegram on breach | PASS |
+| AC-4-3: silent under threshold | PASS |
+| AC-4-4: zero false positives | PASS |
+
+- **Non-blocking:** NB-1 — notify-failed path does not advance lastAlertAt (correct retry-on-outage design).
+- **Cron note:** `'47 * * * *'` intentional deviation from `'0 * * * *'` spec; avoids pile-up. ACCEPTED.
+- **Alert-fires-immediately note:** lancedb ~29GB > 20GB default. EXPECTED per handoff. Not a bug.
+- **Report:** `reports/TASK_REPORT_1959-watchdog-5.md`
+- **Signal:** `docs/signals/qa-1959-watchdog-5-approved.json`

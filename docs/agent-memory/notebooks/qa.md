@@ -1,5 +1,44 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Task:** 1959-watchdog-5 | **Session:** c223 — Disk-usage alert cron QA — APPROVED
+
+## Session 2026-05-20 c223 — Task 1959-watchdog-5 disk-usage alert cron (APPROVED)
+
+### TASK REPORT — 1959-watchdog-5 (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: edafce4f
+files: 4 (diskUsageAlertJob.ts:237L NEW, 1959-watchdog-5-disk-usage-alert.test.ts:228L NEW, cronConfig.ts +5L, startScheduler.ts +15L)
+type: FEAT — hourly LanceDB disk-usage watchdog, BUG Telegram on >20GB, 6h cooldown
+round: 1
+zone: apps/mcp-server/src/scheduler/ + __tests__/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| bun test 1959-watchdog-5 (9 tests) | 9/9 PASS [207ms] |
+| bun test regression (34 tests across 1959+1958+1955a suites) | 34/34 PASS [417ms] |
+| bun tsc --noEmit | 0 errors |
+| AC-4-1: cron registered + wired via jobRunRepo.wrapRun | PASS |
+| AC-4-2: BUG Telegram on breach (TC-2a, TC-2b, smoke PASS) | PASS |
+| AC-4-3: silent under threshold (TC-1a/1b, TC-5 12-tick) | PASS |
+| AC-4-4: zero false positives (TC-5 12 consecutive under-threshold = 0 BUG) | PASS |
+| DDD scan | PASS — scheduler layer; no domain→infra violations |
+| Security: process.env | PASS — Bun.env only |
+| Security: hardcoded secrets | PASS — none |
+| Commit convention | PASS — feat(mcp-server/1959-watchdog-5) + Task: + AC: trailers |
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1959-watchdog-5.md. Report: reports/TASK_REPORT_1959-watchdog-5.md. Signal: docs/signals/qa-1959-watchdog-5-approved.json. DASHBOARD updated. TASKS.md 1959-watchdog-5 moved from Backlog DONE to Done+QA-PASS.
+- **next_cycle_hint**: pm marks 1959-watchdog-5 DONE. ops deploys `docker compose up -d mcp-server` — alert will fire at next :47 UTC tick (lancedb ~29GB > 20GB threshold is expected). cronJobCount now 77. Handoff: docs/handoffs/TASK_1959-watchdog-5.md.
+- **cron_note**: minute=47 (not minute=0 per original spec) — intentional pile-up avoidance; ACCEPTED.
+- **estimated_tokens**: 2800
+
+---
+
 **Last updated:** 2026-05-20 | **Task:** 1962d | **Session:** c222 — Task-lock dispatcher-wrap QA smoke — 3/3 PASS
 
 ## Session 2026-05-20 c222 — 1962d Task-lock dispatcher-wrap QA smoke (3/3 PASS)
