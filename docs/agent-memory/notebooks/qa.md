@@ -1,5 +1,39 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Sprint:** 1955a | **Session:** c212 — Task 1955a path fix — APPROVED
+
+## Session 2026-05-20 c212 — Task 1955a dailyDashboardJob projectRoot() fix (APPROVED)
+
+### TASK REPORT — 1955a (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: acc8d52b
+files: 2 (dailyDashboardJob.ts:455-459, 1955a-daily-dashboard-project-root.test.ts)
+type: FIX — path.resolve segment count 6→3 so /app/src/scheduler/system/../../.. = /app
+round: 1
+zone: apps/mcp-server/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| Commit scope | PASS — 2 files; 5 test additions + 1-line fix + JSDoc |
+| Task tests 5/5 | PASS (529ms) |
+| Full suite | 9281 pass / 283 fail (baseline 9279/285, net improvement) |
+| bun tsc --noEmit | PASS (0 errors) |
+| DDD scan | SKIP (scope-guarded: path-only fix, pre-existing infra imports out of scope) |
+| Security: process.env | PASS — zero hits in changed files |
+| Commit convention | PASS — fix(1955a/mcp-server), Task+AC trailers |
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1955a.md. TASKS.md: 1955a moved to Done. AC-4 (ops container 16:30Z tick) deferred to ops agent post-deploy.
+- **next_cycle_hint**: ops must deploy (`docker compose up -d mcp-server`) then verify `cron_job_runs` at 2026-05-20T16:30Z shows `status=success` for dailyDashboardJob. 1955b (zombie reap) now WIP-unblocked.
+- **estimated_tokens**: 2800
+
+---
+
 **Last updated:** 2026-05-19 | **Sprint:** 1954a | **Session:** c211 — Task 1954a hotfix round-1 — APPROVED
 
 ## Session 2026-05-19 c211 — Task 1954a hotfix column-name fix (APPROVED)

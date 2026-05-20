@@ -82,6 +82,32 @@ Signal back: `docs/signals/dev-mcp-server-1955a-impl-done.json`
 
 ---
 
+## [QA] Review Record
+
+**Date:** 2026-05-20
+**Round:** 1
+**Verdict:** APPROVED
+
+| Check | Result |
+|-------|--------|
+| Commit scope | PASS — 2 files only: test + dailyDashboardJob.ts:455-459 |
+| Commit diff (acc8d52b) | PASS — 6 `..` → 3 `..`, JSDoc updated |
+| AC-1 test: stats file exists at monorepo root | GREEN |
+| AC-1b test: buggy path `/docs/data/project-stats.json` absent | GREEN |
+| AC-2 test: aggregateDailyDashboard returns correct shape | GREEN |
+| AC-3 test: 3 segments from /app/src/scheduler/system → /app | GREEN |
+| AC-3b test: 6 segments (bug) → / (regression guard) | GREEN |
+| Task tests 5/5 | PASS (529ms) |
+| Full suite | 9281 pass / 283 fail (baseline 9279/285 — net improvement, no regressions) |
+| bun tsc --noEmit | 0 errors |
+| DDD | SKIP — path-resolution fix only; pre-existing scheduler→infra imports out of scope per spawn instructions |
+| Security: process.env in changed files | PASS — zero hits |
+| Commit convention | PASS — `fix(1955a/mcp-server)`, Task+AC trailers present |
+
+No blocking issues. No scope creep.
+
+---
+
 ## [Developer] Implementation Record
 
 - **Service:** mcp-server
