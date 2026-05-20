@@ -1,0 +1,18 @@
+{
+  "schema": "agent-signal/v1",
+  "signal_id": "architect-1959-watchdog-8",
+  "from": "architect",
+  "to": ["po", "ops"],
+  "type": "audit_complete",
+  "task_id": "1959-watchdog-8",
+  "sprint": "1959",
+  "generated_at": "2026-05-21T00:30:00Z",
+  "verdict": "2 CONFIRMED SHADOWs found (latent risk, empty dirs only — no active data loss). Threshold for Sprint 1960-volume-shadow-remediation (≥3) NOT reached. No new sprint needed.",
+  "confirmed_shadows": 2,
+  "safe": 2,
+  "out_of_volume": 5,
+  "affected_services": ["pdf-extractor", "rag-service"],
+  "brief": "docs/architecture-briefs/2026-05-21-named-volume-shadow-audit.md",
+  "recommendation": "Add /opt/<service>-assets/ policy to Dockerfiles and developer runbook. No code rebuild required. Latent risk only.",
+  "ac_pass": ["AC-8-1", "AC-8-2", "AC-8-3", "AC-8-4"]
+}

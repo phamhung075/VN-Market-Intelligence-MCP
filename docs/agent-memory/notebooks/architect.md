@@ -1,8 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-21 00:00 UTC | **Sprint:** 1962-audit
+**Last updated:** 2026-05-21 00:30 UTC | **Sprint:** 1959-watchdog-8
 
-## This session (2026-05-21 — 1962 task_id format audit)
+## This session (2026-05-21 — Named-volume shadow audit 1959-watchdog-8)
+
+Read-only audit. 9 services inspected (all `market_data`-mounted). Result: 2 CONFIRMED SHADOWs, 2 SAFE, 5 OUT-OF-VOLUME.
+
+CONFIRMED SHADOWs:
+- pdf-extractor: `RUN mkdir -p /app/data/extractions /app/data` — empty dirs, no seed data, latent risk only.
+- rag-service: `RUN mkdir -p /app/data/lancedb /app/data/models` — model already moved to `/opt/model-cache` (watchdog-3), empty shadow dirs remain. Latent risk only.
+
+SAFE (empty mkdir only, no seeded content): stock-price, alert-engine.
+OUT-OF-VOLUME (no writes under `/app/data` at all): mcp-server, technical-analysis, macro-indicators, kinh-dich-service, news-fetch (ro).
+
+Verdict: threshold ≥3 for Sprint 1960-volume-shadow-remediation NOT reached. No new sprint.
+Recommendation: add `/opt/<service>-assets/` policy to developer runbook. No rebuilds.
+
+Brief: `docs/architecture-briefs/2026-05-21-named-volume-shadow-audit.md`
+Signal: `docs/signals/architect-1959-watchdog-8.json`
+AC-8-1..4: all PASS.
+
+## Previous session (2026-05-21 — 1962 task_id format audit)
 
 16-site read-only audit (9 inner 1960c + 7 outer 1962c). Result: WARN — 0 FAILs, 5 WARNs.
 Two-tier defense structurally intact. All C1 inner/outer pairs use identical `"task:" + task_id` prefix.
