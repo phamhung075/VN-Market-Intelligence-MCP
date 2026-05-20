@@ -4,6 +4,24 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-20 c220 — FIX-alertsource-legal-risk-enum DONE
+
+**Commit:** `09f80233 fix(alert-engine): add legal_risk to alertSource enum — Sprint c220`
+
+**Root cause:** `WRITE_ALERT_VERDICT_SCHEMA` Zod enum in `alertVerdictTools.ts` (apps/mcp-server) had 6 values, none including `legal_risk`. Sprint 1948e-A+B added the legal-risk signal type from news-scout but the verdict tool's enum was never updated. alert-commander was forced to fall back to `position_danger` for VPB 2026-05-20 (Telegram report 2954).
+
+**Fix shape:**
+- `alertVerdictTools.ts`: added `"legal_risk"` as 7th value in enum + updated tool description string
+- `c220-legal-risk-alert-source.test.ts`: 5 tests (schema accepts, write+readback round-trip, regression guard for position_danger, unknown-value rejection)
+
+**Zone deviation note:** PO spec referenced `apps/alert-engine/src/**/write_alert_verdict*.ts` — these paths don't exist (service migrated to Go in 1912b). Go alert-engine accepts free-form `signalTypes []string` — no enum validation, no change needed there. The Zod enum fix is in `apps/mcp-server/`.
+
+**Tests:** 5/5 new PASS + 5/5 existing 1863d PASS. Full suite: 9335 pass / 283 fail (283 are pre-existing BCTC/PDF failures, unrelated). `tsc` 0 errors. No DB migration needed (alertVerdictStore uses JSON file store, not SQLite CHECK constraint).
+
+**Signal:** `docs/signals/dev-alert-engine-c220-fix-legal-risk-done.json`
+
+---
+
 ### 2026-05-14 c108-tick3-fix — 1912b DDL ordering bug FIXED
 
 **Commit:** `bfa93672 fix(1912b/alert-engine): split InitAlertTables DDL into 3 phases — base / ALTER / outcome index`
