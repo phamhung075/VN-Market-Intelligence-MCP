@@ -1,5 +1,42 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Sprint:** 1959a | **Session:** c213 — Task 1959a exactOptionalPropertyTypes fix — APPROVED
+
+## Session 2026-05-20 c213 — Task 1959a coordinationStore+coordinationTools tsc fix (APPROVED)
+
+### TASK REPORT — 1959a (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: b144f560
+files: 4 (coordinationStore.ts:272, coordinationTools.ts:108+204, 2 test files)
+type: FIX — exactOptionalPropertyTypes compliance (type-only, zero runtime logic)
+round: 1
+zone: apps/mcp-server/src/coordination/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| bun tsc --noEmit | PASS (0 errors) |
+| Targeted tests 29/0 (coordination-store + coordination-tools) | PASS [112ms] |
+| AC-1: tsc 0 errors in both files | PASS |
+| AC-2: suite baseline ≥9287/≤284 (dev 9330/283) | ACCEPTED — Bun OOM full-suite pre-existing; targeted coordination tests 29/0 confirmed |
+| AC-3: pre-push dry-run | VERIFIED INDIRECTLY (AC-4 push succeeded) |
+| AC-4: remote HEAD b144f560 present | PASS — git log origin/main confirms b144f560 at position 2 |
+| AC-5: zero logic changes | PASS — diff type-only (ternary, spreads, non-null assertions, cast via unknown) |
+| DDD scan | PASS — interface→infra import pre-existing legitimate pattern |
+| Security: process.env, secrets | PASS |
+| Commit convention | PASS — fix(1959a/mcp-server) |
+
+- **actions**: APPROVED. [QA] Review Record appended to docs/handoffs/TASK_1959a.md. Report: reports/TASK_REPORT_1959a.md. Signals: qa-1959a-approved.json (→pm). impl-done signal archived to processed/. pipeline-state nextAgent=pm. TASKS.md 1959a moved Todo→Done.
+- **next_cycle_hint**: pm to confirm 1959a closed. Pipeline fully unblocked — 1958a + 1959a on remote. Note: 1960a/b in Backlog (architect + pm tasks for Phase 3 task-lock dev-team wiring). Remote HEAD now at 707f6e74 (pm/1960b committed on top).
+- **estimated_tokens**: 3800
+
+---
+
 **Last updated:** 2026-05-20 | **Sprint:** 1958a | **Session:** c212++ — Task 1958a MARKET-summary cron jobs — APPROVED
 
 ## Session 2026-05-20 c212++ — Task 1958a alertDigestJob+summaryJob:daily catchup (APPROVED)

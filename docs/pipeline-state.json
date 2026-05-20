@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
-  "currentSprint": "1958a",
-  "activeTaskId": "1958a",
+  "status": "approved",
+  "currentSprint": "1959a",
+  "activeTaskId": "1959a",
   "nextAgent": "pm",
-  "nextPrompt": "Sprint 1958a APPROVED by QA. Mark 1958a Done in TASKS.md. AC-3 observation gate 2026-05-21T09:00Z — dispatch ops to verify ≥1 new cron_job_runs success row per job after docker compose up -d mcp-server. Architect-followup signal emitted: docs/signals/qa-1958a-architect-followup.json (OHLCV startup backfill event-loop concern, advisory only). Report: reports/TASK_REPORT_1958a.md.",
-  "updatedAt": "2026-05-20T17:30:00Z",
+  "nextPrompt": "TASK 1959a QA-APPROVED — commit b144f560. tsc 0 errors, 29/0 coordination tests, remote HEAD confirmed. Mark 1959a Done in TASKS.md (already done by QA). All 1958a + 1959a artifacts on remote. Pipeline unblocked.",
+  "updatedAt": "2026-05-20T21:00:00Z",
   "updatedBy": "qa",
-  "lastCompleted": "Sprint 1958a QA APPROVED — 16/16 targeted GREEN, 9287/284 full suite (zero regression), DDD PASS, security PASS. Architect-followup advisory for OHLCV startup backfill."
+  "lastCompleted": "Sprint 1959a APPROVED — exactOptionalPropertyTypes tsc fix (commit b144f560). QA verified: tsc 0 errors, 29/0 coordination tests, remote HEAD b144f560 confirmed. TASKS.md updated."
 }
