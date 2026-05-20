@@ -32,7 +32,8 @@
       "last_fired": null,
       "trigger_id": "trig_019nwLpkYELqFdE1DZaRhPUk",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "chef-intraday",
@@ -51,7 +52,8 @@
       "last_fired": null,
       "trigger_id": "trig_015M6yJMwShWmVcm6XNpVQ3U",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "chef-eod",
@@ -70,7 +72,8 @@
       "last_fired": null,
       "trigger_id": "trig_011HNsRMNiQwa3vNwN1b9Anh",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "chef-evening",
@@ -89,7 +92,8 @@
       "last_fired": null,
       "trigger_id": "trig_01CLotVE4XinDFxM2jErUCir",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "digest-sunday",
@@ -108,7 +112,8 @@
       "last_fired": null,
       "trigger_id": "trig_014GzK19w1ZNpwnRjA91ce3P",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "digest-monday-predict",
@@ -145,7 +150,8 @@
       "last_fired": null,
       "trigger_id": "trig_01LpUxJ98v2aK22FqLSBtL1G",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "financial-analyst-morning",
@@ -164,7 +170,8 @@
       "last_fired": null,
       "trigger_id": "trig_01Du7kZ59vzagGh5GvkTY3Gi",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "financial-analyst-midday",
@@ -183,7 +190,8 @@
       "last_fired": null,
       "trigger_id": "trig_011JSNKJEMs5fQwGCmLUkuWT",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "news-scout-market",
@@ -220,7 +228,8 @@
       "last_fired": null,
       "trigger_id": "trig_01Mooo3zi5MFysRAWsHwaztd",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "news-scout-sentiment",
@@ -239,7 +248,8 @@
       "last_fired": null,
       "trigger_id": "trig_016gauuJbAhdbzNcA3LYCFSh",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "market-watcher-market",
@@ -294,7 +304,8 @@
       "last_fired": null,
       "trigger_id": "trig_01W62B3yS7AERMwsGrap4e7U",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "market-watcher-eod",
@@ -313,7 +324,8 @@
       "last_fired": null,
       "trigger_id": "trig_01PUAqNa8gMWRjc6DWqcV7xh",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "pending_delete"
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-05-20T00:00:00Z"
     },
     {
       "slot_id": "alert-commander-market",

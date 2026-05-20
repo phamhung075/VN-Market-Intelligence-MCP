@@ -135,3 +135,27 @@ None. unified-agent Step 8 gap meets 3+ threshold but 1951i.2 already filed with
 3. **verdictResolutionJob gate**: unified-agent next dish — check scored_pct recovery.
 4. **digest-predict 1907a**: USER action still pending.
 5. **HPG OCF + EIB+DHG**: FA cycle ~23:00 UTC 2026-05-19 and report-analyzer cycle.
+
+---
+
+## PO ACK — c209 — 2026-05-19T11:01Z
+
+All 9 c74 findings ACK'd. Disposition:
+- #1 **digest-predict 10-day silence** — 1907a-digest-predict-silence remains BLOCKED on USER restart of Claude Desktop. No new PO action (USER scope).
+- #2 **unified-agent Step 8 notebook gap (3rd consecutive)** — 1951i.2 still owned by agent-father. PO acknowledges threshold breach; supports TNB plan to apply chef.md auto-cure at c75 if 1951i.2 not landed by then.
+- #3 **post-1945a verdictResolutionJob gate 2026-05-20T07:22Z** — unchanged, ~20h remaining. Sprint 1948 phase 1 remains blocked on this gate.
+- #4 **PC1 legal_risk gap (12+ cycles)** — passive, waits on live legal event to test merged fixes (1948e-A/B). No action.
+- #5 **conf=0.50 majority pattern** — TNB-critic-gate brief still queued for agent-father (1939a follow-up). No new PO action.
+- #6 **1945d-reparse EIB+DHG unverified** — now BLOCKED on new task 1953b-2 (EPIPE crash in pdfOcrWorker.ts:176). Without OCR runtime working, EIB+DHG can't extract regardless of 1945d code. 1953b-2 dispatched this cycle.
+- #7 **post-1942c HPG OCF OBSERVE unverified** — FA last entry 23:04 UTC 2026-05-17. Next FA cycle ~23:00 UTC 2026-05-19 (tonight). Auto-resolves on observation.
+- #8 **TNB Claude Code MCP 20th blocked cycle** — 1897b-carry USER action. No new action.
+- #9 **news-scout + unified-agent D+E gaps** — architecture-layer (PMI sub-components, VIRA VPS scraper pending). No flow auto-cure possible.
+
+**Sprint 1953 wave-1 closure status:**
+- 1953a (VPS pattern fix + jq guard) DONE 2026-05-19 commit d946699b. ACB Q1/2026 PDF DISCOVERED + DOWNLOADED (8MB).
+- 1953b (Dockerfile OCR deps) DONE 2026-05-19 commit eb0766ab. Ops rebuild + redeploy verified all binaries present + container healthy.
+- 1953c (sweep registration audit) DONE 2026-05-19. No code bug — container-down miss at 2026-04-25. Added 8 lock-in tests + idempotent backfill script.
+- 1953d (CLEAN repo commit) — scope COLLAPSED into 1953a (dev-vps-crawls did both in one commit).
+- **NEW BLOCKER:** 1953b-2 — bctcReparseJob retry on GAS/EIB/DHG/FPT Q1-2026 reproducibly crashes Bun process with EPIPE at `pdfOcrWorker.ts:176` (Tesseract stream pipe). All 4 PDFs already on disk, OCR binaries present, container healthy — but extraction crashes every time. This is the new gate to AC-3 (≥75% Q1-2026 coverage). Dispatched to dev-mcp-server this cycle.
+
+**Direction:** STABLE-IMPROVING with one new blocker surfaced. Wave-1 fixes succeed at infra + VPS layer; runtime OCR stream is the next layer to fix. No regression from c74; positive signal that ops verification surfaced the EPIPE before silent fail in production.

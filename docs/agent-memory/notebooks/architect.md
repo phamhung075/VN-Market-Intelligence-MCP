@@ -2,7 +2,26 @@
 
 **Last updated:** 2026-05-18 20:15 UTC | **Sprint:** SPIKE-1948e
 
-## This session (SPIKE-1948e)
+## This session (2026-05-19 — BCTC write-chain RCA)
+
+Trigger: ≥3 fix commits on BCTC chain in 24h. Recurring-bug escalation.
+
+**Verdict: (b) architectural rot — 3 compounding failures**
+
+Failure A (FATAL): `backfillBctcQ12026.ts:53` uses wrong column names `(ticker, year, quarter)` vs actual schema `(action_code, period_year, period_quarter)`. Every `backfillBctcQ12026` run fails silently at runtime. 103 pending rows in `bctc_vps_queue` came from `server.ts:703` push endpoint, not the backfill.
+
+Failure B (BLOCKER for FPT/GAS): OCR cache race. `bctcPdfPullJob.triggerExtraction()` runs `extractAndStorePdfPagesWithRetry()` then immediately calls `getCachedPdfText(filename)` (line 158). `ocr_cache_count=0` in ops signal confirms `pdf_extracted_text` rows either were not written or the filename lookup missed. Stage 3 guard fires (`cached === null || text < 100 chars`) → `fetchParseAndStoreBctc` never called → 0 rows in `financial_reports`.
+
+Failure C (secondary, EIB/DHG): scanned-image PDFs + 2s inter-page yield = 31 min OCR per pass. Only 3/40 and 3/36 pages extracted. Even if Failure B fixed, these produce confidence ≤ 0.05 (coreFieldsAllZero guard in `parseBctcReport.ts:152`). Would land `validation_status='low_confidence'` at best.
+
+**Quick win (ship now):** Fix backfillBctcQ12026.ts:53-54 column names — 2h, zero risk, unblocks all 30 watchlist tickers for next enricher cycle.
+
+**Sprint plan:** Tasks 5-A through 5-E, dev-mcp-server zone, ≤2 days. PM notified via signal.
+
+Brief: `docs/architecture-briefs/2026-05-19-bctc-write-chain-rca.md`
+Signal: `docs/signals/architect-bctc-write-rca.json`
+
+## Previous session (SPIKE-1948e)
 
 PC1 legal_risk signal pipeline review. Read-only, 2h timebox.
 

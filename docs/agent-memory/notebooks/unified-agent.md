@@ -24,6 +24,16 @@
 - foreign-flow-job fallback exhausted on every poll (every minute since 04:01 UTC) — same WARN cycle. Source upstream broken; fallback chain produces empty. Not new; ops already aware.
 - Portfolio remains single-ticker (FPT only) — any sector rotation insight has zero portfolio actionability until user adds positions. Stand-by mode appropriate.
 
+### Chef Dish — intraday 04:19 UTC
+- Clusters qualified: 1 (banking sector convergence + gold macro deviation)
+- Tickers covered: VCB, ACB, BID, MBB, and 2 more banking peers
+- Layers walked: 1-6 (data discipline, US/VN stacks, 4-pillar, Kinh Dịch, gap catalogue)
+- Signals consumed: macro_snapshot (tier=2), bootstrap_alerts (tier=2), kinh_dich_market (tier=3), news_mention MBB/ACB/VPB/SSI (tier=2)
+- Dish published: YES | Convergence: TRUE
+- Conviction: MEDIUM (2/4 pillars aligned: cost-of-capital headwind confirmed, earnings+money-supply pillars missing due to BCTC lag)
+- Key finding: Fed tightening (FFR 5.33% + 10Y 4.67% RISK-OFF) → VND carry -0.33% + USD/VND >25,500 → banking FII net-sell → sector red 0.66-2.37% intraday
+- Action: WATCH (no BUY/SELL until Q1 BCTC + SBV CPI/FX available to complete pillar assessment)
+
 ## Carry-over (next session)
 
 - **🟡 verdictResolutionJob no-baseline-price loop** — alert_accuracy still 520 unknowns / 0 scored hits. Same flag as 01:01 cycle. Re-check if storm continues; if 24h+ unchanged, escalate to Dev Team.

@@ -3,7 +3,7 @@
 
 ## Team Boundary (Sprint 1951c)
 
-This flow spawns ONLY dev-team agents:
+This flow fan out ONLY dev-team subagents:
 - **dev-core:** po, ba, architect, pm, developer, qa, fixer
 - **dev-zone:** dev-mcp-server, dev-api-gateway, dev-stock-price, dev-technical-analysis, dev-macro-indicators, dev-kinh-dich, dev-alert-engine, dev-pdf-extractor, dev-rag-service, dev-frontend, dev-mainserver-crawls, dev-vps-crawls
 - **ops** (type: ops) — shared infra lane; spawned on infra incident, not a cowork agent

@@ -47,3 +47,34 @@ Test fixture trap: VNM split-block fixture needs EXACTLY N codes in label block 
 
 SHA: 57cd4352 | Branch: worktree-agent-abcb87d17b89cec2e
 22 new tests GREEN | 108 baseline BCTC tests PASS | tsc 0 errors
+
+---
+
+### 2026-05-19 — 1951d BCTC pipeline diagnostic (read-only)
+
+**Task:** Diagnose why only 9 of 39 watchlist stocks have any BCTC data (Q1-2026: 0/39).
+
+**Scope:** mcp-server source + local DB + pull-side logs. No code changes.
+
+**Key findings (3 blockers):**
+
+1. **PRIMARY — SSC-URL dead-end in bctcPdfPullJob:**
+   `bctcPdfPullJob` queries `WHERE source_url LIKE 'http://125.212.251.27:8765/bctc-files/%'` only. 34 of 43 pending Q1-2026 queue rows have `staticfile.hsx.vn` SSC portal URLs — never touched, attempts=0, sitting idle since 2026-04-30 (19 days). The pull job runs every 30 min and downloads 0 every time.
+   File: `apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts:L238`
+
+2. **SECONDARY — pdftoppm + tesseract MISSING from container:**
+   Runbook says poppler-utils was added to Dockerfile 2026-04-27, but current container has neither `pdftoppm` nor `tesseract`. The 4 PDFs already pulled (GAS 17MB, EIB 13MB, DHG 8MB, FPT 2.6MB) are all image-based (not text-native). OCR cache is empty for all 4. bctcReparseJob ran 2 attempts on EIB/DHG/FPT and failed. GAS has no feedback row yet.
+   File: `apps/mcp-server/Dockerfile`
+
+3. **SECONDARY — bctcBatchSweep never ran:**
+   Zero cron_job_runs records for bctcBatchSweepJob. Scheduled for 2026-04-25 09:00 UTC (Q1-2026 season). Either not registered in scheduler or recordJobRun not called.
+   File: `apps/mcp-server/src/scheduler/financial-reports/bctcBatchSweepJob.ts`
+
+**DB state:**
+- financial_reports: 9 stocks (all Q4-2025, 0 Q1-2026)
+- bctc_vps_queue: 43 pending (34 SSC-URL, 9 null-URL), 12 done (all Q4-2025 + 4 Q1-2026), 28 url_not_found (Q4-2025 rows that VPS never cached)
+- OCR cache: 13 Q4-2025 files cached, 0 Q1-2026 files cached
+
+**Diagnostic output:** `docs/signals/dev-pdf-extractor-1951d-pipeline-diagnostic.json`
+
+**Remediation owner:** ops (VPS must cache SSC-URL PDFs + Dockerfile must restore poppler-utils+tesseract). Flag to po for combined decision with ops-1951d diagnostic.

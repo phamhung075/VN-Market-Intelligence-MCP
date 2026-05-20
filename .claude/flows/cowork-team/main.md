@@ -14,7 +14,7 @@ Cross-team work (e.g. a cowork agent finds a code bug or needs a dev-team action
 
 Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
 
-Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/data/cowork-schedule.json`, matches current UTC ±2min, parallel-spawns all matching agents in one message block.
+Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/data/cowork-schedule.json`, matches current UTC ±2min, parallel fan out matching subagent for working in one message block.
 
 <!-- decision: OQ-1 — Spawn primitive shape. Confirmed: same subagent_type pattern as dev-team. The `agent_id` field in cowork-schedule.json maps 1:1 to subagent_type in the Agent tool call. Spawn prompt = "run <flow_path>  slot=<slot_id>" (mirrors existing trigger_prompt field). No new spawn primitive needed — Claude Code CLI Agent tool is the mechanism, identical to how dev-team spawns po/ba/architect etc. -->
 
