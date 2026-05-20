@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-20T08:30Z (po c216 — drained 11 signals to processed/, pruned 3 DONE rows: 1957a, 1957b, 1957c; pipeline-state reset to idle)_
+_Updated: 2026-05-20T22:15Z (ops c223 — RCA complete for 1958, added 1958-RCA row to ops section)_
 
 ---
 
@@ -31,6 +31,7 @@ _Updated: 2026-05-20T08:30Z (po c216 — drained 11 signals to processed/, prune
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
 | 1958-A-01 | 2026-05-20T20:02:23Z | system-auditor | microservice_degraded | **CRITICAL RESOLVED** Docker-compose stack outage (19:59:48Z audit, 10 of 11 DOWN) → RECOVERED (20:06:31Z, 11/11 UP, recovery time 4 min). Ops deployed `docker compose up -d` + rag-service restart. All health endpoints responding 200. | RESOLVED | **Sprint 1958 OPEN** (po c222 2026-05-20T20:10Z, signal `docs/signals/po-1958-stack-outage-sprint.json`). Recovery signal: `docs/signals/ops-1958a-stack-recovered.json` (2026-05-20T20:06:31Z). Tasks: 1958-recovery (DONE 2026-05-20T20:06:31Z), 1958-rca (HIGH, investigation in flight), 1958-watchdog (MEDIUM, prevention cron). Dedup_key: microservice_degraded:docker-compose-stack:A-01 |
+| 1958-RCA | 2026-05-20T22:15:00Z | ops | root_cause_analysis | **RCA COMPLETE**: Disk pressure (97% full) + RAG lifespan handler hang caused 9/11 services down. Root: LanceDB 29GB + sentence-transformers model init blocked by disk I/O. Deterministic under ≥90% disk. Verdict: non-reproducible now (low likelihood disk refills), high likelihood if LanceDB grows. Hardening: 6 watchdog recommendations (1958-watchdog-1 through -6). Priority: 1958-watchdog-1 (pre-flight disk check), 1958-watchdog-2 (increase RAG start_period 30s→60s), 1958-watchdog-3 (pre-cache model). | OPEN | `docs/signals/ops-1958-rca.json` + appended RCA section to `docs/agent-memory/notebooks/ops.md` |
 | 1956-B-10 | 2026-05-20T04:18Z | system-auditor | data_stale | **CRITICAL** BCTC SLA breached: 329 min age vs 120 min SLA (2.74x over). Last update >5.5h ago. Trust score erosion in Q1/Q2 earnings window. | READ | po c215 → OBSERVE (Tier-3 reclassified to B-06 WARN; same root as B-05a/B-06; earnings-window-quiet; OBSERVE-1957d tracks 72h cadence; OBSERVE-1953g covers Q1-2026 coverage 2026-05-21T02:30Z) |
 | 1956-B-05a | 2026-05-20T04:18Z | system-auditor | data_stale | BCTC VPS proxy stale 21h (marked STALE). Only 1 push in 24h. Possible VPS unavailability or network degradation. | READ | po c215 → OBSERVE (same root as B-10/B-06; VPS push cadence normal for late-May earnings-quiet window; tracked by OBSERVE-1957d) |
 | 1956-B-08 | 2026-05-20T04:18Z | system-auditor | data_stale | vn-news-fetch VPS service UNHEALTHY (uptime 1h 1m). News fetch may be degraded despite recent push timestamp. | READ | po c215 → OBSERVE (transient container restart; Tier-3 C-06 confirms news write-path fresh at 42s; auto-close on next clean Tier-1) |
