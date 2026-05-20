@@ -1,4 +1,4 @@
-<!-- size-justification: ~90L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js (Sprint 1951 follow-up: keeps flow scannable; full matcher is one node script call). Error boundary + telemetry + collision guard remain inline for auditability. -->
+<!-- size-justification: ~195L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js (Sprint 1951 follow-up: keeps flow scannable; full matcher is one node script call). Step 4.6 slot-lock claim (Sprint 1955 Phase 2) added inline for auditability. Error boundary + telemetry + collision guard remain inline. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -82,11 +82,76 @@ This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.
 
 ---
 
+<!-- decision: Step 4.6 Model 1 — Master holds lock 900s TTL, agents do NOT heartbeat.
+  Rationale: cowork-slots are time-bucketed by nominal_tick (floor-15min UTC). A 900s TTL
+  covers exactly one 15-min cycle. If the spawned agent stalls or the master crashes after
+  claiming, the lock auto-expires before the NEXT nominal_tick, which uses a fresh key
+  ("cowork-slot:<agent>:<next_tick>"). There is no risk of stale locks blocking future cycles.
+  Model 2 (master releases via agent signal) was considered but rejected: it requires the
+  spawned agent to signal back, adding coupling and a new failure mode. Model 1 is correct
+  for cowork-slot because the key is tick-scoped — see architecture brief §7 (2026-05-20).
+  Implementation note: release is called after each spawn attempt (success OR failure) via a
+  try/finally pattern. If ALL matched slots are held by other sessions, exit silently with
+  telemetry all_held=true. Partial holds (some won, some held): spawn only WON_SLOTS. -->
+
+## Step 4.6 — Slot lock claim (Model 1: master holds the lock)
+
+Compute `nominal_tick` = floor-15min of current UTC minute (same math as `cowork-match-slots.js`):
+
+```bash
+ACTUAL_M=$(date -u +%M | sed 's/^0//')   # strip leading zero
+M=$(( (ACTUAL_M / 15) * 15 ))
+nominal_tick=$(date -u +%Y%m%dT%H)$(printf '%02d' $M)00Z
+```
+
+Initialize tracking arrays:
+
+```bash
+WON_SLOTS=[]     # slots where task_claim returned claimed=true
+HELD_BY_OTHER=[] # slots where task_claim returned claimed=false
+```
+
+For each slot in MATCHES, attempt claim:
+
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "cowork-slot:" + slot.agent + ":" + nominal_tick,
+  task_kind:   "cowork-slot",
+  owner_agent: "cowork-team",
+  ttl_seconds: 900,
+  payload:     JSON.stringify({ slot_id: slot.slot_id, agent: slot.agent, flow_path: slot.flow_path })
+})
+```
+
+On claim result:
+
+```
+if result.claimed == false:
+  send_telegram(channel=work,
+    "[cowork-team] slot held by ${result.current_holder.owner_session} → skip ${slot.slot_id}")
+  append slot to HELD_BY_OTHER
+  continue to next slot
+
+if result.claimed == true:
+  append slot to WON_SLOTS
+```
+
+All-held guard (after iterating all MATCHES):
+
+```
+if WON_SLOTS is empty:
+  # Silent exit — write telemetry (Step 6) with all_held=true, then EXIT.
+  # Do NOT send a WORK telegram. Do NOT attempt any spawns.
+  EXIT (go to Step 6 with all_held=true)
+```
+
+---
+
 ## Step 5 — Parallel fan-out
 
-Fire **all** MATCHES simultaneously in a single Agent tool message block. No sequential gating.
+Fire **all** WON_SLOTS simultaneously in a single Agent tool message block. No sequential gating.
 
-For each slot in MATCHES:
+For each slot in WON_SLOTS:
 
 ```
 subagent_type : <slot.agent>
@@ -105,6 +170,18 @@ Track spawn results: success (no error) vs failure (agent tool returns error).
 - `send_telegram(channel=work, "[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
 - Add to `errors[]`. Skip this slot's spawn.
 
+**After each spawn attempt (success OR failure) — release lock immediately (try/finally):**
+
+```
+try:
+  spawn agent for slot
+finally:
+  call_tool(server="vn-market", tool="task_release", arguments={
+    task_id: "cowork-slot:" + slot.agent + ":" + nominal_tick
+  })
+  # ok=false is acceptable (already expired or stolen) — ignore release errors
+```
+
 ---
 
 ## Step 6 — Write telemetry signal
@@ -122,6 +199,9 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
   "payload": {
     "fire_time": "${ISO}",
     "matched_slots": [<slot_ids from MATCHES>],
+    "won_slots": [<slot_ids from WON_SLOTS — slots where claim succeeded>],
+    "held_by_other": [<slot_ids from HELD_BY_OTHER — slots held by another session>],
+    "all_held": <true if WON_SLOTS is empty and HELD_BY_OTHER is non-empty>,
     "spawned": [<flow_paths of successfully spawned slots>],
     "silent": <true if MATCHES empty, false otherwise>,
     "drift_min": ${DRIFT_MIN},
