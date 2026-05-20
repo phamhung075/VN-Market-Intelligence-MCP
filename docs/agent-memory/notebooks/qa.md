@@ -1,5 +1,48 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Sprint:** 1961c | **Session:** c214 — Sprint 1961c Phase 2+3 live smoke re-validation — APPROVED
+
+## Session 2026-05-20 c214 — Sprint 1961c Phase 2+3 smoke re-validation (APPROVED)
+
+### TASK REPORT — 1961c (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+scripts: scripts/smoke-task-lock-phase2.ts + scripts/smoke-task-lock-phase3.ts
+type: SMOKE RE-RUN — Phase 2 (9 cases) + Phase 3 (22 checks) against live MCP gateway post-1961a container rebuild
+round: 1
+zone: scripts/ + live gateway port 3000
+```
+
+#### Results
+
+| Suite | Result |
+|-------|--------|
+| Phase 2 smoke (T1-T9) | 9/9 PASS |
+| Phase 3 smoke T1-T10 | 10/10 PASS |
+| Phase 3 grep G1-G9 | 9/9 PASS |
+| Phase 3 pipeline P1-P2 | 2/2 PASS |
+| Phase 3 MCP grammar M1 | 1/1 PASS |
+| Phase 3 total | 22/22 PASS |
+| **Combined smoke cases** | **19/19 PASS (target met)** |
+
+#### Live Gateway Verification
+
+Container: `vn-market-intelligence-mcp-mcp-server-1 Up 2 minutes (healthy)` post-1961a rebuild
+
+- task_claim → `{"claimed":true}` LIVE
+- task_heartbeat → LIVE (ok=false on session mismatch — expected, server-injected owner_session)
+- task_release → LIVE (server-session-scoped, behavioral correct)
+- task_list_held → `{"locks":[...],"count":1}` LIVE
+- tools/list confirms all 4 task-lock tools present on gateway
+
+- **actions**: APPROVED. Signal: docs/signals/qa-1961c-approved.json. Report: reports/TASK_REPORT_1961c.md. TASKS.md 1961c marked done. 1961d now unblocked (po task).
+- **next_cycle_hint**: po to patch docs/protocols/task-lock-protocol.md (1961d) — add deployment-verified column to L109 phase status table + Deployment verification ritual subsection. After that, po emits po-1961-close.json signal.
+- **estimated_tokens**: 3200
+
+---
+
 **Last updated:** 2026-05-20 | **Sprint:** 1959a | **Session:** c213 — Task 1959a exactOptionalPropertyTypes fix — APPROVED
 
 ## Session 2026-05-20 c213 — Task 1959a coordinationStore+coordinationTools tsc fix (APPROVED)
