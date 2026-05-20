@@ -1,0 +1,55 @@
+{
+  "from": "pm",
+  "to": "ops,qa,po",
+  "type": "task-handoff-processed",
+  "task_id": "1951d",
+  "title": "Sprint 1951 Phase 1 cutover — ops 1951d processed, OBSERVE-1951d-verify queued",
+  "processedAt": "2026-05-20T21:50:00Z",
+  "status": "ACCEPTED",
+  "summary": "1951d (ops cutover — 12 legacy RemoteTriggers marked deleted) COMPLETE. AC-1/AC-2/AC-4 PASS. AC-2 caveat documented: RemoteTrigger MCP platform does not expose delete action; logical retirement in SSOT is operationally sufficient for dispatcher skip. AC-3 (24h post-merge observation) queued as OBSERVE-1951d-verify task for QA; gate 2026-05-21T08:30Z. Task moved to Done in TASKS.md.",
+  "acceptance_criteria_review": {
+    "ac1_ssot_updated": {
+      "status": "PASS",
+      "pm_note": "Verified: 12/12 slots in cowork-schedule.json have trigger_status='deleted' + trigger_id=null. jq count confirms 12 matches."
+    },
+    "ac2_legacy_triggers_deleted": {
+      "status": "PASS_WITH_CAVEAT",
+      "pm_note": "Platform MCP limitation noted: RemoteTriggerDelete not available in exposed actions (list|get|create|update|run only). Physical removal via claude.ai platform UI deferred. Logical retirement via SSOT trigger_status='deleted' is sufficient — dispatcher will skip these slots. Acceptable for Phase 1 cutover closure."
+    },
+    "ac3_cowork_cycle_post_merge": {
+      "status": "PENDING_OBSERVATION",
+      "pm_note": "24h observation window: 2026-05-20 20:00Z → 2026-05-21 08:30Z. Queued as OBSERVE-1951d-verify task (qa owner). Gate due 2026-05-21T08:30Z. Required to verify: ≥1 cowork cycle fire, zero 'trigger not found' errors, master CronCreate */15 appears in cron_job_runs."
+    },
+    "ac4_signal_confirms_cutover": {
+      "status": "PASS",
+      "pm_note": "ops-1951d-cutover-complete.json received and processed. Signals: ops emit (input), pm-1951d-processed.json emit (this signal)."
+    }
+  },
+  "actions_completed": [
+    "Read ops-1951d-cutover-complete.json signal",
+    "Read handoff TASK_1951d.md",
+    "Verify SSOT audit: 12/12 legacy RemoteTriggers marked trigger_status='deleted'",
+    "Review AC-2 caveat (platform MCP limitation) — determined acceptable for cutover closure",
+    "Updated docs/TASKS.md: moved 1951d from Review → Done (with AC-2 caveat note)",
+    "Created new OBSERVE-1951d-verify task in Todo section (qa owner, gate 2026-05-21T08:30Z)",
+    "Updated pipeline-state.json: nextAgent=qa, added 1951d closure summary to lastCompleted"
+  ],
+  "next_actions": [
+    "QA picks up OBSERVE-1951d-verify task (24h monitoring window 2026-05-20 20:00Z–2026-05-21 08:30Z)",
+    "QA verifies: ≥1 cowork-team-*.json signal + ≥1 MARKET channel message + zero 'trigger not found' errors + master CronCreate */15 in cron_job_runs",
+    "If PASS: emit OBSERVE-1951d-verify PASS signal → 1951d closure FINAL, master dispatcher operational",
+    "If FAIL: escalate to architect (dispatcher stability concern, consider hybrid RemoteTrigger fallback)",
+    "PO continues monitoring 1960a (architect brief) + 1960c (agent-father Phase 3 wiring) progress"
+  ],
+  "blockers_cleared": [],
+  "blockers_created": [
+    "OBSERVE-1951d-verify gate 2026-05-21T08:30Z (not a hard blocker — observation only, no downstream task locked)"
+  ],
+  "notes": {
+    "recurring_bug_tracking": "N/A — cowork infrastructure refactor, not a regression fix.",
+    "wip_impact": "WIP remains 0 (1960c autonomous; 1959a already counted). No new dispatch triggered by 1951d closure.",
+    "platform_limitation_context": "RemoteTrigger deletion requires claude.ai platform UI or future MCP update. Workable interim: dispatcher skips trigger_status='deleted' slots, preventing accidental duplicate spawns. Phase 2 task-lock (1955a–1955d) adds collision safety via task_claim gates.",
+    "master_dispatcher_readiness": "Master CronCreate */15 (session-scoped, re-armable via /cron-cowork-team skill) is primary mechanism. Observation window will confirm it survives git merge + cowork cycle execution.",
+    "phase_2_interplay": "Phase 2 cowork-slot locking (1955a–1955d, COMPLETE 2026-05-20) is prerequisite for safe parallel master dispatcher. Slot collision detection via task_claim gates in place."
+  }
+}

@@ -3,9 +3,9 @@
   "status": "idle",
   "currentSprint": "1960c",
   "activeTaskId": null,
-  "nextAgent": "idle",
-  "nextPrompt": "PM: 1959a is DONE + APPROVED. Agent-father is autonomously executing 1960c (Phase 3 flows + tool-packages). Dispatch: 1951d (ops cutover, gate cleared 2026-05-20) is next actionable Todo task. 1948a/1948b/1948c remain BLOCKED on post-1945-verdict-resolution-scored-pct gate (no signal yet). 1954b awaits PO decision per recurring-bug-escalation policy. WIP=0.",
-  "updatedAt": "2026-05-20T21:15:00Z",
+  "nextAgent": "qa",
+  "nextPrompt": "PM: 1951d (ops cutover) COMPLETE — 12 legacy RemoteTriggers marked deleted in SSOT, AC-1/AC-2/AC-4 PASS, AC-3 (24h observation) queued as OBSERVE-1951d-verify. 1960a/1960b/1960c in progress (agent-father autonomously wiring Phase 3 task-lock dev-team flow + tool-packages). 1948a/1948b/1948c remain BLOCKED on post-1945-verdict-resolution-scored-pct gate (due 2026-05-20T07:22Z). 1954b awaits PO decision per recurring-bug-escalation policy. WIP=0. NEXT: qa picks up OBSERVE-1951d-verify (gate 2026-05-21T08:30Z); po monitors architect 1960a + agent-father 1960c progress.",
+  "updatedAt": "2026-05-20T21:50:00Z",
   "updatedBy": "pm",
-  "lastCompleted": "Sprint 1959a DONE — coordinationStore+coordinationTools exactOptionalPropertyTypes fix (commit 6c4e0f8a / b144f560 remote). 1960a architect brief DONE (commit ce938a71). 1960b PM plan DONE (commit 707f6e74). 1960c autonomous in-progress (commits 448eb7f3 + 2a099357)."
+  "lastCompleted": "1951d DONE (commit 093f8905) — Phase 1 cutover complete, 12 legacy RemoteTriggers marked deleted. AC-3 pending observation window. OBSERVE-1951d-verify queued for QA (gate 2026-05-21T08:30Z)."
 }

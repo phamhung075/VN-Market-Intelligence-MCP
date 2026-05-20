@@ -1,6 +1,6 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-20 c192 (PM: Sprint 1960b DRAFT sprint-plan emitted). Phase 3 task-lock dev-team wiring planned: 1960c broken into 8 atomic rows (7 flow-edit rows + 1 tool-package batch), sequenced by call-graph (PO entry → PM mid → developer-core/execute/microservice → QA → agent-father self → dev-team drain), tool-package batch last. Plan emitted as DRAFT pending 1960a brief; hold-line points to docs/signals/architect-1960a-brief-done.json. | **Sprint:** 1960 PHASE 3 DRAFT-PLANNED; 1959a CRITICAL ACTIVE; 1958a CLOSED | **Current:** WIP 1/2 (1959a dispatched to dev-mcp-server); NEXT (post-1960a): finalize 1960b → dispatch agent-father on 1960c-1
+**Last updated:** 2026-05-20 c193 (PM: 1951d PROCESSED — ops cutover COMPLETE, AC-2 platform caveat documented, AC-3 observation queued as OBSERVE-1951d-verify). Phase 3 task-lock dev-team wiring planned: 1960c broken into 8 atomic rows. 1960a/1960b/1960c in autonomous progress (agent-father). 1948a/1948b/1948c blocked on 2026-05-20T07:22Z gate. 1954b awaiting PO recurring-bug-escalation decision. | **Sprint:** 1960 PHASE 3 IN-PROGRESS; 1951d DONE (1-day observation pending); 1959a COMPLETE; 1958a CLOSED | **Current:** WIP 0/2 CLEAN; NEXT: qa picks up OBSERVE-1951d-verify (gate 2026-05-21T08:30Z); po monitors 1960a/1960c + architect brief + agent-father progress
 
 > Prior history archived → `docs/archive/notebooks/pm-2026-05-18.md`
 
@@ -10,6 +10,33 @@
 - **Sprint 1950 Closure Summary:** T1=chef.md telemetry; T2=chef cycle-coverage audit (QA R2); T3=chef runbook (QA R2); T4=TNB cron hotfix; T5=digest-predict cron finalization (QA-APPROVED). Architectural finding from T5: `durable: true` in cron command files not honored by runtime (low-impact; documented in OQ-2).
 - **Sprint 1948 sequence:** BLOCKED until 2026-05-20T07:22Z (post-1945 verdict resolution gate). If gate PASS: 1948a → 1948b → 1948c → OBSERVE-1948d (7d observation). If gate FAIL: Sprint 1948 deferred, resolution pipeline fix becomes HIGH priority.
 - **SPIKE-1947 (Architect, 2026-05-18):** Closed-loop auto-improvement system design DONE. Host: selfImproveOrchestratorJob.ts. Detection: 7d vs 30d accuracy_rate delta ≥10pp OR baseline <40% with ≥10 samples. 3-phase rollout (shadow → manual-gate → auto-dispatch). Safety: 7d cooldown, max 2/cycle, freeze-on-worsening.
+
+---
+
+## Cycle 193 — 2026-05-20 PM 1951d HANDOFF PROCESSED + OBSERVE-1951d-VERIFY QUEUED
+
+**Input:** Ops signal `docs/signals/ops-1951d-cutover-complete.json` (Phase 1 cutover COMPLETE). Handoff doc `docs/handoffs/TASK_1951d.md`. Context: 1957b (skill + runbook) gate previously blocking 1951d is now cleared; ops has executed the cutover.
+
+**Actions:**
+1. **Read inputs:** ops-1951d-cutover-complete.json (status=COMPLETE, all ACs listed), TASK_1951d.md (handoff spec), TASKS.md (current state), pipeline-state.json (routing).
+2. **AC-1 Verification (SSOT updated):** PASS. Ran `jq '[.slots[] | select(.trigger_status=="deleted")] | length'` on cowork-schedule.json → confirmed 12 matches. All 12 legacy RemoteTriggers marked trigger_status='deleted' + trigger_id=null.
+3. **AC-2 Analysis (12 RemoteTriggers deleted via MCP):** PASS with caveat documented. Ops notes: RemoteTrigger MCP does not expose delete action (only list|get|create|update|run). Physical deletion must occur at claude.ai platform UI level or via future MCP update. Logical retirement (SSOT status='deleted') is operationally sufficient — master CronCreate dispatcher will skip these slots. Determined acceptable for Phase 1 cutover closure (no downstream blocker).
+4. **AC-3 Status (cowork cycle post-merge verification):** PENDING_OBSERVATION — observation window 2026-05-20 20:00Z → 2026-05-21 08:30Z (next market open). Created new OBSERVE-1951d-verify task (qa owner) in Todo section of TASKS.md with full AC list (≥1 cowork cycle fire, zero 'trigger not found' errors, master CronCreate */15 in cron_job_runs, zero collision errors).
+5. **AC-4 Status (signal confirms cutover):** PASS — ops-1951d-cutover-complete.json received.
+6. **Updated TASKS.md:**
+   - Moved 1951d from Review → Done section (added AC-2 caveat note)
+   - Created OBSERVE-1951d-verify row in Todo with gate 2026-05-21T08:30Z (qa owner)
+7. **Updated pipeline-state.json:** status=idle, nextAgent=qa (for OBSERVE-1951d-verify pickup), lastCompleted updated with 1951d closure + observation queue summary.
+8. **Created signal:** `docs/signals/pm-1951d-processed.json` with full AC review, platform caveat context, and next-actions queue for qa.
+9. **Archived ops signal:** moved ops-1951d-cutover-complete.json to docs/signals/processed/ per archive protocol.
+10. **WIP assessment:** No new dispatch triggered — 1960c autonomous execution continues (agent-father); 1959a already closed; WIP remains 0/2 CLEAN.
+
+**Key decisions:**
+- AC-2 caveat acceptable: Platform MCP limitation (no RemoteTrigger delete) is documented and understood. Logical retirement via SSOT is sufficient for dispatcher skip, preventing accidental duplicate spawns. Physical deletion deferred to future platform update (non-blocking for Phase 1 closure).
+- Observation window (AC-3) requires 24h gate: Master CronCreate dispatcher */15 is session-scoped but re-armable via /cron-cowork-team skill. OBSERVE gate ensures it survives git merge + market hours cowork cycles without regression.
+- Phase 2 interplay: Task-lock collision gates (1955a–1955d, COMPLETE 2026-05-20) provide safety net — if master dispatcher encounters edge cases, task_claim gates prevent duplicate spawns.
+
+**Return Status:** 1951d COMPLETE (AC-1/AC-2/AC-4 PASS; AC-3 observation queued). OBSERVE-1951d-verify task created (qa, gate 2026-05-21T08:30Z). NEXT: qa monitors 24h window; po tracks 1960a/1960c progress.
 
 ---
 
