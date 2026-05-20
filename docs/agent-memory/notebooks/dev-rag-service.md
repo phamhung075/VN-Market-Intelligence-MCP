@@ -4,6 +4,24 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-05-20 — TASK 1959-watchdog-10 (drop dead /app/data/models mkdir token)
+
+**Task:** Remove `/app/data/models` from `RUN mkdir -p` in rag-service Dockerfile. Dead code left from watchdog-3 when model was relocated to `/opt/model-cache`.
+
+**Edit:**
+- `apps/rag-service/Dockerfile` line 37
+- Before: `RUN mkdir -p /app/data/lancedb /app/data/models`
+- After: `RUN mkdir -p /app/data/lancedb`
+- Comment updated to remove "model cache" reference
+
+**Validation:** `docker compose config rag-service` PASS. `EMBEDDING_CACHE_DIR=/opt/model-cache` confirmed correct in output.
+
+**Note:** The stale `ENV EMBEDDING_CACHE_DIR=/app/data/models` on line 41 is already overridden by line 63 (`ENV EMBEDDING_CACHE_DIR=/opt/model-cache`). That line was not touched — task scope was mkdir only.
+
+**Status:** DONE — AC-10-1 PASS. Rebuild pending ops.
+
+---
+
 ### 2026-05-20 — TASK 1959-watchdog-3 (pre-bake sentence-transformers model)
 
 **Task:** Bake sentence-transformers embedding model into RAG service Dockerfile to eliminate first-run HF Hub download on cold-start.
@@ -26,6 +44,4 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 - HF network calls at startup: 0 (confirmed via docker logs)
 - 41 tests GREEN
 
-**Commits:** feat(rag-service/1959-watchdog-3) — pending this session
-
-Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 tests GREEN, HF_HUB_OFFLINE enforced | HEALTHY
+Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 tests GREEN, HF_HUB_OFFLINE enforced. watchdog-10 dead-mkdir cleanup DONE. Next: ops rebuild. | HEALTHY

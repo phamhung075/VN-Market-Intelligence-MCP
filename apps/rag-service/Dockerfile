@@ -33,8 +33,8 @@ RUN pip3 install --no-cache-dir \
 # Copy application
 COPY . .
 
-# Data directory (LanceDB + SQLite + model cache)
-RUN mkdir -p /app/data/lancedb /app/data/models
+# Data directory (LanceDB + SQLite)
+RUN mkdir -p /app/data/lancedb
 
 ENV LANCEDB_PATH=/app/data/lancedb
 ENV DB_PATH=/app/data/rag_service.db

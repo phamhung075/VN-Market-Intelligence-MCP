@@ -1,0 +1,22 @@
+{
+  "schema": "dev-signal/v1",
+  "agent": "dev-rag-service",
+  "task_id": "1959-watchdog-10",
+  "title": "Cleanup /app/data/models mkdir remnant",
+  "status": "DONE",
+  "timestamp": "2026-05-20T21:36:00Z",
+  "sprint": 1959,
+  "zone": "apps/rag-service/",
+  "files_modified": ["apps/rag-service/Dockerfile"],
+  "rebuild_required": true,
+  "smoke_results": {
+    "health": "PENDING — ops rebuild required",
+    "search_query": "vingroup",
+    "search_results_count": "PENDING — ops rebuild required",
+    "rebuild_seconds": "PENDING — ops rebuild required"
+  },
+  "ac_pass": ["AC-10-1"],
+  "ac_pending_rebuild": ["AC-10-2", "AC-10-3", "AC-10-4", "AC-10-5"],
+  "notes": "One-line edit: dropped /app/data/models token from RUN mkdir-p. docker compose config rag-service validates cleanly. Rebuild delegated to ops per task spec. No new tests required (mechanical cleanup).",
+  "next": "qa"
+}

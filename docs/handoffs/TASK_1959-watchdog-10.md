@@ -70,3 +70,28 @@ On done, emit `docs/signals/dev-rag-service-1959-watchdog-10.json`:
 ## Disk-safety note
 
 watchdog-3 already added +920 MB to the rag-service image. This cleanup adds 0 MB (just removes one mkdir). Verify ≥ 15 GB free before `docker compose up -d --build` per `scripts/preflight-disk.sh` (watchdog-1, commit `784905da`).
+
+---
+
+## [DEV] dev-rag-service — 2026-05-20T21:36:00Z
+
+**Status:** DONE (code edit complete; rebuild delegated to ops)
+
+**Edit made:**
+- File: `apps/rag-service/Dockerfile`
+- Removed `/app/data/models` token from `RUN mkdir -p` line
+- Before: `RUN mkdir -p /app/data/lancedb /app/data/models`
+- After: `RUN mkdir -p /app/data/lancedb`
+- Comment updated: "Data directory (LanceDB + SQLite + model cache)" → "Data directory (LanceDB + SQLite)"
+
+**Validation:**
+- `docker compose config rag-service` — PASS (no parse errors, `EMBEDDING_CACHE_DIR=/opt/model-cache` confirmed in output)
+- diff = 2 lines changed (comment + mkdir), 1 file only — AC-10-1 PASS
+
+**AC status:**
+- AC-10-1: PASS — one-line edit, /app/data/models token dropped
+- AC-10-2 through AC-10-5: PENDING ops rebuild + smoke test
+
+**Signal:** `docs/signals/dev-rag-service-1959-watchdog-10.json` emitted (next=qa)
+
+**Next:** ops rebuild (`docker compose up -d --build rag-service`) + 60s smoke, then QA verify ACs 2-5.
