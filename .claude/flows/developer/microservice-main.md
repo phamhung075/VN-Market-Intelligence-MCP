@@ -39,6 +39,21 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 4. `depends_on` not Done → STOP, notify PM
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
 6. **Zone restriction** — only touch files in `apps/<service>/`. If changes needed outside zone, STOP and notify PM.
+
+**6b. Claim sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + task_id,
+  task_kind:   "sprint-task",
+  owner_agent: "<agent-id>",
+  ttl_seconds: 3600,
+  payload:     '{"task_title":"' + task_title + '","branch":"' + branch_name + '","zone":"apps/<service>/"}'
+})
+if not result.claimed:
+  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+```
+(`<agent-id>` = calling dev-* agent name, e.g. "dev-mcp-server", "dev-stock-price" — resolved from Step 0b agent-id.)
+
 7. **Before creating any new file** → look up canonical location in `docs/policies/docs-organization.md` table.
 
 **TDD workflow — TypeScript/Bun services**
@@ -55,6 +70,11 @@ RED    → write apps/<service>/__tests__/test_NNN_task_name.py → must FAIL
 GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
+```
+- **After each TDD loop** → heartbeat:
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit partial, BUG telegram, EXIT)
 ```
 
 **After code — TypeScript/Bun**
@@ -90,6 +110,8 @@ git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
+
+**Lock handoff to QA** — same session, no release needed; QA will heartbeat + release.
 
 **End-of-cycle notebook write**
 → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with agent id)
