@@ -79,3 +79,24 @@ fix(1955a/mcp-server): dailyDashboardJob projectRoot() resolves to /app
 ```
 
 Signal back: `docs/signals/dev-mcp-server-1955a-impl-done.json`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts:455-459` — reduced `..` count from 6 to 3 in `projectRoot()`; updated JSDoc comment to explain container layout
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/1955a-daily-dashboard-project-root.test.ts` — 5 assertions, GREEN
+    - AC-1: stats file exists at monorepo root (not at /)
+    - AC-1b: buggy path `/docs/data/project-stats.json` does not exist
+    - AC-2: `aggregateDailyDashboard` succeeds with real stats JSON
+    - AC-3: 3 parent segments from `/app/src/scheduler/system/` resolve to `/app`
+    - AC-3b: 6 parent segments (the bug) resolve to `/` (regression guard)
+- **Git commits:** `acc8d52b fix(1955a/mcp-server): dailyDashboardJob projectRoot() resolves to /app`
+- **Type check:** clean (0 errors)
+- **Service tests:** 9279 pass / 285 fail (baseline ~9275/284 — +4 net new passes, 0 regressions)
+- **Docs updated:** NONE (no microservice architecture doc touched)
+- **Graphify:** skipped (no docs impacted)

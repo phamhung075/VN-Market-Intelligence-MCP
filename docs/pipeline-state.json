@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "in_progress",
-  "currentSprint": "c212",
-  "activeTaskId": "1955a+1951d",
-  "nextAgent": "dev-mcp-server+ops",
-  "nextPrompt": "dev-mcp-server: run .claude/flows/dev-mcp-server/main.md for Task 1955a (dailyDashboardJob projectRoot fix, handoff docs/handoffs/TASK_1955a.md). ops: run .claude/flows/ops/main.md for Task 1951d (CronDelete 12 RemoteTriggers per docs/architecture-briefs/2026-05-18-cowork-team-command.md §8, create cowork-master-cron-runbook.md).",
-  "updatedAt": "2026-05-19T21:05:00Z",
-  "updatedBy": "dev-team-c212",
-  "lastCompleted": "Cycle 212 (dev-team): PREFLIGHT clean. Drained 12 signals (all stale/resolved). OBSERVE-1951b CLOSED (gate 20:34Z passed, AC-6 PASS). Sprint-1956 incident RESOLVED (11/11 services). 1954a AC-3 PASS (ops backfill 19 rows). TASKS.md trimmed to 80 lines. Dispatching parallel: dev-mcp-server→1955a (HIGH FIX) + ops→1951d (cutover, gate cleared). WIP=2/2. Commit a205c61c."
+  "currentSprint": "c213",
+  "activeTaskId": "1955a",
+  "nextAgent": "qa",
+  "nextPrompt": "qa: run QA pipeline on commit acc8d52b (task 1955a — dailyDashboardJob projectRoot() fix). Handoff: docs/handoffs/TASK_1955a.md. 5/5 tests GREEN, tsc 0 errors. After QA approval: ops redeploy container to activate fix.",
+  "updatedAt": "2026-05-20T04:35:00Z",
+  "updatedBy": "dev-mcp-server-c213",
+  "lastCompleted": "dev-mcp-server: 1955a impl done — commit acc8d52b. projectRoot() reduced from 6 to 3 '..' segments. 5 tests GREEN (AC-3 container path verified). tsc 0 errors. 9279 pass / 285 fail (baseline preserved)."
 }
