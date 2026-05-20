@@ -110,7 +110,7 @@ export function registerCoordinationTools(server: McpServer): void {
         task_kind: task_kind as TaskKind,
         owner_session: SERVER_SESSION_ID,
         owner_agent,
-        ttl_seconds,
+        ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
         payload: payload ?? null,
       });
 
@@ -201,7 +201,11 @@ export function registerCoordinationTools(server: McpServer): void {
         ),
     },
     async ({ kind, owner_agent, expired }) => {
-      const result = listHeldTasks({ kind, owner_agent, expired });
+      const result = listHeldTasks({
+        ...(kind !== undefined ? { kind } : {}),
+        ...(owner_agent !== undefined ? { owner_agent } : {}),
+        ...(expired !== undefined ? { expired } : {}),
+      });
       return {
         content: [
           {

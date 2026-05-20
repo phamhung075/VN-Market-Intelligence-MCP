@@ -269,10 +269,9 @@ export function claimTask(input: ClaimInput): ClaimResult {
       WHERE task_id = ?
     `).get(input.task_id) as CurrentHolder | null;
 
-    return {
-      claimed: false,
-      current_holder: holderRow ?? undefined,
-    };
+    return holderRow
+      ? { claimed: false, current_holder: holderRow }
+      : { claimed: false };
   } catch (err) {
     console.error("[coordinationStore] claimTask error", err);
     return { claimed: false, error: "db_error" };

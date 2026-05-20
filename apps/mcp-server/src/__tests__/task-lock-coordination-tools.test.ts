@@ -86,7 +86,7 @@ describe("task_claim tool contract", () => {
 
     // Tool contract: {claimed: false, current_holder: {...}}
     expect(result.claimed).toBe(false);
-    const r = result as { claimed: false; current_holder?: Record<string, unknown> };
+    const r = result as unknown as { claimed: false; current_holder?: Record<string, unknown> };
     expect(r.current_holder).toBeDefined();
     expect(r.current_holder!["owner_session"]).toBe("mock-session-pid-1234");
     expect(r.current_holder!["owner_agent"]).toBe("cowork-team");
@@ -232,7 +232,7 @@ describe("task_list_held tool contract", () => {
     expect(result.count).toBe(1);
     expect(result.locks).toHaveLength(1);
 
-    const lock = result.locks[0];
+    const lock = result.locks[0]!;
     // Verify all fields from brief §6 task_list_held output schema
     expect(lock.task_id).toBe("cowork-slot:list-test:20260520T000000Z");
     expect(lock.task_kind).toBe("cowork-slot");

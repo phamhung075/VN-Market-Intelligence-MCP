@@ -387,19 +387,19 @@ describe("AC-7: listHeldTasks filtered queries", () => {
   it("filters by kind=sprint-task", () => {
     const result = listHeldTasks({ kind: "sprint-task" });
     expect(result.count).toBe(1);
-    expect(result.locks[0].task_kind).toBe("sprint-task");
+    expect(result.locks[0]!.task_kind).toBe("sprint-task");
   });
 
   it("filters by owner_agent=dev-team", () => {
     const result = listHeldTasks({ owner_agent: "dev-team" });
     expect(result.count).toBe(1);
-    expect(result.locks[0].task_id).toBe("dash:po:row-001");
+    expect(result.locks[0]!.task_id).toBe("dash:po:row-001");
   });
 
   it("filters expired=true returns only stale locks", () => {
     const result = listHeldTasks({ expired: true });
     expect(result.count).toBe(1);
-    expect(result.locks[0].task_id).toBe("cowork-slot:news-scout:20260520T140000Z");
+    expect(result.locks[0]!.task_id).toBe("cowork-slot:news-scout:20260520T140000Z");
   });
 
   it("filters expired=false returns only active locks", () => {
@@ -411,7 +411,7 @@ describe("AC-7: listHeldTasks filtered queries", () => {
 
   it("each lock row has all required fields", () => {
     const result = listHeldTasks({ kind: "sprint-task" });
-    const lock = result.locks[0];
+    const lock = result.locks[0]!;
     expect(lock.task_id).toBeTruthy();
     expect(lock.task_kind).toBeTruthy();
     expect(lock.owner_session).toBeTruthy();
