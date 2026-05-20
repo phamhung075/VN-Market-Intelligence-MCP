@@ -85,7 +85,19 @@ PIPELINE: continue
 ```
 `zone:` on every task is mandatory — dev-team Step 3 reads this field to pick the right dev-* specialist.
 
+**3d.** Heartbeat umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + sprint_id })
+// ok=false here = sprint umbrella expired or stolen; log only, do not abort planning
+```
+
 **4.** Set task status → `in_progress` when developer picks up
+
+**4b.** Heartbeat developer's task lock if pre-existing:
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+// silent on ok=false — developer will (re)claim on entry
+```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
