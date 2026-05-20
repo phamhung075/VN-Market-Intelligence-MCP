@@ -356,3 +356,102 @@ Once frontend code is fixed and committed:
 **Signal Output:** `docs/signals/ops-1957a-triggers-reactivated.json`
 **SSOT Updated:** `docs/data/cowork-schedule.json` (12 slots)
 **DASHBOARD Updated:** 1957a → DONE
+
+---
+
+## Sprint 1957d — Tier-3 Signal Triage (2026-05-20 04:26 UTC)
+
+**Status:** DIAGNOSED — 4 signals triaged, 1 CRITICAL escalation, 3 OBSERVE, infra remain healthy
+
+**Context:** System-auditor Tier-3 audit (04:18-04:20Z) detected 4 signals in ops DASHBOARD:
+1. 1956-B-10 CRITICAL — BCTC SLA breached
+2. 1956-B-05a — BCTC VPS proxy stale 21h
+3. 1956-B-08 — vn-news-fetch UNHEALTHY
+4. 1957-B-06 — BCTC VPS data stale >24h (OBSERVE only)
+
+**Diagnostic Results:**
+
+### 1956-B-10 (CRITICAL) & 1956-B-05a — BCTC VPS Service Failure
+
+**Finding:** CONFIRMED — Root cause is VPS bctc-fetch.service NOT PUSHING
+- BCTC data age: 335 minutes (5h 35min) vs 120 min SLA = 2.74x breach
+- Last BCTC push: 2026-05-19 07:05:07Z (21h ago)
+- Push volume: only 1 push in 24h
+- **All other VPS proxies (prices/news/sbv/foreign-flow) healthy:** prices 143 pushes/24h, news 35 pushes/24h, sbv 16 pushes/24h
+
+**Diagnosis:** This is not earnings-quiet (as PO hypothesized). It's a SERVICE FAILURE. All other proxies push regularly; only bctc-fetch is stuck. Candidates:
+1. **VPS service crashed/stuck** (most likely) — no push activity in 21h
+2. **Script pattern-matching bug** (documented 2026-05-19 in ops notebook Sprint 1951d) — discover-bctc-urls-browser.py fails to parse quarter-year with leading zeros (quý 01 vs quý 1)
+3. **Network failure** (ruled out — other services healthy)
+
+**Recovery Attempts:**
+1. Triggered live BCTC fetch via `trigger_bctc_vps_fetch(tickers=[FPT, VCB, HPG], dry_run=false)` at 2026-05-20T04:25:30Z
+2. SSH command queued: `ssh root@125.212.251.27 /root/run-bctc-debug.sh --ticker FPT --ticker VCB --ticker HPG --verbose`
+3. Expected output: /tmp/bctc-debug-*.log on VPS (fire-and-forget, awaiting dev-mcp-server zone diagnostics)
+
+**Impact:** Q1/Q2 2026 earnings data missing for 34 watchlist stocks. Trust score erosion in critical earnings window.
+
+**Escalation:** dev-mcp-server zone — requires (a) SSH diagnostics on VPS, (b) service restart if stuck, (c) script bug fix if pattern failure, or (d) network debug if connectivity lost.
+
+**Signal Output:** BUG channel message_id 2514
+
+### 1956-B-08 — vn-news-fetch Service Status
+
+**Finding:** OUTDATED SIGNAL — Container is HEALTHY
+- Docker uptime: 7.6h (not 1h 1m as signal stated)
+- News push timestamp: 2026-05-20 04:18:00 (7 min ago, fresh)
+- Container status: healthy
+- Service responding normally
+
+**Action:** No action needed. Signal timing incorrect (audit ran earlier than reported timestamp). Will auto-close on next clean Tier-1 audit.
+
+### 1957-B-06 — BCTC VPS Data Stale >24h
+
+**Finding:** ACKNOWLEDGED — Within SLA, normal for late Q2
+- Last push: 2026-05-19 07:05:07Z (>24h age)
+- SLA threshold: 168h (1 week)
+- Context: Late May = earnings-quiet season (companies filing Q1-2026 through 2026-05-21)
+- Status: Within threshold, expect resumed cadence after 2026-05-21
+
+**Action:** OBSERVE — Monitor 72h cadence. If still stale on 2026-05-23, escalate to dev-mcp-server.
+
+---
+
+## Infrastructure Baseline (2026-05-20 04:26 UTC)
+
+**Docker:** 12/12 containers healthy (all running 8h, no restarts)
+- mcp-server: 3000✓, api-gateway: 4000✓, stock-price: 5010✓, technical-analysis: 5003✓
+- macro-indicators: 5004✓, kinh-dich: 5005✓, alert-engine: 5006✓, pdf-extractor: 5001✓
+- rag-service: 5002✓, news-fetch: 5008✓, frontend: 3001✓, flaresolverr: 8191✓
+
+**Database:** market.db 147.91 MB, WAL 7.45 MB (normal)
+- All circuit breakers OK
+- Pending feedback: 30 items
+- Open warnings: 24 high/critical (mostly rate-limit warnings, expected)
+
+**VPS Proxies:**
+- prices: healthy, 143 pushes/24h ✓
+- news: healthy, 35 pushes/24h ✓
+- sbv: healthy, 16 pushes/24h ✓
+- foreign-flow: healthy, 101 pushes/24h ✓
+- bctc: **STALE**, 1 push/24h ✗
+
+**Data Freshness SLA:**
+- price: 1 min (ok)
+- news: 5 min (ok)
+- sbv_fx: 10 min (ok)
+- foreign_flow: 1 min (ok)
+- bctc: 335 min (BREACHED 120 min SLA)
+
+---
+
+## Next Actions
+
+1. **Immediate:** Monitor BUG channel for SSH diagnostics results from VPS (dev-mcp-server)
+2. **If SSH confirms service stuck:** dev-mcp-server to restart vn-bctc-fetch.service
+3. **If logs show pattern-matching errors:** dev-mcp-server to apply fix from Sprint 1951d analysis
+4. **72h monitor:** 1957-B-06 (BCTC VPS data cadence — expect resume after 2026-05-21)
+5. **Close outdated:** 1956-B-08 will auto-close on next Tier-1 audit (news push fresh)
+
+**Blocking:** YES — BCTC SLA breach blocks earnings data ingestion. Escalation active.
+
