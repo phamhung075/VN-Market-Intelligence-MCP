@@ -30,10 +30,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_019nwLpkYELqFdE1DZaRhPUk",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "chef-intraday",
@@ -50,10 +50,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_015M6yJMwShWmVcm6XNpVQ3U",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "chef-eod",
@@ -70,10 +70,10 @@
       "depends_on": "foreignFlowAlertJob:08:13:UTC — 24-min gate; signal written to DB before this trigger fires",
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_011HNsRMNiQwa3vNwN1b9Anh",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "chef-evening",
@@ -90,10 +90,10 @@
       "depends_on": "macroIndicatorRefreshJob:19:13:UTC — 24-min gate; FRED macro data written to DB before this trigger fires",
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01CLotVE4XinDFxM2jErUCir",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "digest-sunday",
@@ -110,10 +110,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_014GzK19w1ZNpwnRjA91ce3P",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "digest-monday-predict",
@@ -148,10 +148,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01LpUxJ98v2aK22FqLSBtL1G",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "financial-analyst-morning",
@@ -168,10 +168,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01Du7kZ59vzagGh5GvkTY3Gi",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "financial-analyst-midday",
@@ -188,10 +188,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_011JSNKJEMs5fQwGCmLUkuWT",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "news-scout-market",
@@ -226,10 +226,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01Mooo3zi5MFysRAWsHwaztd",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "news-scout-sentiment",
@@ -246,10 +246,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_016gauuJbAhdbzNcA3LYCFSh",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "market-watcher-market",
@@ -302,10 +302,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01W62B3yS7AERMwsGrap4e7U",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "market-watcher-eod",
@@ -322,10 +322,10 @@
       "depends_on": null,
       "enabled": true,
       "last_fired": null,
-      "trigger_id": "trig_01PUAqNa8gMWRjc6DWqcV7xh",
+      "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
-      "last_reactivated_at": "2026-05-20T00:00:00Z"
+      "trigger_status": "deleted",
+      "last_reactivated_at": null
     },
     {
       "slot_id": "alert-commander-market",
