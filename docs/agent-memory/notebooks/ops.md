@@ -70,3 +70,64 @@
 | OBSERVE-1955d | 2026-05-20T09:00Z | vnstockTradingStatsRefresh fire | status∈{success,error} with finished_at NOT NULL |
 | OBSERVE-1955c | 2026-05-25T01:30Z | vnstockFundamentalsRefresh fire | status∈{success,error} with finished_at NOT NULL |
 | 1951d-cowork-fires-2h | 2026-05-20T11:45Z | cowork-team signals after SSOT merge | ≥3 dispatcher ticks + ≥1 MARKET output |
+
+### Sprint 1961a — Container Rebuild (21:36 UTC) [DONE]
+
+**Status:** COMPLETE
+
+**Action taken:**
+- Ran `docker compose up -d --build mcp-server` from project root
+- Build time: ~15s (incremental build, most layers cached)
+- Container restart time: 5s
+- Post-rebuild state: Up 5 seconds, healthy
+
+**Outcome:**
+- Container image rebuilt with latest source (commit b144f560 tsc fix + task-lock coordination tools)
+- 146 tools registered in MCP gateway
+- Startup logs clean: no errors, WAL checkpoint succeeded, scheduler started with 70 cron jobs
+- Port 3000 (MCP) and 4004 (gateway proxy) live
+
+---
+
+### Sprint 1961b — Task-Lock Tools Live Smoke (21:36 UTC) [DONE]
+
+**Status:** COMPLETE
+
+**Tool tests executed on vn-market MCP gateway:**
+
+1. **task_list_held()** ✓
+   - Response: `{"locks":[],"count":0}`
+   - Status: FOUND + EXECUTABLE
+
+2. **task_claim()** ✓
+   - Call: `task_claim(task_id="smoke-1961b-claim-001", task_kind="cowork-slot", owner_agent="ops", ttl_seconds=60, payload="{...}")`
+   - Response: `{"claimed":true}`
+   - Status: FOUND + EXECUTABLE
+
+3. **task_heartbeat()** ✓
+   - Call: `task_heartbeat(task_id="smoke-1961b-claim-001")`
+   - Response: `{"ok":true,"expires_at":1779305898}`
+   - Status: FOUND + EXECUTABLE
+
+4. **task_release()** ✓
+   - Call: `task_release(task_id="smoke-1961b-claim-001", result="success")`
+   - Response: `{"ok":true}`
+   - Status: FOUND + EXECUTABLE
+
+5. **task_list_held() post-release** ✓
+   - Response: `{"locks":[],"count":0}`
+   - Verification: released task no longer in held list
+
+**Outcome:**
+- All 4 Phase 1 task-lock tools registered and callable
+- Round-trip claim→heartbeat→release cycle works end-to-end
+- No "Tool not found" errors
+- No semantic failures
+- Ready for QA Phase 2+3 smoke test (task 1961c)
+
+---
+
+**Sprint 1961a+1961b BLOCKED ITEMS CLEARED:**
+- Cowork-team dispatcher can now use collision-safe slot-locking (Phase 2 gates active)
+- Task-lock MCP interface live on production gateway
+- Unblocks 1961c QA smoke re-validation
