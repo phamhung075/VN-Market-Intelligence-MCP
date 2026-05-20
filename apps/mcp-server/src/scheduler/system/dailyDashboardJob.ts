@@ -453,7 +453,10 @@ export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDa
  * apps/mcp-server/src/scheduler/system/ → ../../../../.. → project root
  */
 function projectRoot(): string {
-  return path.resolve(import.meta.dir, "../../../../../..");
+  // src/scheduler/system/ → 3 ".." reach /app (container WORKDIR)
+  // In dev: apps/mcp-server/src/scheduler/system/ → ../../../.. → monorepo root
+  // WORKDIR /app mirrors apps/mcp-server/ content, so 3 segments are correct.
+  return path.resolve(import.meta.dir, "../../..");
 }
 
 /**
