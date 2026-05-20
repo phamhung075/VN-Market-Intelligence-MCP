@@ -194,3 +194,38 @@ The OHLCV backfill (`runOhlcvStartupProbe` triggered a 5-hour sync of 1599 rows 
 **Gate satisfied:** 1955b done (commit `cfe10b0a`)  
 **Next milestone:** RCA handoff to dev-mcp-server within 30min; fix landing EOD 2026-05-20 or 2026-05-21  
 **Observation gate:** AC-3 verification 2026-05-21T09:00Z (24h post-deploy window for daily job ticks)
+
+---
+
+## [QA] Review Record (2026-05-20)
+
+**Verdict: APPROVED**
+**QA agent:** qa | **Round:** 1 | **Commit reviewed:** 84c2b375
+
+| Check | Result |
+|-------|--------|
+| Targeted tests 16/16 | PASS [279ms] |
+| Full suite 9287/284 | PASS (9271 baseline + 16 new = 9287; zero regression) |
+| tsc | PASS (0 new errors; pre-existing coordination errors from 79ac45e9 excluded) |
+| AC-1: RCA documented | PASS — event-loop trace + DB evidence + why 3 jobs unaffected |
+| AC-2: idempotent | PASS — shouldRunCatchup DB guard + wrapRun success row |
+| AC-3: all 5 jobs have startup catchup | PASS — morning/evening/france pre-existing (lines 306/320/329); alertDigest+summaryDaily added (lines 345/355) |
+| AC-4: zero regression | PASS |
+| Test coverage: fire on no-row / skip on row-exists | PASS (AC-1a/1b/2a/2b) |
+| Test coverage: weekdayOnly=true blocks weekend | PASS (AC-1d/1e/1f) |
+| Test coverage: weekdayOnly=false allows Saturday | PASS (AC-2d/2e) |
+| Test coverage: DB error fail-safe | PASS (AC-3) |
+| recoverMissedExecutions:true on alertDigestJob | PASS — startScheduler.ts:184 |
+| recoverMissedExecutions:true on summaryJob:daily | PASS — summaryJobs.ts:94 |
+| Catchup order: fires AFTER getDb+reapZombies | PASS — setTimeout block starts at line 302 |
+| DDD scan | PASS |
+| Security: no process.env, no secrets | PASS |
+| Commit convention | PASS — fix(1958a/mcp-server), Task+AC trailers |
+
+**Non-blocking:**
+- NB-1: summaryJob:daily dedup uses recordJobRun/shouldRunCatchup DB query (equivalent to alreadySentToday() — functionally identical)
+- NB-2: tsc errors in coordinationStore.ts/coordinationTools.ts are pre-existing from commit 79ac45e9
+
+**Advisory signal emitted:** docs/signals/qa-1958a-architect-followup.json — OHLCV startup backfill (5h) is structural root cause of event-loop starvation; architect review recommended (not blocking 1958a).
+
+**Merge:** approved to main | **Next:** pm marks Done, ops deploys + verifies AC-3 at 2026-05-21T09:00Z

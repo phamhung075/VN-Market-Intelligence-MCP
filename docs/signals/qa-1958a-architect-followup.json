@@ -1,0 +1,17 @@
+{
+  "signal": "architect_followup_advisory",
+  "task": "1958a",
+  "agent": "qa",
+  "timestamp": "2026-05-20T17:30:00Z",
+  "priority": "LOW",
+  "blocking": false,
+  "subject": "OHLCV startup backfill event-loop starvation — structural concern",
+  "description": "runOhlcvStartupProbe() triggered a 5-hour OHLCV backfill at container startup (1599 rows, iterative HTTP calls). This is the structural root cause of event-loop starvation that caused node-cron to miss the 14:00 UTC and 15:30 UTC windows on 2026-05-19 and 2026-05-20. The 1958a fix (recoverMissedExecutions:true + startup catchup probes) mitigates the symptom. The architectural issue persists: startup operations should not consume the event loop for hours.",
+  "recommendation": "Architect should evaluate: (1) moving OHLCV backfill to a background worker / separate thread; (2) rate-limiting the iterative HTTP calls during startup; (3) deferring heavy startup probes until after cron windows have passed (e.g., delay until 15:31 UTC).",
+  "reference_files": [
+    "apps/mcp-server/src/scheduler/market-data/ohlcvStartupProbe.ts",
+    "apps/mcp-server/src/scheduler/startScheduler.ts:116-118"
+  ],
+  "not_blocking_1958a": true,
+  "next_agent": "architect"
+}

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "review",
+  "status": "in_progress",
   "currentSprint": "1958a",
   "activeTaskId": "1958a",
-  "nextAgent": "qa",
-  "nextPrompt": "Sprint 1958a QA — verify fix for 5 MARKET-summary cron jobs not firing. RCA: event-loop starvation caused node-cron to miss alertDigestJob (14:00 UTC) and summaryJob:daily (15:30 UTC) windows; recoverMissedExecutions=false (default) means missed windows permanently skipped; no startup catchup existed for these 2 jobs. Fix: recoverMissedExecutions:true on alertDigestJob + summaryJob:daily; startup catchups for both. 16 new tests GREEN, 9330 pass / 283 fail (no regression). Signal: docs/signals/dev-mcp-server-1958a-impl-done.json. Handoff: docs/handoffs/TASK_1958a.md. AC-3 observation gate: 2026-05-21T09:00Z (ops verifies ≥1 new success row per job after next container deploy).",
-  "updatedAt": "2026-05-20T17:02:00Z",
-  "updatedBy": "dev-mcp-server",
-  "lastCompleted": "Sprint 1958a IMPL DONE — alertDigestJob + summaryJob:daily startup catchups + recoverMissedExecutions. 16 tests GREEN, suite 9330/283. RCA in TASK_1958a.md Findings."
+  "nextAgent": "pm",
+  "nextPrompt": "Sprint 1958a APPROVED by QA. Mark 1958a Done in TASKS.md. AC-3 observation gate 2026-05-21T09:00Z — dispatch ops to verify ≥1 new cron_job_runs success row per job after docker compose up -d mcp-server. Architect-followup signal emitted: docs/signals/qa-1958a-architect-followup.json (OHLCV startup backfill event-loop concern, advisory only). Report: reports/TASK_REPORT_1958a.md.",
+  "updatedAt": "2026-05-20T17:30:00Z",
+  "updatedBy": "qa",
+  "lastCompleted": "Sprint 1958a QA APPROVED — 16/16 targeted GREEN, 9287/284 full suite (zero regression), DDD PASS, security PASS. Architect-followup advisory for OHLCV startup backfill."
 }

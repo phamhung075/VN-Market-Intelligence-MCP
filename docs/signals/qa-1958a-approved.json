@@ -1,0 +1,26 @@
+{
+  "signal": "qa_approved",
+  "task": "1958a",
+  "agent": "qa",
+  "timestamp": "2026-05-20T17:30:00Z",
+  "commit": "84c2b375",
+  "verdict": "APPROVED",
+  "test_results": {
+    "targeted": "16/16 GREEN [279ms]",
+    "suite_pass": 9287,
+    "suite_fail": 284,
+    "baseline": "9271/284 (1955b QA baseline) + 16 new = 9287 — exact match",
+    "tsc": "pre-existing errors in coordination files (79ac45e9) — 0 new errors from 1958a"
+  },
+  "ac_matrix": {
+    "AC-1": "PASS — RCA documented: event-loop starvation + recoverMissedExecutions=false + missing catchup probes; DB evidence with timestamps",
+    "AC-2": "PASS — idempotent: shouldRunCatchup DB guard + wrapRun success row prevents double-send",
+    "AC-3": "PASS — all 5 jobs have startup catchup probes (morning/evening/france pre-existing; alertDigest+summaryDaily added); live observation gate 2026-05-21T09:00Z (ops)",
+    "AC-4": "PASS — 9287=9271+16, 284 pre-existing fails unchanged"
+  },
+  "ddd": "PASS",
+  "security": "PASS",
+  "next_agent": "pm",
+  "report": "reports/TASK_REPORT_1958a.md",
+  "architect_followup_signal": "docs/signals/qa-1958a-architect-followup.json"
+}
