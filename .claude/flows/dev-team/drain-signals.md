@@ -12,8 +12,30 @@ Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` | DB degradat
 
 Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
 Find `## po` section (or any dev-team-addressed section). Collect `status=NEW` rows.
-For each NEW row: load payload if present → append to `pendingSignals[]` with `source="dashboard"` → mark `NEW → READ`.
-If DASHBOARD.md missing or no dev-team section → log `"[dev-team] dashboard skip"` and continue. Never fail-loud on this step.
+
+→ Load skill: `.claude/skills/task-lock/SKILL.md`
+
+For each NEW row:
+  row_key = "dash:" + section_name + ":" + row.id
+
+  result = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id:     row_key,
+    task_kind:   "dashboard-row",
+    owner_agent: "dev-team",
+    ttl_seconds: 1800,
+    payload:     '{"row_id":"' + row.id + '","from":"' + row.from + '","type":"' + row.type + '"}'
+  })
+
+  if not result.claimed:
+    log "[dev-team] SKIP dashboard row " + row.id + " — held by " + result.current_holder.owner_agent
+    continue                            // Do NOT add to pendingSignals[], do NOT mark READ
+
+  // Claim succeeded — proceed with existing drain logic
+  load payload if present → append to pendingSignals[] with source="dashboard"
+  mark row NEW → READ
+  call_tool("task_release", { task_id: row_key })   // release per-row claim immediately after row consumed
+
+If DASHBOARD.md missing or no dev-team section → log "[dev-team] dashboard skip" and continue. Never fail-loud.
 
 ---
 
