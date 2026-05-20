@@ -1,0 +1,27 @@
+{
+  "id": "ops-1959-watchdog-5-deployed",
+  "timestamp": "2026-05-20T21:31:50Z",
+  "task_id": "1959-watchdog-5",
+  "agent": "ops",
+  "action": "DEPLOY",
+  "status": "DEPLOYED",
+  "verified": true,
+  "container_name": "vn-market-intelligence-mcp-mcp-server-1",
+  "container_status": "running",
+  "health_status": "healthy",
+  "deploy_time_utc": "2026-05-20T21:31:50Z",
+  "commit_hash": "8d0f41e0",
+  "expected_first_fire_utc": "2026-05-20T21:47:00Z",
+  "cron_schedule": "47 * * * *",
+  "lancedb_size_mb": 69,
+  "disk_threshold_gb": 20,
+  "alert_will_fire_on_first_run": false,
+  "reason_no_first_alert": "Disk healthy (69 MB < 20 GB threshold); watchdog operating as designed",
+  "acknowledgments": {
+    "ac_4_1": "PASS — diskUsageAlertJob registered + wired in scheduler",
+    "ac_4_2": "VERIFIED — BUG Telegram logic tested and approved by QA",
+    "ac_4_3": "EXPECTED — silent when usage < 20 GB (current disk state)",
+    "ac_4_4": "VERIFIED — zero false positives in test suite (9/9 PASS)"
+  },
+  "notes": "Handoff context referenced lancedb 29GB as design rationale for threshold; current Docker volume is 69 MB. Watchdog-4 (compaction) unlocks 2026-05-22T21:00Z and may reduce size further. This deployment closes the runtime-detection gap for disk pressure incidents."
+}

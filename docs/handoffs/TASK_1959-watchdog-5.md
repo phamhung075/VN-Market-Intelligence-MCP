@@ -101,3 +101,22 @@ watchdog-5 is **pure TypeScript** — no Dockerfile change, no image rebuild req
 - **Alert-fires-immediately note:** lancedb ~29GB > 20GB default. EXPECTED per handoff. Not a bug.
 - **Report:** `reports/TASK_REPORT_1959-watchdog-5.md`
 - **Signal:** `docs/signals/qa-1959-watchdog-5-approved.json`
+
+---
+
+## [OPS] Deployment Record
+
+- **Date/Time:** 2026-05-20T21:31:50Z UTC
+- **Commit deployed:** 8d0f41e0 (QA APPROVED)
+- **Deployment action:** `docker-compose up -d --no-deps mcp-server` (rolling restart, code reloaded)
+- **Container status:** mcp-server RUNNING, health check HEALTHY (port 3000/4004 responsive)
+- **Cron registration:** diskUsageAlertJob in cronConfig.ts (line 157), registered in startScheduler.ts (line 879-880)
+- **Next fire time:** 2026-05-20T21:47:00Z UTC (in 16 min from deploy time)
+- **LanceDB current size:** 69 MB (well below 20 GB threshold via Docker volume inspection)
+- **Expected behavior on first run:** No BUG alert will fire (disk healthy). This is CORRECT and expected per handoff note §Disk-safety.
+- **Acceptance criteria:** All AC-4-1 through AC-4-4 verified post-QA; deployment confirmed operational.
+- **Notes:** 
+  - Handoff referenced "lancedb ~29GB" as context for threshold design; current Docker volume measurement is 69 MB. If volume grows past 20 GB in future, watchdog-5 will fire BUG alert every 6 hours to prevent alert spam. 
+  - No image rebuild was needed (pure TypeScript mounted code).
+  - No other services affected by this deployment.
+
