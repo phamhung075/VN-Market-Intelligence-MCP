@@ -1,0 +1,28 @@
+{
+  "from": "qa",
+  "to": ["po", "agent-father"],
+  "type": "qa-approved",
+  "payload": {
+    "sprint": 1960,
+    "row": "1960d",
+    "smoke_results": "10/10 PASS",
+    "grep_checks": "9/9 PASS",
+    "mcp_form_check": "PASS",
+    "pipeline_state_augment": "PASS",
+    "commit": "1997da7a",
+    "deliverable": "scripts/smoke-task-lock-phase3.ts",
+    "notes": [
+      "T1-T5: sprint-task kind (TTL=3600) — claim race, heartbeat extend, non-holder heartbeat rejected, release+reclaim cycle",
+      "T6-T8: dashboard-row kind (TTL=1800) — per-row drain collision, no dangling rows after release",
+      "T9: TTL expiry simulation via manual DB backdate — stale-steal succeeds (stolen=true)",
+      "T10: Cross-kind isolation — sprint-task:X and dashboard-row:X are independent PKs",
+      "G1-G9: All 8 wired flow .md files contain correct task_claim/heartbeat/release + skill lazy-load",
+      "MCP grammar: all flows use call_tool(server='vn-market') meta-syntax — no curl/fetch violations",
+      "pipeline-state.json AUGMENT verified: status/nextAgent/updatedAt fields preserved",
+      "fixer/main.md NOT wired — not in 1960c row plan (brief §4.7 is informational; 1960c rows 1-8 do not include fixer). Informational finding only — not a blocking issue."
+    ],
+    "next_row": "1960e"
+  },
+  "priority": "high",
+  "createdAt": "2026-05-20T00:00:00Z"
+}
