@@ -4,6 +4,25 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1958a — alertDigestJob + summaryJob:daily startup catchup + recoverMissedExecutions (2026-05-20, IMPL DONE)
+
+**Root Cause:** Event-loop starvation (5h OHLCV backfill at startup / bctcReparseJob zombies) caused node-cron to miss cron windows at 14:00 UTC (alertDigestJob) and 15:30 UTC (summaryJob:daily). `recoverMissedExecutions=false` (node-cron default) means missed windows are permanently skipped. These 2 jobs had NO startup catchup, unlike morningBriefingJob/eveningSummaryJob/franceSummaryJob.
+
+**Fix (3 files):**
+- `startScheduler.ts`: Import `runSummaryJob` from `summaryJobs.js`. Add startup catchup probes for `alertDigestJob` (14:00 UTC, weekdayOnly=true) and `summaryJob:daily` (15:30 UTC, weekdayOnly=false) to existing setTimeout(30s) block. Add `recoverMissedExecutions: true` to alertDigestJob cron registration.
+- `summaryJobs.ts`: Export `runSummaryJob` (was private). Add `recoverMissedExecutions: true` to `summaryJob:daily` cron registration.
+- `1958a-alert-digest-summary-catchup.test.ts` (NEW, 16 tests): AC-1a–h (alertDigestJob catchup params), AC-2a–g (summaryJob:daily catchup params), AC-3 (DB error fail-safe).
+
+**Results:** 16/16 tests GREEN, tsc 0 errors (excluding pre-existing coordinationStore errors), full suite 9330 pass / 283 fail (zero regression from 9284 baseline).
+
+**Secondary signal for Architect:** OHLCV backfill ran for 5h at container startup (1599 rows). Event-loop starvation from startup operations is the root cause pattern.
+
+**NEXT: qa** — verify commit against ACs; then ops container redeploy + confirm all 5 jobs fire within 24h.
+
+Zone health: alertDigestJob and summaryJob:daily now have both startup catchups and recoverMissedExecutions guards; scheduler resilience improved | HEALTHY
+
+---
+
 ### Task 1955b — zombie cron_job_runs reap on startup (2026-05-20, DONE — commit cfe10b0a)
 
 **Problem:** Scheduler crash (SIGKILL / watchdog) left `status='running'` + `finished_at IS NULL` rows in `cron_job_runs`. Reaper function did not exist; CHECK constraint excluded 'crashed'.

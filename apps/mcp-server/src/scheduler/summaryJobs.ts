@@ -53,7 +53,7 @@ export interface SummaryCronConfig {
  *
  * @param periodType - Summary period type to generate
  */
-async function runSummaryJob(periodType: PeriodType): Promise<void> {
+export async function runSummaryJob(periodType: PeriodType): Promise<void> {
   const db = getDb()
   await recordJobRun(db, `summaryJob:${periodType}`, async () => {
     const start = Date.now()
@@ -86,9 +86,12 @@ async function runSummaryJob(periodType: PeriodType): Promise<void> {
  */
 export function registerSummaryJobs(cronConfig: SummaryCronConfig): void {
   // Daily summary — 22:30 every day (after evening summary)
+  // recoverMissedExecutions: true — if the event loop is stalled at fire time
+  // (e.g. startup ohlcv backfill), node-cron replays the missed tick on recovery
+  // instead of skipping until the next day (task 1958a).
   cron.schedule(cronConfig.daily, async () => {
     await runSummaryJob("daily");
-  }, { timezone: "Asia/Ho_Chi_Minh" });
+  }, { timezone: "Asia/Ho_Chi_Minh", recoverMissedExecutions: true });
 
   // Weekly summary — 23:00 every Sunday
   cron.schedule(cronConfig.weekly, async () => {

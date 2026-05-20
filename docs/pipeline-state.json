@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "review",
-  "currentSprint": "1955b",
-  "activeTaskId": "1955b",
+  "currentSprint": "1958a",
+  "activeTaskId": "1958a",
   "nextAgent": "qa",
-  "nextPrompt": "QA verify 1955b — zombie cron_job_runs reap. Commit cfe10b0a. AC: (1) tsc 0 errors PASS; (2) 4 new tests GREEN (AC-1 reaper happy path, AC-2 idempotence×2, AC-3 migration); (3) full suite 9284+ pass; (4) schema-system.ts CHECK includes 'crashed'; (5) startScheduler.ts calls reapZombieJobRuns(db) before cron registration. Signal: docs/signals/dev-mcp-server-1955b-impl-done.json",
-  "updatedAt": "2026-05-20T12:30:00Z",
+  "nextPrompt": "Sprint 1958a QA — verify fix for 5 MARKET-summary cron jobs not firing. RCA: event-loop starvation caused node-cron to miss alertDigestJob (14:00 UTC) and summaryJob:daily (15:30 UTC) windows; recoverMissedExecutions=false (default) means missed windows permanently skipped; no startup catchup existed for these 2 jobs. Fix: recoverMissedExecutions:true on alertDigestJob + summaryJob:daily; startup catchups for both. 16 new tests GREEN, 9330 pass / 283 fail (no regression). Signal: docs/signals/dev-mcp-server-1958a-impl-done.json. Handoff: docs/handoffs/TASK_1958a.md. AC-3 observation gate: 2026-05-21T09:00Z (ops verifies ≥1 new success row per job after next container deploy).",
+  "updatedAt": "2026-05-20T17:02:00Z",
   "updatedBy": "dev-mcp-server",
-  "lastCompleted": "dev-mcp-server 1955b: CHECK extended + migration guard + reaper + startScheduler wiring. commit cfe10b0a. 4 tests GREEN, tsc 0 errors."
+  "lastCompleted": "Sprint 1958a IMPL DONE — alertDigestJob + summaryJob:daily startup catchups + recoverMissedExecutions. 16 tests GREEN, suite 9330/283. RCA in TASK_1958a.md Findings."
 }

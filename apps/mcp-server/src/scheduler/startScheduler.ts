@@ -12,7 +12,7 @@ import { runMarketScan } from './market-data/marketScanJob.js'
 import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
 import { runIntelligenceCycle } from './news-analysis/intelligenceCycleJob.js'
-import { registerSummaryJobs } from './summaryJobs.js'
+import { registerSummaryJobs, runSummaryJob } from './summaryJobs.js'
 import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize } from '../infrastructure/db/checkpoint.js'
 import { runIntegrityCheckJob } from './integrityCheckJob.js'
 import { walCheckpointAlert } from './walCheckpointAlert.js'
@@ -173,11 +173,15 @@ export function startScheduler() {
   // recordJobRun writes the success row after the callback completes, so a
   // second invocation (e.g. after a server restart) finds the row and skips.
   // task 1377.
+  // recoverMissedExecutions: true — if the event loop is stalled at fire time
+  // (e.g. startup ohlcv backfill, bctcReparseJob zombies), node-cron replays
+  // the missed tick on recovery instead of skipping until tomorrow (task 1958a).
+  // Safe because runAlertDigest has an alreadySentToday() DB-backed dedup guard.
   cron.schedule(CRONS.alertDigest, async () => {
     await jobRunRepo.wrapRun('alertDigestJob', async () => {
       await runAlertDigest(undefined, db)
     })
-  }, { timezone: 'Asia/Ho_Chi_Minh' })
+  }, { timezone: 'Asia/Ho_Chi_Minh', recoverMissedExecutions: true })
 
   // Every 30min — WAL checkpoint (task 1329a)
   // FULL mode during live hours; TRUNCATE + backup during off-hours 03:00-05:00 UTC.
@@ -328,6 +332,32 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[startup-catchup] franceSummaryJob error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    // task 1958a: alertDigestJob and summaryJob:daily lacked startup-catchup probes.
+    // When the container restarts after their scheduled windows (14:00 UTC and 15:30 UTC),
+    // these jobs were permanently skipped for the day. The probes below fire them once
+    // on startup when the window has passed and no success row exists for today.
+    // recoverMissedExecutions: true (set on their cron registrations) handles the
+    // complementary case: event-loop stall during a RUNNING container.
+    try {
+      // alertDigestJob: 21:00 VN = 14:00 UTC, weekdays only
+      if (shouldRunCatchup(db, 'alertDigestJob', 14, 0, new Date(), true)) {
+        log('[startup-catchup] alertDigestJob: running catch-up')
+        await jobRunRepo.wrapRun('alertDigestJob', async () => { await runAlertDigest(undefined, db) })
+      }
+    } catch (err) {
+      log(`[startup-catchup] alertDigestJob error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
+    try {
+      // summaryJob:daily: 22:30 VN = 15:30 UTC, every day (weekdayOnly=false)
+      if (shouldRunCatchup(db, 'summaryJob:daily', 15, 30, new Date(), false)) {
+        log('[startup-catchup] summaryJob:daily: running catch-up')
+        await runSummaryJob('daily')
+      }
+    } catch (err) {
+      log(`[startup-catchup] summaryJob:daily error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 
