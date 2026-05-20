@@ -1,0 +1,29 @@
+{
+  "from": "po",
+  "to": ["all"],
+  "type": "sprint-close",
+  "payload": {
+    "sprint": 1955,
+    "title": "Phase 2 — Cowork-slot Locking",
+    "status": "COMPLETE",
+    "commits": [
+      "8b23795a",
+      "aaa4a06d",
+      "d10112a3",
+      "f38608f5",
+      "0d518efe",
+      "e4f3abdb"
+    ],
+    "tasks": {
+      "1955a": "DONE — Step 4.6 slot-lock claim wired in cowork-team/main.md (commit 8b23795a)",
+      "1955b": "DONE — multi-session smoke 9/9 PASS via scripts/smoke-task-lock-phase2.ts (commits aaa4a06d, e4f3abdb)",
+      "1955c": "DONE — task-lock tools verified across 10 cowork tool packages (commit d10112a3)",
+      "1955d": "DONE — cron-jobs collision-safety note + MEMORY.md index entry (commits f38608f5, 0d518efe)"
+    },
+    "qa_signal": "docs/signals/qa-1955b-approved.json",
+    "ac_coverage": "5/5 PASS — exactly-one claim per slot, spawn count = slots, zero residual locks, loser-skip log, all_held telemetry",
+    "next_phase": "Phase 3 dashboard-row + sprint-task locks — defer to demand",
+    "multi_session_collision_risk": "fully resolved end-to-end"
+  },
+  "createdAt": "2026-05-20T19:05:00Z"
+}

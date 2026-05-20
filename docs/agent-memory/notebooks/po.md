@@ -1,47 +1,46 @@
 # PO Notebook
 
-## Last updated: 2026-05-20T08:30Z · Cycle: c216 — drain + dispatch
+## Last updated: 2026-05-20T19:05Z · Cycle: c218 — Sprint 1955 Phase 2 CLOSE + Sprint 1954 audit
 
-### c216 trigger
-Router cron tick 07:07Z: stale pipeline-state (qa nextAgent for 1955a, but 1955a QA-approved in commit bef8e9cf). 11 signal files in `docs/signals/` to drain. DASHBOARD.md had 3 DONE rows ready to prune (1957a, 1957b, 1957c).
+### c218 trigger
+User directive: close Sprint 1955 (Phase 2 cowork-slot locking shipped end-to-end) and audit Sprint 1954 BCTC chain status post-compact. QA approval signal `docs/signals/qa-1955b-approved.json` confirms 1955b 9/9 smoke PASS.
 
-### Actions executed
-1. **Pipeline-state reset** → `idle` (was stale `in_progress, qa, 1955a`).
-2. **Signal drain (11 files)** — moved to `docs/signals/processed/`, INSERT signals_processed in SQLite, fingerprint dedup; 10 routed-to-po, 1 skipped-duplicate-replay. DB prune removed 2 rows >7d. File prune removed 82 stale files.
-3. **DASHBOARD prune** — removed 1957a + 1957c (ops section DONE), 1957b (agent-father section DONE). 4 BCTC OBSERVE rows kept (still READ, gates open).
-4. **TASKS.md sync** — moved 1957a + 1957b from Backlog → Done. 1955a already in Done.
+### Sprint 1955 — CLOSED COMPLETE
+All 4 tasks DONE in TASKS.md Backlog (rows 10–13):
+- **1955a** DONE — Step 4.6 slot-lock claim in `.claude/flows/cowork-team/main.md` (commit `8b23795a`)
+- **1955b** DONE — multi-session smoke 9/9 PASS via `scripts/smoke-task-lock-phase2.ts` (commits `aaa4a06d`, `e4f3abdb`)
+- **1955c** DONE — task-lock tools verified across 10 cowork tool packages (commit `d10112a3`)
+- **1955d** DONE — cron-jobs collision-safety note + MEMORY.md index entry (commits `f38608f5`, `0d518efe`)
 
-### Triage decisions
-- **po-1958 (BCTC stale triage)** → confirms c215 verdict: OBSERVE-only, NO new sprint, absorbed into OBSERVE-1957d (72h push cadence gate 2026-05-23T07:05Z) + OBSERVE-1953g (Q1-2026 coverage ≥26 at 2026-05-21T02:30Z). Tier-3 confirmed earnings-quiet window; write chain alive (C-03 accumulating, C-10 87.1% success, C-16 zero stale BCTC>72h).
-- **po-1907a (premise rewrite)** → already moved to Done as RESOLVED-PREMISE-WRONG; OBSERVE-1907a-verify gates 2026-05-24T14:30Z.
-- **dev-mcp-server-1955a-impl-done** → QA-approved (bef8e9cf), 1955a → Done; AC-4 ops verify is OBSERVE row (16:30Z), no dispatch.
-- **ops-1957c-1951d-gated** + **agent-father-1957b** → both DONE, gates cleared, unblocks 1951d cutover.
-- **cowork-team fires + news_impact** → cowork lane (not dev-team), informational only, archived.
+QA AC coverage: 5/5 PASS (exactly-one claim per slot, spawn count = slots, zero residual `cowork-slot` locks after release, loser-skip log emitted, `all_held=true` telemetry verified). DDD scan PASS, security scan PASS, tsc 0 errors.
 
-### Watch-only finding (NOT yet escalated)
-Router observed at ~06:55Z: market-watcher Step 0 MCP probe reported false outage while news-scout same-tick succeeded against same gateway. Single occurrence. If recurs → file DASHBOARD row, route to dev-team review of `.claude/flows/market-watcher/main.md` Step 0 probe logic.
+**Multi-session collision risk = fully resolved end-to-end.**
 
-### Dispatch decision (WIP=0, cap=2)
-**BATCH = 2 parallel tasks, distinct zones, no collision:**
-1. **1951d cutover** — ops, destructive, gate cleared (1957b done). Delete 12 legacy RemoteTriggers + SSOT update + verify cowork fires within 2h. Zone=`.claude/` + RemoteTrigger MCP. Size=XS.
-2. **1955b zombie reap** — dev-mcp-server, S size, gate cleared (1954a done WIP-gate). Add `reapZombieJobRuns(db)` in `cronJobRunStore.ts`, call from `startScheduler.ts`. Zone=`apps/mcp-server/`. Size=S.
+Sign-off signal: `docs/signals/po-1955-close.json` (this cycle).
+Next phase: Phase 3 (dev-team dashboard-row + sprint-task locks) — defer to demand.
 
-Recurring-bug-escalation freeze (1954c gate) does NOT block 1955b — different module (`cronJobRunStore` vs `bctcPdfPullJob`/BCTC). 1955b is observability hygiene, not BCTC chain.
+### Sprint 1954 audit (Phase B)
+- `git log --grep='1954' --since=24h` shows: `1954a` hotfix landed at commit `2a5cc2a7` (2026-05-19) with QA approval + ops AC-3 PASS (19/33 rows inserted, 14 skipped via OR IGNORE, 53 pending Q1-2026 rows verified). Row in TASKS.md ## Done.
+- `1954b–f` correctly remain BLOCKED in Backlog per structural sequence: 1954b (writer-contract design) → 1954c (4-paths consolidation) → 1954d (DPI escalation) → 1954e (backfill) → 1954f (QA verify). PO gate on 1954b (kick off 2026-05-20 allowed, design-only) is intact. 1954c freeze (recurring-bug-escalation) remains active until 1954c approved.
+- **Recurring-bug rule check:** only ONE 1954-prefixed fix commit on mcp-server module in the last 24h (`2a5cc2a7`). Threshold (≥2) NOT triggered. No architect freeze required.
+- **Verdict: `1954a = DONE`. Next = `wait` — no dispatch needed.** Next active gate is OBSERVE-1953g 2026-05-21T02:30Z (Q1-2026 financial_reports coverage ≥26). If that passes, 1954 may close without firing 1954b-f. If it fails, then dispatch dev-mcp-server to kick off 1954b (writer-contract design) per the existing PO gate.
 
 ### Files touched this cycle
-- `docs/pipeline-state.json` (reset to idle)
-- `docs/signals/DASHBOARD.md` (3 DONE rows pruned, updated timestamp)
-- `docs/signals/signals.db` (11 INSERT, 2 prune)
-- `docs/signals/processed/` (11 files moved in, 82 pruned out)
-- `docs/TASKS.md` (1957a + 1957b moved Backlog → Done)
+- `docs/signals/po-1955-close.json` (NEW)
 - `docs/agent-memory/notebooks/po.md` (this file, OVERWRITE)
+- `docs/TASKS.md` (Sprint 1955 close header in ## Done — moved 1955a–d completion summary)
 
-### Carry-over for c217
-- **2026-05-20T09:00Z:** OBSERVE-1955d gate — vnstockTradingStatsRefresh cron tick verification.
-- **2026-05-20T16:30Z:** dailyDashboardJob 1955a AC-4 first verification (ops OBSERVE).
-- **2026-05-21T02:30Z:** OBSERVE-1953g (Q1-2026 BCTC coverage ≥26).
-- **2026-05-23T07:05Z:** OBSERVE-1957d (BCTC VPS push cadence 72h).
-- **2026-05-24T13:47Z:** digest-sunday natural fire — OBSERVE-1907a-verify 14:30Z.
-- **2026-05-25T01:00Z:** OBSERVE-1955c (vnstockFundamentalsRefresh).
-- **Post-1951d cutover:** verify MARKET ≤2h, then confirm 1955b deploy includes reapZombieJobRuns startup hook.
-- **Watch:** market-watcher Step 0 MCP probe — if false outage recurs next cowork cycle, file dev-team review task.
+### Carry-over for c219
+- **2026-05-20T09:00Z** (passed): OBSERVE-1955d (vnstockTradingStatsRefresh tick).
+- **2026-05-20T16:30Z**: dailyDashboardJob old-1955a AC-4 ops OBSERVE.
+- **2026-05-21T02:30Z**: OBSERVE-1953g (Q1-2026 BCTC coverage ≥26) — pivots 1954b dispatch decision.
+- **2026-05-23T07:05Z**: OBSERVE-1957d (BCTC VPS push cadence 72h).
+- **2026-05-24T13:47Z**: digest-sunday natural fire — OBSERVE-1907a-verify 14:30Z.
+- **2026-05-25T01:00Z**: OBSERVE-1955c old (vnstockFundamentalsRefresh).
+- **2026-05-25**: post-1939-critic-gate-stable window for 1952c.
+- **Phase 3 preview**: after Phase 2 holds 24h-48h, evaluate Phase 3 of task-lock (dev-team dashboard-row + sprint-task) — defer per `next_phase` directive in po-1955-close signal.
+
+### Watch
+- 24h post-`8b23795a` (cowork-team Step 4.6 deploy): `docs/signals/` should show ZERO duplicate `cowork-fire` signals for same slot at same nominal_tick. If duplicates persist, re-open Phase 2.
+- Sprint 1958a in Review (dev-mcp-server commit `84c2b375` — alertDigest+summary cron recoverMissedExecutions fix). QA gate is in flight; not PO action this cycle.
+- DASHBOARD ## po has 5 RESOLVED/READ rows from c213–c215 cycles; no NEW rows since c216 drain. Nothing to process this cycle.
