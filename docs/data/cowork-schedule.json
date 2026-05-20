@@ -7,7 +7,8 @@
     "spike_1951a_oq1": "SUPPORTED — step (*/15), range (2-8), combined (*/15 2-8) all supported. Extended syntax (L,W,?) not supported.",
     "spike_1951a_oq2": "UNKNOWN — No documented workspace-level limit in public docs. Test with 17 triggers or contact Anthropic support.",
     "spike_1951a_oq3": "ANSWERED 2026-05-18 via live API call. RemoteTrigger is a SEPARATE MCP tool (not CronCreate with remote:true). Tool: RemoteTrigger action=create. Required body fields: name, cron_expression, job_config.ccr.environment_id=env_011CV1yonRDFUhYhGEdkVwqj, job_config.ccr.events=[{prompt}], session_context.model, session_context.sources=[{git_repository:{url:VN-Market-repo}}], mcp_connections=[vn-market MCP], enabled_plugins=[], persist_session=false. Current workspace trigger count: 3 (qa-responder + 2 vault). Sprint 1951 adds 17 = 20 total.",
-    "spike_1951a_date": "2026-05-18"
+    "spike_1951a_date": "2026-05-18",
+    "phase2_residual_2026_05_20": "12 server-side RemoteTriggers from sprint 1957a stopgap still exist on claude.ai (no platform delete action — RemoteTrigger MCP exposes only list|get|create|update|run). Idempotent at worst (duplicate fan-outs only — agents are notebook-overwrite). Live path is master */15 CronCreate dispatcher via .claude/skills/cron-cowork-team/SKILL.md. Reconcile when claude.ai ships delete action or workspace UI cleanup. 1951d closed DONE per po c216-mini-triage."
   },
   "_open_questions": [
     "OQ-1: ANSWERED — RemoteTrigger supports full cron range/step syntax (e.g. '*/15 2-8 * * 1-5'). See spike_1951a_oq1.",
