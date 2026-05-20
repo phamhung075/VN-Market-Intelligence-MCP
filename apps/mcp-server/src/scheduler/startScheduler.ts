@@ -64,6 +64,7 @@ import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
+import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
@@ -869,6 +870,20 @@ export function startScheduler() {
   // duplicate sends on day boundary (survives server restarts).
   cron.schedule(CRONS.accuracyDigest, async () => {
     await jobRunRepo.wrapRun('accuracyDigestJob', () => runAccuracyDigest({ db }))
+  }, { timezone: 'UTC' })
+
+  // Every hour at minute=47 UTC — Disk-usage watchdog — task 1959-watchdog-5
+  // Shells out to `du -sh /app/data/lancedb` and sends BUG Telegram when usage
+  // exceeds DISK_ALERT_THRESHOLD_GB (default 20 GB). 6 h cooldown prevents spam.
+  // Minute=47 avoids pile-up with minute=0/7/17/37 cluster.
+  cron.schedule(CRONS.diskUsageAlert, async () => {
+    await jobRunRepo.wrapRun('diskUsageAlertJob', async () => {
+      const result = await runDiskUsageAlertJob()
+      if (result === 'alert-sent') {
+        log('[disk-usage-alert] BUG Telegram sent — lancedb over threshold')
+      }
+      return { rowsWritten: result === 'alert-sent' ? 1 : 0 }
+    })
   }, { timezone: 'UTC' })
 
   // Task 1942a — Startup backfill probe: populate vnstock fundamentals tables

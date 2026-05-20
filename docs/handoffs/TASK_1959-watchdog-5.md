@@ -53,3 +53,23 @@ watchdog-5 is **pure TypeScript** — no Dockerfile change, no image rebuild req
 - Predecessor patterns: imitate `alertDigestJob.ts` (cron + throttle), `rag-service` watchdog-2 (start_period 60 s) for healthcheck timing intuition.
 - Telegram channel: `bug` (per fail-loud-protocol agent-output table).
 - Throttle anti-pattern: do NOT spam the channel — single fire per 6 h window.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files created:**
+  - `apps/mcp-server/src/scheduler/diskUsageAlertJob.ts:225` — Core job: `readDiskUsageGb` (du -sh), `parseDuSizeToGb`, `runDiskUsageAlertJob` (injectable deps + state pattern). `DISK_THRESHOLD_GB` reads from `DISK_ALERT_THRESHOLD_GB` env (default 20 via IIFE). `DiskUsageAlertState` interface for test isolation.
+  - `apps/mcp-server/src/__tests__/1959-watchdog-5-disk-usage-alert.test.ts:226` — 9 tests: TC-1 (under-threshold), TC-2 (over-threshold + BUG message), TC-3 (6h cooldown suppression), TC-4 (cooldown expiry re-fires), TC-5 (12 healthy ticks = zero Telegrams), TC-6 (jump to 25GB = exactly one Telegram).
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/cronConfig.ts` — Added `diskUsageAlert` key (`CRON_DISK_USAGE_ALERT` env, default `'47 * * * *'`). Minute=47 avoids pile-up with minute=0/7/17 cluster.
+  - `apps/mcp-server/src/scheduler/startScheduler.ts` — Import `runDiskUsageAlertJob`; registered cron via `jobRunRepo.wrapRun('diskUsageAlertJob')`.
+- **Tests written:** 9 tests — all GREEN
+- **Type check:** tsc --noEmit: 0 errors
+- **Service tests:** 9/9 task-specific pass; 56/56 recent-sprint regression pass (0 fail)
+- **Docs updated:** `docs/data/project-stats.json#cronJobCount` 76→77 | `docs/TASKS.md` status→DONE | `docs/signals/dev-mcp-server-1959-watchdog-5.json` created
+- **Graphify:** skipped (no docs/architecture touched)
+- **Smoke results:** threshold=1/usage=2 → alert-sent PASS; threshold=100/usage=29 → ok PASS
+- **Env override:** `DISK_ALERT_THRESHOLD_GB` validated (1→1, 100→100 at module load)

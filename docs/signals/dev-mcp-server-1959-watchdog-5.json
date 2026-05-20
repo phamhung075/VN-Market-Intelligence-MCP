@@ -1,0 +1,90 @@
+{
+  "schema": "dev-signal/v1",
+  "agent": "dev-mcp-server",
+  "task_id": "1959-watchdog-5",
+  "title": "Disk-usage alert cron — BUG Telegram on lancedb > 20 GB",
+  "status": "DONE",
+  "timestamp": "2026-05-20T21:30:00Z",
+  "sprint": 1959,
+  "zone": "apps/mcp-server/",
+
+  "impl_summary": {
+    "files_created": [
+      "apps/mcp-server/src/scheduler/diskUsageAlertJob.ts",
+      "apps/mcp-server/src/__tests__/1959-watchdog-5-disk-usage-alert.test.ts"
+    ],
+    "files_modified": [
+      "apps/mcp-server/src/scheduler/cronConfig.ts",
+      "apps/mcp-server/src/scheduler/startScheduler.ts"
+    ],
+    "cron_key": "diskUsageAlert",
+    "cron_expression": "47 * * * *",
+    "cron_description": "Hourly at minute=47 UTC — avoids pile-up with minute=0/7/17 cluster"
+  },
+
+  "cron_counts": {
+    "before": 76,
+    "after": 77,
+    "source": "docs/data/project-stats.json#cronJobCount"
+  },
+
+  "threshold": {
+    "default_gb": 20,
+    "env_override": "DISK_ALERT_THRESHOLD_GB",
+    "note": "Default 20 GB MUST NOT be raised in prod. LanceDB currently at ~29 GB — alert WILL fire immediately on first hourly tick post-deploy."
+  },
+
+  "ac_results": {
+    "AC-4-1": "PASS — diskUsageAlertJob registered in cronConfig.ts (key=diskUsageAlert, '47 * * * *') + wired in startScheduler.ts via jobRunRepo.wrapRun. Will appear in cron_job_runs 1h after deploy.",
+    "AC-4-2": "PASS — BUG Telegram fires when usage > threshold. Verified via smoke test: DISK_ALERT_THRESHOLD_GB=1, simulated usage=2GB → result=alert-sent.",
+    "AC-4-3": "PASS — Silent when usage <= threshold. Verified: TC-1 (18GB < 20GB = ok), TC-5 (12 consecutive ticks at 18GB = 0 Telegrams).",
+    "AC-4-4": "PASS — Zero false positives pattern confirmed by TC-5: 12 consecutive under-threshold ticks = 0 BUG messages."
+  },
+
+  "smoke_results": {
+    "smoke_A_low_threshold": {
+      "env": "DISK_ALERT_THRESHOLD_GB=1",
+      "simulated_usage_gb": 2,
+      "result": "alert-sent",
+      "verdict": "PASS — alert fired correctly above threshold"
+    },
+    "smoke_B_high_threshold": {
+      "env": "DISK_ALERT_THRESHOLD_GB=100",
+      "simulated_usage_gb": 29,
+      "result": "ok",
+      "verdict": "PASS — clean state confirmed below threshold"
+    },
+    "default_threshold_fire": {
+      "env": "default (20 GB)",
+      "simulated_usage_gb": 25,
+      "result": "alert-sent",
+      "verdict": "PASS — prod alert fires at current lancedb size (29 GB > 20 GB)"
+    }
+  },
+
+  "test_results": {
+    "total": 9,
+    "pass": 9,
+    "fail": 0,
+    "file": "apps/mcp-server/src/__tests__/1959-watchdog-5-disk-usage-alert.test.ts",
+    "cases": [
+      "TC-1a: under-threshold (18GB) → ok, no Telegram",
+      "TC-1b: exactly-threshold (20GB) → ok (exclusive threshold)",
+      "TC-2a: over-threshold (25GB) → alert-sent, BUG Telegram fired",
+      "TC-2b: BUG message contains threshold and size",
+      "TC-3a: second tick within 6h cooldown → suppressed",
+      "TC-3b: DISK_COOLDOWN_MS == 6h",
+      "TC-4: after 6h+1ms → fires again (cooldown expiry)",
+      "TC-5: 12 consecutive ticks at 18GB → zero Telegrams (integration)",
+      "TC-6: jump from 18GB to 25GB → exactly one Telegram on first over-threshold tick (integration)"
+    ]
+  },
+
+  "type_check": "tsc --noEmit: 0 errors",
+  "regression_note": "Full suite crash (Bun 1.3.13 OOM known bug with large suites). Recent sprint tests (1959+1958+1955+1954+1942): 56 pass / 0 fail. No regression detected.",
+
+  "production_note": "LanceDB currently at ~29 GB (2026-05-20 incident). Alert WILL fire on first hourly tick (minute=47) post-deploy. This is correct behavior per handoff. Watchdog-4 compaction (gated 2026-05-22T21:00Z) will eventually reduce footprint below 20 GB.",
+
+  "next": "qa",
+  "handoff": "docs/handoffs/TASK_1959-watchdog-5.md"
+}

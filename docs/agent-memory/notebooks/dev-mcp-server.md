@@ -4,6 +4,24 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1959-watchdog-5 — Disk-usage alert cron (2026-05-20, DONE)
+
+**Change:** `diskUsageAlertJob.ts` (new, 225L) — `du -sh /app/data/lancedb`, parse to GB, BUG Telegram if > `DISK_THRESHOLD_GB` (default 20), 6h cooldown via injectable `DiskUsageAlertState`. `DISK_ALERT_THRESHOLD_GB` env override (IIFE, read at module load). `parseDuSizeToGb` handles K/M/G/T/P units.
+
+**Wiring:** `cronConfig.ts` — key `diskUsageAlert`, `CRON_DISK_USAGE_ALERT` env, default `'47 * * * *'` (minute=47 avoids 0/7/17 cluster). `startScheduler.ts` — import + `jobRunRepo.wrapRun('diskUsageAlertJob')`.
+
+**Tests:** 9/9 GREEN (TC-1 through TC-6). Fixed TC-6 loop bound: i<11 not i<12 (at i=11 elapsed=6h exactly, exits cooldown). `tsc --noEmit` 0 errors.
+
+**Smoke:** threshold=1/usage=2 → alert-sent; threshold=100/usage=29 → ok. Both PASS.
+
+**SSOT:** `project-stats.json#cronJobCount` 76→77. Signal: `docs/signals/dev-mcp-server-1959-watchdog-5.json`.
+
+**Prod note:** LanceDB ~29GB > 20GB threshold — alert WILL fire on first hourly tick post-deploy. Correct behavior per handoff.
+
+Zone health: diskUsageAlertJob fills runtime-detection gap; cron registered at minute=47; scheduler resilience HEALTHY
+
+---
+
 ### Task 1959-watchdog-7 — flaresolverr healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
 
 **Change:** `docker-compose.yml` line 401: `start_period: 30s` → `start_period: 60s` for flaresolverr healthcheck.

@@ -150,4 +150,9 @@ export const CRONS = {
    *  Fires after VN market open (02:00 UTC) and before Paris open (08:00 UTC).
    *  Collision check: 07:00 UTC is free (cronHealthAlert=00:00, macroIndicator=06:00). */
   accuracyDigest:             Bun.env.CRON_ACCURACY_DIGEST                        ?? '0 7 * * *',
+  /** diskUsageAlert — hourly LanceDB disk-usage watchdog (task 1959-watchdog-5)
+   *  Fires at minute=47 to avoid pile-up with minute=0/7/17 cluster.
+   *  Alerts BUG channel when /app/data/lancedb exceeds DISK_ALERT_THRESHOLD_GB (default 20 GB).
+   *  6 h cooldown prevents alert flood on sustained over-threshold condition. */
+  diskUsageAlert:             Bun.env.CRON_DISK_USAGE_ALERT                       ?? '47 * * * *',
 }
