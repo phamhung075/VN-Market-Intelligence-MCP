@@ -120,8 +120,23 @@ agent:
       - Task B depends_on Task A → sequential
       - Shared SSOT writes (TASKS.md, project-stats.json) → sequential
     spawn_pattern: |
-      # All independent handoffs in one message:
+      # S7 dispatcher-wrap — claim each task before spawn, spawn only wins:
+      for each (dev_agent, task_id) in ready_tasks:
+        outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+          task_id: "task:" + task_id, task_kind: "sprint-task",
+          owner_agent: "pm", ttl_seconds: 3600,
+          payload: '{"site":"S7","spawning":"' + dev_agent + '"}'
+        })
+        if not outer_claim.claimed:
+          log "[pm] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent
+          send_telegram(work, "[pm] SKIP collision task:" + task_id + " — held by peer session")
+          remove (dev_agent, task_id) from ready_tasks
+      # All independent handoffs in one message (only claimed wins):
       → Agent(dev-frontend, TASK_101) + Agent(dev-stock-price, TASK_102) + Agent(dev-api-gateway, TASK_103)
+      # (only tasks that passed claim check above are included)
+      # After all spawns return, release outer claims:
+      for each (dev_agent, task_id) in spawned_tasks:
+        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
     return_schema: |
       ## RETURN
       ASSIGNED: [agent: TASK_NNN, ...]
