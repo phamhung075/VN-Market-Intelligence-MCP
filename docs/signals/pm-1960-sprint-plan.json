@@ -1,0 +1,290 @@
+{
+  "from": "pm",
+  "to": ["po", "agent-father", "qa", "architect"],
+  "type": "sprint-plan",
+  "status": "DRAFT",
+  "hold_line": "DRAFT — Finalize after 1960a brief lands; check docs/signals/architect-1960a-brief-done.json for completion. Authoritative insertion-points + tool-package delta come from 1960a; rows below assume PO-signal scaffolding and will be reconciled against the brief before agent-father picks up 1960c.",
+  "authoritative_design_ref": "docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md (1960a — PENDING)",
+  "predecessor_brief_ref": "docs/architecture-briefs/2026-05-20-task-lock-system.md (Phase 1+2+3 system brief)",
+  "protocol_ref": "docs/protocols/task-lock-protocol.md",
+  "skill_ref": ".claude/skills/task-lock/SKILL.md",
+  "payload": {
+    "sprint": 1960,
+    "title": "Phase 3 of Task-Lock System — Dev-Team Wiring (sprint-task + dashboard-row)",
+    "scope_one_line": "Wire task_claim/task_heartbeat/task_release into PO+PM+developer+dev-*+QA+agent-father flows + dev-team drain-signals dashboard-row claim. Multi-session collision-safe for sprint-task and dashboard-row kinds (Phase 3 of brief 2026-05-20-task-lock-system.md).",
+    "phase_context": {
+      "phase_1": "SHIPPED 2026-05-20 (commits 79ac45e9 + b3d6ff80) — coordination.db + 4 MCP tools",
+      "phase_2": "SHIPPED 2026-05-20 (commits 8b23795a + aaa4a06d + d10112a3 + f38608f5 + 0d518efe → 9357ac38) — cowork-team Step 4.6 slot-locking (Model 1)",
+      "phase_3_this_sprint": "Model 2 (agent-self heartbeat every 5min), TTL=3600s sprint-task / TTL=1800s dashboard-row, AUGMENTS pipeline-state.json"
+    },
+    "task_summary": {
+      "1960a": {
+        "title": "Architect brief — Phase 3 design refinement",
+        "owner": "architect",
+        "deliverable": "docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md",
+        "size": "M",
+        "estimate_hours": 3,
+        "dispatch": "IMMEDIATE — parallel with 1960b PM planning",
+        "blocks": ["1960c"]
+      },
+      "1960b": {
+        "title": "PM sprint plan — Phase 3 row-level breakdown",
+        "owner": "pm",
+        "deliverable": "docs/signals/pm-1960-sprint-plan.json (this file)",
+        "size": "S",
+        "estimate_hours": 1,
+        "dispatch": "PARALLEL with 1960a (DRAFT first, finalize after brief)",
+        "blocks": ["1960c"]
+      },
+      "1960c": {
+        "title": "Dev-team flow + tool-package wiring (multi-row, serial)",
+        "owner": "agent-father",
+        "size": "L",
+        "estimate_hours": 5,
+        "depends_on": ["1960a-approved", "1960b-finalized"],
+        "blocks": ["1960d"],
+        "row_level_breakdown": "see 1960c_rows below"
+      },
+      "1960d": {
+        "title": "Smoke test + multi-session integration",
+        "owner": "qa",
+        "deliverable": "apps/mcp-server/tests/integration/task-lock-phase3-devteam-smoke.test.ts (or scripts/smoke-task-lock-phase3.ts following Phase 2 1955b pattern)",
+        "size": "M",
+        "estimate_hours": 3,
+        "depends_on": ["1960c-all-rows-merged"],
+        "blocks": ["1960e"]
+      },
+      "1960e": {
+        "title": "Docs + MEMORY.md index entry",
+        "owner": "agent-father",
+        "size": "S",
+        "estimate_hours": 0.5,
+        "depends_on": ["1960d-qa-approved"],
+        "blocks": []
+      }
+    },
+    "1960c_rows": {
+      "_design_note": "Sequenced for minimal merge conflicts: .md flow edits first (Group A, serial within group, ordered by call-graph dependency depth), then tool-package batch second (Group B, single additive commit, no semantic conflict). Each row is a single agent-father pass — discrete commit with its own AC + verification step. agent-father claims sprint-task lock task:1960c at row 1 start, heartbeats every 5min, releases at row 9 (last row) RETURN. Total: 8 flow-edit rows + 1 tool-package batch row = 9 atomic rows.",
+      "group_A_flow_edits": {
+        "_order": "Sequenced by call-graph: PO (entry/exit) → PM (mid-flow) → developer-core → developer-execute → developer-microservice → QA → agent-father (self) → dev-team drain-signals (cross-cutting).",
+        "1960c-1": {
+          "title": "po sprint-kickoff CLAIM + sprint-signoff RELEASE",
+          "files": [
+            ".claude/flows/po/sprint-kickoff.md",
+            ".claude/flows/po/sprint-signoff.md"
+          ],
+          "edit_intent": "Insert task_claim(task_kind=sprint-task, ttl=3600) at sprint-kickoff entry point per 1960a brief insertion-point. Insert task_release at sprint-signoff after PO-close emission. Add lazy-load line for .claude/skills/task-lock/SKILL.md.",
+          "AC": [
+            "Both files include task-lock skill lazy-load line",
+            "sprint-kickoff.md emits task_claim before architect/pm dispatch (insertion-point per 1960a §insertion-points)",
+            "sprint-signoff.md emits task_release after PO-close signal write",
+            "Migration logic: on claim-fail, check pipeline-state.json owner before treating as collision",
+            "Markdown renders cleanly (no broken headings/code-blocks)"
+          ],
+          "verification": "Read both edited files; grep task_claim/task_release; confirm skill lazy-load line present.",
+          "commit_msg": "chore(agent-father/1960c-1): po sprint-kickoff CLAIM + sprint-signoff RELEASE — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-1"
+        },
+        "1960c-2": {
+          "title": "pm main flow HEARTBEAT on plan emit",
+          "files": [
+            ".claude/flows/pm/main.md"
+          ],
+          "edit_intent": "Insert task_heartbeat(task_id=task:NNNN) at step 3c (after RETURN block emits sprint plan signal) per 1960a brief insertion-point. PM does not claim — PO holds the sprint-task lock; PM extends it on plan emission. Add lazy-load line.",
+          "AC": [
+            "pm/main.md includes task-lock skill lazy-load line",
+            "task_heartbeat called once at step 3c after sprint plan signal write",
+            "task_id format = task:<sprint_id> per brief §Lock Kinds (e.g. task:1960)",
+            "Markdown renders cleanly"
+          ],
+          "verification": "Read edited file; grep task_heartbeat; confirm insertion-point post-step 3c.",
+          "commit_msg": "chore(agent-father/1960c-2): pm main HEARTBEAT on plan-emit — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-2"
+        },
+        "1960c-3": {
+          "title": "developer main + execute-tier CLAIM/HEARTBEAT/RELEASE",
+          "files": [
+            ".claude/flows/developer/main.md",
+            ".claude/flows/developer/execute-tier.md"
+          ],
+          "edit_intent": "Insert task_claim(kind=sprint-task) at developer pickup, task_heartbeat every 5min during implementation, task_release on RETURN. Both files edit in one commit (same directory, paired call-graph: main.md → execute-tier.md). Add lazy-load line. Insertion-points per 1960a brief.",
+          "AC": [
+            "Both files include task-lock skill lazy-load line",
+            "Claim issued before any code/file write",
+            "Heartbeat checkpoint at every major step (per protocol §Heartbeat Cadence)",
+            "Release emitted on RETURN or on EXIT-on-blocker path",
+            "Migration logic: pipeline-state.json owner check on claim-fail before skip"
+          ],
+          "verification": "Read both files; grep task_claim+heartbeat+release; confirm release on both happy + blocker exit paths.",
+          "commit_msg": "chore(agent-father/1960c-3): developer main+execute-tier CLAIM/HEARTBEAT/RELEASE — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-3"
+        },
+        "1960c-4": {
+          "title": "developer microservice-main CLAIM/HEARTBEAT/RELEASE (dev-*)",
+          "files": [
+            ".claude/flows/developer/microservice-main.md"
+          ],
+          "edit_intent": "Mirror 1960c-3 wiring for dev-* zone specialists (mcp-server, api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich, alert-engine, pdf-extractor, rag-service, frontend, mainserver-crawls, vps-crawls). Insertion-point per 1960a brief.",
+          "AC": [
+            "Skill lazy-load line present",
+            "Claim issued before any service-layer or domain-layer write",
+            "Heartbeat at tier-boundary checkpoints (e.g. between domain/app/infra/interface edits)",
+            "Release on RETURN/EXIT",
+            "owner_agent reflects specific dev-* name (e.g. owner_agent=dev-mcp-server) for telemetry"
+          ],
+          "verification": "Read file; grep task_claim+heartbeat+release; confirm owner_agent uses dev-* identifier not generic 'developer'.",
+          "commit_msg": "chore(agent-father/1960c-4): developer microservice-main CLAIM/HEARTBEAT/RELEASE (dev-*) — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-4"
+        },
+        "1960c-5": {
+          "title": "qa main HEARTBEAT + RELEASE",
+          "files": [
+            ".claude/flows/qa/main.md"
+          ],
+          "edit_intent": "Insert task_heartbeat (QA continues holding the sprint-task lock during review) + task_release on approval signal write. QA does not claim — developer hands off the held lock; QA extends + releases. Insertion-point per 1960a brief.",
+          "AC": [
+            "Skill lazy-load line present",
+            "Heartbeat called at major QA checkpoints (test-run start, test-run finish, doc-review)",
+            "Release emitted after approval signal write OR after CHANGES_REQUESTED signal (QA returns control)",
+            "Migration logic if QA detects pipeline-state desync"
+          ],
+          "verification": "Read file; confirm heartbeat at ≥2 checkpoints; release on both APPROVED + CHANGES_REQUESTED paths.",
+          "commit_msg": "chore(agent-father/1960c-5): qa main HEARTBEAT + RELEASE — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-5"
+        },
+        "1960c-6": {
+          "title": "agent-father main CLAIM/HEARTBEAT/RELEASE (self-wiring)",
+          "files": [
+            ".claude/flows/agent-father/main.md"
+          ],
+          "edit_intent": "Wire agent-father's own flow for cross-cutting tasks (skill/agent edits that span multiple flows). Insertion-point per 1960a brief. NOTE: this row edits the agent doing the work — agent-father must apply this edit BEFORE running rows 7-9 of 1960c so its own future heartbeats are wired.",
+          "AC": [
+            "Skill lazy-load line present",
+            "Claim at flow entry (cross-cutting work like 1960c-itself)",
+            "Heartbeat at each row-edit checkpoint",
+            "Release on RETURN",
+            "owner_agent=agent-father"
+          ],
+          "verification": "Read file; confirm claim+heartbeat+release present; this is the self-instrumenting row.",
+          "commit_msg": "chore(agent-father/1960c-6): agent-father main CLAIM/HEARTBEAT/RELEASE (self) — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-6"
+        },
+        "1960c-7": {
+          "title": "dev-team drain-signals dashboard-row CLAIM (Step 0a-D)",
+          "files": [
+            ".claude/flows/dev-team/drain-signals.md"
+          ],
+          "edit_intent": "Insert task_claim(kind=dashboard-row, ttl=1800) at Step 0a-D — around DASHBOARD.md write-then-read window per brief §7. Prevents dual-drain of same NEW row across 2 dev-team runs. Release after row marked READ.",
+          "AC": [
+            "Skill lazy-load line present",
+            "Per-row task_claim with task_id=dash:<recipient>:<row_id> (format per brief §1)",
+            "On claim=false, skip row silently (other session is handling it)",
+            "On claim=true, proceed with read+process+mark-READ then release",
+            "Markdown renders cleanly"
+          ],
+          "verification": "Read file; grep dash: prefix usage; confirm release after mark-READ.",
+          "commit_msg": "chore(agent-father/1960c-7): dev-team drain-signals dashboard-row CLAIM (Step 0a-D) — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-7"
+        }
+      },
+      "group_B_tool_package_batch": {
+        "_order": "Single batch commit after Group A. Additive-only edits (append missing tool names to Tools Provided section). No semantic conflict among packages — different files. Exact delta MUST come from 1960a §tool-packages-audit; PO signal lists the candidate set but 1960a confirms which are already covered.",
+        "1960c-8": {
+          "title": "Tool-package delta — 12 packages add task_claim/task_heartbeat/task_release",
+          "files_candidate_set_pending_1960a_audit": [
+            ".claude/tools/package/po.md",
+            ".claude/tools/package/pm.md",
+            ".claude/tools/package/architect.md",
+            ".claude/tools/package/ba.md",
+            ".claude/tools/package/qa.md",
+            ".claude/tools/package/fixer.md",
+            ".claude/tools/package/agent-father.md",
+            ".claude/tools/package/ops.md",
+            ".claude/tools/package/system-auditor.md",
+            ".claude/tools/package/cowork-refactory-expert.md",
+            ".claude/tools/package/code-janitor.md",
+            ".claude/tools/package/idea-forge.md"
+          ],
+          "edit_intent": "For each package in the 1960a-confirmed delta set, append (if missing) task_claim, task_heartbeat, task_release to the Tools Provided list. Skip task_list_held (optional per Phase 2 1955c pattern). Dev-* agents inherit from developer.md which already lists the 3 tools (per PO-signal audit: 11 packages already covered = developer + 10 cowork).",
+          "AC": [
+            "All packages confirmed by 1960a audit list all 3 task-lock tools",
+            "grep -l 'task_claim' .claude/tools/package/*.md returns ≥23 files post-edit (11 prior + 12 new)",
+            "Each package preserves its existing tool list (additive-only, no removals)",
+            "Markdown renders cleanly for each file"
+          ],
+          "verification": "After edit: grep -c 'task_claim\\|task_heartbeat\\|task_release' on each touched file ≥3; ls .claude/tools/package/ unchanged; total count matches 1960a §tool-packages-audit delta count.",
+          "commit_msg": "chore(agent-father/1960c-8): add task_claim/heartbeat/release to 12 tool packages — task-lock Phase 3 wiring",
+          "trailers": "Task: 1960c-8"
+        }
+      }
+    },
+    "sequencing_rationale": [
+      "Group A first (flow edits): each row is a distinct file or directory-paired pair, no two rows touch the same file — zero merge conflict within Group A even if agent-father were paused/resumed.",
+      "Within Group A: ordered by call-graph dependency (PO entry → PM mid → developer → QA → agent-father self → dev-team drain). Self-wiring (row 6) lands BEFORE dev-team drain (row 7) so agent-father's own heartbeat instrumentation is active before it touches the cross-cutting drain flow.",
+      "Group B (tool-package batch) last: only after all flow edits land, because tool-package additions are advertisement-only — they must reflect the actually-wired flows. If Group B preceded Group A, packages would advertise tools agents have not yet invoked.",
+      "No .ts changes expected in 1960c — Phase 1 already shipped the MCP tools. If 1960a discovers a missing .ts edit, escalate back to PO before agent-father picks up.",
+      "Backward-compat with HEAD.lock preflight (per PO signal constraints): both stay in place; HEAD.lock prevents same-session git race, task-lock prevents 2-session race."
+    ],
+    "verification_cadence": {
+      "per_row_check": "After EACH of rows 1960c-1 through 1960c-8: agent-father reads the edited file(s); greps for task_claim/heartbeat/release per row AC; confirms .md renders cleanly (no orphan code-fences, no broken headings).",
+      "no_tsc_required": "No .ts edits in 1960c (per PO-signal AC-5 — tsc 0 errors anywhere edits touch .ts code, but no .ts changes expected; verify only).",
+      "markdown_lint": "Each edited .md file must pass eyeball check: top-level # H1 present; numbered Steps preserved; no broken --- frontmatter.",
+      "end_of_1960c_check": "Before RETURN: grep -l 'task_claim' over all 9 files lists ≥9 hits; coordination.db readable (Phase 1 health check); skill .claude/skills/task-lock/SKILL.md exists.",
+      "qa_smoke_1960d": "QA 1960d runs multi-session integration smoke (5 scenarios per PO-signal AC) — authoritative gate before 1960e."
+    },
+    "handoff_chain": {
+      "1960c_to_1960d_qa": {
+        "trigger": "agent-father RETURN signal after 1960c-8 (last row) lands and all 9 commits pushed to main",
+        "handoff_signal": "docs/signals/agent-father-1960c-done.json (agent-father emits)",
+        "qa_pickup": "qa flow .claude/flows/qa/main.md — picks up 1960d from TASKS.md Todo (status promoted by PM on 1960c-done signal receipt)",
+        "qa_deliverable": "apps/mcp-server/tests/integration/task-lock-phase3-devteam-smoke.test.ts (or scripts/smoke-task-lock-phase3.ts following Phase 2 1955b pattern at apps/mcp-server/tests/integration/cowork-team-multi-session-smoke.test.ts)",
+        "qa_AC": [
+          "2-session race on same sprint-task — exactly one wins",
+          "Heartbeat-extension keeps lock past TTL while agent active",
+          "Stolen-lock detection (heartbeat ok=false → EXIT path)",
+          "Dashboard-row claim prevents dual-drain across 2 dev-team runs",
+          "pipeline-state.json + task-lock coexistence (no false-skip on owner-match)",
+          "Approval signal docs/signals/qa-1960d-approved.json on PASS"
+        ],
+        "blocking_clause": "1960e is BLOCKED until docs/signals/qa-1960d-approved.json exists. If QA returns CHANGES_REQUESTED, fixer (NOT agent-father) takes targeted fix per docs/policies/recurring-bug-policy.md and re-submits."
+      },
+      "1960d_to_1960e_agent_father": {
+        "trigger": "QA approval signal docs/signals/qa-1960d-approved.json lands",
+        "agent_father_pickup": "agent-father flow .claude/flows/agent-father/main.md — picks up 1960e from TASKS.md Todo",
+        "agent_father_deliverables": [
+          "docs/protocols/task-lock-protocol.md — append Phase 3 status block + dev-team call-point table (Phase Availability table flips Phase 3 to SHIPPED)",
+          "docs/agent-memory/MEMORY.md — append index entry matching 1955d pattern (single bullet line, ≤150 chars, format: '- [Phase 3 dev-team task-lock wiring](project_task_lock_phase3.md) — 2026-05-21 Sprint 1960, brief 2026-05-21-task-lock-phase3-devteam.md, tasks 1960a–1960e landed, commit hashes')",
+          ".claude/skills/task-lock/SKILL.md — Phase Status block flips Phase 3 → SHIPPED"
+        ],
+        "agent_father_AC": [
+          "All 3 files updated",
+          "Phase Status table on skill reflects SHIPPED for Phase 3",
+          "MEMORY.md index entry pattern matches 1955d entry (verify by diff against existing project_task_lock_phase2.md line in MEMORY.md)"
+        ],
+        "completion_signal": "docs/signals/agent-father-1960e-done.json → PO sprint-signoff fires task_release on task:1960 (per 1960c-1 wiring)"
+      }
+    },
+    "post_sprint_signoff": {
+      "po_signoff": "po flow .claude/flows/po/sprint-signoff.md — emits sprint-close signal docs/signals/po-1960-close.json + calls task_release on task:1960 (sprint-task lock acquired at sprint-kickoff per 1960c-1 wiring).",
+      "pipeline_state_update": "po updates docs/pipeline-state.json: status=done, currentSprint=null (or next-active), lastCompleted='Sprint 1960 Phase 3 task-lock dev-team wiring DONE 2026-05-21 — commits <a> <b> <c> <d> <e>'."
+    },
+    "constraints_inherited_from_po_signal": [
+      "NO branches — all work on main",
+      "Each agent commits its own task using docs/policies/commit-convention.md",
+      "Backward-compat: pipeline-state.json must remain functional — task-lock AUGMENTS not replaces",
+      "Architect (1960a) MUST design before any flow edits — Phase 3 differs from Phase 2 (Model 2 heartbeats, longer TTL, pipeline-state interaction)"
+    ],
+    "recurring_bug_escalation": "N/A — Phase 3 is new-wiring sprint, not a fix. If 1960d uncovers a Phase 1 regression in task_claim/heartbeat/release MCP tools, escalate to architect (NOT a Phase 3 task) per docs/policies/recurring-bug-policy.md.",
+    "wip_assessment": "Sprint 1960 runs in parallel with 1959a (CRITICAL coordination tsc blocker, dev-mcp-server zone — apps/mcp-server/). Zone-disjoint with Phase 3 (.claude/ + docs/) → no merge collision risk. PM monitors both; if 1959a slips, 1960c still proceeds (Phase 3 wiring depends on Phase 1 tools deployed not the tsc fix per se — Phase 1 tools work at runtime even with pre-push blocked).",
+    "total_estimate_hours": 12.5,
+    "critical_sequencing": "1960a brief MUST land before 1960c — PM finalizes this DRAFT once 1960a brief is APPROVED by PO; only then is agent-father dispatched on 1960c row 1.",
+    "next_actions_on_finalization": [
+      "PM watches for docs/signals/architect-1960a-brief-done.json",
+      "PM reads 1960a brief and reconciles row-level breakdown (insertion-points, tool-package delta, owner_agent name overrides)",
+      "PM flips this signal status DRAFT → FINAL, updates hold_line=null, emits dispatch signal to agent-father for 1960c-1",
+      "PM updates docs/pipeline-state.json: currentSprint=1960, activeTaskId=1960c-1, nextAgent=agent-father"
+    ]
+  },
+  "priority": "high",
+  "createdAt": "2026-05-20T19:10:00Z"
+}
