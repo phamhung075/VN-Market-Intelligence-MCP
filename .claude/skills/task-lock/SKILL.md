@@ -86,6 +86,12 @@ Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-dev
 
 ---
 
+## Dispatcher-Wrap Pattern (outer claim before Agent() spawn)
+
+→ See `.claude/skills/dispatch-claim/SKILL.md` — prevents duplicate spawn in multi-router race (Phase 4 / Sprint 1962c).
+
+---
+
 ## Phase Status (as of 2026-05-20)
 
 - Phase 1 SHIPPED 2026-05-20: coordination.db + 4 MCP tools (task_claim, task_heartbeat, task_release, task_list_held). Commits: 79ac45e9, b3d6ff80.
