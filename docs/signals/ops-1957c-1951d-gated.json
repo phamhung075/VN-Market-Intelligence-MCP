@@ -1,0 +1,37 @@
+{
+  "from": "ops",
+  "to": ["po"],
+  "type": "task-complete",
+  "priority": "medium",
+  "sprint": "1957",
+  "task": "1957c",
+  "createdAt": "2026-05-20T06:15:00Z",
+  "status": "done",
+  "summary": "1951d cutover re-blocked: 1957b-done gate recorded in TASKS.md Blocked-by column. Cutover cannot proceed until skill + runbook are deployed and verified.",
+  "deliverables": [
+    {
+      "file": "docs/TASKS.md",
+      "section": "Todo",
+      "row": "1951d",
+      "action": "Verified Blocked-by column contains '1957b-done'",
+      "status": "confirmed"
+    },
+    {
+      "file": "docs/signals/DASHBOARD.md",
+      "action": "1957c row marked DONE",
+      "status": "updated"
+    }
+  ],
+  "acceptance_verified": [
+    "AC-1: 1951d Backlog row Blocked-by column lists 1957b-done — PASS (already present)",
+    "AC-2: DASHBOARD.md row 1957c status=DONE — PASS (updated)",
+    "AC-3: This signal emitted — PASS"
+  ],
+  "gate_status": "CLEARED — 1957b-done as of 2026-05-20T00:00Z",
+  "next_action": "po: OBSERVE 1957d (BCTC VPS push cadence 72h tracker, 2026-05-23T07:05Z gate). If gate misses, escalate to 1958 diagnostic.",
+  "context": {
+    "1951d_cutover_summary": "Parallel-run master */15 CronCreate dispatcher validates stable. Can now delete 12 legacy RemoteTriggers. Cannot proceed UNTIL skill + runbook deployed (1957b DONE 2026-05-20T00:00Z).",
+    "skill_runbook_location": ".claude/skills/cron-cowork-team/SKILL.md + docs/protocols/cowork-master-cron-runbook.md",
+    "remediation_gate": "Session-start re-register procedure defined in runbook §3; silence-detection rules in §2; recovery flow in §4"
+  }
+}

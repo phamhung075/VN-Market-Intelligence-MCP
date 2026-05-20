@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-20T04:20Z (system-auditor Tier-3 audit — deep DB integrity: all checks PASS, 1 NEW WARN BCTC VPS stale >24h)_
+_Updated: 2026-05-20T06:00Z (agent-father 1957b DONE — cron-cowork-team skill + cowork-master-cron-runbook built; 1957c unblocked for ops)_
 
 ---
 
@@ -29,14 +29,14 @@ _Updated: 2026-05-20T04:20Z (system-auditor Tier-3 audit — deep DB integrity: 
 ## ops
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| 1956-B-10 | 2026-05-20T04:18Z | system-auditor | data_stale | **CRITICAL** BCTC SLA breached: 329 min age vs 120 min SLA (2.74x over). Last update >5.5h ago. Trust score erosion in Q1/Q2 earnings window. | OPEN | dev-mcp-server zone |
-| 1956-B-05a | 2026-05-20T04:18Z | system-auditor | data_stale | BCTC VPS proxy stale 21h (marked STALE). Only 1 push in 24h. Possible VPS unavailability or network degradation. | OPEN | dev-mcp-server zone |
-| 1956-B-08 | 2026-05-20T04:18Z | system-auditor | data_stale | vn-news-fetch VPS service UNHEALTHY (uptime 1h 1m). News fetch may be degraded despite recent push timestamp. | OPEN | dev-vps-crawls zone |
-| 1957-B-06 | 2026-05-20T04:20Z | system-auditor | data_stale | BCTC VPS data stale: last push 2026-05-19 07:05:07Z (>24h age). Within 168h SLA threshold but no discovery activity in 24h. Normal for late Q2 off-season. Monitor for 72h. | OPEN | dev-vps-crawls zone |
+| 1956-B-10 | 2026-05-20T04:18Z | system-auditor | data_stale | **CRITICAL** BCTC SLA breached: 329 min age vs 120 min SLA (2.74x over). Last update >5.5h ago. Trust score erosion in Q1/Q2 earnings window. | READ | po c215 → OBSERVE (Tier-3 reclassified to B-06 WARN; same root as B-05a/B-06; earnings-window-quiet; OBSERVE-1957d tracks 72h cadence; OBSERVE-1953g covers Q1-2026 coverage 2026-05-21T02:30Z) |
+| 1956-B-05a | 2026-05-20T04:18Z | system-auditor | data_stale | BCTC VPS proxy stale 21h (marked STALE). Only 1 push in 24h. Possible VPS unavailability or network degradation. | READ | po c215 → OBSERVE (same root as B-10/B-06; VPS push cadence normal for late-May earnings-quiet window; tracked by OBSERVE-1957d) |
+| 1956-B-08 | 2026-05-20T04:18Z | system-auditor | data_stale | vn-news-fetch VPS service UNHEALTHY (uptime 1h 1m). News fetch may be degraded despite recent push timestamp. | READ | po c215 → OBSERVE (transient container restart; Tier-3 C-06 confirms news write-path fresh at 42s; auto-close on next clean Tier-1) |
+| 1957-B-06 | 2026-05-20T04:20Z | system-auditor | data_stale | BCTC VPS data stale: last push 2026-05-19 07:05:07Z (>24h age). Within 168h SLA threshold but no discovery activity in 24h. Normal for late Q2 off-season. Monitor for 72h. | READ | po c215 → OBSERVE (Tier-3 self-classified within 168h SLA; canonical row for B-10/B-05a; tracked by OBSERVE-1957d) |
 | 1957a | 2026-05-20T00:00Z | ops | remote-trigger-reactivation | 12 legacy cowork RemoteTriggers reactivated from pending_delete → active. cowork-schedule.json SSOT updated. Next fire times: chef-intraday 02:13Z, chef-morning 05:15Z, tnb-audit 20:13Z, more (see ops-1957a-triggers-reactivated.json). | DONE | docs/signals/ops-1957a-triggers-reactivated.json |
-| 1957c | 2026-05-20T00:00Z | po | sprint-open | Re-block 1951d cutover (docs/TASKS.md edit only) — gated on 1957b-done | NEW | docs/signals/po-1957-cowork-scheduler.json |
+| 1957c | 2026-05-20T06:15Z | ops | task-complete | Re-block 1951d cutover — 1957b-done gate CLEARED and recorded. | DONE | docs/signals/agent-father-1957b-cowork-skill-built.json |
 
 ## agent-father
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| 1957b | 2026-05-20T00:00Z | po | sprint-open | Build .claude/skills/cron-cowork-team/SKILL.md + docs/protocols/cowork-master-cron-runbook.md + CLAUDE.md pointer. Phase-1 completion of master-scheduler brief. Gate: 1957a-dispatched. | NEW | docs/signals/po-1957-cowork-scheduler.json |
+| 1957b | 2026-05-20T00:00Z | po | sprint-open | Build .claude/skills/cron-cowork-team/SKILL.md + docs/protocols/cowork-master-cron-runbook.md + CLAUDE.md pointer. Phase-1 completion of master-scheduler brief. Gate: 1957a-dispatched. | DONE | docs/signals/agent-father-1957b-cowork-skill-built.json |
