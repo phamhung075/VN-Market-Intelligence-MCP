@@ -113,9 +113,23 @@ agent:
       - Same service touched by 2+ goals → sequential (risk of contradictory specs)
       - Goal B depends_on Goal A output → sequential
     spawn_pattern: |
-      # All independent specs in one message:
+      # S6 dispatcher-wrap — claim each architect task before spawn, spawn only wins:
+      for each (req_id) in specs_ready:
+        outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+          task_id: "task:" + req_id, task_kind: "sprint-task",
+          owner_agent: "ba", ttl_seconds: 3600,
+          payload: '{"site":"S6","spawning":"architect"}'
+        })
+        if not outer_claim.claimed:
+          log "[ba] SKIP task:" + req_id + " — held by " + outer_claim.current_holder.owner_agent
+          send_telegram(work, "[ba] SKIP collision task:" + req_id + " — held by peer")
+          remove req_id from specs_ready
+      # All independent specs in one message (only claimed wins):
       → BA writes REQ_NNN.md for goalA + REQ_MMM.md for goalB simultaneously
       → Agent(architect, REQ_NNN) + Agent(architect, REQ_MMM)
+      # After all spawns return, release outer claims:
+      for each (req_id) in spawned_specs:
+        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + req_id })
     return_schema: |
       ## RETURN
       SPECS_READY: [REQ_NNN, REQ_MMM, ...]
