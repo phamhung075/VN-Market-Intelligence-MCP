@@ -131,3 +131,68 @@
 - Cowork-team dispatcher can now use collision-safe slot-locking (Phase 2 gates active)
 - Task-lock MCP interface live on production gateway
 - Unblocks 1961c QA smoke re-validation
+
+---
+
+## Sprint 1961 — MCP Server Task-Lock Tools Deployment (21:39 UTC) [COMPLETE]
+
+**Context:** Cowork-team dispatcher error signal (20260520T190639Z) showed collision-protection OFF despite Phase 1/2/3 SHIPPED in source code. RCA: mcp-server container predated Sprint 1959a tsc-compliance fixes; tools not live on `vn-market` gateway.
+
+**Action taken:**
+1. **1961a (HOTFIX — Rebuild + Restart)**
+   - Executed: `docker compose up -d --build mcp-server` from repo root
+   - Container rebuilt (image hash 598b94c7..., cached bun+python layers)
+   - Container restarted: created 15s ago, status Up 12s (healthy)
+   - AC PASS: container <5min up + healthy confirmed
+
+2. **1961b (Smoke-test 4 Phase 1 Tools)**
+   - Used `mcp__claude_ai_gateway__call_tool()` with server="vn-market"
+   - Task ID: smoke-1961b-1779305983 (TTL=60s)
+   - Tests:
+     * `task_claim(task_kind="sprint-task")` → {claimed:true} ✓
+     * `task_heartbeat()` → {ok:true, expires_at:1779306076} ✓
+     * `task_list_held()` → array returned with smoke entry + QA entry ✓
+     * `task_release()` → {ok:true} ✓
+     * Verified post-release: task_list_held() returns empty array ✓
+   - AC PASS: all 4 tools live, round-trip claim→release successful
+
+**Artifacts:**
+- Signal: `docs/signals/ops-1961ab-done.json` (task-complete, routed to PO)
+- TASKS.md: 1961a + 1961b moved to Done section (2026-05-20)
+- Notebook: this entry
+
+**Next:** Awaiting 1961c (QA smoke Phase 2+3) and 1961d (docs + sprint-close protocol patch).
+
+
+---
+
+## Incident Recovery — 2026-05-20 20:02-20:06 UTC (1958a)
+
+**CRITICAL: Docker-compose stack degradation → RESOLVED in 4 min**
+
+### Diagnosis
+- **Alert:** system-auditor Tier-1 audit at 19:59Z and 20:02Z: 9/11 microservices NOT RUNNING
+- **Initial state:** mcp-server (3000) + frontend (3001) UP; api-gateway (4000), stock-price (5010), technical-analysis (5003), macro-indicators (5004), kinh-dich (5005), alert-engine (5006), pdf-extractor (5001), rag-service (5002), news-fetch (5008) DOWN
+- **Network state:** Docker network `vn-market-intelligence-mcp_default` existed but only mcp-server attached; DNS resolution failed for missing services
+- **Root cause:** RAG service (5002) hung on async startup after initial `docker compose up -d`; hung on "Waiting for application startup" state (process initialization deadlock, likely model loading or embeddings init)
+
+### Recovery Actions
+1. `docker compose up -d` from project root → re-created 11 services, started all
+2. Waited ~30s for health checks to stabilize
+3. `curl http://localhost:4000/health` → api-gateway reported 8/9 services ok, rag=down
+4. Inspected `docker compose logs rag-service` → found stuck startup state
+5. `docker restart vn-market-intelligence-mcp-rag-service-1` → forced container restart
+6. Polled `curl http://localhost:5002/health` until responding (took ~15s post-restart)
+7. Final verification: `curl http://localhost:4000/health` → all 9 services ok, latencies normal
+
+### Verification (20:06:31 UTC)
+- All 11 containers UP + healthy
+- api-gateway /health endpoint: status=ok (all 9 services ok)
+- Services verified: alert (3ms), kinh-dich (3ms), macro (2ms), mcp (6ms), news (3ms), pdf (3ms), rag (4ms), stock (3ms), ta (3ms)
+- Inter-service DNS: verified via api-gateway service probes
+- No code changes needed; no env vars missing
+
+**Impact:** Stack fully recovered before Vietnam market open (02:00Z 2026-05-21). No data loss; no alerts missed.
+
+**Signal file:** docs/signals/ops-1958a-stack-recovered.json
+
