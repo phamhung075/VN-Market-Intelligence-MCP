@@ -1,5 +1,42 @@
 # QA — Notebook
 
+**Last updated:** 2026-05-20 | **Sprint:** 1958a | **Session:** c212++ — Task 1958a MARKET-summary cron jobs — APPROVED
+
+## Session 2026-05-20 c212++ — Task 1958a alertDigestJob+summaryJob:daily catchup (APPROVED)
+
+### TASK REPORT — 1958a (compact)
+
+```
+date: 2026-05-20
+outcome: APPROVED
+commit reviewed: 84c2b375
+files: 3 (startScheduler.ts +34L, summaryJobs.ts +7L, 1958a-alert-digest-summary-catchup.test.ts NEW 181L)
+type: FIX — recoverMissedExecutions:true + startup catchup probes for alertDigestJob + summaryJob:daily
+round: 1
+zone: apps/mcp-server/
+```
+
+#### Checks
+
+| Check | Result |
+|-------|--------|
+| Targeted tests 16/16 | PASS [279ms] |
+| Full suite 9287/284 | PASS (baseline 9271+16=9287; zero regression) |
+| bun tsc --noEmit | PASS (0 new errors; pre-existing coordination errors excluded) |
+| AC-1: RCA documented | PASS |
+| AC-2: idempotent (shouldRunCatchup DB guard) | PASS |
+| AC-3: all 5 jobs have startup catchup probes | PASS |
+| AC-4: zero regression | PASS |
+| Test coverage: fire/skip/weekend/saturday/fail-safe | PASS (all 16 scenarios) |
+| DDD scan | PASS |
+| Security: process.env, secrets | PASS |
+
+- **actions**: APPROVED. [QA] Review Record appended to TASK_1958a.md. Signals: qa-1958a-approved.json + qa-1958a-architect-followup.json. pipeline-state nextAgent=pm. Report: reports/TASK_REPORT_1958a.md.
+- **next_cycle_hint**: pm marks 1958a Done. ops deploys docker compose up -d mcp-server then verifies AC-3 at 2026-05-21T09:00Z (cron_job_runs ≥1 success row per all 5 jobs). architect to review qa-1958a-architect-followup.json re OHLCV 5h startup backfill.
+- **estimated_tokens**: 4200
+
+---
+
 **Last updated:** 2026-05-20 | **Sprint:** 1955b | **Session:** c212+ — Task 1955b zombie reap — APPROVED
 
 ## Session 2026-05-20 c212+ — Task 1955b zombie cron_job_runs reap (APPROVED)
