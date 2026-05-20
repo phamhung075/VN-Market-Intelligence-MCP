@@ -40,6 +40,20 @@ Conflict check is main terminal's responsibility — disjoint files → parallel
    - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
    - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
    - VERIFY: `git branch --show-current` must equal `task/NNN-kebab-description` before touching any file
+
+**2b. Claim sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + task_id,
+  task_kind:   "sprint-task",
+  owner_agent: "developer",
+  ttl_seconds: 3600,
+  payload:     '{"task_title":"' + task_title + '","branch":"' + branch_name + '"}'
+})
+if not result.claimed:
+  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+```
+
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
 4. `depends_on` not Done → STOP, notify PM
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
@@ -52,6 +66,11 @@ RED    → write src/__tests__/NNN-task-name.test.ts → must FAIL
 GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
+```
+- **After each TDD loop** → heartbeat:
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit partial, BUG telegram, EXIT)
 ```
 
 **After code**
@@ -87,6 +106,8 @@ REPEAT per acceptance criterion
 - **Docs updated:** [path — what changed] | NONE if no docs impacted
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
+
+**Lock handoff to QA** — same session, no release needed; QA will heartbeat + release.
 
 **Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE — task name, findings, status; never append).
 
