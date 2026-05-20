@@ -33,7 +33,7 @@ For each NEW row:
   // Claim succeeded — proceed with existing drain logic
   load payload if present → append to pendingSignals[] with source="dashboard"
   mark row NEW → READ
-  call_tool("task_release", { task_id: row_key })   // release per-row claim immediately after row consumed
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: row_key })   // release per-row claim immediately after row consumed
 
 If DASHBOARD.md missing or no dev-team section → log "[dev-team] dashboard skip" and continue. Never fail-loud.
 

@@ -50,7 +50,7 @@ Re-read all edited files and run checks:
 - [ ] `inter_agent` routing is symmetric with partner agents
 - [ ] Version date updated to today
 
-**7b. Heartbeat lock** → `call_tool("task_heartbeat", {task_id: "task:" + task_id})`
+**7b. Heartbeat lock** → `call_tool(server="vn-market", tool="task_heartbeat", arguments={task_id: "task:" + task_id})`
 if hb.ok == false: → stolen-lock protocol per skill
 
 **8. Diff summary**
@@ -71,7 +71,7 @@ Produce human-readable summary:
 - (none) | Updated partner agent X routing
 ```
 
-**8b. Release lock** → `call_tool("task_release", {task_id: "task:" + task_id})`
+**8b. Release lock** → `call_tool(server="vn-market", tool="task_release", arguments={task_id: "task:" + task_id})`
 
 ---
 

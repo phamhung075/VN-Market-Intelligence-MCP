@@ -24,7 +24,13 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
   PIPELINE: complete
   ```
 
-- **Reject** → open Backlog tasks for remaining issues → return:
+- **Reject** → open Backlog tasks for remaining issues → release umbrella lock → return:
+
+  **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+  ```
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + sprint_id })
+  // ok=false is acceptable (TTL already expired across long sprint)
+  ```
   ```
   ## RETURN
   DONE: Sprint NNN partial — backlog tasks created

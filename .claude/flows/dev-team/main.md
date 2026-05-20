@@ -181,8 +181,40 @@ call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_k
 | SPRINT-S | architect → pm | each reads own flow |
 | SPRINT-M | ba → architect → pm | sequential |
 | SPRINT-L | ba → architect → pm; post-merge architect review | sequential |
-| UNBLOCK | S4: `outer_claim=task_claim("task:"+batch_id,"dev-team",ttl=3600)`; if claimed: spawn `{route_to}` + `task_release`; else: log SKIP → EXIT | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
-| CLEAN | S4: `outer_claim=task_claim("task:"+batch_id,"dev-team",ttl=3600)`; if claimed: spawn `qa` with branch list + `task_release`; else: log SKIP → EXIT | qa flow handles cleanup → EXIT |
+| UNBLOCK | S4: see dispatch block below | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
+| CLEAN | S4: see dispatch block below | qa flow handles cleanup → EXIT |
+
+**S4 UNBLOCK dispatch:**
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + batch_id,
+  task_kind:   "dev-team",
+  owner_agent: "dev-team",
+  ttl_seconds: 3600
+})
+if result.claimed:
+  spawn {route_to}
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
+else:
+  log "[dev-team] SKIP UNBLOCK " + batch_id + " — held by " + result.current_holder.owner_agent
+  EXIT
+```
+
+**S4 CLEAN dispatch:**
+```
+result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "task:" + batch_id,
+  task_kind:   "dev-team",
+  owner_agent: "dev-team",
+  ttl_seconds: 3600
+})
+if result.claimed:
+  spawn qa with branch list
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
+else:
+  log "[dev-team] SKIP CLEAN " + batch_id + " — held by " + result.current_holder.owner_agent
+  EXIT
+```
 
 Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into handoff/RETURN per task. Step 3 zone-routes by this field. Agent contracts: each agent's `flows/<agent>/main.md` § Role in dev-team flow.
 

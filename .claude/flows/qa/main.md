@@ -64,7 +64,7 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:
 if hb.ok == false:
   // Lock stolen — developer's session terminated before QA ran in this session
   send_telegram(channel="bug", "[qa] lock stolen on " + task_id + " — re-claiming for QA review")
-  → call task_claim(task_id, "sprint-task", "qa", 3600) — proceed even if claim fails (QA is non-mutating until merge)
+  → call_tool(server="vn-market", tool="task_claim", arguments={ task_id: "task:" + task_id, task_kind: "sprint-task", owner_agent: "qa", ttl_seconds: 3600 }) — proceed even if claim fails (QA is non-mutating until merge)
 ```
 
 ```bash
