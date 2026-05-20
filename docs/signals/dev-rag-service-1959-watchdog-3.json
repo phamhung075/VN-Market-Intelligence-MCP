@@ -1,0 +1,35 @@
+{
+  "id": "dev-rag-service-1959-watchdog-3",
+  "ts": "2026-05-20T21:01:00Z",
+  "from": "dev-rag-service",
+  "type": "task_complete",
+  "task_id": "1959-watchdog-3",
+  "sprint": "1959",
+  "summary": "Pre-baked sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (~400MB) into RAG service Dockerfile. Model cached to /opt/model-cache (outside volume mount) during image build. HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1 set at runtime to enforce local-only loading. Cold-start: 11-16s (was >30s). Zero HuggingFace network calls at startup confirmed via docker logs.",
+  "ac_results": {
+    "AC-1": "PASS — apps/rag-service/Dockerfile includes RUN step downloading model to /opt/model-cache",
+    "AC-2": "PASS — image grew from 2.51GB to 3.43GB (~920MB delta, includes model + HF hub metadata; 32GB headroom OK)",
+    "AC-3": "PASS — cold-start healthy in 11s (restart) / 16s (deploy), well under 30s target",
+    "AC-4": "PASS — docker logs confirm zero HuggingFace HTTP requests at startup (HF_HUB_OFFLINE=1 enforced)",
+    "AC-5": "PASS — /health 200, /search 200 with Vietnamese market results, gateway /health 200",
+    "AC-6": "PASS — signal emitted; commit pending with subject feat(rag-service/1959-watchdog-3)"
+  },
+  "measurements": {
+    "image_size_before_gb": 2.51,
+    "image_size_after_gb": 3.43,
+    "image_delta_gb": 0.92,
+    "cold_start_deploy_s": 16,
+    "cold_start_restart_s": 11,
+    "cold_start_target_s": 30,
+    "hf_network_calls_at_startup": 0,
+    "tests_pass": 41,
+    "tests_fail": 0
+  },
+  "files_changed": [
+    "apps/rag-service/Dockerfile — added RUN model-bake step + HF_HUB_OFFLINE + TRANSFORMERS_OFFLINE + updated EMBEDDING_CACHE_DIR to /opt/model-cache",
+    "docker-compose.yml — updated EMBEDDING_CACHE_DIR from /app/data/models to /opt/model-cache (1 line, rag-service stanza only)"
+  ],
+  "technical_notes": "Model baked to /opt/model-cache (not /app/data/models) to avoid Docker named-volume shadowing. Volume market_data mounts at /app/data — files there are shadowed by volume content on existing deployments. /opt/model-cache is outside the volume mount and always available from image layer. EMBEDDING_CACHE_DIR updated in Dockerfile ENV and docker-compose.yml override (docker-compose takes precedence at runtime).",
+  "unblocks": ["1959-watchdog-4 (48h soak → 2026-05-22T21:00Z)"],
+  "status": "DONE"
+}

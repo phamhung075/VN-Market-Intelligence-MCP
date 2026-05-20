@@ -101,7 +101,7 @@ services:
     environment:
     - LANCEDB_PATH=/app/data/lancedb
     - DB_PATH=/app/data/rag_service.db
-    - EMBEDDING_CACHE_DIR=/app/data/models
+    - EMBEDDING_CACHE_DIR=/opt/model-cache
     - LOG_LEVEL=INFO
     restart: unless-stopped
     healthcheck:

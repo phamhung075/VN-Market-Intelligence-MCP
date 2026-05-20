@@ -43,11 +43,29 @@ ENV HOST=0.0.0.0
 ENV PORT=5002
 ENV LOG_LEVEL=INFO
 
-EXPOSE 5002
+# Pre-bake embedding model into image layer (watchdog-3 / sprint-1959).
+# Downloads sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (~400MB)
+# into /opt/model-cache at build time so cold-start never hits HuggingFace Hub.
+# /opt/model-cache is intentionally OUTSIDE the /app/data volume mount so the
+# baked model is always present in the image layer, not shadowed by the volume.
+# At runtime the embedder uses EMBEDDING_CACHE_DIR which now points to /opt/model-cache.
+# HF_HUB_OFFLINE=1 + TRANSFORMERS_OFFLINE=1 prevent any network calls to HF Hub
+# at runtime; the model must be fully present in the cache or startup will fail fast.
+RUN HF_HOME=/opt/model-cache \
+    SENTENCE_TRANSFORMERS_HOME=/opt/model-cache \
+    python3 -c "\
+from sentence_transformers import SentenceTransformer; \
+SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', \
+cache_folder='/opt/model-cache')"
 
-# NOTE: sentence-transformers model (~400MB) auto-downloads on first run
-# Pre-download by setting EMBEDDING_MODEL env and running:
-#   docker run --rm -e EMBEDDING_MODEL=... rag-service python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+# Point embedder cache to the baked model path (overrides the volume-mount path).
+# docker-compose.yml EMBEDDING_CACHE_DIR env also updated to /opt/model-cache.
+ENV EMBEDDING_CACHE_DIR=/opt/model-cache
+# Disable HuggingFace Hub network calls at runtime — model must be in local cache.
+ENV HF_HUB_OFFLINE=1
+ENV TRANSFORMERS_OFFLINE=1
+
+EXPOSE 5002
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5002/health || exit 1

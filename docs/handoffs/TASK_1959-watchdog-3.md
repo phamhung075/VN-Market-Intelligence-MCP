@@ -55,3 +55,25 @@ Disk pre-condition: SAFE NOW. `ops-1958-disk-relief.json` confirms 32 GB free (v
 - Predecessor (start_period bump): `docs/signals/dev-mcp-server-1958-watchdog-2.json`
 - Sprint goal: `docs/SPRINT_GOAL.md` (Sprint 1959)
 - Mid-checkpoint signal: `docs/signals/po-1958-mid-checkpoint.json`
+
+## [Developer] Implementation Record
+
+- **Service:** rag-service
+- **Zone:** apps/rag-service/
+- **Files modified:**
+  - `apps/rag-service/Dockerfile` — added RUN model-bake step to `/opt/model-cache`, added `ENV HF_HUB_OFFLINE=1`, `ENV TRANSFORMERS_OFFLINE=1`, updated `ENV EMBEDDING_CACHE_DIR=/opt/model-cache`; removed obsolete NOTE comment
+  - `docker-compose.yml:104` — updated `EMBEDDING_CACHE_DIR` from `/app/data/models` to `/opt/model-cache` (1-line change in rag-service stanza only; required so docker-compose env override matches Dockerfile ENV)
+- **Tests written:** none (infrastructure-only Dockerfile change; no new Python code)
+- **Git commits:** pending LITE commit feat(rag-service/1959-watchdog-3)
+- **Type check:** N/A (no Python source changes)
+- **Service tests:** 41 pass / 0 fail (pre-existing suite, no regressions)
+- **Docs updated:** docs/agent-memory/notebooks/dev-rag-service.md — session notes + zone health
+- **Graphify:** skipped (no docs/architecture/microservice/rag-service/ content changed)
+- **Measurements:**
+  - Image size before: 2.51 GB | after: 3.43 GB (+920 MB — acceptable, 32 GB headroom)
+  - Cold-start deploy: 16s healthy (target <30s) — PASS
+  - Cold-start restart: 11-16s healthy — PASS
+  - HuggingFace network calls at startup: 0 — PASS
+  - Smoke: /health 200, /search 200 with results, gateway /health 200 — PASS
+- **Key technical decision:** Model baked to `/opt/model-cache` (not `/app/data/models`) to avoid Docker named-volume shadowing. Volume `market_data` mounts at `/app/data` — image-layer files there are shadowed by existing volume content on non-fresh deployments. `/opt/model-cache` is always available from the image layer on every start.
+- **Signal:** docs/signals/dev-rag-service-1959-watchdog-3.json
