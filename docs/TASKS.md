@@ -40,7 +40,6 @@
 ---
 
 ## Todo
-| 1958a | **Sprint 1958 — 5 MARKET-summary cron jobs not firing (USER-VISIBLE).** Cowork-team escalation 2026-05-20T08:57Z: morningBriefingJob (28h overdue, last 2026-05-19 04:39), franceSummaryJob (2h overdue, last 2026-05-19 07:00), eveningSummaryJob (today missed, last 2026-05-19 15:30), summaryJob:daily (2d stale), alertDigestJob (2d+ stale). Other scheduler jobs (foreignFlowFetcher, pollNews, vnIndex, alertScan) firing normally → NOT a container outage. Ops already attempted Docker restart (a013db854584edfb9) — did NOT resolve. Cowork hypothesis: job-group registration regression or shared-code-path bug specific to MARKET-summary group. Related: 1955a (dailyDashboardJob ENOENT) — DIFFERENT root cause, already shipped commit acc8d52b. Work: (1) diagnose — `grep -rn "morningBriefingJob\|franceSummaryJob\|eveningSummaryJob\|summaryJob\|alertDigestJob" apps/mcp-server/src/scheduler/` → confirm registration in startScheduler.ts + cronConfig.ts; (2) check `cron_job_runs` table for last_run + error messages per job_name; (3) check container env vars / feature flags gating these 5 jobs; (4) identify shared dependency (e.g., shared helper module) that fails silently. AC: (1) root cause identified in handoff doc; (2) fix lands per RCA (may be single shared-helper fix or per-job re-wire); (3) all 5 jobs fire at next scheduled tick post-deploy; (4) `cron_job_runs` shows new rows with `status IN ('success','error')` for all 5 within 24h post-deploy. Size=M (RCA + fix). Zone=`apps/mcp-server/`. Owner: dev-mcp-server. **UNBLOCKED 2026-05-20 by 1955b ship.** | HIGH | FIX | dev-mcp-server | docs/handoffs/TASK_1958a.md | — |
 | 1951d | **Sprint 1951 Phase 1 parallel-run cutover — GATE CLEARED 2026-05-20** — Unblocked by 1957b (cron-cowork-team skill + cowork-master-cron-runbook deployed). Cutover will delete 12 legacy RemoteTriggers once master `*/15 CronCreate` + session-start re-registration are in place. POST-CUTOVER RUNBOOK: (a) Session-start: invoke `.claude/skills/cron-cowork-team/SKILL.md` to re-register master `*/15 * * * *` CronCreate; (b) Session-exit detection: no cowork signals >20 min market hours → re-register; (c) CLAUDE.md hook pointer to skill. Runbook: `docs/protocols/cowork-master-cron-runbook.md`. Then: CronDelete 12 legacy RemoteTriggers. Update SSOT: `trigger_id=null`, `trigger_status='deleted'` for 12 slots. Emit router signal confirming cutover. AC: (1) SSOT updated; (2) 12 legacy RemoteTriggers deleted via MCP; (3) cowork cycle fires within 2h post-merge; (4) signal confirms cutover. Size=XS. Zone=`.claude/` + `docs/data/`. Owner=ops. | MEDIUM | TASK | ops | — | — |
 | post-1945-verdict-resolution-scored-pct | **Sprint 1945 AC-1 OBSERVE** — gate 2026-05-20T07:22Z (48h post-1945a deploy). AC: `alert_accuracy.scored_pct` rises ≥60% AND `unknowns_30d` drops by ≥100 (was 36%/520 pre-1945a). If miss → 1947b-verdict-resolution-followup (HIGH FIX, dev-mcp-server). | HIGH | OBSERVE | ops | — | 2026-05-20T07:22Z |
 | post-1945-bug-storm-silence | **Sprint 1945 AC-2 OBSERVE** — gate 2026-05-20T07:22Z (48h). AC: zero new `[bug] verdictResolutionJob` Telegram messages for 48h post-1945a deploy. Any new msg → 1947c-verdict-resolution-bug-followup. | MEDIUM | OBSERVE | ops | — | 2026-05-20T07:22Z |
@@ -58,9 +57,12 @@
 
 ---
 
+## Review
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1958a | **[review 2026-05-20 dev-mcp-server commit 84c2b375] Sprint 1958 — 5 MARKET-summary cron jobs not firing.** RCA: event-loop starvation (5h OHLCV backfill + bctcReparseJob zombies) caused node-cron to miss alertDigestJob (14:00 UTC) and summaryJob:daily (15:30 UTC) windows; recoverMissedExecutions=false (default) permanently skips missed ticks; neither job had startup catchup. Fix: recoverMissedExecutions:true on alertDigestJob+summaryJob:daily; startup catchups added for both. 16 tests GREEN, 9330/283. AC-3 obs gate 2026-05-21T09:00Z. | HIGH | FIX | qa | docs/handoffs/TASK_1958a.md | — |
+
 ---
 ## Done
 
