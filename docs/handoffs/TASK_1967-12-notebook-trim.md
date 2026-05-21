@@ -189,3 +189,26 @@ Size: S | Zone: .claude/agents/ | Task: 1967-12
 **Commit:** `86c60000` — chore(agents/notebooks): trim 6 notebooks >150L baseline
 
 **QA Gates:** Ready for qa — pipeline continues
+
+---
+
+## [QA] Review Record
+
+**Reviewed:** 2026-05-21T21:45Z by qa (round 1)
+**Verdict:** CHANGES_REQUESTED
+**Smart-skip:** YES — zero .ts changes; bun test + tsc skipped
+**Commits validated:** `86c60000` + `ba274463`
+
+| AC | Result |
+|----|--------|
+| AC-1: All 6 notebooks ≤150L | PASS (121, 135, 143, 43, 111, 91) |
+| AC-2: Archive pointer in each live notebook | FAIL — alert-commander:5 stale pointer |
+| AC-3: Carry-over sections preserved | PASS |
+| AC-4: 6 archive files at docs/archive/notebooks/ | PASS |
+| AC-5: Commit references TASK_1967-04 side_finding | PASS |
+| AC-6: No semantic content loss | PASS |
+
+**Blocking issues (1):**
+- `docs/agent-memory/notebooks/alert-commander.md:5` — pointer reads `alert-commander-2026-05-18.md`; must be `alert-commander-2026-05-21.md`. Archive file exists at correct path; only the in-notebook pointer is wrong.
+
+**Fix required:** Single line edit to alert-commander.md line 5.
