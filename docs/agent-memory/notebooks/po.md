@@ -1,61 +1,67 @@
 # PO Notebook
 
-## Last updated: 2026-05-21T21:21:32Z · Cycle: c241 cron-2107Z — dev-team triage, pipeline reconciled, BATCH=NOTHING
+## Last updated: 2026-05-21T22:21:00Z · Cycle: c242 cron-2207Z — dev-team triage, pipeline reconciled, BATCH=NOTHING
 
-> Archive: prior cycles c229–c240 trimmed per L-2 baseline; keep last cycle in-file.
+> Archive: prior cycles c229–c241 trimmed per L-2 baseline; keep last cycle in-file.
 
-### c241 trigger
-Dev-team triage cron-2107Z: 25 stale signals drained to processed/. Asked PO to (a) triage what's actionable for dev-team this cycle, (b) reconcile stale pipeline-state.json (last touch 20:21Z), (c) emit BATCH/NOTHING per dev-team contract. Pipeline-state claimed activeTaskId="1967-02 + qa-1968b1 + qa-1968b2" but realities have moved 5+ states forward.
+### c242 trigger
+Dev-team triage cron-2207Z. Filesystem signals = 0 new (all 25 prior cycle drained inline). DASHBOARD NEW rows = 1 (1959-B-02-NEW from system-auditor 22:10Z). Trigger note flagged P03 READY for dispatch + asked PO to reconcile stale pipeline-state.
+
+### Reality vs trigger-note (critical reconciliation)
+Trigger note said: "TASK_1968c-P03 READY for dispatch, agent-father-1968c-p01-done received at 21:46Z, P03 gate cleared." That was true at 21:46Z. By 22:19Z cron tick, **P03 had already been shipped** (commit `c3b18e8c` at 21:43Z author-time — note: actually 23:44 local = 21:43Z) and `dev-mcp-server-1968c-p03-done.json` signal was already in the inbox awaiting QA. Handoff doc `TASK_1968c-P03-server-filter.md` shows the [Implementer] Completion Record. dev-mcp-server self-claimed on its own cron upon the P01-done arrival — exactly the contract.
 
 ### Decision: BATCH=NOTHING (dev-team idle this cycle)
 
-Reasoning surface-by-surface:
-- **1967-02** (dev-mcp-server): DONE commit `257d92bf` 21:30Z, awaiting QA. Not a dev-team dispatch — already in qa lane.
-- **1968c-P01** (agent-father + dev-mcp-server pair) + **1968c-P02** (agent-father solo): in-flight via agent-father self-cron (NOT dev-team dispatchable per boundary). PO approved sequencing at 21:15Z (po-1968c-approved.json).
-- **1968c-P03** (dev-mcp-server, only natural dev-team candidate per dev-team's own note): explicit gate `agent-father-1968c-p01-done.json` not yet emitted. Dispatching now would race P01's `apps/mcp-server/` touches (P01 has dev-mcp-server pair-claim on cowork-team dispatcher; P03 edits getAgentSignals.ts — different files but same zone-lock). L45 same-zone-collision rule confirms HOLD.
-- **1967-12** (notebook trim sweep): claude-manager-helper, maintenance lane, out-of-scope for dev-team per boundary.
-- **1967-06** (dev-mcp-server, weekly-cron-crash): blocked-until 2026-05-22T21:00Z (OBSERVE-1955e gate). Not unblocked yet.
-- **1967-07..11** (agent-father MED queue): NOT dev-team dispatchable.
+Surface-by-surface (dev-team-dispatchable lane only):
+- **1968c-P03** SHIPPED, in qa lane (NOT dev-team)
+- **1968c-P01/P02** DONE+QA-APPROVED (closed)
+- **1967-02** DONE+QA-APPROVED (closed)
+- **1967-12** DONE+QA-APPROVED round 2 (closed)
+- **1967-06** still gated until 22T21:00Z (~22h)
+- **1967-07..11** agent-father MED queue (NOT dev-team)
+- **1959-B-02-NEW** ops/data-stale, 2h stale (under 24h escalation threshold), vn-news-fetch self-recovery in progress (uptime 1h58m), outside market hours → OBSERVE, no ops dispatch warranted
+- **1959-B-01/B-04/B-05** stale OPEN from 18:07Z, market-hours-suppression / earnings-window-quiet contexts → OBSERVE-continued
 
-Conclusion: every dev-team-dispatchable lane is either (a) in-flight elsewhere, (b) awaiting QA, or (c) gated. **dev-team returns NOTHING.** Next dev-team trigger = `agent-father-1968c-p01-done.json` arrival → P03 unlocks for dev-mcp-server.
+Conclusion: every dev-team-dispatchable lane is either DONE, awaiting QA, gated, or maintenance. Returning NOTHING with clean rationale per dev-team contract.
 
-### Pipeline-state.json reconciled inline (PO override of PM ownership this cycle, per dev-team explicit ask)
-- status: 1968c-wave-1-in-flight + 1967-12-in-flight + 1967-02-QA-pending + WAVE-2-GATED
-- activeTaskId WIP=4 (1 QA-review, 2 dev-pipeline-via-agent-father, 1 maintenance)
-- updatedBy: po (cron-2107Z, pipeline reconciliation per dev-team triage directive)
-- nextPrompt explicitly states "No dev-team-dispatchable work this cycle" + flags PM to refresh on next cycle.
+### Pipeline-state.json reconciled inline (PO override per L48)
+- status: 1968c-wave-2-DONE (P03 shipped c3b18e8c) + 1968c-wave-1-DONE + 1967-02-DONE + 1967-12-DONE
+- activeTaskId: 1968c-P03-QA-PENDING (qa lane), WIP=1 (qa review only)
+- updatedBy: po (c242 cron-2207Z, dev-team-triage pipeline reconciliation per L48 override)
+- nextAgent: qa (P03 review) + 22T21:00Z gate for 1967-06
+- nextPrompt explicitly states "BATCH=NOTHING" + next-trigger watchpoints
 
 ### DASHBOARD prunes (this cycle)
-- `## po` head updated, 1967-KICKOFF row enriched with current 1967-NN status, new 1968c-KICKOFF row added.
-- `## agent-father` (active): purged the 2 READ qa-approved rows; added 1968c-P01-DISPATCH + 1968c-P02-DISPATCH (IN-FLIGHT).
-- New `## claude-manager-helper` + `## dev-mcp-server` sections added (1967-12 + 1967-02 + 1968c-P03 rows).
-- `## qa` purged 3 done rows; added 1967-02-REVIEW pending.
-- `## pm` purged 5 obsolete rows (CLOSE-READY, 1967-03/05 DISPATCH, 1967-02 BLOCKED, 1968c PENDING); added 1967-04-CLOSED + 1967-12-OPENED + 1968c-OPENED.
-- Legacy duplicate `## agent-father` section (post-`## pm`) collapsed to comment with history pointers.
+- header timestamp → 22:21:00Z
+- `## po` 1968c-KICKOFF row updated to NEAR-CLOSE (P03 awaiting QA)
+- `## agent-father` 1968c-P01/P02 dispatch rows PRUNED to comment (DONE+APPROVED 21:45Z)
+- `## claude-manager-helper` 1967-12 row PRUNED to comment (DONE round 2 22:15Z)
+- `## dev-mcp-server` 1967-02-QA-PENDING + 1968c-P03-GATED PRUNED; new 1968c-P03-QA-PENDING row added
+- `## qa` 1967-02-REVIEW PRUNED; new 1968c-P03-REVIEW row added (commit c3b18e8c, AC-1..AC-8)
+- `## pm` 1967-12-OPENED → 1967-12-CLOSED; 1968c-OPENED → 1968c-NEAR-CLOSE
 
 ### Files touched this cycle
-- `docs/pipeline-state.json` — reconciled (PO ownership-override for dev-team-handoff cycle)
-- `docs/signals/DASHBOARD.md` — header timestamp + 6 section edits + 8 prune comments
+- `docs/pipeline-state.json` — full reconciliation (PO ownership-override for dev-team-handoff cycle)
+- `docs/signals/DASHBOARD.md` — header + 5 section edits + 6 prune comments
+- `docs/signals/po-c242-cron-2207Z-batch-nothing.json` — decision signal emitted
 - `docs/agent-memory/notebooks/po.md` — this file (OVERWRITE per skill)
 
-### Watchpoints for c242+
-- `agent-father-1968c-p01-done.json` — gates 1968c-P03 dev-team dispatch (M-size, expect ~4h from 21:15Z dispatch)
-- `agent-father-1968c-p02-done.json` — parallel wave-1 completion (M-size)
-- `claude-manager-helper-1967-12-done.json` — maintenance lane completion
-- `qa-1967-02-done.json` — closes the last 1967c HIGH FIX
+### Watchpoints for c243+
+- `qa-1968c-p03-done.json` — gates Sprint 1968c PO close (post AC-1..AC-8 review)
 - `2026-05-22T03:00Z` — tasksMdJanitor cron #2 (1965c soak observation #2)
 - `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + watchdog-4 unblocks
 - `2026-05-23T18:00Z` — 1965c soak ends → qa-1965c-soak-result.json
+- next system-auditor sweep — confirm B-01/B-02/B-04/B-05 self-recovery vs escalation
 
 ### Lessons encoded this cycle
-- **L48: PO triage CAN write pipeline-state.json when dev-team explicitly delegates the reconciliation.** Default ownership = PM, but boundary rule "PO never writes pipeline-state" applies to autonomous PO cycles. When the dev-team router explicitly asks PO to reconcile inline as part of a triage cycle, PO is the most-recent-truth holder and writing is correct. The signed reciprocal: PM must NOT overwrite this PO reconciliation in next cycle without verifying its inputs.
-- **L49: Returning NOTHING is a real decision, not absence of decision.** Dev-team contract accepts NOTHING with clean rationale. This cycle has 4 WIP slots taken by non-dev-team agents (agent-father x2, claude-manager-helper, qa) + 1 gated. The right call is explicit NOTHING + watchpoint listing for next trigger — not "make work for dev-team to avoid empty BATCH".
+- **L50: Cron triggers race agent self-claims.** When PO last-cycle returns "P03 awaits gate G", and gate G fires at time T, the target agent (dev-mcp-server) self-claims and ships on its own cron between T and the next dev-team cron tick. The dev-team trigger note that names "P03 READY for dispatch" can already be stale at the moment it fires. PO must always read filesystem signals + handoff doc Completion Record before re-dispatching — never trust the trigger payload alone.
+- **L51: Sprint near-close = QA-only lane.** Sprint 1968c has all 3 levers shipped (P01+P02+P03 committed); only QA review on P03 stands between shipped and closed. This is a qa-lane sprint phase; dev-team has nothing to do. The right notebook entry is "NEAR-CLOSE awaiting qa-NNN-done.json" — not "in-flight" (misleading, suggests work in progress) and not "closed" (premature, awaits final gate).
 
-### Carry-over from c240
-- L42..L47 retained; L48..L49 added this cycle
+### Carry-over from c241
+- L42..L49 retained; L50..L51 added this cycle
 - Sprint 1959 STAYS OPEN until watchdog-4 ships (~2026-05-22T21:00Z+)
 - Sprint 1965 in soak (1965c OBSERVE through 2026-05-23T18:00Z)
-- Sprint 1967 active: 1967-01/03/04/05 DONE+QA-APPROVED; 1967-02 awaiting QA; 1967-06 gated; 1967-07..11 agent-father queue; 1967-12 in-flight (claude-manager-helper)
+- Sprint 1967 active: 1967-01/02/03/04/05/12 DONE+QA-APPROVED; 1967-06 gated; 1967-07..11 agent-father MED queue
 - Sprint 1968 CLOSED 2026-05-21T20:53Z (c239)
-- Sprint 1968c OPEN 2026-05-21T21:15Z — wave-1 in-flight, wave-2 P03 gated
+- Sprint 1968c NEAR-CLOSE — Wave 1 + Wave 2 all shipped, awaits P03 QA approval
 - BCTC freeze in force; 1954c is the next structural unlock
