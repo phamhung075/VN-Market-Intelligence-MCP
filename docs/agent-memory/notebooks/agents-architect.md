@@ -90,6 +90,16 @@ User constraint invalidated the cowork-scheduler dispatcher design: Claude Deskt
 
 ---
 
+## 2026-05-21T17:19:22Z
+
+**Brief:** `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md`
+
+Three divergence seams identified between TASKS.md (plan layer), signals/DASHBOARD.md (chain-of-custody), and coordination.db task_locks (runtime atomic guard): status lag (lock state never back-propagates to TASKS.md), owner field disagreement (task_locks.owner_agent vs TASKS.md Owner column unenfored), and non-atomic edits (concurrent agents commit to same file on main with no serialization). Option B (edit-guard) ruled out — coupling coordination.db health to TASKS.md writability inverts failure priorities. Recommend Option A (janitor cron via system-auditor, zero code changes) now, Option C (task_status_echo table + echo cron, auto-fixes all 3 seams) deferred post-1959-watchdog-4 soak.
+
+**Signal dropped:** `docs/signals/agents-architect-tasks-md-hardening-done.json` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
