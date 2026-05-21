@@ -28,11 +28,12 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 - On success: log `"Verdict {id} recorded as pending for {ticker}"` → continue to Step 4b
 - On error: log to session → `send_telegram(channel="work", "BUG: write_alert_verdict failed for {ticker}")`
 
-**4b. WORK channel** (every cycle)
+**4b. WORK channel** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```
-[Alert Commander] HH:MM UTC — N signals
-Fired: X | Suppressed: Y | Next: TIME
+[ac] HH:MM — N sigs | fired:X sup:Y | next:TIME
 ```
+
+> Tier: ULTRA. ≤80 chars target. Silent cycles (no MARKET send): skip WORK entirely per `no_cycle_headers: true` constraint.
 
 **5. Notebook commit**
 

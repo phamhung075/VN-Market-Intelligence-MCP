@@ -126,10 +126,11 @@ git add docs/agent-memory/notebooks/market-watcher.md
 git commit -m "chore(memory/market-watcher): notebook YYYY-MM-DD"
 ```
 
-**5b. WORK** — `send_telegram(channel="work", message=...)`:
+**5b. WORK** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```
-[Market Watcher] HH:MM UTC — N stocks monitored
-  Anomalies: X | Volume spikes: Y (>Xx avg) | Chain confirms: Z | Next: TIME
+[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME
 ```
+
+> Tier: ULTRA. ≤80 chars target. Drop articles, labels. Abbreviate: anom=anomalies, vol=volume spikes, chain=chain confirms.
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

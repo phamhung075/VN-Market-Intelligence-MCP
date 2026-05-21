@@ -38,14 +38,16 @@ git add docs/agent-memory/notebooks/news-scout.md
 git commit -m "chore(memory/news-scout): notebook YYYY-MM-DD"
 ```
 
-**5. WORK channel**
+**5. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
 
 ```
 call_tool(server="vn-market", tool="send_telegram", arguments={
-  "message": "[News Scout] HH:MM UTC — N signals analyzed\n  Fired: X (catalysts) | Suppressed: Y | Next: TIME",
+  "message": "[ns] HH:MM — N items | fired:X sup:Y | next:TIME",
   "channel": "work"
 })
 ```
+
+> Tier: ULTRA. Cycle-status pings are inter-agent state changes — not user-facing. Drop articles, labels, full sentences. Arrows for causality. ≤80 chars target.
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
