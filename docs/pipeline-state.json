@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "active-parallel-sprints",
-  "currentSprint": "1967+1968",
-  "activeTaskId": "1967b+1968a",
-  "nextAgent": "pm",
-  "nextPrompt": "1967b architect brief done (2026-05-21T19:29Z). 22 findings: 6 HIGH / 13 MED / 3 LOW. Signal: docs/signals/architect-1967b-brief-done.json. Handoff: docs/handoffs/TASK_1967b-arch-audit.md. Proceed to 1967c slate decomposition. 1968a Phase 1 also done (agent-father 20:30Z) — await po-1968a-phase1-approved.json in parallel.",
-  "updatedAt": "2026-05-21T19:29:19Z",
-  "updatedBy": "agents-architect",
-  "lastCompleted": "Sprint 1967b architect audit DONE (canonical v2 brief). 22 findings across 7 surfaces. Signal emitted to PM for 1967c."
+  "currentSprint": "1967c+1968b1+1968b2",
+  "activeTaskId": "1967-01 (ready) + 1967-03 (ready) [WIP max 2]",
+  "nextAgent": "dev-team (dispatch 1967-01,03) + dev-mcp-server (1968b1) + agent-father (1968b2)",
+  "nextPrompt": "PM 1967c DONE (2026-05-21T21:45Z): 11 TASK_NNN handoffs from 22 findings. Top-2 HIGH ready: 1967-01 (alertSource XS) + 1967-03 (DASHBOARD stale-race XS). Rest (1967-04..11) queued, WIP max 2 per zone. Blocks: 1967-06 until OBSERVE-1955e gate (2026-05-22T21:00Z). Parallel: 1968b1 (dev-mcp-server hours_back param) + 1968b2 (agent-father L-6/L-7 stagger). Signal: docs/signals/pm-1967c-slate-ready.json. All 11 handoff docs in docs/handoffs/TASK_1967-*.md.",
+  "updatedAt": "2026-05-21T21:45:19Z",
+  "updatedBy": "pm",
+  "lastCompleted": "Sprint 1967c PM slate decomposition DONE. 22 findings → 11 tasks. Top-2 ready for dispatch. Cascaded from architect brief (1967b canonical, 22 findings, 11 required fields per REQ-1967-7e)."
 }

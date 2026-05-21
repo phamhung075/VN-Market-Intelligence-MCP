@@ -1,0 +1,28 @@
+{
+  "from": "pm",
+  "ts": "2026-05-21T21:45:19Z",
+  "signal_type": "task_slate_ready",
+  "sprint": "1967c",
+  "status": "NEW",
+  "summary": "1967c task slate DONE: 22 findings → 11 TASK_NNN handoffs. Top 2 HIGH ready (1967-01,02,03 OR 04,05,06 pick). Blocks: 1967-06 until 2026-05-22T21:00Z, 1967-11 conditional on 1954c. All 11 tasks documented in TASKS.md + handoff files.",
+  "payload": {
+    "findings_total": 22,
+    "severity_breakdown": {
+      "HIGH": 6,
+      "MED": 13,
+      "LOW": 3
+    },
+    "tasks_created": 11,
+    "tasks_bundling_strategy": "6 HIGH mapped to tasks 1967-01..06 (each ~single finding); 13 MED bundled into 5 tasks (1967-07..11); 3 LOW accepted-risk (ITEM-16/20) or optional (ITEM-18)",
+    "deferred": ["ITEM-12 (1968a L-1)", "ITEM-19 (1968a L-2)"],
+    "blocked": ["ITEM-13 (1967-11): conditional on 1954c gate"],
+    "top_2_ready": [
+      "1967-01: alertSource enum (dev-mcp-server, XS)",
+      "1967-03: DASHBOARD stale-race (agent-father, XS)"
+    ],
+    "pipeline": "1967-01..06 ready-to-dispatch (WIP max 2); 1967-07..11 backlog (queued after top-2 done); PO sanity-check overlay with 1968 phase-1 (no duplication)",
+    "signals_emitted": [
+      "docs/signals/pm-1967c-slate-ready.json (this file)"
+    ]
+  }
+}
