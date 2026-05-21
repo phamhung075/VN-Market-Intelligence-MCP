@@ -1,56 +1,58 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-21T23:50Z cycle c243 | **Status:** Sprint 1967c dispatch ACTIVE (1967-04 DONE, 1967-12 queued); Sprint 1968c ready for PO approval (3 parallel P-tasks); WIP=1/2 | **WIP:** 1967-02 in-flight with dev-mcp-server | **Next:** dev-mcp-server picks up 1967-02 (verified_decision enum, XS); claude-manager-helper picks up 1967-12 (notebook trim, S)
+**Last updated:** 2026-05-21T21:31Z cycle c244 | **Status:** Sprint 1967c 1967-02 DONE+QA-APPROVED; 1968c wave-1 in-flight (P01+P02 agent-father+dev-mcp-server pair); 1967-12 in-flight (claude-manager-helper); WIP=3 (2 dev-pipeline + 1 maintenance-parallel) | **Gate:** P03 blocked-until agent-father-1968c-p01-done.json | **Next:** 1968c P01/P02 progress; 1967-12 trimming; signal 1968c-p01-done gates P03 dispatch
 
 > Archive: `docs/archive/notebooks/pm-2026-05-21-earlier.md` (pre-1967c history)
 
-## Current cycle (2026-05-21T23:50Z cycle c243)
+## Current cycle (2026-05-21T21:31Z cycle c244 — PM governance closure: 1967-02 QA APPROVED)
 
 ### Signals drained this cycle
-- **qa-1967-04-done.json** — TASK_1967-04 (market-watcher identity recurrence) APPROVED (static ACs; AC-5/7 PENDING_LIVE)
-  - Side-finding: 7 notebooks exceed 150L baseline (dev-mainserver-crawls 262L, code-janitor 183L, dev-alert-engine 163L, news-scout 158L, dev-vps-crawls 157L, alert-commander 153L + market-watcher was 158L pre-1968a trim)
-  - Recommendation: Create TASK_1967-12 (preventive trim before D5 alert fires next cycle)
+- **qa-1967-02-done.json** — TASK_1967-02 (verified_decision enum signal type) APPROVED (all AC-1..AC-6 PASS)
+  - Commit: 257d92bf (dev-mcp-server, verified_decision added to SignalTypeSchema + tool docs)
+  - Tests: 4/4 unit GREEN (1967-02-verified-decision-enum.test.ts), 9358/285 full suite (285 pre-existing BCTC, zero regression), tsc 0 errors
+  - DDD: PASS (no new infrastructure imports)
+  - Security: PASS (no process.env, no secrets)
+  - BCTC NFR-3: PASS (no BCTC files touched)
 
 ### PM actions completed
-1. Marked TASK_1967-04 DONE in docs/TASKS.md (HIGH, agent-father, ee1dcadf + 4967bf63, static ACs PASS)
-   - AC-1 YAML identity stanza ✓
-   - AC-2 notebook 65L ≤ 150L cap ✓
-   - AC-3 Step -0 assert before MCP calls ✓
-   - AC-4 D5 dimension guard implemented ✓
-   - AC-5/7 deferred to live observation (not blocking)
-2. Created TASK_1967-12 (notebook trim sweep):
-   - Handoff: docs/handoffs/TASK_1967-12-notebook-trim.md
-   - Targets: 6 agents (dev-mainserver-crawls, code-janitor, dev-alert-engine, news-scout, dev-vps-crawls, alert-commander)
-   - Owner: claude-manager-helper (notebook hygiene)
-   - Size: S, Priority: MED (preventive; D5 will alert but not break)
-   - Precedent: market-watcher.md archive pattern (1968a Phase 1 L-2)
-3. Updated docs/TASKS.md Backlog: added TASK_1967-12 row
-4. Updated docs/pipeline-state.json: current status now "1967c-dispatch-active + 1968c-ready + 1967-12-queued"
-5. Emitted signals:
-   - `pm-1967-04-closed.json` — 1967-04 marked DONE; side-finding documented; 1967-12 context provided
-   - `pm-1967-12-ready.json` — TASK_1967-12 assignment to claude-manager-helper
+1. Read QA signal + report (TASK_REPORT_1967-02.md) + handoff (TASK_1967-02-verified-decision-schema.md)
+   - Verdict: APPROVED (ac-1..6-all-pass)
+2. Updated docs/TASKS.md row 1967-02:
+   - Status changed from "DONE 2026-05-21 (dev-mcp-server, Review)" → "DONE 2026-05-21T21:30Z (dev-mcp-server, QA APPROVED)"
+   - Added note: "Unblocks dev-mcp-server pair-claim 1968c-P01 + wave-2 dispatch 1968c-P03 gating"
+3. Updated docs/pipeline-state.json:
+   - status: removed "1967-02-QA-pending" → added "1967-02-DONE (QA APPROVED 2026-05-21T21:30Z, ac-1..6-all-pass)"
+   - activeTaskId: removed "1967-02 (dev-mcp-server, QA review pending)" → WIP reduced 4→3
+   - lastCompleted: prepended "TASK_1967-02 DONE+QA-APPROVED (qa-1967-02-done.json)"
+   - updatedAt: 2026-05-21T21:31:15Z
+   - updatedBy: pm (task-1967-02-qa-closure)
+4. Updated PM notebook (this file):
+   - Status: 1967-02 DONE+QA-APPROVED, WIP=3 (not 4)
+   - Carry-over: 1968c wave-2 now unblocked from dev-mcp-server side (dev-mcp-server task-lock cleared for 1968c-P03)
 
 ### Current dispatch state
-- **WIP count:** 1/2 (1967-02 in-flight with dev-mcp-server on po-1967-02-decision.json spec)
-- **Just completed:** 1967-04 (agent-father, DONE)
-- **Newly queued:** 1967-12 (claude-manager-helper, notebook trim, S)
-- **Blocked gates:** 1967-06 blocked-until 2026-05-22T21:00Z (OBSERVE-1955e soak unlock); 1967-07..11 MED queued after HIGH slate clears
-- **New sprint ready:** 1968c Phase 3 (3 parallel M-size tasks, no blockers) — awaiting PO approval
+- **WIP count:** 3/2 (hard-limit exceeded; see context)
+  - 1968c-P01: agent-father + dev-mcp-server pair, in-flight (4h, due ~2026-05-22T01:00Z)
+  - 1968c-P02: agent-father solo, in-flight (3h, due ~2026-05-22T00:30Z)
+  - 1967-12: claude-manager-helper, in-flight maintenance lane (2h, parallel-safe, due ~2026-05-21T23:30Z)
+  - **NOTE:** WIP=3 = agent-father (2 tasks) + dev-mcp-server (1 task in P01 pair) + claude-manager-helper (1 task). Spans 3 agents but only 2 dev-zone agents (agent-father, dev-mcp-server); claude-manager-helper is maintenance-parallel. PO 2026-05-21T21:15Z approved all 3 as "in-flight + maintenance-parallel = acceptable WIP override."
+- **P03 gate:** blocked-until agent-father-1968c-p01-done.json (dev-mcp-server cannot start until P01 unblocks its task-lock)
+- **Just completed:** 1967-02 (dev-mcp-server, APPROVED)
+- **Blocked gates:** 1967-06 blocked-until 2026-05-22T21:00Z (OBSERVE-1955e soak unlock); 1967-07..11 MED queued after 1967-06 unblocks
 
 ## Next actions
 
-1. **dev-mcp-server** picks up 1967-02 (verified_decision enum, XS) with po-1967-02-decision.json spec
-   - Handoff: docs/handoffs/TASK_1967-02-verified-decision-schema.md
-   - AC-1..AC-6 already in PO decision payload; no rework needed
-2. **claude-manager-helper** picks up 1967-12 (notebook trim sweep, S)
-   - Handoff: docs/handoffs/TASK_1967-12-notebook-trim.md
-   - 6 targets; archive + carry-over preservation pattern; commit links to 1967-04 side_finding
-3. **PO approves 1968c kickoff** → spawns all 3 P01/P02/P03 in parallel (independent zones: .claude/, apps/mcp-server/)
-   - TASK_1968c-P01: L-6 tick-snapshot file writer (4h, agent-father+dev-mcp-server)
-   - TASK_1968c-P02: L-8 composite step-0-cowork skill (3h, agent-father)
-   - TASK_1968c-P03: L-9 server-side signal_type filter (3h, dev-mcp-server)
-4. Await 2026-05-22T21:00Z gate: 1967-06 unlocks (vnstockFundamentalsRefresh weekly cron fix; OBSERVE-1955e soak release)
-5. After 1967-04 + 1967-12 QA APPROVED: release 1967-07..11 MED tier
+1. **Monitor 1968c-P01+P02 progress** (agent-father + dev-mcp-server pair):
+   - P01: tick-snapshot file writer (4h est, due ~2026-05-22T01:00Z) — unblocks P03 dispatch
+   - P02: composite step-0-cowork skill (3h est, due ~2026-05-22T00:30Z) — parallel-safe, no blocker
+   - On agent-father-1968c-p01-done.json arrival → PM gates wave-2 → dev-team dispatches dev-mcp-server for P03
+2. **Monitor 1967-12 progress** (claude-manager-helper):
+   - Notebook trim sweep (2h est, due ~2026-05-21T23:30Z) — maintenance lane, zero zone collision
+   - 6 targets trimmed to ≤150L; archive pointers + carry-over preserved
+3. **Await 2026-05-22T21:00Z gate:** 1967-06 unblocks (OBSERVE-1955e soak release — vnstockFundamentalsRefresh + vnstockTradingStatsRefresh diagnostic)
+   - On gate unlock: release 1967-06 + 1967-07..11 MED tier to agent-father for HIGH/MED sprint completion
+4. **After 1967-12 QA APPROVED:** release 1967-07..11 MED tier (flow notebook fixes, dispatcher-wrap try/finally, signal protocol fixes, misc MED/LOW)
+5. **Sprint 1967 status for PO:** count Done rows and summary remaining gates (1967-06 @ 2026-05-22T21:00Z, 1967-07..11 @ TBD after 1967-12 QA)
 
 ## Carry-over
 
