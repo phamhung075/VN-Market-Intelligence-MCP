@@ -1,0 +1,14 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task_complete",
+  "payload": {
+    "task": "1967-03",
+    "title": "DASHBOARD stale-race guard",
+    "fix_surface": ".claude/flows/pm/main.md",
+    "ac_status": "all PASS (design rationale — flow doc edit)",
+    "handoff": "docs/handoffs/TASK_1967-03-dashboard-stale-race.md"
+  },
+  "priority": "normal",
+  "createdAt": "2026-05-21T20:54:40Z"
+}

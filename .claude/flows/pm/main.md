@@ -99,6 +99,26 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:
 // silent on ok=false — developer will (re)claim on entry
 ```
 
+## DASHBOARD Write Guard — CAS on pipeline-state.json (TASK_1967-03 fix)
+
+Before writing ANY signal row to `docs/signals/DASHBOARD.md` (including `plan_blocked`, `task_slate_ready`, or any pm-originated row), perform a fresh read of `docs/pipeline-state.json`:
+
+```
+1. Read docs/pipeline-state.json (do NOT use any cached snapshot from earlier in this cycle)
+2. Extract `status` field
+3. If status contains "idle" OR "closed" (case-insensitive substring match):
+     → SKIP signal write
+     → Log: "[pm] Sprint idle/closed — DASHBOARD signal suppressed (stale-race guard)"
+     → Continue to next step without emitting signal
+4. If status does not match idle/closed → proceed with signal write normally
+```
+
+**Scope:** This guard applies to every DASHBOARD write in this flow — it is NOT limited to `plan_blocked`. Any pm signal written to a closed sprint is stale.
+
+**Do NOT read pipeline-state.json at flow start and cache it.** Read it atomically, immediately before the write.
+
+---
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **PM commits convention:**

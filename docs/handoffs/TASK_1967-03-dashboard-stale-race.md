@@ -78,3 +78,29 @@ When PM reads TASKS.md to author a signal and by write time the sprint is alread
 
 - REQ-1967-4b (stale-race — pm `plan_blocked` after PO sprint close)
 - ITEM-03 (same finding)
+
+---
+
+## [Developer] — agent-father 2026-05-21
+
+**Status:** DONE
+
+**Fix applied:** `.claude/flows/pm/main.md`
+
+Added "DASHBOARD Write Guard — CAS on pipeline-state.json" section immediately before the `End of cycle` skill call. The guard:
+
+1. Reads `docs/pipeline-state.json` fresh (no cached snapshot) immediately before any DASHBOARD signal write.
+2. Extracts `status` field; if it contains "idle" or "closed" (substring match), the signal is suppressed.
+3. Logs suppression: `[pm] Sprint idle/closed — DASHBOARD signal suppressed (stale-race guard)`.
+4. Applies to ALL pm DASHBOARD writes (not only `plan_blocked`) — any pm signal to a closed sprint is stale.
+5. Proceeds normally when status is active.
+
+**AC walkthrough:**
+- AC-1: PASS — guard reads pipeline-state.json immediately before write (no earlier cached read).
+- AC-2: PASS — idle/closed → return early without signal.
+- AC-3: PASS — active → proceeds with signal write normally.
+- AC-4: PASS (design rationale) — active sprint: status = "1968-ready-to-close + 1967c-dispatch-ready" (not idle/closed), signal emits.
+- AC-5: PASS (design rationale) — closed sprint: status = "idle", signal suppressed, orphan prevented.
+- AC-6: N/A — pure flow doc edit, no TypeScript.
+
+**Files changed:** `.claude/flows/pm/main.md` (1 section added, ~20 lines)

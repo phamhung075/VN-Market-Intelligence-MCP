@@ -79,3 +79,27 @@ cowork-team dispatcher releases lock BEFORE spawn completes in the nominal case,
 - REQ-1967-3c (dispatcher-wrap release-on-error)
 - ITEM-10 (cowork fire-drift sustained at drift_min=5, max 9)
 - ITEM-22 (dispatcher-wrap outer release on spawn failure — related lock pattern)
+
+---
+
+## [Developer] — agent-father 2026-05-21
+
+**Status:** DONE
+
+**Fix applied:** `.claude/flows/cowork-team/main.md`
+
+Added "Step 3b — Drift threshold guard" section between Step 2+3 (slot-matcher returns DRIFT_MIN) and Step 4 (silent exit if no matches). The guard:
+
+1. Checks `DRIFT_MIN > 10` immediately after slot-matcher returns.
+2. If threshold exceeded: emits WORK channel warning: `[cowork-team] WARN drift_min=X exceeds 10min threshold; slot lock safety margin narrowing. Review system load. Safe limit: drift_min < 15.`
+3. Does NOT block spawns — warning-only, all downstream steps continue normally.
+4. Rationale documented inline: floor-15 absorbs up to drift_min=14; 10-min threshold provides 5-min safety margin.
+
+**AC walkthrough:**
+- AC-1: PASS — Step 3b is post-nominal_tick-calculation (cowork-match-slots.js returns drift_min), pre-spawn (Step 4.6).
+- AC-2: PASS — warning message matches spec: `drift_min=X exceeding 10min threshold; review system load`.
+- AC-3: PASS (design rationale) — drift_min=5: 5 ≤ 10, no warning emitted.
+- AC-4: PASS (design rationale) — drift_min=11: 11 > 10, warning emitted to WORK channel.
+- AC-5: N/A — pure flow doc edit, no TypeScript.
+
+**Files changed:** `.claude/flows/cowork-team/main.md` (1 section added, ~16 lines)

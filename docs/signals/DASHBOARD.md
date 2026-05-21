@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-21T20:13:00Z (tran-ngoc-bau c76 — cycle 76 audit-handoff appended to ## po. Evening 19:37Z dish 7/9 GOOD (best yet). digest-predict 12-day silence CRITICAL. legal_risk enum fix queued Sprint 1967. 0 auto-cures. Direction: IMPROVING.)_
+_Updated: 2026-05-21T20:54:40Z (agent-father — 1967-03 + 1967-05 DONE. pm CAS guard + cowork drift guard applied. ## agent-father section added.)_
 
 ---
 
@@ -19,6 +19,12 @@ _Updated: 2026-05-21T20:13:00Z (tran-ngoc-bau c76 — cycle 76 audit-handoff app
 <!-- 1962-B-01 (2026-05-20T22:30Z pm plan_blocked, status=CLOSED stale race) pruned 2026-05-21 po c233 — Sprint 1962 closed 2026-05-20T20:48Z (commit 2e08e586). -->
 <!-- 1953-G-FAIL kept active (recurring-bug-freeze sentinel — DO-NOT-DISPATCH guard for 1953e/h until 1954c lands). -->
 <!-- 1954-A-RECOVERY kept active (RESOLVED but valuable history pointer — Sprint 1958 closure breadcrumb). -->
+
+## agent-father
+| id | ts | from | type | summary | status | payload |
+|---|---|---|---|---|---|---|
+| af-1967-03-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-03 DONE: pm CAS guard on pipeline-state before DASHBOARD write | NEW | docs/signals/agent-father-1967-03-done.json |
+| af-1967-05-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-05 DONE: cowork drift_min>10 WORK warn added Step 3b | NEW | docs/signals/agent-father-1967-05-done.json |
 
 ## tran-ngoc-bau
 | id | ts | from | type | summary | status | payload |

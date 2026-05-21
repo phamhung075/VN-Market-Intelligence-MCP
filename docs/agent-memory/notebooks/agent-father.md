@@ -1,73 +1,50 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T20:03:48Z | **Sprint:** 1968b1 phase2 — L-4 get_agent_signals consolidation
+**Last updated:** 2026-05-21T20:54:40Z | **Sprint:** 1967c — TASK_1967-03 + TASK_1967-05
 
-## This Session — 2026-05-21T20:03Z (Task 1968b1 phase2)
+## This Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05, single cycle)
 
-**Task:** L-4 news-scout get_agent_signals consolidation (3 calls → 1 per cycle).
+**TASK_1967-03 — DASHBOARD stale-race guard (ITEM-03):**
+Fix surface: `.claude/flows/pm/main.md`
+Added "DASHBOARD Write Guard — CAS on pipeline-state.json" section before End-of-cycle skill.
+Logic: Read pipeline-state.json fresh immediately before any DASHBOARD write. If `status` contains "idle" or "closed" → suppress signal + log. Applied to ALL pm DASHBOARD writes, not just plan_blocked.
+AC: all PASS (design rationale). Handoff updated with [Developer] section.
+Signal: `docs/signals/agent-father-1967-03-done.json` → qa.
 
-**stage-bootstrap.md Step 0c:** Replaced single `status=unread` feedback call with one consolidated call:
-`get_agent_signals(from_agent="news-scout", status="all", hours_back=6)` → `SELF_SIGNALS_CACHE`.
-Client-side filter for signal_feedback applied inline. Cache = per-cycle only, never persisted.
+**TASK_1967-05 — cowork dispatcher drift guard (ITEM-07):**
+Fix surface: `.claude/flows/cowork-team/main.md`
+Added "Step 3b — Drift threshold guard" between Step 2+3 (DRIFT_MIN returned) and Step 4 (silent exit).
+Logic: if DRIFT_MIN > 10 → send_telegram WORK warn with drift value and safe limit. Warning-only, no spawn blocked.
+Rationale: floor-15 rounding absorbs up to drift_min=14; threshold=10 provides 5-min safety margin before structural risk.
+AC: all PASS (design rationale). Handoff updated with [Developer] section.
+Signal: `docs/signals/agent-father-1967-05-done.json` → qa.
 
-**stage-signals.md:** Removed 2 MCP calls. Both inter-cycle dedup (180-min) and legal_risk dedup (360-min) now read from `SELF_SIGNALS_CACHE`. hours_back=6 covers the full 360-min legal_risk window.
-
-**AC verified:** AC-2 (3→1 call), AC-3 (0 MCP in dedup), L-4 invariant (360-min window covered).
-
-**Signal emitted:** `docs/signals/agent-father-1968b1-done.json` → qa.
+**Notebook race awareness:** Both tasks completed in single cycle. PO is running concurrently (1968 close + 1967-02 decision). Did NOT touch pipeline-state.json or ## po DASHBOARD section. Added ## agent-father DASHBOARD section per constraints.
 
 ## Previous Session — 2026-05-21T21:00Z (Task 1968b2)
 
-**Task:** 1968b2 — L-6 cron stagger (agent-father-pure) + cycle-bootstrap Step -1 + L-7 notebook commit batching + ITEM-05 collision merge.
+L-6 cron stagger + cycle-bootstrap Step -1 + L-7 batch commit + ITEM-05 collision merge. Signals: agent-father-1968b2-done.json.
 
-**L-6 (cron stagger):** 3 cowork agent .md schedule.cron fields updated.
-- news-scout: `*/15` → `0,15,30,45 2-8 * * 1-5` (fires :00/:15/:30/:45)
-- market-watcher: `*/15` → `5,20,35,50 2-8 * * 1-5` (fires :05/:20/:35/:50)
-- alert-commander: `*/15` → `10,25,40,55 2-8 * * 1-5` (fires :10/:25/:40/:55)
-- No two agents overlap on the same minute. 5-min interleave across the 15-min cycle.
+## Previous Session — 2026-05-21T20:03Z (Task 1968b1 phase2)
 
-**cycle-bootstrap Step -1:** Added tick snapshot awareness.
-- Step -1 checks `docs/data/cycle-snapshot-HH:MM.json` freshness (<7min).
-- Hit → read snapshot, skip get_cycle_bootstrap + get_macro_snapshot.
-- Miss/stale/absent → fall through to Step 0 (canonical path, always safe).
-- Note: snapshot writer (cowork-team) is future task — Step -1 is a no-op until then.
-
-**ITEM-05 + L-7 (single touch, market-watcher/cycle.md Step 5):**
-- ITEM-05 fix: Step 5 header renamed from "Notebook commit" → "Notebook write". OVERWRITE instruction made explicit with `<!-- Fixes ITEM-05 -->` comment.
-- L-7 fix: removed `git add + git commit` bash block from Step 5. Added deferred-commit note + head-lock-self-cure pointer.
-
-**L-7 (news-scout/stage-log-notify.md):** Removed per-cycle `git commit`. Notebook append retained. Deferred-commit note + recovery pointer added.
-
-**L-7 (market-watcher/eod.md Step D):** New step added.
-- Batch commit: `git add notebooks/market-watcher.md notebooks/news-scout.md && git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N"`
-- Uses F4 git_commit_retry idiom (head-lock-self-cure § F4).
-- Error path: BUG channel + recovery pointer.
-
-**Signals:** `docs/signals/agent-father-1968b2-done.json` emitted (caveman ULTRA) → qa + po.
+L-4 news-scout get_agent_signals consolidation 3→1 per cycle. Signal: agent-father-1968b1-done.json.
 
 ## Previous Session — 2026-05-21T20:30Z (Task 1968a — token/tool-call economy Phase 1)
 
-**Task:** 1968a Phase 1 — L-1..L-5 zero-code token economy wins.
-- L-1: 4 agents fixed (startup→conditional/always_load). ~344L/cycle saved. Commit: `3bdd62c4`
-- L-2: 7 notebooks trimmed ≤120L + archived. ~1800L saved. Commit: `ee1dcadf`
-- L-3: signal-dashboard payload pointer rule added. Commit: `4967bf63`
-- L-4: DEFERRED to 1968b (get_agent_signals consolidation).
-- L-5: 3 WORK cycle-status sites → ULTRA tier. Commit: `cb080cc9`
-
-## Previous Session — 2026-05-21T17:27Z (Task 1965a)
-
-Design: handlers.md + audit-dimensions.md for system-auditor. Signal: agent-father-1965a-design-done.json.
+L-1..L-5: startup→conditional lazy-load, 7 notebooks trimmed, signal-dashboard payload pointer rule, L-5 ULTRA tier.
 
 ## Patterns Noticed
 
-- Concurrent agents leave pre-staged files — always check `git status` before staging.
+- Concurrent agents leave pre-staged files — always check git status before staging.
 - DASHBOARD.md modified between reads by concurrent agents — always re-read before editing.
-- Always audit all 35 agents after fixing any specific trigger.
-- ITEM-05 + L-7 surface collision: always read 1967b brief + 1968b2 handoff Coordination section before any cycle.md edit.
+- Always audit all 40 agents after fixing any specific trigger.
+- ITEM-05 + L-7 surface collision: read 1967b brief + 1968b2 handoff Coordination before any cycle.md edit.
+- Notebook race: when PO is in parallel, never touch pipeline-state.json or ## po DASHBOARD.
 
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
 - 1968b1: L-4 (get_agent_signals consolidation in news-scout flows) — gated on dev-mcp-server 1967-01
-- Await qa ratification of 1968b2 before PO closes sprint.
+- 1967-03 + 1967-05: await qa ratification
+- Await qa ratification of 1968b2 before PO closes sprint 1968.

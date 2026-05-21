@@ -61,6 +61,23 @@ Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork
 
 ---
 
+## Step 3b — Drift threshold guard (TASK_1967-05 fix)
+
+After receiving `DRIFT_MIN` from the slot-matcher script:
+
+```
+if DRIFT_MIN > 10:
+  send_telegram(channel=work,
+    "[cowork-team] WARN drift_min=${DRIFT_MIN} exceeds 10min threshold; slot lock safety margin narrowing. Review system load. Safe limit: drift_min < 15.")
+  # Do NOT block — proceed to Step 4. Warning only.
+```
+
+**Rationale:** Floor-15min nominal_tick rounding absorbs drift safely up to drift_min=14. At drift_min ≥ 15, two ticks could map to the same nominal_tick key, causing a duplicate slot-lock claim collision. The 10-min warning provides a 5-minute safety margin to detect load drift before it becomes a structural risk.
+
+**Current safe envelope:** drift_min max observed = 9 (2026-05-21). No spawn is blocked by this check. Threshold = 10. Danger threshold = 15.
+
+---
+
 ## Step 4 — Silent exit if no matches
 
 If MATCHES is `[]` or empty (i.e. `jq 'length == 0'` on the slots array):
