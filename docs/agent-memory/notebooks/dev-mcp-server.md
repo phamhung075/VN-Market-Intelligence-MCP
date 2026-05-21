@@ -4,6 +4,14 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1965b — TASKS.md Janitor cron 03:00Z (2026-05-21, DONE)
+
+**Change:** `tasksMdJanitorJob.ts` (new, ~340L) — daily 03:00 UTC D4 audit dimension. Steps R-1..R-7 per handlers.md. Calls `listHeldTasks(kind="sprint-task")` via coordinationStore (no new DB schema, Option A). Parses TASKS.md (header-position-agnostic), cross-checks Owner+Status vs held lock. Reads pipeline-state.json (AC-4). Runs `git log --format="%H %ai" -- docs/TASKS.md`, detects commits within 30s window (AC-5). Emits DASHBOARD ## po row per signal-dashboard SKILL on divergence. BUG telegram 7d dedup per divergence key. Clean day → console log only (AC-3). All deps injectable for testability. `cronConfig.ts` + `startScheduler.ts` wired. Smoke: 12/12 PASS covering AC-1..AC-5. Commit: fc398b8a.
+
+Zone health: 9662 tests / 897 files GREEN. Bun runtime C++ crash post-test is a known Bun v1.3.13 bug (exit code 0). No new failing tests. | HEALTHY
+
+---
+
 ### Task 1959-watchdog-5 — Disk-usage alert cron (2026-05-20, DONE)
 
 **Change:** `diskUsageAlertJob.ts` (new, 225L) — `du -sh /app/data/lancedb`, parse to GB, BUG Telegram if > `DISK_THRESHOLD_GB` (default 20), 6h cooldown via injectable `DiskUsageAlertState`. `DISK_ALERT_THRESHOLD_GB` env override (IIFE, read at module load). `parseDuSizeToGb` handles K/M/G/T/P units.
