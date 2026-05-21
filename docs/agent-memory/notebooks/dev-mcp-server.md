@@ -5,6 +5,24 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967
 
 ## Working Memory
 
+### Task 1967-02 — verified_decision SignalTypeSchema enum (2026-05-21, DONE)
+
+**Change:**
+- `agentSignalStore.ts:50` — added `"verified_decision"` to `SignalTypeSchema` z.enum (SSOT, 11 values total). Enum is imported by agentSignalTools.ts; no direct edit needed there for the schema.
+- `agentSignalTools.ts:180` — updated `signal_type` describe string to list `verified_decision`.
+- `.claude/tools/list/post_agent_signal.md:19` — added `verified_decision` to enum column.
+- `docs/standards/mcp-tools.md:144` — new row: Alert Commander → All, chain de-dup ack.
+
+**Tests:** `1967-02-verified-decision-enum.test.ts` — 4/4 GREEN (AC-1 enum accepts, AC-2 round-trip, AC-3 regression, AC-4 reject unknown). tsc 0 errors. Full suite: 9358 pass / 285 fail (285 = pre-existing BCTC freeze).
+
+**Commit:** 257d92bf (swept into PM housekeeping commit; all 3 zone files + test included)
+
+**Signal:** `docs/signals/dev-mcp-server-1967-02-done.json` → qa
+
+Zone health: SignalTypeSchema now has 11 values (urgent_news, price_anomaly, cross_validate, suppress, chain_catalyst, fundamental_validation, price_confirmation, verified_chain, signal_feedback, legal_risk, verified_decision). alert-commander chain-ack unblocked | HEALTHY
+
+---
+
 ### Task 1968b1 — get_agent_signals hours_back param (2026-05-21, DONE)
 
 **Change:**

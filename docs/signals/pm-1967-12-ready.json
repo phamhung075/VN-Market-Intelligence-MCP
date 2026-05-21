@@ -1,0 +1,65 @@
+{
+  "from": "pm",
+  "to": "claude-manager-helper",
+  "type": "task-assignment",
+  "task_id": "1967-12",
+  "title": "Notebook trim sweep — 6 agents >150L cap",
+  "assigned_at": "2026-05-21T23:50:00Z",
+  "size": "S",
+  "priority": "MEDIUM",
+  "zone": ".claude/agents/notebooks/",
+  "rationale": "QA audit side-finding on TASK_1967-04 revealed 7 cowork notebooks exceed 150L cap (dev-mainserver-crawls 262L, code-janitor 183L, dev-alert-engine 163L, news-scout 158L, dev-vps-crawls 157L, alert-commander 153L). System-auditor D5 guard will alert if ≥160L at next Tier-2 cycle. Proactive trim prevents alert escalation and improves signal-window latency (smaller notebook context load per agent cycle). Precedent: market-watcher.md trimmed post-1968a Phase 1 (archive + carry-over preservation pattern proven).",
+  "targets": [
+    {
+      "notebook": "dev-mainserver-crawls.md",
+      "current_size_lines": 262,
+      "target_max_lines": 150
+    },
+    {
+      "notebook": "code-janitor.md",
+      "current_size_lines": 183,
+      "target_max_lines": 150
+    },
+    {
+      "notebook": "dev-alert-engine.md",
+      "current_size_lines": 163,
+      "target_max_lines": 150
+    },
+    {
+      "notebook": "news-scout.md",
+      "current_size_lines": 158,
+      "target_max_lines": 150
+    },
+    {
+      "notebook": "dev-vps-crawls.md",
+      "current_size_lines": 157,
+      "target_max_lines": 150
+    },
+    {
+      "notebook": "alert-commander.md",
+      "current_size_lines": 153,
+      "target_max_lines": 150
+    }
+  ],
+  "acceptance_criteria": [
+    "AC-1: All 6 notebooks ≤150L post-trim",
+    "AC-2: Each notebook has archive pointer at line 3",
+    "AC-3: ## Carry-over sections preserved (if present)",
+    "AC-4: Archive files created + moved to docs/archive/notebooks/",
+    "AC-5: Commit message references TASK_1967-04 side_finding",
+    "AC-6: No semantic content loss (verification by archive file review)"
+  ],
+  "handoff": "docs/handoffs/TASK_1967-12-notebook-trim.md",
+  "blocked_by": null,
+  "depends_on": [],
+  "owner": "claude-manager-helper",
+  "model": "claude-haiku-4-5-20251001",
+  "estimate_hours": 2,
+  "context_references": [
+    "TASK_1968a Phase 1 (L-2 notebook archival pattern)",
+    "TASK_1967-04 QA report (side_finding detail)",
+    "docs/agent-memory/notebooks/market-watcher.md (post-1968a trim example)"
+  ],
+  "pipeline": "queue",
+  "next": "claude-manager-helper reads handoff; trims notebooks; archives stale items; commits with convention"
+}

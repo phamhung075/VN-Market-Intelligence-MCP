@@ -92,3 +92,21 @@ Either:
 
 - REQ-1967-1a + REQ-1967-1e (signal_type enum exhaustive, signal feedback)
 - ITEM-01 (related alertSource enum gap)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:50` — added `"verified_decision"` to `SignalTypeSchema` z.enum (SSOT)
+  - `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts:180` — updated `signal_type` describe string to include `verified_decision`
+  - `.claude/tools/list/post_agent_signal.md:19` — added `verified_decision` to enum list in parameter table
+  - `docs/standards/mcp-tools.md:144` — added new row `verified_decision | Alert Commander | All | Chain de-dup ack after alert-commander fires or suppresses`
+- **Tests written:** `apps/mcp-server/src/__tests__/1967-02-verified-decision-enum.test.ts` — 4 assertions, GREEN (AC-1 enum accepts, AC-2 round-trip, AC-3 no regression on existing types, AC-4 unknown type rejected)
+- **Git commits:** 257d92bf (enum addition swept into PM housekeeping commit)
+- **Type check:** clean (0 errors)
+- **Service tests:** 9358 pass / 285 fail (285 = pre-existing BCTC freeze, zero regression)
+- **Docs updated:** `.claude/tools/list/post_agent_signal.md`, `docs/standards/mcp-tools.md`
+- **Graphify:** skipped (no architecture docs impacted)
