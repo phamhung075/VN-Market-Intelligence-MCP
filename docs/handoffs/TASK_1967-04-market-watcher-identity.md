@@ -137,6 +137,26 @@ The new D5 guard will alert on these at next Tier-2 cycle. Out of scope for this
 - [ ] Manual 10-cycle test: market-watcher produces ≥10 signals with zero identity failures (PENDING — live verification)
 - [ ] Zero regressions in signal output quality or timing (PENDING — live verification)
 
+**QA verification — 2026-05-21 (static cycle)**
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| AC-1 YAML fields | PASS | name/color/description/tools/model all present in `.claude/agents/market-watcher.md` |
+| AC-2 notebook ≤150L | PASS | 65L confirmed |
+| AC-3 Step -0 placement | PASS | `.claude/flows/market-watcher/main.md` lines 18-33 — fires before Steps 1-5, before any MCP call |
+| AC-4 D5 dimension | PASS | audit-dimensions.md D5 + handlers.md Step D5 (D5-1/D5-2/D5-3), dedup once/day |
+| AC-5 10-cycle live | PENDING | Deferred to live observation gate — not a blocker for static APPROVED |
+| AC-6 carry-over | PASS | Clean notebook — no items to preserve |
+| AC-7 zero signal degradation | PENDING | Step -0 is pre-flight only; signal path Steps 1-4 unchanged — not a blocker |
+| Smart-Skip | APPLIED | Zero .ts files — bun test + tsc skipped |
+| DDD scan | PASS | Pure .md changes — no domain/infra imports |
+| Security | PASS | No secrets, no process.env, no SQL |
+
+**D5 scope correction (QA finding):** agent-father reported 4 notebooks >150L at implementation time. Live count is 7 (news-scout.md 158L, dev-vps-crawls.md 157L, alert-commander.md 153L now also over threshold). D5 guard logic correct (`$lines -gt 150`). Non-blocking — D5 will alert at next Tier-2 cycle. PM: recommend notebook trim task for all 7.
+
+**Verdict: APPROVED (static ACs 1/2/3/4/6 PASS). AC-5 + AC-7 deferred to live observation gate.**
+Report: `reports/TASK_REPORT_1967-04.md`
+
 ---
 
 ## [PM] Handoff Summary
