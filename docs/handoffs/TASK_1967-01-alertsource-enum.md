@@ -90,3 +90,36 @@ The `alertSource` Zod enum in the MCP tool `write_alert_verdict` is missing two 
 - **DB migration:** NOT REQUIRED — alertVerdictStore uses JSON file store, no SQLite CHECK constraint on alertSource; AlertVerdict type has `alertSource: ... | string` open union (no change needed)
 - **Docs updated:** `.claude/tools/list/write_alert_verdict.md` — enum list corrected
 - **Graphify:** skipped (no microservice architecture docs impacted)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-21
+- **Commit reviewed:** dd071dcd
+- **Round:** 1
+- **Verdict:** APPROVED
+
+### Pipeline Results
+
+| Check | Result |
+|-------|--------|
+| AC-1: Zod schema accepts `legal_risk` | PASS |
+| AC-2: Zod schema accepts `crisis_velocity` | PASS |
+| AC-3: writeAlertVerdict() succeeds with legal_risk | PASS |
+| AC-4: writeAlertVerdict() succeeds with crisis_velocity | PASS |
+| AC-5: unknown alertSource rejected by Zod | PASS |
+| Targeted test (1967-01): 5/5 pass | PASS |
+| Regression (1863b + 1863d + 1945a + c220 + 1967-01): 40/40 pass | PASS |
+| tsc --noEmit | 0 errors |
+| DDD scan (interface→infra only, no domain import) | PASS |
+| Security scan (no process.env, no secrets) | PASS |
+| BCTC freeze (NFR-3): only alertVerdictTools.ts + test + tool doc touched | PASS |
+| Tool doc write_alert_verdict.md updated with both enum values | PASS |
+
+### Notes
+
+- Full suite: 9,356 pass / 285 fail — pre-existing failures (Task 178, Task 241, Task 206, Task 236 etc.) unrelated to this change; baseline unchanged by dd071dcd.
+- `legal_risk` was already present (added Sprint c220 commit 09f80233); only `crisis_velocity` was missing — dev note confirmed correct.
+- Verdicts stored as JSON file; `AlertVerdict.alertSource` uses open union — no migration risk.
+- Commit touches 3 files only: alertVerdictTools.ts, test file, tool doc — minimal blast radius.

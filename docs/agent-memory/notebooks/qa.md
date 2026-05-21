@@ -1,8 +1,38 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1965c | **Session:** c225 — tasksMdJanitorJob ratification + soak kickoff — RATIFY_PASS
+**Last updated:** 2026-05-21 | **Task:** 1967-01 | **Session:** c238 — alertSource enum gap APPROVED
 
 > Archive: `docs/archive/notebooks/qa-2026-05-21.md` (full session history prior to 2026-05-21 trim)
+
+## Session 2026-05-21 c238 — Task 1967-01 APPROVED
+
+### TASK REPORT — 1967-01 (compact)
+
+```
+date: 2026-05-21
+outcome: APPROVED
+commit reviewed: dd071dcd
+files: alertVerdictTools.ts:30-38 (+crisis_velocity to Zod enum), 1967-01-alertsource-enum-gap.test.ts (NEW 5 tests), write_alert_verdict.md:19 (tool doc)
+type: FIX — alertSource enum gap (ITEM-01 from 1967b brief)
+round: 1
+zone: apps/mcp-server/
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1..AC-5 targeted (5/5) | PASS |
+| Regression 1863b+1863d+1945a+c220+1967-01 (40/40) | PASS |
+| tsc --noEmit | 0 errors |
+| DDD (interface→infra, no domain import) | PASS |
+| Security (no process.env, no secrets) | PASS |
+| BCTC freeze NFR-3 | PASS |
+| Tool doc write_alert_verdict.md updated | PASS |
+
+Notes: legal_risk pre-existed (commit 09f80233 Sprint c220); only crisis_velocity was missing. Full suite 9356 pass / 285 fail — 285 pre-existing, baseline unchanged. Signal: docs/signals/qa-1967-01-done.json (to=pm).
+
+- **actions**: APPROVED. TASKS.md 1967-01 → Done. Signal emitted to pm. Task report: reports/TASK_REPORT_1967-01.md.
+- **next_cycle_hint**: pm marks 1967-01 Done, dispatches next HIGH task from 1967 slate (1967-02 or 1967-03).
+- **estimated_tokens**: 2800
 
 ## Session 2026-05-21 c225 — Task 1965c RATIFY_PASS + soak kickoff
 
