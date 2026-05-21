@@ -72,6 +72,9 @@ agent:
         fail_loud: true
       - path: docs/standards/alert-message-format.md
         fail_loud: true
+      - path: docs/standards/mcp-tools.md
+        fail_loud: true
+        # justification: alert-commander constructs MCP calls every cycle (write_alert_verdict, post_agent_signal, log_agent_work); mcp-tools.md is the SSOT for tool names + payload shapes — must be present before first MCP call
     lazy_load:
       - path: docs/standards/portfolio-schema.md
         trigger: position_check
@@ -79,9 +82,6 @@ agent:
       - path: docs/references/kinh-dich-layer.md
         trigger: hexagram_signal
         fail_loud: false
-      - path: docs/standards/mcp-tools.md
-        trigger: startup
-        fail_loud: true
 
 
   signals:

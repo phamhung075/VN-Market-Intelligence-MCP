@@ -66,8 +66,9 @@ agent:
         trigger: position_check
         fail_loud: false
       - path: docs/GLOSSARY_VI.md
-        trigger: startup
+        trigger: vn_financial_terms
         fail_loud: false
+        # justification: loaded only when Vietnamese financial terminology is needed for earnings report parsing — not needed every cycle
 
 
   signal_output_spec:

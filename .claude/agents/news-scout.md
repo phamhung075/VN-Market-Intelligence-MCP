@@ -66,11 +66,13 @@ agent:
         trigger: hexagram_signal
         fail_loud: false
       - path: docs/references/agent-roster.md
-        trigger: startup
+        trigger: system_routing_question
         fail_loud: false
+        # justification: agent-roster.md loaded only when news-scout must resolve which downstream agent to route a signal to — not needed every cycle
       - path: docs/GLOSSARY_VI.md
-        trigger: startup
+        trigger: vn_financial_terms
         fail_loud: false
+        # justification: loaded only when Vietnamese financial terminology is needed for sentiment or impact analysis — not needed every cycle
 
 
   signals:
