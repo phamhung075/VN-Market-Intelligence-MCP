@@ -161,3 +161,31 @@ Size: S | Zone: .claude/agents/ | Task: 1967-12
 - TASK_1967-04 QA report (side_finding: 7 notebooks >150L)
 - System-auditor D5 dimension (notebook-size guard: alerts if >160L)
 - Waterfall lazy-load memory/CLAUDE.md (waterfall audit 2026-05-12 documented 120L notebook soft-cap theory; this task hardens it)
+
+---
+
+## [Implementer] Fix Record
+
+**Executed:** 2026-05-21T21:20Z by claude-manager-helper
+
+**Line counts before → after (AC-1 verified):**
+| Notebook | Before | After | Archive path | Status |
+|----------|--------|-------|--------------|--------|
+| dev-mainserver-crawls | 262L | 121L | docs/archive/notebooks/dev-mainserver-crawls-2026-05-21.md | PASS |
+| code-janitor | 183L | 135L | docs/archive/notebooks/code-janitor-2026-05-21.md | PASS |
+| dev-alert-engine | 163L | 143L | docs/archive/notebooks/dev-alert-engine-2026-05-21.md | PASS |
+| news-scout | 158L | 43L | docs/archive/notebooks/news-scout-2026-05-21.md | PASS |
+| dev-vps-crawls | 157L | 111L | docs/archive/notebooks/dev-vps-crawls-2026-05-21.md | PASS |
+| alert-commander | 153L | 91L | docs/archive/notebooks/alert-commander-2026-05-21.md | PASS |
+
+**AC Summary:**
+- AC-1: All 6 notebooks ≤150L (PASS: max 143L, min 43L)
+- AC-2: Archive pointers added at line 5 of each live notebook (PASS: > Archive: / > Prior history archived →)
+- AC-3: Carry-over sections preserved (PASS: all notebooks retain final carry-over)
+- AC-4: Archive files created in docs/archive/notebooks/ (PASS: 6 files created 2026-05-21)
+- AC-5: Commit message links to TASK_1967-04 (PASS: commit 86c60000 references "Closes side_finding from TASK_1967-04")
+- AC-6: No semantic content loss (PASS: archive files contain all pruned cycles + lessons; live notebooks retain active session state)
+
+**Commit:** `86c60000` — chore(agents/notebooks): trim 6 notebooks >150L baseline
+
+**QA Gates:** Ready for qa — pipeline continues
