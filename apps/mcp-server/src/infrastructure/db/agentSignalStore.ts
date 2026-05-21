@@ -802,6 +802,13 @@ export interface GetSignalsOptions {
    * side-effect is suppressed when this is provided.
    */
   fromAgent?: string;
+  /**
+   * When set, restricts results to signals created within the last N minutes
+   * (based on created_at). Useful for wide lookback windows that exceed the
+   * default TTL (e.g. 360 min for legal_risk dedup in news-scout). When
+   * omitted, no created_at filter is applied (default behaviour preserved).
+   */
+  hoursBack?: number;
 }
 
 /**
@@ -861,6 +868,13 @@ export function getSignals(
     : "s.from_agent = ?";
   const bindParam = opts.fromAgent !== undefined ? opts.fromAgent : agent;
 
+  // Optional lookback window: restrict to signals created within the last N minutes.
+  // Uses minutes internally (hoursBack param is in hours; converted to minutes for SQLite).
+  const hoursBackClause =
+    opts.hoursBack !== undefined
+      ? `AND s.created_at >= datetime('now', '-${Math.ceil(opts.hoursBack * 60)} minutes')`
+      : "";
+
   const rows = db
     .query<RawRow, [string]>(
       `SELECT id, from_agent, to_agent, signal_type, stock_code, payload, status,
@@ -869,6 +883,7 @@ export function getSignals(
        WHERE ${recipientClause}
          AND s.expires_at > datetime('now')
          ${statusClause}
+         ${hoursBackClause}
        ORDER BY s.id ASC`,
     )
     .all(bindParam) as RawRow[];

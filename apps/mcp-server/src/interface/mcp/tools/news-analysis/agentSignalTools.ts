@@ -426,7 +426,9 @@ export function registerAgentSignalTools(server: McpServer): void {
     "get_agent_signals",
     "Retrieve pending signals addressed to the given agent (or broadcast 'all'). " +
       "Unread signals are marked as read on retrieval. " +
-      "Pass from_agent to query sender history instead (read-mark suppressed).",
+      "Pass from_agent to query sender history instead (read-mark suppressed). " +
+      "Pass hours_back to restrict results to signals created within the last N hours " +
+      "(e.g. hours_back=6 covers the 360-min legal_risk dedup window).",
     {
       agent: z
         .string()
@@ -442,6 +444,15 @@ export function registerAgentSignalTools(server: McpServer): void {
           "If provided, return only signals sent BY this agent (sender history). " +
             "Useful for inter-cycle dedup checks. Read-mark side-effect is suppressed.",
         ),
+      hours_back: z.coerce
+        .number()
+        .positive()
+        .optional()
+        .describe(
+          "Restrict results to signals created within the last N hours " +
+            "(e.g. 6 = last 360 minutes). When omitted, only non-expired signals " +
+            "are returned (default behaviour, backward compatible).",
+        ),
     },
     async (args) => {
       try {
@@ -451,6 +462,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         const signals = getSignals(db, args.agent, {
           status: args.status,
           ...(args.from_agent !== undefined ? { fromAgent: args.from_agent } : {}),
+          ...(args.hours_back !== undefined ? { hoursBack: args.hours_back } : {}),
         });
 
         return {
