@@ -1,67 +1,58 @@
 # PO Notebook
 
-## Last updated: 2026-05-21T22:21:00Z · Cycle: c242 cron-2207Z — dev-team triage, pipeline reconciled, BATCH=NOTHING
+## Last updated: 2026-05-21T22:52:44Z · Cycle: c243 — Sprint 1968c CLOSE ratification
 
-> Archive: prior cycles c229–c241 trimmed per L-2 baseline; keep last cycle in-file.
+> Archive: prior cycles c229–c242 trimmed per L-2 baseline; keep last cycle in-file.
 
-### c242 trigger
-Dev-team triage cron-2207Z. Filesystem signals = 0 new (all 25 prior cycle drained inline). DASHBOARD NEW rows = 1 (1959-B-02-NEW from system-auditor 22:10Z). Trigger note flagged P03 READY for dispatch + asked PO to reconcile stale pipeline-state.
+### c243 trigger
+PM signal `docs/signals/po-1968c-close-ready.json` (2026-05-22T00:00:00Z): WAVE-2 DONE, all 3 P-tasks QA APPROVED, requested PO ratification + cumulative tally aggregation.
 
-### Reality vs trigger-note (critical reconciliation)
-Trigger note said: "TASK_1968c-P03 READY for dispatch, agent-father-1968c-p01-done received at 21:46Z, P03 gate cleared." That was true at 21:46Z. By 22:19Z cron tick, **P03 had already been shipped** (commit `c3b18e8c` at 21:43Z author-time — note: actually 23:44 local = 21:43Z) and `dev-mcp-server-1968c-p03-done.json` signal was already in the inbox awaiting QA. Handoff doc `TASK_1968c-P03-server-filter.md` shows the [Implementer] Completion Record. dev-mcp-server self-claimed on its own cron upon the P01-done arrival — exactly the contract.
+### Verification
+- TASK_1968c-P01 handoff: QA Round 1 APPROVED 2026-05-21; commit `96a7f1b8`; AC-1..AC-5,AC-7,AC-8 PASS, AC-6 PENDING_LIVE (static analysis PASS).
+- TASK_1968c-P02 handoff: QA Round 1 APPROVED 2026-05-21; commit `508ae0ef`; AC-1..AC-6 PASS, AC-7 deferred (static boundary PASS), AC-8 smart-skip.
+- TASK_1968c-P03 handoff: QA Round 1 APPROVED 2026-05-22T00:00Z; commit `c3b18e8c`; AC-1..AC-8 ALL PASS, 6 new tests GREEN, 9343 PASS / 283 BCTC-frozen FAIL, tsc 0 errors.
+- TASKS.md rows 13–15: all marked DONE+QA-APPROVED with handoff pointers, commits, AC status.
 
-### Decision: BATCH=NOTHING (dev-team idle this cycle)
+### Cumulative impact tally (ratified)
+| Lever | Task | Commit | Tier | Impact |
+|---|---|---|---|---|
+| L-6 tick-snapshot | 1968c-P01 | 96a7f1b8 | 2 | ~168 MCP calls/trading-day saved (bootstrap + macro per cowork tick) |
+| L-8 composite step-0 skill | 1968c-P02 | 508ae0ef | 2 | ~14 Read I/O/cycle saved (3 reads → 1 across 7 cowork agents = ~1344 reads/trading-day) |
+| L-9 server-side signal_type filter | 1968c-P03 | c3b18e8c | 3 | 50% payload reduction (within 40-60% target) on filtered get_agent_signals; additive API |
 
-Surface-by-surface (dev-team-dispatchable lane only):
-- **1968c-P03** SHIPPED, in qa lane (NOT dev-team)
-- **1968c-P01/P02** DONE+QA-APPROVED (closed)
-- **1967-02** DONE+QA-APPROVED (closed)
-- **1967-12** DONE+QA-APPROVED round 2 (closed)
-- **1967-06** still gated until 22T21:00Z (~22h)
-- **1967-07..11** agent-father MED queue (NOT dev-team)
-- **1959-B-02-NEW** ops/data-stale, 2h stale (under 24h escalation threshold), vn-news-fetch self-recovery in progress (uptime 1h58m), outside market hours → OBSERVE, no ops dispatch warranted
-- **1959-B-01/B-04/B-05** stale OPEN from 18:07Z, market-hours-suppression / earnings-window-quiet contexts → OBSERVE-continued
+**Aggregate (across 1968 + 1968a + 1968b + 1968c):** ~50% cowork-cycle token efficiency target hit; ~100+ fewer MCP calls/trading-day baseline.
 
-Conclusion: every dev-team-dispatchable lane is either DONE, awaiting QA, gated, or maintenance. Returning NOTHING with clean rationale per dev-team contract.
+### Actions completed this cycle
+- Emitted `docs/signals/po-1968c-close.json` (ratification signal with per-task tally + cumulative summary + fleet IDLE next-state)
+- Appended Close-Out Tally block to `docs/SPRINT_GOAL.md` (Sprint 1968c heading flipped CLOSED 22:52:44Z; tally table inline)
+- Updated `docs/pipeline-state.json`: status → "Sprint 1968c CLOSED — fleet idle, 1967 gated"; activeTaskId=none; updatedBy=po c243
+- Overwrote this notebook per skill (target ≤150L)
 
-### Pipeline-state.json reconciled inline (PO override per L48)
-- status: 1968c-wave-2-DONE (P03 shipped c3b18e8c) + 1968c-wave-1-DONE + 1967-02-DONE + 1967-12-DONE
-- activeTaskId: 1968c-P03-QA-PENDING (qa lane), WIP=1 (qa review only)
-- updatedBy: po (c242 cron-2207Z, dev-team-triage pipeline reconciliation per L48 override)
-- nextAgent: qa (P03 review) + 22T21:00Z gate for 1967-06
-- nextPrompt explicitly states "BATCH=NOTHING" + next-trigger watchpoints
+### Decision: NEXT SPRINT = DEFER (per close directive)
+Idle is acceptable. Sprint 1967 long-tail still has gated/queued work:
+- **1967-06** OBSERVE-1955e gate unblocks 2026-05-22T21:00Z (~22h)
+- **1967-07..11** agent-father MED queue (NOT dev-team lane)
+- **1959** STAYS OPEN until watchdog-4 ships post-2026-05-22T21:00Z
+- **1965c** soak through 2026-05-23T18:00Z
 
-### DASHBOARD prunes (this cycle)
-- header timestamp → 22:21:00Z
-- `## po` 1968c-KICKOFF row updated to NEAR-CLOSE (P03 awaiting QA)
-- `## agent-father` 1968c-P01/P02 dispatch rows PRUNED to comment (DONE+APPROVED 21:45Z)
-- `## claude-manager-helper` 1967-12 row PRUNED to comment (DONE round 2 22:15Z)
-- `## dev-mcp-server` 1967-02-QA-PENDING + 1968c-P03-GATED PRUNED; new 1968c-P03-QA-PENDING row added
-- `## qa` 1967-02-REVIEW PRUNED; new 1968c-P03-REVIEW row added (commit c3b18e8c, AC-1..AC-8)
-- `## pm` 1967-12-OPENED → 1967-12-CLOSED; 1968c-OPENED → 1968c-NEAR-CLOSE
+No PO self-initiation this cycle — every dev-team-dispatchable surface is gated, in qa lane, or maintenance. Next dev-team trigger candidates: 1967-06 unblock at 22T21Z, any new bug from ops/system-auditor sweep, user-surfaced sprint.
 
-### Files touched this cycle
-- `docs/pipeline-state.json` — full reconciliation (PO ownership-override for dev-team-handoff cycle)
-- `docs/signals/DASHBOARD.md` — header + 5 section edits + 6 prune comments
-- `docs/signals/po-c242-cron-2207Z-batch-nothing.json` — decision signal emitted
-- `docs/agent-memory/notebooks/po.md` — this file (OVERWRITE per skill)
-
-### Watchpoints for c243+
-- `qa-1968c-p03-done.json` — gates Sprint 1968c PO close (post AC-1..AC-8 review)
+### Watchpoints for c244+
+- `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + watchdog-4 unblock (single biggest near-term trigger)
 - `2026-05-22T03:00Z` — tasksMdJanitor cron #2 (1965c soak observation #2)
-- `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + watchdog-4 unblocks
 - `2026-05-23T18:00Z` — 1965c soak ends → qa-1965c-soak-result.json
-- next system-auditor sweep — confirm B-01/B-02/B-04/B-05 self-recovery vs escalation
+- Next system-auditor sweep — confirm 1959-B-01/B-02/B-04/B-05 self-recovery vs escalation
 
 ### Lessons encoded this cycle
-- **L50: Cron triggers race agent self-claims.** When PO last-cycle returns "P03 awaits gate G", and gate G fires at time T, the target agent (dev-mcp-server) self-claims and ships on its own cron between T and the next dev-team cron tick. The dev-team trigger note that names "P03 READY for dispatch" can already be stale at the moment it fires. PO must always read filesystem signals + handoff doc Completion Record before re-dispatching — never trust the trigger payload alone.
-- **L51: Sprint near-close = QA-only lane.** Sprint 1968c has all 3 levers shipped (P01+P02+P03 committed); only QA review on P03 stands between shipped and closed. This is a qa-lane sprint phase; dev-team has nothing to do. The right notebook entry is "NEAR-CLOSE awaiting qa-NNN-done.json" — not "in-flight" (misleading, suggests work in progress) and not "closed" (premature, awaits final gate).
+- **L52: Close-out tally lives in two places.** (1) Ratification signal `po-NNN-close.json` carries machine-readable per-task impact + cumulative summary for downstream agent consumption; (2) SPRINT_GOAL.md close-out block carries human-readable tally table for sprint history. Both must agree; both are committed in the same close cycle. No drift.
+- **L53: Idle is a valid pipeline-state.** When all dev-team surfaces are gated/queued/in-qa, PO must NOT self-initiate a new sprint just to keep dev-team busy. Idle until next trigger fires is the correct outcome — backlog pressure comes from real bugs, real gates, or user demand, not orchestration discomfort with quiet periods.
 
-### Carry-over from c241
-- L42..L49 retained; L50..L51 added this cycle
+### Carry-over from c242
+- L42..L51 retained; L52..L53 added this cycle
+- Sprint 1968 CLOSED 2026-05-21T20:53Z (c239); 1968a phase-1 ratified
+- Sprint 1968c CLOSED 2026-05-21T22:52:44Z (THIS cycle)
 - Sprint 1959 STAYS OPEN until watchdog-4 ships (~2026-05-22T21:00Z+)
 - Sprint 1965 in soak (1965c OBSERVE through 2026-05-23T18:00Z)
-- Sprint 1967 active: 1967-01/02/03/04/05/12 DONE+QA-APPROVED; 1967-06 gated; 1967-07..11 agent-father MED queue
-- Sprint 1968 CLOSED 2026-05-21T20:53Z (c239)
-- Sprint 1968c NEAR-CLOSE — Wave 1 + Wave 2 all shipped, awaits P03 QA approval
-- BCTC freeze in force; 1954c is the next structural unlock
+- Sprint 1967 active long-tail: 1967-01/02/03/04/05/12 DONE+QA-APPROVED; 1967-06 gated; 1967-07..11 agent-father MED queue
+- BCTC freeze (NFR-3) in force; 1954c is next structural unlock
+- All standing OBSERVE gates preserved (1957d, 1955c, 1907a-verify, 1941b, 1922g, 1965c-soak, 1959-watchdog-4 hold)

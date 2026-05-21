@@ -1,0 +1,55 @@
+{
+  "signal_type": "sprint_closed",
+  "sprint": "1968c",
+  "from_agent": "po",
+  "to_agent": "all",
+  "status": "CLOSED",
+  "phase": "Phase 3 token economy (L-6 + L-8 + L-9)",
+  "timestamp": "2026-05-21T22:52:44Z",
+  "ratifies": "docs/signals/po-1968c-close-ready.json (pm-emitted 2026-05-22T00:00:00Z)",
+  "tasks_closed": [
+    {
+      "id": "1968c-P01",
+      "lever": "L-6 tick-snapshot file writer",
+      "tier": 2,
+      "commit": "96a7f1b8",
+      "impact": "~168 MCP read calls/trading-day saved (eliminates redundant get_cycle_bootstrap + get_macro_snapshot per cowork tick)",
+      "ac_status": "AC-1..AC-5,AC-7,AC-8 PASS; AC-6 PENDING_LIVE (static analysis PASS)",
+      "handoff": "docs/handoffs/TASK_1968c-P01-tick-snapshot.md"
+    },
+    {
+      "id": "1968c-P02",
+      "lever": "L-8 composite step-0-cowork skill",
+      "tier": 2,
+      "commit": "508ae0ef",
+      "impact": "~14 Read file I/O saved per 15-min cowork tick (3 skill reads -> 1 composite across 7 cowork agents)",
+      "ac_status": "AC-1..AC-6 PASS; AC-7 deferred (static boundary analysis PASS); AC-8 smart-skip (zero .ts changes)",
+      "handoff": "docs/handoffs/TASK_1968c-P02-step0-skill.md"
+    },
+    {
+      "id": "1968c-P03",
+      "lever": "L-9 get_agent_signals server-side signal_type filter",
+      "tier": 3,
+      "commit": "c3b18e8c",
+      "impact": "50% payload reduction (within 40-60% target) on filtered get_agent_signals calls; backward compatible (default=null = all types)",
+      "ac_status": "AC-1..AC-8 ALL PASS; 6/6 new filter tests GREEN; 9343 PASS / 283 BCTC-freeze pre-existing FAIL; tsc 0 errors",
+      "handoff": "docs/handoffs/TASK_1968c-P03-server-filter.md"
+    }
+  ],
+  "cumulative_impact": {
+    "p01_mcp_calls_saved_per_day": 168,
+    "p02_read_io_saved_per_cycle": 14,
+    "p03_payload_reduction_percent": 50,
+    "aggregate_summary": "Phase 3 token-economy levers ratified. P01 eliminates ~168 redundant bootstrap/macro MCP calls/trading-day. P02 saves 14 Read file I/O operations per 15-min cowork tick (=~1344 reads/trading-day at 96 ticks). P03 halves get_agent_signals payload on filtered calls (server-side SQL filter, additive API). Combined with prior 1968 + 1968a + 1968b: ~50% cumulative cowork-cycle token efficiency target hit; ~100+ fewer MCP calls/trading-day baseline achieved."
+  },
+  "next_sprint": "DEFER",
+  "next_sprint_rationale": "Sprint 1967 still has gated tasks: 1967-06 OBSERVE-1955e gate unblocks 2026-05-22T21:00Z (~22h from close); 1967-07..11 agent-father MED queue (not dev-team lane). Fleet idle until either 1967-06 unlock fires, new bug surfaces from ops/system-auditor, or user surfaces a new sprint. PO does not self-initiate a new sprint this cycle — idle is acceptable per dev-team contract.",
+  "fleet_state": "IDLE",
+  "wip": "0/2",
+  "active_gates": [
+    "2026-05-22T21:00Z OBSERVE-1955e unlock -> 1967-06 + watchdog-4 unblock",
+    "2026-05-23T18:00Z 1965c-soak ends -> qa-1965c-soak-result.json",
+    "1959 STAYS OPEN until watchdog-4 ships post-21:00Z",
+    "BCTC freeze in force (NFR-3) until 1954c lands"
+  ]
+}

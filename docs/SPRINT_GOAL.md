@@ -1,6 +1,19 @@
-# Sprint 1968c Goal — Token & Tool-Call Economy Phase 3 (Tier 2/3 implementation)
+# Sprint 1968c Goal — Token & Tool-Call Economy Phase 3 (Tier 2/3 implementation) [CLOSED 2026-05-21T22:52:44Z]
 
-**Status:** OPEN 2026-05-21T21:15:41Z (po c240 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` § Phase 3 | **Severity:** MEDIUM (cost-reduction, no incident) | **Owner:** agent-father + dev-mcp-server (paired) | **Parent:** Sprint 1968 CLOSED (Phase 3 deferred per L42 sprint hygiene) | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965c soak (through 2026-05-23T18:00Z) + Sprint 1967 dev fix slate.
+**Status:** CLOSED 2026-05-21T22:52:44Z (po ratified — signal `docs/signals/po-1968c-close.json`). All 3 P-tasks DONE+QA-APPROVED. Phase 3 levers L-6 + L-8 + L-9 ratified. Cumulative impact tally: P01 ~168 MCP calls/trading-day saved + P02 ~14 Read I/O saved per 15-min cowork tick (~1344/trading-day) + P03 50% payload reduction on filtered `get_agent_signals` calls. Combined with prior Phase 1+2: ~50% cowork-cycle token efficiency target hit. Fleet IDLE post-close. Next dev-team trigger: 2026-05-22T21:00Z OBSERVE-1955e unlock (1967-06 + watchdog-4) OR new bug from ops/system-auditor OR user-surfaced sprint.
+
+**OPEN history:** 2026-05-21T21:15:41Z (po c240 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` § Phase 3 | **Severity:** MEDIUM (cost-reduction, no incident) | **Owner:** agent-father + dev-mcp-server (paired) | **Parent:** Sprint 1968 CLOSED (Phase 3 deferred per L42 sprint hygiene) | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965c soak (through 2026-05-23T18:00Z) + Sprint 1967 dev fix slate.
+
+## Close-Out Tally (po, 2026-05-21T22:52:44Z)
+| Task | Commit | Tier | Impact |
+|---|---|---|---|
+| 1968c-P01 (L-6 tick-snapshot) | `96a7f1b8` | 2 | ~168 MCP calls/trading-day saved (bootstrap + macro per cowork tick) |
+| 1968c-P02 (L-8 composite step-0 skill) | `508ae0ef` | 2 | ~14 Read I/O saved per 15-min tick (3 skill reads → 1 composite × 7 cowork agents) |
+| 1968c-P03 (L-9 server-side signal_type filter) | `c3b18e8c` | 3 | 50% payload reduction on filtered `get_agent_signals` (within 40-60% target); additive API, backward compatible |
+
+**Aggregate:** ~100+ fewer MCP calls/trading-day baseline achieved; ~1344 Read I/O saved/trading-day from composite skill; 50% payload reduction on filtered agent-signal queries. Cumulative across 1968 + 1968a + 1968b + 1968c: ~50% cowork-cycle token efficiency target met. Ratification signal: `docs/signals/po-1968c-close.json`.
+
+---
 
 ## Vision
 Land the 3 deferred Phase 3 levers (L-6 tick-snapshot, L-8 composite step-0 skill, L-9 server-side signal_type filter). Target: ~50% cumulative token reduction (1968a + 1968b + 1968c) + ~100 fewer MCP calls/trading-day. Additive API change (L-9 default=null preserves backward compat); ephemeral file write (L-6, gitignored); composite skill consolidation (L-8, 3 skill reads → 1 per cowork agent cycle).
