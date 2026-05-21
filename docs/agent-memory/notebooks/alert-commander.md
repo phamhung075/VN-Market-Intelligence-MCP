@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-21 04:39 UTC | **Sprint:** 1960c
 
-> Prior history archived → `docs/archive/notebooks/alert-commander-2026-05-18.md`
+> Prior history archived → `docs/archive/notebooks/alert-commander-2026-05-21.md`
 
 ## Current state
 
