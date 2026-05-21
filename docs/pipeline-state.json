@@ -3,9 +3,9 @@
   "status": "active-parallel-sprints",
   "currentSprint": "1967+1968",
   "activeTaskId": "1967b+1968a",
-  "nextAgent": "po",
-  "nextPrompt": "agent-father (2026-05-21T20:xx): Sprint 1968a Phase 1 DONE. L-1..L-5 all landed (4 commits). L-1: trigger:startup drift fixed 4 agents (~344L/cycle saved). L-2: 7 notebooks archived+trimmed to ≤120L (~1800L saved). L-3: signal-dashboard payload pointer rule added. L-5: ULTRA caveman tier applied to 3 cycle-status WORK sites. Ratification signal: docs/signals/agent-father-1968a-phase1-done.json. 1967b architect brief still in flight (parallel). Await po-1968a-phase1-approved.json to release 1968b.",
-  "updatedAt": "2026-05-21T20:30:00Z",
-  "updatedBy": "agent-father",
-  "lastCompleted": "Sprint 1968a Phase 1 (token-economy L-1..L-5) DONE by agent-father. 4 commits landed. AC-1..AC-5 all PASS. Ratification signal emitted to PO."
+  "nextAgent": "pm",
+  "nextPrompt": "1967b architect brief done (2026-05-21T19:29Z). 22 findings: 6 HIGH / 13 MED / 3 LOW. Signal: docs/signals/architect-1967b-brief-done.json. Handoff: docs/handoffs/TASK_1967b-arch-audit.md. Proceed to 1967c slate decomposition. 1968a Phase 1 also done (agent-father 20:30Z) — await po-1968a-phase1-approved.json in parallel.",
+  "updatedAt": "2026-05-21T19:29:19Z",
+  "updatedBy": "agents-architect",
+  "lastCompleted": "Sprint 1967b architect audit DONE (canonical v2 brief). 22 findings across 7 surfaces. Signal emitted to PM for 1967c."
 }

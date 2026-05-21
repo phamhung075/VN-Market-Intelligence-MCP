@@ -120,6 +120,16 @@ Sprint 1967a read-only orchestration audit: 13 findings across 6 surfaces. 5 HIG
 
 ---
 
+## 2026-05-21T19:29:19Z
+
+**Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`
+
+Sprint 1967b canonical re-run: 22 findings across 7 surfaces (13 ratified from v1, 9 new). 6 HIGH: alertSource enum gap, verified_decision schema absent, DASHBOARD stale-race, market-watcher identity recurrence, cowork lock release timing, weekly cron no retry. 13 MED cover signal naming, DASHBOARD prune, execute-tier try/finally gaps, isRunning in finally, TASKS.md LWW, identity stanzas missing (8 agents), fire-drift guard, API_MIN_INTERVAL dead slots. 1 BCTC-gated (ITEM-13 freeze policy). 2 deferred to Sprint 1968 L-1/L-2. PM to slate 1967c.
+
+**Signal dropped:** `docs/signals/architect-1967b-brief-done.json` → pm (1967c slate decomposition)
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
