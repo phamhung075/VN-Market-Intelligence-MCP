@@ -110,6 +110,16 @@ Three divergence seams identified between TASKS.md (plan layer), signals/DASHBOA
 
 ---
 
+## 2026-05-21T19:08:39Z
+
+**Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`
+
+Sprint 1967a read-only orchestration audit: 13 findings across 6 surfaces. 5 HIGH (alertSource enum missing `legal_risk` in write_alert_verdict, verified_decision not in post_agent_signal schema, DASHBOARD stale-race on sprint close, market-watcher identity recurrence post-fix, weekly cron jobs have no retry on crash), 7 MED (cowork lock release timing, DASHBOARD unbounded growth, coverage claim drift, fire-drift guard missing, dead API_MIN_INTERVAL slots, alert-commander mcp-tools.md lazy, recurring-bug freeze no timeout). Gate: post-1965c-soak dispatch except ITEM-01/09/04 priority batch.
+
+**Signal dropped:** `docs/signals/agents-architect-1967a-brief-done.json` → po (1967c sign-off) → pm (1967b TASK conversion)
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
