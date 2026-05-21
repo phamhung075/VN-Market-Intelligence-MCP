@@ -1,10 +1,52 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-21T22:20Z cycle c246 | **Status:** Sprint 1968c wave-1 COMPLETE + P03 READY; 1967-12 DONE+QA-APPROVED round 2 (commit 35e2ed3a); 6 notebooks trimmed 1076→644L (40%), D5 audit closed; WIP=1 (P03 ready for dispatch) | **Next:** dev-team dispatch P03 to dev-mcp-server; monitor P03 progress; await OBSERVE-1955e unlock 2026-05-22T21:00Z for 1967-06
+**Last updated:** 2026-05-22T00:00Z cycle c247 | **Status:** Sprint 1968c WAVE-2 COMPLETE + READY FOR CLOSE (P01/P02/P03 all QA APPROVED); Phase 3 Phase 3 token-economy tally ready (P01: 168 calls/day, P02: 14 reads/cycle, P03: 50% payload). WIP=0. | **Next:** PO ratify Sprint 1968c close; await 1967-06 OBSERVE-1955e unlock 2026-05-22T21:00Z
 
 > Archive: `docs/archive/notebooks/pm-2026-05-21-earlier.md` (pre-1967c history)
 
-## Current cycle (2026-05-21T22:20Z cycle c246 — PM 1967-12 closure: QA approved round 2, D5 audit complete)
+## Current cycle (2026-05-22T00:00Z cycle c247 — PM TASK_1968c-P03 closure: QA APPROVED all ACs, WIP=0, ready for PO close ratification)
+
+### Signals drained this cycle
+- **qa-1968c-p03-done.json** — TASK_1968c-P03 (L-9 signal_type server-side filter) APPROVED (AC-1..8 PASS)
+  - Commit: c3b18e8c (2026-05-21T21:43Z shipped, 2026-05-22T00:00Z QA approved)
+  - Tests: 9343 PASS / 283 BCTC-frozen-FAIL; 6 new filter tests GREEN; tsc 0 errors
+  - Payload reduction: 50% (within 40-60% target)
+  - Files: agentSignalStore.ts + agentSignalTools.ts + alert-commander stage-signals.md
+  - Impact: server-side signal_type filter enables precise filtering on get_agent_signals calls
+
+### PM actions completed (cycle c247)
+1. Read QA signal qa-1968c-p03-done.json
+   - Verdict: APPROVED (AC-1..AC-8 all PASS)
+   - Commit: c3b18e8c
+2. Updated docs/TASKS.md row 1968c-P03:
+   - "Todo" → "DONE 2026-05-22T00:00Z (dev-mcp-server, QA APPROVED)"
+   - All ACs tallied: 8/8 PASS
+   - Payload reduction 50%; backward compat verified
+3. Updated docs/pipeline-state.json:
+   - status: "1968c-wave-2-DONE" with all P01/P02/P03 QA APPROVED
+   - activeTaskId: "none (WIP=0; Sprint 1968c ready for close)"
+   - nextAgent: "po (ratify close; aggregate token-economy metrics)"
+   - WIP decremented to 0 (P03 removed from active)
+   - updatedAt: 2026-05-22T00:00:00Z
+4. Created docs/signals/pm-1968c-p03-closed.json:
+   - Signals P03 CLOSED + WIP=0
+   - Metrics: 9343 PASS, 6 new tests GREEN, 50% payload reduction
+5. Created docs/signals/po-1968c-close-ready.json:
+   - Signals Sprint 1968c ALL TASKS DONE + ready for PO close ratification
+   - Includes cumulative token-economy tally pointers (P01/P02/P03 handoff references)
+   - Action: PO aggregates metrics from 3 handoffs, emits po-1968c-close-ratified.json
+6. Updated PM notebook (this file):
+   - Status: Sprint 1968c WAVE-2 COMPLETE, WIP=0, PO close ready
+   - Next: PO close ratification
+
+### Current dispatch state
+- **WIP count:** 0/2 (clean slate; Sprint 1968c content-complete)
+  - 1968c-P03: DONE + QA APPROVED 2026-05-22T00:00Z (dev-mcp-server)
+- **Just completed:** 1968c-P03 (QA APPROVED 2026-05-22T00:00Z); prior: P01+P02 (2026-05-21T21:45Z), 1967-12 (2026-05-21T22:15Z)
+- **Blocked gates:** 1967-06 blocked-until 2026-05-22T21:00Z (OBSERVE-1955e soak unlock); 1967-07..11 MED queued after
+- **Sprint close:** po-1968c-close-ready.json emitted; PO next to aggregate metrics + ratify close
+
+## Prior cycle (2026-05-21T22:20Z cycle c246 — PM 1967-12 closure: QA approved round 2, D5 audit complete)
 
 ### Signals drained this cycle
 - **qa-1967-12-done.json** (round 2) — TASK_1967-12 (notebook trim sweep) APPROVED (AC-1..6 PASS)

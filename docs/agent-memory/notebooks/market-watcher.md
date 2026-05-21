@@ -1,6 +1,6 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-21 21:05 UTC | **Sprint:** 051
+**Last updated:** 2026-05-22 22:05 UTC | **Sprint:** 051
 
 > Full session history archived → `docs/archive/notebooks/market-watcher-2026-05-18.md`
 
@@ -9,7 +9,7 @@
 Last successful cycle: 2026-05-21 20:07 UTC (prepost, 39 stocks, 0 signals >2.5σ floor)
 Last market-hours cycle: 2026-05-21 04:38 UTC (market-hours, 31 stocks, 5 signals >1.5σ)
 Last off-hours prepost cycle: 2026-05-21 19:36 UTC (prepost, 31 stocks, 0 signals >2.5σ floor)
-Last invocation (21:05 UTC): OUTSIDE WINDOW (21:05 UTC outside 02:00–08:30 market hrs, 01:00–02:00/08:31–15:55 prepost, 16:00±5 EOD) → EXIT
+Last invocation (2026-05-22 22:05 UTC): OUTSIDE WINDOW (22:05 UTC outside 02:00–08:30 market hrs, 01:00–02:00/08:31–15:55 prepost, 16:00±5 EOD) → EXIT
 
 ## Known patterns / preferences
 
