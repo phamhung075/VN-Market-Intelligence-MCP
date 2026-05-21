@@ -65,6 +65,7 @@ import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
+import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
@@ -886,6 +887,18 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
+  // Daily 03:00 UTC — TASKS.md / task-lock coherence janitor — task 1965b
+  // D4 audit dimension: calls task_list_held(kind="sprint-task"), cross-checks
+  // pipeline-state.json (AC-4), parses TASKS.md owner/status (AC-2/AC-3),
+  // detects concurrent git commits on docs/TASKS.md within 30s (AC-5).
+  // Emits DASHBOARD ## po row for each divergence. Clean day → log only (AC-3).
+  // Off-peak: 03:00 UTC (after bctcReparseJob at 02:30 UTC). No new DB schema.
+  cron.schedule(CRONS.tasksMdJanitor, async () => {
+    await jobRunRepo.wrapRun('tasksMdJanitorJob', async () => {
+      await runTasksMdJanitorJob()
+    })
+  }, { timezone: 'UTC' })
+
   // Task 1942a — Startup backfill probe: populate vnstock fundamentals tables
   // when the DB is empty or stale after a cold Docker restart.
   // The Monday cron (vnstockFundamentalsRefresh Mon 01:00 UTC) only fires once
@@ -904,5 +917,5 @@ export function startScheduler() {
     })
   })()
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor active`)
 }

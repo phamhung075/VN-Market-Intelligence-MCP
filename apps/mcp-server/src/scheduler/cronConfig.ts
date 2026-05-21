@@ -155,4 +155,9 @@ export const CRONS = {
    *  Alerts BUG channel when /app/data/lancedb exceeds DISK_ALERT_THRESHOLD_GB (default 20 GB).
    *  6 h cooldown prevents alert flood on sustained over-threshold condition. */
   diskUsageAlert:             Bun.env.CRON_DISK_USAGE_ALERT                       ?? '47 * * * *',
+  /** tasksMdJanitor — TASKS.md/task-lock coherence check: daily 03:00 UTC (task 1965b)
+   *  D4 audit dimension: calls task_list_held, cross-checks pipeline-state.json,
+   *  parses TASKS.md, detects git log concurrent commits. Emits DASHBOARD ## po row on divergence.
+   *  03:00 UTC: off-peak, after bctcReparseJob at 02:30 UTC. */
+  tasksMdJanitor:             Bun.env.CRON_TASKS_MD_JANITOR                       ?? '0 3 * * *',
 }
