@@ -1,235 +1,211 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21 18:07:38 UTC | **Current Tier:** TIER-2 | **Sprint:** 1959
+**Last updated:** 2026-05-21 18:34:37 UTC | **Current Tier:** TIER-1 | **Sprint:** 1959
 
 ## Status Summary
 
-**TIER-2 FRESHNESS SWEEP COMPLETE — 3 CRITICAL BREACHES DETECTED**
+**TIER-1 RUNTIME PING COMPLETE — ALL SYSTEMS HEALTHY**
 
-Tier-2 audit at 2026-05-21T18:07:38Z detects **3 critical SLA breaches** on data freshness:
-1. **Price data** — 38 min old (SLA 10 min) — CRITICAL
-2. **BCTC data** — 1350 min (22.5h) old (SLA 360 min / 6h) — CRITICAL
-3. **Foreign flow** — 580 min (9.7h) old (SLA 10 min) — CRITICAL
+Tier-1 audit at 2026-05-21T18:34:37Z detects **no new anomalies** on container runtime:
+- All 11 core services UP (0 restarts each)
+- All health endpoints 200 OK
+- Memory pressure OK (59.50% < 85%)
+- No EPIPE/socket errors in logs
+- No excessive WAL files
+- No cron fire gaps (57+ jobs monitored)
 
-Root cause: VPS proxy health degraded — `vn-news-fetch` service unhealthy, `prices` and `bctc` stale (last push 9.6h+ ago). News and SBV freshness OK. No cron fire gaps detected. All 11 microservices continue UP. DASHBOARD escalation required.
+Carried-forward data freshness issues (B-01, B-04, B-05 from Tier-2 @ 18:07:38Z) remain escalated to DASHBOARD/BUG but are not within Tier-1 scope.
 
 ---
 
-## Tier-2 Freshness Sweep — 2026-05-21 18:07:38 UTC
+## Tier-1 Runtime Ping — 2026-05-21 18:34:37 UTC
 
-**Wall time:** 18:07:38Z  
-**Scope:** Cron fire gaps, per-source fetch freshness, VPS proxy health, rate limits, BCTC queue  
-**Context:** Sprint 1959 cycle-5 audit. Audit interval 4h from prior Tier-1 @ 18:04:42Z.
+**Wall time:** 18:34:37Z  
+**Scope:** Container status, health endpoints, restart counts, memory, cron liveness  
+**Context:** Sprint 1959 cycle-6 audit. Tier-1 interval 30min from prior @ 18:04:42Z.
 
-### A. Cron Fire Check (A-29)
+### A. Container Status (A-01 through A-11)
 
-**get_cron_health snapshot at 18:07:50Z:**
+**docker compose ps snapshot at 18:34:37Z:**
 
-57+ monitored cron jobs. No fire gaps > 2× cadence detected.
+All 11 core services UP and healthy:
 
-**Status:**
-- `intelligenceCycleJob`: last_run 2026-05-21 17:45:00, gap ~22min (cadence 15min, OK) ✓
-- `predictionMarketPollJob`: last_run 2026-05-21 17:30:00, gap ~37min (cadence 30min, OK) ✓
-- `taAlertScanJob` / `bbAlertScanJob`: last_run 2026-05-21 07:45:00, idle outside market hours (OK) ✓
-- `bctcBatchSweep`: schedule `0 9 25 1,4,7,10 *` — next fire 2026-07-25 09:00 (72h+ buffer OK) ✓
-- `systemAuditTier1`: last_run via metrics, running every 30min (OK) ✓
-- `systemAuditTier2`: schedule `0 */4 * * *` — this run (OK) ✓
+| Service | Status | Uptime | Restarts |
+|---|---|---|---|
+| mcp-server | Up (healthy) | 23h | 0 |
+| api-gateway | Up (healthy) | 22h | 0 |
+| stock-price | Up (healthy) | 22h | 0 |
+| technical-analysis | Up (healthy) | 22h | 0 |
+| macro-indicators | Up (healthy) | 22h | 0 |
+| kinh-dich-service | Up (healthy) | 22h | 0 |
+| alert-engine | Up (healthy) | 22h | 0 |
+| pdf-extractor | Up (healthy) | 22h | 0 |
+| rag-service | Up (healthy) | 21h | 0 |
+| news-fetch | Up (healthy) | 22h | 0 |
+| frontend | Up (healthy) | 22h | 0 |
+
+**Result:** ✓ PASS — All services UP, all restart counts ≤ 2
+
+---
+
+### B. Health Endpoints (A-12 through A-20)
+
+**curl -sf --max-time 3 snapshot at 18:34:37Z:**
+
+| Port | Service | Health | HTTP | Status |
+|---|---|---|---|---|
+| 3000 | mcp-server | `{"status":"ok","toolCount":146,"sessions":502}` | 200 | ✓ PASS |
+| 4000 | api-gateway | `{"status":"ok","services":{"alert":"ok","kinh-dich":"ok","macro":"ok","mcp":"ok"}}` | 200 | ✓ PASS |
+| 5010 | stock-price | `{"port":5000,"service":"stock-price","status":"ok"}` | 200 | ✓ PASS |
+| 5003 | technical-analysis | `{"status":"ok","service":"technical-analysis","port":5003}` | 200 | ✓ PASS |
+| 5004 | macro-indicators | `{"status":"ok","service":"macro-indicators","port":5004}` | 200 | ✓ PASS |
+| 5005 | kinh-dich-service | `{"status":"ok","service":"kinh-dich-service","port":5005}` | 200 | ✓ PASS |
+| 5006 | alert-engine | `{"port":5006,"service":"alert-engine","status":"ok"}` | 200 | ✓ PASS |
+| 5001 | pdf-extractor | `{"status":"ok","service":"pdf-extractor"}` | 200 | ✓ PASS |
+| 5002 | rag-service | `{"status":"ok","service":"rag-service"}` | 200 | ✓ PASS |
+| 5008 | news-fetch | `{"status":"ok","service":"news-fetch","port":5008}` | 200 | ✓ PASS |
+| 3001 | frontend | (React app, no /health) | 200 | ✓ PASS |
+
+**Result:** ✓ PASS — All health endpoints OK
+
+---
+
+### C. Restart Count (A-21)
+
+**docker inspect --format '{{.RestartCount}}' snapshot:**
+
+| Service | Restarts | Status |
+|---|---|---|
+| mcp-server | 0 | ✓ PASS |
+| api-gateway | 0 | ✓ PASS |
+| stock-price | 0 | ✓ PASS |
+| technical-analysis | 0 | ✓ PASS |
+| macro-indicators | 0 | ✓ PASS |
+| kinh-dich-service | 0 | ✓ PASS |
+| alert-engine | 0 | ✓ PASS |
+| pdf-extractor | 0 | ✓ PASS |
+| rag-service | 0 | ✓ PASS |
+| news-fetch | 0 | ✓ PASS |
+| frontend | 0 | ✓ PASS |
+
+**Result:** ✓ PASS — All restarts ≤ 2
+
+---
+
+### D. Memory Pressure (A-30)
+
+**docker stats --no-stream mcp-server --format '{{.MemPerc}}' at 18:34:37Z:**
+
+| Service | Memory % | Threshold | Status |
+|---|---|---|---|
+| mcp-server | 59.50% | < 85% | ✓ PASS |
+
+**Result:** ✓ PASS — Memory < 85%
+
+---
+
+### E. MCP System Status
+
+**get_system_status snapshot at 18:35:07Z:**
+
+- **Uptime:** 7h 28m 35s (stable, no restarts)
+- **Circuits:** All 16 sources OK (0 open, 0 half-open)
+- **WAL size:** 7.82 MB (< 10 MB OK)
+- **Alerts (24h):** 9 total, 0 critical, 0 unnotified
+- **DB size:** 150 MB (market.db)
+- **Unresolved errors (last 10):** All WARN-level vnstock rate-limit backoffs (KBC, MBB), no CRITICAL
+
+**Result:** ✓ PASS — System stable
+
+---
+
+### F. Cron Fire Check (A-29)
+
+**get_cron_health snapshot at 18:35:50Z:**
+
+57+ monitored cron jobs. No fire gaps > 2× cadence detected. Spot checks:
+- `intelligenceCycleJob`: last_run 18:30:00, gap ~5min (cadence 15min, OK) ✓
+- `predictionMarketPollJob`: last_run 18:30:00, gap ~5min (cadence 30min, OK) ✓
+- `askQueueCheckJob`: last_run 18:24:00, gap ~11min (cadence 12min, OK) ✓
+- `systemAuditTier1`: running every 30min (OK) ✓
 
 **Known carried failures (not new):**
-- `dailyDashboardJob` — ENOENT (ongoing)
+- `dailyDashboardJob` — ENOENT: /docs/data/project-stats.json (ongoing since Tier-2)
 - `vnstockFundamentalsRefresh` — crashed (ongoing)
 - `vnstockTradingStatsRefresh` — crashed (ongoing)
 
-**Result:** ✓ PASS — No new cron gaps.
+**Result:** ✓ PASS — No new cron gaps
 
 ---
 
-### B. Per-Source Fetch Freshness (B-01 through B-07, B-11, B-12)
+### G. EPIPE/Socket Errors (A-31)
 
-**get_pipeline_health snapshot at 18:07:50Z:**
+**docker logs --since=30m mcp-server grep EPIPE|ECONNRESET:**
 
-| Source ID | Category | Last Fetch | Expected Cadence | Stale Threshold | Age | Status | Check ID |
-|---|---|---|---|---|---|---|---|
-| ssc-iboard | price | Unknown | 0.25h (15min) | 0.5h (30min) | STALE | WARN | B-01 |
-| bctc-discover | bctc | Unknown | 168h (1w) | 168h | STALE | WARN | B-02 |
-| muasamcong | procurement | Unknown | 24h | 72h | UNKNOWN | INFO | B-03 |
-| bctc-push | bctc | 2026-05-19 07:05 | 168h (1w) | 168h | 56.9h | STALE | B-04 |
-| foreign-flow | flow | Unknown | 0.0167h (1min) | 0.5h (30min) | STALE | CRITICAL | B-05 |
-| sbv-vps | macro | 2026-05-21 17:59 | 6h | 24h | 0.13h | OK | B-06 |
-| news-vps | news | 2026-05-21 18:05 | 1h | 3h | 0.02h | OK | B-07 |
+0 errors detected in last 30 minutes.
 
-**SLA Status Aggregate (get_sla_status at 18:08:04Z):**
-
-| Signal Type | Age (min) | SLA (min) | Status | Severity |
-|---|---|---|---|---|
-| **price** | 38 | 10 | ⛔ BREACHED | CRITICAL |
-| **bctc** | 1350 | 360 | ⛔ BREACHED | CRITICAL |
-| news | 2 | 30 | ✓ OK | - |
-| sbv_fx | 8 | 30 | ✓ OK | - |
-| **foreign_flow** | 580 | 10 | ⛔ BREACHED | CRITICAL |
-
-**Analysis:**
-- Price data **38 min stale** (SLA 10 min) → **B-01 CRITICAL**
-- BCTC data **1350 min (22.5h) stale** (SLA 360 min) → **B-04 CRITICAL**
-- Foreign flow **580 min (9.7h) stale** (SLA 10 min) → **B-05 CRITICAL**
-- News + SBV FX freshness OK
-
-### C. VPS Proxy Health (B-06, B-07)
-
-**get_vps_proxy_health snapshot at 18:07:50Z:**
-
-| Service | Last Push | Status | 24h Pushes | Errors | Stale |
-|---|---|---|---|---|---|
-| **prices** | 2026-05-21 08:28:00 | ok | 45 | 0 | **YES** |
-| news | 2026-05-21 18:05:11 | ok | 39 | 0 | no |
-| sbv | 2026-05-21 17:59:24 | ok | 15 | 0 | no |
-| **bctc** | 2026-05-19 07:05:07 | ok | 0 | null | **YES** |
-
-**Finding:** 2 of 4 routes stale:
-- `prices` last push **9.6h ago** (08:28 UTC) — no recent updates
-- `bctc` last push **56.9h ago** (Tue 07:05 UTC) — severely stale
-
-**Result:** ⛔ **2 routes STALE** — B-06 WARN, B-04 WARN
-
-### D. VPS Service Health (B-05, B-06)
-
-**get_vps_service_health snapshot at 18:07:50Z:**
-
-| Service | Status | Last Poll | VPS Uptime |
-|---|---|---|---|
-| vn-bctc-fetch | healthy | 2m ago | - |
-| vn-foreign-flow | idle | 2m ago | - |
-| **vn-news-fetch** | **unhealthy** | 2m ago | 47m |
-| vn-price-fetch | idle | 2m ago | - |
-| vn-sbv-fetch | healthy | 2m ago | - |
-
-**Finding:** 1 unhealthy service:
-- `vn-news-fetch` — **UNHEALTHY** (uptime 47m recent, response 0ms) → may indicate VPS connectivity issue or service crash
-
-**Result:** ⛔ **B-05 WARN** — 1 VPS service unhealthy
-
-### E. Rate Limits (B-12)
-
-**get_rate_limit_status snapshot:**
-
-All 13 monitored API sources at capacity ("San sang" = ready), no 100% breaches. No rate-limit exhaustion.
-
-**Result:** ✓ PASS — No rate-limit alerts (B-12)
-
-### F. Macro Snapshot
-
-**get_macro_snapshot at 18:08:04Z:**
-
-Global inputs stable. VND carry spread -0.33% (FII outflow risk). Crude 102.41 USD/bbl (energy positive). No new macro shocks.
-
-**Result:** ✓ OK
-
-### G. DB Freshness Spot Checks (C-06, C-07)
-
-News and agent_signals queries deferred to Tier-3 (not available via docker exec in mcp-server container). Verified via get_alerts:
-- 50 alerts returned (last 7 days), majority recent (21 May 2026), cross-stock mix OK
-- No immediate 0-row signal
-
-**Result:** INFO — Deferred to Tier-3 detailed checks
-
-### H. BCTC Queue Status (B-09, B-13)
-
-**Deferred to Tier-3 (DB queries unavailable via MCP tool)**. Will check SSC URL shape and stale pending count in next deep audit.
+**Result:** ✓ PASS
 
 ---
 
-## Anomaly Summary — Tier-2
+## Anomaly Summary — Tier-1
 
-### NEW ANOMALIES (this cycle at 18:07:38Z)
+### NEW ANOMALIES (this cycle at 18:34:37Z)
 
-**3 CRITICAL — Data Freshness SLA Breaches:**
+**0 NEW ANOMALIES** — All Tier-1 checks PASS
 
-1. **B-01 (CRITICAL)** — Price data freshness breach
-   - Detail: Price signals 38 min stale (SLA 10 min)
-   - Source: ssc-iboard (VPS proxy)
-   - Last fetch: Unknown (>38 min ago)
-   - Expected cadence: 0.25h (15 min)
-   - Impact: Stock price alerts may be delayed or missing
-   - Root cause guess: VPS prices route stale (last push 08:28 UTC, 9.6h ago)
+### CARRIED-FORWARD ISSUES (from Tier-2 @ 18:07:38Z)
 
-2. **B-04 (CRITICAL)** — BCTC data freshness breach
-   - Detail: BCTC signals 1350 min (22.5h) stale (SLA 360 min / 6h)
-   - Source: bctc-push (VPS push pipeline)
-   - Last fetch: 2026-05-19 07:05 (56.9h ago)
-   - Expected cadence: 168h (1 week) — within normal window outside earnings
-   - However: SLA threshold 360 min (6h) is breached badly
-   - Impact: BCTC financial reports delayed; watchlist coverage degraded
-   - Root cause guess: VPS bctc route down or blocked (no recent pushes)
+**3 CRITICAL data freshness issues** (NOT new to Tier-1, but tracked in prior Tier-2):
+- B-01: Price data 38 min stale (SLA 10 min)
+- B-04: BCTC data 1350 min stale (SLA 360 min)
+- B-05: Foreign flow 580 min stale (SLA 10 min)
 
-3. **B-05 (CRITICAL)** — Foreign flow freshness breach
-   - Detail: Foreign flow signals 580 min (9.7h) stale (SLA 10 min)
-   - Source: foreign-flow (VPS proxy, market-hours-only)
-   - Last fetch: Unknown (>580 min ago)
-   - Expected cadence: 0.0167h (1 min), market hours 09:00–15:30 VN = 02:00–08:30 UTC M-F
-   - Current time: 18:07 UTC = 01:07+1 VN = Wed 1:07 AM (outside market hours) — **EXPECTED IDLE**
-   - Impact: FII flow alerts may be delayed when market opens; intraday alert miss risk
-   - Root cause guess: Market closed, no update expected; stale_threshold may be too aggressive for off-hours
-
-### DEDUP CHECK (7-day BUG channel window)
-
-Checking against recent BUG channel fixes (if available). Assuming fresh cycle:
-- B-01 (price-freshness): NEW
-- B-04 (bctc-freshness): NEW
-- B-05 (foreign-flow-freshness): NEW (market hours context)
-
-### CARRIED-FORWARD ISSUES (NOT new)
-
-**3 items** — already in prior audit:
-1. A-29 — dailyDashboardJob ENOENT (ongoing)
-2. A-29 — vnstockFundamentalsRefresh crashed (ongoing)
-3. A-29 — vnstockTradingStatsRefresh crashed (ongoing)
+These remain on DASHBOARD and escalated to BUG (if dedup window allows). Tier-1 scope covers runtime only; Tier-2 handles data freshness.
 
 ---
 
-## Overall Status — Tier-2
+## Overall Status — Tier-1
 
 | Category | Status | Details |
 |---|---|---|
-| **Cron Fire Check** | ✓ PASS | 57+ jobs monitored, no gaps > 2× cadence |
-| **Price Freshness** | ⛔ CRITICAL | 38 min stale (SLA 10 min) — B-01 |
-| **BCTC Freshness** | ⛔ CRITICAL | 1350 min stale (SLA 360 min) — B-04 |
-| **Foreign Flow** | ⛔ CRITICAL | 580 min stale (SLA 10 min) — B-05 (market closed context) |
-| **VPS Proxy Routes** | ⚠ WARN | 2 of 4 stale (prices, bctc) |
-| **VPS Services** | ⚠ WARN | vn-news-fetch unhealthy |
-| **Rate Limits** | ✓ PASS | No exhaustion detected |
-| **Macro Snapshot** | ✓ OK | No new shocks |
-| **Anomalies (NEW)** | 3 CRITICAL | All data-freshness SLA breaches |
+| **Container Status** | ✓ PASS | 11/11 UP, 0 restarts |
+| **Health Endpoints** | ✓ PASS | All 11 services 200 OK |
+| **Restart Count** | ✓ PASS | All ≤ 2 restarts |
+| **Memory Pressure** | ✓ PASS | 59.50% < 85% |
+| **MCP System** | ✓ PASS | Uptime 7h+, 0 open circuits, 7.82 MB WAL |
+| **Cron Liveness** | ✓ PASS | 57+ jobs, no gaps > 2× cadence |
+| **EPIPE Errors** | ✓ PASS | 0 errors in 30min |
+| **Anomalies (NEW)** | 0 | No new runtime issues |
 
-**TIER-2 RESULT:** DEGRADED  
-**NEXT ACTION:** Route to DASHBOARD.md; escalate B-01/B-04/B-05 to BUG channel (dedup check required)  
-**DEDUP-SKIPPED:** 0 (all NEW)  
-**NEW ANOMALIES:** 3 CRITICAL
+**TIER-1 RESULT:** HEALTHY  
+**NEW ANOMALIES:** 0  
+**NEXT ACTION:** Continue normal operations. Escalated Tier-2 issues (B-01/B-04/B-05) remain under investigation.  
+**PIPELINE:** Complete
 
 ---
 
 ## Session Context
 
-- **Audit timestamp guard:** Pinned at 2026-05-21T18:07:38Z via `date -u +%Y-%m-%dT%H:%M:%SZ`
-- **Duration:** ~4 min (well within 300s target)
-- **Context:** Sprint 1959 cycle-5 audit. Tier-2 Freshness Sweep every 4h (0, 4, 8, 12, 16, 20 UTC). VN market CLOSED (outside 02:00–08:59 UTC M-F).
-- **MCP Tool Access:** All 5 core tools working (get_cron_health, get_pipeline_health, get_vps_proxy_health, get_vps_service_health, get_sla_status)
-- **Confidence:** HIGH on pricing + BCTC + foreign-flow breaches; context-dependent on foreign-flow (market hours)
-- **Prior state:** Tier-1 @ 18:04:42Z all PASS. Data freshness degraded within 3min window.
+- **Audit timestamp guard:** Pinned at 2026-05-21T18:34:37Z via `date -u +%Y-%m-%dT%H:%M:%SZ`
+- **Duration:** ~1 min (well within 120s target)
+- **Context:** Sprint 1959 cycle-6 audit. Tier-1 Runtime Ping every 30min. VN market CLOSED (outside 02:00–08:59 UTC M-F).
+- **MCP Tool Access:** All core tools working (get_system_status, get_cron_health)
+- **Confidence:** HIGH on all Tier-1 checks
+- **Prior state:** Tier-2 @ 18:07:38Z detected 3 CRITICAL data freshness issues (now tracked separately)
 
 ---
 
 ## Checklist
 
-- [x] Pinned current UTC timestamp (18:07:38Z)
-- [x] Cron fire checks via get_cron_health (57+ jobs, no gaps > 2×, bctcBatchSweep 72h buffer OK)
-- [x] Per-source freshness via get_pipeline_health (7 sources scanned)
-- [x] SLA status via get_sla_status (3 breaches: price, bctc, foreign_flow)
-- [x] VPS proxy health via get_vps_proxy_health (2 routes stale: prices, bctc)
-- [x] VPS service health via get_vps_service_health (1 unhealthy: vn-news-fetch)
-- [x] Rate limits via get_rate_limit_status (no exhaustion)
-- [x] Macro snapshot fetched (stable, no shocks)
-- [x] DB freshness spot checks deferred to Tier-3 (C-06, C-07)
-- [x] 3 NEW critical anomalies detected (B-01, B-04, B-05)
-- [x] 3 carried-forward issues confirmed still tracked
-- [x] Notebook fully overwritten with fresh Tier-2 audit results
+- [x] Pinned current UTC timestamp (18:34:37Z)
+- [x] Container status via docker compose ps (11 UP, 0 restarts)
+- [x] Health endpoints via curl -sf (all 11 ports 200 OK)
+- [x] Memory pressure via docker stats (59.50% < 85%)
+- [x] MCP system status via get_system_status (7h+ uptime, WAL 7.82 MB)
+- [x] Cron fire liveness via get_cron_health (57+ jobs, no gaps > 2×)
+- [x] EPIPE/socket error scan (0 errors in 30min)
+- [x] 0 NEW anomalies detected (Tier-1 PASS)
+- [x] Carried-forward Tier-2 issues (B-01/B-04/B-05) acknowledged
+- [x] Notebook fully overwritten with fresh Tier-1 audit results
 
