@@ -1,51 +1,83 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21T22:10:00Z | **Current Tier:** TIER-2 | **Sprint:** 1959
+**Last updated:** 2026-05-21T22:34:39Z | **Current Tier:** TIER-1 | **Sprint:** 1959
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status Summary
 
-**TIER-2 FRESHNESS SWEEP COMPLETE — 4 CRITICAL SLA BREACHES, 3 KNOWN DEDUP, 1 NEW ANOMALY**
+**TIER-1 RUNTIME PING COMPLETE — NO ANOMALIES DETECTED**
 
-Tier-2 audit at 2026-05-21T22:10:00Z: 1 new anomaly, 3 dedup-skipped.
+Tier-1 audit at 2026-05-21T22:34:39Z: 0 new anomalies, 0 dedup-skipped.
 
-### Data Freshness Report
+### Container Runtime Report
 
-| Source | Age | SLA | Status | Dedup Status |
-|--------|-----|-----|--------|---|
-| ssc-iboard (prices) | 53 min | 10 min | CRITICAL BREACH | 1959-B-01 (4h old, skip) |
-| bctc-push | 1590 min (26.5h) | 360 min | CRITICAL BREACH | 1959-B-04 (4h old, skip) |
-| news | 121 min | 30 min | CRITICAL BREACH | NEW — data_stale:news-vps:B-02-NEW |
-| foreign-flow | 820 min (13.7h) | 10 min | CRITICAL BREACH | 1959-B-05 (4h old, skip; outside market hours) |
-| sbv_fx | 8 min | 30 min | OK | — |
+All 11 services UP (26–27h uptime):
+- mcp-server: 27h healthy, 0 restarts
+- api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, news-fetch, rag-service, frontend: 25–26h healthy
 
-### VPS Proxy Health
+### Health Endpoint Status
 
-- Prices: STALE (08:28 UTC, 13.8h ago)
-- BCTC: STALE (2026-05-19 07:05, 56.9h ago)
-- News: OK (22:05:37 UTC, 2m old) — but vn-news-fetch service unhealthy
-- SBV: OK (21:59:31 UTC, 8m old)
+| Service | Port | Status | Latency |
+|---------|------|--------|---------|
+| mcp-server | 3000 | HTTP 200 OK | — |
+| api-gateway | 4000 | HTTP 200 OK (9/9 downstreams ok) | 1–3ms |
+| stock-price | 5010 | HTTP 200 OK | — |
+| technical-analysis | 5003 | HTTP 200 OK | — |
+| macro-indicators | 5004 | HTTP 200 OK | — |
+| kinh-dich-service | 5005 | HTTP 200 OK | — |
+| alert-engine | 5006 | HTTP 200 OK | — |
+| pdf-extractor | 5001 | HTTP 200 OK | — |
+| rag-service | 5002 | HTTP 200 OK | — |
+| news-fetch | 5008 | HTTP 200 OK | — |
+| frontend | 3001 | Static (no health endpoint) | — |
 
-### Cron Health Issues (Carry-forward from Tier-1)
+### Memory & Resource Health
 
-Known stale (unchanged):
-- vnstockFundamentalsRefresh: CRASHED 2026-05-18 01:00 (3+ days)
-- vnstockTradingStatsRefresh: CRASHED 2026-05-18 08:30 (3+ days)
-- dailyDashboardJob: ERROR ENOENT (container mount issue)
+All services < 85% memory:
+- mcp-server: 4GiB (healthy)
+- api-gateway, alert-engine: 2GiB (healthy)
+- macro-indicators: 2.5GiB, 1.5GiB (healthy)
+- Others: ≤512MiB (healthy)
 
-All other crons firing per schedule (54/57 jobs healthy).
+### Inter-Service Connectivity
 
-### Anomaly Disposition
+From mcp-server to:
+- stock-price:5000 → HTTP 200 OK
+- technical-analysis:5003 → HTTP 200 OK
+- alert-engine:5006 → HTTP 200 OK
+- pdf-extractor:5001 → HTTP 200 OK
 
-1. **Prices (B-01)**: Dedup-skip — 1959-B-01 reported 4h ago, same dedup_key
-2. **BCTC (B-04)**: Dedup-skip — 1959-B-04 reported 4h ago, same dedup_key
-3. **Foreign-flow (B-05)**: Dedup-skip — 1959-B-05 reported 4h ago, context outside market hours
-4. **News (NEW)**: NEW ANOMALY — SLA 121min vs 30min, vn-news-fetch VPS service unhealthy, warrant BUG alert
+### Error Monitoring
+
+- Restart count (mcp-server): 0 (threshold: ≤2)
+- EPIPE/ECONNRESET (30m): 0 (threshold: ≤2)
+- No critical system errors detected
+
+## Audit Metrics
+
+| Category | Check ID Range | Pass | Fail | Status |
+|----------|---|---|---|---|
+| Container Status | A-01 to A-11 | 11 | 0 | PASS |
+| Health Endpoints | A-12 to A-20 | 10 | 0 | PASS |
+| Restart Count | A-21 | 1 | 0 | PASS |
+| Memory Pressure | A-30 | 11 | 0 | PASS |
+| Inter-Service | A-25 to A-28 | 4 | 0 | PASS |
+| EPIPE Check | A-31 | 1 | 0 | PASS |
+
+**OVERALL: HEALTHY**
+- Services checked: 11
+- Checks performed: 38
+- New anomalies: 0
+- Dedup-skipped: 0
+- Status: HEALTHY
+
+---
 
 ## Carry-over (next session)
 
-- **vnstockFundamentalsRefresh + vnstockTradingStatsRefresh**: 3-day crash without recovery — escalate to dev-mcp-server zone on next Tier-3
-- **dailyDashboardJob**: Confirm container mount path `/docs/data/project-stats.json` exists
-- **vn-news-fetch VPS service**: Unhealthy state (1h 58m uptime) — may recover, monitor on next Tier-1
-- **News SLA breach**: If persists on next Tier-2 cycle, escalate to dev-vps-crawls (news-fetch zone)
+From prior Tier-2 audit (2026-05-21T22:10:00Z):
+- **vnstockFundamentalsRefresh**: CRASHED 2026-05-18 01:00 (3+ days) — escalate to dev-mcp-server on next Tier-3
+- **vnstockTradingStatsRefresh**: CRASHED 2026-05-18 08:30 (3+ days) — escalate to dev-mcp-server on next Tier-3
+- **dailyDashboardJob**: ERROR ENOENT (missing `/docs/data/project-stats.json`) — confirm mount on next Tier-3
+- **News SLA**: CRITICAL BREACH (121min vs 30min SLA) — known, last reported 2026-05-21T22:10:00Z
