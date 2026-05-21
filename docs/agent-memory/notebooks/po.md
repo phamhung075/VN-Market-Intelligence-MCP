@@ -1,49 +1,61 @@
 # PO Notebook
 
-## Last updated: 2026-05-21T20:55:30Z · Cycle: c239 cron-2053Z — Sprint 1968 CLOSED + 1967-02 decided Option A
+## Last updated: 2026-05-21T21:21:32Z · Cycle: c241 cron-2107Z — dev-team triage, pipeline reconciled, BATCH=NOTHING
 
-> Archive: prior cycles c229–c238 trimmed per L-2; keep last 3 in-file.
+> Archive: prior cycles c229–c240 trimmed per L-2 baseline; keep last cycle in-file.
 
-### c239 trigger
-INBOUND: pm-1968-close-ready.json (`26074613` 21:45Z PM) + dev-team context note (1967-03+1967-05 main-terminal parallel dispatch to agent-father in flight — separate zone). Two PO decisions explicitly needed: (1) close 1968 vs defer Phase 3, (2) 1967-02 Option A vs B.
+### c241 trigger
+Dev-team triage cron-2107Z: 25 stale signals drained to processed/. Asked PO to (a) triage what's actionable for dev-team this cycle, (b) reconcile stale pipeline-state.json (last touch 20:21Z), (c) emit BATCH/NOTHING per dev-team contract. Pipeline-state claimed activeTaskId="1967-02 + qa-1968b1 + qa-1968b2" but realities have moved 5+ states forward.
 
-### Decisions taken (c239)
+### Decision: BATCH=NOTHING (dev-team idle this cycle)
 
-1. **DECISION 1 — Sprint 1968 CLOSED.** All 3 phases (1968a + 1968b1 + 1968b2) DONE+QA-APPROVED. Phase 3 levers (L-6 full tick-snapshot, L-8 composite step-0-cowork skill, L-9 server-side filter) DEFERRED to fresh Sprint 1968c via PM decomposition next cycle. **Rationale:** Phase 3 was explicitly declared OUT-of-scope per the original 1968 SPRINT_GOAL.md L28-31 ("OUT — DEFERRED — requires PM TASK_NNN + dev-team execution after Phase 1 lands"). Rolling them into 1968 post-hoc would violate sprint hygiene (scope creep). PO doctrine reads drive-to-completion as "drive declared scope to completion"; new work = new sprint. Signal emitted: `docs/signals/po-1968-closed.json`. Impact captured in payload: ~56 fewer MCP calls/trading-day + 54 fewer git commits/trading-day. NFR-3 BCTC freeze honored throughout (zero code, zero Docker, zero DB).
+Reasoning surface-by-surface:
+- **1967-02** (dev-mcp-server): DONE commit `257d92bf` 21:30Z, awaiting QA. Not a dev-team dispatch — already in qa lane.
+- **1968c-P01** (agent-father + dev-mcp-server pair) + **1968c-P02** (agent-father solo): in-flight via agent-father self-cron (NOT dev-team dispatchable per boundary). PO approved sequencing at 21:15Z (po-1968c-approved.json).
+- **1968c-P03** (dev-mcp-server, only natural dev-team candidate per dev-team's own note): explicit gate `agent-father-1968c-p01-done.json` not yet emitted. Dispatching now would race P01's `apps/mcp-server/` touches (P01 has dev-mcp-server pair-claim on cowork-team dispatcher; P03 edits getAgentSignals.ts — different files but same zone-lock). L45 same-zone-collision rule confirms HOLD.
+- **1967-12** (notebook trim sweep): claude-manager-helper, maintenance lane, out-of-scope for dev-team per boundary.
+- **1967-06** (dev-mcp-server, weekly-cron-crash): blocked-until 2026-05-22T21:00Z (OBSERVE-1955e gate). Not unblocked yet.
+- **1967-07..11** (agent-father MED queue): NOT dev-team dispatchable.
 
-2. **DECISION 2 — 1967-02 Option A.** Add `verified_decision` as new enum value in MCP Zod schema (XS, dev-mcp-server zone). **Rationale:** (a) Semantic clarity > schema minimalism. `suppress` already means "Alert Commander → All — False positive" per mcp-tools.md L137; `verified_decision` means "chain-dedup ack after alert-commander fired OR suppressed an alert". These are distinct purposes — conflating under Option B causes semantic overload. (b) Schema cost is minor: enum 8→9 values (≤13% growth), not bloat. (c) Receiver readiness: `grep -rn "suppress" .claude/flows/news-scout/ market-watcher/` shows `suppress` used ONLY as a local dedup verb in those flows — no `suppress` consumer logic for a typed cross-agent signal. Option B therefore requires NEW receiver code in 2 flows + agent-father edits to alert-commander.md — strictly more work than Option A's 3-file enum/doc touch. (d) alert-commander.md L21 already documents both signals as distinct ("Emit suppress AND verified_decision"); Option A keeps that contract intact. (e) Brief recommended B on "smaller enum surface" alone; PO overrides on the broader semantic + receiver-readiness analysis. Signal emitted: `docs/signals/po-1967-02-decision.json` with AC-1..AC-6 spec embedded for dev-mcp-server pickup.
+Conclusion: every dev-team-dispatchable lane is either (a) in-flight elsewhere, (b) awaiting QA, or (c) gated. **dev-team returns NOTHING.** Next dev-team trigger = `agent-father-1968c-p01-done.json` arrival → P03 unlocks for dev-mcp-server.
 
-3. **1968b1-RELEASE + 1968b2-RELEASE rows transitioned DONE-QA-PENDING → CLOSED** on DASHBOARD (folded into sprint close). 1968c TASKS.md row reframed from PENDING to DEFERRED → fresh sprint.
+### Pipeline-state.json reconciled inline (PO override of PM ownership this cycle, per dev-team explicit ask)
+- status: 1968c-wave-1-in-flight + 1967-12-in-flight + 1967-02-QA-pending + WAVE-2-GATED
+- activeTaskId WIP=4 (1 QA-review, 2 dev-pipeline-via-agent-father, 1 maintenance)
+- updatedBy: po (cron-2107Z, pipeline reconciliation per dev-team triage directive)
+- nextPrompt explicitly states "No dev-team-dispatchable work this cycle" + flags PM to refresh on next cycle.
 
-4. **1967-02 TASKS.md row** rewritten from "PO decision needed" → "PO DECIDED OPTION A 2026-05-21T20:53Z" with AC-spec pointer. READY-FOR-DISPATCH next dev-mcp-server cycle.
-
-5. **1967-03 / 1967-05 NOT touched by this cycle** — agent-father DASHBOARD writes at 20:54:40Z confirm those tasks landed via main-terminal parallel dispatch (separate zone from PO write). Header timestamp rebased to 20:55:30Z to acknowledge both writes.
+### DASHBOARD prunes (this cycle)
+- `## po` head updated, 1967-KICKOFF row enriched with current 1967-NN status, new 1968c-KICKOFF row added.
+- `## agent-father` (active): purged the 2 READ qa-approved rows; added 1968c-P01-DISPATCH + 1968c-P02-DISPATCH (IN-FLIGHT).
+- New `## claude-manager-helper` + `## dev-mcp-server` sections added (1967-12 + 1967-02 + 1968c-P03 rows).
+- `## qa` purged 3 done rows; added 1967-02-REVIEW pending.
+- `## pm` purged 5 obsolete rows (CLOSE-READY, 1967-03/05 DISPATCH, 1967-02 BLOCKED, 1968c PENDING); added 1967-04-CLOSED + 1967-12-OPENED + 1968c-OPENED.
+- Legacy duplicate `## agent-father` section (post-`## pm`) collapsed to comment with history pointers.
 
 ### Files touched this cycle
-- `docs/signals/po-1968-closed.json` — NEW (sprint close signal, full phase summary + Phase 3 deferral rationale)
-- `docs/signals/po-1967-02-decision.json` — NEW (Option A decision + rationale + AC-1..AC-6 + scope/out-of-scope/zone)
-- `docs/pipeline-state.json` — rebased on PM 21:45Z write; status=1968-CLOSED+1967-02-decided+1967c-active; activeTaskId lists 1967-02 + 1967-03/05 in flight + 1968c pending pm decomp
-- `docs/signals/DASHBOARD.md` — ## po: 1968b1-RELEASE / 1968b2-RELEASE DONE-QA-PENDING→CLOSED; appended new 1968-CLOSE row + 1967-02-DECISION row; header rebased to 20:55:30Z (preserves agent-father 20:54:40Z write)
-- `docs/TASKS.md` — 1968b1/b2 rows annotated "Sprint 1968 CLOSED"; 1968c reframed to DEFERRED→fresh sprint; 1967-02 row updated PO DECIDED OPTION A with AC pointer
-- `docs/agent-memory/notebooks/po.md` — this file (OVERWRITE per skill, ≤200L cap)
+- `docs/pipeline-state.json` — reconciled (PO ownership-override for dev-team-handoff cycle)
+- `docs/signals/DASHBOARD.md` — header timestamp + 6 section edits + 8 prune comments
+- `docs/agent-memory/notebooks/po.md` — this file (OVERWRITE per skill)
 
-### Watchpoints for c240+
-- **agent-father-1967-03-done.json + agent-father-1967-05-done.json** — main-terminal cycle output landing soon (20:54Z agent-father DASHBOARD write already shows tasks DONE; ratify next cron)
-- **dev-mcp-server-1967-02-done.json** — dev-mcp-server picks up Option A spec from `po-1967-02-decision.json`; ratify via standard 1967-NN-RATIFIED flow on completion
-- **pm-1968c-slate-ready.json** — pm next cron decomposes L-6/L-8/L-9 into TASK_1968-P01/P02/P03 + opens fresh Sprint 1968c kickoff
-- **2026-05-22T03:00Z** — tasksMdJanitor cron #2 (1965c soak observation #2)
-- **2026-05-22T21:00Z** — 1959-watchdog-4 + 1964-AC-ENUM + OBSERVE-1955e + 1967-06 quadruple-unlock
-- **2026-05-23T18:00Z** — 1965c soak ends → qa-1965c-soak-result.json
+### Watchpoints for c242+
+- `agent-father-1968c-p01-done.json` — gates 1968c-P03 dev-team dispatch (M-size, expect ~4h from 21:15Z dispatch)
+- `agent-father-1968c-p02-done.json` — parallel wave-1 completion (M-size)
+- `claude-manager-helper-1967-12-done.json` — maintenance lane completion
+- `qa-1967-02-done.json` — closes the last 1967c HIGH FIX
+- `2026-05-22T03:00Z` — tasksMdJanitor cron #2 (1965c soak observation #2)
+- `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + watchdog-4 unblocks
+- `2026-05-23T18:00Z` — 1965c soak ends → qa-1965c-soak-result.json
 
 ### Lessons encoded this cycle
-- **L42: Sprint hygiene wins over drive-to-completion when scope was explicitly OUT from kickoff** — Phase 3 of 1968 was always OUT in SPRINT_GOAL L28-31. Closing 1968 cleanly + opening 1968c is correct; rolling Phase 3 in would have been scope creep, and a drive-to-completion read would have failed to distinguish "declared scope" from "future related work". The rule: drive-to-completion = drive the declared backlog to done; new backlog = new sprint.
-- **L43: When a brief recommends Option B on a single dimension, PO must audit the full surface before ratifying** — ITEM-02 brief preferred B on "smaller enum surface" alone. A full audit of (a) semantic distinctness, (b) receiver-flow readiness, (c) capability-text contract showed Option A was actually less work AND semantically cleaner. PO role = challenge the architect's local-optimum recommendation when a global view changes the calculus. Document the override in the decision signal so the architect sees the reasoning trail.
-- **L44: Always include AC-1..AC-N spec INSIDE the decision signal payload** — `po-1967-02-decision.json` embeds the 6 ACs directly. dev-mcp-server can dispatch from the signal alone without reading 3 separate files. Reduces token cost on the dev side per Sprint 1968 L-3 spirit.
+- **L48: PO triage CAN write pipeline-state.json when dev-team explicitly delegates the reconciliation.** Default ownership = PM, but boundary rule "PO never writes pipeline-state" applies to autonomous PO cycles. When the dev-team router explicitly asks PO to reconcile inline as part of a triage cycle, PO is the most-recent-truth holder and writing is correct. The signed reciprocal: PM must NOT overwrite this PO reconciliation in next cycle without verifying its inputs.
+- **L49: Returning NOTHING is a real decision, not absence of decision.** Dev-team contract accepts NOTHING with clean rationale. This cycle has 4 WIP slots taken by non-dev-team agents (agent-father x2, claude-manager-helper, qa) + 1 gated. The right call is explicit NOTHING + watchpoint listing for next trigger — not "make work for dev-team to avoid empty BATCH".
 
-### Carry-over from c238
+### Carry-over from c240
+- L42..L47 retained; L48..L49 added this cycle
 - Sprint 1959 STAYS OPEN until watchdog-4 ships (~2026-05-22T21:00Z+)
 - Sprint 1965 in soak (1965c OBSERVE through 2026-05-23T18:00Z)
-- Sprint 1967 active: 1967a/b/c DONE; 1967-01 DONE+QA-APPROVED; 1967-02 PO-DECIDED-A (ready-for-dispatch dev-mcp-server); 1967-03/04/05 agent-father in flight via main-terminal (03+05 DONE per 20:54Z DASHBOARD); 1967-06 blocked-until 22T21Z; 1967-07..10 MED queued; 1967-11 conditional on 1954c
-- Sprint 1968 CLOSED 2026-05-21T20:53Z (c239 this cycle) — Phase 3 deferred to fresh 1968c (pm to decompose)
+- Sprint 1967 active: 1967-01/03/04/05 DONE+QA-APPROVED; 1967-02 awaiting QA; 1967-06 gated; 1967-07..11 agent-father queue; 1967-12 in-flight (claude-manager-helper)
+- Sprint 1968 CLOSED 2026-05-21T20:53Z (c239)
+- Sprint 1968c OPEN 2026-05-21T21:15Z — wave-1 in-flight, wave-2 P03 gated
 - BCTC freeze in force; 1954c is the next structural unlock
-- L18..L41 retained (carry-over codes)
