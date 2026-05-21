@@ -49,6 +49,34 @@ Add optional `signal_type` filter parameter to `get_agent_signals` MCP tool to e
 - `docs/policies/dev-standards.md` (parameterized tool design, backward compat)
 - `docs/standards/mcp-tools.md` (MCP tool interface patterns)
 
+## [Implementer] Completion Record
+
+**Commit:** c3b18e8c (2026-05-21)
+**Branch:** main (no branch — all work stays on main per policy)
+**Test result:** 9364 PASS / 285 FAIL (285 = pre-existing BCTC freeze, unchanged) / tsc 0 errors
+**New tests:** 6 (1968c-p03-signal-type-filter.test.ts) — all GREEN
+
+**AC checklist:**
+- [x] AC-1: `signal_type: z.string().nullable().optional()` added to get_agent_signals Zod schema in `agentSignalTools.ts`
+- [x] AC-2: Server-side SQL filter via `AND s.signal_type = '...'` clause in `getSignals()` (`agentSignalStore.ts`)
+- [x] AC-3: Backward-compat: null/undefined/omitted → no SQL clause → all types returned
+- [x] AC-4: `.claude/tools/list/get_agent_signals.md` updated with parameter row + Key Notes section
+- [x] AC-5: alert-commander `stage-signals.md` updated: step 3b (`signal_type="price_anomaly"`) + step 3c (`signal_type="chain_catalyst"`) with actual `call_tool` blocks; news-scout SELF_SIGNALS_CACHE unchanged (loads all types correctly for dedup)
+- [x] AC-6: 6 tests: AC-1 schema, AC-2 filter, AC-3 backward-compat, AC-3b null=all, AC-6c invalid→empty, AC-7 payload reduction
+- [x] AC-7: Test verifies 50% reduction (within 40-60% target) with 5/10 signals filtered
+- [x] AC-8: 9364 ≥ 9358 baseline; tsc 0 errors; BCTC untouched
+
+**Implementation delta (agentSignalStore.ts):**
+- `GetSignalsOptions` interface: added `signalType?: string | null` field with JSDoc
+- `getSignals()`: added `signalTypeClause` — applies `AND s.signal_type = '...'` when signalType is non-null/non-empty; uses SQL escaping (replace `'` with `''`)
+
+**Implementation delta (agentSignalTools.ts):**
+- `get_agent_signals` tool description updated to mention signal_type
+- Added `signal_type: z.string().nullable().optional()` parameter with describe()
+- Handler passes `signalType: args.signal_type` to `getSignals()` when non-null
+
+---
+
 ## [Developer] Implementation Notes
 
 ### Schema update (getAgentSignals.ts)

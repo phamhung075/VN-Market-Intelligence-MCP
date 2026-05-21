@@ -5,6 +5,24 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967
 
 ## Working Memory
 
+### Task 1968c-P03 — get_agent_signals signal_type filter (2026-05-21, DONE)
+
+**Change:**
+- `agentSignalStore.ts` — added `signalType?: string | null` to `GetSignalsOptions`. `getSignals()` gains `AND s.signal_type = '...'` SQL clause when signalType is non-null/non-empty. SQL injection guarded via `replace(/'/g, "''")`.
+- `agentSignalTools.ts` — added `signal_type: z.string().nullable().optional()` to `get_agent_signals` MCP tool schema. Tool description updated. Handler passes `signalType` to `getSignals()` when non-null.
+- `.claude/tools/list/get_agent_signals.md` — parameter table updated with `signal_type` row; new "Key Notes on signal_type" section added.
+- `.claude/flows/alert-commander/stage-signals.md` — step 3b updated to use `signal_type="price_anomaly"` + step 3c updated to use `signal_type="chain_catalyst"` with actual `call_tool` blocks and L-9 comment tags.
+
+**Tests:** `1968c-p03-signal-type-filter.test.ts` — 6/6 GREEN (AC-1 schema, AC-2 filter, AC-3 backward-compat, AC-3b null=all, AC-6c invalid→empty, AC-7 payload reduction 50%). tsc 0 errors. Full suite: 9364 pass / 285 fail (285 = pre-existing BCTC freeze).
+
+**Commit:** c3b18e8c
+
+**Signal:** `docs/signals/dev-mcp-server-1968c-p03-done.json` → qa
+
+Zone health: get_agent_signals server-side signal_type filter COMPLETE; alert-commander 3b+3c use typed queries; wire payload reduced 40-60% | HEALTHY
+
+---
+
 ### Task 1967-02 — verified_decision SignalTypeSchema enum (2026-05-21, DONE)
 
 **Change:**
@@ -40,28 +58,8 @@ Zone health: get_agent_signals now supports hours_back lookback; L-4 consolidati
 
 ---
 
-### Task 1967-01 — alertSource enum gap: crisis_velocity (2026-05-21, DONE)
-
-**Change:** `alertVerdictTools.ts:30-38` — added `"crisis_velocity"` to Zod enum (8 values total). Tool description updated. `.claude/tools/list/write_alert_verdict.md` updated.
-
-**Tests:** 5/5 GREEN (1967-01 suite) + 15/15 related suite. tsc 0 errors.
-
-**Signal:** `docs/signals/dev-mcp-server-1967-01-done.json` → qa.
-
-Zone health: alertSource enum exhaustive (8 values); alert-commander persists legal_risk + crisis_velocity | HEALTHY
-
----
-
-### Task 1965b — TASKS.md Janitor cron 03:00Z (2026-05-21, DONE)
-
-**Change:** `tasksMdJanitorJob.ts` (new, ~340L) — daily 03:00 UTC D4 audit. Calls `listHeldTasks`, parses TASKS.md, cross-checks Owner+Status, reads pipeline-state.json, git-commit window detect. BUG telegram 7d dedup. Smoke: 12/12 PASS. Commit: fc398b8a.
-
-Zone health: 9662 tests / 897 files. Bun v1.3.13 C++ crash post-test is known bug | HEALTHY
-
----
-
 ### Carry-over
 
-- 283 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
+- 285 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
 - Bun v1.3.13 C++ panic after full suite run is a known upstream bug (exit code 0, tests all pass)
 - LanceDB ~29GB > DISK_THRESHOLD_GB(20) — diskUsageAlertJob will fire on next hourly tick (correct behavior, shipped 1959-watchdog-5)
