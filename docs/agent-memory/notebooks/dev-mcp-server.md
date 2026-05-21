@@ -1,218 +1,49 @@
 # dev-mcp-server -- Notebook
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
+Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967-01 archived)
 
 ## Working Memory
 
-### Task 1967-01 — alertSource enum gap: crisis_velocity (2026-05-21, DONE → Review)
+### Task 1968b1 — get_agent_signals hours_back param (2026-05-21, DONE)
 
-**Change:** `alertVerdictTools.ts:30-38` — added `"crisis_velocity"` to Zod enum (8 values total). `legal_risk` was already present; only `crisis_velocity` was missing. Tool description string updated. `.claude/tools/list/write_alert_verdict.md` parameter table updated.
+**Change:**
+- `agentSignalStore.ts` — added `hoursBack?: number` to `GetSignalsOptions`. SQL query gains `AND s.created_at >= datetime('now', '-N minutes')` when set.
+- `agentSignalTools.ts` — added `hours_back: z.coerce.number().positive().optional()` to MCP tool schema. Passed to store as `hoursBack`.
+- `.claude/tools/list/get_agent_signals.md` — parameter table updated; L-4 consolidation pattern documented.
 
-**Tests:** `1967-01-alertsource-enum-gap.test.ts` — 5/5 GREEN (AC-1 Zod accepts legal_risk, AC-2 Zod accepts crisis_velocity, AC-3 handler success legal_risk, AC-4 handler success crisis_velocity, AC-5 unknown rejects). Full related suite 15/15 (1863d+c220+1967-01). tsc 0 errors.
+**Tests:** `1968b1-get-agent-signals-hours-back.test.ts` — 7/7 GREEN. AC-1 Zod schema, AC-2 filter excludes old signals, AC-3 default backward-compat, AC-4 6h/360-min window, AC-5 from_agent combo. tsc 0 errors. Full suite: 9356 pass / 283 fail (283 = pre-existing BCTC, zero regression).
 
-**DB migration:** none needed — alert verdicts stored as JSON file, no SQLite CHECK constraint.
+**Commit:** 4fff6cbb
 
-**Signal:** `docs/signals/dev-mcp-server-1967-01-done.json` emitted → qa.
+**Signal:** `docs/signals/dev-mcp-server-1968b1-param-ready.json` → agent-father (ungates phase 2 SELF_SIGNALS_CACHE)
 
-Zone health: alertSource enum now exhaustive (8 values); alert-commander can persist legal_risk + crisis_velocity without fallback degradation | HEALTHY
+Zone health: get_agent_signals now supports hours_back lookback; L-4 consolidation prereq COMPLETE | HEALTHY
+
+---
+
+### Task 1967-01 — alertSource enum gap: crisis_velocity (2026-05-21, DONE)
+
+**Change:** `alertVerdictTools.ts:30-38` — added `"crisis_velocity"` to Zod enum (8 values total). Tool description updated. `.claude/tools/list/write_alert_verdict.md` updated.
+
+**Tests:** 5/5 GREEN (1967-01 suite) + 15/15 related suite. tsc 0 errors.
+
+**Signal:** `docs/signals/dev-mcp-server-1967-01-done.json` → qa.
+
+Zone health: alertSource enum exhaustive (8 values); alert-commander persists legal_risk + crisis_velocity | HEALTHY
 
 ---
 
 ### Task 1965b — TASKS.md Janitor cron 03:00Z (2026-05-21, DONE)
 
-**Change:** `tasksMdJanitorJob.ts` (new, ~340L) — daily 03:00 UTC D4 audit dimension. Steps R-1..R-7 per handlers.md. Calls `listHeldTasks(kind="sprint-task")` via coordinationStore (no new DB schema, Option A). Parses TASKS.md (header-position-agnostic), cross-checks Owner+Status vs held lock. Reads pipeline-state.json (AC-4). Runs `git log --format="%H %ai" -- docs/TASKS.md`, detects commits within 30s window (AC-5). Emits DASHBOARD ## po row per signal-dashboard SKILL on divergence. BUG telegram 7d dedup per divergence key. Clean day → console log only (AC-3). All deps injectable for testability. `cronConfig.ts` + `startScheduler.ts` wired. Smoke: 12/12 PASS covering AC-1..AC-5. Commit: fc398b8a.
+**Change:** `tasksMdJanitorJob.ts` (new, ~340L) — daily 03:00 UTC D4 audit. Calls `listHeldTasks`, parses TASKS.md, cross-checks Owner+Status, reads pipeline-state.json, git-commit window detect. BUG telegram 7d dedup. Smoke: 12/12 PASS. Commit: fc398b8a.
 
-Zone health: 9662 tests / 897 files GREEN. Bun runtime C++ crash post-test is a known Bun v1.3.13 bug (exit code 0). No new failing tests. | HEALTHY
-
----
-
-### Task 1959-watchdog-5 — Disk-usage alert cron (2026-05-20, DONE)
-
-**Change:** `diskUsageAlertJob.ts` (new, 225L) — `du -sh /app/data/lancedb`, parse to GB, BUG Telegram if > `DISK_THRESHOLD_GB` (default 20), 6h cooldown via injectable `DiskUsageAlertState`. `DISK_ALERT_THRESHOLD_GB` env override (IIFE, read at module load). `parseDuSizeToGb` handles K/M/G/T/P units.
-
-**Wiring:** `cronConfig.ts` — key `diskUsageAlert`, `CRON_DISK_USAGE_ALERT` env, default `'47 * * * *'` (minute=47 avoids 0/7/17 cluster). `startScheduler.ts` — import + `jobRunRepo.wrapRun('diskUsageAlertJob')`.
-
-**Tests:** 9/9 GREEN (TC-1 through TC-6). Fixed TC-6 loop bound: i<11 not i<12 (at i=11 elapsed=6h exactly, exits cooldown). `tsc --noEmit` 0 errors.
-
-**Smoke:** threshold=1/usage=2 → alert-sent; threshold=100/usage=29 → ok. Both PASS.
-
-**SSOT:** `project-stats.json#cronJobCount` 76→77. Signal: `docs/signals/dev-mcp-server-1959-watchdog-5.json`.
-
-**Prod note:** LanceDB ~29GB > 20GB threshold — alert WILL fire on first hourly tick post-deploy. Correct behavior per handoff.
-
-Zone health: diskUsageAlertJob fills runtime-detection gap; cron registered at minute=47; scheduler resilience HEALTHY
+Zone health: 9662 tests / 897 files. Bun v1.3.13 C++ crash post-test is known bug | HEALTHY
 
 ---
 
-### Task 1959-watchdog-7 — flaresolverr healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
-
-**Change:** `docker-compose.yml` line 401: `start_period: 30s` → `start_period: 60s` for flaresolverr healthcheck.
-
-**Deployment:** `docker compose up -d flaresolverr` — container recreated + started. Initial healthy at 18s.
-
-**Smoke test (3 restarts):** 11s / 13s / 11s — all healthy well within 60s. flaresolverr API POST status=ok, solution_status=200. Gateway /health 200.
-
-**Signal:** `docs/signals/dev-mcp-server-1959-watchdog-7.json`
-
-**Unblocks:** 1959-watchdog-5 (dev-mcp-server slot now free).
-
-Zone health: flaresolverr start_period hardened to 60s; Chromium cold-start risk eliminated; all ACs PASS | HEALTHY
-
----
-
-### Task 1958-watchdog-2 — RAG healthcheck start_period 30s → 60s (2026-05-20, DONE — docker-compose.yml)
-
-**Change:** `docker-compose.yml` line 116: `start_period: 30s` → `start_period: 60s` for rag-service healthcheck.
-
-**Deployment:** `docker compose up -d rag-service` — container recreated + started. rag-service healthy at 27s post-restart.
-
-**Smoke test:** /health 200, /search POST returns HPG BCTC result (distance=0.694), gateway /health 200.
-
-**Start_period audit (optional):**
-- mcp-server 10s, pdf-extractor 15s — fine (fast startup services)
-- news-fetch 30s — marginal (2.5GB Node, no timeout evidence)
-- flaresolverr 30s — flagged: Chromium cold-start under disk pressure likely exceeds 30s; recommend follow-up watchdog task bump to 60s
-
-**Signal:** `docs/signals/dev-mcp-server-1958-watchdog-2.json`
-
-Zone health: RAG healthcheck no longer times out on disk-pressure cold-start; flaresolverr has same latent risk (flagged for PM) | HEALTHY
-
----
-
-### Task FIX-listunresolvedreports — c220 caller name fix (2026-05-20, DONE)
-
-**Diagnosis:** Case (a) — tool `list_unresolved_reports` was already implemented in `telegramReportTools.ts` (line 357) and registered via `registerTelegramReportTools` in `registry.ts` (line 145). Live server health confirmed toolCount=146. The bug was in 4 flow file lines that used camelCase pseudocode `listUnresolvedReports()` instead of MCP tool name `list_unresolved_reports`.
-
-**Files fixed (flow files only, no code changes):**
-- `.claude/flows/dev-team/main.md` lines 18 + 134
-- `.claude/flows/dev-team/post-cycle.md` line 18
-- `.claude/flows/po/main.md` line 20
-
-**Results:** 12/12 mcp-drift tests GREEN, tsc 0 errors, no container rebuild needed.
-
-**Signal:** `docs/signals/dev-mcp-server-c220-fix-unresolved-reports-done.json` → qa
-
----
-
-### Task 1959a — exactOptionalPropertyTypes tsc fix (2026-05-20, DONE — commit b144f560)
-
-**Root Cause:** Commit 79ac45e9 (task-lock Phase 1) introduced 3 `exactOptionalPropertyTypes` violations + 2 `noUncheckedIndexedAccess`/cast errors in test files. Pre-push hook was blocking ALL remote pushes (18 local commits stuck).
-
-**Fix (4 files, type-only):**
-- `coordinationStore.ts:272` — `{ claimed: false, current_holder: holderRow ?? undefined }` → ternary omitting key when null (Option A)
-- `coordinationTools.ts:108` — `ttl_seconds` spread conditionally via `...(ttl_seconds !== undefined ? { ttl_seconds } : {})`
-- `coordinationTools.ts:204` — `kind`, `owner_agent`, `expired` spread conditionally in listHeldTasks call
-- Test files: `locks[0]!` non-null assertions + `as unknown as` intermediate cast
-
-**Results:** tsc 0 errors, 9330 pass / 283 fail (AC: ≥9287 / ≤284), `git push origin main` succeeded (bef8e9cf → b144f560). All 1958a artifacts now on remote.
-
-**NEXT: qa** — verify commit b144f560 against ACs.
-
----
-
-### Task 1958a — alertDigestJob + summaryJob:daily startup catchup + recoverMissedExecutions (2026-05-20, IMPL DONE — commit 84c2b375)
-
-**Root Cause:** Event-loop starvation (5h OHLCV backfill at startup / bctcReparseJob zombies) caused node-cron to miss cron windows at 14:00 UTC (alertDigestJob) and 15:30 UTC (summaryJob:daily). `recoverMissedExecutions=false` (node-cron default) means missed windows are permanently skipped. These 2 jobs had NO startup catchup, unlike morningBriefingJob/eveningSummaryJob/franceSummaryJob.
-
-**Fix (3 files):**
-- `startScheduler.ts`: Import `runSummaryJob` from `summaryJobs.js`. Add startup catchup probes for `alertDigestJob` (14:00 UTC, weekdayOnly=true) and `summaryJob:daily` (15:30 UTC, weekdayOnly=false) to existing setTimeout(30s) block. Add `recoverMissedExecutions: true` to alertDigestJob cron registration.
-- `summaryJobs.ts`: Export `runSummaryJob` (was private). Add `recoverMissedExecutions: true` to `summaryJob:daily` cron registration.
-- `1958a-alert-digest-summary-catchup.test.ts` (NEW, 16 tests): AC-1a–h (alertDigestJob catchup params), AC-2a–g (summaryJob:daily catchup params), AC-3 (DB error fail-safe).
-
-**Results:** 16/16 tests GREEN, tsc 0 errors (excluding pre-existing coordinationStore errors), full suite 9330 pass / 283 fail (zero regression from 9284 baseline).
-
-**Secondary signal for Architect:** OHLCV backfill ran for 5h at container startup (1599 rows). Event-loop starvation from startup operations is the root cause pattern.
-
-**NEXT: qa** — verify commit against ACs; then ops container redeploy + confirm all 5 jobs fire within 24h.
-
-Zone health: alertDigestJob and summaryJob:daily now have both startup catchups and recoverMissedExecutions guards; scheduler resilience improved | HEALTHY
-
----
-
-### Task 1955b — zombie cron_job_runs reap on startup (2026-05-20, DONE — commit cfe10b0a)
-
-**Problem:** Scheduler crash (SIGKILL / watchdog) left `status='running'` + `finished_at IS NULL` rows in `cron_job_runs`. Reaper function did not exist; CHECK constraint excluded 'crashed'.
-
-**Fix (4 files):**
-- `cronJobRunStore.ts`: `CronJobRunStatus` type union extended to include `'crashed'`. `reapZombieJobRuns(db)` added — UPDATE WHERE status='running' AND finished_at IS NULL → sets status='crashed', finished_at=NOW, duration_ms computed.
-- `schema-system.ts`: CREATE TABLE check updated to `('running','success','error','crashed')`. Idempotent migration guard: detect old DDL via sqlite_master string-match (`'running','success','error'` present, `'crashed'` absent) → CREATE new table, INSERT OR IGNORE, DROP old, RENAME.
-- `startScheduler.ts`: Import `reapZombieJobRuns` from cronJobRunStore. Call `reapZombieJobRuns(db)` immediately after `getDb()` / `new SqliteJobRunRepository(db)`, before any cron registration. Logs reaped count when > 0.
-- `1955b-reap-zombie-runs.test.ts` (NEW, 178L): AC-1 happy path (2 zombies → crashed), AC-2 idempotence×2 (success/error untouched), AC-3 migration (old DDL + initSystemTables → baseline row preserved + 'crashed' accepted).
-
-**Results:** 4/4 tests GREEN, tsc 0 errors, full suite 9284 pass / 284 fail (284 pre-existing BCTC PDF parsing failures, zero regression).
-
-**NEXT: qa** — verify commit cfe10b0a against ACs; then ops container redeploy + verify `SELECT COUNT(*) FROM cron_job_runs WHERE status='running' AND finished_at IS NULL` = 0 post-restart.
-
-Zone health: zombie rows will be reaped on every container restart; CHECK accepts 'crashed'; migration is idempotent | HEALTHY
-
----
-
-### Task 1955a — dailyDashboardJob projectRoot() path fix (2026-05-20, DONE — commit acc8d52b)
-
-`projectRoot()` at `dailyDashboardJob.ts:455` used 6 `..` segments → resolved to `/` in container. Fixed to 3 segments (`../../..`). 5/5 tests GREEN, tsc 0 errors. DONE + QA-APPROVED.
-
----
-
-### Task 1954a — backfillBctcQ12026 column-name hotfix (2026-05-19, DONE — commit 2a5cc2a7)
-
-INSERT column list renamed to match `bctc_vps_queue` DDL (`action_code`, `period_year`, `period_quarter`). 0 regressions. DONE + QA-APPROVED.
-
----
-
-### Sprint 1953c+f Recovery (2026-05-19, DONE — commit 6c442373)
-
-pdfOcrWorker.ts 3-layer EPIPE guard (stdin error swallow, writable guard, tessExited flag). backfillBctcQ12026.ts new (INSERT OR IGNORE for Q1-2026). DONE.
-
----
-
-### Task 1949 T6/T7 — Cron Rewiring (2026-05-18, DONE)
-
-foreignFlowAlert → `13 8 * * 1-5` (was `30 9`). macroIndicatorRefresh → `13 19 * * *` (was `0 6`). Both 24min before chef cook slots. 9/9 tests GREEN.
-
----
-
-### Task 1948e-A/B — legal_risk signal type (2026-05-18, DONE)
-
-`"legal_risk"` added to SignalTypeSchema. stage-signals.md dispatch block added for news-scout. 8/8 tests GREEN.
-
----
-
-### Task 1946a — PLX watchlist (2026-05-18, DONE)
-
-PLX added to all 3 SSoT sources + frontend domain. 49/49 tests GREEN (includes 1343a stale-count fix).
-
----
-
-### Task 1945a — verdictResolutionJob envelope fix (2026-05-18, DONE)
-
-`getPriceHistory()` now returns `PriceHistoryEnvelope`. `defaultFetchHistory()` reads `envelope.history[0].close`. ~520 unscored alerts will score on next tick.
-
----
-
-### Task 1944b — BCTC dead strategies removed (2026-05-18, DONE)
-
-SSC iboard (NXDOMAIN) + vietstock (HTTP 404) removed from bctcDiscovery.ts. Chain: hsx(0) → VPS Playwright(1) → null. 142 BCTC tests GREEN.
-
----
-
-### Task 1942c — HPG cashflow fix (2026-05-18, DONE)
-
-CASH_FLOW_SCRIPT 3-key fallback + cashFlowExtractor steel-sector OCR label. 6/6 tests GREEN.
-
----
-
-### Task 1942a — vnstock startup backfill probe (2026-05-18, DONE)
-
-`vnstockStartupProbe.ts` injectable deps pattern. Cold DB or stale >7d fires job after 90s. 6/6 tests GREEN.
-
----
-
-### Task 1941c — Daily accuracy digest job (2026-05-18, DONE)
-
-`accuracyDigestJob.ts` at `0 7 * * *`. Top-3/bottom-3 signal types to WORK. DB dedup guard. 7/7 tests GREEN.
-
----
-
-### TNB Critic Gate Sprint A+B (2026-05-17, DONE)
-
-tnbCriticScorer.ts — 5 checks × 0.2, threshold 0.6. 49/49 GREEN. QA c143 APPROVED.
+### Carry-over
+
+- 283 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
+- Bun v1.3.13 C++ panic after full suite run is a known upstream bug (exit code 0, tests all pass)
+- LanceDB ~29GB > DISK_THRESHOLD_GB(20) — diskUsageAlertJob will fire on next hourly tick (correct behavior, shipped 1959-watchdog-5)

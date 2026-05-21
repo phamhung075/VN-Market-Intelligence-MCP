@@ -1,0 +1,17 @@
+{
+  "signal": "dev-mcp-server-1968b1-param-ready",
+  "emitted_at": "2026-05-21T21:00:00Z",
+  "from": "dev-mcp-server",
+  "to": "agent-father",
+  "status": "DONE",
+  "param_name": "hours_back",
+  "param_type": "number (positive, optional)",
+  "default": "omitted — no filter, backward-compatible",
+  "canonical_use": "hours_back=6 → 360-min lookback for legal_risk dedup",
+  "store_option": "hoursBack (GetSignalsOptions)",
+  "commit": "4fff6cbb",
+  "tests": "7/7 GREEN",
+  "tsc": "0 errors",
+  "unblocks": "agent-father phase 2 — news-scout SELF_SIGNALS_CACHE consolidation",
+  "next_action": "agent-father implements stage-bootstrap.md Step 0c consolidation + stage-signals.md cache filters"
+}
