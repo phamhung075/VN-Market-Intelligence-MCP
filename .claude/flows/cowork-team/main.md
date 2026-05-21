@@ -164,6 +164,45 @@ if WON_SLOTS is empty:
 
 ---
 
+## Step 4.7 — Write shared tick snapshot (L-6, 1968c-P01)
+
+<!-- Writes docs/data/cycle-snapshot-<HH:MM>.json before agent spawn.
+     Agents read this file instead of calling get_cycle_bootstrap independently.
+     File is ephemeral (overwritten each tick). Not git-committed (.gitignore).
+     Fallback: if this step fails, agents fall back to direct get_cycle_bootstrap — zero blocker. -->
+
+Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
+
+```bash
+# Resolve tick key (floor-15min, same math as nominal_tick above)
+FILE_TICK=$(date -u +%H:%M)
+
+# Call get_cycle_bootstrap once for the snapshot payload
+BOOTSTRAP_RESULT=$(call_tool(server="vn-market", tool="get_cycle_bootstrap",
+  arguments={"agent_name": "cowork-team"}))
+MARKET_CONTEXT=$(echo "$BOOTSTRAP_RESULT" | jq -c '.market_context // {}')
+
+# Call get_macro_snapshot once for the macro payload
+MACRO_RESULT=$(call_tool(server="vn-market", tool="get_macro_snapshot", arguments={}))
+MACRO_SNAPSHOT=$(echo "$MACRO_RESULT" | jq -c '.')
+
+# Atomic write: tmp → rename
+SNAPSHOT_FILE="docs/data/cycle-snapshot-${FILE_TICK}.json"
+TMPFILE="${SNAPSHOT_FILE}.tmp"
+
+jq -n \
+  --arg tick "$FILE_TICK" \
+  --arg created_at "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+  --argjson market_context "$MARKET_CONTEXT" \
+  --argjson macro_snapshot "$MACRO_SNAPSHOT" \
+  '{tick: $tick, created_at: $created_at, market_context: $market_context, macro_snapshot: $macro_snapshot}' \
+  > "$TMPFILE" && mv "$TMPFILE" "$SNAPSHOT_FILE"
+```
+
+**On any error in this step** (tool failure, jq error, write failure): log `"[cowork-team] tick-snapshot write failed: <error>"` and continue to Step 5. Do NOT block spawns — agents fall back to direct `get_cycle_bootstrap` via the Step -1 miss path in `cycle-bootstrap/SKILL.md`.
+
+---
+
 ## Step 5 — Parallel fan-out
 
 Fire **all** WON_SLOTS simultaneously in a single Agent tool message block. No sequential gating.

@@ -12,12 +12,18 @@ If bootstrap fails or `market_context` missing → send BUG → STOP.
 
 **0b. Regime**
 
-Call `get_macro_snapshot` directly:
+<!-- L-6 (1968c-P01): If cycle-bootstrap Step -1 loaded a tick snapshot (CYCLE_SNAPSHOT set),
+     macro_snapshot is already available from that file — skip the direct get_macro_snapshot call.
+     Only call get_macro_snapshot if CYCLE_SNAPSHOT was NOT loaded (fallback path). -->
+
+If `CYCLE_SNAPSHOT` is NOT set (snapshot miss in Step -1):
 ```
 call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
 ```
 
-**Shape-validation gate:** After the call, apply `isMacroSnapshotValidShape()` from `apps/mcp-server/src/interface/mcp/tools/macro/macroSnapshotGuard.ts`:
+If `CYCLE_SNAPSHOT` IS set: extract `macro_snapshot` from `$CYCLE_SNAPSHOT.macro_snapshot` → set as `MACRO_SNAPSHOT_TEXT`. Log: `[BOOTSTRAP] macro from tick-snapshot — skipping get_macro_snapshot`.
+
+**Shape-validation gate:** After the call (or extraction from snapshot), apply `isMacroSnapshotValidShape()` from `apps/mcp-server/src/interface/mcp/tools/macro/macroSnapshotGuard.ts`:
 - **Valid shape** (`text` field is a non-empty string): set `MACRO_SNAPSHOT_TEXT` to the response → pass to regime-extraction skill below. Set `REGIME_SOURCE=macro_snapshot`.
 - **Invalid shape** (missing or non-string `text` field — e.g. `{"status":"degraded","message":"..."}` system_status bleed): route to news-fallback. Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot shape mismatch — expected {text:string}, got: {actual_keys}`. Non-fatal; continue with news-fallback identical to call failure path.
 - **Call failure**: retry once. If retry also fails, derive regime hint from news context (dominant sentiment: bearish → TIGHTENING hint, bullish → EASING hint, mixed → NEUTRAL). Log `REGIME_SOURCE=news-fallback` + `[WARN] get_macro_snapshot unavailable after retry — regime is estimated`.

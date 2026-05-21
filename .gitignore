@@ -17,3 +17,4 @@ dist/
 /__pycache__/
 docs/agent-memory/sessions/preflight-lsof-*.log
 apps/*/server
+docs/data/cycle-snapshot-*.json

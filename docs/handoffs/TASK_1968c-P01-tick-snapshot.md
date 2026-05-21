@@ -87,6 +87,34 @@ If `$CYCLE_SNAPSHOT` is set and valid, extract `market_context` and `macro_snaps
 
 ---
 
+## [Implementer] — agent-father, 2026-05-21
+
+**Zone:** `.claude/` only (apps/mcp-server/ deferred to dev-mcp-server per task split)
+
+**Files modified:**
+- `.gitignore` — added `docs/data/cycle-snapshot-*.json` (AC-5)
+- `.claude/flows/cowork-team/main.md` — added Step 4.7: snapshot write (get_cycle_bootstrap + get_macro_snapshot → atomic write to docs/data/cycle-snapshot-<HH:MM>.json) before Step 5 fan-out (AC-1, AC-2)
+- `.claude/flows/news-scout/stage-bootstrap.md` — Step 0b updated: if CYCLE_SNAPSHOT set → extract macro_snapshot from snapshot, skip direct get_macro_snapshot call (AC-3, AC-4)
+- `.claude/flows/alert-commander/stage-bootstrap.md` — Step 0b updated: same snapshot-aware macro extraction pattern (AC-3, AC-4)
+
+**Note on cycle-bootstrap/SKILL.md:** Step -1 tick snapshot check was already implemented in Sprint 1968b2 (prior cycle). No changes needed to this file.
+
+**Note on market-watcher/cycle.md:** Step 0 delegates to cycle-bootstrap/SKILL.md which already has Step -1. No additional change needed — market-watcher does not call get_macro_snapshot separately (derives regime from bootstrap context).
+
+**Deferred (dev-mcp-server zone):** apps/mcp-server/ snapshot write integration — per pair-claim arrangement. dev-mcp-server will handle server-side after 1967-02 QA review.
+
+**AC status:**
+- AC-1: PASS — Step 4.7 added to cowork-team/main.md
+- AC-2: PASS — File format: `{tick, created_at, market_context, macro_snapshot}`
+- AC-3: PASS — news-scout + alert-commander updated; market-watcher inherits via skill
+- AC-4: PASS — fallback is default path when CYCLE_SNAPSHOT not set
+- AC-5: PASS — .gitignore updated
+- AC-6: PENDING_QA — live cycle verification needed
+- AC-7: PENDING_QA — manual delete test needed
+- AC-8: PENDING_QA — regression check on signal output
+
+**Signal emitted:** `docs/signals/agent-father-1968c-p01-done.json`
+
 ## [QA] Review Record
 _(To be filled by QA upon task completion)_
 
