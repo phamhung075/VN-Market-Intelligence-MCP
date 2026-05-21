@@ -1,0 +1,27 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "sprint-kickoff-gated",
+  "priority": "medium",
+  "createdAt": "2026-05-21T19:10:46Z",
+  "tier": "ULTRA",
+  "payload": {
+    "sprint": "1968",
+    "phase": "1",
+    "anchor_task": "1968a",
+    "brief": "docs/architecture-briefs/2026-05-21-token-toolcall-economy.md",
+    "goal_ref": "docs/SPRINT_GOAL.md §Sprint 1968",
+    "handoff": "docs/handoffs/TASK_1968a-phase1.md",
+    "scope": "L-1..L-5 (4 trigger:startup fix + 7 notebook trim + signal pointer rule + ULTRA cycle-status)",
+    "gate": "WAIT for 1967b architect brief docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md to land + PO sanity-check overlap before file surgery",
+    "gate_eta": "2026-05-21T22:01Z",
+    "verified_cross_ref": "alert-commander.md still has trigger:startup mcp-tools.md → L-1 NOT a no-op",
+    "no_code": true,
+    "no_docker": true,
+    "no_bctc_paths": true,
+    "ack_signal": "docs/signals/agent-father-1968a-phase1-done.json",
+    "po_ratification_signal": "docs/signals/po-1968a-phase1-approved.json",
+    "time_box_hours": 2,
+    "parallel_with": ["1959-soak", "1965c-soak", "1967a-ba", "1967b-arch"]
+  }
+}

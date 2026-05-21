@@ -1,3 +1,252 @@
+# Sprint 1968 Goal — Token & Tool-Call Economy Phase 1 (agent-father-only, zero-code)
+
+**Status:** OPEN 2026-05-21T19:10Z (po c235 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` | **Severity:** MEDIUM (cost-reduction, no incident) | **Owner:** agent-father (single executor, Phase 1 only) | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965 soak (1965c qa OBSERVE through 2026-05-23T18:00Z) + Sprint 1967 orchestration audit (read-only architect in flight, brief expected ~22:01Z).
+
+## Vision
+Land 5 zero-risk levers (L-1..L-5 from brief) that reduce per-cycle context size 25–35% and remove ~56 redundant MCP calls/trading-day. All edits are agent-system .md surgery — no production code, no Docker rebuild, no schema change. Phase 2 (L-4 consolidated `get_agent_signals` + L-7 EOD notebook commit batch) folds into Sprint 1968 cycle-2 after Phase 1 lands. Phase 3 (L-6 tick snapshot, L-8 composite skill, L-9 server-side filter) is deferred — requires dev-team via PM after Phase 1 ratification.
+
+## Coordination Point (HARD)
+Agent-father MUST NOT start 1968a until Sprint 1967b architect brief lands (`docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`). The 1967 audit may surface additional always_load / notebook / signal-schema drift findings that overlap with brief levers L-1..L-3. Agent-father reads BOTH briefs before file surgery to avoid double-fixing the same agent .md. If 1967b finds nothing in these zones, agent-father proceeds with 1968 brief as-is. ETA: ~2026-05-21T22:01Z (1967b time-box).
+
+## Cross-Ref Check Completed (PO c235)
+- 1963-MW-IDENTITY: alert-commander.md line 82–84 still has `mcp-tools.md trigger: startup`. The MW-identity fix did NOT promote it to always_load. **L-1 for alert-commander remains valid.** Agent-father should decide L-1 outcome based on whether the structural runtime test (does alert-commander need mcp-tools.md on every cycle to construct MCP calls?) returns YES → promote to always_load; NO → change `trigger: startup` → `trigger: mcp_tool_unavailable`.
+- 1964-AC-ENUM: schema-fix is a dev-mcp-server task (Sprint 1967 slate). L-3 (signal payload pointer rule) is additive to signal-dashboard skill — orthogonal, no conflict.
+- 1965-COVERAGE-SWEEP: capability-vs-flow drift — orthogonal to Phase 1 token surgery.
+- BCTC freeze: Phase 1 is agent-system .md only — no BCTC paths touched. Safe.
+
+## Scope
+**IN (Phase 1 — Cycle 1, agent-father only):**
+- L-1: Fix `trigger: startup` lazy-load semantics in 4 agents (news-scout, alert-commander, financial-analyst, report-analyzer). Convert to real conditional triggers OR promote to `always_load` with size-justification comment. SSOT knowledge files unchanged; only the trigger field semantics changes.
+- L-2: Archive + trim 7 over-size notebooks to ≤120L (qa=1149L, dev-frontend=384L, architect=310L, dev-team=286L, pm=269L, ba=234L, system-auditor=211L). Archive remainder to `docs/archive/notebooks/<agent-id>-2026-05-21.md` BEFORE overwrite. Preserve `## Carry-over` section in live notebook. Update `.claude/skills/notebook-write/SKILL.md` hard cap to 120L.
+- L-3: Add signal payload pointer rule to `.claude/skills/signal-dashboard/SKILL.md` — DASHBOARD summary >120 chars → truncate to 80 chars + `→ docs/handoffs/...` pointer. pm sprint signals payload ≤800 chars JSON (title + scope + task IDs only); full plan goes in `docs/handoffs/SPRINT_NNN.md`. No retroactive payload rewrite — applies to NEW signals from cycle-2 onward.
+- L-5: Apply ULTRA caveman tier to cycle-status pings in news-scout (`stage-log-notify.md`) + market-watcher (`cycle.md` Step 5b) + alert-commander session-log headers. No format invention — ULTRA tier already defined in `.claude/skills/caveman/SKILL.md`.
+
+**IN (Phase 2 — Cycle 2, dispatched only after Phase 1 ratified):**
+- L-4: Consolidate news-scout `get_agent_signals` 3 calls → 1 call at stage-bootstrap with SELF_SIGNALS_CACHE; downstream dedup checks read cache. Must confirm `get_agent_signals` supports `hours_back=7` parameter; if not, file a PM TASK_NNN dependency-spec to dev-mcp-server.
+- L-7: Move market-watcher + news-scout notebook commit from per-cycle to EOD batch (08:59 UTC) under market-watcher `eod.md`. Off-hours cycles (every 4h) keep per-cycle commits — too rare to batch.
+
+**OUT (Phase 3 — DEFERRED, requires PM TASK_NNN + dev-team execution after Phase 1 lands):**
+- L-6 tick-snapshot cache (`docs/data/cycle-snapshot-<TICK>.json` + cowork-team write step + 3 cowork agent fallback read paths). Requires dev-mcp-server + agent-father co-execution.
+- L-8 composite step-0-cowork skill. Requires careful error-boundary preservation; needs qa ratification.
+- L-9 `get_agent_signals` server-side `signal_type` filter. Requires dev-mcp-server tool-schema change.
+
+**OUT (this sprint never):**
+- Any production code change.
+- Any Docker rebuild.
+- Any DB schema change.
+- Any BCTC path edit (BCTC freeze in force until 1954c lands).
+- Any cron schedule change.
+
+## Success Metric
+- **AC-1 (L-1):** All 4 agent .md files have `trigger: startup` replaced with a real conditional trigger OR `always_load` promotion. Each promotion to `always_load` carries an inline `# justification: ...` comment. PO sanity-checks the 4 files.
+- **AC-2 (L-2):** 7 notebooks ≤120L. Archive files exist at `docs/archive/notebooks/<agent-id>-2026-05-21.md` with the trimmed content. `## Carry-over` section present in every live notebook. `.claude/skills/notebook-write/SKILL.md` hard cap updated to 120L.
+- **AC-3 (L-3):** `.claude/skills/signal-dashboard/SKILL.md` contains the new "payload pointer rule" section. No retroactive rewrite needed.
+- **AC-4 (L-5):** news-scout `stage-log-notify.md` + market-watcher `cycle.md` Step 5b + alert-commander session-log header lines route cycle-status pings through ULTRA tier per caveman skill.
+- **AC-5 (commit):** Single commit per lever (5 commits) OR one batched commit if all 5 land same cycle. Commit messages follow `docs/policies/commit-convention.md`.
+- **AC-6 (ratification):** PO sanity-check after agent-father emits `docs/signals/agent-father-1968a-phase1-done.json`. PO closes Phase 1 with `docs/signals/po-1968a-phase1-approved.json` → dispatches Phase 2 (cycle-2).
+
+## Tasks
+| ID | Title | Priority/Size | Owner | Zone | Status | Depends |
+|----|-------|---------------|-------|------|--------|---------|
+| 1968a | **Sprint 1968 ANCHOR — Phase 1 token/tool-call surgery (L-1..L-5).** Read brief §2 Tier-1 + this SPRINT_GOAL §Scope (Phase 1) + Sprint 1967b architect brief (when it lands). Execute 5 levers as .md edits. Emit `docs/signals/agent-father-1968a-phase1-done.json` (caveman ultra) with per-lever ACK lines. Time-box 2h. | HIGH / M | agent-father | `.claude/` + `docs/` (read-only on architecture-briefs) | BLOCKED (gated on 1967b brief landing) | 1967b-brief-landed |
+| 1968b | **Sprint 1968 Cycle-2 — PENDING: Phase 2 (L-4 + L-7).** Dispatched only after PO emits `docs/signals/po-1968a-phase1-approved.json`. L-4 = news-scout `get_agent_signals` consolidation in stage-bootstrap + stage-signals. L-7 = market-watcher + news-scout EOD notebook commit batch. PRE-CONDITION CHECK: agent-father MUST verify `get_agent_signals` supports `hours_back=7` parameter; if not, escalate to PM as TASK_NNN dependency-spec to dev-mcp-server BEFORE proceeding with L-4. Time-box 2h. | MEDIUM / S | agent-father | `.claude/` | PENDING | 1968a-approved |
+| 1968c | **Sprint 1968 Phase 3 — PENDING: PM conversion to TASK_NNN slate.** Dispatched only after 1968b approved. L-6 tick-snapshot + L-8 composite skill + L-9 server-side filter → each gets a TASK_NNN row with zone + size + dependency. Cross-reference brief §2 Tier-2/Tier-3 + §3 Context-Tracking Safeguards. Time-box 1h. | MEDIUM / S | pm | `docs/` | PENDING | 1968b-approved |
+
+## Dispatch Slate — Cycle 1 (this kickoff)
+```
+DISPATCH:
+  - (no immediate dispatch — agent-father gated on 1967b brief landing ~22:01Z)
+PENDING (auto-dispatch when 1967b brief lands AND po sanity-check on 1967b passes):
+  - agent-father → 1968a   inner self-claim task:1968a (kind=sprint-task, ttl=7200s)
+                            run .claude/flows/agent-father/main.md
+                            read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md §2 Tier-1
+                            read docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md (for overlap merge)
+                            read docs/SPRINT_GOAL.md §Sprint 1968 §Scope
+                            execute L-1..L-5 as .md edits (no code, no Docker)
+                            emit docs/signals/agent-father-1968a-phase1-done.json (caveman ultra)
+                            handoff to PO for AC-6 sanity-check + ratification
+PENDING (Cycle 2, after po-1968a-phase1-approved.json):
+  - agent-father → 1968b   Phase 2 levers L-4 + L-7
+PENDING (Cycle 3, after po-1968b-phase2-approved.json):
+  - pm → 1968c             decompose Phase 3 levers into TASK_NNN slate for dev-team
+GATED (Sprint close):
+  - po close → when Phase 1 + Phase 2 ratified + Phase 3 PM slate created
+```
+
+## Constraints / Boundary
+- **No code change.** Phase 1 + Phase 2 are agent-system .md surgery only.
+- **No Docker rebuild.** Phase 1 + Phase 2 are filesystem edits + signal emit.
+- **1967b gate.** Agent-father waits for 1967b brief to land (~22:01Z) and PO sanity-checks the overlap window before dispatching 1968a. Prevents double-fixing the same .md surface.
+- **Phase 3 routed through PM.** L-6/L-8/L-9 are dev-team work; PO does not bypass PM.
+- **BCTC freeze in force.** Phase 1 + Phase 2 don't touch BCTC paths — safe by scope.
+- **WIP cap.** agent-father is its own zone; does not collide with dev-mcp-server (1965b done, 1967 in audit) or dev-rag-service (1959-watchdog-4 hold) or ba (1967a in flight) or architect (1967b in flight).
+- All standing OBSERVE gates preserved (1957d, 1955c, 1907a-verify, 1941b, 1922g, 1965c-soak, 1959-watchdog-4 hold). None touch 1968 scope.
+
+---
+
+# Sprint 1967 Goal — Orchestration Bug & Conflict Audit + FIX (full chain)
+
+**Status:** OPEN 2026-05-21T19:01Z (po c234 kickoff) — SCOPE UPGRADE 2026-05-21T19:02Z (user /goal): full chain PO → BA → architect → PM → dev-team; drive to FIX, not just catalogue | **Brief target:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` | **Severity:** HIGH | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965 soak (1965c qa OBSERVE through 2026-05-23T18:00Z).
+
+## Vision
+User-direct request (upgraded 2026-05-21T19:02Z): "fix all bugs/conflicts in orchestration agent system". Detect, catalogue, **AND fix** every orchestration bug, race, dispatch conflict, signal collision, cron overlap, agent-spawning recursion, dead-handoff, identity-confusion, and lock-contention surface currently in the live agent system. Do NOT stop at a catalogue — drive each CONFIRMED finding to "fixed" state via dev-team. DEFERRED findings require explicit architect+PO sign-off.
+
+## Chain — Strict Order (per user directive 2026-05-21T19:02Z)
+```
+PO (this commit)
+  -> BA               (decompose audit scope into atomic requirements per surface 1-7)
+     -> architect    (run orchestration audit; brief listing each bug w/ severity+repro+fix design)
+        -> PM        (convert findings -> TASK_NNN with handoff doc + zone + size + dependency)
+           -> dev-team (developer + zone specialists apply fixes; WIP 2/2; task-lock Phase 4)
+              -> qa  (per-task APPROVE + sprint sign-off when all CONFIRMED bugs DONE)
+```
+Hard rule: BA gate is mandatory. Architect cannot start until PO approves REQ_1967.
+
+## Scope
+**IN (audit surfaces — same as before, now driven to fix):**
+1. Inter-agent comms layer — signal-bus payload schemas, MCP tool enums (e.g. 1964-AC-ENUM), DASHBOARD row reader/writer contracts, caveman handoff format, signal-file naming + write contract.
+2. Flow files — race/idempotency in flows/*/main.md, sub-flow boundaries (e.g. po/main.md JUMP-TO + RETURN block discipline), recursive spawn risk (dev-team / cowork-team dispatcher), agent identity declarations (1963-MW-IDENTITY).
+3. Dispatch routing — `.claude/skills/dispatch/SKILL.md` table coverage, hidden general-purpose fallbacks, dispatcher-wrap vs inner self-claim symmetry, task-lock acquisition/release path (`.claude/skills/task-lock/SKILL.md`).
+4. Signal bus + DASHBOARD — race between writer prune and reader scan, stale-race (e.g. 1962-B-01 pm signal landed after PO closed sprint), missing dedup keys, processed/ migration races.
+5. Cron schedule — overlap windows, `crashed` status that blocks re-fire (OBSERVE-1955d evidence), watchdog grace-period vs scheduler tick collision, master cowork dispatcher fire-drift (cowork-team-20260521T185005Z drift_min=5).
+6. Agent definition pathology — capability text vs flow execution drift (1965-COVERAGE-SWEEP), `always_load` discipline, lazy-load triggers, identity stanza completeness.
+7. Lock contention + race — task-lock Phases 1–4 stale-claim TTL, dispatcher-wrap leak, inner-claim missed on agent crash, dual-claim conflict, TASKS.md / DASHBOARD / pipeline-state.json concurrent-writer last-writer-wins.
+
+**OUT:**
+- Microservice-internal concurrency (e.g. node-cron starvation already shipped 1958a). Only orchestration-layer instances counted here.
+- Re-running deep RCAs already captured (1958-rca, 1958-rca-2, 1954-bctc-write-chain) — link them, don't redo.
+- Live ops data-staleness (1959-B-01/B-04/B-05) — ops-lane, not orchestration.
+- Cosmetic doc drift unless it affects orchestration behaviour.
+
+## Success Metric
+- **AC-1 (BA):** `docs/REQ_1967.md` exists with ≥7 atomic requirements REQ-1967-1..7 (one per surface). PO ratifies via `docs/signals/po-1967-ba-approved.json`. **Hard gate: architect cannot start until this signal lands.**
+- **AC-2 (architect):** Brief at `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` (≤600 L). Each item: `{id, surface, severity (CRIT/HIGH/MED/LOW), repro_or_evidence_pointer, current_behaviour, expected_behaviour, suggested_fix_design, suggested_fix_owner, suggested_fix_size (XS/S/M/L), depends_on}`. Minimum 5 items; "no findings" per surface must be explicit (silence ≠ pass).
+- **AC-3 (PM):** Each architect CONFIRMED finding has a TASKS.md Backlog row `1967-bug-NN` with handoff doc `docs/handoffs/TASK_1967-bug-NN.md`. DEFERRED findings get a row with "Blocked by" = "architect+PO sign-off required".
+- **AC-4 (dev-team):** All CONFIRMED-severity tasks ship with passing tests + tsc 0 errors + qa APPROVE signal `docs/signals/qa-1967-bug-NN-approved.json`. Zone-routing per `.claude/skills/dispatch/SKILL.md`. WIP 2/2 + task-lock Phase 4 dispatcher-wrap respected.
+- **AC-5 (qa sprint sign-off):** `docs/signals/qa-1967-sprint-signoff.json` emitted only when ALL CONFIRMED-severity tasks status=Done OR DEFERRED-with-signoff. No silent skips.
+- **AC-6 (regression guard):** post-sprint smoke: TASKS.md janitor (Sprint 1965) shows zero divergence; cron_job_runs shows zero overlap windows 7d post-deploy; DASHBOARD has zero `## po` rows of type `orchestration-anomaly` for 48h.
+- **AC-7 (cross-link):** Brief cross-links 1963-MW-IDENTITY, OBSERVE-1955d/e, 1962-B-01, 1964-AC-ENUM, 1965-COVERAGE-SWEEP so chain is auditable.
+
+## Seed Evidence (PO pre-curated from c234 audit)
+| # | Surface | Evidence | Notes |
+|---|---------|----------|-------|
+| E-1 | Agent identity / MCP tool awareness | 1963-MW-IDENTITY recurrence pattern (170504Z FAIL after 163840Z SUCCESS) — market-watcher cycles intermittently claim "cannot directly call MCP tools through the gateway" | agent-father shipped a fix; question: is the fix structurally sufficient or is there an underlying race in the agent-spawning prompt-construction layer? |
+| E-2 | Cron re-fire after crash | OBSERVE-1955d FAIL — both `vnstockTradingStatsRefresh` + `vnstockFundamentalsRefresh` crashed once on 2026-05-18, NEVER refired despite weekly schedule. `cronJobRepo.markCrashed()` may not release schedule slot | Architect must confirm whether `status=crashed` blocks scheduler re-pickup; could affect ALL cron jobs sharing this status path |
+| E-3 | Signal-timing race PM ↔ PO | 1962-B-01: pm `plan_blocked` signal at 22:30Z fired AFTER po had already closed sprint at 20:48Z. Sprint state changed between pm's read and pm's write | Indicates missing CAS/version-check on sprint-state transitions, or pm reading stale TASKS.md snapshot |
+| E-4 | MCP signal enum schema | 1964-AC-ENUM: alert-commander's `verified_decision` signal_type rejected by `post_agent_signal` schema; documented fallback `signal_feedback` ALSO rejected. Agent silently degraded | Schema vs documented contract drift — how many other "documented but not implemented" signal types exist? |
+| E-5 | Capability vs execution drift | 1965-COVERAGE-SWEEP: news-scout.md + market-watcher.md claim "all watchlist tickers" but execution touches 5/34 (PC1/GAS/PLX/VIC/VPB) | Identity/capability text is documentation; flow.md is execution truth. Are there other documented-but-not-executed capabilities across the 35 agents? |
+| E-6 | Cowork dispatcher drift | `cowork-team-20260521T185005Z.json` shows `drift_min=5` (fire-time vs schedule slot). `silent=true matched_slots=[]` — was this a wasted tick or a correctly idle one? | Drift accumulation may explain market-watcher intermittent failures (E-1) — same root? |
+| E-7 | Recurring-bug-escalation effectiveness | BCTC freeze in force since 1954c gate; multiple sprints (1965, 1959, 1967) running in parallel while 1954c sits BLOCKED. Is the freeze policy actually freezing, or is unrelated work bypassing intent? | Policy/orchestration contract test |
+
+## Tasks (Cycle 1 — this kickoff)
+| ID | Title | Priority/Size | Owner | Zone | Depends |
+|----|-------|---------------|-------|------|---------|
+| 1967a | **BA decomposition** — produce `docs/REQ_1967.md` with ≥7 atomic requirements REQ-1967-1..7 (one per surface 1–7 in §Scope). Each REQ has check-list testable items mapping to surface bullets. No architecture proposals — pure decomposition. Explicit out-of-scope subsection mirroring §Scope OUT. Use 7 seed evidence rows below as testability anchor. | HIGH / 2h | ba | `docs/` | — |
+
+## Pending Tasks (later cycles — sequenced)
+| ID | Title | Priority/Size | Owner | Zone | Depends |
+|----|-------|---------------|-------|------|---------|
+| 1967b | **Architect audit** — read-only orchestration scan; produce `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` enumerating every CONFIRMED bug per surface with severity + repro + fix design. Cross-link 1963-MW-IDENTITY, OBSERVE-1955d/e, 1962-B-01, 1964-AC-ENUM, 1965-COVERAGE-SWEEP. SUSPECTED entries flagged DEFERRED-NEEDS-PROBE. | HIGH / 4h | architect | multi (read-only) | 1967a APPROVED |
+| 1967c | **PM task slate** — convert each architect CONFIRMED finding into one TASKS.md row `1967-bug-NN` with handoff doc `docs/handoffs/TASK_1967-bug-NN.md`. DEFERRED findings get row with explicit "Blocked by". WIP-cap priority queue documented in dispatch slate. | HIGH / 2h | pm | `docs/` | 1967b brief landed |
+| 1967-bug-NN (slate) | **dev-team fix tasks** — apply fixes per PM slate; per-task qa APPROVE; zone-routing per dispatch skill; WIP 2/2 respected. | per-finding | dev-team | per-finding | 1967c slate complete |
+| 1967z | **qa sprint sign-off** — emit `docs/signals/qa-1967-sprint-signoff.json` when all CONFIRMED bugs Done. PO closes via `docs/signals/po-1967-close.json`. | HIGH / XS | qa | qa | all 1967-bug-NN Done |
+
+## Dispatch Slate — Cycle 1 (this kickoff)
+```
+DISPATCH:
+  - ba → 1967a   inner self-claim task:1967a (kind=sprint-task, ttl=7200s)
+                 run .claude/flows/ba/main.md
+                 read docs/SPRINT_GOAL.md §Scope + §Seed Evidence
+                 produce docs/REQ_1967.md (≥7 REQ items, one per surface)
+                 emit docs/signals/ba-1967a-spec-ready.json (caveman ultra)
+                 handoff to PO for AC-1 approval gate
+PENDING (Cycle 2, after po-1967-ba-approved.json):
+  - architect → 1967b   read REQ_1967 + SPRINT_GOAL.md §Scope; run audit; brief landed
+PENDING (Cycle 3, after 1967b brief + PO sanity check):
+  - pm → 1967c    decompose findings into TASK_1967-bug-NN slate
+PENDING (Cycle 4+, after pm slate complete):
+  - dev-team → 1967-bug-NN slate   apply fixes per priority + WIP cap; qa validates each
+GATED (Sprint close):
+  - qa sprint sign-off → po close   when all CONFIRMED bugs Done or DEFERRED-with-signoff
+```
+
+## Gate decision after 1967b (architect brief)
+- ≥1 CRITICAL with clear repro → PM dispatches CRITICAL fix tasks immediately under WIP 2/2 (parallel to 1959 if zones don't collide).
+- All HIGH/MED → PM queues against current WIP; dispatch can start once 1965c soak ends (2026-05-23T18:00Z) for any dev-mcp-server-zone fix.
+- "No findings" on a surface → architect must explicitly state "scanned, no orchestration risk found" (silence ≠ pass).
+- ≥3 findings on same surface → recurring-bug-escalation triggers; architect runs structural design pass before dev fixes that surface.
+
+## Constraints / Boundary
+- **BA gate is mandatory.** Architect cannot start until `docs/signals/po-1967-ba-approved.json` lands. User explicit directive 2026-05-21T19:02Z: do NOT skip BA.
+- **Fix to completion.** PO does NOT close Sprint 1967 until ALL CONFIRMED bugs status=Done OR DEFERRED with architect+PO sign-off. Session-scoped goal hook enforces this.
+- **WIP cap unchanged** (2/2 dev-zone). Sprint 1967 fix tasks interleave with 1959-watchdog-4 (unlock 2026-05-22T21:00Z) and 1965c-soak (qa-owned).
+- **Parallel sprint rule:** Sprint 1967 runs IN PARALLEL with 1959 + 1965 soaks (different agents/zones).
+- **BCTC freeze in force.** 1967-bug-NN tasks MUST NOT touch BCTC paths until 1954c lands; route to separate slate row gated on 1954c.
+- **Task-lock Phase 4 dispatcher-wrap** applies to every dev spawn; inner self-claim respected.
+- All standing OBSERVE gates preserved (1957d, 1955c, 1907a-verify, 1941b, 1922g, 1965c-soak, 1959-watchdog-4 hold). None touch 1967 scope.
+- Architect audit itself is read-only; fixes ship via dev-team in later cycles.
+
+---
+
+# Sprint 1965 Goal — TASKS.md Hardening Phase 1 (Option A — janitor cron)
+
+**Status:** OPEN 2026-05-21T17:22Z (po c232 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md` | **Severity:** MEDIUM (preventive — divergence detection only, zero code change on auditor side) | **Parallel sprint:** Sprint 1959 (still OPEN-IN-SOAK until watchdog-4 ships post-2026-05-22T21:00Z)
+
+## Vision
+Surface task-lock vs TASKS.md vs pipeline-state divergence within 24h so PO can reconcile manually — without coupling coordination.db health to TASKS.md writability. If divergence is rare (≤2/week), Option C echo cron stays deferred indefinitely; if frequent, that data justifies Sprint 1966 Phase 2.
+
+## Scope
+**IN:**
+- 1965a — agent-father DESIGN: new section `## TASKS.md Reconciliation Pass` in `docs/agents/system-auditor/handlers.md` + new dimension D4 in `docs/agents/system-auditor/audit-dimensions.md` (no code).
+- 1965b — dev-mcp-server IMPLEMENT + smoke: system-auditor 03:00Z pass calls `task_list_held`, emits DASHBOARD `## po` row per `.claude/skills/signal-dashboard/SKILL.md` on divergence (AC-1..AC-5 per brief §6).
+- 1965c — qa OBSERVE 48h soak across 2 cron passes verifying AC-1..AC-5.
+
+**OUT:**
+- Sprint 1966 Option C echo cron (brief §7 rows d/e) — gated on 1965c PASS + 1959-watchdog-4 soak complete (2026-05-22T21:00Z). Do NOT open in this kickoff.
+- Option B edit-guard — ruled out per brief §5 (couples coordination.db health to governance layer).
+
+## Success Metric
+- AC-1: system-auditor session log shows `task_list_held` call at 03:00Z±5min on both observation days.
+- AC-2: When a sprint-task lock is held with TASKS.md status ≠ `In Progress`, DASHBOARD `## po` row appears within 24h.
+- AC-3: Clean-day pass produces ZERO false-positive `## po` rows.
+- AC-4: `task_list_held` empty AND `pipeline-state.json` `activeTaskId` non-null → DASHBOARD alert emitted.
+- AC-5: `git log --all --oneline -- docs/TASKS.md` detects any pair of commits <30s apart on same row → alert.
+
+## Tasks
+| ID | Title | Priority/Size | Owner | Zone | Depends |
+|----|-------|---------------|-------|------|---------|
+| 1965a | Design system-auditor TASKS.md reconciliation pass (handlers.md + audit-dimensions.md D4) | HIGH / 1h | agent-father | `.claude/` | — |
+| 1965b | Implement + smoke: janitor 03:00Z calls task_list_held, emits DASHBOARD row on divergence | HIGH / 2h | dev-mcp-server | `apps/mcp-server/` | 1965a |
+| 1965c | QA: 48h soak verifying AC-1..AC-5 across 2 observation days | MEDIUM / OBSERVE | qa | qa | 1965b |
+
+## Dispatch Slate — Cycle 1 (this kickoff)
+```
+DISPATCH:
+  - agent-father  → 1965a   inner self-claim task:1965a (kind=sprint-task, ttl=3600s)
+                              read brief §3 Option A + §8 Phase 1
+                              land handlers.md §reconciliation + audit-dimensions.md D4
+                              emit docs/signals/agent-father-1965a-design-done.json
+                              forward to dev-mcp-server for 1965b
+PENDING (Cycle 2):
+  - dev-mcp-server → 1965b  after 1965a design landed
+PENDING (Cycle 3):
+  - qa             → 1965c  after 1965b deployed (48h OBSERVE)
+GATED (Sprint 1966):
+  - 1966a/1966b deferred — gate = 1965c PASS + 1959-watchdog-4 soak unlock (2026-05-22T21:00Z)
+```
+
+## Gate decision after 1965c
+- If janitor fires ≤2 false-positives across 48h AND rare-divergence pattern holds → Phase 2 (Option C echo cron) DEFERRED indefinitely per brief §5.
+- If janitor fires daily with genuine divergences → Sprint 1966 dispatched post 1959-watchdog-4 unlock.
+
+## Constraints / Boundary
+- WIP cap unchanged. 1965a only dispatched now; 1965b waits on 1965a design landed; 1965c is OBSERVE-only.
+- Sprint 1965 runs IN PARALLEL with Sprint 1959 soak — does NOT block soak boundary (different agents, different zones).
+- No recurring-bug escalation. 1965 is preventive, not reactive.
+- All standing OBSERVE gates preserved (1957d, 1955c, 1907a-verify, 1941b, 1922g, etc.). None touch 1965 scope.
+
+---
+
 # Sprint 1959 Goal — WATCHDOG HARDENING BATCH (post-1958 stack outage)
 
 **Status:** OPEN-IN-SOAK — cycle-3 active work fully shipped 2026-05-20T21:40Z (w-9 ratified + w-10 dev-done in QA) | **Predecessor:** Sprint 1958 (incident response) CLOSED 2026-05-20T20:40Z | **Severity:** HIGH (preventive hardening — no live incident) | **Sign-off:** po-1958-close.json + po-1958-mid-checkpoint.json + po-1959-cycle-2.json + po-1959-cycle-3.json + po-1959-w9-ratified.json
