@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260521T010346Z",
+    "matched_slots": ["market-watcher-prepost"],
+    "won_slots": ["market-watcher-prepost"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [".claude/flows/market-watcher/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      {"slot_id": "market-watcher-prepost", "error": "Subagent hallucinated needing a spawn_agent MCP tool to spawn itself; did not execute its flow. Recurring pattern (2nd cycle in a row after 000235Z)."}
+    ]
+  },
+  "priority": "high",
+  "createdAt": "20260521T010346Z"
+}

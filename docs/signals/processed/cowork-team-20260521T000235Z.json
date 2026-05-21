@@ -1,0 +1,26 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260521T000235Z",
+    "matched_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-prepost", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-prepost"],
+    "held_by_other": ["market-watcher-offhours"],
+    "all_held": false,
+    "spawned": [".claude/flows/financial-analyst/main.md", ".claude/flows/news-scout/main.md", ".claude/flows/market-watcher/main.md"],
+    "silent": false,
+    "drift_min": 2,
+    "collision_warning": {
+      "agent_id": "market-watcher",
+      "duplicate_slots": ["market-watcher-prepost", "market-watcher-offhours"],
+      "note": "Expected co-fire at 00:00 boundary; lock enforces single-fire per agent per tick"
+    },
+    "errors": [
+      {"slot_id": "news-scout-offhours", "error": "MCP socket closed unexpectedly inside spawned agent"},
+      {"slot_id": "market-watcher-prepost", "error": "MCP socket closed unexpectedly inside spawned agent"}
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260521T000235Z"
+}
