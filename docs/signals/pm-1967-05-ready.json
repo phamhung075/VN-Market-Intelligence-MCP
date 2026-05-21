@@ -1,0 +1,26 @@
+{
+  "signal_id": "pm-1967-05-ready",
+  "timestamp": "2026-05-21T21:45:30Z",
+  "sender": "pm",
+  "recipient": "agent-father",
+  "priority": "HIGH",
+  "type": "task_assignment",
+  "task_id": "1967-05",
+  "task_title": "cowork-team dispatcher-wrap lock release timing drift guard",
+  "scope": "Add warning if drift_min exceeds 10min threshold in cowork-team dispatcher.",
+  "zone": ".claude/flows/cowork-team/",
+  "owner": "agent-father",
+  "size": "XS (~20 min)",
+  "handoff_file": "docs/handoffs/TASK_1967-05-cowork-lock-release-timing.md",
+  "acceptance_criteria": [
+    "cowork-team/main.md includes drift_min > 10 threshold check before task-lock claim release",
+    "If drift_min exceeds 10min → log WARN to WORK channel: 'cowork-dispatcher drift {drift_min}min detected, recalibrate clock or check host latency'",
+    "AC-verified: next 3 cowork cron cycles (2026-05-22T02:00Z, 04:00Z, 06:00Z) all fire within drift_min ≤ 10min AND no spurious WARNs",
+    "Existing drift_min=5 from 2026-05-21T185005Z cowork signal confirmed within safe zone"
+  ],
+  "blockers": "none",
+  "depends_on": "none",
+  "parallel_ok": "yes — non-conflicting with 1967-03 (different zone)",
+  "dispatch_status": "READY",
+  "note": "This is one of two parallel release candidates (1967-03 + 1967-05). Both XS, both agent-father, non-conflicting zones. Dispatch both immediately. WIP cap allows 2 In Progress."
+}

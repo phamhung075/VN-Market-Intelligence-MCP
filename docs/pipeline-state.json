@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "active-1967c",
-  "currentSprint": "1967c (dev-team) + 1968b1/b2 (qa-pending)",
-  "activeTaskId": "1967-02 (queued top of slate) + qa-1968b1 + qa-1968b2 (qa-smoke)",
-  "nextAgent": "qa (smoke 1968b1+1968b2 AC verification) + dev-team next cron (1967-02 dispatch after PO A/B decision)",
-  "nextPrompt": "PO cron-2007Z reconcile (2026-05-21T20:21Z): 1967-01 CLOSED to Done (commit dd071dcd, qa APPROVED). 1968a Phase 1 + 1968b1 Phase 1 (dev-mcp-server `4fff6cbb`) + 1968b1 Phase 2 (agent-father) + 1968b2 (agent-father) ALL DONE — qa smoke verification pending. 1967-02 verified_decision schema needs PO Option A vs B decision before dispatch (NO BATCH this cycle, decision-gated). 1967-03/04/05 agent-father maintenance-lane self-cron. Top dev-team dispatchable after 1967-02 decision = 1967-02 OR 1967-06 (1967-06 blocked-until 2026-05-22T21:00Z). qa-smoke is dev-core but no spec exists yet — qa picks up on its own cron via processed-signals scan.",
-  "updatedAt": "2026-05-21T20:21:44Z",
-  "updatedBy": "po",
-  "lastCompleted": "1967-01 DONE (dev-mcp-server dd071dcd, qa APPROVED). 1968b1 dev-mcp-server commit 4fff6cbb (hours_back param), agent-father consolidation done. 1968b2 agent-father cron-stagger + notebook-batch done (ITEM-05 merged in-touch). Awaiting qa smoke verification on 1968b1 AC-4 (2-fewer-MCP-calls) + 1968b2 AC-1..AC-8."
+  "status": "1968-ready-to-close + 1967c-dispatch-ready",
+  "currentSprint": "1968 READY-TO-CLOSE (all phases DONE+QA-APPROVED) + 1967c active queue release (1967-03/05 dispatch ready, 1967-02 PO decision pending)",
+  "activeTaskId": "1967-03 + 1967-05 (parallel agent-father dispatch ready) | 1967-02 (PO A/B decision gate)",
+  "nextAgent": "pm → agent-father (dispatch 1967-03 + 1967-05 parallel) + po (1967-02 Option A vs B decision) | po (sprint-1968-close-signal once pm confirms)",
+  "nextPrompt": "PM cron-2118Z reconcile (2026-05-21T21:45Z): 1968 Sprint Status Complete — Phase 1 RATIFIED (1968a L-1..L-5 commits 3bdd62c4..ff166258), Phase 2a DONE+QA-APPROVED (1968b1 commits 4fff6cbb+5ae49132, AC-1..AC-5 PASS, ac-4 smoke GREEN 2-fewer calls verified), Phase 2b DONE+QA-APPROVED (1968b2 commit 092692e4, AC-1..AC-8 PASS + ITEM-05 merge, stagger timings ns :00/:15/:30/:45 mw :05/:20/:35/:50 ac :10/:25/:40/:55). WIP=0 clean. 1967c queue: 1967-01 DONE. 1967-02 PO-held (A or B decision). 1967-03/04/05 self-cron ready. 1967-06 blocked-until 2026-05-22T21:00Z. Top dispatch = 1967-03 XS + 1967-05 XS parallel (both agent-father zone, non-conflicting). DECIDE: PO schedules 1967-02 decision first OR pm auto-releases 1967-03/05 now and queues 1967-02 after decision.",
+  "updatedAt": "2026-05-21T21:45:30Z",
+  "updatedBy": "pm",
+  "lastCompleted": "1968b1 DONE+QA-APPROVED (QA commit ad18ad52: hours_back param 4fff6cbb + consolidation 5ae49132, AC-1..AC-5 + AC-4 smoke 2-fewer-calls PASS). 1968b2 DONE+QA-APPROVED (QA commit a15f990c: cron-stagger ns :00/:15/:30/:45 mw :05/:20/:35/:50 ac :10/:25/:40/:55 + batch commit eod.md Step D + ITEM-05 merge 092692e4, AC-1..AC-8 PASS). 1968a+1968b1+1968b2 = Sprint 1968 COMPLETE + QA-VERIFIED."
 }
