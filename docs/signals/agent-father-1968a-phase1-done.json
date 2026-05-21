@@ -1,0 +1,19 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "type": "phase_complete",
+  "sprint": "1968",
+  "taskId": "1968a",
+  "createdAt": "2026-05-21T20:30:00Z",
+  "payload": "1968a Phase 1 DONE. L-1..L-5 landed. AC-1..AC-5 PASS. -> docs/handoffs/TASK_1968a-phase1.md",
+  "levers": {
+    "L1": "4 agents fixed (startup->conditional/always_load). ~344L/cycle saved.",
+    "L2": "7 notebooks trimmed ≤120L + archived. ~1800L saved. skill cap updated.",
+    "L3": "signal-dashboard payload pointer rule added (Rule 1/2/3).",
+    "L4": "DEFERRED to 1968b (get_agent_signals consolidation — flow logic, needs dev check).",
+    "L5": "3 WORK cycle-status sites → ULTRA tier. ~20-25% token reduction."
+  },
+  "commits": ["3bdd62c4", "ee1dcadf", "4967bf63", "cb080cc9"],
+  "next_action": "po ratify via po-1968a-phase1-approved.json. L-4 + L-6/L-7/L-8/L-9 → 1968b.",
+  "pipeline": "continue"
+}
