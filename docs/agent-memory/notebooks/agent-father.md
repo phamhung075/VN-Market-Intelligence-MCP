@@ -1,8 +1,22 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T21:00:00Z | **Sprint:** 1968b2 — L-6 cron stagger + L-7 notebook batch commit + ITEM-05 merge
+**Last updated:** 2026-05-21T20:03:48Z | **Sprint:** 1968b1 phase2 — L-4 get_agent_signals consolidation
 
-## This Session — 2026-05-21T21:00Z (Task 1968b2)
+## This Session — 2026-05-21T20:03Z (Task 1968b1 phase2)
+
+**Task:** L-4 news-scout get_agent_signals consolidation (3 calls → 1 per cycle).
+
+**stage-bootstrap.md Step 0c:** Replaced single `status=unread` feedback call with one consolidated call:
+`get_agent_signals(from_agent="news-scout", status="all", hours_back=6)` → `SELF_SIGNALS_CACHE`.
+Client-side filter for signal_feedback applied inline. Cache = per-cycle only, never persisted.
+
+**stage-signals.md:** Removed 2 MCP calls. Both inter-cycle dedup (180-min) and legal_risk dedup (360-min) now read from `SELF_SIGNALS_CACHE`. hours_back=6 covers the full 360-min legal_risk window.
+
+**AC verified:** AC-2 (3→1 call), AC-3 (0 MCP in dedup), L-4 invariant (360-min window covered).
+
+**Signal emitted:** `docs/signals/agent-father-1968b1-done.json` → qa.
+
+## Previous Session — 2026-05-21T21:00Z (Task 1968b2)
 
 **Task:** 1968b2 — L-6 cron stagger (agent-father-pure) + cycle-bootstrap Step -1 + L-7 notebook commit batching + ITEM-05 collision merge.
 

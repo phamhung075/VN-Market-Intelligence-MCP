@@ -25,14 +25,20 @@ call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
 On valid shape → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME
 
-**0c. Read pending feedback from financial-analyst**
+**0c. Load self-signal cache + feedback tuning**
+<!-- L-4 consolidation (1968b1): single call replaces 3 separate get_agent_signals calls per cycle.
+     hours_back=6 covers the 360-min window required by legal_risk dedup (stage-signals.md).
+     Result stored as SELF_SIGNALS_CACHE — scoped to this cycle only, never persisted. -->
 ```
-call_tool(server="vn-market", tool="get_agent_signals", arguments={
-  "agent": "news-scout",
-  "status": "unread"
+SELF_SIGNALS_CACHE = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "from_agent": "news-scout",
+  "status": "all",
+  "hours_back": 6
 })
 ```
-Client-side filter: keep only signals where `signal_type === "signal_feedback"` (ignore other signal types).
+Non-fatal: if tool errors, set `SELF_SIGNALS_CACHE = []`, skip feedback tuning, continue.
+
+Client-side filter for feedback: keep entries where `signal_type === "signal_feedback"`.
 
 Parse filtered results into `FEEDBACK_HINTS`:
 - Count `accepted=true` vs `accepted=false` per `source_signal_type` (`urgent_news`, `chain_catalyst`)
@@ -41,4 +47,3 @@ Parse filtered results into `FEEDBACK_HINTS`:
 - If acceptance rate > 70% → set `FILTER_HINT_<TYPE>=LOOSE` (keep current thresholds)
 - If no feedback available → skip tuning, use default thresholds
 - Log feedback summary in session log: `Feedback: X accepted / Y rejected | Hints: [list]`
-Non-fatal: if tool errors, skip feedback tuning and continue.

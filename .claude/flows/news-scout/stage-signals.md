@@ -6,16 +6,14 @@
 
 Before posting any `chain_catalyst` or `urgent_news`, check the last 3 hours of signals on the bus:
 
+<!-- L-4 cache hit (1968b1): use SELF_SIGNALS_CACHE loaded at stage-bootstrap Step 0c.
+     No MCP call needed — cache covers hours_back=6 (360 min), which exceeds this 180-min window.
+     Filter: all entries (chain_catalyst + urgent_news types included). -->
 ```
-recent = call_tool(server="vn-market", tool="get_agent_signals", arguments={
-  "agent": "news-scout",
-  "from_agent": "news-scout",
-  "status": "all"
-})
-# from_agent filters by sender (self-history). status="all" ensures already-read rows
-# (marked read by other agents) are still visible. The 180-min window check is applied
-# manually using created_at from the returned payload.
-# Read-mark side-effect is suppressed when from_agent is set.
+recent = SELF_SIGNALS_CACHE
+# SELF_SIGNALS_CACHE populated at Step 0c with from_agent="news-scout", status="all", hours_back=6.
+# Already contains self-history for last 360 min. Read-mark side-effect absent (from_agent set at source).
+# The 180-min window check is applied manually using created_at from the cached payload.
 ```
 
 For each candidate signal:
@@ -41,20 +39,20 @@ Legal risk event detected (prosecution / asset freeze / investigation) in articl
 - Article text matches any `CRIMINAL_PROSECUTION_KEYWORDS` (from `policyImpactMapper.ts`) AND `detectStocksInText()` resolves ≥1 watchlist/reference-stock code (e.g. PC1 from `referenceStocks.utilities`)
 
 **Step 1 — Dedup check:**
-Query recent `agent_signals` for matching `(stock_code, signal_type = "legal_risk")` within 360 minutes:
+Scan `SELF_SIGNALS_CACHE` for matching `(stock_code, signal_type = "legal_risk")` within 360 minutes:
 
+<!-- L-4 cache hit (1968b1): use SELF_SIGNALS_CACHE loaded at stage-bootstrap Step 0c.
+     hours_back=6 = 360 min — exact window needed for legal_risk dedup TTL. No MCP call needed. -->
 ```
-dedup_check = call_tool(server="vn-market", tool="get_agent_signals", arguments={
-  "agent": "news-scout",
-  "from_agent": "news-scout",
-  "status": "all"
-})
-# Manual check: scan returned rows for same stock_code + signal_type="legal_risk"
-# within last 360 minutes using created_at.
+dedup_check = SELF_SIGNALS_CACHE.filter(s =>
+  s.signal_type === "legal_risk" &&
+  s.stock_code === candidate.stock_code &&
+  (now - s.created_at) <= 360  // minutes
+)
 # 360 min = 6h TTL — legal proceedings evolve slowly, no need for per-cycle repost.
 ```
 
-- If duplicate found within 360 min → **SUPPRESS** with log: `"[DEDUP] legal_risk suppressed — same (stock_code, legal_risk) already on bus within 360 min. Skipping post."`
+- If `dedup_check.length > 0` → **SUPPRESS** with log: `"[DEDUP] legal_risk suppressed — same (stock_code, legal_risk) already on bus within 360 min. Skipping post."`
 - If no duplicate → proceed to Step 2
 
 **Step 2 — Classify risk level:**
