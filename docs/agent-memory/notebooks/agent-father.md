@@ -1,8 +1,43 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21 | **Sprint:** 1963-MW-IDENTITY fix
+**Last updated:** 2026-05-21T17:27:36Z | **Sprint:** 1965a — TASKS.md Reconciliation Pass design
 
-## This Session — 2026-05-21 (Task 1963-MW-IDENTITY — market-watcher identity pathology fix)
+## This Session — 2026-05-21T17:27Z (Task 1965a — system-auditor TASKS.md reconciliation pass DESIGN)
+
+**Task:** 1965a — DESIGN: add TASKS.md Reconciliation Pass to system-auditor handlers.md + dimension D4 to audit-dimensions.md.
+
+**Source:** `docs/signals/po-1965-kickoff.json` + `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md` §3 Option A + §8 Phase 1.
+
+**Task lock:** inner self-claim `task:1965a` (kind=sprint-task, ttl=3600s, owner=agent-father). pipeline-state.activeTaskId=null at claim time — no collision.
+
+**Scope (DESIGN only — no code, no Docker changes):**
+
+Two new files created under `docs/agents/system-auditor/` (directory did not exist):
+
+1. `docs/agents/system-auditor/handlers.md`
+   - TASKS.md Reconciliation Pass section: trigger 03:00Z daily, steps R-1..R-7
+   - R-1: `task_list_held(kind="sprint-task")` via MCP; AC-4 pipeline-state empty-list cross-check
+   - R-2: pipeline-state.json `activeTaskId` vs held lock cross-check
+   - R-3: TASKS.md owner/status cross-check per held lock (owner diverge + status diverge)
+   - R-4: git log concurrent-commit detection (30s window on docs/TASKS.md)
+   - R-5: DASHBOARD `## po` emit per divergence (signal-dashboard skill format)
+   - R-6: BUG channel for new divergences (dedup 7d, key: `d4_tasksmd_lock_diverge:<task_id>`)
+   - R-7: clean signal log if zero divergences
+   - Failure modes table: MCP fail, TASKS.md parse fail, pipeline-state missing, git log fail
+
+2. `docs/agents/system-auditor/audit-dimensions.md`
+   - Canonical dimension registry (D1 runtime, D2 fetch, D3 DB integrity pre-existing)
+   - D4: TASKS.md/task-lock coherence — tier 3 at 03:00Z, checks D4-R1..D4-R4, AC-1..AC-5
+   - Signal bus: DASHBOARD ## po + BUG channel (new only, 7d dedup)
+   - Not-in-scope: auto-fix, coordination.db writes, TTL enforcement, Option C (deferred)
+
+**Completion signal:** `docs/signals/agent-father-1965a-design-done.json` → to=dev-mcp-server, type=design-done
+
+**Cascade:** None. Both files are additive (new directory + 2 new files). system-auditor.md flow file unchanged — implementation of the 03:00Z wiring is 1965b (dev-mcp-server). No agent .md edits needed for DESIGN phase.
+
+**Pattern noted:** `docs/agents/system-auditor/` directory did not exist before this task — created fresh. Pattern matches `docs/agents/agents-architect/` and `docs/agents/ops/` which each have a `handlers.md` under a per-agent directory.
+
+## Previous Session — 2026-05-21 (Task 1963-MW-IDENTITY — market-watcher identity pathology fix)
 
 **Task:** Fix intermittent market-watcher identity pathology per DASHBOARD.md 1963-MW-IDENTITY.
 
@@ -21,7 +56,7 @@
 
 **DASHBOARD:** 1963-MW-IDENTITY marked DONE. AC: 2 consecutive clean fires post-fix.
 
-**Cascade:** None. The description/constraints/knowledge changes are self-contained within market-watcher.md. No partner agent routing changes needed (news-scout → market-watcher signal path already symmetric).
+**Cascade:** None. The description/constraints/knowledge changes are self-contained within market-watcher.md.
 
 ## Previous Session — 2026-05-20 (Task task-lock-phase1 — coordination.db + 4 MCP tools)
 
@@ -37,47 +72,16 @@ NEXT: pm plan Phase 2 (cowork-slot flow wiring) + Phase 3 (sprint-task drain)
 
 **Task: 1957b — Phase-1 completion artefacts for cowork master-scheduler**
 
-Source: `docs/signals/processed/po-1957-cowork-scheduler.json` + architecture brief `docs/architecture-briefs/2026-05-18-cowork-master-scheduler.md`.
-
-**Root cause context:** The `*/15 * * * *` CronCreate dispatcher (Sprint 1951c `cowork-team`) is session-scoped. When the Claude Code CLI session ended, the dispatcher evaporated → cowork went dark ~44h. Two artefacts from the 1951c cutover plan were declared MANDATORY but never built. Task 1957b builds them.
-
-Files created (3):
-- `.claude/skills/cron-cowork-team/SKILL.md` — idempotent master CronCreate registration skill. Invoked via `/cron-cowork-team`. Step 1: CronList check (no-op if present). Step 2: CronCreate `*/15 * * * *` durable:true pointing at `.claude/flows/cowork-team/main.md`. Step 3: post-verify. Includes CronDelete admin section.
-- `docs/protocols/cowork-master-cron-runbook.md` — 9-section operational runbook. Covers: architecture (Layer A=RemoteTriggers persistent, Layer B=CronCreate session-scoped), silence-detection signatures (chef >6h, alert-commander >24h, no signals >20min during 02:00-08:30Z), session-start procedure, Layer B recovery, Layer A recovery, diagnostic commands, escalation criteria, 5-test sanity checklist, prevention guidance.
-- `docs/signals/agent-father-1957b-cowork-skill-built.json` — completion signal to po + ops.
-
-Files updated (3):
-- `CLAUDE.md` — `/cron-cowork-team` 1-line pointer added under new `## Skills (slash commands)` section in Defaults block.
-- `docs/signals/DASHBOARD.md` — 1957b → DONE, 1957c gate status updated (1957b-done CLEARED), timestamp updated.
-- `docs/TASKS.md` — 1957b → DONE row with signal reference; 1957c gate cleared.
-
-Acceptance verified:
-- AC-1: Skill present, idempotent (CronList guard in Step 1).
-- AC-2: Second invocation = no-op by design.
-- AC-3: Runbook has §3 Session-start, §2 Silence-detection, §4 Recovery, §8 Sanity tests.
-- AC-4: CLAUDE.md pointer present.
-- AC-5: Signal emitted.
-- AC-6: DASHBOARD.md + TASKS.md updated; 1957c unblocked.
-- AC-7: Notebook overwritten (this entry).
-
-Gate cleared for 1957c (ops): re-block 1951d cutover in docs/TASKS.md Blocked-by column.
+Files created (3): `.claude/skills/cron-cowork-team/SKILL.md`, `docs/protocols/cowork-master-cron-runbook.md`, `docs/signals/agent-father-1957b-cowork-skill-built.json`
+Files updated (3): `CLAUDE.md`, `docs/signals/DASHBOARD.md`, `docs/TASKS.md`
 
 ## Previous Session — 2026-05-19 (Sprint 1951j — cowork self-abort fix)
 
-**Task: 1951j — no_self_abort + Write-tool contract across all 7 cowork agents**
-
-Source: signals `cowork-team-20260519T032444Z-self-abort-pattern.json` + `cowork-team-20260519T042257Z-step8-notebook-gap.json`.
-
-Files edited (8, single commit):
-- `.claude/flows/unified-agent/chef.md` — Step 8 inline Write-tool contract added
-- `.claude/agents/market-watcher.md`, `news-scout.md`, `alert-commander.md`, `financial-analyst.md`, `tran-ngoc-bau.md`, `digest-predict.md` — `no_self_abort: true` + `write_tool_available: true` added
-- `docs/TASKS.md` — 1951j added to Done
+Files edited (8): unified-agent chef.md Step 8, 6 cowork agent .md files (no_self_abort + write_tool_available), TASKS.md.
 
 ## Previous Session — 2026-05-19 (Sprint 1951b cowork tool packages)
 
-**Task: 1951b — cowork tool-packages + notebook-write capability**
-
-Files edited (13, single commit 80768093): market-analyst.md, anti-hallucination SKILL.md, tran-ngoc-bau tool package, system-map.json, 8 agent .md files (alert-commander, news-scout, market-watcher, financial-analyst, digest-predict, unified-agent, report-analyzer, qa-responder), market-watcher cycle.md.
+Files edited (13, commit 80768093): market-analyst.md, anti-hallucination SKILL.md, tran-ngoc-bau tool package, system-map.json, 8 agent .md files, market-watcher cycle.md.
 
 ## Carry-over
 
@@ -89,5 +93,6 @@ Files edited (13, single commit 80768093): market-analyst.md, anti-hallucination
 - `agent-md-factory` skill does not exist as a file in this repo; pattern is applied from memory rule / SSOT conventions.
 - docs/data/ may have a gitignore rule applied by other tools; use `git add -f` for tracked files that surface the warning.
 - Concurrent agents leave pre-staged files — always check `git status` before staging.
-- 1957 context: CronCreate is session-scoped (dies on CLI exit). RemoteTriggers are claude.ai-native and session-independent. The two layers are complementary, not alternatives. Never delete RemoteTriggers before the skill + runbook are in place.
+- 1957 context: CronCreate is session-scoped (dies on CLI exit). RemoteTriggers are claude.ai-native and session-independent.
 - DASHBOARD.md is modified between reads by concurrent agents — always re-read before editing.
+- docs/agents/<agent-id>/ directories are created per-agent as handlers.md + audit-dimensions.md patterns emerge. Pattern confirmed for: agents-architect, ops, system-auditor (1965a).
