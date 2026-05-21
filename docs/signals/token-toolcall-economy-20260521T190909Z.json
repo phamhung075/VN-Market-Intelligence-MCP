@@ -1,0 +1,18 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "architecture-brief",
+  "priority": "high",
+  "createdAt": "2026-05-21T19:09:09Z",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-05-21-token-toolcall-economy.md",
+    "slug": "token-toolcall-economy",
+    "summary": "9 optimization levers identified across 3 phases. Phase 1 (agent-father only, no code): fix 4 trigger:startup lazy-loads, trim 7 oversize notebooks (qa=1149L, dev-frontend=384L), signal payload pointer rule, ULTRA caveman tier on cycle-status pings. Est. 25-35% per-cycle context reduction + ~56 fewer MCP calls/trading-day in Phases 1+2. Phase 3 (dev-team via PM): tick-snapshot dedup for 3 concurrent bootstrap calls, server-side get_agent_signals filter, composite Step-0 skill.",
+    "phase_1_owner": "agent-father",
+    "phase_3_owner": "pm -> dev-team",
+    "cross_ref_sprint": "1967 (orchestration audit — no overlap on enum/schema fix, coordinate on 1963-MW-IDENTITY mcp-tools always_load decision)",
+    "context_tracking_preserved": true,
+    "no_db_change": true,
+    "no_4layer_breach": true
+  }
+}
