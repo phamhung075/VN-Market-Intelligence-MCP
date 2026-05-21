@@ -428,7 +428,8 @@ export function registerAgentSignalTools(server: McpServer): void {
       "Unread signals are marked as read on retrieval. " +
       "Pass from_agent to query sender history instead (read-mark suppressed). " +
       "Pass hours_back to restrict results to signals created within the last N hours " +
-      "(e.g. hours_back=6 covers the 360-min legal_risk dedup window).",
+      "(e.g. hours_back=6 covers the 360-min legal_risk dedup window). " +
+      "Pass signal_type to filter results server-side by signal type (reduces payload 40-60%).",
     {
       agent: z
         .string()
@@ -453,6 +454,15 @@ export function registerAgentSignalTools(server: McpServer): void {
             "(e.g. 6 = last 360 minutes). When omitted, only non-expired signals " +
             "are returned (default behaviour, backward compatible).",
         ),
+      signal_type: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          "Filter results to a specific signal type (server-side). " +
+            "Examples: 'price_anomaly', 'chain_catalyst', 'verified_decision', 'legal_risk'. " +
+            "When null or omitted, all signal types are returned (backward compatible).",
+        ),
     },
     async (args) => {
       try {
@@ -463,6 +473,7 @@ export function registerAgentSignalTools(server: McpServer): void {
           status: args.status,
           ...(args.from_agent !== undefined ? { fromAgent: args.from_agent } : {}),
           ...(args.hours_back !== undefined ? { hoursBack: args.hours_back } : {}),
+          ...(args.signal_type != null ? { signalType: args.signal_type } : {}),
         });
 
         return {

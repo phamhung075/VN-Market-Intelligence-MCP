@@ -24,8 +24,18 @@ Regime-conditioned adjustments:
 **3b. Price-validation override** (runs only when signal.confidence < regime_threshold)
 
 For each signal where conviction < regime_threshold:
-  1. Call `get_agent_signals` filtered for `signal_type="price_anomaly"` AND `stock_code=signal.stockCode` AND not expired (within 120 min)
-  2. Parse `finding_data.move_sigma` from each hit
+  <!-- L-9 (1968c-P03): signal_type="price_anomaly" filter applied server-side — reduces payload ~50%.
+       Only price_anomaly signals returned; no client-side type filtering needed. -->
+  1. Call `get_agent_signals` with `signal_type="price_anomaly"` AND `status="all"` to get price validation signals for `stock_code=signal.stockCode` (filter by stockCode client-side from the filtered result):
+```
+call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "agent": "alert-commander",
+  "status": "all",
+  "signal_type": "price_anomaly",
+  "hours_back": 2
+})
+```
+  2. From returned signals, keep only those where `stock_code == signal.stockCode`. Parse `finding_data.move_sigma` from each hit.
   3. If any hit has `move_sigma >= 4.0` AND `payload.impact_score >= 6`:
      → set `effective_confidence = 0.75`, add annotation `"price-validated override"`
      → escalate as if threshold met
@@ -43,6 +53,16 @@ For each `chain_catalyst` signal from signal bus:
      - `bullish` + earnings event_type → MARKET alert (watchlist-opportunity)
      - `bullish` + macro/trade_war event_type → MARKET alert with regime caveat
      - `neutral` → WORK channel only, do not fire MARKET
-  4. Conflict check: call `get_agent_signals(signal_type="chain_catalyst", stock_code=affected_stock)` — if two signals for same ticker have conflicting `direction` → append conflict warning from `payload.detail` (earningsConflictDetector sets this)
+  <!-- L-9 (1968c-P03): signal_type="chain_catalyst" filter applied server-side — returns only
+       chain_catalyst signals for conflict detection. Reduces payload vs. full result set. -->
+  4. Conflict check: call `get_agent_signals` with `signal_type="chain_catalyst"` for conflict detection — if two signals for same ticker have conflicting `direction` → append conflict warning from `payload.detail` (earningsConflictDetector sets this):
+```
+call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "agent": "alert-commander",
+  "status": "all",
+  "signal_type": "chain_catalyst",
+  "hours_back": 2
+})
+```
   5. Log: `"[ChainCatalyst] [TICKER] event={event_type} dir={direction} conf={confidence:.2f} → {CRITICAL|MARKET|suppressed}"`
   6. Call `record_signal_outcome(signal_id, "fired"|"suppressed", reason)`

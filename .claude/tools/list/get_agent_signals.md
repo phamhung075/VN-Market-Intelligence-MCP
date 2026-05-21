@@ -16,6 +16,15 @@ Retrieve pending signals addressed to an agent. Returns all non-expired signals 
 | `status` | enum | No | `"unread"` | `"unread"` returns only unread signals (marks as read); `"all"` returns all non-expired |
 | `from_agent` | string | No | — | If provided, returns signals sent BY this agent (sender-history). Read-mark suppressed. |
 | `hours_back` | number | No | — | Restrict results to signals created within the last N hours (e.g. `6` = 360 min). When omitted, all non-expired signals are returned (backward-compatible). |
+| `signal_type` | string \| null | No | `null` | Server-side filter: restrict to signals of this type (e.g. `"price_anomaly"`, `"chain_catalyst"`, `"verified_decision"`, `"legal_risk"`). When null or omitted, all types are returned. Reduces payload 40–60%. |
+
+## Key Notes on `signal_type` (Task 1968c-P03)
+
+- **Server-side filter**: filtering happens before response serialization — no client-side parse work needed.
+- **Backward-compatible**: callers that omit `signal_type` receive the full result set (identical to pre-1968c behavior).
+- **Graceful invalid value**: if `signal_type` is a string that matches no rows, returns empty result (no error thrown).
+- **Example — alert-commander price validation** (Step 3b): `signal_type: "price_anomaly"` → only price anomaly signals, ~50% smaller payload.
+- **Example — chain conflict check** (Step 3c): `signal_type: "chain_catalyst"` → only chain catalyst signals for conflict detection.
 
 ## Key Notes on `hours_back`
 

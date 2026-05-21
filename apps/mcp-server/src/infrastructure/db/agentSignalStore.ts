@@ -810,6 +810,13 @@ export interface GetSignalsOptions {
    * omitted, no created_at filter is applied (default behaviour preserved).
    */
   hoursBack?: number;
+  /**
+   * Task 1968c-P03 — Server-side signal_type filter.
+   * When set to a non-null, non-empty string, restricts results to signals
+   * with signal_type matching this value exactly.
+   * null / undefined / "" = no filter applied (all types returned, backward-compatible).
+   */
+  signalType?: string | null;
 }
 
 /**
@@ -876,6 +883,14 @@ export function getSignals(
       ? `AND s.created_at >= datetime('now', '-${Math.ceil(opts.hoursBack * 60)} minutes')`
       : "";
 
+  // Task 1968c-P03: Optional server-side signal_type filter.
+  // Applied when signalType is a non-null, non-empty string.
+  // null / undefined / "" = no filter (all types, backward-compatible).
+  const signalTypeClause =
+    opts.signalType != null && opts.signalType !== ""
+      ? `AND s.signal_type = '${opts.signalType.replace(/'/g, "''")}'`
+      : "";
+
   const rows = db
     .query<RawRow, [string]>(
       `SELECT id, from_agent, to_agent, signal_type, stock_code, payload, status,
@@ -885,6 +900,7 @@ export function getSignals(
          AND s.expires_at > datetime('now')
          ${statusClause}
          ${hoursBackClause}
+         ${signalTypeClause}
        ORDER BY s.id ASC`,
     )
     .all(bindParam) as RawRow[];
