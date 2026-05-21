@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "active-parallel-sprints",
-  "currentSprint": "1967c+1968b1+1968b2",
-  "activeTaskId": "1967-01 (ready) + 1967-03 (ready) [WIP max 2]",
-  "nextAgent": "dev-team (dispatch 1967-01,03) + dev-mcp-server (1968b1) + agent-father (1968b2)",
-  "nextPrompt": "PM 1967c DONE (2026-05-21T21:45Z): 11 TASK_NNN handoffs from 22 findings. Top-2 HIGH ready: 1967-01 (alertSource XS) + 1967-03 (DASHBOARD stale-race XS). Rest (1967-04..11) queued, WIP max 2 per zone. Blocks: 1967-06 until OBSERVE-1955e gate (2026-05-22T21:00Z). Parallel: 1968b1 (dev-mcp-server hours_back param) + 1968b2 (agent-father L-6/L-7 stagger). Signal: docs/signals/pm-1967c-slate-ready.json. All 11 handoff docs in docs/handoffs/TASK_1967-*.md.",
-  "updatedAt": "2026-05-21T21:45:19Z",
-  "updatedBy": "pm",
-  "lastCompleted": "Sprint 1967c PM slate decomposition DONE. 22 findings → 11 tasks. Top-2 ready for dispatch. Cascaded from architect brief (1967b canonical, 22 findings, 11 required fields per REQ-1967-7e)."
+  "status": "active-1967c",
+  "currentSprint": "1967c (dev-team) + 1968b1/b2 (qa-pending)",
+  "activeTaskId": "1967-02 (queued top of slate) + qa-1968b1 + qa-1968b2 (qa-smoke)",
+  "nextAgent": "qa (smoke 1968b1+1968b2 AC verification) + dev-team next cron (1967-02 dispatch after PO A/B decision)",
+  "nextPrompt": "PO cron-2007Z reconcile (2026-05-21T20:21Z): 1967-01 CLOSED to Done (commit dd071dcd, qa APPROVED). 1968a Phase 1 + 1968b1 Phase 1 (dev-mcp-server `4fff6cbb`) + 1968b1 Phase 2 (agent-father) + 1968b2 (agent-father) ALL DONE — qa smoke verification pending. 1967-02 verified_decision schema needs PO Option A vs B decision before dispatch (NO BATCH this cycle, decision-gated). 1967-03/04/05 agent-father maintenance-lane self-cron. Top dev-team dispatchable after 1967-02 decision = 1967-02 OR 1967-06 (1967-06 blocked-until 2026-05-22T21:00Z). qa-smoke is dev-core but no spec exists yet — qa picks up on its own cron via processed-signals scan.",
+  "updatedAt": "2026-05-21T20:21:44Z",
+  "updatedBy": "po",
+  "lastCompleted": "1967-01 DONE (dev-mcp-server dd071dcd, qa APPROVED). 1968b1 dev-mcp-server commit 4fff6cbb (hours_back param), agent-father consolidation done. 1968b2 agent-father cron-stagger + notebook-batch done (ITEM-05 merged in-touch). Awaiting qa smoke verification on 1968b1 AC-4 (2-fewer-MCP-calls) + 1968b2 AC-1..AC-8."
 }
