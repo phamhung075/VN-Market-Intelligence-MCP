@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-21T22:21:00Z (po c242 cron-2207Z dev-team triage — pipeline reconciled, BATCH=NOTHING. Stale rows synced: 1968c-P01/P02/P03 + 1967-02 + 1967-12 all marked DONE; ops B-02-NEW READ + OBSERVE)._
+_Updated: 2026-05-21T23:21:47Z (po c243 cron-2307Z dev-team triage — pipeline reconciled, BATCH=NOTHING. Stale rows pruned post-Sprint-1968c-CLOSE: 1968c-KICKOFF→CLOSED, 1968c-P03-QA-PENDING + 1968c-P03-REVIEW + 1968c-NEAR-CLOSE → DONE/pruned. Fleet IDLE; gates hold; OBSERVE-1955e unlock 2026-05-22T21:00Z is next trigger)._
 
 ---
 
@@ -17,7 +17,7 @@ _Updated: 2026-05-21T22:21:00Z (po c242 cron-2207Z dev-team triage — pipeline 
 | 1953-G-FAIL | 2026-05-21T03:25:00Z | po-self | observe_gate_fail | OBSERVE-1953g HARD FAIL. DO-NOT-DISPATCH 1953e/h — BCTC pipeline recurring-bug-escalation freeze; 1954c architect rethink owns root-cause. | NO-DISPATCH (freeze) | 1954c brief = SSOT |
 | 1954-A-RECOVERY | 2026-05-19T20:50:39Z | system-auditor | runtime_recovery | CRITICAL outage RESOLVED: 8 containers down at 20:07 UTC → all 11 UP at 20:50 UTC. | RESOLVED | Sprint 1958 closure breadcrumb |
 | 1967-KICKOFF | 2026-05-21T19:02:30Z | po-self | sprint-kickoff | Sprint 1967 OPEN — fix all bugs/conflicts in orchestration agent system. 1967b done, 1967c PM slate done, 1968a/b1/b2 released. 1967-01/03/04/05 DONE+QA-APPROVED. 1967-02 commit 257d92bf awaiting QA. 1967-12 ratified (claude-manager-helper). 1967-06 gated 2026-05-22T21:00Z. 1967-07..11 agent-father MED queue. | OPEN | docs/SPRINT_GOAL.md (Sprint 1967 head) |
-| 1968c-KICKOFF | 2026-05-21T21:15Z | po-self | sprint-kickoff | Sprint 1968c Phase 3 — 3 levers ALL SHIPPED. Wave 1 P01 (96a7f1b8) + P02 (508ae0ef) DONE+QA-APPROVED 21:45Z. Wave 2 P03 (c3b18e8c) SHIPPED 21:43Z — awaiting QA (qa lane). PO close-gate pending qa-1968c-p03-done.json. | NEAR-CLOSE | docs/signals/dev-mcp-server-1968c-p03-done.json + docs/SPRINT_GOAL.md (Sprint 1968c head) |
+| 1968c-KICKOFF | 2026-05-21T21:15Z | po-self | sprint-kickoff | **Sprint 1968c CLOSED 2026-05-21T22:52:44Z (po c243 ratification — po-1968c-close.json).** All 3 P-tasks DONE+QA-APPROVED: P01 (96a7f1b8) + P02 (508ae0ef) + P03 (c3b18e8c). Phase 3 levers L-6/L-8/L-9 ratified. Cumulative tally: ~168 MCP calls/day saved + ~14 Read I/O/cycle saved + 50% payload reduction. | CLOSED | docs/signals/po-1968c-close.json |
 <!-- 1954-A-29-1..4 (2026-05-19T19:31Z system-auditor cron-degradation findings) pruned 2026-05-21 po c233 — all READ + resolved (1955a/b shipped, OBSERVE-1955c/d/e tracking). Historical reference in TASKS_ARCHIVE.md if needed. -->
 <!-- 1962-B-01 (2026-05-20T22:30Z pm plan_blocked, status=CLOSED stale race) pruned 2026-05-21 po c233 — Sprint 1962 closed 2026-05-20T20:48Z (commit 2e08e586). -->
 <!-- 1953-G-FAIL kept active (recurring-bug-freeze sentinel — DO-NOT-DISPATCH guard for 1953e/h until 1954c lands). -->
@@ -37,14 +37,14 @@ _Updated: 2026-05-21T22:21:00Z (po c242 cron-2207Z dev-team triage — pipeline 
 ## dev-mcp-server
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| 1968c-P03-QA-PENDING | 2026-05-21T21:43Z | dev-mcp-server | task_complete | **SHIPPED** Wave 2 L-9 server-side signal_type filter on get_agent_signals. Commit `c3b18e8c`. 9364 PASS / 285 BCTC-frozen-FAIL, tsc 0 errors, 6 new filter tests GREEN. AC-1..AC-8 all PASS (50% payload reduction verified). alert-commander stage-signals.md updated (price_anomaly + chain_catalyst). Routed to qa for review. | AWAITING-QA | docs/signals/dev-mcp-server-1968c-p03-done.json |
+<!-- 1968c-P03-QA-PENDING pruned 2026-05-21T23:21Z po c243 cron-2307Z — DONE+QA-APPROVED 2026-05-22T00:00Z (commit c3b18e8c, qa-1968c-p03-done.json); Sprint 1968c CLOSED 2026-05-21T22:52:44Z. -->
 <!-- 1967-02-QA-PENDING pruned 2026-05-21T22:21Z po c242 cron-2207Z — DONE+QA-APPROVED 21:30Z (commit 257d92bf). -->
 <!-- 1968c-P03-GATED pruned 2026-05-21T22:21Z po c242 cron-2207Z — superseded by 1968c-P03-QA-PENDING row above; P01-done signal received 21:46Z, dev-mcp-server self-claimed and shipped at 21:43Z. -->
 
 ## qa
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| 1968c-P03-REVIEW | 2026-05-21T21:43Z | dev-mcp-server | qa_review_request | **PENDING** Review TASK_1968c-P03 commit `c3b18e8c` — server-side signal_type filter on get_agent_signals. AC-1..AC-8 matrix in dev-mcp-server-1968c-p03-done.json. 6 new tests + 9364 PASS / 285 BCTC-FAIL / tsc 0. Files: agentSignalStore.ts, agentSignalTools.ts, 1968c-p03-signal-type-filter.test.ts, .claude/tools/list/get_agent_signals.md, .claude/flows/alert-commander/stage-signals.md. | PENDING | docs/signals/dev-mcp-server-1968c-p03-done.json |
+<!-- 1968c-P03-REVIEW pruned 2026-05-21T23:21Z po c243 cron-2307Z — DONE 2026-05-22T00:00Z (qa APPROVED commit c3b18e8c, qa-1968c-p03-done.json); Sprint 1968c CLOSED. -->
 <!-- 1967-02-REVIEW pruned 2026-05-21T22:21Z po c242 cron-2207Z — DONE+QA-APPROVED 21:30Z (commit 257d92bf). -->
 <!-- qa-1967-03-approved + qa-1967-05-approved + qa-1967-04-approved pruned 2026-05-21T21:21Z po cron-2107Z — DONE 22:55Z (1967-03/05) + 23:45Z (1967-04); all rows DONE + READ + signals drained to processed/. -->
 <!-- qa-1968b1-approved + qa-1968b2-approved pruned 2026-05-21T21:21Z po cron-2107Z — folded into Sprint 1968 close (po-1968-closed.json); historical archive in TASKS_ARCHIVE if needed. -->
@@ -94,7 +94,7 @@ _Updated: 2026-05-21T22:21:00Z (po c242 cron-2207Z dev-team triage — pipeline 
 |---|---|---|---|---|---|---|
 | 1967-04-CLOSED | 2026-05-21T23:50Z | pm | task_done | TASK_1967-04 DONE (QA APPROVED static ACs). AC-5/7 PENDING_LIVE non-blocking. Side-finding → TASK_1967-12 (notebook trim) extracted + PO-ratified. | DONE | docs/signals/processed/pm-1967-04-closed.json |
 | 1967-12-CLOSED | 2026-05-21T22:15Z | pm | task_done | TASK_1967-12 notebook trim sweep DONE+QA-APPROVED round 2 (commit 35e2ed3a, 6 notebooks trimmed 1076→644L 40% reduction, D5 audit closed, AC-1..AC-6 all PASS, AC-2 alert-commander pointer fix verified). | DONE | docs/signals/pm-1967-12-closed.json |
-| 1968c-NEAR-CLOSE | 2026-05-21T22:21Z | pm/po | sprint_near_close | Sprint 1968c content-complete. Wave 1 P01 + P02 DONE+QA-APPROVED 21:45Z (96a7f1b8 + 508ae0ef). Wave 2 P03 SHIPPED 21:43Z (c3b18e8c). Awaiting qa-1968c-p03-done.json → PO close gate. | NEAR-CLOSE | docs/signals/processed/pm-1968c-opened.json + docs/signals/dev-mcp-server-1968c-p03-done.json |
+<!-- 1968c-NEAR-CLOSE pruned 2026-05-21T23:21Z po c243 cron-2307Z — Sprint 1968c CLOSED 2026-05-21T22:52:44Z (po-1968c-close.json); all 3 P-tasks DONE+QA-APPROVED. Pipeline reconciled. -->
 <!-- 1968-CLOSE-READY pruned — PO closed Sprint 1968 at 20:53Z (po-1968-closed.json). -->
 <!-- 1967-03-DISPATCH + 1967-05-DISPATCH pruned — both DONE+QA-APPROVED at 22:55Z (commit fc1b9eab). -->
 <!-- 1967-02-BLOCKED pruned — PO chose Option A 20:53Z (po-1967-02-decision.json); dev-mcp-server shipped 257d92bf 21:30Z; now in qa-pending row. -->
