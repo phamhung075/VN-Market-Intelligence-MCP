@@ -1,0 +1,34 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "gate-released",
+  "sprint": "1968",
+  "taskId": "1968b2",
+  "createdAt": "2026-05-21T19:35:13Z",
+  "payload": "1968b2 OPEN. agent-father-pure: L-6 cron stagger + L-7 toolcall-batch (notebook commit batching). Parallel to 1968b1. -> docs/architecture-briefs/2026-05-21-token-toolcall-economy.md L-6+L-7.",
+  "scope": {
+    "levers": ["L-6", "L-7"],
+    "owner": "agent-father",
+    "L-6 cron stagger": {
+      "brief_section": "L-6 (Tier 2) — Bootstrap dedup via shared tick snapshot",
+      "note": "Original L-6 brief proposes cycle-snapshot file + cowork-team dispatcher write step + agents fall-back. For 1968b2 PURE-agent-father subset: ONLY apply (a) cron stagger by 1 min per agent to prevent concurrent get_cycle_bootstrap collision AND (b) add Step -1 to .claude/skills/cycle-bootstrap/SKILL.md documenting expected snapshot file path (snapshot WRITE deferred to a future dev task since cowork-team.md edit + .gitignore touch are infra). Files: .claude/agents/news-scout.md schedule.cron, market-watcher.md schedule.cron, alert-commander.md schedule.cron. Stagger to e.g. 0/15, 5/15, 10/15.",
+      "ac": ["AC-1: 3 agent .md files have schedule.cron offsets (no two fire concurrently)", "AC-2: cycle-bootstrap SKILL has placeholder Step -1 for snapshot-file lookup with explicit fallback to direct MCP call", "AC-3: no behavior regression (snapshot file optional, fallback path exercised)"]
+    },
+    "L-7 notebook commit batching": {
+      "brief_section": "L-7 (Tier 2)",
+      "files": [".claude/flows/market-watcher/cycle.md Step 5 (remove per-cycle commit, leave write)", ".claude/flows/market-watcher/eod.md (add commits for self + news-scout notebooks)", ".claude/flows/news-scout/stage-log-notify.md (remove per-cycle commit)"],
+      "ac": ["AC-4: market-hours cycles WRITE notebook but skip commit", "AC-5: eod.md commits both notebooks at market close (08:59 UTC)", "AC-6: off-hours cycles (every 4h) retain own commit", "AC-7: head-lock-self-cure runbook pointer added in case eod fails"]
+    },
+    "ac_final": "AC-8: caveman ULTRA done signal -> docs/signals/agent-father-1968b2-done.json with per-lever PASS/FAIL",
+    "time_box": "2h",
+    "zone_isolation": "agent-father pure; no dev-mcp-server, no qa, no architect involvement"
+  },
+  "constraints": {
+    "wip_limit": "1968b1 + 1968b2 = 2 in flight",
+    "bctc_freeze": "active",
+    "no_branches": "main only",
+    "no_overlap_1967b": "1967b architect brief still in flight - evidence-only; if 1967b brief lands and proposes alternative cron schedule, agent-father merges before commit"
+  },
+  "next_action": "main terminal may spawn agent-father immediately in parallel with dev-mcp-server (1968b1 phase1).",
+  "pipeline": "continue"
+}

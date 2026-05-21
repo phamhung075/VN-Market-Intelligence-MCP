@@ -1,0 +1,20 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "phase_approved",
+  "sprint": "1968",
+  "taskId": "1968a",
+  "createdAt": "2026-05-21T19:35:13Z",
+  "payload": "1968a Phase 1 RATIFIED. AC-1..AC-6 PASS. L-1..L-5 verified. NFR-5 no-overlap with 1967b OK. -> docs/handoffs/TASK_1968a-phase1.md (closed). Next: 1968b1 (L-4) gated on dev-mcp-server check; 1968b2 (L-6+L-7) released agent-father-pure.",
+  "verified": {
+    "AC1_L1": "4 agents fixed; alert-commander mcp-tools.md promoted always_load w/ inline justification; 3 others use vn_financial_terms",
+    "AC2_L2": "7 notebooks all <=120L (max=59L qa); 7 archives present in docs/archive/notebooks/*-2026-05-21.md; carry-over preserved; notebook-write SKILL cap=120L + archive-before-overwrite rule landed",
+    "AC3_L3": "signal-dashboard SKILL has ## Payload Pointer Discipline w/ Rule 1+2+3",
+    "AC4_L5": "ULTRA tier applied at news-scout/stage-log-notify.md L41+L50, market-watcher/cycle.md L129+L134, alert-commander/stage-dispatch-log.md L31+L36",
+    "AC5_commits": "5 commits (3bdd62c4, ee1dcadf, 4967bf63, cb080cc9, ff166258) under chore(token-economy/1968a-*) convention",
+    "AC6_signal": "done signal landed at docs/signals/agent-father-1968a-phase1-done.json"
+  },
+  "nfr5_overlap_audit": "1967b architect brief is evidence-only on overlapping surfaces. ITEM-04 proposes ≤150L market-watcher (additive constraint on top of 120L general cap — no conflict). ITEM-05 proposes APPEND->OVERWRITE in market-watcher/cycle.md Step 5 — different surface than L-5 ULTRA WORK ping additions (Step 5b). No double-fix.",
+  "next_action": "po emits 1968b1 (L-4, dev-mcp-server check + agent-father) + 1968b2 (L-6+L-7, agent-father-pure). 1968b1 needs dev-mcp-server to confirm get_agent_signals hours_back parameter before agent-father can consolidate news-scout calls.",
+  "pipeline": "continue"
+}
