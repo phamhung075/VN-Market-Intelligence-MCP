@@ -1,4 +1,83 @@
-# Sprint 1968 Goal — Token & Tool-Call Economy Phase 1 (agent-father-only, zero-code)
+# Sprint 1968c Goal — Token & Tool-Call Economy Phase 3 (Tier 2/3 implementation)
+
+**Status:** OPEN 2026-05-21T21:15:41Z (po c240 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` § Phase 3 | **Severity:** MEDIUM (cost-reduction, no incident) | **Owner:** agent-father + dev-mcp-server (paired) | **Parent:** Sprint 1968 CLOSED (Phase 3 deferred per L42 sprint hygiene) | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965c soak (through 2026-05-23T18:00Z) + Sprint 1967 dev fix slate.
+
+## Vision
+Land the 3 deferred Phase 3 levers (L-6 tick-snapshot, L-8 composite step-0 skill, L-9 server-side signal_type filter). Target: ~50% cumulative token reduction (1968a + 1968b + 1968c) + ~100 fewer MCP calls/trading-day. Additive API change (L-9 default=null preserves backward compat); ephemeral file write (L-6, gitignored); composite skill consolidation (L-8, 3 skill reads → 1 per cowork agent cycle).
+
+## Sequencing (PO decided c240)
+**Wave 1 (NOW):** P01 (agent-father lead + dev-mcp-server pair on apps/mcp-server/ portion) + P02 (agent-father solo). Both parallel-safe: P01 writes cowork-team.md + cycle-bootstrap SKILL; P02 creates NEW step-0-cowork SKILL + updates 7 agent always_load entries — different files in .claude/.
+**Wave 2 (gated on agent-father-1968c-p01-done.json):** P03 (dev-mcp-server) — releases dev-mcp-server slot from P01's apps/mcp-server/ portion before starting schema work on getAgentSignals.ts. Avoids same-agent context-switching collision (1962-B-01 precedent).
+**Anti-pattern rejected:** Firing all 3 in parallel. P01 + P03 both load dev-mcp-server zone; recurring-bug-escalation policy + 1962-B-01 race evidence say serialize same-zone work.
+
+## Scope
+**IN:**
+- **1968c-P01:** L-6 tick-snapshot file writer. Cowork-team dispatcher writes `docs/data/cycle-snapshot-<TICK>.json` pre-spawn; 3-5 cowork agents read if ±7m fresh; fallback to direct `get_cycle_bootstrap` if absent/stale. Atomic write. Gitignored. Est savings: ~168 MCP calls/trading-day. Owner: agent-father + dev-mcp-server. Handoff: `docs/handoffs/TASK_1968c-P01-tick-snapshot.md`.
+- **1968c-P02:** L-8 composite `step-0-cowork` skill consolidating notebook-read + cycle-bootstrap + regime-extraction. Target ~60L. Error boundaries preserved (fail-loud intact). 7 cowork agents updated to call composite. Est savings: 14 Read I/O per 15-min tick. Owner: agent-father. Handoff: `docs/handoffs/TASK_1968c-P02-step0-skill.md`.
+- **1968c-P03:** L-9 `get_agent_signals` optional `signal_type` parameter (additive, default=null = all). Server-side filter applied pre-serialization. 3 agents updated (news-scout, alert-commander, market-watcher). 40-60% payload reduction verified. Owner: dev-mcp-server. Handoff: `docs/handoffs/TASK_1968c-P03-server-filter.md`.
+
+**OUT:**
+- Any BCTC path touch (NFR-3 freeze in force).
+- Any DB schema change (NFR-2).
+- Any cron schedule change.
+- Retroactive bootstrap-pattern rewrite for non-cowork agents.
+
+## Success Metric
+- **AC-1 (P01):** `docs/data/cycle-snapshot-<TICK>.json` written by cowork-team dispatcher pre-spawn; 5 cowork agents read with ±7m freshness check; fallback path on cache miss; gitignored. 2 fewer get_cycle_bootstrap + 2 fewer get_macro_snapshot per tick measured in cowork cycle logs.
+- **AC-2 (P02):** `.claude/skills/step-0-cowork/SKILL.md` ≤120L; 7 cowork agents reference in always_load; error boundary tests GREEN (notebook fail STOP, bootstrap fail STOP, regime fail FALLBACK NEUTRAL); tsc 0 errors + bun test GREEN.
+- **AC-3 (P03):** `signal_type` Zod parameter added; server-side filter applied; backward compat verified (no-param call returns full set); 40-60% payload reduction measured for filtered calls; ≥3 agents updated; existing tests baseline ≥9358 PASS (NOTE: PO refresh of P03 AC-8 anchor from ≥9277 to ≥9358 per dev-mcp-server-1967-02-done.json verified baseline).
+- **AC-4 (sprint close):** All 3 P-tasks QA APPROVED → PO emits `docs/signals/po-1968c-close.json` with cumulative Phase 1+2+3 savings tally.
+
+## Tasks
+| ID | Title | Priority/Size | Owner | Zone | Status | Depends |
+|----|-------|---------------|-------|------|--------|---------|
+| 1968c-P01 | L-6 tick-snapshot file writer (cowork-team + cycle-bootstrap) | HIGH / M | agent-father + dev-mcp-server | `.claude/` + `apps/mcp-server/` | READY (wave 1) | — |
+| 1968c-P02 | L-8 composite step-0-cowork skill | HIGH / M | agent-father | `.claude/` | READY (wave 1, parallel with P01) | — |
+| 1968c-P03 | L-9 get_agent_signals server-side signal_type filter | HIGH / M | dev-mcp-server | `apps/mcp-server/` | GATED (wave 2, after P01 done) | P01 |
+
+## Dispatch Slate — Wave 1 (this kickoff)
+```
+DISPATCH:
+  - agent-father → 1968c-P01 (lead) + dev-mcp-server pair-claim on apps/mcp-server/ portion
+      inner self-claim task:1968c-P01 (kind=sprint-task, ttl=7200s)
+      run .claude/flows/agent-father/main.md
+      read docs/handoffs/TASK_1968c-P01-tick-snapshot.md
+      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-6 Tier 2
+      execute .claude/ + apps/mcp-server/ surgery per AC-1..AC-8
+      emit docs/signals/agent-father-1968c-p01-done.json
+      handoff to QA for AC validation
+  - agent-father → 1968c-P02   inner self-claim task:1968c-P02 (kind=sprint-task, ttl=7200s)
+      run .claude/flows/agent-father/main.md
+      read docs/handoffs/TASK_1968c-P02-step0-skill.md
+      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-8 Tier 3
+      create .claude/skills/step-0-cowork/SKILL.md + update 7 cowork agent always_load entries
+      emit docs/signals/agent-father-1968c-p02-done.json
+      handoff to QA for AC validation
+PENDING (wave 2, after agent-father-1968c-p01-done.json):
+  - dev-mcp-server → 1968c-P03   inner self-claim task:1968c-P03 (kind=sprint-task, ttl=7200s)
+      run .claude/flows/dev-mcp-server/main.md
+      read docs/handoffs/TASK_1968c-P03-server-filter.md
+      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-9 Tier 3
+      add signal_type optional param to getAgentSignals.ts + tests + flow updates
+      emit docs/signals/dev-mcp-server-1968c-p03-done.json
+GATED (sprint close):
+  - po close → when all 3 P-tasks QA APPROVED + cumulative Phase 1+2+3 impact tallied
+```
+
+## Constraints / Boundary
+- **No BCTC touch.** All 3 tasks are .claude/ + apps/mcp-server/ scope; BCTC freeze irrelevant.
+- **WIP cap 2/2.** Wave 1 uses agent-father (1 slot) + agent-father (2 slots — same agent serial-claims both, OR splits into two agent-father instances per task-lock Phase 4). dev-mcp-server pair-claim on P01 counts toward dev-mcp-server WIP. Wave 2 uses dev-mcp-server (1 slot, P03 only).
+- **Phase 3 routed correctly through PM → PO → dev-team.** PO does not bypass PM decomposition.
+- All standing OBSERVE gates preserved (1957d, 1955c, 1907a-verify, 1941b, 1922g, 1965c-soak, 1959-watchdog-4 hold). None touch 1968c scope.
+
+## Cross-Refs
+- Brief: `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` § Rollout Plan § Phase 3
+- Parent close: `docs/signals/po-1968-closed.json` (1968 closed; Phase 3 deferred to 1968c per L42)
+- Signals: `docs/signals/po-1968c-approved.json` + `docs/signals/pm-1968c-opened.json`
+
+---
+
+# Sprint 1968 Goal — Token & Tool-Call Economy Phase 1 (agent-father-only, zero-code) [CLOSED 2026-05-21T20:53Z]
 
 **Status:** OPEN 2026-05-21T19:10Z (po c235 kickoff) | **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` | **Severity:** MEDIUM (cost-reduction, no incident) | **Owner:** agent-father (single executor, Phase 1 only) | **Parallel with:** Sprint 1959 soak (watchdog-4 unlock 2026-05-22T21:00Z) + Sprint 1965 soak (1965c qa OBSERVE through 2026-05-23T18:00Z) + Sprint 1967 orchestration audit (read-only architect in flight, brief expected ~22:01Z).
 

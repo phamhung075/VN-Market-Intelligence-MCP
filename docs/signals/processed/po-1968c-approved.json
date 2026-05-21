@@ -1,0 +1,85 @@
+{
+  "from": "po",
+  "to": "pm",
+  "type": "sprint-kickoff-approved",
+  "sprint": "1968c",
+  "title": "Phase 3 Token Economy — Tier 2/3 Implementation (3 parallel tasks)",
+  "decided_at": "2026-05-21T21:15:41Z",
+  "decided_by": "po cycle c240",
+  "verdict": "APPROVED",
+  "parent_sprint": "1968",
+  "parent_close_ref": "docs/signals/po-1968-closed.json (Phase 3 deferred per L42 sprint hygiene)",
+  "scope_ratification": {
+    "in_scope": [
+      "P01: L-6 tick-snapshot file writer (cowork-team dispatcher + cycle-bootstrap skill + 3-5 cowork agent flows). Atomic write contract specified in handoff. Fallback path mandatory (snapshot absent or stale > 7m -> direct get_cycle_bootstrap call). Gitignore entry mandatory (ephemeral file, not versioned).",
+      "P02: L-8 composite step-0-cowork skill consolidating notebook-read + cycle-bootstrap + regime-extraction into one ~60L skill. Error boundaries strictly preserved (fail-loud protocol intact). All 7 cowork agents updated to call composite.",
+      "P03: L-9 get_agent_signals server-side signal_type filter (additive parameter, default=null preserves backward compat). At least 3 callers updated (news-scout, alert-commander, market-watcher). Payload reduction 40-60% verified."
+    ],
+    "out_of_scope": [
+      "Any production code outside apps/mcp-server/ (P01 .claude/ surface + P03 apps/mcp-server/ surface only)",
+      "Any BCTC path touch (NFR-3 freeze in force)",
+      "Any Docker rebuild beyond what P01/P03 require for deployment validation",
+      "Any DB schema change",
+      "Any cron schedule change",
+      "Retroactive rewrite of cycle-bootstrap pattern for non-cowork agents (only the 5-7 cowork agents in scope)"
+    ],
+    "nfr_compliance": {
+      "NFR-1_zero_schema_change": "PASS — P03 adds optional parameter only (additive); P01/P02 are .claude/ + ephemeral file only",
+      "NFR-2_zero_db_change": "PASS — no DB writes in any of the 3 tasks",
+      "NFR-3_bctc_freeze_respected": "PASS — none of the 3 tasks touch BCTC paths (verified zone declarations)",
+      "NFR-4_fail_loud_preserved": "PASS — P02 explicitly preserves fail-loud per AC-3 + AC-6; P01 fallback path is non-blocking (snapshot absence != failure); P03 backward compat default=all preserves existing behavior",
+      "NFR-5_backward_compat": "PASS — P03 default-null preserves existing call behavior; P01 fallback ensures zero blocker on cache miss; P02 composite preserves all 3 constituent skill semantics"
+    }
+  },
+  "sequencing_decision": {
+    "model": "phased_parallel",
+    "rationale": "P01 handoff declares 'blocks: [P02, P03]' but semantic audit shows P02 only needs P01's SPEC (captured in handoff doc), not P01 deployed. P03 has no semantic dep on P01 but does compete for dev-mcp-server zone slot. WIP 2/2 cap and recurring-bug-escalation (multiple devs juggling same zone = race risk per Sprint 1962-B-01 evidence) recommend serializing dev-mcp-server zone work.",
+    "wave_1_dispatch_now": [
+      {
+        "task_id": "1968c-P01",
+        "owner": "agent-father (lead, .claude/ surface) + dev-mcp-server (apps/mcp-server/ touches via cowork-team dispatcher)",
+        "zone": ".claude/ + apps/mcp-server/",
+        "size": "M",
+        "lock_ttl_seconds": 7200,
+        "blocks": ["1968c-P02 semantic", "1968c-P03 zone"]
+      },
+      {
+        "task_id": "1968c-P02",
+        "owner": "agent-father",
+        "zone": ".claude/",
+        "size": "M",
+        "lock_ttl_seconds": 7200,
+        "parallel_safe_with": "1968c-P01 (different agent-father subzone — composite skill file is NEW, no conflict with cowork-team.md edits)",
+        "note": "Agent-father authors P02 referencing P01's handoff-spec for the snapshot read step; does NOT require P01 deployed. AC-2 wording 'with L-6 snapshot check from 1968c-P01' means INCLUDES the snapshot check pattern from P01's spec, not 'waits until P01 deployed'."
+      }
+    ],
+    "wave_2_gated_on_P01_landed": [
+      {
+        "task_id": "1968c-P03",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "lock_ttl_seconds": 7200,
+        "gate": "P01 dev-mcp-server portion DONE (cowork-team.md snapshot write step + .gitignore) → frees dev-mcp-server slot for P03 schema work",
+        "rationale": "Avoids dev-mcp-server agent context-switching mid-task; preserves WIP 2/2 hygiene per Sprint 1962-B-01 recurring-bug evidence; P03 has no time pressure (Tier 3 token reduction, not a live incident)"
+      }
+    ],
+    "anti_recommendation": "Do NOT fire all 3 in parallel. Reasoning: (a) P01 + P03 both load dev-mcp-server with simultaneous .ts edits + .claude/ edits; agent context-switching between cowork-team.md write logic and getAgentSignals.ts schema edits raises collision risk in same dev-mcp-server session. (b) PM's blocks:[P02,P03] declaration is conservative but P02 has cleaner agent-father isolation than the PM-implied serial chain. (c) Phase 3 is not blocking any live ops; sequenced delivery in 2 waves over ~6h is preferable to risky parallel chaos."
+  },
+  "acceptance_gate": "All 3 tasks QA APPROVED → close Sprint 1968c, tally Phase 1+2+3 total savings (target: ~50% token reduction + ~100 fewer MCP calls/trading-day). PO ratification signal: docs/signals/po-1968c-close.json with per-task AC summary + cumulative impact metric.",
+  "dispatch_slate": {
+    "wave_1_now": "DISPATCH:\n  - agent-father → 1968c-P01 (lead) + dev-mcp-server pair-claim on apps/mcp-server/ portion\n      inner self-claim task:1968c-P01 (kind=sprint-task, ttl=7200s)\n      read docs/handoffs/TASK_1968c-P01-tick-snapshot.md\n      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-6 Tier 2\n      execute .claude/ + apps/mcp-server/ surgery per ACs AC-1..AC-8\n      emit docs/signals/agent-father-1968c-p01-done.json (or co-emit with dev-mcp-server signal)\n      handoff to QA for AC validation\n  - agent-father → 1968c-P02   inner self-claim task:1968c-P02 (kind=sprint-task, ttl=7200s)\n      read docs/handoffs/TASK_1968c-P02-step0-skill.md\n      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-8 Tier 3\n      create .claude/skills/step-0-cowork/SKILL.md + update 7 cowork agent always_load entries\n      emit docs/signals/agent-father-1968c-p02-done.json\n      handoff to QA for AC validation",
+    "wave_2_gated": "PENDING (auto-dispatch when agent-father-1968c-p01-done.json lands AND dev-mcp-server portion is QA-pending or DONE):\n  - dev-mcp-server → 1968c-P03   inner self-claim task:1968c-P03 (kind=sprint-task, ttl=7200s)\n      read docs/handoffs/TASK_1968c-P03-server-filter.md\n      read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § L-9 Tier 3\n      add signal_type optional parameter to getAgentSignals.ts Zod schema + server-side filter logic\n      update .claude/tools/list/get_agent_signals.md doc + flow files (news-scout, alert-commander)\n      add unit tests (filter present, filter absent, invalid value)\n      emit docs/signals/dev-mcp-server-1968c-p03-done.json\n      handoff to QA for AC validation"
+  },
+  "ac_override_audit": "PM handoff acceptance criteria all reviewed for measurability. AC-8 of P03 references '≥9277 PASS' baseline — verified against latest commit 257d92bf which shows 9358 pass / 285 fail (BCTC freeze baseline). Updated guidance: P03 baseline should be ≥9358 PASS post-implementation (with +1-3 new filter tests bringing total to ~9361 PASS). PM may want to refresh AC-8 numeric anchor or accept ≥9358 PASS as the floor.",
+  "po_notes": [
+    "L43 reaffirmed: PM brief decomposition was correct on all 3 ACs surface audits — semantic, receiver-readiness, zone-collision all checked.",
+    "L44 reaffirmed: ACs embedded in handoffs are sufficient for dispatch — no need for further decomposition request to PM.",
+    "L42 applied: Sprint 1968c IS the new sprint for Phase 3 work. Sprint hygiene preserved (1968 stayed closed; 1968c is the new vehicle).",
+    "Cross-ref unchanged: BCTC freeze in force; 1959-watchdog-4 unlock 2026-05-22T21:00Z; 1965c-soak through 2026-05-23T18:00Z; Sprint 1967 fix slate continues in parallel."
+  ],
+  "depends_on": [],
+  "blockers": "None — wave_1 dispatch immediate; wave_2 auto-gated.",
+  "pipeline": "continue",
+  "next": "pm dispatches wave_1 (P01 + P02) to agent-father / dev-mcp-server pair. QA picks up per-task ACs on completion. PO ratifies sprint close once all 3 P-tasks QA APPROVED."
+}
