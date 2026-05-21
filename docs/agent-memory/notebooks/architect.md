@@ -1,310 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-20 21:35 UTC | **Sprint:** 1959-watchdog-9
+**Last updated:** 2026-05-21 | **Sprint:** 1967
 
-## This session (2026-05-20 — 1959-watchdog-9 standing volume policy)
+> Archive: `docs/archive/notebooks/architect-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
-Docs-only task. Created `docs/standards/dockerfile-volume-policy.md` (59L) codifying the `/opt/<service>-assets/` convention as canonical location for service-baked artifacts. Core content: rule + named-volume shadow failure mode (RAG watchdog-3 incident, commit `66255410`) + canonical Dockerfile pattern + code-review rejection checklist. Cross-linked from `docs/references/tree-map.md` (standards section + Write Ownership table) and `docs/protocols/docker-deployment-runbook.md` Related section. AC-9-1..4 all PASS.
+## Current session (2026-05-21 — Sprint 1967 orchestration audit)
 
-Signal: `docs/signals/architect-1959-watchdog-9.json` → po. DASHBOARD 1959-watchdog-9 flipped DISPATCHED→DONE.
+Brief commissioned by BA/PO. Surface coverage: 7 REQs, evidence-only on surfaces overlapping 1968 (L-1/L-2/L-3). No fix authority in 1967 for those surfaces — defer to 1968.
 
-## Previous session (2026-05-21 — Named-volume shadow audit 1959-watchdog-8)
+## Previous session (2026-05-21 — Token/tool-call economy brief)
 
-Read-only audit. 9 services inspected (all `market_data`-mounted). Result: 2 CONFIRMED SHADOWs, 2 SAFE, 5 OUT-OF-VOLUME.
-
-CONFIRMED SHADOWs:
-- pdf-extractor: `RUN mkdir -p /app/data/extractions /app/data` — empty dirs, no seed data, latent risk only.
-- rag-service: `RUN mkdir -p /app/data/lancedb /app/data/models` — model already moved to `/opt/model-cache` (watchdog-3), empty shadow dirs remain. Latent risk only.
-
-SAFE (empty mkdir only, no seeded content): stock-price, alert-engine.
-OUT-OF-VOLUME (no writes under `/app/data` at all): mcp-server, technical-analysis, macro-indicators, kinh-dich-service, news-fetch (ro).
-
-Verdict: threshold ≥3 for Sprint 1960-volume-shadow-remediation NOT reached. No new sprint.
-Recommendation: add `/opt/<service>-assets/` policy to developer runbook. No rebuilds.
-
-Brief: `docs/architecture-briefs/2026-05-21-named-volume-shadow-audit.md`
-Signal: `docs/signals/architect-1959-watchdog-8.json`
-AC-8-1..4: all PASS.
+Brief: `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md`. 9 waste types (W-1..W-9), 9 levers (L-1..L-9) in 3 tiers. Phase 1 (L-1..L-5) = zero-risk, agent-father only. Phase 2 (L-4/L-7) = moderate. Phase 3 (L-6/L-8/L-9) = PM→dev-team.
 
 ## Previous session (2026-05-21 — 1962 task_id format audit)
 
-16-site read-only audit (9 inner 1960c + 7 outer 1962c). Result: WARN — 0 FAILs, 5 WARNs.
-Two-tier defense structurally intact. All C1 inner/outer pairs use identical `"task:" + task_id` prefix.
-Brief: `docs/architecture-briefs/2026-05-21-task-id-format-audit.md`. Signal: `docs/signals/architect-1962-audit-done.json`. Commit: `25d2d3d9`.
-
-**5 WARNs (all auto-fixable, no redesign):**
-- WARN-1 C5: `sprint-signoff.md` Reject path — no explicit release (TTL fallback only, 3600s gap)
-- WARN-2 C4: `qa/main.md:67` — `→ call task_claim(task_id, ...)` abbreviated positional syntax
-- WARN-3 C4: `drain-signals.md:36` — `call_tool("task_release", ...)` missing `server=` param
-- WARN-4 C4: `agent-father/edit-apply.md:53,74` — heartbeat + release both use abbreviated form
-- WARN-5 C4: `dev-team/main.md:184-185` — S4 inline table uses positional task_claim() shorthand
-
-WARN-1 has highest operational risk if sprint durations exceed 3600s. All others are documentation grammar.
-Follow-up: Sprint-1963-optional (defer to next refactor cycle per audit recommendation).
-
-## Previous session (2026-05-21 — Task-lock dispatcher-wrap brief)
-
-Sprint 1962 task 1962a. Designed Model 1 dispatcher-wrap (outer claim around Agent() spawn) as additive guard on top of Phase 3 Model 2 self-claim. Brief: `docs/architecture-briefs/2026-05-21-task-lock-dispatcher-wrap.md`. Signal: `docs/signals/architect-1962a-brief-done.json`.
-
-**Brownfield findings:**
-- All 7 PO-identified spawn sites verified present at stated line numbers.
-- ops/main.md confirmed Agent()-free (bash/docker commands only). Excluded correctly by PO.
-- drain-signals.md + cowork-team/main.md already wrapped (Phase 2). Leave untouched.
-- No additional sites beyond PO audit.
-
-**Key design decisions:**
-- Inner self-claim (Model 2, Phase 3): KEEP AS-IS. Outer wrap is additive. Remove only after 1962d observation window.
-- Owner-agent identity: outer = dispatcher (dev-team / developer / ba / pm), inner = spawned agent. Different `owner_agent` values on same `task_id` key permits serial claim/release without false collision.
-- PO triage (S3) uses synthetic date-scoped key `task:po-triage-<YYYYMMDD>` (no existing task_id at triage time). TTL=1800s.
-- Pipeline resume (S2) uses `task:` + `pipeline-state.json.activeTaskId`. Migration-check (stale-lock-takeover) path from task-lock SKILL applies if claimed=false here.
-- Parallel batch pattern: claim each task_id before spawning, collect which passed, spawn only those in one message, release all after spawn returns.
-- Transition window (outer release → inner claim): <2s window, 15min cron interval — statistically negligible. No additional mechanism.
-- No Docker rebuild needed — all edits are .md orchestration layer only.
-
-**S2+S3+S4 same file:** main.md has three separate edit hunks (pipeline-resume, po-triage, UNBLOCK/CLEAN). PM (1962b) may group into one commit per c47 policy (one file = one commit).
-
-Signal emitted: `docs/signals/architect-1962a-brief-done.json` → pm, agent-father, qa. PM 1962b unblocked.
+16-site read-only audit. WARN: 0 FAILs, 5 WARNs. Two-tier defense structurally intact.
+5 WARNs (auto-fixable): WARN-1 C5 sprint-signoff no explicit release; WARN-2..5 abbreviated task_claim() syntax. WARN-1 highest risk if sprint >3600s.
+Brief: `docs/architecture-briefs/2026-05-21-task-id-format-audit.md`
 
 ## Previous session (2026-05-20 — Phase 3 task-lock dev-team wiring brief)
 
-Sprint 1960 task 1960a kickoff per `docs/signals/po-1960-signoff.json`. Phase 3 design refinement — wire `task_claim`/`task_heartbeat`/`task_release` into PO+PM+developer+dev-*+QA+agent-father+fixer flows. Brief: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md`.
-
-**Key design resolutions:**
-- **Model 2 (agent-self heartbeat) chosen** — agents heartbeat at flow-step boundaries (TDD loops, QA pipeline entry) rather than wall-clock timer. No master polling needed because dev-team chain shares `owner_session` UUID within one Claude Code session.
-- **Developer is PRIMARY claimer**, not PM. CLAIM at flow Pre-code step 2b (after branch checkout, before file reads). Matches the in_progress transition timing.
-- **Developer does NOT release on RETURN**; QA inherits same-session lock and releases atomically at `git push origin main`. Avoids TTL gap during QA→fixer→QA round trips. Brief §4.4 explicit ("Lock handoff to QA — same session, no release needed").
-- **Migration logic on claim-fail**: read `docs/pipeline-state.json`. If `activeTaskId == task_id` AND `nextAgent == calling_agent` AND `current_holder.owner_agent == calling_agent` AND `heartbeat_at > 5min stale` → logical takeover detected → EXIT cycle (`PIPELINE: blocked, reason: stale-lock-takeover`). Next 15-min cron tick retries naturally. NO new MCP tool needed.
-- **TTLs**: sprint-task 3600s (developer/qa/architect/agent-father primary), 1800s (ba/pm/fixer shorter overrides), dashboard-row 1800s. Cowork-slot 900s (Phase 2, unchanged).
-
-**Critical correction to PO signoff audit:** all 12 dev-* agents inherit `tools_package: .claude/tools/package/developer.md` (verified via grep). Developer.md already lists the 3 task-lock tools. **Zero dev-* package edits needed in Phase 3.** PO signoff implied otherwise; brief §5 corrects.
-
-**Tool-package delta (12 EDITs only):** po, pm, architect, ba, qa, fixer, agent-father, ops, system-auditor, cowork-refactory-expert, code-janitor, idea-forge. ops + system-auditor get `task_list_held` only (audit-read). qa + agent-father get all 4 tools.
-
-**File-path matrix (9 flow edits, each with one-line snippet for agent-father 1960c mechanical edit):**
-- po/sprint-kickoff.md §4.1 (claim umbrella after step 4)
-- po/sprint-signoff.md §4.2 (release umbrella in Approve branch)
-- pm/main.md §4.3 (heartbeat after step 3c + step 4)
-- developer/main.md §4.4 (claim 2b + heartbeat TDD + lock-handoff comment)
-- developer/microservice-main.md §4.5 (same pattern; claim after step 6, before step 7)
-- qa/main.md §4.6 (heartbeat before bun test, release before git checkout main)
-- fixer/main.md §4.7 (heartbeat after step 2 git status)
-- agent-father/edit-apply.md §4.8 (claim 5a + heartbeat 7b + release 8b)
-- dev-team/drain-signals.md §4.9 (dashboard-row claim before NEW→READ + immediate release after row consumed)
-
-**Implementation order for 1960c (§8):** packages → skill update → drain-signals → developer flows (paired) → qa → fixer → pm → po → agent-father (last because agent-father edits its own flow).
-
-**Failure-mode table §6** has 9 entries (P3-F1 through P3-F9). All paths degrade to (a) duplicate work, (b) one cron-tick delay, or (c) BUG telegram. No data-loss scenario. Task-lock is advisory, not hard gate.
-
-**Test plan for QA 1960d §7:** 7 scenarios — T1 race claim / T2 heartbeat TTL extension / T3 stolen-lock detection / T4 dashboard dual-drain / T5 pipeline-state coexistence / T6 cross-agent heartbeat / T7 concurrent stale-steal race. Each maps to 1960d AC.
-
-Signal emitted: `docs/signals/architect-1960a-brief-done.json` → po, pm, agent-father, qa. PM 1960b is now unblocked to finalize the sprint plan reading the brief.
-
-## Previous session (2026-05-19 — BCTC write-chain RCA)
-
-Trigger: ≥3 fix commits on BCTC chain in 24h. Recurring-bug escalation.
-
-**Verdict: (b) architectural rot — 3 compounding failures**
-
-Failure A (FATAL): `backfillBctcQ12026.ts:53` uses wrong column names `(ticker, year, quarter)` vs actual schema `(action_code, period_year, period_quarter)`. Every `backfillBctcQ12026` run fails silently at runtime. 103 pending rows in `bctc_vps_queue` came from `server.ts:703` push endpoint, not the backfill.
-
-Failure B (BLOCKER for FPT/GAS): OCR cache race. `bctcPdfPullJob.triggerExtraction()` runs `extractAndStorePdfPagesWithRetry()` then immediately calls `getCachedPdfText(filename)` (line 158). `ocr_cache_count=0` in ops signal confirms `pdf_extracted_text` rows either were not written or the filename lookup missed. Stage 3 guard fires (`cached === null || text < 100 chars`) → `fetchParseAndStoreBctc` never called → 0 rows in `financial_reports`.
-
-Failure C (secondary, EIB/DHG): scanned-image PDFs + 2s inter-page yield = 31 min OCR per pass. Only 3/40 and 3/36 pages extracted. Even if Failure B fixed, these produce confidence ≤ 0.05 (coreFieldsAllZero guard in `parseBctcReport.ts:152`). Would land `validation_status='low_confidence'` at best.
-
-**Quick win (ship now):** Fix backfillBctcQ12026.ts:53-54 column names — 2h, zero risk, unblocks all 30 watchlist tickers for next enricher cycle.
-
-**Sprint plan:** Tasks 5-A through 5-E, dev-mcp-server zone, ≤2 days. PM notified via signal.
-
-Brief: `docs/architecture-briefs/2026-05-19-bctc-write-chain-rca.md`
-Signal: `docs/signals/architect-bctc-write-rca.json`
-
-## Previous session (SPIKE-1948e)
-
-PC1 legal_risk signal pipeline review. Read-only, 2h timebox.
-
-**Root cause (three-point cascade):**
-1. `SignalTypeSchema` in `agentSignalStore.ts:39-49` has 9 values — `"legal_risk"` is absent. Any `post_agent_signal(signal_type: "legal_risk")` call is Zod-rejected before DB write.
-2. `stage-signals.md` defines only `urgent_news` + `chain_catalyst` dispatch paths. No `legal_risk` dispatch block exists. news-scout notebook (04:22 UTC 2026-05-18) confirms: "PC1 chairman arrest — not in watchlist, sector ripple noted." Agent recognised the event but took no signal action.
-3. PC1 absent from primary watchlist (`mcp.config.json` L44-58, `WATCHLIST_SEED`) — present only in `referenceStocks.utilities` and `sectorPeers.ts`. Contributing factor to low-urgency classification, not the proximate cause.
-
-**What already works (confirmed intact):**
-- `legalRiskDetector.ts` pattern library covers `khởi tố` / `bắt tạm giam` — correct, no keyword changes needed
-- `get_legal_risk_signals` read side already queries `agent_signals` (Task 1940a) — correct
-- `schema-news.ts` `agent_signals.signal_type TEXT` — no DB-level constraint, neutral to fix
-- `policyImpactMapper.ts` recognises prosecution as `legal_risk` PolicyType with `CRIMINAL_PROSECUTION_KEYWORDS` — reusable as classification guidance in Fix B
-
-**Fix sizing: S (both changes)**
-- Fix A: add `"legal_risk"` to `SignalTypeSchema` enum (1-line, `agentSignalStore.ts`)
-- Fix B: add `legal_risk` dispatch block to `stage-signals.md` with 6h dedup guard
-
-**Key risk R-1:** dedup — legal events must not re-post every 20-min news-scout cycle. Remedy: 6h dedup guard on same `stock_code` + `signal_type = "legal_risk"`.
-**Key risk R-3:** 1945 stabilisation window — Fix A touches `agentSignalStore.ts` only. Zero contact with `verdictResolutionJob.ts` or `alert_accuracy` tables. Window safe.
-
-Child task filed: **1948e-fix** (Todo, MEDIUM, dev-mcp-server).
-Spike: `docs/spikes/SPIKE_1948e-pc1-legal-risk-pipeline.md`
-Brief: `docs/architecture-briefs/2026-05-18-legal-risk-signal-pipeline.md`
-TASKS.md: SPIKE-1948e Todo → Done; 1948e-fix added to Backlog.
-
-## Previous session (SPIKE-1947)
-
-Closed-loop auto-improvement system design. Read-only, 3h timebox.
-
-**Host decision:** Option C — scheduler job inside `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts`. Rationale: direct SQLite access to `market.db` (single-writer satisfied — job runs inside mcp-server process), follows `monthlySignalQualityJob.ts` + `accuracyDigestJob.ts` precedent, zero new Docker services. New microservice (Option A) rejected: cross-service DB read violation. Cowork agent (Option B) rejected for Phase 1: token cost + hypothesis quality unproven on new system.
-
-**Detection policy:** Two-window comparison of `getAccuracyStats(db, {days:7})` vs `getAccuracyStats(db, {days:30})`. Degraded = delta ≥ 10pp with ≥3 samples in both windows. Persistently-low = baseline_rate < 40% with ≥10 samples. Min sample threshold = 10 for dispatch.
-
-**New components:**
-- `domain/services/degradationRules.ts` — pure rule-lookup table, zero imports, DDD domain layer
-- `infrastructure/db/improveCheckStore.ts` — snapshot write/read for recheck baseline
-- `infrastructure/db/schema-system.ts` — `improve_check_log` table (add to initSystemTables)
-- `scheduler/audits/selfImproveOrchestratorJob.ts` — cron entry point, 09:00 UTC daily
-
-**Key reuse:** `getAccuracyStats()` (already in signalOutcomeStore.ts) is the ONLY query needed for detection. `cron_job_runs.wrapRun()` pattern for dedup. `sendTelegramWork()` for WORK channel.
-
-**Phasing:** Phase 1 (Sprint 1948) = shadow mode (log + WORK Telegram, no dispatch). Phase 2 = manual-gate via signal-bus JSON. Phase 3 = auto-dispatch with kill-switch env var.
-
-**OBSERVE gates:** 3 of 6 can retire once Phase 1 stable: post-1945-verdict-resolution-scored-pct, post-1945-bug-storm-silence, 1941b-signal-outcomes-seed-window. Keep: 1922g-pharma, post-1944-financial-reports, post-1942-fa-verify (data source liveness, not accuracy-loop scope).
-
-**Decision: YES — proceed to Sprint 1948 Phase 1.** Pre-condition: post-1945-verdict-resolution-scored-pct gate must clear 2026-05-20T07:22Z before 1948a starts.
-
-Spike: `docs/spikes/SPIKE_1947-auto-improve-loop.md`
-Brief: `docs/architecture-briefs/2026-05-18-closed-loop-auto-improvement.md`
-TASKS.md: SPIKE-1947 Todo → Done.
-
-## Previous session (SPIKE-1946)
-
-PLX -40% crash crisis detection gap diagnosis. Read-only, 2h timebox.
-
-Root cause: PLX absent from `watchlist` SQLite table. `get_crisis_early_warning` hard-filters to `SELECT code FROM watchlist` (crisisTools.ts L55) → PLX never enters velocity evaluation. Three seed sources all lack PLX: `docs/data/system-map.json`, `apps/mcp-server/mcp.config.json`, `seedWatchlist.ts` WATCHLIST_SEED.
-
-Tool architecture confirmed correct for its scope: velocity-spike detector (2× 24h baseline), not price-crash detector. alert-commander calls it every cycle (stage-bootstrap.md Step 2) — tool is active, not passive.
-
-news-scout chain_catalyst path covers non-watchlist stocks (uses stockAliases.ts + detectStocksInText) but is probabilistic (TTL ~120 min, regime confidence threshold). Signal #3383 (PLX bearish crisis, 05:20 UTC) deduped at 06:20 UTC news-scout cycle; may have expired before 07:07 UTC alert-commander cycle (RC-3 = design trade-off, not bug).
-
-Verdict: FIX. Child task 1946a: add PLX to 3 files (system-map.json + mcp.config.json + seedWatchlist.ts), 1 new unit test, idempotent seed test. Zone: apps/mcp-server/ + docs/data/.
-
-TASKS.md: SPIKE-1946 Todo → Done, 1946a added to Todo.
-Spike doc: `docs/spikes/SPIKE_1946-crisis-detection-plx-gap.md`
-
-## Previous session (ARCH-1945b)
-
-Accuracy digest frontend card brief. Multi-zone: `apps/mcp-server/` + `apps/frontend/`.
-
-Key brownfield findings:
-- `getSystemAccuracyDigestStats(db, days)` already fully implemented at `signalOutcomeStore.ts:380`. Has table guard returning zero struct. Already imported in `server.ts:48` (extends existing import with one added symbol).
-- Handler insertion: after `server.ts:1020` (end of GET /api/signals/stock/:code), before line 1022 (POST /api/ohlcv-backfill-done).
-- SectionCard insertion: after `dashboard.analysis.tsx:1417` (end of "Kinh Dịch — Cổ phiếu mẫu"), before line 1418 (`</div>`).
-- Api-gateway confirmed: `/mcp/*` catch-all routes to `mcp-server:3000` (registry.go:26). No gateway code change.
-- No `fetchAccuracyDigest` exists yet — new function after line 519 of `client.ts`.
-- New types `AccuracyDigestStats` + `SignalTypeAccuracyDigest` in `domain/market.ts` after line 168.
-- Export `deriveAccuracyDigestState()` helper from `client.ts` for unit testability.
-
-6 states (BA spec §5 table counts Loading/null as distinct from Empty): null, empty, all-neutral, insufficient-sample, partial, normal.
-
-R-4: days param SQL template literal — handler clamps [1,90] BEFORE calling function. Critical sequencing.
-R-5: SPIKE-1945 isolation — do NOT touch verdictResolutionJob.ts or alert_accuracy tables.
-
-Brief: `docs/architecture-briefs/2026-05-18-accuracy-digest-frontend-card.md`
-TASKS.md: ARCH-1945b added to Done, 1945b already in Todo.
-
-## Previous session (SPIKE-1945)
-
-SPIKE-1945 verdict-resolution no-baseline — FIXABLE BUG confirmed.
-
-Root cause: `defaultFetchHistory()` in `verdictResolutionJob.ts` (L119–122) reads
-`snaps[0].price` from `getPriceHistory()` result. Go `/price/history` endpoint returns
-`{code: string, history: DailyOHLCV[]}` envelope (not `PriceSnapshot[]` array). At runtime:
-`snaps[0]` = `undefined` → `TypeError: Cannot read properties of undefined` → catch block
-returns `null` → "price-fetch-failed:unresolvable" guard fires on every baseline fetch.
-
-This explains 100% of the ~520 unscored verdicts and the 19-BUG-msgs/21h storm (TNB c68 #7).
-The `false_positive` label from Sprint 1926a is incorrect for these rows (direction never
-evaluated). Sprint 1336 SQLite isolation has no impact on this path.
-
-Child task 1945a scoped: fix `getPriceHistory` return type in `clients.ts` + update
-`defaultFetchHistory` unwrapping + audit all callers. Goal: `scored_pct ≥ 60%` post-deploy.
-
-Key finding: Go response has `DailyOHLCV.close` (not `.price`). Correct baseline field is
-`envelope.history[0].close` (history ordered ASC by date from Go query L223).
-
-Spike doc: `docs/spikes/SPIKE_1945-verdict-resolution-no-baseline.md`
-
-## Previous session (ARCH-1944)
-
-Zone-split brief for Sprint 1944 bctcQueueEnricher fix.
-
-Brownfield scan overturned both root causes stated in the task brief:
-
-1. VPS route `/proxy/bctc-discover/:ticker` — already landed in repo (commit `1b8f8cd5`). Not missing.
-2. `bctcHttpFetcher.ts` X-API-Key injection — already landed (commits `8f9c2d55`/`0d248b00`), 6 unit tests covering AC-1..6.
-
-New root cause found: **response shape mismatch**. VPS `runDiscoverScript()` returns `string[]` but `extractVpsPlaywrightUrls()` in `bctcDiscovery.ts` expects `{results:[{url,source,confidence}],error}`. Fix goes in `vps-proxy-server.js` (wrap output in envelope). This is Risk R-1 in the brief.
-
-Child tasks:
-- 1944a-vps (dev-vps-crawls, S): wrap shape + deploy-vinahost.sh
-- 1944a-mcp (dev-mcp-server, S): verify wiring + add guarded live-probe test
-
-cafef Strategy 2 was already fully removed in TASK_1916b. 1944b scope revised to type-cleanup only (`_fetchCafef` field removal + comment update).
-
-Brief: `docs/architecture-briefs/2026-05-18-vps-bctc-discover-route-zone-split.md`
-
-## Previous session (ARCH-1942c)
-
-TASK-1942c HPG OCF all-zeros — brownfield design complete.
-
-Scenario B root cause confirmed: `CASH_FLOW_SCRIPT` single key `'Net cash inflows/outflows from operating activities'` in `vnstockBridge.ts` (L844) uses `g()` helper which returns `float(0 or 0) = 0.0` on key-miss, not NULL. Same pattern in `FINANCE_SCRIPT` for NI key.
-
-Scenario A root cause confirmed: `cashFlowExtractor.ts` missing `"sản xuất kinh doanh"` label variant in `P_OPERATING_CF`. The `fv()` variadic alt-patterns mechanism already supports adding it with zero risk.
-
-Both fixes ship in same PR — independent, no conflict. Domain type change: `VnstockCashFlow.operatingCashFlow: number | null` (safe — all downstream callers use SQLite `?` placeholder or null-check the outer object).
-
-Key precedent: `BALANCE_SHEET_SCRIPT` already has multi-key fallback pattern (L776-782: `if short_debt == 0 and long_debt == 0: long_debt = g('Convertible...')`). This is the model for the CASH_FLOW_SCRIPT fix.
-
-Handoff: `docs/handoffs/1942c-ba-spec.md`
-
-## Previous session (ARCH-1920/BCTC-3b)
-
-ARCH-1920 cadence policy brief. Brownfield scan of 10 zombie tables across schema-financial-reports.ts / schema-macro.ts / schema-alerts.ts. Key design decisions:
-
-- Cadence follows data volatility (per-domain), NOT source-tier. Source tier = metadata tag only.
-- 5 new cronConfig keys: `vnstockFundamentalsRefresh` (Mon 01:00 UTC), `vnstockTradingStatsRefresh` (daily 08:30 UTC weekdays), `bondMaturityPoller` (Sun 02:30 UTC), `commodityTrackerRefresh` (daily 06:00 UTC), `brokerSanctionsSweep` (last Fri of quarter months).
-- Shipping index wires into same `commodityTrackerRefreshJob.ts` (both write to `tracked_indicators`).
-- HIGH pre-condition for 1920d: `broker_sanctions` table missing UNIQUE(broker_name, sanction_start) — must be schema migration in same PR as job.
-- Zone assignments: vnstock → `financial-reports/`, bond/commodity → `macro/`, broker_sanctions → `news-analysis/`.
-- Failure policy: all jobs fail-loud WORK channel (not BUG — data pipeline, not code panic).
-- Risk R-1: vnstock rate-limit → `isRunning` guard mandatory in `vnstockFundamentalsJob.ts`.
-- Risk R-2: bond_maturity — BA must confirm geo-access from France before deciding VPS vs direct.
-
-Brief: `docs/architecture-briefs/2026-05-15-ARCH-1920-scheduler-cadence-policy.md`
-
-## Previous session
-
-TASK-1918b Architect design — news-scout macro snapshot package gap. Path A chosen (direct tool call), Path B (signal bus) rejected. No new code; 4-file surface: agentBootstrap.ts + SKILL_MANIFEST.md + news-scout.md + stage-bootstrap.md.
-
-TASK-BCTC-3b Architect design — hsx.vn BCTC discovery redesigned for main server (TypeScript) after prior "Envoy route-block" conclusion overturned by main-server recon 2026-05-15.
-
-Key findings and design decisions:
-- Prior probe used wrong URL (`/n/api/v1/news/securities/VNM/1` — missing locale segment, string ticker instead of numeric ID). Correct endpoint: `GET /m/api/v1/1/mediafiles/5/{numericId}` returns HTTP 200 with BCTC PDFs directly from France. No VPS needed.
-- New implementation: TypeScript fetcher `hsxBctcFetcher.ts` in `infrastructure/fetchers/`. Not Python. Not VPS. Not a scheduler job.
-- Integration: new Strategy 0 in `bctcDiscovery.ts`. Current Strategy 0 (VPS Playwright) demotes to Strategy 1. Domain service contract unchanged for consumers.
-- `DiscoverOptions._fetchHsx` injectable port added (different arity from `HttpFetchFn` — three params: ticker, year, timeoutMs). `HosePdfDiscoveryResult.source` union gains `"hsx"`.
-- `bctcQueueEnricherJob.ts` wires the new fetcher; no logic changes.
-- No DB schema changes. No new scheduler job. No VPS script changes.
-- Handoff: `docs/handoffs/TASK_BCTC-3b.md` fully rewritten with Architect section. TASK-BCTC-3c updated: pure integration verification (seed queue, run enricher, confirm `staticfile.hsx.vn` URLs land + accessible). No MCP server code changes expected for 3c.
-
-Risk to monitor: static token `HJ2HNS3SKICV4FNE` in hsx.vn JS bundle. If rotated → all hsx.vn calls return 403. Monitor `source: "hsx"` success rate in enricher logs. Token is public, not a secret — do NOT put in `.env`.
+Brief: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md`. Model 2 self-claim chosen. Developer = PRIMARY claimer (2b pre-code). QA inherits lock, releases at git push. 12 tool-package edits only (dev-* inherit developer.md). 9 flow edits with insertion points. Test plan: 7 scenarios T1-T7.
 
 ## Patterns noticed
 
-- Reuters fallback split (`1899a-reuters-fallback-{dom,lifecycle,detect}.test.ts`) is the confirmed working precedent for the Bun test split pattern.
-- Preamble line-count bloat is the recurring risk in Bun test splits: 113L preamble means any group <90L of tests will land under 200L; groups of 90-100L need trimming.
-- hsx.vn Envoy route-block pattern: `x-envoy-upstream-service-time: 2ms` + empty body = edge rejection (no backend contact). Contrast with working endpoints: `x-envoy-upstream-service-time: 6ms` + `cache-control: max-age=60`. This is a reliable signal for "permanently blocked by Envoy route table" vs "backend reachable."
-- When a geo-restriction hypothesis fails (VPS same 404 as France), always check if the block is at routing layer vs IP filter layer. Envoy route tables are routing-layer blocks — unbypassable from any external IP.
+- Reuters fallback split is confirmed working precedent for Bun test split pattern
+- hsx.vn Envoy route-block: `x-envoy-upstream-service-time: 2ms` + empty body = edge rejection (no backend contact)
+- Backtesting: `Option C equity curve` = direct copy lines 302-307 in backtestEngine.ts
 
 ## Carry-over (next session)
 
-- SPIKE_BCTC-3: FULLY CLOSED. Re-Assessment appended to `docs/spikes/SPIKE_BCTC-3-hsx-xhr-scope.md`. TASK-BCTC-3b/3c closed. TASK-BCTC-1 (ops) filed in `docs/TASKS.md`.
-- TASK-BCTC-1: HIGH ops — fix `TasksMax=512` + `MemoryMax=512M` in `/etc/systemd/system/vn-bctc-fetch.service`. 30 min. AC: VNM Q1/2026 Playwright discovery succeeds without pthread_create error. Owner: ops.
-- 1899a-bloomberg-test-split: handoff at `docs/handoffs/TASK_1899a-bloomberg-test-split.md`. Ready for dev-news-fetch.
-- SPIKE_006 c61: BA spec needed — scoring unification (alertAccuracy.ts + alertOutcomeScorer + verdictResolutionJob). Open Q: confirm 60% threshold denominator with user.
-- Headlock F2b + F1 (Docker .git/ exclusion): user-queue carry item.
+- Sprint-1963-optional: WARN-1..5 auto-fix defer to next refactor cycle
+- 1948e-fix: add `"legal_risk"` to SignalTypeSchema + legal_risk dispatch block in stage-signals.md
+- TASK-BCTC-1: HIGH ops — fix `TasksMax=512` + `MemoryMax=512M` in systemd service
+- SPIKE_006 c61: scoring unification (confirm 60% threshold denominator with user)

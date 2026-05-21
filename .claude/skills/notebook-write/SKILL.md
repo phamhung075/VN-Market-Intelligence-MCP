@@ -16,15 +16,18 @@ Path: `$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md`
 1. If the file already exists, Read it first to recover any explicit carry-over items (anything under a `## Carry-over` heading).
 2. Drop everything else — old session summaries, old patterns, old "Zone health:" lines from prior cycles. Each cycle owns only its own observations + any carry-over the previous cycle explicitly marked.
 
-### Body (target ≤50 lines, hard cap 80)
+### Body (target ≤100 lines, hard cap 120)
 
 - **Last updated:** `<ISO date>` · **Sprint:** `<NNN>`
+- **Archive pointer (if trimmed):** `> Archive: docs/archive/notebooks/<agent-id>-<YYYY-MM-DD>.md`
 - **This session (1–3 sentences):** what was done, what was found.
 - **Patterns noticed:** recurring bugs, architecture violations, calibration observations (optional, omit if none).
 - **Zone health:** one line per zone-scan finding (dev-* agents only — emit `Zone health: no drift detected` or specific drift line).
 - **Carry-over (next session):** unresolved questions, blocked tasks. **Only items here survive into the next cycle.**
 
-If your draft is >80 lines, you are appending. Stop, re-read this skill, and rewrite as a fresh overwrite.
+**Archive-before-overwrite rule:** If the current notebook file exceeds 120 lines, COPY the full file to `docs/archive/notebooks/<agent-id>-<YYYY-MM-DD>.md` BEFORE writing the trimmed overwrite. Add an archive pointer on line 3 of the live file. Archive is write-once — do not edit archives.
+
+If your draft is >120 lines, you are appending. Stop, re-read this skill, and rewrite as a fresh overwrite.
 
 ### Tool call
 
