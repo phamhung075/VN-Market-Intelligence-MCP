@@ -132,3 +132,66 @@ AC-1 through AC-5 per `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md
 | AC-3 | No divergence → zero false-positive rows in `## po` |
 | AC-4 | `task_list_held` empty but `pipeline-state.activeTaskId` non-null → DASHBOARD alert |
 | AC-5 | Two TASKS.md commits within 30s → detected via git log → DASHBOARD alert |
+
+---
+
+## Step D5: Notebook Overflow Detection
+
+**Dimension:** D5 — see `docs/agents/system-auditor/audit-dimensions.md`
+**Sprint:** 1967 ITEM-04 (market-watcher identity recurrence fix — TASK_1967-04)
+
+### Trigger
+
+Tier-2 (every 4h) pass. Runs alongside D2 (Data Fetch Integrity). If Tier-2 is not the current tier, skip this handler.
+
+### Steps
+
+**Step D5-1 — Collect notebook sizes**
+
+```bash
+for notebook in docs/agent-memory/notebooks/*.md; do
+  lines=$(wc -l < "$notebook")
+  basename=$(basename "$notebook")
+  if [[ $lines -gt 150 ]]; then
+    echo "OVERFLOW: $basename = $lines L"
+  fi
+done
+```
+
+Collect all notebooks exceeding 150L into a violation list.
+
+**Step D5-2 — Alert on violations**
+
+For each violation found in Step D5-1:
+```
+send_telegram(
+  channel="work",
+  message="[system-auditor] D5 Notebook overflow: <basename> = <lines>L (threshold 150L). Agent identity risk — trim required."
+)
+```
+
+Dedup key pattern: `d5_notebook_overflow:<basename>:<calendar_date>` — alert once per agent per day maximum.
+
+**Step D5-3 — Clean pass**
+
+If zero violations:
+```
+log "[system-auditor] D5 pass clean — all notebooks ≤ 150L at <UTC>"
+```
+No WORK message, no DASHBOARD row.
+
+### Failure modes
+
+| Failure | Behavior |
+|---|---|
+| `docs/agent-memory/notebooks/` unreadable | Log WARN: `"[system-auditor] D5 WARN: notebooks dir unreadable — skipping check"` → continue to next dimension |
+| `wc -l` fails for specific file | Log WARN for that file, continue checking remaining notebooks |
+
+### Acceptance criteria (TASK_1967-04 AC-4)
+
+| AC | Check |
+|----|-------|
+| D5-AC-1 | D5 handler fires at Tier-2 pass (every 4h) |
+| D5-AC-2 | Any notebook > 150L → WORK telegram sent within the same Tier-2 cycle |
+| D5-AC-3 | Zero violations → no WORK message (no false positives) |
+| D5-AC-4 | Dedup: same notebook fires at most once per calendar day |

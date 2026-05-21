@@ -15,6 +15,22 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 ## Steps
 
+**Step -0: Identity assertion (detect context overflow)**
+
+Before any MCP call, verify agent identity loaded correctly:
+```
+EXPECTED_AGENT = "market-watcher"
+ACTUAL_AGENT   = YAML frontmatter `name` field (from agent definition header)
+
+if ACTUAL_AGENT != EXPECTED_AGENT:
+  send_telegram(channel="bug", "[market-watcher] IDENTITY_CHECK=FAIL — context overflow likely. Expected: market-watcher, got: " + ACTUAL_AGENT)
+  EXIT with DONE: identity-fail | PIPELINE: blocked
+else:
+  log "IDENTITY_CHECK=OK — agent=market-watcher"
+```
+
+Pattern: If name/color/description fields are missing or wrong (context window truncated identity stanza), this fires before any market data fetch. Detects the SUCCESS→SILENT→FAILURE recurrence pattern (TASK_1967-04).
+
 1. Read current UTC time.
 2. Match the window above (evaluate market row first, then prepost, then EOD, then EXIT); if none → return `DONE: outside-window | PIPELINE: complete` and EXIT.
 3. Run Step 0 smoke probe: `call_tool(server="vn-market", tool="get_system_status")`. On failure → `send_telegram(channel=bug, "[market-watcher] Step 0 smoke probe FAILED")` → EXIT.

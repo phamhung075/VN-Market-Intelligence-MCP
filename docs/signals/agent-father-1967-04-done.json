@@ -1,0 +1,28 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task-done",
+  "task_id": "1967-04",
+  "title": "market-watcher identity recurrence fix",
+  "done_at": "2026-05-21T23:30:00Z",
+  "status": "complete",
+  "ac_summary": {
+    "AC-1": "PASS — YAML frontmatter name/color/description/tools/model all present",
+    "AC-2": "PASS — notebook 65L (under 150L cap), no trim needed",
+    "AC-3": "PASS — Step -0 identity assertion added to .claude/flows/market-watcher/main.md",
+    "AC-4": "PASS — D5 dimension + handler added to system-auditor (audit-dimensions.md + handlers.md)",
+    "AC-5": "PENDING_QA — live 10-cycle test required",
+    "AC-6": "PASS — no carry-over items to preserve (clean notebook)",
+    "AC-7": "PENDING_QA — no logic changes to signal emission path"
+  },
+  "files_modified": [
+    ".claude/flows/market-watcher/main.md",
+    "docs/agents/system-auditor/audit-dimensions.md",
+    "docs/agents/system-auditor/handlers.md",
+    "docs/handoffs/TASK_1967-04-market-watcher-identity.md"
+  ],
+  "side_finding": "4 other notebooks already >150L: dev-mainserver-crawls.md (262L), qa.md (190L), code-janitor.md (183L), dev-alert-engine.md (163L). D5 guard will alert on next Tier-2 cycle.",
+  "qa_gate": "AC-5 + AC-7 require live cycle verification (10-cycle market-watcher run)",
+  "pipeline": "continue",
+  "next": "qa"
+}

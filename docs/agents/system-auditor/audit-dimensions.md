@@ -80,3 +80,35 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 - Writing to `coordination.db` — read-only via `task_list_held`
 - Enforcing task-lock TTL — MCP server manages TTL independently
 - Sprint 1966 Option C echo cron — deferred post 1965c soak (gated on 2026-05-22T21:00Z)
+
+---
+
+## D5: Notebook Overflow Risk
+
+**Tier:** 2 (every 4h — runs with D2)
+**Check IDs:** [sau-d5-NbOverflow]
+**Scope:** All agent notebook files at `docs/agent-memory/notebooks/*.md`. Checks line count against 150L hard cap.
+**Pass condition:** Zero notebooks exceed 150L. Any notebook ≥150L triggers a WORK channel alert.
+**Signal type:** `system_issue`
+**Sprint:** 1967 ITEM-04 (market-watcher identity recurrence fix)
+
+### Checks
+
+| Check | Description | Pass condition |
+|-------|-------------|---------------|
+| D5-N1 | Line count of each `docs/agent-memory/notebooks/*.md` | All files ≤ 150L |
+
+### Failure modes
+
+| Failure | Behavior |
+|---|---|
+| Any notebook > 150L | Send WORK telegram: `"[system-auditor] Notebook overflow: <filename> = <N>L (threshold 150L)"` |
+| `docs/agent-memory/notebooks/` unreadable | Log WARN, skip D5 this cycle |
+
+### Rationale
+
+Notebook context overflow is the root cause of identity-assertion failures in cowork agents (TASK_1967-04). A growing notebook can exhaust the context window, silently truncating YAML identity stanza fields (name, color, description). This guard catches overflow before it causes agent identity drift.
+
+### Handler
+
+See `docs/agents/system-auditor/handlers.md` §Step D5.

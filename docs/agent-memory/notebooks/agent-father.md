@@ -1,8 +1,21 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T20:54:40Z | **Sprint:** 1967c — TASK_1967-03 + TASK_1967-05
+**Last updated:** 2026-05-21T23:30:00Z | **Sprint:** 1967c — TASK_1967-04
 
-## This Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05, single cycle)
+## This Session — 2026-05-21T23:30Z (Task 1967-04)
+
+**TASK_1967-04 — market-watcher identity recurrence fix (ITEM-04, HIGH):**
+Fix surface: `.claude/flows/market-watcher/main.md` + `docs/agents/system-auditor/`
+AC-1 (YAML stanza): PASS — name/color/description/tools/model all present in frontmatter.
+AC-2 (notebook ≤150L): PASS — market-watcher notebook = 65L, no trim needed.
+AC-3 (Step -0 identity assertion): Added to `.claude/flows/market-watcher/main.md` — fires before any MCP call, logs IDENTITY_CHECK=OK/FAIL, BUG telegram + EXIT on failure.
+AC-4 (D5 guard): Added D5 dimension to `docs/agents/system-auditor/audit-dimensions.md` + Step D5 handler to `docs/agents/system-auditor/handlers.md`. Tier-2, 4h cadence, 150L threshold, WORK alert on violation, dedup once/day per agent.
+AC-5 + AC-7: PENDING_QA (live 10-cycle test).
+Side finding: 4 other notebooks already >150L (dev-mainserver-crawls 262L, qa 190L, code-janitor 183L, dev-alert-engine 163L) — D5 will catch these at next Tier-2.
+Signal: `docs/signals/agent-father-1967-04-done.json` → qa.
+Files modified: 3 (.claude/flows/market-watcher/main.md, docs/agents/system-auditor/audit-dimensions.md, docs/agents/system-auditor/handlers.md) + handoff updated.
+
+## Previous Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05, single cycle)
 
 **TASK_1967-03 — DASHBOARD stale-race guard (ITEM-03):**
 Fix surface: `.claude/flows/pm/main.md`
