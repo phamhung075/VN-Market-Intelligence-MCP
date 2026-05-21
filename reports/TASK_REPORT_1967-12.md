@@ -28,3 +28,42 @@ security: N/A
 ### Non-Blocking
 
 - None
+
+---
+
+## Round 2 — QA Re-review
+
+**Reviewed:** 2026-05-21T22:15Z by qa (round 2)
+**Verdict:** APPROVED
+**Commit validated:** `e696017b`
+**Smart-skip:** YES — zero .ts changes
+
+### AC-2 re-check (targeted)
+
+- `docs/agent-memory/notebooks/alert-commander.md:5` — reads `alert-commander-2026-05-21.md` — PASS
+- Line count: 91L (unchanged) — PASS (AC-1 spot-check)
+
+### No-regression — other 5 notebook pointers
+
+| Notebook | Pointer | Result |
+|----------|---------|--------|
+| dev-mainserver-crawls.md:5 | `dev-mainserver-crawls-2026-05-21.md` | PASS |
+| code-janitor.md:5 | `code-janitor-2026-05-21.md` | PASS |
+| dev-alert-engine.md:5 | `dev-alert-engine-2026-05-21.md` | PASS |
+| news-scout.md:3 | `news-scout-2026-05-21.md` | PASS |
+| dev-vps-crawls.md:5 | `dev-vps-crawls-2026-05-21.md` | PASS |
+
+### Full AC Matrix (Round 2)
+
+| AC | Result |
+|----|--------|
+| AC-1: All 6 notebooks ≤150L | PASS |
+| AC-2: Archive pointer in each live notebook | PASS — all 6 correct |
+| AC-3: Carry-over sections preserved | PASS |
+| AC-4: 6 archive files at docs/archive/notebooks/ | PASS |
+| AC-5: Commit references TASK_1967-04 side_finding | PASS |
+| AC-6: No semantic content loss | PASS |
+
+outcome: APPROVED
+blocking_issues: 0
+merge_status: APPROVED — ready for main

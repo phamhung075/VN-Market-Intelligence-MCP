@@ -1,15 +1,38 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1967-12 | **Session:** c246 — CHANGES_REQUESTED
+**Last updated:** 2026-05-21 | **Task:** 1967-12 | **Session:** c246-r2 — APPROVED
 
-## Session 2026-05-21 c246 — Task 1967-12 CHANGES_REQUESTED
+## Session 2026-05-21 c246-r2 — Task 1967-12 APPROVED (round 2)
+
+```
+date: 2026-05-21
+outcome: APPROVED
+commit reviewed: e696017b
+zone: .md only — zero .ts changes
+smart_skip: YES — bun test + tsc skipped
+round: 2
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: 6 notebooks ≤150L (spot-check) | PASS — 91L unchanged |
+| AC-2: Archive pointer each notebook | PASS — alert-commander:5 now `alert-commander-2026-05-21.md` |
+| AC-3: Carry-over preserved | PASS (carried from round 1) |
+| AC-4: 6 archive files exist | PASS (carried from round 1) |
+| AC-5: Commit refs TASK_1967-04 | PASS (carried from round 1) |
+| AC-6: No semantic content loss | PASS (carried from round 1) |
+| No-regression (5 other pointers) | PASS — all correct |
+
+Blocking: 0. Signal: docs/signals/qa-1967-12-done.json updated (APPROVED, round 2).
+
+## Session 2026-05-21 c246-r1 — Task 1967-12 CHANGES_REQUESTED (round 1)
 
 ```
 date: 2026-05-21
 outcome: CHANGES_REQUESTED
 commits reviewed: 86c60000 + ba274463
 zone: .md only — zero .ts changes
-smart_skip: YES — bun test + tsc skipped
+smart_skip: YES
 round: 1
 ```
 
@@ -22,9 +45,7 @@ round: 1
 | AC-5: Commit refs TASK_1967-04 | PASS |
 | AC-6: No semantic content loss | PASS |
 
-Blocking: `docs/agent-memory/notebooks/alert-commander.md:5` — pointer `alert-commander-2026-05-18.md` must be `alert-commander-2026-05-21.md`. Single-line fix. Archive file at correct path already exists.
-
-Signal: docs/signals/qa-1967-12-done.json emitted. Report: reports/TASK_REPORT_1967-12.md.
+Blocking: `docs/agent-memory/notebooks/alert-commander.md:5` — pointer `alert-commander-2026-05-18.md` must be `alert-commander-2026-05-21.md`. Single-line fix.
 
 ## Session 2026-05-21 c245 — Tasks 1968c-P01 + 1968c-P02 APPROVED
 
@@ -36,7 +57,7 @@ zone: .claude/ only — zero .ts changes across both
 smart_skip: YES
 ```
 
-AC-1..AC-8 + BCTC NFR-3 + Brief-commit: ALL PASS (both). Signals qa-1968c-p01-done.json + qa-1968c-p02-done.json emitted.
+AC-1..AC-8 + BCTC NFR-3 + Brief-commit: ALL PASS (both). Signals emitted.
 
 ## Session 2026-05-21 c244 — Task 1967-02 APPROVED
 
@@ -114,4 +135,3 @@ AC-1..AC-5: PASS. Regression 40/40: PASS. tsc: 0 errors.
 - 1965c soak window closes 2026-05-23T18:00Z — emit soak result signal after that
 - 1968c-P02 AC-7 mock failure tests: deferred to future hardening task
 - 1968c-P01 AC-6 live verification: deferred (non-blocking; static analysis PASS)
-- 1967-12 fixer round 1: alert-commander.md:5 pointer fix only — single-line change, re-submit
