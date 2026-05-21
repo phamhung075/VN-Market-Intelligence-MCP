@@ -1,0 +1,38 @@
+{
+  "from": "po",
+  "to": "dev-mcp-server",
+  "type": "decision",
+  "task": "1967-02",
+  "decided_at": "2026-05-21T20:53:24Z",
+  "decided_by": "po cron-2053Z (c238 → c239)",
+  "chosen_option": "A",
+  "option_A_summary": "Add `verified_decision` as new enum value in MCP signal_type schema (agentSignalTools.ts Zod enum + post_agent_signal.md tool doc + mcp-tools.md Inter-Agent Signal Types table)",
+  "rationale": "Semantic clarity > schema minimalism. (1) `suppress` already has a precise meaning in mcp-tools.md L137: 'Alert Commander → All — False positive'. `verified_decision` has a different purpose: chain de-dup ack after alert-commander fires OR suppresses an alert. Conflating these under one enum value (Option B) would force receivers to disambiguate via payload inspection — semantic overload. (2) Schema cost: enum grows 8 → 9 values (≤13% growth). Not bloat. (3) Receiver readiness: scan of .claude/flows/news-scout/ and .claude/flows/market-watcher/ shows NO current `suppress` consumer logic — `suppress` is used only as a local dedup verb inside these flows, not as a typed cross-agent signal they react to. Option B would therefore require BOTH agent-father (to remove `verified_decision` from alert-commander.md) AND new receiver code in news-scout + market-watcher to handle a typed `suppress` signal_type. Net work for B exceeds A. (4) Existing alert-commander.md line 21 capability text already documents both signals as distinct ('Emit suppress AND verified_decision'). Option A keeps that contract; Option B requires rewriting it. (5) ITEM-02 brief recommendation favoured B on 'smaller enum surface' alone; PO override on the broader semantic + receiver-readiness argument.",
+  "scope": {
+    "files": [
+      "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts — extend Zod enum with `verified_decision`",
+      ".claude/tools/list/post_agent_signal.md — add `verified_decision` to enum line L19",
+      "docs/standards/mcp-tools.md — add row to Inter-Agent Signal Types table (Alert Commander → All — chain de-dup ack after fire/suppress)"
+    ],
+    "out_of_scope": [
+      "signal_feedback enum value (not requested; defer until a separate task surfaces a need)",
+      "agent-father flow edits to alert-commander.md (capability text already correct; no edit needed)",
+      "news-scout / market-watcher flow consumer logic for verified_decision (deferred — alert-commander emits ack; downstream consumers wire on demand if/when a real chain-dedup use case lands)"
+    ],
+    "zone": "apps/mcp-server/ (+ doc updates)",
+    "owner": "dev-mcp-server",
+    "size": "XS"
+  },
+  "acceptance_criteria": [
+    "AC-1: agentSignalTools.ts Zod enum includes `verified_decision`",
+    "AC-2: post_agent_signal MCP tool accepts `signal_type=verified_decision` without enum-validation error",
+    "AC-3: post_agent_signal.md tool doc L19 lists `verified_decision`",
+    "AC-4: mcp-tools.md Inter-Agent Signal Types table has new row",
+    "AC-5: Unit test added covering enum value",
+    "AC-6: tsc 0 errors, full test suite still 9277 PASS / 34 FAIL baseline"
+  ],
+  "blocked_by": null,
+  "next_action": "pm assigns 1967-02 → dev-mcp-server with this decision attached as authoritative spec",
+  "pipeline": "continue",
+  "priority": "high"
+}
