@@ -54,3 +54,26 @@
 - Key finding: Macro-Kinh-Dich contradiction — VNINDEX Khon (buy signal 100%) vs FII outflow (carry -0.33%) + Fed tight (5.33%) vs VCB Lao Ám recovery signal vs GAS/FPT Lao Duong overbought warnings. Pivot point: Fed signal at 20:30 UTC tonight (US market open)
 - Action: WATCH (no action today — giai doan "tiep nhan"/Khon phase, await US confirmation tomorrow for direction)
 - Pillar gaps: BCTC Q1 overdue 3d banking, SBV CPI/FX data missing = confidence limited to MEDIUM, not HIGH
+
+### Chef Dish — intraday 03:13 UTC (2026-05-21T0313Z)
+- Clusters qualified: 2 (banking sector + oil_gas sector)
+- Tickers covered: VCB, ACB, MBB, CTG (banking); GAS, PLX (oil_gas)
+- Layers walked: 1-6 (state transitions on inflow/outflow flows, Brent -3.14σ level shift; US Fed 5.33% TIGHTENING + US10Y 4.59% RISK-OFF vs VND 26.161 appreciate; 4-pillar banking 2/4, oil_gas 1/4; Kinh Dich Khon market buy signal 100%, VCB Lao Ám recovery, GAS Lao Dương overbought; gaps on money supply SBV, Q1 BCTC overdue, Brent single-read durability)
+- Signals consumed: market_context_bootstrap_20260521T0300Z (tier=2), news_mention_ACB/MBB/VCB/GAS/PLX_20260520(tier=2), macro_brent_CRITICAL_20260520T1515Z (tier=2), kinh_dich_khon_market (tier=3)
+- Dish published: YES | Convergence: TRUE (2 clusters)
+- Conviction: MEDIUM banking, LOW-MEDIUM oil_gas (pillar gaps dominate: money supply missing SBV, earnings missing Q1 BCTC)
+- Key finding: Khon receptive phase + domestic inflow vs foreigner outflow = repricing, not sustained trend. Brent crash -3.14σ may be supply abundance OR growth anxiety — durability unknown (single read).
+- Action: WATCH (no BUY/SELL — wait Q1 BCTC for banking clarity; oil_gas await Brent >107 to confirm relief vs <106 durability)
+- Pillar gaps: SAME AS PRIOR — banking 2/4, oil 1/4. SBV data missing, Q1 overdue 3d. Brent is 1-read signal, no trend confirmation.
+
+### Chef Dish — intraday 04:13 UTC (2026-05-21T0413Z)
+- Clusters qualified: 3 (banking carry squeeze + oil_gas macro shock + BĐS funding stress)
+- Tickers covered: ACB, CTG, MBB, VIC (banking); GAS, PLX (oil_gas); VHM, VIC (real_estate)
+- Layers walked: 1-6 ✓ (state transitions: USD/VND 26,355 cross 25,500 = carry pressure; Brent -3.14σ extreme shock; SBV refinance 4.5% tight; US Fed 5.33% TIGHTENING; VN carry -0.33% FII_OUTFLOW_RISK; 4-pillar banking 2.5/4, oil_gas 2.5/4, BĐS 3/4 misaligned; Kinh Dịch VNINDEX Khon 100% buy signal + all 3 sectors Lao Âm Hào 6 oversold recovery trigger; gaps on BCTC Q1 overdue 3d banking, no money supply SBV data)
+- Signals consumed: macro_snapshot_20260521T0423 (tier=2, carry -0.33% FII_OUTFLOW_RISK), bootstrap_alerts_20x19open (tier=2), macro_brent_CRITICAL_-3.14σ (tier=2), kinh_dich_vnindex_khon + acb_tinh + gas_ty + vcb_kien + vhm_tapkham (tier=3), news_mention_acb/ctg/mbb/vic/gas/plx/vhm_20260520-21 (tier=2)
+- Dish published: YES | Convergence: TRUE (3 clusters → guaranteed publish)
+- Conviction: MEDIUM banking + MEDIUM oil_gas + MEDIUM-HIGH BĐS (technical oversold setup strong Lão Âm Hào 6 all sectors, but fundamental pillars mostly headwinds: carry tight, Fed up, BĐS funding scarce)
+- Key finding: Macro-Kinh-Dịch alignment rare: (1) VNINDEX Khon 100% buy + VNINDEX Lão Âm Hào 6 (oversold) = setup for cleanup/technical rebound 2-3d ahead. (2) Banking FII outflow evident (-700B 20/05), but domestic buyers stepping in; reversal watch ACB/CTG Hào 6 → Dương. (3) Oil shock extreme (Brent -3.14σ), GAS/PLX oversold (Lão Âm Hào 6), but durability unknown (single snapshot); await >107 to confirm relief or <106 to signal sustained weakness. (4) BĐS entire sector Lão Âm Hào 6, macro headwinds (carry+funding+Fed), but technical bottom cleanup likely = buy dip setup if USD/VND reverts <26,000.
+- Action: WATCH (no BUY yet) → Triggers: (a) USD/VND 26,000 level = ACB/CTG/BID setup to buy dip; (b) Brent 107+ = GAS/PLX confirm relief; (c) Hào 6 flips to Dương (2-3d) = sector-wide rebound momentum. Do NOT hold thru rebound cap — Hào 6 Lão Âm is near-term bounce, not trend reversal (quẻ chính still Khôn Thiếu Âm, not Lão Dương trend flip).
+- Pillar gaps: Same structural issues: Q1 BCTC banking overdue 3d, SBV money supply/CPI/FX stale 8.7h, Brent single-read (1 snapshot), no earnings projection for tech/oil earnings cliff Q2 2026. Confidence capped at MEDIUM until BCTC lands.
+- Session metrics: 10 MCP calls (bootstrap, macro, market_hexagram, kinhdich_4tickers, fed_spread, bctc_2tickers, send_telegram_3x). Elapsed: 45s. No errors (1 bctc tool returned null, expected — Q1 filings overdue).

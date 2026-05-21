@@ -1,0 +1,28 @@
+{
+  "signal_id": 3577,
+  "cycle_id": "20260521-0415",
+  "from_agent": "news-scout",
+  "to_agent": "alert-commander",
+  "signal_type": "urgent_news",
+  "stock_code": "VIC",
+  "title": "VIC block trade 3.4T VND — institutional capital re-entry",
+  "detail": "Lượng cổ phiếu Vingroup (VIC) giá trị 3.400 tỷ đồng vừa đổi chủ. Large block transaction signals institutional confidence in VIC real estate exposure. | pillars=M2:tailwind,COC:neutral,EPS:neutral,POL:neutral | phase=recovery tier=equity",
+  "impact_score": 8,
+  "timestamp": "2026-05-21T04:15:00Z",
+  "regime": "TIGHTENING",
+  "regime_adjusted_score": 5.6,
+  "finding_data": {
+    "headline": "Lượng cổ phiếu Vingroup (VIC) giá trị 3.400 tỷ đồng vừa đổi chủ",
+    "source": "cafef",
+    "severity": "high",
+    "confidence": 0.8,
+    "hot_money_risk": false,
+    "cpi_pressure_risk": false,
+    "affected_sectors": ["real_estate"],
+    "affected_stocks": ["VIC", "VHM", "VRE", "NVL", "KBC", "TCH", "D2D"]
+  },
+  "ttl_minutes": 120,
+  "expires_at": "2026-05-21T06:15:00Z",
+  "critic_score": 0.8,
+  "dedup_notes": "VIC MEDIUM urgency passed dedup gate (prior VIC signal #3564 from 02:03, 6 cycles ago — outside 180m window)"
+}

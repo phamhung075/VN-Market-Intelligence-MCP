@@ -129,6 +129,22 @@ Cycle 2026-05-17 23:04–23:09 UTC. Analyzed 3/38 watchlist stocks with BCTC dat
 
 ---
 
+## Recent session — 2026-05-21
+
+### Analysis Cycle (00:30–00:45 UTC)
+- Stocks: 1 fully analyzed (VCB Q4-2025, conf 63%) | 3 with PDFs stored but extraction broken (FPT, EIB, GAS) | Critical findings: [36/39 Q1-2026 reports QUÁ HẠN (18+ days past deadline — only DHG/EIB/FPT submitted); Investment Clock error; Layer-7 OCF/NI forensic ratio healthy for VCB (1.15); Macro TIGHTENING persists] | Chain validations: 0 (0 open chain findings 60min window)
+- Regime: TIGHTENING (US 10Y 4.57% RISK-OFF threshold, VND carry -0.33% FII_OUTFLOW_RISK, Global Liquidity TIGHTENING, DXY 99.13 USD STABLE) | Max Deposit Rate: 5.00% | Valuation flags: [VCB=FAIR]
+- **VCB** (banking, Q4-2025, conf 63%): Net Rev 16,169.8 tỷ (+18.1% QoQ), Net Profit 8,633.8 tỷ (-0.8% QoQ), Net Margin 53.4% (-10.2pp QoQ). PE 14.1 PREMIUM +57% vs banking median 9.0, ROE 16.7% BELOW sector median 17.6% — premium not supported by ROE leadership. EY=7.09%, EY_SPREAD=+2.09% → FAIR. Sentiment TĂNG slope +0.07 (11/25 bullish vs 5 bearish). OCF/NI ratio 1.15 (healthy, no earnings quality warn). Layer 7: pass (no divergence flag). Layer 8: phase=insufficient_data (investment clock error), tier=equity. Investment clock tool timeout — phase='insufficient_data' rendered. G-Bond 10Y yield unavailable → gbond_regime_signal=false. Signal fundamental_validation posted to alert-commander.
+- **FPT** (tech, Q1-2026, conf 44%): PDF stored 2026-05-19 but extraction returns all zeros (Net Rev=0, Net Profit=0, EPS=0). Confidence degraded to 44%. Extraction error prevents EY_SPREAD computation. Skipped from valuation verdict — insufficient extraction confidence. Signal NOT posted (non-fatal data quality).
+- **EIB/GAS/DHG**: PDFs stored (EIB 2026-05-20, GAS/DHG in storage) but extraction not attempted in this cycle (queue depth).
+- **Other watchlist (35 stocks)**: get_bctc_full returns "Chưa có dữ liệu BCTC" — analysis skipped.
+- Macro: Brent 105.45 USD/bbl (no change from snapshot), Gold 4546.2 USD/oz, USD/VND 26,161 official. DXY 99.13 USD STABLE. Banking/Real Estate regime BÌNH THƯỜNG per macro. Energy sector CAO tích cực (GAS/PLX up +3.7%/+4.4%), but currency pressure HIGH (26K threshold) áp lực HVN/logistics.
+- Legal risks: None detected. Insider signals: None for VCB. Historical context (search_similar_context): Skipped in this cycle.
+- Deadline Watch: CRITICAL — 36/39 stocks Q1-2026 QUÁ HẠN (deadline 30/04 or 15/05 now 5+ days past). Only 3 submitted (DHG 2026-05-19, EIB 2026-05-20, FPT 2026-05-19). Mass late-filing trend persists 5+ cycles. Escalate to data-pipeline / report-analyzer.
+- Data quality: FPT extraction broken (Q1-2026 shows all zeros; confidence 44% garbage). VCB extraction clean. BCTC ingestion stalled for 35/39 stocks due to deadline delays.
+- Tool errors: get_investment_clock_phase() socket timeout — phase='insufficient_data' applied per spec (non-fatal, continue).
+- Token estimate: ~28k
+
 ## Recent session — 2026-05-09
 
 Cycle 01:00 UTC. Stocks: VCB (FAIR, deteriorating), FPT (signal posted). Regime: NEUTRAL | Max Deposit Rate: 5.00%. BCTC gap: 29/31 stocks missing. Signals: 2 fundamental_validation posted.
