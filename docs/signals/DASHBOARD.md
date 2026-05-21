@@ -1,13 +1,14 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-21T18:21:00Z (po c233 — Sprint 1965 cascade CLOSED: 1965a DONE `5b09ef44`, 1965b DONE `fc398b8a`, 1965c RATIFY_PASS, 1965c-soak OBSERVE window 18:00Z..2026-05-23T18:00Z. Pipeline returned to idle-in-soak. Prior: system-auditor Tier-2 — 3 CRITICAL freshness breaches (B-01/B-04/B-05) on ## ops lane. Sprint 1966 Option C echo cron remains GATED on 1965c SOAK_PASS + 1959-watchdog-4 soak unlock 2026-05-22T21:00Z.)_
+_Updated: 2026-05-21T20:13:00Z (tnb c75 — audit-handoff written. Overall: NEEDS_ATTENTION. unified-agent Step 8 gap CLOSED (1951i.2 landed). digest-predict 11-day silence CRITICAL. D+E+F+biz-context gaps structural. GOOD=4 NEEDS_ATTENTION=2 CRITICAL=1.)_
 
 ---
 
 ## po
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
+| tnb-20260521T201300 | 2026-05-21T20:13Z | tran-ngoc-bau | audit-handoff | Overall: NEEDS_ATTENTION c75 | NEW | docs/handoffs/tnb-audit-latest.md |
 | 1953-G-FAIL | 2026-05-21T03:25:00Z | po-self | observe_gate_fail | OBSERVE-1953g HARD FAIL. MCP sampled 15 watchlist tickers (DHG/EIB/FPT/VCB/HPG/VNM/VIC/MWG/MBB/CTG/ACB/BID/GAS/PNJ/SAB) → only DHG/EIB/FPT return Q1-2026 rows AND those rows are zero-value stubs (Net Revenue/Equity/Cash all 0). Coverage ≈3/39 vs AC ≥26. Independent corroboration from financial-analyst TG2958 (same 3 tickers). **DO-NOT-DISPATCH 1953e/h** — BCTC pipeline is under recurring-bug-escalation freeze; 1954c architect rethink already owns root-cause. Stub-row finding fwd to 1954c brief as fresh evidence. TG2958 archived `duplicate`. | NO-DISPATCH (freeze) | 1954c brief = SSOT; gate row in TASKS.md updated FAIL inline; no new TASKS rows opened |
 | 1962-B-01 | 2026-05-20T22:30:00Z | pm | plan_blocked | Sprint 1962b BLOCKED — architect 1962a brief MISSING. **CLOSED 2026-05-20T21:02Z (po c224): STALE RACE.** Sprint 1962 was already closed at 20:48Z (commit `2e08e586`) BEFORE this 22:30Z pm signal could resolve. 1962a brief landed (architect, Done section row 1962a). pm released task:1962b cleanly and exited; pipeline already finalised. No PO dispatch needed. | CLOSED | docs/signals/processed/po-1962-close.json + docs/signals/processed/po-1962-signoff.json + docs/signals/processed/architect-1962-audit-done.json |
 | 1954-A-RECOVERY | 2026-05-19T20:50:39Z | system-auditor | runtime_recovery | CRITICAL outage RESOLVED: 8 containers down at 20:07 UTC → all 11 UP at 20:50 UTC. Likely automated recovery or ops action. | RESOLVED | Containers restarted cleanly; health endpoints responding; MCP connectivity restored; all services operational |

@@ -1,0 +1,9 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-05-21T20:13:00Z",
+  "summary": "Cycle 75 — Overall: NEEDS_ATTENTION. KEY POSITIVE: unified-agent Step 8 gap CLOSED (4 dishes today, 1951i.2 landed). KEY FINDING: D+E+F gaps + biz context absent in all 3 dishes. digest-predict 11-day silence CRITICAL. methodology GOOD=4 NEEDS_ATTENTION=2 CRITICAL=1."
+}
