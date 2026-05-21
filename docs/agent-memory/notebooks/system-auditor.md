@@ -1,56 +1,51 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21T22:05:02Z | **Current Tier:** TIER-1 | **Sprint:** 1959
+**Last updated:** 2026-05-21T22:10:00Z | **Current Tier:** TIER-2 | **Sprint:** 1959
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status Summary
 
-**TIER-1 RUNTIME PING COMPLETE — ALL SYSTEMS HEALTHY**
+**TIER-2 FRESHNESS SWEEP COMPLETE — 4 CRITICAL SLA BREACHES, 3 KNOWN DEDUP, 1 NEW ANOMALY**
 
-Tier-1 audit at 2026-05-21T22:05:02Z: 0 new anomalies, 0 dedup-skipped.
-- All 11 core services UP (0 restarts each, 64.33% memory)
-- Health endpoints: 11/11 200 OK
-- Inter-service connectivity: 4/4 passing (stock-price, technical-analysis, alert-engine, pdf-extractor)
-- No EPIPE/ECONNRESET errors in last 30 min
-- WAL: market=7.82MB — all < 50MB
-- Circuit breaker: 16/16 sources OK, 0 failures
-- 56+ cron jobs monitored; 54 firing per schedule; 3 known stale issues (vnstockFundamentalsRefresh, vnstockTradingStatsRefresh, dailyDashboardJob)
+Tier-2 audit at 2026-05-21T22:10:00Z: 1 new anomaly, 3 dedup-skipped.
 
-Carried-forward known issues (NOT new):
-- vnstockFundamentalsRefresh: crashed since 2026-05-18 (no recovery)
-- vnstockTradingStatsRefresh: crashed since 2026-05-18 (no recovery)
-- dailyDashboardJob: ENOENT /docs/data/project-stats.json path (container mount issue)
+### Data Freshness Report
 
-## Key Container State (22:05:02Z)
+| Source | Age | SLA | Status | Dedup Status |
+|--------|-----|-----|--------|---|
+| ssc-iboard (prices) | 53 min | 10 min | CRITICAL BREACH | 1959-B-01 (4h old, skip) |
+| bctc-push | 1590 min (26.5h) | 360 min | CRITICAL BREACH | 1959-B-04 (4h old, skip) |
+| news | 121 min | 30 min | CRITICAL BREACH | NEW — data_stale:news-vps:B-02-NEW |
+| foreign-flow | 820 min (13.7h) | 10 min | CRITICAL BREACH | 1959-B-05 (4h old, skip; outside market hours) |
+| sbv_fx | 8 min | 30 min | OK | — |
 
-All 11 services: mcp-server, api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch, frontend — all Up (healthy), 0 restarts each.
+### VPS Proxy Health
 
-Health endpoints tested on external ports (all 200 OK):
-- 3000 (mcp-server): OK
-- 4000 (api-gateway): OK
-- 5010 (stock-price): OK
-- 5003 (technical-analysis): OK
-- 5004 (macro-indicators): OK
-- 5005 (kinh-dich-service): OK
-- 5006 (alert-engine): OK
-- 5001 (pdf-extractor): OK
-- 5002 (rag-service): OK
-- 5008 (news-fetch): OK
-- 3001 (frontend): OK (HTML response)
+- Prices: STALE (08:28 UTC, 13.8h ago)
+- BCTC: STALE (2026-05-19 07:05, 56.9h ago)
+- News: OK (22:05:37 UTC, 2m old) — but vn-news-fetch service unhealthy
+- SBV: OK (21:59:31 UTC, 8m old)
 
-MCP system status: toolCount=146, sessions=651, uptime ~11h, WAL 7.82MB, mcp-server restart_count=0, memory=64.33%.
+### Cron Health Issues (Carry-forward from Tier-1)
 
-Circuit breaker: all 16 sources [OK] with 0 failures.
+Known stale (unchanged):
+- vnstockFundamentalsRefresh: CRASHED 2026-05-18 01:00 (3+ days)
+- vnstockTradingStatsRefresh: CRASHED 2026-05-18 08:30 (3+ days)
+- dailyDashboardJob: ERROR ENOENT (container mount issue)
 
-Cron health: 54/57 jobs firing per schedule. Known stale (unchanged from prior cycle):
-- vnstockFundamentalsRefresh (crashed 2026-05-18, not recovered)
-- vnstockTradingStatsRefresh (crashed 2026-05-18, not recovered)
-- dailyDashboardJob (error: ENOENT, last run 2026-05-17)
+All other crons firing per schedule (54/57 jobs healthy).
 
-No runtime anomalies detected this cycle.
+### Anomaly Disposition
+
+1. **Prices (B-01)**: Dedup-skip — 1959-B-01 reported 4h ago, same dedup_key
+2. **BCTC (B-04)**: Dedup-skip — 1959-B-04 reported 4h ago, same dedup_key
+3. **Foreign-flow (B-05)**: Dedup-skip — 1959-B-05 reported 4h ago, context outside market hours
+4. **News (NEW)**: NEW ANOMALY — SLA 121min vs 30min, vn-news-fetch VPS service unhealthy, warrant BUG alert
 
 ## Carry-over (next session)
 
-- Monitor vnstockFundamentalsRefresh + vnstockTradingStatsRefresh — crashed since 2026-05-18; if not fixed by Tier-2 next cycle, escalate to dev-mcp-server
-- dailyDashboardJob ENOENT — confirm container mount path `/docs/data/project-stats.json` exists and is writable
+- **vnstockFundamentalsRefresh + vnstockTradingStatsRefresh**: 3-day crash without recovery — escalate to dev-mcp-server zone on next Tier-3
+- **dailyDashboardJob**: Confirm container mount path `/docs/data/project-stats.json` exists
+- **vn-news-fetch VPS service**: Unhealthy state (1h 58m uptime) — may recover, monitor on next Tier-1
+- **News SLA breach**: If persists on next Tier-2 cycle, escalate to dev-vps-crawls (news-fetch zone)
