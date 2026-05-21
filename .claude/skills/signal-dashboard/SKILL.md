@@ -86,6 +86,33 @@ Never prune NEW or READ rows. If a section becomes empty (header only), keep it.
 
 ---
 
+## Payload Pointer Discipline
+
+Rules apply to NEW signals from cycle 2 of Sprint 1968 onward. No retroactive rewrite.
+
+**Rule 1 — DASHBOARD summary column cap:**
+When the summary column of a DASHBOARD.md row would exceed 120 chars, truncate to 80 chars and append a pointer:
+```
+<first 80 chars of summary> → docs/handoffs/TASK_NNN.md
+```
+Full details live in the handoff file, not the signal row.
+
+**Rule 2 — PM sprint-kickoff signal payload cap:**
+`pm sprint-kickoff` signal payload body must be ≤800 chars JSON. Format:
+```json
+{ "title": "...", "scope": "...", "tasks": ["1968a", "1968b"] }
+```
+Full plan lives in `docs/handoffs/SPRINT_NNN.md`. The signal is a pointer, not the plan.
+
+**Rule 3 — Pointer integrity check:**
+The writer of a truncated signal MUST verify the pointed file exists before emitting:
+```
+ls docs/handoffs/TASK_NNN.md  # must return the file, not ENOENT
+```
+No orphan pointers. If the file does not exist, create it first, then emit the signal.
+
+---
+
 ## Signal types (canonical)
 
 | type | Meaning | Common payload |
