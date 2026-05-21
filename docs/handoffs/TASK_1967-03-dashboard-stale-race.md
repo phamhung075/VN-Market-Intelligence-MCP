@@ -104,3 +104,27 @@ Added "DASHBOARD Write Guard — CAS on pipeline-state.json" section immediately
 - AC-6: N/A — pure flow doc edit, no TypeScript.
 
 **Files changed:** `.claude/flows/pm/main.md` (1 section added, ~20 lines)
+
+---
+
+## [QA] Review Record — 2026-05-21
+
+**Verdict:** APPROVED
+**Round:** 1
+**Reviewer:** qa
+**Commit reviewed:** fc1b9eab
+**Smart-Skip:** YES — zero .ts changes, pure .md flow edit
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-1 | Guard reads pipeline-state.json fresh, no cached snapshot | PASS — pm/main.md:108 explicit "do NOT use any cached snapshot" |
+| AC-2 | status ∈ {idle, closed} → return early without signal | PASS — pm/main.md:109-113, substring match + skip + log |
+| AC-3 | status active → proceed with signal write | PASS — pm/main.md:114 |
+| AC-4 | active sprint: signal emits | PASS (design rationale) |
+| AC-5 | closed sprint: signal suppressed, orphan prevented | PASS (design rationale) |
+| AC-6 | tsc 0 errors | N/A — no TypeScript |
+| BCTC NFR-3 | No .ts or PDF changes | PASS |
+| Caveman | ULTRA preserved | PASS |
+| Scope | Guard covers ALL pm DASHBOARD writes, not just plan_blocked | PASS — pm/main.md:116 confirms |
+
+**Notes:** Guard placement is correct — between Step 4b (heartbeat) and End-of-cycle skill. The explicit anti-cache instruction at line 118 ("Do NOT read pipeline-state.json at flow start and cache it") closes the loophole precisely. Logic is sound for the stale-race observed in 1962-B-01.

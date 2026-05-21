@@ -1,0 +1,25 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "task_approved",
+  "payload": {
+    "task_id": "1967-05",
+    "title": "Cowork dispatcher drift guard (Step 3b drift_min > 10 WORK warning)",
+    "verdict": "APPROVED",
+    "round": 1,
+    "commit_reviewed": "fc1b9eab",
+    "smart_skip": true,
+    "ac_results": {
+      "AC-1": "PASS",
+      "AC-2": "PASS",
+      "AC-3": "PASS",
+      "AC-4": "PASS",
+      "AC-5": "N/A"
+    },
+    "files_reviewed": [".claude/flows/cowork-team/main.md"],
+    "bctc_nfr3": "PASS",
+    "notes": "Warning-only, no spawn blocked. Threshold math verified. Safe envelope drift_min=9 confirmed."
+  },
+  "priority": "high",
+  "createdAt": "2026-05-21T22:55:00Z"
+}

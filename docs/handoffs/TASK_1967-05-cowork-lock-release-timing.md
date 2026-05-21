@@ -103,3 +103,26 @@ Added "Step 3b — Drift threshold guard" section between Step 2+3 (slot-matcher
 - AC-5: N/A — pure flow doc edit, no TypeScript.
 
 **Files changed:** `.claude/flows/cowork-team/main.md` (1 section added, ~16 lines)
+
+---
+
+## [QA] Review Record — 2026-05-21
+
+**Verdict:** APPROVED
+**Round:** 1
+**Reviewer:** qa
+**Commit reviewed:** fc1b9eab
+**Smart-Skip:** YES — zero .ts changes, pure .md flow edit
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-1 | Step 3b is post-nominal_tick (Step 2+3), pre-spawn (Step 4.6) | PASS — cowork-team/main.md:64, structurally between Step 2+3 and Step 4 |
+| AC-2 | Warning message matches spec | PASS — cowork-team/main.md:71-72, drift_min=X + threshold + safe limit documented |
+| AC-3 | drift_min=5 → no warning | PASS (design rationale, 5 ≤ 10) |
+| AC-4 | drift_min=11 → warning emitted | PASS (design rationale, 11 > 10) |
+| AC-5 | tsc 0 errors | N/A — no TypeScript |
+| BCTC NFR-3 | No .ts or PDF changes | PASS |
+| Caveman | ULTRA preserved | PASS |
+| No-block | Spawn not blocked by guard | PASS — cowork-team/main.md:73 "Do NOT block — proceed to Step 4. Warning only." |
+
+**Notes:** Threshold math verified — floor-15 rounding absorbs drift_min up to 14 safely; threshold=10 provides 5-min margin before danger at 15. Current safe envelope drift_min=9 (2026-05-21) is within bound. Warning-only guard has zero false positive risk at current operating envelope.

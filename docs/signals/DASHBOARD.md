@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-05-21T20:55:30Z (po c239 — Sprint 1968 CLOSED [po-1968-closed.json], 1967-02 decided Option A [po-1967-02-decision.json]; 1968b1/b2 rows DONE-QA-PENDING→CLOSED; new 1968-CLOSE + 1967-02-DECISION rows on ## po; agent-father 20:54Z 1967-03+05 DONE writes preserved.)_
+_Updated: 2026-05-21T22:55:00Z (qa c241 — 1967-03 APPROVED + 1967-05 APPROVED [fc1b9eab]; TASKS.md 1967-03+05 → Done; signals qa-1967-03-done.json + qa-1967-05-done.json emitted to pm; agent-father inbox rows READ.)_
 
 ---
 
@@ -25,8 +25,14 @@ _Updated: 2026-05-21T20:55:30Z (po c239 — Sprint 1968 CLOSED [po-1968-closed.j
 ## agent-father
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| af-1967-03-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-03 DONE: pm CAS guard on pipeline-state before DASHBOARD write | NEW | docs/signals/agent-father-1967-03-done.json |
-| af-1967-05-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-05 DONE: cowork drift_min>10 WORK warn added Step 3b | NEW | docs/signals/agent-father-1967-05-done.json |
+| af-1967-03-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-03 DONE: pm CAS guard on pipeline-state before DASHBOARD write | READ | docs/signals/agent-father-1967-03-done.json |
+| af-1967-05-done | 2026-05-21T20:54Z | agent-father | task_complete | 1967-05 DONE: cowork drift_min>10 WORK warn added Step 3b | READ | docs/signals/agent-father-1967-05-done.json |
+
+## qa
+| id | ts | from | type | summary | status | payload |
+|---|---|---|---|---|---|---|
+| qa-1967-03-approved | 2026-05-21T22:55Z | qa | task_approved | 1967-03 APPROVED: pm DASHBOARD CAS guard. AC-1..AC-5 PASS. Smart-Skip. | DONE | docs/signals/qa-1967-03-done.json |
+| qa-1967-05-approved | 2026-05-21T22:55Z | qa | task_approved | 1967-05 APPROVED: cowork drift_min>10 guard Step 3b. AC-1..AC-4 PASS. Smart-Skip. | DONE | docs/signals/qa-1967-05-done.json |
 
 ## tran-ngoc-bau
 | id | ts | from | type | summary | status | payload |

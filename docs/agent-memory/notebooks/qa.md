@@ -1,6 +1,39 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1968b2 | **Session:** c240 — L-6 cron stagger + L-7 notebook batch commit APPROVED
+**Last updated:** 2026-05-21 | **Task:** 1967-03 + 1967-05 | **Session:** c241 — dual XS flow-doc APPROVED (combined cycle)
+
+## Session 2026-05-21 c241 — Tasks 1967-03 + 1967-05 APPROVED
+
+### TASK REPORT — 1967-03 + 1967-05 (compact)
+
+```
+date: 2026-05-21
+outcome: APPROVED (both)
+commit reviewed: fc1b9eab
+files: .claude/flows/pm/main.md, .claude/flows/cowork-team/main.md
+type: FIX — ITEM-03 pm DASHBOARD stale-race CAS guard + ITEM-07 cowork drift_min threshold guard
+round: 1 (each)
+zone: .claude/ only — zero .ts files
+smart_skip: YES — bun test + tsc skipped (pure .md edits)
+```
+
+| Check | 1967-03 | 1967-05 |
+|-------|---------|---------|
+| AC-1 | PASS — fresh pipeline-state.json read, no cache | PASS — Step 3b post-slot-matcher pre-spawn |
+| AC-2 | PASS — idle/closed substring → skip + log | PASS — drift_min > 10 → WORK warning |
+| AC-3 | PASS — active → signal proceeds | PASS — design rationale |
+| AC-4 | PASS — design rationale | PASS — design rationale |
+| AC-5 | PASS — design rationale | N/A |
+| AC-6 | N/A (no TS) | N/A (no TS) |
+| BCTC NFR-3 | PASS | PASS |
+| Caveman ULTRA | PASS | PASS |
+| Scope coverage | ALL pm DASHBOARD writes (line 116) | Warning-only, no spawn block (line 73) |
+
+Notes: 1967-03 guard placement correct (between Step 4b and End-of-cycle). Anti-cache instruction (pm/main.md:118) closes loophole precisely. 1967-05 threshold math sound: floor-15 absorbs drift_min≤14; threshold=10 gives 5-min margin; current envelope drift_min=9 safe. Combined review for notebook race avoidance per context instructions.
+
+- **actions**: BOTH APPROVED. TASKS.md 1967-03 + 1967-05 → Done. Signals qa-1967-03-done.json + qa-1967-05-done.json emitted to pm. Handoffs updated with [QA] Review Record. DASHBOARD ## qa section written. agent-father inbox rows → READ.
+- **next_cycle_hint**: pm marks 1967-03 + 1967-05 Done; dispatches next HIGH tasks from 1967 slate (1967-02 ready post-PO-decision, 1967-04 agent-father next).
+- **estimated_tokens**: 2400
 
 ## Session 2026-05-21 c240 — Task 1968b2 APPROVED
 
