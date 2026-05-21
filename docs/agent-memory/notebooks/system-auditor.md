@@ -1,6 +1,6 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21T22:34:39Z | **Current Tier:** TIER-1 | **Sprint:** 1959
+**Last updated:** 2026-05-21T23:05:36Z | **Current Tier:** TIER-1 | **Sprint:** 1959
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -8,20 +8,21 @@
 
 **TIER-1 RUNTIME PING COMPLETE — NO ANOMALIES DETECTED**
 
-Tier-1 audit at 2026-05-21T22:34:39Z: 0 new anomalies, 0 dedup-skipped.
+Tier-1 audit at 2026-05-21T23:05:36Z: 0 new anomalies, 0 dedup-skipped.
 
 ### Container Runtime Report
 
-All 11 services UP (26–27h uptime):
+All 12 services UP (25–27h uptime):
 - mcp-server: 27h healthy, 0 restarts
-- api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, news-fetch, rag-service, frontend: 25–26h healthy
+- api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, news-fetch, rag-service, frontend: 25–27h healthy
+- flaresolverr: 26h healthy
 
 ### Health Endpoint Status
 
 | Service | Port | Status | Latency |
 |---------|------|--------|---------|
 | mcp-server | 3000 | HTTP 200 OK | — |
-| api-gateway | 4000 | HTTP 200 OK (9/9 downstreams ok) | 1–3ms |
+| api-gateway | 4000 | HTTP 200 OK | — |
 | stock-price | 5010 | HTTP 200 OK | — |
 | technical-analysis | 5003 | HTTP 200 OK | — |
 | macro-indicators | 5004 | HTTP 200 OK | — |
@@ -35,10 +36,9 @@ All 11 services UP (26–27h uptime):
 ### Memory & Resource Health
 
 All services < 85% memory:
-- mcp-server: 4GiB (healthy)
-- api-gateway, alert-engine: 2GiB (healthy)
-- macro-indicators: 2.5GiB, 1.5GiB (healthy)
-- Others: ≤512MiB (healthy)
+- mcp-server: 29.75% (healthy)
+- news-fetch: 69.61% (healthy)
+- All others: ≤9.19% (healthy)
 
 ### Inter-Service Connectivity
 
@@ -66,7 +66,7 @@ From mcp-server to:
 | EPIPE Check | A-31 | 1 | 0 | PASS |
 
 **OVERALL: HEALTHY**
-- Services checked: 11
+- Services checked: 12
 - Checks performed: 38
 - New anomalies: 0
 - Dedup-skipped: 0
@@ -81,3 +81,4 @@ From prior Tier-2 audit (2026-05-21T22:10:00Z):
 - **vnstockTradingStatsRefresh**: CRASHED 2026-05-18 08:30 (3+ days) — escalate to dev-mcp-server on next Tier-3
 - **dailyDashboardJob**: ERROR ENOENT (missing `/docs/data/project-stats.json`) — confirm mount on next Tier-3
 - **News SLA**: CRITICAL BREACH (121min vs 30min SLA) — known, last reported 2026-05-21T22:10:00Z
+- **bctcReparseJob**: Success rate 84.2% (down from 100%) — needs monitoring on next Tier-3
