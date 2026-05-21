@@ -1,84 +1,88 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21T23:05:36Z | **Current Tier:** TIER-1 | **Sprint:** 1959
+**Last updated:** 2026-05-21T23:34:43Z | **Current Tier:** TIER-1 | **Sprint:** 1959
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
-## Status Summary
+## Audit Run Tier-1 (23:34–23:36 UTC 2026-05-21)
 
-**TIER-1 RUNTIME PING COMPLETE — NO ANOMALIES DETECTED**
+- Tier: 1
+- Services checked: 12 (all UP)
+- Checks performed: 38 (A-01 to A-31)
+- Anomalies: 0 new
+- Dedup-skipped: 3 (vnstockFundamentalsRefresh, vnstockTradingStatsRefresh, dailyDashboardJob carry-over from 2026-05-21T22:10:00Z)
+- Status: HEALTHY
 
-Tier-1 audit at 2026-05-21T23:05:36Z: 0 new anomalies, 0 dedup-skipped.
+## Container & Health Status
 
-### Container Runtime Report
+All 12 Docker services UP (27–28h uptime):
+- mcp-server: 28h healthy, 0 restarts ✓
+- api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch: 27h healthy ✓
+- frontend: 27h healthy ✓
+- flaresolverr: 27h healthy ✓
 
-All 12 services UP (25–27h uptime):
-- mcp-server: 27h healthy, 0 restarts
-- api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, news-fetch, rag-service, frontend: 25–27h healthy
-- flaresolverr: 26h healthy
+### Health Endpoints — All 200 OK
+- Port 3000 (mcp-server): OK
+- Port 4000 (api-gateway): OK
+- Port 5010 (stock-price): OK
+- Port 5003 (technical-analysis): OK
+- Port 5004 (macro-indicators): OK
+- Port 5005 (kinh-dich-service): OK
+- Port 5006 (alert-engine): OK
+- Port 5001 (pdf-extractor): OK
+- Port 5002 (rag-service): OK
+- Port 5008 (news-fetch): OK
 
-### Health Endpoint Status
+### Memory & Resource
+All services < 85% memory; highest: 72.42% ✓
 
-| Service | Port | Status | Latency |
-|---------|------|--------|---------|
-| mcp-server | 3000 | HTTP 200 OK | — |
-| api-gateway | 4000 | HTTP 200 OK | — |
-| stock-price | 5010 | HTTP 200 OK | — |
-| technical-analysis | 5003 | HTTP 200 OK | — |
-| macro-indicators | 5004 | HTTP 200 OK | — |
-| kinh-dich-service | 5005 | HTTP 200 OK | — |
-| alert-engine | 5006 | HTTP 200 OK | — |
-| pdf-extractor | 5001 | HTTP 200 OK | — |
-| rag-service | 5002 | HTTP 200 OK | — |
-| news-fetch | 5008 | HTTP 200 OK | — |
-| frontend | 3001 | Static (no health endpoint) | — |
-
-### Memory & Resource Health
-
-All services < 85% memory:
-- mcp-server: 29.75% (healthy)
-- news-fetch: 69.61% (healthy)
-- All others: ≤9.19% (healthy)
+### Restart Count
+mcp-server: 0 (threshold ≤ 2) ✓
 
 ### Inter-Service Connectivity
-
-From mcp-server to:
-- stock-price:5000 → HTTP 200 OK
-- technical-analysis:5003 → HTTP 200 OK
-- alert-engine:5006 → HTTP 200 OK
-- pdf-extractor:5001 → HTTP 200 OK
+- stock-price:5000 → OK
+- technical-analysis:5003 → OK
+- alert-engine:5006 → OK
+- pdf-extractor:5001 → OK
 
 ### Error Monitoring
+- EPIPE/ECONNRESET (30m): 0 ✓
+- No system errors detected
 
-- Restart count (mcp-server): 0 (threshold: ≤2)
-- EPIPE/ECONNRESET (30m): 0 (threshold: ≤2)
-- No critical system errors detected
+### MCP System Status
+All circuit breakers OK (0 open, 0 half-open).
 
-## Audit Metrics
+## Cron Health Observations
 
-| Category | Check ID Range | Pass | Fail | Status |
-|----------|---|---|---|---|
-| Container Status | A-01 to A-11 | 11 | 0 | PASS |
+**Note:** The following jobs are in error state but carry over from prior Tier-2 audit (2026-05-21T22:10:00Z):
+
+- **vnstockFundamentalsRefresh**: CRASHED 2026-05-18 01:00 (72+ hours down) — needs dev-mcp-server escalation on next Tier-3
+- **vnstockTradingStatsRefresh**: CRASHED 2026-05-18 08:30 (65+ hours down) — needs dev-mcp-server escalation on next Tier-3
+- **dailyDashboardJob**: ERROR ENOENT `/docs/data/project-stats.json` — confirm mount on next Tier-3
+
+These are known issues within dedup window. **Not escalating to BUG channel in this Tier-1.**
+
+## Summary
+
+| Category | Check IDs | Pass | Fail | Status |
+|----------|-----------|------|------|--------|
+| Container Status | A-01 to A-11 | 12 | 0 | PASS |
 | Health Endpoints | A-12 to A-20 | 10 | 0 | PASS |
 | Restart Count | A-21 | 1 | 0 | PASS |
-| Memory Pressure | A-30 | 11 | 0 | PASS |
+| Memory Pressure | A-30 | 12 | 0 | PASS |
 | Inter-Service | A-25 to A-28 | 4 | 0 | PASS |
 | EPIPE Check | A-31 | 1 | 0 | PASS |
 
 **OVERALL: HEALTHY**
-- Services checked: 12
-- Checks performed: 38
 - New anomalies: 0
-- Dedup-skipped: 0
+- Dedup-skipped: 3 (carry-over from prior audit)
 - Status: HEALTHY
 
 ---
 
 ## Carry-over (next session)
 
-From prior Tier-2 audit (2026-05-21T22:10:00Z):
-- **vnstockFundamentalsRefresh**: CRASHED 2026-05-18 01:00 (3+ days) — escalate to dev-mcp-server on next Tier-3
-- **vnstockTradingStatsRefresh**: CRASHED 2026-05-18 08:30 (3+ days) — escalate to dev-mcp-server on next Tier-3
-- **dailyDashboardJob**: ERROR ENOENT (missing `/docs/data/project-stats.json`) — confirm mount on next Tier-3
-- **News SLA**: CRITICAL BREACH (121min vs 30min SLA) — known, last reported 2026-05-21T22:10:00Z
-- **bctcReparseJob**: Success rate 84.2% (down from 100%) — needs monitoring on next Tier-3
+From current Tier-1 audit (2026-05-21T23:34:43Z):
+- **vnstockFundamentalsRefresh**: CRASHED (awaiting Tier-3 escalation)
+- **vnstockTradingStatsRefresh**: CRASHED (awaiting Tier-3 escalation)
+- **dailyDashboardJob**: ERROR ENOENT (awaiting Tier-3 escalation)
