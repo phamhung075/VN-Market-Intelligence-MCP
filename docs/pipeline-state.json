@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "1960c",
+  "status": "idle-in-soak",
+  "currentSprint": "1965-soak",
   "activeTaskId": null,
   "nextAgent": "qa",
-  "nextPrompt": "PM: 1951d (ops cutover) COMPLETE — 12 legacy RemoteTriggers marked deleted in SSOT, AC-1/AC-2/AC-4 PASS, AC-3 (24h observation) queued as OBSERVE-1951d-verify. 1960a/1960b/1960c in progress (agent-father autonomously wiring Phase 3 task-lock dev-team flow + tool-packages). 1948a/1948b/1948c remain BLOCKED on post-1945-verdict-resolution-scored-pct gate (due 2026-05-20T07:22Z). 1954b awaits PO decision per recurring-bug-escalation policy. WIP=0. NEXT: qa picks up OBSERVE-1951d-verify (gate 2026-05-21T08:30Z); po monitors architect 1960a + agent-father 1960c progress.",
-  "updatedAt": "2026-05-20T21:50:00Z",
-  "updatedBy": "pm",
-  "lastCompleted": "1951d DONE (commit 093f8905) — Phase 1 cutover complete, 12 legacy RemoteTriggers marked deleted. AC-3 pending observation window. OBSERVE-1951d-verify queued for QA (gate 2026-05-21T08:30Z)."
+  "nextPrompt": "PO c233: Sprint 1965 Phase 1 (TASKS.md hardening / Option A janitor cron) cascade COMPLETE 2026-05-21T18:00Z. 1965a DONE (agent-father, commit 5b09ef44 — system-auditor handlers.md §TASKS.md Reconciliation Pass + audit-dimensions.md D4). 1965b DONE (dev-mcp-server, commit fc398b8a — tasksMdJanitorJob.ts wired daily 03:00Z, smoke 12/12 PASS, tsc clean, AC-1..AC-5 all PASS). 1965c RATIFY_PASS (qa, smoke 12/12 + DDD + security all PASS). 1965c-soak OBSERVE window 2026-05-21T18:00Z..2026-05-23T18:00Z (48h, 2 cron passes 2026-05-22T03:00Z + 2026-05-23T03:00Z). qa emits qa-1965c-soak-result.json after 2026-05-23T18:00Z; SOAK_PASS gates Sprint 1966 (Option C echo cron). Parallel Sprint 1959 watchdog soak still open — watchdog-4 unlock 2026-05-22T21:00Z, queued: 1964-AC-ENUM. WIP=0. NEXT: qa picks up 1965c-soak verification at 03:00Z windows + 1959-watchdog-4 unlock; po monitors. Other OBSERVE gates preserved: 1957d (BCTC cadence 2026-05-23T07:05Z), 1907a-verify (digest-sunday 2026-05-24T13:47Z), 1955c (Mon 01:00Z), 1955e (DEEP HOLD 2026-05-22T21:00Z), 1922g (2026-06-01). 3 CRITICAL system-auditor Tier-2 alerts on ## ops lane (1959-B-01 price 38min, B-04 BCTC 22.5h, B-05 foreign-flow 9.7h outside-market-hours) — NOT new PO work, ops-lane.",
+  "updatedAt": "2026-05-21T18:21:00Z",
+  "updatedBy": "po",
+  "lastCompleted": "Sprint 1965 cascade — 1965a (commit 5b09ef44) + 1965b (commit fc398b8a) + 1965c RATIFY_PASS (smoke 12/12). 1965c-soak observing 48h window."
 }

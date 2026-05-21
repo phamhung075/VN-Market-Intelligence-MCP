@@ -1,0 +1,34 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "type": "sprint-kickoff",
+  "createdAt": "2026-05-21T17:22:22Z",
+  "priority": "high",
+  "sprint": {
+    "id": 1965,
+    "phase": "Phase 1 — Option A (janitor cron)",
+    "theme": "TASKS.md hardening — three-layer coordination coherence",
+    "brief": "docs/architecture-briefs/2026-05-21-tasks-md-hardening.md",
+    "scope_in": [
+      "1965a — agent-father DESIGN: add §TASKS.md Reconciliation Pass to docs/agents/system-auditor/handlers.md + dimension D4 to docs/agents/system-auditor/audit-dimensions.md",
+      "1965b — dev-mcp-server IMPLEMENT + smoke: janitor 03:00Z calls task_list_held, emits DASHBOARD `## po` row on divergence (AC-1..AC-5)",
+      "1965c — qa OBSERVE 48h soak (AC-1..AC-5)"
+    ],
+    "scope_out": [
+      "Sprint 1966 Option C echo cron (rows d/e in brief §7) — gated on 1965c PASS + 1959-watchdog-4 soak complete (2026-05-22T21:00Z)"
+    ]
+  },
+  "tasks_md_rows": ["1965a", "1965b", "1965c"],
+  "next_agent": "agent-father",
+  "next_action": "Spawn agent-father with task:1965a inner self-claim (kind=sprint-task, ttl=3600s) per .claude/skills/task-lock/SKILL.md. Read brief §3 Option A + §8 Phase 1. Land both .md edits. Emit completion signal docs/signals/agent-father-1965a-design-done.json then forward to dev-mcp-server for 1965b.",
+  "umbrella_claim": {
+    "task_id": "task:1965",
+    "task_kind": "sprint-task",
+    "owner_agent": "po",
+    "ttl_seconds": 3600,
+    "payload": "{\"sprint_id\":\"1965\",\"stage\":\"kickoff\",\"phase\":\"1\"}",
+    "note": "Dispatcher-wrap outer claim handled by main terminal at next-agent spawn time per .claude/skills/dispatch-claim/SKILL.md. PO inner self-claim attempted in file-evidence mode — MCP gateway availability per 1897b VirtioFS pending. Lock identity preserved here so downstream dispatcher can re-attempt cleanly."
+  },
+  "acceptance_criteria_ref": "brief §6 AC-1..AC-5",
+  "gate_for_1966": "1965c PASS + 1959-watchdog-4 soak complete (unlock 2026-05-22T21:00Z) + (optional) janitor fires daily with genuine divergences (>2 false-positive threshold per brief §5). Do NOT open 1966 rows in this kickoff."
+}
