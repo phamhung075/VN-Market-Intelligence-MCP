@@ -25,7 +25,7 @@ Add optional `signal_type` filter parameter to `get_agent_signals` MCP tool to e
   - market-watcher: optional; if it reads agent_signals, filter to relevant types
 - [ ] AC-6: Unit test added covering: (a) call WITH `signal_type` param → results filtered; (b) call WITHOUT param → all results returned; (c) invalid `signal_type` value → handled gracefully (empty result or error per design)
 - [ ] AC-7: Payload size reduction verified: 40–60% smaller result set for typical signal_type filter (measure via MCP call log or mock test)
-- [ ] AC-8: Full regression suite GREEN (tsc 0 errors, existing tool tests ≥9277 PASS, new filter tests +1–3 GREEN)
+- [ ] AC-8: Full regression suite GREEN (tsc 0 errors, existing tool tests ≥9358 PASS — post-1967-02 baseline per dev-mcp-server 257d92bf, new filter tests +1–3 GREEN)
 
 **Files to read first:**
 - `apps/mcp-server/src/interface/mcp/tools/news-analysis/getAgentSignals.ts` (current tool implementation)
@@ -123,7 +123,7 @@ _(To be filled by QA upon task completion)_
 - [ ] Backward compatibility verified: calls without `signal_type` return full result set
 - [ ] Payload size reduction measured: 40–60% smaller for filtered calls (vs. full result)
 - [ ] Unit tests GREEN (filter present, filter absent, invalid value cases)
-- [ ] Regression suite PASS (tsc 0 errors, existing tests ≥9277 PASS)
+- [ ] Regression suite PASS (tsc 0 errors, existing tests ≥9358 PASS — post-1967-02 baseline)
 - [ ] Agent calls updated in ≥2 flows (news-scout, alert-commander)
 
 ---
