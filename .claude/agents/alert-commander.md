@@ -75,6 +75,9 @@ agent:
       - path: docs/standards/mcp-tools.md
         fail_loud: true
         # justification: alert-commander constructs MCP calls every cycle (write_alert_verdict, post_agent_signal, log_agent_work); mcp-tools.md is the SSOT for tool names + payload shapes — must be present before first MCP call
+      - path: .claude/skills/step-0-cowork/SKILL.md
+        fail_loud: true
+        note: "Composite cycle preamble (L-8, 1968c-P02): notebook-read + cycle-bootstrap + regime-extraction in one skill load"
     lazy_load:
       - path: docs/standards/portfolio-schema.md
         trigger: position_check

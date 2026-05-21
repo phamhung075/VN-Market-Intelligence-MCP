@@ -1,0 +1,28 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task-done",
+  "payload": {
+    "task_id": "TASK_1968c-P02",
+    "title": "L-8 composite step-0-cowork skill",
+    "brief_section": "docs/architecture-briefs/2026-05-21-token-toolcall-economy.md §L-8",
+    "files_created": [
+      ".claude/skills/step-0-cowork/SKILL.md"
+    ],
+    "files_modified": [
+      ".claude/agents/news-scout.md",
+      ".claude/agents/market-watcher.md",
+      ".claude/agents/alert-commander.md",
+      ".claude/agents/financial-analyst.md",
+      ".claude/agents/report-analyzer.md",
+      ".claude/agents/digest-predict.md",
+      ".claude/agents/qa-responder.md"
+    ],
+    "ac_pending_qa": ["AC-7", "AC-8"],
+    "ac_pass": ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5", "AC-6"],
+    "unified_agent": "optional upgrade deferred per AC-5 spec",
+    "handoff": "docs/handoffs/TASK_1968c-P02-step0-skill.md"
+  },
+  "priority": "normal",
+  "createdAt": "2026-05-21T21:27:35Z"
+}

@@ -103,6 +103,38 @@ Each constituent block must preserve its original error handling:
 
 ---
 
+## [Implementer] — agent-father, 2026-05-21
+
+**Zone:** `.claude/skills/` (new skill) + 7 cowork agent `.md` files
+
+**Files created:**
+- `.claude/skills/step-0-cowork/SKILL.md` (~75L) — composite preamble: Step 0a (notebook-read), Step 0b (cycle-bootstrap with L-6 snapshot check), Step 0c (regime-extraction). Error boundaries from all 3 constituent skills preserved. (AC-1, AC-2, AC-3)
+
+**Files modified (always_load added):**
+- `.claude/agents/news-scout.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/market-watcher.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/alert-commander.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/financial-analyst.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/report-analyzer.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/digest-predict.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+- `.claude/agents/qa-responder.md` — added step-0-cowork/SKILL.md to always_load (AC-4)
+
+**AC-5 note (unified-agent):** inspected — unified-agent runs market-cycle stages but its always_load is already tight (3 files). Step-0-cowork upgrade is optional for v1 per handoff spec. Not modified.
+
+**AC-6 (fail-loud preserved):** PASS by design — skill's Step 0a notebook-read fail → STOP (non-recoverable); Step 0b bootstrap fail → STOP (non-recoverable); Step 0c regime fail → NEUTRAL fallback (recoverable). Matches constituent skill error contracts exactly.
+
+**AC status:**
+- AC-1: PASS — file at .claude/skills/step-0-cowork/SKILL.md, 75L (≤120L cap)
+- AC-2: PASS — 3-step structure: notebook-read → bootstrap (with snapshot check) → regime
+- AC-3: PASS — error boundaries preserved per constituent skill contracts
+- AC-4: PASS — 7 cowork agents updated
+- AC-5: PASS — unified-agent inspected, optional upgrade deferred
+- AC-6: PASS — fail-loud protocol referenced at top of skill; stop conditions preserved
+- AC-7: PENDING_QA — error boundary tests (mock failures)
+- AC-8: PENDING_QA — smoke suite + tsc check
+
+**Signal emitted:** `docs/signals/agent-father-1968c-p02-done.json`
+
 ## [QA] Review Record
 _(To be filled by QA upon task completion)_
 

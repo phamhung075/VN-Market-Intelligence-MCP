@@ -1,63 +1,49 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T23:30:00Z | **Sprint:** 1967c — TASK_1967-04
+**Last updated:** 2026-05-21T00:00Z | **Sprint:** 1968c — TASK_1968c-P01 + P02
 
-## This Session — 2026-05-21T23:30Z (Task 1967-04)
+## This Session — 2026-05-21 (Tasks 1968c-P01 + 1968c-P02)
 
-**TASK_1967-04 — market-watcher identity recurrence fix (ITEM-04, HIGH):**
-Fix surface: `.claude/flows/market-watcher/main.md` + `docs/agents/system-auditor/`
-AC-1 (YAML stanza): PASS — name/color/description/tools/model all present in frontmatter.
-AC-2 (notebook ≤150L): PASS — market-watcher notebook = 65L, no trim needed.
-AC-3 (Step -0 identity assertion): Added to `.claude/flows/market-watcher/main.md` — fires before any MCP call, logs IDENTITY_CHECK=OK/FAIL, BUG telegram + EXIT on failure.
-AC-4 (D5 guard): Added D5 dimension to `docs/agents/system-auditor/audit-dimensions.md` + Step D5 handler to `docs/agents/system-auditor/handlers.md`. Tier-2, 4h cadence, 150L threshold, WORK alert on violation, dedup once/day per agent.
-AC-5 + AC-7: PENDING_QA (live 10-cycle test).
-Side finding: 4 other notebooks already >150L (dev-mainserver-crawls 262L, qa 190L, code-janitor 183L, dev-alert-engine 163L) — D5 will catch these at next Tier-2.
-Signal: `docs/signals/agent-father-1967-04-done.json` → qa.
-Files modified: 3 (.claude/flows/market-watcher/main.md, docs/agents/system-auditor/audit-dimensions.md, docs/agents/system-auditor/handlers.md) + handoff updated.
+**TASK_1968c-P01 — L-6 tick-snapshot (.claude/ surface):**
+Files: .gitignore (AC-5), cowork-team/main.md (Step 4.7 snapshot write), news-scout/stage-bootstrap.md (macro snapshot-aware), alert-commander/stage-bootstrap.md (macro snapshot-aware).
+cycle-bootstrap/SKILL.md Step -1 was already implemented in 1968b2 — no edit needed.
+AC-1..5: PASS. AC-6..8: PENDING_QA. Signal: agent-father-1968c-p01-done.json.
+Deferred: apps/mcp-server/ zone → dev-mcp-server (pair-claim after 1967-02 QA).
 
-## Previous Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05, single cycle)
+**TASK_1968c-P02 — L-8 composite step-0-cowork skill:**
+Created: .claude/skills/step-0-cowork/SKILL.md (75L, ≤120L cap).
+Updated always_load: news-scout, market-watcher, alert-commander, financial-analyst, report-analyzer, digest-predict, qa-responder (7 agents).
+Error boundaries preserved: notebook-read fail → STOP; bootstrap fail → STOP; regime fail → NEUTRAL fallback.
+AC-1..6: PASS. AC-7..8: PENDING_QA. Signal: agent-father-1968c-p02-done.json.
+unified-agent: inspected, optional upgrade deferred (AC-5 spec).
 
-**TASK_1967-03 — DASHBOARD stale-race guard (ITEM-03):**
-Fix surface: `.claude/flows/pm/main.md`
-Added "DASHBOARD Write Guard — CAS on pipeline-state.json" section before End-of-cycle skill.
-Logic: Read pipeline-state.json fresh immediately before any DASHBOARD write. If `status` contains "idle" or "closed" → suppress signal + log. Applied to ALL pm DASHBOARD writes, not just plan_blocked.
-AC: all PASS (design rationale). Handoff updated with [Developer] section.
-Signal: `docs/signals/agent-father-1967-03-done.json` → qa.
+## Previous Session — 2026-05-21T23:30Z (Task 1967-04)
 
-**TASK_1967-05 — cowork dispatcher drift guard (ITEM-07):**
-Fix surface: `.claude/flows/cowork-team/main.md`
-Added "Step 3b — Drift threshold guard" between Step 2+3 (DRIFT_MIN returned) and Step 4 (silent exit).
-Logic: if DRIFT_MIN > 10 → send_telegram WORK warn with drift value and safe limit. Warning-only, no spawn blocked.
-Rationale: floor-15 rounding absorbs up to drift_min=14; threshold=10 provides 5-min safety margin before structural risk.
-AC: all PASS (design rationale). Handoff updated with [Developer] section.
-Signal: `docs/signals/agent-father-1967-05-done.json` → qa.
+market-watcher identity recurrence fix (ITEM-04): Step -0 identity assertion added to market-watcher/main.md. D5 guard added to system-auditor audit-dimensions.md + handlers.md. AC-5+AC-7: PENDING_QA. Signal: agent-father-1967-04-done.json.
 
-**Notebook race awareness:** Both tasks completed in single cycle. PO is running concurrently (1968 close + 1967-02 decision). Did NOT touch pipeline-state.json or ## po DASHBOARD section. Added ## agent-father DASHBOARD section per constraints.
+## Previous Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05)
+
+1967-03: DASHBOARD stale-race guard → pm/main.md CAS pattern.
+1967-05: cowork dispatcher drift guard → cowork-team/main.md Step 3b (DRIFT_MIN>10 WORK warn).
 
 ## Previous Session — 2026-05-21T21:00Z (Task 1968b2)
 
-L-6 cron stagger + cycle-bootstrap Step -1 + L-7 batch commit + ITEM-05 collision merge. Signals: agent-father-1968b2-done.json.
+L-6 cron stagger + cycle-bootstrap Step -1 + L-7 batch commit + ITEM-05 collision merge.
 
 ## Previous Session — 2026-05-21T20:03Z (Task 1968b1 phase2)
 
-L-4 news-scout get_agent_signals consolidation 3→1 per cycle. Signal: agent-father-1968b1-done.json.
-
-## Previous Session — 2026-05-21T20:30Z (Task 1968a — token/tool-call economy Phase 1)
-
-L-1..L-5: startup→conditional lazy-load, 7 notebooks trimmed, signal-dashboard payload pointer rule, L-5 ULTRA tier.
+L-4 news-scout get_agent_signals consolidation 3→1 per cycle.
 
 ## Patterns Noticed
 
-- Concurrent agents leave pre-staged files — always check git status before staging.
-- DASHBOARD.md modified between reads by concurrent agents — always re-read before editing.
-- Always audit all 40 agents after fixing any specific trigger.
-- ITEM-05 + L-7 surface collision: read 1967b brief + 1968b2 handoff Coordination before any cycle.md edit.
-- Notebook race: when PO is in parallel, never touch pipeline-state.json or ## po DASHBOARD.
+- cycle-bootstrap/SKILL.md already had Step -1 from 1968b2 — always check prior sprint notebook before re-implementing.
+- P01 + P02 touch distinct subzones (.claude/flows/ vs .claude/skills/ + .claude/agents/) — safely interleaved in single cycle.
+- When adding always_load entries to cowork agents, check for `note:` vs `# justification:` comment style — be consistent with existing style in each file.
 
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
-- 1968b1: L-4 (get_agent_signals consolidation in news-scout flows) — gated on dev-mcp-server 1967-01
-- 1967-03 + 1967-05: await qa ratification
-- Await qa ratification of 1968b2 before PO closes sprint 1968.
+- 1968c-P01/P02: await qa ratification (AC-6..8 pending)
+- 1968c-P03 (wave 2): gated on P01 done signal — now emitted, P03 can proceed
+- 1967-04 AC-5+AC-7: await qa 10-cycle live test

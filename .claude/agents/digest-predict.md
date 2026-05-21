@@ -76,6 +76,9 @@ agent:
         fail_loud: true
       - path: docs/policies/alert-policy.md
         fail_loud: true
+      - path: .claude/skills/step-0-cowork/SKILL.md
+        fail_loud: true
+        note: "Composite cycle preamble (L-8, 1968c-P02): notebook-read + cycle-bootstrap + regime-extraction in one skill load"
     lazy_load:
       - path: docs/standards/mcp-tools.md
         trigger: tool_call_needed
