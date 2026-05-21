@@ -1,8 +1,20 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-18 | **Sprint:** 1950-T4+T5 (c4)
+**Last updated:** 2026-05-21T20:20Z | **Sprint:** 1967 (c1)
 
-## Current state (2026-05-18) — Sprint 1950-T4 + T5
+## Current state (2026-05-21) — Sprint 1967 orchestration audit decomp
+
+REQ_1967.md written. 7 atomic REQs (one per surface 1-7), NFR-1..5, 0 PO blockers.
+Signal: `docs/signals/ba-1967a-spec-ready.json`. NEXT: PO approval -> po-1967-ba-approved.json -> architect 1967b.
+
+Key decisions:
+- Surface 4f (signal payload pointer) + Surface 6b (trigger:startup) flagged as cross-sprint with 1968 L-3/L-1/L-2 — evidence input only, fix authority stays in 1968.
+- Superseded architect brief (ae9649866b992cb41, 13 findings) treated as supplementary evidence — noted in REQ_1967 blockers section.
+- No PO blockers: all 7 surfaces fully defined by SPRINT_GOAL + E-1..E-7 seed evidence.
+- Glossary/disambiguation section added for "race", "idempotency", "recursive spawn", "dispatcher", "dispatcher-wrap", "CAS", "dead-handoff", "stale-race".
+- DDD layer tagged per REQ: surface-1=Infrastructure+Interface, surface-2=Application+Interface, surface-3=Application+Infrastructure, surface-4=Infrastructure+Application, surface-5=Infrastructure+Application, surface-6=Interface+Application, surface-7=Infrastructure+Application.
+
+## Prior state (2026-05-18) — Sprint 1950-T4+T5 (c4)
 
 REQ_1950.md extended with §T4 + §T5 (light specs, cron infrastructure fixes). No PO blockers on either. Signal: `docs/signals/ba-2026-05-18T1730Z-1950-T4-T5-specs.json`. NEXT: agent-father (T4 urgent first — deadline 20:17Z).
 

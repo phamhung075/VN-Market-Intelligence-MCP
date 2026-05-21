@@ -1,0 +1,15 @@
+{
+  "from": "ba",
+  "to": "po",
+  "type": "spec-ready",
+  "sprint": "1967",
+  "taskId": "1967a",
+  "createdAt": "2026-05-21T20:20Z",
+  "payload": "REQ_1967 done. 7 REQ+NFR. 0 PO blockers. -> docs/REQ_1967.md",
+  "spec": "docs/REQ_1967.md",
+  "req_count": 7,
+  "blockers": 0,
+  "po_action": "approve -> emit po-1967-ba-approved.json -> unblock architect 1967b",
+  "cross_sprint_flags": ["REQ-1967-4f overlaps 1968-L3", "REQ-1967-6b overlaps 1968-L1/L2"],
+  "priority": "high"
+}
