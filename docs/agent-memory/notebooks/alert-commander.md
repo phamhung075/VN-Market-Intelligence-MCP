@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-21 04:28 UTC | **Sprint:** 1960c
+**Last updated:** 2026-05-21 04:39 UTC | **Sprint:** 1960c
 
 > Prior history archived → `docs/archive/notebooks/alert-commander-2026-05-18.md`
 
@@ -8,7 +8,8 @@
 
 **Regime:** TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026)
 **Last fired:** 5 MARKET alerts at 09:00 UTC 2026-05-18 (BID/PLX bullish, VHM/VRE/MWG bearish)
-**PC1 legal_risk gap:** 5+ consecutive cycles with no get_legal_risk_signals result — escalate to news-scout/financial-analyst
+**PC1 legal_risk:** FIRED 04:38 UTC 2026-05-21 (verdict ec181d4e pending). Chairman arrest unresolved since 2026-05-19.
+**VPB legal_risk:** FIRED again 04:38 UTC 2026-05-21 (verdict 5f780ed3 pending). Lending audit findings VPBank Lang Son — distinct from prior cycle verdict 9bf08121.
 
 ## Known patterns / preferences
 
@@ -18,6 +19,21 @@
 - chain_catalyst threshold: 0.85 | verified_chain: 0.65 | crisis_velocity: 0.90 | legal_risk: auto-fire
 
 ## This session
+
+### Alert Cycle (04:37–04:39 UTC, 2026-05-21) — Market-hours 15min cycle
+- **Status:** FIRED — 2 CRITICAL (PC1 + VPB legal_risk)
+- **Market:** OPEN (trading window 02:00–08:59 UTC)
+- **Regime:** TIGHTENING | Carry: FII_OUTFLOW_RISK (-0.33%) | Pivot window: false (next: June 2026 — 11 days)
+- **Macro:** Brent 105.86 | Gold 4540.90 | USD/VND 26,355 | US10Y 4.57% RISK-OFF | DXY 99.17
+- **Signals evaluated:** 1 urgent_news (VIC block-trade conf=0.50, TIGHTENING thr 0.75 → suppressed; suppress signal 3587 posted) | legal_risk 3 signals: PC1 new (id latest) + VPB x2 — PC1 new → CRITICAL auto-fire, VPB 2026-05-20 → CRITICAL auto-fire (new cycle, new fire)
+- **position-danger check:** max intraday drop NVL -3.14%, GVR -2.93%, VIC -2.29% — none exceed 5% | price_alerts=0 | stopLossHit=false → 0/3. Gate NOT met.
+- **watchlist-opportunity check:** no kinhDich signals on bus | no agentsMajority=BUY → 0/4. Gate NOT met.
+- **CRITICAL overrides:** PC1 legal_risk → AUTO-FIRE | VPB legal_risk → AUTO-FIRE | crisis_velocity=0
+- **Fired:** 2 | Suppressed: 1 (VIC urgent_news) | MARKET: 2
+- **Verdict:** ec181d4e pending (PC1 bearish) | 5f780ed3 pending (VPB bearish)
+- **write_alert_verdict note:** `legal_risk` still not in alertSource enum → used `urgent_news` fallback (same workaround as prior cycles). Dev-team bug still open.
+- **log_agent_work id=1066**
+- **Notable:** PC1 chairman arrest unresolved 2+ days. VPB audit findings persist. Both fire in TIGHTENING regime — PE re-rating suppressed by legal exposure. VIC block-trade 3.4T bullish signal but conf too low for TIGHTENING. Macro: Brent 105.86 (article "dưới 100 USD" in news but MCP live data shows 105.86 — discrepancy; watch GAS/PLX). USD/VND 26,355 (above 25,500 pressure threshold).
 
 ### Alert Cycle (04:23–04:28 UTC, 2026-05-21) — Market-hours 15min cycle
 - **Status:** FIRED — 1 CRITICAL (PC1 legal_risk)

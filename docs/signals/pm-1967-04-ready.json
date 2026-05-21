@@ -1,0 +1,33 @@
+{
+  "from": "pm",
+  "to": "agent-father",
+  "type": "task-ready",
+  "task_id": "1967-04",
+  "title": "market-watcher identity recurrence fix",
+  "ready_at": "2026-05-21T23:15:00Z",
+  "ready_by": "pm cycle 2026-05-21",
+  "handoff_file": "docs/handoffs/TASK_1967-04-market-watcher-identity.md",
+  "context": {
+    "sprint": "1967",
+    "item": "ITEM-04",
+    "priority": "HIGH",
+    "pattern": "SUCCESS → SILENT → FAILURE every other cycle",
+    "root_cause": "notebook truncation on token context limits → YAML identity stanza lost",
+    "size": "S",
+    "zone": ".claude/agents/"
+  },
+  "key_fixes": [
+    "Trim market-watcher notebook to ≤150L hard max",
+    "Verify YAML identity stanza completeness (name/color/description per agent-metadata standard)",
+    "Add Step -0 identity assertion to market-watcher flow (detects context overflow)",
+    "Expand system-auditor Tier-2 with D5 dimension (notebook-size overflow guard ≥1 agent >150L)"
+  ],
+  "qa_gate": "Manual 10-cycle test: market-watcher produces ≥10 signals with zero identity failures",
+  "pairs_with": [
+    "1967-06 (vnstockFundamentalsRefresh weekly cron fix — both HIGH for close-gate)"
+  ],
+  "wip_count": "PM dispatching 1967-04 → agent-father. WIP will be 1 after dispatch (1967-02 in flight with dev-mcp-server). Second HIGH (1967-06) remains blocked-until 2026-05-22T21:00Z.",
+  "next_tier": "1967-06 (unlocks after soak-1959-watchdog-4 release)",
+  "pipeline": "continue",
+  "priority": "high"
+}

@@ -46,7 +46,8 @@ export const SignalTypeSchema = z.enum([
   "price_confirmation",
   "verified_chain",
   "signal_feedback",
-  "legal_risk",  // SPIKE-1948e-fix
+  "legal_risk",           // SPIKE-1948e-fix
+  "verified_decision",    // Task 1967-02: chain de-dup ack after alert-commander fires/suppresses
 ]);
 
 /** Valid signal types that agents can exchange (includes enrichment chain types). */

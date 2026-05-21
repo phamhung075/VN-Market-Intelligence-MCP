@@ -16,7 +16,7 @@ The chain synthesizer automatically forms causal chains when 2+ agents post abou
 |------|------|----------|---------|-------------|
 | `from_agent` | string | Yes | — | Name of the sending agent (e.g. 'news-scout') |
 | `to_agent` | string | Yes | — | Name of receiving agent or 'all' for broadcast (e.g. 'alert-commander') |
-| `signal_type` | enum | Yes | — | Signal classification: `urgent_news`, `price_anomaly`, `cross_validate`, `suppress`, `chain_catalyst`, `fundamental_validation`, `price_confirmation`, `verified_chain` |
+| `signal_type` | enum | Yes | — | Signal classification: `urgent_news`, `price_anomaly`, `cross_validate`, `suppress`, `chain_catalyst`, `fundamental_validation`, `price_confirmation`, `verified_chain`, `verified_decision` |
 | `stock_code` | string | No | — | Stock ticker code (e.g. 'VNM'), optional |
 | `payload` | object | Yes | — | Signal payload: `title` (string), `detail` (string), `impact_score` (0-10, optional) |
 | `ttl_minutes` | number | No | 120 | Time-to-live in minutes |

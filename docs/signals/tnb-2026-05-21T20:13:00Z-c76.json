@@ -1,0 +1,10 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "normal",
+  "createdAt": "2026-05-21T20:13:00Z",
+  "cycle": 76,
+  "summary": "Overall: NEEDS_ATTENTION | Direction: IMPROVING | Evening 19:37Z dish 7/9 GOOD (best yet). F5 alertSource enum fix queued Sprint 1967. digest-predict 12-day silence (CRITICAL). 0 auto-cures."
+}

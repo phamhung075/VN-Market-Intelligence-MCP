@@ -18,7 +18,7 @@
     "testable_checklists_per_req": true,
     "done_criteria_per_req": true
   },
-  "architect_brief_decision": "RE-RUN — early brief (2026-05-21-orchestration-bug-conflict-audit.md) marked SUPERSEDED, treat as evidence input only. Canonical 1967b must enumerate per-flow JUMP-TO/RETURN tables, all-35-agent capability/always_load/identity audit, per-dispatch-site task-lock symmetry, signal-file naming contract, caveman ≤120 char compliance, 11-field per-finding invariant, BCTC-gated finding enumeration.",
+  "architect_brief_decision": "RE-RUN — early brief (2026-05-21-orchestration-bug-conflict-audit.md) marked SUPERSEDED, treat as evidence input only. Canonical 1967b must enumerate per-flow JUMP-TO/RETURN tables, all-35-agent capability/always_load/identity audit, per-dispatch-site task-lock symmetry, signal-file naming contract, caveman <=120 char compliance, 11-field per-finding invariant, BCTC-gated finding enumeration.",
   "next_action": "architect 1967b dispatch — read REQ_1967 + treat early brief as evidence",
   "priority": "high"
 }

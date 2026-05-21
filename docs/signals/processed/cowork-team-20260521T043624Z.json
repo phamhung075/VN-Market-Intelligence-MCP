@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260521T043624Z",
+    "matched_slots": ["news-scout-market", "market-watcher-market", "market-watcher-prepost", "alert-commander-market"],
+    "won_slots": ["news-scout-market", "market-watcher-market", "alert-commander-market"],
+    "held_by_other": ["market-watcher-prepost"],
+    "all_held": false,
+    "spawned": [
+      ".claude/flows/news-scout/main.md",
+      ".claude/flows/market-watcher/main.md",
+      ".claude/flows/alert-commander/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "collision_warnings": [
+      {"agent_id": "market-watcher", "duplicate_slots": ["market-watcher-market", "market-watcher-prepost"]}
+    ],
+    "errors": [],
+    "success_summary": {
+      "news-scout-market": "2 signals fired (#3585 NVL urgent_news shareholder liquidation, #3586 chain_catalyst real estate sector liquidation)",
+      "market-watcher-market": "5 signals fired (#3580 NVL 2.1σ, #3581 GVR 1.95σ, #3582 KBC 1.72σ, #3583 GAS 1.79σ, #3584 FPT 1.03σ) — 2nd consecutive success after hallucination streak",
+      "alert-commander-market": "2 CRITICAL fired (PC1 legal_risk verdict ec181d4e, VPB legal_risk verdict 5f780ed3); 1 suppressed (VIC conf<0.75 TIGHTENING)"
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260521T043624Z"
+}

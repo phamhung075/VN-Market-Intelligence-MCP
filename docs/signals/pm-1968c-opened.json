@@ -1,0 +1,53 @@
+{
+  "from": "pm",
+  "to": "po",
+  "type": "sprint-kickoff",
+  "sprint": "1968c",
+  "title": "Phase 3 Token Economy — Tier 2/3 Implementation (3 parallel tasks)",
+  "opened_at": "2026-05-21T23:15:00Z",
+  "opened_by": "pm cycle 2026-05-21",
+  "parent_sprint": "1968",
+  "parent_context": "Sprint 1968 Phases 1+2 shipped (1968a token economy L-1..L-5 + 1968b1/b2 tool/notebook consolidation). Phase 3 was deferred per original SPRINT_GOAL L28-31 (out-of-scope). PM decomposition complete: 3 atomic TASK_1968c-Pxx handoffs ready for dispatch.",
+  "tasks": [
+    {
+      "task_id": "1968c-P01",
+      "title": "L-6 tick-snapshot file writer (cowork-team + cycle-bootstrap)",
+      "owner": "agent-father + dev-mcp-server",
+      "zone": ".claude/ + apps/mcp-server/",
+      "size": "M",
+      "est_savings": "6 fewer MCP calls/tick = ~168/trading-day",
+      "handoff": "docs/handoffs/TASK_1968c-P01-tick-snapshot.md"
+    },
+    {
+      "task_id": "1968c-P02",
+      "title": "L-8 composite step-0-cowork skill (notebook + bootstrap + regime)",
+      "owner": "agent-father",
+      "zone": ".claude/",
+      "size": "M",
+      "est_savings": "2 file reads per agent/cycle across 7 agents",
+      "handoff": "docs/handoffs/TASK_1968c-P02-step0-skill.md"
+    },
+    {
+      "task_id": "1968c-P03",
+      "title": "L-9 get_agent_signals server-side signal_type filter",
+      "owner": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "size": "M",
+      "est_savings": "40–60% payload reduction per filtered call",
+      "handoff": "docs/handoffs/TASK_1968c-P03-server-filter.md"
+    }
+  ],
+  "execution_model": "Parallel (all 3 independent, can execute concurrently after approval)",
+  "nfr": [
+    "Zero schema changes",
+    "Zero DB changes",
+    "BCTC freeze NFR-3 respected (if BCTC touches needed: NO)",
+    "Fail-loud protocol preserved (context-tracking safeguards per brief §3)",
+    "Backward compatibility (L-9 default=all preserves existing call behavior)"
+  ],
+  "blockers": "None (ready to dispatch immediately upon PO approval)",
+  "cross_reference": "docs/architecture-briefs/2026-05-21-token-toolcall-economy.md § Rollout Plan § Phase 3",
+  "acceptance_gate": "All 3 tasks QA APPROVED → close Sprint 1968c, tally Phase 1+2+3 savings (~50% token reduction + ~100 fewer MCP calls/trading-day)",
+  "pipeline": "continue",
+  "priority": "high"
+}

@@ -141,3 +141,4 @@ Decision guide → `.claude/skills/semble-search/SKILL.md`
 | `fundamental_validation` | Financial Analyst, Report Analyzer | Alert Commander | BCTC confirms/contradicts catalyst |
 | `price_confirmation` | Market Watcher | All | Price confirms catalyst |
 | `verified_chain` | Server | Alert Commander | 2+ agent confirmations synthesized |
+| `verified_decision` | Alert Commander | All | Chain de-dup ack after alert-commander fires or suppresses |

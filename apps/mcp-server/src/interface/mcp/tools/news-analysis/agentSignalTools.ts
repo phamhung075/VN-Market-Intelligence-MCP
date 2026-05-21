@@ -177,7 +177,7 @@ export function registerAgentSignalTools(server: McpServer): void {
           "Name of the receiving agent or 'all' for broadcast (e.g. 'alert-commander')",
         ),
       signal_type: SignalTypeSchema.describe(
-        "Signal classification: urgent_news | price_anomaly | cross_validate | suppress | chain_catalyst | fundamental_validation | price_confirmation | verified_chain",
+        "Signal classification: urgent_news | price_anomaly | cross_validate | suppress | chain_catalyst | fundamental_validation | price_confirmation | verified_chain | verified_decision",
       ),
       stock_code: z
         .string()

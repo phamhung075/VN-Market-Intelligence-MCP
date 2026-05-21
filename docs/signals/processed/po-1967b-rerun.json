@@ -8,9 +8,9 @@
   "payload": "1967b RE-RUN. Early brief SUPERSEDED, use as evidence. Cover all 7 REQs + 5 NFRs. -> docs/REQ_1967.md",
   "spec": "docs/REQ_1967.md",
   "supersedes": "docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md",
-  "rerun_reason": "Early brief authored pre-BA scope. Covers ~50% of REQ_1967 testable checklists. Gaps: REQ-1967-1b (signal-file naming contract), REQ-1967-1d (caveman ≤120 char compliance), REQ-1967-2a (per-flow JUMP-TO/RETURN table all flows), REQ-1967-2b (recursive spawn guard dev-team/cowork-team), REQ-1967-2d (cowork flow idempotency), REQ-1967-3a-3e (per-dispatch-site task-lock symmetry table), REQ-1967-4a/4d (signal-bus race window analysis + processed/ migration atomicity), REQ-1967-5b/5c/5e (isRunning guard audit, watchdog vs cron tick, OBSERVE-1955d gate status), REQ-1967-6a/6c/6d/6e (full 35-agent enumeration), REQ-1967-7e (11-field per-finding invariant), REQ-1967-7f (BCTC-gated finding enumeration).",
+  "rerun_reason": "Early brief authored pre-BA scope. Covers ~50% of REQ_1967 testable checklists. Gaps: REQ-1967-1b (signal-file naming contract), REQ-1967-1d (caveman <=120 char compliance), REQ-1967-2a (per-flow JUMP-TO/RETURN table all flows), REQ-1967-2b (recursive spawn guard dev-team/cowork-team), REQ-1967-2d (cowork flow idempotency), REQ-1967-3a-3e (per-dispatch-site task-lock symmetry table), REQ-1967-4a/4d (signal-bus race window analysis + processed/ migration atomicity), REQ-1967-5b/5c/5e (isRunning guard audit, watchdog vs cron tick, OBSERVE-1955d gate status), REQ-1967-6a/6c/6d/6e (full 35-agent enumeration), REQ-1967-7e (11-field per-finding invariant), REQ-1967-7f (BCTC-gated finding enumeration).",
   "deliverable": "docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md (overwrite or v2)",
   "time_box_hours": 4,
-  "constraints": "Read-only diagnostic. No code or config edits. ≤600L per NFR-1. Silence ≠ pass (NFR-2). BCTC freeze compliance (NFR-3). WIP cap 2/2 per zone (NFR-4). No double-fix with Sprint 1968 L-1/L-2/L-3/L-5 (NFR-5).",
+  "constraints": "Read-only diagnostic. No code or config edits. <=600L per NFR-1. Silence != pass (NFR-2). BCTC freeze compliance (NFR-3). WIP cap 2/2 per zone (NFR-4). No double-fix with Sprint 1968 L-1/L-2/L-3/L-5 (NFR-5).",
   "priority": "high"
 }
