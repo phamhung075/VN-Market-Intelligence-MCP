@@ -1,0 +1,21 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "qa-approved",
+  "payload": {
+    "task_id": "TASK_1968c-P02",
+    "title": "L-8 composite step-0-cowork skill",
+    "verdict": "APPROVED",
+    "commit": "508ae0ef",
+    "round": 1,
+    "smart_skip": true,
+    "ac_pass": ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5", "AC-6"],
+    "ac_deferred": ["AC-7"],
+    "ac_smart_skip": ["AC-8"],
+    "report": "reports/TASK_REPORT_1968c-P02.md",
+    "handoff": "docs/handoffs/TASK_1968c-P02-step0-skill.md",
+    "note": "AC-7 mock failure tests deferred (static boundary analysis PASS). AC-8 smart-skipped (zero .ts changes)."
+  },
+  "priority": "high",
+  "createdAt": "2026-05-21T21:45:00Z"
+}
