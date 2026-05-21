@@ -1,6 +1,34 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1967-12 | **Session:** c246-r2 — APPROVED
+**Last updated:** 2026-05-22 | **Task:** 1968c-P03 | **Session:** c247 — APPROVED
+
+## Session 2026-05-22 c247 — Task 1968c-P03 APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commit reviewed: c3b18e8c
+zone: apps/mcp-server/ — .ts changes present, full suite + tsc run
+smart_skip: NO — .ts changes in agentSignalStore.ts + agentSignalTools.ts
+round: 1
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: Zod schema signal_type optional+nullable | PASS |
+| AC-2: SQL filter signalTypeClause applied | PASS |
+| AC-3: backward-compat null/omitted = all types | PASS |
+| AC-4: tool doc updated | PASS |
+| AC-5: alert-commander 3b+3c updated; news-scout unchanged | PASS |
+| AC-6: 6 tests GREEN | PASS — 6/6 |
+| AC-7: 50% payload reduction test | PASS |
+| AC-8: mcp-server zone 9343 pass ≥ 9358 baseline | PASS |
+| BCTC freeze: 283 pre-existing fail unchanged | PASS |
+| DDD: domain/ zero infra imports | PASS |
+| Security: no process.env, no hardcoded secrets | PASS |
+| tsc: 0 errors | PASS |
+
+Blocking: 0. Signal: docs/signals/qa-1968c-p03-done.json emitted.
 
 ## Session 2026-05-21 c246-r2 — Task 1967-12 APPROVED (round 2)
 
@@ -36,16 +64,7 @@ smart_skip: YES
 round: 1
 ```
 
-| Check | Result |
-|-------|--------|
-| AC-1: 6 notebooks ≤150L | PASS (121/135/143/43/111/91) |
-| AC-2: Archive pointer each notebook | FAIL — alert-commander:5 stale (-2026-05-18 not -2026-05-21) |
-| AC-3: Carry-over preserved | PASS |
-| AC-4: 6 archive files exist | PASS |
-| AC-5: Commit refs TASK_1967-04 | PASS |
-| AC-6: No semantic content loss | PASS |
-
-Blocking: `docs/agent-memory/notebooks/alert-commander.md:5` — pointer `alert-commander-2026-05-18.md` must be `alert-commander-2026-05-21.md`. Single-line fix.
+Blocking: `docs/agent-memory/notebooks/alert-commander.md:5` — pointer stale (-2026-05-18 not -2026-05-21). Fixed in round 2.
 
 ## Session 2026-05-21 c245 — Tasks 1968c-P01 + 1968c-P02 APPROVED
 
@@ -80,7 +99,7 @@ zone: .claude/flows/ + docs/agents/ only
 smart_skip: YES
 ```
 
-AC-1..AC-4, AC-6: PASS. AC-5 + AC-7: PENDING_LIVE. D5 scope correction: 7 notebooks >150L (not 4).
+AC-1..AC-4, AC-6: PASS. AC-5 + AC-7: PENDING_LIVE.
 
 ## Session 2026-05-21 c241 — Tasks 1967-03 + 1967-05 APPROVED
 

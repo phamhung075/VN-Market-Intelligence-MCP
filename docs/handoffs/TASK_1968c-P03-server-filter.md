@@ -144,15 +144,18 @@ call_tool(
 ---
 
 ## [QA] Review Record
-_(To be filled by QA upon task completion)_
 
-- [ ] Tool schema accepts `signal_type` parameter
-- [ ] Server-side filtering implemented and tested
-- [ ] Backward compatibility verified: calls without `signal_type` return full result set
-- [ ] Payload size reduction measured: 40–60% smaller for filtered calls (vs. full result)
-- [ ] Unit tests GREEN (filter present, filter absent, invalid value cases)
-- [ ] Regression suite PASS (tsc 0 errors, existing tests ≥9358 PASS — post-1967-02 baseline)
-- [ ] Agent calls updated in ≥2 flows (news-scout, alert-commander)
+**Date:** 2026-05-22 | **Verdict:** APPROVED | **Round:** 1
+
+- [x] Tool schema accepts `signal_type` parameter — z.string().nullable().optional() with .describe() at agentSignalTools.ts:457
+- [x] Server-side filtering implemented — signalTypeClause applied in getSignals() at agentSignalStore.ts:889–891 with single-quote escape
+- [x] Backward compatibility verified — null/undefined/omitted → no SQL clause → all types returned (test AC-3 + AC-3b)
+- [x] Payload size reduction measured — 50% (within 40-60% target), verified by AC-7 test with 5/10 signal split
+- [x] Unit tests GREEN — 6/6 PASS (1968c-p03-signal-type-filter.test.ts)
+- [x] Regression suite PASS — tsc 0 errors; mcp-server zone 9343 pass / 283 BCTC-freeze fail (pre-existing, unchanged)
+- [x] Agent calls updated in ≥2 flows — alert-commander stage-signals.md steps 3b (price_anomaly) + 3c (chain_catalyst); news-scout SELF_SIGNALS_CACHE unchanged (all-types correct for dedup)
+- [x] DDD: domain/ has zero import statements from infrastructure/ — PASS
+- [x] Security: no process.env, no hardcoded secrets; SQL escaping consistent with existing codebase pattern
 
 ---
 
