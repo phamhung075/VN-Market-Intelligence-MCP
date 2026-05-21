@@ -1,48 +1,46 @@
 # PO Notebook
 
-## Last updated: 2026-05-21T19:10:46Z · Cycle: c235 — Sprint 1968 kickoff (Phase 1 token/tool-call economy, gated mini-sprint)
+## Last updated: 2026-05-21T19:19:20Z · Cycle: c236 — Sprint 1967 AC-1 PASS + 1968a gate released
 
-### c235 trigger
-INBOUND signal from agents-architect: `docs/signals/token-toolcall-economy-20260521T190909Z.json` + brief `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md`. 9 levers across 3 phases. Phase 1 (L-1..L-5) is agent-father-only zero-code (.md surgery), risk LOW, expected 25–35% per-cycle context reduction + ~56 fewer MCP calls/trading-day.
+### c236 trigger
+INBOUND: BA 1967a DONE @ commit f7ef1b23 — `docs/signals/ba-1967a-spec-ready.json` (REQ_1967.md, 7 REQ + 5 NFR + 0 PO blockers). Parallel hold: agent-father 1968a awaiting overlap sanity-check.
 
-### Decisions taken (c235)
-1. **Brief SIGNED OFF** — scope respects DDD (Phase 1+2 are .md edits, no domain/app/infra layer); no SSOT collisions; tree-map DAG respected; fail-loud preserved; system-auditor audit trail preserved (archive-before-overwrite for notebooks).
-2. **Sprint 1968 OPENED as mini-sprint** — Phase 1 only this cycle; Phase 2 (L-4 + L-7) sequenced cycle-2; Phase 3 (L-6/L-8/L-9) routed through PM as TASK_NNN slate after Phase 1 ratified.
-3. **HARD GATE on 1967b** — agent-father must NOT start 1968a until Sprint 1967b architect brief lands at `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` AND PO sanity-checks overlap with 1968 brief levers L-1..L-3. Prevents double-fix on same .md surface. ETA ~22:01Z (1967b 4h time-box from 19:01Z).
-4. **Cross-ref verified** — alert-commander.md lines 82-84 still has `mcp-tools.md trigger: startup`. The 1963-MW-IDENTITY agent-father fix promoted mcp-tools.md to `always_load` for **market-watcher only**, NOT alert-commander. L-1 alert-commander work remains valid. Handoff doc recommends promote-to-always_load (alert-commander makes MCP calls every cycle for write_alert_verdict + post_agent_signal).
-5. **Conflict check vs Sprint 1967** — 1967 = orchestration BUG audit (correctness). 1968 = STEADY-STATE COST. Orthogonal. 1964-AC-ENUM (1967 scope) is schema-fix; L-3 (1968) is payload-size — different layers. Safe to parallel.
-6. **WIP/zone safety** — agent-father owns 1968 alone; does not collide with dev-mcp-server (1965b done, 1967 audit not on dev-mcp-server), dev-rag-service (1959-watchdog-4 hold), ba (1967a in flight), architect (1967b in flight).
+### Decisions taken (c236)
+1. **AC-1 PASS on 1967a** — REQ_1967.md verified: 7 atomic REQs (one per orchestration surface), DDD layers tagged each, NFR section present (NFR-1..5), out-of-scope mirrors SPRINT_GOAL §Scope OUT verbatim, testable check-lists per REQ, done-criteria per REQ, glossary present, 0 blockers. Signal emitted `docs/signals/po-1967-ba-approved.json`.
+2. **1967b decision = RE-RUN, not RATIFY** — Early architect brief (`docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`, 13 items / 5 HIGH / 7 MED) authored pre-BA scope. Coverage of REQ_1967 testable checklists ≈ 50%. Gaps spanning REQ-1967-1b/1d/2a/2b/2d/3a-3e/4a/4d/5b/5c/5e/6a/6c/6d/6e/7e/7f are too wide to ratify. Decision: mark early brief SUPERSEDED in header (evidence-only); spawn fresh architect 1967b with REQ_1967 as scope contract. Re-run signal `docs/signals/po-1967b-rerun.json`.
+3. **1968a gate RELEASED — overlap audit CLEAN** — Cross-checked L-1..L-5 against REQ_1967 checklists. L-1↔REQ-1967-6b: REQ explicitly defers fix authority to Sprint 1968; architect = evidence only. L-2↔REQ-1967-6c: different surfaces (L-2 is notebook size cap, REQ-6c is always_load file audit). L-3↔REQ-1967-4f: REQ explicitly defers to Sprint 1968 L-3. L-5↔REQ-1967-1d: REQ is audit/finding only; L-5 implements ULTRA on specific files. No double-fix risk. agent-father may start file surgery immediately in parallel with 1967b architect re-run. Signal emitted `docs/signals/po-1968a-gate-released.json`.
+4. **WIP/zone safety** — architect on 1967b (read-only diagnostic, no zone), agent-father on 1968a (.md surgery, agent-father-only). Zero collision. dev-mcp-server idle on 1967/1968. dev-rag-service on 1959-watchdog-4 hold. qa on 1965c-soak. BCTC paths frozen.
+5. **Channel audit deferred** — DASHBOARD `## po` rows (tnb c75, 1953-G-FAIL freeze sentinel, 1965-CLOSE, 1967-KICKOFF) all current from c235. tnb c75 NEEDS_ATTENTION still queued for next routine cycle. No MARKET/WORK/BUG fresh scan needed for AC-1 gate work.
 
 ### Files touched this cycle
-- `docs/SPRINT_GOAL.md` — Sprint 1968 head prepended above Sprint 1967 (preserved).
-- `docs/TASKS.md` — 3 Backlog rows added (1968a HARD-GATED on 1967b; 1968b/1968c PENDING).
-- `docs/signals/DASHBOARD.md` — _Updated_ timestamp refreshed + `## agent-father` 1968a-PHASE1 GATED row prepended above 1965a-DESIGN DONE row.
-- `docs/signals/po-1968-signoff-and-kickoff.json` — kickoff signal (caveman ULTRA tier, applies new L-3 payload pointer discipline a priori).
-- `docs/handoffs/TASK_1968a-phase1.md` — detailed agent-father execution doc with per-lever target file table + AC list + coordination notes.
+- `docs/signals/po-1967-ba-approved.json` — AC-1 PASS signal (caveman ultra payload).
+- `docs/signals/po-1967b-rerun.json` — RE-RUN dispatch to architect.
+- `docs/signals/po-1968a-gate-released.json` — gate release signal (caveman ultra).
+- `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` — header SUPERSEDED notice prepended (file kept as evidence input).
+- `docs/signals/DASHBOARD.md` — _Updated_ + ## po (3 new rows) + ## agent-father (1968a flipped to RELEASED) + ## agents-architect (1967b-RERUN row added, 1967a-AUDIT marked SUPERSEDED-CLEARED) + ## ba (1967a-DECOMP marked DONE).
+- `docs/TASKS.md` — 1967b row Blocked-by cleared + scope rewritten to RE-RUN spec; 1967a migrated to Done section.
+- `docs/pipeline-state.json` — activeTaskId 1967a→1967b, nextAgent ba→agents-architect, full RE-RUN prompt embedded.
 - `docs/agent-memory/notebooks/po.md` — this file (OVERWRITE).
 
-### Channel audit (Step 0 — c235)
-Cycle-bound, no fresh MARKET/WORK/BUG audit — c234 audit + DASHBOARD reads still recent (<30 min). DASHBOARD `## po` already-known rows: tnb c75 audit (deferred to next routine cycle), 1953-G-FAIL (under 1954c freeze, do-not-dispatch sentinel), 1965-CLOSE + 1967-KICKOFF status both green. No new triage required for 1968 work.
-
-### Watchpoints for c236+
-- **2026-05-21T~22:01Z** — Sprint 1967b architect brief lands. PO sanity-check overlap with 1968 levers L-1..L-3. If clear → release 1968a dispatch to agent-father. If 1967b finds additional drift in same files → agent-father merges fixes in single touch.
+### Watchpoints for c237+
+- **Architect 1967b lands** — review canonical brief vs REQ_1967 checklists (silence-≠-pass enforcement); if PASS → dispatch PM 1967c slate; if FAIL → return brief with gap list.
+- **agent-father 1968a-phase1-done.json** — review 5-lever execution; emit `po-1968a-phase1-approved.json` to unlock 1968b; verify L-1 alert-commander promote-to-always_load decision documented.
 - **2026-05-22T03:00Z** — first tasksMdJanitor cron fire (1965c soak observation #1).
 - **2026-05-22T21:00Z** — 1959-watchdog-4 + 1964-AC-ENUM + OBSERVE-1955e soak unlock.
-- **2026-05-23T03:00Z** — second tasksMdJanitor fire (1965c soak observation #2).
-- **2026-05-23T07:05Z** — OBSERVE-1957d BCTC cadence 72h tracker.
 - **2026-05-23T18:00Z** — 1965c soak ends → qa emits qa-1965c-soak-result.json.
-- **After 1968a Phase 1 lands** — PO ratifies via `docs/signals/po-1968a-phase1-approved.json` → dispatches 1968b Phase 2 (L-4 + L-7). After 1968b → PM 1968c Phase 3 slate.
+- **Sequence after Phase 1+1967b** — Sprint 1968b (L-4 + L-7), then 1967c PM slate decomposition, then PM 1968c Phase 3 slate.
 
 ### Lessons encoded this cycle
-- L29: **Sprint mini-pattern works for cost-reduction work** — single-executor agent-father-only sprints don't need full PO→BA→architect→PM chain when scope is non-functional (.md surgery) and risk is LOW. Mini-sprint keeps cognitive load low + zero WIP collision.
-- L30: **Cross-ref verification before dispatch is mandatory when two briefs overlap** — Sprint 1967 orchestration audit + Sprint 1968 token economy both touch agent .md files. Always check whether prior fix already covered a target; otherwise duplicate-edit waste + churn risk.
-- L31: **Hard-gate parallel sprints when surface overlaps** — agent-father gated on 1967b landing is cheap insurance; principle: when two parallel sprints both touch the same .md surface, the second-to-land sprint waits for the first brief to materialize so fixes merge in single touch.
+- L32: **RE-RUN vs RATIFY decision matrix** — when a pre-BA architect brief lands and a BA spec then materializes, default = RE-RUN unless coverage of BA testable checklists ≥80%. Below 80% the gaps will leak into PM slate or downstream code as silent omissions. Cheaper to re-spend architect cycles than to find missing audit later.
+- L33: **Mark superseded ≠ delete** — early brief stays in tree as evidence input for canonical architect run; the 13 ITEM rows can be ratified verbatim into the canonical brief when they map 1:1 to REQ_1967 check-list items. Architect saves rediscovery cost.
+- L34: **Cross-sprint overlap CLEAN verdict requires "evidence only on architect side"** — sprint X may fix surface Y while sprint Z audits the same Y, BUT only if Z's NFR explicitly states evidence-only / no fix proposals. REQ_1967 §Cross-sprint boundary notes nailed this for 1968 L-1/L-2/L-3/L-5. Sufficient to release the parallel gate immediately, no need to wait for architect brief landing.
+- L35: **Three-signal cycle (approve + rerun + gate-release) is one PO cycle** — when gates fan out in parallel, batch all signals + DASHBOARD edits + pipeline-state + TASKS.md in a single commit; downstream agents read consistent state, no torn-write race.
 
-### Carry-over from c229–c234
+### Carry-over from c229–c235
 - Sprint 1959 STAYS OPEN until watchdog-4 ships (~2026-05-22T21:00Z+)
 - Sprint 1965 in soak (1965c OBSERVE through 2026-05-23T18:00Z)
-- Sprint 1967 active (BA 1967a in flight; architect 1967b PENDING on BA approval; PM 1967c + dev-team slate downstream)
-- Sprint 1968 OPEN-GATED (Phase 1 agent-father held until 1967b lands ~22:01Z)
+- Sprint 1967 active (BA 1967a DONE+APPROVED c236; architect 1967b RE-RUN dispatched c236; PM 1967c + dev-team slate downstream)
+- Sprint 1968 OPEN (Phase 1 agent-father GATE RELEASED c236 — runs parallel to 1967b)
 - BCTC freeze in force; 1954c is the next structural unlock
 - 1964-AC-ENUM (LOW) queued for 2026-05-22T21:00Z soak release (separate from 1968 L-3 payload work)
-- L18 idle-EXIT, L19 maintenance-dashboard ≠ dev-backlog, L20 silent-cowork-fires-not-signals, L21 parallel-sprint OK when zones+agents don't collide, L22 housekeeping-cycles-return-NOTHING, L23 DASHBOARD-pruning, L24 sprint-kickoff-from-user-feedback, L25 PO-pre-curated-seed-evidence, L26 read-only-find-vs-fix, L27 /goal-is-scope-upgrade, L28 BA-gate-via-signal-hard-gate
+- L18 idle-EXIT, L19 maintenance-dashboard ≠ dev-backlog, L20 silent-cowork-fires-not-signals, L21 parallel-sprint OK when zones+agents don't collide, L22 housekeeping-cycles-return-NOTHING, L23 DASHBOARD-pruning, L24 sprint-kickoff-from-user-feedback, L25 PO-pre-curated-seed-evidence, L26 read-only-find-vs-fix, L27 /goal-is-scope-upgrade, L28 BA-gate-via-signal-hard-gate, L29 mini-sprint-pattern-for-cost-reduction, L30 cross-ref-verify-before-dispatch, L31 hard-gate-parallel-sprints-when-surface-overlaps

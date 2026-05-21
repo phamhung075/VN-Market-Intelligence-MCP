@@ -1,0 +1,23 @@
+{
+  "from": "po",
+  "to": "ba",
+  "type": "sprint-kickoff",
+  "sprint": "1967",
+  "task_id": "1967a",
+  "priority": "high",
+  "createdAt": "2026-05-21T19:02:30Z",
+  "payload": "Sprint 1967 kickoff (po c234, user /goal directive). Goal: fix all bugs/conflicts in orchestration agent system. Chain PO->BA->architect->PM->dev-team. BA NOT skipped. Task 1967a: BA decompose. Read docs/SPRINT_GOAL.md Sprint 1967 head (7 surfaces: comms/flows/dispatch/signal-bus/cron/agent-defs/locks+races + 7 seed evidence rows). Produce docs/REQ_1967.md w/ >=7 REQ-1967-1..7 (one per surface), check-list items per REQ, out-of-scope mirror. No arch proposals - pure decomp. Emit docs/signals/ba-1967a-spec-ready.json (caveman ultra). Handoff to PO for AC-1 approval. Hard gate: architect cannot start until po-1967-ba-approved.json. Time-box 2h. Handoff doc: docs/handoffs/TASK_1967a-ba-decomp.md.",
+  "nextAgent": "ba",
+  "nextPrompt": "Run .claude/flows/ba/main.md for task 1967a. Inner self-claim task:1967a kind=sprint-task ttl=7200s. Read SPRINT_GOAL.md Sprint 1967 head. Produce docs/REQ_1967.md (>=7 atomic REQs, one per surface 1-7, check-list testable items, OUT subsection). Emit docs/signals/ba-1967a-spec-ready.json. Forward to PO for AC-1 approval gate.",
+  "context": {
+    "sprint_goal_file": "docs/SPRINT_GOAL.md",
+    "surfaces": ["inter-agent-comms", "flows", "dispatch-routing", "signal-bus-dashboard", "cron-schedule", "agent-definitions", "lock-contention-races"],
+    "seed_evidence_count": 7,
+    "chain": ["po", "ba", "architect", "pm", "dev-team", "qa"],
+    "ba_gate_mandatory": true,
+    "drive_to_fix": true,
+    "parallel_sprints": ["1959-watchdog-soak", "1965c-soak"],
+    "wip_cap": "2/2 dev-zone",
+    "bctc_freeze": "active until 1954c"
+  }
+}

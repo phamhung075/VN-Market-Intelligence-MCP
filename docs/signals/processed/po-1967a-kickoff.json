@@ -1,0 +1,41 @@
+{
+  "from": "po",
+  "to": "agents-architect",
+  "type": "sprint-kickoff",
+  "sprint": 1967,
+  "taskId": "1967a",
+  "title": "Orchestration Bug & Conflict Audit (read-only)",
+  "priority": "high",
+  "timebox_minutes": 180,
+  "mode": "diagnostic",
+  "no_code": true,
+  "user_request_verbatim": "Need virtual dev team working on finding bugs or conflicts in actual system orchestration agent setup.",
+  "source": "direct user feedback 2026-05-21T18:55Z",
+  "instructions": {
+    "flow": "run .claude/flows/agents-architect/main.md",
+    "self_claim": "inner task-lock kind=sprint-task ttl=10800s on task:1967a",
+    "starting_point": "docs/SPRINT_GOAL.md §Seed Evidence (7 rows)",
+    "output_brief": "docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md",
+    "max_lines": 600,
+    "completion_signal": "docs/signals/agents-architect-1967a-brief-done.json",
+    "forward_to_after_done": "po (1967c sign-off) then pm (1967b TASK_NNN conversion)"
+  },
+  "surfaces_in_scope": [
+    "inter-agent comms layer (signal-bus payload schemas, MCP tool enums, DASHBOARD r/w contract, caveman handoff format, signal-file naming)",
+    "flow files (race/idempotency, JUMP-TO + RETURN discipline, recursive spawn risk, identity declarations)",
+    "dispatch routing (.claude/skills/dispatch/SKILL.md coverage, dispatcher-wrap vs inner self-claim symmetry, task-lock acquire/release)",
+    "signal bus + DASHBOARD (writer-prune vs reader-scan race, stale-race, dedup keys, processed/ migration)",
+    "cron schedule + cowork dispatcher (overlap, status=crashed blocking re-fire, watchdog grace, fire-drift)",
+    "agent definitions (capability text vs flow execution drift, always_load discipline, lazy-load triggers, identity stanza)"
+  ],
+  "out_of_scope": [
+    "any code change",
+    "rerunning deep RCAs already captured (1958-rca, 1954-bctc, 1958-rca-2)",
+    "live ops data-staleness investigation (1959-B-01/B-04/B-05)"
+  ],
+  "seed_evidence_ids": ["1963-MW-IDENTITY", "OBSERVE-1955d", "1962-B-01", "1964-AC-ENUM", "1965-COVERAGE-SWEEP", "cowork-team-20260521T185005Z drift_min=5", "recurring-bug-freeze policy test"],
+  "acceptance_criteria_pointer": "docs/SPRINT_GOAL.md Sprint 1967 §Success Metric (AC-1..AC-5)",
+  "background_run": true,
+  "priority_level": "high",
+  "createdAt": "2026-05-21T19:01:59Z"
+}

@@ -1,6 +1,8 @@
 # Orchestration Bug & Conflict Audit — Sprint 1967a Brief
 
-**Author:** agents-architect | **Date:** 2026-05-21T19:08:39Z | **Task:** 1967a
+> **STATUS — SUPERSEDED 2026-05-21T19:19:20Z (po c236):** This brief was authored pre-BA scope (direct dispatch) and covers ~50% of the testable check-lists in `docs/REQ_1967.md`. The canonical 1967b architect brief MUST re-run against REQ_1967 — using this document as **evidence input only**, not as authoritative output. Re-run dispatch signal: `docs/signals/po-1967b-rerun.json`. Re-run gaps to close: REQ-1967-1b (signal-file naming contract), -1d (caveman ≤120 char compliance), -2a (per-flow JUMP-TO/RETURN table), -2b (recursive-spawn guard dev-team/cowork-team), -2d (cowork-flow idempotency), -3a..-3e (per-dispatch-site task-lock symmetry table), -4a/-4d (writer-prune vs reader-scan race window + processed/ migration atomicity), -5b/-5c/-5e (isRunning guard audit, watchdog start_period vs cron tick, OBSERVE-1955d gate status), -6a/-6c/-6d/-6e (full 35-agent capability/always_load/identity/count audit), -7e (11-field per-finding invariant), -7f (BCTC-gated finding enumeration). The 13 ITEM rows below remain valid as evidence and may be ratified into the canonical brief verbatim.
+
+**Author:** agents-architect | **Date:** 2026-05-21T19:08:39Z | **Task:** 1967a (superseded — see notice above)
 **Scope:** Read-only scan across 6 surfaces: inter-agent comms, flow files, dispatch routing, signal bus + DASHBOARD, cron + cowork dispatcher, agent definitions.
 **AC-7 Cross-links:** 1963-MW-IDENTITY · OBSERVE-1955d · 1962-B-01 · 1964-AC-ENUM · 1965-COVERAGE-SWEEP · cowork-team-20260521T185005Z · recurring-bug-freeze-policy
 

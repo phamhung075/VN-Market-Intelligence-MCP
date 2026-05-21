@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle-in-soak",
-  "currentSprint": "1965-soak",
-  "activeTaskId": null,
-  "nextAgent": "qa",
-  "nextPrompt": "PO c233: Sprint 1965 Phase 1 (TASKS.md hardening / Option A janitor cron) cascade COMPLETE 2026-05-21T18:00Z. 1965a DONE (agent-father, commit 5b09ef44 — system-auditor handlers.md §TASKS.md Reconciliation Pass + audit-dimensions.md D4). 1965b DONE (dev-mcp-server, commit fc398b8a — tasksMdJanitorJob.ts wired daily 03:00Z, smoke 12/12 PASS, tsc clean, AC-1..AC-5 all PASS). 1965c RATIFY_PASS (qa, smoke 12/12 + DDD + security all PASS). 1965c-soak OBSERVE window 2026-05-21T18:00Z..2026-05-23T18:00Z (48h, 2 cron passes 2026-05-22T03:00Z + 2026-05-23T03:00Z). qa emits qa-1965c-soak-result.json after 2026-05-23T18:00Z; SOAK_PASS gates Sprint 1966 (Option C echo cron). Parallel Sprint 1959 watchdog soak still open — watchdog-4 unlock 2026-05-22T21:00Z, queued: 1964-AC-ENUM. WIP=0. NEXT: qa picks up 1965c-soak verification at 03:00Z windows + 1959-watchdog-4 unlock; po monitors. Other OBSERVE gates preserved: 1957d (BCTC cadence 2026-05-23T07:05Z), 1907a-verify (digest-sunday 2026-05-24T13:47Z), 1955c (Mon 01:00Z), 1955e (DEEP HOLD 2026-05-22T21:00Z), 1922g (2026-06-01). 3 CRITICAL system-auditor Tier-2 alerts on ## ops lane (1959-B-01 price 38min, B-04 BCTC 22.5h, B-05 foreign-flow 9.7h outside-market-hours) — NOT new PO work, ops-lane.",
-  "updatedAt": "2026-05-21T18:21:00Z",
+  "status": "active-orchestration-bug-hunt",
+  "currentSprint": "1967",
+  "activeTaskId": "1967b",
+  "nextAgent": "agents-architect",
+  "nextPrompt": "PO c236 (2026-05-21T19:19Z): Sprint 1967 AC-1 PASS — BA 1967a APPROVED (REQ_1967.md, 7 REQ + 5 NFR + 0 blockers). 1967b dispatch cleared with RE-RUN decision: early architect brief at docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md is EVIDENCE INPUT ONLY (covers ~50% of REQ_1967 checklists). Canonical 1967b must close gaps: REQ-1967-1b (signal-file naming contract + filesystem audit), -1d (caveman ≤120 char compliance scan), -2a (per-flow JUMP-TO/RETURN table for ALL flows), -2b (recursive-spawn guard dev-team/cowork-team), -2d (cowork-flow idempotency), -3a..-3e (per-dispatch-site task-lock symmetry table), -4a/-4d (writer-prune vs reader-scan race window + processed/ migration atomicity), -5b/-5c/-5e (isRunning guard audit, watchdog start_period vs cron tick, OBSERVE-1955d gate status), -6a/-6c/-6d/-6e (FULL 35-agent capability/always_load/identity/count audit), -7e (11-field per-finding invariant), -7f (BCTC-gated finding enumeration). Constraints: NFR-1 ≤600L, NFR-2 silence ≠ pass, NFR-3 BCTC freeze, NFR-5 no double-fix with Sprint 1968 L-1/L-2/L-3/L-5 (evidence-flag only on those surfaces). Read-only diagnostic — no code/config edits. Time-box 4h. Output: overwrite/v2 of docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md. Emit docs/signals/architect-1967b-brief-done.json on completion. Handoff: docs/handoffs/TASK_1967b-arch-audit.md. Parallel: Sprint 1968 Phase 1 gate RELEASED to agent-father (overlap audit CLEAN) — agent-father runs 1968a in parallel (no zone collision). WIP 2/2 (architect on 1967b, agent-father on 1968a). 1959-watchdog-soak + 1965c-soak both active. BCTC freeze in force.",
+  "updatedAt": "2026-05-21T19:19:20Z",
   "updatedBy": "po",
-  "lastCompleted": "Sprint 1965 cascade — 1965a (commit 5b09ef44) + 1965b (commit fc398b8a) + 1965c RATIFY_PASS (smoke 12/12). 1965c-soak observing 48h window."
+  "lastCompleted": "Sprint 1967 task 1967a (BA REQ_1967.md decomposition, 7 REQ + 5 NFR + 0 blockers) APPROVED by PO at AC-1 gate (commit f7ef1b23 + po c236). 1968a parallel gate released after overlap audit CLEAN."
 }
