@@ -1,8 +1,40 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1967-01 | **Session:** c238 — alertSource enum gap APPROVED
+**Last updated:** 2026-05-21 | **Task:** 1968b1 | **Session:** c239 — L-4 get_agent_signals consolidation APPROVED
 
 > Archive: `docs/archive/notebooks/qa-2026-05-21.md` (full session history prior to 2026-05-21 trim)
+
+## Session 2026-05-21 c239 — Task 1968b1 APPROVED
+
+### TASK REPORT — 1968b1 (compact)
+
+```
+date: 2026-05-21
+outcome: APPROVED
+commits reviewed: 4fff6cbb (phase1) + 5ae49132 (phase2)
+files: agentSignalStore.ts:796-892, agentSignalTools.ts:424-483, 1968b1-get-agent-signals-hours-back.test.ts (NEW 7 tests), get_agent_signals.md, stage-bootstrap.md:28-49, stage-signals.md:9-55
+type: FEAT — L-4 get_agent_signals 3→1 consolidation (hours_back param + SELF_SIGNALS_CACHE)
+round: 1
+zone: apps/mcp-server/ + .claude/flows/news-scout/
+```
+
+| Check | Result |
+|-------|--------|
+| 1968b1 unit tests (7/7) | PASS |
+| mcp-server regression (9314/283 pre-existing) | PASS |
+| tsc --noEmit | 0 errors |
+| DDD (no domain → infra import) | PASS |
+| Security (no process.env, no secrets) | PASS |
+| AC-1..AC-5 | ALL PASS |
+| BCTC freeze NFR-3 | PASS |
+| Tool doc updated | PASS |
+| Caveman compression preserved | PASS |
+
+Notes: cache window math verified — signal_feedback TTL=60min < 360min, inter-cycle dedup 180min < 360min, legal_risk dedup 360min == 360min. hoursBack SQL injection safe: Zod coerces to positive number, Math.ceil ensures integer. Full suite 347 failures = 283 mcp-server pre-existing + 64 scripts/Next.js pre-existing, zero attributable to 1968b1.
+
+- **actions**: APPROVED. TASKS.md 1968b1 → Done. Signal qa-1968b1-done.json emitted to pm. Task report: reports/TASK_REPORT_1968b1.md.
+- **next_cycle_hint**: pm marks 1968b1 Done, checks 1968b2 status, gates 1968c when both b1+b2 approved.
+- **estimated_tokens**: 3100
 
 ## Session 2026-05-21 c238 — Task 1967-01 APPROVED
 

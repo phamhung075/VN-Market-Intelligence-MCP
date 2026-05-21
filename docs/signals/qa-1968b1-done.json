@@ -1,0 +1,21 @@
+{
+  "signal": "qa-1968b1-done",
+  "emitted_at": "2026-05-21T20:30:00Z",
+  "from": "qa",
+  "to": "pm",
+  "verdict": "APPROVED",
+  "task": "1968b1 — L-4 get_agent_signals consolidation (dev-mcp-server + agent-father)",
+  "commits": ["4fff6cbb", "5ae49132"],
+  "tests": "7/7 GREEN (1968b1 suite) | 9314/9597 (mcp-server, 283 pre-existing)",
+  "tsc": "0 errors",
+  "ac": {
+    "AC-1": "PASS",
+    "AC-2": "PASS",
+    "AC-3": "PASS",
+    "AC-4": "PASS",
+    "AC-5": "PASS"
+  },
+  "tasks_md": "1968b1 → Done",
+  "report": "reports/TASK_REPORT_1968b1.md",
+  "next": "pm — mark 1968b1 Done, check 1968b2 status, gate 1968c if both b1+b2 approved"
+}
