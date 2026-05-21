@@ -1,6 +1,36 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1967-04 | **Session:** c243 — 1967-04 market-watcher identity APPROVED (static)
+**Last updated:** 2026-05-21 | **Task:** 1967-02 | **Session:** c244 — 1967-02 verified_decision enum APPROVED
+
+## Session 2026-05-21 c244 — Task 1967-02 APPROVED
+
+### TASK REPORT — 1967-02 (compact)
+
+```
+date: 2026-05-21
+outcome: APPROVED
+commits reviewed: 257d92bf (code + test + docs bundled)
+files: agentSignalStore.ts:50, agentSignalTools.ts:180, post_agent_signal.md:19, mcp-tools.md:144, 1967-02-verified-decision-enum.test.ts (new)
+type: FIX — ITEM-02 verified_decision enum gap (Option A additive)
+round: 1
+zone: apps/mcp-server/
+smart_skip: NO — .ts changes present, full suite + tsc both run
+```
+
+| Check | 1967-02 |
+|-------|---------|
+| AC-1 Zod enum includes verified_decision | PASS — agentSignalStore.ts:50 |
+| AC-2 round-trip parse | PASS — test AC-2 green |
+| AC-3 post_agent_signal.md:19 updated | PASS |
+| AC-4 mcp-tools.md:144 new row | PASS |
+| AC-5 unit test 4/4 | PASS |
+| AC-6 tsc + regression | PASS — 0 errors, 9358/285 (BCTC pre-existing) |
+| DDD | PASS — no new infra imports |
+| Security | PASS — no process.env, no secrets |
+| BCTC NFR-3 | PASS — no BCTC files touched |
+
+- **actions**: APPROVED. Signal qa-1967-02-done.json emitted to pm. Handoff [QA] Record updated. Task report: reports/TASK_REPORT_1967-02.md.
+- **next_cycle_hint**: pm marks 1967-02 Done in TASKS.md; continue 1967c slate.
 
 ## Session 2026-05-21 c243 — Task 1967-04 APPROVED (static)
 
