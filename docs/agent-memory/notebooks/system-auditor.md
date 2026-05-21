@@ -1,6 +1,6 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-21 19:04:42 UTC | **Current Tier:** TIER-1 | **Sprint:** 1959
+**Last updated:** 2026-05-21T19:34:45Z | **Current Tier:** TIER-1 | **Sprint:** 1959
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -8,19 +8,22 @@
 
 **TIER-1 RUNTIME PING COMPLETE — ALL SYSTEMS HEALTHY**
 
-Tier-1 audit at 2026-05-21T19:04:42Z: 0 new anomalies.
+Tier-1 audit at 2026-05-21T19:34:45Z: 0 new anomalies.
 - All 11 core services UP (0 restarts each), all health endpoints 200 OK
-- Memory 60.71% < 85%, no EPIPE errors, no excessive WAL (7.82 MB), 57+ cron jobs monitored
+- Memory 56.61% (mcp-server) / 47.66% (rag-service) < 85%, no EPIPE errors, no excessive WAL (7.82 MB), 57+ cron jobs monitored
 
 Carried-forward Tier-2 data freshness issues (B-01 price stale, B-04 BCTC stale, B-05 foreign flow stale) remain escalated to DASHBOARD/BUG. Not within Tier-1 scope.
 
-## Key Container State (19:04:42Z)
+## Key Container State (19:34:45Z)
 
 All 11 services: mcp-server, api-gateway, stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch, frontend — all Up (healthy), 0 restarts.
 
-MCP: toolCount=146, sessions=517, uptime 7h+, WAL 7.82 MB.
+MCP: toolCount=146, sessions=539, uptime 30,499s (8h 28m), WAL 7.82 MB.
 
-Known cron failures (stale, not new): dailyDashboardJob ENOENT project-stats.json; vnstockFundamentalsRefresh + vnstockTradingStatsRefresh crashed (since 2026-05-18).
+Known cron failures (stale, not new): 
+- vnstockFundamentalsRefresh: crashed since 2026-05-18
+- vnstockTradingStatsRefresh: crashed since 2026-05-18
+- dailyDashboardJob: ENOENT /docs/data/project-stats.json
 
 ## Carry-over (next session)
 
