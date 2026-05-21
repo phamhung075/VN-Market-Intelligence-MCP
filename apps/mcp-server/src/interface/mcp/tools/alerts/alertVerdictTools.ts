@@ -35,6 +35,7 @@ export const WRITE_ALERT_VERDICT_SCHEMA = z.object({
     "position_danger",
     "watchlist_opportunity",
     "legal_risk",
+    "crisis_velocity",
   ]),
   firedAt: z.string().datetime(),
 });
@@ -109,7 +110,7 @@ export function registerAlertVerdictTools(server: McpServer): void {
       "Generates a UUID, writes one AlertVerdict row with verdict='pending' to the " +
       "alert-verdicts store. Used by alert-commander at fire time (step 4a). " +
       "alertSource must be one of: urgent_news, verified_chain, chain_catalyst, " +
-      "price_anomaly, position_danger, watchlist_opportunity, legal_risk.",
+      "price_anomaly, position_danger, watchlist_opportunity, legal_risk, crisis_velocity.",
     WRITE_ALERT_VERDICT_SHAPE,
     async (rawInput) => {
       try {

@@ -1,0 +1,21 @@
+{
+  "signal": "dev-mcp-server-1967-01-done",
+  "task": "1967-01",
+  "agent": "dev-mcp-server",
+  "status": "Review",
+  "timestamp": "2026-05-21T22:00:00Z",
+  "summary": "alertSource Zod enum extended with crisis_velocity (legal_risk was already present). 5/5 tests GREEN, tsc 0 errors. No DB migration needed.",
+  "files_changed": [
+    "apps/mcp-server/src/interface/mcp/tools/alerts/alertVerdictTools.ts",
+    "apps/mcp-server/src/__tests__/1967-01-alertsource-enum-gap.test.ts",
+    ".claude/tools/list/write_alert_verdict.md"
+  ],
+  "tests": {
+    "new_pass": 5,
+    "regression_pass": 10,
+    "fail": 0
+  },
+  "next": "qa",
+  "handoff": "docs/handoffs/TASK_1967-01-alertsource-enum.md",
+  "pipeline": "continue"
+}

@@ -16,7 +16,7 @@ agents: [alert-commander]
 | ticker | string | yes | — | Stock code (e.g. "VNM"). Automatically uppercased. |
 | direction | string | yes | — | Alert direction: "bullish" or "bearish". |
 | conviction | number | yes | — | Conviction score 0.0–1.0. |
-| alertSource | string | yes | — | Signal type: one of urgent_news, verified_chain, chain_catalyst, price_anomaly, position_danger, watchlist_opportunity. |
+| alertSource | string | yes | — | Signal type: one of urgent_news, verified_chain, chain_catalyst, price_anomaly, position_danger, watchlist_opportunity, legal_risk, crisis_velocity. |
 | firedAt | string | yes | — | ISO 8601 UTC timestamp of MARKET alert fire (e.g. "2026-05-10T09:00:00Z"). |
 
 ## Returns
@@ -51,3 +51,4 @@ agents: [alert-commander]
 - Dedup-safe: if the same UUID already exists, the write is skipped
 - verdict is always "pending" at write time; resolved by verdictResolutionJob (Task 1863b/c)
 - Task 1863d — tool #126
+- Task 1967-01 — added legal_risk + crisis_velocity to alertSource enum

@@ -72,3 +72,21 @@ The `alertSource` Zod enum in the MCP tool `write_alert_verdict` is missing two 
 
 - REQ-1967-1a (signal_type enum exhaustive)
 - 1964-AC-ENUM (pre-existing TASKS.md row, waiting on watchdog-4 unlock 2026-05-22T21:00Z)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/alerts/alertVerdictTools.ts:30-38` — added `crisis_velocity` to Zod enum; updated tool description string (note: `legal_risk` was already present, only `crisis_velocity` was missing)
+  - `.claude/tools/list/write_alert_verdict.md:19` — updated alertSource parameter description to include `legal_risk` and `crisis_velocity`
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/1967-01-alertsource-enum-gap.test.ts` — 5 assertions (AC-1..AC-5), all GREEN
+- **Git commits:** pending (see commit)
+- **Type check:** clean (tsc --noEmit, 0 errors)
+- **Service tests:** 5 pass / 0 fail (new) + 15/15 pass on related test files (1863d + c220 + 1967-01)
+- **DB migration:** NOT REQUIRED — alertVerdictStore uses JSON file store, no SQLite CHECK constraint on alertSource; AlertVerdict type has `alertSource: ... | string` open union (no change needed)
+- **Docs updated:** `.claude/tools/list/write_alert_verdict.md` — enum list corrected
+- **Graphify:** skipped (no microservice architecture docs impacted)

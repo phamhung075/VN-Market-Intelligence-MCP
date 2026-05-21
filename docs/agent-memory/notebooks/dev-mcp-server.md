@@ -4,6 +4,20 @@ Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 
 ## Working Memory
 
+### Task 1967-01 — alertSource enum gap: crisis_velocity (2026-05-21, DONE → Review)
+
+**Change:** `alertVerdictTools.ts:30-38` — added `"crisis_velocity"` to Zod enum (8 values total). `legal_risk` was already present; only `crisis_velocity` was missing. Tool description string updated. `.claude/tools/list/write_alert_verdict.md` parameter table updated.
+
+**Tests:** `1967-01-alertsource-enum-gap.test.ts` — 5/5 GREEN (AC-1 Zod accepts legal_risk, AC-2 Zod accepts crisis_velocity, AC-3 handler success legal_risk, AC-4 handler success crisis_velocity, AC-5 unknown rejects). Full related suite 15/15 (1863d+c220+1967-01). tsc 0 errors.
+
+**DB migration:** none needed — alert verdicts stored as JSON file, no SQLite CHECK constraint.
+
+**Signal:** `docs/signals/dev-mcp-server-1967-01-done.json` emitted → qa.
+
+Zone health: alertSource enum now exhaustive (8 values); alert-commander can persist legal_risk + crisis_velocity without fallback degradation | HEALTHY
+
+---
+
 ### Task 1965b — TASKS.md Janitor cron 03:00Z (2026-05-21, DONE)
 
 **Change:** `tasksMdJanitorJob.ts` (new, ~340L) — daily 03:00 UTC D4 audit dimension. Steps R-1..R-7 per handlers.md. Calls `listHeldTasks(kind="sprint-task")` via coordinationStore (no new DB schema, Option A). Parses TASKS.md (header-position-agnostic), cross-checks Owner+Status vs held lock. Reads pipeline-state.json (AC-4). Runs `git log --format="%H %ai" -- docs/TASKS.md`, detects commits within 30s window (AC-5). Emits DASHBOARD ## po row per signal-dashboard SKILL on divergence. BUG telegram 7d dedup per divergence key. Clean day → console log only (AC-3). All deps injectable for testability. `cronConfig.ts` + `startScheduler.ts` wired. Smoke: 12/12 PASS covering AC-1..AC-5. Commit: fc398b8a.
