@@ -33,6 +33,27 @@ Blocked = one-line `send_telegram(channel="bug")` + drop signal `docs/signals/{a
 Read `.claude/skills/telegram-channel-routing/SKILL.md` before any `send_telegram` call.
 Every call MUST include `channel=` explicitly: `"market"` | `"work"` | `"bug"`.
 
+## Step -1 — Tick Snapshot Check (L-6, 1968b2)
+
+Before calling `get_cycle_bootstrap`, check for a shared tick snapshot file:
+
+```
+TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 → "02:05")
+SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json
+```
+
+1. Does `SNAPSHOT_PATH` exist?
+   - NO → fall through to Step 0 (direct MCP call — canonical path).
+2. Is the file timestamp within the last 7 minutes of current UTC?
+   - NO (stale, >7min old) → treat as absent → fall through to Step 0.
+3. YES (file exists AND fresh) → READ the snapshot. Extract `market_context` and `macro_snapshot` fields. Skip `get_cycle_bootstrap` in Step 0 and skip `get_macro_snapshot` if your flow calls it in Step 0b.
+   - Log: `[BOOTSTRAP] tick-snapshot hit: <TICK> — skipping get_cycle_bootstrap`.
+   - Proceed directly to Step 0b (Regime Extraction).
+
+**Fallback is the canonical path.** If the snapshot file is absent, stale, malformed, or unreadable → fall through to Step 0. Never block on a missing snapshot.
+
+**Note:** The snapshot writer (cowork-team dispatcher) is a future task. Until it lands, Step -1 will always miss and fall through to Step 0 — zero behavior regression.
+
 ## Step 0 — Bootstrap
 
 ```

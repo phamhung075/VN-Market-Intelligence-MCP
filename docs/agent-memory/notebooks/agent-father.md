@@ -1,61 +1,59 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T20:30:00Z | **Sprint:** 1968a — Token economy Phase 1 DONE
+**Last updated:** 2026-05-21T21:00:00Z | **Sprint:** 1968b2 — L-6 cron stagger + L-7 notebook batch commit + ITEM-05 merge
 
-## This Session — 2026-05-21T20:30Z (Task 1968a — token/tool-call economy Phase 1)
+## This Session — 2026-05-21T21:00Z (Task 1968b2)
 
-**Task:** 1968a Phase 1 — L-1..L-5 zero-code token economy wins. Gate: po-1968a-gate-released.json (overlap audit CLEAN).
+**Task:** 1968b2 — L-6 cron stagger (agent-father-pure) + cycle-bootstrap Step -1 + L-7 notebook commit batching + ITEM-05 collision merge.
 
-**L-1 (trigger:startup drift):** Fixed 4 agents.
-- news-scout: agent-roster→system_routing_question; GLOSSARY_VI→vn_financial_terms (~344L/cycle saved)
-- alert-commander: mcp-tools.md promoted lazy_load(startup)→always_load with justification comment
-- financial-analyst: GLOSSARY_VI→vn_financial_terms
-- report-analyzer: GLOSSARY_VI→vn_financial_terms
-- Full 35-agent audit: 0 remaining trigger:startup violations.
-Commit: `3bdd62c4`
+**L-6 (cron stagger):** 3 cowork agent .md schedule.cron fields updated.
+- news-scout: `*/15` → `0,15,30,45 2-8 * * 1-5` (fires :00/:15/:30/:45)
+- market-watcher: `*/15` → `5,20,35,50 2-8 * * 1-5` (fires :05/:20/:35/:50)
+- alert-commander: `*/15` → `10,25,40,55 2-8 * * 1-5` (fires :10/:25/:40/:55)
+- No two agents overlap on the same minute. 5-min interleave across the 15-min cycle.
 
-**L-2 (notebook hygiene):** 7 notebooks archived + trimmed ≤120L.
-- qa: 1149L→59L | dev-frontend: 384L→42L | architect: 310L→36L | dev-team: 286L→26L
-- pm: 269L→26L | ba: 234L→31L | system-auditor: 211L→29L
-- All ## Carry-over sections preserved. Archive pointers in live headers.
-- notebook-write/SKILL.md: hard cap updated 80→120L; archive-before-overwrite rule added.
-Commit: `ee1dcadf`
+**cycle-bootstrap Step -1:** Added tick snapshot awareness.
+- Step -1 checks `docs/data/cycle-snapshot-HH:MM.json` freshness (<7min).
+- Hit → read snapshot, skip get_cycle_bootstrap + get_macro_snapshot.
+- Miss/stale/absent → fall through to Step 0 (canonical path, always safe).
+- Note: snapshot writer (cowork-team) is future task — Step -1 is a no-op until then.
 
-**L-3 (signal payload pointer rule):** signal-dashboard/SKILL.md updated.
-- New section "## Payload Pointer Discipline" with Rule 1/2/3.
-- Rule 1: DASHBOARD summary >120 chars → 80 chars + file pointer.
-- Rule 2: pm sprint-kickoff payload ≤800 chars JSON (pointer only).
-- Rule 3: pointer integrity check (file must exist before emit).
-Commit: `4967bf63`
+**ITEM-05 + L-7 (single touch, market-watcher/cycle.md Step 5):**
+- ITEM-05 fix: Step 5 header renamed from "Notebook commit" → "Notebook write". OVERWRITE instruction made explicit with `<!-- Fixes ITEM-05 -->` comment.
+- L-7 fix: removed `git add + git commit` bash block from Step 5. Added deferred-commit note + head-lock-self-cure pointer.
 
-**L-4 (get_agent_signals consolidation):** DEFERRED to 1968b. Requires flow logic change to news-scout stage-bootstrap/stage-signals + confirmation of hours_back parameter support from dev-mcp-server. Not zero-risk for agent-father alone.
+**L-7 (news-scout/stage-log-notify.md):** Removed per-cycle `git commit`. Notebook append retained. Deferred-commit note + recovery pointer added.
 
-**L-5 (ULTRA caveman tier):** 3 WORK cycle-status emission sites updated.
-- news-scout/stage-log-notify.md Step 5: full prose → ULTRA "[ns] HH:MM — N items | fired:X sup:Y | next:TIME"
-- market-watcher/cycle.md Step 5b: → ULTRA "[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME"
-- alert-commander/stage-dispatch-log.md Step 4b: → ULTRA "[ac] HH:MM — N sigs | fired:X sup:Y | next:TIME"
-Commit: `cb080cc9`
+**L-7 (market-watcher/eod.md Step D):** New step added.
+- Batch commit: `git add notebooks/market-watcher.md notebooks/news-scout.md && git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N"`
+- Uses F4 git_commit_retry idiom (head-lock-self-cure § F4).
+- Error path: BUG channel + recovery pointer.
 
-**Signals + docs:** pipeline-state.json updated. DASHBOARD.md row + _Updated. docs/signals/agent-father-1968a-phase1-done.json emitted (ULTRA, caveman) → po.
+**Signals:** `docs/signals/agent-father-1968b2-done.json` emitted (caveman ULTRA) → qa + po.
+
+## Previous Session — 2026-05-21T20:30Z (Task 1968a — token/tool-call economy Phase 1)
+
+**Task:** 1968a Phase 1 — L-1..L-5 zero-code token economy wins.
+- L-1: 4 agents fixed (startup→conditional/always_load). ~344L/cycle saved. Commit: `3bdd62c4`
+- L-2: 7 notebooks trimmed ≤120L + archived. ~1800L saved. Commit: `ee1dcadf`
+- L-3: signal-dashboard payload pointer rule added. Commit: `4967bf63`
+- L-4: DEFERRED to 1968b (get_agent_signals consolidation).
+- L-5: 3 WORK cycle-status sites → ULTRA tier. Commit: `cb080cc9`
 
 ## Previous Session — 2026-05-21T17:27Z (Task 1965a)
 
-Design: handlers.md + audit-dimensions.md for system-auditor. D4 TASKS.md reconciliation pass. 2 new files. Signal: agent-father-1965a-design-done.json.
-
-## Previous Session — 2026-05-21 (Task 1963-MW-IDENTITY)
-
-market-watcher.md: explicit identity, mcp-tools→always_load, signals+schedule added. DASHBOARD 1963-MW-IDENTITY DONE.
+Design: handlers.md + audit-dimensions.md for system-auditor. Signal: agent-father-1965a-design-done.json.
 
 ## Patterns Noticed
 
 - Concurrent agents leave pre-staged files — always check `git status` before staging.
 - DASHBOARD.md modified between reads by concurrent agents — always re-read before editing.
-- docs/agents/<agent-id>/ directories created per-agent (handlers.md + audit-dimensions.md). Pattern: agents-architect, ops, system-auditor.
-- Always audit all 35 agents after fixing any specific trigger — do not stop at the brief's named list.
+- Always audit all 35 agents after fixing any specific trigger.
+- ITEM-05 + L-7 surface collision: always read 1967b brief + 1968b2 handoff Coordination section before any cycle.md edit.
 
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
-- 1968b: L-4 (get_agent_signals consolidation in news-scout flows) + any L-6/L-7/L-8/L-9 Phase 2/3 work
-- Await po-1968a-phase1-approved.json to release 1968b
+- 1968b1: L-4 (get_agent_signals consolidation in news-scout flows) — gated on dev-mcp-server 1967-01
+- Await qa ratification of 1968b2 before PO closes sprint.

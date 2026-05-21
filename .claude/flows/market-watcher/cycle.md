@@ -91,7 +91,9 @@ Schema: `PriceAnomalyFindingDataSchema` in `apps/mcp-server/src/domain/signals/s
 
 Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
-**5. Notebook commit** — Write (full overwrite) `docs/agent-memory/notebooks/market-watcher.md` per skill: `.claude/skills/notebook-write/SKILL.md`. Read existing notebook first to recover any `## Carry-over` items, then overwrite with fresh cycle body (target ≤50L, hard cap 80L):
+**5. Notebook write** — **OVERWRITE** (not append) `docs/agent-memory/notebooks/market-watcher.md` per skill: `.claude/skills/notebook-write/SKILL.md`. Read existing notebook first to recover any `## Carry-over` items, then overwrite with fresh cycle body (target ≤50L, hard cap 80L):
+<!-- Fixes ITEM-05 (1967b/1968b2): APPEND→OVERWRITE per notebook-write skill mandate. -->
+<!-- L-7 (1968b2): per-cycle git commit REMOVED — deferred to eod.md batch commit at market close. -->
 
 > Invariant: timestamp = current UTC, never future, never speculative. (UTC guard — Sprint 1865a pattern)
 
@@ -121,10 +123,9 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 | exit_status | complete\|blocked\|empty |
 | token_estimate | N |
 ```
-```bash
-git add docs/agent-memory/notebooks/market-watcher.md
-git commit -m "chore(memory/market-watcher): notebook YYYY-MM-DD"
-```
+
+> Notebook is written to disk every cycle. Git commit is deferred to eod.md (market close batch). Off-hours cycles retain their own per-cycle commit.
+> If EOD flow fails before commit → recovery: `docs/protocols/head-lock-self-cure.md`.
 
 **5b. WORK** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```

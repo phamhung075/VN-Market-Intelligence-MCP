@@ -33,10 +33,9 @@ Append to `docs/agent-memory/notebooks/news-scout.md`:
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 - Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
 ```
-```bash
-git add docs/agent-memory/notebooks/news-scout.md
-git commit -m "chore(memory/news-scout): notebook YYYY-MM-DD"
-```
+
+> Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.
+> Recovery if EOD missed: `docs/protocols/head-lock-self-cure.md`.
 
 **5. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
 

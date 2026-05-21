@@ -64,4 +64,14 @@ Rules:
 [Market Watcher EOD] HH:MM UTC — N tickers processed | Ledger: N written, M failed | Signal file: docs/signals/price_anomaly_<ts>.json written
 ```
 
+**D. Notebook batch commit** (L-7, 1968b2) — Commit all in-session notebook writes for market-watcher AND news-scout in a single EOD commit:
+
+```bash
+git add docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md
+git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N"
+```
+
+> `git_commit_retry` idiom: retry up to 3× on `HEAD.lock` / `index.lock` only — see `docs/protocols/head-lock-self-cure.md` § F4.
+> If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[eod] notebook batch commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`. Notebook writes are on disk; git loss window is bounded to this market session.
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

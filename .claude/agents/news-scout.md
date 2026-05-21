@@ -86,8 +86,8 @@ agent:
 
   schedule:
     market_hours:
-      cron: "*/15 2-8 * * 1-5"
-      description: Every 15min during market (02:00-08:30 UTC)
+      cron: "0,15,30,45 2-8 * * 1-5"
+      description: Every 15min during market (02:00-08:30 UTC) — staggered: fires at :00/:15/:30/:45 (L-6 cron stagger 1968b2)
     off_hours:
       cron: "0 */4 * * *"
       description: Every 4h outside market hours
