@@ -1,8 +1,29 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-20 | **Sprint:** task-lock Phase 1 + 1957b
+**Last updated:** 2026-05-21 | **Sprint:** 1963-MW-IDENTITY fix
 
-## This Session — 2026-05-20 (Task task-lock-phase1 — coordination.db + 4 MCP tools)
+## This Session — 2026-05-21 (Task 1963-MW-IDENTITY — market-watcher identity pathology fix)
+
+**Task:** Fix intermittent market-watcher identity pathology per DASHBOARD.md 1963-MW-IDENTITY.
+
+**Root cause identified:** `mcp-tools.md` was `lazy_load(trigger=startup)`. When agent mis-identified its role, the trigger never fired — agent never learned MCP tools were available → "cannot call MCP tools" hallucination. YAML `description` field also lacked explicit identity statement.
+
+**Changes applied to `.claude/agents/market-watcher.md` (1 file, 0 cascade):**
+1. YAML `description` — explicit "You ARE the Market Watcher agent. Execute your flow end-to-end using call_tool(server="vn-market", ...)"
+2. `mcp-tools.md` promoted from `lazy_load(trigger=startup)` to `always_load` (fail_loud: true)
+3. Added `identity_role: "market-watcher"` constraint
+4. Added `mcp_tool_available: true` constraint
+5. Added missing `signals:` section (consumes: urgent_news, cross_validate; produces: price_anomaly)
+6. Added missing `schedule:` section (market_hours, prepost, eod crons)
+7. Version bumped to 2026-05-21
+
+**Validation:** 5/5 — YAML frontmatter valid, all always_load paths resolve, flow path exists, inter_agent symmetric with news-scout, version updated.
+
+**DASHBOARD:** 1963-MW-IDENTITY marked DONE. AC: 2 consecutive clean fires post-fix.
+
+**Cascade:** None. The description/constraints/knowledge changes are self-contained within market-watcher.md. No partner agent routing changes needed (news-scout → market-watcher signal path already symmetric).
+
+## Previous Session — 2026-05-20 (Task task-lock-phase1 — coordination.db + 4 MCP tools)
 
 **Task:** Phase 1 of task-lock system per architect brief `docs/architecture-briefs/2026-05-20-task-lock-system.md`
 
