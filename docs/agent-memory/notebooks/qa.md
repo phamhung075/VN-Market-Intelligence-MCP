@@ -1,6 +1,42 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-21 | **Task:** 1968b1 | **Session:** c239 — L-4 get_agent_signals consolidation APPROVED
+**Last updated:** 2026-05-21 | **Task:** 1968b2 | **Session:** c240 — L-6 cron stagger + L-7 notebook batch commit APPROVED
+
+## Session 2026-05-21 c240 — Task 1968b2 APPROVED
+
+### TASK REPORT — 1968b2 (compact)
+
+```
+date: 2026-05-21
+outcome: APPROVED
+commit reviewed: 092692e4
+files: .claude/agents/news-scout.md, market-watcher.md, alert-commander.md, .claude/skills/cycle-bootstrap/SKILL.md, .claude/flows/market-watcher/cycle.md, .claude/flows/market-watcher/eod.md, .claude/flows/news-scout/stage-log-notify.md
+type: FEAT — L-6 cron stagger + cycle-bootstrap Step -1 + L-7 notebook batch commit + ITEM-05 collision merge
+round: 1
+zone: .claude/ docs only — zero .ts files
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1 cron non-overlap (math: ns∩mw=∅, ns∩ac=∅, mw∩ac=∅) | PASS |
+| AC-2 cycle-bootstrap Step -1 snapshot check + explicit fallback | PASS |
+| AC-3 no regression — snapshot optional, miss=Step 0 canonical | PASS |
+| AC-4 cycle.md Step 5 = OVERWRITE write only, git commit removed | PASS |
+| AC-5 eod.md Step D: git add market-watcher.md + news-scout.md batch | PASS |
+| AC-6 stage-log-notify.md: notebook write retained, commit removed | PASS |
+| AC-7 head-lock-self-cure pointer in eod.md:74 + stage-log-notify.md:38 | PASS |
+| AC-8 done signal in commit diff confirmed | PASS |
+| ITEM-05 single-touch collision merge (APPEND→OVERWRITE + L-7) | PASS |
+| BCTC freeze NFR-3 | PASS |
+| Caveman ULTRA preserved | PASS |
+| bun test | SKIP — Smart-Skip (zero .ts changes) |
+| tsc --noEmit | SKIP — Smart-Skip (zero .ts changes) |
+
+Notes: cron firing minutes across 60-min window = [0,5,10,15,20,25,30,35,40,45,50,55], uniform 5-min gaps. Stage-log-notify.md off-hours commit retention (line 37: "Off-hours cycles retain their own per-cycle commit") matches TASK spec §L-7 item 5. No blocking issues. TASKS.md 1968b2 → Done. Signal qa-1968b2-done.json emitted to pm. Task report: reports/TASK_REPORT_1968b2.md.
+
+- **actions**: APPROVED. 1968b1+1968b2 both done — pm may now dispatch 1968c.
+- **next_cycle_hint**: pm gates 1968c (Phase 3 dev slate) on both b1+b2 approved — both now confirmed.
+- **estimated_tokens**: 2600
 
 > Archive: `docs/archive/notebooks/qa-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
