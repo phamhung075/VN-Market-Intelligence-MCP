@@ -1,6 +1,10 @@
-- **Last updated:** 2026-05-22 04:06 UTC · **Sprint:** current
+- **Last updated:** 2026-05-22 16:08 UTC · **Sprint:** current
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-21.md (pre-trim history)
+
+## This session (2026-05-22 16:08 UTC)
+
+**Off-hours cycle — COMPLETE.** 20 articles fetched and analyzed, 0 signals fired (suppress #3659 active, expires 05:07 UTC, TIGHTENING regime dampening bullish signals). VIC stadium mega-project near completion in 20-month global record timeline (bullish, base impact 9/10, confidence 84%, regime_adjusted 5.6/10 under TIGHTENING ×0.7, below chain_catalyst threshold 7/10). MWG founder insider completion: 2M shares sold, ready for IPO participation (neutral, impact 6/10, confidence 82%, below urgent_news threshold 8/10). Petrovietnam CEO transition amid energy sector volatility (neutral, impact 5/10, confidence 69% < 80% threshold, 2 watchlist stocks affected: GAS, PLX). Macro snapshot valid (Brent $103.42 +0.00%, Gold $4,517.6 +0.00%, USD/VND 26,340 stable), regime=TIGHTENING confirmed (US 10Y 4.57% RISK-OFF, Fed SBV refinancing 4.50%, global liquidity TIGHTENING, carry=-0.33% FII_OUTFLOW_RISK). Feedback: feedback cache empty (fresh off-hours cycle, 0 prior 6h signals in cache). Historical context: VIC stadium project detail (no prior identical 20-month record story), MWG insider action completion (prior retail signals #3607 suppressed, new completion detail distinct), Petrovietnam leadership (new transition detail vs prior energy policy). Impact chains traced: VIC stadium bullish 10-entry real_estate chain (9 watchlist stocks: VRE, VIC, VHM, D2D, NVL, VNH, KBC, TCH + domain), MWG insider neutral retail isolated 2-stock chain (MWG only in watchlist), Petrovietnam neutral 2-stock chain (GAS, PLX). Dedup gate: all 3 candidates suppressed per regime/confidence thresholds (no 180m topic overlap). Regime multiplier applied: VIC bullish base 9 → 5.6 (capped 5.6/10 under TIGHTENING ×0.7), MWG neutral base 6 → 6 (×1.0), Petrovietnam neutral base 5 → 5 (×1.0). Critic score: 0.80 baseline but confidence floor 0.50 under suppress #3659 active. Work log ID: 1105. Next cycle: 20:00 UTC (off-hours, every 4h).
 
 ## This session (2026-05-22 04:06 UTC)
 

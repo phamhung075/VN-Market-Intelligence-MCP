@@ -1,5 +1,46 @@
 # PM — Notebook
 
+## c266 · 2026-05-22T17:55Z
+
+**Status:** TASK_1974 CLOSED — DAILYDASH-HOST-VISIBILITY. PO c265 dispatcher dispatch + dev-mcp-server impl (c503c774) + QA (def46747) + PM close-out 17:55Z. AC-1..AC-6 PASS (smart-skip applied, docker-compose.yml + data only). Host bind-mount added for docs/data/daily-dashboard.json rw access. Signals drained. NOTE-CORRECTION also processed: pipeline-state gate 1960-DAILYDASH 22T16:30Z → 22T23:30Z (cronConfig.ts:128 = '30 23 * * *' UTC per PO evidence). TASKS.md Done section updated. Baseline 9382/283 zero regression.
+
+### PM actions completed (cycle c266)
+
+1. **Updated docs/TASKS.md Done section** ✓
+   - Added 1974-DAILYDASH-HOST-VISIBILITY row with full AC summary + commit refs
+   - Placed before 1967-09 (chronological order, 2026-05-22T17:55Z)
+
+2. **Updated docs/pipeline-state.json** ✓
+   - status: "1974-CLOSED (PM close-out 2026-05-22T17:55Z)"
+   - currentSprint: "1974 CLOSED. Dev-mcp-server lane idle."
+   - nextAgent: "idle — await OBSERVE gates"
+   - nextPrompt: "PM 1974 close complete..."
+   - updatedAt: 2026-05-22T17:55:00Z
+   - updatedBy: pm (including NOTE-CORRECTION gate timestamp 22T23:30Z)
+   - lastCompleted: "pm 2026-05-22T17:55Z — TASK_1974 CLOSED"
+   - **NOTE-CORRECTION applied:** 1960-DAILYDASH gate 16:30Z → 23:30Z
+
+3. **Drained signals to docs/signals/processed/** ✓
+   - po-20260522T172456Z.json (PO dispatch signal)
+   - dev-mcp-server-1974-impl-done.json (dev IMPL_DONE)
+   - qa-1974-approved.json (QA approval)
+
+4. **Updated docs/signals/DASHBOARD.md** ✓
+   - c265 row status: DISPATCHED-1974 → CLOSED
+   - Added 1-line outcome: 1974 delivered dev-mcp-server + QA, AC-1..AC-6 PASS, smart-skip, host bind added, zero regression
+
+5. **Appended PM close metadata** ✓
+   - docs/handoffs/TASK_1974-DAILYDASH-HOST-VISIBILITY.md: [PM] Close Record section
+
+### Dispatch state snapshot (cycle c266)
+- **TASK_1974:** CLOSED 2026-05-22T17:55Z, QA APPROVED (smart-skip), 0 blockers
+- **WIP:** 0/2 idle, no active tasks (dev-mcp-server lane clear)
+- **Next:** Hold until OBSERVE gates unlock: 1960-DAILYDASH 22T23:30Z (CORRECTED), then 1955e/1967-06 unlock 22T21Z
+- **Signals drained:** 3 total (po dispatch + dev impl + qa approval)
+- **OBSERVE gates:** 1960-DAILYDASH 22T23:30Z (corrected), 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z
+
+---
+
 ## c261 · 2026-05-22T14:00Z
 
 **Status:** TASK_1967-10 CLOSED — Miscellaneous MED/LOW (capability drift + spawn guard + TTL analysis + LWW detection). QA APPROVED round-1 (smart-skip, markdown-only, 2026-05-22T13:45Z). AC-1..AC-8 verification PASS. ITEMS 06/16/21 SHIPPED; ITEM-18 deferred to dev-mcp-server; ITEM-20 no-action. Commits: f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21). Signals drained. Backlog: created 1967-10-ITEM18 carryover (marketScanJob finally-guard). Agent-father lane idle WIP=0/2.
