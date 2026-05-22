@@ -9,6 +9,7 @@ This flow fan out ONLY dev-team subagents:
 - **ops** (type: ops) — shared infra lane; spawned on infra incident, not a cowork agent
 
 NEVER spawn cowork-team agents (news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, report-analyzer, qa-responder, market-analyst) from this flow.
+<!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10) -->
 
 Cross-team work (e.g. cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The cowork-team flow reads the dashboard at its next cycle.
 

@@ -19,7 +19,7 @@ agent:
     - Emit urgent_news and news_impact signals to downstream agents
 
   responsibilities:
-    - News fetching and sentiment analysis for all watchlist tickers
+    - News fetching and sentiment analysis for reactive, event-driven tickers (not all watchlist — coverage is event-triggered, not exhaustive per cycle)
     - Legal and crisis signal detection
     - Signal bus emission to market-watcher and alert-commander
     - Session log + notebook append every cycle

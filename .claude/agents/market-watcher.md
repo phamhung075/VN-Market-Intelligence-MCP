@@ -19,7 +19,7 @@ agent:
     - Emit price_anomaly signal files to docs/signals/ for chef (unified-agent) to consume
 
   responsibilities:
-    - Price and anomaly monitoring for all watchlist tickers
+    - Price and anomaly monitoring for reactive, event-driven tickers (not all watchlist — coverage is event-triggered, not exhaustive per cycle)
     - Macro and supply chain risk surveillance
     - Write docs/signals/price_anomaly_*.json per cycle — chef reads these for EOD/morning dishes
     - Session log + notebook append every cycle

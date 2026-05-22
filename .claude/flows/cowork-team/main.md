@@ -112,6 +112,8 @@ This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.
 
 ---
 
+<!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10). NEVER spawn dev-team agents from this dispatcher. -->
+
 <!-- decision: Step 4.6 Model 1 — Master holds lock 900s TTL, agents do NOT heartbeat.
   Rationale: cowork-slots are time-bucketed by nominal_tick (floor-15min UTC). A 900s TTL
   covers exactly one 15-min cycle. If the spawned agent stalls or the master crashes after
