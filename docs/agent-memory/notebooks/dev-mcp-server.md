@@ -5,6 +5,23 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967
 
 ## Working Memory
 
+### Task 1960-DAILYDASH — dailyDashboardJob projectRoot fix (2026-05-22, DONE)
+
+**Change:**
+- `apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts` — added `import { getProjectRoot } from "../../infrastructure/projectRoot.js"` at line 27. Deleted local `projectRoot()` helper (was lines 455-460: `import.meta.dir + '../../..'` which resolves to `/` in container). Switched all 4 path.join callers: `loadSessionFiles`, `loadProjectStats`, `loadTasksMd`, `writeDashboard` to use canonical `getProjectRoot()`.
+
+**Root cause fixed:** Container WORKDIR `/app` has only 3 path segments above the file; local helper used 3 `..` to reach `/app` but resolved to `/` instead. Canonical `getProjectRoot()` uses `git rev-parse --show-toplevel` with `process.cwd()` fallback — correct in both dev and container.
+
+**Tests:** `1955a-daily-dashboard-project-root.test.ts` + `1854a-daily-dashboard-job.test.ts` — 14/14 GREEN. tsc 0 errors. Full suite: 9364 pass / 285 fail (285 = pre-existing BCTC freeze, zero regression).
+
+**Commit:** 2f0a74e9
+
+**Signal:** `docs/signals/dev-mcp-server-1960-DAILYDASH-done.json` → qa
+
+Zone health: dailyDashboardJob projectRoot() container path bug FIXED; job was dead 5 days (success_rate 0%); AC-5 PENDING_LIVE (ops docker rebuild required for next cron tick at 23:30 GMT+7) | HEALING
+
+---
+
 ### Task 1968c-P03 — get_agent_signals signal_type filter (2026-05-21, DONE)
 
 **Change:**

@@ -45,6 +45,7 @@ _Updated: 2026-05-22T01:20:05Z (po c245 cron-0107Z dev-team triage — BATCH=1 F
 ## qa
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
+| 1960-DAILYDASH-REVIEW | 2026-05-22T02:10:00Z | dev-mcp-server | review_request | **REVIEW 1960-DAILYDASH** dailyDashboardJob projectRoot() fix. Commit `2f0a74e9` on main. Single file: `apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts`. AC-1: local helper deleted, canonical import added. AC-2: 4 path.join callers updated. AC-3: tsc 0 errors. AC-4: 14/14 GREEN (1955a+1854a suites), full 9364/285. AC-5: PENDING_LIVE (ops rebuild needed). | OPEN | docs/signals/dev-mcp-server-1960-DAILYDASH-done.json |
 <!-- 1968c-P03-REVIEW pruned 2026-05-21T23:21Z po c243 cron-2307Z — DONE 2026-05-22T00:00Z (qa APPROVED commit c3b18e8c, qa-1968c-p03-done.json); Sprint 1968c CLOSED. -->
 <!-- 1967-02-REVIEW pruned 2026-05-21T22:21Z po c242 cron-2207Z — DONE+QA-APPROVED 21:30Z (commit 257d92bf). -->
 <!-- qa-1967-03-approved + qa-1967-05-approved + qa-1967-04-approved pruned 2026-05-21T21:21Z po cron-2107Z — DONE 22:55Z (1967-03/05) + 23:45Z (1967-04); all rows DONE + READ + signals drained to processed/. -->
