@@ -2,10 +2,10 @@
   "name": "@vn-market/technical-analysis",
   "version": "1.0.0",
   "description": "Technical Analysis microservice — RSI/MACD/MA/BB calculations (DDD, port 5003)",
-  "module": "src/index.ts",
+  "module": "composition-root.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run src/index.ts",
+    "start": "bun run composition-root.ts",
     "test": "bun test",
     "check": "bun tsc --noEmit"
   },
