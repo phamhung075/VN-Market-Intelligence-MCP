@@ -1,0 +1,17 @@
+{
+  "primitive": "CalculateBollingerBands",
+  "category": "failure",
+  "description": "BB insufficient-data scenario: only 5 closes provided but period=20 requires at least 20. Calculate returns ErrInsufficientData. Also covers related validation failures: period < 2 returns ErrInvalidPeriod; multiplier <= 0 returns ErrInvalidMultiplier; NaN price returns ErrInvalidPrice.",
+  "input": {
+    "closes": [86.16, 89.09, 88.78, 90.32, 89.07],
+    "period": 20,
+    "multiplier": 2.0
+  },
+  "expectedOutput": {
+    "error": "bollinger_bands: insufficient data: need at least period closes",
+    "upper":  null,
+    "middle": null,
+    "lower":  null,
+    "note": "len(closes)=5 < period=20 → ErrInsufficientData. Other failure modes: period<2 → ErrInvalidPeriod; multiplier<=0 → ErrInvalidMultiplier; NaN/negative price → ErrInvalidPrice."
+  }
+}

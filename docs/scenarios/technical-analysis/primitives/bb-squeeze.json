@@ -1,0 +1,24 @@
+{
+  "primitive": "CalculateBollingerBands",
+  "category": "edge",
+  "description": "BB squeeze scenario: flat closes produce zero population stdDev, causing all three bands to collapse to the same value (upper == middle == lower). Period 20, multiplier 2.0. This is the classic Bollinger Squeeze when volatility is zero. Output length = 25 - 20 + 1 = 6.",
+  "input": {
+    "closes": [
+      100.0, 100.0, 100.0, 100.0, 100.0,
+      100.0, 100.0, 100.0, 100.0, 100.0,
+      100.0, 100.0, 100.0, 100.0, 100.0,
+      100.0, 100.0, 100.0, 100.0, 100.0,
+      100.0, 100.0, 100.0, 100.0, 100.0
+    ],
+    "period": 20,
+    "multiplier": 2.0
+  },
+  "expectedOutput": {
+    "upper":  [100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
+    "middle": [100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
+    "lower":  [100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
+    "length": 6,
+    "tolerance": 1e-10,
+    "note": "stdDev=0 when all prices identical. upper==middle==lower for all windows."
+  }
+}
