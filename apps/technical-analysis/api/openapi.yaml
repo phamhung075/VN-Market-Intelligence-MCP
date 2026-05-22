@@ -1,0 +1,226 @@
+openapi: "3.0.3"
+info:
+  title: Technical Analysis Microservice
+  description: >
+    Computes RSI, MACD, Bollinger Bands, and Moving Averages from read-only
+    market.db price history. Returns computed indicators via HTTP.
+    Language: Go (pilot rewrite — Option B verdict 2026-05-22).
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:5003
+    description: Local development
+
+# Internal microservice — no authentication required.
+# The empty security array overrides the redocly security-defined rule at the
+# root level so both endpoints are explicitly declared open.
+security: []
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns service liveness status.
+      responses:
+        "200":
+          description: Service is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                service: technical-analysis
+                port: 5003
+
+  /ta/indicators:
+    post:
+      operationId: computeIndicators
+      summary: Compute technical indicators for a stock
+      description: >
+        Accepts a Vietnamese stock ticker and lookback period (trading days).
+        Returns RSI, MACD (line + signal + histogram), Bollinger Bands
+        (upper/middle/lower), and Moving Averages (SMA + EMA) as float64 arrays.
+        Arrays are empty (omitted) when there is insufficient price history for
+        the requested period.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComputeTARequest"
+            example:
+              symbol: VNM
+              period: 60
+      responses:
+        "200":
+          description: Indicators computed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComputeTAResponse"
+        "400":
+          description: Invalid request body (missing symbol, invalid period, bad JSON).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "501":
+          description: Not yet implemented (P1-B primitives not yet landed).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal computation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+
+    # --- Health ---
+
+    HealthResponse:
+      type: object
+      required: [status, service, port]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: technical-analysis
+        port:
+          type: integer
+          example: 5003
+
+    # --- Request ---
+    # Field names MUST match pkg/application/dtos.go ComputeTARequest exactly.
+
+    ComputeTARequest:
+      type: object
+      required: [symbol, period]
+      properties:
+        symbol:
+          type: string
+          description: >
+            Vietnamese stock ticker code (e.g. "VNM", "VCB", "HPG").
+            Case-insensitive; service normalises to uppercase internally.
+          example: VNM
+        period:
+          type: integer
+          minimum: 1
+          description: >
+            Number of trading days of price history to use as the lookback
+            window. Must be at least 1. Indicator computation requires a
+            minimum number of candles per indicator (e.g. RSI needs ≥14,
+            MACD needs ≥26); if period < minimum the corresponding output
+            array will be empty (field omitted in response).
+          example: 60
+
+    # --- Response ---
+    # Field names MUST match pkg/application/dtos.go ComputeTAResponse exactly.
+    # All indicator fields are []float64 arrays (omitempty — absent when empty).
+
+    ComputeTAResponse:
+      type: object
+      required: [symbol]
+      properties:
+        symbol:
+          type: string
+          description: Stock ticker as provided in the request.
+          example: VNM
+        rsi:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            14-period Wilder RSI values, range [0, 100]. Array length =
+            (period - 14 + 1) for a default 14-period window. Omitted when
+            there are fewer than 14 candles.
+          example: [58.3, 61.2, 55.7]
+        macdLine:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            MACD line = fast EMA (12) − slow EMA (26). Omitted when there
+            are fewer than 26 candles.
+          example: [1.23, 1.45, 0.98]
+        signalLine:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Signal line = 9-period EMA of the MACD line. Omitted when there
+            are fewer than 34 candles (26 + 9 − 1).
+          example: [0.98, 1.10, 1.02]
+        histogram:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            MACD histogram = macdLine − signalLine.
+          example: [0.25, 0.35, -0.04]
+        bollingerUpper:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Bollinger upper band = SMA(20) + 2 × σ (population std dev).
+            Omitted when fewer than 20 candles.
+          example: [47500.0, 47800.0, 46900.0]
+        bollingerMiddle:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Bollinger middle band = SMA(20).
+          example: [44800.0, 44600.0, 44500.0]
+        bollingerLower:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Bollinger lower band = SMA(20) − 2 × σ (population std dev).
+          example: [42100.0, 41400.0, 42100.0]
+        sma:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Simple Moving Average values for the requested period.
+            Omitted when fewer than period candles.
+          example: [44800.0, 44600.0, 44500.0]
+        ema:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Exponential Moving Average values for the requested period,
+            using Wilder's smoothing factor α = 2 / (period + 1).
+            Omitted when fewer than period candles.
+          example: [45200.0, 45100.0, 44900.0]
+
+    # --- Errors ---
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: "symbol is required"
