@@ -134,3 +134,13 @@ Handoff files themselves are unchanged (purely additive section anchors if agent
 **Verification:** `grep -n "##§" SKILL.md` returns ZERO matches; all canonical anchor format now `## §N-slug` (WITH space) ✓
 **Commit:** b637bd8b
 **Signal:** docs/signals/fixer-1968d-wave1-refixed.json emitted (NEXT=qa)
+
+## §qa-round-2
+
+## [QA] Review Record — Round 2
+
+**QA:** qa | **Round:** 2 | **Timestamp:** 2026-05-22T11:00Z
+**Verdict:** APPROVED
+**Checks:** `grep -n "##§"` = 0 matches; all `§` refs use `## §` (WITH space); grep pattern `^## §[0-9]` correct; fallback rule `## §` correct; JSON examples `## §3-qa-round-1` correct; smoke test refs `## §` correct. Delta-read dogfood PASS (returned [Fixer] section only, ≤30% bytes). Backward compat PASS. Zone PASS (zero apps/).
+**Blocking issues:** 0
+**Signal:** docs/signals/qa-1968d-wave1-approved.json emitted (NEXT=pm)

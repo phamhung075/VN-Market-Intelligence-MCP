@@ -26,3 +26,26 @@ Either option restores consistency. Option B aligns with the BA spec AC-1 exampl
 - AC-2 (qa flow Step 0c), AC-3 (developer flow Step 0c), AC-3 fixer: all present and correctly structured.
 - HANDOFF_DELTA field in all 3 RETURN blocks: PRESENT and correctly structured.
 - The blocking issue is documentation-only (no runtime crash — fallback preserves function). However, the inconsistency means the delta optimization is unreliable until fixed.
+
+---
+
+## [QA Round 2] — 2026-05-22T11:00Z
+
+**QA:** qa | **Round:** 2 | **Verdict:** APPROVED
+
+| Check | Result |
+|-------|--------|
+| `grep -n "##§"` in SKILL.md → 0 matches | PASS |
+| All `§` refs use `## §` (WITH space) throughout file | PASS |
+| Grep pattern line 22: `^## §[0-9]` — matches space-format anchors | PASS |
+| Fallback rule line 48: uses `## §` (space) detection | PASS |
+| JSON examples lines 58+64: `## §3-qa-round-1` | PASS |
+| Smoke test refs lines 74+77: `## §` format | PASS |
+| Delta-read dogfood (round 2): returned only [Fixer] Fix Record (lines 123-136 of 136L) — ≤30% bytes | PASS |
+| Backward compat: file with no `## §` anchors → full-read, no error (documented in fallback rules) | PASS |
+| Zone check: commits b637bd8b + 05b7b40f → zero `apps/` files | PASS |
+
+**Blocking issues:** 0
+
+**Anchor state:** `last_read_anchor = "## §impl-agent-father"` → delta returned [Fixer] section only. 30% target satisfied.
+**Fixer commits:** b637bd8b (skill + flow fix), 05b7b40f (handoff + notebook append)

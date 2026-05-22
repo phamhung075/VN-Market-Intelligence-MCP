@@ -28,3 +28,20 @@ After: `**Notebook write** (before QA) → skill: \`.claude/skills/notebook-writ
 - Blank-state simulation: file with no `## c` heading → one Write → exactly 1 `## c` heading. PASS.
 - P02 dogfood: agent-father.md initialized via blank-state Write (AC-4 exercised). PASS.
 - Zone: zero `apps/` files. PASS.
+
+---
+
+## [QA Round 2] — 2026-05-22T11:00Z
+
+**QA:** qa | **Round:** 2 | **Verdict:** APPROVED
+
+| Check | Result |
+|-------|--------|
+| `grep -n "OVERWRITE"` in developer/main.md → 0 matches | PASS |
+| Line 122: now reads `(section-overwrite — append new c<NNN> section; skill handles prune + blank-state init)` | PASS |
+| agent-father c252 notebook entry uses `## c252 · ISO-ts` section-overwrite format | PASS |
+| Zone check: commits b637bd8b + 05b7b40f → zero `apps/` files | PASS |
+
+**Blocking issues:** 0
+
+**Note:** Fixer's own notebook (`fixer.md`) retains legacy session-based headings — acceptable since P02 task scope is notebook-write SKILL + developer flow only; fixer notebook migration is a separate future task.

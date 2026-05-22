@@ -124,3 +124,13 @@ git revert HEAD --no-edit
 **Verification:** `grep -n "OVERWRITE" developer/main.md` returns ZERO matches; parenthetical now reflects current notebook-write/SKILL.md pattern ✓
 **Commit:** b637bd8b
 **Signal:** docs/signals/fixer-1968d-wave1-refixed.json emitted (NEXT=qa)
+
+## §qa-round-2
+
+## [QA] Review Record — Round 2
+
+**QA:** qa | **Round:** 2 | **Timestamp:** 2026-05-22T11:00Z
+**Verdict:** APPROVED
+**Checks:** `grep -n "OVERWRITE"` = 0 matches; line 122 reads `(section-overwrite — append new c<NNN> section; skill handles prune + blank-state init)`; agent-father c252 notebook uses `## c252 · ISO-ts` format (section-overwrite dogfood confirmed). Zone PASS (zero apps/).
+**Blocking issues:** 0
+**Signal:** docs/signals/qa-1968d-wave1-approved.json emitted (NEXT=pm)

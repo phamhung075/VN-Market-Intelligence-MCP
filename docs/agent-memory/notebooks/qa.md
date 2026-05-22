@@ -71,3 +71,34 @@ Blocking: 0. Signal: docs/signals/qa-1971-done.json emitted. TASK_REPORT at repo
 - 1968c-P02 AC-7 mock failure tests: deferred to future hardening task
 - 1968c-P01 AC-6 live verification: deferred (non-blocking; static analysis PASS)
 - 1968d Wave 2 (P03 zone-caveman-dict): BLOCKED on P01+P02 APPROVED
+
+## c253 · 2026-05-22T11:00Z
+
+**Sprint:** 1968d | **Tasks:** P01+P02 Wave 1 | **Session:** c253 — APPROVED (both)
+
+```
+date: 2026-05-22
+outcome: APPROVED (P01 + P02)
+commits reviewed: b637bd8b + 05b7b40f
+zone: .claude/ only — smart-skip (no .ts changes)
+smart_skip: YES
+round: 2
+```
+
+| Check | P01 | P02 |
+|-------|-----|-----|
+| `grep "##§"` = 0 | PASS | N/A |
+| All `§` refs use `## §` (WITH space) | PASS | N/A |
+| grep pattern `^## §[0-9]` correct | PASS | N/A |
+| Fallback rule uses `## §` | PASS | N/A |
+| `grep "OVERWRITE"` = 0 | N/A | PASS |
+| Line 122 section-overwrite comment | N/A | PASS |
+| Delta-read dogfood (2nd cycle) | PASS — [Fixer] only | N/A |
+| agent-father c252 section-overwrite | N/A | PASS |
+| Zone: zero apps/ | PASS | PASS |
+
+**Blocking issues:** 0 (both tasks)
+
+Signal: docs/signals/qa-1968d-wave1-approved.json emitted. Wave 2 (P03) gate UNBLOCKED. Reports at reports/TASK_REPORT_1968d-P01.md + reports/TASK_REPORT_1968d-P02.md (Round 2 appended).
+
+**anchor_out:** `## §qa-round-2` (last anchor in both handoff files after this cycle)
