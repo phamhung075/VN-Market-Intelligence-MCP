@@ -1,5 +1,46 @@
 # PM — Notebook
 
+## c255 · 2026-05-22T13:30Z
+
+**Status:** TASK_1967-07 CLOSED — Flow notebook fixes (cycle OVERWRITE + DASHBOARD prune + mcp-tools cross-link). QA APPROVED round-1 (smart-skip, markdown-only). AC-1..AC-5 + AC-8 PASS, AC-6/AC-7 OBS-GATE non-blocking. Agent-father commit e640f133 (2 files: signal-dashboard SKILL + mcp-tools.md). Signals drained. Pipeline idle: WIP=0/2 ready for 1967-08 dispatch.
+
+### Signal processed (cycle c255)
+- **qa-1967-07-approved.json** — TASK_1967-07 APPROVED 2026-05-22T13:00Z (smart-skip verdict)
+- **agent-father-1967-07-done.json** — IMPL_DONE 2026-05-22T12:30Z (commit e640f133)
+
+### PM actions completed (cycle c255 — TASK_1967-07 CLOSE)
+
+1. **Confirmed TASK_1967-07 in DONE state** ✓
+   - Done section line 24 (already migrated by agent-father)
+   - All AC 1–5 PASS, AC-8 PASS (vacuous), AC-6/AC-7 OBS-GATE
+
+2. **Drained signals to docs/signals/processed/** ✓
+   - qa-1967-07-approved.json
+   - agent-father-1967-07-done.json
+
+3. **Updated docs/pipeline-state.json** ✓
+   - status: "1967-07-CLOSED (PM close-out 2026-05-22T13:30Z, QA APPROVED round-1, smart-skip)"
+   - currentSprint: "1967-08/09/10 agent-father MED queue (1967-07 CLOSED)"
+   - activeTaskId: "— (WIP=0/2 idle)"
+   - nextAgent: "agent-father (dispatch 1967-08 per PO c254 recommendation)"
+   - updatedAt: 2026-05-22T13:30:00Z
+   - updatedBy: pm (1967-07 close metadata + next dispatch assessment)
+
+4. **Appended handoff close metadata** ✓
+   - docs/handoffs/TASK_1967-07-flow-notebook-fixes.md: PM Close Record section added
+   - Backlog assessment table (1967-08/09/10 ready, 1967-06/11 blocked)
+   - Dispatch options (A=sequential 1967-08, B=parallel 1967-08+1967-10)
+
+### Dispatch state snapshot (cycle c255)
+- **TASK_1967-07:** CLOSED 2026-05-22T13:30Z, QA APPROVED (smart-skip), 0 blockers
+- **Pipeline:** 1967-08/09/10 agent-father MED queue ready (Option A sequential, Option B parallel if collision-clear)
+- **WIP:** 0/2 idle, ready for immediate dispatch
+- **OBSERVE gates:** 1960-DAILYDASH (~10h), 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z
+- **Blocked tasks:** 1967-06 (OBSERVE-1955e gate), 1967-11 (1954c conditional)
+- **Next:** Dispatch 1967-08 (dispatcher-wrap try/finally) now, or parallel 1967-08+1967-10 after collision verify
+
+---
+
 ## c254 · 2026-05-22T06:30Z
 
 **Status:** TASK_1970 CLOSED — TA OHLCV backfill across 30 watchlist tickers complete. QA APPROVED c256 (10/10 GREEN, 9382 pass / 283 baseline BCTC-freeze, zero regressions). INSERT OR REPLACE naturally heals ~1072 corrupt low=0 rows from 1972 VNDIRECT null-coercion bug. WIP=0/2.

@@ -155,3 +155,42 @@ All three are knowledge-file edits (no code). Bundle together for single PR.
 **Smart-skip note:** Zone = `.claude/` + `docs/standards/` markdown only. No .ts code touched. Per smart-skip policy: bun test + bun tsc skipped (vacuous PASS). DDD/security scans N/A for markdown-only changes.
 
 **Signal emitted:** `docs/signals/qa-1967-07-approved.json` → NEXT=pm
+
+---
+
+## [PM] Close Record — 2026-05-22T13:30Z
+
+**Task state:** CLOSED
+
+**Close-out completed:**
+1. ✓ TASK_1967-07 confirmed in DONE section of docs/TASKS.md (line 24)
+2. ✓ Signals drained: qa-1967-07-approved.json + agent-father-1967-07-done.json → docs/signals/processed/
+3. ✓ docs/pipeline-state.json updated: activeTaskId cleared, nextAgent → agent-father (1967-08 dispatch), currentSprint updated
+4. ✓ Handoff close metadata appended (this section)
+
+**QA verdict summary:**
+- Round 1: APPROVED (smart-skip applied, markdown-only zone)
+- AC-1..AC-5 PASS (market-watcher cycle.md confirmed, signal-dashboard SKILL updated, mcp-tools.md cross-link added)
+- AC-8 PASS (no .ts files touched, vacuous tsc)
+- AC-6/AC-7 OBS-GATE (live observation, non-blocking per contract)
+- 0 blocking issues
+
+**Files changed (agent-father c255 commit e640f133):**
+- `.claude/skills/signal-dashboard/SKILL.md` — PRUNE section expanded (DONE=immediate + READ=48h)
+- `docs/standards/mcp-tools.md` — cross-link added above Inter-Agent Signal Types table
+
+**Backlog assessment (post-1967-07 close):**
+
+| Task | Status | Zone | Owner | Estimate | Blocker |
+|------|--------|------|-------|----------|---------|
+| 1967-08 | READY | `.claude/flows/` | agent-father | MED, 2h | — |
+| 1967-09 | READY | `docs/` + `.claude/flows/` | agent-father | MED, 2h | mcp-tools.md collision verify |
+| 1967-10 | READY | `.claude/agents/` + flows | agent-father | MED, 2h | — |
+| 1967-06 | BLOCKED | `apps/mcp-server/` + `docs/agents/` | dev-mcp-server | HIGH, 2h | OBSERVE-1955e unlock 22T21Z |
+| 1967-11 | BLOCKED | `docs/policies/` + `docs/agents/` | agent-father | MED, 2h | 1954c BCTC gate (conditional) |
+
+**PM recommendation for next dispatch:**
+- **Option A (sequential, low cognitive load):** Dispatch 1967-08 NOW to agent-father (single-lane, 2h, cleanest scope)
+- **Option B (parallel, if collision-clear):** Dispatch 1967-08 + 1967-10 concurrently (WIP=2/2 OK, disjoint file sets if 1967-09 deferred)
+
+WIP count: 0/2 (pipeline idle, ready for immediate dispatch)

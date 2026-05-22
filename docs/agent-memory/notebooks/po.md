@@ -1,5 +1,40 @@
 # PO Notebook
 
+## c254 · 2026-05-22T06:20:45Z — Reconcile cycle: PM-1970-close pre-empted + 1967-07 mid-cycle ship + 1967-08 next pick
+
+### Trigger
+dev-team dispatcher cron-0607Z drained 3 fresh signals (dev-mcp-server-1970-done + qa-1970-approved + po-1968d-ratified echo). Cron prompt assumed pre-cycle pipeline-state stale on `nextAgent: pm dispatch 1970` — but PM had already executed close at 06:20Z UTC (commit f363515e) BEFORE this PO cycle landed at 06:20:45Z. Pipeline-state was correctly reconciled by PM, so PO cycle scope narrowed to: ACK + next-priority surfacing + branch cleanup + WORK telegram.
+
+### Mid-cycle discovery
+Agent-father shipped TASK_1967-07 at 06:23Z UTC (commit e640f133, signal docs/signals/agent-father-1967-07-done.json) — 3 minutes AFTER my cycle started. This bumped my initial "1967-07 priority pick" recommendation to **1967-08 next**. Signal stays in inbox for next-cron qa drain (smart-skip applies — markdown-only zone per caveman ULTRA context).
+
+### Triage decisions
+1. **PM-1970-close** verified via commit + TASKS.md row 93 in Done + pipeline-state already reconciled by PM. No PM re-dispatch needed. Drained `pm-1970-close.json` to processed/.
+2. **1967-07 IMPL_DONE** noted in route signal + pipeline-state + DASHBOARD c254 row + this notebook. Kept signal in inbox (writer kept it — qa drains next).
+3. **Next-priority pick** = 1967-08 (dispatcher-wrap try/finally, .claude/flows/ scope, zero collision with shipped 1967-07). Parallel-safe second = 1967-10 (cleanest file separation). 1967-09 has partial mcp-tools.md collision risk vs 1967-07 — verify section overlap before parallel.
+4. **Branch policy carry-over**: `git branch -a | grep task/` confirmed `task/1972-vndirect-ohlcv-null-coercion` still present. Queued for code-janitor sweep via new ## maintenance section in DASHBOARD.md (signal-only — PO does NOT spawn code-janitor per CLAUDE.md dev-team boundary).
+5. **OBSERVE gates** unchanged from c253 — none due this cycle, next 22T16:30Z DAILYDASH ~10h out.
+
+### Actions completed
+- Wrote `docs/signals/po-c254-cron-0607Z-route.json` (PM next-pick recommendation 1967-08 + branch-cleanup pointer).
+- Updated `docs/pipeline-state.json` (status, currentSprint→1967-08+10+9 queue, activeTaskId=1967-07 qa-pending, nextAgent→pm 1967-08).
+- Updated `docs/signals/DASHBOARD.md`: header `_Updated:_` + new c254-ACK-1970-CLOSE row in ## po + new ## maintenance section with BRANCH-CLEANUP-1972 row.
+- Drained `docs/signals/pm-1970-close.json` → processed/.
+- Notebook diff-write: c254 section prepended; c251 pruned per L-12 3-cycle rule (keep c254+c253+c252).
+
+### Lessons (carry-over + new)
+- **L70 (NEW c254)**: Race-window between cron-tick dispatcher drain (cron prompt frozen at t=0) and parallel agent activity (PM + agent-father shipped between t=0 and PO cycle execution). PO must verify actual repo state (git log, signal inbox, TASKS.md) against cron-prompt assumptions before acting. Stale cron-prompt context is normal; idempotent reconcile is the cure (don't redo work that's already shipped).
+- **L69 (c253)**: Cumulative tally signal-write pattern — when ratifying multi-phase economy sprint, include BOTH per-phase breakdown AND grand-total dimensions to validate original /goal verification.
+- **L68 (c252)**: Batched QA dispatch for parallel-shipped sibling tasks saves 1 file write + 1 qa-read; preserves per-task verdict granularity.
+
+### Carry-over to next cycle
+- **Next-cron qa drain**: agent-father-1967-07-done.json (smart-skip markdown-only → qa may close immediately).
+- **PM next-cron dispatch**: 1967-08 to agent-father (lane B). Parallel-safe second: 1967-10. Verify 1967-09 mcp-tools.md section overlap before parallel.
+- **OBSERVE windows**: 22T16:30Z DAILYDASH AC-5.2, 22T21Z 1955e+1967-06 unlock+watchdog-4, 23T03Z 1965d janitor errors=0 verify, 23T07:05Z 1957d BCTC tracker, 23T18Z 1965c soak end, 24T14:30Z 1907a digest-predict Sunday fire, 25T01:30Z 1955c vnstockFundamentals weekly.
+- **Branch cleanup**: task/1972-vndirect-ohlcv-null-coercion queued in ## maintenance section. Code-janitor sweeps next cron tick (or human intervention). PO does NOT spawn code-janitor.
+- **NFR-3 BCTC freeze** persists until 1954c structural unlock.
+- WIP: dev-mcp-server 0/2 (idle), agent-father 1/2 (1967-07 qa-pending), qa 0 in-flight.
+
 ## c253 · 2026-05-22T05:50Z — Sprint 1968d RATIFIED — Phase 4 token-economy CLOSED
 
 ### Trigger
@@ -11,83 +46,23 @@ PM signal `docs/signals/pm-1968d-close.json` (PM clock 12:35Z; actual UTC 05:50Z
 - **P03 (L-14)**: `.claude/skills/caveman/SKILL.md` `## Zone Dictionaries` (5 zone maps) LIVE. Silent fallback when zone unset. 5 KB/day signal compression.
 - **Cumulative Phase 1+2+3+4**: ~224 MCP calls/day + ~1344 Read I/O/day + 50% payload reduction + ~54 commits/day + 65–175 KB/day file I/O — four-dimensional savings. Goal MET + EXCEEDED (context-tracking IMPROVED via 3-cycle notebook retention).
 
-### Channel audit (Step 0)
-DASHBOARD c252 already drained 5 fresh + 3 replay signals. No missed BUG/MARKET/WORK signals. CLEAN.
-
 ### Actions completed
 - `docs/signals/po-1968d-ratified.json` emitted with full cumulative tally + Phase 5 deferred-lever inventory.
 - `docs/SPRINT_GOAL.md` § Sprint 1968d header status updated OPEN→CLOSED with close-out tally.
 - `docs/TASKS.md` 4 rows moved Backlog→Done (1968d-P01/P02/P03 + 1968d-BA-SPEC).
 - `docs/pipeline-state.json` rewritten: currentSprint→1970-TA-OHLCV-BACKFILL, activeTaskId cleared of 1968d-*, nextAgent→pm.
-- Notebook section-overwrite (this c253): prune c250, retain c253+c252+c251 per L-12 3-cycle rule.
-
-### Lessons (carry-over + new)
-- **L69 (NEW c253)**: Cumulative tally signal-write pattern — when ratifying multi-phase economy sprint, include BOTH per-phase breakdown AND grand-total dimensions to validate original /goal verification. po-1968c-close.json was per-phase only; po-1968d-ratified.json adds `cumulative_tally_phase_1_through_4` block for explicit goal-verification audit trail.
-- **L68 (c252)**: Batched QA dispatch for parallel-shipped sibling tasks saves 1 file write + 1 qa-read; preserves per-task verdict granularity.
-- **L67 (c251)**: Spec-review gate value validated — BA's "≤2 files" self-target collided with reality (P01=4 files).
-
-### Carry-over to next cycle
-- **Track A pickup**: 1970-TA-OHLCV-BACKFILL dispatch when dev-mcp-server WIP frees (PM owns); PO re-enters only on rollback/blocker.
-- **Track B pickup**: 1967-07/08/09/10 agent-father MED lane (separate WIP from dev-mcp-server) — PM may dispatch in parallel.
-- **OBSERVE windows**: 22T16:30Z DAILYDASH AC-5.2, 22T21Z 1955e+1967-06 unlock+watchdog-4, 23T03Z 1965d janitor errors=0 verify, 23T07:05Z 1957d BCTC tracker, 23T18Z 1965c soak end (qa-1965c-soak-result.json), 24T14:30Z 1907a digest-predict Sunday fire, 25T01:30Z 1955c vnstockFundamentals weekly.
-- **Phase 5 lever inventory**: L-11 (signal-bus batching, RISKY architect brief), L-13 (TASKS.md row-patch, defer >200L; currently 157L), L-15 (pipeline-state.json delta-merge SKIP), L-16 (MCP cache, architect cache-invalidation design first).
-- **NFR-3 BCTC freeze** persists until 1954c structural unlock.
-- WIP: dev-mcp-server 1/2 (1970 dispatch-ready), agent-father 0/2 (Phase 4 closed), qa 0 in-flight.
 
 ## c252 · 2026-05-22T05:23Z — Dev-team triage: 1968d-Wave1 QA dispatch + 1971 closure confirmed
 
 ### Trigger
-cron-0507Z dev-team drain: 5 fresh signals + 3 deduped replays. Routing decision needed for: 1968d-P01-ready (agent-father IMPL_COMPLETE), 1968d-P02-ready (replay, also IMPL_COMPLETE), 1971-PM-close, conflict resolution in pipeline-state.json (nextAgent stale = "agent-father dual-claim" but both signals already shipped).
+cron-0507Z dev-team drain: 5 fresh signals + 3 deduped replays. Routing decision needed for: 1968d-P01-ready (agent-father IMPL_COMPLETE), 1968d-P02-ready (replay, also IMPL_COMPLETE), 1971-PM-close, conflict resolution in pipeline-state.json.
 
 ### Triage decisions
-1. **QA dispatch (batched)** — emitted single `po-1968d-wave1-qa-dispatch.json` covering BOTH P01+P02 (siblings under .claude/skills/, zero cross-dep). Per-task qa_verify_checklist embedded (7 items P01, 8 items P02). More efficient than 2 separate dispatch signals.
-2. **1971 closure verified** — PM signal `pm-1971-close.json` 07:45Z + TASKS.md row 93 in Done section + QA APPROVED commit bc515ab2. No loose ends. P/L recovery side-effect tracked under existing OBSERVE row `post-1945-verdict-resolution-scored-pct` (target rise from 36%); does NOT need new OBSERVE row (gate already exists in Todo section line 72).
-3. **1968d-P03 gating confirmed** — Wave 2 blocked-by `1968d-P01 QA APPROVED + 1968d-P02 QA APPROVED`. Owner remains agent-father (.claude/skills/caveman/ zone-locked, same agent that did P01+P02). PM dispatches once gate clears.
-4. **1970+1972 freed** — dev-mcp-server WIP=0/2 post-1971 close. PM-track-B routing: dispatch 1970 first (HIGH, RSI/MACD/BB broken across all 30 watchlist tickers, user-facing), then 1972 (MED, 1070 rows low=0). Tracks A (qa) + B (pm) zone-orthogonal — no collision.
-5. **OBSERVE gates** — current 05:23Z. Next due: 22T16:30Z DAILYDASH (~11h out). None actionable this cycle.
-6. **Pipeline-state** — rewrote nextAgent split (qa + pm parallel tracks); cleared stale `agent-father dual-claim` since both P01+P02 already shipped.
+1. **QA dispatch (batched)** — emitted single `po-1968d-wave1-qa-dispatch.json` covering BOTH P01+P02 (siblings under .claude/skills/, zero cross-dep). Per-task qa_verify_checklist embedded.
+2. **1971 closure verified** — PM signal `pm-1971-close.json` 07:45Z + TASKS.md row 93 in Done section + QA APPROVED commit bc515ab2.
+3. **1970+1972 freed** — dev-mcp-server WIP=0/2 post-1971 close.
 
-### Actions completed
-- Wrote `docs/signals/po-1968d-wave1-qa-dispatch.json` (batched QA dispatch, 80 lines, per-task checklists).
-- Updated `docs/pipeline-state.json` (status, currentSprint, activeTaskId, nextAgent split-tracks, lastCompleted).
-- Updated `docs/signals/DASHBOARD.md`: header `_Updated:_` + new ## po row `c252-WAVE1-QA-DISPATCH`.
-- Removed stale `docs/signals/ba-1968d-spec-ready.json` from active inbox (duplicate of processed/ copy).
-- Notebook diff-write: this c252 section appended; c250 pruned per 3-cycle rule (kept c252+c251+c250 → c250 pruned at write-end to maintain 3-window since c252 entering).
+### Lessons captured
+- **L68**: Batched QA dispatch for parallel-shipped sibling tasks saves 1 file write + 1 qa-read; preserves per-task verdict granularity.
 
-### Lessons (carry-over + new)
-- **L68 (NEW c252)**: When 2 IMPL_COMPLETE signals share zone + qa workload, batch into single dispatch signal with per-task checklist sub-objects. Saves 1 file write + 1 qa-read; preserves per-task verdict granularity (qa still emits 2 verdict signals). Pattern reusable for any Wave-N parallel-shipped sibling tasks.
-- **L67 (c251)**: Spec-review gate value validated — BA's "≤2 files" self-target collided with reality (fixer flow exists → P01=4 files). Without PO review, fixer flow may have been dropped silently.
-- **L66 (c250)**: Phase 4 lever picks all live in `.claude/` agent-system scope — safe lane parallel to apps/* hotfix lanes.
-
-### Carry-over to next cycle
-- **Track A pickup**: qa-1968d-P01-done.json + qa-1968d-P02-done.json arrival → if both APPROVED, PM auto-dispatches P03 (no PO involvement until close).
-- **Track B pickup**: PM dispatches 1970+1972 → dev-mcp-server self-claims and ships → qa verifies → PM closes. PO only re-enters if blocker or rollback.
-- **Sprint 1968d close trigger**: all 3 P-tasks QA APPROVED → emit `po-1968d-close.json` with Phase 1+2+3+4 cumulative tally + Phase 5 deferred-lever inventory (L-11/L-13/L-16).
-- **OBSERVE windows still active**: 22T16:30Z DAILYDASH, 22T21Z 1955e+1967-06 unlock, 23T03Z 1965d janitor, 23T07:05Z 1957d BCTC, 23T18Z 1965c soak, 24T14:30Z 1907a digest, 25T01:30Z 1955c vnstock.
-- WIP: dev-team 0/2 (post-1971); agent-father 2/2 (P01+P02 in qa-review, not dev slot); qa 2 in-flight (P01+P02).
-- NFR-3 BCTC freeze persists until 1954c structural unlock.
-
-## c251 · 2026-05-22T05:10Z — Sprint 1968d BA spec APPROVED, hand to PM
-
-### Trigger
-BA `a1cf6c64e08db3ce5` returned SPECS_READY for Sprint 1968d Phase 4 (3 handoffs: P01 L-10 delta-read, P02 L-12 notebook diff-write, P03 L-14 zone caveman dict) per c250 kickoff intent "hand back to PO for spec review, not directly to PM".
-
-### Review verdict: APPROVED (all 3 handoffs)
-- P01: AC-1..AC-5 YES, smoke 6 steps, rollback YES, owner=agent-father, .claude/ zone, Wave1 no-gate
-- P02: AC-1..AC-5 YES, smoke 6 steps, rollback YES, owner=agent-father, .claude/ zone, Wave1 parallel-safe
-- P03: AC-1..AC-5 YES, smoke 5 steps, rollback YES, owner=agent-father, .claude/ zone, Wave2 gated on P01+P02 QA APPROVED
-
-### BA design calls confirmed
-- P01 silent full-read fallback for files without §N anchors → matches SPRINT_GOAL AC-1
-- P02 blank-state init (one-time Write if no ## c<NNN>) → matches Scope OUT forward-only
-- P03 bctc-extractor FROZEN-NFR3 placeholder → matches kickoff no_bctc_zone:true
-
-### Actions
-- Read 3 handoffs + ba-1968d-spec-ready.json + SPRINT_GOAL § 1968d + kickoff signal.
-- Emitted `docs/signals/po-1968d-spec-approved.json` → NEXT=pm.
-- Moved `docs/signals/ba-1968d-spec-ready.json` → `processed/`.
-
-### Lessons
-- **L67**: Spec-review gate value — BA's "≤2 files of dev work" self-target collided with reality (P01 fixer flow exists → 4 files). PO check caught + cleared per SPRINT-M tier semantics.
-
-<!-- c250 pruned per L-12 3-cycle retention rule (keep c253+c252+c251); content archived to git history. -->
+<!-- c251 pruned per L-12 3-cycle retention rule (keep c254+c253+c252); content archived to git history. -->
