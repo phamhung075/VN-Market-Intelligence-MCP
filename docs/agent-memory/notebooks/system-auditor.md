@@ -1,16 +1,16 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T17:03:35Z | **Current Tier:** TIER-1 | **Sprint:** 1970+
+**Last updated:** 2026-05-22T17:33:38Z | **Current Tier:** TIER-1 | **Sprint:** 1970+ | **A-21c Verdict:** FAIL
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ---
 
-## Audit Run Tier-1 (17:03–17:04 UTC 2026-05-22)
+## Audit Run Tier-1 (17:33–17:35 UTC 2026-05-22)
 
 **Tier:** 1 (Runtime Ping)
-**Duration:** < 1 min | **Containers checked:** 11/11 | **Health endpoints:** 10/11 (1 no endpoint) | **Restart counts:** docker ps healthy | **EPIPE/ECONNRESET in 1h logs:** 0
-**Anomalies detected:** 0 NEW anomalies
+**Duration:** < 2 min | **Containers checked:** 11/11 | **Health endpoints:** 10/11 (1 no endpoint) | **Restart counts:** mcp-server=0 | **EPIPE/ECONNRESET in 1h logs:** 0
+**Anomalies detected:** 0 NEW anomalies | **A-21c Explicit Verdict:** FAIL (no new fire since 2026-05-17T16:30Z, gate expired, root cause = missing volume mount /app/docs/data/project-stats.json)
 
 ### Findings
 
@@ -51,7 +51,7 @@
 - Carry-over issues within dedup window:
   - A-21: vnstockFundamentalsRefresh crashed (gate 2026-05-22T21:00Z) — DEDUP-SKIP
   - A-21b: vnstockTradingStatsRefresh 50% (gate 2026-05-22T21:00Z) — DEDUP-SKIP
-  - A-21c: dailyDashboardJob ENOENT /docs/data/project-stats.json (last error 2026-05-17, gate expired 16:30Z, no new runs since) — STALE, DEDUP-SKIP
+  - A-21c: dailyDashboardJob FAIL VERDICT (last error 2026-05-17T16:30Z, NO FIRE since, gate expired 2026-05-22T16:30Z, root cause = missing docker volume mount /app/docs/data/project-stats.json, job path /docs/data/project-stats.json not mounted) — RE-FIRE BUG with new verdict + recommend dev-mcp-server dispatch
   - A-29: bctcReparseJob 85.4% (canonical NFR-3 defer-freeze) — DEDUP-SKIP
   - A-31: Reuters + Trading-Econ RSS circuits OPEN (fallback operational) — DEDUP-SKIP
 - Status: PASS (no new gaps)
@@ -114,4 +114,4 @@ All 11 core services UP and operational. Health endpoints responding normally (1
 
 ## Session Notes
 
-- 17:03Z: Tier-1 runtime ping — 0 new anomalies. All 11 core containers UP (12–45h uptime), 10/10 health endpoints OK (frontend no /health expected), docker ps shows all healthy, 16/16 circuit breakers green, 65+ cron jobs 99%+ success. Carry-over issues (A-21, A-21b, A-21c, A-29, A-30, A-31, B-01, B-02, B-08, C-06, C-07) remain in dedup window. A-21c error is stale (2026-05-17) with no new runs since; gate expired 16:30Z but issue remains within dedup. No new BUG alerts. Tier-1 PASS.
+- 17:33Z: Tier-1 runtime ping — A-21c EXPLICIT VERDICT REQUIRED (carry-over dedup context). Checked cron health: dailyDashboardJob shows last_run=2026-05-17T16:30Z with ENOENT error, total_runs=1 (never fired again). Gate expired at 2026-05-22T16:30Z. Docker inspect: job should fire at 23:30 GMT+7 = 16:30 UTC daily. Timestamp check: current=2026-05-22T17:33:38Z, so job should have fired today at 16:30Z but NO FIRE recorded. Root cause: docker inspect mounts show missing volume for /app/docs/data/project-stats.json (only daily-dashboard.json mounted). Verdict = FAIL. 0 new anomalies. All 11 containers UP, 10/10 health endpoints OK, 16/16 circuit breakers green. Recommend BUG alert for A-21c with dev-mcp-server dispatch.
