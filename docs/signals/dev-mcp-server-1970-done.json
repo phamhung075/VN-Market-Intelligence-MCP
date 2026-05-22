@@ -1,0 +1,38 @@
+{
+  "schema": "dev-done/v1",
+  "task_id": "1970",
+  "task_title": "TA OHLCV Backfill: RSI/MACD/BB indicator restoration across 30 watchlist tickers",
+  "agent": "dev-mcp-server",
+  "status": "IMPL_DONE",
+  "timestamp": "2026-05-22T06:00Z",
+  "branch": "main",
+  "files_modified": [
+    "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts",
+    "apps/mcp-server/src/scheduler/cronConfig.ts",
+    "apps/mcp-server/src/scheduler/startScheduler.ts",
+    "apps/mcp-server/src/__tests__/1970-ta-ohlcv-backfill.test.ts",
+    "docs/standards/cron-jobs.md",
+    "docs/WORK.md",
+    "docs/handoffs/TASK_1970-TA-OHLCV-BACKFILL.md",
+    "docs/signals/dev-mcp-server-1970-done.json"
+  ],
+  "test_results": {
+    "task_tests": "10/10 GREEN",
+    "full_suite": "9700 tests / exit 0",
+    "tsc": "0 errors"
+  },
+  "ac_coverage": {
+    "AC-1": "PASS — covered tickers with >= 35 clean rows not re-fetched",
+    "AC-2": "PASS — tickers < 35 rows fetched + INSERT OR REPLACE upsert",
+    "AC-3": "PASS — tickers with any low=0 corrupt rows fetched regardless of count",
+    "AC-4": "PASS — per-ticker error isolation verified",
+    "AC-5": "PASS — sparse/backfilled/covered/errors summary correct"
+  },
+  "handoff": "docs/handoffs/TASK_1970-TA-OHLCV-BACKFILL.md",
+  "handoff_delta": {
+    "last_read_anchor": "## §2-impl",
+    "last_read_at": "2026-05-22T06:00Z"
+  },
+  "NEXT": "qa",
+  "PIPELINE": "continue"
+}

@@ -88,6 +88,11 @@ export const CRONS = {
    *  Fires after VN market open data push window. Alerts WORK if >50% watchlist tickers
    *  are missing from daily_ohlcv for the current VN date. Covers mid-day VPS outage. */
   ohlcvStalenessCheck:    Bun.env.CRON_OHLCV_STALENESS_CHECK            ?? '15 8 * * 1-5',
+  /** taOhlcvBackfill — TA indicator restoration backfill, daily 01:30 UTC (08:30 VN, pre-market open) Mon-Fri (task 1970)
+   *  Heals low=0 corrupt rows from 1972-era VNDIRECT null-coercion bug.
+   *  Fetches tickers with < TA_MIN_ROWS (35) clean rows or any low=0 corrupt rows.
+   *  Uses INSERT OR REPLACE to overwrite corrupt data. Non-blocking (fire-and-forget). */
+  taOhlcvBackfill:        Bun.env.CRON_TA_OHLCV_BACKFILL                ?? '30 1 * * 1-5',
   /** cascadeBacktest — daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows >3d old (task 1505, Sprint 192) */
   cascadeBacktest:        Bun.env.CRON_CASCADE_BACKTEST                  ?? '30 20 * * *',
   /** priceUpdateWatchdog — price staleness detection at 6h threshold (task 229, Sprint 229)

@@ -86,6 +86,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1970 | **IMPL_DONE 2026-05-22T06:00Z (dev-mcp-server)** — TA OHLCV backfill across 30 watchlist tickers. New `taOhlcvBackfillJob.ts`: detects tickers with < 35 rows OR low=0 corrupt rows (1972-era bug), fetches from VNDIRECT via INSERT OR REPLACE (heals corrupt data). Cron: `30 1 * * 1-5` (pre-market 08:30 VN). 10/10 tests GREEN (AC-1..AC-5). tsc 0 errors. Full suite 9700/exit-0. Handoff: `docs/handoffs/TASK_1970-TA-OHLCV-BACKFILL.md`. | HIGH | TASK | dev-mcp-server | docs/handoffs/TASK_1970-TA-OHLCV-BACKFILL.md | — |
 
 ---
 ## Done

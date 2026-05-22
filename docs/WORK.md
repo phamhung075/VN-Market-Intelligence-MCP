@@ -59,3 +59,5 @@ TASK-1380 updated: [DATA] → [BUG]. Root cause confirmed by ops: alert_engine f
   Next: 01:45 UTC (15-min cycle) | Watchlist: 34 tickers monitored
 
 ## [Developer] 2026-05-14 — 1916a-vps-part: add GET /proxy/bctc-discover/:ticker to vps-proxy-server.js — deployed to VPS 125.212.251.27:8765, 200+[] with key / 401 without key — branch task/1916a-vps-discover-route commit 1b8f8cd5
+
+## [Developer] 2026-05-22 — 1970-ta-ohlcv: taOhlcvBackfillJob added — daily 01:30 UTC cron, INSERT OR REPLACE heals 1972-era low=0 corrupt rows, TA_MIN_ROWS=35, 10 tests GREEN, tsc clean — apps/mcp-server

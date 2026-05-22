@@ -60,6 +60,19 @@ Verdict lifecycle → `docs/policies/alert-policy.md` (Signal Verdict Lifecycle 
 Source: `apps/mcp-server/src/scheduler/digest/accuracyDigestJob.ts`
 Env override: `CRON_ACCURACY_DIGEST` (default `0 7 * * *`)
 
+## OHLCV Data Quality & TA Indicator Restoration
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| `30 1 * * 1-5` (01:30 UTC, pre-market) | `taOhlcvBackfillJob` — daily TA OHLCV restoration backfill. Detects tickers with < 35 rows (MACD minimum) or any `low=0` corrupt rows (1972-era VNDIRECT null-coercion bug). Fetches from api-finfo.vndirect.com.vn with INSERT OR REPLACE to overwrite corrupt data. Returns `{covered, backfilled, sparse, errors}`. | 1970 |
+
+- `TA_MIN_ROWS = 35`: MACD(12,26,9) requires 34 prices (slow+signal-1=34); RSI(14) requires 15; BB(20) requires 20. 35 is the safe universal minimum.
+- `covered`: tickers with >= 35 clean rows (no fetch needed)
+- `backfilled`: tickers successfully fetched + upserted with >= 35 valid rows
+- `sparse`: tickers where API returned < 35 rows (best-effort insert, TA still limited)
+- Env override: `CRON_TA_OHLCV_BACKFILL` (default `30 1 * * 1-5`)
+- Source: `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts`
+
 ## Analysis Ownership (dedup policy)
 
 | Domain | Owner | Verifier | Notes |

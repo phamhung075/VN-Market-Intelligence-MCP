@@ -3,6 +3,24 @@
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967-01 archived)
 
+## c1 · 2026-05-22T06:00Z
+
+### Task 1970 — TA OHLCV Backfill (2026-05-22, IMPL_DONE)
+
+**Change:**
+- `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts` (NEW, 216L) — daily cron `30 1 * * 1-5` (pre-market). Reads watchlist, checks `cnt >= 35 AND corrupt_cnt == 0` to determine skip. Fetches from VNDIRECT, upserts via `INSERT OR REPLACE` (heals 1972-era low=0 rows). Returns `{ covered, backfilled, sparse, errors }`.
+- `cronConfig.ts` — `taOhlcvBackfill: '30 1 * * 1-5'` (env: `CRON_TA_OHLCV_BACKFILL`)
+- `startScheduler.ts` — import + `jobRunRepo.wrapRun('ta-ohlcv-backfill', ...)`
+- `docs/standards/cron-jobs.md` — "OHLCV Data Quality & TA Indicator Restoration" section
+
+**Tests:** `1970-ta-ohlcv-backfill.test.ts` 10/10 GREEN. Full suite 9700/exit-0. tsc 0 errors.
+
+**Signal:** `docs/signals/dev-mcp-server-1970-done.json` → qa
+
+Zone health: taOhlcvBackfillJob added; TA_MIN_ROWS=35 threshold heals MACD/RSI/BB gaps; INSERT OR REPLACE overwrites 1972-era corrupt low=0 rows | HEALTHY
+
+---
+
 ## Working Memory
 
 ### Task 1972 — VnDirect OHLCV null-coercion fix (2026-05-22, IMPL_DONE/QA-PENDING)

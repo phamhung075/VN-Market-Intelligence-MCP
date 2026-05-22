@@ -46,6 +46,7 @@ import { runVerdictResolutionJobCron } from './alerts/verdictResolutionJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
+import { runTaOhlcvBackfill } from './market-data/taOhlcvBackfillJob.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
@@ -578,6 +579,22 @@ export function startScheduler() {
   cron.schedule(CRONS.ohlcvStalenessCheck, async () => {
     await jobRunRepo.wrapRun('ohlcv-staleness-check', async () => {
       await runOhlcvStalenessCheck()
+    })
+  }, { timezone: 'UTC' })
+
+  // 01:30 UTC Mon-Fri — TA OHLCV restoration backfill — task 1970
+  // Heals daily_ohlcv rows corrupt from 1972-era VNDIRECT null-coercion bug (low=0).
+  // Fetches tickers with < 35 clean rows OR any low=0 corrupt rows. Uses INSERT OR REPLACE.
+  // Fire-and-forget: non-blocking; errors logged only.
+  cron.schedule(CRONS.taOhlcvBackfill, async () => {
+    await jobRunRepo.wrapRun('ta-ohlcv-backfill', async () => {
+      const result = await runTaOhlcvBackfill()
+      return {
+        rowsWritten: result.backfilled,
+        covered: result.covered,
+        sparse: result.sparse,
+        errors: result.errors.length,
+      }
     })
   }, { timezone: 'UTC' })
 
