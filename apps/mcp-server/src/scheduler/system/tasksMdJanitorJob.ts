@@ -29,6 +29,7 @@ import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { listHeldTasks, type LockRow } from "../../infrastructure/db/coordinationStore.js";
+import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -498,8 +499,6 @@ const JOB_FAILURE_DEDUP_KEY = "d4_janitor_internal_failure";
  * Internal failures are caught here and send a single BUG telegram (7d dedup).
  */
 export async function runTasksMdJanitorJob(): Promise<void> {
-  const projectRoot = resolve(import.meta.dir, "..", "..", "..", "..", "..");
-
   const deps: JanitorDeps = {
     listHeld: () => {
       const result = listHeldTasks({ kind: "sprint-task" });
@@ -516,7 +515,7 @@ export async function runTasksMdJanitorJob(): Promise<void> {
       try {
         return execSync(cmd, {
           encoding: "utf8",
-          cwd: projectRoot,
+          cwd: getProjectRoot(),
           timeout: 10_000,
         });
       } catch (err) {
@@ -540,7 +539,7 @@ export async function runTasksMdJanitorJob(): Promise<void> {
 
     nowIso: () => new Date().toISOString(),
 
-    projectRoot,
+    projectRoot: getProjectRoot(),
   };
 
   try {
