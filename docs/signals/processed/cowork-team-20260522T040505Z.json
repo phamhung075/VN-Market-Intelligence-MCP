@@ -1,0 +1,19 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260522T040505Z",
+    "matched_slots": ["news-scout-market", "news-scout-offhours", "market-watcher-market", "market-watcher-prepost", "market-watcher-offhours", "alert-commander-market"],
+    "won_slots": ["news-scout-market", "market-watcher-market", "alert-commander-market"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [".claude/flows/news-scout/main.md", ".claude/flows/market-watcher/main.md", ".claude/flows/alert-commander/main.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "notes": "HH:00 4-hour boundary — news-scout coalesced (market+offhours), market-watcher coalesced (market+prepost+offhours); 3 unique agents spawned. VHM/VNH watch persists; VN-Index -1.45%"
+  },
+  "priority": "low",
+  "createdAt": "20260522T040505Z"
+}

@@ -1,0 +1,121 @@
+{
+  "cycle_id": "20260522-0000",
+  "timestamp": "2026-05-22T00:07:00Z",
+  "agent": "news-scout",
+  "source_tier": 2,
+  "signals": [
+    {
+      "signal_id": 3622,
+      "signal_type": "urgent_news",
+      "stock_code": "NVL",
+      "headline": "Cổ đông lớn Novaland bán ra hàng triệu cổ phiếu NVL khi giá tăng bốc đầu 80%",
+      "detail": "Large shareholder liquidation at 80% rally peak — insider selling signal after significant rally",
+      "severity": "high",
+      "regime": "TIGHTENING",
+      "regime_adjusted_score": 9.0,
+      "confidence": 0.84,
+      "impact_chain": {
+        "event_type": "sector_event",
+        "direction": "bearish",
+        "affected_stocks": ["NVL", "VRE", "VIC", "VHM", "D2D", "KBC", "TCH"],
+        "affected_sectors": ["real_estate"]
+      },
+      "source": "cafef",
+      "published_date": "2026-05-21T04:31Z"
+    },
+    {
+      "signal_id": 3623,
+      "signal_type": "chain_catalyst",
+      "headline": "Real estate shareholder liquidation pattern — insider exit amid institutional rotation",
+      "detail": "NVL large shareholder divesting 80% rally in TIGHTENING regime suggests valuation concern. Sector bifurcation: mega-cap accumulation (VIC, VHM) vs mid-cap pressure (NVL, KBC, TCH).",
+      "event_type": "sector_event",
+      "direction": "bearish",
+      "regime": "TIGHTENING",
+      "regime_adjusted_score": 9.0,
+      "confidence": 0.86,
+      "impact_chain": {
+        "affected_stocks": ["NVL", "KBC", "TCH", "VRE", "D2D"],
+        "affected_sectors": ["real_estate"]
+      },
+      "pillar_scores": {
+        "M2": "neutral",
+        "COC": "headwind",
+        "EPS": "neutral",
+        "POL": "neutral"
+      },
+      "cycle_phase": "contraction",
+      "pyramid_tier": "equity",
+      "source": "cafef",
+      "published_date": "2026-05-21T04:31Z"
+    },
+    {
+      "signal_id": 3624,
+      "signal_type": "chain_catalyst",
+      "headline": "PC1 utilities limit-up rally — sector earnings momentum in TIGHTENING regime",
+      "detail": "PC1 consecutive daily limit-up (kịch trần) signals utilities sector defensive earnings strength. TIGHTENING regime dampening (×0.7 multiplier) still leaves bullish signals from Q1 earnings cascade.",
+      "event_type": "earnings",
+      "direction": "bullish",
+      "regime": "TIGHTENING",
+      "regime_adjusted_score": 5.6,
+      "confidence": 0.76,
+      "impact_chain": {
+        "affected_stocks": ["POW", "PPC", "JSH", "REE"],
+        "affected_sectors": ["utilities"]
+      },
+      "pillar_scores": {
+        "M2": "neutral",
+        "COC": "neutral",
+        "EPS": "tailwind",
+        "POL": "neutral"
+      },
+      "cycle_phase": "slowdown",
+      "pyramid_tier": "equity",
+      "source": "cafef",
+      "published_date": "2026-05-21T08:26Z"
+    },
+    {
+      "signal_id": 3625,
+      "signal_type": "chain_catalyst",
+      "headline": "FII institutional net sell 1.7T VND amid VN-Index weakness",
+      "detail": "Foreign investors suddenly net-sold 1.7T VND during market weakness — follows persistent carry-spread headwind (-0.33%, VND 5% vs Fed 5.33%). Combined with macro Brent pressure approaching $100 support, signals FII defensive posture.",
+      "event_type": "macro",
+      "direction": "bearish",
+      "regime": "TIGHTENING",
+      "regime_adjusted_score": 7.0,
+      "confidence": 0.69,
+      "impact_chain": {
+        "affected_stocks": ["FPT", "VPB"],
+        "affected_sectors": ["securities", "tech"]
+      },
+      "pillar_scores": {
+        "M2": "headwind",
+        "COC": "headwind",
+        "EPS": "neutral",
+        "POL": "neutral"
+      },
+      "cycle_phase": "contraction",
+      "pyramid_tier": "equity",
+      "hot_money_risk": true,
+      "source": "cafef",
+      "published_date": "2026-05-21T08:45Z"
+    }
+  ],
+  "macro_context": {
+    "regime": "TIGHTENING",
+    "carry_spread": -0.33,
+    "carry_regime": "FII_OUTFLOW_RISK",
+    "brent_crude_usd": 104.63,
+    "gold_usd_oz": 4534.20,
+    "usd_vnd": 26350,
+    "us_10y_yield": 4.59,
+    "fed_funds_rate": 5.33,
+    "global_liquidity": "TIGHTENING"
+  },
+  "summary": {
+    "total_articles": 20,
+    "high_impact_items": 4,
+    "signals_fired": 4,
+    "dominant_theme": "NVL insider liquidation + real estate bifurcation + utilities earnings offset + FII outflow pressure",
+    "regime_assessment": "TIGHTENING — bearish bias (3 bearish vs 1 bullish signal)"
+  }
+}

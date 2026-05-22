@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "NONE (1968c CLOSED). Active OBSERVE: 1960-DAILYDASH AC-5.2 cron gate 22T16:30Z, 1965d-JANITOR-PATHFIX AC-5.2 cron gate 23T03:00Z, 1967-06 unlock 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak end 23T18Z (pass #1 OBSERVE-AMBIGUOUS; pass #2 23T03Z now coincides with 1965d cron-fire verification).",
-  "activeTaskId": "1965d-JANITOR-PATHFIX-OBSERVE + 1960-DAILYDASH-OBSERVE",
-  "nextAgent": "idle (observation mode) — dual cron gates: (a) dailyDashboardJob 23:30 GMT+7 / 22T16:30Z (AC-5.2 verify success_rate > 0); (b) tasksMdJanitor 10:00 GMT+7 / 23T03:00Z (AC-5.2 verify done — held=N divergences=N errors=0). Post-gate: system-auditor or ops CLOSE/ESCALATE.",
-  "nextPrompt": "None (observation mode). Cron gate unlocks: 22T16:30Z (1960) | 23T03:00Z (1965d + 1965c soak #2). Next action: system-auditor / ops validates cron execution results.",
-  "updatedAt": "2026-05-22T05:55:00Z",
-  "updatedBy": "dev-team (cron-0307Z FIX chain CLOSE — fix-forward canonical pipeline-state.json after ops wrote to wrong path docs/data/pipeline-state.json; stray removed; 1965d AC-5.1 DEPLOY-VERIFIED PASS @ image 4eab331, AC-5.2 OBSERVE gate 23T03:00Z)",
-  "lastCompleted": "1965d-JANITOR-PATHFIX OPS-DEPLOYED 2026-05-22T05:52:50Z (ops 1b83730e, image sha256:4eab331, mcp-server healthy, /health 200, all 12 containers UP, AC-5.1 PASS). Prior: 1965d QA-APPROVED (qa c3c9a198, 12/12 smoke + 1/1 lint + tsc clean). Prior: 1965d dev-mcp-server DONE (db4931de). Prior: 1960-DAILYDASH OPS-DEPLOYED 2026-05-22T02:38:10Z (33843a20, image 3af8ec8, AC-5.1 PASS, AC-5.2 gate 22T16:30Z)."
+  "currentSprint": "NONE (1968c CLOSED). QUEUED: 1970-TA-OHLCV-BACKFILL (FIX S-M, dev-mcp-server, WIP-gated). Active OBSERVE: 1960-DAILYDASH AC-5.2 cron gate 22T16:30Z, 1965d-JANITOR-PATHFIX AC-5.2 cron gate 23T03:00Z, 1967-06 unlock 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak end 23T18Z (pass #2 coincides with 1965d cron-fire 23T03Z).",
+  "activeTaskId": "1965d-JANITOR-PATHFIX-OBSERVE + 1960-DAILYDASH-OBSERVE + 1970-TA-OHLCV-BACKFILL-QUEUED",
+  "nextAgent": "idle (observation mode) — dispatch eligibility for 1970: earliest of (a) 22T16:30Z DAILYDASH AC-5.2 PASS frees WIP slot, or (b) 23T03:00Z JANITOR AC-5.2 PASS frees WIP slot. Then dev-mcp-server spawns on 1970 per po-c248 spec.",
+  "nextPrompt": "None (observation mode). Cron gate unlocks: 22T16:30Z (1960) | 23T03:00Z (1965d + 1965c soak #2). When WIP frees, next dev-team tick dispatches 1970-TA-OHLCV-BACKFILL to dev-mcp-server per po-c248-cron-0420Z-batch-nothing.json AC spec.",
+  "updatedAt": "2026-05-22T04:25:00Z",
+  "updatedBy": "dev-team (cron-0407Z drain+idle — 9 signals drained to processed/; PO c248 already ran 3min ago via user direct prompt — skipping redundant re-spawn; 1970-TA-OHLCV-BACKFILL queued WIP-gated; fleet remains IDLE)",
+  "lastCompleted": "PO c248 USER-BUG triage 2026-05-22T04:20:28Z (interactive, commit 5ab5a5c7) — confirmed RSI/MACD/BB symptom is real, root cause = daily_ohlcv only 22 candles (need ≥35 for MACD); queued 1970-TA-OHLCV-BACKFILL for dev-mcp-server, AC-1..AC-5 spec in payload. Prior: 1965d-JANITOR-PATHFIX OPS-DEPLOYED 2026-05-22T05:52:50Z (ops 1b83730e, image 4eab331, all 12 containers UP)."
 }
