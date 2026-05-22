@@ -1,6 +1,6 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T10:03:12Z | **Current Tier:** TIER-1 | **Sprint:** 1970+
+**Last updated:** 2026-05-22T10:30:15Z | **Current Tier:** TIER-2 | **Sprint:** 1970+
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -66,7 +66,48 @@ All 11 services UP and operational. 10/11 health endpoints responsive (frontend 
 
 Cron health excellent. No escalation warranted.
 
+---
+
+## Audit Run Tier-2 (10:30–10:31 UTC 2026-05-22)
+
+- Tier: 2 (Data Freshness Sweep)
+- Cron fire gaps (A-29): All jobs within normal cadence; no anomalies detected
+- Data source freshness (B-01 through B-12):
+  - **3 CRITICAL breaches flagged (dedup: 1 new B-01, 1 new B-02; 1 existing B-08 re-verification)**
+  - ssc-iboard PRICE (B-01): Last push 2026-05-22T09:00:00Z → 1.5h stale vs 15min SLA (CRITICAL, NEW)
+  - foreign-flow FLOW (B-02): Last update 2026-05-22T09:00:00Z → 90min stale vs 1min market-hours SLA (CRITICAL, NEW)
+  - news-vps: 2026-05-22T10:25:14Z → 5min fresh (OK)
+  - sbv-vps: 2026-05-22T10:29:54Z → fresh (OK)
+  - bctc-push: Last successful push **2026-05-19T07:05:07Z → 75.4 hours stale** (3d 3h). vn-bctc-fetch service healthy per vpsServiceHealthJob but zero new PDFs arriving. UNCHANGED since 06:30Z Tier-2 scan — **no recovery detected** (CRITICAL, EXISTING dedup B-08, update DASHBOARD age + mark NOT-RECOVERED)
+- VPS proxy health: 4/4 VPS routes showing status='ok' but 2 marked STALE (prices, bctc)
+- Rate limits: 11/11 sources ready (0 at 100%)
+- SLA status per get_sla_status: 2 ok, 3 breached (price, bctc, foreign_flow)
+- DB freshness spot checks (C-06, C-07):
+  - News articles <3h: expected to be present (deferred to Tier-3)
+  - Agent signals <24h: expected to be present (deferred to Tier-3)
+- BCTC URL shape (B-09): deferred to Tier-3
+- Pending BCTC queue staleness (B-13): deferred to Tier-3
+
+### Anomalies Detected
+
+| check_id | severity | source_id | detail | status | dedup_key | action |
+|---|---|---|---|---|---|---|
+| B-01 | CRITICAL | ssc-iboard | Price updates 1.5h stale vs 15min SLA | NEW | data_stale:ssc-iboard:B-01 | BUG Telegram sent; append DASHBOARD |
+| B-02 | CRITICAL | foreign-flow | Foreign flow 90min stale vs 1min SLA (market hours) | NEW | data_stale:foreign-flow:B-02 | BUG Telegram sent; append DASHBOARD |
+| B-08 | CRITICAL | bctc-push | BCTC VPS push 75.4h stale; no recovery since 06:30Z scan | EXISTING (re-verify) | data_stale:bctc-push:B-08 | Update DASHBOARD row 1972-BCTC-VPS-STALE: age=75.4h, status=STILL-STALE (NOT-RECOVERED); do NOT create duplicate row |
+
+### System Status at 10:30Z
+
+| Layer | Metric | Value | Status |
+|---|---|---|---|
+| Cron jobs (fire gaps) | All | No gaps detected | HEALTHY |
+| Data freshness (A-grade) | news, sbv | <5 min | HEALTHY |
+| Data freshness (CRITICAL) | price, foreign-flow, bctc | 1.5h / 90min / 75.4h | DEGRADED |
+| VPS proxy | 7 routes | 5 healthy, 2 stale (price, bctc) | DEGRADED |
+| Rate limits | 11 sources | 0 at 100% | OK |
+| Overall | State | DEGRADED | 3 CRITICAL anomalies (1 new B-01, 1 new B-02, 1 existing B-08 no-recovery) |
+
 **Next scheduled audits:**
-- Tier-1 (Runtime Ping): 2026-05-22T10:30Z (every 30 min)
-- Tier-2 (Data Freshness Sweep): 2026-05-22T10:00Z or later (every 4h; prior run 06:30Z)
+- Tier-1 (Runtime Ping): 2026-05-22T11:00Z (every 30 min)
+- Tier-2 (Data Freshness Sweep): 2026-05-22T14:00Z (every 4h)
 - Tier-3 (Deep DB Integrity): 2026-05-23T02:00Z (daily at 02:00 UTC)
