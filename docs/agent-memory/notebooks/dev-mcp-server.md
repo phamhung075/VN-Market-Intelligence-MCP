@@ -5,6 +5,24 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967
 
 ## Working Memory
 
+### Task 1965d-JANITOR-PATHFIX — tasksMdJanitorJob projectRoot fix + lint seal (2026-05-22, DONE)
+
+**Change:**
+- `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` — deleted local `const projectRoot = resolve(import.meta.dir, "..", "..", "..", "..", "..")` at line 501 (resolved to `/` in container). Added `import { getProjectRoot } from "../../infrastructure/projectRoot.js"`. Replaced `cwd: projectRoot` and `projectRoot,` in production deps with `getProjectRoot()` calls.
+- `apps/mcp-server/src/__tests__/lint/no-local-project-root.test.ts` (NEW) — lint test scanning `scheduler/` tree for `resolve(import.meta.dir, '..'` anti-pattern. FAIL pre-fix, PASS post-fix. Regression seal.
+
+**Root cause fixed:** Same anti-pattern as dailyDashboardJob (commit 2f0a74e9). `import.meta.dir` in container = `/app/src/scheduler/system` — five `..` segments reach `/` not `/app`. Canonical `getProjectRoot()` uses `git rev-parse --show-toplevel` with `process.cwd()` fallback.
+
+**Tests:** smoke-tasks-md-janitor.ts 12/12 PASS. Lint test 1/1 GREEN. tsc 0 errors.
+
+**Commit:** db4931de
+
+**Signal:** `docs/signals/dev-mcp-server-1965d-JANITOR-PATHFIX-done.json` → qa
+
+Zone health: tasksMdJanitorJob container-path ENOENT bug FIXED (R-2 pipeline-state.json + R-3 TASKS.md errors=2 at 03:00Z now resolved); lint seal prevents recurrence; AC-5 PENDING_LIVE (next 03:00Z cron fire) | HEALING
+
+---
+
 ### Task 1960-DAILYDASH — dailyDashboardJob projectRoot fix (2026-05-22, DONE)
 
 **Change:**
