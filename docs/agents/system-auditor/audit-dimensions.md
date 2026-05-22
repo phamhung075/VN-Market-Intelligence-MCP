@@ -83,6 +83,58 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 
 ---
 
+## D-N: Concurrent-Write mtime Detection (TASKS.md / pipeline-state.json)
+
+**Tier:** 3 (daily 03:00Z — runs with D4)
+**Check IDs:** DN-W1, DN-W2
+**Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md` ITEM-21
+**Sprint:** 1967c (detection mechanism; long-term fix deferred — Option C task_status_echo table)
+
+### Checks
+
+| Check | Description | Pass condition |
+|-------|-------------|---------------|
+| DN-W1 | mtime delta on `docs/TASKS.md` | No two distinct mtime stamps within the same 15-min window (i.e. mtime changes ≥ 2 times in any 15-min bucket detected via git log `--follow --diff-filter=M`) |
+| DN-W2 | mtime delta on `docs/pipeline-state.json` | Same 15-min window rule as DN-W1 |
+
+### Detection algorithm
+
+```
+for each target_file in [docs/TASKS.md, docs/pipeline-state.json]:
+  commits = git log --oneline --follow --diff-filter=M --format="%H %ai" -- <target_file> | head -20
+  bucket each commit timestamp into 15-min windows (floor to nearest :00/:15/:30/:45)
+  for each window:
+    if len(commits_in_window) >= 2:
+      send_telegram(channel=work,
+        "[system-auditor] D-N: concurrent writes detected on <target_file> — " +
+        len(commits_in_window) + " commits in 15-min window " + window_key +
+        " (last-writer-wins risk). Escalate to po.")
+      write DASHBOARD row: {section: "## po", type: "concurrent-write-alert", file: target_file, window: window_key}
+```
+
+### Acceptance criteria
+
+| AC | Check | Pass condition |
+|----|-------|---------------|
+| AC-1 | DN-W1/DN-W2 fire at 03:00Z | Git log call appears in session log at 03:00Z ± 5min |
+| AC-2 | Concurrent writes detected → WORK alert + DASHBOARD row | Alert emitted within 24h of concurrent-write event |
+| AC-3 | No concurrent writes → no false-positive alert | Clean day: zero D-N alerts |
+
+### Failure modes
+
+| Failure | Behavior |
+|---|---|
+| git log non-zero exit | Log WARN, skip D-N this cycle — do not block D4 |
+| TASKS.md or pipeline-state.json missing | Log WARN, skip file, continue other file |
+
+### Not in scope for D-N
+
+- Auto-merging or serializing concurrent writes (detection only)
+- Monitoring DASHBOARD.md concurrent writes (lower risk tier — deferred)
+- Long-term fix: task_status_echo table (Option C, future sprint)
+
+---
+
 ## D5: Notebook Overflow Risk
 
 **Tier:** 2 (every 4h — runs with D2)
