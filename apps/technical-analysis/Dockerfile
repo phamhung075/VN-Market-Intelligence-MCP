@@ -1,23 +1,34 @@
-# Technical Analysis Service — Bun/TypeScript
+# Technical Analysis Microservice — Go 1.22
+# Multi-stage build — no CGO required (pure-Go SQLite via modernc.org/sqlite)
 # Port 5003
 
-FROM oven/bun:1.3.13-alpine AS builder
+# Stage 1: build
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
-COPY package.json bun.lock* ./
-RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile
 
-COPY . .
+# Cache go module downloads before copying source
+COPY go.mod go.sum ./
+RUN go mod download
 
-# ── Runtime ──
-FROM oven/bun:1.3.13-alpine
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+COPY api/ api/
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server ./cmd/server/
+
+# Stage 2: minimal runtime
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY package.json tsconfig.json ./
+
+COPY --from=builder /out/server /app/server
+COPY api/ /app/api/
+
+RUN mkdir -p /app/data
 
 EXPOSE 5003
-ENV PORT=5003
 
-CMD ["bun", "run", "src/index.ts"]
+ENTRYPOINT ["/app/server"]
