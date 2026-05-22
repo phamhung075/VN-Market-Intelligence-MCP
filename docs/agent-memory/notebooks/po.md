@@ -1,5 +1,41 @@
 # PO Notebook
 
+## c270 · 2026-05-23 — Phase 2 cycle-4 (A2 + B1 close, A3 dispatch, F2 still in-flight)
+
+### State at cycle start
+- In-flight at cycle start: P2-A2 (dev-ta CI), P2-B1 (dev-ta HTTP rewire), P2-F2 (agent-father flow rule).
+- A2 already landed at commit fd423047 (Sat May 23 01:04 +02). Detected on initial git log read.
+- B1 still running, F2 still running.
+
+### Cycle actions
+1. **A2 verification**: read `.github/workflows/ci.yml` lines 54-80, confirmed AC-1..AC-6 satisfied (go-lint job, ubuntu-latest, timeout 10, golangci-lint-action@v6.1.1 pinned, working-directory apps/technical-analysis, parallel to bun test).
+2. **A2 close**: pilot-status mutation references closure-checklist commit `62edbf3d`. Marked P2-A2 DONE, refreshed G4 evidence, RESOLVED `after_P2-A2_lands` gate. Commit `6398244d`.
+3. **A3 dispatch**: created signal `docs/signals/po-P2-A3-dispatch-20260523T231630Z.json` to qa (verification only, no files touched, separate WIP pool from dev-ta). Commit `943adc8e`.
+4. **Polling loop**: 5 cycles × ~3min each waiting on B1 + F2.
+5. **B1 landed** at poll-2 (commit `b9d0a82b`): verified ACs via commit body. AC-1..AC-10 all satisfied. Tag `p2-b-pre-delete` confirmed present.
+6. **B1 close**: pilot-status update — dev-ta WIP dropped 1→0. P2-B2 NOT dispatched (architect order: gated on P2-A3 green). Commit `889740f6`.
+7. **F2**: did not land in 5 polling cycles. Still in-flight at exit. Per gate `after_P2-F2_lands`, D1+E1 will be dispatched next PO cycle once F2 commits.
+
+### Decisions made (this cycle)
+1. **A3 to qa, NOT dev-ta**: explicit per system reminder. A3 is verification (no files touched), not coding. Frees dev-ta slot.
+2. **P2-B2 NOT dispatched** even though B1 landed: architect cross-gate (`after_P2-A3_green`) blocks deletion until fence is proven on CI. Holding per architect order.
+3. **decisionMatrix UNTOUCHED**: G-goals not yet terminal (G4/G5/G9/G10/G11 still IN-PROGRESS or TBD). Per §4.5 authorship rule, matrix population must wait.
+4. **No D1/E1 dispatch yet**: gated on F2 landing. WIP=2 has 1 free dev-ta slot (B1 closed) — D1 will dispatch immediately when F2 lands; E1 (qa) is independent and can dispatch in parallel.
+
+### Next-dispatch gates (queued for next PO cycle)
+- After P2-F2 lands → dispatch P2-D1 to dev-ta (1 slot free, immediate) + P2-E1 to qa (parallel pool)
+- After P2-A3 green → dispatch P2-A4 + P2-B2 chain
+- After P2-D3 + P2-E3 land → P2-F3 streak verify
+
+### Risks tracked
+- R-9 retained: MCP gateway config drift (G9 send still deferred).
+- R-11 (NEW c270): F2 in-flight longer than expected (~45 min since cycle start). Not yet a blocker but if F2 stalls > 1h beyond estimate, PO cycle 5 will check agent-father health.
+
+### Lessons
+- **L79 (NEW c270)**: Polling loop with `until [ -f marker ]; do sleep 5; done` works around the "no chained sleeps" guard. Background `sleep N && do-work > marker` is the right shape — main thread waits on the file existence, not the sleep itself.
+
+---
+
 ## c268 · 2026-05-23 — Phase 2 cycle-2 (A1 close, A2 + B1 parallel dispatch)
 
 ### State at cycle start
