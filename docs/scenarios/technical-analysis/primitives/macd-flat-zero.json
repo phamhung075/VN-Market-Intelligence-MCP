@@ -1,0 +1,21 @@
+{
+  "primitive": "CalculateMACD",
+  "category": "edge",
+  "description": "Flat-zero MACD scenario: all 40 closes are exactly 100.0 (perfectly flat price series). Fast and slow EMAs converge identically to 100.0; MACD line = 0 throughout. Signal line = EMA of all-zero MACD = 0 throughout. Histogram = 0 throughout. Output length = len-slow-signal+2 = 40-26-9+2 = 7 triples. Verifies the primitive handles a volatility-free environment without division errors or NaN propagation.",
+  "input": {
+    "closes_count": 40,
+    "closes_description": "40 closes all equal to 100.0",
+    "closes_pattern": "flat[0..39]=100.0",
+    "fast": 12,
+    "slow": 26,
+    "signalPeriod": 9
+  },
+  "expectedOutput": {
+    "outputLength": 7,
+    "macdLine": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "signalLine": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "histogram": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "tolerance": 1e-10,
+    "note": "All EMAs collapse to 100.0 on flat closes. MACD=fastEMA-slowEMA=0 everywhere. Signal=EMA(zeros)=0. Histogram=0. No NaN, no division error."
+  }
+}

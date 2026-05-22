@@ -1,0 +1,23 @@
+{
+  "primitive": "CalculateBollingerBands",
+  "category": "golden",
+  "description": "Canonical Bollinger Bands golden vector: 20 closes, period=5, multiplier=2.0. Population stdDev (divisor N). Output length = 20-5+1 = 16 windows. First window: closes[0:5]=[10,11,12,10.5,11.5]; mean=11.0; sumSq=(1+0+1+0.25+0.25)=2.5; stdDev=sqrt(2.5/5)=sqrt(0.5)=0.707107; upper=11.0+2*0.707107=12.414214; lower=11.0-2*0.707107=9.585786. All 16 triples verified by Go implementation.",
+  "input": {
+    "closes": [
+      10.0, 11.0, 12.0, 10.5, 11.5,
+      13.0, 12.5, 11.0, 10.0, 12.0,
+      13.5, 14.0, 13.0, 12.5, 11.5,
+      12.0, 13.0, 14.5, 15.0, 14.0
+    ],
+    "period": 5,
+    "multiplier": 2.0
+  },
+  "expectedOutput": {
+    "upper":  [12.414214, 13.320465, 13.620465, 13.554724, 13.735416, 13.854066, 14.216609, 15.093326, 15.328427, 14.414214, 14.620465, 14.320465, 13.566190, 14.759126, 15.927636, 15.854066],
+    "middle": [11.000000, 11.600000, 11.900000, 11.700000, 11.600000, 11.700000, 11.800000, 12.100000, 12.500000, 13.000000, 12.900000, 12.600000, 12.400000, 12.700000, 13.200000, 13.700000],
+    "lower":  [9.585786, 9.879535, 10.179535, 9.845276, 9.464584, 9.545934, 9.383391, 9.106674, 9.671573, 11.585786, 11.179535, 10.879535, 11.233810, 10.640874, 10.472364, 11.545934],
+    "length": 16,
+    "tolerance": 0.000001,
+    "note": "Population stdDev (divisor N). First window: mean=11.0, stdDev=sqrt(0.5)=0.707107. upper=middle+2*stdDev, lower=middle-2*stdDev. Cross-verified with Go implementation."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "primitive": "DetectCross",
+  "category": "edge",
+  "description": "Parallel-no-cross scenario: fastLine always strictly above slowLine throughout all 5 bars. Both lines trend upward in parallel with no sign change in (fast-slow). The diff series is always positive (2.0 throughout), so no bullish or bearish cross event fires. Verifies DetectCross returns an empty event slice (not nil — nil vs empty is a valid implementation detail, but eventCount must be 0) without error when given valid input with no crossovers.",
+  "input": {
+    "fastLine": [5.0, 6.0, 7.0, 6.5, 5.5],
+    "slowLine": [3.0, 3.5, 4.0, 3.5, 3.0]
+  },
+  "expectedOutput": {
+    "events": [],
+    "eventCount": 0,
+    "error": null,
+    "note": "diff[i]=(fast-slow)=[2.0,2.5,3.0,3.0,2.5] — always positive. No sign change → no cross events. Empty slice returned (not nil error). eventCount MUST be 0."
+  }
+}

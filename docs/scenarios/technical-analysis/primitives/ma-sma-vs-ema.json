@@ -1,0 +1,16 @@
+{
+  "primitive": "CalculateMovingAverage",
+  "category": "golden",
+  "description": "SMA vs EMA divergence scenario: 7 closes with a peak-then-decline pattern (period=3, alpha=2/(3+1)=0.5). SMA and EMA seed identically at index 0 (both = mean of first 3 closes = 4.0). EMA then lags the SMA on the rising side and leads on the falling side due to alpha-weighting. Both produce 5 output values. Verifies: (1) SMA and EMA seed equal on first value; (2) EMA reacts faster to price changes than SMA on upswing; (3) EMA decays faster than SMA on downswing. All values cross-verified with Go implementation.",
+  "input": {
+    "closes": [2.0, 4.0, 6.0, 8.0, 6.0, 4.0, 2.0],
+    "period": 3
+  },
+  "expectedOutput": {
+    "sma": [4.000000, 6.000000, 6.666667, 6.000000, 4.000000],
+    "ema": [4.000000, 6.000000, 6.000000, 5.000000, 3.500000],
+    "length": 5,
+    "tolerance": 0.000001,
+    "note": "alpha=0.5 (standard, not Wilder). EMA seed = SMA of closes[0:3] = (2+4+6)/3 = 4.0. SMA and EMA diverge at index 2: SMA=6.667 (window mean), EMA=6.0 (weighted). EMA leads the decline: index 4 EMA=3.5 vs SMA=4.0."
+  }
+}

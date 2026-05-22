@@ -1,0 +1,18 @@
+{
+  "primitive": "CalculateBollingerBands",
+  "category": "edge",
+  "description": "BB edge case: period equals the number of closes (len=5, period=5). Output length = 5-5+1 = 1 (single window covering the entire input). Closes=[10,12,11,13,12]; mean=(10+12+11+13+12)/5=11.6; sumSq=(2.56+0.16+0.36+1.96+0.16)=5.2; stdDev=sqrt(5.2/5)=sqrt(1.04)=1.019804; upper=11.6+2*1.019804=13.639608; lower=11.6-2*1.019804=9.560392. Population stdDev (divisor N). Verifies no off-by-one error at the boundary where period==len.",
+  "input": {
+    "closes": [10.0, 12.0, 11.0, 13.0, 12.0],
+    "period": 5,
+    "multiplier": 2.0
+  },
+  "expectedOutput": {
+    "upper":  [13.639608],
+    "middle": [11.600000],
+    "lower":  [9.560392],
+    "length": 1,
+    "tolerance": 0.000001,
+    "note": "Single window: period==len(closes). mean=11.6, stdDev=sqrt(1.04)=1.019804. Output has exactly 1 triple. No ErrInsufficientData (len >= period is satisfied)."
+  }
+}

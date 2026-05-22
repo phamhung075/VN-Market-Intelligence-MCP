@@ -1,0 +1,33 @@
+{
+  "primitive": "CalculateMovingAverage",
+  "category": "failure",
+  "description": "Dispatcher unknown-type failure scenario: CalculateMovingAverage called with an unsupported maType. Three sub-cases: (1) maType=WMA (Weighted MA — not implemented); (2) maType=VWMA (Volume-Weighted — not implemented); (3) maType='' (empty string). All must return ErrUnknownMAType and nil output. Verifies the dispatcher rejects anything other than SMA/sma/EMA/ema.",
+  "input": {
+    "cases": [
+      {
+        "name": "unknown-wma",
+        "closes": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "period": 3,
+        "maType": "WMA"
+      },
+      {
+        "name": "unknown-vwma",
+        "closes": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "period": 3,
+        "maType": "VWMA"
+      },
+      {
+        "name": "empty-matype",
+        "closes": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "period": 3,
+        "maType": ""
+      }
+    ]
+  },
+  "expectedOutput": {
+    "sma": null,
+    "ema": null,
+    "error": "moving_average: unknown maType: must be SMA or EMA",
+    "note": "All three cases MUST return ErrUnknownMAType. Output MUST be nil. Case-insensitive matching applies only for SMA/EMA — any other string is rejected regardless of casing."
+  }
+}

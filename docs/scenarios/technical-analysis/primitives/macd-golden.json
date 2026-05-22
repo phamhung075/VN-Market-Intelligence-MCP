@@ -1,0 +1,34 @@
+{
+  "primitive": "CalculateMACD",
+  "category": "golden",
+  "description": "Canonical MACD golden vector (12/26/9): 60 closes — 30 flat at 100.0 (seeds both EMAs to 100), then +2.0 per candle for 30 candles (rising trend). Fast EMA (12) responds quicker than slow EMA (26), generating positive MACD line throughout the ramp. Output length = 60-26-9+2 = 27 triples. First triple verified by step-through computation: fast EMA seeds diverge after close[26] departure from flat. Cross-verified with Go implementation.",
+  "input": {
+    "closes_count": 60,
+    "closes_description": "60 closes — 30 flat at 100, then +2/candle ramp to 160",
+    "closes_pattern": "flat[0..29]=100.0; ramp[30..59]=100.0+(i-29)*2.0",
+    "fast": 12,
+    "slow": 26,
+    "signalPeriod": 9
+  },
+  "expectedOutput": {
+    "outputLength": 27,
+    "firstTriple": {
+      "macdLine": 1.263097,
+      "signalLine": 0.298132,
+      "histogram": 0.964964,
+      "tolerance": 0.001
+    },
+    "lastTriple": {
+      "index": 26,
+      "macdLine": 11.588828,
+      "signalLine": 10.592818,
+      "histogram": 0.996010,
+      "tolerance": 0.001
+    },
+    "invariants": {
+      "macdLineAlwaysPositive": true,
+      "histogramAlwaysPositive": true,
+      "note": "Rising trend forces fastEMA above slowEMA throughout. MACD and histogram both positive for all 27 triples."
+    }
+  }
+}
