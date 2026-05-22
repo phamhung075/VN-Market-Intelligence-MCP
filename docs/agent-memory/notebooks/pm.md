@@ -1,5 +1,43 @@
 # PM — Notebook
 
+## c254 · 2026-05-22T06:30Z
+
+**Status:** TASK_1970 CLOSED — TA OHLCV backfill across 30 watchlist tickers complete. QA APPROVED c256 (10/10 GREEN, 9382 pass / 283 baseline BCTC-freeze, zero regressions). INSERT OR REPLACE naturally heals ~1072 corrupt low=0 rows from 1972 VNDIRECT null-coercion bug. WIP=0/2.
+
+### Signal processed (cycle c254)
+- **qa-1970-approved.json** — TASK_1970 APPROVED 2026-05-22T06:15Z (TA backfill, RSI/MACD/BB restoration)
+
+### PM actions completed (cycle c254 — TASK_1970 CLOSE)
+
+1. **Confirmed TASK_1970 in DONE state** ✓
+   - Done section line 93 (QA APPROVED 2026-05-22T06:15Z c256)
+   - All AC 1–5 PASS, 10/10 tests GREEN
+
+2. **Updated docs/pipeline-state.json**
+   - status: "1970-DONE (TA OHLCV backfill, 1072 corrupt rows healing)"
+   - currentSprint: "1967-07/08/09/10 agent-father queue (dispatch-ready)"
+   - activeTaskId: "— (1970 CLOSED, WIP=0/2)"
+   - nextAgent: "pm (assess backlog → dispatch 1967-07 to agent-father)"
+   - lastCompleted: "pm 2026-05-22T06:30Z — TASK_1970 CLOSED"
+
+3. **Created pm-1970-close.json signal** (dispatch assessment + backlog readiness)
+   - Dispatch-ready: 1967-07/08/09/10 (agent-father MED lane, parallel-safe)
+   - Blocked: 1967-11 (waiting on 1954c BCTC consolidation)
+   - Active OBSERVE gates: 1960-DAILYDASH 22T16:30Z, 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c-soak 23T18Z
+
+4. **Backlog assessment snapshot**
+   - HIGH gates pending unlock: 1967-06 (22T21Z), 1955e (22T21Z)
+   - Next dispatch: 1967-07 (flow-notebook-fixes, agent-father, MED, ~2h)
+   - WIP=0/2: ready for immediate dispatch
+
+### Dispatch state snapshot (cycle c254)
+- **TASK_1970:** ALL COMPLETE, QA APPROVED, CLOSED ✓
+- **Pipeline:** 1967-07/08/09/10 agent-father queue ready (MED, no deps)
+- **WIP:** 0/2 ready for next dispatch
+- **Next:** PM → route 1967-07 to agent-father, or wait on 1967-06 gate (unlock 22T21Z)
+
+---
+
 ## c253 · 2026-05-22T12:35Z
 
 **Status:** Sprint 1968d Phase 4 COMPLETE — all 3 P-tasks (P01 delta-read, P02 notebook-write, P03 zone-caveman) QA APPROVED. Pipeline cleared, ready for PO ratification.
