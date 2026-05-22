@@ -133,8 +133,11 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
     log "[dev-team] SKIP pipeline resume " + resume_key + " — held by peer session"
     # fall through to Step 1 (do NOT spawn)
   else:
-    Agent(nextAgent, context...)
-    call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
+    try:
+      Agent(nextAgent, context...)
+    finally:
+      call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
+      # ok=false is acceptable (TTL expired or inner self-claim already released)
     JUMP TO execute
   ```
 - `in_progress` AND `updatedAt ≥ 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.

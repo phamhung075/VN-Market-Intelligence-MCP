@@ -111,3 +111,39 @@ Lock is released on ALL exit paths (success, failure, exception).
 - ITEM-17 (execute-tier outer release not in try/finally)
 - ITEM-22 (dispatcher-wrap no try/finally in 2 sites)
 - dispatch-claim SKILL.md (correct pattern reference)
+
+---
+
+## [Agent-father] IMPL_DONE
+
+**Commit:** TBD (see below) | **Zone:** `.claude/` | **ts:** 2026-05-22T12:45Z
+
+### AC Table
+
+| # | Criterion | Status |
+|---|---|---|
+| AC-1 | execute-tier.md Step 1+2+3 wrapped in try/finally | PASS |
+| AC-2 | dev-team/main.md pipeline-resume block wrapped in try/finally | PASS |
+| AC-3 | task_release() inside finally (reachable on all paths) | PASS |
+| AC-4 | Simulate exception → task_release fires (pattern verified vs cowork-team reference) | PASS |
+| AC-5 | Normal flow → task_release fires | PASS |
+| AC-6 | tsc 0 errors | PASS (markdown-only, no .ts touched) |
+
+### Files Changed
+
+- `.claude/flows/dev-team/execute-tier.md` — Steps 2+3 wrapped in try/finally; spawned_batch[] explicit; release in finally loop
+- `.claude/flows/dev-team/main.md` — pipeline-resume Agent() call wrapped in try/finally; release moved into finally
+
+### Changes Summary
+
+**execute-tier.md (ITEM-17):**
+- Step 1 claim-loop now collects `spawned_batch[]` (only claimed tasks, not the full tier_batch)
+- Steps 2+3 collapsed into a single `try/finally` block
+- `finally` contains the release loop — fires on ALL exit paths including exception
+
+**dev-team/main.md pipeline-resume (ITEM-22 / S2):**
+- `Agent(nextAgent, context...)` now inside `try` block
+- `task_release(resume_key)` moved from sequential position into `finally` block
+
+**Quality:** smart-skip (markdown-only, `.claude/flows/` zone)
+**NEXT:** qa

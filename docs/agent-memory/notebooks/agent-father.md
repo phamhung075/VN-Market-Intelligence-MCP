@@ -1,37 +1,6 @@
 # Agent Father — Notebook
 
 
-## c253 · 2026-05-22T11:05Z
-
-**Sprint:** 1968d | **Cycle:** pm Wave 1 close
-
-**P01 + P02 QA ROUND 2 APPROVED (11:00Z):**
-- Fixer commits b637bd8b + 05b7b40f verified clean
-- Delta-read dogfood PASS (fixer section only returned, 7.6% of full)
-- Notebook-write dogfood PASS (c<NNN> anchor format applied to c252 entry)
-- Both tasks flipped to DONE in TASKS.md + QA round-2 metadata added
-- TASKS.md rows 10–12 updated (P01/P02 status + P03 gate removed)
-
-**Pipeline state updated:**
-- 1968d-WAVE1-DONE (was WAVE1-QA-PENDING)
-- 1968d-WAVE2-READY (P03 unblocked)
-- activeTaskId: P01+P02 removed, P03 added to Todo
-- lastCompleted: PM 2026-05-22T11:05Z — 1968d Wave 1 CLOSED
-- nextAgent: agent-father (P03 dispatch)
-
-**P03 dispatch signal emitted:**
-- docs/signals/pm-1968d-wave1-closed.json
-- Contains zone dictionaries JSON for caveman SKILL append (5 zones: mcp-server, stock-price, alert-engine, bctc-extractor, .claude)
-- Activation rule + backward compat documented
-- Single-task claim workflow noted (no parallel)
-
-**Token-economy live impact:**
-- L-10 (delta-read SKILL): 50–150 KB/trading-day I/O saved
-- L-12 (notebook-write diff-write): ~10–20 KB write I/O + ~30% reduction per cycle
-- Aggregated into Phase 4 tally when P03 lands
-
-**Signals emitted:** pm-1968d-wave1-closed.json → NEXT=agent-father
-
 ## c254 · 2026-05-22T12:00Z
 
 **Sprint:** 1968d | **Task:** P03 (per-zone caveman dictionaries)
@@ -64,6 +33,18 @@ AC-1..AC-5: ALL PASS.
 
 Signal: agent-father-1967-07-done.json → NEXT=qa
 
+## c256 · 2026-05-22T12:45Z
+
+**Sprint:** 1967c | **Task:** 1967-08 (dispatcher-wrap try/finally)
+
+**ITEM-17 + ITEM-22 FIXED:**
+- execute-tier.md: Step 1 claim-loop now populates `spawned_batch[]` (claimed tasks only). Steps 2+3 wrapped in `try/finally` — release loop in `finally` block reachable on ALL exit paths (success + exception).
+- dev-team/main.md pipeline-resume (S2): `Agent(nextAgent)` now wrapped in `try/finally` — `task_release(resume_key)` in `finally` block.
+- Both sites now match cowork-team/main.md reference pattern (CORRECT).
+- AC-1..AC-5 PASS. AC-6 (tsc): markdown-only zone, 0 .ts touched.
+
+**Signal emitted:** docs/signals/agent-father-1967-08-done.json → NEXT=qa, QUALITY=smart-skip
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
@@ -72,3 +53,4 @@ Signal: agent-father-1967-07-done.json → NEXT=qa
 - 1968d-P01/P02: QA APPROVED, DONE (Round-2 verified)
 - 1968d-P03: DONE — awaiting qa approval
 - 1967-07: IMPL_DONE — awaiting smart-skip qa
+- 1967-08: IMPL_DONE — awaiting smart-skip qa
