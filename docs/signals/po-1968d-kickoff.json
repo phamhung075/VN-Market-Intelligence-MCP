@@ -1,0 +1,100 @@
+{
+  "schema": "po-sprint-kickoff/v1",
+  "sprint": "1968d",
+  "from_agent": "po",
+  "to_agent": "ba",
+  "signal_type": "sprint_kickoff",
+  "from": "po",
+  "to": "ba",
+  "generated_at": "2026-05-22T04:57:24Z",
+  "cycle_id": "c250",
+  "phase": "token-toolcall-economy-phase-4",
+  "parent_brief": "docs/architecture-briefs/2026-05-21-token-toolcall-economy.md",
+  "sprint_goal_ref": "docs/SPRINT_GOAL.md § Sprint 1968d",
+  "title": "Sprint 1968d — Token & Tool-Call Economy Phase 4 (L-10 + L-12 + L-14)",
+  "user_demand": "continue token/tool-call economy hunt; do not idle; scope next wave alongside active 1971 SEV-1 hotfix",
+  "fleet_state_at_kickoff": {
+    "wip_active": 1,
+    "wip_active_task": "1971-STOCKPRICE-SCAN-ORDER-MISMATCH (dev-stock-price, SEV-1 USER-BUG, XS)",
+    "wip_queued": ["1970-TA-OHLCV-BACKFILL (dev-mcp-server, gated)", "1972-VNDIRECT-OHLCV-NULL-COERCION (dev-mcp-server, queued)"],
+    "observe_gates_standing": ["1965d 23T03Z", "1960 22T16:30Z", "1955e 22T21Z", "1965c-soak 23T18Z", "1957d 23T07:05Z", "1955c 25T01:30Z", "1907a-verify 24T14:30Z", "1941b 25Z", "1922g 06-01"],
+    "bctc_freeze": "NFR-3 in effect"
+  },
+  "levers_selected": [
+    {
+      "id": "L-10",
+      "task_id": "1968d-P01",
+      "title": "handoff delta-read SKILL + flow updates (qa/developer/fixer)",
+      "tier": 3,
+      "est_savings": "50-150 KB/trading-day across QA + developer + fixer handoff re-reads",
+      "zone": ".claude/skills/handoff-delta-read/ + .claude/flows/",
+      "owner": "agent-father",
+      "wave": 1,
+      "depends": []
+    },
+    {
+      "id": "L-12",
+      "task_id": "1968d-P02",
+      "title": "notebook diff-write SKILL refactor (section-overwrite + 3-cycle retention)",
+      "tier": 2,
+      "est_savings": "~10-20 KB write I/O / trading-day across 10 active agents + searchable history",
+      "zone": ".claude/skills/notebook-write/",
+      "owner": "agent-father",
+      "wave": 1,
+      "depends": []
+    },
+    {
+      "id": "L-14",
+      "task_id": "1968d-P03",
+      "title": "per-zone caveman dictionaries (5 zones: mcp-server, stock-price, alert-engine, bctc, .claude)",
+      "tier": 3,
+      "est_savings": "10-15% extra compression on zone-scoped signals + DASHBOARD rows (~5 KB/trading-day)",
+      "zone": ".claude/skills/caveman/",
+      "owner": "agent-father",
+      "wave": 2,
+      "depends": ["1968d-P01", "1968d-P02"]
+    }
+  ],
+  "levers_rejected": {
+    "L-11": "signal-bus batching — RISKY: changes signal-file contract used by 10+ agents + dispatcher. Collision risk with active 1971/1970/1972 comms. Defer to Phase 5 architect brief.",
+    "L-13": "TASKS.md row-level patch — LOWER ROI than estimated. TASKS.md is 146L (not 250L); already partially row-level patched. Defer until file regrows >200L.",
+    "L-15": "pipeline-state delta-merge — file is 11 lines, delta overhead > rewrite cost. Skip permanently.",
+    "L-16": "MCP tool result caching at gateway — TOUCHES apps/mcp-server/ same zone as 1970/1972 hotfix queue + stale-cache poisoning risk for alert verdicts. Defer to architect brief for cache-invalidation design first."
+  },
+  "wave_plan": {
+    "wave_1": {
+      "tasks": ["1968d-P01", "1968d-P02"],
+      "parallel": true,
+      "owner": "agent-father (task-lock Phase 4 dual-claim OR serial)",
+      "rationale": "Both .claude/skills/ sibling files, no collision"
+    },
+    "wave_2": {
+      "tasks": ["1968d-P03"],
+      "gated_on": "Wave 1 QA APPROVED on both P01 + P02",
+      "owner": "agent-father",
+      "rationale": "L-14 zone dictionary may reference L-10 delta-read pattern in examples → serial reduces rework"
+    },
+    "sprint_close": {
+      "trigger": "all 3 P-tasks QA APPROVED",
+      "actor": "po",
+      "output": "docs/signals/po-1968d-close.json with cumulative Phase 1+2+3+4 savings tally"
+    }
+  },
+  "roi_summary": {
+    "phase_4_combined_target": "~70-170 KB/trading-day I/O reduction + notebook searchability + zone-aware caveman quality",
+    "cumulative_with_phase_1_2_3": "1968+1968a/b/c achieved ~50% cowork-cycle token efficiency + ~100 MCP-calls/day saved; Phase 4 extends to read-side/write-side bytes lane + caveman additive compression",
+    "risk_profile": "identical to Phase 1/2/3 — pure .claude/ .md surgery, no Docker rebuild, no schema, no BCTC, no cron change, no apps/* touch"
+  },
+  "constraints": {
+    "no_apps_touch": true,
+    "no_docker_rebuild": true,
+    "no_db_schema_change": true,
+    "no_bctc_zone": true,
+    "no_cron_schedule_change": true,
+    "wip_cap_2_honored": true,
+    "main_branch_only": true,
+    "recurring_bug_escalation_triggered": false
+  },
+  "next_action": "ba decomposes 1968d into TASK_1968d-P01 + TASK_1968d-P02 + TASK_1968d-P03 handoffs with AC-1..AC-5 per task; emits docs/signals/ba-1968d-spec-ready.json; hands back to PO for spec review",
+  "next_agent": "ba"
+}

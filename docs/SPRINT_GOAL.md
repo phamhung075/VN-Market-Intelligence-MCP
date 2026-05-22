@@ -1,3 +1,97 @@
+# Sprint 1968d Goal — Token & Tool-Call Economy Phase 4 (L-10 + L-12 + L-14) [OPEN 2026-05-22T04:57Z]
+
+**Status:** OPEN 2026-05-22T04:57Z (po c250 kickoff per user demand "continue economy hunt — do not idle"). **Severity:** MEDIUM (cost-reduction, no incident). **Owner:** agent-father (sole executor, pure `.claude/` agent-system .md surgery). **Parent:** Sprints 1968 + 1968a/b/c CLOSED (Phase 1+2+3 cumulative ~50% cowork-cycle token efficiency achieved). **Parallel with:** Sprint 1971 (SEV-1 USER-BUG FPT close=0, dev-stock-price zone, XS fix in flight) + queued 1970/1972 + standing OBSERVE gates (1965d 23T03Z, 1960 22T16:30Z, 1955e 22T21Z, 1965c soak through 23T18Z, 1957d 23T07:05Z).
+
+## Vision
+Land the next 3 high-ROI zero-collision levers picked from Phase 4 survey: **L-10 handoff delta-read**, **L-12 notebook diff-write**, **L-14 per-zone caveman dictionaries**. Continues the token+call hunt without touching any apps/* zone (no risk of collision with active 1971 hotfix, no Docker rebuild, no BCTC NFR-3 violation, no schema/cron change). All 3 are agent-father .md surgery — identical risk profile to Phase 1/2/3.
+
+## Levers Selected (PO survey c250)
+Survey of router-proposed L-10..L-16 produced this 3-pick. Levers REJECTED with reasoning at bottom of section.
+
+| Lever | Title | Tier | Est. savings | Zone | Owner |
+|---|---|---|---|---|---|
+| **L-10** | Handoff-file delta-read (anchor by section heading + last-read timestamp) | 3 | ~3–8 KB saved per QA/Fixer/Developer re-read; many re-reads per task ⇒ 50–150 KB/trading-day | `.claude/skills/` + 3–4 agent flows | agent-father |
+| **L-12** | Notebook diff-write (last-cycle section overwrite, prior cycles preserved) | 2 | Eliminates full-notebook rewrite each cycle for ~10 active agents; ~80–150L write avoided per cycle per agent ⇒ ~10–20 KB write I/O / trading-day + searchable history | `.claude/skills/notebook-write/SKILL.md` + body-discipline doc | agent-father |
+| **L-14** | Per-zone caveman dictionaries (mcp-server / stock-price / alert-engine / bctc / cowork map common phrases) | 3 | Additive on top of base caveman; ~10–15% extra compression on zone-scoped signals + DASHBOARD rows ⇒ ~5 KB/trading-day | `.claude/skills/caveman/SKILL.md` + zone-map appendix | agent-father |
+
+**Combined Phase 4 target:** ~70–170 KB/trading-day I/O reduction + notebook history searchability + zone-aware caveman quality bump. No new MCP calls saved (Phase 1+2+3 already harvested that lane); Phase 4 hunt is in **read-side / write-side bytes** + caveman additive compression.
+
+**Rejected from router shortlist:**
+- **L-11 (signal-bus batching)** — RISKY: changes signal-file contract used by 10+ agents + dispatcher. High collision potential with active 1971/1970/1972 dev-team comms. Defer to Phase 5 architect brief.
+- **L-13 (TASKS.md row-level patch protocol)** — LOWER ROI than router estimated. TASKS.md is currently **146L** (not 250L); already partially row-level patched. Saves <5L per PM cycle. Defer until file regrows >200L.
+- **L-15 (pipeline-state.json delta-merge)** — File is **11 lines**. Delta-merge overhead > rewrite cost. Skip permanently.
+- **L-16 (MCP tool result caching at gateway)** — TOUCHES apps/mcp-server/ which is the SAME zone as 1970/1972 hotfix queue + creates risk of stale cache poisoning alert verdicts. Cross-cuts with NFR-2 (no schema change). Defer to architect brief for cache-invalidation design first.
+
+## Sequencing (PO decided c250)
+**Wave 1 (NOW):** L-10 + L-12 in parallel (agent-father splits into two task-lock claims OR serial-claims both — task-lock Phase 4 supports either). Both touch `.claude/skills/` siblings (different files): L-10 creates `.claude/skills/handoff-delta-read/SKILL.md` + edits qa/developer/fixer flow read steps; L-12 edits `.claude/skills/notebook-write/SKILL.md` + adds section-anchor convention.
+
+**Wave 2 (gated on Wave 1 QA APPROVAL):** L-14 — needs both prior skills landed because zone dictionary appendix may itself reference the new delta-read pattern when introducing the dictionary file. agent-father claim, sole executor.
+
+**Anti-pattern rejected:** Firing all 3 in parallel. L-14 zone-dictionary file may be referenced from L-10's delta-read examples — serial ordering reduces re-work risk.
+
+**Parallel-safe with active dev-team work:** Sprint 1971 (dev-stock-price, apps/stock-price/) + queued 1970/1972 (dev-mcp-server, apps/mcp-server/) operate in microservice zones; 1968d operates in `.claude/` — zero file collision possible.
+
+## Scope
+**IN:**
+- **1968d-P01:** L-10 — Create `.claude/skills/handoff-delta-read/SKILL.md` (≤80L). Defines: (1) handoff file section anchor convention (`## §<N>-<slug>` headings); (2) reader stores last-read offset+anchor in calling signal payload (`last_read_anchor` field); (3) on re-read, agent jumps to anchor and reads only delta; (4) full-read fallback if anchor missing or older than 24h. Update qa/developer/fixer flows to call the new skill instead of full-Read on TASK_NNN handoffs. Owner: agent-father. Est savings: 50–150 KB/trading-day across QA + developer + fixer re-reads.
+- **1968d-P02:** L-12 — Update `.claude/skills/notebook-write/SKILL.md` from full-overwrite to **section-overwrite + prior-cycles preserved**. Section anchor: `## c<NNN> · <timestamp>`. Skill writes new c<N+1> section, leaves c<N>..c<N-2> intact, prunes c<N-3> and older. Net: each cycle writes ~50L not ~150L; prior 2 cycles searchable in same file. Notebooks bounded ≤200L by retention rule. Update 10 cowork+dev notebook files to first-time-init blank-state. Owner: agent-father. Est savings: ~10–20 KB write I/O / trading-day + searchable history.
+- **1968d-P03:** L-14 — Append `## Zone Dictionaries` section to `.claude/skills/caveman/SKILL.md` with 5 zone maps: `apps/mcp-server/` {tool→t, server→s, handler→h, store→st, scheduler→sch}; `apps/stock-price/` {fetcher→f, scanner→sc, ohlcv→o, ticker→tk}; `apps/alert-engine/` {verdict→v, evaluator→ev, alert→a}; `apps/bctc-extractor/` {extractor→ex, pdf→p, ocr→oc, queue→q}; `.claude/` {agent→ag, flow→fl, skill→sk, signal→sg}. Activated via `zone:` field already present in batch entries. Backward compat: when zone unset, base caveman applies unchanged. Owner: agent-father. Est savings: 10–15% extra compression on zone-scoped signals + DASHBOARD rows.
+
+**OUT:**
+- Any apps/* code touch (collision-free guarantee).
+- Any DB schema, cron schedule, BCTC path, or Docker rebuild.
+- L-11, L-13, L-15, L-16 (rejected with reasoning above).
+- Retro-write of historical notebook history (only forward-write from Phase 4 deploy).
+
+## Success Metric
+- **AC-1 (P01):** `.claude/skills/handoff-delta-read/SKILL.md` ≤80L exists. qa-main.md, developer-main.md, fixer-main.md (if present) reference the skill in handoff-read steps. Smoke test: open a sample TASK handoff, simulate first-read+second-read, assert second-read I/O bytes ≤30% of first-read.
+- **AC-2 (P02):** `.claude/skills/notebook-write/SKILL.md` updated to section-overwrite mode with retention rule documented (keep last 3 cycles, prune older). Smoke test: 3 simulated cycles on a sample notebook → file contains c<N>+c<N-1>+c<N-2> sections, prior pruned, total ≤200L.
+- **AC-3 (P03):** `.claude/skills/caveman/SKILL.md` ## Zone Dictionaries section with all 5 zone maps. Smoke test: a sample signal carrying `zone: apps/mcp-server/` encodes 'tool→t, server→s, handler→h, store→st, scheduler→sch' and round-trips losslessly via decode.
+- **AC-4 (sprint close):** All 3 P-tasks QA APPROVED → PO emits `docs/signals/po-1968d-close.json` with cumulative Phase 1+2+3+4 savings tally + Phase 5 deferred-lever inventory (L-11, L-13-watchlist, L-16 architect brief request).
+
+## Tasks
+| ID | Title | Priority/Size | Owner | Zone | Status | Depends |
+|----|-------|---------------|-------|------|--------|---------|
+| 1968d-P01 | L-10 handoff delta-read SKILL + 3 flow updates | HIGH / M | agent-father | `.claude/skills/` + `.claude/flows/` | READY (wave 1) | — |
+| 1968d-P02 | L-12 notebook diff-write SKILL refactor | HIGH / M | agent-father | `.claude/skills/notebook-write/` | READY (wave 1, parallel with P01) | — |
+| 1968d-P03 | L-14 per-zone caveman dictionary appendix | MED / S | agent-father | `.claude/skills/caveman/` | GATED (wave 2, after P01 + P02 done) | 1968d-P01, 1968d-P02 |
+
+## Dispatch Slate — Wave 1 (BA decomposition next)
+```
+PIPELINE: continue
+NEXT: ba
+- ba → decompose 1968d into TASK_1968d-P01 + TASK_1968d-P02 + TASK_1968d-P03 handoffs with AC-1..AC-5 per task
+  inner self-claim task:1968d-ba-spec (kind=spec-decomp, ttl=3600s)
+  run .claude/flows/ba/main.md
+  read docs/SPRINT_GOAL.md § Sprint 1968d
+  read docs/architecture-briefs/2026-05-21-token-toolcall-economy.md (parent brief context)
+  emit docs/handoffs/TASK_1968d-P01-handoff-delta-read.md
+       docs/handoffs/TASK_1968d-P02-notebook-diff-write.md
+       docs/handoffs/TASK_1968d-P03-zone-caveman-dict.md
+  emit docs/signals/ba-1968d-spec-ready.json
+  handoff back to PO for spec review
+PENDING (wave 1, after BA spec PO-approved):
+  - agent-father → 1968d-P01 + 1968d-P02 (parallel, both .claude/skills/ but different subtrees)
+PENDING (wave 2, after agent-father-1968d-p01-done.json AND -p02-done.json):
+  - agent-father → 1968d-P03
+GATED (sprint close):
+  - po close → when all 3 P-tasks QA APPROVED + cumulative Phase 1+2+3+4 savings tally + Phase 5 deferred-lever inventory
+```
+
+## Constraints / Boundary
+- **No apps/* touch.** All 3 tasks are `.claude/` agent-system .md scope. Zero collision risk with active 1971 (dev-stock-price) or queued 1970/1972 (dev-mcp-server).
+- **WIP cap 2/2 honored.** Wave 1 uses agent-father (1–2 slots: P01+P02 via task-lock Phase 4 dual-claim). Wave 2 single-claim. dev-mcp-server / dev-stock-price slots NOT consumed.
+- **NFR-3 BCTC-freeze respected.** No BCTC zone touch.
+- **Recurring-bug-escalation NOT triggered.** Levers operate on agent-system skills, not on modules with ≥2 prior fix commits.
+- **Standing OBSERVE gates preserved:** 1957d (23T07:05Z), 1955c (25T01:30Z), 1955e (22T21Z), 1907a-verify (24T14:30Z), 1941b (25Z), 1922g (06-01), 1965c-soak (23T18Z), 1965d (23T03Z), 1960 (22T16:30Z). None touch 1968d scope.
+
+## Cross-Refs
+- Parent brief: `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md` (Phase 4 levers reference)
+- Parent close signals: `docs/signals/processed/po-1968-closed.json` + `po-1968c-close.json` (Phase 3 ratification)
+- Kickoff signal: `docs/signals/po-1968d-kickoff.json` (this sprint open, ROI summary + wave plan)
+
+---
+
 # Sprint 1968c Goal — Token & Tool-Call Economy Phase 3 (Tier 2/3 implementation) [CLOSED 2026-05-21T22:52:44Z]
 
 **Status:** CLOSED 2026-05-21T22:52:44Z (po ratified — signal `docs/signals/po-1968c-close.json`). All 3 P-tasks DONE+QA-APPROVED. Phase 3 levers L-6 + L-8 + L-9 ratified. Cumulative impact tally: P01 ~168 MCP calls/trading-day saved + P02 ~14 Read I/O saved per 15-min cowork tick (~1344/trading-day) + P03 50% payload reduction on filtered `get_agent_signals` calls. Combined with prior Phase 1+2: ~50% cowork-cycle token efficiency target hit. Fleet IDLE post-close. Next dev-team trigger: 2026-05-22T21:00Z OBSERVE-1955e unlock (1967-06 + watchdog-4) OR new bug from ops/system-auditor OR user-surfaced sprint.
