@@ -1,0 +1,91 @@
+{
+  "schema": "po-qa-dispatch/v1",
+  "from": "po",
+  "to": "qa",
+  "type": "qa-review-request",
+  "sprint": "1968d",
+  "tasks": ["1968d-P01-handoff-delta-read", "1968d-P02-notebook-diff-write"],
+  "timestamp": "2026-05-22T05:23:00Z",
+  "cycle_id": "c252",
+  "dispatch_mode": "parallel-batch (both .claude/skills/ siblings, no cross-file dependency)",
+  "rationale": "Both agent-father signals (P01-ready + P02-ready) carry IMPL_COMPLETE + smoke-test PASS + self-attested AC PASS. Zone identical (.claude/skills/), zero apps/* touch, zero BCTC, zero Docker rebuild. Single QA pass covers both efficiently — no test infra needed beyond static read + skill smoke.",
+
+  "task_1": {
+    "task_id": "1968d-P01-handoff-delta-read",
+    "handoff": "docs/handoffs/TASK_1968d-P01-handoff-delta-read.md",
+    "agent_done_signal": "docs/signals/processed/agent-father-1968d-P01-ready.json",
+    "files_changed": [
+      ".claude/skills/handoff-delta-read/SKILL.md",
+      ".claude/flows/qa/main.md",
+      ".claude/flows/developer/main.md",
+      ".claude/flows/fixer/main.md"
+    ],
+    "self_attested_ac": {
+      "AC-1": "PASS — SKILL.md 77L ≤80L; §N-slug anchor convention; delta-read algo; full-read fallback documented",
+      "AC-2": "PASS — qa/main.md Step 0c delta-read skill call; HANDOFF_DELTA in RETURN block",
+      "AC-3": "PASS — developer/main.md Step 0c delta-read skill call; HANDOFF_DELTA in RETURN block",
+      "AC-4": "PASS — full-read fallback explicit (anchor null, anchor not found, >24h stale)",
+      "AC-5": "PASS — git diff shows only .claude/ files; zero apps/ touch"
+    },
+    "smoke_test_attested": "PASS — delta_ratio 7.6% of full read (target ≤30%); backward_compat PASS; stale_fallback PASS",
+    "qa_verify_checklist": [
+      "Read .claude/skills/handoff-delta-read/SKILL.md — confirm ≤80L (po pre-check: 77L), confirm §N-slug convention + delta-read algo + full-read fallback wording",
+      "Read .claude/flows/qa/main.md — confirm Step 0c delta-read invocation + HANDOFF_DELTA returned",
+      "Read .claude/flows/developer/main.md — confirm Step 0c delta-read invocation",
+      "Read .claude/flows/fixer/main.md — confirm Step 0c delta-read invocation (BA included this since fixer flow exists)",
+      "Git diff scan: ensure ONLY .claude/ touched (zero apps/*, zero docs/, zero BCTC)",
+      "Smoke: pick any TASK_NNN handoff with §N-slug, simulate second read via skill steps, confirm delta ratio ≤30%",
+      "Backward-compat smoke: pick legacy handoff WITHOUT §N anchors, confirm silent full-read fallback (no error)"
+    ]
+  },
+
+  "task_2": {
+    "task_id": "1968d-P02-notebook-diff-write",
+    "handoff": "docs/handoffs/TASK_1968d-P02-notebook-diff-write.md",
+    "agent_done_signal": "docs/signals/processed/agent-father-1968d-P02-ready-replay.json",
+    "files_changed": [".claude/skills/notebook-write/SKILL.md"],
+    "self_attested_ac": {
+      "AC-1": "PASS — ## c<NNN> · <ISO-ts> anchor format; grep pattern documented",
+      "AC-2": "PASS — 3-cycle retention (c<N>, c<N-1>, c<N-2>); prune c<N-2>- older; no prune if <3 sections",
+      "AC-3": "PASS — Edit tool pattern: Step 1 prune oldest, Step 2 append new section",
+      "AC-4": "PASS — blank-state Write fallback if no ## c<NNN> heading present",
+      "AC-5": "PASS — ≤200L bound; additional prune + trim rule if exceeded"
+    },
+    "smoke_test_attested": "PASS — c98→c102 simulation; c98 pruned at c101, c99 pruned at c102; file_lines_after_c102=44L (≤200L); blank-state init PASS",
+    "qa_verify_checklist": [
+      "Read .claude/skills/notebook-write/SKILL.md — confirm 69L (po pre-check: well within ≤80L target / ≤200L cap)",
+      "Confirm ## c<NNN> · <ISO-ts> anchor format documented",
+      "Confirm 3-cycle retention rule explicit (c<N>, c<N-1>, c<N-2> kept; older pruned)",
+      "Confirm Edit-based write+prune pattern documented (NOT full Write overwrite)",
+      "Confirm blank-state Write fallback documented (first deploy / no anchor present)",
+      "Confirm ≤200L bound + trim rule for overflow",
+      "Smoke: simulate 3-cycle dogfood (c1→c2→c3→c4) — verify c1 pruned at c4, file stays ≤200L",
+      "Dogfood evidence check: agent-father signal claims its own notebook initialized via this skill's AC-4 blank-state path — verify docs/agent-memory/notebooks/agent-father.md has ≥1 ## c<NNN> heading"
+    ]
+  },
+
+  "global_checks": {
+    "zone_isolation": "Both tasks touch ONLY .claude/skills/ + .claude/flows/. PO pre-check: ls + wc confirms files exist within bounds. QA confirms via git diff.",
+    "bctc_freeze_nfr3": "Zero BCTC files touched in either task — pure .claude/ surgery.",
+    "no_docker_rebuild": "Pure .md changes; no rebuild required.",
+    "no_apps_touch": "Verified — both signals declare 5 files total, all under .claude/.",
+    "no_schema_change": "Verified — no .sql, no schema-*.ts, no migrations.",
+    "rollback": "git revert HEAD --no-edit (per agent-father signal); each task is its own commit per claim-lock pattern.",
+    "parallel_safety": "Both files are siblings under .claude/skills/, but separate directories (handoff-delta-read/ vs notebook-write/). Zero shared file. QA can review either order or simultaneously."
+  },
+
+  "post_qa_routing": {
+    "if_both_approved": "Emit qa-1968d-P01-approved.json + qa-1968d-P02-approved.json (or combined qa-1968d-wave1-done.json). PM then dispatches 1968d-P03 (Wave 2 GATED) to agent-father.",
+    "if_either_rejected": "Emit qa-1968d-P0X-changes-requested.json with specific AC failures. Agent-father re-runs that task. P03 remains gated.",
+    "if_both_rejected": "Escalate to po for spec-review re-audit (cycle c252 spec was reviewed clean at c251; rejection at QA implies execution divergence not spec ambiguity)."
+  },
+
+  "wip_context": {
+    "dev_team_wip_before": "0/2 (1971 CLOSED 2026-05-22T07:45Z PM, frees slot)",
+    "agent_father_wip": "2/2 (P01+P02 in QA review — qa is verification, not new dev slot)",
+    "dev_mcp_server_queue": ["1970-TA-OHLCV-BACKFILL", "1972-VNDIRECT-OHLCV-NULL-COERCION"],
+    "po_recommendation_to_pm": "Dispatch 1970 immediately (TA broken across all 30 watchlist tickers, user-facing severity). 1972 next when WIP frees (1070 rows low=0, ~2.6%, lower urgency)."
+  },
+
+  "next_agent": "qa"
+}
