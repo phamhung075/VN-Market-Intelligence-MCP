@@ -1,0 +1,52 @@
+{
+  "module": "technical-analysis",
+  "primitives": ["CalculateBollingerBands", "CalculateSMA", "CalculateEMA"],
+  "input": {
+    "closes_length": 40,
+    "description": "40 nearly-flat prices (100.0 + i*0.01, i=0..39) — micro-increment series produces narrow Bollinger Bands (bandwidth ≈ 0.23) and near-zero SMA/EMA spread; models volatility compression before a breakout",
+    "params": {
+      "RSIPeriod": 14,
+      "MACDFast": 12,
+      "MACDSlow": 26,
+      "MACDSignal": 9,
+      "BBPeriod": 20,
+      "BBMultiplier": 2.0,
+      "MAPeriod": 20,
+      "MAType": "SMA"
+    }
+  },
+  "expectedOutput": {
+    "BBUpper_populated": true,
+    "BBMiddle_populated": true,
+    "BBLower_populated": true,
+    "BB_length": 21,
+    "BB_bandwidth_max": 0.25,
+    "BB_Upper_first_approx": 100.2103,
+    "BB_Middle_first_approx": 100.0950,
+    "BB_Lower_first_approx": 99.9797,
+    "BB_tolerance": 0.001,
+    "SMA_populated": true,
+    "SMA_length": 21,
+    "EMA_populated": true,
+    "EMA_length": 21,
+    "SMA_EMA_spread_max": 0.001,
+    "RSI_populated": true,
+    "RSI_length": 26,
+    "MACDLine_populated": true,
+    "MACDLine_length": 7,
+    "error": null
+  },
+  "description": "Bollinger Bands compress to bandwidth ≈ 0.23 on flat series; SMA and EMA are identical (zero spread) at first output point. All 3 BB series + both MAs populated. Models a volatility squeeze scenario. Spot-checked: BB[0] upper=100.2103, mid=100.0950, lower=99.9797; SMA[0]=EMA[0]=100.0950.",
+  "category": "golden",
+  "spot_check": {
+    "verified_by": "go run /tmp/spotcheck2.go",
+    "BB_Upper_first_exact": 100.2103,
+    "BB_Middle_first_exact": 100.0950,
+    "BB_Lower_first_exact": 99.9797,
+    "BB_bandwidth_first_exact": 0.2307,
+    "SMA_first_exact": 100.0950,
+    "EMA_first_exact": 100.0950,
+    "SMA_EMA_spread_exact": 0.0,
+    "tolerance": 1e-3
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "module": "technical-analysis",
+  "primitives": ["CalculateRSI", "CalculateMACD", "DetectCross"],
+  "input": {
+    "closes_length": 50,
+    "description": "50 prices: 20-bar decline (50.0 down to 34.2, step -0.8) then 30-bar rally (step +0.9) — RSI rises from oversold through 50; MACD line converges toward signal",
+    "params": {
+      "RSIPeriod": 14,
+      "MACDFast": 12,
+      "MACDSlow": 26,
+      "MACDSignal": 9,
+      "MAPeriod": 14,
+      "MAType": "EMA"
+    }
+  },
+  "expectedOutput": {
+    "RSI_populated": true,
+    "RSI_length": 36,
+    "RSI_first": 0.0,
+    "RSI_last_approx": 89.33,
+    "RSI_last_tolerance": 0.01,
+    "RSI_range": [0, 100],
+    "MACDLine_populated": true,
+    "MACDLine_length": 17,
+    "MACDLine_last_positive": true,
+    "SignalLine_populated": true,
+    "Histogram_populated": true,
+    "EMA_populated": true,
+    "CrossSignals_non_nil": true,
+    "error": null
+  },
+  "description": "RSI rises from oversold (0) through 50 on rally; MACD line turns positive (bullish). RSI + MACD both computed on the same 50-price dip-and-rally series. Spot-checked: RSI[0]=0.0000, RSI[last]≈89.33; MACD length=17, last MACDLine≈4.19.",
+  "category": "golden",
+  "spot_check": {
+    "verified_by": "go run /tmp/spotcheck.go",
+    "RSI_first_exact": 0.0,
+    "RSI_last_exact": 89.3334,
+    "MACDLine_first_exact": -0.1164,
+    "MACDLine_last_exact": 4.1853,
+    "SignalLine_last_exact": 3.3256,
+    "Histogram_last_exact": 0.8598,
+    "tolerance": 1e-3
+  }
+}

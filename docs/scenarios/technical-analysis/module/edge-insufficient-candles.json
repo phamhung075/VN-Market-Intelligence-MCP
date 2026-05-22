@@ -1,0 +1,44 @@
+{
+  "module": "technical-analysis",
+  "primitives": ["CalculateRSI", "CalculateMACD", "CalculateBollingerBands", "CalculateSMA", "CalculateEMA", "DetectCross"],
+  "input": {
+    "closes_length": 10,
+    "description": "10 prices (10.0 + i, i=0..9). All default periods require more data: RSI(14) needs 15 closes, MACD(12,26,9) needs 35 closes, BB(20) needs 20 closes, SMA(14)/EMA(14) need 14 closes. 10 prices satisfies none of these — all primitives degrade gracefully (non-fatal policy: fields stay nil, module returns (Result{}, nil)).",
+    "params": {
+      "RSIPeriod": 14,
+      "MACDFast": 12,
+      "MACDSlow": 26,
+      "MACDSignal": 9,
+      "BBPeriod": 20,
+      "BBMultiplier": 2.0,
+      "MAPeriod": 14,
+      "MAType": "SMA"
+    }
+  },
+  "expectedOutput": {
+    "RSI_nil": true,
+    "MACDLine_nil": true,
+    "SignalLine_nil": true,
+    "Histogram_nil": true,
+    "BBUpper_nil": true,
+    "BBMiddle_nil": true,
+    "BBLower_nil": true,
+    "SMA_nil": true,
+    "EMA_nil": true,
+    "CrossSignals_nil": true,
+    "error": null,
+    "non_fatal_policy": "module.Compute returns (Result{}, nil) — zero struct, nil error. All fields nil. No panic, no fatal error."
+  },
+  "description": "Edge case: 10 candles is insufficient for all 5 primitives at their default periods. Non-fatal policy: each primitive error is swallowed, its output field remains nil. module.Compute returns nil error. Spot-checked: all fields nil, err=nil confirmed via go run.",
+  "category": "edge",
+  "spot_check": {
+    "verified_by": "go run /tmp/spotcheck.go (Scenario 5 block)",
+    "RSI_nil_confirmed": true,
+    "MACD_nil_confirmed": true,
+    "BB_nil_confirmed": true,
+    "SMA_nil_confirmed": true,
+    "EMA_nil_confirmed": true,
+    "Cross_nil_confirmed": true,
+    "err_nil_confirmed": true
+  }
+}
