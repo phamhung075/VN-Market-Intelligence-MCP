@@ -45,6 +45,22 @@
 **Commits:** f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21)
 **Signal:** docs/signals/agent-father-1967-10-done.json → NEXT=qa
 
+## c259 · 2026-05-22T13:15Z
+
+**Sprint:** 1963 follow-up | **Task:** 1963-MW-IDENTITY review
+
+**Trigger:** PO commit 7c252993 routed market-watcher hallucination bug (4x consecutive cycles refusing own flow, claiming need for spawn_agent) to agent-father.
+
+**Audit result:** Task already DONE. TASK_1967-04 (commit 70503631, QA approved 2026-05-21T23:45Z, PM closed commit 6c16ec49) fully resolved the bug:
+- Step -0 identity assertion added to `.claude/flows/market-watcher/main.md` — fires before any MCP call, detects context overflow via YAML name field check
+- YAML frontmatter verified complete (5 required fields: name/color/description/tools/model)
+- `identity_role`, `no_self_abort`, `mcp_tool_available` constraints added to agent definition
+- `mcp-tools.md` added to `always_load` with anti-hallucination note
+
+**Compliance audit:** 5/5 checks passed — frontmatter valid, all `always_load` paths resolve, `flow.default` resolves, `inter_agent` routing present, version date current.
+
+**Decision:** No edit required. 1963-MW-IDENTITY is DONE per DASHBOARD collapsed comment. This invocation correctly resolves to a no-op review.
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
