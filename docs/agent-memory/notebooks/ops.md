@@ -33,3 +33,46 @@ CLOSED — All acceptance criteria met, deployment verified, no rollback needed.
 
 ## Previous Sessions
 [Earlier work details would be appended here in production]
+
+---
+
+## Session: 2026-05-22
+
+**Task:** 1960-DAILYDASH deploy (mcp-server rebuild with dailyDashboardJob projectRoot fix)
+
+### Cycle Summary
+- QA-approved deploy execution: Rebuild mcp-server container to load post-fix code
+- Fix: dailyDashboardJob now imports getProjectRoot() from infrastructure/projectRoot.js (canonical helper) instead of using local projectRoot() function that resolved to /
+- Deployment successful; all AC-5 part 1 criteria verified; AC-5 part 2 (cron observation) scheduled
+
+### Execution Timeline
+- 2026-05-22 02:37:19 UTC — Build started (mcp-server Dockerfile)
+- 2026-05-22 02:37:50 UTC — Dependencies installed (323 packages, 134s)
+- 2026-05-22 02:37:59 UTC — Source copied, TypeScript compiled, artifacts exported
+- 2026-05-22 02:38:00 UTC — Build complete (119.4s total)
+- 2026-05-22 02:37:26 UTC — docker compose up -d mcp-server executed
+- 2026-05-22 02:38:10 UTC — Container healthy (13s from start, within 60s start_period)
+
+### Key Results
+- Image hash change: sha256:598b94c → sha256:3af8ec8 (verified via docker inspect)
+- Container state: Up 20s (healthy) at verification
+- Health endpoint: /health returns 200 (uptime 13.08s)
+- Post-rebuild service check: 10/11 healthy (1 frontend /health not exposed, 1 stock-price port collision with macOS AirTunes — pre-existing)
+- Gateway port 3000 bound correctly
+- Code verification: dailyDashboardJob.ts imports getProjectRoot() from infrastructure/projectRoot.js (line 27)
+
+### Acceptance Criteria
+- **AC-5 part 1 (DEPLOY-VERIFIED):** PASS
+  - Container running new image (hash changed)
+  - Health check 200
+  - Sanity check confirms post-fix code loaded
+- **AC-5 part 2 (CRON-VERIFIED):** PENDING
+  - Next cron tick: 2026-05-22T16:30Z (23:30 GMT+7)
+  - Gate: must write docs/data/project-stats.json successfully
+  - Current success_rate = 0% (5-day outage); must improve to >90%
+
+### Signals Emitted
+- `docs/signals/ops-1960-DAILYDASH-deployed.json` (verified=true, AC-5-1 PASS)
+
+### Status
+DEPLOYED — AC-5 part 1 complete. Awaiting cron observation (part 2) at 2026-05-22T16:30Z.

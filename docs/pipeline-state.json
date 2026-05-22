@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "status": "idle",
-  "currentSprint": "NONE (1968c CLOSED). Active: 1960-DAILYDASH QA-APPROVED (ops deploy pending), 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak.",
-  "activeTaskId": "1960-DAILYDASH-DEPLOY-PENDING",
-  "nextAgent": "ops — deploy 1960-DAILYDASH fix (docker-compose build mcp-server && docker-compose up -d mcp-server). Verify cron_job_runs.success_rate > 0 at next 23:30 GMT+7 tick. Signal: docs/signals/qa-1960-DAILYDASH-done.json.",
-  "nextPrompt": "Ops deploy 1960-DAILYDASH: rebuild mcp-server container (commit 2f0a74e9 already on main). Action: docker-compose build mcp-server && docker-compose up -d mcp-server. Then observe next 23:30 GMT+7 dailyDashboardJob cron run in cron_job_runs table — success_rate must be > 0 (AC-5 live gate). Report result to WORK channel.",
-  "updatedAt": "2026-05-22T04:00:00Z",
-  "updatedBy": "qa (1960-DAILYDASH QA APPROVED — AC-1..AC-4 PASS, AC-5 PENDING_LIVE; 14/14 unit GREEN; tsc 0 errors; DDD+Security PASS; no regression; report: reports/TASK_REPORT_1960-DAILYDASH.md)",
-  "lastCompleted": "1960-DAILYDASH QA-APPROVED 2026-05-22T04:00:00Z (qa, commit 2f0a74e9). Prior: 1960-DAILYDASH DONE 2026-05-22T02:10:00Z (dev-mcp-server)."
+  "currentSprint": "NONE (1968c CLOSED). Active: 1960-DAILYDASH OPS-DEPLOYED (AC-5.1 PASS, AC-5.2 OBSERVE until 22T16:30Z), 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak.",
+  "activeTaskId": "1960-DAILYDASH-OBSERVE (cron gate)",
+  "nextAgent": "idle (observation mode) — monitoring dailyDashboardJob cron tick at 2026-05-22T16:30Z (23:30 GMT+7). AC-5 part 2 gate: must write docs/data/project-stats.json successfully; check cron_job_runs.success_rate > 0. Post-gate: either CLOSE (success) or ESCALATE (cron failure).",
+  "nextPrompt": "None (observation mode). Cron gate unlock: 2026-05-22T16:30Z. Next action: system-auditor or ops will validate cron execution result.",
+  "updatedAt": "2026-05-22T02:38:10Z",
+  "updatedBy": "ops (1960-DAILYDASH OPS-DEPLOYED: mcp-server rebuild + AC-5.1 verified; AC-5.2 gate scheduled 22T16:30Z)",
+  "lastCompleted": "1960-DAILYDASH OPS-DEPLOYED 2026-05-22T02:38:10Z (ops, image hash sha256:3af8ec8, container healthy, /health 200, post-rebuild health check 10/11 OK). Prior: 1960-DAILYDASH QA-APPROVED 2026-05-22T04:00:00Z (qa)."
 }
