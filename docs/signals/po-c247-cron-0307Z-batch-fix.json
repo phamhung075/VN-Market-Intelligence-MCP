@@ -1,0 +1,62 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-batch",
+  "cycle_id": "c247-cron-0307Z",
+  "createdAt": "2026-05-22T03:22:35Z",
+  "priority": "high",
+  "payload": {
+    "verdict": "BATCH(1 FIX)",
+    "trigger": "tasksMdJanitor cron #1 fired 03:00Z and logged errors=2 (1965c soak observation pass #1). Both errors are container-path resolution bugs identical to just-shipped DAILYDASH anti-pattern. Plus: system-auditor A-30 frontend false-positive (frontend is healthy on / 200 but lacks /health endpoint).",
+    "tasks": [
+      {
+        "type": "FIX",
+        "id": "1965d-JANITOR-PATHFIX",
+        "title": "tasksMdJanitor projectRoot resolution + lint-test seal",
+        "desc": "Replace local helper `const projectRoot = resolve(import.meta.dir, ...)` in apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:501 with canonical getProjectRoot import. Add lint test that fails build if regex matches anywhere under scheduler/. Mechanically identical to 2f0a74e9.",
+        "size": "XS",
+        "files": [
+          "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+          "apps/mcp-server/src/__tests__/lint/no-local-project-root.test.ts (NEW)"
+        ],
+        "baseline_pass": "smoke-tasks-md-janitor.ts 12/12 GREEN; tsc 0 errors; lint test GREEN.",
+        "zone": "apps/mcp-server/",
+        "acceptance": {
+          "AC-1": "tasksMdJanitorJob.ts imports getProjectRoot from infrastructure/projectRoot.js; local helper removed.",
+          "AC-2": "Lint test scans scheduler/ tree, asserts zero matches for /const projectRoot\\s*=\\s*resolve\\(import\\.meta\\.dir/.",
+          "AC-3": "tsc 0 errors.",
+          "AC-4": "scripts/smoke-tasks-md-janitor.ts still 12/12 GREEN.",
+          "AC-5": "Post-deploy 23T03:00Z janitor cron fire logs errors=0 (live observation gate)."
+        },
+        "owner": "dev-mcp-server",
+        "handoff": "Inline triage task — read this signal payload; no separate handoff file needed (XS scope).",
+        "recurring_bug_note": "2nd projectRoot-anti-pattern fix in 4h (after 2f0a74e9). Grep confirms tasksMdJanitorJob.ts:501 is the LAST occurrence. Per policy: closing not chasing — AC-2 lint test seals regression door, so no architect rethink needed."
+      }
+    ],
+    "side_actions": [
+      {
+        "type": "ACK-FALSE-POSITIVE",
+        "id": "1960-A-30-FRONTEND",
+        "note": "system-auditor A-30 alert (frontend port 3001 health endpoint not responding) is a false-positive — frontend is UP 31h healthy; curl http://localhost:3001/ returns HTTP 200; /health returns 404 because frontend never had a /health endpoint (already documented in OPS-DEPLOYED 02:38Z row). Meta-fix routed to system-auditor (or dev-frontend to add /health) deferred to next maintenance cycle (LOW prio, no impact). DASHBOARD ops row updated to OBSERVE-FALSE-POSITIVE."
+      },
+      {
+        "type": "SOAK-NOTE",
+        "id": "OBSERVE-1965c-soak",
+        "note": "Cron pass #1 at 03:00Z: log entry exists (AC-1 PASS), no crash (AC-3 PASS), no BUG flood (AC-4 PASS), but errors=2 (AC-1 strict reading AMBIGUOUS). 1965d fix should land before 23T03Z cron pass #2 so final SOAK_PASS verdict is achievable. qa to wait for 23T18Z soak end + emit qa-1965c-soak-result.json with verdict based on pass #2 evidence (post-1965d-deploy)."
+      }
+    ],
+    "gates_unchanged": [
+      "2026-05-22T16:30Z — 1960-DAILYDASH AC-5.2 cron-fire gate (dailyDashboardJob 23:30 GMT+7)",
+      "2026-05-22T21:00Z — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + 1959-watchdog-4 actionable",
+      "2026-05-23T03:00Z — tasksMdJanitor cron #2 (1965c soak pass #2 — verifies 1965d fix landed clean)",
+      "2026-05-23T07:05Z — OBSERVE-1957d BCTC 72h cadence",
+      "2026-05-23T18:00Z — 1965c soak ends → qa emits qa-1965c-soak-result.json"
+    ],
+    "wip": "2/2 (1960-DAILYDASH OBSERVE-gate + 1965d-JANITOR-PATHFIX dispatched)",
+    "constraints_honored": [
+      "NFR-3 BCTC freeze (1965d not BCTC-touching)",
+      "Recurring-bug-escalation softly applied (closing not chasing — lint test seals)",
+      "WIP cap 2/2 reached exactly; no further dispatch this cycle"
+    ]
+  }
+}

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": "NONE (1968c CLOSED). Active: 1960-DAILYDASH OPS-DEPLOYED (AC-5.1 PASS, AC-5.2 OBSERVE until 22T16:30Z), 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak.",
-  "activeTaskId": "1960-DAILYDASH-OBSERVE (cron gate)",
-  "nextAgent": "idle (observation mode) — monitoring dailyDashboardJob cron tick at 2026-05-22T16:30Z (23:30 GMT+7). PO c246 cron-0207Z re-audit CONFIRMED dispatcher NOTHING hint (no new system-auditor commits since 02:08Z; all anomalies triaged/gated/frozen/observing). Next action: next cron tick re-audits, system-auditor Tier-1 ~03:00Z, market-hours B-04/B-12 self-recovery probe.",
-  "nextPrompt": "None (observation mode). Cron gate unlock: 2026-05-22T16:30Z. Next dev-team triage tick will re-audit DASHBOARD ops for any new anomalies post-02:43Z.",
-  "updatedAt": "2026-05-22T02:44:17Z",
-  "updatedBy": "po (c246 cron-0207Z dev-team triage BATCH=NOTHING — re-audit confirmed dispatcher hint; fleet truly idle pre-16:30Z gate)",
-  "lastCompleted": "1960-DAILYDASH OPS-DEPLOYED 2026-05-22T02:38:10Z (ops, image hash sha256:3af8ec8, container healthy, /health 200). Prior: 1960-DAILYDASH QA-APPROVED 2026-05-22T04:00:00Z (qa)."
+  "status": "dispatched",
+  "currentSprint": "1965d-JANITOR-PATHFIX DISPATCHED (po c247 cron-0307Z). Active: 1960-DAILYDASH OBSERVE-gate to 22T16:30Z, 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak end 23T18Z (pass #1 OBSERVE-AMBIGUOUS pending 1965d fix→ pass #2 23T03Z).",
+  "activeTaskId": "1965d-JANITOR-PATHFIX",
+  "nextAgent": "dev-mcp-server — claim TASKS.md row 1965d-JANITOR-PATHFIX, replace local projectRoot helper with canonical getProjectRoot import (apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts:501 — mechanically identical to 2f0a74e9 DAILYDASH fix). Add lint test apps/mcp-server/src/__tests__/lint/ that fails build if any scheduler/*.ts matches /const projectRoot\\s*=\\s*resolve\\(import\\.meta\\.dir/. Smoke smoke-tasks-md-janitor.ts must stay 12/12 GREEN. Hand to QA on commit.",
+  "nextPrompt": "Run .claude/flows/dev-mcp-server/main.md for TASK_1965d-JANITOR-PATHFIX. Triage signal: docs/signals/po-c247-cron-0307Z-batch-fix.json. Recurring-bug context: closing not chasing — AC-2 lint test seals regression door (grep verified only 1 remaining occurrence in codebase).",
+  "updatedAt": "2026-05-22T03:22:35Z",
+  "updatedBy": "po (c247 cron-0307Z dev-team triage BATCH=1 FIX:1965d-JANITOR-PATHFIX — tasksMdJanitor cron #1 errors=2 at 03:00Z surfaced same projectRoot anti-pattern as just-shipped DAILYDASH; closing not chasing with lint-test seal)",
+  "lastCompleted": "1960-DAILYDASH OPS-DEPLOYED 2026-05-22T02:38:10Z (ops, image hash sha256:3af8ec8, container healthy, /health 200, AC-5.1 PASS, AC-5.2 gate 22T16:30Z)."
 }
