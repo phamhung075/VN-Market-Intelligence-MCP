@@ -33,44 +33,6 @@ P02 — `.claude/flows/developer/main.md:122` — stale "(OVERWRITE ... never ap
 
 Signal: docs/signals/qa-1968d-wave1-changes.json emitted. Reports at reports/TASK_REPORT_1968d-P01.md + reports/TASK_REPORT_1968d-P02.md. Wave 2 gate BLOCKED.
 
-## c251 · 2026-05-22
-
-**Sprint:** 1971 | **Task:** STOCKPRICE-SCAN-ORDER-MISMATCH | **Session:** c251 — APPROVED
-
-```
-date: 2026-05-22
-outcome: APPROVED
-commit reviewed: bc515ab2
-zone: apps/stock-price/ — Go service, fetchers.go + fetchers_test.go
-smart_skip: NO — Go code change; full go test ./... required
-round: 1
-```
-
-| Check | Result |
-|-------|--------|
-| AC-1: SEV-1 root cause confirmed — Scan order transposed vs SELECT (Low/High/Close/Open) since 1912c | PASS |
-| AC-2: Fix at fetchers.go:239 — reordered to &c.Date,&c.Open,&c.High,&c.Low,&c.Close,&c.Volume matching SELECT | PASS |
-| AC-3: TestSQLiteRepo_GetHistory_OHLCFieldParity — asymmetric seed, all 6 fields asserted individually | PASS |
-| Go suite: pkg/application 7/7 | PASS |
-| Go suite: pkg/domain PASS | PASS |
-| Go suite: pkg/infrastructure 8/8 (incl. new OHLCFieldParity) | PASS |
-| Go suite: pkg/interface/http 11/11 | PASS |
-| DDD: domain/ zero infra imports | PASS |
-| Security: no hardcoded secrets, parameterized SQL, no process.env | PASS |
-| BCTC freeze NFR-3: zero BCTC files touched | PASS |
-| Zone isolation: apps/stock-price/ only; mcp-server + .claude untouched | PASS |
-
-Blocking: 0. Signal: docs/signals/qa-1971-done.json emitted. TASK_REPORT at reports/TASK_REPORT_1971.md.
-
-## Carry-over
-
-- Ops agent: `docker-compose build mcp-server && docker-compose up -d mcp-server` — deploy 1945d fixes
-- Ops agent (from c188): `docker-compose build mcp-server && docker-compose up -d mcp-server` then `seedWatchlist` + verify PLX row in live DB
-- Ops agent (from Sprint 1949): `docker-compose up -d mcp-server` — activate new cron schedule
-- 1965c soak window closes 2026-05-23T18:00Z — emit soak result signal after that
-- 1968c-P02 AC-7 mock failure tests: deferred to future hardening task
-- 1968c-P01 AC-6 live verification: deferred (non-blocking; static analysis PASS)
-- 1968d Wave 2 (P03 zone-caveman-dict): BLOCKED on P01+P02 APPROVED
 
 ## c253 · 2026-05-22T11:00Z
 
@@ -102,3 +64,42 @@ round: 2
 Signal: docs/signals/qa-1968d-wave1-approved.json emitted. Wave 2 (P03) gate UNBLOCKED. Reports at reports/TASK_REPORT_1968d-P01.md + reports/TASK_REPORT_1968d-P02.md (Round 2 appended).
 
 **anchor_out:** `## §qa-round-2` (last anchor in both handoff files after this cycle)
+
+## c254 · 2026-05-22T10:00Z
+
+**Sprint:** active | **Task:** 1972-VNDIRECT-OHLCV-NULL-COERCION | **Session:** c254 — APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commits reviewed: 0a51a5a0 + 165d15dc
+zone: apps/mcp-server/ — ohlcvBackfill.ts + regression test
+smart_skip: NO — TS code change, full suite + tsc run
+round: 1
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: null low record NOT inserted (no low=0) | PASS — 5/5 targeted tests GREEN |
+| AC-2: null open record NOT inserted | PASS |
+| AC-3: complete OHLCV record IS inserted | PASS |
+| AC-4: null close still skipped (pre-existing guard) | PASS |
+| AC-5: asymmetric fixture (open=10/high=40/close=20, low=null) → 0 rows | PASS |
+| Full suite: 9370 pass / 285 fail | PASS — 285 pre-existing BCTC freeze, zero regression |
+| tsc --noEmit | 0 errors |
+| DDD: infra layer, zero domain imports | PASS |
+| Security: parameterized SQL, no process.env, no secrets | PASS |
+| BCTC freeze NFR-3 | PASS — zero bctc-extractor files touched |
+| Zone isolation: apps/mcp-server/ only | PASS |
+
+Blocking: 0. Signal: docs/signals/qa-1972-approved.json. Report: reports/TASK_REPORT_1972.md. NEXT: pm → close TASK_1972.
+
+## Carry-over
+
+- Ops agent: `docker-compose build mcp-server && docker-compose up -d mcp-server` — deploy 1945d fixes
+- Ops agent (from c188): `docker-compose build mcp-server && docker-compose up -d mcp-server` then `seedWatchlist` + verify PLX row in live DB
+- Ops agent (from Sprint 1949): `docker-compose up -d mcp-server` — activate new cron schedule
+- 1965c soak window closes 2026-05-23T18:00Z — emit soak result signal after that
+- 1968c-P02 AC-7 mock failure tests: deferred to future hardening task
+- 1968c-P01 AC-6 live verification: deferred (non-blocking; static analysis PASS)
+- 1972 residual ~1072 low=0 rows in production daily_ohlcv: separate DB cleanup task if needed
