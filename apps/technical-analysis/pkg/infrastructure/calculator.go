@@ -1,12 +1,13 @@
 // Package infrastructure — TACalculator implements the TAIndicatorCalculator port.
 // P1-B1g: RSI wired. P1-B2g: MACD wired. P1-B3g: Bollinger Bands wired.
-// Remaining primitives (MA, DetectCross) wired in P1-B4g..B5g.
+// P1-B4g: SMA + EMA wired. DetectCross wired in P1-B5g.
 package infrastructure
 
 import (
 	"github.com/vn-market-intelligence/technical-analysis/pkg/domain"
 	bb "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/bollinger_bands"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/macd"
+	ma "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/moving_average"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi"
 )
 
@@ -48,6 +49,20 @@ func (c *TACalculator) Calculate(closes []float64, period int) (*domain.Technica
 		bbLower = bbResult.Lower
 	}
 
+	// SMA: default period equals caller period. Non-fatal if insufficient data.
+	var smaValues []float64
+	smaResult, smaErr := ma.CalculateSMA(closes, period)
+	if smaErr == nil {
+		smaValues = smaResult
+	}
+
+	// EMA: default period equals caller period. Non-fatal if insufficient data.
+	var emaValues []float64
+	emaResult, emaErr := ma.CalculateEMA(closes, period)
+	if emaErr == nil {
+		emaValues = emaResult
+	}
+
 	return &domain.TechnicalIndicators{
 		RSI:             rsiValues,
 		MACDLine:        macdLine,
@@ -56,5 +71,7 @@ func (c *TACalculator) Calculate(closes []float64, period int) (*domain.Technica
 		BollingerUpper:  bbUpper,
 		BollingerMiddle: bbMiddle,
 		BollingerLower:  bbLower,
+		SMA:             smaValues,
+		EMA:             emaValues,
 	}, nil
 }

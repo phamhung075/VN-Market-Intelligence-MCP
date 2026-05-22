@@ -1,0 +1,16 @@
+{
+  "primitive": "CalculateMovingAverage",
+  "category": "golden",
+  "description": "Moving averages golden vector: 10-candle series, period 4. alpha=2/(4+1)=0.4. SMA[0]=(10+11+12.5+13)/4=11.625; EMA[0]=SMA seed=11.625; EMA[1]=(11.5-11.625)*0.4+11.625=11.575. Both SMA and EMA produce 7 values (10-4+1). Verified by hand + Python reference.",
+  "input": {
+    "closes": [10.0, 11.0, 12.5, 13.0, 11.5, 12.0, 14.0, 13.5, 12.0, 13.0],
+    "period": 4
+  },
+  "expectedOutput": {
+    "sma": [11.625, 12.0, 12.25, 12.625, 12.75, 12.875, 13.125],
+    "ema": [11.625, 11.575, 11.745, 12.647, 12.9882, 12.59292, 12.755752],
+    "length": 7,
+    "tolerance": 0.0001,
+    "note": "EMA seed = SMA of first period closes. alpha = 2/(period+1) = 0.4. NOT Wilder smoothing."
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "primitive": "CalculateMovingAverage",
+  "category": "failure",
+  "description": "Moving averages failure cases: (1) invalid period <= 0 returns ErrInvalidPeriod; (2) len(closes) < period returns ErrInsufficientData; (3) NaN price returns ErrInvalidPrice; (4) negative price returns ErrInvalidPrice; (5) unknown maType returns ErrUnknownMAType. All cases must return non-nil error and nil/empty output.",
+  "input": {
+    "cases": [
+      {
+        "name": "invalid-period-zero",
+        "closes": [1.0, 2.0, 3.0],
+        "period": 0,
+        "maType": "SMA"
+      },
+      {
+        "name": "invalid-period-negative",
+        "closes": [1.0, 2.0, 3.0],
+        "period": -1,
+        "maType": "EMA"
+      },
+      {
+        "name": "insufficient-data-empty",
+        "closes": [],
+        "period": 5,
+        "maType": "SMA"
+      },
+      {
+        "name": "insufficient-data-less-than-period",
+        "closes": [1.0, 2.0],
+        "period": 5,
+        "maType": "EMA"
+      },
+      {
+        "name": "nan-price",
+        "closes": [1.0, null, 3.0],
+        "period": 2,
+        "maType": "SMA",
+        "note": "null represents NaN in the sandbox runner"
+      },
+      {
+        "name": "negative-price",
+        "closes": [1.0, -2.0, 3.0],
+        "period": 2,
+        "maType": "EMA"
+      },
+      {
+        "name": "unknown-matype",
+        "closes": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "period": 3,
+        "maType": "WMA"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "sma": null,
+    "ema": null,
+    "error": "one of: ErrInvalidPeriod | ErrInsufficientData | ErrInvalidPrice | ErrUnknownMAType",
+    "note": "All cases MUST return a non-nil error. Output MUST be nil/empty. No partial results acceptable."
+  }
+}

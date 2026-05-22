@@ -1,0 +1,62 @@
+{
+  "primitive": "CalculateMovingAverage",
+  "category": "edge",
+  "description": "Moving averages edge cases: (1) period==1 — output equals input for both SMA and EMA (alpha=2/(1+1)=1.0, so EMA instantly tracks price); (2) period==len — single output value equal to SMA of all closes; (3) flat input — SMA and EMA both equal the constant price; (4) dispatcher case-insensitive routing — 'sma'/'SMA'/'ema'/'EMA' all route correctly.",
+  "input": {
+    "cases": [
+      {
+        "name": "period-equals-one",
+        "closes": [3.0, 7.0, 2.0, 9.0],
+        "period": 1,
+        "description": "period=1: alpha=1, so EMA=closes and SMA=closes"
+      },
+      {
+        "name": "period-equals-length",
+        "closes": [2.0, 4.0, 6.0, 8.0],
+        "period": 4,
+        "description": "period==len: single value = mean of all = 5.0"
+      },
+      {
+        "name": "flat-input",
+        "closes": [5.0, 5.0, 5.0, 5.0, 5.0],
+        "period": 3,
+        "description": "flat prices: SMA=5.0 everywhere, EMA=5.0 everywhere"
+      },
+      {
+        "name": "dispatcher-case-insensitive",
+        "closes": [1.0, 2.0, 3.0, 4.0, 5.0],
+        "period": 3,
+        "maTypes": ["SMA", "sma", "EMA", "ema"],
+        "description": "all four case variants must route without error"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "cases": [
+      {
+        "name": "period-equals-one",
+        "sma": [3.0, 7.0, 2.0, 9.0],
+        "ema": [3.0, 7.0, 2.0, 9.0],
+        "length": 4
+      },
+      {
+        "name": "period-equals-length",
+        "sma": [5.0],
+        "ema": [5.0],
+        "length": 1
+      },
+      {
+        "name": "flat-input",
+        "sma": [5.0, 5.0, 5.0],
+        "ema": [5.0, 5.0, 5.0],
+        "length": 3
+      },
+      {
+        "name": "dispatcher-case-insensitive",
+        "allRoute": true,
+        "error": null
+      }
+    ],
+    "tolerance": 0.0001
+  }
+}
