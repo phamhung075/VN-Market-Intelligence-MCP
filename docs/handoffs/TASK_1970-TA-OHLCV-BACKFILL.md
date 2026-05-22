@@ -65,3 +65,36 @@ Additionally, tickers need >= 35 OHLCV rows for RSI(14)/MACD(12,26,9)/BB(20) to 
 ### HANDOFF_DELTA
 - `last_read_anchor: "## §2-impl"`
 - `last_read_at: "2026-05-22T06:00Z"`
+
+---
+
+## §3-qa
+
+## [QA] Review Record
+
+- **QA cycle:** c256
+- **Date:** 2026-05-22T06:15Z
+- **Round:** 1
+- **Verdict:** APPROVED
+
+| Check | Result |
+|-------|--------|
+| AC-1 (covered tickers skip fetch): AC-1a + AC-1b | PASS — 2/2 tests GREEN |
+| AC-2 (< TA_MIN_ROWS fetched + upserted): AC-2a + AC-2b + AC-2c | PASS — 3/3 tests GREEN |
+| AC-3 (low=0 corrupt → fetched even if cnt >= 35) | PASS — 1/1 test GREEN |
+| AC-4 (per-ticker error isolation) | PASS — 1/1 test GREEN |
+| AC-5 (sparse + empty watchlist + multi-ticker summary): AC-5 + AC-5b + AC-5c | PASS — 3/3 tests GREEN |
+| Targeted suite: 10/10 tests, 33 assertions | PASS |
+| Full suite: 9382 pass / 283 fail | PASS — 283 = pre-existing BCTC freeze (baseline 9370+12 new), zero regressions |
+| bun tsc --noEmit | 0 errors |
+| DDD: taOhlcvBackfillJob.ts is scheduler layer (not domain/) — infra imports permitted | PASS |
+| Security: parameterized SQL (prepare + .run/.get), no process.env, no hardcoded secrets | PASS |
+| Cron schedule 30 1 * * 1-5 (01:30 UTC pre-market): no collision with taAlertScan (02:00 UTC start) | PASS |
+| INSERT OR REPLACE vs INSERT OR IGNORE (1972 null-coercion fix respected) | PASS |
+| TA_MIN_ROWS=35 boundary: MACD(26,9) needs 34 min; 35 = correct safe buffer | PASS |
+| Injectable fetchFn for testability; production uses VNDIRECT HTTPS directly (no VPS proxy — consistent with ohlcvStartupProbe.ts precedent) | PASS |
+| Error isolation: try/catch per ticker; errors accumulated not thrown | PASS |
+
+**Blocking issues:** 0
+
+**HANDOFF_DELTA:** `{ "last_read_anchor": "## §3-qa", "last_read_at": "2026-05-22T06:15Z" }`

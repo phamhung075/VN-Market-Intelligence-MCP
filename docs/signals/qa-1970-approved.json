@@ -1,0 +1,28 @@
+{
+  "schema": "cowork-signal-v1",
+  "signal_id": "qa-1970-approved",
+  "from": "qa",
+  "to": "pm",
+  "generated_at": "2026-05-22T06:15Z",
+  "zone": "mcp-server",
+  "tier": "ULTRA",
+  "body": {
+    "verdict": "APPROVED",
+    "task": "TASK_1970",
+    "title": "TA OHLCV Backfill: RSI/MACD/BB Indicator Restoration",
+    "commit": "870981a2",
+    "tests": "10/10 targeted GREEN | 9382 pass / 283 fail full suite (zero regressions, baseline 9370)",
+    "tsc": "0 errors",
+    "ddd": "PASS",
+    "security": "PASS",
+    "round": 1,
+    "report": "reports/TASK_REPORT_1970.md",
+    "handoff": "docs/handoffs/TASK_1970-TA-OHLCV-BACKFILL.md",
+    "handoff_delta": {
+      "last_read_anchor": "## §3-qa",
+      "last_read_at": "2026-05-22T06:15Z"
+    }
+  },
+  "NEXT": "pm",
+  "action": "mark TASK_1970 Done, unblock downstream"
+}
