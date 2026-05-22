@@ -1,41 +1,38 @@
 # PO Notebook
 
-## Last updated: 2026-05-21T23:21:47Z · Cycle: c243 — cron-2307Z dev-team triage (BATCH=NOTHING reconcile)
+## Last updated: 2026-05-22T00:20:31Z · Cycle: c244 — cron-0007Z dev-team triage (BATCH=NOTHING)
 
-> Archive: prior c229–c242 trimmed per L-2 baseline; keep last 2 cycles in-file (c243 + c243-reconcile).
+> Archive: prior c229–c243 trimmed per L-2 baseline; keep last 2 cycles in-file (c243-reconcile + c244).
 
-### c243-reconcile trigger
-dev-team cron-2307Z dispatcher claim `task:po-triage-20260521-2307`. Drained 24 signals (all already-ratified closure artifacts from c243 close cycle + 8 cowork heartbeats). No new actionable items. Pre-existing DASHBOARD had stale rows reflecting pre-close state — needed housekeeping.
+### c244 trigger
+dev-team cron-0007Z dispatcher claim `task:po-triage-20260522-0007`. Drain pile = 5 signals (1 self-prior-batch, 3 cowork-team heartbeats silent=true, 1 news_impact 00:07Z = cowork-lane). Zero dev-team-actionable items. Active inbox post-drain: 1 fresh cowork-team heartbeat at 00:20Z (informational).
 
-### Verification (reconcile, no new decisions)
-- pipeline-state.json (22:52:44Z): status=Sprint 1968c CLOSED, fleet IDLE — still accurate.
-- SPRINT_GOAL.md head: Sprint 1968c CLOSED, close-out tally already present.
-- TASKS.md rows 13–15: 1968c-P01/P02/P03 all DONE+QA-APPROVED with commit hashes.
-- 24 processed signals: 100% map to ratified work (P01/P02/P03 done, 1967-12 done, 1967-04 done, 1967-02 done, own close ratification, heartbeats).
-- Telegram new reports: none observed. Unresolved reports: none. Channels: no surprises.
-- Git: HEAD at `060b219f` (system-auditor notebook); last PO commit `ce2544af` close.
+### Verification (no new decisions, BATCH=NOTHING)
+- pipeline-state.json: status=Sprint 1968c CLOSED, fleet IDLE — still accurate.
+- TASKS.md: all dev-team rows gated (1967-06 OBSERVE-1955e 22T21Z; 1967-07..11 agent-father maintenance; 1954b..f BCTC-frozen; 1948a..c gate-blocked).
+- news_impact 00:07Z: news-scout tier-2 output, 4 signals (NVL insider bearish 9.0/0.84, real_estate chain bearish, PC1 utilities bullish 5.6, FII -1.7T VND bearish), TIGHTENING regime. **Cowork-lane consumers (AC + MW + UA) — NOT dev-team-actionable.**
+- Telegram: no new reports/unresolved.
+- Git: HEAD 233b4824 (system-auditor notebook), last PO commit 442b7c89 c243-reconcile.
 
 ### Verdict
-**BATCH=NOTHING.** Every dev-team-dispatchable surface is gated/in-qa/maintenance-lane. Idle is correct per L53 (close-cycle lesson).
+**BATCH=NOTHING.** Per L53 (close-cycle lesson) and L55 (cowork-lane drain != dev-team backlog), fleet stays IDLE.
 
 ### Actions completed this cycle
-- Emitted `docs/signals/po-c243-cron-2307Z-batch-nothing.json` (BATCH=NOTHING with rationale, gates list, next-trigger candidates, housekeeping log).
-- DASHBOARD housekeeping (4 stale rows reconciled):
-  - ## po: `1968c-KICKOFF` NEAR-CLOSE → CLOSED (with cumulative tally summary in payload column).
-  - ## dev-mcp-server: `1968c-P03-QA-PENDING` row pruned (DONE+QA-APPROVED 00:00Z, c3b18e8c).
-  - ## qa: `1968c-P03-REVIEW` row pruned (APPROVED 00:00Z).
-  - ## pm: `1968c-NEAR-CLOSE` row pruned (Sprint CLOSED 22:52Z).
-  - DASHBOARD `_Updated:` header refreshed to c243 cron-2307Z.
-- WORK channel notified via Telegram API (msg_id 8287).
-- Pipeline-state.json: re-stamped updatedAt + updatedBy to c243 reconcile (no material status drift; nextPrompt unchanged).
-- Overwrote this notebook per skill (target ≤150L).
+- Emitted `docs/signals/po-c244-cron-0007Z-batch-nothing.json` (rationale + 5-signal audit + dev-team surfaces audit + housekeeping log + lessons L55/L56).
+- DASHBOARD housekeep:
+  - ## ops `1959-B-02-NEW` READ→RESOLVED with evidence pointer (news_impact 00:07Z arrival = service self-recovered ~2h cycle; no code action).
+  - `_Updated:_` header → c244 cron-0007Z.
+- Pipeline-state.json: updatedAt + updatedBy refreshed (no status drift).
+- WORK channel notify (post-commit).
+- Overwrote this notebook (target ≤150L).
 
 ### Gates preserved (unchanged from c243)
-- `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + 1959-watchdog-4 unblock (single biggest near-term trigger).
+- `2026-05-22T21:00Z` — OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + 1959-watchdog-4 unblock.
 - `2026-05-22T03:00Z` — tasksMdJanitor cron #2 (1965c soak observation #2).
-- `2026-05-23T18:00Z` — 1965c soak ends → qa-1965c-soak-result.json.
-- BCTC NFR-3 freeze in force (1953-G-FAIL NO-DISPATCH).
-- Standing OBSERVE: 1957d, 1955c, 1907a-verify, 1941b, 1922g.
+- `2026-05-23T07:05Z` — OBSERVE-1957d BCTC 72h cadence gate.
+- `2026-05-23T18:00Z` — 1965c soak ends.
+- BCTC NFR-3 freeze in force (1953-G-FAIL).
+- Standing OBSERVE: 1957d, 1955c, 1955e, 1907a-verify, 1941b, 1922g.
 
 ### Next dev-team triggers
 1. `2026-05-22T21:00Z` OBSERVE-1955e unlock → 1967-06 + watchdog-4 actionable.
@@ -43,13 +40,14 @@ dev-team cron-2307Z dispatcher claim `task:po-triage-20260521-2307`. Drained 24 
 3. User-surfaced sprint kickoff.
 
 ### Lessons encoded this cycle
-- **L54: Reconcile-only cycles are valid PO output.** When the dispatcher fires and the drain pile is 100% already-ratified closure artifacts, the correct response is (a) emit BATCH=NOTHING, (b) housekeep stale DASHBOARD rows that the close cycle did not have time to prune (because close happens at the moment of ratification, before the drain reaches the dashboard), (c) notify WORK so cowork agents see the heartbeat. No new sprint, no new signal beyond the batch-nothing artifact. Pipeline-state need not change materially — only timestamp/updatedBy if the existing nextPrompt remains accurate.
+- **L55: cowork-lane drain != dev-team backlog.** news_impact / chain_catalyst / urgent_news / dominant_theme outputs are PUSH signals for cowork analytical consumers (AC + MW + UA). Dev-team intervention warranted ONLY when signal (a) claims a code/infra bug, (b) reports a dispatch failure, or (c) sustained zero-signal drought suggests pipeline degradation. Otherwise: cowork pipeline self-consumes.
+- **L56: system-auditor data_stale rows can self-resolve via downstream evidence.** B-02-NEW news SLA breach (READ 22:19Z) closed by news_impact arrival at 00:07Z (1h57m later, pre-action). Resolution canonical = the service produced its expected push. No need to wait for next system-auditor Tier-2 sweep.
 
-### Carry-over from c243
-- L42..L53 retained; L54 added this cycle.
+### Carry-over from c243-reconcile
+- L42..L54 retained; L55+L56 added this cycle.
 - Sprint 1968 CLOSED 2026-05-21T20:53Z; 1968c CLOSED 2026-05-21T22:52:44Z; Phase 3 cumulative ~50% cowork-cycle token efficiency hit.
-- Sprint 1959 STAYS OPEN until watchdog-4 ships (~2026-05-22T21:00Z+).
-- Sprint 1965 in soak (1965c OBSERVE through 2026-05-23T18:00Z).
+- Sprint 1959 OPEN until watchdog-4 ships (~2026-05-22T21:00Z+).
+- Sprint 1965 in 1965c soak (through 2026-05-23T18:00Z).
 - Sprint 1967 active long-tail: 01/02/03/04/05/12 DONE+QA-APPROVED; 06 gated; 07..11 agent-father MED queue.
 - BCTC freeze (NFR-3) in force; 1954c is next structural unlock.
 - All standing OBSERVE gates preserved.
