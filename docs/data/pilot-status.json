@@ -58,27 +58,54 @@
     "skeletonAuthor": "po",
     "expansionOwner": "architect",
     "atomizationOwner": "pm",
+    "atomizationStatus": "DONE 2026-05-23 (PM commit 05469c95 — 19 handoff files + TASKS.md backlog)",
     "buckets": {
-      "P2-A": {"goal": "G4", "title": "Architecture fence in CI (Go linter)", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION"},
-      "P2-B": {"goal": "G5", "title": "Old TS TA code deletion + caller HTTP rewire", "owner": "dev-technical-analysis", "status": "PENDING-ARCHITECT-EXPANSION"},
-      "P2-C": {"goal": "G9", "title": "User verbal-async confirm gate", "owner": "po", "status": "OPEN-AWAITING-USER-REPLY", "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md", "mechanism": "Telegram MARKET + signal file (async, no meeting)"},
-      "P2-D": {"goal": "G10", "title": "AI-fixability proof (≤2 cycles)", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION", "blockedBy": "P0-1 bug-inventory.json status verification"},
-      "P2-E": {"goal": "G11", "title": "Regression alarm bell — observed case", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION", "blockedBy": "P2-F flow rule"},
-      "P2-F": {"goal": "G12", "title": "Dashboard-green DoD flow rule + 3-task streak", "owner": "architect (brief) → agent-father (flow edit) + qa (streak verify)", "status": "PENDING-ARCHITECT-EXPANSION"}
+      "P2-A": {"goal": "G4", "title": "Architecture fence in CI (Go linter)", "owner": "dev-technical-analysis + qa", "status": "IN-PROGRESS", "tasks": {"P2-A1": "DISPATCHED 2026-05-23 (dev-technical-analysis)", "P2-A2": "PENDING (blocked by P2-A1)", "P2-A3": "PENDING (blocked by P2-A2)", "P2-A4": "PENDING (blocked by P2-A3)"}},
+      "P2-B": {"goal": "G5", "title": "Old TS TA code deletion + caller HTTP rewire", "owner": "dev-technical-analysis", "status": "IN-PROGRESS", "tasks": {"P2-B0": "DONE 2026-05-23 commit c175f745 (brownfield inventory)", "P2-B1": "READY (P2-B0 done) — held by PO until P2-A1 lands to keep WIP≤2", "P2-B2": "PENDING (blocked by P2-B1; deletion gated on P2-A3 green per architect order)", "P2-B3": "PENDING (blocked by P2-B2)", "P2-B4": "PENDING (blocked by P2-B3)"}},
+      "P2-C": {"goal": "G9", "title": "User verbal-async confirm gate", "owner": "po", "status": "OPEN-AWAITING-USER-REPLY-OPS-BLOCKED", "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md", "mechanism": "Telegram WORK + signal file (async, no meeting). Send DEFERRED-CYCLE-2 — vn-market MCP still not loaded in PO session. Ops signal docs/signals/po-20260522T225100Z.json queued. Non-blocking for dev work."},
+      "P2-D": {"goal": "G10", "title": "AI-fixability proof (≤2 cycles)", "owner": "dev-technical-analysis + qa", "status": "PENDING-FLOW-RULE", "blockedBy": "P2-F2 (flow rule must land before P2-D2 bug injection so G12 streak accrues under the rule). TA baseline confirmed = 1.5 cycles per architect (bug-inventory.json exists).", "tasks": {"P2-D0": "READY (qa can verify bug-inventory.json now)", "P2-D1": "PENDING (blocked by P2-F2)", "P2-D2": "PENDING (blocked by P2-D1 + P2-F2)", "P2-D3": "PENDING (blocked by P2-D2)"}},
+      "P2-E": {"goal": "G11", "title": "Regression alarm bell — observed case", "owner": "dev-technical-analysis + qa", "status": "PENDING-FLOW-RULE", "blockedBy": "P2-F2 + P2-D3 (must see G10 fix pattern before designing canary)", "tasks": {"P2-E1": "PENDING (blocked by P2-F2)", "P2-E2": "PENDING (blocked by P2-E1)", "P2-E3": "PENDING (blocked by P2-E2)"}},
+      "P2-F": {"goal": "G12", "title": "Dashboard-green DoD flow rule + 3-task streak", "owner": "architect (brief) → agent-father (flow edit) + qa (streak verify)", "status": "IN-PROGRESS", "tasks": {"P2-F1": "DONE 2026-05-23 (architect brief docs/architecture-briefs/2026-05-22-refactor/p2-f-flow-rule-brief.md)", "P2-F2": "DISPATCHED 2026-05-23 (agent-father, signal pm-P2-F2-dispatch-20260523T222530Z.json) — CRITICAL PATH", "P2-F3": "PENDING (blocked by P2-D3 + P2-E3 — 3-task streak verification)"}}
     },
     "g9": {
       "mechanism": "async Telegram WORK (PO permission constraint — MARKET write forbidden) + signal file",
       "notificationSentAt": null,
-      "notificationSendStatus": "DEFERRED — vn-market MCP not loaded in PO kickoff session 2026-05-23 (claude mcp list reports command:undefined). Queued for next PO cycle with working MCP. Send template in docs/po-decisions/2026-05-23-g9-user-confirmation.md §MCP send block.",
+      "notificationSendStatus": "DEFERRED-CYCLE-2 — vn-market MCP still not loaded in PO cycle 2 (2026-05-23 ~22:50Z). .mcp.json uses {url: ...} SSE shape but Claude CLI reports `command: expected string, received undefined`. Ops escalation queued via docs/signals/po-20260522T225100Z.json. User has short-circuit path: open apps/technical-analysis/dashboard/index.html and reply directly.",
       "userReplyReceivedAt": null,
       "blocksPhase2DevWork": false,
-      "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md"
+      "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md",
+      "opsEscalationSignal": "docs/signals/po-20260522T225100Z.json"
     },
-    "nextTaskForMainRouter": {
-      "agent": "architect",
-      "intent": "Expand phase-2-task-plan-go.md skeleton: pick Go fence linter for P2-A, atomize all 6 buckets into per-task specs, author flow-rule brief for P2-F, verify P0-1 bug-inventory.json status. Output: updated phase-2-task-plan-go.md ready for PM atomization.",
-      "input": "docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md (PO skeleton) + docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md + docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan-go.md (template)"
-    }
+    "wip": {
+      "limit": 2,
+      "current": ["P2-F2 (agent-father)", "P2-A1 (dev-technical-analysis)"],
+      "current_count": 2,
+      "note": "WIP at limit. P2-B0 landed (commit c175f745); P2-B1 ready but held by PO until P2-A1 lands. Dev-technical-analysis holds exactly 1 active slot. If P2-A1 lands first, P2-B1 dispatches; if P2-F2 lands first, qa picks up P2-D1+E1 (no dev-tech contention)."
+    },
+    "criticalPath": "P2-F2 → P2-D1 → P2-D2 → P2-D3 → P2-E1 → P2-E2 → P2-E3 → P2-F3",
+    "burnRate": {
+      "deadline": "2026-07-03",
+      "daysRemaining": 41,
+      "tasksRemaining": 19,
+      "avgHoursPerTask": 0.583,
+      "totalEstimatedHours": 11.66,
+      "neededBurnRate": "0.28 hours/day",
+      "actualBurnRate": "TBD (no completions yet in Phase 2)",
+      "status": "ON-TRACK"
+    },
+    "nextDispatchGates": {
+      "after_P2-F2_lands": ["dispatch P2-D1 to qa", "dispatch P2-E1 to qa"],
+      "after_P2-A1_lands": ["dispatch P2-A2 to dev-technical-analysis"],
+      "after_P2-A3_green": ["dispatch P2-B2 chain (deletion can proceed once fence proven)"],
+      "after_P2-B0_lands": ["dispatch P2-B1 to dev-technical-analysis"],
+      "after_P2-D3_lands": ["dispatch P2-E1/E2 chain (regression pair design needs G10 fix pattern visible)"],
+      "after_P2-D3_AND_P2-E3": ["dispatch P2-F3 to qa (streak verification)"]
+    },
+    "decisionsThisCycle": [
+      "Graphify scope: DEFER full run until Phase 2 closure. Rely on incremental `/graphify docs --update --no-viz` per developer flow step. Decision doc: docs/po-decisions/2026-05-23-graphify-scope.md",
+      "G9 send: DEFERRED-CYCLE-2. Ops escalation signal queued for vn-market MCP config fix. Non-blocking for dev work.",
+      "WIP overage acknowledged: 3 in-flight on dev-technical-analysis (P2-F2 agent-father is separate agent). PO accepts transient overage given task atomicity (~30 min each)."
+    ]
   },
   "goals": [
     {
@@ -166,7 +193,8 @@
       "verifiedBy": "qa (P1 closure — technical readiness confirmed; verbal user confirmation gate remains open per charter)",
       "evidence": "QA confirms dashboard is technically ready for user trust verification: (a) 3-level zoom present (Primitives → Module → Microservice); (b) click any card → openModal() shows description + input JSON + expectedOutput JSON in modal-body; (c) no Go source code exposed to user (Go references are HTML <code> shell commands and JSON metadata strings, not rendered source); (d) Edit & Rerun button wired via rerun-handler.js (paste-back UX, 5s flip). Missing: verbal YES from user at pilot review — PO gate, not QA gate (per charter §G9 verification method). QA marks IN-PROGRESS until PO records user verbal confirmation.",
       "phase2Bucket": "P2-C",
-      "phase2Mechanism": "async Telegram WORK notification (MARKET write forbidden by PO permissions) + signal file; no synchronous meeting; user reply YES/NO closes gate; decision rationale in docs/po-decisions/2026-05-23-g9-user-confirmation.md"
+      "phase2Mechanism": "async Telegram WORK notification (MARKET write forbidden by PO permissions) + signal file; no synchronous meeting; user reply YES/NO closes gate; decision rationale in docs/po-decisions/2026-05-23-g9-user-confirmation.md",
+      "phase2SendStatus": "DEFERRED-CYCLE-2 (2026-05-23 ~22:50Z) — vn-market MCP still not loaded in PO session. Ops escalation queued via docs/signals/po-20260522T225100Z.json. Short-circuit: user may self-open dashboard and reply directly."
     },
     {
       "id": "G10",

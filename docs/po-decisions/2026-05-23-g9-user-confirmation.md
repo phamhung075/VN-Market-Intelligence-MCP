@@ -57,10 +57,10 @@ No deadline. Phase 2 dev work proceeds in parallel — G9 does not block.
 
 | Event | Status | Timestamp |
 |---|---|---|
-| PO notification sent (Telegram WORK) | DEFERRED (vn-market MCP not loaded in current PO session — `.mcp.json` shows `command: undefined` warning) | (deferred — see below) |
-| Signal file dropped | PENDING | (set on commit) |
+| PO notification sent (Telegram WORK) | DEFERRED-CYCLE-2 (vn-market MCP still not loaded — `.mcp.json` has `url:` SSE entry, but Claude CLI surface in PO session lacks `mcp__vn_market__*` tools; gateway `claude.ai gateway` is up but `mcp__claude_ai_gateway__call_tool` not in PO tool-package permissions; ops escalation queued — see "## Ops escalation" below) | (deferred — cycle 2 of N) |
+| Signal file dropped | DONE | po-20260522T220634Z.json (kickoff cycle) |
 | User reply received | PENDING | — |
-| `pilot-status.json` G9 updated | PENDING | — |
+| `pilot-status.json` G9 updated | PENDING (still IN-PROGRESS) | — |
 
 ## On YES response — PO action checklist
 
@@ -108,6 +108,24 @@ call_tool(
 Until that fires, the signal file `docs/signals/po-20260522T220634Z.json` is the only audit trace of the G9 strategy decision. The signal file is preserved on `main` so the next PO cycle picks up the queued send.
 
 A short-circuit alternative: user (who reads this commit) can self-trigger by opening `apps/technical-analysis/dashboard/index.html` and replying directly — that satisfies the charter §G9 verification method either way ("user verbal YES").
+
+## Ops escalation
+
+**Cycle 2 attempt (this cycle, 2026-05-23 ~22:50Z):**
+
+- `claude mcp list` confirms `vn-market` is still skipped: `[Warning] [vn-market] mcpServers.vn-market: Skipped — invalid MCP server config for "vn-market": command: expected string, received undefined`.
+- `.mcp.json` uses `{"url": "https://zenmidi.com/vn-market/sse"}` — a remote SSE entry, no `command` field. The Claude CLI version in this PO session appears to require `command` even for SSE entries (config-schema mismatch).
+- PO tool surface in this session: Read / Edit / Write / Bash only. No `mcp__vn_market__send_telegram`, no `mcp__claude_ai_gateway__call_tool` — gateway is connected per `claude mcp list` but not exposed to this PO agent's tool permissions.
+- Per `fail-loud-protocol.md`: PO does NOT investigate the MCP config. That is ops's job.
+
+**Action queued (next ops cycle):**
+
+Signal file `docs/signals/po-{timestamp}.json` (this commit) requests ops to:
+1. Verify the Claude CLI version supports `url:` shape for MCP server entries (or what the correct shape is for the current CLI).
+2. Either fix `.mcp.json` to a valid shape or upgrade the CLI to one that accepts the SSE entry.
+3. Confirm `send_telegram` tool is callable from PO sessions after the fix.
+
+Until ops confirms, G9 stays IN-PROGRESS. The short-circuit (user self-opens `apps/technical-analysis/dashboard/index.html`) remains a valid path — the user may close the gate at any time by replying directly.
 
 ## Decision Matrix Implication
 

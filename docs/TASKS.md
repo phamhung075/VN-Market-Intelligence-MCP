@@ -9,11 +9,11 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
 |---------|-------|----------|------|-------|---------|--------|-----------|
-| P2-F2 | agent-father inserts dashboard-green DoD step in dev-technical-analysis flow | HIGH | TASK | agent-father | docs/handoffs/TASK_P2-F2.md | READY | — |
-| P2-A1 | Author `.golangci.yml` with Fence-A/B/C depguard rules | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-A1.md | READY | — |
-| P2-B0 | Brownfield inventory scan: all TS TA callers in mcp-server | MEDIUM | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B0.md | PENDING | — |
+| P2-F2 | agent-father inserts dashboard-green DoD step in dev-technical-analysis flow | HIGH | TASK | agent-father | docs/handoffs/TASK_P2-F2.md | IN-PROGRESS (dispatch signal pm-P2-F2-dispatch-20260523T222530Z.json) | — |
+| P2-A1 | Author `.golangci.yml` with Fence-A/B/C depguard rules | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-A1.md | IN-PROGRESS (dev-technical-analysis dispatched) | — |
+| P2-B0 | Brownfield inventory scan: all TS TA callers in mcp-server | MEDIUM | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B0.md | DONE 2026-05-23 (c175f745) | — |
+| P2-B1 | Rewire `technicalIndicatorTools.ts` to HTTP call against TA Go service | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B1.md | READY (P2-B0 done — next-up after A1/F2 land per WIP=2 rule) | P2-B0 (done) |
 | P2-A2 | Add `go-lint` CI job to `.github/workflows/ci.yml` | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-A2.md | PENDING | P2-A1 |
-| P2-B1 | Rewire `technicalIndicatorTools.ts` to HTTP call against TA Go service | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B1.md | PENDING | P2-B0 |
 | P2-A3 | Verify CI green on clean codebase (no violations) | HIGH | TASK | qa | docs/handoffs/TASK_P2-A3.md | PENDING | P2-A2 |
 | P2-B2 | Move `technicalIndicators.ts` domain service to `_deprecated/` | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B2.md | PENDING | P2-B1 |
 | P2-D0 | Preflight: verify bug-inventory.json has ≥1 TA candidate | MEDIUM | TASK | qa | docs/handoffs/TASK_P2-D0.md | PENDING | — |
@@ -31,14 +31,22 @@
 
 **Notes:**
 - P2-F1 (architect brief) completed 2026-05-23 — not included in dispatch queue (architect-owned, non-delegable)
-- P2-F2 (agent-father flow edit) is on critical path: must complete before P2-D2 + P2-E2 dispatch so streaks tasks accrue under the rule
-- P2-A1 + P2-B0 can run in parallel with P2-F2
+- P2-F2 (agent-father flow edit) IN-PROGRESS — critical path; must complete before P2-D2 + P2-E2 dispatch so streak tasks accrue under the rule
+- P2-A1 IN-PROGRESS (dev-technical-analysis); P2-B0 DONE
+- **PO next-dispatch gates (updated 2026-05-23 cycle 2):**
+  - After P2-F2 lands → dispatch P2-D1 + P2-E1 to qa
+  - After P2-A1 lands → dispatch P2-A2 to dev-technical-analysis (sequential)
+  - After P2-A3 green → dispatch P2-B2 chain (deletion can proceed once fence proven)
+  - **P2-B1 is READY now (P2-B0 done) but PO is holding it back** to keep dev-technical-analysis WIP ≤ 2; will dispatch when P2-A1 lands
+  - After P2-D3 lands → dispatch P2-E1/E2 (regression pair needs G10 fix pattern visible)
+  - After P2-D3 + P2-E3 → dispatch P2-F3 to qa (streak verification)
 - G4 (fence): P2-A1 → P2-A2 → P2-A3 → P2-A4 (sequential, same owner, ~45 min)
-- G5 (deletion): P2-B0 → P2-B1 → P2-B2 → P2-B3 → P2-B4 (sequential, same owner + QA, ~2.5 hours)
+- G5 (deletion): P2-B0 ✓ → P2-B1 → P2-B2 → P2-B3 → P2-B4 (sequential, same owner + QA, ~2.5 hours)
 - G10 (AI-fix): P2-D0 → P2-D1 → P2-D2 → P2-D3 (sequential, ~2 hours + 1h agent fix)
 - G11 (regression): P2-E1 → P2-E2 → P2-E3 (sequential, ~2 hours + 1h agent fix)
 - G12 (flow rule): P2-F2 → (gates P2-D2/E2) → P2-F3 after P2-D3+E3 complete
-- G9 (async): P2-C independent, no blocker on dev work
+- G9 (async): P2-C independent, no blocker on dev work — send DEFERRED-CYCLE-2 (ops blocker; signal po-20260522T225100Z.json)
+- **Graphify decision (this cycle):** full graphify DEFERRED until Phase 2 closure. Per-task incremental `/graphify docs --update --no-viz` already enforced by `flows/developer/main.md`. Decision doc: `docs/po-decisions/2026-05-23-graphify-scope.md`.
 
 ---
 

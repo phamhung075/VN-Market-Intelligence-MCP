@@ -1,46 +1,39 @@
 # PO Notebook
 
-## c266 · 2026-05-23 — Phase 2 of Go pilot OPEN (technical-analysis)
+## c267 · 2026-05-23 — Phase 2 drive cycle (3 in-flight, 2 decisions, 1 ops escalation)
 
-### Trigger
-User direct prompt: Phase 1 closed at QA verdict PASS (commit `9564f6ee`). Phase 2 kickoff request with 6 remaining goals (G4, G5, G9, G10, G11, G12), deadline 2026-07-03.
+### State at cycle start
+- Phase 2 OPEN. Architect expansion DONE (commit cf819518). PM atomization DONE (commit 05469c95, 19 handoff files + TASKS.md backlog).
+- P2-F1 architect brief DONE. P2-B0 brownfield scan DONE (commit c175f745).
+- In-flight: P2-F2 (agent-father, signal pm-P2-F2-dispatch-20260523T222530Z.json), P2-A1 (dev-technical-analysis), G5 deletion preflight.
+- TA baseline confirmed: 1.5 cycles (bug-inventory.json exists, 2 TA bugs).
 
-### Authored
-1. **Skeleton plan** — `docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md`. Mirrors Phase 1 structure. 6 buckets P2-A..P2-F. Architect to expand into atomic per-task specs; PM to atomize into handoffs.
-2. **G9 decision doc** — `docs/po-decisions/2026-05-23-g9-user-confirmation.md`. Async mechanism via Telegram WORK (MARKET write forbidden by PO permissions). Send DEFERRED — vn-market MCP not loaded in this kickoff session (`.mcp.json` warning: `command: undefined`). Template queued.
-3. **pilot-status.json updated** — `status: PHASE-2`, `phase: 2`. `phase1.status: ARCHIVED` with closure metadata. New `phase2` block with 6 buckets, owners, blockers, next-task-for-router routing to architect.
-4. **Architect dispatch signal** — `docs/signals/po-20260522T220634Z.json`. Payload: full Phase 2 brief pointer + 6 bucket summary + constraints (security clause, scope-creep, NO BRANCHES, token economy, atomic commit format).
+### Decisions made (this cycle)
+1. **Graphify scope**: DEFER full run until Phase 2 closure. Per-task incremental `/graphify docs --update --no-viz` already enforced by flows/developer/main.md (lines 94-105). Doc: `docs/po-decisions/2026-05-23-graphify-scope.md`. No flow change needed.
+2. **G9 send**: DEFERRED-CYCLE-2. vn-market MCP still not loaded (.mcp.json `url:` shape rejected by current CLI as `command: undefined`). PO tool surface lacks `mcp__claude_ai_gateway__call_tool` permission. Ops escalation signal `docs/signals/po-20260522T225100Z.json` queued — non-blocking per fail-loud-protocol.md (PO does not investigate MCP config).
+3. **WIP enforcement**: holding P2-B1 even though P2-B0 is done — wait for P2-A1 to land before dispatching to keep dev-technical-analysis WIP ≤ 2.
 
-### Bucket plan
-- **P2-A (G4)** fence: Go linter pick (go-arch-lint / golangci-lint depguard / custom). Three rules: Fence-A primitive ↛ module/app/interface, Fence-B module ↛ application/interface, Fence-C no New*Repo outside cmd/server/main.go. QA proves with 1 deliberate violation → CI red.
-- **P2-B (G5)** delete old TS TA code in `apps/mcp-server/src/.../technical*`. Brownfield scan FIRST. Rollback tag before delete. Highest-risk Phase 2 task.
-- **P2-C (G9)** PO-owned async. Notification queued (MCP send block).
-- **P2-D (G10)** AI-fix proof ≤2 cycles. Depends on P0-1 bug-inventory.json (architect verify status).
-- **P2-E (G11)** regression alarm — scenario pair (primary + canary sharing input shape). Gates on P2-F.
-- **P2-F (G12)** flow rule for dev-technical-analysis DoD = sandbox green. Architect briefs → agent-father implements (NEVER direct agent .md edit per agent-md-factory rule). Streak 1/3 → close at 3.
+### Next-dispatch gates (queued for next PO cycle)
+- After P2-F2 lands → dispatch P2-D1 + P2-E1 to qa
+- After P2-A1 lands → dispatch P2-A2 to dev-technical-analysis AND release P2-B1 (whichever lower priority)
+- After P2-A3 green → unblock P2-B2 deletion chain
+- After P2-D3 lands → dispatch P2-E1/E2 (regression pair needs G10 pattern)
+- After P2-D3 + P2-E3 → dispatch P2-F3 for streak verification (3-task close)
 
-### G9 strategy verdict
-**Async WORK + signal, no meeting.** Rationale: user is non-technical / France-tz GMT+1 / market GMT+7; `feedback_po_autonomy.md` says user is config admin only; charter wording "verbally confirmed" is interpretable as direct user statement (typed reply counts); dashboard is already async-friendly (file:// URL, no source-code exposure); async is reversible. Send DEFERRED because MCP gateway lost vn-market — next PO cycle picks up the queued template.
+### Risks tracked
+- R-5 G9 user reply delay: acknowledged, decoupled from dev path. If reply > 2026-06-06 with other 11 goals terminal, PO calls decision matrix per charter §Decision Matrix.
+- R-9 (new) MCP gateway config drift: same blocker hit kickoff + cycle 2. If hit cycle 3 too, PO escalates to architect (config schema audit, not just ops fix).
+- WIP overage: 0 this cycle. Holding pattern in effect.
 
-### Decisions made
-- Phase 2 dev work does NOT block on G9 (parallel async track).
-- P2-F architect→agent-father chain locked (not direct edit).
-- P0-1 bug-inventory.json status check pushed to architect at P2-D expansion.
-- WORK not MARKET for the G9 ask (PO permissions: `channels.market.write: false`).
+### Burn rate
+41 days / 19 tasks ≈ 0.46 tasks/day average. Estimated 11.66 hours total agent time. Burn rate needed: 0.28 hours/day. Status: ON-TRACK.
 
-### Constraints honored
-- Token economy active.
-- Stay on `main` (NO BRANCHES).
-- Atomic commit `chore(pilot): Phase 2 kickoff by PO`.
-- Verbatim user problem + security clause preserved in Phase 2 plan.
-
-### Carry-over
-- Next PO cycle (when MCP up): fire `send_telegram(channel="work", message=<G9 ask>)` per decision doc §MCP send block.
-- Architect picks up signal `po-20260522T220634Z.json` to expand Phase 2 plan.
-- PM downstream from architect: handoff files + TASKS.md Backlog update.
-- Deadline budget: ~5 sprints slack on 2026-07-03 (Phase 1 = 1 sprint consumed).
-- G12 streak = 1/3. P2-D + P2-E fix-work will accrue tasks #2 + #3 once flow rule lands.
+### Carry-over to next cycle
+- Watch for P2-F2 + P2-A1 completion commits → trigger queued dispatches.
+- Check `claude mcp list` for vn-market — if loaded, fire G9 send per `docs/po-decisions/2026-05-23-g9-user-confirmation.md` §MCP send block.
+- Update G12 streak (task #2 + #3 land via P2-D3 + P2-E3).
 
 ### Lessons
-- **L76 (NEW c266)**: When PO permissions block a channel (`market.write: false`) but the goal text says "user verbal confirm", route via the next-allowed channel (WORK) — the user reads all 3, and WORK is correct semantically (sprint-status event). Don't try to send to MARKET and don't escalate as blocked — just pick the right channel.
-- **L75/L74/L73/L72/L70 retained from c265** (sprint-1974 context — unrelated to pilot; carry-over for next non-pilot cycle).
+- **L77 (NEW c267)**: When MCP server is loaded but exposed via gateway only (not direct), and PO tool-package permissions don't include gateway-tool access, treat as deferred per fail-loud-protocol.md. Do NOT investigate the config — drop ops signal and move on. The user reading the commit can also short-circuit by self-opening the dashboard.
+- **L76 retained (c266)**: WORK not MARKET for G9 ask. PO permission constraint locked.
+- **L75-L70 retained from c265** (sprint-1974, carry-over for non-pilot cycles).
