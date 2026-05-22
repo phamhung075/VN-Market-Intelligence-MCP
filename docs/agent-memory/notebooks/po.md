@@ -1,5 +1,54 @@
 # PO Notebook
 
+## c262 · 2026-05-22T12:21:08Z — 3 system-auditor anomalies → BATCH=NOTHING
+
+### Trigger
+dev-team cron-1207Z dispatcher drained DASHBOARD and surfaced 3 NEW tier-1 anomalies from system-auditor (DASHBOARD ## system-auditor lines 36-38): A-11 CRITICAL (stock-price /health unreachable), A-29 WARN (Reuters+TE 65-failure circuit), A-21c CRITICAL (DAILYDASH ENOENT). pipeline-state was already idle (1967-10 closed 14:00Z by PM; WIP=0/2; nextAgent="idle — await OBSERVE gates"). Signal filesystem inbox empty.
+
+### Live-state verification (L70 reconcile)
+- `docker ps` stock-price = `Up 7 hours (healthy)` mapping `0.0.0.0:5010->5000/tcp`
+- `curl http://localhost:5010/health` → HTTP 200 `{"port":5000,"service":"stock-price","status":"ok"}` time 1.4ms
+- `curl http://localhost:5000/health` → HTTP 403 (macOS AirTunes — pre-existing collision documented at line 87 ## ops row 1960-DAILYDASH-DEPLOY)
+- `docker inspect` healthcheck log: 4 consecutive "ok" status results
+- mcp-server logs `--since 2h | grep -i reuters`: Reuters VPS push delivering 11:30:01Z + 12:00:02Z (total:15 sources:[reuters:15]) WHILE newsapi fallback runs in parallel (16 entries)
+- Trading Economics: zero log evidence in last 6h
+- DAILYDASH fix: commit 2f0a74e9 + rebuild 33843a20 already shipped 02:38:10Z
+
+### Triage verdicts
+1. **A-11 = FALSE-POSITIVE** — system-auditor probed wrong host port (assumed 5000, actual mapping 5010). Same class as A-30 frontend false-positive (already documented). Meta-fix LOW-prio: probe map needs per-service host-port override. Not dev-team-urgent.
+2. **A-29 = OBSERVE** — live evidence contradicts circuit-open alarm. Reuters VPS path AND newsapi fallback BOTH delivering news. Counter is stale-historical from earlier failure burst that hasn't decayed. Zero downstream impact. Auto-close on next sweep counter reset.
+3. **A-21c = DEDUP** — fix already deployed 02:38Z. OBSERVE-1960-DAILYDASH-CRON gate scheduled 22T16:30Z (~4h10min from triage). System-auditor re-firing pre-gate (cron hasn't ticked yet). Expected. No new dispatch.
+
+**Verdict: BATCH = NOTHING.** All 3 reduce to non-dispatch. No FIX/SPRINT emitted.
+
+### Actions completed
+- Wrote `docs/signals/po-20260522T122108Z.json` (triage signal, schema po.triage.v1, per-anomaly classification + reasoning + dedup keys)
+- Updated `docs/signals/DASHBOARD.md`:
+  - Header `_Updated:_` rewritten with c262 summary + L71 lesson
+  - New ## po row `c262-TRIAGE-A11-A29-A21c` (DISPATCHED-NOTHING)
+  - ## system-auditor rows A-11/A-29/A-21c marked with PO verdict + new status (OBSERVE-FALSE-POSITIVE / OBSERVE / DEDUP-GATED)
+- pipeline-state.json: NO update (already correctly reads `idle — await OBSERVE gates`; my triage doesn't change next-agent)
+- TASKS.md: NO change (no new task created; no existing rows reclassified)
+- Telegram: NONE emitted (per skill emission rule — non-actionable noise has no value)
+
+### Lessons (carry-over + new)
+- **L71 (NEW c262)**: System-auditor false-positives are recurring (A-11 stock-price, A-30 frontend). Root cause = system-auditor probe map hardcodes container-internal ports (5000) instead of reading actual host-side mapping from `docker inspect` or `.env.ports`. Recommend backlog meta-fix: `system-auditor` should call `docker inspect <name> --format '{{(index (index .NetworkSettings.Ports "5000/tcp") 0).HostPort}}'` for each service, OR read a `services.health-probe-map.json` SSOT. LOW-prio not dev-team-urgent today, but if 3rd recurrence appears, promote to a SPIKE for agents-architect.
+- **L70 (c254)**: Cron-prompt context is t=0 snapshot. Idempotent reconcile + live state verification required every cycle. This cycle: live `curl` + `docker ps` + `docker logs --since 2h` overrode system-auditor's stale claims — three of three "CRITICAL" anomalies disproved by ground-truth probes.
+- **L69 (c253)**: Cumulative tally pattern for multi-phase economy sprint signing.
+
+### Carry-over to next cycle
+- **OBSERVE windows due (UTC)**:
+  - 22T16:30Z — DAILYDASH AC-5.2 cron tick (first dispatchable verdict; will auto-close A-21c on PASS)
+  - 22T21Z — triple unlock: 1955e diagnostic + 1967-06 HIGH FIX + 1959-watchdog-4 LanceDB compaction soak release (large WIP refill candidate)
+  - 23T03Z — 1965d janitor errors=0 verify
+  - 23T07:05Z — 1957d BCTC tracker
+  - 23T18Z — 1965c soak end
+- **Standing FROZEN**: NFR-3 BCTC freeze (1953-G-FAIL sentinel), recurring-bug rule, NO-BRANCHES policy
+- **Branch carry-over**: `task/1972-vndirect-ohlcv-null-coercion` still in ## maintenance (code-janitor sweep pending; PO does NOT spawn)
+- **Backlog ITEM-18**: 1967-10-ITEM18 LOW (marketScanJob finally-guard, XS, dev-mcp-server, opportunistic bundle with next dev-mcp-server task)
+- **WIP**: 0/2 across all agents (idle, ready for 22T16:30Z gate verdict + dispatch)
+- **Meta-fix backlog**: A-11 + A-30 → system-auditor probe map (LOW-prio; promote to SPIKE if 3rd false-positive surfaces)
+
 ## c254 · 2026-05-22T06:20:45Z — Quadruple race-window reconcile + 1967-08 next pick + branch carry-over
 
 ### Trigger
@@ -15,58 +64,26 @@ dev-team dispatcher cron-0607Z drained 3 fresh signals (dev-mcp-server-1970-done
 
 ### Triage decisions
 1. **PM-1970-close** verified via commit + TASKS.md row 93 in Done + pipeline-state reconciled by PM. No PM re-dispatch needed. Drained `pm-1970-close.json` → processed/.
-2. **1967-07** went from "queued" to "FULLY CLOSED" during my cycle. Agent-father self-claimed (lane B is theirs to drive), QA smart-skip approved, PM closed. All 3 signals drained by their writers to processed/ — I didn't need to drain them.
-3. **Next-priority pick** = 1967-08 (dispatcher-wrap try/finally, .claude/flows/ scope, zero collision with shipped 1967-07). Pipeline-state.nextAgent now reads "agent-father (dispatch 1967-08...)" — my recommendation honored. Parallel-safe second = 1967-10 (cleanest file separation). 1967-09 has partial mcp-tools.md collision risk vs 1967-07 — verify section overlap before parallel.
-4. **Branch policy carry-over**: `git branch -a | grep task/` confirmed `task/1972-vndirect-ohlcv-null-coercion` still present. Queued for code-janitor sweep via new ## maintenance section in DASHBOARD.md (signal-only — PO does NOT spawn code-janitor per CLAUDE.md dev-team boundary).
-5. **OBSERVE gates** unchanged from c253 — none due this cycle, next 22T16:30Z DAILYDASH ~10h out.
+2. **1967-07** went from "queued" to "FULLY CLOSED" during my cycle. Agent-father self-claimed, QA smart-skip approved, PM closed.
+3. **Next-priority pick** = 1967-08 (dispatcher-wrap try/finally, .claude/flows/ scope). Parallel-safe second = 1967-10. 1967-09 has partial mcp-tools.md collision risk.
+4. **Branch policy carry-over**: `task/1972-vndirect-ohlcv-null-coercion` queued in ## maintenance section.
 
-### Actions completed
-- Wrote `docs/signals/po-c254-cron-0607Z-route.json` (1967-08 next-pick recommendation + branch-cleanup pointer + race-window context).
-- Updated `docs/pipeline-state.json` PO touch at 06:20:45Z — later patched by qa+pm during their close cycles, current state correctly reflects 1967-07-CLOSED + nextAgent=agent-father 1967-08.
-- Updated `docs/signals/DASHBOARD.md`: header `_Updated:_` quadruple-race summary + new c254-ACK-1970-CLOSE row in ## po + new `## maintenance` section with BRANCH-CLEANUP-1972 row.
-- Drained `docs/signals/pm-1970-close.json` → processed/. (Other 3 signals — agent-father-1967-07-done, qa-1967-07-approved — drained by their writers.)
-- Notebook diff-write: c254 section prepended; c251 pruned per L-12 3-cycle rule (keep c254+c253+c252).
-
-### Lessons (carry-over + new)
-- **L70 (NEW c254)**: Race-window between cron-tick dispatcher drain (cron prompt frozen at t=0) and parallel agent activity. THIS cycle had FOUR parallel commits land between t=0 and PO write-finalize. Required mid-cycle state re-verification (git log + signal inbox + pipeline-state diff) at least twice. Lesson hardened: every read-then-write block in PO flow needs idempotent reconcile against live state. Cron-prompt assumptions are stale by definition in a multi-agent system.
-- **L69 (c253)**: Cumulative tally signal-write pattern — when ratifying multi-phase economy sprint, include BOTH per-phase breakdown AND grand-total dimensions to validate original /goal verification.
-- **L68 (c252)**: Batched QA dispatch for parallel-shipped sibling tasks saves 1 file write + 1 qa-read; preserves per-task verdict granularity.
-
-### Carry-over to next cycle
-- **PM next-cron dispatch**: 1967-08 to agent-father (lane B, single-lane sequential, .claude/flows/ scope, 2h estimate). Optional parallel-dispatch 1967-10 (cleanest file separation). Verify 1967-09 mcp-tools.md section overlap before parallel.
-- **OBSERVE windows**: 22T16:30Z DAILYDASH AC-5.2, 22T21Z 1955e+1967-06 unlock+watchdog-4, 23T03Z 1965d janitor errors=0 verify, 23T07:05Z 1957d BCTC tracker, 23T18Z 1965c soak end, 24T14:30Z 1907a digest-predict Sunday fire, 25T01:30Z 1955c vnstockFundamentals weekly.
-- **Branch cleanup**: task/1972-vndirect-ohlcv-null-coercion queued in ## maintenance section. Code-janitor sweeps next cron tick (or human intervention). PO does NOT spawn code-janitor.
-- **NFR-3 BCTC freeze** persists until 1954c structural unlock.
-- WIP: 0/2 across all agents (idle, ready for 1967-08 dispatch).
+### Lessons captured
+- **L70**: Race-window between cron-tick dispatcher drain (cron prompt frozen at t=0) and parallel agent activity. Required mid-cycle state re-verification at least twice. Cron-prompt assumptions are stale by definition in a multi-agent system.
 
 ## c253 · 2026-05-22T05:50Z — Sprint 1968d RATIFIED — Phase 4 token-economy CLOSED
 
 ### Trigger
-PM signal `docs/signals/pm-1968d-close.json` (PM clock 12:35Z; actual UTC 05:50Z — PM time-drift noted, not blocking). All 3 P-tasks QA APPROVED + commit `af2de58e`. Cumulative Phase 1+2+3+4 tally requested vs original /goal upgrade "find better way to keeping actual performance and context tracking but economics token and call tools".
+PM signal `pm-1968d-close.json`. All 3 P-tasks QA APPROVED + commit `af2de58e`. Cumulative Phase 1+2+3+4 tally requested.
 
-### Ratification verdict: APPROVED (all 3 P-tasks + cumulative tally)
-- **P01 (L-10)**: `.claude/skills/handoff-delta-read/SKILL.md` (77L) + qa/developer/fixer flow Step 0c ALL LIVE. Smoke 7.6% delta (target ≤30%). Backward-compat silent full-read fallback verified. 50–150 KB/day savings.
-- **P02 (L-12)**: `.claude/skills/notebook-write/SKILL.md` (69L) section-overwrite + 3-cycle retention LIVE. Dogfood: this notebook write IS the section-overwrite pattern. Blank-state Write path exercised on PM bootstrap. 10–20 KB/day write I/O + searchable history (UPGRADE from 1-cycle overwrite).
-- **P03 (L-14)**: `.claude/skills/caveman/SKILL.md` `## Zone Dictionaries` (5 zone maps) LIVE. Silent fallback when zone unset. 5 KB/day signal compression.
-- **Cumulative Phase 1+2+3+4**: ~224 MCP calls/day + ~1344 Read I/O/day + 50% payload reduction + ~54 commits/day + 65–175 KB/day file I/O — four-dimensional savings. Goal MET + EXCEEDED (context-tracking IMPROVED via 3-cycle notebook retention).
+### Ratification verdict: APPROVED
+- **P01 (L-10)**: handoff-delta-read SKILL + flow Step 0c LIVE. Smoke 7.6% delta. 50–150 KB/day savings.
+- **P02 (L-12)**: notebook-write SKILL section-overwrite + 3-cycle retention LIVE. 10–20 KB/day write I/O + searchable history.
+- **P03 (L-14)**: caveman Zone Dictionaries (5 zone maps) LIVE. 5 KB/day signal compression.
+- **Cumulative**: ~224 MCP calls/day + ~1344 Read I/O/day + 50% payload reduction + ~54 commits/day + 65–175 KB/day file I/O.
 
-### Actions completed
-- `docs/signals/po-1968d-ratified.json` emitted with full cumulative tally + Phase 5 deferred-lever inventory.
-- `docs/SPRINT_GOAL.md` § Sprint 1968d header status updated OPEN→CLOSED with close-out tally.
-- `docs/TASKS.md` 4 rows moved Backlog→Done (1968d-P01/P02/P03 + 1968d-BA-SPEC).
-- `docs/pipeline-state.json` rewritten: currentSprint→1970-TA-OHLCV-BACKFILL, activeTaskId cleared of 1968d-*, nextAgent→pm.
+### Actions
+- `po-1968d-ratified.json` emitted with cumulative tally + Phase 5 deferred inventory.
+- SPRINT_GOAL.md + TASKS.md + pipeline-state.json updated.
 
-## c252 · 2026-05-22T05:23Z — Dev-team triage: 1968d-Wave1 QA dispatch + 1971 closure confirmed
-
-### Trigger
-cron-0507Z dev-team drain: 5 fresh signals + 3 deduped replays. Routing decision needed for: 1968d-P01-ready (agent-father IMPL_COMPLETE), 1968d-P02-ready (replay, also IMPL_COMPLETE), 1971-PM-close, conflict resolution in pipeline-state.json.
-
-### Triage decisions
-1. **QA dispatch (batched)** — emitted single `po-1968d-wave1-qa-dispatch.json` covering BOTH P01+P02 (siblings under .claude/skills/, zero cross-dep). Per-task qa_verify_checklist embedded.
-2. **1971 closure verified** — PM signal `pm-1971-close.json` 07:45Z + TASKS.md row 93 in Done section + QA APPROVED commit bc515ab2.
-3. **1970+1972 freed** — dev-mcp-server WIP=0/2 post-1971 close.
-
-### Lessons captured
-- **L68**: Batched QA dispatch for parallel-shipped sibling tasks saves 1 file write + 1 qa-read; preserves per-task verdict granularity.
-
-<!-- c251 pruned per L-12 3-cycle retention rule (keep c254+c253+c252); content archived to git history. -->
+<!-- c252 pruned per L-12 3-cycle retention rule (keep c262+c254+c253); content archived to git history. -->

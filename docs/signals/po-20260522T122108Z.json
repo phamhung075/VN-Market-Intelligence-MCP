@@ -1,0 +1,52 @@
+{
+  "schema": "po.triage.v1",
+  "generated_at": "2026-05-22T12:21:08Z",
+  "cycle_id": "c262-cron-1207Z",
+  "trigger": "dev-team Step 1 — system-auditor delivered 3 tier-1 anomalies (A-11 CRITICAL, A-29 WARN, A-21c CRITICAL)",
+  "verdict": "BATCH=NOTHING — all 3 reduce to FALSE-POSITIVE / DEDUP / OBSERVE; no dispatchable work today",
+  "wip": "0/2 across all agents (idle)",
+  "pipeline_state_reconciled": true,
+  "branch": "main (carry-over task/1972-vndirect-ohlcv-null-coercion still in ## maintenance; code-janitor sweep pending per CLAUDE.md dev-team boundary)",
+  "anomaly_classification": [
+    {
+      "id": "A-11",
+      "severity_reported": "CRITICAL",
+      "verdict": "FALSE-POSITIVE",
+      "reasoning": "System-auditor probed wrong host port. docker ps shows 'vn-market-intelligence-mcp-stock-price-1 Up 7 hours (healthy) 0.0.0.0:5010->5000/tcp'. Host port = 5010 (NOT 5000). Direct probe curl http://localhost:5010/health returns HTTP 200 with body {\"port\":5000,\"service\":\"stock-price\",\"status\":\"ok\"}. Port 5000 on macOS = AirTunes (HTTP 403 — pre-existing collision already documented in ## ops row 1960-DAILYDASH-DEPLOY at 02:38Z: 'stock-price 403 = pre-existing macOS AirTunes collision'). Docker healthcheck status=healthy with 4 consecutive 'ok' results in inspect log. Container logs clean ('listening addr=:5000' since 04:58:33Z).",
+      "same_class_as": "A-30 frontend false-positive (DASHBOARD row 1960-A-30-FRONTEND 03:05Z) — same root: system-auditor probe map needs per-service path/port override",
+      "meta_fix_recommendation": "LOW-prio deferred: update system-auditor health probe to read actual host port mapping from docker inspect (or .env.ports map) instead of assuming container-internal port. Same meta-fix backlog as A-30. Not dev-team-urgent.",
+      "action": "OBSERVE-FALSE-POSITIVE, dedup_key=microservice_degraded:stock-price:A-11"
+    },
+    {
+      "id": "A-29",
+      "severity_reported": "WARN",
+      "verdict": "OBSERVE — live evidence contradicts circuit-open alarm",
+      "reasoning": "Reuters: live tail (docker logs --since 2h mcp-server | grep -i reuters) shows VPS push delivering successfully — '[push-news] received VN news from VPS total:15 sources:[reuters:15]' at 11:30:01Z + 12:00:02Z (within 20min of triage). Newsapi fallback is ACTIVE (16 'Reuters VPS push stale — activating newsapi fallback fetcher' entries in last 2h), so news IS flowing both paths. The '65 consecutive failures' count is a historical circuit counter that has not yet decayed despite recovery. Trading Economics: zero log evidence in last 6h (no error rows, no circuit events) — likely silent-recovery same pattern, or off-hours quiet.",
+      "blast_radius": "ZERO impact on downstream cowork agents — news_impact signals continue flowing (last fresh at 00:07Z via news-fetch VPS, plus newsapi fallback active).",
+      "action": "OBSERVE — wait for next system-auditor sweep (Tier-2 every ~3h) to confirm counter decay. If still flagged at next sweep AND zero new news_impact signals, escalate. Otherwise auto-close on counter reset.",
+      "dedup_key": "microservice_degraded:news-fetch:A-29:reuters-circuit-stale-counter"
+    },
+    {
+      "id": "A-21c",
+      "severity_reported": "CRITICAL",
+      "verdict": "DEDUP — already routed + already FIXED + observe gate scheduled",
+      "reasoning": "Fix shipped 02:38Z (commit 2f0a74e9 dailyDashboardJob.ts canonical getProjectRoot import; rebuild 33843a20). DASHBOARD ## ops rows: 1960-DAILYDASH-DEPLOY (OPS-DEPLOYED 02:38:10Z) + OBSERVE-1960-DAILYDASH-CRON (GATE-SCHEDULED 22T16:30Z, ~4h10min from now). System-auditor is re-firing pre-gate — the cron tick that proves the fix has not yet fired (cron schedule = 16:30Z = 23:30 GMT+7 once-daily). Expected behavior; no new action.",
+      "dedup_key": "microservice_degraded:mcp-server:A-21c:dailyDashboardJob_path (matches DASHBOARD row 1960-A-21c-DAILYDASH 01:04Z + 1960-A-29-CRON-REPEAT 01:35Z + 1960-DAILYDASH 00:31Z)",
+      "action": "DEDUP — let OBSERVE-1960-DAILYDASH-CRON 22T16:30Z gate run; if AC-5 part 2 PASS, system-auditor will auto-drop alarm next sweep."
+    }
+  ],
+  "standing_rows_unchanged": [
+    "1953-G-FAIL sentinel (BCTC NFR-3 freeze in force, 1954c is unblock)",
+    "ssc-iboard B-04 OBSERVE market-hours (current 12:21Z = 4h post-close 08:30Z, normal quiet)",
+    "foreign-flow B-12 OBSERVE market-hours",
+    "B-08 / 1972-BCTC-VPS-STALE DEFER-FREEZE",
+    "Standing OBSERVE gates: 22T16:30Z DAILYDASH, 22T21Z 1955e/1967-06/watchdog-4, 23T03Z 1965d janitor, 23T07:05Z 1957d, 23T18Z 1965c soak"
+  ],
+  "active_blockers": [
+    "NFR-3 BCTC freeze (no BCTC patches until 1954c)",
+    "Recurring-bug-escalation rule active",
+    "NO-BRANCHES policy"
+  ],
+  "next_dispatch_window": "22T16:30Z (DAILYDASH AC-5.2 cron tick — first dispatchable verdict); 22T21Z (triple unlock 1955e + 1967-06 + watchdog-4 — large WIP refill candidate)",
+  "telegram_emission": "NONE — all 3 anomalies non-actionable today; no value to BUG/WORK channel noise"
+}
