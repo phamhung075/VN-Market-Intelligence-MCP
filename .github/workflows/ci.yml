@@ -51,9 +51,30 @@ jobs:
           echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
           bun test 2>&1 | grep -E "^[[:space:]]*[0-9]+ (pass|fail)" | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
 
+  go-lint:
+    name: go-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/technical-analysis/go.mod
+          cache-dependency-path: apps/technical-analysis/go.sum
+
+      # Run golangci-lint (depguard Fence-A/B/C) against the technical-analysis service.
+      # working-directory is equivalent to: cd apps/technical-analysis && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          working-directory: apps/technical-analysis
+          args: --config .golangci.yml
+
 # AC-8 (optional) — Branch protection setup:
-# To require this CI job before merging to main, go to:
+# To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
 #   Branch name pattern: main
 #   Check: "Require status checks to pass before merging"
-#   Search for and add status check: "bun test"
+#   Search for and add status checks: "bun test", "go-lint"
