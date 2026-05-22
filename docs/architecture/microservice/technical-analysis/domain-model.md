@@ -1,46 +1,56 @@
 # technical-analysis — Domain Model
 
+> **Language:** Go (pilot rewrite; P1-A..B-bucket tasks). TypeScript types superseded 2026-05-22.
+
 ## Types
 
 ### CandleStick
-```typescript
-interface CandleStick {
-  date: string    // "YYYY-MM-DD"
-  open: number
-  high: number
-  low: number
-  close: number
-  volume: number
+```go
+// pkg/domain/models.go
+type CandleStick struct {
+  Symbol string
+  Date   string
+  Open   float64
+  High   float64
+  Low    float64
+  Close  float64
+  Volume int64
 }
 ```
 
 ### TechnicalIndicators
-```typescript
-interface TechnicalIndicators {
-  rsi: number | null
-  macd: { line: number, signal: number, histogram: number } | null
-  movingAverages: { ma5: number | null, ma20: number | null, ma50: number | null }
-  bollingerBands: { upper: number, mid: number, lower: number } | null
-  trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+```go
+// pkg/domain/models.go
+type TechnicalIndicators struct {
+  Symbol          string
+  RSI             []float64  // Wilder's 14-period RSI; len = N - period
+  MACDLine        []float64  // fast EMA - slow EMA (aligned)
+  SignalLine       []float64  // EMA of MACDLine
+  Histogram       []float64  // MACDLine - SignalLine
+  BollingerUpper  []float64  // SMA + 2*populationStdDev
+  BollingerMiddle []float64  // SMA(period=20)
+  BollingerLower  []float64  // SMA - 2*populationStdDev
+  SMA             []float64  // (P1-B4g)
+  EMA             []float64  // (P1-B4g)
 }
 ```
 
 ## Repository Ports
 
 ### PriceHistoryRepository
-```typescript
-interface PriceHistoryRepository {
-  getHistory(code: string, days: number): Promise<CandleStick[]>
+```go
+// pkg/domain/ports.go
+type PriceHistoryRepository interface {
+  // GetHistory returns daily closes for symbol over last N days.
+  GetHistory(symbol string, days int) ([]CandleStick, error)
 }
 ```
 
 ### TAIndicatorCalculator
-```typescript
-interface TAIndicatorCalculator {
-  calculateRSI(closes: number[], period?: number): number | null
-  calculateMACD(closes: number[]): { line, signal, histogram } | null
-  calculateMA(closes: number[], period: number): number | null
-  calculateBB(closes: number[], period?, stdDev?): { upper, mid, lower } | null
+```go
+// pkg/domain/ports.go
+type TAIndicatorCalculator interface {
+  Calculate(closes []float64, period int) (*TechnicalIndicators, error)
 }
 ```
 
