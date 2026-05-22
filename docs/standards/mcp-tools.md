@@ -129,6 +129,8 @@ Decision guide → `.claude/skills/semble-search/SKILL.md`
 
 ## Inter-Agent Signal Types
 
+> DASHBOARD row prune rule (DONE=immediate, READ=48h aging) → `.claude/skills/signal-dashboard/SKILL.md` § PRUNE
+
 | Signal | From | To | When |
 |--------|------|----|------|
 | `urgent_news` | News Scout | Market Watcher | Impact >= 8 |

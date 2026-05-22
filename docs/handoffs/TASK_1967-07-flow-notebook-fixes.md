@@ -109,3 +109,26 @@ All three are knowledge-file edits (no code). Bundle together for single PR.
 - ITEM-04 (market-watcher identity recurrence, same notebook trimming effort)
 - REQ-1967-2e (flow identity vs declared responsibilities)
 - REQ-1967-4e (DASHBOARD stale rows prune condition)
+
+---
+
+## [Agent-Father] Implementation — 2026-05-22T
+
+**AC coverage:**
+
+1. [x] AC-1 — market-watcher/cycle.md Step 5: "OVERWRITE" confirmed in place (ITEM-05 was pre-fixed in 1967b/1968b2, comment on line 95 confirms). No change required.
+2. [x] AC-2 — Notebook-write skill link confirmed in cycle.md Step 5 (`skill: .claude/skills/notebook-write/SKILL.md`).
+3. [x] AC-3 — signal-dashboard SKILL.md PRUNE section updated: DONE=immediate, READ=48h aging rule added.
+4. [x] AC-4 — Prune rule is executable: `status=DONE → DELETE immediately; status=READ AND ts < now()-48h → DELETE`.
+5. [x] AC-5 — mcp-tools.md cross-link added above Inter-Agent Signal Types table: `→ .claude/skills/signal-dashboard/SKILL.md § PRUNE`.
+6. [ ] AC-6 — DASHBOARD.md manual prune test: deferred to QA (live observation, markdown-only = smart-skip applies).
+7. [ ] AC-7 — Next cowork-team cycle post-fix verify: deferred to live observation.
+8. [x] AC-8 — tsc 0 errors: no .ts files touched (markdown-only zone).
+
+**Files changed:**
+- `.claude/skills/signal-dashboard/SKILL.md` — PRUNE section expanded (DONE=immediate + READ=48h)
+- `docs/standards/mcp-tools.md` — cross-link added above Inter-Agent Signal Types
+- `docs/TASKS.md` — 1967-07 row moved to Review
+- `docs/agent-memory/notebooks/agent-father.md` — c255 appended
+
+**Signal emitted:** `docs/signals/agent-father-1967-07-done.json` → NEXT=qa

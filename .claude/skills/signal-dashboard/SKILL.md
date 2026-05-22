@@ -76,13 +76,20 @@ Run at end of every write cycle (after appending new rows):
 
 ```
 1. Read DASHBOARD.md
-2. Remove all rows where status = DONE
-3. Update _Updated: {ISO}_ timestamp
-4. Write back
+2. Remove all rows where status = DONE (immediate — no aging)
+3. Remove all rows where status = READ AND ts < now() - 48h
+4. Update _Updated: {ISO}_ timestamp
+5. Write back
 ```
 
-Prune threshold: **DONE rows removed immediately** — no aging delay.
-Never prune NEW or READ rows. If a section becomes empty (header only), keep it.
+Prune thresholds:
+- **DONE** rows → removed immediately after ACK/CLOSE
+- **READ** rows → removed after 48h aging (`ts < now() - 48h`)
+- **NEW** rows → never pruned
+
+Dedup key: `id` (unique per signal). If a section becomes empty (header only), keep it.
+
+Frequency: cowork-team main cycle step (after all reads), or nightly via system-auditor cron.
 
 ---
 
