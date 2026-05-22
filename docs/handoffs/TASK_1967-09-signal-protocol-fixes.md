@@ -124,3 +124,28 @@ All are config/doc edits, no code changes.
 - REQ-1967-1b (signal-file naming contract)
 - REQ-1967-5b + 5d (cowork overlap guard, fire-drift)
 - ITEM-14, ITEM-11, ITEM-10 (findings)
+
+---
+
+## [Agent-father] IMPL_DONE — 2026-05-22T06:37Z
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1: mcp-tools.md naming contract | PASS | `## Signal Bus — Naming Contract` section added above Inter-Agent Signal Types |
+| AC-2: agent-chaining-protocol.md cross-linked | PASS | Cross-link note included in new naming contract section |
+| AC-3: po/main.md ISO-8601 signal rule | PASS | Signal write rule added before Notebook write section |
+| AC-4: cowork-schedule.json dead slots disabled | PASS | 4 slots (not 3 — market-watcher-prepost also had trigger_error). All: enabled=false + _disabled_by |
+| AC-5: cowork-team/main.md drift_min commentary | PASS | `## §drift-min` anchor + threshold table (safe ≤10, caution 11-14, risk ≥15) |
+| AC-6/AC-7: live observation tests | DEFERRED | smart-skip QA applies (markdown+JSON only) |
+
+**Files changed:**
+- `docs/standards/mcp-tools.md` — Signal Bus naming contract section (+18L)
+- `docs/data/cowork-schedule.json` — 4 dead slots: enabled→false + _disabled_by
+- `.claude/flows/po/main.md` — signal write rule (+4L)
+- `.claude/flows/cowork-team/main.md` — §drift-min anchor + threshold table (+14L)
+
+**Signal:** `docs/signals/agent-father-1967-09-done.json` → NEXT=qa, QUALITY=smart-skip
+
+**Deviation:** Handoff evidence listed 3 API_MIN_INTERVAL slots; live audit found 4 (`market-watcher-prepost` also affected). All 4 disabled.
+
+**Commit SHA:** (appended after commit below)

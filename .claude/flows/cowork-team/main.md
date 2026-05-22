@@ -1,4 +1,4 @@
-<!-- size-justification: ~195L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js (Sprint 1951 follow-up: keeps flow scannable; full matcher is one node script call). Step 4.6 slot-lock claim (Sprint 1955 Phase 2) added inline for auditability. Error boundary + telemetry + collision guard remain inline. -->
+<!-- size-justification: ~300L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js. Step 4.6 slot-lock (Sprint 1955 Phase 2) + Step 4.7 tick-snapshot (1968c-P01) + §drift-min threshold table (1967-09) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -61,6 +61,11 @@ Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork
 
 ---
 
+## §drift-min
+
+<!-- anchor: §drift-min — reserved for L-10 delta-read. Do NOT merge into other steps. -->
+<!-- collision-scope: drift_min commentary ONLY. Spawn-guard region (Step 4.6+) is reserved for TASK_1967-10. -->
+
 ## Step 3b — Drift threshold guard (TASK_1967-05 fix)
 
 After receiving `DRIFT_MIN` from the slot-matcher script:
@@ -72,9 +77,17 @@ if DRIFT_MIN > 10:
   # Do NOT block — proceed to Step 4. Warning only.
 ```
 
+**Drift envelope thresholds:**
+
+| drift_min | Status | Action |
+|-----------|--------|--------|
+| 0 – 10 | Safe | None — floor-15min rounding absorbs lag |
+| 11 – 14 | Caution | WORK telegram warning (above) |
+| ≥ 15 | Collision risk | Two ticks could map to same nominal_tick key → duplicate slot-lock claim collision possible. Escalate immediately. |
+
 **Rationale:** Floor-15min nominal_tick rounding absorbs drift safely up to drift_min=14. At drift_min ≥ 15, two ticks could map to the same nominal_tick key, causing a duplicate slot-lock claim collision. The 10-min warning provides a 5-minute safety margin to detect load drift before it becomes a structural risk.
 
-**Current safe envelope:** drift_min max observed = 9 (2026-05-21). No spawn is blocked by this check. Threshold = 10. Danger threshold = 15.
+**Current safe envelope:** drift_min max observed = 9 (2026-05-21). No spawn is blocked by this check. Warning threshold = 10. Danger threshold = 15.
 
 ---
 

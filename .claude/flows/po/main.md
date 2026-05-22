@@ -120,6 +120,9 @@ Do not inline these workflows here — that's the whole point of the split.
 
 ---
 
+**Signal write rule:** When PO emits a `docs/signals/*.json` file, filename MUST follow the contract:
+`po-{ISO-8601-timestamp}.json` (e.g. `po-20260521T194519Z.json`). Timestamp via `date -u +%Y%m%dT%H%M%SZ`. Sprint/task references belong in the `payload` field — never in the filename. SSOT → `docs/standards/mcp-tools.md` § Signal Bus — Naming Contract.
+
 **Notebook write** (end of every cycle) → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE, target ≤50L). Skill handles body discipline + Carry-over block.
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.

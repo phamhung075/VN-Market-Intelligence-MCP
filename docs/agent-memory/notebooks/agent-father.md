@@ -1,22 +1,6 @@
 # Agent Father — Notebook
 
 
-## c254 · 2026-05-22T12:00Z
-
-**Sprint:** 1968d | **Task:** P03 (per-zone caveman dictionaries)
-
-**P03 — Zone Dictionaries appended to caveman SKILL:**
-`.claude/skills/caveman/SKILL.md` 71L→96L (≤100L cap PASS).
-5 zone maps: mcp-server (t/s/h/st/sch), stock-price (f/sc/o/tk), alert-engine (v/ev/a), bctc-extractor (ex/p/oc/q FROZEN-NFR3), .claude (ag/fl/sk/sg).
-Activation rule: `zone:` field in signal → additive on top of ULTRA/FULL/LITE tier. Silent fallback when absent.
-Round-trip example included (mcp-server zone encode+decode verified lossless).
-AC-1..AC-5: ALL PASS.
-
-**Dogfood — handoff-delta-read:** first-cycle full-read (no prior anchor). anchor_out=null (no §N headings in handoff). Next read will also be full-read (expected for 1-file tasks with no multi-round amendments).
-**Dogfood — notebook-write:** section-overwrite c254 appended. c252+c253 retained (2 prior cycles). No prune needed (<3 sections before this write).
-**Doc-correction:** PM erroneously wrote c253 entry to agent-father notebook last cycle. This c254 entry is agent-father's own actual cycle record. (No c253 structural damage — content was accurate, just misattributed.)
-
-**Signal emitted:** docs/signals/agent-father-1968d-P03-ready.json → NEXT=qa
 
 ## c255 · 2026-05-22T12:30Z
 
@@ -45,6 +29,20 @@ Signal: agent-father-1967-07-done.json → NEXT=qa
 
 **Signal emitted:** docs/signals/agent-father-1967-08-done.json → NEXT=qa, QUALITY=smart-skip
 
+## c257 · 2026-05-22T06:37Z
+
+**Sprint:** 1967c | **Task:** 1967-09 (signal protocol fixes — ITEM-14 + ITEM-11 + ITEM-10)
+
+**ITEM-14 (AC-1/AC-2):** mcp-tools.md Signal Bus section added with full naming contract rule (`{from}-{ISO-8601-timestamp}.json`). anti-pattern examples included. Cross-link to agent-chaining-protocol.md added.
+
+**ITEM-11 (AC-4):** cowork-schedule.json — 4 API_MIN_INTERVAL dead slots disabled (handoff said 3; audit found 4: news-scout-market, market-watcher-market, market-watcher-prepost, alert-commander-market). All set `enabled=false` + `_disabled_by` field.
+
+**ITEM-10 (AC-5) + ITEM-14 (AC-3):** cowork-team/main.md — `## §drift-min` section anchor added above Step 3b. Drift envelope threshold table (safe ≤10 / caution 11-14 / risk ≥15) added. size-justification comment updated to ~300L. po/main.md — signal write rule added with ISO-8601 timestamp enforcement instruction.
+
+**Collision discipline:** §drift-min anchor scoped to drift commentary only. Spawn-guard region (Steps 4.6+) untouched — reserved for TASK_1967-10.
+
+**Signal emitted:** docs/signals/agent-father-1967-09-done.json → NEXT=qa, QUALITY=smart-skip
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
@@ -54,3 +52,4 @@ Signal: agent-father-1967-07-done.json → NEXT=qa
 - 1968d-P03: DONE — awaiting qa approval
 - 1967-07: IMPL_DONE — awaiting smart-skip qa
 - 1967-08: IMPL_DONE — awaiting smart-skip qa
+- 1967-09: IMPL_DONE — awaiting smart-skip qa

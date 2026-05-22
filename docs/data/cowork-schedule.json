@@ -207,7 +207,8 @@
       "dish_type": "market_hours_gather",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
+      "_disabled_by": "API_MIN_INTERVAL — cowork master dispatcher owns sub-hourly firing",
       "last_fired": null,
       "trigger_id": null,
       "trigger_error": "API_MIN_INTERVAL: cron fires more than once/hour; API requires minimum 1h interval"
@@ -265,7 +266,8 @@
       "dish_type": "market_hours_gather",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
+      "_disabled_by": "API_MIN_INTERVAL — cowork master dispatcher owns sub-hourly firing",
       "last_fired": null,
       "trigger_id": null,
       "trigger_error": "API_MIN_INTERVAL: cron fires more than once/hour; API requires minimum 1h interval"
@@ -283,7 +285,8 @@
       "dish_type": "pre_post_gather",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
+      "_disabled_by": "API_MIN_INTERVAL — cowork master dispatcher owns sub-hourly firing",
       "last_fired": null,
       "trigger_id": null,
       "trigger_error": "API_MIN_INTERVAL: cron fires more than once/hour; API requires minimum 1h interval"
@@ -341,7 +344,8 @@
       "dish_type": "market_hours_alert",
       "guaranteed": false,
       "depends_on": null,
-      "enabled": true,
+      "enabled": false,
+      "_disabled_by": "API_MIN_INTERVAL — cowork master dispatcher owns sub-hourly firing",
       "last_fired": null,
       "trigger_id": null,
       "trigger_error": "API_MIN_INTERVAL: cron fires more than once/hour; API requires minimum 1h interval"

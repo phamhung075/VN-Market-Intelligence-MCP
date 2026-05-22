@@ -127,6 +127,26 @@ Tools injected by the MCP client — not registered by the server, not in tool-r
 
 Decision guide → `.claude/skills/semble-search/SKILL.md`
 
+## Signal Bus — Naming Contract
+
+All agents writing to `docs/signals/` MUST comply with the naming contract:
+
+```
+docs/signals/{from}-{ISO-8601-timestamp}.json
+```
+
+- `{from}` — agent id (e.g. `po`, `cowork-team`, `agent-father`)
+- `{ISO-8601-timestamp}` — compact UTC form `YYYYMMDDTHHMMSSz` (e.g. `20260521T194519Z`)
+- Full example: `po-20260521T194519Z.json`
+
+**Why:** Dedup fingerprint in `signals.db` relies on the timestamp component. Missing timestamp breaks dedup and makes stale signals hard to prune.
+
+**Anti-pattern (never):** `po-1967-ba-approved.json`, `po-1967b-rerun.json` — sprint references belong in the `payload`, not the filename.
+
+Historical spec (1 line) → `docs/protocols/agent-chaining-protocol.md` § Cross-Team Signal Directory (cross-link only; mcp-tools.md is SSOT).
+
+---
+
 ## Inter-Agent Signal Types
 
 > DASHBOARD row prune rule (DONE=immediate, READ=48h aging) → `.claude/skills/signal-dashboard/SKILL.md` § PRUNE
