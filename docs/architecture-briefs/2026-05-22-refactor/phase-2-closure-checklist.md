@@ -28,7 +28,7 @@ Phase 2 is COMPLETE when ALL of the following hold simultaneously:
 - All dispatch gates in `pilot-status.json.phase2.nextDispatchGates` are closed (every `after_*` array consumed or marked resolved).
 - All sandbox scenarios are GREEN: `cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all && go run ./cmd/sandbox -tier=module -module=technical-analysis -scenario=all` exits 0 with 30/30 GREEN.
 - Fence linter blocks deliberate violations: P2-A4 evidence shows CI `go-lint` red on Fence-A injection, green on revert (two CI run URLs recorded).
-- `pilot-status.json.phase2.status` flipped from `OPEN` to `CLOSED`; `pilot-status.json.status` updated to `DONE` if decision matrix reached terminal state, or remains `PHASE-2` only when G9 async user reply outstanding.
+- `pilot-status.json.phase2.status` flipped from `OPEN` to `CLOSED`; `pilot-status.json.status` updated to `DONE` if decision matrix reached terminal state. **Charter §Status Tracking defines the only valid top-level status values: `ACTIVE` | `DONE` | `FAILED`.** `PHASE-2` is NOT a charter-valid status and MUST NOT be used as a terminal value. When G9 async user reply is outstanding at brief closure, status MUST remain `ACTIVE` with a `g9_pending: true` annotation in `pilot-status.json.phase2`. If the hard deadline 2026-07-03 (charter §Hard Deadline) arrives with G9 still open, status is forced to `FAILED` and PO MUST call the decision matrix immediately per charter §Hard Deadline — G9 grades as PARTIAL, Trust dimension evaluated on G8 alone.
 - Decision matrix populated: `decisionMatrix.{speed,trust,scale}` each set to `YES` or `NO`; `verdict` field set (`scale` | `rescope` | `stop-MVR`).
 
 ---
@@ -42,13 +42,13 @@ Grades: **PASS** (charter verification method satisfied, evidence recorded), **P
 | **G1** | 5 primitives + ≥3 scenarios each + 1 failure scenario, sandbox all GREEN | Scenarios present but <3 per primitive | Primitives missing | `pilot-status.json.goals[id=G1].evidence` (already YES) |
 | **G2** | `grep` cross-module imports = 0; ≥1 multi-primitive module scenario GREEN | Module exists but only single-primitive scenarios | Module not extracted | `pilot-status.json.goals[id=G2].evidence` (already YES) |
 | **G3** | `cmd/server/main.go` ≤80 lines; grep for domain ops = 0; OpenAPI present | Composition root has 1-2 inline ops | No composition root | `pilot-status.json.goals[id=G3].evidence` (already YES) |
-| **G4** | P2-A1+A2+A3+A4 all DONE; CI red/green cycle proven; two CI run URLs | A1+A2+A3 done, A4 deliberate-violation not run | Fence linter not adopted | `docs/handoffs/TASK_P2-A{1,2,3,4}.md` + CI run URLs |
+| **G4** | P2-A1+A2+A3+A4 all DONE; CI red/green cycle proven; two CI run URLs filed in `docs/handoffs/TASK_P2-A4.md §Evidence to Record` | A1+A2+A3 done, A4 deliberate-violation not run | Fence linter not adopted | `docs/handoffs/TASK_P2-A4.md §Evidence to Record` (CI URLs) + `docs/handoffs/TASK_P2-A{1,2,3}.md` |
 | **G5** | P2-B0..B4 all DONE; `find apps/mcp-server/src -path "*technical*" -not -path "*_deprecated*"` = 0; `grep TODO.*migrat` = 0; MCP tool end-to-end green | Deletion done but TODOs remain | Rollback executed (see §5) | `docs/handoffs/TASK_P2-B{0,1,2,3,4}.md` |
 | **G6** | Dashboard 3 panels render from `file://`; no JS errors | One panel missing or stale data | Dashboard broken | `pilot-status.json.goals[id=G6].evidence` (already YES) |
 | **G7** | Edit-JSON-rerun loop works; env audit empty for forbidden keys | Loop works but env audit shows non-fatal keys | Sandbox leaks credentials → charter §Security blocks PASS | `pilot-status.json.goals[id=G7].evidence` (already YES) |
 | **G8** | 6 red cards visible (1 deliberate bug + 5 known-bad scenarios) | <6 red cards | Honest-red never proven | `pilot-status.json.goals[id=G8].evidence` (already YES) |
 | **G9** | User verbal YES recorded with timestamp in `docs/po-decisions/2026-05-23-g9-user-confirmation.md` | User replied but no card-pointed answer | No user reply by deadline → bumped to post-pilot rescope | `docs/po-decisions/2026-05-23-g9-user-confirmation.md` + `pilot-status.json.phase2.g9` |
-| **G10** | P2-D3 commits ≤2 between P2-D2 injection and final GREEN; sandbox all-scenario GREEN; baseline 1.5 cycles recorded | Fix in 3 cycles (over target but not catastrophic) | Bug never reproducible / agent unable to fix | `docs/handoffs/TASK_P2-D{0,1,2,3}.md` + git log between injection and fix |
+| **G10** | P2-D3 commits ≤2 between P2-D2 injection and final GREEN; sandbox all-scenario GREEN; baseline sourced from `docs/data/bug-inventory.json.baselineCycleCount` | Fix in 3 cycles (over target but not catastrophic) | Bug never reproducible / agent unable to fix | `docs/data/bug-inventory.json.baselineCycleCount` (baseline) + `docs/handoffs/TASK_P2-D{0,1,2,3}.md` + git log between injection and fix |
 | **G11** | P2-E3 evidence: scenario B observed RED mid-fix, agent fixed B before DONE; final all GREEN | Regression triggered but agent shipped with B red (DoD bypassed) | Canary pair never coupled; regression alarm never fires | `docs/handoffs/TASK_P2-E{1,2,3}.md` + sandbox logs |
 | **G12** | Flow file contains DoD step (P2-F2 grep ≥1); 3-task streak logged in `pilot-status.json.goals[id=G12].g12Streak.tasks` (3 entries) | Streak 2/3 | Flow rule not adopted | `.claude/flows/dev-technical-analysis/main.md` + `pilot-status.json.goals[id=G12].g12Streak` |
 
@@ -60,7 +60,7 @@ Grading owner: PO. Grading happens after the last in-flight task lands and QA ev
 
 Each row is one atomic commit. PO runs them sequentially after grading.
 
-1. `chore(pilot): close Phase 2 — pilot-status.json terminal state` — flip `phase2.status: OPEN → CLOSED`, set `closedAt`, write all 12 goal grades, populate `decisionMatrix`, set `verdict`, set top-level `status` (`DONE` if all goals YES + matrix terminal; `PHASE-2` if G9 async still outstanding).
+1. `chore(pilot): close Phase 2 — pilot-status.json terminal state` — flip `phase2.status: OPEN → CLOSED`, set `closedAt`, write all 12 goal grades, populate `decisionMatrix`, set `verdict`, set top-level `status` to a charter-valid value: `DONE` if all goals YES + matrix terminal; `ACTIVE` with `phase2.g9_pending: true` if G9 async still outstanding (NOT `PHASE-2` — see §1); `FAILED` if hard deadline 2026-07-03 has passed with G9 unresolved.
 2. `docs(arch/refactor): Phase 2 closure summary` — create `docs/architecture-briefs/2026-05-22-refactor/phase-2-closure-summary.md` (1-page: goals graded, decision matrix verdict, links to evidence). Skip if summary already authored alongside last task.
 3. `chore(tasks): archive Phase 2 rows` — move all 19 P2-* rows from `docs/TASKS.md` Backlog to a `## Phase 2 — ARCHIVED 2026-MM-DD` section (or to `docs/TASKS-archive.md` if archive file convention exists). Do not delete — preserve traceability.
 4. `chore(pilot): graphify refresh post-Phase-2` — `/graphify docs --update --no-viz` (deferred during Phase 2 per `docs/po-decisions/2026-05-23-graphify-scope.md`; runs now).
@@ -91,6 +91,18 @@ No synchronous meeting required. PO is the decision owner per charter §Decision
 
 ---
 
+## 4.5. Decision Matrix Authorship Rule
+
+**Authorship is restricted to PO.** Only PO may populate `decisionMatrix.{speed,trust,scale}` in `pilot-status.json`. No other agent (BA, architect, developer, QA, ops, agent-father) is permitted to write to these fields. Any non-PO mutation of `decisionMatrix.*` is an audit failure and MUST be reverted on detection.
+
+**Timing constraint.** PO may only populate the matrix AFTER all 12 G-goals have reached a terminal grade (`PASS`, `PARTIAL`, or `DEFER` — no `TBD` or `IN-PROGRESS` remaining in `pilot-status.json.goals[]`). Filling the matrix before all 12 goals are terminal is also an audit failure.
+
+**Verdict signature.** The `verdict` field (`scale` | `rescope` | `stop-MVR`) is set by PO in the same commit that finalizes the matrix dimensions. PO records the commit hash inline in the `closure.goalGrades` JSON block (see §4 sign-off). The commit hash anchors the matrix decision to a specific moment in git history; any later mutation of the matrix without a new PO-signed commit is a contract violation.
+
+**Application rule.** PO applies charter §Decision Matrix YES criteria mechanically to the finalized goal grades — no discretion on which goals feed which dimension. Speed = G10 + G11; Trust = G9 + G8; Scale = all 12 + sprint count. If G9 is PARTIAL, Trust = NO (charter requires user-confirmed YES).
+
+---
+
 ## 5. Rollback Plan
 
 Triggered when any goal grades FAIL (defined: PARTIAL on ≥2 goals OR DEFER on any G4/G5/G10/G11/G12 OR explicit FAIL on G7 security gate).
@@ -104,6 +116,18 @@ Triggered when any goal grades FAIL (defined: PARTIAL on ≥2 goals OR DEFER on 
 | **G12 flow rule not adopted** | Revert P2-F2 commit. Grade G12 as DEFER. Re-dispatch under post-pilot task with stricter agent-father verification. |
 | **G9 user replies NO** | Triage feedback into dashboard-polish task. Grade G9 as PARTIAL. Decision matrix Trust = NO → 2-YES rescope. |
 | **Catastrophic (≥3 goals FAIL)** | Invoke charter §Decision Matrix 0-1 YES path → STOP refactor, fall back to MVR. Architect authors MVR brief within 1 sprint. |
+
+**Pre-revert tag inventory.** The following tags act as snapshot points for revert operations. They are appended to the existing `p2-b-pre-delete` marker — they do NOT replace it. All three are recommendations to be added to the respective HANDOFF files; PO will not retroactively retag landed commits without explicit ops action.
+
+| Tag | Purpose | Created by | When |
+|---|---|---|---|
+| `p2-b-pre-delete` | G5 deletion rollback (existing) | dev-tech | P2-B0 pre-step, before P2-B2 deletion commits |
+| `p2-a2-pre-ci` | G4 CI job activation rollback (NEW) | dev-tech | BEFORE P2-A2 commits land |
+| `p2-d2-pre-inject` | G10 bug injection rollback (NEW) | QA | BEFORE P2-D2 commits land |
+
+**Action items for HANDOFF files (deferred — do not modify in-flight handoffs):**
+- `docs/handoffs/TASK_P2-A2.md`: P2-A2 is already in-flight (PID 83694). If A2 lands without `p2-a2-pre-ci` tag, ops MUST add a post-hoc tag on the commit immediately before A2's first commit (`git tag p2-a2-pre-ci <pre-A2-hash>`). Annotate this requirement in the handoff after A2 lands.
+- `docs/handoffs/TASK_P2-D2.md`: P2-D2 not yet dispatched. Pre-step "create `p2-d2-pre-inject` tag" to be added to the handoff before P2-D2 dispatch (not now — would require touching downstream work).
 
 Sprint-extension cap: charter deadline is 2026-07-03. Hard stop is 2 sprints beyond (charter §Hard Deadline silent-extension-forbidden rule). At sprint 8 absolute, PO calls the matrix on whatever state exists.
 
