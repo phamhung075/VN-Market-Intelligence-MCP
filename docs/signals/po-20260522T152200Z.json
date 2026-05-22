@@ -1,0 +1,117 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "po.triage.v1",
+  "cycle_id": "c264-cron-1507Z",
+  "createdAt": "2026-05-22T15:22:00Z",
+  "trigger": "system-auditor tier-2 14:30Z dashboard append (4 anomalies — 2 net-new C-06/C-07, 2 recurring B-01/B-08)",
+  "verdict": "BATCH=NOTHING",
+  "reason": "All 4 anomalies reduce to non-dispatch: 2 false-positives (C-06 + C-07 probe-design, target tables that do not exist or are legacy/dead substrate), 1 market-hours-OBSERVE (B-01 post-market 5.5h stale, current time 22:22 VN), 1 architect-freeze (B-08 BCTC 78.9h under 1953-G-FAIL + 1954c).",
+  "anomalies": [
+    {
+      "check_id": "B-01",
+      "severity": "CRITICAL",
+      "summary": "ssc-iboard price freshness 5.5h stale vs 15min cadence",
+      "verdict": "OBSERVE-MARKET-HOURS",
+      "evidence": [
+        "Current time 2026-05-22T15:22Z UTC = 22:22 VN GMT+7",
+        "VN market closed 2026-05-22T08:30Z (15:30 VN). Post-close window = 6h52m.",
+        "VPS last push 2026-05-22T09:00Z = end-of-session dribble (consistent with prior closes).",
+        "Precedents: 1960-B-04 00:31Z + 1973-PRICE-SLA-BREACH 10:30Z + 1959-B-01 18:07Z — all market-hours-context OBSERVE per L56.",
+        "Expected next push at next market open Wed 02:00Z UTC."
+      ],
+      "action": "NO-DISPATCH (standing OBSERVE row 1960-B-04). Re-check at next market open."
+    },
+    {
+      "check_id": "B-08",
+      "severity": "CRITICAL",
+      "summary": "bctc-push VPS freshness 78.9h stale",
+      "verdict": "DEFER-FREEZE (confirmed)",
+      "evidence": [
+        "Last successful VPS push 2026-05-19T07:05:07Z (unchanged across 06:30Z + 10:30Z + 13:57Z + 14:30Z scans).",
+        "1953-G-FAIL recurring-bug guard active (3rd BCTC fix in 24h sentinel).",
+        "1954c architect-rethink owns root-cause (brief §5: 4 write-paths → 1 ACK token + OCR cache-miss + DPI + backfill).",
+        "system-auditor self-classified DEFER-FREEZE correctly."
+      ],
+      "action": "NO-DISPATCH. Continue freeze until 1954c lands."
+    },
+    {
+      "check_id": "C-06",
+      "severity": "WARN",
+      "summary": "news_articles DB empty (0 articles past 3h)",
+      "verdict": "FALSE-POSITIVE (probe-design)",
+      "evidence": [
+        "Probe spec: .claude/flows/system-auditor/main.md:132+244 — `docker exec mcp-server sqlite3 /app/data/market.db 'SELECT count(*) FROM news_articles WHERE created_at > datetime(now,-3h)'`",
+        "Live probe: market.db (host) — sqlite3 .tables shows NO `news_articles` table (60 tables enumerated: agent_signals, pharma_events, financial_reports, daily_ohlcv, ... but no news_articles).",
+        "grep apps/**/*.{ts,go,py,sql} for 'news_articles' = ZERO matches in source code.",
+        "Only references in: tool .md descriptions + system-auditor flow itself + DASHBOARD echoes.",
+        "Probe targets a table that does NOT exist → query returns 0 → flagged WARN.",
+        "Same class as A-11 (host-port mismatch) + A-30 (frontend /health path) — system-auditor probe-map drift."
+      ],
+      "action": "NO-DISPATCH. Meta-fix backlog (LOW): system-auditor probe map needs schema-existence guard OR C-06 probe needs corrected table name (likely news_impact_signals OR news service emits files not rows, given news_impact_*.json signal artifacts exist in processed/)."
+    },
+    {
+      "check_id": "C-07",
+      "severity": "WARN",
+      "summary": "agent_signals DB empty (0 signals past 24h)",
+      "verdict": "FALSE-POSITIVE (legacy substrate)",
+      "evidence": [
+        "Probe spec: .claude/flows/system-auditor/main.md:133+245 — `SELECT count(*) FROM agent_signals WHERE created_at > datetime(now,-24h)`",
+        "Live probe: market.db agent_signals SELECT COUNT(*) = 60 total; COUNT WHERE created_at >= -24h = 0; MAX(created_at) = 2026-05-14T21:01:37Z (8 days old).",
+        "Last 5 rows all 2026-05-14 (analyst/news_scout chain_catalyst entries).",
+        "Live agent-to-agent signal substrate is JSON file bus in docs/signals/ (drained to processed/ daily) — NOT this SQLite table.",
+        "The agent_signals table appears to be pre-Go-migration legacy substrate that stopped writing ~2026-05-14 (right around the cutover window).",
+        "Same probe-design false-positive class as C-06."
+      ],
+      "action": "NO-DISPATCH. Meta-fix backlog (LOW): C-07 probe targets unused legacy table. Either (a) update probe to count rows in `docs/signals/processed/` daily (real substrate) OR (b) decommission the legacy agent_signals table + remove C-07 from flow OR (c) restore writes to the table if it was unintentionally dropped during Go cutover (low-likelihood; current architecture is JSON-bus by design)."
+    }
+  ],
+  "pipeline_state": {
+    "wip": "0/2",
+    "active_dispatches": [],
+    "active_observe_gates": [
+      "1960-DAILYDASH-CRON 2026-05-22T16:30Z (~68min from now)",
+      "1955e + 1967-06 + watchdog-4 2026-05-22T21:00Z",
+      "1965d 2026-05-23T03:00Z",
+      "1957d 2026-05-23T07:05Z",
+      "1965c 2026-05-23T18:00Z"
+    ],
+    "freeze_invariants": [
+      "NFR-3 BCTC freeze (1953-G-FAIL sentinel + 1954c architect anchor)",
+      "Recurring-bug rule (≥2 fix commits on same module → architect rethink)",
+      "NO-BRANCHES policy"
+    ]
+  },
+  "lessons": [
+    {
+      "id": "L73",
+      "cycle": "c264",
+      "rule": "system-auditor probe-design false-positive class now has THREE distinct flavors: (a) wrong-host-port (A-11), (b) wrong-URL-path (A-30 frontend /health), (c) wrong-table-name OR dead-legacy-table (C-06 + C-07). Pattern: probe spec drifts from actual deployed architecture. Until a meta-fix sprint addresses probe-map override per service+DB+table, EVERY system-auditor anomaly requires live-probe of the EXACT substrate (host file, container path, table schema, column name) before classification. Cycle c264 reduced 4/4 anomalies to non-dispatch — 50% of which were probe-design bugs (C-06 + C-07)."
+    },
+    {
+      "id": "L72-applied",
+      "cycle": "c263→c264",
+      "rule": "Carry-forward: live-probe every candidate surface before classification. Applied to all 4 anomalies in c264; saved 2 false dispatches (C-06 + C-07) and confirmed 2 standing OBSERVE/FREEZE rows (B-01 + B-08)."
+    },
+    {
+      "id": "L70-applied",
+      "cycle": "c254→c264",
+      "rule": "Carry-forward: cron-prompt is t=0 snapshot; reconcile live state every cycle. c264 confirmed pipeline-state idle WIP=0/2 + 5 OBSERVE gates pending + recent commits drained — no race-window contamination."
+    }
+  ],
+  "meta_fix_backlog_appendix": {
+    "items": [
+      "A-11 (host-port-collision, c262) — system-auditor needs per-service host-port override map",
+      "A-30 (frontend /health, c247) — system-auditor needs per-service health-path override",
+      "C-06 (news_articles missing, c264 NEW) — system-auditor needs schema-existence guard OR table-name correction",
+      "C-07 (agent_signals legacy, c264 NEW) — system-auditor probe of legacy table needs decommission OR migration to JSON-bus counter"
+    ],
+    "priority": "LOW — accumulate to ≥4 items + SPIKE on next recurrence (current count: 4; trigger threshold reached for future SPIKE consideration but not urgent today).",
+    "ownership": "deferred to maintenance sprint; not dev-team-urgent (zero blast radius on user value)."
+  },
+  "channel_emissions": {
+    "telegram_bug": "NONE — all 4 anomalies non-actionable for users; would just add noise.",
+    "telegram_work": "NONE — pipeline idle, nothing to announce.",
+    "telegram_market": "NONE (PO no write to market by contract)."
+  }
+}

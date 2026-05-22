@@ -1,39 +1,38 @@
 # PO Notebook
 
-## c263 · 2026-05-22T13:57:07Z — USER-BUG "bctc export text not working all" → DEFER-FREEZE
+## c264 · 2026-05-22T15:22:00Z — cron-1507Z dev-team triage (sys-auditor tier-2 14:30Z, 4 anomalies)
 
 ### Trigger
-Direct user prompt 2026-05-22T13:21Z (Vietnamese-English non-technical): "bctc export text not working all". Triaged as USER-BUG interrupt, not cron-tick.
+dev-team cron-1507Z spawn; sys-auditor tier-2 14:30Z appended 4 rows (B-01 + B-08 recurring; C-06 + C-07 net-new). WIP 0/2. Pipeline-state idle.
 
-### Live-probe ground truth (5 surfaces, L70 reconcile)
-1. **read_bctc_pdf MCP tool**: PASS — FPT/VNM/DHG/VCB return 46K-50K char Vietnamese OCR text via getCachedPdfText conf 0.80; NOT-A-REAL-FILE.pdf correctly rejected. Tool handler in `apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts:547-650`.
-2. **get_bctc_full**: PARTIAL — 12/30 watchlist have rows (FPT VNM VCB HPG ACB DHG DGC BSR SHB EIB DIG VEA). 16/30 MISSING (VIC, GAS, MSN, MWG, HUT, DXG, KDH, PDR, FRT, ...). Decimal-shift bugs: VNM net_profit=0.000051; DHG rev=0.000009; DGC rev=23 profit=421; HPG/BSR/EIB key fields zero.
-3. **list_stored_pdfs**: PASS (17 PDFs on disk in /app/data/pdfs).
-4. **bctcPdfPull VPS pipeline**: STALE — 13:30:02Z cron `itemsProcessed:10 downloaded:0 failed:10` (VPS 125.212.251.27:8765 returning 404 for all watchlist tickers `<TICKER>_2026_Q1.pdf`); bctcQueueEnricher 0 URLs populated/9 items. Already tracked 1972-BCTC-VPS-STALE (now 78.9h, ## ops).
-5. **Frontend BCTC export button**: NON-EXISTENT — zero matches in apps/frontend/. Surface user might have meant doesn't exist.
+### Live-probe verdicts (L70/L72 reconcile — no trust of prior snapshot)
+1. **B-01 CRITICAL** ssc-iboard 5.5h stale → **OBSERVE-MARKET-HOURS**. Current 15:22Z = 22:22 VN, market closed 08:30Z (6h52m post-close). 09:00Z VPS push = end-of-session dribble. Same context as 1960-B-04 / 1973 / 1959-B-01. No-dispatch; re-check Wed 02:00Z market open.
+2. **B-08 CRITICAL** bctc-push 78.9h stale → **DEFER-FREEZE confirmed**. 1953-G-FAIL + 1954c standing; sys-auditor self-class matches.
+3. **C-06 WARN** news_articles 0/3h → **FALSE-POSITIVE (probe-design)**. `sqlite3 market.db .tables` enumerates 60 tables, ZERO match `news_articles`. `grep apps/**/*.{ts,go,py,sql}` = ZERO matches. Probe references a non-existent table → returns 0 → WARN. Same class as A-11 + A-30.
+4. **C-07 WARN** agent_signals 0/24h → **FALSE-POSITIVE (legacy substrate)**. Table EXISTS (60 rows total) but MAX(created_at)=2026-05-14T21:01Z = 8d stale. Frozen at Go-migration cutover. Live agent-bus = JSON files in docs/signals/ (not this SQLite). Probe targets unused legacy table.
 
 ### Verdict
-**BATCH=NOTHING (DEFER-FREEZE).** All failure modes downstream of 1954c architectural-rot consolidation scope (brief §5: 4 BCTC write paths → 1 ACK token + OCR cache-miss + DPI escalation + backfill stranded PDFs). Recurring-bug guard 1953-G-FAIL active (3rd BCTC fix in 24h). Shipping a new patch on the same module violates the rule. PM owns 1954c sequencing.
+**BATCH=NOTHING.** 4/4 reduce to non-dispatch. 2 probe-design FP + 1 market-hours-OBSERVE + 1 architect-freeze.
 
 ### Actions
-- `docs/signals/po-20260522T135707Z.json` (po.triage.v1, full evidence + per-surface probe results)
-- DASHBOARD ## po row `c263-USER-BUG-BCTC-EXPORT-TEXT` (DISPATCHED-NOTHING)
-- DASHBOARD ## ops row 1972 updated with c263 fresh evidence (78.9h, decimal-shift catalog, recommend list refreshed)
-- DASHBOARD header rewritten with c263 summary
-- pipeline-state.json: NO change (idle, WIP=0/2, next dispatch 22T16:30Z DAILYDASH AC-5.2)
-- TASKS.md: NO change (1954c already in sprint backlog)
-- Telegram: NONE (non-technical user; partial surfaces functional; 1972 already covers visible symptom)
+- `docs/signals/po-20260522T152200Z.json` (po.triage.v1 — full 4-anomaly evidence + meta-fix appendix)
+- DASHBOARD ## po row `c264-TRIAGE-B01-B08-C06-C07` (DISPATCHED-NOTHING)
+- DASHBOARD ## system-auditor 4 rows annotated with PO verdicts (status updated: B-01→OBSERVE-MARKET-HOURS, B-08→DEFER-FREEZE, C-06→OBSERVE-FALSE-POSITIVE, C-07→OBSERVE-FALSE-POSITIVE)
+- DASHBOARD header rewritten with c264 summary (c263 carried as prior-context)
+- pipeline-state.json: NO change (idle, WIP=0/2 unchanged, next gate DAILYDASH 22T16:30Z)
+- TASKS.md: NO change
+- Telegram: NONE (4 anomalies all non-actionable for users)
 
 ### Lessons
-- **L72 (NEW c263)**: USER-BUG terse non-technical complaints ('not working all') require live-probe of EVERY candidate surface before classification. The phrase can mean: (a) partial coverage perceived as total failure, (b) single broken tool the user happened to hit, or (c) numerically wrong data dismissed as 'not working'. This cycle: 4 of 5 surfaces probed PASS or PARTIAL — pipeline degraded, not down. No new dispatch.
-- **L71 (c262, retained)**: system-auditor false-positives recurring (probe map needs per-service host-port override).
-- **L70 (c254, retained)**: cron/interrupt context = t=0 snapshot; live state reconcile every cycle.
+- **L73 (NEW c264)**: system-auditor probe-design false-positive class now has 3 distinct flavors — (a) wrong-host-port (A-11), (b) wrong-URL-path (A-30), (c) wrong-table-name OR dead-legacy-table (C-06 + C-07). Until probe-map override per service+DB+table ships, EVERY system-auditor anomaly requires live-probe of the EXACT substrate before classification. c264 saved 2 false dispatches.
+- **L72 applied** (c263→c264): live-probe every candidate surface before classification. Worked again.
+- **L71 retained** (c262): probe map needs per-service overrides — meta-fix backlog now 4 items.
+- **L70 retained** (c254): cron-prompt is t=0; reconcile live state every cycle.
 
-### Carry-over to next cycle
-- OBSERVE windows due (UTC): 22T16:30Z DAILYDASH AC-5.2 verdict | 22T21Z triple unlock (1955e + 1967-06 + watchdog-4) | 23T03Z 1965d errors=0 | 23T07:05Z 1957d BCTC tracker info gate | 23T18Z 1965c soak end
-- Standing FROZEN: NFR-3 BCTC freeze (1953-G-FAIL sentinel), recurring-bug rule, NO-BRANCHES policy
-- Branch carry-over: task/1972-vndirect-ohlcv-null-coercion in ## maintenance (code-janitor pending)
-- Backlog ITEM-18: 1967-10-ITEM18 LOW (marketScanJob finally-guard, XS, dev-mcp-server)
-- WIP: 0/2 (idle)
-- 1954c remains anchor for BCTC unblock (architect rethink owns root)
-- Meta-fix backlog: A-11 + A-30 system-auditor probe map (LOW, SPIKE on 3rd recurrence)
+### Carry-over
+- OBSERVE windows (UTC): 22T16:30Z DAILYDASH AC-5.2 (~68min); 22T21Z triple unlock (1955e + 1967-06 + watchdog-4); 23T03Z 1965d errors=0; 23T07:05Z 1957d BCTC tracker; 23T18Z 1965c soak end.
+- FROZEN: NFR-3 BCTC freeze (1953-G-FAIL), recurring-bug rule, NO-BRANCHES.
+- Branch carry-over: task/1972-vndirect-ohlcv-null-coercion in ## maintenance (code-janitor pending).
+- Backlog: 1967-10-ITEM18 LOW (marketScanJob finally-guard, XS, dev-mcp-server); 1954c anchor for BCTC unblock.
+- Meta-fix probe-map backlog now 4 items (A-11 + A-30 + C-06 + C-07) — SPIKE threshold reached, LOW-prio (zero user-value impact).
+- WIP: 0/2 unchanged.
