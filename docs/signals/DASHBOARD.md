@@ -30,6 +30,12 @@ _Updated: 2026-05-22T06:20:45Z (po cron-0607Z c254 dev-team triage). **Quadruple
 <!-- 1953-G-FAIL kept active (recurring-bug-freeze sentinel — DO-NOT-DISPATCH guard for 1953e/h until 1954c lands). -->
 <!-- 1954-A-RECOVERY kept active (RESOLVED but valuable history pointer — Sprint 1958 closure breadcrumb). -->
 
+## system-auditor
+| check_id | severity | ts | summary | zone_owner | status |
+|---|---|---|---|---|---|
+| A-29 | WARN | 2026-05-22T11:33:13Z | Reuters RSS + Trading Economics RSS: 65 consecutive failures (circuit open) — no news fetch for these sources | dev-mcp-server | OPEN |
+| A-21c | CRITICAL | 2026-05-22T11:33:13Z | dailyDashboardJob: ENOENT /docs/data/project-stats.json (0.0% success rate) — observe gate 2026-05-22T16:30Z | dev-mcp-server | OPEN |
+
 ## agent-father
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
