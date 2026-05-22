@@ -1,69 +1,6 @@
 # QA — Notebook
 
 
-## c255 · 2026-05-22T12:30Z
-
-**Sprint:** 1968d | **Task:** P03 zone-caveman-dict | **Session:** c255 — APPROVED
-
-```
-date: 2026-05-22
-outcome: APPROVED
-commit reviewed: d974eb57
-zone: .claude/ only — smart-skip (no .ts changes)
-smart_skip: YES
-round: 1
-```
-
-| Check | Result |
-|-------|--------|
-| AC-1: Zone Dictionaries section exists after Boundaries | PASS |
-| AC-2: 5 zone maps, correct abbreviations | PASS |
-| AC-3: Activation rule documented (additive, silent fallback) | PASS |
-| AC-4: Round-trip example (encode + decode + no-zone fallback) | PASS |
-| AC-5: Additive comment + FROZEN-NFR3; base tiers unchanged | PASS |
-| Line count: 96L ≤ 100L | PASS |
-| Backward compat: processed signals zone: = metadata prose only | PASS |
-| Smoke encode/decode | PASS |
-| Smoke no-zone fallback | PASS |
-
-**Blocking issues:** 0
-**Signal:** docs/signals/qa-1968d-P03-approved.json. **NEXT:** pm — Sprint 1968d Wave 2 COMPLETE (P01+P02+P03 all QA APPROVED).
-
-HANDOFF_DELTA: { "last_read_anchor": "## § qa-round-1", "last_read_at": "2026-05-22T12:30Z" }
-
-## c256 · 2026-05-22T06:15Z
-
-**Sprint:** active | **Task:** 1970-TA-OHLCV-BACKFILL | **Session:** c256 — APPROVED
-
-```
-date: 2026-05-22
-outcome: APPROVED
-commit reviewed: 870981a2
-zone: apps/mcp-server/ — scheduler/market-data/taOhlcvBackfillJob.ts + test
-smart_skip: NO — TS code change, full suite + tsc run
-round: 1
-```
-
-| Check | Result |
-|-------|--------|
-| AC-1 (covered skip fetch): AC-1a + AC-1b | PASS |
-| AC-2 (< TA_MIN_ROWS fetched + INSERT OR REPLACE): AC-2a + AC-2b + AC-2c | PASS |
-| AC-3 (low=0 corrupt → fetch even if cnt >= 35) | PASS |
-| AC-4 (per-ticker error isolation) | PASS |
-| AC-5 (sparse + empty + multi-ticker summary): AC-5 + AC-5b + AC-5c | PASS |
-| Targeted suite: 10/10 tests, 33 assertions | PASS — 0 fail |
-| Full suite: 9382 pass / 283 fail | PASS — 283 pre-existing BCTC freeze, zero regression vs baseline 9370 |
-| tsc --noEmit | 0 errors |
-| DDD: scheduler layer, infra imports permitted (not domain/) | PASS |
-| Security: parameterized SQL, no process.env, no hardcoded secrets | PASS |
-| Cron 30 1 * * 1-5 — no collision (taAlertScan starts 02:00 UTC, 30min after) | PASS |
-| INSERT OR REPLACE (not OR IGNORE) — heals 1972 corrupt rows | PASS |
-| TA_MIN_ROWS=35 boundary — MACD(26,9) needs 34 min, 35 = safe buffer | PASS |
-
-**Blocking:** 0. **Report:** reports/TASK_REPORT_1970.md. **Signal:** docs/signals/qa-1970-approved.json. **NEXT:** pm — mark TASK_1970 Done.
-
-**HANDOFF_DELTA:** `{ "last_read_anchor": "## §3-qa", "last_read_at": "2026-05-22T06:15Z" }`
-
 ## c257 · 2026-05-22T13:00Z
 
 **Sprint:** 1967c | **Task:** TASK_1967-07 | **Session:** c257 — APPROVED
@@ -113,6 +50,34 @@ round: 1
 | AC-6: tsc 0 (vacuous — no .ts) | PASS |
 
 **Blocking:** 0. Signal: docs/signals/qa-1967-08-approved.json. NEXT: pm — mark TASK_1967-08 Done.
+
+## c259 · 2026-05-22T13:30Z
+
+**Sprint:** 1967c | **Task:** TASK_1967-09 | **Session:** c259 — APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commit reviewed: c4a50420
+zone: docs/ + .claude/flows/ — smart-skip (markdown + JSON only, no .ts touched)
+smart_skip: YES
+round: 1
+```
+
+| AC | Result |
+|----|--------|
+| AC-1: mcp-tools.md Signal Bus Naming Contract section | PASS — L130-146 |
+| AC-2: agent-chaining-protocol.md cross-linked | PASS — mcp-tools.md:146 |
+| AC-3: po/main.md ISO-8601 signal write rule | PASS — L123-124 |
+| AC-4: 4 API_MIN_INTERVAL slots enabled=false + _disabled_by | PASS — jq confirmed all 4 |
+| AC-5: cowork-team/main.md §drift-min anchor + threshold table | PASS — L64-90 |
+| Collision check: drift-min bounded, spawn-guard untouched | PASS |
+| File size: cowork-team/main.md 301L (1L over 300L soft) | NON-BLOCKING — self-documented in L1 |
+| Deviation: 4 dead slots vs 3 in handoff | ACKNOWLEDGED — market-watcher-prepost confirmed |
+
+**Blocking issues:** 0. **Signal:** docs/signals/qa-1967-09-approved.json. **NEXT:** pm.
+
+HANDOFF_DELTA: { "last_read_anchor": "## [QA] Review Record", "last_read_at": "2026-05-22T13:30Z" }
 
 ## Carry-over
 

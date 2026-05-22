@@ -149,3 +149,29 @@ All are config/doc edits, no code changes.
 **Deviation:** Handoff evidence listed 3 API_MIN_INTERVAL slots; live audit found 4 (`market-watcher-prepost` also affected). All 4 disabled.
 
 **Commit SHA:** c4a50420
+
+---
+
+## [QA] Review Record — 2026-05-22T13:30Z
+
+**Round:** 1 | **Smart-skip:** YES (markdown + JSON only, no .ts touched) | **Verdict:** APPROVED
+
+| AC | QA Check | Result | Evidence |
+|----|----------|--------|----------|
+| AC-1 | mcp-tools.md has `## Signal Bus — Naming Contract` section with naming rule | PASS | `docs/standards/mcp-tools.md:130-146` — section present, naming pattern `{from}-{ISO-8601-timestamp}.json` documented, anti-pattern examples listed |
+| AC-2 | agent-chaining-protocol.md cross-linked from mcp-tools.md | PASS | `docs/standards/mcp-tools.md:146` — cross-link: `docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory` |
+| AC-3 | po/main.md has ISO-8601 signal write rule | PASS | `.claude/flows/po/main.md:123-124` — rule present with exact format, timestamp command, and SSOT back-ref |
+| AC-4 | cowork-schedule.json: 4 API_MIN_INTERVAL slots enabled=false + _disabled_by | PASS | jq verified: `news-scout-market`, `market-watcher-market`, `market-watcher-prepost`, `alert-commander-market` — all 4 `enabled=false`, all 4 have `_disabled_by` field |
+| AC-5 | cowork-team/main.md `## §drift-min` anchor + threshold table | PASS | `.claude/flows/cowork-team/main.md:64-90` — `## §drift-min` anchor at L64, collision-scope guard comment at L67, threshold table at L82-86 (safe 0-10, caution 11-14, risk ≥15) |
+
+**Collision check:** `## §drift-min` region bounded to L64-90 (`drift_min` commentary only). Spawn-guard region (Step 4.6+, L115+) untouched — reserved for TASK_1967-10 per L67 comment. PASS.
+
+**File size check:** cowork-team/main.md = 301L. Project split policy threshold is 300L (per size-justification comment at L1). File is 1L over the soft threshold, but L1 size-justification comment explicitly states "Split deferred until next architectural sprint." No blocking issue — deviation is self-documented in the file header.
+
+**Deviation acknowledgment:** Handoff evidence listed 3 API_MIN_INTERVAL dead slots; live audit found 4 (`market-watcher-prepost` was also affected but missing from the original handoff evidence). Agent-father disabled all 4. QA confirms all 4 are now `enabled=false` with `_disabled_by`. Live state is correct. Deviation approved — live state supersedes stale handoff evidence.
+
+**Smart-skip note:** No .ts files modified. bun test + bun tsc --noEmit skipped per smart-skip policy (markdown + JSON only). DDD and security scans not applicable.
+
+**Blocking issues:** 0
+
+**VERDICT: APPROVED**

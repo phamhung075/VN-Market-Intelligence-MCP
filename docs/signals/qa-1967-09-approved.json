@@ -1,0 +1,27 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "task-approved",
+  "payload": {
+    "task_id": "TASK_1967-09",
+    "title": "Signal protocol fixes (naming contract + dead slots + drift doc)",
+    "verdict": "APPROVED",
+    "round": 1,
+    "smart_skip": true,
+    "smart_skip_reason": "markdown + JSON only — no .ts touched",
+    "ac_results": {
+      "AC-1": "PASS — docs/standards/mcp-tools.md:130-146 Signal Bus Naming Contract section present",
+      "AC-2": "PASS — docs/standards/mcp-tools.md:146 cross-link to agent-chaining-protocol.md",
+      "AC-3": "PASS — .claude/flows/po/main.md:123-124 ISO-8601 signal write rule present",
+      "AC-4": "PASS — 4 API_MIN_INTERVAL slots confirmed enabled=false + _disabled_by (news-scout-market, market-watcher-market, market-watcher-prepost, alert-commander-market)",
+      "AC-5": "PASS — .claude/flows/cowork-team/main.md:64-90 §drift-min anchor + threshold table present"
+    },
+    "deviation_acknowledged": "4 dead slots (not 3) — market-watcher-prepost confirmed in live file. Agent-father deviation approved: live state > stale handoff evidence.",
+    "collision_check": "PASS — drift-min region bounded L64-90; spawn-guard (Step 4.6+) untouched, reserved for TASK_1967-10",
+    "file_size_check": "cowork-team/main.md = 301L (1L over 300L soft threshold); self-documented in L1 size-justification; split deferred to next arch sprint — non-blocking",
+    "blocking_issues": 0,
+    "handoff": "docs/handoffs/TASK_1967-09-signal-protocol-fixes.md"
+  },
+  "priority": "normal",
+  "createdAt": "20260522T064009Z"
+}
