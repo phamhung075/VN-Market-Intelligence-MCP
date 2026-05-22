@@ -1,6 +1,30 @@
 # QA — Notebook
 
 
+## c261 · 2026-05-22T17:55Z
+
+**Sprint:** 1974 | **Task:** 1974-DAILYDASH-HOST-VISIBILITY | **Session:** c261 — APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commits reviewed: c503c774 (docker-compose.yml + host file), def46747 (notebook + signal)
+zone: docker-compose.yml + docs/ — smart-skip (infra/md-only, 0 .ts/.go/.py)
+smart_skip: YES
+round: 1
+```
+
+| AC | Result |
+|----|--------|
+| AC-1: daily-dashboard bind line 19, :ro lines 16-18 unchanged | PASS |
+| AC-2: host file 1625B, 9 keys, mtime 19:29 | PASS |
+| AC-3: restart mcp-server → mtime + generatedAt unchanged | PASS |
+| AC-4: EROFS on project-stats.json write inside container | PASS |
+| AC-5: 9382/283 baseline (smart-skip, 283=BCTC freeze) | SMART-SKIP |
+| AC-6: N/A (option a chosen) | N/A |
+
+**Blocking issues:** 0. Signal: docs/signals/qa-1974-approved.json. NEXT: pm.
+
 ## c260 · 2026-05-22T13:45Z
 
 **Sprint:** 1967c | **Task:** TASK_1967-10 | **Session:** c260 — APPROVED
