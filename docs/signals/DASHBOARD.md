@@ -33,6 +33,7 @@ _Updated: 2026-05-22T06:20:45Z (po cron-0607Z c254 dev-team triage). **Quadruple
 ## system-auditor
 | check_id | severity | ts | summary | zone_owner | status |
 |---|---|---|---|---|---|
+| A-11 | CRITICAL | 2026-05-22T12:03:20Z | stock-price service /health endpoint UNREACHABLE (HTTP timeout). Container UP 8h, port 5000 listening, but curl returns FAILED. May affect price alert dispatch. | dev-stock-price | OPEN |
 | A-29 | WARN | 2026-05-22T11:33:13Z | Reuters RSS + Trading Economics RSS: 65 consecutive failures (circuit open) — no news fetch for these sources | dev-mcp-server | OPEN |
 | A-21c | CRITICAL | 2026-05-22T11:33:13Z | dailyDashboardJob: ENOENT /docs/data/project-stats.json (0.0% success rate) — observe gate 2026-05-22T16:30Z | dev-mcp-server | OPEN |
 

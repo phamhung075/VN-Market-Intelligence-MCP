@@ -1,12 +1,51 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T11:33:58Z | **Current Tier:** TIER-1 | **Sprint:** 1970+
+**Last updated:** 2026-05-22T12:03:20Z | **Current Tier:** TIER-1 | **Sprint:** 1970+
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ---
 
-## Audit Run Tier-1 (11:33–11:33 UTC 2026-05-22) — CURRENT
+## Audit Run Tier-1 (12:03–12:04 UTC 2026-05-22) — CURRENT
+
+- Tier: 1 (Runtime Ping)
+- Containers checked: 12/12 UP (mcp-server 8h, stock-price 7h, rest 39-40h stable)
+- Health endpoints: 10/11 responding at 200 OK — **NEW: stock-price /health TIMEOUT (A-11 CRITICAL)**
+- mcp-server restart count: MISSING (cannot inspect)
+- mcp-server memory: UNAVAILABLE (docker stats call failed)
+- Circuit breakers: 16/16 green per get_system_status (no circuit changes from 11:33Z)
+- Cron status: consistent with 11:33Z snapshot; no new fires in 30 min
+- Data freshness: consistent snapshot (BCTC 9.5h stale per freshness SLA check)
+- **Anomalies detected: 1 NEW + carry-over dedup items**
+
+### NEW Anomalies (not in 7-day dedup window)
+
+| check_id | severity | detail | impact |
+|---|---|---|---|
+| A-11 | CRITICAL | stock-price service /health endpoint UNREACHABLE (HTTP timeout). Container UP 8h, port 5000 listening, but curl returns FAILED. | Price alert dispatch may be isolated from live health check. Zone: dev-stock-price. |
+
+### Carry-over (7-day dedup, skip BUG write)
+
+| check_id | severity | detail | dedup_key | notes |
+|---|---|---|---|---|
+| A-21/A-21b/A-21c | CRITICAL | vnstockFundamentalsRefresh crashed; vnstockTradingStatsRefresh 50%; dailyDashboardJob ENOENT | microservice_degraded:mcp-server:A-2x | Gated 2026-05-22T21:00Z (A-21) and 16:30Z (A-21c AC-5.2) |
+| A-29 | WARN | Reuters RSS + Trading-Econ RSS: 65 consecutive failures (circuit open) | data_stale sources | Fallback feeds operational |
+| B-08 | CRITICAL | BCTC VPS stale 9.5h (continuing) | data_stale:bctc-push:B-08 | OPEN-STALE, observe VPS push age |
+
+### System Health at 12:03Z
+
+| Layer | Metric | Value | Status |
+|---|---|---|---|
+| Containers | Count | 12/12 UP | HEALTHY |
+| Health endpoints | 200 OK | 10/11 (stock-price NEW FAIL) | DEGRADED |
+| Circuit breakers | Status | 16/16 GREEN | OPERATIONAL |
+| Cron jobs | Success rates | 99%+ major; 3 dedup-gated; bctcReparseJob 85% | DEGRADED |
+| Data freshness | BCTC age | 9.5h stale | DEGRADED |
+| Overall | State | DEGRADED | 1 NEW (A-11) + 4 carry-over |
+
+---
+
+## Previous Audit Run Tier-1 (11:33–11:33 UTC 2026-05-22)
 
 - Tier: 1 (Runtime Ping)
 - Containers checked: 11/11 UP (mcp-server 8h, stock-price 7h, rest 38-39h stable; no NEW restarts)
