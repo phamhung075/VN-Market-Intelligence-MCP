@@ -87,6 +87,10 @@
 
 ## Review
 
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+| 1972 | **IMPL_DONE 2026-05-22T09:00Z (dev-mcp-server commit `0a51a5a0`)** — VnDirect OHLCV null-coercion fix. `ohlcvBackfill.ts` transaction guard expanded: `r.open==null \|\| r.high==null \|\| r.low==null` now included alongside existing `r.close==null`. Removed `?? 0` / `?? close` coercions that produced ~1072 corrupt `low=0` / `open=0` rows in `daily_ohlcv`. 5 regression tests (AC-1 null-low / AC-2 null-open / AC-3 valid-record / AC-4 null-close regression / AC-5 asymmetric fixture open=10/high=40/close=20,low=null → no low=0). Full suite 9370/285 GREEN (285 = pre-existing BCTC freeze). tsc 0 errors. BCTC NFR-3 CLEAR. Zone: apps/mcp-server/ only. Handoff: docs/handoffs/TASK_1972-vndirect-ohlcv-null-coercion.md. | MED | FIX | dev-mcp-server | docs/handoffs/TASK_1972-vndirect-ohlcv-null-coercion.md | — |
+
 ---
 ## Done
 

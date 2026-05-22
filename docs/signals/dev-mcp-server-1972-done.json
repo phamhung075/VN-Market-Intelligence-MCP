@@ -1,0 +1,39 @@
+{
+  "schema": "dev-signal/v1",
+  "signal_type": "impl_done",
+  "task_id": "1972",
+  "task_title": "VnDirect OHLCV null-coercion fix",
+  "from_agent": "dev-mcp-server",
+  "to_agent": "qa",
+  "generated_at": "2026-05-22T09:00:00Z",
+  "commit": "0a51a5a0",
+  "branch": "main",
+  "zone": "apps/mcp-server/",
+  "files_changed": [
+    "apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts",
+    "apps/mcp-server/src/__tests__/1972-vndirect-ohlcv-null-coercion.test.ts",
+    "docs/handoffs/TASK_1972-vndirect-ohlcv-null-coercion.md"
+  ],
+  "test_results": {
+    "new_tests": 5,
+    "new_pass": 5,
+    "new_fail": 0,
+    "full_suite_pass": 9370,
+    "full_suite_fail": 285,
+    "fail_note": "285 = pre-existing BCTC freeze, zero regression from this change"
+  },
+  "type_check": "0 errors",
+  "handoff": "docs/handoffs/TASK_1972-vndirect-ohlcv-null-coercion.md",
+  "qa_checklist": [
+    "AC-1: null low record NOT inserted (no low=0 row) — test PASS",
+    "AC-2: null open record NOT inserted (no open=0 row) — test PASS",
+    "AC-3: complete OHLCV record IS inserted correctly — test PASS",
+    "AC-4: null close still skipped (regression guard) — test PASS",
+    "AC-5: asymmetric fixture (open=10/high=40/close=20,low=null) → no low=0 — test PASS",
+    "tsc --noEmit: 0 errors",
+    "BCTC NFR-3: not BCTC-touching — CLEAR",
+    "DDD: infrastructure/fetchers layer only, no domain imports",
+    "Security: no process.env, no secrets, no hardcoded paths"
+  ],
+  "notes": "ohlcvBackfill.ts fix: guard expanded from r.close==null to include r.open==null || r.high==null || r.low==null. Removes ?? 0 and ?? close coercions. Residual ~1072 low=0 rows from before this fix remain in production DB — separate cleanup task if needed."
+}

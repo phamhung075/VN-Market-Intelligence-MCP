@@ -71,7 +71,7 @@ upsert.run(r.code, r.date, r.open, r.high, r.low, r.close, r.nmVolume ?? 0);
   - `apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts` — tightened guard in `insertMany` transaction. Added `r.open == null || r.high == null || r.low == null` checks alongside existing `r.close == null`. Removed `r.open ?? 0`, `r.high ?? close`, `r.low ?? close` coercions — replaced with direct `r.open`, `r.high`, `r.low` (guaranteed non-null after guard). Added explaining comment.
 - **Tests written:**
   - `apps/mcp-server/src/__tests__/1972-vndirect-ohlcv-null-coercion.test.ts` — 5 assertions (AC-1..AC-5), all GREEN. Uses `globalThis.fetch` mock injected per-test; asymmetric OHLCV fixture (open=10/high=40/close=20, low=null) verifies no low=0 row produced.
-- **Git commits:** see commit hash
+- **Git commits:** `0a51a5a0` fix(mcp-server/1972): TASK_1972 VnDirect OHLCV null-coercion
 - **Type check:** clean — tsc --noEmit 0 errors
 - **Service tests:** 5/5 new tests GREEN; full suite 9370 pass / 285 fail (285 = pre-existing BCTC freeze, zero regression)
 - **DB migration:** NOT REQUIRED — guard change only, no schema modification

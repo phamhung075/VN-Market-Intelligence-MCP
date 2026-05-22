@@ -5,6 +5,23 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967
 
 ## Working Memory
 
+### Task 1972 — VnDirect OHLCV null-coercion fix (2026-05-22, IMPL_DONE/QA-PENDING)
+
+**Change:**
+- `apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts` — expanded guard in `insertMany` transaction from `r.close==null` to include `r.open==null || r.high==null || r.low==null`. Removed `r.open ?? 0`, `r.high ?? close`, `r.low ?? close` coercions; use field values directly. Records with any missing OHLC field are now skipped entirely.
+
+**Root cause fixed:** `ohlcvBackfill.ts` only guarded `r.close==null`. Null `open`/`high`/`low` fields were coerced — `r.open ?? 0` wrote 0 to DB, `r.low ?? close` wrote 0 if close was also 0. Produced ~1072 corrupt `low=0` rows in `daily_ohlcv` (tracked separately from 1971 Go scan-order fix).
+
+**Tests:** `1972-vndirect-ohlcv-null-coercion.test.ts` 5/5 GREEN (AC-1 null-low skip, AC-2 null-open skip, AC-3 valid record insert, AC-4 null-close regression, AC-5 asymmetric fixture). tsc 0 errors. Full suite 9370/285.
+
+**Commit:** `0a51a5a0`
+
+**Signal:** `docs/signals/dev-mcp-server-1972-done.json` → qa
+
+Zone health: ohlcvBackfill.ts null-coercion guard FIXED; ~1072 pre-existing corrupt rows remain in production DB (cleanup task if needed, not blocking); regression test seals the fix | HEALING
+
+---
+
 ### Task 1965d-JANITOR-PATHFIX — tasksMdJanitorJob projectRoot fix + lint seal (2026-05-22, DONE)
 
 **Change:**
