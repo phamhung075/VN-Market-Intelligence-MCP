@@ -69,3 +69,28 @@ Example — destructive op:
 - No Chinese, Japanese, Korean characters — English only
 - "stop caveman" or "normal mode": revert
 - Level persists until changed or session end
+
+## Zone Dictionaries (L-14 Caveman per-zone mapping)
+
+<!-- Do not edit base ULTRA/FULL/LITE tier rules above. Zone dictionaries are append-only extensions. -->
+
+Activation: when a batch entry or signal carries `zone: <zone-path>`, look up the zone map and apply the listed abbreviations ON TOP of the active ULTRA/FULL/LITE tier. Zone abbreviations are ADDITIVE — they stack on top of whichever tier is active. When `zone:` is absent or unrecognized, base caveman applies unchanged (silent fallback, no error).
+
+| Zone path | Abbreviations |
+|-----------|--------------|
+| `apps/mcp-server/` | tool→t, server→s, handler→h, store→st, scheduler→sch |
+| `apps/stock-price/` | fetcher→f, scanner→sc, ohlcv→o, ticker→tk |
+| `apps/alert-engine/` | verdict→v, evaluator→ev, alert→a |
+| `apps/bctc-extractor/` | extractor→ex, pdf→p, ocr→oc, queue→q `# FROZEN — NFR-3 active` |
+| `.claude/` | agent→ag, flow→fl, skill→sk, signal→sg |
+
+### Round-trip example (zone=apps/mcp-server/)
+
+Encode: `{ "zone": "apps/mcp-server/", "msg": "handler in mcp-server scheduler crashed, store corrupted" }`
+→ apply mcp-server zone dict on top of ultra tier →
+`{ "zone": "apps/mcp-server/", "msg": "h in s sch crashed, st corrupted" }`
+
+Decode: receiver sees `zone: apps/mcp-server/` → expand h=handler, s=server, sch=scheduler, st=store
+→ `"handler in mcp-server scheduler crashed, store corrupted"` (lossless round-trip)
+
+No-zone fallback: `{ "msg": "scheduler task failed" }` → base ultra → `{ "msg": "sch task fail" }` (zone dict NOT applied)

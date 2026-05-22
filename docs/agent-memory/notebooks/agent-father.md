@@ -54,10 +54,27 @@ Dogfood: this notebook entry IS the blank-state init for agent-father notebook.
 
 **Signals emitted:** pm-1968d-wave1-closed.json → NEXT=agent-father
 
+## c254 · 2026-05-22T12:00Z
+
+**Sprint:** 1968d | **Task:** P03 (per-zone caveman dictionaries)
+
+**P03 — Zone Dictionaries appended to caveman SKILL:**
+`.claude/skills/caveman/SKILL.md` 71L→96L (≤100L cap PASS).
+5 zone maps: mcp-server (t/s/h/st/sch), stock-price (f/sc/o/tk), alert-engine (v/ev/a), bctc-extractor (ex/p/oc/q FROZEN-NFR3), .claude (ag/fl/sk/sg).
+Activation rule: `zone:` field in signal → additive on top of ULTRA/FULL/LITE tier. Silent fallback when absent.
+Round-trip example included (mcp-server zone encode+decode verified lossless).
+AC-1..AC-5: ALL PASS.
+
+**Dogfood — handoff-delta-read:** first-cycle full-read (no prior anchor). anchor_out=null (no §N headings in handoff). Next read will also be full-read (expected for 1-file tasks with no multi-round amendments).
+**Dogfood — notebook-write:** section-overwrite c254 appended. c252+c253 retained (2 prior cycles). No prune needed (<3 sections before this write).
+**Doc-correction:** PM erroneously wrote c253 entry to agent-father notebook last cycle. This c254 entry is agent-father's own actual cycle record. (No c253 structural damage — content was accurate, just misattributed.)
+
+**Signal emitted:** docs/signals/agent-father-1968d-P03-ready.json → NEXT=qa
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
 - 1968c-P01/P02: await qa ratification (AC-6..8 pending)
 - 1968d-P01/P02: QA APPROVED, DONE (Round-2 verified)
-- 1968d-P03: READY for dispatch (gate removed, P01+P02 DONE)
+- 1968d-P03: DONE (this cycle) — awaiting qa approval
