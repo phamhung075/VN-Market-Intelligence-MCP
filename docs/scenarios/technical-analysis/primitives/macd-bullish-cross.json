@@ -1,0 +1,25 @@
+{
+  "primitive": "CalculateMACD",
+  "category": "golden",
+  "description": "Bullish MACD cross scenario (12/26/9): prices are flat at 100 for 30 candles (seeds both EMAs near 100), decline sharply to 70 over 15 candles (forces MACD deeply negative), then rally strongly above 100 (fast EMA surpasses slow EMA, histogram crosses from negative to positive within the output window). Verifies bullish-cross detection. Output length: (60-26+1)-9+1 = 27 triples.",
+  "input": {
+    "description": "60 prices — 30 flat at 100, 15 declining (100→70), 15 rallying (+5/candle from 75→145)",
+    "fast": 12,
+    "slow": 26,
+    "signalPeriod": 9,
+    "prices_pattern": "flat[0..29]=100; decline[30..44]=100-2*(i-29); rally[45..59]=prev+5"
+  },
+  "expectedOutput": {
+    "outputLength": 27,
+    "macdLine": "starts negative, crosses zero upward around index 18",
+    "histogram": "has at least one sign change from negative to positive (bullish cross)",
+    "firstTriple": {
+      "macdLine": -1.2631,
+      "signalLine": -0.2981,
+      "histogram": -0.9650,
+      "tolerance": 0.001
+    },
+    "crossAtIndex": 14,
+    "note": "histogram[13]=-0.7210 < 0, histogram[14]=+0.1548 > 0 — bullish cross confirmed"
+  }
+}

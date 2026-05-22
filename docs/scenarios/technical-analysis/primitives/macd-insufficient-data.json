@@ -1,0 +1,42 @@
+{
+  "primitive": "CalculateMACD",
+  "category": "failure",
+  "description": "Insufficient-data and invalid-parameter failure scenarios for CalculateMACD. Three sub-cases: (1) empty input, (2) 34 prices with 12/26/9 (need 35 = slow+signalPeriod), (3) fast >= slow (invalid periods). All must return a non-nil error and zero-length output arrays.",
+  "input": {
+    "cases": [
+      {
+        "name": "empty-input",
+        "closes": [],
+        "fast": 12,
+        "slow": 26,
+        "signalPeriod": 9
+      },
+      {
+        "name": "exactly-slow-plus-signal-minus-one",
+        "closes_count": 34,
+        "closes_description": "34 zeros — need 35 minimum for 12/26/9",
+        "fast": 12,
+        "slow": 26,
+        "signalPeriod": 9
+      },
+      {
+        "name": "fast-equals-slow",
+        "closes_count": 50,
+        "fast": 26,
+        "slow": 26,
+        "signalPeriod": 9
+      }
+    ]
+  },
+  "expectedOutput": {
+    "macdLine": null,
+    "signalLine": null,
+    "histogram": null,
+    "errors": [
+      "ErrInsufficientData (empty input)",
+      "ErrInsufficientData (34 < 35)",
+      "ErrInvalidPeriods (fast == slow)"
+    ],
+    "note": "All three cases MUST return a non-nil error. Output arrays MUST be nil/empty. No partial results are acceptable."
+  }
+}

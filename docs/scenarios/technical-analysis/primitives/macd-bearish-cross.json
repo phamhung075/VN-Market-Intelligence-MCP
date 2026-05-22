@@ -1,0 +1,25 @@
+{
+  "primitive": "CalculateMACD",
+  "category": "golden",
+  "description": "Bearish MACD cross scenario (12/26/9): prices are flat at 100 for 30 candles (seeds both EMAs near 100), rise sharply over 15 candles (forces MACD positive), then decline sharply below 100 (fast EMA drops below slow EMA, histogram crosses from positive to negative within the output window). Verifies bearish-cross detection. Output length: (60-26+1)-9+1 = 27 triples.",
+  "input": {
+    "description": "60 prices — 30 flat at 100, 15 rising (100→130), 15 declining (-5/candle from 130→55)",
+    "fast": 12,
+    "slow": 26,
+    "signalPeriod": 9,
+    "prices_pattern": "flat[0..29]=100; rise[30..44]=100+2*(i-29); decline[45..59]=prev-5"
+  },
+  "expectedOutput": {
+    "outputLength": 27,
+    "macdLine": "starts positive, crosses zero downward around index 18",
+    "histogram": "has at least one sign change from positive to negative (bearish cross)",
+    "firstTriple": {
+      "macdLine": 1.2631,
+      "signalLine": 0.2981,
+      "histogram": 0.9650,
+      "tolerance": 0.001
+    },
+    "crossAtIndex": 14,
+    "note": "histogram[13]=+0.7210 > 0, histogram[14]=-0.1548 < 0 — bearish cross confirmed"
+  }
+}
