@@ -1,6 +1,30 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-22 | **Task:** 1960-DAILYDASH | **Session:** c248 — APPROVED
+**Last updated:** 2026-05-22 | **Task:** 1965d-JANITOR-PATHFIX | **Session:** c249 — APPROVED
+
+## Session 2026-05-22 c249 — Task 1965d-JANITOR-PATHFIX APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED (AC-5 PENDING_LIVE)
+commit reviewed: db4931de
+zone: apps/mcp-server/ — .ts changes present, full suite + tsc run
+smart_skip: NO — .ts changes in tasksMdJanitorJob.ts + new lint test
+round: 1
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: canonical getProjectRoot import at :32; no local helper; all callers switched | PASS |
+| AC-2: no-local-project-root.test.ts 1/1 GREEN (0 occurrences in scheduler/) | PASS |
+| AC-3: tsc --noEmit 0 errors | PASS |
+| AC-4: smoke-tasks-md-janitor.ts 12/12 PASS | PASS |
+| AC-5: PENDING_LIVE | PENDING — ops docker rebuild + 2026-05-23T03:00Z cron tick required |
+| DDD: interface/scheduler importing infrastructure — permitted by layer rules | PASS |
+| Security: no process.env, no hardcoded secrets, no SQL injection surface | PASS |
+| Regression: 9365 pass / 285 fail — all 285 pre-existing (Task 178 + BCTC-frozen); zero new janitor/projectRoot failures | PASS |
+
+Blocking: 0. Signal: docs/signals/qa-1965d-JANITOR-PATHFIX-done.json emitted. TASK_REPORT at reports/TASK_REPORT_1965d-JANITOR-PATHFIX.md.
 
 ## Session 2026-05-22 c248 — Task 1960-DAILYDASH APPROVED
 
