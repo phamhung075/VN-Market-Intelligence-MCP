@@ -1,49 +1,32 @@
 # Agent Father — Notebook
 
-**Last updated:** 2026-05-21T00:00Z | **Sprint:** 1968c — TASK_1968c-P01 + P02
+## c252 · 2026-05-22T08:30Z
 
-## This Session — 2026-05-21 (Tasks 1968c-P01 + 1968c-P02)
+**Sprint:** 1968d | **Tasks:** P01 (handoff-delta-read SKILL) + P02 (notebook-write diff-write)
 
-**TASK_1968c-P01 — L-6 tick-snapshot (.claude/ surface):**
-Files: .gitignore (AC-5), cowork-team/main.md (Step 4.7 snapshot write), news-scout/stage-bootstrap.md (macro snapshot-aware), alert-commander/stage-bootstrap.md (macro snapshot-aware).
-cycle-bootstrap/SKILL.md Step -1 was already implemented in 1968b2 — no edit needed.
-AC-1..5: PASS. AC-6..8: PENDING_QA. Signal: agent-father-1968c-p01-done.json.
-Deferred: apps/mcp-server/ zone → dev-mcp-server (pair-claim after 1967-02 QA).
+**P01 — handoff-delta-read SKILL created:**
+`.claude/skills/handoff-delta-read/SKILL.md` (77L ≤80L AC-1 PASS).
+§N-slug anchor convention. Delta-read algo: seek last_read_anchor → read from that line to EOF.
+Full-read fallback: anchor null OR last_read_at >24h. Backward compat: no §N anchors → full-read silently.
+Flows updated: qa/main.md (Step 0c), developer/main.md (Step 0c), fixer/main.md (Step 0c).
+HANDOFF_DELTA field added to all RETURN blocks. Smoke test PASS: delta = 7.6% of full (target ≤30%).
 
-**TASK_1968c-P02 — L-8 composite step-0-cowork skill:**
-Created: .claude/skills/step-0-cowork/SKILL.md (75L, ≤120L cap).
-Updated always_load: news-scout, market-watcher, alert-commander, financial-analyst, report-analyzer, digest-predict, qa-responder (7 agents).
-Error boundaries preserved: notebook-read fail → STOP; bootstrap fail → STOP; regime fail → NEUTRAL fallback.
-AC-1..6: PASS. AC-7..8: PENDING_QA. Signal: agent-father-1968c-p02-done.json.
-unified-agent: inspected, optional upgrade deferred (AC-5 spec).
+**P02 — notebook-write SKILL refactored:**
+`.claude/skills/notebook-write/SKILL.md` (69L) — full-overwrite → section-overwrite.
+c<NNN> · ISO-ts anchor format. 3-cycle retention (keep c<N>, c<N-1>, c<N-2>). Prune c<N-3>+ via Edit.
+Blank-state: one-time Write if no ## c<NNN> heading. ≤200L file bound.
+Smoke test PASS: 3-cycle sim (c101/c102/c103 pass, c98+c99 pruned, 44L ≤200L).
+Dogfood: this notebook entry IS the blank-state init for agent-father notebook.
 
-## Previous Session — 2026-05-21T23:30Z (Task 1967-04)
+**Signals emitted:** agent-father-1968d-P01-ready.json, agent-father-1968d-P02-ready.json → NEXT=qa
 
-market-watcher identity recurrence fix (ITEM-04): Step -0 identity assertion added to market-watcher/main.md. D5 guard added to system-auditor audit-dimensions.md + handlers.md. AC-5+AC-7: PENDING_QA. Signal: agent-father-1967-04-done.json.
-
-## Previous Session — 2026-05-21T20:54Z (Tasks 1967-03 + 1967-05)
-
-1967-03: DASHBOARD stale-race guard → pm/main.md CAS pattern.
-1967-05: cowork dispatcher drift guard → cowork-team/main.md Step 3b (DRIFT_MIN>10 WORK warn).
-
-## Previous Session — 2026-05-21T21:00Z (Task 1968b2)
-
-L-6 cron stagger + cycle-bootstrap Step -1 + L-7 batch commit + ITEM-05 collision merge.
-
-## Previous Session — 2026-05-21T20:03Z (Task 1968b1 phase2)
-
-L-4 news-scout get_agent_signals consolidation 3→1 per cycle.
-
-## Patterns Noticed
-
-- cycle-bootstrap/SKILL.md already had Step -1 from 1968b2 — always check prior sprint notebook before re-implementing.
-- P01 + P02 touch distinct subzones (.claude/flows/ vs .claude/skills/ + .claude/agents/) — safely interleaved in single cycle.
-- When adding always_load entries to cowork agents, check for `note:` vs `# justification:` comment style — be consistent with existing style in each file.
+**AC checks P01:** AC-1 PASS (≤80L, §N-slug, algo, fallback), AC-2 PASS (qa Step 0c), AC-3 PASS (dev Step 0c), AC-4 PASS (silent fallback documented), AC-5 PASS (no apps/ touch)
+**AC checks P02:** AC-1 PASS (c<NNN>·ts format), AC-2 PASS (3-cycle retention), AC-3 PASS (Edit pattern documented), AC-4 PASS (blank-state Write), AC-5 PASS (≤200L bound + trim note)
 
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
 - 1968c-P01/P02: await qa ratification (AC-6..8 pending)
-- 1968c-P03 (wave 2): gated on P01 done signal — now emitted, P03 can proceed
-- 1967-04 AC-5+AC-7: await qa 10-cycle live test
+- 1968d-P01/P02: await qa APPROVED (signals emitted, NEXT=qa)
+- Wave 2 P03 (zone-caveman-dict): gated on P01+P02 QA APPROVED

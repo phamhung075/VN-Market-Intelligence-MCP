@@ -6,6 +6,7 @@
 
 ## Input
 `docs/handoffs/TASK_NNN.md` → `[QA] Review Record` (exact file:line issues)
+Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` from QA round.
 
 ## Output
 `[Fixer] Fix Record` in handoff | QA notified | docs/TASKS.md In Progress → Review
@@ -33,6 +34,16 @@ Escalate to PM immediately if: public API change needed | >2 files touched | fix
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `fixer`)
+
+**Step 0c — Delta-read handoff** → skill: `.claude/skills/handoff-delta-read/SKILL.md`
+```
+Read handoff using delta-read skill:
+  path: docs/handoffs/TASK_NNN.md
+  last_read_anchor: <from signal payload handoff_delta.last_read_anchor, or null>
+  last_read_at:     <from signal payload handoff_delta.last_read_at, or null>
+→ seek to [QA] Review Record section; read only the delta since last fixer/QA round
+→ store anchor_out + read_at into context (emit in RETURN block as handoff_delta for QA re-run)
+```
 
 **Trigger**:
 1. Read `[QA] Review Record` → extract file:line refs → go DIRECTLY there
@@ -79,5 +90,6 @@ Update docs/TASKS.md → return:
 DONE: Fixes applied — N issues resolved, tests pass, tsc clean (see [Fixer] Fix Record in handoff)
 NEXT: qa | re-run full QA pipeline on branch task/NNN-kebab
 HANDOFF: docs/handoffs/TASK_NNN.md
+HANDOFF_DELTA: { "last_read_anchor": "<anchor_out>", "last_read_at": "<read_at>" }
 PIPELINE: continue
 ```

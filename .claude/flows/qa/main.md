@@ -5,6 +5,7 @@
 
 ## Input
 `docs/handoffs/TASK_NNN.md` with `[Developer] Implementation Record`, branch `task/NNN-*`
+Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` from prior round.
 
 ## Output
 Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
@@ -49,6 +50,15 @@ After pre-checks (project-root, notebook-read, Smart-Skip), jump to the labelled
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `qa`)
+
+**Step 0c — Delta-read handoff** → skill: `.claude/skills/handoff-delta-read/SKILL.md`
+```
+Read handoff using delta-read skill:
+  path: docs/handoffs/TASK_NNN.md
+  last_read_anchor: <from signal payload handoff_delta.last_read_anchor, or null>
+  last_read_at:     <from signal payload handoff_delta.last_read_at, or null>
+→ store anchor_out + read_at into context (emit in RETURN block as handoff_delta for next round)
+```
 
 ## Smart-Skip
 - Test-only change → skip DDD + security. Run: unit + regression + tsc.
@@ -129,6 +139,7 @@ git push origin --delete task/NNN-kebab-description 2>/dev/null || true  # ignor
 DONE: Task NNN merged, pushed to main, branch deleted locally + remote, all tests green
 NEXT: pm | mark Task NNN done, unblock downstream, queue next developer task
 HANDOFF: docs/handoffs/TASK_NNN.md
+HANDOFF_DELTA: { "last_read_anchor": "<anchor_out>", "last_read_at": "<read_at>" }
 PIPELINE: continue
 ```
 
@@ -140,6 +151,7 @@ DONE: QA review complete — N issues found (see [QA] Review Record in handoff)
 NEXT: fixer | apply minimum fixes to listed issues      ← round < 2
 NEXT: architect | fixer ceiling hit, root-cause needed  ← round ≥ 2
 HANDOFF: docs/handoffs/TASK_NNN.md
+HANDOFF_DELTA: { "last_read_anchor": "<anchor_out>", "last_read_at": "<read_at>" }
 PIPELINE: continue
 ```
 

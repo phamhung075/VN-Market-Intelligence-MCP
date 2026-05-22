@@ -1,0 +1,33 @@
+{
+  "schema": "agent-done/v1",
+  "sprint": "1968d",
+  "task_id": "1968d-P01-handoff-delta-read",
+  "from_agent": "agent-father",
+  "to_agent": "qa",
+  "signal_type": "task_ready_for_qa",
+  "generated_at": "2026-05-22T08:35Z",
+  "cycle_id": "c252",
+  "verdict": "IMPL_COMPLETE",
+  "files_changed": [
+    ".claude/skills/handoff-delta-read/SKILL.md",
+    ".claude/flows/qa/main.md",
+    ".claude/flows/developer/main.md",
+    ".claude/flows/fixer/main.md"
+  ],
+  "ac_summary": {
+    "AC-1": "PASS — SKILL.md 77L ≤80L; §N-slug anchor convention; delta-read algo; full-read fallback documented",
+    "AC-2": "PASS — qa/main.md Step 0c delta-read skill call; HANDOFF_DELTA in RETURN block",
+    "AC-3": "PASS — developer/main.md Step 0c delta-read skill call; HANDOFF_DELTA in RETURN block",
+    "AC-4": "PASS — full-read fallback explicit (anchor null, anchor not found, >24h stale)",
+    "AC-5": "PASS — git diff shows only .claude/ files; zero apps/ touch"
+  },
+  "smoke_test": {
+    "result": "PASS",
+    "delta_ratio": "7.6% of full read (target ≤30%)",
+    "backward_compat": "PASS — file with no §N anchors triggers full-read silently",
+    "stale_fallback": "PASS — last_read_at >24h triggers full-read despite anchor present"
+  },
+  "rollback": "git revert HEAD --no-edit (removes 4 files cleanly)",
+  "handoff_path": "docs/handoffs/TASK_1968d-P01-handoff-delta-read.md",
+  "next": "qa"
+}

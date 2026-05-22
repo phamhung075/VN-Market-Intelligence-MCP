@@ -93,3 +93,18 @@ Handoff files themselves are unchanged (purely additive section anchors if agent
 **Blockers for PO:** none
 **DDD layer:** Infrastructure (read-path tooling, no domain entity change)
 **Wave:** 1 — parallel-safe with P02 (different skill subtree, different flow files)
+
+## §impl-agent-father
+
+## [Developer] Implementation Record
+
+- **Agent:** agent-father | **Cycle:** c252 | **Timestamp:** 2026-05-22T08:35Z
+- **Files created:**
+  - `.claude/skills/handoff-delta-read/SKILL.md` — 77L; §N-slug anchor convention; delta-read algo; full-read fallback (null anchor, anchor-not-found, >24h stale)
+- **Files modified:**
+  - `.claude/flows/qa/main.md` — Step 0c delta-read call added; HANDOFF_DELTA in 2 RETURN blocks
+  - `.claude/flows/developer/main.md` — Step 0c delta-read call added; HANDOFF_DELTA in RETURN block
+  - `.claude/flows/fixer/main.md` — Step 0c delta-read call added; HANDOFF_DELTA in RETURN block
+- **Smoke test:** PASS — delta read 7.6% of full file (628 of 8234 bytes). Backward compat: no §N anchors → full-read silently. Stale >24h → full-read. AC-5: zero apps/ touch.
+- **AC status:** AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS, AC-5 PASS
+- **Signal:** docs/signals/agent-father-1968d-P01-ready.json emitted (NEXT=qa)

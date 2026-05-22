@@ -6,6 +6,7 @@
 
 ## Input
 `docs/handoffs/TASK_NNN.md` with `[Architect] Brownfield Findings`
+Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` from prior round.
 
 ## Output
 Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in handoff | PM/QA notified
@@ -33,6 +34,15 @@ Conflict check is main terminal's responsibility — disjoint files → parallel
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `developer`)
+
+**Step 0c — Delta-read handoff** → skill: `.claude/skills/handoff-delta-read/SKILL.md`
+```
+Read handoff using delta-read skill:
+  path: docs/handoffs/TASK_NNN.md
+  last_read_anchor: <from signal payload handoff_delta.last_read_anchor, or null>
+  last_read_at:     <from signal payload handoff_delta.last_read_at, or null>
+→ store anchor_out + read_at into context (emit in RETURN block as handoff_delta for QA)
+```
 
 **Pre-code checklist**
 1. Confirm task status in docs/TASKS.md
@@ -126,5 +136,6 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 DONE: Implementation complete — CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts], NEW_PASS=23, tsc clean
 NEXT: qa | run full QA pipeline on branch task/NNN-kebab
 HANDOFF: docs/handoffs/TASK_NNN.md
+HANDOFF_DELTA: { "last_read_anchor": "<anchor_out>", "last_read_at": "<read_at>" }
 PIPELINE: continue
 ```

@@ -1,49 +1,69 @@
 ---
 name: notebook-write
 description: >
-  Overwrite agent notebook at end of cycle. Records session summary, patterns,
-  carry-over items. Used as end-of-cycle step in all dev-team flow files.
+  Section-overwrite agent notebook at end of cycle. Appends a new c<NNN> section,
+  retains last 3 cycles, prunes older sections. Replaces full-overwrite pattern.
+  Used as end-of-cycle step in all dev-team and cowork flow files.
 ---
 
-## End-of-cycle notebook write
+## End-of-cycle notebook write — section-overwrite pattern
 
 Path: `$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md`
 
-**Operation = Write tool (full overwrite), NOT Edit (no append).** This is critical: the file MUST be replaced wholesale every cycle. Appending grows the notebook unbounded and breaks the waterfall lazy-load budget (see `feedback_waterfall_lazy_load`).
+**Operation = Edit tool (section append + prune), NOT Write/full-overwrite.**
+Each cycle appends a new section; the prior 2 sections are retained; older sections are pruned.
 
-### Pre-write check (MANDATORY)
+### Section anchor format (AC-1)
 
-1. If the file already exists, Read it first to recover any explicit carry-over items (anything under a `## Carry-over` heading).
-2. Drop everything else — old session summaries, old patterns, old "Zone health:" lines from prior cycles. Each cycle owns only its own observations + any carry-over the previous cycle explicitly marked.
-
-### Body (target ≤100 lines, hard cap 120)
-
-- **Last updated:** `<ISO date>` · **Sprint:** `<NNN>`
-- **Archive pointer (if trimmed):** `> Archive: docs/archive/notebooks/<agent-id>-<YYYY-MM-DD>.md`
-- **This session (1–3 sentences):** what was done, what was found.
-- **Patterns noticed:** recurring bugs, architecture violations, calibration observations (optional, omit if none).
-- **Zone health:** one line per zone-scan finding (dev-* agents only — emit `Zone health: no drift detected` or specific drift line).
-- **Carry-over (next session):** unresolved questions, blocked tasks. **Only items here survive into the next cycle.**
-
-**Archive-before-overwrite rule:** If the current notebook file exceeds 120 lines, COPY the full file to `docs/archive/notebooks/<agent-id>-<YYYY-MM-DD>.md` BEFORE writing the trimmed overwrite. Add an archive pointer on line 3 of the live file. Archive is write-once — do not edit archives.
-
-If your draft is >120 lines, you are appending. Stop, re-read this skill, and rewrite as a fresh overwrite.
-
-### Tool call
-
-```
-Write(path=$PROJECT_ROOT/docs/agent-memory/notebooks/<agent-id>.md, content=<≤50L body>)
+```markdown
+## c<NNN> · <YYYY-MM-DDThh:mmZ>
 ```
 
-Never use Edit/Append. Never preserve prior session content outside the explicit `## Carry-over` block.
+`<NNN>` = agent's current cycle counter (from kickoff signal `cycle_id`, or count existing `## c` headings + 1).
+Grep to locate sections: `grep "^## c[0-9]" notebook.md`
+
+### Retention rule (AC-2)
+
+Keep: current cycle `c<N+1>` + 2 prior cycles `c<N>` and `c<N-1>`.
+Prune: `c<N-2>` and older (delete heading + entire content block below it, down to the next `## c` heading or EOF).
+Do NOT prune if the file has fewer than 3 `## c` sections (blank-state or fresh deploy).
+
+### Write operation (AC-3)
+
+**Step 1 — Prune oldest section** (only if ≥ 3 sections exist):
+```
+Edit(file=<notebook_path>,
+     old_string=<full ## c(N-2) heading + its content block>,
+     new_string="")
+```
+
+**Step 2 — Append new section** (append after last line of current content):
+```
+Edit(file=<notebook_path>,
+     old_string=<last line of existing file content>,
+     new_string=<last line>\n\n## c<N+1> · <ISO-timestamp>\n<new cycle content ≤60L>)
+```
+
+### Blank-state fallback (AC-4)
+
+If the file does NOT yet contain any `## c<NNN>` heading (new file or legacy format):
+→ Perform a single full **Write** to initialize the section structure:
+```
+Write(path=<notebook_path>, content="# <Agent> — Notebook\n\n## c<NNN> · <ISO-timestamp>\n<cycle content>")
+```
+This handles first-deploy and pre-existing plain-text notebooks gracefully (forward-only, no retro-write).
+
+### ≤200L bound (AC-5)
+
+If file would exceed 200L after write: prune one additional prior section.
+A notebook exceeding 200L after pruning signals a section-content discipline violation — trim the current section to ≤60L.
+Note: 200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L) is the primary enforcement lever.
 
 ### Commit — retry on lock collision (F4)
 
-Notebook commits are bare `git commit` calls that hit `index.lock` / `HEAD.lock` during Docker VirtioFS scan races (H4 confirmed c57+c58). Use the `git_commit_retry` idiom for all notebook commit steps:
-
 ```bash
 # idiom → docs/protocols/head-lock-self-cure.md § F4 — Git Commit Retry Wrapper
-git_commit_retry -m "chore(memory/<agent-id>): notebook <cycle>"
+git_commit_retry -m "chore(memory/<agent-id>): cycle <NNN> <YYYY-MM-DD>"
 ```
 
 > Requires `$PROJECT_ROOT` set by skill: `.claude/skills/project-root/SKILL.md`

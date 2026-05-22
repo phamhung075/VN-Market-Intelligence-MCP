@@ -93,3 +93,15 @@ git revert HEAD --no-edit
 **Blockers for PO:** none
 **DDD layer:** Infrastructure (write-path tooling, no domain entity change)
 **Wave:** 1 — parallel-safe with P01 (single skill file, no overlap with P01's skill or flows)
+
+## §impl-agent-father
+
+## [Developer] Implementation Record
+
+- **Agent:** agent-father | **Cycle:** c252 | **Timestamp:** 2026-05-22T08:35Z
+- **Files modified:**
+  - `.claude/skills/notebook-write/SKILL.md` — 69L; full-overwrite → section-overwrite; ## c<NNN>·ISO-ts anchor; 3-cycle retention; Edit-based prune+append; blank-state Write fallback; ≤200L bound with trim note
+- **Smoke test:** PASS — 3-cycle simulation (c101+c100+c99 present after c101 write; c99+c98 absent after c102 write; 44L ≤200L). Blank-state: 1 ## c heading after init Write.
+- **Dogfood:** agent-father notebook initialized via blank-state Write path (AC-4 exercised live on own notebook).
+- **AC status:** AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS, AC-5 PASS
+- **Signal:** docs/signals/agent-father-1968d-P02-ready.json emitted (NEXT=qa)
