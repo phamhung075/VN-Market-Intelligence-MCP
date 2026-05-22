@@ -1,0 +1,20 @@
+{
+  "primitive": "CalculateRSI",
+  "category": "golden",
+  "description": "Overbought-pullback scenario: 14 consecutive gains drive RSI to 100 (overbought), then 5 declining candles demonstrate pullback. First RSI = 100 (pure-gain seed, avgLoss=0). After decline candles RSI falls below 70, confirming the primitive captures a realistic overbought-then-pullback pattern. All values in [0,100].",
+  "input": {
+    "closes": [
+      30.0, 31.0, 32.0, 33.0, 34.0,
+      35.0, 36.0, 37.0, 38.0, 39.0,
+      40.0, 41.0, 42.0, 43.0, 44.0,
+      43.0, 41.5, 40.0, 38.0, 36.0
+    ],
+    "period": 14
+  },
+  "expectedOutput": {
+    "rsi": [100.0, 92.8571, 83.2512, 74.9062, 65.4813, 57.6674],
+    "tolerance": 0.01,
+    "length": 6,
+    "note": "First value MUST be exactly 100 (pure-gain seed, avgLoss=0). Values after index 0 reflect Wilder smoothing as losses appear."
+  }
+}

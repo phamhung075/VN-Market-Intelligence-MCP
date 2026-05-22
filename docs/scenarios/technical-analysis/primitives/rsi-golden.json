@@ -1,0 +1,21 @@
+{
+  "primitive": "CalculateRSI",
+  "category": "golden",
+  "description": "14-period Wilder RSI on a 20-candle mixed price series. Seed window (moves 1-14) averaged with SMA; subsequent values use Wilder smoothing: avgGain=(prev*(13)+curr)/14. Output has 6 RSI values (len 20 - 14 = 6). All values in [0,100]. Tolerance ±1 RSI point.",
+  "input": {
+    "closes": [
+      44.34, 44.09, 44.15, 43.61, 44.33,
+      44.83, 45.10, 45.15, 43.61, 44.33,
+      44.83, 45.85, 46.08, 45.89, 46.03,
+      46.41, 45.98, 45.77, 45.35, 46.03
+    ],
+    "period": 14
+  },
+  "expectedOutput": {
+    "rsi": [62.5557, 64.7021, 60.4775, 58.4697, 54.5677, 59.3031],
+    "tolerance": 1.0,
+    "length": 6,
+    "rangeMin": 0,
+    "rangeMax": 100
+  }
+}

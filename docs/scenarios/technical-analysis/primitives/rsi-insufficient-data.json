@@ -1,0 +1,29 @@
+{
+  "primitive": "CalculateRSI",
+  "category": "failure",
+  "description": "Insufficient-data failure scenario: fewer closes than period+1 must return an error. Three sub-cases: (1) empty input with period=14, (2) exactly period closes (len=14, need 15), (3) period=0 invalid period. All must return an error — no RSI values produced.",
+  "input": {
+    "cases": [
+      {
+        "name": "empty-input",
+        "closes": [],
+        "period": 14
+      },
+      {
+        "name": "exactly-period-closes",
+        "closes": [44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.15, 43.61, 44.33, 44.83, 45.85, 46.08, 45.89],
+        "period": 14
+      },
+      {
+        "name": "invalid-period-zero",
+        "closes": [44.34, 44.09, 44.15],
+        "period": 0
+      }
+    ]
+  },
+  "expectedOutput": {
+    "rsi": null,
+    "error": "ErrInsufficientData or ErrInvalidPeriod depending on case",
+    "note": "All three cases MUST return a non-nil error. The rsi output MUST be nil/empty. No partial results are acceptable."
+  }
+}
