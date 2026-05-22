@@ -1,6 +1,33 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-22 | **Task:** 1968c-P03 | **Session:** c247 — APPROVED
+**Last updated:** 2026-05-22 | **Task:** 1960-DAILYDASH | **Session:** c248 — APPROVED
+
+## Session 2026-05-22 c248 — Task 1960-DAILYDASH APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED (AC-5 PENDING_LIVE)
+commit reviewed: 2f0a74e9
+zone: apps/mcp-server/ — single .ts file change
+smart_skip: NO — .ts changes in dailyDashboardJob.ts
+round: 1
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: canonical getProjectRoot import added; local helper deleted | PASS — line 27 import present; old lines 455-460 gone |
+| AC-2: all 4 path.join callers use getProjectRoot() | PASS — loadSessionFiles:459, loadProjectStats:486, loadTasksMd:495, writeDashboard:509 |
+| AC-3: tsc 0 errors | PASS |
+| AC-4: 14/14 unit tests GREEN (1955a: 5/5 + 1854a: 9/9) | PASS |
+| AC-5: PENDING_LIVE | PENDING — ops docker rebuild + 23:30 GMT+7 cron tick required |
+| DDD: interface/scheduler importing infrastructure — permitted by layer rules | PASS |
+| DDD: domain/ zero actual infra import statements | PASS |
+| Security: no process.env, no hardcoded secrets, no SQL injection surface | PASS |
+| Regression: 9801 pass / 349 fail (carry-over from post-2f0a74e9 commits; no dailyDashboard failures) | PASS |
+| 1837a pipeline-state AC-2 failure: pre-existing (status was verbose before 2f0a74e9) | PRE-EXISTING — not caused by this task |
+
+Blocking: 0. Signal: docs/signals/qa-1960-DAILYDASH-done.json emitted. DASHBOARD.md qa row DONE + ops row 1960-DAILYDASH-DEPLOY OPEN.
+
 
 ## Session 2026-05-22 c247 — Task 1968c-P03 APPROVED
 

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "1960-DAILYDASH SHIPPED 2026-05-22T02:10:00Z (dev-mcp-server). dailyDashboardJob projectRoot() local helper replaced with canonical getProjectRoot() from infrastructure/projectRoot.ts. Commit 2f0a74e9. AC-1..AC-4 PASS. AC-5 PENDING_LIVE (requires ops docker rebuild + cron tick). QA review pending.",
-  "currentSprint": "NONE (1968c CLOSED). Active: 1960-DAILYDASH QA-PENDING, 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak.",
-  "activeTaskId": "1960-DAILYDASH-QA-PENDING",
-  "nextAgent": "qa — review 1960-DAILYDASH fix (commit 2f0a74e9, branch main). AC-1..AC-4 PASS. AC-5 PENDING_LIVE. Signal: docs/signals/dev-mcp-server-1960-DAILYDASH-done.json. After QA-APPROVED: ops rebuilds mcp-server container; next 23:30 GMT+7 cron tick verifies success in cron_job_runs.",
-  "nextPrompt": "QA review 1960-DAILYDASH: dailyDashboardJob projectRoot() fix (commit 2f0a74e9). Single file change: apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts. AC-1: import added, local helper deleted. AC-2: 4 path.join callers use getProjectRoot(). AC-3: tsc 0 errors. AC-4: 14/14 tests GREEN (1955a + 1854a suites). AC-5: PENDING_LIVE (ops deploy needed). Signal: docs/signals/dev-mcp-server-1960-DAILYDASH-done.json.",
-  "updatedAt": "2026-05-22T02:10:00Z",
-  "updatedBy": "dev-mcp-server (1960-DAILYDASH SHIPPED — replace local projectRoot() with canonical getProjectRoot(); commit 2f0a74e9; tsc 0 errors; 9364 pass / 285 fail pre-existing BCTC; routed to QA)",
-  "lastCompleted": "1960-DAILYDASH DONE 2026-05-22T02:10:00Z (dev-mcp-server commit 2f0a74e9). Prior: Sprint 1968c CLOSED 2026-05-21T22:52:44Z (po ratified). Tasks: 1968c-P01 (96a7f1b8), 1968c-P02 (508ae0ef), 1968c-P03 (c3b18e8c). Cumulative: ~168 MCP calls/day saved + ~14 Read I/O/cycle + 50% payload reduction."
+  "status": "idle",
+  "currentSprint": "NONE (1968c CLOSED). Active: 1960-DAILYDASH QA-APPROVED (ops deploy pending), 1967-06 gated 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak.",
+  "activeTaskId": "1960-DAILYDASH-DEPLOY-PENDING",
+  "nextAgent": "ops — deploy 1960-DAILYDASH fix (docker-compose build mcp-server && docker-compose up -d mcp-server). Verify cron_job_runs.success_rate > 0 at next 23:30 GMT+7 tick. Signal: docs/signals/qa-1960-DAILYDASH-done.json.",
+  "nextPrompt": "Ops deploy 1960-DAILYDASH: rebuild mcp-server container (commit 2f0a74e9 already on main). Action: docker-compose build mcp-server && docker-compose up -d mcp-server. Then observe next 23:30 GMT+7 dailyDashboardJob cron run in cron_job_runs table — success_rate must be > 0 (AC-5 live gate). Report result to WORK channel.",
+  "updatedAt": "2026-05-22T04:00:00Z",
+  "updatedBy": "qa (1960-DAILYDASH QA APPROVED — AC-1..AC-4 PASS, AC-5 PENDING_LIVE; 14/14 unit GREEN; tsc 0 errors; DDD+Security PASS; no regression; report: reports/TASK_REPORT_1960-DAILYDASH.md)",
+  "lastCompleted": "1960-DAILYDASH QA-APPROVED 2026-05-22T04:00:00Z (qa, commit 2f0a74e9). Prior: 1960-DAILYDASH DONE 2026-05-22T02:10:00Z (dev-mcp-server)."
 }
