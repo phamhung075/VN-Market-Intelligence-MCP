@@ -1,5 +1,34 @@
 # PM — Notebook
 
+## c261 · 2026-05-22T14:00Z
+
+**Status:** TASK_1967-10 CLOSED — Miscellaneous MED/LOW (capability drift + spawn guard + TTL analysis + LWW detection). QA APPROVED round-1 (smart-skip, markdown-only, 2026-05-22T13:45Z). AC-1..AC-8 verification PASS. ITEMS 06/16/21 SHIPPED; ITEM-18 deferred to dev-mcp-server; ITEM-20 no-action. Commits: f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21). Signals drained. Backlog: created 1967-10-ITEM18 carryover (marketScanJob finally-guard). Agent-father lane idle WIP=0/2.
+
+### Signals processed (cycle c261)
+- **qa-1967-10-approved.json** → docs/signals/processed/ (QA smart-skip 2026-05-22T13:45Z)
+- **agent-father-1967-10-done.json** → docs/signals/processed/ (IMPL 2026-05-22T08:46Z)
+
+### PM actions completed (cycle c261 — TASK_1967-10 CLOSE)
+
+1. **Drained signals to processed/** ✓
+2. **Moved TASK_1967-10 Backlog → DONE** ✓ (line 98, full AC + deviation row)
+3. **Updated docs/pipeline-state.json** ✓
+   - status: "1967-10-CLOSED (PM close 14:00Z, smart-skip, ACs PASS)"
+   - currentSprint: "1967-10 CLOSED. Agent-father lane idle. Next: 1967-06 (HIGH, blocked OBSERVE-1955e) or 1967-11 (MED, blocked 1954c)"
+   - activeTaskId: "— (WIP=0/2, awaiting gate unlock)"
+   - nextAgent: "idle — await OBSERVE 1960-DAILYDASH 22T16:30Z or 1955e/1967-06 unlock 22T21Z"
+4. **Appended PM Close Record to handoff** ✓ (commit SHAs, QA approval, deviations, carryover scope)
+5. **Created 1967-10-ITEM18 backlog entry** ✓ (dev-mcp-server lane, marketScanJob finally-guard, XS size, LOW priority)
+
+### Dispatch state snapshot (cycle c261)
+- **TASK_1967-10:** CLOSED 2026-05-22T14:00Z, QA APPROVED (smart-skip), 0 blockers
+- **WIP:** 0/2 idle, no active tasks (agent-father + dev-mcp-server lanes both clear)
+- **Next:** Hold until OBSERVE gates unlock: 1960-DAILYDASH 22T16:30Z, then 1955e/1967-06 unlock 22T21Z
+- **Backlog:** 1967-06 (HIGH, BLOCKED-1955e), 1967-11 (MED, BLOCKED-1954c), 1967-10-ITEM18 (LOW, carryover dev-mcp-server)
+- **OBSERVE gates:** 1960-DAILYDASH 22T16:30Z, 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z
+
+---
+
 ## c260 · 2026-05-22T13:45Z
 
 **Status:** TASK_1967-09 CLOSED — Signal protocol fixes (naming contract + dead slots + drift doc). QA APPROVED round-1 (smart-skip, markdown + JSON only). AC-1..AC-5 PASS. Deviation: 4 dead slots live vs 3 evidence (market-watcher-prepost also affected); live state authoritative per QA review. Signals drained. TASK_1967-10 ready for immediate dispatch (agent-father, ~2h, single-lane).
