@@ -207,6 +207,73 @@ func TestSQLiteRepo_SaveQuote_Writes(t *testing.T) {
 	}
 }
 
+// ── AC-3 Regression: SELECT/Scan field-order parity (1971-STOCKPRICE-SCAN-ORDER-MISMATCH) ──
+
+// TestSQLiteRepo_GetHistory_OHLCFieldParity seeds one row with fully asymmetric
+// OHLC values so any column transposition causes at least one assertion to fail.
+// Values chosen: open=10, high=40, low=5, close=20, volume=1000 — all distinct,
+// none can be confused with another if Scan order is wrong.
+func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
+	marketDB, mCleanup := createTempMarketDB(t)
+	defer mCleanup()
+	ownDB, oCleanup := createTempOwnDB(t)
+	defer oCleanup()
+
+	// Seed one row with asymmetric OHLCV values directly into daily_ohlcv.
+	db, err := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
+	if err != nil {
+		t.Fatalf("open market.db for seeding: %v", err)
+	}
+	const (
+		seedDate   = "2026-05-22"
+		seedOpen   = 10.0
+		seedHigh   = 40.0
+		seedLow    = 5.0
+		seedClose  = 20.0
+		seedVolume = 1000.0
+	)
+	_, err = db.Exec(
+		`INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		"FPT", seedDate, seedOpen, seedHigh, seedLow, seedClose, seedVolume,
+		"2026-05-22T00:00:00Z",
+	)
+	db.Close()
+	if err != nil {
+		t.Fatalf("seed daily_ohlcv: %v", err)
+	}
+
+	repo := infrastructure.NewSQLitePriceHistoryRepository(marketDB, ownDB)
+	history, err := repo.GetHistory("FPT", 7)
+	if err != nil {
+		t.Fatalf("GetHistory error: %v", err)
+	}
+	if len(history) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(history))
+	}
+	row := history[0]
+
+	// Assert all 6 fields individually — any Scan transposition fails loudly.
+	if row.Date != seedDate {
+		t.Errorf("Date: want %s, got %s", seedDate, row.Date)
+	}
+	if row.Open != seedOpen {
+		t.Errorf("Open: want %.1f, got %.1f", seedOpen, row.Open)
+	}
+	if row.High != seedHigh {
+		t.Errorf("High: want %.1f, got %.1f", seedHigh, row.High)
+	}
+	if row.Low != seedLow {
+		t.Errorf("Low: want %.1f, got %.1f", seedLow, row.Low)
+	}
+	if row.Close != seedClose {
+		t.Errorf("Close: want %.1f, got %.1f", seedClose, row.Close)
+	}
+	if row.Volume != seedVolume {
+		t.Errorf("Volume: want %.1f, got %.1f", seedVolume, row.Volume)
+	}
+}
+
 // ── AC-8: Concurrent R/W safety — 100-iteration WAL test ─────────────────────
 
 func TestTier3Fetcher_ConcurrentReadWrite_NoLock(t *testing.T) {

@@ -1,6 +1,6 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "dispatch-pending",
+  "status": "qa-pending",
   "currentSprint": "NONE (1968c CLOSED). DISPATCHED: 1971-STOCKPRICE-SCAN-ORDER-MISMATCH (FIX XS dev-stock-price, WIP-override per SEV-1 USER-BUG c249). QUEUED: 1970-TA-OHLCV-BACKFILL (FIX S-M dev-mcp-server, still WIP-gated for dispatch), 1972-VNDIRECT-OHLCV-NULL-COERCION (FIX S dev-mcp-server, awaiting next cycle). Active OBSERVE: 1960-DAILYDASH AC-5.2 cron gate 22T16:30Z, 1965d-JANITOR-PATHFIX AC-5.2 cron gate 23T03:00Z, 1967-06 unlock 22T21Z, 1967-07..11 agent-father queue, 1959 watchdog-4 hold, 1965c soak end 23T18Z.",
   "activeTaskId": "1971-STOCKPRICE-SCAN-ORDER-MISMATCH-DISPATCHED + 1965d-JANITOR-PATHFIX-OBSERVE + 1960-DAILYDASH-OBSERVE + 1970-TA-OHLCV-BACKFILL-QUEUED + 1972-VNDIRECT-OHLCV-NULL-COERCION-QUEUED",
   "nextAgent": "dev-stock-price — spawn on 1971 per po-USER-BUG-close-zero-20260522T044044Z.json AC-1..AC-5 spec. SEV-1 user-facing fix, 1-line Scan reorder + regression test.",

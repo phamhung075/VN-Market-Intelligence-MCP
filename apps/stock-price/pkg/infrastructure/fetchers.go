@@ -236,7 +236,7 @@ func (r *SQLitePriceHistoryRepository) GetHistory(code string, days int) ([]doma
 	var result []domain.DailyOHLCV
 	for rows.Next() {
 		var c domain.DailyOHLCV
-		if err := rows.Scan(&c.Date, &c.Low, &c.High, &c.Close, &c.Open, &c.Volume); err != nil {
+		if err := rows.Scan(&c.Date, &c.Open, &c.High, &c.Low, &c.Close, &c.Volume); err != nil {
 			continue
 		}
 		result = append(result, c)
