@@ -23,10 +23,41 @@ Dogfood: this notebook entry IS the blank-state init for agent-father notebook.
 **AC checks P01:** AC-1 PASS (≤80L, §N-slug, algo, fallback), AC-2 PASS (qa Step 0c), AC-3 PASS (dev Step 0c), AC-4 PASS (silent fallback documented), AC-5 PASS (no apps/ touch)
 **AC checks P02:** AC-1 PASS (c<NNN>·ts format), AC-2 PASS (3-cycle retention), AC-3 PASS (Edit pattern documented), AC-4 PASS (blank-state Write), AC-5 PASS (≤200L bound + trim note)
 
+## c253 · 2026-05-22T11:05Z
+
+**Sprint:** 1968d | **Cycle:** pm Wave 1 close
+
+**P01 + P02 QA ROUND 2 APPROVED (11:00Z):**
+- Fixer commits b637bd8b + 05b7b40f verified clean
+- Delta-read dogfood PASS (fixer section only returned, 7.6% of full)
+- Notebook-write dogfood PASS (c<NNN> anchor format applied to c252 entry)
+- Both tasks flipped to DONE in TASKS.md + QA round-2 metadata added
+- TASKS.md rows 10–12 updated (P01/P02 status + P03 gate removed)
+
+**Pipeline state updated:**
+- 1968d-WAVE1-DONE (was WAVE1-QA-PENDING)
+- 1968d-WAVE2-READY (P03 unblocked)
+- activeTaskId: P01+P02 removed, P03 added to Todo
+- lastCompleted: PM 2026-05-22T11:05Z — 1968d Wave 1 CLOSED
+- nextAgent: agent-father (P03 dispatch)
+
+**P03 dispatch signal emitted:**
+- docs/signals/pm-1968d-wave1-closed.json
+- Contains zone dictionaries JSON for caveman SKILL append (5 zones: mcp-server, stock-price, alert-engine, bctc-extractor, .claude)
+- Activation rule + backward compat documented
+- Single-task claim workflow noted (no parallel)
+
+**Token-economy live impact:**
+- L-10 (delta-read SKILL): 50–150 KB/trading-day I/O saved
+- L-12 (notebook-write diff-write): ~10–20 KB write I/O + ~30% reduction per cycle
+- Aggregated into Phase 4 tally when P03 lands
+
+**Signals emitted:** pm-1968d-wave1-closed.json → NEXT=agent-father
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
 - OQ-2: macro_* naming convention — needs qa verification
 - 1968c-P01/P02: await qa ratification (AC-6..8 pending)
-- 1968d-P01/P02: await qa APPROVED (signals emitted, NEXT=qa)
-- Wave 2 P03 (zone-caveman-dict): gated on P01+P02 QA APPROVED
+- 1968d-P01/P02: QA APPROVED, DONE (Round-2 verified)
+- 1968d-P03: READY for dispatch (gate removed, P01+P02 DONE)

@@ -77,3 +77,23 @@ upsert.run(r.code, r.date, r.open, r.high, r.low, r.close, r.nmVolume ?? 0);
 - **DB migration:** NOT REQUIRED — guard change only, no schema modification
 - **Docs updated:** NONE — no microservice architecture docs impacted
 - **Graphify:** skipped (no architecture docs touched)
+
+---
+
+## §3-qa-round-1
+
+**QA Agent:** qa | **Date:** 2026-05-22 | **Round:** 1 | **Verdict:** APPROVED
+
+| Check | Result |
+|-------|--------|
+| Targeted tests (5/5) | PASS |
+| Full suite 9370 pass / 285 fail | PASS — 285 pre-existing BCTC freeze, zero regression |
+| tsc --noEmit | 0 errors |
+| DDD: infra layer, zero domain imports | PASS |
+| Security: parameterized SQL, no process.env, no secrets | PASS |
+| BCTC freeze NFR-3 | PASS — zero bctc-extractor files touched |
+| Zone isolation: apps/mcp-server/ only | PASS |
+| Root cause: asymmetric fixture → 0 rows inserted (AC-5) | PASS |
+
+Signal: `docs/signals/qa-1972-approved.json`
+Report: `reports/TASK_REPORT_1972.md`
