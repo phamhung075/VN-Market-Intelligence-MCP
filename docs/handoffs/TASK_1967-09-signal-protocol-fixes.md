@@ -175,3 +175,38 @@ All are config/doc edits, no code changes.
 **Blocking issues:** 0
 
 **VERDICT: APPROVED**
+
+---
+
+## [PM] Close Record — 2026-05-22T13:45Z
+
+**Status:** TASK_1967-09 CLOSED ✓
+
+**Signals drained:**
+- qa-1967-09-approved.json → docs/signals/processed/
+- agent-father-1967-09-done.json → docs/signals/processed/
+
+**Updates completed:**
+1. docs/TASKS.md: Backlog → Done (line 90+)
+2. docs/pipeline-state.json: activeTaskId cleared, nextAgent=agent-father (dispatch 1967-10)
+3. docs/TASKS.md Done section: Full row with AC summary + deviation note
+
+**Deviation acknowledged:**
+- Handoff evidence: 3 API_MIN_INTERVAL slots (news-scout-market, market-watcher-market, alert-commander-market)
+- Live audit QA verified: 4 slots (added market-watcher-prepost)
+- All 4 now disabled (`enabled=false` + `_disabled_by`)
+- Live state is authoritative per QA review
+
+**cowork-team/main.md size check:**
+- File = 301L (soft threshold 300L per size-justification comment L1)
+- L1 comment: "Split deferred until next architectural sprint"
+- QA approved deviation as self-documented (non-blocking)
+- Spawn-guard region L115+ untouched (reserved for TASK_1967-10 per L67 comment)
+
+**Commits:**
+- Agent-father IMPL: c4a50420 + 48036593
+- QA round-1 APPROVED: 2026-05-22T13:30Z (qa-1967-09-approved.json)
+
+**WIP after close:** 0/2 (ready for immediate 1967-10 dispatch)
+
+**Next dispatch:** TASK_1967-10 (agent-father, miscellaneous MED/LOW, ~2h, single-lane sequential)

@@ -1,5 +1,33 @@
 # PM — Notebook
 
+## c260 · 2026-05-22T13:45Z
+
+**Status:** TASK_1967-09 CLOSED — Signal protocol fixes (naming contract + dead slots + drift doc). QA APPROVED round-1 (smart-skip, markdown + JSON only). AC-1..AC-5 PASS. Deviation: 4 dead slots live vs 3 evidence (market-watcher-prepost also affected); live state authoritative per QA review. Signals drained. TASK_1967-10 ready for immediate dispatch (agent-father, ~2h, single-lane).
+
+### Signal processed (cycle c260)
+- **qa-1967-09-approved.json** → docs/signals/processed/ (QA smart-skip 2026-05-22T13:30Z)
+- **agent-father-1967-09-done.json** → docs/signals/processed/ (IMPL 2026-05-22T06:37Z)
+
+### PM actions completed (cycle c260 — TASK_1967-09 CLOSE)
+
+1. **Drained signals to processed/** ✓
+2. **Moved TASK_1967-09 Backlog → DONE** ✓ (line 90, full AC + deviation row)
+3. **Updated docs/pipeline-state.json** ✓
+   - status: "1967-09-CLOSED (PM close 13:45Z, smart-skip)"
+   - currentSprint: "1967-10 agent-father queue (immediate dispatch)"
+   - activeTaskId: "— (WIP=0/2)"
+   - nextAgent: "agent-father (dispatch 1967-10 single-lane)"
+4. **Appended PM Close Record to handoff** ✓ (commit SHAs, deviation note, cowork-team/main.md size check approved)
+
+### Dispatch state snapshot (cycle c260)
+- **TASK_1967-09:** CLOSED 2026-05-22T13:45Z, QA APPROVED (smart-skip), 0 blockers
+- **WIP:** 0/2 idle, ready for immediate 1967-10 dispatch
+- **Next:** TASK_1967-10 (agent-father MED/LOW, miscellaneous capability drift + spawn-guard + TTL + system-auditor D-N, ~2h, single-lane)
+- **Blocked:** 1967-06 (OBSERVE-1955e unlock 22T21Z), 1967-11 (1954c gate)
+- **OBSERVE gates:** 1960-DAILYDASH 22T16:30Z, 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z
+
+---
+
 ## c259 · 2026-05-22T13:30Z
 
 **Status:** TASK_1967-08 CLOSED — Dispatcher-wrap try/finally (execute-tier.md + dev-team/main.md outer claim release). QA APPROVED round-1 (smart-skip, markdown-only). AC-1..AC-6 PASS (pattern match cowork-team/main.md reference confirmed). Agent-father commit 740747e1. Signals drained. Pipeline idle: WIP=0/2 ready for 1967-09 dispatch.

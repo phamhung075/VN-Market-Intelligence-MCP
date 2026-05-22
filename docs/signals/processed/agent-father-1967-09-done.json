@@ -1,0 +1,27 @@
+{
+  "from": "agent-father",
+  "to": "qa",
+  "type": "task-done",
+  "payload": {
+    "task_id": "TASK_1967-09",
+    "title": "Signal protocol fixes (naming contract + dead slots + drift doc)",
+    "quality": "smart-skip",
+    "quality_reason": "markdown + JSON only — no .ts touched",
+    "files_changed": [
+      "docs/standards/mcp-tools.md",
+      "docs/data/cowork-schedule.json",
+      ".claude/flows/po/main.md",
+      ".claude/flows/cowork-team/main.md"
+    ],
+    "ac_results": {
+      "AC-1": "PASS — mcp-tools.md Signal Bus section includes naming contract rule",
+      "AC-2": "PASS — agent-chaining-protocol.md cross-linked from mcp-tools.md",
+      "AC-3": "PASS — po/main.md signal write rule added with ISO-8601 timestamp enforcement",
+      "AC-4": "PASS — cowork-schedule.json: 4 API_MIN_INTERVAL slots set enabled=false + _disabled_by",
+      "AC-5": "PASS — cowork-team/main.md §drift-min anchor added with threshold table (safe ≤10, risk ≥15)"
+    },
+    "notes": "Handoff evidence listed 3 API_MIN_INTERVAL slots; audit found 4 (market-watcher-prepost also affected). All 4 disabled."
+  },
+  "priority": "normal",
+  "createdAt": "20260522T063714Z"
+}
