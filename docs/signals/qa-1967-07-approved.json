@@ -1,0 +1,12 @@
+{
+  "id": "qa-1967-07-approved",
+  "ts": "2026-05-22T13:00Z",
+  "from": "qa",
+  "task": "1967-07",
+  "status": "QA_APPROVED",
+  "summary": "TASK_1967-07 APPROVED — flow notebook fixes (cycle OVERWRITE + DASHBOARD prune + mcp-tools cross-link). Smart-skip applied (markdown-only). 6 AC PASS, 2 OBS-GATE (live observation, non-blocking).",
+  "NEXT": "pm",
+  "smart_skip": true,
+  "round": 1,
+  "blocking_issues": 0
+}

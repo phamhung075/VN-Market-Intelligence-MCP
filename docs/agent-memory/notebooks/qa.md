@@ -1,38 +1,5 @@
 # QA — Notebook
 
-## c252 · 2026-05-22T09:15Z
-
-**Sprint:** 1968d | **Tasks:** P01+P02 Wave 1 | **Session:** c252 — CHANGES_REQUESTED (both)
-
-```
-date: 2026-05-22
-outcome: CHANGES_REQUESTED (P01 + P02)
-commit reviewed: d2ca7c4f
-zone: .claude/ only — smart-skip (no .ts changes)
-smart_skip: YES
-round: 1
-```
-
-| Check | P01 | P02 |
-|-------|-----|-----|
-| Zone: zero apps/ touch | PASS | PASS |
-| Skill file size: ≤80L | PASS (77L) | PASS (69L) |
-| AC-1 skill exists + anchor convention | PASS (with caveat — see issues) | PASS |
-| AC-2 qa flow Step 0c | PASS | N/A |
-| AC-3 developer flow Step 0c | PASS | FAIL (stale OVERWRITE comment at line 122) |
-| AC-4 backward compat / blank-state Write | PASS (algorithm correct) | PASS |
-| AC-5 no apps/ / ≤200L bound | PASS | PASS |
-| Smoke test math verified | PASS (7.6%=628/8234) | PASS (3-cycle sim 47L≤200L) |
-| HANDOFF_DELTA in all RETURN blocks | PASS | N/A |
-
-**Blocking issues:**
-
-P01 — `.claude/skills/handoff-delta-read/SKILL.md:11,22,48` — anchor format contradiction (no-space prose/JSON vs space code-block examples; grep pattern does not match examples; fallback detection broken for space-format).
-
-P02 — `.claude/flows/developer/main.md:122` — stale "(OVERWRITE ... never append)" comment contradicts new section-overwrite pattern.
-
-Signal: docs/signals/qa-1968d-wave1-changes.json emitted. Reports at reports/TASK_REPORT_1968d-P01.md + reports/TASK_REPORT_1968d-P02.md. Wave 2 gate BLOCKED.
-
 
 ## c253 · 2026-05-22T11:00Z
 
@@ -156,6 +123,32 @@ round: 1
 **Blocking:** 0. **Report:** reports/TASK_REPORT_1970.md. **Signal:** docs/signals/qa-1970-approved.json. **NEXT:** pm — mark TASK_1970 Done.
 
 **HANDOFF_DELTA:** `{ "last_read_anchor": "## §3-qa", "last_read_at": "2026-05-22T06:15Z" }`
+
+## c257 · 2026-05-22T13:00Z
+
+**Sprint:** 1967c | **Task:** TASK_1967-07 | **Session:** c257 — APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commit reviewed: e640f133
+zone: .claude/ + docs/standards/ — smart-skip (markdown-only, no .ts changes)
+smart_skip: YES
+round: 1
+```
+
+| AC | Result |
+|----|--------|
+| AC-1: cycle.md Step 5 OVERWRITE | PASS — `.claude/flows/market-watcher/cycle.md:94` |
+| AC-2: notebook-write skill link | PASS — `skill: .claude/skills/notebook-write/SKILL.md` present |
+| AC-3: PRUNE section DONE=immediate + READ=48h | PASS — `.claude/skills/signal-dashboard/SKILL.md:73-92` |
+| AC-4: executable prune conditions | PASS — status=DONE→DELETE + status=READ+ts<now()-48h→DELETE |
+| AC-5: mcp-tools.md cross-link above table | PASS — `docs/standards/mcp-tools.md:132` |
+| AC-6: DASHBOARD manual prune test | OBS-GATE (non-blocking) |
+| AC-7: next cycle live verify | OBS-GATE (non-blocking) |
+| AC-8: tsc 0 | PASS (vacuous — no .ts touched) |
+
+**Blocking issues:** 0. Signal: docs/signals/qa-1967-07-approved.json. NEXT: pm.
 
 ## Carry-over
 

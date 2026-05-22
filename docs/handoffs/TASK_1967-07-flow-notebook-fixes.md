@@ -132,3 +132,26 @@ All three are knowledge-file edits (no code). Bundle together for single PR.
 - `docs/agent-memory/notebooks/agent-father.md` — c255 appended
 
 **Signal emitted:** `docs/signals/agent-father-1967-07-done.json` → NEXT=qa
+
+---
+
+## [QA] Review Record — 2026-05-22T
+
+**Round:** 1 | **Smart-skip:** YES (markdown-only zone, no .ts changes) | **Verdict:** APPROVED
+
+| AC | Criterion | QA Verification | Result |
+|----|-----------|-----------------|--------|
+| AC-1 | market-watcher/cycle.md Step 5: "OVERWRITE" | `.claude/flows/market-watcher/cycle.md:94` — "OVERWRITE (not append)" confirmed | PASS |
+| AC-2 | Notebook-write skill link in cycle.md Step 5 | `.claude/flows/market-watcher/cycle.md:94` — `skill: .claude/skills/notebook-write/SKILL.md` present | PASS |
+| AC-3 | signal-dashboard SKILL.md PRUNE section: DONE=immediate + READ=48h | `.claude/skills/signal-dashboard/SKILL.md:73-92` — PRUNE section with both rules present | PASS |
+| AC-4 | Prune rule executable: status=DONE → DELETE; READ + ts < now()-48h → DELETE | `.claude/skills/signal-dashboard/SKILL.md:79-80` — exact conditions in code block | PASS |
+| AC-5 | mcp-tools.md cross-link above Inter-Agent Signal Types table | `docs/standards/mcp-tools.md:132` — blockquote with `§ PRUNE` link present above table | PASS |
+| AC-6 | DASHBOARD.md manual prune test | Deferred — live observation gate, not a blocker per handoff contract | OBS-GATE |
+| AC-7 | Next cowork-team cycle post-fix verify | Deferred — live observation gate, not a blocker per handoff contract | OBS-GATE |
+| AC-8 | tsc 0 errors | No .ts files touched — vacuously PASS | PASS |
+
+**Blocking issues:** 0
+
+**Smart-skip note:** Zone = `.claude/` + `docs/standards/` markdown only. No .ts code touched. Per smart-skip policy: bun test + bun tsc skipped (vacuous PASS). DDD/security scans N/A for markdown-only changes.
+
+**Signal emitted:** `docs/signals/qa-1967-07-approved.json` → NEXT=pm
