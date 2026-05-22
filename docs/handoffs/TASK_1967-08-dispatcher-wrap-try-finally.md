@@ -182,3 +182,28 @@ dev-team/main.md S2 (lines 136-142): `else: try: Agent(nextAgent, ...) / finally
 None.
 
 **NEXT:** pm
+
+---
+
+## [PM] Close-out Record
+
+**Closer:** pm | **Session:** c259 | **ts:** 2026-05-22T13:30Z | **Status:** CLOSED → DONE
+
+### Final Status
+
+- **TASK_1967-08:** APPROVED round-1 (smart-skip) → CLOSED to Done section in docs/TASKS.md
+- **QA Verdict:** All AC-1..AC-6 PASS (markdown-only zone, no .ts compilation required)
+- **Signal Drain:** qa-1967-08-approved.json + agent-father-1967-08-done.json → docs/signals/processed/
+- **Pipeline State:** activeTaskId reset, nextAgent = agent-father for 1967-09 dispatch
+- **Backlog:** 1967-09 + 1967-10 ready (sequential or parallel per collision audit)
+
+### Files Drained
+
+- `docs/signals/qa-1967-08-approved.json` → `docs/signals/processed/qa-1967-08-approved.json`
+- `docs/signals/agent-father-1967-08-done.json` → `docs/signals/processed/agent-father-1967-08-done.json`
+
+### Commit Log
+
+- agent-father: `740747e1` — dispatcher-wrap try/finally (ITEM-17 + ITEM-22) shipped 2026-05-22T12:45Z
+- qa: round-1 APPROVED 2026-05-22T13:15Z (pattern match verified vs cowork-team reference)
+- pm: close-out 2026-05-22T13:30Z (TASK_DONE entry created, pipeline-state.json updated, signals drained, WIP=0/2)

@@ -1,5 +1,47 @@
 # PM — Notebook
 
+## c259 · 2026-05-22T13:30Z
+
+**Status:** TASK_1967-08 CLOSED — Dispatcher-wrap try/finally (execute-tier.md + dev-team/main.md outer claim release). QA APPROVED round-1 (smart-skip, markdown-only). AC-1..AC-6 PASS (pattern match cowork-team/main.md reference confirmed). Agent-father commit 740747e1. Signals drained. Pipeline idle: WIP=0/2 ready for 1967-09 dispatch.
+
+### Signal processed (cycle c259)
+- **qa-1967-08-approved.json** — TASK_1967-08 APPROVED 2026-05-22T13:15Z (smart-skip, pattern-match verdict)
+- **agent-father-1967-08-done.json** — IMPL_DONE 2026-05-22T12:45Z (commit 740747e1)
+
+### PM actions completed (cycle c259 — TASK_1967-08 CLOSE)
+
+1. **Moved TASK_1967-08 Backlog → DONE in docs/TASKS.md** ✓
+   - Entry added to Done section with full AC summary
+   - QA smart-skip notation preserved (markdown-only zone, no .ts)
+   - Backlog entry removed
+
+2. **Drained signals to docs/signals/processed/** ✓
+   - qa-1967-08-approved.json
+   - agent-father-1967-08-done.json
+
+3. **Updated docs/pipeline-state.json** ✓
+   - status: "1967-08-CLOSED (PM close-out 2026-05-22T13:30Z, QA smart-skip)"
+   - currentSprint: "1967-09/10 ready sequentially or parallel after collision audit"
+   - activeTaskId: "— (WIP=0/2 idle)"
+   - nextAgent: "agent-father (1967-09 signal protocol fixes, docs/standards/mcp-tools.md + .claude/flows/ zone)"
+   - updatedAt: 2026-05-22T13:30:00Z
+   - updatedBy: pm (1967-08 close metadata + next dispatch assessment)
+
+4. **Appended handoff close metadata** ✓
+   - docs/handoffs/TASK_1967-08-dispatcher-wrap-try-finally.md: PM Close Record section added
+   - Commit log: 740747e1 (agent-father), qa round-1 c258, pm close c259
+   - Backlog assessment: 1967-09/1967-10 ready (1967-06/11 blocked)
+
+### Dispatch state snapshot (cycle c259)
+- **TASK_1967-08:** CLOSED 2026-05-22T13:30Z, QA APPROVED (smart-skip), 0 blockers
+- **Pipeline:** 1967-09 ready (signal protocol: mcp-tools.md + flow docs). Option: 1967-09 + 1967-10 parallel after collision-clear.
+- **WIP:** 0/2 idle, ready for immediate dispatch
+- **OBSERVE gates:** 1960-DAILYDASH (~10h), 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z
+- **Blocked tasks:** 1967-06 (OBSERVE-1955e gate), 1967-11 (1954c conditional)
+- **Next:** Dispatch 1967-09 sequential (mcp-tools.md) OR parallel-dispatch 1967-09 + 1967-10 after collision audit (1967-09 touches docs/standards/mcp-tools.md + .claude/flows/po/main.md; 1967-10 touches .claude/agents/* capability text + optional flow spawn-guard notes + system-auditor D-N — verify no file collision before parallel)
+
+---
+
 ## c255 · 2026-05-22T13:30Z
 
 **Status:** TASK_1967-07 CLOSED — Flow notebook fixes (cycle OVERWRITE + DASHBOARD prune + mcp-tools cross-link). QA APPROVED round-1 (smart-skip, markdown-only). AC-1..AC-5 + AC-8 PASS, AC-6/AC-7 OBS-GATE non-blocking. Agent-father commit e640f133 (2 files: signal-dashboard SKILL + mcp-tools.md). Signals drained. Pipeline idle: WIP=0/2 ready for 1967-08 dispatch.
