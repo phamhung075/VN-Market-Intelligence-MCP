@@ -144,3 +144,43 @@ Five low-risk items bundled:
 | ITEM-20 AC-1 | PASS | No action; confirmed safe documented |
 | ITEM-21 AC-1 | PASS | D-N dimension registered in audit-dimensions.md |
 | ITEM-21 AC-2 | PASS | WORK alert + DASHBOARD row in D-N algorithm |
+
+---
+
+## [QA] Review Record
+
+**Reviewer:** qa | **Date:** 2026-05-22T13:45Z | **Round:** 1 | **Verdict:** APPROVED
+
+**Method:** Smart-skip (markdown-only, no .ts touched — bun test + tsc vacuous)
+
+### AC Verification
+
+| Item | Check | Result |
+|------|-------|--------|
+| ITEM-06 AC-1 | news-scout.md responsibilities line | PASS — L22: "reactive, event-driven tickers (not all watchlist — coverage is event-triggered, not exhaustive per cycle)" |
+| ITEM-06 AC-2 | market-watcher.md responsibilities line | PASS — L22: identical wording confirmed |
+| ITEM-06 AC-3 | 1965-COVERAGE-SWEEP cross-link | ACKNOWLEDGED NOTE — handoff-only reference; brief not yet created, out-of-scope for 1967c per agent-father |
+| ITEM-16 AC-1 | dev-team/main.md spawn-guard comment | PASS — L12: comment present after NEVER-spawn line |
+| ITEM-16 AC-2 | cowork-team/main.md spawn-guard at L115+ | PASS — L115: spawn-guard comment confirmed in pre-Step-4.6 region |
+| ITEM-18 | DEFERRED | ACKNOWLEDGED — apps/mcp-server is dev-mcp-server zone; agent-father scope-respected; flagged for next dev-mcp-server bundle |
+| ITEM-20 | NO-ACTION | ACKNOWLEDGED — TTL confirmed safe by design; analysis-only finding documented in handoff |
+| ITEM-21 AC-1 | audit-dimensions.md D-N dimension | PASS — D-N section present (L86-135), covers DN-W1 + DN-W2, 15-min bucket via git log, Tier-3 03:00Z alongside D4 |
+| ITEM-21 AC-2 | WORK alert + DASHBOARD po-row | PASS — detection algorithm emits send_telegram(work) + DASHBOARD row on concurrent writes |
+
+### Collision Check
+
+| Check | Result |
+|-------|--------|
+| §drift-min L64-90 UNTOUCHED | PASS — diff shows only +2L spawn-guard comment at L115; §drift-min region unchanged |
+| Spawn-guard at L115+ (pre-Step-4.6) | PASS — L115 confirmed, Step 4.6 starts at L129 |
+| cowork-team/main.md size | PASS — 303L (1L over 300L soft threshold, 7L under 310L flag); L1 size-justification documents "Split deferred until next architectural sprint" |
+
+### Deviation Acknowledgments
+
+- ITEM-18 DEFERRED: apps/mcp-server is dev-mcp-server zone — agent-father correctly deferred. Handoff explicitly flags for next dev-mcp-server bundle. ACKNOWLEDGED.
+- ITEM-20 NO-ACTION: TTL analysis confirmed safe by design. Handoff close documents the analysis. ACKNOWLEDGED.
+- ITEM-21 Option C deferred: detection-only acceptable for this round. ACKNOWLEDGED.
+
+**Blocking issues:** 0
+
+**Signal:** docs/signals/qa-1967-10-approved.json | **NEXT:** pm — mark TASK_1967-10 Done

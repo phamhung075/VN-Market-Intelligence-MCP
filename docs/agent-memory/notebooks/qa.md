@@ -1,31 +1,35 @@
 # QA — Notebook
 
 
-## c257 · 2026-05-22T13:00Z
+## c260 · 2026-05-22T13:45Z
 
-**Sprint:** 1967c | **Task:** TASK_1967-07 | **Session:** c257 — APPROVED
+**Sprint:** 1967c | **Task:** TASK_1967-10 | **Session:** c260 — APPROVED
 
 ```
 date: 2026-05-22
 outcome: APPROVED
-commit reviewed: e640f133
-zone: .claude/ + docs/standards/ — smart-skip (markdown-only, no .ts changes)
+commits reviewed: f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21), 49552d97 (notebook+handoff+signal)
+zone: .claude/agents/ + .claude/flows/ + docs/agents/system-auditor/ — smart-skip (markdown-only)
 smart_skip: YES
 round: 1
 ```
 
 | AC | Result |
 |----|--------|
-| AC-1: cycle.md Step 5 OVERWRITE | PASS — `.claude/flows/market-watcher/cycle.md:94` |
-| AC-2: notebook-write skill link | PASS — `skill: .claude/skills/notebook-write/SKILL.md` present |
-| AC-3: PRUNE section DONE=immediate + READ=48h | PASS — `.claude/skills/signal-dashboard/SKILL.md:73-92` |
-| AC-4: executable prune conditions | PASS — status=DONE→DELETE + status=READ+ts<now()-48h→DELETE |
-| AC-5: mcp-tools.md cross-link above table | PASS — `docs/standards/mcp-tools.md:132` |
-| AC-6: DASHBOARD manual prune test | OBS-GATE (non-blocking) |
-| AC-7: next cycle live verify | OBS-GATE (non-blocking) |
-| AC-8: tsc 0 | PASS (vacuous — no .ts touched) |
+| ITEM-06 AC-1: news-scout.md L22 reactive text | PASS |
+| ITEM-06 AC-2: market-watcher.md L22 reactive text | PASS |
+| ITEM-06 AC-3: 1965-COVERAGE-SWEEP cross-link | ACKNOWLEDGED NOTE (handoff-only) |
+| ITEM-16 AC-1: dev-team/main.md spawn-guard L12 | PASS |
+| ITEM-16 AC-2: cowork-team/main.md spawn-guard L115 | PASS |
+| ITEM-18: DEFERRED | ACKNOWLEDGED (dev-mcp-server zone) |
+| ITEM-20: NO-ACTION | ACKNOWLEDGED (TTL safe by design) |
+| ITEM-21 AC-1: D-N dimension in audit-dimensions.md | PASS — DN-W1+DN-W2, 15-min bucket, Tier-3 03:00Z |
+| ITEM-21 AC-2: WORK alert + DASHBOARD po-row | PASS |
+| Collision: §drift-min L64-90 UNTOUCHED | PASS |
+| Collision: spawn-guard at L115 (pre-Step-4.6) | PASS |
+| File size: cowork-team/main.md 303L | NON-BLOCKING — L1 documents split deferred |
 
-**Blocking issues:** 0. Signal: docs/signals/qa-1967-07-approved.json. NEXT: pm.
+**Blocking issues:** 0. Signal: docs/signals/qa-1967-10-approved.json. NEXT: pm.
 
 ## c258 · 2026-05-22T13:15Z
 
