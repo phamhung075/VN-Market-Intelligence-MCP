@@ -97,3 +97,32 @@ The `## Zone Dictionaries` section is removed from `caveman/SKILL.md`. All agent
 **DDD layer:** Infrastructure (compression convention layer, no domain entity change)
 **Wave:** 2 — GATED on 1968d-P01 QA APPROVED AND 1968d-P02 QA APPROVED
 **Gate rationale:** L-14 zone dict examples may reference L-10 delta-read anchor format; gating prevents rework if P01 changes anchor convention during QA.
+
+---
+
+## § qa-round-1
+
+## [QA] Review Record
+
+**QA:** qa | **Cycle:** c255 | **Timestamp:** 2026-05-22T12:30Z
+**Commit reviewed:** d974eb57
+**Round:** 1
+**Smart-Skip:** YES — zone `.claude/` markdown only, zero `.ts` files touched; `bun test` + `bun tsc --noEmit` skipped per policy
+**Line count:** 96L (cap 100L) — PASS
+
+| AC | Check | Result |
+|----|-------|--------|
+| AC-1 | `## Zone Dictionaries (L-14 Caveman per-zone mapping)` section present after `## Boundaries` (line 73) | PASS |
+| AC-2 | All 5 zone maps present: mcp-server (t/s/h/st/sch), stock-price (f/sc/o/tk), alert-engine (v/ev/a), bctc-extractor (ex/p/oc/q), .claude (ag/fl/sk/sg) | PASS |
+| AC-3 | Activation rule documented — `zone:` field triggers zone dict on top of ULTRA/FULL/LITE; absent/unrecognized zone = silent fallback | PASS |
+| AC-4 | Round-trip example present for `apps/mcp-server/` zone (encode + decode + no-zone fallback) | PASS |
+| AC-5 | Additive comment + FROZEN-NFR3 marker on bctc-extractor row; no modification to base ULTRA/FULL/LITE content (lines 1–72 unchanged) | PASS |
+| Backward compat | `zone:` in processed signals = metadata prose only (3 matches, none zone-dict encoded) | PASS |
+| Smoke test (encode) | `handler in mcp-server scheduler crashed, store corrupted` → `h in s sch crashed, st corrupted` | PASS |
+| Smoke test (decode) | zone field → expand h/s/sch/st → lossless round-trip | PASS |
+| Smoke test (no-zone) | `{ msg: scheduler task failed }` → base ultra → `sch task fail` (zone dict NOT applied) | PASS |
+
+**Blocking issues:** 0
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_1968d-P03.md
+**Signal emitted:** docs/signals/qa-1968d-P03-approved.json
