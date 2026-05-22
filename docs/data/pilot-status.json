@@ -60,8 +60,8 @@
     "atomizationOwner": "pm",
     "atomizationStatus": "DONE 2026-05-23 (PM commit 05469c95 — 19 handoff files + TASKS.md backlog)",
     "buckets": {
-      "P2-A": {"goal": "G4", "title": "Architecture fence in CI (Go linter)", "owner": "dev-technical-analysis + qa", "status": "IN-PROGRESS", "tasks": {"P2-A1": "DISPATCHED 2026-05-23 (dev-technical-analysis)", "P2-A2": "PENDING (blocked by P2-A1)", "P2-A3": "PENDING (blocked by P2-A2)", "P2-A4": "PENDING (blocked by P2-A3)"}},
-      "P2-B": {"goal": "G5", "title": "Old TS TA code deletion + caller HTTP rewire", "owner": "dev-technical-analysis", "status": "IN-PROGRESS", "tasks": {"P2-B0": "DONE 2026-05-23 commit c175f745 (brownfield inventory)", "P2-B1": "READY (P2-B0 done) — held by PO until P2-A1 lands to keep WIP≤2", "P2-B2": "PENDING (blocked by P2-B1; deletion gated on P2-A3 green per architect order)", "P2-B3": "PENDING (blocked by P2-B2)", "P2-B4": "PENDING (blocked by P2-B3)"}},
+      "P2-A": {"goal": "G4", "title": "Architecture fence in CI (Go linter)", "owner": "dev-technical-analysis + qa", "status": "IN-PROGRESS", "tasks": {"P2-A1": "DONE 2026-05-23 (commits 9561fee9 config + 2a8de107 docs — golangci-lint v2 depguard Fence-A/B/C; 3 fences verified; 30/30 sandbox green)", "P2-A2": "IN-FLIGHT 2026-05-23 (dev-technical-analysis, cycle-2 dispatch)", "P2-A3": "PENDING (blocked by P2-A2)", "P2-A4": "PENDING (blocked by P2-A3)"}},
+      "P2-B": {"goal": "G5", "title": "Old TS TA code deletion + caller HTTP rewire", "owner": "dev-technical-analysis", "status": "IN-PROGRESS", "tasks": {"P2-B0": "DONE 2026-05-23 commit c175f745 (brownfield inventory)", "P2-B1": "IN-FLIGHT 2026-05-23 (dev-technical-analysis, cycle-2 dispatch; SCOPE-EXPANDED 10 ACs per PM commit 9f98b42d — A2 HTTP rewire + assembleBriefing SEV-2 fix + DailyCandle type redirect + 1408/1410 imports + git tag p2-b-pre-delete pre-step)", "P2-B2": "PENDING (blocked by P2-B1; deletion gated on P2-A3 green per architect order)", "P2-B3": "PENDING (blocked by P2-B2)", "P2-B4": "PENDING (blocked by P2-B3)"}},
       "P2-C": {"goal": "G9", "title": "User verbal-async confirm gate", "owner": "po", "status": "OPEN-AWAITING-USER-REPLY-OPS-BLOCKED", "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md", "mechanism": "Telegram WORK + signal file (async, no meeting). Send DEFERRED-CYCLE-2 — vn-market MCP still not loaded in PO session. Ops signal docs/signals/po-20260522T225100Z.json queued. Non-blocking for dev work."},
       "P2-D": {"goal": "G10", "title": "AI-fixability proof (≤2 cycles)", "owner": "dev-technical-analysis + qa", "status": "PENDING-FLOW-RULE", "blockedBy": "P2-F2 (flow rule must land before P2-D2 bug injection so G12 streak accrues under the rule). TA baseline confirmed = 1.5 cycles per architect (bug-inventory.json exists).", "tasks": {"P2-D0": "READY (qa can verify bug-inventory.json now)", "P2-D1": "PENDING (blocked by P2-F2)", "P2-D2": "PENDING (blocked by P2-D1 + P2-F2)", "P2-D3": "PENDING (blocked by P2-D2)"}},
       "P2-E": {"goal": "G11", "title": "Regression alarm bell — observed case", "owner": "dev-technical-analysis + qa", "status": "PENDING-FLOW-RULE", "blockedBy": "P2-F2 + P2-D3 (must see G10 fix pattern before designing canary)", "tasks": {"P2-E1": "PENDING (blocked by P2-F2)", "P2-E2": "PENDING (blocked by P2-E1)", "P2-E3": "PENDING (blocked by P2-E2)"}},
@@ -78,9 +78,9 @@
     },
     "wip": {
       "limit": 2,
-      "current": ["P2-F2 (agent-father)", "P2-A1 (dev-technical-analysis)"],
-      "current_count": 2,
-      "note": "WIP at limit. P2-B0 landed (commit c175f745); P2-B1 ready but held by PO until P2-A1 lands. Dev-technical-analysis holds exactly 1 active slot. If P2-A1 lands first, P2-B1 dispatches; if P2-F2 lands first, qa picks up P2-D1+E1 (no dev-tech contention)."
+      "current": ["P2-F2 (agent-father)", "P2-A2 (dev-technical-analysis PID 83694)", "P2-B1 (dev-technical-analysis PID 83724 — SCOPE-EXPANDED 10 ACs)"],
+      "current_count": 3,
+      "note": "WIP transient overage (3/2) acknowledged. A1 landed cycle-2 (9561fee9 + 2a8de107) freeing slot; PO dispatched A2 (33 min) + B1 (1h scope-expanded) atomic tasks in parallel since both target dev-technical-analysis with non-overlapping files (.github/workflows/ci.yml vs apps/mcp-server/src/**). Per cycle-1 PO decision, transient overage is acceptable for atomicity ~30-60 min each. F2 (agent-father, separate agent) does not contend."
     },
     "criticalPath": "P2-F2 → P2-D1 → P2-D2 → P2-D3 → P2-E1 → P2-E2 → P2-E3 → P2-F3",
     "burnRate": {
@@ -94,17 +94,19 @@
       "status": "ON-TRACK"
     },
     "nextDispatchGates": {
+      "after_P2-A2_lands": ["dispatch P2-A3 to qa (deliberate-violation CI proof)"],
+      "after_P2-A3_green": ["dispatch P2-A4 (CI green verification close-out)", "dispatch P2-B2 chain (deletion can proceed once fence proven)"],
+      "after_P2-B1_lands": ["create git tag p2-b-pre-delete", "dispatch P2-B2 to dev-technical-analysis (gated on P2-A3 green)"],
       "after_P2-F2_lands": ["dispatch P2-D1 to qa", "dispatch P2-E1 to qa"],
-      "after_P2-A1_lands": ["dispatch P2-A2 to dev-technical-analysis"],
-      "after_P2-A3_green": ["dispatch P2-B2 chain (deletion can proceed once fence proven)"],
-      "after_P2-B0_lands": ["dispatch P2-B1 to dev-technical-analysis"],
       "after_P2-D3_lands": ["dispatch P2-E1/E2 chain (regression pair design needs G10 fix pattern visible)"],
       "after_P2-D3_AND_P2-E3": ["dispatch P2-F3 to qa (streak verification)"]
     },
     "decisionsThisCycle": [
       "Graphify scope: DEFER full run until Phase 2 closure. Rely on incremental `/graphify docs --update --no-viz` per developer flow step. Decision doc: docs/po-decisions/2026-05-23-graphify-scope.md",
       "G9 send: DEFERRED-CYCLE-2. Ops escalation signal queued for vn-market MCP config fix. Non-blocking for dev work.",
-      "WIP overage acknowledged: 3 in-flight on dev-technical-analysis (P2-F2 agent-father is separate agent). PO accepts transient overage given task atomicity (~30 min each)."
+      "WIP overage acknowledged: 3 in-flight on dev-technical-analysis (P2-F2 agent-father is separate agent). PO accepts transient overage given task atomicity (~30 min each).",
+      "Cycle-2 (2026-05-23): P2-A1 closed (commits 9561fee9 + 2a8de107). G4 evidence updated to reflect P2-A1 DONE state.",
+      "Cycle-2 dispatch: P2-A2 (33 min — CI fence job) + P2-B1 (1h — scope-expanded HTTP rewire) both released to dev-technical-analysis in parallel. Non-overlapping files (.github/workflows/ci.yml vs apps/mcp-server/src/**). Verified B1 handoff contains AC-7 + AC-8 (assembleBriefing SEV-2 rewire), AC-9 (test type redirects), AC-10 (smoke check), pre-step `git tag p2-b-pre-delete` documented. Scope-expansion confirmed before dispatch."
     ]
   },
   "goals": [
@@ -142,9 +144,9 @@
       "status": "IN-PROGRESS",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "P2-A1 COMPLETE (commit 9561fee9): apps/technical-analysis/.golangci.yml created with Fence-A/B/C depguard rules. golangci-lint v2 exits 0 on clean codebase. All three fences verified with deliberate violations (each caught exit 1). Awaiting P2-A2 (CI job integration) and P2-A3/A4 (deliberate-violation CI proof) to reach YES.",
+      "evidence": "P2-A1 DONE (commits 9561fee9 config + 2a8de107 docs): apps/technical-analysis/.golangci.yml created with Fence-A/B/C depguard rules. golangci-lint v2 exits 0 on clean codebase. All three fences verified with deliberate violations (each caught exit 1). 30/30 sandbox green. P2-A2 IN-FLIGHT (cycle-2 dispatch). Awaiting P2-A3/A4 (deliberate-violation CI proof) to reach YES.",
       "phase2Bucket": "P2-A",
-      "phase2Note": "P2-A1 done. Config: golangci-lint v2 + depguard, linters.settings format. Main allow-list overrides built-in. **/pkg/primitive/**, **/pkg/module/**, !**/cmd/server/main.go patterns work. Next: P2-A2 CI job."
+      "phase2Note": "P2-A1 done. P2-A2 in-flight. Config: golangci-lint v2 + depguard, linters.settings format. Main allow-list overrides built-in. **/pkg/primitive/**, **/pkg/module/**, !**/cmd/server/main.go patterns work."
     },
     {
       "id": "G5",

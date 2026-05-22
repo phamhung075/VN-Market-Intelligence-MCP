@@ -1,5 +1,41 @@
 # PO Notebook
 
+## c268 · 2026-05-23 — Phase 2 cycle-2 (A1 close, A2 + B1 parallel dispatch)
+
+### State at cycle start
+- A1 landed: commits 9561fee9 (config) + 2a8de107 (docs). Fence linter operational, 3 fences verified, 30/30 sandbox green. Slot freed on dev-technical-analysis.
+- F2 still running (agent-father, do not touch).
+- PM cycle 1 done (commit 9f98b42d expanded B1 from 6 → 10 ACs after B0 SEV-2 finding).
+- Per dispatch gates `after_P2-A1_lands` → A2; `after_P2-B0_lands` → B1 — both gates active.
+
+### Cycle 2 actions
+1. Verified B1 handoff: AC-7 + AC-8 cover assembleBriefing.ts SEV-2 rewire (computeRSI/computeMA removal). AC-9 covers 1408+1410 type-only DailyCandle redirect. AC-10 covers integration smoke. Pre-step `git tag p2-b-pre-delete` documented lines 70-78. Scope expansion intact, no escalation needed.
+2. Closed A1 in pilot-status.json: G4 evidence updated, P2-A1 marked DONE with both commit hashes.
+3. Dispatched P2-A2 → dev-technical-analysis PID 83694 (CI fence job, 33 min, single file `.github/workflows/ci.yml`).
+4. Dispatched P2-B1 → dev-technical-analysis PID 83724 (SCOPE-EXPANDED 10-AC HTTP rewire, 1h, 4 files in `apps/mcp-server/src/**`). Brief explicitly flagged scope expansion and "complete ALL 10 ACs, not just original 6".
+5. Updated WIP to 3/2 (transient overage acknowledged — A2 + B1 file domains non-overlap → parallel safe).
+6. Refreshed nextDispatchGates: A2→A3, A3→A4+B2, B1→tag+B2(gated on A3), F2→D1+E1.
+
+### Decisions made (this cycle)
+1. **Parallel dispatch A2 + B1**: Both target dev-technical-analysis but touch disjoint file trees (`.github/workflows/ci.yml` vs `apps/mcp-server/src/**`). No conflict. Atomic commits each. WIP overage 3/2 acceptable per cycle-1 PO policy for short atomic tasks.
+2. **No QA dispatch yet**: P2-D1/E1 await F2 landing (flow-rule must exist before AI-fix DoD verification). Per dispatch gates.
+
+### Next-dispatch gates (queued for next PO cycle)
+- After P2-A2 lands → dispatch P2-A3 to qa (deliberate-violation CI proof)
+- After P2-B1 lands → confirm `git tag p2-b-pre-delete` exists; then gate P2-B2 on P2-A3 green
+- After P2-A3 green → dispatch P2-A4 + P2-B2 chain
+- After P2-F2 lands → dispatch P2-D1 + P2-E1 to qa
+- After P2-D3 + P2-E3 land → dispatch P2-F3 (streak verification, 3-task close)
+
+### Risks tracked
+- R-9 retained: MCP gateway config drift (G9 send still deferred).
+- R-10 (new c268): B1 author may skip AC-7/AC-8 if they only read original handoff frontmatter. Brief explicitly flags scope expansion. If post-commit verification finds AC-7/AC-8 not satisfied, PO will NOT-PASS the deliverable and re-dispatch with reduced trust window.
+
+### Lessons
+- **L78 (NEW c268)**: Scope-expanded handoffs need explicit "you must complete ALL N ACs" callout in dispatch brief, not just a link to the updated handoff file. Lessons from previous cycle suggest agents read frontmatter ac_count once and act on memory. Restating in the dispatch brief = belt-and-braces.
+
+---
+
 ## c267 · 2026-05-23 — Phase 2 drive cycle (3 in-flight, 2 decisions, 1 ops escalation)
 
 ### State at cycle start
