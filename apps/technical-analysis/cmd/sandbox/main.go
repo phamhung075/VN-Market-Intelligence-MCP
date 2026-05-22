@@ -260,6 +260,11 @@ func generateDeclineRally(n int) []float64 {
 // ---------------------------------------------------------------------------
 
 func resolveScenarioPath(tier, scenarioArg string) (string, error) {
+	// If the caller passes an absolute path, return it as-is (no prefix doubling).
+	if filepath.IsAbs(scenarioArg) {
+		return scenarioArg, nil
+	}
+
 	// Find repo root (walk up from cwd to find docs/scenarios).
 	cwd, err := os.Getwd()
 	if err != nil {

@@ -287,6 +287,45 @@ func TestRunDetectCross_Golden(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// resolveScenarioPath tests
+// ---------------------------------------------------------------------------
+
+func TestResolveScenarioPath_AbsolutePath(t *testing.T) {
+	// When an absolute path is given, resolveScenarioPath must return it as-is,
+	// regardless of tier or repo-root resolution. This prevents path doubling
+	// (e.g. /base/dir + /abs/path → /base/dir/abs/path was the old bug).
+	absPath := "/tmp/my-scenario.json"
+	got, err := resolveScenarioPath("primitive", absPath)
+	if err != nil {
+		t.Fatalf("resolveScenarioPath with absolute path returned error: %v", err)
+	}
+	if got != absPath {
+		t.Errorf("resolveScenarioPath(%q) = %q, want %q (must be returned as-is)", absPath, got, absPath)
+	}
+}
+
+func TestResolveScenarioPath_RelativePath(t *testing.T) {
+	// A relative name (no leading /) must be prefixed with the base directory.
+	// We call with a name that won't exist — we only verify the returned path
+	// ends with the expected suffix (base is determined by tier + repo root).
+	got, err := resolveScenarioPath("primitive", "rsi-golden")
+	if err != nil {
+		// Acceptable: repo root may not be found in the test environment.
+		// The important thing is it did NOT return the bare "rsi-golden" unchanged.
+		t.Logf("resolveScenarioPath (relative) returned err (acceptable in sandbox env): %v", err)
+		return
+	}
+	// If resolution succeeded, the path must NOT equal the bare input.
+	if got == "rsi-golden" || got == "rsi-golden.json" {
+		t.Errorf("resolveScenarioPath(%q) = %q — relative path was not prefixed with base dir", "rsi-golden", got)
+	}
+	// Must have .json suffix.
+	if len(got) < 5 || got[len(got)-5:] != ".json" {
+		t.Errorf("resolveScenarioPath(%q) = %q — result must end in .json", "rsi-golden", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Env audit gate test
 // ---------------------------------------------------------------------------
 
