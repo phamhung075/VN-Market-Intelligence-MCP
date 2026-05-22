@@ -1,66 +1,6 @@
 # QA — Notebook
 
 
-## c253 · 2026-05-22T11:00Z
-
-**Sprint:** 1968d | **Tasks:** P01+P02 Wave 1 | **Session:** c253 — APPROVED (both)
-
-```
-date: 2026-05-22
-outcome: APPROVED (P01 + P02)
-commits reviewed: b637bd8b + 05b7b40f
-zone: .claude/ only — smart-skip (no .ts changes)
-smart_skip: YES
-round: 2
-```
-
-| Check | P01 | P02 |
-|-------|-----|-----|
-| `grep "##§"` = 0 | PASS | N/A |
-| All `§` refs use `## §` (WITH space) | PASS | N/A |
-| grep pattern `^## §[0-9]` correct | PASS | N/A |
-| Fallback rule uses `## §` | PASS | N/A |
-| `grep "OVERWRITE"` = 0 | N/A | PASS |
-| Line 122 section-overwrite comment | N/A | PASS |
-| Delta-read dogfood (2nd cycle) | PASS — [Fixer] only | N/A |
-| agent-father c252 section-overwrite | N/A | PASS |
-| Zone: zero apps/ | PASS | PASS |
-
-**Blocking issues:** 0 (both tasks)
-
-Signal: docs/signals/qa-1968d-wave1-approved.json emitted. Wave 2 (P03) gate UNBLOCKED. Reports at reports/TASK_REPORT_1968d-P01.md + reports/TASK_REPORT_1968d-P02.md (Round 2 appended).
-
-**anchor_out:** `## §qa-round-2` (last anchor in both handoff files after this cycle)
-
-## c254 · 2026-05-22T10:00Z
-
-**Sprint:** active | **Task:** 1972-VNDIRECT-OHLCV-NULL-COERCION | **Session:** c254 — APPROVED
-
-```
-date: 2026-05-22
-outcome: APPROVED
-commits reviewed: 0a51a5a0 + 165d15dc
-zone: apps/mcp-server/ — ohlcvBackfill.ts + regression test
-smart_skip: NO — TS code change, full suite + tsc run
-round: 1
-```
-
-| Check | Result |
-|-------|--------|
-| AC-1: null low record NOT inserted (no low=0) | PASS — 5/5 targeted tests GREEN |
-| AC-2: null open record NOT inserted | PASS |
-| AC-3: complete OHLCV record IS inserted | PASS |
-| AC-4: null close still skipped (pre-existing guard) | PASS |
-| AC-5: asymmetric fixture (open=10/high=40/close=20, low=null) → 0 rows | PASS |
-| Full suite: 9370 pass / 285 fail | PASS — 285 pre-existing BCTC freeze, zero regression |
-| tsc --noEmit | 0 errors |
-| DDD: infra layer, zero domain imports | PASS |
-| Security: parameterized SQL, no process.env, no secrets | PASS |
-| BCTC freeze NFR-3 | PASS — zero bctc-extractor files touched |
-| Zone isolation: apps/mcp-server/ only | PASS |
-
-Blocking: 0. Signal: docs/signals/qa-1972-approved.json. Report: reports/TASK_REPORT_1972.md. NEXT: pm → close TASK_1972.
-
 ## c255 · 2026-05-22T12:30Z
 
 **Sprint:** 1968d | **Task:** P03 zone-caveman-dict | **Session:** c255 — APPROVED
@@ -149,6 +89,30 @@ round: 1
 | AC-8: tsc 0 | PASS (vacuous — no .ts touched) |
 
 **Blocking issues:** 0. Signal: docs/signals/qa-1967-07-approved.json. NEXT: pm.
+
+## c258 · 2026-05-22T13:15Z
+
+**Sprint:** 1967c | **Task:** TASK_1967-08 | **Session:** c258 — APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commit reviewed: 740747e1
+zone: .claude/flows/ — smart-skip (markdown-only, no .ts changes)
+smart_skip: YES
+round: 1
+```
+
+| AC | Result |
+|----|--------|
+| AC-1: execute-tier.md spawned_batch[] + try/finally | PASS — L35 init, L48 append, L51 try, L56 finally loop |
+| AC-2: main.md pipeline-resume try/finally | PASS — L137 try, L138 Agent(), L139 finally, L140 task_release |
+| AC-3: task_release inside finally, all paths | PASS — no orphan release outside finally |
+| AC-4: exception → task_release fires | PASS — pattern matches cowork-team/main.md:229-239 |
+| AC-5: normal flow → task_release fires | PASS |
+| AC-6: tsc 0 (vacuous — no .ts) | PASS |
+
+**Blocking:** 0. Signal: docs/signals/qa-1967-08-approved.json. NEXT: pm — mark TASK_1967-08 Done.
 
 ## Carry-over
 

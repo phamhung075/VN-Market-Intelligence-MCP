@@ -147,3 +147,38 @@ Lock is released on ALL exit paths (success, failure, exception).
 
 **Quality:** smart-skip (markdown-only, `.claude/flows/` zone)
 **NEXT:** qa
+
+---
+
+## [QA] Review Record
+
+**Reviewer:** qa | **Session:** c258 | **ts:** 2026-05-22T13:15Z | **Round:** 1
+**Smart-skip:** YES — markdown-only `.claude/flows/` zone, no .ts touched
+**Verdict: APPROVED**
+
+### AC Table
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| AC-1 | execute-tier.md Step 1+2+3 wrapped in try/finally | PASS | `execute-tier.md:35` — `spawned_batch = []`; L51 `try:` wraps Steps 2+3; L56 `finally:` release loop |
+| AC-2 | dev-team/main.md pipeline-resume block wrapped in try/finally | PASS | `main.md:137` `try:` / `main.md:139` `finally:` around Agent(nextAgent) + task_release(resume_key) |
+| AC-3 | task_release() inside finally (reachable on all paths) | PASS | Both sites: release exclusively inside finally block; no orphan release path outside |
+| AC-4 | Simulate exception → task_release fires (pattern verified vs cowork-team reference) | PASS | try/finally guarantees finally on exception; pattern mirrors cowork-team/main.md:229-239 exactly |
+| AC-5 | Normal flow → task_release fires | PASS | finally fires on all exit paths including normal return |
+| AC-6 | tsc 0 errors | PASS (vacuous — no .ts touched) |
+
+### Pattern Match — cowork-team/main.md Reference
+
+Reference (cowork-team/main.md:229-239): `try: spawn agent / finally: task_release(...)` per slot.
+
+dev-team/main.md S2 (lines 136-142): `else: try: Agent(nextAgent, ...) / finally: task_release(resume_key)` — shape matches reference exactly.
+
+### spawned_batch[] Semantics
+
+`execute-tier.md:35-48`: `spawned_batch = []` initialized before claim loop; appended only on `outer_claim.claimed == true`. Steps 2+3 spawn only entries in `spawned_batch`. Finally-release loop iterates `spawned_batch` — coverage is exact, no orphan release path outside finally block.
+
+### Blocking Issues
+
+None.
+
+**NEXT:** pm
