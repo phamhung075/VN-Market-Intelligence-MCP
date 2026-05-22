@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Analysis — Scenario Trust Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Technical Analysis &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-E1 &nbsp;|&nbsp; Pilot: technical-analysis &nbsp;|&nbsp; Language: Go
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
+    &nbsp;&bull;&nbsp;
+    25 primitive scenarios + 5 module scenarios &mdash; all loaded from JSON, zero production credentials.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ================================================== LEVEL 1: PRIMITIVES -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        5 pure Go functions (CalculateRSI, CalculateMACD, CalculateBollingerBands,
+        CalculateMovingAverage, DetectCross). Each is a zero-dependency pure function.
+        5 scenarios each = 25 total. Click any scenario to inspect input &harr; expectedOutput.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="prim-total-chip">25 scenarios</span>
+        <span class="summary-chip chip-green" id="prim-green-chip">0 passed</span>
+        <span class="summary-chip chip-red"   id="prim-red-chip">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 2: MODULE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>pkg/module/technical_analysis.go</code> &mdash; composes all 5 primitives via
+        package imports. Multi-primitive stories: RSI+MACD cross, BB+MA compression, EMA crossover,
+        full-basket, edge case. Click any scenario to see which primitives are exercised and compare
+        expected outputs.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="mod-total-chip">5 scenarios</span>
+        <span class="summary-chip chip-green" id="mod-green-chip">0 passed</span>
+        <span class="summary-chip chip-red"   id="mod-red-chip">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 3: MICROSERVICE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/technical-analysis/</code> &mdash; Go HTTP service wiring
+        DDD layers (domain / application / infrastructure / interface) with chi router,
+        OpenAPI 3.0 contract, port 5003.
+        Live HTTP wiring deferred to P1-E2.
+      </p>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: not yet run (P1-E1 static)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+</div>
+
+<footer>
+  P1-E1 &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: technical-analysis &bull;
+  Scenarios committed at c6af6839 (primitives) + 457bbb3d (module) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  Next: P1-E2 sandbox runner (<code>go run ./cmd/sandbox -tier=&lt;tier&gt; -scenario=&lt;file&gt;</code>)
+</footer>
+
+<!-- ================================================== MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Input</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator" id="modal-status-text"></span>
+      <span class="modal-note" id="modal-status-note"></span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E2)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================== EMBEDDED SCENARIO DATA -->
+<!-- All 25 primitive scenarios from docs/scenarios/technical-analysis/primitives/ -->
+<!-- All 5 module scenarios from docs/scenarios/technical-analysis/module/       -->
+<!-- Embedded inline so the dashboard works as a static file:// asset            -->
+<!-- Security: zero DB credentials, zero API keys — pure JSON scenario data only -->
+<script>
+window.__PRIMITIVES_DATA__ = [
+  {
+    "primitive": "CalculateBollingerBands",
+    "category": "golden",
+    "description": "BB expansion scenario: 25-candle series starting flat then spiking with increasing volatility (textbook rising price with variance). Period 20, multiplier 2.0. Population stdDev (divisor N). First output: window closes[0:20] mean=88.7085, stdDev=1.291705 (verified with Python numpy ddof=0). Band width (upper-lower) widens as volatility increases across the 6 output windows.",
+    "input": {
+      "closes": [
+        86.16,
+        89.09,
+        88.78,
+        90.32,
+        89.07,
+        91.15,
+        89.44,
+        89.18,
+        86.93,
+        87.68,
+        86.96,
+        89.43,
+        89.32,
+        88.72,
+        87.45,
+        87.26,
+        89.5,
+        87.9,
+        89.13,
+        90.7,
+        92.9,
+        92.98,
+        91.8,
+        92.66,
+        92.68
+      ],
+      "period": 20,
+      "multiplier": 2.0
+    },
+    "expectedOutput": {
+      "upper": [
+        91.291911,
+        91.949721,
+        92.613254,
+        92.93445,
+        93.311412,
+        93.727011
+      ],
+      "middle": [
+        88.7085,
+        89.0455,
+        89.24,
+        89.391,
+        89.508,
+        89.6885
+      ],
+      "lower": [
+        86.125089,
+        86.141279,
+        85.866746,
+        85.84755,
+        85.704588,
+        85.649989
+      ],
+      "length": 6,
+      "tolerance": 0.0001,
+      "note": "population stdDev (divisor N). Cross-verified: Python numpy.std(window, ddof=0)."
+    },
+    "filename": "bb-expansion",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateBollingerBands",
+    "category": "golden",
+    "description": "Canonical Bollinger Bands golden vector: 20 closes, period=5, multiplier=2.0. Population stdDev (divisor N). Output length = 20-5+1 = 16 windows. First window: closes[0:5]=[10,11,12,10.5,11.5]; mean=11.0; sumSq=(1+0+1+0.25+0.25)=2.5; stdDev=sqrt(2.5/5)=sqrt(0.5)=0.707107; upper=11.0+2*0.707107=12.414214; lower=11.0-2*0.707107=9.585786. All 16 triples verified by Go implementation.",
+    "input": {
+      "closes": [
+        10.0,
+        11.0,
+        12.0,
+        10.5,
+        11.5,
+        13.0,
+        12.5,
+        11.0,
+        10.0,
+        12.0,
+        13.5,
+        14.0,
+        13.0,
+        12.5,
+        11.5,
+        12.0,
+        13.0,
+        14.5,
+        15.0,
+        14.0
+      ],
+      "period": 5,
+      "multiplier": 2.0
+    },
+    "expectedOutput": {
+      "upper": [
+        12.414214,
+        13.320465,
+        13.620465,
+        13.554724,
+        13.735416,
+        13.854066,
+        14.216609,
+        15.093326,
+        15.328427,
+        14.414214,
+        14.620465,
+        14.320465,
+        13.56619,
+        14.759126,
+        15.927636,
+        15.854066
+      ],
+      "middle": [
+        11.0,
+        11.6,
+        11.9,
+        11.7,
+        11.6,
+        11.7,
+        11.8,
+        12.1,
+        12.5,
+        13.0,
+        12.9,
+        12.6,
+        12.4,
+        12.7,
+        13.2,
+        13.7
+      ],
+      "lower": [
+        9.585786,
+        9.879535,
+        10.179535,
+        9.845276,
+        9.464584,
+        9.545934,
+        9.383391,
+        9.106674,
+        9.671573,
+        11.585786,
+        11.179535,
+        10.879535,
+        11.23381,
+        10.640874,
+        10.472364,
+        11.545934
+      ],
+      "length": 16,
+      "tolerance": 1e-06,
+      "note": "Population stdDev (divisor N). First window: mean=11.0, stdDev=sqrt(0.5)=0.707107. upper=middle+2*stdDev, lower=middle-2*stdDev. Cross-verified with Go implementation."
+    },
+    "filename": "bb-golden",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateBollingerBands",
+    "category": "failure",
+    "description": "BB insufficient-data scenario: only 5 closes provided but period=20 requires at least 20. Calculate returns ErrInsufficientData. Also covers related validation failures: period < 2 returns ErrInvalidPeriod; multiplier <= 0 returns ErrInvalidMultiplier; NaN price returns ErrInvalidPrice.",
+    "input": {
+      "closes": [
+        86.16,
+        89.09,
+        88.78,
+        90.32,
+        89.07
+      ],
+      "period": 20,
+      "multiplier": 2.0
+    },
+    "expectedOutput": {
+      "error": "bollinger_bands: insufficient data: need at least period closes",
+      "upper": null,
+      "middle": null,
+      "lower": null,
+      "note": "len(closes)=5 < period=20 → ErrInsufficientData. Other failure modes: period<2 → ErrInvalidPeriod; multiplier<=0 → ErrInvalidMultiplier; NaN/negative price → ErrInvalidPrice."
+    },
+    "filename": "bb-insufficient-data",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateBollingerBands",
+    "category": "edge",
+    "description": "BB edge case: period equals the number of closes (len=5, period=5). Output length = 5-5+1 = 1 (single window covering the entire input). Closes=[10,12,11,13,12]; mean=(10+12+11+13+12)/5=11.6; sumSq=(2.56+0.16+0.36+1.96+0.16)=5.2; stdDev=sqrt(5.2/5)=sqrt(1.04)=1.019804; upper=11.6+2*1.019804=13.639608; lower=11.6-2*1.019804=9.560392. Population stdDev (divisor N). Verifies no off-by-one error at the boundary where period==len.",
+    "input": {
+      "closes": [
+        10.0,
+        12.0,
+        11.0,
+        13.0,
+        12.0
+      ],
+      "period": 5,
+      "multiplier": 2.0
+    },
+    "expectedOutput": {
+      "upper": [
+        13.639608
+      ],
+      "middle": [
+        11.6
+      ],
+      "lower": [
+        9.560392
+      ],
+      "length": 1,
+      "tolerance": 1e-06,
+      "note": "Single window: period==len(closes). mean=11.6, stdDev=sqrt(1.04)=1.019804. Output has exactly 1 triple. No ErrInsufficientData (len >= period is satisfied)."
+    },
+    "filename": "bb-period-equals-length",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateBollingerBands",
+    "category": "edge",
+    "description": "BB squeeze scenario: flat closes produce zero population stdDev, causing all three bands to collapse to the same value (upper == middle == lower). Period 20, multiplier 2.0. This is the classic Bollinger Squeeze when volatility is zero. Output length = 25 - 20 + 1 = 6.",
+    "input": {
+      "closes": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "period": 20,
+      "multiplier": 2.0
+    },
+    "expectedOutput": {
+      "upper": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "middle": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "lower": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "length": 6,
+      "tolerance": 1e-10,
+      "note": "stdDev=0 when all prices identical. upper==middle==lower for all windows."
+    },
+    "filename": "bb-squeeze",
+    "status": "static"
+  },
+  {
+    "primitive": "DetectCross",
+    "category": "edge",
+    "description": "Edge cases for DetectCross: (1) parallel lines that never cross — fast always below slow, returns empty event list; (2) equal-then-cross scenario where both series are equal for several bars then fast breaks above (bullish cross at the first bar where fast strictly exceeds slow); (3) minimum valid 2-element input with a cross.",
+    "input": {
+      "cases": [
+        {
+          "name": "parallel-lines-no-cross",
+          "description": "fast always below slow — no crossover events expected",
+          "fastLine": [
+            1.0,
+            1.5,
+            2.0,
+            2.5,
+            3.0
+          ],
+          "slowLine": [
+            4.0,
+            4.5,
+            5.0,
+            5.5,
+            6.0
+          ]
+        },
+        {
+          "name": "equal-then-bullish-cross",
+          "description": "both lines equal for first 3 bars, then fast breaks above slow at index 3",
+          "fastLine": [
+            2.0,
+            2.0,
+            2.0,
+            5.0
+          ],
+          "slowLine": [
+            2.0,
+            2.0,
+            2.0,
+            2.0
+          ]
+        },
+        {
+          "name": "minimum-2-element-bullish",
+          "description": "minimum valid input: 2 bars, fast crosses above slow at index 1",
+          "fastLine": [
+            1.0,
+            3.0
+          ],
+          "slowLine": [
+            2.0,
+            2.0
+          ]
+        }
+      ]
+    },
+    "expectedOutput": {
+      "cases": [
+        {
+          "name": "parallel-lines-no-cross",
+          "events": [],
+          "eventCount": 0
+        },
+        {
+          "name": "equal-then-bullish-cross",
+          "events": [
+            {
+              "index": 3,
+              "direction": "bullish"
+            }
+          ],
+          "eventCount": 1,
+          "note": "prevDiff = 2.0-2.0 = 0 (<=0 satisfied), currDiff = 5.0-2.0 = 3.0 (>0) — bullish cross confirmed"
+        },
+        {
+          "name": "minimum-2-element-bullish",
+          "events": [
+            {
+              "index": 1,
+              "direction": "bullish"
+            }
+          ],
+          "eventCount": 1
+        }
+      ]
+    },
+    "filename": "cross-edge",
+    "status": "static"
+  },
+  {
+    "primitive": "DetectCross",
+    "category": "failure",
+    "description": "Invalid-input failure scenarios for DetectCross. Three sub-cases: (1) mismatched slice lengths — ErrMismatchedLengths; (2) fewer than 2 data points (empty input) — ErrInsufficientData; (3) NaN value in fastLine — ErrInvalidValue. All must return a non-nil error and nil/empty event slice.",
+    "input": {
+      "cases": [
+        {
+          "name": "mismatched-lengths",
+          "description": "fastLine has 3 elements, slowLine has 2 — lengths do not match",
+          "fastLine": [
+            1.0,
+            2.0,
+            3.0
+          ],
+          "slowLine": [
+            1.0,
+            2.0
+          ]
+        },
+        {
+          "name": "empty-input",
+          "description": "both slices empty — fewer than 2 data points",
+          "fastLine": [],
+          "slowLine": []
+        },
+        {
+          "name": "nan-value-in-fast",
+          "description": "NaN injected at index 1 in fastLine — must be rejected",
+          "fastLine": [
+            1.0,
+            "NaN",
+            3.0
+          ],
+          "slowLine": [
+            2.0,
+            2.0,
+            2.0
+          ]
+        }
+      ]
+    },
+    "expectedOutput": {
+      "events": null,
+      "errors": [
+        "ErrMismatchedLengths (fastLine len 3 != slowLine len 2)",
+        "ErrInsufficientData (empty slices — need at least 2 points)",
+        "ErrInvalidValue (NaN at fastLine[1])"
+      ],
+      "note": "All three cases MUST return a non-nil error. Event slice MUST be nil or empty. No partial results are acceptable."
+    },
+    "filename": "cross-failure",
+    "status": "static"
+  },
+  {
+    "primitive": "DetectCross",
+    "category": "golden",
+    "description": "Canonical MACD-line vs signal-line cross scenario. Two crossing series modelled as simple step sequences that cross twice: once bullish (fast rises above slow at index 2) and once bearish (fast falls below slow at index 5). Verifies that DetectCross returns exactly 2 CrossEvents in order with correct indices and directions.",
+    "input": {
+      "description": "8-element parallel series with two deliberate crossovers",
+      "fastLine": [
+        1.0,
+        2.0,
+        4.0,
+        4.0,
+        4.0,
+        2.0,
+        1.0,
+        1.0
+      ],
+      "slowLine": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "expectedOutput": {
+      "events": [
+        {
+          "index": 2,
+          "direction": "bullish"
+        },
+        {
+          "index": 5,
+          "direction": "bearish"
+        }
+      ],
+      "eventCount": 2,
+      "note": "Bullish cross confirmed at index 2 (fast 2.0→4.0 crosses above slow 3.0). Bearish cross confirmed at index 5 (fast 4.0→2.0 crosses below slow 3.0)."
+    },
+    "filename": "cross-golden",
+    "status": "static"
+  },
+  {
+    "primitive": "DetectCross",
+    "category": "golden",
+    "description": "Multi-alternating cross scenario: fastLine oscillates above and below a flat slowLine (=3.0), producing 4 cross events in 10 bars. Bullish cross at index 2 (fast 2.0→4.0, crosses above 3.0). Bearish cross at index 4 (fast 4.0→2.0, crosses below 3.0). Bullish cross at index 7 (fast 2.0→4.0, crosses above 3.0). Bearish cross at index 8 (fast 4.0→2.0, crosses below 3.0). Verifies DetectCross detects all alternating crosses in sequence with correct indices and directions.",
+    "input": {
+      "fastLine": [
+        1.0,
+        2.0,
+        4.0,
+        4.0,
+        2.0,
+        1.0,
+        2.0,
+        4.0,
+        2.0,
+        1.0
+      ],
+      "slowLine": [
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "expectedOutput": {
+      "events": [
+        {
+          "index": 2,
+          "direction": "bullish"
+        },
+        {
+          "index": 4,
+          "direction": "bearish"
+        },
+        {
+          "index": 7,
+          "direction": "bullish"
+        },
+        {
+          "index": 8,
+          "direction": "bearish"
+        }
+      ],
+      "eventCount": 4,
+      "note": "Index 2: prevDiff=(2-3)=-1<=0, currDiff=(4-3)=1>0 → bullish. Index 4: prevDiff=(4-3)=1>=0, currDiff=(2-3)=-1<0 → bearish. Index 7: prevDiff=-1<=0, currDiff=1>0 → bullish. Index 8: prevDiff=1>=0, currDiff=-1<0 → bearish. No consecutive same-direction crosses."
+    },
+    "filename": "cross-multi-alternating",
+    "status": "static"
+  },
+  {
+    "primitive": "DetectCross",
+    "category": "edge",
+    "description": "Parallel-no-cross scenario: fastLine always strictly above slowLine throughout all 5 bars. Both lines trend upward in parallel with no sign change in (fast-slow). The diff series is always positive (2.0 throughout), so no bullish or bearish cross event fires. Verifies DetectCross returns an empty event slice (not nil — nil vs empty is a valid implementation detail, but eventCount must be 0) without error when given valid input with no crossovers.",
+    "input": {
+      "fastLine": [
+        5.0,
+        6.0,
+        7.0,
+        6.5,
+        5.5
+      ],
+      "slowLine": [
+        3.0,
+        3.5,
+        4.0,
+        3.5,
+        3.0
+      ]
+    },
+    "expectedOutput": {
+      "events": [],
+      "eventCount": 0,
+      "error": null,
+      "note": "diff[i]=(fast-slow)=[2.0,2.5,3.0,3.0,2.5] — always positive. No sign change → no cross events. Empty slice returned (not nil error). eventCount MUST be 0."
+    },
+    "filename": "cross-parallel-no-cross",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMovingAverage",
+    "category": "failure",
+    "description": "Dispatcher unknown-type failure scenario: CalculateMovingAverage called with an unsupported maType. Three sub-cases: (1) maType=WMA (Weighted MA — not implemented); (2) maType=VWMA (Volume-Weighted — not implemented); (3) maType='' (empty string). All must return ErrUnknownMAType and nil output. Verifies the dispatcher rejects anything other than SMA/sma/EMA/ema.",
+    "input": {
+      "cases": [
+        {
+          "name": "unknown-wma",
+          "closes": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+          ],
+          "period": 3,
+          "maType": "WMA"
+        },
+        {
+          "name": "unknown-vwma",
+          "closes": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+          ],
+          "period": 3,
+          "maType": "VWMA"
+        },
+        {
+          "name": "empty-matype",
+          "closes": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+          ],
+          "period": 3,
+          "maType": ""
+        }
+      ]
+    },
+    "expectedOutput": {
+      "sma": null,
+      "ema": null,
+      "error": "moving_average: unknown maType: must be SMA or EMA",
+      "note": "All three cases MUST return ErrUnknownMAType. Output MUST be nil. Case-insensitive matching applies only for SMA/EMA — any other string is rejected regardless of casing."
+    },
+    "filename": "ma-dispatcher-unknown",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMovingAverage",
+    "category": "edge",
+    "description": "Moving averages edge cases: (1) period==1 — output equals input for both SMA and EMA (alpha=2/(1+1)=1.0, so EMA instantly tracks price); (2) period==len — single output value equal to SMA of all closes; (3) flat input — SMA and EMA both equal the constant price; (4) dispatcher case-insensitive routing — 'sma'/'SMA'/'ema'/'EMA' all route correctly.",
+    "input": {
+      "cases": [
+        {
+          "name": "period-equals-one",
+          "closes": [
+            3.0,
+            7.0,
+            2.0,
+            9.0
+          ],
+          "period": 1,
+          "description": "period=1: alpha=1, so EMA=closes and SMA=closes"
+        },
+        {
+          "name": "period-equals-length",
+          "closes": [
+            2.0,
+            4.0,
+            6.0,
+            8.0
+          ],
+          "period": 4,
+          "description": "period==len: single value = mean of all = 5.0"
+        },
+        {
+          "name": "flat-input",
+          "closes": [
+            5.0,
+            5.0,
+            5.0,
+            5.0,
+            5.0
+          ],
+          "period": 3,
+          "description": "flat prices: SMA=5.0 everywhere, EMA=5.0 everywhere"
+        },
+        {
+          "name": "dispatcher-case-insensitive",
+          "closes": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+          ],
+          "period": 3,
+          "maTypes": [
+            "SMA",
+            "sma",
+            "EMA",
+            "ema"
+          ],
+          "description": "all four case variants must route without error"
+        }
+      ]
+    },
+    "expectedOutput": {
+      "cases": [
+        {
+          "name": "period-equals-one",
+          "sma": [
+            3.0,
+            7.0,
+            2.0,
+            9.0
+          ],
+          "ema": [
+            3.0,
+            7.0,
+            2.0,
+            9.0
+          ],
+          "length": 4
+        },
+        {
+          "name": "period-equals-length",
+          "sma": [
+            5.0
+          ],
+          "ema": [
+            5.0
+          ],
+          "length": 1
+        },
+        {
+          "name": "flat-input",
+          "sma": [
+            5.0,
+            5.0,
+            5.0
+          ],
+          "ema": [
+            5.0,
+            5.0,
+            5.0
+          ],
+          "length": 3
+        },
+        {
+          "name": "dispatcher-case-insensitive",
+          "allRoute": true,
+          "error": null
+        }
+      ],
+      "tolerance": 0.0001
+    },
+    "filename": "ma-edge",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMovingAverage",
+    "category": "failure",
+    "description": "Moving averages failure cases: (1) invalid period <= 0 returns ErrInvalidPeriod; (2) len(closes) < period returns ErrInsufficientData; (3) NaN price returns ErrInvalidPrice; (4) negative price returns ErrInvalidPrice; (5) unknown maType returns ErrUnknownMAType. All cases must return non-nil error and nil/empty output.",
+    "input": {
+      "cases": [
+        {
+          "name": "invalid-period-zero",
+          "closes": [
+            1.0,
+            2.0,
+            3.0
+          ],
+          "period": 0,
+          "maType": "SMA"
+        },
+        {
+          "name": "invalid-period-negative",
+          "closes": [
+            1.0,
+            2.0,
+            3.0
+          ],
+          "period": -1,
+          "maType": "EMA"
+        },
+        {
+          "name": "insufficient-data-empty",
+          "closes": [],
+          "period": 5,
+          "maType": "SMA"
+        },
+        {
+          "name": "insufficient-data-less-than-period",
+          "closes": [
+            1.0,
+            2.0
+          ],
+          "period": 5,
+          "maType": "EMA"
+        },
+        {
+          "name": "nan-price",
+          "closes": [
+            1.0,
+            null,
+            3.0
+          ],
+          "period": 2,
+          "maType": "SMA",
+          "note": "null represents NaN in the sandbox runner"
+        },
+        {
+          "name": "negative-price",
+          "closes": [
+            1.0,
+            -2.0,
+            3.0
+          ],
+          "period": 2,
+          "maType": "EMA"
+        },
+        {
+          "name": "unknown-matype",
+          "closes": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+          ],
+          "period": 3,
+          "maType": "WMA"
+        }
+      ]
+    },
+    "expectedOutput": {
+      "sma": null,
+      "ema": null,
+      "error": "one of: ErrInvalidPeriod | ErrInsufficientData | ErrInvalidPrice | ErrUnknownMAType",
+      "note": "All cases MUST return a non-nil error. Output MUST be nil/empty. No partial results acceptable."
+    },
+    "filename": "ma-failure",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMovingAverage",
+    "category": "golden",
+    "description": "Moving averages golden vector: 10-candle series, period 4. alpha=2/(4+1)=0.4. SMA[0]=(10+11+12.5+13)/4=11.625; EMA[0]=SMA seed=11.625; EMA[1]=(11.5-11.625)*0.4+11.625=11.575. Both SMA and EMA produce 7 values (10-4+1). Verified by hand + Python reference.",
+    "input": {
+      "closes": [
+        10.0,
+        11.0,
+        12.5,
+        13.0,
+        11.5,
+        12.0,
+        14.0,
+        13.5,
+        12.0,
+        13.0
+      ],
+      "period": 4
+    },
+    "expectedOutput": {
+      "sma": [
+        11.625,
+        12.0,
+        12.25,
+        12.625,
+        12.75,
+        12.875,
+        13.125
+      ],
+      "ema": [
+        11.625,
+        11.575,
+        11.745,
+        12.647,
+        12.9882,
+        12.59292,
+        12.755752
+      ],
+      "length": 7,
+      "tolerance": 0.0001,
+      "note": "EMA seed = SMA of first period closes. alpha = 2/(period+1) = 0.4. NOT Wilder smoothing."
+    },
+    "filename": "ma-golden",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMovingAverage",
+    "category": "golden",
+    "description": "SMA vs EMA divergence scenario: 7 closes with a peak-then-decline pattern (period=3, alpha=2/(3+1)=0.5). SMA and EMA seed identically at index 0 (both = mean of first 3 closes = 4.0). EMA then lags the SMA on the rising side and leads on the falling side due to alpha-weighting. Both produce 5 output values. Verifies: (1) SMA and EMA seed equal on first value; (2) EMA reacts faster to price changes than SMA on upswing; (3) EMA decays faster than SMA on downswing. All values cross-verified with Go implementation.",
+    "input": {
+      "closes": [
+        2.0,
+        4.0,
+        6.0,
+        8.0,
+        6.0,
+        4.0,
+        2.0
+      ],
+      "period": 3
+    },
+    "expectedOutput": {
+      "sma": [
+        4.0,
+        6.0,
+        6.666667,
+        6.0,
+        4.0
+      ],
+      "ema": [
+        4.0,
+        6.0,
+        6.0,
+        5.0,
+        3.5
+      ],
+      "length": 5,
+      "tolerance": 1e-06,
+      "note": "alpha=0.5 (standard, not Wilder). EMA seed = SMA of closes[0:3] = (2+4+6)/3 = 4.0. SMA and EMA diverge at index 2: SMA=6.667 (window mean), EMA=6.0 (weighted). EMA leads the decline: index 4 EMA=3.5 vs SMA=4.0."
+    },
+    "filename": "ma-sma-vs-ema",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMACD",
+    "category": "golden",
+    "description": "Bearish MACD cross scenario (12/26/9): prices are flat at 100 for 30 candles (seeds both EMAs near 100), rise sharply over 15 candles (forces MACD positive), then decline sharply below 100 (fast EMA drops below slow EMA, histogram crosses from positive to negative within the output window). Verifies bearish-cross detection. Output length: (60-26+1)-9+1 = 27 triples.",
+    "input": {
+      "description": "60 prices — 30 flat at 100, 15 rising (100→130), 15 declining (-5/candle from 130→55)",
+      "fast": 12,
+      "slow": 26,
+      "signalPeriod": 9,
+      "prices_pattern": "flat[0..29]=100; rise[30..44]=100+2*(i-29); decline[45..59]=prev-5"
+    },
+    "expectedOutput": {
+      "outputLength": 27,
+      "macdLine": "starts positive, crosses zero downward around index 18",
+      "histogram": "has at least one sign change from positive to negative (bearish cross)",
+      "firstTriple": {
+        "macdLine": 1.2631,
+        "signalLine": 0.2981,
+        "histogram": 0.965,
+        "tolerance": 0.001
+      },
+      "crossAtIndex": 14,
+      "note": "histogram[13]=+0.7210 > 0, histogram[14]=-0.1548 < 0 — bearish cross confirmed"
+    },
+    "filename": "macd-bearish-cross",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMACD",
+    "category": "golden",
+    "description": "Bullish MACD cross scenario (12/26/9): prices are flat at 100 for 30 candles (seeds both EMAs near 100), decline sharply to 70 over 15 candles (forces MACD deeply negative), then rally strongly above 100 (fast EMA surpasses slow EMA, histogram crosses from negative to positive within the output window). Verifies bullish-cross detection. Output length: (60-26+1)-9+1 = 27 triples.",
+    "input": {
+      "description": "60 prices — 30 flat at 100, 15 declining (100→70), 15 rallying (+5/candle from 75→145)",
+      "fast": 12,
+      "slow": 26,
+      "signalPeriod": 9,
+      "prices_pattern": "flat[0..29]=100; decline[30..44]=100-2*(i-29); rally[45..59]=prev+5"
+    },
+    "expectedOutput": {
+      "outputLength": 27,
+      "macdLine": "starts negative, crosses zero upward around index 18",
+      "histogram": "has at least one sign change from negative to positive (bullish cross)",
+      "firstTriple": {
+        "macdLine": -1.2631,
+        "signalLine": -0.2981,
+        "histogram": -0.965,
+        "tolerance": 0.001
+      },
+      "crossAtIndex": 14,
+      "note": "histogram[13]=-0.7210 < 0, histogram[14]=+0.1548 > 0 — bullish cross confirmed"
+    },
+    "filename": "macd-bullish-cross",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMACD",
+    "category": "edge",
+    "description": "Flat-zero MACD scenario: all 40 closes are exactly 100.0 (perfectly flat price series). Fast and slow EMAs converge identically to 100.0; MACD line = 0 throughout. Signal line = EMA of all-zero MACD = 0 throughout. Histogram = 0 throughout. Output length = len-slow-signal+2 = 40-26-9+2 = 7 triples. Verifies the primitive handles a volatility-free environment without division errors or NaN propagation.",
+    "input": {
+      "closes_count": 40,
+      "closes_description": "40 closes all equal to 100.0",
+      "closes_pattern": "flat[0..39]=100.0",
+      "fast": 12,
+      "slow": 26,
+      "signalPeriod": 9
+    },
+    "expectedOutput": {
+      "outputLength": 7,
+      "macdLine": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "signalLine": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "histogram": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tolerance": 1e-10,
+      "note": "All EMAs collapse to 100.0 on flat closes. MACD=fastEMA-slowEMA=0 everywhere. Signal=EMA(zeros)=0. Histogram=0. No NaN, no division error."
+    },
+    "filename": "macd-flat-zero",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMACD",
+    "category": "golden",
+    "description": "Canonical MACD golden vector (12/26/9): 60 closes — 30 flat at 100.0 (seeds both EMAs to 100), then +2.0 per candle for 30 candles (rising trend). Fast EMA (12) responds quicker than slow EMA (26), generating positive MACD line throughout the ramp. Output length = 60-26-9+2 = 27 triples. First triple verified by step-through computation: fast EMA seeds diverge after close[26] departure from flat. Cross-verified with Go implementation.",
+    "input": {
+      "closes_count": 60,
+      "closes_description": "60 closes — 30 flat at 100, then +2/candle ramp to 160",
+      "closes_pattern": "flat[0..29]=100.0; ramp[30..59]=100.0+(i-29)*2.0",
+      "fast": 12,
+      "slow": 26,
+      "signalPeriod": 9
+    },
+    "expectedOutput": {
+      "outputLength": 27,
+      "firstTriple": {
+        "macdLine": 1.263097,
+        "signalLine": 0.298132,
+        "histogram": 0.964964,
+        "tolerance": 0.001
+      },
+      "lastTriple": {
+        "index": 26,
+        "macdLine": 11.588828,
+        "signalLine": 10.592818,
+        "histogram": 0.99601,
+        "tolerance": 0.001
+      },
+      "invariants": {
+        "macdLineAlwaysPositive": true,
+        "histogramAlwaysPositive": true,
+        "note": "Rising trend forces fastEMA above slowEMA throughout. MACD and histogram both positive for all 27 triples."
+      }
+    },
+    "filename": "macd-golden",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateMACD",
+    "category": "failure",
+    "description": "Insufficient-data and invalid-parameter failure scenarios for CalculateMACD. Three sub-cases: (1) empty input, (2) 34 prices with 12/26/9 (need 35 = slow+signalPeriod), (3) fast >= slow (invalid periods). All must return a non-nil error and zero-length output arrays.",
+    "input": {
+      "cases": [
+        {
+          "name": "empty-input",
+          "closes": [],
+          "fast": 12,
+          "slow": 26,
+          "signalPeriod": 9
+        },
+        {
+          "name": "exactly-slow-plus-signal-minus-one",
+          "closes_count": 34,
+          "closes_description": "34 zeros — need 35 minimum for 12/26/9",
+          "fast": 12,
+          "slow": 26,
+          "signalPeriod": 9
+        },
+        {
+          "name": "fast-equals-slow",
+          "closes_count": 50,
+          "fast": 26,
+          "slow": 26,
+          "signalPeriod": 9
+        }
+      ]
+    },
+    "expectedOutput": {
+      "macdLine": null,
+      "signalLine": null,
+      "histogram": null,
+      "errors": [
+        "ErrInsufficientData (empty input)",
+        "ErrInsufficientData (34 < 35)",
+        "ErrInvalidPeriods (fast == slow)"
+      ],
+      "note": "All three cases MUST return a non-nil error. Output arrays MUST be nil/empty. No partial results are acceptable."
+    },
+    "filename": "macd-insufficient-data",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateRSI",
+    "category": "golden",
+    "description": "14-period Wilder RSI on a 20-candle mixed price series. Seed window (moves 1-14) averaged with SMA; subsequent values use Wilder smoothing: avgGain=(prev*(13)+curr)/14. Output has 6 RSI values (len 20 - 14 = 6). All values in [0,100]. Tolerance ±1 RSI point.",
+    "input": {
+      "closes": [
+        44.34,
+        44.09,
+        44.15,
+        43.61,
+        44.33,
+        44.83,
+        45.1,
+        45.15,
+        43.61,
+        44.33,
+        44.83,
+        45.85,
+        46.08,
+        45.89,
+        46.03,
+        46.41,
+        45.98,
+        45.77,
+        45.35,
+        46.03
+      ],
+      "period": 14
+    },
+    "expectedOutput": {
+      "rsi": [
+        62.5557,
+        64.7021,
+        60.4775,
+        58.4697,
+        54.5677,
+        59.3031
+      ],
+      "tolerance": 1.0,
+      "length": 6,
+      "rangeMin": 0,
+      "rangeMax": 100
+    },
+    "filename": "rsi-golden",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateRSI",
+    "category": "failure",
+    "description": "Insufficient-data failure scenario: fewer closes than period+1 must return an error. Three sub-cases: (1) empty input with period=14, (2) exactly period closes (len=14, need 15), (3) period=0 invalid period. All must return an error — no RSI values produced.",
+    "input": {
+      "cases": [
+        {
+          "name": "empty-input",
+          "closes": [],
+          "period": 14
+        },
+        {
+          "name": "exactly-period-closes",
+          "closes": [
+            44.34,
+            44.09,
+            44.15,
+            43.61,
+            44.33,
+            44.83,
+            45.1,
+            45.15,
+            43.61,
+            44.33,
+            44.83,
+            45.85,
+            46.08,
+            45.89
+          ],
+          "period": 14
+        },
+        {
+          "name": "invalid-period-zero",
+          "closes": [
+            44.34,
+            44.09,
+            44.15
+          ],
+          "period": 0
+        }
+      ]
+    },
+    "expectedOutput": {
+      "rsi": null,
+      "error": "ErrInsufficientData or ErrInvalidPeriod depending on case",
+      "note": "All three cases MUST return a non-nil error. The rsi output MUST be nil/empty. No partial results are acceptable."
+    },
+    "filename": "rsi-insufficient-data",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateRSI",
+    "category": "edge",
+    "description": "Mid-range RSI scenario: 20 candles alternating between +1.0 gains and -0.5 losses (period=14). Neither overbought nor oversold — RSI oscillates in the 60-70 band. Verifies Wilder smoothing preserves mid-range stability without drifting to extremes. First RSI = avgGain/avgLoss from 14 moves of alternating +1/-0.5 pattern.",
+    "input": {
+      "closes": [
+        50.0,
+        51.0,
+        50.5,
+        51.5,
+        51.0,
+        52.0,
+        51.5,
+        52.5,
+        52.0,
+        53.0,
+        52.5,
+        53.5,
+        53.0,
+        54.0,
+        53.5,
+        54.5,
+        54.0,
+        55.0,
+        54.5,
+        55.5
+      ],
+      "period": 14
+    },
+    "expectedOutput": {
+      "rsi": [
+        66.6667,
+        69.7674,
+        66.4395,
+        69.5663,
+        66.243,
+        69.3923
+      ],
+      "tolerance": 0.001,
+      "length": 6,
+      "note": "Mid-range RSI from alternating +1/-0.5 candles. avgGain=1.0*(8/14), avgLoss=0.5*(6/14) for first 14 moves. All values must be in (60, 75) range — neither overbought nor oversold."
+    },
+    "filename": "rsi-mid-range",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateRSI",
+    "category": "golden",
+    "description": "Overbought-pullback scenario: 14 consecutive gains drive RSI to 100 (overbought), then 5 declining candles demonstrate pullback. First RSI = 100 (pure-gain seed, avgLoss=0). After decline candles RSI falls below 70, confirming the primitive captures a realistic overbought-then-pullback pattern. All values in [0,100].",
+    "input": {
+      "closes": [
+        30.0,
+        31.0,
+        32.0,
+        33.0,
+        34.0,
+        35.0,
+        36.0,
+        37.0,
+        38.0,
+        39.0,
+        40.0,
+        41.0,
+        42.0,
+        43.0,
+        44.0,
+        43.0,
+        41.5,
+        40.0,
+        38.0,
+        36.0
+      ],
+      "period": 14
+    },
+    "expectedOutput": {
+      "rsi": [
+        100.0,
+        92.8571,
+        83.2512,
+        74.9062,
+        65.4813,
+        57.6674
+      ],
+      "tolerance": 0.01,
+      "length": 6,
+      "note": "First value MUST be exactly 100 (pure-gain seed, avgLoss=0). Values after index 0 reflect Wilder smoothing as losses appear."
+    },
+    "filename": "rsi-overbought-pullback",
+    "status": "static"
+  },
+  {
+    "primitive": "CalculateRSI",
+    "category": "golden",
+    "description": "Oversold-bounce scenario: 14 consecutive losses drive RSI to 0 (oversold), then 5 rising candles demonstrate recovery. First RSI = 0 (pure-loss seed). After recovery candles RSI climbs above 30, confirming the primitive captures a realistic oversold-then-recover pattern. All values in [0,100].",
+    "input": {
+      "closes": [
+        50.0,
+        49.0,
+        48.0,
+        47.0,
+        46.0,
+        45.0,
+        44.0,
+        43.0,
+        42.0,
+        41.0,
+        40.0,
+        39.0,
+        38.0,
+        37.0,
+        36.0,
+        37.0,
+        38.5,
+        40.0,
+        42.0,
+        44.0
+      ],
+      "period": 14
+    },
+    "expectedOutput": {
+      "rsi": [
+        0.0,
+        7.1429,
+        16.7488,
+        25.0938,
+        34.5187,
+        42.3326
+      ],
+      "tolerance": 0.01,
+      "length": 6,
+      "note": "First value MUST be exactly 0 (pure-loss seed, avgGain=0). Values after index 0 reflect Wilder smoothing as gains appear."
+    },
+    "filename": "rsi-oversold-bounce",
+    "status": "static"
+  }
+];
+window.__MODULE_DATA__ = [
+  {
+    "module": "technical-analysis",
+    "primitives": [
+      "CalculateBollingerBands",
+      "CalculateSMA",
+      "CalculateEMA"
+    ],
+    "input": {
+      "closes_length": 40,
+      "description": "40 nearly-flat prices (100.0 + i*0.01, i=0..39) — micro-increment series produces narrow Bollinger Bands (bandwidth ≈ 0.23) and near-zero SMA/EMA spread; models volatility compression before a breakout",
+      "params": {
+        "RSIPeriod": 14,
+        "MACDFast": 12,
+        "MACDSlow": 26,
+        "MACDSignal": 9,
+        "BBPeriod": 20,
+        "BBMultiplier": 2.0,
+        "MAPeriod": 20,
+        "MAType": "SMA"
+      }
+    },
+    "expectedOutput": {
+      "BBUpper_populated": true,
+      "BBMiddle_populated": true,
+      "BBLower_populated": true,
+      "BB_length": 21,
+      "BB_bandwidth_max": 0.25,
+      "BB_Upper_first_approx": 100.2103,
+      "BB_Middle_first_approx": 100.095,
+      "BB_Lower_first_approx": 99.9797,
+      "BB_tolerance": 0.001,
+      "SMA_populated": true,
+      "SMA_length": 21,
+      "EMA_populated": true,
+      "EMA_length": 21,
+      "SMA_EMA_spread_max": 0.001,
+      "RSI_populated": true,
+      "RSI_length": 26,
+      "MACDLine_populated": true,
+      "MACDLine_length": 7,
+      "error": null
+    },
+    "description": "Bollinger Bands compress to bandwidth ≈ 0.23 on flat series; SMA and EMA are identical (zero spread) at first output point. All 3 BB series + both MAs populated. Models a volatility squeeze scenario. Spot-checked: BB[0] upper=100.2103, mid=100.0950, lower=99.9797; SMA[0]=EMA[0]=100.0950.",
+    "category": "golden",
+    "spot_check": {
+      "verified_by": "go run /tmp/spotcheck2.go",
+      "BB_Upper_first_exact": 100.2103,
+      "BB_Middle_first_exact": 100.095,
+      "BB_Lower_first_exact": 99.9797,
+      "BB_bandwidth_first_exact": 0.2307,
+      "SMA_first_exact": 100.095,
+      "EMA_first_exact": 100.095,
+      "SMA_EMA_spread_exact": 0.0,
+      "tolerance": 0.001
+    },
+    "filename": "bb-ma-compression",
+    "status": "static"
+  },
+  {
+    "module": "technical-analysis",
+    "primitives": [
+      "CalculateRSI",
+      "CalculateMACD",
+      "CalculateBollingerBands",
+      "CalculateSMA",
+      "CalculateEMA",
+      "DetectCross"
+    ],
+    "input": {
+      "closes_length": 10,
+      "description": "10 prices (10.0 + i, i=0..9). All default periods require more data: RSI(14) needs 15 closes, MACD(12,26,9) needs 35 closes, BB(20) needs 20 closes, SMA(14)/EMA(14) need 14 closes. 10 prices satisfies none of these — all primitives degrade gracefully (non-fatal policy: fields stay nil, module returns (Result{}, nil)).",
+      "params": {
+        "RSIPeriod": 14,
+        "MACDFast": 12,
+        "MACDSlow": 26,
+        "MACDSignal": 9,
+        "BBPeriod": 20,
+        "BBMultiplier": 2.0,
+        "MAPeriod": 14,
+        "MAType": "SMA"
+      }
+    },
+    "expectedOutput": {
+      "RSI_nil": true,
+      "MACDLine_nil": true,
+      "SignalLine_nil": true,
+      "Histogram_nil": true,
+      "BBUpper_nil": true,
+      "BBMiddle_nil": true,
+      "BBLower_nil": true,
+      "SMA_nil": true,
+      "EMA_nil": true,
+      "CrossSignals_nil": true,
+      "error": null,
+      "non_fatal_policy": "module.Compute returns (Result{}, nil) — zero struct, nil error. All fields nil. No panic, no fatal error."
+    },
+    "description": "Edge case: 10 candles is insufficient for all 5 primitives at their default periods. Non-fatal policy: each primitive error is swallowed, its output field remains nil. module.Compute returns nil error. Spot-checked: all fields nil, err=nil confirmed via go run.",
+    "category": "edge",
+    "spot_check": {
+      "verified_by": "go run /tmp/spotcheck.go (Scenario 5 block)",
+      "RSI_nil_confirmed": true,
+      "MACD_nil_confirmed": true,
+      "BB_nil_confirmed": true,
+      "SMA_nil_confirmed": true,
+      "EMA_nil_confirmed": true,
+      "Cross_nil_confirmed": true,
+      "err_nil_confirmed": true
+    },
+    "filename": "edge-insufficient-candles",
+    "status": "static"
+  },
+  {
+    "module": "technical-analysis",
+    "primitives": [
+      "CalculateEMA",
+      "DetectCross"
+    ],
+    "input": {
+      "closes_length": 50,
+      "description": "50 prices: 15-bar decline (100.0 down to 72.0, step -2.0) then 35-bar rally (step +2.5). Fast EMA (period 5) crosses above slow EMA (period 20) at aligned index 3. Note: module.Compute exposes a single MAPeriod EMA; the cross story is validated by independently computing CalculateEMA(5) and CalculateEMA(20) with alignment offset 15, then DetectCross — bullish cross at index 3.",
+      "prices_construction": "prices[0]=100.0; prices[i]=prices[i-1]-2.0 for i=1..14; prices[i]=prices[i-1]+2.5 for i=15..49",
+      "primitive_params_for_cross_verification": {
+        "fast_period": 5,
+        "slow_period": 20,
+        "alignment_offset": 15
+      },
+      "module_params": {
+        "RSIPeriod": 14,
+        "MACDFast": 12,
+        "MACDSlow": 26,
+        "MACDSignal": 9,
+        "BBPeriod": 20,
+        "BBMultiplier": 2.0,
+        "MAPeriod": 14,
+        "MAType": "EMA"
+      }
+    },
+    "expectedOutput": {
+      "EMA_populated": true,
+      "RSI_populated": true,
+      "MACDLine_populated": true,
+      "BBUpper_populated": true,
+      "cross_detection_via_primitives": {
+        "fastEMA_len": 46,
+        "slowEMA_len": 31,
+        "alignedFast_len": 31,
+        "cross_count": 1,
+        "cross_0_index": 3,
+        "cross_0_direction": "bullish",
+        "cross_0_fastEMA_approx": 87.35,
+        "cross_0_slowEMA_approx": 85.75,
+        "tolerance": 0.01
+      },
+      "module_compute_result": {
+        "RSI_length": 36,
+        "MACD_length": 17,
+        "BB_length": 31,
+        "EMA_length": 47,
+        "CrossSignals_non_nil": true
+      },
+      "error": null
+    },
+    "description": "Fast EMA (period 5) crosses above slow EMA (period 20) at aligned array index 3 — bullish signal. DetectCross fires once. Spot-checked: alignedFast[2]=85.0267 < emaSlow[2]=85.0893 (fast still below); alignedFast[3]=87.3512 > emaSlow[3]=85.7474 (cross confirmed bullish). module.Compute runs all 5 primitives on same series; cross result from DetectCross applied to MACD vs signal pair.",
+    "category": "golden",
+    "spot_check": {
+      "verified_by": "go run /tmp/spotcheck2.go",
+      "alignedFast_at_idx2": 85.0267,
+      "emaSlow_at_idx2": 85.0893,
+      "alignedFast_at_idx3": 87.3512,
+      "emaSlow_at_idx3": 85.7474,
+      "cross_direction": "bullish",
+      "cross_index": 3,
+      "tolerance": 0.001
+    },
+    "filename": "ema-crossover-detect-cross",
+    "status": "static"
+  },
+  {
+    "module": "technical-analysis",
+    "primitives": [
+      "CalculateRSI",
+      "CalculateMACD",
+      "CalculateBollingerBands",
+      "CalculateSMA",
+      "CalculateEMA",
+      "DetectCross"
+    ],
+    "input": {
+      "closes_length": 100,
+      "description": "100 deterministic prices (10.0 + i*0.5, i=0..99) — linear uptrend",
+      "params": {
+        "RSIPeriod": 14,
+        "MACDFast": 12,
+        "MACDSlow": 26,
+        "MACDSignal": 9,
+        "BBPeriod": 20,
+        "BBMultiplier": 2.0,
+        "MAPeriod": 14,
+        "MAType": "SMA"
+      }
+    },
+    "expectedOutput": {
+      "RSI_length_min": 86,
+      "RSI_range": [
+        0,
+        100
+      ],
+      "MACDLine_populated": true,
+      "SignalLine_populated": true,
+      "Histogram_populated": true,
+      "BBUpper_populated": true,
+      "BBMiddle_populated": true,
+      "BBLower_populated": true,
+      "SMA_populated": true,
+      "EMA_populated": true,
+      "CrossSignals_non_nil": true,
+      "error": null
+    },
+    "description": "RSI + MACD + Bollinger Bands + SMA + EMA all computed on 100 prices; cross signals detected (MACD line vs signal line). Full basket scenario.",
+    "category": "golden",
+    "filename": "multi-primitive-bullish-cross",
+    "status": "static"
+  },
+  {
+    "module": "technical-analysis",
+    "primitives": [
+      "CalculateRSI",
+      "CalculateMACD",
+      "DetectCross"
+    ],
+    "input": {
+      "closes_length": 50,
+      "description": "50 prices: 20-bar decline (50.0 down to 34.2, step -0.8) then 30-bar rally (step +0.9) — RSI rises from oversold through 50; MACD line converges toward signal",
+      "params": {
+        "RSIPeriod": 14,
+        "MACDFast": 12,
+        "MACDSlow": 26,
+        "MACDSignal": 9,
+        "MAPeriod": 14,
+        "MAType": "EMA"
+      }
+    },
+    "expectedOutput": {
+      "RSI_populated": true,
+      "RSI_length": 36,
+      "RSI_first": 0.0,
+      "RSI_last_approx": 89.33,
+      "RSI_last_tolerance": 0.01,
+      "RSI_range": [
+        0,
+        100
+      ],
+      "MACDLine_populated": true,
+      "MACDLine_length": 17,
+      "MACDLine_last_positive": true,
+      "SignalLine_populated": true,
+      "Histogram_populated": true,
+      "EMA_populated": true,
+      "CrossSignals_non_nil": true,
+      "error": null
+    },
+    "description": "RSI rises from oversold (0) through 50 on rally; MACD line turns positive (bullish). RSI + MACD both computed on the same 50-price dip-and-rally series. Spot-checked: RSI[0]=0.0000, RSI[last]≈89.33; MACD length=17, last MACDLine≈4.19.",
+    "category": "golden",
+    "spot_check": {
+      "verified_by": "go run /tmp/spotcheck.go",
+      "RSI_first_exact": 0.0,
+      "RSI_last_exact": 89.3334,
+      "MACDLine_first_exact": -0.1164,
+      "MACDLine_last_exact": 4.1853,
+      "SignalLine_last_exact": 3.3256,
+      "Histogram_last_exact": 0.8598,
+      "tolerance": 0.001
+    },
+    "filename": "rsi-macd-crossover",
+    "status": "static"
+  }
+];
+</script>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -503,6 +503,16 @@ All A-bucket tasks must reach this gate before any B-bucket task starts.
 
 ### P1-E1 — Build three-level dashboard
 
+**Status: DONE** — commit `feat(ta-dashboard): three-level scenario trust dashboard (P1-E1)`  
+**Completed:** 2026-05-22 by dev-frontend  
+**Goals met:** G6 (dashboard renders from JSON, file:// URL confirmed), G8 (status badges present, red/green honest infrastructure in place), G9 (trust contract — non-coder can verify RSI from dashboard alone), G12 (dashboard is DoD gate for all TA tasks)  
+
+**Implementation notes:**
+- Framework decision: static HTML + vanilla JS + CSS (no Remix runtime). Justification: the dashboard is a trust layer requiring zero infrastructure — `file://` URL, no npm, no server. Remix would add an SSR boot cost incompatible with the "open in browser with no server" AC.
+- All 25 primitive scenarios + 5 module scenarios embedded as inline JSON in `index.html` via `window.__PRIMITIVES_DATA__` and `window.__MODULE_DATA__` — works in `file://` without `fetch()`.
+- Microservice panel is a static placeholder documenting the Go service shape (DDD layers, OpenAPI endpoints, port 5003). Clearly labelled "Live data not wired yet — P1-E2".
+- "Edit & Rerun" button present (AC5 met) — wired in P1-E2 to `go run ./cmd/sandbox -tier=<tier> -scenario=<file>`.
+
 **Owner:** dev-frontend  
 **Goals:** G6 (Three-level dashboard renders from JSON traces), G8 (Red/green status is honest), G9 (Dashboard is trust contract), G12  
 **Files touched:**
