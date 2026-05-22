@@ -1,6 +1,6 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T01:04:44Z | **Current Tier:** TIER-1 | **Sprint:** 1960
+**Last updated:** 2026-05-22T01:35:09Z | **Current Tier:** TIER-1 | **Sprint:** 1960
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -157,3 +157,45 @@ Appended to DASHBOARD.md (ops section):
 
 Sent to WORK channel at 01:05 UTC:
 > [system-auditor] Tier-1 complete 01:05 UTC — 12/12 services UP, 11/11 health OK, 4 NEW anomalies detected (3 CRITICAL cron, 1 WARN) | Status: DEGRADED
+
+---
+
+## Audit Run Tier-1 (01:35–01:35 UTC 2026-05-22)
+
+- Tier: 1
+- Services checked: 11 (all UP, 28–30h uptime)
+- Health endpoints checked: 5 core services (all 200 OK)
+- Restart count: mcp-server=0 (threshold ≤ 2) ✓
+- Memory pressure: mcp-server=77.15% (threshold < 85%) ✓
+- MCP system status: 16/16 circuit breakers OK, 10 vnstock warnings (rate-limited, transient)
+- Cron health review:
+  - bctcReparseJob: 84.2% success_rate (WARN threshold <90%)
+  - vnstockFundamentalsRefresh: still CRASHED (4d old, no new fire)
+  - vnstockTradingStatsRefresh: still CRASHED (4d old, no new fire)
+  - dailyDashboardJob: ENOENT confirmed — path bug `/docs/data/` vs `/app/data/`
+- Anomalies: 1 NEW critical (path bug confirmed + BUG alert sent)
+- Dedup-skipped: 3 (A-21, A-21b already gated; A-29 under BCTC freeze)
+- Status: DEGRADED (same 3 critical crons + 1 warn as prior cycle; new BUG alert on path bug)
+
+### Finding: dailyDashboardJob Container Path Bug
+
+**Check:** A-29 (Cron job success rate)
+**Severity:** CRITICAL
+**Root cause:** dailyDashboardJob.ts uses local projectRoot() helper that resolves to `/docs/data/` instead of canonical `/app/data/` (mcp-server volume mount point). File exists on host and is mounted correctly; job fails at startup with ENOENT.
+**Impact:** Daily dashboard generation disabled since 2026-05-17 (5d)
+**Fix:** Replace local helper with canonical getProjectRoot() import (same as bctcReparseJob + other jobs in same service)
+**Zone:** dev-mcp-server (XS fix)
+**Signal:** Message 2554 sent to BUG channel at 01:35 UTC
+**Dashboard:** Appended row 1960-A-29-CRON-REPEAT to ops section
+
+### Summary
+
+**Tier-1 STATUS: DEGRADED (no change)**
+- All 11 containers UP (runtime layer PASS) ✓
+- All 5 health endpoints 200 (api layer sample PASS) ✓
+- mcp-server: 0 restarts, 77.15% memory (resource layer PASS) ✓
+- Cron health: 3 critical hung jobs + 1 warn (same as previous cycle 01:04Z)
+- New activity: confirmed path bug root cause, sent BUG alert, appended DASHBOARD row
+- No self-recovery observed in the 31-minute gap (01:04–01:35)
+
+**Next steps:** (1) Monitor for Tier-2 freshness sweep (03:30Z+); (2) dev-mcp-server ships XS fix for dailyDashboardJob path bug within sprint 1960; (3) vnstock crashes remain gated per OBSERVE-1955e / TASK 1967-06 (unlock 2026-05-22T21:00Z)
