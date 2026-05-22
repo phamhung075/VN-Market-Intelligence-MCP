@@ -178,17 +178,24 @@ export async function runOhlcvBackfill(
       // Batch insert inside a transaction for performance
       const insertMany = db.transaction((rows: VnDirectOhlcvRecord[]) => {
         for (const r of rows) {
-          if (!r.code || !r.date || r.close == null) continue;
-          const code: string = r.code;
-          const date: string = r.date;
-          const close: number = r.close;
+          // Skip records with any missing OHLC field — coercing null to 0 produces
+          // corrupt rows (e.g. low=0) that break TA computations and P/L scoring.
+          // All four fields must be present; volume is optional (defaults to 0).
+          if (
+            !r.code ||
+            !r.date ||
+            r.open == null ||
+            r.high == null ||
+            r.low == null ||
+            r.close == null
+          ) continue;
           upsert.run(
-            code,
-            date,
-            r.open ?? 0,
-            r.high ?? close,
-            r.low ?? close,
-            close,
+            r.code,
+            r.date,
+            r.open,
+            r.high,
+            r.low,
+            r.close,
             r.nmVolume ?? 0,
           );
         }
