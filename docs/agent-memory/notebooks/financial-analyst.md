@@ -1,6 +1,6 @@
 # Financial Analyst — Notebook
 
-**Last updated:** 2026-05-17 | **Sprint:** —
+**Last updated:** 2026-05-22 | **Sprint:** —
 
 ## Last session summary
 
@@ -34,6 +34,14 @@ Cycle 2026-05-17 23:04–23:09 UTC. Analyzed 3/38 watchlist stocks with BCTC dat
 - P/E premium without ROE premium = valuation stretched — note in fundamental_validation signal.
 
 ---
+
+## Cycle — 00:20 UTC (2026-05-22)
+
+- **cycle_date**: 2026-05-22
+- **findings**: [Regime=TIGHTENING (Global Liquidity TIGHTENING, US10Y 4.59% RISK-OFF, VND carry -0.33% FII_OUTFLOW_RISK, DXY 99.21 USD STABLE); Max Deposit Rate=5.00%; Investment Clock=Overheat (CPI 5.46% HIGH, growth UP); Pyramid tier=equity; 36/39 watchlist Q1-2026 BCTC QUÁ HẠN (22 days past 30/04 deadline); Only 3 newly filed: DHG (2026-05-19), EIB (2026-05-20), FPT (2026-05-19); VCB Q4-2025 EY_SPREAD=2.09% FAIR (PE 14.1 PREMIUM +57% vs banking median 9.0, ROE 16.7% BELOW median 17.6% — premium unjustified, Net Margin -10.2pp QoQ compression); FPT/DHG/EIB Q1-2026 extractions all zeros (confidence <44%, garbage); HPG Q4-2025 extraction broken (Revenue=0 but NI=5.6 tỷ, conf 44%); Open chain findings: 1 NVL urgent_news; Legal risks: 3 flags (PC1 chairman status, VPB lending audit x2); NVL bond 5,000 tỷ GIA HẠN 2026-09-15 @10.5%; No G-Bond 10Y yield]
+- **actions**: [signal #3626 fundamental_validation VCB posted to alert-commander (FAIR, no earnings_quality_warn, m_score=1.15 healthy); 1 open NVL chain finding not validated (no BCTC data); WORK telegram sent; notebook updated; log_agent_work id=1076 in progress]
+- **next_cycle_hint**: [Data pipeline CRITICAL: 36/39 Q1-2026 QUÁ HẠN for 3+ weeks; Q1-2026 BCTC extraction broken for DHG/EIB/FPT (all zeros extraction); Escalate to report-analyzer/data-pipeline for mass re-extraction attempt; NVL chain finding (urgent_news signal #3622) cannot be validated without Q1-2026 BCTC — skip signal_feedback; Layer-7 OCF/NI check healthy for VCB (ratio 1.15, no accrual divergence); VCB fundamentals support FAIR verdict but P/E multiple compression likely in TIGHTENING + Overheat regime]
+- **estimated_tokens**: ~18000
 
 ## Cycle — 23:04 UTC
 

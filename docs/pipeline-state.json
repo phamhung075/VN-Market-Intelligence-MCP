@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "ba-spec-pending + 1971-APPROVED-pending-pm-close",
-  "currentSprint": "1968d-PHASE4-OPEN (token+toolcall economy L-10+L-12+L-14, agent-father .claude/ zone). DONE: 1971-STOCKPRICE-SCAN-ORDER-MISMATCH (QA APPROVED 2026-05-22T07:10Z). QUEUED: 1970-TA-OHLCV-BACKFILL (FIX S-M dev-mcp-server), 1972-VNDIRECT-OHLCV-NULL-COERCION (FIX S dev-mcp-server). Active OBSERVE: 1960-DAILYDASH 22T16:30Z, 1965d-JANITOR-PATHFIX 23T03Z, 1967-06 unlock 22T21Z, 1959 watchdog-4 hold, 1965c soak 23T18Z.",
-  "activeTaskId": "1968d-BA-SPEC-PENDING + 1971-APPROVED-PM-CLOSE-PENDING + 1965d-JANITOR-PATHFIX-OBSERVE + 1960-DAILYDASH-OBSERVE + 1970-TA-OHLCV-BACKFILL-QUEUED + 1972-VNDIRECT-OHLCV-NULL-COERCION-QUEUED",
-  "nextAgent": "pm — close TASK_1971 (Done), unblock 1972-VNDIRECT-OHLCV-NULL-COERCION, continue 1968d BA spec track",
-  "nextPrompt": "QA APPROVED TASK_1971-STOCKPRICE-SCAN-ORDER-MISMATCH (signal: docs/signals/qa-1971-done.json). Mark 1971 Done in TASKS.md (already updated by QA). Unblock 1972-VNDIRECT-OHLCV-NULL-COERCION (FIX S dev-mcp-server, no WIP gate). Continue parallel 1968d BA spec track (docs/signals/po-1968d-kickoff.json). Blast-radius advisory: verdictResolutionJob P/L scoring should recover from 36% — observe post-1971.",
-  "updatedAt": "2026-05-22T07:10:00Z",
-  "updatedBy": "qa — TASK_1971 APPROVED. Go suite 26/26 PASS. DDD PASS. Security PASS. BCTC freeze NFR-3 PASS. Scan order transposition fixed (fetchers.go:239). Regression test added (OHLCFieldParity). TASKS.md row Done. Signal qa-1971-done.json emitted.",
-  "lastCompleted": "QA 2026-05-22T07:10Z — TASK_1971-STOCKPRICE-SCAN-ORDER-MISMATCH APPROVED (bc515ab2). SEV-1 close=0 root cause confirmed fixed (Scan order reordered to match SELECT). Regression test seals the transposition door. Prior: PO c250 Sprint 1968d kickoff 2026-05-22T04:57:24Z."
+  "status": "1971-DONE + 1972-unblocked-queued + 1968d-BA-SPEC-PENDING",
+  "currentSprint": "1968d-PHASE4-OPEN (token+toolcall economy L-10+L-12+L-14, agent-father .claude/ zone). DONE: 1971-STOCKPRICE-SCAN-ORDER-MISMATCH (pm-close 2026-05-22T07:45Z). QUEUED: 1970-TA-OHLCV-BACKFILL (FIX S-M dev-mcp-server), 1972-VNDIRECT-OHLCV-NULL-COERCION (FIX S dev-mcp-server, no dependency gate). Active OBSERVE: 1960-DAILYDASH 22T16:30Z, 1965d-JANITOR-PATHFIX 23T03Z, 1967-06 unlock 22T21Z, 1959 watchdog-4 hold, 1965c soak 23T18Z.",
+  "activeTaskId": "1968d-BA-SPEC-PENDING + 1965d-JANITOR-PATHFIX-OBSERVE + 1960-DAILYDASH-OBSERVE + 1970-TA-OHLCV-BACKFILL-QUEUED + 1972-VNDIRECT-OHLCV-NULL-COERCION-QUEUED",
+  "nextAgent": "router (WIP=0 after 1971 close); dispatch 1972 if WIP permits; continue 1968d BA spec track; monitor OBSERVE gates",
+  "nextPrompt": "TASK_1971 CLOSED (pm cycle c251, 2026-05-22T07:45Z). P/L recovery from 36% now in progress post-fix deploy. 1972-VNDIRECT-OHLCV-NULL-COERCION ready to dispatch (FIX S, dev-mcp-server zone, independent). 1970-TA-OHLCV-BACKFILL queued. Continue 1968d BA spec track (po-1968d-kickoff.json). OBSERVE gates: 1965c-soak 23T18Z, 1967-06 unlock 22T21Z.",
+  "updatedAt": "2026-05-22T07:45:00Z",
+  "updatedBy": "pm — TASK_1971 CLOSED. TASKS.md row verified Done (dev-stock-price bc515ab2, QA APPROVED 2026-05-22T07:10Z). P/L blast-radius: verdictResolutionJob expected to recover from 36% stuck. Residual low=0 rows (1072) out of scope for 1971 (tracked as 1972). Signal pm-1971-close.json emitted. WIP decremented.",
+  "lastCompleted": "PM 2026-05-22T07:45Z — TASK_1971 CLOSED. Dev-stock-price scan-order fix verified (bc515ab2, 26/26 Go tests PASS, DDD+Security+BCTC-freeze PASS). Regression test OHLCFieldParity seals transposition. Blast-radius: P/L recovery 36%→expected-higher. Prior: QA 2026-05-22T07:10Z APPROVED."
 }

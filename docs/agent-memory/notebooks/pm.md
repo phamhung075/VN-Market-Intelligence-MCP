@@ -1,10 +1,50 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-22T00:00Z cycle c247 | **Status:** Sprint 1968c WAVE-2 COMPLETE + READY FOR CLOSE (P01/P02/P03 all QA APPROVED); Phase 3 Phase 3 token-economy tally ready (P01: 168 calls/day, P02: 14 reads/cycle, P03: 50% payload). WIP=0. | **Next:** PO ratify Sprint 1968c close; await 1967-06 OBSERVE-1955e unlock 2026-05-22T21:00Z
+**Last updated:** 2026-05-22T07:45Z cycle c251 | **Status:** TASK_1971 CLOSED (SEV-1 scan-order fix verified, P/L recovery in progress); WIP=0; 1972-VNDIRECT ready to unblock if router dispatches. | **Next:** Monitor 1971 P/L recovery; await 1972 dispatch gate; continue 1968d BA spec track
 
 > Archive: `docs/archive/notebooks/pm-2026-05-21-earlier.md` (pre-1967c history)
 
-## Current cycle (2026-05-22T00:00Z cycle c247 — PM TASK_1968c-P03 closure: QA APPROVED all ACs, WIP=0, ready for PO close ratification)
+## Current cycle (2026-05-22T07:45Z cycle c251 — PM TASK_1971 close: QA APPROVED, TASKS.md Done verified, P/L recovery expected)
+
+### Signals drained this cycle
+- **qa-1971-done.json** — TASK_1971-STOCKPRICE-SCAN-ORDER-MISMATCH APPROVED
+  - Verdict: APPROVED (scan order transposition fixed)
+  - Commit: dev-stock-price bc515ab2
+  - Tests: 26/26 Go PASS across 4 packages
+  - Fix: Scan params reordered (Low/High/Close/Open) → (Open/High/Low/Close) to match SELECT at line 239
+  - Regression: TestSQLiteRepo_GetHistory_OHLCFieldParity added (asymmetric seed asserts all 6 OHLCV fields)
+  - Blast-radius: verdictResolutionJob.ts P/L scoring expected to recover from 36% stuck rate
+  - Residual: 1072 low=0 rows (VNDirect null coercion) tracked as TASK_1972, out of scope
+
+### PM actions completed (cycle c251)
+1. Verified TASK_1971 row in TASKS.md Done section (already placed by QA at line 93-94)
+   - Status: DONE 2026-05-22T07:10Z (dev-stock-price, QA APPROVED)
+   - All QA checks: DDD PASS, Security PASS, BCTC-freeze NFR-3 PASS (zero BCTC files)
+   - Reconciled: PM-canonical format confirmed (no edit needed)
+2. Updated docs/pipeline-state.json:
+   - Removed "1971-APPROVED-PM-CLOSE-PENDING" from activeTaskId list
+   - Status: "1971-DONE + 1972-unblocked-queued + 1968d-BA-SPEC-PENDING"
+   - nextAgent: "router (WIP=0 after 1971 close); dispatch 1972 if WIP permits; continue 1968d BA spec track"
+   - updatedAt: 2026-05-22T07:45:00Z
+   - updatedBy: pm — 1971 CLOSED
+3. Created docs/signals/pm-1971-close.json:
+   - Close summary: SEV-1 scan-order mismatch fixed; P/L recovery 36%→expected-higher
+   - Blast-radius note: verdictResolutionJob expected to recover (confirmed in qa-1971-done.json line 44)
+   - Unblock list: TASK_1972-VNDIRECT-OHLCV-NULL-COERCION ready (no dependency gate)
+4. Updated PM notebook (this file):
+   - Status: TASK_1971 CLOSED, WIP=0
+   - Next: Monitor 1971 P/L recovery post-deploy; 1972 ready for dispatch if router permits
+
+### Current dispatch state
+- **WIP count:** 0/2 (clean slate; 1971 closed)
+  - 1971: DONE + PM-CLOSED 2026-05-22T07:45Z (dev-stock-price bc515ab2, QA APPROVED 2026-05-22T07:10Z)
+- **Just completed:** 1971 (pm-closed 2026-05-22T07:45Z); prior: 1968c-P03 (qa-approved 2026-05-22T00:00Z)
+- **Unblocked queued:** 1972-VNDIRECT-OHLCV-NULL-COERCION (FIX S, dev-mcp-server zone, no dependency gate — ready for dispatch)
+- **Active queued:** 1970-TA-OHLCV-BACKFILL (FIX S-M, dev-mcp-server zone)
+- **Blocked gates:** 1967-06 blocked-until 2026-05-22T21:00Z (OBSERVE-1955e soak unlock); 1968d BA spec pending
+- **P/L recovery:** verdictResolutionJob.ts now reads correct close field from stock-price (36%→expected higher); monitor post-deploy
+
+## Prior cycle (2026-05-22T00:00Z cycle c247 — PM TASK_1968c-P03 closure: QA APPROVED all ACs, WIP=0, ready for PO close ratification)
 
 ### Signals drained this cycle
 - **qa-1968c-p03-done.json** — TASK_1968c-P03 (L-9 signal_type server-side filter) APPROVED (AC-1..8 PASS)
