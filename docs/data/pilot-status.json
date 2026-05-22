@@ -139,12 +139,12 @@
       "id": "G4",
       "track": "A",
       "title": "Architecture fence enforced in CI",
-      "status": "TBD",
+      "status": "IN-PROGRESS",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope.",
+      "evidence": "P2-A1 COMPLETE (commit 9561fee9): apps/technical-analysis/.golangci.yml created with Fence-A/B/C depguard rules. golangci-lint v2 exits 0 on clean codebase. All three fences verified with deliberate violations (each caught exit 1). Awaiting P2-A2 (CI job integration) and P2-A3/A4 (deliberate-violation CI proof) to reach YES.",
       "phase2Bucket": "P2-A",
-      "phase2Note": "Go-language adaptation needed — ESLint Fence-A/B/C rules from X-5 (06-metrics-cross-cutting.md) must be re-authored for Go layout (pkg/primitive ↛ pkg/module, pkg/module ↛ pkg/{application,interface}, no NewSQLite/NewRedis/NewHTTP outside cmd/server/main.go). Architect to pick linter: go-arch-lint, golangci-lint depguard, or custom."
+      "phase2Note": "P2-A1 done. Config: golangci-lint v2 + depguard, linters.settings format. Main allow-list overrides built-in. **/pkg/primitive/**, **/pkg/module/**, !**/cmd/server/main.go patterns work. Next: P2-A2 CI job."
     },
     {
       "id": "G5",

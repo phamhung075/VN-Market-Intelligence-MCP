@@ -4,6 +4,61 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ## Working Memory
 
+### 2026-05-23 — P2-A1 golangci-lint Fence-A/B/C config (task #16)
+
+**Task:** P2-A1 — Author `.golangci.yml` with depguard Fence-A/B/C rules. Goal G4.
+
+**Status:** DONE — commit 9561fee9
+
+**What was done:**
+- Created `apps/technical-analysis/.golangci.yml` (73 lines).
+- golangci-lint v2.12.2 installed via homebrew.
+- Key v2 format discovery: config key is `linters.settings.depguard` (not top-level `linters-settings`). This is a breaking change from v1.
+- Built-in "Main" rule override: golangci-lint v2 depguard has a built-in "Main" deny-all-internal-packages rule. Must be overridden by defining a rule also named "Main" with an explicit `allow:` list.
+- File pattern discovery: `$root/pkg/primitive/**/*.go` does NOT work for file matching in v2; must use `**/pkg/primitive/**` (double-star glob relative to cwd).
+- Fence-C negation: `!**/cmd/server/main.go` correctly excludes composition root from the infrastructure deny rule. Only-negation rules (no positive patterns) apply to all files not matching the negation.
+
+**Fences verified:**
+- Fence-A: `**/pkg/primitive/**` — denies pkg/module, pkg/application, pkg/interface. Verified: violation caught exit 1.
+- Fence-B: `**/pkg/module/**` — denies pkg/application, pkg/interface. Verified: violation caught exit 1.
+- Fence-C: `!**/cmd/server/main.go` + `!**/*_test.go` — denies pkg/infrastructure everywhere except composition root + test files. Verified: cmd/sandbox violation caught, cmd/server/main.go passes.
+
+**Smoke checks:**
+- `golangci-lint run --config .golangci.yml` → 0 issues, exit 0
+- `python3 -c "import yaml; yaml.safe_load(open('.golangci.yml'))"` → YAML valid
+- `go test ./...` → 7 packages ok, 0 failures
+- `go vet ./...` → zero warnings
+- `go build ./cmd/...` → exit 0
+- Sandbox: 25 primitive GREEN + 5 module GREEN = 30/30
+
+**AC checklist:** AC-1 ✓ (file created) / AC-2 ✓ (go 1.22) / AC-3 ✓ (Fence-A) / AC-4 ✓ (Fence-B) / AC-5 ✓ (Fence-C) / AC-6 ✓ (exit 0 clean) / AC-7 ✓ (YAML valid)
+
+**Next:** P2-A2 — CI job integration (owner: dev-technical-analysis, gates on P2-A1)
+
+---
+
+### 2026-05-23 — P2-B0 Brownfield Inventory (task #15)
+
+**Task:** P2-B0 — brownfield inventory scan: all TS TA callers in mcp-server. Gate document for P2-B1 through P2-B4 (G5 deletion chain).
+
+**Status:** DONE — commit c175f745
+
+**What was done:**
+- Ran `find apps/mcp-server/src -path "*technical*" -name "*.ts"` — 3 primary files (matches pre-scan)
+- Ran full import grep across all TS exports from technicalIndicators.ts — found 4 additional callers beyond architect pre-scan
+- Wrote `docs/architecture-briefs/2026-05-22-refactor/p2-b-caller-inventory.md` (259 lines)
+
+**Key findings:**
+- Pre-scan had 3 files; full scan found 7 actionable (SEV-1 through SEV-4) + 2 already-done (SEV-5)
+- **Critical gap (SEV-2):** `assembleBriefing.ts` imports `computeRSI` + `computeMA` directly — must fix in P2-B1 scope expansion or deletion will break morning briefing
+- **Type-only gaps (SEV-3):** `1408` and `1410` diacritics tests import `DailyCandle` type — will cause tsc errors after deletion; fix in P2-B1/B2
+- **DailyCandle conflict:** two incompatible shapes exist (`{day,close}` in technicalIndicators vs `{date,open,high,low,close,volume}` in IBacktestPriceRepository). Tool handler must define its own local type after rewire.
+- **Already done (SEV-5):** taAlertScanJob + bbAlertScanJob already use HTTP client (`computeTAIndicators` from clients.ts). Grep matched JSDoc comments only, not live imports.
+- **Zero TODO:migrate comments** — P2-B3 is a confirmatory no-op.
+- HTTP client `ta` entry confirmed in clients.ts line 25, port 5003.
+
+**P2-B1 note:** scope must expand to cover assembleBriefing.ts (SEV-2) + type redirects for B2/B3 (SEV-3). Estimate 45min still adequate.
+
 ### 2026-05-23 — Dashboard TS Migration + Sandbox Fix (task #14)
 
 **Task:** Migrate `dashboard/app.js` + `dashboard/rerun-handler.js` → TypeScript with esbuild build. Fix Bug 2 `resolveScenarioPath`. Sandbox re-run 30/30 green.
