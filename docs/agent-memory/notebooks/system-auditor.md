@@ -1,10 +1,46 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T03:05:01Z | **Current Tier:** TIER-1 | **Sprint:** 1960
+**Last updated:** 2026-05-22T03:35:12Z | **Current Tier:** TIER-1 | **Sprint:** 1960
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ---
+
+## Audit Run Tier-1 (03:34–03:35 UTC 2026-05-22)
+
+- Tier: 1
+- Containers checked: 12/12 UP
+- Health endpoints checked: 10/11 OK (frontend still failing)
+- mcp-server restart count: 0 (57 min uptime after last restart)
+- Memory pressure: 49.9% (nominal, < 85%)
+- Anomalies: 0 NEW (A-30 frontend remains under observation, no new escalations)
+- Dedup-skipped: 4 (same pre-gated anomalies A-21, A-21b, A-21c, A-29)
+- Status: DEGRADED (frontend unavailable, but stable; pre-known cron issues unchanged)
+
+### Key Observations (03:35Z Cycle)
+
+**Container Status**: All 12 containers UP and reporting healthy (docker ps + MCP get_system_status aligned)
+- mcp-server: 57 min uptime, 49.9% memory, restart_count=0 ✓
+- All other services: 30–31 hours uptime, healthy ✓
+
+**Health Endpoints**: 10/11 responding (A-30 frontend persistent, no change)
+- Core services (mcp, api-gateway, stock-price, ta, macro, kinh-dich, alert-engine, pdf-extractor, rag, news-fetch): ALL OK ✓
+- Frontend (port 3001): TIMEOUT (HTTP 504 or ECONNREFUSED) — same as 03:04Z ⚠
+
+**Cron Health Review**: 68+ jobs tracked; 4 pre-gated anomalies unchanged
+- bctcReparseJob: 85.4% success, last run 02:38:22Z (success) ✓
+- vnstockFundamentalsRefresh: CRASHED, 0% success, 4d old ⚠ (DEDUP)
+- vnstockTradingStatsRefresh: CRASHED, 0% success, 3d old ⚠ (DEDUP)
+- dailyDashboardJob: ENOENT path error, 1 run failed ⚠ (ops deployed, observing next 16:30Z fire)
+
+**MCP System Metrics**:
+- DB size: 151.68 MB (market.db)
+- WAL: 4.19 MB (OK, < 10MB)
+- Circuit breakers: 16/16 GREEN
+- Alerts (24h): 14 total, 3 HIGH/CRITICAL ✓
+- Errors: vnstock RATE_LIMITED (external pressure, not app issue)
+
+**NO NEW ANOMALIES** in this cycle — A-30 persists but stable, no new escalations.
 
 ## Audit Run Tier-1 (03:04–03:05 UTC 2026-05-22)
 
@@ -156,6 +192,7 @@ All sources within SLA for active trading hours.
 | 02:04Z | T-1 | 02:04:46Z | <1min | 12/12 UP | 11/11 OK | 4 same | DEGRADED | 0 NEW | 4 | No BUG (all dedup), no DASHBOARD (pre-populated) |
 | 02:34Z | T-1 | 02:34:38Z | <1min | 12/12 UP | 11/11 OK | 4 same | DEGRADED | 0 NEW | 4 | No BUG (all dedup), no new alerts |
 | 03:04Z | T-1 | 03:04:40Z | 25s | 12/12 UP | 10/11 OK | 4 same | DEGRADED | 1 NEW (A-30 frontend) | 4 | BUG alert A-30 sent (msg 2560), DASHBOARD row appended |
+| 03:34Z | T-1 | 03:34:40Z | 55s | 12/12 UP | 10/11 OK | 4 same | DEGRADED | 0 NEW | 4 | No BUG (A-30 already dedup, stable); mcp-server restart observed (57m uptime from restart) |
 
 **Cycle Pattern**: Initial 01:04Z Tier-1 detected 4 anomalies; 01:35Z refinement added A-21c root-cause context. 02:04Z/02:34Z cycles confirm no recovery + no new fires. At 03:04Z, NEW A-30 frontend health FAIL detected and escalated. All pre-known anomalies remain under active gates from po c245 triage (DASHBOARD.md rows c245-BATCH through c245-ops-gate, populated 2026-05-22T01:20:05Z).
 
