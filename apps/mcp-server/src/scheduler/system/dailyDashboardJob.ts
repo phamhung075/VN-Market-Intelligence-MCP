@@ -24,6 +24,7 @@ import {
   formatAccuracyReport,
   type AccuracyReport,
 } from "../../interface/mcp/tools/alerts/alertAccuracy.js";
+import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -449,24 +450,13 @@ export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDa
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Resolves the project root relative to this file's location.
- * apps/mcp-server/src/scheduler/system/ → ../../../../.. → project root
- */
-function projectRoot(): string {
-  // src/scheduler/system/ → 3 ".." reach /app (container WORKDIR)
-  // In dev: apps/mcp-server/src/scheduler/system/ → ../../../.. → monorepo root
-  // WORKDIR /app mirrors apps/mcp-server/ content, so 3 segments are correct.
-  return path.resolve(import.meta.dir, "../../..");
-}
-
-/**
  * Loads session log files for a given date from the filesystem.
  *
  * @param date - "YYYY-MM-DD"
  * @returns Map of filename → content
  */
 function loadSessionFiles(date: string): Record<string, string> {
-  const sessionsDir = path.join(projectRoot(), "docs/agent-memory/sessions");
+  const sessionsDir = path.join(getProjectRoot(), "docs/agent-memory/sessions");
   const result: Record<string, string> = {};
 
   let entries: string[];
@@ -493,7 +483,7 @@ function loadSessionFiles(date: string): Record<string, string> {
  * Loads docs/data/project-stats.json from the filesystem.
  */
 function loadProjectStats(): ProjectStats {
-  const statsPath = path.join(projectRoot(), "docs/data/project-stats.json");
+  const statsPath = path.join(getProjectRoot(), "docs/data/project-stats.json");
   const raw = fs.readFileSync(statsPath, "utf8");
   return JSON.parse(raw) as ProjectStats;
 }
@@ -502,7 +492,7 @@ function loadProjectStats(): ProjectStats {
  * Loads docs/TASKS.md from the filesystem.
  */
 function loadTasksMd(): string {
-  const tasksPath = path.join(projectRoot(), "docs/TASKS.md");
+  const tasksPath = path.join(getProjectRoot(), "docs/TASKS.md");
   try {
     return fs.readFileSync(tasksPath, "utf8");
   } catch {
@@ -516,7 +506,7 @@ function loadTasksMd(): string {
  * @param dashboard - DailyDashboard to write
  */
 function writeDashboard(dashboard: DailyDashboard): void {
-  const outPath = path.join(projectRoot(), "docs/data/daily-dashboard.json");
+  const outPath = path.join(getProjectRoot(), "docs/data/daily-dashboard.json");
   fs.writeFileSync(outPath, JSON.stringify(dashboard, null, 2) + "\n", "utf8");
 }
 
