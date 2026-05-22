@@ -1,6 +1,34 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-22 | **Task:** 1965d-JANITOR-PATHFIX | **Session:** c249 — APPROVED
+**Last updated:** 2026-05-22 | **Task:** 1971-STOCKPRICE-SCAN-ORDER-MISMATCH | **Session:** c251 — APPROVED
+
+## Session 2026-05-22 c251 — Task 1971-STOCKPRICE-SCAN-ORDER-MISMATCH APPROVED
+
+```
+date: 2026-05-22
+outcome: APPROVED
+commit reviewed: bc515ab2
+zone: apps/stock-price/ — Go service, fetchers.go + fetchers_test.go
+smart_skip: NO — Go code change; full go test ./... required
+round: 1
+```
+
+| Check | Result |
+|-------|--------|
+| AC-1: SEV-1 root cause confirmed — Scan order transposed vs SELECT (Low/High/Close/Open) since 1912c | PASS |
+| AC-2: Fix at fetchers.go:239 — reordered to &c.Date,&c.Open,&c.High,&c.Low,&c.Close,&c.Volume matching SELECT | PASS |
+| AC-3: TestSQLiteRepo_GetHistory_OHLCFieldParity — asymmetric seed, all 6 fields asserted individually | PASS |
+| Go suite: pkg/application 7/7 | PASS |
+| Go suite: pkg/domain PASS | PASS |
+| Go suite: pkg/infrastructure 8/8 (incl. new OHLCFieldParity) | PASS |
+| Go suite: pkg/interface/http 11/11 | PASS |
+| DDD: domain/ zero infra imports | PASS |
+| Security: no hardcoded secrets, parameterized SQL, no process.env | PASS |
+| BCTC freeze NFR-3: zero BCTC files touched | PASS |
+| Zone isolation: apps/stock-price/ only; mcp-server + .claude untouched | PASS |
+| Regression test design: asymmetric values guarantee any future transposition fails loudly | PASS |
+
+Blocking: 0. Signal: docs/signals/qa-1971-done.json emitted. TASK_REPORT at reports/TASK_REPORT_1971.md. TASKS.md 1971 row moved to Done.
 
 ## Session 2026-05-22 c249 — Task 1965d-JANITOR-PATHFIX APPROVED
 
