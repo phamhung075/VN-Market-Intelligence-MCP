@@ -1,0 +1,26 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "phase-2-kickoff",
+  "priority": "high",
+  "createdAt": "2026-05-22T22:06:34Z",
+  "pilot": "technical-analysis",
+  "phase": "2",
+  "deadline": "2026-07-03",
+  "payload": {
+    "summary": "Phase 2 of Go pilot OPEN. Phase 1 closed (commit 9564f6ee, QA verdict PASS). 6 remaining goals to close: G4, G5, G9, G10, G11, G12.",
+    "skeletonPlan": "docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md",
+    "buckets": ["P2-A (G4 fence)", "P2-B (G5 deletion)", "P2-C (G9 PO-owned)", "P2-D (G10 AI-fix)", "P2-E (G11 regression)", "P2-F (G12 flow rule)"],
+    "architectAction": "Expand skeleton into atomic tasks. Pick Go fence linter. Verify P0-1 bug-inventory.json status. Author flow-rule brief for P2-F (to be implemented by agent-father).",
+    "pmAction": "After architect hands off expanded plan, create handoff files docs/handoffs/TASK_P2-*.md and update docs/TASKS.md Backlog.",
+    "g9Strategy": "Async Telegram MARKET + this signal. PO does NOT block Phase 2 dev work on user reply. Decision doc: docs/po-decisions/2026-05-23-g9-user-confirmation.md",
+    "g12Streak": "1/3 (P1 QA closure logged). Two more consecutive dev tasks needed; will accrue from P2-D fix-work and P2-E fix-work.",
+    "constraints": [
+      "Security: zero DB credentials / zero API keys in sandbox process (charter §Security Clause).",
+      "Scope: technical-analysis only (charter §Anti-Scope-Creep).",
+      "Branches: stay on main (project CLAUDE.md NO BRANCHES rule).",
+      "Token economy: 3-tier compression active for agent-to-agent comms.",
+      "Atomic commits: chore(pilot): Phase 2 kickoff by PO for this PO drop."
+    ]
+  }
+}

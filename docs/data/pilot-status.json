@@ -2,11 +2,11 @@
   "pilot": "technical-analysis",
   "charterRef": "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md",
   "charterVersion": "1.0",
-  "status": "PHASE-1",
+  "status": "PHASE-2",
   "sprintKickoff": "2026-05-22",
   "sprintDeadline": "2026-07-03",
-  "sprintCount": 0,
-  "phase": "1",
+  "sprintCount": 1,
+  "phase": "2",
   "deadline": "kickoff + 6 sprints",
   "languageDecision": "Go (locked 2026-05-22 by user, Option B verdict, supersedes 2026-05-14 de-scope)",
   "pivotEvent": {
@@ -28,12 +28,15 @@
     "obsoleteTaskPlan": "docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan.md"
   },
   "phase1": {
-    "status": "COMPLETE",
+    "status": "ARCHIVED",
     "planExpandedAt": "2026-05-22T16:00:00Z",
     "firstTaskReady": "P1-A1g",
     "completedTasks": 2,
     "completedTaskList": ["P1-E1", "P1-E2"],
     "completedAt": "2026-05-22",
+    "archivedAt": "2026-05-23",
+    "archivedBy": "po (Phase 2 kickoff)",
+    "archivedReason": "Phase 1 closed with QA verdict PASS commit 9564f6ee. G1, G2, G3, G6, G7, G8 = YES. G9, G12 = IN-PROGRESS (carried into Phase 2). G4, G5, G10, G11 = TBD (deferred to Phase 2 buckets).",
     "note": "Phase 1 COMPLETE. P1-E2 (sandbox runner + rerun-handler) shipped 2026-05-22. All 30 scenarios (25 primitive + 5 module) GREEN. ENV AUDIT: forbidden_matches empty. Test A (honest RED) + Test B (honest GREEN) both proven. cmd/sandbox/main.go + rerun-handler.js + sandbox_test.go committed atomically. go test ./... 7 packages green. Phase 1 dashboard trust layer operational.",
     "qaClosureVerification": {
       "date": "2026-05-22",
@@ -45,6 +48,36 @@
       "sandboxGoldenRun": "30/30 GREEN (25 primitive + 5 module)",
       "g8HonestRed": "5 corrupted scenarios all returned RED: C1 rsi[0] got 66.67 want 99.99, C2 outputLength got 27 want 999, C3 upper[0] got 12.41 want 9999.99, C4 sma length got 7 want 999, C5 eventCount got 2 want 999. Corrupted files cleaned up (not committed).",
       "securityGate": "CLEAR — no forbidden env matches, no DB credentials in sandbox process"
+    }
+  },
+  "phase2": {
+    "status": "OPEN",
+    "openedAt": "2026-05-23",
+    "openedBy": "po (Phase 2 kickoff)",
+    "skeletonPlan": "docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md",
+    "skeletonAuthor": "po",
+    "expansionOwner": "architect",
+    "atomizationOwner": "pm",
+    "buckets": {
+      "P2-A": {"goal": "G4", "title": "Architecture fence in CI (Go linter)", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION"},
+      "P2-B": {"goal": "G5", "title": "Old TS TA code deletion + caller HTTP rewire", "owner": "dev-technical-analysis", "status": "PENDING-ARCHITECT-EXPANSION"},
+      "P2-C": {"goal": "G9", "title": "User verbal-async confirm gate", "owner": "po", "status": "OPEN-AWAITING-USER-REPLY", "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md", "mechanism": "Telegram MARKET + signal file (async, no meeting)"},
+      "P2-D": {"goal": "G10", "title": "AI-fixability proof (≤2 cycles)", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION", "blockedBy": "P0-1 bug-inventory.json status verification"},
+      "P2-E": {"goal": "G11", "title": "Regression alarm bell — observed case", "owner": "dev-technical-analysis + qa", "status": "PENDING-ARCHITECT-EXPANSION", "blockedBy": "P2-F flow rule"},
+      "P2-F": {"goal": "G12", "title": "Dashboard-green DoD flow rule + 3-task streak", "owner": "architect (brief) → agent-father (flow edit) + qa (streak verify)", "status": "PENDING-ARCHITECT-EXPANSION"}
+    },
+    "g9": {
+      "mechanism": "async Telegram WORK (PO permission constraint — MARKET write forbidden) + signal file",
+      "notificationSentAt": null,
+      "notificationSendStatus": "DEFERRED — vn-market MCP not loaded in PO kickoff session 2026-05-23 (claude mcp list reports command:undefined). Queued for next PO cycle with working MCP. Send template in docs/po-decisions/2026-05-23-g9-user-confirmation.md §MCP send block.",
+      "userReplyReceivedAt": null,
+      "blocksPhase2DevWork": false,
+      "decisionDoc": "docs/po-decisions/2026-05-23-g9-user-confirmation.md"
+    },
+    "nextTaskForMainRouter": {
+      "agent": "architect",
+      "intent": "Expand phase-2-task-plan-go.md skeleton: pick Go fence linter for P2-A, atomize all 6 buckets into per-task specs, author flow-rule brief for P2-F, verify P0-1 bug-inventory.json status. Output: updated phase-2-task-plan-go.md ready for PM atomization.",
+      "input": "docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md (PO skeleton) + docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md + docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan-go.md (template)"
     }
   },
   "goals": [
@@ -82,7 +115,9 @@
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope."
+      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope.",
+      "phase2Bucket": "P2-A",
+      "phase2Note": "Go-language adaptation needed — ESLint Fence-A/B/C rules from X-5 (06-metrics-cross-cutting.md) must be re-authored for Go layout (pkg/primitive ↛ pkg/module, pkg/module ↛ pkg/{application,interface}, no NewSQLite/NewRedis/NewHTTP outside cmd/server/main.go). Architect to pick linter: go-arch-lint, golangci-lint depguard, or custom."
     },
     {
       "id": "G5",
@@ -91,7 +126,9 @@
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope."
+      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope.",
+      "phase2Bucket": "P2-B",
+      "phase2Note": "Highest-risk Phase 2 task — deletion in live monolith. Architect to specify brownfield scan + rollback strategy (tagged commit before delete) as atomic sub-tasks."
     },
     {
       "id": "G6",
@@ -127,7 +164,9 @@
       "status": "IN-PROGRESS",
       "verifiedAt": "2026-05-22",
       "verifiedBy": "qa (P1 closure — technical readiness confirmed; verbal user confirmation gate remains open per charter)",
-      "evidence": "QA confirms dashboard is technically ready for user trust verification: (a) 3-level zoom present (Primitives → Module → Microservice); (b) click any card → openModal() shows description + input JSON + expectedOutput JSON in modal-body; (c) no Go source code exposed to user (Go references are HTML <code> shell commands and JSON metadata strings, not rendered source); (d) Edit & Rerun button wired via rerun-handler.js (paste-back UX, 5s flip). Missing: verbal YES from user at pilot review — PO gate, not QA gate (per charter §G9 verification method). QA marks IN-PROGRESS until PO records user verbal confirmation."
+      "evidence": "QA confirms dashboard is technically ready for user trust verification: (a) 3-level zoom present (Primitives → Module → Microservice); (b) click any card → openModal() shows description + input JSON + expectedOutput JSON in modal-body; (c) no Go source code exposed to user (Go references are HTML <code> shell commands and JSON metadata strings, not rendered source); (d) Edit & Rerun button wired via rerun-handler.js (paste-back UX, 5s flip). Missing: verbal YES from user at pilot review — PO gate, not QA gate (per charter §G9 verification method). QA marks IN-PROGRESS until PO records user verbal confirmation.",
+      "phase2Bucket": "P2-C",
+      "phase2Mechanism": "async Telegram WORK notification (MARKET write forbidden by PO permissions) + signal file; no synchronous meeting; user reply YES/NO closes gate; decision rationale in docs/po-decisions/2026-05-23-g9-user-confirmation.md"
     },
     {
       "id": "G10",
@@ -136,7 +175,9 @@
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope."
+      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope.",
+      "phase2Bucket": "P2-D",
+      "phase2Note": "Architect to verify P0-1 bug-inventory.json existence at expansion time. If missing, P2-D includes sub-task for system-auditor to create it. Baseline cycle count = 4-6 per system-wide average if no TA-specific baseline available."
     },
     {
       "id": "G11",
@@ -145,7 +186,9 @@
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope."
+      "evidence": "DEFERRED to Phase 2 per phase-1-task-plan-go.md §Goal Mapping. Not in Phase 1 scope.",
+      "phase2Bucket": "P2-E",
+      "phase2Note": "Gates on P2-F flow rule being in place (otherwise agent has no DoD enforcement to detect regression). Architect orders P2-F before P2-E."
     },
     {
       "id": "G12",
@@ -155,6 +198,8 @@
       "verifiedAt": "2026-05-22",
       "verifiedBy": "qa (P1 closure — task #1 of 3-task streak logged)",
       "evidence": "Task streak tracking: task #1 = this QA P1 closure verification run (2026-05-22). QA confirmed 30/30 scenarios GREEN via sandbox before updating pilot-status.json. Remaining: task #2 and task #3 (consecutive Phase 2 dev tasks must follow dashboard-green-before-done rule). Flow rule authoring by architect still pending. G12 = YES when 3 consecutive tasks confirmed. Current streak: 1/3.",
+      "phase2Bucket": "P2-F",
+      "phase2Note": "Architect authors flow-rule brief → agent-father implements (agent .md changes go via agent-father, never direct). Task #2 + #3 candidates: P2-D AI-fix task + P2-E regression-fix task (both will exercise the sandbox-green DoD).",
       "g12Streak": {
         "required": 3,
         "completed": 1,
