@@ -4,6 +4,150 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ## Working Memory
 
+### 2026-05-23 — Dashboard TS Migration + Sandbox Fix (task #14)
+
+**Task:** Migrate `dashboard/app.js` + `dashboard/rerun-handler.js` → TypeScript with esbuild build. Fix Bug 2 `resolveScenarioPath`. Sandbox re-run 30/30 green.
+
+**Status:** DONE — commits 492061ba (TS migration refactor), 39dbf32b (sandbox fix)
+
+**What was done:**
+- Created `dashboard/app.ts` — full TS port of app.js. Types: ScenarioData, PrimitiveConfig, ScenarioStatus, ScenarioCategory. No `any`. Window globals declared for cross-file access pattern.
+- Created `dashboard/rerun-handler.ts` — full TS port of rerun-handler.js. SandboxResult + RerunEditorPayload interfaces. Typed debounce. `import type` from app.ts (stripped at build time).
+- Created `dashboard/build.sh` — esbuild compiles .ts → `dashboard/dist/*.js` (IIFE, ES2020, browser platform, zero runtime deps). Run: `./dashboard/build.sh`.
+- Created `dashboard/tsconfig.dashboard.json` — browser-targeted config (lib: ES2020,DOM), strict, noEmit for type-check only. Zero tsc errors.
+- Updated `index.html` script tags: `dist/app.js` + `dist/rerun-handler.js`.
+- Added `esbuild@0.28.0` as devDependency; `build:dashboard` npm script.
+- **Bug 1 (primitives 30→25):** NOT a bug in current state — `__PRIMITIVES_DATA__` already has exactly 25 primitive entries, no module entries accidentally appended. Audit confirmed clean.
+- **Bug 2 (resolveScenarioPath doubles path):** Fixed in `cmd/sandbox/main.go` — added `filepath.IsAbs()` guard at top of function, returns absolute path as-is. Added 2 unit tests: TestResolveScenarioPath_AbsolutePath + TestResolveScenarioPath_RelativePath. 17/17 sandbox tests pass.
+- **Sandbox re-run:** 30/30 GREEN (25 primitive + 5 module).
+- **Bun test suite:** 24/24 pass, 0 fail.
+- **Type-check:** `bun tsc --project dashboard/tsconfig.dashboard.json --noEmit` → 0 errors.
+
+**Key decisions:**
+- esbuild `--bundle=false` preserves loose IIFE (no module bundling needed; both files load independently as global-scope IIFEs communicating via window).
+- Cross-file access (app.ts vars accessed by rerun-handler.ts): via window globals (renderPrimitivesPanel, openModal, currentScenario, showRerunPane). This is the correct pattern for non-bundled multi-file browser JS.
+- Build output: `dashboard/dist/` — keep source .ts and compiled .js separate.
+
+### 2026-05-22 — TASK_P1-E2 (Phase 1 Go — Sandbox runner + rerun-handler, Phase 1 COMPLETE)
+
+**Task:** P1-E2 — Dashboard edit-rerun + honest red/green. Go sandbox binary + rerun-handler.js wired.
+
+**Status:** DONE — commit f0958a97
+
+**What was done:**
+- Created `cmd/sandbox/main.go` — Go binary accepting `-tier=primitive|module` + `-scenario=<file>`. Dispatches to all 5 primitives and module. Emits JSON result block to stdout. Exits 0 (green) or 1 (red). `-audit` flag prints audited_env_keys + forbidden_matches for ENV AUDIT GATE.
+- Created `cmd/sandbox/sandbox_test.go` — 11 unit tests: floatEq, diffFloat, diffLen, generateFromPattern (3 patterns), generateDeclineRally, safeIdx, RSI runner golden/RED/failure, BB golden, DetectCross golden, forbiddenEnvPrefixes.
+- Created `dashboard/rerun-handler.js` — static paste-back bridge pattern: Edit & Rerun button opens editor textarea (pre-filled JSON), displays exact go run command, paste-back textarea flips card RED/GREEN within 5s of paste. Justification: no proxy/server needed (preserves G6 file:// constraint).
+- Modified `dashboard/app.js` — rerun-btn click handler delegates to showRerunPane() (rerun-handler.js).
+- Modified `dashboard/index.html` — added script tag for rerun-handler.js + id="modal-body" for DOM injection.
+
+**ENV AUDIT GATE (verbatim):**
+```
+audited_env_keys: HOME,PATH
+forbidden_matches:
+```
+PASS — empty forbidden_matches. Zero DB credentials.
+
+**Test A (honest RED):** rsi-mid-range-CORRUPTED.json (rsi[0]=50.0) → status=red, diff="rsi[0]: got 66.666667, want 50.000000 (tol 0.001)"
+**Test B (honest GREEN):** rsi-mid-range.json → status=green, diffs=null, runMs=0
+
+**All 30 scenarios GREEN:** 25 primitive + 5 module before marking DONE (G12 enforced).
+**go test ./...:** 7 packages ok, go vet clean, go build clean.
+
+**Phase 1 COMPLETE.** completedTaskList=[P1-E1, P1-E2], phase1.status=COMPLETE, G7=YES, G8=YES.
+
+**Scenario format lessons learned:**
+- Multi-case success (cross-edge.json): detected via exp.Cases array presence; hasExpCases mode.
+- Multi-case failure (cross-failure.json): detected via exp.Cases empty; error-expectation mode.
+- MACD patterns: prices_pattern field (not closes_pattern); no closes_count; count inferred from outputLength.
+- Module RSI_last_approx tolerance: approx field = use 2.0 RSI points (not 0.01) since closes generated from description not exact array.
+- Empty maType in dispatcher: must NOT default to SMA; empty string routes to ErrUnknownMAType.
+
+### 2026-05-22 — TASK_P1-D2 (Phase 1 Go — 5-file module scenario JSON suite, D-bucket CLOSED)
+
+**Task:** Author 4 missing module scenario JSON files to reach 5 total in `docs/scenarios/technical-analysis/module/`.
+
+**Status:** DONE — commit 457bbb3d
+
+**What was done:**
+- Existing: `multi-primitive-bullish-cross.json` (C1g, full basket / golden) — identified as Scenario 4 story ("all 5 primitives on same series").
+- Created `rsi-macd-crossover.json` — Scenario 1: 50-price dip-and-rally; RSI rises from 0→89.33; MACD bullish; golden.
+- Created `bb-ma-compression.json` — Scenario 2: 40 nearly-flat prices (step +0.01); BB bandwidth ≈ 0.23; SMA=EMA (zero spread); golden.
+- Created `ema-crossover-detect-cross.json` — Scenario 3: 50 prices decline then rally; fast EMA(5) crosses slow EMA(20) at aligned index 3 (bullish); DetectCross fires; golden.
+- Created `edge-insufficient-candles.json` — Scenario 5: 10 prices; all 5 primitives nil; module returns (Result{}, nil); non-fatal policy confirmed; edge.
+
+**Schema:** Matched existing file schema exactly — `module`, `primitives[]`, `input.closes_length + description + params`, `expectedOutput` (property-based assertions), `description`, `category`. Added `spot_check` block (extension, continuity preserved).
+
+**AC Verification:**
+1. 5 files total in module/: PASS (`find ... | wc -l` = 5)
+2. 5 mandated stories covered: PASS (RSI+MACD cross, BB+MA compression, EMA cross+detect, full basket [existing], edge)
+3. All 5 valid JSON (jq sweep): PASS
+4. ≥2 scenarios spot-checked against module.Compute: PASS (scenarios 1+2+3+5 all verified)
+5. Existing multi-primitive-bullish-cross.json byte-identical: PASS (git diff = 0)
+6. go test ./...: 100 PASS (no Go code touched)
+7. Commit references G2, G7, G12: PASS
+
+**Spot-check results:**
+- Scenario 1 (rsi-macd): RSI[0]=0.0000, RSI[last]=89.3334, MACD len=17, last=4.1853 — within 1e-3 tolerance PASS
+- Scenario 2 (bb-ma): BB[0] upper=100.2103, mid=100.0950, lower=99.9797, bandwidth=0.2307; SMA[0]=EMA[0]=100.0950 (spread=0) PASS
+- Scenario 3 (ema cross): alignedFast[2]=85.0267 < slow[2]=85.0893; alignedFast[3]=87.3512 > slow[3]=85.7474 → bullish cross idx=3 PASS
+- Scenario 5 (edge): all 9 fields nil, err=nil confirmed PASS
+
+**Schema continuity report:**
+- Matched existing schema verbatim: `module`, `primitives[]`, `input.{closes_length, description, params}`, `expectedOutput`, `description`, `category`.
+- Plan spec shows `input.closes[]` (raw array) but existing file uses `closes_length` + `description`. Followed existing file (continuity). Drift flagged.
+- Plan spec does not include `spot_check` block; added as extension for traceability. No existing fields modified.
+
+**D-BUCKET STATUS: CLOSED.** P1-D1 (25-file primitives, c6af6839) + P1-D2 (5-file module, 457bbb3d) — both done.
+
+**Next:** P1-E1 (three-level dashboard HTML/CSS/JS) — owner: dev-frontend. Unblocked by C1g + D2 per dependency graph.
+
+---
+
+### 2026-05-22 — TASK_P1-C1g (Phase 1 Go — Module composition, C-bucket CLOSED)
+
+**Task:** Module composition — `pkg/module/technical_analysis.go` + test + calculator refactor.
+
+**Status:** DONE — commit cdc911ab
+
+**What was done:**
+- Created `pkg/module/technical_analysis.go` (120L) — package `module`. Exports `ComputeParams` struct (RSIPeriod, MACDFast, MACDSlow, MACDSignal, BBPeriod, BBMultiplier, MAPeriod, MAType), `Result` struct (9 output fields + CrossSignals []dc.CrossEvent), and `Compute(closes []float64, p ComputeParams) (Result, error)`. Non-fatal policy: each primitive error leaves its fields nil. Cross signal pair decision (MACD line vs signal line) moved from calculator to module. Zero defaults func for param zero-value substitution.
+- Created `pkg/module/technical_analysis_test.go` — 8 table-driven sub-tests + 1 RSI range test = 9 tests: happy path (100 prices all populated), BB nil + RSI populated (15 prices), all nil (5 prices), RSIPeriod invalid, BBMultiplier negative, unknown MAType, zero-params→defaults, cross signal pair verification.
+- Refactored `pkg/infrastructure/calculator.go` (94L → 50L) — removed all 5 `pkg/primitive/*` imports. Now imports only `pkg/module` and `pkg/domain`. Delegates to `module.Compute`, maps `Result` → `domain.TechnicalIndicators`. Thin mapper pattern complete.
+- Created `docs/scenarios/technical-analysis/module/multi-primitive-bullish-cross.json` — golden scenario: all 5 indicators on 100-price linear series.
+
+**AC Verification:**
+1. Package `module` exports Compute function: PASS
+2. Imports all 5 primitives from pkg/primitive/<name>: PASS (via module layer)
+3. Zero cross-module imports outside primitives: PASS
+4. Composition orchestrates ≥2 primitives in sequence: PASS (5 primitives)
+5. Multi-primitive test with ≥2 primitives together: PASS (9 sub-tests)
+6. Test verifies output shape: PASS
+7. ≥1 multi-primitive scenario JSON: PASS (multi-primitive-bullish-cross.json)
+8. go test ./...: 100 PASS
+9. go vet ./...: PASS
+10. Commit references G2, G12: PASS
+
+**Smoke gates:**
+- `go test ./pkg/module/...`: 9 PASS, 0 FAIL
+- `go test ./...`: 100 PASS (6 packages: module + 5 primitives)
+- `go vet ./...`: exit 0 PASS
+- `go build ./...`: exit 0 PASS
+- `grep 'pkg/primitive' calculator.go`: 0 (PASS)
+- JSON parse: 17 scenario files valid (jq . exit 0)
+
+**B→C layering shift:**
+- BEFORE: calculator owned non-fatal policy for all 5 primitives + cross-pair decision.
+- AFTER: module owns all non-fatal policy + cross-pair decision. Calculator is a thin mapper only (50L).
+
+**G12 status:** sandbox runner (cmd/sandbox) not yet authored. G12 deferred to P1-E2 per plan spec.
+
+**C-BUCKET STATUS: CLOSED.** P1-C1g shipped.
+
+**Next:** P1-D1 (25-file primitive scenario suite) or P1-D2 (5-file module scenario suite after C1g).
+
+---
+
 ### 2026-05-22 — TASK_P1-B5g (Phase 1 Go — Detect Cross primitive, B-bucket CLOSED)
 
 **Task:** Extract Go detect_cross primitive: `pkg/primitive/detect_cross/detect_cross.go` + table-driven test + 3 scenario JSONs + wire into calculator.
