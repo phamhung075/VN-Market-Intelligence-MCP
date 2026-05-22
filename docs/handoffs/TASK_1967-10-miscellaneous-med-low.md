@@ -99,3 +99,48 @@ Five low-risk items bundled:
 
 - ITEM-06 → 1965-COVERAGE-SWEEP (architecture brief for rotation sweep design)
 - ITEM-21 → 2026-05-21-tasks-md-hardening.md brief Option C (future table-based solution)
+
+---
+
+## [Agent-father] Implementation Summary
+
+**Completed:** 2026-05-22 | **Commits:** f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21)
+
+### ITEM-06 — DONE
+- `.claude/agents/news-scout.md` L22 responsibilities: "all watchlist tickers" → "reactive, event-driven tickers (not all watchlist — coverage is event-triggered, not exhaustive per cycle)"
+- `.claude/agents/market-watcher.md` L22 responsibilities: same update
+- agent-md-factory pattern applied (1-line edit per file, SSOT, no drift introduced)
+- Cross-link to 1965-COVERAGE-SWEEP noted in handoff; no file-level change needed (brief exists separately)
+
+### ITEM-16 — DONE
+- `.claude/flows/dev-team/main.md`: spawn-guard comment added after "NEVER spawn cowork-team agents" line
+- `.claude/flows/cowork-team/main.md`: spawn-guard comment added at L115+ (pre-Step-4.6 region) — §drift-min (L64-90) untouched per collision constraint
+- cowork-team/main.md now 303L (was 301L, net +2L — within 310L flag threshold, no split needed)
+
+### ITEM-18 — DEFERRED
+- Out-of-zone for agent-father lane (apps/mcp-server is dev-mcp-server zone)
+- Flagged in handoff as recommended for next dev-mcp-server bundle per original handoff guidance
+
+### ITEM-20 — NO ACTION
+- TTL analysis confirmed safe by design; no code or doc change required
+- Documented as analysis-only finding (confirmed safe)
+
+### ITEM-21 — DONE
+- `docs/agents/system-auditor/audit-dimensions.md`: D-N dimension added (52L insert)
+- Covers DN-W1 (TASKS.md) + DN-W2 (pipeline-state.json) mtime 15-min bucket detection
+- Detection algorithm, acceptance criteria, failure modes, and scope boundary documented
+- Dimension runs at Tier-3 03:00Z alongside D4; non-blocking on git log failure
+- WORK alert + DASHBOARD po-row emitted on concurrent-write detection
+
+### AC Mapping
+| AC | Status | Note |
+|----|--------|------|
+| ITEM-06 AC-1 | PASS | news-scout.md L22 updated |
+| ITEM-06 AC-2 | PASS | market-watcher.md L22 updated |
+| ITEM-06 AC-3 | NOTE | Cross-link to 1965-COVERAGE-SWEEP in handoff only (brief not yet created — out-of-scope for 1967c) |
+| ITEM-16 AC-1 | PASS | dev-team/main.md spawn-guard note added |
+| ITEM-16 AC-2 | PASS | cowork-team/main.md spawn-guard note added at L115+ |
+| ITEM-18 AC-1/2 | DEFERRED | dev-mcp-server zone — not agent-father scope |
+| ITEM-20 AC-1 | PASS | No action; confirmed safe documented |
+| ITEM-21 AC-1 | PASS | D-N dimension registered in audit-dimensions.md |
+| ITEM-21 AC-2 | PASS | WORK alert + DASHBOARD row in D-N algorithm |

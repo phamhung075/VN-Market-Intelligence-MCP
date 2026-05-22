@@ -2,21 +2,6 @@
 
 
 
-## c255 · 2026-05-22T12:30Z
-
-**Sprint:** 1967c | **Task:** 1967-07 (flow notebook fixes — ITEM-05 + ITEM-08 + ITEM-15)
-
-**ITEM-05:** market-watcher/cycle.md Step 5 already reads "OVERWRITE" + notebook-write skill link (pre-fixed 1967b/1968b2). No change needed — AC-1/AC-2 confirmed PASS.
-
-**ITEM-08/15:** signal-dashboard SKILL.md PRUNE section updated. Added READ=48h aging rule alongside existing DONE=immediate rule. Dedup key + frequency note added. AC-3/AC-4 PASS.
-
-**mcp-tools.md:** Cross-link `→ .claude/skills/signal-dashboard/SKILL.md § PRUNE` added above Inter-Agent Signal Types table. AC-5 PASS.
-
-**AC-8 (tsc):** markdown-only zone — no .ts touched. PASS.
-**AC-6/AC-7:** deferred to live observation (smart-skip QA applies).
-
-Signal: agent-father-1967-07-done.json → NEXT=qa
-
 ## c256 · 2026-05-22T12:45Z
 
 **Sprint:** 1967c | **Task:** 1967-08 (dispatcher-wrap try/finally)
@@ -42,6 +27,23 @@ Signal: agent-father-1967-07-done.json → NEXT=qa
 **Collision discipline:** §drift-min anchor scoped to drift commentary only. Spawn-guard region (Steps 4.6+) untouched — reserved for TASK_1967-10.
 
 **Signal emitted:** docs/signals/agent-father-1967-09-done.json → NEXT=qa, QUALITY=smart-skip
+
+## c258 · 2026-05-22T13:00Z
+
+**Sprint:** 1967c | **Task:** 1967-10 (miscellaneous MED/LOW bundle)
+
+**ITEM-06:** news-scout.md + market-watcher.md responsibilities L22 updated — "all watchlist tickers" → "reactive, event-driven tickers". 1-line edit per file. agent-md-factory applied.
+
+**ITEM-16:** spawn-guard documentation notes added. dev-team/main.md: comment after NEVER-spawn line. cowork-team/main.md: comment at L115+ (pre-Step-4.6), §drift-min (L64-90) untouched per collision constraint. cowork-team now 303L (under 310L flag threshold).
+
+**ITEM-18:** DEFERRED — apps/mcp-server is dev-mcp-server zone, out of agent-father scope. Flagged in handoff.
+
+**ITEM-20:** NO ACTION — TTL analysis confirmed safe, documented as analysis-only finding.
+
+**ITEM-21:** D-N dimension added to docs/agents/system-auditor/audit-dimensions.md. DN-W1 + DN-W2 checks for TASKS.md + pipeline-state.json mtime 15-min bucket detection. WORK alert + DASHBOARD po-row on violation. Tier-3 03:00Z alongside D4.
+
+**Commits:** f47ed0bf (ITEM-06+16), c8b053d8 (ITEM-21)
+**Signal:** docs/signals/agent-father-1967-10-done.json → NEXT=qa
 
 ## Carry-over
 
