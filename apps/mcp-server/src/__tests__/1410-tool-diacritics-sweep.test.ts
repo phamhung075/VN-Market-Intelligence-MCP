@@ -37,7 +37,7 @@ import * as rebalancingToolsNs from "../interface/mcp/tools/portfolio/rebalancin
 import * as sentimentTrendToolsNs from "../interface/mcp/tools/news-analysis/sentimentTrendTools.js";
 import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegramReportTools.js";
 
-import type { DailyCandle } from "../domain/services/technicalIndicators.js";
+import type { ToolCandle as DailyCandle } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import type { DomainType } from "../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

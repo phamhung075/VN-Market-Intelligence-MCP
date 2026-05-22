@@ -26,10 +26,47 @@ import {
   computePortfolioPnl,
   type PortfolioPnlResult,
 } from "../../domain/services/portfolioPnlCalculator.js";
-import {
-  computeRSI,
-  computeMA,
-} from "../../domain/services/technicalIndicators.js";
+// ── Local pure-math helpers (P2-B1 AC-7/AC-8 — SEV-2 fix) ───────────────────
+// computeRSI and computeMA formerly imported from domain/services/technicalIndicators.js.
+// Replaced with self-contained inline implementations so that P2-B2 can safely
+// delete the domain TS service without breaking the morning briefing at runtime.
+// Math is identical to the domain service; duplication is intentional and temporary.
+
+/** Simple Moving Average of last `period` values in `prices`. Returns null if insufficient data. */
+function computeMALocal(prices: number[], period: number): number | null {
+  if (prices.length < period) return null;
+  const window = prices.slice(-period);
+  return window.reduce((a, b) => a + b, 0) / period;
+}
+
+/** RSI(period) with Wilder smoothing (k = 1/period). Returns null if insufficient data. */
+function computeRSILocal(prices: number[], period = 14): number | null {
+  if (prices.length < period + 1) return null;
+  const deltas: number[] = [];
+  for (let i = 1; i < prices.length; i++) {
+    deltas.push(prices[i]! - prices[i - 1]!);
+  }
+  const gains = deltas.map((d) => (d > 0 ? d : 0));
+  const losses = deltas.map((d) => (d < 0 ? -d : 0));
+  const wilderEma = (vals: number[], p: number): number[] => {
+    if (vals.length < p) return [];
+    const k = 1 / p;
+    const seed = vals.slice(0, p).reduce((a, b) => a + b, 0) / p;
+    const result = [seed];
+    for (let i = p; i < vals.length; i++) {
+      result.push(vals[i]! * k + result[result.length - 1]! * (1 - k));
+    }
+    return result;
+  };
+  const sg = wilderEma(gains, period);
+  const sl = wilderEma(losses, period);
+  if (!sg.length || !sl.length) return null;
+  const avgGain = sg[sg.length - 1]!;
+  const avgLoss = sl[sl.length - 1]!;
+  if (avgLoss === 0) return 100;
+  if (avgGain === 0) return 0;
+  return 100 - 100 / (1 + avgGain / avgLoss);
+}
 import {
   getCurrentDeadline,
   getNextDeadline,
@@ -634,8 +671,8 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
   const prices = rows.map((r) => r.close_price);
   const currentPrice = prices.at(-1) ?? null;
 
-  const rsi14 = computeRSI(prices, Math.min(14, rows.length - 1));
-  const ma20 = computeMA(prices, Math.min(20, rows.length));
+  const rsi14 = computeRSILocal(prices, Math.min(14, rows.length - 1));
+  const ma20 = computeMALocal(prices, Math.min(20, rows.length));
 
   const rsiStatus: TaSignal["rsiStatus"] =
     rsi14 === null ? "neutral"

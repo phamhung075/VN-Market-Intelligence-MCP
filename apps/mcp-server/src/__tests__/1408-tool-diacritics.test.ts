@@ -4,7 +4,7 @@ import { describe, it, expect } from "bun:test";
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/sector/supplyChainTools.js";
-import type { DailyCandle } from "../domain/services/technicalIndicators.js";
+import type { ToolCandle as DailyCandle } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import type { SupplyChainSignal } from "../domain/services/supplyChainAnalyzer.js";
 
 // RSI N/A branch (technicalIndicatorTools.ts:164 "cần tối thiểu 15 nến") is architecturally
