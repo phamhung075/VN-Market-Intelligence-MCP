@@ -1,6 +1,19 @@
-# Sprint 1968d Goal — Token & Tool-Call Economy Phase 4 (L-10 + L-12 + L-14) [OPEN 2026-05-22T04:57Z]
+# Sprint 1968d Goal — Token & Tool-Call Economy Phase 4 (L-10 + L-12 + L-14) [CLOSED 2026-05-22T05:50:08Z]
 
-**Status:** OPEN 2026-05-22T04:57Z (po c250 kickoff per user demand "continue economy hunt — do not idle"). **Severity:** MEDIUM (cost-reduction, no incident). **Owner:** agent-father (sole executor, pure `.claude/` agent-system .md surgery). **Parent:** Sprints 1968 + 1968a/b/c CLOSED (Phase 1+2+3 cumulative ~50% cowork-cycle token efficiency achieved). **Parallel with:** Sprint 1971 (SEV-1 USER-BUG FPT close=0, dev-stock-price zone, XS fix in flight) + queued 1970/1972 + standing OBSERVE gates (1965d 23T03Z, 1960 22T16:30Z, 1955e 22T21Z, 1965c soak through 23T18Z, 1957d 23T07:05Z).
+**Status:** CLOSED 2026-05-22T05:50:08Z (po c253 ratification — signal `docs/signals/po-1968d-ratified.json`). All 3 P-tasks DONE+QA-APPROVED. Phase 4 levers L-10 + L-12 + L-14 ratified. **Cumulative Phase 4 impact tally:** 65–175 KB/trading-day file-I/O reduction (L-10 50–150 KB handoff re-read + L-12 10–20 KB notebook write + L-14 5 KB zone-caveman compression). **Cumulative Phase 1+2+3+4 grand total:** ~224 MCP calls/day saved + ~1344 Read I/O/day saved + 50% payload reduction on filtered get_agent_signals + ~54 git commits/day saved + 65–175 KB/day file I/O saved. Context-tracking IMPROVED (notebook retention rose from 1 cycle overwrite to 3 cycles with prune). Goal verification vs original /goal: PASS — performance preserved (backward-compat fallbacks on every lever), context tracking improved (3-cycle notebook history), token+tool-call economy hits four-dimensional savings. Fleet WIP 1/2 (dev-mcp-server on TASK_1970 dispatch-ready). Next sprint: **1970-TA-OHLCV-BACKFILL** (HIGH user-facing, RSI/MACD/BB broken across 30 watchlist tickers, dispatch when WIP slot opens).
+
+**OPEN history:** 2026-05-22T04:57Z (po c250 kickoff per user demand "continue economy hunt — do not idle"). **Severity:** MEDIUM (cost-reduction, no incident). **Owner:** agent-father (sole executor, pure `.claude/` agent-system .md surgery). **Parent:** Sprints 1968 + 1968a/b/c CLOSED (Phase 1+2+3 cumulative ~50% cowork-cycle token efficiency achieved). **Parallel with:** Sprint 1971 (SEV-1 USER-BUG FPT close=0, dev-stock-price zone — CLOSED 22T07:10Z bc515ab2) + 1972 (VnDirect null-coercion — CLOSED 22T12:00Z 0a51a5a0+165d15dc+e059de61) + queued 1970 + standing OBSERVE gates (1965d 23T03Z, 1960 22T16:30Z, 1955e 22T21Z, 1965c soak through 23T18Z, 1957d 23T07:05Z).
+
+## Close-Out Tally (po, 2026-05-22T05:50:08Z)
+| Task | Commit | Tier | Impact |
+|---|---|---|---|
+| 1968d-P01 (L-10 handoff delta-read SKILL + 3 flow updates) | `b637bd8b` + `05b7b40f` + `af2de58e` | 3 | 50–150 KB/trading-day handoff re-read savings (7.6% delta vs ≤30% target) |
+| 1968d-P02 (L-12 notebook diff-write SKILL refactor) | `b637bd8b` + `05b7b40f` + `af2de58e` | 2 | 10–20 KB/trading-day write I/O + 3-cycle searchable history (was 1-cycle overwrite) |
+| 1968d-P03 (L-14 per-zone caveman dictionary appendix) | `d974eb57` + `af2de58e` | 3 | 5 KB/trading-day signal compression + zone-aware caveman quality bump |
+
+**Aggregate Phase 4:** 65–175 KB/trading-day file-I/O reduction across 22 agents. Backward-compat preserved on every lever. Dogfood successful in 1968d cycle itself (PM notebook bootstrap, QA delta-read in round 2 verification of P01, agent-father c252 section-overwrite). Ratification signal: `docs/signals/po-1968d-ratified.json`. **Phase 5 deferred-lever inventory:** L-11 (signal-bus batching, RISKY → architect brief), L-13 (TASKS.md row-patch, LOW ROI today defer until >200L), L-15 (pipeline-state.json delta-merge, SKIP permanently), L-16 (MCP tool result caching, architect cache-invalidation design first).
+
+---
 
 ## Vision
 Land the next 3 high-ROI zero-collision levers picked from Phase 4 survey: **L-10 handoff delta-read**, **L-12 notebook diff-write**, **L-14 per-zone caveman dictionaries**. Continues the token+call hunt without touching any apps/* zone (no risk of collision with active 1971 hotfix, no Docker rebuild, no BCTC NFR-3 violation, no schema/cron change). All 3 are agent-father .md surgery — identical risk profile to Phase 1/2/3.
