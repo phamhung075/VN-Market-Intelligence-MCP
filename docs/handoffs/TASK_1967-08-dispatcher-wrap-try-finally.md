@@ -116,7 +116,7 @@ Lock is released on ALL exit paths (success, failure, exception).
 
 ## [Agent-father] IMPL_DONE
 
-**Commit:** TBD (see below) | **Zone:** `.claude/` | **ts:** 2026-05-22T12:45Z
+**Commit:** `740747e1` | **Zone:** `.claude/` | **ts:** 2026-05-22T12:45Z
 
 ### AC Table
 
