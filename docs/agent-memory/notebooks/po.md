@@ -1,38 +1,37 @@
 # PO Notebook
 
-## c264 · 2026-05-22T15:22:00Z — cron-1507Z dev-team triage (sys-auditor tier-2 14:30Z, 4 anomalies)
+## c265 · 2026-05-22T17:24:56Z — cron-1707Z dev-team triage (L70 dispatcher reconcile)
 
 ### Trigger
-dev-team cron-1507Z spawn; sys-auditor tier-2 14:30Z appended 4 rows (B-01 + B-08 recurring; C-06 + C-07 net-new). WIP 0/2. Pipeline-state idle.
+dev-team cron-1707Z spawn. Dispatcher L70 live-probe contradicted pipeline-state.json AND my own c264 verdict (both stated DAILYDASH AC-5.2 gate at 22T16:30Z). WIP=0/2.
 
-### Live-probe verdicts (L70/L72 reconcile — no trust of prior snapshot)
-1. **B-01 CRITICAL** ssc-iboard 5.5h stale → **OBSERVE-MARKET-HOURS**. Current 15:22Z = 22:22 VN, market closed 08:30Z (6h52m post-close). 09:00Z VPS push = end-of-session dribble. Same context as 1960-B-04 / 1973 / 1959-B-01. No-dispatch; re-check Wed 02:00Z market open.
-2. **B-08 CRITICAL** bctc-push 78.9h stale → **DEFER-FREEZE confirmed**. 1953-G-FAIL + 1954c standing; sys-auditor self-class matches.
-3. **C-06 WARN** news_articles 0/3h → **FALSE-POSITIVE (probe-design)**. `sqlite3 market.db .tables` enumerates 60 tables, ZERO match `news_articles`. `grep apps/**/*.{ts,go,py,sql}` = ZERO matches. Probe references a non-existent table → returns 0 → WARN. Same class as A-11 + A-30.
-4. **C-07 WARN** agent_signals 0/24h → **FALSE-POSITIVE (legacy substrate)**. Table EXISTS (60 rows total) but MAX(created_at)=2026-05-14T21:01Z = 8d stale. Frozen at Go-migration cutover. Live agent-bus = JSON files in docs/signals/ (not this SQLite). Probe targets unused legacy table.
+### Live-probe verdicts
+1. **Gate timestamp wrong** — cronConfig.ts:128 dailyDashboard = `'30 23 * * *'` UTC; container TZ=UTC (verified by `docker exec date`); logs `--since 1h | grep dailyDashboard` = EMPTY. The 16:30Z window never fired. Actual target = **22T23:30Z** (~6h08min from now).
+2. **Missing host bind-mount** — dailyDashboardJob.ts:509 writes `/app/docs/data/daily-dashboard.json` inside container; docker-compose.yml mcp-server volumes lines 11-19 only mount 3 individual `:ro` files (project-stats.json, stock-classification.json, alert-verdicts.json) — NO bind for daily-dashboard.json. Output is host-invisible AND lost on restart. AC-5.2 cannot be host-verified at 23:30Z without this fix.
 
 ### Verdict
-**BATCH=NOTHING.** 4/4 reduce to non-dispatch. 2 probe-design FP + 1 market-hours-OBSERVE + 1 architect-freeze.
+**BATCH=1 FIX + 1 NOTE-CORRECTION.**
+- FIX-1974-DAILYDASH-HOST-VISIBILITY (XS, dev-mcp-server, docker-compose.yml). Dispatch NOW — ~6h before 23:30Z fire, WIP=0/2 safe, XS scope, AC-1..AC-6 in payload, implementer chooses single-file rw mount vs whole-dir mount.
+- NOTE-CORRECTION pipeline-state gate 16:30Z → 23:30Z, routed to PM via RETURN (no own dispatch).
 
 ### Actions
-- `docs/signals/po-20260522T152200Z.json` (po.triage.v1 — full 4-anomaly evidence + meta-fix appendix)
-- DASHBOARD ## po row `c264-TRIAGE-B01-B08-C06-C07` (DISPATCHED-NOTHING)
-- DASHBOARD ## system-auditor 4 rows annotated with PO verdicts (status updated: B-01→OBSERVE-MARKET-HOURS, B-08→DEFER-FREEZE, C-06→OBSERVE-FALSE-POSITIVE, C-07→OBSERVE-FALSE-POSITIVE)
-- DASHBOARD header rewritten with c264 summary (c263 carried as prior-context)
-- pipeline-state.json: NO change (idle, WIP=0/2 unchanged, next gate DAILYDASH 22T16:30Z)
-- TASKS.md: NO change
-- Telegram: NONE (4 anomalies all non-actionable for users)
+- `docs/signals/po-20260522T172456Z.json` (po.triage.v1 — full 1-FIX + 1-NOTE payload + AC-1..AC-6 + lessons L74/L75)
+- DASHBOARD ## po row `c265-TRIAGE-DAILYDASH-RECONCILE` (DISPATCHED-1974)
+- DASHBOARD header rewritten with c265 summary (c264 carried as prior-context)
+- pipeline-state.json: **no own write** — NOTE-CORRECTION routed to PM (PO does not own pipeline-state maintenance; PM owns).
+- TASKS.md: no change (FIX row will be opened by dev-team Step 3 on signal pickup).
+- Telegram: NONE (infra fix, non-user-facing).
 
 ### Lessons
-- **L73 (NEW c264)**: system-auditor probe-design false-positive class now has 3 distinct flavors — (a) wrong-host-port (A-11), (b) wrong-URL-path (A-30), (c) wrong-table-name OR dead-legacy-table (C-06 + C-07). Until probe-map override per service+DB+table ships, EVERY system-auditor anomaly requires live-probe of the EXACT substrate before classification. c264 saved 2 false dispatches.
-- **L72 applied** (c263→c264): live-probe every candidate surface before classification. Worked again.
-- **L71 retained** (c262): probe map needs per-service overrides — meta-fix backlog now 4 items.
-- **L70 retained** (c254): cron-prompt is t=0; reconcile live state every cycle.
+- **L75 (NEW c265)**: container-only writes under `/app/docs/data/` (or any /app path) that need host verification = silent-death anti-pattern. Require bind-mount OR docker-exec verification clause OR sidecar copy. Architect to consider systemic rule (audit other jobs writing under /app/docs/).
+- **L74 (NEW c265)**: PO must cite cronConfig.ts:line + container TZ + `logs --since 1h | grep <job>` before declaring any OBSERVE gate timestamp. c264 propagated the 16:30Z error from the L70 snapshot — dispatcher caught it this cycle. Live-probe before trusting any timestamp.
+- **L73 retained** (c264): system-auditor probe false-positive class — 3 flavors (wrong-host-port, wrong-URL-path, wrong-table-name/dead-legacy-table). Meta-fix backlog 4 items still LOW-prio deferred.
+- **L72 retained** (c263): live-probe every candidate surface for terse USER-BUG complaints.
+- **L70 retained** (c254): cron-prompt is t=0 snapshot; reconcile live state every cycle — applied this cycle and saved the AC-5.2 verification window.
 
 ### Carry-over
-- OBSERVE windows (UTC): 22T16:30Z DAILYDASH AC-5.2 (~68min); 22T21Z triple unlock (1955e + 1967-06 + watchdog-4); 23T03Z 1965d errors=0; 23T07:05Z 1957d BCTC tracker; 23T18Z 1965c soak end.
+- OBSERVE gates (UTC, CORRECTED): **22T23:30Z 1960-DAILYDASH AC-5.2 (~6h08min, requires 1974 to land first)**; 22T21:00Z 1967-06 unlock (~3h35min); 22T21:00Z 1955e unlock; 23T03:00Z 1965d errors=0; 23T07:05Z 1957d BCTC tracker; 23T18:00Z 1965c soak end.
 - FROZEN: NFR-3 BCTC freeze (1953-G-FAIL), recurring-bug rule, NO-BRANCHES.
 - Branch carry-over: task/1972-vndirect-ohlcv-null-coercion in ## maintenance (code-janitor pending).
-- Backlog: 1967-10-ITEM18 LOW (marketScanJob finally-guard, XS, dev-mcp-server); 1954c anchor for BCTC unblock.
-- Meta-fix probe-map backlog now 4 items (A-11 + A-30 + C-06 + C-07) — SPIKE threshold reached, LOW-prio (zero user-value impact).
-- WIP: 0/2 unchanged.
+- Backlog: PROBE-MAP-OVERRIDE-SPIKE 4-item meta-fix LOW-prio (A-11 + A-30 + C-06 + C-07); 1967-10-ITEM18 LOW (marketScanJob finally-guard); 1954c anchor for BCTC unblock.
+- WIP: 0/2 → 1/2 on 1974 dispatch.
