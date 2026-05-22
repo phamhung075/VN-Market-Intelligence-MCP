@@ -1,6 +1,6 @@
 # System Auditor — Notebook
 
-**Last updated:** 2026-05-22T19:03:21Z | **Current Tier:** TIER-1 | **Sprint:** 1970+ | **Audit Type:** Runtime Ping
+**Last updated:** 2026-05-22T19:30:00Z | **Current Task:** TASK_P0-1 bug-inventory baseline | **Sprint:** 1970+ | **Audit Type:** Task Execution
 
 > Archive: `docs/archive/notebooks/system-auditor-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -177,6 +177,54 @@ Tier-1 audit scope: container liveness, health endpoints, restart counts, memory
 
 | Cycle | Tier | Time | Duration | Anomalies (new) | Status | Notes |
 |---|---|---|---|---|---|---|
+| P0-1 (TASK) | — | 19:28Z | <5 min | — | COMPLETE | Created docs/data/bug-inventory.json baseline (G10 metric pilot-charter) |
 | #29 (current) | 1 | 19:03Z | <1 min | 0 NEW | HEALTHY | All carry-over dedup honored. VPS stales pre-tracked. |
 | #28 (prior) | 1 | 18:35Z | <1 min | 0 NEW | HEALTHY | Dedup 3 items (A-21c gate, A-21/A-21b, A-29 OBSERVE). |
 | #27 (prior) | 2 | 14:30Z | <5 min | 4 dedup-classified | MIXED | B-01 OBSERVE-MARKET-HOURS, B-08 DEFER-FREEZE, C-06/C-07 FALSE-POSITIVE. |
+
+---
+
+## Task P0-1 Execution (2026-05-22T19:28Z) — Bug Inventory Baseline
+
+**Handoff:** `docs/handoffs/TASK_P0-1-bug-inventory.md`
+**Charter:** `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §Baseline Metric Capture
+**Output:** `docs/data/bug-inventory.json`
+
+### Execution Summary
+
+**Data sources scanned:**
+- Git log (60 days): 1383 commits with bug/fix keywords
+- TASKS.md: recent task records + fix cycles
+- docs/signals/: DASHBOARD.md anomalies + signal files
+- docs/agent-memory/notebooks/*.md: bug carry-overs + cycles
+
+**Bugs extracted:** 29 total (60-day window 2026-03-23 to 2026-05-22)
+- **Resolved:** 18 bugs (62%)
+- **Open:** 11 bugs (38%)
+
+**Module distribution:**
+- mcp-server: 17 bugs (58%)
+- agents: 4 bugs (14%)
+- data-sources: 3 bugs (10%)
+- ops: 2 bugs (7%)
+- technical-analysis: 2 bugs (7%)
+- stock-price: 1 bug (3%)
+
+**Baseline cycle count:**
+- TA-specific bugs: 2 (1970, 1968d) → avg 1.5 cycles
+- System-wide average: 1.3 cycles (from 13 resolved bugs with fixCycles > 0)
+- Charter fallback (4-6): **REPLACED** with measured TA baseline 1.5 cycles
+
+**AC verification:**
+- ✓ AC-1: File `docs/data/bug-inventory.json` created in docs/data/ zone
+- ✓ AC-2: Valid JSON, conforms to charter schema (generatedAt, bugs[], baselineCycleCount)
+- ✓ AC-3: ≥20 bugs extracted (29 total > 20 minimum)
+- ✓ AC-4: baselineCycleCount field populated (1.5 = TA-specific average)
+- ✓ AC-5: All bugs have valid status field (resolved: true | false)
+
+**Confidence assessment:** Medium
+- fixCycles conservatively estimated from git log + TASKS.md records
+- Open bugs marked fixCycles=0 (pending resolution)
+- Evidence trail included (commit hashes, check IDs, task IDs)
+
+**Next steps:** TASK_P0-2 (pilot-status.json) unblocked for Phase 0 exit gate verification

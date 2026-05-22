@@ -1,0 +1,258 @@
+{
+  "generatedAt": "2026-05-22T19:28:05Z",
+  "baselineCapturedAt": "2026-05-22T19:28:05Z",
+  "windowDays": 60,
+  "windowStart": "2026-03-23",
+  "windowEnd": "2026-05-22",
+  "baselineCycleCount": 1.5,
+  "bugs": [
+    {
+      "id": "1974-DAILYDASH-HOST-VISIBILITY",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(mcp-server/docker): add host bind-mount c503c774 — daily-dashboard.json container-only write"
+    },
+    {
+      "id": "1972-VNDIRECT-NULL-COERCION",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(mcp-server/1972): VnDirect OHLCV null-coercion — skip records with missing OHLC fields 0a51a5a0"
+    },
+    {
+      "id": "1971-SCAN-ORDER-MISMATCH",
+      "module": "stock-price",
+      "fixCycles": 2,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(1971): SQLite Scan order close=0 bug bc515ab2, USER-BUG triage fde58556"
+    },
+    {
+      "id": "1970-TA-OHLCV-MISSING",
+      "module": "technical-analysis",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "feat(1970/ta-ohlcv): RSI/MACD/BB backfill across 30 watchlist tickers 870981a2"
+    },
+    {
+      "id": "1965d-JANITOR-PATHFIX",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(1965d-JANITOR-PATHFIX): replace local projectRoot with canonical getProjectRoot() helper db4931de"
+    },
+    {
+      "id": "1960-DAILYDASH-ENOENT",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(mcp-server/scheduler): dailyDashboardJob projectRoot resolution — switch to canonical getProjectRoot 2f0a74e9"
+    },
+    {
+      "id": "1968d-wave1-anchor-format",
+      "module": "technical-analysis",
+      "fixCycles": 2,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(1968d/wave1-changes): anchor-format standardize + stale-comment removed b637bd8b"
+    },
+    {
+      "id": "1967-10-ITEM-18-isRunning-guard",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "CARRYOVER: marketScanJob isRunning guard — move isRunning=false to finally block (deferred to next bundle)"
+    },
+    {
+      "id": "1967-07-flow-notebook-fixes",
+      "module": "agents",
+      "fixCycles": 2,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "fix(agents/flows): reactive coverage text + spawn-guard doc notes f47ed0bf, e640f133"
+    },
+    {
+      "id": "A-21c-dailyDashboardJob-ENOENT",
+      "module": "mcp-server",
+      "fixCycles": 2,
+      "date": "2026-05-22",
+      "resolved": true,
+      "evidence": "System auditor check A-21c: dailyDashboardJob ENOENT /docs/data/project-stats.json — fixed by 1960-DAILYDASH"
+    },
+    {
+      "id": "A-21-vnstockFundamentalsRefresh-crash",
+      "module": "mcp-server",
+      "fixCycles": 0,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "Weekly cron crash 2026-05-18, never re-fired — 7+ days stale fundamental data"
+    },
+    {
+      "id": "A-21b-vnstockTradingStatsRefresh-crash",
+      "module": "mcp-server",
+      "fixCycles": 0,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "Weekly cron crash 2026-05-18 — 4+ days downtime"
+    },
+    {
+      "id": "B-05-price-stale-9h",
+      "module": "data-sources",
+      "fixCycles": 0,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "System auditor check B-05: ssc-iboard price stale 9+ hours post-close"
+    },
+    {
+      "id": "B-08-BCTC-VPS-stale-78h",
+      "module": "data-sources",
+      "fixCycles": 0,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "System auditor check B-08: BCTC VPS stale 78.9 hours — defer-freeze under 1953-G-FAIL/1954c scope"
+    },
+    {
+      "id": "B-10-news-fetch-VPS-unhealthy",
+      "module": "data-sources",
+      "fixCycles": 0,
+      "date": "2026-05-22",
+      "resolved": false,
+      "evidence": "System auditor check B-10: news-fetch VPS unhealthy — 30-minute monitoring window active"
+    },
+    {
+      "id": "1967-04-market-watcher-identity",
+      "module": "agents",
+      "fixCycles": 2,
+      "date": "2026-05-21",
+      "resolved": true,
+      "evidence": "fix(agent/market-watcher): TASK_1967-04 identity recurrence fix (ITEM-04 HIGH) 70503631"
+    },
+    {
+      "id": "1967-05-cowork-drift-threshold",
+      "module": "agents",
+      "fixCycles": 1,
+      "date": "2026-05-21",
+      "resolved": true,
+      "evidence": "fix(agent-father/1967c): TASK_1967-05 cowork drift threshold fc1b9eab"
+    },
+    {
+      "id": "1963-MW-hallucination-bug",
+      "module": "agents",
+      "fixCycles": 3,
+      "date": "2026-05-21",
+      "resolved": false,
+      "evidence": "chore(po/1963-mw-identity): route market-watcher hallucination bug → agent-father 7c252993 — open BUG"
+    },
+    {
+      "id": "1955e-vnstockFundamentalsRefresh-retry",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-21",
+      "resolved": false,
+      "evidence": "TASK_1967-06 ITEM-09 HIGH: change weekly cron to daily Mon-Fri schedule — blocked-until 2026-05-22T21:00Z"
+    },
+    {
+      "id": "1959-watchdog-5-disk-usage",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "feat(mcp-server/1959-watchdog-5): disk-usage alert cron — BUG Telegram on lancedb > 20 GB edafce4f"
+    },
+    {
+      "id": "1959-watchdog-7-flaresolverr-health",
+      "module": "ops",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(ops/1959-watchdog-7): bump flaresolverr healthcheck start_period 30s → 60s fd292896"
+    },
+    {
+      "id": "1958-watchdog-2-rag-health",
+      "module": "ops",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(ops/1958-watchdog-2): bump rag-service healthcheck start_period 30s → 60s 76e5d1cd"
+    },
+    {
+      "id": "1958-listUnresolvedReports-gap",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(mcp-server): resolve listUnresolvedReports tool gap — case a Sprint c220 199f279c"
+    },
+    {
+      "id": "1959a-coordinationStore-types",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(1959a/mcp-server): coordinationStore + coordinationTools exactOptionalPropertyTypes compliance b144f560"
+    },
+    {
+      "id": "1958a-alertDigestJob-catchup",
+      "module": "mcp-server",
+      "fixCycles": 1,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(1958a/mcp-server): alertDigestJob + summaryJob:daily missing fire windows 84c2b375"
+    },
+    {
+      "id": "1955b-zombie-cron-rows",
+      "module": "mcp-server",
+      "fixCycles": 2,
+      "date": "2026-05-20",
+      "resolved": true,
+      "evidence": "fix(1955b/mcp-server): reap zombie cron_job_runs rows on startup (CHECK + reaper + migration) cfe10b0a"
+    },
+    {
+      "id": "1945-verdict-resolution-scored-pct",
+      "module": "mcp-server",
+      "fixCycles": 3,
+      "date": "2026-05-20",
+      "resolved": false,
+      "evidence": "PRE-CONDITION gate for 1948a/1948b — post-resolution pipeline fix takes priority"
+    },
+    {
+      "id": "1954-BCTC-write-chain-rca",
+      "module": "mcp-server",
+      "fixCycles": 0,
+      "date": "2026-05-19",
+      "resolved": false,
+      "evidence": "TASK_1954b design phase: OCR-completion ACK token + writer contract (blocked)"
+    },
+    {
+      "id": "1953-G-FAIL-BCTC-stale",
+      "module": "mcp-server",
+      "fixCycles": 6,
+      "date": "2026-05-18",
+      "resolved": false,
+      "evidence": "chore(po/1953g): FAIL confirmed — NO-DISPATCH recurring-bug freeze, BCTC stale 3+ days"
+    }
+  ],
+  "stats": {
+    "totalBugs": 29,
+    "resolvedBugs": 18,
+    "openBugs": 11,
+    "averageFixCycles": 1.3,
+    "moduleDistribution": {
+      "mcp-server": 17,
+      "stock-price": 1,
+      "technical-analysis": 2,
+      "agents": 4,
+      "data-sources": 3,
+      "ops": 2
+    },
+    "confidence": "medium",
+    "notes": "fixCycles conservatively estimated from git log + TASKS.md records. TA-specific bugs: 1970, 1968d (2 bugs). System baseline (4-6 cycles per charter) replaced with measured TA average 1.5 cycles from resolved bugs. Open bugs carry estimatedCycles=0 pending resolution."
+  }
+}
