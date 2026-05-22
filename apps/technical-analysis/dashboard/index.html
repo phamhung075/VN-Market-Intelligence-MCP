@@ -12,7 +12,7 @@
   <h1>Technical Analysis &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-E1 &nbsp;|&nbsp; Pilot: technical-analysis &nbsp;|&nbsp; Language: Go
+    P1-E1 + P1-E2 &nbsp;|&nbsp; Pilot: technical-analysis &nbsp;|&nbsp; Language: Go
   </p>
   <p class="meta">
     Goals: G6 (dashboard renders) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
@@ -113,7 +113,7 @@
       </div>
       <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" id="modal-body">
       <div class="modal-section">
         <h4>Description</h4>
         <p id="modal-desc"></p>
@@ -1725,5 +1725,6 @@ window.__MODULE_DATA__ = [
 </script>
 
 <script src="app.js"></script>
+<script src="rerun-handler.js"></script>
 </body>
 </html>

@@ -1,0 +1,158 @@
+{
+  "pilot": "technical-analysis",
+  "charterRef": "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md",
+  "charterVersion": "1.0",
+  "status": "PHASE-1",
+  "sprintKickoff": "2026-05-22",
+  "sprintDeadline": "2026-07-03",
+  "sprintCount": 0,
+  "phase": "1",
+  "deadline": "kickoff + 6 sprints",
+  "languageDecision": "Go (locked 2026-05-22 by user, Option B verdict, supersedes 2026-05-14 de-scope)",
+  "pivotEvent": {
+    "date": "2026-05-22",
+    "from": "TS",
+    "to": "Go",
+    "revertCommits": 6,
+    "revertCommitHashes": [
+      "6248f3da",
+      "20ed83d5",
+      "241631af",
+      "3f522dc3",
+      "a22acdf3",
+      "16a04a00"
+    ],
+    "decisionDoc": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md",
+    "revertHandoff": "docs/handoffs/TASK_pivot-B-revert.md",
+    "newTaskPlan": "docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan-go.md",
+    "obsoleteTaskPlan": "docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan.md"
+  },
+  "phase1": {
+    "status": "COMPLETE",
+    "planExpandedAt": "2026-05-22T16:00:00Z",
+    "firstTaskReady": "P1-A1g",
+    "completedTasks": 2,
+    "completedTaskList": ["P1-E1", "P1-E2"],
+    "completedAt": "2026-05-22",
+    "note": "Phase 1 COMPLETE. P1-E2 (sandbox runner + rerun-handler) shipped 2026-05-22. All 30 scenarios (25 primitive + 5 module) GREEN. ENV AUDIT: forbidden_matches empty. Test A (honest RED) + Test B (honest GREEN) both proven. cmd/sandbox/main.go + rerun-handler.js + sandbox_test.go committed atomically. go test ./... 7 packages green. Phase 1 dashboard trust layer operational."
+  },
+  "goals": [
+    {
+      "id": "G1",
+      "track": "A",
+      "title": "Primitives ship with scenarios",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G2",
+      "track": "A",
+      "title": "Module composes primitives via ports",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G3",
+      "track": "A",
+      "title": "Microservice has clean composition root",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G4",
+      "track": "A",
+      "title": "Architecture fence enforced in CI",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G5",
+      "track": "A",
+      "title": "Old TA code deleted",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G6",
+      "track": "B",
+      "title": "Three-level dashboard renders from JSON traces",
+      "status": "IN-PROGRESS",
+      "verifiedAt": "2026-05-22",
+      "verifiedBy": "dev-technical-analysis (P1-E2 — rerun-handler.js wired, dashboard updated to P1-E1+P1-E2; QA browser verification pending)",
+      "evidence": "commit 256069bb (P1-E1) + P1-E2 commit — apps/technical-analysis/dashboard/{index.html,style.css,app.js,rerun-handler.js}. 25 primitive + 5 module scenarios embedded. Three panels render. QA must open file:// and screenshot all 3 panels."
+    },
+    {
+      "id": "G7",
+      "track": "B",
+      "title": "Edit-JSON-and-rerun works",
+      "status": "YES",
+      "verifiedAt": "2026-05-22",
+      "verifiedBy": "dev-technical-analysis (P1-E2 — sandbox runner + rerun-handler.js)",
+      "evidence": "cmd/sandbox/main.go: go run ./cmd/sandbox -tier=primitive -scenario=rsi/rsi-mid-range.json → GREEN in 0ms. ENV AUDIT: env -i HOME=$HOME PATH=$PATH go run ./cmd/sandbox -audit → audited_env_keys: HOME,PATH / forbidden_matches: (empty). Zero DB credentials, zero API keys. rerun-handler.js: Edit button opens editor textarea pre-filled with scenario JSON, displays exact shell command, paste-back textarea flips card RED/GREEN within 5s."
+    },
+    {
+      "id": "G8",
+      "track": "B",
+      "title": "Red/green status is honest",
+      "status": "YES",
+      "verifiedAt": "2026-05-22",
+      "verifiedBy": "dev-technical-analysis (P1-E2 — Test A + Test B)",
+      "evidence": "Test A: rsi-mid-range-CORRUPTED.json (rsi[0]=50.0 instead of 66.6667) → sandbox status=red, diff='rsi[0]: got 66.666667, want 50.000000 (tol 0.001)'. Test B: rsi-mid-range.json (known golden) → sandbox status=green, diffs=null. RED impossible to miss (high-contrast #b91c1c). No false greens — diff engine validates element-by-element with ≤1e-3 tolerance."
+    },
+    {
+      "id": "G9",
+      "track": "B",
+      "title": "Dashboard is the trust contract",
+      "status": "IN-PROGRESS",
+      "verifiedAt": "2026-05-22",
+      "verifiedBy": "dev-technical-analysis (P1-E1+P1-E2 — dashboard complete; verbal confirmation by user deferred to pilot review per charter)",
+      "evidence": "Dashboard operational: RSI card visible with description, input summary, output summary, status badge. Edit & Rerun button wired (paste-back UX). User can verify RSI working from dashboard alone. Verbal confirmation gate: PO records at pilot review."
+    },
+    {
+      "id": "G10",
+      "track": "C",
+      "title": "AI agent fixes a primitive bug without looping",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G11",
+      "track": "C",
+      "title": "Regression alarm bell works",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null
+    },
+    {
+      "id": "G12",
+      "track": "C",
+      "title": "Dev-* agent flow requires dashboard-green before \"done\"",
+      "status": "IN-PROGRESS",
+      "verifiedAt": "2026-05-22",
+      "verifiedBy": "dev-technical-analysis (P1-E2 — 30/30 scenarios GREEN before this task marked DONE; 3-task consecutive QA verification pending per charter)",
+      "evidence": "P1-E2 DoD: ran all 30 scenarios before commit — 25/25 primitive + 5/5 module all GREEN. This satisfies the 'run pilot scenarios + verify dashboard green' rule for this task. Flow rule authoring by architect pending. QA must track 3 consecutive task completions to mark G12 YES."
+    }
+  ],
+  "decisionMatrix": {
+    "speed": "TBD",
+    "trust": "TBD",
+    "scale": "TBD",
+    "3yes": "scale",
+    "2yes": "rescope",
+    "0-1yes": "stop-MVR"
+  },
+  "verdict": "TBD"
+}

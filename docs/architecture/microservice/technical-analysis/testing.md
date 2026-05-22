@@ -1,45 +1,83 @@
 # technical-analysis — Testing
 
-## Unit Tests — Calculator
-**File:** `apps/technical-analysis/src/__tests__/unit/ta-calculator.test.ts`
+**Language:** Go (switched 2026-05-22 from TypeScript, Option B verdict)
 
-| Test | Assertion |
-|------|-----------|
-| MA insufficient data | Returns null |
-| MA([10,20,30,40,50], 3) | = 40.0 |
-| MA([10,20,30,40,50], 5) | = 30.0 |
-| RSI insufficient data | Returns null |
-| RSI pure ascending | = 100 |
-| RSI pure descending | = 0 |
-| RSI mixed prices | 0 < RSI < 100 |
-| MACD insufficient data | Returns null |
-| MACD structure | Has line, signal, histogram |
-| MACD histogram | = line - signal |
-| BB insufficient data | Returns null |
-| BB varied prices | upper > mid > lower |
-| BB equal prices | upper = mid = lower (zero std dev) |
+## Go Test Suite
 
-## Unit Tests — Service
-**File:** `apps/technical-analysis/src/__tests__/unit/calculate-ta-service.test.ts`
+### Unit Tests — Primitives (P1-B1g..B5g)
 
-- Mock `PriceHistoryRepository.getHistory()` and `TAIndicatorCalculator` (all 4 methods)
-- Verifies correct args passed to repository
-- Trend: RSI>70 + macdHist>0 → BULLISH
-- Trend: RSI<30 + macdHist<0 → BEARISH
-- Trend: RSI mid-range → NEUTRAL
-- Handles null indicators gracefully
+| Package | File | Coverage |
+|---------|------|----------|
+| `pkg/primitive/rsi` | `rsi_test.go` | Wilder RSI, insufficient data, invalid period |
+| `pkg/primitive/macd` | `macd_test.go` | MACD golden vector, EMA alignment, insufficient data |
+| `pkg/primitive/bollinger_bands` | `bollinger_bands_test.go` | Population stdDev, squeeze, expansion |
+| `pkg/primitive/moving_average` | `moving_average_test.go` | SMA, EMA, dispatcher, case-insensitive routing |
+| `pkg/primitive/detect_cross` | `detect_cross_test.go` | Bullish/bearish cross, equal-then-cross, parallel lines |
 
-## Integration Tests
-**File:** `apps/technical-analysis/src/__tests__/integration/compute-ta-usecase.test.ts`
+### Unit Tests — Module (P1-C1g)
 
-- Uses real `TACalculatorImpl`, mocked repository
-- Response includes `code` and ISO `computedAt`
-- Null indicators for insufficient data (3 candles)
-- Valid indicators for 60+ candles (RSI 0-100, MACD not null)
-- Flat prices → NEUTRAL trend
+| Package | File | Coverage |
+|---------|------|----------|
+| `pkg/module` | `technical_analysis_test.go` | Multi-primitive composition, non-fatal policy, RSI+MACD+BB+MA+DetectCross |
+
+### Unit Tests — Sandbox Runner (P1-E2)
+
+| Package | File | Coverage |
+|---------|------|----------|
+| `cmd/sandbox` | `sandbox_test.go` | floatEq, diffFloat, diffLen, generateFromPattern (3 patterns), generateDeclineRally, safeIdx, RSI runner golden, RSI runner honest RED, RSI failure (error expected = GREEN), BB golden first window, DetectCross golden, forbiddenEnvPrefixes list |
+
+## Scenario Suite (P1-D1 + P1-D2)
+
+30 scenario JSON files under `docs/scenarios/technical-analysis/`:
+- `primitives/` — 25 files (5 per primitive × 5 scenarios: golden + edge × 3 + failure)
+- `module/` — 5 files (multi-primitive composition stories)
+
+All 30 scenarios pass through `go run ./cmd/sandbox`:
+```sh
+cd apps/technical-analysis
+go run ./cmd/sandbox -tier=primitive -scenario=rsi/rsi-golden.json    # status: green
+go run ./cmd/sandbox -tier=module    -scenario=rsi-macd-crossover.json # status: green
+```
 
 ## Run Commands
+
 ```bash
-cd apps/technical-analysis && bun test
-cd apps/technical-analysis && bun tsc --noEmit
+# All Go tests
+cd apps/technical-analysis && go test ./...
+
+# Static analysis
+cd apps/technical-analysis && go vet ./...
+
+# Build all binaries
+cd apps/technical-analysis && go build ./...
+
+# Sandbox runner (all primitive scenarios)
+cd apps/technical-analysis
+for f in /path/to/docs/scenarios/technical-analysis/primitives/*.json; do
+  name=$(basename "$f")
+  go run ./cmd/sandbox -tier=primitive -scenario="$name"
+done
+
+# ENV audit gate (security clause — must return empty forbidden_matches)
+env -i HOME=$HOME PATH=$PATH go run ./cmd/sandbox -audit
+# Expected output:
+# audited_env_keys: HOME,PATH
+# forbidden_matches:
 ```
+
+## Test Counts (baseline 2026-05-22)
+
+| Package | Tests | Status |
+|---------|-------|--------|
+| cmd/sandbox | 11 | ok |
+| pkg/module | (integration) | ok |
+| pkg/primitive/bollinger_bands | (table-driven) | ok |
+| pkg/primitive/detect_cross | (table-driven) | ok |
+| pkg/primitive/macd | (table-driven) | ok |
+| pkg/primitive/moving_average | (table-driven) | ok |
+| pkg/primitive/rsi | (table-driven) | ok |
+| **Total** | **7 packages** | **all ok** |
+
+## Dashboard Trust Layer (G12)
+
+Per pilot charter G12 rule: no task is DONE until `go test ./...` is green AND all 30 scenarios pass the sandbox runner. The `cmd/sandbox` binary is the mechanised DoD gate.

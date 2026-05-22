@@ -549,11 +549,31 @@ All A-bucket tasks must reach this gate before any B-bucket task starts.
 
 ### P1-E2 — Dashboard edit-rerun + honest red/green
 
-**Owner:** dev-frontend  
+**Status: DONE** — commit `feat(ta-sandbox): credential-free scenario runner (P1-E2)` (see phase1.completedTaskList in pilot-status.json)  
+**Completed:** 2026-05-22 by dev-technical-analysis  
+**Goals met:** G7 (edit-JSON-and-rerun works, zero DB credentials proven), G8 (honest red/green via Test A corruption + Test B golden), G12 (30/30 scenarios GREEN before marking DONE)
+
+**ENV AUDIT GATE result (verbatim):**
+```
+audited_env_keys: HOME,PATH
+forbidden_matches:
+```
+forbidden_matches is EMPTY — zero DB credentials, zero API keys in sandbox process. Security clause satisfied.
+
+**Test A (honest RED):** Corrupted rsi-mid-range-CORRUPTED.json (rsi[0] changed from 66.6667 to 50.0) → sandbox returned RED with diff `rsi[0]: got 66.666667, want 50.000000 (tol 0.001)`. Card would flip RED in dashboard.
+
+**Test B (honest GREEN):** Ran rsi-mid-range.json (known golden) → sandbox returned GREEN with null diffs in 0ms.
+
+**Bridge pattern (rerun-handler.js justification):** Static paste-back UX chosen over local proxy. Rationale: a local proxy requires a separate process, adds a port-binding credential surface, and breaks the G6 constraint (dashboard opens at file:// without infrastructure). The paste-back pattern keeps the sandbox credential-free by design — the user runs the command in their own shell, the sandbox never has access to browser state or credentials. The "Edit & Rerun" button: (1) opens editor textarea pre-filled with scenario JSON, (2) displays exact `go run ./cmd/sandbox ...` command, (3) provides paste-back textarea that accepts the runner JSON output and flips the card RED/GREEN within 5 seconds of paste.
+
+**Owner:** dev-frontend (implemented by dev-technical-analysis per final task assignment)
 **Goals:** G7 (Edit-JSON-and-rerun works), G8 (Red/green status is honest), G12  
 **Files touched:**
-- `apps/technical-analysis/dashboard/app.js` (MODIFY — add rerun handler)
+- `apps/technical-analysis/cmd/sandbox/main.go` (NEW — Go sandbox runner)
+- `apps/technical-analysis/cmd/sandbox/sandbox_test.go` (NEW — unit tests for diff logic)
+- `apps/technical-analysis/dashboard/app.js` (MODIFY — rerun handler wired)
 - `apps/technical-analysis/dashboard/rerun-handler.js` (NEW — sandbox integration)
+- `apps/technical-analysis/dashboard/index.html` (MODIFY — script tag + modal-body id)
 
 **AC:**
 1. "Edit & Rerun" button in detail view opens editor (`<textarea>` with JSON content pre-filled)

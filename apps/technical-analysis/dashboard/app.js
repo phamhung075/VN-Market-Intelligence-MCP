@@ -467,14 +467,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close button
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
 
-  // Edit & Rerun button (P1-E2 placeholder)
+  // Edit & Rerun button — wired by rerun-handler.js (P1-E2).
+  // rerun-handler.js replaces this listener on DOMContentLoaded (50ms defer).
+  // This stub ensures no-op if rerun-handler.js fails to load.
   document.getElementById('rerun-btn').addEventListener('click', () => {
     if (!currentScenario) return;
-    alert(
-      'P1-E2 — Edit & Rerun not yet wired.\n\n' +
-      'Next task: implement sandbox runner.\n' +
-      'Command: go run ./cmd/sandbox -tier=' + (currentScenario.module ? 'module' : 'primitive') + ' -scenario=<file>\n\n' +
-      'Sandbox will have zero DB credentials per security clause.'
-    );
+    if (typeof showRerunPane === 'function') {
+      showRerunPane(currentScenario);
+    }
+    // rerun-handler.js takes over from here.
   });
 });
