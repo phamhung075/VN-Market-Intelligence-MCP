@@ -1,11 +1,12 @@
 // Package infrastructure — TACalculator implements the TAIndicatorCalculator port.
 // P1-B1g: RSI wired. P1-B2g: MACD wired. P1-B3g: Bollinger Bands wired.
-// P1-B4g: SMA + EMA wired. DetectCross wired in P1-B5g.
+// P1-B4g: SMA + EMA wired. P1-B5g: DetectCross wired (MACD line vs signal line).
 package infrastructure
 
 import (
 	"github.com/vn-market-intelligence/technical-analysis/pkg/domain"
 	bb "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/bollinger_bands"
+	dc "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/detect_cross"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/macd"
 	ma "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/moving_average"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi"
@@ -63,6 +64,21 @@ func (c *TACalculator) Calculate(closes []float64, period int) (*domain.Technica
 		emaValues = emaResult
 	}
 
+	// DetectCross: applied to MACD line vs signal line (canonical cross use case).
+	// Non-fatal: skipped when MACD output is unavailable (e.g. insufficient data).
+	var crossSignals []domain.CrossSignal
+	if len(macdLine) >= 2 && len(signalLine) >= 2 {
+		events, dcErr := dc.DetectCross(macdLine, signalLine)
+		if dcErr == nil {
+			for _, e := range events {
+				crossSignals = append(crossSignals, domain.CrossSignal{
+					Index:     e.Index,
+					Direction: e.Direction,
+				})
+			}
+		}
+	}
+
 	return &domain.TechnicalIndicators{
 		RSI:             rsiValues,
 		MACDLine:        macdLine,
@@ -73,5 +89,6 @@ func (c *TACalculator) Calculate(closes []float64, period int) (*domain.Technica
 		BollingerLower:  bbLower,
 		SMA:             smaValues,
 		EMA:             emaValues,
+		CrossSignals:    crossSignals,
 	}, nil
 }

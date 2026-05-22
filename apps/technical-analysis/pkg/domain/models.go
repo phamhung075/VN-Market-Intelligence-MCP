@@ -13,6 +13,13 @@ type CandleStick struct {
 	Volume    int64
 }
 
+// CrossSignal represents a detected crossover between two indicator lines.
+// P1-B5g: populated by DetectCross (MACD line vs signal line).
+type CrossSignal struct {
+	Index     int    // bar index where the cross is confirmed
+	Direction string // "bullish" or "bearish"
+}
+
 // TechnicalIndicators holds the computed output for a symbol.
 type TechnicalIndicators struct {
 	Symbol          string
@@ -25,4 +32,5 @@ type TechnicalIndicators struct {
 	BollingerLower  []float64
 	SMA             []float64
 	EMA             []float64
+	CrossSignals    []CrossSignal // MACD line vs signal line crossovers (P1-B5g)
 }

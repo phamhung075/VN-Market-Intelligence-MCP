@@ -1,0 +1,47 @@
+{
+  "primitive": "DetectCross",
+  "category": "edge",
+  "description": "Edge cases for DetectCross: (1) parallel lines that never cross — fast always below slow, returns empty event list; (2) equal-then-cross scenario where both series are equal for several bars then fast breaks above (bullish cross at the first bar where fast strictly exceeds slow); (3) minimum valid 2-element input with a cross.",
+  "input": {
+    "cases": [
+      {
+        "name": "parallel-lines-no-cross",
+        "description": "fast always below slow — no crossover events expected",
+        "fastLine": [1.0, 1.5, 2.0, 2.5, 3.0],
+        "slowLine": [4.0, 4.5, 5.0, 5.5, 6.0]
+      },
+      {
+        "name": "equal-then-bullish-cross",
+        "description": "both lines equal for first 3 bars, then fast breaks above slow at index 3",
+        "fastLine": [2.0, 2.0, 2.0, 5.0],
+        "slowLine": [2.0, 2.0, 2.0, 2.0]
+      },
+      {
+        "name": "minimum-2-element-bullish",
+        "description": "minimum valid input: 2 bars, fast crosses above slow at index 1",
+        "fastLine": [1.0, 3.0],
+        "slowLine": [2.0, 2.0]
+      }
+    ]
+  },
+  "expectedOutput": {
+    "cases": [
+      {
+        "name": "parallel-lines-no-cross",
+        "events": [],
+        "eventCount": 0
+      },
+      {
+        "name": "equal-then-bullish-cross",
+        "events": [{ "index": 3, "direction": "bullish" }],
+        "eventCount": 1,
+        "note": "prevDiff = 2.0-2.0 = 0 (<=0 satisfied), currDiff = 5.0-2.0 = 3.0 (>0) — bullish cross confirmed"
+      },
+      {
+        "name": "minimum-2-element-bullish",
+        "events": [{ "index": 1, "direction": "bullish" }],
+        "eventCount": 1
+      }
+    ]
+  }
+}

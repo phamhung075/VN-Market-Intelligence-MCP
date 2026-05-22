@@ -1,0 +1,36 @@
+{
+  "primitive": "DetectCross",
+  "category": "failure",
+  "description": "Invalid-input failure scenarios for DetectCross. Three sub-cases: (1) mismatched slice lengths — ErrMismatchedLengths; (2) fewer than 2 data points (empty input) — ErrInsufficientData; (3) NaN value in fastLine — ErrInvalidValue. All must return a non-nil error and nil/empty event slice.",
+  "input": {
+    "cases": [
+      {
+        "name": "mismatched-lengths",
+        "description": "fastLine has 3 elements, slowLine has 2 — lengths do not match",
+        "fastLine": [1.0, 2.0, 3.0],
+        "slowLine": [1.0, 2.0]
+      },
+      {
+        "name": "empty-input",
+        "description": "both slices empty — fewer than 2 data points",
+        "fastLine": [],
+        "slowLine": []
+      },
+      {
+        "name": "nan-value-in-fast",
+        "description": "NaN injected at index 1 in fastLine — must be rejected",
+        "fastLine": [1.0, "NaN", 3.0],
+        "slowLine": [2.0, 2.0, 2.0]
+      }
+    ]
+  },
+  "expectedOutput": {
+    "events": null,
+    "errors": [
+      "ErrMismatchedLengths (fastLine len 3 != slowLine len 2)",
+      "ErrInsufficientData (empty slices — need at least 2 points)",
+      "ErrInvalidValue (NaN at fastLine[1])"
+    ],
+    "note": "All three cases MUST return a non-nil error. Event slice MUST be nil or empty. No partial results are acceptable."
+  }
+}

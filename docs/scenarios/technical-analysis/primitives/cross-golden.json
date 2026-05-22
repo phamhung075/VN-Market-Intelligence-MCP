@@ -1,0 +1,18 @@
+{
+  "primitive": "DetectCross",
+  "category": "golden",
+  "description": "Canonical MACD-line vs signal-line cross scenario. Two crossing series modelled as simple step sequences that cross twice: once bullish (fast rises above slow at index 2) and once bearish (fast falls below slow at index 5). Verifies that DetectCross returns exactly 2 CrossEvents in order with correct indices and directions.",
+  "input": {
+    "description": "8-element parallel series with two deliberate crossovers",
+    "fastLine": [1.0, 2.0, 4.0, 4.0, 4.0, 2.0, 1.0, 1.0],
+    "slowLine": [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+  },
+  "expectedOutput": {
+    "events": [
+      { "index": 2, "direction": "bullish" },
+      { "index": 5, "direction": "bearish" }
+    ],
+    "eventCount": 2,
+    "note": "Bullish cross confirmed at index 2 (fast 2.0→4.0 crosses above slow 3.0). Bearish cross confirmed at index 5 (fast 4.0→2.0 crosses below slow 3.0)."
+  }
+}
