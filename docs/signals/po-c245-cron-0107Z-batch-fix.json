@@ -1,0 +1,63 @@
+{
+  "schema": "po-triage-v1",
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-batch",
+  "cycle": "c245",
+  "spawn": "cron-0107Z dev-team dispatch",
+  "claim": "task:po-triage-20260522-0107",
+  "createdAt": "2026-05-22T01:20:05Z",
+  "verdict": "BATCH",
+  "rationale": "Dispatcher prompt assumed BATCH=NOTHING, but between c244 (00:20Z) and c245 (01:20Z) system-auditor surfaced 6 NEW CRITICAL anomalies (DASHBOARD ops rows 1960-A-21, A-21b, A-21c/DAILYDASH, B-04, B-08, B-12, A-29). Per L55, code/infra bugs are dev-team-actionable and break the NOTHING assumption. Triage outcome: 5 of 7 are already-gated or context-defer; 1 is net-new and shippable now.",
+  "audit_of_5_drained_signals": "Per dispatcher prompt: 4 cowork-team heartbeats (00:20/00:35/00:50/01:05Z silent=true) + 1 self-prior c244 batch — all correctly routed to processed/, zero net-new actionable. Confirmed.",
+  "audit_of_6_new_system_auditor_anomalies": {
+    "1960-A-21_vnstockFundamentalsRefresh_CRASHED_4d": "DEDUP — already covered by TASKS.md row 1967-06 (HIGH, gated 2026-05-22T21:00Z OBSERVE-1955e unlock) AND OBSERVE-1955e (DEEP HOLD same gate). No new action; system-auditor re-firing same root cause as gate counts down. DO NOT spawn duplicate task.",
+    "1960-A-21b_vnstockTradingStatsRefresh_CRASHED_4d": "DEDUP — sibling failure, identical root, covered by same 1967-06 + OBSERVE-1955e gate. Per OBSERVE-1955e payload: BOTH jobs are explicitly named (wedged-jobs diagnostic at unlock). No new action.",
+    "1960-A-21c_dailyDashboardJob_ENOENT_5d": "**NET-NEW + ACTIONABLE.** File `/docs/data/project-stats.json` exists on host (verified). docker-compose.yml line 16 mounts `./docs/data/project-stats.json:/app/docs/data/project-stats.json:ro` correctly. Bug located: `apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts:455-460` uses local `projectRoot()` helper resolving `import.meta.dir + '../../..'`; ENOENT reports leading-slash path `/docs/data/...` proving projectRoot() returns `/` not `/app` in container runtime (Bun import.meta.dir resolution differs from dev assumption). Fix: replace local helper with canonical `getProjectRoot()` from `infrastructure/projectRoot.js` (already used by sibling jobs agentMemoryTools, trackSessionToolUsageJob). NOT BCTC-touching. NOT market-hours-contextual. 5d dead with success_rate=0%. Zone=apps/mcp-server/. Size=XS. Owner=dev-mcp-server. SHIPPABLE THIS BATCH.",
+    "1960-A-29_bctcReparseJob_WARN_84.2pct": "DEFER under NFR-3 BCTC freeze (1953-G-FAIL recurring-bug guard). 1954c owns BCTC root rethink; no parallel BCTC patches permitted. Standing DASHBOARD row sufficient. No new task.",
+    "1960-B-04_ssc-iboard_price_stale_16h": "OBSERVE — market-hours-contextual per c244 L56 precedent (B-02-NEW self-recovered via downstream evidence). VN market opens 02:00Z (~40 min). Wait for next push window; if stale persists past 03:30Z next system-auditor sweep escalates. No new task.",
+    "1960-B-08_bctc-push_stale_65h": "DEFER under NFR-3 BCTC freeze. Same logic as A-29. 1954c owns root. No new task.",
+    "1960-B-12_foreign-flow_stale_24h": "OBSERVE — market-hours-contextual. SLA suppression-outside-market-hours bug noted in B-12 payload recovery note; that meta-fix is for a future maintenance sprint (low priority), not dev-team-urgent today. Wait for market-open refresh window. No new task."
+  },
+  "batch": [
+    {
+      "type": "FIX",
+      "id": "1960-DAILYDASH",
+      "title": "dailyDashboardJob ENOENT — projectRoot() container path resolution",
+      "desc": "Replace local projectRoot() in dailyDashboardJob.ts (line 455-460) with canonical getProjectRoot() from infrastructure/projectRoot.js. Local helper uses import.meta.dir + '../../..' which resolves to '/' in container runtime instead of '/app'. ENOENT on /docs/data/project-stats.json blocks daily dashboard generation for 5 days (success_rate=0%). Sibling jobs (agentMemoryTools, trackSessionToolUsageJob) already use the canonical helper. File exists on host + docker mount verified correct.",
+      "size": "XS",
+      "files": [
+        "apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts"
+      ],
+      "baseline_pass": "9343 (Sprint 1968c QA baseline; 283 BCTC-freeze pre-existing FAIL acknowledged)",
+      "zone": "apps/mcp-server/",
+      "acceptance_criteria": [
+        "AC-1: dailyDashboardJob.ts imports getProjectRoot from infrastructure/projectRoot.js and removes the local projectRoot() function (lines 451-460)",
+        "AC-2: All 4 path.join callers in the file (lines 469, 496, 505, 519) switched to getProjectRoot()",
+        "AC-3: tsc 0 errors",
+        "AC-4: Existing unit test for dailyDashboardJob (if any) remains GREEN; if no unit test exists, add a minimal smoke test that calls loadStats() against a temp directory",
+        "AC-5: Post-deploy (ops): next dailyDashboardJob cron tick shows success in cron_job_runs (status='success', finished_at non-null, no ENOENT in logs)"
+      ],
+      "blocks_dispatch_unless": "FALSE — no gate, no soak, no freeze applies. Ready immediately.",
+      "estimate_hours": 1
+    }
+  ],
+  "gates_unchanged": {
+    "2026-05-22T21:00:00Z": "OBSERVE-1955e DEEP-HOLD unlock → 1967-06 + 1959-watchdog-4 unblock; also covers A-21 + A-21b root-cause investigation",
+    "2026-05-22T03:00:00Z": "tasksMdJanitor cron pass #2 (1965c soak observation #2)",
+    "2026-05-23T07:05:00Z": "OBSERVE-1957d BCTC 72h cadence gate",
+    "2026-05-23T18:00:00Z": "1965c soak ends",
+    "NFR-3": "BCTC freeze in force (1953-G-FAIL) — covers A-29 + B-08 deferrals",
+    "standing_OBSERVE": "1957d, 1955c, 1955e, 1907a-verify, 1941b, 1922g"
+  },
+  "lesson_encoded_this_cycle": {
+    "L57": "BATCH=NOTHING dispatcher hints are SUGGESTIONS, not invariants. Always re-audit DASHBOARD ops + last 5 commits before ratifying NOTHING — system-auditor Tier-1 fires every hour and surfaces real bugs on hour boundaries. c245 caught 3 NEW system-auditor commits (dc5c7170 + 7b72bc5d + 16be4332) in the 1h window post-c244. Dedup logic (cross-check against TASKS.md row IDs + OBSERVE rows) is what made the batch tractable: 4 of 6 anomalies were already-gated, leaving 1 net-new shippable FIX. Without the cross-check, dispatching FIX for A-21/A-21b would have collided with 1967-06 + OBSERVE-1955e (recurring-bug-escalation risk per c241 L42-derived rules)."
+  },
+  "housekeeping_log": {
+    "DASHBOARD_updates": "_Updated:_ header refresh; 1960-A-21 + A-21b rows annotated DEDUP→1967-06+OBSERVE-1955e (no status change); 1960-A-21c-DAILYDASH row annotated ROUTED→TASKS.md 1960-DAILYDASH; A-29/B-08 annotated DEFER (NFR-3 freeze); B-04/B-12 annotated OBSERVE (market-hours-context)",
+    "TASKS_md_append": "1 new row appended to Backlog: 1960-DAILYDASH FIX HIGH dev-mcp-server",
+    "pipeline-state_refresh": "updatedAt + updatedBy timestamp + activeTaskId pointer to 1960-DAILYDASH; status now reflects 1 task dispatched (not idle)",
+    "WORK_notify": "Telegram WORK channel: c245 BATCH(1 FIX:1960-DAILYDASH) dispatched + 5 anomalies dedup/defer/observe",
+    "signal_emitted": "docs/signals/po-c245-cron-0107Z-batch-fix.json (this file)"
+  }
+}
