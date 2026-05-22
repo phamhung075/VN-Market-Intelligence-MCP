@@ -128,8 +128,24 @@ Zone health: get_agent_signals now supports hours_back lookback; L-4 consolidati
 
 ---
 
+### Task 1974-DAILYDASH-HOST-VISIBILITY — docker-compose rw bind for daily-dashboard.json (2026-05-22, IMPL_DONE)
+
+**Change:**
+- `docker-compose.yml` — added `./docs/data/daily-dashboard.json:/app/docs/data/daily-dashboard.json` (rw, option-a). Existing 3 :ro single-file mounts preserved.
+- `docs/data/daily-dashboard.json` — initialized with `{}` on host (gitignored; Docker requires pre-existing FILE target for single-file bind-mounts).
+
+**AC results:** AC-1 PASS (rw mount added, :ro mounts intact) | AC-2 PASS (manual trigger → host file 1625B, 9 top-level keys) | AC-3 PASS (restart-survival, mtime/content unchanged) | AC-4 PASS (project-stats.json EROFS inside container) | AC-5 PASS (9382/283, 283=pre-existing BCTC freeze).
+
+**Commit:** c503c774
+
+**Signal:** `docs/signals/dev-mcp-server-1974-impl-done.json` → qa
+
+Zone health: dailyDashboardJob write-path now host-visible; daily-dashboard.json persists across restarts; RO integrity on 3 input mounts confirmed | HEALTHY
+
+---
+
 ### Carry-over
 
-- 285 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
+- 283 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
 - Bun v1.3.13 C++ panic after full suite run is a known upstream bug (exit code 0, tests all pass)
 - LanceDB ~29GB > DISK_THRESHOLD_GB(20) — diskUsageAlertJob will fire on next hourly tick (correct behavior, shipped 1959-watchdog-5)

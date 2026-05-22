@@ -1,0 +1,34 @@
+{
+  "signal_type": "impl_done",
+  "task_id": "1974-DAILYDASH-HOST-VISIBILITY",
+  "agent": "dev-mcp-server",
+  "timestamp": "2026-05-22T17:32:00Z",
+  "status": "IMPL_DONE",
+  "pipeline": "continue",
+  "next": "qa",
+  "commits": ["c503c774"],
+  "files_touched": [
+    "docker-compose.yml",
+    "docs/data/daily-dashboard.json"
+  ],
+  "ac_results": {
+    "AC-1": "PASS — rw single-file bind added line 19; 3 existing :ro mounts preserved",
+    "AC-2": "PASS — manual runDailyDashboardJob() trigger; host file 1625B with 9 top-level keys at mtime 19:29",
+    "AC-3": "PASS — docker compose restart mcp-server; mtime/content unchanged post-restart",
+    "AC-4": "PASS — echo x > /app/docs/data/project-stats.json → EROFS inside container",
+    "AC-5": "PASS — 9382 pass / 283 fail (283 = pre-existing BCTC freeze, zero regression)",
+    "AC-6": "N/A — option (a) chosen"
+  },
+  "test_results": {
+    "pass": 9382,
+    "fail": 283,
+    "fail_note": "283 = pre-existing BCTC PDF parsing freeze (recurring-bug freeze active)",
+    "baseline_unchanged": true
+  },
+  "notes_for_qa": [
+    "Live natural cron at 22T23:30Z UTC will re-run job and overwrite file — QA may verify mtime update at that time",
+    "docs/data/daily-dashboard.json is gitignored (data/ pattern in .gitignore) — host file exists at absolute path, Docker bind is active",
+    "Option (a) chosen: single-file rw bind, 3 :ro single-file mounts untouched — no risk from removing :ro protection",
+    "Manual trigger executed this cycle: result {date: '2026-05-23', sessionCount: 0, tasksDone: 0, written: true}"
+  ]
+}
