@@ -12,7 +12,7 @@
 | P2-F2 | agent-father inserts dashboard-green DoD step in dev-technical-analysis flow | HIGH | TASK | agent-father | docs/handoffs/TASK_P2-F2.md | IN-PROGRESS (dispatch signal pm-P2-F2-dispatch-20260523T222530Z.json) | — |
 | P2-A1 | Author `.golangci.yml` with Fence-A/B/C depguard rules | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-A1.md | IN-PROGRESS (dev-technical-analysis dispatched) | — |
 | P2-B0 | Brownfield inventory scan: all TS TA callers in mcp-server | MEDIUM | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B0.md | DONE 2026-05-23 (c175f745) | — |
-| P2-B1 | Rewire `technicalIndicatorTools.ts` to HTTP call against TA Go service | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B1.md | READY (P2-B0 done — next-up after A1/F2 land per WIP=2 rule) | P2-B0 (done) |
+| P2-B1 | Rewire TA callers to HTTP (assembleBriefing + tool handler + type fixes) — SCOPE EXPANDED per B0 audit | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B1.md | READY (P2-B0 done — next-up after A1/F2 land per WIP=2 rule) | P2-B0 (done) |
 | P2-A2 | Add `go-lint` CI job to `.github/workflows/ci.yml` | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-A2.md | PENDING | P2-A1 |
 | P2-A3 | Verify CI green on clean codebase (no violations) | HIGH | TASK | qa | docs/handoffs/TASK_P2-A3.md | PENDING | P2-A2 |
 | P2-B2 | Move `technicalIndicators.ts` domain service to `_deprecated/` | HIGH | TASK | dev-technical-analysis | docs/handoffs/TASK_P2-B2.md | PENDING | P2-B1 |
@@ -38,6 +38,7 @@
   - After P2-A1 lands → dispatch P2-A2 to dev-technical-analysis (sequential)
   - After P2-A3 green → dispatch P2-B2 chain (deletion can proceed once fence proven)
   - **P2-B1 is READY now (P2-B0 done) but PO is holding it back** to keep dev-technical-analysis WIP ≤ 2; will dispatch when P2-A1 lands
+  - **P2-B1 SCOPE EXPANDED (PM 2026-05-23T22:35Z):** Based on P2-B0 audit finding (signal file main-router-P2-B0-finding-20260523T223500Z.json), B1 now includes assembleBriefing.ts rewire (SEV-2 gap) + DailyCandle type fixes (SEV-3). Handoff updated: docs/handoffs/TASK_P2-B1.md. AC count 6→10, estimate 45min→1h. Pre-step: git tag p2-b-pre-delete before P2-B2 deletion commit.
   - After P2-D3 lands → dispatch P2-E1/E2 (regression pair needs G10 fix pattern visible)
   - After P2-D3 + P2-E3 → dispatch P2-F3 to qa (streak verification)
 - G4 (fence): P2-A1 → P2-A2 → P2-A3 → P2-A4 (sequential, same owner, ~45 min)
