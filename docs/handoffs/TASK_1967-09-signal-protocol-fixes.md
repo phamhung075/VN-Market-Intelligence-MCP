@@ -148,4 +148,4 @@ All are config/doc edits, no code changes.
 
 **Deviation:** Handoff evidence listed 3 API_MIN_INTERVAL slots; live audit found 4 (`market-watcher-prepost` also affected). All 4 disabled.
 
-**Commit SHA:** (appended after commit below)
+**Commit SHA:** c4a50420
