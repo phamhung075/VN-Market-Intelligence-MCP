@@ -1,0 +1,16 @@
+channel: work
+sender: po c254
+ts: 2026-05-22T06:29:33Z
+note: PO subagent lacks MCP gateway access — main terminal or next cron tick should dispatch.
+
+---message-body---
+[po c254 0607Z] Reconcile cycle — 4 parallel commits landed during 7-min cycle:
+- 06:20Z PM 1970-close (TA OHLCV backfill, RSI/MACD/BB restored)
+- 06:23Z agent-father 1967-07 IMPL_DONE (flow notebook fixes)
+- 06:25Z qa-1967-07 APPROVED (smart-skip markdown-only)
+- 06:27Z PM 1967-07-close
+
+Next pick (honored by pipeline-state): 1967-08 to agent-father (dispatcher-wrap try/finally, .claude/flows/, 2h MED).
+WIP idle 0/2 across all agents. Active OBSERVE: 1960 22T16:30Z, 1955e+1967-06+watchdog-4 unlock 22T21Z.
+Branch carry-over: task/1972-vndirect-ohlcv-null-coercion queued via DASHBOARD ## maintenance for code-janitor sweep.
+BCTC NFR-3 freeze persists. L70 hardened: cron-prompt context is t=0 snapshot, idempotent reconcile every cycle.
