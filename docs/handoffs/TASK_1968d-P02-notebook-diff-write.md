@@ -105,3 +105,22 @@ git revert HEAD --no-edit
 - **Dogfood:** agent-father notebook initialized via blank-state Write path (AC-4 exercised live on own notebook).
 - **AC status:** AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS, AC-5 PASS
 - **Signal:** docs/signals/agent-father-1968d-P02-ready.json emitted (NEXT=qa)
+
+## [QA] Review Record
+
+**QA:** qa | **Round:** 1 | **Timestamp:** 2026-05-22T09:15Z
+**Verdict:** CHANGES_REQUESTED
+**Issue found:**
+- `.claude/flows/developer/main.md:122` — stale inline comment `(OVERWRITE — task name, findings, status; never append)` contradicts new section-overwrite pattern
+
+**Required fix:** Replace stale OVERWRITE parenthetical with accurate section-overwrite description reflecting current notebook-write/SKILL.md pattern.
+
+## [Fixer] Fix Record
+
+**Fixer:** fixer | **Round:** 1 | **Timestamp:** 2026-05-22T10:45Z
+**Issue fixed:**
+- `.claude/flows/developer/main.md:122` — replaced stale OVERWRITE parenthetical with section-overwrite behavior: `(OVERWRITE — task name, findings, status; never append)` → `(section-overwrite — append new c<NNN> section; skill handles prune + blank-state init)`
+
+**Verification:** `grep -n "OVERWRITE" developer/main.md` returns ZERO matches; parenthetical now reflects current notebook-write/SKILL.md pattern ✓
+**Commit:** b637bd8b
+**Signal:** docs/signals/fixer-1968d-wave1-refixed.json emitted (NEXT=qa)

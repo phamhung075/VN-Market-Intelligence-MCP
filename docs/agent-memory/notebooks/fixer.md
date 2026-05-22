@@ -68,3 +68,33 @@
 - **Scope:** ≤2 files (only financial-reports.md edited; anti-hallucination already fixed in prior session)
 - **Verification:** No regressions — markdown-only commit, no side effects
 - **Status:** Signal created `docs/signals/fixer-1951b-blocks-applied.json`; NEXT: qa for re-verification on Sprint 1951b gate
+
+## Session 2026-05-22 (Sprint 1968d Wave 1, Round 1)
+
+**Tasks:** TASK_1968d-P01 + TASK_1968d-P02 (parallel QA CHANGES_REQUESTED)
+
+**TASK_1968d-P01 — Handoff Delta-Read SKILL Anchor Format Fix**
+- **Issue:** Inconsistent anchor format: prose said `##§N-<slug>` (no space), but code examples and grep pattern used `## §1-spec` (WITH space). Breaks delta-read detection on space-format anchors.
+- **Fixes applied:**
+  1. `.claude/skills/handoff-delta-read/SKILL.md:11` — prose updated: `##§N-<slug>` → `## §N-<slug>`
+  2. `.claude/skills/handoff-delta-read/SKILL.md:22` — grep pattern: `^##§[0-9]` → `^## §[0-9]`
+  3. `.claude/skills/handoff-delta-read/SKILL.md:29` — input description: `##§N-slug` → `## §N-slug`
+  4. `.claude/skills/handoff-delta-read/SKILL.md:48` — fallback rule #1: `##§` → `## §`
+  5. `.claude/skills/handoff-delta-read/SKILL.md:58, 64` — JSON examples: `##§3-qa-round-1` → `## §3-qa-round-1`
+  6. `.claude/skills/handoff-delta-read/SKILL.md:74, 77` — smoke test section: `##§` → `## §`
+- **Verification:** `grep -n "##§" SKILL.md` = 0 matches. All anchors now `## §N-slug` format (WITH space) per BA spec AC-1.
+- **Commit:** b637bd8b
+
+**TASK_1968d-P02 — Developer Flow Notebook-Write Comment Fix**
+- **Issue:** Stale inline comment contradicted new section-overwrite pattern. Parenthetical said `(OVERWRITE — task name, findings, status; never append)` but new skill uses section-overwrite (append c<NNN> section).
+- **Fix applied:**
+  - `.claude/flows/developer/main.md:122` — replaced stale OVERWRITE with: `(section-overwrite — append new c<NNN> section; skill handles prune + blank-state init)`
+- **Verification:** `grep -n "OVERWRITE" developer/main.md` = 0 matches. Parenthetical now accurate to notebook-write/SKILL.md pattern.
+- **Commit:** b637bd8b
+
+**Overall status:**
+- **Files touched:** 2 (handoff-delta-read/SKILL.md, developer/main.md)
+- **Scope:** ≤2 files rule satisfied ✓
+- **Tests:** N/A (markup-only changes; QA decides if test coverage needed on re-run)
+- **Signal:** `docs/signals/fixer-1968d-wave1-refixed.json` created; NEXT: qa for round 2 verification
+- **Handoff append:** Both TASK_1968d-P01 and TASK_1968d-P02 handoff files updated with [QA] Review Record + [Fixer] Fix Record sections

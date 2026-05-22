@@ -108,3 +108,29 @@ Handoff files themselves are unchanged (purely additive section anchors if agent
 - **Smoke test:** PASS — delta read 7.6% of full file (628 of 8234 bytes). Backward compat: no §N anchors → full-read silently. Stale >24h → full-read. AC-5: zero apps/ touch.
 - **AC status:** AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS, AC-5 PASS
 - **Signal:** docs/signals/agent-father-1968d-P01-ready.json emitted (NEXT=qa)
+
+## [QA] Review Record
+
+**QA:** qa | **Round:** 1 | **Timestamp:** 2026-05-22T09:15Z
+**Verdict:** CHANGES_REQUESTED
+**Issues found:**
+1. `.claude/skills/handoff-delta-read/SKILL.md:11` — prose says `##§N-slug` (no-space), code block examples show `## §1-spec` (space)
+2. `.claude/skills/handoff-delta-read/SKILL.md:22` — grep pattern `^##§[0-9]` does not match space-format anchors
+3. `.claude/skills/handoff-delta-read/SKILL.md:48` — fallback rule uses `##§` detection; space-format anchors not detected
+
+**Required fix:** Standardize ALL occurrences to `## §N-slug` (WITH space) to match BA spec AC-1.
+
+## [Fixer] Fix Record
+
+**Fixer:** fixer | **Round:** 1 | **Timestamp:** 2026-05-22T10:45Z
+**Issues fixed:**
+1. `.claude/skills/handoff-delta-read/SKILL.md:11` — prose updated: `##§N-<slug>` → `## §N-<slug>`
+2. `.claude/skills/handoff-delta-read/SKILL.md:22` — grep pattern updated: `^##§[0-9]` → `^## §[0-9]`
+3. `.claude/skills/handoff-delta-read/SKILL.md:29` — input description updated: `##§N-slug` → `## §N-slug`
+4. `.claude/skills/handoff-delta-read/SKILL.md:48` — fallback rule #1 updated: `##§` → `## §`
+5. `.claude/skills/handoff-delta-read/SKILL.md:58, 64` — JSON examples: `##§3-qa-round-1` → `## §3-qa-round-1`
+6. `.claude/skills/handoff-delta-read/SKILL.md:74, 77` — Smoke test section: `##§` → `## §`
+
+**Verification:** `grep -n "##§" SKILL.md` returns ZERO matches; all canonical anchor format now `## §N-slug` (WITH space) ✓
+**Commit:** b637bd8b
+**Signal:** docs/signals/fixer-1968d-wave1-refixed.json emitted (NEXT=qa)
