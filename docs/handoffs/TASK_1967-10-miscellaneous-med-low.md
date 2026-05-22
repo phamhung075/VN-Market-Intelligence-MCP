@@ -184,3 +184,33 @@ Five low-risk items bundled:
 **Blocking issues:** 0
 
 **Signal:** docs/signals/qa-1967-10-approved.json | **NEXT:** pm — mark TASK_1967-10 Done
+
+---
+
+## [PM] Close Metadata
+
+**Closed:** 2026-05-22T14:00Z
+
+**Implementation Commits:**
+- f47ed0bf (agent-father ITEM-06 + ITEM-16 implementation)
+- c8b053d8 (agent-father ITEM-21 system-auditor D-N implementation)
+
+**QA Approval:**
+- qa round-1 2026-05-22T13:45Z (commit a713f664, smart-skip markdown-only method)
+- All 8 ACs verified PASS; no deviations requiring code changes
+
+**Deviation Notes:**
+- **ITEM-18 DEFERRED:** marketScanJob finally guard (pdfOcrWorker.ts L75) out-of-zone for agent-father (apps/mcp-server is dev-mcp-server zone). Flagged in handoff for next dev-mcp-server bundle. See AC-6 note in handoff.
+- **ITEM-20 NO-ACTION:** TTL analysis confirmed safe by design. Documented as analysis-only finding; no code or doc change required.
+- **ITEM-21 Option C DEFERRED:** Detection-only acceptable for this round. Long-term task_status_echo table-based solution deferred to future sprint per handoff guidance.
+
+**Carryover to Backlog:**
+- ITEM-18 created new task (see TASK_1967-11-dev-mcp-server-item18 created in backlog for dev-mcp-server lane)
+
+**Signal Drain:**
+- docs/signals/qa-1967-10-approved.json → docs/signals/processed/
+- docs/signals/agent-father-1967-10-done.json → docs/signals/processed/
+
+**TASKS.md Update:**
+- Row moved Backlog → Done (row 98 in current file)
+- Summary text includes deviation acknowledgments and signoff from QA round-1
