@@ -119,7 +119,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 
 **Lock handoff to QA** — same session, no release needed; QA will heartbeat + release.
 
-**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE — task name, findings, status; never append).
+**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (section-overwrite — append new c<NNN> section; skill handles prune + blank-state init).
 
 **Commit notebook**:
 ```bash

@@ -8,7 +8,7 @@ description: >
 
 ## Section Anchor Convention
 
-Handoff files use `##§N-<slug>` headings as positional anchors (no space between `##` and `§`):
+Handoff files use `## §N-<slug>` headings as positional anchors (space between `##` and `§`):
 
 ```markdown
 ## §1-spec
@@ -19,14 +19,14 @@ Handoff files use `##§N-<slug>` headings as positional anchors (no space betwee
 ```
 
 Each workflow section appended to a handoff MUST start with one of these headings.
-The anchor is the EXACT heading line (including `##§N-slug`). Grep pattern: `^##§[0-9]`.
+The anchor is the EXACT heading line (including `## §N-slug`). Grep pattern: `^## §[0-9]`.
 
 ---
 
 ## Delta-Read Algorithm
 
 **Inputs** (from calling signal payload or in-context variable):
-- `last_read_anchor` — string | null: the `##§N-slug` heading at which the previous read ended
+- `last_read_anchor` — string | null: the `## §N-slug` heading at which the previous read ended
 - `last_read_at` — ISO timestamp | null: when the last read occurred
 
 **Decision:**
@@ -45,7 +45,7 @@ else:
 ```
 
 **Fallback rules (AC-4 backward compat):**
-1. File has NO `##§` anchors → `anchor_out = null` → next call triggers full-read silently.
+1. File has NO `## §` anchors → `anchor_out = null` → next call triggers full-read silently.
 2. `last_read_anchor` present but not found in current file → full-read silently (no error raised).
 3. `last_read_at` absent → treat as null → full-read.
 
@@ -55,13 +55,13 @@ else:
 
 **Store after each read** (in calling signal JSON or in-context var):
 ```json
-{ "last_read_anchor": "##§3-qa-round-1", "last_read_at": "2026-05-22T08:00Z" }
+{ "last_read_anchor": "## §3-qa-round-1", "last_read_at": "2026-05-22T08:00Z" }
 ```
 
 **Pass on next spawn** via signal payload field `handoff_delta` or inline in the prompt:
 ```
 handoff: docs/handoffs/TASK_NNN.md
-last_read_anchor: "##§3-qa-round-1"
+last_read_anchor: "## §3-qa-round-1"
 last_read_at: "2026-05-22T08:00Z"
 ```
 
@@ -71,7 +71,7 @@ The anchor field goes into the DONE signal emitted by each agent, so the next ag
 
 ## Smoke Test (AC-4 / § 4 of handoff spec)
 
-First read: `last_read_anchor=null` → full file returned, `anchor_out` = last `##§` heading.
+First read: `last_read_anchor=null` → full file returned, `anchor_out` = last `## §` heading.
 Second read with same anchor → delta only (≤30% bytes of first read).
 Read with `last_read_at = now - 25h` → full-read triggered despite anchor present.
-File with no `##§` headings → `anchor_out=null`, next read is full-read, no error.
+File with no `## §` headings → `anchor_out=null`, next read is full-read, no error.
