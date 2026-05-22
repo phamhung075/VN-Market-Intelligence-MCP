@@ -1,0 +1,73 @@
+# golangci-lint configuration for apps/technical-analysis
+# Implements G4 (Architecture fence enforced in CI) per pilot-charter.md.
+#
+# Linter choice: golangci-lint + depguard
+# Rationale: Already canonical in Go ecosystem; depguard expresses deny-list per
+# package path prefix with YAML config; integrates with the existing go vet +
+# staticcheck chain in smoke checks. See phase-2-task-plan-go.md §Fence Linter Decision.
+#
+# Three fence rules (Fence-A, Fence-B, Fence-C) enforce the three-tier fractal
+# architecture: primitives → modules → microservice composition root.
+#
+# Task: P2-A1  Goal: G4  Pilot: technical-analysis  Language: Go
+
+version: "2"
+
+run:
+  go: "1.22"
+
+linters:
+  default: none
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Base allow-list: all code in this module is permitted anywhere unless
+        # a fence rule below overrides it.
+        # External deps: Go stdlib, this module's own packages, chi router, modernc sqlite.
+        Main:
+          allow:
+            - $gostd
+            - github.com/vn-market-intelligence/technical-analysis
+            - github.com/go-chi
+            - modernc.org
+
+        # Fence-A: pkg/primitive/* is the bottom tier (pure-function layer).
+        # Primitives compute single indicators. They must NOT reach upward into
+        # module, application, or interface layers. They may only import stdlib
+        # and other primitives in the same domain.
+        fence-a:
+          files:
+            - "**/pkg/primitive/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/module"
+              desc: "Fence-A: primitive must not import module layer"
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/application"
+              desc: "Fence-A: primitive must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/interface"
+              desc: "Fence-A: primitive must not import interface layer"
+
+        # Fence-B: pkg/module/* is the middle tier (composition layer).
+        # Modules compose multiple primitives via their interfaces. They must NOT
+        # reach into the application layer (use cases) or interface layer (HTTP handlers).
+        fence-b:
+          files:
+            - "**/pkg/module/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/application"
+              desc: "Fence-B: module must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/interface"
+              desc: "Fence-B: module must not import interface layer"
+
+        # Fence-C: pkg/infrastructure constructors (NewSQLite*, NewRedis*, NewHTTP*)
+        # must only be wired from the composition root (cmd/server/main.go).
+        # No other non-test file may import pkg/infrastructure directly.
+        # Test files (*_test.go) are exempt to allow infrastructure package self-tests.
+        fence-c:
+          files:
+            - "!**/cmd/server/main.go"
+            - "!**/*_test.go"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/technical-analysis/pkg/infrastructure"
+              desc: "Fence-C: infrastructure wiring only allowed in cmd/server/main.go (composition root)"
