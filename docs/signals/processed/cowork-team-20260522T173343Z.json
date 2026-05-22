@@ -14,5 +14,12 @@
     "errors": []
   },
   "priority": "low",
-  "createdAt": "20260522T173343Z"
+  "createdAt": "20260522T173343Z",
+  "_drain": {
+    "fingerprint": "9b61cfe222391a31f2a8324d304df2f23d49783d24e35a30d52f0214be3c7bcb",
+    "processedAt": "2026-05-22 18:20:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po",
+    "dispatcher_judgment_skip": true
+  }
 }

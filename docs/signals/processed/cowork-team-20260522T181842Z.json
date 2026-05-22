@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260522T181842Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260522T181842Z",
+  "_drain": {
+    "fingerprint": "68f857a013f49f729f946ad61d90fb0e5caa3e6e851f2ed3be4aca46021d1bad",
+    "processedAt": "2026-05-22 18:20:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po",
+    "dispatcher_judgment_skip": true
+  }
+}
