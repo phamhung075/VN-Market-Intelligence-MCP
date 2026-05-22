@@ -1,10 +1,56 @@
 # PM — Notebook
 
-**Last updated:** 2026-05-22T07:45Z cycle c251 | **Status:** TASK_1971 CLOSED (SEV-1 scan-order fix verified, P/L recovery in progress); WIP=0; 1972-VNDIRECT ready to unblock if router dispatches. | **Next:** Monitor 1971 P/L recovery; await 1972 dispatch gate; continue 1968d BA spec track
+**Last updated:** 2026-05-22T12:00Z cycle c252 | **Status:** TASK_1972 CLOSED (VnDirect null-coercion fix, QA APPROVED); WIP=1/2 (agent-father on P03); 1970-TA-OHLCV-BACKFILL DISPATCH-READY. | **Next:** Dispatch 1970 when P03 ships or WIP slot opens; monitor backfill cycle for corrupt-row natural overwrite.
 
 > Archive: `docs/archive/notebooks/pm-2026-05-21-earlier.md` (pre-1967c history)
 
-## Current cycle (2026-05-22T07:45Z cycle c251 — PM TASK_1971 close: QA APPROVED, TASKS.md Done verified, P/L recovery expected)
+## Current cycle (2026-05-22T12:00Z cycle c252 — PM TASK_1972 close: QA APPROVED, pipeline-state + 1970 dispatch readiness updated)
+
+### Signals drained this cycle
+- **qa-1972-approved.json** — TASK_1972 (VnDirect null-coercion fix) APPROVED
+  - Verdict: APPROVED (guard expanded, 5/5 tests PASS)
+  - Commits: 0a51a5a0 + 165d15dc + e059de61
+  - Tests: 5/5 new tests GREEN; full suite 9370/285 (zero regression)
+  - Fix: ohlcvBackfill.ts guard now checks r.open==null || r.high==null || r.low==null alongside r.close==null
+  - Blast-radius: ~1072 corrupt low=0 rows in DB no longer reproducible from new VNDIRECT fetches; natural overwrite on backfill cycle (existing rows will be replaced, no separate cleanup task needed)
+  - Downstream: TA indicators (RSI/MACD/BB) stabilize after backfill; tracked as TASK_1970
+
+### PM actions completed (cycle c252)
+1. Read QA signal qa-1972-approved.json
+   - Verdict: APPROVED (AC-1..AC-5 all PASS, tsc clean)
+   - Commits: 0a51a5a0 (fix) + 165d15dc (test) + e059de61 (cleanup)
+2. Updated docs/TASKS.md:
+   - Moved 1972 row from Review → Done
+   - Status: "DONE 2026-05-22T12:00Z (dev-mcp-server, QA APPROVED)"
+   - Added blast-radius note: 1072 corrupt rows, natural overwrite strategy
+   - Added 1970 unblock reference
+3. Updated docs/pipeline-state.json:
+   - status: "1972-DONE" (appended to state string)
+   - currentSprint: "1972-DONE + 1970-DISPATCH-READY"
+   - activeTaskId: removed 1972, kept 1968d-P03-READY + 1970-TA-OHLCV-BACKFILL-DISPATCH-READY
+   - nextAgent: "agent-father (P03), pm (1970 flagged for dispatch after WIP slot)"
+   - nextPrompt: updated with 1972-DONE verdict + 1970 readiness
+   - lastCompleted: "pm 2026-05-22T12:00Z — 1972 CLOSED"
+   - updatedAt: 2026-05-22T12:00:00Z
+   - updatedBy: pm notes + corrupt-row strategy
+4. Created docs/signals/pm-1972-close.json:
+   - Close summary: root cause (null-coercion logic), fix (expanded guard), test coverage (AC-1..5)
+   - Blast-radius: 1072 corrupt rows, no new production from 1972 onward, natural overwrite on backfill
+   - Next gate: 1970-TA-OHLCV-BACKFILL (DISPATCH-READY, no technical blockers)
+   - WIP impact: remains 1/2 (agent-father on P03)
+5. Updated PM notebook (this file):
+   - Status: 1972 CLOSED, WIP=1/2
+   - Next: dispatch 1970 when P03 ships or WIP slot opens
+
+### Current dispatch state
+- **WIP count:** 1/2 (good; P03 shipped or in flight)
+  - 1968d-P03: agent-father, READY/IN-PROGRESS (zone-caveman-dict SKILL update, .claude/ zone)
+- **Just completed:** 1972 (pm-closed 2026-05-22T12:00Z); prior: 1971 (pm-closed 2026-05-22T07:45Z)
+- **Dispatch-ready (queued):** 1970-TA-OHLCV-BACKFILL (FIX S-M, dev-mcp-server zone, RSI/MACD/BB restoration, HIGH priority)
+- **Blocked gates:** 1967-06 blocked-until 2026-05-22T21:00Z (OBSERVE-1955e soak unlock); 1968d BA spec pending review
+- **Corrupt-row strategy:** ~1072 low=0 rows in DB will be naturally overwritten when VNDIRECT backfill cycle runs; no separate cleanup task at this time (cost-benefit: backfill happens weekly, minimal extra IO)
+
+## Prior cycle (2026-05-22T07:45Z cycle c251 — PM TASK_1971 close: QA APPROVED, TASKS.md Done verified, P/L recovery expected)
 
 ### Signals drained this cycle
 - **qa-1971-done.json** — TASK_1971-STOCKPRICE-SCAN-ORDER-MISMATCH APPROVED

@@ -1,0 +1,51 @@
+{
+  "signal_type": "pm_task_close",
+  "task_id": "1972",
+  "task_title": "VnDirect OHLCV null-coercion fix",
+  "status": "DONE",
+  "timestamp": "2026-05-22T12:00:00Z",
+  "verdict": "QA APPROVED",
+  "sprint_id": "1968d+",
+  "commits": [
+    "0a51a5a0",
+    "165d15dc",
+    "e059de61"
+  ],
+  "test_results": {
+    "new_tests": 5,
+    "new_tests_pass": 5,
+    "full_suite_pass": 9370,
+    "full_suite_fail": 285,
+    "fail_reason": "pre-existing BCTC freeze (zero regression)"
+  },
+  "close_summary": {
+    "root_cause": "ohlcvBackfill.ts insertMany transaction guard checked only close==null, skipped open/high/low null checks. Result: r.open??0, r.high??close, r.low??close coercions produced ~1072 corrupt rows (low=0, open=0) in daily_ohlcv table.",
+    "fix": "Guard expanded: r.open==null || r.high==null || r.low==null || r.close==null → skip entire record. Removed ?? fallbacks; all 4 OHLCV fields guaranteed non-null on insert.",
+    "test_coverage": [
+      "AC-1: null-low (valid open/high/close) → no insert",
+      "AC-2: null-open (valid high/low/close) → no insert",
+      "AC-3: all-valid OHLCV → insert correct",
+      "AC-4: null-close regression → still skip",
+      "AC-5: asymmetric fixture (open=10/high=40/close=20,low=null) → no low=0 row produced"
+    ]
+  },
+  "blast_radius": {
+    "corrupt_rows_preexisting": "~1072 low=0 rows in daily_ohlcv (produced by old coercion logic)",
+    "post_1972_reproducibility": "False — new VNDIRECT fetches now skip records with null OHLCV fields",
+    "cleanup_strategy": "Natural overwrite on next backfill cycle (existing corrupt rows will be replaced when VNDIRECT returns corrected data). No separate cleanup task required at this time.",
+    "downstream_impact": "TA indicators (RSI/MACD/BB) which depend on OHLCV correctness will stabilize once backfill cycle completes. Tracked as TASK_1970-TA-OHLCV-BACKFILL."
+  },
+  "files_modified": [
+    "apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts"
+  ],
+  "files_tested": [
+    "apps/mcp-server/src/__tests__/1972-vndirect-ohlcv-null-coercion.test.ts"
+  ],
+  "zone": "apps/mcp-server/",
+  "nfr3_bctc_freeze": "CLEAR (zero bctc-extractor files touched)",
+  "next_gate": "1970-TA-OHLCV-BACKFILL dispatch pending WIP slot (HIGH priority, RSI/MACD/BB restoration across 30 watchlist tickers)",
+  "dispatch_readiness": "1970 ready — no technical blockers, all AC gates open",
+  "wip_impact": "WIP remains 1/2 (agent-father on 1968d-P03). 1970 dispatch awaits P03 completion or next WIP slot opening.",
+  "created_by": "pm",
+  "created_at": "2026-05-22T12:00:00Z"
+}
