@@ -1,0 +1,72 @@
+{
+  "from": "pm",
+  "to": "agent-father",
+  "type": "task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T22:25:30Z",
+  "phase": "2",
+  "pilot": "technical-analysis",
+  "task": {
+    "id": "P2-F2",
+    "title": "agent-father inserts dashboard-green DoD step in dev-technical-analysis flow",
+    "goal": "G12",
+    "owner": "agent-father",
+    "estimate_hours": 0.5,
+    "handoff_file": "docs/handoffs/TASK_P2-F2.md",
+    "reason": "Critical path task. Must complete before P2-D2 + P2-E2 dispatch so streak tasks accrue under the rule.",
+    "files_to_modify": [
+      ".claude/flows/dev-technical-analysis/main.md"
+    ],
+    "reference_brief": "docs/architecture-briefs/2026-05-22-refactor/p2-f-flow-rule-brief.md",
+    "strategy": "Insert DoD step into existing 'Pilot Hard Rule (G12 — blocking)' section (Strategy A preferred). Do not rewrite flow file. Respect agent-md-factory conventions.",
+    "acceptance_criteria": [
+      "Flow file contains explicit step: 'Do not mark task DONE until sandbox dashboard shows all TA scenarios green'",
+      "Step inserted BEFORE RETURN/DONE block (pre-close enforcement)",
+      "Exact sandbox command included: go run ./cmd/sandbox -tier=primitive ... && go run ./cmd/sandbox -tier=module ...",
+      "RED = not done enforced",
+      "Sandbox output paste-to-handoff requirement documented"
+    ]
+  },
+  "downstream_tasks": [
+    {
+      "id": "P2-D2",
+      "reason": "Awaits P2-F2 completion — bug injection for G10 proof"
+    },
+    {
+      "id": "P2-E2",
+      "reason": "Awaits P2-F2 completion — regression test for G11 proof"
+    }
+  ],
+  "parallel_ready_tasks": [
+    {
+      "id": "P2-A1",
+      "reason": "Dev-technical-analysis can start .golangci.yml config in parallel"
+    },
+    {
+      "id": "P2-B0",
+      "reason": "Dev-technical-analysis can start brownfield scan in parallel"
+    }
+  ],
+  "wip_status": {
+    "current_wip_count": 1,
+    "max_wip_limit": 2,
+    "current_in_progress": [
+      "dev-technical-analysis on task #14 (dashboard TS migration, commit a0d4c2b9, agent ad456a97d370bacdb)"
+    ],
+    "slots_available": 1,
+    "note": "After P2-F2 dispatches to agent-father, WIP count remains 2. P2-A1 will queue until dashboard TS migration completes."
+  },
+  "burn_rate_status": {
+    "sprint_kickoff": "2026-05-23",
+    "sprint_deadline": "2026-07-03",
+    "days_available": 41,
+    "total_tasks": 20,
+    "completed_tasks": 0,
+    "avg_hours_per_task": 0.583,
+    "total_estimated_hours": 11.66,
+    "burn_rate_needed": "0.28 hours/day",
+    "status": "on-track",
+    "note": "Estimate includes 2 hours of human agent work (P2-D3, P2-E3 fix cycles). Conservative: not accounting for parallelization or agent speed improvements."
+  },
+  "commitment": "PM creates 20 handoff files + updates TASKS.md backlog + dispatches P2-F2 in single atomic commit. Next gate: wait for agent-father P2-F2 completion + dev-technical-analysis dashboard TS migration completion before dispatching P2-A1."
+}
