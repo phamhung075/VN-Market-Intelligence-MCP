@@ -2,6 +2,34 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-22 — 1971-STOCKPRICE-SCAN-ORDER-MISMATCH SHIPPED
+
+### What shipped (SEV-1 hotfix)
+
+Fixed SQLitePriceHistoryRepository.GetHistory — SQL column transposition bug that made `close` return DB.low (=0 on light-volume days), causing -100% delta on frontend dashboard for FPT and all other tickers.
+
+**Root cause:** `rows.Scan(&c.Date, &c.Low, &c.High, &c.Close, &c.Open, &c.Volume)` — Low/Close/Open were transposed vs SELECT order `(date, open, high, low, close, volume)`.
+
+**Fix:** Reordered Scan to `(&c.Date, &c.Open, &c.High, &c.Low, &c.Close, &c.Volume)` — 1 line change at fetchers.go:239.
+
+**Regression test added:** `TestSQLiteRepo_GetHistory_OHLCFieldParity` — seeds 1 row with asymmetric OHLC (open=10, high=40, low=5, close=20, vol=1000), asserts all 6 fields individually. Masks zero-value bug for future.
+
+**Commit:** `bc515ab2` — `fix(1971): correct SQLite Scan order in GetHistory — close=0 bug`
+
+**Test results:** 8 infra tests PASS (was 7 + 1 new), all packages PASS. Zero regressions.
+
+**Deploy verified:**
+- Container rebuilt: `docker compose build stock-price` — success
+- Container healthy: port 5010:5000 — healthy
+- AC-1: `curl http://localhost:4000/stock/price/history?code=FPT&days=7` — close=77000 (2026-05-22), close=76500 (2026-05-21), all matching DB truth
+- AC-2: open/high/low correctly mapped; residual low=0 on 4/6 dates = 1972 (VNDirect parser, out of scope)
+
+**Done signal:** `docs/signals/dev-stock-price-1971-done.json`
+
+### Blast radius notes (for PO/QA)
+- `verdictResolutionJob.ts:123` was scoring P/L against transposed close for ~9d since 1912c (2026-05-13). Now fixed — post-1945-verdict-resolution-scored-pct should recover from 36%.
+- 1070 rows in daily_ohlcv with low=0 (VNDirect null coercion on light-volume days) remain — tracked as 1972-VNDIRECT-OHLCV-NULL-COERCION, dev-mcp-server, queued next cycle.
+
 ## Session 2026-05-14 — 1912c-cutover COMPLETE
 
 ### What shipped (cutover sprint c108)
