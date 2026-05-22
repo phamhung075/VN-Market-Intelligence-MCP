@@ -76,3 +76,46 @@ CLOSED — All acceptance criteria met, deployment verified, no rollback needed.
 
 ### Status
 DEPLOYED — AC-5 part 1 complete. Awaiting cron observation (part 2) at 2026-05-22T16:30Z.
+
+---
+
+## Session: 2026-05-22 (continued) — 1965d-JANITOR-PATHFIX
+
+**Task:** Deploy 1965d-JANITOR-PATHFIX (mcp-server rebuild with tasksMdJanitorJob projectRoot fix)
+
+### Cycle Summary
+- QA-approved deploy execution: Rebuild mcp-server container to load tasksMdJanitorJob fix
+- Fix: tasksMdJanitorJob.ts now imports getProjectRoot() from infrastructure/projectRoot.js (canonical helper) instead of local projectRoot() function
+- Deployment successful; all AC-5 part 1 criteria verified; AC-5 part 2 (cron observation) scheduled for next janitor fire
+
+### Execution Timeline
+- 2026-05-22 05:51:53 UTC — Build started (docker compose build mcp-server)
+- 2026-05-22 05:51:58 UTC — Dependencies loaded from cache (bun, npm layers cached)
+- 2026-05-22 05:52:19 UTC — Build complete (26.3s total, fast due to caching)
+- 2026-05-22 05:52:22 UTC — docker compose up -d mcp-server (container recreate + start)
+- 2026-05-22 05:52:42 UTC — Container healthy (24s from start, well under 60s start_period)
+
+### Key Results
+- Image hash change: sha256:3af8ec8 (1960) → sha256:4eab331 (1965d) (verified via docker inspect)
+- Container state: Up 24s (healthy) at verification
+- Health endpoint: /health returns 200 (toolCount=146, uptime=18s, status="ok")
+- Post-rebuild service check: all 12 containers UP (alert-engine, api-gateway, flaresolverr, frontend, kinh-dich, macro, mcp-server, news, pdf, rag, stock, technical)
+- Gateway port 3000 bound correctly
+- Code verification: tasksMdJanitorJob.ts imports getProjectRoot() from infrastructure/projectRoot.js (line 32)
+
+### Acceptance Criteria
+- **AC-5 part 1 (DEPLOY-VERIFIED):** PASS
+  - Container running new image (hash changed: 4eab331)
+  - Health check 200 OK
+  - Sanity check confirms post-fix code loaded (getProjectRoot import verified)
+  - All 12 microservices UP
+- **AC-5 part 2 (CRON-VERIFIED):** PENDING
+  - Next janitor fire: 2026-05-23T03:00Z (10:00 GMT+7)
+  - Gate: must run tasksMdJanitor successfully, write docs/agent-memory/notebooks/*.md updates
+  - Expected outcome: done — held=N divergences=N errors=0
+
+### Signals Emitted
+- `docs/signals/ops-1965d-JANITOR-PATHFIX-deployed.json` (verified=true, AC-5-1 PASS, all_pass)
+
+### Status
+DEPLOYED — AC-5 part 1 complete. Awaiting cron observation (part 2) at 2026-05-23T03:00Z (tasksMdJanitor cycle).
