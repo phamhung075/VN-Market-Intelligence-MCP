@@ -1,0 +1,41 @@
+{
+  "task_id": "P1-KD-A",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "status": "DONE",
+  "timestamp": "2026-05-23T23:19:06Z",
+  "agent": "dev-kinh-dich",
+  "ac_results": {
+    "AC-1": "PASS",
+    "AC-2": "PASS",
+    "AC-3": "PASS",
+    "AC-4": "PASS",
+    "AC-5": "PASS",
+    "AC-6": "PASS"
+  },
+  "ac_evidence": {
+    "AC-1": "Runner accepts --tier=primitive|module|all, --module=kinh-dich, --scenario=all|<path>. Invocation: bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all",
+    "AC-2": "Scenario paths in runner.ts: docs/scenarios/kinh-dich/primitives/ (primitive tier), docs/scenarios/kinh-dich/module/ (module tier). grep count=2.",
+    "AC-3": "Exit 0 on PASS. Output: [sandbox] PASS 0/0 scenarios (no scenarios loaded — baseline GREEN). Non-zero on failure (process.exit(1) when failed>0).",
+    "AC-4": "grep -c 'DB_PATH|KINH_DICH_DB|API_KEY|SECRET|TOKEN|PASSWORD|infrastructure|hono|SQLite' runner.ts = 0",
+    "AC-5": "process.env in config.ts = 0. Bun.env in config.ts = 2 (lines 12-13). Both PORT and DB_PATH now use Bun.env.",
+    "AC-6": "grep -rn 'from.*infrastructure|from.*hono|from.*application|from.*interface' runner.ts = 0 matches"
+  },
+  "hard_gates": {
+    "ZERO_INFRASTRUCTURE_IMPORTS": true,
+    "zero_import_grep_count": 0
+  },
+  "sandbox_run_exit": 0,
+  "sandbox_invocation": "bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all",
+  "sandbox_output": "[sandbox] PASS 0/0 scenarios (no scenarios loaded — baseline GREEN)",
+  "sandbox_runner_location": "apps/kinh-dich-service/src/sandbox/runner.ts",
+  "scenario_dirs_created": [
+    "docs/scenarios/kinh-dich/primitives/",
+    "docs/scenarios/kinh-dich/module/"
+  ],
+  "config_fix_status": "DONE",
+  "config_fix_detail": "apps/kinh-dich-service/src/infrastructure/config.ts lines 12-13: process.env replaced with Bun.env",
+  "tests_passing": 30,
+  "tsc_clean": true,
+  "next": "PM dispatches P1-B1 (hexagram-resolver + R-FENCE discovery)"
+}

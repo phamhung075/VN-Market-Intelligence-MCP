@@ -40,3 +40,27 @@ Zone health: test coverage expanded, 3 structural bugs fixed, fallback path veri
 - `src/infrastructure/repositories.ts` — SQL table + columns fixed
 
 Zone health: SQL fix applied, scores now use real daily closing prices, different stocks will produce different hexagrams | HEALTHY
+
+### 2026-05-24 — P1-A: Bun sandbox runner + config.ts Bun.env fix
+
+**Task:** P1-KD-A — establish sandbox foundation for G7/G8/G12 verification cycles.
+
+**Files created/modified:**
+- `apps/kinh-dich-service/src/sandbox/runner.ts` (CREATE) — sandbox runner with --tier/--module/--scenario flags
+- `apps/kinh-dich-service/src/infrastructure/config.ts` (MODIFY) — process.env → Bun.env (2 lines)
+- `apps/kinh-dich-service/package.json` (MODIFY) — added "sandbox" script alias
+- `docs/scenarios/kinh-dich/primitives/` (CREATE dir) — scenario fixture dir for primitive tier
+- `docs/scenarios/kinh-dich/module/` (CREATE dir) — scenario fixture dir for module tier
+
+**AC results:** All 6 PASS. AC-4 zero-cred count=0. AC-6 zero-import count=0. Sandbox exits 0 baseline (no primitives yet). 30/30 tests pass. tsc clean.
+
+**Key design decisions:**
+- Runner uses `import.meta.url` + 5-level walk-up to find repo root (no hardcoded path)
+- `--tier=all` expands to [primitive, module] in sequence
+- Zero-scenario (no JSON files in dir) = PASS by design (expected at P1-A since no primitives exist)
+- Scenario JSON validation: requires `tier` + `input` fields as minimum structure
+- Per-scenario execution dispatch hook ready for P1-B1 primitives
+
+**Blocks:** P1-B1 (hexagram-resolver + R-FENCE discovery gate)
+
+Zone health: P1-A DONE — sandbox GREEN baseline established | HEALTHY

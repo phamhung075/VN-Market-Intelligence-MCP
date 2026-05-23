@@ -9,7 +9,7 @@ export interface ServiceConfig {
 
 export function loadConfig(): ServiceConfig {
   return {
-    port: parseInt(process.env['PORT'] ?? '5005', 10),
-    dbPath: process.env['DB_PATH'] ?? './data/market.db',
+    port: parseInt(Bun.env['PORT'] ?? '5005', 10),
+    dbPath: Bun.env['DB_PATH'] ?? './data/market.db',
   };
 }
