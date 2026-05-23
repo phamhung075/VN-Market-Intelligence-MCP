@@ -1,5 +1,60 @@
 # PM — Notebook
 
+## c282 cycle-41 · 2026-05-23T185200Z
+
+**Status:** PHASE 2 PLAN INGESTED + P2-B1 DISPATCHED (R-3 MCP HTTP rewire). Architect cycle-22 completion signal (9bd67f8c) received: Phase 2 task plan READY with 14 atomic tasks. PM ingested plan into SSOT (phase2.status AWAITING-PLAN → IN-PROGRESS, added taskPlan ref, taskCount=14, wipPolicy, activeTask, openQuestions array with OQ-7..OQ-10 resolutions). OQ-7 RESOLVED (stub-first: P2-B1 stubs, P2-X1 real, P2-X3 upgrade), OQ-8 DEFERRED-TO-PO (scraper sidecar strategy), OQ-9 RESOLVED (G6/G7 recheck at P2-G1, no new task), OQ-10 RESOLVED (calendar fixture-first approach). Created TASK_P2-B1-macro.md handoff (7 ACs, R-1 + G12 hard gates, 2h estimate, 5 TS + 4 Go files). Created dispatch signal pm-cycle41-dispatch-dev-mcp-server-p2-b1-20260523T185200Z.json with full spec, OQ resolutions, hard gates, constraints binding. Updated pilot-status SSOT: phase2.status=IN-PROGRESS, added ingestedAt/ingestedBy/architectIngestCycle/architectIngestCommit/taskPlan/taskCount/wipPolicy/activeTask/openQuestions/progress_notes. WIP=1 enforced (dev-mcp-server P2-B1 only). Anchor 1776df8e verified held. Single atomic commit: `chore(pm/c282-cycle-41): ingest Phase 2 plan + dispatch dev-mcp-server P2-B1 (R-3 MCP HTTP rewire)`.
+
+### Architect Phase 2 Plan Ingestion
+
+- **Architect cycle:** c282-cycle-22
+- **Plan commit:** 9bd67f8c
+- **Plan ref:** docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md
+- **Plan status:** READY-FOR-DISPATCH
+- **Total tasks:** 14 (buckets B, C, D, E, F, G)
+- **Critical path:** P2-B1 → P2-B2 → P2-B3 → P2-X1..X3 → P2-G1 → P2-F1 → P2-C1 → P2-D1..E1
+- **WIP policy:** WIP=1 sequential (dev-macro-indicators single agent, TS + Go simultaneous risk mitigation)
+
+### OQ Resolution Summary
+
+| OQ | Title | Status | Resolution |
+|----|-------|--------|----------|
+| OQ-7 | P2-B1 Go stub vs real | RESOLVED | Stub-first: fixture JSON P2-B1, real primitives P2-X1, upgrade P2-X3 carry/yield |
+| OQ-8 | Scraper sidecar | DEFERRED-TO-PO | Brownfield §9 Option A: TS scrapers stay. Port to Go Phase 2 OR post-pilot? PO decision. Not blocking P2-B1. |
+| OQ-9 | G6/G7 re-verify | RESOLVED | Phase 1 DONE; recommend QA re-check P2-G1 with 6 primitives live. No new task. |
+| OQ-10 | macro-calendar impl | RESOLVED | Static fixture JSON P2-B1, port logic P2-X3 |
+
+### P2-B1 Task Details
+
+- **Task ID:** P2-B1 (critical path first)
+- **Title:** MCP Tool Handler HTTP Rewire (R-3 Unblock)
+- **Owner:** dev-mcp-server
+- **Estimate:** 2 hours
+- **ACs:** 7 (imports removed, HTTP routing, failure handling, routes registered, smoke test, zero new imports, R-1 guard)
+- **Hard gates:** R-1 (grep zero, BLOCKING) + G12 DoD (sandbox all-tier, BLOCKING)
+- **Goals:** G5b + R-3
+- **Files touched:** 3 TS (macroTools, carryTools, dinhGiaTools) + 4 Go (router, handlers_carry/yield/calendar)
+- **Zones in:** apps/mcp-server/src/interface/mcp/tools/macro/ + apps/macro-indicators/pkg/interface/http/
+- **Zones forbidden:** apps/technical-analysis/ (FROZEN) + apps/mcp-server/src/domain/ + SSOT files
+
+### PM Actions Completed (Cycle c282-cycle-41)
+
+1. **Ingested architect Phase 2 task plan** — Read 9bd67f8c, verified 14 tasks, confirmed critical path, identified OQ-7..OQ-10 ✓
+2. **Resolved OQ-7..OQ-10** — OQ-7/10 stub-first approach (PM inline), OQ-8 deferred-to-PO (scraper strategy), OQ-9 G6/G7 recheck at P2-G1 (no new task) ✓
+3. **Updated pilot-status SSOT** — phase2.status IN-PROGRESS, taskPlan/taskCount/wipPolicy/activeTask/openQuestions all added with resolutions ✓
+4. **Created TASK_P2-B1-macro.md handoff** — 7 ACs, R-1 + G12 hard gates, files section, constraints, zones, implementation guidance, RETURN block ✓
+5. **Created dispatch signal** — pm-cycle41-dispatch-dev-mcp-server-p2-b1-20260523T185200Z.json with WIP claim, plan ingest, OQ resolutions, hard gates, AC-1..7, constraints, next tasks ✓
+6. **Verified anchor 1776df8e** — Pre: git log --ancestry-path... returns non-empty, post-commit check scheduled ✓
+7. **Updated PM notebook** — cycle-41 entry with context, OQ table, P2-B1 details, actions, next steps ✓
+
+### Next Steps
+
+- Dev-mcp-server dispatch: TASK_P2-B1-macro.md + dispatch signal
+- WIP enforcement: phase2_dev_team = ACTIVE (1/1, dev-mcp-server on P2-B1)
+- Hard gates: R-1 grep zero matches + G12 sandbox all-tier green (BOTH BLOCKING)
+- After P2-B1 DONE + QA-GREEN: PM dispatches P2-A1 or P2-B2 per architect critical path
+
+---
+
 ## c282 cycle-40 · 2026-05-23T120718Z
 
 **Status:** PHASE 1 COMPLETE (11/11 DONE + GREEN) — P1-E2 QA GREEN verified (7/7 ACs PASS, sandbox 3-tier all exit 0, env audit clean 0 matches, anchor held). PM closed P1-E2 in SSOT (DONE, impl 12242e45 + signal adc0d5ff, qa ae93159d). Verified all 4 Phase 1 exit criteria (≤4h time-to-primitive: 54 minutes PASS, sandbox 3-tier GREEN 5/5 PASS, dashboard ≥90% PASS, G12 earned 3/3 streak PASS). Created PHASE-1-CLOSE-GATE-macro.md handoff with all criteria evidenced + 11/11 task closure list + R-3 flag for Phase 2 architect. Created pm-phase1-close-gate-ready signal for PO with GO/NO-GO decision paths. Updated pilot-status SSOT: phase1.status="READY_FOR_CLOSE_GATE", g12Streak.streakComplete=true, added P1-E2 final entry (DONE). Updated PM notebook (this section). Anchor 1776df8e held (exit 0 pre- and post-Phase-1-close). WIP=0 enforced (Phase 1 complete, no new dispatch until PO approves + architect expands Phase 2). Single atomic commit: `chore(pm/c282-cycle-40): close P1-E2 + Phase 1 COMPLETE (11/11) — handoff to PO for close gate (4 criteria + G12 EARNED)`.
