@@ -5,7 +5,7 @@
   "cycle": "c282 cycle-24 (qa execution)",
   "task_id": "P2-A4",
   "consumed_dispatch": "docs/signals/po-cycle24-dispatch-qa-p2-a4-20260523T075305Z.json",
-  "commit_sha": "<pending — populated after commit>",
+  "commit_sha": "f611d753",
   "result": "PASS",
   "ac_results": {
     "ac_4a": {
