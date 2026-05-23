@@ -4,7 +4,7 @@
   "timestamp": "2026-05-23T15:20:50Z",
   "pilot": "macro-indicators",
   "status": "DONE",
-  "commit": "PENDING",
+  "commit": "535e7bdc",
   "summary": "Dashboard data refresh: PRIMITIVES_DATA extended from 3 to 18 entries (6 primitives × 3 scenarios), MODULE_DATA updated to reflect all 6 primitives + BuildMacroSignals scenario structure, microservice panel Loading placeholder replaced with NOT-RUN service card. JS renderPrimitivesPanel() updated to handle multiple primitives dynamically (group headers + input summaries).",
 
   "ac_1_primitives_data_count": 6,
