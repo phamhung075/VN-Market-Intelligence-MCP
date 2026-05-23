@@ -3,6 +3,30 @@
 > **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md` | **Archived Done tasks:** See `docs/TASKS_ARCHIVE.md` for complete history (1777–1896+)
 
 ---
+
+## Phase 0 Backlog (Stock-Price Fleet Pilot 3)
+
+**Status:** Opened 2026-05-23 (PO dispatch signal po-pilot3-stock-price-chartered-20260523T220944Z.json). Phase 0 scope: 6 deliverables (brownfield inventory, R-CGO confirmation, bug-inventory entry, agent-flow + G12 DoD baking, anchor commit, phase-1 task plan). WIP limit enforced: max 2 In Progress. Sprint deadline: 1 sprint (2026-05-24 delivery expected). Exit gate: all 6 deliverables + architect verification signal before PO approval of Phase 0→Phase 1 transition.
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| P0-SP-1 | Brownfield inventory of apps/stock-price (architecture audit + R-CGO feasibility) | HIGH | TASK | architect + system-auditor | docs/handoffs/TASK_P0-SP-1-brownfield-inventory.md | READY | — |
+| P0-SP-2 | Bug-inventory entry: stock_price_baseline (G10 metric) | HIGH | TASK | system-auditor | docs/handoffs/TASK_P0-SP-2-bug-inventory-entry.md | READY | — |
+| P0-SP-3 | Agent-father: confirm dev-stock-price.md + bake dev-stock-price flow with G12 DoD Gate + CGO/Fence rules | HIGH | TASK | agent-father | docs/handoffs/TASK_P0-SP-3-agent-flow-baking.md | READY | — |
+| P0-SP-4 | Set anchor commit + update pilot-status SSOT | MEDIUM | TASK | pm | docs/handoffs/TASK_P0-SP-4-anchor-commit.md | READY | P0-SP-1, P0-SP-2, P0-SP-3 (all deliverables before anchor) |
+| P0-SP-5 | R-CGO Confirmation: verify primitives + module + sandbox build CGO_ENABLED=0 (binding risk gate) | CRITICAL | TASK | dev-stock-price | docs/handoffs/TASK_P0-SP-5-r-cgo-confirmation.md | READY | P0-SP-1 (brownfield R-CGO feasibility) |
+| P0-SP-6 | Phase-1 task plan authoring (architect) | HIGH | TASK | architect | docs/handoffs/TASK_P0-SP-6-phase1-task-plan.md | READY | P0-SP-1, P0-SP-2 (brownfield + bug-inventory inputs) |
+| P0-EXIT-GATE | Phase 0 exit gate verification (architect signal) | CRITICAL | GATE | architect | — | READY | P0-SP-1..6 all DONE |
+
+**Notes:**
+- **WIP=2 cap (fleet pilot):** max 2 READY→IN-PROGRESS at once; stock-price + kinh-dich (pilot-4) capped together at WIP=2
+- **Parallel dispatch eligible:** P0-SP-1 + P0-SP-2 + P0-SP-3 + P0-SP-5 + P0-SP-6 are independent; P0-SP-4 depends on all others (sequential last)
+- **R-CGO critical:** P0-SP-5 is a BINDING risk gate (HIGH severity); if BLOCKED, Phase 1 cannot proceed without architect re-cut
+- **Architect sign-off required:** P0-EXIT-GATE requires architect verification signal before PO approves Phase 0→Phase 1
+- **Charter reference:** docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §Phase 0 + §CGO Boundary Clause
+
+---
+
 ## Phase 2 Backlog (Technical-Analysis Pilot)
 
 **Status:** Expanded 2026-05-23 by architect. WIP limit enforced: max 2 In Progress. Sprint deadline: 2026-07-03 (6 sprints from kickoff 2026-05-23).
