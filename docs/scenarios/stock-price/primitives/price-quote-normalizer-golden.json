@@ -1,0 +1,25 @@
+{
+  "primitive": "price_quote_normalizer",
+  "scenario": "price-quote-normalizer-golden",
+  "description": "Happy-path normalization of a real VCB HOSE quote",
+  "input": {
+    "rawPrice": 85000,
+    "rawVolume": 1000000,
+    "rawChange": 500,
+    "rawChangePct": 0.59,
+    "code": "VCB",
+    "source": "hose",
+    "fetchedAt": "2026-05-24T10:30:00Z",
+    "latencyMs": 150
+  },
+  "expectedOutput": {
+    "code": "VCB",
+    "price": 85000,
+    "volume": 1000000,
+    "change": 500,
+    "changePercent": 0.59,
+    "source": "hose",
+    "fetchedAt": "2026-05-24T10:30:00Z",
+    "latencyMs": 150
+  }
+}

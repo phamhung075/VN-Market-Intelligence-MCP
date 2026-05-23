@@ -1,0 +1,25 @@
+{
+  "primitive": "price_quote_normalizer",
+  "scenario": "price-quote-normalizer-edge",
+  "description": "Edge case: zero volume, zero change, zero changePct (cache quote — T3 pattern)",
+  "input": {
+    "rawPrice": 75000,
+    "rawVolume": 0,
+    "rawChange": 0,
+    "rawChangePct": 0,
+    "code": "ACB",
+    "source": "cache",
+    "fetchedAt": "2026-05-24T09:00:00Z",
+    "latencyMs": 0
+  },
+  "expectedOutput": {
+    "code": "ACB",
+    "price": 75000,
+    "volume": 0,
+    "change": 0,
+    "changePercent": 0,
+    "source": "cache",
+    "fetchedAt": "2026-05-24T09:00:00Z",
+    "latencyMs": 0
+  }
+}

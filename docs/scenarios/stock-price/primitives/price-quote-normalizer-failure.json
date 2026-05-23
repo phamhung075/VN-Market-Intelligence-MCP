@@ -1,0 +1,26 @@
+{
+  "primitive": "price_quote_normalizer",
+  "scenario": "price-quote-normalizer-failure",
+  "description": "Failure case: empty code string — primitive passes it through gracefully (no panic, no error). Caller is responsible for validation.",
+  "input": {
+    "rawPrice": 70000,
+    "rawVolume": 1000,
+    "rawChange": 100,
+    "rawChangePct": 0.14,
+    "code": "",
+    "source": "hnx",
+    "fetchedAt": "2026-05-24T10:15:00Z",
+    "latencyMs": 200
+  },
+  "expectedOutput": {
+    "code": "",
+    "price": 70000,
+    "volume": 1000,
+    "change": 100,
+    "changePercent": 0.14,
+    "source": "hnx",
+    "fetchedAt": "2026-05-24T10:15:00Z",
+    "latencyMs": 200,
+    "_error": null
+  }
+}
