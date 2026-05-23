@@ -29,12 +29,12 @@
   "_phase_note": "Starts '0' (Phase 0 open). Do not use DONE/ACTIVE here — use top-level status.",
 
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "_status_enum": "Allowed values: OPEN | CLOSED",
     "openedAt": "2026-05-24T00:00:00Z",
     "openedBy": "architect (charter cycle 2026-05-24)",
-    "closedAt": null,
-    "closedBy": null,
+    "closedAt": "2026-05-24T23:15:00Z",
+    "closedBy": "pm (exit gate verification cycle)",
     "owner": "architect + system-auditor + agent-father (+ dev-kinh-dich R-FENCE feasibility confirmation)",
     "deliverables": {
       "pilot_status_ssot": {
@@ -90,29 +90,36 @@
     },
     "dispatch_signal": "docs/signals/pm-kinh-dich-phase0-dispatch-20260524T120000Z.json",
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_src_primitive_yet": true,
       "no_code_in_service_src_module_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null,
+      "exit_gate_status": "PASS",
+      "closedAt": "2026-05-24T23:15:00Z",
+      "verification_commit_sha_architect": "pm-verified-all-4-signals-20260524T231500Z",
+      "verification_signal": "pm-kinh-dich-p1-a-dispatch-20260524T231500Z.json",
+      "deliverable_verdicts": {
+        "D0_charter_ssot": "VERIFIED — docs/data/pilot-status-kinh-dich.json instantiated (charter v2.0 commit 4e914a81)",
+        "P0-KD-1_brownfield_inventory": "VERIFIED — docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md + signal architect-kinh-dich-p0-kd-1-done-20260524T230418Z.json + R-FENCE=VIABLE + 5 primitives confirmed",
+        "P0-KD-2_bug_inventory_baseline": "VERIFIED — docs/data/bug-inventory.json kinh_dich_baseline block + signal system-auditor-kinh-dich-p0-kd-2-done-20260524T120000Z.json + baselineCycleCount=1.5",
+        "P0-KD-3_dev_agent_flow": "VERIFIED — .claude/agents/dev-kinh-dich.md + .claude/flows/dev-kinh-dich/main.md + signal agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json + G12 DoD gate baked + all 6 ACs PASS",
+        "P0-KD-4_phase_1_task_plan": "VERIFIED — docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md + signal architect-p0-kd-4-done-20260523T231332Z.json + 9 tasks / 54 ACs + WIP=1"
+      },
       "expected_return_signals": [
-        "pm-p0-kd1-brownfield-inventory-complete-<UTC>.json (architect/system-auditor)",
-        "pm-p0-kd2-bug-inventory-entry-complete-<UTC>.json (system-auditor)",
-        "pm-p0-kd3-agent-flow-baking-complete-<UTC>.json (agent-father)",
-        "pm-p0-kd4-phase1-task-plan-complete-<UTC>.json (architect)"
+        "architect-kinh-dich-p0-kd-1-done-20260524T230418Z.json ✓",
+        "system-auditor-kinh-dich-p0-kd-2-done-20260524T120000Z.json ✓",
+        "agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json ✓",
+        "architect-p0-kd-4-done-20260523T231332Z.json ✓"
       ]
     }
   },
 
   "phase1": {
-    "_note": "Block stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
+    "_note": "Phase 1 OPEN — sequence P1-A (Bun sandbox runner + config.ts fix). WIP=1 enforced throughout.",
+    "status": "ACTIVE",
     "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T23:15:00Z",
+    "openedBy": "pm (exit gate verification cycle)",
     "gateVerdict": null,
     "gateVerifiedAt": null,
     "gateVerifiedBy": null,
@@ -120,9 +127,15 @@
     "gateDecisionDoc": null,
     "gateSignal": null,
     "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
-    "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (PENDING Phase 0 delivery)",
+    "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
     "wip_limit": 1,
-    "progress_notes": []
+    "task_sequence": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
+    "current_task": "P1-A",
+    "current_task_status": "READY",
+    "current_task_handoff": "docs/handoffs/TASK_P1-KD-A.md",
+    "progress_notes": [
+      "2026-05-24T23:15:00Z — Phase 1 OPENED; P1-A handoff created; dev-kinh-dich ready to accept"
+    ]
   },
 
   "phase2": {
