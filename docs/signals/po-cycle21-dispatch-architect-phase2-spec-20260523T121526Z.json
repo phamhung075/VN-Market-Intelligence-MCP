@@ -1,0 +1,78 @@
+{
+  "agent": "po",
+  "role": "product-owner",
+  "cycle": "c282-cycle-21",
+  "timestamp": "2026-05-23T12:15:26Z",
+  "event": "dispatch_architect_phase2_spec",
+  "pilot": "macro-indicators",
+  "phase_target": "2",
+  "target_agent": "architect",
+  "dispatch_owner": "po",
+  "blocking_gate": "Phase 1 exit gate (GO verdict)",
+  "blocking_gate_signal": "docs/signals/po-cycle21-phase1-gate-GO-20260523T121526Z.json",
+  "blocking_gate_decision": "docs/po-decisions/2026-05-23-macro-indicators-phase-1-gate.md",
+
+  "mandate": {
+    "summary": "Author Phase 2 task plan for macro-indicators pilot. Drive remaining G-goals (G1, G4, G5, G8, G9, G10, G11) to terminal grade per goals[].phase2Bucket assignments in SSOT. G12 already EARNED — pending PO 12/12 flip per Charter §4.5.",
+    "deliverable_primary": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
+    "deliverable_pattern": "Mirror Phase 1 plan structure: per-task AC, file paths, smoke gates, sequencing diagram, WIP limit, exit gate criteria",
+    "ssot_field_to_flip_on_complete": "phase2.status NOT-STARTED → ACTIVE (after architect signal + PO verification)"
+  },
+
+  "first_task_required": {
+    "id": "P2-B1",
+    "title": "MCP tool handler HTTP rewire (R-3 mitigation)",
+    "priority": "HIGHEST (first in Phase 2)",
+    "scope_explicit": "apps/mcp-server/src/interface/mcp/tools/macro/ — 4 tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) currently bypass HTTP via direct Go-domain imports. Rewire each to HTTP-call apps/macro-indicators microservice on port 5004.",
+    "rationale": "R-3 (HIGH risk from p0-brownfield-inventory) is the single biggest architectural debt. Until rewire is done, Go microservice IS NOT the source of truth for MCP — TS macro brain still bypassed. G5 (TS delete) cannot land without R-3 first because deleting TS macro brain would break the bypass-import path.",
+    "binding_acceptance_criteria_seed": [
+      "All 4 MCP tools route via http://macro-indicators:5004 (containerised) or http://localhost:5004 (local dev)",
+      "Zero direct imports from apps/macro-indicators/pkg/ in apps/mcp-server/src/interface/mcp/tools/macro/",
+      "Each tool response matches OpenAPI contract apps/macro-indicators/api/openapi.yaml",
+      "Smoke test: MCP tool invocation returns identical payload shape pre and post rewire (TS macro brain still in place as fallback during rewire)",
+      "G5 unblock note: P2-B2 = git mv apps/macro-indicators/src/ → _deprecated/, ONLY after P2-B1 GREEN"
+    ],
+    "pre_revert_tag_required": "macro-pre-delete (set before P2-B2 git mv per charter L5 lesson)"
+  },
+
+  "phase_2_goals_to_cover": [
+    {"id": "G1", "bucket": null, "deliverable": "5-7 macro primitives extracted to Go (candidate list in goals[].calibration for G1)"},
+    {"id": "G4", "bucket": "P2-A", "deliverable": "Offline depguard primary OR pilot-zone CI secondary; AC-4a/b/c from TA P2-A4 verbatim; pre-revert tag macro-pre-ci"},
+    {"id": "G5", "bucket": "P2-B", "deliverable": "G5a TS → _deprecated/; G5b MCP HTTP rewire verified (=P2-B1); G5c zero TODO migrat; pre-revert tag macro-pre-delete"},
+    {"id": "G8", "bucket": null, "deliverable": "Test A (corrupted) + Test B (golden) honest-red verification per TA pattern"},
+    {"id": "G9", "bucket": "P2-C", "deliverable": "PO Playwright short-circuit (Path B, Day-0 default per L6) OR user verbal (Path A)"},
+    {"id": "G10", "bucket": "P2-D", "deliverable": "AI agent fix bug ≤2 cycles vs baseline (bug-inventory macro_indicators_baseline.baselineCycleCount); pre-revert tag macro-pre-inject"},
+    {"id": "G11", "bucket": "P2-E", "deliverable": "Coupling-proven outcome-(a) for 2 trials per TA cycle-17 rubric"},
+    {"id": "G12", "bucket": "P2-F", "deliverable": "EARNED already; ensure streak holds in Phase 2; PO flips to YES at 12/12 terminal"}
+  ],
+
+  "constraints_for_architect": [
+    "Charter §4.5 matrix-authorship: decisionMatrix populated ONLY at 12/12 terminal (PO authorship; architect does NOT touch)",
+    "WIP=1 on phase_2_dev_team unless architect explicitly justifies parallel P2-A + P2-B per OQ-6 (in which case WIP=2 cap)",
+    "Pre-revert tags MUST be set before destructive operations: macro-pre-ci before P2-A2, macro-pre-delete before P2-B2, macro-pre-inject before P2-D2",
+    "L84 explicit-file staging, no --force, no --no-verify, no --no-gpg-sign, no push of source/CI",
+    "Anchor 1776df8e must remain ancestor throughout Phase 2",
+    "SSOT update: phase2.task_plan field must reference architect's authored doc path on completion",
+    "Each task in Phase 2 plan must declare R-1 grep guard (defensive — math/rand zero matches) inheriting from Phase 1 discipline",
+    "Each Go-code task must declare G12 DoD gate (sandbox tier green before commit) — continues 3/3 streak into Phase 2"
+  ],
+
+  "completion_signal_expected": {
+    "filename_pattern": "architect-macro-phase2-plan-done-<UTC>.json",
+    "must_reference": [
+      "deliverable_path (Phase 2 task plan .md path)",
+      "anchor 1776df8e held pre+post",
+      "commit SHAs",
+      "wip_limit confirmation",
+      "P2-B1 R-3 first-task confirmation"
+    ]
+  },
+
+  "po_next_step_after_architect_completes": "PO verifies architect deliverable, flips phase2.status NOT-STARTED→ACTIVE, dispatches pm for P2-B1 handoff (mirrors cycle-30 P1-A1 dispatch pattern).",
+
+  "carry_over_warnings": [
+    "Stale TA dispatch docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json is for CLOSED TA pilot — IGNORE",
+    "Parent pilot-status.json is FROZEN — DO NOT MUTATE",
+    "decisionMatrix and verdict fields stay TBD until 12/12 terminal"
+  ]
+}

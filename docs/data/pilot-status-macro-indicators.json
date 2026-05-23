@@ -43,11 +43,17 @@
     }
   },
   "phase1": {
-    "status": "READY_FOR_CLOSE_GATE",
+    "status": "APPROVED",
     "openedAt": "2026-05-23T10:05:08Z",
     "openedBy": "po cycle-30 (Phase 0 atomic close — Phase 1 dispatch to pm for P1-A1)",
     "readyAt": "2026-05-23T12:07:18Z",
     "readyBy": "qa c282-cycle-40 — P1-E2 GREEN (11/11 tasks DONE)",
+    "gateVerdict": "GO",
+    "gateVerifiedAt": "2026-05-23T12:15:26Z",
+    "gateVerifiedBy": "po c282-cycle-21 — Phase 1 exit gate (4 criteria PASS + G12 EARNED-PENDING)",
+    "gateCommit": "PENDING-COMMIT-SHA",
+    "gateDecisionDoc": "docs/po-decisions/2026-05-23-macro-indicators-phase-1-gate.md",
+    "gateSignal": "docs/signals/po-cycle21-phase1-gate-GO-20260523T121526Z.json",
     "blockedBy": null,
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 1",
     "task_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
@@ -312,9 +318,14 @@
     }
   },
   "phase2": {
-    "status": "NOT-STARTED",
-    "blockedBy": "phase1.exit_gate (PO go/no-go after first primitive ships)",
-    "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2"
+    "status": "AWAITING-PLAN",
+    "unblockedAt": "2026-05-23T12:15:26Z",
+    "unblockedBy": "po c282-cycle-21 (Phase 1 GO gate verdict)",
+    "blockedBy": "architect Phase 2 task plan authorship (dispatch signal po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json)",
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
+    "first_task_required": "P2-B1 = R-3 MCP HTTP rewire of 4 macro tools (apps/mcp-server/src/interface/mcp/tools/macro/)",
+    "wip_limit": 1,
+    "dispatch_signal_to_architect": "docs/signals/po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json"
   },
   "goals": [
     {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selects from §G1 candidate list (macro-investment-clock, macro-fed-liquidity-spread, macro-carry-trade-signal, macro-yield-spread-signal, macro-ism-regime-signal, macro-pyramid-tier, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier) at Phase 0."},
@@ -372,6 +383,27 @@
         "All work on main (no branches)",
         "Parent pilot-status.json UNTOUCHED (FROZEN historical record)",
         "Charter §4.5 carry-over: pilot-status-macro-indicators.json created with all 12 goals = TBD + decisionMatrix all TBD (matrix populates ONLY at brief close)"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T12:15:26Z",
+      "cycle": "c282 cycle-21",
+      "decision": "Phase 1 exit gate VERDICT=GO. All 4 criteria PASS on independent PO re-verification: (1) time-to-first-primitive 54 min (P1-A1 10:13:55Z → P1-B1 11:07:58Z), (2) sandbox all-tier 5/5 PASS exit 0 (PO live re-run), (3) dashboard 3 panels + Option C edit-rerun textarea + 19 NOT-RUN markers + grep secrets exit 1 (zero matches in .go/.html/.json/.md), (4) G12 streak 3/3 EARNED (P1-B1+P1-C1+P1-E1 all sandbox-green). G12 candidacy persists EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE (no early flip). decisionMatrix and verdict remain TBD per Charter §4.5 atomic-with-12/12 rule. Phase 2 unlocked; architect dispatched to author Phase 2 task plan with P2-B1=R-3 MCP HTTP rewire as first task.",
+      "rationale": "PM cycle-40 readiness signal (pm-phase1-close-gate-ready-20260523T120718Z.json) presented all 4 criteria evidenced; PO re-verified each independently rather than trust-only-PM. Sandbox re-run exit 0 confirms PM not stale. grep -r 'FRED_API_KEY|api_key|API_KEY' on apps/macro-indicators/ macro zone .go/.html/.json/.md returns exit 1 (zero matches) confirming env hygiene. Anchor 1776df8e ancestor exit 0 confirms no rewrite throughout Phase 1. Standing user directive 'set goals to complete this micro service' honored: GO verdict unlocks Phase 2 expansion (G1+G4+G5+G8+G9+G10+G11 buckets). NO-GO would cap pilot to PoC — contrary to user directive given evidence is clean. HOLD not warranted — zero ambiguity in evidence. Architect dispatched (not PM/dev) because Phase 2 plan authorship is architect-owned; PM dispatch waits for plan landing.",
+      "action": "Authored: (1) docs/po-decisions/2026-05-23-macro-indicators-phase-1-gate.md (verdict + per-criterion re-verification evidence); (2) docs/signals/po-cycle21-phase1-gate-GO-20260523T121526Z.json (structured gate signal); (3) docs/signals/po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json (architect dispatch with P2-B1 first-task requirement); (4) flipped phase1.status READY_FOR_CLOSE_GATE → APPROVED + added gateVerdict/gateVerifiedAt/gateVerifiedBy/gateCommit/gateDecisionDoc/gateSignal; (5) flipped phase2.status NOT-STARTED → AWAITING-PLAN + first_task_required + wip_limit + dispatch_signal_to_architect; (6) appended this cycle-21 entry; (7) overwrote PO notebook to cycle-21 gate state.",
+      "constraints_held": [
+        "L84 explicit-file staging (5 files explicitly staged: po-decision, gate signal, architect dispatch signal, pilot-status SSOT, notebook)",
+        "No --force, no --no-verify, no --no-gpg-sign",
+        "No push of source/CI changes",
+        "All work on main (no branches)",
+        "Anchor 1776df8e held pre+post (exit 0 both checks)",
+        "Parent pilot-status.json UNTOUCHED (FROZEN TA pilot historical record)",
+        "Charter §4.5 matrix-authorship: decisionMatrix and verdict fields remain TBD (no early flip; atomic only at 12/12 terminal)",
+        "G12 candidacy preserved as EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE (no flip to YES at this gate)",
+        "Goals 1-11 remain TBD (only G12 already EARNED per Phase 1 streak completion)",
+        "SSOT one-active-dispatch-per-task: phase_1_dev_team WIP=0 (no active dispatch); architect dispatch is spec authorship not dev task",
+        "Stale TA cycle-20 dispatch signal IGNORED (TA pilot CLOSED DORMANT 12/12)",
+        "Auto-continue (no user approval requested per standing user directive)"
       ]
     },
     {
