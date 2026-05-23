@@ -1,0 +1,29 @@
+{
+  "from": "agent-father",
+  "to": "po",
+  "via": "main-router",
+  "type": "completion",
+  "program": "fleet-factory-rollout",
+  "prework": "SI-1",
+  "createdAt": "2026-05-23T22:03:18Z",
+  "schema_path": "docs/data/pilot-status-schema.json",
+  "goals_count": 12,
+  "decision_matrix_block_present": true,
+  "divergence_between_closed_pilots": "Two field-name divergences found and resolved in favour of macro v2.0 shape: (1) D1 CLOSE FIELDS — TA v1 used 'statusFlippedAt'+'statusFlippedBy'; macro v2 uses 'closedAt'+'closedBy'+'closureSignal'+'closureDecisionDoc'. Schema adopts macro v2 field names; TA v1 fields are DEPRECATED. (2) D2 LANGUAGE FIELDS — TA v1 used single 'languageDecision' string; macro v2 uses three split fields ('language', 'languageLockSource', 'languageLockedAt'). Schema adopts macro v2 split. Minor variations (sprintCount, pivotEvent, decisionMatrix 3yes/2yes/0-1yes inline map) documented as non-breaking; resolutions noted in _schema_meta._divergence_notes.",
+  "commit_sha": "PENDING — staged and committed after this signal write",
+  "pilot_3_gate": "PO may now instantiate docs/data/pilot-status-stock-price.json from this schema. All 12 G-goals present with canonical track labels (A: G1-G5, B: G6-G9, C: G10-G12). decisionMatrix block present with §4.5 authorship rule embedded. Phase 0 deliverable skeleton matches macro v2 pattern. Service-specific values are clearly marked <SERVICE:...> placeholders.",
+  "files_written": [
+    "docs/data/pilot-status-schema.json",
+    "docs/signals/agentfather-si1-schema-done-20260523T220318Z.json"
+  ],
+  "constraints_held": [
+    "main branch — no branch created",
+    "L84 explicit-file staging (git add per path; no -A/. used)",
+    "No --force, no --no-verify, no --no-gpg-sign, no git push",
+    "docs/data/pilot-status.json NOT modified (FROZEN TA pilot — read only)",
+    "docs/data/pilot-status-macro-indicators.json NOT modified (CLOSED macro pilot — read only)",
+    "No apps/** source touched",
+    "No agent .md files modified (data schema task — agent-md-factory NOT invoked)",
+    "docs/data/system-map.json queried via jq (system-map ports/agents/zones not hardcoded into schema — service values are <SERVICE:...> placeholders)"
+  ]
+}
