@@ -71,7 +71,7 @@
     "ac_count": 55,
     "wip_limit": 1,
     "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). P1-B3 DONE (69b034a4, 2026-05-24T01:08:00Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (9 scenarios GREEN), G12 streak 3/3 COMPLETE. P1-C DONE (e98179f9, 2026-05-24T01:15:00Z) — AC-1..AC-7 all PASS, Fence-B CLEAR (module/primitive isolation), sandbox 11/11 all-tier green. P1-D (dashboard stub) READY for dispatch — handoff at docs/handoffs/TASK_P1-D.md. WIP=1 sequential — blocking on main router to spawn dev-stock-price for P1-D."],
+    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). P1-B3 DONE (69b034a4, 2026-05-24T01:08:00Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (9 scenarios GREEN), G12 streak 3/3 COMPLETE. P1-C DONE (e98179f9, 2026-05-24T01:15:00Z) — AC-1..AC-7 all PASS, Fence-B CLEAR (module/primitive isolation), sandbox 11/11 all-tier green. P1-D DONE (7329180b, 2026-05-24T02:25:21Z) — AC-1..AC-7 all PASS, G6 dashboard shipped (honest NOT-RUN, SI-2 untouched). P1-E (edit-rerun + env audit) READY for dispatch — handoff at docs/handoffs/TASK_P1-E.md. WIP=1 sequential."],
     "tasks": {
       "P1-A": {
         "id": "P1-A",
@@ -158,15 +158,34 @@
       "P1-D": {
         "id": "P1-D",
         "title": "Dashboard stub: apps/stock-price/dashboard/index.html — 3 panels (primitives, module, microservice), NOT-RUN state",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T01:20:00Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T02:25:21Z",
+        "completedBy": "dev-stock-price",
+        "commit_sha": "7329180b",
+        "signal": "docs/signals/dev-stock-price-p1-d-done-20260523T232521Z.json",
         "handoff": "docs/handoffs/TASK_P1-D.md",
         "ac_count": 7,
+        "ac_verdicts": "AC-1 PASS (file:// standalone), AC-2 PASS (3 panels), AC-3 PASS (honest NOT-RUN), AC-4 PASS (HTML parse + JS clean), AC-5 PASS (creds_grep=0), AC-6 PASS (CSS cloned), AC-7 PASS (sandbox 11/11 green)",
         "blocked_by": "P1-C (DONE 2026-05-24T01:15:00Z)",
         "blocks": "P1-E",
+        "g6_status": "EARNED-PENDING (awaiting G8 honest-red + G9 PO Playwright in P1-E/P1-G; dashboard built, NOT-RUN state honest)",
         "si2_note": "SI-2 fleet dashboard index (docs/dashboards/index.html) is Phase 2 deliverable, triggered at G6 close — NOT in P1-D scope. P1-D owns per-service dashboard only.",
-        "g12_requirement": "Sandbox all-green (all scenarios: B1+B2+B3 primitives + C module) before any card shows GREEN status"
+        "g12_requirement": "Sandbox all-green (all scenarios: B1+B2+B3 primitives + C module) before any card shows GREEN status — SATISFIED before DONE"
+      },
+      "P1-E": {
+        "id": "P1-E",
+        "title": "Edit-rerun handler + env audit (zero DB creds, zero CGO in sandbox env)",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:30:00Z",
+        "readyBy": "pm",
+        "handoff": "docs/handoffs/TASK_P1-E.md",
+        "ac_count": 6,
+        "blocked_by": "P1-D (DONE 2026-05-24T02:25:21Z)",
+        "blocks": "P1-F (optional) and P1-G (QA close-gate)",
+        "g7_track": "Trust track — G7 (edit-JSON-rerun works), G8 (honest-red contract), G12 DoD (sandbox green after rerun)",
+        "description": "G7 trust contract — user edits scenario JSON, reruns sandbox with CGO_ENABLED=0, dashboard reflects new result. Env audit proves zero DB creds / API keys / secrets in sandbox process environment."
       }
     }
   },
