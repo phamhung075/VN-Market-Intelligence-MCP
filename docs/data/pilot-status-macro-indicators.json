@@ -479,7 +479,7 @@
         "qa_verified_at": "2026-05-23T13:17:15Z",
         "qa_cycle": "c282-cycle-44",
         "qa_signal": "docs/signals/qa-p2-a2-macro-GREEN-20260523T131715Z.json",
-        "qa_commit_sha": "PENDING-QA-COMMIT",
+        "qa_commit_sha": "33ff372e",
         "ac_results": "8/8 PASS (AC-1 tag+SHA+parent CLEAN + AC-2 CI job macro-go-lint in workflow + AC-3 fence-a QA-independently-reproduced + AC-4 lint exit 0 regression clean + AC-5 sandbox 5/5 + AC-6 R-1 exit 1 + AC-7 anchor pre+post exit 0 + AC-8 signal 10/10 fields)",
         "g4_flip": "PARTIAL→YES",
         "deliberate_violation_proof": "QA independent reproduction: fence-a depguard fired (EXIT:1) on infrastructure import in pkg/primitive/; post-revert EXIT:0; violation never committed",
