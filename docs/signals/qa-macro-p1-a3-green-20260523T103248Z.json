@@ -1,0 +1,98 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "qa-verdict",
+  "createdAt": "2026-05-23T10:32:48Z",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "task_id": "P1-A3",
+  "task_title": "cmd/sandbox/main.go — sandbox harness CLI",
+  "verdict": "GREEN",
+  "dev_commit": "c76cbe04",
+  "dev_signal_commit": "a0f8a3ea",
+  "ac_results": {
+    "AC-1": {
+      "description": "Three flags present and parseable (-tier, -module, -scenario)",
+      "result": "PASS",
+      "evidence": "go run ./cmd/sandbox --help 2>&1 | grep -c 'tier|module|scenario' => 5 (>= 3). Flags confirmed: -tier (primitive|module|all), -module (module name), -scenario (all|<filepath>). Help output verbatim: -module string / -scenario string / -tier string."
+    },
+    "AC-2": {
+      "description": "Scenario path resolution graceful when directories missing — exits 0 with total=0 pass=0 fail=0 status=OK",
+      "result": "PASS",
+      "evidence": {
+        "tier_primitive": {
+          "stdout": "no scenarios discovered (expected during scaffold phase — P1-D1/D2 will create them) + total=0 pass=0 fail=0 status=OK",
+          "exit_code": 0
+        },
+        "tier_module": {
+          "stdout": "no scenarios discovered (expected during scaffold phase — P1-D1/D2 will create them) + total=0 pass=0 fail=0 status=OK",
+          "exit_code": 0
+        },
+        "tier_all": {
+          "stdout": "no scenarios discovered (expected during scaffold phase — P1-D1/D2 will create them) + total=0 pass=0 fail=0 status=OK",
+          "exit_code": 0
+        }
+      }
+    },
+    "AC-3": {
+      "description": "Pass/fail reporting structure in place — summary line total=N pass=N fail=N status=OK|FAIL; exit 1 for fail>0; stubs have explicit P1-B1 TODO comments",
+      "result": "PASS",
+      "evidence": {
+        "todo_p1_b1_lines": [
+          "L115: // TODO(P1-B1): unmarshal scenario JSON, dispatch to primitive function, compare to expected.",
+          "L121: // TODO(P1-B1): unmarshal scenario JSON, dispatch to module function, compare to expected."
+        ],
+        "exit_1_paths": ["L140", "L146", "L151", "L157", "L197"],
+        "summary_format_confirmed": "fmt.Printf(\"total=%d pass=%d fail=%d status=%s\\n\", total, pass, fail, status) at L194",
+        "status_ok_fail_logic": "status = OK if fail==0, FAIL if fail>0; os.Exit(1) at L197 when fail>0"
+      }
+    },
+    "AC-4": {
+      "description": "Zero env secret reads — grep -E 'FRED_API_KEY|os.Getenv...' returns 0 matches",
+      "result": "PASS",
+      "evidence": "grep -E 'FRED_API_KEY|os\\.Getenv\\(\"FRED|os\\.Getenv\\(\"SECRET|API_KEY|TOKEN|DB_PASSWORD' apps/macro-indicators/cmd/sandbox/main.go => exit 1 (0 matches). File uses no os.Getenv calls whatsoever."
+    }
+  },
+  "additional_checks": {
+    "go_mod_tidy": {
+      "exit_code": 0,
+      "idempotent": true,
+      "note": "no diff produced"
+    },
+    "go_vet": {
+      "command": "go vet ./...",
+      "exit_code": 0
+    },
+    "go_build": {
+      "command": "go build ./cmd/sandbox",
+      "exit_code": 0
+    },
+    "wc_l": {
+      "result": 199,
+      "note": "within handoff target range 150-200"
+    },
+    "anchor_reachable": {
+      "command": "git merge-base --is-ancestor 1776df8e HEAD",
+      "exit_code": 0,
+      "anchor": "1776df8e",
+      "status": "HELD"
+    },
+    "l84_compliance": {
+      "commit_c76cbe04": {
+        "files_staged": ["apps/macro-indicators/cmd/sandbox/main.go"],
+        "file_count": 1,
+        "compliant": true
+      },
+      "commit_a0f8a3ea": {
+        "files_staged": ["docs/signals/dev-macro-p1-a3-done-20260523T102934Z.json"],
+        "file_count": 1,
+        "compliant": true
+      }
+    }
+  },
+  "d1_assessment": "ACCEPTED — handoff target 150-200 governs over dispatch suggestion of <=120; 199 within range",
+  "g12_dod": "NOT_BINDING_scaffold_only — gate activates P1-B1 onward when first primitive is implemented and scenarios are created",
+  "blocking_issues": 0,
+  "ready_for_next_dispatch": true,
+  "next_task_id": "P1-A4"
+}

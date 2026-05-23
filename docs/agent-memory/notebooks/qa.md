@@ -1,5 +1,39 @@
 # QA — Notebook
 
+## c282 cycle-29 · 2026-05-23 · macro P1-A3 sandbox harness CLI verification
+
+**Task:** P1-A3 — cmd/sandbox/main.go sandbox harness (macro-indicators pilot) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-a3-green-20260523T103248Z.json
+dev_commit: c76cbe04
+dev_signal_commit: a0f8a3ea
+```
+
+| AC | Result | Independent Evidence |
+|----|--------|----------------------|
+| AC-1: 3 flags (-tier, -module, -scenario) | PASS | --help grep-count=5 (>=3); all flags verbatim confirmed |
+| AC-2: graceful missing dir — exit 0 | PASS | All 3 tier smoke runs: total=0 pass=0 fail=0 status=OK, exit 0 |
+| AC-3: summary format + exit-1 path + P1-B1 TODOs | PASS | L115+L121 TODO(P1-B1); fmt.Printf at L194; os.Exit(1) at L197 for fail>0 |
+| AC-4: zero env secret reads | PASS | grep exit=1 (0 matches); no os.Getenv in file at all |
+| go mod tidy | PASS | exit 0, idempotent |
+| go vet ./... | PASS | exit 0 |
+| go build ./cmd/sandbox | PASS | exit 0 |
+| wc -l | PASS | 199 lines (within handoff target 150-200) |
+| anchor 1776df8e | PASS | merge-base --is-ancestor → exit 0 |
+| L84 commit-c76cbe04 | PASS | 1 file exactly (cmd/sandbox/main.go CREATE) |
+| L84 commit-a0f8a3ea | PASS | 1 file exactly (signal JSON) |
+
+**D-1 (INFO):** 199 lines — ACCEPTED. Handoff target 150-200 governs. Dispatch suggestion <=120 non-binding.
+**G12 DoD:** NOT_BINDING (scaffold-only, no scenarios exist yet — binds P1-B1 onward).
+**Blocking issues:** 0 — all 4 ACs + all additional checks PASS.
+**NEXT:** pm — dispatch P1-A4 (pkg/ DDD scaffold)
+
+---
+
 ## c282 cycle-28 · 2026-05-23 · macro P1-A2 composition root verification
 
 **Task:** P1-A2 — cmd/server/main.go composition root (macro-indicators pilot) | **Verdict:** GREEN
