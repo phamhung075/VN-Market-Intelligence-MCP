@@ -2,6 +2,41 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-24 — P1-A Sandbox Runner DONE
+
+### What shipped (P1-A)
+
+Sandbox harness CLI (`cmd/sandbox/main.go`) — full flag/discovery/dispatch framework for Phase 1.
+
+**All 5 ACs PASS:**
+- AC-1: Flag parser: -tier (primitive|module|all), -module (stock-price), -scenario (all|filepath)
+- AC-2: Scenario JSON loading from docs/scenarios/stock-price/{primitives,module}/; zero HTTP, zero DB
+- AC-3: Exit 0 on all-pass/no-scenarios, exit non-zero on any failure; per-scenario PASS/FAIL slog output
+- AC-4: grep credential count = 0 PASS
+- AC-5 (R-CGO pre-check): `CGO_ENABLED=0 go build -o ./bin/sp-sandbox ./cmd/sandbox/` exit 0 PASS
+
+**Sandbox dry-run (all modes):** total=0 pass=0 fail=0 status=OK exit 0 (no scenarios yet — P1-B1+ populates)
+
+**Fence checks:**
+- Fence-A (no infra imports in sandbox): PASS — exit 1 (zero matches)
+- Fence-C (no CGO in sandbox): PASS — stdlib-only imports, CGO_ENABLED=0 build authoritative
+
+**go test ./pkg/... -count=1:** 4/4 packages PASS, 0 regressions
+
+**Commit:** `afe3468b` — `feat(stock-price/P1-A): sandbox runner — CGO_ENABLED=0, flag parser, scenario discovery`
+
+**Signal:** `docs/signals/dev-stock-price-p1-a-done-20260524T004600Z.json`
+
+**Scenario dirs created:**
+- `docs/scenarios/stock-price/primitives/` (empty — P1-B1 will populate with 3 JSONs per primitive)
+- `docs/scenarios/stock-price/module/` (empty — P1-C will populate)
+
+**State for P1-B1:**
+- Sandbox framework complete: executePrimitive/executeModule dispatchers ready for case blocks
+- P1-B1 adds `case "price_quote_normalizer"` to executePrimitive dispatcher
+- P1-B1 adds scenario JSON files to docs/scenarios/stock-price/primitives/
+- R-CGO pre-check PASS unblocks P1-B1 dispatch
+
 ## Session 2026-05-23 — P0-SP-5 R-CGO Confirmation CLEAR
 
 ### What shipped (P0-SP-5 binding gate)

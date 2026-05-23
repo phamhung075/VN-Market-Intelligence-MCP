@@ -1,0 +1,68 @@
+{
+  "signal": "dev-stock-price-p1-a-done",
+  "from": "dev-stock-price",
+  "emittedAt": "2026-05-24T00:46:00Z",
+  "type": "task_done",
+  "task_id": "P1-A",
+  "pilot": "stock-price",
+  "phase": "1",
+  "commit_sha": "afe3468b",
+  "status": "DONE",
+
+  "ac_verdicts": {
+    "AC-1": {
+      "verdict": "PASS",
+      "evidence": "Sandbox accepts -tier (primitive|module|all), -module (stock-price), -scenario (all|filepath). Missing flags produce error + flag.Usage() + exit 1."
+    },
+    "AC-2": {
+      "verdict": "PASS",
+      "evidence": "Scenario JSON loaded from docs/scenarios/stock-price/primitives/ (primitive tier) and docs/scenarios/stock-price/module/ (module tier). Zero live HTTP calls, zero SQLite connections. No scenarios exist yet (P1-B1+) — sandbox prints 'no scenarios discovered' and exits 0."
+    },
+    "AC-3": {
+      "verdict": "PASS",
+      "evidence": "Exit 0 when no scenarios found (or all pass). Exit non-zero when any scenario fails. Per-scenario PASS/FAIL summary via slog JSON to stdout. Dry-run output: total=0 pass=0 fail=0 status=OK (all 3 tier modes -tier=primitive / -tier=module / -tier=all)."
+    },
+    "AC-4": {
+      "verdict": "PASS",
+      "evidence": "grep -c 'DB_PATH|STOCK_PRICE_DB|API_KEY|SECRET|TOKEN|PASSWORD' apps/stock-price/cmd/sandbox/main.go = 0 (grep exit 1 = zero matches)"
+    },
+    "AC-5": {
+      "verdict": "PASS",
+      "label": "R-CGO pre-check: PASS",
+      "evidence": "cd apps/stock-price && CGO_ENABLED=0 go build -o ./bin/sp-sandbox ./cmd/sandbox/ — exit code 0",
+      "binary": "apps/stock-price/bin/sp-sandbox (3.4M, stdlib-only, zero CGO imports)"
+    }
+  },
+
+  "ac5_cgo_build_exit_code": 0,
+  "r_cgo_precheck": "PASS",
+
+  "sandbox_status": {
+    "primitive_tier": "GREEN (total=0 pass=0 fail=0 status=OK, exit 0 — no scenarios yet, P1-B1+ will populate)",
+    "module_tier": "GREEN (total=0 pass=0 fail=0 status=OK, exit 0 — no scenarios yet, P1-C+ will populate)",
+    "all_tiers": "GREEN (total=0 pass=0 fail=0 status=OK, exit 0)"
+  },
+
+  "regression_test": {
+    "command": "cd apps/stock-price && go test ./pkg/... -count=1",
+    "result": "4/4 packages PASS — application, domain, infrastructure, interface/http",
+    "regressions": 0
+  },
+
+  "fence_checks": {
+    "fence_a_infra_imports_in_sandbox": "PASS — grep -rn 'pkg/infrastructure|pkg/application|pkg/interface' cmd/sandbox/ = 0 matches (exit 1)",
+    "fence_c_cgo_in_sandbox": "PASS — actual import block contains stdlib only (encoding/json, flag, fmt, log/slog, os, path/filepath). CGO_ENABLED=0 build exit 0 is authoritative proof."
+  },
+
+  "scenario_dirs_created": [
+    "docs/scenarios/stock-price/primitives/ (created, empty — P1-B1 will populate)",
+    "docs/scenarios/stock-price/module/ (created, empty — P1-C will populate)"
+  ],
+
+  "next_task": {
+    "task_id": "P1-B1",
+    "title": "Extract first primitive: price-quote-normalizer + R-CGO gate AC-8",
+    "trigger": "This DONE signal received + AC-5 R-CGO pre-check PASS",
+    "note": "P1-B1 unblocked. PM to dispatch next task per WIP=1 sequencing rule."
+  }
+}
