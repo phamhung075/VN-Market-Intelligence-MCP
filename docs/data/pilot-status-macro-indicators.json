@@ -43,9 +43,11 @@
     }
   },
   "phase1": {
-    "status": "ACTIVE",
+    "status": "READY_FOR_CLOSE_GATE",
     "openedAt": "2026-05-23T10:05:08Z",
     "openedBy": "po cycle-30 (Phase 0 atomic close — Phase 1 dispatch to pm for P1-A1)",
+    "readyAt": "2026-05-23T12:07:18Z",
+    "readyBy": "qa c282-cycle-40 — P1-E2 GREEN (11/11 tasks DONE)",
     "blockedBy": null,
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 1",
     "task_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
@@ -264,25 +266,44 @@
         ]
       },
       {
-        "timestamp": "2026-05-23T115436Z",
+        "timestamp": "2026-05-23T120718Z",
         "task_id": "P1-E2",
-        "status": "DISPATCH",
+        "status": "DONE",
         "handoff": "docs/handoffs/TASK_P1-E2-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-e2-20260523T115436Z.json",
-        "description": "Final Phase 1 task: dashboard edit-rerun handler + env audit (FRED_API_KEY + .env hygiene). User edits scenario JSON, refreshes dashboard → sandbox reruns → card updates. Env audit: grep for secrets must return empty.",
-        "position_in_phase": "11 of 11 (final task)",
+        "signal": "docs/signals/qa-macro-p1-e2-green-20260523T120718Z.json",
+        "description": "Final Phase 1 task: dashboard edit-rerun handler + env audit (FRED_API_KEY + .env hygiene). QA GREEN — 7/7 ACs PASS. Phase 1 COMPLETE (11/11).",
+        "position_in_phase": "11 of 11 (final task — DONE)",
         "critical_path": true,
-        "gates_binding": [
-          "AC-2 env audit (env | grep FRED_API_KEY|API_KEY|SECRET|PASSWORD|DB → 0 matches, BLOCKING)",
-          "AC-4 sandbox regression (all 3 tiers green: 3-2-5 pass counts, BLOCKING)",
-          "AC-5 R-1 determinism propagated (zero math/rand outside tests, BLOCKING)",
-          "AC-6 L84 explicit staging (dashboard/index.html + .gitignore, BLOCKING)"
+        "qa_verdict": "GREEN",
+        "qa_signal": "docs/signals/qa-macro-p1-e2-green-20260523T120718Z.json",
+        "qa_timestamp": "2026-05-23T12:07:18Z",
+        "qa_cycle": "c282-cycle-40",
+        "impl_commit": "12242e45",
+        "dev_signal_commit": "adc0d5ff",
+        "ac_results": "7/7 PASS (AC-1 edit-rerun handler wired + AC-2 env audit 0 matches + AC-3 FRED_API_KEY absent from Go source + AC-4 sandbox 3/3+2/2+5/5 GREEN + AC-5 R-1 determinism clean + AC-6 L84 2 explicit files + AC-7 completion signal valid)",
+        "sandbox_evidence": {
+          "primitive_tier": "total=3 pass=3 fail=0 status=OK exit 0 (QA independent run)",
+          "module_tier": "total=2 pass=2 fail=0 status=OK exit 0 (QA independent run)",
+          "all_tier": "total=5 pass=5 fail=0 status=OK exit 0 (QA independent run)"
+        },
+        "env_audit_result": "0 matches (env scan clean + .go/.html/.json/.md source scan exit 1)",
+        "anchor_check": "1776df8e HELD (exit 0)",
+        "deviations": [
+          {
+            "id": "OBS-1",
+            "severity": "INFO",
+            "description": "TS legacy source files (src/*.ts, __tests__/*.ts) contain FRED_API_KEY references — brownfield zone, out of Go pilot scope. AC-2 grep correctly scoped to .go/.html/.json/.md. Zero real credentials found anywhere.",
+            "ruling": "ACCEPTED"
+          },
+          {
+            "id": "OBS-2",
+            "severity": "INFO",
+            "description": "R-1 grep returns 1 comment-only match in macro_investment_clock.go — pre-existing from P1-B1, accepted at QA cycle-32. Zero new randomization in P1-E2 HTML code.",
+            "ruling": "ACCEPTED (pre-existing, previously accepted)"
+          }
         ],
-        "ac_count": 7,
-        "estimate_hours": 2.5,
-        "depends_on": ["P1-E1"],
-        "unblocks": [],
-        "phase_1_close_gate": true
+        "phase_1_close_gate": true,
+        "phase_1_ready": true
       }
     ],
     "risk_propagation": {

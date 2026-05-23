@@ -1,5 +1,50 @@
 # QA — Notebook
 
+## c282 cycle-40 · 2026-05-23 · macro P1-E2 edit-rerun handler + env audit — FINAL Phase 1 task
+
+**Task:** P1-E2 — Dashboard edit-rerun handler (Option C) + env audit (FRED_API_KEY + .env hygiene) | **Verdict:** GREEN | **Phase 1:** 11/11 COMPLETE
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-e2-green-20260523T120718Z.json
+impl_commit: 12242e45
+dev_signal_commit: adc0d5ff
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: JSON editor pane present | PASS | <textarea class="rerun-json-editor" id="rerun-json-editor"> at lines 900-901 |
+| AC-1: Sandbox command display (correct syntax) | PASS | buildSandboxCmd() at lines 1080-1088: 'go run ./cmd/sandbox -tier=<tier> -module=macro-indicators -scenario=all'. rerun-cmd-code element renders it. |
+| AC-1: Paste-result textarea present | PASS | <textarea class="rerun-paste-area" id="rerun-paste-area"> at lines 907-912 |
+| AC-1: Card RED/GREEN flip JS logic | PASS | applyPastedResult() lines 1168-1222: parses status=(OK\|FAIL), sets cardStatus='green'\|'red', calls setStatus() + renderPrimitivesPanel() + renderModulePanel(). dotClass() maps to CSS dot-green/dot-red. |
+| AC-2: env scan (QA environment) | PASS | env \| grep -E 'FRED_API_KEY\|API_KEY\|SECRET\|PASSWORD\|DB' → empty output |
+| AC-2: source scan (.go/.html/.json/.md) | PASS | grep -rE '...' --include=*.go --include=*.html --include=*.json --include=*.md → exit 1 (0 matches) |
+| AC-3: FRED_API_KEY in Go source | PASS | grep -rE 'FRED_API_KEY' apps/macro-indicators/ --include=*.go → exit 1 (0 matches) |
+| AC-3: .gitignore covers .env* (zone-level) | PASS | apps/macro-indicators/.gitignore lines 5-9: .env / .env.local / .env.test / .env.*.local / .env.production |
+| AC-3: no .env files staged | PASS | git ls-files \| grep '.env' → exit 1 |
+| AC-4: sandbox primitive-tier 3/3 | PASS | total=3 pass=3 fail=0 status=OK exit 0 (QA independent run) |
+| AC-4: sandbox module-tier 2/2 | PASS | total=2 pass=2 fail=0 status=OK exit 0 (QA independent run) |
+| AC-4: sandbox all-tier 5/5 | PASS | total=5 pass=5 fail=0 status=OK exit 0 (QA independent run) |
+| AC-5: R-1 determinism (new P1-E2 code) | PASS | grep math/rand\|rand.Intn\|... --include=*.go --include=*.html → 1 match = comment-only in macro_investment_clock.go (pre-existing P1-B1, accepted cycle-32). Zero matches in new dashboard HTML. |
+| AC-6: L84 commit 12242e45 | PASS | git show 12242e45 --stat: exactly 2 files — apps/macro-indicators/.gitignore (NEW) + apps/macro-indicators/dashboard/index.html (505+, 38-). No -A, no wildcard. |
+| AC-7: dev completion signal | PASS | docs/signals/dev-macro-p1-e2-done-20260523T120000Z.json: all required fields (agent, task_id, status=DONE, impl_commit, ac_results=7/7 PASS, sandbox_evidence, env_audit_result, anchor_check pre+post) |
+| Fence-A: pkg/primitive/ stdlib only | PASS | Only import: 'strings' (stdlib). Test: 'testing'. Zero cross-layer imports. |
+| Fence-B: pkg/module/ primitive-only | PASS | grep app\|infrastructure\|interface imports → exit 1 (0 matches). Self-import macro_signals in test only. |
+| Anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 |
+| No TA files in commit 12242e45 | CLEAR | git show 12242e45 --stat \| grep -i technical-analysis → exit 1 |
+| No CI files touched | CLEAR | .golangci.yml + .github/workflows/ci.yml → exit 1 |
+
+**OBS-1 ACCEPTED:** TS legacy source files (src/*.ts, __tests__/*.ts) contain FRED_API_KEY references — brownfield TS zone, pre-existing, out of Go pilot scope. AC-2 grep scoped to .go/.html/.json/.md correctly. Zero real credentials found.
+**OBS-2 ACCEPTED:** R-1 grep 1 comment-only match — pre-existing from P1-B1, accepted QA cycle-32. Zero new randomization in P1-E2 HTML.
+**Phase 1 COMPLETE:** 11/11 tasks DONE. pilot-status-macro-indicators.json updated: P1-E2.status=DONE + phase1.status=READY_FOR_CLOSE_GATE.
+**G12 Status:** EARNED (3/3 streak: P1-B1 + P1-C1 + P1-E1). Pending PO 12/12 close per Charter §4.5.
+**Blocking issues:** 0 — all 7 ACs + all defensive gates PASS.
+**NEXT:** pm — mark P1-E2 DONE. PO runs Phase 1 exit gate (≤4h time-to-primitive, sandbox all-green, dashboard ≥90%, G12 streak 3/3 EARNED).
+
+---
+
 ## c282 cycle-39 · 2026-05-23 · macro P1-E1 dashboard stub HTML verification
 
 **Task:** P1-E1 — Dashboard stub HTML (3 panels, NOT-RUN state, TA pattern clone) | **Verdict:** GREEN | **G12 Streak:** 3/3 COMPLETE
