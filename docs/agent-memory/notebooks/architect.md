@@ -1,6 +1,47 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 (SI-3 TS fence spike) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 00:26 UTC (P0-SP-1 + P0-SP-6 stock-price) | **Sprint:** fleet-factory-rollout program
+
+## P0-SP-1 + P0-SP-6 cycle (2026-05-24) — stock-price factory Phase 0 deliverables
+
+**Task:** Two sequential Phase 0 deliverables for stock-price factory pilot #3 (fleet pilot 1).
+
+**Brownfield findings (P0-SP-1):**
+- All 4 DDD layers already present and structurally clean. Total Go source LOC: ~734. Single CGO dependency (`mattn/go-sqlite3 v1.14.22`) isolated to `pkg/infrastructure/fetchers.go` L15 only.
+- Domain layer (models.go, ports.go, services.go): ZERO infra imports. services.go uses only `sync` stdlib.
+- Application layer (usecases.go): ZERO infra imports. Imports domain only.
+- Interface layer (router.go): ZERO CGO. Imports application + domain (error type mapping only).
+- Composition root (cmd/server/main.go): imports pkg/infrastructure but does NOT directly import mattn/go-sqlite3.
+- R-CGO verdict: **FEASIBLE** — CGO strictly isolated to one file in infrastructure. Sandbox CGO_ENABLED=0 build viable.
+- Primitive set confirmed: 3 primary (price-quote-normalizer ★★★, tier-fallback-selector ★★★, price-staleness-classifier ★★) + 1 optional (ohlcv-aggregator ★). exchange-code-router deferred (no ticker lookup table exists).
+- Module candidate: `price_resolution` — port interface `TierFetcher{FetchPrice(code string) (*domain.PriceQuote, error)}`.
+- G5a: ResolvePriceService in domain/services.go is the predecessor — defer _deprecated/ move to Phase 2.
+- G5b: **Narrower than expected.** HTTP integration already in place: `fetchStockPrice` + `getPriceHistory` in clients.ts route to port 5000. No direct domain imports in any market-data tool handler. G5b is a Phase 2 routing decision (optional route of priceHistoryTools.ts + tickerIntelligenceTools.ts via Go service).
+
+**Phase-1 plan decisions (P0-SP-6):**
+- 9 tasks (P1-A through P1-G), 55 ACs total.
+- P1-A: sandbox runner (CGO_ENABLED=0 pre-check as AC-5 = hard gate before P1-B1).
+- P1-B1: first primitive (price-quote-normalizer) + R-CGO gate baked in (AC-5/6/7/8). R-CGO GATE is a BLOCKER.
+- P1-B2/B3: 2nd and 3rd primitives (tier-fallback-selector, price-staleness-classifier). R-CGO inherited.
+- P1-C: module stub (price_resolution) — TierFetcher port + composition. Fence-B baked in AC-2.
+- P1-D: dashboard stub — 3-panel standard (primitives + module + microservice).
+- P1-E: edit-rerun + env audit. CGO_ENABLED=0 rerun command explicit in AC-2.
+- P1-F: optional ohlcv-aggregator 4th primitive (flex bucket).
+- P1-G: QA close-gate verification.
+- G12 streak: P1-B1 (#1), P1-B2 (#2), P1-B3 (#3). First 3 sandbox-green tasks.
+- Critical path: P1-A → P1-B1 [R-CGO chokepoint] → P1-B2 → P1-B3 → P1-C → P1-D → P1-E → P1-G.
+- WIP=1 sequential throughout.
+- Key OQ resolved: G5b no mandatory rewire, ohlcv-aggregator optional P1-F, exchange-code-router deferred, no new go.mod deps needed.
+
+**Files authored this cycle (L84 — 4 files):**
+1. `docs/architecture-briefs/2026-05-23-stock-price-factory/p0-brownfield-inventory.md` (NEW — P0-SP-1)
+2. `docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md` (NEW — P0-SP-6)
+3. `docs/signals/architect-p0sp1-p0sp6-done-20260523T222607Z.json` (NEW — completion signal)
+4. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal for PM:** `docs/signals/architect-p0sp1-p0sp6-done-20260523T222607Z.json`
+
+---
 
 ## SI-3 cycle (2026-05-24) — TS ESLint architecture-fence spike
 
