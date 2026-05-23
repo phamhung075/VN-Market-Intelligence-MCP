@@ -25,32 +25,32 @@
   "language": "Go",
   "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; stock-price is natively Go (runtime go1.22+cgo per system-map)",
   "languageLockedAt": "2026-05-22 (parent decision)",
-  "phase": "0",
+  "phase": "1",
 
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "openedAt": "2026-05-23T22:06:04Z",
     "openedBy": "po (fleet pilot-3 charter creation)",
-    "closedAt": null,
-    "closedBy": null,
+    "closedAt": "2026-05-24T00:00:00Z",
+    "closedBy": "pm (P0-SP-4 anchor commit + SSOT update)",
     "owner": "architect + system-auditor + agent-father (+ dev-stock-price for CGO-free sandbox feasibility confirmation)",
     "deliverables": {
       "_note": "Per charter §Phase 0 exit gate. R-CGO confirmation is added to brownfield_inventory scope (stock-price-specific).",
       "pilot_status_ssot": "DONE 2026-05-23T22:06:04Z (this file)",
-      "brownfield_inventory": "PENDING — architect/system-auditor; MUST confirm exact primitive set + module name + G5a/G5b scope + R-CGO (CGO_ENABLED=0 sandbox feasibility)",
-      "bug_inventory_entry": "PENDING — stock_price_baseline block (fallback baselineCycleCount=1.5)",
-      "dev_agent_file": "PENDING — agent-father confirms .claude/agents/dev-stock-price.md (v2026-05-14, exists) factory-readiness (Go primary, G12 DoD, CGO-boundary lazy-load)",
-      "dev_agent_flow_file": "PENDING — .claude/flows/dev-stock-price/main.md with G12 DoD Gate Day-0 + CGO/Fence-A/B/C + pre-revert tag protocol",
-      "phase_1_task_plan": "PENDING — phase-1-task-plan-go.md (atomic tasks, per-task AC, WIP=1, R-CGO gate baked into first-primitive task AC)"
+      "brownfield_inventory": "DONE 2026-05-24T00:00:00Z — commit debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "bug_inventory_entry": "DONE 2026-05-24T00:00:00Z — commit 32d77e60",
+      "dev_agent_file": "DONE 2026-05-24T00:00:00Z — agent-father confirms factory-readiness (Go primary, G12 DoD, CGO-boundary lazy-load)",
+      "dev_agent_flow_file": "DONE 2026-05-24T00:00:00Z — commit 4a04bb96 (G12 DoD Gate Day-0 + CGO/Fence-A/B/C + pre-revert tag protocol)",
+      "phase_1_task_plan": "DONE 2026-05-24T00:00:00Z — commit debba8eaff0724d1fb32fc9d28640201cc32d1cc"
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-24T00:00:00Z",
+      "verification_commit_sha_architect": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "verification_signal": "docs/signals/pm-p0-sp4-anchor-commit-done-20260524T000000Z.json"
     }
   },
 
@@ -258,8 +258,8 @@
   "goalsEarned": 0,
   "_goalsEarned_note": "Running counter of goals with status=YES. Must equal 12 at terminal close.",
 
-  "anchor": "TBD",
-  "_anchor_note": "Frozen-anchor commit SHA for this pilot's contracts (.golangci.yml freeze etc.). Set by dev-stock-price at Phase 0 / first scaffold commit. Once frozen: no retag, no rewrite, no push.",
+  "anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "_anchor_note": "Frozen-anchor commit SHA for this pilot's contracts (.golangci.yml freeze etc.). Set by PM at Phase 0 close (P0-SP-4). Once frozen: no retag, no rewrite, no push.",
 
   "sprintCount": 0,
   "_sprintCount_note": "Optional computed field. Incremented per completed sprint. Used in Scale criterion (≤6).",

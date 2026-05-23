@@ -1,0 +1,116 @@
+{
+  "signal_meta": {
+    "agent": "pm",
+    "task_id": "P0-SP-4",
+    "pilot": "stock-price",
+    "signal_type": "task_completion",
+    "issued_at": "2026-05-24T00:00:00Z",
+    "issued_by": "pm",
+    "cycle": "c282-cycle-54"
+  },
+  "task_summary": {
+    "title": "Set anchor commit + update pilot-status SSOT (PM)",
+    "phase": "0",
+    "status": "DONE",
+    "duration_estimate": "1h",
+    "owner": "pm"
+  },
+  "anchor_commit": {
+    "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+    "anchoredAt": "2026-05-24T00:00:00Z",
+    "anchoredBy": "pm",
+    "description": "Phase 0 baseline anchor — all 5 Phase 0 deliverables landed and committed. Frozen for subsequent contract enforcement (G4 fence freeze, pre-revert tags, R-CGO confirmation proof).",
+    "ancestor_check": "PASS (git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD exit 0)",
+    "freeze_discipline": "No retag, no rewrite, no force-push forward from this anchor. Binding until Phase 0 close-gate architect signal."
+  },
+  "ssot_update": {
+    "ssot_path": "docs/data/pilot-status-stock-price.json",
+    "ssot_valid": true,
+    "jq_verify": "exit 0",
+    "fields_updated": [
+      "anchor (TBD → debba8eaff0724d1fb32fc9d28640201cc32d1cc)",
+      "phase (0 → 1)",
+      "phase0.status (OPEN → CLOSED)",
+      "phase0.closedAt (null → 2026-05-24T00:00:00Z)",
+      "phase0.closedBy (null → pm)",
+      "phase0.deliverables.* (all PENDING → DONE with commit SHAs)",
+      "phase0.exit_gate.all_deliverables_landed (false → true)",
+      "phase0.exit_gate.exit_gate_status (OPEN → CLOSED)",
+      "phase0.exit_gate.verification_commit_sha_architect (null → debba8eaff0724d1fb32fc9d28640201cc32d1cc)"
+    ]
+  },
+  "prerequisite_verification": {
+    "P0-SP-1_brownfield_inventory": {
+      "commit_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "verified": true,
+      "description": "brownfield inventory + exact primitive set + module name + G5a/G5b scope + R-CGO feasibility confirmed"
+    },
+    "P0-SP-2_bug_inventory": {
+      "commit_sha": "32d77e60",
+      "verified": true,
+      "description": "bug-inventory stock_price_baseline entry (1 bug in 60d, fallback baselineCycleCount=1.5)"
+    },
+    "P0-SP-3_agent_flow": {
+      "commit_sha": "4a04bb96",
+      "verified": true,
+      "description": "dev-stock-price flow with G12 DoD gate + CGO/Fence-A/B/C + pre-revert tag protocol"
+    },
+    "P0-SP-5_R_CGO_gate": {
+      "commit_sha": "e9da9a7c",
+      "verdict": "CLEAR",
+      "verified": true,
+      "description": "R-CGO confirmation — sandbox stub compiles + runs under CGO_ENABLED=0"
+    },
+    "P0-SP-6_phase_1_task_plan": {
+      "commit_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "verified": true,
+      "description": "phase-1-task-plan-go.md (9 tasks, 55 ACs, WIP=1, R-CGO gate baked into first-primitive task AC)"
+    }
+  },
+  "acceptance_criteria": {
+    "AC-1_current_commit_sha_recorded": {
+      "status": "PASS",
+      "evidence": "git rev-parse HEAD = debba8eaff0724d1fb32fc9d28640201cc32d1cc"
+    },
+    "AC-2_update_pilot_status_ssot": {
+      "status": "PASS",
+      "evidence": "docs/data/pilot-status-stock-price.json updated: anchor field set, phase0.exit_gate.verification_commit_sha_architect set, jq . exits 0"
+    },
+    "AC-3_record_anchor_in_pm_notebook": {
+      "status": "PASS",
+      "evidence": "docs/agent-memory/notebooks/pm.md appended (cycle-54 entry, <200L)"
+    },
+    "AC-4_no_source_code_changes": {
+      "status": "PASS",
+      "evidence": "git diff --stat shows ONLY: docs/data/pilot-status-stock-price.json + docs/agent-memory/notebooks/pm.md + docs/signals/pm-p0-sp4-anchor-commit-done-*.json"
+    },
+    "AC-5_anchor_verification": {
+      "status": "PASS",
+      "evidence": "git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD exits 0"
+    }
+  },
+  "hard_gates": {
+    "sha_recorded_40_char_hex": true,
+    "json_valid": true,
+    "ancestor_check_pass": true,
+    "all_gates_pass": true
+  },
+  "phase_transition": {
+    "phase_before": "0",
+    "phase_after": "1",
+    "exit_gate_status": "CLOSED",
+    "ready_for_phase_1": true,
+    "next_task": "dev-stock-price receives phase-1-task-plan with 9 tasks; WIP=1 enforced"
+  },
+  "staging_info": {
+    "force_add_required": true,
+    "reason": ".gitignore:5 data/ rules — git add -f docs/data/pilot-status-stock-price.json",
+    "explicit_file_per_l84": [
+      "docs/data/pilot-status-stock-price.json",
+      "docs/agent-memory/notebooks/pm.md",
+      "docs/signals/pm-p0-sp4-anchor-commit-done-20260524T000000Z.json"
+    ]
+  },
+  "commit_message": "chore(pm/stock-price): P0-SP-4 anchor commit + SSOT — Phase 0 complete (5/5 deliverables)",
+  "notes": "Anchor discipline begins immediately: no retag, no rewrite, no force-push from debba8eaff0724d1fb32fc9d28640201cc32d1cc forward until Phase 0 close-gate architect signal lands. Phase 1 dispatch to dev-stock-price next. WIP=1 cap enforced."
+}
