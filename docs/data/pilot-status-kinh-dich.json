@@ -1,0 +1,298 @@
+{
+  "_schema_meta": {
+    "type": "pilot-status",
+    "schema_version": "1.0",
+    "schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, agent-father 2026-05-23T22:01:07Z)",
+    "instantiated_by": "architect (kinh-dich pilot-4 charter cycle 2026-05-24)",
+    "instantiated_at": "2026-05-24T00:00:00Z",
+    "shape": "macro v2.0 field shape — all three language fields, closedAt/closedBy/closureSignal/closureDecisionDoc, openedAt/openedBy, goalsEarned, constraints_binding_day_0, lessons_baked_in"
+  },
+
+  "pilot": "kinh-dich-service",
+  "charterRef": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
+  "charterVersion": "2.0",
+  "status": "ACTIVE",
+  "_status_enum": "Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision.",
+  "openedAt": "2026-05-24T00:00:00Z",
+  "openedBy": "architect (charter cycle 2026-05-24 — po-pilot4-kinh-dich-open-20260523T223738Z.json authorization)",
+  "closedAt": null,
+  "closedBy": null,
+  "closureSignal": null,
+  "closureDecisionDoc": null,
+  "sprintKickoff": "2026-05-24",
+  "sprintDeadline": "2026-07-05",
+  "deadline": "kickoff + 6 sprints",
+  "language": "TypeScript",
+  "languageLockSource": "docs/signals/po-pilot4-kinh-dich-open-20260523T223738Z.json — kinh-dich is natively TS/Bun (language_locked: true); no rewrite step; pilot-charter.md §Language Lock",
+  "languageLockedAt": "2026-05-24",
+  "phase": "0",
+  "_phase_note": "Starts '0' (Phase 0 open). Do not use DONE/ACTIVE here — use top-level status.",
+
+  "phase0": {
+    "status": "OPEN",
+    "_status_enum": "Allowed values: OPEN | CLOSED",
+    "openedAt": "2026-05-24T00:00:00Z",
+    "openedBy": "architect (charter cycle 2026-05-24)",
+    "closedAt": null,
+    "closedBy": null,
+    "owner": "architect + system-auditor + agent-father (+ dev-kinh-dich R-FENCE feasibility confirmation)",
+    "deliverables": {
+      "pilot_status_ssot": "DONE 2026-05-24T00:00:00Z (this file — architect charter cycle)",
+      "brownfield_inventory": "PENDING (docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md)",
+      "bug_inventory_entry": "PENDING (docs/data/bug-inventory.json kinh_dich_baseline block)",
+      "dev_agent_file": "PENDING (.claude/agents/dev-kinh-dich.md factory-mode confirmation — agent-father)",
+      "dev_agent_flow_file": "PENDING (.claude/flows/dev-kinh-dich/main.md G12 DoD Gate + Fence rules + pre-revert tags — agent-father)",
+      "phase_1_task_plan": "PENDING (docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md)"
+    },
+    "exit_gate": {
+      "all_deliverables_landed": false,
+      "pilot_status_phase_0_fields_populated": true,
+      "no_code_in_service_src_primitive_yet": true,
+      "no_code_in_service_src_module_yet": true,
+      "exit_gate_status": "OPEN",
+      "closedAt": null,
+      "verification_commit_sha_architect": null,
+      "verification_signal": null
+    }
+  },
+
+  "phase1": {
+    "_note": "Block stubbed until Phase 0 closes. Expand on Phase 0 exit.",
+    "status": "NOT-STARTED",
+    "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
+    "openedAt": null,
+    "openedBy": null,
+    "gateVerdict": null,
+    "gateVerifiedAt": null,
+    "gateVerifiedBy": null,
+    "gateCommit": null,
+    "gateDecisionDoc": null,
+    "gateSignal": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
+    "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (PENDING Phase 0 delivery)",
+    "wip_limit": 1,
+    "progress_notes": []
+  },
+
+  "phase2": {
+    "_note": "Block stubbed until Phase 1 gate passes.",
+    "status": "NOT-STARTED",
+    "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
+    "openedAt": null,
+    "openedBy": null,
+    "closedAt": null,
+    "closedBy": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
+    "taskPlan": null,
+    "taskCount": null,
+    "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
+    "wip_limit": 1,
+    "tasks": {}
+  },
+
+  "goals": [
+    {
+      "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
+      "id": "G1",
+      "track": "A",
+      "title": "Primitives ship with scenarios",
+      "status": "TBD",
+      "_status_enum": "Allowed values: TBD | IN-PROGRESS | YES | NO | PARTIAL | DEFER. Flipped to YES only when all AC pass and evidence is locked. PO-only authorship per Charter §4.5.",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "3-5 TypeScript primitives in src/primitive/; each has ≥3 scenarios (golden + edge + failure). Candidates: hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer. dev-kinh-dich confirms exact set in Phase 0. grep src/primitive/ for infrastructure imports must return 0.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G2",
+      "track": "A",
+      "title": "Module composes primitives via ports",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "One module: src/module/reading_composer/. Port: MarkovPort (infra provides SQLite impl, injected by composition root, never directly imported by module). Module must import zero infrastructure. Has ≥1 multi-primitive scenario (full KinhDichReading story: 6 scores → complete reading). grep src/module/reading_composer/ for src/infrastructure must return 0.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G3",
+      "track": "A",
+      "title": "Microservice has clean composition root",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "src/index.ts ≤80 lines; OpenAPI YAML present in src/interface/; zero domain-op grep (computeReading/classifyNguHanh/resolveHexagram/encodeHaos must not appear in index.ts). Port = 5005 (internal == external) per system-map.json — never hardcoded.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G4",
+      "track": "A",
+      "title": "Architecture fence enforced (offline ESLint boundaries evidence)",
+      "_title_note": "TS service: ESLint fence per SI-3 Option A (eslint-plugin-boundaries v6.0.2). NOT Go depguard. Spec LOCKED at charter v1 — SI-3 §5 'spec is final at charter v1'.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Fence tool: eslint-plugin-boundaries (Option A) in apps/kinh-dich-service/eslint.config.mjs. devDependencies: eslint + eslint-plugin-boundaries. CI command: bunx eslint src/ --max-warnings 0. Pre-revert tag: kinh-dich-pre-ci. Deliberate-violation protocol: inject Fence-A import in src/primitive/hexagram-resolver/index.ts → non-zero exit + 'Fence-A' in output → revert → exit 0 + git clean → violation NEVER committed. R-FENCE gate: AC-4b proof must succeed on real .js-suffixed ESM import style. Fallback if R-2 bites: add @typescript-eslint/parser (5-min Option-A internal fix). Full template: charter §G4 eslint.config.mjs block.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G5",
+      "track": "A",
+      "title": "Old service code deleted + HTTP rewire",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Port = 5005 (internal == external) per system-map.json. G5a: superseded domain/services.ts logic moved to src/_deprecated/ (or deleted under kinh-dich-pre-delete tag). G5b: MCP tool handlers confirmed routing HTTP to port 5005 with zero direct domain imports — dev-kinh-dich confirms exact tools in Phase 0. G5c: grep TODO.*migrat = 0. Pre-delete tag: kinh-dich-pre-delete.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track B — Dashboard Trust (G6-G9). User-facing trust layer: honest rendering, zero-credential sandbox, user confirmation.",
+      "id": "G6",
+      "track": "B",
+      "title": "Three-level dashboard renders from JSON traces",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Dashboard path: apps/kinh-dich-service/dashboard/index.html. 3 panels: primitives (3-5 cards) + module (reading_composer card) + microservice (service composition card). file:// works with zero network calls and zero external API calls. Renders from scenario trace JSON. NOTE: SI-2 fleet index (docs/dashboards/index.html) is stock-price's G6 deliverable — do NOT claim or touch it here.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G7",
+      "track": "B",
+      "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Env audit: env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD' returns empty. Sandbox runner: bun run sandbox / bunx ts-node sandbox/ (or equivalent). Rerun handler invokes sandbox against edited scenario JSON. Zero SQLite connection in primitive/module execution path (hexagram logic is pure compute). No KINH_DICH_DB_PATH or equivalent in sandbox env.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G8",
+      "track": "B",
+      "title": "Red/green status is honest",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Test A = deliberate corruption of golden scenario (e.g. flip expected hexagram number in hexagram-resolver golden, or flip expected dynamic value in ngu-hanh-classifier golden) → dashboard RED, diff captured. Test B = known-good golden → dashboard GREEN, diff null. Both proven before G8 grades YES. Pattern identical across all pilots.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G9",
+      "track": "B",
+      "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
+      "_title_note": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over from TA cycle-19 + macro cycle-53.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Path A: user verbal YES to 'Can you tell from this dashboard whether kinh-dich hexagram resolution is working correctly?' recorded in docs/po-decisions/<date>-g9-kinh-dich-user-confirmation.md. Path B (default): PO Playwright + chromium-headless-shell against file://apps/kinh-dich-service/dashboard/index.html via Terminal.app TCC-stage (L87). Acceptance: ZERO console errors / pageerrors / requestfailed, all 3 panel cards rendered, NOT-RUN status honestly displayed.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track C — AI-Fixability (G10-G12). Proves the agent loop can self-correct without human intervention.",
+      "id": "G10",
+      "track": "C",
+      "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Baseline: docs/data/bug-inventory.json kinh_dich_baseline.baselineCycleCount (fallback 1.5 if <2 bugs in 60d window). max_cycles_allowed=2. Inject 1 deliberate single-literal bug in a primitive (e.g., wrong threshold constant in hao-encoder: LAO_DUONG_THRESHOLD = 0.85 instead of 0.75, or flipped comparison in reading-scorer). Measure dev-kinh-dich cycles to GREEN.",
+      "cycle_count": null,
+      "max_cycles_allowed": 2,
+      "phase2Bucket": null
+    },
+    {
+      "id": "G11",
+      "track": "C",
+      "title": "Regression alarm bell works",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "2-trial coupling-proof (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix; verify ≥1 coupled scenario RED + single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Outcome-(a) × 2 = PASS.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G12",
+      "track": "C",
+      "title": "Dev-kinh-dich agent flow requires dashboard-green before done (3-task streak)",
+      "_title_note": "The dev-kinh-dich flow DoD gate (sandbox-green-before-RETURN) must be baked Day 0 in Phase 0 (agent-father flow file deliverable). Streak: 3 consecutive dev tasks shipped only after sandbox-green evidence pasted into handoff.",
+      "status": "TBD",
+      "_status_candidacy": "May be held as EARNED-PENDING per Charter §4.5 once streak is complete. PO flips YES only at 12/12 terminal atomic close.",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Streak tasks = first-primitive task + module-stub task + dashboard-stub task (Phase 1 B/C/D bucket pattern). Rule effective after Phase 0 agent-father flow commit.",
+      "phase2Bucket": null,
+      "g12Streak": {
+        "required": 3,
+        "completed": 0,
+        "streakComplete": false,
+        "completedAt": null,
+        "tasks": [],
+        "ruleEffectiveAfter": null
+      }
+    }
+  ],
+
+  "decisionMatrix": {
+    "_authorship_rule": "PO-only per Charter §Constraints + §4.5. Populated ONLY after 12/12 G-goals reach terminal grade. Atomic with last G-goal flips in same commit. NO partial population. NO pre-filling before 12/12. Block stays present-but-empty (TBD) the entire pilot until terminal.",
+    "_criteria_source": "Charter §Decision Matrix derivation: Speed = G10 + G11; Trust = G9 (PASS) + G8; Scale = all 12 goals YES + sprintCount ≤ 6.",
+    "speed": "TBD",
+    "_speed_note": "YES if G10=YES AND G11=YES. Apply mechanically — no PO discretion.",
+    "trust": "TBD",
+    "_trust_note": "YES if G9=YES (PASS grade, not PARTIAL) AND G8=YES.",
+    "scale": "TBD",
+    "_scale_note": "YES if all 12 G-goals YES AND sprintCount ≤ 6.",
+    "verdict": "TBD",
+    "_verdict_enum": "TBD until matrix terminal. Then one of: scale | rescope | stop-MVR. Derived mechanically: 3×YES → scale; 2×YES → rescope; 0-1×YES → stop-MVR.",
+    "populatedAt": null,
+    "populatedBy": null,
+    "populatedInCommit": null,
+    "criteriaApplication": {
+      "speed": null,
+      "trust": null,
+      "scale": null
+    },
+    "outcome": null
+  },
+
+  "verdict": "TBD",
+  "_verdict_note": "Mirrors decisionMatrix.verdict. TBD during ACTIVE. Set to scale | rescope | stop-MVR at terminal close.",
+
+  "goalsEarned": 0,
+  "_goalsEarned_note": "Running counter of goals with status=YES. Incremented by whoever flips each goal. Must equal 12 at terminal close.",
+
+  "constraints_binding_day_0": [
+    "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push of source/CI changes (local-only; user owns push)",
+    "All work on main (NO branches per CLAUDE.md)",
+    "SSOT: one active dispatch per task",
+    "Anchor discipline: once frozen (eslint.config.mjs freeze, pre-revert tags), no retag/rewrite/push",
+    "Charter §4.5 matrix-authorship rule: PO-only, atomic with 12/12 terminal",
+    "SI-2 ownership: do NOT touch docs/dashboards/index.html (stock-price's G6 deliverable)",
+    "R-FENCE fence tool: eslint-plugin-boundaries (Option A) exclusively — no Go depguard, no Option C",
+    "System facts via jq on system-map.json — never hardcode port/zone/agent",
+    "Notebook + signal hygiene (agent notebook ≤200L; signals {agent}-{ISO}.json)"
+  ],
+
+  "lessons_baked_in": [
+    "L1: Language locked Day 0 = TypeScript/Bun (natively TS, no rewrite step)",
+    "L2: G4 offline ESLint boundaries evidence primary (pilot-scoped, no whole-project CI noise)",
+    "L3: Status enum strict — ACTIVE|DONE|FAILED only; auto-FAILED on G9-blocked deadline",
+    "L4: decisionMatrix PO-only, atomic with 12/12 terminal — no partial population",
+    "L5: Pre-revert tags Day 0 — kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject",
+    "L6: G9 Playwright short-circuit Day-0 default — equal weight to user verbal",
+    "L7: SSOT + L84 + anchor discipline Day 0",
+    "L-FENCE: R-FENCE per-service gate — eslint-plugin-boundaries AC-4b proof must produce non-zero exit + Fence-A in output on real .js-suffixed ESM import style; 5-min in-Option-A fallback if R-2 bites (NOT Option C)"
+  ]
+}

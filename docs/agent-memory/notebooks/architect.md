@@ -1,6 +1,39 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-23 22:33 UTC (P0-EXIT-GATE stock-price verification) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 00:00 UTC (kinh-dich pilot-4 charter v2.0 + SSOT) | **Sprint:** fleet-factory-rollout program
+
+## kinh-dich pilot-4 charter cycle (2026-05-24T00:00Z) — pilot-4 Day 0
+
+**Task:** Draft kinh-dich pilot-4 charter v2.0 and instantiate SSOT. Authorization: `po-pilot4-kinh-dich-open-20260523T223738Z.json`. Gate conditions met: SI-3 FINAL + stock-price cleared Phase 0.
+
+**Service facts (jq verified):** port 5005 (internal==external), zone apps/kinh-dich-service, language ts, runtime bun, specialist dev-kinh-dich.
+
+**Brownfield scan (Day 0):**
+- All 4 DDD layers in src/: domain/, application/, infrastructure/, interface/ + composition root src/index.ts.
+- NO src/primitive/, NO src/module/, NO sandbox/, NO dashboard/ — RED verdict, correct for Phase 0.
+- domain/services.ts is the decomposition target: computeReading() (full reading orchestration) + classifyNguHanh() (exported) + 5 internal helpers (resolveHexagram, encodeHaos, computeHoQue, computeBienQue, extractOutcomeScore/TrendScore/majorityVote). Zero infra imports — pure compute.
+- Embedded hexagram library (TRIGRAM_LINES, QUE_META 64 entries, QUE_DATA 64 entries) inside domain/services.ts.
+- No ESLint config exists — clean slate for SI-3 Option A.
+- package.json: dependencies={hono}, devDependencies={bun-types, typescript} — no eslint yet.
+- Zero CGO/SQLite dependency in primitive/module path — naturally clean for G7 zero-creds.
+
+**Primitive candidates confirmed:** hexagram-resolver (resolveHexagram), hao-encoder (classifyHao+encodeHaos), ngu-hanh-classifier (classifyNguHanh — already exported), reading-scorer (extractOutcomeScore+TrendScore+majorityVote), nuclear-hexagram-computer (computeHoQue+computeBienQue). Dev-kinh-dich confirms exact 3-5 subset in Phase 0.
+
+**G4 transcription:** SI-3 §5 carried VERBATIM with <svc>→kinh-dich-service. Fence tool = eslint-plugin-boundaries (Option A) in eslint.config.mjs. AC-4a/4b/4c verbatim. Deliberate-violation path = src/primitive/hexagram-resolver/index.ts (real primitive, will exist at G4 time). G4 LOCKED at charter v1 (SI-3 §5 "spec is final at charter v1").
+
+**R-FENCE gate:** novel-tooling risk (first TS service exercising eslint-plugin-boundaries). R-2 risk (.js-suffixed ESM imports) documented in charter §R-FENCE Boundary Clause. Phase-0/Phase-1 gate = AC-4b deliberate-violation proof. Fallback = add @typescript-eslint/parser (5-min in-Option-A, NOT Option C).
+
+**SI-2 ownership:** confirmed NOT kinh-dich's. Charter §G6 + SSOT G6.calibration explicitly state SI-2 = stock-price's G6 deliverable. kinh-dich G6 = apps/kinh-dich-service/dashboard/index.html only.
+
+**Files authored this cycle (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` (NEW — charter v2.0)
+2. `docs/data/pilot-status-kinh-dich.json` (NEW — SSOT Day 0, requires git add -f)
+3. `docs/signals/architect-kinh-dich-charter-draft-done-20260524T000005Z.json` (NEW — PO ratification signal)
+4. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal for PO ratification:** `docs/signals/architect-kinh-dich-charter-draft-done-20260524T000005Z.json`
+
+---
 
 ## P0-EXIT-GATE verification cycle (2026-05-23T22:33Z) — stock-price factory Phase 0
 
