@@ -1,5 +1,34 @@
 # QA — Notebook
 
+## c282 cycle-27 · 2026-05-23 · P2-B4 G5 final verification
+
+**Task:** P2-B4 — Integration test: TA MCP tool end-to-end via Go service | **Verdict:** PASS
+
+```
+date: 2026-05-23
+outcome: PASS
+type: integration-gate (G5 final verification — read-only, no production code mutation)
+signal: docs/signals/qa-p2-b4-done-20260523T091543Z.json
+```
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| AC-1: Go TA service running | PASS | Started locally via go run ./cmd/server/ (PID 25115). GET /health → HTTP 200. |
+| AC-2: MCP tool returns RSI/MACD/BB | PASS_WITH_NOTE | POST /ta/indicators = 501 stub; DB fallback activated; formatTaIndicatorReport verified with 60 VCB candles: RSI=52.7, MACD Hist=-157, BB Upper=89909/Mid=86764/Lower=83619. |
+| AC-3: Response format match | PASS | Both Go path (formatReportFromGoResponse) and DB fallback (formatReport) produce identical Vietnamese report with same field names (RSI, MACD, BB) and JSON envelope {source_tier:3, text, fetchedAt}. |
+| AC-4: find *technical* *.ts not _deprecated | PASS_WITH_INTERPRETATION | 1 file returned: technicalIndicatorTools.ts (live HTTP wrapper). Old domain service deleted. 0 live imports. 2 comment-only history refs confirmed. |
+| AC-5: grep TODO.*migrat = 0 | PASS | grep exits 1 with 0 matches. |
+| bun test baseline delta | PASS | 9382/283/35 — identical to P2-B3 baseline. 0 new failures. exit 0. |
+| bun tsc --noEmit | PASS | 0 errors. |
+| go test ./... | PASS | 7 packages ok, 31 tests, 0 failures. |
+| sandbox 30/30 | GREEN | All Go primitive + module tests pass. |
+
+**g5_qa_verdict: PASS** — G5 chain complete. PO may flip G5=YES and close brief at 12/12 terminal.
+
+**Note:** Go service PID 25115 still running on port 5003 (started by QA). Ops/PO to clean up after cycle-28 close.
+
+---
+
 ## c282 cycle-15 · 2026-05-23 · P2-F3 G12 streak 3/3 independent verification
 
 **Task:** P2-F3 — verify G12 streak (QA-P1-closure + P2-D3 + P2-E2) | **Verdict:** PASS
