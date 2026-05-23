@@ -1,5 +1,62 @@
 # PM — Notebook
 
+## c282 cycle-51 · 2026-05-23T164802Z
+
+**Status:** P2-F1 CLOSED (QA GREEN — G8 honest-red proof PASS, 5/5 ACs, hard gates all PASS) → P2-C1 DISPATCHED (G9 PO Playwright Path B, no user async-wait, 30m, 4 ACs, po owner). QA verified P2-F1 at 2026-05-23T16:45:02Z: 5/5 AC PASS (Test A 2 corruptions + exit non-zero + dashboard RED + restore, Test B all-golden exit 0 + all-GREEN, AC-3 generalization 2 primitives, AC-4 no residual mutations, AC-5 G8 summary). PM re-verified all 6 hard gates pre-cycle (anchor 1776df8e held exit 0, R-1 exit 1 zero matches, Fence-B/C exit 1 each, scenario dir clean empty, sandbox 20/20 exit 0). PM closed P2-F1 in SSOT (status DONE, goals.G8 flipped TBD→YES, added qaSignal/flippedAt/evidence, goalsEarned 5→6). PM created 2 signals: pm-cycle51-p2-f1-closed-g8-FLIPPED-20260523T164802Z.json (close + G8 flip + hard gates re-verified) + pm-cycle51-dispatch-po-p2-c1-20260523T164802Z.json (G9 dispatch, Path B default, Charter §G9 TA cycle-19 lesson L6, no user wait). PM created TASK_P2-C1-macro.md handoff (4 ACs: Playwright headless, zero console/page/network errors, all 3 panels + status honesty, PO decision doc). Updated pilot-status SSOT: phase2.activeTask=P2-F1→P2-C1, added P2-F1 task entry (DONE), goalsEarned 5→6, goals[G8].status=YES + verified_at/verifiedBy/evidence/flippedAt, decisionMatrix UNTOUCHED per §4.5 (PO-only at 12/12 terminal). Updated PM notebook cycle-51 entry. WIP=1 enforced (po on P2-C1 only). Anchor 1776df8e verified held pre+post. Single atomic commit: `chore(pm/c282-cycle-51): atomic close P2-F1 macro-indicators + flip G8=YES (6/12) + dispatch P2-C1 (po G9 Playwright trust)`.
+
+### P2-F1 Closure Verified (Cycle c282-cycle-51 — G8 Honest-Red Complete)
+
+- **Task ID:** P2-F1 (critical path task after P2-G1)
+- **Completion signal:** `docs/signals/qa-p2-f1-macro-GREEN-20260523T164502Z.json` ✓
+- **QA verdict:** GREEN (5/5 ACs PASS) ✓
+- **AC results:**
+  - AC-1: Test A Corruption 1 (indicatorName='') → exit 1 + dashboard RED + restore ✓
+  - AC-2: Test B all-golden → exit 0 + all-GREEN ✓
+  - AC-3: Test A Corruption 2 (vndDepositRate=-999.0) → exit 1 + dashboard RED + restore ✓
+  - AC-4: No residual mutations (git diff empty, git status clean) ✓
+  - AC-5: G8 summary (RED on corrupt, all-GREEN on golden, no false positives) ✓
+- **Hard gates (PM re-verified at HEAD):**
+  - Anchor 1776df8e held: exit 0 ✓
+  - R-1 deterministic: exit 1 (0 matches) ✓
+  - Fence-B module clean: exit 1 × 2 checks ✓
+  - Fence-C infra clean: exit 1 ✓
+  - Scenario dir clean: git diff empty ✓
+  - Sandbox all-tier green: total=20 pass=20 fail=0 status=OK ✓
+- **Milestone:** G8 terminal complete. Dashboard honesty proven (2-corruption + all-golden patterns). Ready to flip YES.
+
+### P2-C1 Task Context (Dispatch to po)
+
+- **Task ID:** P2-C1 (critical path, G9 verification)
+- **Title:** G9 PO Playwright Short-Circuit (Path B Default)
+- **Owner:** po
+- **Path:** Path B (PO Playwright headless, no user async-wait — Charter §G9 L6 TA cycle-19 precedent)
+- **Estimate:** 30 minutes
+- **ACs:** 4 (Playwright headless execution, zero console/page/network errors, all 3 panels + status honesty, PO decision doc)
+- **WIP:** 1/1 (po on P2-C1)
+- **Blocks:** P2-D1 (bug injection)
+- **Depends on:** P2-F1 ✓ (DONE at 16:45:02Z)
+- **Charter ref:** docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md §G9
+
+### PM Actions Completed (Cycle c282-cycle-51)
+
+1. **Verified P2-F1 completion** — QA signal qa-p2-f1-macro-GREEN-20260523T164502Z.json received, 5/5 ACs PASS, 2-corruption test + all-golden test + generalization + no residuals + G8 summary, hard gates all PASS ✓
+2. **Re-verified all 6 hard gates at HEAD** — anchor 1776df8e held (exit 0), R-1 exit 1, Fence-B/C exit 1 each, scenario clean (empty), sandbox 20/20 exit 0 ✓
+3. **Updated pilot-status SSOT atomically** — goals[G8].status TBD→YES + flippedAt/evidence, goalsEarned 5→6, phase2.activeTask P2-F1→P2-C1, added P2-F1 task entry (DONE with qa_signal/completed_at/completed_by) ✓
+4. **Created P2-F1 close signal** — pm-cycle51-p2-f1-closed-g8-FLIPPED-20260523T164802Z.json with G8 flip rationale + hard gates re-run + goalsEarned 5→6 + decisionMatrix UNTOUCHED note ✓
+5. **Created P2-C1 dispatch signal + handoff** — pm-cycle51-dispatch-po-p2-c1-20260523T164802Z.json + TASK_P2-C1-macro.md with 4 ACs, Path B context, TA cycle-19 precedent, Charter §G9 reference ✓
+6. **Updated PM notebook** — cycle-51 entry with closure + dispatch summary ✓
+
+### Next Steps
+
+- **PO dispatch:** TASK_P2-C1-macro.md + dispatch signal for Playwright headless verification
+- **WIP enforcement:** po on P2-C1 only (1/1)
+- **Hard gates:** Playwright executable available, sandbox operational, zero code changes (verification-only)
+- **After P2-C1 DONE + po decision doc:** PM dispatches P2-D1 (QA bug injection pre-tag)
+- **G12 status:** Remains EARNED-PENDING per Charter §4.5 (flip to YES only at 12/12 terminal + PO close)
+- **Phase 2 progress:** 8/14 tasks DONE (P2-B1, P2-A1, P2-A2, P2-B2, P2-B3, P2-X1, P2-X2, P2-X3, P2-G1, P2-F1), 5 remaining (P2-C1 in flight, P2-D1..E1 queued)
+
+---
+
 ## c282 cycle-42 · 2026-05-23T125400Z
 
 **Status:** P2-B1 CLOSED (R-3 UNBLOCKED GREEN) → P2-A1 DISPATCHED (G4 fence rules). QA signal received (7d424a29) confirming P2-B1 all 7 ACs PASS: R-1 hard gate clear (exit 1), G12 sandbox all-tier green exit 0, anchor 1776df8e held, forbidden zones clean, env audit clean, OBS-cmd-router-rewire accepted as forward work. PM closed P2-B1 in SSOT (status DONE, qa_commit 7d424a29, closed_at/closed_by tracked). Next task per critical path: P2-A1 (.golangci.yml Fence-A/B/C depguard config, 45m estimate, 5 ACs, dev-macro-indicators owner). P2-A1 blocked-by P2-B1 DONE (now clear); blocks P2-A2. Created TASK_P2-A1-macro.md handoff with full AC spec, hard gates, implementation guidance. Created dispatch signal pm-cycle42-dispatch-dev-macro-indicators-p2-a1-20260523T125400Z.json with AC summary, hard gates, sequencing note, critical path context. Updated SSOT: phase2.activeTask=P2-A1, progress_notes appended with cycle-42 closure + dispatch event, P2-B1 entry updated (closed_at/closed_by added). WIP=1 enforced (dev-macro-indicators on P2-A1). Anchor 1776df8e verified held pre+post. Single atomic commit: `chore(pm/c282-cycle-42): close P2-B1 (R-3 unblock GREEN) + dispatch dev-macro-indicators P2-A1 (G4 fence rules)`.

@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-F1",
+    "activeTask": "P2-C1",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -584,6 +584,29 @@
         "ac_count": 6,
         "ac_results": "6/6 PASS (all 3 goals G1+G2+G3 terminal verified)",
         "goals_verified": ["G1", "G2", "G3"]
+      },
+      "P2-F1": {
+        "status": "DONE",
+        "title": "G8 Honest-Red Proof (Test A Corrupted + Test B Golden)",
+        "owner": "qa",
+        "dispatch_timestamp": "2026-05-23T16:36:00Z",
+        "handoff_doc": "docs/handoffs/TASK_P2-F1-macro.md",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T16:45:02Z",
+        "qa_signal": "docs/signals/qa-p2-f1-macro-GREEN-20260523T164502Z.json",
+        "completed_at": "2026-05-23T16:48:02Z",
+        "completed_by": "pm c282-cycle-51 (closure + G8 flip)",
+        "ac_count": 5,
+        "ac_results": "5/5 PASS (Test A 2 corruptions + exit non-zero + dashboard RED + restore, Test B golden all-GREEN, AC-3 generalization 2 primitives, AC-4 no residual mutations, AC-5 G8 summary)",
+        "hard_gates": {
+          "anchor_1776df8e_held": "PASS (exit 0, pre+post verified)",
+          "r1_deterministic": "PASS (exit 1, 0 matches)",
+          "fence_b_module_clean": "PASS (exit 1 × 2 checks)",
+          "fence_c_infra_clean": "PASS (exit 1)",
+          "scenario_dir_clean": "PASS (git diff empty, git status clean)",
+          "sandbox_all_tier_green": "PASS (total=20 pass=20 fail=0 status=OK exit 0)"
+        },
+        "goals_verified": ["G8"]
       }
     },
     "observations": [
@@ -746,12 +769,12 @@
       "id": "G8",
       "track": "B",
       "title": "Red/green status is honest",
-      "status": "TBD",
-      "verifiedAt": null,
-      "verifiedBy": null,
-      "evidence": null,
-      "phase2Bucket": null,
-      "calibration": "Test A corrupted + Test B golden pattern from TA verbatim."
+      "status": "YES",
+      "verifiedAt": "2026-05-23T16:48:02Z",
+      "verifiedBy": "pm c282-cycle-51 (re-verified hard gates) + qa c282-cycle-50 (P2-F1)",
+      "evidence": "P2-F1 (cycle-50): QA honest-red proof PASS. Test A: 2 deliberate corruptions (macro-investment-clock-golden.json indicatorName='' + macro-carry-trade-signal-golden.json vndDepositRate=-999.0) both exit non-zero + dashboard RED (status=FAIL mapped to dot-red via applyPastedResult() L1196). Test B: all 20 golden scenarios exit 0 + dashboard all-GREEN (status=OK + fail=0 mapped to dot-green). Rendering contract verified from dashboard/index.html applyPastedResult() logic. QA AC-1/AC-2/AC-3/AC-4/AC-5 all PASS (5/5). Hard gates all PASS: anchor 1776df8e held, R-1 deterministic (exit 1), Fence-B/C clean (exit 1 each), scenario dir clean (git diff empty), sandbox 20/20 exit 0. PM cycle-51 re-verified all 6 hard gates pre-cycle at HEAD: anchor (exit 0), R-1 (exit 0), Fence-B/C (exit 0), scenario clean (empty), sandbox 20/20 (exit 0). Dashboard honesty proof PASS. G8 terminal complete.",
+      "phase2Bucket": "P2-F1",
+      "calibration": "Test A corrupted + Test B golden pattern from TA verbatim. QA signal qa-p2-f1-macro-GREEN-20260523T164502Z.json comprehensive (test_a_evidence × 2 corruptions, test_b_evidence, honesty_table, hard_gates_table, scenario_dir_post_restore_clean, sandbox_20_20)."
     },
     {
       "id": "G9",
@@ -912,7 +935,7 @@
       ]
     }
   ],
-  "goalsEarned": 5,
+  "goalsEarned": 6,
   "progress_notes_cycle_50": [
     {
       "timestamp": "2026-05-23T16:45:00Z",
