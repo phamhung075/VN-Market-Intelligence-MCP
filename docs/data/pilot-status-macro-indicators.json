@@ -234,23 +234,34 @@
         ]
       },
       {
-        "timestamp": "2026-05-23T113400Z",
+        "timestamp": "2026-05-23T135000Z",
         "task_id": "P1-E1",
-        "status": "DISPATCH",
+        "status": "DONE",
         "handoff": "docs/handoffs/TASK_P1-E1-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-e1-20260523T113400Z.json",
-        "description": "Dashboard stub (G12 streak task #3 of 3). Static HTML, 3 panels (primitives, module, microservice), honest NOT-RUN status display. Clones TA dashboard pattern. Sandbox green all-tiers before DONE. Critical path to Phase 1 close. DISPATCH signal sent 2026-05-23T113400Z. Unblocked by P1-D2 DONE.",
-        "blockedBy": null,
-        "gates_binding": [
-          "G12 DoD (HARD GATE: sandbox green before DONE — streak task #3 of 3, BLOCKING)",
-          "R-1 determinism (gating evidence, non-blocking)",
-          "G6 (three-level dashboard from JSON traces)",
-          "G8 (red/green status honest — NOT-RUN initially)",
-          "G9 (Playwright renders, zero console errors)"
-        ],
-        "g12_streak_position": "3 of 3",
+        "signal": "docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json",
+        "description": "Dashboard stub (G12 streak task #3 of 3). Static HTML, 3 panels (primitives, module, microservice), honest NOT-RUN status display. Clones TA dashboard pattern. Sandbox green all-tiers before DONE. Critical path to Phase 1 close.",
+        "qa_verdict": "GREEN",
+        "qa_signal": "docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json",
+        "qa_timestamp": "2026-05-23T135000Z",
+        "qa_cycle": "c282-cycle-39",
+        "impl_commit": "41a7d866",
+        "ac_results": "7/7 PASS (AC-1 zero network calls + AC-2 three panels confirmed + AC-3 NOT-RUN×17 honest + AC-4 no CDN/no build + AC-5 zero secrets + AC-6 TA pattern clone + AC-7 sandbox 3-tier GREEN)",
+        "sandbox_evidence": {
+          "primitive_tier": "total=3 pass=3 fail=0 status=OK (exit 0) — QA independently run",
+          "module_tier": "total=2 pass=2 fail=0 status=OK (exit 0) — QA independently run",
+          "all_tier": "total=5 pass=5 fail=0 status=OK (exit 0) — QA independently run"
+        },
+        "anchor_check": "1776df8e HELD (exit 0)",
+        "g12_streak_position": "3 of 3 — COMPLETE",
         "critical_path": true,
-        "sandbox_syntax_note": "QA cycle-38 observation: sandbox CLI REQUIRES -module flag with -tier=all. Correct: 'go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all'. Documented in AC-7 HARD GATE of handoff."
+        "deviations": [
+          {
+            "id": "DEV-1",
+            "severity": "LOW",
+            "description": "CSS/JS embedded inline (no build pipeline) vs TA separate style.css + dist/app.js. AC-1 and AC-4 both satisfied. QA ACCEPTED.",
+            "ruling": "ACCEPTED"
+          }
+        ]
       }
     ],
     "risk_propagation": {
@@ -275,7 +286,7 @@
     {"id": "G9", "track": "B", "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-C", "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent."},
     {"id": "G10", "track": "C", "title": "AI agent fixes a primitive bug without looping (≤2 cycles)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-D", "calibration": "baselineCycleCount from docs/data/bug-inventory.json (macro entry — Phase 0 deliverable). Falls back to TA's 1.5 or system-wide 4-6. Pre-revert tag: macro-pre-inject before P2-D2."},
     {"id": "G11", "track": "C", "title": "Regression alarm bell works", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-E", "calibration": "Coupling-proven outcome-(a) for 2 trials = PASS per TA cycle-17 rubric."},
-    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task.", "g12Streak": {"required": 3, "completed": 2, "streakComplete": false, "tasks": [{"task_id": "P1-B1", "status": "DONE", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "status": "DONE", "impl_commit": "ac92ef56", "sandbox_result": "module 1/1 GREEN + all-tier 4/4 GREEN", "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json"}, {"task_id": "P1-E1", "status": "DISPATCH_20260523T113400Z", "expected_signal": "qa-macro-p1-e1-green-<UTC>.json", "dispatch_date": "2026-05-23T113400Z", "estimate_hours": 2.0, "critical_path": true}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
+    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task.", "g12Streak": {"required": 3, "completed": 3, "streakComplete": true, "completedAt": "2026-05-23T135000Z", "tasks": [{"task_id": "P1-B1", "status": "DONE", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "status": "DONE", "impl_commit": "ac92ef56", "sandbox_result": "module 1/1 GREEN + all-tier 4/4 GREEN", "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json"}, {"task_id": "P1-E1", "status": "DONE", "impl_commit": "41a7d866", "sandbox_result": "primitive 3/3 + module 2/2 + all-tier 5/5 GREEN", "qa_signal": "docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json", "qa_timestamp": "2026-05-23T135000Z"}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
 
   ],
   "decisionMatrix": {

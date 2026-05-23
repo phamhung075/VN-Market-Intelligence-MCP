@@ -1,5 +1,42 @@
 # QA — Notebook
 
+## c282 cycle-39 · 2026-05-23 · macro P1-E1 dashboard stub HTML verification
+
+**Task:** P1-E1 — Dashboard stub HTML (3 panels, NOT-RUN state, TA pattern clone) | **Verdict:** GREEN | **G12 Streak:** 3/3 COMPLETE
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json
+impl_commit: 41a7d866
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: zero remote calls on load | PASS | grep -E 'fetch\(|XMLHttpRequest|import.*from' → exit 1 (0 matches). All CSS+JS inline. |
+| AC-2: three panels (Primitives/Module/Microservice) | PASS | primitives 9 matches, module 12 matches, microservice 17 matches; port 5004 + Go language at lines 690, 1081 |
+| AC-3: NOT-RUN honest status (≥3 minimum) | PASS | grep -c 'NOT-RUN' → 17. Sole GREEN/PASS at line 1105 is descriptive modal text — NOT a status slot. No hardcoded status GREEN. |
+| AC-4: Playwright compatible (no CDN, no build) | PASS | grep -E '<script src=|<link rel=.*stylesheet.*href=http' → exit 1 (0 external scripts). Vanilla JS inline only. |
+| AC-5: zero secrets | PASS | grep -Ei 'FRED_API_KEY|DB_PASSWORD|SECRET|TOKEN|password|api_key' → exit 1 (0 matches) |
+| AC-6: TA pattern clone | PASS | levels-grid, level-panel, panel-header, modal, modal-body, modal-close all present — structural clone confirmed. |
+| AC-7 G12 HARD GATE: sandbox primitive-tier 3/3 | PASS | go run ./cmd/sandbox -tier=primitive -module=macro-indicators -scenario=all → total=3 pass=3 fail=0 status=OK exit 0 (QA independent run) |
+| AC-7 G12 HARD GATE: sandbox module-tier 2/2 | PASS | go run ./cmd/sandbox -tier=module -module=macro-indicators -scenario=all → total=2 pass=2 fail=0 status=OK exit 0 (QA independent run) |
+| AC-7 G12 HARD GATE: sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK exit 0 (QA independent run) |
+| R-1 determinism (pkg/ + cmd/ + dashboard/) | PASS | 1 match in macro_investment_clock.go line 7 — comment-only (// Key change: the TS original used Math.random()...). Pre-existing from P1-B1 (QA cycle-32 ACCEPTED). Zero matches in new dashboard HTML. CLEAN for new code. |
+| Fence-A: pkg/primitive/ stdlib only | PASS | import "strings" only — no cross-layer imports |
+| Fence-B: pkg/module/ primitive-only | PASS | import pkg/primitive/macro_investment_clock only — no app/infra/interface imports |
+| Anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 |
+| L84 commit 41a7d866 | PASS | 1 file changed: apps/macro-indicators/dashboard/index.html (1146 insertions). Explicit path confirmed. |
+| Forbidden zones 41a7d866 | CLEAR | No technical-analysis files, no .golangci.yml, no .github/workflows/ in commit diff. |
+
+**DEV-1 ACCEPTED:** CSS/JS inline (no build pipeline) vs TA separate style.css + dist/app.js. AC-1 (file:// compat) and AC-4 (no external CDN/console errors) both satisfied. Structural layout, color scheme, card/panel patterns fully cloned. P1-E2 can add build pipeline.
+**G12 DoD:** BINDING and GREEN — all 3 sandbox tiers independently confirmed 3/3 + 2/2 + 5/5. streak_completed=3/3 COMPLETE.
+**Blocking issues:** 0 — all 7 ACs + all hard gates PASS.
+**NEXT:** pm — mark P1-E1 DONE, G12 grade earned (3/3 streak complete). Dispatch P1-E2 (edit-rerun handler + env audit).
+
+---
+
 ## c282 cycle-34 · 2026-05-23 · macro P1-D2 module scenario JSON verification
 
 **Task:** P1-D2 — module-level scenario JSON (golden + edge fixtures for macro-signals) | **Verdict:** GREEN
