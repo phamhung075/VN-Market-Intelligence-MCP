@@ -259,6 +259,28 @@
       }
     ]
   },
+  "stock_price_baseline": {
+    "capturedAt": "2026-05-24",
+    "capturedBy": "system-auditor (TASK P0-SP-2 phase-0 D3 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-25",
+    "windowEnd": "2026-05-24",
+    "stockPriceBugsFound": 1,
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (stock-price has only 1 bug in 60-day window; <2 threshold means use system-wide per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "Scanning git log --since=2026-03-25 + docs/agent-memory/notebooks/dev-stock-price.md + docs/signals/ for last 60 days found exactly 1 bug attributed to module=stock-price: bug 1971-SCAN-ORDER-MISMATCH (fixCycles=2, bc515ab2). Since <2 bugs, falls back to system-wide baselineCycleCount=1.5 per charter §Baseline Metric Capture fall-back rule. G10 threshold for Phase 2 bug-injection will use 1.5 cycles as max acceptable.",
+    "bugsIdentified": [
+      {
+        "id": "1971-SCAN-ORDER-MISMATCH",
+        "module": "stock-price",
+        "fixCycles": 2,
+        "date": "2026-05-22",
+        "resolved": true,
+        "evidence": "fix(1971): SQLite Scan order close=0 bug bc515ab2, USER-BUG triage fde58556"
+      }
+    ],
+    "g10_target": "AI agent fixes stock-price primitive bug in ≤2 cycles vs baseline 1.5"
+  },
   "stats": {
     "totalBugs": 29,
     "resolvedBugs": 18,
