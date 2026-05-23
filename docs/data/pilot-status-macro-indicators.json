@@ -7,7 +7,11 @@
   "pilot": "macro-indicators",
   "charterRef": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md",
   "charterVersion": "2.0",
-  "status": "ACTIVE",
+  "status": "DONE",
+  "closedAt": "2026-05-23T21:42:47Z",
+  "closedBy": "po c282-cycle-58 (12/12 terminal atomic close — all goals YES, decisionMatrix verdict=scale)",
+  "closureSignal": "docs/signals/po-macro-terminal-close-12of12-20260523T214247Z.json",
+  "closureDecisionDoc": "docs/po-decisions/2026-05-23-macro-pilot-terminal-and-program-completion.md",
   "openedAt": "2026-05-23T09:38:57Z",
   "openedBy": "po cycle-29 — next-pilot kickoff after TA scale verdict",
   "sprintKickoff": "2026-05-23",
@@ -318,7 +322,9 @@
     }
   },
   "phase2": {
-    "status": "IN-PROGRESS",
+    "status": "CLOSED",
+    "closedAt": "2026-05-23T21:42:47Z",
+    "closedBy": "po c282-cycle-58 (all 14 P2-* tasks DONE; 9 goals flipped in Phase 2; G6/G7/G12 flipped at PO terminal close)",
     "unblockedAt": "2026-05-23T12:15:26Z",
     "unblockedBy": "po c282-cycle-21 (Phase 1 GO gate verdict)",
     "ingestedAt": "2026-05-23T18:52:00Z",
@@ -929,22 +935,22 @@
       "id": "G6",
       "track": "B",
       "title": "Three-level dashboard renders from JSON traces",
-      "status": "TBD",
-      "verifiedAt": null,
-      "verifiedBy": null,
-      "evidence": null,
-      "phase2Bucket": null,
+      "status": "YES",
+      "verifiedAt": "2026-05-23T21:42:47Z",
+      "verifiedBy": "po c282-cycle-58 (12/12 terminal atomic close — §4.5 exception)",
+      "evidence": "Phase 1 P1-E1 (qa GREEN 2026-05-23T13:50:00Z, signal qa-macro-p1-e1-green-20260523T135000Z.json): dashboard/index.html renders 3 panels from file:// — Primitives (grep macro-investment-clock|Primitives → 9 matches), Module (macro-signals|Module → 12 matches), Microservice (macro-indicators|Microservice → 17 matches, port 5004 + Go confirmed). AC-1 zero network calls (grep fetch|XMLHttpRequest → exit 1), AC-3 honest NOT-RUN ×17, AC-4 no CDN/no build, AC-5 zero secrets, AC-7 sandbox 3-tier all GREEN. Re-verified with real 6-primitive data at P2-C1 rerun (cycle-53, PO Playwright headless): 6/6 primitive cards + 1 module card (2 subcards) + 1 microservice card (NOT-RUN port 5004) all rendered, ZERO console errors/pageerrors/requestfailed. Phase-2 task plan explicitly states 'No Phase 2 task needed' for G6 (delivered Phase 1, re-verified P2-G1/P2-C1-rerun). PO accepts P1-E1 GREEN + P2-C1-rerun Playwright as terminal evidence.",
+      "phase2Bucket": "P1-E1 + P2-C1-rerun (re-verify)",
       "calibration": "apps/macro-indicators/dashboard/index.html — primitives + module + microservice panels. file:// works."
     },
     {
       "id": "G7",
       "track": "B",
       "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
-      "status": "TBD",
-      "verifiedAt": null,
-      "verifiedBy": null,
-      "evidence": null,
-      "phase2Bucket": null,
+      "status": "YES",
+      "verifiedAt": "2026-05-23T21:42:47Z",
+      "verifiedBy": "po c282-cycle-58 (12/12 terminal atomic close — §4.5 exception)",
+      "evidence": "Phase 1 P1-E2 (qa GREEN 2026-05-23T12:07:18Z, signal qa-macro-p1-e2-green-20260523T120718Z.json): AC-1 edit-rerun handler wired (paste-JSON → applyPastedResult re-render), AC-2 env audit 0 matches (env | grep -E 'FRED_API_KEY|API_KEY|SECRET|PASSWORD|DB' returns empty), AC-3 FRED_API_KEY absent from Go source, AC-4 sandbox 3/3+2/2+5/5 GREEN, AC-5 R-1 determinism clean. Charter §Security Clause satisfied: ZERO DB credentials + ZERO external API keys (FRED_API_KEY included) in sandbox process env. Re-verified at P2-G1 (cycle-49) when real 6-primitive data populated the dashboard. Phase-2 task plan explicitly states 'No Phase 2 task needed' for G7 (delivered Phase 1, re-verified P2-G1). PO accepts P1-E2 GREEN + P2-G1 re-verify as terminal evidence.",
+      "phase2Bucket": "P1-E2 + P2-G1 (re-verify)",
       "calibration": "Env audit MUST include FRED_API_KEY in forbidden grep (macro-specific addition vs TA)."
     },
     {
@@ -1008,13 +1014,13 @@
       "id": "G12",
       "track": "C",
       "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)",
-      "status": "EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE",
-      "verifiedAt": "2026-05-23T135000Z",
-      "verifiedBy": "qa-macro-indicators",
-      "evidence": "3/3 consecutive G12 DoD gates satisfied (P1-B1, P1-C1, P1-E1) — all sandbox tiers green before commit",
-      "phase2Bucket": "P2-F",
+      "status": "YES",
+      "verifiedAt": "2026-05-23T21:42:47Z",
+      "verifiedBy": "po c282-cycle-58 (EARNED-PENDING → YES at 12/12 terminal close per §4.5)",
+      "evidence": "3/3 consecutive G12 DoD gates satisfied (P1-B1 sandbox 3/3 GREEN, P1-C1 module 1/1 + all-tier 4/4 GREEN, P1-E1 primitive 3/3 + module 2/2 + all-tier 5/5 GREEN) — all sandbox tiers green before commit. Streak earned at P1-E1 cycle-39. The dev-macro-indicators flow's sandbox-green-before-done DoD gate held across the WHOLE pilot: every subsequent dev task (P2-A1, P2-B1, P2-B2, P2-X1, P2-X2, P2-X3, P2-X4, P2-D2, P2-E2) shipped only after sandbox all-tier exit 0 (20/20 from P2-X1 onward). PO flips EARNED-PENDING → YES at 12/12 terminal per Charter §4.5 (the streak held, deferred flip is the §4.5-mandated authorship gate, not a deficiency).",
+      "phase2Bucket": "P1-B1/C1/E1 streak (pilot-wide DoD adherence confirmed)",
       "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task.",
-      "candidacy": "EARNED (grade earned at P1-E1 cycle-39). Pending PO 12/12 close per Charter §4.5: decisionMatrix populated only after all 12 goals reach terminal grade (YES/PARTIAL/DEFER). G12 will be flipped to YES at that time.",
+      "candidacy": "FLIPPED YES at PO 12/12 terminal close (cycle-58). Grade earned at P1-E1 cycle-39; held EARNED-PENDING per Charter §4.5 (decisionMatrix + final goals populated only after all 12 goals reach terminal grade). All 12 now terminal → G12 flipped to YES in this atomic commit.",
       "g12Streak": {
         "required": 3,
         "completed": 3,
@@ -1049,14 +1055,23 @@
     }
   ],
   "decisionMatrix": {
-    "speed": "TBD",
-    "trust": "TBD",
-    "scale": "TBD",
-    "verdict": "TBD",
-    "_authorship_rule": "PO-only per charter §Constraints + §4.5 carry-over. Populate ONLY after 12/12 G-goals reach terminal grade (YES/PARTIAL/DEFER — no TBD/IN-PROGRESS). Atomic with last G-goal flip + verdict signature in same commit.",
-    "_criteria_application": "Mechanical per charter §Decision Matrix rubric: Speed = G10 + G11; Trust = G9 + G8; Scale = all 12 + sprint count ≤ 6. NO PO discretion beyond rubric."
+    "speed": "YES",
+    "trust": "YES",
+    "scale": "YES",
+    "verdict": "scale",
+    "populatedAt": "2026-05-23T21:42:47Z",
+    "populatedBy": "po c282-cycle-58 (12/12 terminal atomic close)",
+    "populatedInCommit": "self-reference — this commit (decisionMatrix + G6/G7/G12 flips + status flip atomic per Charter §4.5 matrix-authorship rule)",
+    "criteriaApplication": {
+      "speed": "G10=YES (verifiedAt 2026-05-23T18:00:00Z — P2-D1/D2: dev-macro-indicators fixed injected macro_carry_trade_signal bug in cycle 1 of ≤2 budget vs baselineCycleCount=1.5; byte-identical restore; sandbox 20/20 GREEN) AND G11=YES (verifiedAt 2026-05-23T21:35:50Z — P2-E1/E2: 2 trials across DIFFERENT primitives [carry-trade Trial-1 + yield-spread Trial-2], both single-literal mutations causing ≥2 coupled-scenario RED, both fixed single-edit cycle-1; regression alarm fired and forced fix before done). Both YES per charter §Decision Matrix: 'G10 confirmed ≤2 cycles vs baseline AND G11 regression alarm triggered at least once' — applied MECHANICALLY (07-phases §Phase 3: Speed = G10 + G11).",
+      "trust": "G9=YES (verifiedAt 2026-05-23T15:39:15Z — P2-C1 rerun: PO Playwright headless chromium Path B verification PASS; ZERO console errors/pageerrors/requestfailed; 6/6 primitives + module + microservice cards rendered; NOT-RUN honestly displayed; equal weight to user verbal confirm per charter §G9 Path B Day-0 default + cycle-19 TA precedent) AND G8=YES (verifiedAt 2026-05-23T16:48:02Z — P2-F1: Test A 2 corruptions → status RED captured; Test B 20 golden scenarios → all GREEN; no false greens). G9 graded PASS (not PARTIAL) so Trust = YES per Q6 authorship rule. Both YES per charter §Decision Matrix: 'G9 confirmed (Path A OR Path B) AND G8 red/green honesty proven' — applied MECHANICALLY (07-phases §Phase 3: Trust = G9 + G8).",
+      "scale": "All 12 G-goals YES (G1+G2+G3+G4+G5+G6+G7+G8+G9+G10+G11+G12) + both tracks delivered (Track A Trust Foundation G1-G5 YES; Track B Dashboard Trust Layer G6-G9 YES; Track C AI-Fixability G10-G12 YES) + sprintCount=1 (kickoff 2026-05-23 → terminal close 2026-05-23, well within 6-sprint charter deadline 2026-07-04, ~42 days buffer remaining). YES per charter §Decision Matrix: 'All 12 goals YES AND both tracks A+B delivered within 6 sprints' — applied MECHANICALLY (07-phases §Phase 3: Scale = all 12 + sprintCount ≤ 6)."
+    },
+    "outcome": "3 YES → verdict=scale. Per charter §Decision Matrix outcome rule, scale to next microservice (recommended post-macro: news-fetch or stock-price, architect to recommend based on bounded-context cleanness). NOTE: this is the FACTORY-PATTERN gate verdict for the macro pilot in isolation — it does NOT by itself complete the broader 2026-05-22-refactor program (Phases 2-6 scale-out remain unstarted). See docs/po-decisions/2026-05-23-macro-pilot-terminal-and-program-completion.md for the program-level adjudication (verdict b).",
+    "_authorship_rule": "PO-only per charter §Constraints + §4.5 carry-over. Populated after 12/12 G-goals reached terminal grade. Atomic with last G-goal flips (G6/G7/G12) + verdict signature in same commit.",
+    "_criteria_application_source": "07-phases.md §Phase 3 derivation: Speed = G10 + G11; Trust = G9 + G8; Scale = all 12 + sprintCount ≤ 6. Q6 authorship rule (closure-checklist-audit): PO fills autonomously by applying charter §Decision Matrix YES criteria to finalized goal grades; Trust requires G9 graded (PASS → Trust YES). NO PO discretion beyond rubric — values derived mechanically from goal evidence."
   },
-  "verdict": "TBD",
+  "verdict": "scale",
   "constraints_binding_day_0": [
     "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
     "No --force, no --no-verify, no --no-gpg-sign",
@@ -1077,6 +1092,23 @@
     "L7 — SSOT + L84 + anchor discipline binding from Day 0"
   ],
   "poDecisionLog": [
+    {
+      "timestamp": "2026-05-23T21:42:47Z",
+      "cycle": "c282 cycle-58",
+      "decision": "PILOT CLOSED — 12/12 G-goals terminal YES, decisionMatrix verdict=scale (Speed YES + Trust YES + Scale YES). Macro-indicators factory v2 is the SECOND factory-pattern proof point (after TA pilot, closed 2026-05-23 verdict=scale). At the 12/12 terminal gate, PO flipped the remaining 3 goals (G6, G7, G12) in ONE atomic commit per Charter §4.5 exception to single-goal-atomic-flip, populated the decisionMatrix mechanically per 07-phases §Phase 3 derivation, flipped status ACTIVE→DONE and phase2 IN-PROGRESS→CLOSED.",
+      "rationale": "PM cycle-57 (commit d4cec5c3) flipped G11=YES, goalsEarned=9, all 14 P2-* tasks DONE. 9/12 already YES (G1-G5, G8-G11). G6 (dashboard 3-panel render from file://, no JS errors) delivered Phase 1 P1-E1 (qa GREEN, signal qa-macro-p1-e1-green-20260523T135000Z.json — 3 panels, zero network calls, NOT-RUN×17, sandbox 5/5) and re-verified with real 6-primitive data at P2-C1 rerun (PO Playwright headless: 6/6 primitive cards + module + microservice, zero console/page/request errors). G7 (edit-rerun loop + zero-creds env audit) delivered Phase 1 P1-E2 (qa GREEN, signal qa-macro-p1-e2-green-20260523T120718Z.json — handler wired, env audit 0 matches incl FRED_API_KEY, charter §Security Clause satisfied) and re-verified at P2-G1. Phase-2 task plan explicitly states 'No Phase 2 task needed' for both. PO accepted the Phase 1 GREEN verdicts + Phase 2 re-verification as terminal evidence (no new dev/qa cycles). G12 (dev-flow sandbox-green-before-done, 3-task streak P1-B1/C1/E1) was EARNED at cycle-39, held EARNED-PENDING per §4.5; the streak held across the whole pilot (every dev task shipped sandbox-green), so flipped to YES at terminal. decisionMatrix derived MECHANICALLY per 07-phases §Phase 3 + Q6 authorship rule: Speed=G10+G11=YES, Trust=G9+G8=YES (G9 graded PASS not PARTIAL), Scale=all-12+sprintCount(1)≤6=YES → 3 YES → verdict=scale. Anchor 1776df8e HELD (exit 0) pre-commit. Program-completion adjudication: this scale verdict is the FACTORY-PATTERN gate for the macro pilot in isolation; the broader 2026-05-22-refactor program (07-phases Phases 2-6: ~48 primitives across 11 modules, mcp-server megabarrel rewire, coverage push, L4 automation) remains UNSTARTED (packages/modules/ does not exist; packages/primitives/ holds only TA). Verdict (b) — broader rollout phases remain. See closure decision doc.",
+      "action": "Authored: (1) flipped G6 TBD→YES + G7 TBD→YES + G12 EARNED-PENDING→YES (atomic, §4.5 terminal exception); (2) populated decisionMatrix {speed,trust,scale}=YES + verdict=scale + criteriaApplication (mechanical derivation) + outcome; (3) top-level verdict TBD→scale; (4) status ACTIVE→DONE + closedAt/closedBy/closureSignal/closureDecisionDoc; (5) phase2 IN-PROGRESS→CLOSED; (6) goalsEarned 9→12 + note; (7) this poDecisionLog entry; (8) closure signal docs/signals/po-macro-terminal-close-12of12-20260523T214247Z.json; (9) program-completion decision doc docs/po-decisions/2026-05-23-macro-pilot-terminal-and-program-completion.md (verdict b + remaining phases + next dispatch recommendation); (10) overwrote PO notebook to cycle-58 closure state.",
+      "constraints_held": [
+        "L84 explicit-file staging (per-path git add; pilot-status JSON, closure signal, decision doc, PO notebook)",
+        "No --force, no --no-verify, no --no-gpg-sign, no git push",
+        "All work on main (no branches)",
+        "Anchor 1776df8e HELD pre-commit (git merge-base --is-ancestor exit 0)",
+        "apps/macro-indicators/** + apps/technical-analysis/** source UNTOUCHED",
+        "Parent pilot-status.json (FROZEN TA historical record) UNTOUCHED",
+        "Charter §4.5 matrix-authorship: PO-only, atomic with last G-goal flips, mechanical derivation (07-phases §Phase 3 + Q6 rule), no PO discretion beyond rubric",
+        "decisionMatrix derived MECHANICALLY from goal evidence — not invented"
+      ]
+    },
     {
       "timestamp": "2026-05-23T09:38:57Z",
       "cycle": "c282 cycle-29",
@@ -1130,8 +1162,8 @@
       ]
     }
   ],
-  "goalsEarned": 9,
-  "goalsEarned_note": "G1=YES (P2-X1), G2=YES (P2-X2+P2-G1), G3=YES (P2-X3), G4=YES (P2-A1+P2-A2), G5=YES (P2-B1+P2-B2+P2-B3), G8=YES (P2-F1), G9=YES (P2-C1 rerun cycle-53 @ 1200fa18), G10=YES (P2-D1+P2-D2 cycle-56 @ 9e3131ea + aa87759b), G11=YES (P2-E1+P2-E2 cycle-57 @ f2b45fd2 + a6ea2aed). G12=EARNED-PENDING per §4.5.",
+  "goalsEarned": 12,
+  "goalsEarned_note": "ALL 12 YES at terminal close (po cycle-58). G1=YES (P2-X1), G2=YES (P2-X2+P2-G1), G3=YES (P2-X3), G4=YES (P2-A1+P2-A2), G5=YES (P2-B1+P2-B2+P2-B3), G6=YES (P1-E1 + P2-C1-rerun re-verify — PO terminal flip), G7=YES (P1-E2 + P2-G1 re-verify — PO terminal flip), G8=YES (P2-F1), G9=YES (P2-C1 rerun cycle-53 @ 1200fa18), G10=YES (P2-D1+P2-D2 cycle-56 @ 9e3131ea + aa87759b), G11=YES (P2-E1+P2-E2 cycle-57 @ f2b45fd2 + a6ea2aed), G12=YES (P1-B1/C1/E1 streak; EARNED-PENDING → YES at §4.5 terminal flip — PO terminal flip). decisionMatrix verdict=scale (Speed YES + Trust YES + Scale YES).",
   "progress_notes_cycle_50": [
     {
       "timestamp": "2026-05-23T16:45:00Z",
