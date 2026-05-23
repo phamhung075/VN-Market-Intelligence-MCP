@@ -115,7 +115,7 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 ACTIVE — P1-A DONE (1e76d339). Sequencing P1-B1 (hexagram-resolver + R-FENCE discovery). WIP=1 enforced throughout.",
+    "_note": "Phase 1 ACTIVE — P1-A DONE (1e76d339). P1-B1 DONE (50c2d2ff). Sequencing P1-B2 (ngu-hanh-classifier + R-FENCE inherited). G12 streak 1/3 earned. WIP=1 enforced throughout.",
     "status": "ACTIVE",
     "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T23:15:00Z",
@@ -130,12 +130,13 @@
     "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
     "wip_limit": 1,
     "task_sequence": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "current_task": "P1-B1",
+    "current_task": "P1-B2",
     "current_task_status": "READY",
-    "current_task_handoff": "docs/handoffs/TASK_P1-KD-B1.md",
+    "current_task_handoff": "docs/handoffs/TASK_P1-KD-B2.md",
     "progress_notes": [
       "2026-05-24T23:15:00Z — Phase 1 OPENED; P1-A handoff created; dev-kinh-dich ready to accept",
-      "2026-05-24T00:00:00Z — P1-A DONE (commit 1e76d339); all 6 ACs PASS (zero-creds, zero-infra, sandbox-green); P1-B1 sequenced"
+      "2026-05-24T00:00:00Z — P1-A DONE (commit 1e76d339); all 6 ACs PASS (zero-creds, zero-infra, sandbox-green); P1-B1 sequenced",
+      "2026-05-24T01:15:00Z — P1-B1 DONE (commit 50c2d2ff); all 8 ACs PASS; R-FENCE discovery VIABLE; §R-FENCE Discovery section recorded in TASK_P1-KD-B1.md; G12 streak 1/3 earned; P1-B2 sequenced"
     ]
   },
 
@@ -299,11 +300,18 @@
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 0,
+        "completed": 1,
         "streakComplete": false,
         "completedAt": null,
-        "tasks": [],
-        "ruleEffectiveAfter": null
+        "tasks": [
+          {
+            "taskId": "P1-B1",
+            "title": "hexagram-resolver + R-FENCE discovery",
+            "completedAt": "2026-05-24T01:15:00Z",
+            "sandboxVerdict": "PASS (3/3 scenarios green)"
+          }
+        ],
+        "ruleEffectiveAfter": "2026-05-24T01:15:00Z (P1-B1 DONE)"
       }
     }
   ],
