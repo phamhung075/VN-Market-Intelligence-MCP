@@ -1,5 +1,98 @@
 # PM — Notebook
 
+## c282 cycle-31 · 2026-05-23T10:15:00Z
+
+**Status:** P1-A1 VERIFIED DONE + P1-A2 DISPATCHED — macro-indicators pilot Phase 1 second task. Dev-macro-indicators completed P1-A1 (go.mod + go.sum) at 2026-05-23T10:13:55Z. All 4 ACs pass: module name, Go version (1.25.0 per tidy), chi v5.2.1 + modernc-sqlite v1.29.9 pinned, idempotent. Two notes: D-1 (tools.go anchor to remove in P1-A2 since main.go will import deps), D-2 (go directive 1.25.0 correct). PM verified completion signal + commits, updated pilot-status SSOT phase1.progress_notes, created P1-A2 handoff (cmd/server/main.go composition root, ~20m, 5 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. Next: P1-A3 (sandbox/main.go) unblocked after P1-A2 QA green.
+
+### P1-A1 Completion Verified
+
+- **Task ID:** P1-A1 (first of 11 Phase 1 tasks)
+- **Completion signal:** `docs/signals/dev-macro-p1-a1-done-20260523T101355Z.json` ✓
+- **Commit:** 5db4a246 ✓
+- **AC results:** 4/4 PASS
+  - AC-1: go.mod (module, go version, 2 direct deps) ✓
+  - AC-2: go mod verify + go.sum non-empty ✓
+  - AC-3: go mod tidy idempotent ✓
+  - AC-4: commit message references G3 + explicit file paths (L84 discipline) ✓
+- **Smoke checks:** all PASS (go mod verify, go.sum 55 lines, chi v5.2.1, sqlite v1.29.9, tidy idempotent, go build noop)
+- **Deviations:**
+  - D-1 (LOW): tools.go anchor added to keep deps during scaffold — REMOVE in P1-A2 (main.go will import both directly). PM noted in P1-A2 handoff + dispatch signal.
+  - D-2 (INFO): go directive 1.25.0 (correct per Go 1.26.2 tidy with modernc-sqlite v1.29.9 requirement). No action needed.
+
+### P1-A2 Task Context
+
+- **Task ID:** P1-A2 (second of 11 Phase 1 tasks)
+- **Title:** Create `apps/macro-indicators/cmd/server/main.go` (composition root)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 20 minutes (scaffold-only)
+- **AC count:** 5 (file size ≤100L + zero business logic + port 5004 + zero creds + TA pattern mirror)
+- **Goal:** G3 (Microservice has clean composition root)
+- **Files touched:** `cmd/server/main.go` (CREATE), `tools.go` (DELETE — P1-A1 anchor now redundant)
+- **Blocks:** P1-A3 (cmd/sandbox/main.go)
+- **D-1 follow-up:** dev must `git rm apps/macro-indicators/tools.go` as part of P1-A2 (composition root imports both deps directly, anchor no longer needed)
+
+### PM Actions Completed (Cycle c282 cycle-31)
+
+1. **Verified P1-A1 completion** ✓
+   - Read completion signal (dev-macro-p1-a1-done-20260523T101355Z.json)
+   - Verified commit 5db4a246 (feat commit message, 3 files: go.mod + go.sum + tools.go)
+   - Cross-checked go.mod (chi v5.2.1, modernc-sqlite v1.29.9)
+   - Cross-checked go.sum (55 lines, hashes match)
+   - Verified all 4 AC results PASS
+   - Noted D-1 and D-2 deviations (both expected, low-severity)
+
+2. **Created TASK_P1-A2-macro.md handoff doc** ✓
+   - 5 verbatim ACs from phase-1-task-plan-go.md §P1-A2
+   - Composition root pattern (mirroring TA pilot at anchor 1776df8e)
+   - D-1 explicit action: "tools.go must be deleted in P1-A2"
+   - AC-4 pre-scaffold gate: "go vet ./cmd/... expected non-zero (pkg/ not yet exist)"
+   - Constraints section: L84 + no-bypass binding + anchor discipline
+   - Risk flags: R-1 (forward-warning at P1-A5), R-3 (Phase 2 expansion)
+   - G12 DoD Gate note: does NOT apply to P1-A2 (scaffold-only, activates P1-B1)
+   - Smoke checks included (file size, grep checks, port, tools.go deletion)
+   - RETURN block template provided
+
+3. **Created dispatch signal (pm-dispatch-dev-macro-p1-a2-20260523T101500Z.json)** ✓
+   - WIP claim: phase_1_dev_team = ACTIVE (1 of 1 enforced)
+   - P1-A1 verification embedded (commit 5db4a246, all 4 ACs pass, deviations D-1/D-2)
+   - D-1 action reminder: "dev must git rm apps/macro-indicators/tools.go"
+   - Risk flags: R-1 + R-3 with binding_on + forward_warning notes
+   - G12 DoD Gate clarification: does NOT apply to P1-A2
+   - L84 staging example provided
+   - Commit message template provided (G3 advance, new/delete files, AC refs, pre-scaffold note)
+
+4. **Updated pilot-status SSOT (docs/data/pilot-status-macro-indicators.json)** ✓
+   - Added phase1.progress_notes section (timeline of P1-A1 + P1-A2)
+   - P1-A1 entry: timestamp 2026-05-23T10:13:55Z, status DONE, commit 5db4a246, signal ref, AC results, deviations D-1/D-2
+   - P1-A2 entry: timestamp 2026-05-23T10:15:00Z, status DISPATCH, handoff ref, signal ref, description (D-1 follow-up noted)
+   - Constraints still live: R-1 (P1-B1 AC-6 gate), R-3 (Phase 2 P2-B expansion)
+
+5. **Updated PM notebook (this file)** ✓
+   - New section: c282 cycle-31 with full P1-A1 verification + P1-A2 dispatch summary
+   - Action completion log
+   - Next step alert (P1-A3 unblocked after P1-A2 QA green)
+
+### Next Steps
+
+- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-A2-macro.md + docs/signals/pm-dispatch-dev-macro-p1-a2-20260523T101500Z.json)
+- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-A2 DONE + QA-green
+- **P1-A3 readiness:** After P1-A2 DONE, PM prepares P1-A3 handoff (cmd/sandbox/main.go, ~20m, ~4 ACs)
+- **R-1 forward-warning:** At P1-A5 close (openapi.yaml complete), PM will include explicit R-1 deterministic-scoring reminder in P1-B1 handoff
+- **R-3 phase 2 flag:** At Phase 1 close gate, PM will flag R-3 (mcp-server tool handler rewire) for architect attention when Phase 2 task plan expands
+
+### Pilot Status SSOT Checkpoint
+
+- **Pilot:** macro-indicators
+- **Phase:** 1 (ACTIVE)
+- **Task count:** 11 (P1-A1..E2)
+- **Progress:** P1-A1 DONE (5db4a246), P1-A2 DISPATCH (pm-dispatch-dev-macro-p1-a2-20260523T101500Z.json)
+- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-A2)
+- **Phase deadline:** 2026-07-04 (6 sprints, hard)
+- **Language:** Go (locked Day 0)
+- **Anchor:** 1776df8e (held) ✓
+
+---
+
 ## c282 cycle-30 · 2026-05-23T10:58:40Z
 
 **Status:** PHASE 1 FIRST TASK DISPATCH — macro-indicators pilot. PO Phase 0 atomic close (c282 cycle-30 10:05:08Z) verified all 5 architect deliverables. PM now authors P1-A1 handoff doc + WIP-1 lock + dispatch signal for dev-macro-indicators. Handoff: `docs/handoffs/TASK_P1-A1-macro.md`. Dispatch signal: `docs/signals/pm-dispatch-dev-macro-p1-a1-20260523T105840Z.json`. WIP lock: phase_1_dev_team = ACTIVE (one task in progress max).

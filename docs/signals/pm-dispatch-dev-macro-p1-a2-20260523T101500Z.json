@@ -1,0 +1,93 @@
+{
+  "from": "pm",
+  "to": "dev-macro-indicators",
+  "type": "task-dispatch",
+  "createdAt": "2026-05-23T10:15:00Z",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "task_id": "P1-A2",
+  "task_title": "cmd/server/main.go (composition root)",
+  "handoff_ref": "docs/handoffs/TASK_P1-A2-macro.md",
+  "previous_task_id": "P1-A1",
+  "previous_task_status": "DONE",
+  "previous_task_commit": "5db4a246",
+  "previous_task_signal": "docs/signals/dev-macro-p1-a1-done-20260523T101355Z.json",
+  "wip_lock": {
+    "resource": "phase_1_dev_team",
+    "status": "ACTIVE",
+    "claim_holder": "dev-macro-indicators",
+    "wip_limit": 1,
+    "current_count": 1,
+    "reason": "P1-A2 in progress (sequential WIP=1 per charter wip_limit.phase_1_dev_team)"
+  },
+  "p1_a1_completion_verified": {
+    "commit": "5db4a246",
+    "all_4_acs_pass": true,
+    "deviations": [
+      {
+        "id": "D-1",
+        "severity": "LOW",
+        "title": "tools.go anchor to be removed in P1-A2",
+        "action": "dev must git rm apps/macro-indicators/tools.go as part of P1-A2 (composition root imports both deps directly)"
+      },
+      {
+        "id": "D-2",
+        "severity": "INFO",
+        "title": "go directive 1.25.0 (not 1.22)",
+        "action": "no action — correct per Go 1.26.2 tidy behavior with modernc-sqlite v1.29.9 requirement"
+      }
+    ]
+  },
+  "task_context": {
+    "estimate_minutes": 20,
+    "ac_count": 5,
+    "goal": "G3 (clean composition root)",
+    "blocked_by": "P1-A1 (complete ✓)",
+    "blocks": "P1-A3 (sandbox/main.go)",
+    "files_touched": [
+      {
+        "path": "apps/macro-indicators/cmd/server/main.go",
+        "action": "CREATE",
+        "notes": "composition root, ≤100 lines, TA pattern"
+      },
+      {
+        "path": "apps/macro-indicators/tools.go",
+        "action": "DELETE",
+        "notes": "P1-A1 anchor, now redundant after composition root exists"
+      }
+    ]
+  },
+  "constraints": {
+    "l84_explicit_staging": "REQUIRED (git add <path> per file; NO -A, NO .)",
+    "no_bypass": [
+      "No --force",
+      "No --no-verify (pre-commit hooks must pass)",
+      "No --no-gpg-sign",
+      "No git push (local-only work)"
+    ],
+    "anchor_discipline": "1776df8e must remain reachable (no retag, no rewrite, no force-push)"
+  },
+  "risk_propagation": {
+    "R-1": {
+      "description": "Math.random() in scoreIndicator() — TS → Go deterministic tier lookup",
+      "binding_on": "P1-B1 AC-6 (fix mandatory before sandbox scenarios)",
+      "forward_warning": "PM will include explicit R-1 reminder in P1-B1 handoff at P1-A5 close",
+      "evidence_gate": "grep -c \"Math.random|rand.Intn|rand.Float\" pkg/primitive/macro_investment_clock/*.go → must return 0"
+    },
+    "R-3": {
+      "description": "4 MCP tools bypass HTTP via direct domain imports in mcp-server",
+      "binding_on": "Phase 2 P2-B scope expansion (not P1 scope)",
+      "forward_warning": "PM will flag for architect attention at Phase 1 close gate",
+      "phase_2_implication": "mcp-server tool handler rewire (apps/mcp-server/src/interface/mcp/tools/macro/ must route HTTP to port 5004)"
+    }
+  },
+  "g12_dod_gate": {
+    "applies": false,
+    "reason": "P1-A2 is scaffold-only (no sandbox runner, no scenarios yet)",
+    "activation": "P1-B1 onward (first primitive task with sandbox verification)"
+  },
+  "l84_staging_example": "git add apps/macro-indicators/cmd/server/main.go && git add --force apps/macro-indicators/tools.go",
+  "commit_message_template": "feat(macro-indicators): P1-A2 — cmd/server/main.go composition root\n\nAdvances G3 per pilot-charter.md v2.0.\n\n- apps/macro-indicators/cmd/server/main.go (NEW, ~80–100 lines)\n  Composition root: DI wiring + server startup + graceful shutdown.\n  Port: 5004. Pattern: TA pilot reference.\n- apps/macro-indicators/tools.go (DELETE — scaffold anchor redundant after main.go imports deps)\n\nAC-1..5 satisfied (TASK_P1-A2-macro.md).\nGo vet expected pre-scaffold failure (pkg/ not yet exist).\nL84 discipline: explicit per-file staging.\nAnchor 1776df8e held.",
+  "anchor_held": "1776df8e (unchanged)",
+  "next_task_unblocked": "P1-A3 (sandbox/main.go) — will dispatch after P1-A2 QA green"
+}

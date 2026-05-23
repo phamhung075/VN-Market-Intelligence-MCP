@@ -53,6 +53,36 @@
     "first_task": "P1-A1 (go.mod + go.sum)",
     "first_task_dispatch_owner": "pm (creates handoff doc + WIP-1 enforcement; forwards to dev-macro-indicators)",
     "expansion_owner": "architect (Phase 2 task plan at Phase 1 close after PO go/no-go gate)",
+    "progress_notes": [
+      {
+        "timestamp": "2026-05-23T10:13:55Z",
+        "task_id": "P1-A1",
+        "status": "DONE",
+        "commit": "5db4a246",
+        "signal": "docs/signals/dev-macro-p1-a1-done-20260523T101355Z.json",
+        "ac_results": "4/4 PASS (go.mod + go.sum + go mod verify + idempotent tidy)",
+        "deviations": [
+          {
+            "id": "D-1",
+            "severity": "LOW",
+            "description": "tools.go anchor added (prevents go mod tidy stripping deps in scaffold phase) — REMOVE in P1-A2 since main.go will import both deps directly"
+          },
+          {
+            "id": "D-2",
+            "severity": "INFO",
+            "description": "go directive 1.25.0 (not 1.22) — correct per Go 1.26.2 tidy with modernc-sqlite v1.29.9 requirement; AC-1 spirit satisfied"
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-05-23T10:15:00Z",
+        "task_id": "P1-A2",
+        "status": "DISPATCH",
+        "handoff": "docs/handoffs/TASK_P1-A2-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a2-20260523T101500Z.json",
+        "description": "cmd/server/main.go composition root (~20m, 5 ACs). D-1 follow-up: dev must git rm tools.go during this task. Next: P1-A3 (sandbox/main.go)"
+      }
+    ],
     "risk_propagation": {
       "R-1": "Math.random() in scoreIndicator() — MUST be fixed in P1-B1 AC-6 (already baked into task plan). PM dispatch handoff doc MUST include explicit R-1 reminder when P1-A5 completes (B1 forward-warning).",
       "R-3": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass macro-indicators HTTP via direct domain imports in mcp-server. Phase 2 P2-B spec MUST explicitly include mcp-server tool handler rewire (apps/mcp-server/src/interface/mcp/tools/macro/) — NOT just apps/macro-indicators/src/ git mv. Noted for architect when Phase 2 task plan expanded."
