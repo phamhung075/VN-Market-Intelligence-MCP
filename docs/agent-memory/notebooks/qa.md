@@ -1,5 +1,38 @@
 # QA — Notebook
 
+## c282 cycle-28 · 2026-05-23 · macro P1-A2 composition root verification
+
+**Task:** P1-A2 — cmd/server/main.go composition root (macro-indicators pilot) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-a2-green-20260523T102304Z.json
+dev_commit: 0e2d9075
+```
+
+| AC | Result | Independent Evidence |
+|----|--------|----------------------|
+| AC-1: ≤100 lines | PASS | wc -l → 88 (dev reported 88, confirmed) |
+| AC-2: zero business logic | PASS | grep exit:1 — zero matches for scoreIndicator/buildSnapshot/oilDirection/goldDirection/usdvndDirection |
+| AC-3a: port 5004 via envStr | PASS | 3 grep hits: comment + envStr("PORT","5004") + health response literal |
+| AC-3b: zero credentials | PASS | grep exit:1 — FRED_API_KEY/sk_/api_key/secret all absent |
+| AC-4: go vet exit 0 | PASS | go vet ./... → exit:0 (D-3 confirmed: pre-scaffold, no pkg/ to vet) |
+| AC-5: TA pattern mirror | PASS | slog/ReadTimeout/WriteTimeout/IdleTimeout/signal.Notify/context.WithTimeout all present |
+| tools.go removed | PASS | git ls-files → empty (not tracked) |
+| go mod tidy | PASS | exit:0 idempotent |
+| go build ./cmd/server | PASS | exit:0 |
+| anchor 1776df8e | PASS | merge-base --is-ancestor → exit:0 |
+| L84 commit-0e2d9075 | PASS | 2 files exactly (main.go CREATE + tools.go DELETE) |
+| L84 commit-ed1a426b | PASS | 1 file exactly (signal JSON) |
+
+**G12 DoD:** NOT_BINDING (scaffold-only, no domain code — binds P1-B1 onward)
+**Blocking issues:** 0 — all 5 ACs + all additional checks PASS.
+**NEXT:** pm — dispatch P1-A3 (cmd/sandbox/main.go)
+
+---
+
 ## c282 cycle-27 · 2026-05-23 · P2-B4 G5 final verification
 
 **Task:** P2-B4 — Integration test: TA MCP tool end-to-end via Go service | **Verdict:** PASS

@@ -1,0 +1,72 @@
+{
+  "from": "qa",
+  "to": "pm",
+  "type": "qa-verdict",
+  "createdAt": "2026-05-23T10:23:04Z",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "task_id": "P1-A2",
+  "task_title": "cmd/server/main.go composition root",
+  "verdict": "GREEN",
+  "dev_commit_sha": "0e2d9075fe13f249f4dc41beb30887ae1c07bc56",
+  "ac_results": {
+    "AC-1": {
+      "status": "PASS",
+      "criteria": "wc -l apps/macro-indicators/cmd/server/main.go ≤ 100",
+      "independent_evidence": "wc -l → 88 lines (threshold: ≤100, dev reported 88 — confirmed)"
+    },
+    "AC-2": {
+      "status": "PASS",
+      "criteria": "grep -E 'scoreIndicator|buildSnapshot|oilDirection|goldDirection|usdvndDirection' returns nothing",
+      "independent_evidence": "grep exit:1 — zero matches confirmed. File contains only imports, DI constructor comment stubs, /health handler, server startup, graceful shutdown boilerplate."
+    },
+    "AC-3a": {
+      "status": "PASS",
+      "criteria": "Port 5004 default via envStr confirmed",
+      "independent_evidence": "grep -E '5004|envStr.*PORT' → 3 matches: (1) comment line 7 '// reads ZERO secrets — only PORT (default 5004)', (2) line 29 'port := envStr(\"PORT\", \"5004\")', (3) line 47 JSON health response body literal. envStr helper at line 83-87 confirmed."
+    },
+    "AC-3b": {
+      "status": "PASS",
+      "criteria": "grep -E 'FRED_API_KEY|sk_|api_key.*=.*\"|secret.*=.*\"' returns nothing",
+      "independent_evidence": "grep exit:1 — zero hardcoded credentials found."
+    },
+    "AC-4": {
+      "status": "PASS",
+      "criteria": "go vet ./... — record exit code (dev reported exit 0, pre-scaffold note D-3)",
+      "independent_evidence": "go vet ./... → exit:0. Confirmed dev's D-3 note: no pkg/ packages exist yet so nothing to vet. This is a better pre-scaffold outcome than anticipated (TASK expected non-zero from 'package not found' — actual result is clean because empty ./... has nothing to fail on)."
+    },
+    "AC-5": {
+      "status": "PASS",
+      "criteria": "signal.Notify + context.WithTimeout + ReadTimeout + WriteTimeout + IdleTimeout + slog all present — mirrors TA pilot pattern",
+      "independent_evidence": "grep -E confirmed all 6 patterns present: slog.NewJSONHandler (line 34), ReadTimeout 15s (line 55), WriteTimeout 15s (line 56), IdleTimeout 60s (line 57), signal.Notify SIGINT/SIGTERM (line 63), context.WithTimeout 5s (line 66). idleConnsClosed channel + goroutine shutdown pattern mirrors TA pilot verbatim."
+    }
+  },
+  "additional_checks": {
+    "tools_go_removed": {
+      "status": "PASS",
+      "evidence": "git ls-files apps/macro-indicators/tools.go → empty (not tracked). Confirmed deleted from index."
+    },
+    "go_mod_tidy": {
+      "status": "PASS",
+      "evidence": "cd apps/macro-indicators && go mod tidy → exit:0, no diff (idempotent)"
+    },
+    "go_build_cmd_server": {
+      "status": "PASS",
+      "evidence": "cd apps/macro-indicators && go build ./cmd/server → exit:0 (binary produced, cleaned up)"
+    },
+    "anchor_reachable": {
+      "status": "PASS",
+      "evidence": "git merge-base --is-ancestor 1776df8e HEAD → exit:0 (anchor held)"
+    },
+    "l84_compliance": {
+      "status": "PASS",
+      "commit_0e2d9075_files": "2 files exactly — apps/macro-indicators/cmd/server/main.go (88 insertions) + apps/macro-indicators/tools.go (12 deletions). No stray files staged.",
+      "commit_ed1a426b_files": "1 file exactly — docs/signals/dev-macro-p1-a2-done-20260523T102048Z.json (69 insertions). Compliant.",
+      "evidence": "git show --stat 0e2d9075 + git show --stat ed1a426b verified independently"
+    }
+  },
+  "g12_dod": "NOT_BINDING_scaffold_only — G12 DoD gate does not apply to P1-A2. This task creates scaffold only (composition root with commented DI wiring). No domain code exists to sandbox. G12 binding activates from P1-B1 onward when first primitive + scenarios are introduced.",
+  "ready_for_next_dispatch": true,
+  "next_task_id": "P1-A3",
+  "next_task_title": "cmd/sandbox/main.go (sandbox runner)"
+}
