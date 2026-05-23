@@ -186,3 +186,99 @@ This revision file is one of three files authored this cycle:
 3. `docs/agent-memory/notebooks/architect.md` (notebook entry)
 
 All three are new or append-only mutations. No production code touched. No CI workflow touched. No agent flow files touched. L84 compliant.
+
+---
+
+## Amendment 1 — AC-4c freeze-anchor update (golangci-lint v1.64.8 compat)
+
+**Date:** 2026-05-23 (cycle-22 post-dispatch)
+**Author:** architect
+**Decision:** Path B — amend AC-4c; accept `9d364329` as the new frozen anchor.
+**Back-pointer to PO dispatch:** `docs/signals/po-cycle22-dispatch-dev-ta-fix-go-lint-revised-20260523T073040Z.json` (field `prior_cycle_20_outcome_note`)
+**Architect signal:** `docs/signals/architect-g4-ac4c-amendment-20260523T083000Z.json`
+
+---
+
+### 1. Collision Evidence
+
+`git log --oneline apps/technical-analysis/.golangci.yml` shows:
+
+```
+9d364329 fix(technical-analysis): cycle-20 — golangci-lint findings on apps/technical-analysis (G4 unblock)
+9561fee9 chore(arch/technical-analysis): P2-A1 — golangci-lint depguard Fence-A/B/C config
+```
+
+Commit `9d364329` was authored AFTER the freeze anchor `9561fee9` that AC-4c named. AC-4c as originally written requires `git log` to show NO commits after `9561fee9` — a condition that is now permanently false on `main`. As-written, AC-4c is unsatisfiable regardless of any fix dev-ta applies to lint findings.
+
+---
+
+### 2. Verification of Commit `9d364329` Content
+
+`git show 9d364329 -- apps/technical-analysis/.golangci.yml` reviewed in full. Findings:
+
+**What changed:** golangci-lint config format keys only. Specifically:
+- `version: "2"` field removed (v2-only top-level key)
+- `linters.default: none` → `linters.disable-all: true` (v1 equivalent)
+- `linters.settings:` (nested under `linters:`) → `linters-settings:` (top-level, v1 key path)
+
+**What did NOT change:** all three fence rule bodies are byte-for-byte identical in semantic content:
+- `fence-a` deny list: `pkg/module`, `pkg/application`, `pkg/interface` (with exact `desc:` strings)
+- `fence-b` deny list: `pkg/application`, `pkg/interface` (with exact `desc:` strings)
+- `fence-c` file patterns and deny list: `!cmd/server/main.go`, `!**/*_test.go`, `pkg/infrastructure` (with exact `desc:` string)
+- `Main` allow-list: `$gostd`, `github.com/vn-market-intelligence/technical-analysis`, `github.com/go-chi`, `modernc.org`
+
+This is a pure format conversion. No fence rule was added, removed, weakened, or renamed. The architectural intent encoded in the config is unchanged.
+
+---
+
+### 3. Tooling-Compat Justification
+
+**Action pin:** `.github/workflows/ci.yml` line 70 confirms `golangci/golangci-lint-action@v6.1.1`. This is frozen (out of scope per cycle-20 dispatch and per the revised cycle-22 dispatch `out_of_scope` list: "`.github/workflows/ci.yml` changes").
+
+**Binary version shipped by that action:** `golangci-lint-action@v6.1.1` installs `golangci-lint v1.64.8` by default (v1 series). Commit `9d364329` body (authored by dev-ta, citing local smoke run) confirms: "v1.64.8 exits code 3 on v2-format config: 'you are using a configuration file for golangci-lint v2'". The original P2-A1 commit `9561fee9` itself explicitly states "Config format: golangci-lint v2" — establishing that the original config was authored for a v2 binary.
+
+**Path-A feasibility:** Path A would require reverting `9d364329` (restoring v2 format) and finding an alternate fix. The only alternate fix that makes CI pass without touching `.golangci.yml` is changing `ci.yml` to either (a) pin `golangci-lint-action` to a version that installs a v2 binary, or (b) add `with: version: v2.x` to the action inputs. Both options require modifying `ci.yml`, which is frozen in the same out-of-scope clause. Path A therefore has no viable exit without a double scope violation (revert of `9d364329` + change to `ci.yml`). Path A is structurally blocked.
+
+**Architectural ruling:** The v2→v1 format conversion in `9d364329` was a necessary tooling-compatibility adaptation given the frozen CI action pin. It is not arbitrary config drift. Blessing `9d364329` as the new freeze anchor is the correct architectural call.
+
+---
+
+### 4. Revised AC-4c Text
+
+**OLD AC-4c (superseded):**
+
+> `apps/technical-analysis/.golangci.yml` is at P2-A1 close state (committed `9561fee9`). [...] Config must NOT have been modified after P2-A1 close. Verification method: `git log --oneline apps/technical-analysis/.golangci.yml` shows no commits after `9561fee9`.
+
+**NEW AC-4c (effective immediately):**
+
+> `apps/technical-analysis/.golangci.yml` is at its current frozen state (committed `9d364329`). The file declares three fences: `fence-a` (primitive must not import module/application/interface), `fence-b` (module must not import application/interface), `fence-c` (infrastructure import only in cmd/server/main.go). Config must NOT have been modified after `9d364329`.
+>
+> Note: `9d364329` converted the config from golangci-lint v2 format to v1 format to match `golangci-lint-action@v6.1.1`'s default binary (v1.64.8). The format conversion is semantic-neutral — all three fence rules are preserved identically. See Amendment 1 in this file for full evidence.
+>
+> Verification method: `git log --oneline apps/technical-analysis/.golangci.yml` shows exactly two commits — `9561fee9` (P2-A1 config creation) then `9d364329` (v2→v1 format conversion) — and no commits after `9d364329`. QA runs this command and records the verbatim output in `TASK_P2-A4.md §Evidence to Record`.
+>
+> AC-4c verdict: PASS if `git log` shows `9d364329` as the most recent commit on this file with no commits after it. FAIL if any commit appears after `9d364329`.
+
+---
+
+### 5. Impact on TASK_P2-A4.md
+
+**PO re-edit required: YES.**
+
+`TASK_P2-A4.md` AC-4c block currently references `9561fee9` as the freeze anchor (both in the AC text and in the §Evidence to Record template). PO must update:
+1. AC-4c prose: replace `9561fee9` with `9d364329` as the named freeze anchor.
+2. §Evidence to Record `ac_4c_verdict` guidance: update to "PASS if `9d364329` is the most recent commit; FAIL if any commit appears after `9d364329`".
+3. The "Known collision" note in the current handoff (which describes `9d364329` as a violation) should be replaced or retracted — under the new anchor, `9d364329` is the correct frozen state, not a violation.
+
+No other sections of TASK_P2-A4.md require changes (AC-4a and AC-4b are unaffected).
+
+---
+
+### 6. What Does NOT Change
+
+- AC-1, AC-2, AC-3, AC-4a, AC-4b, AC-5: unchanged.
+- The three fence rules (Fence-A, Fence-B, Fence-C) and their semantic content: unchanged.
+- The `golangci-lint-action@v6.1.1` pin in `ci.yml`: unchanged and not touched.
+- The `apps/technical-analysis/` source files: not touched.
+- L84 staging discipline: 3 files authored this amendment cycle (this file appended, architect signal dropped, notebook appended).
+- Anchor `62edbf3d` held.

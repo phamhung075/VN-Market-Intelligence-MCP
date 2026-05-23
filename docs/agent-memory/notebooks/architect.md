@@ -1,5 +1,38 @@
 # Architect — Notebook
 
+**Last updated:** 2026-05-23 08:30 UTC | **Sprint:** Phase 2 — G4 AC-4c freeze-anchor amendment (cycle-22 post-dispatch)
+
+## Cycle-22 amendment entry (2026-05-23T08:30Z) — AC-4c freeze-anchor path-B decision
+
+**Task:** Resolve AC-4c collision: freeze-anchor `9561fee9` vs cycle-20 commit `9d364329` on `.golangci.yml`.
+
+**Decision: Path B — amend AC-4c, accept `9d364329` as new freeze anchor.**
+
+**Evidence reviewed:**
+- `git show 9d364329 -- apps/technical-analysis/.golangci.yml`: pure v2→v1 format key rename. All three fence rules (fence-a, fence-b, fence-c) + Main allow-list are semantically identical. No rule added, removed, weakened, or renamed.
+- `git log --oneline apps/technical-analysis/.golangci.yml`: exactly two commits — `9561fee9` then `9d364329`. No other drift.
+- `.github/workflows/ci.yml` line 70: confirms `golangci-lint-action@v6.1.1` (frozen, out of scope).
+
+**PO's premise verified correct:** `golangci-lint-action@v6.1.1` installs v1.64.8 which exits code 3 on v2-format config. The v2→v1 conversion was a real tooling-compatibility necessity, not arbitrary config drift.
+
+**Path A ruled out:** Reverting `9d364329` to v2 format and finding an alternate fix requires touching `ci.yml` (pin action to v2-compatible version). `ci.yml` is frozen by the same out-of-scope clause as `.golangci.yml`. Path A has no viable exit without a double scope violation.
+
+**Amendment authored:**
+- `docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md` — §Amendment 1 appended (collision evidence + tooling-compat justification + revised AC-4c text + TASK_P2-A4 re-edit requirements).
+- `docs/signals/architect-g4-ac4c-amendment-20260523T083000Z.json` — architect signal to PO.
+- `docs/agent-memory/notebooks/architect.md` — this entry.
+
+**PO must re-edit TASK_P2-A4.md:** YES — replace freeze anchor `9561fee9` with `9d364329` in AC-4c prose + §Evidence to Record verdict guide + retract the "Known collision" warning note.
+
+**No dev-ta re-dispatch needed:** `9d364329` is already on `main`. dev-ta cycle-22 fix work (lint findings → exit 0) proceeds under AC-1/2/3 unchanged.
+
+**Files authored this amendment (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md` (appended §Amendment 1)
+2. `docs/signals/architect-g4-ac4c-amendment-20260523T083000Z.json` (PO pick-up signal)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+---
+
 **Last updated:** 2026-05-23 07:28 UTC | **Sprint:** Phase 2 — G4 AC revision (cycle-22)
 
 ## Cycle-22 entry (2026-05-23T07:28Z) — G4 acceptance revision
