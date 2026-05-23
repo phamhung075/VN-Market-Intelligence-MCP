@@ -1,5 +1,44 @@
 # QA — Notebook
 
+## c282 cycle-56 · 2026-05-23 · macro P2-E1 G11 trial-2 injection — DONE (honest-FAIL ≥2)
+
+**Task:** P2-E1 — Regression Alarm Proof G11 trial-2 injection | **Verdict:** INJECTION_DONE | **G11:** coupling_proven=true
+
+```
+date: 2026-05-23
+outcome: INJECTION_DONE
+type: pilot-task-qa (single-literal bug injection, G11 trial-2 regression alarm proof)
+qa_commit: 3a095039
+pre_injection_sha: 6a63c1da
+signal: docs/signals/qa-p2-e1-injection-DONE-20260523T213037Z.json
+```
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| Anchor 1776df8e pre | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| Baseline sandbox 20/20 | PASS | total=20 pass=20 fail=0 status=OK exit 0 (pre-injection) |
+| Tags created (local-only) | PASS | p2-e1-pre-injection (annotated) + macro-e1-pre-inject (lightweight) @ 6a63c1da |
+| Primitive selection | PASS | macro_yield_spread_signal (DIFFERENT from P2-D1 carry-trade) |
+| Single-literal mutation | PASS | CheapThreshold = 2.0 → 5.0 (line 44, macro_yield_spread_signal.go) |
+| Diff vs tag (AC-1) | PASS | exactly 1 line changed: git diff p2-e1-pre-injection HEAD confirms single literal |
+| Sandbox exit 1 post-mutation | PASS | exit status 1, total=20 pass=18 fail=2 status=FAIL |
+| FAIL scenario 1 | PASS | macro-yield-spread-signal-golden.json: Label got FAIRLY_VALUED want CHEAP |
+| FAIL scenario 2 (coupling) | PASS | macro-signals-golden.json: yieldSpread.label got FAIRLY_VALUED want CHEAP |
+| G8 isolation (other 18 GREEN) | PASS | carry-trade, gold, investment-clock, oil, usdvnd all 15 scenarios PASS; yield-edge + yield-failure + signals-edge PASS |
+| R-1 determinism | PASS | grep math/rand|rand.Intn|rand.Float|time.Now.*Seed pkg/ → exit 1 (0 matches) |
+| Fence-B module app+infra | PASS | grep application|infrastructure in pkg/module/macro_signals/ → exit 1 |
+| Fence-C infra in pkg/ | PASS | grep /infrastructure in pkg/ excl. cmd/server/main.go → exit 1 |
+| Anchor 1776df8e post | PASS | exit 0 (HELD) |
+| L84 explicit staging | PASS | only macro_yield_spread_signal.go staged, no -A or . |
+| TA untouched | PASS | apps/technical-analysis/ not in commit, git status untracked only |
+| SSOT untouched | PASS | docs/data/pilot-status-macro-indicators.json not touched |
+
+**Coupling analysis:** CheapThreshold 2.0→5.0 raises the bar so that spreads of 3.5pp (primitive golden) and 2.6pp (module golden) both reclassify from CHEAP to FAIRLY_VALUED. Single constant — two RED cards. Coupling chain: primitive→module via macro_signals.go import (G2 verified). G8 isolation: only yield-spread path affected, all 5 other primitives remain GREEN.
+**Blocking issues:** 0 — all ACs and hard gates PASS. Honest-RED contract satisfied.
+**NEXT:** dev-macro-indicators — P2-E2: restore CheapThreshold 5.0 → 2.0 (byte-identical to p2-e1-pre-injection tag), sandbox must return 20/20 GREEN.
+
+---
+
 ## c282 cycle-53 · 2026-05-23 · macro P2-X4 dashboard data refresh (G9 unblock) — GREEN
 
 **Task:** P2-X4 — Dashboard Data Refresh (PRIMITIVES_DATA + MODULE_DATA + microservice panel) | **Verdict:** GREEN | **G9:** p2_c1_rerun_unblocked=true
