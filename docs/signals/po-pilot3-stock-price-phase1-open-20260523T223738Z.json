@@ -1,0 +1,53 @@
+{
+  "signal": "po-pilot3-stock-price-phase1-open",
+  "from": "po",
+  "emittedAt": "2026-05-23T22:37:38Z",
+  "type": "dispatch",
+  "subject": "stock-price pilot-3 Phase-0→Phase-1 gate RATIFIED — dispatch PM to begin Phase 1 at P1-A (WIP=1)",
+  "decision_doc": "docs/po-decisions/2026-05-24-pilot3-phase1-gate-ratify-and-pilot4-kinh-dich-open.md",
+  "gate_pass_signal": "docs/signals/architect-p0-exit-gate-stock-price-20260523T223331Z.json",
+  "gate_ruling": "RATIFIED",
+  "ratification_basis": {
+    "all_6_deliverables": "PASS (P0-SP-1..6 verdict=PASS per architect gate signal)",
+    "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+    "anchor_is_ancestor_of_HEAD": true,
+    "tags_pointing_at_anchor": 0,
+    "anchor_frozen": true,
+    "ssot_phase": "1 (phase0.status=CLOSED, closedBy=pm)",
+    "decisionMatrix": "present-but-empty (TBD) — charter §4.5 compliant, populates ONLY at 12/12 terminal",
+    "no_code_in_fences_yet": "pkg/primitive=absent, pkg/module=absent (Phase 1 creates them)",
+    "r_cgo_phase0_verdict": "CLEAR (P0-SP-5) — CGO confined to pkg/infrastructure/fetchers.go; sandbox builds CGO_ENABLED=0"
+  },
+  "pilot": {
+    "service": "stock-price",
+    "fleet_pilot_number": 3,
+    "language": "Go",
+    "port_internal": 5000,
+    "port_external": 5010,
+    "zone": "apps/stock-price/",
+    "dev_specialist": "dev-stock-price",
+    "status": "ACTIVE",
+    "phase": "1"
+  },
+  "phase1_authorization": {
+    "task_plan": "docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md",
+    "task_count": 9,
+    "ac_count": 55,
+    "wip": "1 sequential — PM dispatches ONE task at a time; next only after current DONE signal",
+    "start_at": "P1-A (cmd/sandbox/main.go — CGO_ENABLED=0 sandbox runner; AC-5 hard gate: CGO_ENABLED=0 go build ./cmd/sandbox exit 0 before P1-B1)",
+    "then": "P1-B1 (first primitive price-quote-normalizer + R-CGO gate)",
+    "r_cgo_hard_blocker": "P1-B1 AC-8 — if AC-5/AC-6/AC-7 do not ALL pass, R-CGO is BLOCKED: stop Phase 1 at P1-B1, PM escalates to architect before any further primitive extraction. Phase-1 critical chokepoint.",
+    "g12_streak": "P1-B1 (#1) -> P1-B2 (#2) -> P1-B3 (#3); G12 EARNED-PENDING only after streak; PO flips YES only at 12/12 terminal atomic close",
+    "frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc — no retag, no rewrite, no push"
+  },
+  "next_dispatch": {
+    "agent": "pm",
+    "then": "dev-stock-price",
+    "intent": "Open stock-price pilot-3 Phase 1 — dispatch P1-A per phase-1 task plan",
+    "flow": ".claude/flows/pm/main.md",
+    "ssot_owner_note": "PM owns docs/data/pilot-status-stock-price.json — populate phase1.openedAt/openedBy/status=ACTIVE on dispatch. PO does NOT mutate the SSOT in this ruling (gate-open authority only)."
+  },
+  "wip_cap": "WIP=2 fleet cap — {stock-price (Phase 1), kinh-dich (Phase 0, opened this cycle)} = 2 ACTIVE charters at cap. No pilot 5 charter until pilot 3 clears Phase 1.",
+  "constraints_held": "L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push; all on main; stock-price SSOT NOT mutated by PO (PM-owned, already phase=1); CLOSED/FROZEN SSOTs + DORMANT app source untouched; decisionMatrix empty until terminal; system facts via jq on system-map.json",
+  "do_not": "Do NOT skip P1-A AC-5 CGO build gate. Do NOT dispatch P1-B2 before P1-B1 R-CGO CLEAR verdict recorded. Do NOT run parallel dispatches within Phase 1."
+}

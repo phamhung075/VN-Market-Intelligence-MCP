@@ -1,0 +1,65 @@
+{
+  "signal": "po-pilot4-kinh-dich-open",
+  "from": "po",
+  "emittedAt": "2026-05-23T22:37:38Z",
+  "type": "dispatch",
+  "subject": "kinh-dich pilot-4 WIP=2 second slot OPENED — dispatch architect to draft pilot-charter (TS fence, port 5005)",
+  "decision_doc": "docs/po-decisions/2026-05-24-pilot3-phase1-gate-ratify-and-pilot4-kinh-dich-open.md",
+  "ruling": "OPEN",
+  "prior_ruling": "docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md (Decision 1 pilot-4=kinh-dich + WIP=2; Decision 4 G4 gated on SI-3)",
+  "gate_conditions_met": {
+    "si3_complete": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md — status=FINAL, chosen_option=A (eslint-plugin-boundaries v6.0.2), within_one_sprint=true, g4_ac_text_ready=true",
+    "stock_price_cleared_phase0": "RATIFIED this cycle (po-pilot3-stock-price-phase1-open-20260523T223738Z.json); stock-price now Phase-1",
+    "wip2_cap": "{stock-price (Phase 1), kinh-dich (Phase 0)} = 2 ACTIVE at cap, not over"
+  },
+  "pilot": {
+    "service": "kinh-dich-service",
+    "fleet_pilot_number": 4,
+    "language": "TypeScript",
+    "runtime": "Bun",
+    "language_locked": true,
+    "port_internal": 5005,
+    "port_external": 5005,
+    "zone": "apps/kinh-dich-service",
+    "dev_specialist": "dev-kinh-dich",
+    "charter_version_target": "2.0",
+    "status_target": "ACTIVE",
+    "phase_target": "0"
+  },
+  "charter_draft_authorization": {
+    "owner": "architect",
+    "output_charter": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
+    "clone_structure_from": "macro v2.0 / stock-price v2.0 charter (12 G-goals Tracks A/B/C, Phase 0 exit gate, §4.5 decisionMatrix PO-only authorship, §Hard Deadline status-enum L3, lessons L1-L7 baked Day 0)",
+    "service_facts_via_jq": "system-map.json: port 5005 (internal==external), zone apps/kinh-dich-service, language ts, runtime bun, specialist dev-kinh-dich — never hardcode",
+    "language_lock_day0": "TypeScript — natively TS/Bun, no rewrite step (L1 no mid-pilot pivot)",
+    "g4_transcription": {
+      "source": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md §5 (G4 AC block) — transcribe VERBATIM",
+      "svc_substitution": "<svc> -> kinh-dich-service throughout",
+      "fence_tool": "eslint-plugin-boundaries (Option A) in apps/kinh-dich-service/eslint.config.mjs — NOT Go .golangci.yml/depguard",
+      "deliberate_violation_path": "SI-3 §4/§8 example src/primitive/hexagram-resolver/index.ts (substitute an actual primitive that exists at G4 time)",
+      "ac_4a_4b_4c": "carry SI-3 §5 verbatim: eslint.config.mjs exists + eslint & eslint-plugin-boundaries in devDependencies + bunx eslint src/ --max-warnings 0 exit 0; Fence-A violation -> non-zero exit with 'Fence-A' in output -> reverted -> never committed; eslint.config.mjs freeze anchor at G4 close",
+      "g4_no_longer_gated": "SI-3 landed -> G4 section may be LOCKED at charter v1, no architect Amendment (SI-3 §5 'spec is final at charter v1')"
+    },
+    "pre_revert_tags": ["kinh-dich-pre-ci", "kinh-dich-pre-delete", "kinh-dich-pre-inject"],
+    "si2_ownership": "SI-2 fleet dashboard index is stock-price's (ratification Decision 3) — kinh-dich charter must NOT re-claim SI-2; kinh-dich G6 builds only apps/kinh-dich-service/dashboard/index.html",
+    "per_service_risk_gate": {
+      "no_r_cgo_analog": "kinh-dich is TS/Bun, no mattn/go-sqlite3 — stock-price's R-CGO hard chokepoint does NOT apply",
+      "candidate_gate_R_FENCE": "TS fence resolution is the novel-tooling risk (first TS service to exercise eslint-plugin-boundaries). SI-3 §6.2 R-2: confirm .js-suffixed ESM imports are matched by src/<layer>/**/* element patterns. Phase-0/Phase-1 gate = AC-4b deliberate-violation proof producing non-zero exit + 'Fence-A' in output on this service's real import style. If R-2 bites, SI-3 §6.3 5-min in-Option-A fallback (add @typescript-eslint/parser) — does NOT drop to Option C.",
+      "g7_zero_creds": "carries over unchanged — kinh-dich sandbox process must have zero DB creds / API keys / secrets (hexagram logic is pure compute)",
+      "authority": "architect finalizes the per-service gate wording in the charter at Phase 0; PO framing above is to transcribe/refine, not a freeze"
+    },
+    "ssot_to_instantiate": {
+      "path": "docs/data/pilot-status-kinh-dich.json",
+      "from_schema": "docs/data/pilot-status-schema.json (macro v2 field shape)",
+      "day0_values": "12 goals=TBD, decisionMatrix present-but-empty, status=ACTIVE, phase=0, language=TypeScript locked Day 0",
+      "gitignore_note": "docs/data/ is gitignored — committing this new file REQUIRES git add -f docs/data/pilot-status-kinh-dich.json. NOT created by this PO ruling; created by the architect/charter step."
+    }
+  },
+  "next_dispatch": {
+    "agent": "architect",
+    "intent": "Draft kinh-dich pilot-4 charter (TS stack, port 5005) per authorization above",
+    "flow": ".claude/flows/architect/main.md"
+  },
+  "constraints_held": "L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push; all on main; did NOT create kinh-dich SSOT/charter this cycle (architect's step); did NOT touch DORMANT/CLOSED/FROZEN app source or SSOTs; decisionMatrix empty until terminal; system facts via jq on system-map.json; docs/data/*.json gitignore flagged (git add -f for kinh-dich SSOT)",
+  "do_not": "Do NOT lock G4 with Go depguard text (kinh-dich is TS — use SI-3 §5 ESLint fence). Do NOT re-claim SI-2 ownership. Do NOT open pilot 5 (alert-engine) charter — WIP=2 cap, pilot 3 must clear Phase 1 first."
+}
