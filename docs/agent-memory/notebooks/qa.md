@@ -1,5 +1,48 @@
 # QA — Notebook
 
+## c282 cycle-58 · 2026-05-24 · stock-price P1-G Phase-1 close-gate — GO
+
+**Task:** P1-G — Phase 1 Close-Gate Verification (QA) | **Verdict:** GO | **Phase 1:** CLOSED
+
+```
+date: 2026-05-24
+outcome: GO
+type: pilot-task-qa (Phase 1 exit gate — read-only verification, no production code mutation)
+signal: docs/signals/qa-stock-price-phase1-close-gate-20260523T234229Z.json
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: sandbox primitive tier | PASS | CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive → exit 0, total=9 pass=9 fail=0 status=OK |
+| AC-1: sandbox module tier | PASS | CGO_ENABLED=0 go run ./cmd/sandbox -tier=module → exit 0, total=2 pass=2 fail=0 status=OK |
+| AC-1: sandbox all tier (G12 DoD) | PASS | CGO_ENABLED=0 go run ./cmd/sandbox -tier=all → exit 0, total=11 pass=11 fail=0 status=OK |
+| AC-2: dashboard 5/5 cards (100%) | PASS | 3 primitive cards (price-quote-normalizer, tier-fallback-selector, price-staleness-classifier) + 1 module card (price_resolution) + 1 microservice card (stock-price) — all present in HTML source |
+| AC-2: dashboard self-contained | PASS | grep http://|https://|fetch(|cdn → 0 live external loads. All matches are comments/text, not network calls |
+| AC-2: honest NOT-RUN cold-start | PASS | "9 NOT-RUN" (primitives) + "2 NOT-RUN" (module) in summary chips. Zero false greens. |
+| AC-2: edit-rerun panel | PASS | rerun-panel-overlay present (line 592). CGO_ENABLED=0 badge highlighted (lines 997+1006). |
+| AC-2: env-audit command | PASS | `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` present at dashboard line 1029 |
+| AC-3: G12 streak P1-B1 | CONFIRMED | RETURN block: sandbox exit 0, total=3 pass=3, g12_dod_sandbox=GREEN (streak task #1) |
+| AC-3: G12 streak P1-B2 | CONFIRMED | RETURN block: g12_dod_sandbox=GREEN, AC-5 PASS (all 6 scenarios), streak task #2 |
+| AC-3: G12 streak P1-B3 | CONFIRMED | RETURN block: g12_dod_sandbox=GREEN, AC-5 PASS (all 9 scenarios — B1+B2+B3), streak task #3 completes 3/3 |
+| AC-4: R-CGO fence (mattn/go-sqlite3) | PASS | grep mattn/go-sqlite3\|import "C" in pkg/primitive/ pkg/module/ cmd/sandbox/ → exit 1 (0 matches). Comment-only 'cgo' text at cmd/sandbox/main.go:16 is not an import. |
+| AC-5: close-gate signal emitted | PASS | docs/signals/qa-stock-price-phase1-close-gate-20260523T234229Z.json |
+| Frozen anchor debba8eaff0 | INTACT | git merge-base --is-ancestor exit 0 (still ancestor of HEAD). git tag --points-at → empty (zero tags). |
+| SSOT g12Streak.completed=3 | CONFIRMED | docs/data/pilot-status-stock-price.json: completed=3, streakComplete=true, completedAt=2026-05-24T01:08:00Z |
+| SSOT decisionMatrix | PRESENT-EMPTY | All fields TBD — PO-only per Charter §4.5. Not mutated by QA. |
+
+**Phase 1 exit criteria:**
+- Criterion 1 (time to first primitive): P1-A→P1-B1 ≈ 7 minutes — PASS (≤4 agent-hours)
+- Criterion 2 (sandbox all-green): 11/11 exit 0 — PASS
+- Criterion 3 (dashboard ≥90%): 5/5 = 100% — PASS
+- Criterion 4 (G12 3/3 streak): 3/3 CONFIRMED — PASS
+
+**Verdict: GO** — all 4 criteria met. Phase 1 CLOSED.
+**Unblocks:** (1) WIP cap release for pilot-5 alert-engine, (2) Phase 2 entry for stock-price.
+**Blocking issues:** 0 — all 5 ACs + all hard gates PASS.
+**NEXT:** pm — mark P1-G DONE, update pilot-status-stock-price.json phase1.gateVerdict=GO + phase1.status=CLOSED, notify PO for Phase 2 dispatch authorization.
+
+---
+
 ## c282 cycle-57 · 2026-05-23 · macro P2-E2-verify G11 trial-2 fix verification — GREEN
 
 **Task:** P2-E2-verify — Independent G11 trial-2 fix verification | **Verdict:** GREEN | **G11:** g11_grading=YES
