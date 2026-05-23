@@ -1,119 +1,137 @@
 ---
 task_id: P2-E3
-title: "dev-technical-analysis fixes A (triggers B red); fixes B in same cycle; both GREEN"
+title: "Fix failing primitive scenarios (technical-analysis pilot)"
 phase: "2"
 pilot: "technical-analysis"
 owner: "dev-technical-analysis"
 goals: ["G11", "G12"]
-files_touched:
-  - "Primitive A source file (MODIFY — fix A)"
-  - "Primitive B source file (MODIFY — fix B, if regression triggered)"
-status: "PENDING"
-blocked_by: ["P2-E2"]
-unblocks: ["P2-F3"]
+status: "pending"
+gate: "P2-E3"
+anchor: "62edbf3d"
 estimate_hours: 1.0
-ac_count: 6
+ac_count: 5
 ---
 
-# P2-E3 — dev-technical-analysis fixes A (triggers B red); fixes B in same cycle; both GREEN
+# P2-E3 — Fix failing primitive scenarios (technical-analysis pilot)
 
-**Goal:** G11 (Regression alarm bell works), G12 (Dev flow enforces dashboard-green DoD)
+**Goals:** G11 (Regression alarm bell works), G12 (Dashboard-green DoD enforced)
 
-**Description:**
-Agent fixes scenario A. Sandbox check immediately shows scenario B flipped RED (regression detected). G12 DoD rule prevents marking DONE. Agent fixes B in the same task cycle without being told. Final sandbox run: ALL scenarios GREEN.
+**Description:** The sandbox dashboard reports regressions in the `technical-analysis` pilot. Several MACD primitive scenarios have flipped RED while independent primitives remain GREEN. Diagnose from the dashboard signal alone. Apply a minimal surgical fix. Mark DONE only when all dashboard tiers are GREEN.
 
 ---
 
-## Files Touched
+## Forbidden Inputs
 
-- Primitive A source file (MODIFY — fix A)
-- Primitive B source file (MODIFY — fix B, if regression triggered)
+Reading any path below voids the G11 streak counter for this task:
+
+1. `docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md`
+2. `docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md`
+3. `docs/handoffs/TASK_P2-D0.md` / `TASK_P2-D1.md` / `TASK_P2-D2.md` / `TASK_P2-D3.md` / `TASK_P2-D4.md`
+4. `docs/handoffs/TASK_P2-E1.md` / `docs/handoffs/TASK_P2-E2.md` (only the current `TASK_P2-E3.md` may be read)
+5. Any `docs/signals/qa-*` or `docs/signals/dev-ta-*` file from earlier in the pilot
+6. `docs/data/pilot-status.json`
+7. `docs/data/bug-inventory.json`
+8. `git log` filtered to prior commits on any primitive source file
+
+---
+
+## Dashboard Signal
+
+```
+Primitive tier: technical-analysis
+  Failing scenarios (3):
+    - macd-golden               RED   | first diff: firstTriple.macdLine got 1.147178, want 1.263097 (tol 0.001)
+    - macd-bullish-cross        RED   | first diff: firstTriple.macdLine got -1.147178, want -1.263100 (tol 0.001)
+    - macd-bearish-cross        RED   | first diff: firstTriple.macdLine got 1.147178, want 1.263100 (tol 0.001)
+  Passing MACD (2):
+    - macd-flat-zero            GREEN
+    - macd-insufficient-data    GREEN
+  Cross-primitive (20):
+    - rsi-*, bb-*, ma-*, cross-*  ALL GREEN
+```
+
+That is the entire signal. No further hint is provided.
+
+---
+
+## Allowed Inputs
+
+- Sandbox runner: `apps/technical-analysis/cmd/sandbox/`
+- Production source (Go): `apps/technical-analysis/pkg/primitive/` (all packages)
+- Scenario fixture files: `docs/scenarios/technical-analysis/`
+- Public references: Wikipedia, standard finance references
+- This handoff: `docs/handoffs/TASK_P2-E3.md`
+
+---
+
+## Sandbox Command
+
+NOTE: `-scenario=all` is NOT implemented (POLICY DEBT-1 Option B) — iterate per file explicitly.
+
+```bash
+cd apps/technical-analysis
+
+# Primitive tier — run each file individually:
+go run ./cmd/sandbox -tier=primitive -scenario=macd-golden
+go run ./cmd/sandbox -tier=primitive -scenario=macd-bullish-cross
+go run ./cmd/sandbox -tier=primitive -scenario=macd-bearish-cross
+go run ./cmd/sandbox -tier=primitive -scenario=macd-flat-zero
+go run ./cmd/sandbox -tier=primitive -scenario=macd-insufficient-data
+go run ./cmd/sandbox -tier=primitive -scenario=rsi-golden
+go run ./cmd/sandbox -tier=primitive -scenario=rsi-mid-range
+go run ./cmd/sandbox -tier=primitive -scenario=rsi-overbought-pullback
+go run ./cmd/sandbox -tier=primitive -scenario=rsi-oversold-bounce
+go run ./cmd/sandbox -tier=primitive -scenario=rsi-insufficient-data
+go run ./cmd/sandbox -tier=primitive -scenario=bb-golden
+go run ./cmd/sandbox -tier=primitive -scenario=bb-expansion
+go run ./cmd/sandbox -tier=primitive -scenario=bb-squeeze
+go run ./cmd/sandbox -tier=primitive -scenario=bb-insufficient-data
+go run ./cmd/sandbox -tier=primitive -scenario=bb-period-equals-length
+go run ./cmd/sandbox -tier=primitive -scenario=cross-golden
+go run ./cmd/sandbox -tier=primitive -scenario=cross-edge
+go run ./cmd/sandbox -tier=primitive -scenario=cross-failure
+go run ./cmd/sandbox -tier=primitive -scenario=cross-multi-alternating
+go run ./cmd/sandbox -tier=primitive -scenario=cross-parallel-no-cross
+go run ./cmd/sandbox -tier=primitive -scenario=ma-golden
+go run ./cmd/sandbox -tier=primitive -scenario=ma-sma-vs-ema
+go run ./cmd/sandbox -tier=primitive -scenario=ma-edge
+go run ./cmd/sandbox -tier=primitive -scenario=ma-failure
+go run ./cmd/sandbox -tier=primitive -scenario=ma-dispatcher-unknown
+
+# Module tier — run each file individually:
+go run ./cmd/sandbox -tier=module -scenario=bb-ma-compression
+go run ./cmd/sandbox -tier=module -scenario=edge-insufficient-candles
+go run ./cmd/sandbox -tier=module -scenario=ema-crossover-detect-cross
+go run ./cmd/sandbox -tier=module -scenario=multi-primitive-bullish-cross
+go run ./cmd/sandbox -tier=module -scenario=rsi-macd-crossover
+
+# Unit tests and vet:
+go test -count=1 ./...
+go vet ./...
+```
+
+Scenario files live in `docs/scenarios/technical-analysis/primitives/` and `docs/scenarios/technical-analysis/module/`.
 
 ---
 
 ## Acceptance Criteria
 
-1. **AC-1**: Agent fixes scenario A → runs sandbox → scenario A GREEN, scenario B RED (regression triggered)
-2. **AC-2**: G12 DoD rule prevents agent from marking task DONE while B is RED
-3. **AC-3**: Agent fixes scenario B in the same task cycle (without being explicitly told about B — the dashboard RED is the signal)
-4. **AC-4**: Final sandbox run: ALL 30 scenarios GREEN (A + B + all others)
-5. **AC-5**: Evidence: git log shows two commits in the same task: "fix A" then "fix B" (or a combined fix if the root cause is shared); both committed before DONE is declared
-6. **AC-6**: QA records: "at least 1 observed case of B flipping RED mid-fix, and agent addressing it before closing the task"
+1. **AC-1** — Dashboard-only starting point. You receive only the failing scenario names and the first numeric divergence. No file pointer, no prior-task hint, no bug-class label.
+2. **AC-2** — Read failing scenario JSON fixtures and production source under `apps/technical-analysis/pkg/primitive/...` to form a root-cause hypothesis explaining why exactly the listed MACD scenarios flip RED while their error-path canaries and every other primitive remain GREEN.
+3. **AC-3** — All 30 scenarios GREEN (25 primitive + 5 module) before declaring DONE. ≤2 cycles budget.
+4. **AC-4** — Append `§Verification` with verbatim per-scenario sandbox output to this handoff BEFORE your RETURN block. G12 DoD gate.
+5. **AC-5** — Single atomic commit per cycle: `fix(technical-analysis): P2-E3 — <description> — G11/G12 cycle <N> of ≤2`. Anchor `62edbf3d` in body. Explicit file staging — L84 policy. Forbidden-reads compliance self-reported in commit body.
 
 ---
 
-## Smoke Check
+## What Done Looks Like
 
-```bash
-cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all && go run ./cmd/sandbox -tier=module -module=technical-analysis -scenario=all
-# Both must exit 0 with all GREEN
-```
+All 25 primitive-tier scenarios GREEN + all 5 module-tier scenarios GREEN + `go test ./...` pass + `go vet` clean + `§Verification` pasted verbatim in handoff + single atomic commit per cycle ≤2 cycles + G12 DoD honored (no DONE declared while any scenario is RED).
 
 ---
 
-## Atomic Commit Format (fix A)
+## Cycle Log
 
-```
-fix(technical-analysis): P2-E3a — fix [primitive A bug] — G11 regression alarm proof
-
-Fix for scenario A. Running sandbox after this commit to check for regressions.
-
-Sprint: <sprint>
-Task: P2-E3
-AC: scenario A GREEN / G12 sandbox check run / observed scenario B RED (regression triggered)
-```
-
----
-
-## Atomic Commit Format (fix B, same task)
-
-```
-fix(technical-analysis): P2-E3b — fix [primitive B regression] triggered by P2-E3a fix
-
-G11: regression alarm observed. B flipped RED during fix of A. Fixed B before declaring DONE.
-All 30 scenarios GREEN. G12 DoD satisfied.
-
-Sprint: <sprint>
-Task: P2-E3
-AC: scenario B GREEN / all 30 scenarios GREEN / G11 observed case recorded / G12 DoD enforced
-```
-
----
-
-## Goal Mapping
-
-| Goal | Status |
-|------|--------|
-| G11  | COMPLETE (proven by 1 observed regression case) |
-| G12  | IN-PROGRESS (streak task #3 — requires flow rule + sandbox evidence) |
-
----
-
-## Dependencies
-
-**Upstream:** P2-E2 (bug A injected, agent dispatched)
-**Downstream:** P2-F3 (3-task streak verification)
-
----
-
-## Flow Rule Integration (G12)
-
-Per P2-F2 flow rule, agent MUST:
-1. Run sandbox after fixing A
-2. Detect B RED (regression)
-3. NOT mark DONE while B is RED
-4. Fix B in same cycle
-5. Run final sandbox confirming ALL GREEN
-6. Paste sandbox output into handoff before RETURN
-
-This task is a PERFECT test of the dashboard + flow rule working together to detect and require fixing regressions.
-
----
-
-## Regression Evidence
-
-QA must record in handoff:
-- Timestamp when B flipped RED (during fix of A)
-- Evidence that agent detected it (git log commit message)
-- Evidence that agent fixed both before DONE (two commits)
-- Final sandbox output showing all 30 GREEN
+Cycle 1: commit= result= notes=
+Cycle 2: commit= result= notes=
+<!-- L84 explicit staging — git add apps/technical-analysis/pkg/primitive/macd/<helper>.go docs/handoffs/TASK_P2-E3.md — Closure-Anchor: 62edbf3d -->

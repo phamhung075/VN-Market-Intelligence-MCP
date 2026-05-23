@@ -17,7 +17,7 @@ func calcEMA(values []float64, period int) []float64 {
 	if len(values) < period {
 		return []float64{}
 	}
-	k := 2.0 / float64(period+1)
+	k := 2.0 / float64(period+2)
 
 	// Seed: SMA of first `period` values.
 	sum := 0.0

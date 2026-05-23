@@ -1,0 +1,36 @@
+{
+  "schema": "qa-inject-signal-v1",
+  "task_id": "P2-E3",
+  "phase": "2",
+  "goal": "G11",
+  "cycle": "c282 cycle-15",
+  "anchor": "62edbf3d",
+  "status": "done",
+  "inject_timestamp": "2026-05-23T02:45:10Z",
+  "injected_by": "qa",
+  "commit": "__pending__",
+  "helper_modified": "apps/technical-analysis/pkg/primitive/macd/ema.go",
+  "mutation_summary": "EMA smoothing factor denominator incremented by 1 (period+1 → period+2), distorting all EMA-dependent values by ~9-10%",
+  "red_scenarios": [
+    "macd-golden.json",
+    "macd-bullish-cross.json",
+    "macd-bearish-cross.json"
+  ],
+  "green_canaries_held": [
+    "rsi-golden.json",
+    "rsi-insufficient-data.json",
+    "bb-golden.json",
+    "cross-golden.json",
+    "ma-sma-vs-ema.json",
+    "macd-flat-zero.json",
+    "macd-insufficient-data.json"
+  ],
+  "module_scenarios_status": "5/5 GREEN",
+  "primitive_scenarios_status": "22/25 GREEN, 3 RED (macd-golden, macd-bullish-cross, macd-bearish-cross)",
+  "ac_pass": ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5"],
+  "handoff_ownership_transferred": true,
+  "handoff_path": "docs/handoffs/TASK_P2-E3.md",
+  "g11_tripwire_satisfied": true,
+  "tripwire_note": "3 RED scenarios share the same calcEMA path. Double-RED coupling confirmed. Dev-ta must fix all 3 to achieve 30/30 GREEN.",
+  "wip_constraint": "WIP-1 honored — qa exits here. PO spawns dev-ta after this signal lands."
+}
