@@ -1,0 +1,14 @@
+{
+  "scenario_name": "macro-signals-edge",
+  "phase": "module",
+  "tier": "module",
+  "module": "macro_signals",
+  "description": "Edge case: empty batch input yields empty classifications (boundary handling)",
+  "input": {
+    "indicator_names": []
+  },
+  "expected_output": {
+    "batch_count": 0,
+    "classifications": []
+  }
+}
