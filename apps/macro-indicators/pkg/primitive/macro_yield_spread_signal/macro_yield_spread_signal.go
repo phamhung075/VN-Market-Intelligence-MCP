@@ -41,7 +41,7 @@ const (
 	LabelUnknown = "UNKNOWN"
 
 	// CheapThreshold is the spread above which label = CHEAP (strictly >).
-	CheapThreshold = 5.0
+	CheapThreshold = 2.0
 )
 
 // ---------------------------------------------------------------------------
