@@ -94,3 +94,29 @@ Zone health: P1-A DONE — sandbox GREEN baseline established | HEALTHY
 **G12 streak:** #1 of 3. Sandbox GREEN before RETURN. DoD Gate satisfied.
 
 Zone health: P1-B1 DONE — first primitive extracted, R-FENCE VIABLE, G12 streak 1/3 | HEALTHY
+
+### 2026-05-24 — P1-B2: ngu-hanh-classifier primitive + G12 streak #2
+
+**Task:** P1-KD-B2 — extract second primitive (lowest-complexity: classifyNguHanh already public API in domain/services.ts).
+
+**Files created:**
+- `apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/index.ts` — pure primitive, inline types (NguHanh, NguHanhDynamic, NguHanhResult), embedded GENERATION/DESTRUCTION tables, zero cross-layer imports
+- `apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/index.test.ts` — 12 test cases (generation cycle x5, destruction cycle x5, SAME, unknown, score range, interpretation)
+- `docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-golden.json` — Thuy→Moc TUONG_SINH score 0.3
+- `docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-edge.json` — Kim+Kim SAME score 0.1
+- `docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-failure.json` — InvalidElement → NEUTRAL score 0.0 (no-throw)
+- `docs/signals/dev-kinh-dich-p1-b2-done-20260524T080000Z.json`
+
+**Files modified:**
+- `apps/kinh-dich-service/src/sandbox/runner.ts` — added classifyNguHanh import + runNguHanhClassifierScenario executor + dispatch
+
+**AC results:** All 5 PASS. 12/12 tests pass. tsc clean. Fence-A grep=0 actual imports. Sandbox PASS 6/6.
+
+**Key technical decisions:**
+- Types inlined (not imported from domain/models.ts) — maximally pure primitive, avoids even domain-layer import
+- Unknown element → NEUTRAL (no throw) — safer for downstream pipeline callers with unvalidated market data strings
+- Commit: 7598c113
+
+**G12 streak:** #2 of 3. Sandbox GREEN 6/6 (hexagram-resolver x3 + ngu-hanh-classifier x3). DoD Gate #2 satisfied.
+
+Zone health: P1-B2 DONE — second primitive extracted, Fence-A clean, G12 streak 2/3 | HEALTHY
