@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-30 · 2026-05-23 · macro P1-A4 pkg/ DDD scaffold verification
+
+**Task:** P1-A4 — pkg/ DDD scaffold (6 stub files, macro-indicators pilot) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-a4-green-20260523T104327Z.json
+dev_commit: a3878361
+dev_signal_commit: f15127f6
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: go build ./... | PASS | exit 0 (independent run) |
+| AC-2: go vet ./... | PASS | exit 0 (independent run) |
+| AC-3: Fence-A import-only grep | PASS | GREP_EXIT:1 (0 matches); models.go imports 'time' only; ports.go imports 'context' only |
+| AC-4: commit a3878361 = 6 files exactly | PASS | git show --stat: 6 files, no extras, no .DS_Store, no go.sum bleed-in |
+| go mod tidy idempotent | PASS | TIDY_EXIT:0 x2 |
+| golangci-lint | PASS | 0 issues, LINT_EXIT:0 (from apps/macro-indicators/) |
+| line counts 33/23/22/42/40/43 total=203 | PASS | wc -l all 6 files confirmed exactly |
+| anchor 1776df8e | PASS | merge-base --is-ancestor => exit 0 |
+| L84 a3878361 | PASS | 6 files staged explicitly, no wildcard |
+| L84 f15127f6 | PASS | 1 file exactly (signal JSON) |
+| Stub discipline (0 business logic, 0 math/rand) | PASS | STUB_GREP_EXIT:1 (0 matches across all pkg/) |
+
+**D-1 (COSMETIC):** ACCEPTED — chi.Router concrete type matches handoff §file 6. router.go adds middleware.RequestID + middleware.Recoverer (additive, aligns with TA pattern). Not a spec violation.
+**D-2 (INFO):** ACKNOWLEDGED — comment docstrings mentioning layer names not actual imports. ^import|^\t\" pattern confirms Fence-A.
+**R-1 pre-check:** CLEAN — no math/rand in pkg/. R-1 risk not pre-violated.
+**G12 DoD:** NOT_BINDING — scaffold-only, no scenarios yet. Activates P1-B1 onward.
+**Blocking issues:** 0 — all 4 ACs + all additional checks PASS.
+**NEXT:** pm — dispatch P1-A5 (api/openapi.yaml)
+
+---
+
 ## c282 cycle-29 · 2026-05-23 · macro P1-A3 sandbox harness CLI verification
 
 **Task:** P1-A3 — cmd/sandbox/main.go sandbox harness (macro-indicators pilot) | **Verdict:** GREEN
