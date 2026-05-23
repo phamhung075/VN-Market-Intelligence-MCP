@@ -71,7 +71,7 @@
     "ac_count": 55,
     "wip_limit": 1,
     "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). Dispatching P1-B3 (third primitive: price-staleness-classifier; G12 streak #3/3). WIP=1 sequential — P1-C held until P1-B3 DONE."],
+    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). P1-B3 DONE (69b034a4, 2026-05-24T01:08:00Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (9 scenarios GREEN), G12 streak 3/3 COMPLETE. P1-C (module stub) READY for dispatch — handoff at docs/handoffs/TASK_P1-C.md. WIP=1 sequential — blocking on main router to spawn dev-stock-price for P1-C."],
     "tasks": {
       "P1-A": {
         "id": "P1-A",
@@ -121,15 +121,33 @@
       "P1-B3": {
         "id": "P1-B3",
         "title": "Third primitive: price-staleness-classifier",
-        "status": "READY",
-        "readyAt": "2026-05-24T01:15:00Z",
-        "readyBy": "pm",
+        "status": "DONE",
+        "completedAt": "2026-05-24T01:08:00Z",
+        "completedBy": "dev-stock-price",
+        "commit_sha": "69b034a4",
+        "dispatchedAt": "2026-05-24T01:03:00Z",
+        "dispatchedBy": "pm",
+        "dispatchSignal": "docs/signals/pm-p1-b3-dispatch-stock-price-20260524T011500Z.json",
         "handoff": "docs/handoffs/TASK_P1-B3.md",
         "ac_count": 6,
+        "ac_verdicts": "AC-1..AC-6 all PASS",
         "blocked_by": "P1-B2 (sandbox GREEN)",
         "blocks": "P1-C",
         "g12_streak_task": 3,
-        "g12_dod_requirement": "Sandbox all-green (all P1-B1 + P1-B2 + P1-B3 scenarios = 9 total); streak 3/3 complete"
+        "g12_dod_requirement": "Sandbox all-green (all P1-B1 + P1-B2 + P1-B3 scenarios = 9 total); streak 3/3 complete",
+        "g12_dod_sandbox": "GREEN"
+      },
+      "P1-C": {
+        "id": "P1-C",
+        "title": "Module stub: pkg/module/price_resolution/ — port + composition function",
+        "status": "READY",
+        "readyAt": "2026-05-24T01:08:00Z",
+        "readyBy": "pm",
+        "handoff": "docs/handoffs/TASK_P1-C.md",
+        "ac_count": 7,
+        "blocked_by": "P1-B3 (DONE 2026-05-24T01:08:00Z)",
+        "blocks": "P1-D",
+        "g12_requirement": "Sandbox all-green at both -tier=primitive and -tier=module before DONE"
       }
     }
   },
@@ -289,14 +307,16 @@
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 2,
-        "streakComplete": false,
-        "completedAt": null,
+        "completed": 3,
+        "streakComplete": true,
+        "completedAt": "2026-05-24T01:08:00Z",
         "tasks": [
           "P1-B1 (2026-05-24T00:53:00Z — DONE, sandbox GREEN, 3 scenarios PASS)",
-          "P1-B2 (2026-05-24T01:00:46Z — DONE, sandbox GREEN, 6 scenarios PASS)"
+          "P1-B2 (2026-05-24T01:00:46Z — DONE, sandbox GREEN, 6 scenarios PASS)",
+          "P1-B3 (2026-05-24T01:08:00Z — DONE, sandbox GREEN, 9 scenarios PASS)"
         ],
-        "pending_task": "P1-B3 (awaiting dispatch — will complete streak 3/3)",
+        "pending_task": null,
+        "streakStatus": "COMPLETE (G12 earned 3/3 — QA to verify before PO flips goal status)",
         "ruleEffectiveAfter": "2026-05-24T00:00:00Z (Phase 0 flow commit with DoD baked)"
       }
     }
