@@ -1,0 +1,116 @@
+{
+  "type": "pm-dispatch",
+  "from": "pm",
+  "to": "qa",
+  "cycle": "cycle-56",
+  "task_id": "P2-E1",
+  "title": "Regression Alarm Proof — 2 Trials (G11)",
+  "goal_under_proof": "G11",
+  "dispatch_timestamp": "2026-05-23T18:00:00Z",
+  "anchor": "1776df8e (held throughout P2-D1/D2, must remain ancestor throughout P2-E1)",
+  "blocked_by": "P2-D2 DONE @ 9e3131ea (dev) + aa87759b (qa)",
+  "blocking": "Phase 3 (PO 12/12 close)",
+  "context": {
+    "p2_d_complete": {
+      "g10_status": "YES (flipped cycle-56)",
+      "trial_1_summary": "P2-D1: macro_carry_trade_signal HotMoneyThreshold 2.5→5.0 (QA injected @ bdfc57f5). P2-D2: byte-identical restore (dev @ 9e3131ea, qa verified @ aa87759b). Cycle 1 of 2 max. Sandbox 20/20 GREEN post-fix. All hard gates CLEAN.",
+      "cycle_used": 1,
+      "max_cycles": 2,
+      "evidence_chain": "P2-D1 injection → P2-D2 fix → QA GREEN verify → PM G10 flip cycle-56"
+    },
+    "g11_contract": {
+      "definition_verbatim": "AI fixes bug A, breaks scenario B → dashboard flips B red → AI forced to fix B before 'done'. TA pilot lesson: Two trials of coupling-proven outcome-(a) = PASS (cycle-17 PO decision).",
+      "trial_2_requirement": "Different primitive than P2-D1 (carry-trade). Different mutation than P2-D1 (different threshold). Same coupling-proof pattern: one mutation → ≥2 failures, one fix → all GREEN.",
+      "qa_owns": "scenario pair design, mutation strategy, sandbox verification, G8 isolation, coupling-proof evidence",
+      "dev_owns": "diagnosis from dashboard RED, single-edit fix, byte-identical restore, all hard gates post-fix",
+      "joint_success": "Coupling-proven via dashboard rendering N coupled REDs from one mutation + single-edit fix repairs all N"
+    }
+  },
+  "handoff_doc": "docs/handoffs/TASK_P2-E1-macro.md",
+  "handoff_sections": {
+    "pre_flight_checklist": "SSOT P2-D2=DONE, G10=YES, activeTask=P2-E1, anchor held, sandbox 20/20 GREEN at HEAD, pre-revert tags p2-d1-pre-injection + macro-pre-inject in place",
+    "primitive_selection": "Choose from: macro_yield_spread_signal, macro_oil_impact_classifier, macro_gold_direction_classifier, macro_usdvnd_direction_classifier, macro_investment_clock. Recommend yield-spread (couples with carry via macro-signals module). DO NOT use carry-trade again.",
+    "injection_protocol": "Step 1: git tag p2-e1-pre-injection HEAD (before mutation). Step 2: Edit primitive constant (single line, clearly wrong value). Step 3: Verify sandbox exit 1 + ≥2 FAIL + dashboard RED. Step 4: Hard gates clean. Step 5: git commit injection (L84 staging). Step 6: Document dashboard state.",
+    "fix_protocol": "Dev diagnoses from ≥2 RED cards. Single edit: restore constant to original value. Verify byte-identical vs p2-e1-pre-injection tag. Sandbox 20/20 GREEN. All hard gates clean post-fix. Commit fix with clear subject.",
+    "qa_verification": "AC-1: pre-tag + different primitive + ≥2 FAIL + coupling. AC-2: single-edit fix + byte-identical + zone clean. AC-3: coupling-proven (1 mutation → ≥2 failures, 1 fix → GREEN). AC-4: G11 terminal ready (2 trials proven, protocol repeatable)."
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "criterion": "Trial 2 mutation setup: pre-revert tag created, DIFFERENT primitive selected, sandbox exit 1 with ≥2 FAILs, coupling-proven (one mutation breaks multiple scenarios)",
+      "expected": "p2-e1-pre-injection tag on HEAD before mutation; primitive ≠ carry-trade; sandbox post-injection: exit 1, fail ≥ 2, failed_scenarios list includes mutated primitive + coupled scenario(s)"
+    },
+    {
+      "id": "AC-2",
+      "criterion": "Dev single-edit fix: byte-identical restore to pre-injection tag, sandbox 20/20 GREEN post-fix, zone discipline (only primitive file modified, no SSOT/TA/scenarios/CI touched)",
+      "expected": "git diff p2-e1-pre-injection -- <primitive-file> returns empty; sandbox post-fix: exit 0, total=20 pass=20 fail=0; git diff HEAD~1..HEAD shows only primitive file (≤5 lines changed)"
+    },
+    {
+      "id": "AC-3",
+      "criterion": "Coupling-proven outcome-(a) per TA cycle-17 rubric: single mutation caused ≥2 RED scenarios, single fix repaired all RED scenarios, no iteration required (dev not re-dispatched for fix attempt 2)",
+      "expected": "Mutation failure list includes ≥2 scenarios; fix commit shows byte-identical restore of single constant; post-fix sandbox 20/20 GREEN; single commit per trial (no failed fix attempts)"
+    },
+    {
+      "id": "AC-4",
+      "criterion": "G11 ready to flip YES: 2 trials coupling-proven, protocol proven repeatable across different primitives, all hard gates clean throughout (anchor held, R-1 deterministic, Fence-B/C clean, SSOT/TA/scenarios/CI untouched), no outstanding bugs in sandbox",
+      "expected": "Trial 1 + Trial 2 both PASS coupling-proof; anchor 1776df8e ancestor both cycles; sandbox 20/20 GREEN post-trial-2 fix; QA completion signal with all AC results = PASS"
+    }
+  ],
+  "hard_gates_binding": [
+    "Anchor 1776df8e must remain ancestor before and after every commit (check: git log --oneline --ancestry-path 1776df8e..HEAD | tail -1 returns non-empty)",
+    "R-1 determinism: grep -rE 'math/rand|rand\\.Intn|rand\\.Float' apps/macro-indicators/pkg/ must exit 1 (zero matches)",
+    "Fence-B module: grep -rn 'application|infrastructure|interface' apps/macro-indicators/pkg/module/ must exit 1",
+    "Fence-C root: grep -rn 'scoreIndicator|Classify|Compute' apps/macro-indicators/cmd/server/main.go must exit 1",
+    "G12 DoD gate: cd apps/macro-indicators && go run ./cmd/sandbox -tier=all -scenario=all must exit 0, total=20 pass=20 (before dev declares DONE)",
+    "SSOT untouched: git diff 44b2c835..HEAD -- docs/data/pilot-status-macro-indicators.json must be empty",
+    "TA untouched: git diff HEAD -- apps/technical-analysis/ must be empty",
+    "Scenarios untouched: git diff HEAD -- docs/scenarios/ must be empty",
+    "CI untouched: git diff HEAD -- .github/workflows/ must be empty"
+  ],
+  "constraints_binding": [
+    "L84 explicit-file staging: git add <path> per file. NEVER git add -A or . (only mutated primitive file staged for mutation commit; only mutated file staged for fix commit)",
+    "No --force, no --no-verify, no --no-gpg-sign: if hook fails, fix and create new commit",
+    "No git push: local-only commits",
+    "All work on main: no branches",
+    "Different primitive requirement: Trial 2 primitive ≠ carry-trade (used in Trial 1). Different mutation for generalizability proof.",
+    "One active dispatch: only P2-E1 in flight; P2-D2 DONE before this dispatch; Phase 3 blocked until P2-E1 completes"
+  ],
+  "qa_owns": [
+    "Primitive selection (different from carry-trade)",
+    "Mutation strategy (single constant, clearly wrong value)",
+    "Sandbox verification (pre-injection and post-fix)",
+    "G8 isolation check (only affected scenarios fail)",
+    "Coupling-proof evidence (one mutation ≥2 failures, one fix all GREEN)",
+    "Dashboard state documentation (visual confirmation of RED/GREEN transitions)",
+    "Completion signal authorship (qa-p2-e1-macro-GREEN-<UTC>.json with all ACs)"
+  ],
+  "dev_owns": [
+    "Diagnosis: read QA signal + open dashboard + identify ≥2 RED cards",
+    "Root cause analysis: determine which constant is wrong and what the fix is",
+    "Single-edit fix: restore constant to pre-injection value",
+    "Byte-identical verification: git diff p2-e1-pre-injection -- <file> returns empty",
+    "Hard gates post-fix: anchor held, R-1 exit 1, Fence-B/C exit 1, G12 sandbox 20/20",
+    "Commit fix with clear subject (fix(macro-indicators): P2-E1 — restore <primitive> constant)"
+  ],
+  "phase2_progress": {
+    "g10_flipped_this_cycle": "YES (cycle-56, evidence: P2-D1+P2-D2 trial 1 complete, byte-identical restore, sandbox 20/20, all hard gates clean)",
+    "g11_in_flight": "DISPATCHED cycle-56 (trial 2, awaiting QA/dev completion)",
+    "phase2_activeTask_updated": "P2-E1 (was P2-D2)",
+    "goals_earned": 8,
+    "goals_earned_list": "G1, G2, G3, G4, G5, G8, G9, G10",
+    "goals_remaining": "G11 (in flight), G6/G7 (Phase 1 DONE, re-verified at P2-G1), G12 (EARNED-PENDING per Charter §4.5)"
+  },
+  "references": {
+    "charter": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md §G11 (definition + TA lesson)",
+    "task_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md §P2-E1 (scenario pair design, trial protocol, AC specs)",
+    "ta_g11_precedent": "TA pilot cycle-17 PO decision (2 trials coupling-proven = G11 YES)",
+    "g10_trial1": "docs/signals/qa-p2-d2-verify-GREEN-20260523T155948Z.json (trial 1 evidence)",
+    "ssot": "docs/data/pilot-status-macro-indicators.json phase2.activeTask=P2-E1, goals.G10=YES, goals.G11=TBD"
+  },
+  "post_completion_action": {
+    "qa_completion_signal": "docs/signals/qa-p2-e1-macro-GREEN-<UTC>.json with all trial 2 evidence + coupling-proof + AC results",
+    "pm_next_cycle": "cycle-57: verify QA completion signal received, flip G11=YES in SSOT, update goals_earned=9, set phase2.activeTask=null, dispatch PO for Phase 3 (12/12 close + decisionMatrix)",
+    "g11_terminal_definition": "Both trial 1 (P2-D1+D2) and trial 2 (P2-E1) PASS coupling-proven outcome-(a) per TA cycle-17 rubric. No further G11 work after P2-E1."
+  },
+  "timestamp": "2026-05-23T18:00:00Z"
+}

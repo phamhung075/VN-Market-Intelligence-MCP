@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-D2",
+    "activeTask": "P2-E1",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -699,7 +699,7 @@
         }
       },
       "P2-D2": {
-        "status": "DISPATCHED",
+        "status": "DONE",
         "title": "Fix injected bug — byte-identical restore (G10 AI-fixability proof)",
         "owner": "dev-macro-indicators",
         "handoff": "docs/handoffs/TASK_P2-D2-macro.md",
@@ -711,7 +711,44 @@
           "definition_of_fix": "byte-identical restore to pre-bug state matching tag p2-d1-pre-injection",
           "verification_command": "git diff p2-d1-pre-injection -- apps/macro-indicators/pkg/primitive/macro_carry_trade_signal/macro_carry_trade_signal.go MUST be empty",
           "sandbox_target": "total=20 pass=20 fail=0 status=OK exit 0"
+        },
+        "completion": {
+          "dev_commit": "9e3131ea",
+          "dev_signal": "docs/signals/dev-macro-p2-d2-fix-DONE-20260523T175700Z.json",
+          "qa_commit": "aa87759b",
+          "qa_signal": "docs/signals/qa-p2-d2-verify-GREEN-20260523T155948Z.json",
+          "qa_verdict": "GREEN",
+          "cycle_used": 1,
+          "max_cycles": 2,
+          "byte_identical_diff_vs_tag": "empty",
+          "sandbox_post_fix": {
+            "exit_code": 0,
+            "status": "OK",
+            "total": 20,
+            "pass": 20,
+            "fail": 0
+          },
+          "hard_gates_post_fix": "ALL CLEAN",
+          "zone_discipline": {
+            "ssot_untouched": true,
+            "ta_untouched": true,
+            "scenarios_untouched": true,
+            "ci_untouched": true
+          },
+          "closed_cycle": "cycle-56",
+          "closed_timestamp": "2026-05-23T18:00:00Z"
         }
+      },
+      "P2-E1": {
+        "status": "DISPATCHED",
+        "title": "Regression alarm proof — 2 trials (G11)",
+        "owner": "qa",
+        "handoff": "docs/handoffs/TASK_P2-E1-macro.md",
+        "dispatch_cycle": "cycle-56",
+        "dispatch_timestamp": "2026-05-23T18:00:00Z",
+        "description": "Regression alarm: second trial of coupling-proven outcome-(a) per G11 contract. Target DIFFERENT primitive than P2-D1 (carry-trade). QA selects from: yield-spread, oil, gold, usdvnd, or investment-clock. Single-literal mutation causes ≥2 scenarios RED (coupling). Dev-macro-indicators fixes both in single edit, sandbox GREEN. G11 terminal verified after successful 2-trial proof.",
+        "estimate_hours": 0.75,
+        "ac_count": 5
       }
     },
     "observations": [
@@ -903,12 +940,14 @@
       "id": "G10",
       "track": "C",
       "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
-      "status": "TBD",
-      "verifiedAt": null,
-      "verifiedBy": null,
-      "evidence": null,
+      "status": "YES",
+      "verifiedAt": "2026-05-23T18:00:00Z",
+      "verifiedBy": "pm c282-cycle-56",
+      "evidence": "P2-D1 (cycle-54): QA injected deliberate bug in macro_carry_trade_signal.go (HotMoneyThreshold 2.5 → 5.0, line 40). Sandbox exit 1, total=20 pass=18 fail=2 (macro-carry-trade-signal-golden + macro-signals-golden cascade). Dashboard predicted RED. P2-D2 (cycle-55): dev-macro-indicators fixed in cycle 1 of 2 (max). Fix commit 9e3131ea: byte-identical restore to tag p2-d1-pre-injection (git diff empty, line 40 reads HotMoneyThreshold = 2.5). QA verified (commit aa87759b): sandbox post-fix exit 0, total=20 pass=20 fail=0 status=OK. Hard gates all CLEAN post-fix (anchor 1776df8e held, R-1 exit 1, Fence-B/C exit 1, SSOT/TA/scenarios untouched). Zone discipline 100% (only macro_carry_trade_signal.go modified in dev zone). G10 PASS: AI fixed injected bug within ≤2 cycles, byte-identical restore, sandbox GREEN, all hard gates CLEAN. Coupling-proven via G8 isolation + P2-D1 multi-scenario failure + P2-D2 single-edit repair (carry+yield both RED from single carry-threshold bug, single carry-fix repairs both).",
       "phase2Bucket": "P2-D",
-      "calibration": "baselineCycleCount from docs/data/bug-inventory.json (macro entry — Phase 0 deliverable). Falls back to TA's 1.5 or system-wide 4-6. Pre-revert tag: macro-pre-inject before P2-D2."
+      "calibration": "baselineCycleCount: macro baseline from Phase 0 bug-inventory entry; TA baseline was 1.5 cycles. Achievement: cycle_used = 1 ≤ max_cycles = 2. EXCEEDS baseline.",
+      "cycle_count": 1,
+      "max_cycles_allowed": 2
     },
     {
       "id": "G11",
@@ -1047,8 +1086,8 @@
       ]
     }
   ],
-  "goalsEarned": 7,
-  "goalsEarned_note": "G1=YES (P2-X1), G2=YES (P2-X2+P2-G1), G3=YES (P2-X3), G4=YES (P2-A1+P2-A2), G5=YES (P2-B1+P2-B2+P2-B3), G8=YES (P2-F1), G9=YES (P2-C1 rerun cycle-53 @ 1200fa18). G10/G11 TBD at P2-D2/P2-E1. G12=EARNED-PENDING per §4.5.",
+  "goalsEarned": 8,
+  "goalsEarned_note": "G1=YES (P2-X1), G2=YES (P2-X2+P2-G1), G3=YES (P2-X3), G4=YES (P2-A1+P2-A2), G5=YES (P2-B1+P2-B2+P2-B3), G8=YES (P2-F1), G9=YES (P2-C1 rerun cycle-53 @ 1200fa18), G10=YES (P2-D1+P2-D2 cycle-56 @ 9e3131ea + aa87759b). G11 TBD at P2-E1. G12=EARNED-PENDING per §4.5.",
   "progress_notes_cycle_50": [
     {
       "timestamp": "2026-05-23T16:45:00Z",
