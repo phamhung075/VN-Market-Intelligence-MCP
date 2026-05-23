@@ -262,6 +262,27 @@
             "ruling": "ACCEPTED"
           }
         ]
+      },
+      {
+        "timestamp": "2026-05-23T115436Z",
+        "task_id": "P1-E2",
+        "status": "DISPATCH",
+        "handoff": "docs/handoffs/TASK_P1-E2-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-e2-20260523T115436Z.json",
+        "description": "Final Phase 1 task: dashboard edit-rerun handler + env audit (FRED_API_KEY + .env hygiene). User edits scenario JSON, refreshes dashboard → sandbox reruns → card updates. Env audit: grep for secrets must return empty.",
+        "position_in_phase": "11 of 11 (final task)",
+        "critical_path": true,
+        "gates_binding": [
+          "AC-2 env audit (env | grep FRED_API_KEY|API_KEY|SECRET|PASSWORD|DB → 0 matches, BLOCKING)",
+          "AC-4 sandbox regression (all 3 tiers green: 3-2-5 pass counts, BLOCKING)",
+          "AC-5 R-1 determinism propagated (zero math/rand outside tests, BLOCKING)",
+          "AC-6 L84 explicit staging (dashboard/index.html + .gitignore, BLOCKING)"
+        ],
+        "ac_count": 7,
+        "estimate_hours": 2.5,
+        "depends_on": ["P1-E1"],
+        "unblocks": [],
+        "phase_1_close_gate": true
       }
     ],
     "risk_propagation": {
@@ -286,7 +307,7 @@
     {"id": "G9", "track": "B", "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-C", "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent."},
     {"id": "G10", "track": "C", "title": "AI agent fixes a primitive bug without looping (≤2 cycles)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-D", "calibration": "baselineCycleCount from docs/data/bug-inventory.json (macro entry — Phase 0 deliverable). Falls back to TA's 1.5 or system-wide 4-6. Pre-revert tag: macro-pre-inject before P2-D2."},
     {"id": "G11", "track": "C", "title": "Regression alarm bell works", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-E", "calibration": "Coupling-proven outcome-(a) for 2 trials = PASS per TA cycle-17 rubric."},
-    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task.", "g12Streak": {"required": 3, "completed": 3, "streakComplete": true, "completedAt": "2026-05-23T135000Z", "tasks": [{"task_id": "P1-B1", "status": "DONE", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "status": "DONE", "impl_commit": "ac92ef56", "sandbox_result": "module 1/1 GREEN + all-tier 4/4 GREEN", "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json"}, {"task_id": "P1-E1", "status": "DONE", "impl_commit": "41a7d866", "sandbox_result": "primitive 3/3 + module 2/2 + all-tier 5/5 GREEN", "qa_signal": "docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json", "qa_timestamp": "2026-05-23T135000Z"}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
+    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE", "verifiedAt": "2026-05-23T135000Z", "verifiedBy": "qa-macro-indicators", "evidence": "3/3 consecutive G12 DoD gates satisfied (P1-B1, P1-C1, P1-E1) — all sandbox tiers green before commit", "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task.", "candidacy": "EARNED (grade earned at P1-E1 cycle-39). Pending PO 12/12 close per Charter §4.5: decisionMatrix populated only after all 12 goals reach terminal grade (YES/PARTIAL/DEFER). G12 will be flipped to YES at that time.", "g12Streak": {"required": 3, "completed": 3, "streakComplete": true, "completedAt": "2026-05-23T135000Z", "tasks": [{"task_id": "P1-B1", "status": "DONE", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "status": "DONE", "impl_commit": "ac92ef56", "sandbox_result": "module 1/1 GREEN + all-tier 4/4 GREEN", "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json"}, {"task_id": "P1-E1", "status": "DONE", "impl_commit": "41a7d866", "sandbox_result": "primitive 3/3 + module 2/2 + all-tier 5/5 GREEN", "qa_signal": "docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json", "qa_timestamp": "2026-05-23T135000Z"}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
 
   ],
   "decisionMatrix": {

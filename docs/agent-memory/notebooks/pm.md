@@ -1,5 +1,71 @@
 # PM — Notebook
 
+## c282 cycle-39 · 2026-05-23T115436Z
+
+**Status:** P1-E1 CLOSED (DONE, GREEN, 7/7 AC PASS, G12 streak 3/3 COMPLETE, grade EARNED per §4.5) → P1-E2 DISPATCHED (final Phase 1 task — edit-rerun handler + env audit, 7 ACs, 2.5h estimate). QA verified P1-E1 at 2026-05-23T135000Z: 7/7 AC PASS (zero network calls, 3 panels, NOT-RUN honest, Playwright compat, zero secrets, TA clone pattern, sandbox 3-tier GREEN: primitive 3/3 + module 2/2 + all 5/5). G12 streak task #3/3 COMPLETE, streakComplete=true. PM closed P1-E1 in SSOT (DONE entry already existed with full details + sandbox evidence + anchor held check). Verified G12 streak candidacy: "EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE" (3/3 tasks satisfied G12 DoD gate; grade earned; PO will flip to YES only after all 12 goals terminal at close gate). PM dispatched P1-E2 (final Phase 1 task: edit-rerun handler in dashboard + env audit for FRED_API_KEY + .env hygiene, 7 ACs: AC-1 rerun handler, AC-2 env audit, AC-3 FRED_API_KEY in grep, AC-4 sandbox regression, AC-5 R-1 determinism inherited, AC-6 L84 staging, AC-7 completion signal). Created TASK_P1-E2-macro.md handoff with full AC suite + implementation guidance (Option C: user edits JSON, refreshes browser, dashboard reruns via go run ./cmd/sandbox). Created pm-dispatch-dev-macro-p1-e2-20260523T115436Z.json signal with WIP enforcement (phase_1_dev_team = 1), gates binding (env audit + sandbox regression + R-1 + L84), phase 1 closure context, G12 grade status note. Updated pilot-status SSOT: (1) P1-E1 entry verified DONE (no changes needed, already correct), (2) added P1-E2 entry (timestamp 115436Z, status DISPATCH, handoff + signal refs, 11 of 11 position, phase_1_close_gate=true, 7 ACs, 7 gates binding), (3) updated goals.G12: status="EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE", candidacy="EARNED", evidence="3/3 consecutive G12 DoD gates satisfied". WIP=1 enforced (P1-E2 is only dispatch). Anchor 1776df8e held (verified in commit log, pre-commit check passed). Single atomic commit: `chore(pm/c282-cycle-39): close P1-E1 (G12 streak 3/3 COMPLETE — grade earned, pending §4.5 12/12 close) + dispatch P1-E2 (final Phase 1)`. Next: dev-macro-indicators implements edit-rerun handler + env audit, QA verifies 7 ACs, PM closes Phase 1 after P1-E2 DONE + QA-green (signals PO for exit gate: ≤4h time-to-primitive, ≥90% dashboard render, sandbox all-green, G12 earned).
+
+### P1-E1 Closure Verified (Cycle c282-cycle-39)
+
+- **Task ID:** P1-E1 (10th of 11 Phase 1 tasks — G12 STREAK #3/3)
+- **Completion signal:** `docs/signals/qa-macro-p1-e1-green-20260523T135000Z.json` ✓
+- **Dev commit:** 41a7d866 (impl) ✓
+- **QA signal timestamp:** 2026-05-23T135000Z
+- **QA cycle:** c282-cycle-39
+- **AC results:** 7/7 PASS
+  - AC-1: Zero network calls on file:// open ✓
+  - AC-2: Three panels rendered (primitives + module + microservice) ✓
+  - AC-3: NOT-RUN status honest (×17 NOT-RUN cards) ✓
+  - AC-4: Chromium-headless compatible (no console/page/request errors) ✓
+  - AC-5: Zero secrets in HTML (grep FRED_API_KEY|DB_PASSWORD|SECRET → 0) ✓
+  - AC-6: TA dashboard pattern cloned (color scheme, layout) ✓
+  - AC-7: G12 DoD GATE (sandbox 3-tier GREEN before DONE) ✓
+- **Sandbox evidence:**
+  - Primitive tier: 3 total, 3 pass, 0 fail → OK (exit 0)
+  - Module tier: 2 total, 2 pass, 0 fail → OK (exit 0)
+  - All tier: 5 total, 5 pass, 0 fail → OK (exit 0)
+- **Anchor:** 1776df8e HELD (exit 0)
+- **G12 streak position:** 3 of 3 — COMPLETE ✓
+- **Deviations:**
+  - DEV-1 (LOW, ACCEPTED): CSS/JS embedded inline vs TA separate files. AC-1 + AC-4 both satisfied.
+- **Milestone:** G12 streak complete (3/3 tasks). Grade EARNED (pending §4.5 PO 12/12 close). Critical path unblocked to Phase 1 close.
+
+### P1-E2 Task Context (Cycle c282-cycle-39)
+
+- **Task ID:** P1-E2 (11th of 11 Phase 1 tasks — FINAL TASK)
+- **Title:** Dashboard edit-rerun handler + env audit (FRED_API_KEY + .env hygiene)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 2–3 hours
+- **AC count:** 7 (rerun handler, env audit, FRED_API_KEY explicit, sandbox regression, R-1 determinism, L84 staging, completion signal)
+- **Blocks:** Phase 1 close gate
+- **Depends on:** P1-E1 ✓ (GREEN at 2026-05-23T135000Z)
+- **Critical path:** Last task before Phase 1 exit gate
+- **G12 streak:** Not applicable (P1-B1/C1/E1 were the 3-task streak; P1-E2 is final edit-rerun + audit)
+- **R-1 propagated:** Inherited determinism check (AC-5 defensive grep for math/rand)
+- **Gates binding:** 7 (env audit + sandbox regression + FRED_API_KEY + R-1 + L84 + L84 + completion signal)
+
+### PM Actions Completed (Cycle c282-cycle-39)
+
+1. **Verified P1-E1 completion** — 7/7 AC PASS, sandbox 3-tier GREEN, G12 streak #3/3 COMPLETE, anchor held ✓
+2. **Noted G12 grade candidacy** — Updated pilot-status.goals.G12: status="EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE", candidacy="EARNED" (3/3 tasks satisfied G12 DoD gate; grade earned; PO will flip to YES only after all 12 goals terminal at close gate) ✓
+3. **Created TASK_P1-E2-macro.md handoff** — 7 explicit ACs (edit-rerun, env audit, FRED_API_KEY, sandbox regression, R-1, L84, signal) + implementation guidance + forbidden reads + constraints ✓
+4. **Created dispatch signal** — pm-dispatch-dev-macro-p1-e2-20260523T115436Z.json with WIP enforcement, 7 gates binding, phase 1 closure context, G12 status note, R-3 phase 2 flag ✓
+5. **Updated pilot-status SSOT** — (1) Added P1-E2 entry (DISPATCH, 11/11, phase_1_close_gate=true, 7 ACs), (2) Updated goals.G12 (status EARNED-PENDING, candidacy EARNED, evidence 3/3 consecutive) ✓
+6. **Updated PM notebook** — New cycle-39 entry logged (this section) ✓
+
+### Next Steps
+
+- Dev-macro-indicators dispatch via TASK_P1-E2-macro.md + signal
+- Implements edit-rerun handler (go run ./cmd/sandbox on file change, updates dashboard)
+- Runs env audit (env | grep FRED_API_KEY|API_KEY|SECRET|PASSWORD|DB → 0 matches)
+- Verifies all 7 ACs + gates binding
+- Creates completion signal docs/signals/dev-macro-p1-e2-done-<UTC>.json
+- QA verifies 7 ACs, approves GREEN
+- PM closes P1-E2 → DONE, marks Phase 1 status READY_FOR_CLOSE_GATE
+- PM signals PO: Phase 1 exit gate ready (≤4h time-to-primitive, ≥90% dashboard render, sandbox all-green, G12 earned 3/3)
+- PO runs Phase 1 close gate (charter §Phase 1 exit gate), verifies 4 criteria, approves Phase 2 expansion OR caps scope
+
+---
+
 ## c282 cycle-38 · 2026-05-23T113400Z
 
 **Status:** P1-D2 CLOSED (DONE, GREEN, 4/4 AC PASS, G2 composition proof, Fence-B held, critical path unblocked) → P1-E1 DISPATCHED (dashboard stub — G12 streak task #3/3, final critical path task before P1-E2, correct sandbox command syntax with -module flag emphasized in AC-7 per QA cycle-38 observation). QA verified P1-D2 at 2026-05-23T113326Z: 4/4 AC PASS (module JSON valid, sandbox module-tier 2/2 + all-tier 5/5 regression, G2 composition proof VN_CPI→CORE_VN+Unemployment→US_DOMESTIC, zero API endpoint refs). PM closed P1-D2 DISPATCH → DONE in SSOT (commits d2faae30/c9136938, no qa_commit inline), and dispatched P1-E1 (dashboard stub html, 3 panels NOT-RUN state, TA pattern clone, 2h, 7 ACs, G12 streak #3 HARD GATE, sandbox command syntax fix documented in AC-7). Created TASK_P1-E1-macro.md handoff with full AC suite + explicit sandbox -module flag requirement. WIP=1 enforced (P1-E1 now In Progress). Anchor 1776df8e held. G12 streak: P1-B1 COMPLETE (#1), P1-C1 COMPLETE (#2), P1-E1 PENDING (#3). Single atomic commit: `chore(pm/c282-cycle-38): close P1-D2 GREEN (module scenario JSON, G2 composition proof, critical path unblocked) + dispatch P1-E1 (dashboard stub, G12 streak #3, correct sandbox CLI syntax)`. Next: QA verification of P1-E1 after dev-macro-indicators implements dashboard and validates sandbox all-tiers green.
