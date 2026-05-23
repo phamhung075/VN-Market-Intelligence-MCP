@@ -1,0 +1,55 @@
+{
+  "signal_id": "dev-stock-price-p1-b1-done-20260524T005300Z",
+  "task_id": "P1-B1",
+  "pilot": "stock-price",
+  "phase": 1,
+  "from": "dev-stock-price",
+  "to": "pm",
+  "timestamp": "2026-05-24T00:53:00Z",
+  "verdict": "DONE",
+  "commit_sha": "69afa2ab",
+  "r_cgo_gate": "CLEAR",
+  "g12_streak_task": 1,
+  "g12_dod_sandbox": "GREEN",
+  "sandbox_output": {
+    "total": 3,
+    "pass": 3,
+    "fail": 0,
+    "status": "OK",
+    "exit_code": 0,
+    "scenarios": [
+      "price-quote-normalizer-golden.json: PASS",
+      "price-quote-normalizer-edge.json: PASS",
+      "price-quote-normalizer-failure.json: PASS"
+    ]
+  },
+  "ac_verdicts": {
+    "AC-1": "PASS — NormalizeQuote() exported with exact signature",
+    "AC-2": "PASS — 5 table-driven test rows (VCB/HOSE, HNX-negative, cache-zero, zero-volume, empty-code)",
+    "AC-3": "PASS — go test ./pkg/primitive/price-quote-normalizer/... exit 0",
+    "AC-4": "PASS — sandbox -tier=primitive exit 0, all 3 scenarios GREEN",
+    "AC-5": "PASS — CGO_ENABLED=0 go build ./cmd/sandbox exit 0",
+    "AC-6": "PASS — grep mattn/cgo/importC in primitive: exit 1 (zero matches)",
+    "AC-7": "PASS — grep pkg/infrastructure in primitive: exit 1 (zero matches)",
+    "AC-8": "CLEAR — all R-CGO checks passed",
+    "AC-9": "PASS — grep application|interface/http|infrastructure in primitive: exit 1 (zero matches)"
+  },
+  "go_test_all_pkg": {
+    "packages": 5,
+    "pass": 5,
+    "fail": 0,
+    "regressions": 0
+  },
+  "files_created": [
+    "apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go",
+    "apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer_test.go",
+    "docs/scenarios/stock-price/primitives/price-quote-normalizer-golden.json",
+    "docs/scenarios/stock-price/primitives/price-quote-normalizer-edge.json",
+    "docs/scenarios/stock-price/primitives/price-quote-normalizer-failure.json"
+  ],
+  "files_modified": [
+    "apps/stock-price/cmd/sandbox/main.go"
+  ],
+  "pre_revert_tag": "stock-price-pre-p1b1",
+  "next_task": "P1-B2 (tier-fallback-selector) — held until PM dispatch; R-CGO CLEAR unblocks"
+}

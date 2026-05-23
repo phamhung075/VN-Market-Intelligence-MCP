@@ -339,4 +339,113 @@ If R-CGO is BLOCKED, emit a **blocker signal** instead and notify PM in WORK cha
 
 ## RETURN Block (written by dev-stock-price when DONE)
 
-_(This section is left blank for you to fill in once the task is complete. Include commit SHA, all AC evidence, R-CGO gate verdict, and the sandbox output summary.)_
+**Verdict:** DONE
+**Commit SHA:** `69afa2ab`
+**Date:** 2026-05-24T00:53Z
+
+---
+
+### AC-1: Function signature PASS
+
+```go
+func NormalizeQuote(
+    rawPrice, rawVolume, rawChange, rawChangePct float64,
+    code string,
+    source domain.PriceSource,
+    fetchedAt string,
+    latencyMs int64,
+) domain.PriceQuote
+```
+
+File: `apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go`
+
+---
+
+### AC-2 + AC-3: Table-driven tests (5 rows) — PASS
+
+```
+=== RUN   TestNormalizeQuote/VCB_HOSE_happy_path       --- PASS
+=== RUN   TestNormalizeQuote/HNX_price_with_negative_change --- PASS
+=== RUN   TestNormalizeQuote/cache_price_zero_change    --- PASS
+=== RUN   TestNormalizeQuote/zero_volume_edge_case      --- PASS
+=== RUN   TestNormalizeQuote/empty_code_passes_through  --- PASS
+ok  github.com/vn-market-intelligence/stock-price/pkg/primitive/price-quote-normalizer  0.921s
+```
+
+---
+
+### AC-4: Sandbox primitive tier GREEN (G12 DoD Gate #1) — PASS
+
+```
+go run ./cmd/sandbox -tier=primitive -module=stock-price -scenario=all
+
+{"msg":"PASS","scenario":"price-quote-normalizer-edge.json"}
+{"msg":"PASS","scenario":"price-quote-normalizer-failure.json"}
+{"msg":"PASS","scenario":"price-quote-normalizer-golden.json"}
+total=3 pass=3 fail=0 status=OK
+exit code: 0
+```
+
+---
+
+### AC-5 (R-CGO-1): CGO_ENABLED=0 build — PASS
+
+```
+CGO_ENABLED=0 go build -o ./bin/sp-sandbox ./cmd/sandbox
+EXIT_CODE=0
+```
+
+---
+
+### AC-6 (R-CGO-2): Zero CGO imports in primitive — PASS
+
+```
+grep -rn "mattn/go-sqlite3\|cgo\|import \"C\"" apps/stock-price/pkg/primitive/price-quote-normalizer/
+(no output)
+EXIT_CODE=1
+```
+
+---
+
+### AC-7 (R-CGO-3): Zero infrastructure imports in primitive (Fence-B) — PASS
+
+```
+grep -rn "pkg/infrastructure" apps/stock-price/pkg/primitive/price-quote-normalizer/
+(no output)
+EXIT_CODE=1
+```
+
+---
+
+### AC-8 (R-CGO-GATE): CLEAR
+
+All three R-CGO checks passed:
+- AC-5 exit 0 PASS
+- AC-6 exit 1 (zero matches) PASS
+- AC-7 exit 1 (zero matches) PASS
+
+**Verdict: R-CGO CLEAR** — P1-B2 can be dispatched.
+
+---
+
+### AC-9 (Fence-A): Zero cross-layer imports — PASS
+
+```
+grep -rn "application\|interface/http\|infrastructure" apps/stock-price/pkg/primitive/price-quote-normalizer/
+(no output)
+EXIT_CODE=1
+```
+
+---
+
+### go test ./pkg/... -count=1: 5/5 PASS
+
+```
+ok  github.com/vn-market-intelligence/stock-price/pkg/application
+ok  github.com/vn-market-intelligence/stock-price/pkg/domain
+ok  github.com/vn-market-intelligence/stock-price/pkg/infrastructure
+ok  github.com/vn-market-intelligence/stock-price/pkg/interface/http
+ok  github.com/vn-market-intelligence/stock-price/pkg/primitive/price-quote-normalizer
+```
+
+Zero regressions.
