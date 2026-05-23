@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>stock-price &mdash; Scenario Trust Dashboard</title>
+  <style>
+/* stock-price Dashboard — trust layer (P1-D) */
+/* Design: high-contrast, no framework, readable at a glance */
+/* Layout cloned from apps/macro-indicators/dashboard/ (3-panel standard) */
+/* AC-1: zero CDN, zero external fetch, zero credentials */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --edge: #7c6b00;
+  --edge-bg: #fffbcc;
+  --edge-border: #c4a800;
+  --failure: #6b3a00;
+  --failure-bg: #fff1e0;
+  --failure-border: #c47a00;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.levels-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .levels-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .levels-grid { grid-template-columns: 1fr; }
+}
+
+.level-panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.panel-header .panel-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.panel-header .level-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.badge-primitives { background: #e0f2fe; color: #075985; }
+.badge-module     { background: #ede9fe; color: #4c1d95; }
+.badge-service    { background: #fce7f3; color: #9d174d; }
+
+.panel-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-notrun { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-green  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red    { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Primitive group card */
+.primitive-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.primitive-group-header {
+  padding: 8px 14px;
+  background: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.primitive-group-header .group-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-pending-label { background: #f1f5f9; color: #64748b; }
+.status-green-label   { background: var(--green-bg); color: var(--green); }
+.status-red-label     { background: var(--red-bg); color: var(--red); }
+
+.primitive-scenarios {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.scenario-card:last-child { border-bottom: none; }
+.scenario-card:hover { background: #f8fafc; }
+
+.scenario-status-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
+.scenario-meta { flex: 1; min-width: 0; }
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.scenario-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.category-chip {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.cat-golden  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.cat-edge    { background: var(--edge-bg); border-color: var(--edge-border); color: var(--edge); }
+.cat-failure { background: var(--failure-bg); border-color: var(--failure-border); color: var(--failure); }
+
+/* Module panel cards */
+.module-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-card-header {
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border-bottom: 1px solid #ddd6fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.module-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.module-card-meta {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  margin-top: 2px;
+}
+
+.module-primitives-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.prim-tag {
+  font-size: 0.68rem;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+
+.module-card-body {
+  padding: 10px 14px;
+}
+
+.module-card-desc {
+  font-size: 0.77rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Microservice panel */
+.service-card {
+  border: 1.5px solid #fce7f3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.service-card-header {
+  padding: 10px 14px;
+  background: #fdf2f8;
+  border-bottom: 1px solid #fce7f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.service-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #9d174d;
+}
+
+.service-card-meta {
+  font-size: 0.75rem;
+  color: #be185d;
+  margin-top: 2px;
+}
+
+.service-ports {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff5f7;
+  border-bottom: 1px solid #fce7f3;
+  flex-wrap: wrap;
+}
+
+.port-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.port-internal { background: #fce7f3; border-color: #f9a8d4; color: #9d174d; }
+.port-external { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+
+.service-endpoints {
+  padding: 10px 14px;
+}
+
+.service-endpoints h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.method-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+.method-get  { background: #dcfce7; color: #15803d; }
+.method-post { background: #dbeafe; color: #1d4ed8; }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #374151;
+  flex: 1;
+}
+
+.endpoint-desc { font-size: 0.72rem; color: #64748b; }
+
+/* NOT-RUN status badge — AC-3: honest cold-start state */
+.not-run-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #9ca3af;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+
+/* Legend */
+.legend {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-chip {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+footer {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 820px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.modal-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #6b7280;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.modal-close:hover { color: #1e293b; }
+
+.modal-body { padding: 20px; }
+
+.modal-section { margin-bottom: 16px; }
+.modal-section h4 { font-size: 0.8rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.modal-section p  { font-size: 0.82rem; color: #64748b; line-height: 1.5; }
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) { .diff-grid { grid-template-columns: 1fr; } }
+
+.diff-pane {}
+
+.label-input  { font-size: 0.72rem; font-weight: 700; color: #075985; display: block; margin-bottom: 4px; }
+.label-output { font-size: 0.72rem; font-weight: 700; color: #1a7f3c; display: block; margin-bottom: 4px; }
+
+.modal-json {
+  background: #1e293b;
+  color: #94d68a;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.modal-status-bar {
+  padding: 12px 20px;
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+}
+
+.status-indicator {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.modal-note {
+  font-size: 0.74rem;
+  color: #9ca3af;
+  flex: 1;
+}
+
+.rerun-btn {
+  font-size: 0.74rem;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-btn:hover { background: #334155; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>stock-price &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-D &nbsp;|&nbsp; Pilot: stock-price &nbsp;|&nbsp; Language: Go (go1.22+cgo)
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G8 (honest red/NOT-RUN) &bull; G9 (trust contract) &bull; G12 (green before done)
+    &nbsp;&bull;&nbsp;
+    9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline, zero production credentials.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+    Service ports: internal&nbsp;5000 / external&nbsp;5010 (per <code>docs/data/system-map.json</code>).
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ============================================================ LEVEL 1: PRIMITIVES -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        3 pure Go functions: <strong>price-quote-normalizer</strong>,
+        <strong>tier-fallback-selector</strong>,
+        <strong>price-staleness-classifier</strong>.
+        Each is a stdlib-only pure function (Fence-A: zero infra imports).
+        3 scenarios each = 9 total. Click any scenario to inspect input &harr; expectedOutput.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">9 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">9 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="prim-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="prim-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 2: MODULE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>pkg/module/price_resolution/</code> &mdash; composes all 3 primitives via
+        the <code>TierFetcher</code> port (Fence-B: zero infra imports). Orchestrates
+        3-tier fallback: T1 &rarr; T2 &rarr; T3 with staleness annotation.
+        Click any scenario to see the composition story.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">2 scenarios</span>
+        <span class="summary-chip chip-notrun" id="mod-notrun-chip">2 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="mod-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="mod-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 3: MICROSERVICE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/stock-price/</code> &mdash; Go HTTP service (go1.22+cgo).
+        DDD layers: domain / application / infrastructure / interface.
+        3-tier price fallback: VPS bridge &rarr; exchange APIs &rarr; SQLite cache.
+        Serves HOSE/HNX/UPCOM price data.
+      </p>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (cold start — honest)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+</div>
+
+<footer>
+  P1-D &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: stock-price &bull;
+  Ports: internal 5000 / external 5010 (source: docs/data/system-map.json) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green &bull;
+  Next: P1-E edit-rerun handler (<code>CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -scenario=all</code>)
+</footer>
+
+<!-- ============================================================ MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Input</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator" id="modal-status-text"></span>
+      <span class="modal-note" id="modal-status-note">G8 contract: NOT-RUN until sandbox executed</span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ EMBEDDED SCENARIO DATA -->
+<!-- All 9 primitive scenarios from docs/scenarios/stock-price/primitives/ -->
+<!-- All 2 module scenarios from docs/scenarios/stock-price/module/       -->
+<!-- Embedded inline so the dashboard works as a static file:// asset      -->
+<!-- Security (AC-5 / G7): zero DB credentials, zero API keys, zero tokens -->
+<script>
+/* ── Scenario data — embedded inline, zero external fetch ────────────────── */
+/* AC-5: zero credentials in this file (G7 security contract).                */
+/* Verified: no DB credentials, no API keys, no auth tokens.                  */
+
+window.__PRIMITIVES_DATA__ = [
+  /* ── price-quote-normalizer ──────────────────────────────────────────── */
+  {
+    "primitive": "price-quote-normalizer",
+    "category": "golden",
+    "scenario": "price-quote-normalizer-golden",
+    "description": "Happy-path normalization of a real VCB HOSE quote. rawPrice=85000, rawVolume=1000000, rawChange=500, rawChangePct=0.59, source=hose. Expected output maps field-for-field to domain.PriceQuote.",
+    "input": {
+      "rawPrice": 85000,
+      "rawVolume": 1000000,
+      "rawChange": 500,
+      "rawChangePct": 0.59,
+      "code": "VCB",
+      "source": "hose",
+      "fetchedAt": "2026-05-24T10:30:00Z",
+      "latencyMs": 150
+    },
+    "expectedOutput": {
+      "code": "VCB",
+      "price": 85000,
+      "volume": 1000000,
+      "change": 500,
+      "changePercent": 0.59,
+      "source": "hose",
+      "fetchedAt": "2026-05-24T10:30:00Z",
+      "latencyMs": 150
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "price-quote-normalizer",
+    "category": "edge",
+    "scenario": "price-quote-normalizer-edge",
+    "description": "Edge case: zero volume, zero change, zero changePct — T3 cache pattern. ACB cache quote with all movement fields at zero. Primitive must pass through gracefully with zero values in canonical shape.",
+    "input": {
+      "rawPrice": 75000,
+      "rawVolume": 0,
+      "rawChange": 0,
+      "rawChangePct": 0,
+      "code": "ACB",
+      "source": "cache",
+      "fetchedAt": "2026-05-24T09:00:00Z",
+      "latencyMs": 0
+    },
+    "expectedOutput": {
+      "code": "ACB",
+      "price": 75000,
+      "volume": 0,
+      "change": 0,
+      "changePercent": 0,
+      "source": "cache",
+      "fetchedAt": "2026-05-24T09:00:00Z",
+      "latencyMs": 0
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "price-quote-normalizer",
+    "category": "failure",
+    "scenario": "price-quote-normalizer-failure",
+    "description": "Failure case: empty code string. Primitive passes through gracefully — no panic, no error. Caller is responsible for upstream validation. Output preserves empty code field.",
+    "input": {
+      "rawPrice": 70000,
+      "rawVolume": 1000,
+      "rawChange": 100,
+      "rawChangePct": 0.14,
+      "code": "",
+      "source": "hnx",
+      "fetchedAt": "2026-05-24T10:15:00Z",
+      "latencyMs": 200
+    },
+    "expectedOutput": {
+      "code": "",
+      "price": 70000,
+      "volume": 1000,
+      "change": 100,
+      "changePercent": 0.14,
+      "source": "hnx",
+      "fetchedAt": "2026-05-24T10:15:00Z",
+      "latencyMs": 200,
+      "_error": null
+    },
+    "status": "not-run"
+  },
+  /* ── tier-fallback-selector ──────────────────────────────────────────── */
+  {
+    "primitive": "tier-fallback-selector",
+    "category": "golden",
+    "scenario": "tier-fallback-selector-golden",
+    "description": "T1 non-nil, T2/T3 also present — T1 selected. T1 (hose) wins by tier order. T2 and T3 are ignored. Result is T1 quote with source=hose.",
+    "input": {
+      "results": [
+        { "quote": { "code": "VCB", "price": 85000, "source": "hose", "fetchedAt": "2026-05-24T00:53:00Z", "latencyMs": 42 }, "err": null },
+        { "quote": { "code": "VCB", "price": 85100, "source": "hnx",  "fetchedAt": "2026-05-24T00:52:00Z", "latencyMs": 78 }, "err": null },
+        { "quote": { "code": "VCB", "price": 84900, "source": "cache","fetchedAt": "2026-05-23T00:00:00Z", "latencyMs": 0  }, "err": null }
+      ]
+    },
+    "expectedOutput": {
+      "quote": { "code": "VCB", "price": 85000, "source": "hose" },
+      "err": null,
+      "reason": "T1 (hose) is non-nil, so it wins. T2 and T3 are not evaluated."
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "tier-fallback-selector",
+    "category": "edge",
+    "scenario": "tier-fallback-selector-edge",
+    "description": "T1 nil (connection timeout), T2 non-nil — T2 selected. Demonstrates graceful fallback when T1 fails. T3 not evaluated because T2 succeeds.",
+    "input": {
+      "results": [
+        { "quote": null, "err": "connection timeout" },
+        { "quote": { "code": "VCB", "price": 85100, "source": "hnx", "fetchedAt": "2026-05-24T00:52:00Z", "latencyMs": 78 }, "err": null },
+        { "quote": null, "err": "not evaluated" }
+      ]
+    },
+    "expectedOutput": {
+      "quote": { "code": "VCB", "price": 85100, "source": "hnx" },
+      "err": null,
+      "reason": "T1 failed (quote=nil); T2 is non-nil, so it wins. T3 not evaluated."
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "tier-fallback-selector",
+    "category": "failure",
+    "scenario": "tier-fallback-selector-failure",
+    "description": "All tiers nil — PriceNotAvailableError returned. T1: connection timeout. T2: API rate limit. T3: cache miss. No tier produces a quote.",
+    "input": {
+      "results": [
+        { "quote": null, "err": "T1 connection timeout" },
+        { "quote": null, "err": "T2 API rate limit" },
+        { "quote": null, "err": "T3 cache miss" }
+      ]
+    },
+    "expectedOutput": {
+      "quote": null,
+      "err": "PriceNotAvailableError",
+      "reason": "All three tiers failed (all quotes nil). Return error sentinel."
+    },
+    "status": "not-run"
+  },
+  /* ── price-staleness-classifier ──────────────────────────────────────── */
+  {
+    "primitive": "price-staleness-classifier",
+    "category": "golden",
+    "scenario": "price-staleness-classifier-golden",
+    "description": "fetchedAt = 30 seconds ago, freshThreshold=60s, staleThreshold=3600s → FRESH. Age 30s is within the fresh window.",
+    "input": {
+      "fetchedAt": "2026-05-24T00:59:30Z",
+      "now": "2026-05-24T01:00:00Z",
+      "freshThresholdSeconds": 60,
+      "staleThresholdSeconds": 3600
+    },
+    "expectedOutput": {
+      "label": "FRESH",
+      "err": null,
+      "reason": "Age = 30s < freshThreshold=60s → FRESH"
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "price-staleness-classifier",
+    "category": "edge",
+    "scenario": "price-staleness-classifier-edge",
+    "description": "fetchedAt = 90 seconds ago, freshThreshold=60s, staleThreshold=3600s → STALE. Age 90s is between fresh and stale thresholds.",
+    "input": {
+      "fetchedAt": "2026-05-24T00:58:30Z",
+      "now": "2026-05-24T01:00:00Z",
+      "freshThresholdSeconds": 60,
+      "staleThresholdSeconds": 3600
+    },
+    "expectedOutput": {
+      "label": "STALE",
+      "err": null,
+      "reason": "Age = 90s > freshThreshold=60s but < staleThreshold=3600s → STALE"
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "price-staleness-classifier",
+    "category": "failure",
+    "scenario": "price-staleness-classifier-failure",
+    "description": "fetchedAt = malformed string (not-a-date) → error. Cannot parse as RFC3339. Returns non-nil error.",
+    "input": {
+      "fetchedAt": "not-a-date",
+      "now": "2026-05-24T01:00:00Z",
+      "freshThresholdSeconds": 60,
+      "staleThresholdSeconds": 3600
+    },
+    "expectedOutput": {
+      "label": null,
+      "err": "time: invalid layout",
+      "reason": "Cannot parse fetchedAt as RFC3339; return error"
+    },
+    "status": "not-run"
+  }
+];
+
+window.__MODULE_DATA__ = [
+  {
+    "module": "price_resolution",
+    "primitives": ["price-quote-normalizer", "tier-fallback-selector", "price-staleness-classifier"],
+    "scenario": "price-resolution-golden",
+    "category": "golden",
+    "description": "3-tier walk: T1 returns quote (STALE: 90s old) → T2 returns quote (FRESH: 10s old) → module selects T1 by tier order. Staleness is annotation, not selection criterion. Result: T1 quote with staleness=STALE.",
+    "input": {
+      "code": "VCB",
+      "now": "2026-05-24T01:00:00Z",
+      "fresh_threshold_seconds": 60,
+      "stale_threshold_seconds": 3600,
+      "tier_1": { "price": 85000, "source": "hose", "fetched_at": "2026-05-24T00:58:30Z" },
+      "tier_2": { "price": 84950, "source": "hnx",  "fetched_at": "2026-05-24T00:59:50Z" },
+      "tier_3": null
+    },
+    "expectedOutput": {
+      "code": "VCB",
+      "price": 85000,
+      "source": "hose",
+      "staleness": "STALE"
+    },
+    "status": "not-run"
+  },
+  {
+    "module": "price_resolution",
+    "primitives": ["tier-fallback-selector", "price-staleness-classifier"],
+    "scenario": "price-resolution-edge",
+    "category": "edge",
+    "description": "T1 nil, T2 nil, T3 cache quote (EXPIRED: 5h old) → T3 wins (only tier with data). Result: T3 quote with staleness=EXPIRED.",
+    "input": {
+      "code": "VCB",
+      "now": "2026-05-24T01:00:00Z",
+      "fresh_threshold_seconds": 60,
+      "stale_threshold_seconds": 3600,
+      "tier_1": null,
+      "tier_2": null,
+      "tier_3": { "price": 84000, "source": "cache", "fetched_at": "2026-05-23T20:00:00Z" }
+    },
+    "expectedOutput": {
+      "code": "VCB",
+      "price": 84000,
+      "source": "cache",
+      "staleness": "EXPIRED"
+    },
+    "status": "not-run"
+  }
+];
+
+/* ── Dashboard renderer ───────────────────────────────────────────────────── */
+/* AC-3 / G8: all status starts as "not-run" — no fake greens.                */
+/* AC-4 / G9: no console.error, no thrown exceptions, all cards render.       */
+
+(function() {
+  'use strict';
+
+  /* ── Utilities ──────────────────────────────────────────────────────── */
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function categoryChipClass(cat) {
+    if (cat === 'golden')  return 'cat-golden';
+    if (cat === 'edge')    return 'cat-edge';
+    if (cat === 'failure') return 'cat-failure';
+    return 'cat-edge';
+  }
+
+  function statusDotClass(status) {
+    if (status === 'pass') return 'dot-green';
+    if (status === 'fail') return 'dot-red';
+    return 'dot-pending';
+  }
+
+  function statusLabel(status) {
+    if (status === 'pass') return '<span style="color:#1a7f3c;font-weight:700;">PASS</span>';
+    if (status === 'fail') return '<span style="color:#b91c1c;font-weight:700;">FAIL</span>';
+    return '<span class="not-run-badge">NOT-RUN</span>';
+  }
+
+  function groupStatusClass(allNotRun, anyFail, allPass) {
+    if (anyFail)    return 'status-red-label';
+    if (allPass)    return 'status-green-label';
+    return 'status-pending-label';
+  }
+
+  function groupStatusText(allNotRun, anyFail, allPass) {
+    if (anyFail) return 'FAIL';
+    if (allPass) return 'PASS';
+    return 'NOT-RUN';
+  }
+
+  /* ── Primitives panel ───────────────────────────────────────────────── */
+
+  function buildPrimitivesPanel() {
+    var container = document.getElementById('primitives-panel-body');
+    if (!container) return;
+
+    /* Group scenarios by primitive name */
+    var groups = {};
+    var order  = [];
+    window.__PRIMITIVES_DATA__.forEach(function(sc) {
+      var name = sc.primitive;
+      if (!groups[name]) { groups[name] = []; order.push(name); }
+      groups[name].push(sc);
+    });
+
+    var html = '';
+    order.forEach(function(primName) {
+      var scenarios = groups[primName];
+      var anyFail   = scenarios.some(function(s) { return s.status === 'fail'; });
+      var allPass   = scenarios.every(function(s) { return s.status === 'pass'; });
+
+      var labelClass = groupStatusClass(false, anyFail, allPass);
+      var labelText  = groupStatusText(false, anyFail, allPass);
+
+      html += '<div class="primitive-group">';
+      html += '<div class="primitive-group-header">';
+      html += '<code style="font-size:0.82rem;">' + escHtml(primName) + '</code>';
+      html += '<span class="group-status ' + labelClass + '">' + labelText + '</span>';
+      html += '</div>';
+      html += '<div class="primitive-scenarios">';
+
+      scenarios.forEach(function(sc, idx) {
+        html += '<button class="scenario-card" data-type="primitive" data-idx="' + idx + '" data-prim="' + escHtml(primName) + '" aria-label="Open scenario ' + escHtml(sc.scenario) + '">';
+        html += '<span class="scenario-status-dot ' + statusDotClass(sc.status) + '"></span>';
+        html += '<span class="scenario-meta">';
+        html += '<span class="scenario-name">' + escHtml(sc.scenario) + '</span>';
+        html += '<span class="scenario-desc">' + escHtml(sc.description) + '</span>';
+        html += '</span>';
+        html += '<span class="category-chip ' + categoryChipClass(sc.category) + '">' + escHtml(sc.category) + '</span>';
+        html += '</button>';
+      });
+
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+    updatePrimitiveSummary();
+  }
+
+  function updatePrimitiveSummary() {
+    var data    = window.__PRIMITIVES_DATA__ || [];
+    var total   = data.length;
+    var passed  = data.filter(function(s){ return s.status === 'pass'; }).length;
+    var failed  = data.filter(function(s){ return s.status === 'fail'; }).length;
+    var notRun  = total - passed - failed;
+
+    var notRunChip  = document.getElementById('prim-notrun-chip');
+    var greenChip   = document.getElementById('prim-green-chip');
+    var redChip     = document.getElementById('prim-red-chip');
+
+    if (notRunChip) { notRunChip.textContent = notRun + ' NOT-RUN'; notRunChip.style.display = notRun > 0 ? '' : 'none'; }
+    if (greenChip)  { greenChip.textContent  = passed + ' passed';  greenChip.style.display  = passed > 0 ? '' : 'none'; }
+    if (redChip)    { redChip.textContent    = failed + ' failed';  redChip.style.display    = failed > 0 ? '' : 'none'; }
+  }
+
+  /* ── Module panel ───────────────────────────────────────────────────── */
+
+  function buildModulePanel() {
+    var container = document.getElementById('module-panel-body');
+    if (!container) return;
+
+    var html = '';
+    window.__MODULE_DATA__.forEach(function(sc, idx) {
+      var anyFail = sc.status === 'fail';
+      var allPass = sc.status === 'pass';
+      var labelClass = groupStatusClass(false, anyFail, allPass);
+      var labelText  = groupStatusText(false, anyFail, allPass);
+
+      html += '<div class="module-card">';
+      /* Header */
+      html += '<div class="module-card-header">';
+      html += '<div>';
+      html += '<div class="module-card-title">' + escHtml(sc.scenario) + '</div>';
+      html += '<div class="module-card-meta">module: ' + escHtml(sc.module) + ' &bull; category: ' + escHtml(sc.category) + '</div>';
+      html += '</div>';
+      html += '<span class="group-status ' + labelClass + '">' + labelText + '</span>';
+      html += '</div>';
+      /* Primitive tags */
+      html += '<div class="module-primitives-tag">';
+      (sc.primitives || []).forEach(function(p) {
+        html += '<span class="prim-tag">' + escHtml(p) + '</span>';
+      });
+      html += '</div>';
+      /* Body */
+      html += '<div class="module-card-body">';
+      html += '<p class="module-card-desc">' + escHtml(sc.description) + '</p>';
+      html += '<div style="margin-top:8px;">';
+      html += '<button class="scenario-card" style="border:none;padding:6px 0;background:none;width:auto;display:inline-flex;gap:8px;align-items:center;cursor:pointer;" data-type="module" data-idx="' + idx + '" aria-label="Open module scenario ' + escHtml(sc.scenario) + '">';
+      html += '<span class="scenario-status-dot ' + statusDotClass(sc.status) + '"></span>';
+      html += '<span style="font-size:0.78rem;color:#4c1d95;font-weight:600;">View input &harr; expected output</span>';
+      html += '</button>';
+      html += '</div></div></div>';
+    });
+
+    container.innerHTML = html;
+    updateModuleSummary();
+  }
+
+  function updateModuleSummary() {
+    var data   = window.__MODULE_DATA__ || [];
+    var total  = data.length;
+    var passed = data.filter(function(s){ return s.status === 'pass'; }).length;
+    var failed = data.filter(function(s){ return s.status === 'fail'; }).length;
+    var notRun = total - passed - failed;
+
+    var notRunChip = document.getElementById('mod-notrun-chip');
+    var greenChip  = document.getElementById('mod-green-chip');
+    var redChip    = document.getElementById('mod-red-chip');
+
+    if (notRunChip) { notRunChip.textContent = notRun + ' NOT-RUN'; notRunChip.style.display = notRun > 0 ? '' : 'none'; }
+    if (greenChip)  { greenChip.textContent  = passed + ' passed';  greenChip.style.display  = passed > 0 ? '' : 'none'; }
+    if (redChip)    { redChip.textContent    = failed + ' failed';  redChip.style.display    = failed > 0 ? '' : 'none'; }
+  }
+
+  /* ── Microservice panel ─────────────────────────────────────────────── */
+
+  function buildServicePanel() {
+    var container = document.getElementById('service-panel-body');
+    if (!container) return;
+
+    /* AC-2 / AC-3: service facts (ports from system-map.json — pulled at build time, not runtime fetch) */
+    /* Internal port 5000, external port 5010 — source: docs/data/system-map.json */
+    var html = '';
+
+    html += '<div class="service-card">';
+    /* Header */
+    html += '<div class="service-card-header">';
+    html += '<div>';
+    html += '<div class="service-card-title">stock-price</div>';
+    html += '<div class="service-card-meta">Go 1.22+cgo &bull; DDD (domain/application/infrastructure/interface) &bull; HOSE / HNX / UPCOM</div>';
+    html += '</div>';
+    html += '<span class="not-run-badge">NOT-RUN</span>';
+    html += '</div>';
+    /* Ports */
+    html += '<div class="service-ports">';
+    html += '<span class="port-badge port-internal">:5000 internal</span>';
+    html += '<span class="port-badge port-external">:5010 external</span>';
+    html += '</div>';
+    /* Endpoints */
+    html += '<div class="service-endpoints">';
+    html += '<h4>Endpoints (apps/stock-price/pkg/interface/http/router.go)</h4>';
+    var endpoints = [
+      { method: 'GET',  path: '/health',             desc: 'Health check — returns service status, port 5000' },
+      { method: 'POST', path: '/price/fetch',         desc: 'Fetch price quotes for one or more tickers — 3-tier fallback (VPS bridge → exchange APIs → SQLite cache)' },
+      { method: 'GET',  path: '/price/history',       desc: 'Price history — query params: code=X&days=N (OHLCV rows from SQLite cache)' },
+      { method: 'GET',  path: '/price/history/{code}','desc': 'Price history — path-param variant (backward compat with TS Hono callers)' }
+    ];
+    endpoints.forEach(function(ep) {
+      var methodClass = ep.method === 'GET' ? 'method-get' : 'method-post';
+      html += '<div class="endpoint-row">';
+      html += '<span class="method-badge ' + methodClass + '">' + escHtml(ep.method) + '</span>';
+      html += '<span class="endpoint-path">' + escHtml(ep.path) + '</span>';
+      html += '<span class="endpoint-desc">' + escHtml(ep.desc) + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    /* DDD layers info */
+    html += '<div style="padding:10px 14px;border-top:1px solid var(--border);font-size:0.75rem;color:#64748b;line-height:1.7;">';
+    html += '<strong style="color:#374151;">3-Tier Price Fallback:</strong><br>';
+    html += 'Tier 1: VPS bridge (Vinahost Vietnam — geo-blocked exchange access)<br>';
+    html += 'Tier 2: Exchange APIs (direct — HOSE/HNX/UPCOM)<br>';
+    html += 'Tier 3: SQLite cache (<code>stock_price.db</code> — WAL mode, CGO-sqlite3)<br>';
+    html += '<br><strong style="color:#374151;">Composition root:</strong> <code>cmd/server/main.go</code> — only file allowed to import CGO-sqlite3 (Fence-C)';
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  /* ── Modal ──────────────────────────────────────────────────────────── */
+
+  var currentScenario = null;
+
+  function openModal(type, idx, primName) {
+    var sc = null;
+    if (type === 'primitive') {
+      var filtered = primName
+        ? window.__PRIMITIVES_DATA__.filter(function(s){ return s.primitive === primName; })
+        : window.__PRIMITIVES_DATA__;
+      sc = filtered[idx];
+    } else if (type === 'module') {
+      sc = window.__MODULE_DATA__[idx];
+    }
+    if (!sc) return;
+    currentScenario = sc;
+
+    var overlay = document.getElementById('modal-overlay');
+    var title   = document.getElementById('modal-title');
+    var cat     = document.getElementById('modal-cat');
+    var desc    = document.getElementById('modal-desc');
+    var inJson  = document.getElementById('modal-input-json');
+    var outJson = document.getElementById('modal-output-json');
+    var statTxt = document.getElementById('modal-status-text');
+
+    title.textContent  = sc.scenario || sc.primitive || sc.module || 'Scenario';
+    cat.textContent    = (sc.category || '').toUpperCase();
+    desc.textContent   = sc.description || '';
+    inJson.textContent = JSON.stringify(sc.input || sc.inputs || {}, null, 2);
+    outJson.textContent= JSON.stringify(sc.expectedOutput || sc.expected || {}, null, 2);
+    statTxt.innerHTML  = statusLabel(sc.status || 'not-run');
+
+    overlay.classList.add('open');
+    overlay.focus && overlay.focus();
+  }
+
+  function closeModal() {
+    var overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('open');
+    currentScenario = null;
+  }
+
+  /* ── Event delegation ───────────────────────────────────────────────── */
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.scenario-card');
+    if (btn) {
+      var type = btn.getAttribute('data-type');
+      var idx  = parseInt(btn.getAttribute('data-idx'), 10);
+      var prim = btn.getAttribute('data-prim');
+      openModal(type, idx, prim);
+      return;
+    }
+
+    if (e.target.id === 'modal-close-btn' || e.target.id === 'modal-overlay') {
+      closeModal();
+      return;
+    }
+
+    if (e.target.id === 'rerun-btn') {
+      /* P1-E placeholder: edit-rerun handler added in next task */
+      alert('Edit-rerun handler: P1-E deliverable.\nTo run manually:\n\ncd apps/stock-price\nCGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all');
+      return;
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  /* ── Bootstrap ──────────────────────────────────────────────────────── */
+
+  function init() {
+    buildPrimitivesPanel();
+    buildModulePanel();
+    buildServicePanel();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+}());
+</script>
+</body>
+</html>
