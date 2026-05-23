@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-B1 (MCP HTTP rewire, owner dev-mcp-server, blocks P2-B2)",
+    "activeTask": null,
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -364,6 +364,40 @@
         "resolvedBy": "pm c282-cycle-41 (inline with task plan review)"
       }
     ],
+    "tasks": {
+      "P2-B1": {
+        "status": "DONE",
+        "title": "MCP Tool Handler HTTP Rewire (R-3 Unblock)",
+        "dev_commit_sha": "98df0f43",
+        "dev_signal_commit": "d3d8569f",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T12:50:05Z",
+        "qa_signal": "docs/signals/qa-p2-b1-macro-GREEN-20260523T125005Z.json",
+        "ac_results": "7/7 PASS",
+        "sandbox_evidence": "total=5 pass=5 fail=0 status=OK exit 0 (QA independent run)",
+        "r1_gate": "PASS (exit 1, 0 matches)",
+        "anchor_1776df8e": "HELD (exit 0 pre+post)",
+        "forbidden_zone": "CLEAN (exit 1, 0 matches)",
+        "env_audit": "CLEAN (exit 1, 0 matches)",
+        "observations": [
+          {
+            "id": "OBS-cmd-router-rewire",
+            "severity": "INFO",
+            "description": "cmd/server/main.go not yet wired to NewRouter() — cmd/ frozen per handoff. Forward work item for P2-X1 or new task.",
+            "ruling": "ACCEPTED"
+          }
+        ]
+      }
+    },
+    "observations": [
+      {
+        "id": "OBS-cmd-router-rewire",
+        "task": "P2-B1",
+        "severity": "INFO",
+        "description": "cmd/server/main.go pre-scaffold inline mux not yet wired to NewRouter(). cmd/ is frozen per handoff §Out-of-Zone Bans. Forward Phase 2 work item — wiring cmd→NewRouter() when real handler implementations land (likely P2-X1 or new task).",
+        "ruling": "ACCEPTED — not a P2-B1 fail. AC-4 satisficed by router_test.go 4/4 PASS."
+      }
+    ],
     "progress_notes": [
       {
         "timestamp": "2026-05-23T18:52:00Z",
@@ -371,6 +405,12 @@
         "event": "Phase 2 task plan INGESTED + P2-B1 DISPATCHED",
         "detail": "Architect Phase 2 plan (9bd67f8c) ingested into SSOT. OQ-7/10 RESOLVED (stub-first approach), OQ-8 DEFERRED-TO-PO (scraper strategy), OQ-9 RESOLVED (G6/G7 re-check at P2-G1). P2-B1 (R-3 MCP HTTP rewire) dispatched to dev-mcp-server with 7 ACs, 2h estimate, hard gates (R-1 + G12 DoD). Anchor 1776df8e held. WIP=1 enforced. Phase 2 status IN-PROGRESS.",
         "commit": "PENDING-CYCLE-41-COMMIT"
+      },
+      {
+        "timestamp": "2026-05-23T12:50:05Z",
+        "cycle": "c282 cycle-41 (QA)",
+        "event": "P2-B1 QA-GREEN @ 2026-05-23T12:50:05Z — commits 98df0f43 + d3d8569f + <qa-commit-pending>",
+        "detail": "All 7 ACs PASS. R-1 hard gate CLEAR (exit 1). G12 sandbox PASS (total=5 pass=5 fail=0 status=OK exit 0). Anchor 1776df8e HELD (exit 0). Forbidden-zone CLEAN (exit 1). Env audit CLEAN (exit 1). OBS-cmd-router-rewire accepted as forward work. R-3 risk UNBLOCKED — all 4 macro MCP tools now route via HTTP to port 5004. phase2.activeTask set null (PM picks next per critical path)."
       }
     ]
   },

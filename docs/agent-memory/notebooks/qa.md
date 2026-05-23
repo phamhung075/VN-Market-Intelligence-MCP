@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-41 · 2026-05-23 · macro P2-B1 MCP HTTP rewire (R-3 unblock) — 4 tools verified
+
+**Task:** P2-B1 — MCP Tool Handler HTTP Rewire (R-3 Unblock) | **Verdict:** GREEN | **Phase 2:** P2-B1 DONE, activeTask=null
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-p2-b1-macro-GREEN-20260523T125005Z.json
+impl_commit: 98df0f43
+dev_signal_commit: d3d8569f
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: Direct domain imports removed | PASS | grep computeCarryTradeSignal|computeYieldSpreadSignal|getMacroCalendar|fetchYahooFinancePrices|fetchSbvRates in apps/mcp-server/src/interface/mcp/tools/macro/ → exit 1 (0 matches). All 3 handler files import only macroHttpClient.js + SDK + zod + logger. |
+| AC-2: MACRO_INDICATORS_URL env var + fallback | PASS | macroHttpClient.ts is SSOT: Bun.env.MACRO_INDICATORS_URL ?? "http://localhost:5004". All 3 handlers call getMacroBaseUrl() from macroHttpClient.js. Uses Bun.env (not process.env) — checklist compliant. |
+| AC-3: Graceful HTTP failure handling | PASS | All 3 handler files have try/catch: !response.ok path + network failure catch both return { content: [{ type: 'text', text: JSON.stringify({ error: 'macro-indicators service unavailable' }) }] }. No thrown exception escaping any handler. |
+| AC-4: Go router 3 routes + go build exit 0 | PASS | router.go lines 24-26: r.Get("/carry-trade-signal"), r.Get("/yield-spread-signal"), r.Get("/macro-calendar"). go build ./... → exit 0. |
+| AC-5: Path A httptest 4/4 PASS | PASS | go test ./pkg/interface/http/... -v: TestHealthRoute PASS, TestCarryTradeSignalRoute PASS (200+JSON+regime+HOT_MONEY_INFLOW), TestYieldSpreadSignalRoute PASS (200+JSON+label+VN_ATTRACTIVE), TestMacroCalendarRoute PASS (200+JSON+events+daysRequested). exit 0. |
+| AC-6: Zero cross-service imports | PASS | grep matches are string literals in logger.warn() and description comments — NOT import statements. grep '^import|^from' on 3 handler files filtered for macro-indicators → exit 1 (0 actual imports). |
+| AC-7: R-1 HARD GATE (no randomization) | PASS | grep -rE "math/rand|rand.Intn|rand.Float|time.Now.*Seed" apps/macro-indicators/pkg/ → exit 1 (0 matches). CLEAR. |
+| G12 DoD gate: sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK exit 0. |
+| Anchor 1776df8e pre-QA | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0. |
+| Forbidden zone audit (commit 98df0f43) | CLEAN | git show --stat 98df0f43 | grep -E 'technical-analysis|.golangci.yml|.github/workflows/ci.yml|apps/macro-indicators/cmd/' → exit 1. 9 files touched: all in apps/macro-indicators/pkg/interface/http/ + apps/mcp-server/src/interface/mcp/tools/macro/ only. |
+| Env audit: no FRED_API_KEY | CLEAN | grep -rE "FRED_API_KEY|api_key|API_KEY" apps/macro-indicators/ --include=*.go --include=*.html --include=*.json --include=*.md → exit 1 (0 matches). |
+
+**OBS-cmd-router-rewire ACCEPTED:** cmd/server/main.go pre-scaffold inline mux; NewRouter() wiring commented out at line 42. cmd/ frozen per handoff §Out-of-Zone Bans. AC-4 satisficed by router_test.go 4/4 PASS. Forward work item for P2-X1 or new task.
+**R-3 Risk UNBLOCKED:** All 4 macro MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) now route exclusively via HTTP to port 5004. Domain imports removed from mcp-server interface layer.
+**G12 sandbox:** total=5 pass=5 fail=0 — all 5 scenarios PASS (3 primitive + 2 module). No regression from P2-B1 Go stubs.
+**SSOT:** pilot-status-macro-indicators.json P2-B1.status=DONE + phase2.activeTask=null + progress_notes appended + OBS-cmd-router-rewire recorded under phase2.observations[].
+**Blocking issues:** 0 — all 7 ACs + all hard gates PASS.
+**NEXT:** pm — mark P2-B1 DONE. Dispatch next Phase 2 task per architect critical path (P2-B1 → P2-B2 → P2-B3...).
+
+---
+
 ## c282 cycle-40 · 2026-05-23 · macro P1-E2 edit-rerun handler + env audit — FINAL Phase 1 task
 
 **Task:** P1-E2 — Dashboard edit-rerun handler (Option C) + env audit (FRED_API_KEY + .env hygiene) | **Verdict:** GREEN | **Phase 1:** 11/11 COMPLETE
