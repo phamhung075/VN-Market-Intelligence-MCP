@@ -21,6 +21,9 @@ func NewRouter(useCase *application.ComputeMacroUseCase, logger *slog.Logger) ch
 
 	r.Get("/health", handleHealth())
 	r.Post("/snapshot", handleSnapshot(useCase, logger))
+	r.Get("/carry-trade-signal", handleCarryTradeSignal())
+	r.Get("/yield-spread-signal", handleYieldSpreadSignal())
+	r.Get("/macro-calendar", handleMacroCalendar())
 
 	return r
 }
