@@ -1,5 +1,48 @@
 # QA — Notebook
 
+## c282 cycle-44b · 2026-05-23 · macro P2-B2 TS deprecation git mv (G5a)
+
+**Task:** P2-B2 — Pre-Delete Tag + git mv src/ src/_deprecated/ (G5a TS Deprecation) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-p2-b2-macro-GREEN-20260523T153000Z.json
+impl_commit: 6ec6639f
+dev_signal_commit: ef93ad15
+macro_pre_delete_tag_sha: 37f79c96ca3896e839fd18289c73a788cf3a57ee
+head_sha: ef93ad1542205c7fe7504071aeff1fa3b4e3d9d4
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Pre-condition: anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| Pre-condition: macro-pre-delete tag SHA | PASS | git rev-list -n1 macro-pre-delete → 37f79c96ca3896e839fd18289c73a788cf3a57ee. Matches dev signal exactly. |
+| Pre-condition: HEAD order | PASS | ef93ad15 (signal) → 6ec6639f (impl) → 37f79c96 (pm dispatch = tag). Correct. |
+| AC-1: TS files moved to _deprecated/ count=11 | PASS | find apps/macro-indicators/src/_deprecated -type f (*.ts|*.tsx|*.js|*.mjs|*.cjs) → 11 files. ≥11 threshold met. application/(4) + domain/(4) + infrastructure/repositories.ts + interface/handlers.ts + index.ts |
+| AC-1: history preserved via git mv | PASS | git log --follow --oneline -- apps/macro-indicators/src/_deprecated/index.ts → 8 commits, oldest 9d696ef7 (pre-dates 6ec6639f by many commits). Rename detection confirmed. |
+| AC-2: scrapers preserved count=8 TS files | PASS | find apps/macro-indicators/src/infrastructure/scrapers -type f -name "*.ts" → 8 files. 13 total including .py helpers. ≥7 threshold met. |
+| AC-2: scrapers NOT in _deprecated/ | PASS | find apps/macro-indicators/src/_deprecated/infrastructure/scrapers → exit 1, zero results. CLEAN. |
+| AC-3: zero orphan TS outside _deprecated/ + scrapers/ | PASS | find ... grep -v _deprecated/ grep -v scrapers/ → zero results. CLEAN. |
+| AC-4: downstream callers audit | PASS | grep -rn "from.*apps/macro-indicators/src/" apps/mcp-server/src/ | grep -v _deprecated → exit 0 zero output. Only reference: clients.ts:115 JSDoc comment inside /** */ block. No real import statements (grep '^import|^from' → exit 1). CLEAN. |
+| AC-4: bun tsc --noEmit on mcp-server | PASS | exit 0, 0 errors. |
+| AC-5: golangci-lint run ./... | PASS | 0 issues. GOLANGCI_EXIT:0. |
+| AC-5: go test ./... | PASS | 3 packages ok (interface/http, module/macro_signals, primitive/macro_investment_clock). GO_TEST_EXIT:0. |
+| AC-5 R-1: determinism guard | PASS | grep -rE "math/rand|rand.Intn|rand.Float|time.Now.*Seed" pkg/ → R1_EXIT:1 (0 matches). CLEAR. |
+| AC-5 G12: sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK. SANDBOX_EXIT:0. All 5 scenarios PASS. |
+| AC-6: TA pilot untouched | PASS | git diff 37f79c96 HEAD --stat -- apps/technical-analysis/ → zero output. FROZEN. |
+| AC-6: configs frozen (.golangci.yml + ci.yml) | PASS | git diff 37f79c96 HEAD --stat -- .golangci.yml apps/macro-indicators/.golangci.yml .github/workflows/ci.yml → zero output. FROZEN. |
+| AC-7: anchor 1776df8e post | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0. HELD. |
+
+**G5 status note:** G5 status unchanged at P2-B2 — terminal verification deferred to P2-B3 per architect critical path.
+**OBS-scrapers-count:** scrapers/ directory contains 13 files total (8 .ts + 5 .py). AC-2 checks TS count specifically = 8 ≥ 7 threshold. Python helpers present (brownfield sidecar). Not a blocker.
+**OBS-ac4-exit-0:** grep -rn "from.*apps/macro-indicators/src/" | grep -v _deprecated exits 0 (match found) but match is JSDoc comment at clients.ts:115 only. QA verified real-import grep ('^import|^from') → exit 1. Zero broken imports. AC-4 PASS.
+**Blocking issues:** 0 — all 7 ACs + all hard gates PASS. Verdict GREEN.
+**NEXT:** pm cycle-45 — close P2-B2, update pilot-status-macro-indicators.json phase2.activeTask=null + P2-B2.status=DONE, dispatch P2-B3 (G5 terminal verification per architect critical path).
+
+---
+
 ## c282 cycle-44 · 2026-05-23 · macro P2-A2 CI wiring + deliberate-violation proof (G4 YES)
 
 **Task:** P2-A2 — CI Job + Deliberate Violation Proof + Pre-CI Tag | **Verdict:** GREEN | **G4:** PARTIAL→YES
