@@ -1,6 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 00:26 UTC (P0-SP-1 + P0-SP-6 stock-price) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-23 22:33 UTC (P0-EXIT-GATE stock-price verification) | **Sprint:** fleet-factory-rollout program
+
+## P0-EXIT-GATE verification cycle (2026-05-23T22:33Z) — stock-price factory Phase 0
+
+**Task:** Independent technical-completeness verification of all 6 Phase-0 deliverables before PO ratifies gate. Emit signal to docs/signals/.
+
+**Verification outcome: GATE-PASS — all 6 deliverables verified PASS.**
+
+- P0-SP-1 (brownfield, debba8ea): PASS. File exists (20795 bytes). R-CGO=FEASIBLE confirmed in §6 of inventory. Primitive candidates (3 primary + 1 optional), module=price_resolution, port=TierFetcher. G5b narrower than expected (HTTP clients already in place).
+- P0-SP-2 (bug-inventory, 32d77e60): PASS. stock_price_baseline present with baselineCycleCount=1.5 (1 bug in 60d window, <2 threshold = system-wide fallback per charter). JSON valid (jq exit 0). Key in file is 'stock_price_baseline' (charter-aligned).
+- P0-SP-3 (agent+flow baking, 4a04bb96): PASS. Both files on disk (agent 10638 bytes, flow 9245 bytes). G12 DoD Gate baked (§Pilot Hard Rule section). R-CGO Gate baked (§R-CGO Gate, 3-step sequence). Fence-A/B/C baked (§Fence Rules). Pre-revert tag protocol baked (stock-price-pre-ci/-delete/-inject). YAML valid per PM signal.
+- P0-SP-4 (anchor commit, df7d3d7a): PASS. anchor=debba8eaff0724d1fb32fc9d28640201cc32d1cc (40-char hex valid). Ancestor of HEAD confirmed (git merge-base exit 0). SSOT phase=1, phase0.status=CLOSED. Zero tags pointing at anchor (frozen).
+- P0-SP-5 (R-CGO, e9da9a7c): PASS. Verdict=CLEAR. CGO_ENABLED=0 build exit 0. grep mattn in domain/app/interface = 0 matches. cmd/sandbox stub exists with stdlib-only imports. Phase-1 gate template ACs ready for P1-B1.
+- P0-SP-6 (phase-1 plan, debba8ea): PASS. File 34124 bytes, 9 tasks (P1-A..P1-G), 55 ACs. R-CGO gate baked into P1-B1 (AC-5/6/7/8, hard BLOCKER). G12 streak = P1-B1/B2/B3. Critical path documented. 7 OQs resolved.
+
+**SSOT invariants:** decisionMatrix present-but-empty (speed/trust/scale/verdict all TBD, populatedAt=null) — correct per charter §4.5 (PO-only, 12/12 terminal only). No code in pkg/primitive or pkg/module yet.
+
+**Signal emitted:** docs/signals/architect-p0-exit-gate-stock-price-20260523T223331Z.json (GATE-PASS, ready_for_po_review=true)
+
+**Files written this cycle (L84 — 2 files):**
+1. `docs/signals/architect-p0-exit-gate-stock-price-20260523T223331Z.json` (NEW — exit gate signal)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+---
 
 ## P0-SP-1 + P0-SP-6 cycle (2026-05-24) — stock-price factory Phase 0 deliverables
 

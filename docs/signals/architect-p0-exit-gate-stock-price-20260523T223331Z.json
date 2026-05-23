@@ -1,0 +1,167 @@
+{
+  "signal": "architect-p0-exit-gate-stock-price",
+  "from": "architect",
+  "emittedAt": "2026-05-23T22:33:31Z",
+  "pilot": "stock-price",
+  "fleet_pilot_number": 3,
+  "task": "P0-EXIT-GATE independent verification",
+  "purpose": "Independent architect verification that all 6 Phase-0 deliverables genuinely meet their acceptance criteria. This is the technical-completeness check; PO holds gate-open authority separately.",
+  "charter_ref": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §Phase 0 exit gate",
+  "ssot_ref": "docs/data/pilot-status-stock-price.json (phase=1, phase0.status=CLOSED, anchor=debba8eaff0724d1fb32fc9d28640201cc32d1cc)",
+
+  "deliverable_verdicts": {
+    "P0-SP-1": {
+      "title": "Brownfield inventory",
+      "verdict": "PASS",
+      "commit_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "file_exists": "docs/architecture-briefs/2026-05-23-stock-price-factory/p0-brownfield-inventory.md (20795 bytes)",
+      "evidence": [
+        "File on disk: 20795 bytes, committed at debba8ea",
+        "R-CGO feasibility section present (line 257-294 in inventory): Status=FEASIBLE — mattn/go-sqlite3 isolated to pkg/infrastructure/fetchers.go:L15 only; zero CGO in domain/application/interface layers confirmed by grep",
+        "Primitive candidates confirmed: price-quote-normalizer (***), tier-fallback-selector (***), price-staleness-classifier (**), ohlcv-aggregator (optional P1-F)",
+        "Module candidate: price_resolution with TierFetcher port interface",
+        "G5b scope narrowed: HTTP integration already present in clients.ts (fetchStockPrice + getPriceHistory to port 5000); no direct domain imports in any market-data MCP handler — no mandatory rewire for Phase 1",
+        "Phase 0 gate section (lines ~300-310): 9/9 exit-gate checks passed per inventory",
+        "Architect signal architect-p0sp1-p0sp6-done-20260523T222607Z.json corroborates: r_cgo_verdict=FEASIBLE, phase0_gate=GO"
+      ],
+      "ac_gaps": "None — all 6 ACs (domain audit, R-CGO confirmation, primitive mapping, module port design, MCP handler audit, R-CGO summary) documented in inventory",
+      "risk_flags": "None"
+    },
+    "P0-SP-2": {
+      "title": "Bug-inventory entry: stock_price_baseline",
+      "verdict": "PASS",
+      "commit_sha": "32d77e60f11b0bc4a9394bf190b147720a9cdb1d",
+      "evidence": [
+        "stock_price_baseline key present in docs/data/bug-inventory.json (jq . exits 0 — JSON valid)",
+        "baselineCycleCount=1.5 (confirmed via jq '.stock_price_baseline.baselineCycleCount' = 1.5)",
+        "stockPriceBugsFound=1 (bug 1971-SCAN-ORDER-MISMATCH, fixCycles=2, module=stock-price) — <2 threshold triggers system-wide fallback to 1.5 per charter §Baseline Metric Capture",
+        "scanWindow: 2026-03-25..2026-05-24 (60-day window matches AC-1)",
+        "Commit 32d77e60 scope: single file modified (docs/data/bug-inventory.json +22 lines, no source changes per AC-5)",
+        "System-wide baselineCycleCount field at root=1.5 also confirmed present"
+      ],
+      "ac_gaps": "None — AC-1 (git log scan), AC-2 (notebook cross-ref), AC-3 (entry recorded), AC-4 (JSON valid), AC-5 (no source changes) all satisfied",
+      "risk_flags": "Note: handoff AC-3 template used key 'stock_price' but actual key in file is 'stock_price_baseline'. This matches the charter naming convention and the PM P0-SP-4 signal's reference, so no discrepancy at the charter level — handoff template was illustrative."
+    },
+    "P0-SP-3": {
+      "title": "Agent-flow baking: dev-stock-price.md + dev-stock-price/main.md",
+      "verdict": "PASS",
+      "commit_sha": "4a04bb96 (flow/agent update, confirmed in PM P0-SP-4 signal as 4a04bb96)",
+      "evidence": [
+        ".claude/agents/dev-stock-price.md exists (10638 bytes); YAML frontmatter valid; fields name/color/description/tools/model/zone all present; zone=apps/stock-price/; model=claude-opus-4-5",
+        ".claude/flows/dev-stock-price/main.md exists (9245 bytes); valid markdown",
+        "G12 DoD Gate: section '## Pilot Hard Rule (G12 — blocking)' present with both CGO_ENABLED=0 sandbox commands; explicit RETURN blocker documented (lines 52-77)",
+        "R-CGO Gate: section '## R-CGO Gate' present (lines 81-109); 3-step pre-check sequence documented (primitive tier + module tier + grep mattn/go-sqlite3 = 0)",
+        "Fence-A/B/C rules: all three fences documented in '## Fence Rules' section (lines 131-148); grep commands for each fence boundary",
+        "Pre-revert tags: '## Pre-Revert Tag Protocol' section present with stock-price-pre-ci, stock-price-pre-delete, stock-price-pre-inject",
+        "PM P0-SP-3 signal (20260523T222357Z) confirms all 7 ACs PASS; g12_dod_gate=BAKED; r_cgo_gate=DOCUMENTED; fence_rules=BAKED; pre_revert_tags=PROTOCOL-ADDED; yaml_valid=CONFIRMED",
+        "Agent YAML validated by signal: yaml_valid=true, all 6 frontmatter fields present"
+      ],
+      "ac_gaps": "None",
+      "risk_flags": "None"
+    },
+    "P0-SP-4": {
+      "title": "Anchor commit + SSOT update",
+      "verdict": "PASS",
+      "commit_sha": "df7d3d7a (PM anchor commit — phase 0→1 SSOT update)",
+      "evidence": [
+        "Anchor SHA recorded in SSOT: debba8eaff0724d1fb32fc9d28640201cc32d1cc (40-char hex format verified via regex '^[0-9a-f]{40}$')",
+        "git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD exits 0 (confirmed ancestor of HEAD)",
+        "git merge-base --is-ancestor df7d3d7a HEAD exits 0 (PM's own anchor commit also ancestor)",
+        "SSOT phase=1, phase0.status=CLOSED, phase0.closedAt=2026-05-24T00:00:00Z, phase0.closedBy=pm",
+        "SSOT phase0.exit_gate.verification_commit_sha_architect = debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+        "PM P0-SP-4 signal confirms: AC-1 (SHA recorded) PASS, AC-2 (SSOT updated) PASS, AC-3 (notebook appended) PASS, AC-4 (no source changes) PASS, AC-5 (ancestor check) PASS; all_gates_pass=true; jq_verify=exit 0",
+        "No tags pointing at debba8ea (git tag --points-at debba8eaff0724d1fb32fc9d28640201cc32d1cc = 0 results)"
+      ],
+      "ac_gaps": "None",
+      "risk_flags": "None"
+    },
+    "P0-SP-5": {
+      "title": "R-CGO gate confirmation",
+      "verdict": "PASS",
+      "commit_sha": "e9da9a7c (dev-stock-price R-CGO confirmation + sandbox stub creation)",
+      "evidence": [
+        "Signal docs/signals/dev-stock-price-p0-sp5-r-cgo-confirmation-20260523T222111Z.json: r_cgo_verdict=CLEAR",
+        "AC-2 CGO_ENABLED=0 build: exit_code=0 (sandbox builds clean under pure Go)",
+        "AC-3 grep mattn in domain/application/interface: matches=0 (CGO confined to pkg/infrastructure/fetchers.go:L15 and fetchers_test.go:L13 only)",
+        "AC-4 sandbox stub: cmd/sandbox/main.go created with stdlib-only imports (flag, fmt), zero mattn references",
+        "AC-4 grep mattn in cmd/sandbox: matches=0",
+        "AC-6 sandbox runtime CGO_ENABLED=0 go run ./cmd/sandbox -help: exit_code=0, output='stock-price sandbox — R-CGO verified'",
+        "Full test suite: go test ./pkg/... -count=1 PASS, packages=[application, domain, infrastructure, interface/http], regressions=0",
+        "Fence-A/B: N/A pre-Phase-1 (pkg/primitive/ and pkg/module/ don't exist yet — correctly noted as Phase 1 creates them); feasibility confirmed by domain/application purity above",
+        "Fence-C: CORRECT — mattn confined to pkg/infrastructure/; cmd/server/main.go imports pkg/infrastructure package (does not directly import mattn — verified as consistent with Fence-C intent)",
+        "Phase-1 gate template ACs documented in signal's phase_1_gate section — 4 ACs ready for P1-B1"
+      ],
+      "ac_gaps": "AC-5 noted as 'cannot fully verify PRE-Phase-1' for post-extraction module check — correctly deferred to P1-B1 with template ACs. This is by-design per handoff spec.",
+      "risk_flags": "None"
+    },
+    "P0-SP-6": {
+      "title": "Phase-1 task plan",
+      "verdict": "PASS",
+      "commit_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "evidence": [
+        "File on disk: docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md (34124 bytes)",
+        "Task count: 9 tasks (P1-A, P1-B1, P1-B2, P1-B3, P1-C, P1-D, P1-E, P1-F, P1-G) — confirmed via grep '^### P1-' = 9",
+        "AC count: 55 ACs — confirmed via grep AC- = 55; matches handoff requirement (40-60 ACs)",
+        "R-CGO gate baked into P1-B1: AC-5 (CGO_ENABLED=0 build), AC-6 (grep mattn exit 1), AC-7 (grep pkg/infrastructure exit 1), AC-8 (R-CGO-GATE verdict: CLEAR or BLOCKED = BLOCKER); AC-8 is a hard gate that blocks advance to P1-B2",
+        "G12 streak: P1-B1 (streak #1), P1-B2 (streak #2), P1-B3 (streak #3) — confirmed in architect signal + commit message",
+        "Critical path documented: P1-A → P1-B1 [R-CGO gate] → P1-B2 → P1-B3 → P1-C → P1-D → P1-E → P1-F → P1-G",
+        "WIP policy: WIP=1 sequential throughout",
+        "Exit criteria documented: 4 gates (time-to-first-primitive ≤4h, sandbox all-green, dashboard ≥90%, G12 streak 3/3)",
+        "7 OQs resolved (OQ-1 primitives, OQ-2 G5a scope, OQ-3 G5b HTTP already wired, OQ-4 dashboard panels, OQ-5 scenario fixtures, OQ-6 exchange-code-router deferred, OQ-7 existing go.mod sufficient)",
+        "Architect completion signal p0sp1-p0sp6-done confirms: task_count=9, ac_count=55, r_cgo_gate_baked=YES, exit_criteria_documented=YES, critical_path_documented=YES, open_questions_resolved=7"
+      ],
+      "ac_gaps": "None",
+      "risk_flags": "None"
+    }
+  },
+
+  "anchor_verification": {
+    "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+    "sha_format_valid": true,
+    "sha_hex_length": 40,
+    "is_ancestor_of_HEAD": true,
+    "command_used": "git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD",
+    "tags_pointing_at_anchor": 0,
+    "anchor_frozen": true,
+    "freeze_discipline_check": "No tags, no retag, no rewrite evidence found. Commit message intact (docs/architect/P0-SP-1+P0-SP-6). Anchor is in linear commit history between debba8ea and df7d3d7a (PM close commit)."
+  },
+
+  "ssot_invariants": {
+    "decisionMatrix_present_but_empty": true,
+    "decisionMatrix_speed": "TBD",
+    "decisionMatrix_trust": "TBD",
+    "decisionMatrix_scale": "TBD",
+    "decisionMatrix_verdict": "TBD",
+    "decisionMatrix_populatedAt": null,
+    "decisionMatrix_populatedBy": null,
+    "charter_section_4_5_compliant": true,
+    "note": "decisionMatrix block is present-but-empty per charter §4.5 — populated ONLY after 12/12 G-goals reach terminal grade in atomic PO commit. Correct state for Phase 1 entry."
+  },
+
+  "no_code_in_pkg_yet": {
+    "pkg_primitive_exists": false,
+    "pkg_module_exists": false,
+    "note": "Verified via P0-SP-5 signal (Fence-A/B = N/A pre-Phase-1). pkg/primitive/ and pkg/module/ do not exist yet — Phase 1 creates them. Phase 0 exit gate condition satisfied."
+  },
+
+  "overall_verdict": "GATE-PASS",
+  "gate_pass_rationale": "All 6 Phase-0 deliverables verified PASS against their acceptance criteria. Anchor frozen (no tags, confirmed ancestor). SSOT decisionMatrix correctly empty. No code in pkg/primitive or pkg/module yet. Technical-completeness check is clean.",
+
+  "per_deliverable_summary": [
+    {"id": "P0-SP-1", "title": "Brownfield inventory", "verdict": "PASS", "commit": "debba8ea"},
+    {"id": "P0-SP-2", "title": "Bug-inventory baseline entry", "verdict": "PASS", "commit": "32d77e60", "baselineCycleCount": 1.5},
+    {"id": "P0-SP-3", "title": "Agent-flow baking (G12 DoD + CGO fences)", "verdict": "PASS", "commit": "4a04bb96"},
+    {"id": "P0-SP-4", "title": "Anchor commit + SSOT update", "verdict": "PASS", "commit": "df7d3d7a"},
+    {"id": "P0-SP-5", "title": "R-CGO gate: verdict CLEAR", "verdict": "PASS", "commit": "e9da9a7c"},
+    {"id": "P0-SP-6", "title": "Phase-1 task plan (9 tasks, 55 ACs)", "verdict": "PASS", "commit": "debba8ea"}
+  ],
+
+  "ready_for_po_review": true,
+  "po_gate_note": "All 6 deliverables technically complete and verified. PO holds gate-open authority and ratifies independently. No architect blocker stands in the way of Phase 1 dispatch.",
+
+  "caveats": [
+    "P0-SP-2: handoff template used key 'stock_price' but actual JSON key is 'stock_price_baseline' — naming is consistent with the charter convention; not a schema error.",
+    "P0-SP-5 AC-5 (post-extraction module check): correctly deferred to P1-B1 per handoff spec; Phase 1 R-CGO gate template ACs are ready.",
+    "The P0-SP-3 commit is referenced as both 83770aa1 (PM notebook) and 4a04bb96 (flow baking commit per PM P0-SP-4 signal). Both are valid ancestors of HEAD. The flow/agent content is confirmed correct on disk regardless of which commit carries which file."
+  ]
+}
