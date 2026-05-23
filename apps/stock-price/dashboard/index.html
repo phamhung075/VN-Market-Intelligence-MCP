@@ -583,6 +583,238 @@ footer {
 }
 
 .rerun-btn:hover { background: #334155; }
+
+/* ── Rerun panel (P1-E: edit-rerun handler) ─────────────────────────────── */
+/* G7 trust contract: file:// safe — zero fetch, zero CDN, zero server.      */
+/* User edits scenario JSON on disk, runs the command below, pastes output.  */
+/* Dashboard parses NDJSON lines and updates in-memory status + re-renders.  */
+
+.rerun-panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rerun-panel-overlay.open { display: flex; }
+
+.rerun-panel {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 860px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.22);
+}
+
+.rerun-panel-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #0f172a;
+  border-radius: 12px 12px 0 0;
+}
+
+.rerun-panel-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 2px;
+}
+
+.rerun-panel-header .rerun-subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.rerun-panel-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #94a3b8;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.rerun-panel-close:hover { color: #f8fafc; }
+
+.rerun-panel-body { padding: 20px; }
+
+.rerun-step {
+  margin-bottom: 20px;
+}
+
+.rerun-step-num {
+  display: inline-block;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 99px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.rerun-step-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+
+.rerun-step p {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.rerun-cmd-block {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+}
+
+.rerun-cmd-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: #7dd3fc;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.rerun-cmd-env {
+  color: #fde68a;
+}
+
+.rerun-cmd-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  background: #1e3a5f;
+  color: #93c5fd;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-cmd-copy-btn:hover { background: #2563eb; color: #fff; }
+
+.rerun-cgo-badge {
+  display: inline-block;
+  background: #d4f7e0;
+  border: 1px solid #2da05a;
+  color: #1a7f3c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 8px;
+  letter-spacing: 0.04em;
+  margin-left: 8px;
+}
+
+.rerun-output-area {
+  width: 100%;
+  min-height: 140px;
+  max-height: 260px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  background: #1e293b;
+  color: #94d68a;
+  border: 1.5px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.rerun-output-area::placeholder { color: #475569; }
+
+.rerun-apply-btn {
+  background: #1a7f3c;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  margin-right: 10px;
+}
+
+.rerun-apply-btn:hover { background: #166534; }
+
+.rerun-reset-btn {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-reset-btn:hover { background: #e2e8f0; }
+
+.rerun-result-msg {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-top: 12px;
+  display: none;
+}
+
+.rerun-result-msg.success { background: var(--green-bg); color: var(--green); display: block; }
+.rerun-result-msg.error   { background: var(--red-bg);   color: var(--red);   display: block; }
+
+.rerun-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.rerun-env-note {
+  font-size: 0.74rem;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  line-height: 1.6;
+}
+
+.rerun-env-note code {
+  font-family: 'Courier New', monospace;
+  background: #e2e8f0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+}
   </style>
 </head>
 <body>
@@ -591,14 +823,15 @@ footer {
   <h1>stock-price &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-D &nbsp;|&nbsp; Pilot: stock-price &nbsp;|&nbsp; Language: Go (go1.22+cgo)
+    P1-D + P1-E &nbsp;|&nbsp; Pilot: stock-price &nbsp;|&nbsp; Language: Go (go1.22+cgo)
   </p>
   <p class="meta">
-    Goals: G6 (dashboard renders) &bull; G8 (honest red/NOT-RUN) &bull; G9 (trust contract) &bull; G12 (green before done)
+    Goals: G6 (dashboard renders) &bull; G7 (edit-rerun, zero creds) &bull; G8 (honest red/NOT-RUN) &bull; G9 (trust contract) &bull; G12 (green before done)
     &nbsp;&bull;&nbsp;
     9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
     Service ports: internal&nbsp;5000 / external&nbsp;5010 (per <code>docs/data/system-map.json</code>).
+    Click <strong>Edit &amp; Rerun</strong> on any scenario to invoke the sandbox and update results live.
   </p>
 </header>
 
@@ -678,11 +911,14 @@ footer {
 </div>
 
 <footer>
-  P1-D &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: stock-price &bull;
+  P1-D + P1-E &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: stock-price &bull;
   Ports: internal 5000 / external 5010 (source: docs/data/system-map.json) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
+  G7 trust contract: edit scenario JSON &rarr; run <code>CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all</code> &rarr; paste output &rarr; dashboard updates &bull;
   G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green &bull;
-  Next: P1-E edit-rerun handler (<code>CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -scenario=all</code>)
+  AC-2 (R-CGO): <code>CGO_ENABLED=0</code> is set explicitly before <code>go run</code> &bull;
+  AC-3 (env audit): zero DB creds / API keys / tokens in sandbox process &bull;
+  Next: P1-G (QA close-gate)
 </footer>
 
 <!-- ============================================================ MODAL -->
@@ -720,6 +956,113 @@ footer {
     </div>
   </div>
 </div>
+
+<!-- ============================================================ RERUN PANEL (P1-E) -->
+<!-- G7 trust contract: edit scenario JSON on disk, run the sandbox command,     -->
+<!-- paste NDJSON output here — dashboard parses and updates status in real time. -->
+<!-- AC-2: CGO_ENABLED=0 is shown explicitly in the command block below.          -->
+<!-- Security (AC-3 / G7): zero DB credentials, zero API keys, zero tokens.      -->
+<!-- file:// safe: no fetch(), no WebSocket, no server — pure clipboard + paste.  -->
+<div class="rerun-panel-overlay" id="rerun-panel-overlay" role="dialog" aria-modal="true" aria-labelledby="rerun-panel-title">
+  <div class="rerun-panel">
+    <div class="rerun-panel-header">
+      <div>
+        <h3 id="rerun-panel-title">Edit &amp; Rerun Scenarios</h3>
+        <span class="rerun-subtitle">G7 Trust Contract &mdash; Live documentation, not a static screenshot &bull; P1-E</span>
+      </div>
+      <button class="rerun-panel-close" id="rerun-panel-close-btn" aria-label="Close rerun panel">&times;</button>
+    </div>
+    <div class="rerun-panel-body">
+
+      <!-- Step 1: Edit scenario JSON -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">1</span>Edit scenario JSON file on disk
+        </div>
+        <p>
+          Open any scenario file and change a field. Example: edit
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">docs/scenarios/stock-price/primitives/price-quote-normalizer-golden.json</code>
+          and change <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">rawPrice</code> from <strong>85000</strong> to <strong>70000</strong>
+          (and <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">expectedOutput.price</code> to <strong>70000</strong>).
+          Save the file. No reload needed until Step 4.
+        </p>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 2: Run sandbox command -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">2</span>Run sandbox command
+          <span class="rerun-cgo-badge">CGO_ENABLED=0</span>
+        </div>
+        <p>
+          Copy and run this command from the repo root. The <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">CGO_ENABLED=0</code>
+          flag is set explicitly before the <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">go run</code> invocation
+          (AC-2 / R-CGO gate). The sandbox has zero DB access, zero network calls, zero API keys (AC-3 / G7 security contract).
+        </p>
+        <!-- AC-2 evidence: command with explicit CGO_ENABLED=0 before go run -->
+        <div class="rerun-cmd-block">
+          <pre class="rerun-cmd-text"><span class="rerun-cmd-env">CGO_ENABLED=0</span> go run ./cmd/sandbox \
+  -tier=all \
+  -module=stock-price \
+  -scenario=all</pre>
+          <button class="rerun-cmd-copy-btn" id="rerun-copy-primitive-btn" type="button">Copy</button>
+        </div>
+        <p style="margin-top:8px;font-size:0.74rem;color:#64748b;">
+          Or run per-tier: &nbsp;
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 4px;border-radius:3px;font-size:0.7rem;">CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=stock-price -scenario=all</code>
+          &nbsp; then &nbsp;
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 4px;border-radius:3px;font-size:0.7rem;">CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=stock-price -scenario=all</code>
+        </p>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 3: Env audit note -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">3</span>Zero-credentials audit (AC-3 / G7 gate)
+        </div>
+        <div class="rerun-env-note">
+          Before running, confirm the sandbox process has zero forbidden credentials in its environment:<br>
+          <code>env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"</code>
+          &mdash; must return <strong>empty</strong> (exit code 1, zero matches).<br>
+          The sandbox reads only scenario JSON fixtures under
+          <code>docs/scenarios/stock-price/</code> &mdash; zero production DB, zero network, zero API keys.
+        </div>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 4: Paste output and apply -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">4</span>Paste sandbox output and apply results
+        </div>
+        <p>
+          Paste the full NDJSON output from the sandbox command (each line is a JSON log entry or the summary line).
+          Click <strong>Apply Results</strong> to update scenario status cards live.
+        </p>
+        <textarea
+          id="rerun-output-textarea"
+          class="rerun-output-area"
+          placeholder='Paste sandbox output here. Example:
+{"time":"...","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-golden.json"}
+{"time":"...","level":"INFO","msg":"FAIL","scenario":"price-staleness-classifier-edge.json"}
+total=9 pass=8 fail=1 status=FAIL'
+          aria-label="Sandbox output to paste"
+        ></textarea>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+          <button class="rerun-apply-btn" id="rerun-apply-btn" type="button">Apply Results</button>
+          <button class="rerun-reset-btn" id="rerun-reset-btn" type="button">Reset to NOT-RUN</button>
+        </div>
+        <div class="rerun-result-msg" id="rerun-result-msg"></div>
+      </div>
+
+    </div><!-- .rerun-panel-body -->
+  </div><!-- .rerun-panel -->
+</div><!-- .rerun-panel-overlay -->
 
 <!-- ============================================================ EMBEDDED SCENARIO DATA -->
 <!-- All 9 primitive scenarios from docs/scenarios/stock-price/primitives/ -->
@@ -1266,15 +1609,229 @@ window.__MODULE_DATA__ = [
     }
 
     if (e.target.id === 'rerun-btn') {
-      /* P1-E placeholder: edit-rerun handler added in next task */
-      alert('Edit-rerun handler: P1-E deliverable.\nTo run manually:\n\ncd apps/stock-price\nCGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all');
+      openRerunPanel();
+      return;
+    }
+
+    /* Rerun panel close */
+    if (e.target.id === 'rerun-panel-close-btn' || e.target.id === 'rerun-panel-overlay') {
+      closeRerunPanel();
+      return;
+    }
+
+    /* Copy command button */
+    if (e.target.id === 'rerun-copy-primitive-btn') {
+      var cmd = 'CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(function() {
+          e.target.textContent = 'Copied!';
+          setTimeout(function() { e.target.textContent = 'Copy'; }, 1800);
+        }).catch(function() {
+          e.target.textContent = 'Copy failed';
+          setTimeout(function() { e.target.textContent = 'Copy'; }, 2000);
+        });
+      } else {
+        /* Fallback for file:// origins that may block clipboard API */
+        var ta = document.createElement('textarea');
+        ta.value = cmd;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); e.target.textContent = 'Copied!'; }
+        catch(ex) { e.target.textContent = 'Select + Ctrl-C'; }
+        document.body.removeChild(ta);
+        setTimeout(function() { e.target.textContent = 'Copy'; }, 1800);
+      }
+      return;
+    }
+
+    /* Apply results button */
+    if (e.target.id === 'rerun-apply-btn') {
+      applyRerunOutput();
+      return;
+    }
+
+    /* Reset to NOT-RUN */
+    if (e.target.id === 'rerun-reset-btn') {
+      resetAllToNotRun();
       return;
     }
   });
 
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+      /* Rerun panel takes priority if open */
+      var rerunOverlay = document.getElementById('rerun-panel-overlay');
+      if (rerunOverlay && rerunOverlay.classList.contains('open')) {
+        closeRerunPanel();
+        return;
+      }
+      closeModal();
+    }
   });
+
+  /* ── Rerun panel (P1-E: edit-rerun handler) ────────────────────────── */
+  /* G7 trust contract implementation.                                    */
+  /* AC-1: user edits JSON, reruns sandbox, pastes output → cards update. */
+  /* AC-2: CGO_ENABLED=0 shown explicitly in command block.               */
+  /* AC-3: env audit note shown; zero creds required in sandbox process.  */
+  /* file:// safe: no fetch(), no WebSocket, no external requests.        */
+
+  function openRerunPanel() {
+    var overlay = document.getElementById('rerun-panel-overlay');
+    if (overlay) overlay.classList.add('open');
+    /* Clear previous result message */
+    var msg = document.getElementById('rerun-result-msg');
+    if (msg) { msg.className = 'rerun-result-msg'; msg.textContent = ''; }
+  }
+
+  function closeRerunPanel() {
+    var overlay = document.getElementById('rerun-panel-overlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  /**
+   * parseRerunOutput parses the NDJSON output from the sandbox runner.
+   *
+   * The sandbox emits lines like:
+   *   {"time":"...","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-golden.json"}
+   *   {"time":"...","level":"INFO","msg":"FAIL","scenario":"price-staleness-classifier-edge.json"}
+   *   total=9 pass=8 fail=1 status=FAIL
+   *
+   * Returns: { updates: [{name, status}], summary: {total, pass, fail, status} }
+   */
+  function parseRerunOutput(raw) {
+    var lines = raw.split('\n');
+    var updates = [];
+    var summary = null;
+
+    lines.forEach(function(line) {
+      line = line.trim();
+      if (!line) return;
+
+      /* Try to parse summary line: total=N pass=N fail=N status=X */
+      var sumMatch = line.match(/^total=(\d+)\s+pass=(\d+)\s+fail=(\d+)\s+status=(\S+)/);
+      if (sumMatch) {
+        summary = {
+          total:  parseInt(sumMatch[1], 10),
+          pass:   parseInt(sumMatch[2], 10),
+          fail:   parseInt(sumMatch[3], 10),
+          status: sumMatch[4]
+        };
+        return;
+      }
+
+      /* Try to parse JSON log line */
+      if (line.charAt(0) === '{') {
+        try {
+          var obj = JSON.parse(line);
+          var msg  = (obj.msg || '').toUpperCase();
+          var name = obj.scenario || '';
+          if (name && (msg === 'PASS' || msg === 'FAIL')) {
+            updates.push({ name: name, status: msg === 'PASS' ? 'pass' : 'fail' });
+          }
+        } catch(_) { /* skip malformed lines */ }
+      }
+    });
+
+    return { updates: updates, summary: summary };
+  }
+
+  /**
+   * applyRerunOutput reads the textarea, parses sandbox NDJSON output,
+   * and updates the in-memory scenario data + re-renders all panels.
+   * AC-1 implementation: dashboard card updates after user pastes output.
+   */
+  function applyRerunOutput() {
+    var ta  = document.getElementById('rerun-output-textarea');
+    var msg = document.getElementById('rerun-result-msg');
+    if (!ta || !msg) return;
+
+    var raw = ta.value.trim();
+    if (!raw) {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'No output pasted. Run the sandbox command and paste the output above.';
+      return;
+    }
+
+    var result = parseRerunOutput(raw);
+    if (result.updates.length === 0 && !result.summary) {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'Could not parse sandbox output. Paste the raw NDJSON lines from the terminal.';
+      return;
+    }
+
+    /* Apply status updates to in-memory data arrays.
+       The sandbox emits the bare filename (e.g. "price-quote-normalizer-golden.json").
+       We match against sc.scenario + ".json" OR the filename directly. */
+    var applied = 0;
+    result.updates.forEach(function(upd) {
+      var baseName = upd.name.replace(/\.json$/, '');
+
+      /* Search primitives */
+      (window.__PRIMITIVES_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+
+      /* Search modules */
+      (window.__MODULE_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+    });
+
+    /* Re-render all panels with updated status */
+    buildPrimitivesPanel();
+    buildModulePanel();
+    /* Service panel does not have scenario statuses — skip rebuild */
+
+    /* Report result */
+    var allGreen = (result.summary && result.summary.fail === 0) ||
+                   (!result.summary && result.updates.every(function(u){ return u.status === 'pass'; }));
+
+    if (allGreen && applied > 0) {
+      var passCount = result.summary ? result.summary.pass : result.updates.filter(function(u){ return u.status === 'pass'; }).length;
+      msg.className = 'rerun-result-msg success';
+      msg.textContent = 'Applied ' + applied + ' scenario update(s). ' +
+        (result.summary
+          ? 'total=' + result.summary.total + ' pass=' + result.summary.pass + ' fail=' + result.summary.fail + ' status=' + result.summary.status
+          : passCount + ' passed') +
+        ' — All GREEN (G12 DoD gate satisfied).';
+    } else if (applied > 0) {
+      var failCount = result.summary ? result.summary.fail : result.updates.filter(function(u){ return u.status === 'fail'; }).length;
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'Applied ' + applied + ' scenario update(s). ' + failCount + ' scenario(s) FAILED. ' +
+        (result.summary ? 'status=' + result.summary.status : '') +
+        ' — Dashboard shows honest RED (G8 contract).';
+    } else {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'No matching scenarios found in pasted output. Check scenario names match the JSON file names.';
+    }
+  }
+
+  /**
+   * resetAllToNotRun resets every scenario in both data arrays to "not-run"
+   * and re-renders the panels. Satisfies G8 honest-NOT-RUN cold-start contract.
+   */
+  function resetAllToNotRun() {
+    (window.__PRIMITIVES_DATA__ || []).forEach(function(sc) { sc.status = 'not-run'; });
+    (window.__MODULE_DATA__ || []).forEach(function(sc) { sc.status = 'not-run'; });
+    buildPrimitivesPanel();
+    buildModulePanel();
+    var msg = document.getElementById('rerun-result-msg');
+    if (msg) {
+      msg.className = 'rerun-result-msg';
+      msg.textContent = '';
+    }
+    var ta = document.getElementById('rerun-output-textarea');
+    if (ta) ta.value = '';
+  }
 
   /* ── Bootstrap ──────────────────────────────────────────────────────── */
 
