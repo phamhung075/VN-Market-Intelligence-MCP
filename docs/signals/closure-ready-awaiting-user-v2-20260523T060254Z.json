@@ -1,0 +1,63 @@
+{
+  "signal": "closure-ready-awaiting-user",
+  "revision": "v2 (post-public-flip)",
+  "brief": "docs/architecture-briefs/2026-05-22-refactor",
+  "anchor": "62edbf3d",
+  "head_at_v1": "a2f0cf9c",
+  "phase2_status": "OPEN",
+  "g_goals_terminal_count": 10,
+  "terminal_yes": ["G1", "G2", "G3", "G6", "G7", "G8", "G10", "G11", "G12"],
+  "user_action_landed_since_v1": {
+    "action": "github.com repo visibility flipped public",
+    "verified_by": "gh repo view --json visibility,isPrivate returned visibility=PUBLIC isPrivate=false",
+    "consequence": "GitHub Actions free-tier quota constraint lifted (public repos = unlimited free Actions minutes)",
+    "ci_rerun_dispatched": "gh run rerun 26319980090 --failed (exit 0)",
+    "ci_post_rerun_state": "status=in_progress (no longer billing-blocked); go-lint job exited 3 on first job (real lint errors, not infra)",
+    "user_directive": "skip ci result polling — user will verify CI green via dashboard async (same pattern as G9 dashboard verbal-async reply)"
+  },
+  "remaining_blockers": {
+    "G4": {
+      "status": "IN-PROGRESS",
+      "blocker_change": "billing-block REMOVED; now blocked on actual CI green (lint+test pass)",
+      "owner": "user (verifies via dashboard) → then dev/qa fixes any real lint/test errors found",
+      "user_verification_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/26319980090",
+      "expected_outcome_paths": [
+        "(a) CI green → flip G4=YES → chain P2-A3 unblocks",
+        "(b) CI red on real code errors → dispatch dev (Go zone) to fix golangci-lint findings → re-rerun → recurse to (a)"
+      ]
+    },
+    "G5": {
+      "status": "TBD",
+      "blocked_by": "G4 (deletion chain blocks on architecture fence proven green)",
+      "owner": "transitively user (via G4)"
+    },
+    "G9": {
+      "status": "IN-PROGRESS",
+      "blocked_by": "user verbal-async dashboard verification reply",
+      "owner": "user",
+      "short_circuit": "user opens dashboard via PO-prepared link, replies YES/NO via Telegram WORK channel or signal file"
+    }
+  },
+  "phase2_tasks_remaining": {
+    "P2-A3": "DISPATCHED (qa fresh dispatch ready, blocked on CI-green-confirmation)",
+    "P2-A4": "PENDING (blocked by P2-A3)",
+    "P2-B2": "PENDING (blocked by P2-A3 green per architect order)",
+    "P2-B3": "PENDING (blocked by P2-B2)",
+    "P2-B4": "PENDING (blocked by P2-B3)"
+  },
+  "decision_matrix": {
+    "speed": "TBD (eligibility: G6+G11 both YES already)",
+    "trust": "TBD (eligibility: G8+G9+G10 all YES required — BLOCKED on G9)",
+    "scale": "TBD (eligibility: G4+G5+G12 all YES required — BLOCKED on G4+G5)",
+    "section_4_5_binding": "decisionMatrix population requires ALL 12 G-goals terminal first; PO MUST NOT populate before"
+  },
+  "user_action_required": [
+    "1. Verify CI run 26319980090 on dashboard. If green → reply 'ci green' (unblocks G4+G5 chain). If red → reply with failure summary so dev-team can fix.",
+    "2. Verify G9 dashboard and reply YES/NO via Telegram WORK or signal file (unblocks G9).",
+    "3. (optional, removes Terminal.app workaround dependency) Restore macOS TCC Documents access for Claude Code."
+  ],
+  "po_next_action": "HOLD — user dashboard-async-verifying CI run; G9 still awaiting user reply. No further autonomous progress possible until either confirmation lands.",
+  "lessons_promoted_this_cycle": [
+    "docs/lessons/L87-tcc-asymmetric-recovery.md (Terminal.app-as-IO-executor pattern for TCC-revoked Claude sessions)"
+  ]
+}

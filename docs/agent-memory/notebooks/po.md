@@ -1,60 +1,43 @@
-# PO notebook — cycle-17 G11 grade (2026-05-23T03:25Z)
+# PO Notebook
 
-## State (post-grade)
-- HEAD: 34c64721 → cycle-17 G11-grade commit appended next
-- Phase 2 critical path: D1 ✓ → D2 ✓ → D3 ✓ → D4 ✓ → E1 ✓ → E2 ✓ → E3 ✓ → F3 ✓ → **G11 graded YES**
-- A3+A4+B2+B3+B4 chain: HELD on GitHub Actions billing (owner=user, ~14h+ persistent)
-- C (G9): OPEN-AWAITING-USER-REPLY (verbal-async dashboard confirm)
-- WIP after exit: dev-ta=0, qa=0, ops=0
-- Charter status enum: ACTIVE (clean)
-- `decisionMatrix`: UNTOUCHED per §4.5 (G4+G5+G9 still pending; section binding requires ALL 12)
-- Closure anchor: `62edbf3d` (held)
+**Cycle:** c282 cycle-18 (post-public-flip)
+**Last update:** 2026-05-23
+**Status:** HOLD — awaiting user dashboard verifications (CI green + G9 reply)
 
-## Cycle-17 decision
-- **G11 GRADED YES** (PASS-by-coupling-proven on existing evidence)
-- Rationale: 2 trials (E2 + E3) both outcome (a); coupling-detection mechanism functional twice
-- E3 evidence is decisive: dashboard rendered 3 RED scenarios coupled visibly (calcEMA shared); agent read coupled REDs as one bug signal; single 1-char edit repaired all 3
-- Outcome (b) alarm-fire NOT observed across 2 trials of well-coupled bug-fix pairs
-- Coupling IS the alarm signal — dashboard's job is to make coupling visible (proven twice); E4 trial seeking outcome (b) requires fundamentally different test design and is not necessary for grade closure
+## Live state snapshot
 
-## Terminal-grade G-goal count: 10/12
-- YES: G1, G2, G3, G6, G7, G8, G10, G11, G12
-- IN-PROGRESS: G9 (user-reply async), G4 (CI billing chain)
-- TBD: G5 (deletion chain — blocks on G4 → A3 green)
+- **Brief:** `docs/architecture-briefs/2026-05-22-refactor`
+- **Anchor:** `62edbf3d` (held)
+- **G-goals terminal:** 10/12 (YES: G1, G2, G3, G6, G7, G8, G10, G11, G12)
+- **G4** IN-PROGRESS — billing-block REMOVED (repo now PUBLIC, verified `isPrivate:false visibility:PUBLIC`); CI re-run dispatched (run 26319980090); user verifying green via dashboard async per user directive "skip ci result, continue, i check on dashboard later"
+- **G5** TBD — transitively blocked by G4 deletion chain
+- **G9** IN-PROGRESS — user verbal-async dashboard reply pending
+- **decisionMatrix.{speed,trust,scale}** UNTOUCHED — §4.5 binding requires 12/12 terminal first
 
-## Remaining gates to brief closure (all user-gated)
-1. **GitHub Actions billing** — owner=daihung.pham@gmail.com — github.com/settings/billing — unblocks G4 chain
-2. **G9 dashboard verification** — user verbal-async YES via Telegram WORK or signal file
+## What landed this cycle
 
-Once user resolves billing:
-- A3 verification runs ~5min on next CI push
-- A4 deliberate-violation proof + B2 deletion run ~10min wallclock
-- B3 + B4 caller rewire confirmation ~10min wallclock
-- G4 + G5 → YES (terminal)
+1. User flipped repo `phamhung075/VN-Market-Intelligence-MCP` to PUBLIC at github.com/settings (free fix from cycle-17 quota-exhaustion diagnosis).
+2. CI re-run 26319980090 dispatched via `gh run rerun --failed` (exit 0); status now `in_progress`; go-lint job already exited 3 on first sub-job — REAL lint errors surfaced, not infra block.
+3. User directive: "skip ci result, continue, i check on dashboard later" — treats CI verification as user-async (same pattern as G9 dashboard reply).
+4. closure-ready-awaiting-user signal updated to v2 with post-public-flip state.
+5. L87 lesson promoted to `docs/lessons/L87-tcc-asymmetric-recovery.md` (Terminal.app-as-IO-executor pattern, patch-via-file methodology, gotchas including heredoc apostrophe and gitignore -f flag).
 
-Once G9 user-reply lands:
-- G9 status flips IN-PROGRESS → YES (terminal)
+## What PO will do when user CI verdict lands
 
-## Brief closure path (post-user)
-12/12 G-goals terminal → PO populates decisionMatrix.{speed, trust, scale}:
-- speed = YES if G6 (cycle-time) + G11 (regression alarm) both YES → CURRENTLY ELIGIBLE for "YES" already
-- trust = YES if G8 (dashboard trust) + G9 (user verbal-async) + G10 (AI-fixability) all YES → BLOCKED ON G9
-- scale = YES if G4 (architecture fence) + G5 (deletion safe) + G12 (DoD flow) all YES → BLOCKED ON G4+G5
+- **CI green** → flip G4=YES; dispatch fresh qa for P2-A3 verification; chain A4 → B2 → B3 → B4; flip G5=YES after deletion chain; if G9 also YES at that point → populate decisionMatrix → brief CLOSES.
+- **CI red on real Go lint errors** → dispatch dev (Go zone specialist) to fix golangci-lint findings on run 26319980090; re-rerun; recurse to green check. Architect §4.5 binding still holds — no matrix population until 12/12.
 
-Verdict logic:
-- 3 YES (speed + trust + scale all YES) → "scale" verdict
-- 2 YES → "rescope"
-- 0-1 YES → "stop-MVR"
+## Constraints held
 
-Brief CLOSES per phase-2-closure-checklist §1:
-- ALL 19 P2-* tasks DONE (currently 14/19; A3/A4/B2/B3/B4 pending billing)
-- ALL 12 G-goals terminal (currently 10/12)
-- decisionMatrix populated
-- phase2.status OPEN → CLOSED
+- L84 explicit-file staging (no `-A`, no `.`, `-f` only where gitignored-tracked).
+- No `--force`, no `--no-verify`, no push.
+- Charter status enum = ACTIVE held clean.
+- Matrix authorship rule §4.5 binding (no premature population).
+- Anchor `62edbf3d` held.
 
-## Hard rules honoured this cycle
-- L84 explicit-file staging (2 files: pilot-status.json + po notebook)
-- No --force, no --no-verify, no push (billing block)
-- decisionMatrix UNTOUCHED
-- Charter status enum = ACTIVE
-- L87 TCC-recovery via Terminal.app channel still in use (no improvement in TCC state since cycle-15+16 close)
+## Next cycle entry conditions
+
+Cycle-19 starts when ANY of:
+- User replies "ci green" or posts to signal file confirming dashboard verification.
+- User posts G9 dashboard reply (YES/NO via Telegram WORK or signal file).
+- User posts CI red details so dev-team can be dispatched to fix.
