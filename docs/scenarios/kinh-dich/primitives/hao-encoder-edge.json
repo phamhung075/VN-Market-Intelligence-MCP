@@ -1,0 +1,18 @@
+{
+  "primitive": "hao-encoder",
+  "tier": "primitive",
+  "name": "hao-encoder-edge",
+  "description": "Boundary conditions: scores at exact thresholds (0.75 → THIEU_DUONG exclusive upper, 0.10 → THIEU_DUONG inclusive, -0.75 → THIEU_AM exclusive lower)",
+  "input": {
+    "method": "encodeHaos",
+    "scores": [0.75, 0.10, -0.75, 0.0, 0.76, -0.76]
+  },
+  "expected": {
+    "length": 6,
+    "states": ["THIEU_DUONG", "THIEU_DUONG", "THIEU_AM", "THIEU_AM", "LAO_DUONG", "LAO_AM"],
+    "binaries": [1, 1, 0, 0, 1, 0],
+    "all_have_boolean_is_changing": true,
+    "all_have_non_empty_states": true
+  },
+  "notes": "Scores at threshold boundaries. 0.75 is NOT > 0.75 so THIEU_DUONG. 0.10 >= 0.10 so THIEU_DUONG. -0.75 is NOT < -0.75 so THIEU_AM. 0.76 > 0.75 so LAO_DUONG. -0.76 < -0.75 so LAO_AM."
+}

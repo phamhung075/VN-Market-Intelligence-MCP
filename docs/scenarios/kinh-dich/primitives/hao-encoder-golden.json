@@ -1,0 +1,17 @@
+{
+  "primitive": "hao-encoder",
+  "tier": "primitive",
+  "name": "hao-encoder-golden",
+  "description": "Happy path: typical scores mapping across all four states",
+  "input": {
+    "method": "encodeHaos",
+    "scores": [0.8, 0.4, -0.8, 0.1, -0.5, 0.6]
+  },
+  "expected": {
+    "length": 6,
+    "states": ["LAO_DUONG", "THIEU_DUONG", "LAO_AM", "THIEU_DUONG", "THIEU_AM", "THIEU_DUONG"],
+    "binaries": [1, 1, 0, 1, 0, 1],
+    "all_have_labels": true
+  },
+  "notes": "Covers all four state buckets in a single call."
+}

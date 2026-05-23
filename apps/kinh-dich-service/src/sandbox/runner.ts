@@ -18,6 +18,7 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { resolveHexagram } from '../primitive/hexagram-resolver/index.js';
 import { classifyNguHanh } from '../primitive/ngu-hanh-classifier/index.js';
+import { encodeHaos } from '../primitive/hao-encoder/index.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,81 @@ function runNguHanhClassifierScenario(fileName: string, scenario: ScenarioFile):
   }
 }
 
+/**
+ * Execute a hao-encoder scenario.
+ * Dispatched when scenario.primitive === 'hao-encoder'.
+ *
+ * Reads: input.scores (number[])
+ * Optional: expected.length, expected.states (string[]), expected.binaries (number[])
+ */
+function runHaoEncoderScenario(fileName: string, scenario: ScenarioFile): ScenarioResult {
+  const input = scenario.input as Record<string, unknown>;
+  const scores = input['scores'];
+
+  if (!Array.isArray(scores)) {
+    return { file: fileName, status: 'FAIL', error: 'hao-encoder scenario missing input.scores array' };
+  }
+
+  const expectError = scenario.expect_error === true;
+  const expected = scenario.expected as Record<string, unknown> | undefined;
+
+  try {
+    const result = encodeHaos(scores as number[]);
+
+    if (expectError) {
+      return { file: fileName, status: 'FAIL', error: `Expected error but got result of length ${result.length}` };
+    }
+
+    if (expected !== undefined) {
+      const expectedLength = expected['length'] as number | undefined;
+      if (expectedLength !== undefined && result.length !== expectedLength) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `Expected result.length=${expectedLength} but got ${result.length}`,
+          output: result,
+        };
+      }
+
+      const expectedStates = expected['states'] as string[] | undefined;
+      if (Array.isArray(expectedStates)) {
+        for (let i = 0; i < expectedStates.length; i++) {
+          if (result[i]?.state !== expectedStates[i]) {
+            return {
+              file: fileName,
+              status: 'FAIL',
+              error: `result[${i}].state: expected ${expectedStates[i]} but got ${result[i]?.state}`,
+              output: result,
+            };
+          }
+        }
+      }
+
+      const expectedBinaries = expected['binaries'] as number[] | undefined;
+      if (Array.isArray(expectedBinaries)) {
+        for (let i = 0; i < expectedBinaries.length; i++) {
+          if (result[i]?.binary !== expectedBinaries[i]) {
+            return {
+              file: fileName,
+              status: 'FAIL',
+              error: `result[${i}].binary: expected ${expectedBinaries[i]} but got ${result[i]?.binary}`,
+              output: result,
+            };
+          }
+        }
+      }
+    }
+
+    return { file: fileName, status: 'PASS', output: result };
+  } catch (err) {
+    if (expectError) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { file: fileName, status: 'PASS', output: { error: errMsg } };
+    }
+    return { file: fileName, status: 'FAIL', error: `Unexpected error: ${err}` };
+  }
+}
+
 // ── Scenario execution ────────────────────────────────────────────────────────
 
 function runScenario(filePath: string): ScenarioResult {
@@ -238,6 +314,10 @@ function runScenario(filePath: string): ScenarioResult {
 
   if (scenario.primitive === 'ngu-hanh-classifier') {
     return runNguHanhClassifierScenario(fileName, scenario);
+  }
+
+  if (scenario.primitive === 'hao-encoder') {
+    return runHaoEncoderScenario(fileName, scenario);
   }
 
   // Fallback: well-formed scenario with no known primitive → structural PASS.
