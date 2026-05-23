@@ -94,3 +94,19 @@ AC: spec doc created / bug scoped to single primitive / sandbox RED detection co
 - Reference: `docs/architecture-briefs/2026-05-22-refactor/phase-2-task-plan-go.md` §P2-D1 (lines 524–566)
 - Code snippet in spec should be redacted per architect boundary (reference file/line only, not exact code)
 - Scenario detection: sandbox must show RED for at least one scenario after injection
+
+---
+
+## Verification (qa, 2026-05-23 cycle-11 R-11 redispatch)
+
+Spec file `docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md` created (125 lines, smoke-check passes >20). Variant selected: **Option A — Wilder smoothing period off-by-one**, with rationale documented in spec §Selected Variant.
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC-1 | PASS | spec file exists at the canonical path |
+| AC-2 | PASS | spec §Bug Location & Mutation Sketch (file=rsi.go, lines 55–58, mutation sketch redacted per architect boundary); §Expected Failure Signature (`rsi-golden.json` card → RED) |
+| AC-3 | PASS | spec §Expected Failure Signature, detectability claim: golden ±1-point tolerance is tighter than recursive drift introduced by off-by-one smoothing constant; first post-seed value exceeds tolerance — not silent |
+| AC-4 | PASS | spec §Cycle-Counting Protocol (7 numbered rules: cycle = dev-TA dispatch ending in commit+dashboard read; +1 per RED-exit; no partial credit; no-spec-cheat clause) |
+| AC-5 | PASS | spec §Baseline & Target table: baseline 1.5 cycles (TA-specific, from `bug-inventory.json#baselineCycleCount` averaging 1970 + 1968d), target ≤ 2 cycles (inclusive) |
+
+Prerequisites confirmed at start of task: `docs/data/bug-inventory.json` exists with `baselineCycleCount: 1.5` and ≥1 TA bug (P2-D0 gate passed); `docs/architecture-briefs/2026-05-22-refactor/p2-f-flow-rule-brief.md` exists (P2-F1 gate passed). Closure anchor: `62edbf3d`.
