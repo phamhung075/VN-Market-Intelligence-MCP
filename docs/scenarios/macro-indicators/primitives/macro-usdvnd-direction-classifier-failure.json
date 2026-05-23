@@ -1,0 +1,8 @@
+{
+  "name": "usdvnd_zero_rate_invalid_input",
+  "primitive": "macro_usdvnd_direction_classifier",
+  "input": { "rateVND": 0 },
+  "expected": null,
+  "shouldPass": false,
+  "errorType": "invalid_input"
+}

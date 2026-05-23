@@ -1,0 +1,8 @@
+{
+  "name": "oil_zero_price_invalid_input",
+  "primitive": "macro_oil_impact_classifier",
+  "input": { "priceUSD": 0 },
+  "expected": null,
+  "shouldPass": false,
+  "errorType": "invalid_input"
+}

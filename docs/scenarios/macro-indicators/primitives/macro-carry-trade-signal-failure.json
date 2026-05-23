@@ -1,0 +1,12 @@
+{
+  "name": "carry_zero_vnd_rate_invalid_input",
+  "primitive": "macro_carry_trade_signal",
+  "input": {
+    "vndDepositRate": 0,
+    "fedFundsRate": 5.33,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": null,
+  "shouldPass": false,
+  "errorType": "invalid_input"
+}

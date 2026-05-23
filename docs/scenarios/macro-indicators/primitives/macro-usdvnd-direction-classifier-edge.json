@@ -1,0 +1,10 @@
+{
+  "name": "usdvnd_neutral_stable_band",
+  "primitive": "macro_usdvnd_direction_classifier",
+  "input": { "rateVND": 24200.0 },
+  "expected": {
+    "direction": "NEUTRAL",
+    "rateVND": 24200.0
+  },
+  "shouldPass": true
+}

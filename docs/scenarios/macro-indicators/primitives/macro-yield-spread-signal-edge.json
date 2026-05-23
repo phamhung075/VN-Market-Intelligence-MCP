@@ -1,0 +1,17 @@
+{
+  "name": "yield_expensive_negative_spread",
+  "primitive": "macro_yield_spread_signal",
+  "input": {
+    "earningYield": 4.0,
+    "depositRate": 6.0,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": {
+    "label": "EXPENSIVE",
+    "spread": -2.0,
+    "earningYield": 4.0,
+    "depositRate": 6.0,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "shouldPass": true
+}

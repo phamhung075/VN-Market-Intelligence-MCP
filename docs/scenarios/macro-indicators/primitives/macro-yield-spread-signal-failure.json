@@ -1,0 +1,12 @@
+{
+  "name": "yield_zero_earning_yield_invalid_input",
+  "primitive": "macro_yield_spread_signal",
+  "input": {
+    "earningYield": 0,
+    "depositRate": 5.0,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": null,
+  "shouldPass": false,
+  "errorType": "invalid_input"
+}

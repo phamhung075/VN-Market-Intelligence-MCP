@@ -1,0 +1,17 @@
+{
+  "name": "carry_hot_money_inflow",
+  "primitive": "macro_carry_trade_signal",
+  "input": {
+    "vndDepositRate": 6.5,
+    "fedFundsRate": 3.5,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": {
+    "regime": "HOT_MONEY_INFLOW",
+    "carrySpread": 3.0,
+    "vndDepositRate": 6.5,
+    "fedFundsRate": 3.5,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "shouldPass": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "yield_cheap_strong_premium",
+  "primitive": "macro_yield_spread_signal",
+  "input": {
+    "earningYield": 8.5,
+    "depositRate": 5.0,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": {
+    "label": "CHEAP",
+    "spread": 3.5,
+    "earningYield": 8.5,
+    "depositRate": 5.0,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "shouldPass": true
+}

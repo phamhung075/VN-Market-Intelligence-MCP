@@ -1,0 +1,10 @@
+{
+  "name": "gold_bullish_safe_haven",
+  "primitive": "macro_gold_direction_classifier",
+  "input": { "priceUSD": 2350.0 },
+  "expected": {
+    "direction": "BULLISH",
+    "priceUSD": 2350.0
+  },
+  "shouldPass": true
+}

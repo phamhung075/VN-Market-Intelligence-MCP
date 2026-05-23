@@ -1,0 +1,10 @@
+{
+  "name": "usdvnd_bearish_depreciation",
+  "primitive": "macro_usdvnd_direction_classifier",
+  "input": { "rateVND": 26500.0 },
+  "expected": {
+    "direction": "BEARISH",
+    "rateVND": 26500.0
+  },
+  "shouldPass": true
+}

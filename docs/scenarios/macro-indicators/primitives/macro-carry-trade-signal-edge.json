@@ -1,0 +1,17 @@
+{
+  "name": "carry_fii_outflow_risk",
+  "primitive": "macro_carry_trade_signal",
+  "input": {
+    "vndDepositRate": 4.5,
+    "fedFundsRate": 4.2,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "expected": {
+    "regime": "FII_OUTFLOW_RISK",
+    "carrySpread": 0.3,
+    "vndDepositRate": 4.5,
+    "fedFundsRate": 4.2,
+    "computedAt": "2026-05-23T00:00:00Z"
+  },
+  "shouldPass": true
+}

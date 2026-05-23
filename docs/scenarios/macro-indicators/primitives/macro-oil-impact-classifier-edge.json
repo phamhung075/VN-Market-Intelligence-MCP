@@ -1,0 +1,10 @@
+{
+  "name": "oil_neutral_at_boundary",
+  "primitive": "macro_oil_impact_classifier",
+  "input": { "priceUSD": 80.0 },
+  "expected": {
+    "impact": "NEUTRAL",
+    "priceUSD": 80.0
+  },
+  "shouldPass": true
+}

@@ -1,0 +1,10 @@
+{
+  "name": "oil_bearish_high_price",
+  "primitive": "macro_oil_impact_classifier",
+  "input": { "priceUSD": 120.0 },
+  "expected": {
+    "impact": "BEARISH",
+    "priceUSD": 120.0
+  },
+  "shouldPass": true
+}

@@ -1,0 +1,10 @@
+{
+  "name": "gold_neutral_mid_band",
+  "primitive": "macro_gold_direction_classifier",
+  "input": { "priceUSD": 2000.0 },
+  "expected": {
+    "direction": "NEUTRAL",
+    "priceUSD": 2000.0
+  },
+  "shouldPass": true
+}

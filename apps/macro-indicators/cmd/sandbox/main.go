@@ -27,6 +27,11 @@ import (
 
 	mic "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_investment_clock"
 	ms "github.com/vn-market-intelligence/macro-indicators/pkg/module/macro_signals"
+	oil "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_oil_impact_classifier"
+	gld "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_gold_direction_classifier"
+	uvnd "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_usdvnd_direction_classifier"
+	carry "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_carry_trade_signal"
+	yld "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_yield_spread_signal"
 )
 
 // ---------------------------------------------------------------------------
@@ -128,6 +133,260 @@ func discoverScenarios(root, tier, scenarioArg string) ([]Scenario, error) {
 }
 
 // ---------------------------------------------------------------------------
+// Scenario JSON shapes — new primitives (P2-X1)
+// ---------------------------------------------------------------------------
+
+// macroOilImpactScenario is the JSON envelope for macro-oil-impact-classifier scenarios.
+type macroOilImpactScenario struct {
+	Name       string `json:"name"`
+	Primitive  string `json:"primitive"`
+	Input      oil.OilImpactInput `json:"input"`
+	Expected   *struct {
+		Impact   string  `json:"impact"`
+		PriceUSD float64 `json:"priceUSD"`
+	} `json:"expected"`
+	ShouldPass bool   `json:"shouldPass"`
+	ErrorType  string `json:"errorType"`
+}
+
+// macroGoldDirectionScenario is the JSON envelope for macro-gold-direction-classifier scenarios.
+type macroGoldDirectionScenario struct {
+	Name       string `json:"name"`
+	Primitive  string `json:"primitive"`
+	Input      gld.GoldDirectionInput `json:"input"`
+	Expected   *struct {
+		Direction string  `json:"direction"`
+		PriceUSD  float64 `json:"priceUSD"`
+	} `json:"expected"`
+	ShouldPass bool   `json:"shouldPass"`
+	ErrorType  string `json:"errorType"`
+}
+
+// macroUsdVndDirectionScenario is the JSON envelope for macro-usdvnd-direction-classifier scenarios.
+type macroUsdVndDirectionScenario struct {
+	Name       string `json:"name"`
+	Primitive  string `json:"primitive"`
+	Input      uvnd.UsdVndDirectionInput `json:"input"`
+	Expected   *struct {
+		Direction string  `json:"direction"`
+		RateVND   float64 `json:"rateVND"`
+	} `json:"expected"`
+	ShouldPass bool   `json:"shouldPass"`
+	ErrorType  string `json:"errorType"`
+}
+
+// macroCarryTradeScenario is the JSON envelope for macro-carry-trade-signal scenarios.
+type macroCarryTradeScenario struct {
+	Name       string `json:"name"`
+	Primitive  string `json:"primitive"`
+	Input      carry.CarryTradeInput `json:"input"`
+	Expected   *struct {
+		Regime         string  `json:"regime"`
+		CarrySpread    float64 `json:"carrySpread"`
+		VNDDepositRate float64 `json:"vndDepositRate"`
+		FedFundsRate   float64 `json:"fedFundsRate"`
+		ComputedAt     string  `json:"computedAt"`
+	} `json:"expected"`
+	ShouldPass bool   `json:"shouldPass"`
+	ErrorType  string `json:"errorType"`
+}
+
+// macroYieldSpreadScenario is the JSON envelope for macro-yield-spread-signal scenarios.
+type macroYieldSpreadScenario struct {
+	Name       string `json:"name"`
+	Primitive  string `json:"primitive"`
+	Input      yld.YieldSpreadInput `json:"input"`
+	Expected   *struct {
+		Label        string  `json:"label"`
+		Spread       float64 `json:"spread"`
+		EarningYield float64 `json:"earningYield"`
+		DepositRate  float64 `json:"depositRate"`
+		ComputedAt   string  `json:"computedAt"`
+	} `json:"expected"`
+	ShouldPass bool   `json:"shouldPass"`
+	ErrorType  string `json:"errorType"`
+}
+
+// ---------------------------------------------------------------------------
+// Execution — macro_oil_impact_classifier (P2-X1)
+// ---------------------------------------------------------------------------
+
+func executeMacroOilImpact(data []byte) (bool, error) {
+	var s macroOilImpactScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-oil-impact-classifier scenario: %w", err)
+	}
+
+	got := oil.Classify(s.Input)
+
+	if !s.ShouldPass {
+		// Failure scenarios: verify graceful degradation (no panic).
+		return true, nil
+	}
+	if s.Expected == nil {
+		return false, fmt.Errorf("scenario %q: shouldPass=true but expected is nil", s.Name)
+	}
+
+	var diffs []string
+	if got.Impact != s.Expected.Impact {
+		diffs = append(diffs, fmt.Sprintf("Impact: got %q, want %q", got.Impact, s.Expected.Impact))
+	}
+	if got.PriceUSD != s.Expected.PriceUSD {
+		diffs = append(diffs, fmt.Sprintf("PriceUSD: got %v, want %v", got.PriceUSD, s.Expected.PriceUSD))
+	}
+	if len(diffs) > 0 {
+		return false, fmt.Errorf("scenario %q: %v", s.Name, diffs)
+	}
+	return true, nil
+}
+
+// ---------------------------------------------------------------------------
+// Execution — macro_gold_direction_classifier (P2-X1)
+// ---------------------------------------------------------------------------
+
+func executeMacroGoldDirection(data []byte) (bool, error) {
+	var s macroGoldDirectionScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-gold-direction-classifier scenario: %w", err)
+	}
+
+	got := gld.Classify(s.Input)
+
+	if !s.ShouldPass {
+		return true, nil
+	}
+	if s.Expected == nil {
+		return false, fmt.Errorf("scenario %q: shouldPass=true but expected is nil", s.Name)
+	}
+
+	var diffs []string
+	if got.Direction != s.Expected.Direction {
+		diffs = append(diffs, fmt.Sprintf("Direction: got %q, want %q", got.Direction, s.Expected.Direction))
+	}
+	if got.PriceUSD != s.Expected.PriceUSD {
+		diffs = append(diffs, fmt.Sprintf("PriceUSD: got %v, want %v", got.PriceUSD, s.Expected.PriceUSD))
+	}
+	if len(diffs) > 0 {
+		return false, fmt.Errorf("scenario %q: %v", s.Name, diffs)
+	}
+	return true, nil
+}
+
+// ---------------------------------------------------------------------------
+// Execution — macro_usdvnd_direction_classifier (P2-X1)
+// ---------------------------------------------------------------------------
+
+func executeMacroUsdVndDirection(data []byte) (bool, error) {
+	var s macroUsdVndDirectionScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-usdvnd-direction-classifier scenario: %w", err)
+	}
+
+	got := uvnd.Classify(s.Input)
+
+	if !s.ShouldPass {
+		return true, nil
+	}
+	if s.Expected == nil {
+		return false, fmt.Errorf("scenario %q: shouldPass=true but expected is nil", s.Name)
+	}
+
+	var diffs []string
+	if got.Direction != s.Expected.Direction {
+		diffs = append(diffs, fmt.Sprintf("Direction: got %q, want %q", got.Direction, s.Expected.Direction))
+	}
+	if got.RateVND != s.Expected.RateVND {
+		diffs = append(diffs, fmt.Sprintf("RateVND: got %v, want %v", got.RateVND, s.Expected.RateVND))
+	}
+	if len(diffs) > 0 {
+		return false, fmt.Errorf("scenario %q: %v", s.Name, diffs)
+	}
+	return true, nil
+}
+
+// ---------------------------------------------------------------------------
+// Execution — macro_carry_trade_signal (P2-X1)
+// ---------------------------------------------------------------------------
+
+func executeMacroCarryTrade(data []byte) (bool, error) {
+	var s macroCarryTradeScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-carry-trade-signal scenario: %w", err)
+	}
+
+	got := carry.Compute(s.Input)
+
+	if !s.ShouldPass {
+		return true, nil
+	}
+	if s.Expected == nil {
+		return false, fmt.Errorf("scenario %q: shouldPass=true but expected is nil", s.Name)
+	}
+
+	var diffs []string
+	if got.Regime != s.Expected.Regime {
+		diffs = append(diffs, fmt.Sprintf("Regime: got %q, want %q", got.Regime, s.Expected.Regime))
+	}
+	if got.CarrySpread != s.Expected.CarrySpread {
+		diffs = append(diffs, fmt.Sprintf("CarrySpread: got %v, want %v", got.CarrySpread, s.Expected.CarrySpread))
+	}
+	if got.VNDDepositRate != s.Expected.VNDDepositRate {
+		diffs = append(diffs, fmt.Sprintf("VNDDepositRate: got %v, want %v", got.VNDDepositRate, s.Expected.VNDDepositRate))
+	}
+	if got.FedFundsRate != s.Expected.FedFundsRate {
+		diffs = append(diffs, fmt.Sprintf("FedFundsRate: got %v, want %v", got.FedFundsRate, s.Expected.FedFundsRate))
+	}
+	if got.ComputedAt != s.Expected.ComputedAt {
+		diffs = append(diffs, fmt.Sprintf("ComputedAt: got %q, want %q", got.ComputedAt, s.Expected.ComputedAt))
+	}
+	if len(diffs) > 0 {
+		return false, fmt.Errorf("scenario %q: %v", s.Name, diffs)
+	}
+	return true, nil
+}
+
+// ---------------------------------------------------------------------------
+// Execution — macro_yield_spread_signal (P2-X1)
+// ---------------------------------------------------------------------------
+
+func executeMacroYieldSpread(data []byte) (bool, error) {
+	var s macroYieldSpreadScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-yield-spread-signal scenario: %w", err)
+	}
+
+	got := yld.Compute(s.Input)
+
+	if !s.ShouldPass {
+		return true, nil
+	}
+	if s.Expected == nil {
+		return false, fmt.Errorf("scenario %q: shouldPass=true but expected is nil", s.Name)
+	}
+
+	var diffs []string
+	if got.Label != s.Expected.Label {
+		diffs = append(diffs, fmt.Sprintf("Label: got %q, want %q", got.Label, s.Expected.Label))
+	}
+	if got.Spread != s.Expected.Spread {
+		diffs = append(diffs, fmt.Sprintf("Spread: got %v, want %v", got.Spread, s.Expected.Spread))
+	}
+	if got.EarningYield != s.Expected.EarningYield {
+		diffs = append(diffs, fmt.Sprintf("EarningYield: got %v, want %v", got.EarningYield, s.Expected.EarningYield))
+	}
+	if got.DepositRate != s.Expected.DepositRate {
+		diffs = append(diffs, fmt.Sprintf("DepositRate: got %v, want %v", got.DepositRate, s.Expected.DepositRate))
+	}
+	if got.ComputedAt != s.Expected.ComputedAt {
+		diffs = append(diffs, fmt.Sprintf("ComputedAt: got %q, want %q", got.ComputedAt, s.Expected.ComputedAt))
+	}
+	if len(diffs) > 0 {
+		return false, fmt.Errorf("scenario %q: %v", s.Name, diffs)
+	}
+	return true, nil
+}
+
+// ---------------------------------------------------------------------------
 // Execution — macro_investment_clock (P1-B1)
 // ---------------------------------------------------------------------------
 
@@ -196,6 +455,16 @@ func executePrimitive(s Scenario) (bool, error) {
 	switch envelope.Primitive {
 	case "macro_investment_clock":
 		return executeMacroInvestmentClock(data)
+	case "macro_oil_impact_classifier":
+		return executeMacroOilImpact(data)
+	case "macro_gold_direction_classifier":
+		return executeMacroGoldDirection(data)
+	case "macro_usdvnd_direction_classifier":
+		return executeMacroUsdVndDirection(data)
+	case "macro_carry_trade_signal":
+		return executeMacroCarryTrade(data)
+	case "macro_yield_spread_signal":
+		return executeMacroYieldSpread(data)
 	case "":
 		// Backward-compat: infer from filename prefix.
 		if len(s.Name) >= len("macro-investment-clock") &&
@@ -204,7 +473,7 @@ func executePrimitive(s Scenario) (bool, error) {
 		}
 		return false, fmt.Errorf("scenario %q: missing 'primitive' field and cannot infer from name", s.Name)
 	default:
-		return false, fmt.Errorf("unknown primitive %q in %s (not yet wired — add handler in P1-C1+)", envelope.Primitive, s.Name)
+		return false, fmt.Errorf("unknown primitive %q in %s (not yet wired)", envelope.Primitive, s.Name)
 	}
 }
 
