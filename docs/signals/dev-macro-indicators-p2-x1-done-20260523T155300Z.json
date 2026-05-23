@@ -1,0 +1,61 @@
+{
+  "type": "dev-completion",
+  "from": "dev-macro-indicators",
+  "to": "pm",
+  "task_id": "P2-X1",
+  "timestamp": "2026-05-23T15:53:00Z",
+  "primitives_added": [
+    {
+      "name": "macro-oil-impact-classifier",
+      "go_pkg_path": "apps/macro-indicators/pkg/primitive/macro_oil_impact_classifier",
+      "scenarios_count": 3
+    },
+    {
+      "name": "macro-gold-direction-classifier",
+      "go_pkg_path": "apps/macro-indicators/pkg/primitive/macro_gold_direction_classifier",
+      "scenarios_count": 3
+    },
+    {
+      "name": "macro-usdvnd-direction-classifier",
+      "go_pkg_path": "apps/macro-indicators/pkg/primitive/macro_usdvnd_direction_classifier",
+      "scenarios_count": 3
+    },
+    {
+      "name": "macro-carry-trade-signal",
+      "go_pkg_path": "apps/macro-indicators/pkg/primitive/macro_carry_trade_signal",
+      "scenarios_count": 3
+    },
+    {
+      "name": "macro-yield-spread-signal",
+      "go_pkg_path": "apps/macro-indicators/pkg/primitive/macro_yield_spread_signal",
+      "scenarios_count": 3
+    }
+  ],
+  "sandbox_scenarios_added": 15,
+  "hard_gates": {
+    "golangci_exit": 0,
+    "go_test_exit": 0,
+    "r1_grep_exit": 1,
+    "sandbox_total": 20,
+    "sandbox_pass": 20,
+    "sandbox_fail": 0,
+    "sandbox_status": "OK"
+  },
+  "fence_a_compliance": true,
+  "anchor_held_pre": true,
+  "anchor_held_post": true,
+  "impl_commit_sha": "61c3dce4",
+  "primitive_count_pre": 1,
+  "primitive_count_post": 6,
+  "g1_terminal_readiness": "READY_FOR_FLIP",
+  "ac_evidence": {
+    "ac1_primitive_dirs": "find apps/macro-indicators/pkg/primitive -type d | wc -l → 9 (≥6 PASS)",
+    "ac2_per_primitive_tests": "all 5 exit 0, each has ≥5 rows in table-driven pattern",
+    "ac3_scenario_json_count": "find docs/scenarios/macro-indicators/primitives -name '*.json' | wc -l → 18 (PASS)",
+    "ac4_fence_a": "grep -rn application|interface|infrastructure apps/macro-indicators/pkg/primitive/ → 0 matches, exit 1 (PASS)",
+    "ac5_golangci": "golangci-lint run → 0 issues, exit 0 (PASS)",
+    "ac6_sandbox_primitive_tier": "go run ./cmd/sandbox -tier=primitive -module=macro-indicators -scenario=all → total=18 pass=18 fail=0 status=OK exit 0 (PASS)",
+    "ac7_r1_determinism": "grep -rE math/rand|rand.Intn|rand.Float|time.Now.*Seed apps/macro-indicators/pkg/primitive/ → 0 matches, exit 1 (PASS)"
+  },
+  "notes": "handlers_carry.go and handlers_yield.go NOT updated — no AC in handoff requires handler wiring; Phase-2 plan explicitly assigns handler upgrade to P2-X3. AC-1 through AC-7 all PASS without handler changes."
+}
