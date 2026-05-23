@@ -8,7 +8,7 @@
   "status": "done",
   "inject_timestamp": "2026-05-23T02:45:10Z",
   "injected_by": "qa",
-  "commit": "__pending__",
+  "commit": "d6c790bf",
   "helper_modified": "apps/technical-analysis/pkg/primitive/macd/ema.go",
   "mutation_summary": "EMA smoothing factor denominator incremented by 1 (period+1 → period+2), distorting all EMA-dependent values by ~9-10%",
   "red_scenarios": [
