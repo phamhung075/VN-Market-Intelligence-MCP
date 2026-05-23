@@ -1,0 +1,113 @@
+{
+  "from": "architect",
+  "to": "po",
+  "type": "phase0-completion-signal",
+  "priority": "high",
+  "createdAt": "2026-05-23T10:02:34Z",
+  "cycle": "c282 cycle-29",
+  "pilot": "macro-indicators",
+  "phase": "0",
+  "commit_sha": "db0c0ba7",
+  "commit_anchor": "1776df8e (held throughout — no rebase, no force)",
+  "constraints_held": [
+    "L84 explicit-file staging (6 files explicitly staged, no -A no .)",
+    "No --force, no --no-verify, no push",
+    "All work on main (NO branches)",
+    "One active dispatch per task (this signal is the single completion signal)",
+    "Parent pilot-status.json UNTOUCHED (FROZEN)",
+    "Parent brief UNTOUCHED (TA CLOSED state preserved)"
+  ],
+  "deliverables": [
+    {
+      "id": "PHASE0-D1",
+      "title": "Brownfield inventory scan",
+      "status": "DONE",
+      "path": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md",
+      "commit": "db0c0ba7",
+      "key_findings": [
+        "1936 total LOC (934 src + 1002 scrapers)",
+        "DDD layers MOSTLY CLEAN — domain/ has zero infra imports",
+        "R-1 HIGH: scoreIndicator() uses Math.random() — must fix in P1-B1",
+        "R-3 HIGH: 4 MCP tools bypass macro-indicators HTTP entirely (direct domain imports in mcp-server) — G5b is deeper than TA",
+        "8 scrapers: 7 live, 1 WONTFIX (investing-economic-calendar NullAdapter)",
+        "6 primitives selected for pilot (investment-clock, oil/gold/usdvnd classifiers, carry-trade, yield-spread)",
+        "Module: macro-signals only (defer macro-core to post-pilot)",
+        "No pkg/ directory — Phase 0 exit gate clean"
+      ]
+    },
+    {
+      "id": "PHASE0-D2",
+      "title": "Bug-inventory macro entry",
+      "status": "DONE",
+      "path": "docs/data/bug-inventory.json (extended, not replaced)",
+      "commit": "db0c0ba7",
+      "key_findings": [
+        "Zero macro-indicators bugs in 60-day window (2026-03-24 to 2026-05-23)",
+        "baselineCycleCount = 1.3 (system-wide fallback per charter §Baseline Metric Capture)",
+        "macro_indicators_baseline block added with G10 target and knownRiskPre_pilot entry for R-1"
+      ]
+    },
+    {
+      "id": "PHASE0-D3",
+      "title": "dev-macro-indicators agent file",
+      "status": "DONE",
+      "path": ".claude/agents/dev-macro-indicators.md",
+      "commit": "db0c0ba7",
+      "note": "File pre-existed (version 2026-05-06, TS-only). Updated to version 2026-05-23 with Go primary mode, G12 DoD Gate constraint in constraints block, 3 new lazy_load entries (brownfield, task plan, charter), dual tech_stack/test_command fields. agent-md-factory standards preserved."
+    },
+    {
+      "id": "PHASE0-D4",
+      "title": "dev-macro-indicators flow file (G12 DoD Gate baked Day 0)",
+      "status": "DONE",
+      "path": ".claude/flows/dev-macro-indicators/main.md",
+      "commit": "db0c0ba7",
+      "note": "File pre-existed (minimal stub, no G12 gate). Updated verbatim from TA flow cc7578f1 pattern: G12 DoD Gate (mandatory blocking, both sandbox tiers), Language Mode table, Smoke Checks table, Security Rule (FRED_API_KEY explicitly named), Fence Rules (Fence-A/B/C pre-check), Pre-revert tag protocol (macro-pre-ci, macro-pre-delete, macro-pre-inject). G12 DoD Gate is present from Day 0 — no separate flow-edit task needed (L6 carry-over)."
+    },
+    {
+      "id": "PHASE0-D5",
+      "title": "Phase 1 task plan (Go scaffold + first primitive atomic tasks)",
+      "status": "DONE",
+      "path": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
+      "commit": "db0c0ba7",
+      "key_findings": [
+        "11 atomic tasks: P1-A1..A5 (Go scaffold) + P1-B1 (first primitive) + P1-C1 (module stub) + P1-D1/D2 (scenarios) + P1-E1/E2 (dashboard)",
+        "WIP=1 per charter wip_limit.phase_1_dev_team=1",
+        "First primitive: macro-investment-clock (deterministic replacement for Math.random() scoreIndicator)",
+        "Phase 1 exit gate: ≤4h first primitive + sandbox green + dashboard render ≥90% + PO approve",
+        "6 open questions for PM (OQ-1 through OQ-6)",
+        "Pre-revert tags (macro-pre-ci, macro-pre-delete, macro-pre-inject) called out in Phase 2 section"
+      ]
+    }
+  ],
+  "phase0_exit_gate": {
+    "all_5_deliverables_landed": true,
+    "pilot_status_phase0_fields_to_update": "PO must flip pilot-status-macro-indicators.json phase0 deliverables PENDING→DONE and exit_gate.all_deliverables_landed=true",
+    "no_code_in_apps_macro_indicators_pkg_yet": true,
+    "go_mod_absent": true,
+    "exit_gate_status": "READY_FOR_PO_CLOSE"
+  },
+  "risk_flags_for_po_pm": [
+    {
+      "id": "R-1",
+      "severity": "HIGH",
+      "description": "Math.random() in scoreIndicator() — non-deterministic domain logic. Go rewrite must use deterministic lookup. Blocks stable scenario JSON. Must fix in P1-B1 per brownfield §5 R-1.",
+      "phase_impact": "Phase 1 — P1-B1 AC-6 ensures fix"
+    },
+    {
+      "id": "R-3",
+      "severity": "HIGH",
+      "description": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass macro-indicators HTTP entirely via direct domain imports in mcp-server. G5b rewire is more extensive than TA's simple HTTP swap. Phase 2 P2-B spec must include mcp-server tool rewire, not just apps/macro-indicators/src/ git mv.",
+      "phase_impact": "Phase 2 — P2-B spec must be expanded vs TA precedent"
+    }
+  ],
+  "next_dispatch": {
+    "owner": "po",
+    "action": "Cycle-30: verify 5 deliverables via this signal trail; flip phase0 deliverables PENDING→DONE in pilot-status-macro-indicators.json; flip phase0.status OPEN→CLOSED; verify Phase 0 exit gate; dispatch dev-macro-indicators for Phase 1 (starting P1-A1) via pm",
+    "trigger": "R-11 2026-05-23T15:38:57Z (6h from PO kickoff dispatch)"
+  },
+  "phase_plan_owner_next": {
+    "phase_1": "pm dispatches dev-macro-indicators (WIP=1, P1-A1 first)",
+    "phase_2": "architect expands Phase 2 task plan at Phase 1 close (after PO go/no-go gate)",
+    "phase_3": "po atomic close"
+  }
+}
