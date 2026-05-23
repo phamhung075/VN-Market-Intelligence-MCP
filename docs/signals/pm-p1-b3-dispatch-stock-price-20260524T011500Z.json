@@ -1,0 +1,58 @@
+{
+  "signal_id": "pm-p1-b3-dispatch-stock-price-20260524T011500Z",
+  "task_id": "P1-B3",
+  "pilot": "stock-price",
+  "phase": 1,
+  "from": "pm",
+  "to": "dev-stock-price",
+  "timestamp": "2026-05-24T01:15:00Z",
+  "action": "DISPATCH",
+  "unblock_condition": "P1-B2 DONE (commit b3f2ee5f, 2026-05-24T01:00:46Z, sandbox GREEN 6/6 scenarios)",
+  "ac_count": 6,
+  "ac_list": [
+    "AC-1: StalenessLabel type (Fresh, Stale, Expired) and ClassifyStaleness function exported in classifier.go",
+    "AC-2: Table-driven test with ≥5 rows (FRESH, STALE, EXPIRED, boundary, malformed RFC3339)",
+    "AC-3: go test ./pkg/primitive/price-staleness-classifier/... exits 0",
+    "AC-4: Fence-A compliance — grep mattn/go-sqlite3|pkg/infrastructure|cgo|import \"C\" exits 1 (0 matches)",
+    "AC-5: Sandbox all-green (go run ./cmd/sandbox -tier=primitive -scenario=all) exits 0 with 9/9 scenarios PASS (B1+B2+B3)",
+    "AC-6: G12 DoD Gate #3 — sandbox green (all 9 scenarios) before RETURN; this task COMPLETES streak 3/3"
+  ],
+  "g12_streak": {
+    "required": 3,
+    "completed": 2,
+    "current_task_number": 3,
+    "completion_on_this_task": true,
+    "evidence_requirement": "All 9 scenarios (B1×3 + B2×3 + B3×3) must show PASS in sandbox output before marking DONE",
+    "note": "After P1-B3 DONE, G12 streak is EARNED-PENDING pending QA verification at P1-G close-gate"
+  },
+  "files_to_create": [
+    "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go",
+    "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier_test.go",
+    "docs/scenarios/stock-price/primitives/price-staleness-classifier-golden.json",
+    "docs/scenarios/stock-price/primitives/price-staleness-classifier-edge.json",
+    "docs/scenarios/stock-price/primitives/price-staleness-classifier-failure.json"
+  ],
+  "scenario_fixtures": {
+    "golden": "docs/scenarios/stock-price/primitives/price-staleness-classifier-golden.json — fetchedAt 30s ago, freshThreshold=60 → FRESH",
+    "edge": "docs/scenarios/stock-price/primitives/price-staleness-classifier-edge.json — fetchedAt 90s ago, freshThreshold=60, staleThreshold=3600 → STALE",
+    "failure": "docs/scenarios/stock-price/primitives/price-staleness-classifier-failure.json — malformed RFC3339 string → error"
+  },
+  "fence_requirements": {
+    "fence_a": "grep mattn/go-sqlite3|pkg/infrastructure|cgo|import \"C\" in classifier.go/classifier_test.go must exit 1",
+    "r_cgo_inherited": "R-CGO CLEAR from P1-B1 (AC-8 PASS); P1-B2 reconfirmed; P1-B3 final gate check before P1-C",
+    "cgo_enabled_0": "CGO_ENABLED=0 go build ./cmd/sandbox must exit 0 (no CGO code path reachable via new primitive)"
+  },
+  "wip_rule": "WIP=1 sequential — P1-B3 is the ONLY task in progress. P1-C (module stub) is HELD until P1-B3 DONE.",
+  "sequential_context": {
+    "prior_task": "P1-B2 (DONE b3f2ee5f, 2026-05-24T01:00:46Z)",
+    "current_task": "P1-B3 (READY-FOR-DISPATCH)",
+    "next_task": "P1-C (HELD until P1-B3 DONE signal + sandbox-green evidence)"
+  },
+  "return_requirement": {
+    "signal_file": "docs/signals/dev-stock-price-p1-b3-done-<UTC>.json",
+    "verdict": "DONE",
+    "g12_sandbox_requirement": "GREEN — all 9 scenarios must PASS before signal emit",
+    "commit_requirement": "L84 explicit-file staging (git add <path> per file, never -A/.); standard commit; no push"
+  },
+  "blocker_escalation": "If any Fence-A check fails OR AC-5 (sandbox) fails, BLOCK immediately. Do not attempt workaround. PM/Architect rethink needed (R-CGO precedent)."
+}
