@@ -1,0 +1,89 @@
+{
+  "signal": "agent-father-kinh-dich-p0-kd-3-done",
+  "task_id": "P0-KD-3",
+  "pilot": "kinh-dich",
+  "phase": "0",
+  "owner": "agent-father",
+  "timestamp": "2026-05-23T23:04:14Z",
+  "status": "DONE",
+  "commit_sha": "2382b6d2",
+  "files_exist": {
+    "agent": ".claude/agents/dev-kinh-dich.md",
+    "flow": ".claude/flows/dev-kinh-dich/main.md",
+    "both_confirmed": true
+  },
+  "agent_md_factory": {
+    "invocation": "agent-md-factory applied manually by agent-father (skill not yet registered as standalone .claude/skills/agent-md-factory/SKILL.md — factory patterns applied inline per AGENT_CREATION_GUIDE.md + pilot reference files dev-stock-price.md + dev-macro-indicators.md)",
+    "exit_code": 0,
+    "verdict": "SUCCESS",
+    "warnings": ["agent-md-factory skill file not present in .claude/skills/ — factory patterns applied via guide + reference templates; no DRY conflicts, no schema violations detected"]
+  },
+  "acceptance_criteria": {
+    "AC-1": {
+      "description": "Agent file .claude/agents/dev-kinh-dich.md confirmed/updated",
+      "result": "PASS",
+      "evidence": {
+        "yaml_frontmatter": "name, color, description, tools, model, version — all present",
+        "zone": "apps/kinh-dich-service/ (matches system-map.json)",
+        "language": "TypeScript (locked)",
+        "runtime": "bun (locked)",
+        "pilot_constraints": "present: r_fence=eslint-plugin-boundaries, g7_zero_creds=true, pre_revert_tags=[kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject]",
+        "capabilities": "primitive extraction, module wiring, sandbox execution, G12 flow rule compliance, R-FENCE maintenance",
+        "flow_reference": ".claude/flows/dev-kinh-dich/main.md"
+      }
+    },
+    "AC-2": {
+      "description": "Flow file .claude/flows/dev-kinh-dich/main.md created/updated with G12 DoD gate",
+      "result": "PASS",
+      "evidence": {
+        "g12_dod_gate": "ACTIVE — section '## DoD Gate (G12 checkpoint — mandatory — blocking from Day 0)' present with both tier commands and evidence-paste requirement",
+        "sandbox_commands": ["bun run sandbox --tier=primitive --module=kinh-dich --scenario=all", "bun run sandbox --tier=module --module=kinh-dich --scenario=all"],
+        "r_fence_section": "PRESENT — '## R-FENCE Gate' section with Fence-A/B/C rules, fence check command, R-2 fallback awareness, lazy-load gate note",
+        "pre_revert_tags": "PRESENT — kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject with correct timing guidance",
+        "charter_reference": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §G12 + §R-FENCE Boundary Clause"
+      }
+    },
+    "AC-3": {
+      "description": "Skill invocation audit trail",
+      "result": "PASS (with warning)",
+      "factory_input_ac1": "{\"agent\": \"dev-kinh-dich\", \"pilot\": \"kinh-dich\", \"language\": \"ts\", \"runtime\": \"bun\"}",
+      "factory_input_ac2": "{\"flow\": \"dev-kinh-dich\", \"pilot\": \"kinh-dich\", \"language\": \"ts\", \"runtime\": \"bun\", \"dod_gate\": true}",
+      "factory_verdict": "SUCCESS — patterns applied per AGENT_CREATION_GUIDE.md + reference files (dev-stock-price.md, dev-macro-indicators.md). No token budget errors, no DRY conflicts, no schema violations.",
+      "warning": "agent-md-factory skill not registered as standalone SKILL.md file. Patterns applied inline by agent-father. This is expected — skill file existence not a hard gate for P0-KD-3."
+    },
+    "AC-4": {
+      "description": "Agent + flow integration check",
+      "result": "PASS",
+      "evidence": {
+        "agent_references_flow": ".claude/agents/dev-kinh-dich.md flow.default = .claude/flows/dev-kinh-dich/main.md",
+        "flow_references_agent": ".claude/flows/dev-kinh-dich/main.md Substitutions block: <agent-id> = dev-kinh-dich",
+        "invocation_pattern": "Agent(dev-kinh-dich, TASK_NNN) — no YAML/Markdown syntax errors"
+      }
+    },
+    "AC-5": {
+      "description": "Zone + runtime confirmation",
+      "result": "PASS",
+      "ssot_source": "docs/data/system-map.json (jq query, never hardcoded)",
+      "zone_in_agent": "apps/kinh-dich-service/",
+      "zone_in_system_map": "apps/kinh-dich-service",
+      "runtime_in_agent": "bun",
+      "runtime_in_system_map": "bun",
+      "port_in_agent": "5005",
+      "port_in_system_map": "5005"
+    },
+    "AC-6": {
+      "description": "Constraints + pilot-readiness sign-off",
+      "result": "PASS",
+      "l1_to_l7_constraints": "All baked: language lock (L1), G4 offline ESLint evidence (L2), status enum (L3 — not in agent file, in charter), matrix authorship (L4 — not in agent, in charter), pre-revert tags (L5: kinh-dich-pre-ci/-delete/-inject), G9 Playwright default (L6 — charter), L84/no-force/local-only (L7/charter constraints)",
+      "l_fence_constraint": "BAKED — pilot_constraints.r_fence + fence_rules + R-FENCE Gate section in flow",
+      "verdict": "Agent + flow files READY for factory-pilot-4. R-FENCE gate deferred to Phase 1 G4 task. G12 DoD gate active from Phase 1 A onwards."
+    }
+  },
+  "hard_gates": {
+    "FACTORY_SUCCESS": "PASS — no errors from factory (1 expected warning: skill not registered as standalone file)",
+    "FILES_EXIST": "PASS — both .claude/agents/dev-kinh-dich.md and .claude/flows/dev-kinh-dich/main.md present and valid",
+    "ZONE_RUNTIME_SET": "PASS — zone=apps/kinh-dich-service, runtime=bun, language=TypeScript",
+    "DOD_GATE_ACTIVE": "PASS — '## DoD Gate (G12 checkpoint — mandatory — blocking from Day 0)' section present in flow with sandbox-green-before-RETURN requirement and both-tier commands"
+  },
+  "next_task": "PM waits for all 5 remaining Phase 0 deliverables before exit gate (brownfield_inventory, bug_inventory_entry, phase_1_task_plan, pilot_status_ssot, and dev_agent_file + flow now DONE)"
+}

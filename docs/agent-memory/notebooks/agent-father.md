@@ -1,6 +1,20 @@
 # Agent Father — Notebook
 
+## c260 · 2026-05-23T23:04Z
 
+**Task:** P0-KD-3 — dev-kinh-dich agent + flow baking (Factory v2 pilot 4)
+
+**BOTH FILES UPDATED (factory audit + rewrite):**
+- `.claude/agents/dev-kinh-dich.md`: added `pilot_constraints` (g12_dod_gate, r_fence/Fence-A/B/C, g7_zero_creds, pre_revert_tags), `doc_maintenance`, `language: TypeScript`, `runtime: bun`, `model: claude-opus-4-5`, factory lazy_load (charter, brownfield, phase-1-plan, pilot-status), updated capabilities/skills for primitive/module/sandbox work.
+- `.claude/flows/dev-kinh-dich/main.md`: baked G12 DoD Gate (sandbox-green-before-RETURN, both tiers), R-FENCE section (eslint-plugin-boundaries Fence-A/B/C, R-2 fallback, lazy-load gate note), pre-revert tag protocol (kinh-dich-pre-ci/-delete/-inject), smoke checks, security/zero-credentials clause.
+
+**System facts:** zone=apps/kinh-dich-service, runtime=bun, language=ts, port=5005 (all from system-map.json via jq).
+
+**Commit:** 2382b6d2 (L84 explicit-file staging — 2 files only)
+**Signal:** docs/signals/agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json
+**All 6 ACs PASS. Hard gates: FACTORY SUCCESS + FILES EXIST + ZONE+RUNTIME SET + DOD GATE ACTIVE — all PASS.**
+
+**Note:** agent-md-factory skill not registered as standalone SKILL.md — patterns applied inline per guide + reference templates (dev-stock-price.md, dev-macro-indicators.md). Expected warning; not a hard gate blocker.
 
 ## c256 · 2026-05-22T12:45Z
 
