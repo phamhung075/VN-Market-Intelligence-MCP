@@ -1,6 +1,50 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-23 08:30 UTC | **Sprint:** Phase 2 — G4 AC-4c freeze-anchor amendment (cycle-22 post-dispatch)
+**Last updated:** 2026-05-23 10:30 UTC | **Sprint:** macro-indicators pilot Phase 0 (cycle-29)
+
+## Cycle-29 entry (2026-05-23T10:30Z) — macro-indicators Phase 0 deliverables
+
+**Task:** Execute Phase 0 for macro-indicators factory v2 (5 deliverables per po-macro-pilot-kickoff-20260523T093857Z.json).
+
+**Brownfield findings (D1):**
+- Total LOC: 1 936 (934 core src + 1 002 scrapers)
+- DDD layers: MOSTLY CLEAN — `domain/` has zero infra imports (golden rule holds)
+- Critical finding: `scoreIndicator()` uses `Math.random()` — non-deterministic, must fix in P1-B1
+- Critical finding: 4 of 7 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass the macro-indicators HTTP layer entirely — direct domain imports in mcp-server (G5b is more extensive than a simple HTTP swap)
+- 8 scrapers: 7 live, 1 WONTFIX null-stub (investing-economic-calendar)
+- No `pkg/` directory exists — Phase 0 exit gate confirmed clean
+
+**Primitive selection (D1 §7):** 6 primitives selected:
+1. macro-investment-clock (first — pure classifier, no live data)
+2. macro-oil-impact-classifier (pure threshold function)
+3. macro-gold-direction-classifier (same shape)
+4. macro-usdvnd-direction-classifier (same shape)
+5. macro-carry-trade-signal (ported from mcp-server domain)
+6. macro-yield-spread-signal (ported from mcp-server domain)
+Module: macro-signals only (defer macro-core to post-pilot per charter §G2 calibration)
+
+**Bug inventory (D2):** Zero macro-specific bugs in 60-day window. Baseline falls back to system-wide 1.3 cycles. R-1 Math.random() risk documented in macro_indicators_baseline knownRiskPre_pilot.
+
+**Agent + flow (D3/D4):** dev-macro-indicators.md updated to version 2026-05-23 (Go primary mode, G12 DoD Gate constraint, 3 new lazy_load entries). Flow main.md updated with Language Mode table + Smoke Checks + G12 DoD Gate + Security Rule + Fence Rules + Pre-revert tag protocol — verbatim TA pilot flow shape per cc7578f1 pattern.
+
+**Phase 1 task plan (D5):** 11 atomic tasks (P1-A1..A5 + B1 + C1 + D1 + D2 + E1 + E2). First primitive = macro-investment-clock. WIP=1. Phase 1 exit gate: ≤4h to first primitive, sandbox green, dashboard render ≥90%. OQ-4 flagged: no dev-frontend in Phase 1 — dev-macro-indicators owns dashboard stub.
+
+**Key risk flags for PM/PO:**
+- R-3 (HIGH): MCP tool G5b rewire is deeper than TA's — 4 tools must shift from direct domain calls to HTTP. Phase 2 P2-B must include mcp-server rewire spec, not just `git mv` on macro-indicators src.
+- R-1 (HIGH): Math.random() fix required in P1-B1 before any stable scenario JSON can be authored.
+- Scraper strategy: Option A (keep TS scrapers side-car in Phase 1). Phase 2 P2-B decides whether to port or deprecate.
+
+**Files authored this cycle (L84 — 6 files):**
+1. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md` (NEW — D1)
+2. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md` (NEW — D5)
+3. `.claude/agents/dev-macro-indicators.md` (MODIFIED — D3 Go pilot update)
+4. `.claude/flows/dev-macro-indicators/main.md` (MODIFIED — D4 G12 DoD Gate + Language Mode + Security)
+5. `docs/data/bug-inventory.json` (MODIFIED — D2 macro baseline entry)
+6. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Completion signal:** `docs/signals/architect-macro-phase0-done-<UTC>.json` (to be written after commit)
+
+---
 
 ## Cycle-22 amendment entry (2026-05-23T08:30Z) — AC-4c freeze-anchor path-B decision
 

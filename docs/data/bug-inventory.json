@@ -239,6 +239,26 @@
       "evidence": "chore(po/1953g): FAIL confirmed — NO-DISPATCH recurring-bug freeze, BCTC stale 3+ days"
     }
   ],
+  "macro_indicators_baseline": {
+    "capturedAt": "2026-05-23",
+    "capturedBy": "architect (cycle-29 phase-0 D2 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-24",
+    "windowEnd": "2026-05-23",
+    "macroBugsFound": 0,
+    "baselineCycleCount": 1.3,
+    "baselineSource": "system-wide averageFixCycles (no macro-indicators-specific bugs in 60-day window; falls back to system-wide per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "Scanning git log + docs/signals + agent notebooks for last 60 days found zero bugs attributed to module=macro-indicators. System-wide averageFixCycles=1.3 (vs TA-specific measured 1.5). Using 1.3 as macro baseline — conservative but defensible per charter §Baseline Metric Capture fall-back rule.",
+    "g10_target": "AI agent fixes macro primitive bug in ≤2 cycles vs baseline 1.3",
+    "knownRiskPre_pilot": [
+      {
+        "risk": "R-1 Math.random() in scoreIndicator()",
+        "description": "Non-deterministic domain logic in MacroScoreService.scoreIndicator() — Go rewrite must replace with deterministic lookup. Detected in brownfield scan p0-brownfield-inventory.md §5 R-1. Not a bug (it was intentional in TS) but creates a class of test-flakiness risk if not addressed before primitive extraction.",
+        "priority": "HIGH",
+        "phase_to_fix": "P1-B1 (first primitive extraction)"
+      }
+    ]
+  },
   "stats": {
     "totalBugs": 29,
     "resolvedBugs": 18,
@@ -250,9 +270,10 @@
       "technical-analysis": 2,
       "agents": 4,
       "data-sources": 3,
-      "ops": 2
+      "ops": 2,
+      "macro-indicators": 0
     },
     "confidence": "medium",
-    "notes": "fixCycles conservatively estimated from git log + TASKS.md records. TA-specific bugs: 1970, 1968d (2 bugs). System baseline (4-6 cycles per charter) replaced with measured TA average 1.5 cycles from resolved bugs. Open bugs carry estimatedCycles=0 pending resolution."
+    "notes": "fixCycles conservatively estimated from git log + TASKS.md records. TA-specific bugs: 1970, 1968d (2 bugs). System baseline (4-6 cycles per charter) replaced with measured TA average 1.5 cycles from resolved bugs. Macro-indicators baseline added 2026-05-23: 0 bugs in 60-day window, falls back to system-wide 1.3 per charter §Baseline Metric Capture. Open bugs carry estimatedCycles=0 pending resolution."
   }
 }
