@@ -50,11 +50,26 @@ Run the column matching your Language Mode before every commit. Both columns are
 
 ## Pilot Hard Rule (G12 — blocking)
 
-> MUST run pilot scenarios + verify dashboard green before reporting task complete
+### G12 DoD Gate (mandatory — blocking)
 
-**Enforcement:** Before writing the RETURN block or marking any task DONE, run the sandbox command for your Language Mode (see Smoke Checks table above).
+**Do not mark task DONE until sandbox dashboard shows all TA scenarios green.**
 
-Open `apps/technical-analysis/dashboard/index.html` and verify ALL scenario cards show green. If ANY card is red, the task is NOT done — fix the failing scenario first.
+Run both tiers before declaring complete:
+
+```bash
+cd apps/technical-analysis
+go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all
+go run ./cmd/sandbox -tier=module -module=technical-analysis -scenario=all
+```
+
+Both commands must exit 0 with all scenarios GREEN.
+
+If ANY scenario is RED:
+- The task is NOT done.
+- Fix the failing scenario before re-running.
+- Each fix attempt that does not result in all-GREEN = 1 cycle (counted for G10/G11 evidence).
+
+Evidence requirement: paste the sandbox output (pass/fail summary line) into the task handoff doc before writing the RETURN block.
 
 This rule is non-negotiable. It applies to every task cycle in the `technical-analysis` pilot (Phase 0 through Phase 3).
 
