@@ -115,7 +115,7 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 OPEN — sequence P1-A (Bun sandbox runner + config.ts fix). WIP=1 enforced throughout.",
+    "_note": "Phase 1 ACTIVE — P1-A DONE (1e76d339). Sequencing P1-B1 (hexagram-resolver + R-FENCE discovery). WIP=1 enforced throughout.",
     "status": "ACTIVE",
     "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T23:15:00Z",
@@ -130,11 +130,12 @@
     "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
     "wip_limit": 1,
     "task_sequence": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "current_task": "P1-A",
+    "current_task": "P1-B1",
     "current_task_status": "READY",
-    "current_task_handoff": "docs/handoffs/TASK_P1-KD-A.md",
+    "current_task_handoff": "docs/handoffs/TASK_P1-KD-B1.md",
     "progress_notes": [
-      "2026-05-24T23:15:00Z — Phase 1 OPENED; P1-A handoff created; dev-kinh-dich ready to accept"
+      "2026-05-24T23:15:00Z — Phase 1 OPENED; P1-A handoff created; dev-kinh-dich ready to accept",
+      "2026-05-24T00:00:00Z — P1-A DONE (commit 1e76d339); all 6 ACs PASS (zero-creds, zero-infra, sandbox-green); P1-B1 sequenced"
     ]
   },
 
