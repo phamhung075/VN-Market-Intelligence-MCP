@@ -1,0 +1,36 @@
+{
+  "module": "price_resolution",
+  "scenario": "price-resolution-golden",
+  "description": "3-tier walk: T1 returns quote (stale: 90s old relative to now field) → T2 returns quote (fresh: 10s old) → module selects T1 (T1 wins by tier order, staleness is annotation not selection) → result: T1 quote with staleness=STALE",
+  "inputs": {
+    "code": "VCB",
+    "now": "2026-05-24T01:00:00Z",
+    "fresh_threshold_seconds": 60,
+    "stale_threshold_seconds": 3600,
+    "tier_1": {
+      "price": 85000,
+      "volume": 1000000,
+      "change": 500,
+      "change_pct": 0.59,
+      "source": "hose",
+      "fetched_at": "2026-05-24T00:58:30Z",
+      "latency_ms": 15
+    },
+    "tier_2": {
+      "price": 84950,
+      "volume": 800000,
+      "change": 450,
+      "change_pct": 0.53,
+      "source": "hnx",
+      "fetched_at": "2026-05-24T00:59:50Z",
+      "latency_ms": 25
+    },
+    "tier_3": null
+  },
+  "expected": {
+    "code": "VCB",
+    "price": 85000,
+    "source": "hose",
+    "staleness": "STALE"
+  }
+}

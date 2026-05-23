@@ -1,0 +1,28 @@
+{
+  "module": "price_resolution",
+  "scenario": "price-resolution-edge",
+  "description": "T1 nil, T2 nil, T3 cache quote (EXPIRED: 5h old relative to now field) → T3 wins (only tier with data) → result: T3 quote with staleness=EXPIRED",
+  "inputs": {
+    "code": "VCB",
+    "now": "2026-05-24T01:00:00Z",
+    "fresh_threshold_seconds": 60,
+    "stale_threshold_seconds": 3600,
+    "tier_1": null,
+    "tier_2": null,
+    "tier_3": {
+      "price": 84000,
+      "volume": 500000,
+      "change": 0,
+      "change_pct": 0,
+      "source": "cache",
+      "fetched_at": "2026-05-23T20:00:00Z",
+      "latency_ms": 5
+    }
+  },
+  "expected": {
+    "code": "VCB",
+    "price": 84000,
+    "source": "cache",
+    "staleness": "EXPIRED"
+  }
+}
