@@ -14,7 +14,9 @@ estimate_hours: 0.333
 ac_count: 3
 spec_revision: "docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md"
 revision_landed: "2026-05-23T07:28:17Z (architect commit f8258e82)"
+amendment_1_landed: "2026-05-23T08:30:00Z (architect commit 10aceb0c — AC-4c freeze anchor 9561fee9 → 9d364329)"
 po_handoff_rewrite: "2026-05-23T07:30:40Z (cycle-22, supersedes original CI-rerun ACs)"
+po_handoff_amendment_1_applied: "2026-05-23T07:42:40Z (cycle-23, AC-4c anchor + verdict updated + collision note retracted)"
 ---
 
 # P2-A4 — Offline deliberate-violation proof: prove fence enforcement (revised AC — no CI dependency)
@@ -77,19 +79,21 @@ This replaces the original P2-A4 design of committing a violation to a PR and re
 
 ### AC-4c — Config is frozen; fence scope is unambiguous
 
-`apps/technical-analysis/.golangci.yml` is at P2-A1 close state (committed `9561fee9`). The file declares three fences:
+`apps/technical-analysis/.golangci.yml` is at its current frozen state (committed `9d364329`). The file declares three fences:
 - `fence-a` (primitive must not import module/application/interface)
 - `fence-b` (module must not import application/interface)
 - `fence-c` (infrastructure import only in cmd/server/main.go)
 
-Config must NOT have been modified after P2-A1 close (out_of_scope clause).
+Config must NOT have been modified after `9d364329` (out_of_scope clause).
 
-**Verification method:** `git log --oneline apps/technical-analysis/.golangci.yml` shows no commits after `9561fee9`.
+**Note:** `9d364329` converted the config from golangci-lint v2 format to v1 format to match `golangci-lint-action@v6.1.1`'s default binary (v1.64.8). The format conversion is semantic-neutral — all three fence rules are preserved identically (byte-for-byte semantic content). Full evidence: `docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md` §Amendment 1. Architect signal: `docs/signals/architect-g4-ac4c-amendment-20260523T083000Z.json`. PO adoption commit: cycle-23 (this file).
+
+**Verification method:** `git log --oneline apps/technical-analysis/.golangci.yml` shows exactly two commits — `9561fee9` (P2-A1 config creation) then `9d364329` (v2→v1 format conversion) — and no commits after `9d364329`.
+
+**AC-4c verdict:** PASS if `9d364329` is the most recent commit on this file; FAIL if any commit appears after `9d364329`.
 
 **Evidence to record (see §Evidence to Record):**
 - Verbatim `git log --oneline apps/technical-analysis/.golangci.yml` output
-
-**IMPORTANT — Known collision:** Cycle-20 dev-ta dispatch produced commit `9d364329` which modified `.golangci.yml` (converted v2 format → v1 format). This currently violates AC-4c. dev-ta cycle-22 (revised dispatch) is responsible for resolving the collision via path-A (revert + alternative fix) or path-B (escalate to architect for AC-4c amendment). QA executes AC-4c verification AFTER dev-ta cycle-22 resolves the collision; if the git log still shows `9d364329` after `9561fee9`, AC-4c is FAIL — do not paper over the collision.
 
 ---
 
@@ -124,7 +128,7 @@ git_status_after_revert:  <verbatim `git status --short` output — MUST be empt
 
 ```
 git_log_output: <verbatim output of `git log --oneline apps/technical-analysis/.golangci.yml`>
-ac_4c_verdict:  <PASS if no commits after 9561fee9; FAIL if any commit (including 9d364329) appears after 9561fee9>
+ac_4c_verdict:  <PASS if 9d364329 is the most recent commit on this file; FAIL if any commit appears after 9d364329>
 ```
 
 ---
@@ -159,7 +163,7 @@ git log --oneline apps/technical-analysis/.golangci.yml
 
 ## Dependencies
 
-**Upstream:** P2-A3-prereq-fix-go-lint (revised cycle-22 dispatch must complete first — either path-A landed + `.golangci.yml` restored to `9561fee9` state, or path-B escalation resolved by architect with AC-4c amendment).
+**Upstream:** P2-A3-prereq-fix-go-lint (revised cycle-22 dispatch must complete first). Path-B escalation resolved by architect 2026-05-23 commit `10aceb0c` — AC-4c amended to accept `9d364329` as the new frozen anchor (`docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md` §Amendment 1). dev-ta cycle-22 work (fix lint findings, exit 0 on clean run) proceeds unchanged under AC-1/AC-2/AC-3.
 **Downstream:** None (G4 complete after this task; G5 deletion chain P2-B2..B4 then proceeds).
 
 ---
