@@ -1,5 +1,65 @@
 # PM — Notebook
 
+## c282 cycle-42 · 2026-05-23T125400Z
+
+**Status:** P2-B1 CLOSED (R-3 UNBLOCKED GREEN) → P2-A1 DISPATCHED (G4 fence rules). QA signal received (7d424a29) confirming P2-B1 all 7 ACs PASS: R-1 hard gate clear (exit 1), G12 sandbox all-tier green exit 0, anchor 1776df8e held, forbidden zones clean, env audit clean, OBS-cmd-router-rewire accepted as forward work. PM closed P2-B1 in SSOT (status DONE, qa_commit 7d424a29, closed_at/closed_by tracked). Next task per critical path: P2-A1 (.golangci.yml Fence-A/B/C depguard config, 45m estimate, 5 ACs, dev-macro-indicators owner). P2-A1 blocked-by P2-B1 DONE (now clear); blocks P2-A2. Created TASK_P2-A1-macro.md handoff with full AC spec, hard gates, implementation guidance. Created dispatch signal pm-cycle42-dispatch-dev-macro-indicators-p2-a1-20260523T125400Z.json with AC summary, hard gates, sequencing note, critical path context. Updated SSOT: phase2.activeTask=P2-A1, progress_notes appended with cycle-42 closure + dispatch event, P2-B1 entry updated (closed_at/closed_by added). WIP=1 enforced (dev-macro-indicators on P2-A1). Anchor 1776df8e verified held pre+post. Single atomic commit: `chore(pm/c282-cycle-42): close P2-B1 (R-3 unblock GREEN) + dispatch dev-macro-indicators P2-A1 (G4 fence rules)`.
+
+### P2-B1 Closure Verified (Cycle c282-cycle-42 — R-3 Unblock Complete)
+
+- **Task ID:** P2-B1 (critical path first — MCP HTTP rewire)
+- **Completion signal:** `docs/signals/qa-p2-b1-macro-GREEN-20260523T125005Z.json` + qa-commit 7d424a29 ✓
+- **Dev commits:** 98df0f43 (impl) + d3d8569f (signal) ✓
+- **QA commit:** 7d424a29 ✓
+- **QA verdict:** GREEN ✓
+- **AC results:** 7/7 PASS
+  - AC-1: Direct imports removed from TS handlers → 0 matches ✓
+  - AC-2: All 4 tools route via HTTP (MACRO_INDICATORS_URL env var) ✓
+  - AC-3: Graceful failure handling (error JSON, no crash) ✓
+  - AC-4: Go router 3 routes registered + go build exit 0 ✓
+  - AC-5: Smoke test — curl all 3 endpoints return HTTP 200 JSON ✓
+  - AC-6: Zero new cross-service imports + grep exit 1 ✓
+  - AC-7: R-1 hard gate CLEAR (grep exit 1, zero matches) ✓
+- **Hard gates:**
+  - R-1 determinism: PASS (exit 1) ✓
+  - G12 DoD: PASS (sandbox all-tier exit 0) ✓
+- **Sandbox evidence:** total=5 pass=5 fail=0 status=OK exit 0 ✓
+- **Anchor:** 1776df8e HELD (exit 0 post-P2-B1 commit 7d424a29) ✓
+- **Milestone:** P2-B1 DONE. R-3 risk UNBLOCKED (4 MCP tools now route HTTP→port 5004).
+- **Observation:** OBS-cmd-router-rewire (cmd/server/main.go not yet wired to NewRouter) accepted as forward work item — not a P2-B1 fail.
+
+### P2-A1 Task Details (Next Task — G4 Fence Rules)
+
+- **Task ID:** P2-A1 (critical path second, sequential after P2-B1)
+- **Title:** .golangci.yml Creation (Fence-A/B/C Rules)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 45 minutes
+- **ACs:** 5 (depguard structure, linter clean, file size ≤80, freeze anchor, R-1 propagated)
+- **Hard gates:** AC-2 (golangci-lint run exit 0, BLOCKING)
+- **Goals:** G4 partial (full G4 after P2-A2 CI wiring)
+- **Files to create:** `apps/macro-indicators/.golangci.yml` (ONLY — config-only task)
+- **Zones in:** apps/macro-indicators/.golangci.yml (CREATE)
+- **Zones forbidden:** apps/technical-analysis/ (FROZEN) + .github/workflows/ci.yml (P2-A2 will modify) + SSOT files
+- **Constraints:** L84 explicit (1 file), anchor 1776df8e held, no destructive git
+
+### PM Actions Completed (Cycle c282-cycle-42)
+
+1. **Verified P2-B1 closure** — QA signal 7d424a29 received, all 7 ACs PASS, hard gates clear ✓
+2. **Updated SSOT pilot-status** — phase2.activeTask null→P2-A1, P2-B1 entry marked DONE with qa_commit + closed_at/closed_by, progress_notes appended with closure + dispatch event ✓
+3. **Created TASK_P2-A1-macro.md** — Full handoff with 5 ACs, hard gate AC-2 (linter clean), freeze anchor establishment, R-1 guard propagated, implementation guidance, RETURN block ✓
+4. **Created dispatch signal** — pm-cycle42-dispatch-dev-macro-indicators-p2-a1-20260523T125400Z.json with AC summary, hard gates, sequencing note, critical path context, OQ status (OQ-8 deferred-to-PO noted), constraint binding, expected return signal spec ✓
+5. **Verified anchor pre+post** — git merge-base --is-ancestor 1776df8e HEAD returns 0 both checks ✓
+6. **Updated PM notebook** — cycle-42 entry with P2-B1 closure details + P2-A1 task details + actions + next steps ✓
+
+### Next Steps
+
+- dev-macro-indicators dispatch: TASK_P2-A1-macro.md + dispatch signal
+- WIP enforcement: phase2_dev_team = ACTIVE (1/1, dev-macro-indicators on P2-A1)
+- Hard gate: AC-2 golangci-lint run must exit 0 (BLOCKING if violations detected)
+- After P2-A1 DONE + dev signal: PM dispatches P2-A2 (CI job + violation proof + macro-pre-ci tag)
+- OQ-8 status: DEFERRED-TO-PO (scraper sidecar strategy — not blocking P2-A1 or subsequent tasks)
+
+---
+
 ## c282 cycle-41 · 2026-05-23T185200Z
 
 **Status:** PHASE 2 PLAN INGESTED + P2-B1 DISPATCHED (R-3 MCP HTTP rewire). Architect cycle-22 completion signal (9bd67f8c) received: Phase 2 task plan READY with 14 atomic tasks. PM ingested plan into SSOT (phase2.status AWAITING-PLAN → IN-PROGRESS, added taskPlan ref, taskCount=14, wipPolicy, activeTask, openQuestions array with OQ-7..OQ-10 resolutions). OQ-7 RESOLVED (stub-first: P2-B1 stubs, P2-X1 real, P2-X3 upgrade), OQ-8 DEFERRED-TO-PO (scraper sidecar strategy), OQ-9 RESOLVED (G6/G7 recheck at P2-G1, no new task), OQ-10 RESOLVED (calendar fixture-first approach). Created TASK_P2-B1-macro.md handoff (7 ACs, R-1 + G12 hard gates, 2h estimate, 5 TS + 4 Go files). Created dispatch signal pm-cycle41-dispatch-dev-mcp-server-p2-b1-20260523T185200Z.json with full spec, OQ resolutions, hard gates, constraints binding. Updated pilot-status SSOT: phase2.status=IN-PROGRESS, added ingestedAt/ingestedBy/architectIngestCycle/architectIngestCommit/taskPlan/taskCount/wipPolicy/activeTask/openQuestions/progress_notes. WIP=1 enforced (dev-mcp-server P2-B1 only). Anchor 1776df8e verified held. Single atomic commit: `chore(pm/c282-cycle-41): ingest Phase 2 plan + dispatch dev-mcp-server P2-B1 (R-3 MCP HTTP rewire)`.
