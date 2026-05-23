@@ -1,6 +1,49 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-23 23:12 UTC (P0-KD-4 phase-1-task-plan-ts.md, 9 tasks / 54 ACs) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 00:00 UTC (stock-price Phase-2 task plan, 14 tasks / 66 ACs) | **Sprint:** fleet-factory-rollout program
+
+## stock-price Phase-2 task plan cycle (2026-05-24T00:00Z) — fleet pilot 3 Phase 2 dispatch
+
+**Task:** Author Phase-2 atomic task plan for stock-price factory pilot (fleet pilot 3), per PO
+authorization signal `po-stock-price-phase2-authorize-20260523T234647Z.json`. Phase-1 gate was GO.
+
+**Key decisions:**
+- 14 tasks (P2-A through P2-Z), 66 ACs total. WIP=1 sequential throughout.
+- G-goal posture at Phase-1 close carried forward exactly: EARNED-PENDING = G1,G2,G6,G7,G8,G12;
+  STILL-UNMET (Phase-2 work) = G3,G4,G5,G9,G10,G11; goalsEarned=0. NO flips in Phase 2.
+- Pre-revert tags sequenced as standalone tasks: P2-A (stock-price-pre-ci before G4), P2-E
+  (stock-price-pre-delete before G5a), P2-L (stock-price-pre-inject before G10 injection).
+- G4 split across 4 tasks: P2-A (tag) + P2-B (.golangci.yml + CI job) + P2-C (AC-4b violation
+  proof — reverted, NEVER committed) + P2-D (AC-4c freeze anchor confirmation). Mirrors macro pilot
+  P2-A1/A2 structure, adapted for stock-price.
+- G5a: git mv `pkg/domain/services.go` (ResolvePriceService) → `pkg/domain/_deprecated/services_v1.go`
+  under stock-price-pre-delete tag. FetchPriceUseCase rewired to call price_resolution module.
+- G5b: scope confirmed NARROW (brownfield §5) — HTTP client already present at port 5000 in
+  clients.ts. No direct stock-price domain imports in any mcp-server tool handler. Audit only (P2-G).
+- G5c: zero TODO.*migrat verification at P2-G.
+- G3: composition root cleanup + OpenAPI YAML at P2-H. Fence-C: CGO SQLite wired at cmd/server/main.go.
+- G6/SI-2: dashboard finalization + SI-2 fleet index docs/dashboards/index.html created at P2-I.
+  stock-price is EXCLUSIVE owner of that file (first fleet pilot at G6, ratification Decision 3).
+- G8: honest-red deliberate-break proof at P2-J (re-confirm of EARNED-PENDING from Phase 1).
+- G9: PO Playwright Path B at P2-K (Day-0 default per L6; no synchronous user wait).
+- G10/G11: bug injection (P2-L) then fix + 2-trial coupling proof (P2-M). Bug target =
+  price-staleness-classifier (single-literal off-by-one). G11 Trial-1 from G10 injection +
+  Trial-2 from a different primitive mutation.
+- P2-Z: QA close-gate verifies 10 exit criteria. NO goal flips. PM transitions SSOT, PO does Phase 3.
+- CGO constraint baked into every dev task: Fence-A/B/C in every primitive/module task;
+  CGO_ENABLED=0 sandbox build checked in G12 DoD gate on every task.
+- G12 DoD gate applied on P2-B, P2-F, P2-H, P2-I, P2-M (all dev tasks producing sandbox artefacts).
+- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc: INTACT check baked into constraints table.
+- .git/index.lock contention guidance explicit (kinh-dich pilot concurrently active).
+
+**Files authored this cycle (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-23-stock-price-factory/phase-2-task-plan-go.md` (NEW)
+2. `docs/signals/architect-sp-phase2-plan-done-20260523T235443Z.json` (NEW — PM pickup)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal for PM:** `docs/signals/architect-sp-phase2-plan-done-20260523T235443Z.json`
+
+---
 
 ## P0-KD-4 phase-1-task-plan cycle (2026-05-23T23:12Z) — kinh-dich pilot-4 Phase 0 final deliverable
 
