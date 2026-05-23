@@ -1,0 +1,8 @@
+{
+  "name": "null_indicator_error",
+  "primitive": "macro_investment_clock",
+  "input": { "indicatorName": null },
+  "expected": null,
+  "shouldPass": false,
+  "errorType": "invalid_input"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "VN_CPI_indicator",
+  "primitive": "macro_investment_clock",
+  "input": { "indicatorName": "VN_CPI" },
+  "expected": {
+    "tier": "VN_DIRECT",
+    "score": 8,
+    "phase": "CORE_VN"
+  },
+  "shouldPass": true
+}

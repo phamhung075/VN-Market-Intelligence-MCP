@@ -1,0 +1,11 @@
+{
+  "name": "empty_string_indicator",
+  "primitive": "macro_investment_clock",
+  "input": { "indicatorName": "" },
+  "expected": {
+    "tier": "US_DOMESTIC",
+    "score": 2,
+    "phase": "US_DOMESTIC"
+  },
+  "shouldPass": true
+}
