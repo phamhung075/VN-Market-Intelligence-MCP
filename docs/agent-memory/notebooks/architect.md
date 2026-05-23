@@ -1,6 +1,45 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-23 12:22 UTC | **Sprint:** macro-indicators pilot Phase 2 task plan (c282 cycle-22)
+**Last updated:** 2026-05-23 (fleet-factory-rollout roadmap) | **Sprint:** fleet-factory-rollout program brief
+
+## Fleet-Factory-Rollout cycle (2026-05-23) — program roadmap brief
+
+**Task:** Author fleet-factory-rollout brief (user goal: complete factory for all microservices, each with working dashboard). READ-ONLY brownfield survey + brief authoring only. No apps/** modified.
+
+**Brownfield findings:**
+- 11 services total; 3 excluded from factory scope (api-gateway=pure router, mcp-server=orchestrator, frontend=UI)
+- 2 GREEN (TA+macro — both pilots DONE 2026-05-23)
+- 5 RED (kinh-dich, stock-price, alert-engine, pdf-extractor, rag-service)
+- 1 YELLOW (news-fetch — DDD exists, no primitives, no dedicated dev agent)
+- Go services (stock-price, alert-engine): depguard fence proven, zero new tooling needed
+- TS services (kinh-dich, news-fetch): ESLint fence rule NOT YET DESIGNED — SI-3 spike needed before G4 credible
+- Python services (pdf-extractor, rag-service): Python fence tool UNDEFINED — SI-4 spike needed; defer to pilots 7+8
+- news-fetch zone specialist = `developer` (generic) — SI-5 agent file creation needed
+
+**Pilot sequence: 3=kinh-dich (TS), 4=stock-price (Go), 5=alert-engine (Go), 6=news-fetch (TS), 7=pdf-extractor (Python), 8=rag-service (Python)**
+
+**Shared infra prework (SI-1..SI-5):**
+- SI-1: fleet SSOT schema (agent-father, ~1-2h, do now)
+- SI-2: fleet dashboard index (dev-kinh-dich at G6 of pilot 3)
+- SI-3: TS ESLint fence design (architect spike, before pilot 3 charter)
+- SI-4: Python fence tool decision (architect spike, before pilot 7)
+- SI-5: dev-news-fetch agent file (agent-father, before pilot 6)
+
+**Key risk flags:**
+- SI-3 HIGH: TS fence rule is the G4 gate for 2 services (kinh-dich + news-fetch). Must be designed before pilot 3 charter locks G4 criteria.
+- alert-engine G7: Telegram credentials MUST NEVER appear in sandbox environment. Hard gate.
+- Python trace JSON format: Python narrator equivalent must be designed in SI-4 spike.
+- WIP=2 max: no more than 2 pilot charters ACTIVE simultaneously.
+
+**Files authored this cycle (4 files — L84):**
+1. `docs/architecture-briefs/2026-05-23-fleet-factory-rollout/00-roadmap.md` (NEW)
+2. `docs/architecture-briefs/2026-05-23-fleet-factory-rollout/01-service-inventory.md` (NEW)
+3. `docs/architecture-briefs/2026-05-23-fleet-factory-rollout/02-phasing.md` (NEW)
+4. `docs/architecture-briefs/2026-05-23-fleet-factory-rollout/03-dashboard-standard.md` (NEW)
+
+**Next dispatch:** PO to ratify brief → author pilot 3 (kinh-dich) charter. Architect spike on SI-3 (TS fence) should be scheduled first or in parallel with PO ratification.
+
+---
 
 ## Cycle-22 entry (2026-05-23T12:22Z) — macro-indicators Phase 2 task plan
 
