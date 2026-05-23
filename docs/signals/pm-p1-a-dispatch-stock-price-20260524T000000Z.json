@@ -1,0 +1,102 @@
+{
+  "signal": "pm-p1-a-dispatch-stock-price",
+  "from": "pm",
+  "emittedAt": "2026-05-24T00:00:00Z",
+  "type": "dispatch",
+  "subject": "stock-price pilot-3 Phase 1 — dispatch P1-A (cmd/sandbox/main.go sandbox runner, CGO_ENABLED=0)",
+  "phase": "1",
+  "task_id": "P1-A",
+  "pilot": "stock-price",
+  "handoff_file": "docs/handoffs/TASK_P1-A.md",
+  "assigned_to": "dev-stock-price",
+  "phase1_gate_approval": "docs/signals/po-pilot3-stock-price-phase1-open-20260523T223738Z.json (PO gate RATIFIED)",
+  "arc_authority": "docs/po-decisions/2026-05-24-pilot3-phase1-gate-ratify-and-pilot4-kinh-dich-open.md §Decision 1",
+
+  "task_summary": {
+    "title": "cmd/sandbox/main.go — sandbox runner",
+    "scope": "Create CGO_ENABLED=0-compatible sandbox binary that drives scenario-based testing for primitives and modules",
+    "files_touched": ["apps/stock-price/cmd/sandbox/main.go (CREATE)"],
+    "ac_count": 5,
+    "duration_estimate": "45 minutes"
+  },
+
+  "acceptance_criteria": {
+    "ac_1": "Flag parser: -tier (primitive|module|all), -module (stock-price), -scenario (all|path) all functional",
+    "ac_2": "Scenario JSON loading from docs/scenarios/stock-price/{tier}/ (zero live HTTP, zero DB)",
+    "ac_3": "Exit 0 on PASS, non-zero on FAIL; per-scenario PASS/FAIL summary output",
+    "ac_4": "Zero credential reads: grep DB_PATH|API_KEY|SECRET|TOKEN|PASSWORD = 0",
+    "ac_5_hard_gate": "CGO_ENABLED=0 go build -o ./bin/sp-sandbox ./cmd/sandbox/ MUST exit 0 (R-CGO pre-check)"
+  },
+
+  "critical_hard_gate": {
+    "gate_id": "AC-5 (R-CGO pre-check)",
+    "gate_rule": "CGO_ENABLED=0 go build ./cmd/sandbox/ exit 0 REQUIRED before P1-B1 dispatch",
+    "failure_path": "P1-A BLOCKED → investigate import chain → escalate to architect if structural",
+    "success_path": "AC-5 PASS → record R-CGO pre-check=PASS in RETURN → PM dispatches P1-B1"
+  },
+
+  "sequencing_constraint": {
+    "rule": "WIP=1 sequential — P1-A only; P1-B1 (next task) BLOCKED until P1-A DONE + AC-5 PASS",
+    "blocks": ["P1-B1 (first primitive + R-CGO gate AC-8)"],
+    "blocked_by": [],
+    "note": "No parallel Phase 1 tasks. Primitive extraction is sequential learning loop."
+  },
+
+  "r_cgo_context": {
+    "gate_type": "stock-price-specific (mattn/go-sqlite3 confinement)",
+    "definition": "Sandbox imports ONLY pkg/primitive/* and pkg/module/*; never pkg/infrastructure/, pkg/application/, or pkg/interface/",
+    "phase_0_precedent": "P0-SP-5 confirmed CGO confined to pkg/infrastructure/fetchers.go; brownfield FEASIBLE",
+    "phase_1_confirmation": "AC-5 (P1-A) + AC-6/AC-7 (P1-B1) + AC-8 verdict (P1-B1 R-CGO GATE) lock the boundary",
+    "blocker_escalation": "If AC-5 fails → P1-A BLOCKED; if AC-6/AC-7 fail → P1-B1 R-CGO BLOCKED → Phase 1 stops → PM escalates to architect"
+  },
+
+  "g12_dod_gate": {
+    "applicable_to_p1_a": false,
+    "reason": "P1-A is the sandbox runner scaffolding; does not produce primitive/module artefacts yet",
+    "g12_streak_starts_at": "P1-B1 (first primitive with sandbox-green requirement)",
+    "g12_context": "charter §G12 DoD Gate — dev-stock-price flow requires dashboard-green before DONE on tasks B1, B2, B3; QA verifies 3-task streak at P1-G"
+  },
+
+  "phase_1_critical_path": {
+    "sequence": [
+      "P1-A (sandbox runner — CGO_ENABLED=0 check) ← YOU ARE HERE",
+      "P1-B1 (first primitive price-quote-normalizer + R-CGO gate AC-8) [BLOCKS if AC-5 fails]",
+      "P1-B2 (second primitive tier-fallback-selector — R-CGO inherited)",
+      "P1-B3 (third primitive price-staleness-classifier — G12 streak #3)",
+      "P1-C (module stub price_resolution)",
+      "P1-D (dashboard stub 3 panels)",
+      "P1-E (edit-rerun handler + env audit)",
+      "P1-F (optional: ohlcv-aggregator 4th primitive)",
+      "P1-G (QA close-gate verification)"
+    ],
+    "estimated_total": "12 dev-hours (single agent WIP=1)",
+    "exit_criteria": "Sandbox all-green + dashboard ≥90% + G12 streak 3/3 + R-CGO final CLEAR"
+  },
+
+  "ssot_state": {
+    "pilot_status_ssot": "docs/data/pilot-status-stock-price.json",
+    "updated_by_pm": true,
+    "phase_fields_set": {
+      "phase": "1",
+      "status": "ACTIVE",
+      "openedAt": "2026-05-24T00:00:00Z",
+      "openedBy": "pm",
+      "task_plan": "docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md",
+      "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"]
+    },
+    "decisionMatrix": "present-but-empty (TBD per charter §4.5 — populates ONLY at 12/12 terminal)"
+  },
+
+  "constraints_held": "L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push; all on main; frozen anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc untouched; system facts via jq on system-map.json",
+
+  "next_dispatch": {
+    "task_id": "P1-B1",
+    "title": "Extract first primitive: price-quote-normalizer + R-CGO gate AC-8",
+    "trigger": "P1-A DONE signal + AC-5 R-CGO pre-check=PASS received from dev-stock-price",
+    "blocker": "If AC-5 fails, P1-B1 BLOCKED — PM escalates to architect before dispatch",
+    "wip_count_after_p1_a_done": 1,
+    "note": "WIP=1 throughout Phase 1 — PM dispatches next task only after current task DONE + hard gates passed"
+  },
+
+  "handoff_instructions": "dev-stock-price: (1) Read TASK_P1-A.md in full. (2) Create cmd/sandbox/main.go with flag parser + scenario loader. (3) Verify AC-1 through AC-5. (4) CRITICAL: Run CGO_ENABLED=0 go build — if exit non-zero, P1-A is BLOCKED. (5) Emit DONE signal with R-CGO pre-check verdict. (6) Main router spawns PM to evaluate DONE signal and dispatch P1-B1."
+}

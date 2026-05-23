@@ -55,20 +55,23 @@
   },
 
   "phase1": {
-    "_note": "Stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
-    "openedAt": null,
-    "openedBy": null,
+    "_note": "Phase 1 ACTIVE — opened by PM after PO ratified Phase 0→Phase 1 gate. WIP=1 sequential execution; dispatch ONE task at a time.",
+    "status": "ACTIVE",
+    "openedAt": "2026-05-24T00:00:00Z",
+    "openedBy": "pm",
     "gateVerdict": null,
     "gateVerifiedAt": null,
     "gateVerifiedBy": null,
     "gateCommit": null,
     "gateDecisionDoc": null,
-    "gateSignal": null,
+    "gateSignal": "docs/signals/po-pilot3-stock-price-phase1-open-20260523T223738Z.json",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §Phase Skeleton (architect expands into 07-phases.md at Phase 0)",
-    "task_plan": null,
+    "task_plan": "docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md",
+    "task_count": 9,
+    "ac_count": 55,
     "wip_limit": 1,
-    "progress_notes": []
+    "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
+    "progress_notes": ["Dispatching P1-A (cmd/sandbox/main.go sandbox runner) — hard gate AC-5: CGO_ENABLED=0 go build exit 0 before P1-B1 allowed"]
   },
 
   "phase2": {
