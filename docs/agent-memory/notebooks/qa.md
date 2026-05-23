@@ -21,6 +21,27 @@ signal: docs/signals/qa-P2-F3-done-20260523T024500Z.json
 
 ---
 
+## c282 cycle-15 · 2026-05-23 · P2-E3 inject — MACD/EMA smoothing factor denominator
+
+**Task:** P2-E3-inject — G11 alternate canary pair (MACD) | **Verdict:** INJECT COMPLETE
+
+```
+date: 2026-05-23
+outcome: INJECT COMPLETE
+type: bug-injection (not a dev-handoff QA review)
+inject_commit: d6c790bf
+signal: docs/signals/qa-P2-E3-inject-20260523T024510Z.json
+```
+
+Pre-inject baseline: 30/30 GREEN (25 primitive + 5 module, verified before mutation).
+Mutation: single-token change in `apps/technical-analysis/pkg/primitive/macd/ema.go` line 20 — smoothing factor denominator incremented by 1.
+Post-inject: macd-golden RED (6 diffs), macd-bullish-cross RED (4 diffs), macd-bearish-cross RED (firstTriple + crossAtIndex); macd-flat-zero GREEN (constant series → EMA invariant under k); macd-insufficient-data GREEN (error path); rsi-* 5 GREEN; bb-* 5 GREEN; ma-* 5 GREEN; cross-* 5 GREEN; module 5/5 GREEN.
+G11 tripwire satisfied: 3 RED scenarios share calcEMA path — double-RED coupling confirmed.
+Handoff TASK_P2-E3.md rewritten: owner=dev-technical-analysis, status=pending, no-cheat (no EMA/MACD/calcEMA/smoothing in body), 8-path forbidden list, per-file sandbox loop (DEBT-1 Option B).
+WIP-1 honored: QA exits after completion signal. PO spawns dev-ta.
+
+---
+
 ## c282 cycle-14 · 2026-05-23 · P2-E2 inject — RSI Wilder smoothing fresh variant
 
 **Task:** P2-E2-inject — bug A injection for G11 regression-alarm proof | **Verdict:** INJECT COMPLETE
