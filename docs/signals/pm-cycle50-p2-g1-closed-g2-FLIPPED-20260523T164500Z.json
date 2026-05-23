@@ -1,0 +1,134 @@
+{
+  "dispatcher": "pm",
+  "cycle": "c282-cycle-50",
+  "task_closed": "P2-G1",
+  "verdict": "DONE",
+  "qa_verdict": "GREEN",
+  "qa_verified_at": "2026-05-23T16:36:00Z",
+  "qa_signal": "docs/signals/qa-p2-g1-macro-GREEN-20260523T163600Z.json",
+  "qa_cycle": "c282-cycle-49 (QA dispatch from P2-X3 closure)",
+  "p2_g1_ac_results": [
+    {
+      "ac": "AC-1 (G1: 6 primitives + ≥18 scenarios)",
+      "verdict": "PASS",
+      "evidence": "All 6 primitive packages exist: macro-investment-clock, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier, macro-carry-trade-signal, macro-yield-spread-signal. All 18 scenario JSON files confirmed (3 per primitive: golden+edge+failure). Each primitive has implementation + test files."
+    },
+    {
+      "ac": "AC-2 (G2: Module imports 6 primitives + Fence-B clean)",
+      "verdict": "PASS",
+      "evidence": "macro_signals.go imports all 6 primitives at lines 22-27 (mic, oil, gld, uvnd, carry, yld). BuildMacroSignals() populates all 6 output fields. Fence-B greps both exit 1: grep application|infrastructure exit 1 (FENCE_B_PASS_1), grep interface exit 1 (FENCE_B_PASS_2)."
+    },
+    {
+      "ac": "AC-3 (G3: Composition root clean)",
+      "verdict": "PASS",
+      "evidence": "cmd/server/main.go inspected: DI-only wiring (commodityFetcher → sbvRateRepo → useCase → router). Grep for business logic markers (scoreIndicator|buildSnapshot|oilDirection|carryTrade|yieldSpread|computeSignal) exit 1 = ROOT_CLEAN."
+    },
+    {
+      "ac": "AC-4 (G3: End-to-end snapshot path verified)",
+      "verdict": "PASS",
+      "evidence": "Handler → Execute() chain traced: router.go:64 useCase.Execute → usecases.go:116 sigs.BuildMacroSignals → 6 primitive functions → MacroSignalsOutput{all 6 fields}. Call chain confirmed via grep evidence."
+    },
+    {
+      "ac": "AC-5 (G1: Sandbox all-tier 20/20)",
+      "verdict": "PASS",
+      "evidence": "go run ./cmd/sandbox -tier=all -scenario=all (QA independent run): total=20 pass=20 fail=0 status=OK exit 0"
+    },
+    {
+      "ac": "AC-6 (G1+G2+G3: Joint terminal summary table)",
+      "verdict": "PASS",
+      "evidence": "9-row table verified: G1 (6 primitives ✓, ≥18 scenarios ✓), G2 (6 imports ✓, Fence-B ✓), G3 (root clean ✓, chain ✓), anchor ✓, R-1 ✓, sandbox ✓"
+    }
+  ],
+  "hard_gates_verification": {
+    "anchor_held": { "verdict": "PASS", "exit_code": 0, "command": "git merge-base --is-ancestor 1776df8e HEAD", "qa_verified": true, "pm_reverified_cycle50": true },
+    "r1_clean": { "verdict": "PASS", "exit_code": 1, "command": "grep -rE 'math/rand|rand.Intn|rand.Float|time.Now.*Seed' apps/macro-indicators/pkg/" },
+    "fence_b_app_infra": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*application|infrastructure' apps/macro-indicators/pkg/module/macro_signals/" },
+    "fence_b_iface": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*/interface' apps/macro-indicators/pkg/module/macro_signals/" },
+    "fence_c_pkg": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*/infrastructure' apps/macro-indicators/pkg/" },
+    "build_exit": 0,
+    "vet_exit": 0,
+    "lint_exit": 0,
+    "sandbox_exit": 0,
+    "sandbox_total": 20,
+    "sandbox_pass": 20,
+    "sandbox_fail": 0
+  },
+  "pm_cycle50_independent_g2_reverification": {
+    "timestamp_utc": "2026-05-23T16:39:00Z",
+    "anchor_check": { "result": "PASS", "exit_code": 0, "command": "git merge-base --is-ancestor 1776df8e HEAD" },
+    "module_directory": { "result": "PASS", "path": "apps/macro-indicators/pkg/module/macro_signals/", "status": "exists" },
+    "primitive_imports": {
+      "result": "PASS",
+      "count": 6,
+      "lines": "22-27",
+      "aliases": ["mic", "oil", "gld", "uvnd", "carry", "yld"],
+      "evidence": "grep -nE '(mic|oil|gld|uvnd|carry|yld) ' macro_signals.go returns 6 import + 6 usage = 12 total"
+    },
+    "fence_b_check_1": { "result": "PASS", "exit_code": 1, "pattern": "application|infrastructure", "status": "FENCE_B_PASS_1" },
+    "fence_b_check_2": { "result": "PASS", "exit_code": 1, "pattern": "/interface", "status": "FENCE_B_PASS_2" },
+    "sandbox_check": {
+      "result": "PASS",
+      "exit_code": 0,
+      "command": "go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all",
+      "output": "total=20 pass=20 fail=0 status=OK"
+    }
+  },
+  "g2_flip_decision": "YES",
+  "g2_flip_timestamp": "2026-05-23T16:45:00Z",
+  "g2_flip_authority": "pm c282-cycle-50",
+  "g2_evidence_summary": "P2-X2 (cycle-48): macro-signals module wires all 6 primitives via ports. P2-G1 (cycle-49): QA joint terminal verification — macro_signals.go imports 6 primitives L22-27, BuildMacroSignals outputs all 6 fields, Fence-B exit 1×2, sandbox all-tier 20/20. PM cycle-50 independent re-verification at HEAD: anchor held, module + 6/6 wires confirmed, Fence-B exit 1×2, sandbox 20/20, all hard gates PASS. G2 terminal verification COMPLETE.",
+  "goals_earned_pre_flip": 4,
+  "goals_earned_post_flip": 5,
+  "goals_earned_list": ["G4 (Architecture fence)", "G5 (TS deprecation + HTTP rewire)", "G1 (Primitives + scenarios)", "G3 (Composition root clean)", "G2 (Module composes all 6 primitives)"],
+  "charter_section_4_5_preserved": true,
+  "decisionMatrix_status": "TBD (no flip until 12/12 terminal)",
+  "anchor_held": true,
+  "next_dispatched": {
+    "task_id": "P2-F1",
+    "owner": "qa",
+    "goal_path": "G8 (Red/green status is honest)",
+    "estimate_hours": 0.5,
+    "blocks": "P2-C1 (G9 PO Playwright)"
+  },
+  "critical_path_summary": "Sequential: P2-G1 DONE → P2-F1 (next) → P2-C1 → P2-D1/D2 (G10 AI-fixability) → P2-E1 (G11 regression alarm) → Phase 3 (PO 12/12 close). All remaining tasks on critical path (WIP=1, no parallelization).",
+  "ssot_mutations": [
+    {
+      "field": "phase2.activeTask",
+      "old": "P2-G1",
+      "new": "P2-F1"
+    },
+    {
+      "field": "goals.G2.status",
+      "old": "TBD",
+      "new": "YES"
+    },
+    {
+      "field": "goals.G2.verifiedAt",
+      "old": null,
+      "new": "2026-05-23T16:36:00Z"
+    },
+    {
+      "field": "goals.G2.verifiedBy",
+      "old": null,
+      "new": "pm c282-cycle-50"
+    },
+    {
+      "field": "goals.G2.evidence",
+      "old": null,
+      "new": "P2-X2 + P2-G1 + PM cycle-50 terminal chain..."
+    },
+    {
+      "field": "goalsEarned",
+      "old": 4,
+      "new": 5
+    },
+    {
+      "field": "phase2.tasks.P2-G1",
+      "old": "not_in_ssot",
+      "new": "added with status=DONE, qa_verdict=GREEN, ac_results, goals_verified=[G1,G2,G3]"
+    }
+  ],
+  "timestamp_utc": "2026-05-23T16:45:00Z",
+  "closed_at_utc": "2026-05-23T16:45:00Z",
+  "closed_by": "pm c282-cycle-50"
+}

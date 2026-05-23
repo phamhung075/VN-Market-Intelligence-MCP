@@ -1,0 +1,46 @@
+{
+  "dispatcher": "pm",
+  "cycle": "c282-cycle-50",
+  "dispatched_to_agent": "qa",
+  "task_id": "P2-F1",
+  "handoff_doc": "docs/handoffs/TASK_P2-F1-macro.md",
+  "ddd_zone": "apps/macro-indicators/ (dashboard + scenario JSON mutations, all temporary)",
+  "goal_path": "G8 (Red/green status is honest)",
+  "ac_count": 5,
+  "estimate_hours": 0.5,
+  "blocked_by": [
+    "P2-G1 DONE (cycle-49, qa signal 2026-05-23T16:36:00Z)"
+  ],
+  "unblocks": [
+    "P2-C1 (G9 PO Playwright short-circuit)"
+  ],
+  "critical_path": true,
+  "wip_limit_enforced": 1,
+  "previous_active_task": "P2-G1",
+  "anchor_maintained": "1776df8e",
+  "hard_constraints": [
+    "Anchor 1776df8e must remain ancestor pre+post (check: git merge-base --is-ancestor 1776df8e HEAD; echo $?)",
+    "No source code changes (mutation-only on scenario JSON, all reverted before DONE)",
+    "R-1 defensive (no intentional randomization in test code)",
+    "Dashboard file:// reachable (apps/macro-indicators/dashboard/index.html)",
+    "Sandbox operational at submission (go run ./cmd/sandbox -tier=all -scenario=all exit 0)",
+    "Charter §4.5 preserved: decisionMatrix untouched (PO-only at 12/12)"
+  ],
+  "critical_path_reasoning": "G8 honest-red proof is mandatory before G9 dashboard trust contract verification (P2-C1). If dashboard can show false greens on corrupted data, then G9 trust verification is not credible. This task proves dashboard honesty before any trust claims. WIP=1 enforced: QA on P2-F1 exclusively.",
+  "success_signal_path": "docs/signals/qa-p2-f1-macro-GREEN-<UTC>.json",
+  "failure_signal_path": "docs/signals/qa-p2-f1-macro-RED-<UTC>.json",
+  "key_background": [
+    "P2-G1 just closed (cycle-49): all 3 goals G1/G2/G3 terminal verified, 6/6 ACs PASS, sandbox 20/20 at HEAD, anchor 1776df8e held",
+    "P2-F1 is QA-only verification (no code changes required from dev team)",
+    "Dashboard now populated with real primitive + module + microservice data from prior tasks",
+    "G8 requires proof that red/green status honestly reflects scenario validity (no false greens)",
+    "Test A pattern: corrupt scenario JSON (data-only, not code) → sandbox exits non-zero → dashboard shows RED",
+    "Test B pattern: all golden scenarios → sandbox exits 0 → dashboard all-GREEN",
+    "AC-3 requires testing ≥2 different primitives to prove generalization (not just 1 flaky case)",
+    "All scenario mutations must be reverted before submission (git status clean)"
+  ],
+  "qa_method": "honest-red dashboard proof — automated sandbox failures on corrupted scenarios + optional visual dashboard inspection",
+  "qa_scope": "Read-mostly on source code (inspection only); temporary JSON mutations on scenario files (all reverted)",
+  "timestamp_utc": "2026-05-23T16:45:00Z",
+  "dispatched_at_utc": "2026-05-23T16:45:00Z"
+}
