@@ -1,0 +1,46 @@
+{
+  "signal": "po-pilot4-kinh-dich-phase0-open",
+  "from": "po",
+  "to": "pm",
+  "emittedAt": "2026-05-23T22:53:23Z",
+  "type": "dispatch",
+  "subject": "kinh-dich pilot-4 charter v2.0 RATIFIED — PM authorized to decompose Phase 0 into deliverables D1-D5 (D0 SSOT already landed)",
+  "ruling": "RATIFIED",
+  "decision_doc": "docs/po-decisions/2026-05-24-pilot4-kinh-dich-charter-ratify-phase0-open.md",
+  "charter_ratified": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
+  "charter_version": "2.0",
+  "charter_commit": "4e914a811d68bc9bf00d452485fa4b1aed84cb5d",
+  "ssot": "docs/data/pilot-status-kinh-dich.json",
+  "architect_draft_signal": "docs/signals/architect-kinh-dich-charter-draft-done-20260524T000005Z.json",
+  "prior_open_ruling": "docs/po-decisions/2026-05-24-pilot3-phase1-gate-ratify-and-pilot4-kinh-dich-open.md (Decision 2)",
+
+  "ratification_basis_verified_independently": {
+    "g4_ts_fence_not_go_depguard": "PASS — charter §G4 AC-4a/4b/4c transcribed VERBATIM from SI-3 §5 (00-design.md) with <svc> -> kinh-dich-service; eslint-plugin-boundaries Option A in apps/kinh-dich-service/eslint.config.mjs; G4 LOCKED at charter v1 (no Amendment)",
+    "r_fence_gate_present_no_r_cgo": "PASS — §R-FENCE Boundary Clause; AC-4b deliberate violation on real .js ESM import (../../application/dtos.js); SI-3 §6.3 fallback = @typescript-eslint/parser (stays Option A); G7 zero-creds carries over",
+    "twelve_goals_tracks_abc_phase0_gate": "PASS — G1-G5 Track A, G6-G9 Track B, G10-G12 Track C; Phase-0 exit gate present",
+    "decisionMatrix_present_but_empty": "PASS — speed/trust/scale/verdict all TBD, populatedAt=null, populatedBy=null; §4.5 PO-only, populate only at 12/12 terminal",
+    "ssot_day0_shape": "PASS — status=ACTIVE, phase=0, language=TypeScript locked Day 0, all 12 goals TBD, goalsEarned=0",
+    "si2_not_reclaimed": "PASS — charter assigns SI-2 (docs/dashboards/index.html) to stock-price; kinh-dich G6 = apps/kinh-dich-service/dashboard/index.html only",
+    "service_facts_match_jq": "PASS — jq on system-map.json: port 5005 (internal==external), zone apps/kinh-dich-service, language ts, runtime bun, specialist dev-kinh-dich"
+  },
+
+  "authorization": {
+    "intent": "PM decomposes kinh-dich Phase 0 into atomic deliverables, WIP=1, dispatch owners per charter §Phase 0",
+    "owner_next": "pm",
+    "flow": ".claude/flows/pm/main.md",
+    "ssot_ownership": "PM owns docs/data/pilot-status-kinh-dich.json Phase-0 field mutations (PO did NOT mutate SSOT — ratify + Phase-0-open authority only, mirrors stock-price Decision-1 pattern)",
+    "deliverables": {
+      "D0_pilot_status_ssot": "DONE 2026-05-24 (architect charter cycle — docs/data/pilot-status-kinh-dich.json)",
+      "D1_brownfield_inventory": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md — confirm exact primitive set + module name; G5a superseded-vs-retained domain/services.ts; G5b exact MCP handlers reaching kinh-dich domain; R-FENCE feasibility (AC-4b deliberate-violation proof on real .js ESM import). Owner: architect/system-auditor (+ dev-kinh-dich R-FENCE confirm)",
+      "D2_bug_inventory_entry": "docs/data/bug-inventory.json kinh_dich_baseline block (baselineCycleCount; fallback 1.5 if <2 bugs in 60d window). gitignored dir -> git add -f",
+      "D3_dev_agent_file": ".claude/agents/dev-kinh-dich.md factory-mode confirmation (TS primary, G12 DoD, R-FENCE lazy-load). Owner: agent-father",
+      "D4_dev_agent_flow_file": ".claude/flows/dev-kinh-dich/main.md — G12 DoD-Gate baked Day 0 + Fence-A/B/C + pre-revert tag protocol (kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject). Owner: agent-father",
+      "D5_phase_1_task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md — atomic tasks, per-task AC, WIP=1, R-FENCE gate baked into first-fence task AC exactly as stock-price baked R-CGO into P1-B1"
+    },
+    "phase0_exit_gate": "all 6 deliverables landed + SSOT phase-0 fields populated + no code in src/primitive|src/module yet + architect verification signal"
+  },
+
+  "constraints_held": "L84 explicit-file staging (per-path git add, no -A/.); no --force/--no-verify/--no-gpg-sign; no git push; all on main; PO did NOT mutate the PM-owned kinh-dich SSOT; did NOT touch DORMANT/CLOSED/FROZEN app source or SSOTs (apps/technical-analysis/**, apps/macro-indicators/**, pilot-status.json, pilot-status-macro-indicators.json); decisionMatrix empty until 12/12 terminal (§4.5); system facts via jq on system-map.json — never hardcoded",
+  "wip_status": "{stock-price (Phase 1), kinh-dich (Phase 0)} = 2 ACTIVE at WIP=2 cap. No pilot-5 (alert-engine) charter opens until pilot-3 clears Phase 1",
+  "do_not": "Do NOT populate decisionMatrix (12/12 terminal only). Do NOT re-claim SI-2 (stock-price's). Do NOT open pilot-5 (alert-engine). Do NOT add code to src/primitive|src/module during Phase 0. Do NOT touch DORMANT/CLOSED app source or SSOTs."
+}
