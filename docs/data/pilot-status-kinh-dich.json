@@ -37,13 +37,58 @@
     "closedBy": null,
     "owner": "architect + system-auditor + agent-father (+ dev-kinh-dich R-FENCE feasibility confirmation)",
     "deliverables": {
-      "pilot_status_ssot": "DONE 2026-05-24T00:00:00Z (this file — architect charter cycle)",
-      "brownfield_inventory": "PENDING (docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md)",
-      "bug_inventory_entry": "PENDING (docs/data/bug-inventory.json kinh_dich_baseline block)",
-      "dev_agent_file": "PENDING (.claude/agents/dev-kinh-dich.md factory-mode confirmation — agent-father)",
-      "dev_agent_flow_file": "PENDING (.claude/flows/dev-kinh-dich/main.md G12 DoD Gate + Fence rules + pre-revert tags — agent-father)",
-      "phase_1_task_plan": "PENDING (docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md)"
+      "pilot_status_ssot": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T00:00:00Z",
+        "path": "docs/data/pilot-status-kinh-dich.json",
+        "owner": "architect",
+        "handoff": "n/a (charter cycle)"
+      },
+      "brownfield_inventory": {
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T12:00:00Z",
+        "path": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md",
+        "owner": "architect + system-auditor",
+        "handoff": "docs/handoffs/TASK_P0-KD-1-brownfield-inventory.md",
+        "task_id": "P0-KD-1"
+      },
+      "bug_inventory_entry": {
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T12:00:00Z",
+        "path": "docs/data/bug-inventory.json (kinh_dich_baseline block)",
+        "owner": "system-auditor",
+        "handoff": "docs/handoffs/TASK_P0-KD-2-bug-inventory-entry.md",
+        "task_id": "P0-KD-2"
+      },
+      "dev_agent_file": {
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T12:00:00Z",
+        "path": ".claude/agents/dev-kinh-dich.md",
+        "owner": "agent-father",
+        "handoff": "docs/handoffs/TASK_P0-KD-3-agent-flow-baking.md",
+        "task_id": "P0-KD-3",
+        "note": "Skill: agent-md-factory; includes G12 DoD gate constraint"
+      },
+      "dev_agent_flow_file": {
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T12:00:00Z",
+        "path": ".claude/flows/dev-kinh-dich/main.md",
+        "owner": "agent-father",
+        "handoff": "docs/handoffs/TASK_P0-KD-3-agent-flow-baking.md",
+        "task_id": "P0-KD-3",
+        "note": "G12 DoD Gate baked Day 0; Fence-A/B/C rules; pre-revert tags (kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject)"
+      },
+      "phase_1_task_plan": {
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T12:00:00Z",
+        "path": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md",
+        "owner": "architect",
+        "handoff": "docs/handoffs/TASK_P0-KD-4-phase1-task-plan.md",
+        "task_id": "P0-KD-4",
+        "note": "7-9 atomic Phase 1 tasks; ~10-12 dev-hours; 2-3 sprints; WIP=1"
+      }
     },
+    "dispatch_signal": "docs/signals/pm-kinh-dich-phase0-dispatch-20260524T120000Z.json",
     "exit_gate": {
       "all_deliverables_landed": false,
       "pilot_status_phase_0_fields_populated": true,
@@ -52,7 +97,13 @@
       "exit_gate_status": "OPEN",
       "closedAt": null,
       "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "verification_signal": null,
+      "expected_return_signals": [
+        "pm-p0-kd1-brownfield-inventory-complete-<UTC>.json (architect/system-auditor)",
+        "pm-p0-kd2-bug-inventory-entry-complete-<UTC>.json (system-auditor)",
+        "pm-p0-kd3-agent-flow-baking-complete-<UTC>.json (agent-father)",
+        "pm-p0-kd4-phase1-task-plan-complete-<UTC>.json (architect)"
+      ]
     }
   },
 
