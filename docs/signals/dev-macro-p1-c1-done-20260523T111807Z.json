@@ -1,0 +1,60 @@
+{
+  "task_id": "P1-C1",
+  "agent": "dev-macro-indicators",
+  "status": "DONE",
+  "timestamp_utc": "2026-05-23T11:18:07Z",
+  "impl_commit_sha": "ac92ef56",
+  "signal_commit_sha": null,
+  "ac_verdicts": {
+    "AC-1": "PASS",
+    "AC-2": "PASS",
+    "AC-3": "PASS",
+    "AC-4": "PASS",
+    "AC-5": "PASS",
+    "AC-6": "PASS"
+  },
+  "gates": {
+    "R1_grep_count": 0,
+    "R1_grep_exit": 1,
+    "fence_b_grep_count": 0,
+    "fence_b_grep_exit": 1,
+    "G12_sandbox_module_tier": {
+      "command": "go run ./cmd/sandbox -tier=module -module=macro-indicators -scenario=all",
+      "exit_code": 0,
+      "output": "total=1 pass=1 fail=0 status=OK",
+      "scenario_results": [
+        {"scenario": "macro-signals-golden.json", "result": "PASS"}
+      ]
+    },
+    "G12_sandbox_all_tier": {
+      "command": "go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all",
+      "exit_code": 0,
+      "output": "total=4 pass=4 fail=0 status=OK",
+      "scenario_results": [
+        {"scenario": "macro-investment-clock-edge.json", "result": "PASS"},
+        {"scenario": "macro-investment-clock-failure.json", "result": "PASS"},
+        {"scenario": "macro-investment-clock-golden.json", "result": "PASS"},
+        {"scenario": "macro-signals-golden.json", "result": "PASS"}
+      ]
+    },
+    "golangci_lint_exit": 0,
+    "golangci_lint_issues": 0,
+    "go_test_all_exit": 0,
+    "anchor_pre_commit": 0,
+    "anchor_post_commit": 0
+  },
+  "files_staged": [
+    "apps/macro-indicators/pkg/module/macro_signals/macro_signals.go",
+    "apps/macro-indicators/pkg/module/macro_signals/macro_signals_test.go",
+    "docs/scenarios/macro-indicators/module/macro-signals-golden.json",
+    "apps/macro-indicators/cmd/sandbox/main.go"
+  ],
+  "deviations": [
+    {
+      "description": "Handoff specifies docs/scenarios/macro-indicators/modules/ (plural). Sandbox code uses docs/scenarios/macro-indicators/module/ (singular). Used singular to match sandbox runtime — authoritative.",
+      "severity": "LOW",
+      "justification": "Sandbox discoverScenarios hardcodes 'module' (singular). Creating under the wrong path would cause G12 sandbox to silently find 0 scenarios (empty = OK exit, not a green scenario). Chose runtime-correct path."
+    }
+  ],
+  "next_tasks": ["P1-D1", "P1-D2", "P1-E1"]
+}
