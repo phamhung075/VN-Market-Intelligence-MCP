@@ -1,6 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 00:00 UTC (kinh-dich pilot-4 charter v2.0 + SSOT) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 23:04 UTC (P0-KD-1 brownfield inventory, R-FENCE VIABLE) | **Sprint:** fleet-factory-rollout program
+
+## P0-KD-1 brownfield inventory cycle (2026-05-24T23:04Z) — kinh-dich pilot-4 Phase 0
+
+**Task:** Read-only audit of apps/kinh-dich-service — DDD layer map, primitive candidates, module design, MCP handler audit, R-FENCE confirmation.
+
+**Key findings:**
+- All 4 DDD layers confirmed present and clean. domain/services.ts is the monolithic decomposition target (513 lines, all pure compute). Zero infra imports in domain or application layers.
+- 5 primitive candidates all confirmed extractable from domain/services.ts (line numbers verified): hexagram-resolver (L272-281), hao-encoder (L245-266), ngu-hanh-classifier (L340-369, already exported), reading-scorer (L301-332), nuclear-hexagram-computer (L283-295).
+- Module candidate: reading_composer. MarkovPort already exists as KinhDichRepositoryPort.getMarkovData() in domain/repositories.ts — no new interface needed.
+- R-FENCE verdict: VIABLE. .js suffix confirmed in all domain/application/interface imports. eslint-plugin-boundaries element patterns will match resolved source paths. G4 deliberate-violation pair confirmed: hexagram-resolver (will exist) + ReadingRequest from src/application/dtos.ts (exists now).
+- HIGH-RISK G5b finding: mcp-server has a PARALLEL COPY of kinhDich domain (apps/mcp-server/src/domain/services/kinhDich/, 11 files). All 6 MCP kinh-dich tools (get_kinhdich_reading, get_market_hexagram, get_hexagram_history, get_transition_probabilities, run_hexagram_backtest, explain_hexagram) use direct domain imports — NOT HTTP. 4 new endpoints needed on kinh-dich-service for full G5b rewire.
+- Minor: config.ts uses process.env instead of Bun.env (dev-standards violation).
+
+**Files authored this cycle (L84 — 2 files):**
+1. `docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md` (NEW — in commit 7d5e8784 via PM co-commit)
+2. `docs/signals/architect-kinh-dich-p0-kd-1-done-20260524T230418Z.json` (NEW — commit 335f037a)
+
+**Commits:** brownfield doc: 7d5e8784 | signal: 335f037a
+
+---
 
 ## kinh-dich pilot-4 charter cycle (2026-05-24T00:00Z) — pilot-4 Day 0
 
