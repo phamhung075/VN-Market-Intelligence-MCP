@@ -16,32 +16,47 @@
   "language": "Go",
   "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user verdict generalizes to macro-indicators",
   "languageLockedAt": "2026-05-22 (parent decision)",
-  "phase": "0",
+  "phase": "1",
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "openedAt": "2026-05-23T09:38:57Z",
     "openedBy": "po (cycle-29 atomic kickoff)",
+    "closedAt": "2026-05-23T10:05:08Z",
+    "closedBy": "po (cycle-30 atomic close — all 5 architect deliverables verified)",
     "owner": "architect + system-auditor + agent-father",
     "deliverables": {
       "pilot_status_ssot": "DONE 2026-05-23T09:38:57Z (this file)",
-      "brownfield_inventory": "PENDING (architect or system-auditor — docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md)",
-      "bug_inventory_macro_entry": "PENDING (system-auditor — extend docs/data/bug-inventory.json with macro-specific bugs from last 60 days)",
-      "dev_macro_indicators_agent_file": "PENDING (agent-father — .claude/agents/dev-macro-indicators.md)",
-      "dev_macro_indicators_flow_file": "PENDING (agent-father — .claude/flows/dev-macro-indicators/main.md with G12 DoD Gate baked in from Day 0)",
-      "phase_1_task_plan_go": "PENDING (architect — docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md)"
+      "brownfield_inventory": "DONE 2026-05-23T11:55Z @ db0c0ba7 — docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md (1936 LOC scanned, DDD clean, R-1 + R-3 flagged HIGH)",
+      "bug_inventory_macro_entry": "DONE 2026-05-23T11:55Z @ db0c0ba7 — docs/data/bug-inventory.json macro_indicators_baseline block added; baselineCycleCount=1.3 (system-wide fallback, zero macro bugs in 60d window)",
+      "dev_macro_indicators_agent_file": "DONE 2026-05-23T11:59Z @ db0c0ba7 — .claude/agents/dev-macro-indicators.md v2026-05-23 (Go primary mode, G12 DoD constraint, 3 new lazy_load entries)",
+      "dev_macro_indicators_flow_file": "DONE 2026-05-23T12:00Z @ db0c0ba7 — .claude/flows/dev-macro-indicators/main.md (G12 DoD Gate Day-0 baked, Language Mode table, FRED_API_KEY explicit security clause, Fence-A/B/C, pre-revert tag protocol)",
+      "phase_1_task_plan_go": "DONE 2026-05-23T11:58Z @ db0c0ba7 — docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md (11 atomic tasks P1-A1..E2, per-task AC, WIP=1, R-1 fix mandated in P1-B1 AC-6)"
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
-      "pilot_status_phase_0_fields_populated": false,
+      "all_deliverables_landed": true,
+      "pilot_status_phase_0_fields_populated": true,
       "no_code_in_apps_macro_indicators_pkg_yet": true,
-      "exit_gate_status": "OPEN"
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-23T10:05:08Z",
+      "verification_commit_sha_architect": "db0c0ba7 + af71de22 (completion signal)",
+      "verification_signal": "docs/signals/architect-macro-phase0-done-20260523T100234Z.json"
     }
   },
   "phase1": {
-    "status": "NOT-STARTED",
-    "blockedBy": "phase0.exit_gate",
+    "status": "ACTIVE",
+    "openedAt": "2026-05-23T10:05:08Z",
+    "openedBy": "po cycle-30 (Phase 0 atomic close — Phase 1 dispatch to pm for P1-A1)",
+    "blockedBy": null,
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 1",
-    "expansion_owner": "architect (expands skeleton into phase-1-task-plan-go.md atomic tasks at Phase 0 close)"
+    "task_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
+    "wip_limit": 1,
+    "first_task": "P1-A1 (go.mod + go.sum)",
+    "first_task_dispatch_owner": "pm (creates handoff doc + WIP-1 enforcement; forwards to dev-macro-indicators)",
+    "expansion_owner": "architect (Phase 2 task plan at Phase 1 close after PO go/no-go gate)",
+    "risk_propagation": {
+      "R-1": "Math.random() in scoreIndicator() — MUST be fixed in P1-B1 AC-6 (already baked into task plan). PM dispatch handoff doc MUST include explicit R-1 reminder when P1-A5 completes (B1 forward-warning).",
+      "R-3": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass macro-indicators HTTP via direct domain imports in mcp-server. Phase 2 P2-B spec MUST explicitly include mcp-server tool handler rewire (apps/mcp-server/src/interface/mcp/tools/macro/) — NOT just apps/macro-indicators/src/ git mv. Noted for architect when Phase 2 task plan expanded."
+    }
   },
   "phase2": {
     "status": "NOT-STARTED",
@@ -103,6 +118,23 @@
         "All work on main (no branches)",
         "Parent pilot-status.json UNTOUCHED (FROZEN historical record)",
         "Charter §4.5 carry-over: pilot-status-macro-indicators.json created with all 12 goals = TBD + decisionMatrix all TBD (matrix populates ONLY at brief close)"
+      ]
+    },
+    {
+      "timestamp": "2026-05-23T10:05:08Z",
+      "cycle": "c282 cycle-30",
+      "decision": "Phase 0 atomically CLOSED (5/5 architect deliverables verified). Phase 1 OPENED. Dispatch pm to author P1-A1 handoff doc (go.mod + go.sum) for dev-macro-indicators. R-1 + R-3 risk flags propagated into pilot-status phase1.risk_propagation for survivability.",
+      "rationale": "Verification of architect completion signal (architect-macro-phase0-done-20260523T100234Z.json) confirmed all 5 deliverables landed at commits db0c0ba7 + af71de22 with anchor 1776df8e held: D1 brownfield (16.9KB), D2 bug-inventory macro_indicators_baseline block, D3 agent v2026-05-23 Go primary, D4 flow with G12 DoD Gate Day-0 baked + FRED_API_KEY explicit + Fence-A/B/C, D5 phase-1-task-plan-go.md (11 atomic tasks, per-task AC, sequencing diagram, exit gate). Phase 1 task plan is dispatch-ready without further BA/PM decomposition — each task has 4-7 explicit ACs, file paths, smoke gates. PM dispatched (not directly dev-macro-indicators) because charter wip_limit.phase_1_dev_team=1 requires WIP-1 lock + handoff doc authorship discipline. R-1 (Math.random in scoreIndicator) is already baked into P1-B1 AC-6, but PM must explicitly forward-warn dev on P1-A5 close. R-3 (4 MCP tools bypass HTTP via direct domain imports in mcp-server) is Phase 2 P2-B scope expansion — flagged for architect when Phase 2 plan expands at Phase 1 close gate.",
+      "action": "Authored: (1) flipped phase0 deliverables PENDING→DONE with commit refs; (2) flipped phase0.status OPEN→CLOSED + exit_gate CLOSED; (3) flipped phase 0→1 + phase1.status NOT-STARTED→ACTIVE; (4) added phase1.risk_propagation block with R-1 + R-3 verbatim; (5) appended this decision log entry; (6) wrote dispatch signal docs/signals/po-macro-pm-dispatch-p1-a1-20260523T100508Z.json; (7) overwrote PO notebook to cycle-30 state.",
+      "constraints_held": [
+        "L84 explicit-file staging (3 files explicitly staged: pilot-status JSON, dispatch signal, notebook)",
+        "No --force, no --no-verify, no push",
+        "All work on main (no branches)",
+        "Anchor 1776df8e held (no retag, no rewrite)",
+        "Parent pilot-status.json UNTOUCHED (FROZEN historical record)",
+        "Charter §4.5 matrix-authorship: decisionMatrix remains all TBD (populates only at 12/12 terminal)",
+        "SSOT one-active-dispatch-per-task: phase1 has single P1-A1 dispatch via PM",
+        "R-1 + R-3 propagated to pilot-status phase1.risk_propagation block (survives across cycles even if signal file is purged)"
       ]
     }
   ]

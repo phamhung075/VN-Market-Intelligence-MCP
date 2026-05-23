@@ -1,0 +1,83 @@
+{
+  "from": "po",
+  "to": "pm",
+  "type": "phase1-first-task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T10:05:08Z",
+  "cycle": "c282 cycle-30",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "commit_anchor": "1776df8e (held — no rebase, no force)",
+  "phase0_close_commit_sha": "<set on commit>",
+  "consumed_signal": "docs/signals/architect-macro-phase0-done-20260523T100234Z.json",
+  "phase0_close": {
+    "status": "CLOSED",
+    "closed_at": "2026-05-23T10:05:08Z",
+    "all_5_deliverables_verified": true,
+    "architect_commits": ["db0c0ba7", "af71de22"]
+  },
+  "dispatch_target_task": {
+    "id": "P1-A1",
+    "title": "Create apps/macro-indicators/go.mod + go.sum (Go 1.22, chi + modernc-sqlite deps)",
+    "spec_source": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md §P1-A1",
+    "owner_agent": "dev-macro-indicators",
+    "estimate": "15m",
+    "ac_count": 4,
+    "files_touched": [
+      "apps/macro-indicators/go.mod (CREATE)",
+      "apps/macro-indicators/go.sum (GENERATED via go mod tidy)"
+    ],
+    "blocks": "P1-A2",
+    "blocked_by": null
+  },
+  "pm_actions_required": [
+    "1. Read docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md §P1-A1 (full AC list)",
+    "2. Author handoff doc docs/handoffs/TASK_P1-A1.md (use TA pilot handoff format as template — refer to docs/handoffs/TASK_P2-B1.md for pattern)",
+    "3. Embed verbatim AC-1..AC-4 from phase-1-task-plan-go.md §P1-A1",
+    "4. Confirm OQ-5 resolution: go-chi/chi pinned at v5.2.1 (verify alert-engine go.mod still shows v5.2.1 before dispatch)",
+    "5. Set WIP=1 lock on phase1 (charter wip_limit.phase_1_dev_team=1) — no other dev-macro-indicators task may dispatch until P1-A1 returns DONE + QA-green",
+    "6. Dispatch dev-macro-indicators via task-lock skill (.claude/skills/dispatch-claim/SKILL.md)",
+    "7. Forward-warn in TASK_P1-A1.md handoff: 'After this task closes, next 4 tasks A2..A5 build the Go scaffold. P1-B1 (the first primitive — macro-investment-clock) MUST replace TS scoreIndicator() Math.random() with deterministic tier lookup per R-1 (HIGH). AC-6 of P1-B1 is the hard gate. Architect risk flag R-1 is non-negotiable.'"
+  ],
+  "risk_flags_propagated": [
+    {
+      "id": "R-1",
+      "severity": "HIGH",
+      "description": "Math.random() in scoreIndicator() at src/domain/services.ts — non-deterministic domain logic. Go rewrite must use deterministic tier lookup (VN_DIRECT=8, REGIONAL=5, US_DOMESTIC=2 per phase-1-task-plan §P1-B1 design).",
+      "binding_on_task": "P1-B1 AC-6 (grep -c 'Math.random|rand.Intn|rand.Float' pkg/primitive/macro_investment_clock/*.go must return 0)",
+      "pm_responsibility": "Forward-warn dev-macro-indicators in EVERY handoff from P1-A1 onward — must not be lost between A-bucket and B-bucket dispatches",
+      "po_tracking_location": "pilot-status-macro-indicators.json phase1.risk_propagation.R-1"
+    },
+    {
+      "id": "R-3",
+      "severity": "HIGH",
+      "description": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass macro-indicators HTTP layer entirely via direct domain imports in mcp-server. G5b rewire is more complex than TA's simple HTTP swap — must include mcp-server tool handler rewire (apps/mcp-server/src/interface/mcp/tools/macro/), NOT just apps/macro-indicators/src/ git mv.",
+      "binding_on_task": "Phase 2 P2-B spec expansion (architect-owned at Phase 1 close gate, not dev's job in Phase 1)",
+      "pm_responsibility": "Note in TASK_P1-A1.md handoff under '## Phase 2 forward-look' section — do NOT instruct dev on it (out of Phase 1 scope), but ensure architect sees the note when Phase 2 plan expands",
+      "po_tracking_location": "pilot-status-macro-indicators.json phase1.risk_propagation.R-3"
+    }
+  ],
+  "constraints_binding": [
+    "L84 explicit-file staging (git add per file; NEVER -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push of source/CI changes (local-only)",
+    "All work on main (NO branches)",
+    "Anchor 1776df8e held (no retag, no rewrite)",
+    "SSOT: one active dispatch per task — P1-A1 is the single open dispatch",
+    "WIP=1 phase 1 cap (charter wip_limit.phase_1_dev_team=1)",
+    "G12 DoD Gate (sandbox green BEFORE commit) — kicks in at P1-B1 onward (P1-A1..A5 are scaffold-only, no sandbox to run yet)",
+    "Charter §4.5 matrix-authorship: PO-only, atomic with 12/12 — decisionMatrix stays TBD until then"
+  ],
+  "phase_plan_owner_next": {
+    "phase_1_a_bucket": "pm dispatches dev-macro-indicators P1-A1..A5 sequentially (WIP=1)",
+    "phase_1_b_bucket": "P1-B1 dispatch carries R-1 hard AC forward",
+    "phase_1_exit_gate": "PO Go/No-Go after P1-E2 close (4 criteria per phase-1-task-plan §Phase 1 Exit Gate)",
+    "phase_2": "architect expands Phase 2 task plan at Phase 1 close (R-3 expansion required)",
+    "phase_3": "po atomic close after 12/12 G-goals terminal"
+  },
+  "po_signature": {
+    "agent": "po",
+    "cycle": "c282 cycle-30",
+    "decisionLogRef": "docs/data/pilot-status-macro-indicators.json $.poDecisionLog[1] (timestamp 2026-05-23T10:05:08Z)"
+  }
+}
