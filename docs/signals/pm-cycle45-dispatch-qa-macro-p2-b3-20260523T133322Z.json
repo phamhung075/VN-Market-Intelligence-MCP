@@ -1,0 +1,32 @@
+{
+  "from": "pm",
+  "to": "qa",
+  "type": "dispatch",
+  "cycle": "c282-cycle-45",
+  "timestamp": "2026-05-23T13:33:22Z",
+  "task_id": "P2-B3",
+  "task_title": "G5 Terminal Verification (G5b HTTP + G5c zero TODO)",
+  "handoff_path": "docs/handoffs/TASK_P2-B3-macro.md",
+  "phase": "2",
+  "goal_linkage": "G5 (terminal verification only)",
+  "pre_conditions": [
+    "P2-B2 DONE (TS deprecation complete)",
+    "P2-B1 DONE (MCP HTTP rewire complete)",
+    "Anchor 1776df8e held (pre-dispatch verified)"
+  ],
+  "acceptance_criteria_count": 4,
+  "wip_check": "1/1 (phase_2_qa: no active QA task before this dispatch)",
+  "anchor": "1776df8e",
+  "anchor_held_pre": true,
+  "hard_gates": {
+    "r1_determinism": "EXIT:1 (pre-verified)",
+    "golangci_lint": "EXIT:0 (pre-verified)",
+    "sandbox_all_tier": "EXIT:0, total=5 pass=5 fail=0 (pre-verified)"
+  },
+  "critical_path": true,
+  "estimated_hours": 0.25,
+  "blockers": [],
+  "notes": "P2-B3 is QA-only verification task (no code changes). Verify G5b HTTP routing (zero direct domain imports in MCP handlers) + G5c TODO sweep (zero TODO.*migrat references). Post-completion, PM flips G5 status TBD → YES and dispatches P2-X1 (5 remaining primitives expansion). WIP=1 enforced: QA owns single slot.",
+  "completion_signal_format": "docs/signals/qa-macro-p2-b3-green-<UTC>.json (structure defined in TASK handoff AC-4)",
+  "downstream_owner_on_completion": "pm (G5 status flip + P2-X1 dispatch)"
+}

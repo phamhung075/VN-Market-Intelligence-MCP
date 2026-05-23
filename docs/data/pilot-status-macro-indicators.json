@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-B2",
+    "activeTask": "P2-B3",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -494,18 +494,27 @@
         "env_audit": "CLEAN (no FRED_API_KEY in CI yaml diff, exit 1)"
       },
       "P2-B2": {
-        "status": "IN-PROGRESS",
+        "status": "DONE",
         "title": "Pre-delete tag + git mv src/ src/_deprecated/ (G5a TS Deprecation)",
         "dispatch_timestamp": "2026-05-23T15:22:06Z",
         "dispatch_commit_sha": "will-be-set-after-pm-dispatch-commit",
         "handoff_doc": "docs/handoffs/TASK_P2-B2-macro.md",
         "dispatch_signal": "docs/signals/pm-cycle44-dispatch-dev-macro-indicators-p2-b2-20260523T152206Z.json",
+        "impl_commit": "6ec6639f",
+        "dev_signal": "docs/signals/dev-macro-p2-b2-done-ef93ad15.json",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T15:30:00Z",
+        "qa_signal": "docs/signals/qa-p2-b2-macro-GREEN-20260523T153000Z.json",
+        "completed_at": "2026-05-23T13:33:22Z",
+        "completed_by": "pm c282-cycle-45 (closure + P2-B3 dispatch)",
+        "macro_pre_delete_tag_sha": "37f79c96ca3896e839fd18289c73a788cf3a57ee",
         "description": "Pre-delete tag + git mv src/ src/_deprecated/ (TS deprecation, history preserved via git mv, scrapers sidecar kept). Unblocks P2-B3 (G5 verification) + P2-X1 (primitives expansion). WIP=1. Critical path.",
         "goal_path": "G5a",
         "blocked_by": "P2-A2 DONE",
         "unblocks": "P2-B3 (qa verification)",
         "estimate_hours": 0.5,
-        "ac_count": 8
+        "ac_count": 8,
+        "ac_results": "8/8 PASS (all ACs satisfied: tag created + 11 TS files moved + 8 scrapers preserved + Go build clean + G12 sandbox 5/5 pass + R-1 exit 1 + anchor held pre/post + TA untouched)"
       }
     },
     "observations": [

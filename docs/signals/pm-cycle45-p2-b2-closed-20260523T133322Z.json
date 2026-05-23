@@ -1,0 +1,29 @@
+{
+  "from": "pm",
+  "type": "pm-close",
+  "cycle": "c282-cycle-45",
+  "timestamp": "2026-05-23T13:33:22Z",
+  "task_id": "P2-B2",
+  "status": "CLOSED",
+  "qa_verdict": "GREEN",
+  "qa_signal": "docs/signals/qa-p2-b2-macro-GREEN-20260523T153000Z.json",
+  "qa_verified_at": "2026-05-23T15:30:00Z",
+  "dev_impl_commit": "6ec6639f",
+  "dev_signal_commit": "ef93ad15",
+  "macro_pre_delete_tag_sha": "37f79c96ca3896e839fd18289c73a788cf3a57ee",
+  "anchor_held_pre": true,
+  "anchor_held_post": true,
+  "hard_gates": {
+    "r1_determinism_grep": 1,
+    "golangci_lint": 0,
+    "sandbox_status": "OK",
+    "sandbox_total": 5,
+    "sandbox_pass": 5,
+    "sandbox_fail": 0
+  },
+  "decision_matrix_touched": false,
+  "g5_status_flipped": false,
+  "g5_terminal_deferred_to": "P2-B3",
+  "next_active_task": "P2-B3",
+  "notes": "P2-B2 (git mv TS deprecation) verified GREEN by QA. All 8 ACs PASS. 11 TS files moved to _deprecated/, 8 scrapers preserved, Go build clean, G12 sandbox all-tier 5/5 pass, R-1 determinism clear, anchor 1776df8e held pre/post, TA zone untouched. Charter §4.5 binding: decisionMatrix fields untouched. G5 status NOT flipped at P2-B2 close — terminal G5 flip deferred to P2-B3 (QA verification task). WIP=1 enforced: P2-B3 becomes sole active task on phase_2 after this close."
+}
