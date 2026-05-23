@@ -1,30 +1,260 @@
-// Package main — stock-price sandbox.
+// Package main — stock-price sandbox scenario runner.
+//
+// Usage:
+//
+//	go run ./cmd/sandbox -tier=primitive -module=stock-price -scenario=all
+//	go run ./cmd/sandbox -tier=module    -module=stock-price -scenario=all
+//	go run ./cmd/sandbox -tier=all       -module=stock-price -scenario=all
+//	go run ./cmd/sandbox -tier=primitive -module=stock-price -scenario=docs/scenarios/stock-price/primitives/price-quote-normalizer-golden.json
+//
+// Security contract:
+//   - Zero DB access. Zero network calls. Zero API keys.
+//   - Reads scenario JSON from docs/scenarios/stock-price/ only.
+//   - All computation via pkg/primitive/* and pkg/module/* (pure functions, P1-B1+).
 //
 // R-CGO gate: this binary MUST build and run under CGO_ENABLED=0.
 // Zero mattn/go-sqlite3 imports, zero C pragmas, zero CGO dependencies.
 // Scenario JSON fixtures stand in for tier-fetch results.
-// Phase 1 will expand this stub as primitives + module are extracted.
 //
-// Usage: CGO_ENABLED=0 go run ./cmd/sandbox [-help]
+// P1-A  — sandbox harness CLI with full flag/discovery/dispatch framework.
+//          No primitive executors yet (wired in P1-B1+).
+// P1-B1 — wire executePrimitive to price_quote_normalizer.NormalizeQuote.
+// P1-B2 — wire executePrimitive to tier_fallback_selector.SelectWinningTier.
+// P1-B3 — wire executePrimitive to price_staleness_classifier.ClassifyStaleness.
+// P1-C  — wire executeModule to price_resolution.Resolve via TierFetcher port.
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
 )
 
-func main() {
-	help := flag.Bool("help", false, "Show usage")
-	flag.Parse()
+// ---------------------------------------------------------------------------
+// Scenario envelope
+// ---------------------------------------------------------------------------
 
-	if *help {
-		fmt.Println("stock-price sandbox — R-CGO verified")
-		fmt.Println("Usage: CGO_ENABLED=0 go run ./cmd/sandbox [-help]")
-		fmt.Println()
-		fmt.Println("Phase 0 stub: confirms zero CGO in primitive/module/sandbox layers.")
-		fmt.Println("Phase 1 will add: -tier=primitive -module=stock-price -scenario=all")
-		return
+// Scenario holds metadata discovered during filesystem walk.
+type Scenario struct {
+	Path string
+	Name string
+	Tier string // "primitive" | "module"
+}
+
+// ---------------------------------------------------------------------------
+// Repo root resolution
+// ---------------------------------------------------------------------------
+
+// findRepoRoot walks up from start until it finds the docs/scenarios directory,
+// then returns that directory as the repo root. Returns "" if not found.
+func findRepoRoot(start string) string {
+	dir := start
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "docs", "scenarios")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return ""
+}
+
+// ---------------------------------------------------------------------------
+// Scenario discovery
+// ---------------------------------------------------------------------------
+
+// discoverScenarios returns all *.json files in the requested tier dirs.
+// When -scenario=<filepath>, returns only that one path (resolved against repo root).
+// Returns empty slice (not error) when directories do not exist (pre-P1-B1 phase).
+func discoverScenarios(root, tier, scenarioArg string) ([]Scenario, error) {
+	// Single-file mode.
+	if scenarioArg != "all" && scenarioArg != "" {
+		p := scenarioArg
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(root, p)
+		}
+		t := "primitive"
+		if filepath.Dir(p) == filepath.Join(root, "docs", "scenarios", "stock-price", "module") {
+			t = "module"
+		}
+		return []Scenario{{Path: p, Name: filepath.Base(p), Tier: t}}, nil
 	}
 
-	fmt.Println("Stock-price sandbox: R-CGO verified — no CGO dependencies")
+	// Collect tier directories.
+	var dirs []struct{ path, tier string }
+	base := filepath.Join(root, "docs", "scenarios", "stock-price")
+	switch tier {
+	case "primitive":
+		dirs = append(dirs, struct{ path, tier string }{filepath.Join(base, "primitives"), "primitive"})
+	case "module":
+		dirs = append(dirs, struct{ path, tier string }{filepath.Join(base, "module"), "module"})
+	case "all":
+		dirs = append(dirs, struct{ path, tier string }{filepath.Join(base, "primitives"), "primitive"})
+		dirs = append(dirs, struct{ path, tier string }{filepath.Join(base, "module"), "module"})
+	default:
+		return nil, fmt.Errorf("unknown -tier %q: must be primitive|module|all", tier)
+	}
+
+	var scenarios []Scenario
+	for _, d := range dirs {
+		matches, err := filepath.Glob(filepath.Join(d.path, "*.json"))
+		if err != nil {
+			return nil, fmt.Errorf("glob %s: %w", d.path, err)
+		}
+		for _, m := range matches {
+			scenarios = append(scenarios, Scenario{
+				Path: m,
+				Name: filepath.Base(m),
+				Tier: d.tier,
+			})
+		}
+	}
+	return scenarios, nil
+}
+
+// ---------------------------------------------------------------------------
+// Execution — primitive dispatcher (P1-A framework; executors wired P1-B1+)
+// ---------------------------------------------------------------------------
+
+// executePrimitive dispatches a primitive scenario to the correct handler
+// based on the "primitive" field in the scenario JSON.
+// P1-A: no primitives exist yet — unknown primitive returns graceful warning (not panic).
+// P1-B1+: case blocks are added per primitive as they are extracted.
+func executePrimitive(s Scenario) (bool, error) {
+	data, err := os.ReadFile(s.Path)
+	if err != nil {
+		return false, fmt.Errorf("read %s: %w", s.Path, err)
+	}
+
+	// Peek at the "primitive" field to dispatch.
+	var envelope struct {
+		Primitive string `json:"primitive"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return false, fmt.Errorf("peek primitive field in %s: %w", s.Name, err)
+	}
+
+	switch envelope.Primitive {
+	// P1-B1: case "price_quote_normalizer": return executePriceQuoteNormalizer(data)
+	// P1-B2: case "tier_fallback_selector": return executeTierFallbackSelector(data)
+	// P1-B3: case "price_staleness_classifier": return executePriceStalenessClassifier(data)
+	case "":
+		return false, fmt.Errorf("scenario %q: missing 'primitive' field", s.Name)
+	default:
+		return false, fmt.Errorf("primitive %q in %s not yet wired (add executor in P1-B1+)", envelope.Primitive, s.Name)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Execution — module dispatcher (P1-A framework; executors wired P1-C+)
+// ---------------------------------------------------------------------------
+
+// executeModule dispatches a module scenario to the correct handler
+// based on the "module" field in the scenario JSON.
+// P1-A: no modules exist yet — unknown module returns graceful warning (not panic).
+// P1-C+: case blocks are added per module as they are implemented.
+func executeModule(s Scenario) (bool, error) {
+	data, err := os.ReadFile(s.Path)
+	if err != nil {
+		return false, fmt.Errorf("read %s: %w", s.Path, err)
+	}
+
+	// Peek at the "module" field to dispatch.
+	var envelope struct {
+		Module string `json:"module"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return false, fmt.Errorf("peek module field in %s: %w", s.Name, err)
+	}
+
+	switch envelope.Module {
+	// P1-C: case "price_resolution": return executePriceResolution(data)
+	case "":
+		return false, fmt.Errorf("scenario %q: missing 'module' field", s.Name)
+	default:
+		return false, fmt.Errorf("module %q in %s not yet wired (add executor in P1-C+)", envelope.Module, s.Name)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	tierFlag := flag.String("tier", "", "primitive | module | all")
+	moduleFlag := flag.String("module", "", "module identifier, e.g. stock-price")
+	scenarioFlag := flag.String("scenario", "all", "all | <filepath>")
+	flag.Parse()
+
+	if *tierFlag == "" || *moduleFlag == "" {
+		logger.Error("missing required flags", slog.String("required", "-tier and -module"))
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Error("getwd failed", slog.Any("err", err))
+		os.Exit(1)
+	}
+	root := findRepoRoot(cwd)
+	if root == "" {
+		logger.Error("cannot locate repo root (docs/scenarios not found)", slog.String("cwd", cwd))
+		os.Exit(1)
+	}
+
+	scenarios, err := discoverScenarios(root, *tierFlag, *scenarioFlag)
+	if err != nil {
+		logger.Error("scenario discovery failed", slog.Any("err", err))
+		os.Exit(1)
+	}
+
+	if len(scenarios) == 0 {
+		logger.Info("no scenarios discovered (expected during scaffold phase — P1-B1+ will create them)",
+			slog.String("tier", *tierFlag),
+			slog.String("module", *moduleFlag),
+		)
+		fmt.Printf("total=0 pass=0 fail=0 status=OK\n")
+		os.Exit(0)
+	}
+
+	pass, fail := 0, 0
+	for _, s := range scenarios {
+		var ok bool
+		var runErr error
+		switch s.Tier {
+		case "primitive":
+			ok, runErr = executePrimitive(s)
+		case "module":
+			ok, runErr = executeModule(s)
+		default:
+			runErr = fmt.Errorf("unknown tier %q", s.Tier)
+		}
+		if runErr != nil || !ok {
+			logger.Info("FAIL", slog.String("scenario", s.Name), slog.Any("reason", runErr))
+			fail++
+		} else {
+			logger.Info("PASS", slog.String("scenario", s.Name))
+			pass++
+		}
+	}
+
+	total := pass + fail
+	status := "OK"
+	if fail > 0 {
+		status = "FAIL"
+	}
+	fmt.Printf("total=%d pass=%d fail=%d status=%s\n", total, pass, fail, status)
+
+	if fail > 0 {
+		os.Exit(1)
+	}
 }
