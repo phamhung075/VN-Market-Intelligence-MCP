@@ -1,0 +1,36 @@
+{
+  "signal": "dev-macro-indicators-p2-a1-done",
+  "task_id": "P2-A1",
+  "owner": "dev-macro-indicators",
+  "completion_timestamp": "2026-05-23T13:00:00Z",
+  "commit_sha": "31597da4",
+  "acs_passed": {
+    "AC-1": "PASS — depguard enabled, fence-a/fence-b/fence-c named rules present (grep -c depguard = 3, grep -c fence-a|fence-b|fence-c = 3)",
+    "AC-2": "PASS — golangci-lint run exits 0 (0 issues on current codebase)",
+    "AC-3": "PASS — wc -l = 64 lines (limit: 80)",
+    "AC-4": "PASS — git log --oneline apps/macro-indicators/.golangci.yml shows only commit 31597da4 (freeze anchor established)",
+    "AC-5": "PASS — grep -rE 'math/rand|rand\\.Intn|rand\\.Float' apps/macro-indicators/pkg/ exits 1 (R-1 guard: zero matches)"
+  },
+  "golangci_lint_exit_code": 0,
+  "r1_grep_exit_code": 1,
+  "g12_sandbox_status": "total=5 pass=5 fail=0 status=OK",
+  "go_test_exit_code": 0,
+  "go_build_exit_code": 0,
+  "fence_rules_summary": {
+    "fence-a": "files: **/pkg/primitive/** — deny: module/application/interface/infrastructure layers. Primitive tier imports stdlib only.",
+    "fence-b": "files: **/pkg/module/** — deny: application/interface/infrastructure layers. Module tier imports stdlib + primitives only.",
+    "fence-c": "files: all except cmd/server/main.go and *_test.go — deny: infrastructure layer. Infrastructure importable only from composition root."
+  },
+  "anchor_check_pre": "exit 0 (1776df8e is ancestor of HEAD before commit)",
+  "anchor_check_post": "exit 0 (1776df8e is ancestor of HEAD after commit 31597da4)",
+  "file_staged_impl": "apps/macro-indicators/.golangci.yml (1 file only)",
+  "golangci_lint_version": "2.12.2",
+  "config_format": "golangci-lint v2 (version: '2', linters.settings.depguard, default: none)",
+  "fence_verification": {
+    "fence-a-fires": "CONFIRMED — deliberate application import in pkg/primitive/ caught: 'Fence-A: primitive must not import application layer'",
+    "fence-b-fires": "CONFIRMED — deliberate infrastructure import in pkg/module/ caught: 'Fence-B: module must not import infrastructure layer'",
+    "fence-c-fires": "CONFIRMED — deliberate infrastructure import in pkg/application/ caught: 'Fence-C: infrastructure wiring only allowed in cmd/server/main.go'",
+    "no_false_positives": "CONFIRMED — golangci-lint run on existing P1 code exits 0"
+  },
+  "next_task": "P2-A2 (CI job + deliberate violation proof + macro-pre-ci tag) — blocked until this signal received by PM"
+}
