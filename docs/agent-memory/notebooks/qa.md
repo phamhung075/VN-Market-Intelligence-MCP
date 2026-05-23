@@ -1,5 +1,46 @@
 # QA — Notebook
 
+## c282 cycle-53 · 2026-05-23 · macro P2-X4 dashboard data refresh (G9 unblock) — GREEN
+
+**Task:** P2-X4 — Dashboard Data Refresh (PRIMITIVES_DATA + MODULE_DATA + microservice panel) | **Verdict:** GREEN | **G9:** p2_c1_rerun_unblocked=true
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (dashboard-only HTML verification + G8 honest-red regression + hard gates)
+signal: docs/signals/qa-p2-x4-macro-GREEN-20260523T172900Z.json
+dev_commit: 535e7bdc
+option_used: B (Playwright unavailable — JS contract code-path inspection + sandbox run)
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Pre-flight anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| SSOT activeTask=P2-X4 | PASS | grep activeTask pilot-status-macro-indicators.json = "P2-X4" |
+| Commit 535e7bdc present | PASS | git log --oneline -5 confirms 535e7bdc at position 3 |
+| AC-1: 6 primitives in PRIMITIVES_DATA | PASS | grep -c '"primitive"' = 20 (>=18). All 6 distinct keys confirmed: investment_clock, oil, gold, usdvnd, carry, yield |
+| AC-2: macro_signals module with 2 scenarios | PASS | grep -c '"module"' = 4 (>=2). MODULE_DATA has golden + edge for macro_signals |
+| AC-3: no Loading placeholder | PASS | grep -q 'Loading…' → exit 1 (no match). Microservice panel body has NOT-RUN service card: port 5004, endpoints, DDD layers |
+| AC-4+AC-5: JS render contract (Option B) | PASS | dotClass() L1344-1347: FAIL→dot-red, OK→dot-green, else→dot-pending. applyPastedResult() L1477: status=FAIL→cardStatus='red'. PRIM_LABELS map covers all 6 primitives. Sandbox baseline 20/20 exit 0. All data entries status=NOT-RUN → zero false greens/reds on load. |
+| AC-6: dashboard-only scope | PASS | git show 535e7bdc --stat: only dashboard/index.html + dev signal file. pkg/cmd/scenarios/TA/charter all empty. |
+| AC-7: sandbox 20/20 at HEAD | PASS | go run ./cmd/sandbox -tier=all → total=20 pass=20 fail=0 status=OK exit 0 (QA independent run 17:26:52Z) |
+| G8 honest-red (Option B) | PASS | Corrupted macro-gold-direction-classifier-golden.json (BULLISH→BEARISH). Sandbox exit 1, total=20 pass=19 fail=1 status=FAIL. JS contract: status=FAIL→dot-red path verified (L1477). git checkout restore → md5 match 167c26e6dd782b25a4162d757236e757. Post-restore: exit 0, 20/20. git diff empty. |
+| R-1 no randomness | PASS | grep -rE math/rand\|rand.Intn\|rand.Float\|time.Now.*Seed pkg/ → exit 1 |
+| Fence-B module (app+infra) | PASS | grep -rnE application\|infrastructure in pkg/module/macro_signals/ → exit 1 |
+| Fence-B module (interface) | PASS | grep -rnE /interface in pkg/module/macro_signals/ → exit 1 |
+| Fence-C infra (pkg/) | PASS | grep -rnE /infrastructure in pkg/ excl. cmd/server/main.go → exit 1 |
+| Scenarios dir clean | PASS | git status -s docs/scenarios/macro-indicators/ → empty |
+| pkg/cmd clean | PASS | git status -s pkg/ cmd/ → empty |
+| TA untouched | PASS | git status -s apps/technical-analysis/ → only untracked .DS_Store (no tracked mutations) |
+| Anchor 1776df8e post | PASS | exit 0 (HELD) |
+
+**G8 regression:** PROVEN — corruption → exit 1 + FAIL; byte-identical restore (md5=167c26e6dd782b25a4162d757236e757); post-restore → exit 0 + 20/20; git diff empty.
+**p2_c1_rerun_unblocked:** true — dashboard now shows 6 primitives (was 1/6). PO Playwright rerun expected: primitive_groups_rendered=6, microservice card NOT-RUN.
+**Blocking issues:** 0 — all 7 ACs + all hard gates PASS.
+**NEXT:** PM cycle-53 — close P2-X4 + re-dispatch P2-C1 to po (append to existing decision doc).
+
+---
+
 ## c282 cycle-50 · 2026-05-23 · macro P2-F1 G8 honest-red dashboard proof — GREEN
 
 **Task:** P2-F1 — G8 Honest-Red Proof (Test A Corrupted + Test B Golden) | **Verdict:** GREEN | **G8:** ready_for_flip
