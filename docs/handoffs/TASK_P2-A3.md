@@ -75,3 +75,27 @@ No commit for this task — QA records evidence in handoff file.
 - Screenshot or log excerpt showing `go-lint: passed`
 - Timestamp of green CI run
 - Confirmation that `bun test` still passes (not broken by P2-A2 changes)
+
+---
+
+## Verification Attempts
+
+### Attempt 1 — 2026-05-23T01:18:30Z UTC (R-11 dispatch, fresh qa subagent, cycle-10)
+
+**Probe:** `gh run list --workflow=ci.yml --limit 10` and `gh run list --commit=fd423047`
+
+**Finding — BLOCKED, not verifiable:**
+- `gh run list --commit=fd423047` returns `[]` — no CI run exists for the A2 landing commit.
+- `git log origin/main..main --oneline | wc -l` = 18 commits ahead since fd423047 (local branch overall is ~66 commits ahead of `origin/main`).
+- `git show origin/main:.github/workflows/ci.yml` confirms the remote workflow file does NOT yet contain the `go-lint` job — that job ships in fd423047, which has not been pushed.
+- Most recent CI run on origin (run 26304884657, head `05e2bd6c`, 2026-05-22T18:23:54Z) preceded fd423047 and ran the bun-only ci.yml.
+
+**Root cause:** P2-A2 landed locally only. The push gate that would have triggered CI on fd423047 never fired. AC-1..AC-4 cannot be evaluated against a CI run that does not exist.
+
+**Scope-shrink option (gh workflow run ci.yml) rejected:** Triggering `workflow_dispatch` on origin/main would execute the pre-A2 ci.yml (no go-lint job) — would not verify A2's deliverable.
+
+**Path forward (PO decision required):**
+1. Push the 66-commit backlog (or at minimum a fast-forward through fd423047) so CI fires on the A2 landing — then re-run A3 verification against the resulting run URL.
+2. Alternative: cherry-pick fd423047 onto a verification branch, push that branch, trigger CI via PR, verify, then merge. (Heavier; not aligned with project "no branches" policy.)
+
+QA cannot push autonomously — push of 66 backlogged commits is a high-blast-radius action outside this WIP-1 status-check scope. Status-reply signal `qa-P2-A3-blocked-push-gate-20260523T012600Z.json` emitted.
