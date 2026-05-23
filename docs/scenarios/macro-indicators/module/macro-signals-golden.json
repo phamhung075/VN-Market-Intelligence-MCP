@@ -1,0 +1,33 @@
+{
+  "scenario_name": "macro-signals-golden",
+  "phase": "module",
+  "tier": "module",
+  "module": "macro_signals",
+  "description": "Batch classification through macro-signals module (1 primitive wired: macro-investment-clock)",
+  "input": {
+    "indicator_names": ["VN_CPI", "Unemployment_Rate", "Unknown"]
+  },
+  "expected_output": {
+    "batch_count": 3,
+    "classifications": [
+      {
+        "indicator": "VN_CPI",
+        "tier": "VN_DIRECT",
+        "score": 8,
+        "phase": "CORE_VN"
+      },
+      {
+        "indicator": "Unemployment_Rate",
+        "tier": "US_DOMESTIC",
+        "score": 2,
+        "phase": "US_DOMESTIC"
+      },
+      {
+        "indicator": "Unknown",
+        "tier": "US_DOMESTIC",
+        "score": 2,
+        "phase": "US_DOMESTIC"
+      }
+    ]
+  }
+}

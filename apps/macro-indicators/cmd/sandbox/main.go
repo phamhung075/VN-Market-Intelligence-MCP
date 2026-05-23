@@ -14,6 +14,7 @@
 //
 // P1-A3 — feat(macro-indicators): sandbox harness CLI (placeholder runner until P1-B1).
 // P1-B1 — wire executePrimitive to macro_investment_clock.Classify + executeFallback stubs.
+// P1-C1 — wire executeModule to macro_signals.ClassifyBatch via module tier.
 package main
 
 import (
@@ -25,6 +26,7 @@ import (
 	"path/filepath"
 
 	mic "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_investment_clock"
+	ms "github.com/vn-market-intelligence/macro-indicators/pkg/module/macro_signals"
 )
 
 // ---------------------------------------------------------------------------
@@ -206,10 +208,112 @@ func executePrimitive(s Scenario) (bool, error) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Module scenario JSON shapes (P1-C1 — macro_signals)
+// ---------------------------------------------------------------------------
+
+// macroSignalsClassification is one entry in the expected_output.classifications array.
+type macroSignalsClassification struct {
+	Indicator string `json:"indicator"`
+	Tier      string `json:"tier"`
+	Score     int    `json:"score"`
+	Phase     string `json:"phase"`
+}
+
+// macroSignalsScenario is the JSON envelope for macro-signals module scenario files.
+type macroSignalsScenario struct {
+	ScenarioName string `json:"scenario_name"`
+	Module       string `json:"module"`
+	Input        struct {
+		IndicatorNames []string `json:"indicator_names"`
+	} `json:"input"`
+	ExpectedOutput struct {
+		BatchCount      int                          `json:"batch_count"`
+		Classifications []macroSignalsClassification `json:"classifications"`
+	} `json:"expected_output"`
+}
+
+// concreteClock wraps the macro_investment_clock.Classify function to satisfy
+// the macro_signals.Classifier interface — allows the sandbox to wire the real
+// primitive without importing a mock or changing the module's public API.
+type concreteClock struct{}
+
+func (c *concreteClock) Classify(input mic.InvestmentClockInput) mic.InvestmentClockOutput {
+	return mic.Classify(input)
+}
+
+// executeMacroSignals runs a macro-signals module scenario.
+// It wires the concrete macro_investment_clock primitive (via concreteClock adapter),
+// calls ClassifyBatch, then compares results to expected_output.classifications.
+func executeMacroSignals(data []byte) (bool, error) {
+	var s macroSignalsScenario
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("unmarshal macro-signals scenario: %w", err)
+	}
+
+	sigs := ms.New(&concreteClock{})
+	results := sigs.ClassifyBatch(s.Input.IndicatorNames)
+
+	// Validate batch count.
+	if len(results) != s.ExpectedOutput.BatchCount {
+		return false, fmt.Errorf("batch_count: got %d, want %d", len(results), s.ExpectedOutput.BatchCount)
+	}
+
+	// Validate each classification against the expected list (positional).
+	for i, exp := range s.ExpectedOutput.Classifications {
+		if i >= len(results) {
+			return false, fmt.Errorf("classification[%d]: no result (got only %d)", i, len(results))
+		}
+		got := results[i]
+		var diffs []string
+		if got.Indicator != exp.Indicator {
+			diffs = append(diffs, fmt.Sprintf("Indicator: got %q, want %q", got.Indicator, exp.Indicator))
+		}
+		if got.Tier != exp.Tier {
+			diffs = append(diffs, fmt.Sprintf("Tier: got %q, want %q", got.Tier, exp.Tier))
+		}
+		if got.Score != exp.Score {
+			diffs = append(diffs, fmt.Sprintf("Score: got %d, want %d", got.Score, exp.Score))
+		}
+		if got.Phase != exp.Phase {
+			diffs = append(diffs, fmt.Sprintf("Phase: got %q, want %q", got.Phase, exp.Phase))
+		}
+		if len(diffs) > 0 {
+			return false, fmt.Errorf("classification[%d]: %v", i, diffs)
+		}
+	}
+
+	return true, nil
+}
+
 // executeModule runs a module scenario against pkg/module/* (wired in P1-C1).
-// TODO(P1-C1): unmarshal scenario JSON, dispatch to module function, compare to expected.
-func executeModule(_ Scenario) (bool, error) {
-	return false, fmt.Errorf("module scenarios not yet runnable: pkg/module/ wired in P1-C1")
+// Dispatches on the "module" field in the scenario JSON.
+func executeModule(s Scenario) (bool, error) {
+	data, err := os.ReadFile(s.Path)
+	if err != nil {
+		return false, fmt.Errorf("read %s: %w", s.Path, err)
+	}
+
+	// Peek at the "module" field to dispatch.
+	var envelope struct {
+		Module string `json:"module"`
+	}
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return false, fmt.Errorf("peek module field in %s: %w", s.Name, err)
+	}
+
+	switch envelope.Module {
+	case "macro_signals":
+		return executeMacroSignals(data)
+	case "":
+		// Backward-compat: infer from filename prefix.
+		if len(s.Name) >= len("macro-signals") && s.Name[:len("macro-signals")] == "macro-signals" {
+			return executeMacroSignals(data)
+		}
+		return false, fmt.Errorf("scenario %q: missing 'module' field and cannot infer from name", s.Name)
+	default:
+		return false, fmt.Errorf("unknown module %q in %s (not yet wired)", envelope.Module, s.Name)
+	}
 }
 
 // ---------------------------------------------------------------------------
