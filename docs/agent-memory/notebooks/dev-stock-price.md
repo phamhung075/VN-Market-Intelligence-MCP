@@ -2,6 +2,34 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-23 — P0-SP-5 R-CGO Confirmation CLEAR
+
+### What shipped (P0-SP-5 binding gate)
+
+R-CGO confirmation complete. Verdict: **CLEAR**. Phase 1 can proceed.
+
+**Evidence collected:**
+- AC-2: `CGO_ENABLED=0 go build -o ./cmd/sandbox/sandbox ./cmd/sandbox` — exit 0 PASS
+- AC-3: `grep -rn '"github.com/mattn/go-sqlite3"' pkg/domain/ pkg/application/ pkg/interface/` — 0 matches PASS
+- AC-4: `cmd/sandbox/main.go` did not exist — created minimal stub (flag+fmt, zero CGO). `grep -rn '"github.com/mattn/go-sqlite3"' cmd/sandbox/` — 0 matches PASS
+- AC-6: `CGO_ENABLED=0 go run ./cmd/sandbox -help` — exit 0, correct output PASS
+- Full test suite: `go test ./pkg/... -count=1` — 4/4 packages PASS, 0 regressions
+
+**CGO boundary confirmed:**
+- mattn/go-sqlite3 imported ONLY at `pkg/infrastructure/fetchers.go:15` and `fetchers_test.go:13` (Fence-C correct)
+- Zero mattn imports in domain, application, interface, or sandbox layers
+- Fence-A/B (primitive/module) N/A yet — they don't exist. Will be verified in P1-A1.
+
+**Commit:** `e9da9a7c` — `feat(stock-price/P0-SP-5): R-CGO confirmation CLEAR — sandbox stub + gate signal`
+
+**Signal:** `docs/signals/dev-stock-price-p0-sp5-r-cgo-confirmation-20260523T222111Z.json`
+
+**State for Phase 1:**
+- Phase 1 gate template ACs ready for P1-A1 (first primitive task)
+- `cmd/sandbox/main.go` stub created — Phase 1 will expand with `-tier=primitive -module=stock-price -scenario=all` flag support
+- No pkg/primitive/ or pkg/module/ exists yet (correct — Phase 0 boundary)
+- All 4 pkg/ test packages passing
+
 ## Session 2026-05-22 — 1971-STOCKPRICE-SCAN-ORDER-MISMATCH SHIPPED
 
 ### What shipped (SEV-1 hotfix)

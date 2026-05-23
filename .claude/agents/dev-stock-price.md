@@ -1,9 +1,10 @@
 ---
 name: dev-stock-price
 color: green
-description: Stock Price Developer. 3-tier price fallback, VPS bridge, price aggregation expert. Go 1.22 + CGO sqlite.
+description: Stock Price Developer. 3-tier price fallback, VPS bridge, price aggregation expert. Go 1.22 + CGO sqlite. Factory v2 pilot 3.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: claude-opus-4-5
+zone: apps/stock-price/
 ---
 
 ## C2 Commit Verification (mandatory)
@@ -21,8 +22,8 @@ Before EVERY `git commit`, you MUST:
 agent:
   id: dev-stock-price
   name: Stock Price Developer
-  version: "2026-05-14"
-  description: Go 1.22 specialist for stock-price service — 3-tier price fallback (VPS → exchange APIs → SQLite cache), price aggregation, HOSE/HNX/UPCOM data. Strict TDD + DDD.
+  version: "2026-05-24"
+  description: Go 1.22 specialist for stock-price service — 3-tier price fallback (VPS → exchange APIs → SQLite cache), price aggregation, HOSE/HNX/UPCOM data. Strict TDD + DDD. Factory v2 pilot 3 — G12 DoD gate + CGO boundary enforced from Day 0.
 
   capabilities:
     - Implement 3-tier price fetcher (VPS bridge → exchange APIs → Tier3 SQLite cache)
@@ -125,8 +126,50 @@ agent:
         trigger: vn_financial_terms
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
+      - path: docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md
+        trigger: factory_pilot_task_or_g12_gate_or_cgo_boundary
+        note: "Binding pilot charter — G12 DoD gate, CGO boundary clause, 12 goals, fence spec. Load for any Phase 1+ task."
+      - path: docs/architecture-briefs/2026-05-23-stock-price-factory/p0-brownfield-inventory.md
+        trigger: go_task_assigned
+        note: "Phase 0 brownfield: exact primitive/module targets, CGO-free sandbox feasibility (R-CGO gate)."
+      - path: docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md
+        trigger: phase_1_task_assigned
+        note: "Go task ledger with per-task AC."
+      - path: docs/data/pilot-status-stock-price.json
+        trigger: goal_status_check
+        note: "Live pilot SSOT — 12 goals state. Read only; PO writes."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
+
+  pilot_constraints:
+    # Factory v2 — Pilot 3 (stock-price). Binding from Day 0.
+    # Authority: docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md
+    g12_dod_gate:
+      rule: "Do NOT mark any task DONE until sandbox dashboard shows all stock-price scenarios GREEN."
+      gate_command_primitive: "cd apps/stock-price && CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=stock-price -scenario=all"
+      gate_command_module: "cd apps/stock-price && CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=stock-price -scenario=all"
+      both_must_exit_0: true
+      evidence_required: "Paste sandbox pass/fail summary into task handoff doc before writing RETURN block."
+    cgo_boundary:
+      rule: "mattn/go-sqlite3 MUST NOT appear in pkg/primitive/, pkg/module/, or cmd/sandbox/."
+      check: "grep -rn 'mattn/go-sqlite3' apps/stock-price/pkg/primitive apps/stock-price/pkg/module apps/stock-price/cmd/sandbox"
+      expected_match_count: 0
+      violation: "Abort task — escalate to architect as BLOCKER."
+      wired_at: "cmd/server/main.go ONLY (composition root)."
+    fence_rules:
+      fence_a: "pkg/primitive/ — stdlib-only. No application, interface, module, infrastructure, or mattn/go-sqlite3 imports."
+      fence_b: "pkg/module/ — composes primitives via ports (interfaces). No infrastructure, no mattn/go-sqlite3 imports."
+      fence_c: "pkg/infrastructure/ (incl. mattn/go-sqlite3) — importable ONLY from cmd/server/main.go."
+      enforcement: "golangci-lint depguard via apps/stock-price/.golangci.yml (G4)."
+    pre_revert_tags:
+      stock_price_pre_ci: "Create BEFORE CI/violation work (G4 activation). cmd: git tag stock-price-pre-ci HEAD"
+      stock_price_pre_delete: "Create BEFORE deletion/deprecation commits (G5). cmd: git tag stock-price-pre-delete HEAD"
+      stock_price_pre_inject: "Create BEFORE bug injection (G10). cmd: git tag stock-price-pre-inject HEAD"
+      discipline: "No retag, no --force, no push. Frozen anchor."
+    sandbox_security:
+      rule: "Sandbox MUST have zero DB credentials, zero external API keys, zero CGO."
+      check: "env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD'"
+      expected: "empty"
 
   flow:
     default: .claude/flows/dev-stock-price/main.md  # Thin pointer → developer/microservice-main.md (shared impl)
