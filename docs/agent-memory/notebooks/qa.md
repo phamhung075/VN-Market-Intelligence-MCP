@@ -1,5 +1,44 @@
 # QA — Notebook
 
+## c282 cycle-33 · 2026-05-23 · macro P1-C1 macro-signals module stub verification
+
+**Task:** P1-C1 — module stub macro-signals (G12 streak task #2 of 3) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json
+impl_commit: ac92ef56
+dev_signal_commit: 57b7381a
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: Signals struct + DI New(clock Classifier) + ClassifyBatch method | PASS | macro_signals.go L38 (struct), L45 (New), L52 (ClassifyBatch); local Classifier interface at L23 — dependency-inversion pattern, decoupled from primitive internals |
+| AC-2 Fence-B HARD GATE: zero app/interface/infra imports | PASS | FENCE_B_EXIT:1 (zero matches); only import is pkg/primitive/macro_investment_clock |
+| AC-3: Golden JSON singular path parses, no orphan plural | PASS | jq exit 0; content matches spec (3 classifications VN_DIRECT/US_DOMESTIC/US_DOMESTIC); plural path 'modules/' does not exist (exit 1) |
+| AC-4: Unit tests table-driven ≥3 rows, go test exit 0 | PASS | 4 test funcs, 11 sub-tests: ResultCount(4 rows), ClassificationValues(3 rows), NilInputReturnsEmpty, IndicatorNamePreserved — all PASS; MODULE_TEST_FRESH_EXIT:0 |
+| AC-5 G12 HARD GATE: sandbox module-tier exit 0 | PASS | go run ./cmd/sandbox -tier=module -module=macro-signals -scenario=all → total=1 pass=1 fail=0 status=OK exit 0 |
+| AC-5 G12 regression: sandbox all-tier exit 0 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=4 pass=4 fail=0 status=OK exit 0 (P1-B1 primitives still GREEN) |
+| AC-6 R-1 DEFENSIVE GATE: zero math/rand | PASS | R1_EXIT:1 (zero matches) |
+| golangci-lint | PASS | 0 issues, LINT_EXIT:0 |
+| go test ./... (full module regression) | PASS | 2 packages ok (macro_signals + macro_investment_clock), FULL_TEST_EXIT:0 |
+| Anchor 1776df8e pre-commit | PASS | merge-base --is-ancestor 1776df8e ac92ef56^ → exit 0 |
+| Anchor 1776df8e post-HEAD | PASS | merge-base --is-ancestor 1776df8e HEAD → exit 0 |
+| L84 impl commit ac92ef56 | PASS | 4 files: macro_signals.go + macro_signals_test.go + golden JSON + cmd/sandbox/main.go (module dispatch wire-in); all within apps/macro-indicators/ + docs/scenarios/ |
+| L84 signal commit 57b7381a | PASS | 1 file exactly (dev signal JSON) |
+| Forbidden zones | CLEAR | no technical-analysis, no .env, no FRED_API_KEY hardcoded |
+
+**D-1 (ACCEPTED):** Scenario path singular (module/) vs handoff spec plural (modules/). Sandbox runtime hardcodes singular. No orphan plural dir. QA accepts — runtime path is authoritative.
+**Fence-B GATE:** CLEAR — exit 1, zero matches. Module-layer isolation honored.
+**R-1 GATE:** CLEAR — exit 1, zero matches. Determinism mandate honored.
+**G12 DoD:** BINDING and GREEN — sandbox module-tier 1/1 PASS + all-tier 4/4 PASS. streak_completed=2/3.
+**Blocking issues:** 0 — all 6 ACs + all hard gates PASS.
+**NEXT:** pm — mark P1-C1 DONE, dispatch P1-E1 (G12 streak #3 of 3).
+
+---
+
 ## c282 cycle-32 · 2026-05-23 · macro P1-B1 macro-investment-clock first primitive verification
 
 **Task:** P1-B1 — macro-investment-clock (first primitive: deterministic tier lookup + table-driven test + 3 scenarios) | **Verdict:** GREEN

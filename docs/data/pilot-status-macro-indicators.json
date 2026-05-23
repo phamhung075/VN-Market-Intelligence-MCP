@@ -181,7 +181,7 @@
       {
         "timestamp": "2026-05-23T11:12:00Z",
         "task_id": "P1-C1",
-        "status": "DISPATCH",
+        "status": "DONE",
         "handoff": "docs/handoffs/TASK_P1-C1-macro.md",
         "signal": "docs/signals/pm-dispatch-dev-macro-p1-c1-20260523T111200Z.json",
         "description": "Module stub: macro-signals (Day 0 lesson L1 — thin composition, prove wiring pattern early). Imports macro-investment-clock via ports (DI), zero app/infra imports (Fence-B). 1.5h, 6 ACs, G12 streak #2.",
@@ -189,14 +189,22 @@
           "G12 DoD (AC-5 hard gate: go run ./cmd/sandbox -tier=module → exit 0, all scenarios PASS)",
           "R-1 propagated (AC-6 defensive grep: zero math/rand)"
         ],
-        "qa_verdict": null,
-        "qa_signal": null,
-        "qa_timestamp": null,
+        "qa_verdict": "GREEN",
+        "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json",
+        "qa_timestamp": "2026-05-23T11:21:03Z",
         "qa_commit": null,
-        "impl_commit": null,
-        "dev_signal_commit": null,
-        "ac_results": null,
-        "deviations": []
+        "impl_commit": "ac92ef56",
+        "dev_signal_commit": "57b7381a",
+        "ac_results": "6/6 PASS (Signals struct+DI constructor+ClassifyBatch + Fence-B exit 1 + golden JSON singular path + 11 sub-tests across 4 funcs + G12 sandbox module 1/1 PASS + all-tier 4/4 PASS + R-1 exit 1)",
+        "deviations": [
+          {
+            "id": "D-1",
+            "severity": "LOW",
+            "description": "Scenario path singular (docs/scenarios/macro-indicators/module/) vs handoff spec plural (modules/). Matches sandbox runtime hardcode. No orphan plural dir. QA accepted."
+          }
+        ],
+        "milestone": "G12 streak task #2 of 3 complete. Module layer composition proven. Unblocks P1-D1, P1-D2, P1-E1.",
+        "next_task_note": "P1-E1 is G12 streak #3 — sandbox must stay GREEN."
       }
     ],
     "risk_propagation": {
@@ -221,7 +229,7 @@
     {"id": "G9", "track": "B", "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-C", "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent."},
     {"id": "G10", "track": "C", "title": "AI agent fixes a primitive bug without looping (≤2 cycles)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-D", "calibration": "baselineCycleCount from docs/data/bug-inventory.json (macro entry — Phase 0 deliverable). Falls back to TA's 1.5 or system-wide 4-6. Pre-revert tag: macro-pre-inject before P2-D2."},
     {"id": "G11", "track": "C", "title": "Regression alarm bell works", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-E", "calibration": "Coupling-proven outcome-(a) for 2 trials = PASS per TA cycle-17 rubric."},
-    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + 2 Phase 2 dev tasks.", "g12Streak": {"required": 3, "completed": 1, "streakComplete": false, "tasks": [{"task_id": "P1-B1", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "status": "DISPATCHED_2026-05-23T111200Z", "expected_signal": "qa-macro-p1-c1-green-<UTC>.json"}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
+    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + 2 Phase 2 dev tasks.", "g12Streak": {"required": 3, "completed": 2, "streakComplete": false, "tasks": [{"task_id": "P1-B1", "impl_commit": "b66a1d45", "sandbox_result": "3/3 GREEN", "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json"}, {"task_id": "P1-C1", "impl_commit": "ac92ef56", "sandbox_result": "module 1/1 GREEN + all-tier 4/4 GREEN", "qa_signal": "docs/signals/qa-macro-p1-c1-green-20260523T112103Z.json"}, {"task_id": "P1-E1", "status": "PENDING_STREAK_3", "expected_signal": "qa-macro-p1-e1-green-<UTC>.json"}], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
   ],
   "decisionMatrix": {
     "speed": "TBD",
