@@ -1,0 +1,121 @@
+{
+  "signal_type": "task_dispatch",
+  "timestamp": "2026-05-23T11:12:00Z",
+  "agent": "pm",
+  "cycle": "cycle-36",
+  "from_state": "P1-B1 VERIFIED GREEN (qa_verdict=GREEN, 7/7 AC PASS, R-1 hard gate + G12 hard gate both OK, qa_signal qa-macro-p1-b1-green-20260523T110758Z.json)",
+  "dispatch_to": "dev-macro-indicators",
+  "task_id": "P1-C1",
+  "task_title": "Module stub: macro-signals (Day 0 lesson L1 — thin composition, prove wiring pattern early)",
+  "phase": "1",
+  "pilot": "macro-indicators",
+  "handoff_doc": "docs/handoffs/TASK_P1-C1-macro.md",
+  "estimated_hours": 1.5,
+  "ac_count": 6,
+  "goals": ["G2", "G12"],
+  "blocked_by": "P1-B1",
+  "unblocks": ["P1-D1", "P1-D2", "P1-E1"],
+  "zone": "apps/macro-indicators/",
+  "wip_claim": {
+    "phase_1_dev_team": "ACTIVE",
+    "count": "1/1"
+  },
+  "p1_b1_closure": {
+    "task_id": "P1-B1",
+    "status": "DONE",
+    "impl_commit": "b66a1d45",
+    "dev_signal_commit": "5ec50608",
+    "qa_verdict": "GREEN",
+    "qa_timestamp": "2026-05-23T11:07:58Z",
+    "qa_signal": "docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json",
+    "ac_results": "7/7 PASS (all ACs + R-1 hard gate + G12 hard gate)",
+    "r1_gate_status": "PASS (grep -rE math/rand|rand.Intn|rand.Float → 0 matches)",
+    "g12_gate_status": "PASS (go run ./cmd/sandbox -tier=primitive → exit 0, 3/3 scenarios GREEN)",
+    "deviations": [
+      {
+        "id": "D-1",
+        "severity": "ACCEPTED",
+        "description": "cmd/sandbox/main.go included as 6th explicitly staged file (Classify wire-in required for AC-7 G12 sandbox). All within apps/macro-indicators/ zone. L84 upheld."
+      }
+    ]
+  },
+  "context": {
+    "lesson_l1": "TA pilot learned: ship thin module stub on Day 0 to validate composition pattern early, before Phase 2 primitives pile in. This task proves the wiring works with 1 primitive; Phase 2 will add 5 more using same pattern.",
+    "composition_pattern": "DI constructor New(clock primitive.Classifier) — never instantiates primitives internally. Enables testability + Phase 2 multi-primitive growth.",
+    "fence_b_isolation": "Module imports ONLY from pkg/primitive/; zero application/interface/infrastructure imports. Pure domain orchestration.",
+    "g12_streak": {
+      "required": 3,
+      "completed": 1,
+      "current_task": "P1-C1 (streak task #2)",
+      "streak_tasks": ["P1-B1 (completed)", "P1-C1 (current dispatch)", "P1-E1 (after P1-E2 completes)"],
+      "rule": "All 3 tasks must have sandbox green before DONE declared (hard gate)"
+    },
+    "r1_propagation": "Module inherits determinism requirement from P1-B1 primitive. AC-6 defensive grep guards against drift in Phase 2."
+  },
+  "gates_binding": [
+    {
+      "gate_id": "G12_DoD",
+      "rule": "go run ./cmd/sandbox -tier=module -module=macro-indicators -scenario=all exits 0 with all scenarios PASS",
+      "blocking": true,
+      "rationale": "G12 streak task #2. Sandbox green is mandatory before DONE declared. Unblocks dashboard + edge-case tasks.",
+      "failure_mode": "If sandbox fails: fix module wiring, re-run, each attempt = 1 cycle (G10/G11 evidence)"
+    },
+    {
+      "gate_id": "R1_propagated",
+      "rule": "grep -rnE 'math/rand|rand\\.Intn|rand\\.Float|time\\.Now.*Seed' apps/macro-indicators/pkg/module/macro_signals/ must exit 1 (0 matches)",
+      "blocking": false,
+      "rationale": "Defensive: module inherits determinism from primitives. Phase 2 will add more primitives; all must stay deterministic.",
+      "failure_mode": "If grep finds randomization: handoff rejected, developer must remove all rand usage"
+    }
+  ],
+  "files_touched": [
+    "apps/macro-indicators/pkg/module/macro_signals/macro_signals.go (CREATE)",
+    "apps/macro-indicators/pkg/module/macro_signals/macro_signals_test.go (CREATE)",
+    "docs/scenarios/macro-indicators/modules/macro-signals-golden.json (CREATE)"
+  ],
+  "smoke_check_commands": [
+    "cd apps/macro-indicators && go build ./pkg/module/macro_signals/...",
+    "go vet ./pkg/module/macro_signals/...",
+    "go test ./pkg/module/macro_signals/... -v",
+    "grep -rnE 'vn-market-intelligence/macro-indicators/pkg/(application|interface|infrastructure)' pkg/module/macro_signals/ || echo 'Fence-B CLEAN'",
+    "grep -rnE 'math/rand|rand\\.Intn|rand\\.Float|time\\.Now.*Seed' pkg/module/macro_signals/ || echo 'R-1 CLEAN'",
+    "jq . docs/scenarios/macro-indicators/modules/macro-signals-golden.json > /dev/null && echo 'JSON: valid'",
+    "go run ./cmd/sandbox -tier=module -module=macro-indicators -scenario=all"
+  ],
+  "knowledge_sources": {
+    "pilot_charter": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md §Goals §G2 (Module composes primitives via ports)",
+    "phase_1_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md §P1-C1",
+    "ta_module_pattern": "git show 1776df8e:apps/technical-analysis/pkg/module/macro/ (reference — LOCKED at anchor)",
+    "lesson_l1": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/01-lessons-from-ta-pilot.md §L1",
+    "p1_b1_interface": "Read TASK_P1-B1-macro.md AC-1 output to confirm Classifier interface shape"
+  },
+  "critical_notes": [
+    "Module is pure domain orchestration — no app/infra/interface concerns",
+    "Composition via DI constructor enables testability + Phase 2 growth (5 more primitives coming, same pattern)",
+    "Sandbox module-tier support: if cmd/sandbox does not yet support -tier=module, extend it in this task (small delta)",
+    "G12 DoD is HARD GATE — sandbox must be green before DONE declared (not optional, not post-commit)",
+    "R-1 is propagated defensively — Phase 2 will add more primitives, all must stay deterministic"
+  ],
+  "constraints": [
+    "L84 explicit-file staging (git add <path> per file, not -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push (local-only, user owns push)",
+    "All work on main (NO branches per CLAUDE.md)",
+    "Anchor 1776df8e must remain reachable (pre + post commit)",
+    "Zone: apps/macro-indicators/ only — no cross-service mods"
+  ],
+  "compliance_checklist": [
+    "Handoff doc: docs/handoffs/TASK_P1-C1-macro.md (created 2026-05-23T11:12:00Z) ✓",
+    "Dispatch signal: this file (pm-dispatch-dev-macro-p1-c1-20260523T111200Z.json) ✓",
+    "Pilot SSOT updated: docs/data/pilot-status-macro-indicators.json (P1-C1 DISPATCH entry + g12Streak task #2 added) ✓",
+    "PM notebook updated: docs/agent-memory/notebooks/pm.md (cycle-36 entry) ✓",
+    "Anchor pre-check: git merge-base --is-ancestor 1776df8e HEAD = 0 ✓",
+    "WIP enforcement: phase_1_dev_team = ACTIVE (1/1) ✓"
+  ],
+  "next_steps": [
+    "Dev-macro-indicators picks up TASK_P1-C1-macro.md",
+    "PM monitors phase_1_dev_team claim until P1-C1 DONE + QA-green",
+    "QA verifies G12 sandbox green (module-tier) + R-1 propagated grep (zero math/rand) before granting GREEN",
+    "After P1-C1 DONE, PM dispatches P1-D1 (scenario JSON suite) OR P1-E1 (dashboard card) — architect determines order at this gate"
+  ]
+}

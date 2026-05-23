@@ -1,5 +1,130 @@
 # PM — Notebook
 
+## c282 cycle-36 · 2026-05-23T11:12:00Z
+
+**Status:** P1-B1 CLOSED (DONE, GREEN, R-1 + G12 hard gates PASS) → P1-C1 DISPATCHED (module stub, Day 0 lesson L1, G12 streak #2/3). QA verified P1-B1 at 2026-05-23T11:07:58Z: 7/7 AC PASS (macro-investment-clock primitive complete, deterministic tier lookup table, 3 scenarios golden/edge/failure, zero math/rand verified, sandbox all-green). PM closed P1-B1 DISPATCH → DONE in SSOT (commits b66a1d45/5ec50608, no qa_commit field since QA approved inline without separate commit), marked first primitive complete in pilot-status, and dispatched P1-C1 (module stub macro_signals, thin composition via ports, 1.5h, 6 ACs, G12 streak task #2, imports macro-investment-clock via DI, zero app/infra imports, Fence-B enforced). Created TASK_P1-C1-macro.md handoff with explicit composition pattern (DI constructor, thin orchestration method), sandbox module-tier gate (AC-5), and R-1 propagated defensive grep (AC-6). WIP=1 enforced (P1-C1 now In Progress). Anchor 1776df8e held. Single atomic commit: `chore(pm/c282-cycle-36): close P1-B1 GREEN (first primitive, R-1 + G12 hard gates PASS, 7/7 AC) + dispatch P1-C1 (module stub, G12 streak #2, composition proof)`. Next: QA verification of P1-C1 after dev-macro-indicators implements macro_signals module and validates sandbox module-tier green.
+
+### P1-B1 Closure Verified
+
+- **Task ID:** P1-B1 (sixth of 11 Phase 1 tasks — FIRST PRIMITIVE)
+- **Completion signal:** `docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json` ✓
+- **Dev commits:** b66a1d45 (impl) + 5ec50608 (signal) ✓
+- **QA commit:** none (QA approved inline in signal)
+- **AC results:** 7/7 PASS
+  - AC-1: Deterministic tier-to-score mapping (VN=8, REGIONAL=5, US=2, NOT random) ✓
+  - AC-2: Phase classification logic (score ≥8 → CORE_VN, ≥5 → REGIONAL, <5 → US_DOMESTIC) ✓
+  - AC-3: Table-driven test (≥5 rows: VN/REGIONAL/US/empty/unknown) ✓
+  - AC-4: Scenario JSON files (golden, edge, failure with jq validation) ✓
+  - AC-5: Fence-A pre-check (domain imports zero app/infra/interface) ✓
+  - AC-6: R-1 HARD GATE (grep -rE math/rand|rand.Intn|rand.Float → 0 matches, BLOCKING) ✓
+  - AC-7: G12 DoD GATE (go run ./cmd/sandbox -tier=primitive → exit 0, 3/3 scenarios PASS) ✓
+- **Additional checks:** go build ./... exit 0 ✓, go vet ./... exit 0 ✓, sandbox all-green ✓, L84 compliance (5 files in impl + 1 in signal) ✓, anchor reachable ✓
+- **Deviations:**
+  - D-1 (ACCEPTED): cmd/sandbox/main.go included as 6th explicitly staged file (Classify wire-in required for AC-7 G12 sandbox). All within apps/macro-indicators/ zone. L84 upheld.
+- **Milestone:** First primitive complete. R-1 + G12 hard gates now active on all subsequent primitives. G12 streak task #1/3 COMPLETE.
+
+### P1-C1 Task Context
+
+- **Task ID:** P1-C1 (seventh of 11 Phase 1 tasks)
+- **Title:** Module stub macro-signals (Day 0 lesson L1 — thin composition, prove wiring pattern early)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 1.5 hours (thin orchestration, composition proof)
+- **AC count:** 6 (DI constructor, Fence-B isolation, scenario JSON, unit test, sandbox gate, R-1 propagated)
+- **Goals:** G2 (Module composes primitives via ports), G12 (sandbox green before done, streak task #2)
+- **Blocked by:** P1-B1 ✓ (GREEN at 2026-05-23T11:07:58Z)
+- **Unblocks:** P1-D1, P1-D2, P1-E1
+- **Files touched:**
+  - `apps/macro-indicators/pkg/module/macro_signals/macro_signals.go` (CREATE — Signals struct + New constructor + ClassifyBatch method)
+  - `apps/macro-indicators/pkg/module/macro_signals/macro_signals_test.go` (CREATE — 3+ table-driven test rows)
+  - `docs/scenarios/macro-indicators/modules/macro-signals-golden.json` (CREATE — batch scenario)
+- **Composition pattern:** New(clock primitive.Classifier) — never instantiates primitives internally. DI enables testability + Phase 2 multi-primitive composition.
+- **Day 0 lesson L1 rationale:** TA pilot learned shipping thin module stub early catches composition bugs before Phase 2 primitives pile in. This task proves the pattern works with 1 primitive; Phase 2 will add 5 more using same pattern.
+- **Fence-B isolation:** Module imports ONLY from pkg/primitive/; zero application/interface/infrastructure imports. Pure domain orchestration.
+- **G12 streak:** P1-C1 is streak task #2 (of 3 required consecutive). Sandbox module-tier must be green before DONE declared.
+- **R-1 propagated:** Module inherits determinism requirement from P1-B1. AC-6 defensive grep guards against drift in Phase 2.
+
+### PM Actions Completed (Cycle c282 cycle-36)
+
+1. **Verified P1-B1 completion** ✓
+   - Read completion signal (qa-macro-p1-b1-green-20260523T110758Z.json)
+   - Verified dev commits b66a1d45 (impl) + 5ec50608 (signal)
+   - Cross-checked 7/7 AC PASS (AC-1 deterministic tier mapping, AC-2 phase classification, AC-3 table-driven test, AC-4 scenarios, AC-5 Fence-A isolation, AC-6 R-1 hard gate grep, AC-7 G12 hard gate sandbox)
+   - Verified R-1 HARD GATE: grep -rE math/rand|rand.Intn|rand.Float → 0 matches ✓
+   - Verified G12 HARD GATE: go run ./cmd/sandbox -tier=primitive → exit 0, 3/3 scenarios GREEN ✓
+   - Cross-checked additional checks (go build exit 0, go vet exit 0, scenario JSON jq valid, sandbox all green, anchor held, L84 compliance)
+   - D-1 assessment: cmd/sandbox/main.go included as 6th file (wire-in required for Classify method in AC-7 G12 gate). All within zone. L84 upheld. ACCEPTED.
+   - Milestone recorded: First primitive complete, R-1 + G12 hard gates now active on all subsequent primitives, G12 streak task #1/3 COMPLETE
+
+2. **Created TASK_P1-C1-macro.md handoff doc** ✓
+   - 6 verbatim ACs from phase-1-task-plan §P1-C1 with explicit G12 gate annotation
+   - AC-1 module struct + DI constructor (Signals + New(clock))
+   - AC-2 Fence-B isolation (grep -rn app|infra|interface → 0 matches)
+   - AC-3 module scenario JSON (golden — batch invocation, 3+ tiers exercised)
+   - AC-4 unit test table-driven (3+ rows: batch_vn, batch_us, batch_empty)
+   - AC-5 G12 DoD GATE (go run ./cmd/sandbox -tier=module → exit 0, all PASS, BLOCKING)
+   - AC-6 R-1 propagated defensive grep (zero math/rand, defensive for Phase 2)
+   - Composition pattern section with code example (DI constructor, ClassifyBatch method)
+   - Day 0 lesson L1 rationale (TA pilot carry-over)
+   - Fence-B isolation section (pure domain orchestration)
+   - Smoke check commands (build, vet, test, fences, scenario JSON, sandbox)
+   - Commit message template + RETURN block template with sandbox output paste requirement
+   - Critical notes: G12 DoD is HARD GATE, R-1 propagated defensively for Phase 2, composition proof validates pattern
+
+3. **Created dispatch signal (pm-dispatch-dev-macro-p1-c1-20260523T111200Z.json)** ✓
+   - WIP claim: phase_1_dev_team = ACTIVE (1 of 1 enforced)
+   - P1-B1 closure embedded (commits b66a1d45/5ec50608, 7/7 ACs, qa_signal qa-macro-p1-b1-green-20260523T110758Z.json, GREEN, R-1 + G12 hard gates PASS)
+   - Gates section: G12 DoD (AC-5, sandbox module-tier green, BLOCKING) + R-1 propagated (AC-6 defensive, non-blocking)
+   - Task spec: estimate 1.5h, 6 ACs, goals G2/G12, 3 files (2 Go + 1 JSON)
+   - Day 0 lesson L1 context (TA pilot carry-over, thin module stub early validation)
+   - Composition pattern section (DI constructor, enables testability + Phase 2 growth)
+   - G12 streak tracking: required 3, completed 1, current task #2 (P1-C1), expected next P1-E1
+   - R-1 propagation rationale (module inherits determinism, Phase 2 will add more primitives)
+   - Smoke check commands (7 commands explicit: build, vet, test, Fence-B grep, R-1 grep, JSON valid, sandbox module-tier)
+   - Knowledge sources + critical notes + compliance checklist
+
+4. **Updated pilot-status SSOT (docs/data/pilot-status-macro-indicators.json)** ✓
+   - P1-B1 entry already DONE (from previous cycle-35 state)
+   - Added P1-C1 entry: timestamp 2026-05-23T11:12:00Z, status DISPATCH, handoff + signal refs, gates_binding array with G12 DoD + R-1 propagated
+   - Updated g12Streak.completed from 1 to 1 (no change — P1-C1 not yet done)
+   - Added P1-C1 to g12Streak.tasks array (task_id, status DISPATCHED_2026-05-23T111200Z, expected_signal qa-macro-p1-c1-green-<UTC>.json)
+   - Phase 1 progress now shows: A-bucket COMPLETE (5/5), B-bucket COMPLETE (P1-B1 DONE), C-bucket ACTIVE (P1-C1 DISPATCH)
+
+5. **Updated PM notebook (this file)** ✓
+   - New section: c282 cycle-36 with full P1-B1 closure + P1-C1 dispatch summary
+   - P1-B1 closure verification log (7/7 ACs, R-1 hard gate, G12 hard gate, D-1 assessment, milestone recorded)
+   - P1-C1 task context (6 ACs, DI composition, Fence-B isolation, G12 streak #2, R-1 propagated)
+   - PM actions completed log (5 actions)
+   - Next steps updated
+
+### Next Steps
+
+- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-C1-macro.md + pm-dispatch-dev-macro-p1-c1-20260523T111200Z.json)
+- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-C1 DONE + QA-green (G12 sandbox module-tier green MUST pass)
+- **G12 enforcement:** QA must verify sandbox output (go run ./cmd/sandbox -tier=module) exits 0 with all scenarios PASS before granting GREEN.
+- **R-1 propagated enforcement:** QA must verify zero math/rand in module file before granting GREEN (defensive check for Phase 2 drift).
+- **P1-D1 / P1-D2 / P1-E1 readiness:** After P1-C1 DONE, PM prepares next dispatch(es). Architect determines execution order at this gate (D1 scenario suite expansion vs E1 dashboard card).
+- **G12 streak tracking:** P1-C1 completion will update g12Streak.completed = 1 (unchanged until QA green) + mark P1-C1 task DONE in g12Streak.tasks. P1-E1 is expected streak task #3/3.
+- **R-3 phase 2 flag:** At Phase 1 close gate (after P1-E2), PM flags R-3 (mcp-server tool handler HTTP rewire for 4 tools) for architect attention when Phase 2 task plan expands.
+
+### Pilot Status SSOT Checkpoint (cycle-36)
+
+- **Pilot:** macro-indicators
+- **Phase:** 1 (ACTIVE)
+- **Task count:** 11 (P1-A1..E2)
+- **Progress:** 
+  - A-bucket COMPLETE: P1-A1..A5 DONE + GREEN (5/5 scaffold tasks)
+  - B-bucket COMPLETE: P1-B1 DONE (b66a1d45) + GREEN (7/7 AC, R-1 hard gate, G12 hard gate)
+  - C-bucket ACTIVE: P1-C1 DISPATCH (pm-dispatch-dev-macro-p1-c1-20260523T111200Z.json)
+- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-C1)
+- **Phase deadline:** 2026-07-04 (6 sprints, hard)
+- **Language:** Go (locked Day 0)
+- **Anchor:** 1776df8e (held) ✓
+- **Hard gates active:** R-1 (AC-6 grep guard: no math/rand, binding on all primitives) + G12 (AC-7 DoD: sandbox green before commit, binding on all tasks with sandbox output) — P1-B1 PASS both, P1-C1 inherits both
+- **G12 streak:** P1-B1 is streak task #1/3 COMPLETE ✓. P1-C1 is streak task #2 (current dispatch). P1-E1 expected streak task #3.
+- **Risk propagation:** R-1 (deterministic scoring mandate, now proven in P1-B1, propagates to all primitives) + R-3 (Phase 2 mcp-server HTTP rewire, still flagged for Phase 2 expansion) both tracked in pilot-status phase1.risk_propagation
+
+---
+
 ## c282 cycle-35 · 2026-05-23T11:00:00Z
 
 **Status:** A-BUCKET COMPLETE (5/5 scaffold tasks DONE + GREEN) → P1-B1 DISPATCHED (first primitive, R-1 + G12 gates BINDING). QA verified P1-A5 at 2026-05-23T10:52:56Z: 4/4 AC PASS (openapi.yaml 166L, yaml.safe_load exit 0, /health + /snapshot schema verified, file exists at canonical path). PM closed P1-A5 DISPATCH → DONE in SSOT (commits e39587e5/272a98f9, qa_commit de2c0712), marked scaffold_complete=true (NEW field for A-bucket milestone), and dispatched P1-B1 (first primitive macro-investment-clock, 2h, 7 ACs, deterministic tier lookup, no math/rand allowed, sandbox green mandatory before commit). Created TASK_P1-B1-macro.md handoff with explicit R-1 + G12 DoD hard gates in AC-6 + AC-7 sections. WIP=1 enforced (P1-B1 now In Progress). Anchor 1776df8e held. Single atomic commit: `chore(pm/c282-cycle-35): close P1-A5 (openapi.yaml GREEN, A-bucket complete 5/5) + dispatch P1-B1 (first primitive — R-1 + G12 gates BINDING)`. Next: QA verification of P1-B1 after dev-macro-indicators implements macro-investment-clock.
