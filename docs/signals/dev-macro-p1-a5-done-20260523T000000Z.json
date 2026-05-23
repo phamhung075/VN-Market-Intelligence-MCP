@@ -1,0 +1,27 @@
+{
+  "signal": "dev-macro-p1-a5-done",
+  "task_id": "P1-A5",
+  "agent": "dev-macro-indicators",
+  "timestamp": "2026-05-23T00:00:00Z",
+  "commit_sha": "e39587e5",
+  "ac1_status": "PASS",
+  "ac2_status": "PASS",
+  "ac3_status": "PASS",
+  "ac4_status": "PASS",
+  "smoke_gate": {
+    "go_build": "PASS",
+    "go_vet": "PASS",
+    "openapi_yaml_exists": "PASS",
+    "grep_business_logic_in_main": "PASS (count=0)"
+  },
+  "anchor_verified": true,
+  "anchor_sha": "1776df8e",
+  "line_count": 166,
+  "file": "apps/macro-indicators/api/openapi.yaml",
+  "ready_for_qa": true,
+  "unblocks": "P1-B1 (first primitive: macro-investment-clock)",
+  "forward_risks_acknowledged": {
+    "R-1": "HIGH — deterministic tier scoring required in P1-B1 pkg/primitive/macro_investment_clock/ — NO Math.random/rand.Intn/rand.Float allowed",
+    "R-3": "HIGH — Phase 2 P2-B: 4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) must be HTTP rewired to port 5004"
+  }
+}
