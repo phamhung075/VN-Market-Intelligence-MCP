@@ -71,7 +71,7 @@
     "ac_count": 55,
     "wip_limit": 1,
     "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. Dispatching P1-B1 (first primitive: price-quote-normalizer + R-CGO gate AC-8). WIP=1 sequential — P1-B2 held until P1-B1 DONE."],
+    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). Dispatching P1-B2 (second primitive: tier-fallback-selector). WIP=1 sequential — P1-B3 held until P1-B2 DONE."],
     "tasks": {
       "P1-A": {
         "id": "P1-A",
@@ -86,14 +86,32 @@
       "P1-B1": {
         "id": "P1-B1",
         "title": "First primitive: price-quote-normalizer + R-CGO gate",
-        "status": "DISPATCHED",
-        "dispatchedAt": "2026-05-24T??:??:??Z",
-        "dispatchedBy": "pm",
-        "dispatchSignal": "docs/signals/pm-p1-b1-dispatch-stock-price-20260524T??????Z.json",
+        "status": "DONE",
+        "completedAt": "2026-05-24T00:53:00Z",
+        "completedBy": "dev-stock-price",
+        "commit_sha": "69afa2ab",
         "handoff": "docs/handoffs/TASK_P1-B1.md",
         "ac_count": 9,
+        "ac_verdicts": "AC-1..AC-9 all PASS",
         "r_cgo_gate_critical": true,
-        "r_cgo_gate_task_ac": "AC-5,AC-6,AC-7,AC-8 (BLOCKER: if any fail, stop Phase 1, escalate to architect)"
+        "r_cgo_gate_verdict": "CLEAR",
+        "r_cgo_gate_task_ac": "AC-5,AC-6,AC-7,AC-8 (ALL PASS — R-CGO CLEARED, advance Phase 1)",
+        "g12_streak_task": 1,
+        "g12_dod_sandbox": "GREEN"
+      },
+      "P1-B2": {
+        "id": "P1-B2",
+        "title": "Second primitive: tier-fallback-selector",
+        "status": "DISPATCHED",
+        "dispatchedAt": "2026-05-24T01:05:00Z",
+        "dispatchedBy": "pm",
+        "dispatchSignal": "docs/signals/pm-p1-b2-dispatch-stock-price-20260524T010500Z.json",
+        "handoff": "docs/handoffs/TASK_P1-B2.md",
+        "ac_count": 6,
+        "blocked_by": "P1-B1 (R-CGO GATE)",
+        "blocks": "P1-B3",
+        "g12_streak_task": 2,
+        "g12_dod_requirement": "Sandbox all-green (all P1-B1 + P1-B2 scenarios)"
       }
     }
   },
@@ -253,11 +271,11 @@
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 0,
+        "completed": 1,
         "streakComplete": false,
         "completedAt": null,
-        "tasks": [],
-        "ruleEffectiveAfter": null
+        "tasks": ["P1-B1 (2026-05-24T00:53:00Z — DONE, sandbox GREEN)"],
+        "ruleEffectiveAfter": "2026-05-24T00:00:00Z (Phase 0 flow commit with DoD baked)"
       }
     }
   ],
