@@ -1,0 +1,25 @@
+{
+  "kind": "dispatch",
+  "from": "po",
+  "to": "ops",
+  "cycle": "c282 cycle-10 → cycle-11 prep",
+  "timestamp": "2026-05-23T01:26:00Z",
+  "task": "push origin/main forward to include fd423047 (P2-A2 landing) — unblock A3 verification",
+  "rationale": "qa cycle-10 R-11 verdict (commit 0b5760da, signal qa-P2-A3-blocked-push-gate-20260523T012600Z.json) found that fd423047 was never pushed to origin/main. Local main is 67 commits ahead of origin. `gh run list --commit=fd423047` returns [] because the commit doesn't exist on remote. Without the push, P2-A3 (CI green verification of go-lint job) is structurally impossible.",
+  "scope": {
+    "command": "git push origin main",
+    "blast_radius": "67 commits get pushed to origin/main. All commits are PO/dev-ta/qa/architect/pm/agent-father work since 2026-05-22T18:23Z. No branches, per project policy.",
+    "pre_check": "git log --oneline origin/main..HEAD | wc -l should return 67 (or 68 including this cycle-11 dispatch commit if PO commits ops signal). Verify no secret files in the push: git diff origin/main..HEAD --stat | grep -E '\\.env|credentials|secrets|\\.key' should return nothing.",
+    "post_check": "git rev-parse origin/main should equal local HEAD. gh run list --workflow=ci.yml --limit 5 should show a new run kicking off."
+  },
+  "constraints": [
+    "WIP-1 (ops handles push only — does NOT dispatch P2-A3 re-verification, that is PO's gate)",
+    "NO --force, NO --no-verify (per CLAUDE.md safety protocol)",
+    "If pre-commit/pre-push hook fails: report to PO with hook output, do NOT bypass",
+    "If push fails (auth, network): report to PO with error and exit",
+    "Do NOT mutate any in-flight handoff or pilot-status.json — PO handles re-dispatch after push lands"
+  ],
+  "anchor": "62edbf3d",
+  "next_po_action_after_push": "PO cycle-11 will (a) wait for CI run to complete on origin/main HEAD, (b) re-dispatch fresh qa subagent for P2-A3 against the new CI run URL, (c) parallel-dispatch fresh qa subagent for P2-D1 spec doc (stall-watch escalation).",
+  "exit_condition": "Push lands successfully OR push fails with error report. Write status signal docs/signals/ops-push-origin-result-{timestamp}.json with result."
+}

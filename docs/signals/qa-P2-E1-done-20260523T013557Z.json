@@ -1,0 +1,56 @@
+{
+  "kind": "task_completion",
+  "from": "qa",
+  "to": "po",
+  "cycle": "c282 cycle-11",
+  "timestamp": "2026-05-23T01:35:57Z",
+  "task_id": "P2-E1",
+  "dispatch_signal": "docs/signals/po-R11-E1-redispatch-20260523T013100Z.json",
+  "supersedes_prior_dispatch": "docs/signals/po-P2-E1-dispatch-20260523T003500Z.json",
+  "closure_anchor": "62edbf3d",
+  "verdict": "DONE_WITH_FINDING",
+  "file_path": "docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md",
+  "file_status": "on_disk_and_tracked",
+  "smoke_check": "wc -l = 135 (> 20 required)",
+  "commit_hash_actual": "b7a7aece9889ce16a816d3cf16dbd609e16311be",
+  "commit_hash_intended_atomic": "would_have_been_separate_E1_commit_but_race_lost",
+  "ac_confirmations": {
+    "AC-1": {
+      "status": "PASS",
+      "evidence": "Spec §2 describes Scenario A (RSI Wilder smoothing off-by-one in apps/technical-analysis/pkg/primitive/rsi/rsi.go lines 56-57, period↔period-1 swap) flipping rsi-golden.json + 2 correlated RSI scenarios RED; Scenario B canary (MA EMA seed via ma-golden.json, tolerance 0.0001, secondary ma-sma-vs-ema.json) which must stay GREEN unless RSI fix introduces regression. Input shape (closes []float64, period int) identical between A and B."
+    },
+    "AC-2": {
+      "status": "PASS",
+      "evidence": "Spec §3 explains WHY natural fix for A could break B via three named load-bearing links in current Phase 1 Go code (HEAD 6d7a5746): (3a) identical input contract drives shared-validation-helper temptation, (3b) shared SMA-over-first-period seed pattern across rsi.go lines 35-43 + moving_average.go lines 82-86 + macd/ema.go lines 22-27 — agent diagnosing the buggy recurrence will inspect the adjacent seed loop and may pattern-copy fix to MA, (3c) explicit verbatim TODO comment in macd/ema.go line 3 ('shared EMA will live in pkg/primitive/ma (P1-B4g)') creates refactor temptation. §3 closes with failure-mode summary table mapping 4 likely agent fix-time actions to their B-flip-RED consequences."
+    },
+    "AC-3": {
+      "status": "PASS",
+      "evidence": "All 5 scenario JSONs confirmed present in docs/scenarios/technical-analysis/primitives/ from Phase 1 P1-D1 suite (git commit c6af6839ec, 2026-05-22): rsi-golden.json (A primary RED), rsi-overbought-pullback.json + rsi-oversold-bounce.json (A correlated RED), ma-golden.json (B canary), ma-sma-vs-ema.json (B secondary canary). No new scenario JSON files required; no gap to escalate to architect/dev-ta per scope_shrink_option."
+    },
+    "AC-4": {
+      "status": "PASS",
+      "evidence": "Spec §4 documents 6-step test plan: (1) pre-injection baseline (all 25 GREEN), (2) inject bug A on throwaway branch, (3) confirm A RED footprint + B still GREEN pre-fix, (4) dispatch dev-technical-analysis with RSI failure only (no mention of MA/B), agent must run G12 dashboard-green DoD step from P2-F2 flow (cc7578f1), (5) observe one of three outcomes — (a) clean fix N/A, (b) regression caught by G12 = G11 PROVEN, (c) DONE-with-MA-RED = G11 FAILED escalate to PM+Architect, (6) cycle accounting against TA baselineCycleCount=1.5, target ≤2 cycles."
+    }
+  },
+  "constraint_compliance": {
+    "WIP-1": "PASS — I only touched the E1 spec file. I did NOT touch P2-D1 or P2-A3 work.",
+    "no_dispatch_chain": "PASS — no subagents spawned, no signals dispatched downstream.",
+    "TASK_P2-E1_frontmatter_untouched": "PASS — I did NOT modify docs/handoffs/TASK_P2-E1.md.",
+    "atomic_commit_with_closure_anchor": "PARTIAL — see FINDING-PARALLEL-RACE below. Spec content + closure anchor 62edbf3d are both present in commit b7a7aece, but that commit is the parallel D1 qa agent's atomic commit, not a standalone E1 atomic commit.",
+    "coordinate_by_spec_only_with_D1": "PASS — I selected RSI off-by-one for Scenario A (same bug class as D1, allowed per dispatch); Scenario B (MA EMA seed canary) is unique to this E1 spec. No back-channel coordination occurred."
+  },
+  "finding": {
+    "id": "FINDING-PARALLEL-RACE-D1-E1",
+    "severity": "minor",
+    "summary": "Parallel D1 qa agent's commit b7a7aece bundled my E1 spec file (p2-e-regression-scenario-spec.md, 135 lines) into its own atomic commit alongside p2-d-bug-injection-spec.md. The D1 agent also modified docs/handoffs/TASK_P2-D1.md (16 inserts) which the D1 dispatch presumably forbade. Most likely root cause: D1 agent staged with `git add docs/architecture-briefs/2026-05-22-refactor/` (broad-glob) or `git add -A`, sweeping my unstaged file into its index before I could commit. I had not yet committed — my `git add p2-e-...spec.md` had succeeded, but my `git commit` attempt failed because D1's commit landed first and (apparently) consumed my staged file's blob into its own commit.",
+    "impact": "E1 spec content is correct and on origin/main HEAD branch. Closure anchor 62edbf3d IS recorded in commit b7a7aece message. But the E1 dispatch's literal 'atomic commit per docs/policies/commit-convention.md' constraint is not satisfied — the commit message reads 'P2-D1', not 'P2-E1', and the AC mapping in the commit message is D1's, not E1's. Audit trail for E1's atomic landing is captured in this completion signal instead.",
+    "remediation_options_for_po": [
+      "ACCEPT: file content correct, closure anchor recorded, this signal documents E1 ACs — accept bundled commit and move on to P2-E2.",
+      "RECOMMIT: dispatch a fresh qa subagent in cycle-12 to revert b7a7aece, then create two separate atomic commits (one for D1, one for E1). Requires both files re-applied. Adds 1 cycle of cost for clean audit trail.",
+      "FLOW_FIX: amend qa flow to forbid `git add -A` and `git add <directory>/` (broad-glob staging) — require explicit file-path staging only — to prevent parallel-WIP races. Apply on next qa flow update."
+    ],
+    "qa_recommendation": "ACCEPT + FLOW_FIX. The content is correct and the anchor is recorded; a recommit costs a cycle for zero functional benefit. The flow fix prevents the same race in future parallel dispatches."
+  },
+  "stall_watch_compliance": "Completed within 30-minute wall clock (dispatched 01:31:00Z, signal written 01:35:57Z = ~5 minutes elapsed). No stall.",
+  "exit": "Exiting per dispatch exit_condition. PO holds verdict."
+}

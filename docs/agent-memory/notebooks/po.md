@@ -1,50 +1,46 @@
 # PO Notebook
 
-## c282 · 2026-05-23 — Phase 2 cycle-10 (R-11 FIRED → BLOCKED verdict on A3 push gate)
+## c282 · 2026-05-23 — Phase 2 cycle-11 (ops push landed → CI billing block discovered → D1+E1 specs LANDED)
 
-### State at cycle start (01:13:37Z)
-- HEAD `0cafe51f` (c280 cycle-9 idle commit). A3 ~115min, D1/E1 ~38.6min. dev-ta WIP = 0.
-- pilot-status.status = ACTIVE. Anchor 62edbf3d held.
-- A3 R-11 threshold 2026-05-23T01:18:17Z UTC. ~4.7min headroom at start. Will cross during cycle.
+### State at cycle start (01:30Z)
+- HEAD `6d7a5746` (== origin/main thanks to cycle-10 ops dispatch). pilot-status.status=ACTIVE. Anchor 62edbf3d held.
+- A3 ~3h12m in-flight (now blocked at INFRA, not push). D1+E1 ~56min in-flight (silent-stall).
 
-### Step 0 — A3 R-11 evaluation
-- `git log --since=22:18:17Z -- pilot-status.json arch-briefs/ signals/` → 13 results, all PO/dispatch own commits + 943adc8e dispatch commit. NO A3 verification commit.
-- At 01:18:30Z (poll 3): current UTC >= threshold 01:18:17Z AND no verification commit → **R-11 FIRED**.
+### Step 0 — ops push outcome
+- `git fetch origin main` → origin/main == local HEAD `6d7a5746` (push SUCCEEDED).
+- ops result signal `ops-push-origin-result-20260523T012909Z.json`: 68 commits pushed clean, tsc PASS, no secrets.
+- **NEW BLOCKER**: CI run `26319812041` on push HEAD FAILED in 4s — GitHub Actions billing annotation. Last ≥10 CI runs all 3-5s failures since 2026-05-22T17:53Z (~8h persistent block).
+- Filed bug signal `bug-ci-billing-block-20260523T013000Z.json` to BUG channel. Owner=user (only daihung.pham@gmail.com can fix GitHub billing). ops cannot self-resolve.
+- A3 re-dispatch HELD pending user billing fix. Evaluated + rejected 3 fallback options (local lint evidence fails AC; switch provider out-of-scope; pause Phase 2 wastes deadline).
 
-### Step 1 — landing watch (5 polls, ~10min, 01:14Z → 01:24:31Z)
-- POLL 1 (01:14:00Z) HEAD `0cafe51f` — no spec files, A3 ~115.7min.
-- POLL 2 (01:17:38Z) HEAD `0cafe51f` — no spec files, A3 ~119.3min (40s pre-threshold).
-- POLL 3 (01:18:30Z) — **THRESHOLD CROSSED**. Wrote signal `po-R11-A3-status-check-20260523T011830Z.json`. Spawned fresh qa subagent (background, claude -p).
-- POLL 4 (01:21:35Z) HEAD `0cafe51f` — qa still working, no landing yet.
-- POLL 5 (01:24:31Z) HEAD **`0b5760da`** — qa landed commit, verdict BLOCKED. Signal `qa-P2-A3-blocked-push-gate-20260523T012600Z.json`.
+### Step 1 — parallel D1+E1 re-dispatch (pure-write, no CI dep)
+- Wrote dispatch signals `po-R11-D1-redispatch-20260523T013100Z.json` + `po-R11-E1-redispatch-20260523T013100Z.json` (supersede cycle-7 silent-stall dispatches).
+- Spawned 2 fresh background qa subagents (PIDs 95667 + 95704) — WIP-1 each, no-dispatch-chain, no-handoff-mutation, 30min stall-watch self-report.
 
-### qa verdict (commit 0b5760da, ~6min from R-11 dispatch)
-- **BLOCKED**: fd423047 was never pushed to origin/main. Local 67 commits ahead of origin (remote HEAD 05e2bd6c from 2026-05-22T18:23). `gh run list --commit=fd423047` returns []. go-lint job absent from origin ci.yml — no CI run exists.
-- Scope-shrink (gh workflow run on HEAD remote) rejected: would verify pre-A2 workflow = wrong thing.
-- qa appended §Verification Attempts to TASK_P2-A3.md (frontmatter UNMUTATED per WIP rule).
-- qa did NOT autonomously push 67-commit backlog (out of scope, high blast radius, PO decision).
+### Step 2 — 5-poll landing watch (01:31:34Z → 01:37:19Z)
+- P1 (01:31:34Z) HEAD `6d7a5746`, specs absent, 2 qa procs alive.
+- P2 (01:34:28Z) HEAD `6d7a5746`, **D1 spec PRESENT** in working tree, E1 absent.
+- P3 (01:34:58Z) HEAD **`b7a7aece`**, BOTH specs present (committed atomically).
+- P4 (01:36:49Z) — 2 completion signals landed (qa-P2-D1-done + qa-P2-E1-done).
+- P5 (01:37:19Z) — both qa procs EXITED clean.
 
-### Stall-watch entries (logged in poDecisionLog)
-- D1 + E1 both ~49.5min in-flight at exit (00:35Z dispatch + ~50min) — past 40min trigger.
-- No simultaneous R-11 on D1/E1 — same qa identity was blocked on A3 push gate; redundant. Deferred to cycle-11 fresh dispatch.
+### Verdict: BOTH SPECS DONE in commit `b7a7aece`
+- D1: 125-line spec, variant A (RSI Wilder period off-by-one), AC-1..AC-5 PASS, P2-D0+F1 prereqs verified.
+- E1: 135-line spec, A=RSI off-by-one (shared bug class allowed), B canary=MA EMA seed via ma-golden.json, 3 named shared-code links, AC-1..AC-4 PASS, all 5 scenario JSONs present from P1-D1 commit c6af6839ec.
+- **FINDING-PARALLEL-RACE-D1-E1**: D1 agent's broad-glob `git add docs/architecture-briefs/.../` swept E1's file into D1's atomic commit. Commit msg says D1 only. Both completion signals recommend ACCEPT (content correct, anchor recorded) + FLOW_FIX (forbid broad-glob staging — L84 candidate, defer post-Phase-2). PO ACCEPTS.
 
-### Decisions (poDecisionLog appended)
-- R-11 FIRED on A3 → fresh qa dispatch → BLOCKED verdict surfaced infrastructure issue.
-- STALL-WATCH log entry on D1/E1 (no escalation cycle-10, qa was busy on A3).
-- No mutation of in-flight handoffs (TASK_P2-A3/D1/E1.md frontmatter intact; qa appended evidence section only).
-- decisionMatrix UNTOUCHED (G-goals not yet terminal per §4.5).
-- Charter status enum = ACTIVE held clean.
+### Decisions (poDecisionLog appended this commit)
+- OPS PUSH LANDED + CI billing block surfaced → A3 HELD on infra, bug signal filed to user.
+- PARALLEL R-11 redispatch on D1+E1 → both DONE in 5min; race condition accepted.
+- decisionMatrix UNTOUCHED (G-goals not yet terminal per §4.5). Charter status enum = ACTIVE.
 
-### Exit (01:24:31Z) — exit condition met (R-11 + 2 follow-up polls)
-- Commits this cycle: 1 (qa 0b5760da BLOCKED verdict) — first non-PO-self commit since cycle-7 F2 landing.
-- Gates dispatched: 0 (no follow-on chain; A3 verification structurally impossible until push).
-- dev-ta WIP = 0 (still gated).
-- Blockers: **A3 push gate** (67 commits unpushed), **D1/E1 specs absent** (qa-owned).
+### Exit (01:37:19Z) — exit condition met (D1+E1 lands + 2 follow-up polls)
+- Commits this cycle: 1 (b7a7aece bundled D1+E1).
+- Gates dispatched: 0 (D2 READY but deferred to cycle-12 for billing coordination).
+- dev-ta WIP = 0. qa WIP = 1 (A3 HELD). ops WIP = 0 (push complete).
 
-### Carry-over to cycle-11
-- HEAD `0b5760da`. A3 BLOCKED until origin/main push happens.
-- **Cycle-11 PO routing (mandatory)**: dispatch ops subagent to `git push origin main` (recovery action, ops scope per Agent Autonomy memory). Once push lands and CI runs, re-dispatch qa for P2-A3 verification against the new CI run URL.
-- **Parallel cycle-11**: fresh qa subagent for P2-D1 spec doc (hotter than E1 — E2 cross-gated on D3 landing per critical path). E1 stall-watch acknowledged, lower priority.
-- Tag p2-b-pre-delete intact at b9d0a82b. Anchor 62edbf3d held.
-- L83 candidate lesson: "long-running local-only main branch breaks remote CI verification — PO/PM should add origin-sync check to dispatch-claim or pre-dispatch hook". Defer to post-Phase-2 with L82.
-- nextDispatchGates unchanged in pilot-status (gate logic still correct, just blocked on physical push).
+### Carry-over to cycle-12
+- HEAD `b7a7aece`. Critical path: `D1 ✓ → D2 → D3 → E1 ✓ → E2 → E3 → F3`. A3+A4+B2 chain HELD on billing.
+- Cycle-12 step-0 priorities: (a) `gh run list duration>10s` = billing recovery signal; (b) if cleared → fresh qa for A3 against next CI run; (c) optionally dispatch P2-D2 (qa, bug injection — pure write, can run parallel with A3).
+- L84 candidate: "concurrent qa subagents need git index serialization OR git worktree per subagent OR explicit-file staging only" — defer post-Phase-2.
+- Anchor 62edbf3d held. p2-b-pre-delete tag at b9d0a82b intact.

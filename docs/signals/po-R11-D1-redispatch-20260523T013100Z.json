@@ -1,0 +1,23 @@
+{
+  "kind": "dispatch",
+  "from": "po",
+  "to": "qa",
+  "cycle": "c282 cycle-11",
+  "timestamp": "2026-05-23T01:31:00Z",
+  "task_id": "P2-D1",
+  "anchor": "62edbf3d",
+  "supersedes_prior_dispatch": "docs/signals/po-P2-D1-dispatch-20260523T003500Z.json (qa silent-stall ~56min in-flight at cycle-11 start, past 40min stall-watch trigger logged cycle-10)",
+  "rationale": "Cycle-10 R-11 verdict on A3 returned BLOCKED (push gate). Cycle-11 confirmed ops push landed and discovered CI billing block — A3 chain is HELD pending user billing fix. Spec docs P2-D1 + P2-E1 are pure-write tasks with NO CI dependency. Re-dispatch fresh qa subagents in parallel to unstall hot critical-path work that was waiting on prior qa subagent (which got tied up on A3 push-gate verification).",
+  "task_summary": "Read docs/handoffs/TASK_P2-D1.md (full file). Per AC-1..AC-5 in that handoff, design and write docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md. Select bug variant (RSI period off-by-one OR Wilder seed selection per architect guidance lines 32-38 of handoff). Spec must be >20 lines. Sandbox RED detection confirmed in spec. Cycle-counting protocol documented. Baseline 1.5 cycles (TA-specific from bug-inventory.json), target ≤2.",
+  "constraints": [
+    "WIP-1 (this qa subagent owns ONLY P2-D1; do NOT touch P2-E1 or P2-A3)",
+    "NO dispatch chain (PO is the only dispatcher)",
+    "Do NOT mutate TASK_P2-D1.md frontmatter (handoff is SSOT; you may append §Verification or §Implementation Notes section below frontmatter if useful)",
+    "Atomic commit per docs/policies/commit-convention.md, reference closure anchor 62edbf3d",
+    "Code snippets in spec MUST be redacted per architect boundary (file/line refs only, not exact code)",
+    "If you find P2-D0 baseline file missing or bug-inventory.json missing, log to signal and STOP — do not proceed without baseline data"
+  ],
+  "exit_condition": "Spec file landed in atomic commit on origin/main HEAD branch, then write completion signal docs/signals/qa-P2-D1-done-{timestamp}.json with commit hash + file path + AC-1..AC-5 confirmations. Exit.",
+  "stall_watch_note_for_qa": "If you cannot finish within 30min wall clock, write a status signal at the 30min mark with what's done and what's blocking — do NOT silently stall.",
+  "scope_shrink_option_if_blocked": "If bug-inventory.json or P2-D0 baseline file is missing, write a STATUS signal documenting the missing prerequisite — PO will dispatch system-auditor to backfill. Do NOT fabricate baseline data."
+}
