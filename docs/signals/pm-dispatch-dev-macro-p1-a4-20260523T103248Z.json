@@ -1,0 +1,106 @@
+{
+  "from": "pm",
+  "to": "dev-macro-indicators",
+  "via": "handoff",
+  "type": "task-dispatch",
+  "createdAt": "2026-05-23T10:32:48Z",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "task_id": "P1-A4",
+  "task_title": "pkg/ DDD Scaffold (6 stub files)",
+  "handoff_file": "docs/handoffs/TASK_P1-A4-macro.md",
+  "description": "Scaffold the foundational Go DDD package structure: pkg/domain/, pkg/application/, pkg/infrastructure/, pkg/interface/http/. Create 6 stub files (models.go, ports.go, dtos.go, usecases.go, repositories.go, router.go). All stubs compile. No business logic yet.",
+  "wip_claim": {
+    "phase": "phase_1_dev_team",
+    "current_owner": "dev-macro-indicators",
+    "wip_limit": 1,
+    "count_before_dispatch": 0,
+    "count_after_dispatch": 1,
+    "status": "ACTIVE"
+  },
+  "previous_task": {
+    "task_id": "P1-A3",
+    "status": "DONE",
+    "verdict": "GREEN",
+    "commit_dev": "c76cbe04",
+    "commit_signal": "a0f8a3ea",
+    "ac_results": "4/4 PASS (flags, scenario path resolution, pass/fail reporting, zero env secrets)",
+    "qc_verified_at": "2026-05-23T10:32:48Z",
+    "qc_signal": "docs/signals/qa-macro-p1-a3-green-20260523T103248Z.json"
+  },
+  "dispatch_metadata": {
+    "estimate_minutes": 30,
+    "ac_count": 4,
+    "file_count": 6,
+    "goals": ["G3"],
+    "blocks": ["P1-A5", "P1-B1"],
+    "blocked_by": ["P1-A3"],
+    "zone": "apps/macro-indicators",
+    "language": "Go"
+  },
+  "ac_summary": {
+    "AC-1": "go build ./... passes (zero compile errors)",
+    "AC-2": "go vet ./... passes (zero warnings)",
+    "AC-3": "pkg/domain/models.go imports ZERO from pkg/application|infrastructure|interface (Fence-A golden rule)",
+    "AC-4": "Commit message lists all 6 files explicitly (L84 discipline)"
+  },
+  "constraints_binding": {
+    "L84_explicit_file_staging": true,
+    "no_force": true,
+    "no_no_verify": true,
+    "no_gpg_bypass": true,
+    "no_git_push": true,
+    "anchor_1776df8e_held": true
+  },
+  "risk_flags": {
+    "R-1": {
+      "severity": "HIGH",
+      "binding_on": "P1-B1 AC-6",
+      "forward_warning": true,
+      "description": "Math.random() in scoreIndicator() TS → Go deterministic tier lookup. PM will include explicit R-1 grep guard in P1-B1 handoff."
+    },
+    "R-3": {
+      "severity": "HIGH",
+      "binding_on": "Phase 2 P2-B",
+      "forward_warning": true,
+      "description": "4 MCP tools bypass HTTP layer via direct domain imports. Phase 2 P2-B scope expansion: mcp-server tool handler rewire to port 5004. Noted for architect at Phase 1 close gate."
+    }
+  },
+  "g12_dod_gate": {
+    "applies": false,
+    "reason": "Scaffold-only, no scenarios exist yet. Gate activates P1-B1 onward.",
+    "binding_from": "P1-B1"
+  },
+  "depguard_fence_rules": {
+    "fence_a": "Domain MUST NOT import application|infrastructure|interface (AC-3 verifies manually; automated check later in Phase 2)",
+    "fence_b": "Application MUST NOT import infrastructure|interface (future Phase 2 concern)",
+    "fence_c": "Composition root MUST NOT import domain logic (future Phase 2 concern)",
+    "note": ".golangci.yml is frozen at TA P2-A1 close; Phase 2 will activate automated enforcement"
+  },
+  "smoke_checks": {
+    "go_build": "cd apps/macro-indicators && go build ./... => exit 0",
+    "go_vet": "cd apps/macro-indicators && go vet ./... => exit 0",
+    "domain_isolation": "grep -rn 'pkg/application|pkg/infrastructure|pkg/interface' pkg/domain/*.go => exit 1",
+    "anchor_reachable": "git merge-base --is-ancestor 1776df8e HEAD => exit 0"
+  },
+  "files_to_create": [
+    "apps/macro-indicators/pkg/domain/models.go",
+    "apps/macro-indicators/pkg/domain/ports.go",
+    "apps/macro-indicators/pkg/application/dtos.go",
+    "apps/macro-indicators/pkg/application/usecases.go",
+    "apps/macro-indicators/pkg/infrastructure/repositories.go",
+    "apps/macro-indicators/pkg/interface/http/router.go"
+  ],
+  "commit_template_summary": "feat(macro-indicators): P1-A4 — pkg/ DDD scaffold (6 stub files). Advances G3. Lists all 6 files explicitly. AC-1..4 verified.",
+  "next_task": {
+    "task_id": "P1-A5",
+    "title": "api/openapi.yaml HTTP contract",
+    "unblocked_after": "P1-A4 DONE + QA green",
+    "owner": "dev-macro-indicators"
+  },
+  "sot_refs": {
+    "pilot_status": "docs/data/pilot-status-macro-indicators.json",
+    "phase_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md §P1-A4",
+    "charter": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md v2.0"
+  }
+}

@@ -93,12 +93,30 @@
         ]
       },
       {
-        "timestamp": "2026-05-23T10:23:05Z",
+        "timestamp": "2026-05-23T10:32:48Z",
         "task_id": "P1-A3",
+        "status": "DONE",
+        "commits": [
+          "c76cbe04 (dev-macro-indicators impl)",
+          "a0f8a3ea (dev-macro-indicators signal)"
+        ],
+        "signal": "docs/signals/qa-macro-p1-a3-green-20260523T103248Z.json",
+        "ac_results": "4/4 PASS (cmd/sandbox/main.go 199 lines + flags (-tier/-module/-scenario) + scenario path resolution graceful + pass/fail reporting stubs + zero env secrets)",
+        "deviations": [
+          {
+            "id": "D-1",
+            "severity": "ACCEPTED",
+            "description": "Handoff target 150-200 governs over dispatch suggestion ≤120. 199 lines within range. AC assessment: handoff target takes precedence."
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-05-23T10:32:48Z",
+        "task_id": "P1-A4",
         "status": "DISPATCH",
-        "handoff": "docs/handoffs/TASK_P1-A3-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a3-20260523T102305Z.json",
-        "description": "cmd/sandbox/main.go sandbox harness (~20m, 4 ACs). Clone TA pattern (apps/technical-analysis/cmd/sandbox/main.go). Next: P1-A4 (pkg/ DDD scaffold)"
+        "handoff": "docs/handoffs/TASK_P1-A4-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a4-20260523T103248Z.json",
+        "description": "pkg/ DDD scaffold (6 stub files: domain/models.go, domain/ports.go, application/dtos.go, application/usecases.go, infrastructure/repositories.go, interface/http/router.go). ~30m, 4 ACs. No business logic yet. Next: P1-A5 (api/openapi.yaml)"
       }
     ],
     "risk_propagation": {
