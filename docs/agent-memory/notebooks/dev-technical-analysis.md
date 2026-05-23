@@ -4,6 +4,110 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ## Working Memory
 
+### 2026-05-23 — P2-A3-prereq Fix golangci-lint findings (cycle-22)
+
+**Task:** Fix golangci-lint findings on apps/technical-analysis, unblock G4.
+
+**Status:** DONE — signal commit 106b3727 | no source fix needed
+
+**Root cause:** CI uses golangci-lint v1.64.8; local had v2.12.2. The cycle-20 commit 9d364329 already converted .golangci.yml from v2→v1 format (architect-blessed as frozen anchor per Amendment 1). No additional source changes required in cycle-22.
+
+**Path chosen:** A (local verification with v1.64.8 binary proves exit 0).
+
+**Verification:**
+- Installed golangci-lint v1.64.8 at /tmp/golangci-lint-v1/golangci-lint
+- `golangci-lint v1.64.8 run` → exit 0, 1 linter active (depguard), 0 issues
+- `go test ./...` → exit 0, 7 packages ok
+- `go vet ./...` → exit 0
+- Sandbox primitive: 25/25 GREEN
+- Sandbox module: 5/5 GREEN
+- Grand total: 30/30 GREEN
+
+**AC-4c freeze check:** `git log --oneline .golangci.yml` shows exactly 9561fee9 then 9d364329 — no commits after 9d364329. PASS.
+
+**Done signal:** `docs/signals/dev-ta-cycle22-fix-go-lint-done-20260523T085500Z.json`
+
+---
+
+### 2026-05-23 — P2-E3 EMA smoothing factor denominator fix (cycle-16)
+
+**Task:** P2-E3 — Fix 3 failing MACD scenarios (macd-golden, macd-bullish-cross, macd-bearish-cross). G11+G12.
+
+**Status:** DONE — commit 815fc9bb | cycles consumed: 1 of ≤2
+
+**Root cause:** `ema.go` line 20 used `k := 2.0 / float64(period+2)` instead of the standard EMA smoothing factor `k = 2 / (period+1)`. The denominator off-by-one (`+2` instead of `+1`) caused every non-flat EMA to converge too slowly — systematically undershooting the MACD line by ~9% at the first triple for 12/26/9 parameterisation. Flat-zero unaffected (fastEMA==slowEMA regardless of k when all closes are identical). Error-path canary unaffected (never reaches the smoothing loop).
+
+**Diagnostic path:** Dashboard signal showed firstTriple.macdLine got 1.147178, want 1.263097. Only 3 value-path MACD scenarios RED; 2 canary/edge GREEN. Opened ema.go directly. Spotted `float64(period+2)` on line 20. Standard EMA formula from Wikipedia/finance references: `k = 2 / (N+1)`. Off-by-one confirmed. Fixed without reading any forbidden file.
+
+**Fix:** 1-character change in ema.go line 20 — `period+2` → `period+1`.
+
+**Smoke:**
+- `go test -count=1 ./...` → 7 packages ok, 0 failures ✓
+- `go vet ./...` → exit 0, no warnings ✓
+- Sandbox primitive: 25/25 GREEN ✓
+- Sandbox module: 5/5 GREEN ✓
+- Grand total: 30/30 GREEN ✓
+
+**Forbidden reads:** None. Diagnosis from dashboard signal + ema.go source + scenario JSON only.
+
+**Done signal:** `docs/signals/dev-ta-P2-E3-done-20260523T024840Z.json`
+
+---
+
+### 2026-05-23 — P2-E2 RSI Wilder smoothing divisor fix (c282 cycle-14)
+
+**Task:** P2-E2 — Fix 4 failing RSI scenarios (rsi-golden, rsi-mid-range, rsi-overbought-pullback, rsi-oversold-bounce). G11+G12.
+
+**Status:** DONE — commit f0cde20f | cycles consumed: 1 of ≤2
+
+**Root cause:** `rsi.go` lines 56-57 used `float64(period+1)` as Wilder smoothing divisor instead of correct `float64(period)`. Wilder's formula: `avgGain = (prevAvgGain*(period-1) + currGain) / period`. Using `period+1` caused systematic undershoot in all value-path RSI outputs (too slow convergence). Error-path canary unaffected (never reaches the smoothing loop).
+
+**Diagnostic path:** Dashboard signal showed rsi[4] got 53.28, want 54.57 — "got" too low. Inspected rsi.go production source directly. Spotted divisor `float64(period+1)` at lines 56-57. Wilder's published formula requires dividing by `period` only. Confirmed bug without reading any forbidden file.
+
+**Fix:** 2-character change in rsi.go — `period+1` → `period` (both lines 56 and 57).
+
+**Smoke:**
+- `go test -count=1 ./...` → 7 packages ok, 0 failures ✓
+- `go vet ./...` → exit 0, no warnings ✓
+- Sandbox primitive: 25/25 GREEN ✓
+- Sandbox module: 5/5 GREEN ✓
+- Grand total: 30/30 GREEN ✓
+
+**Forbidden reads:** None. Diagnosis from dashboard signal + rsi.go source + scenario JSON only.
+
+**Done signal:** `docs/signals/dev-ta-P2-E2-done-20260523T023101Z.json`
+
+---
+
+### 2026-05-23 — P2-B1 Rewire TA callers to HTTP (scope-expanded 10 ACs)
+
+**Task:** P2-B1 — Rewire technicalIndicatorTools.ts + assembleBriefing.ts + type redirect in 1408/1410.
+
+**Status:** DONE — commit b9d0a82b | tag: p2-b-pre-delete created
+
+**Files modified (4):**
+- `apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts` — HTTP rewire (AC-1..6)
+- `apps/mcp-server/src/application/usecases/assembleBriefing.ts` — SEV-2 fix (AC-7,8)
+- `apps/mcp-server/src/__tests__/1408-tool-diacritics.test.ts` — type redirect (AC-9)
+- `apps/mcp-server/src/__tests__/1410-tool-diacritics-sweep.test.ts` — type redirect (AC-9)
+
+**Key decisions:**
+- AC-8 choice: local pure-math helpers (NOT Go HTTP) for assembleBriefing — in-memory prices, zero latency
+- AC-5 pattern: HTTP primary → DB fallback (local helpers) → error envelope. Preserves 1302 test compat until P2-B2 quarantine.
+- AC-6: ToolCandle exported from technicalIndicatorTools.ts; tests import as `ToolCandle as DailyCandle`
+- 1302 still imports domain service (expected — moves to _deprecated/ in P2-B2, not P2-B1 scope)
+
+**Smoke:**
+- `bun tsc --noEmit` → exit 0 ✓
+- `bun test 1302 + 1408 + 1881a` → 62/62 pass ✓
+- 1410 has 1 pre-existing fail (alertAccuracy unrelated to TA)
+- grep: assembleBriefing comment only (no live import), 1302 remains (P2-B2)
+
+**Downstream:**
+- P2-B2 (deletion): gated on this commit + p2-b-pre-delete tag (already created here)
+
+---
+
 ### 2026-05-23 — P2-A1 golangci-lint Fence-A/B/C config (task #16)
 
 **Task:** P2-A1 — Author `.golangci.yml` with depguard Fence-A/B/C rules. Goal G4.
