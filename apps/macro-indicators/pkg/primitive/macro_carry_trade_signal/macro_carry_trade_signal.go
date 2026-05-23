@@ -37,7 +37,7 @@ const (
 	RegimeFIIOutflowRisk = "FII_OUTFLOW_RISK"
 
 	// HotMoneyThreshold is the carry spread above which regime = HOT_MONEY_INFLOW.
-	HotMoneyThreshold = 5.0
+	HotMoneyThreshold = 2.5
 
 	// OutflowRiskThreshold is the carry spread below which regime = FII_OUTFLOW_RISK.
 	OutflowRiskThreshold = 0.5

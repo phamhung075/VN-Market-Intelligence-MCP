@@ -1,0 +1,40 @@
+{
+  "type": "dev-fix",
+  "from": "dev-macro-indicators",
+  "to": "qa",
+  "cycle": "cycle-55",
+  "task_id": "P2-D2",
+  "goal_under_proof": "G10",
+  "cycle_used": 1,
+  "max_cycles": 2,
+  "fix_commit_sha": "PENDING — will be updated after commit",
+  "byte_identical_verification": {
+    "command": "git diff p2-d1-pre-injection -- apps/macro-indicators/pkg/primitive/macro_carry_trade_signal/macro_carry_trade_signal.go",
+    "result": "empty (zero output) — confirmed byte-identical to pre-bug tag"
+  },
+  "sandbox_post_fix": {
+    "command": "cd apps/macro-indicators && go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all",
+    "exit_code": 0,
+    "status": "OK",
+    "total": 20,
+    "pass": 20,
+    "fail": 0
+  },
+  "hard_gates_post_fix": {
+    "anchor_1776df8e": "HELD (exit 0)",
+    "r1_no_math_rand": "exit 1 (clean)",
+    "fence_b_app_infra": "exit 1 (clean)",
+    "fence_b_interface": "exit 1 (clean)",
+    "fence_c_infra_outside_main": "exit 1 (clean)",
+    "ssot_untouched_since_44b2c835": true,
+    "ta_untouched": true,
+    "scenarios_untouched": true,
+    "ci_config_untouched": true
+  },
+  "tag_validation": {
+    "p2_d1_pre_injection_still_at_c2217c92": true,
+    "macro_pre_inject_still_at_c2217c92": true
+  },
+  "g10_pass_evidence": "Byte-identical restore achieved within cycle 1 of 2 (max). G10 = PASS pending qa re-verify + PM atomic flip.",
+  "timestamp": "2026-05-23T17:57:00Z"
+}
