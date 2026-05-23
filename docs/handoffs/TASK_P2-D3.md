@@ -143,5 +143,85 @@ AC: sandbox primitive all-GREEN; sandbox module all-GREEN; verification block ap
 
 | Cycle | Commit | Result | Notes |
 |---|---|---|---|
-| 1 | TBD | TBD | |
-| 2 | TBD | TBD | (only if cycle 1 was RED) |
+| 1 | 92639e15 | GREEN | Wilder smoothing weighted prev avg by `period` instead of `period-1`. Single-line fix in `apps/technical-analysis/pkg/primitive/rsi/rsi.go` lines 56-57. All 30 dashboard scenarios GREEN (25 primitive + 5 module). `go test ./...` PASS. `go vet` clean. |
+| 2 | n/a | n/a | Not needed — cycle 1 GREEN. |
+
+---
+
+## §Verification
+
+Per AC-4 / G12 DoD. The sandbox runner takes one scenario per invocation (`-scenario=<file>` — `-scenario=all` is not implemented by `cmd/sandbox/main.go`). Ran every scenario file under `docs/scenarios/technical-analysis/{primitives,module}/` and captured the `"status"` line emitted by the runner. Every scenario GREEN; runner exit 0 on every invocation.
+
+**Reproduction (pre-fix)** — `cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -scenario=rsi-golden.json`:
+
+```
+"status": "red"
+"diffs": [ "rsi[4]: got 56.181151, want 54.567700 (tol 1)" ]
+exit status 1
+```
+
+Matches dashboard signal exactly.
+
+**Post-fix — primitive tier (25 scenarios):**
+
+```
+bb-expansion.json                        green
+bb-golden.json                           green
+bb-insufficient-data.json                green
+bb-period-equals-length.json             green
+bb-squeeze.json                          green
+cross-edge.json                          green
+cross-failure.json                       green
+cross-golden.json                        green
+cross-multi-alternating.json             green
+cross-parallel-no-cross.json             green
+ma-dispatcher-unknown.json               green
+ma-edge.json                             green
+ma-failure.json                          green
+ma-golden.json                           green
+ma-sma-vs-ema.json                       green
+macd-bearish-cross.json                  green
+macd-bullish-cross.json                  green
+macd-flat-zero.json                      green
+macd-golden.json                         green
+macd-insufficient-data.json              green
+rsi-golden.json                          green
+rsi-insufficient-data.json               green
+rsi-mid-range.json                       green
+rsi-overbought-pullback.json             green
+rsi-oversold-bounce.json                 green
+```
+
+**Post-fix — module tier (5 scenarios):**
+
+```
+bb-ma-compression.json                   green
+edge-insufficient-candles.json           green
+ema-crossover-detect-cross.json          green
+multi-primitive-bullish-cross.json       green
+rsi-macd-crossover.json                  green
+```
+
+**Unit tests (`cd apps/technical-analysis && go test -count=1 ./...`)**:
+
+```
+ok  	github.com/vn-market-intelligence/technical-analysis/cmd/sandbox	0.987s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/module	0.660s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/primitive/bollinger_bands	0.329s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/primitive/detect_cross	1.310s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/primitive/macd	1.649s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/primitive/moving_average	2.305s
+ok  	github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi	1.973s
+```
+
+`go vet ./...`: clean (no output).
+
+**Summary: 25/25 primitive GREEN, 5/5 module GREEN, 30/30 total, all tests pass. G12 DoD satisfied.**
+
+---
+
+## §Root-Cause Note
+
+`apps/technical-analysis/pkg/primitive/rsi/rsi.go` lines 56-57 used `(avgGain*period + gain) / period` for the smoothed average. Wilder's recursive moving average is `(prevAvg*(period-1) + curr) / period` — multiplying the previous average by `period` (rather than `period-1`) effectively keeps the previous value almost unchanged (it only diluted current gain/loss by `1/period`) instead of giving the previous EMA-equivalent weight `(period-1)/period`. The seed step (first emitted value, simple average of the first `period` moves) was correct, which is why `rsi[0]` matched expected and divergence appeared from `rsi[1]` onward, growing with each subsequent bar. The scenario JSON description for `rsi-golden.json` explicitly states the correct formula: `avgGain=(prev*(13)+curr)/14`.
+
+Why the canary (`rsi-insufficient-data`) stayed GREEN: it never reaches the smoothing loop — it exercises only the early-return error path (`ErrInsufficientData`) and the input-validation paths. All other RSI value-path scenarios (`rsi-golden`, `rsi-overbought-pullback`, `rsi-oversold-bounce`, `rsi-mid-range`) iterate the smoothing loop and were therefore all sensitive to the same single off-by-one weight. No other primitive (`bb-*`, `macd-*`, `ma-*`, `cross-*`) uses Wilder smoothing, which is why the regression was perfectly isolated to RSI.

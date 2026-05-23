@@ -53,8 +53,8 @@ func Calculate(closes []float64, period int) ([]float64, error) {
 		} else {
 			loss = -d
 		}
-		avgGain = (avgGain*float64(period) + gain) / float64(period)
-		avgLoss = (avgLoss*float64(period) + loss) / float64(period)
+		avgGain = (avgGain*float64(period-1) + gain) / float64(period)
+		avgLoss = (avgLoss*float64(period-1) + loss) / float64(period)
 		out = append(out, wilderRSI(avgGain, avgLoss))
 	}
 	return out, nil
