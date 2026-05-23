@@ -1,5 +1,36 @@
 # Architect — Notebook
 
+**Last updated:** 2026-05-24 (SI-3 TS fence spike) | **Sprint:** fleet-factory-rollout program
+
+## SI-3 cycle (2026-05-24) — TS ESLint architecture-fence spike
+
+**Task:** Design ESLint equivalent of Go depguard for TS services (kinh-dich + news-fetch). Output: `docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md`.
+
+**Decision: Option A — `eslint-plugin-boundaries` v6.0.2.** Within 1 sprint: YES. G4 AC text ready: YES. Option C NOT recommended.
+
+**Brownfield findings:**
+- kinh-dich and news-fetch have zero ESLint config today. Clean slate — no migration needed.
+- Both use Bun 1.x runtime, `moduleResolution: "bundler"`, `.js` extension in relative imports.
+- No `tsconfig.json` path aliases. Option B (tsconfig aliases + grep) was rejected as weaker than depguard.
+- No `src/primitive/` or `src/module/` yet — config is authored at charter time, frozen at G4 close (same as golangci.yml).
+
+**Design outcome:**
+- Single `eslint.config.mjs` per service using flat config API.
+- Three rules via `boundaries/element-types`: Fence-A (primitive→no module/app/interface/infra), Fence-B (module→no app/interface/infra), Fence-C (any non-composition-root→no infrastructure).
+- CI command: `bunx eslint src/ --max-warnings 0` (exits non-zero on any violation).
+- Violation proof recipe (AC-4b): inject a Fence-A import in a primitive file, confirm "Fence-A" in output + non-zero exit, revert, confirm exit 0 + git clean.
+
+**Key risk:** R-2 — `.js`-suffixed import strings and plugin pattern matching. Confirmed mitigation: fallback is adding `@typescript-eslint/parser` (5-min change, stays Option A). Dev must confirm empirically in AC-4b before G4 closes.
+
+**PO action:** Transcribe §5 of `00-design.md` verbatim into pilot-4 kinh-dich charter G4 section. Same text applies to pilot-6 news-fetch.
+
+**Files authored this cycle (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md` (NEW — full design + violation recipe + AC text)
+2. `docs/signals/architect-si3-ts-fence-done-20260523T220332Z.json` (NEW — PO pickup signal)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+---
+
 **Last updated:** 2026-05-23 (fleet-factory-rollout roadmap) | **Sprint:** fleet-factory-rollout program brief
 
 ## Fleet-Factory-Rollout cycle (2026-05-23) — program roadmap brief

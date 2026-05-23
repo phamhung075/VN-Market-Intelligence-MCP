@@ -1,0 +1,29 @@
+{
+  "from": "architect",
+  "to": "po",
+  "via": "main-router",
+  "type": "si3-complete",
+  "createdAt": "2026-05-23T22:03:32Z",
+  "prework": "SI-3",
+  "program": "fleet-factory-rollout",
+  "brief_path": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md",
+  "chosen_option": "A",
+  "option_description": "eslint-plugin-boundaries v6.0.2 (ESLint flat config) — three fence rules matching Go depguard Fence-A/B/C",
+  "within_one_sprint": true,
+  "g4_ac_text_ready": true,
+  "g4_ac_location": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md §5",
+  "option_c_recommended": false,
+  "commit_sha": "TBD — will be set after commit",
+  "gates_unblocked": [
+    "pilot-4 (kinh-dich-service) G4 — PO may now lock G4 section by transcribing §5 verbatim",
+    "pilot-6 (news-fetch) G4 — same §5 text applies with svc=news-fetch"
+  ],
+  "key_findings": {
+    "no_existing_eslint_in_ts_services": true,
+    "no_tsconfig_changes_required": true,
+    "bun_run_lint_ci_is_the_fence_command": "bunx eslint src/ --max-warnings 0",
+    "violation_proof_recipe": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md §4",
+    "known_risk_r2": "eslint-plugin-boundaries .js-suffix import matching — dev must confirm empirically in AC-4b; fallback is adding @typescript-eslint/parser (5-min fix, stays Option A)"
+  },
+  "po_action_required": "Transcribe §5 G4 AC verbatim into pilot-4 (kinh-dich) charter. Replace <svc> with kinh-dich-service. Pilot-4 G4 section is now lockable."
+}
