@@ -111,12 +111,38 @@
         ]
       },
       {
-        "timestamp": "2026-05-23T10:32:48Z",
+        "timestamp": "2026-05-23T10:43:27Z",
         "task_id": "P1-A4",
+        "status": "DONE",
+        "commits": [
+          "a3878361 (dev-macro-indicators impl)",
+          "f15127f6 (dev-macro-indicators signal)"
+        ],
+        "signal": "docs/signals/qa-macro-p1-a4-green-20260523T104327Z.json",
+        "ac_results": "4/4 PASS (go build ./... exit 0 + go vet ./... exit 0 + Fence-A: domain imports zero app/infra/interface + 6 explicit files L84)",
+        "deviations": [],
+        "qa_commit": "7629f258"
+      },
+      {
+        "timestamp": "2026-05-23T10:43:27Z",
+        "task_id": "P1-A4",
+        "status": "DONE",
+        "commits": [
+          "a3878361 (dev-macro-indicators impl)",
+          "f15127f6 (dev-macro-indicators signal)"
+        ],
+        "signal": "docs/signals/qa-macro-p1-a4-green-20260523T104327Z.json",
+        "ac_results": "4/4 PASS (go build ./... exit 0 + go vet ./... exit 0 + Fence-A: domain imports zero app/infra/interface + 6 explicit files)",
+        "deviations": [],
+        "qa_commit": "7629f258"
+      },
+      {
+        "timestamp": "2026-05-23T10:43:27Z",
+        "task_id": "P1-A5",
         "status": "DISPATCH",
-        "handoff": "docs/handoffs/TASK_P1-A4-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a4-20260523T103248Z.json",
-        "description": "pkg/ DDD scaffold (6 stub files: domain/models.go, domain/ports.go, application/dtos.go, application/usecases.go, infrastructure/repositories.go, interface/http/router.go). ~30m, 4 ACs. No business logic yet. Next: P1-A5 (api/openapi.yaml)"
+        "handoff": "docs/handoffs/TASK_P1-A5-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json",
+        "description": "api/openapi.yaml HTTP contract spec (GET /health + POST /snapshot). ~15m, 4 ACs. Smoke gate end-of-A-bucket (go build, go vet, openapi exists, zero business logic). Next: P1-B1 (first primitive macro-investment-clock)"
       }
     ],
     "risk_propagation": {

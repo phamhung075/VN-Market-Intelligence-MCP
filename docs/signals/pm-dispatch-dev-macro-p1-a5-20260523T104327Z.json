@@ -1,0 +1,145 @@
+{
+  "signal_type": "pm_dispatch",
+  "timestamp": "2026-05-23T10:43:27Z",
+  "cycle": "c282 cycle-34",
+  "task_id": "P1-A5",
+  "task_title": "api/openapi.yaml — HTTP Contract Spec",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "owner": "dev-macro-indicators",
+  "estimate_minutes": 15,
+  "ac_count": 4,
+  "goals": ["G3"],
+  "depends_on": "P1-A4",
+  "blocks": ["P1-B1"],
+  "status": "READY-FOR-DISPATCH",
+  "handoff_path": "docs/handoffs/TASK_P1-A5-macro.md",
+  "phase_plan_ref": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md §P1-A5",
+  "previous_task_verification": {
+    "task_id": "P1-A4",
+    "status": "DONE",
+    "qa_timestamp": "2026-05-23T10:43:27Z",
+    "qa_verdict": "GREEN",
+    "qa_signal": "docs/signals/qa-macro-p1-a4-green-20260523T104327Z.json",
+    "dev_commits": ["a3878361 (impl)", "f15127f6 (signal)"],
+    "qa_commit": "7629f258",
+    "ac_results": "4/4 PASS",
+    "ac_details": {
+      "AC-1": "go build ./... exit 0",
+      "AC-2": "go vet ./... exit 0",
+      "AC-3": "Fence-A grep: domain imports zero app/infra/interface packages",
+      "AC-4": "git show a3878361 = exactly 6 files"
+    },
+    "additional_checks": [
+      "go mod tidy idempotent ✓",
+      "golangci-lint 0 issues ✓",
+      "stub discipline confirmed (zero business logic, zero math/rand) ✓"
+    ],
+    "deviations": []
+  },
+  "task_spec": {
+    "title": "Create api/openapi.yaml HTTP contract specification",
+    "description": "Scaffold OpenAPI 3.0 specification documenting HTTP endpoints: GET /health (returns {status, service, port}) and POST /snapshot (returns macro snapshot response)",
+    "files_touched": [
+      {
+        "path": "apps/macro-indicators/api/openapi.yaml",
+        "action": "CREATE",
+        "type": "YAML specification"
+      }
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "description": "Valid OpenAPI 3.0 document (python3 yaml.safe_load passes)",
+        "verification": "python3 -c \"import yaml; yaml.safe_load(open('apps/macro-indicators/api/openapi.yaml'))\" && echo PASS"
+      },
+      {
+        "id": "AC-2",
+        "description": "GET /health endpoint documented with {status, service, port} fields",
+        "verification": "Schema present in openapi.yaml"
+      },
+      {
+        "id": "AC-3",
+        "description": "POST /snapshot endpoint documented with response body (vnIndex, oilUsd, goldUsd, usdVnd, signals, fetchedAt)",
+        "verification": "Schema present in openapi.yaml"
+      },
+      {
+        "id": "AC-4",
+        "description": "File exists at canonical path",
+        "verification": "test -f apps/macro-indicators/api/openapi.yaml && echo PASS"
+      }
+    ]
+  },
+  "smoke_gate": {
+    "description": "End-of-A-bucket smoke gate (before P1-B1 primitive starts)",
+    "checks": [
+      {
+        "command": "cd apps/macro-indicators && go build ./...",
+        "expected": "exit 0 (no compile errors)"
+      },
+      {
+        "command": "go vet ./...",
+        "expected": "exit 0 (no warnings)"
+      },
+      {
+        "command": "test -f api/openapi.yaml && echo openapi:PASS",
+        "expected": "openapi:PASS"
+      },
+      {
+        "command": "grep -c 'scoreIndicator|buildSnapshot|oilDirection' cmd/server/main.go",
+        "expected": "0 (no business logic leak from scaffold)"
+      }
+    ]
+  },
+  "forward_risks": [
+    {
+      "id": "R-1",
+      "severity": "HIGH",
+      "title": "Math.random() deterministic scoring requirement",
+      "description": "TS scoreIndicator() uses Math.random() — Go rewrite must be deterministic. Binding check in P1-B1 AC-6.",
+      "binding_on": "P1-B1 AC-6 (explicit grep guard for Math.random|rand.Intn|rand.Float must return 0)",
+      "forward_warning": "PM includes explicit R-1 reminder in P1-B1 handoff after P1-A5 completes"
+    },
+    {
+      "id": "R-3",
+      "severity": "HIGH",
+      "title": "MCP tool rewire Phase 2 scope",
+      "description": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) currently bypass HTTP via direct domain imports in mcp-server",
+      "binding_on": "Phase 2 P2-B (mcp-server tool handler rewire required when Go service lands)",
+      "forward_warning": "PM flags R-3 for architect attention at Phase 1 close gate"
+    }
+  ],
+  "constraints": {
+    "l84_staging": "Explicit-file only: git add apps/macro-indicators/api/openapi.yaml (no -A, no .)",
+    "no_force": "No --force, no --no-verify, no --no-gpg-sign",
+    "no_push": "Local-only work (user owns push decision)",
+    "anchor_discipline": "Anchor 1776df8e immutable (no retag, no rewrite, no push)"
+  },
+  "g12_gate": {
+    "applies": false,
+    "reason": "P1-A5 is scaffold-only specification file — G12 gate activates from P1-B1 onward (first primitive with sandbox execution)"
+  },
+  "wip_status": {
+    "pilot_phase": "1",
+    "wip_limit": 1,
+    "active_task_before_dispatch": "P1-A4 (now DONE)",
+    "active_task_after_dispatch": "P1-A5",
+    "enforcement": "dev-macro-indicators claims WIP slot exclusively until P1-A5 DONE + QA-green"
+  },
+  "next_steps": {
+    "immediate": "dev-macro-indicators receives handoff (TASK_P1-A5-macro.md) and dispatch signal",
+    "after_done": "QA verifies AC-1..AC-4 PASS + smoke gate PASS",
+    "after_qa_green": "PM closes P1-A5 in SSOT, creates P1-B1 handoff (first primitive macro-investment-clock), dispatches dev-macro-indicators for P1-B1"
+  },
+  "ssot_references": [
+    "docs/data/pilot-status-macro-indicators.json (updated: P1-A4 closed, P1-A5 dispatched)",
+    "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md (per-task AC source)"
+  ],
+  "signal_author": "pm",
+  "signal_metadata": {
+    "briefing": "P1-A4 verified GREEN by QA (commit 7629f258). 6 stub files created (domain/models, domain/ports, application/dtos, application/usecases, infrastructure/repositories, interface/http/router). Fence-A enforced (zero imports from lower layers). WIP remains 1/1. Anchor 1776df8e held. R-1 + R-3 constraints propagated. P1-A5 (api/openapi.yaml) now dispatched — end-of-A-bucket specification task. 15m estimate, 4 ACs (valid YAML + 2 endpoints documented + file exists + smoke gate pass-through). Blocks P1-B1 (first primitive). G12 DoD not binding. Next cycle: P1-B1 dispatch after P1-A5 QA green.",
+    "cycle_number": 34,
+    "anchor_verified": true,
+    "wip_count_after_dispatch": 1
+  }
+}

@@ -1,5 +1,105 @@
 # PM — Notebook
 
+## c282 cycle-34 · 2026-05-23T10:43:27Z
+
+**Status:** P1-A4 VERIFIED GREEN + P1-A5 DISPATCHED — macro-indicators pilot Phase 1 fifth task. QA verified P1-A4 at 2026-05-23T10:43:27Z: 4/4 AC PASS (pkg/ DDD scaffold, 6 stub files, Fence-A enforced, go build/vet both exit 0, R-1 pre-check clean). PM updated pilot-status SSOT phase1: closed P1-A4 entry (status DONE, commits a3878361/f15127f6, qa_commit 7629f258) and created P1-A5 entry (status DISPATCH). Created TASK_P1-A5-macro.md handoff (api/openapi.yaml HTTP contract spec, ~15m, 4 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. R-1 + R-3 constraints propagated in P1-A5 Forward Risks. G12 DoD does NOT apply to P1-A5 (scaffold-only specification, activates P1-B1). Next: P1-B1 (macro-investment-clock primitive) unblocked after P1-A5 QA green.
+
+### P1-A4 Closure Verified
+
+- **Task ID:** P1-A4 (fourth of 11 Phase 1 tasks)
+- **Completion signal:** `docs/signals/qa-macro-p1-a4-green-20260523T104327Z.json` ✓
+- **Dev commits:** a3878361 (impl) + f15127f6 (signal) ✓
+- **QA commit:** 7629f258 ✓
+- **AC results:** 4/4 PASS
+  - AC-1: go build ./... exit 0 ✓
+  - AC-2: go vet ./... exit 0 ✓
+  - AC-3: Fence-A grep `^import|\t"` on pkg/domain/ → zero matches ✓
+  - AC-4: git show a3878361 = exactly 6 files ✓
+- **Additional checks:** go mod tidy idempotent ✓, golangci-lint 0 issues ✓, stub discipline confirmed (zero business logic, zero math/rand) ✓, L84 compliance (6 files in impl, 1 file in signal) ✓, anchor reachable ✓
+- **Deviations:** none
+
+### P1-A5 Task Context
+
+- **Task ID:** P1-A5 (fifth of 11 Phase 1 tasks)
+- **Title:** Create `api/openapi.yaml` HTTP contract spec (GET /health + POST /snapshot)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 15 minutes (specification-only)
+- **AC count:** 4 (valid OpenAPI 3.0 YAML + GET /health documented + POST /snapshot documented + file exists)
+- **Goals:** G3 (Microservice has clean composition root)
+- **Files touched:** 1 YAML file (CREATE)
+  - `apps/macro-indicators/api/openapi.yaml` (OpenAPI 3.0 specification)
+- **Blocks:** P1-B1 (first primitive macro-investment-clock, requires smoke gate confirmation at A5 close)
+- **Pattern:** Standard OpenAPI 3.0 contract (mirroring TA pilot)
+- **Key constraint:** Smoke gate at end of A-bucket (go build, go vet, openapi file exists, zero business logic)
+
+### PM Actions Completed (Cycle c282 cycle-34)
+
+1. **Verified P1-A4 completion** ✓
+   - Read completion signal (qa-macro-p1-a4-green-20260523T104327Z.json)
+   - Verified dev commits a3878361 + f15127f6
+   - Cross-checked 4/4 AC PASS (AC-1 go build, AC-2 go vet, AC-3 Fence-A domain isolation, AC-4 6 explicit files L84)
+   - Cross-checked additional checks (go mod tidy idempotent, golangci-lint 0 issues, stub discipline confirmed, L84 compliant, anchor held)
+   - No deviations
+
+2. **Created TASK_P1-A5-macro.md handoff doc** ✓
+   - 4 verbatim ACs from phase-1-task-plan §P1-A5
+   - OpenAPI 3.0 specification pattern + implementation guidance
+   - AC verification commands (python3 yaml.safe_load, endpoint schema checks)
+   - L84 explicit-file staging instructions (1 git add command for single file)
+   - Constraints section: L84 + no-bypass binding + anchor discipline
+   - Forward Risks section: R-1 (deterministic scoring P1-B1 AC-6 binding) + R-3 (Phase 2 P2-B mcp-server rewire)
+   - G12 DoD Gate note: does NOT apply to P1-A5 (scaffold-only specification, activates from P1-B1)
+   - Smoke gate end-of-A-bucket section (all 4 checks listed explicitly)
+   - Commit message template provided
+   - RETURN block template provided
+
+3. **Created dispatch signal (pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json)** ✓
+   - WIP claim: phase_1_dev_team = ACTIVE (1 of 1 enforced)
+   - P1-A4 verification embedded (commits a3878361 + f15127f6, 4/4 ACs, qa_commit 7629f258, no deviations)
+   - Task spec: estimate 15m, 4 ACs, goals G3, 1 file (YAML specification)
+   - Smoke gate section with all 4 checks explicit + expected outcomes
+   - Risk flags: R-1 + R-3 with binding_on + forward_warning notes
+   - G12 DoD clarification: does NOT apply to P1-A5 (activates from P1-B1 onward)
+   - Constraints inherited: L84 + no-bypass + anchor held
+   - Next steps + SSOT references + briefing included
+
+4. **Updated pilot-status SSOT (docs/data/pilot-status-macro-indicators.json)** ✓
+   - Closed P1-A4 entry: status DISPATCH → DONE (timestamp 2026-05-23T10:43:27Z)
+   - Added commits field to P1-A4: a3878361 + f15127f6
+   - Added qa_commit field: 7629f258
+   - Updated signal ref to qa-macro-p1-a4-green-20260523T104327Z.json
+   - Updated AC results to "4/4 PASS (go build ./... exit 0, go vet ./... exit 0, Fence-A domain isolation, 6 explicit files L84)"
+   - Deviations: empty array (none)
+   - Added P1-A5 entry: timestamp 2026-05-23T10:43:27Z, status DISPATCH, handoff + signal refs
+   - Constraints still live: R-1 (P1-B1 AC-6 gate), R-3 (Phase 2 P2-B expansion)
+
+5. **Updated PM notebook (this file)** ✓
+   - New section: c282 cycle-34 with full P1-A4 verification + P1-A5 dispatch summary
+   - Action completion log + deviations review
+   - Task context + Fence-A implementation guidance
+   - Next step alert (P1-B1 unblocked after P1-A5 QA green)
+
+### Next Steps
+
+- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-A5-macro.md + docs/signals/pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json)
+- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-A5 DONE + QA-green
+- **P1-B1 readiness:** After P1-A5 DONE, PM prepares P1-B1 handoff (first primitive macro-investment-clock, ~2h, 7 ACs, deterministic scoring)
+- **R-1 forward-warning:** At P1-A5 close (openapi.yaml complete), PM includes explicit R-1 deterministic-scoring reminder in P1-B1 handoff with grep guard AC-6
+- **R-3 phase 2 flag:** At Phase 1 close gate, PM flags R-3 (mcp-server tool handler HTTP rewire) for architect attention when Phase 2 task plan expands
+
+### Pilot Status SSOT Checkpoint
+
+- **Pilot:** macro-indicators
+- **Phase:** 1 (ACTIVE)
+- **Task count:** 11 (P1-A1..E2)
+- **Progress:** P1-A1 DONE (5db4a246), P1-A2 DONE (0e2d9075/ed1a426b), P1-A3 DONE (c76cbe04/a0f8a3ea), P1-A4 DONE (a3878361/f15127f6, qa 7629f258), P1-A5 DISPATCH (pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json)
+- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-A5)
+- **Phase deadline:** 2026-07-04 (6 sprints, hard)
+- **Language:** Go (locked Day 0)
+- **Anchor:** 1776df8e (held) ✓
+
+---
+
 ## c282 cycle-33 · 2026-05-23T10:32:48Z
 
 **Status:** P1-A3 VERIFIED GREEN + P1-A4 DISPATCHED — macro-indicators pilot Phase 1 fourth task. QA verified P1-A3 at 2026-05-23T10:32:48Z: 4/4 AC PASS (cmd/sandbox/main.go 199L sandbox harness + flags + scenario path resolution graceful + pass/fail stubs + zero env secrets). One deviation D-1 ACCEPTED (handoff target 150-200 governs over dispatch suggestion ≤120; 199 within range). PM updated pilot-status SSOT phase1.progress_notes with P1-A3 closure, created P1-A4 handoff (pkg/ DDD scaffold, 6 stub files, ~30m, 4 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. R-1 + R-3 constraints still live. G12 DoD does NOT apply to P1-A4 (scaffold-only, activates P1-B1). Next: P1-A5 (api/openapi.yaml) unblocked after P1-A4 QA green.
