@@ -1,5 +1,43 @@
 # QA — Notebook
 
+## c282 cycle-34 · 2026-05-23 · macro P1-D2 module scenario JSON verification
+
+**Task:** P1-D2 — module-level scenario JSON (golden + edge fixtures for macro-signals) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-d2-green-20260523T113326Z.json
+impl_commit: d2faae30
+dev_signal_commit: c9136938
+qa_commit: 6d0ef54d
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: jq golden exit 0 | PASS | `jq empty` golden → exit 0 independently confirmed |
+| AC-1: jq edge exit 0 | PASS | `jq empty` edge → exit 0 independently confirmed |
+| AC-2 HARD GATE: sandbox module-tier 2/2 | PASS | go run ./cmd/sandbox -tier=module -module=macro-signals -scenario=all → total=2 pass=2 fail=0 status=OK exit 0 |
+| AC-2 regression: sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK exit 0 |
+| AC-3: G2 composition proof manual trace | PASS | VN_CPI: VN_DIRECT_INDICATORS exact match → VN_DIRECT/8/CORE_VN; Unemployment_Rate: no match → US_DOMESTIC/2/US_DOMESTIC; Unknown: default → US_DOMESTIC/2/US_DOMESTIC. All match golden expected_output. DI confirmed: New(clock Classifier) + s.clock.Classify() via interface. |
+| AC-4: zero API refs | PASS | grep exit 1 (zero matches) on both files |
+| Anchor 1776df8e pre-commit | PASS | merge-base --is-ancestor 1776df8e d2faae30^ → exit 0 |
+| Anchor 1776df8e post-HEAD | PASS | merge-base --is-ancestor 1776df8e HEAD → exit 0 |
+| L84 impl commit d2faae30 | PASS | 1 file only: docs/scenarios/macro-indicators/module/macro-signals-edge.json (NEW) |
+| L84 signal commit c9136938 | PASS | 1 file only: dev signal JSON |
+| R-1 determinism | PASS | grep random|seed|Math.random|rand(|time.Now → exit 1 (0 matches) |
+| Forbidden zones d2faae30 | CLEAR | no technical-analysis, no .golangci.yml, no .github/workflows, no dashboards |
+| Forbidden zones c9136938 | CLEAR | same — signal only |
+
+**D-1 ACCEPTED:** golden pre-existed from P1-C1. Only edge.json new in d2faae30. Golden content verified: 3 indicators correctly trace through scoreToPhase. AC-3 G2 proof confirmed — adequate for composition validation.
+**OBSERVATION:** QA prompt AC-2 regression omitted -module flag. Correct invocation: -tier=all -module=macro-indicators. Non-blocking — dev is not at fault.
+**G12 DoD:** BINDING and GREEN — sandbox module 2/2 + all-tier 5/5. G12 streak position: fixture-only task, not a streak task. P1-E1 is streak #3.
+**Blocking issues:** 0 — all 4 ACs + all hard gates PASS.
+**NEXT:** pm — mark P1-D2 DONE, dispatch P1-E1 (G12 streak task #3 of 3, critical path to Phase 1 close).
+
+---
+
 ## c282 cycle-33 · 2026-05-23 · macro P1-C1 macro-signals module stub verification
 
 **Task:** P1-C1 — module stub macro-signals (G12 streak task #2 of 3) | **Verdict:** GREEN
