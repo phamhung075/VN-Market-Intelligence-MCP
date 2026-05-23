@@ -1,0 +1,46 @@
+{
+  "from": "pm",
+  "type": "pm-close",
+  "task_id": "P2-B3",
+  "timestamp": "2026-05-23T15:40:00Z",
+  "cycle": "c282-cycle-46",
+  "qa_verdict": "GREEN",
+  "qa_signal_commit": "90b714b9",
+  "qa_signal_path": "docs/signals/qa-p2-b3-macro-GREEN-20260523T153700Z.json",
+  "p2_b3_marked_done": true,
+  "g5_flipped": true,
+  "g5_previous_status": "TBD",
+  "g5_new_status": "YES",
+  "g5_verified_at": "2026-05-23T15:37:00Z",
+  "g5_verified_by": "pm c282-cycle-46",
+  "goals_earned_count": 2,
+  "goals_earned": ["G4", "G5"],
+  "anchor_held_pre": true,
+  "anchor_held_post": true,
+  "hard_gates": {
+    "r1_exit": 1,
+    "golangci_exit": 0,
+    "sandbox_exit": 0,
+    "sandbox_summary": "total=5 pass=5 fail=0 status=OK"
+  },
+  "decision_matrix_touched": false,
+  "decisionMatrix_status": "all_fields_remain_TBD",
+  "constraints_held": [
+    "L84 explicit-file staging (SSOT + handoff + 2 signal files)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push",
+    "All work on main",
+    "Anchor 1776df8e HELD pre+post",
+    "Charter §4.5 matrix-authorship: decisionMatrix untouched"
+  ],
+  "acs_passed": {
+    "P2-B3_ac_1": "G5b HTTP routing confirmed (0 matches)",
+    "P2-B3_ac_2": "G5c TODO sweep clean (0 matches)",
+    "P2-B3_ac_3": "G5a TS deprecation confirmed (0 stray files)",
+    "P2-B3_ac_4": "G5 grade evidence recorded (PASS)"
+  },
+  "next_task": "P2-X1",
+  "next_task_owner": "dev-macro-indicators",
+  "next_task_handoff": "docs/handoffs/TASK_P2-X1-macro.md",
+  "wip_status": "WIP=1/1 (P2-X1 sole active task)"
+}
