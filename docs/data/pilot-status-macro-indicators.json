@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-X4",
+    "activeTask": "P2-C1",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -609,12 +609,16 @@
         "goals_verified": ["G8"]
       },
       "P2-C1": {
-        "status": "NO",
-        "title": "G9 PO Playwright Short-Circuit (Path B Default)",
+        "status": "DISPATCHED-RERUN",
+        "title": "G9 PO Playwright Short-Circuit (Path B Default) — RERUN AFTER P2-X4",
         "owner": "po",
         "dispatch_timestamp": "2026-05-23T15:05:01Z",
         "handoff_doc": "docs/handoffs/TASK_P2-C1-macro.md",
-        "po_verdict": "NO",
+        "rerun_cycle": "cycle-53",
+        "rerun_dependency_resolved": "P2-X4 DONE @ 442cf944 (dev@535e7bdc, qa@442cf944, GREEN)",
+        "handoff_unchanged": "docs/handoffs/TASK_P2-C1-macro.md",
+        "decision_doc_append_target": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md",
+        "po_verdict_first_run": "NO",
         "po_verified_at": "2026-05-23T15:05:01Z",
         "po_signal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
         "po_decision_doc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md",
@@ -628,7 +632,7 @@
         "goals_affected": ["G9"]
       },
       "P2-X4": {
-        "status": "DISPATCHED",
+        "status": "DONE",
         "title": "Dashboard data refresh — sync inline PRIMITIVES_DATA + MODULE_DATA + microservice panel",
         "owner": "dev-macro-indicators",
         "dispatch_timestamp": "2026-05-23T15:05:01Z",
@@ -641,7 +645,14 @@
         "blocked_by": "P2-F1",
         "unblocks": "P2-C1-rerun (PO Playwright re-verify)",
         "blocker_reason": "P2-C1 verdict=NO (1/6 primitives rendered). P2-X4 syncs dashboard data to match factory state. Then P2-C1 rerun will PASS (6/6 primitives visible) → G9 flip YES",
-        "goals_unblock": ["G9"]
+        "goals_unblock": ["G9"],
+        "completion": {
+          "dev_commit": "535e7bdc",
+          "qa_commit": "442cf944",
+          "qa_verdict": "GREEN",
+          "qa_signal": "docs/signals/qa-p2-x4-macro-GREEN-20260523T172900Z.json",
+          "completed_at": "2026-05-23T17:32:00Z"
+        }
       }
     },
     "observations": [
@@ -976,7 +987,7 @@
     }
   ],
   "goalsEarned": 6,
-  "goalsEarned_note": "P2-C1 verdict=NO (1/6 primitives rendered vs 'all' required in G9 charter). Remediation: P2-X4 → P2-C1 rerun. If rerun PASS, flip G9 YES → goalsEarned 6→7. Otherwise defer.",
+  "goalsEarned_note": "P2-C1 verdict=NO (1/6 primitives rendered vs 'all' required in G9 charter). Remediation: P2-X4 (cycle-52) DONE @ 442cf944 → P2-C1 rerun (cycle-53) to PO. Rerun recipe: same handoff, append to existing PO decision doc. If rerun PASS, flip G9 YES → goalsEarned 6→7 at cycle-54 atomic close. Otherwise defer.",
   "progress_notes_cycle_50": [
     {
       "timestamp": "2026-05-23T16:45:00Z",
