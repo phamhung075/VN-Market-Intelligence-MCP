@@ -76,6 +76,26 @@
 - Commit: df6ad8dc
 - Gates pilot-3 (stock-price) Phase 0 — PO can now instantiate docs/data/pilot-status-stock-price.json.
 
+## c-P0-SP-3 · 2026-05-24T00:23Z
+
+**Task:** P0-SP-3 — Bake G12 DoD Gate + factory disciplines into dev-stock-price agent/flow
+
+**Actions:**
+- `.claude/agents/dev-stock-price.md` CONFIRMED: added `zone` to YAML frontmatter, updated `model` to `claude-opus-4-5`, added `pilot_constraints` block (g12_dod_gate, cgo_boundary, fence_rules, pre_revert_tags, sandbox_security), added factory pilot lazy-load references.
+- `.claude/flows/dev-stock-price/main.md` CONFIRMED: transformed thin pointer into full macro-indicators-pattern flow. Added: Language Mode, Smoke Checks, G12 DoD Gate (blocking), R-CGO Gate (pre-check sequence + escalation), Security Rule, Fence Rules (A/B/C with grep commands), Pre-Revert Tag Protocol (stock-price-pre-ci/-delete/-inject).
+- Signal emitted: docs/signals/pm-p0-sp3-agent-flow-baking-complete-20260523T222357Z.json
+
+**Gates verified (all PASS):**
+- YAML valid: yes (frontmatter has name/color/description/tools/model/zone)
+- G12 DoD present: yes (both sandbox tiers CGO_ENABLED=0 must exit 0 GREEN)
+- R-CGO documented: yes (3-step pre-check + escalation path)
+- Fence-A/B/C baked: yes
+- Pre-revert tags: yes (3 tags documented)
+- Flow loads: yes (valid markdown, head-1 check passed)
+- Commit SHA: 83770aa1 (changes landed in HEAD via P0-SP-5 session)
+
+**AC status:** AC-1 through AC-7 PASS.
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
