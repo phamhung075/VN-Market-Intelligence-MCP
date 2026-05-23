@@ -297,5 +297,14 @@
     },
     "confidence": "medium",
     "notes": "fixCycles conservatively estimated from git log + TASKS.md records. TA-specific bugs: 1970, 1968d (2 bugs). System baseline (4-6 cycles per charter) replaced with measured TA average 1.5 cycles from resolved bugs. Macro-indicators baseline added 2026-05-23: 0 bugs in 60-day window, falls back to system-wide 1.3 per charter §Baseline Metric Capture. Open bugs carry estimatedCycles=0 pending resolution."
+  },
+  "kinh_dich_baseline": {
+    "service": "kinh-dich-service",
+    "module": "kinh-dich",
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (60d window 2026-03-25 to 2026-05-24 had 0 bugs attributed to kinh-dich; <2 threshold triggers fallback per charter §Baseline Metric Capture)",
+    "observedFixCount": null,
+    "recordedAt": "2026-05-24T12:00:00Z",
+    "recordedBy": "system-auditor (phase-0 pilot kickoff, TASK P0-KD-2)"
   }
 }
