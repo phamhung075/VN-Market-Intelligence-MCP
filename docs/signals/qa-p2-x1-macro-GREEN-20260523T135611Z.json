@@ -43,7 +43,7 @@
   "anchor_held_post": 0,
   "dev_impl_commit": "61c3dce4",
   "dev_signal_commit": "cea869e8",
-  "qa_signal_commit": "<sha>",
+  "qa_signal_commit": "358fc324",
   "g1_readiness": "READY_FOR_FLIP — primitive count 6/6, all Fence-A compliant, all R-1 deterministic, sandbox 20/20",
   "timestamp_utc": "2026-05-23T13:56:11Z"
 }
