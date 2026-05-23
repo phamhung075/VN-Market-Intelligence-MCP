@@ -1,5 +1,42 @@
 # QA — Notebook
 
+## c282 cycle-44 · 2026-05-23 · macro P2-A2 CI wiring + deliberate-violation proof (G4 YES)
+
+**Task:** P2-A2 — CI Job + Deliberate Violation Proof + Pre-CI Tag | **Verdict:** GREEN | **G4:** PARTIAL→YES
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification + QA independent fence reproduction)
+signal: docs/signals/qa-p2-a2-macro-GREEN-20260523T131715Z.json
+impl_commit: 9d1f4535
+dev_signal: docs/signals/dev-macro-p2-a2-done-20260523T151400Z.json
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: macro-pre-ci tag + SHA + parent check | PASS | git tag -l = macro-pre-ci. git rev-parse = 8651de0e614822b6c0c2a7f57575ef27a74cfab4 (matches dev signal exactly). git log 8651de0e..9d1f4535 = exactly 1 commit (CI wiring). Tag is IMMEDIATE parent of 9d1f4535. |
+| AC-2: CI job macro-go-lint in workflow | PASS | git show 9d1f4535 --stat: ONLY .github/workflows/ci.yml (22+1-). Job: macro-go-lint, golangci/golangci-lint-action@v6.1.1, working-directory=apps/macro-indicators, go-version-file=apps/macro-indicators/go.mod, triggers push+PR main. Existing go-lint TA job UNTOUCHED. |
+| AC-3: deliberate-violation proof + QA independent reproduction | PASS | QA REPRODUCED: injected import _ 'github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure' into pkg/primitive/macro_investment_clock/macro_investment_clock.go L16-19. golangci-lint EXIT=1 with 'Fence-A: primitive must not import infrastructure layer (depguard)'. Reverted via Edit. Post-revert EXIT=0. git diff = CLEAN. Never committed. Matches dev signal proof excerpt exactly. |
+| AC-4: local lint clean on main HEAD | PASS | golangci-lint run → 0 issues LINT_EXIT:0. |
+| AC-5: G12 sandbox 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK SANDBOX_EXIT:0. (edge/failure/golden/macro-signals-edge/macro-signals-golden all PASS) |
+| AC-6: R-1 determinism | PASS | grep -rE 'math/rand\|rand\.Intn\|rand\.Float\|time\.Now.*Seed' apps/macro-indicators/pkg/ → R1_EXIT:1 (0 matches). |
+| AC-7: anchor 1776df8e pre+post | PASS | anchor_pre=0 (HELD). anchor_post=0 (HELD). |
+| AC-8: completion signal 10/10 fields | PASS | python3 field check: MISSING=[] (all 10 required fields present, all values correct). |
+| go build ./... | PASS | BUILD_EXIT:0 |
+| go test ./... | PASS | TEST_EXIT:0 — 3 packages ok (interface/http, module/macro_signals, primitive/macro_investment_clock) |
+| Forbidden-zone audit impl 9d1f4535 | CLEAN | Only .github/workflows/ci.yml. Zero TA files, zero root .golangci.yml, zero SSOT pilot-status. |
+| Env audit CI yaml | CLEAN | git diff macro-pre-ci 9d1f4535 -- .github/workflows/ci.yml \| grep FRED_API_KEY → EXIT:1 (0 matches). |
+| Charter §4.5 SSOT protection | CLEAN | git show 9d1f4535 -- docs/data/pilot-status-macro-indicators.json = empty (0 lines). SSOT not touched in impl commit. |
+
+**G4 flip:** PARTIAL→YES. Full evidence: CI job wired + QA independently reproduced Fence-A depguard violation (EXIT:1) + confirmed post-revert clean (EXIT:0) + violation never committed to any branch.
+**OBS-deliberate-proof-method-local:** Proof is local-only (never CI-run) — identical to TA pilot pattern. QA independent reproduction satisfies G4 evidence standard per TA precedent (cycle-43 established: offline violation evidence = equivalent to CI failure evidence for G4 grading).
+**SSOT:** pilot-status-macro-indicators.json updated: P2-A2.status=DONE + phase2.activeTask=null + G4.status=YES (was PARTIAL) + progress_notes appended + QA commit SHA will backfill after commit.
+**Blocking issues:** 0 — all 8 ACs + all hard gates PASS.
+**NEXT:** pm cycle-44 — close P2-A2, verify G4=YES, dispatch P2-B2 (macro-pre-delete tag + git mv per architect critical path).
+
+---
+
 ## c282 cycle-43 · 2026-05-23 · macro P2-A1 .golangci.yml Fence-A/B/C depguard rules (G4 partial)
 
 **Task:** P2-A1 — .golangci.yml Creation (Fence-A/B/C Rules) | **Verdict:** GREEN | **Phase 2:** P2-A1 DONE, activeTask=null, G4=PARTIAL

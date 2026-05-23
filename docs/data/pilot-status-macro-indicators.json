@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-A2",
+    "activeTask": null,
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -466,16 +466,32 @@
         "closed_by": "pm c282-cycle-43 (verification of QA GREEN signal)"
       },
       "P2-A2": {
-        "status": "IN-PROGRESS",
+        "status": "DONE",
         "title": "CI Job + Deliberate Violation Proof + Pre-CI Tag",
         "dispatch_timestamp": "2026-05-23T15:09:10Z",
         "dispatch_commit_sha": "will-be-set-after-pm-dispatch-commit",
         "handoff_doc": "docs/handoffs/TASK_P2-A2-macro.md",
         "dispatch_signal": "docs/signals/pm-cycle43-dispatch-dev-macro-indicators-p2-a2-20260523T150910Z.json",
-        "description": "CI wiring + deliberate-violation proof + macro-pre-ci tag. Flips G4 PARTIAL→YES after QA verification.",
-        "g4_status_target": "YES (full)",
-        "ac_count": 5,
-        "expected_completion_cycle": "c282-cycle-44 or later (dev task 1h est)"
+        "description": "CI wiring + deliberate-violation proof + macro-pre-ci tag. G4 flipped PARTIAL→YES.",
+        "impl_commit": "9d1f4535",
+        "dev_signal": "docs/signals/dev-macro-p2-a2-done-20260523T151400Z.json",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T13:17:15Z",
+        "qa_cycle": "c282-cycle-44",
+        "qa_signal": "docs/signals/qa-p2-a2-macro-GREEN-20260523T131715Z.json",
+        "qa_commit_sha": "PENDING-QA-COMMIT",
+        "ac_results": "8/8 PASS (AC-1 tag+SHA+parent CLEAN + AC-2 CI job macro-go-lint in workflow + AC-3 fence-a QA-independently-reproduced + AC-4 lint exit 0 regression clean + AC-5 sandbox 5/5 + AC-6 R-1 exit 1 + AC-7 anchor pre+post exit 0 + AC-8 signal 10/10 fields)",
+        "g4_flip": "PARTIAL→YES",
+        "deliberate_violation_proof": "QA independent reproduction: fence-a depguard fired (EXIT:1) on infrastructure import in pkg/primitive/; post-revert EXIT:0; violation never committed",
+        "ci_job": "macro-go-lint (golangci/golangci-lint-action@v6.1.1, working-directory=apps/macro-indicators, go.mod version source)",
+        "macro_pre_ci_tag_sha": "8651de0e614822b6c0c2a7f57575ef27a74cfab4",
+        "sandbox_evidence": "total=5 pass=5 fail=0 status=OK (exit 0, QA independent run)",
+        "r1_gate": "PASS (exit 1, 0 matches)",
+        "go_build": "BUILD_EXIT:0",
+        "go_test": "TEST_EXIT:0 (3 packages ok)",
+        "anchor_1776df8e": "HELD (exit 0 pre+post)",
+        "forbidden_zone": "CLEAN (only .github/workflows/ci.yml in impl commit)",
+        "env_audit": "CLEAN (no FRED_API_KEY in CI yaml diff, exit 1)"
       }
     },
     "observations": [
@@ -515,6 +531,12 @@
         "detail": "All 5 ACs PASS. golangci-lint EXIT:0 (0 issues, HARD GATE). R-1 EXIT:1 (0 matches). G12 sandbox total=5 pass=5 fail=0 status=OK EXIT:0 (all 5 scenarios). go build EXIT:0. go test EXIT:0 (3 packages ok). Anchor 1776df8e HELD (exit 0 pre-QA). Forbidden-zone CLEAN (EXIT:1). Env audit CLEAN (EXIT:1). Fence config sound: v2 format (version:'2', default:none), fence-a (**/pkg/primitive/**), fence-b (**/pkg/module/**), fence-c (!**/cmd/server/main.go + !**/*_test.go). OBS-golangci-v2-format accepted as forward lesson. phase2.activeTask P2-A1 → null. G4 status TBD → PARTIAL. Freeze anchor: 31597da4 is first+only commit on .golangci.yml."
       },
       {
+        "timestamp": "2026-05-23T13:17:15Z",
+        "cycle": "c282-cycle-44 (QA)",
+        "event": "P2-A2 QA-GREEN @ 2026-05-23T13:17:15Z — impl commit 9d1f4535",
+        "detail": "All 8 ACs PASS. AC-1 tag macro-pre-ci on 8651de0e (EXACT match, immediate parent of 9d1f4535). AC-2 macro-go-lint job in .github/workflows/ci.yml (golangci/golangci-lint-action@v6.1.1, apps/macro-indicators working-dir, go.mod version source, only ci.yml touched). AC-3 QA INDEPENDENTLY REPRODUCED fence-a violation: depguard EXIT=1 with 'Fence-A: primitive must not import infrastructure layer' — reverted, post-revert EXIT=0, clean git status, never committed. AC-4 lint EXIT:0 (0 issues). AC-5 sandbox total=5 pass=5 fail=0 status=OK EXIT:0. AC-6 R-1 EXIT:1 (0 matches). AC-7 anchor 1776df8e pre+post EXIT:0 (HELD). AC-8 signal 10/10 required fields present. go build EXIT:0, go test EXIT:0 (3 packages ok). Forbidden-zone CLEAN (0 TA files, 0 SSOT mutations in impl commit). Env audit CLEAN (no FRED_API_KEY in CI yaml diff). G4 flipped PARTIAL→YES. phase2.activeTask P2-A2→null."
+      },
+      {
         "timestamp": "2026-05-23T15:09:10Z",
         "cycle": "c282-cycle-43 (PM dispatch)",
         "event": "P2-A1 CLOSED + P2-A2 DISPATCHED",
@@ -527,7 +549,7 @@
     {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selects from §G1 candidate list (macro-investment-clock, macro-fed-liquidity-spread, macro-carry-trade-signal, macro-yield-spread-signal, macro-ism-regime-signal, macro-pyramid-tier, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier) at Phase 0."},
     {"id": "G2", "track": "A", "title": "Module composes primitives via ports", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Pilot ONE module only (recommended: macro-signals). Defer macro-core split to post-pilot. Architect confirms Phase 0."},
     {"id": "G3", "track": "A", "title": "Microservice has clean composition root", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "cmd/server/main.go ≤80 lines; OpenAPI YAML; no domain ops grep."},
-    {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "PARTIAL", "verifiedAt": null, "verifiedBy": null, "evidence": "P2-A1: .golangci.yml Fence-A/B/C created, golangci-lint run exits 0 on existing P1 code. Fence config sound (v2 format, default:none, 3 fence rules). Full YES after P2-A2 CI wiring + deliberate-violation proof.", "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
+    {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "YES", "verifiedAt": "2026-05-23T13:17:15Z", "verifiedBy": "qa c282-cycle-44", "evidence": "P2-A1: .golangci.yml Fence-A/B/C created, golangci-lint run exits 0 on existing P1 code. P2-A2: CI job macro-go-lint wired (golangci/golangci-lint-action@v6.1.1, working-directory=apps/macro-indicators). QA independently reproduced Fence-A violation (depguard EXIT:1 with 'Fence-A: primitive must not import infrastructure layer') + confirmed post-revert EXIT:0 + violation never committed. macro-pre-ci tag on 8651de0e (immediate parent of CI wiring commit 9d1f4535).", "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
     {"id": "G5", "track": "A", "title": "Old TS macro-indicators code deleted + HTTP rewire", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-B", "calibration": "G5a: apps/macro-indicators/src/ TS → _deprecated/. G5b: MCP tool handlers in apps/mcp-server/src/interface/mcp/tools/macro/ verified HTTP-routed to Go service port 5004. G5c: zero TODO.*migrat. Pre-revert tag: macro-pre-delete before P2-B2 git mv."},
     {"id": "G6", "track": "B", "title": "Three-level dashboard renders from JSON traces", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "apps/macro-indicators/dashboard/index.html — primitives + module + microservice panels. file:// works."},
     {"id": "G7", "track": "B", "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Env audit MUST include FRED_API_KEY in forbidden grep (macro-specific addition vs TA)."},
