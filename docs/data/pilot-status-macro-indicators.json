@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": null,
+    "activeTask": "P2-A2",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -426,6 +426,56 @@
             "ruling": "ACCEPTED"
           }
         ]
+      },
+      "P2-A1": {
+        "status": "DONE",
+        "title": ".golangci.yml Creation (Fence-A/B/C Rules)",
+        "dev_commit_sha": "31597da4",
+        "dev_signal": "docs/signals/dev-macro-p2-a1-done-20260523T130000Z.json",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T15:05:00Z",
+        "qa_signal": "docs/signals/qa-p2-a1-macro-GREEN-20260523T150500Z.json",
+        "qa_commit_sha": "d18de7aa",
+        "ac_results": "5/5 PASS",
+        "golangci_lint": "EXIT:0 — 0 issues",
+        "file_lines": 64,
+        "r1_gate": "PASS (EXIT:1, 0 matches)",
+        "sandbox_evidence": "total=5 pass=5 fail=0 status=OK exit 0 (QA independent run)",
+        "go_build": "BUILD_EXIT:0",
+        "go_test": "TEST_EXIT:0 (3 packages ok)",
+        "anchor_1776df8e": "HELD (exit 0 pre-QA)",
+        "forbidden_zone": "CLEAN (EXIT:1, 0 matches)",
+        "env_audit": "CLEAN (EXIT:1, 0 matches)",
+        "fence_config": {
+          "version": "v2",
+          "default_none": true,
+          "fence_a_pattern": "**/pkg/primitive/**",
+          "fence_b_pattern": "**/pkg/module/**",
+          "fence_c_exclusions": ["!**/cmd/server/main.go", "!**/*_test.go"]
+        },
+        "g4_contribution": "PARTIAL — config created + linter runs cleanly. Full G4=YES after P2-A2 CI wiring + deliberate-violation proof.",
+        "observations": [
+          {
+            "id": "OBS-golangci-v2-format",
+            "severity": "INFO",
+            "description": "golangci-lint v2 config format (version: '2', linters.settings not linters-settings) differs from TA pilot v1 format. Implementation correctly applies v2 format matching tool version 2.12.2. Forward lesson for future pilots.",
+            "ruling": "ACCEPTED"
+          }
+        ],
+        "closed_at": "2026-05-23T150900Z",
+        "closed_by": "pm c282-cycle-43 (verification of QA GREEN signal)"
+      },
+      "P2-A2": {
+        "status": "IN-PROGRESS",
+        "title": "CI Job + Deliberate Violation Proof + Pre-CI Tag",
+        "dispatch_timestamp": "2026-05-23T15:09:10Z",
+        "dispatch_commit_sha": "will-be-set-after-pm-dispatch-commit",
+        "handoff_doc": "docs/handoffs/TASK_P2-A2-macro.md",
+        "dispatch_signal": "docs/signals/pm-cycle43-dispatch-dev-macro-indicators-p2-a2-20260523T150910Z.json",
+        "description": "CI wiring + deliberate-violation proof + macro-pre-ci tag. Flips G4 PARTIAL→YES after QA verification.",
+        "g4_status_target": "YES (full)",
+        "ac_count": 5,
+        "expected_completion_cycle": "c282-cycle-44 or later (dev task 1h est)"
       }
     },
     "observations": [
@@ -463,6 +513,13 @@
         "cycle": "c282 cycle-43 (QA)",
         "event": "P2-A1 QA-GREEN @ 2026-05-23T15:05:00Z — impl commit 31597da4",
         "detail": "All 5 ACs PASS. golangci-lint EXIT:0 (0 issues, HARD GATE). R-1 EXIT:1 (0 matches). G12 sandbox total=5 pass=5 fail=0 status=OK EXIT:0 (all 5 scenarios). go build EXIT:0. go test EXIT:0 (3 packages ok). Anchor 1776df8e HELD (exit 0 pre-QA). Forbidden-zone CLEAN (EXIT:1). Env audit CLEAN (EXIT:1). Fence config sound: v2 format (version:'2', default:none), fence-a (**/pkg/primitive/**), fence-b (**/pkg/module/**), fence-c (!**/cmd/server/main.go + !**/*_test.go). OBS-golangci-v2-format accepted as forward lesson. phase2.activeTask P2-A1 → null. G4 status TBD → PARTIAL. Freeze anchor: 31597da4 is first+only commit on .golangci.yml."
+      },
+      {
+        "timestamp": "2026-05-23T15:09:10Z",
+        "cycle": "c282-cycle-43 (PM dispatch)",
+        "event": "P2-A1 CLOSED + P2-A2 DISPATCHED",
+        "detail": "PM verified P2-A1 completion signal (qa commit d18de7aa). All 5 ACs PASS, anchor 1776df8e held (exit 0), R-1 exit 1 (zero matches), golangci-lint exit 0, G12 sandbox all-tier 5/5 pass exit 0. PM closed P2-A1 (status=DONE, impl 31597da4, qa d18de7aa + backfill 83fa6233). G4 status flipped PENDING → PARTIAL (config creation complete, full YES requires P2-A2 CI + violation proof). phase2.activeTask updated null→P2-A2. Next task P2-A2 (CI job + deliberate-violation proof + macro-pre-ci tag) dispatched to dev-macro-indicators per critical path. WIP=1 enforced (dev-macro-indicators owns slot). Handoff TASK_P2-A2-macro.md created (5 ACs, 1h estimate). Dispatch signal pm-cycle43-dispatch-dev-macro-indicators-p2-a2-20260523T150910Z.json created. Anchor 1776df8e held pre+post.",
+        "commit": "will-be-set-in-pm-dispatch-commit-this-cycle"
       }
     ]
   },
