@@ -1,0 +1,166 @@
+openapi: "3.0.0"
+info:
+  title: Macro Indicators Microservice
+  description: >
+    Fetches SBV (State Bank of Vietnam) FX rates and commodity prices,
+    computes macroeconomic signals and regime classification.
+    Returns a macro snapshot via HTTP.
+    Language: Go (pilot rewrite — macro-indicators, Phase 1).
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:5004
+    description: Local development
+
+# Internal microservice — no authentication required.
+# The empty security array overrides any redocly security-defined rule at the
+# root level so both endpoints are explicitly declared open.
+security: []
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns service liveness status.
+      responses:
+        "200":
+          description: Service is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                service: macro-indicators
+                port: 5004
+
+  /snapshot:
+    post:
+      operationId: computeSnapshot
+      summary: Compute macro snapshot
+      description: >
+        Fetches live SBV FX rates and commodity prices (oil, gold), then
+        computes macroeconomic signals. Returns a point-in-time snapshot of
+        key macro indicators for Vietnam market analysis.
+        POST body is an empty JSON object — no parameters required.
+        NOTE: Returns 501 until P1-B1 primitives land.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnapshotRequest"
+            example: {}
+      responses:
+        "200":
+          description: Macro snapshot computed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MacroSnapshotResponse"
+              example:
+                vnIndex: 1245.67
+                oilUsd: 78.42
+                goldUsd: 1923.50
+                usdVnd: 24850.0
+                signals: {}
+                fetchedAt: "2026-05-23T10:43:00Z"
+        "501":
+          description: Not yet implemented (P1-B primitives not yet landed).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal computation error (fetch failure or data unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+
+    # --- Health ---
+
+    HealthResponse:
+      type: object
+      required: [status, service, port]
+      properties:
+        status:
+          type: string
+          description: Liveness status string.
+          example: ok
+        service:
+          type: string
+          description: Service name identifier.
+          example: macro-indicators
+        port:
+          type: integer
+          description: Port the service is listening on.
+          example: 5004
+
+    # --- Request ---
+
+    SnapshotRequest:
+      type: object
+      description: >
+        Empty request body — no parameters required.
+        The macro snapshot is computed from live data sources
+        (SBV FX rates, commodity prices) fetched server-side.
+      properties: {}
+
+    # --- Response ---
+    # Field names MUST match pkg/application/dtos.go MacroSnapshotResponse exactly.
+
+    MacroSnapshotResponse:
+      type: object
+      required: [vnIndex, oilUsd, goldUsd, usdVnd, signals, fetchedAt]
+      properties:
+        vnIndex:
+          type: number
+          format: double
+          description: VN-Index closing value (Ho Chi Minh Stock Exchange composite index).
+          example: 1245.67
+        oilUsd:
+          type: number
+          format: double
+          description: Brent crude oil price in USD per barrel.
+          example: 78.42
+        goldUsd:
+          type: number
+          format: double
+          description: Gold spot price in USD per troy ounce.
+          example: 1923.50
+        usdVnd:
+          type: number
+          format: double
+          description: >
+            USD/VND exchange rate as published by SBV (State Bank of Vietnam).
+            Expressed as VND per 1 USD.
+          example: 24850.0
+        signals:
+          type: object
+          description: >
+            Macroeconomic signal map — structure is TBD (Phase 2 extension).
+            Returns an empty object until P1-B primitives and signal computation land.
+          additionalProperties: true
+          example: {}
+        fetchedAt:
+          type: string
+          format: date-time
+          description: >
+            RFC3339 timestamp of when the snapshot data was fetched from live sources.
+          example: "2026-05-23T10:43:00Z"
+
+    # --- Errors ---
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error description.
+          example: "not implemented"
