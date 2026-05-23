@@ -1,0 +1,50 @@
+{
+  "type": "po-dispatch",
+  "from": "po",
+  "to": "dev-technical-analysis",
+  "cycle": "c282 cycle-20",
+  "timestamp": "2026-05-23T06:40:34Z",
+  "task_id": "P2-A3-prereq-fix-go-lint",
+  "title": "Fix golangci-lint findings on apps/technical-analysis (G4 unblock)",
+  "context": {
+    "g4_scope_correction": "G4 = apps/technical-analysis golangci-lint clean exit (architecture fence on refactored Go pilot), NOT whole-CI green. Legacy TS bun test failures OUT OF SCOPE.",
+    "ci_run_with_findings": "26319980090",
+    "ci_job": "go-lint",
+    "ci_exit_code": 3,
+    "target_dir": "apps/technical-analysis",
+    "blocked_goal": "G4 (architecture fence enforced in CI)",
+    "downstream_unblock": "P2-A3 (qa CI green verification) → P2-A4 (deliberate-violation proof) → G5 deletion chain (P2-B2..B4)"
+  },
+  "task_body": {
+    "step1_capture": "Run `gh run view 26319980090 --log` (or `gh run view 26319980090 --log-failed --job go-lint`) to capture golangci-lint findings on apps/technical-analysis.",
+    "step2_fix": "Fix all golangci-lint findings on apps/technical-analysis Go source files. Do NOT modify legacy TS code. Do NOT modify .golangci.yml (config is Phase 2 frozen per P2-A1 close).",
+    "step3_local_verify": "Run `cd apps/technical-analysis && golangci-lint run` — MUST exit 0 before pushing.",
+    "step4_test_verify": "Run `cd apps/technical-analysis && go test ./...` — MUST pass (regression guard).",
+    "step5_sandbox_verify": "Run sandbox 30/30 primitives + modules — MUST be GREEN (G12 DoD gate enforced per cc7578f1).",
+    "step6_commit": "Subject pattern: `fix(technical-analysis): cycle-20 — golangci-lint findings on apps/technical-analysis (G4 unblock)`. L84 explicit-file staging only. No --force, no --no-verify.",
+    "step7_push_and_rerun": "Push to origin/main. Then `gh workflow run ci.yml --ref main` OR `gh run rerun <new-run-id> --failed`. Wait for go-lint job completion.",
+    "step8_signal": "Write completion signal docs/signals/dev-ta-cycle20-fix-go-lint-done-<UTC>.json with: commit_sha, golangci_lint_exit_code, sandbox_30_30_status, ci_run_id, ci_go_lint_exit_code, completion_timestamp."
+  },
+  "acceptance": [
+    "AC-1: `golangci-lint run` exits 0 on apps/technical-analysis (local).",
+    "AC-2: `go test ./...` exits 0 on apps/technical-analysis (local).",
+    "AC-3: sandbox primitives + modules 30/30 GREEN.",
+    "AC-4: CI go-lint job exits 0 on rerun.",
+    "AC-5: Completion signal written with all verification fields."
+  ],
+  "out_of_scope": [
+    "Legacy TS bun test failures (addressed by G5 deletion chain P2-B2..B4).",
+    ".golangci.yml config changes (frozen at P2-A1 close).",
+    ".github/workflows/ci.yml changes (frozen at P2-A2 close).",
+    "Whole-CI green (G4 scope-corrected to apps/technical-analysis go-lint job only)."
+  ],
+  "constraints": [
+    "L84 explicit-file staging (per-path `git add`, no `-A`, no `.`).",
+    "No --force, no --no-verify, no --no-gpg-sign.",
+    "G12 DoD: sandbox green BEFORE commit (RED = not done).",
+    "Forbidden reads: none (this is a fix task, not a measurement task).",
+    "Anchor 62edbf3d held."
+  ],
+  "downstream_handoff_after_completion": "PO cycle-21 reads completion signal → if all AC PASS → re-dispatch fresh qa for P2-A3 verification → on qa PASS → flip G4=YES atomic with cycle-21 close commit per §4.5 matrix-authorship rule.",
+  "r11_status_check": "If no completion signal by 2026-05-23T06 + 1h, PO will spawn R-11 status-check on this dispatch."
+}

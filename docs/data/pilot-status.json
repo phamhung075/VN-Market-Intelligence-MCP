@@ -88,8 +88,8 @@
     },
     "wip": {
       "limit": 2,
-      "current": ["P2-A3 (qa — HELD pending dev-team Go-zone fix of golangci-lint findings on apps/technical-analysis; G4 SCOPE-CORRECTED cycle-19: apps/technical-analysis go-lint clean, NOT whole-CI green)"],
-      "current_count_dev_ta": 0,
+      "current": ["dev-technical-analysis (Go zone — DISPATCHED cycle-20 2026-05-23T06:40:34Z: fix golangci-lint findings on apps/technical-analysis from CI run 26319980090 go-lint exit 3; signal docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json)", "P2-A3 (qa — HELD blocked-by dev-ta fix above)"],
+      "current_count_dev_ta": 1,
       "note": "Cycle-19 (2026-05-23T06:34:55Z): TWO atomic changes. (1) G9 status IN-PROGRESS \u2192 YES via user-delegated PO Playwright headless verification. User directive 'i thing i no need check, but you can check it apps/technical-analysis/dashboard/index.html, use chromium for check result' short-circuited the async Telegram path. PO staged dashboard to /tmp/dashboard-stage via Terminal.app (L87); chromium-headless-shell v1223 navigated file://; ZERO console errors / pageerrors / requestfailed; 25 primitives + 5 modules rendered faithfully; NOT-RUN status honestly displayed; trust-contract VERDICT: PASS. (2) G4 verification SCOPE NARROWED per user message 'CI cannot greem because it run on complete project and old code have many fail cannot passe, we factor code for easy maintain'. CORRECTED FRAMING: G4 = apps/technical-analysis golangci-lint clean exit (architecture fence on refactored Go pilot \u2014 go-lint CI job scoped working-directory: apps/technical-analysis), NOT whole-CI green. Legacy TS bun test failures are KNOWN, EXPECTED, and OUTSIDE G4 scope \u2014 addressed by G5 deletion chain (P2-B2..B4). G4 unblock path is now dev-team-gated (dev-technical-analysis Go-zone), not user-gated. CI run 26319980090 latest rerun showed go-lint exit 3 \u2014 REAL lint findings in apps/technical-analysis Go code (fix surface). Terminal-grade G-goal count Y/12 = 11/12 (G1-G3, G6-G12 = YES \u2014 G9 newly added; G4 IN-PROGRESS dev-team-gated; G5 transitively blocked by G4). decisionMatrix.{speed,trust,scale} STILL UNTOUCHED per \u00a74.5 (G4+G5 not terminal). Cycle-20 priorities: (1) dispatch dev-technical-analysis (Go zone) to capture golangci-lint findings from CI run 26319980090 go-lint logs (exit 3) and fix on apps/technical-analysis; (2) re-rerun CI; (3) confirm go-lint job green \u2192 flip G4=YES atomic with cycle-20 close. Cycle-21+: P2-A3 verification \u2192 A4 deliberate-violation proof \u2192 B2 deletion (using tag p2-b-pre-delete at commit b9d0a82b) \u2192 B3 caller rewire \u2192 B4 confirmation \u2192 flip G5=YES \u2192 all 12 terminal \u2192 populate decisionMatrix \u2192 brief CLOSES per phase-2-closure-checklist \u00a71. L84 explicit-file staging; no --force, no --no-verify, no push; PO solo this cycle; Charter status enum = ACTIVE held clean; anchor 62edbf3d held; L87 Terminal.app channel for all writes. SPAGHETTI-CLEANUP (user feedback 'why many files on /tmp ? is spagetti document on multiple version'): cycle-19 lands MINIMAL \u2014 only pilot-status.json + po.md mutated; obsolete closure-ready-awaiting-user v1 + v2 signal files DELETED via git rm (point-in-time snapshots that go stale fast; pilot-status + po notebook are the live SSOT); /tmp scratch self-cleaned by landing script. Future cycles use SSOT-only mutation pattern; no version-numbered signal proliferation."
     },
     "poDecisionLog": [
@@ -142,7 +142,7 @@
       "after_CI_billing_recovery": ["re-dispatch fresh qa for P2-A3 against next clean CI run on origin/main", "unblock A3+A4+B2 chain — A3 green → A4 deliberate-violation proof + B2 deletion"],
       "after_P2-D3_AND_P2-E3": ["dispatch P2-F3 to qa (streak verification)"],
       "after_G9_user_verification": "RESOLVED 2026-05-23 cycle-19 — G9 graded YES via user-delegated PO Playwright headless verification (user short-circuited async Telegram path with directive to check dashboard via chromium); trust-contract verdict PASS",
-      "after_G4_golangci_lint_clean": "PENDING dev-technical-analysis (Go zone) fix of golangci-lint findings from CI run 26319980090 go-lint job (exit 3) on apps/technical-analysis; re-rerun CI; confirm go-lint job exit 0 → flip G4=YES atomic with cycle-20 close commit per §4.5 matrix-authorship rule"
+      "after_G4_golangci_lint_clean": "DISPATCHED cycle-20 2026-05-23T06:40:34Z — dev-technical-analysis Go zone tasked via docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json: capture golangci-lint findings from CI run 26319980090 go-lint exit 3, fix on apps/technical-analysis, run `cd apps/technical-analysis && golangci-lint run` locally to confirm exit 0, push, re-rerun CI, write completion signal; gate clears when go-lint job exit 0 observed; PO flips G4=YES atomic with cycle-21 close per §4.5"
     },
     "decisionsThisCycle": [
       "Graphify scope: DEFER full run until Phase 2 closure. Rely on incremental `/graphify docs --update --no-viz` per developer flow step. Decision doc: docs/po-decisions/2026-05-23-graphify-scope.md",
@@ -346,6 +346,34 @@
                       "post-fix: re-rerun CI, verify go-lint job green (bun test status remains red — out of G4 scope)",
                       "post-G4-green: dispatch P2-A3 → A4 → B2 → B3 → B4 chain (~30min wallclock)",
                       "post-G4+G5: PO populates decisionMatrix.{speed,trust,scale} → brief CLOSES per phase-2-closure-checklist §1"
+              ]
+      },
+      {
+              "timestamp": "2026-05-23T06:40:34Z",
+              "cycle": "c282 cycle-20 (dev-ta dispatch — fix golangci-lint findings on apps/technical-analysis)",
+              "decision": "DISPATCH dev-technical-analysis (Go zone) to capture + fix golangci-lint findings from CI run 26319980090 go-lint job (exit 3) on apps/technical-analysis. Signal docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json. Gate `after_G4_golangci_lint_clean` flipped PENDING → DISPATCHED. WIP dev-ta 0 → 1.",
+              "rationale": "Cycle-19 graded G9=YES via PO Playwright verification + applied G4 scope correction (apps/technical-analysis go-lint clean, NOT whole-CI green). G4 remains IN-PROGRESS dev-team-gated. CI run 26319980090 (latest rerun after repo public flip) go-lint job exited 3 — REAL golangci-lint findings on apps/technical-analysis Go code (the refactored Go pilot surface). Per zone-routing policy, dev-technical-analysis owns Go code in apps/technical-analysis. Dispatch contains: (a) CI run ID + job name for log capture; (b) target dir apps/technical-analysis; (c) local verify command; (d) acceptance: golangci-lint exit 0 on apps/technical-analysis; (e) re-rerun + completion signal protocol; (f) constraints (L84 explicit-file staging, no --force, no --no-verify, no whole-CI fix attempts — bun test failures OUT OF SCOPE). On completion signal → cycle-21 PO closes: P2-A3 qa verification dispatched; once qa confirms go-lint green → flip G4=YES atomic with cycle-21 close commit per §4.5.",
+              "action": "Wrote dispatch signal docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json with task body. Mutated pilot-status.json: (a) wip.current adds dev-ta entry + retains P2-A3 held; (b) wip.current_count_dev_ta 0→1; (c) nextDispatchGates.after_G4_golangci_lint_clean PENDING→DISPATCHED; (d) decisionsThisCycle append cycle-20 entry. Overwrote docs/agent-memory/notebooks/po.md cycle-20 state. Atomic commit anchor 62edbf3d. L84 explicit-file staging (3 files: pilot-status.json + po.md + dispatch signal). L87 Terminal.app channel.",
+              "constraints_preserved": [
+                      "WIP discipline: dev-ta=1 (within limit 2); qa=1 (P2-A3 held); PO solo orchestration",
+                      "L84 explicit-file staging honoured",
+                      "no --no-verify, no --force, no push",
+                      "no in-flight handoff mutation",
+                      "decisionMatrix.{speed,trust,scale} STILL UNTOUCHED per §4.5 (G4+G5 not terminal — 11/12)",
+                      "Charter status enum = ACTIVE held clean",
+                      "anchor 62edbf3d held",
+                      "G4 scope correction honored — dev-ta dispatch scoped to apps/technical-analysis go-lint ONLY, not whole-CI",
+                      "SSOT pattern continued — one dispatch signal (per-task event record), no version-numbered proliferation"
+              ],
+              "terminal_grade_count": "11/12 unchanged (cycle-20 is dispatch only, no goal flip)",
+              "next_observation_targets": [
+                      "cycle-21: dev-ta completion signal lands at docs/signals/dev-ta-fix-go-lint-done-*.json",
+                      "cycle-21: PO verifies signal: golangci-lint exit 0 on apps/technical-analysis + CI go-lint job green on rerun",
+                      "cycle-21: re-dispatch fresh qa for P2-A3 verification (clean codebase + green go-lint job)",
+                      "cycle-21: on qa PASS → flip G4=YES atomic with cycle-21 close commit",
+                      "cycle-22+: dispatch P2-A4 (deliberate-violation proof) + P2-B2 deletion chain",
+                      "post-G5: PO populates decisionMatrix → brief CLOSES per phase-2-closure-checklist §1",
+                      "R-11 trigger: if no dev-ta signal by cycle-20 + 1h → re-spawn status-check"
               ]
       }
     ]
