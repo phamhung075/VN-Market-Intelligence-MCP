@@ -1,10 +1,22 @@
 // Package http — HTTP interface layer for the macro-indicators service.
-// Routes: GET /health (200 ok), POST /snapshot (501 stub until P1-B1 lands).
+//
+// P2-X3: real handlers wired for /snapshot, /carry-trade-signal, /yield-spread-signal.
+// /macro-calendar remains fixture-based (per OQ-10 resolution).
+//
+// Routes:
+//   GET  /health               — 200 ok + service JSON (unchanged from P2-B1)
+//   POST /snapshot             — real ComputeMacroUseCase.Execute() (AC-2)
+//   GET  /carry-trade-signal   — real carry primitive call (AC-3)
+//   GET  /yield-spread-signal  — real yield primitive call (AC-4)
+//   GET  /macro-calendar       — fixture response (OQ-10 deferred)
 package http
 
 import (
+	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -28,6 +40,10 @@ func NewRouter(useCase *application.ComputeMacroUseCase, logger *slog.Logger) ch
 	return r
 }
 
+// ---------------------------------------------------------------------------
+// /health — unchanged from P2-B1 (AC-1)
+// ---------------------------------------------------------------------------
+
 func handleHealth() http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -36,11 +52,28 @@ func handleHealth() http.HandlerFunc {
 	}
 }
 
-func handleSnapshot(_ *application.ComputeMacroUseCase, _ *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		// TODO(P1-B1): implement snapshot handler using ComputeMacroUseCase.Execute.
+// ---------------------------------------------------------------------------
+// /snapshot — real handler (P2-X3, AC-2)
+// ---------------------------------------------------------------------------
+
+func handleSnapshot(useCase *application.ComputeMacroUseCase, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		resp, err := useCase.Execute(ctx, application.MacroSnapshotRequest{})
+		if err != nil {
+			logger.Error("snapshot use case failed", slog.Any("error", err))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error":"snapshot computation failed"}`))
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotImplemented)
-		_, _ = w.Write([]byte(`{"error":"not implemented"}`))
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			logger.Error("snapshot encode failed", slog.Any("error", err))
+		}
 	}
 }

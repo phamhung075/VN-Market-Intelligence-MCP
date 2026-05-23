@@ -1,7 +1,10 @@
 // Package main — macro-indicators composition root.
 //
 // Responsibility: wire infrastructure adapters to domain ports, start HTTP server.
-// Rules (G3): only imports, DI constructor calls, server startup. No logic.
+// Rules (G3): only imports, DI constructor calls, server startup. No business logic.
+//
+// P2-X3: DI wiring complete — infrastructure adapters injected into use case,
+// use case injected into router. All routes live, 501 stubs resolved.
 //
 // Sandbox security (charter §Security Clause macro-specific addition):
 // reads ZERO secrets — only PORT (default 5004) and LOG_LEVEL (default "INFO").
@@ -18,10 +21,10 @@ import (
 	"syscall"
 	"time"
 
-	// Pre-scaffold: pkg/ packages (router, use cases, infrastructure) do not exist yet.
-	// DI wiring is commented below — will be uncommented in P1-A4 when pkg/ stubs compile.
-	// Importing chi and modernc-sqlite directly here so tools.go anchor can be removed.
-	_ "github.com/go-chi/chi/v5"
+	"github.com/vn-market-intelligence/macro-indicators/pkg/application"
+	iface "github.com/vn-market-intelligence/macro-indicators/pkg/interface/http"
+	"github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -34,24 +37,17 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
-	// Pre-scaffold DI wiring (P1-A4 will uncomment when pkg/ stubs exist):
-	//
-	// commodityFetcher := infrastructure.NewHTTPCommodityFetcher()
-	// sbvRateRepo      := infrastructure.NewSBVRateRepository()
-	// useCase          := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, logger)
-	// router           := router.NewRouter(useCase, logger)
-	//
-	// For now, serve a minimal mux so the binary compiles and the server starts.
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status":"ok","service":"macro-indicators","port":5004}`))
-	})
+	// DI wiring: infrastructure adapters → use case → router.
+	// Fence-C: only this file (cmd/server/main.go) imports pkg/infrastructure.
+	commodityFetcher := infrastructure.NewHTTPCommodityFetcher("")
+	sbvRateRepo := infrastructure.NewSBVRateRepository()
+	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo)
+	router := iface.NewRouter(useCase, logger)
 
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      router,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
