@@ -207,9 +207,9 @@
         "next_task_note": "P1-D2 (critical path) unblocks P1-E1 (G12 streak #3). P1-D1 (primitive scenarios) can follow P1-D2 DONE."
       },
       {
-        "timestamp": "2026-05-23T11:21:03Z",
+        "timestamp": "2026-05-23T11:33:26Z",
         "task_id": "P1-D2",
-        "status": "DISPATCH",
+        "status": "DONE",
         "handoff": "docs/handoffs/TASK_P1-D2-macro.md",
         "signal": "docs/signals/pm-dispatch-dev-macro-p1-d2-20260523T112103Z.json",
         "description": "Module-level scenario JSON (golden + edge fixtures for macro-signals composition validation). Frozen fixture data, 2 files, 30m estimate, 4 ACs. Composition proof: golden scenario invokes macro-signals.ClassifyBatch() with VN indicators → returns tier/score/phase from macro-investment-clock primitive via DI. Critical path unblocks P1-E1 (dashboard stub).",
@@ -218,7 +218,34 @@
           "R-1 inherited (AC-4 defensive: zero API endpoint references in JSON, frozen fixture data only)"
         ],
         "critical_path": true,
-        "unblocks": "P1-E1 (dashboard stub, critical path to Phase 1 close)"
+        "unblocks": "P1-E1 (dashboard stub, critical path to Phase 1 close)",
+        "qa_verdict": "GREEN",
+        "qa_signal": "docs/signals/qa-macro-p1-d2-green-20260523T113326Z.json",
+        "qa_timestamp": "2026-05-23T11:33:26Z",
+        "impl_commit": "d2faae30",
+        "dev_signal_commit": "c9136938",
+        "ac_results": "4/4 PASS (AC-1 jq both exit 0 + AC-2 sandbox module 2/2 PASS + all-tier 5/5 PASS + AC-3 G2 composition proof manual trace confirmed + AC-4 zero API refs exit 1)",
+        "deviations": [
+          {
+            "id": "D-1",
+            "severity": "ACCEPTED",
+            "description": "macro-signals-golden.json pre-existed from P1-C1. Only edge.json is new in d2faae30. Golden content verified correct (3 indicators, correct tier/score/phase per scoreToPhase logic). AC-3 G2 proof confirmed. D-1 ACCEPT upheld."
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-05-23T11:33:26Z",
+        "task_id": "P1-E1",
+        "status": "READY",
+        "description": "Dashboard stub (G12 streak task #3 of 3). Renders primitive + module + service panels. Sandbox green before DONE. Critical path to Phase 1 close. Unblocked by P1-D2 DONE.",
+        "blockedBy": null,
+        "gates_binding": [
+          "G12 DoD (HARD GATE: sandbox green before DONE — streak task #3 of 3)",
+          "G6 (three-level dashboard from JSON traces)",
+          "G7 (edit-JSON-and-rerun, zero credentials)"
+        ],
+        "g12_streak_position": "3 of 3",
+        "critical_path": true
       }
     ],
     "risk_propagation": {
