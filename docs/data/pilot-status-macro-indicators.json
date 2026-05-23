@@ -137,12 +137,32 @@
         "qa_commit": "7629f258"
       },
       {
-        "timestamp": "2026-05-23T10:43:27Z",
+        "timestamp": "2026-05-23T10:52:56Z",
         "task_id": "P1-A5",
+        "status": "DONE",
+        "commits": [
+          "e39587e5 (dev-macro-indicators impl)",
+          "272a98f9 (dev-macro-indicators signal)"
+        ],
+        "signal": "docs/signals/qa-macro-p1-a5-green-20260523T105256Z.json",
+        "ac_results": "4/4 PASS (yaml.safe_load exit 0 + /health response schema PASS + /snapshot response schema PASS + file exists)",
+        "qa_commit": "de2c0712",
+        "deviations": [],
+        "milestone": "A-bucket complete (5/5 scaffold tasks done — P1-A1..A5)",
+        "scaffold_complete": true,
+        "next_task_note": "P1-B1 is FIRST PRIMITIVE — R-1 + G12 gates BINDING. No math/rand allowed. Sandbox must be green before P1-B1 commit."
+      },
+      {
+        "timestamp": "2026-05-23T11:00:00Z",
+        "task_id": "P1-B1",
         "status": "DISPATCH",
-        "handoff": "docs/handoffs/TASK_P1-A5-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json",
-        "description": "api/openapi.yaml HTTP contract spec (GET /health + POST /snapshot). ~15m, 4 ACs. Smoke gate end-of-A-bucket (go build, go vet, openapi exists, zero business logic). Next: P1-B1 (first primitive macro-investment-clock)"
+        "handoff": "docs/handoffs/TASK_P1-B1-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-b1-20260523T110000Z.json",
+        "description": "First primitive: macro-investment-clock (deterministic tier lookup, 7 ACs, 2h estimate). R-1 hard gate: no math/rand. G12 hard gate: sandbox green before commit. Unblocks P1-C1.",
+        "gates_newly_binding": [
+          "R-1 (AC-6 hard gate: grep -rE math/rand|rand.Intn|rand.Float → 0 matches)",
+          "G12 DoD (AC-7 hard gate: go run ./cmd/sandbox -tier=primitive → exit 0, all scenarios PASS)"
+        ]
       }
     ],
     "risk_propagation": {

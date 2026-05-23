@@ -1,5 +1,9 @@
 # PM — Notebook
 
+## c282 cycle-35 · 2026-05-23T11:00:00Z
+
+**Status:** A-BUCKET COMPLETE (5/5 scaffold tasks DONE + GREEN) → P1-B1 DISPATCHED (first primitive, R-1 + G12 gates BINDING). QA verified P1-A5 at 2026-05-23T10:52:56Z: 4/4 AC PASS (openapi.yaml 166L, yaml.safe_load exit 0, /health + /snapshot schema verified, file exists at canonical path). PM closed P1-A5 DISPATCH → DONE in SSOT (commits e39587e5/272a98f9, qa_commit de2c0712), marked scaffold_complete=true (NEW field for A-bucket milestone), and dispatched P1-B1 (first primitive macro-investment-clock, 2h, 7 ACs, deterministic tier lookup, no math/rand allowed, sandbox green mandatory before commit). Created TASK_P1-B1-macro.md handoff with explicit R-1 + G12 DoD hard gates in AC-6 + AC-7 sections. WIP=1 enforced (P1-B1 now In Progress). Anchor 1776df8e held. Single atomic commit: `chore(pm/c282-cycle-35): close P1-A5 (openapi.yaml GREEN, A-bucket complete 5/5) + dispatch P1-B1 (first primitive — R-1 + G12 gates BINDING)`. Next: QA verification of P1-B1 after dev-macro-indicators implements macro-investment-clock.
+
 ## c282 cycle-34 · 2026-05-23T10:43:27Z
 
 **Status:** P1-A4 VERIFIED GREEN + P1-A5 DISPATCHED — macro-indicators pilot Phase 1 fifth task. QA verified P1-A4 at 2026-05-23T10:43:27Z: 4/4 AC PASS (pkg/ DDD scaffold, 6 stub files, Fence-A enforced, go build/vet both exit 0, R-1 pre-check clean). PM updated pilot-status SSOT phase1: closed P1-A4 entry (status DONE, commits a3878361/f15127f6, qa_commit 7629f258) and created P1-A5 entry (status DISPATCH). Created TASK_P1-A5-macro.md handoff (api/openapi.yaml HTTP contract spec, ~15m, 4 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. R-1 + R-3 constraints propagated in P1-A5 Forward Risks. G12 DoD does NOT apply to P1-A5 (scaffold-only specification, activates P1-B1). Next: P1-B1 (macro-investment-clock primitive) unblocked after P1-A5 QA green.
@@ -79,24 +83,110 @@
    - Task context + Fence-A implementation guidance
    - Next step alert (P1-B1 unblocked after P1-A5 QA green)
 
+### P1-B1 Dispatch Summary (Cycle 35)
+
+- **Task ID:** P1-B1 (sixth of 11 Phase 1 tasks)
+- **Title:** Extract first primitive: macro-investment-clock (deterministic tier lookup + table-driven test + 3 scenarios)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 2.0 hours
+- **AC count:** 7
+- **Goals:** G1 (Primitives ship with scenarios), G7 (Edit-JSON-and-rerun), G12 (sandbox green before done)
+- **Blocked by:** P1-A5 ✓ (GREEN at 2026-05-23T10:52:56Z)
+- **Unblocks:** P1-C1 (module stub macro_signals)
+- **HARD GATES (NEW — activate P1-B1 onward):**
+  1. **R-1 HARD GATE (AC-6):** `grep -rE "math/rand|rand\.Intn|rand\.Float" → 0 matches` (NO randomization in primitives)
+  2. **G12 DoD GATE (AC-7):** `go run ./cmd/sandbox -tier=primitive → exit 0, all 3 scenarios PASS` (sandbox green before commit)
+- **Files touched:**
+  - `apps/macro-indicators/pkg/primitive/macro_investment_clock/macro_investment_clock.go` (CREATE)
+  - `apps/macro-indicators/pkg/primitive/macro_investment_clock/macro_investment_clock_test.go` (CREATE)
+  - `docs/scenarios/macro-indicators/primitives/macro-investment-clock-{golden,edge,failure}.json` (CREATE)
+- **Critical implementation notes:**
+  - TS source: `MacroScoreService.scoreIndicator()` uses Math.random() — Go rewrite MUST use deterministic fixed lookup
+  - Tier constants: VN_DIRECT=8, REGIONAL=5, US_DOMESTIC=2 (NOT variable)
+  - Phase classification (Go invention): score ≥8 → CORE_VN, ≥5 → REGIONAL, <5 → US_DOMESTIC
+  - Indicator lists from TS defaults.ts: VN_DIRECT_INDICATORS, REGIONAL_INDICATORS
+  - Table-driven test: ≥5 rows (VN/REGIONAL/US tiers + empty string + unknown)
+  - Scenario JSON: golden (known indicator), edge (empty string), failure (invalid input)
+- **Fence-A pre-check:** domain layer imports zero app/infra/interface
+- **R-3 forward:** 4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) remain HIGH priority for Phase 2 P2-B HTTP rewire in mcp-server
+
+### PM Actions Completed (Cycle c282 cycle-35)
+
+1. **Verified P1-A5 completion** ✓
+   - Read completion signal (qa-macro-p1-a5-green-20260523T105256Z.json)
+   - Verified dev commits e39587e5 (impl) + 272a98f9 (signal)
+   - Cross-checked 4/4 AC PASS (yaml.safe_load, /health schema, /snapshot schema, file exists)
+   - Cross-checked additional checks (go build exit 0, go vet exit 0, biz logic grep count=0, L84 compliance, anchor held, path/method alignment, port consistency, R-1 pre-check clean)
+   - D-1 assessment: 166 lines vs 80-120 guideline = ACCEPTED (legitimate spec elaboration, no new endpoints, no business logic)
+   - G12 note: NOT_BINDING_scaffold_only (activates from P1-B1 onward)
+
+2. **Created TASK_P1-B1-macro.md handoff doc** ✓
+   - 7 ACs from phase-1-task-plan §P1-B1 with explicit HARD GATE annotations
+   - AC-1 deterministic tier mapping (VN_DIRECT=8, REGIONAL=5, US_DOMESTIC=2, indicator lists)
+   - AC-2 phase classification logic (score ≥8 → CORE_VN, ≥5 → REGIONAL, <5 → US_DOMESTIC)
+   - AC-3 table-driven test (≥5 rows: VN/REGIONAL/US/empty/unknown)
+   - AC-4 scenario JSON files (golden, edge, failure with jq validation)
+   - AC-5 Fence-A pre-check (domain imports zero app/infra/interface)
+   - AC-6 R-1 HARD GATE (grep -rE math/rand|rand.Intn|rand.Float → 0 matches, BLOCKING)
+   - AC-7 G12 DoD GATE (go run ./cmd/sandbox -tier=primitive → exit 0, all PASS, BLOCKING)
+   - Background section explaining TS Math.random() → Go deterministic swap
+   - Forbidden section (no --force, no external-zone mods)
+   - Smoke check commands (go build, go vet, go test, grep guard, sandbox run)
+   - Commit message template + RETURN block template with full sandbox output paste requirement
+   - Critical notes: first primitive, R-1 bindng, G12 streak task #1, no scraper data yet
+
+3. **Created dispatch signal (pm-dispatch-dev-macro-p1-b1-20260523T110000Z.json)** ✓
+   - WIP claim: phase_1_dev_team = ACTIVE (1 of 1 enforced)
+   - P1-A5 verification embedded (commits e39587e5/272a98f9, 4/4 ACs, qa_commit de2c0712, GREEN)
+   - Hard gates section: R-1 (grep guard, BLOCKING, rationale + failure mode) + G12 (sandbox green, BLOCKING, rationale + failure mode)
+   - Task spec: estimate 2h, 7 ACs, goals G1/G7/G12, 5 files (2 Go + 3 JSON)
+   - Context for dev: TS source locations, architecture brief, TA precedent, test/scenario patterns
+   - Forward look: P1-C1 next (module stub), P1-E1 next (dashboard card), Phase 2 expansion (5 more primitives + R-3 mcp-server rewire)
+   - Compliance checklist: L84 + no-bypass + no-force + anchor held
+   - PM notes: cycle-35 atomic commit, A-bucket milestone, WIP transition 0→1, QC handoff explicit
+
+4. **Updated pilot-status SSOT (docs/data/pilot-status-macro-indicators.json)** ✓
+   - Closed P1-A5 entry: status DISPATCH → DONE (timestamp 2026-05-23T10:52:56Z)
+   - Added commits field to P1-A5: e39587e5 (impl) + 272a98f9 (signal)
+   - Added qa_commit field: de2c0712
+   - Updated signal ref to qa-macro-p1-a5-green-20260523T105256Z.json
+   - Updated AC results to "4/4 PASS (yaml.safe_load exit 0 + /health response schema + /snapshot response schema + file exists)"
+   - Added milestone field: "A-bucket complete (5/5 scaffold tasks done — P1-A1..A5)"
+   - Added NEW field scaffold_complete=true (marks end-of-A-bucket milestone)
+   - Added next_task_note: "P1-B1 is FIRST PRIMITIVE — R-1 + G12 gates BINDING. No math/rand allowed. Sandbox must be green before P1-B1 commit."
+   - Added P1-B1 entry: timestamp 2026-05-23T11:00:00Z, status DISPATCH, handoff + signal refs, description, gates_newly_binding array
+
+5. **Updated PM notebook (this file)** ✓
+   - New section: c282 cycle-35 with full P1-A5 closure + P1-B1 dispatch summary
+   - P1-B1 dispatch summary: task details, hard gates (R-1 + G12), files touched, critical impl notes, phase 2 forward
+   - PM actions completed log (5 actions)
+   - Next steps updated
+
 ### Next Steps
 
-- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-A5-macro.md + docs/signals/pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json)
-- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-A5 DONE + QA-green
-- **P1-B1 readiness:** After P1-A5 DONE, PM prepares P1-B1 handoff (first primitive macro-investment-clock, ~2h, 7 ACs, deterministic scoring)
-- **R-1 forward-warning:** At P1-A5 close (openapi.yaml complete), PM includes explicit R-1 deterministic-scoring reminder in P1-B1 handoff with grep guard AC-6
-- **R-3 phase 2 flag:** At Phase 1 close gate, PM flags R-3 (mcp-server tool handler HTTP rewire) for architect attention when Phase 2 task plan expands
+- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-B1-macro.md + docs/signals/pm-dispatch-dev-macro-p1-b1-20260523T110000Z.json)
+- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-B1 DONE + QA-green (R-1 grep guard + G12 sandbox green MUST pass)
+- **R-1 enforcement:** QA must verify zero math/rand in impl before granting GREEN. Commit rejected if R-1 violated.
+- **G12 enforcement:** QA must verify sandbox output (go run ./cmd/sandbox -tier=primitive) exits 0 with all scenarios PASS before granting GREEN.
+- **P1-C1 readiness:** After P1-B1 DONE, PM prepares P1-C1 handoff (module stub macro_signals composes macro-investment-clock, ~1h, 6 ACs, G2 + G12 streak task #2)
+- **R-3 phase 2 flag:** At Phase 1 close gate (after P1-E2), PM flags R-3 (mcp-server tool handler HTTP rewire for 4 tools) for architect attention when Phase 2 task plan expands
 
-### Pilot Status SSOT Checkpoint
+### Pilot Status SSOT Checkpoint (cycle-35)
 
 - **Pilot:** macro-indicators
 - **Phase:** 1 (ACTIVE)
 - **Task count:** 11 (P1-A1..E2)
-- **Progress:** P1-A1 DONE (5db4a246), P1-A2 DONE (0e2d9075/ed1a426b), P1-A3 DONE (c76cbe04/a0f8a3ea), P1-A4 DONE (a3878361/f15127f6, qa 7629f258), P1-A5 DISPATCH (pm-dispatch-dev-macro-p1-a5-20260523T104327Z.json)
-- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-A5)
+- **Progress:** 
+  - A-bucket COMPLETE: P1-A1 DONE (5db4a246), P1-A2 DONE (0e2d9075/ed1a426b), P1-A3 DONE (c76cbe04/a0f8a3ea), P1-A4 DONE (a3878361/f15127f6, qa 7629f258), P1-A5 DONE (e39587e5/272a98f9, qa de2c0712)
+  - B-bucket IN PROGRESS: P1-B1 DISPATCH (pm-dispatch-dev-macro-p1-b1-20260523T110000Z.json)
+- **A-bucket milestone:** scaffold_complete=true (5/5 scaffold tasks DONE + GREEN, smoke gate passed)
+- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-B1)
 - **Phase deadline:** 2026-07-04 (6 sprints, hard)
 - **Language:** Go (locked Day 0)
 - **Anchor:** 1776df8e (held) ✓
+- **Hard gates active:** R-1 (AC-6 grep guard: no math/rand) + G12 (AC-7 DoD: sandbox green before commit) — binding on P1-B1 and all subsequent primitives
+- **G12 streak:** P1-B1 is streak task #1 (of 3 required consecutive for G12 grade). P1-C1 and P1-E1 are #2 and #3.
+- **Risk propagation:** R-1 (deterministic scoring mandate) + R-3 (Phase 2 mcp-server HTTP rewire) both flagged and tracked in pilot-status phase1.risk_propagation
 
 ---
 
