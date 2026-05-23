@@ -10,7 +10,7 @@
   "goals_count": 12,
   "decision_matrix_block_present": true,
   "divergence_between_closed_pilots": "Two field-name divergences found and resolved in favour of macro v2.0 shape: (1) D1 CLOSE FIELDS — TA v1 used 'statusFlippedAt'+'statusFlippedBy'; macro v2 uses 'closedAt'+'closedBy'+'closureSignal'+'closureDecisionDoc'. Schema adopts macro v2 field names; TA v1 fields are DEPRECATED. (2) D2 LANGUAGE FIELDS — TA v1 used single 'languageDecision' string; macro v2 uses three split fields ('language', 'languageLockSource', 'languageLockedAt'). Schema adopts macro v2 split. Minor variations (sprintCount, pivotEvent, decisionMatrix 3yes/2yes/0-1yes inline map) documented as non-breaking; resolutions noted in _schema_meta._divergence_notes.",
-  "commit_sha": "PENDING — staged and committed after this signal write",
+  "commit_sha": "df6ad8dc",
   "pilot_3_gate": "PO may now instantiate docs/data/pilot-status-stock-price.json from this schema. All 12 G-goals present with canonical track labels (A: G1-G5, B: G6-G9, C: G10-G12). decisionMatrix block present with §4.5 authorship rule embedded. Phase 0 deliverable skeleton matches macro v2 pattern. Service-specific values are clearly marked <SERVICE:...> placeholders.",
   "files_written": [
     "docs/data/pilot-status-schema.json",

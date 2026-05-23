@@ -61,6 +61,21 @@
 
 **Decision:** No edit required. 1963-MW-IDENTITY is DONE per DASHBOARD collapsed comment. This invocation correctly resolves to a no-op review.
 
+## 2026-05-23 · SI-1 Fleet Pilot-Status SSOT Schema
+
+**Program:** fleet-factory-rollout | **Prework:** SI-1 | **Dispatch:** po-si1-dispatch-agentfather-schema-20260523T215642Z.json
+
+**DONE.** Authored `docs/data/pilot-status-schema.json` — canonical template for all fleet pilot-status files.
+
+- Reconciled TA v1 + macro v2 closed pilots. Two structural divergences found + resolved (D1: close fields; D2: language fields) — macro v2 shape adopted as fleet canonical.
+- 12 G-goals present: Track A G1-G5 (Trust Foundation), Track B G6-G9 (Dashboard Trust), Track C G10-G12 (AI-Fixability).
+- decisionMatrix block with §4.5 authorship rule embedded verbatim.
+- Phase 0 deliverable skeleton matches macro v2 pattern.
+- All service-specific values marked `<SERVICE:...>` — no hardcoded service data.
+- Completion signal: docs/signals/agentfather-si1-schema-done-20260523T220318Z.json
+- Commit: df6ad8dc
+- Gates pilot-3 (stock-price) Phase 0 — PO can now instantiate docs/data/pilot-status-stock-price.json.
+
 ## Carry-over
 
 - OQ-1: get_financial_summary — needs qa verification against live tool list
@@ -71,3 +86,4 @@
 - 1967-07: IMPL_DONE — awaiting smart-skip qa
 - 1967-08: IMPL_DONE — awaiting smart-skip qa
 - 1967-09: IMPL_DONE — awaiting smart-skip qa
+- SI-5 (dev-news-fetch agent): DEFERRED — before pilot-6 charter. Clone dev-macro-indicators pattern.
