@@ -1,0 +1,63 @@
+{
+  "signal": "po-pilot3-stock-price-chartered",
+  "from": "po",
+  "emittedAt": "2026-05-23T22:09:44Z",
+  "type": "dispatch",
+  "subject": "stock-price fleet pilot-3 chartered — dispatch PM to open Phase 0",
+  "ratification": "docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md (Decision 1 + Decision 5 step 3)",
+  "deliverables_landed": {
+    "charter_path": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md",
+    "status_ssot_path": "docs/data/pilot-status-stock-price.json"
+  },
+  "pilot": {
+    "service": "stock-price",
+    "fleet_pilot_number": 3,
+    "language": "Go",
+    "language_locked": true,
+    "port_internal": 5000,
+    "port_external": 5010,
+    "zone": "apps/stock-price/",
+    "dev_specialist": "dev-stock-price",
+    "ts_fence_dependency": "NONE — Go service, depguard proven on TA+macro; not gated by SI-3",
+    "status": "ACTIVE",
+    "phase": "0",
+    "goalsEarned": 0,
+    "decisionMatrix": "present-but-empty (populates ONLY at 12/12 terminal per charter §4.5)"
+  },
+  "refactor_targets": {
+    "_note": "Recommended candidates derived from read-only grep of apps/stock-price/pkg/domain/services.go + infrastructure/fetchers.go. dev-stock-price CONFIRMS/refines exact set in Phase 0 brownfield. Charter freezes the decomposition principle, not the names.",
+    "primitives_3to5_pure_stdlib_FenceA": [
+      "price-quote-normalizer (raw exchange payload -> canonical PriceQuote)",
+      "tier-fallback-selector (ordered tier results -> winning tier + validity; decision logic of ResolvePriceService.FetchPrice)",
+      "ohlcv-aggregator (raw daily rows -> canonical DailyOHLCV series)",
+      "price-staleness-classifier (quote + now + threshold -> FRESH/STALE/EXPIRED)",
+      "exchange-code-router (ticker -> exchange + canonical request shape)"
+    ],
+    "module_FenceB": "pkg/module/price_resolution/ — composes primitives + injected TierFetcher port; orchestrates 3-tier fallback story; ONE module (history_aggregation deferred post-pilot)",
+    "infra_FenceC": "Tier1VnDirectFetcher / Tier2VnDirectLegacyFetcher / Tier3CacheFetcher (CGO SQLite) / SQLitePriceHistoryRepository — importable ONLY from cmd/server/main.go"
+  },
+  "phase0_risk_CGO": {
+    "id": "R-CGO",
+    "severity": "HIGH",
+    "binding": true,
+    "analog": "macro R-1 (math/rand) Phase-0 gate; alert-engine Telegram-creds hard gate",
+    "rule": "mattn/go-sqlite3 (CGO) MUST NOT leak into pkg/primitive, pkg/module, or cmd/sandbox. Sandbox MUST build & run the refactored primitives+module under CGO_ENABLED=0 against scenario JSON fixtures (no real SQLite, no live VnDirect).",
+    "phase0_confirmation_required": "dev-stock-price verifies extracted primitives+module+sandbox compile and run under CGO_ENABLED=0; if any unit transitively pulls mattn/go-sqlite3, the cut is wrong (I/O leaked into a fence) and must be re-cut before Phase 1."
+  },
+  "next_dispatch": {
+    "agent": "pm",
+    "then": "dev-stock-price",
+    "intent": "Open stock-price pilot-3 Phase 0",
+    "flow": ".claude/flows/pm/main.md",
+    "phase0_scope": [
+      "architect + system-auditor: brownfield inventory docs/architecture-briefs/2026-05-23-stock-price-factory/p0-brownfield-inventory.md — confirm exact primitive set + module name + G5a (superseded vs retained logic) + G5b (which mcp-server market-data tool handlers reach stock-price domain) + R-CGO (CGO_ENABLED=0 sandbox feasibility)",
+      "bug-inventory: add stock_price_baseline block to docs/data/bug-inventory.json (fallback baselineCycleCount=1.5)",
+      "agent-father: confirm .claude/agents/dev-stock-price.md factory-readiness (exists v2026-05-14) + bake G12 DoD Gate + CGO/Fence-A/B/C + pre-revert tag protocol into .claude/flows/dev-stock-price/main.md (Day-0)",
+      "phase-1 task plan: docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md (atomic tasks, per-task AC, WIP=1, R-CGO gate baked into first-primitive task AC)",
+      "EXIT GATE: all 6 Phase-0 deliverables landed + SSOT phase0 fields populated + no code in pkg/primitive|pkg/module yet + architect verification signal"
+    ],
+    "wip_cap": "WIP=2 fleet cap — stock-price is ACTIVE pilot #1; kinh-dich (pilot 4) opens only after SI-3 lands AND stock-price clears Phase 0"
+  },
+  "constraints_held": "L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push; all on main; CLOSED SSOTs (pilot-status.json, pilot-status-macro-indicators.json) untouched; DORMANT app source (apps/technical-analysis/**, apps/macro-indicators/**) untouched; apps/stock-price/** source NOT touched (charter-only); decisionMatrix empty until terminal; system facts via jq on system-map.json",
+  "do_not": "Do NOT author kinh-dich charter (pilot 4, gated on SI-3). Do NOT dispatch implementation directly — main router spawns pm next."
+}

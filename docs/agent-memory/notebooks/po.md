@@ -1,29 +1,27 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-59 (Fleet Factory Rollout — ratification + framing + prework + TS-fence)
-**Last update:** 2026-05-23T21:56:42Z
-**Status:** Architect's fleet-rollout brief (`d898401a`) RATIFIED. Program goal (user): per-microservice factory + per-service dashboard for all eligible services. Two NOW dispatches emitted (architect SI-3, agent-father SI-1). Pilot-3/4 charters gated behind them.
+**Cycle:** c282 cycle-60 (Fleet pilot-3 stock-price — charter + SSOT authored, SI-1 landed)
+**Last update:** 2026-05-23T22:09:44Z
+**Status:** SI-1 schema landed → pilot-3 (stock-price) chartered. Charter + status SSOT authored, charter-only (no impl). Dispatch signal emitted naming PM → dev-stock-price Phase 0. WIP=2: stock-price is ACTIVE pilot #1.
 
 ---
 
-## This cycle (cycle-59) — decisions recorded
+## This cycle (cycle-60) — pilot-3 stock-price chartered
 
-Decision doc: `docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md`. All facts verified via jq on `system-map.json` (12 zones; 5 RED-service dev agents present; news-fetch specialist=`developer` → confirms SI-5; no schema file → SI-1 open; no kinh-dich-factory dir → pilot-3 charter correctly ungated).
+Authored from SI-1 fleet schema + macro v2.0 template, per ratification Decision 5 step 3. All service facts via jq on `system-map.json` (NOT hardcoded): port 5000 internal / 5010 external, zone `apps/stock-price/`, specialist `dev-stock-price`, runtime `go1.22+cgo`.
 
-1. **Pilot order RATIFIED with ONE swap:** 3=stock-price(Go) → 4=kinh-dich(TS) → 5=alert-engine(Go) → 6=news-fetch(TS) → 7=pdf-extractor(Py) → 8=rag-service(Py). Promoted stock-price ahead of kinh-dich: first fleet pilot must carry zero new-tooling risk (Go depguard proven) while HIGH-RISK SI-3 (TS fence) runs in parallel. kinh-dich loses nothing — still gets full charter as pilot-4. **WIP=2 confirmed.**
-2. **Framing: per-service in-app model is CANONICAL; original shared-`packages/*` framing SUBSUMED (a).** Q-9 (Go out of scope) REVERSED by two Go scale verdicts. mcp-server cleanup delivered incrementally via per-pilot G5 (no standalone Phase 4 workspace rewire). `11-open-questions` Q-1/Q-2/Q-6 MOOT. Will NOT revive shared-`packages/*` unless user sets a new distinct goal.
-3. **Prework:** SI-1 GO now (agent-father, schema), SI-3 GO now (architect spike, TS fence) — parallel. SI-2 deferred→first-pilot G6. SI-4 deferred→pre-pilot-7. SI-5 deferred→pre-pilot-6.
-4. **TS fence (SI-3): DELEGATE to architect spike** (G4 is load-bearing trust gate — must be uniform across fleet). Option C (weaker TS G4) pre-selected as CONDITIONAL fallback if spike >1 sprint. Pilot-3 (Go) NOT gated by SI-3; pilot-4 (kinh-dich) charter G4 cannot lock until SI-3 resolves.
-5. **Signals emitted:** `po-si3-dispatch-architect-ts-fence-...`, `po-si1-dispatch-agentfather-schema-...`, `po-fleet-rollout-ratified-...` (all 20260523T215642Z).
-
-Brief typo noted (non-blocking): `02-phasing.md` diagram labels kinh-dich "Go→TS" — inventory + tables correctly say TS/Bun. Architect to fix on next touch.
+1. **Charter:** `docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md` — cloned macro v2.0; 12 G-goals across 3 tracks (A Trust G1-5, B Dashboard G6-9, C AI-Fixability G10-12). Go G4 = depguard (NO SI-3 dependency). 3-panel dashboard (G6) file:// zero-network. Honest-red contract (G8). G9 Path B Playwright Day-0 default. §4.5 matrix derivation = Speed(G10+G11) / Trust(G8+G9) / Scale(all-12 + sprintCount≤6).
+2. **SSOT:** `docs/data/pilot-status-stock-price.json` — instantiated from SI-1 schema. 12 goals TBD, goalsEarned=0, status ACTIVE, phase 0, language Go locked, anchor TBD, decisionMatrix present-but-empty (TBD). JSON validated (jq).
+3. **Refactor targets (charter §Refactor Targets; dev confirms Phase 0):** primitives = price-quote-normalizer, tier-fallback-selector, ohlcv-aggregator, price-staleness-classifier, exchange-code-router (3-5, stdlib Fence-A). Module = `pkg/module/price_resolution/` (Fence-B, injected TierFetcher port). Infra (Fence-C, cmd/server/main.go only) = Tier1/2/3 fetchers + CGO SQLite repo.
+4. **L-CGO (NEW lesson, stock-price-specific):** `mattn/go-sqlite3` (CGO) MUST NOT leak into primitive/module/sandbox. Sandbox builds & runs under `CGO_ENABLED=0`. Flagged R-CGO as Phase-0 binding gate (analog macro R-1 / alert-engine Telegram-creds).
+5. **Signal emitted:** `docs/signals/po-pilot3-stock-price-chartered-20260523T220944Z.json` → next dispatch PM → dev-stock-price Phase 0.
 
 ---
 
 ## Carry-over (next cycle)
 
-- **NEXT (parallel):** main router spawns (1) architect→SI-3 TS-fence spike, (2) agent-father→SI-1 pilot-status-schema. Both `now-parallel`.
-- **AFTER SI-1 lands:** PO authors `docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md` + `docs/data/pilot-status-stock-price.json` (clone macro v2.0; Go G4=depguard) → then dispatch stock-price Phase 0.
-- **AFTER SI-3 lands:** PO authors `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` (+ status SSOT), transcribing SI-3 G4 AC verbatim. Respect WIP=2.
-- **Deferred triggers:** SI-5 (agent-father, dev-news-fetch) pre-pilot-6; SI-4 (architect, Python fence) pre-pilot-7; SI-2 (dev) at stock-price G6.
-- **Do NOT touch:** frozen `pilot-status.json` (TA), closed `pilot-status-macro-indicators.json`, any `apps/**` source.
+- **NEXT:** main router spawns `pm` (`.claude/flows/pm/main.md`) → opens stock-price Phase 0; pm forwards to architect/system-auditor (brownfield + R-CGO confirm), agent-father (dev-stock-price flow G12 DoD + fences), bug-inventory entry, phase-1 task plan. Exit gate = 6 deliverables + architect verification signal.
+- **WIP=2:** stock-price ACTIVE #1. kinh-dich (pilot 4) opens ONLY after SI-3 lands AND stock-price clears Phase 0. Do NOT author kinh-dich charter yet.
+- **Deferred triggers:** SI-2 (fleet dashboard index `docs/dashboards/index.html`) — owner = dev-stock-price at G6 (first fleet pilot to hit G6; ratification Decision 3 corrected owner from kinh-dich to stock-price). SI-5 (dev-news-fetch) pre-pilot-6. SI-4 (Python fence) pre-pilot-7.
+- **PO self-dispatch (after SI-3):** author kinh-dich charter transcribing SI-3 G4 AC verbatim.
+- **Do NOT touch:** frozen `pilot-status.json` (TA), closed `pilot-status-macro-indicators.json`, DORMANT `apps/technical-analysis/**` + `apps/macro-indicators/**`, `apps/stock-price/**` source (charter-only this cycle).

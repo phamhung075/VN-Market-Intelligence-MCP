@@ -1,0 +1,291 @@
+{
+  "_maintained_by": "po",
+  "_note": "stock-price pilot SSOT — Factory v2, fleet pilot 3 (FIRST fleet-rollout pilot). Instantiated from SI-1 fleet schema docs/data/pilot-status-schema.json (agent-father v1.0). Separate file from pilot-status.json (FROZEN TA) and pilot-status-macro-indicators.json (CLOSED macro) — both untouched. Author this file end-to-end through the stock-price pilot life cycle.",
+  "_schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, 2026-05-23T22:01:07Z) — macro v2 field shape canonical",
+  "_ratification": "docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md (Decision 1 — stock-price PROMOTED to pilot 3, zero new-tooling risk; Decision 5 step 3)",
+  "_parent_pilot_closures": [
+    "docs/data/pilot-status.json (TA, status=DONE, verdict=scale, 2026-05-23T09:19:10Z)",
+    "docs/data/pilot-status-macro-indicators.json (macro, status=DONE, verdict=scale, 2026-05-23T21:42:47Z)"
+  ],
+  "_cgo_boundary_gate": "Charter §CGO Boundary Clause — mattn/go-sqlite3 (CGO) must NOT leak into pkg/primitive, pkg/module, or cmd/sandbox; sandbox builds & runs under CGO_ENABLED=0. R-CGO is the binding correctness gate (analog of macro R-1 / alert-engine Telegram-creds). dev-stock-price confirms at Phase 0.",
+
+  "pilot": "stock-price",
+  "charterRef": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md",
+  "charterVersion": "2.0",
+  "status": "ACTIVE",
+  "openedAt": "2026-05-23T22:06:04Z",
+  "openedBy": "po (fleet pilot-3 charter creation — after SI-1 schema landed; ratification Decision 5 step 3)",
+  "closedAt": null,
+  "closedBy": null,
+  "closureSignal": null,
+  "closureDecisionDoc": null,
+  "sprintKickoff": "2026-05-23",
+  "sprintDeadline": "2026-07-04",
+  "deadline": "kickoff + 6 sprints",
+  "language": "Go",
+  "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; stock-price is natively Go (runtime go1.22+cgo per system-map)",
+  "languageLockedAt": "2026-05-22 (parent decision)",
+  "phase": "0",
+
+  "phase0": {
+    "status": "OPEN",
+    "openedAt": "2026-05-23T22:06:04Z",
+    "openedBy": "po (fleet pilot-3 charter creation)",
+    "closedAt": null,
+    "closedBy": null,
+    "owner": "architect + system-auditor + agent-father (+ dev-stock-price for CGO-free sandbox feasibility confirmation)",
+    "deliverables": {
+      "_note": "Per charter §Phase 0 exit gate. R-CGO confirmation is added to brownfield_inventory scope (stock-price-specific).",
+      "pilot_status_ssot": "DONE 2026-05-23T22:06:04Z (this file)",
+      "brownfield_inventory": "PENDING — architect/system-auditor; MUST confirm exact primitive set + module name + G5a/G5b scope + R-CGO (CGO_ENABLED=0 sandbox feasibility)",
+      "bug_inventory_entry": "PENDING — stock_price_baseline block (fallback baselineCycleCount=1.5)",
+      "dev_agent_file": "PENDING — agent-father confirms .claude/agents/dev-stock-price.md (v2026-05-14, exists) factory-readiness (Go primary, G12 DoD, CGO-boundary lazy-load)",
+      "dev_agent_flow_file": "PENDING — .claude/flows/dev-stock-price/main.md with G12 DoD Gate Day-0 + CGO/Fence-A/B/C + pre-revert tag protocol",
+      "phase_1_task_plan": "PENDING — phase-1-task-plan-go.md (atomic tasks, per-task AC, WIP=1, R-CGO gate baked into first-primitive task AC)"
+    },
+    "exit_gate": {
+      "all_deliverables_landed": false,
+      "pilot_status_phase_0_fields_populated": true,
+      "no_code_in_service_pkg_yet": true,
+      "exit_gate_status": "OPEN",
+      "closedAt": null,
+      "verification_commit_sha_architect": null,
+      "verification_signal": null
+    }
+  },
+
+  "phase1": {
+    "_note": "Stubbed until Phase 0 closes. Expand on Phase 0 exit.",
+    "status": "NOT-STARTED",
+    "openedAt": null,
+    "openedBy": null,
+    "gateVerdict": null,
+    "gateVerifiedAt": null,
+    "gateVerifiedBy": null,
+    "gateCommit": null,
+    "gateDecisionDoc": null,
+    "gateSignal": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §Phase Skeleton (architect expands into 07-phases.md at Phase 0)",
+    "task_plan": null,
+    "wip_limit": 1,
+    "progress_notes": []
+  },
+
+  "phase2": {
+    "_note": "Stubbed until Phase 1 gate passes.",
+    "status": "NOT-STARTED",
+    "openedAt": null,
+    "openedBy": null,
+    "closedAt": null,
+    "closedBy": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §Phase Skeleton (architect expands into phase-2-task-plan-go.md at Phase 1 close)",
+    "taskPlan": null,
+    "taskCount": null,
+    "wipPolicy": "WIP=1 — R-CGO unblock + .golangci.yml fence first if Phase 0 flags any CGO leak; otherwise standard primitive-extraction order",
+    "wip_limit": 1,
+    "tasks": {}
+  },
+
+  "goals": [
+    {
+      "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
+      "id": "G1",
+      "track": "A",
+      "title": "Primitives ship with scenarios",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "3-5 Go primitives in apps/stock-price/pkg/primitive/ (candidates: price-quote-normalizer, tier-fallback-selector, ohlcv-aggregator, price-staleness-classifier, exchange-code-router — dev-stock-price confirms exact set Phase 0). Each ≥3 scenarios (golden + edge + failure). Verify: CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -scenario=all exits 0; ≥1 failure scenario; grep mattn/go-sqlite3 in pkg/primitive = 0 (R-CGO gate). Min 9 scenario files (3 prim × 3).",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G2",
+      "track": "A",
+      "title": "Module composes primitives via ports",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "ONE module: apps/stock-price/pkg/module/price_resolution/. Composes primitives via interface + an injected TierFetcher port (infra impl, never imported directly). Multi-primitive scenario = 3-tier fallback story. Fence-B + CGO: grep pkg/module/ imports (cross-module=0) + grep mattn/go-sqlite3|pkg/infrastructure in module = 0. history_aggregation module deferred post-pilot.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G3",
+      "track": "A",
+      "title": "Microservice has clean composition root",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "cmd/server/main.go wires module + adapters; CGO SQLite fetcher injected HERE as TierFetcher infra impl. Zero domain logic in root. OpenAPI YAML in pkg/interface/http/. Port = 5000 internal / 5010 external (system-map.json, never hardcoded). grep FetchPrice|tierResult|normalize|aggregate in main.go = 0.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G4",
+      "track": "A",
+      "title": "Architecture fence enforced (offline depguard evidence)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Go service → depguard via golangci-lint (SAME mechanism as TA+macro, NO SI-3/TS-fence dependency). apps/stock-price/.golangci.yml: Fence-A (pkg/primitive must not import application/infrastructure/interface OR mattn/go-sqlite3), Fence-B (pkg/module must not import infrastructure OR mattn/go-sqlite3), Fence-C (infra importable ONLY from cmd/server/main.go; exclusions !cmd/server/main.go, !*_test.go). CI job stock-price-go-lint working-directory=apps/stock-price OR offline proof. Pre-revert tag stock-price-pre-ci. AC-4a CI job, AC-4b deliberate Fence-A violation reproduces non-zero exit with 'Fence-A' + reverted + never committed (QA independent), AC-4c .golangci.yml freeze anchor most-recent commit on file at close.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G5",
+      "track": "A",
+      "title": "Old service code deleted + HTTP rewire",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Port 5000 (internal) / 5010 (external). G5a: superseded pre-refactor domain/application logic moved to apps/stock-price/pkg/_deprecated/ (or deleted under tag) after new module ships — Phase 0 confirms replaced vs retained. G5b: mcp-server market-data tool handlers that reach stock-price domain verified HTTP-routed to port 5000 (candidates: priceHistoryTools.ts, tickerIntelligenceTools.ts, priceAlertTools.ts — dev confirms which actually reach in). G5c: zero TODO.*migrat. Pre-delete tag stock-price-pre-delete before any git mv. _deprecated/ target = apps/stock-price/pkg/_deprecated/.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track B — Dashboard Trust (G6-G9). User-facing trust layer: honest rendering, zero-credential + zero-CGO sandbox, user confirmation.",
+      "id": "G6",
+      "track": "B",
+      "title": "Three-level dashboard renders from JSON traces",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "apps/stock-price/dashboard/index.html — 3 panels (primitives 3-5 + module price_resolution + microservice). file:// works with ZERO network + ZERO CGO. No CDN, no build server. SI-2 TRIGGER: stock-price is the FIRST fleet pilot to hit G6 → dev-stock-price owns docs/dashboards/index.html (fleet dashboard index) creation at G6 time (ratification Decision 3, owner corrected from kinh-dich to stock-price). G6-triggered Phase 2 deliverable, NOT Phase 0.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G7",
+      "track": "B",
+      "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Env audit forbidden keys: DB_|API_KEY|SECRET|TOKEN|PASSWORD returns empty in sandbox process. stock-price-specific CGO gate: sandbox binary builds+runs under CGO_ENABLED=0; grep mattn/go-sqlite3 in pkg/primitive+pkg/module+cmd/sandbox = 0. rerun-handler invokes CGO_ENABLED=0 sandbox against edited fixtures (no live VnDirect, no real SQLite).",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G8",
+      "track": "B",
+      "title": "Red/green status is honest",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Honest-red contract. Test A = deliberate corruption of golden scenario (e.g. flip expected tier in tier-fallback-selector golden) → dashboard RED, diff captured. Test B = known golden → dashboard GREEN, diff=null. Both proven before YES. No false greens (QA runs known-bad scenarios). Pattern identical across all pilots.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G9",
+      "track": "B",
+      "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Path B (PO Playwright headless) is Day-0 DEFAULT (L6). Path B command: Playwright + chromium-headless-shell against file://apps/stock-price/dashboard/index.html (TCC-staged via Terminal.app per L87). Acceptance: 0 console errors, 0 pageerrors, 0 requestfailed, all primitive+module+microservice cards rendered, NOT-RUN honestly displayed. Path A = user verbal YES on dashboard-only. Either path = YES, equal weight. VERDICT captured in docs/po-decisions/<date>-g9-stock-price-user-confirmation.md.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track C — AI-Fixability (G10-G12). Proves the agent loop can self-correct without human intervention.",
+      "id": "G10",
+      "track": "C",
+      "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Baseline from bug-inventory.json stock_price_baseline block (Phase 0 adds; fallback system-wide baselineCycleCount=1.5). max_cycles_allowed=2. Inject 1 deliberate SINGLE-literal bug into a stock-price primitive (e.g. wrong staleness threshold in price-staleness-classifier, or flipped comparison in tier-fallback-selector). Measure cycles to dashboard GREEN. Pre-revert tag stock-price-pre-inject.",
+      "cycle_count": null,
+      "max_cycles_allowed": 2,
+      "phase2Bucket": null
+    },
+    {
+      "id": "G11",
+      "track": "C",
+      "title": "Regression alarm bell works",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 primitive mutation + fix. Trial-2 = DIFFERENT primitive mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix repairs all coupled REDs. Outcome-(a) × 2 = PASS.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G12",
+      "track": "C",
+      "title": "Dev-* agent flow requires dashboard-green before done (3-task streak)",
+      "status": "TBD",
+      "_status_candidacy": "May be held EARNED-PENDING per Charter §4.5 once streak complete. PO flips YES only at 12/12 terminal atomic close.",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "agent-father bakes G12 DoD Gate (sandbox-green-before-RETURN) into .claude/flows/dev-stock-price/main.md Day 0 at Phase 0 (clone TA/macro pattern). Streak tasks = first-primitive + module-stub + dashboard-stub (Phase 1 bucket pattern). Rule effective after Phase 0 flow commit.",
+      "phase2Bucket": null,
+      "g12Streak": {
+        "required": 3,
+        "completed": 0,
+        "streakComplete": false,
+        "completedAt": null,
+        "tasks": [],
+        "ruleEffectiveAfter": null
+      }
+    }
+  ],
+
+  "decisionMatrix": {
+    "_authorship_rule": "PO-only per Charter §Constraints + §4.5. Populated ONLY after 12/12 G-goals reach terminal grade. Atomic with last G-goal flips in same commit. NO partial population. NO pre-filling before 12/12. Block stays present-but-empty (TBD) the entire pilot until terminal.",
+    "_criteria_source": "Charter §Decision Matrix derivation: Speed = G10 + G11; Trust = G9 (PASS) + G8; Scale = all 12 goals YES + sprintCount ≤ 6.",
+    "speed": "TBD",
+    "trust": "TBD",
+    "scale": "TBD",
+    "verdict": "TBD",
+    "populatedAt": null,
+    "populatedBy": null,
+    "populatedInCommit": null,
+    "criteriaApplication": {
+      "speed": null,
+      "trust": null,
+      "scale": null
+    },
+    "outcome": null
+  },
+
+  "verdict": "TBD",
+
+  "goalsEarned": 0,
+  "_goalsEarned_note": "Running counter of goals with status=YES. Must equal 12 at terminal close.",
+
+  "anchor": "TBD",
+  "_anchor_note": "Frozen-anchor commit SHA for this pilot's contracts (.golangci.yml freeze etc.). Set by dev-stock-price at Phase 0 / first scaffold commit. Once frozen: no retag, no rewrite, no push.",
+
+  "sprintCount": 0,
+  "_sprintCount_note": "Optional computed field. Incremented per completed sprint. Used in Scale criterion (≤6).",
+
+  "constraints_binding_day_0": [
+    "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push of source/CI changes (local-only; user owns push)",
+    "All work on main (NO branches per CLAUDE.md)",
+    "SSOT: one active dispatch per task",
+    "Anchor discipline: once frozen, no retag/rewrite/push",
+    "Charter §4.5 matrix-authorship rule: PO-only, atomic with 12/12 terminal",
+    "CGO boundary: mattn/go-sqlite3 only in infra, wired only from cmd/server/main.go; never in primitive/module/sandbox",
+    "DORMANT/CLOSED freeze: do not touch apps/technical-analysis/**, apps/macro-indicators/**, pilot-status.json, pilot-status-macro-indicators.json",
+    "System facts via jq on system-map.json (never hardcode port/zone/agent)",
+    "Notebook + signal hygiene (agent notebook ≤200L; signals {agent}-{ISO}.json)"
+  ],
+
+  "lessons_baked_in": [
+    "L1 = language locked Day 0 (Go) AND service is natively Go (no rewrite step)",
+    "L2 = G4 offline depguard primary (whole-project CI noisy)",
+    "L3 = status enum strict ACTIVE|DONE|FAILED (no operational labels)",
+    "L4 = decisionMatrix PO-only atomic with 12/12 terminal",
+    "L5 = pre-revert tags Day 0 (stock-price-pre-ci, stock-price-pre-delete, stock-price-pre-inject)",
+    "L6 = G9 Playwright short-circuit Day-0 default (equal weight to user verbal)",
+    "L7 = SSOT + L84 + anchor discipline Day 0",
+    "L-CGO = NEW stock-price-specific: mattn/go-sqlite3 must not leak into primitive/module/sandbox; sandbox builds under CGO_ENABLED=0; R-CGO Phase-0 confirmation gate (analog of macro R-1 / alert-engine Telegram-creds)"
+  ]
+}
