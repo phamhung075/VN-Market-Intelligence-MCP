@@ -1,0 +1,65 @@
+{
+  "from": "pm",
+  "to": "dev-macro-indicators",
+  "type": "task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T10:58:40Z",
+  "cycle": "c282 cycle-30",
+  "pilot": "macro-indicators",
+  "phase": "1",
+  "task_id": "P1-A1",
+  "task_title": "Create apps/macro-indicators/go.mod + go.sum (Go 1.22, chi + modernc-sqlite deps)",
+  "handoff_doc": "docs/handoffs/TASK_P1-A1-macro.md",
+  "owner_agent": "dev-macro-indicators",
+  "estimate_hours": 0.25,
+  "ac_count": 4,
+  "files_touched": [
+    "apps/macro-indicators/go.mod (CREATE)",
+    "apps/macro-indicators/go.sum (GENERATED via go mod tidy)"
+  ],
+  "wip_claim": {
+    "lock_id": "phase_1_dev_team",
+    "wip_limit": 1,
+    "claim_status": "ACTIVE",
+    "claim_set_at": "2026-05-23T10:58:40Z",
+    "note": "WIP=1 enforced: no other dev-macro-indicators task may dispatch until P1-A1 DONE + QA-green"
+  },
+  "constraints": [
+    "L84 explicit-file staging (git add per file; NEVER -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push (local-only; user owns push)",
+    "All work on main (NO branches)",
+    "Anchor 1776df8e held (no retag, no rewrite)"
+  ],
+  "upstream_deps": [],
+  "downstream_unblocks": ["P1-A2"],
+  "risk_flags_embedded": [
+    {
+      "id": "R-1",
+      "severity": "HIGH",
+      "description": "Math.random() in scoreIndicator() (src/domain/services.ts) must be replaced with deterministic tier lookup in P1-B1 Go rewrite. AC-6 of P1-B1 is the hard gate (grep for Math.random|rand.Intn|rand.Float must return 0).",
+      "binding_on": "P1-B1",
+      "pm_action": "Forward-warn at P1-A5 close when B1 dispatch is prepared"
+    },
+    {
+      "id": "R-3",
+      "severity": "HIGH",
+      "description": "4 MCP tools (get_macro_snapshot, get_carry_trade_signal, get_yield_spread_signal, get_macro_calendar) bypass macro-indicators HTTP via direct domain imports in mcp-server. Phase 2 P2-B must include mcp-server tool handler rewire.",
+      "binding_on": "Phase 2 (Phase 1 forward-look only)",
+      "pm_action": "Note in Phase 2 task plan expansion at Phase 1 close gate for architect awareness"
+    }
+  ],
+  "g12_dod_gate_note": "G12 gate (sandbox green before DONE) does NOT apply to P1-A1 (scaffold-only). Gate activates P1-B1 onward.",
+  "qa_signals_expected": [
+    "P1-A1-DONE signal with commit SHA",
+    "Confirmation of L84 explicit staging",
+    "Smoke check results (go mod verify, go mod tidy idempotent)"
+  ],
+  "phase_plan_ref": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
+  "pm_signature": {
+    "agent": "pm",
+    "cycle": "c282 cycle-30",
+    "action": "handoff doc TASK_P1-A1-macro.md authored + WIP-1 lock set + dispatch signal created",
+    "timestamp": "2026-05-23T10:58:40Z"
+  }
+}
