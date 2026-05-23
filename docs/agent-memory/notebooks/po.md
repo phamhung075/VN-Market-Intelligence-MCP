@@ -1,83 +1,81 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-21 (macro-indicators Phase 1 exit gate)
-**Last update:** 2026-05-23T12:15:26Z
-**Status:** Phase 1 GATE = **GO**. All 4 criteria PASS on independent PO re-verification. G12 EARNED-PENDING. decisionMatrix unchanged (Charter §4.5). Architect dispatched for Phase 2 plan with P2-B1 = R-3 MCP HTTP rewire as first task. Anchor 1776df8e held pre+post.
+**Cycle:** c282 cycle-51 (PO leg — P2-C1 G9 Playwright Path B verification)
+**Last update:** 2026-05-23T15:05:01Z
+**Status:** P2-C1 DONE with verdict **NO**. `g9_ready_for_flip=false`. Dashboard skeleton + safety verified GREEN (0 errors, honest NOT-RUN, 3 panels), but only 1 of 6 primitive cards rendered — `PRIMITIVES_DATA` inline block out of sync since P2-X1. Recommend P2-X4 dashboard data refresh (~30 min) then re-dispatch P2-C1-rerun for atomic G9 flip.
 
-## This cycle (Phase 1 exit gate)
+## This cycle (P2-C1 G9 Path B Playwright)
 
-Consumed PM cycle-40 readiness signal `pm-phase1-close-gate-ready-20260523T120718Z.json` + handoff `PHASE-1-CLOSE-GATE-macro.md` + PM commit `0e5b5da4`. Re-verified all 4 criteria independently rather than trust-only.
+PM cycle-51 dispatched P2-C1 to PO (`docs/signals/pm-cycle51-dispatch-po-p2-c1-20260523T164802Z.json`) after closing P2-F1 with G8 honest-red FLIPPED to YES. Pre-flight gates all PASS:
+- Anchor 1776df8e ancestor exit 0 (pre)
+- `activeTask` = "P2-C1"
+- G9 = "TBD"
+- G8 = "YES" (G8 honest-red precondition for trusting any G9 verdict)
 
-### Re-verification evidence
+### Sandbox baseline (AC-1)
+`cd apps/macro-indicators && go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all` → exit 0 → `total=20 pass=20 fail=0 status=OK`. Captured `/tmp/sandbox-baseline.json`.
 
-| Criterion | Requirement | Independent verification | Verdict |
-|---|---|---|---|
-| 1 — time to first primitive | ≤4h P1-A1 dev → P1-B1 QA GREEN | SSOT progress_notes: 10:13:55Z → 11:07:58Z = 54 min | PASS |
-| 2 — sandbox all-tier | exit 0, all PASS | PO live re-run: `total=5 pass=5 fail=0 status=OK` exit 0 | PASS |
-| 3 — dashboard | 3 panels + edit-rerun + zero secrets | 3 panel-body IDs + `<textarea rerun-json-editor>` + 19 NOT-RUN + grep exit 1 (zero matches in macro zone .go/.html/.json/.md) | PASS |
-| 4 — G12 streak 3/3 | streakComplete=true | SSOT goals[G12].g12Streak.streakComplete=true; 3 tasks P1-B1+P1-C1+P1-E1 sandbox-green | PASS |
+### Playwright headless (AC-2 + AC-3, Path B per L6)
+- Tool: Playwright 1.60.0 + chromium 1223 headless (installed at `/tmp/macro-g9-verify/` since global npx cache had stale chromium-1179)
+- Script: `/tmp/verify-macro-dashboard.mjs` (~110 lines, ESM, self-contained)
+- URL: `file://...apps/macro-indicators/dashboard/index.html`
+- Title: "macro-indicators — Scenario Trust Dashboard"
+- Screenshot: `/tmp/macro-dashboard-green-20260523T150356Z.png` (1280×1831 full-page, NOT committed per Hard Rules)
 
-Anchor `1776df8e` ancestor exit 0 pre-gate. Post-gate expected 0 (this gate adds artefacts only).
+**Safety dimensions — all GREEN:**
+| Dimension | Count | Verdict |
+|---|---|---|
+| console errors | 0 | PASS |
+| pageerror events | 0 | PASS |
+| requestfailed events | 0 | PASS |
+| dot-red (false reds) | 0 | PASS |
+| dot-green (false greens) | 0 | PASS (static NOT-RUN by design) |
+| dot-pending (honest NOT-RUN) | 6 | PASS |
+| not-run-badges | 1 | PASS |
+| primitives-panel + module-panel + microservice-panel | 3/3 | PASS |
 
-### Decision
+**Coverage dimension — PARTIAL:**
+- `primitive_groups_rendered` = 1 (only `macro_investment_clock`)
+- Expected per handoff AC-3 + charter §G9 Path B = 6 (oil/gold/usdvnd/carry/yield missing)
+- Microservice panel body = "Loading…" placeholder (never populated)
+- Module-tier rendered 1 group correctly
+- `scenario_cards` = 3 vs 18 expected (6×3)
 
-**Verdict: GO.** Standing user directive ("set goals to complete this micro service") honored — GO unlocks Phase 2 expansion. NO-GO would cap to PoC (contrary to directive with clean evidence). HOLD not warranted (zero ambiguity).
+### Verdict: NO (g9_ready_for_flip=false)
 
-G12 candidacy preserved as `EARNED-PENDING-§4.5-PO-12-OF-12-CLOSE`. NO early flip to YES. `decisionMatrix` and `verdict` fields remain TBD per Charter §4.5 atomic-with-12/12-terminal rule.
+Root cause: `apps/macro-indicators/dashboard/index.html` line ~928 inline `PRIMITIVES_DATA` was authored at P1-E1 with only macro_investment_clock. P2-X1 shipped 5 new primitives + 15 scenario JSON files into `docs/scenarios/macro-indicators/primitives/` but no task refreshed the dashboard's embedded data. P2-X2 module expansion similarly not mirrored. Microservice panel body still placeholder.
+
+This is not a backend bug, not a dashboard logic bug — it is a missing **data-refresh task** (P2-X4). Recommend ~30 min handoff to dev-macro-indicators: read the 15 new scenario JSONs + append matching entries to `PRIMITIVES_DATA` + populate microservice panel body + re-run identical Playwright recipe on next cycle for atomic G9 flip.
 
 ### Artefacts produced
 
-1. `docs/po-decisions/2026-05-23-macro-indicators-phase-1-gate.md` (GO verdict + evidence)
-2. `docs/signals/po-cycle21-phase1-gate-GO-20260523T121526Z.json` (structured gate signal)
-3. `docs/signals/po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json` (architect dispatch w/ P2-B1 first-task requirement)
-4. `docs/data/pilot-status-macro-indicators.json` (SSOT mutations below)
-5. This notebook (overwritten cycle-21 gate state)
+1. `docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md` (full trust contract + recipe + remediation plan)
+2. `docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json` (structured signal w/ all AC verdicts + hard-gates + evidence pointers)
+3. This notebook (overwritten)
 
-### SSOT mutations
+### Path B rationale (L6 honored)
 
-- `phase1.status` READY_FOR_CLOSE_GATE → APPROVED
-- `phase1.gateVerdict` = GO; `gateVerifiedAt` = 2026-05-23T12:15:26Z; `gateVerifiedBy` = po cycle-21
-- `phase1.gateCommit` = PENDING-COMMIT-SHA (will be filled post-commit)
-- `phase1.gateDecisionDoc` + `gateSignal` references
-- `phase2.status` NOT-STARTED → AWAITING-PLAN + `first_task_required` (P2-B1 R-3 MCP HTTP rewire) + `wip_limit=1` + `dispatch_signal_to_architect`
-- `poDecisionLog` cycle-21 entry prepended (full rationale + constraints held)
-- Goals 1-11 UNCHANGED (TBD). G12 UNCHANGED (EARNED-PENDING). decisionMatrix UNCHANGED (TBD). verdict UNCHANGED (TBD).
+Did NOT ask user to open dashboard. Drove headless chromium myself. Verdict carries equal weight to user verbal confirm per cycle-19 TA precedent. The fact that Path B surfaced a real gap in seconds (not days) is exactly the L6 dividend.
 
-## Constraints held
+### Constraints held
 
-- L84 explicit-file staging (5 files staged per-path)
-- No `--force`, no `--no-verify`, no `--no-gpg-sign`, no push
-- Anchor `1776df8e` held pre+post (exit 0)
-- Parent `docs/data/pilot-status.json` UNTOUCHED (FROZEN TA pilot historical record)
-- Charter §4.5 matrix-authorship: decisionMatrix and verdict remain TBD
-- G12 preserved as EARNED-PENDING (no early flip)
-- SSOT one-active-dispatch-per-task: phase_1_dev_team WIP=0; architect dispatch is spec authorship not dev task
-- Stale TA cycle-20 dispatch signal IGNORED (TA pilot CLOSED DORMANT)
-- Auto-continue (no user approval requested)
+- L84 explicit-file staging (2 files only — decision doc + signal)
+- No `--force`, no `--no-verify`, no `--no-gpg-sign`, no `git push`
+- Anchor `1776df8e` held pre (exit 0); post-commit re-verify required
+- `apps/macro-indicators/` and `docs/scenarios/macro-indicators/` UNTOUCHED (verification-only)
+- No /tmp screenshot or /tmp script committed into repo
+- No decisionMatrix writes (Charter §4.5 — PO only after 12/12 terminal)
+- No G9 status flip in pilot-status-macro-indicators.json (PM flips on cycle-52 after P2-X4)
+- No work on apps/technical-analysis (TA pilot DORMANT)
+- One active dispatch per task; no shadow signals
 
 ## Carry-over to next cycle
 
-When architect returns Phase 2 plan completion signal (`architect-macro-phase2-plan-done-<UTC>.json`):
-1. Verify plan exists at `docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md`
-2. Verify P2-B1 = R-3 MCP HTTP rewire (apps/mcp-server/src/interface/mcp/tools/macro/) is first task with explicit AC mentioning `apps/mcp-server/...` rewire (NOT just apps/macro-indicators/src/ git mv)
-3. Verify pre-revert tags planned: `macro-pre-ci` (P2-A2), `macro-pre-delete` (P2-B2), `macro-pre-inject` (P2-D2)
-4. Verify anchor `1776df8e` ancestor exit 0
-5. If all OK: flip `phase2.status` AWAITING-PLAN → ACTIVE + dispatch PM for P2-B1 handoff (mirrors cycle-30 P1-A1 pattern)
-6. If gap: re-dispatch architect with specific fix list
+PM cycle-52 should:
+1. Close P2-C1 as NO + record `g9_ready_for_flip=false`
+2. Author `docs/handoffs/TASK_P2-X4-macro.md` for dashboard data refresh (5 primitive entries + 0-N module entries + microservice card body, ~30 min for dev-macro-indicators)
+3. Dispatch P2-X4 (WIP=1)
+4. On dev DONE + QA GREEN, re-dispatch P2-C1-rerun (PO Playwright re-verify, append to same decision doc — no new ceremony)
+5. On PASS, atomically flip G9 → YES (6→7/12 goals earned)
 
-When PM/dev reach P2-B1 GREEN: continue G12 streak (Phase 2 carries DoD discipline).
-
-When all 12 goals reach terminal grade (YES/PARTIAL/DEFER — no TBD/IN-PROGRESS):
-- Atomic-with-G12-flip: populate decisionMatrix.{speed, trust, scale, verdict} per Charter §4.5 mechanical rubric (Speed=G10+G11; Trust=G9+G8; Scale=all 12 + sprint count ≤6).
-- This is the 12/12 terminal close — final PO atomic commit.
-
-If architect does not return signal within 6h (R-11 trigger 2026-05-23T18:15:26Z), PO re-dispatches.
-
-## Pending OQs for architect (carry-over)
-
-- OQ-6: P2-A1 + P2-B1 parallel dispatch (WIP=2 cap) — architect to decide at Phase 2 plan authoring
-- OQ-4: dashboard ownership Phase 2 (dev-frontend split if complexity grows) — architect to decide
-- Phase 2 task plan must declare R-1 defensive grep on every Go-code task (math/rand zero matches)
-- Phase 2 task plan must declare G12 DoD gate on every Go-code task (sandbox tier green before commit)
-
-Parent TA closure artefacts (commits `62edbf3d`, `9d364329`, tag `p2-b-pre-delete @ b9d0a82b`, brief CLOSED at `abda93ef`) remain frozen historical anchors. Macro-indicators Phase 1 APPROVED state is the new active baseline.
+Alternative: PM may judge looser §G9 reading ("panel skeleton renders") and unilaterally flip G9 → YES — full evidence trail provided either way.
