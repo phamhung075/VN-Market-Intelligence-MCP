@@ -105,30 +105,32 @@ QA fills in this block after running the three checks. PO uses this block to fli
 
 ```
 ci.yml path: .github/workflows/ci.yml
-job_name_line:        <verbatim line from ci.yml — e.g., "  go-lint:">
-uses_line:            <verbatim line — e.g., "      uses: golangci/golangci-lint-action@v6.1.1">
-working_directory:    <verbatim line — e.g., "        working-directory: apps/technical-analysis">
-args_line:            <verbatim line — e.g., "          args: --config .golangci.yml">
-line_range_cited:     <e.g., "lines 54-73">
-commit_at_read:       <git rev-parse HEAD at time of read>
+job_name_line:        go-lint:
+uses_line:                uses: golangci/golangci-lint-action@v6.1.1
+working_directory:          working-directory: apps/technical-analysis
+args_line:                args: --config .golangci.yml
+line_range_cited:     lines 54-74
+commit_at_read:       2a9a07e1c6a14a808c5a186eef6adb14b93f77cc
 ```
 
 ### AC-4b Evidence
 
 ```
-violation_command:        <exact import line added — e.g., 'import "github.com/vn-market-intelligence/technical-analysis/pkg/module"'>
-violation_file_path:      <relative path under apps/technical-analysis — e.g., pkg/primitive/rsi/rsi.go>
-violation_linter_output:  <first error line — MUST contain "Fence-A">
-violation_exit_code:      <integer, MUST be non-zero>
+violation_command:        _ "github.com/vn-market-intelligence/technical-analysis/pkg/application"
+violation_file_path:      pkg/primitive/rsi/rsi.go
+violation_linter_output:  pkg/primitive/rsi/rsi.go:9:2: import 'github.com/vn-market-intelligence/technical-analysis/pkg/application' is not allowed from list 'fence-a': Fence-A: primitive must not import application layer (depguard)
+violation_exit_code:      1
 revert_exit_code:         0
-git_status_after_revert:  <verbatim `git status --short` output — MUST be empty>
+git_status_after_revert:  (empty — apps/technical-analysis/pkg/primitive/rsi/rsi.go not present in git status --short output)
 ```
 
 ### AC-4c Evidence
 
 ```
-git_log_output: <verbatim output of `git log --oneline apps/technical-analysis/.golangci.yml`>
-ac_4c_verdict:  <PASS if 9d364329 is the most recent commit on this file; FAIL if any commit appears after 9d364329>
+git_log_output:
+9d364329 fix(technical-analysis): cycle-20 — golangci-lint findings on apps/technical-analysis (G4 unblock)
+9561fee9 chore(arch/technical-analysis): P2-A1 — golangci-lint depguard Fence-A/B/C config
+ac_4c_verdict:  PASS — 9d364329 is the most recent commit on apps/technical-analysis/.golangci.yml; no commits after it
 ```
 
 ---

@@ -1,0 +1,39 @@
+{
+  "type": "qa-completion",
+  "from": "qa",
+  "to": "po",
+  "cycle": "c282 cycle-24 (qa execution)",
+  "task_id": "P2-A4",
+  "consumed_dispatch": "docs/signals/po-cycle24-dispatch-qa-p2-a4-20260523T075305Z.json",
+  "commit_sha": "<pending — populated after commit>",
+  "result": "PASS",
+  "ac_results": {
+    "ac_4a": {
+      "verdict": "PASS",
+      "evidence_captured": "true",
+      "evidence_block_ref": "docs/handoffs/TASK_P2-A4.md §Evidence to Record → AC-4a Evidence",
+      "summary": "go-lint job confirmed in .github/workflows/ci.yml lines 54-74 — uses golangci/golangci-lint-action@v6.1.1, working-directory: apps/technical-analysis, args: --config .golangci.yml, triggered on push:main + pull_request:main"
+    },
+    "ac_4b": {
+      "verdict": "PASS",
+      "violation_linter_output_contains_fence_a": "true",
+      "violation_linter_output_first_line": "pkg/primitive/rsi/rsi.go:9:2: import 'github.com/vn-market-intelligence/technical-analysis/pkg/application' is not allowed from list 'fence-a': Fence-A: primitive must not import application layer (depguard)",
+      "violation_exit_code": 1,
+      "violation_committed": "false",
+      "revert_exit_code": 0,
+      "git_status_after_revert_empty": "true",
+      "note": "pkg/module import caused typecheck cycle; switched to pkg/application (also Fence-A denied, no cycle) — depguard rule confirmed active"
+    },
+    "ac_4c": {
+      "verdict": "PASS",
+      "most_recent_commit_on_golangci_yml": "9d364329",
+      "expected_anchor": "9d364329",
+      "match": "true",
+      "git_log_verbatim": "9d364329 fix(technical-analysis): cycle-20 — golangci-lint findings on apps/technical-analysis (G4 unblock)\n9561fee9 chore(arch/technical-analysis): P2-A1 — golangci-lint depguard Fence-A/B/C config"
+    }
+  },
+  "g4_qa_verdict": "PASS",
+  "g4_ready_to_flip": "true",
+  "evidence_captured_at_handoff": "docs/handoffs/TASK_P2-A4.md",
+  "completion_timestamp": "2026-05-23T09:15:00Z"
+}
