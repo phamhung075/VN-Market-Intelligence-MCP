@@ -1,0 +1,137 @@
+{
+  "task_id": "P2-G1",
+  "cycle": "c282-cycle-49",
+  "verdict": "GREEN",
+  "timestamp_utc": "2026-05-23T16:36:00Z",
+  "qa_agent": "qa",
+  "qa_method": "independent code inspection + all hard gates re-run at HEAD",
+  "verified_chain": {
+    "dev_commit_chain": ["88adeb70", "ea891074", "61c3dce4"],
+    "pm_commits": ["0fffcca9", "4818c70a", "fc4ab456"]
+  },
+  "ac_results": {
+    "ac1": {
+      "verdict": "PASS",
+      "evidence": "All 6 primitive packages exist under apps/macro-indicators/pkg/primitive/ with underscore naming (Go convention): macro_investment_clock, macro_oil_impact_classifier, macro_gold_direction_classifier, macro_usdvnd_direction_classifier, macro_carry_trade_signal, macro_yield_spread_signal. All 18 scenario JSON files confirmed flat in docs/scenarios/macro-indicators/primitives/ (3 per primitive: golden+edge+failure × 6 = 18). Each primitive package contains implementation + test files.",
+      "primitives_confirmed": [
+        "macro_investment_clock (macro_investment_clock.go + macro_investment_clock_test.go + testdata/)",
+        "macro_oil_impact_classifier (macro_oil_impact_classifier.go + macro_oil_impact_classifier_test.go)",
+        "macro_gold_direction_classifier (macro_gold_direction_classifier.go + macro_gold_direction_classifier_test.go)",
+        "macro_usdvnd_direction_classifier (macro_usdvnd_direction_classifier.go + macro_usdvnd_direction_classifier_test.go)",
+        "macro_carry_trade_signal (macro_carry_trade_signal.go + macro_carry_trade_signal_test.go)",
+        "macro_yield_spread_signal (macro_yield_spread_signal.go + macro_yield_spread_signal_test.go)"
+      ],
+      "scenario_files_total": 18,
+      "scenario_files_per_primitive": 3,
+      "naming_note": "Primitive packages use underscore convention (Go standard); scenario files use hyphen convention. Both sets fully present."
+    },
+    "ac2": {
+      "verdict": "PASS",
+      "evidence": "macro_signals.go imports all 6 primitive packages at lines 22-27 (mic/oil/gld/uvnd/carry/yld aliases). BuildMacroSignals() populates all 6 output fields: InvestmentClock, OilImpact, GoldDirection, UsdVndDirection, CarryTrade, YieldSpread. Fence-B greps both exit 1: FENCE_B_PASS_1 (no application|infrastructure imports), FENCE_B_PASS_2 (no interface imports). Reference count: grep -c primitive_names = 12 occurrences in macro_signals.go (import + usage each = 2 × 6).",
+      "fence_b_app_infra": "FENCE_B_PASS_1 (exit 1, 0 matches)",
+      "fence_b_iface": "FENCE_B_PASS_2 (exit 1, 0 matches)",
+      "imports_confirmed": [
+        "mic = macro_investment_clock (L22)",
+        "oil = macro_oil_impact_classifier (L23)",
+        "gld = macro_gold_direction_classifier (L24)",
+        "uvnd = macro_usdvnd_direction_classifier (L25)",
+        "carry = macro_carry_trade_signal (L26)",
+        "yld = macro_yield_spread_signal (L27)"
+      ],
+      "build_macro_signals_fields_confirmed": [
+        "InvestmentClock: s.clock.Classify(input.InvestmentClock)",
+        "OilImpact: oil.Classify(input.OilImpact)",
+        "GoldDirection: gld.Classify(input.GoldDirection)",
+        "UsdVndDirection: uvnd.Classify(input.UsdVndDirection)",
+        "CarryTrade: carry.Compute(input.CarryTrade)",
+        "YieldSpread: yld.Compute(input.YieldSpread)"
+      ]
+    },
+    "ac3": {
+      "verdict": "PASS",
+      "evidence": "cmd/server/main.go inspected: contains only import block, DI constructors (commodityFetcher → sbvRateRepo → useCase → router), http.Server config, signal handling, server startup, and envStr() helper. Grep for business logic markers exit 1: grep -nE 'scoreIndicator|buildSnapshot|oilDirection|carryTrade|yieldSpread|computeSignal' → ROOT_CLEAN (exit 1, 0 matches). DI chain confirmed: infrastructure.NewHTTPCommodityFetcher → infrastructure.NewSBVRateRepository → application.NewComputeMacroUseCase → iface.NewRouter. Fence-C: only cmd/server/main.go imports pkg/infrastructure (correct per DDD composition root pattern)."
+    },
+    "ac4": {
+      "verdict": "PASS",
+      "option_used": "OPTION B (code-path tracing)",
+      "reason_option_b": "Server-start avoided to maintain read-only constraint and avoid port conflicts in CI-like environment. Code-path evidence is complete and traceable.",
+      "evidence": {
+        "handler_to_execute": "router.go:64 → useCase.Execute(ctx, application.MacroSnapshotRequest{}) — confirmed via grep",
+        "execute_to_buildmacrosignals": "usecases.go:116 → sigs.BuildMacroSignals(input) — confirmed via grep; Execute() defined at usecases.go:89",
+        "buildmacrosignals_to_6_primitives": "macro_signals.go BuildMacroSignals returns MacroSignalsOutput with 6 fields populated by 6 primitive calls (oil.Classify, gld.Classify, uvnd.Classify, carry.Compute, yld.Compute, s.clock.Classify via Classifier port)",
+        "full_chain": "POST /snapshot → router.go:64 handleSnapshot → useCase.Execute (usecases.go:89) → ms.BuildMacroSignals (macro_signals.go:BuildMacroSignals) → 6 primitive functions → MacroSignalsOutput{InvestmentClock, OilImpact, GoldDirection, UsdVndDirection, CarryTrade, YieldSpread}"
+      }
+    },
+    "ac5": {
+      "verdict": "PASS",
+      "evidence": "go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all (QA independent run at HEAD)",
+      "last_5_lines": [
+        "PASS macro-usdvnd-direction-classifier-golden.json",
+        "PASS macro-yield-spread-signal-edge.json",
+        "PASS macro-yield-spread-signal-failure.json",
+        "PASS macro-yield-spread-signal-golden.json",
+        "PASS macro-signals-edge.json",
+        "PASS macro-signals-golden.json",
+        "total=20 pass=20 fail=0 status=OK"
+      ],
+      "sandbox_exit": 0,
+      "total": 20,
+      "pass": 20,
+      "fail": 0,
+      "status": "OK"
+    },
+    "ac6": {
+      "verdict": "PASS",
+      "evidence": "Joint G1+G2+G3 terminal summary table — all 9 rows PASS",
+      "table": [
+        { "goal": "G1", "criterion": "6 primitives exist", "evidence_file": "apps/macro-indicators/pkg/primitive/", "check": "ls 6 dirs (underscore naming) all present", "result": "PASS", "status": "TERMINAL (already YES)" },
+        { "goal": "G1", "criterion": "Each ≥3 scenarios", "evidence_file": "docs/scenarios/macro-indicators/primitives/", "check": "find -type f -name *.json | wc -l = 18 (≥18 threshold)", "result": "PASS", "status": "TERMINAL (already YES)" },
+        { "goal": "G2", "criterion": "Module imports 6 primitives", "evidence_file": "pkg/module/macro_signals/macro_signals.go", "check": "imports mic/oil/gld/uvnd/carry/yld confirmed L22-27; grep count = 12 occurrences", "result": "PASS", "status": "TERMINAL (ready for flip)" },
+        { "goal": "G2", "criterion": "Fence-B clean (exit 1×2)", "evidence_file": "pkg/module/macro_signals/", "check": "FENCE_B_PASS_1 (exit 1) + FENCE_B_PASS_2 (exit 1)", "result": "PASS", "status": "TERMINAL (ready for flip)" },
+        { "goal": "G3", "criterion": "Composition root clean", "evidence_file": "cmd/server/main.go", "check": "grep business logic markers exit 1 = ROOT_CLEAN; DI-only wiring confirmed", "result": "PASS", "status": "TERMINAL (already YES)" },
+        { "goal": "G3", "criterion": "Handlers → Execute() → BuildMacroSignals", "evidence_file": "router.go + usecases.go", "check": "router.go:64 useCase.Execute; usecases.go:116 sigs.BuildMacroSignals; BuildMacroSignals 6 primitive calls confirmed", "result": "PASS", "status": "TERMINAL (already YES)" },
+        { "goal": "JOINT", "criterion": "Anchor held", "evidence_file": "1776df8e", "check": "git merge-base --is-ancestor 1776df8e HEAD; exit 0", "result": "PASS", "status": "PASS" },
+        { "goal": "JOINT", "criterion": "R-1 deterministic", "evidence_file": "pkg/", "check": "grep -rE 'math/rand|rand.Intn|rand.Float|time.Now.*Seed' apps/macro-indicators/pkg/ → exit 1", "result": "PASS", "status": "PASS" },
+        { "goal": "JOINT", "criterion": "Sandbox 20/20", "evidence_file": "./cmd/sandbox -tier=all", "check": "total=20 pass=20 fail=0 status=OK exit 0", "result": "PASS", "status": "PASS" }
+      ]
+    }
+  },
+  "hard_gates": {
+    "anchor_held": { "verdict": "PASS", "exit_code": 0, "command": "git merge-base --is-ancestor 1776df8e HEAD" },
+    "r1_clean": { "verdict": "PASS", "exit_code": 1, "command": "grep -rE 'math/rand|rand.Intn|rand.Float|time.Now.*Seed' apps/macro-indicators/pkg/" },
+    "fence_b_app_infra": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*(application|infrastructure)\"' apps/macro-indicators/pkg/module/macro_signals/" },
+    "fence_b_iface": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*/interface(/|\")' apps/macro-indicators/pkg/module/macro_signals/" },
+    "fence_c_pkg_clean": { "verdict": "PASS", "exit_code": 1, "command": "grep -rnE '^\\s*\"[^\"]*/infrastructure(/|\")' apps/macro-indicators/pkg/" },
+    "build_exit": 0,
+    "vet_exit": 0,
+    "lint_exit": 0,
+    "lint_issues": "0 issues.",
+    "sandbox_exit": 0,
+    "sandbox_total": 20,
+    "sandbox_pass": 20,
+    "sandbox_fail": 0
+  },
+  "joint_terminal_summary": {
+    "G1": {
+      "current": "YES",
+      "terminal_verified": true,
+      "evidence": "6 primitive packages confirmed (underscore naming), 18 scenario files confirmed (3 per primitive), sandbox all-tier 20/20 PASS"
+    },
+    "G2": {
+      "current": "TBD",
+      "ready_for_flip": true,
+      "evidence": "macro_signals.go imports all 6 primitives (L22-27), BuildMacroSignals() populates all 6 output fields, Fence-B exit 1 × 2 (no app/infra/iface imports), sandbox all-tier 20/20, R-1 deterministic, anchor held, build/vet/lint all exit 0"
+    },
+    "G3": {
+      "current": "YES",
+      "terminal_verified": true,
+      "evidence": "cmd/server/main.go DI-only (grep business logic markers exit 1 = ROOT_CLEAN), real handlers via Execute → BuildMacroSignals chain confirmed at router.go:64 + usecases.go:116"
+    }
+  },
+  "g2_ready_for_flip": true,
+  "g1_terminal_ready": true,
+  "g3_terminal_ready": true,
+  "joint_g123_recommendation": "All 3 goals PASS independent QA terminal verification. PM may flip G2=YES in SSOT atomic with cycle-50 commit.",
+  "next_action_recommended": "PM cycle-50: atomic flip G2=YES (5/12) + dispatch next critical-path task from {P2-F1, P2-C1, P2-D1}",
+  "notes": "QA verified independently at HEAD: 6 primitive packages (underscore naming), 18 scenario files (3 per primitive, flat in primitives/), macro_signals.go imports all 6 via aliased imports, BuildMacroSignals populates 6 fields, Fence-B exit 1 × 2, Fence-C exit 1, composition root DI-only (ROOT_CLEAN), call chain router.go:64 → usecases.go:116 → macro_signals.BuildMacroSignals → 6 primitives, sandbox 20/20 at HEAD (exit 0), R-1 exit 1, build/vet/lint all exit 0, anchor 1776df8e HELD (exit 0). All 6 ACs PASS. All hard gates PASS. G2 ready for flip."
+}
