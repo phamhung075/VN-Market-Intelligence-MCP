@@ -1,0 +1,36 @@
+{
+  "dispatcher": "pm",
+  "cycle": "c282-cycle-48",
+  "dispatched_to_agent": "dev-macro-indicators",
+  "task_id": "P2-X3",
+  "task_title": "Snapshot Endpoint Implementation (Go Handler → Real Use Case)",
+  "handoff_doc": "docs/handoffs/TASK_P2-X3-macro.md",
+  "ddd_zone": "apps/macro-indicators/pkg/interface/http/ + pkg/application/ + pkg/infrastructure/ (Go zone)",
+  "goal_path": "G3",
+  "ac_count": 5,
+  "estimate_hours": 1,
+  "blocked_by": "P2-X2 DONE",
+  "unblocks": "P2-G1 (terminal verification of G1 + G2 + G3)",
+  "critical_path": true,
+  "wip_limit_enforced": 1,
+  "previous_active_task": "P2-X2",
+  "anchor_maintained": "1776df8e",
+  "hard_constraints": [
+    "R-1 deterministic scoring: no math/rand in Go zone",
+    "G12 DoD gate: sandbox all-tier exit 0 before DONE",
+    "Fence-B/C compliance: no cross-layer imports in application/infrastructure",
+    "L84 staging: explicit git add per file, never git add -A",
+    "No --force, --no-verify, --no-gpg-sign, no git push",
+    "Anchor 1776df8e must remain ancestor pre+post commit",
+    "Out-of-zone ban: NO apps/technical-analysis/ or apps/mcp-server/src/ changes"
+  ],
+  "key_background": "P2-B1 created Go handler stubs (fixture JSON or 501). P2-X1 extracted 5 new primitives to pkg/primitive/. P2-X2 wired module to compose all 6 primitives. P2-X3 implements real handlers using the module composition, replacing 501 stubs with real microservice endpoints. Fixture mode recommended for sandbox determinism (R-1 guard).",
+  "implementation_priority": [
+    "1. /snapshot endpoint (exercises full module composition via ComputeMacroUseCase)",
+    "2. /carry-trade-signal and /yield-spread-signal (re-use primitives)",
+    "3. /macro-calendar (may stay fixture-based or invoke calendar logic)"
+  ],
+  "fence_c_rule": "pkg/application/ and pkg/infrastructure/ are NEW packages (P2-X3 creation). Only cmd/server/main.go allowed to import infrastructure layer. Packages must import from pkg/module/ and pkg/primitive/, never reverse.",
+  "success_signal_path": "docs/signals/dev-macro-indicators-p2-x3-done-<UTC>.json",
+  "timestamp_utc": "2026-05-23T16:13:15Z"
+}
