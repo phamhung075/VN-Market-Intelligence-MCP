@@ -1,0 +1,16 @@
+{
+  "primitive": "price_staleness_classifier",
+  "scenario": "price-staleness-classifier-failure",
+  "description": "fetchedAt = malformed string (not-a-date) → error",
+  "input": {
+    "fetchedAt": "not-a-date",
+    "now": "2026-05-24T01:00:00Z",
+    "freshThresholdSeconds": 60,
+    "staleThresholdSeconds": 3600
+  },
+  "expected": {
+    "label": null,
+    "err": "time: invalid layout"
+  },
+  "expected_reason": "Cannot parse fetchedAt as RFC3339; return error"
+}

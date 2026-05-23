@@ -1,0 +1,16 @@
+{
+  "primitive": "price_staleness_classifier",
+  "scenario": "price-staleness-classifier-golden",
+  "description": "fetchedAt = 30 seconds ago, freshThreshold=60, staleThreshold=3600 → FRESH",
+  "input": {
+    "fetchedAt": "2026-05-24T00:59:30Z",
+    "now": "2026-05-24T01:00:00Z",
+    "freshThresholdSeconds": 60,
+    "staleThresholdSeconds": 3600
+  },
+  "expected": {
+    "label": "FRESH",
+    "err": null
+  },
+  "expected_reason": "Age = 30s, which is within freshThreshold=60s, so label is FRESH"
+}

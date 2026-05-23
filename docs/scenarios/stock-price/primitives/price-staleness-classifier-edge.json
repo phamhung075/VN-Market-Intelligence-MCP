@@ -1,0 +1,16 @@
+{
+  "primitive": "price_staleness_classifier",
+  "scenario": "price-staleness-classifier-edge",
+  "description": "fetchedAt = 90 seconds ago, freshThreshold=60, staleThreshold=3600 → STALE",
+  "input": {
+    "fetchedAt": "2026-05-24T00:58:30Z",
+    "now": "2026-05-24T01:00:00Z",
+    "freshThresholdSeconds": 60,
+    "staleThresholdSeconds": 3600
+  },
+  "expected": {
+    "label": "STALE",
+    "err": null
+  },
+  "expected_reason": "Age = 90s, which is between freshThreshold=60s and staleThreshold=3600s, so label is STALE"
+}
