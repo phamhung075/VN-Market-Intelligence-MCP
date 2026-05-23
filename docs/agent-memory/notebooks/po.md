@@ -1,42 +1,38 @@
 # PO Notebook
 
-## c276 · 2026-05-23 — Phase 2 cycle-7 (R-11 ESCALATION → F2 LANDED → D1/E1 dispatched)
+## c278 · 2026-05-23 — Phase 2 cycle-8 (5-poll idle, A3 ~95min, no R-11 trigger)
 
-### State at cycle start (00:12:04Z)
-- HEAD `8b13fe75` (c274 cycle-6 notebook). F2 in-flight ~118min, A3 in-flight ~68min. WIP dev-ta = 0.
-- pilot-status.status = ACTIVE. R-11 threshold = 2026-05-23T00:30Z (cycle-6 math; prompt typo: said 2026-05-24).
+### State at cycle start (00:43:02Z)
+- HEAD `c88c4427` (c276 cycle-7 notebook). A3 in-flight ~85min, D1 ~8min, E1 ~8min. dev-ta WIP = 0.
+- pilot-status.status = ACTIVE. A3 dispatched 22:18Z UTC (commit 943adc8e +0200 timestamp; signal filename string suggested 23:16Z but git commit timestamp is SSOT).
+- A3 R-11-style threshold per prompt Step 0 = >120min from dispatch (= 01:18Z UTC). ~35min headroom at cycle start.
 
 ### Cycle actions
-1. Polls 1-7 (00:12Z → 00:31Z, ~3min each). HEAD unchanged. Zero landings, zero new signals.
-2. At poll 7 (00:31:28Z) R-11 threshold crossed by 1.5min. **Option (a) executed:**
-   - Wrote `docs/signals/po-R11-status-check-20260523T003128Z.json` (status-check ask + scope-shrink option).
-   - Spawned background `claude -p` agent-father with `.claude/flows/agent-father/main.md` and status-check prompt.
-   - Atomic commit `84149011` anchored 62edbf3d. poDecisionLog c276 appended.
-3. Follow-up poll 1 (00:34:41Z, ~60s after dispatch): **F2 LANDED at `cc7578f1`**. Verified all 5 ACs by direct diff read: DoD section present, before-RETURN, two-tier sandbox commands, RED=not-done, evidence-to-handoff. Strategy A (upgrade existing prose to structured step). +18/-3 lines, no sibling-rule breakage.
-4. Dispatched D1 + E1 to qa per `after_P2-F2_lands` gate (both qa-owned per handoff frontmatter — prompt said D1→dev-ta, handoff SSOT honored). Signals `po-P2-D1/E1-dispatch-20260523T003500Z.json`. pilot-status updated: P2-F2=DONE, P2-D1+P2-E1=DISPATCHED, P2-D/P2-E status=IN-PROGRESS, gate after_P2-F2_lands=RESOLVED, g12Streak.ruleEffectiveAfter=cc7578f1. Atomic commit `76deec11`.
-5. Follow-up poll 2 (00:40:55Z): HEAD unchanged. agent-father bg subagent log confirms F2 self-verification matches mine; A3 (qa CI verify) still in-flight ~80min.
+1. Step 0 stall-risk eval on A3: 95min < 120min threshold → NO escalation triggered. Verified A3 dispatch timestamp from `git log --format=%ci 943adc8e` not signal filename.
+2. Polls 1-5 (00:43Z → 00:53Z, ~3min each via bg `sleep 180` loop). HEAD `c88c4427` unchanged across all polls. Zero landings, zero new signals from qa or agent-father.
+3. D1 + E1 both ~18min in-flight — within handoff estimate 0.333 hrs (20min). No escalation candidates.
+4. No mutation of in-flight handoffs (TASK_P2-A3.md / TASK_P2-D1.md / TASK_P2-E1.md all untouched).
+5. pilot-status updated: wip.note refreshed to cycle-8 summary; decisionsThisCycle appended with cycle-8 entry.
 
-### Decisions logged (poDecisionLog c276)
-- R-11 Option (a) re-spawn — rationale + outcome (SUCCESS in 60s). 
-- D1+E1 parallel dispatch — ownership-discrepancy note (prompt vs handoff SSOT).
+### Decisions logged (decisionsThisCycle)
+- Cycle-8 entry: 5-poll idle, no escalation, A3 still has ~25min headroom to R-11 threshold, dispatch gates unchanged.
 
 ### Constraints preserved
-- decisionMatrix UNTOUCHED (G-goals not terminal).
-- charter status enum = ACTIVE.
-- No mutation of in-flight handoffs (TASK_P2-F2.md, TASK_P2-A3.md untouched).
-- WIP-1 on R-11 status-check, no dispatch chain.
-- Anchor 62edbf3d held on both commits.
+- decisionMatrix UNTOUCHED (G-goals not yet terminal).
+- charter status enum = ACTIVE (no PHASE-2 regression).
+- WIP-1 not exceeded — D1/E1 still belong to qa, dev-ta WIP = 0.
+- Atomic commit references 62edbf3d anchor.
+- No user prompt; no mutation of in-flight handoffs.
 
-### State at cycle end (~00:41Z)
-- HEAD `76deec11`. dev-technical-analysis WIP = 0 (still gated on D2/E2 spec landings).
-- qa concurrent: A3 verification (~80min) + D1 spec (just dispatched) + E1 spec (just dispatched).
-- F2=DONE, F1=DONE, B1=DONE, A1=DONE, A2=DONE, B0=DONE. A3=DISPATCHED, D1=DISPATCHED, E1=DISPATCHED.
-- g12Streak: 1/3 (rule effective from cc7578f1 onward).
+### State at cycle end (00:53Z)
+- HEAD will be cycle-8 pilot-status commit (this cycle's commit anchored at 62edbf3d).
+- dev-technical-analysis WIP = 0 (idle, gated).
+- qa concurrent: A3 verification (~95min) + D1 spec (~18min) + E1 spec (~18min).
+- A3=DISPATCHED, D1=DISPATCHED, E1=DISPATCHED. F2=DONE / F1=DONE / B1=DONE / A1=DONE / A2=DONE / B0=DONE.
 
-### Carry-over to next cycle (c278)
-- HEAD `76deec11`. R-11 threshold no longer relevant for F2 (landed). New in-flight: A3 (qa CI), D1 (qa spec ~20min), E1 (qa spec ~20min).
-- Next dispatch gates: A3 green → P2-A4 + unblock P2-B2; D1 land → dispatch P2-D2 (dev-ta finally gets work); E1 land → P2-E2 (gated also on D3).
-- If A3 ~3h in-flight by next cycle, evaluate R-11 for it (no formal threshold yet for A3).
-- Bug to watch: dev-technical-analysis WIP=0 entire cycle — bottleneck has been qa/agent-father gating. D2 dispatch (dev-ta) will be first dev coding under new G12 flow rule.
-- Lesson L81 applied: full 40-char SHA for HEAD-change polling worked correctly (`until [ "$(git rev-parse HEAD)" != "$BASELINE" ]`).
-- New lesson L82 candidate: silent-stall pattern — agent-father subagent likely hit a tool-loop or context-block at ~80min and never errored visibly. R-11 fresh-spawn unblocked in 60s. Worth encoding in dispatch-claim skill as "if no commit + no signal after N minutes, re-spawn rather than waiting".
+### Carry-over to next cycle (c280)
+- HEAD = cycle-8 closure commit (will be next baseline). A3 ~95min at cycle-8 exit → if still in-flight at next cycle entry, evaluate R-11 against 120min threshold (= 01:18Z UTC).
+- IF A3 R-11 triggers next cycle: Option (a) → write signal `docs/signals/po-R11-status-check-qa-<ts>.json` + spawn fresh qa subagent with TASK_P2-A3 status-check prompt. WIP-1, no dispatch chain.
+- Next dispatch gates UNCHANGED: A3 green → dispatch P2-A4 + unblock P2-B2 (architect order satisfied). D1 land → dispatch P2-D2 (dev-ta first work under new G12 flow rule, g12Streak task #2). E1 land → P2-E2 gated also on D3.
+- Lesson L82 candidate stays parked: encode silent-stall re-spawn pattern into `.claude/skills/dispatch-claim/` after Phase 2 close. Empirical evidence from cycle-7 (60s F2 landing post-respawn) supports the heuristic.
+- Tag p2-b-pre-delete intact at b9d0a82b.
