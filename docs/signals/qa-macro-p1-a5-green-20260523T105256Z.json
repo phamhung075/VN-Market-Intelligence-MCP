@@ -1,0 +1,80 @@
+{
+  "signal": "qa-macro-p1-a5-green",
+  "verdict": "GREEN",
+  "task_id": "P1-A5",
+  "qa_agent": "qa",
+  "timestamp": "2026-05-23T10:52:56Z",
+  "dev_commit": "e39587e5",
+  "signal_commit": "272a98f9",
+
+  "ac1_status": {
+    "result": "PASS",
+    "evidence": "python3 yaml.safe_load exit 0; openapi field = '3.0.0' (starts with '3.0')"
+  },
+  "ac2_status": {
+    "result": "PASS",
+    "evidence": "AC2_MISSING: set() — properties found: {status, service, port}; $ref resolved to HealthResponse in components/schemas"
+  },
+  "ac3_status": {
+    "result": "PASS",
+    "evidence": "AC3_MISSING: set() — properties found: {vnIndex, oilUsd, goldUsd, usdVnd, signals, fetchedAt}; $ref resolved to MacroSnapshotResponse in components/schemas"
+  },
+  "ac4_status": {
+    "result": "PASS",
+    "evidence": "test -f apps/macro-indicators/api/openapi.yaml → AC4:PASS, exit 0"
+  },
+
+  "smoke_gate_status": {
+    "build_exit": 0,
+    "vet_exit": 0,
+    "biz_logic_grep_count": 0,
+    "biz_logic_grep_exit": 1,
+    "evidence": "go build ./... exit 0; go vet ./... exit 0; grep -cE scoreIndicator|buildSnapshot|oilDirection cmd/server/main.go = 0 (grep exits 1 = no matches, PASS)"
+  },
+
+  "additional_checks": {
+    "l84": {
+      "result": "PASS",
+      "evidence": "git show --stat e39587e5 --name-only lists exactly 1 file: apps/macro-indicators/api/openapi.yaml. No .DS_Store, no extras."
+    },
+    "l84_signal_commit": {
+      "result": "PASS",
+      "evidence": "git show --stat 272a98f9 --name-only lists exactly 1 file: docs/signals/dev-macro-p1-a5-done-20260523T000000Z.json."
+    },
+    "anchor": {
+      "result": "PASS",
+      "evidence": "git merge-base --is-ancestor 1776df8e HEAD → ANCHOR_EXIT:0"
+    },
+    "path_method_alignment": {
+      "result": "PASS",
+      "evidence": "/health → GET only; /snapshot → POST only. Matches router.go: r.Get('/health', handleHealth()) at L22, r.Post('/snapshot', handleSnapshot(...)) at L23."
+    },
+    "port_consistency": {
+      "result": "PASS",
+      "evidence": "servers[0].url = 'http://localhost:5004'; HealthResponse.port example = 5004. Matches cmd/server/main.go envStr('PORT','5004') default."
+    },
+    "r1_pre_check": {
+      "result": "CLEAN",
+      "evidence": "grep -rE 'math/rand|rand\\.Intn|rand\\.Float' apps/macro-indicators/pkg/ apps/macro-indicators/cmd/ → exit 1 (0 matches). math/rand not present anywhere in scaffold."
+    }
+  },
+
+  "d1_assessment": {
+    "reported_line_count": 166,
+    "handoff_guideline": "80-120 lines (size estimate)",
+    "verdict": "ACCEPTED",
+    "reasoning": "Extra 46 lines (beyond 120 guideline) consist entirely of: field descriptions (description: fields on every property — usdVnd, fetchedAt, signals, oilUsd, etc.), format: double annotations, format: date-time annotation, additionalProperties: true on signals, example blocks for both endpoints and all schema fields, a 501 error response schema (appropriate for scaffold-stub endpoint), a 500 error response schema, an ErrorResponse component schema, a SnapshotRequest schema, inline code comment documenting field-name alignment with pkg/application/dtos.go, and a security: [] override with explanatory comment. No new endpoints added beyond /health and /snapshot. No business logic. No validation logic. No operations beyond router.go stubs. All extra lines are spec elaboration aligned with OpenAPI best-practice documentation — not spec violation."
+  },
+
+  "g12_dod": "NOT_BINDING_scaffold_only",
+  "g12_note": "G12 DoD Gate does not activate on P1-A5 (specification file only, no sandbox scenarios). Activates from P1-B1 onward (first primitive).",
+
+  "paths_verified": ["/health (GET)", "/snapshot (POST)"],
+  "endpoints_in_spec": 2,
+  "endpoints_in_router": 2,
+  "alignment": "EXACT",
+
+  "ready_for_next_dispatch": true,
+  "next_task_id": "P1-B1",
+  "next_task_critical_note": "P1-B1 is FIRST PRIMITIVE — R-1 grep guard binds as AC-6 HARD GATE; G12 DoD activates (sandbox must be green before commit). NO math/rand, NO rand.Intn, NO rand.Float anywhere in pkg/primitive/macro_investment_clock/. Deterministic tier lookup required."
+}

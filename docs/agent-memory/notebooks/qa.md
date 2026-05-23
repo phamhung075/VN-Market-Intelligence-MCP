@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-31 · 2026-05-23 · macro P1-A5 api/openapi.yaml HTTP contract spec verification
+
+**Task:** P1-A5 — api/openapi.yaml HTTP contract spec (macro-indicators pilot) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-a5-green-20260523T105256Z.json
+dev_commit: e39587e5
+dev_signal_commit: 272a98f9
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: Valid OpenAPI 3.0 YAML | PASS | python3 yaml.safe_load exit 0; openapi field = '3.0.0' |
+| AC-2: GET /health schema {status,service,port} | PASS | AC2_MISSING: set() — $ref resolved to HealthResponse, all 3 props confirmed |
+| AC-3: POST /snapshot schema {vnIndex,oilUsd,goldUsd,usdVnd,signals,fetchedAt} | PASS | AC3_MISSING: set() — $ref resolved to MacroSnapshotResponse, all 6 props confirmed |
+| AC-4: file exists at canonical path | PASS | test -f exit 0 |
+| go build ./... | PASS | BUILD_EXIT:0 |
+| go vet ./... | PASS | VET_EXIT:0 |
+| biz logic grep (main.go) | PASS | count=0, grep exit 1 (no matches) |
+| L84 e39587e5 | PASS | exactly 1 file: apps/macro-indicators/api/openapi.yaml |
+| L84 272a98f9 | PASS | exactly 1 file: signal JSON |
+| anchor 1776df8e | PASS | merge-base --is-ancestor → exit 0 |
+| path/method alignment | PASS | /health=GET, /snapshot=POST — matches router.go L22-23 exactly |
+| port consistency | PASS | servers[0].url=http://localhost:5004; HealthResponse.port example=5004 |
+| R-1 pre-check | CLEAN | grep math/rand|rand.Intn|rand.Float in pkg/+cmd/ → exit 1 (0 matches) |
+
+**D-1 (ACCEPTED):** 166 lines vs 80-120 guideline. Extra lines = field descriptions, format annotations, examples, 501/500 error schemas, ErrorResponse + SnapshotRequest components, security: [] override with comment. No new endpoints, no business logic, no validation logic. Pure spec elaboration. NOT a spec violation.
+**G12 DoD:** NOT_BINDING_scaffold_only — activates P1-B1 onward.
+**Blocking issues:** 0 — all 4 ACs + all additional checks PASS.
+**NEXT:** pm — dispatch P1-B1 (first primitive: macro-investment-clock). R-1 HARD GATE + G12 DoD activate.
+
+---
+
 ## c282 cycle-30 · 2026-05-23 · macro P1-A4 pkg/ DDD scaffold verification
 
 **Task:** P1-A4 — pkg/ DDD scaffold (6 stub files, macro-indicators pilot) | **Verdict:** GREEN
