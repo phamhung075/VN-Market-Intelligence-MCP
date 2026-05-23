@@ -2,6 +2,46 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-24 — P1-B1 price-quote-normalizer + R-CGO Gate DONE
+
+### What shipped (P1-B1)
+
+First primitive extracted: `pkg/primitive/price-quote-normalizer/`.
+
+**All 9 ACs PASS:**
+- AC-1: `NormalizeQuote()` exported with exact signature (stdlib+domain only)
+- AC-2: 5-row table-driven test (VCB/HOSE, HNX-negative, cache-zero, zero-volume, empty-code)
+- AC-3: `go test ./pkg/primitive/price-quote-normalizer/...` exit 0 PASS
+- AC-4: sandbox -tier=primitive exit 0 (3/3 scenarios GREEN) PASS
+- AC-5 (R-CGO-1): `CGO_ENABLED=0 go build ./cmd/sandbox` exit 0 PASS
+- AC-6 (R-CGO-2): grep mattn/cgo/importC in primitive: exit 1 (zero matches) PASS
+- AC-7 (R-CGO-3): grep pkg/infrastructure in primitive: exit 1 (zero matches) PASS
+- AC-8 (R-CGO-GATE): **CLEAR** — all R-CGO checks passed
+- AC-9 (Fence-A): grep application|interface/http|infrastructure in primitive: exit 1 PASS
+
+**Sandbox output (G12 streak #1):**
+```
+price-quote-normalizer-golden.json: PASS
+price-quote-normalizer-edge.json: PASS
+price-quote-normalizer-failure.json: PASS
+total=3 pass=3 fail=0 status=OK exit 0
+```
+
+**go test ./pkg/... -count=1:** 5/5 packages PASS, 0 regressions
+
+**Commits:**
+- `69afa2ab` — `feat(stock-price/P1-B1): extract price-quote-normalizer primitive + R-CGO gate CLEAR`
+- `9c9252f3` — `docs(stock-price/P1-B1): RETURN block + completion signal — R-CGO CLEAR, G12 #1 GREEN`
+
+**Signal:** `docs/signals/dev-stock-price-p1-b1-done-20260524T005300Z.json`
+**Pre-revert tag:** `stock-price-pre-p1b1`
+
+**State for P1-B2:**
+- R-CGO gate CLEAR — P1-B2 unblocked
+- sandbox dispatcher ready: add `case "tier_fallback_selector"` to executePrimitive
+- P1-B2 adds `pkg/primitive/tier-fallback-selector/` and 3 scenario JSONs
+- All pkg/ tests passing baseline: 5/5
+
 ## Session 2026-05-24 — P1-A Sandbox Runner DONE
 
 ### What shipped (P1-A)
