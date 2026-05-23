@@ -1,0 +1,8 @@
+{
+  "primitive": "ngu-hanh-classifier",
+  "tier": "primitive",
+  "name": "golden-thuy-moc-generation",
+  "input": { "lower": "Thuy", "upper": "Moc" },
+  "expected": { "dynamic": "TUONG_SINH", "score": 0.3, "error": null },
+  "description": "Golden case: Water (Thuy) generates Wood (Moc) — lower generates upper. GENERATION[Thuy]=Moc → dynamic=TUONG_SINH, score=0.3 (nội lực sinh ngoại lực)."
+}

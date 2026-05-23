@@ -1,0 +1,9 @@
+{
+  "primitive": "ngu-hanh-classifier",
+  "tier": "primitive",
+  "name": "failure-unknown-element",
+  "input": { "lower": "InvalidElement", "upper": "Moc" },
+  "expected": { "dynamic": "NEUTRAL", "score": 0.0, "error": null },
+  "expect_error": false,
+  "description": "Failure case: unknown lower element string — documented choice is no-throw, returns NEUTRAL (score 0.0). This is safer for downstream pipeline callers that may receive raw, unvalidated market data strings."
+}

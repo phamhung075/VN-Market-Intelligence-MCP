@@ -17,6 +17,7 @@
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { resolveHexagram } from '../primitive/hexagram-resolver/index.js';
+import { classifyNguHanh } from '../primitive/ngu-hanh-classifier/index.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -146,6 +147,62 @@ function runHexagramResolverScenario(fileName: string, scenario: ScenarioFile): 
   }
 }
 
+/**
+ * Execute a ngu-hanh-classifier scenario.
+ * Dispatched when scenario.primitive === 'ngu-hanh-classifier'.
+ */
+function runNguHanhClassifierScenario(fileName: string, scenario: ScenarioFile): ScenarioResult {
+  const input = scenario.input as Record<string, unknown>;
+  const lower = input['lower'];
+  const upper = input['upper'];
+
+  if (typeof lower !== 'string' || typeof upper !== 'string') {
+    return { file: fileName, status: 'FAIL', error: 'ngu-hanh-classifier scenario missing input.lower or input.upper strings' };
+  }
+
+  const expectError = scenario.expect_error === true;
+  const expected = scenario.expected as Record<string, unknown> | undefined;
+
+  try {
+    const result = classifyNguHanh(lower, upper);
+
+    if (expectError) {
+      return { file: fileName, status: 'FAIL', error: `Expected error but got result: ${JSON.stringify(result)}` };
+    }
+
+    if (expected !== undefined) {
+      const expectedDynamic = expected['dynamic'] as string | undefined;
+      const expectedScore = expected['score'] as number | undefined;
+
+      if (expectedDynamic !== undefined && result.dynamic !== expectedDynamic) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `Expected dynamic=${expectedDynamic} but got ${result.dynamic}`,
+          output: result,
+        };
+      }
+
+      if (expectedScore !== undefined && result.score !== expectedScore) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `Expected score=${expectedScore} but got ${result.score}`,
+          output: result,
+        };
+      }
+    }
+
+    return { file: fileName, status: 'PASS', output: result };
+  } catch (err) {
+    if (expectError) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { file: fileName, status: 'PASS', output: { error: errMsg } };
+    }
+    return { file: fileName, status: 'FAIL', error: `Unexpected error: ${err}` };
+  }
+}
+
 // ── Scenario execution ────────────────────────────────────────────────────────
 
 function runScenario(filePath: string): ScenarioResult {
@@ -177,6 +234,10 @@ function runScenario(filePath: string): ScenarioResult {
   // Dispatch to primitive executor based on scenario.primitive field.
   if (scenario.primitive === 'hexagram-resolver') {
     return runHexagramResolverScenario(fileName, scenario);
+  }
+
+  if (scenario.primitive === 'ngu-hanh-classifier') {
+    return runNguHanhClassifierScenario(fileName, scenario);
   }
 
   // Fallback: well-formed scenario with no known primitive → structural PASS.

@@ -1,0 +1,57 @@
+{
+  "task_id": "P1-KD-B2",
+  "pilot": "kinh-dich",
+  "status": "DONE",
+  "timestamp": "2026-05-24T08:00:00Z",
+  "ac_results": {
+    "AC-1": "PASS",
+    "AC-2": "PASS",
+    "AC-3": "PASS",
+    "AC-4": "PASS",
+    "AC-5": "PASS"
+  },
+  "sandbox_verdict": {
+    "command": "cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all",
+    "exit_code": 0,
+    "scenario_count": 6,
+    "scenarios": [
+      "hexagram-resolver-golden.json (PASS)",
+      "hexagram-resolver-edge.json (PASS)",
+      "hexagram-resolver-failure.json (PASS)",
+      "ngu-hanh-classifier-golden.json (PASS)",
+      "ngu-hanh-classifier-edge.json (PASS)",
+      "ngu-hanh-classifier-failure.json (PASS)"
+    ],
+    "comment": "Second primitive extracted; G12 DoD Gate #2 satisfied: all 6 scenarios (2 primitives) green"
+  },
+  "g12_streak": {
+    "task_number": 2,
+    "position": "2/3",
+    "sandbox_all_green": true,
+    "scenario_count": 6,
+    "comment": "Second consecutive primitive task with sandbox-green before RETURN"
+  },
+  "cross_layer_import_grep_count": 0,
+  "ac_evidence": {
+    "AC-1": "classifyNguHanh(lower: string, upper: string): NguHanhResult exported from apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/index.ts with embedded GENERATION/DESTRUCTION tables and inline NguHanh/NguHanhResult types",
+    "AC-2": "12 unit tests in index.test.ts covering: generation (lower→upper), generation (upper→lower), destruction (lower→upper), destruction (upper→lower), SAME element, unknown lower, unknown upper, score range (all 25 pairs), interpretation non-empty string, full generation cycle x5, full destruction cycle x5",
+    "AC-3": "bun test src/primitive/ngu-hanh-classifier/ → 12 pass, 0 fail, 120 expect() calls, exit 0",
+    "AC-4": "grep -rn from.*application|from.*interface|from.*infrastructure|from.*module apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/ → 0 actual import statements (1 comment line only)",
+    "AC-5": "[sandbox] PASS 6/6 scenarios (0 failed, 0 skipped), exit 0"
+  },
+  "design_choices": {
+    "unknown_element_behavior": "Returns NEUTRAL (dynamic='NEUTRAL', score=0.0) — no throw. Safer for downstream pipeline callers with unvalidated market data strings.",
+    "types_placement": "NguHanh, NguHanhDynamic, NguHanhResult inlined in primitive (not imported from domain/models.ts) — avoids even domain-layer import, maximally pure"
+  },
+  "files_created": [
+    "apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/index.ts",
+    "apps/kinh-dich-service/src/primitive/ngu-hanh-classifier/index.test.ts",
+    "docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-golden.json",
+    "docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-edge.json",
+    "docs/scenarios/kinh-dich/primitives/ngu-hanh-classifier-failure.json"
+  ],
+  "files_modified": [
+    "apps/kinh-dich-service/src/sandbox/runner.ts (added ngu-hanh-classifier import + runNguHanhClassifierScenario executor + dispatch)"
+  ],
+  "next": "PM sequences P1-B3 (hao-encoder, third primitive + final streak task)"
+}

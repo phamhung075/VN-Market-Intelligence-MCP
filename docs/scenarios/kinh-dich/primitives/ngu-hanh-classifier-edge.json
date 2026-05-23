@@ -1,0 +1,8 @@
+{
+  "primitive": "ngu-hanh-classifier",
+  "tier": "primitive",
+  "name": "edge-same-element-kim",
+  "input": { "lower": "Kim", "upper": "Kim" },
+  "expected": { "dynamic": "SAME", "score": 0.1, "error": null },
+  "description": "Edge case: same element (Kim + Kim) — neutral reinforcement. lower === upper → dynamic=SAME, score=0.1 (cùng hành — tăng cường xu hướng hiện tại)."
+}
