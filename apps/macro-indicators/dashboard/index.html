@@ -779,17 +779,19 @@ footer {
       <span class="level-badge badge-primitives">Level 1</span>
       <h2>Primitives</h2>
       <p class="panel-desc">
-        1 pure Go primitive (macro_investment_clock). Classifies economic indicators
-        into investment clock tiers (VN_DIRECT, US_DOMESTIC, GLOBAL_COMMODITY, etc.).
-        3 scenarios: golden, edge, failure. Click any scenario to inspect input &harr; expectedOutput.
+        6 pure Go primitives: macro_investment_clock, macro_oil_impact_classifier,
+        macro_gold_direction_classifier, macro_usdvnd_direction_classifier,
+        macro_carry_trade_signal, macro_yield_spread_signal.
+        18 scenarios total (3 per primitive: golden, edge, failure).
+        Click any scenario to inspect input &harr; expectedOutput.
       </p>
       <div class="panel-summary">
-        <span class="summary-chip chip-total" id="prim-total-chip">3 scenarios</span>
+        <span class="summary-chip chip-total" id="prim-total-chip">18 scenarios</span>
         <span class="summary-chip chip-notrun" id="prim-notrun-chip">NOT-RUN</span>
       </div>
     </div>
     <div class="panel-body" id="primitives-panel-body">
-      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+      <!-- 18 scenario cards rendered by renderPrimitivesPanel() on DOMContentLoaded -->
     </div>
   </div>
 
@@ -799,8 +801,9 @@ footer {
       <span class="level-badge badge-module">Level 2</span>
       <h2>Module</h2>
       <p class="panel-desc">
-        <code>pkg/module/macro_signals/</code> &mdash; composes macro_investment_clock via
-        ClassifyBatch. Multi-indicator batch stories: golden (3 indicators) and edge (empty batch).
+        <code>pkg/module/macro_signals/</code> &mdash; composes all 6 primitives via
+        BuildMacroSignals. Golden (mid-range inputs producing deterministic signals) and
+        edge (zero-value inputs triggering zero-data guard on all 6 signals).
         Click any scenario to see which primitives are exercised and compare expected outputs.
       </p>
       <div class="panel-summary">
@@ -809,7 +812,7 @@ footer {
       </div>
     </div>
     <div class="panel-body" id="module-panel-body">
-      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+      <!-- 2 module scenario cards (golden + edge) rendered by renderModulePanel() on DOMContentLoaded -->
     </div>
   </div>
 
@@ -828,7 +831,19 @@ footer {
       </div>
     </div>
     <div class="panel-body" id="service-panel-body">
-      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+      <div style="padding:12px 0;">
+        <div style="border:1.5px solid var(--border);border-radius:8px;padding:14px 16px;background:#f8fafc;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9ca3af;flex-shrink:0;" title="NOT-RUN"></span>
+            <strong style="font-size:0.92rem;">macro-indicators</strong>
+            <span style="font-size:0.75rem;color:#9ca3af;margin-left:auto;">NOT-RUN</span>
+          </div>
+          <p style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Go HTTP service &bull; Port 5004 &bull; Sandbox trace only (no live data)</p>
+          <p style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Endpoints: <code style="font-size:0.78rem;">/health</code> &bull; <code style="font-size:0.78rem;">/snapshot</code> &bull; <code style="font-size:0.78rem;">/carry-trade-signal</code> &bull; <code style="font-size:0.78rem;">/yield-spread-signal</code> &bull; <code style="font-size:0.78rem;">/macro-calendar</code></p>
+          <p style="font-size:0.78rem;color:#9ca3af;">DDD layers: domain &rarr; application &rarr; infrastructure &rarr; interface &bull; All 6 primitives wired via BuildMacroSignals &bull; R-3 resolved (P2-B1)</p>
+        </div>
+        <p style="font-size:0.75rem;color:#9ca3af;text-align:center;">Live HTTP verification deferred to P2-C1 Playwright run &mdash; sandbox trace mode (file:// URL, no server required)</p>
+      </div>
     </div>
   </div>
 
@@ -845,13 +860,14 @@ footer {
 </div>
 
 <footer>
-  P1-E2 &mdash; Three-Level Scenario Trust Dashboard + Edit-Rerun Handler &bull; Pilot: macro-indicators &bull;
-  Port: 5004 &bull; Language: Go &bull;
-  Scenarios committed at P1-B1 (primitives) + P1-C1/D2 (module) &bull;
+  P2-X4 &mdash; Dashboard data refresh: 6 primitives (18 scenarios) + module (2 scenarios) + microservice panel &bull;
+  Pilot: macro-indicators &bull; Port: 5004 &bull; Language: Go &bull;
+  Primitives: macro_investment_clock (P1-B1) + oil/gold/usdvnd/carry/yield (P2-X1) &bull;
+  Module: macro_signals wires all 6 primitives (P2-X2) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
   Edit-rerun handler: click any scenario &rarr; &quot;Edit &amp; Rerun&quot; &rarr; copy command &rarr; paste result &rarr; card flips RED/GREEN &bull;
   Sandbox runner: <code>go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=all</code> &bull;
-  Final Phase 1 task (11/11 complete)
+  G9 unblock: all 6 primitive cards + module card + microservice card rendered (P2-C1 Playwright re-verify)
 </footer>
 
 <!-- ================================================== MODAL -->
@@ -920,10 +936,11 @@ footer {
 </div>
 
 <!-- ================================================== EMBEDDED SCENARIO DATA -->
-<!-- All 3 primitive scenarios from docs/scenarios/macro-indicators/primitives/ -->
-<!-- All 2 module scenarios from docs/scenarios/macro-indicators/module/        -->
-<!-- Embedded inline so the dashboard works as a static file:// asset           -->
-<!-- Security: zero DB credentials, zero API keys — pure JSON scenario data only -->
+<!-- All 18 primitive scenarios from docs/scenarios/macro-indicators/primitives/ -->
+<!-- All 2 module scenarios from docs/scenarios/macro-indicators/module/          -->
+<!-- Embedded inline so the dashboard works as a static file:// asset             -->
+<!-- Security: zero DB credentials, zero API keys — pure JSON scenario data only  -->
+<!-- P2-X4: extended from 3 (P1-E1) to 18 entries (6 primitives x 3 scenarios)   -->
 <script>
 var PRIMITIVES_DATA = [
   {
@@ -967,6 +984,242 @@ var PRIMITIVES_DATA = [
     "shouldPass": false,
     "errorType": "invalid_input",
     "status": "NOT-RUN"
+  },
+  {
+    "name": "oil_bearish_high_price",
+    "primitive": "macro_oil_impact_classifier",
+    "filename": "macro-oil-impact-classifier-golden.json",
+    "category": "golden",
+    "description": "Golden path: high oil price ($120) classifies as BEARISH impact on Vietnam economy (import cost pressure). Verifies primary bearish threshold path through OilImpactClassifier.",
+    "input": { "priceUSD": 120.0 },
+    "expectedOutput": {
+      "impact": "BEARISH",
+      "priceUSD": 120.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "oil_neutral_at_boundary",
+    "primitive": "macro_oil_impact_classifier",
+    "filename": "macro-oil-impact-classifier-edge.json",
+    "category": "edge",
+    "description": "Edge case: oil at boundary price ($80) classifies as NEUTRAL impact. Verifies boundary threshold handling — price at exact neutral band midpoint.",
+    "input": { "priceUSD": 80.0 },
+    "expectedOutput": {
+      "impact": "NEUTRAL",
+      "priceUSD": 80.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "oil_zero_price_invalid_input",
+    "primitive": "macro_oil_impact_classifier",
+    "filename": "macro-oil-impact-classifier-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: zero priceUSD is invalid input. shouldPass=false — verifies graceful error handling without panic.",
+    "input": { "priceUSD": 0 },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "gold_bullish_safe_haven",
+    "primitive": "macro_gold_direction_classifier",
+    "filename": "macro-gold-direction-classifier-golden.json",
+    "category": "golden",
+    "description": "Golden path: high gold price ($2350) classifies as BULLISH direction — safe haven demand indicator. Verifies primary bullish threshold path through GoldDirectionClassifier.",
+    "input": { "priceUSD": 2350.0 },
+    "expectedOutput": {
+      "direction": "BULLISH",
+      "priceUSD": 2350.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "gold_neutral_mid_band",
+    "primitive": "macro_gold_direction_classifier",
+    "filename": "macro-gold-direction-classifier-edge.json",
+    "category": "edge",
+    "description": "Edge case: gold at mid-band price ($2000) classifies as NEUTRAL direction. Verifies neutral band boundary handling.",
+    "input": { "priceUSD": 2000.0 },
+    "expectedOutput": {
+      "direction": "NEUTRAL",
+      "priceUSD": 2000.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "gold_zero_price_invalid_input",
+    "primitive": "macro_gold_direction_classifier",
+    "filename": "macro-gold-direction-classifier-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: zero priceUSD is invalid input. shouldPass=false — verifies graceful error handling without panic.",
+    "input": { "priceUSD": 0 },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "usdvnd_bearish_depreciation",
+    "primitive": "macro_usdvnd_direction_classifier",
+    "filename": "macro-usdvnd-direction-classifier-golden.json",
+    "category": "golden",
+    "description": "Golden path: high USD/VND rate (26500) indicates VND depreciation — BEARISH signal for Vietnam equity. Verifies primary bearish threshold path through UsdVndDirectionClassifier.",
+    "input": { "rateVND": 26500.0 },
+    "expectedOutput": {
+      "direction": "BEARISH",
+      "rateVND": 26500.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "usdvnd_neutral_stable_band",
+    "primitive": "macro_usdvnd_direction_classifier",
+    "filename": "macro-usdvnd-direction-classifier-edge.json",
+    "category": "edge",
+    "description": "Edge case: USD/VND rate in stable band (24200) classifies as NEUTRAL direction. Verifies stable exchange rate band threshold.",
+    "input": { "rateVND": 24200.0 },
+    "expectedOutput": {
+      "direction": "NEUTRAL",
+      "rateVND": 24200.0
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "usdvnd_zero_rate_invalid_input",
+    "primitive": "macro_usdvnd_direction_classifier",
+    "filename": "macro-usdvnd-direction-classifier-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: zero rateVND is invalid input. shouldPass=false — verifies graceful error handling without panic.",
+    "input": { "rateVND": 0 },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "carry_hot_money_inflow",
+    "primitive": "macro_carry_trade_signal",
+    "filename": "macro-carry-trade-signal-golden.json",
+    "category": "golden",
+    "description": "Golden path: VND deposit rate (6.5%) significantly exceeds Fed funds rate (3.5%), carry spread=3.0 — HOT_MONEY_INFLOW regime. Verifies primary carry trade signal path.",
+    "input": {
+      "vndDepositRate": 6.5,
+      "fedFundsRate": 3.5,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": {
+      "regime": "HOT_MONEY_INFLOW",
+      "carrySpread": 3.0,
+      "vndDepositRate": 6.5,
+      "fedFundsRate": 3.5,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "carry_fii_outflow_risk",
+    "primitive": "macro_carry_trade_signal",
+    "filename": "macro-carry-trade-signal-edge.json",
+    "category": "edge",
+    "description": "Edge case: narrow carry spread (0.3) — VND rate (4.5%) barely above Fed rate (4.2%) — FII_OUTFLOW_RISK regime. Verifies narrow spread boundary classification.",
+    "input": {
+      "vndDepositRate": 4.5,
+      "fedFundsRate": 4.2,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": {
+      "regime": "FII_OUTFLOW_RISK",
+      "carrySpread": 0.3,
+      "vndDepositRate": 4.5,
+      "fedFundsRate": 4.2,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "carry_zero_vnd_rate_invalid_input",
+    "primitive": "macro_carry_trade_signal",
+    "filename": "macro-carry-trade-signal-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: zero vndDepositRate is invalid input. shouldPass=false — verifies graceful error handling without panic.",
+    "input": {
+      "vndDepositRate": 0,
+      "fedFundsRate": 5.33,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "yield_cheap_strong_premium",
+    "primitive": "macro_yield_spread_signal",
+    "filename": "macro-yield-spread-signal-golden.json",
+    "category": "golden",
+    "description": "Golden path: earning yield (8.5%) significantly exceeds deposit rate (5.0%), spread=3.5 — CHEAP label (equities cheap vs fixed income). Verifies primary yield spread signal path.",
+    "input": {
+      "earningYield": 8.5,
+      "depositRate": 5.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": {
+      "label": "CHEAP",
+      "spread": 3.5,
+      "earningYield": 8.5,
+      "depositRate": 5.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "yield_expensive_negative_spread",
+    "primitive": "macro_yield_spread_signal",
+    "filename": "macro-yield-spread-signal-edge.json",
+    "category": "edge",
+    "description": "Edge case: earning yield (4.0%) below deposit rate (6.0%), spread=-2.0 — EXPENSIVE label (equities expensive vs fixed income). Verifies negative spread boundary classification.",
+    "input": {
+      "earningYield": 4.0,
+      "depositRate": 6.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": {
+      "label": "EXPENSIVE",
+      "spread": -2.0,
+      "earningYield": 4.0,
+      "depositRate": 6.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "yield_zero_earning_yield_invalid_input",
+    "primitive": "macro_yield_spread_signal",
+    "filename": "macro-yield-spread-signal-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: zero earningYield is invalid input. shouldPass=false — verifies graceful error handling without panic.",
+    "input": {
+      "earningYield": 0,
+      "depositRate": 5.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
   }
 ];
 
@@ -976,18 +1229,30 @@ var MODULE_DATA = [
     "module": "macro_signals",
     "filename": "macro-signals-golden.json",
     "category": "golden",
-    "description": "Batch classification through macro-signals module (1 primitive wired: macro-investment-clock). 3 indicator names: VN_CPI (VN_DIRECT/8/CORE_VN), Unemployment_Rate (US_DOMESTIC/2/US_DOMESTIC), Unknown (US_DOMESTIC/2/US_DOMESTIC). Verifies ClassifyBatch returns all 3 results correctly.",
-    "primitives": ["macro_investment_clock"],
+    "description": "Golden path: BuildMacroSignals wires all 6 primitives with mid-range inputs producing deterministic signals. investmentClock=VN_DIRECT/8/CORE_VN, oilImpact=NEUTRAL, goldDirection=BULLISH, usdVndDirection=NEUTRAL, carryTrade=HOT_MONEY_INFLOW/spread=3.0, yieldSpread=CHEAP/spread=2.6.",
+    "primitives": [
+      "macro_investment_clock",
+      "macro_oil_impact_classifier",
+      "macro_gold_direction_classifier",
+      "macro_usdvnd_direction_classifier",
+      "macro_carry_trade_signal",
+      "macro_yield_spread_signal"
+    ],
     "input": {
-      "indicator_names": ["VN_CPI", "Unemployment_Rate", "Unknown"]
+      "investmentClock": { "indicatorName": "VN_CPI" },
+      "oilImpact": { "priceUSD": 85.0 },
+      "goldDirection": { "priceUSD": 2300.0 },
+      "usdVndDirection": { "rateVND": 24500.0 },
+      "carryTrade": { "vndDepositRate": 8.0, "fedFundsRate": 5.0, "computedAt": "2026-05-23T00:00:00Z" },
+      "yieldSpread": { "earningYield": 8.1, "depositRate": 5.5, "computedAt": "2026-05-23T00:00:00Z" }
     },
     "expectedOutput": {
-      "batch_count": 3,
-      "classifications": [
-        { "indicator": "VN_CPI", "tier": "VN_DIRECT", "score": 8, "phase": "CORE_VN" },
-        { "indicator": "Unemployment_Rate", "tier": "US_DOMESTIC", "score": 2, "phase": "US_DOMESTIC" },
-        { "indicator": "Unknown", "tier": "US_DOMESTIC", "score": 2, "phase": "US_DOMESTIC" }
-      ]
+      "investmentClock": { "tier": "VN_DIRECT", "score": 8, "phase": "CORE_VN" },
+      "oilImpact": { "impact": "NEUTRAL", "priceUSD": 85.0 },
+      "goldDirection": { "direction": "BULLISH", "priceUSD": 2300.0 },
+      "usdVndDirection": { "direction": "NEUTRAL", "rateVND": 24500.0 },
+      "carryTrade": { "regime": "HOT_MONEY_INFLOW", "carrySpread": 3.0, "vndDepositRate": 8.0, "fedFundsRate": 5.0, "computedAt": "2026-05-23T00:00:00Z" },
+      "yieldSpread": { "label": "CHEAP", "spread": 2.6, "earningYield": 8.1, "depositRate": 5.5, "computedAt": "2026-05-23T00:00:00Z" }
     },
     "status": "NOT-RUN"
   },
@@ -996,14 +1261,30 @@ var MODULE_DATA = [
     "module": "macro_signals",
     "filename": "macro-signals-edge.json",
     "category": "edge",
-    "description": "Edge case: empty batch input yields empty classifications (boundary handling). Verifies ClassifyBatch handles zero-length input without error and returns batch_count=0 with empty classifications array.",
-    "primitives": ["macro_investment_clock"],
+    "description": "Edge case: zero-value inputs trigger each primitive's zero-data guard (graceful degradation across all 6 signals). investmentClock=US_DOMESTIC/2, oilImpact=NEUTRAL, goldDirection=NEUTRAL, usdVndDirection=NEUTRAL, carryTrade=NEUTRAL/spread=0, yieldSpread=UNKNOWN/spread=0.",
+    "primitives": [
+      "macro_investment_clock",
+      "macro_oil_impact_classifier",
+      "macro_gold_direction_classifier",
+      "macro_usdvnd_direction_classifier",
+      "macro_carry_trade_signal",
+      "macro_yield_spread_signal"
+    ],
     "input": {
-      "indicator_names": []
+      "investmentClock": { "indicatorName": "" },
+      "oilImpact": { "priceUSD": 0 },
+      "goldDirection": { "priceUSD": 0 },
+      "usdVndDirection": { "rateVND": 0 },
+      "carryTrade": { "vndDepositRate": 0, "fedFundsRate": 0, "computedAt": "2026-05-23T00:00:00Z" },
+      "yieldSpread": { "earningYield": 0, "depositRate": 0, "computedAt": "2026-05-23T00:00:00Z" }
     },
     "expectedOutput": {
-      "batch_count": 0,
-      "classifications": []
+      "investmentClock": { "tier": "US_DOMESTIC", "score": 2, "phase": "US_DOMESTIC" },
+      "oilImpact": { "impact": "NEUTRAL", "priceUSD": 0 },
+      "goldDirection": { "direction": "NEUTRAL", "priceUSD": 0 },
+      "usdVndDirection": { "direction": "NEUTRAL", "rateVND": 0 },
+      "carryTrade": { "regime": "NEUTRAL", "carrySpread": 0, "vndDepositRate": 0, "fedFundsRate": 0, "computedAt": "2026-05-23T00:00:00Z" },
+      "yieldSpread": { "label": "UNKNOWN", "spread": 0, "earningYield": 0, "depositRate": 0, "computedAt": "2026-05-23T00:00:00Z" }
     },
     "status": "NOT-RUN"
   }
@@ -1318,6 +1599,16 @@ var MODULE_DATA = [
       }
     }
 
+    // Primitive display labels (P2-X4: all 6 primitives)
+    var PRIM_LABELS = {
+      "macro_investment_clock":          "Investment Clock Classifier",
+      "macro_oil_impact_classifier":     "Oil Impact Classifier",
+      "macro_gold_direction_classifier": "Gold Direction Classifier",
+      "macro_usdvnd_direction_classifier": "USD/VND Direction Classifier",
+      "macro_carry_trade_signal":        "Carry Trade Signal",
+      "macro_yield_spread_signal":       "Yield Spread Signal"
+    };
+
     Object.keys(groups).forEach(function(primKey) {
       var scenarios = groups[primKey];
       var allGreen = scenarios.every(function(s) { return getStatus(s) === "green"; });
@@ -1331,8 +1622,9 @@ var MODULE_DATA = [
       var header = document.createElement("div");
       header.className = "primitive-group-header";
       header.style.borderLeft = "4px solid #075985";
+      var primLabel = PRIM_LABELS[primKey] || primKey;
       header.innerHTML =
-        '<span>macro_investment_clock &mdash; Investment Clock Classifier</span>' +
+        '<span>' + escapeHtml(primKey) + ' &mdash; ' + escapeHtml(primLabel) + '</span>' +
         '<span class="group-status ' + groupStatusClass + '">' + groupStatusLabel + '</span>';
 
       var scenarioList = document.createElement("div");
@@ -1345,13 +1637,16 @@ var MODULE_DATA = [
         card.type = "button";
         card.setAttribute("aria-label", "View scenario: " + (s.filename || s.name));
 
+        // Generic input summary: show JSON keys+values (first 80 chars)
+        var inputSummary = s.input ? JSON.stringify(s.input).slice(0, 80) : "null";
+
         card.innerHTML =
           '<span class="scenario-status-dot ' + dotClass(liveStatus) + '" aria-hidden="true"></span>' +
           '<span class="scenario-meta">' +
             '<span class="scenario-name">' + escapeHtml(s.filename || s.name) + '</span>' +
             '<span class="scenario-desc">' + escapeHtml((s.description || "").slice(0, 120)) + '</span>' +
             '<span style="font-size:0.72rem;color:#6b7280;margin-top:3px;display:block;">' +
-              'In: indicatorName=' + escapeHtml(JSON.stringify(s.input && s.input.indicatorName)) +
+              'In: ' + escapeHtml(inputSummary) +
               ' &nbsp;|&nbsp; Status: <strong>' + statusLabel(liveStatus) + '</strong>' +
             '</span>' +
           '</span>' +
@@ -1408,9 +1703,15 @@ var MODULE_DATA = [
       headerBtn.type = "button";
       headerBtn.setAttribute("aria-label", "View module scenario: " + (s.filename || s.scenario_name || ""));
 
-      var inputSummary = s.input && s.input.indicator_names
-        ? s.input.indicator_names.length + " indicators"
-        : "0 indicators";
+      // BuildMacroSignals input uses named primitive fields (P2-X2); fallback to indicator_names for P1 compat.
+      var inputSummary;
+      if (s.input && s.input.indicator_names) {
+        inputSummary = s.input.indicator_names.length + " indicator_names";
+      } else if (s.input) {
+        inputSummary = Object.keys(s.input).length + " primitives: " + Object.keys(s.input).join(", ");
+      } else {
+        inputSummary = "0 inputs";
+      }
 
       headerBtn.innerHTML =
         '<span>' +
