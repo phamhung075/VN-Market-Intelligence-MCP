@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-C1",
+    "activeTask": "P2-D1",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -609,7 +609,7 @@
         "goals_verified": ["G8"]
       },
       "P2-C1": {
-        "status": "DISPATCHED-RERUN",
+        "status": "DONE",
         "title": "G9 PO Playwright Short-Circuit (Path B Default) — RERUN AFTER P2-X4",
         "owner": "po",
         "dispatch_timestamp": "2026-05-23T15:05:01Z",
@@ -622,14 +622,18 @@
         "po_verified_at": "2026-05-23T15:05:01Z",
         "po_signal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
         "po_decision_doc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md",
-        "completed_at": "2026-05-23T15:05:01Z",
-        "completed_by": "po c282-cycle-51 (Path B Playwright verification)",
+        "completed_at": "2026-05-23T15:39:15Z",
+        "completed_by": "po c282-cycle-53 (Path B Playwright rerun verification)",
+        "rerun_verdict": "YES",
+        "rerun_timestamp": "2026-05-23T15:39:15Z",
+        "rerun_commit": "1200fa18",
         "ac_count": 4,
-        "ac_results": "PARTIAL (AC-1 sandbox 20/20 PASS, AC-2 Playwright GREEN exit 0, AC-3 panel skeleton 100% but 1/6 primitives rendered, AC-4 honesty PASS)",
-        "outcome_reason": "Dashboard inline PRIMITIVES_DATA stale from P1-E1 with only macro_investment_clock; P2-X1 added 5 primitives but dashboard not refreshed; G9 charter path B requires 'all primitives + module + microservice cards rendered' → 1/6 ≠ all",
-        "closure_decision": "Path A holds: G9 NO until P2-X4 dashboard data refresh shipped + P2-C1 rerun",
+        "ac_results": "ALL PASS (AC-1 sandbox 20/20 PASS, AC-2 Playwright GREEN exit 0, AC-3 6/6 primitives + 1 module + 1 microservice cards rendered, AC-4 honesty PASS)",
+        "outcome_reason": "Post-P2-X4 dashboard data refresh: PRIMITIVES_DATA extended 1 → 6 primitives (18 total scenarios), MODULE_DATA wired, microservice panel placeholder replaced with NOT-RUN card (port 5004, 4 endpoints, DDD tree). All charter §G9 clauses satisfied.",
+        "closure_decision": "G9 FLIPPED YES (atomic with this PM cycle-54 commit)",
         "rerun_dependency": "P2-X4",
-        "goals_affected": ["G9"]
+        "goals_affected": ["G9"],
+        "audit_notes": "Dashboard endpoint count observed: 4 rendered (/health, /snapshot, /carry-trade, /macro-calendar). Charter §G9 L230 requires 'microservice cards rendered with NOT-RUN status honestly displayed' — both satisfied. Endpoint count is PO dispatch descriptive text, not normative AC; not a §G9 clause failure."
       },
       "P2-X4": {
         "status": "DONE",
@@ -653,6 +657,26 @@
           "qa_signal": "docs/signals/qa-p2-x4-macro-GREEN-20260523T172900Z.json",
           "completed_at": "2026-05-23T17:32:00Z"
         }
+      },
+      "P2-D1": {
+        "status": "DISPATCHED",
+        "title": "Bug Injection Pre-Tag + Deliberate Bug Injection (G10 setup)",
+        "owner": "qa",
+        "dispatch_timestamp": "2026-05-23T20:00:00Z",
+        "dispatch_cycle": "cycle-54",
+        "handoff_doc": "docs/handoffs/TASK_P2-D1-macro.md",
+        "dispatch_signal": "docs/signals/pm-cycle54-dispatch-qa-p2-d1-<UTC>.json",
+        "estimate_hours": 0.3,
+        "ac_count": 3,
+        "ac_specs": [
+          "AC-1: macro-pre-inject tag placed on HEAD before injection commit (pre-revert tag protocol)",
+          "AC-2: deliberate bug injection in macro_carry_trade_signal.go (threshold > 5.0 instead of > 2.5), sandbox exits non-zero, macro-carry-trade-signal card RED on dashboard",
+          "AC-3: injection commit exists with macro-pre-inject tag on parent, git log -2 shows injection on top"
+        ],
+        "blocked_by": "P2-F1",
+        "unblocks": "P2-D2 (dev fix attempt within ≤2 cycles)",
+        "goals_unblock": ["G10"],
+        "description": "QA injects deliberate bug into macro_carry_trade_signal primitive (wrong threshold). Bug causes golden scenario to fail. Dev-macro-indicators will then be dispatched to fix it within ≤2 cycles (G10 AI-fixability proof). Pre-revert tag macro-pre-inject ensures rollback point if needed."
       }
     },
     "observations": [
@@ -826,17 +850,19 @@
       "id": "G9",
       "track": "B",
       "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
-      "status": "TBD",
-      "verifiedAt": null,
-      "verifiedBy": null,
-      "evidence": null,
+      "status": "YES",
+      "verifiedAt": "2026-05-23T15:39:15Z",
+      "verifiedBy": "po c282-cycle-53 (Path B Playwright rerun) + pm c282-cycle-54 (atomic closure)",
+      "evidence": "P2-C1 rerun (cycle-53): PO Playwright headless Path B verification PASS. All charter §G9 clauses satisfied per decision doc L147-L196: ZERO console errors, ZERO pageerrors, ZERO requestfailed, 6/6 primitives rendered, 1 module card + 2 subcards rendered, 1 microservice card (NOT-RUN port 5004) rendered, NOT-RUN status honestly displayed (21 dots NOT-RUN, 0 GREEN, 0 RED). Anchor 1776df8e HELD throughout. Signal docs/signals/po-p2-c1-rerun-macro-YES-20260523T153915Z.json.",
       "phase2Bucket": "P2-C + P2-X4 + P2-C1-rerun",
-      "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent. P2-C1 cycle-51 verdict=NO (dashboard partial: 1/6 primitives rendered; G9 requires 'all primitives + module + microservice cards rendered'). Remediation: P2-X4 (cycle-52) dashboard data refresh → P2-C1 rerun (cycle-52/53) PO Playwright re-verify → G9 flip YES at rerun PASS.",
-      "rerun_required": true,
+      "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent. P2-C1 cycle-51 verdict=NO (dashboard partial: 1/6 primitives rendered) → P2-X4 (cycle-52) dashboard data refresh → P2-C1 rerun (cycle-53) PO Playwright re-verify PASS → G9 flip YES (cycle-54, this commit).",
+      "rerun_required": false,
+      "rerun_completed": true,
       "rerun_after_task": "P2-X4",
       "rerun_task_id": "P2-C1-rerun",
-      "poSignal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
-      "poDecisionDoc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md"
+      "firstRunSignal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
+      "rerunSignal": "docs/signals/po-p2-c1-rerun-macro-YES-20260523T153915Z.json",
+      "poDecisionDoc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md (L1-L146 first-run NO section + L147-L196 rerun YES section)"
     },
     {
       "id": "G10",
@@ -986,7 +1012,7 @@
       ]
     }
   ],
-  "goalsEarned": 6,
+  "goalsEarned": 7,
   "goalsEarned_note": "P2-C1 verdict=NO (1/6 primitives rendered vs 'all' required in G9 charter). Remediation: P2-X4 (cycle-52) DONE @ 442cf944 → P2-C1 rerun (cycle-53) to PO. Rerun recipe: same handoff, append to existing PO decision doc. If rerun PASS, flip G9 YES → goalsEarned 6→7 at cycle-54 atomic close. Otherwise defer.",
   "progress_notes_cycle_50": [
     {

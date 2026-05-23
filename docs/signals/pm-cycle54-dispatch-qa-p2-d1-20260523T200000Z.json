@@ -1,0 +1,50 @@
+{
+  "type": "pm-dispatch",
+  "from": "pm",
+  "to": "qa",
+  "cycle": "cycle-54",
+  "task_id": "P2-D1",
+  "handoff": "docs/handoffs/TASK_P2-D1-macro.md",
+  "charter_clauses_unblocked": "G10 setup (AI agent bug-fixability proof)",
+  "what_just_closed": {
+    "task_id": "P2-C1",
+    "rerun": true,
+    "po_commit": "1200fa18",
+    "verdict": "YES",
+    "goal_flipped": "G9 (6 → 7/12 goals earned)",
+    "evidence": "all 7 charter §G9 clauses (L230) satisfied; PO Playwright headless rerun; 6/6 primitives + 1 module (2 subcards) + 1 microservice (NOT-RUN port 5004) all rendered; ZERO console/page/req errors; NOT-RUN status honestly displayed (21 dots NOT-RUN, 0 GREEN, 0 RED)"
+  },
+  "next_goal_target": "G10 (AI agent fixes bug ≤2 cycles)",
+  "task_path": [
+    "P2-D1: QA injects deliberate threshold bug in macro_carry_trade_signal (> 5.0 instead of > 2.5)",
+    "P2-D2: dev-macro-indicators fixes bug within ≤2 cycles (cycle counting starts when D1 signal received)"
+  ],
+  "constraints_for_next_agent": [
+    "L84 explicit-file staging (only .go source file, no scenarios)",
+    "Anchor 1776df8e held pre + post",
+    "R-1 hard gate (no math/rand) BINDING",
+    "Pre-revert tag macro-pre-inject MANDATORY before ANY file edit",
+    "Sandbox primitive-tier must show fail=1 (injected bug breaks golden scenario)",
+    "Dashboard must show RED for macro-carry-trade-signal after injection",
+    "G12 DoD: sandbox all-tier 20/20 with fail=1 (1 injection failure expected) BINDING",
+    "WIP=1 (qa owns single slot)",
+    "No --force, no --no-verify, no --no-gpg-sign, no push"
+  ],
+  "cycle_counting": {
+    "method": "Cycle count = from P2-D1 completion signal to P2-D2 sandbox-green (first exit 0 all-tier). Each dev dispatch attempt = 1 cycle.",
+    "baseline": "1.3 (from docs/data/bug-inventory.json macro_indicators baseline)",
+    "target": "≤2 cycles (2 dispatch attempts max)",
+    "precedent": "TA pilot cycle-17 G10 proof (cycle-25 inject + cycle-26 fix = 2 cycles PASS per TA cycle-25 record)"
+  },
+  "ssot_state_pre_dispatch": {
+    "activeTask": "P2-D1",
+    "goalsEarned": 7,
+    "goalsEarned_list": ["G1", "G2", "G3", "G4", "G5", "G8", "G9"],
+    "goalsRemaining": ["G6", "G7", "G10", "G11", "G12"],
+    "phase2Tasks_done": ["P2-A1", "P2-A2", "P2-B1", "P2-B2", "P2-B3", "P2-X1", "P2-X2", "P2-X3", "P2-G1", "P2-F1", "P2-C1", "P2-X4"],
+    "phase2Tasks_next": ["P2-D1 (this dispatch)", "P2-D2", "P2-E1"],
+    "anchor": "1776df8e (held pre + post cycle-54 commit)"
+  },
+  "decisionMatrix": "UNTOUCHED — Charter §4.5 preserved; only populated at 12/12 terminal by PO atomic close",
+  "timestamp": "2026-05-23T20:00:00Z"
+}
