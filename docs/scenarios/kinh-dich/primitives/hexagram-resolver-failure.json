@@ -1,0 +1,9 @@
+{
+  "primitive": "hexagram-resolver",
+  "tier": "primitive",
+  "name": "failure-invalid-length",
+  "input": { "signals": [1, 0] },
+  "expected": { "hexagram": null, "error": "resolveHexagram requires exactly 6 signals, got 2" },
+  "expect_error": true,
+  "description": "Failure case: signals array length is 2 (not 6). Expected: throws Error with message 'resolveHexagram requires exactly 6 signals, got 2'. Sandbox must catch the thrown error and record it as PASS (expected error), not crash."
+}

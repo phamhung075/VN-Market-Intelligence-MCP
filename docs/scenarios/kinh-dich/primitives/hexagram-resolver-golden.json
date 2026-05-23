@@ -1,0 +1,8 @@
+{
+  "primitive": "hexagram-resolver",
+  "tier": "primitive",
+  "name": "golden-thuan-can",
+  "input": { "signals": [1, 1, 1, 1, 1, 1] },
+  "expected": { "hexagram": 1, "error": null },
+  "description": "Golden case: both lower and upper trigrams are Qian (Càn). Signals [1,1,1,1,1,1] → lower=Qian, upper=Qian → Quẻ Thuần Càn = hexagram 1."
+}

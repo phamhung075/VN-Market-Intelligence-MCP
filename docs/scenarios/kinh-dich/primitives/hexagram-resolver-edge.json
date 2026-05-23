@@ -1,0 +1,8 @@
+{
+  "primitive": "hexagram-resolver",
+  "tier": "primitive",
+  "name": "edge-thuan-khon",
+  "input": { "signals": [0, 0, 0, 0, 0, 0] },
+  "expected": { "hexagram": 2, "error": null },
+  "description": "Edge case: all-zero signals. Lower=Kun(0,0,0), upper=Kun(0,0,0) → Quẻ Thuần Khôn = hexagram 2. Tests the minimum-value boundary of the signal space."
+}

@@ -64,3 +64,33 @@ Zone health: SQL fix applied, scores now use real daily closing prices, differen
 **Blocks:** P1-B1 (hexagram-resolver + R-FENCE discovery gate)
 
 Zone health: P1-A DONE — sandbox GREEN baseline established | HEALTHY
+
+### 2026-05-24 — P1-B1: hexagram-resolver primitive + R-FENCE discovery gate
+
+**Task:** P1-KD-B1 — extract first primitive + R-FENCE discovery (G12 streak #1).
+
+**Files created:**
+- `apps/kinh-dich-service/src/primitive/hexagram-resolver/index.ts` — pure primitive, zero cross-layer imports
+- `apps/kinh-dich-service/src/primitive/hexagram-resolver/index.test.ts` — 9 test cases (pass/edge/failure)
+- `docs/scenarios/kinh-dich/primitives/hexagram-resolver-golden.json`
+- `docs/scenarios/kinh-dich/primitives/hexagram-resolver-edge.json`
+- `docs/scenarios/kinh-dich/primitives/hexagram-resolver-failure.json`
+- `docs/signals/dev-kinh-dich-p1-b1-done-20260524T000000Z.json`
+
+**Files modified:**
+- `apps/kinh-dich-service/src/sandbox/runner.ts` — added hexagram-resolver executor + dispatcher
+- `docs/handoffs/TASK_P1-KD-B1.md` — added §R-FENCE Discovery section
+
+**AC results:** All 8 PASS. 39/39 tests pass. tsc clean. Sandbox PASS 3/3.
+
+**R-FENCE discovery:** VIABLE. Import style confirmed: `.js`-suffixed ESM throughout domain/application/interface. G4 deliberate-violation pair calibrated: `import type { ReadingRequest } from '../../application/dtos.js'` in `src/primitive/hexagram-resolver/index.ts` will be the Phase 2 proof target.
+
+**Key technical decisions:**
+- Embedded full TRIGRAM_LINES + QUE_META (all 64 hexagrams) in primitive — not just the source lines 198-201 from services.ts, because the TRIGRAMS_TO_QUE map is built dynamically from QUE_META at module load
+- Added explicit length check (`signals.length !== 6`) before the trigram lookup to produce a clear error message
+- Sandbox runner updated with per-scenario dispatch on `scenario.primitive === 'hexagram-resolver'`
+- Failure scenario uses `expect_error: true` flag — sandbox catches thrown error and records PASS
+
+**G12 streak:** #1 of 3. Sandbox GREEN before RETURN. DoD Gate satisfied.
+
+Zone health: P1-B1 DONE — first primitive extracted, R-FENCE VIABLE, G12 streak 1/3 | HEALTHY

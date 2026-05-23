@@ -243,6 +243,31 @@ R-FENCE discovery: RECORDED. Phase 2 G4 will use this recorded style for empiric
 
 ---
 
+## R-FENCE Discovery
+
+Import style confirmed: .js-suffixed ESM (e.g., from '../../application/dtos.js').
+
+Evidence from `grep -rn "from.*\.js'"` across domain/application/interface layers:
+- `src/domain/services.ts:18:` `} from './models.js';`
+- `src/domain/repositories.ts:7:` `import type { KinhDichStoredRow, MarkovData } from './models.js';`
+- `src/application/usecases.ts:8:` `import { computeReading, QUE_META } from '../domain/services.js';`
+- `src/interface/handlers.ts:9:` `import type { ReadingUseCase, MarketHexagramUseCase } from '../application/usecases.js';`
+- `src/interface/serializers.ts:7:` `import { HexagramNotFoundError, InsufficientDataError } from '../domain/errors.js';`
+
+All relative imports throughout domain/application/interface layers use `.js`-suffixed ESM. No ambiguity — the style is uniform and canonical for Bun's `moduleResolution: "bundler"`.
+
+Phase 2 G4 deliberate-violation pair (eslint-plugin-boundaries proof):
+- Source file: `apps/kinh-dich-service/src/primitive/hexagram-resolver/index.ts`
+- Violation import: `import type { ReadingRequest } from '../../application/dtos.js'`
+- Expected outcome: `bunx eslint src/ --max-warnings 0` exits non-zero with "Fence-A" or similar error in output
+- Concrete proof: inject the violation import → run eslint → observe non-zero exit + error message → revert → exit 0
+- Path resolves: `../../application/dtos.js` from `src/primitive/hexagram-resolver/index.ts` resolves to `src/application/dtos.ts` (confirmed file exists with `ReadingRequest` export)
+
+R-FENCE discovery: RECORDED. Phase 2 G4 will use this recorded style for empirical AC-4b proof.
+R-FENCE verdict: VIABLE — import style matched, deliberate-violation pair calibrated, no blockers.
+
+---
+
 ## R-FENCE Gate (Critical Information — Phase 2 G4 Target)
 
 **Gate status: DISCOVERY MODE**

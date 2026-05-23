@@ -16,6 +16,7 @@
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
+import { resolveHexagram } from '../primitive/hexagram-resolver/index.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -98,6 +99,53 @@ function loadScenarioFiles(dir: string, scenario: string): string[] {
   return existsSync(full) ? [full] : [];
 }
 
+// ── Primitive executors ───────────────────────────────────────────────────────
+
+/**
+ * Execute a hexagram-resolver scenario.
+ * Dispatched when scenario.primitive === 'hexagram-resolver'.
+ */
+function runHexagramResolverScenario(fileName: string, scenario: ScenarioFile): ScenarioResult {
+  const input = scenario.input as unknown as Record<string, unknown>;
+  const signals = input['signals'] as number[] | undefined;
+
+  if (!Array.isArray(signals)) {
+    return { file: fileName, status: 'FAIL', error: 'hexagram-resolver scenario missing input.signals array' };
+  }
+
+  const expectError = scenario.expect_error === true;
+  const expected = scenario.expected as Record<string, unknown> | undefined;
+
+  try {
+    const result = resolveHexagram(signals);
+
+    if (expectError) {
+      return { file: fileName, status: 'FAIL', error: `Expected error but got result: ${result}` };
+    }
+
+    if (expected !== undefined) {
+      const expectedHexagram = expected['hexagram'] as number | null;
+      if (expectedHexagram !== null && result !== expectedHexagram) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `Expected hexagram ${expectedHexagram} but got ${result}`,
+          output: result,
+        };
+      }
+    }
+
+    return { file: fileName, status: 'PASS', output: { hexagram: result } };
+  } catch (err) {
+    if (expectError) {
+      // Expected error — scenario passes
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { file: fileName, status: 'PASS', output: { error: errMsg } };
+    }
+    return { file: fileName, status: 'FAIL', error: `Unexpected error: ${err}` };
+  }
+}
+
 // ── Scenario execution ────────────────────────────────────────────────────────
 
 function runScenario(filePath: string): ScenarioResult {
@@ -126,9 +174,12 @@ function runScenario(filePath: string): ScenarioResult {
     };
   }
 
-  // No primitives exist yet in P1-A — scenarios are PASS by structure validation only.
-  // P1-B1 onward will add primitive-specific execution dispatch here.
-  // This runner treats a well-formed scenario JSON as structurally PASS at this stage.
+  // Dispatch to primitive executor based on scenario.primitive field.
+  if (scenario.primitive === 'hexagram-resolver') {
+    return runHexagramResolverScenario(fileName, scenario);
+  }
+
+  // Fallback: well-formed scenario with no known primitive → structural PASS.
   return { file: fileName, status: 'PASS', output: scenario.input };
 }
 
