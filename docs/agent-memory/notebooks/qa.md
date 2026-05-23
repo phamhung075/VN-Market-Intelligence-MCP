@@ -21,6 +21,29 @@ No dispatch chain — PO spawns dev-ta in substep 2b.
 
 ---
 
+## c282 cycle-14 · 2026-05-23 · P2-D4 G10 audit — RSI Wilder smoothing fix (dev-ta P2-D3)
+
+**Task:** P2-D4 G10 audit — forbidden-reads compliance | **Verdict:** PASS — G10 = YES
+
+```
+date: 2026-05-23
+outcome: PASS
+type: audit-gate (G10 AI-fixability proof)
+commit_target: d909492b (dev-ta P2-D3 fix)
+audit_signal: docs/signals/qa-P2-D4-done-20260523T022718Z.json
+```
+
+| AC | Result | Notes |
+|----|--------|-------|
+| AC-1: cycle count | PASS | Exactly 1 commit between dispatch+fix. Single amend = cycle-internal. |
+| AC-2: forbidden reads | PASS | Session 290037b0 JSONL audited. 0 forbidden path inputs. |
+| AC-3: allowed reads | PASS | All 6 self-reported reads confirmed on allowed list. |
+| AC-4: sandbox 30/30 | PASS | Verified at d909492b state. HEAD has P2-E2 injection (expected). |
+
+**G10 = PASS.** dev-ta fixed RSI Wilder smoothing off-by-one in 1 of 2 cycles from dashboard signal alone. No forbidden reads detected via JSONL session audit. Sandbox 30/30 GREEN at fix commit. PO to flip G10→YES in cycle-15.
+
+---
+
 ## c263 · 2026-05-22 · P1 closure gate — technical-analysis pilot
 
 **Task:** Phase 1 closure verification (commit f0958a97 / P1-E2) | **Verdict:** PASS — Phase 2 UNBLOCKED
