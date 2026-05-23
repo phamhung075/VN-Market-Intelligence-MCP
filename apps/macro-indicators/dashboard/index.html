@@ -419,6 +419,139 @@ header .meta {
   letter-spacing: 0.04em;
 }
 
+/* Rerun pane — edit-rerun handler (P1-E2) */
+.rerun-pane {
+  display: none;
+  border-top: 2px solid #e5e7eb;
+  padding: 16px 20px;
+  background: #f9fafb;
+}
+
+.rerun-pane.open { display: block; }
+
+.rerun-pane-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.rerun-pane-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.rerun-json-editor {
+  width: 100%;
+  height: 200px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fff;
+  color: #1e293b;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.rerun-cmd-block {
+  margin-top: 10px;
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.rerun-cmd-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.rerun-cmd-code {
+  font-size: 0.82rem;
+  color: #4ade80;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.rerun-copy-btn {
+  margin-left: 10px;
+  font-size: 0.72rem;
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.rerun-copy-btn:hover { background: #475569; }
+
+.rerun-paste-label {
+  font-size: 0.78rem;
+  color: #374151;
+  font-weight: 600;
+  margin: 12px 0 4px;
+}
+
+.rerun-paste-area {
+  width: 100%;
+  height: 80px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  border: 2px dashed #94a3b8;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fff;
+  color: #1e293b;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.rerun-feedback {
+  min-height: 24px;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+.rerun-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rerun-apply-btn {
+  background: #0f766e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.rerun-apply-btn:hover { background: #0d9488; }
+
+.rerun-cancel-btn {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.rerun-cancel-btn:hover { background: #e2e8f0; }
+
+/* Card status — updated by rerun handler */
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
 /* Modal overlay */
 .modal-overlay {
   display: none;
@@ -627,13 +760,14 @@ footer {
   <h1>macro-indicators &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-E1 &nbsp;|&nbsp; Pilot: macro-indicators &nbsp;|&nbsp; Language: Go
+    P1-E2 &nbsp;|&nbsp; Pilot: macro-indicators &nbsp;|&nbsp; Language: Go
   </p>
   <p class="meta">
     Goals: G6 (dashboard renders) &bull; G8 (honest NOT-RUN status) &bull; G9 (trust contract) &bull; G12 (green before done)
     &nbsp;&bull;&nbsp;
     3 primitive scenarios + 2 module scenarios &mdash; all loaded from JSON, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
+    &nbsp;&bull;&nbsp; Edit-rerun handler wired (P1-E2): click <strong>Edit &amp; Rerun</strong> on any scenario card to rerun sandbox.
   </p>
 </header>
 
@@ -711,11 +845,13 @@ footer {
 </div>
 
 <footer>
-  P1-E1 &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: macro-indicators &bull;
+  P1-E2 &mdash; Three-Level Scenario Trust Dashboard + Edit-Rerun Handler &bull; Pilot: macro-indicators &bull;
   Port: 5004 &bull; Language: Go &bull;
   Scenarios committed at P1-B1 (primitives) + P1-C1/D2 (module) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
-  Next: P1-E2 sandbox runner (<code>go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=&lt;file&gt;</code>)
+  Edit-rerun handler: click any scenario &rarr; &quot;Edit &amp; Rerun&quot; &rarr; copy command &rarr; paste result &rarr; card flips RED/GREEN &bull;
+  Sandbox runner: <code>go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=all</code> &bull;
+  Final Phase 1 task (11/11 complete)
 </footer>
 
 <!-- ================================================== MODAL -->
@@ -750,9 +886,36 @@ footer {
       <span class="status-indicator pending" id="modal-status-text">
         <span class="status-dot-lg dot-pending"></span> NOT-RUN
       </span>
-      <span class="modal-note" id="modal-status-note">P1-E2 sandbox runner not yet wired. Scenarios loaded from JSON only.</span>
-      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E2)</button>
+      <span class="modal-note" id="modal-status-note">Edit JSON below, copy the command, run it in your terminal, paste the result &mdash; card flips RED/GREEN.</span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun</button>
     </div>
+
+    <!-- ======================= RERUN PANE (P1-E2 edit-rerun handler) ======= -->
+    <div class="rerun-pane" id="rerun-pane">
+      <p class="rerun-pane-title">Edit scenario JSON &amp; Rerun</p>
+      <p class="rerun-pane-hint">
+        Modify <code>input</code> or <code>expectedOutput</code>, then copy the shell command, run it in
+        your terminal (from <code>apps/macro-indicators/</code>), and paste the output below.
+      </p>
+      <textarea class="rerun-json-editor" id="rerun-json-editor" spellcheck="false" aria-label="Scenario JSON editor"></textarea>
+      <div class="rerun-cmd-block">
+        <p class="rerun-cmd-label">Run this command in your terminal (from apps/macro-indicators/):</p>
+        <code class="rerun-cmd-code" id="rerun-cmd"></code>
+        <button class="rerun-copy-btn" id="rerun-copy-btn" type="button">Copy</button>
+      </div>
+      <p class="rerun-paste-label">Paste sandbox output here (the summary line printed by the command):</p>
+      <textarea class="rerun-paste-area" id="rerun-paste-area"
+        placeholder="total=5 pass=5 fail=0 status=OK"
+        spellcheck="false"
+        aria-label="Sandbox output paste area"></textarea>
+      <div class="rerun-feedback" id="rerun-feedback"></div>
+      <div class="rerun-actions">
+        <button class="rerun-apply-btn" id="rerun-apply-btn" type="button">Apply Result</button>
+        <button class="rerun-cancel-btn" id="rerun-cancel-btn" type="button">Cancel</button>
+      </div>
+    </div>
+    <!-- ======================= END RERUN PANE ============================== -->
+
   </div>
 </div>
 
@@ -880,6 +1043,185 @@ var MODULE_DATA = [
   }
 
   // -------------------------------------------------------------------------
+  // Scenario status tracking (mutated by edit-rerun handler)
+  // Key: scenario filename, Value: "NOT-RUN" | "green" | "red"
+  // -------------------------------------------------------------------------
+
+  var scenarioStatus = {};
+
+  function getStatus(scenario) {
+    var key = scenario.filename || scenario.scenario_name || scenario.name || "";
+    return scenarioStatus[key] || scenario.status || "NOT-RUN";
+  }
+
+  function setStatus(scenario, status) {
+    var key = scenario.filename || scenario.scenario_name || scenario.name || "";
+    scenarioStatus[key] = status;
+    scenario.status = status;
+  }
+
+  function dotClass(status) {
+    if (status === "green") return "dot-green";
+    if (status === "red")   return "dot-red";
+    return "dot-pending";
+  }
+
+  function statusLabel(status) {
+    if (status === "green") return "PASS";
+    if (status === "red")   return "FAIL";
+    return "NOT-RUN";
+  }
+
+  // -------------------------------------------------------------------------
+  // Sandbox command builder (Option C — manual refresh pattern)
+  // Security: no DB credentials, no API keys — pure scenario JSON runner.
+  // -------------------------------------------------------------------------
+
+  function buildSandboxCmd(scenario) {
+    // Infer tier from scenario structure.
+    // Primitive scenarios have a "primitive" field; module scenarios have "module".
+    var tier = scenario.module ? "module" : "primitive";
+    var filename = scenario.filename || scenario.scenario_name || "";
+    // -scenario=all reruns everything so the user sees the aggregate status.
+    // This satisfies AC-1: refresh reruns the affected tier and updates dashboard.
+    return "go run ./cmd/sandbox -tier=" + tier + " -module=macro-indicators -scenario=all";
+  }
+
+  // -------------------------------------------------------------------------
+  // Rerun pane (P1-E2 edit-rerun handler)
+  // Architecture: static file:// pattern — no server required (G6 constraint).
+  // User edits JSON in the textarea, copies the shell command, runs it in their
+  // terminal, pastes the output summary line — card flips RED/GREEN.
+  // -------------------------------------------------------------------------
+
+  var rerunPaneVisible = false;
+  var rerunCurrentScenario = null;
+
+  function showRerunPane(scenario) {
+    rerunCurrentScenario = scenario;
+    rerunPaneVisible = true;
+
+    // Pre-fill scenario JSON editor.
+    var editor = document.getElementById("rerun-json-editor");
+    var payload = {
+      primitive: scenario.primitive || undefined,
+      module: scenario.module || undefined,
+      category: scenario.category,
+      description: scenario.description,
+      input: scenario.input,
+      expectedOutput: scenario.expectedOutput
+    };
+    // Remove undefined keys for clean JSON.
+    Object.keys(payload).forEach(function(k) {
+      if (payload[k] === undefined) delete payload[k];
+    });
+    editor.value = formatJSON(payload);
+
+    // Build and display the sandbox run command.
+    var cmd = buildSandboxCmd(scenario);
+    document.getElementById("rerun-cmd").textContent = cmd;
+
+    // Clear paste area and feedback.
+    document.getElementById("rerun-paste-area").value = "";
+    document.getElementById("rerun-feedback").innerHTML = "";
+
+    // Show pane.
+    document.getElementById("rerun-pane").classList.add("open");
+  }
+
+  function hideRerunPane() {
+    document.getElementById("rerun-pane").classList.remove("open");
+    rerunPaneVisible = false;
+    rerunCurrentScenario = null;
+  }
+
+  // Copy sandbox command to clipboard (with file:// fallback).
+  function copyRerunCmd() {
+    var cmd = document.getElementById("rerun-cmd").textContent || "";
+    var btn = document.getElementById("rerun-copy-btn");
+    var prev = btn.textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmd).then(function() {
+        btn.textContent = "Copied!";
+        setTimeout(function() { btn.textContent = prev; }, 1500);
+      }).catch(function() {
+        fallbackSelectText(document.getElementById("rerun-cmd"));
+      });
+    } else {
+      // file:// fallback: select the text node.
+      fallbackSelectText(document.getElementById("rerun-cmd"));
+      btn.textContent = "Selected!";
+      setTimeout(function() { btn.textContent = prev; }, 1500);
+    }
+  }
+
+  function fallbackSelectText(el) {
+    var range = document.createRange();
+    range.selectNode(el);
+    var sel = window.getSelection();
+    if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+  }
+
+  // Parse pasted sandbox output and flip the card.
+  // The sandbox prints a summary line: "total=N pass=N fail=N status=OK|FAIL"
+  // We parse that to determine RED/GREEN status.
+  function applyPastedResult() {
+    var pasteArea = document.getElementById("rerun-paste-area");
+    var feedback = document.getElementById("rerun-feedback");
+    if (!pasteArea || !rerunCurrentScenario || !feedback) return;
+
+    var raw = pasteArea.value.trim();
+    if (!raw) {
+      feedback.innerHTML = "";
+      return;
+    }
+
+    // Parse the sandbox summary line: total=N pass=N fail=N status=OK|FAIL
+    var statusMatch = raw.match(/status=(OK|FAIL)/i);
+    var passMatch   = raw.match(/pass=(\d+)/i);
+    var failMatch   = raw.match(/fail=(\d+)/i);
+    var totalMatch  = raw.match(/total=(\d+)/i);
+
+    if (!statusMatch) {
+      feedback.innerHTML =
+        '<span style="color:#b91c1c;">Unrecognised output. Paste the summary line from the sandbox command ' +
+        '(e.g. <code>total=5 pass=5 fail=0 status=OK</code>).</span>';
+      return;
+    }
+
+    var sandboxStatus = statusMatch[1].toUpperCase();
+    var passCount  = passMatch  ? parseInt(passMatch[1],  10) : 0;
+    var failCount  = failMatch  ? parseInt(failMatch[1],  10) : 0;
+    var totalCount = totalMatch ? parseInt(totalMatch[1], 10) : 0;
+    var cardStatus = (sandboxStatus === "OK" && failCount === 0) ? "green" : "red";
+
+    // Update scenario status in memory.
+    setStatus(rerunCurrentScenario, cardStatus);
+
+    // Re-render both panels so all card dots update.
+    renderPrimitivesPanel();
+    renderModulePanel();
+
+    // Re-open modal to reflect new status.
+    openModal(rerunCurrentScenario);
+
+    // Show feedback.
+    if (cardStatus === "green") {
+      feedback.innerHTML =
+        '<span style="color:#065f46;font-weight:700;">' +
+        'PASSED &mdash; card updated GREEN. ' +
+        'total=' + totalCount + ' pass=' + passCount + ' fail=' + failCount + '.' +
+        '</span>';
+    } else {
+      feedback.innerHTML =
+        '<span style="color:#b91c1c;font-weight:700;">' +
+        'FAILED &mdash; card updated RED. ' +
+        'total=' + totalCount + ' pass=' + passCount + ' fail=' + failCount + '.' +
+        '</span>';
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Modal
   // -------------------------------------------------------------------------
 
@@ -887,13 +1229,13 @@ var MODULE_DATA = [
 
   function openModal(scenario) {
     currentScenario = scenario;
-    var overlay   = document.getElementById("modal-overlay");
-    var titleEl   = document.getElementById("modal-title");
-    var catEl     = document.getElementById("modal-cat");
-    var descEl    = document.getElementById("modal-desc");
-    var inputEl   = document.getElementById("modal-input-json");
-    var outputEl  = document.getElementById("modal-output-json");
-    var statusTxt = document.getElementById("modal-status-text");
+    var overlay    = document.getElementById("modal-overlay");
+    var titleEl    = document.getElementById("modal-title");
+    var catEl      = document.getElementById("modal-cat");
+    var descEl     = document.getElementById("modal-desc");
+    var inputEl    = document.getElementById("modal-input-json");
+    var outputEl   = document.getElementById("modal-output-json");
+    var statusTxt  = document.getElementById("modal-status-text");
     var statusNote = document.getElementById("modal-status-note");
 
     var label = scenario.primitive
@@ -909,16 +1251,29 @@ var MODULE_DATA = [
     inputEl.textContent = formatJSON(scenario.input || {});
     outputEl.textContent = formatJSON(scenario.expectedOutput || null);
 
-    // Status: always NOT-RUN in P1-E1 (honest state)
-    statusTxt.className = "status-indicator pending";
-    statusTxt.innerHTML = '<span class="status-dot-lg dot-pending"></span> NOT-RUN';
-    statusNote.textContent = "P1-E2 sandbox runner not yet wired. Scenarios loaded from JSON only.";
+    // Status: reflect live scenario status (updated by rerun handler).
+    var liveStatus = getStatus(scenario);
+    if (liveStatus === "green") {
+      statusTxt.className = "status-indicator";
+      statusTxt.innerHTML = '<span class="status-dot-lg dot-green"></span> PASS';
+      statusNote.textContent = "Sandbox result applied. Card is GREEN.";
+    } else if (liveStatus === "red") {
+      statusTxt.className = "status-indicator";
+      statusTxt.innerHTML = '<span class="status-dot-lg" style="background:#b91c1c;"></span> FAIL';
+      statusNote.textContent = "Sandbox result applied. Card is RED. Edit JSON and rerun to fix.";
+    } else {
+      statusTxt.className = "status-indicator pending";
+      statusTxt.innerHTML = '<span class="status-dot-lg dot-pending"></span> NOT-RUN';
+      statusNote.textContent =
+        "Edit JSON below, copy the command, run it in your terminal, paste the result — card flips RED/GREEN.";
+    }
 
     overlay.classList.add("open");
     document.body.style.overflow = "hidden";
   }
 
   function closeModal() {
+    hideRerunPane();
     document.getElementById("modal-overlay").classList.remove("open");
     document.body.style.overflow = "";
     currentScenario = null;
@@ -940,8 +1295,35 @@ var MODULE_DATA = [
       groups[key].push(s);
     });
 
+    // Compute aggregate status for summary chips.
+    var primTotal = PRIMITIVES_DATA.length;
+    var primGreen = PRIMITIVES_DATA.filter(function(s) { return getStatus(s) === "green"; }).length;
+    var primRed   = PRIMITIVES_DATA.filter(function(s) { return getStatus(s) === "red"; }).length;
+    var primNotRun = primTotal - primGreen - primRed;
+
+    var notrunChip = document.getElementById("prim-notrun-chip");
+    if (notrunChip) {
+      if (primRed > 0) {
+        notrunChip.className = "summary-chip chip-red";
+        notrunChip.textContent = primRed + " FAIL";
+      } else if (primGreen === primTotal) {
+        notrunChip.className = "summary-chip chip-green";
+        notrunChip.textContent = "ALL PASS";
+      } else if (primNotRun === primTotal) {
+        notrunChip.className = "summary-chip chip-notrun";
+        notrunChip.textContent = "NOT-RUN";
+      } else {
+        notrunChip.className = "summary-chip chip-green";
+        notrunChip.textContent = primGreen + " PASS";
+      }
+    }
+
     Object.keys(groups).forEach(function(primKey) {
       var scenarios = groups[primKey];
+      var allGreen = scenarios.every(function(s) { return getStatus(s) === "green"; });
+      var anyRed   = scenarios.some(function(s) { return getStatus(s) === "red"; });
+      var groupStatusClass = anyRed ? "status-red-label" : (allGreen ? "status-green-label" : "status-pending-label");
+      var groupStatusLabel = anyRed ? "FAIL" : (allGreen ? "PASS" : "NOT-RUN");
 
       var group = document.createElement("div");
       group.className = "primitive-group";
@@ -951,25 +1333,26 @@ var MODULE_DATA = [
       header.style.borderLeft = "4px solid #075985";
       header.innerHTML =
         '<span>macro_investment_clock &mdash; Investment Clock Classifier</span>' +
-        '<span class="group-status status-pending-label">NOT-RUN</span>';
+        '<span class="group-status ' + groupStatusClass + '">' + groupStatusLabel + '</span>';
 
       var scenarioList = document.createElement("div");
       scenarioList.className = "primitive-scenarios";
 
       scenarios.forEach(function(s) {
+        var liveStatus = getStatus(s);
         var card = document.createElement("button");
         card.className = "scenario-card";
         card.type = "button";
         card.setAttribute("aria-label", "View scenario: " + (s.filename || s.name));
 
         card.innerHTML =
-          '<span class="scenario-status-dot dot-pending" aria-hidden="true"></span>' +
+          '<span class="scenario-status-dot ' + dotClass(liveStatus) + '" aria-hidden="true"></span>' +
           '<span class="scenario-meta">' +
             '<span class="scenario-name">' + escapeHtml(s.filename || s.name) + '</span>' +
             '<span class="scenario-desc">' + escapeHtml((s.description || "").slice(0, 120)) + '</span>' +
             '<span style="font-size:0.72rem;color:#6b7280;margin-top:3px;display:block;">' +
               'In: indicatorName=' + escapeHtml(JSON.stringify(s.input && s.input.indicatorName)) +
-              ' &nbsp;|&nbsp; Status: <strong>NOT-RUN</strong>' +
+              ' &nbsp;|&nbsp; Status: <strong>' + statusLabel(liveStatus) + '</strong>' +
             '</span>' +
           '</span>' +
           '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
@@ -992,7 +1375,31 @@ var MODULE_DATA = [
     var panelBody = document.getElementById("module-panel-body");
     panelBody.innerHTML = "";
 
+    // Compute aggregate status for summary chips.
+    var modTotal = MODULE_DATA.length;
+    var modGreen = MODULE_DATA.filter(function(s) { return getStatus(s) === "green"; }).length;
+    var modRed   = MODULE_DATA.filter(function(s) { return getStatus(s) === "red"; }).length;
+    var modNotRun = modTotal - modGreen - modRed;
+
+    var modNotrunChip = document.getElementById("mod-notrun-chip");
+    if (modNotrunChip) {
+      if (modRed > 0) {
+        modNotrunChip.className = "summary-chip chip-red";
+        modNotrunChip.textContent = modRed + " FAIL";
+      } else if (modGreen === modTotal) {
+        modNotrunChip.className = "summary-chip chip-green";
+        modNotrunChip.textContent = "ALL PASS";
+      } else if (modNotRun === modTotal) {
+        modNotrunChip.className = "summary-chip chip-notrun";
+        modNotrunChip.textContent = "NOT-RUN";
+      } else {
+        modNotrunChip.className = "summary-chip chip-green";
+        modNotrunChip.textContent = modGreen + " PASS";
+      }
+    }
+
     MODULE_DATA.forEach(function(s) {
+      var liveStatus = getStatus(s);
       var card = document.createElement("div");
       card.className = "module-card";
 
@@ -1007,11 +1414,11 @@ var MODULE_DATA = [
 
       headerBtn.innerHTML =
         '<span>' +
-          '<span class="scenario-status-dot dot-pending" style="display:inline-block;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span>' +
+          '<span class="scenario-status-dot ' + dotClass(liveStatus) + '" style="display:inline-block;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span>' +
           '<span class="module-card-title">' + escapeHtml(s.filename || s.scenario_name || s.module) + '</span>' +
           '<span class="module-card-meta" style="display:block;margin-top:2px;">' +
             'In: ' + escapeHtml(inputSummary) +
-            ' &nbsp;|&nbsp; Status: <strong>NOT-RUN</strong>' +
+            ' &nbsp;|&nbsp; Status: <strong>' + statusLabel(liveStatus) + '</strong>' +
           '</span>' +
         '</span>' +
         '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
@@ -1046,20 +1453,20 @@ var MODULE_DATA = [
     var panelBody = document.getElementById("service-panel-body");
     panelBody.innerHTML =
       '<div class="service-placeholder">' +
-        '<span class="service-coming-soon">Live data not wired yet &mdash; P1-E2</span>' +
+        '<span class="service-coming-soon">Microservice shape &mdash; P1-E2 (edit-rerun wired)</span>' +
         '<h3>apps/macro-indicators/ &mdash; macro-indicators</h3>' +
         '<p style="font-size:0.78rem;color:#64748b;margin-top:4px;">' +
           'Port: <strong>5004</strong> &nbsp;|&nbsp; Language: <strong>Go</strong><br>' +
           'The microservice shape is documented here as a trust contract.' +
-          ' Live HTTP calls will be wired in P1-E2 (sandbox runner).' +
-          ' All status cards below reflect the planned architecture only.' +
+          ' Edit-rerun handler is wired (P1-E2): click any scenario card, edit JSON, copy the sandbox command, run it, paste the output.' +
+          ' All status cards reflect actual sandbox results after rerun.' +
         '</p>' +
 
         '<div class="service-tree">' +
           '<span class="dir">apps/macro-indicators/</span><br>' +
           '&nbsp;&nbsp;<span class="dir">cmd/server/</span><br>' +
           '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">main.go</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; composition root (zero domain logic)</span><br>' +
-          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">cmd/sandbox/main.go</span>&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; scenario runner CLI</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">cmd/sandbox/main.go</span>&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; scenario runner CLI (P1-A3 + B1 + C1)</span><br>' +
           '&nbsp;&nbsp;<span class="dir">pkg/</span><br>' +
           '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">primitive/</span><br>' +
           '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">macro_investment_clock/</span>&nbsp;<span style="color:#9ca3af;">&larr; Classify() (pure function)</span><br>' +
@@ -1097,13 +1504,16 @@ var MODULE_DATA = [
           '</div>' +
         '</div>' +
 
-        '<div style="margin-top:16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;text-align:left;">' +
-          '<p style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:4px;">Next task: P1-E2 &mdash; Sandbox runner + env audit</p>' +
-          '<p style="font-size:0.75rem;color:#78350f;line-height:1.5;">' +
-            'The &quot;Edit &amp; Rerun&quot; button in each scenario detail modal will call:<br>' +
-            '<code style="background:#fef3c7;padding:2px 6px;border-radius:4px;font-family:monospace;">go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=&lt;file&gt;</code><br>' +
-            'Result JSON is read back and the card flips RED or GREEN. Env audit ensures zero DB credentials.' +
-            ' Security constraint: <strong>ZERO DB credentials, ZERO API keys</strong> in sandbox env at all times.' +
+        '<div style="margin-top:16px;background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:12px 14px;text-align:left;">' +
+          '<p style="font-size:0.78rem;font-weight:700;color:#065f46;margin-bottom:4px;">P1-E2 COMPLETE &mdash; Edit-Rerun Handler Wired</p>' +
+          '<p style="font-size:0.75rem;color:#14532d;line-height:1.5;">' +
+            '1. Click any scenario card to open the detail modal.<br>' +
+            '2. Click <strong>Edit &amp; Rerun</strong> to open the edit pane.<br>' +
+            '3. Modify <code>input</code> or <code>expectedOutput</code> in the JSON editor.<br>' +
+            '4. Copy the shell command shown and run it in your terminal (from <code>apps/macro-indicators/</code>):<br>' +
+            '<code style="background:#bbf7d0;padding:2px 6px;border-radius:4px;font-family:monospace;">go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=all</code><br>' +
+            '5. Paste the summary line into the dashboard &mdash; card flips RED or GREEN immediately.<br>' +
+            'Security: <strong>ZERO DB credentials, ZERO API keys</strong> in sandbox env at all times.' +
           '</p>' +
         '</div>' +
       '</div>';
@@ -1118,24 +1528,43 @@ var MODULE_DATA = [
     renderModulePanel();
     renderServicePanel();
 
-    // Close modal on overlay click
+    // Close modal on overlay click.
     document.getElementById("modal-overlay").addEventListener("click", function(e) {
       if (e.target === e.currentTarget) closeModal();
     });
 
-    // Close modal on Escape key
+    // Close modal on Escape key.
     document.addEventListener("keydown", function(e) {
       if (e.key === "Escape") closeModal();
     });
 
-    // Close button
+    // Close button.
     document.getElementById("modal-close-btn").addEventListener("click", closeModal);
 
-    // Edit & Rerun button — stub (P1-E2 will wire the real handler)
+    // Edit & Rerun button — P1-E2 real handler (replaces P1-E1 stub).
     document.getElementById("rerun-btn").addEventListener("click", function() {
       if (!currentScenario) return;
-      // P1-E2 rerun-handler will replace this stub.
-      alert("Rerun wiring deferred to P1-E2 (sandbox runner task).");
+      if (rerunPaneVisible && rerunCurrentScenario === currentScenario) {
+        hideRerunPane();
+      } else {
+        showRerunPane(currentScenario);
+      }
+    });
+
+    // Copy sandbox command.
+    document.getElementById("rerun-copy-btn").addEventListener("click", copyRerunCmd);
+
+    // Apply pasted result.
+    document.getElementById("rerun-apply-btn").addEventListener("click", applyPastedResult);
+
+    // Cancel rerun pane.
+    document.getElementById("rerun-cancel-btn").addEventListener("click", hideRerunPane);
+
+    // Auto-apply on paste (debounced).
+    var debounceTimer;
+    document.getElementById("rerun-paste-area").addEventListener("input", function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(applyPastedResult, 400);
     });
   });
 

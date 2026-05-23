@@ -1,0 +1,24 @@
+# macro-indicators zone — .gitignore
+# Security: no credentials, no local env overrides committed.
+
+# Environment files — NEVER commit (charter §Security Clause: FRED_API_KEY, DB credentials)
+.env
+.env.local
+.env.test
+.env.*.local
+.env.production
+
+# Go build artefacts
+/bin/
+*.exe
+*.test
+*.out
+
+# Sandbox binary (if compiled — prefer go run in pilot)
+sandbox
+
+# macOS
+.DS_Store
+
+# Node / Bun (legacy TS scrapers)
+node_modules/
