@@ -5,7 +5,7 @@ phase: "2"
 pilot: "technical-analysis"
 owner: "dev-technical-analysis"
 goals: ["G11", "G12"]
-status: "PENDING"
+status: "DONE"
 gate: P2-E2
 anchor: "62edbf3d"
 estimate_hours: 1.0
@@ -78,7 +78,76 @@ Production source `apps/technical-analysis/pkg/primitive/**`, scenario JSON fixt
 ## What Done Looks Like
 
 All 25 primitive-tier scenarios GREEN + all 5 module-tier scenarios GREEN + `go test ./...` pass + `go vet` clean + `§Verification` pasted verbatim in handoff + single atomic commit per cycle ≤2 cycles.
+
+## §Verification
+
+### Root Cause
+
+Line 56-57 of `apps/technical-analysis/pkg/primitive/rsi/rsi.go` used `float64(period+1)` as the divisor in the Wilder smoothing loop instead of the correct `float64(period)`. Wilder's formula: `avgGain = (prevAvgGain*(period-1) + currentGain) / period`. Dividing by `period+1` produced values that were systematically too small (converged too slowly), causing all value-path scenarios to diverge while the error-path canary (`rsi-insufficient-data`) was unaffected.
+
+Surgical fix: two characters changed in rsi.go — `period+1` → `period` (lines 56 and 57).
+
+### go test -count=1 ./...
+
+```
+ok  github.com/vn-market-intelligence/technical-analysis/cmd/sandbox     0.359s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/module      0.665s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/primitive/bollinger_bands   1.302s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/primitive/detect_cross      1.969s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/primitive/macd              2.303s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/primitive/moving_average    1.633s
+ok  github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi               0.976s
+```
+
+### go vet ./...
+
+```
+(no output — exit 0)
+```
+
+### Primitive Tier — 25/25 GREEN
+
+| scenario | status |
+|---|---|
+| rsi-golden | GREEN |
+| rsi-mid-range | GREEN |
+| rsi-overbought-pullback | GREEN |
+| rsi-oversold-bounce | GREEN |
+| rsi-insufficient-data | GREEN |
+| bb-expansion | GREEN |
+| bb-golden | GREEN |
+| bb-insufficient-data | GREEN |
+| bb-period-equals-length | GREEN |
+| bb-squeeze | GREEN |
+| cross-edge | GREEN |
+| cross-failure | GREEN |
+| cross-golden | GREEN |
+| cross-multi-alternating | GREEN |
+| cross-parallel-no-cross | GREEN |
+| ma-dispatcher-unknown | GREEN |
+| ma-edge | GREEN |
+| ma-failure | GREEN |
+| ma-golden | GREEN |
+| ma-sma-vs-ema | GREEN |
+| macd-bearish-cross | GREEN |
+| macd-bullish-cross | GREEN |
+| macd-flat-zero | GREEN |
+| macd-golden | GREEN |
+| macd-insufficient-data | GREEN |
+
+### Module Tier — 5/5 GREEN
+
+| scenario | status |
+|---|---|
+| bb-ma-compression | GREEN |
+| edge-insufficient-candles | GREEN |
+| ema-crossover-detect-cross | GREEN |
+| multi-primitive-bullish-cross | GREEN |
+| rsi-macd-crossover | GREEN |
+
+**Total: 30/30 GREEN. G12 DoD satisfied.**
+
 ## Cycle Log
-Cycle 1: commit= result= notes=
+Cycle 1: commit= result=30/30 GREEN notes=Divisor bug period+1→period in Wilder smoothing loop. Surgical 2-char fix. All scenarios GREEN in cycle 1.
 Cycle 2: commit= result= notes=
 <!-- L84 explicit staging — git add apps/technical-analysis/pkg/primitive/rsi/rsi.go docs/handoffs/TASK_P2-E2.md — Closure-Anchor: 62edbf3d -->
