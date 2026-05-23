@@ -1,3 +1,4 @@
+// DEPRECATED: G5 Phase 2. Moved from domain/services/. Delete after G5 verification passes.
 Bun.env["DB_PATH"] = ":memory:"; // isolation — must be first line
 
 /**
@@ -20,7 +21,7 @@ import {
   computeBollingerBands,
   computeAllIndicators,
   type DailyCandle,
-} from "../domain/services/technicalIndicators.js";
+} from "./technicalIndicators.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

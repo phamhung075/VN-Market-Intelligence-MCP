@@ -87,3 +87,43 @@ AC: original path empty / _deprecated/ files present / bun test passes / find re
 - Use `git mv` to move files — this preserves history as renames, not deletes + creates.
 - The `_deprecated/` folder may already exist; create if needed.
 - Post-G5-verification, these files will be deleted entirely. For now, quarantine preserves reference.
+
+---
+
+## Verification (appended 2026-05-23T08:20Z — cycle-25)
+
+### AC-7: Tag Re-anchor
+- Pre-state: `943adc8eb8e1282467007a736043e9775a8721af refs/tags/p2-b-pre-delete` (stale — PO dispatch commit)
+- `git tag -d p2-b-pre-delete` → deleted stale tag
+- `git tag p2-b-pre-delete b9d0a82b` → re-anchored to P2-B1 landing
+- Post-state: `b9d0a82b2441cf754cc44e8af02c76527c25d2b7 refs/tags/p2-b-pre-delete` ✓
+
+### AC-1: Original path removed
+- `apps/mcp-server/src/domain/services/technicalIndicators.ts` — staged as git rename (R), no longer at original path ✓
+
+### AC-2: git mv to _deprecated/
+- `apps/mcp-server/src/_deprecated/technicalIndicators.ts` — staged via `git mv` (history preserved as rename) ✓
+
+### AC-3: Test file moved
+- `apps/mcp-server/src/_deprecated/1302-technical-indicators.test.ts` — staged via `git mv` ✓
+- Internal import updated: `../domain/services/technicalIndicators.js` → `./technicalIndicators.js` (co-located in _deprecated/)
+
+### AC-4: bun test passes
+- Exit code: 0
+- 9382 pass / 283 fail / 35 skip (9700 total, 904 files) — pre-existing failure baseline unchanged
+- 1302 test file: 50 pass / 0 fail (import resolved to co-located _deprecated/technicalIndicators.ts)
+
+### AC-5: find command output
+```
+apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts
+```
+Count outside _deprecated/: 1 (the rewired HTTP tool handler only) ✓
+
+### AC-6: DEPRECATED header added to both files
+- `_deprecated/technicalIndicators.ts` line 1: `// DEPRECATED: G5 Phase 2. Moved from domain/services/. Delete after G5 verification passes.` ✓
+- `_deprecated/1302-technical-indicators.test.ts` line 1: `// DEPRECATED: G5 Phase 2. Moved from domain/services/. Delete after G5 verification passes.` ✓
+
+### Sandbox 30/30 GREEN
+- Primitive tier: 25/25 green
+- Module tier: 5/5 green
+- G12 DoD: PASS

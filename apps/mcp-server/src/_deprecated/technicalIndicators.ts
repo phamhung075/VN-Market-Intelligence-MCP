@@ -1,3 +1,4 @@
+// DEPRECATED: G5 Phase 2. Moved from domain/services/. Delete after G5 verification passes.
 /**
  * Technical Indicators Domain Service — Task 1302
  *
