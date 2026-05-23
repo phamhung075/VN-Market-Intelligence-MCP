@@ -1,5 +1,26 @@
 # QA — Notebook
 
+## c282 cycle-15 · 2026-05-23 · P2-F3 G12 streak 3/3 independent verification
+
+**Task:** P2-F3 — verify G12 streak (QA-P1-closure + P2-D3 + P2-E2) | **Verdict:** PASS
+
+```
+date: 2026-05-23
+outcome: PASS
+type: streak-verification (read-only — no production code mutation)
+signal: docs/signals/qa-P2-F3-done-20260523T024500Z.json
+```
+
+| Task | Valid | Cycle-count | Sandbox | Forbidden-reads |
+|------|-------|-------------|---------|-----------------|
+| QA-P1-closure | YES | N/A (pre-streak) | 30/30 GREEN + g8HonestRed 5/5 | N/A |
+| P2-D3 (d909492b) | YES | 1 (git log 1d0acb5d..d909492b) | 30/30 GREEN | FULL (D4 JSONL audit) |
+| P2-E2 (f0cde20f) | YES | 1 (git log 37d867d5..f0cde20f) | 30/30 GREEN | COMPLIANT (7-path enumeration) |
+
+**Anomalies:** 0. G12 streak 3/3 CONFIRMED. PO may flip goals[G12].status → YES.
+
+---
+
 ## c282 cycle-14 · 2026-05-23 · P2-E2 inject — RSI Wilder smoothing fresh variant
 
 **Task:** P2-E2-inject — bug A injection for G11 regression-alarm proof | **Verdict:** INJECT COMPLETE
