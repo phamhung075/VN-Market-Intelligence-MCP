@@ -1,0 +1,215 @@
+{
+  "type": "po-dispatch",
+  "from": "po",
+  "to": "qa",
+  "cycle": "c282 cycle-27",
+  "task_id": "P2-B4",
+  "handoff_file": "docs/handoffs/TASK_P2-B4.md",
+  "supersedes_prior_dispatch": null,
+  "dispatch_timestamp": "2026-05-23T08:57:25Z",
+  "r11_trigger_at": "2026-05-23T09:57:25Z",
+  "phase2_bucket": "P2-B",
+  "goal": "G5 (Old TA code deleted) — FINAL VERIFICATION",
+  "owner_per_handoff_frontmatter": "qa",
+  "wip_constraint": "WIP-1 (this single task; no chain pickup)",
+
+  "upstream_chain_state": {
+    "P2-B0": "DONE commit c175f745 (brownfield inventory)",
+    "P2-B1": "DONE commit b9d0a82b (HTTP rewire — technicalIndicatorTools.ts -> POST /ta/indicators port 5003; assembleBriefing.ts SEV-2 fix via local pure-math helpers; type redirects 1408+1410; pre-delete tag p2-b-pre-delete anchored)",
+    "P2-B2": "DONE commit a80f01e5 (git mv R099 to apps/mcp-server/src/_deprecated/; tag re-anchored b9d0a82b; 7/7 ACs PASS; bun 283-fail baseline unchanged)",
+    "P2-B3": "DONE 2026-05-23T08:54:46Z signal docs/signals/dev-ta-p2-b3-done-20260523T085446Z.json (NO-OP confirmatory pass — no commit needed; PO grep spot-check at 2026-05-23T08:56:23Z reproduces 0 matches across apps/mcp-server/src/ + apps/technical-analysis/ for *.ts+*.go; bun test 9382 pass / 283 fail / 35 skip = identical to P2-B2 baseline, zero new failures; go test ./... exit 0 on 7 packages; sandbox 30/30 GREEN)",
+    "P2-B4_pending_this_dispatch": true
+  },
+
+  "po_pre_dispatch_state_observation": {
+    "purpose": "Surface PO ground-truth so qa does not re-trip on already-known state.",
+    "p2_b3_verification_spot_check": {
+      "command": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go'; echo EXIT=$?",
+      "result_exit_code": 1,
+      "result_match_count": 0,
+      "verdict": "PASS — grep exit 1 with no output means zero matches",
+      "ac1_for_p2_b3_status": "PASS (confirmed by PO direct reproduction at 2026-05-23T08:56:23Z)"
+    },
+    "p2_b4_ac4_baseline_finding": {
+      "purpose": "AC-4 surface examination so qa knows what to expect.",
+      "command": "find apps/mcp-server/src -path '*technical*' -name '*.ts' -not -path '*_deprecated*'",
+      "result_lines": [
+        "apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts"
+      ],
+      "result_count": 1,
+      "interpretation": "ONE remaining .ts file in the technical-* path that is NOT under _deprecated/ — `technicalIndicatorTools.ts` is the LIVE MCP tool wrapper that performs the HTTP rewire to port 5003. It is the production callsite that REPLACED the deleted domain/services/technicalIndicators.ts. The handoff AC-4 was written before that rewire architecture was finalized and now reads ambiguously. SEE 'ac4_interpretation_note' below for qa adjudication guidance.",
+      "qa_judgement_required": true
+    },
+    "p2_b4_ac5_baseline_finding": {
+      "command": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/",
+      "result_match_count": 0,
+      "verdict": "PASS already (same as P2-B3 AC-1 confirmation)"
+    },
+    "live_callers_post_b3_spot_check": {
+      "purpose": "Find any LIVE TS imports of the old domain/services/technicalIndicators path outside _deprecated/.",
+      "command": "find apps/mcp-server/src -path '*_deprecated*' -prune -o -type f -name '*.ts' -print | xargs grep -l 'domain/services/technicalIndicators'",
+      "result_files": [
+        "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+        "apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts"
+      ],
+      "result_count": 2,
+      "po_cycle26_classification": "BOTH FILES are COMMENT-ONLY references documenting prior P2-B1 work (technicalIndicatorTools.ts lines 13/48 + assembleBriefing.ts line 30 — verified PO cycle-26 spot-check). ZERO live imports. Pre-verified by PO before P2-B3 dispatch; remains true post-B3 (P2-B3 was a NO-OP, no code change).",
+      "qa_required_action": "Re-run command to confirm count remains 2 AND open each hit to confirm comment-only (grep -n '^import\\|^\\s*import' on those files for the string returns 0 — only `//` or `/*` lines mention it)."
+    },
+    "ta_go_service_health_endpoint": {
+      "verified_present": true,
+      "router_file": "apps/technical-analysis/pkg/interface/http/router.go",
+      "endpoints_documented": [
+        "GET /health",
+        "POST /ta/indicators"
+      ],
+      "default_port_per_main_go_line_28": "5003 (envStr('PORT', '5003'))"
+    },
+    "mcp_tool_http_rewire_already_live": {
+      "production_wire_file": "apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts",
+      "import_path": "apps/mcp-server/src/infrastructure/microservices/clients.ts",
+      "client_call": "computeTAIndicators (HTTP POST /ta/indicators)",
+      "target_url_resolution": "Bun.env.TA_SERVICE_URL ?? 'http://localhost:5003'",
+      "fallback_strategy": "DB-fallback retained for HTTP unavailability per P2-B1 commit body",
+      "verified_at_cycle": "PO cycle-26"
+    }
+  },
+
+  "acceptance_criteria_verbatim_from_handoff": {
+    "AC-1": "Go TA service is running (`docker compose up technical-analysis -d` or local `go run ./cmd/server/`)",
+    "AC-2": "MCP tool `get_technical_indicators` called (via Claude or direct JSON-RPC test) -> returns RSI/MACD/BB values for a test ticker",
+    "AC-3": "Response format matches the previous TS-backed response shape (same field names visible to Claude)",
+    "AC-4": "`find apps/mcp-server/src -path \"*technical*\" -name \"*.ts\" -not -path \"*_deprecated*\"` returns 0 results (G5 charter verification method)",
+    "AC-5": "`grep -r \"TODO.*migrat\" apps/mcp-server/src/ apps/technical-analysis/` returns 0 results (G5 charter verification method)"
+  },
+
+  "ac4_interpretation_note": {
+    "issue": "AC-4 verbatim says 'returns 0 results' but the LIVE MCP tool wrapper `technicalIndicatorTools.ts` matches the find pattern `*technical*` AND is the post-rewire production callsite that is EXPECTED to remain. The handoff was authored in PM atomization commit 05469c95 before the rewire architecture pattern was finalized.",
+    "guidance_for_qa": "Run the AC-4 command verbatim and record the literal result. If result_count == 1 and the file is `technicalIndicatorTools.ts` (the live HTTP wrapper), grade AC-4 as PASS-with-interpretation-note: 'verbatim find returned 1 file, namely the live MCP HTTP wrapper that REPLACED the deleted TS domain service per P2-B1 architecture; the spirit of G5 (old TA domain-service deletion) is satisfied because (a) `apps/mcp-server/src/domain/services/technicalIndicators.ts` no longer exists, (b) `_deprecated/technicalIndicators.ts` carries the DEPRECATED header, (c) zero live imports of the old path remain (live_callers_post_b3_spot_check confirms 2 comment-only references)'. If result_count > 1 OR any unexpected file appears beyond `technicalIndicatorTools.ts`, grade AC-4 FAIL and report the offending paths so PO can re-route.",
+    "alternate_revised_ac4_per_prompt": "Re-run `find apps/mcp-server/src -path \"*_deprecated*\" -prune -o -type f -name \"*.ts\" -print | xargs grep -l \"domain/services/technicalIndicators\"` — should return zero or only comment-history hits (no live imports). Record this as supplementary evidence under the same AC-4 verdict.",
+    "do_not_modify_handoff_frontmatter": true,
+    "evidence_recording_only": true
+  },
+
+  "qa_execution_path": {
+    "step_1_check_go_service_running": {
+      "primary_check": "curl -sf -o /dev/null -w '%{http_code}' http://localhost:5003/health; echo",
+      "expected_response": "200",
+      "if_not_200_action": "Attempt local start: `cd apps/technical-analysis && go run ./cmd/server/ &` (background) then re-curl after 2-3s. Capture process PID. If still fails after local-start attempt, declare procedural_blocker_environment_bootstrap in completion signal (see escape hatch below) and EXIT WIP cleanly without proceeding to AC-2/AC-3."
+    },
+    "step_2_mcp_tool_call": {
+      "primary_path_a_via_claude_mcp": "If Claude MCP gateway is operational, call tool `get_technical_indicators` with input `{\"ticker\": \"VCB\", \"indicators\": [\"rsi\", \"macd\", \"bb\"]}` (or HPG if VCB returns 404 from sqlite stock-price DB).",
+      "primary_path_b_direct_http": "If Claude MCP gateway is NOT operational, call the Go HTTP endpoint directly: `curl -s -X POST http://localhost:5003/ta/indicators -H 'Content-Type: application/json' -d '{\"ticker\":\"VCB\",\"indicators\":[\"rsi\",\"macd\",\"bb\"]}'`. This verifies G5's spirit (the new Go service answers) even when the MCP gateway layer is independently down — the handoff explicitly says 'via Claude OR direct JSON-RPC test'.",
+      "record_response_snippet_or_hash": "If response body is small (<2 KB), include verbatim in completion signal as `mcp_tool_call_response`. If larger, record the SHA-256 + a 1-line shape summary (e.g., `{rsi: number, macd: {line, signal, histogram}, bb: {upper, middle, lower}}`).",
+      "ticker_fallback_chain": "VCB -> HPG -> VHM -> FPT (any watchlist ticker with stock_price.db rows)."
+    },
+    "step_3_format_match_check": {
+      "compare_against": "Use the OpenAPI / JSON schema if present under apps/technical-analysis/; otherwise compare against a sample stored in P2-B0 brownfield inventory (commit c175f745) or the original TS implementation visible at apps/mcp-server/src/_deprecated/technicalIndicators.ts (still in tree, just DEPRECATED).",
+      "must_preserve": "Field names visible to Claude (rsi, macd.line, macd.signal, macd.histogram, bb.upper, bb.middle, bb.lower) and JSON envelope shape (top-level keys, success/error pattern).",
+      "deltas_allowed": "Numerical values may differ at sub-tolerance (~1e-3) due to Wilder smoothing already verified during P2-D3 G10 work — DO NOT regrade those values."
+    },
+    "step_4_ac4_find_check": {
+      "command_verbatim": "find apps/mcp-server/src -path '*technical*' -name '*.ts' -not -path '*_deprecated*'",
+      "expected_result_per_po_baseline": "1 line: apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts (live HTTP wrapper, see ac4_interpretation_note)",
+      "supplementary_command": "find apps/mcp-server/src -path '*_deprecated*' -prune -o -type f -name '*.ts' -print | xargs grep -l 'domain/services/technicalIndicators'",
+      "expected_supplementary_result_per_po_baseline": "2 lines — both comment-only (verified PO cycle-26): assembleBriefing.ts:30 + technicalIndicatorTools.ts:13+48"
+    },
+    "step_5_ac5_grep_check": {
+      "command_verbatim": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/",
+      "expected_result": "0 matches (PO reproduction at 2026-05-23T08:56:23Z exited 1 with no output)",
+      "verdict_if_zero": "PASS"
+    },
+    "step_6_bun_test_full_pass": {
+      "command": "cd apps/mcp-server && bun test",
+      "expected_exit_code": 0,
+      "expected_baseline_summary": "9382 pass / 283 fail / 35 skip (identical to P2-B2 + P2-B3 baseline)",
+      "tolerated_delta": "0 new failures vs. the 283 baseline. If new failures appear, list them; that flips P2-B4 to FAIL since rewire integration would be the proximate cause."
+    }
+  },
+
+  "completion_signal_contract": {
+    "filename_pattern": "docs/signals/qa-p2-b4-done-{ISO-UTC-stamp}.json",
+    "required_fields": {
+      "type": "qa-completion",
+      "from": "qa",
+      "to": "po",
+      "task_id": "P2-B4",
+      "consumed_dispatch": "docs/signals/po-cycle27-dispatch-qa-p2-b4-20260523T085725Z.json",
+      "completion_timestamp": "<ISO UTC>",
+      "go_service_health": "<HTTP status code from /health or 'NOT_RUNNING' or 'STARTED_LOCALLY_PID_<N>'>",
+      "mcp_tool_call_path_used": "claude_mcp | direct_http_curl",
+      "mcp_tool_call_request": {
+        "ticker": "<ticker tried>",
+        "indicators": ["rsi", "macd", "bb"]
+      },
+      "mcp_tool_call_response": "<verbatim JSON if <2KB, else { sha256: <hash>, shape_summary: <one-line> }>",
+      "format_match_against_reference": "PASS | FAIL | NOT_APPLICABLE_REFERENCE_MISSING",
+      "ac4_find_result": "<verbatim find output, line count, file list>",
+      "ac4_supplementary_live_callers_grep_result": "<verbatim grep output, file list>",
+      "live_callers_post_b3": "<integer count, must be 0 LIVE (comment-only references ok)>",
+      "ac5_grep_result_match_count": "<integer, expected 0>",
+      "bun_test_exit_code": "<int>",
+      "bun_test_summary": "<one-line pass/fail/skip>",
+      "bun_test_failure_delta_vs_p2_b3_baseline": "<int delta vs 283>",
+      "go_test_exit_code": "<int, optional re-run>",
+      "ac_results": {
+        "ac_1": "PASS | FAIL — go service running evidence",
+        "ac_2": "PASS | FAIL — tool call returned RSI/MACD/BB evidence",
+        "ac_3": "PASS | FAIL — format match evidence",
+        "ac_4": "PASS_WITH_INTERPRETATION | PASS | FAIL — per ac4_interpretation_note",
+        "ac_5": "PASS | FAIL — grep TODO.*migrat = 0 evidence"
+      },
+      "g5_qa_verdict": "PASS | FAIL — aggregate of all 5 ACs (PASS_WITH_INTERPRETATION on AC-4 still aggregates to PASS)",
+      "procedural_blocker_environment_bootstrap": "absent | present_with_one_line_reason",
+      "notes": "<free-form, optional>"
+    }
+  },
+
+  "escape_hatch_procedural_blocker": {
+    "trigger": "qa cannot start Go service / mcp-server / docker stack themselves (no auth, missing binaries, permission denied, port conflict, etc.).",
+    "action": "Declare `procedural_blocker_environment_bootstrap` field in completion signal with one-line reason (e.g., 'go run ./cmd/server/ requires Go toolchain not in PATH', 'docker daemon not reachable', 'port 5003 already bound by unknown process'). Set g5_qa_verdict to BLOCKED. Do NOT fabricate evidence; do NOT skip AC-1; do NOT proceed to AC-2/AC-3.",
+    "po_routing_on_blocker": "PO cycle-28 will route to ops or developer to bring up the Go service in a separate background process, then re-dispatch fresh qa for P2-B4 verification round 2 against the live endpoint."
+  },
+
+  "constraints": [
+    "L84 explicit-file staging only — no broad-glob git add (no `git add docs/` or `git add .`)",
+    "No --force, no --no-verify, no push (CI billing block still owner=user)",
+    "Anchor 62edbf3d held (architecture brief closure-checklist commit)",
+    ".golangci.yml freeze anchor 9d364329 held",
+    "P2-B1 anchor b9d0a82b held; tag p2-b-pre-delete still at b9d0a82b (no retag, no force)",
+    "P2-B2 commit a80f01e5 held",
+    "No mutation of TASK_P2-B4.md frontmatter (append-only §Verification Evidence below frontmatter if appending)",
+    "WIP-1 (this task only; no chain pickup; no P2-* dispatches by qa)",
+    "No decisionMatrix.* writes (Charter §4.5 PO-only authorship + only after all 12 G-goals terminal)",
+    "No charter status enum mutation (status remains ACTIVE)",
+    "No new branches (per CLAUDE.md no-branches policy)",
+    "Coordinate-by-spec-only — no back-channel ACK to dev-ta or other agents"
+  ],
+
+  "out_of_scope_for_this_dispatch": [
+    "Any source code edits to apps/mcp-server/src/** or apps/technical-analysis/**",
+    "Any .golangci.yml edits",
+    "Any _deprecated/ directory mutations (do not delete, do not move files)",
+    "Any git tag operations (no create, no delete, no retag)",
+    "Any modification of charter, pilot-status.json, decisionMatrix, or goal grades",
+    "Re-running G10/G11/G12 evidence captures (already locked YES at cycles 14/15)",
+    "Re-running P2-B0/B1/B2/B3 work (chain consumed; no replay)"
+  ],
+
+  "expected_completion_path": {
+    "happy_path": "Go service responds 200 on /health (already-running OR locally-started by qa) -> MCP tool call returns RSI/MACD/BB matching reference shape -> AC-4 verbatim find returns 1 line (live wrapper, PASS_WITH_INTERPRETATION) -> AC-5 grep returns 0 -> bun test 283-fail baseline unchanged -> g5_qa_verdict=PASS -> completion signal written -> PO cycle-28 atomic close (flip G5 YES + populate decisionMatrix + brief CLOSE + 12/12 terminal).",
+    "blocker_path": "Go service not running and qa cannot bootstrap it (no Go toolchain, docker down, port bound, etc.) -> procedural_blocker_environment_bootstrap=true -> g5_qa_verdict=BLOCKED -> PO cycle-28 re-routes to ops/developer to bring up service -> fresh qa P2-B4 dispatch round 2 -> G5 close shifts to cycle-29.",
+    "fail_path": "Go service responds but MCP tool returns wrong shape OR new bun test failures appear OR live import grep returns >0 live imports -> g5_qa_verdict=FAIL -> PO cycle-28 routes to dev-technical-analysis to fix the regression -> G5 close blocked until fix lands."
+  },
+
+  "next_chain_step_for_po_cycle_28": {
+    "on_qa_pass": "Atomic cycle-close commit: (1) flip pilot-status.json goals[id=G5].status TBD -> YES with verifiedAt + verifiedBy + evidence chain; (2) populate decisionMatrix.{speed,trust,scale} per Charter §Decision Matrix YES criteria (Speed = G10+G11, Trust = G9+G8, Scale = all 12 + sprint count); (3) set verdict (scale | rescope | stop-MVR) per 3-YES/2-YES/0-1-YES rule; (4) flip pilot-status.json phase2.status OPEN -> CLOSED with closedAt; (5) set top-level status: DONE if all goals YES + matrix terminal AND G9 not pending (G9 already YES so check pending); (6) close all dispatch gates in nextDispatchGates; (7) author phase-2-closure-summary.md OR include inline in close commit; (8) write closure signal docs/signals/po-brief-closed-<UTC>.json pointing to dashboard + summary; (9) 12/12 terminal grade reached.",
+    "on_qa_blocker": "Cycle-28 routes ops or developer to start TA Go service in background, then writes fresh P2-B4 dispatch round 2 to a new qa subagent. G5 close shifts to cycle-29 or later.",
+    "on_qa_fail": "Cycle-28 reads failure details, decides revert vs forward-fix per phase-2-closure-checklist §5 rollback plan, dispatches dev-technical-analysis for fix. G5 close shifts to cycle-29+ pending re-verification."
+  },
+
+  "signal_writer_metadata": {
+    "naming_contract_followed": "po-cycle27-dispatch-qa-p2-b4-{ISO-UTC}.json per docs/standards/mcp-tools.md §Signal Bus Naming Contract (cycle + task identifiers embedded in filename for human readability is acceptable as a prefix; ISO timestamp is the disambiguator)",
+    "ssot_compliance": "ONE active dispatch for P2-B4 (this signal). No prior P2-B4 dispatch exists. No supersede."
+  }
+}
