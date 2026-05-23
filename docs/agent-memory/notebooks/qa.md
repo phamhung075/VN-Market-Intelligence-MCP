@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-50 · 2026-05-23 · macro P2-F1 G8 honest-red dashboard proof — GREEN
+
+**Task:** P2-F1 — G8 Honest-Red Proof (Test A Corrupted + Test B Golden) | **Verdict:** GREEN | **G8:** ready_for_flip
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (controlled scenario JSON corruption + restore, no code changes)
+signal: docs/signals/qa-p2-f1-macro-GREEN-20260523T164502Z.json
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Anchor 1776df8e pre | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| Baseline sandbox 20/20 | PASS | total=20 pass=20 fail=0 status=OK exit 0 (pre-corruption baseline) |
+| AC-1 Corruption 1: macro-investment-clock-golden.json | PASS | indicatorName=""→exit 1, FAIL: Tier got US_DOMESTIC want VN_DIRECT, Score got 2 want 8, Phase got US_DOMESTIC want CORE_VN. total=1 pass=0 fail=1 status=FAIL |
+| AC-1 Dashboard RED contract | PASS | applyPastedResult() L1196: status=FAIL→cardStatus='red'→dot-red CSS. Rendering contract verified from dashboard/index.html source. |
+| AC-1 Restore byte-identical | PASS | git checkout macro-investment-clock-golden.json. git diff=empty. Post-restore exit 0, PASS, total=1 pass=1. |
+| AC-3 Corruption 2: macro-carry-trade-signal-golden.json | PASS | vndDepositRate=-999.0→exit 1, FAIL: Regime got FII_OUTFLOW_RISK want HOT_MONEY_INFLOW, CarrySpread got -1002.5 want 3, VNDDepositRate got -999 want 6.5. total=1 pass=0 fail=1 status=FAIL |
+| AC-3 Restore byte-identical | PASS | git checkout macro-carry-trade-signal-golden.json. git diff=empty. Post-restore exit 0, PASS, total=1 pass=1. |
+| AC-2 Test B: full golden suite | PASS | total=20 pass=20 fail=0 status=OK exit 0. All 20 scenarios PASS. |
+| AC-4 No residual mutations | PASS | git diff docs/scenarios/macro-indicators/=empty. git status=clean. |
+| R-1 determinism | PASS | grep -rE math/rand|rand.Intn|rand.Float|time.Now.*Seed apps/macro-indicators/pkg/ → exit 1 (0 matches) |
+| Fence-B app/infra (macro_signals) | PASS | exit 1 (0 matches) |
+| Fence-B iface (macro_signals) | PASS | exit 1 (0 matches) |
+| Fence-C infra (pkg/) | PASS | exit 1 (0 matches) |
+| Anchor 1776df8e post | PASS | exit 0 (HELD) |
+| Final sandbox 20/20 | PASS | total=20 pass=20 fail=0 status=OK exit 0 |
+
+**G8 evidence:** 2 corruptions (macro-investment-clock empty-string + macro-carry-trade-signal extreme-negative) both produce exit non-zero + FAIL. All 20 golden scenarios produce exit 0 + OK. Dashboard rendering contract proven honest. No false positives.
+**Honesty table:** Test A (2 rows) sandbox non-zero → RED; Test B sandbox 0 → all-GREEN. All rows G8_HONEST=YES.
+**Blocking issues:** 0 — all 5 ACs + all hard gates PASS. Both mutations reverted byte-identical.
+**NEXT:** PM cycle-51 — atomic flip G8=YES (6/12) + dispatch P2-C1 (G9 PO Playwright trust contract).
+
+---
+
 ## c282 cycle-49 · 2026-05-23 · macro P2-G1 joint G1+G2+G3 terminal verification — GREEN
 
 **Task:** P2-G1 — Joint G1+G2+G3 Terminal Verification (QA verification-only, no code) | **Verdict:** GREEN | **G2:** ready_for_flip
