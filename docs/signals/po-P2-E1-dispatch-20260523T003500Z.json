@@ -1,0 +1,25 @@
+{
+  "from": "po",
+  "to": "qa",
+  "timestamp": "2026-05-23T00:35:00Z",
+  "kind": "task-dispatch",
+  "priority": "high",
+  "subject": "P2-E1 — Design regression scenario pair A+B (G11 regression alarm bell)",
+  "context": {
+    "task": "P2-E1",
+    "owner_per_handoff": "qa",
+    "po_cycle": "c276 (cycle-7)",
+    "handoff": "docs/handoffs/TASK_P2-E1.md",
+    "goal": "G11 — Regression alarm bell works",
+    "blocked_by_now_cleared": ["P2-F1 (architect brief landed)", "P2-F2 (LANDED commit cc7578f1)"],
+    "unblocks": "P2-E2 (scenario pair implementation)",
+    "estimate_hours": 0.333,
+    "ac_count": 4,
+    "files_touched": ["docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md (NEW)"],
+    "anchor_commit": "62edbf3d",
+    "f2_landing_commit": "cc7578f1",
+    "critical_path": "P2-F2 → P2-D1 → P2-D2 → P2-D3 → P2-E1..3 → P2-F3"
+  },
+  "wip_note": "Parallel-dispatched with P2-D1. Both are independent spec-design tasks for qa.",
+  "ownership_note": "Step 0 instruction said 'dispatch P2-D1 to dev-ta + P2-E1 to qa' but handoff frontmatter declares both D1 and E1 owner=qa. Handoff SSOT honored — dispatched both to qa. Discrepancy logged in poDecisionLog c276."
+}
