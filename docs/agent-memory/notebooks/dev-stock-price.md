@@ -2,6 +2,48 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-24 — P1-C price_resolution module + Fence-B DONE
+
+### What shipped (P1-C)
+
+Module stub: `pkg/module/price_resolution/` — composes 3 primitives via TierFetcher port.
+
+**All 7 ACs PASS:**
+- AC-1: `ports.go` exports TierFetcher interface; zero infrastructure imports
+- AC-2 (Fence-B): grep mattn/go-sqlite3|pkg/infrastructure|cgo|import C = 0 matches (exit 1)
+- AC-3: `go test ./pkg/module/price_resolution/...` exit 0 — 8 tests with mock TierFetchers
+- AC-4: grep cross-module imports = 0 (exit 1)
+- AC-5: `go run ./cmd/sandbox -tier=module -scenario=all` exit 0 (2/2 PASS)
+- AC-6: `go run ./cmd/sandbox -tier=all -scenario=all` exit 0 (11/11 PASS)
+- AC-7 (G12 DoD): primitive 9/9 + module 2/2 = both tiers GREEN before commit
+
+**Sandbox output (tier=all, G12 gate):**
+```
+primitive: price-quote-normalizer-edge/failure/golden PASS (×3)
+primitive: price-staleness-classifier-edge/failure/golden PASS (×3)
+primitive: tier-fallback-selector-edge/failure/golden PASS (×3)
+module: price-resolution-edge.json PASS
+module: price-resolution-golden.json PASS
+total=11 pass=11 fail=0 status=OK exit 0
+```
+
+**go test ./pkg/... -count=1:** 8/8 packages PASS (includes new module/price_resolution)
+
+**Commit:** `e98179f9` — `feat(stock-price): P1-C price_resolution module + Fence-B (composes B1/B2/B3 primitives)`
+
+**Signal:** `docs/signals/dev-stock-price-p1-c-done-20260524T011500Z.json`
+
+**Key design decisions:**
+- `ResolvedQuote` embeds `domain.PriceQuote` + adds `Staleness string` field — avoids mutation of pointer returned by infra
+- Staleness annotation is best-effort: ClassifyStaleness error leaves Staleness="" (quote still returned)
+- `NewWithThresholds()` constructor enables deterministic staleness testing
+- Sandbox FetchedAt rebinding: scenario "now" field used to compute age, then rebind FetchedAt relative to real wall-clock time.Now() so the internal ClassifyStaleness call produces the expected label at test runtime
+
+**State for P1-D:**
+- P1-D (dashboard stub) is now unblocked
+- pkg/module/ exists; sandbox tier=module wired and GREEN
+- All 8 pkg/ tests passing; Fence-B confirmed clean
+
 ## Session 2026-05-24 — P1-B1 price-quote-normalizer + R-CGO Gate DONE
 
 ### What shipped (P1-B1)

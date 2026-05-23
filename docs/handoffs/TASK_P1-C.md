@@ -4,10 +4,12 @@ pilot: "stock-price"
 phase: 1
 title: "Module stub: pkg/module/price_resolution/ — port + composition function"
 owner: "dev-stock-price"
-status: "READY"
+status: "DONE"
 readyAt: "2026-05-24T01:08:00Z"
-dispatchedAt: null
-dispatchedBy: null
+dispatchedAt: "2026-05-24T01:08:00Z"
+dispatchedBy: "pm"
+doneAt: "2026-05-24T01:15:00Z"
+commit_sha: "e98179f9"
 createdAt: "2026-05-24T01:08:00Z"
 createdBy: "pm"
 source: "docs/architecture-briefs/2026-05-23-stock-price-factory/phase-1-task-plan-go.md (§P1-C)"
