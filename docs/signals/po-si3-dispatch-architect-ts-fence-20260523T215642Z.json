@@ -1,0 +1,15 @@
+{
+  "from": "po",
+  "to": "architect",
+  "via": "main-router",
+  "type": "dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T21:56:42Z",
+  "program": "fleet-factory-rollout",
+  "prework": "SI-3",
+  "payload": "SI-3 TS ESLint fence-rule design spike (HIGH RISK). Design an ESLint enforcement equivalent to Go depguard for Fence-A/B/C import isolation: primitive must not import application; module must not import infrastructure; composition-root must not import domain logic. Pick Option A (eslint-plugin-boundaries/custom rule) or Option B (tsconfig path-alias + CI check) and justify. Deliver a deliberate-violation proof recipe matching Go G4 AC-4b (intentional Fence-A violation reproduces non-zero lint exit with fence name in output; reverted; never committed). Time-box 1 sprint; if exceeded, recommend Option C (documented weaker TS G4 fallback) per Risk Register. Gates G4 of pilot-4 (kinh-dich, TS) and pilot-6 (news-fetch, TS). Does NOT gate pilot-3 (stock-price, Go).",
+  "output": "docs/architecture-briefs/2026-05-23-ts-fence-spike/",
+  "runs_parallel_with": "po-si1-dispatch-agentfather-schema-20260523T215642Z.json",
+  "decisionDoc": "docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md",
+  "constraints": "main only; L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push; do not modify apps/** source in the spike (design + proof recipe only)"
+}

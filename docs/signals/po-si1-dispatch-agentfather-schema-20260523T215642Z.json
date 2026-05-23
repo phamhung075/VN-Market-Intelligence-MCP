@@ -1,0 +1,16 @@
+{
+  "from": "po",
+  "to": "agent-father",
+  "via": "main-router",
+  "type": "dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T21:56:42Z",
+  "program": "fleet-factory-rollout",
+  "prework": "SI-1",
+  "payload": "SI-1 Fleet pilot-status SSOT schema. Author docs/data/pilot-status-schema.json — a reusable template (JSON Schema or annotated example) that every future per-service pilot-status file MUST conform to. Required fields: pilot, charterRef, charterVersion, status (ACTIVE|DONE|FAILED), language, languageLockSource, openedAt, closedAt, closedBy, closureSignal, closureDecisionDoc, phase0, goals (G1-G12 each with status[TBD|IN-PROGRESS|YES|NO|PARTIAL|DEFER], verifiedAt, verifiedBy), decisionMatrix (speed/trust/scale verdicts + outcome). Derive the shape from the two existing CLOSED files (docs/data/pilot-status.json TA + docs/data/pilot-status-macro-indicators.json macro) — do NOT modify either; both are frozen/closed historical records. Gates pilot-3 (stock-price) Phase 0. ~1-2h, SSOT-only, no dev involvement.",
+  "output": "docs/data/pilot-status-schema.json",
+  "runs_parallel_with": "po-si3-dispatch-architect-ts-fence-20260523T215642Z.json",
+  "do_not_touch": ["docs/data/pilot-status.json", "docs/data/pilot-status-macro-indicators.json"],
+  "decisionDoc": "docs/po-decisions/2026-05-23-fleet-factory-rollout-ratification.md",
+  "constraints": "main only; L84 explicit-file staging; no --force/--no-verify/--no-gpg-sign; no git push"
+}
