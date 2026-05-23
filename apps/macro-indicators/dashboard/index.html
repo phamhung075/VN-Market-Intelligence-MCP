@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>macro-indicators &mdash; Scenario Trust Dashboard</title>
+  <style>
+/* macro-indicators Dashboard — trust layer (P1-E1) */
+/* Design: high-contrast, no framework, readable at a glance */
+/* Layout cloned from apps/technical-analysis/dashboard/ (anchor 1776df8e) */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --edge: #7c6b00;
+  --edge-bg: #fffbcc;
+  --edge-border: #c4a800;
+  --failure: #6b3a00;
+  --failure-bg: #fff1e0;
+  --failure-border: #c47a00;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.levels-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .levels-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .levels-grid { grid-template-columns: 1fr; }
+}
+
+.level-panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.panel-header .panel-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.panel-header .level-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.badge-primitives { background: #e0f2fe; color: #075985; }
+.badge-module     { background: #ede9fe; color: #4c1d95; }
+.badge-service    { background: #fce7f3; color: #9d174d; }
+
+.panel-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total    { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-notrun   { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-green    { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red      { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Primitive group */
+.primitive-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.primitive-group-header {
+  padding: 8px 14px;
+  background: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.primitive-group-header .group-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-pending-label { background: #f1f5f9; color: #64748b; }
+.status-green-label   { background: var(--green-bg); color: var(--green); }
+.status-red-label     { background: var(--red-bg); color: var(--red); }
+
+.primitive-scenarios {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.scenario-card:last-child { border-bottom: none; }
+.scenario-card:hover { background: #f8fafc; }
+
+.scenario-status-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
+.scenario-meta { flex: 1; min-width: 0; }
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.scenario-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.category-chip {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.cat-golden  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.cat-edge    { background: var(--edge-bg); border-color: var(--edge-border); color: var(--edge); }
+.cat-failure { background: var(--failure-bg); border-color: var(--failure-border); color: var(--failure); }
+
+/* Module panel cards */
+.module-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-card-header {
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border-bottom: 1px solid #ddd6fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.12s;
+  width: 100%;
+  font-family: var(--font);
+  text-align: left;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.module-card-header:hover { background: #ede9fe; }
+
+.module-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.module-card-meta {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  margin-top: 2px;
+}
+
+.module-primitives-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.prim-tag {
+  font-size: 0.68rem;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+
+.module-card-body {
+  padding: 10px 14px;
+}
+
+.module-card-desc {
+  font-size: 0.77rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Service panel */
+.service-placeholder {
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+}
+
+.service-placeholder .service-coming-soon {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #9d174d;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  background: #fce7f3;
+  padding: 4px 12px;
+  border-radius: 99px;
+  display: inline-block;
+}
+
+.service-placeholder h3 {
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin: 10px 0 6px;
+}
+
+.service-tree {
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  color: #64748b;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  line-height: 1.8;
+}
+
+.service-tree .dir { color: #2563eb; font-weight: 600; }
+.service-tree .file-go { color: #16a34a; }
+.service-tree .file-yaml { color: #d97706; }
+.service-tree .ddd-layer { color: #7c3aed; }
+
+.service-endpoints { margin-top: 12px; }
+
+.service-endpoints h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.method-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+.method-get  { background: #dcfce7; color: #15803d; }
+.method-post { background: #dbeafe; color: #1d4ed8; }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #374151;
+  flex: 1;
+}
+
+.endpoint-desc { font-size: 0.72rem; color: #64748b; }
+
+/* NOT-RUN status badge */
+.not-run-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #9ca3af;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  background: #1e293b;
+  color: #f8fafc;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 { font-size: 1rem; font-weight: 700; }
+.modal-header .modal-category { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.modal-close:hover { color: #f8fafc; }
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.modal-section { margin-bottom: 20px; }
+
+.modal-section h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.modal-section p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.modal-json {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 240px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+
+.modal-status-bar {
+  padding: 12px 20px;
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.status-indicator.pending { color: #64748b; }
+
+.status-dot-lg {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.modal-note {
+  flex: 1;
+  font-size: 0.76rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.rerun-btn {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: #1e293b;
+  color: #f8fafc;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.12s;
+}
+
+.rerun-btn:hover { background: #334155; }
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .diff-grid { grid-template-columns: 1fr; }
+}
+
+.diff-pane label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.diff-pane .label-input  { color: #1d4ed8; }
+.diff-pane .label-output { color: #15803d; }
+
+.legend {
+  max-width: 1400px;
+  margin: 28px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.76rem;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-chip {
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+footer {
+  max-width: 1400px;
+  margin: 20px auto 0;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-align: center;
+  padding-bottom: 32px;
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>macro-indicators &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-E1 &nbsp;|&nbsp; Pilot: macro-indicators &nbsp;|&nbsp; Language: Go
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G8 (honest NOT-RUN status) &bull; G9 (trust contract) &bull; G12 (green before done)
+    &nbsp;&bull;&nbsp;
+    3 primitive scenarios + 2 module scenarios &mdash; all loaded from JSON, zero production credentials.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ================================================== LEVEL 1: PRIMITIVES -->
+  <div class="level-panel" id="primitives-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        1 pure Go primitive (macro_investment_clock). Classifies economic indicators
+        into investment clock tiers (VN_DIRECT, US_DOMESTIC, GLOBAL_COMMODITY, etc.).
+        3 scenarios: golden, edge, failure. Click any scenario to inspect input &harr; expectedOutput.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="prim-total-chip">3 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">NOT-RUN</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 2: MODULE -->
+  <div class="level-panel" id="module-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>pkg/module/macro_signals/</code> &mdash; composes macro_investment_clock via
+        ClassifyBatch. Multi-indicator batch stories: golden (3 indicators) and edge (empty batch).
+        Click any scenario to see which primitives are exercised and compare expected outputs.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="mod-total-chip">2 scenarios</span>
+        <span class="summary-chip chip-notrun" id="mod-notrun-chip">NOT-RUN</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 3: MICROSERVICE -->
+  <div class="level-panel" id="microservice-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/macro-indicators/</code> &mdash; Go HTTP service wiring
+        DDD layers (domain / application / infrastructure / interface) with Hono-compatible router,
+        port 5004. Live HTTP wiring deferred to P1-E2.
+      </p>
+      <div class="panel-summary">
+        <span class="not-run-badge">NOT-RUN</span>
+      </div>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+      <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (P1-E1 static — honest state before rerun)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+</div>
+
+<footer>
+  P1-E1 &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: macro-indicators &bull;
+  Port: 5004 &bull; Language: Go &bull;
+  Scenarios committed at P1-B1 (primitives) + P1-C1/D2 (module) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  Next: P1-E2 sandbox runner (<code>go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=&lt;file&gt;</code>)
+</footer>
+
+<!-- ================================================== MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Input</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator pending" id="modal-status-text">
+        <span class="status-dot-lg dot-pending"></span> NOT-RUN
+      </span>
+      <span class="modal-note" id="modal-status-note">P1-E2 sandbox runner not yet wired. Scenarios loaded from JSON only.</span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E2)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================== EMBEDDED SCENARIO DATA -->
+<!-- All 3 primitive scenarios from docs/scenarios/macro-indicators/primitives/ -->
+<!-- All 2 module scenarios from docs/scenarios/macro-indicators/module/        -->
+<!-- Embedded inline so the dashboard works as a static file:// asset           -->
+<!-- Security: zero DB credentials, zero API keys — pure JSON scenario data only -->
+<script>
+var PRIMITIVES_DATA = [
+  {
+    "name": "VN_CPI_indicator",
+    "primitive": "macro_investment_clock",
+    "filename": "macro-investment-clock-golden.json",
+    "category": "golden",
+    "description": "Golden path: VN_CPI indicator classifies as VN_DIRECT tier with score=8, phase=CORE_VN. Verifies the primary Vietnam direct indicator path through Classify().",
+    "input": { "indicatorName": "VN_CPI" },
+    "expectedOutput": {
+      "tier": "VN_DIRECT",
+      "score": 8,
+      "phase": "CORE_VN"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "empty_string_indicator",
+    "primitive": "macro_investment_clock",
+    "filename": "macro-investment-clock-edge.json",
+    "category": "edge",
+    "description": "Edge case: empty string indicatorName falls through to default (US_DOMESTIC) tier with score=2, phase=US_DOMESTIC. Verifies graceful handling of unrecognized inputs.",
+    "input": { "indicatorName": "" },
+    "expectedOutput": {
+      "tier": "US_DOMESTIC",
+      "score": 2,
+      "phase": "US_DOMESTIC"
+    },
+    "shouldPass": true,
+    "status": "NOT-RUN"
+  },
+  {
+    "name": "null_indicator_error",
+    "primitive": "macro_investment_clock",
+    "filename": "macro-investment-clock-failure.json",
+    "category": "failure",
+    "description": "Failure scenario: null indicatorName. shouldPass=false — verifies the function handles null/invalid input without panic (graceful degradation). Scenario passes by virtue of non-panicking execution.",
+    "input": { "indicatorName": null },
+    "expectedOutput": null,
+    "shouldPass": false,
+    "errorType": "invalid_input",
+    "status": "NOT-RUN"
+  }
+];
+
+var MODULE_DATA = [
+  {
+    "scenario_name": "macro-signals-golden",
+    "module": "macro_signals",
+    "filename": "macro-signals-golden.json",
+    "category": "golden",
+    "description": "Batch classification through macro-signals module (1 primitive wired: macro-investment-clock). 3 indicator names: VN_CPI (VN_DIRECT/8/CORE_VN), Unemployment_Rate (US_DOMESTIC/2/US_DOMESTIC), Unknown (US_DOMESTIC/2/US_DOMESTIC). Verifies ClassifyBatch returns all 3 results correctly.",
+    "primitives": ["macro_investment_clock"],
+    "input": {
+      "indicator_names": ["VN_CPI", "Unemployment_Rate", "Unknown"]
+    },
+    "expectedOutput": {
+      "batch_count": 3,
+      "classifications": [
+        { "indicator": "VN_CPI", "tier": "VN_DIRECT", "score": 8, "phase": "CORE_VN" },
+        { "indicator": "Unemployment_Rate", "tier": "US_DOMESTIC", "score": 2, "phase": "US_DOMESTIC" },
+        { "indicator": "Unknown", "tier": "US_DOMESTIC", "score": 2, "phase": "US_DOMESTIC" }
+      ]
+    },
+    "status": "NOT-RUN"
+  },
+  {
+    "scenario_name": "macro-signals-edge",
+    "module": "macro_signals",
+    "filename": "macro-signals-edge.json",
+    "category": "edge",
+    "description": "Edge case: empty batch input yields empty classifications (boundary handling). Verifies ClassifyBatch handles zero-length input without error and returns batch_count=0 with empty classifications array.",
+    "primitives": ["macro_investment_clock"],
+    "input": {
+      "indicator_names": []
+    },
+    "expectedOutput": {
+      "batch_count": 0,
+      "classifications": []
+    },
+    "status": "NOT-RUN"
+  }
+];
+</script>
+
+<script>
+(function() {
+  "use strict";
+
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+
+  function catClass(cat) {
+    if (cat === "golden") return "cat-golden";
+    if (cat === "edge")   return "cat-edge";
+    return "cat-failure";
+  }
+
+  function catLabel(cat) {
+    if (cat === "golden") return "golden";
+    if (cat === "edge")   return "edge";
+    return "failure";
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatJSON(obj) {
+    return JSON.stringify(obj, null, 2);
+  }
+
+  // -------------------------------------------------------------------------
+  // Modal
+  // -------------------------------------------------------------------------
+
+  var currentScenario = null;
+
+  function openModal(scenario) {
+    currentScenario = scenario;
+    var overlay   = document.getElementById("modal-overlay");
+    var titleEl   = document.getElementById("modal-title");
+    var catEl     = document.getElementById("modal-cat");
+    var descEl    = document.getElementById("modal-desc");
+    var inputEl   = document.getElementById("modal-input-json");
+    var outputEl  = document.getElementById("modal-output-json");
+    var statusTxt = document.getElementById("modal-status-text");
+    var statusNote = document.getElementById("modal-status-note");
+
+    var label = scenario.primitive
+      ? ("macro_investment_clock — " + (scenario.filename || scenario.name))
+      : ("Module: " + (scenario.module || "") + " — " + (scenario.filename || scenario.scenario_name || ""));
+
+    titleEl.textContent = label;
+
+    catEl.className = "modal-category category-chip " + catClass(scenario.category);
+    catEl.textContent = catLabel(scenario.category);
+
+    descEl.textContent = scenario.description || "(no description)";
+    inputEl.textContent = formatJSON(scenario.input || {});
+    outputEl.textContent = formatJSON(scenario.expectedOutput || null);
+
+    // Status: always NOT-RUN in P1-E1 (honest state)
+    statusTxt.className = "status-indicator pending";
+    statusTxt.innerHTML = '<span class="status-dot-lg dot-pending"></span> NOT-RUN';
+    statusNote.textContent = "P1-E2 sandbox runner not yet wired. Scenarios loaded from JSON only.";
+
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+    document.body.style.overflow = "";
+    currentScenario = null;
+  }
+
+  // -------------------------------------------------------------------------
+  // Render Primitives panel
+  // -------------------------------------------------------------------------
+
+  function renderPrimitivesPanel() {
+    var panelBody = document.getElementById("primitives-panel-body");
+    panelBody.innerHTML = "";
+
+    // Group by primitive name (only one primitive in macro-indicators P1)
+    var groups = {};
+    PRIMITIVES_DATA.forEach(function(s) {
+      var key = s.primitive || "unknown";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(s);
+    });
+
+    Object.keys(groups).forEach(function(primKey) {
+      var scenarios = groups[primKey];
+
+      var group = document.createElement("div");
+      group.className = "primitive-group";
+
+      var header = document.createElement("div");
+      header.className = "primitive-group-header";
+      header.style.borderLeft = "4px solid #075985";
+      header.innerHTML =
+        '<span>macro_investment_clock &mdash; Investment Clock Classifier</span>' +
+        '<span class="group-status status-pending-label">NOT-RUN</span>';
+
+      var scenarioList = document.createElement("div");
+      scenarioList.className = "primitive-scenarios";
+
+      scenarios.forEach(function(s) {
+        var card = document.createElement("button");
+        card.className = "scenario-card";
+        card.type = "button";
+        card.setAttribute("aria-label", "View scenario: " + (s.filename || s.name));
+
+        card.innerHTML =
+          '<span class="scenario-status-dot dot-pending" aria-hidden="true"></span>' +
+          '<span class="scenario-meta">' +
+            '<span class="scenario-name">' + escapeHtml(s.filename || s.name) + '</span>' +
+            '<span class="scenario-desc">' + escapeHtml((s.description || "").slice(0, 120)) + '</span>' +
+            '<span style="font-size:0.72rem;color:#6b7280;margin-top:3px;display:block;">' +
+              'In: indicatorName=' + escapeHtml(JSON.stringify(s.input && s.input.indicatorName)) +
+              ' &nbsp;|&nbsp; Status: <strong>NOT-RUN</strong>' +
+            '</span>' +
+          '</span>' +
+          '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
+
+        card.addEventListener("click", function() { openModal(s); });
+        scenarioList.appendChild(card);
+      });
+
+      group.appendChild(header);
+      group.appendChild(scenarioList);
+      panelBody.appendChild(group);
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Render Module panel
+  // -------------------------------------------------------------------------
+
+  function renderModulePanel() {
+    var panelBody = document.getElementById("module-panel-body");
+    panelBody.innerHTML = "";
+
+    MODULE_DATA.forEach(function(s) {
+      var card = document.createElement("div");
+      card.className = "module-card";
+
+      var headerBtn = document.createElement("button");
+      headerBtn.className = "module-card-header";
+      headerBtn.type = "button";
+      headerBtn.setAttribute("aria-label", "View module scenario: " + (s.filename || s.scenario_name || ""));
+
+      var inputSummary = s.input && s.input.indicator_names
+        ? s.input.indicator_names.length + " indicators"
+        : "0 indicators";
+
+      headerBtn.innerHTML =
+        '<span>' +
+          '<span class="scenario-status-dot dot-pending" style="display:inline-block;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span>' +
+          '<span class="module-card-title">' + escapeHtml(s.filename || s.scenario_name || s.module) + '</span>' +
+          '<span class="module-card-meta" style="display:block;margin-top:2px;">' +
+            'In: ' + escapeHtml(inputSummary) +
+            ' &nbsp;|&nbsp; Status: <strong>NOT-RUN</strong>' +
+          '</span>' +
+        '</span>' +
+        '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
+
+      headerBtn.addEventListener("click", function() { openModal(s); });
+
+      var primTags = document.createElement("div");
+      primTags.className = "module-primitives-tag";
+      (s.primitives || []).forEach(function(p) {
+        var tag = document.createElement("span");
+        tag.className = "prim-tag";
+        tag.textContent = p;
+        primTags.appendChild(tag);
+      });
+
+      var body = document.createElement("div");
+      body.className = "module-card-body";
+      body.innerHTML = '<p class="module-card-desc">' + escapeHtml((s.description || "").slice(0, 200)) + '</p>';
+
+      card.appendChild(headerBtn);
+      card.appendChild(primTags);
+      card.appendChild(body);
+      panelBody.appendChild(card);
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Render Microservice panel
+  // -------------------------------------------------------------------------
+
+  function renderServicePanel() {
+    var panelBody = document.getElementById("service-panel-body");
+    panelBody.innerHTML =
+      '<div class="service-placeholder">' +
+        '<span class="service-coming-soon">Live data not wired yet &mdash; P1-E2</span>' +
+        '<h3>apps/macro-indicators/ &mdash; macro-indicators</h3>' +
+        '<p style="font-size:0.78rem;color:#64748b;margin-top:4px;">' +
+          'Port: <strong>5004</strong> &nbsp;|&nbsp; Language: <strong>Go</strong><br>' +
+          'The microservice shape is documented here as a trust contract.' +
+          ' Live HTTP calls will be wired in P1-E2 (sandbox runner).' +
+          ' All status cards below reflect the planned architecture only.' +
+        '</p>' +
+
+        '<div class="service-tree">' +
+          '<span class="dir">apps/macro-indicators/</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">cmd/server/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">main.go</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; composition root (zero domain logic)</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">cmd/sandbox/main.go</span>&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; scenario runner CLI</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">pkg/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">primitive/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">macro_investment_clock/</span>&nbsp;<span style="color:#9ca3af;">&larr; Classify() (pure function)</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">module/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">macro_signals/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; ClassifyBatch() (composes primitive)</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">domain/</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; models.go, ports.go</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">application/</span>&nbsp;<span style="color:#9ca3af;">&larr; dtos.go, usecases.go</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">infrastructure/</span>&nbsp;<span style="color:#9ca3af;">&larr; sbv scraper, commodity sources</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">interface/http/</span>&nbsp;<span style="color:#9ca3af;">&larr; router.go (Hono-compatible)</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">api/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-yaml">openapi.yaml</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; HTTP contract (OpenAPI 3.0)</span>' +
+        '</div>' +
+
+        '<div class="service-endpoints">' +
+          '<h4>HTTP Endpoints (OpenAPI contract)</h4>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/health</span>' +
+            '<span class="endpoint-desc">Liveness check &rarr; {&quot;status&quot;:&quot;ok&quot;,&quot;service&quot;:&quot;macro-indicators&quot;,&quot;port&quot;:5004}</span>' +
+          '</div>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/macro/snapshot</span>' +
+            '<span class="endpoint-desc">SBV FX rates + commodity prices + macro regime score. Uses macro_signals.ClassifyBatch.</span>' +
+          '</div>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/macro/carry-trade</span>' +
+            '<span class="endpoint-desc">Carry-trade signal: VN yield vs USD yield spread computation.</span>' +
+          '</div>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/macro/calendar</span>' +
+            '<span class="endpoint-desc">Upcoming macroeconomic events calendar (SBV, CPI release, etc.).</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="margin-top:16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;text-align:left;">' +
+          '<p style="font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:4px;">Next task: P1-E2 &mdash; Sandbox runner + env audit</p>' +
+          '<p style="font-size:0.75rem;color:#78350f;line-height:1.5;">' +
+            'The &quot;Edit &amp; Rerun&quot; button in each scenario detail modal will call:<br>' +
+            '<code style="background:#fef3c7;padding:2px 6px;border-radius:4px;font-family:monospace;">go run ./cmd/sandbox -tier=&lt;tier&gt; -module=macro-indicators -scenario=&lt;file&gt;</code><br>' +
+            'Result JSON is read back and the card flips RED or GREEN. Env audit ensures zero DB credentials.' +
+            ' Security constraint: <strong>ZERO DB credentials, ZERO API keys</strong> in sandbox env at all times.' +
+          '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // -------------------------------------------------------------------------
+  // Bootstrap
+  // -------------------------------------------------------------------------
+
+  document.addEventListener("DOMContentLoaded", function() {
+    renderPrimitivesPanel();
+    renderModulePanel();
+    renderServicePanel();
+
+    // Close modal on overlay click
+    document.getElementById("modal-overlay").addEventListener("click", function(e) {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Close modal on Escape key
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Close button
+    document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+
+    // Edit & Rerun button — stub (P1-E2 will wire the real handler)
+    document.getElementById("rerun-btn").addEventListener("click", function() {
+      if (!currentScenario) return;
+      // P1-E2 rerun-handler will replace this stub.
+      alert("Rerun wiring deferred to P1-E2 (sandbox runner task).");
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
