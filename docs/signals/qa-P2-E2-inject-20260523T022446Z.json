@@ -1,0 +1,53 @@
+{
+  "from": "qa",
+  "to": "po",
+  "kind": "inject_complete",
+  "task_id": "P2-E2",
+  "timestamp": "2026-05-23T02:24:46Z",
+  "inject_commit_sha": "PENDING_COMMIT",
+  "files_modified": [
+    "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
+    "docs/handoffs/TASK_P2-E2.md"
+  ],
+  "bug_class": "RSI Wilder smoothing off-by-one, fresh variant (distinct from D2 mutation)",
+  "pre_inject_baseline": {
+    "primitive_scenarios_total": 25,
+    "primitive_green": 25,
+    "primitive_red": 0,
+    "note": "All 25 primitive scenarios GREEN before injection"
+  },
+  "post_inject_sandbox": {
+    "primitive_scenarios_total": 25,
+    "primitive_green": 21,
+    "primitive_red": 4,
+    "scenario_a_red": [
+      "rsi-golden",
+      "rsi-mid-range",
+      "rsi-overbought-pullback",
+      "rsi-oversold-bounce"
+    ],
+    "first_numeric_divergence": "rsi-golden: rsi[4] got 53.281574, want 54.567700 (tol 1)",
+    "canary_b_green": [
+      "rsi-insufficient-data",
+      "ma-golden",
+      "ma-sma-vs-ema"
+    ],
+    "cross_primitive_green_count": 20,
+    "cross_primitive_green_note": "bb-*, macd-*, ma-*, cross-* ALL GREEN"
+  },
+  "scenario_a_test_names_flipped_red": [
+    "rsi-golden",
+    "rsi-mid-range",
+    "rsi-overbought-pullback",
+    "rsi-oversold-bounce"
+  ],
+  "scenario_b_canary_green_evidence": {
+    "rsi-insufficient-data": "green — error-path canary unaffected (never reaches smoothing recurrence)",
+    "ma-golden": "green — cross-primitive canary B not yet triggered",
+    "ma-sma-vs-ema": "green — cross-primitive secondary canary B not yet triggered"
+  },
+  "handoff_rewritten": "docs/handoffs/TASK_P2-E2.md — owner changed from qa to dev-technical-analysis, no-cheat clause applied, forbidden inputs list (8 paths), L84 staging anchor at line 84",
+  "next_action": "PO to spawn dev-technical-analysis against docs/handoffs/TASK_P2-E2.md — do NOT expose inject SHA, bug-class operand, or any forbidden-input path to dev-ta",
+  "no_dispatch_chain": true,
+  "closure_anchor": "62edbf3d"
+}
