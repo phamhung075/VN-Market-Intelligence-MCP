@@ -1,5 +1,59 @@
 # QA — Notebook
 
+## c282 cycle-14 · 2026-05-23 · P2-E2 inject — RSI Wilder smoothing fresh variant
+
+**Task:** P2-E2-inject — bug A injection for G11 regression-alarm proof | **Verdict:** INJECT COMPLETE
+
+```
+date: 2026-05-23
+outcome: INJECT COMPLETE
+type: bug-injection (not a dev-handoff QA review)
+inject_commit: 37d867d5
+signal: docs/signals/qa-P2-E2-inject-20260523T022446Z.json
+```
+
+Pre-inject baseline: 25/25 primitive scenarios GREEN.
+Fresh variant injected into `apps/technical-analysis/pkg/primitive/rsi/rsi.go` lines 56-57 — denominator operand only, distinct from D2's numerator-operand mutation.
+Post-inject: rsi-golden RED (rsi[4] got 53.281574, want 54.567700, tol 1), rsi-mid-range RED, rsi-overbought-pullback RED, rsi-oversold-bounce RED (4 RED); rsi-insufficient-data GREEN; ma-golden GREEN; ma-sma-vs-ema GREEN; 20 cross-primitive GREEN.
+Handoff TASK_P2-E2.md rewritten for dev-ta: owner=dev-technical-analysis, no-cheat clause, 8-path forbidden inputs list, L84 staging anchor at line 84.
+Signal written for PO: inject SHA + sandbox diff + canary B GREEN evidence. Operand NOT named in signal.
+No dispatch chain — PO spawns dev-ta in substep 2b.
+
+---
+
+## c263 · 2026-05-22 · P1 closure gate — technical-analysis pilot
+
+**Task:** Phase 1 closure verification (commit f0958a97 / P1-E2) | **Verdict:** PASS — Phase 2 UNBLOCKED
+
+```
+date: 2026-05-22
+outcome: PASS
+type: pilot-closure-gate
+commit_verified: f0958a97 (P1-E2)
+qa_commit: 9564f6ee (pilot-status.json updated)
+```
+
+| Goal | Status | Evidence summary |
+|------|--------|-----------------|
+| G1 | YES | 5 primitives, 25/25 sandbox GREEN, go test 5 packages ok |
+| G2 | YES | module/technical_analysis.go, 5/5 module scenarios GREEN |
+| G3 | YES | main.go 79L ≤80 AC, zero domain logic grep, DDD layers, openapi.yaml |
+| G4 | TBD | DEFERRED Phase 2 |
+| G5 | TBD | DEFERRED Phase 2 |
+| G6 | YES | 3 panels, 25+5 embedded, JS clean, openModal drill-down confirmed |
+| G7 | YES | env audit: forbidden_matches EMPTY. 30/30 sandbox GREEN |
+| G8 | YES | 5 corrupted → 5 RED: rsi wrong val, macd wrong len, bb wrong upper, ma wrong len, cross wrong events |
+| G9 | IN-PROG | Dashboard technically ready; verbal user gate = PO at pilot review |
+| G10 | TBD | DEFERRED Phase 2 |
+| G11 | TBD | DEFERRED Phase 2 |
+| G12 | IN-PROG | Streak 1/3 — task #1 = this QA run (30/30 GREEN before verdict) |
+
+**Security gate:** CLEAR. ENV audit verbatim: `audited_env_keys: HOME,PATH / forbidden_matches:` (empty).
+**G8 5 corruptions:** C1 rsi[0] 66.67→99.99 RED, C2 outputLength 27→999 RED, C3 bb upper[0] 12.41→9999.99 RED, C4 sma length 7→999 RED, C5 eventCount 2→999 RED. All cleaned up (not committed).
+**Phase 2 gate:** G1 YES + G2 YES + G3 YES + G6 YES + G7 YES + G8 YES = 6 hard goals confirmed. Phase 2 UNBLOCKED.
+**Deferred correctly:** G4/G5/G10/G11 all TBD — matches phase-1-task-plan-go.md §Goal Mapping.
+
+---
 
 ## c262 · 2026-05-22T20:00Z
 
