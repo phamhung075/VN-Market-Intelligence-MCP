@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-A1",
+    "activeTask": null,
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -365,6 +365,42 @@
       }
     ],
     "tasks": {
+      "P2-A1": {
+        "status": "DONE",
+        "title": ".golangci.yml Creation (Fence-A/B/C Rules)",
+        "dev_commit_sha": "31597da4",
+        "dev_signal": "docs/signals/dev-macro-p2-a1-done-20260523T130000Z.json",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T15:05:00Z",
+        "qa_signal": "docs/signals/qa-p2-a1-macro-GREEN-20260523T150500Z.json",
+        "qa_commit_sha": "PENDING",
+        "ac_results": "5/5 PASS",
+        "golangci_lint": "EXIT:0 — 0 issues",
+        "file_lines": 64,
+        "r1_gate": "PASS (EXIT:1, 0 matches)",
+        "sandbox_evidence": "total=5 pass=5 fail=0 status=OK exit 0 (QA independent run)",
+        "go_build": "BUILD_EXIT:0",
+        "go_test": "TEST_EXIT:0 (3 packages ok)",
+        "anchor_1776df8e": "HELD (exit 0 pre-QA)",
+        "forbidden_zone": "CLEAN (EXIT:1, 0 matches)",
+        "env_audit": "CLEAN (EXIT:1, 0 matches)",
+        "fence_config": {
+          "version": "v2",
+          "default_none": true,
+          "fence_a_pattern": "**/pkg/primitive/**",
+          "fence_b_pattern": "**/pkg/module/**",
+          "fence_c_exclusions": ["!**/cmd/server/main.go", "!**/*_test.go"]
+        },
+        "g4_contribution": "PARTIAL — config created + linter runs cleanly. Full G4=YES after P2-A2 CI wiring + deliberate-violation proof.",
+        "observations": [
+          {
+            "id": "OBS-golangci-v2-format",
+            "severity": "INFO",
+            "description": "golangci-lint v2 config format (version: '2', linters.settings not linters-settings) differs from TA pilot v1 format. Implementation correctly applies v2 format matching tool version 2.12.2. Forward lesson for future pilots.",
+            "ruling": "ACCEPTED"
+          }
+        ]
+      },
       "P2-B1": {
         "status": "DONE",
         "title": "MCP Tool Handler HTTP Rewire (R-3 Unblock)",
@@ -399,6 +435,13 @@
         "severity": "INFO",
         "description": "cmd/server/main.go pre-scaffold inline mux not yet wired to NewRouter(). cmd/ is frozen per handoff §Out-of-Zone Bans. Forward Phase 2 work item — wiring cmd→NewRouter() when real handler implementations land (likely P2-X1 or new task).",
         "ruling": "ACCEPTED — not a P2-B1 fail. AC-4 satisficed by router_test.go 4/4 PASS."
+      },
+      {
+        "id": "OBS-golangci-v2-format",
+        "task": "P2-A1",
+        "severity": "INFO",
+        "description": "golangci-lint v2 config format (version: '2', linters.settings.depguard, default: none) differs from TA pilot v1 format (linters-settings key). Implementation correct for tool version 2.12.2. Forward lesson: future pilots must verify installed golangci-lint version and apply matching config schema.",
+        "ruling": "ACCEPTED — recorded for forward reference per QA dispatch instructions"
       }
     ],
     "progress_notes": [
@@ -414,6 +457,12 @@
         "cycle": "c282 cycle-41 (QA)",
         "event": "P2-B1 QA-GREEN @ 2026-05-23T12:50:05Z — commits 98df0f43 + d3d8569f + <qa-commit-pending>",
         "detail": "All 7 ACs PASS. R-1 hard gate CLEAR (exit 1). G12 sandbox PASS (total=5 pass=5 fail=0 status=OK exit 0). Anchor 1776df8e HELD (exit 0). Forbidden-zone CLEAN (exit 1). Env audit CLEAN (exit 1). OBS-cmd-router-rewire accepted as forward work. R-3 risk UNBLOCKED — all 4 macro MCP tools now route via HTTP to port 5004. phase2.activeTask set null (PM picks next per critical path)."
+      },
+      {
+        "timestamp": "2026-05-23T15:05:00Z",
+        "cycle": "c282 cycle-43 (QA)",
+        "event": "P2-A1 QA-GREEN @ 2026-05-23T15:05:00Z — impl commit 31597da4",
+        "detail": "All 5 ACs PASS. golangci-lint EXIT:0 (0 issues, HARD GATE). R-1 EXIT:1 (0 matches). G12 sandbox total=5 pass=5 fail=0 status=OK EXIT:0 (all 5 scenarios). go build EXIT:0. go test EXIT:0 (3 packages ok). Anchor 1776df8e HELD (exit 0 pre-QA). Forbidden-zone CLEAN (EXIT:1). Env audit CLEAN (EXIT:1). Fence config sound: v2 format (version:'2', default:none), fence-a (**/pkg/primitive/**), fence-b (**/pkg/module/**), fence-c (!**/cmd/server/main.go + !**/*_test.go). OBS-golangci-v2-format accepted as forward lesson. phase2.activeTask P2-A1 → null. G4 status TBD → PARTIAL. Freeze anchor: 31597da4 is first+only commit on .golangci.yml."
       }
     ]
   },
@@ -421,7 +470,7 @@
     {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selects from §G1 candidate list (macro-investment-clock, macro-fed-liquidity-spread, macro-carry-trade-signal, macro-yield-spread-signal, macro-ism-regime-signal, macro-pyramid-tier, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier) at Phase 0."},
     {"id": "G2", "track": "A", "title": "Module composes primitives via ports", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Pilot ONE module only (recommended: macro-signals). Defer macro-core split to post-pilot. Architect confirms Phase 0."},
     {"id": "G3", "track": "A", "title": "Microservice has clean composition root", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "cmd/server/main.go ≤80 lines; OpenAPI YAML; no domain ops grep."},
-    {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
+    {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "PARTIAL", "verifiedAt": null, "verifiedBy": null, "evidence": "P2-A1: .golangci.yml Fence-A/B/C created, golangci-lint run exits 0 on existing P1 code. Fence config sound (v2 format, default:none, 3 fence rules). Full YES after P2-A2 CI wiring + deliberate-violation proof.", "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
     {"id": "G5", "track": "A", "title": "Old TS macro-indicators code deleted + HTTP rewire", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-B", "calibration": "G5a: apps/macro-indicators/src/ TS → _deprecated/. G5b: MCP tool handlers in apps/mcp-server/src/interface/mcp/tools/macro/ verified HTTP-routed to Go service port 5004. G5c: zero TODO.*migrat. Pre-revert tag: macro-pre-delete before P2-B2 git mv."},
     {"id": "G6", "track": "B", "title": "Three-level dashboard renders from JSON traces", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "apps/macro-indicators/dashboard/index.html — primitives + module + microservice panels. file:// works."},
     {"id": "G7", "track": "B", "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Env audit MUST include FRED_API_KEY in forbidden grep (macro-specific addition vs TA)."},

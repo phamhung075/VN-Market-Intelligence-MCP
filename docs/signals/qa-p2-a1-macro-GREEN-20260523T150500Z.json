@@ -1,0 +1,87 @@
+{
+  "signal": "qa-p2-a1-macro-GREEN",
+  "task_id": "P2-A1",
+  "qa_agent": "qa",
+  "qa_cycle": "c282-cycle-43",
+  "verdict": "GREEN",
+  "qa_verified_at": "2026-05-23T15:05:00Z",
+  "impl_commit": "31597da4",
+  "dev_signal": "docs/signals/dev-macro-p2-a1-done-20260523T130000Z.json",
+  "ac_results": {
+    "AC-1": {
+      "status": "PASS",
+      "evidence": "depguard enabled (linters.enable). fence-a/fence-b/fence-c all present. grep -c depguard = 3, grep -c fence-a|fence-b|fence-c = 3. version: '2' confirmed (v2 format). default: none confirmed (no implicit Main rule). File: apps/macro-indicators/.golangci.yml"
+    },
+    "AC-2": {
+      "status": "PASS — HARD GATE",
+      "evidence": "cd apps/macro-indicators && golangci-lint run → '0 issues.' LINT_EXIT:0. Independent QA execution."
+    },
+    "AC-3": {
+      "status": "PASS",
+      "evidence": "wc -l apps/macro-indicators/.golangci.yml → 64 lines (limit: ≤80). CLEAR."
+    },
+    "AC-4": {
+      "status": "PASS",
+      "evidence": "git log --oneline apps/macro-indicators/.golangci.yml → exactly 1 line: '31597da4 feat(macro-indicators): P2-A1 — .golangci.yml Fence-A/B/C depguard rules (G4 partial)'. Single commit on this file. Freeze anchor established."
+    },
+    "AC-5": {
+      "status": "PASS",
+      "evidence": "grep -rE 'math/rand|rand\\.Intn|rand\\.Float|time\\.Now.*Seed' apps/macro-indicators/pkg/ → EXIT:1 (0 matches). R-1 guard CLEAR."
+    }
+  },
+  "hard_gates": {
+    "golangci_lint": "EXIT:0 — 0 issues. PASS.",
+    "r1_grep": "EXIT:1 — 0 matches. PASS.",
+    "g12_sandbox_all_tier": "total=5 pass=5 fail=0 status=OK SANDBOX_EXIT:0. All 5 scenarios PASS (macro-investment-clock-edge, macro-investment-clock-failure, macro-investment-clock-golden, macro-signals-edge, macro-signals-golden). PASS.",
+    "go_build": "BUILD_EXIT:0. PASS.",
+    "go_test": "TEST_EXIT:0 — 3 packages ok (interface/http, module/macro_signals, primitive/macro_investment_clock). PASS.",
+    "anchor_1776df8e_pre_qa": "HELD — git merge-base --is-ancestor 1776df8e HEAD → exit 0."
+  },
+  "fence_config_analysis": {
+    "version_v2": "CONFIRMED — version: '2' at line 13. Correct format for golangci-lint v2 (not v1 linters-settings key).",
+    "default_none": "CONFIRMED — linters.default: none at line 16. Only depguard enabled. No implicit Main rule active.",
+    "fence_a": {
+      "file_pattern": "**/pkg/primitive/**",
+      "scope_match": "CORRECT — matches all .go files under apps/macro-indicators/pkg/primitive/*/",
+      "denies": ["pkg/module", "pkg/application", "pkg/interface", "pkg/infrastructure"],
+      "assessment": "SOUND — bottom tier (pure-function) isolated to stdlib only"
+    },
+    "fence_b": {
+      "file_pattern": "**/pkg/module/**",
+      "scope_match": "CORRECT — matches all .go files under apps/macro-indicators/pkg/module/*/",
+      "denies": ["pkg/application", "pkg/interface", "pkg/infrastructure"],
+      "assessment": "SOUND — middle tier (composition) may only import primitives + stdlib. No upward reach."
+    },
+    "fence_c": {
+      "file_patterns": ["!**/cmd/server/main.go", "!**/*_test.go"],
+      "scope_match": "CORRECT — negation patterns exclude composition root and test files; rule fires on everything else",
+      "denies": ["pkg/infrastructure"],
+      "assessment": "SOUND — infrastructure importable ONLY from cmd/server/main.go (composition root) and test files. All other non-test files blocked."
+    },
+    "list_mode_omission": {
+      "note": "Handoff AC-1 template included list-mode: 'lax' but implementation omits it. golangci-lint v2 depguard format does not use list-mode in rules (v1 field). Omission is CORRECT for v2. Linter runs cleanly — confirms format is valid.",
+      "ruling": "OBS-ACCEPTED — not a violation, v2 format is authoritative"
+    }
+  },
+  "forbidden_zone_audit": {
+    "commit": "31597da4",
+    "check": "git show --stat 31597da4 | grep -E '^ apps/technical-analysis/|^ \\.github/workflows/ci\\.yml|^ docs/data/pilot-status|^ \\./\\.golangci\\.yml'",
+    "result": "EXIT:1 — 0 matches. CLEAN.",
+    "files_touched": "apps/macro-indicators/.golangci.yml (1 file, 64 insertions). Only in-zone file."
+  },
+  "env_audit": {
+    "check": "grep -rE 'FRED_API_KEY|api_key|API_KEY' apps/macro-indicators/ --include=*.go --include=*.yml --include=*.html --include=*.json --include=*.md",
+    "result": "EXIT:1 — 0 matches. CLEAN."
+  },
+  "obs": [
+    {
+      "id": "OBS-golangci-v2-format",
+      "severity": "INFO",
+      "description": "golangci-lint v2 format differs from v1: top-level version: '2', linters.settings key (not linters-settings), and rules under linters.settings.depguard.rules (not depguard.rules). The TA pilot used v1 format — macro-indicators correctly applied v2 format matching tool version 2.12.2. Forward lesson: any future pilot must verify installed golangci-lint version and choose matching config format.",
+      "ruling": "ACCEPTED — OBS recorded for forward reference per dispatch instructions"
+    }
+  ],
+  "g4_status": "PARTIAL — P2-A1 establishes fence config. Full YES after P2-A2 CI wiring + deliberate-violation proof.",
+  "blocking_issues": 0,
+  "next_task": "P2-A2 (CI job wiring + deliberate-violation proof + macro-pre-ci tag) — P2-A1 freeze anchor is 31597da4"
+}

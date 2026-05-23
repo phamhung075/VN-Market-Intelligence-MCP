@@ -1,5 +1,45 @@
 # QA — Notebook
 
+## c282 cycle-43 · 2026-05-23 · macro P2-A1 .golangci.yml Fence-A/B/C depguard rules (G4 partial)
+
+**Task:** P2-A1 — .golangci.yml Creation (Fence-A/B/C Rules) | **Verdict:** GREEN | **Phase 2:** P2-A1 DONE, activeTask=null, G4=PARTIAL
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-p2-a1-macro-GREEN-20260523T150500Z.json
+impl_commit: 31597da4
+dev_signal: docs/signals/dev-macro-p2-a1-done-20260523T130000Z.json
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: depguard enabled + 3 fence rules | PASS | grep -c depguard = 3; grep -c fence-a\|fence-b\|fence-c = 3; version: '2' + default: none confirmed. File: apps/macro-indicators/.golangci.yml |
+| AC-2 HARD GATE: golangci-lint run exit 0 | PASS | cd apps/macro-indicators && golangci-lint run → '0 issues.' LINT_EXIT:0. QA independent run. |
+| AC-3: file ≤80 lines | PASS | wc -l = 64 lines (limit ≤80). CLEAR. |
+| AC-4: only commit 31597da4 on file | PASS | git log --oneline apps/macro-indicators/.golangci.yml → exactly 1 entry: '31597da4 feat(macro-indicators): P2-A1 — .golangci.yml Fence-A/B/C depguard rules (G4 partial)'. Freeze anchor established. |
+| AC-5 R-1: zero math/rand | PASS | grep -rE 'math/rand\|rand\.Intn\|rand\.Float\|time\.Now.*Seed' apps/macro-indicators/pkg/ → EXIT:1 (0 matches). R-1 CLEAR. |
+| G12 DoD gate: sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK SANDBOX_EXIT:0. All 5 scenarios PASS (edge/failure/golden/macro-signals-edge/macro-signals-golden). |
+| go build ./... | PASS | BUILD_EXIT:0. |
+| go test ./... | PASS | TEST_EXIT:0 — 3 packages ok (interface/http, module/macro_signals, primitive/macro_investment_clock). |
+| Anchor 1776df8e pre-QA | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0. HELD. |
+| Forbidden zone audit (31597da4) | CLEAN | git show --stat 31597da4 \| grep -E 'technical-analysis\|ci.yml\|pilot-status\|./\.golangci\.yml' → EXIT:1 (0 matches). 1 file only: apps/macro-indicators/.golangci.yml. |
+| Env audit: no FRED_API_KEY / API_KEY | CLEAN | grep -rE 'FRED_API_KEY\|api_key\|API_KEY' apps/macro-indicators/ --include=*.go --include=*.yml --include=*.html --include=*.json --include=*.md → EXIT:1 (0 matches). |
+| Fence-A scope pattern | SOUND | files: '**/pkg/primitive/**' — matches all .go files under pkg/primitive/. Denies module/application/interface/infrastructure. |
+| Fence-B scope pattern | SOUND | files: '**/pkg/module/**' — matches all .go files under pkg/module/. Denies application/interface/infrastructure. |
+| Fence-C exclusion pattern | SOUND | files: ['!**/cmd/server/main.go', '!**/*_test.go'] — denies infrastructure import from all files except composition root + tests. Correct enforcement. |
+| v2 format + default:none | CONFIRMED | version: '2' at L13. linters.settings (not linters-settings). default: none at L16. No implicit Main rule. Depguard only. |
+
+**OBS-golangci-v2-format ACCEPTED:** v2 config format (version:'2', linters.settings) differs from TA pilot v1 (linters-settings). Implementation correct for golangci-lint 2.12.2. Note: handoff AC-1 template included list-mode:'lax' but implementation omits it — list-mode is a v1 field, v2 does not use it in rules. Omission is correct. Linter runs cleanly confirming valid format. Forward lesson for future pilots baked into OBS.
+**G4 status:** PARTIAL — config created + lint-clean proof. Full YES requires P2-A2 CI wiring + deliberate-violation proof (fences fire on actual violations).
+**G12 sandbox:** total=5 pass=5 fail=0 — all 5 scenarios PASS. No regression from P2-A1 config-only change.
+**SSOT:** pilot-status-macro-indicators.json — P2-A1 status=DONE + phase2.activeTask=null + G4 status=PARTIAL + OBS-golangci-v2-format in phase2.observations + progress_notes appended.
+**Blocking issues:** 0 — all 5 ACs + all hard gates PASS.
+**NEXT:** pm — mark P2-A1 DONE. Dispatch P2-A2 (CI wiring + deliberate-violation proof + macro-pre-ci tag) per architect critical path.
+
+---
+
 ## c282 cycle-41 · 2026-05-23 · macro P2-B1 MCP HTTP rewire (R-3 unblock) — 4 tools verified
 
 **Task:** P2-B1 — MCP Tool Handler HTTP Rewire (R-3 Unblock) | **Verdict:** GREEN | **Phase 2:** P2-B1 DONE, activeTask=null
