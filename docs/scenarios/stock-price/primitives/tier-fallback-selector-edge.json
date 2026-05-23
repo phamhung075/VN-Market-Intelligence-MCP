@@ -1,0 +1,44 @@
+{
+  "primitive": "tier_fallback_selector",
+  "scenario": "tier-fallback-selector-edge",
+  "description": "T1 nil, T2 non-nil — T2 selected",
+  "input": {
+    "results": [
+      {
+        "quote": null,
+        "err": "connection timeout"
+      },
+      {
+        "quote": {
+          "code": "VCB",
+          "price": 85100,
+          "volume": 950000,
+          "change": 600,
+          "changePercent": 0.71,
+          "source": "hnx",
+          "fetchedAt": "2026-05-24T00:52:00Z",
+          "latencyMs": 78
+        },
+        "err": null
+      },
+      {
+        "quote": null,
+        "err": "not evaluated"
+      }
+    ]
+  },
+  "expected": {
+    "quote": {
+      "code": "VCB",
+      "price": 85100,
+      "volume": 950000,
+      "change": 600,
+      "changePercent": 0.71,
+      "source": "hnx",
+      "fetchedAt": "2026-05-24T00:52:00Z",
+      "latencyMs": 78
+    },
+    "err": null
+  },
+  "expected_reason": "T1 failed (quote=nil, err!=null); T2 is non-nil, so it wins. T3 not evaluated."
+}

@@ -1,0 +1,62 @@
+{
+  "primitive": "tier_fallback_selector",
+  "scenario": "tier-fallback-selector-golden",
+  "description": "T1 non-nil, T2/T3 also present — T1 selected",
+  "input": {
+    "results": [
+      {
+        "quote": {
+          "code": "VCB",
+          "price": 85000,
+          "volume": 1000000,
+          "change": 500,
+          "changePercent": 0.59,
+          "source": "hose",
+          "fetchedAt": "2026-05-24T00:53:00Z",
+          "latencyMs": 42
+        },
+        "err": null
+      },
+      {
+        "quote": {
+          "code": "VCB",
+          "price": 85100,
+          "volume": 950000,
+          "change": 600,
+          "changePercent": 0.71,
+          "source": "hnx",
+          "fetchedAt": "2026-05-24T00:52:00Z",
+          "latencyMs": 78
+        },
+        "err": null
+      },
+      {
+        "quote": {
+          "code": "VCB",
+          "price": 84900,
+          "volume": 0,
+          "change": 0,
+          "changePercent": 0,
+          "source": "cache",
+          "fetchedAt": "2026-05-23T00:00:00Z",
+          "latencyMs": 0
+        },
+        "err": null
+      }
+    ]
+  },
+  "expected": {
+    "quote": {
+      "code": "VCB",
+      "price": 85000,
+      "volume": 1000000,
+      "change": 500,
+      "changePercent": 0.59,
+      "source": "hose",
+      "fetchedAt": "2026-05-24T00:53:00Z",
+      "latencyMs": 42
+    },
+    "err": null
+  },
+  "expected_reason": "T1 (hose) is non-nil, so it wins. T2 and T3 are not evaluated."
+}

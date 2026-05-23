@@ -1,0 +1,26 @@
+{
+  "primitive": "tier_fallback_selector",
+  "scenario": "tier-fallback-selector-failure",
+  "description": "All tiers nil — PriceNotAvailableError",
+  "input": {
+    "results": [
+      {
+        "quote": null,
+        "err": "T1 connection timeout"
+      },
+      {
+        "quote": null,
+        "err": "T2 API rate limit"
+      },
+      {
+        "quote": null,
+        "err": "T3 cache miss"
+      }
+    ]
+  },
+  "expected": {
+    "quote": null,
+    "err": "PriceNotAvailableError"
+  },
+  "expected_reason": "All three tiers failed (all quotes nil). Return error sentinel."
+}
