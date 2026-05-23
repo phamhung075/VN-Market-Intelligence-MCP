@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-45 · 2026-05-23 · macro P2-B3 G5 terminal verification
+
+**Task:** P2-B3 — G5 Terminal Verification (G5b HTTP + G5c zero TODO) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-p2-b3-macro-GREEN-20260523T153700Z.json
+baseline_commit: 2d8052bf
+head_sha: 2d8052bf48d6b7fb199bf25694ae54b6717624fc
+macro_pre_delete_tag_sha: 37f79c96ca3896e839fd18289c73a788cf3a57ee
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Pre-condition: anchor 1776df8e pre | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| AC-1: G5b HTTP routing (0 domain imports in MCP macro handlers) | PASS | grep -rn computeCarryTradeSignal\|computeYieldSpreadSignal\|getMacroCalendar\|fetchYahooFinancePrices\|fetchSbvRates apps/mcp-server/src/interface/mcp/tools/macro/ → exit 1 (0 matches). All 4 tools HTTP-routed to port 5004. |
+| AC-2: G5c TODO sweep (0 TODO.*migrat in macro zone) | PASS | grep -r "TODO.*migrat" apps/macro-indicators/ apps/mcp-server/src/interface/mcp/tools/macro/ --include=*.ts --include=*.go → exit 1 (0 matches). CLEAN. |
+| AC-3: G5a TS deprecation (0 stray TS in active zone) | PASS | find apps/macro-indicators/src -path "*_deprecated*" -prune -o -type f -name "*.ts" -print | grep -v scraper → empty output. ZERO stray TS confirmed. |
+| AC-4: G5 grade evidence in signal | PASS | Signal file written with all 4 AC results, hard gates, out-of-zone, g5_terminal_readiness=READY_FOR_FLIP. Signal is authoritative evidence record. |
+| R-1 determinism guard | PASS | grep -rE "math/rand\|rand.Intn\|rand.Float\|time.Now.*Seed" apps/macro-indicators/pkg/ → R1_EXIT:1 (0 matches). CLEAR. |
+| golangci-lint run ./... | PASS | 0 issues. GOLANGCI_EXIT:0. |
+| go test ./... | PASS | 3 packages ok (pkg/interface/http, pkg/module/macro_signals, pkg/primitive/macro_investment_clock). GO_TEST_EXIT:0. |
+| G12 DoD sandbox all-tier 5/5 | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=5 pass=5 fail=0 status=OK. SANDBOX_EXIT:0. All 5 scenarios PASS. |
+| TA pilot untouched | PASS | git diff 2d8052bf HEAD --stat -- apps/technical-analysis/ → zero output. FROZEN. |
+| Configs frozen (.golangci.yml + ci.yml) | PASS | git diff 2d8052bf HEAD --stat -- .golangci.yml apps/macro-indicators/.golangci.yml .github/workflows/ci.yml → zero output. FROZEN. |
+| Anchor 1776df8e post | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD). No mutations — HEAD unchanged from baseline. |
+
+**G5 sub-goals confirmed:** G5a (TS deprecated, zero stray), G5b (HTTP routing clean, zero domain imports), G5c (zero TODO.*migrat). All 3 sub-goals GREEN.
+**g5_terminal_readiness:** READY_FOR_FLIP
+**Blocking issues:** 0 — all 4 ACs + all hard gates PASS. Verdict GREEN.
+**NEXT:** PM cycle-46 — close P2-B3, flip goals[G5].status=YES (atomic per Charter §4.5), dispatch P2-X1 (5 remaining primitives expansion).
+
+---
+
 ## c282 cycle-44b · 2026-05-23 · macro P2-B2 TS deprecation git mv (G5a)
 
 **Task:** P2-B2 — Pre-Delete Tag + git mv src/ src/_deprecated/ (G5a TS Deprecation) | **Verdict:** GREEN
