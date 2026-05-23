@@ -1,5 +1,88 @@
 # QA — Notebook
 
+## c282 cycle-49 · 2026-05-23 · macro P2-G1 joint G1+G2+G3 terminal verification — GREEN
+
+**Task:** P2-G1 — Joint G1+G2+G3 Terminal Verification (QA verification-only, no code) | **Verdict:** GREEN | **G2:** ready_for_flip
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (independent code inspection + all hard gates re-run at HEAD)
+signal: docs/signals/qa-p2-g1-macro-GREEN-20260523T163600Z.json
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| AC-1: 6 primitive packages exist | PASS | macro_investment_clock, macro_oil_impact_classifier, macro_gold_direction_classifier, macro_usdvnd_direction_classifier, macro_carry_trade_signal, macro_yield_spread_signal — all present (underscore naming, Go convention) |
+| AC-1: 18 scenario files (3 per primitive) | PASS | find docs/scenarios/macro-indicators/primitives -type f -name *.json | wc -l = 18. Flat layout, hyphen naming. |
+| AC-2: macro_signals.go imports 6 primitives | PASS | L22-27: mic/oil/gld/uvnd/carry/yld aliased imports. BuildMacroSignals() populates 6 fields. grep count = 12 occurrences. |
+| AC-2: Fence-B app/infra | PASS | FENCE_B_PASS_1 (exit 1, 0 matches) |
+| AC-2: Fence-B iface | PASS | FENCE_B_PASS_2 (exit 1, 0 matches) |
+| AC-3: Composition root clean | PASS | grep scoreIndicator|buildSnapshot|oilDirection|carryTrade|yieldSpread|computeSignal → ROOT_CLEAN (exit 1). DI chain: commodityFetcher → sbvRateRepo → useCase → router only. |
+| AC-4: Call chain trace (Option B) | PASS | router.go:64 useCase.Execute → usecases.go:116 sigs.BuildMacroSignals → 6 primitive calls in MacroSignalsOutput. Complete end-to-end chain verified by code inspection. |
+| AC-5: Sandbox 20/20 at HEAD | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=20 pass=20 fail=0 status=OK exit=0 |
+| AC-6: Joint G1+G2+G3 terminal table | PASS | 9/9 rows PASS: G1 (6 prims + 18 scenarios), G2 (6 imports + Fence-B ×2), G3 (ROOT_CLEAN + call chain), JOINT (anchor + R-1 + sandbox) |
+| R-1 determinism | PASS | grep -rE math/rand|rand.Intn|rand.Float|time.Now.*Seed apps/macro-indicators/pkg/ → exit 1 (0 matches) |
+| Fence-C (no infra in pkg/) | PASS | grep -rnE infrastructure import in apps/macro-indicators/pkg/ → exit 1 |
+| go build ./... | PASS | exit 0 |
+| go vet ./... | PASS | exit 0 |
+| golangci-lint run | PASS | 0 issues. exit 0. |
+
+**G1 terminal:** YES (already flipped, re-verified: 6 packages + 18 scenarios + sandbox 20/20)
+**G2 terminal:** READY_FOR_FLIP — 6 imports confirmed, Fence-B clean ×2, BuildMacroSignals 6 fields, sandbox 20/20
+**G3 terminal:** YES (already flipped, re-verified: ROOT_CLEAN, call chain confirmed)
+**Sandbox last line:** total=20 pass=20 fail=0 status=OK
+**Blocking issues:** 0 — all 6 ACs + all hard gates PASS.
+**NEXT:** PM cycle-50 — atomic flip G2=YES (5/12) + dispatch next critical-path task from {P2-F1, P2-C1, P2-D1}.
+
+---
+
+## c282 cycle-48 · 2026-05-23 · macro P2-X3 snapshot+carry+yield real handlers (G3 ready_for_flip)
+
+**Task:** P2-X3 — Snapshot Endpoint Implementation (Go Handler → Real Use Case) | **Verdict:** GREEN | **G3:** ready_for_flip
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (independent code inspection + all hard gates re-run at HEAD)
+signal: docs/signals/qa-p2-x3-macro-GREEN-20260523T162900Z.json
+verified_dev_commit: 88adeb70
+qa_commit: 34fb662d
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| Anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| AC-1: /health unchanged | PASS | router.go L51 returns hardcoded JSON '{\"status\":\"ok\",\"service\":\"macro-indicators\",\"port\":5004}' with StatusOK. Unchanged from P2-B1. |
+| AC-2: /snapshot real handler (not 501) | PASS | router.go L35 wires POST /snapshot to handleSnapshot(useCase, logger). usecases.go Execute() calls ms.New(&concreteClock{}).BuildMacroSignals(input) — all 6 primitives (InvestmentClock/OilImpact/GoldDirection/UsdVndDirection/CarryTrade/YieldSpread). MacroSnapshotResponse has vnIndex/oilUsd/goldUsd/usdVnd/fetchedAt + Signals with 6 keys. Zero HTTP 501 in handler path. |
+| AC-3: /carry-trade-signal real handler | PASS | handlers_carry.go L28 calls carry.Compute(CarryTradeInput{...}) — real primitive. Response map: regime/carrySpread/vndDepositRate/fedFundsRate/computedAt. No stub. |
+| AC-4: /yield-spread-signal real handler | PASS | handlers_yield.go L28 calls yld.Compute(YieldSpreadInput{...}) — real primitive. Response map: label/spread/earningYield/depositRate/computedAt. No stub. |
+| AC-5 G12 DoD sandbox (BINDING, QA independent) | PASS | go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=20 pass=20 fail=0 status=OK exit=0. All 20 scenarios PASS (15 primitive + 5 module). |
+| R-1 determinism | PASS | grep math/rand\|rand.Intn\|rand.Float\|time.Now.*Seed apps/macro-indicators/pkg/ → exit 1 (0 matches). CLEAN. |
+| Fence-C (no infra in pkg/) | PASS | grep -rnE infra import in apps/macro-indicators/pkg/ → exit 1 (0 matches). Only cmd/server/main.go imports infrastructure. |
+| Fence-B appinfra (macro_signals) | PASS | grep application\|infrastructure import in pkg/module/macro_signals/ → exit 1 (0 matches). CLEAN. |
+| Fence-B iface (macro_signals) | PASS | grep interface import in pkg/module/macro_signals/ → exit 1 (0 matches). CLEAN. |
+| go build ./... | PASS | exit 0. |
+| go vet ./... | PASS | exit 0. |
+| golangci-lint run | PASS | 0 issues. exit 0. |
+| Out-of-zone: apps/technical-analysis/ | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: apps/mcp-server/src/ | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: .github/workflows/ci.yml | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: .golangci.yml | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: apps/macro-indicators/.golangci.yml | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: docs/data/pilot-status-macro-indicators.json | UNTOUCHED | PM-owned SSOT, confirmed no diff. |
+| Out-of-zone: pkg/primitive/ (existing) | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Out-of-zone: macro_signals.go (module wiring) | UNTOUCHED | git diff HEAD~2..HEAD exit 0, no output. |
+| Composition root G3 inspection | PASS | cmd/server/main.go: imports + DI constructors + server startup ONLY. Zero if-conditions on data, zero calculations, zero domain logic. Grep scoreIndicator\|buildSnapshot\|oilDirection → exit 1 in main.go. |
+
+**G3 ready_for_flip:** YES — composition root clean (cmd/server/main.go DI-only), real handlers replace 501 stubs, all 6 primitives composed via module.
+**Sandbox last 5 lines (QA-independent run):** PASS macro-yield-spread-signal-golden.json → PASS macro-signals-edge.json → PASS macro-signals-golden.json → total=20 pass=20 fail=0 status=OK → sandbox_exit=0
+**Blocking issues:** 0 — all 5 ACs + all hard gates PASS. Out-of-zone clean.
+**NEXT:** PM cycle-49 — atomic close P2-X3 + flip G3=YES (4/12) + dispatch P2-G1 (joint G1+G2+G3 terminal verification, QA-owned).
+
+---
+
 ## c282 cycle-45 · 2026-05-23 · macro P2-B3 G5 terminal verification
 
 **Task:** P2-B3 — G5 Terminal Verification (G5b HTTP + G5c zero TODO) | **Verdict:** GREEN
