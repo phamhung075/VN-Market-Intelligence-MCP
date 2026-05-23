@@ -1,0 +1,18 @@
+{
+  "name": "reading-composer-edge",
+  "tier": "module",
+  "module": "reading_composer",
+  "input": {
+    "stockCode": "VCB",
+    "scores": [0.8, -0.3, 0.6, 0.1, -0.7, 0.4],
+    "markovData": { "transitionProb": 0.75, "historicalConfidence": 0.8 }
+  },
+  "expected": {
+    "queChinhNumber": 11,
+    "hoQueNumber": 55,
+    "bienQueNumber": 19,
+    "haosLength": 6,
+    "tradingSignal": "BUY",
+    "confidenceRangeWithMarkov": [0.7, 0.95]
+  }
+}
