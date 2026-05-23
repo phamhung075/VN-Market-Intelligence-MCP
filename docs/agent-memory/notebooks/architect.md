@@ -1,6 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-23 10:30 UTC | **Sprint:** macro-indicators pilot Phase 0 (cycle-29)
+**Last updated:** 2026-05-23 12:22 UTC | **Sprint:** macro-indicators pilot Phase 2 task plan (c282 cycle-22)
+
+## Cycle-22 entry (2026-05-23T12:22Z) — macro-indicators Phase 2 task plan
+
+**Task:** Author Phase 2 task plan for macro-indicators pilot (c282-cycle-22), per PO dispatch signal `po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json`. Phase 1 gate was GO (4/4 criteria PASS, G12 EARNED-PENDING, 2026-05-23T12:15:26Z).
+
+**Brownfield pre-read (confirms prior Phase 0 findings):**
+- 4 MCP tool files read: `macroTools.ts` (668L), `carryTools.ts` (199L), `dinhGiaTools.ts` (162L)
+- R-3 confirmed HIGH: `macroTools.ts` imports `fetchYahooFinancePrices`, `fetchSbvRates`, `computeCarryTradeSignal`, `computeYieldSpreadSignal` directly. `carryTools.ts` imports `computeCarryTradeSignal`, `getMacroCalendar` directly. `dinhGiaTools.ts` imports `computeYieldSpreadSignal` directly.
+- Go router (`router.go`) has only `/health` + `/snapshot` (501 stub). Needs 3 new routes for P2-B1.
+- Existing Go primitive: `macro_investment_clock/` only. Phase 2 adds 5 more.
+- `api/openapi.yaml` documents `/health` + `/snapshot` only (needs extension for new routes).
+- Anchor `1776df8e` confirmed ancestor via `git log --ancestry-path` check.
+
+**Phase 2 plan decisions:**
+- **WIP=1** (no parallel P2-A + P2-B) — R-3 unblock is highest priority; splitting focus before R-3 clears risks errors. P2-A1 follows P2-B1.
+- **14 tasks** across 6 logical buckets (B, A, X, G, F, C, D, E).
+- **G6/G7 treated as DONE** from Phase 1 (P1-E1/P1-E2 QA-verified GREEN) — no Phase 2 task needed. QA re-confirms at P2-G1.
+- **P2-B1 scope clarified:** dev-mcp-server agent (not dev-macro-indicators) — it touches the mcp-server TS zone. Go handler stubs (handlers_carry.go, handlers_yield.go, handlers_calendar.go) are co-delivered in P2-B1 to avoid zombie stub period.
+- **Pre-revert tags:** macro-pre-ci (before P2-A2), macro-pre-delete (before P2-B2), macro-pre-inject (before P2-D1) — all explicitly wired into task specs.
+- **Critical path:** P2-B1 → P2-A1 → P2-A2 → P2-B2 → P2-B3 → P2-X1 → P2-X2 → P2-X3 → P2-G1 → P2-F1 → P2-C1 → P2-D1 → P2-D2 → P2-E1 → Phase 3.
+- **OQ-7..OQ-10** authored for PM (scraper strategy, stub vs real impl, calendar port scope).
+
+**Risk flags surfaced for PM:**
+- P2-B1 requires both TS handler rewire AND new Go HTTP endpoints in same task — scope is larger than TA's equivalent P2-B1 (which only rewired TS, Go endpoint was already live). Dev agent must not split these across commits.
+- Scraper sidecar (Option A from brownfield §9): TS scrapers stay in place providing data to Go service. P2-X3 snapshot endpoint implementation will need to call scrapers via some mechanism — PM must clarify in OQ-8.
+- G6/G7 no-task assumption: if dashboard regresses during P2-X1..X3 (primitive cards added), QA must catch at P2-G1. The assumption is safe but PM should make it explicit in P2-G1 handoff.
+
+**Files authored this cycle (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md` (NEW — 14 tasks, per-task AC, sequencing diagram, goal coverage matrix, WIP decision)
+2. `docs/signals/architect-cycle22-phase2-plan-ready-20260523T122207Z.json` (NEW — PM pickup signal)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal for PM:** `docs/signals/architect-cycle22-phase2-plan-ready-20260523T122207Z.json`
+
+---
 
 ## Cycle-29 entry (2026-05-23T10:30Z) — macro-indicators Phase 0 deliverables
 

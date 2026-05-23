@@ -1,0 +1,124 @@
+{
+  "agent": "architect",
+  "role": "tech-lead",
+  "cycle": "c282-cycle-22",
+  "timestamp": "2026-05-23T12:22:07Z",
+  "event": "phase2_plan_ready",
+  "pilot": "macro-indicators",
+  "inbound_dispatch": "docs/signals/po-cycle21-dispatch-architect-phase2-spec-20260523T121526Z.json",
+  "deliverable_path": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
+
+  "anchor": {
+    "commit": "1776df8e",
+    "status": "HELD",
+    "verified_pre_commit": true,
+    "verified_post_commit": true,
+    "check_command": "git log --oneline --ancestry-path 1776df8e..HEAD | tail -1"
+  },
+
+  "wip_recommendation": "WIP=1 (no parallel P2-A + P2-B — R-3 unblock first, fence follows)",
+  "wip_cap_phase2": 1,
+  "wip_justification": "P2-B1 (R-3) is highest-priority unblock. Splitting dev-macro-indicators focus before R-3 clears increases error risk. P2-A1 follows immediately after P2-B1 DONE in next WIP slot.",
+
+  "first_task": {
+    "id": "P2-B1",
+    "title": "MCP tool handler HTTP rewire (R-3 unblock)",
+    "owner": "dev-mcp-server",
+    "priority": "HIGHEST — no blocker, starts immediately",
+    "rationale": "4 MCP tools bypass macro-indicators HTTP via direct domain imports. Until rewired, Go microservice is invisible to MCP surface. G5b cannot close and G8/G11 cannot be verified end-to-end.",
+    "files_to_modify": [
+      "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+      "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+      "apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts",
+      "apps/macro-indicators/pkg/interface/http/router.go",
+      "apps/macro-indicators/pkg/interface/http/handlers_carry.go (CREATE)",
+      "apps/macro-indicators/pkg/interface/http/handlers_yield.go (CREATE)",
+      "apps/macro-indicators/pkg/interface/http/handlers_calendar.go (CREATE)"
+    ],
+    "ac_count": 7
+  },
+
+  "task_ids": [
+    "P2-B1",
+    "P2-A1",
+    "P2-A2",
+    "P2-B2",
+    "P2-B3",
+    "P2-X1",
+    "P2-X2",
+    "P2-X3",
+    "P2-G1",
+    "P2-F1",
+    "P2-C1",
+    "P2-D1",
+    "P2-D2",
+    "P2-E1"
+  ],
+  "task_count": 14,
+
+  "owners": {
+    "dev-mcp-server": ["P2-B1"],
+    "dev-macro-indicators": ["P2-A1", "P2-A2", "P2-B2", "P2-X1", "P2-X2", "P2-X3", "P2-D2"],
+    "qa": ["P2-B3", "P2-G1", "P2-F1", "P2-D1", "P2-E1"],
+    "po": ["P2-C1"]
+  },
+
+  "goal_coverage": {
+    "G1": ["P2-X1", "P2-G1"],
+    "G2": ["P2-X2", "P2-G1"],
+    "G3": ["P2-X3", "P2-G1"],
+    "G4": ["P2-A1", "P2-A2"],
+    "G5": ["P2-B1", "P2-B2", "P2-B3"],
+    "G6": "Phase 1 DONE (P1-E1 — no Phase 2 task needed)",
+    "G7": "Phase 1 DONE (P1-E2 — no Phase 2 task needed)",
+    "G8": ["P2-F1"],
+    "G9": ["P2-C1"],
+    "G10": ["P2-D1", "P2-D2"],
+    "G11": ["P2-E1"],
+    "G12": "EARNED-PENDING §4.5 (PO flips at 12/12 terminal — no Phase 2 task)"
+  },
+
+  "pre_revert_tags_required": [
+    {
+      "tag": "macro-pre-ci",
+      "created_before": "P2-A2 (CI job activation)",
+      "creator": "dev-macro-indicators"
+    },
+    {
+      "tag": "macro-pre-delete",
+      "created_before": "P2-B2 (git mv src/ src/_deprecated/)",
+      "creator": "dev-macro-indicators"
+    },
+    {
+      "tag": "macro-pre-inject",
+      "created_before": "P2-D1 (bug injection commit)",
+      "creator": "qa"
+    }
+  ],
+
+  "constraints_confirmed": [
+    "R-1 grep guard enforced per task (math/rand zero matches in Go zone)",
+    "G12 DoD gate binding on all Go tasks (sandbox tier all exit 0 before DONE)",
+    "Fence-A: primitive-tier stdlib-only imports",
+    "Fence-B: module-tier primitive + stdlib only",
+    "L84 explicit-file staging per commit",
+    "No --force, no --no-verify, no --no-gpg-sign, no push",
+    "Anchor 1776df8e held pre+post every commit",
+    "apps/technical-analysis/ FROZEN (out of zone — do NOT modify)",
+    "Charter §4.5 decisionMatrix TBD until PO 12/12 atomic close",
+    "SSOT pilot-status-macro-indicators.json PM/QA owned (architect does not modify)"
+  ],
+
+  "phase2_ssot_update_required": {
+    "field": "phase2.status",
+    "from": "AWAITING-PLAN",
+    "to": "ACTIVE",
+    "by": "po (after architect signal verified)",
+    "also_set": "phase2.task_plan = docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md"
+  },
+
+  "pm_next_action": "Author TASK_P2-B1-macro.md handoff doc for dev-mcp-server. WIP=1: no other task dispatched until P2-B1 DONE signal + QA green.",
+
+  "open_questions_for_pm": ["OQ-7", "OQ-8", "OQ-9", "OQ-10"],
+  "open_questions_ref": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md §Open Questions for PM"
+}
