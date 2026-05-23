@@ -1,107 +1,65 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-28 (FINAL ATOMIC CLOSE — Brief CLOSED 12/12 terminal, verdict=scale)
-**Last update:** 2026-05-23T09:19:10Z
-**Status:** **BRIEF CLOSED.** 12/12 G-goals YES. decisionMatrix populated (Speed=YES Trust=YES Scale=YES verdict=scale). phase2.status=CLOSED. top-level status=DONE.
+**Cycle:** c282 cycle-29 (next-pilot kickoff — macro-indicators Factory v2 ACTIVE)
+**Last update:** 2026-05-23T09:38:57Z
+**Status:** Macro-indicators pilot KICKED OFF. Charter v2 ACTIVE. Phase 0 dispatched to architect (+ delegates system-auditor + agent-father). Parent TA pilot remains CLOSED (untouched this cycle).
 
-## Final state snapshot
+## This cycle
 
-- **Brief:** `docs/architecture-briefs/2026-05-22-deep-module-ddd-with-dashboards.md` — **status line flipped READY FOR PO REVIEW → CLOSED 2026-05-23**
-- **Refactor dir:** `docs/architecture-briefs/2026-05-22-refactor` — Phase 2 CLOSED 2026-05-23T09:19:10Z
-- **Pilot status SSOT:** `docs/data/pilot-status.json` — status=DONE, phase2.status=CLOSED, all 12 goals YES, decisionMatrix terminal verdict=scale
-- **Closure signal:** `docs/signals/po-brief-closed-20260523T091910Z.json`
-- **Final cycle:** c282 cycle-28
-- **G-goals terminal:** **12/12 YES** (G1+G2+G3+G4+G5+G6+G7+G8+G9+G10+G11+G12 all PASS)
-- **decisionMatrix:** Speed=YES (G10+G11) + Trust=YES (G9+G8) + Scale=YES (12/12 + tracks A+B + 1 sprint) + **verdict=scale** (3-YES per charter §Decision Matrix mechanical rubric)
-- **Next pilot recommendation:** macro-indicators per charter §Decision Matrix outcome
+User asked "next micro service factory" after TA pilot closed verdict=scale. Per parent charter §Decision Matrix outcome + PO language decision 2026-05-22 §Q2 (which generalizes Go-lock to macro-indicators), macro-indicators is the named next pilot — language pre-locked, no pivot risk.
 
-## What happened this cycle (cycle-28)
+Authored Factory v2 atomically (7 new files, L84 staging):
 
-1. Consumed qa P2-B4 completion signal `docs/signals/qa-p2-b4-done-20260523T091543Z.json` (commit `58d65645`):
-   - `g5_qa_verdict=PASS` aggregate
-   - AC-1 PASS: Go service /health 200 on port 5003 (PID 25115, qa started locally via `go run ./cmd/server/`)
-   - AC-2 PASS_WITH_NOTE: POST /ta/indicators returns 501 stub (Go handler not yet implemented per router.go:36-39) — MCP tool DB-fallback path activated as designed per P2-B1; formatter exercised with 60 VCB candles confirms RSI=52.7, MACD Line=+743/Signal=+900/Hist=-157, BB Upper=89909/Mid=86764/Lower=83619 — **501 stub is known pre-implementation design state, not a regression**
-   - AC-3 PASS: Go-path + DB-fallback formats identical (envelope `{source_tier:3, text, fetchedAt}`)
-   - AC-4 PASS_WITH_INTERPRETATION: 1 file = live HTTP wrapper + 2 comment-only refs + 0 live imports
-   - AC-5 PASS: grep TODO.*migrat = 0
-   - Supplementary: bun 9382/283/35 delta=0 vs P2-B3; tsc 0 errors; go test 7 packages ok 31 tests; sandbox 30/30 GREEN
-2. **PO end-to-end spot-checks reproduced (2026-05-23T09:19:10Z), all reconcile with qa:**
-   - `find apps/mcp-server/src -path "*_deprecated*" -prune -o -type f -name "*.ts" -print | xargs grep -l "domain/services/technicalIndicators"` → 2 files (assembleBriefing.ts + technicalIndicatorTools.ts)
-   - `grep -n "domain/services/technicalIndicators"` on those 2 files → 3 references, all COMMENT-ONLY (line 13 prefix `*`, line 48 prefix `*`, line 30 prefix `//`)
-   - `grep -r "TODO.*migrat" apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go'` → 0 matches exit 1
-   - `ls apps/mcp-server/src/_deprecated/` → technicalIndicators.ts + 1302-technical-indicators.test.ts present
-   - `ls apps/mcp-server/src/domain/services/technicalIndicators.ts` → No such file
-3. **ATOMIC FINAL CLOSE COMMIT (single commit, L84 explicit-file staging — 4 files):**
-   - **Flipped `goals[G5].status` TBD → YES** with verifiedAt=2026-05-23T09:15:43Z + full evidence chain (B0 c175f745 + B1 b9d0a82b + B2 a80f01e5 + B3 NO-OP signal + B4 commit 58d65645 + 501-stub design-state interpretation note)
-   - **Flipped `phase2.buckets.P2-B.status`** IN-PROGRESS → DONE
-   - **Flipped `phase2.buckets.P2-B.tasks.P2-B4`** DISPATCHED → DONE commit 58d65645
-   - **Populated `decisionMatrix`** per Charter §4.5 binding (atomic with G5 flip + only AFTER 12/12 terminal) — MECHANICAL APPLICATION of charter §Decision Matrix YES criteria:
-     - **Speed = G10 PASS + G11 PASS → YES** (criterion: 'G10 ≤2 cycles AND G11 alarm triggered at least once')
-     - **Trust = G9 PASS + G8 PASS → YES** (criterion: 'G9 verbally confirmed by user AND G8 red/green honesty proven')
-     - **Scale = all 12 YES + tracks A+B + sprintCount=1 ≤6 → YES** (criterion: 'All 12 YES AND both tracks delivered within 6 sprints')
-     - **verdict = scale** (3-YES → 'scale to next microservice' per outcome rubric)
-   - **Flipped top-level `status`** ACTIVE → DONE (charter §Status Tracking: 'DONE when all 12 goals are YES and decision matrix is complete')
-   - **Flipped `phase2.status`** OPEN → CLOSED with closedAt
-   - **Added `phase2.closure` block** per phase-2-closure-checklist §4 sign-off line (signedAt + signedBy + verdict + goalGrades 12/12 PASS + decisionMatrixOutcome + keyCommitsAnchorList + closureSignal pointer + cleanupNoteForOps)
-   - **Added `phase2.closure_summary` block** (1-page inline per §3 single-commit fallback)
-   - **Resolved `after_P2-B4_PASS` gate** with full close narrative
-   - **Wrote closure signal** `docs/signals/po-brief-closed-20260523T091910Z.json`
-   - **Updated brief master doc** status line: 'READY FOR PO REVIEW' → 'CLOSED 2026-05-23 — Phase 2 verdict=scale, 12/12 YES'
-   - **Overwrote this notebook** to cycle-28 final state
-   - **Appended decisionsThisCycle cycle-28 entry** with full rationale + action + constraints + next_observation_targets
+1. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md` (v2.0 ACTIVE — 7 TA lessons baked in v1, no Amendment-1 retrofit expected)
+2. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/01-lessons-from-ta-pilot.md` (L1-L7 explicit)
+3. `docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md` (skeleton — architect expands at Phase 0)
+4. `docs/data/pilot-status-macro-indicators.json` (NEW SSOT — parent pilot-status.json UNTOUCHED, FROZEN)
+5. `docs/po-decisions/2026-05-23-next-pilot-macro-indicators.md` (decision + alternatives weighed)
+6. `docs/signals/po-macro-pilot-kickoff-20260523T093857Z.json` (architect dispatch — 5 Phase 0 deliverables)
+7. This notebook overwrite
 
-## decisionMatrix mechanical derivation (per Charter §4.5 + task contract authoring rule)
+## Lessons baked into charter v1 (no Amendment-1 retrofit)
 
-The matrix values are NOT judgment calls. They are derived mechanically from the charter §Decision Matrix rubric applied to the finalized goal grades:
+| # | TA pain | Macro fix |
+|---|---|---|
+| L1 | Language pivot mid-Phase-1 (6 reverted commits, 3-4 days) | Go locked Day 0 via parent user verdict |
+| L2 | G4 whole-CI noisy from 283 unrelated TS fails | Offline depguard primary AC at v1 |
+| L3 | `PHASE-2` operational status enum violation | Status strict `ACTIVE\|DONE\|FAILED` Day 0 |
+| L4 | decisionMatrix authorship undefined | §4.5 PO-only + atomic-with-12/12 Day 0 |
+| L5 | Only `pre-delete` tag; `pre-ci`+`pre-inject` retrofitted | `macro-pre-{delete,ci,inject}` mandated Day 0 |
+| L6 | G9 sync-user-wait blocked 4 cycles | PO Playwright Path B Day 0 default |
+| L7 | SSOT/L84/anchor retroactively enforced | Binding from Day 0 in §Constraints |
 
-| Criterion | Rubric (charter verbatim) | Inputs | Result |
-|---|---|---|---|
-| **Speed** | G10 confirmed ≤2 cycles vs 4-6 baseline AND G11 regression alarm was triggered at least once (proving it works) | G10=PASS (1 cycle vs 1.5 baseline) + G11=PASS (2 trials both outcome (a); coupling proven; mechanism functional twice) | **YES** |
-| **Trust** | G9 confirmed verbally by user AND G8 red/green honesty proven | G9=PASS (user-delegated Playwright VERDICT PASS cycle-19 — user directive satisfies verbal-confirm spirit per decisionDoc) + G8=PASS (Test A red + Test B green honest) | **YES** |
-| **Scale** | All 12 goals YES AND both tracks A+B delivered within 6 sprints | 12/12 YES + Track A (G1-G5) YES + Track B (G6-G9) YES + Track C (G10-G12) YES + sprintCount=1 ≤6 | **YES** |
-| **Verdict** | 3 YES → scale; 2 YES → rescope; 0-1 YES → stop-MVR | 3 YES | **scale** |
+## Phase 0 dispatch (architect-owned, delegates to system-auditor + agent-father)
 
-## Cleanup note for ops (folded into closure)
+5 deliverables, parallel work (no dev-team WIP yet):
+- D1 brownfield inventory (architect or system-auditor)
+- D2 bug-inventory macro entry (system-auditor)
+- D3+D4 dev-macro-indicators agent + flow with G12 DoD Gate baked Day 0 (agent-father)
+- D5 phase-1-task-plan-go.md (architect)
 
-- **Go service PID 25115 left running on port 5003** by qa P2-B4 (qa started locally via `go run ./cmd/server/ &` since Docker not running at session start)
-- **Severity:** LOW — harmless stray dev binary, not a blocker
-- **Cleanup command:** `kill 25115` or `pkill -f 'go run ./cmd/server'` when convenient
-- **Folded into closure signal** `cleanupNoteForOps` field + `closure_summary.post_close_followups` per task contract option (single source of truth, no separate ops cleanup signal)
+R-11 trigger 2026-05-23T15:38:57Z (6h).
 
-## Optional post-close follow-ups (not blocking)
+## Constraints held
 
-1. `/graphify docs --update --no-viz` per phase-2-closure-checklist §3 item 4 (deferred during Phase 2 per docs/po-decisions/2026-05-23-graphify-scope.md)
-2. Charter §Decision Matrix amendment per checklist §3 item 5: append amendment to pilot-charter.md recording verdict=scale + next-pilot=macro-indicators
-3. Archive Phase 2 rows per checklist §3 item 3: move 19 P2-* rows from docs/TASKS.md Backlog to ARCHIVED section
-4. Ops cleanup Go PID 25115
+- L84 explicit-file staging (~7 files, per-file `git add`)
+- No `--force`, no `--no-verify`, no push
+- Parent pilot-status.json UNTOUCHED (FROZEN per L4 — separate SSOT for new pilot)
+- Parent brief master doc UNTOUCHED (status line already correctly `CLOSED 2026-05-23`)
+- Parent charter UNTOUCHED (CLOSED state preserved)
+- New pilot-status created with all 12 goals = TBD + decisionMatrix all TBD (§4.5 rule binding Day 0)
+- All work on `main`
+- PO autonomous per `feedback_po_autonomy.md`
 
-## Constraints held this cycle
+## Carry-over to cycle-30
 
-- L84 explicit-file staging (4 files: pilot-status.json + po.md + closure signal + brief master doc status line — 4th file justified per §3 single-commit-fallback)
-- No `--force`, no `--no-verify`, no push (CI billing block still owner=user)
-- Anchor `62edbf3d` held throughout entire pilot (architecture brief closure-checklist)
-- `.golangci.yml` freeze anchor `9d364329` held
-- Tag `p2-b-pre-delete` at `b9d0a82b` held (no retag, no force across the entire G5 chain B0→B1→B2→B3→B4)
-- P2-B1 anchor `b9d0a82b` held; P2-B2 commit `a80f01e5` held
-- **Charter §4.5 matrix-authorship rule honored:** decisionMatrix populate atomic in same commit as G5=YES flip; only AFTER 12/12 terminal grade reached
-- **decisionMatrix values derived MECHANICALLY from charter rubric** — no PO discretion beyond rubric per task contract authoring rule
-- Charter status enum compliance: top-level status `DONE` is charter-valid value
-- phase2.status `CLOSED` matches phase-2-closure-checklist §1 binding
-- No in-flight handoff frontmatter mutation (TASK_P2-B4.md untouched — qa already appended its completion evidence)
-- WIP-0 on dev-ta and qa pools (chain fully closed; no further dispatch)
-- SSOT-only mutation per cycle-19 cleanup policy
-- No PO source code edits (closure is doc + JSON + signal only)
+When architect signal returns (any/all of 5 Phase 0 deliverables done):
+1. Read completion signals
+2. Update `pilot-status-macro-indicators.json.phase0.deliverables.*` PENDING → DONE with commit refs
+3. When all 5 done → flip `phase0.status` OPEN → CLOSED + `phase` 0 → 1
+4. Dispatch dev-macro-indicators for Phase 1 first task (Go scaffold + macro-investment-clock primitive)
+5. R-11 trigger 6h from cycle-29 dispatch if no architect signal returns
 
-## Carry-over to next cycle
+If user issues directive overriding macro-indicators selection (low probability — parent charter named it), pivot per directive but reuse 7-lesson carry-over.
 
-**There is no next cycle for this brief.** Brief is CLOSED.
-
-If a new pilot kickoff is requested (e.g., macro-indicators per scale verdict), PO will:
-1. Read this notebook + closure signal + pilot-status.json to confirm prior brief CLOSED state
-2. Author a new charter for the new pilot (or accept user directive)
-3. Create a new pilot-status.json (or extend existing structure per architect amendment)
-4. Begin Phase 0 for the new pilot
-
-Otherwise, PO returns to normal sprint-planning duties per `.claude/flows/po/main.md` (channel audit + signal triage + sprint kickoff or sign-off).
-
-**Architecture brief anchor `62edbf3d` and all frozen anchors remain valid post-close** — they are historical reference points for the closed pilot.
+Parent TA closure artefacts (commits `62edbf3d`, `9d364329`, tag `p2-b-pre-delete @ b9d0a82b`) remain valid historical anchors but are not actively maintained.

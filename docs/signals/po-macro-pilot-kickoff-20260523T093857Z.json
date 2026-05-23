@@ -1,0 +1,135 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "pilot-kickoff-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-23T09:38:57Z",
+  "cycle": "c282 cycle-29",
+  "pilot": "macro-indicators",
+  "factory_version": "v2",
+  "parent_pilot_closure": {
+    "pilot": "technical-analysis",
+    "closed_at": "2026-05-23T09:19:10Z",
+    "verdict": "scale",
+    "closure_signal": "docs/signals/po-brief-closed-20260523T091910Z.json",
+    "closure_commit_anchor": "62edbf3d (architecture brief closure-checklist held throughout pilot)"
+  },
+  "charter_ref": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md",
+  "charter_version": "2.0",
+  "charter_status": "ACTIVE",
+  "pilot_status_ssot": "docs/data/pilot-status-macro-indicators.json",
+  "lessons_doc": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/01-lessons-from-ta-pilot.md",
+  "phase_skeleton": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md",
+  "po_decision_doc": "docs/po-decisions/2026-05-23-next-pilot-macro-indicators.md",
+  "kickoff_date": "2026-05-23",
+  "hard_deadline": "2026-07-04 (kickoff + 6 sprints per charter §Hard Deadline)",
+  "language": "Go",
+  "language_lock_source": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user verdict 2026-05-22 generalizes Go to macro-indicators",
+  "current_phase": "0",
+  "phase_0_deliverables_owner_architect": [
+    {
+      "id": "PHASE0-D1",
+      "title": "Brownfield inventory scan",
+      "target_path": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md",
+      "owner": "architect (or delegate to system-auditor)",
+      "scope": "Scan apps/macro-indicators/: current TS files + LOC + DDD layer mapping; 8 external scrapers + status (live/wontfix/disabled); existing MCP tool callers (get_macro_snapshot, get_macro_calendar, get_carry_trade_signal, get_yield_spread_signal, get_imf_signals, get_fed_liquidity_signal, get_credit_flow_signal) — confirm count + caller paths; tests inventory (__tests__/unit/*, __tests__/integration/*); identify 5-7 primitives to extract from charter §G1 candidate list",
+      "completion_signal_contract": "docs/signals/architect-p0-brownfield-done-<ISO>.json"
+    },
+    {
+      "id": "PHASE0-D2",
+      "title": "Bug-inventory macro entry",
+      "target_path": "docs/data/bug-inventory.json (extend, do not replace)",
+      "owner": "architect delegates to system-auditor",
+      "scope": "Extend existing bug-inventory.json with macro-specific bugs from last 60 days (git log + docs/signals + agent notebooks scan). Schema unchanged from TA pilot. If no macro bugs in inventory, fall back to system-wide 4-6 baselineCycleCount per parent charter §Baseline Metric Capture",
+      "completion_signal_contract": "docs/signals/system-auditor-p0-bug-inventory-macro-done-<ISO>.json"
+    },
+    {
+      "id": "PHASE0-D3",
+      "title": "dev-macro-indicators agent file",
+      "target_path": ".claude/agents/dev-macro-indicators.md",
+      "owner": "architect delegates to agent-father",
+      "scope": "Clone .claude/agents/dev-technical-analysis.md, adjust scope to apps/macro-indicators/, preserve YAML frontmatter pattern (name/color/description/tools/model), preserve agent-md-factory standards",
+      "completion_signal_contract": "docs/signals/agent-father-p0-dev-macro-agent-done-<ISO>.json"
+    },
+    {
+      "id": "PHASE0-D4",
+      "title": "dev-macro-indicators flow file (G12 DoD Gate baked Day 0)",
+      "target_path": ".claude/flows/dev-macro-indicators/main.md",
+      "owner": "architect delegates to agent-father",
+      "scope": "Clone .claude/flows/dev-technical-analysis/main.md verbatim including G12 DoD Gate from commit cc7578f1 (2026-05-23 cycle-7 P2-F2 landing). Adjust working-directory to apps/macro-indicators/. G12 DoD Gate must be present from Day 0 (L6 carry-over from TA pilot — no separate flow-edit task needed).",
+      "completion_signal_contract": "docs/signals/agent-father-p0-dev-macro-flow-done-<ISO>.json"
+    },
+    {
+      "id": "PHASE0-D5",
+      "title": "Phase 1 task plan (Go scaffold + first primitive atomic tasks)",
+      "target_path": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md",
+      "owner": "architect (do not delegate)",
+      "scope": "Expand 07-phases.md §Phase 1 into atomic tasks per TA's phase-1-task-plan-go.md pattern. Scope: apps/macro-indicators/go.mod + cmd/server/main.go (port 5004) + cmd/sandbox/main.go + pkg/primitive/macro_investment_clock/ + docs/scenarios/macro-indicators/primitives/macro-investment-clock-{golden,edge,failure}.json + apps/macro-indicators/dashboard/index.html stub + sandbox green for first primitive. Reference parent TA phase-1-task-plan-go.md for shape.",
+      "completion_signal_contract": "docs/signals/architect-p0-phase-1-task-plan-done-<ISO>.json"
+    }
+  ],
+  "lessons_baked_in_charter_v1": [
+    {
+      "id": "L1",
+      "source": "TA Phase 1 language pivot (6 reverted commits)",
+      "charter_v2_section": "§Language Lock + §Charter Inherited Lessons L1",
+      "fix": "Go locked Day 0 via parent user verdict 2026-05-22 §Q2 — no pivot possible"
+    },
+    {
+      "id": "L2",
+      "source": "TA G4 Amendment 1 (architect 10aceb0c)",
+      "charter_v2_section": "§G4 + §Charter Inherited Lessons L2",
+      "fix": "Offline depguard primary evidence OR pilot-zone-scoped CI secondary — both AC surfaces at v1, no Amendment expected"
+    },
+    {
+      "id": "L3",
+      "source": "TA Q5 closure-checklist-audit (PHASE-2 status enum violation)",
+      "charter_v2_section": "§Hard Deadline + §Status Tracking + §Charter Inherited Lessons L3",
+      "fix": "Status enum strictly ACTIVE|DONE|FAILED. Auto-FAILED on G9-blocked deadline pass."
+    },
+    {
+      "id": "L4",
+      "source": "TA Q6 closure-checklist-audit (decisionMatrix authorship undefined)",
+      "charter_v2_section": "§Constraints + decisionMatrix._authorship_rule in pilot-status SSOT",
+      "fix": "PO-only authorship; populate ONLY after 12/12 terminal in atomic commit"
+    },
+    {
+      "id": "L5",
+      "source": "TA Q7 closure-checklist-audit (pre-revert tags missing)",
+      "charter_v2_section": "§G4 + §G5 + §G10 require pre-* tags Day 0",
+      "fix": "macro-pre-delete, macro-pre-ci, macro-pre-inject mandated at v1 in handoff specs"
+    },
+    {
+      "id": "L6",
+      "source": "TA G9 cycle-19 user-delegated PO Playwright precedent",
+      "charter_v2_section": "§G9 — Path A user verbal OR Path B PO Playwright (Day 0 default)",
+      "fix": "PO does not wait synchronously for user; runs Playwright headless verification immediately if user unavailable"
+    },
+    {
+      "id": "L7",
+      "source": "TA cycle-19 SSOT + L84 + anchor cleanup policy",
+      "charter_v2_section": "§Constraints (binding Day 0)",
+      "fix": "L84 explicit-file staging; no force/no push/local-only; one active dispatch per task; anchor hold"
+    }
+  ],
+  "rollback_safety_pre_tags_required_in_phase_2_handoffs": [
+    {"tag": "macro-pre-delete", "purpose": "G5 git mv to _deprecated/ rollback", "created_by": "dev-macro-indicators in P2-B0 pre-step"},
+    {"tag": "macro-pre-ci", "purpose": "G4 CI job activation rollback", "created_by": "dev-macro-indicators before P2-A2 commit lands"},
+    {"tag": "macro-pre-inject", "purpose": "G10 bug injection rollback", "created_by": "qa before P2-D2 commit lands"}
+  ],
+  "wip_limit": {
+    "phase_0_dev_team": 0,
+    "phase_1_dev_team": 1,
+    "phase_2_dev_team": 2,
+    "rationale": "Phase 0 has no dev-team work (setup only). Phase 1 starts single-WIP (first primitive solo). Phase 2 allows WIP=2 (matches parent TA Phase 2 WIP rule)."
+  },
+  "po_next_observation": "Cycle-30 PO: verify all 5 Phase 0 deliverables landed via signal trail; flip phase0 deliverables PENDING→DONE; flip phase0.status OPEN→CLOSED; verify Phase 0 exit gate; enable Phase 1 dispatch to dev-macro-indicators. R-11 trigger 2026-05-23T15:38:57Z (6h from this dispatch — generous for parallel architect+system-auditor+agent-father work).",
+  "constraints_held_this_dispatch": [
+    "L84 explicit-file staging (per-file git add)",
+    "No --force, no --no-verify, no push",
+    "Parent pilot-status.json UNTOUCHED (FROZEN historical record)",
+    "Parent brief master doc UNTOUCHED",
+    "Parent charter UNTOUCHED (CLOSED state preserved)",
+    "New pilot-status SSOT created with all 12 goals TBD + decisionMatrix all TBD (§4.5 rule binding from Day 0)"
+  ]
+}

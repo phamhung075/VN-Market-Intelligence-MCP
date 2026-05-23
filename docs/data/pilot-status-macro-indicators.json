@@ -1,0 +1,109 @@
+{
+  "_maintained_by": "po",
+  "_note": "macro-indicators pilot SSOT — Factory v2. Separate file from pilot-status.json (which is FROZEN historical record for the closed technical-analysis pilot 2026-05-23). DO NOT mutate pilot-status.json. Author this file end-to-end through macro pilot life cycle.",
+  "_parent_pilot_closure": "docs/data/pilot-status.json (status=DONE, verdict=scale, closedAt 2026-05-23T09:19:10Z)",
+  "_parent_pilot_closure_signal": "docs/signals/po-brief-closed-20260523T091910Z.json",
+  "_lessons_carryover": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/01-lessons-from-ta-pilot.md",
+  "pilot": "macro-indicators",
+  "charterRef": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md",
+  "charterVersion": "2.0",
+  "status": "ACTIVE",
+  "openedAt": "2026-05-23T09:38:57Z",
+  "openedBy": "po cycle-29 — next-pilot kickoff after TA scale verdict",
+  "sprintKickoff": "2026-05-23",
+  "sprintDeadline": "2026-07-04",
+  "deadline": "kickoff + 6 sprints",
+  "language": "Go",
+  "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user verdict generalizes to macro-indicators",
+  "languageLockedAt": "2026-05-22 (parent decision)",
+  "phase": "0",
+  "phase0": {
+    "status": "OPEN",
+    "openedAt": "2026-05-23T09:38:57Z",
+    "openedBy": "po (cycle-29 atomic kickoff)",
+    "owner": "architect + system-auditor + agent-father",
+    "deliverables": {
+      "pilot_status_ssot": "DONE 2026-05-23T09:38:57Z (this file)",
+      "brownfield_inventory": "PENDING (architect or system-auditor — docs/architecture-briefs/2026-05-23-macro-indicators-factory/p0-brownfield-inventory.md)",
+      "bug_inventory_macro_entry": "PENDING (system-auditor — extend docs/data/bug-inventory.json with macro-specific bugs from last 60 days)",
+      "dev_macro_indicators_agent_file": "PENDING (agent-father — .claude/agents/dev-macro-indicators.md)",
+      "dev_macro_indicators_flow_file": "PENDING (agent-father — .claude/flows/dev-macro-indicators/main.md with G12 DoD Gate baked in from Day 0)",
+      "phase_1_task_plan_go": "PENDING (architect — docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-1-task-plan-go.md)"
+    },
+    "exit_gate": {
+      "all_deliverables_landed": false,
+      "pilot_status_phase_0_fields_populated": false,
+      "no_code_in_apps_macro_indicators_pkg_yet": true,
+      "exit_gate_status": "OPEN"
+    }
+  },
+  "phase1": {
+    "status": "NOT-STARTED",
+    "blockedBy": "phase0.exit_gate",
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 1",
+    "expansion_owner": "architect (expands skeleton into phase-1-task-plan-go.md atomic tasks at Phase 0 close)"
+  },
+  "phase2": {
+    "status": "NOT-STARTED",
+    "blockedBy": "phase1.exit_gate (PO go/no-go after first primitive ships)",
+    "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2"
+  },
+  "goals": [
+    {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selects from §G1 candidate list (macro-investment-clock, macro-fed-liquidity-spread, macro-carry-trade-signal, macro-yield-spread-signal, macro-ism-regime-signal, macro-pyramid-tier, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier) at Phase 0."},
+    {"id": "G2", "track": "A", "title": "Module composes primitives via ports", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Pilot ONE module only (recommended: macro-signals). Defer macro-core split to post-pilot. Architect confirms Phase 0."},
+    {"id": "G3", "track": "A", "title": "Microservice has clean composition root", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "cmd/server/main.go ≤80 lines; OpenAPI YAML; no domain ops grep."},
+    {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
+    {"id": "G5", "track": "A", "title": "Old TS macro-indicators code deleted + HTTP rewire", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-B", "calibration": "G5a: apps/macro-indicators/src/ TS → _deprecated/. G5b: MCP tool handlers in apps/mcp-server/src/interface/mcp/tools/macro/ verified HTTP-routed to Go service port 5004. G5c: zero TODO.*migrat. Pre-revert tag: macro-pre-delete before P2-B2 git mv."},
+    {"id": "G6", "track": "B", "title": "Three-level dashboard renders from JSON traces", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "apps/macro-indicators/dashboard/index.html — primitives + module + microservice panels. file:// works."},
+    {"id": "G7", "track": "B", "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Env audit MUST include FRED_API_KEY in forbidden grep (macro-specific addition vs TA)."},
+    {"id": "G8", "track": "B", "title": "Red/green status is honest", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Test A corrupted + Test B golden pattern from TA verbatim."},
+    {"id": "G9", "track": "B", "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-C", "calibration": "L6 carry-over: Path B (PO Playwright short-circuit) is Day-0 default. Path A (user verbal) preferred if user available. Either satisfies G9 per cycle-19 TA precedent."},
+    {"id": "G10", "track": "C", "title": "AI agent fixes a primitive bug without looping (≤2 cycles)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-D", "calibration": "baselineCycleCount from docs/data/bug-inventory.json (macro entry — Phase 0 deliverable). Falls back to TA's 1.5 or system-wide 4-6. Pre-revert tag: macro-pre-inject before P2-D2."},
+    {"id": "G11", "track": "C", "title": "Regression alarm bell works", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-E", "calibration": "Coupling-proven outcome-(a) for 2 trials = PASS per TA cycle-17 rubric."},
+    {"id": "G12", "track": "C", "title": "Dev-macro-indicators flow requires dashboard-green before done (3-task streak)", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": "P2-F", "calibration": "L6 carry-over: agent-father clones dev-technical-analysis flow with G12 DoD Gate baked in Day 0 (Phase 0 deliverable). 3-task streak uses Phase 1 first-primitive task + 2 Phase 2 dev tasks.", "g12Streak": {"required": 3, "completed": 0, "streakComplete": false, "tasks": [], "ruleEffectiveAfter": "Phase 0 dev-macro-indicators flow creation (agent-father commit)"}}
+  ],
+  "decisionMatrix": {
+    "speed": "TBD",
+    "trust": "TBD",
+    "scale": "TBD",
+    "verdict": "TBD",
+    "_authorship_rule": "PO-only per charter §Constraints + §4.5 carry-over. Populate ONLY after 12/12 G-goals reach terminal grade (YES/PARTIAL/DEFER — no TBD/IN-PROGRESS). Atomic with last G-goal flip + verdict signature in same commit.",
+    "_criteria_application": "Mechanical per charter §Decision Matrix rubric: Speed = G10 + G11; Trust = G9 + G8; Scale = all 12 + sprint count ≤ 6. NO PO discretion beyond rubric."
+  },
+  "verdict": "TBD",
+  "constraints_binding_day_0": [
+    "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
+    "No --force, no --no-verify, no --no-gpg-sign",
+    "No git push of source/CI changes (local-only; user owns push)",
+    "All work on main (NO branches per CLAUDE.md)",
+    "SSOT: one active dispatch per task",
+    "Anchor discipline: once frozen, no retag/rewrite/push",
+    "Charter §4.5 matrix-authorship rule",
+    "Notebook + signal hygiene (PO notebook ≤200L, signals {agent}-{ISO}.json)"
+  ],
+  "lessons_baked_in_v1": [
+    "L1 — Language locked Go Day 0 (no pivot possible)",
+    "L2 — G4 offline depguard primary evidence (not whole-CI)",
+    "L3 — Status enum strict ACTIVE/DONE/FAILED (no operational labels)",
+    "L4 — decisionMatrix PO-only authorship + atomic with 12/12 terminal",
+    "L5 — Pre-revert tags Day 0 (macro-pre-delete, macro-pre-ci, macro-pre-inject)",
+    "L6 — G9 PO Playwright short-circuit Day 0 default",
+    "L7 — SSOT + L84 + anchor discipline binding from Day 0"
+  ],
+  "poDecisionLog": [
+    {
+      "timestamp": "2026-05-23T09:38:57Z",
+      "cycle": "c282 cycle-29",
+      "decision": "Kickoff macro-indicators factory v2 — pilot SSOT initialized, charter v2 authored, lessons doc + phase skeleton in place. Dispatch architect for Phase 0 deliverables.",
+      "rationale": "TA pilot CLOSED 2026-05-23T09:19:10Z 12/12 YES verdict=scale. Parent charter §Decision Matrix outcome rule says scale verdict → macro-indicators. User language-pivot decision (2026-05-22 §Q2) already locks Go for macro. Seven lessons from TA pilot baked into charter v1 — no Amendments expected on Day 1. Phase 0 owners (architect + system-auditor + agent-father) can run in parallel since no dev-team WIP yet.",
+      "action": "Authored: (1) pilot-charter.md v2; (2) 01-lessons-from-ta-pilot.md; (3) 07-phases.md skeleton; (4) this pilot-status SSOT; (5) docs/po-decisions/2026-05-23-next-pilot-macro-indicators.md justification; (6) dispatch signal docs/signals/po-macro-pilot-kickoff-20260523T093857Z.json; (7) overwrote PO notebook to cycle-29 state.",
+      "constraints_held": [
+        "L84 explicit-file staging (single atomic commit, ~7 new files all explicitly staged)",
+        "No --force, no --no-verify, no push",
+        "All work on main (no branches)",
+        "Parent pilot-status.json UNTOUCHED (FROZEN historical record)",
+        "Charter §4.5 carry-over: pilot-status-macro-indicators.json created with all 12 goals = TBD + decisionMatrix all TBD (matrix populates ONLY at brief close)"
+      ]
+    }
+  ]
+}
