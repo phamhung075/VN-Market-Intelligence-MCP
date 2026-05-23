@@ -1,0 +1,63 @@
+{
+  "type": "qa-p2-e2-verify",
+  "from": "qa",
+  "to": "pm",
+  "cycle": "cycle-57",
+  "task_id": "P2-E2-verify",
+  "goal_under_proof": "G11",
+  "verdict": "GREEN",
+  "dev_fix_commit_verified": "f2b45fd2",
+  "byte_identical_diff_vs_tag": "",
+  "whole_tree_diff_vs_tag_non_source": "docs/agent-memory/notebooks/qa.md + docs/signals/qa-p2-e1-injection-DONE-20260523T213037Z.json (notebook + signal only — zero source drift)",
+  "sandbox_exit_code": 0,
+  "sandbox_pass_count": 20,
+  "sandbox_fail_count": 0,
+  "sandbox_status": "OK",
+  "previously_failed_scenarios_now_green": [
+    "macro-yield-spread-signal-golden.json",
+    "macro-signals-golden.json"
+  ],
+  "cycle_used": 1,
+  "hard_gates": {
+    "anchor_held": true,
+    "anchor_exit": 0,
+    "r1_exit": 1,
+    "fence_b_exit": 1,
+    "fence_c_exit": 1
+  },
+  "zone_discipline_clean": true,
+  "zone_discipline_evidence": {
+    "fix_commit_files": [
+      "apps/macro-indicators/pkg/primitive/macro_yield_spread_signal/macro_yield_spread_signal.go"
+    ],
+    "ssot_untouched": true,
+    "ta_untouched": true,
+    "scenarios_untouched": true,
+    "ci_untouched": true
+  },
+  "literal_verified": {
+    "before_in_commit": "CheapThreshold = 5.0",
+    "after_in_commit": "CheapThreshold = 2.0",
+    "file": "apps/macro-indicators/pkg/primitive/macro_yield_spread_signal/macro_yield_spread_signal.go",
+    "line": 44
+  },
+  "g11_grading_recommendation": "YES",
+  "g11_evidence_summary": "Trial-2 (yield-spread primitive, DIFFERENT from trial-1 carry-trade): single CheapThreshold mutation caused ≥2 RED scenarios (coupling-proven). Single edit byte-identical fix restored all 20/20 GREEN in cycle 1 (≤2 budget). Repeatable across different primitives — TA cycle-17 rubric satisfied: 2 trials coupling-proven = G11 PASS.",
+  "ac_results": {
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS"
+  },
+  "ac_detail": {
+    "AC1_byte_identical": "git diff p2-e1-pre-injection -- macro_yield_spread_signal.go → empty; whole-tree --stat shows only notebooks+signals (zero source drift)",
+    "AC2_sandbox": "exit 0, total=20 pass=20 fail=0 status=OK; macro-yield-spread-signal-golden + macro-signals-golden both GREEN (were RED in P2-E1)",
+    "AC3_hard_gates": "anchor_exit=0 HELD; r1_exit=1 (0 matches); fence_b_exit=1 (0 matches); fence_c_exit=1 (0 matches)",
+    "AC4_cycle_budget": "Single fix commit f2b45fd2 after injection commit 3a095039 — cycle 1 of ≤2 budget. No prior failed fix attempt commit.",
+    "AC5_zone_discipline": "git show --stat f2b45fd2 shows exactly 1 source file (yield-spread primitive). SSOT/TA/scenarios/CI all untouched."
+  },
+  "next_dispatch_target": "pm",
+  "next_dispatch_task": "cycle-57 flip G11=YES (9/12)",
+  "completion_timestamp": "2026-05-23T21:35:50Z"
+}

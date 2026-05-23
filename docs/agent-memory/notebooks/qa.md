@@ -1,5 +1,42 @@
 # QA — Notebook
 
+## c282 cycle-57 · 2026-05-23 · macro P2-E2-verify G11 trial-2 fix verification — GREEN
+
+**Task:** P2-E2-verify — Independent G11 trial-2 fix verification | **Verdict:** GREEN | **G11:** g11_grading=YES
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (independent re-measurement — no source edits)
+signal: docs/signals/qa-p2-e2-verify-GREEN-20260523T213550Z.json
+dev_fix_commit_verified: f2b45fd2
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: byte-identical diff vs tag (per-file) | PASS | git diff p2-e1-pre-injection -- macro_yield_spread_signal.go → empty (zero output) |
+| AC-1: whole-tree --stat vs tag | PASS | Only notebooks/qa.md + qa-p2-e1-injection signal appear (non-source). Zero source drift. |
+| AC-2: sandbox exit 0 | PASS | go run ./cmd/sandbox -tier=all → exit 0, total=20 pass=20 fail=0 status=OK (QA independent run) |
+| AC-2: macro-yield-spread-signal-golden GREEN | PASS | Was RED in P2-E1 (FAIRLY_VALUED got, CHEAP want) — now PASS |
+| AC-2: macro-signals-golden GREEN | PASS | Was RED in P2-E1 (yieldSpread.label FAIRLY_VALUED) — now PASS |
+| AC-3: anchor 1776df8e | PASS | git merge-base --is-ancestor 1776df8e HEAD → exit 0 (HELD) |
+| AC-3: R-1 determinism | PASS | grep math/rand|rand.Intn|rand.Float|time.Now.*Seed apps/macro-indicators/pkg/ → exit 1 (0 matches) |
+| AC-3: Fence-B module app+infra | PASS | grep -rnE application\|infrastructure in pkg/module/macro_signals/ → exit 1 (0 matches) |
+| AC-3: Fence-C infra in pkg/ | PASS | grep -rnE /infrastructure in pkg/ excl. main.go → exit 1 (0 matches) |
+| AC-4: cycle budget | PASS | Commits since injection (3a095039): f2b45fd2 (fix) + a364a570 (notebook). Single fix, no prior failed attempt. Cycle 1 of ≤2. |
+| AC-5: zone discipline — fix files | PASS | git show --stat f2b45fd2: exactly 1 file: macro_yield_spread_signal.go (2 +/-). |
+| AC-5: SSOT untouched by dev | PASS | git show f2b45fd2 -- docs/data/pilot-status-macro-indicators.json → empty |
+| AC-5: TA untouched by dev | PASS | git diff p2-e1-pre-injection HEAD -- apps/technical-analysis/ → empty |
+| AC-5: scenarios untouched | PASS | git diff p2-e1-pre-injection HEAD -- docs/scenarios/ → empty |
+| AC-5: CI untouched | PASS | git diff p2-e1-pre-injection HEAD -- .github/workflows/ → empty |
+
+**Fix literal verified:** commit f2b45fd2 diff shows CheapThreshold = 5.0 → 2.0 (line 44). Byte-identical to p2-e1-pre-injection tag.
+**G11 grading recommendation:** YES — trial-2 fixability proven on yield-spread primitive (DIFFERENT from trial-1 carry-trade), byte-identical restore in cycle 1 (≤2 budget), sandbox 20/20, both coupled RED scenarios recovered. Protocol repeatable across different primitives = TA cycle-17 rubric satisfied.
+**Blocking issues:** 0 — all 5 ACs + all hard gates PASS.
+**NEXT:** pm cycle-57 — flip G11=YES (9/12).
+
+---
+
 ## c282 cycle-56 · 2026-05-23 · macro P2-E1 G11 trial-2 injection — DONE (honest-FAIL ≥2)
 
 **Task:** P2-E1 — Regression Alarm Proof G11 trial-2 injection | **Verdict:** INJECTION_DONE | **G11:** coupling_proven=true
