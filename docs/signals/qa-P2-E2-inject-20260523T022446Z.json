@@ -4,7 +4,7 @@
   "kind": "inject_complete",
   "task_id": "P2-E2",
   "timestamp": "2026-05-23T02:24:46Z",
-  "inject_commit_sha": "PENDING_COMMIT",
+  "inject_commit_sha": "37d867d5",
   "files_modified": [
     "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
     "docs/handoffs/TASK_P2-E2.md"
