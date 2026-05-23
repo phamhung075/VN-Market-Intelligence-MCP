@@ -1,5 +1,47 @@
 # PM — Notebook
 
+## c282 cycle-38 · 2026-05-23T113400Z
+
+**Status:** P1-D2 CLOSED (DONE, GREEN, 4/4 AC PASS, G2 composition proof, Fence-B held, critical path unblocked) → P1-E1 DISPATCHED (dashboard stub — G12 streak task #3/3, final critical path task before P1-E2, correct sandbox command syntax with -module flag emphasized in AC-7 per QA cycle-38 observation). QA verified P1-D2 at 2026-05-23T113326Z: 4/4 AC PASS (module JSON valid, sandbox module-tier 2/2 + all-tier 5/5 regression, G2 composition proof VN_CPI→CORE_VN+Unemployment→US_DOMESTIC, zero API endpoint refs). PM closed P1-D2 DISPATCH → DONE in SSOT (commits d2faae30/c9136938, no qa_commit inline), and dispatched P1-E1 (dashboard stub html, 3 panels NOT-RUN state, TA pattern clone, 2h, 7 ACs, G12 streak #3 HARD GATE, sandbox command syntax fix documented in AC-7). Created TASK_P1-E1-macro.md handoff with full AC suite + explicit sandbox -module flag requirement. WIP=1 enforced (P1-E1 now In Progress). Anchor 1776df8e held. G12 streak: P1-B1 COMPLETE (#1), P1-C1 COMPLETE (#2), P1-E1 PENDING (#3). Single atomic commit: `chore(pm/c282-cycle-38): close P1-D2 GREEN (module scenario JSON, G2 composition proof, critical path unblocked) + dispatch P1-E1 (dashboard stub, G12 streak #3, correct sandbox CLI syntax)`. Next: QA verification of P1-E1 after dev-macro-indicators implements dashboard and validates sandbox all-tiers green.
+
+### P1-D2 Closure Verified
+
+- **Task ID:** P1-D2 (ninth of 11 Phase 1 tasks — CRITICAL PATH)
+- **Completion signal:** `docs/signals/qa-macro-p1-d2-green-20260523T113326Z.json` ✓
+- **Dev commits:** d2faae30 (impl) + c9136938 (signal) ✓
+- **AC results:** 4/4 PASS
+  - AC-1: Valid JSON (jq exit 0 both files) ✓
+  - AC-2 HARD GATE: sandbox module-tier 2/2 PASS + all-tier 5/5 PASS ✓
+  - AC-3: G2 composition proof (VN_CPI→VN_DIRECT/8/CORE_VN, Unemployment_Rate→US_DOMESTIC/2/US_DOMESTIC) ✓
+  - AC-4: Zero API endpoint refs ✓
+- **Deviations:** D-1 ACCEPTED (golden pre-existed from P1-C1, sufficient for AC-3)
+- **Milestone:** Critical path unblocked. Module-level fixtures complete. G2 composition proven.
+
+### P1-E1 Task Context
+
+- **Task ID:** P1-E1 (tenth of 11 Phase 1 tasks — G12 STREAK #3/3)
+- **Title:** Dashboard stub HTML (3 panels, NOT-RUN state, TA pattern clone)
+- **Estimate:** 2.0 hours
+- **AC count:** 7 (file://, 3 panels, NOT-RUN honest, Playwright compat, zero secrets, TA clone, G12 sandbox all-tiers HARD GATE)
+- **G12 Streak Position:** #3 of 3 — final streak task before Phase 1 close
+- **Critical Note:** AC-7 HARD GATE includes sandbox command syntax fix — must run `go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all` (requires -module flag, per QA cycle-38 observation)
+
+### PM Actions Completed (Cycle c282 cycle-38)
+
+1. **Verified P1-D2 completion** — 4/4 AC PASS, sandbox 5/5 regression green, G2 composition proof confirmed, anchor held ✓
+2. **Created TASK_P1-E1-macro.md handoff** — 7 ACs + G12 hard gate with sandbox command syntax fix in AC-7 ✓
+3. **Created pm-dispatch-dev-macro-p1-e1-20260523T113400Z.json signal** — WIP claim + hard gates + sandbox syntax note ✓
+4. **Updated pilot-status SSOT** — P1-E1 status READY→DISPATCH, g12Streak updated with P1-E1 pending #3/3 ✓
+5. **Updated PM notebook** — cycle-38 entry logged ✓
+
+### Next Steps
+
+- Dev-macro-indicators dispatch via TASK_P1-E1-macro.md + signal
+- QA verifies 7 ACs + G12 hard gate (all 3 sandbox tiers must exit 0, 5/5 PASS before DONE)
+- After P1-E1 DONE, PM dispatches P1-E2 (edit-rerun handler, final Phase 1 task)
+
+---
+
 ## c282 cycle-37 · 2026-05-23T11:21:03Z
 
 **Status:** P1-C1 CLOSED (DONE, GREEN, 6/6 AC PASS, Fence-B + G12 gates PASS) → P1-D2 DISPATCHED (module-level scenario JSON, 2 files, 30m, 4 ACs, critical path unblocks E1). QA verified P1-C1 at 2026-05-23T11:21:03Z: 6/6 AC PASS (macro_signals module struct + DI constructor + ClassifyBatch, Fence-B zero app/infra imports, scenario JSON singular path, 4-func 11-sub-test table-driven, sandbox module-tier 1/1 PASS + all-tier 4/4 PASS, R-1 zero math/rand). PM closed P1-C1 DISPATCH → DONE in SSOT (commits ac92ef56/57b7381a, no qa_commit inline), marked module stub complete, and dispatched P1-D2 (module scenario fixtures golden+edge, composition proof validation, 30m, 4 ACs, G2 validation on critical path). Created TASK_P1-D2-macro.md handoff with explicit G12 gate (sandbox module-tier green) and R-1 inherited defensive. WIP=1 enforced (P1-D2 now In Progress). Anchor 1776df8e held. G12 streak task #2/3 COMPLETE. Single atomic commit: `chore(pm/c282-cycle-37): close P1-C1 GREEN (module stub, G12 streak #2, Fence-B + 6/6 AC) + dispatch P1-D2 (module scenario JSON, critical path → E1)`. Next: QA verification of P1-D2 after dev-macro-indicators creates module scenario fixtures and validates sandbox module-tier green.
