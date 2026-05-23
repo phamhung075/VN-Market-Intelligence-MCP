@@ -1,0 +1,39 @@
+{
+  "signal_id": "architect-p0-kd-4-done-20260523T231332Z",
+  "from": "architect",
+  "to": "pm",
+  "timestamp": "2026-05-23T231332Z",
+  "task_id": "P0-KD-4",
+  "pilot": "kinh-dich",
+  "phase": "0",
+  "status": "DONE",
+  "commit_sha": "0f5105bd",
+  "file": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md",
+  "task_count": 9,
+  "ac_count": 54,
+  "estimated_effort": "~10-12 dev-hours, 2-3 sprints",
+  "primitive_extraction_order": [
+    "hexagram-resolver (P1-B1 — standalone, G4 deliberate-violation proof target)",
+    "ngu-hanh-classifier (P1-B2 — already exported, lowest complexity)",
+    "hao-encoder (P1-B3 — threshold constants self-contained)",
+    "reading-scorer (P1-F optional — 4 functions + 2 tables)"
+  ],
+  "module_name": "reading_composer",
+  "g5b_risk_noted": true,
+  "g5b_summary": "6 MCP tool rewires + 4 new HTTP endpoints on kinh-dich-service — largest G5 in fleet. Zero Phase 1 scope.",
+  "r_fence_gate_baked": "YES — P1-B1 AC-6+AC-7 (discovery only; AC-4b enforcement = Phase 2 G4)",
+  "r_cgo_analog": "NONE — no CGO in TypeScript/Bun. Per-service risk gate is R-FENCE (eslint-plugin-boundaries).",
+  "dashboard_note": "apps/kinh-dich-service/dashboard/index.html only — NOT docs/dashboards/index.html (SI-2 = stock-price G6 deliverable)",
+  "g12_streak_tasks": ["P1-B1", "P1-B2", "P1-B3"],
+  "wip_policy": "WIP=1 sequential",
+  "phase0_deliverables": {
+    "D1_pilot_status_ssot": "DONE (docs/data/pilot-status-kinh-dich.json — charter cycle)",
+    "D2_brownfield_inventory": "DONE (P0-KD-1 — docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md)",
+    "D3_bug_inventory_entry": "DONE (P0-KD-2 — docs/data/bug-inventory.json kinh_dich_baseline)",
+    "D4_dev_agent_file": "DONE (P0-KD-3 — .claude/agents/dev-kinh-dich.md confirmed factory-ready)",
+    "D5_dev_agent_flow_file": "DONE (P0-KD-3 — .claude/flows/dev-kinh-dich/main.md G12 DoD Gate baked)",
+    "D6_phase_1_task_plan": "DONE (P0-KD-4 — this file, commit 0f5105bd)"
+  },
+  "phase0_exit_gate": "ALL 6 DELIVERABLES LANDED — ready for PM to close Phase-0 exit gate",
+  "next": "PM closes Phase-0 exit gate, dispatches Phase-1 P1-A to dev-kinh-dich"
+}
