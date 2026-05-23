@@ -70,8 +70,8 @@
     "task_count": 9,
     "ac_count": 55,
     "wip_limit": 1,
-    "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
-    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). P1-B3 DONE (69b034a4, 2026-05-24T01:08:00Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (9 scenarios GREEN), G12 streak 3/3 COMPLETE. P1-C DONE (e98179f9, 2026-05-24T01:15:00Z) — AC-1..AC-7 all PASS, Fence-B CLEAR (module/primitive isolation), sandbox 11/11 all-tier green. P1-D DONE (7329180b, 2026-05-24T02:25:21Z) — AC-1..AC-7 all PASS, G6 dashboard shipped (honest NOT-RUN, SI-2 untouched). P1-E (edit-rerun + env audit) READY for dispatch — handoff at docs/handoffs/TASK_P1-E.md. WIP=1 sequential."],
+    "sequential_plan": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional — SKIPPED per PM decision 2026-05-24T02:45:00Z)", "P1-G"],
+    "progress_notes": ["P1-A DONE (afe3468b, 2026-05-24T00:46:00Z) — AC-1..AC-5 all PASS, R-CGO pre-check PASS, sandbox all-green (primitive/module/all tiers), zero regressions. P1-B1 DONE (69afa2ab, 2026-05-24T00:53:00Z) — AC-1..AC-9 all PASS, R-CGO CLEAR (AC-8 PASS), G12 DoD sandbox GREEN (#1 streak). P1-B2 DONE (b3f2ee5f, 2026-05-24T01:00:46Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (6 scenarios GREEN), G12 DoD sandbox GREEN (#2 streak). P1-B3 DONE (69b034a4, 2026-05-24T01:08:00Z) — AC-1..AC-6 all PASS, Fence-A CLEAR (9 scenarios GREEN), G12 streak 3/3 COMPLETE. P1-C DONE (e98179f9, 2026-05-24T01:15:00Z) — AC-1..AC-7 all PASS, Fence-B CLEAR (module/primitive isolation), sandbox 11/11 all-tier green. P1-D DONE (7329180b, 2026-05-24T02:25:21Z) — AC-1..AC-7 all PASS, G6 dashboard shipped (honest NOT-RUN, SI-2 untouched). P1-E DONE (8c8edbf1, 2026-05-24T01:35:37Z) — AC-1..AC-6 all PASS, edit-rerun panel + paste-apply NDJSON handler working, env audit confirmed zero creds, sandbox all-green (11/11 exit 0), G7/G8 EARNED-PENDING (mechanism built + verified). P1-F SKIPPED (optional, G12 streak already 3/3 complete, no unmet goal depends on 4th primitive). P1-G QA close-gate READY at docs/handoffs/TASK_P1-G.md — will verify Phase 1 exit criteria (sandbox all-green, dashboard ≥90%, G12 3/3 confirmed, R-CGO final check). WIP=1 sequential."],
     "tasks": {
       "P1-A": {
         "id": "P1-A",
@@ -177,15 +177,43 @@
       "P1-E": {
         "id": "P1-E",
         "title": "Edit-rerun handler + env audit (zero DB creds, zero CGO in sandbox env)",
-        "status": "READY",
-        "readyAt": "2026-05-24T02:30:00Z",
-        "readyBy": "pm",
+        "status": "DONE",
+        "completedAt": "2026-05-24T01:35:37Z",
+        "completedBy": "dev-stock-price",
+        "commit_sha": "8c8edbf1",
         "handoff": "docs/handoffs/TASK_P1-E.md",
         "ac_count": 6,
+        "ac_verdicts": "AC-1 PASS (rerun panel with paste-apply handler), AC-2 PASS (CGO_ENABLED=0 explicit in cmd), AC-3 PASS (env audit empty), AC-4 PASS (grep mattn = 0), AC-5 PASS (manual edit->rerun->verify), AC-6 PASS (all scenarios green post-rerun)",
         "blocked_by": "P1-D (DONE 2026-05-24T02:25:21Z)",
-        "blocks": "P1-F (optional) and P1-G (QA close-gate)",
-        "g7_track": "Trust track — G7 (edit-JSON-rerun works), G8 (honest-red contract), G12 DoD (sandbox green after rerun)",
-        "description": "G7 trust contract — user edits scenario JSON, reruns sandbox with CGO_ENABLED=0, dashboard reflects new result. Env audit proves zero DB creds / API keys / secrets in sandbox process environment."
+        "blocks": "P1-G (QA close-gate)",
+        "g7_track": "EARNED-PENDING (G7 edit-JSON-rerun mechanism built + verified)",
+        "g8_track": "ADVANCED (G8 honest-status reset-to-NOT-RUN + paste-apply honest-green pattern)",
+        "description": "G7 trust contract — user edits scenario JSON, refreshes dashboard, sees updated result via paste-apply NDJSON handler. Env audit proves zero DB creds / API keys / secrets in sandbox process environment. Sandbox all-green (11/11) confirmed."
+      },
+      "P1-F": {
+        "id": "P1-F",
+        "title": "Flex / catchup / ohlcv-aggregator optional 4th primitive (if Phase 1 time allows)",
+        "status": "SKIPPED",
+        "skippedAt": "2026-05-24T02:45:00Z",
+        "skippedBy": "pm",
+        "skippedReason": "P1-F is OPTIONAL per phase-1-task-plan-go.md §P1-F. G12 streak is already 3/3 COMPLETE (P1-B1, P1-B2, P1-B3). No unmet G-goal depends on a 4th primitive. Proceeding directly to P1-G QA close-gate.",
+        "ac_count": 4,
+        "blocked_by": "P1-E (skipped, optional task)",
+        "blocks": "P1-G (QA close-gate)",
+        "deferred_to": "Phase 2 backlog (if time permits)"
+      },
+      "P1-G": {
+        "id": "P1-G",
+        "title": "Phase 1 close-gate verification (QA)",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:45:00Z",
+        "readyBy": "pm",
+        "owner": "qa",
+        "handoff": "docs/handoffs/TASK_P1-G.md",
+        "ac_count": 5,
+        "blocked_by": "P1-E (DONE 2026-05-24T01:35:37Z)",
+        "blocks": "Phase 1 exit gate (PO verdict)",
+        "description": "QA verifies Phase 1 exit criteria: sandbox all-green (3 tiers), dashboard ≥90%, G12 3/3 streak confirmed, R-CGO final verification. Emits Phase 1 exit gate signal with GO/CONDITIONAL-GO/NO-GO verdict."
       }
     }
   },
