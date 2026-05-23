@@ -1,26 +1,30 @@
 # Architecture Brief: Deep Module + DDD — Three-Tier Refactor Plan
 
-**Date:** 2026-05-22  **Author:** Architect  **Version:** 2.0 (full plan)
-**Status:** READY FOR PO REVIEW — open questions in `11-open-questions.md`
+**Date:** 2026-05-22  **Author:** Architect  **Version:** 2.3 (pilot charter added — technical-analysis)
+**Status:** CLOSED 2026-05-23 — Phase 2 verdict=`scale`, 12/12 G-goals YES (po cycle-28 atomic close; closure signal `docs/signals/po-brief-closed-20260523T091910Z.json`; SSOT `docs/data/pilot-status.json`)
 
 ---
 
 ## Document Index
 
-| File | Contents |
-|---|---|
-| This file | Master index, concept overlay, Pocock mapping, quick-start summary |
-| `2026-05-22-refactor/01-current-state.md` | Re-audit: three-tier classification of all 12 modules, 10 microservices, 84 domain service files |
-| `2026-05-22-refactor/02-target-state.md` | Proposed 48 primitives, 11 modules, final apps/ layout, dependency graph, deletion + split list |
-| `2026-05-22-refactor/03-metrics-primitive.md` | 7 primitive metrics with L0-L4 maturity ladder per metric |
-| `2026-05-22-refactor/04-metrics-module.md` | 7 module metrics with L0-L4 maturity ladder |
-| `2026-05-22-refactor/05-metrics-microservice.md` | 6 microservice metrics with L0-L4 maturity ladder |
-| `2026-05-22-refactor/06-metrics-cross-cutting.md` | 4 cross-cutting metrics + current bug inventory (10 bugs) + debt inventory (7 items) |
-| `2026-05-22-refactor/07-phases.md` | 7-phase plan with entry/exit criteria, estimates, risk callouts |
-| `2026-05-22-refactor/08-sandbox-dashboards.md` | Sandbox-kit spec, narrator API, renderer, three-level zoom, edit-rerun, master dashboard layout |
-| `2026-05-22-refactor/09-bug-mapping.md` | 10 bugs mapped to tier + phase + metric that makes them impossible to recur |
-| `2026-05-22-refactor/10-validation-rituals.md` | Measurement cadence, owner per metric, escalation triggers, 5-command quick-reference |
-| `2026-05-22-refactor/11-open-questions.md` | 10 open decisions for PO; recommended defaults; sign-off table |
+| File | Scope | Contents |
+|---|---|---|
+| This file | Master | Master index, concept overlay, Pocock mapping, quick-start summary |
+| `2026-05-22-refactor/pilot-charter.md` | **PILOT** | **Binding contract for technical-analysis pilot — 12 goals, decision matrix, 6-sprint deadline** |
+| `2026-05-22-refactor/01-current-state.md` | Scale | Re-audit: three-tier classification of all 12 modules, 10 microservices, 84 domain service files |
+| `2026-05-22-refactor/02-target-state.md` | Scale | Proposed 48 primitives, 11 modules, final apps/ layout, dependency graph, deletion + split list |
+| `2026-05-22-refactor/03-metrics-primitive.md` | Scale | 7 primitive metrics with L0-L4 maturity ladder per metric |
+| `2026-05-22-refactor/04-metrics-module.md` | Scale | 7 module metrics with L0-L4 maturity ladder |
+| `2026-05-22-refactor/05-metrics-microservice.md` | Scale | 6 microservice metrics with L0-L4 maturity ladder |
+| `2026-05-22-refactor/06-metrics-cross-cutting.md` | Scale | 4 cross-cutting metrics + current bug inventory (10 bugs) + debt inventory (7 items) |
+| `2026-05-22-refactor/07-phases.md` | Scale | 7-phase plan with entry/exit criteria, estimates, risk callouts |
+| `2026-05-22-refactor/08-sandbox-dashboards.md` | Both | Sandbox-kit spec, narrator API, renderer, three-level zoom, edit-rerun, master dashboard layout |
+| `2026-05-22-refactor/09-bug-mapping.md` | Scale | 10 bugs mapped to tier + phase + metric that makes them impossible to recur |
+| `2026-05-22-refactor/10-validation-rituals.md` | Scale | Measurement cadence, owner per metric, escalation triggers, 5-command quick-reference |
+| `2026-05-22-refactor/11-open-questions.md` | Both | 10 open decisions for PO; recommended defaults; sign-off table; accepted-by-default mitigations M-1–M-4 |
+| `2026-05-22-refactor/qa-gates/00-index.md` | Scale | QA gate checklists index — 100 metric gates + 9 phase exit gates + 4 standing-rule checks |
+
+**Scope legend:** PILOT = technical-analysis pilot only | Scale = applies after pilot gate passes | Both = applies to pilot and scale phases.
 
 ---
 
@@ -100,12 +104,12 @@ From `02-target-state.md`:
 
 From `03-metrics-primitive.md`, `04-metrics-module.md`, `05-metrics-microservice.md`, `06-metrics-cross-cutting.md`:
 
-- **7 primitive metrics** (P-1 through P-7)
+- **7 primitive metrics** (P-1 through P-7) — P-2 has trivial-primitive exemption for pure functions
 - **7 module metrics** (M-1 through M-7)
 - **6 microservice metrics** (S-1 through S-6)
-- **4 cross-cutting metrics** (X-1 through X-4)
-- **Total: 24 auditable metrics**
-- **24 × 5 levels = 120 measurement definitions** — all concrete (grep command or procedure specified per metric)
+- **5 cross-cutting metrics** (X-1 through X-5) — X-5 Architectural Fence added 2026-05-22
+- **Total: 25 auditable metrics**
+- **25 × 5 levels = 125 measurement definitions** — all concrete (grep command or procedure specified per metric)
 
 ---
 
@@ -115,14 +119,20 @@ From `07-phases.md`:
 
 | Phase | Goal | Duration |
 |---|---|---|
-| Phase 0 | Baseline audit — measure all 24 metrics at current L-level | 1 sprint |
-| Phase 1 | Pilot — kinh-dich from L0 to L4 across all three tiers | 2-3 sprints |
+| Phase 0 | Baseline audit — measure all 25 metrics at current L-level | 1 sprint |
+| Phase 1 | Pilot — sandbox-kit dogfood first, then kinh-dich L0→L4 | 2-3 sprints |
+| Phase 1→2 Gate | Go/no-go: time-to-extract, render rate, reuse count, dogfood | Gate (not a sprint) |
 | Phase 2 (Track A) | Extract all ~48 primitives to L2 | 4-6 sprints |
 | Phase 3 (Track B) | Rebuild all 11 modules at L2 | 4-6 sprints (parallel) |
 | Phase 4 (Track C) | Rewire apps/ composition roots at L2 | 4-5 sprints (parallel) |
 | Phase 5 | Coverage push — all tiers to L3; dashboards live | 3-4 sprints |
-| Phase 6 | Excellence — L4 automation + lint enforcement | 3-4 sprints |
+| Phase 6 | Excellence — L4 automation + fence lint enforcement | 3-4 sprints |
 | **Total** | | **14-18 sprints (parallel tracks)** |
+
+**Standing rules (all phases):** 70/30 capacity split; module-freeze per phase; no phase skipping. See `07-phases.md` Standing Rules section.
+
+**PILOT GATE — Phase 1 → Phase 2 transition is gated on the 12-goal pilot review.**
+Before any Track A/B/C work starts (Phase 2+), the `technical-analysis` pilot charter (`2026-05-22-refactor/pilot-charter.md`) must reach a decision matrix verdict. A 3-YES verdict unlocks scale. 2-YES requires re-scope. 0-1 YES stops the refactor. No Phase 2 work starts without PO sign-off on the pilot verdict.
 
 ---
 
@@ -153,7 +163,29 @@ Top 3 that actually require a decision (not just rubber-stamp):
 
 ---
 
-## 9. User Trust Layer (non-technical summary)
+## 9. Constraints and Mitigations (v2.1 amendment)
+
+Surfaced during pre-PO review. Full detail in each referenced sub-document.
+
+| ID | Constraint / Mitigation | Where addressed |
+|---|---|---|
+| C-1 | Scope-vs-capacity risk — 70/30 sprint split (refactor/ops) | `07-phases.md` Standing Rules |
+| C-2 | Sandbox tooling is itself a build risk — false-red dashboards undermine trust | `07-phases.md` Phase 1 dogfood ordering; `08-sandbox-dashboards.md` build sequence |
+| C-3 | Half-refactored state is worse than current — phase exit gates enforced | `07-phases.md` Standing Rules — Phase-Exit Gate Enforcement |
+| C-4 | Scenario drift — JSON mocks go stale as VN data formats change | `10-validation-rituals.md` Scenario-Refresh Ritual (§5) |
+| C-5 | Agent fleet hybrid navigation mid-refactor — module-freeze rule | `07-phases.md` Standing Rules — Module-Freeze Rule |
+| C-6 | DDD ceremony tax on pure functions — port/adapter not always justified | `03-metrics-primitive.md` Trivial-Primitive Exemption (P-2 opt-out) |
+| C-7 | Composition-root discipline cannot rely on humans alone | `06-metrics-cross-cutting.md` X-5 Architectural Fence Enforcement |
+| M-1 | Pilot kill-switch — explicit go/no-go before bulk Track A | `07-phases.md` Phase 1→2 Gate |
+| M-2 | Trivial-primitive exemption — pure functions skip port/adapter | `03-metrics-primitive.md` P-2 opt-out |
+| M-3 | Dogfood the sandbox tooling — narrator + renderer extracted first | `07-phases.md` Phase 1 dogfood ordering; `08-sandbox-dashboards.md` §8 |
+| M-4 | CI fence as architectural enforcement — Fence-A/B/C ESLint rules | `06-metrics-cross-cutting.md` X-5 |
+
+All 7 constraints are addressed. All 4 mitigations are baked in. Approving Q-1–Q-10 defaults in `11-open-questions.md` also accepts M-1–M-4 and all standing rules.
+
+---
+
+## 10. User Trust Layer (non-technical summary)
 
 After Phase 5, the user can open `apps/mcp-server/dashboard/index.html` in a browser and see:
 - Three panels: Primitives, Modules, Microservices — each with green/yellow/red health badges.
