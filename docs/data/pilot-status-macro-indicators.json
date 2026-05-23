@@ -373,7 +373,7 @@
         "qa_verdict": "GREEN",
         "qa_verified_at": "2026-05-23T15:05:00Z",
         "qa_signal": "docs/signals/qa-p2-a1-macro-GREEN-20260523T150500Z.json",
-        "qa_commit_sha": "PENDING",
+        "qa_commit_sha": "d18de7aa",
         "ac_results": "5/5 PASS",
         "golangci_lint": "EXIT:0 — 0 issues",
         "file_lines": 64,
