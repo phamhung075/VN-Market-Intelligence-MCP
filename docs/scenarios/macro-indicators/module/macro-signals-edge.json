@@ -3,12 +3,55 @@
   "phase": "module",
   "tier": "module",
   "module": "macro_signals",
-  "description": "Edge case: empty batch input yields empty classifications (boundary handling)",
+  "scenario_type": "build_macro_signals",
+  "description": "Edge case: zero-value inputs trigger each primitive's zero-data guard (graceful degradation across all 6 signals)",
   "input": {
-    "indicator_names": []
+    "investmentClock": { "indicatorName": "" },
+    "oilImpact": { "priceUSD": 0 },
+    "goldDirection": { "priceUSD": 0 },
+    "usdVndDirection": { "rateVND": 0 },
+    "carryTrade": {
+      "vndDepositRate": 0,
+      "fedFundsRate": 0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "yieldSpread": {
+      "earningYield": 0,
+      "depositRate": 0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    }
   },
   "expected_output": {
-    "batch_count": 0,
-    "classifications": []
+    "investmentClock": {
+      "tier": "US_DOMESTIC",
+      "score": 2,
+      "phase": "US_DOMESTIC"
+    },
+    "oilImpact": {
+      "impact": "NEUTRAL",
+      "priceUSD": 0
+    },
+    "goldDirection": {
+      "direction": "NEUTRAL",
+      "priceUSD": 0
+    },
+    "usdVndDirection": {
+      "direction": "NEUTRAL",
+      "rateVND": 0
+    },
+    "carryTrade": {
+      "regime": "NEUTRAL",
+      "carrySpread": 0,
+      "vndDepositRate": 0,
+      "fedFundsRate": 0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "yieldSpread": {
+      "label": "UNKNOWN",
+      "spread": 0,
+      "earningYield": 0,
+      "depositRate": 0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    }
   }
 }

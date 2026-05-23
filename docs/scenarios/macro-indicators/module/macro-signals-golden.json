@@ -3,31 +3,55 @@
   "phase": "module",
   "tier": "module",
   "module": "macro_signals",
-  "description": "Batch classification through macro-signals module (1 primitive wired: macro-investment-clock)",
+  "scenario_type": "build_macro_signals",
+  "description": "Golden path: BuildMacroSignals wires all 6 primitives with mid-range inputs producing deterministic signals",
   "input": {
-    "indicator_names": ["VN_CPI", "Unemployment_Rate", "Unknown"]
+    "investmentClock": { "indicatorName": "VN_CPI" },
+    "oilImpact": { "priceUSD": 85.0 },
+    "goldDirection": { "priceUSD": 2300.0 },
+    "usdVndDirection": { "rateVND": 24500.0 },
+    "carryTrade": {
+      "vndDepositRate": 8.0,
+      "fedFundsRate": 5.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "yieldSpread": {
+      "earningYield": 8.1,
+      "depositRate": 5.5,
+      "computedAt": "2026-05-23T00:00:00Z"
+    }
   },
   "expected_output": {
-    "batch_count": 3,
-    "classifications": [
-      {
-        "indicator": "VN_CPI",
-        "tier": "VN_DIRECT",
-        "score": 8,
-        "phase": "CORE_VN"
-      },
-      {
-        "indicator": "Unemployment_Rate",
-        "tier": "US_DOMESTIC",
-        "score": 2,
-        "phase": "US_DOMESTIC"
-      },
-      {
-        "indicator": "Unknown",
-        "tier": "US_DOMESTIC",
-        "score": 2,
-        "phase": "US_DOMESTIC"
-      }
-    ]
+    "investmentClock": {
+      "tier": "VN_DIRECT",
+      "score": 8,
+      "phase": "CORE_VN"
+    },
+    "oilImpact": {
+      "impact": "NEUTRAL",
+      "priceUSD": 85.0
+    },
+    "goldDirection": {
+      "direction": "BULLISH",
+      "priceUSD": 2300.0
+    },
+    "usdVndDirection": {
+      "direction": "NEUTRAL",
+      "rateVND": 24500.0
+    },
+    "carryTrade": {
+      "regime": "HOT_MONEY_INFLOW",
+      "carrySpread": 3.0,
+      "vndDepositRate": 8.0,
+      "fedFundsRate": 5.0,
+      "computedAt": "2026-05-23T00:00:00Z"
+    },
+    "yieldSpread": {
+      "label": "CHEAP",
+      "spread": 2.6,
+      "earningYield": 8.1,
+      "depositRate": 5.5,
+      "computedAt": "2026-05-23T00:00:00Z"
+    }
   }
 }
