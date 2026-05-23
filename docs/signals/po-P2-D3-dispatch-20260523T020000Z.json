@@ -1,0 +1,67 @@
+{
+  "from": "po",
+  "to": "dev-technical-analysis",
+  "kind": "dispatch",
+  "task_id": "P2-D3",
+  "cycle": "c282 cycle-13",
+  "timestamp": "2026-05-23T02:00:00Z",
+  "closure_anchor": "62edbf3d",
+  "handoff": "docs/handoffs/TASK_P2-D3.md",
+  "wip_constraint": 1,
+  "no_dispatch_chain": true,
+  "no_handoff_frontmatter_mutation": true,
+  "append_only_below_frontmatter": true,
+  "scope_shrink_option": "If the sandbox commands fail to run at all (toolchain missing, go.mod broken, etc.) — emit a BLOCKED signal back to PO and exit. Do NOT touch source files.",
+  "stall_watch_self_report_minutes": 30,
+  "context_redaction": {
+    "rationale": "G10 AI-fixability proof — dev-ta must diagnose from dashboard signal alone (per p2-d-bug-injection-spec.md §Cycle-Counting Protocol rule 6 — no-cheat clause).",
+    "forbidden_reads": [
+      "docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md",
+      "docs/handoffs/TASK_P2-D0.md",
+      "docs/handoffs/TASK_P2-D1.md",
+      "docs/handoffs/TASK_P2-D2.md",
+      "docs/signals/qa-P2-D2-done-20260523T015140Z.json",
+      "docs/signals/po-P2-D2-dispatch-20260523T014645Z.json",
+      "docs/data/pilot-status.json (phase2 narrative section)",
+      "git log SHAs from last 24 hours of commits touching rsi.go"
+    ],
+    "allowed_reads": [
+      "apps/technical-analysis/pkg/primitive/**/*.go (production source + _test.go)",
+      "apps/technical-analysis/pkg/module/**/*.go",
+      "apps/technical-analysis/cmd/sandbox/**/*.go",
+      "docs/scenarios/technical-analysis/**/*.json",
+      "Public technical-indicator references (Wikipedia, original publications)"
+    ]
+  },
+  "dashboard_signal": {
+    "primitive": "technical-analysis",
+    "failing_scenarios": [
+      "rsi-golden",
+      "rsi-overbought-pullback",
+      "rsi-oversold-bounce",
+      "rsi-mid-range"
+    ],
+    "canary_green": ["rsi-insufficient-data"],
+    "cross_primitive_green": "20 scenarios across bb-*, macd-*, ma-*, cross-* (all GREEN)",
+    "first_divergence": "rsi-golden: rsi[4] got 56.181151, want 54.567700 (tol 1)"
+  },
+  "sandbox_commands": {
+    "reproduce_red": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all",
+    "post_fix_primitive": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all",
+    "post_fix_module": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=module -module=technical-analysis -scenario=all",
+    "single_scenario_debug": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=rsi/rsi-golden.json"
+  },
+  "acceptance_criteria_summary": "See TASK_P2-D3.md §Observable Behaviour. Six ACs: (1) dashboard-only input, (2) source-inspection diagnosis, (3) ≤2 cycles to all-GREEN, (4) §Verification appended before RETURN, (5) surgical diff, (6) atomic Conventional-Commit per cycle with anchor 62edbf3d in body.",
+  "g12_dod_reminder": "Per .claude/flows/dev-technical-analysis/main.md G12 DoD Gate (cc7578f1): you MUST run BOTH tiers of sandbox before RETURN, paste the pass/fail summary lines into TASK_P2-D3.md §Verification, and only then write your RETURN block. RED = task NOT done; re-cycle.",
+  "constraints": [
+    "WIP 1 — single fix at a time",
+    "No dispatch chain — PO handles all follow-on",
+    "No --no-verify, no --force, no broad-glob `git add .` — L84",
+    "Stage explicit files only",
+    "Single atomic commit per cycle, ≤2 cycles total",
+    "All work on main (no branches)",
+    "No push attempted — CI billing block is active; local landing is sufficient for G10 proof",
+    "Frontmatter of TASK_P2-D3.md is read-only; append §Verification + §Cycle Log entries below frontmatter only"
+  ],
+  "expected_outcome": "Commit subject pattern `fix(technical-analysis): P2-D3 — <description> — G10 cycle <N> of ≤2`. After your fix lands, write completion signal `docs/signals/dev-ta-P2-D3-done-<UTC>Z.json` referencing commit SHA + sandbox output + cycle count consumed. Cycle counting begins at THIS dispatch per p2-d-bug-injection-spec.md §Cycle-Counting Protocol rule 1."
+}
