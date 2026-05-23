@@ -1,46 +1,44 @@
 # PO Notebook
 
-## c282 · 2026-05-23 — Phase 2 cycle-11 (ops push landed → CI billing block discovered → D1+E1 specs LANDED)
+## c282 · 2026-05-23 — Phase 2 cycle-12 (P2-D2 LANDED clean, billing still blocked)
 
-### State at cycle start (01:30Z)
-- HEAD `6d7a5746` (== origin/main thanks to cycle-10 ops dispatch). pilot-status.status=ACTIVE. Anchor 62edbf3d held.
-- A3 ~3h12m in-flight (now blocked at INFRA, not push). D1+E1 ~56min in-flight (silent-stall).
+### State at cycle start (01:46Z)
+- HEAD `892fdf49` (cycle-11 close). pilot-status.status=ACTIVE. Anchor 62edbf3d held.
+- A3 HELD on CI billing block (8h+ persistent). D1+E1 specs DONE. dev-ta WIP=0.
 
-### Step 0 — ops push outcome
-- `git fetch origin main` → origin/main == local HEAD `6d7a5746` (push SUCCEEDED).
-- ops result signal `ops-push-origin-result-20260523T012909Z.json`: 68 commits pushed clean, tsc PASS, no secrets.
-- **NEW BLOCKER**: CI run `26319812041` on push HEAD FAILED in 4s — GitHub Actions billing annotation. Last ≥10 CI runs all 3-5s failures since 2026-05-22T17:53Z (~8h persistent block).
-- Filed bug signal `bug-ci-billing-block-20260523T013000Z.json` to BUG channel. Owner=user (only daihung.pham@gmail.com can fix GitHub billing). ops cannot self-resolve.
-- A3 re-dispatch HELD pending user billing fix. Evaluated + rejected 3 fallback options (local lint evidence fails AC; switch provider out-of-scope; pause Phase 2 wastes deadline).
+### Step 0 — billing check
+- 3 newest CI runs: all `conclusion=failure`, durations 4-5s. No recovery signal.
+- Billing block PERSISTS (owner=user). A3 chain remains HELD on infra.
 
-### Step 1 — parallel D1+E1 re-dispatch (pure-write, no CI dep)
-- Wrote dispatch signals `po-R11-D1-redispatch-20260523T013100Z.json` + `po-R11-E1-redispatch-20260523T013100Z.json` (supersede cycle-7 silent-stall dispatches).
-- Spawned 2 fresh background qa subagents (PIDs 95667 + 95704) — WIP-1 each, no-dispatch-chain, no-handoff-mutation, 30min stall-watch self-report.
+### Step 1 — P2-D2 dispatch (pure-write, no CI dep)
+- Wrote `docs/signals/po-P2-D2-dispatch-20260523T014645Z.json` with full step-by-step instructions (L84 explicit-staging, G12 DoD evidence-in-handoff, 15min stall-watch, scope-shrink option).
+- Spawned fresh qa background subagent via `claude -p` R-11 pattern (PID 98231).
 
-### Step 2 — 5-poll landing watch (01:31:34Z → 01:37:19Z)
-- P1 (01:31:34Z) HEAD `6d7a5746`, specs absent, 2 qa procs alive.
-- P2 (01:34:28Z) HEAD `6d7a5746`, **D1 spec PRESENT** in working tree, E1 absent.
-- P3 (01:34:58Z) HEAD **`b7a7aece`**, BOTH specs present (committed atomically).
-- P4 (01:36:49Z) — 2 completion signals landed (qa-P2-D1-done + qa-P2-E1-done).
-- P5 (01:37:19Z) — both qa procs EXITED clean.
+### Step 2 — 5-poll loop (01:47Z → 01:57Z)
+- P1 (01:47Z) baseline HEAD `892fdf49`, qa alive 35s.
+- P3 (01:51Z) HEAD unchanged, qa 3m31s, **rsi.go has UNSTAGED mutation** — diff confirms `period-1` → `period` at lines 56-57 (exact spec).
+- P4 (01:54Z) HEAD `c0d88bd2` — commit landed; signal `qa-P2-D2-done-20260523T015140Z.json` present; qa exited.
+- P5 (01:57Z) stable, no further commits.
 
-### Verdict: BOTH SPECS DONE in commit `b7a7aece`
-- D1: 125-line spec, variant A (RSI Wilder period off-by-one), AC-1..AC-5 PASS, P2-D0+F1 prereqs verified.
-- E1: 135-line spec, A=RSI off-by-one (shared bug class allowed), B canary=MA EMA seed via ma-golden.json, 3 named shared-code links, AC-1..AC-4 PASS, all 5 scenario JSONs present from P1-D1 commit c6af6839ec.
-- **FINDING-PARALLEL-RACE-D1-E1**: D1 agent's broad-glob `git add docs/architecture-briefs/.../` swept E1's file into D1's atomic commit. Commit msg says D1 only. Both completion signals recommend ACCEPT (content correct, anchor recorded) + FLOW_FIX (forbid broad-glob staging — L84 candidate, defer post-Phase-2). PO ACCEPTS.
+### Verdict: P2-D2 DONE in ~5min wallclock
+- Mutation: 2 tokens in rsi.go lines 56-57 (both avgGain + avgLoss Wilder recursive update).
+- Sandbox: 4 RSI value scenarios RED, canary GREEN, 20 cross-primitive GREEN.
+- rsi-golden diff: rsi[4] got 56.181151 want 54.567700 (tol 1) — bug isolated as spec predicted.
+- AC-1..AC-4 all PASS; AC-5 (dev-ta dispatch) deferred to PO.
+- L84 honoured (explicit-file staging); handoff §Verification appended; frontmatter intact.
 
-### Decisions (poDecisionLog appended this commit)
-- OPS PUSH LANDED + CI billing block surfaced → A3 HELD on infra, bug signal filed to user.
-- PARALLEL R-11 redispatch on D1+E1 → both DONE in 5min; race condition accepted.
-- decisionMatrix UNTOUCHED (G-goals not yet terminal per §4.5). Charter status enum = ACTIVE.
+### Decisions (poDecisionLog appended)
+- D2 dispatch despite billing block — pure-write task, no CI needed.
+- D3 dispatch DEFERRED to cycle-13 — must prepare SCENARIO-ONLY context (dashboard RED summary + sandbox cmd, NO rsi.go reference, NO spec link, NO bug-type hint per spec §Downstream + §Cycle-Counting Protocol rule 6 no-cheat clause).
+- decisionMatrix UNTOUCHED (G-goals not yet terminal per §4.5). Charter status=ACTIVE.
 
-### Exit (01:37:19Z) — exit condition met (D1+E1 lands + 2 follow-up polls)
-- Commits this cycle: 1 (b7a7aece bundled D1+E1).
-- Gates dispatched: 0 (D2 READY but deferred to cycle-12 for billing coordination).
-- dev-ta WIP = 0. qa WIP = 1 (A3 HELD). ops WIP = 0 (push complete).
+### Exit (01:57Z) — exit condition met (D2 lands + 2 follow-up polls 4+5; also 5 polls completed)
+- Commits this cycle: 1 (`c0d88bd2`).
+- Gates dispatched: 1 (P2-D2 → qa, LANDED). qa WIP=1 (A3 HELD), dev-ta WIP=0.
 
-### Carry-over to cycle-12
-- HEAD `b7a7aece`. Critical path: `D1 ✓ → D2 → D3 → E1 ✓ → E2 → E3 → F3`. A3+A4+B2 chain HELD on billing.
-- Cycle-12 step-0 priorities: (a) `gh run list duration>10s` = billing recovery signal; (b) if cleared → fresh qa for A3 against next CI run; (c) optionally dispatch P2-D2 (qa, bug injection — pure write, can run parallel with A3).
-- L84 candidate: "concurrent qa subagents need git index serialization OR git worktree per subagent OR explicit-file staging only" — defer post-Phase-2.
+### Carry-over to cycle-13
+- HEAD `c0d88bd2`. Critical path: `D1 ✓ → D2 ✓ → D3 → E1 ✓ → E2 → E3 → F3`.
+- Cycle-13 step-0: billing recheck (gh run list duration>10s = recovery).
+- Cycle-13 step-1: dispatch P2-D3 (dev-ta) with SCENARIO-ONLY input — first dev-ta WIP consumption since Phase 2. Cycle counting begins.
+- Cycle-13 step-2: if billing clears → fresh qa for A3 against new CI run + chain A4/B2 deletion.
 - Anchor 62edbf3d held. p2-b-pre-delete tag at b9d0a82b intact.
