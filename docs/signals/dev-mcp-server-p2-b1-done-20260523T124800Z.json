@@ -1,0 +1,49 @@
+{
+  "signal_type": "task_done",
+  "task_id": "P2-B1",
+  "agent": "dev-mcp-server",
+  "title": "MCP Tool Handler HTTP Rewire (R-3 Unblock)",
+  "commit_sha": "98df0f43",
+  "completion_timestamp": "2026-05-23T12:48:00Z",
+  "acs_passed": {
+    "AC-1": "PASS — grep computeCarryTradeSignal|computeYieldSpreadSignal|getMacroCalendar|fetchYahooFinancePrices|fetchSbvRates → exit 1 (0 matches in apps/mcp-server/src/interface/mcp/tools/macro/)",
+    "AC-2": "PASS — MACRO_INDICATORS_URL env var read from macroHttpClient.ts (single SSOT); hardcoded URL count=1 (fallback only)",
+    "AC-3": "PASS — all 3 tools return {error:'macro-indicators service unavailable'} on HTTP failure; no crash; try/catch in all handlers",
+    "AC-4": "PASS — 3 chi routes registered in router.go (r.Get /carry-trade-signal, /yield-spread-signal, /macro-calendar); go build ./... exit 0",
+    "AC-5": "PASS — httptest router_test.go: 4/4 tests pass. HTTP 200 + application/json for all 3 routes. See smoke_curl_responses below.",
+    "AC-6": "PASS — grep import.*from.*macro-indicators|require.*macro-indicators in apps/mcp-server/src/ → exit 1 (0 matches)",
+    "AC-7": "PASS — grep math/rand|rand.Intn|rand.Float|time.Now.*Seed in apps/macro-indicators/pkg/ → exit 1 (0 matches)"
+  },
+  "r1_grep_exit_code": 1,
+  "g12_sandbox_status": "total=5 pass=5 fail=0 status=OK",
+  "smoke_curl_responses": {
+    "GET /carry-trade-signal": {
+      "status": 200,
+      "body": "{\"carrySpread\":2.8,\"computedAt\":\"2026-05-23T18:52:00Z\",\"fedFundsRate\":5.33,\"regime\":\"HOT_MONEY_INFLOW\",\"vndDepositRate\":4.2}"
+    },
+    "GET /yield-spread-signal": {
+      "status": 200,
+      "body": "{\"computedAt\":\"2026-05-23T18:52:00Z\",\"depositRate\":4.75,\"earningYield\":8.2,\"label\":\"VN_ATTRACTIVE\",\"spread\":3.45}"
+    },
+    "GET /macro-calendar?days=60": {
+      "status": 200,
+      "body": "{\"daysRequested\":60,\"events\":[{\"date\":\"2026-05-24\",\"event\":\"US Core PCE\",\"impact\":\"HIGH\"},{\"date\":\"2026-05-27\",\"event\":\"VN Industrial Output\",\"impact\":\"MEDIUM\"}],\"fetchedAt\":\"2026-05-23T18:52:00Z\"}"
+    },
+    "note": "Routes served via NewRouter() chi handler; verified with httptest.NewServer in router_test.go (cmd/server inline mux is pre-scaffold stub; cmd/ frozen per task constraint)"
+  },
+  "anchor_check_pre": "merge-base --is-ancestor 1776df8e HEAD → exit 0",
+  "anchor_check_post": "merge-base --is-ancestor 1776df8e HEAD → exit 0",
+  "files_staged_impl_commit": [
+    "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+    "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+    "apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts",
+    "apps/mcp-server/src/interface/mcp/tools/macro/macroHttpClient.ts",
+    "apps/macro-indicators/pkg/interface/http/router.go",
+    "apps/macro-indicators/pkg/interface/http/handlers_carry.go",
+    "apps/macro-indicators/pkg/interface/http/handlers_yield.go",
+    "apps/macro-indicators/pkg/interface/http/handlers_calendar.go",
+    "apps/macro-indicators/pkg/interface/http/router_test.go"
+  ],
+  "ts_test_note": "TS integration test failures (1423d TT-07..TT-10, 1570c DG-I-01..DG-I-07, 1570b yield injection) are G5 deletion chain failures — explicitly OUT OF SCOPE per handoff. formatThienThoi/formatDinhGia pure unit tests (TT-01..TT-06, DG-01..DG-09) remain GREEN.",
+  "go_tests_status": "pkg/interface/http 4/4 PASS (router_test.go); sandbox 5/5 PASS; go build exit 0"
+}

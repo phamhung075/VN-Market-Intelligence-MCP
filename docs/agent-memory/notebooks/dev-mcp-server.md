@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c282 · 2026-05-23T12:48Z
+
+### Task P2-B1 — MCP HTTP Rewire (2026-05-23, IMPL_DONE)
+
+**Change:**
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts` — REWRITE: removed `computeCarryTradeSignal`, `computeYieldSpreadSignal`, `fetchYahooFinancePrices`, `fetchSbvRates` domain/infra imports. `get_macro_snapshot` now HTTP POST to `/snapshot`. `formatThienThoi`/`formatDinhGia` kept exported with inlined carry/yield math (no domain imports). `MacroSnapshotResponse`, `ThienThoiInputs`, `DinhGiaInputs` interfaces kept for test compat.
+- `apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts` — REWRITE: `get_carry_trade_signal` → HTTP GET `/carry-trade-signal`; `get_macro_calendar` → HTTP GET `/macro-calendar?days={days}`. Removed `getMacroCalendar`, `computeCarryTradeSignal`, DB read helpers.
+- `apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts` — REWRITE: `get_yield_spread_signal` → HTTP GET `/yield-spread-signal`. Removed `computeYieldSpreadSignal`, DB read helpers.
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroHttpClient.ts` (NEW) — single SSOT for `MACRO_INDICATORS_URL` env var (fallback `http://localhost:5004`).
+- `apps/macro-indicators/pkg/interface/http/handlers_carry.go` (NEW) — GET /carry-trade-signal fixture stub (TODO P2-X3).
+- `apps/macro-indicators/pkg/interface/http/handlers_yield.go` (NEW) — GET /yield-spread-signal fixture stub (TODO P2-X3).
+- `apps/macro-indicators/pkg/interface/http/handlers_calendar.go` (NEW) — GET /macro-calendar fixture stub (OQ-10: no live data).
+- `apps/macro-indicators/pkg/interface/http/router.go` — 3 new chi routes added.
+- `apps/macro-indicators/pkg/interface/http/router_test.go` (NEW) — httptest smoke tests, 4/4 PASS.
+
+**AC results:** AC-1..AC-7 all PASS. R-1 exit=1 (no rand). G12 sandbox total=5 pass=5 fail=0 status=OK.
+
+**Commit:** `98df0f43`
+
+**Signal:** `docs/signals/dev-mcp-server-p2-b1-done-20260523T124800Z.json` → qa
+
+Zone health: 4 MCP macro tools now route through HTTP to macro-indicators:5004; DDD violation (domain imports in interface layer) RESOLVED; G5b unblocked | HEALTHY
+
+---
+
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md` (tasks 1955a-1967-01 archived)
 
