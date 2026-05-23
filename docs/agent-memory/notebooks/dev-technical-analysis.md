@@ -50,18 +50,21 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ---
 
-### 2026-05-23 — P2-A3-prereq Fix golangci-lint findings (cycle-22)
+### 2026-05-23 — P2-A3-prereq Fix golangci-lint findings (cycle-20 re-dispatch, cycle-22 verification)
 
 **Task:** Fix golangci-lint findings on apps/technical-analysis, unblock G4.
 
-**Status:** DONE — signal commit 106b3727 | no source fix needed
+**Status:** DONE — fix commit 9d364329 | cycle-20 signal dev-ta-cycle20-fix-go-lint-done-20260523T094500Z.json
 
-**Root cause:** CI uses golangci-lint v1.64.8; local had v2.12.2. The cycle-20 commit 9d364329 already converted .golangci.yml from v2→v1 format (architect-blessed as frozen anchor per Amendment 1). No additional source changes required in cycle-22.
+**Root cause:** CI uses golangci-lint v1.64.8; local had v2.12.2. The cycle-20 commit 9d364329 already converted .golangci.yml from v2→v1 format (architect-blessed as frozen anchor per Amendment 1). No additional source changes required.
 
-**Path chosen:** A (local verification with v1.64.8 binary proves exit 0).
+**CI confirmation (cycle-20 re-dispatch):**
+- CI run 26326536909 on SHA 9d364329 — go-lint job: success (exit 0)
+- bun test job: failure (out-of-scope legacy TS — G5 deletion chain)
+- Rerun triggered: gh run rerun 26326536909 --failed
+- go-lint job conclusion: success completed
 
-**Verification:**
-- Installed golangci-lint v1.64.8 at /tmp/golangci-lint-v1/golangci-lint
+**Local verification:**
 - `golangci-lint v1.64.8 run` → exit 0, 1 linter active (depguard), 0 issues
 - `go test ./...` → exit 0, 7 packages ok
 - `go vet ./...` → exit 0
@@ -71,7 +74,9 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 **AC-4c freeze check:** `git log --oneline .golangci.yml` shows exactly 9561fee9 then 9d364329 — no commits after 9d364329. PASS.
 
-**Done signal:** `docs/signals/dev-ta-cycle22-fix-go-lint-done-20260523T085500Z.json`
+**Done signals:**
+- `docs/signals/dev-ta-cycle22-fix-go-lint-done-20260523T085500Z.json` (local verification)
+- `docs/signals/dev-ta-cycle20-fix-go-lint-done-20260523T094500Z.json` (CI confirmation + AC-4)
 
 ---
 
