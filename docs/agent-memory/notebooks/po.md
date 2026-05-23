@@ -1,48 +1,37 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-62 (kinh-dich pilot-4 charter v2.0 RATIFIED + Phase-0 decomposition dispatched to PM)
-**Last update:** 2026-05-23T22:53:23Z
-**Status:** Architect drafted kinh-dich charter v2.0 + Day-0 SSOT (commit 4e914a81 = HEAD). Verified independently on all 7 checklist points → RATIFIED. PM authorized to decompose Phase 0 (D1-D5; D0 SSOT already landed). One dispatch signal emitted. Decision doc written.
+**Cycle:** c282 cycle-63 (stock-price Phase-1 GO RATIFIED + Phase-2 AUTHORIZED + pilot-5 WIP HOLD)
+**Last update:** 2026-05-23T23:46:47Z
+**Status:** QA returned GO on stock-price (pilot-3) Phase-1 close-gate. Independently re-verified → RATIFIED. Phase-2 entry authorized → architect drafts plan. pilot-5 (alert-engine) ruled HOLD (WIP=2 binds). Decision doc + 2 signals emitted.
 
 ---
 
-## This cycle (cycle-62) — kinh-dich charter RATIFY + Phase-0 open
+## This cycle (cycle-63) — 3 rulings
 
-**Decision doc:** `docs/po-decisions/2026-05-24-pilot4-kinh-dich-charter-ratify-phase0-open.md`
-**Dispatch signal:** `docs/signals/po-pilot4-kinh-dich-phase0-open-20260523T225323Z.json` → PM
-**Charter ratified:** `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` v2.0 (commit 4e914a81 = HEAD)
+**Decision doc:** `docs/po-decisions/2026-05-24-stock-price-phase1-gate-ratify-phase2-authorize-pilot5-wip-ruling.md`
+**Signals:** `po-stock-price-phase2-authorize-20260523T234647Z.json` (→architect), `po-pilot5-alert-engine-wip-hold-20260523T234647Z.json` (→fleet-record)
+**QA signal:** `qa-stock-price-phase1-close-gate-20260523T234229Z.json` (commit 56fab996). HEAD at decision = 9534c117.
 
-### 7-point ratify checklist — ALL PASS (verified independently, not architect's word)
-1. G4 = TS fence: AC-4a/4b/4c VERBATIM from SI-3 §5 with <svc>→kinh-dich-service; eslint-plugin-boundaries Option A; G4 LOCKED v1, no Amendment. NOT Go depguard.
-2. R-FENCE gate present (no R-CGO analog); AC-4b on real .js import (../../application/dtos.js); fallback @typescript-eslint/parser (stays Option A); G7 zero-creds carries over.
-3. 12 G-goals Tracks A/B/C + Phase-0 exit gate present.
-4. decisionMatrix present-but-empty (speed/trust/scale/verdict TBD, populatedAt=null) — NOT pre-filled.
-5. SSOT Day-0: status=ACTIVE, phase=0, language=TypeScript locked, 12 goals TBD, goalsEarned=0, dm empty.
-6. SI-2 NOT re-claimed (stock-price owns docs/dashboards/index.html); kinh-dich G6 = apps/kinh-dich-service/dashboard/index.html only.
-7. Service facts via jq: port 5005 (int==ext), zone apps/kinh-dich-service, language ts, runtime bun, specialist dev-kinh-dich.
-- Supplementary: WIP=2 holds {stock-price P1, kinh-dich P0}; TA+macro DONE/scale untouched; no pilot-5 dir; no .golangci.yml in kinh-dich charter; no git lock.
+### D1 — RATIFIED (GO sound)
+Re-verified independently: AC-1 sandbox 11/11 green (CGO_ENABLED=0); AC-2 dashboard 5/5, self-contained, honest NOT-RUN; AC-3 G12 streak 3/3; AC-4 R-CGO fence 0 matches. Anchor `debba8e…` ancestor of HEAD (exit 0), 0 tags. decisionMatrix empty (§4.5 OK).
+**G-goal posture (NO flips, goalsEarned=0):**
+- EARNED-PENDING: G1 G2 G6 G7 G8 G12
+- STILL-UNMET (Phase-2): G3 G4 G5 G9 G10 G11
+Did NOT touch pilot-status-stock-price.json (PM-owned). 12/12 terminal flip is later Phase-3 (PO-only).
 
-### What I did NOT touch
-- kinh-dich SSOT is PM-owned — did NOT mutate (ratify + Phase-0-open authority only; mirrors stock-price Decision-1 pattern).
-- decisionMatrix stays empty (§4.5, 12/12 terminal only).
-- DORMANT/CLOSED: apps/technical-analysis/**, apps/macro-indicators/**, pilot-status.json, pilot-status-macro-indicators.json, stock-price SSOT — all untouched.
-- No pilot-5 (alert-engine) opened.
+### D2 — Phase-2 AUTHORIZED
+No phase-2-task-plan-go.md exists (only charter + p0-brownfield + phase-1 plan). Dispatch → **architect** drafts `phase-2-task-plan-go.md`. Scope: G4 fence+violation proof+pre-ci tag, G5a/b/c deprecate+rewire MCP→HTTP 5010, G6/SI-2 fleet index (dev-stock-price OWNS docs/dashboards/index.html), G8/G9(Playwright Path B)/G10/G11, G3/G7/G12 finalize. PO did NOT author plan.
 
-### Phase-0 deliverables PM must decompose (charter §Phase 0)
-- D1 brownfield-inventory (architect/system-auditor + dev-kinh-dich R-FENCE confirm) — exact primitive set + module name, G5a/G5b scope, AC-4b feasibility on real import.
-- D2 bug-inventory kinh_dich_baseline (fallback 1.5; gitignored → git add -f).
-- D3 .claude/agents/dev-kinh-dich.md factory-mode (agent-father).
-- D4 .claude/flows/dev-kinh-dich/main.md G12 DoD-Gate Day 0 + Fence-A/B/C + pre-revert tags (agent-father).
-- D5 phase-1-task-plan-ts.md — R-FENCE baked into first-fence task AC (like stock-price P1-B1 R-CGO).
+### D3 — pilot-5 HOLD (Option a)
+WIP=2 counts ACTIVE charters. {stock-price Phase 2, kinh-dich Phase 1} = 2 = AT cap. Rejected "Phase-2 = lighter slot" (Phase 2 is heaviest). Unblock: pilot-5 opens ONLY when stock-price OR kinh-dich hits terminal 12/12 (DONE, matrix populated, CLOSED). Non-terminal phase boundaries free nothing. On unblock: charter alert-engine (Go, port 5006, zone apps/alert-engine, dev-alert-engine).
 
 ---
 
 ## Carry-over (next cycle)
 
-- **NEXT:** main router → `pm` decomposes kinh-dich Phase 0 (per signal po-pilot4-kinh-dich-phase0-open-20260523T225323Z.json), WIP=1; PM owns SSOT phase-0 field mutations. Phase-0 exit gate = 6 deliverables + SSOT populated + no src/primitive|src/module code + architect verify signal.
-- **In parallel:** stock-price Phase 1 in flight (PM → dev-stock-price, P1-A → P1-B1 R-CGO chokepoint AC-8). If P1-B1 BLOCKED, Phase 1 stops; PM escalates to architect.
-- **WIP=2 cap:** {stock-price P1, kinh-dich P0} both ACTIVE. No pilot-5 (alert-engine) charter until pilot-3 clears Phase 1.
-- **kinh-dich G12** → EARNED-PENDING after Phase-1 3-task streak (first-primitive · module-stub · dashboard-stub); PO flips YES only at 12/12 terminal.
-- **decisionMatrix** stays empty on every active pilot until 12/12 terminal (§4.5).
-- **Deferred prework triggers:** SI-2 owner=dev-stock-price at G6; SI-5 (dev-news-fetch) pre-pilot-6; SI-4 (Python fence) pre-pilot-7.
-- **Do NOT touch:** frozen pilot-status.json (TA), closed pilot-status-macro-indicators.json, DORMANT apps/technical-analysis/** + apps/macro-indicators/**, PM-owned stock-price + kinh-dich SSOTs.
+- **NEXT:** main router → architect drafts stock-price `phase-2-task-plan-go.md` (per po-stock-price-phase2-authorize signal). PM owns SSOT phase2 transition (NOT PO).
+- **In parallel:** kinh-dich (pilot-4) Phase 1 in flight (PM sequencing P1-C). WIP=2 holds.
+- **WIP=2 cap:** {stock-price Phase 2, kinh-dich Phase 1} ACTIVE. pilot-5 (alert-engine) HOLD until one hits terminal 12/12.
+- **decisionMatrix** stays empty on all active pilots until 12/12 terminal (§4.5). PO flips G-goals only at terminal atomic close.
+- **Do NOT touch:** frozen anchor debba8e… (no retag/push), pilot-status.json (TA), pilot-status-macro-indicators.json (closed), DORMANT apps/technical-analysis/** + apps/macro-indicators/**, PM-owned stock-price + kinh-dich SSOTs.
+- **Deferred prework triggers:** SI-2 owner=dev-stock-price at G6 (Phase 2); SI-5 (dev-news-fetch) pre-pilot-6; SI-4 (Python fence) pre-pilot-7.
