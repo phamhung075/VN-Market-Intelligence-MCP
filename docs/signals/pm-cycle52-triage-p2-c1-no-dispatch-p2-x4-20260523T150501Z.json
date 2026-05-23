@@ -1,0 +1,109 @@
+{
+  "signal_id": "pm-cycle52-triage-p2-c1-no-dispatch-p2-x4-20260523T150501Z",
+  "agent": "pm",
+  "cycle": "c282-cycle-52",
+  "timestamp_utc": "2026-05-23T15:05:01Z",
+  "decision_type": "path_a_triage_p2_c1_no_plus_dispatch_p2_x4",
+  "blocker_signal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
+  "po_decision_doc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md",
+
+  "triage_decision": "Path A — PO NO verdict holds",
+  "charter_reference": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md §G9 line 230",
+  "charter_g9_path_b_verbatim": "Acceptance: ZERO console errors, ZERO pageerrors, ZERO requestfailed, all primitives + module + microservice cards rendered, NOT-RUN status honestly displayed.",
+  "g9_requirement_analysis": "Charter requires 'all primitives' render. Current: 1 of 6. Unambiguous reading: 1/6 ≠ all. PO NO correct.",
+
+  "root_cause": "Dashboard inline PRIMITIVES_DATA array (apps/macro-indicators/dashboard/index.html ~L928) authored at P1-E1 with only macro_investment_clock (3 scenarios). P2-X1 added 5 new primitives (oil, gold, usdvnd, carry, yield = 15 scenario JSON files) + P2-X2 expanded module to compose all 6. Dashboard inline data block was never refreshed post-P2-X1/X2.",
+
+  "remediation_task": "P2-X4",
+  "remediation_title": "Dashboard data refresh — sync inline PRIMITIVES_DATA + MODULE_DATA + microservice panel",
+  "remediation_owner": "dev-macro-indicators",
+  "remediation_estimate_hours": 0.5,
+  "remediation_ac_count": 7,
+  "remediation_ac_list": [
+    "AC-1: PRIMITIVES_DATA contains all 6 primitives (≥18 entries)",
+    "AC-2: MODULE_DATA contains macro-signals module (≥2 entries)",
+    "AC-3: microservice panel body populated (no 'Loading…' placeholder)",
+    "AC-4: Playwright headless render shows 6 primitive + 1 module + 1 microservice cards",
+    "AC-5: Red/green honesty contract still holds (corrupted RED, golden GREEN)",
+    "AC-6: Zero code changes outside apps/macro-indicators/dashboard/ (zone ban)",
+    "AC-7: G12 DoD gate — sandbox 20/20 exit 0 immediately before commit"
+  ],
+  "remediation_hard_gates": [
+    "G12 DoD: go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all exit 0",
+    "L84 staging: git add apps/macro-indicators/dashboard/index.html (explicit, never -A/.)",
+    "Anchor 1776df8e held pre+post",
+    "No --force, no --no-verify, no --no-gpg-sign, no git push"
+  ],
+
+  "p2_c1_closure": {
+    "status": "NO",
+    "reason": "Dashboard partial (1/6 primitives rendered vs 'all required)",
+    "outcome_reason": "Dashboard inline PRIMITIVES_DATA stale from P1-E1 with only macro_investment_clock; P2-X1 added 5 primitives but dashboard not refreshed; G9 charter path B requires 'all primitives + module + microservice cards rendered' → 1/6 ≠ all",
+    "g9_status_after_triage": "TBD (no flip yet)",
+    "goals_earned_after_triage": 6
+  },
+
+  "p2_x4_dispatch": {
+    "task_id": "P2-X4",
+    "handoff_doc": "docs/handoffs/TASK_P2-X4-macro.md",
+    "owner": "dev-macro-indicators",
+    "estimate_hours": 0.5,
+    "blocked_by": "P2-F1 (DONE)",
+    "unblocks": "P2-C1-rerun (PO Playwright re-verify after DONE + QA GREEN)",
+    "blocker_reason": "P2-C1 verdict=NO. Dashboard inline data out of sync. P2-X4 syncs data to match factory state (6 primitives + module). Then re-dispatch P2-C1 for rerun. On rerun PASS → G9 flip YES → goalsEarned 6 → 7."
+  },
+
+  "sequencing_note": "P2-X4 is inline task insertion into Phase 2 sequencing (not in original task plan). Authorized by architect Phase 2 plan §Open Questions flexibility (PM minor-task discretion per charter). After P2-X4 DONE + QA GREEN, PM will re-dispatch P2-C1 (same handoff TASK_P2-C1-macro.md, same 4 ACs, rerun Playwright recipe). On PO rerun PASS, G9 flips TBD → YES without new ceremony (PO appends evidence to existing decision doc). Then PM flips goal in SSOT + advances to P2-D1 (bug injection pre-tag, next critical-path task).",
+
+  "wip_enforcement": {
+    "current_wip": 1,
+    "wip_max": 2,
+    "active_owner": "dev-macro-indicators",
+    "active_task": "P2-X4"
+  },
+
+  "charter_compliance": {
+    "charter_section": "§G9 (Path B acceptance criteria) + §4.5 (decisionMatrix authorship)",
+    "status": "COMPLIANT",
+    "notes": [
+      "G9 stays TBD per §4.5 — no early flip. Will flip YES only after P2-C1 rerun PASS in atomic commit.",
+      "decisionMatrix field stays TBD (PO-only authorship at 12/12 goal terminal per §4.5).",
+      "Charter §Anti-Scope-Creep: P2-X4 is remediation task (data refresh, not new logic). Scope stays macro-indicators only."
+    ]
+  },
+
+  "ssot_updates": [
+    "phase2.activeTask: P2-F1 → P2-X4",
+    "Added P2-C1 task entry (status=NO, poVerdic, poSignal, outcome_reason, rerun_dependency=P2-X4)",
+    "Added P2-X4 task entry (status=DISPATCHED, blocker_reason, goals_unblock=[G9])",
+    "goals[G9].status: TBD (unchanged), added poSignal/poDecisionDoc/rerun_required/rerun_after_task fields",
+    "goalsEarned: 6 (unchanged), added goalsEarned_note field"
+  ],
+
+  "anchor_check": {
+    "pre_triage": "1776df8e HELD (git log --ancestry-path 1776df8e..HEAD | tail -1 returns non-empty)",
+    "post_commit": "PENDING-VERIFY (will check after atomic commit)"
+  },
+
+  "constraints_held": [
+    "L84 explicit-file staging (3 files explicitly staged: pilot-status SSOT, dispatch signal, notebook)",
+    "No --force, no --no-verify, no --no-gpg-sign, no git push of source/CI",
+    "All work on main (no branches)",
+    "Charter §4.5 decisionMatrix UNTOUCHED (no early flip)",
+    "WIP=1 enforced (dev-macro-indicators on P2-X4 only)",
+    "Anchor 1776df8e maintained throughout"
+  ],
+
+  "commit_subject": "chore(pm/c282-cycle-52): triage P2-C1 NO (Path A charter reading) + author + dispatch P2-X4 (dashboard-data-refresh, G9 unblock)",
+
+  "next_action": "dev-macro-indicators implements P2-X4 per handoff TASK_P2-X4-macro.md. After DONE + QA GREEN, PM re-dispatches P2-C1 to PO for Playwright headless rerun. On rerun PASS, G9 flips YES.",
+
+  "references": {
+    "blocker_signal": "docs/signals/po-p2-c1-macro-NO-20260523T150501Z.json",
+    "po_decision_doc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md",
+    "charter": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md",
+    "phase_2_task_plan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
+    "pilot_status": "docs/data/pilot-status-macro-indicators.json",
+    "handoff_p2_x4": "docs/handoffs/TASK_P2-X4-macro.md"
+  }
+}

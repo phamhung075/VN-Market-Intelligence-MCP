@@ -1,5 +1,30 @@
 # PM — Notebook
 
+## c282 cycle-52 · 2026-05-23T150501Z
+
+**Status:** P2-C1 CLOSED (PO NO verdict — charter §G9 Path B requires 'all primitives + module + microservice cards rendered', 1/6 primitives visible due to stale dashboard inline data) → P2-X4 AUTHORED + DISPATCHED (dashboard data refresh, 30m, 7 ACs, G9 unblock). **Decision: Path A** — charter §G9 strict reading: "**all primitives** + module + microservice cards rendered". 1 of 6 ≠ all. Root cause: dashboard PRIMITIVES_DATA inline block (apps/macro-indicators/dashboard/index.html L928) authored P1-E1 with only macro_investment_clock; P2-X1 added 5 new primitives (oil, gold, usdvnd, carry, yield) but dashboard never refreshed. G9 stays TBD. Remediation: P2-X4 (dev-macro-indicators, 30m) syncs dashboard inline data → then re-dispatch P2-C1 to PO for Playwright re-verify → on PASS flip G9 TBD → YES (6 → 7/12 goals). PM updated SSOT: phase2.activeTask P2-F1 → P2-X4, added P2-C1 entry (status=NO, poSignal, outcome_reason, rerun_dependency=P2-X4), added P2-X4 entry (status=DISPATCHED, blocker_reason, goals_unblock=[G9]). Updated goals[G9] (TBD unchanged, added rerun_required/rerun_after_task fields, poSignal/poDecisionDoc refs). goalsEarned stays 6. Created TASK_P2-X4-macro.md (7 ACs: PRIMITIVES_DATA 6 primitives, MODULE_DATA, microservice card, Playwright render, honesty, zone ban, G12 DoD). Created dispatch signal pm-cycle52-dispatch-dev-macro-indicators-p2-x4-<UTC>.json. Charter §4.5 decisionMatrix UNTOUCHED. WIP=1 enforced. Anchor 1776df8e held. Single atomic commit: `chore(pm/c282-cycle-52): triage P2-C1 NO (Path A charter reading) + author + dispatch P2-X4 (dashboard-data-refresh, G9 unblock)`.
+
+### P2-C1 Triage Reading (Path A — PO NO Verdict Holds)
+
+**Charter §G9 Path B (pilot-charter.md line 230) verbatim:**  
+"Acceptance: ZERO console errors, ZERO pageerrors, ZERO requestfailed, **all primitives + module + microservice cards rendered**, NOT-RUN status honestly displayed."
+
+**PM triage:** "all primitives" unambiguous. 1 of 6 ≠ all. PO NO correct. Path A holds.
+
+**Root cause:** Dashboard inline PRIMITIVES_DATA (index.html ~L928) has only macro_investment_clock (P1-E1 authored). P2-X1 added 5 new (oil, gold, usdvnd, carry, yield, 15 JSON files) + P2-X2 module expanded, but dashboard inline block never refreshed. 1/6 primitives now visible.
+
+**Remediation path:** P2-X4 → P2-C1 rerun → G9 flip YES (no new ceremony).
+
+### P2-X4 Task Authoring
+
+- **Handoff:** docs/handoffs/TASK_P2-X4-macro.md ✓
+- **ACs:** 7 (PRIMITIVES_DATA 18+ entries, MODULE_DATA 2+, microservice card, Playwright 6+1+1, honesty, zone ban, G12 DoD sandbox 20/20)
+- **Implementation:** Read 15 new primitive JSON, mirror to PRIMITIVES_DATA; module JSON to MODULE_DATA; populate microservice panel body.
+- **Files:** ONLY dashboard/index.html (zero pkg/, cmd/, scenarios/, config mutations)
+- **After DONE:** PM re-dispatches P2-C1 (PO Playwright rerun) → on PASS, PO appends to existing decision doc + PM flips G9 → YES + goalsEarned 6 → 7.
+
+---
+
 ## c282 cycle-51 · 2026-05-23T164802Z
 
 **Status:** P2-F1 CLOSED (QA GREEN — G8 honest-red proof PASS, 5/5 ACs, hard gates all PASS) → P2-C1 DISPATCHED (G9 PO Playwright Path B, no user async-wait, 30m, 4 ACs, po owner). QA verified P2-F1 at 2026-05-23T16:45:02Z: 5/5 AC PASS (Test A 2 corruptions + exit non-zero + dashboard RED + restore, Test B all-golden exit 0 + all-GREEN, AC-3 generalization 2 primitives, AC-4 no residual mutations, AC-5 G8 summary). PM re-verified all 6 hard gates pre-cycle (anchor 1776df8e held exit 0, R-1 exit 1 zero matches, Fence-B/C exit 1 each, scenario dir clean empty, sandbox 20/20 exit 0). PM closed P2-F1 in SSOT (status DONE, goals.G8 flipped TBD→YES, added qaSignal/flippedAt/evidence, goalsEarned 5→6). PM created 2 signals: pm-cycle51-p2-f1-closed-g8-FLIPPED-20260523T164802Z.json (close + G8 flip + hard gates re-verified) + pm-cycle51-dispatch-po-p2-c1-20260523T164802Z.json (G9 dispatch, Path B default, Charter §G9 TA cycle-19 lesson L6, no user wait). PM created TASK_P2-C1-macro.md handoff (4 ACs: Playwright headless, zero console/page/network errors, all 3 panels + status honesty, PO decision doc). Updated pilot-status SSOT: phase2.activeTask=P2-F1→P2-C1, added P2-F1 task entry (DONE), goalsEarned 5→6, goals[G8].status=YES + verified_at/verifiedBy/evidence/flippedAt, decisionMatrix UNTOUCHED per §4.5 (PO-only at 12/12 terminal). Updated PM notebook cycle-51 entry. WIP=1 enforced (po on P2-C1 only). Anchor 1776df8e verified held pre+post. Single atomic commit: `chore(pm/c282-cycle-51): atomic close P2-F1 macro-indicators + flip G8=YES (6/12) + dispatch P2-C1 (po G9 Playwright trust)`.
