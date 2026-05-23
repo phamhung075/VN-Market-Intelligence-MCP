@@ -1,0 +1,29 @@
+{
+  "cycle": "c282 cycle-47",
+  "closed_task": "P2-X1",
+  "task_title": "Remaining 5 Primitives Extraction (oil/gold/usdvnd/carry/yield)",
+  "qa_verdict": "GREEN",
+  "dev_impl_commit": "61c3dce4",
+  "dev_signal_commit": "cea869e8",
+  "qa_signal_commit": "358fc324",
+  "qa_signal_file": "docs/signals/qa-p2-x1-macro-GREEN-20260523T135611Z.json",
+  "g1_flipped": true,
+  "g1_terminal_check": {
+    "primitive_count": "6 (1 existing + 5 new)",
+    "primitive_count_check": "ls -d apps/macro-indicators/pkg/primitive/*/ | wc -l → 6",
+    "fence_a_clean": "grep -rn 'application|interface|infrastructure' apps/macro-indicators/pkg/primitive/ → exit 1 (0 matches)",
+    "r1_deterministic": "grep -rE 'math/rand|rand.Intn|rand.Float|time.Now.*Seed' apps/macro-indicators/pkg/primitive/ → exit 1 (0 matches)",
+    "sandbox_all_tier": "go run ./cmd/sandbox -tier=all -module=macro-indicators -scenario=all → total=20 pass=20 fail=0 status=OK exit 0",
+    "anchor_held": "git merge-base --is-ancestor 1776df8e HEAD → exit 0"
+  },
+  "g1_evidence": "6/6 primitives (macro-investment-clock + oil + gold + usdvnd + carry + yield), Fence-A clean, R-1 deterministic, sandbox 20/20 verified at PM cycle-47",
+  "goals_earned_pre": 2,
+  "goals_earned_post": 3,
+  "next_dispatch": "P2-X2",
+  "pm_verification_timestamp": "2026-05-23T16:00:10Z",
+  "anchor_held_pre": 0,
+  "anchor_held_post": 0,
+  "pm_close_commit": "WILL_BE_FILLED_AFTER_COMMIT",
+  "timestamp_utc": "2026-05-23T16:00:10Z",
+  "notes": "G1 terminal check PASS on all 4 criteria. G1 flipped YES in atomic commit with SSOT mutation. G12 EARNED-PENDING status persists (no flip until PO 12/12 close per Charter §4.5)."
+}

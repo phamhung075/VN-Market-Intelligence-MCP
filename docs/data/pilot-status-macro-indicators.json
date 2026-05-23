@@ -328,7 +328,7 @@
     "taskPlan": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "wipPolicy": "WIP=1 — P2-B1 R-3 unblock first, then P2-A1 fence (sequential per plan §WIP Decision)",
-    "activeTask": "P2-X1",
+    "activeTask": "P2-X2",
     "firstTaskDispatchOwner": "pm (creates TASK_P2-B1 handoff + dispatch signal for dev-mcp-server)",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-macro-indicators-factory/07-phases.md §Phase 2",
     "wip_limit": 1,
@@ -533,6 +533,33 @@
         "ac_results": "4/4 PASS (G5a TS deprecation confirmed, G5b HTTP routing confirmed, G5c TODO sweep clean, G5 ready for flip)",
         "g5_readiness": "READY_FOR_FLIP",
         "anchor_held": true
+      },
+      "P2-X1": {
+        "status": "DONE",
+        "title": "Remaining 5 Primitives Extraction (oil/gold/usdvnd/carry/yield)",
+        "owner": "dev-macro-indicators",
+        "dispatch_timestamp": "2026-05-23T15:37:00Z",
+        "dispatch_signal": "docs/signals/pm-cycle46-dispatch-dev-macro-indicators-p2-x1-20260523T153700Z.json",
+        "handoff_doc": "docs/handoffs/TASK_P2-X1-macro.md",
+        "impl_commit": "61c3dce4",
+        "dev_signal_commit": "cea869e8",
+        "qa_verdict": "GREEN",
+        "qa_verified_at": "2026-05-23T13:56:11Z",
+        "qa_signal": "docs/signals/qa-p2-x1-macro-GREEN-20260523T135611Z.json",
+        "qa_commit": "358fc324",
+        "completed_at": "2026-05-23T16:00:10Z",
+        "completed_by": "pm c282-cycle-47 (closure + G1 flip)",
+        "description": "Extract 5 remaining primitives (oil, gold, usdvnd, carry, yield) to Go packages with 3 scenario JSON files each (15 total new). All 7 ACs PASS. G1 terminal verification: 6/6 primitives, Fence-A clean, R-1 deterministic, sandbox 20/20 verified.",
+        "goal_path": "G1",
+        "ac_count": 7,
+        "ac_results": "7/7 PASS (primitives count, per-primitive tests, scenario JSON valid, Fence-A clean, golangci-lint, G12 DoD gate, R-1 determinism)",
+        "sandbox_evidence": {
+          "all_tier": "total=20 pass=20 fail=0 status=OK exit 0 (QA + PM verified independently)"
+        },
+        "primitives_added": 5,
+        "scenarios_added": 15,
+        "g1_terminal_check": "PASS (6/6 primitives, Fence-A clean, R-1 deterministic, sandbox 20/20)",
+        "anchor_held": true
       }
     },
     "observations": [
@@ -590,11 +617,18 @@
         "event": "P2-B3 CLOSED (QA GREEN) + G5 FLIPPED YES + P2-X1 DISPATCHED",
         "detail": "QA signal received (qa-p2-b3-macro-GREEN-20260523T153700Z.json). P2-B3 all 4 ACs PASS: G5a (TS deprecated, 0 stray TS files in active zone), G5b (0 direct domain imports in MCP macro handlers, all 4 tools route HTTP to port 5004), G5c (0 TODO.*migrat references in macro zone). Hard gates: anchor 1776df8e HELD pre+post (exit 0), R-1 exit 1 (zero matches), golangci-lint exit 0, sandbox total=5 pass=5 fail=0 status=OK. PM closed P2-B3 (status=DONE). Goals[G5].status flipped TBD → YES (atomic with this commit). Added goals[G5] evidence field with P2-B1/B2/B3 evidence chain. phase2.activeTask updated P2-B3→P2-X1. Added P2-B3 record to tasks block with qa_verdict/completed_at/completed_by. Handoff TASK_P2-X1-macro.md created (7 ACs, 3h estimate, 5 primitives: oil/gold/usdvnd/carry/yield). Dispatch signal pm-cycle46-dispatch-dev-macro-indicators-p2-x1-<UTC>.json created. Signal pm-cycle46-p2-b3-closed-g5-flipped-<UTC>.json created. Goals earned count: 2 (G4, G5). Next critical-path task: P2-X1 (5 remaining primitives extraction). WIP=1 enforced (dev-macro-indicators owns slot).",
         "commit": "pm-cycle46-commit-will-be-set"
+      },
+      {
+        "timestamp": "2026-05-23T16:00:10Z",
+        "cycle": "c282-cycle-47 (PM close + dispatch)",
+        "event": "P2-X1 CLOSED (QA GREEN) + G1 FLIPPED YES + P2-X2 DISPATCHED",
+        "detail": "QA signal received (qa-p2-x1-macro-GREEN-20260523T135611Z.json). P2-X1 all 7 ACs PASS: 5 primitives extracted (oil, gold, usdvnd, carry, yield), 15 new scenario JSON files created (3 per primitive), Fence-A clean (grep exit 1), R-1 deterministic (grep exit 1), golangci-lint exit 0, go test exit 0, G12 sandbox all-tier total=20 pass=20 fail=0 status=OK. PM performed G1 terminal check (independent): 6/6 primitive count (1 existing + 5 new), Fence-A clean exit 1, R-1 exit 1, sandbox 20/20 verified, anchor 1776df8e HELD pre+post exit 0. All terminal verification criteria PASS. PM closed P2-X1 (status=DONE). Goals[G1].status flipped TBD → YES (atomic with this commit). Added goals[G1] evidence field with full P2-X1 + terminal verification chain. phase2.activeTask updated P2-X1→P2-X2. Added P2-X1 record to tasks block with all qa/pm evidence. Handoff TASK_P2-X2-macro.md created (5 ACs, 1h estimate, module expansion). Dispatch signal pm-cycle47-dispatch-dev-macro-indicators-p2-x2-<UTC>.json created. Signal pm-cycle47-p2-x1-closed-g1-flipped-<UTC>.json created. Goals earned count: 3 (G4, G5, G1). Next critical-path task: P2-X2 (module wires all 6 primitives). WIP=1 enforced (dev-macro-indicators owns slot). G12 remains EARNED-PENDING per Charter §4.5 (no flip until PO 12/12 close).",
+        "commit": "pm-cycle47-commit-will-be-set"
       }
     ]
   },
   "goals": [
-    {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selects from §G1 candidate list (macro-investment-clock, macro-fed-liquidity-spread, macro-carry-trade-signal, macro-yield-spread-signal, macro-ism-regime-signal, macro-pyramid-tier, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier) at Phase 0."},
+    {"id": "G1", "track": "A", "title": "Primitives ship with scenarios", "status": "YES", "verifiedAt": "2026-05-23T16:00:10Z", "verifiedBy": "pm c282-cycle-47", "evidence": "P2-X1 (cycle-47): 5 remaining primitives extracted to Go (oil, gold, usdvnd, carry, yield) + 15 new scenario JSON files. PM terminal verification: 6/6 primitive packages (1 existing macro-investment-clock + 5 new), Fence-A clean (grep exit 1), R-1 deterministic (grep exit 1), sandbox all-tier total=20 pass=20 fail=0 status=OK exit 0, anchor 1776df8e HELD pre+post (exit 0). All acceptance criteria 7/7 PASS. Third goal earned in Phase 2.", "phase2Bucket": "P2-X", "calibration": "5-7 macro primitives extracted to Go (vs TA's 5). Architect selected 6 total (1 from P1 + 5 new P2-X1): macro-investment-clock, macro-oil-impact-classifier, macro-gold-direction-classifier, macro-usdvnd-direction-classifier, macro-carry-trade-signal, macro-yield-spread-signal. Each has ≥3 scenarios (golden + edge + failure)."},
     {"id": "G2", "track": "A", "title": "Module composes primitives via ports", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "Pilot ONE module only (recommended: macro-signals). Defer macro-core split to post-pilot. Architect confirms Phase 0."},
     {"id": "G3", "track": "A", "title": "Microservice has clean composition root", "status": "TBD", "verifiedAt": null, "verifiedBy": null, "evidence": null, "phase2Bucket": null, "calibration": "cmd/server/main.go ≤80 lines; OpenAPI YAML; no domain ops grep."},
     {"id": "G4", "track": "A", "title": "Architecture fence enforced (offline depguard evidence)", "status": "YES", "verifiedAt": "2026-05-23T13:17:15Z", "verifiedBy": "qa c282-cycle-44", "evidence": "P2-A1 (cycle-43): .golangci.yml Fence-A/B/C created, golangci-lint run exits 0 on existing P1 code, impl commit 31597da4. P2-A2 (cycle-44): CI job macro-go-lint wired to .github/workflows/ci.yml (golangci/golangci-lint-action@v6.1.1, working-directory=apps/macro-indicators, version source go.mod), impl commit 9d1f4535. QA independently reproduced Fence-A violation (depguard EXIT:1 with 'Fence-A: primitive must not import infrastructure layer') on test infrastructure import + confirmed post-revert EXIT:0 + violation never committed (git status clean). macro-pre-ci tag placed on 8651de0e (immediate parent of CI wiring commit 9d1f4535). PM cycle-44 formal verification: anchor 1776df8e HELD (exit 0), R-1 exit 1, golangci-lint exit 0, G12 sandbox total=5 pass=5 fail=0 exit 0. First goal earned in Phase 2.", "phase2Bucket": "P2-A", "calibration": "L2 carry-over: offline depguard primary OR pilot-zone-scoped CI secondary. AC-4a/b/c verbatim from TA P2-A4. Pre-revert tag: macro-pre-ci before P2-A2 lands."},
