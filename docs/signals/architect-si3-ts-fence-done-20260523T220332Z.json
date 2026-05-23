@@ -13,7 +13,7 @@
   "g4_ac_text_ready": true,
   "g4_ac_location": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md §5",
   "option_c_recommended": false,
-  "commit_sha": "TBD — will be set after commit",
+  "commit_sha": "388703b7",
   "gates_unblocked": [
     "pilot-4 (kinh-dich-service) G4 — PO may now lock G4 section by transcribing §5 verbatim",
     "pilot-6 (news-fetch) G4 — same §5 text applies with svc=news-fetch"
