@@ -1,0 +1,52 @@
+{
+  "from": "po",
+  "to": "qa",
+  "kind": "dispatch",
+  "task_id": "P2-D4",
+  "cycle": "c282 cycle-14",
+  "timestamp": "2026-05-23T03:05:00Z",
+  "closure_anchor": "62edbf3d",
+  "handoff": "docs/handoffs/TASK_P2-D4.md",
+  "wip_constraint": 1,
+  "no_dispatch_chain": true,
+  "no_handoff_frontmatter_mutation": true,
+  "append_only_below_frontmatter": true,
+  "stall_watch_self_report_minutes": 30,
+  "scope_shrink_option": "If the dev-ta subagent transcript file cannot be located in /private/tmp/claude-501 (output naming convention may differ across Claude Code versions), mark AC-2 INDETERMINATE and rely on the dev-ta self-reported forbidden_reads_compliance.files_read array in docs/signals/dev-ta-P2-D3-done-20260523T020835Z.json as the audit reference. Do NOT fail the audit on missing transcript alone.",
+  "audit_target": {
+    "task_id": "P2-D3",
+    "dispatch_signal": "docs/signals/po-P2-D3-dispatch-20260523T020000Z.json",
+    "completion_signal": "docs/signals/dev-ta-P2-D3-done-20260523T020835Z.json",
+    "dispatch_commit": "1d0acb5d",
+    "fix_commit": "d909492bc84ce8de284ae9e51a87bf2e0946dd59",
+    "handoff": "docs/handoffs/TASK_P2-D3.md",
+    "claimed_cycles_consumed": 1,
+    "claimed_cycle_budget": 2,
+    "claimed_forbidden_reads_compliance": "FULL"
+  },
+  "audit_reference_inputs_allowed": [
+    "docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md (you ARE the audit reference; reading is allowed and expected)",
+    "docs/handoffs/TASK_P2-D0.md, TASK_P2-D1.md, TASK_P2-D2.md (audit reference)",
+    "docs/signals/qa-P2-D2-* (audit reference)",
+    "docs/signals/po-P2-D2-* (audit reference)",
+    "docs/data/pilot-status.json (audit reference)",
+    "Full git log on apps/technical-analysis/pkg/primitive/rsi/rsi.go (audit reference)",
+    "/private/tmp/claude-501/**/*.output transcripts (dev-ta history audit)",
+    "apps/technical-analysis/pkg/primitive/**, cmd/sandbox/** (sandbox re-verify)",
+    "docs/scenarios/technical-analysis/**/*.json (sandbox re-verify)"
+  ],
+  "constraints": [
+    "WIP 1 — single qa subagent",
+    "No dispatch chain — PO handles all follow-on (E2 dispatched in parallel cycle-14, D5 conditionally in cycle-15)",
+    "No --no-verify, no --force, no broad-glob `git add .` — L84",
+    "Stage explicit files only: docs/handoffs/TASK_P2-D4.md + docs/signals/qa-P2-D4-done-*.json",
+    "Single atomic commit for the audit verdict",
+    "All work on main (no branches)",
+    "No push attempted — CI billing block is active; local landing is sufficient for G10 audit",
+    "Frontmatter of TASK_P2-D4.md is read-only; append §Audit Findings below frontmatter only",
+    "decisionMatrix UNTOUCHED — PO is the only author of decisionMatrix.{speed,trust,scale}",
+    "DO NOT mutate goals[G10].status or pilot-status.json yourself; only emit the audit signal and PO will update in cycle-15"
+  ],
+  "expected_outcome": "Atomic commit subject pattern `chore(qa/P2-D4): G10 audit — forbidden-reads compliance <PASS|FAIL|INDETERMINATE>`. After the audit lands, write completion signal docs/signals/qa-P2-D4-done-<UTC>Z.json with the schema shown in AC-5 of the handoff. PO cycle-15 will read the signal and either flip G10 → YES (PASS), dispatch P2-D5 (FAIL), or accept self-report (INDETERMINATE).",
+  "non_cheat_rationale": "P2-D3 was the AI-fixability proof. If dev-ta cheated by reading the bug spec, the proof is voided. This audit is the independent verification that the proof was real. Audit verdict carries the G10 grade."
+}

@@ -1,0 +1,71 @@
+{
+  "from": "po",
+  "to": "dev-technical-analysis",
+  "kind": "dispatch",
+  "task_id": "P2-E2",
+  "cycle": "c282 cycle-14",
+  "timestamp": "2026-05-23T02:27:30Z",
+  "closure_anchor": "62edbf3d",
+  "handoff": "docs/handoffs/TASK_P2-E2.md",
+  "wip_constraint": 1,
+  "no_dispatch_chain": true,
+  "no_handoff_frontmatter_mutation": true,
+  "append_only_below_frontmatter": true,
+  "stall_watch_self_report_minutes": 30,
+  "scope_shrink_option": "If the sandbox commands fail to run at all (toolchain missing, go.mod broken, etc.) — emit a BLOCKED signal back to PO and exit. Do NOT touch source files.",
+  "context_redaction": {
+    "rationale": "G11 regression-alarm bell proof + G12 DoD streak — dev-ta must diagnose from dashboard signal alone, must NOT cheat by reading the bug spec or any prior-fix context.",
+    "forbidden_reads": [
+      "docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md",
+      "docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md",
+      "docs/handoffs/TASK_P2-D3.md",
+      "docs/handoffs/TASK_P2-E1.md",
+      "docs/signals/dev-ta-P2-D3-done-20260523T020835Z.json",
+      "docs/signals/qa-P2-E1-done-20260523T013557Z.json",
+      "docs/signals/qa-P2-E2-inject-20260523T022446Z.json (and any other qa-P2-E2-inject-*.json)",
+      "git log/show/diff on apps/technical-analysis/pkg/primitive/rsi/rsi.go in the last 24h; commit d909492b (D3 fix); inject commit SHA; any PR diffs"
+    ],
+    "allowed_reads": [
+      "apps/technical-analysis/pkg/primitive/**/*.go (production source + _test.go)",
+      "apps/technical-analysis/pkg/module/**/*.go",
+      "apps/technical-analysis/cmd/sandbox/**/*.go",
+      "docs/scenarios/technical-analysis/**/*.json",
+      "Public technical-indicator references (Wikipedia, original publications)",
+      "docs/handoffs/TASK_P2-E2.md (this task's own handoff)",
+      ".claude/flows/dev-technical-analysis/main.md (own flow file)"
+    ]
+  },
+  "dashboard_signal": {
+    "primitive_tier": "technical-analysis",
+    "failing_scenarios": [
+      "rsi-golden",
+      "rsi-mid-range",
+      "rsi-overbought-pullback",
+      "rsi-oversold-bounce"
+    ],
+    "canary_green": ["rsi-insufficient-data"],
+    "cross_primitive_green": "20 scenarios across bb-*, macd-*, ma-*, cross-* (all GREEN)",
+    "first_divergence": "rsi-golden: rsi[4] got 53.281574, want 54.567700 (tol 1)"
+  },
+  "sandbox_commands": {
+    "iterate_primitive": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -scenario=<file under docs/scenarios/technical-analysis/primitives/>",
+    "iterate_module": "cd apps/technical-analysis && go run ./cmd/sandbox -tier=module -scenario=<file under docs/scenarios/technical-analysis/module/>",
+    "unit_tests": "cd apps/technical-analysis && go test -count=1 ./...",
+    "vet": "cd apps/technical-analysis && go vet ./...",
+    "note": "POLICY DEBT-1: -scenario=all flag is NOT implemented in cmd/sandbox/main.go; iterate per file."
+  },
+  "acceptance_criteria_summary": "See TASK_P2-E2.md §Observable Behaviour. Six ACs: (1) dashboard-only input, (2) source-inspection diagnosis, (3) ≤2 cycles to all-GREEN, (4) §Verification appended before RETURN, (5) surgical diff, (6) atomic Conventional-Commit per cycle with anchor 62edbf3d in body.",
+  "g12_dod_reminder": "Per .claude/flows/dev-technical-analysis/main.md G12 DoD Gate (cc7578f1): you MUST run BOTH tiers of sandbox before RETURN, paste the pass/fail summary lines into TASK_P2-E2.md §Verification, and only then write your RETURN block. RED = task NOT done; re-cycle.",
+  "g11_observation_protocol": "There is a canary pair embedded in this scenario set. Per spec design (you do NOT read the spec), some non-RSI scenarios may flip RED as a side-effect of your fix. The G12 DoD requires you check the full dashboard, not just the originally-failing scenarios. If your fix flips an originally-GREEN cross-primitive scenario to RED, you MUST iterate (counts towards the same cycle as part of internal escalation per spec rule 5).",
+  "constraints": [
+    "WIP 1 — single fix at a time",
+    "No dispatch chain — PO handles all follow-on",
+    "No --no-verify, no --force, no broad-glob `git add .` — L84",
+    "Stage explicit files only",
+    "Single atomic commit per cycle, ≤2 cycles total",
+    "All work on main (no branches)",
+    "No push attempted — CI billing block is active; local landing is sufficient for G11/G12 proof",
+    "Frontmatter of TASK_P2-E2.md is read-only; append §Verification + §Cycle Log entries below frontmatter only"
+  ],
+  "expected_outcome": "Commit subject pattern `fix(technical-analysis): P2-E2 — <description> — G11/G12 cycle <N> of ≤2`. After your fix lands, write completion signal docs/signals/dev-ta-P2-E2-done-<UTC>Z.json referencing commit SHA + sandbox output + cycle count consumed + forbidden_reads_compliance evidence."
+}

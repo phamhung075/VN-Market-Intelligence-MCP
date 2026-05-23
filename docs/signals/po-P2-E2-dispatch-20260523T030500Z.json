@@ -1,0 +1,68 @@
+{
+  "from": "po",
+  "to": "qa",
+  "kind": "dispatch",
+  "task_id": "P2-E2",
+  "cycle": "c282 cycle-14",
+  "timestamp": "2026-05-23T03:05:00Z",
+  "closure_anchor": "62edbf3d",
+  "handoff": "docs/handoffs/TASK_P2-E2.md",
+  "wip_constraint": 1,
+  "no_dispatch_chain": true,
+  "stall_watch_self_report_minutes": 30,
+  "scope_shrink_option": "If apps/technical-analysis/pkg/primitive/rsi/rsi.go has drifted since cycle-13 such that the same Wilder smoothing off-by-one cannot be reproduced cleanly, escalate BLOCKED to PO and exit. Do NOT improvise a different bug.",
+  "two_step_protocol": {
+    "step_1_qa_inject": {
+      "task": "Inject scenario A bug per docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md §Scenario A (RSI Wilder smoothing off-by-one — same bug-class as D2). Use a fresh mutation (e.g., flip a different operand pair or invert the smoothing direction) so the dev-ta cannot recognise the previous fix pattern verbatim.",
+      "target_file": "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
+      "verify_pre_inject": "Run sandbox on all 25 primitive scenarios — confirm all GREEN (baseline). If any RED, escalate BLOCKED.",
+      "verify_post_inject": "Run sandbox on all 25 primitive scenarios — confirm: (a) rsi-golden RED, (b) at least one other RSI value-path scenario RED, (c) rsi-insufficient-data GREEN (error-path canary), (d) ma-golden GREEN, (e) ma-sma-vs-ema GREEN (canary B not yet triggered — only the fix could trigger B).",
+      "atomic_commit": "test(technical-analysis): P2-E2-inject — RSI Wilder smoothing fresh bug variant for G11 regression-alarm proof. Sprint: phase-2. Task: P2-E2. Closure-Anchor: 62edbf3d. AC: scenario A RED / scenario B canary GREEN / dev-ta handoff rewritten.",
+      "explicit_files": ["apps/technical-analysis/pkg/primitive/rsi/rsi.go", "docs/handoffs/TASK_P2-E2.md"]
+    },
+    "step_2_qa_authors_dev_ta_handoff": {
+      "task": "OVERWRITE docs/handoffs/TASK_P2-E2.md so it dispatches dev-technical-analysis to fix scenario A only. The PM-stub current content (owner=qa) is consumed by step 1; the new content must target dev-ta with no-cheat scope.",
+      "required_frontmatter": {
+        "task_id": "P2-E2",
+        "title": "Fix failing RSI scenarios (technical-analysis pilot)",
+        "phase": "2",
+        "pilot": "technical-analysis",
+        "owner": "dev-technical-analysis",
+        "goals": ["G11", "G12"],
+        "status": "PENDING",
+        "gate": "P2-E2",
+        "anchor": "62edbf3d",
+        "estimate_hours": 1.0,
+        "ac_count": 6
+      },
+      "required_body_sections": [
+        "## Observable Behaviour (Acceptance Criteria) — paraphrased ACs (no spec quoting): AC-1 dashboard-only input, AC-2 source-inspection diagnosis, AC-3 ≤2 cycles to all-GREEN (G10 budget shared), AC-4 §Verification appended before RETURN, AC-5 surgical diff, AC-6 atomic Conventional-Commit per cycle with anchor 62edbf3d in body",
+        "## Dashboard Signal You Receive — paste verbatim the actual post-inject sandbox RED status lines from step 1. List failing scenarios, passing canary (rsi-insufficient-data), cross-primitive GREEN summary. Show first numeric divergence on rsi-golden.",
+        "## Sandbox Command — `cd apps/technical-analysis && go run ./cmd/sandbox -tier=primitive -scenario=<iterate per file>` AND `-tier=module -scenario=<iterate per file>`. NOTE: -scenario=all is NOT implemented (POLICY DEBT-1) — iterate per file.",
+        "## Forbidden Inputs — explicit 8-path list copying the D3 pattern + ADD: (a) docs/architecture-briefs/2026-05-22-refactor/p2-e-regression-scenario-spec.md, (b) docs/architecture-briefs/2026-05-22-refactor/p2-d-bug-injection-spec.md, (c) docs/handoffs/TASK_P2-D3.md, (d) docs/handoffs/TASK_P2-E1.md, (e) docs/signals/dev-ta-P2-D3-done-20260523T020835Z.json, (f) docs/signals/qa-P2-E1-done-20260523T013557Z.json, (g) docs/signals/qa-P2-E2-inject-*.json (your inject commit signal), (h) the inject commit SHA from step 1 + d909492b (D3 fix) + the last 24h of git log on rsi.go. Append `## Allowed Inputs` listing: production source under apps/technical-analysis/pkg/primitive/**, scenario JSON fixtures, sandbox runner, own handoff + own dispatch signal, public technical-indicator references (Wikipedia, original publications).",
+        "## What Done Looks Like — both sandbox tiers GREEN, go test ./... ok, go vet clean, §Verification appended verbatim, single atomic commit per cycle."
+      ],
+      "non_cheat_clause": "The whole purpose is to test whether dev-ta can fix a SECOND injected bug without leaking from any previous-fix context. If dev-ta reads any forbidden path, the G11 streak counter for this task is voided.",
+      "qa_inject_signal": "Write docs/signals/qa-P2-E2-inject-<UTC>Z.json (after step 1 commit lands) containing: commit SHA, sandbox pre/post RED diff lines, files modified, scenario A name, scenario B canary verified GREEN. Do NOT name the bug-class or operand in this signal — PO will read it but dev-ta will not be granted read access via the Forbidden Inputs list."
+    },
+    "step_3_qa_signals_inject_complete": {
+      "task": "Write docs/signals/qa-P2-E2-inject-<UTC>Z.json signalling that inject + handoff rewrite are complete and ready for PO to dispatch dev-ta. This is the qa exit signal; PO will spawn dev-ta in a separate substep once this signal lands."
+    }
+  },
+  "constraints": [
+    "WIP 1 — single qa subagent for this two-step task",
+    "No dispatch chain — qa does NOT spawn dev-ta; PO handles that in substep 2b after qa's inject signal lands",
+    "No --no-verify, no --force, no broad-glob `git add .` — L84",
+    "Stage explicit files only",
+    "Single atomic commit for inject (step 1), one additional commit for handoff rewrite is acceptable ONLY if step-1 atomic commit cannot include the new handoff (otherwise combine — preferred)",
+    "All work on main (no branches)",
+    "No push attempted — CI billing block is active",
+    "Frontmatter of TASK_P2-E2.md is OVERWRITTEN by you in step 2 (PM stub is consumed; this is acceptable because the task ownership transfers from qa-inject to dev-ta-fix as per the two-step protocol — handoff is NOT in-flight at the time you rewrite it)",
+    "decisionMatrix UNTOUCHED",
+    "Do NOT mutate pilot-status.json — PO handles the cycle close",
+    "Do NOT mutate goals[G11] or g12Streak — PO handles updates in cycle-15"
+  ],
+  "expected_outcome": "qa lands inject commit + rewrites TASK_P2-E2.md for dev-ta dispatch + writes qa-P2-E2-inject signal. PO substep-2b then spawns dev-technical-analysis subagent against the rewritten handoff. dev-ta runs ≤2 cycles to all-GREEN with G12 DoD evidence in handoff. If dev-ta declares DONE while ma-golden RED, G11 = FAIL (alarm bell failed); if dev-ta iterates on ma-golden RED before DONE, G11 = PASS (alarm bell worked); if ma-golden stays GREEN, G11 N/A for this dispatch (trial yields no regression observation).",
+  "g12_streak_advance": "This is the second G12 streak cycle (D3 was the first). Three clean cycles = streak complete. If dev-ta declares DONE without sandbox evidence pasted into handoff, G12 streak counter does NOT advance.",
+  "non_cheat_rationale": "Dev-ta must NOT see the spec, the inject commit SHA, the bug-class name (Wilder), the operand (period/period-1), or any prior-fix git log. Dispatch payload contains ONLY: sandbox RED summary + sandbox command + handoff doc reference. The Forbidden Inputs list inside the handoff codifies this."
+}
