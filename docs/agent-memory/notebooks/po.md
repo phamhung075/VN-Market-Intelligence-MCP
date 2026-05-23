@@ -1,61 +1,74 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-25 (G4 atomic close YES + G5 chain kickoff via P2-B2 dispatch)
-**Last update:** 2026-05-23T08:03:50Z
-**Status:** G4=YES. 11/12 terminal. G5 chain in-flight. decisionMatrix STILL UNTOUCHED per §4.5.
+**Cycle:** c282 cycle-26 (P2-B2 verified DONE + P2-B3 dispatched — SSOT-corrected to confirmatory NO-OP)
+**Last update:** 2026-05-23T08:28:55Z
+**Status:** G4=YES. 11/12 terminal. G5 chain in-flight (B2 done, B3 dispatched, B4 pending). decisionMatrix STILL UNTOUCHED per §4.5.
 
 ## Live state snapshot
 
 - **Brief:** `docs/architecture-briefs/2026-05-22-refactor` — at 11/12 terminal (closure pending G5)
 - **Anchor:** `62edbf3d` (architecture brief)
 - **`.golangci.yml` freeze anchor:** `9d364329` (architect Amendment 1)
+- **P2-B1 anchor (= p2-b-pre-delete tag target):** `b9d0a82b`
+- **P2-B2 commit:** `a80f01e5` (R099 git mv → _deprecated/)
 - **G-goals terminal:** **11/12** (G1-G4 + G6-G12 = YES; G5 TBD)
-- **G4** YES (verifiedAt 2026-05-23T09:15:00Z; verifiedBy qa P2-A4 + dev-ta cycle-22; 7/7 AC)
-- **G5** TBD (P2-B2 just dispatched; B3 + B4 chain ahead)
+- **G5** TBD (P2-B2 DONE; P2-B3 dispatched as confirmatory NO-OP; P2-B4 next)
 - **decisionMatrix.{speed,trust,scale}** UNTOUCHED (waits for G5=YES + 12/12)
-- **WIP:** dev-ta 1 (P2-B2 fresh); qa 0 (P2-A4 consumed; P2-A3 RESOLVED-REDUNDANT)
+- **WIP:** dev-ta 1 (P2-B3 fresh); qa 0
 
-## What happened this cycle (cycle-25)
+## What happened this cycle (cycle-26)
 
-1. Consumed qa completion signal `docs/signals/qa-p2-a4-done-20260523T091500Z.json` (commits f611d753 + c86c26f4). g4_qa_verdict=PASS on all 3 ACs: AC-4a workflow file (ci.yml lines 54-74, golangci-lint-action@v6.1.1, working-directory apps/technical-analysis), AC-4b deliberate Fence-A violation triggered depguard 'Fence-A: primitive must not import application layer' exit 1, reverted, never committed, AC-4c freeze anchor 9d364329 most-recent on .golangci.yml.
-2. Combined with dev-ta cycle-22 AC-1/2/3/5 PASS (commit 106b3727) = **7/7 aggregate AC PASS** for G4.
-3. Per Charter §4.5 matrix-authorship rule: qa-verified evidence locked, atomic flip allowed.
-4. Mutated `pilot-status.json` via single python mutator: (a) goals[G4].status IN-PROGRESS -> YES + verifiedAt + verifiedBy + 7-AC evidence summary; (b) phase2.buckets.P2-A.status -> DONE; P2-A3 RESOLVED-REDUNDANT; P2-A4 DONE; (c) phase2.buckets.P2-B.tasks.P2-B2 DISPATCHED cycle-25; (d) wip.current rewritten (qa removed, dev-ta P2-B2 added); (e) wip.note prepended; (f) nextDispatchGates updated (after_G4_golangci_lint_clean DONE, g5_chain_start DISPATCHED); (g) decisionsThisCycle append cycle-25 entry.
-5. **G5 chain reconciliation:** prompt instructed "dispatch P2-B0 first" — but P2-B0 was ALREADY DONE in commit c175f745 (cycle-4 brownfield inventory + baselineCycleCount=1.5 already populated in docs/data/bug-inventory.json). P2-B1 was also already DONE in commit b9d0a82b (HTTP rewire with pre-delete tag created). Actual next chain task is **P2-B2** (deletion via git mv to _deprecated/). Dispatched dev-technical-analysis per handoff frontmatter owner via `docs/signals/po-cycle25-dispatch-dev-ta-p2-b2-20260523T080350Z.json`.
-6. **Tag-anchor drift finding:** `git show-ref p2-b-pre-delete` returns 943adc8e (a cycle-4 PO dispatch commit), not the expected b9d0a82b. The tag was created prematurely during cycle-4 and never corrected. Resolution baked into P2-B2 dispatch as AC-7: dev-ta will `git tag -d` local stale + `git tag` re-create at b9d0a82b BEFORE the mv commit (local-only, no remote push, no `git tag -f`).
+1. Consumed dev-ta completion signal `docs/signals/dev-ta-p2-b2-done-20260523T082620Z.json` (commit `a80f01e5`). All 7 ACs PASS per signal.
+2. **PO end-to-end spot-checks ALL PASS:**
+   - `git show-ref p2-b-pre-delete` → `b9d0a82b2441cf754cc44e8af02c76527c25d2b7` ✓ (re-anchored from stale 943adc8e per AC-7, no `--force`)
+   - `ls apps/mcp-server/src/_deprecated/` → both `technicalIndicators.ts` + `1302-technical-indicators.test.ts` present ✓
+   - `ls apps/mcp-server/src/domain/services/technicalIndicators.ts` → `No such file or directory` ✓ (old path gone via R099 rename)
+   - `grep -rn "domain/services/technicalIndicators" apps/mcp-server/src --include="*.ts" | grep -v _deprecated` → 3 lines, ALL comment-only references (technicalIndicatorTools.ts:13 + :48 + assembleBriefing.ts:30 historical comments) — ZERO live imports
+3. **SSOT-corrected P2-B3 scope finding:** Prompt narrative said "rewire technicalIndicatorTools.ts to consume new TA service via HTTP port 5003" but **HTTP rewire was ALREADY completed in P2-B1** (commit b9d0a82b) and is live in production:
+   - `technicalIndicatorTools.ts` lines 36-38 import `computeTAIndicators` from `infrastructure/microservices/clients.ts`
+   - `clients.ts` line 25: `ta: Bun.env.TA_SERVICE_URL ?? 'http://localhost:5003'`
+   - Primary path POST /ta/indicators per lines 501-518 with DB-fallback retained for HTTP unavailability
+   - Actual P2-B3 per TASK_P2-B3.md handoff frontmatter (SSOT) is `Remove all TODO:migrate comments` — pure comment cleanup
+4. **PO pre-check on P2-B3 AC-1:** `grep -r "TODO.*migrat" apps/mcp-server/src/ apps/technical-analysis/ --include="*.ts" --include="*.go"` → **0 results already**. Task is a confirmatory NO-OP.
+5. **TA port 5003 confirmed** via `apps/technical-analysis/cmd/server/main.go` line 28: `port := envStr("PORT", "5003")`.
+6. **Dispatched P2-B3** via `docs/signals/po-cycle26-dispatch-dev-ta-p2-b3-20260523T082855Z.json` — dispatch signal documents the obsolete-prompt vs SSOT-handoff reconciliation IN FULL DETAIL in `po_pre_dispatch_state_observation` block so dev-ta does NOT re-do already-completed HTTP rewire work. dev-ta still runs the full 3-AC acceptance pass + completion signal so chain advances atomically for P2-B4 qa consume.
+7. Mutated `pilot-status.json`: P2-B2 DISPATCHED → DONE; P2-B3 PENDING → DISPATCHED cycle-26 with SSOT-corrected scope note; wip.current swap; wip.note prepended cycle-26 narrative; nextDispatchGates updated (after_P2-B2_lands RESOLVED, after_P2-B3_lands PENDING, after_P2-B4_PASS PENDING); decisionsThisCycle append cycle-26 entry.
 
-## Why G5 chain starts at P2-B2 not P2-B0
+## Why P2-B3 is a confirmatory NO-OP this dispatch
 
-Prompt classification said "P2-B0 = caller inventory baseline (per `docs/handoffs/TASK_P2-B0.md`... or per phase-2-task-plan-go.md §P2-B0)" — that work shipped cycle-4 (commit c175f745, `docs/architecture-briefs/2026-05-22-refactor/p2-b-caller-inventory.md`, 259 lines, 3 primary + 4 additional callers surfaced). The "baseline cycle count" mentioned for G10/G11 metrics is a separate thing entirely (`docs/data/bug-inventory.json.baselineCycleCount = 1.5` — already set). So no fresh P2-B0 dispatch is warranted; that would be re-running a completed task. Prompt-vs-state reconciled to actual SSOT.
+The grep pattern `TODO.*migrat` is already 0 across both `apps/mcp-server/src/` and `apps/technical-analysis/` for `.ts` + `.go` files. Either:
+- (a) Migration TODOs were never added during P2-B1/P2-B2 work (developers wrote production-ready rewires without leaving migration breadcrumbs), or
+- (b) Any TODO:migrate markers that ever existed got removed atomic with the rewire commits
+
+Either way: dev-ta runs the AC pass + completion signal but no source edits are expected. The dispatch signal `expected_completion_path` field acknowledges this and lets dev-ta decide whether a no-op completion commit is needed or whether AC re-verification + signal alone suffices.
 
 ## G5 chain plan (cycles 26-28)
 
 | Cycle | Task | Owner | Action | Gate |
 |-------|------|-------|--------|------|
-| c26 | P2-B2 (THIS dispatch) | dev-technical-analysis | git mv technicalIndicators.ts + 1302 test to _deprecated/; tag re-anchor; bun test passes; 7 ACs | Completion signal docs/signals/dev-ta-p2-b2-done-<UTC>.json with tag anchor evidence |
-| c27 | P2-B3 | dev-technical-analysis | grep TODO.*migrat = 0 results; bun test + go test pass; 3 ACs | Completion signal dev-ta-p2-b3-done |
-| c27/28 | P2-B4 | qa | get_technical_indicators MCP tool returns RSI/MACD/BB via HTTP port 5003; format match; find/grep AC re-run | qa completion signal qa-p2-b4-done with 5 ACs |
-| c28 (atomic) | G5 flip + matrix populate + brief close | po | goals[G5].status TBD -> YES + decisionMatrix.{speed,trust,scale} populated per Charter §Decision Matrix YES criteria + brief status ACTIVE -> CLOSED + write docs/signals/po-brief-closed-<UTC>.json per phase-2-closure-checklist §3 | Final atomic CLOSE commit per §4.5 |
+| c26 (DONE) | P2-B2 verification | po | spot-checks PASS (tag + files + grep) + dispatch P2-B3 | Cycle-26 close commit |
+| c26 (THIS dispatch) | P2-B3 | dev-technical-analysis | confirmatory NO-OP cleanup pass; grep TODO.*migrat = 0; bun test + go test pass; 3 ACs | Completion signal `dev-ta-p2-b3-done-<UTC>.json` |
+| c27 | P2-B4 | qa | get_technical_indicators MCP tool returns RSI/MACD/BB via HTTP port 5003; format match; find/grep AC re-run; 5 ACs | Completion signal `qa-p2-b4-done-<UTC>.json` |
+| c28 (atomic) | G5 flip + matrix populate + brief close | po | goals[G5].status TBD -> YES + decisionMatrix.{speed,trust,scale} populated per Charter §Decision Matrix YES criteria + brief status ACTIVE -> CLOSED + write `docs/signals/po-brief-closed-<UTC>.json` per phase-2-closure-checklist §3 | Final atomic CLOSE commit per §4.5 |
 
 ## Constraints held this cycle
 
 - L84 explicit-file staging (3 files: pilot-status.json + po.md + dispatch signal)
 - No `--force`, no `--no-verify`, no push (CI billing block still owner=user)
-- No in-flight handoff frontmatter mutation (TASK_P2-A4.md + TASK_P2-B2.md untouched)
-- Anchor `62edbf3d` held; frozen `.golangci.yml` anchor `9d364329` held
+- No in-flight handoff frontmatter mutation (TASK_P2-B3.md untouched — dispatch signal carries the SSOT-correction context)
+- Anchor `62edbf3d` held; frozen `.golangci.yml` anchor `9d364329` held; P2-B1/tag anchor `b9d0a82b` held; P2-B2 commit `a80f01e5` held
 - Charter status enum = ACTIVE held clean
-- Matrix-authorship §4.5 binding intact: G4 flipped atomic with qa-verified evidence; decisionMatrix.{speed,trust,scale} UNTOUCHED until G5 also terminal
-- SSOT-only mutation per cycle-19 cleanup policy (single python mutator, no patch sprawl)
-- One active dispatch per task: P2-B2 fresh (not a re-dispatch); P2-B0 NOT re-dispatched (already DONE)
+- Matrix-authorship §4.5 binding intact: G5 NOT flipped this cycle (P2-B3 + P2-B4 must PASS first); decisionMatrix UNTOUCHED
+- SSOT-only mutation per cycle-19 cleanup policy (no patch sprawl)
+- One active dispatch per task: P2-B3 fresh (not a re-dispatch; not a supersede of any prior signal)
 
-## Carry-over to next cycle (cycle-26)
+## Carry-over to next cycle (cycle-27)
 
-- **Highest priority:** watch for `docs/signals/dev-ta-p2-b2-done-*.json` (tag re-anchor + mv commit SHA + 7 AC verdicts)
-- Active dispatch: `docs/signals/po-cycle25-dispatch-dev-ta-p2-b2-20260523T080350Z.json`
-- Active handoff: `docs/handoffs/TASK_P2-B2.md` (frontmatter status=PENDING, owner=dev-technical-analysis; PO added AC-7 in dispatch signal but NOT in handoff frontmatter to keep handoff immutable)
-- **On B2 PASS:** dispatch P2-B3 (TODO migrate grep cleanup) to dev-technical-analysis; same atomic-close pattern
-- **On B3 PASS:** dispatch P2-B4 (qa integration verify) to qa
-- **On B4 PASS:** atomic cycle-close — flip goals[G5].status YES + populate decisionMatrix + brief CLOSES per phase-2-closure-checklist §3
-- R-11 fire deadline for B2: **2026-05-23T09:03:50Z** (60min from dispatch)
-- If tag re-anchor reveals deeper drift (e.g., b9d0a82b commit content not actually the deletion-prep state): escalate to architect for re-anchor strategy before B2 proceeds
-- Architecture brief anchor: `62edbf3d`. `.golangci.yml` freeze anchor: `9d364329`. P2-B1 anchor (next G5 chain target for tag): `b9d0a82b`.
+- **Highest priority:** watch for `docs/signals/dev-ta-p2-b3-done-*.json` (grep evidence + bun+go test exits + ac_results triple)
+- Active dispatch: `docs/signals/po-cycle26-dispatch-dev-ta-p2-b3-20260523T082855Z.json`
+- Active handoff: `docs/handoffs/TASK_P2-B3.md` (frontmatter status=PENDING, owner=dev-technical-analysis; PO did NOT modify frontmatter — dispatch signal carries SSOT-correction context)
+- **On B3 PASS:** dispatch P2-B4 (qa integration verify get_technical_indicators MCP tool returns RSI/MACD/BB via HTTP port 5003; find/grep AC re-run) per TASK_P2-B4.md
+- **On B4 PASS (cycle-28):** atomic cycle-close — flip goals[G5].status YES + populate decisionMatrix.{speed,trust,scale} + brief CLOSES per phase-2-closure-checklist §3 + write `docs/signals/po-brief-closed-<UTC>.json` → 12/12 terminal
+- R-11 fire deadline for B3: **2026-05-23T09:28:55Z** (60min from dispatch — wide envelope for a 15min confirmatory NO-OP)
+- If dev-ta reports unexpected NON-zero grep matches (i.e., PO pre-check was somehow wrong): NOT a blocker — dev-ta deletes those comment lines per AC-2 (comment-only no logic) + re-runs tests + emits standard completion signal
+- Architecture brief anchor: `62edbf3d`. `.golangci.yml` freeze anchor: `9d364329`. P2-B1 anchor: `b9d0a82b`. P2-B2 commit: `a80f01e5`.

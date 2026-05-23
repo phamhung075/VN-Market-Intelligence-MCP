@@ -1,0 +1,95 @@
+{
+  "from": "po",
+  "to": "dev-technical-analysis",
+  "type": "dispatch",
+  "cycle": "c282 cycle-26",
+  "dispatch_timestamp": "2026-05-23T08:28:55Z",
+  "task_id": "P2-B3",
+  "handoff_file": "docs/handoffs/TASK_P2-B3.md",
+  "handoff_owner": "dev-technical-analysis",
+  "goal": "G5",
+  "phase": "2",
+  "bucket": "P2-B",
+  "consumes_completion_signal": "docs/signals/dev-ta-p2-b2-done-20260523T082620Z.json",
+  "upstream_anchor_commits": {
+    "p2_b0_inventory": "c175f745",
+    "p2_b1_http_rewire": "b9d0a82b",
+    "p2_b2_deprecated_mv": "a80f01e5",
+    "p2_b_pre_delete_tag": "b9d0a82b",
+    "architecture_brief_anchor": "62edbf3d",
+    "golangci_yml_freeze_anchor": "9d364329"
+  },
+  "po_pre_dispatch_state_observation": {
+    "note": "PO verified actual SSOT state before dispatch. The prompt narrative ('rewire technicalIndicatorTools.ts to consume new TA service via HTTP port 5003') is OBSOLETE — HTTP rewire was completed in P2-B1 (commit b9d0a82b) and is already live in apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts (see lines 36-38, 501-518). The actual P2-B3 task per TASK_P2-B3.md handoff frontmatter (SSOT) is a TODO:migrate comment cleanup confirmatory pass.",
+    "po_grep_pre_check": {
+      "command": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go'",
+      "result_count": 0,
+      "exit_code": 1,
+      "interpretation": "Already zero matches BEFORE dispatch — P2-B3 is a confirmatory NO-OP. dev-ta still runs the full acceptance check and emits the completion signal so the chain advances atomically and qa P2-B4 can consume it."
+    },
+    "p2_b2_completion_summary": {
+      "commit_sha": "a80f01e5",
+      "files_moved_to_deprecated": [
+        "apps/mcp-server/src/_deprecated/technicalIndicators.ts",
+        "apps/mcp-server/src/_deprecated/1302-technical-indicators.test.ts"
+      ],
+      "tag_anchor_evidence": "git show-ref p2-b-pre-delete returns b9d0a82b2441cf754cc44e8af02c76527c25d2b7 (PO spot-check PASS)",
+      "old_path_removed": "ls apps/mcp-server/src/domain/services/technicalIndicators.ts -> No such file or directory (PO spot-check PASS)",
+      "remaining_callers_outside_deprecated": 0,
+      "bun_test_baseline": "9382 pass / 283 fail / 35 skip / 9700 total — 283 pre-existing failures unchanged",
+      "sandbox": "30/30 GREEN"
+    },
+    "ta_service_port_confirmation": {
+      "source_file": "apps/technical-analysis/cmd/server/main.go",
+      "line": "28: port := envStr(\"PORT\", \"5003\")",
+      "comment_line_7": "reads ZERO secrets — only PORT (default 5003) and LOG_LEVEL (default \"INFO\")",
+      "client_config": "apps/mcp-server/src/infrastructure/microservices/clients.ts line 25: ta: Bun.env.TA_SERVICE_URL ?? 'http://localhost:5003'",
+      "verdict": "Port 5003 confirmed — already in use in production code path"
+    }
+  },
+  "acceptance_criteria_verbatim_from_handoff": {
+    "ac_1": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go' returns 0 results",
+    "ac_2": "Removal is comment-only — no logic changes",
+    "ac_3": "Both bun test and go test still pass"
+  },
+  "smoke_check_verbatim_from_handoff": "grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go' | wc -l must print 0; cd apps/technical-analysis && go test ./... && cd ../../apps/mcp-server && bun test",
+  "evidence_to_record_in_completion_signal": {
+    "commit_sha": "REQUIRED — atomic commit SHA per Atomic Commit Format in handoff",
+    "rewired_files": "REQUIRED — list any .ts/.go files modified (expected EMPTY since pre-check already shows 0 matches; confirm with explicit empty array if no edits needed)",
+    "grep_todo_migrat_count": "REQUIRED — integer count from grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go' | wc -l (must be 0)",
+    "grep_todo_migrat_command_used_verbatim": "REQUIRED — exact command string with flags",
+    "bun_test_exit_code": "REQUIRED — integer (must be 0)",
+    "bun_test_summary": "REQUIRED — e.g. '9382 pass / 283 fail / 35 skip / 9700 total'",
+    "bun_test_new_failures_vs_p2_b2_baseline": "REQUIRED — integer (must be 0; baseline 283 pre-existing)",
+    "go_test_exit_code": "REQUIRED — integer (must be 0)",
+    "go_test_packages_summary": "REQUIRED — e.g. '7 packages ok' or per-package verdict",
+    "sandbox_30_30_status": "REQUIRED — '30/30 GREEN' literal or RED detail",
+    "ac_results": {
+      "ac_1": "PASS/FAIL with grep evidence",
+      "ac_2": "PASS/FAIL with diff evidence (or 'N/A — no edits needed' if grep already 0)",
+      "ac_3": "PASS/FAIL with bun+go test exit codes"
+    },
+    "consumed_dispatch": "docs/signals/po-cycle26-dispatch-dev-ta-p2-b3-20260523T082855Z.json",
+    "completion_timestamp": "REQUIRED — ISO-8601 UTC"
+  },
+  "completion_signal_filename_contract": "docs/signals/dev-ta-p2-b3-done-<UTC>.json (timestamp via date -u +'%Y%m%dT%H%M%SZ')",
+  "out_of_scope": [
+    "Anything outside interface/mcp/tools/market-data/ + apps/technical-analysis/ rewire — but expected scope is COMMENT REMOVAL ONLY per handoff AC-2 (no logic changes)",
+    "No .golangci.yml mods (freeze anchor 9d364329 held)",
+    "No _deprecated/ file deletion (kept for rollback per P2-B4 confirmation)",
+    "No new HTTP rewires (P2-B1 already landed; clients.ts + technicalIndicatorTools.ts already use port 5003)",
+    "No fresh git tag operations on p2-b-pre-delete (anchor at b9d0a82b confirmed correct)"
+  ],
+  "constraints": {
+    "l84_explicit_file_staging": "REQUIRED — git add specific files only, never -A or glob; if grep is already 0 and no files need editing, the only commit is potentially a notebook+signal commit by dev-ta",
+    "no_force": "REQUIRED — no git --force",
+    "no_no_verify": "REQUIRED — no git --no-verify",
+    "no_push": "REQUIRED — CI billing block active, local commit only",
+    "anchor_held": "62edbf3d (architecture brief)",
+    "golangci_freeze_held": "9d364329"
+  },
+  "ssot_note": "One active dispatch per task. P2-B3 is fresh — no prior dispatch to supersede.",
+  "expected_completion_path": "Given pre-check grep already returns 0, the work likely reduces to (a) re-run AC-1 grep + capture evidence; (b) re-run bun test to confirm 283-failure baseline unchanged; (c) re-run go test ./... + sandbox 30/30; (d) write completion signal + handoff status update + atomic commit with empty diff or notebook-only update following the Atomic Commit Format. dev-ta should self-determine whether a 'no-op' completion commit is needed or whether the AC re-verification alone is sufficient per existing flow rules.",
+  "next_chain_step_for_po": "On dev-ta completion signal: dispatch P2-B4 (qa integration verify get_technical_indicators MCP tool returns RSI/MACD/BB via HTTP port 5003; find/grep AC re-run). On P2-B4 PASS: atomic cycle-close — flip goals[G5].status TBD -> YES + populate decisionMatrix.{speed,trust,scale} + brief CLOSES per phase-2-closure-checklist §3.",
+  "r11_trigger_timestamp": "2026-05-23T09:28:55Z (60min from dispatch; P2-B3 is a confirmatory NO-OP estimate 0.25h per handoff = 15min — wide R-11 envelope for caution)"
+}
