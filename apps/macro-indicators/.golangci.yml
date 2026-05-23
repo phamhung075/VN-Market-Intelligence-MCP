@@ -1,0 +1,64 @@
+# golangci-lint v2 configuration for apps/macro-indicators
+# Implements G4 (Architecture fence enforced) per pilot-charter.md.
+#
+# Linter: depguard — deny-list per package path prefix per fence rule.
+# Three fence rules enforce the three-tier DDD architecture:
+#   Fence-A: primitives → stdlib only
+#   Fence-B: modules   → stdlib + primitives only
+#   Fence-C: infra     → composition root (cmd/server/main.go) only
+#
+# Task: P2-A1  Goal: G4 partial  Pilot: macro-indicators  Language: Go
+# Format: golangci-lint v2 (v2.12.2 — linters.settings, not linters-settings)
+
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Fence-A: pkg/primitive/* is the bottom tier (pure-function layer).
+        # Primitives compute single indicators. They must NOT reach upward into
+        # module, application, interface, or infrastructure layers.
+        # They may only import stdlib and other primitives within the same domain.
+        fence-a:
+          files:
+            - "**/pkg/primitive/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/module"
+              desc: "Fence-A: primitive must not import module layer"
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/application"
+              desc: "Fence-A: primitive must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/interface"
+              desc: "Fence-A: primitive must not import interface layer"
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"
+              desc: "Fence-A: primitive must not import infrastructure layer"
+
+        # Fence-B: pkg/module/* is the middle tier (composition layer).
+        # Modules compose multiple primitives. They must NOT reach into the
+        # application layer (use cases), interface layer (HTTP handlers), or
+        # infrastructure layer (adapters/repositories).
+        fence-b:
+          files:
+            - "**/pkg/module/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/application"
+              desc: "Fence-B: module must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/interface"
+              desc: "Fence-B: module must not import interface layer"
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"
+              desc: "Fence-B: module must not import infrastructure layer"
+
+        # Fence-C: pkg/infrastructure constructors must only be wired from the
+        # composition root (cmd/server/main.go). No other non-test file may import
+        # pkg/infrastructure directly. Test files (*_test.go) are exempt to allow
+        # infrastructure package self-tests.
+        fence-c:
+          files:
+            - "!**/cmd/server/main.go"
+            - "!**/*_test.go"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"
+              desc: "Fence-C: infrastructure wiring only allowed in cmd/server/main.go (composition root)"
