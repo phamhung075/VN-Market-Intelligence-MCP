@@ -1,5 +1,43 @@
 # QA — Notebook
 
+## c282 cycle-32 · 2026-05-23 · macro P1-B1 macro-investment-clock first primitive verification
+
+**Task:** P1-B1 — macro-investment-clock (first primitive: deterministic tier lookup + table-driven test + 3 scenarios) | **Verdict:** GREEN
+
+```
+date: 2026-05-23
+outcome: GREEN
+type: pilot-task-qa (read-only verification — no production code mutation)
+signal: docs/signals/qa-macro-p1-b1-green-20260523T110758Z.json
+impl_commit: b66a1d45
+dev_signal_commit: 5ec50608
+```
+
+| Check | Result | Independent Evidence |
+|-------|--------|----------------------|
+| AC-1: Exported consts (VN_DIRECT=8, REGIONAL=5, US_DOMESTIC=2 + tier strings + indicator var lists) | PASS | macro_investment_clock.go L22-63 verified; all 6 consts + 2 exported vars confirmed |
+| AC-2: Phase classification score≥8→CORE_VN, score≥5→REGIONAL, score<5→US_DOMESTIC | PASS | scoreToPhase() L162-170 confirmed; newOutput() wires deterministically |
+| AC-3: Table-driven test ≥5 rows, go test exit 0 | PASS | 10 rows in TestClassify + TestConstants = 11 tests; TEST_EXIT:0; all 10 sub-tests PASS |
+| AC-4: 3 scenario JSON files parse (golden/edge/failure) | PASS | jq . all 3 → exit 0; content matches spec exactly (VN_CPI golden, empty edge, null failure) |
+| AC-5 Fence-A: zero cross-layer imports | PASS | FENCE_A_EXIT:1 (zero matches); only import: "strings" |
+| AC-6 R-1 HARD GATE: zero math/rand | PASS | R1_EXIT:1 (zero matches); gate CLEAR |
+| AC-7 G12 HARD GATE: sandbox 3/3 GREEN exit 0 | PASS | total=3 pass=3 fail=0 status=OK; SANDBOX_EXIT:0 |
+| golangci-lint | PASS | 0 issues, LINT_EXIT:0 |
+| go test ./... (full module regression) | PASS | 1 package ok, FULL_MODULE_EXIT:0 |
+| Anchor 1776df8e pre-commit | PASS | merge-base --is-ancestor → exit 0 |
+| Anchor 1776df8e post-commit (HEAD) | PASS | merge-base --is-ancestor → exit 0 |
+| L84 impl commit b66a1d45 | PASS | 6 files (5 in spec + cmd/sandbox wire-in); all in apps/macro-indicators/ + docs/scenarios/ |
+| L84 signal commit 5ec50608 | PASS | 1 file exactly (signal JSON) |
+| Forbidden zones | CLEAR | no technical-analysis, no .env, no FRED_API_KEY hardcoded |
+
+**D-1 (ACCEPTED):** cmd/sandbox/main.go included as 6th file (Classify wire-in for AC-7). Not in original 5-file handoff spec but required for G12 sandbox discovery. Zone-local, L84-compliant. Not blocking.
+**R-1 GATE:** CLEAR — exit 1, zero matches. Determinism mandate honored.
+**G12 DoD:** BINDING and GREEN — sandbox 3/3 PASS. streak_completed=1/3.
+**Blocking issues:** 0 — all 7 ACs + all hard gates PASS.
+**NEXT:** pm — mark P1-B1 DONE, dispatch P1-C1.
+
+---
+
 ## c282 cycle-31 · 2026-05-23 · macro P1-A5 api/openapi.yaml HTTP contract spec verification
 
 **Task:** P1-A5 — api/openapi.yaml HTTP contract spec (macro-indicators pilot) | **Verdict:** GREEN
