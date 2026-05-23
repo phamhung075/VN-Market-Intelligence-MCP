@@ -1,6 +1,32 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 23:04 UTC (P0-KD-1 brownfield inventory, R-FENCE VIABLE) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-23 23:12 UTC (P0-KD-4 phase-1-task-plan-ts.md, 9 tasks / 54 ACs) | **Sprint:** fleet-factory-rollout program
+
+## P0-KD-4 phase-1-task-plan cycle (2026-05-23T23:12Z) — kinh-dich pilot-4 Phase 0 final deliverable
+
+**Task:** Author Phase 1 task plan (TS/Bun) for kinh-dich factory pilot, mirroring stock-price Go sibling plan structure.
+
+**Key decisions:**
+- 9 tasks (P1-A through P1-G), 54 ACs total. WIP=1 sequential throughout.
+- P1-A: Bun sandbox runner (zero-infra imports gate AC-6) + `config.ts` Bun.env one-liner fix (fold in as lowest-risk change).
+- P1-B1: first primitive (`hexagram-resolver`) + R-FENCE discovery gate (AC-6+AC-7 — import style recorded, NOT AC-4b proof which is Phase 2 G4). R-FENCE discovery is the Phase 1 information gate; must be recorded before Phase 2 G4 is authored.
+- P1-B2: second primitive (`ngu-hanh-classifier` — already exported, lowest complexity).
+- P1-B3: third primitive (`hao-encoder` — threshold constants self-contained). G12 streak tasks = B1/B2/B3.
+- P1-C: module stub (`reading_composer`) — MarkovPort reuse from existing `KinhDichRepositoryPort.getMarkovData()` (confirmed in brownfield §4, no new interface needed). `nuclear-hexagram-computer` deferred to Phase 2 (depends on hexagram-resolver stability).
+- P1-D: dashboard stub (3-panel: primitives + module + microservice). Explicit SI-2 disavowal comment baked into HTML.
+- P1-E: edit-rerun handler + env audit. No CGO_ENABLED=0 analog needed (pure TS/Bun).
+- P1-F: optional `reading-scorer` 4th primitive (4 functions + 2 tables, medium leverage).
+- P1-G: QA close-gate. Emits phase1 exit signal.
+- NO P1 equivalent of R-CGO — no CGO in TypeScript. R-FENCE is discovery-only in Phase 1 (enforcement = Phase 2).
+- G5b risk noted explicitly: 6 MCP tool rewires + 4 new HTTP endpoints = largest G5 in fleet to date. Phase 1 has ZERO G5b scope.
+
+**Files authored this cycle (L84 — 2 files):**
+1. `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md` (NEW — P0-KD-4)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal to emit after commit:** `docs/signals/architect-p0-kd-4-done-<UTC>.json`
+
+---
 
 ## P0-KD-1 brownfield inventory cycle (2026-05-24T23:04Z) — kinh-dich pilot-4 Phase 0
 
