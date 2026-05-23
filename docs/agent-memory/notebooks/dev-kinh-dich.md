@@ -120,3 +120,31 @@ Zone health: P1-B1 DONE — first primitive extracted, R-FENCE VIABLE, G12 strea
 **G12 streak:** #2 of 3. Sandbox GREEN 6/6 (hexagram-resolver x3 + ngu-hanh-classifier x3). DoD Gate #2 satisfied.
 
 Zone health: P1-B2 DONE — second primitive extracted, Fence-A clean, G12 streak 2/3 | HEALTHY
+
+### 2026-05-24 — P1-B3: hao-encoder primitive + G12 streak #3 (COMPLETE)
+
+**Task:** P1-KD-B3 — extract third and final primitive for G12 streak (classifyHao + encodeHaos from domain/services.ts L245-L266 + L205-L223).
+
+**Files created:**
+- `apps/kinh-dich-service/src/primitive/hao-encoder/index.ts` — HaoState type, HaoReading interface, all threshold constants (LAO_DUONG=0.75, THIEU_DUONG=0.10, LAO_AM=-0.75), STATE_TO_BINARY/STATE_TO_CHANGING/HAO_LABELS tables, classifyHao() + encodeHaos(), zero cross-layer imports
+- `apps/kinh-dich-service/src/primitive/hao-encoder/index.test.ts` — 17 test cases covering all 4 state buckets, threshold boundaries (exclusive at 0.75, inclusive at 0.10), clamping, encodeHaos 6-element happy path, handoff AC-2 example, length validation (5/7/0 throw), label presence, binary/isChanging type checks
+- `docs/scenarios/kinh-dich/primitives/hao-encoder-golden.json` — scores [0.8, 0.4, -0.8, 0.1, -0.5, 0.6] → states [LAO_DUONG, THIEU_DUONG, LAO_AM, THIEU_DUONG, THIEU_AM, THIEU_DUONG]
+- `docs/scenarios/kinh-dich/primitives/hao-encoder-edge.json` — boundary scores [0.75, 0.10, -0.75, 0.0, 0.76, -0.76] → correct state-bucket assignments per threshold semantics
+- `docs/scenarios/kinh-dich/primitives/hao-encoder-failure.json` — length-5 array → expect_error: true → PASS when Error thrown
+- `docs/signals/dev-kinh-dich-p1-b3-done-20260523T234143Z.json`
+
+**Files modified:**
+- `apps/kinh-dich-service/src/sandbox/runner.ts` — added encodeHaos import + runHaoEncoderScenario executor (validates length, states, binaries) + dispatch on `scenario.primitive === 'hao-encoder'`
+
+**AC results:** All 6 PASS. 17/17 hao-encoder tests pass. 68/68 full suite pass. tsc clean. Fence-A grep: 0 actual import lines. Sandbox PASS 9/9.
+
+**Key technical decisions:**
+- THIEU_DUONG_THRESHOLD is 0.10 (exact source value at L206) — handoff description said "≈0.25" but source is authoritative at 0.10
+- HAO_LABELS keyed by 1-indexed position (1-6) — encodeHaos attaches correct positional label via (i+1)
+- classifyHao() returns label for position 1 by default (position-agnostic helper); encodeHaos() re-indexes correctly
+- Fence-A: primitive is stdlib-only, no domain/models.ts import — HaoState and HaoReading redefined inline (same pattern as ngu-hanh-classifier)
+- Commit: 6bdabbb9
+
+**G12 streak:** 3/3 COMPLETE. Sandbox GREEN 9/9 (hexagram-resolver x3 + ngu-hanh-classifier x3 + hao-encoder x3). DoD Gate #3 satisfied. G12 status = EARNED-PENDING (PO flips at 12/12 terminal).
+
+Zone health: P1-B3 DONE — G12 streak 3/3 COMPLETE, all 9 primitive scenarios GREEN | HEALTHY
