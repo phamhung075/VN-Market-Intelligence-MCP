@@ -4,6 +4,30 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ## Working Memory
 
+### 2026-05-23 — P2-B2 Move technicalIndicators.ts to _deprecated/ (cycle-25)
+
+**Task:** P2-B2 — G5 Phase 2: quarantine TS domain service + test to `_deprecated/`.
+
+**Status:** DONE — commit a80f01e5
+
+**AC-7 (tag re-anchor):** Stale `p2-b-pre-delete` pointed to `943adc8e` (PO dispatch). Deleted stale + re-created at `b9d0a82b` (P2-B1 landing). Verified with `git show-ref`.
+
+**Caller status (confirmed clean before mv):** All SEV-1..3 callers were resolved by P2-B1. `assembleBriefing.ts` import is now a comment only. `1408`/`1410` diacritics tests import from `ToolCandle` in `technicalIndicatorTools.ts`. Only live import from `technicalIndicators.js` remaining was the `1302` test file (also being moved).
+
+**Import fix:** `1302-technical-indicators.test.ts` internal import updated `../domain/services/technicalIndicators.js` → `./technicalIndicators.js` to resolve co-located path in `_deprecated/`.
+
+**bun test:** 9382 pass / 283 fail / 35 skip / exit 0 — no new failures introduced.
+
+**find AC-5:** 1 result outside `_deprecated/` (technicalIndicatorTools.ts — the rewired HTTP tool handler).
+
+**Sandbox 30/30 GREEN** (25 primitive + 5 module) — G12 DoD PASS.
+
+**Done signal:** `docs/signals/dev-ta-p2-b2-done-20260523T082620Z.json`
+
+**Next:** P2-B3 (TODO migrate cleanup — inventory §E confirmed ZERO `TODO.*migrat` patterns; P2-B3 is confirmatory no-op). PO dispatches P2-B3 separately.
+
+---
+
 ### 2026-05-23 — P2-A3-prereq Fix golangci-lint findings (cycle-22)
 
 **Task:** Fix golangci-lint findings on apps/technical-analysis, unblock G4.
