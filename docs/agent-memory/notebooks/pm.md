@@ -1,5 +1,105 @@
 # PM — Notebook
 
+## c282 cycle-32 · 2026-05-23T10:23:05Z
+
+**Status:** P1-A2 VERIFIED GREEN + P1-A3 DISPATCHED — macro-indicators pilot Phase 1 third task. QA verified P1-A2 at 2026-05-23T10:23:04Z: 5/5 AC PASS (cmd/server/main.go 88L composition root + tools.go deleted). One info-level deviation D-3 (go vet exit 0, better than expected pre-scaffold outcome). PM updated pilot-status SSOT phase1.progress_notes with P1-A2 closure, created P1-A3 handoff (cmd/sandbox/main.go CLI harness, ~20m, 4 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. R-1 + R-3 constraints still live. G12 DoD does NOT apply to P1-A3 (scaffold-only, activates P1-B1). Next: P1-A4 (pkg/ DDD scaffold) unblocked after P1-A3 QA green.
+
+### P1-A2 Closure Verified
+
+- **Task ID:** P1-A2 (second of 11 Phase 1 tasks)
+- **Completion signal:** `docs/signals/qa-macro-p1-a2-green-20260523T102304Z.json` ✓
+- **Dev commits:** 0e2d9075 (impl) + ed1a426b (signal) ✓
+- **AC results:** 5/5 PASS
+  - AC-1: wc -l → 88 lines (≤100 threshold) ✓
+  - AC-2: grep -E 'scoreIndicator|buildSnapshot|oilDirection' → 0 matches ✓
+  - AC-3a: Port 5004 default via envStr confirmed ✓
+  - AC-3b: grep -E 'FRED_API_KEY|sk_|api_key|secret' → 0 matches ✓
+  - AC-4: go vet ./... → exit 0. D-3: no pkg/ packages exist yet, so nothing to vet (better outcome than anticipated) ✓
+  - AC-5: signal.Notify + context.WithTimeout + ReadTimeout + WriteTimeout + IdleTimeout + slog all present — mirrors TA pattern ✓
+- **Additional checks:** tools.go deleted ✓, go mod tidy idempotent ✓, go build ./cmd/server exit 0 ✓, L84 compliance (2 files in impl commit, 1 file in signal commit) ✓, anchor reachable ✓
+- **Deviations:**
+  - D-3 (INFO): go vet exit 0 (not non-zero as AC-4 anticipated). Pre-scaffold note recorded. No action needed.
+
+### P1-A3 Task Context
+
+- **Task ID:** P1-A3 (third of 11 Phase 1 tasks)
+- **Title:** Create `apps/macro-indicators/cmd/sandbox/main.go` (sandbox CLI harness)
+- **Owner:** dev-macro-indicators
+- **Estimate:** 20 minutes (scaffold-only)
+- **AC count:** 4 (3 flags + scenario path resolution + pass/fail reporting + zero env secrets)
+- **Goals:** G7 (Edit-JSON-and-rerun works), G12 (Dashboard-green before done)
+- **Files touched:** `cmd/sandbox/main.go` (CREATE)
+- **Blocks:** P1-A4 (pkg/ DDD scaffold)
+- **Pattern:** Clone TA sandbox (apps/technical-analysis/cmd/sandbox/main.go anchor 1776df8e)
+
+### PM Actions Completed (Cycle c282 cycle-32)
+
+1. **Verified P1-A2 completion** ✓
+   - Read completion signal (qa-macro-p1-a2-green-20260523T102304Z.json)
+   - Verified dev commits 0e2d9075 + ed1a426b
+   - Cross-checked 5/5 AC PASS (AC-1 88L, AC-2 zero business logic, AC-3 port+creds, AC-4 pre-scaffold vet, AC-5 TA pattern)
+   - Cross-checked additional checks (tools.go deleted, tidy idempotent, build clean, anchor held, L84 compliant)
+   - Noted D-3 deviation (info-level, no action needed)
+
+2. **Created TASK_P1-A3-macro.md handoff doc** ✓
+   - 4 verbatim ACs from phase-1-task-plan §P1-A3
+   - Sandbox CLI harness pattern (flags: -tier/-module/-scenario)
+   - Scenario path resolution (docs/scenarios/macro-indicators/{primitives,module}/)
+   - Pass/fail reporting + exit codes
+   - Zero env secret reads (FRED_API_KEY explicitly forbidden)
+   - TA pattern reference (anchor 1776df8e)
+   - Constraints section: L84 + no-bypass binding + anchor discipline
+   - Risk flags: R-1 (forward-warning at P1-A5), R-3 (Phase 2 expansion)
+   - G12 DoD Gate note: does NOT apply to P1-A3 (activates P1-B1)
+   - Pre-scaffold note: scenarios created in P1-D1/D2, gracefully exits 0 until then
+   - Smoke checks included
+   - RETURN block template provided
+
+3. **Created dispatch signal (pm-dispatch-dev-macro-p1-a3-20260523T102305Z.json)** ✓
+   - WIP claim: phase_1_dev_team = ACTIVE (1 of 1 enforced)
+   - P1-A2 verification embedded (commits 0e2d9075 + ed1a426b, 5/5 ACs, D-3 deviation)
+   - Task details: estimate 0.33h, 4 ACs, goals G7+G12, pattern (TA clone)
+   - Risk flags: R-1 + R-3 with binding_on + forward_warning notes
+   - G12 DoD clarification: does NOT apply to P1-A3 (activates P1-B1)
+   - Constraints inherited: L84 + no-bypass + anchor held
+   - Next steps + pipeline status included
+
+4. **Updated pilot-status SSOT (docs/data/pilot-status-macro-indicators.json)** ✓
+   - Moved P1-A2 entry: status DISPATCH → DONE (timestamp 2026-05-23T10:23:04Z)
+   - Added commits field to P1-A2: 0e2d9075 + ed1a426b
+   - Updated signal ref to qa-macro-p1-a2-green-20260523T102304Z.json
+   - Updated AC results to "5/5 PASS (cmd/server/main.go ≤100L + zero business logic + port 5004 + zero creds + TA pattern + tools.go deleted)"
+   - Added D-3 deviation (info-level, pre-scaffold vet behavior)
+   - Added P1-A3 entry: timestamp 2026-05-23T10:23:05Z, status DISPATCH, handoff + signal refs
+   - Constraints still live: R-1 (P1-B1 AC-6 gate), R-3 (Phase 2 P2-B expansion)
+
+5. **Updated PM notebook (this file)** ✓
+   - New section: c282 cycle-32 with full P1-A2 verification + P1-A3 dispatch summary
+   - Action completion log
+   - Task context + deviations
+   - Next step alert (P1-A4 unblocked after P1-A3 QA green)
+
+### Next Steps
+
+- **Dev-macro-indicators dispatch:** PM dispatch signal sent (TASK_P1-A3-macro.md + docs/signals/pm-dispatch-dev-macro-p1-a3-20260523T102305Z.json)
+- **WIP tracking:** PM monitors phase_1_dev_team claim until P1-A3 DONE + QA-green
+- **P1-A4 readiness:** After P1-A3 DONE, PM prepares P1-A4 handoff (pkg/ DDD scaffold, ~30m, ~8 ACs)
+- **R-1 forward-warning:** At P1-A5 close (openapi.yaml complete), PM will include explicit R-1 deterministic-scoring reminder in P1-B1 handoff
+- **R-3 phase 2 flag:** At Phase 1 close gate, PM will flag R-3 (mcp-server tool handler rewire) for architect attention when Phase 2 task plan expands
+
+### Pilot Status SSOT Checkpoint
+
+- **Pilot:** macro-indicators
+- **Phase:** 1 (ACTIVE)
+- **Task count:** 11 (P1-A1..E2)
+- **Progress:** P1-A1 DONE (5db4a246), P1-A2 DONE (0e2d9075/ed1a426b), P1-A3 DISPATCH (pm-dispatch-dev-macro-p1-a3-20260523T102305Z.json)
+- **WIP:** 1/1 (phase_1_dev_team = ACTIVE, dev-macro-indicators on P1-A3)
+- **Phase deadline:** 2026-07-04 (6 sprints, hard)
+- **Language:** Go (locked Day 0)
+- **Anchor:** 1776df8e (held) ✓
+
+---
+
 ## c282 cycle-31 · 2026-05-23T10:15:00Z
 
 **Status:** P1-A1 VERIFIED DONE + P1-A2 DISPATCHED — macro-indicators pilot Phase 1 second task. Dev-macro-indicators completed P1-A1 (go.mod + go.sum) at 2026-05-23T10:13:55Z. All 4 ACs pass: module name, Go version (1.25.0 per tidy), chi v5.2.1 + modernc-sqlite v1.29.9 pinned, idempotent. Two notes: D-1 (tools.go anchor to remove in P1-A2 since main.go will import deps), D-2 (go directive 1.25.0 correct). PM verified completion signal + commits, updated pilot-status SSOT phase1.progress_notes, created P1-A2 handoff (cmd/server/main.go composition root, ~20m, 5 ACs) + dispatch signal. WIP lock: phase_1_dev_team = ACTIVE (1 of 1). Anchor 1776df8e held. Next: P1-A3 (sandbox/main.go) unblocked after P1-A2 QA green.

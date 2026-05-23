@@ -75,12 +75,30 @@
         ]
       },
       {
-        "timestamp": "2026-05-23T10:15:00Z",
+        "timestamp": "2026-05-23T10:23:04Z",
         "task_id": "P1-A2",
+        "status": "DONE",
+        "commits": [
+          "0e2d9075 (dev-macro-indicators impl)",
+          "ed1a426b (dev-macro-indicators signal)"
+        ],
+        "signal": "docs/signals/qa-macro-p1-a2-green-20260523T102304Z.json",
+        "ac_results": "5/5 PASS (cmd/server/main.go ≤100L + zero business logic + port 5004 + zero creds + TA pattern + tools.go deleted)",
+        "deviations": [
+          {
+            "id": "D-3",
+            "severity": "INFO",
+            "description": "go vet ./cmd/... exit 0 (not non-zero as AC-4 anticipated) because no pkg/ packages exist yet — empty ./... has nothing to fail on. Better outcome. Pre-scaffold note recorded in commit."
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-05-23T10:23:05Z",
+        "task_id": "P1-A3",
         "status": "DISPATCH",
-        "handoff": "docs/handoffs/TASK_P1-A2-macro.md",
-        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a2-20260523T101500Z.json",
-        "description": "cmd/server/main.go composition root (~20m, 5 ACs). D-1 follow-up: dev must git rm tools.go during this task. Next: P1-A3 (sandbox/main.go)"
+        "handoff": "docs/handoffs/TASK_P1-A3-macro.md",
+        "signal": "docs/signals/pm-dispatch-dev-macro-p1-a3-20260523T102305Z.json",
+        "description": "cmd/sandbox/main.go sandbox harness (~20m, 4 ACs). Clone TA pattern (apps/technical-analysis/cmd/sandbox/main.go). Next: P1-A4 (pkg/ DDD scaffold)"
       }
     ],
     "risk_propagation": {
