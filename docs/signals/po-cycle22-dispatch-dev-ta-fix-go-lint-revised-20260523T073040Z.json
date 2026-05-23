@@ -1,0 +1,68 @@
+{
+  "type": "po-dispatch",
+  "from": "po",
+  "to": "dev-technical-analysis",
+  "cycle": "c282 cycle-22",
+  "timestamp": "2026-05-23T07:30:40Z",
+  "task_id": "P2-A3-prereq-fix-go-lint",
+  "title": "Fix golangci-lint findings on apps/technical-analysis (G4 unblock) — REVISED (whole-CI dependency removed)",
+  "supersedes": "docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json",
+  "supersede_reason": "Architect G4 acceptance revision landed 2026-05-23T07:28:17Z (signal docs/signals/architect-g4-revision-20260523T072817Z.json + spec docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md). Original AC-4 (CI go-lint job exits 0 on rerun) was structurally unsatisfiable until G5 deletion chain completes (bun test job is whole-monorepo legacy TS and will remain red). User rationale (verbatim): \"attention CI cannot show correct result because CI is run on complete project but we check only new factory repo\". Revised AC removes whole-CI dependency by replacing AC-4 with three offline checks (AC-4a workflow file read + AC-4b local deliberate-violation proof + AC-4c config-freeze git-log check). G4 can flip YES without waiting for whole-CI green. Architect recommends SUPERSEDE not amend (cleaner audit trail).",
+  "revised_spec": "docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md",
+  "context": {
+    "g4_scope_correction": "G4 = apps/technical-analysis golangci-lint clean exit (architecture fence on refactored Go pilot), NOT whole-CI green. Legacy TS bun test failures OUT OF SCOPE.",
+    "ci_run_with_findings": "26319980090",
+    "ci_job": "go-lint",
+    "ci_exit_code_observed": 3,
+    "target_dir": "apps/technical-analysis",
+    "blocked_goal": "G4 (architecture fence enforced in CI)",
+    "downstream_unblock": "P2-A4 (offline deliberate-violation proof per revised AC-4b — replaces PR-based proof) → P2-B2..B4 deletion chain → G5 YES → 12/12 terminal → decisionMatrix populated → brief CLOSES",
+    "ci_dependency_dropped": true
+  },
+  "prior_cycle_20_outcome_note": {
+    "warning": "Cycle-20 dev-ta dispatch already produced commit 9d364329 'fix(technical-analysis): cycle-20 — golangci-lint findings on apps/technical-analysis (G4 unblock)' which MODIFIED apps/technical-analysis/.golangci.yml (converted v2 format → v1 format, 104 lines). User PAUSED dev-ta after this commit.",
+    "collision_with_AC_4c": "Revised AC-4c requires `git log --oneline apps/technical-analysis/.golangci.yml` to show NO commits after 9561fee9. Current state: log shows 9d364329 AFTER 9561fee9 — AC-4c would fail as-written.",
+    "dev_ta_must_decide": "Two paths exist: (path-A) revert 9d364329 cleanly and find an alternative fix that does NOT modify .golangci.yml (e.g., bump golangci-lint-action to a version that installs v2 binary, or pin v2-compatible action version in .github/workflows/ci.yml — but ci.yml is also frozen per cycle-20 out_of_scope), OR (path-B) escalate to PO with a bug-escalation signal explaining the v1-vs-v2 binary collision and request architect to amend AC-4c to allow the new frozen anchor 9d364329. PO will route the escalation to architect if path-B is chosen. Do NOT silently keep the v1 config and claim AC-4c PASS — that is fabricated evidence.",
+    "recommended_path": "path-B (escalate). The root cause is golangci-lint-action@v6.1.1 installing v1.64.8 by default while .golangci.yml was authored in v2 format. This is a real architectural-config mismatch that warrants architect review, not a unilateral config flip. Architect may choose: (1) bless 9d364329 as new frozen anchor (AC-4c text update), (2) require ci.yml workflow change to pin v2 binary (re-opens ci.yml scope), (3) require .golangci.yml revert + alternate fix. Decision is architect's, not dev-ta's."
+  },
+  "task_body": {
+    "step1_capture": "Re-read CI run 26319980090 go-lint job logs IF needed for context (the underlying error 'you are using a configuration file for golangci-lint v2' is already known from cycle-20 commit body — capture optional).",
+    "step2_decide": "Decide between path-A (revert + alternative fix without touching .golangci.yml) or path-B (escalate the v1-vs-v2 binary collision to PO via bug-escalation signal). Recommended: path-B.",
+    "step3_if_path_A": "If path-A chosen: (i) `git revert 9d364329` cleanly, OR cherry-pick 9561fee9 state of .golangci.yml back; (ii) find an alternative fix that does NOT modify .golangci.yml (only options known to PO: change CI workflow to install v2 binary explicitly — but ci.yml is frozen per cycle-20 out_of_scope, so this also requires PO/architect approval); (iii) run `cd apps/technical-analysis && golangci-lint run` with v2 binary locally to confirm exit 0 against the v2-format config.",
+    "step4_if_path_B": "If path-B chosen: write bug-escalation signal docs/signals/dev-ta-bug-escalation-go-lint-binary-version-<UTC>.json with payload = '[dev-technical-analysis] AC-4c collision: .golangci.yml frozen anchor 9561fee9 (v2 format) incompatible with golangci-lint-action@v6.1.1 default v1.64.8 binary. Cycle-20 fix 9d364329 converted to v1 format but now violates revised AC-4c. Architect input needed: bless 9d364329 as new anchor, OR pin v2 binary in ci.yml (out-of-scope), OR revert + alternate fix path. EXIT — awaiting PO/architect.' + EXIT.",
+    "step5_local_verify_if_path_A": "Run `cd apps/technical-analysis && golangci-lint run` — MUST exit 0 before signal (AC-1).",
+    "step6_test_verify_if_path_A": "Run `cd apps/technical-analysis && go test ./...` — MUST pass (AC-2 regression guard).",
+    "step7_sandbox_verify_if_path_A": "Run sandbox 30/30 primitives + modules — MUST be GREEN (AC-3 G12 DoD gate per cc7578f1).",
+    "step8_commit_if_path_A": "Subject pattern: `fix(technical-analysis): cycle-22 — golangci-lint findings on apps/technical-analysis (G4 unblock, revised AC)`. L84 explicit-file staging only. No --force, no --no-verify.",
+    "step9_no_push": "Do NOT push to origin/main. The revised AC removes CI-rerun dependency — local verification is sufficient. PO/qa will handle any push decision separately.",
+    "step10_signal": "Write completion signal docs/signals/dev-ta-cycle22-fix-go-lint-done-<UTC>.json with: commit_sha (or 'NONE — path-B escalated'), golangci_lint_local_exit_code, go_test_local_exit_code, sandbox_30_30_status, g4_ci_dependency_dropped: true, path_chosen ('A' or 'B'), completion_timestamp."
+  },
+  "acceptance": {
+    "ac_count": 7,
+    "ac_1": "`golangci-lint run` exits 0 on apps/technical-analysis (local). Evidence: completion signal field golangci_lint_local_exit_code: 0. UNCHANGED from cycle-20.",
+    "ac_2": "`go test ./...` exits 0 on apps/technical-analysis (local). Evidence: completion signal field go_test_local_exit_code: 0. UNCHANGED from cycle-20.",
+    "ac_3": "Sandbox primitives + modules 30/30 GREEN (`go run ./cmd/sandbox -tier=primitive` + `-tier=module`). Evidence: completion signal field sandbox_30_30_status: GREEN. UNCHANGED from cycle-20.",
+    "ac_4a": "CI job exists and is correctly wired. `.github/workflows/ci.yml` contains a job named `go-lint` with `uses: golangci/golangci-lint-action@v6.1.1`, `working-directory: apps/technical-analysis` (or equivalent `with: working-directory:` key), `args: --config .golangci.yml`, running on every push to main and every pull_request targeting main. Verification: QA reads the workflow file directly (no API call). Evidence pointer: .github/workflows/ci.yml lines 54-73 (committed at P2-A2 commit fd423047). NEW — replaces original AC-4.",
+    "ac_4b": "Local deliberate-violation proof (offline). dev-ta or QA introduces 1 deliberate Fence-A violation LOCALLY (e.g., `import \"github.com/vn-market-intelligence/technical-analysis/pkg/module\"` inside any file under pkg/primitive/), runs `golangci-lint run` from apps/technical-analysis/, confirms linter exits non-zero with depguard Fence-A denial. Revert violation, re-run, confirm exit 0. Violation is NEVER committed or pushed. Evidence: pasted before/after linter output into docs/handoffs/TASK_P2-A4.md §Evidence to Record with fields violation_command, violation_linter_output (must contain 'Fence-A'), violation_exit_code (non-zero), revert_exit_code (0). NEW — replaces PR-based proof.",
+    "ac_4c": "Config is frozen; fence scope is unambiguous. `apps/technical-analysis/.golangci.yml` at P2-A1 close state (committed 9561fee9). File declares three fences: fence-a (primitive must not import module/application/interface), fence-b (module must not import application/interface), fence-c (infrastructure import only in cmd/server/main.go). Config must NOT have been modified after P2-A1 close. Verification: `git log --oneline apps/technical-analysis/.golangci.yml` shows no commits after 9561fee9. Evidence: `git log` output pasted into TASK_P2-A4.md §Evidence to Record. NEW — replaces CI-rerun proof. NOTE: cycle-20 commit 9d364329 currently violates this AC — see prior_cycle_20_outcome_note above.",
+    "ac_5": "Completion signal written at docs/signals/dev-ta-cycle22-fix-go-lint-done-<UTC>.json with all verification fields: commit_sha (or 'NONE — path-B escalated'), golangci_lint_local_exit_code, go_test_local_exit_code, sandbox_30_30_status, AND new field g4_ci_dependency_dropped: true (confirming the whole-CI AC-4 was superseded by this revision). UPDATED — adds g4_ci_dependency_dropped field."
+  },
+  "out_of_scope": [
+    "Legacy TS bun test failures (addressed by G5 deletion chain P2-B2..B4).",
+    "Whole-CI green (G4 scope-corrected to apps/technical-analysis go-lint job only — CI dependency now formally dropped per architect revision).",
+    "CI rerun observation (revised AC-4a/4b/4c provide fence proof without CI run).",
+    ".github/workflows/ci.yml changes (frozen at P2-A2 close — if path-A requires ci.yml change, escalate via path-B)."
+  ],
+  "constraints": [
+    "L84 explicit-file staging (per-path `git add`, no `-A`, no `.`).",
+    "No --force, no --no-verify, no --no-gpg-sign.",
+    "No push of any source-code changes (revised AC removes push requirement).",
+    "G12 DoD: sandbox green BEFORE commit (RED = not done) — applies only if path-A.",
+    "Forbidden reads: none (this is a fix/escalation task, not a G10/G11 measurement task).",
+    "Anchor 62edbf3d held.",
+    "SSOT: one active dispatch per task — this signal supersedes cycle-20 dispatch."
+  ],
+  "downstream_handoff_after_completion": "PO cycle-23 reads completion signal → if path-B escalated, PO routes to architect for AC-4c amendment decision → if path-A succeeded with all AC PASS → dispatch fresh qa for P2-A3 + P2-A4 verification (qa will execute AC-4a workflow read + AC-4b local violation proof + AC-4c git log check per the rewritten TASK_P2-A4.md handoff) → on qa PASS → flip G4=YES atomic with cycle-23 close commit per §4.5 matrix-authorship rule → chain P2-B2..B4 deletion (tag p2-b-pre-delete at b9d0a82b) → flip G5=YES → 12/12 terminal → populate decisionMatrix → brief CLOSES per phase-2-closure-checklist §1.",
+  "r11_status_check": "If no completion signal by 2026-05-23T07:30:40Z + 1h = 2026-05-23T08:30:40Z, PO will spawn R-11 status-check on this dispatch.",
+  "main_terminal_note": "Main terminal will spawn dev-technical-analysis to consume this revised dispatch (PO does not spawn dev — main terminal routes per CLAUDE.md). PO's job this cycle is signal write + handoff rewrite + pilot-status update + notebook update only."
+}
