@@ -144,3 +144,53 @@ The fact that I'm declaring NO does **not** mean Path B failed; Path B worked ex
 5. On PASS, PO atomically flips G9 → YES + advances goals-earned 6 → 7.
 
 **Alternative (PM judgment call):** if PM disagrees with the gap interpretation and reads charter §G9 more loosely ("dashboard cards render = panels render"), PM may unilaterally flip G9 → YES and document the looser reading. I document my verdict as NO precisely so PM has the audit trail to make that judgment with full evidence.
+
+---
+
+## Rerun (cycle-53, after P2-X4 dashboard data refresh)
+
+**Trigger:** PM cycle-53 commit `85bb1cce` re-dispatched P2-C1 to po after dev P2-X4 (`535e7bdc`) + qa P2-X4 GREEN (`442cf944`) resolved the dashboard data gap that caused the first-run NO.
+
+**What changed since first run:**
+- PRIMITIVES_DATA extended 3 → 18 entries (all 6 primitives × 3 scenarios each).
+- MODULE_DATA wired to `macro_signals` module with golden + edge scenarios (BuildMacroSignals shape, 6 primitives per scenario).
+- Microservice panel "Loading…" placeholder replaced with NOT-RUN service card (Level-3 badge, port 5004, 4 HTTP endpoints `/health` `/macro/snapshot` `/macro/carry-trade` `/macro/calendar`, DDD layer tree, P1-E2 edit-rerun instructions).
+
+**Recipe used:** Identical to first run (Path B, Playwright 1.60.0 + chromium-headless-shell 1223 at `/tmp/macro-g9-verify/node_modules/playwright`, browser cache at `~/Library/Caches/ms-playwright`). Script `/tmp/verify-macro-dashboard-rerun.mjs` is a strict expansion of first-run `/tmp/verify-macro-dashboard.mjs` (settle bumped to 1800ms per handoff; new selectors for module-card top-level count + microservice card / port / DDD / endpoints; verdict logic tightened to charter §G9 L230 verbatim). Path B was used at first run; reused here.
+
+**Measurements (this run):**
+- console errors: 0
+- pageerrors: 0
+- requestfailed: 0
+- primitive group headers rendered: 6 (expected 6) — investment_clock, oil_impact, gold_direction, usdvnd_direction, carry_trade, yield_spread
+- primitive scenario cards rendered: 18 (expected 18) — 3 per group × 6
+- module cards rendered: 2 (expected 1 logical module `macro_signals` with 2 scenario subcards golden+edge — dashboard renders one `.module-card` div per scenario subcard, both for the same `macro_signals` module; distinct module names = 1, scenario subcards = 2, AC met)
+- module scenario subcards rendered: 2 (golden `macro-signals-golden.json` + edge `macro-signals-edge.json`, each carrying all 6 primitive tags)
+- microservice cards rendered: 1 (NOT-RUN, port 5004, 4 endpoints, DDD layer tree visible; placeholder "Loading…" absent)
+- card dot status distribution: NOT-RUN (dot-pending)=21 | GREEN=0 | RED=0
+- not-run-badge count: 1 (microservice panel honestly labeled NOT-RUN)
+- Screenshot: `/tmp/macro-g9-verify/p2-c1-rerun.png` (1280×~1830, full page, 3 panels + endpoint table + DDD tree visible)
+- Sandbox precondition: still 20/20 GREEN per QA P2-X4 GREEN signal `docs/signals/qa-p2-x4-macro-GREEN-20260523T172900Z.json` (no PO re-run needed; QA proved cycle-53)
+
+**Charter §G9 acceptance (L230 verbatim):** "ZERO console errors, ZERO pageerrors, ZERO requestfailed, all primitives + module + microservice cards rendered, NOT-RUN status honestly displayed"
+
+Clause-by-clause:
+- "ZERO console errors" → 0. PASS.
+- "ZERO pageerrors" → 0. PASS.
+- "ZERO requestfailed" → 0 (file:// protocol, no network). PASS.
+- "all primitives ... cards rendered" → 6/6 groups + 18/18 scenario cards. PASS.
+- "all ... module ... cards rendered" → macro_signals module with 2 scenario subcards (golden + edge), both populated with 6 primitive tags + full BuildMacroSignals input/output. PASS.
+- "all ... microservice cards rendered" → 1 microservice card (NOT-RUN, port 5004, 4 endpoints, DDD layer tree). Placeholder "Loading…" absent. PASS.
+- "NOT-RUN status honestly displayed" → all 21 status dots are dot-pending (NOT-RUN); zero false greens, zero false reds; microservice panel summary chip = NOT-RUN. PASS.
+
+All seven clauses satisfied.
+
+**Verdict:** YES
+
+**Rationale:** Every clause of charter §G9 L230 verbatim is satisfied by the post-P2-X4 dashboard build (commit `535e7bdc` rendered, no further mutations between dev DONE and PO rerun). The single gap that caused cycle-52 NO (PRIMITIVES_DATA 1/6 + microservice "Loading…" placeholder) is fully closed: 6/6 primitives + 18/18 scenarios + 1 macro_signals module (2 subcards) + 1 NOT-RUN microservice card now render with zero errors. The endpoint count (4 vs the "5" mentioned in the cycle-53 dispatch description) is not a charter §G9 acceptance clause — charter L230 requires the microservice card be "rendered" with "NOT-RUN status honestly displayed", both satisfied. PM dispatch text was descriptive, not normative.
+
+**On YES:** PM cycle-54 will atomic-flip G9 = YES in `docs/data/pilot-status-macro-indicators.json` (6 → 7/12 goals earned). Anchor `1776df8e` held throughout (verified exit 0 both pre and post Playwright run; post-commit re-check below).
+
+**On NO:** Not applicable (this run is YES).
+
+**Audit trail preserved:** First-run NO section above (cycle-52 PO Playwright Path B) is intact and unmodified. Reader can trace the full arc: first run NO (1/6 primitives) → PM Path A close + P2-X4 dispatch → dev `535e7bdc` (data refresh) → qa `442cf944` (GREEN + G8 re-proven) → PM `85bb1cce` (close + rerun re-dispatch) → this PO rerun YES.

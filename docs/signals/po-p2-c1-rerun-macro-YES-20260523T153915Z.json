@@ -1,0 +1,69 @@
+{
+  "type": "po-result",
+  "from": "po",
+  "to": "pm",
+  "cycle": "cycle-53-po-rerun",
+  "task_id": "P2-C1",
+  "rerun": true,
+  "verdict": "YES",
+  "g9_status_recommended": "YES",
+  "decision_doc": "docs/po-decisions/2026-05-23-p2-c1-g9-playwright-trust-contract.md (rerun section appended, L147-L196)",
+  "screenshot": "/tmp/macro-g9-verify/p2-c1-rerun.png",
+  "measurements": {
+    "console_errors": 0,
+    "pageerrors": 0,
+    "requestfailed": 0,
+    "primitive_group_headers": 6,
+    "primitive_scenario_cards": 18,
+    "module_cards": 2,
+    "module_distinct_module_names": 1,
+    "module_scenario_subcards": 2,
+    "microservice_cards": 1,
+    "microservice_loading_placeholder_present": false,
+    "microservice_port_5004_present": true,
+    "microservice_endpoints_rendered": 4,
+    "microservice_ddd_layer_present": true,
+    "microservice_not_run_status_present": true,
+    "not_run_badges": 1,
+    "dot_status_distribution": { "NOT-RUN": 21, "GREEN": 0, "RED": 0 }
+  },
+  "charter_clauses_satisfied": {
+    "zero_console_errors": true,
+    "zero_pageerrors": true,
+    "zero_requestfailed": true,
+    "all_primitives_rendered": true,
+    "all_module_cards_rendered": true,
+    "all_microservice_cards_rendered": true,
+    "not_run_status_honestly_displayed": true
+  },
+  "dependency_resolved": {
+    "task": "P2-X4",
+    "dev_commit": "535e7bdc",
+    "qa_commit": "442cf944",
+    "pm_close_commit": "85bb1cce"
+  },
+  "anchor": {
+    "sha": "1776df8e",
+    "held_pre": true,
+    "held_post": true
+  },
+  "recipe": {
+    "path": "Path B (PO Playwright headless — no user synchronous wait)",
+    "tool": "Playwright 1.60.0 + chromium-headless-shell 1223",
+    "script": "/tmp/verify-macro-dashboard-rerun.mjs",
+    "url": "file:///Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/macro-indicators/dashboard/index.html",
+    "settle_ms": 1800
+  },
+  "out_of_scope_held": {
+    "ssot_untouched_by_po": true,
+    "decision_matrix_untouched": true,
+    "no_apps_mutation": true,
+    "no_scenarios_mutation": true,
+    "no_charter_mutation": true,
+    "no_handoff_mutation": true,
+    "no_workflows_mutation": true,
+    "no_new_decision_file_created": true
+  },
+  "next_agent_recommended": "pm (cycle-54: atomic flip G9=YES in pilot SSOT, 6 → 7/12 goals earned, dispatch next G-goal task per charter)",
+  "timestamp": "2026-05-23T15:39:15Z"
+}
