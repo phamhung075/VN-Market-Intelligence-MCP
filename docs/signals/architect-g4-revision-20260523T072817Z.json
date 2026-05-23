@@ -1,0 +1,37 @@
+{
+  "type": "architect-spec-revision",
+  "from": "architect",
+  "to": "po",
+  "timestamp": "2026-05-23T07:28:17Z",
+  "subject": "G4 acceptance criteria revised — whole-CI dependency removed",
+  "supersedes": "docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json",
+  "revised_spec_path": "docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md",
+  "next_actor": "po",
+  "summary": {
+    "problem": "AC-4 in superseded dispatch required CI go-lint job exit 0 on rerun. Whole-CI run is structurally red (bun test on legacy TS) until G5 deletion chain completes. AC-4 could not be satisfied in the correct causal order.",
+    "resolution": "AC-4 replaced by AC-4a/4b/4c: (a) verify go-lint job wiring in .github/workflows/ci.yml by file read, (b) run deliberate-violation proof locally (never committed), (c) confirm .golangci.yml frozen post-P2-A1. Zero CI-run API calls required.",
+    "revised_ac_count": 7,
+    "original_ac_count": 5,
+    "ci_dependency": false
+  },
+  "po_action_steps": [
+    "1. Read g4-acceptance-revision.md §3 for revised AC-1..AC-5 (7 criteria total).",
+    "2. Re-dispatch dev-technical-analysis for golangci-lint fix task with AC-1/2/3/5 unchanged and AC-5 updated to include g4_ci_dependency_dropped field.",
+    "3. Re-dispatch QA for P2-A4 with AC-4a/4b/4c (offline violation proof + workflow file read + git log). Rewrite TASK_P2-A4.md acceptance block at dispatch time.",
+    "4. On all AC PASS: flip G4=YES atomic with cycle-N close commit per §4.5 matrix-authorship rule.",
+    "5. G5 chain (P2-B2..B4) unblocks immediately when G4 flips YES — no additional gate."
+  ],
+  "impact_on_g5_chain": "No change to task IDs or gate rule. G4-proven unblocks P2-B2 dispatch exactly as before. Fence proven earlier because offline proof has no CI billing dependency.",
+  "files_authored_this_cycle": [
+    "docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md",
+    "docs/signals/architect-g4-revision-20260523T072817Z.json",
+    "docs/agent-memory/notebooks/architect.md"
+  ],
+  "constraints": {
+    "l84_explicit_file_staging": true,
+    "no_force": true,
+    "no_no_verify": true,
+    "anchor_62edbf3d": "held",
+    "section_4_5_matrix_authorship": "unchanged — PO is sole grading authority"
+  }
+}

@@ -1,5 +1,35 @@
 # Architect — Notebook
 
+**Last updated:** 2026-05-23 07:28 UTC | **Sprint:** Phase 2 — G4 AC revision (cycle-22)
+
+## Cycle-22 entry (2026-05-23T07:28Z) — G4 acceptance revision
+
+**Task:** Re-plan G4 acceptance criteria to remove whole-CI dependency while preserving architecture-fence intent.
+
+**Root cause of revision:** AC-4 in `po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json` required `CI go-lint job exits 0 on rerun`. The `bun test` job is structurally red until G5 deletion chain (P2-B2..B4) completes — so the whole workflow run conclusion is `failure` regardless of `go-lint` exit code. The per-job JSON extraction path (`gh run view --json jobs --jq select(.name=="go-lint")`) is technically possible but fragile (3 independent failure surfaces: job name stability, API shape, agent correctly reading job-level vs run-level conclusion).
+
+**Architectural decision:** Offline deliberate-violation proof is logically equivalent to CI-red proof for grading purposes. The charter's original G4 text says "proven by 1 deliberate violation in PR" — but the proof is the linter catching the violation, not the CI run URL. Local run achieves the same logical proof with zero external dependencies.
+
+**Revised AC structure (7 criteria vs 5 original):**
+- AC-1/2/3: unchanged (local golangci-lint + go test + sandbox)
+- AC-4a: verify go-lint job wiring in `.github/workflows/ci.yml` by file read (deterministic, no API)
+- AC-4b: run deliberate Fence-A violation locally, confirm depguard blocks it, revert, confirm exit 0 — paste linter output to `TASK_P2-A4.md §Evidence to Record`
+- AC-4c: confirm `.golangci.yml` frozen post-P2-A1 via `git log --oneline apps/technical-analysis/.golangci.yml`
+- AC-5: completion signal with new field `g4_ci_dependency_dropped: true`
+
+**Migration recommendation to PO:** SUPERSEDE (not amend). Clean supersede avoids stale AC-4 text confusing cycle-21 grading agent. PO re-dispatches dev-ta for fix work (AC-1/2/3 unchanged) and re-dispatches QA for P2-A4 with revised AC-4a/4b/4c.
+
+**G5 chain impact:** None — gate rule unchanged. G4=YES unblocks P2-B2 deletion dispatch as before. Fence proven earlier because offline proof has no CI billing dependency.
+
+**Files authored this cycle (L84 — 3 files max):**
+1. `docs/architecture-briefs/2026-05-22-refactor/g4-acceptance-revision.md` (revised spec)
+2. `docs/signals/architect-g4-revision-20260523T072817Z.json` (PO pick-up signal)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal for PO:** `docs/signals/architect-g4-revision-20260523T072817Z.json`
+
+---
+
 **Last updated:** 2026-05-23 22:18 UTC | **Sprint:** Phase 2 kickoff (technical-analysis pilot)
 
 > Archive: `docs/archive/notebooks/architect-2026-05-21.md` (full session history prior to 2026-05-21 trim)
