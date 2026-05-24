@@ -1,8 +1,66 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 (UTC) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 10:30 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor Phase-2 task plan (2026-05-24) — 24-task plan covering G1-full through G5b-clearance
+
+**Task:** Author Phase-2 task plan for pdf-extractor SCALE pilot. Authorization: po-20260524T083616Z.json; Phase-1 gate APPROVED @7247fd08 (po cycle-292). Phase-2 AWAITING-PLAN.
+
+**Inputs loaded:** pilot-status-pdf-extractor.json (phase2 block + goals + bctc_freeze_gate + g5_split) + phase-1-task-plan-python.md + p0-brownfield-inventory.md + po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md + pyproject.toml (no importlinter section yet) + scenario directory (9 JSON files: 6 real + 3 echo_identity scaffold) + main.py (88L raw, LOC re-verify in P2-D) + bug-inventory pdf_extractor_baseline (baselineCycleCount=1.5, 2 g10 candidates).
+
+**Key decisions:**
+- 24 atomic tasks total (P2-B1/B2/B3/B4 + P2-C + P2-D + P2-E1/E2 + P2-F + P2-A1/A2/A3/A4 + P2-G + P2-J0/J1/J2/J3 + P2-K1/K2 + P2-G5a + P2-G5c + P2-G5b-clearance + P2-G5b-dispatch). WIP=1 sequential. 22 dispatchable immediately. G5b-clearance + G5b-dispatch HARD FROZEN.
+- G4 fence: import-linter (locked SI-4, pyproject.toml [tool.importlinter], lint-imports CLI). Fence-A: domain.primitives must not import infrastructure/application/interface. Fence-B: domain.modules must not import infrastructure/interface.
+- G1-full: 4 new primitives (confidence_scorer, low_confidence_gate, ratio_computer, field_extractor). P2-B4 field_extractor = READ-ONLY mcp-server archaeology, ZERO mcp-server write.
+- G10 injection: decimal_normalizer scale literal (single-literal decimal-shift). pdf-extractor-pre-inject tag by qa.
+- G11: Trial-1 = G10 alias (decimal_normalizer + multi_primitive_story module coupling). Trial-2 = low_confidence_gate threshold 0.2→0.3 + module coupling.
+- G5b sequenced LAST. Clearance criteria: C1-C4 (both 1954c + 1953-G-FAIL resolved + BCTC path stable). Architect emits clearance signal → PO emits freeze-lift → PM dispatches G5b-dispatch.
+- 12/12 explicitly blocked until G5b resolves (cleared + lifted + dispatched, or ruled MOOT).
+- G7 canonical form baked: `env -i PYTHONPATH=. python3 <runner>` → forbidden-grep EMPTY. CTX_ADVISOR_* excluded.
+- §4.5 compliance: ZERO goal-flip instructions. goalsEarned stays 0. decisionMatrix untouched. PO-only at 12/12 terminal.
+
+**Risk flags raised:**
+- R-1 Dashboard needs 4 new primitive card slots (PM must sequence dashboard update in P2-C or P2-D before P2-E1)
+- R-5 G5b clearance timeline unknown — the ONE explicit 12/12 blocker
+
+**Files authored this cycle (L84 — 1 file):**
+1. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-2-task-plan-python.md` (NEW — 24 tasks, 130+ ACs)
+
+**Next actor:** pm (create handoff files + update pilot-status phase2.taskPlanStatus=READY-FOR-DISPATCH + dispatch P2-B1)
+
+---
+
+## kinh-dich-service Go Phase-2 task plan (2026-05-24) — Phase 2 dispatch after Phase-1 CONDITIONAL-GO
+
+**Task:** Author Go Phase-2 task plan for kinh-dich-service (fleet pilot 4). Authorization: po-20260524T081835Z.json; Phase-1 CONDITIONAL-GO (qa conditional = scope boundary only, NOT quality defect). Phase-2 AWAITING-PLAN.
+
+**Inputs loaded:** pilot-status-kinh-dich.json (phase2 block, goals, tsCompletionArchive) + pilot-charter.md (G1-G12 + R-FENCE clause) + phase-1-task-plan-go.md (primitives, module, fences) + stock-price phase-2-task-plan-go.md (structural template) + dashboard/index.html (stale-comment locations verified: L13 + L1578) + kinhDichTools.ts (6 tools confirmed HTTP-routed to port 5005, P2-KD-G already complete) + git tag scan (3 TS-era tags already exist — critical naming conflict resolved with -go suffix).
+
+**Critical discovery — tag naming conflict:**
+`kinh-dich-pre-ci` (2d245200), `kinh-dich-pre-delete` (fdaf4be3), `kinh-dich-pre-inject` (b4cdb1db) all exist from TS pilot. Cannot retag (charter constraint: no --force). Go Phase 2 uses `-go` suffix: `kinh-dich-pre-ci-go`, `kinh-dich-pre-delete-go`, `kinh-dich-pre-inject-go`. Each P2-A/P2-E/P2-J task verifies TS-era tags remain intact (SHAs unchanged).
+
+**Key decisions:**
+- 12 atomic tasks (P2-A through P2-Z), WIP=1.
+- G4 fence: depguard via golangci-lint (NOT eslint-plugin-boundaries — that was TS pilot). Fence-A allowlist REQUIRED for `nuclear_hexagram` → `hexagram_resolver` + `hao_encoder` sister-primitive imports (OQ-6). P2-B AC-2 proves no false-positive on existing codebase.
+- G5 determination: G5a may already be done from TS pilot (P2-KD-F commit 5641f2a1 moved services_v1.ts to _deprecated/). P2-F is a verification-if-done / move-if-not task. OQ-1 for PM.
+- G5b: read-only audit only. All 6 MCP tools confirmed HTTP-routed to port 5005 by TS pilot. No rewire needed.
+- G9: re-confirm on REBUILT Go dashboard (TS G9 evidence from P2-KD-L is superseded). Pre-condition: sandbox populated BEFORE Playwright runs.
+- G10 injection: `THIEU_DUONG_THRESHOLD` 0.10→0.25 in hao_encoder.go. Single literal. Authentic contract (Phase-1 Key Risk 2). Blind fix target ≤2 cycles (baseline 1.5).
+- G10 byte-identical restore: `git diff kinh-dich-pre-inject-go HEAD -- hao_encoder.go` = EMPTY.
+- G11 coupling: Trial-1 hao_encoder→reading_composer module coupling; Trial-2 hexagram_resolver→reading_composer coupling.
+- Dashboard cleanup: P2-H removes 2 stale CSS comments (`language=ts, runtime=bun`) at L13 + L1578.
+- §4.5 compliance baked throughout. No goal flips in any task. goalsEarned stays 0.
+
+**Risk flags raised:** R-1 sister-primitive Fence-A false-green (MEDIUM); R-2 G5b scope boundary confusion (LOW); R-3 G9 cold-open vs populated state (LOW); R-4 TS-era tag naming collision (LOW, mitigated by -go suffix).
+
+**Files authored this cycle (1):**
+1. `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md` (NEW — 12 tasks, 61 ACs)
+
+**Next actor:** PO — review plan, repoint `phase2.taskPlan` + install tasks map in SSOT, flip phase2.status AWAITING-PLAN→OPEN, dispatch P2-A to dev-kinh-dich.
+
+---
 
 ## rag-service Phase-2 task plan (2026-05-24) — Phase 2 dispatch after Phase 1 APPROVED
 
