@@ -1,0 +1,8 @@
+{
+  "primitive": "field_extractor",
+  "inputs": {
+    "text": "Doanh thu thuần: 1,234.5\nTổng tài sản: 50,000.0",
+    "field_name": "net_profit"
+  },
+  "expected": null
+}

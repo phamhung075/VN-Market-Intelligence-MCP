@@ -1,0 +1,8 @@
+{
+  "primitive": "field_extractor",
+  "inputs": {
+    "text": "",
+    "field_name": "net_revenue"
+  },
+  "expected": null
+}
