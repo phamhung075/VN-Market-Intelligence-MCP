@@ -21,8 +21,8 @@
   "language": "TypeScript",
   "languageLockSource": "stays TS — small fetch/normalize service, low Go-rewrite payoff (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "1",
-  "_phase_note": "Tracks current phase as string integer. Phase 0 CLOSED 2026-05-24T07:34Z (PO P0-NF-EXIT sign-off). Phase 1 ACTIVE. Advances to '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
+  "phase": "2",
+  "_phase_note": "Tracks current phase as string integer. Phase 0 CLOSED 2026-05-24T07:34Z (PO P0-NF-EXIT sign-off). Phase 1 CLOSED/APPROVED 2026-05-24T08:39Z (PO P1-NF close-gate sign-off; QA gate PASS @c8a2f7cb, signal qa-news-fetch-p1-approved). Phase 2 OPEN (AWAITING-PLAN) 2026-05-24T08:39Z. Advanced 1→2 at Phase-1 close-gate APPROVE (po). Do not use DONE/ACTIVE here — use top-level status.",
   "phase0": {
     "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
@@ -56,35 +56,74 @@
     }
   },
   "phase1": {
-    "_note": "[OPTIONAL-PHASE] Phase 1 ACTIVE as of 2026-05-24T07:34Z (PO P0-NF-EXIT sign-off). 10 tasks, 68 ACs, WIP=1 sequential. First task P1-A (sandbox harness). Routed to generic developer via .claude/flows/dev-news-fetch/main.md, zone apps/news-fetch/.",
-    "status": "ACTIVE",
+    "_note": "[OPTIONAL-PHASE] Phase 1 CLOSED/APPROVED 2026-05-24T08:39Z (PO P1-NF close-gate sign-off). 10 tasks, 68 ACs, WIP=1 sequential — all DONE. QA close-gate APPROVED Round 2 after fixer commit c8a2f7cb (tsc exit 0, sandbox 13/13, DDD fence PASS, security PASS, G12 streak 3/3). 7 goals evidence-locked EARNED-PENDING (G1/G2/G3/G5/G6/G7/G12) — recorded in goals[].phase1_state, status stays TBD per Charter §4.5 (PO-only flip atomic at 12/12 terminal Phase 3).",
+    "status": "APPROVED",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T07:34:21Z",
     "openedBy": "po (P0-NF-EXIT sign-off — Phase 0 CLOSED, Phase 1 OPEN; first WIP=1 task P1-A dispatched to developer)",
-    "gateVerdict": null,
-    "gateVerifiedAt": null,
-    "gateVerifiedBy": null,
-    "gateCommit": null,
-    "gateDecisionDoc": null,
-    "gateSignal": null,
+    "gateVerdict": "PASS",
+    "gateVerifiedAt": "2026-05-24T00:00:01Z",
+    "gateVerifiedBy": "qa (P1-NF-QA close-gate verification, Round 2 re-approval after fixer commit c8a2f7cb)",
+    "gateCommit": "c8a2f7cb",
+    "gateDecisionDoc": "docs/handoffs/TASK_P1-NF-QA.md",
+    "gateSignal": "docs/signals/qa-news-fetch-p1-approved-20260524T000001Z.json",
+    "gateClosedBy": "po (Phase-1 close-gate APPROVE 2026-05-24T08:39Z — QA gate signal verified APPROVED: sandbox 13/13 PASS exit 0, bun test 233 pass, bun tsc --noEmit exit 0 [was exit 2 / 5 TS2769, fixed @c8a2f7cb models.ts:43 FetchResult.method union +'module'], DDD fence PASS, security/env-audit PASS [CTX_ADVISOR_* correctly excluded], G12 streak 3/3 CONFIRMED [P1-B1+P1-C+P1-D]; 7 goals EARNED-PENDING evidence-locked, recorded in goals[].phase1_state — NOT flipped to YES per §4.5)",
     "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/07-phases.md §Phase 1",
     "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md",
     "wip_limit": 1,
-    "progress_notes": []
+    "progress_notes": [
+      "2026-05-24T07:34:21Z po: Phase 1 OPEN. First dispatch P1-A (sandbox harness) → developer via dev-news-fetch flow. WIP=1.",
+      "2026-05-24T08:39:28Z po: Phase 1 CLOSED/APPROVED. QA close-gate Round 2 APPROVED @c8a2f7cb (sandbox 13/13, tsc exit 0, DDD+security PASS, G12 streak 3/3). EARNED-PENDING (NOT flipped to YES): G1, G2, G3, G5, G6, G7, G12 — evidence chains in goals[].phase1_state. Top-level phase 1→2. Phase 2 opened AWAITING-PLAN. Remaining for Phase 2: G4 (SI-3 ESLint fence — SI-3 LANDED @388703b7), G8 (honest-red 6 cards), G9 (PO Playwright Path B), G10 (AI-fix ≤2 cycles vs baseline 1.5), G11 (regression 2-trial)."
+    ]
   },
   "phase2": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
-    "status": "NOT-STARTED",
+    "_note": "Phase 2 OPEN (AWAITING-PLAN) at Phase-1 close (po 2026-05-24T08:39Z). PO authored the Phase-2 skeleton task plan + dispatch BATCH inline at close (this is the smallest service — generic developer owner, no specialist; PO carries more of the planning load per charter §Risk 3). Architect may expand per-task ACs from the skeleton, or PM/dev-team may dispatch directly from the skeleton ledger below. Covers G4 + G8 + G9 + G10 + G11, then matrix close at 12/12 in Phase 3.",
+    "status": "AWAITING-PLAN",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T08:39:28Z",
+    "openedBy": "po (Phase-1 close-gate APPROVE → Phase-2 open AWAITING-PLAN; PO authored Phase-2 skeleton task plan + dispatch BATCH inline — see skeletonTaskLedger + dispatchOrder)",
     "closedAt": null,
     "closedBy": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 2>",
-    "taskPlan": null,
-    "taskCount": null,
-    "wipPolicy": "<SERVICE:WIP=1 default; specialised ordering if R-type risks require specific first task>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/07-phases.md §Phase 2 + this block's skeletonTaskLedger (PO-authored)",
+    "taskPlan": "docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-2-task-plan.md",
+    "taskPlanStatus": "PO-SKELETON-INLINE (architect may expand per-task ACs; not blocking dispatch — skeleton ledger below is dispatchable)",
+    "taskCount": 10,
+    "wipPolicy": "WIP=1 single generic developer (zone apps/news-fetch/) + qa + po, strictly sequential per pilot wip_limit. G4 first (SI-3 ESLint fence — SI-3 LANDED @388703b7, AC text verbatim-ready in SI-3 §5). G10/G11 require pre-revert tag news-fetch-pre-inject Day-0 of injection task (qa). G9 is async PO track, no blocking dependency.",
     "wip_limit": 1,
+    "si3_dependency_finding": {
+      "_finding": "SI-3 STATUS: LANDED. The G4 AC for TS pilots was gated on SI-3 (TypeScript ESLint architecture-fence design). SI-3 is COMPLETE — chosen_option=A (eslint-plugin-boundaries v6.0.2, flat config), commit 388703b7, signal docs/signals/architect-si3-ts-fence-done-20260523T220332Z.json, design FINAL at docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md.",
+      "g4_unblocked": true,
+      "g4_ac_source": "docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md §5 (verbatim G4 AC text for TS pilots; substitute <svc>=news-fetch). Same §5 already proven on kinh-dich (pilot-4) Phase-2 P2-KD-B/C/D.",
+      "owner_decision": "Owner = developer (fence config + deliberate-violation execution) + qa (independent violation reproduction + AC-4c freeze confirm). NO architect SI-3 re-design needed — spec is FINAL/locked. NO new task to author SI-3.",
+      "element_pattern_note": "news-fetch src layer dirs are SINGULAR (src/primitive/, src/module/) — matches SI-3 §3.2 boundaries/elements patterns (src/primitive/**/*, src/module/**/*) verbatim. The dev-news-fetch/main.md Fence note uses PLURAL (src/primitives/, src/modules/) which is STALE — use SI-3 §5 singular patterns as the locked AC. Dev should not copy the flow's plural note.",
+      "r2_fallback": "If eslint-plugin-boundaries fails to match .js-suffixed ESM import paths in AC-4b (SI-3 §6.3 R-2), add @typescript-eslint/parser devDep + languageOptions:{parser:tsParser} inline — stays Option A, no new task, no drop to Option C."
+    },
+    "skeletonTaskLedger": {
+      "_note": "PO-authored Phase-2 skeleton. Mirrors kinh-dich TS Phase-2 (docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-ts.md) adapted to news-fetch. WIP=1 sequential. NO task flips any goal — all goal flips are PO-only, atomic in one Phase-3 commit at 12/12 (§4.5).",
+      "P2-NF-A": {"title": "Create news-fetch-pre-ci tag (pre-revert anchor before G4 ESLint fence work)", "owner": "developer", "goals": ["G4-setup"], "blocked_by": [], "blocks": ["P2-NF-B"], "est": "5m"},
+      "P2-NF-B": {"title": "eslint.config.mjs Fence-A/B/C (verbatim SI-3 §3.2) + eslint+eslint-plugin-boundaries devDep + lint:ci script", "owner": "developer", "goals": ["G4-partial"], "blocked_by": ["P2-NF-A"], "blocks": ["P2-NF-C"], "est": "1h"},
+      "P2-NF-C": {"title": "G4 deliberate-violation proof (AC-4b): Fence-A breach in src/primitive/published-at-parser → bunx eslint exit non-zero + 'Fence-A' in output → revert → exit 0, NEVER committed. dev executes, qa reproduces independently on a different primitive.", "owner": "developer+qa", "goals": ["G4-full"], "blocked_by": ["P2-NF-B"], "blocks": ["P2-NF-D"], "est": "30m"},
+      "P2-NF-D": {"title": "G4 freeze anchor confirm (AC-4c): git log eslint.config.mjs shows P2-NF-B as most-recent commit; news-fetch-pre-ci ancestry confirmed. QA compiles G4 evidence + signal.", "owner": "qa", "goals": ["G4-finalized"], "blocked_by": ["P2-NF-C"], "blocks": ["P2-NF-E"], "est": "15m"},
+      "P2-NF-E": {"title": "G8 honest-red proof: 1 deliberate broken primitive + 5 known-bad scenarios → 6 RED cards on dashboard; revert → GREEN. QA captures honesty_table + test_a/test_b in GREEN signal.", "owner": "qa+developer", "goals": ["G8"], "blocked_by": ["P2-NF-D"], "blocks": ["P2-NF-F"], "est": "30m"},
+      "P2-NF-F": {"title": "G9 dashboard trust contract — Path B PO Playwright headless (Day-0 default per L6). Render apps/news-fetch/dashboard/index.html via file://; assert 3 panels + 6 cards + honest status + console_errors=0. Capture VERDICT fields.", "owner": "po", "goals": ["G9"], "blocked_by": [], "blocks": [], "est": "30m", "track": "async-PO (no blocking dependency)"},
+      "P2-NF-G": {"title": "Create news-fetch-pre-inject tag + G10 bug injection: single-literal off-by-one / wrong-timezone in src/primitive/published-at-parser (normalizeRfcDate RFC-date timezone edge — bug-inventory recommended target). Sandbox published-at-parser card → RED before dispatch. Cycle counter starts.", "owner": "qa", "goals": ["G10-setup"], "blocked_by": ["P2-NF-D"], "blocks": ["P2-NF-H"], "est": "20m"},
+      "P2-NF-H": {"title": "G10 AI-fixability proof: developer fixes published-at-parser bug in ≤2 cycles (baseline 1.5 from bug-inventory news_fetch_baseline) from dashboard-RED signal only (no spec, no file pointer). Dashboard → GREEN. G12 DoD enforced.", "owner": "developer+qa", "goals": ["G10"], "blocked_by": ["P2-NF-G"], "blocks": ["P2-NF-I"], "est": "1h"},
+      "P2-NF-I": {"title": "G11 regression alarm — 2-trial coupling proof. Trial-1 = G10 alias (published-at-parser mutation + fix). Trial-2 = DIFFERENT primitive (headline-normalizer or source-dedup-key mutation + fix). Each must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS. QA designs pair; developer fixes.", "owner": "qa+developer", "goals": ["G11"], "blocked_by": ["P2-NF-H"], "blocks": ["P2-NF-Z"], "est": "1.5h"},
+      "P2-NF-Z": {"title": "Phase 2 close-gate verification (QA): confirm G4 (A-D) + G8 + G10 + G11 evidence chains; re-confirm 7 EARNED-PENDING goals + G12 streak intact; sandbox all-green; emit close-gate signal. NO goal flips (PO-only Phase 3).", "owner": "qa", "goals": ["close-gate (no flip)"], "blocked_by": ["P2-NF-F", "P2-NF-I"], "blocks": ["Phase 3 PO matrix close"], "est": "30m"}
+    },
+    "dispatchOrder": [
+      "P2-NF-A → P2-NF-B → P2-NF-C → P2-NF-D (G4 chain, first — SI-3 fence)",
+      "P2-NF-E (G8 honest-red, after G4 fence proven)",
+      "P2-NF-G → P2-NF-H (G10 inject+fix, after P2-NF-D)",
+      "P2-NF-I (G11 regression 2-trial, after P2-NF-H pattern stabilized)",
+      "P2-NF-F (G9 PO Playwright — async PO track, may run anytime, no blocking dependency)",
+      "P2-NF-Z (close-gate, after P2-NF-F + P2-NF-I)"
+    ],
+    "preRevertTags": {
+      "_note": "Created IN the task that gates them, BEFORE any mutation. No retag, no --force, no push. None exist yet at plan-time.",
+      "news-fetch-pre-ci": "P2-NF-A Step 0 — before G4 ESLint fence work",
+      "news-fetch-pre-inject": "P2-NF-G Step 0 — before G10 bug injection"
+    },
     "tasks": {}
   },
   "goals": [
@@ -96,6 +135,7 @@
       "_title_note": "[FIXED] Title is canonical per Charter. Service-specific calibration lives in 'calibration' field only.",
       "status": "TBD",
       "_status_enum": "[FIXED] Allowed values: TBD | IN-PROGRESS | YES | NO | PARTIAL | DEFER. Starts TBD. Flipped to YES only when all AC pass and evidence is locked. PO-only authorship per Charter §4.5.",
+      "phase1_state": "EARNED-PENDING: 4 primitives extracted (published-at-parser, headline-normalizer, source-dedup-key, article-relevance-filter), each with 3 scenario JSONs (golden+edge+failure) at docs/scenarios/news-fetch/primitives/<name>/ = 12 primitive scenarios; ≥1 failure scenario per primitive CONFIRMED. Sandbox 13/13 PASS exit 0 (12 primitive + 1 module). QA verified P1-NF-QA @c8a2f7cb, signal qa-news-fetch-p1-approved. NOT YES — §4.5 PO-only flip atomic at 12/12 terminal Phase 3.",
       "verifiedAt": null,
       "_verifiedAt_note": "[DERIVED] ISO-8601 UTC. Null until YES.",
       "verifiedBy": null,
@@ -110,6 +150,7 @@
       "track": "A",
       "title": "Module composes primitives via ports",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: apps/news-fetch/src/module/news_ingest/index.ts imports only from ../../primitive/* and ../../domain/*; ports.ts declares NewsIngestPort + NewsFetcherPort. Zero ../../infrastructure/* imports (DDD scan PASS). Multi-primitive scenario docs/scenarios/news-fetch/module/multi-source-ingest.json PASS — exercises headline-normalizer + source-dedup-key. QA verified P1-NF-QA @c8a2f7cb. NOT YES — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -121,6 +162,7 @@
       "track": "A",
       "title": "Microservice has clean composition root",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: apps/news-fetch/composition-root.ts = 34 lines, only imports + DI bindings + app export; domain-op grep (normalizeHeadline|parsePublishedAt|computeArticleKey|if |switch) → 0 code matches (comments only). apps/news-fetch/api/openapi.yaml present (GET/POST /health, /reuters/headlines, /bloomberg/headlines). NON-BLOCKING DELTA: src/index.ts is 23 lines vs AC-2 spec ≤15 — pure entry, zero domain ops, intent satisfied (QA non-blocking note). Port 5008 (system-map). QA verified P1-NF-QA @c8a2f7cb. NOT YES — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -130,14 +172,15 @@
     {
       "id": "G4",
       "track": "A",
-      "title": "Architecture fence enforced (offline depguard evidence)",
+      "title": "Architecture fence enforced (offline ESLint boundaries evidence)",
       "_title_note": "[FIXED] For Go services: depguard via golangci-lint, CI job scoped to service dir. For TS services: ESLint fence per SI-3 design (gate: SI-3 must land before G4 AC locked for TS pilots). For Python services: per SI-4 decision.",
       "status": "TBD",
+      "_si3_gate": "CLEARED — SI-3 LANDED @388703b7 (chosen_option=A, eslint-plugin-boundaries v6.0.2, design docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md FINAL; signal architect-si3-ts-fence-done-20260523T220332Z.json). G4 AC for news-fetch is LOCKABLE — transcribe SI-3 §5 verbatim with <svc>=news-fetch. NO architect re-design needed.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:fence tool (depguard for Go / ESLint for TS / per-SI-4 for Python), CI job name, working-directory, pre-revert tag name, deliberate-violation protocol reference (Fence-A violation proven + reverted + never committed)>",
-      "phase2Bucket": null
+      "calibration": "FENCE TOOL = eslint-plugin-boundaries (SI-3 Option A, LOCKED). Config: apps/news-fetch/eslint.config.mjs (verbatim SI-3 §3.2 — element patterns SINGULAR src/primitive/**/* + src/module/**/* + src/infrastructure/**/* etc; boundaries/ignore __tests__ + sandbox). devDeps: eslint + eslint-plugin-boundaries in package.json. Fence command: cd apps/news-fetch && bunx eslint src/ --max-warnings 0. Three fences: Fence-A (primitive must not import module/application/interface/infrastructure), Fence-B (module must not import application/interface/infrastructure), Fence-C (infrastructure only importable from src/index.ts composition root). Deliberate-violation proof (AC-4b): inject Fence-A breach in src/primitive/published-at-parser → exit non-zero + 'Fence-A' in output → revert → exit 0, NEVER committed. AC-4c freeze anchor: git log eslint.config.mjs shows P2-NF-B as most-recent commit. Pre-revert tag: news-fetch-pre-ci (P2-NF-A). R-2 fallback: +@typescript-eslint/parser inline if .js-suffix match fails (stays Option A). Owner: developer (fence) + qa (violation proof). Phase-2 tasks P2-NF-A→D.",
+      "phase2Bucket": "P2-NF-A, P2-NF-B, P2-NF-C, P2-NF-D"
     },
     {
       "id": "G5",
@@ -145,6 +188,7 @@
       "title": "Old service code deleted + HTTP rewire",
       "_title_note": "[FIXED] G5a: old TS/legacy source moved to _deprecated/. G5b: MCP tool handlers rewired HTTP to service port. G5c: zero TODO.*migrat refs.",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING (full G5 done in Phase 1 — news-fetch G5 was scoped into Phase-1 P1-G5, the only Phase-1 task touching apps/mcp-server/): G5a — apps/mcp-server/src/infrastructure/fetchers/reuters.ts DELETED from production path, moved to apps/mcp-server/src/_deprecated/fetchers/reuters.ts (@ts-nocheck + README superseded-by-news-fetch:5008). G5b — analysis.ts line 25 fetchReuters removed; lines 119-138 HTTP fetch to ${NEWS_FETCH_BASE}/reuters/headlines where NEWS_FETCH_BASE=Bun.env['NEWS_FETCH_URL']??'http://news-fetch:5008'. G5c — grep TODO.*migrat → 0 matches; zero live imports from infrastructure/fetchers/reuters. Bun.env (not process.env). QA verified P1-NF-QA @c8a2f7cb. NOT YES — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -157,6 +201,7 @@
       "track": "B",
       "title": "Three-level dashboard renders from JSON traces",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: apps/news-fetch/dashboard/index.html present, 3 distinct panels (panel-primitives, panel-module, panel-microservice), 6 cards (4 primitive + 1 module + 1 microservice). All badges initially honest NOT-RUN on load; results.json written by sandbox runner with 13 PASS trace. XMLHttpRequest (file://-compatible, zero network), zero hardcoded creds, SI-2 boundary comment line 2, no external http/https fetch. QA verified P1-NF-QA @c8a2f7cb (structure verified via static analysis + results.json; full headless Playwright deferred to G9/Phase 2). NOT YES — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -168,6 +213,7 @@
       "track": "B",
       "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: edit-rerun cycle proven in TASK_P1-NF-E.md (corrupt golden.json → sandbox exit 1, 11 PASS/1 FAIL RED → revert → exit 0, 13 PASS GREEN). dashboard/rerun-handler.js present. Env audit CLEAN: Bun.env confirms TELEGRAM_BOT_TOKEN / NEWSAPI_API_KEY / VPS_PUSH_API_KEY / CLOUDFLARE_TOKEN all absent from apps/news-fetch/ context (Bun does NOT load root .env from subdir). Sandbox runner CREDENTIAL_PATTERN (lines 43-52) correctly EXCLUDES CTX_ADVISOR_* (Claude Code harness context-sizing vars, NOT credentials). QA verified P1-NF-QA @c8a2f7cb. NOT YES — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -179,11 +225,12 @@
       "track": "B",
       "title": "Red/green status is honest",
       "status": "TBD",
+      "phase1_state": "PARTIAL (Phase-1): Red→Green cycle proven in P1-NF-E (corrupt golden → RED exit 1; revert → GREEN exit 0). REMAINING for Phase 2 (G8-full): 5 known-bad scenarios + 1 deliberate broken primitive = 6 RED cards; QA honesty_table + test_a/test_b. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:Test A = deliberate corruption of golden scenario → dashboard RED; Test B = known golden → dashboard GREEN. Pattern identical across all pilots.>",
-      "phase2Bucket": null
+      "calibration": "Test A = deliberate corruption of a golden scenario (e.g. published-at-parser or headline-normalizer golden expected value) → dashboard RED; Test B = known-good golden → dashboard GREEN. G8-full Phase 2: 1 deliberate broken primitive + 5 known-bad scenario JSONs (wrong expected outputs) → 6 RED cards visible on dashboard; revert → GREEN. QA captures honesty_table + test_a/test_b in GREEN signal. Owner: qa (verify) + developer (honesty impl if needed). Phase-2 task P2-NF-E.",
+      "phase2Bucket": "P2-NF-E"
     },
     {
       "id": "G9",
@@ -194,8 +241,8 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:verification path (Path A or Path B); Playwright headless command if Path B; trust-contract VERDICT fields to capture>",
-      "phase2Bucket": null
+      "calibration": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over (TA cycle-19 + macro cycle-53). PO renders apps/news-fetch/dashboard/index.html via file:// headless; asserts 3 panels + 6 cards render + honest status + console_errors=0. Path A (user verbal) preferred if user available — either satisfies G9. Capture trust-contract VERDICT fields: panels_rendered, cards_per_tier, status_honest, console_errors=0. Owner: PO. Phase-2 task P2-NF-F (async PO track, no blocking dependency).",
+      "phase2Bucket": "P2-NF-F"
     },
     {
       "_track_note": "Track C — AI-Fixability (G10-G12). Proves the agent loop can self-correct without human intervention.",
@@ -206,10 +253,10 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:baseline cycle count from bug-inventory.json entry for this service; max_cycles_allowed=2; inject 1 deliberate single-literal bug in a primitive, measure cycles to GREEN>",
+      "calibration": "baselineCycleCount=1.5 (bug-inventory.json news_fetch_baseline; system-wide fallback — 0 news-fetch primitive-class bugs in 60d window; B-10 VPS-unhealthy excluded as I/O adapter not primitive-class). max_cycles_allowed=2. RECOMMENDED INJECTION TARGET (bug-inventory knownRiskPre_pilot R-1): src/primitive/published-at-parser — normalizeRfcDate off-by-one OR wrong RFC-date timezone handling (deterministic, unambiguous single-literal fix; matches PO intent 'published-at-parser RFC-date timezone edge'). Inject 1 deliberate single-literal bug → published-at-parser card RED → developer fixes from dashboard-RED signal only (no spec/file pointer) → all GREEN. Cycle = one developer dispatch ending in commit + sandbox read; >2 cycles = FAIL. Pre-revert tag: news-fetch-pre-inject (P2-NF-G). Owner: qa (inject+count) + developer (fix). Phase-2 tasks P2-NF-G + P2-NF-H.",
       "cycle_count": null,
       "max_cycles_allowed": 2,
-      "phase2Bucket": null
+      "phase2Bucket": "P2-NF-G, P2-NF-H"
     },
     {
       "id": "G11",
@@ -219,8 +266,8 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix. Trial-2 = DIFFERENT primitive mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS per rubric.>",
-      "phase2Bucket": null
+      "calibration": "2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias: published-at-parser mutation + fix. Trial-2 = DIFFERENT primitive: headline-normalizer (or source-dedup-key) mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS per rubric. Owner: qa (scenario design) + developer (fix). Phase-2 task P2-NF-I.",
+      "phase2Bucket": "P2-NF-I"
     },
     {
       "id": "G12",
@@ -228,6 +275,7 @@
       "title": "Dev-* agent flow requires dashboard-green before done (3-task streak)",
       "_title_note": "[FIXED] The dev-<svc> flow DoD gate (sandbox-green-before-RETURN) must be baked Day 0 in Phase 0 (agent-father flow file deliverable). Streak: 3 consecutive dev tasks shipped only after sandbox-green evidence pasted into handoff.",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: 3-task streak COMPLETE (P1-B1 → P1-C → P1-D), all consecutive + in order, each with sandbox-green-before-DONE evidence pasted in handoff. Flow rule baked in .claude/flows/dev-news-fetch/main.md ('Do not mark task DONE until sandbox dashboard shows all news-fetch scenarios green'), effective after commit bca30508. QA gate verified streak 3/3 P1-NF-QA @c8a2f7cb. NOT YES — §4.5 PO-only at 12/12 terminal.",
       "_status_candidacy": "May be held as EARNED-PENDING per Charter §4.5 once streak is complete. PO flips YES only at 12/12 terminal atomic close.",
       "verifiedAt": null,
       "verifiedBy": null,
@@ -236,11 +284,17 @@
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 0,
-        "streakComplete": false,
-        "completedAt": null,
-        "tasks": [],
-        "ruleEffectiveAfter": "bca30508 2026-05-24 (.claude/flows/dev-news-fetch/main.md — G12 DoD gate baked; every dev task from Phase 1 onward must sandbox-green-before-RETURN)"
+        "completed": 3,
+        "streakComplete": true,
+        "completedAt": "2026-05-24T00:00:01Z",
+        "tasks": [
+          {"task": "P1-B1", "streak": 1, "evidence": "3/3 PASS exit 0 pasted in TASK_P1-NF-B1.md before DONE"},
+          {"task": "P1-C", "streak": 2, "evidence": "13/13 PASS exit 0 pasted in TASK_P1-NF-C.md before DONE"},
+          {"task": "P1-D", "streak": 3, "evidence": "13/13 PASS exit 0 pasted in TASK_P1-NF-D.md before DONE"}
+        ],
+        "verifiedBy": "qa (P1-NF-QA streak 3/3 CONFIRMED); confirmed by po Phase-1 close-gate 2026-05-24T08:39Z",
+        "ruleEffectiveAfter": "bca30508 2026-05-24 (.claude/flows/dev-news-fetch/main.md — G12 DoD gate baked; every dev task from Phase 1 onward must sandbox-green-before-RETURN)",
+        "_status_note": "Streak COMPLETE (3/3). G12 goal status stays TBD/EARNED-PENDING (not YES) per Charter §4.5 — PO flips YES only at 12/12 terminal atomic close."
       }
     }
   ],
@@ -268,7 +322,7 @@
   "verdict": "TBD",
   "_verdict_note": "[DERIVED] Mirrors decisionMatrix.verdict. TBD during ACTIVE. Set to scale | rescope | stop-MVR at terminal close.",
   "goalsEarned": 0,
-  "_goalsEarned_note": "[DERIVED] Running counter of goals with status=YES. Incremented by whoever flips each goal. Must equal 12 at terminal close.",
+  "_goalsEarned_note": "[DERIVED] Running counter of goals with status=YES. Incremented by whoever flips each goal. Must equal 12 at terminal close. STAYS 0 through Phase 1+2 — no goal flips to YES until the Phase-3 terminal atomic 12/12 close (§4.5). Phase-1 close earned 7 goals as EARNED-PENDING (recorded in goals[].phase1_state, NOT in this counter): G1, G2, G3, G5, G6, G7, G12. G8 is PARTIAL (Phase-1). Remaining for Phase 2: G4, G8-full, G9, G10, G11.",
   "constraints_binding_day_0": [
     "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
     "No --force, no --no-verify, no --no-gpg-sign",

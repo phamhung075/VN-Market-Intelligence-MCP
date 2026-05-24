@@ -102,9 +102,9 @@
 
 ---
 
-## Phase 1 Backlog (News-Fetch SCALE Pilot) — OPEN 2026-05-24
+## Phase 1 Backlog (News-Fetch SCALE Pilot) — CLOSED/APPROVED 2026-05-24
 
-**Status:** OPEN 2026-05-24T07:34Z by PO (P0-NF-EXIT sign-off). Plan: `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md` (10 tasks, 68 ACs). **WIP=1 strictly sequential** (per pilot-status `phase1.wip_limit`). Owner = generic `developer`, routed via `.claude/flows/dev-news-fetch/main.md`, zone `apps/news-fetch/` ONLY. Language TS/Bun (locked). G12 DoD gate (sandbox-green-before-RETURN) effective for every task since bca30508. First task: **P1-A** (only one dispatchable at a time).
+**Status:** CLOSED/APPROVED 2026-05-24T08:39Z by PO (P1-NF close-gate sign-off). All 10 tasks DONE. QA close-gate APPROVED Round 2 @c8a2f7cb (sandbox 13/13 PASS exit 0, bun test 233 pass, bun tsc --noEmit exit 0 [fixed models.ts:43 FetchResult.method union +'module'], DDD fence PASS, security/env-audit PASS, G12 streak 3/3 P1-B1+P1-C+P1-D). Signal `docs/signals/qa-news-fetch-p1-approved-20260524T000001Z.json`; handoff `docs/handoffs/TASK_P1-NF-QA.md`. **7 goals EARNED-PENDING** (G1/G2/G3/G5/G6/G7/G12 — evidence in `pilot-status-news-fetch.json` goals[].phase1_state; G8 PARTIAL); NOT flipped to YES per §4.5 (PO-only atomic at 12/12 Phase 3). Top-level phase 1→2. Plan: `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md`.
 
 | Task ID | Title | Goals | Owner | Status | Blocked by |
 |---------|-------|-------|-------|--------|-----------|
@@ -126,6 +126,34 @@
 - **Hard scope fence:** `apps/news-fetch/` ONLY (P1-G5 is the ONLY task touching `apps/mcp-server/`, for the single G5 HTTP rewire). No cowork agents (news-scout/market-watcher) per charter §Risk 4.
 - **Constraints binding Day 0:** L84 explicit-file staging (git add <path>), no --force/--no-verify, no push of source/CI, all on main, ESM `.js` import suffixes, `Bun.env` not `process.env`, sandbox exits non-zero on any FAIL.
 - **Pre-revert tags are Phase 2 work** (news-fetch-pre-ci / pre-delete / pre-inject) — NOT created in Phase 1.
+
+---
+
+## Phase 2 Backlog (News-Fetch SCALE Pilot) — OPEN (AWAITING-PLAN) 2026-05-24
+
+**Status:** OPEN 2026-05-24T08:39Z by PO (Phase-1 close-gate APPROVE → Phase-2 open). Plan: `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-2-task-plan.md` (10 tasks, PO skeleton — dispatchable; architect AC-expansion optional/non-blocking). **WIP=1 strictly sequential.** Owner = generic `developer` (+ qa + po), routed via `.claude/flows/dev-news-fetch/main.md`, zone `apps/news-fetch/` ONLY. Closes the 5 remaining goals: **G4, G8, G9, G10, G11**. **SI-3 finding: LANDED** (eslint-plugin-boundaries Option A, commit 388703b7) — G4 fully unblocked, AC verbatim in SI-3 §5; NO architect re-design needed.
+
+| Task ID | Title | Goals | Owner | Status | Blocked by |
+|---------|-------|-------|-------|--------|-----------|
+| P2-NF-A | Create `news-fetch-pre-ci` tag (pre-revert anchor before G4 fence) | G4-setup | developer | READY (FIRST — dispatch now) | — |
+| P2-NF-B | `eslint.config.mjs` Fence-A/B/C (verbatim SI-3 §3.2) + `eslint`+`eslint-plugin-boundaries` devDep + `lint:ci` | G4-partial | developer | BLOCKED | P2-NF-A |
+| P2-NF-C | G4 deliberate-violation proof (AC-4b) — Fence-A breach → exit non-zero + "Fence-A" → revert → exit 0, NEVER committed | G4-full | developer + qa | BLOCKED | P2-NF-B |
+| P2-NF-D | G4 freeze anchor confirm (AC-4c) + QA G4 evidence + signal | G4-finalized | qa | BLOCKED | P2-NF-C |
+| P2-NF-E | G8 honest-red — 1 deliberate broken primitive + 5 known-bad scenarios → 6 RED cards → revert GREEN; QA honesty_table | G8 | qa + developer | BLOCKED | P2-NF-D |
+| P2-NF-F | G9 dashboard trust contract — Path B PO Playwright headless (file://, 3 panels + 6 cards + honest status + console_errors=0) | G9 | po | READY (async PO track — no blocking dep) | — |
+| P2-NF-G | Create `news-fetch-pre-inject` tag + G10 bug injection in `published-at-parser` (RFC-date timezone/off-by-one); card RED before dispatch | G10-setup | qa | BLOCKED | P2-NF-D |
+| P2-NF-H | G10 AI-fix ≤2 cycles (baseline 1.5) from dashboard-RED signal only; dashboard GREEN; G12 DoD enforced | G10 | developer + qa | BLOCKED | P2-NF-G |
+| P2-NF-I | G11 regression 2-trial — Trial-1 published-at-parser, Trial-2 headline-normalizer; Outcome-(a) × 2 = PASS | G11 | qa + developer | BLOCKED | P2-NF-H |
+| P2-NF-Z | Phase 2 close-gate (QA) — confirm G4+G8+G10+G11 chains; re-confirm 7 EARNED-PENDING + G12 streak; sandbox all-green; signal. NO flips | close-gate | qa | BLOCKED | P2-NF-F, P2-NF-I |
+
+**Notes:**
+- **WIP=1 sequential.** Dispatch P2-NF-A first (G4 chain). P2-NF-F (G9 PO Playwright) is the async PO track — runs in parallel, no blocking dependency.
+- **§4.5 compliance:** NO task flips any goal. `goalsEarned` stays 0, `decisionMatrix` stays TBD. PO-only atomic flip at 12/12 terminal Phase 3.
+- **Pre-revert tags:** `news-fetch-pre-ci` (P2-NF-A Step 0) + `news-fetch-pre-inject` (P2-NF-G Step 0). `news-fetch-pre-delete` NOT needed — G5 done in Phase 1.
+- **G4 element-pattern gotcha:** src dirs are SINGULAR (src/primitive/, src/module/) — use SI-3 §5 singular patterns. The dev-flow Fence note plural (src/primitives/) is STALE.
+- **R-2 fallback:** `.js`-suffix match failure → add `@typescript-eslint/parser` inline (stays Option A, no new task).
+- **Hard scope fence:** `apps/news-fetch/` ONLY. No cowork-agent coverage-sweep work (charter §Risk 4).
+- **Constraints Day 0:** L84 explicit staging, no --force/--no-verify, no push of source/CI, all on main, anchor `news-fetch-pre-refactor @ 31483c8c` INTACT.
 
 ---
 
