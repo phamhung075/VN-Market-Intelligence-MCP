@@ -1,0 +1,49 @@
+{
+  "signal": "pm-alert-engine-P2-I-ready",
+  "task": "P2-I",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "pm": "pm",
+  "timestamp": "2026-05-24T09:48:00Z",
+  "predecessor_task": "P2-H",
+  "predecessor_done_at": "2026-05-24T09:47:53Z",
+  "predecessor_commit": "7ecb6f34d9dedfaa98759ea2eb952a8a332abec3",
+  "predecessor_ac_verdicts": {
+    "AC-1": "PASS (zero domain-operation references)",
+    "AC-2": "PASS (alert_pipeline module wired)",
+    "AC-3": "PASS (infra adapters injected)",
+    "AC-4": "PASS (OpenAPI contract exists)",
+    "AC-5": "PASS (build+lint clean)",
+    "AC-6": "PASS (composition root ≤120 lines, 101L)",
+    "AC-7": "PASS (G12 DoD sandbox green, 11/11 PASS)"
+  },
+  "ssot_updates": {
+    "phase2.current_task": "P2-H → P2-I",
+    "phase2.current_task_owner": "dev-alert-engine (unchanged)",
+    "phase2.current_task_status": "SEQUENCED",
+    "phase2.current_task_handoff": "docs/handoffs/TASK_P2-I-ae-g6-dashboard-finalization.md",
+    "phase2.tasks.P2-H": { "status": "SEQUENCED → DONE", "doneAt": "2026-05-24T094753Z", "doneBy": "dev-alert-engine" },
+    "phase2.tasks.P2-I": { "status": "TBD → SEQUENCED", "acCount": 5, "blockedBy": "P2-H", "blocks": "P2-J", "sequencedAt": "2026-05-24T094800Z" },
+    "goalsEarned": 0,
+    "decisionMatrix": "all-TBD (frozen per §4.5)"
+  },
+  "p2i_ac_list": [
+    "AC-1: Dashboard file exists and opens via file:// (test -f FOUND)",
+    "AC-2: Deprecated notice present (grep _deprecated|services_v1|deprecated ≥1)",
+    "AC-3: SI-2 disavowal comment still present (grep SI-2 NOTE|docs/dashboards/index.html.*stock-price-EXCLUSIVE ≥1)",
+    "AC-4: Zero credentials clean (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0)",
+    "AC-5: G12 DoD gate (CGO_ENABLED=0 sandbox all-tier exit 0, ≥11 scenarios PASS)"
+  ],
+  "p2i_files_touched": [
+    "apps/alert-engine/dashboard/index.html (MODIFY — add G5a _deprecated/ notice + update microservice panel to reflect Phase-2 wired state; NO SI-2 touch)"
+  ],
+  "p2i_critical_notes": [
+    "P2-I must BUILD ON current file state — commit 099f8819 already relabeled category chips (golden/edge/failure → Valid Input/Edge Case/Bad Input → Error) via CATEGORY_LABELS map. P2-I adds deprecated-notice + Phase-2 wired-state display WITHOUT reverting that relabel.",
+    "SI-2 boundary MANDATORY: alert-engine MUST NOT create or modify docs/dashboards/index.html. The SI-2 disavowal HTML comment already baked in P1-D must remain present.",
+    "NO goal flips: G6 evidence advances but does NOT flip to YES. §4.5 SSOT untouched (goalsEarned stays 0, decisionMatrix all-TBD)."
+  ],
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "next_actor": "dev-alert-engine",
+  "next_action": "Execute P2-I: add deprecated-notice section + update microservice panel to reflect Phase-2 wired state; verify all 5 ACs PASS"
+}
