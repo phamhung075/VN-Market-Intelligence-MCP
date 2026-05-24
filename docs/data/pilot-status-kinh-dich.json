@@ -115,17 +115,28 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 READY_FOR_CLOSE_GATE — P1-A DONE (1e76d339). P1-B1 DONE (50c2d2ff). P1-B2 DONE (7598c113). P1-B3 DONE (6bdabbb9, G12 streak #3 COMPLETE). P1-C VERIFIED DONE (50069d69, MarkovPort Option B + inline delegation). P1-D VERIFIED DONE (7d6cd85f, G6 dashboard file://). P1-E VERIFIED DONE (6fc9b721, edit-rerun + zero-creds audit). P1-F VERIFIED DONE (43158e5c + 3114adf7, reading-scorer 4th primitive). P1-G close-gate completed with CONDITIONAL-GO (QA 3/4 criteria). P1-KD-H authorized (dashboard completion — add reading-scorer card). QA AC-2 follow-up spot re-verify pending.",
-    "status": "READY_FOR_CLOSE_GATE",
+    "_note": "Phase 1 APPROVED (CLEAN FULL GO) — all 9 Phase-1 tasks complete with clean sandbox green. P1-A DONE (1e76d339). P1-B1 DONE (50c2d2ff). P1-B2 DONE (7598c113). P1-B3 DONE (6bdabbb9, G12 streak #3 COMPLETE). P1-C VERIFIED DONE (50069d69, MarkovPort Option B + inline delegation). P1-D VERIFIED DONE (7d6cd85f, G6 dashboard file://). P1-E VERIFIED DONE (6fc9b721, edit-rerun + zero-creds audit). P1-F VERIFIED DONE (43158e5c + 3114adf7, reading-scorer 4th primitive). P1-G close-gate completed with CONDITIONAL-GO (QA 3/4 criteria). P1-KD-H DONE (b7cb55bc, dashboard 6/6 card groups + reading-scorer 4th primitive). P1-KD-QA-AC2-REVERT DONE (34205c87, AC-2 re-verify PASS: 6/6 = 100% + honest NOT-RUN + file self-contained). Next gate = Phase-2 authorization (PO → architect Phase-2 task plan).",
+    "status": "APPROVED",
     "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T23:15:00Z",
     "openedBy": "pm (exit gate verification cycle)",
-    "gateVerdict": "fix-then-clean-GO (PO decision 2026-05-24)",
-    "gateVerifiedAt": "2026-05-24T01:03:15Z",
-    "gateVerifiedBy": "po",
-    "gateCommit": "2474b873f63a30719b5e08080f777c909427e2e8",
+    "gateVerdict": "clean full GO (PO decision fix-then-clean-GO 2026-05-24 + QA AC-2 re-verify PASS 2026-05-24)",
+    "gateVerifiedAt": "2026-05-24T07:00:00Z",
+    "gateVerifiedBy": "qa",
+    "gateCommit": "34205c87",
     "gateDecisionDoc": "docs/po-decisions/2026-05-24-kinh-dich-phase1-close-gate-fix-then-clean-go.md",
-    "gateSignal": "docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json",
+    "gateSignal": "docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json",
+    "closedAt": "2026-05-24T07:00:00Z",
+    "closedBy": "qa (AC-2 re-verify PASS)",
+    "milestone": {
+      "verdict": "clean full GO",
+      "verifiedBy": "qa",
+      "evidence": [
+        "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md (commit 34205c87)",
+        "docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json"
+      ],
+      "date": "2026-05-24"
+    },
     "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
     "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
     "wip_limit": 1,
@@ -518,7 +529,7 @@
         "note": "Close-gate routed to PO for fix-then-clean-GO authorization"
       },
       "P1-KD-H": {
-        "status": "READY",
+        "status": "DONE",
         "owner": "dev-kinh-dich",
         "zone": "apps/kinh-dich-service",
         "type": "FIX",
@@ -528,20 +539,31 @@
         "authorized_by": "po",
         "authorization_signal": "docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json",
         "note": "Dashboard completion — add reading-scorer 4th primitive with 3 real scenarios; update panel label to '4 pure TypeScript functions'; ensure sandbox stays 14/14 green. G12 DoD applies.",
-        "status": "READY",
-        "completedAt": null,
-        "completedBy": null
+        "completedAt": "2026-05-24T06:45:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "b7cb55bc",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS"
+        }
       },
       "P1-KD-QA-AC2-REVERT": {
-        "status": "READY",
+        "status": "DONE",
         "owner": "qa",
         "type": "QA-GATE",
         "scope": "AC-2-only spot re-verify",
         "note": "After P1-KD-H DONE: confirm 6/6 = 100% dashboard render, honest cold-open NOT-RUN preserved, file self-contained. On QA PASS -> Phase-1 = clean full GO; PM flips phase1 -> APPROVED.",
         "depends_on": "P1-KD-H",
         "blocks": "Phase-1 clean-GO close (status=APPROVED)",
-        "completedAt": null,
-        "completedBy": null
+        "completedAt": "2026-05-24T07:00:00Z",
+        "completedBy": "qa",
+        "commit_sha": "34205c87",
+        "verdict": "PASS",
+        "evidence": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md"
       }
     }
   },
