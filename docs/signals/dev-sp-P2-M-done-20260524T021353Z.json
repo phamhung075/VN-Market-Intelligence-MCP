@@ -1,0 +1,71 @@
+{
+  "signal": "dev-sp-P2-M-done",
+  "task": "P2-M",
+  "pilot": "stock-price",
+  "emitted_at": "2026-05-24T02:13:53Z",
+  "emitted_by": "dev-stock-price",
+  "next_actor": "pm",
+  "next_action": "verify P2-M (G10 byte-identical restore + G11 trial-2), then sequence P2-Z (QA close-gate)",
+
+  "g10_evidence": {
+    "bug_location": "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go",
+    "bug_description": "ClassifyStaleness freshCutoff branch returned Stale instead of Fresh. Single-literal injection: return Stale -> return Fresh on line 70.",
+    "diagnosis_method": "Sandbox output showed price-staleness-classifier-golden FAIL with got=STALE want=FRESH. Golden scenario has age=30s, freshThreshold=60s, so age<=freshCutoff branch fires. Inspected classifier.go switch: first case returned Stale (injected) instead of Fresh (baseline). Single-edit fix restoring Fresh.",
+    "fix_file": "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go",
+    "fix_description": "Changed `return Stale, nil` back to `return Fresh, nil` in case age <= freshCutoff branch.",
+    "commit_sha": "4e920ffb",
+    "fix_cycles_used": 1,
+    "sandbox_post_fix": "total=11 pass=11 fail=0 status=OK",
+    "build_exit": 0,
+    "lint_exit": 0,
+    "byte_identical_restore": "git diff stock-price-pre-inject HEAD -- apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go → EMPTY (exit 0)"
+  },
+
+  "g11_trial1_evidence": {
+    "trial_1_injected_primitive": "price-staleness-classifier",
+    "trial_1_observation": "G10 injection caused fail=1 (price-staleness-classifier-golden only). No other primitive scenario failed because price-staleness-classifier is consumed by price_resolution module (which uses time.Now() rebinding in sandbox executor — the module scenarios pass regardless of classifier logic change when they test staleness=STALE via age>freshThreshold). The module golden scenario tests staleness=STALE (T1 was 90s old relative to now, beyond freshThreshold=60s), so the buggy Stale return still satisfied that scenario.",
+    "trial_1_coupled_scenarios_failed": 1,
+    "trial_1_fix_restored_all": "YES (single edit restored all to GREEN)",
+    "trial_1_outcome": "outcome-(a) PASS (1 coupled scenario: the injected primitive golden)"
+  },
+
+  "g11_trial2_evidence": {
+    "trial_2_injected_primitive": "price-quote-normalizer",
+    "trial_2_mutation": "Changed ChangePercent: rawChangePct to ChangePercent: rawChange in NormalizeQuote return struct",
+    "trial_2_mutation_file": "apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go",
+    "pre_trial2_tag": "stock-price-pre-trial2",
+    "trial_2_sandbox_red": "total=11 pass=9 fail=2 status=FAIL",
+    "trial_2_failing_scenarios": [
+      "price-quote-normalizer-golden.json (ChangePercent: got=500 want=0.59)",
+      "price-quote-normalizer-failure.json (ChangePercent: got=100 want=0.14)"
+    ],
+    "trial_2_coupled_scenarios_failed": 2,
+    "trial_2_fix": "Changed ChangePercent: rawChange back to ChangePercent: rawChangePct (single-literal restore, working-tree git restore — NOT committed)",
+    "trial_2_sandbox_green": "total=11 pass=11 fail=0 status=OK",
+    "trial_2_byte_identical_restore": "git diff stock-price-pre-trial2 HEAD -- apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go → EMPTY (exit 0)",
+    "trial_2_fix_restored_all": "YES (both coupled REDs restored to GREEN by single-edit)",
+    "trial_2_outcome": "outcome-(a) PASS"
+  },
+
+  "g11_verdict": "PASS (both trials demonstrate regression-alarm coupling — Trial-1: 1 scenario RED, Trial-2: 2 scenarios RED, both single-edit restored)",
+
+  "g12_dod": {
+    "final_sandbox": "total=11 pass=11 fail=0 status=OK",
+    "build_exit": 0,
+    "lint_exit": 0,
+    "working_tree_clean": true,
+    "foreign_files_staged": "none",
+    "frozen_tags_intact": ["stock-price-pre-inject at 57d4df43", "stock-price-pre-ci", "stock-price-pre-delete", "stock-price-pre-p1b1"],
+    "frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc intact"
+  },
+
+  "constraints_verified": {
+    "no_ssot_changes": true,
+    "no_foreign_files_committed": true,
+    "no_golangci_yml_changes": true,
+    "no_force_no_verify": true,
+    "no_si2_fleet_index_changes": true,
+    "main_branch_only": true,
+    "explicit_path_staging": true
+  }
+}
