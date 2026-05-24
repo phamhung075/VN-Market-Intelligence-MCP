@@ -1,0 +1,30 @@
+{
+  "from": "dev-mcp-server",
+  "to": "po",
+  "type": "task-complete",
+  "task": "NEWS-INGEST-1",
+  "createdAt": "2026-05-25T00:00:06Z",
+  "verdict": {
+    "root_cause": "(c) VPS/news-fetch upstream re-pushes already-stored articles every cycle",
+    "ruled_out": ["(a') shared/single source_url", "(b) title-dedup over-match"],
+    "evidence_cycle": "2026-05-24T21:57:17Z",
+    "histogram": {
+      "total_articles": 160,
+      "empty_url_count": 0,
+      "distinct_non_empty_url_count": 160,
+      "max_dup_count_for_any_url": 1,
+      "title_dup_true_count": 50,
+      "title_dup_false_count": 110,
+      "insert_changes_nonzero": 0,
+      "insert_changes_zero": 110,
+      "inserted": 0,
+      "duplicates": 160,
+      "urls_already_in_db": 160,
+      "urls_not_in_db": 0
+    },
+    "mcp_server_dedup_correct": true,
+    "fix_zone": "apps/news-fetch/ (dev-news-fetch) or VPS push script on Vinahost — needs 'since cursor' to push only NEW articles"
+  },
+  "commit": "7e350f56",
+  "handoff": "docs/handoffs/TASK_NEWS-INGEST.md"
+}

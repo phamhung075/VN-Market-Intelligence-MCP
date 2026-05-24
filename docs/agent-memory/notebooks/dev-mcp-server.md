@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c292 · 2026-05-25 (NEWS-INGEST-1)
+
+### NEWS-INGEST-1 — Confirm root cause of news-ingest all-duplicate drop (DONE)
+
+**Verdict:** Root cause (c) — VPS/news-fetch re-pushes already-stored articles every cycle.
+
+**Evidence from real cycle (2026-05-24T21:57:17Z, 160 items):**
+- 160/160 source_urls distinct + non-empty
+- 160/160 source_urls already in rag_analyses (batch DB verify = `already_in_db: 160, not_in_db: 0`)
+- 50 dropped by `isTitleDup=true` (legitimate: title seen in prior push)
+- 110 reached INSERT OR IGNORE → all `changes=0` (URL already in partial unique index)
+- `inserted: 0` — correct dedup behavior, wrong upstream feed
+
+**Both PO candidate causes ruled out:**
+- (a') shared/single source_url — RULED OUT (160 distinct URLs, max_dup_count=1)
+- (b) title-dedup over-match — RULED OUT (50 title-dups are real prior inserts; 110 INSERT misses are URL-index hits, not title-dedup)
+
+**Fix zone:** `apps/news-fetch/` (dev-news-fetch) — needs a "since cursor" so VPS only pushes articles newer than the last push timestamp. VPS push script on Vinahost may also need the cursor. mcp-server dedup layers are CORRECT and must NOT be weakened.
+
+**Commit:** `7e350f56`
+
+Zone health: pollNews dedup working correctly; upstream VPS re-push is the bug; NEWS-INGEST-2 fix routes to dev-news-fetch | HEALTHY
+
+---
+
 ## c291 · 2026-05-24 (NF-LD-5-dev-A)
 
 ### NF-LD-5-dev-A — Regenerate served copy with Refresh button (DONE)
