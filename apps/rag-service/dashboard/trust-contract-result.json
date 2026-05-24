@@ -1,0 +1,36 @@
+{
+  "panels_ok": true,
+  "panels_count": 3,
+  "primitive_cards": [
+    {
+      "name": "similarity-scorer",
+      "status": "GREEN"
+    },
+    {
+      "name": "relevance-threshold-gate",
+      "status": "GREEN"
+    },
+    {
+      "name": "temporal-decay-scorer",
+      "status": "GREEN"
+    },
+    {
+      "name": "top-k-selector",
+      "status": "GREEN"
+    },
+    {
+      "name": "context-window-packer",
+      "status": "GREEN"
+    }
+  ],
+  "primitive_cards_count": 5,
+  "primitive_cards_all_green": true,
+  "module_ok": true,
+  "microservice_not_run": true,
+  "colors_match_traces": true,
+  "honest_red_method": "DOM patch via page.route(): trace-similarity-scorer-golden.passed set to false in-memory → card shows \"FAIL\" (expected FAIL). File on disk NOT modified.",
+  "console_errors": 0,
+  "network_calls": 0,
+  "verdict": "PASS",
+  "error": null
+}

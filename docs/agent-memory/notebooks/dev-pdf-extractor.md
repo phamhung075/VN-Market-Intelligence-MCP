@@ -4,6 +4,23 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P2-G5a DONE (move superseded code to _deprecated/)
+
+**Commit:** `d339303f` | **Tag:** `pdf-extractor-pre-delete`
+
+**Finding:** No function bodies from P1-B1/P1-B2 extraction remained in domain/services.py — the `def validate_financial_figures` and `def normalize_decimal` bodies were already fully moved to domain/primitives/ in Phase 1. Only a backward-compat re-export shim existed.
+
+**What was moved to `_deprecated/`:**
+- `domain/primitive/` (singular) — proto-scaffold `mock_echo` with zero live callers. Runner uses `domain.primitives.{name}` (plural). Moved to `_deprecated/domain_primitive_mock_echo/` with DEPRECATED header.
+
+**Import update:** `test_financial_validation.py` updated to import directly from `domain.primitives.validate_financial_figures` (backward-compat shim dependency on `domain.services` removed).
+
+**Evidence:** 114 pytest PASS. lint-imports: 2 KEPT 0 broken. Sandbox: 20 GREEN primitive (1 deliberate honest-RED fixture), module PASS. Zero mcp-server files touched.
+
+**Next:** P2-G5c (qa: zero TODO.*migrat grep)
+
+---
+
 ### 2026-05-24 — P2-J3 DONE (G10 regression repair — low_confidence_gate threshold)
 
 **Fix commit:** `1a678571` | **Cycle count:** 1
