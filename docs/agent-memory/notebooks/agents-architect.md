@@ -1,5 +1,21 @@
 # agents-architect — Notebook
 
+## 2026-05-24T07:33:08Z
+
+**Brief:** `docs/architecture-briefs/2026-05-24-microservice-build-standard-promotion.md` (REVISED)
+
+User decision: standard must be SIZE-GATED. Revised brief adds Profile Selection gate (FULL for new
+apps/<svc>/, LEAN for feature on existing service), updates all three trigger points (F4 architect
+Step 5, F5 dev-team Step 2, F6 microservice-main Step 0c) to emit `BUILD-STANDARD: full/lean`
+instead of `required`, and trims the LEAN profile to drop the multi-role relay and per-feature
+dashboard/charter — keeping only fence + sandbox/replay + honest red/green DoD driven by one
+dev-<svc> agent. Lazy-load wiring (F3a/F3b) stays as single entry; standard's § 1 drives
+conditional FULL charter+phases load without frontmatter bloat.
+
+**Signal dropped:** `docs/signals/agents-architect-microservice-build-standard-promotion-20260524T073308Z.json` → agent-father (supersedes 072538Z signal)
+
+---
+
 ## 2026-05-24T07:25:38Z
 
 **Brief:** `docs/architecture-briefs/2026-05-24-microservice-build-standard-promotion.md`
