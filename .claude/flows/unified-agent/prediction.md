@@ -28,7 +28,10 @@ If `get_prediction_markets()` does not return regime context → check current `
 ### Prediction Review (HH:MM UTC)
 - Mode: PREDICTION_REVIEW | Claims: N | Accuracy: X% | Flags: [list] | Regime at prediction: REGIME
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/unified-agent.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/unified-agent.md
 git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```

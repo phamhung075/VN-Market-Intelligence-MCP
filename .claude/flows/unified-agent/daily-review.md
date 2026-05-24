@@ -48,7 +48,10 @@ Append to `docs/agent-memory/notebooks/unified-agent.md`:
 ### Daily Review (HH:MM UTC)
 - Mode: DAILY_REVIEW | Freshness: [ok/stale] | Bugs: [list]
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/unified-agent.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/unified-agent.md
 git commit -m "chore(memory/unified-agent): notebook YYYY-MM-DD"
 ```

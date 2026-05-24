@@ -69,7 +69,10 @@ Horizon:
 ### Monday Predictions (HH:MM UTC)
 - Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/digest-predict.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/digest-predict.md
 git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD"
 ```
