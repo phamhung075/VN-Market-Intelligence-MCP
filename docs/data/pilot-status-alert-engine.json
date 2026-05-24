@@ -116,21 +116,35 @@
     "acCount": 69,
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-A",
+    "current_task": "P2-B",
     "current_task_status": "SEQUENCED",
     "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P2-A-ae-pre-ci-tag.md",
+    "current_task_handoff": "docs/handoffs/TASK_P2-B-ae-golangci-yml.md",
+    "progress_notes": [
+      "P2-A DONE 2026-05-24T084900Z — alert-engine-pre-ci tag created at commit 604a71f1 (Phase-1 close-gate signal commit, per dev-alert-engine P2-A done signal). Tag verified present via `git tag | grep alert-engine-pre-ci`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-A minimal 3-AC task complete.",
+      "P2-B SEQUENCED 2026-05-24T085000Z — .golangci.yml Fence-A/B/C creation + CI job wiring. Owner: dev-alert-engine. 5 ACs (config exists + 3 rules, lint exit 0, CI job wired OR offline proof, freeze anchor AC-4, G12 DoD gate). Handoff: docs/handoffs/TASK_P2-B-ae-golangci-yml.md. CRITICAL FRAMING: AC-2 green lint run is CONFIG PROOF, not FENCE-PROOF. Actual fence enforcement proof is P2-C (deliberate violation test). P2-B must establish config; P2-C must prove it works."
+    ],
     "tasks": {
       "P2-A": {
         "title": "Create alert-engine-pre-ci tag (pre-revert anchor before G4 work)",
         "owner": "dev-alert-engine",
         "blocks": "P2-B",
         "blockedBy": null,
-        "status": "SEQUENCED",
+        "status": "DONE",
         "acCount": 3,
-        "sequencedAt": "2026-05-24T082100Z"
+        "sequencedAt": "2026-05-24T082100Z",
+        "doneAt": "2026-05-24T084900Z",
+        "doneBy": "dev-alert-engine"
       },
-      "P2-B": { "title": ".golangci.yml Fence-A/B/C creation + CI job wiring", "owner": "dev-alert-engine", "status": "TBD" },
+      "P2-B": {
+        "title": ".golangci.yml Fence-A/B/C creation + CI job wiring",
+        "owner": "dev-alert-engine",
+        "blocks": "P2-C",
+        "blockedBy": "P2-A",
+        "status": "SEQUENCED",
+        "acCount": 5,
+        "sequencedAt": "2026-05-24T085000Z"
+      },
       "P2-C": { "title": "G4 deliberate-violation proof (AC-4b) — Fence-A violation + revert", "owner": "dev-alert-engine + qa", "status": "TBD" },
       "P2-D": { "title": "G4 freeze anchor confirmation (AC-4c)", "owner": "qa", "status": "TBD" },
       "P2-E": { "title": "Create alert-engine-pre-delete tag (pre-revert anchor before G5a work)", "owner": "dev-alert-engine", "status": "TBD" },
