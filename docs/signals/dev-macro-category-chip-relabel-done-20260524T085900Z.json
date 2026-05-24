@@ -1,0 +1,26 @@
+{
+  "signal": "dev-macro-category-chip-relabel-done",
+  "timestamp": "2026-05-24T08:59:00Z",
+  "from": "dev-macro-indicators",
+  "to": "qa",
+  "task": "category-chip-relabeling",
+  "status": "DONE",
+  "commit": "f0a8760c",
+  "files_changed": ["apps/macro-indicators/dashboard/index.html"],
+  "summary": "Relabeled scenario category chips to Plain meaning scheme: golden→Valid Input, edge→Edge Case, failure→Bad Input→Error. Display layer only — JSON SSOT unchanged. Render gate PASS: JS errors NONE, Valid Input×7, Edge Case×7, Bad Input→Error×6, bare failure chips×0. G12 DoD: primitive 18/18 green, module 2/2 green.",
+  "render_gate": {
+    "js_errors": 0,
+    "valid_input_chips": 7,
+    "edge_case_chips": 7,
+    "bad_input_chips": 6,
+    "bare_failure_chips": 0,
+    "total_chip_text": "18 scenarios",
+    "notrun_chip_text": "NOT-RUN",
+    "legend_test_passes_present": true
+  },
+  "g12_dod": {
+    "primitive_tier": "total=18 pass=18 fail=0 status=OK",
+    "module_tier": "total=2 pass=2 fail=0 status=OK"
+  },
+  "next_actor": "qa"
+}
