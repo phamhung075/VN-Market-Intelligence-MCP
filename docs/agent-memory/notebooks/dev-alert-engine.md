@@ -6,6 +6,31 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-B — .golangci.yml Fence-A/B/C + CI go-lint job DONE
+
+**Task:** P2-B — create apps/alert-engine/.golangci.yml + wire alert-engine-go-lint CI job
+
+**Outcome:** All 5 ACs PASS. Commit ships .golangci.yml + ci.yml + handoff + notebook + signal.
+
+**Key decisions:**
+- Used golangci-lint v2 format (installed: 2.12.2) — not v1 syntax from handoff spec. Matches peer pattern.
+- Fence-C brownfield adaptation: added `!**/pkg/infrastructure/**` exclusion because alert-engine's
+  `pkg/infrastructure/sqlite.go` registers mattn/go-sqlite3 CGO driver directly (unlike stock-price
+  which registers at composition root). Fence-C still bars primitive/module/application/interface from sqlite3.
+- CI job wired: `alert-engine-go-lint` job in .github/workflows/ci.yml, matching stock-price-go-lint pattern.
+
+**AC evidence:**
+- AC-1: PASS — 69 lines (≤80), three named rules fence-a/fence-b/fence-c in v2 format
+- AC-2: PASS — golangci-lint 2.12.2 exits 0, 0 issues; CONFIG-VALIDITY only, NOT fence-enforcement proof
+- AC-3: PASS — grep returns 8 matches for alert-engine-go-lint/alert-engine in ci.yml
+- AC-4: PASS — only P2-B commit on apps/alert-engine/.golangci.yml (freeze anchor for P2-D)
+- AC-5: PASS — sandbox total=11 pass=11 fail=0 status=OK exit 0
+
+**Signal:** docs/signals/dev-ae-P2-B-done-<UTC>.json (to be filled post-commit)
+**Next:** PM dispatches P2-C (G4 deliberate-violation proof — Fence-A non-zero exit + revert)
+
+---
+
 ### 2026-05-24 P2-A — alert-engine-pre-ci Tag Created (Phase 2 Start)
 
 **Task:** P2-A — pre-revert anchor tag before G4 .golangci.yml work

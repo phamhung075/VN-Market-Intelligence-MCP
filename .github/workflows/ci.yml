@@ -114,6 +114,31 @@ jobs:
           working-directory: apps/stock-price
           args: --config .golangci.yml
 
+  alert-engine-go-lint:
+    name: Alert Engine Go Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: apps/alert-engine
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/alert-engine/go.mod
+          cache-dependency-path: apps/alert-engine/go.sum
+
+      # Run golangci-lint (depguard Fence-A/B/C) against the alert-engine service.
+      # working-directory is equivalent to: cd apps/alert-engine && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          working-directory: apps/alert-engine
+          args: --config .golangci.yml
+
   kinh-dich-ts-lint:
     name: kinh-dich-ts-lint
     runs-on: ubuntu-latest
