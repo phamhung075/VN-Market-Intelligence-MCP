@@ -1,5 +1,68 @@
 # QA — Notebook
 
+## cycle-98 · 2026-05-24 · pdf-extractor P2-J0/J1/J2 — G10 bug injection — DONE
+
+**Task:** P2-J0 (preflight) + P2-J1 (sealed spec) + P2-J2 (tag + inject + RED confirm) | **Verdict:** INJECTION DONE — G10 RED baseline committed
+
+```
+date: 2026-05-24T14:00:00Z
+outcome: DONE — pre-inject tag set, single-literal bug injected, RED confirmed, blind-safe signal emitted
+type: pilot-task-qa (G10 bug injection — pdf-extractor)
+signal: docs/signals/qa-pdf-extractor-P2-J2-injected-20260524T140000Z.json
+sealed_spec: docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-j1-bug-injection-spec.md
+inject_commit: e15cdde8
+pre_inject_tag: pdf-extractor-pre-inject → 4f254c8e
+
+P2-J0 (preflight):
+  baselineCycleCount: 1.5 (pdf_extractor_baseline)
+  g10_target: "AI agent fixes pdf-extractor primitive bug in ≤2 cycles vs baseline 1.5"
+  pdf_extractor_pre_inject_tag_preexisting: false (CONFIRMED absent before P2-J2)
+  injection_candidates_confirmed: BCTC-decimal-shift-class + BCTC-confidence-threshold-boundary
+
+P2-J1 (injection spec):
+  selected_primitive: low_confidence_gate
+  selected_over: decimal_normalizer (already used in G8 P2-E2 proof)
+  mutation_file: apps/pdf-extractor/domain/primitives/low_confidence_gate/primitive.py
+  mutation_line: 40
+  original_literal: 0.2
+  mutated_literal: 0.1
+  mutation_constant: _LOW_CONF_THRESHOLD
+  rationale: single-literal constant mutation; explicit G10/G11 injection target per spec + docstring
+
+P2-J2 (inject + confirm):
+  pre_inject_tag_created: pdf-extractor-pre-inject → 4f254c8e (at HEAD before mutation)
+  mutation_applied: _LOW_CONF_THRESHOLD 0.2 → 0.1 (primitive.py:40)
+  scenario_flipped_RED: edge_low_confidence_flag.json (confidence=0.15, expected=low_confidence, actual=normal)
+  sandbox_exit: 1 (pass=false)
+  scenarios_still_GREEN: happy_normal.json (exit 0) + failure_zero_skip.json (exit 0)
+  isolation_confirmed: true (2/3 non-bad scenarios GREEN; only boundary scenario RED)
+  pytest_delta: 3 FAIL / 102 PASS (test_edge_low_confidence_flag_0_15, test_edge_low_confidence_flag_0_19, test_return_is_string)
+  inject_commit: e15cdde8
+  signal_commit: 8b2dbf30 (swept into commit-mutex commit)
+  ssot_not_mutated: true (PO-only §4.5)
+  goal_flips: NONE
+```
+
+| Check | Verdict |
+|-------|---------|
+| P2-J0: baselineCycleCount=1.5 confirmed | PASS |
+| P2-J0: g10_target confirmed | PASS |
+| P2-J0: pre-inject tag absent before J2 | PASS |
+| P2-J1: sealed spec written (MUST NOT read) | PASS |
+| P2-J2: pre-inject tag created at clean HEAD | PASS |
+| P2-J2: single-literal mutation applied | PASS |
+| P2-J2: edge scenario flips RED (exit 1) | PASS |
+| P2-J2: happy + failure scenarios stay GREEN | PASS |
+| P2-J2: isolation confirmed | PASS |
+| P2-J2: pytest delta 3 fail / 102 pass | PASS |
+| P2-J2: inject committed + signal emitted | PASS |
+| P2-J2: blind-safe signal (no bug location/literal) | PASS |
+
+**INJECTION verdict: DONE. G10 RED baseline committed.**
+**NEXT:** P2-J3 — dispatch dev-pdf-extractor BLIND (edge_low_confidence_flag RED, fix to GREEN ≤2 cycles). DO NOT share p2-j1-bug-injection-spec.md path with the fixing dev.
+
+---
+
 ## cycle-97 · 2026-05-24 · pdf-extractor P2-G — G9 Playwright headless trust contract — PASS
 
 **Task:** P2-G (G9 Playwright headless Path B) | **Verdict:** G9 VERIFIED — EARNED-PENDING
