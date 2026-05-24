@@ -1,0 +1,13 @@
+{
+  "primitive": "source-dedup-key",
+  "function": "computeArticleKey",
+  "input": {
+    "article": {
+      "url": null,
+      "headline": "",
+      "source": "reuters"
+    }
+  },
+  "expectedOutput": "fallback:reuters:empty",
+  "scenarioType": "failure"
+}

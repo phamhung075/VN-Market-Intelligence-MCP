@@ -1,0 +1,13 @@
+{
+  "primitive": "source-dedup-key",
+  "function": "computeArticleKey",
+  "input": {
+    "article": {
+      "url": null,
+      "headline": "Vietnam GDP grows 6.8%",
+      "source": "reuters"
+    }
+  },
+  "expectedOutput": "headline:reuters:vietnam gdp grows 6.8%",
+  "scenarioType": "edge"
+}

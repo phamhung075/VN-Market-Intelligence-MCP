@@ -1,0 +1,13 @@
+{
+  "primitive": "source-dedup-key",
+  "function": "computeArticleKey",
+  "input": {
+    "article": {
+      "url": "https://bloomberg.com/news/articles/2026-05-24/fed-rates",
+      "headline": "Fed raises rates",
+      "source": "bloomberg"
+    }
+  },
+  "expectedOutput": "url:bloomberg.com/news/articles/2026-05-24/fed-rates",
+  "scenarioType": "golden"
+}
