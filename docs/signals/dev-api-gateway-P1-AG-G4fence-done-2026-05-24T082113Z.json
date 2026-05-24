@@ -1,0 +1,71 @@
+{
+  "signal": "G4-FENCE-DONE",
+  "agent": "dev-api-gateway",
+  "task": "P1-AG-E2",
+  "goal": "G4",
+  "pilot": "api-gateway",
+  "timestamp": "2026-05-24T082113Z",
+  "commit": {
+    "sha": "9fd1634e",
+    "files": [
+      "apps/api-gateway/.golangci.yml",
+      ".github/workflows/ci.yml",
+      "apps/api-gateway/docs/g4-fence.md"
+    ],
+    "note": "Files committed in concurrent commit 9fd1634e alongside PM alert-engine sequencing work. Git working tree clean, all three files verified correct in HEAD."
+  },
+  "ac": {
+    "AC-1": "PASS — apps/api-gateway/.golangci.yml with depguard fence-a (prim→module, prim→net/http, prim→net/http/httputil forbidden) + fence-b (module→infra forbidden) + fence-c (infra only in composition root) present.",
+    "AC-2": "PASS — CI job 'API Gateway Go Lint' added to .github/workflows/ci.yml, scoped to apps/api-gateway/, uses golangci-lint-action@v6.1.1 with --config .golangci.yml. Mirrors macro-indicators CI job shape.",
+    "AC-3": "PASS — PROVEN-BITES (see bites_proof below). Violation NOT committed.",
+    "AC-4": "PASS — go build ./... exit 0, go test ./... all PASS (57 tests).",
+    "AC-5_G12": "PASS — clean lint exit 0 confirmed after revert + go test ./... 57 PASS."
+  },
+  "bites_proof": {
+    "violation_introduced": "Added `import _ \"net/http\"` inside pkg/primitive/overall-status-computer/compute.go (Fence-A net/http ban)",
+    "lint_with_violation_exit_code": 1,
+    "lint_with_violation_output": "pkg/primitive/overall-status-computer/compute.go:9:8: import 'net/http' is not allowed from list 'fence-a': Fence-A: primitive must be pure-compute (zero I/O) — net/http forbidden (depguard)\nimport _ \"net/http\"\n       ^\n1 issues:\n* depguard: 1\nEXIT_CODE=1",
+    "rule_named_in_output": "depguard — fence-a — Fence-A: primitive must be pure-compute (zero I/O) — net/http forbidden",
+    "violation_reverted": true,
+    "lint_after_revert_exit_code": 0,
+    "lint_after_revert_output": "0 issues.\nEXIT_CODE=0",
+    "violation_committed": false
+  },
+  "go_test": {
+    "exit_code": 0,
+    "total_tests": 57,
+    "packages": [
+      "pkg/application (4 tests — PASS)",
+      "pkg/domain (6 tests — PASS)",
+      "pkg/infrastructure (7 tests — PASS)",
+      "pkg/interface/http (26 tests — PASS)",
+      "pkg/module/gateway (8 tests — PASS)",
+      "pkg/primitive/overall-status-computer (7 tests — PASS)",
+      "pkg/primitive/proxy-path-resolver (6 tests — PASS)",
+      "pkg/primitive/route-service-matcher (10 tests — PASS)"
+    ],
+    "sandbox_primitive": "total=11 pass=11 fail=0 status=OK EXIT=0",
+    "sandbox_module": "total=1 pass=1 fail=0 status=OK EXIT=0"
+  },
+  "fence_rules": {
+    "fence_a_files": "**/pkg/primitive/**",
+    "fence_a_denied": [
+      "github.com/vn-market-intelligence/api-gateway/pkg/module",
+      "github.com/vn-market-intelligence/api-gateway/pkg/application",
+      "github.com/vn-market-intelligence/api-gateway/pkg/interface",
+      "github.com/vn-market-intelligence/api-gateway/pkg/infrastructure",
+      "net/http",
+      "net/http/httputil"
+    ],
+    "fence_b_files": "**/pkg/module/**",
+    "fence_b_denied": [
+      "github.com/vn-market-intelligence/api-gateway/pkg/application",
+      "github.com/vn-market-intelligence/api-gateway/pkg/interface",
+      "github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
+    ],
+    "fence_c_files": "all except **/cmd/server/main.go and **/*_test.go",
+    "fence_c_denied": [
+      "github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
+    ]
+  }
+}

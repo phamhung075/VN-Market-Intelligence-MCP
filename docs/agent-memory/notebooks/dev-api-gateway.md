@@ -4,32 +4,34 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 
 ## Working Memory
 
-**Last task:** P1-AG-B1 overall-status-computer extraction (2026-05-24) — SCALE pilot Phase 1
+**Last task:** P1-AG-E2 G4 architecture fence (depguard + CI job) — 2026-05-24
 
-**Status:** P1-AG-B1 DONE — commit ab534044
+**Status:** P1-AG-E2 DONE — commit 9fd1634e
 
-**What changed (P1-AG-B1):**
-- NEW: `pkg/primitive/overall-status-computer/compute.go` — exported `ComputeOverallStatus(map[string]string) string`; pure function, zero external imports, stdlib only. No import cycle (primitive does NOT import pkg/domain; uses string constants).
-- NEW: `pkg/primitive/overall-status-computer/compute_test.go` — 7 table-driven sub-tests: all-ok, all-down, mixed→degraded, empty→down, single-ok, single-down, degraded-present.
-- NEW: 4 scenario JSONs in `pkg/primitive/overall-status-computer/scenarios/`: golden-all-ok, golden-degraded, failure-reversed-guard (genuine failure fixture), g11-canary-cascade (G11 proof).
-- MODIFIED: `pkg/domain/services.go` — imports primitive via alias `osc`, converts `map[string]HealthStatus` to `map[string]string`, calls `osc.ComputeOverallStatus`, casts result back to `HealthStatus`. Inline `computeOverallStatus` removed.
-- NEW: `docs/g11-coupling-design.md` — two-trial cascade plan; Trial-1 proves overall-status-computer flip corrupts /health JSON AND dashboard badge class simultaneously; Trial-2 (B3) covers route-service-matcher.
+**What changed (P1-AG-E2):**
+- NEW: `apps/api-gateway/.golangci.yml` — golangci-lint v2 depguard config. fence-a: prim→module/app/interface/infra/net/http/net/http/httputil all denied. fence-b: module→app/interface/infra denied. fence-c: infra only in cmd/server/main.go.
+- UPDATED: `.github/workflows/ci.yml` — added `api-gateway-go-lint` job (mirrors macro-go-lint shape), scoped to apps/api-gateway/, uses golangci-lint-action@v6.1.1 --config .golangci.yml.
+- NEW: `apps/api-gateway/docs/g4-fence.md` — fence evidence doc: deny rules table, fence command, deliberate-violation protocol (Fence-A), CI job description.
 
-**Test count:** 47 top-level PASS + 13 sub-tests (60 total entries). Was 45. go vet clean.
+**Test count:** 57 tests PASS (unchanged). go build exit 0. sandbox primitive total=11 pass=11. sandbox module total=1 pass=1.
 
-**Import cycle resolution note:** Primitive uses `string` (not `domain.HealthStatus`) to avoid domain→primitive→domain cycle. services.go converts to/from string inline. This is correct three-tier architecture: primitives are the base tier, domain depends on primitives (not vice versa).
+**BITES PROOF (G4 proven non-false-green):**
+- Violation: `import _ "net/http"` added to pkg/primitive/overall-status-computer/compute.go
+- With violation: lint exit 1 — `import 'net/http' is not allowed from list 'fence-a': Fence-A: primitive must be pure-compute (zero I/O) — net/http forbidden (depguard)`
+- After revert: lint exit 0 — `0 issues.`
+- Violation NOT committed.
 
-**AC status (P1-AG-B1):**
-- AC-1: ComputeOverallStatus exported, pure, zero net/http/httputil imports in pkg/primitive/. PASS.
-- AC-2: 4 scenarios present; failure-reversed-guard is genuine failure scenario. PASS.
-- AC-3: services.go calls primitive, inline duplicate removed. PASS.
-- AC-4: go test ./... 47 PASS, go vet ./... clean. PASS.
-- AC-5: g11-coupling-design.md authored, two-trial plan documented. PASS.
-- AC-6: smoke output in RETURN block. PASS.
+**AC status (P1-AG-E2):**
+- AC-1: golangci-lint config with depguard rules present. PASS.
+- AC-2: CI job api-gateway-go-lint added. PASS.
+- AC-3: PROVEN-BITES — depguard named in non-zero output, clean after revert. Violation not committed. PASS.
+- AC-4: go build ./... + go test ./... pass. PASS.
+- AC-5 (G12): clean lint exit 0 + 57 go tests PASS. PASS.
+
+**Signal:** docs/signals/dev-api-gateway-P1-AG-G4fence-done-2026-05-24T082113Z.json
+
+**Previous tasks DONE:** B1 (overall-status-computer, ab534044), B2 (proxy-path-resolver, 239533dd), B3 (route-service-matcher, in HEAD), C1 (module/gateway, c956631d), E2 (G4 fence, 9fd1634e)
 
 **Next tasks (Phase 1):**
-- B2: Extract proxy-path-resolver primitive from pkg/interface/http/handlers.go ProxyPath
-- B3: Extract route-service-matcher primitive + Trial-2 G11 evidence
-- B4: pkg/module/gateway/ composition module
-- B5: cmd/sandbox runner + scenario execution
+- B5: cmd/sandbox runner + scenario execution (CGO_ENABLED=0 go run ./cmd/sandbox)
 - B6: Trust dashboard HTML
