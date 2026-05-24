@@ -9,16 +9,18 @@
  * (no TS, no test output, no terminal).
  *
  * Asserts:
- *   - 3 panels rendered (primitives / module / microservice)
- *   - 6 cards (4 primitive + 1 module + 1 microservice)
+ *   - 3 sandbox panels rendered (primitives / module / microservice)
+ *   - 1 live-data panel present (panel-live-data) — shows degrade state under file://
+ *   - 6 sandbox cards (4 primitive + 1 module + 1 microservice)
  *   - status badges are honest (PASS/FAIL/ERROR/NOT-RUN — never fabricated)
  *   - ≥1 green (PASS) primitive card with a human-readable story
+ *   - live panel shows file:// degrade message (no fake rows, no network error)
  *   - 0 JS console errors, 0 page errors
  *   - 0 external network calls (file:// only — every request must be file://)
  *   - saves render-check.png screenshot for evidence
  *
  * Exit codes:
- *   0 - PASS  (3 panels, 6 cards, ≥1 green primitive story, 0 errors, 0 net)
+ *   0 - PASS  (3 sandbox panels, 1 live panel, 6 sandbox cards, ≥1 green primitive story, live degrade shown, 0 errors, 0 net)
  *   1 - FAIL  (missing panels/cards, red dashboard, JS/page errors, network calls)
  *
  * Usage (from apps/news-fetch/):
@@ -97,8 +99,11 @@ async function run() {
     await page.goto(PAGE_URL, { waitUntil: "networkidle" });
     await page.waitForTimeout(400); // settle synchronous XHR + badge paint
 
-    // 1. Panels — must be exactly 3 distinct panels.
+    // 1. Panels — 3 sandbox panels + 1 live-data panel = 4 total.
     const panelIds = await page.$$eval(".panel", (els) => els.map((e) => e.id));
+    const SANDBOX_PANEL_IDS = ["panel-primitives", "panel-module", "panel-microservice"];
+    const sandboxPanelIds = panelIds.filter((id) => SANDBOX_PANEL_IDS.includes(id));
+    const hasLivePanel = panelIds.includes("panel-live-data");
 
     // 2. Cards — id + name + meta + badge text/class per card.
     const cards = await page.$$eval(".card", (els) =>
@@ -126,6 +131,17 @@ async function run() {
     const lastRun = await page
       .$eval("#last-run", (e) => e.textContent.trim())
       .catch(() => "");
+
+    // 4. Live panel degrade state (file:// → must show degrade, not fake rows, not error).
+    const liveDegradeVisible = await page
+      .$eval("#live-state-degrade", (e) => !!e && e.textContent.trim().length > 0)
+      .catch(() => false);
+    const liveFakeRows = await page
+      .$eval("#live-data-rows", () => true)
+      .catch(() => false);
+    const liveErrorVisible = await page
+      .$eval("#live-state-error", () => true)
+      .catch(() => false);
 
     await page.screenshot({ path: SCREENSHOT, fullPage: true });
     await browser.close();
@@ -161,10 +177,12 @@ async function run() {
     // Verdict (data-driven — no hardcoded pass totals).
     // -----------------------------------------------------------------------
     const failReasons = [];
-    if (panelIds.length !== 3)
-      failReasons.push(`expected 3 panels, got ${panelIds.length}`);
+    if (sandboxPanelIds.length !== 3)
+      failReasons.push(`expected 3 sandbox panels, got ${sandboxPanelIds.length} (panelIds=${JSON.stringify(panelIds)})`);
+    if (!hasLivePanel)
+      failReasons.push("panel-live-data not found");
     if (cards.length !== 6)
-      failReasons.push(`expected 6 cards, got ${cards.length}`);
+      failReasons.push(`expected 6 sandbox cards, got ${cards.length}`);
     if (greenPrimitives.length < 1)
       failReasons.push("no green (PASS) primitive card with a story");
     if (badgeCounts.FAIL > 0 || badgeCounts.ERROR > 0)
@@ -181,6 +199,12 @@ async function run() {
       failReasons.push(
         `${externalRequests.length} external network calls: [${externalRequests.join(", ")}]`
       );
+    if (!liveDegradeVisible)
+      failReasons.push("live panel does not show file:// degrade state (expected #live-state-degrade visible)");
+    if (liveFakeRows)
+      failReasons.push("live panel shows fake row data under file:// (SECURITY VIOLATION)");
+    if (liveErrorVisible)
+      failReasons.push("live panel shows error state under file:// (degrade should fire before fetch attempt)");
 
     const verdict = failReasons.length === 0 ? "PASS" : "FAIL";
 
@@ -189,6 +213,10 @@ async function run() {
       goal: "G9",
       panels_rendered: panelIds.length,
       panel_ids: panelIds,
+      sandbox_panels: sandboxPanelIds.length,
+      live_panel_present: hasLivePanel,
+      live_panel_degrade: liveDegradeVisible,
+      live_panel_fake_rows: liveFakeRows,
       cards_total: cards.length,
       cards_per_tier: {
         primitives: cards.filter((c) => c.id.startsWith("prim-")).length,
@@ -212,7 +240,7 @@ async function run() {
     console.log("");
     if (verdict === "PASS") {
       console.log(
-        `[dash-check] PASS — 3 panels, 6 cards (${result.cards_per_tier.primitives}/${result.cards_per_tier.module}/${result.cards_per_tier.microservice}), ` +
+        `[dash-check] PASS — 3 sandbox panels + 1 live panel (degrade), 6 cards (${result.cards_per_tier.primitives}/${result.cards_per_tier.module}/${result.cards_per_tier.microservice}), ` +
           `${greenPrimitives.length} green primitive stories, 0 errors, 0 external net.`
       );
       console.log("[dash-check] Per-card stories:");
