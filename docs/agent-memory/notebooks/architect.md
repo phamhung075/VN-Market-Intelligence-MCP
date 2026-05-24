@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 09:10 UTC (pdf-extractor Phase-0 P0-PDF-1+2+3) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 07:44 UTC (pdf-extractor Phase-1 P1-A1 handoff + TASKS.md) | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor Phase-1 first dispatch (2026-05-24T07:44Z) — P1-A1 handoff + TASKS.md chain registration
+
+**Task:** PM-stand-in bookkeeping (no pm agent in this fleet). Register 10-task Phase-1 chain in TASKS.md + create TASK_P1-A1.md handoff for dev-pdf-extractor.
+
+**Key decisions:**
+- TASKS.md Phase-1 section: P1-A1=Todo, P1-A2..P1-G=Blocked. Compact table (28 lines, ≤80 cap met).
+- TASK_P1-A1.md: 7 ACs verbatim from task plan §P1-A1. Zero-creds gate evidence slots (AC-5+AC-6 paste zones) baked in. G12 DoD gate evidence slot baked. Architect design notes include composition root design (≤80L), sandbox runner contract, dynamic dispatch pattern, scenario dir layout.
+- Hard gate restated: P1-B1 MUST NOT dispatch until AC-5 (env audit empty) + AC-6 (scenario grep 0) PASS evidence pasted into handoff.
+- Commit: files included in fleet committer batch c8e29f08 (rag-service P1-A commit picked up my staged files).
+
+**Files authored this cycle (2):**
+1. `docs/TASKS.md` (MODIFIED — Phase-1 pdf-extractor section added, lines 132–159)
+2. `docs/handoffs/TASK_P1-A1.md` (NEW — dev-pdf-extractor first dispatch handoff)
+
+---
 
 ## pdf-extractor Phase-0 cycle (2026-05-24T09:10Z) — fleet pilot Phase 0 deliverables P0-PDF-1/2/3
 
