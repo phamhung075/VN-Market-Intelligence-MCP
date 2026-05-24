@@ -1,0 +1,69 @@
+{
+  "scenario": "module-route-story",
+  "tier": "module",
+  "module": "gateway",
+  "description": "Multi-primitive routing story (G2 evidence). A single inbound request /macro/indicators exercises THREE primitives in sequence: (1) route-service-matcher extracts the service name, (2) proxy-path-resolver computes the downstream path, (3) overall-status-computer aggregates health. This is the canonical G2 scenario: one story that drives ≥2 primitives through the module boundary via ports.",
+  "primitives_exercised": [
+    "route-service-matcher",
+    "proxy-path-resolver",
+    "overall-status-computer"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "primitive": "route-service-matcher",
+      "function": "ExtractServiceName",
+      "input": {
+        "path": "/macro/indicators",
+        "prefixToStrip": "/"
+      },
+      "expected": {
+        "serviceName": "macro"
+      }
+    },
+    {
+      "step": 2,
+      "primitive": "proxy-path-resolver",
+      "function": "ResolveProxyPath",
+      "input": {
+        "reqPath": "/macro/indicators",
+        "noProbe": false
+      },
+      "expected": {
+        "downstreamPath": "/indicators"
+      }
+    },
+    {
+      "step": 3,
+      "primitive": "overall-status-computer",
+      "function": "ComputeOverallStatus",
+      "input": {
+        "statuses": {
+          "macro": "ok",
+          "stock": "ok",
+          "ta": "ok"
+        }
+      },
+      "expected": {
+        "overall": "ok"
+      }
+    }
+  ],
+  "routing_result": {
+    "serviceName": "macro",
+    "targetURL": "http://macro-service:8081",
+    "downstreamPath": "/indicators",
+    "found": true
+  },
+  "health_result": {
+    "overall": "ok"
+  },
+  "verdict": "PASS",
+  "g2_evidence": {
+    "multi_primitive": true,
+    "primitives_in_sequence": ["route-service-matcher", "proxy-path-resolver", "overall-status-computer"],
+    "module_composes_via_ports": true,
+    "no_cross_module_import": true,
+    "note": "GatewayModule.Route() drives steps 1+2 in sequence. GatewayModule.AggregateHealth() drives step 3. All three primitives are composed behind the RoutingPorts interface — no direct infrastructure import."
+  }
+}
