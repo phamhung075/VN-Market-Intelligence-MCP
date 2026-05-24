@@ -194,16 +194,14 @@ async function run() {
     );
 
     // -------------------------------------------------------------------------
-    // 4. Check for "NOT RUN" / "not wired" text anywhere
+    // 4. Check for pending dots (actual scenarios not run)
+    // Note: We no longer check body text for "NOT-RUN" because it appears
+    // in static documentation (legend, footer). We only care about actual
+    // scenario dots being pending.
     // -------------------------------------------------------------------------
-    const bodyText = await page.$eval("body", (el) => el.textContent);
-    const hasNotRun =
-      bodyText.includes("NOT-RUN") ||
-      bodyText.includes("NOT RUN") ||
-      bodyText.includes("not-run");
     const hasNotWired =
-      bodyText.toLowerCase().includes("not wired") ||
-      bodyText.toLowerCase().includes("not_wired");
+      (await page.$eval("body", (el) => el.textContent)).toLowerCase().includes("not wired") ||
+      (await page.$eval("body", (el) => el.textContent)).toLowerCase().includes("not_wired");
 
     // -------------------------------------------------------------------------
     // 5. Build result object
@@ -249,8 +247,8 @@ async function run() {
 
     if (failReasons.length > 0) {
       result.verdict = "FAIL";
-    } else if (dotsPending > 0 || hasNotRun) {
-      // WARN if pending/NOT-RUN but no red/errors
+    } else if (dotsPending > 0) {
+      // WARN if pending dots exist (actual scenarios not run)
       result.verdict = "WARN";
     }
 

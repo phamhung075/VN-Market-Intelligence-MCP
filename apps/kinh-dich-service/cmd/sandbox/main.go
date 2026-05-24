@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/module/reading_composer"
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/primitive/hao_encoder"
@@ -29,10 +30,32 @@ import (
 )
 
 var (
-	tier     = flag.String("tier", "primitive", "Tier to test: primitive or module")
-	module   = flag.String("module", "kinh-dich", "Module name (kinh-dich)")
-	scenario = flag.String("scenario", "all", "Scenario file name or 'all'")
+	tier       = flag.String("tier", "primitive", "Tier to test: primitive, module, or all")
+	module     = flag.String("module", "kinh-dich", "Module name (kinh-dich)")
+	scenario   = flag.String("scenario", "all", "Scenario file name or 'all'")
+	emitTraces = flag.Bool("emit-traces", false, "Emit JSON traces to dashboard/sandbox-traces.js for dashboard loading")
 )
+
+// ScenarioTrace holds the result of a single scenario execution for dashboard rendering.
+type ScenarioTrace struct {
+	Scenario string `json:"scenario"`
+	Tier     string `json:"tier"`
+	Status   string `json:"status"` // "pass" or "fail"
+	Error    string `json:"error,omitempty"`
+}
+
+// TraceOutput is the full trace artifact written for dashboard consumption.
+type TraceOutput struct {
+	GeneratedAt string          `json:"generatedAt"`
+	CommitHash  string          `json:"commitHash"`
+	Primitives  []ScenarioTrace `json:"primitives"`
+	Modules     []ScenarioTrace `json:"modules"`
+	Summary     struct {
+		Total  int `json:"total"`
+		Passed int `json:"passed"`
+		Failed int `json:"failed"`
+	} `json:"summary"`
+}
 
 func main() {
 	flag.Parse()
@@ -44,64 +67,223 @@ func main() {
 		os.Exit(1)
 	}
 
-	var subDir string
+	// Determine which tiers to run
+	var tiersToRun []string
 	switch *tier {
 	case "primitive":
-		subDir = "primitives"
+		tiersToRun = []string{"primitive"}
 	case "module":
-		subDir = "module"
+		tiersToRun = []string{"module"}
+	case "all":
+		tiersToRun = []string{"primitive", "module"}
 	default:
-		fmt.Printf("ERROR: Unknown tier %q (use primitive or module)\n", *tier)
+		fmt.Printf("ERROR: Unknown tier %q (use primitive, module, or all)\n", *tier)
 		os.Exit(1)
 	}
 
-	scenarioPath := filepath.Join(scenarioDir, subDir)
+	totalPassed := 0
+	totalFailed := 0
+	var allFailures []string
+	var primitiveTraces []ScenarioTrace
+	var moduleTraces []ScenarioTrace
 
-	var files []string
-	if *scenario == "all" {
-		entries, err := os.ReadDir(scenarioPath)
-		if err != nil {
-			fmt.Printf("ERROR: Cannot read scenario directory: %v\n", err)
-			os.Exit(1)
-		}
-		for _, e := range entries {
-			if strings.HasSuffix(e.Name(), ".json") {
-				files = append(files, filepath.Join(scenarioPath, e.Name()))
-			}
-		}
-	} else {
-		files = []string{filepath.Join(scenarioPath, *scenario)}
-	}
-
-	passed := 0
-	failed := 0
-	var failures []string
-
-	for _, f := range files {
-		name := filepath.Base(f)
-		result, err := runScenario(f)
-		if err != nil {
-			fmt.Printf("  [RED]  %s: %v\n", name, err)
-			failed++
-			failures = append(failures, name)
-		} else if result {
-			fmt.Printf("  [GREEN] %s\n", name)
-			passed++
+	for _, currentTier := range tiersToRun {
+		var subDir string
+		if currentTier == "primitive" {
+			subDir = "primitives"
 		} else {
-			fmt.Printf("  [RED]  %s: output mismatch\n", name)
-			failed++
-			failures = append(failures, name)
+			subDir = "module"
+		}
+
+		scenarioPath := filepath.Join(scenarioDir, subDir)
+
+		var files []string
+		if *scenario == "all" {
+			entries, err := os.ReadDir(scenarioPath)
+			if err != nil {
+				fmt.Printf("ERROR: Cannot read scenario directory: %v\n", err)
+				os.Exit(1)
+			}
+			for _, e := range entries {
+				if strings.HasSuffix(e.Name(), ".json") {
+					files = append(files, filepath.Join(scenarioPath, e.Name()))
+				}
+			}
+		} else {
+			files = []string{filepath.Join(scenarioPath, *scenario)}
+		}
+
+		for _, f := range files {
+			name := filepath.Base(f)
+			scenarioName := strings.TrimSuffix(name, ".json")
+			result, err := runScenario(f)
+
+			trace := ScenarioTrace{
+				Scenario: scenarioName,
+				Tier:     currentTier,
+			}
+
+			if err != nil {
+				fmt.Printf("  [RED]  %s: %v\n", name, err)
+				totalFailed++
+				allFailures = append(allFailures, name)
+				trace.Status = "fail"
+				trace.Error = err.Error()
+			} else if result {
+				fmt.Printf("  [GREEN] %s\n", name)
+				totalPassed++
+				trace.Status = "pass"
+			} else {
+				fmt.Printf("  [RED]  %s: output mismatch\n", name)
+				totalFailed++
+				allFailures = append(allFailures, name)
+				trace.Status = "fail"
+				trace.Error = "output mismatch"
+			}
+
+			if currentTier == "primitive" {
+				primitiveTraces = append(primitiveTraces, trace)
+			} else {
+				moduleTraces = append(moduleTraces, trace)
+			}
 		}
 	}
 
 	fmt.Printf("\n=== SANDBOX SUMMARY ===\n")
 	fmt.Printf("Tier: %s\n", *tier)
-	fmt.Printf("Passed: %d/%d\n", passed, passed+failed)
-	if failed > 0 {
-		fmt.Printf("Failed: %v\n", failures)
+	fmt.Printf("Passed: %d/%d\n", totalPassed, totalPassed+totalFailed)
+	if totalFailed > 0 {
+		fmt.Printf("Failed: %v\n", allFailures)
+	} else {
+		fmt.Println("All scenarios GREEN")
+	}
+
+	// Emit traces if requested
+	if *emitTraces {
+		if err := emitTracesFile(primitiveTraces, moduleTraces, totalPassed, totalFailed); err != nil {
+			fmt.Printf("ERROR: Failed to emit traces: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if totalFailed > 0 {
 		os.Exit(1)
 	}
-	fmt.Println("All scenarios GREEN")
+}
+
+// emitTracesFile writes sandbox-traces.js for dashboard loading
+func emitTracesFile(primitives, modules []ScenarioTrace, passed, failed int) error {
+	// Get commit hash
+	commitHash := getCommitHash()
+
+	traceOutput := TraceOutput{
+		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
+		CommitHash:  commitHash,
+		Primitives:  primitives,
+		Modules:     modules,
+	}
+	traceOutput.Summary.Total = passed + failed
+	traceOutput.Summary.Passed = passed
+	traceOutput.Summary.Failed = failed
+
+	jsonBytes, err := json.MarshalIndent(traceOutput, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal trace output: %w", err)
+	}
+
+	// Find dashboard directory
+	dashboardDir := findDashboardDir()
+	if dashboardDir == "" {
+		return fmt.Errorf("could not find dashboard directory")
+	}
+
+	// Write as JS const for file:// loading (CORS-safe)
+	jsContent := fmt.Sprintf(`// AUTO-GENERATED by: CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -scenario=all -emit-traces
+// Generated at: %s
+// Commit: %s
+// DO NOT EDIT MANUALLY — re-run sandbox with -emit-traces to regenerate
+// G8 honesty: this file reflects REAL sandbox execution results, not hardcoded values
+window.__SANDBOX_TRACES__ = %s;
+`, traceOutput.GeneratedAt, commitHash, string(jsonBytes))
+
+	tracesPath := filepath.Join(dashboardDir, "sandbox-traces.js")
+	if err := os.WriteFile(tracesPath, []byte(jsContent), 0644); err != nil {
+		return fmt.Errorf("write traces file: %w", err)
+	}
+
+	fmt.Printf("\n=== TRACES EMITTED ===\n")
+	fmt.Printf("File: %s\n", tracesPath)
+	fmt.Printf("Scenarios: %d total (%d passed, %d failed)\n", passed+failed, passed, failed)
+	fmt.Printf("Commit: %s\n", commitHash)
+	fmt.Printf("Timestamp: %s\n", traceOutput.GeneratedAt)
+
+	return nil
+}
+
+// getCommitHash returns the current git commit hash (short form)
+func getCommitHash() string {
+	// Try to read from git
+	cwd, _ := os.Getwd()
+	dir := cwd
+	for i := 0; i < 10; i++ {
+		gitDir := filepath.Join(dir, ".git")
+		if _, err := os.Stat(gitDir); err == nil {
+			// Found .git, try to read HEAD
+			headPath := filepath.Join(gitDir, "HEAD")
+			headBytes, err := os.ReadFile(headPath)
+			if err == nil {
+				head := strings.TrimSpace(string(headBytes))
+				// If it's a ref, resolve it
+				if strings.HasPrefix(head, "ref: ") {
+					refPath := filepath.Join(gitDir, strings.TrimPrefix(head, "ref: "))
+					refBytes, err := os.ReadFile(refPath)
+					if err == nil {
+						hash := strings.TrimSpace(string(refBytes))
+						if len(hash) >= 8 {
+							return hash[:8]
+						}
+					}
+				} else if len(head) >= 8 {
+					return head[:8]
+				}
+			}
+			break
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "unknown"
+}
+
+// findDashboardDir finds the dashboard directory relative to cwd
+func findDashboardDir() string {
+	cwd, _ := os.Getwd()
+
+	// Walk up to find apps/kinh-dich-service/dashboard
+	dir := cwd
+	for i := 0; i < 10; i++ {
+		candidate := filepath.Join(dir, "apps", "kinh-dich-service", "dashboard")
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+		// Also check if we're already in kinh-dich-service
+		candidate = filepath.Join(dir, "dashboard")
+		if _, err := os.Stat(candidate); err == nil {
+			// Verify it's the right dashboard by checking for index.html
+			if _, err := os.Stat(filepath.Join(candidate, "index.html")); err == nil {
+				return candidate
+			}
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return ""
 }
 
 func findScenarioDir() string {
