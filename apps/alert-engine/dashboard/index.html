@@ -9,6 +9,12 @@
        SI-2 fleet index (docs/dashboards/index.html) is stock-price's G6 deliverable and is stock-price-EXCLUSIVE.
        alert-engine MUST NOT create or modify docs/dashboards/index.html. Do NOT merge. -->
 
+  <!-- P2-I — G5a deprecated-notice + Phase-2 wired-state update.
+       _deprecated path: pkg/domain/_deprecated/services_v1.go (moved from pkg/domain/services.go in P2-F).
+       Live path: alert_pipeline module (pkg/module/alert_pipeline/) wired at composition root cmd/server/main.go (P2-H).
+       OpenAPI contract: api/openapi.yaml — GET /health + POST /alert/evaluate on port 5006.
+       AC-2 anchor: _deprecated / services_v1 / deprecated keywords present in this file (G5a transparency). -->
+
   <!-- P1-D — Dashboard Stub (G6 GENESIS for alert-engine).
        3-panel standard (charter §G6): Primitives → Module → Microservice.
        Renders from REAL sandbox scenario data embedded inline (zero external fetch).
@@ -845,7 +851,7 @@ footer code {
   <h1>alert-engine &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-D (G6 GENESIS) &nbsp;|&nbsp; Pilot: alert-engine (fleet pilot-5) &nbsp;|&nbsp; Language: Go (go1.22+cgo)
+    P2-I (G6 Finalization) &bull; P1-D (G6 GENESIS) &nbsp;|&nbsp; Pilot: alert-engine (fleet pilot-5) &nbsp;|&nbsp; Language: Go (go1.22+cgo)
   </p>
   <p class="meta">
     Goals: G6 (dashboard renders) &bull; G8 (honest NOT-RUN / red) &bull; G9 (trust contract setup) &bull; G12 (green only after sandbox green)
@@ -857,6 +863,26 @@ footer code {
     Status is honest NOT-RUN on cold open &mdash; GREEN only after a real sandbox run (G8 / G12).
   </p>
 </header>
+
+<!-- ============================================================ P2-I: DEPRECATED-NOTICE BANNER (G5a) -->
+<!-- AC-2 anchor: _deprecated / services_v1 / deprecated — G5a transparency layer.               -->
+<div style="max-width:1400px;margin:0 auto 24px;padding:14px 20px;background:#fffbcc;border:1.5px solid #c4a800;border-radius:8px;font-size:0.83rem;color:#7c6b00;line-height:1.7;">
+  <strong style="font-size:0.88rem;color:#5c4a00;">Phase-2 Architecture Notice &mdash; P2-I (G5a Transparency)</strong><br>
+  <strong>Deprecated path:</strong>
+  <code style="font-family:'Courier New',monospace;background:#fef9c3;border:1px solid #c4a800;border-radius:3px;padding:1px 6px;font-size:0.76rem;">pkg/domain/_deprecated/services_v1.go</code>
+  &mdash; the original domain-layer service functions
+  (<code style="font-family:'Courier New',monospace;font-size:0.74rem;">ComputeFingerprint</code>,
+  <code style="font-family:'Courier New',monospace;font-size:0.74rem;">IsDuplicate</code>,
+  <code style="font-family:'Courier New',monospace;font-size:0.74rem;">ShouldSuppressAlert</code>)
+  were moved here from <code style="font-family:'Courier New',monospace;font-size:0.74rem;">pkg/domain/services.go</code> via <code>git mv</code> in P2-F.
+  The deprecated package is excluded from <code style="font-family:'Courier New',monospace;font-size:0.74rem;">go build ./...</code> (underscore prefix).<br>
+  <strong>Live path (Phase-2):</strong>
+  <code style="font-family:'Courier New',monospace;background:#fef9c3;border:1px solid #c4a800;border-radius:3px;padding:1px 6px;font-size:0.76rem;">pkg/module/alert_pipeline/</code>
+  &mdash; composes the three primitives via injected ports (Fence-B). Wired at composition root
+  <code style="font-family:'Courier New',monospace;font-size:0.74rem;">cmd/server/main.go</code>
+  in P2-H. OpenAPI contract: <code style="font-family:'Courier New',monospace;font-size:0.74rem;">api/openapi.yaml</code>
+  (GET /health + POST /alert/evaluate, port 5006).
+</div>
 
 <div class="levels-grid">
 
@@ -934,13 +960,15 @@ footer code {
 </div>
 
 <footer>
-  P1-D &mdash; Three-Level Scenario Trust Dashboard (G6 GENESIS) &bull; Pilot: alert-engine (fleet pilot-5) &bull;
+  P2-I (G6 Finalization) &bull; P1-D (G6 GENESIS) &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: alert-engine (fleet pilot-5) &bull;
   Port: 5006 (internal == external, source: docs/data/system-map.json) &bull;
+  Phase-2 wired state: <code>alert_pipeline</code> module live at <code>cmd/server/main.go</code> (P2-H); deprecated domain services at <code>pkg/domain/_deprecated/services_v1.go</code> (P2-F) &bull;
+  OpenAPI: <code>api/openapi.yaml</code> &mdash; GET /health + POST /alert/evaluate &bull;
   No server required (file:// URL) &bull; No production credentials &bull; No Telegram tokens &bull;
   G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green (real trace, never hardcoded &mdash; AC-7) &bull;
   G12 trust contract: edit scenario JSON &rarr; run <code>CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all</code> &rarr; paste output &rarr; dashboard updates &bull;
   ZERO-CREDS (G7 headline risk): sandbox runs zero Telegram API calls, zero SQLite reads, zero env credential lookups &bull;
-  Full edit-rerun handler + complete G7 env audit is finalised in P1-E.
+  Full edit-rerun handler + complete G7 env audit finalised in P1-E.
 </footer>
 
 <!-- ============================================================ MODAL -->
@@ -1471,16 +1499,21 @@ window.__MODULE_DATA__ = [
       html += '</div>';
     });
     html += '</div>';
-    /* Pipeline info */
+    /* Pipeline info — Phase-2 wired state (P2-I) */
     html += '<div style="padding:10px 14px;border-top:1px solid var(--border);font-size:0.75rem;color:#64748b;line-height:1.7;">';
-    html += '<strong style="color:#374151;">Alert pipeline:</strong><br>';
+    html += '<strong style="color:#374151;">Phase-2 wired state (P2-H):</strong><br>';
+    html += 'Composition root: <code style="font-family:\'Courier New\',monospace;">cmd/server/main.go</code> wires <code style="font-family:\'Courier New\',monospace;">alert_pipeline.New(alertRepo, muteRepo, telegram, domain.DefaultCooldownConfig)</code>.<br>';
+    html += 'Live module: <code style="font-family:\'Courier New\',monospace;">pkg/module/alert_pipeline/</code> &mdash; composes three primitives via injected ports (Fence-B).<br>';
+    html += 'Deprecated domain services: <code style="font-family:\'Courier New\',monospace;">pkg/domain/_deprecated/services_v1.go</code> (moved P2-F; excluded from build).<br>';
+    html += 'OpenAPI contract: <code style="font-family:\'Courier New\',monospace;">api/openapi.yaml</code> &mdash; GET /health + POST /alert/evaluate, port 5006.<br>';
+    html += '<br><strong style="color:#374151;">Alert pipeline steps:</strong><br>';
     html += '1. classify severity &rarr; channel (signal-classifier)<br>';
     html += '2. build dedup fingerprint (dedup-key-builder)<br>';
     html += '3. check duplicate + recent alerts (AlertRepositoryPort)<br>';
     html += '4. check cooldown window + daily cap (cooldown-gate)<br>';
     html += '5. check mute (MutePort)<br>';
     html += '6. route to Telegram channel (TelegramPort)<br>';
-    html += '<br><strong style="color:#374151;">ZERO-CREDS boundary:</strong> the sandbox imports only <code>pkg/primitive/*</code> + <code>pkg/module/*</code> — never <code>pkg/infrastructure/</code> (Telegram client / SQLite). Credentials are wired only in <code>cmd/server/main.go</code> (composition root).';
+    html += '<br><strong style="color:#374151;">ZERO-CREDS boundary:</strong> the sandbox imports only <code>pkg/primitive/*</code> + <code>pkg/module/*</code> — never <code>pkg/infrastructure/</code> (Telegram client / SQLite). Credentials are wired only in <code>cmd/server/main.go</code> (composition root, Fence-C).';
     html += '</div>';
     html += '</div>';
 
