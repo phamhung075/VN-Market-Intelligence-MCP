@@ -889,6 +889,100 @@ The change is made in the **copy** that dev-mcp-server places at `apps/mcp-serve
 
 ---
 
+## NF-LD-4-QA — [QA] Review Record — 2026-05-24T22:30Z
+
+**Verdict: CHANGES_REQUESTED**
+
+**Commits inspected:** `e160fe04` (NF-LD-4-dev-A, dev-mcp-server) + `d32398f4` (NF-LD-4-dev-B, developer)
+
+---
+
+### AC-1 Security Clause — served directory + handler
+
+- `grep -rn "VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer|DB_PATH|process.env|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → exit 1 (0 matches)
+- `grep -n "db|getDb|Database|DB_PATH|process.env|Bun.env" newsFetchDashboardHandler.ts` → lines 13-14 are JSDoc comments only; zero real references
+- `grep -ni "INSERT|UPDATE|DELETE|CREATE|DROP|ALTER" newsFetchDashboardHandler.ts` → 0 matches
+- Handler imports: `node:http`, `node:fs`, `node:path` only — no DB, no credentials, no infrastructure
+- **PASS**
+
+### AC-2 DRY / ANTI-DRIFT — sync script reproduce check
+
+**FAIL — BLOCKING.**
+
+`bash apps/mcp-server/sync-news-fetch-dashboard.sh` was run from repo root. The sync script exited 0 with all 4 verification passes (ENDPOINT relative, no creds, degrade kept). However `git diff -- apps/mcp-server/src/interface/news-fetch-dashboard/` after running the script shows 3 differences between the script-generated output and the committed served copy:
+
+1. **Header comment path** (line 8): committed has `bash apps/mcp-server/scripts/sync-news-fetch-dashboard.sh` (stale path with `scripts/` prefix), sync script writes `bash apps/mcp-server/sync-news-fetch-dashboard.sh` (correct path). This means the committed file contains a stale comment referencing a non-existent path `apps/mcp-server/scripts/sync-...`.
+2. **JS comment block** (lines 305-315): committed has 7-line "SERVED COPY" comment block (`IMPORTANT: This is the SERVED COPY...`) that was hand-added by dev-A and is NOT present in the source `apps/news-fetch/dashboard/index.html`. When the sync script copies from source, it does not inject this block, so re-running the sync silently removes it.
+3. **Error message** (line 431): committed says "Could not reach the live endpoint — check that mcp-server is running." — the sync script rewrites the source text "Could not reach the server — check that mcp-server is running at localhost:3000." to "Could not reach the server — the live endpoint returned an error." (different error message applied by sed substitution). The committed copy has a THIRD variant that matches neither the source nor the sync script output.
+
+**The committed served copy was hand-edited after dev-A ran the sync script (or instead of it).** The sync script does not reproduce the committed copy. Per the QA spec binding gate: "If the sync script does NOT reproduce the committed copy → CHANGES_REQUESTED (drift)."
+
+**FUNCTIONAL IMPACT: The ENDPOINT (relative path, 0 localhost:3000) and file:// degrade check are correct in the committed copy — the drift is in comments and a user-visible error message string, not in security-critical or honesty-critical paths.**
+
+**Required fix (dev-mcp-server):**
+- Either: bring the committed `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` into exact sync with what `sync-news-fetch-dashboard.sh` produces (run the script, review diff, commit the result)
+- OR: update `sync-news-fetch-dashboard.sh` to produce exactly the committed copy (add the SERVED COPY comment injection; fix the header path reference; align the error message sed substitution)
+- Either approach is acceptable. The correct path in the header must be `apps/mcp-server/sync-news-fetch-dashboard.sh` (not `scripts/sync-...`).
+- **Do NOT change the ENDPOINT (relative) or the file:// degrade branch.**
+
+### AC-3 Sandbox Honesty Not Regressed
+
+- `node apps/news-fetch/dashboard/dash-check.mjs` → **PASS** (panels=4, sandbox=3, live=1, cards=6, PASS=6, FAIL=0, live_panel_degrade=true, live_panel_fake_rows=false, console_errors=0, page_errors=0, external_network_calls=0)
+- sandbox runner: `data.js` last commit = `cd8d0146` (pre-NF-LD-4); `apps/news-fetch/src/sandbox/runner.ts` untouched (git diff HEAD → empty)
+- **PASS**
+
+### AC-4 NF-LD-4 Tests + NF-LD-2 Regression
+
+- `bun test src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts` → **11 pass / 0 fail** (22 expect() calls)
+  - Tests (e) + (f) confirm path traversal returns HTTP 400 status (not string assertion only)
+  - Tests (h) + (i) confirm no localhost:3000 in ENDPOINT, relative path present
+  - Test (j) confirms file:// degrade branch kept
+  - Test (k) confirms 0 credentials in served index.html
+- `bun test src/__tests__/NF-LD-2-news-fetch-live.test.ts` → **9 pass / 0 fail** (37 expect() calls)
+- `bun tsc --noEmit` → **exit 0**, 0 errors
+- Full suite: Bun 1.3.13 C++ crash on `bun test` (full suite) is a **pre-existing Bun runtime bug** (same crash URL as cycles 103–108 baseline); NF-LD-specific tests and handler subset (39 tests) all pass; 0 new regressions attributable to NF-LD-4.
+- **PASS**
+
+### AC-5 Pilot-Status Frozen
+
+- `docs/data/pilot-status-news-fetch.json` last commit: `b3407530` (TERMINAL 12/12 close) — NOT touched by `e160fe04` or `d32398f4`
+- `goalsEarned=12`, `verdict=scale`, `status=DONE` confirmed unchanged
+- **PASS**
+
+### AC-6 DDD
+
+- `newsFetchDashboardHandler.ts` imports: `node:http`, `node:fs`, `node:path` only — 0 domain/application/infrastructure imports
+- No DB parameter, no `getDb()`, no `new Database()`. Static files only.
+- **PASS**
+
+### AC-7 Deferred dev-A ACs (live curl 200 + traversal 400) — in-process test coverage
+
+- AC-6 (MIME curl) and AC-7 (traversal curl) are legitimately deferred to ops post-rebuild.
+- In-process tests (e)/(f) prove traversal → HTTP 400 against real handler code.
+- **Confirmed: ops PROVE step (NF-LD-4-OPS) only needs to confirm deployed behavior, not re-prove logic.**
+
+### Summary
+
+| Check | Verdict |
+|---|---|
+| Security: 0 creds in served dir | PASS |
+| Security: handler no DB/env access | PASS |
+| Security: handler no write verbs | PASS |
+| DDD: 0 domain/infra/app imports | PASS |
+| **DRY/Anti-drift: sync script reproduces committed copy** | **FAIL — BLOCKING** |
+| Sandbox honest: dash-check PASS (4 panels, 6 cards, degrade=true) | PASS |
+| data.js untouched (byte-identical) | PASS |
+| sandbox runner.ts untouched | PASS |
+| NF-LD-4 tests: 11/11 | PASS |
+| NF-LD-2 tests: 9/9 (regression) | PASS |
+| tsc exit 0 | PASS |
+| Pilot-status 12/12 frozen | PASS |
+| Traversal guard proves 400 in-process test | PASS |
+
+**Round:** 1. **NEXT: fixer (dev-mcp-server)** — apply minimum fix: align `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` with `sync-news-fetch-dashboard.sh` output (run script, verify 0 git diff, fix stale `scripts/` path in header comment). Do NOT change ENDPOINT or degrade branch.
+
+---
+
 ## Constraints binding NF-LD-4 (verbatim — every agent in the chain)
 - L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`
 - No `--force`, no `--no-verify`, no `--no-gpg-sign`

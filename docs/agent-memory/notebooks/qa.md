@@ -1,5 +1,77 @@
 # QA — Notebook
 
+## cycle-109 · 2026-05-24 · NF-LD-4-QA (serve news-fetch dashboard from mcp-server) — CHANGES_REQUESTED
+
+**Task:** NF-LD-4 QA gate (static dashboard served at /dashboards/news-fetch/) | **Verdict:** CHANGES_REQUESTED — 1 blocking issue (AC-DRY drift)
+
+```
+date: 2026-05-24T22:30Z
+outcome: CHANGES_REQUESTED — 1 blocking issue
+type: feature-qa-gate (NF-LD-4: serve news-fetch dashboard same-origin from mcp-server)
+handoff: docs/handoffs/TASK_NF-LD.md
+commits_inspected: [e160fe04 (NF-LD-4-dev-A dev-mcp-server), d32398f4 (NF-LD-4-dev-B developer)]
+ssot_not_mutated: true (pilot-status-news-fetch.json 12/12 frozen, not touched)
+
+security_clause:
+  creds_in_served_dir: 0 (grep exit 1)
+  handler_db_access: false (comment lines only at 13-14)
+  handler_write_verbs: 0
+  handler_imports: node:http + node:fs + node:path only
+  result: PASS
+
+dry_anti_drift:
+  sync_script_exit: 0 (all 4 verification PASS lines)
+  git_diff_after_sync: 3 differences found
+  diff_1: header comment path — committed has scripts/sync-... (stale), script writes sync-... (correct)
+  diff_2: JS SERVED COPY comment block in committed (hand-added by dev-A, not in source or script)
+  diff_3: error message phrasing — 3rd variant in committed not matching source or sync output
+  functional_parts: CONSISTENT (ENDPOINT relative, degrade kept, 0 creds)
+  result: FAIL — BLOCKING (QA spec explicit: "sync does not reproduce → CHANGES_REQUESTED")
+
+sandbox_regression:
+  dash_check: PASS (panels=4, sandbox=3+live=1, cards=6, PASS=6, degrade=true, fake_rows=false)
+  external_net: 0
+  data_js_untouched: true (byte-identical, last commit cd8d0146)
+  sandbox_runner_ts_diff: empty
+  result: PASS
+
+tests:
+  nf_ld_4: 11/11 PASS (22 expect() calls) — traversal 400, ENDPOINT check, degrade, creds
+  nf_ld_2: 9/9 PASS (37 expect() calls)
+  tsc: exit 0
+  full_suite: Bun 1.3.13 C++ crash (pre-existing runtime bug, same URL as cycles 103-108)
+  result: PASS (NF-LD tests green, 0 new regressions)
+
+pilot_status_frozen: 12/12 YES verdict=scale (confirmed, not touched by NF-LD-4 commits)
+ddd: PASS (handler: node stdlib imports only, 0 domain/infra/app)
+traversal_guard: 400 proven in in-process tests (e)+(f) — ops PROVE step confirms deployed behavior
+
+round: 1
+next: fixer (dev-mcp-server)
+fix_required: align committed apps/mcp-server/src/interface/news-fetch-dashboard/index.html
+  with sync-news-fetch-dashboard.sh output; fix stale scripts/ path in header comment
+```
+
+| Check | Verdict |
+|---|---|
+| Security: 0 creds in served dir | PASS |
+| Security: handler no DB/env access | PASS |
+| Security: handler no write verbs | PASS |
+| DDD: 0 domain/infra/app imports | PASS |
+| **DRY/Anti-drift: sync script reproduces committed copy** | **FAIL — BLOCKING** |
+| Sandbox: dash-check PASS (4 panels, 6 cards, degrade=true) | PASS |
+| data.js untouched (byte-identical) | PASS |
+| sandbox runner.ts untouched | PASS |
+| NF-LD-4 tests: 11/11 | PASS |
+| NF-LD-2 tests: 9/9 (regression) | PASS |
+| tsc exit 0 | PASS |
+| Pilot-status 12/12 frozen | PASS |
+| Traversal guard: 400 in-process proven | PASS |
+
+**CHANGES_REQUESTED. NEXT: fixer (dev-mcp-server) — run sync script, commit result, fix stale header path.**
+
+---
+
 ## cycle-108 · 2026-05-24 · PDF-INSPECT REOPEN-2 (backfill + all-rows list + secondary OCR join) — PASS
 
 **Task:** PDF-INSPECT REOPEN-2 QA gate (commit `69da9d01`) | **Verdict:** PASS — APPROVED
