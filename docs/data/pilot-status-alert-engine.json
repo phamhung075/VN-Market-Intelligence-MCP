@@ -1,20 +1,19 @@
 {
   "_maintained_by": "po",
-  "_note": "alert-engine pilot SSOT — Factory v2, fleet pilot 5. Instantiated from SI-1 fleet schema docs/data/pilot-status-schema.json (agent-father v1.0). Separate file from all closed pilot SSOTs — none are touched by this file.",
-  "_schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, 2026-05-23T22:01:07Z) — macro v2 field shape canonical",
-  "_authorship_rule": "decisionMatrix fields (speed/trust/scale/verdict) are PO-ONLY. Populated ONLY after 12/12 G-goals reach terminal state, in ONE atomic commit alongside the final goal flip. Any agent other than PO writing these fields is a VIOLATION of charter §4.5.",
-  "_criteria_source": "Charter §Decision Matrix (mechanical derivation): Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount ≤ 6. No agent may reinterpret these formulae.",
-  "_creds_boundary_gate": "Charter §ZERO-CREDS Boundary Clause — TELEGRAM_BOT_TOKEN, TELEGRAM_INFO_MARKET_GROUP_ID, TELEGRAM_INFO_WORK_CHANNEL_ID, TELEGRAM_REPORT_BUG_CHANNEL_ID must NOT appear in pkg/primitive, pkg/module, or cmd/sandbox; sandbox builds and runs under CGO_ENABLED=0 with zero TELEGRAM_* env vars. This is the G7 HARD GATE for alert-engine.",
+  "_note": "alert-engine pilot SSOT \u2014 Factory v2, fleet pilot 5. Instantiated from SI-1 fleet schema docs/data/pilot-status-schema.json (agent-father v1.0). Separate file from all closed pilot SSOTs \u2014 none are touched by this file.",
+  "_schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, 2026-05-23T22:01:07Z) \u2014 macro v2 field shape canonical",
+  "_authorship_rule": "decisionMatrix fields (speed/trust/scale/verdict) are PO-ONLY. Populated ONLY after 12/12 G-goals reach terminal state, in ONE atomic commit alongside the final goal flip. Any agent other than PO writing these fields is a VIOLATION of charter \u00a74.5.",
+  "_criteria_source": "Charter \u00a7Decision Matrix (mechanical derivation): Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount \u2264 6. No agent may reinterpret these formulae.",
+  "_creds_boundary_gate": "Charter \u00a7ZERO-CREDS Boundary Clause \u2014 TELEGRAM_BOT_TOKEN, TELEGRAM_INFO_MARKET_GROUP_ID, TELEGRAM_INFO_WORK_CHANNEL_ID, TELEGRAM_REPORT_BUG_CHANNEL_ID must NOT appear in pkg/primitive, pkg/module, or cmd/sandbox; sandbox builds and runs under CGO_ENABLED=0 with zero TELEGRAM_* env vars. This is the G7 HARD GATE for alert-engine.",
   "_si2_boundary": "docs/dashboards/index.html is stock-price-EXCLUSIVE per fleet ratification Decision 3. alert-engine MUST NOT touch that file. G6 = apps/alert-engine/dashboard/index.html ONLY.",
   "_frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor of HEAD throughout this pilot. Do not rebase, reset, or force-push past this commit.",
   "_fleet_serialization": "INTERIM FLEET-WIDE SINGLE-COMMITTER SERIALIZATION active at SSOT creation. Verify git diff --cached --name-only clear of foreign paths before staging.",
-
   "pilot": "alert-engine",
   "charterRef": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md",
   "charterVersion": "2.0",
   "status": "ACTIVE",
   "openedAt": "2026-05-24T02:40:00Z",
-  "openedBy": "architect (fleet pilot-5 charter creation — PO authorization signal po-20260524T023538Z-alert-engine-pilot5-charter.json)",
+  "openedBy": "architect (fleet pilot-5 charter creation \u2014 PO authorization signal po-20260524T023538Z-alert-engine-pilot5-charter.json)",
   "closedAt": null,
   "closedBy": null,
   "closureSignal": null,
@@ -23,10 +22,9 @@
   "sprintDeadline": "2026-07-05",
   "deadline": "kickoff + 6 sprints",
   "language": "Go",
-  "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; alert-engine is natively Go (runtime go1.22+cgo per system-map.json)",
+  "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md \u00a7Q2 \u2014 user 'B' verdict; Go is the implementation language for all Go microservice fractals; alert-engine is natively Go (runtime go1.22+cgo per system-map.json)",
   "languageLockedAt": "2026-05-22",
   "phase": "2",
-
   "phase0": {
     "status": "CLOSED",
     "openedAt": "2026-05-24T02:40:00Z",
@@ -35,13 +33,13 @@
     "closedBy": "pm (phase1.status transitioned to DONE at close-gate)",
     "owner": "architect + system-auditor + agent-father (+ dev-alert-engine for ZERO-CREDS + CGO-free sandbox feasibility confirmation)",
     "deliverables": {
-      "_note": "Per charter §Phase 0 exit gate. ZERO-CREDS confirmation is added to brownfield_inventory scope (alert-engine-specific G7 hard gate).",
+      "_note": "Per charter \u00a7Phase 0 exit gate. ZERO-CREDS confirmation is added to brownfield_inventory scope (alert-engine-specific G7 hard gate).",
       "pilot_status_ssot": "DONE 2026-05-24T02:40:00Z (this file)",
-      "brownfield_inventory": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/p0-brownfield-inventory.md",
-      "bug_inventory_entry": "TBD — docs/data/bug-inventory.json alert_engine_baseline block",
-      "dev_agent_file": "TBD — .claude/agents/dev-alert-engine.md confirmed factory-ready (Go primary, G12 DoD, ZERO-CREDS-boundary lazy-load)",
-      "dev_agent_flow_file": "TBD — .claude/flows/dev-alert-engine/main.md with G12 DoD Gate Day-0 + ZERO-CREDS/Fence-A/B/C + pre-revert tag protocol",
-      "phase_1_task_plan": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md"
+      "brownfield_inventory": "TBD \u2014 docs/architecture-briefs/2026-05-24-alert-engine-factory/p0-brownfield-inventory.md",
+      "bug_inventory_entry": "TBD \u2014 docs/data/bug-inventory.json alert_engine_baseline block",
+      "dev_agent_file": "TBD \u2014 .claude/agents/dev-alert-engine.md confirmed factory-ready (Go primary, G12 DoD, ZERO-CREDS-boundary lazy-load)",
+      "dev_agent_flow_file": "TBD \u2014 .claude/flows/dev-alert-engine/main.md with G12 DoD Gate Day-0 + ZERO-CREDS/Fence-A/B/C + pre-revert tag protocol",
+      "phase_1_task_plan": "TBD \u2014 docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md"
     },
     "exit_gate": {
       "all_deliverables_landed": true,
@@ -53,26 +51,25 @@
       "verification_signal": "brownfield_inventory satisfied by P1-A through P1-E artifacts; Phase 1 primitives + module + dashboard confirm brownfield 3-primitive extraction; ZERO-CREDS boundary confirmed Phase 1 exit; phase0 brownfield_inventory artifact is the complete Phase 1 task ledger (P1-A through P1-E DONE; P1-B4 SKIPPED per plan; P1-G QA close-gate pending)"
     }
   },
-
   "phase1": {
-    "_note": "Phase 1 DONE (2026-05-24T053000Z → 2026-05-24T082000Z) — 9 sequential tasks (P1-A through P1-G). Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). P1-B3 DONE 2026-05-24T054219Z (commit 251071bd, G1 core-3 band complete + G12 streak #3 COMPLETE; cooldown-gate, now time.Time injected, byte-identical to brownfield ShouldSuppressAlert; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean incl. time.Now=0; CGO0 build+tests pass). P1-B4 (optional flex 4th primitive) SKIPPED per plan §P1-B4 — core-3 band satisfies G1 minimum; defers to Phase 2. P1-C DONE 2026-05-24T055413Z (commit cd56dbd2, G2 + G12; alert_pipeline module composes 3 primitives via injected ports AlertRepositoryPort/MutePort/TelegramPort, ports option B slim module-local interfaces; Fence-B clean (only doc-comment grep hit, zero forbidden imports); cross-module=0; ZERO-CREDS=0; 2 module scenarios; sandbox total=11 pass=11 fail=0 status=OK; CGO0 build+test pass; anchor intact; no SSOT/SI-2/other-pilot touch). P1-D DONE 2026-05-24T060000Z (commit 89202e98, G6 genesis dashboard stub 3-panel + SI-2 disavowal comment + edit-rerun panel skeleton). P1-E DONE 2026-05-24T061600Z (commit 4e756d40, G7 ZERO-CREDS all 4 sub-gates PASS + edit-rerun handler wired + G8 + dashboard updates). Phase 1 close-gate: all 5 criteria PASS (time-to-prim 0.1h, sandbox 11/11, dashboard 100%, G12 3/3, G7 all-4-PASS).",
+    "_note": "Phase 1 DONE (2026-05-24T053000Z \u2192 2026-05-24T082000Z) \u2014 9 sequential tasks (P1-A through P1-G). Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). P1-B3 DONE 2026-05-24T054219Z (commit 251071bd, G1 core-3 band complete + G12 streak #3 COMPLETE; cooldown-gate, now time.Time injected, byte-identical to brownfield ShouldSuppressAlert; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean incl. time.Now=0; CGO0 build+tests pass). P1-B4 (optional flex 4th primitive) SKIPPED per plan \u00a7P1-B4 \u2014 core-3 band satisfies G1 minimum; defers to Phase 2. P1-C DONE 2026-05-24T055413Z (commit cd56dbd2, G2 + G12; alert_pipeline module composes 3 primitives via injected ports AlertRepositoryPort/MutePort/TelegramPort, ports option B slim module-local interfaces; Fence-B clean (only doc-comment grep hit, zero forbidden imports); cross-module=0; ZERO-CREDS=0; 2 module scenarios; sandbox total=11 pass=11 fail=0 status=OK; CGO0 build+test pass; anchor intact; no SSOT/SI-2/other-pilot touch). P1-D DONE 2026-05-24T060000Z (commit 89202e98, G6 genesis dashboard stub 3-panel + SI-2 disavowal comment + edit-rerun panel skeleton). P1-E DONE 2026-05-24T061600Z (commit 4e756d40, G7 ZERO-CREDS all 4 sub-gates PASS + edit-rerun handler wired + G8 + dashboard updates). Phase 1 close-gate: all 5 criteria PASS (time-to-prim 0.1h, sandbox 11/11, dashboard 100%, G12 3/3, G7 all-4-PASS).",
     "status": "DONE",
     "openedAt": "2026-05-24T053000Z",
     "openedBy": "pm (PM_ALERT_ENGINE_PHASE1_OPEN)",
-    "gateVerdict": "GO — all 5 close-gate criteria PASS",
+    "gateVerdict": "GO \u2014 all 5 close-gate criteria PASS",
     "gateVerifiedAt": "2026-05-24T082000Z",
     "gateVerifiedBy": "pm (close-gate verification)",
     "gateCommit": "4e756d40",
-    "gateDecisionDoc": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md §Phase 1 Exit Criteria",
+    "gateDecisionDoc": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md \u00a7Phase 1 Exit Criteria",
     "gateSignal": "docs/signals/pm-alert-engine-phase1-closed-20260524T082000Z.json",
-    "skeleton_in": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md §Phase Skeleton",
+    "skeleton_in": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md \u00a7Phase Skeleton",
     "task_plan": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md",
     "task_count": 9,
     "ac_count": 59,
     "wip_limit": 1,
     "current_task": "PHASE-1-CLOSED",
     "current_task_owner": "pm",
-    "current_task_handoff": "none (phase closed — next actor architect for Phase 2 plan)",
+    "current_task_handoff": "none (phase closed \u2014 next actor architect for Phase 2 plan)",
     "sequential_plan": [
       "P1-A: cmd/sandbox/main.go + ZERO-CREDS gate (1h, 7 ACs)",
       "P1-B1: signal-classifier primitive + 3 scenarios (1.5h, 8 ACs)",
@@ -85,26 +82,25 @@
       "P1-G: Phase 1 close-gate verification (QA, 30m, 6 ACs)"
     ],
     "progress_notes": [
-      "P1-A DONE 2026-05-24T052327Z — cmd/sandbox scaffold, CGO_ENABLED=0 + ZERO-CREDS hard gate passed.",
-      "P1-B1 DONE 2026-05-24T053017Z — signal-classifier primitive + 3 scenarios; G1; G12 streak #1.",
-      "P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13) — dedup-key-builder primitive (djb2 seed=5381, byte-identical to brownfield) + 3 scenarios; sandbox total=6 pass=6 fail=0 status=OK; ZERO-CREDS clean; CGO0 build+tests pass; Fence-A clean; G1; G12 streak #2. Router-verified.",
-      "P1-B3 SEQUENCED 2026-05-24T053651Z — cooldown-gate primitive (ShouldSuppressAlert, now time.Time injected) + 3 scenarios; 7 ACs; owner dev-alert-engine; G1 + G12 streak #3 (COMPLETES Phase-1 G12 streak requirement). Handoff docs/handoffs/TASK_P1-AE-B3.md.",
-      "P1-B3 DONE 2026-05-24T054219Z (commit 251071bd) — cooldown-gate primitive; now time.Time injected (Fence-A grep incl. time.Now = 0), byte-identical to brownfield ShouldSuppressAlert; 3 scenarios (golden/edge/failure incl. critical-bypass); 10 unit-test cases pass; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS clean (scenario JSON creds grep=0); CGO0 build+tests pass; no SSOT/SI-2/other-pilot touch; anchor intact. Router-verified. G1 core-3 band COMPLETE + G12 streak #3 COMPLETE (Phase-1 streak requirement met). P1-B4 (optional flex) SKIPPED — core-3 satisfies G1 minimum per plan §P1-B4; defers to Phase 2.",
-      "P1-C SEQUENCED 2026-05-24T054219Z — module stub alert_pipeline: ports.go (AlertRepositoryPort/MutePort/TelegramPort, re-export or slim local) + pipeline.go (compose 3 primitives) + pipeline_test.go (mock ports) + 2 module scenarios (golden/edge). Fence-B (module imports primitives + domain + stdlib only; zero infrastructure/application/interface/mattn/go-sqlite3; zero cross-module imports; zero creds). 7 ACs; owner dev-alert-engine; G2 + G12. Handoff docs/handoffs/TASK_P1-AE-C.md.",
-      "P1-C DONE 2026-05-24T055413Z (commit cd56dbd2) — alert_pipeline module stub; ports option B (slim module-local interfaces); composes signal-classifier + dedup-key-builder + cooldown-gate via injected AlertRepositoryPort/MutePort/TelegramPort; 7 ACs PASS. Router independently verified: Fence-B grep clean (single hit = doc-comment line in ports.go, zero forbidden imports); cross-module grep=0; ZERO-CREDS module grep=0 (TelegramPort type-name only); unit test mock ports (happy/dedup-hit/mute-hit) exit 0; module-tier + all-tier sandbox total=11 pass=11 fail=0 status=OK; CGO0 build exit 0; no SSOT/SI-2/other-pilot touch; anchor debba8ea intact. G2 advances (EARNED-PENDING internal). NO goal flip; goalsEarned=0.",
-      "P1-D SEQUENCED 2026-05-24T055413Z — dashboard stub apps/alert-engine/dashboard/index.html: 3 panels (primitives 3-card / module 1-card / microservice 1-card port 5006 from system-map.json as label-only), honest NOT-RUN cold-open, self-contained file:// (zero external CDN/fetch/img), zero creds (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), SI-2 DISAVOWAL HTML comment (docs/dashboards/index.html is stock-price-EXCLUSIVE — alert-engine MUST NOT create/modify). G6 GENESIS + G8 (NOT-RUN honest) + G9 setup (PO Playwright pre-compat: zero console errors, all cards in DOM) + G12 (DoD sandbox-green-before-green-card). 7 ACs; owner dev-alert-engine. Handoff docs/handoffs/TASK_P1-AE-D.md.",
-      "P1-D DONE 2026-05-24T060000Z (commit 89202e98) — dashboard stub 3-panel rendered (primitives + module + microservice), SI-2 disavowal comment baked (HTML line 8-10), edit-rerun panel skeleton in place (lines 982-1087), honest NOT-RUN cold-open (all 11 scenario cards start 'not-run'), zero credentials (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), file:// works (zero CDN/fetch/img). G6 genesis COMPLETE. Router-verified: single file created, anchor intact, no SSOT/SI-2/other-pilot touch. Next task: P1-E (edit-rerun handler finalization + G7 env audit all-4 sub-gates).",
-      "P1-E SEQUENCED 2026-05-24T060000Z — edit-rerun handler + G7 ZERO-CREDS audit (all 4 sub-gates: env audit empty, scenario JSON cred-free, CGO_ENABLED=0 build exit 0, edit→rerun cycle works). 7 ACs; owner dev-alert-engine; G7 + G8 + G12. Handoff docs/handoffs/TASK_P1-AE-E.md. HEADLINE RISK: if any G7 sub-gate fails, Phase 1 is CONDITIONAL-HOLD.",
-      "P1-E DONE 2026-05-24T061600Z (commit 4e756d40) — edit-rerun handler wired in dashboard (openRerunPanel + parseRerunOutput + applyRerunOutput + resetAllToNotRun); all 7 ACs PASS. G7 ZERO-CREDS all 4 sub-gates verified PASS: (1) env audit empty, (2) sandbox source grep 0 credential hits, (3) CGO_ENABLED=0 build exit 0, (4) edit→rerun cycle works (cooldown-gate-golden.json cfg.cooldownMinutes 30→60, sandbox re-ran, dashboard updated). G8 advances (honest-red proof deferred Phase 2 P2-J). Sandbox total=11 pass=11 fail=0 status=OK. Anchor debba8ea intact. No SSOT/SI-2/other-pilot touch. Phase 1 clear to close (next: PM runs close-gate, then architect Phase 2 plan)."
+      "P1-A DONE 2026-05-24T052327Z \u2014 cmd/sandbox scaffold, CGO_ENABLED=0 + ZERO-CREDS hard gate passed.",
+      "P1-B1 DONE 2026-05-24T053017Z \u2014 signal-classifier primitive + 3 scenarios; G1; G12 streak #1.",
+      "P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13) \u2014 dedup-key-builder primitive (djb2 seed=5381, byte-identical to brownfield) + 3 scenarios; sandbox total=6 pass=6 fail=0 status=OK; ZERO-CREDS clean; CGO0 build+tests pass; Fence-A clean; G1; G12 streak #2. Router-verified.",
+      "P1-B3 SEQUENCED 2026-05-24T053651Z \u2014 cooldown-gate primitive (ShouldSuppressAlert, now time.Time injected) + 3 scenarios; 7 ACs; owner dev-alert-engine; G1 + G12 streak #3 (COMPLETES Phase-1 G12 streak requirement). Handoff docs/handoffs/TASK_P1-AE-B3.md.",
+      "P1-B3 DONE 2026-05-24T054219Z (commit 251071bd) \u2014 cooldown-gate primitive; now time.Time injected (Fence-A grep incl. time.Now = 0), byte-identical to brownfield ShouldSuppressAlert; 3 scenarios (golden/edge/failure incl. critical-bypass); 10 unit-test cases pass; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS clean (scenario JSON creds grep=0); CGO0 build+tests pass; no SSOT/SI-2/other-pilot touch; anchor intact. Router-verified. G1 core-3 band COMPLETE + G12 streak #3 COMPLETE (Phase-1 streak requirement met). P1-B4 (optional flex) SKIPPED \u2014 core-3 satisfies G1 minimum per plan \u00a7P1-B4; defers to Phase 2.",
+      "P1-C SEQUENCED 2026-05-24T054219Z \u2014 module stub alert_pipeline: ports.go (AlertRepositoryPort/MutePort/TelegramPort, re-export or slim local) + pipeline.go (compose 3 primitives) + pipeline_test.go (mock ports) + 2 module scenarios (golden/edge). Fence-B (module imports primitives + domain + stdlib only; zero infrastructure/application/interface/mattn/go-sqlite3; zero cross-module imports; zero creds). 7 ACs; owner dev-alert-engine; G2 + G12. Handoff docs/handoffs/TASK_P1-AE-C.md.",
+      "P1-C DONE 2026-05-24T055413Z (commit cd56dbd2) \u2014 alert_pipeline module stub; ports option B (slim module-local interfaces); composes signal-classifier + dedup-key-builder + cooldown-gate via injected AlertRepositoryPort/MutePort/TelegramPort; 7 ACs PASS. Router independently verified: Fence-B grep clean (single hit = doc-comment line in ports.go, zero forbidden imports); cross-module grep=0; ZERO-CREDS module grep=0 (TelegramPort type-name only); unit test mock ports (happy/dedup-hit/mute-hit) exit 0; module-tier + all-tier sandbox total=11 pass=11 fail=0 status=OK; CGO0 build exit 0; no SSOT/SI-2/other-pilot touch; anchor debba8ea intact. G2 advances (EARNED-PENDING internal). NO goal flip; goalsEarned=0.",
+      "P1-D SEQUENCED 2026-05-24T055413Z \u2014 dashboard stub apps/alert-engine/dashboard/index.html: 3 panels (primitives 3-card / module 1-card / microservice 1-card port 5006 from system-map.json as label-only), honest NOT-RUN cold-open, self-contained file:// (zero external CDN/fetch/img), zero creds (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), SI-2 DISAVOWAL HTML comment (docs/dashboards/index.html is stock-price-EXCLUSIVE \u2014 alert-engine MUST NOT create/modify). G6 GENESIS + G8 (NOT-RUN honest) + G9 setup (PO Playwright pre-compat: zero console errors, all cards in DOM) + G12 (DoD sandbox-green-before-green-card). 7 ACs; owner dev-alert-engine. Handoff docs/handoffs/TASK_P1-AE-D.md.",
+      "P1-D DONE 2026-05-24T060000Z (commit 89202e98) \u2014 dashboard stub 3-panel rendered (primitives + module + microservice), SI-2 disavowal comment baked (HTML line 8-10), edit-rerun panel skeleton in place (lines 982-1087), honest NOT-RUN cold-open (all 11 scenario cards start 'not-run'), zero credentials (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), file:// works (zero CDN/fetch/img). G6 genesis COMPLETE. Router-verified: single file created, anchor intact, no SSOT/SI-2/other-pilot touch. Next task: P1-E (edit-rerun handler finalization + G7 env audit all-4 sub-gates).",
+      "P1-E SEQUENCED 2026-05-24T060000Z \u2014 edit-rerun handler + G7 ZERO-CREDS audit (all 4 sub-gates: env audit empty, scenario JSON cred-free, CGO_ENABLED=0 build exit 0, edit\u2192rerun cycle works). 7 ACs; owner dev-alert-engine; G7 + G8 + G12. Handoff docs/handoffs/TASK_P1-AE-E.md. HEADLINE RISK: if any G7 sub-gate fails, Phase 1 is CONDITIONAL-HOLD.",
+      "P1-E DONE 2026-05-24T061600Z (commit 4e756d40) \u2014 edit-rerun handler wired in dashboard (openRerunPanel + parseRerunOutput + applyRerunOutput + resetAllToNotRun); all 7 ACs PASS. G7 ZERO-CREDS all 4 sub-gates verified PASS: (1) env audit empty, (2) sandbox source grep 0 credential hits, (3) CGO_ENABLED=0 build exit 0, (4) edit\u2192rerun cycle works (cooldown-gate-golden.json cfg.cooldownMinutes 30\u219260, sandbox re-ran, dashboard updated). G8 advances (honest-red proof deferred Phase 2 P2-J). Sandbox total=11 pass=11 fail=0 status=OK. Anchor debba8ea intact. No SSOT/SI-2/other-pilot touch. Phase 1 clear to close (next: PM runs close-gate, then architect Phase 2 plan)."
     ],
     "tasks": {}
   },
-
   "phase2": {
-    "_note": "Phase 2 ACTIVE (2026-05-24T082100Z) — 14 sequential tasks (P2-A through P2-Z). Owner: dev-alert-engine + qa + po. WIP=1 sequential. Pre-revert tag discipline binds task sequence (L5). Charter §4.5 ZERO-CREDS SSOT freeze: goalsEarned stays 0, decisionMatrix stays all-TBD.",
+    "_note": "Phase 2 ACTIVE (2026-05-24T082100Z) \u2014 14 sequential tasks (P2-A through P2-Z). Owner: dev-alert-engine + qa + po. WIP=1 sequential. Pre-revert tag discipline binds task sequence (L5). Charter \u00a74.5 ZERO-CREDS SSOT freeze: goalsEarned stays 0, decisionMatrix stays all-TBD.",
     "status": "ACTIVE",
     "openedAt": "2026-05-24T082100Z",
-    "openedBy": "pm (Phase 1 exit gate PASS → Phase 2 dispatch)",
+    "openedBy": "pm (Phase 1 exit gate PASS \u2192 Phase 2 dispatch)",
     "gateVerdict": null,
     "gateVerifiedAt": null,
     "gateVerifiedBy": null,
@@ -114,22 +110,23 @@
     "taskPlan": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "acCount": 69,
-    "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
+    "wipPolicy": "WIP=1 sequential \u2014 PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-J",
+    "current_task": "P2-K",
     "current_task_status": "SEQUENCED",
-    "current_task_owner": "qa",
-    "current_task_handoff": "docs/handoffs/TASK_P2-J-ae-g8-honest-red.md",
+    "current_task_owner": "po",
+    "current_task_handoff": "docs/handoffs/TASK_P2-K-ae-g9-playwright.md",
     "progress_notes": [
-      "P2-I DONE 2026-05-24T095500Z (commit 9d18d87e) — G6 finalization: dashboard deprecated-notice added + Phase-2 wired-state display. All 5 ACs PASS: AC-1 file:// static (zero network), AC-2 deprecated-notice visible (grep ≥1), AC-3 SI-2 disavowal intact (grep ≥1), AC-4 zero credentials (grep=0), AC-5 G12 DoD sandbox green (11/11 PASS). Background category-relabel (commit 099f8819) preserved WITHOUT revert (golden/edge/failure relabeled to Valid Input/Edge Case/Bad Input→Error). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-J (G8 honest-red deliberate-break proof).",
-      "P2-H DONE 2026-05-24T094753Z (commit 7ecb6f34) — G3 complete: cmd/server/main.go composition root rewired to alert_pipeline module + api/openapi.yaml OpenAPI contract created. All 7 ACs PASS: AC-1 zero domain-operation references in composition root (grep ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes|isToday|djb2Hash = 0), AC-2 alert_pipeline module wired (grep alertpipeline ≥1), AC-3 infra adapters injected at root (grep infrastructure|SQLite|mattn|Telegram ≥1), AC-4 OpenAPI contract exists (apps/alert-engine/api/openapi.yaml FOUND, python3 yaml.safe_load exit 0), AC-5 build+lint clean (go build ./... && golangci-lint run both exit 0), AC-6 composition root ≤120 lines (101L ≤120), AC-7 G12 DoD sandbox green (CGO_ENABLED=0 sandbox all-tier total=11 pass=11 fail=0 status=OK). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-I (G6 dashboard finalization: deprecated-notice + Phase-2 wired-state display).",
-      "P2-G DONE 2026-05-24T073523Z — G5b/G5c complete: MCP handler HTTP-port audit + zero TODO.*migrat verification (QA-only). All 5 ACs PASS: AC-1 zero direct alert-engine domain imports in mcp-server (grep returns 0), AC-2 HTTP client at port 5006 confirmed in clients.ts (grep ≥1), AC-3 zero TODO.*migrat in alert-engine zone (grep=0), AC-4 zero TODO.*migrat in _deprecated path (grep=0), AC-5 G5 evidence compiled (g5a_deprecated_path + g5b_zero_direct_domain_imports YES + g5b_http_client_present YES + g5c_zero_todo_migrat YES + g5_ready_to_grade YES). Signal qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json emitted. Anchor debba8ea INTACT. Ready for P2-H (G3 composition root rewire: alert_pipeline module wiring + OpenAPI contract).",
-      "P2-F DONE 2026-05-24T092600Z — G5a complete: services.go + services_test.go moved to pkg/domain/_deprecated/services_v1.go + services_v1_test.go (git mv preserves history). evaluate.go rewired to call alert_pipeline module instead of direct domain function calls (fingerprint/dedup/cooldown). All 7 ACs PASS: AC-1 file moved + original gone, AC-2 zero direct domain calls in evaluate.go (grep=0), AC-3 build clean (go build ./... exit 0), AC-4 golangci-lint exit 0 (fence-a/b/c all clean), AC-5 sandbox green (11/11 PASS), AC-6 _deprecated/ path exists with moved files, AC-7 fence-c holds (infra only in main.go). Anchor debba8ea INTACT. Ready for P2-G (G5b/G5c audit: MCP HTTP-port + zero TODO-migrat).",
-      "P2-E DONE 2026-05-24T093000Z — alert-engine-pre-delete tag created at commit ccef14fa (P2-D close-gate commit per prior PM cycle). Tag verified present via `git tag | grep alert-engine-pre-delete`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-E minimal 3-AC tag task complete. Ready to sequence P2-F G5a git mv + evaluate.go rewire.",
-      "P2-A DONE 2026-05-24T084900Z — alert-engine-pre-ci tag created at commit 604a71f1 (Phase-1 close-gate signal commit, per dev-alert-engine P2-A done signal). Tag verified present via `git tag | grep alert-engine-pre-ci`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-A minimal 3-AC task complete.",
-      "P2-B DONE 2026-05-24T085113Z (commit 6c2edc9d) — .golangci.yml Fence-A/B/C creation + CI job wiring. Config file created (69L, 3 named rules: fence-a/b/c), CI job wired in .github/workflows/ci.yml (alert-engine-go-lint job), golangci-lint run exits 0 on current Phase-1 codebase (CONFIG PROOF established). G12 DoD gate PASS (sandbox 11/11). AC-2 green run = CONFIG-PROOF-ONLY per charter note: actual fence enforcement proof is P2-C (deliberate violation test). P2-B establishes config + proof lint runs; P2-C proves fence catches violations.",
-      "P2-C DONE 2026-05-24T090600Z (commit sequence: dev 2026-05-24T085936Z via docs/signals/dev-ae-P2-C-done-20260524T085936Z.json + qa 2026-05-24T090600Z via docs/signals/qa-ae-P2-C-repro-done-20260524T090600Z.json) — G4 Fence-A deliberate-violation proof (AC-4b + AC-4 QA repro). Owner: dev-alert-engine + qa (independent reproduction). AC-1 PASS (lint exit 1, fence-a named, signal-classifier/classifier.go + mattn/go-sqlite3 violation). AC-2 PASS (lint exit 0 after revert). AC-3 PASS (violation never staged/committed). AC-4 PASS (QA independently reproduced on dedup-key-builder/builder.go with pkg/infrastructure import — different file, different import, same fence-a enforcement; feedback_fence_false_green proof: fence is NOT file-specific, universal enforcement confirmed). AC-5 PASS (sandbox 11/11 post-revert). R-FENCE gate PASS: proof is NOT file-specific, not import-specific. G4 advances (EARNED-PENDING internal, no goal flip per §4.5).",
-      "P2-D DONE 2026-05-24T092000Z — G4 freeze anchor confirmation (AC-4c). Owner: qa. AC-1 PASS (git log --oneline apps/alert-engine/.golangci.yml shows P2-B commit 6c2edc9d as most-recent; freeze anchor locked). AC-2 PASS (git merge-base alert-engine-pre-ci HEAD returns non-empty SHA; pre-ci tag is ancestor of current HEAD). AC-3 PASS (G4 evidence file TASK_P2-D-ae-g4-evidence.md compiled with 6-field evidence table: ac_4a_ci_job_wired=YES, ac_4b_violation_proof=YES, ac_4c_freeze_sha=6c2edc9d, alert_engine_pre_ci_tag_sha=604a71f1, r_fence_gate=PASS, g4_ready_to_grade=YES). Signal qa-ae-P2-D-g4-evidence-done-20260524T092000Z.json emitted. G4 evidence chain complete, ready for P2-F (G5a) work."
+      "P2-J DONE 2026-05-24T080002Z (signal qa-ae-P2-J-g8-done-20260524T080002Z.json) - G8 honest-red deliberate-break proof PASS. All 5 ACs PASS: AC-1 sandbox exit 1 + dashboard RED on cooldown-gate corrupt (suppress false to true), AC-2 sandbox exit 0 after revert all 11 scenarios green, AC-3 2 more primitives corrupted both exit non-zero (signal-classifier + dedup-key-builder), AC-4 all scenario files reverted/git status clean, AC-5 G8 evidence compiled (TASK_P2-J-ae-g8-evidence.md + signal). Router-verified: 3 scenarios tested (cooldown-gate/signal-classifier/dedup-key-builder), each corruption to RED verified, each revert to GREEN verified, zero residue left, anchor debba8ea INTACT. G8 advances EARNED-PENDING. Ready for P2-K (G9 PO Playwright Path B dashboard verification).",
+      "P2-I DONE 2026-05-24T095500Z (commit 9d18d87e) \u2014 G6 finalization: dashboard deprecated-notice added + Phase-2 wired-state display. All 5 ACs PASS: AC-1 file:// static (zero network), AC-2 deprecated-notice visible (grep \u22651), AC-3 SI-2 disavowal intact (grep \u22651), AC-4 zero credentials (grep=0), AC-5 G12 DoD sandbox green (11/11 PASS). Background category-relabel (commit 099f8819) preserved WITHOUT revert (golden/edge/failure relabeled to Valid Input/Edge Case/Bad Input\u2192Error). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-J (G8 honest-red deliberate-break proof).",
+      "P2-H DONE 2026-05-24T094753Z (commit 7ecb6f34) \u2014 G3 complete: cmd/server/main.go composition root rewired to alert_pipeline module + api/openapi.yaml OpenAPI contract created. All 7 ACs PASS: AC-1 zero domain-operation references in composition root (grep ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes|isToday|djb2Hash = 0), AC-2 alert_pipeline module wired (grep alertpipeline \u22651), AC-3 infra adapters injected at root (grep infrastructure|SQLite|mattn|Telegram \u22651), AC-4 OpenAPI contract exists (apps/alert-engine/api/openapi.yaml FOUND, python3 yaml.safe_load exit 0), AC-5 build+lint clean (go build ./... && golangci-lint run both exit 0), AC-6 composition root \u2264120 lines (101L \u2264120), AC-7 G12 DoD sandbox green (CGO_ENABLED=0 sandbox all-tier total=11 pass=11 fail=0 status=OK). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-I (G6 dashboard finalization: deprecated-notice + Phase-2 wired-state display).",
+      "P2-G DONE 2026-05-24T073523Z \u2014 G5b/G5c complete: MCP handler HTTP-port audit + zero TODO.*migrat verification (QA-only). All 5 ACs PASS: AC-1 zero direct alert-engine domain imports in mcp-server (grep returns 0), AC-2 HTTP client at port 5006 confirmed in clients.ts (grep \u22651), AC-3 zero TODO.*migrat in alert-engine zone (grep=0), AC-4 zero TODO.*migrat in _deprecated path (grep=0), AC-5 G5 evidence compiled (g5a_deprecated_path + g5b_zero_direct_domain_imports YES + g5b_http_client_present YES + g5c_zero_todo_migrat YES + g5_ready_to_grade YES). Signal qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json emitted. Anchor debba8ea INTACT. Ready for P2-H (G3 composition root rewire: alert_pipeline module wiring + OpenAPI contract).",
+      "P2-F DONE 2026-05-24T092600Z \u2014 G5a complete: services.go + services_test.go moved to pkg/domain/_deprecated/services_v1.go + services_v1_test.go (git mv preserves history). evaluate.go rewired to call alert_pipeline module instead of direct domain function calls (fingerprint/dedup/cooldown). All 7 ACs PASS: AC-1 file moved + original gone, AC-2 zero direct domain calls in evaluate.go (grep=0), AC-3 build clean (go build ./... exit 0), AC-4 golangci-lint exit 0 (fence-a/b/c all clean), AC-5 sandbox green (11/11 PASS), AC-6 _deprecated/ path exists with moved files, AC-7 fence-c holds (infra only in main.go). Anchor debba8ea INTACT. Ready for P2-G (G5b/G5c audit: MCP HTTP-port + zero TODO-migrat).",
+      "P2-E DONE 2026-05-24T093000Z \u2014 alert-engine-pre-delete tag created at commit ccef14fa (P2-D close-gate commit per prior PM cycle). Tag verified present via `git tag | grep alert-engine-pre-delete`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-E minimal 3-AC tag task complete. Ready to sequence P2-F G5a git mv + evaluate.go rewire.",
+      "P2-A DONE 2026-05-24T084900Z \u2014 alert-engine-pre-ci tag created at commit 604a71f1 (Phase-1 close-gate signal commit, per dev-alert-engine P2-A done signal). Tag verified present via `git tag | grep alert-engine-pre-ci`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-A minimal 3-AC task complete.",
+      "P2-B DONE 2026-05-24T085113Z (commit 6c2edc9d) \u2014 .golangci.yml Fence-A/B/C creation + CI job wiring. Config file created (69L, 3 named rules: fence-a/b/c), CI job wired in .github/workflows/ci.yml (alert-engine-go-lint job), golangci-lint run exits 0 on current Phase-1 codebase (CONFIG PROOF established). G12 DoD gate PASS (sandbox 11/11). AC-2 green run = CONFIG-PROOF-ONLY per charter note: actual fence enforcement proof is P2-C (deliberate violation test). P2-B establishes config + proof lint runs; P2-C proves fence catches violations.",
+      "P2-C DONE 2026-05-24T090600Z (commit sequence: dev 2026-05-24T085936Z via docs/signals/dev-ae-P2-C-done-20260524T085936Z.json + qa 2026-05-24T090600Z via docs/signals/qa-ae-P2-C-repro-done-20260524T090600Z.json) \u2014 G4 Fence-A deliberate-violation proof (AC-4b + AC-4 QA repro). Owner: dev-alert-engine + qa (independent reproduction). AC-1 PASS (lint exit 1, fence-a named, signal-classifier/classifier.go + mattn/go-sqlite3 violation). AC-2 PASS (lint exit 0 after revert). AC-3 PASS (violation never staged/committed). AC-4 PASS (QA independently reproduced on dedup-key-builder/builder.go with pkg/infrastructure import \u2014 different file, different import, same fence-a enforcement; feedback_fence_false_green proof: fence is NOT file-specific, universal enforcement confirmed). AC-5 PASS (sandbox 11/11 post-revert). R-FENCE gate PASS: proof is NOT file-specific, not import-specific. G4 advances (EARNED-PENDING internal, no goal flip per \u00a74.5).",
+      "P2-D DONE 2026-05-24T092000Z \u2014 G4 freeze anchor confirmation (AC-4c). Owner: qa. AC-1 PASS (git log --oneline apps/alert-engine/.golangci.yml shows P2-B commit 6c2edc9d as most-recent; freeze anchor locked). AC-2 PASS (git merge-base alert-engine-pre-ci HEAD returns non-empty SHA; pre-ci tag is ancestor of current HEAD). AC-3 PASS (G4 evidence file TASK_P2-D-ae-g4-evidence.md compiled with 6-field evidence table: ac_4a_ci_job_wired=YES, ac_4b_violation_proof=YES, ac_4c_freeze_sha=6c2edc9d, alert_engine_pre_ci_tag_sha=604a71f1, r_fence_gate=PASS, g4_ready_to_grade=YES). Signal qa-ae-P2-D-g4-evidence-done-20260524T092000Z.json emitted. G4 evidence chain complete, ready for P2-F (G5a) work."
     ],
     "tasks": {
       "P2-A": {
@@ -154,27 +151,125 @@
         "doneAt": "2026-05-24T085113Z",
         "doneBy": "dev-alert-engine"
       },
-      "P2-C": { "title": "G4 deliberate-violation proof (AC-4b) — Fence-A violation + revert", "owner": "dev-alert-engine + qa", "blocks": "P2-D", "blockedBy": "P2-B", "status": "DONE", "acCount": 5, "sequencedAt": "2026-05-24T085113Z", "doneAt": "2026-05-24T090600Z", "doneBy": "dev-alert-engine + qa" },
-      "P2-D": { "title": "G4 freeze anchor confirmation (AC-4c)", "owner": "qa", "blocks": "P2-E", "blockedBy": "P2-C", "status": "DONE", "acCount": 3, "sequencedAt": "2026-05-24T090630Z", "doneAt": "2026-05-24T092000Z", "doneBy": "qa" },
-      "P2-E": { "title": "Create alert-engine-pre-delete tag (pre-revert anchor before G5a work)", "owner": "dev-alert-engine", "blocks": "P2-F", "blockedBy": "P2-D", "status": "DONE", "acCount": 3, "sequencedAt": "2026-05-24T092100Z", "doneAt": "2026-05-24T093000Z", "doneBy": "dev-alert-engine" },
-      "P2-F": { "title": "G5a — git mv domain/services.go → _deprecated/ + evaluate.go rewire", "owner": "dev-alert-engine", "blocks": "P2-G", "blockedBy": "P2-E", "status": "DONE", "acCount": 7, "sequencedAt": "2026-05-24T093000Z", "doneAt": "2026-05-24T092600Z", "doneBy": "dev-alert-engine" },
-      "P2-G": { "title": "G5b/G5c — MCP handler HTTP-port audit + zero TODO.*migrat", "owner": "qa", "blocks": "P2-H", "blockedBy": "P2-F", "status": "DONE", "acCount": 5, "sequencedAt": "2026-05-24T093000Z", "doneAt": "2026-05-24T073523Z", "doneBy": "qa" },
-      "P2-H": { "title": "G3 — composition root rewire to alert_pipeline module + OpenAPI contract", "owner": "dev-alert-engine", "blocks": "P2-I", "blockedBy": "P2-G", "status": "DONE", "acCount": 7, "sequencedAt": "2026-05-24T073600Z", "doneAt": "2026-05-24T094753Z", "doneBy": "dev-alert-engine" },
-      "P2-I": { "title": "G6 finalization — dashboard deprecated-notice + Phase-2 wired-state display", "owner": "dev-alert-engine", "blocks": "P2-J", "blockedBy": "P2-H", "status": "DONE", "acCount": 5, "sequencedAt": "2026-05-24T094800Z", "doneAt": "2026-05-24T095500Z", "doneBy": "dev-alert-engine" },
-      "P2-J": { "title": "G8 honest-red deliberate-break proof (Test A corrupted + Test B golden)", "owner": "qa", "blocks": "P2-K", "blockedBy": "P2-I", "status": "SEQUENCED", "acCount": 5, "sequencedAt": "2026-05-24T075621Z" },
-      "P2-K": { "title": "G9 PO Playwright Path B (chromium-headless-shell, TCC-staged)", "owner": "po", "status": "TBD" },
-      "P2-L": { "title": "Create alert-engine-pre-inject tag + G10 bug injection (QA only)", "owner": "qa", "status": "TBD" },
-      "P2-M": { "title": "G10 AI-fixability fix ≤2 cycles (blind fix) + G11 2-trial coupling proof", "owner": "dev-alert-engine + qa", "status": "TBD" },
-      "P2-Z": { "title": "Phase 2 close-gate verification (QA) — all Phase-2 goal evidence chain confirmed", "owner": "qa", "status": "TBD" }
+      "P2-C": {
+        "title": "G4 deliberate-violation proof (AC-4b) \u2014 Fence-A violation + revert",
+        "owner": "dev-alert-engine + qa",
+        "blocks": "P2-D",
+        "blockedBy": "P2-B",
+        "status": "DONE",
+        "acCount": 5,
+        "sequencedAt": "2026-05-24T085113Z",
+        "doneAt": "2026-05-24T090600Z",
+        "doneBy": "dev-alert-engine + qa"
+      },
+      "P2-D": {
+        "title": "G4 freeze anchor confirmation (AC-4c)",
+        "owner": "qa",
+        "blocks": "P2-E",
+        "blockedBy": "P2-C",
+        "status": "DONE",
+        "acCount": 3,
+        "sequencedAt": "2026-05-24T090630Z",
+        "doneAt": "2026-05-24T092000Z",
+        "doneBy": "qa"
+      },
+      "P2-E": {
+        "title": "Create alert-engine-pre-delete tag (pre-revert anchor before G5a work)",
+        "owner": "dev-alert-engine",
+        "blocks": "P2-F",
+        "blockedBy": "P2-D",
+        "status": "DONE",
+        "acCount": 3,
+        "sequencedAt": "2026-05-24T092100Z",
+        "doneAt": "2026-05-24T093000Z",
+        "doneBy": "dev-alert-engine"
+      },
+      "P2-F": {
+        "title": "G5a \u2014 git mv domain/services.go \u2192 _deprecated/ + evaluate.go rewire",
+        "owner": "dev-alert-engine",
+        "blocks": "P2-G",
+        "blockedBy": "P2-E",
+        "status": "DONE",
+        "acCount": 7,
+        "sequencedAt": "2026-05-24T093000Z",
+        "doneAt": "2026-05-24T092600Z",
+        "doneBy": "dev-alert-engine"
+      },
+      "P2-G": {
+        "title": "G5b/G5c \u2014 MCP handler HTTP-port audit + zero TODO.*migrat",
+        "owner": "qa",
+        "blocks": "P2-H",
+        "blockedBy": "P2-F",
+        "status": "DONE",
+        "acCount": 5,
+        "sequencedAt": "2026-05-24T093000Z",
+        "doneAt": "2026-05-24T073523Z",
+        "doneBy": "qa"
+      },
+      "P2-H": {
+        "title": "G3 \u2014 composition root rewire to alert_pipeline module + OpenAPI contract",
+        "owner": "dev-alert-engine",
+        "blocks": "P2-I",
+        "blockedBy": "P2-G",
+        "status": "DONE",
+        "acCount": 7,
+        "sequencedAt": "2026-05-24T073600Z",
+        "doneAt": "2026-05-24T094753Z",
+        "doneBy": "dev-alert-engine"
+      },
+      "P2-I": {
+        "title": "G6 finalization \u2014 dashboard deprecated-notice + Phase-2 wired-state display",
+        "owner": "dev-alert-engine",
+        "blocks": "P2-J",
+        "blockedBy": "P2-H",
+        "status": "DONE",
+        "acCount": 5,
+        "sequencedAt": "2026-05-24T094800Z",
+        "doneAt": "2026-05-24T095500Z",
+        "doneBy": "dev-alert-engine"
+      },
+      "P2-J": {
+        "title": "G8 honest-red deliberate-break proof (Test A corrupted + Test B golden)",
+        "owner": "qa",
+        "blocks": "P2-K",
+        "blockedBy": "P2-I",
+        "status": "DONE",
+        "acCount": 5,
+        "sequencedAt": "2026-05-24T075621Z",
+        "doneAt": "2026-05-24T080002Z",
+        "doneBy": "qa"
+      },
+      "P2-K": {
+        "title": "G9 PO Playwright Path B (chromium-headless-shell, TCC-staged)",
+        "owner": "po",
+        "status": "SEQUENCED",
+        "blocks": "P2-L",
+        "blockedBy": "P2-J",
+        "acCount": 4,
+        "sequencedAt": "2026-05-24T080002Z"
+      },
+      "P2-L": {
+        "title": "Create alert-engine-pre-inject tag + G10 bug injection (QA only)",
+        "owner": "qa",
+        "status": "TBD"
+      },
+      "P2-M": {
+        "title": "G10 AI-fixability fix \u22642 cycles (blind fix) + G11 2-trial coupling proof",
+        "owner": "dev-alert-engine + qa",
+        "status": "TBD"
+      },
+      "P2-Z": {
+        "title": "Phase 2 close-gate verification (QA) \u2014 all Phase-2 goal evidence chain confirmed",
+        "owner": "qa",
+        "status": "TBD"
+      }
     }
   },
-
   "goalsEarned": 0,
   "_goalsEarned_note": "Running counter incremented ONLY by PO at terminal atomic close. Starts 0. Must reach 12 before decisionMatrix is populated.",
-
   "goals": [
     {
-      "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
+      "_track_note": "Track A \u2014 Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
       "id": "G1",
       "track": "A",
       "title": "Primitives ship with scenarios",
@@ -182,7 +277,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "3-5 Go primitives in apps/alert-engine/pkg/primitive/ (candidates: signal-classifier, dedup-key-builder, cooldown-gate, duplicate-checker, alert-formatter — dev-alert-engine confirms exact set Phase 0). Each ≥3 scenarios (golden + edge + failure). Verify: CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -scenario=all exits 0; ≥1 failure scenario; grep mattn/go-sqlite3 in pkg/primitive = 0; grep -iE 'token|chat_id|bot|secret|api_key' in pkg/primitive = 0 (ZERO-CREDS gate). Min 9 scenario files (3 prim × 3).",
+      "calibration": "3-5 Go primitives in apps/alert-engine/pkg/primitive/ (candidates: signal-classifier, dedup-key-builder, cooldown-gate, duplicate-checker, alert-formatter \u2014 dev-alert-engine confirms exact set Phase 0). Each \u22653 scenarios (golden + edge + failure). Verify: CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -scenario=all exits 0; \u22651 failure scenario; grep mattn/go-sqlite3 in pkg/primitive = 0; grep -iE 'token|chat_id|bot|secret|api_key' in pkg/primitive = 0 (ZERO-CREDS gate). Min 9 scenario files (3 prim \u00d7 3).",
       "phase2Bucket": null
     },
     {
@@ -193,7 +288,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "ONE module: apps/alert-engine/pkg/module/alert_pipeline/. Composes primitives via interface + injected AlertRepositoryPort + MutePort + TelegramPort (infra impls, never imported directly). Multi-primitive scenario = alert pipeline story (classify → fingerprint → dedup → cooldown → format → route). Fence-B + ZERO-CREDS + CGO: grep pkg/module/ imports (cross-module=0) + grep mattn/go-sqlite3|pkg/infrastructure in module = 0 + grep -iE 'telegram|bot_token|chat_id' in module = 0. mute_gate module deferred post-pilot.",
+      "calibration": "ONE module: apps/alert-engine/pkg/module/alert_pipeline/. Composes primitives via interface + injected AlertRepositoryPort + MutePort + TelegramPort (infra impls, never imported directly). Multi-primitive scenario = alert pipeline story (classify \u2192 fingerprint \u2192 dedup \u2192 cooldown \u2192 format \u2192 route). Fence-B + ZERO-CREDS + CGO: grep pkg/module/ imports (cross-module=0) + grep mattn/go-sqlite3|pkg/infrastructure in module = 0 + grep -iE 'telegram|bot_token|chat_id' in module = 0. mute_gate module deferred post-pilot.",
       "phase2Bucket": null
     },
     {
@@ -215,7 +310,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "Go service → depguard via golangci-lint (SAME mechanism as TA+macro+stock-price, NO SI-3/TS-fence dependency). apps/alert-engine/.golangci.yml: Fence-A (pkg/primitive must not import application/infrastructure/interface OR mattn/go-sqlite3 OR Telegram client), Fence-B (pkg/module must not import infrastructure OR mattn/go-sqlite3), Fence-C (infra importable ONLY from cmd/server/main.go; exclusions !cmd/server/main.go, !*_test.go). CI job alert-engine-go-lint working-directory=apps/alert-engine OR offline proof. Pre-revert tag alert-engine-pre-ci. AC-4a CI job, AC-4b deliberate Fence-A violation reproduces non-zero exit with 'Fence-A' + reverted + never committed (QA independent), AC-4c .golangci.yml freeze anchor most-recent commit on file at close.",
+      "calibration": "Go service \u2192 depguard via golangci-lint (SAME mechanism as TA+macro+stock-price, NO SI-3/TS-fence dependency). apps/alert-engine/.golangci.yml: Fence-A (pkg/primitive must not import application/infrastructure/interface OR mattn/go-sqlite3 OR Telegram client), Fence-B (pkg/module must not import infrastructure OR mattn/go-sqlite3), Fence-C (infra importable ONLY from cmd/server/main.go; exclusions !cmd/server/main.go, !*_test.go). CI job alert-engine-go-lint working-directory=apps/alert-engine OR offline proof. Pre-revert tag alert-engine-pre-ci. AC-4a CI job, AC-4b deliberate Fence-A violation reproduces non-zero exit with 'Fence-A' + reverted + never committed (QA independent), AC-4c .golangci.yml freeze anchor most-recent commit on file at close.",
       "phase2Bucket": null
     },
     {
@@ -226,11 +321,11 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "G5a: superseded domain/services.go functions moved to pkg/_deprecated/ or deleted under alert-engine-pre-delete tag after module ships. G5b: mcp-server tool handlers invoking alert-engine verified routed via HTTP port 5006 — zero direct domain imports. G5c: grep TODO.*migrat in apps/alert-engine/ + mcp-server alert tool dirs = 0. Pre-delete tag alert-engine-pre-delete MUST precede any git mv.",
+      "calibration": "G5a: superseded domain/services.go functions moved to pkg/_deprecated/ or deleted under alert-engine-pre-delete tag after module ships. G5b: mcp-server tool handlers invoking alert-engine verified routed via HTTP port 5006 \u2014 zero direct domain imports. G5c: grep TODO.*migrat in apps/alert-engine/ + mcp-server alert tool dirs = 0. Pre-delete tag alert-engine-pre-delete MUST precede any git mv.",
       "phase2Bucket": null
     },
     {
-      "_track_note": "Track B — Dashboard Trust Layer (G6-G9). User-facing transparency contract.",
+      "_track_note": "Track B \u2014 Dashboard Trust Layer (G6-G9). User-facing transparency contract.",
       "id": "G6",
       "track": "B",
       "title": "Three-level dashboard renders from JSON traces (3-panel standard)",
@@ -238,7 +333,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "apps/alert-engine/dashboard/index.html — 3 panels (primitives, module, microservice). file:// standalone, ZERO network calls, ZERO CGO, ZERO TELEGRAM_* vars, ZERO credential-shaped data. Renders from scenario trace JSON. HTML comment baked in disavowing docs/dashboards/index.html (SI-2 is stock-price-EXCLUSIVE). SI-2 is NOT a G6 deliverable for alert-engine.",
+      "calibration": "apps/alert-engine/dashboard/index.html \u2014 3 panels (primitives, module, microservice). file:// standalone, ZERO network calls, ZERO CGO, ZERO TELEGRAM_* vars, ZERO credential-shaped data. Renders from scenario trace JSON. HTML comment baked in disavowing docs/dashboards/index.html (SI-2 is stock-price-EXCLUSIVE). SI-2 is NOT a G6 deliverable for alert-engine.",
       "phase2Bucket": null
     },
     {
@@ -249,7 +344,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "HEADLINE RISK. User edits scenario JSON, refreshes dashboard, sees updated result. ALL 4 sub-gates must PASS: (1) env audit: env | grep -iE 'TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD' returns empty; (2) scenario JSON grep -rniE 'token|chat_id|bot|secret|api_key|password' apps/alert-engine/cmd/sandbox/ = 0; (3) sandbox compiles under CGO_ENABLED=0; (4) edit→rerun→updated-trace cycle works end-to-end. All 4 required — missing any one = G7 NOT PASS.",
+      "calibration": "HEADLINE RISK. User edits scenario JSON, refreshes dashboard, sees updated result. ALL 4 sub-gates must PASS: (1) env audit: env | grep -iE 'TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD' returns empty; (2) scenario JSON grep -rniE 'token|chat_id|bot|secret|api_key|password' apps/alert-engine/cmd/sandbox/ = 0; (3) sandbox compiles under CGO_ENABLED=0; (4) edit\u2192rerun\u2192updated-trace cycle works end-to-end. All 4 required \u2014 missing any one = G7 NOT PASS.",
       "phase2Bucket": null
     },
     {
@@ -260,13 +355,13 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "Two tests proven before G8 grades YES: Test A (deliberately corrupted scenario e.g. flip expected suppress:false → suppress:true in cooldown-gate golden) → dashboard RED, diff captured; Test B (known-good golden after revert) → dashboard GREEN, diff=null. No false green tolerated.",
+      "calibration": "Two tests proven before G8 grades YES: Test A (deliberately corrupted scenario e.g. flip expected suppress:false \u2192 suppress:true in cooldown-gate golden) \u2192 dashboard RED, diff captured; Test B (known-good golden after revert) \u2192 dashboard GREEN, diff=null. No false green tolerated.",
       "phase2Bucket": null
     },
     {
       "id": "G9",
       "track": "B",
-      "title": "Dashboard is the trust contract — short-circuit via PO Playwright (Day-0 default, L6)",
+      "title": "Dashboard is the trust contract \u2014 short-circuit via PO Playwright (Day-0 default, L6)",
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
@@ -275,15 +370,15 @@
       "phase2Bucket": null
     },
     {
-      "_track_note": "Track C — AI-Fixability Proof (G10-G12). Proving the sandbox accelerates dev loops.",
+      "_track_note": "Track C \u2014 AI-Fixability Proof (G10-G12). Proving the sandbox accelerates dev loops.",
       "id": "G10",
       "track": "C",
-      "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
+      "title": "AI agent fixes a primitive bug without looping (\u22642 cycles)",
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "QA injects 1 deliberate single-literal bug into an alert-engine primitive (e.g. wrong djb2 seed constant in dedup-key-builder, or flipped comparison in cooldown-gate). dev-alert-engine fixes in ≤2 dispatch cycles. Baseline from docs/data/bug-inventory.json alert_engine_baseline block (fallback 1.5 if no 60d history). Pre-inject tag alert-engine-pre-inject MUST precede injection commit. Dashboard turns GREEN post-fix.",
+      "calibration": "QA injects 1 deliberate single-literal bug into an alert-engine primitive (e.g. wrong djb2 seed constant in dedup-key-builder, or flipped comparison in cooldown-gate). dev-alert-engine fixes in \u22642 dispatch cycles. Baseline from docs/data/bug-inventory.json alert_engine_baseline block (fallback 1.5 if no 60d history). Pre-inject tag alert-engine-pre-inject MUST precede injection commit. Dashboard turns GREEN post-fix.",
       "phase2Bucket": null
     },
     {
@@ -294,7 +389,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "2-trial coupling proof (identical to TA/macro/stock-price). Trial-1 = G10 injection + fix; verify ≥1 coupled scenario RED, single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Both trials outcome-(a) = PASS. Alarm-mechanism-functional.",
+      "calibration": "2-trial coupling proof (identical to TA/macro/stock-price). Trial-1 = G10 injection + fix; verify \u22651 coupled scenario RED, single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Both trials outcome-(a) = PASS. Alarm-mechanism-functional.",
       "phase2Bucket": null
     },
     {
@@ -309,12 +404,10 @@
       "phase2Bucket": null
     }
   ],
-
   "goalsEarned_note": "Counter starts 0. Each YES flip by PO at terminal close increments by 1. Only PO may increment.",
-
   "decisionMatrix": {
-    "_authorship_rule": "PO-ONLY. Populated ONLY after 12/12 G-goals are terminal (all YES or explicit NO/PARTIAL). Populated in ONE atomic commit alongside the final goal flip + verdict. ANY other agent writing these fields is a charter §4.5 VIOLATION.",
-    "_criteria_source": "Charter §Decision Matrix: Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount ≤ 6.",
+    "_authorship_rule": "PO-ONLY. Populated ONLY after 12/12 G-goals are terminal (all YES or explicit NO/PARTIAL). Populated in ONE atomic commit alongside the final goal flip + verdict. ANY other agent writing these fields is a charter \u00a74.5 VIOLATION.",
+    "_criteria_source": "Charter \u00a7Decision Matrix: Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount \u2264 6.",
     "speed": "TBD",
     "trust": "TBD",
     "scale": "TBD",
@@ -322,27 +415,25 @@
     "populatedAt": null,
     "populatedBy": null
   },
-
   "lessons_baked_in_v1": [
-    "L1: Language lock Go Day 0 — service is natively Go, no rewrite step",
-    "L2: G4 offline depguard evidence — pilot-scoped CI or offline proof, no whole-project CI noise",
-    "L3: Hard deadline enum ACTIVE|DONE|FAILED — no operational labels",
-    "L4: §4.5 matrix authorship PO-only after 12/12 terminal",
+    "L1: Language lock Go Day 0 \u2014 service is natively Go, no rewrite step",
+    "L2: G4 offline depguard evidence \u2014 pilot-scoped CI or offline proof, no whole-project CI noise",
+    "L3: Hard deadline enum ACTIVE|DONE|FAILED \u2014 no operational labels",
+    "L4: \u00a74.5 matrix authorship PO-only after 12/12 terminal",
     "L5: Pre-revert tags Day 0 (alert-engine-pre-ci/-delete/-inject)",
     "L6: G9 Path B PO Playwright Day-0 default, equal weight to user verbal",
     "L7: L84 explicit-file staging, no-force, no-verify, anchor-hold",
-    "L-CREDS: ZERO-CREDS boundary — TELEGRAM_* vars never in sandbox; scenario JSON credential-free; CGO_ENABLED=0 sandbox"
+    "L-CREDS: ZERO-CREDS boundary \u2014 TELEGRAM_* vars never in sandbox; scenario JSON credential-free; CGO_ENABLED=0 sandbox"
   ],
-
   "constraints_binding_day_0": [
-    "L84 explicit-file staging — git add <path> per file, NEVER -A or .",
+    "L84 explicit-file staging \u2014 git add <path> per file, NEVER -A or .",
     "No --force, --no-verify, --no-gpg-sign",
-    "All work on main — NO branches",
-    "DORMANT/CLOSED freeze — apps/technical-analysis/**, apps/macro-indicators/**, apps/stock-price/** + closed SSOTs untouched",
-    "ZERO-CREDS boundary — TELEGRAM_* only in infra + cmd/server/main.go, never in primitive/module/sandbox",
-    "SI-2 exclusion — docs/dashboards/index.html is stock-price-EXCLUSIVE, alert-engine MUST NOT touch",
-    "§4.5 matrix-authorship — decisionMatrix PO-only after 12/12 terminal",
+    "All work on main \u2014 NO branches",
+    "DORMANT/CLOSED freeze \u2014 apps/technical-analysis/**, apps/macro-indicators/**, apps/stock-price/** + closed SSOTs untouched",
+    "ZERO-CREDS boundary \u2014 TELEGRAM_* only in infra + cmd/server/main.go, never in primitive/module/sandbox",
+    "SI-2 exclusion \u2014 docs/dashboards/index.html is stock-price-EXCLUSIVE, alert-engine MUST NOT touch",
+    "\u00a74.5 matrix-authorship \u2014 decisionMatrix PO-only after 12/12 terminal",
     "Frozen anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor of HEAD",
-    "Fleet-wide single-committer serialization — verify git diff --cached --name-only clear of foreign paths before staging"
+    "Fleet-wide single-committer serialization \u2014 verify git diff --cached --name-only clear of foreign paths before staging"
   ]
 }
