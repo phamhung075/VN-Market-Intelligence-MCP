@@ -794,3 +794,175 @@ These items are tested via the 39 unit/handler tests with in-memory fixtures, bu
 **NEXT: dev-mcp-server.** Fix `pdf_path` population so docs appear. Options: (A) fix the pipeline write-back so pdf_path is persisted on primary path + backfill existing 14 rows, OR (B) extend LIST_SQL to include docs with `pdf_path IS NULL` but with matching OCR text (action_code+period join). After fix, re-deploy and QA re-runs check 2 only (real-data served verification).
 
 ---
+
+## [Architect] REOPEN-2 / pdf_path gap — Re-Root-Cause Design (2026-05-24T~UTC)
+
+**Trigger:** 3rd consecutive "assumption-about-reality-was-wrong" defect in this feature. Recurring-bug-escalation rule applies: no new fix commit until this re-spec is on record. QA verified all facts below against REAL `market.db` in the running container.
+
+**Prior trail preserved in full above. This section revises the matching premise only.**
+
+---
+
+### 1. Revised Matching Premise
+
+The previous re-ground design (REOPEN section above) stated: "financial_reports.pdf_path is the authoritative path — no heuristic scan needed." That premise was correct in theory but wrong in practice: ALL 14 real rows were inserted via `tryNewsChainFallback()` (line 645), which hardcodes `source: { pdfPath: null }`. The primary download path (lines 283-300) correctly writes PDFs to disk AND sets `report.source.pdfPath` (line 404 via `normaliseFilename()`), but none of the 14 current records went through that path. Consequence: `financial_reports.pdf_path IS NULL` for all 14 rows. The `bctcInspectHandler.ts` LIST_SQL filter `WHERE pdf_path IS NOT NULL AND pdf_path != ''` therefore returns zero rows — the viewer is empty.
+
+**Confirmed real-data state (QA-verified, live container):**
+- `financial_reports`: 14 rows (ACB, BSR, DGC, DHG, DIG, EIB, FPT×2, HPG, SHB, VCB×2, VEA, VNM). ALL have `pdf_path = NULL`.
+- `/app/data/pdfs/`: 17 PDF files on disk with messy real names.
+- `pdf_extracted_text`: 819 rows, 18 distinct filenames.
+
+**The robust join key for matching a `financial_reports` row to (a) its on-disk PDF and (b) its OCR rows:**
+
+Join key = `action_code` + `period_year` + `period_quarter` encoded in the PDF filename, cross-matched against `pdf_extracted_text.filename`.
+
+**Precise matching rule — PDF filename parsing:**
+
+Filenames observed on disk are messy. The canonical rule must tolerate all of these forms:
+
+| Example filename | Tokens to extract |
+|---|---|
+| `VCB_2025_Q1.pdf` | ticker=VCB, year=2025, quarter=1 |
+| `VCB_2025_Q4.pdf` | ticker=VCB, year=2025, quarter=4 |
+| `20250429-VCB-Bao-cao-tai-chinh-hop-nhat-Quy-1-nam-2025_signed.pdf` | ticker=VCB, year=2025, quarter=1 |
+| `20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf` | ticker=FPT, year=2025, quarter=4 |
+| `BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf` | ticker=VNM, year=2025, quarter=4 (December → Q4) |
+| `VCB_2025_Q1.pdf` (short canonical) | ticker=VCB, year=2025, quarter=1 |
+
+**Extraction algorithm (two-pass):**
+
+Pass 1 — structured token scan (covers `bctcPdfPullJob.buildPdfSavePath()` canonical names and dated variants):
+1. Normalize the filename: uppercase, strip extension, replace hyphens/underscores/spaces with single space.
+2. Ticker: first 2-4 uppercase alpha token that matches the known ticker list (or any alpha token ≥ 2 chars at position 0-1).
+3. Year: 4-digit token in range 2020-2030.
+4. Quarter: match any of — `Q1`/`Q2`/`Q3`/`Q4`, `QUY 1`/`QUY 2`/`QUY 3`/`QUY 4`, `QUY-1`/`QUY-4`, `QUY 1 NAM YYYY`. If month token present and no quarter: map month → quarter (Jan-Mar=1, Apr-Jun=2, Jul-Sep=3, Oct-Dec=4). Month 12 in filename `31.12.2025` → Q4.
+
+Pass 2 — VCB ambiguity case (the critical one): `VCB` appears as both Q1-2025 and Q4-2025 on disk. The year+quarter tokens MUST both match the `financial_reports.period_year` + `period_quarter` for the row being linked. A filename `VCB_2025_Q1.pdf` matches ONLY the row with `period_year=2025 AND period_quarter=1`. No guessing — if the tokens don't match unambiguously to exactly one row, `has_pdf: false` for that row.
+
+**`pdf_extracted_text` join key:** `pdf_extracted_text.filename` = the basename of the PDF file. After resolving which PDF file corresponds to a `financial_reports` row, `hasOcr = ocrFilenameSet.has(filename)`. This is already implemented correctly in `bctcInspectHandler.ts` lines 174-183. No change needed to the OCR join logic — it works once `has_pdf` resolves the right filename.
+
+---
+
+### 2. Backfill vs Serve-Time Match — Decision
+
+**DECISION: BACKFILL (Option A in QA's framing) + serve-time safety net.**
+
+Rationale:
+
+- The inspector's LIST_SQL filter `WHERE pdf_path IS NOT NULL` is architecturally correct — `pdf_path` is the authoritative pointer. Making the inspector work without it (serve-time-only) would mean two code paths forever: one for rows with `pdf_path` (primary ingest path), one for rows without (news-inference fallback). That adds permanent complexity to the inspector and hides a real data-quality gap from every other consumer of `financial_reports`.
+- Backfill is a WRITE to `market.db` legitimately owned by mcp-server. The write is idempotent (`UPDATE ... WHERE pdf_path IS NULL AND action_code = ? AND period_year = ? AND period_quarter = ?`). It does not touch the extraction pipeline logic.
+- Backfill also benefits every future reader of `financial_reports` that wants to know where the PDF lives — it is a data-quality fix, not an inspector-only hack.
+- Serve-time-only matching would require the inspector to re-implement the filename parser on every list request and never persist the result — it is fragile and silently wrong for the ambiguous-ticker case.
+
+**Backfill implementation (to be written by dev-mcp-server — design only here):**
+
+A new idempotent function `backfillPdfPaths(db, pdfDir)` in `apps/mcp-server/src/application/usecases/` (or as a standalone migration script in `apps/mcp-server/scripts/`):
+
+1. Select all `financial_reports` rows where `pdf_path IS NULL`.
+2. For each row, enumerate `pdfDir/*.pdf` and apply the two-pass matcher above against `(action_code, period_year, period_quarter)`.
+3. If exactly one file matches: `UPDATE financial_reports SET pdf_path = '<abs_path>' WHERE id = '<row_id>'`. Log the update.
+4. If zero matches: leave `pdf_path` NULL, log "no match for {action_code} Q{q} {year}".
+5. If multiple matches: leave `pdf_path` NULL, log "ambiguous: {filenames}".
+6. Return a summary: `{ updated: N, no_match: M, ambiguous: K }`.
+
+**Where to call it:** call `backfillPdfPaths()` once at mcp-server startup (inside `apps/mcp-server/src/infrastructure/db/` init, or in `server.ts` after DB init, before routes are live). It is idempotent — subsequent calls for already-populated rows are no-ops (WHERE `pdf_path IS NULL` skips them). Cost: one filesystem scan of `pdfDir` once at startup — acceptable for a dev inspection tool.
+
+**After backfill:** the LIST_SQL in `bctcInspectHandler.ts` is unchanged and correct. The 14 real rows that have matching PDFs on disk will now have non-null `pdf_path`. The viewer will show ≥N docs (where N ≤ 14 — some may have no matching PDF and stay NULL).
+
+**Serve-time safety net (complementary, not primary):** The inspector's LIST endpoint should ALSO show rows with `pdf_path IS NULL` but with OCR rows — `has_pdf: false, has_ocr: true`. This makes the right pane useful (OCR text + figures) even for docs with no matched PDF. The LIST_SQL filter changes from `WHERE pdf_path IS NOT NULL` to `WHERE action_code NOT LIKE '%example%' AND action_code NOT LIKE '%error%' AND action_code NOT LIKE '%missing%'` (the existing junk filters stay). The `has_pdf` flag is computed per row as `pdf_path IS NOT NULL AND existsSync(pdf_path)`.
+
+**Combined approach:** backfill at startup sets `pdf_path` for rows where a match is found. LIST returns ALL 14 real rows regardless. `has_pdf` and `has_ocr` flags are always computed at serve time. This gives the viewer full visibility on day-1 against real data.
+
+---
+
+### 3. Honest-Degrade Contract on Real Data
+
+| Row state | has_pdf | has_ocr | Left pane | Right pane |
+|---|---|---|---|---|
+| `pdf_path` set + file on disk + OCR rows | true | true | pdf.js renders PDF | figures + OCR text pages |
+| `pdf_path` set + file on disk + NO OCR rows | true | false | pdf.js renders PDF | figures shown; OCR section: "No OCR text found for this document." |
+| `pdf_path` set + file NOT on disk | false | depends | "PDF not available at stored path: {path}" (amber, no crash) | figures + OCR text if available |
+| `pdf_path IS NULL` + OCR rows found (via serve-time OCR join) | false | true | "PDF not linked — no file matched for this document." (amber) | figures from financial_reports + OCR pages from pdf_extracted_text (join by action_code+period — see below) |
+| `pdf_path IS NULL` + NO OCR rows | false | false | "PDF not linked." | figures from financial_reports if row exists; if all zero/null: show the zero-value fields honestly, label "news-inference report (no PDF extraction)" |
+
+**The `pdf_path IS NULL + has_ocr` case requires a secondary OCR join strategy.** When `pdf_path IS NULL`, `basename(pdf_path)` is unavailable as the OCR join key. In this case, the OCR endpoint (`GET /api/bctc-inspect/ocr/{doc_id}`) must use a derived filename from the two-pass matcher — scan `pdf_extracted_text` filenames for any that parse to matching `(action_code, period_year, period_quarter)`. This is a read-only scan against the `pdf_extracted_text.filename` set (already loaded as `ocrFilenameSet`). If found: serve OCR. If ambiguous or not found: serve figures-only with "No OCR text available."
+
+**Docs with neither PDF nor OCR (all-null/all-zero news-inference reports):** STILL LISTED in the dropdown with `has_pdf: false, has_ocr: false`. The user must be able to see these — they represent the data quality gap itself, which is the whole point of the inspector. The right pane shows the parsed figures (all zero for news-inference rows — that IS the honest signal: zero figures = news-inference, no real extraction happened). Label them clearly: company_name is `"Unknown (news_inference)"` from the fallback path — display that as-is.
+
+---
+
+### 4. List Scope
+
+**ALL 14 real `financial_reports` rows are shown, with per-doc `has_pdf` and `has_ocr` flags.** No exclusion by `has_pdf` or `has_ocr`.
+
+Rationale: the inspector's purpose is to let the user eyeball extraction quality. A row with `has_pdf: false, has_ocr: false` IS quality-relevant information — it tells the user that the pipeline ingested this ticker/period via news-inference only, with no PDF. That is a quality signal, not junk. Hiding it would make the viewer less useful, not more.
+
+**Filter kept:** junk rows (`action_code LIKE '%example%'` / `'%error%'` / `'%missing%'`) excluded. These are SCALE pilot test artifacts, not real docs.
+
+**LIST_SQL change (from REOPEN-2, applied by dev-mcp-server):**
+
+```sql
+SELECT
+  id, action_code, company_name, period_type, period_year, period_quarter, sort_key,
+  pdf_path,
+  net_revenue, gross_profit, net_profit, net_profit_api_bridge,
+  net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence,
+  parsed_at
+FROM financial_reports
+WHERE action_code NOT LIKE '%example%'
+  AND action_code NOT LIKE '%error%'
+  AND action_code NOT LIKE '%missing%'
+ORDER BY parsed_at DESC
+```
+
+(The `WHERE pdf_path IS NOT NULL` filter is REMOVED. `has_pdf` is computed at serve time per row.)
+
+---
+
+### 5. Deeper Pipeline Defect (Flag Only — Out of Inspector Scope)
+
+`tryNewsChainFallback()` at `fetchParseAndStoreBctc.ts:645` hardcodes `pdfPath: null` unconditionally. When the news-inference chain identifies a ticker/period and produces a `financial_reports` row, it has no reference to a local PDF file — the fallback path never downloads a PDF. This means: even if a PDF for this ticker/period already exists on disk (written by a prior successful `bctcPdfPullJob` run for the same document), the fallback-inserted row will never have `pdf_path` set unless:
+  - the backfill function described in §2 runs at startup and links it retroactively, OR
+  - the fallback path itself is enhanced to scan for an existing on-disk PDF and set `pdfPath` if found.
+
+**For the dev-mcp-server pipeline fix task (separate, NOT inspector scope):** after the backfill function ships, the fallback path should also call a lightweight `findExistingPdf(action_code, period_year, period_quarter, pdfDir)` before inserting, and set `pdfPath` if found. This closes the gap for future ingest cycles — new news-inference rows will get `pdf_path` set at insert time rather than requiring a backfill scan. File: `fetchParseAndStoreBctc.ts`, inside `tryNewsChainFallback()` near line 645. This is a pipeline data-quality fix, NOT an inspector change.
+
+---
+
+### 6. Pattern Lesson (Standing Rule)
+
+Three consecutive defects in this feature traced to designing and verifying against assumed data shapes:
+- PI-1: assumed `pdf_documents` was a real doc registry (15,570 junk rows, 0 real data).
+- REOPEN-1: assumed `financial_reports.pdf_path` was populated (0 non-null rows in real data).
+- REOPEN-2: assumed primary ingest path was active for current rows (all 14 were fallback-path inserts).
+
+**Standing rule baked from this session:**
+
+> For any data-bound feature, BOTH the design AND the QA gate MUST be validated against a live sample of the REAL store — row counts, null-rates of the columns relied upon, and the ingest path that actually populated the current rows — not schema existence, column presence, or fixture data alone. Fixture tests cover edge cases only; acceptance requires real-store verification.
+
+This applies to every architect design that reads from an existing table: before specifying a filter (`WHERE pdf_path IS NOT NULL`), verify the null-rate on REAL data first (`docker exec ... SELECT COUNT(*) FROM ... WHERE pdf_path IS NULL`). If null-rate > 0, design the degrade path first.
+
+**Encoding:** this rule is added to the notebook (§ Lessons) this cycle. QA mandate for PI-3-redo-2: real-store `docker exec` check REQUIRED as the FIRST verification step before any acceptance assertion.
+
+---
+
+### 7. Files to Modify (REOPEN-2 — dev-mcp-server implementation)
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` | Remove `WHERE pdf_path IS NOT NULL` from LIST_SQL; add `pdf_path` to SELECT; compute `has_pdf` per row as `pdf_path IS NOT NULL AND existsSync(pdf_path)`; add secondary OCR filename fallback for `pdf_path IS NULL` rows | interface |
+| `apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts` | NEW — `backfillPdfPaths(db, pdfDir)` idempotent matcher; two-pass filename parser; UPDATE `pdf_path` for matched rows | application |
+| `apps/mcp-server/src/interface/mcp/server.ts` OR startup hook | Call `backfillPdfPaths(db, pdfDir)` once at startup after DB init | interface/infra |
+| `apps/mcp-server/src/__tests__/PI3-bctc-inspect-reopen2.test.ts` | NEW — tests: (a) LIST returns all 14 rows with correct flags; (b) backfill sets pdf_path for matched rows; (c) has_pdf false for unmatched; (d) OCR join via filename scan for pdf_path IS NULL rows; (e) has_ocr true when pdf_extracted_text rows match | interface/application |
+
+**Import-fence impact:** NONE. `backfillBctcPdfPaths.ts` in application layer — calls infra DB via injected `db` handle (same pattern as all usecases). No domain-layer import. No new fence changes.
+
+**Zone:** `apps/mcp-server/` — SINGLE ZONE. No pdf-extractor changes. No new mcp-server-to-pdf-extractor HTTP calls.
+
+**BUILD-STANDARD:** lean (apps/mcp-server/ already exists, REOPEN-2 is a targeted fix + data backfill addition).
+
+**Impl owner: dev-mcp-server.**
+
+---
+
+**NEXT: dev-mcp-server** — implement REOPEN-2 per this design. Then QA re-runs against REAL container with REAL `market.db`, confirming `count >= 10` in list and at least one doc renders OCR text in the right pane.

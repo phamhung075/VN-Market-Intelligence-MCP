@@ -1,10 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 17:58 UTC | **Sprint:** PDF-INSPECT-REDO
+**Last updated:** 2026-05-24 20:50 UTC | **Sprint:** PDF-INSPECT-REOPEN-2
 
 [3 most recent cycles retained below. Archive in git history.]
 
-## PDF-INSPECT REOPEN / Re-ground — PI-3-redo design (2026-05-24T17:58Z) — DESIGN COMPLETE
+## PDF-INSPECT REOPEN-2 / pdf_path gap — Re-Root-Cause Design (2026-05-24T~UTC) — DESIGN COMPLETE
+
+**Task:** 3rd consecutive "assumption-about-reality-was-wrong" defect. Recurring-bug-escalation rule triggered. Root cause: all 14 real `financial_reports` rows were inserted via `tryNewsChainFallback()` (line 645) which hardcodes `pdfPath: null`. The primary download path (lines 283-300) correctly sets `pdf_path` at line 404, but none of the 14 current rows went through it. Result: `WHERE pdf_path IS NOT NULL` returns 0 rows → viewer empty.
+
+**Key decisions:**
+- **Matching rule:** two-pass filename parser against `(action_code, period_year, period_quarter)` tokens in messy PDF filenames. VCB Q1-2025 vs Q4-2025 disambiguated by year+quarter both matching. Month token (e.g. 31.12.2025) → Q4. Ambiguous = `has_pdf: false` (no guess).
+- **Backfill chosen over serve-time-only.** Idempotent `backfillBctcPdfPaths(db, pdfDir)` called at mcp-server startup. WRITE to `market.db` legitimately owned by mcp-server. Fixes the data gap for all consumers, not just the inspector.
+- **LIST_SQL: remove `WHERE pdf_path IS NOT NULL`.** All 14 real rows shown. `has_pdf` / `has_ocr` flags computed per row at serve time.
+- **Honest-degrade tiers:** pdf_path+file+OCR = full; pdf_path+file+no OCR = figures+message; pdf_path+no file = amber "not available at stored path"; pdf_path IS NULL+OCR = secondary filename scan via action_code+period tokens; pdf_path IS NULL+no OCR = figures-only honest zero-value display labeled "news-inference report".
+- **Secondary OCR join (for pdf_path IS NULL rows):** OCR endpoint scans `pdf_extracted_text` filenames for any that parse to matching (action_code, period_year, period_quarter). Read-only, no DB write.
+- **Pipeline defect flagged (out of scope):** `tryNewsChainFallback()` should call `findExistingPdf()` before insert — separate dev-mcp-server pipeline task.
+- **Standing lesson:** for any data-bound feature, design AND QA gate must verify null-rates on REAL store (docker exec), not just schema or fixtures. Baked as policy.
+
+**Files to modify (dev-mcp-server REOPEN-2):**
+1. `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` — LIST_SQL fix + secondary OCR join
+2. `apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts` (NEW) — idempotent backfill
+3. `apps/mcp-server/src/interface/mcp/server.ts` or startup — call backfill at startup
+4. `apps/mcp-server/src/__tests__/PI3-bctc-inspect-reopen2.test.ts` (NEW) — real-data-shaped tests
+
+**Handoff updated:** `docs/handoffs/TASK_PDF-INSPECT.md` — REOPEN-2 subsection appended after line 794.
+**Next actor:** dev-mcp-server.
+
+---
+
+## PDF-INSPECT REOPEN / Re-ground — PI-3-redo design (2026-05-24T17:58Z) — DESIGN COMPLETE (SUPERSEDED BY REOPEN-2)
 
 **Task:** Recurring-bug-escalation rethink. Root cause: PI-1 designed against `pdf_extractor.db pdf_documents` (15,570 junk rows, 0 real data) + `/app/data/extractions/` (0 files). Real data is in `market.db` (`financial_reports` 14 real rows + `pdf_extracted_text` 819 real OCR rows). Inspector was reading the wrong DB entirely.
 
