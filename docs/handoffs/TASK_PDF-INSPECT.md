@@ -286,5 +286,62 @@ The viewer's `GET /inspect/pdf/{doc_id}` and `GET /inspect/extraction/{doc_id}` 
 
 ---
 
+## [Developer] PI-2 Implementation — 2026-05-24T19:35Z
+
+**Commit:** `4651c080` — `feat(pdf-extractor/PI-2): side-by-side PDF inspection viewer`
+
+### Files delivered
+
+| File | Action | Notes |
+|------|--------|-------|
+| `apps/pdf-extractor/domain/repositories.py` | Modified | Added `find_all() -> list[PDFDocument]` abstract method to `PDFDocumentRepository` |
+| `apps/pdf-extractor/infrastructure/repositories.py` | Modified | `_ensure_schema()` migration adds nullable `pdf_path TEXT` column; `find_all()` + `set_pdf_path()` implemented in `SQLitePDFDocumentRepository` |
+| `apps/pdf-extractor/infrastructure/inspection_store.py` | Created | `InspectionStore(db_path, pdf_dir, extraction_dir)` with `list_docs()`, `get_pdf_bytes(doc_id)`, `get_extraction(doc_id)`; UUID validation before all filesystem access; lazy pdf_path backfill via ticker-from-URL heuristic |
+| `apps/pdf-extractor/interface/viewer.html` | Created | SI-2 boundary comment; pdf.js CDN 4.2.67 left pane + text/table right pane; honest-degrade for missing PDF/extraction; fallback to `<iframe>` if CDN unreachable |
+| `apps/pdf-extractor/interface/handlers.py` | Modified | `register_routes(router, extract_usecase, inspection_store)` — 4 new routes: `GET /inspect`, `GET /inspect/pdfs`, `GET /inspect/pdf/{doc_id}`, `GET /inspect/extraction/{doc_id}`; SI-2 boundary comment at top |
+| `apps/pdf-extractor/main.py` | Modified | `InspectionStore` wired in `create_app()`; `PDF_DIR` env var (default `/app/data/pdfs`); passed to `register_routes()` |
+| `apps/pdf-extractor/__tests__/unit/test_inspection_store.py` | Created | 23 unit tests for `InspectionStore` + pure helper functions |
+| `apps/pdf-extractor/__tests__/integration/test_inspection_routes.py` | Created | 24 integration tests for all 4 routes via `TestClient` |
+
+### Design decisions made in PI-2
+
+- **pdf_path mapping:** implemented the `pdf_path TEXT` column + lazy backfill approach (architect's recommended option). On `GET /inspect/pdfs`, any row with `pdf_path IS NULL` triggers a ticker-from-URL heuristic scan of `/app/data/pdfs/`. If exactly one PDF matches, the path is written back. Multiple matches = ambiguous = `has_pdf: false` (no guess). Rationale: zero-ambiguity guarantee.
+- **main.py LOC:** 98L (within 80L soft cap is advisory; 98L acceptable for composition root per architect risk note R-3 — single-function extension, no refactor needed).
+- **UUID validation (R-5):** `_is_valid_uuid()` applied in `get_pdf_bytes()` and `get_extraction()` before any filesystem operation. Path is always constructed server-side from validated UUID, never from raw user input.
+- **pdf.js CDN pinned:** `pdfjs-dist@4.2.67` (risk R-4 resolved).
+- **CDN fallback:** `<iframe src="/inspect/pdf/{docId}">` shown if pdf.js import fails (CDN unreachable).
+
+### DoD gate (G12)
+
+| Gate | Result |
+|------|--------|
+| pytest green | 161 passed (114 original + 47 new) |
+| import-linter fences A+B | KEPT (2 kept, 0 broken) |
+| Frozen files untouched | `git diff dashboard/ sandbox/` = empty |
+| `git show --stat HEAD` foreign files | 0 foreign files |
+| Explicit-file staging | 8 files, no `-A`/`.` used |
+| No `--no-verify`/`--force` | Confirmed |
+
+### How to run the viewer
+
+**Docker (normal production path):**
+```
+docker compose up pdf-extractor
+# Open in browser:
+http://localhost:5001/inspect
+```
+
+**Local development:**
+```
+cd apps/pdf-extractor
+PDF_DIR=/app/data/pdfs uvicorn main:app --port 5001
+# Open in browser:
+http://localhost:5001/inspect
+```
+
+The viewer page shows a dropdown of all `pdf_documents` rows. Select one → LEFT pane renders the PDF via pdf.js (CDN) or browser fallback; RIGHT pane shows text_content + tables[] + confidence scores from `/app/data/extractions/{doc_id}.json`. Missing PDF or extraction shows an explicit message, never fabricated content.
+
+---
+
 ## Commit discipline (every committer)
 Explicit `git add <path>` per file; never `-A`/`.`. No `--force`/`--no-verify`/`--no-gpg-sign`. No `git push`. After commit, `git show --stat HEAD` MUST show only your files (heavy fleet commit-race active — if a foreign file appears, you conflated a commit; do NOT rewrite history, re-stage your own and re-commit). Commit-mutex enum defect known: claim key under `sprint-task` kind if mutex needed (per notebook carry-over).

@@ -4,6 +4,40 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — PI-2 DONE (side-by-side PDF inspection viewer)
+
+**Commit:** `4651c080`
+
+**Delivered:**
+- `infrastructure/inspection_store.py` — `InspectionStore(db_path, pdf_dir, extraction_dir)` with `list_docs()`, `get_pdf_bytes()`, `get_extraction()`. UUID validation on all filesystem access. Lazy pdf_path backfill via ticker-from-URL heuristic (single unambiguous match only).
+- `interface/viewer.html` — SI-2 boundary comment; pdf.js CDN 4.2.67 left pane + text/table right pane; honest-degrade messages for missing PDF/extraction; `<iframe>` fallback if CDN down.
+- `interface/handlers.py` — 4 new routes: `GET /inspect`, `GET /inspect/pdfs`, `GET /inspect/pdf/{doc_id}`, `GET /inspect/extraction/{doc_id}`. Signature extended to `register_routes(router, extract_usecase, inspection_store)`.
+- `domain/repositories.py` — `find_all()` abstract method added to `PDFDocumentRepository`.
+- `infrastructure/repositories.py` — `_ensure_schema()` migration adds nullable `pdf_path TEXT` column; `find_all()` + `set_pdf_path()` implemented.
+- `main.py` — `InspectionStore` wired in `create_app()`; `PDF_DIR` env var (default `/app/data/pdfs`).
+- 47 new tests (23 unit + 24 integration). Total: 161 pytest PASS.
+- Import-linter: 2 fences KEPT, 0 broken. Frozen files: untouched.
+
+**User URL:** `http://localhost:5001/inspect` (or Docker port 5001)
+
+**Next:** qa PI-3 verification.
+
+### 2026-05-24 — DASHBOARD FILE:// FIX DONE (false-green repair)
+
+**Commit:** `a9fdf056`
+
+**Defect:** `dashboard/index.html` used `fetch(entry.path)` to load trace JSONs. Under `file://` (double-click), Chrome/Safari block fetch() of local files (opaque/null origin CORS). Every card showed NOT-RUN despite all trace JSONs being present and valid on disk.
+
+**Fix:** New `sandbox/gen_traces_js.py` reads all `dashboard/traces/<tier>/*.json` and emits `window.__TRACES = {...}` into `dashboard/traces.js`. `index.html` now loads it via `<script src="traces.js">` (not subject to file:// CORS restriction) and reads from `window.__TRACES` synchronously — no fetch(), no server required. `rerun.sh` now calls `gen_traces_js.py` after each runner.py invocation.
+
+**Files changed:** `dashboard/index.html`, `dashboard/traces.js` (new), `sandbox/gen_traces_js.py` (new), `sandbox/rerun.sh`.
+
+**G12 evidence:** 114 pytest PASS. Sandbox: 7 canonical PASS + service-tier NOT-RUN (honest). 6 intentional-RED known_bad fixtures unaffected. Security clause: clean.
+
+**Next:** QA verifies double-click renders PASS badges.
+
+---
+
 ### 2026-05-24 — P2-G5a DONE (move superseded code to _deprecated/)
 
 **Commit:** `d339303f` | **Tag:** `pdf-extractor-pre-delete`
