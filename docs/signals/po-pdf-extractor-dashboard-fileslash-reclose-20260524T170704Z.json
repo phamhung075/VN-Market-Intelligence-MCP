@@ -54,6 +54,6 @@
 
   "ssotFile": "docs/data/pilot-status-pdf-extractor.json",
   "ssot_remediation_block": "dashboard_trust_remediation (status=RE-CLOSED)",
-  "reclosure_commit": "[DERIVED] recorded post-commit — atomic re-close commit SHA back-filled into the SSOT reclosure_commit field after the commit lands (same pattern as 3e840688 → b836776e on the original close).",
+  "reclosure_commit": "dbaa69c9 (atomic re-close — SSOT remediation block + this signal in a single commit; SHA recorded here in a follow-up back-fill, same pattern as 3e840688 → b836776e on the original close).",
   "commit_discipline": "explicit-file staging (git add <path> per file); no --force/--no-verify/--no-gpg-sign; on main; no push."
 }

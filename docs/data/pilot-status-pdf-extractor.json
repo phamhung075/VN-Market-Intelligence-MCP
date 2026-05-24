@@ -57,7 +57,7 @@
     "reclosedBy": "po (dashboard sub-gate re-close — file:// acceptance method)",
     "reclosedAt": "2026-05-24T17:07:04Z",
     "reclosure_signal": "docs/signals/po-pdf-extractor-dashboard-fileslash-reclose-20260524T170704Z.json",
-    "reclosure_commit": "[DERIVED] recorded post-commit — see reclosure_signal payload for the atomic re-close commit SHA"
+    "reclosure_commit": "dbaa69c9 (atomic re-close — SSOT remediation block + re-close signal, single commit; SHA back-filled in follow-up like original 3e840688 → b836776e)"
   },
   "sprintKickoff": "2026-05-24",
   "sprintDeadline": "2026-07-05",
