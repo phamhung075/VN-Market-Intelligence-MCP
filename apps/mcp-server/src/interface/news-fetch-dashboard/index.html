@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<!-- GENERATED FILE — DO NOT EDIT BY HAND.
+     Source: apps/news-fetch/dashboard/index.html
+     Sync:   apps/mcp-server/sync-news-fetch-dashboard.sh
+     Served: /dashboards/news-fetch/ (via mcp-server port 3000)
+     KEY DIFFERENCE from source: ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
+     so this copy works same-origin when served by mcp-server on port 3000.
+     To re-sync: cd <repo-root> && bash apps/mcp-server/scripts/sync-news-fetch-dashboard.sh
+-->
+<!-- news-fetch pilot dashboard — SI-2 BOUNDARY: this file is news-fetch ONLY, never shared with docs/dashboards/index.html (stock-price exclusive) -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>news-fetch Pilot Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+    }
+    h1 { font-size: 1.4rem; color: #7dd3fc; margin-bottom: 4px; }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 28px; }
+    .panel { margin-bottom: 28px; }
+    .panel-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 6px;
+    }
+    .cards { display: flex; flex-wrap: wrap; gap: 12px; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px 16px;
+      min-width: 200px;
+      max-width: 280px;
+    }
+    .card-name { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+    .card-meta { font-size: 0.75rem; color: #64748b; margin-bottom: 8px; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .badge-notrun { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+    .badge-pass   { background: #14532d; color: #86efac; border: 1px solid #16a34a; }
+    .badge-fail   { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; }
+    .badge-error  { background: #431407; color: #fdba74; border: 1px solid #ea580c; }
+    .wires { font-size: 0.7rem; color: #94a3b8; margin-top: 6px; }
+    .endpoints { font-size: 0.7rem; color: #94a3b8; margin-top: 6px; line-height: 1.6; }
+    #last-run { font-size: 0.75rem; color: #475569; margin-top: 20px; }
+
+    /* ── Live Data panel styles (NF-LD-2b) ── */
+    .live-state-msg {
+      font-size: 0.8rem;
+      color: #64748b;
+      padding: 12px 0;
+    }
+    .live-state-msg.degrade { color: #7dd3fc; }
+    .live-state-msg.error   { color: #fca5a5; }
+    .live-state-msg.empty   { color: #94a3b8; }
+    .live-source-block { margin-bottom: 20px; }
+    .live-source-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #7dd3fc;
+      margin-bottom: 8px;
+    }
+    .live-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+    .live-table th {
+      text-align: left;
+      color: #64748b;
+      font-weight: 600;
+      border-bottom: 1px solid #1e293b;
+      padding: 4px 8px 4px 0;
+    }
+    .live-table td {
+      color: #cbd5e1;
+      border-bottom: 1px solid #0f1117;
+      padding: 5px 8px 5px 0;
+      vertical-align: top;
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .live-table td.headline-cell { max-width: 320px; }
+    .live-table td a { color: #93c5fd; text-decoration: none; }
+    .live-table td a:hover { text-decoration: underline; }
+    .live-table td.verdict { color: #86efac; }
+    .live-table td.verdict.bearish { color: #fca5a5; }
+    .live-table td.verdict.neutral { color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<h1>news-fetch Pilot Dashboard</h1>
+<p class="subtitle">Sandbox results — Phase 1 trust layer &nbsp;|&nbsp; port 5008 &nbsp;|&nbsp; TS/Bun</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 1 — Primitives
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-primitives">
+  <div class="panel-title">Primitives</div>
+  <div class="cards" id="primitives-cards">
+
+    <div class="card" id="prim-published-at-parser">
+      <div class="card-name">published-at-parser</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-published-at-parser">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-headline-normalizer">
+      <div class="card-name">headline-normalizer</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-headline-normalizer">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-source-dedup-key">
+      <div class="card-name">source-dedup-key</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-source-dedup-key">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-article-relevance-filter">
+      <div class="card-name">article-relevance-filter</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-article-relevance-filter">NOT-RUN</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 2 — Module
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-module">
+  <div class="panel-title">Module</div>
+  <div class="cards">
+
+    <div class="card" id="mod-news-ingest">
+      <div class="card-name">news_ingest</div>
+      <div class="card-meta">1 scenario</div>
+      <span class="badge badge-notrun" id="badge-news_ingest">NOT-RUN</span>
+      <div class="wires">composes: published-at-parser + headline-normalizer + source-dedup-key + article-relevance-filter</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 3 — Microservice
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-microservice">
+  <div class="panel-title">Microservice</div>
+  <div class="cards">
+
+    <div class="card" id="svc-news-fetch">
+      <div class="card-name">news-fetch</div>
+      <div class="card-meta">port 5008</div>
+      <span class="badge badge-notrun" id="badge-news-fetch-svc">NOT-RUN</span>
+      <div class="endpoints">
+        GET /health<br>
+        POST /reuters/headlines<br>
+        GET /reuters/headlines<br>
+        POST /bloomberg/headlines<br>
+        GET /bloomberg/headlines
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="last-run">Last run: not yet — run sandbox to populate data</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 4 — Live Data (DB Inspection)
+     NF-LD-2b: http-fetches GET /api/news-fetch/live from mcp-server (port 3000).
+     SECURITY: zero DB creds, zero API keys in this panel — read-only endpoint only.
+     NOT sandbox data — separate section, honest degrade under file://.
+═══════════════════════════════════════════════════════ -->
+<hr style="border: none; border-top: 1px solid #1e293b; margin: 8px 0 28px;">
+
+<div class="panel" id="panel-live-data">
+  <div class="panel-title">Live Data — DB Inspection
+    <span style="font-size:0.7rem; color:#475569; font-weight:400; text-transform:none; letter-spacing:0;">
+      (mcp-server :3000 · rag_analyses · SELECT-only)
+    </span>
+  </div>
+  <div id="live-data-content">
+    <!-- state will be rendered by initLivePanel() below -->
+  </div>
+</div>
+
+<!-- Inline sidecar: generated by sandbox runner, sets window.__NEWS_FETCH_DATA__.
+     A <script src> tag is NOT blocked by Chromium's file:// CORS policy —
+     unlike XHR, which treats file:// as origin=null and blocks same-dir reads.
+     Regenerate: bun run src/sandbox/runner.ts --tier=all --module=news-fetch
+                   --scenario=all --output=dashboard/results.json
+     If data.js is absent (cold start), window.__NEWS_FETCH_DATA__ stays
+     undefined and all cards remain NOT-RUN (honest G8 state). -->
+<script src="data.js"></script>
+
+<script>
+/**
+ * Dashboard loader — reads trace from window.__NEWS_FETCH_DATA__ (inline sidecar).
+ *
+ * AC-file-url: zero XHR, zero fetch(). Headless Chromium blocks file://→file://
+ * XHR as cross-origin (origin null). A <script src="data.js"> loads without
+ * restriction, so the runner writes data.js alongside results.json when
+ * --output=dashboard/results.json is passed. This is the fleet-proven mechanism
+ * (mirrors kinh-dich G9 PASS precedent).
+ *
+ * Fallback: if window.__NEWS_FETCH_DATA__ is absent (no data.js yet, or HTTP
+ * server context without sidecar), stays NOT-RUN — honest cold-start state.
+ */
+
+const PRIMITIVE_NAMES = [
+  'published-at-parser',
+  'headline-normalizer',
+  'source-dedup-key',
+  'article-relevance-filter',
+];
+
+function setBadge(id, status) {
+  const el = document.getElementById('badge-' + id);
+  if (!el) return;
+  const classMap = {
+    'PASS': 'badge-pass',
+    'FAIL': 'badge-fail',
+    'ERROR': 'badge-error',
+    'NOT-RUN': 'badge-notrun',
+  };
+  el.className = 'badge ' + (classMap[status] || 'badge-notrun');
+  el.textContent = status;
+}
+
+function applyTrace(trace) {
+  if (!trace || !trace.results) return;
+
+  // Compute per-primitive status (escalate: PASS < FAIL < ERROR)
+  const primStatus = {};
+  for (const r of trace.results) {
+    if (r.primitive) {
+      const prev = primStatus[r.primitive];
+      if (!prev) {
+        primStatus[r.primitive] = r.status;
+      } else if (r.status === 'ERROR') {
+        primStatus[r.primitive] = 'ERROR';
+      } else if (r.status === 'FAIL' && prev !== 'ERROR') {
+        primStatus[r.primitive] = 'FAIL';
+      }
+    }
+  }
+
+  // Update primitive badges
+  for (const name of PRIMITIVE_NAMES) {
+    setBadge(name, primStatus[name] || 'NOT-RUN');
+  }
+
+  // Module badge
+  const moduleResults = trace.results.filter(r => r.module === 'news_ingest');
+  if (moduleResults.length > 0) {
+    const anyFail = moduleResults.some(r => r.status === 'FAIL' || r.status === 'ERROR');
+    setBadge('news_ingest', anyFail ? 'FAIL' : 'PASS');
+  }
+
+  // Microservice badge — derived from overall totals
+  const anyFail = trace.totals.fail > 0 || trace.totals.error > 0;
+  setBadge('news-fetch-svc', trace.totals.pass > 0 && !anyFail ? 'PASS' : anyFail ? 'FAIL' : 'NOT-RUN');
+
+  // Last run line
+  const lastRunEl = document.getElementById('last-run');
+  if (lastRunEl && trace.runAt) {
+    lastRunEl.textContent = 'Last run: ' + trace.runAt + ' — ' +
+      trace.totals.pass + ' PASS, ' +
+      trace.totals.fail + ' FAIL, ' +
+      trace.totals.error + ' ERROR';
+  }
+}
+
+// Primary: read from inline sidecar (file:// safe, zero CORS).
+if (typeof window.__NEWS_FETCH_DATA__ !== 'undefined') {
+  applyTrace(window.__NEWS_FETCH_DATA__);
+}
+// No XHR fallback — XHR is blocked under file:// in Chromium (origin null).
+// To update results: re-run sandbox with --output=dashboard/results.json.
+</script>
+
+<script>
+/**
+ * Live Data panel — NF-LD-2b / NF-LD-4-dev-A (served copy)
+ *
+ * IMPORTANT: This is the SERVED COPY (mcp-server:3000 same-origin).
+ * ENDPOINT uses a RELATIVE path — no scheme/host.
+ * Source file: apps/news-fetch/dashboard/index.html
+ * Sync script: apps/mcp-server/scripts/sync-news-fetch-dashboard.sh
+ *
+ * Fetches GET /api/news-fetch/live?source=all&limit=20 (relative — same-origin)
+ * Renders recent rag_analyses rows per source (reuters / bloomberg).
+ *
+ * 4 explicit states — NEVER fabricates rows:
+ *   FILE_DEGRADE  — detected BEFORE fetch attempt via window.location.protocol === 'file:'
+ *   LOADING       — fetch in-flight
+ *   EMPTY         — endpoint reachable, 0 rows returned
+ *   ERROR         — fetch failed or HTTP non-2xx
+ *
+ * Security: zero DB creds, zero API keys. Read-only GET only.
+ * Does NOT touch sandbox panels, data.js, or window.__NEWS_FETCH_DATA__.
+ */
+(function initLivePanel() {
+  var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
+  var container = document.getElementById('live-data-content');
+  if (!container) return;
+
+  // ── State: FILE:// DEGRADE — check protocol BEFORE any fetch attempt ──
+  if (window.location.protocol === 'file:') {
+    container.innerHTML =
+      '<p class="live-state-msg degrade" id="live-state-degrade">' +
+      'Live data requires the dashboard to be served (e.g. <code>bun run serve</code> or ' +
+      '<code>npx serve apps/news-fetch/dashboard</code>). ' +
+      'Not available under <code>file://</code>.' +
+      '</p>';
+    return;
+  }
+
+  // ── State: LOADING ──
+  container.innerHTML =
+    '<p class="live-state-msg" id="live-state-loading">Loading live data…</p>';
+
+  fetch(ENDPOINT)
+    .then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (body) {
+          throw { httpStatus: res.status, body: body };
+        });
+      }
+      return res.json();
+    })
+    .then(function (data) {
+      // ── State: EMPTY ──
+      if (!data || !data.rows || data.rows.length === 0) {
+        container.innerHTML =
+          '<p class="live-state-msg empty" id="live-state-empty">' +
+          'No rows yet — pipeline may not have run yet, or no Reuters/Bloomberg articles ' +
+          'have been ingested. Run the news headlines refresh job to populate data.' +
+          '</p>';
+        return;
+      }
+
+      // ── State: DATA — split rows per source ──
+      var reuters = data.rows.filter(function (r) {
+        return r.url && r.url.indexOf('reuters') !== -1;
+      });
+      var bloomberg = data.rows.filter(function (r) {
+        return r.url && r.url.indexOf('bloomberg') !== -1;
+      });
+      var other = data.rows.filter(function (r) {
+        return !(r.url && (r.url.indexOf('reuters') !== -1 || r.url.indexOf('bloomberg') !== -1));
+      });
+
+      var html = '';
+
+      function renderSourceBlock(label, rows) {
+        if (rows.length === 0) return '';
+        var block = '<div class="live-source-block">';
+        block += '<div class="live-source-label">' + label + ' (' + rows.length + ' rows)</div>';
+        block += '<table class="live-table">';
+        block += '<thead><tr>' +
+          '<th>Headline</th>' +
+          '<th>Published</th>' +
+          '<th>Sentiment</th>' +
+          '<th>Impact</th>' +
+          '<th>Fetched</th>' +
+          '</tr></thead><tbody>';
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var headline = r.headline ? escHtml(r.headline) : '(no title)';
+          var headlineCell = r.url
+            ? '<a href="' + escAttr(r.url) + '" target="_blank" rel="noopener">' + headline + '</a>'
+            : headline;
+          var sentiment = r.sentiment ? escHtml(r.sentiment) : '—';
+          var verdictClass = 'verdict';
+          if (r.sentiment === 'bearish') verdictClass += ' bearish';
+          else if (r.sentiment === 'neutral') verdictClass += ' neutral';
+          var impact = r.impact_direction
+            ? escHtml(r.impact_direction) + (r.impact_score != null ? ' ' + r.impact_score : '')
+            : '—';
+          var pub = r.published_at ? fmtDate(r.published_at) : '—';
+          var fetched = r.created_at ? fmtDate(r.created_at) : '—';
+          block += '<tr>' +
+            '<td class="headline-cell">' + headlineCell + '</td>' +
+            '<td>' + pub + '</td>' +
+            '<td class="' + verdictClass + '">' + sentiment + '</td>' +
+            '<td>' + impact + '</td>' +
+            '<td>' + fetched + '</td>' +
+            '</tr>';
+        }
+        block += '</tbody></table></div>';
+        return block;
+      }
+
+      html += renderSourceBlock('Reuters', reuters);
+      html += renderSourceBlock('Bloomberg', bloomberg);
+      if (other.length > 0) html += renderSourceBlock('Other', other);
+
+      container.innerHTML = '<div id="live-data-rows">' + html + '</div>';
+    })
+    .catch(function (err) {
+      // ── State: ERROR ──
+      var msg;
+      if (err && err.httpStatus) {
+        msg = 'Server error: HTTP ' + err.httpStatus + ' — the live endpoint returned an error.';
+      } else {
+        msg = 'Could not reach the live endpoint — check that mcp-server is running. (' +
+          (err && err.message ? escHtml(err.message) : 'fetch failed') + ')';
+      }
+      container.innerHTML =
+        '<p class="live-state-msg error" id="live-state-error">' + msg + '</p>';
+    });
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escAttr(s) {
+    return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function fmtDate(iso) {
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return escHtml(iso);
+      return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z');
+    } catch (e) {
+      return escHtml(iso);
+    }
+  }
+}());
+</script>
+</body>
+</html>

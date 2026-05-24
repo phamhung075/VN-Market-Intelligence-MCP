@@ -46,6 +46,7 @@ import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
 import { handleNewsFetchLive } from "./routes/newsFetchLiveHandler.js";
+import { handleNewsFetchDashboard } from "./routes/newsFetchDashboardHandler.js";
 import {
   handleBctcInspectPage,
   handleBctcInspectDocs,
@@ -318,6 +319,21 @@ export async function createBunServer(
     // ── GET /api/news-fetch/live — live DB inspection view (no auth) ─────────
     if (method === "GET" && pathname === "/api/news-fetch/live") {
       handleNewsFetchLive(req, res, db);
+      return;
+    }
+
+    // ── GET /dashboards/news-fetch/* — static dashboard (NF-LD-4) ─────────────
+    // Serves the news-fetch pilot dashboard (sandbox + live panels) same-origin.
+    // Files live in apps/mcp-server/src/interface/news-fetch-dashboard/.
+    // Included automatically by the existing COPY apps/mcp-server/src/ ./src/ Dockerfile line.
+    if (method === "GET" && (pathname === "/dashboards/news-fetch/" ||
+        pathname === "/dashboards/news-fetch/index.html")) {
+      handleNewsFetchDashboard(req, res, null);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/dashboards/news-fetch/")) {
+      const asset = pathname.slice("/dashboards/news-fetch/".length);
+      handleNewsFetchDashboard(req, res, asset);
       return;
     }
 

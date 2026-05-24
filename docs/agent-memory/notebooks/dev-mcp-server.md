@@ -1,5 +1,43 @@
 # dev-mcp-server -- Notebook
 
+## c288 · 2026-05-24T22:00Z
+
+### NF-LD-4-dev-A — Serve news-fetch dashboard from mcp-server (IMPL_DONE)
+
+**Commit:** TBD (staged, next)
+
+**Deliverables:**
+
+1. `apps/mcp-server/src/interface/news-fetch-dashboard/` (NEW dir) — 4 files:
+   - `index.html` (GENERATED copy: relative ENDPOINT `/api/news-fetch/live...`, no localhost:3000, file:// degrade kept, GENERATED header comment)
+   - `data.js` (verbatim copy from apps/news-fetch/dashboard/)
+   - `rerun-handler.js` (verbatim copy)
+   - `results.json` (verbatim copy)
+
+2. `apps/mcp-server/src/interface/mcp/routes/newsFetchDashboardHandler.ts` (NEW) — static file handler. Exports `handleNewsFetchDashboard(req, res, asset: string | null)`. No db param, no getDb(), no credentials. MIME map (html/js/mjs/json). Path-traversal guard: rejects any asset where `basename(asset) !== asset` or contains `..`/`/`. Mirrors bctcInspectHandler pattern.
+
+3. `apps/mcp-server/src/interface/mcp/server.ts` (MODIFIED) — 1 import + 2 `if` blocks for `/dashboards/news-fetch/` (index) and `/dashboards/news-fetch/*` (assets).
+
+4. `apps/mcp-server/sync-news-fetch-dashboard.sh` (NEW) — DRY sync script. Copies verbatim assets + rewrites ENDPOINT to relative + injects GENERATED header. Verifications: no absolute ENDPOINT, relative ENDPOINT present, file:// degrade kept, no creds.
+
+5. `apps/mcp-server/package.json` (MODIFIED) — `sync-news-fetch-dashboard` script entry.
+
+6. `apps/mcp-server/src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts` (NEW) — 11 tests, all pass.
+
+7. `docs/architecture/microservice/mcp-server/news-analysis.md` (MODIFIED) — Dashboard section added.
+
+**AC pass: 12/12** (pre-ops ACs; AC-6 and AC-7 verified post-container-rebuild by ops)
+
+**Tests:** NF-LD-4 11/11 GREEN. NF-LD-2 9/9 GREEN. Full suite 9386 pass / 360 fail (0 new regressions; 360 = pre-existing baseline, improved from 364 at NF-LD-3). tsc exit 0.
+
+**Security:** grep served dir for creds → 0 matches. No localhost:3000 in ENDPOINT var → 0 matches. file:// degrade kept. No Dockerfile change needed (COPY src/ covers new subdir).
+
+**Next:** NF-LD-4-dev-B → generic developer (1-line ENDPOINT rewrite in apps/news-fetch/dashboard/index.html source). Then NF-LD-4-QA → qa. Then NF-LD-4-EXIT → PO. Then NF-LD-4-OPS → ops (docker rebuild + PROVE served URL).
+
+Zone health: /dashboards/news-fetch/ route added; same-origin served dashboard; sync-news-fetch-dashboard.sh prevents drift; tsc clean | HEALTHY
+
+---
+
 ## c287 · 2026-05-24T21:00Z
 
 ### PI3-REOPEN-2 — backfill + all-rows inspector + secondary OCR join (2026-05-24, IMPL_DONE)

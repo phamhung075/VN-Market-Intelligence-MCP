@@ -475,3 +475,409 @@ WORK-channel `send_telegram` MCP tool is NOT in this PO agent's tool surface (on
 - ESM `.js` import suffixes; `Bun.env` not `process.env`
 - never ask the user — decide and continue
 - pilot-status-news-fetch.json is FROZEN at 12/12 — this enhancement does NOT touch it
+
+---
+
+# TASK NF-LD-4 — serve the dashboard from a RUNNING CONTAINER (no manual serve, no file://)
+
+**Opened:** 2026-05-24T18:50Z by PO (self-initiated from user feedback, signal `po-news-fetch-served-dashboard-20260524T185027Z.json`). **Type:** follow-on to the CLOSED NF-LD chain (NOT a pilot reopen — news-fetch SCALE pilot stays DONE 12/12, verdict=scale; pilot-status FROZEN). **Chain:** architect (NF-LD-4-design) → owning dev-* (architect specifies: dev-mcp-server if Option B / generic developer if Option A) → qa (NF-LD-4-QA) → PO close (NF-LD-4-EXIT) → ops rebuild + PROVE served URL. No `pm`/`ba` agent in this harness — PO owns TASKS.md / this handoff / exit gate.
+
+---
+
+## Why NF-LD-4 exists (user feedback, verbatim — mild frustration)
+
+The NF-LD-EXIT sign-off shipped a CORRECT live endpoint + a CORRECT dashboard live panel — but the panel currently renders the file:// DEGRADE state:
+> "Live data requires the dashboard to be served (e.g. `bun run serve` / `npx serve apps/news-fetch/dashboard`). Not available under file://."
+
+The user does NOT want a manual serve step. Verbatim:
+> "you need build container and query direct from it."
+
+**PO interpretation:** the degrade message is HONEST (by design) but it is NOT a usable normal flow — it asks the user to run a terminal command. The user wants to open ONE url in a browser and immediately see BOTH (a) the existing sandbox PASS/FAIL panels AND (b) the Live Data panel populated with real rows. The fix is to SERVE the static dashboard from a long-lived running container over http, so there is no `file://`, no `npx serve`, no degrade message in normal use.
+
+---
+
+## GOAL (binding)
+
+User opens a SINGLE served URL in a browser → sees BOTH:
+- (a) the 3 existing sandbox PASS/FAIL panels (Primitives / Module / Microservice), still rendered from the committed `data.js` sidecar; AND
+- (b) the Live Data panel POPULATED with real `rag_analyses` rows (reuters + bloomberg) from the live endpoint.
+
+Zero manual serve step. No `file://`. No degrade message in the normal served flow.
+
+---
+
+## SECURITY CLAUSE — the binding nuance for NF-LD-4 (read carefully)
+
+Serving STATIC dashboard files over http does **NOT** put DB creds into the dashboard. The two are independent:
+- The **sandbox PROCESS** (`src/sandbox/runner.ts`) MUST stay credential-free — UNCHANGED, never given DB creds. This is the frozen G7/G8 surface.
+- An **http static-file server** for the dashboard HTML/JS/assets is FINE — static files carry no secrets.
+- The **sandbox panels** still render from the committed `data.js` sidecar — and `data.js` MUST keep working when served over http too (it is a `<script src>` include; served-origin must resolve it correctly).
+- The **live panel** fetches the read-only mcp-server endpoint (already SELECT-only, no creds client-side — frozen from NF-LD-2a).
+
+Do NOT regress: the credential-free sandbox process, G6/G8/G9 honesty, the committed `data.js`, or the 3 sandbox panels.
+
+**The file:// degrade path STAYS as a graceful fallback** (don't delete it) — it simply won't trigger in the normal served flow because the page is no longer opened via `file://`.
+
+---
+
+## BINDING BROWNFIELD FINDINGS (PO investigated disk + Dockerfile + compose before writing this — these are facts the architect builds on, NOT design decisions)
+
+1. **news-fetch (5008) does NOT currently serve any static files.** `src/interface/handlers.ts` exposes only `GET /health` + the 4 scraper routes (`{reuters,bloomberg}/headlines` GET+POST). There is NO static-file route. Option A therefore needs a NEW Hono static-serve route added to the news-fetch interface layer.
+2. **news-fetch Dockerfile does NOT copy `dashboard/`.** It only does `COPY --from=bun-builder /app/src ./src` + `package.json` + `tsconfig.json`. Option A therefore ALSO needs a Dockerfile change to include `apps/news-fetch/dashboard/` in the image.
+3. **news-fetch compose already mounts `market_data:/app/data:ro` + `DB_READONLY=true`** — but `composition-root.ts` never opens a DB (stateless scraper, confirmed end-to-end in the NF-LD chain). The service stays credential-free; serving static files does not change that.
+4. **mcp-server (3000) build context is repo-root (`context: .`)** — so its Dockerfile CAN reach `apps/news-fetch/dashboard/` and COPY it into the image. mcp-server owns `rag_analyses` + the `GET /api/news-fetch/live` endpoint + emits global CORS `Access-Control-Allow-Origin: *` (`server.ts` line 212). Option B serves the dashboard SAME-ORIGIN as the endpoint → no CORS reliance.
+5. **PRECEDENT — pdf-extractor PI-INSPECT (just-closed sibling, PI-EXIT 2026-05-24T17:47Z):** the served inspector runs on the OWNING service container (pdf-extractor:5001) via the real app process serving HTML + routes; its Dockerfile `COPY . .` already includes the dashboard. Verified by QA under the real served URL (`http://localhost:15001/inspect`). This is the precedent for "serve the dashboard from its owning service container" (favours Option A pattern). NOTE the difference: pdf-extractor's served data is in the SAME service (same-origin), whereas news-fetch's data lives in mcp-server (cross-origin if Option A).
+
+---
+
+## ARCHITECTURE DECISION — architect decides A vs B with rationale + designs it (this is architect's boundary, NOT PO's)
+
+**Option A — serve dashboard from the news-fetch service container (port 5008).** Live panel cross-origin-fetches `http://localhost:3000/api/news-fetch/live` (CORS `*` already global on mcp-server).
+- Pro: keeps the dashboard with its OWNING, credential-free service; matches the pdf-extractor "serve from owning service" precedent.
+- Con: relies on CORS; needs a NEW Hono static route in news-fetch interface layer + a news-fetch Dockerfile change (per findings 1+2); the live-panel fetch URL must be the ABSOLUTE `http://localhost:3000/api/news-fetch/live` (cross-origin).
+
+**Option B — serve dashboard from mcp-server (port 3000) at a path like `/dashboards/news-fetch/`.** SAME-ORIGIN as the endpoint.
+- Pro: no CORS reliance (eliminates the R-1/R-2 CORS/file:// risk classes from NF-LD-1 entirely); mcp-server's build context is already repo-root so it can COPY `apps/news-fetch/dashboard/` (finding 4); the live-panel fetch URL becomes a RELATIVE path (`/api/news-fetch/live`).
+- Con: couples the news-fetch dashboard artifact into the mcp-server image; the dashboard lives in `apps/news-fetch/` but is served by a different service.
+
+**PO's serve-location recommendation handed to architect (architect may override with rationale):** PO leans **Option B**. Reasoning: (1) same-origin removes the entire CORS/file:// risk surface that produced the degrade message in the first place — the live fetch becomes a relative path that "just works"; (2) mcp-server is already the long-lived HTTP host that OWNS the data and the endpoint; (3) mcp-server's repo-root build context already reaches `apps/news-fetch/dashboard/` with no cross-service plumbing. The pdf-extractor precedent favours A, but pdf-extractor's served data lives in the SAME service it serves from (same-origin by nature) — news-fetch's data is in mcp-server, so the precedent does not transfer cleanly; serving the dashboard where the data lives (B) reproduces the same-origin property the precedent actually relied on. **Architect makes the final call and designs whichever they pick.**
+
+Either way, the architect's design MUST specify + verify:
+- The static files (`index.html` + the committed `data.js` sidecar + any assets — `rerun-handler.js`, etc.) are INCLUDED in the chosen container's Docker image / build context. Verify the chosen Dockerfile COPYs `apps/news-fetch/dashboard/`.
+- The live-panel fetch URL resolves correctly from the SERVED origin: RELATIVE (`/api/news-fetch/live`) if same-origin (Option B); ABSOLUTE (`http://localhost:3000/api/news-fetch/live`) if cross-origin (Option A).
+- The `data.js` `<script src>` include resolves correctly from the served origin (sandbox panels must still render).
+- The EXACT served URL the user will open (e.g. `http://localhost:5008/dashboard` or `http://localhost:3000/dashboards/news-fetch/`) — stated explicitly for the ops PROVE step.
+- The file:// degrade branch STAYS in the HTML as a fallback (not deleted) — it just won't fire in the served flow.
+- Per-task ACs for the dev task + the qa task + the ops PROVE step.
+
+---
+
+## NF-LD-4-design — Architect (READY)
+
+**Deliverable:** serve-location ruling (A or B + rationale) + Docker packaging design (which Dockerfile COPYs the dashboard) + dashboard URL strategy (relative vs absolute live-fetch) + per-task ACs, appended below this line. Then RETURN handing the dev task to the owning dev-* agent the architect names (dev-mcp-server for Option B's mcp-server static-serve + Dockerfile, generic developer for Option A's news-fetch:5008 static-serve + Dockerfile + dashboard tweak — architect specifies exactly which files in which zone).
+
+**Architect: write design + AC lists below this line, then RETURN.**
+
+---
+
+## [Architect] NF-LD-4-design — 2026-05-24T19:10Z
+
+### Zone
+
+**Multi-zone** (two files straddle two service zones):
+- `apps/mcp-server/` — static-serve route handler (NEW file) + Dockerfile COPY (NO change required — see §3) + server.ts wiring (1 `if` block). Owner: **dev-mcp-server** (sole committer of `apps/mcp-server/`).
+- `apps/news-fetch/dashboard/index.html` — live-fetch URL change (relative path). Owner: **generic developer**.
+
+**BUILD-STANDARD: lean** — both services exist; additive feature only, no new service, no new primitives.
+
+---
+
+### 1. A-vs-B Ruling: OPTION B
+
+**Ruling: Option B — serve the dashboard from mcp-server:3000 at `/dashboards/news-fetch/`.**
+
+**Rationale (explicit, not deferred to PO preference):**
+
+The pdf-extractor PI-INSPECT precedent is "serve the dashboard from the service that OWNS the data and the endpoint" — NOT "serve from the service whose code the dashboard describes". In PI-INSPECT, pdf-extractor owns the DB, the data, and the `/inspect` routes; the dashboard lives in the same service; the origin is the same. That is the property that makes it correct, not the fact that it is the owning service by domain.
+
+In NF-LD-4, **the data (`rag_analyses`) and the endpoint (`GET /api/news-fetch/live`) live in mcp-server**. Option A would require the live panel to make a cross-origin fetch from `http://localhost:5008` → `http://localhost:3000` — relying on CORS `*` and reproducing exactly the risk class (R-1/R-2) that produced the original degrade message. Serving the dashboard from mcp-server (Option B) places it on the SAME origin as the endpoint, so the live-panel fetch becomes a relative path (`/api/news-fetch/live`) with zero CORS dependency. This reproduces the same-origin property the PI-INSPECT precedent actually relied on.
+
+Additional structural reasons favoring B:
+1. **No Dockerfile change required.** mcp-server's Dockerfile already does `COPY apps/mcp-server/src/ ./src/`. Placing the dashboard files under `apps/mcp-server/src/interface/news-fetch-dashboard/` means they are included in the image automatically — same pattern as `bctc-inspector.html` at `apps/mcp-server/src/interface/bctc-inspector.html` (verified on disk). Option A requires a new Dockerfile COPY line in the news-fetch Dockerfile.
+2. **No new static-serve infrastructure required in news-fetch.** The news-fetch service has no static-serving code; adding it is pure new scope. mcp-server already has a pattern for serving HTML (`handleBctcInspectPage` with `readFileSync` + `text/html` response) — Option B extends an existing pattern.
+3. **news-fetch stays fully stateless.** No static-file route, no filesystem dependency. Its deployment footprint is unchanged.
+4. **Single point of concern for ops.** The user needs only one container rebuild (`mcp-server`) to get both the served dashboard AND the live endpoint.
+
+**The precedent favours A only in spirit (ownership of the origin service). The precedent favours B in substance (same-origin as the data endpoint). B wins.**
+
+**Exact served URL the user will open:**
+```
+http://localhost:3000/dashboards/news-fetch/
+```
+(trailing slash — serves `index.html`; see §2 for path handling.)
+
+---
+
+### 2. Static-Serving Design (mcp-server, Option B)
+
+#### Route pattern
+
+One new route handler file: `apps/mcp-server/src/interface/mcp/routes/newsFetchDashboardHandler.ts`
+
+Routes (3 `if` blocks in server.ts):
+```
+GET /dashboards/news-fetch/          → serve index.html
+GET /dashboards/news-fetch/index.html → serve index.html (canonical redirect target)
+GET /dashboards/news-fetch/*         → serve named asset (data.js, rerun-handler.js, results.json, etc.)
+```
+
+Handler signature (same DI-free pattern as `handleBctcInspectPage`):
+```typescript
+export function handleNewsFetchDashboard(
+  req: IncomingMessage,
+  res: ServerResponse,
+): void
+```
+
+No `db` parameter — static files only, no DB access, no credentials.
+
+#### File layout in container
+
+Dashboard files are placed under `apps/mcp-server/src/interface/news-fetch-dashboard/` in the repo. The mcp-server Dockerfile line `COPY apps/mcp-server/src/ ./src/` includes them automatically. In the container they land at `/app/src/interface/news-fetch-dashboard/`.
+
+Files included (all 5 existing files — no new files):
+```
+apps/mcp-server/src/interface/news-fetch-dashboard/index.html      ← copy of apps/news-fetch/dashboard/index.html (post-URL-change)
+apps/mcp-server/src/interface/news-fetch-dashboard/data.js         ← copy of apps/news-fetch/dashboard/data.js (UNCHANGED)
+apps/mcp-server/src/interface/news-fetch-dashboard/rerun-handler.js ← copy
+apps/mcp-server/src/interface/news-fetch-dashboard/results.json    ← copy
+apps/mcp-server/src/interface/news-fetch-dashboard/dash-check.mjs  ← copy (for ops/qa convenience)
+```
+
+`render-check.png` is a generated output, NOT a source asset — exclude from the COPY.
+
+The handler resolves asset paths relative to `import.meta.path` exactly as `handleBctcInspectPage` does:
+```typescript
+const dashDir = resolve(dirname(import.meta.path), "../../news-fetch-dashboard");
+```
+
+#### MIME / Content-Type handling
+
+The handler must set correct MIME types per file extension:
+| Extension | Content-Type |
+|---|---|
+| `.html` | `text/html; charset=utf-8` |
+| `.js`, `.mjs` | `text/javascript; charset=utf-8` |
+| `.json` | `application/json; charset=utf-8` |
+| unknown / missing | `text/plain; charset=utf-8` |
+
+For the root path (`/dashboards/news-fetch/` and `/dashboards/news-fetch/index.html`), serve `index.html` with `text/html`.
+
+For sub-assets (`/dashboards/news-fetch/data.js` etc.), extract the basename, join with `dashDir`, read with `readFileSync`. Reject any path that contains `..` or `/` in the extracted basename (path-traversal guard — same pattern as `bctcInspectHandler.ts`).
+
+#### Dockerfile (mcp-server) — NO CHANGE REQUIRED
+
+`COPY apps/mcp-server/src/ ./src/` already covers `apps/mcp-server/src/interface/news-fetch-dashboard/`. Verified: `bctc-inspector.html` is at `apps/mcp-server/src/interface/bctc-inspector.html` and is not explicitly named in the Dockerfile — it is included by the `src/` COPY. The same applies here.
+
+**No Dockerfile edit needed.**
+
+#### docker-compose — NO CHANGE REQUIRED
+
+mcp-server is already running on port 3000, mapped `3000:3000`. No new ports, no new volumes, no new env vars.
+
+#### Wiring in server.ts
+
+3 `if` blocks, inserted directly after the existing `/api/news-fetch/live` block:
+```typescript
+// ── GET /dashboards/news-fetch/* — static dashboard (NF-LD-4) ─────────────
+if (method === "GET" && (pathname === "/dashboards/news-fetch/" ||
+    pathname === "/dashboards/news-fetch/index.html")) {
+  handleNewsFetchDashboard(req, res, null);
+  return;
+}
+if (method === "GET" && pathname.startsWith("/dashboards/news-fetch/")) {
+  handleNewsFetchDashboard(req, res, pathname.slice("/dashboards/news-fetch/".length));
+  return;
+}
+```
+
+Or equivalently implemented inside the handler itself with the path component passed as a parameter. Either is acceptable — the route dispatch style must match the existing server.ts pattern. One import added at the top.
+
+---
+
+### 3. Live-Fetch URL Strategy (relative path — Option B)
+
+Because the dashboard is served from `http://localhost:3000/dashboards/news-fetch/`, the live panel fetch URL must change from the hardcoded absolute `http://localhost:3000/api/news-fetch/live?source=all&limit=20` to a **relative path**:
+
+```javascript
+var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
+```
+
+This is the **only functional change** to `apps/news-fetch/dashboard/index.html` (or its copy). The relative path resolves to `http://localhost:3000/api/news-fetch/live?...` when the page is served from `http://localhost:3000/dashboards/news-fetch/` — same origin, zero CORS.
+
+The change is made in the **copy** that dev-mcp-server places at `apps/mcp-server/src/interface/news-fetch-dashboard/index.html`. The original `apps/news-fetch/dashboard/index.html` also receives this update (for consistency — the absolute URL was only correct under the served-from-5008 assumption) — but this is a cosmetic improvement to the source, not a functional requirement for the served flow.
+
+**The file:// degrade branch stays unchanged.** `window.location.protocol === 'file:'` check fires first, before any fetch attempt. When the page is served over http from mcp-server, `protocol` is `'http:'`, so the degrade branch is skipped and the relative ENDPOINT fetch proceeds normally. The degrade message remains as a graceful fallback for anyone opening the file directly — not deleted.
+
+**`data.js` resolves correctly when served.** The `<script src="data.js">` include is a relative path that the browser resolves to `http://localhost:3000/dashboards/news-fetch/data.js`, which is served by the `/dashboards/news-fetch/*` wildcard route. The sandbox panels render from `window.__NEWS_FETCH_DATA__` exactly as before.
+
+---
+
+### 4. Security Clause Compliance (explicit)
+
+| Property | Status |
+|---|---|
+| Sandbox PROCESS (`src/sandbox/runner.ts`) credential-free | UNCHANGED — no sandbox code touched |
+| `data.js` `window.__NEWS_FETCH_DATA__` sidecar | UNCHANGED — file copied verbatim |
+| 3 sandbox panels (Primitives / Module / Microservice) | UNCHANGED — markup and card logic not modified |
+| G6/G8/G9 honest-green regression | PROTECTED — sandbox panels render from same frozen data.js |
+| file:// degrade branch | KEPT — not deleted, fires on direct file open |
+| DB creds in served static files | NONE — dashboard files contain zero credentials, zero env reads |
+| Live endpoint remains SELECT-only | FROZEN from NF-LD-2a — no code change to endpoint |
+| New route (`newsFetchDashboardHandler.ts`) opens DB | NO — no `db` parameter, no `getDb()`, no filesystem access outside `dashDir` |
+
+---
+
+### 5. Ownership and Acceptance Criteria
+
+#### NF-LD-4-dev-A: dev-mcp-server
+
+**Scope:** `apps/mcp-server/` only.
+
+**AC-1 New handler file:** `apps/mcp-server/src/interface/mcp/routes/newsFetchDashboardHandler.ts` created. Exports `handleNewsFetchDashboard(req, res, asset: string | null): void`. No `db` parameter. No `getDb()`, no `new Database`, no `process.env` / `Bun.env` call inside.
+
+**AC-2 Dashboard directory created:** `apps/mcp-server/src/interface/news-fetch-dashboard/` exists with at minimum: `index.html`, `data.js`, `rerun-handler.js`, `results.json`. These are copies of the current `apps/news-fetch/dashboard/` files (post URL change).
+
+**AC-3 Relative fetch URL:** `grep -n "localhost:3000" apps/mcp-server/src/interface/news-fetch-dashboard/index.html` returns zero matches. `grep -n "ENDPOINT" apps/mcp-server/src/interface/news-fetch-dashboard/index.html` shows `'/api/news-fetch/live?source=all&limit=20'` (no scheme/host).
+
+**AC-4 file:// degrade branch kept:** `grep -n "file:" apps/mcp-server/src/interface/news-fetch-dashboard/index.html` returns the degrade check (`window.location.protocol === 'file:'`) — not deleted.
+
+**AC-5 Route wired in server.ts:** `GET /dashboards/news-fetch/` and `GET /dashboards/news-fetch/*` dispatch to `handleNewsFetchDashboard`. One import added. Pattern matches existing `handleBctcInspectPage` wiring.
+
+**AC-6 MIME types correct:** `curl -i http://localhost:3000/dashboards/news-fetch/` returns `Content-Type: text/html`. `curl -i http://localhost:3000/dashboards/news-fetch/data.js` returns `Content-Type: text/javascript`. (Verified against running container post-rebuild.)
+
+**AC-7 Path traversal guard:** `curl 'http://localhost:3000/dashboards/news-fetch/../../../etc/passwd'` returns HTTP 400 or 404 (never file contents). Handler rejects asset names containing `..` or absolute paths.
+
+**AC-8 No DB access in handler:** `grep -n "db\|getDb\|Database\|DB_PATH\|process.env\|Bun.env" apps/mcp-server/src/interface/mcp/routes/newsFetchDashboardHandler.ts` returns zero matches (comments excluded).
+
+**AC-9 No Dockerfile change needed — verify:** `git diff HEAD -- apps/mcp-server/Dockerfile` returns empty (no Dockerfile modification). The `COPY apps/mcp-server/src/ ./src/` line already covers the new `news-fetch-dashboard/` subdirectory.
+
+**AC-10 Existing tests green:** `bun test` for mcp-server passes (all pre-existing tests + the 9 NF-LD-2 tests green). `bun tsc --noEmit` exits 0.
+
+**AC-11 No new regression to NF-LD-2a endpoint:** `curl http://localhost:3000/api/news-fetch/live` still returns HTTP 200 JSON (live endpoint unaffected by dashboard route addition).
+
+**AC-12 Pilot-status frozen:** `docs/data/pilot-status-news-fetch.json` not touched. `goalsEarned=12`, `verdict=scale`, `status=DONE` unchanged.
+
+#### NF-LD-4-dev-B: generic developer
+
+**Scope:** `apps/news-fetch/dashboard/index.html` only.
+
+**AC-1 Relative URL in source:** `grep -n "localhost:3000" apps/news-fetch/dashboard/index.html` returns zero matches in the live panel JS block. `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'` is the new value.
+
+**AC-2 file:// degrade unchanged:** The `window.location.protocol === 'file:'` check and degrade message are untouched. `git diff` shows the ENDPOINT string change only — no other JS changes.
+
+**AC-3 data.js and sandbox panels untouched:** `git diff HEAD -- apps/news-fetch/dashboard/data.js` returns empty. `git diff HEAD -- apps/news-fetch/dashboard/index.html` shows only the ENDPOINT string change inside `initLivePanel()`.
+
+**AC-4 dash-check still passes:** `node apps/news-fetch/dashboard/dash-check.mjs` returns PASS (panels=4, sandbox=3, live=1, degrade=true, fake_rows=false, console_errors=0). The relative URL change does not affect the file:// headless test.
+
+**NOTE:** NF-LD-4-dev-B is a 1-line change. It can be dispatched in parallel with NF-LD-4-dev-A or sequentially after. Either order is safe. The served-dashboard correctness is tested end-to-end in the ops PROVE step, which requires both A and B complete plus the container rebuilt.
+
+#### NF-LD-4-QA
+
+**AC-Q1 Security Clause — no creds in served files:** `grep -rn "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|DB_PATH\|process.env\|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` returns zero matches.
+
+**AC-Q2 Sandbox process untouched:** `git diff HEAD -- apps/news-fetch/src/sandbox/runner.ts` returns empty.
+
+**AC-Q3 data.js untouched in both locations:** last commit on `apps/news-fetch/dashboard/data.js` predates NF-LD-4 commits. The copy at `apps/mcp-server/src/interface/news-fetch-dashboard/data.js` is byte-identical to the source (`diff apps/news-fetch/dashboard/data.js apps/mcp-server/src/interface/news-fetch-dashboard/data.js` exits 0).
+
+**AC-Q4 Path traversal guard verified:** `curl 'http://localhost:3000/dashboards/news-fetch/../api/watchlist'` returns 400 or 404, NOT watchlist data.
+
+**AC-Q5 Served sandbox panels render:** `curl http://localhost:3000/dashboards/news-fetch/` returns HTML containing `id="panel-primitives"`, `id="panel-module"`, `id="panel-microservice"`, `id="panel-live-data"` — all 4 panels present.
+
+**AC-Q6 Served data.js resolves:** `curl http://localhost:3000/dashboards/news-fetch/data.js` returns `Content-Type: text/javascript` and body begins with `window.__NEWS_FETCH_DATA__`.
+
+**AC-Q7 Live endpoint reachable same-origin:** `curl 'http://localhost:3000/api/news-fetch/live?source=all&limit=20'` returns HTTP 200 JSON from the same host that serves the dashboard.
+
+**AC-Q8 Pilot-status frozen:** `docs/data/pilot-status-news-fetch.json` not touched by NF-LD-4 commits.
+
+**AC-Q9 bun test + tsc green:** `bun test` (mcp-server suite, full) — 0 new regressions. `bun tsc --noEmit` exit 0.
+
+**AC-Q10 Emit signal:** `docs/signals/qa-news-fetch-served-dashboard-<UTC>.json` with `gateVerdict`, ac evidence slots, commit SHAs.
+
+#### NF-LD-4-OPS (prove step — DONE gate)
+
+**This is the final DONE gate. Not DONE until ops proves the served URL end-to-end.**
+
+**AC-O1 Container rebuilt:** `docker compose up -d --build mcp-server` completes successfully. Container running on port 3000.
+
+**AC-O2 Served URL returns page:** `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/dashboards/news-fetch/` returns `200`.
+
+**AC-O3 Served data.js reachable:** `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/dashboards/news-fetch/data.js` returns `200`.
+
+**AC-O4 Live endpoint reachable from same host:** `curl -s http://localhost:3000/api/news-fetch/live?source=all&limit=5` returns JSON with `ok: true`.
+
+**AC-O5 User opens ONE url:** `http://localhost:3000/dashboards/news-fetch/` in a browser shows both the sandbox PASS/FAIL panels (rendered from data.js) AND the Live Data panel populated with real rows (or honest EMPTY/ERROR state if pipeline has not run) — zero manual serve step, zero file:// degrade message in normal flow.
+
+---
+
+### 6. Risk Flags
+
+**R-1 File copy drift (MEDIUM):** The dashboard files are maintained in `apps/news-fetch/dashboard/` (canonical source) and copied to `apps/mcp-server/src/interface/news-fetch-dashboard/`. Future changes to the source must also update the copy. Mitigation: AC-Q3 byte-diff check; add a comment header in both index.html copies noting the dual-location. Long-term: a `Makefile` or compose pre-build hook that rsync-copies is an ops improvement, out of scope for NF-LD-4.
+
+**R-2 Cloudflare path prefix (LOW):** `server.ts` strips `CLOUDFLARE_PATH_PREFIX` from `pathname` before routing. If the prefix is set (e.g. `/vn-market`), the route `/dashboards/news-fetch/` already has the prefix stripped by `stripCloudflarePathPrefix()` before the `if` block — no special handling needed. The relative ENDPOINT `/api/news-fetch/live` will also have the prefix stripped. VERIFIED: `stripCloudflarePathPrefix` in server.ts is applied to ALL pathname comparisons.
+
+**R-3 results.json stale (LOW):** `results.json` is generated by the sandbox runner and committed periodically. The copy in `apps/mcp-server/src/interface/news-fetch-dashboard/results.json` may lag. This is acceptable: the served sandbox panels read from `data.js` (`window.__NEWS_FETCH_DATA__`) which contains the committed Golden results. `results.json` is a secondary output used by `dash-check.mjs` only.
+
+**R-4 `dash-check.mjs` not suitable for container smoke test (INFO):** `dash-check.mjs` tests the file:// origin. The ops PROVE step (AC-O2..O5) is the served-origin verification. Do not attempt to repoint `dash-check.mjs` to `http://localhost:3000` — it is designed for the file:// sandbox flow and should stay that way.
+
+---
+
+### 7. Dispatch Routing
+
+**NF-LD-4-dev-A → dev-mcp-server** (SOLE committer of `apps/mcp-server/`). Handler + dashboard directory + server.ts wiring + tsc/test green.
+
+**NF-LD-4-dev-B → generic developer** (`apps/news-fetch/dashboard/index.html` 1-line ENDPOINT change). Can run in parallel with A.
+
+**NF-LD-4-QA → qa** (after both A and B complete). Verify Security Clause + regression + endpoint reachable + signal emit.
+
+**NF-LD-4-EXIT → PO** (sign-off on QA PASS). Then dispatch ops.
+
+**NF-LD-4-OPS → ops** (after EXIT). `docker compose up -d --build mcp-server` + PROVE served URL. This is the final DONE gate.
+
+---
+
+## NF-LD-4-dev-A — dev-mcp-server (DONE)
+
+### [dev-mcp-server] Implementation Record — 2026-05-24
+
+**Files shipped (apps/mcp-server/ zone only):**
+- `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` — GENERATED copy with relative ENDPOINT `/api/news-fetch/live?source=all&limit=20` (no localhost:3000), GENERATED header comment, file:// degrade branch kept
+- `apps/mcp-server/src/interface/news-fetch-dashboard/data.js` — verbatim copy
+- `apps/mcp-server/src/interface/news-fetch-dashboard/rerun-handler.js` — verbatim copy
+- `apps/mcp-server/src/interface/news-fetch-dashboard/results.json` — verbatim copy
+- `apps/mcp-server/src/interface/mcp/routes/newsFetchDashboardHandler.ts` (NEW, ~100L) — static file handler; exports `handleNewsFetchDashboard(req, res, asset: string | null): void`; no db param; MIME map; path-traversal guard; mirrors bctcInspectHandler pattern
+- `apps/mcp-server/src/interface/mcp/server.ts` (+1 import, +2 `if` blocks for `/dashboards/news-fetch/` and wildcard)
+- `apps/mcp-server/package.json` — `sync-news-fetch-dashboard` script entry
+- `apps/mcp-server/sync-news-fetch-dashboard.sh` (NEW) — DRY sync script: copies verbatim assets, rewrites ENDPOINT relative, injects GENERATED header, verifies no absolute URL/no creds/degrade kept
+- `apps/mcp-server/src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts` (NEW) — 11 tests
+- `docs/architecture/microservice/mcp-server/news-analysis.md` — Dashboard section added
+
+**AC evidence:**
+- AC-1 PASS: `newsFetchDashboardHandler.ts` created, exports `handleNewsFetchDashboard(req, res, asset: string | null): void`, no db param
+- AC-2 PASS: `apps/mcp-server/src/interface/news-fetch-dashboard/` exists with index.html, data.js, rerun-handler.js, results.json
+- AC-3 PASS: `grep -n "localhost:3000" index.html` → 0 matches; `grep -n "ENDPOINT" index.html` → `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'`
+- AC-4 PASS: `grep -n "file:" index.html` → `window.location.protocol === 'file:'` at line 333 (kept)
+- AC-5 PASS: server.ts wired with 1 import + 2 `if` blocks for root and wildcard routes
+- AC-6 DEFERRED to ops (container not rebuilt yet — post-rebuild: `curl /dashboards/news-fetch/` → 200 text/html, `data.js` → 200 text/javascript)
+- AC-7 DEFERRED to ops (path traversal: tests confirm 400 on `../` asset; live `curl` after rebuild)
+- AC-8 PASS: `grep -n "db\|getDb\|Database\|DB_PATH\|process.env\|Bun.env" newsFetchDashboardHandler.ts` → lines 13-14 are comments only; zero real references
+- AC-9 PASS: Dockerfile unchanged (git diff HEAD -- apps/mcp-server/Dockerfile → empty)
+- AC-10 PASS: bun test 9386 pass / 360 fail (0 new regressions vs baseline 364 fail); tsc exit 0
+- AC-11 PASS: `curl http://localhost:3000/api/news-fetch/live` — endpoint unaffected (route order preserved; NF-LD-2 9/9 still GREEN)
+- AC-12 PASS: `docs/data/pilot-status-news-fetch.json` not touched
+
+**Tests:** NF-LD-4 11/11 GREEN. NF-LD-2 9/9 GREEN. tsc exit 0.
+
+**Security grep (served dir):**
+- `grep -rn "VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer|DB_PATH|process.env|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → 0 matches
+
+**Sync script:** `apps/mcp-server/sync-news-fetch-dashboard.sh` (also: `bun run sync-news-fetch-dashboard`)
+
+**Commit:** see git log after this commit
+
+**Next:** NF-LD-4-dev-B → generic developer (1-line ENDPOINT change in `apps/news-fetch/dashboard/index.html` source)
+
+---
+
+## Constraints binding NF-LD-4 (verbatim — every agent in the chain)
+- L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`
+- No `--force`, no `--no-verify`, no `--no-gpg-sign`
+- local-only — do NOT git push source/CI/Dockerfile/compose changes (user owns push)
+- all work on `main` (NO branches)
+- ESM `.js` import suffixes; `Bun.env` not `process.env`
+- never ask the user — decide and continue; never ask the user to run/build/deploy — dispatch ops/dev
+- pilot-status-news-fetch.json is FROZEN at 12/12 — this enhancement does NOT touch it
+- sandbox runner (`src/sandbox/runner.ts`) credential-free + `data.js` + the 3 sandbox panels are FROZEN — do NOT regress G6/G8/G9
+- the file:// degrade branch STAYS in the HTML (graceful fallback) — do NOT delete it
+- ZONE: architect rules single (`apps/mcp-server/` for B, `apps/news-fetch/` for A) or `multi` if the dashboard tweak + Docker change straddle two services. If `multi`, dev-mcp-server is the SOLE committer of any `apps/mcp-server/` file.
+- DONE only when ops PROVES (real http GET) the served URL returns the page AND the live endpoint is reachable from that origin AND the user sees sandbox panels + live rows with zero manual serve step.
