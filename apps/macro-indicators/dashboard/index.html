@@ -854,9 +854,9 @@ footer {
   <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (P1-E1 static — honest state before rerun)</span>
-  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
-  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
-  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">Valid Input</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">Edge Case</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">Bad Input &rarr; Error</span> Invalid input &rarr; expected error (test PASSES)</span>
 </div>
 
 <footer>
@@ -1305,10 +1305,17 @@ var MODULE_DATA = [
     return "cat-failure";
   }
 
+  // Category display label map — maps internal category keys to human-readable
+  // labels shown on chips. The underlying JSON `category` field values
+  // (golden/edge/failure) are the data SSOT and are NOT changed here.
+  var CATEGORY_LABELS = {
+    golden:  "Valid Input",
+    edge:    "Edge Case",
+    failure: "Bad Input → Error"
+  };
+
   function catLabel(cat) {
-    if (cat === "golden") return "golden";
-    if (cat === "edge")   return "edge";
-    return "failure";
+    return CATEGORY_LABELS[cat] || CATEGORY_LABELS["failure"];
   }
 
   function escapeHtml(str) {
