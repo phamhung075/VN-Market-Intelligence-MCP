@@ -125,23 +125,25 @@ describe("NF-LD-4 — handleNewsFetchDashboard", () => {
     expect(statusCode()).toBe(404);
   });
 
-  // (h) No absolute localhost:3000 in ENDPOINT var
+  // (h) No absolute localhost:3000 in ENDPOINT/BASE_ENDPOINT var
+  // NF-LD-5 renamed var ENDPOINT to var BASE_ENDPOINT; accept either form.
   test("(h) served index.html has no 'localhost:3000' in ENDPOINT variable", () => {
     const { res, body } = mockResponse();
     handleNewsFetchDashboard(DUMMY_REQ, res, null);
     const html = body();
-    // Find the ENDPOINT variable line — must NOT contain localhost:3000
-    const endpointLine = html.split("\n").find((l) => l.includes("var ENDPOINT"));
+    // Find the ENDPOINT variable line (var ENDPOINT or var BASE_ENDPOINT) — must NOT contain localhost:3000
+    const endpointLine = html.split("\n").find((l) => /var (BASE_)?ENDPOINT/.test(l) && l.includes("="));
     expect(endpointLine).toBeDefined();
     expect(endpointLine).not.toContain("localhost:3000");
   });
 
-  // (i) Relative ENDPOINT present
+  // (i) Relative ENDPOINT present (var ENDPOINT or var BASE_ENDPOINT, NF-LD-5+)
   test("(i) served index.html ENDPOINT is relative '/api/news-fetch/live...'", () => {
     const { res, body } = mockResponse();
     handleNewsFetchDashboard(DUMMY_REQ, res, null);
     const html = body();
-    expect(html).toContain("var ENDPOINT = '/api/news-fetch/live");
+    // Accept either var ENDPOINT or var BASE_ENDPOINT with a relative path
+    expect(html).toMatch(/var (BASE_)?ENDPOINT = '\/api\/news-fetch\/live/);
   });
 
   // (j) file:// degrade branch present

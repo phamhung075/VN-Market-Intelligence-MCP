@@ -71,11 +71,17 @@ fi
 # Copy source first
 cp "${INDEX_SRC}" "${INDEX_DST}"
 
-# Rewrite: absolute ENDPOINT → relative ENDPOINT
-# FROM: var ENDPOINT = 'http://localhost:3000/api/news-fetch/live?source=all&limit=20';
-# TO:   var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
+# Rewrite: absolute ENDPOINT → relative ENDPOINT (legacy guard only — NF-LD-4 source already uses relative)
+# Legacy pattern (NF-LD-4 and earlier):
+#   FROM: var ENDPOINT = 'http://localhost:3000/api/news-fetch/live?source=all&limit=20';
+#   TO:   var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
+# NF-LD-5+ pattern: source uses var BASE_ENDPOINT = '/api/news-fetch/live?limit=20'; (already relative — no rewrite needed)
+# Both seds below are no-ops when source already uses relative paths; kept for safety.
 sed -i '' \
   "s|var ENDPOINT = 'http://localhost:3000/api/news-fetch/live|var ENDPOINT = '/api/news-fetch/live|g" \
+  "${INDEX_DST}"
+sed -i '' \
+  "s|var BASE_ENDPOINT = 'http://localhost:3000/api/news-fetch/live|var BASE_ENDPOINT = '/api/news-fetch/live|g" \
   "${INDEX_DST}"
 
 # Also rewrite the absolute error-message references (cosmetic — user-visible text only).
@@ -93,7 +99,7 @@ HEADER='<!-- GENERATED FILE — DO NOT EDIT BY HAND.
      Source: apps/news-fetch/dashboard/index.html
      Sync:   apps/mcp-server/sync-news-fetch-dashboard.sh
      Served: /dashboards/news-fetch/ (via mcp-server port 3000)
-     KEY DIFFERENCE from source: ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
+     KEY DIFFERENCE from source: BASE_ENDPOINT / ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
      so this copy works same-origin when served by mcp-server on port 3000.
      To re-sync: cd <repo-root> && bash apps/mcp-server/sync-news-fetch-dashboard.sh
 -->'
@@ -110,15 +116,15 @@ echo "[sync-news-fetch-dashboard] copied (with ENDPOINT rewrite + header): index
 echo ""
 echo "[sync-news-fetch-dashboard] Verification:"
 
-# Confirm no absolute localhost:3000 in served index.html ENDPOINT var
-if grep -q "var ENDPOINT = 'http://localhost:3000" "${INDEX_DST}"; then
+# Confirm no absolute localhost:3000 in served index.html ENDPOINT/BASE_ENDPOINT var
+if grep -qE "var (BASE_)?ENDPOINT = 'http://localhost:3000" "${INDEX_DST}"; then
   echo "[sync-news-fetch-dashboard] ERROR: absolute ENDPOINT still present in ${INDEX_DST}" >&2
   exit 1
 fi
 echo "[sync-news-fetch-dashboard] PASS: no absolute ENDPOINT in served index.html"
 
-# Confirm relative ENDPOINT present
-if ! grep -q "var ENDPOINT = '/api/news-fetch/live" "${INDEX_DST}"; then
+# Confirm relative ENDPOINT present (accepts either var ENDPOINT or var BASE_ENDPOINT)
+if ! grep -qE "var (BASE_)?ENDPOINT = '/api/news-fetch/live" "${INDEX_DST}"; then
   echo "[sync-news-fetch-dashboard] ERROR: relative ENDPOINT not found in ${INDEX_DST}" >&2
   exit 1
 fi

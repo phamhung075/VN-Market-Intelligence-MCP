@@ -1,5 +1,26 @@
 # dev-mcp-server -- Notebook
 
+## c291 · 2026-05-24 (NF-LD-5-dev-A)
+
+### NF-LD-5-dev-A — Regenerate served copy with Refresh button (DONE)
+
+**Root cause of script fix:** NF-LD-5-dev-B (commit `12600a1f`) renamed `var ENDPOINT` → `var BASE_ENDPOINT` in the canonical source. Sync script verification grep looked for `var ENDPOINT = '/api/news-fetch/live` → exit 1. Fix: broadened grep to `var (BASE_)?ENDPOINT`; added `BASE_ENDPOINT` sed guard (no-op since source already relative); updated header comment.
+
+**Idempotency:** md5 `b1d8806f7e8ae8b7de26a78962b6550b` stable across 3 consecutive runs.
+
+**Files shipped:**
+- `sync-news-fetch-dashboard.sh` — variable-name guards + verification pattern updated
+- `src/interface/news-fetch-dashboard/index.html` — REGENERATED (button + selector + loadLiveData callable)
+- `src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts` — tests (h)+(i) accept `var (BASE_)?ENDPOINT`
+
+**Tests:** NF-LD-4 11/11 + NF-LD-2 9/9 = 20/20 PASS. tsc exit 0.
+
+**Next:** NF-LD-5-QA → qa.
+
+Zone health: sync script handles BASE_ENDPOINT rename; served copy idempotent; button + selector in served HTML; 0 localhost:3000 in fetch path | HEALTHY
+
+---
+
 ## c290 · 2026-05-24 (BCTC inspector page-sync)
 
 ### BCTC inspector — synchronized PDF + OCR page navigation (IMPL_DONE)

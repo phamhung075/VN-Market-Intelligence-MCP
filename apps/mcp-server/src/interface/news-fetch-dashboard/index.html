@@ -3,7 +3,7 @@
      Source: apps/news-fetch/dashboard/index.html
      Sync:   apps/mcp-server/sync-news-fetch-dashboard.sh
      Served: /dashboards/news-fetch/ (via mcp-server port 3000)
-     KEY DIFFERENCE from source: ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
+     KEY DIFFERENCE from source: BASE_ENDPOINT / ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
      so this copy works same-origin when served by mcp-server on port 3000.
      To re-sync: cd <repo-root> && bash apps/mcp-server/sync-news-fetch-dashboard.sh
 -->
@@ -106,6 +106,38 @@
     .live-table td.verdict { color: #86efac; }
     .live-table td.verdict.bearish { color: #fca5a5; }
     .live-table td.verdict.neutral { color: #94a3b8; }
+
+    /* ── Live panel controls (NF-LD-5) ── */
+    .live-panel-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .live-refresh-btn {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 4px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #7dd3fc;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .live-refresh-btn:hover:not(:disabled) { background: #253047; }
+    .live-refresh-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .live-source-select {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .live-source-select:disabled { opacity: 0.45; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -203,8 +235,16 @@
       (mcp-server :3000 · rag_analyses · SELECT-only)
     </span>
   </div>
+  <div class="live-panel-controls">
+    <button class="live-refresh-btn" id="live-refresh-btn" type="button">Refresh / Load latest</button>
+    <select class="live-source-select" id="live-source-select" title="Filter by source">
+      <option value="all">All sources</option>
+      <option value="reuters">Reuters</option>
+      <option value="bloomberg">Bloomberg</option>
+    </select>
+  </div>
   <div id="live-data-content">
-    <!-- state will be rendered by initLivePanel() below -->
+    <!-- state will be rendered by loadLiveData() below -->
   </div>
 </div>
 
@@ -305,23 +345,32 @@ if (typeof window.__NEWS_FETCH_DATA__ !== 'undefined') {
 
 <script>
 /**
- * Live Data panel — NF-LD-2b
+ * Live Data panel — NF-LD-2b / NF-LD-5
  *
- * Fetches GET http://localhost:3000/api/news-fetch/live?source=all&limit=20
+ * loadLiveData() fetches GET /api/news-fetch/live?source=<source>&limit=20
+ * (relative path — same-origin when served from mcp-server:3000).
  * Renders recent rag_analyses rows per source (reuters / bloomberg).
  *
  * 4 explicit states — NEVER fabricates rows:
  *   FILE_DEGRADE  — detected BEFORE fetch attempt via window.location.protocol === 'file:'
- *   LOADING       — fetch in-flight
+ *   LOADING       — fetch in-flight (button disabled)
  *   EMPTY         — endpoint reachable, 0 rows returned
  *   ERROR         — fetch failed or HTTP non-2xx
+ *
+ * NF-LD-5: "Refresh / Load latest" button + source selector.
+ *   - Button re-calls loadLiveData() on click; disabled during in-flight fetch.
+ *   - Source selector (all|reuters|bloomberg) rebuilds the source= query param.
+ *   - Under file://, the degrade state fires BEFORE any fetch — button shows
+ *     the degrade message immediately (no network call).
  *
  * Security: zero DB creds, zero API keys. Read-only GET only.
  * Does NOT touch sandbox panels, data.js, or window.__NEWS_FETCH_DATA__.
  */
 (function initLivePanel() {
-  var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
+  var BASE_ENDPOINT = '/api/news-fetch/live?limit=20';
   var container = document.getElementById('live-data-content');
+  var btn = document.getElementById('live-refresh-btn');
+  var sourceSelect = document.getElementById('live-source-select');
   if (!container) return;
 
   // ── State: FILE:// DEGRADE — check protocol BEFORE any fetch attempt ──
@@ -332,103 +381,133 @@ if (typeof window.__NEWS_FETCH_DATA__ !== 'undefined') {
       '<code>npx serve apps/news-fetch/dashboard</code>). ' +
       'Not available under <code>file://</code>.' +
       '</p>';
+    // Keep button/select visible but disabled under file:// — honest state.
+    if (btn) btn.disabled = true;
+    if (sourceSelect) sourceSelect.disabled = true;
     return;
   }
 
-  // ── State: LOADING ──
-  container.innerHTML =
-    '<p class="live-state-msg" id="live-state-loading">Loading live data…</p>';
+  function loadLiveData() {
+    var source = (sourceSelect && sourceSelect.value) ? sourceSelect.value : 'all';
+    var endpoint = BASE_ENDPOINT + '&source=' + encodeURIComponent(source);
 
-  fetch(ENDPOINT)
-    .then(function (res) {
-      if (!res.ok) {
-        return res.text().then(function (body) {
-          throw { httpStatus: res.status, body: body };
-        });
-      }
-      return res.json();
-    })
-    .then(function (data) {
-      // ── State: EMPTY ──
-      if (!data || !data.rows || data.rows.length === 0) {
-        container.innerHTML =
-          '<p class="live-state-msg empty" id="live-state-empty">' +
-          'No rows yet — pipeline may not have run yet, or no Reuters/Bloomberg articles ' +
-          'have been ingested. Run the news headlines refresh job to populate data.' +
-          '</p>';
-        return;
-      }
+    // Disable controls during fetch to prevent double-fire.
+    if (btn) btn.disabled = true;
+    if (sourceSelect) sourceSelect.disabled = true;
 
-      // ── State: DATA — split rows per source ──
-      var reuters = data.rows.filter(function (r) {
-        return r.url && r.url.indexOf('reuters') !== -1;
-      });
-      var bloomberg = data.rows.filter(function (r) {
-        return r.url && r.url.indexOf('bloomberg') !== -1;
-      });
-      var other = data.rows.filter(function (r) {
-        return !(r.url && (r.url.indexOf('reuters') !== -1 || r.url.indexOf('bloomberg') !== -1));
-      });
+    // ── State: LOADING ──
+    container.innerHTML =
+      '<p class="live-state-msg" id="live-state-loading">Loading live data…</p>';
 
-      var html = '';
-
-      function renderSourceBlock(label, rows) {
-        if (rows.length === 0) return '';
-        var block = '<div class="live-source-block">';
-        block += '<div class="live-source-label">' + label + ' (' + rows.length + ' rows)</div>';
-        block += '<table class="live-table">';
-        block += '<thead><tr>' +
-          '<th>Headline</th>' +
-          '<th>Published</th>' +
-          '<th>Sentiment</th>' +
-          '<th>Impact</th>' +
-          '<th>Fetched</th>' +
-          '</tr></thead><tbody>';
-        for (var i = 0; i < rows.length; i++) {
-          var r = rows[i];
-          var headline = r.headline ? escHtml(r.headline) : '(no title)';
-          var headlineCell = r.url
-            ? '<a href="' + escAttr(r.url) + '" target="_blank" rel="noopener">' + headline + '</a>'
-            : headline;
-          var sentiment = r.sentiment ? escHtml(r.sentiment) : '—';
-          var verdictClass = 'verdict';
-          if (r.sentiment === 'bearish') verdictClass += ' bearish';
-          else if (r.sentiment === 'neutral') verdictClass += ' neutral';
-          var impact = r.impact_direction
-            ? escHtml(r.impact_direction) + (r.impact_score != null ? ' ' + r.impact_score : '')
-            : '—';
-          var pub = r.published_at ? fmtDate(r.published_at) : '—';
-          var fetched = r.created_at ? fmtDate(r.created_at) : '—';
-          block += '<tr>' +
-            '<td class="headline-cell">' + headlineCell + '</td>' +
-            '<td>' + pub + '</td>' +
-            '<td class="' + verdictClass + '">' + sentiment + '</td>' +
-            '<td>' + impact + '</td>' +
-            '<td>' + fetched + '</td>' +
-            '</tr>';
+    fetch(endpoint)
+      .then(function (res) {
+        if (!res.ok) {
+          return res.text().then(function (body) {
+            throw { httpStatus: res.status, body: body };
+          });
         }
-        block += '</tbody></table></div>';
-        return block;
-      }
+        return res.json();
+      })
+      .then(function (data) {
+        // ── State: EMPTY ──
+        if (!data || !data.rows || data.rows.length === 0) {
+          container.innerHTML =
+            '<p class="live-state-msg empty" id="live-state-empty">' +
+            'No rows yet — pipeline may not have run yet, or no Reuters/Bloomberg articles ' +
+            'have been ingested. Run the news headlines refresh job to populate data.' +
+            '</p>';
+          return;
+        }
 
-      html += renderSourceBlock('Reuters', reuters);
-      html += renderSourceBlock('Bloomberg', bloomberg);
-      if (other.length > 0) html += renderSourceBlock('Other', other);
+        // ── State: DATA — split rows per source ──
+        var reuters = data.rows.filter(function (r) {
+          return r.url && r.url.indexOf('reuters') !== -1;
+        });
+        var bloomberg = data.rows.filter(function (r) {
+          return r.url && r.url.indexOf('bloomberg') !== -1;
+        });
+        var other = data.rows.filter(function (r) {
+          return !(r.url && (r.url.indexOf('reuters') !== -1 || r.url.indexOf('bloomberg') !== -1));
+        });
 
-      container.innerHTML = '<div id="live-data-rows">' + html + '</div>';
-    })
-    .catch(function (err) {
-      // ── State: ERROR ──
-      var msg;
-      if (err && err.httpStatus) {
-        msg = 'Server error: HTTP ' + err.httpStatus + ' — the live endpoint returned an error.';
-      } else {
-        msg = 'Could not reach the live endpoint — check that mcp-server is running. (' +
-          (err && err.message ? escHtml(err.message) : 'fetch failed') + ')';
-      }
-      container.innerHTML =
-        '<p class="live-state-msg error" id="live-state-error">' + msg + '</p>';
-    });
+        var html = '';
+
+        function renderSourceBlock(label, rows) {
+          if (rows.length === 0) return '';
+          var block = '<div class="live-source-block">';
+          block += '<div class="live-source-label">' + label + ' (' + rows.length + ' rows)</div>';
+          block += '<table class="live-table">';
+          block += '<thead><tr>' +
+            '<th>Headline</th>' +
+            '<th>Published</th>' +
+            '<th>Sentiment</th>' +
+            '<th>Impact</th>' +
+            '<th>Fetched</th>' +
+            '</tr></thead><tbody>';
+          for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            var headline = r.headline ? escHtml(r.headline) : '(no title)';
+            var headlineCell = r.url
+              ? '<a href="' + escAttr(r.url) + '" target="_blank" rel="noopener">' + headline + '</a>'
+              : headline;
+            var sentiment = r.sentiment ? escHtml(r.sentiment) : '—';
+            var verdictClass = 'verdict';
+            if (r.sentiment === 'bearish') verdictClass += ' bearish';
+            else if (r.sentiment === 'neutral') verdictClass += ' neutral';
+            var impact = r.impact_direction
+              ? escHtml(r.impact_direction) + (r.impact_score != null ? ' ' + r.impact_score : '')
+              : '—';
+            var pub = r.published_at ? fmtDate(r.published_at) : '—';
+            var fetched = r.created_at ? fmtDate(r.created_at) : '—';
+            block += '<tr>' +
+              '<td class="headline-cell">' + headlineCell + '</td>' +
+              '<td>' + pub + '</td>' +
+              '<td class="' + verdictClass + '">' + sentiment + '</td>' +
+              '<td>' + impact + '</td>' +
+              '<td>' + fetched + '</td>' +
+              '</tr>';
+          }
+          block += '</tbody></table></div>';
+          return block;
+        }
+
+        html += renderSourceBlock('Reuters', reuters);
+        html += renderSourceBlock('Bloomberg', bloomberg);
+        if (other.length > 0) html += renderSourceBlock('Other', other);
+
+        container.innerHTML = '<div id="live-data-rows">' + html + '</div>';
+      })
+      .catch(function (err) {
+        // ── State: ERROR ──
+        var msg;
+        if (err && err.httpStatus) {
+          msg = 'Server error: HTTP ' + err.httpStatus + ' — check that mcp-server is running.';
+        } else {
+          msg = 'Could not reach the server — the live endpoint returned an error. (' +
+            (err && err.message ? escHtml(err.message) : 'fetch failed') + ')';
+        }
+        container.innerHTML =
+          '<p class="live-state-msg error" id="live-state-error">' + msg + '</p>';
+      })
+      .finally(function () {
+        // Re-enable controls after fetch completes (success or error).
+        if (btn) btn.disabled = false;
+        if (sourceSelect) sourceSelect.disabled = false;
+      });
+  }
+
+  // Wire button click to loadLiveData().
+  if (btn) {
+    btn.addEventListener('click', function () { loadLiveData(); });
+  }
+
+  // Wire source selector change to reload immediately.
+  if (sourceSelect) {
+    sourceSelect.addEventListener('change', function () { loadLiveData(); });
+  }
+
+  // Initial load on page load.
+  loadLiveData();
 
   function escHtml(s) {
     return String(s)
