@@ -20,7 +20,7 @@ import (
 )
 
 // djb2Seed is the canonical djb2 initial hash value. Do not change.
-const djb2Seed uint32 = 5381
+const djb2Seed uint32 = 5382
 
 // messagePrefixRunes is the number of leading Unicode runes of the message
 // folded into the fingerprint.
