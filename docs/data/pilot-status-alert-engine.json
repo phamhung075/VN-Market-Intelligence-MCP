@@ -55,7 +55,7 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). Current task: P1-B2 (dedup-key-builder primitive + 3 scenarios).",
+    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). Current task: P1-B3 (cooldown-gate primitive + 3 scenarios — completes G12 streak #3).",
     "status": "ACTIVE",
     "openedAt": "2026-05-24T053000Z",
     "openedBy": "pm (PM_ALERT_ENGINE_PHASE1_OPEN)",
@@ -70,9 +70,9 @@
     "task_count": 9,
     "ac_count": 59,
     "wip_limit": 1,
-    "current_task": "P1-B2",
+    "current_task": "P1-B3",
     "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P1-AE-B2.md",
+    "current_task_handoff": "docs/handoffs/TASK_P1-AE-B3.md",
     "sequential_plan": [
       "P1-A: cmd/sandbox/main.go + ZERO-CREDS gate (1h, 7 ACs)",
       "P1-B1: signal-classifier primitive + 3 scenarios (1.5h, 8 ACs)",
@@ -84,7 +84,12 @@
       "P1-E: edit-rerun handler + full G7 env audit (1.5h, 7 ACs)",
       "P1-G: Phase 1 close-gate verification (QA, 30m, 6 ACs)"
     ],
-    "progress_notes": [],
+    "progress_notes": [
+      "P1-A DONE 2026-05-24T052327Z — cmd/sandbox scaffold, CGO_ENABLED=0 + ZERO-CREDS hard gate passed.",
+      "P1-B1 DONE 2026-05-24T053017Z — signal-classifier primitive + 3 scenarios; G1; G12 streak #1.",
+      "P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13) — dedup-key-builder primitive (djb2 seed=5381, byte-identical to brownfield) + 3 scenarios; sandbox total=6 pass=6 fail=0 status=OK; ZERO-CREDS clean; CGO0 build+tests pass; Fence-A clean; G1; G12 streak #2. Router-verified.",
+      "P1-B3 SEQUENCED 2026-05-24T053651Z — cooldown-gate primitive (ShouldSuppressAlert, now time.Time injected) + 3 scenarios; 7 ACs; owner dev-alert-engine; G1 + G12 streak #3 (COMPLETES Phase-1 G12 streak requirement). Handoff docs/handoffs/TASK_P1-AE-B3.md."
+    ],
     "tasks": {}
   },
 
