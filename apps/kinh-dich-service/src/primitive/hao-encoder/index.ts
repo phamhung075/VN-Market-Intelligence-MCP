@@ -25,7 +25,7 @@ export interface HaoReading {
 // ── Embedded threshold constants ──────────────────────────────────────────────
 
 /** Score above this threshold → LAO_DUONG (old yang, changing yang line) */
-const LAO_DUONG_THRESHOLD = 0.75;
+const LAO_DUONG_THRESHOLD = 0.85; // G10-INJECTED: was 0.75
 
 /** Score at or above this threshold (and ≤ LAO_DUONG) → THIEU_DUONG (young yang, stable yang line) */
 const THIEU_DUONG_THRESHOLD = 0.10;

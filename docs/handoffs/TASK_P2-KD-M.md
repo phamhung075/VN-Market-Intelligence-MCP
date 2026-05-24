@@ -187,22 +187,54 @@ Must return non-empty (anchor is still a proper ancestor of HEAD).
 ### Evidence — G10 Injection (Pre-Fix)
 
 ```
-[PASTE FULL SANDBOX OUTPUT HERE showing hao-encoder FAIL]
-[Must show: exit code non-zero, at least one scenario with FAIL status for hao-encoder]
+[FAIL] hao-encoder-edge.json | result[4].state: expected LAO_DUONG but got THIEU_DUONG
+[PASS] hao-encoder-failure.json
+[FAIL] hao-encoder-golden.json | result[0].state: expected LAO_DUONG but got THIEU_DUONG
+[PASS] hexagram-resolver-edge.json
+[PASS] hexagram-resolver-failure.json
+[PASS] hexagram-resolver-golden.json
+[PASS] ngu-hanh-classifier-edge.json
+[PASS] ngu-hanh-classifier-failure.json
+[PASS] ngu-hanh-classifier-golden.json
+[PASS] nuclear-hexagram-computer-edge.json
+[PASS] nuclear-hexagram-computer-failure.json
+[PASS] nuclear-hexagram-computer-golden.json
+[PASS] reading-scorer-edge.json
+[PASS] reading-scorer-failure.json
+[PASS] reading-scorer-golden.json
+[PASS] reading-composer-edge.json
+[PASS] reading-composer-golden.json
+
+[sandbox] FAIL 15/17 scenarios (2 failed, 0 skipped)
+SANDBOX_EXIT=1
+
+tsc exit 0 (compiles clean with injected bug)
 ```
 
 ### Evidence — G10 Dashboard RED
 
 ```
-[PASTE DASHBOARD STATE DESCRIPTION OR SCREENSHOT]
-[Must show: hao-encoder card displays FAIL/RED status after sandbox run]
+After running sandbox with injected bug, the hao-encoder card displays FAIL/RED status.
+The sandbox runner exited non-zero (exit 1) with 2 scenarios failing:
+- hao-encoder-golden.json: FAIL
+- hao-encoder-edge.json: FAIL
+The dashboard living-docs page (apps/kinh-dich-service/src/interface/dashboard/)
+reflects the RED state for hao-encoder primitive. The LAO_DUONG_THRESHOLD bug
+causes any score in range (0.75, 0.85] to be misclassified as THIEU_DUONG instead
+of LAO_DUONG, producing wrong state + isChanging=false instead of true.
 ```
 
 ### Evidence — Tag Created
 
 ```
-[PASTE OUTPUT of 'git tag kinh-dich-pre-inject' verification]
-[PASTE OUTPUT of 'git log --oneline kinh-dich-pre-inject']
+$ git tag | grep kinh-dich
+kinh-dich-pre-ci
+kinh-dich-pre-delete
+kinh-dich-pre-inject
+
+$ git log --oneline kinh-dich-pre-inject
+b4cdb1db signal(pm/kinh-dich): P2-KD-M ready — kinh-dich-pre-inject tag + G10 bug injection handoff (next: qa)
+(... full history follows)
 ```
 
 ### Evidence — Commit Message
@@ -212,9 +244,11 @@ test(kinh-dich): P2-KD-M — deliberate bug injection for G10 AI-fixability proo
 
 Injection details:
 - Target: apps/kinh-dich-service/src/primitive/hao-encoder/index.ts
-- Option chosen: [A/B/C]
-- Literal changed: [exact change, e.g., "LAO_DUONG_THRESHOLD: 0.75 → 0.85"]
-- Effect: hao-encoder golden scenario fails (boundary-value inputs affected)
+- Option chosen: A (threshold off-by-one)
+- Literal changed: LAO_DUONG_THRESHOLD 0.75 → 0.85
+- Effect: hao-encoder golden + edge scenarios fail (2 FAILs); scores in (0.75, 0.85]
+  misclassified as THIEU_DUONG instead of LAO_DUONG; tsc exit 0 (runtime-only defect)
 - Dashboard: hao-encoder card RED after sandbox run
 - G12 DoD EXCEPTION: RED sandbox is required for G10 baseline
+- kinh-dich-pre-inject tag created at b4cdb1db before this commit
 ```
