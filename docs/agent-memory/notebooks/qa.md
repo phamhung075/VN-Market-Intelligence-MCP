@@ -1,5 +1,37 @@
 # QA — Notebook
 
+## c282 cycle-69 · 2026-05-24 · kinh-dich P2-KD-Z — Phase-2 close-gate — READY-FOR-PHASE-3
+
+**Task:** P2-KD-Z — Phase-2 Close-Gate Verification | **Verdict:** READY-FOR-PHASE-3
+
+```
+date: 2026-05-24T04:55:03Z
+outcome: READY-FOR-PHASE-3
+type: pilot-task-qa (Phase-2 close-gate — read-only audit + live sandbox run)
+signal: docs/signals/qa-kd-phase2-close-gate-20260524T045503Z.json
+evidence: docs/handoffs/TASK_P2-KD-Z-close-gate-evidence.md
+sandbox: 17/17 PASS, exit 0 (15 primitive + 2 module)
+eslint: exit 0 | tsc: exit 0
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (CONFIRMED — 153 commits since, ancestor of HEAD)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD, no dup keys
+goal_flips: NONE (Charter §4.5 honored)
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (sandbox 17/17 + ESLint + tsc) | PASS | All exit 0; 17/17 scenarios green |
+| AC-2 (goal evidence G1/G3/G4/G5/G6/G8/G9/G10/G11/G12) | PASS | Evidence complete; TASK_P2-KD-N-g10-g11.md absent as separate file but G10/G11 evidence fully in TASK_P2-KD-N.md |
+| AC-3 (G12 streak carry-forward) | PASS | P1-B1/B2/B3/D/E/F + P2 tasks all sandbox-green-before-DONE |
+| AC-4 (pre-revert tags ancestry) | PASS | pre-ci→pre-delete→pre-inject→HEAD ancestry verified |
+| AC-5 (ESLint fence clean) | PASS | exit 0, no warnings |
+| AC-6 (anchor + SSOT) | PASS | Anchor ancestor CONFIRMED; goalsEarned=0; decisionMatrix TBD; no dup keys |
+| AC-7 (SI-2 boundary Phase 2) | PASS | No Phase-2 task touched SI-2; pre-Phase-2 469c047a is metadata-only, documented |
+
+**Verdict: READY-FOR-PHASE-3**
+**NEXT:** pm — record P2-KD-Z DONE + Phase-2 COMPLETE, then authorize Phase-3 PO terminal 12/12 atomic close.
+
+---
+
 ## c282 cycle-64 · 2026-05-24 · stock-price P2-Z — Phase-2 close-gate — READY-FOR-PHASE-3
 
 **Task:** P2-Z — Phase-2 Close-Gate Verification | **Verdict:** READY-FOR-PHASE-3 | **Commit:** (pending)
