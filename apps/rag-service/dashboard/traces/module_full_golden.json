@@ -1,22 +1,16 @@
 {
-  "passed": false,
+  "passed": true,
   "primitive": "retrieval",
   "actual": {
-    "top_k_ids": []
+    "top_k_ids": [
+      "doc-1"
+    ]
   },
   "expected": {
     "top_k_ids": [
       "doc-1"
     ]
   },
-  "diff": [
-    {
-      "key": "top_k_ids",
-      "actual": [],
-      "expected": [
-        "doc-1"
-      ]
-    }
-  ],
+  "diff": [],
   "elapsed_ms": 1
 }

@@ -1,11 +1,15 @@
 {
-  "passed": false,
+  "passed": true,
   "primitive": "top_k_selector",
   "actual": {
     "result": [
       {
-        "id": "doc-3",
-        "score": 0.5
+        "id": "doc-1",
+        "score": 0.9
+      },
+      {
+        "id": "doc-2",
+        "score": 0.7
       }
     ]
   },
@@ -21,26 +25,6 @@
       }
     ]
   },
-  "diff": [
-    {
-      "key": "result",
-      "actual": [
-        {
-          "id": "doc-3",
-          "score": 0.5
-        }
-      ],
-      "expected": [
-        {
-          "id": "doc-1",
-          "score": 0.9
-        },
-        {
-          "id": "doc-2",
-          "score": 0.7
-        }
-      ]
-    }
-  ],
+  "diff": [],
   "elapsed_ms": 0
 }
