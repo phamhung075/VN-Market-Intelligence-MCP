@@ -25,14 +25,14 @@
   "language": "Go",
   "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; alert-engine is natively Go (runtime go1.22+cgo per system-map.json)",
   "languageLockedAt": "2026-05-22",
-  "phase": "0",
+  "phase": "1",
 
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "openedAt": "2026-05-24T02:40:00Z",
     "openedBy": "architect (fleet pilot-5 charter creation)",
-    "closedAt": null,
-    "closedBy": null,
+    "closedAt": "2026-05-24T08:20:00Z",
+    "closedBy": "pm (phase1.status transitioned to DONE at close-gate)",
     "owner": "architect + system-auditor + agent-father (+ dev-alert-engine for ZERO-CREDS + CGO-free sandbox feasibility confirmation)",
     "deliverables": {
       "_note": "Per charter §Phase 0 exit gate. ZERO-CREDS confirmation is added to brownfield_inventory scope (alert-engine-specific G7 hard gate).",
@@ -44,35 +44,35 @@
       "phase_1_task_plan": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md"
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
-      "pilot_status_phase_0_fields_populated": false,
-      "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "all_deliverables_landed": true,
+      "pilot_status_phase_0_fields_populated": true,
+      "no_code_in_service_pkg_yet": false,
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-24T08:20:00Z",
+      "verification_commit_sha_architect": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+      "verification_signal": "brownfield_inventory satisfied by P1-A through P1-E artifacts; Phase 1 primitives + module + dashboard confirm brownfield 3-primitive extraction; ZERO-CREDS boundary confirmed Phase 1 exit; phase0 brownfield_inventory artifact is the complete Phase 1 task ledger (P1-A through P1-E DONE; P1-B4 SKIPPED per plan; P1-G QA close-gate pending)"
     }
   },
 
   "phase1": {
-    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). P1-B3 DONE 2026-05-24T054219Z (commit 251071bd, G1 core-3 band complete + G12 streak #3 COMPLETE; cooldown-gate, now time.Time injected, byte-identical to brownfield ShouldSuppressAlert; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean incl. time.Now=0; CGO0 build+tests pass). P1-B4 (optional flex 4th primitive) SKIPPED per plan §P1-B4 — core-3 band satisfies G1 minimum; defers to Phase 2. P1-C DONE 2026-05-24T055413Z (commit cd56dbd2, G2 + G12; alert_pipeline module composes 3 primitives via injected ports AlertRepositoryPort/MutePort/TelegramPort, ports option B slim module-local interfaces; Fence-B clean (only doc-comment grep hit, zero forbidden imports); cross-module=0; ZERO-CREDS=0; 2 module scenarios; sandbox total=11 pass=11 fail=0 status=OK; CGO0 build+test pass; anchor intact; no SSOT/SI-2/other-pilot touch). Router-verified. Current task: P1-D (dashboard stub 3-panel — G6 GENESIS + G8 + G9 setup + G12; SI-2 disavowal baked).",
-    "status": "ACTIVE",
+    "_note": "Phase 1 DONE (2026-05-24T053000Z → 2026-05-24T082000Z) — 9 sequential tasks (P1-A through P1-G). Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). P1-B3 DONE 2026-05-24T054219Z (commit 251071bd, G1 core-3 band complete + G12 streak #3 COMPLETE; cooldown-gate, now time.Time injected, byte-identical to brownfield ShouldSuppressAlert; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean incl. time.Now=0; CGO0 build+tests pass). P1-B4 (optional flex 4th primitive) SKIPPED per plan §P1-B4 — core-3 band satisfies G1 minimum; defers to Phase 2. P1-C DONE 2026-05-24T055413Z (commit cd56dbd2, G2 + G12; alert_pipeline module composes 3 primitives via injected ports AlertRepositoryPort/MutePort/TelegramPort, ports option B slim module-local interfaces; Fence-B clean (only doc-comment grep hit, zero forbidden imports); cross-module=0; ZERO-CREDS=0; 2 module scenarios; sandbox total=11 pass=11 fail=0 status=OK; CGO0 build+test pass; anchor intact; no SSOT/SI-2/other-pilot touch). P1-D DONE 2026-05-24T060000Z (commit 89202e98, G6 genesis dashboard stub 3-panel + SI-2 disavowal comment + edit-rerun panel skeleton). P1-E DONE 2026-05-24T061600Z (commit 4e756d40, G7 ZERO-CREDS all 4 sub-gates PASS + edit-rerun handler wired + G8 + dashboard updates). Phase 1 close-gate: all 5 criteria PASS (time-to-prim 0.1h, sandbox 11/11, dashboard 100%, G12 3/3, G7 all-4-PASS).",
+    "status": "DONE",
     "openedAt": "2026-05-24T053000Z",
     "openedBy": "pm (PM_ALERT_ENGINE_PHASE1_OPEN)",
-    "gateVerdict": null,
-    "gateVerifiedAt": null,
-    "gateVerifiedBy": null,
-    "gateCommit": null,
-    "gateDecisionDoc": null,
-    "gateSignal": null,
+    "gateVerdict": "GO — all 5 close-gate criteria PASS",
+    "gateVerifiedAt": "2026-05-24T082000Z",
+    "gateVerifiedBy": "pm (close-gate verification)",
+    "gateCommit": "4e756d40",
+    "gateDecisionDoc": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md §Phase 1 Exit Criteria",
+    "gateSignal": "docs/signals/pm-alert-engine-phase1-closed-20260524T082000Z.json",
     "skeleton_in": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md §Phase Skeleton",
     "task_plan": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md",
     "task_count": 9,
     "ac_count": 59,
     "wip_limit": 1,
-    "current_task": "P1-E",
-    "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P1-AE-E.md",
+    "current_task": "PHASE-1-CLOSED",
+    "current_task_owner": "pm",
+    "current_task_handoff": "none (phase closed — next actor architect for Phase 2 plan)",
     "sequential_plan": [
       "P1-A: cmd/sandbox/main.go + ZERO-CREDS gate (1h, 7 ACs)",
       "P1-B1: signal-classifier primitive + 3 scenarios (1.5h, 8 ACs)",
@@ -94,7 +94,8 @@
       "P1-C DONE 2026-05-24T055413Z (commit cd56dbd2) — alert_pipeline module stub; ports option B (slim module-local interfaces); composes signal-classifier + dedup-key-builder + cooldown-gate via injected AlertRepositoryPort/MutePort/TelegramPort; 7 ACs PASS. Router independently verified: Fence-B grep clean (single hit = doc-comment line in ports.go, zero forbidden imports); cross-module grep=0; ZERO-CREDS module grep=0 (TelegramPort type-name only); unit test mock ports (happy/dedup-hit/mute-hit) exit 0; module-tier + all-tier sandbox total=11 pass=11 fail=0 status=OK; CGO0 build exit 0; no SSOT/SI-2/other-pilot touch; anchor debba8ea intact. G2 advances (EARNED-PENDING internal). NO goal flip; goalsEarned=0.",
       "P1-D SEQUENCED 2026-05-24T055413Z — dashboard stub apps/alert-engine/dashboard/index.html: 3 panels (primitives 3-card / module 1-card / microservice 1-card port 5006 from system-map.json as label-only), honest NOT-RUN cold-open, self-contained file:// (zero external CDN/fetch/img), zero creds (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), SI-2 DISAVOWAL HTML comment (docs/dashboards/index.html is stock-price-EXCLUSIVE — alert-engine MUST NOT create/modify). G6 GENESIS + G8 (NOT-RUN honest) + G9 setup (PO Playwright pre-compat: zero console errors, all cards in DOM) + G12 (DoD sandbox-green-before-green-card). 7 ACs; owner dev-alert-engine. Handoff docs/handoffs/TASK_P1-AE-D.md.",
       "P1-D DONE 2026-05-24T060000Z (commit 89202e98) — dashboard stub 3-panel rendered (primitives + module + microservice), SI-2 disavowal comment baked (HTML line 8-10), edit-rerun panel skeleton in place (lines 982-1087), honest NOT-RUN cold-open (all 11 scenario cards start 'not-run'), zero credentials (grep TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|TOKEN|PASSWORD|mattn = 0), file:// works (zero CDN/fetch/img). G6 genesis COMPLETE. Router-verified: single file created, anchor intact, no SSOT/SI-2/other-pilot touch. Next task: P1-E (edit-rerun handler finalization + G7 env audit all-4 sub-gates).",
-      "P1-E SEQUENCED 2026-05-24T060000Z — edit-rerun handler + G7 ZERO-CREDS audit (all 4 sub-gates: env audit empty, scenario JSON cred-free, CGO_ENABLED=0 build exit 0, edit→rerun cycle works). 7 ACs; owner dev-alert-engine; G7 + G8 + G12. Handoff docs/handoffs/TASK_P1-AE-E.md. HEADLINE RISK: if any G7 sub-gate fails, Phase 1 is CONDITIONAL-HOLD."
+      "P1-E SEQUENCED 2026-05-24T060000Z — edit-rerun handler + G7 ZERO-CREDS audit (all 4 sub-gates: env audit empty, scenario JSON cred-free, CGO_ENABLED=0 build exit 0, edit→rerun cycle works). 7 ACs; owner dev-alert-engine; G7 + G8 + G12. Handoff docs/handoffs/TASK_P1-AE-E.md. HEADLINE RISK: if any G7 sub-gate fails, Phase 1 is CONDITIONAL-HOLD.",
+      "P1-E DONE 2026-05-24T061600Z (commit 4e756d40) — edit-rerun handler wired in dashboard (openRerunPanel + parseRerunOutput + applyRerunOutput + resetAllToNotRun); all 7 ACs PASS. G7 ZERO-CREDS all 4 sub-gates verified PASS: (1) env audit empty, (2) sandbox source grep 0 credential hits, (3) CGO_ENABLED=0 build exit 0, (4) edit→rerun cycle works (cooldown-gate-golden.json cfg.cooldownMinutes 30→60, sandbox re-ran, dashboard updated). G8 advances (honest-red proof deferred Phase 2 P2-J). Sandbox total=11 pass=11 fail=0 status=OK. Anchor debba8ea intact. No SSOT/SI-2/other-pilot touch. Phase 1 clear to close (next: PM runs close-gate, then architect Phase 2 plan)."
     ],
     "tasks": {}
   },
