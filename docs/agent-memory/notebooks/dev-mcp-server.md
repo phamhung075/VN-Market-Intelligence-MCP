@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c2026-05-24 · P2-F G5a/G5b/G5c — RAG HTTP Rewire (DONE)
+
+**Task:** P2-F — G5 delete+rewire for rag-service SCALE pilot
+
+**G5a:** embeddings.ts + vectorstore.ts + retriever.ts git-mv → `infrastructure/rag/_deprecated/` (git mv landed in 1356dcce; this commit fixes relative imports in `_deprecated/retriever.ts`: `../../` → `../../../`).
+
+**G5b:** 7 callers rewired from direct LanceDB (retriever.ts/vectorstore.ts) to ragHttpClient.ts HTTP boundary (port 5002):
+- `analysis.ts` — searchContext/insertAnalysis → ragSearch/ragIndex + RagSearchResultDTO mapping
+- `dataAuditJob.ts` — getCount/compactVectorStore → ragHealthCheck stub
+- `index.ts` — closeVectorStore removed (comment: R-1 resolved)
+- `fetchParseAndStoreBctc.ts` — AnalysisInput import + getDefaultInsertAnalysis rewired
+- `pollNews.ts`, `runImpactChain.ts`, `runPredictionImpactChain.ts` — defaultRagRetriever → ragSearch with exactOptionalPropertyTypes spread pattern
+
+**G5c:** `grep -rn "TODO.*migrat"` → 0 results
+
+**R-1 DUAL LANCEDB WRITERS:** RESOLVED — mcp-server no longer writes LanceDB in live path.
+
+**Tests:** TS 0 errors. Integration test `p2-f-rag-http-rewire.test.ts` 8/8 PASS. Full suite: 9293 pass / 356 fail (356 = pre-existing Bun panic artifacts, exit 0).
+
+**Commits:** `d29da3a8` (code) + `be7b3461` (pilot-status P2-F DONE). Pre-revert tag: `rag-pre-delete` (SHA 525f8492).
+
+**Next:** P2-J — G10 bug injection (QA injects, dev-rag-service fixes blind ≤2 cycles).
+
+---
+
 ## c282 · 2026-05-23T12:48Z
 
 ### Task P2-B1 — MCP HTTP Rewire (2026-05-23, IMPL_DONE)
@@ -170,7 +195,6 @@ Zone health: dailyDashboardJob write-path now host-visible; daily-dashboard.json
 ---
 
 ### Carry-over
-
 - 283 pre-existing BCTC PDF parsing test failures — BCTC freeze active, do not touch
-- Bun v1.3.13 C++ panic after full suite run is a known upstream bug (exit code 0, tests all pass)
-- LanceDB ~29GB > DISK_THRESHOLD_GB(20) — diskUsageAlertJob will fire on next hourly tick (correct behavior, shipped 1959-watchdog-5)
+- Bun v1.3.13 C++ panic after full suite is a known upstream bug (exit code 0, tests pass)
+- LanceDB ~29GB > DISK_THRESHOLD_GB(20) — diskUsageAlertJob fires on next hourly tick (correct)
