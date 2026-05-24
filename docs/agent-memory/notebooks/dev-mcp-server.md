@@ -1,5 +1,42 @@
 # dev-mcp-server -- Notebook
 
+## c284 · 2026-05-24T11:05Z
+
+### Task 1954c/G5b — BCTC Consolidation (pdf-extractor service as single extraction owner)
+
+**Pre-revert tag:** `bctc-pre-g5b-consolidation`
+
+**Task 1 (backfill column fix):** Already shipped in commit `2a5cc2a7` — column names `ticker/year/quarter` → `action_code/period_year/period_quarter` were already correct.
+
+**Task 2 (pdf.ts service-first inversion):** `9c22c915`
+- `downloadAndExtractPdf` now calls `extractViaMicroservice` FIRST. Service success → return immediately. Service null/throws → pdf-parse fallback.
+- `ocrPdfBuffer` marked `@deprecated`.
+- Suite C of `1352b-pdf-extractor-wiring.test.ts` updated to reflect new service-first contract. 14/14 PASS.
+
+**Task 3 (bctcPdfPullJob → service):** `09e2cd70`
+- `BctcPdfPullDeps.triggerExtraction` gains `pdfUrl` param.
+- Production deps use `extractViaMicroservice(pdfUrl, "bctc")` instead of `extractAndStorePdfPagesWithRetry`. 8/8 existing tests PASS.
+
+**Task 4 (pushBctcExtraction → service):** `70e75cbd`
+- `PushBctcExtractionDeps`: `extractPages+getCache` → `extractViaService`.
+- TC-4 tests in 1945d updated to inject `extractViaService` mock. 12/12 PASS.
+
+**Task 5 (bctcReparseJob → 3-tier service):** `0ae87b9d`
+- `ReparseDeps` gains `extractViaService` (Tier 1). `extractText` demoted to Tier 2. `getOcrCache` stays Tier 3. `extractHighDpiRetry` deprecated.
+- 5 test files updated with `extractViaService: async () => null` stubs. 38/38 PASS.
+
+**Task 6 (deprecation + offline integration test):** `372fbc91`
+- `pdfOcrWorker.ts:extractAndStorePdfPagesWithRetry` marked `@deprecated`.
+- `bctc-consolidation.test.ts` (NEW): 3-test offline suite. Bun mock HTTP server at port 0 (OS-assigned). Tests: service-first result / service-null fallback / pybctc_text. 3/3 PASS.
+
+**Full suite:** 9315 pass / 347 fail (baseline 9311/348 — net improvement). Zero regression.
+
+**Self-grep:** `extractAndStorePdfPagesWithRetry` — 0 NEW calls; legacy reference in `fetchParseAndStoreBctc.ts` (UNTOUCHED, architect-frozen; dead path since all 4 callers pass pdfTextOverride). `ocrPdfBuffer` — only in `pdf.ts` definition (deprecated). `fetchParseAndStoreBctc.ts` UNTOUCHED confirmed. `pdfExtractorClient.ts` UNTOUCHED confirmed.
+
+**Next:** Task 7 = QA gate. QA emits consolidation PASS signal → architect emits 1954c-clearance + G5b-clearance → PO lifts freeze → G5 → YES → 12/12.
+
+---
+
 ## c283 · 2026-05-24T09:45Z
 
 ### Task commit-mutex-live — commit-mutex lock kind deployed (2026-05-24, IMPL_DONE)
