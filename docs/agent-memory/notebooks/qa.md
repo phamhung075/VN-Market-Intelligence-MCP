@@ -1,5 +1,35 @@
 # QA — Notebook
 
+## c282 cycle-73 · 2026-05-24 · alert-engine P2-J — G8 honest-red deliberate-break proof — PASS
+
+**Task:** P2-J — G8 honest-red deliberate-break proof | **Verdict:** PASS
+
+```
+date: 2026-05-24T08:00:02Z
+outcome: PASS — 5/5 ACs PASS; G8 honest-red contract proven across 3 primitives
+type: pilot-task-qa (deliberate-break proof — corrupt+revert+revert discipline, no code committed)
+evidence: docs/handoffs/TASK_P2-J-ae-g8-evidence.md
+signal: docs/signals/qa-ae-P2-J-g8-done-20260524T080002Z.json
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base --is-ancestor exit 0)
+scenario_files_staged: 0 (all 3 corruptions reverted before commit)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD, G8 stays EARNED-PENDING
+g8_goal_status: EARNED-PENDING (PO flips at Phase-3 terminal)
+```
+
+| AC | Command | Result | Verdict |
+|----|---------|--------|---------|
+| AC-1 (Test A — cooldown-gate corrupt) | suppress false→true → sandbox run | exit 1, fail=1, FAIL line present | PASS |
+| AC-2 (Test B — golden after revert) | git checkout cooldown-gate-golden → sandbox run | exit 0, 11/11 PASS, status=OK | PASS |
+| AC-3 Run 1 (signal-classifier corrupt) | valid true→false → sandbox run | exit 1, fail=1 | PASS |
+| AC-3 Run 2 (dedup-key-builder corrupt) | fingerprint 4c79b07f→deadbeef → sandbox run | exit 1, fail=1 | PASS |
+| AC-4 (git status clean of alert-engine scenarios) | git status --short grep scenarios | zero alert-engine files | PASS |
+| AC-5 (G8 evidence compiled + signal) | evidence file + signal created + committed | files committed | PASS |
+
+**G8 verdict: PASS — dashboard is NOT false-green. Honest-red proven.**
+**Next:** pm — mark P2-J DONE, sequence P2-K (G9 PO Playwright Path B).
+
+---
+
 ## c282 cycle-72 · 2026-05-24 · alert-engine P2-G — G5b/G5c audit — PASS
 
 **Task:** P2-G — G5b/G5c audit (brownfield deprecation integration regression check) | **Verdict:** PASS
