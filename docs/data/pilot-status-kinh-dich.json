@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-F",
+    "current_task": "P2-KD-G",
     "current_task_owner": "dev-kinh-dich",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-F.md",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-G.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -461,8 +461,10 @@
         "tag_name": "kinh-dich-pre-delete"
       },
       "P2-KD-F": {
-        "status": "READY",
-        "dispatchedAt": "2026-05-24T23:59:00Z",
+        "status": "DONE",
+        "completedAt": "2026-05-24T03:47:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "5641f2a1",
         "owner": "dev-kinh-dich",
         "title": "G5a — git mv domain/services.ts → src/_deprecated/ + usecases rewire to reading_composer",
         "handoff": "docs/handoffs/TASK_P2-KD-F.md",
@@ -471,7 +473,29 @@
         "est_hours": 1.5,
         "ac_count": 7,
         "g_goals_advanced": ["G5a"],
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS",
+          "AC-7": "PASS"
+        },
         "note": "CRITICAL: atomic move (git mv + rewire staged together, committed as ONE commit). Self-verify post-commit: git show --stat shows RENAME (not add/delete); original domain/services.ts is GONE from tree (git ls-tree -r HEAD shows only _deprecated/ path). Hexagram data handling decision: move to hexagram-data.ts OR embed in primitives (dev chooses, documents)."
+      },
+      "P2-KD-G": {
+        "status": "READY",
+        "dispatchedAt": "2026-05-24T03:47:00Z",
+        "owner": "dev-kinh-dich",
+        "title": "G5b — MCP handler HTTP rewire: 6 tools → port 5005 + 4 new kinh-dich-service endpoints",
+        "handoff": "docs/handoffs/TASK_P2-KD-G.md",
+        "blocked_by": "P2-KD-F",
+        "blocks": "P2-KD-H",
+        "est_hours": 3.0,
+        "ac_count": 8,
+        "g_goals_advanced": ["G5b"],
+        "note": "HIGHEST-RISK G5 in fleet so far. Rewrite 6 MCP tool handlers from direct mcp-server domain copy imports to HTTP POST/GET calls to port 5005. Add 4 new kinh-dich-service endpoints. AC-1 strict: zero live imports from parallel copy post-completion. Score helpers stay in mcp-server. Port 5005 from system-map.json — never hardcoded."
       }
     }
   },
