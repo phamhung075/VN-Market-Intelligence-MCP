@@ -106,7 +106,7 @@
     "tasks": {
       "_note": "[DERIVED] 14 atomic tasks from rag-service-phase-2-task-plan.md (commit f2d15494). Dependency order, WIP=1. Status enum: NOT-STARTED | IN-PROGRESS | DONE | BLOCKED. Task DONE does NOT flip any G-goal (§4.5 — PO-only atomic flip at 12/12 terminal). goalsAdvanced is informational (which goals the task contributes evidence toward), NOT a flip instruction.",
       "_status_enum": "[FIXED] Allowed values per task: NOT-STARTED | IN-PROGRESS | DONE | BLOCKED",
-      "P2-B1": {"title": "relevance-threshold-gate primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": [], "blocks": ["P2-B2"], "status": "NOT-STARTED"},
+      "P2-B1": {"title": "relevance-threshold-gate primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": [], "blocks": ["P2-B2"], "status": "DONE", "doneAt": "2026-05-24", "doneCommit": "TBD-P2B1"},
       "P2-B2": {"title": "top-k-selector primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": ["P2-B1"], "blocks": ["P2-B3"], "status": "NOT-STARTED"},
       "P2-B3": {"title": "context-window-packer primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 8, "preRevertTag": null, "blockedBy": ["P2-B2"], "blocks": ["P2-B4"], "status": "NOT-STARTED"},
       "P2-B4": {"title": "temporal-decay-scorer primitive + now-injection (R-2)", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 9, "preRevertTag": null, "blockedBy": ["P2-B3"], "blocks": ["P2-C"], "status": "NOT-STARTED"},

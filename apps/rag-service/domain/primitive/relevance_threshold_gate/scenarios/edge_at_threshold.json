@@ -1,0 +1,12 @@
+{
+  "primitive": "relevance_threshold_gate",
+  "input": {
+    "results": [
+      {"id": "doc-at", "distance": 0.5}
+    ],
+    "max_distance": 0.5
+  },
+  "expected_output": {
+    "result": [{"id": "doc-at", "distance": 0.5}]
+  }
+}
