@@ -1,5 +1,71 @@
 # QA — Notebook
 
+## c283 cycle-84 · 2026-05-24 · api-gateway SCALE pilot — Consolidated End-State Verification
+
+**Task:** Final QA verification pass for api-gateway SCALE pilot before PO terminal close | **Verdict:** READY-FOR-PO-CLOSE (G1–G8, G10, G11, G12 PASS; G9 pending PO; G4 pre-ci tag gap noted as non-blocking)
+
+```
+date: 2026-05-24
+zone: apps/api-gateway/ ONLY
+head_sha: a2d4425c
+
+G10 VERDICT: PASS at cycle_count=1 (accept-at-1, caveat noted)
+  bug: SplitN n=3→n=2 (uncommitted working-tree-only)
+  fix: n=2→n=3 commit 492cda60 (dev correctly identified via git diff + sandbox symptom)
+  caveat: bug was never committed; dev used git diff to locate it (not dashboard-only)
+  ruling: ACCEPT-AT-1 — canonical G10 metric = ≤2 cycles + dashboard red→green;
+           dashboard DID show precise failing scenario (golden-normal-proxy RED);
+           single-literal fix in 1 cycle EXCEEDS baseline 1.5; no re-run required
+           (uncommitted bug is realistic for dev workflow; git diff is a legitimate tool)
+
+END-STATE VERIFICATION (Task 2):
+  go test -count=1 ./...: 8 packages all PASS (57 tests) — exit 0
+  sandbox primitive: total=11 pass=11 fail=0 status=OK exit=0
+  sandbox module: total=1 pass=1 fail=0 status=OK exit=0
+  dash-check: panelCount=3 cardCount=12 dotsGreen=12 dotsRed=0 jsErrors=0 verdict=PASS
+  golangci-lint --config .golangci.yml: 0 issues exit=0
+  scrubbed-env audit: grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD" → EMPTY (exit:1, grep found nothing)
+
+G4 PRE-CI TAG GAP:
+  api-gateway-pre-ci tag was never created (no api-gateway tags exist)
+  fence DOES bite (proven in G4 signal bites_proof: net/http import → exit 1, Fence-A named)
+  QA independent reproduction also confirmed in cycle-79 (G4 PASS there)
+  CI job exists in .github/workflows/ci.yml
+  .golangci.yml freeze anchor: 9fd1634e (only commit on file)
+  Ruling: NON-BLOCKING — fence proven live; pre-ci tag is documentation-level gap only;
+           PO to note at terminal close
+
+G12 STREAK:
+  Gate baked in flow: .claude/flows/dev-api-gateway/main.md line 57
+  Confirmed sandbox-green-before-DONE tasks: B1(ab534044) + B3(c21dd48c) + C1(c956631d) + E1(aeb21970) + E2(75723244) = 5+ tasks
+  Streak 3/3: COMPLETE (evidence in signals) — SSOT pending PO flip (§4.5)
+
+G9: TBD — PO's remaining call (Path A verbal OR Path B Playwright)
+
+ssot_not_mutated: pilot-status-api-gateway.json not touched (PO-only §4.5)
+goal_flips: NONE
+report: reports/TASK_REPORT_AG-FINAL-QA.md (not written — findings returned inline per instruction)
+```
+
+| Goal | Verdict | Key Evidence |
+|------|---------|-------------|
+| G1 | PASS | 3 primitives × 3+ scenarios = 11 scenarios total; sandbox 11/11 exit 0; commit ab534044+cfd38a3b+c21dd48c |
+| G2 | PASS | pkg/module/gateway/ multi-primitive scenario; module-route-story PASS; commit c956631d |
+| G3 | PASS | openapi.yaml 5 paths; main.go 67L ≤80; zero domain ops; commits d9c76e00 + c348ea2a |
+| G4 | PASS-with-caveat | .golangci.yml commit 9fd1634e; CI job present; bites-proof exit 1 + Fence-A named; golangci-lint 0 issues now; pre-ci TAG MISSING (non-blocking) |
+| G5 | PASS | NEW Go service — zero legacy TS gateway in mcp-server/src; zero TODO.*migrat; commit b3ae0568 confirms |
+| G6 | PASS | dashboard/index.html 3 panels file:// standalone zero network; panelCount=3 cards=12; commit 60880ca3 |
+| G7 | PASS | scrubbed-env audit EMPTY (exit:1 grep); CGO_ENABLED=0 builds clean; commit 75723244 |
+| G8 | PASS | cycle-79: 5 bad scenarios → 8 FAILs, 3 RED cards; reverted → 12 green; commit d971c94d |
+| G9 | PENDING-PO | No po-decisions doc yet; Path B Playwright is Day-0 default; PO action required |
+| G10 | PASS | cycle_count=1; SplitN n=2→n=3; commit 492cda60; sandbox 11/11 + dash PASS |
+| G11 | PASS | Trial-1 (osc, 3 RED, single-edit fix) + Trial-2 (rsm, 2 RED, single-edit fix); both outcome-(a); commit d971c94d |
+| G12 | PASS | Gate baked flow line 57; 5+ tasks sandbox-green-before-DONE; streak 3/3 COMPLETE |
+
+**Verdict: READY-FOR-PO-CLOSE** (all G1–G8, G10, G11, G12 PASS or PASS-with-caveat; G9 PO-only)
+
+---
+
 ## c283 cycle-83 · 2026-05-24 · alert-engine P2-Z — Phase-2 Close-Gate — PASS
 
 **Task:** P2-Z — Phase 2 Close-Gate Verification | **Verdict:** PASS — all 6 ACs green
