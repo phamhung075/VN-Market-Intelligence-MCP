@@ -1,23 +1,35 @@
-# Kinh Dich Service — Bun/TypeScript
+# Kinh Dich Service — Go (reboot from TS/Bun)
 # Port 5005
+# CGO_ENABLED=0 — pure-Go build (modernc.org/sqlite, no mattn/go-sqlite3)
 
-FROM oven/bun:1.3.13-alpine AS builder
+# ── Stage 1: Builder ──
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
-COPY package.json bun.lock* ./
-RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile
 
+# Copy go.mod and go.sum first for better layer caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
 COPY . .
 
-# ── Runtime ──
-FROM oven/bun:1.3.13-alpine
+# Build with CGO disabled (pure-Go, no C dependencies)
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -o /app/server ./cmd/server
+
+# ── Stage 2: Runtime ──
+FROM alpine:3.20
 
 WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY package.json tsconfig.json ./
+
+# Copy binary from builder
+COPY --from=builder /app/server /app/server
+
+# Copy API spec for reference (7 endpoints, same HTTP contract)
+COPY --from=builder /app/api /app/api
 
 EXPOSE 5005
 ENV PORT=5005
 
-CMD ["bun", "run", "src/index.ts"]
+CMD ["/app/server"]
