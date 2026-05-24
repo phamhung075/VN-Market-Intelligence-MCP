@@ -43,30 +43,30 @@
     ],
     "raw_results": [
       {
-        "id": "doc-1",
-        "distance": 0.3,
-        "created_at": "2026-05-10T00:00:00Z",
-        "title": "VN-Index earnings growth Q1 2026",
-        "summary": "Vietnam market sees strong earnings momentum driven by banking sector.",
-        "source": "VNDirect",
-        "action_code": "VNM"
+        "id": "doc-far-1",
+        "distance": 0.7,
+        "created_at": "2026-05-24T00:00:00Z",
+        "title": "Result beyond threshold",
+        "summary": "This result has distance 0.7 which exceeds max_distance=0.5.",
+        "source": "HOSE",
+        "action_code": ""
       },
       {
-        "id": "doc-2",
-        "distance": 0.9,
-        "created_at": "2026-05-01T00:00:00Z",
-        "title": "Global macro headwinds reduce VN-Index upside",
-        "summary": "USD strength and rising yields weigh on emerging markets.",
-        "source": "Bloomberg",
+        "id": "doc-far-2",
+        "distance": 0.95,
+        "created_at": "2026-05-24T00:00:00Z",
+        "title": "Very distant result",
+        "summary": "Distance 0.95 is far beyond the threshold of 0.5.",
+        "source": "HNX",
         "action_code": ""
       }
     ],
-    "top_k": 1,
+    "top_k": 5,
     "max_distance": 0.5,
     "half_life_days": 7.0,
     "now_iso": "2026-05-24T00:00:00Z"
   },
   "expected_output": {
-    "top_k_ids": ["doc-1"]
+    "top_k_ids": []
   }
 }

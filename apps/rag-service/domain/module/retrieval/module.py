@@ -1,31 +1,30 @@
 """
-retrieval/module.py — RetrievalModule: composes primitives via Protocol ports.
+retrieval/module.py — RetrievalModule: composes all 5 primitives via Protocol ports.
 
-Pipeline (Phase 1 stub):
+Pipeline (Phase 2 full wiring):
   1. Embed query text       via EmbedderModulePort (port — never infra directly)
   2. ANN search             via VectorSearchPort   (port — never infra directly)
-  3. similarity_scorer      primitive: distance -> similarity in [0,1]
-  4. relevance gate         stub pass-through (relevance_threshold_gate not yet extracted)
-  5. temporal decay         stub pass-through (temporal_decay_scorer not yet extracted;
-                            datetime.now() injection deferred to Phase 2 primitive extraction)
-  6. top-k trim             inline slice (top_k_selector not yet extracted to primitive)
+  3. context_window_packer  primitive: pack result metadata (title+source+content)
+  4. similarity_scorer      primitive: distance -> similarity in [0,1]
+  5. relevance_threshold_gate primitive: filter by max_distance threshold
+  6. temporal_decay_scorer  primitive: apply exponential decay (now injected)
+  7. top_k_selector         primitive: trim to top_k results
 
 Fence-B (binding): ZERO imports from infrastructure/, application/, or interface/.
 The only external imports are stdlib + domain.primitive.* (same domain layer).
-
-AC-6 compliance: P1-C does NOT extract temporal-decay-scorer, relevance-threshold-gate,
-top-k-selector, or context-window-packer. Steps 4-6 are stubs / inline logic here.
-Extraction of the remaining 4 primitives is Phase 2 bucket-B tasks.
 """
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
 from typing import Optional
 
-# Primitive import (same domain layer — Fence-B allows domain→domain)
+# Primitive imports (same domain layer — Fence-B allows domain→domain)
 from domain.primitive.similarity_scorer.similarity_scorer import score as _similarity_score
+from domain.primitive.relevance_threshold_gate.relevance_threshold_gate import gate as _threshold_gate
+from domain.primitive.temporal_decay_scorer.temporal_decay_scorer import score as _temporal_score
+from domain.primitive.top_k_selector.top_k_selector import select_top_k as _select_top_k
+from domain.primitive.context_window_packer.context_window_packer import pack as _pack
 
 # Port types (structural Protocol — no infra import)
 from domain.module.retrieval.ports import EmbedderModulePort, VectorSearchPort
@@ -36,7 +35,7 @@ class RetrievalModule:
     Thin composition barrel for the retrieval pipeline.
 
     Receives pre-computed embedding vectors (EmbedderModulePort) and raw ANN
-    results (VectorSearchPort), applies the primitive pipeline, and returns
+    results (VectorSearchPort), applies all 5 domain primitives, and returns
     a ranked top-k list of result dicts.
 
     Constructor injection: ports are injected at build time (composition root).
@@ -60,7 +59,7 @@ class RetrievalModule:
         now: Optional[datetime] = None,
     ) -> list[dict]:
         """
-        Execute the retrieval pipeline.
+        Execute the full retrieval pipeline via all 5 domain primitives.
 
         Args:
             query_text:    raw query string to embed and search
@@ -71,7 +70,7 @@ class RetrievalModule:
 
         Returns:
             list of result dicts, sorted descending by recency_score.
-            Each dict includes: id, distance, similarity, recency_score, created_at
+            Each dict includes: id, distance, similarity, recency_score, packed_text
             plus any extra fields from the VectorSearchPort.
         """
         # Step 1 — Embed via port (never calls infra directly)
@@ -87,12 +86,20 @@ class RetrievalModule:
         if not raw_candidates:
             return []
 
-        # Step 3 — similarity_scorer primitive: distance -> similarity in [0,1]
-        scored: list[dict] = []
+        # Step 3 — context_window_packer: pack result metadata into embedding-ready text
+        packed: list[dict] = []
         for result in raw_candidates:
+            packed_text = _pack(
+                title=str(result.get("title", "")),
+                content=str(result.get("summary", result.get("content", ""))),
+                source=str(result.get("source", result.get("action_code", ""))),
+            )
+            packed.append({**result, "packed_text": packed_text})
+
+        # Step 4 — similarity_scorer primitive: distance -> similarity in [0,1]
+        scored: list[dict] = []
+        for result in packed:
             distance = float(result.get("distance", 1.0))
-            # Fence-A: similarity_scorer is a domain primitive — calling it from
-            # a domain module is legal (same layer).
             try:
                 similarity = _similarity_score(distance)
             except ValueError:
@@ -100,23 +107,21 @@ class RetrievalModule:
                 continue
             scored.append({**result, "similarity": similarity})
 
-        # Step 4 — relevance threshold gate (stub: inline filter, not yet extracted)
-        # Phase 2 will replace this with: relevance_threshold_gate.gate(results, max_distance)
-        gated = [r for r in scored if r.get("distance", 1.0) <= max_distance]
+        # Step 5 — relevance_threshold_gate primitive: filter by max_distance
+        gated = _threshold_gate(scored, max_distance)
 
         if not gated:
             return []
 
-        # Step 5 — temporal decay scoring (stub: inline, not yet extracted)
-        # Phase 2 will replace this with: temporal_decay_scorer.score(similarity, created_at, half_life_days, now)
-        # now injection (determinism gate): allows tests to supply fixed datetime
-        _now: datetime = now or datetime.now(tz=timezone.utc)
+        # Step 6 — temporal_decay_scorer primitive: apply exponential decay
+        # now injection (determinism gate): allows tests/sandbox to supply fixed datetime
+        _now: datetime = now if now is not None else datetime.now(tz=timezone.utc)
 
         decayed: list[dict] = []
         for r in gated:
             similarity = r.get("similarity", 0.0)
             created_at_iso: str = r.get("created_at", "")
-            recency_score = _compute_recency_score_inline(
+            recency_score = _temporal_score(
                 similarity=similarity,
                 created_at_iso=created_at_iso,
                 half_life_days=half_life_days,
@@ -124,10 +129,9 @@ class RetrievalModule:
             )
             decayed.append({**r, "recency_score": recency_score})
 
-        # Step 6 — top-k selector (stub: inline slice, not yet extracted)
-        # Phase 2 will replace with: top_k_selector.select(results, top_k)
+        # Step 7 — top_k_selector primitive: trim to top_k, sorted by recency_score desc
         ranked = sorted(decayed, key=lambda x: x.get("recency_score", 0.0), reverse=True)
-        return ranked[:top_k]
+        return _select_top_k(ranked, top_k)
 
 
 # ── Sandbox entry point ────────────────────────────────────────────────────
@@ -153,8 +157,9 @@ async def retrieve(
       - _SandboxEmbedder: returns the pre-computed query_vector directly.
       - _SandboxVectorSearch: returns the pre-baked raw_results directly.
 
-    This means zero infrastructure imports, zero model loading, zero LanceDB.
+    Zero infrastructure imports, zero model loading, zero LanceDB.
     Determinism gate: now_iso is a fixed ISO timestamp injected from the scenario.
+    All 5 primitives execute against pre-baked fixed inputs — fully deterministic.
     """
 
     class _SandboxEmbedder:
@@ -183,33 +188,3 @@ async def retrieve(
         now=_now,
     )
     return {"top_k_ids": [r["id"] for r in results]}
-
-
-# ── Inline stub: temporal decay ────────────────────────────────────────────
-# This is a TEMPORARY inline implementation duplicating the logic from
-# domain/services.py compute_recency_score(). It will be REPLACED in Phase 2
-# when temporal_decay_scorer is extracted to domain/primitive/temporal_decay_scorer/.
-# The `now` parameter is the determinism injection point (Phase 1 task plan §Execution Notes).
-
-def _compute_recency_score_inline(
-    similarity: float,
-    created_at_iso: str,
-    half_life_days: float,
-    now: datetime,
-) -> float:
-    """Inline recency score stub (extracted to primitive in Phase 2)."""
-    try:
-        created_at = datetime.fromisoformat(created_at_iso.replace("Z", "+00:00"))
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        age_hours = max(0.0, (now - created_at).total_seconds() / 3600.0)
-    except (ValueError, TypeError):
-        age_hours = float("inf")
-
-    half_life_hours = half_life_days * 24.0
-    if half_life_hours <= 0 or not math.isfinite(age_hours):
-        decay_factor = 0.0
-    else:
-        decay_factor = math.pow(0.5, age_hours / half_life_hours)
-
-    return similarity * decay_factor

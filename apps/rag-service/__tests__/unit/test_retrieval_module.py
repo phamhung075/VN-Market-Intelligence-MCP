@@ -258,3 +258,124 @@ class TestRetrievalModuleDistanceFilter:
 
         assert len(results) == 1
         assert results[0]["id"] == "boundary"
+
+
+# ── (d) All 5 primitives wired end-to-end ────────────────────────────────
+
+
+@pytest.mark.asyncio
+class TestRetrievalModuleAllPrimitivesPipeline:
+
+    async def test_end_to_end_all_5_primitives(self, mock_ports):
+        """
+        AC-6a: End-to-end pipeline exercising all 5 primitives.
+
+        Setup:
+          - 2 raw results: doc-keep (distance=0.3, within threshold) and
+            doc-filter (distance=0.9, beyond max_distance=0.5)
+          - now=FIXED_NOW, half_life_days=7.0
+
+        Expected:
+          - context_window_packer packs both results' metadata
+          - similarity_scorer converts distance → similarity for each
+          - relevance_threshold_gate drops doc-filter (distance 0.9 > 0.5)
+          - temporal_decay_scorer applies decay to doc-keep
+          - top_k_selector returns [doc-keep] (only 1 passes)
+        """
+        embedder, vector_search = mock_ports
+        vector_search.search.return_value = [
+            {
+                "id": "doc-keep",
+                "distance": 0.3,
+                "created_at": RECENT_ISO,
+                "title": "VN-Index Q1 2026",
+                "summary": "Earnings growth accelerated",
+                "source": "VNDirect",
+                "action_code": "VNM",
+            },
+            {
+                "id": "doc-filter",
+                "distance": 0.9,
+                "created_at": RECENT_ISO,
+                "title": "Distant result",
+                "summary": "Far beyond threshold",
+                "source": "Other",
+                "action_code": "",
+            },
+        ]
+        module = RetrievalModule(embedder=embedder, vector_search=vector_search)
+
+        results = await module.retrieve(
+            query_text="VN-Index earnings",
+            top_k=5,
+            max_distance=0.5,
+            half_life_days=7.0,
+            now=FIXED_NOW,
+        )
+
+        # Only doc-keep passes the threshold gate
+        assert len(results) == 1
+        assert results[0]["id"] == "doc-keep"
+
+        # Similarity field present (set by similarity_scorer)
+        assert "similarity" in results[0]
+        import pytest as _pt
+        assert results[0]["similarity"] == _pt.approx(1.0 / (1.0 + 0.3), abs=1e-4)
+
+        # Recency score present (set by temporal_decay_scorer)
+        assert "recency_score" in results[0]
+        assert results[0]["recency_score"] > 0.0
+
+        # Packed text present (set by context_window_packer)
+        assert "packed_text" in results[0]
+        assert "VN-Index Q1 2026" in results[0]["packed_text"]
+
+    async def test_now_injection_propagated_through_pipeline(self, mock_ports):
+        """
+        AC-6b: now parameter is passed through to temporal_decay_scorer correctly.
+
+        Two results with the same distance but different creation times.
+        When now is fixed, the older document gets a lower recency_score.
+        Verifying now_injection: both runs with same FIXED_NOW produce same scores.
+        """
+        embedder, vector_search = mock_ports
+        vector_search.search.return_value = [
+            make_result("young", distance=0.2, created_at=RECENT_ISO),   # 2h old
+            make_result("old",   distance=0.2, created_at=OLD_ISO),      # 72h old
+        ]
+        module = RetrievalModule(embedder=embedder, vector_search=vector_search)
+
+        # Run 1: inject FIXED_NOW
+        results_1 = await module.retrieve(
+            query_text="q",
+            top_k=5,
+            max_distance=0.8,
+            half_life_days=7.0,
+            now=FIXED_NOW,
+        )
+
+        # Run 2: inject same FIXED_NOW — scores must be byte-identical (determinism gate)
+        vector_search.search.return_value = [
+            make_result("young", distance=0.2, created_at=RECENT_ISO),
+            make_result("old",   distance=0.2, created_at=OLD_ISO),
+        ]
+        results_2 = await module.retrieve(
+            query_text="q",
+            top_k=5,
+            max_distance=0.8,
+            half_life_days=7.0,
+            now=FIXED_NOW,
+        )
+
+        assert len(results_1) == 2
+        assert len(results_2) == 2
+
+        # Scores are identical across both runs (determinism)
+        scores_1 = [r["recency_score"] for r in results_1]
+        scores_2 = [r["recency_score"] for r in results_2]
+        assert scores_1 == scores_2
+
+        # Younger document has strictly higher recency score
+        score_young = next(r["recency_score"] for r in results_1 if r["id"] == "young")
+        score_old   = next(r["recency_score"] for r in results_1 if r["id"] == "old")
+        assert score_young > score_old
