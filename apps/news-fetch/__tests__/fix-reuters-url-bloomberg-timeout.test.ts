@@ -65,27 +65,28 @@ describe('Bug 1 — Reuters RSS URL is not the decommissioned feeds.reuters.com'
 // ---------------------------------------------------------------------------
 
 describe('Bug 1 — Reuters handler emits warning log when RSS primary fails', () => {
-  it('handlers.ts warns when RSS primary returns error', () => {
+  it('news_ingest module warns when RSS primary returns error', () => {
+    // Fallback-chain logic moved from handlers.ts to src/module/news_ingest/index.ts (P1-C)
     const src = readFileSync(
-      resolve(import.meta.dir, '../src/interface/handlers.ts'),
+      resolve(import.meta.dir, '../src/module/news_ingest/index.ts'),
       'utf-8',
     );
     // Must log when rssResult.error != null before invoking fallback
     expect(src).toContain('[reuters/headlines] RSS primary failed');
   });
 
-  it('handlers.ts warns when RSS primary returns 0 articles', () => {
+  it('news_ingest module warns when RSS primary returns 0 articles', () => {
     const src = readFileSync(
-      resolve(import.meta.dir, '../src/interface/handlers.ts'),
+      resolve(import.meta.dir, '../src/module/news_ingest/index.ts'),
       'utf-8',
     );
     // Must log when RSS returns empty feed before invoking fallback
     expect(src).toContain('[reuters/headlines] RSS primary returned 0 articles');
   });
 
-  it('handlers.ts warns when stealth fallback also returns 0 articles', () => {
+  it('news_ingest module warns when stealth fallback also returns 0 articles', () => {
     const src = readFileSync(
-      resolve(import.meta.dir, '../src/interface/handlers.ts'),
+      resolve(import.meta.dir, '../src/module/news_ingest/index.ts'),
       'utf-8',
     );
     // Must log when both primary and fallback yield no headlines

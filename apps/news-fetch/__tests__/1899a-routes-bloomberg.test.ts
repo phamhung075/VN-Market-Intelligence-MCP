@@ -132,13 +132,14 @@ async function get(app: ReturnType<typeof createRouter>, path: string): Promise<
 // ---------------------------------------------------------------------------
 
 describe('1899a-routes — POST /bloomberg/headlines RSS success', () => {
-  it('returns 200 with FetchResult method=rss when RSS succeeds', async () => {
+  it('returns 200 when RSS succeeds', async () => {
     const app = createRouter(rssStub(REUTERS_SUCCESS), fallbackStub(REUTERS_FALLBACK), bloombergRssStub(BLOOMBERG_RSS_SUCCESS), bloombergStealthStub(BLOOMBERG_STEALTH_SUCCESS));
     const res = await post(app, '/bloomberg/headlines', { maxItems: 5 });
     expect(res.status).toBe(200);
     const body = (await res.json()) as FetchResult;
     expect(body.source).toBe(NewsSource.BLOOMBERG);
-    expect(body.method).toBe('rss');
+    // method is 'module' since P1-C — fallback chain moved to news_ingest module
+    expect(body.method).toBe('module');
     expect(body.articles.length).toBeGreaterThan(0);
   });
 
@@ -172,7 +173,8 @@ describe('1899a-routes — POST /bloomberg/headlines RSS error → stealth fallb
     expect(res.status).toBe(200);
     expect(stealth.fetchHeadlines).toHaveBeenCalledWith(5);
     const body = (await res.json()) as FetchResult;
-    expect(body.method).toBe('playwright-stealth');
+    // method is 'module' since P1-C — fallback orchestration in news_ingest module
+    expect(body.method).toBe('module');
   });
 
   it('invokes stealth fallback when RSS returns 0 articles', async () => {
@@ -183,12 +185,13 @@ describe('1899a-routes — POST /bloomberg/headlines RSS error → stealth fallb
     expect(stealth.fetchHeadlines).toHaveBeenCalledWith(5);
   });
 
-  it('returns stealth error result as-is when stealth also fails', async () => {
+  it('returns 200 with empty articles when stealth also fails', async () => {
+    // P1-C: module abstracts FetchResult; stealth scraper errors are not propagated to HTTP response.
+    // error field is always null at HTTP layer (module returns Article[] only).
     const app = createRouter(rssStub(REUTERS_SUCCESS), fallbackStub(REUTERS_FALLBACK), bloombergRssStub(BLOOMBERG_RSS_ERROR), bloombergStealthStub(BLOOMBERG_ERROR));
     const res = await post(app, '/bloomberg/headlines', { maxItems: 5 });
     expect(res.status).toBe(200);
     const body = (await res.json()) as FetchResult;
-    expect(body.error).toBe('perimeterx-challenge');
     expect(body.articles).toHaveLength(0);
   });
 });

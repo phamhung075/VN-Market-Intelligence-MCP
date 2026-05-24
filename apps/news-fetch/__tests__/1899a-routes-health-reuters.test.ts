@@ -134,12 +134,13 @@ describe('1899a-routes — GET /health', () => {
 });
 
 describe('1899a-routes — POST /reuters/headlines success', () => {
-  it('returns 200 with FetchResult', async () => {
+  it('returns 200 with response', async () => {
     const app = createRouter(rssStub(REUTERS_SUCCESS), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergRssStub(), bloombergStealthStub());
     const res = await post(app, '/reuters/headlines', { maxItems: 5 });
     expect(res.status).toBe(200);
     const body = (await res.json()) as FetchResult;
-    expect(body.method).toBe('rss');
+    // method is 'module' since P1-C — fallback chain moved to news_ingest module
+    expect(body.method).toBe('module');
     expect(body.error).toBeNull();
   });
 
@@ -167,10 +168,12 @@ describe('1899a-routes — POST /reuters/headlines success', () => {
 });
 
 describe('1899a-routes — POST /reuters/headlines fallback: RSS error', () => {
-  it('returns fallback FetchResult when RSS error != null', async () => {
+  it('returns 200 when RSS error != null (fallback invoked)', async () => {
     const app = createRouter(rssStub(REUTERS_ERROR), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergRssStub(), bloombergStealthStub());
-    const body = (await (await post(app, '/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
-    expect(body.method).toBe('playwright-stealth');
+    const res = await post(app, '/reuters/headlines', { maxItems: 5 });
+    // method is 'module' since P1-C — fallback orchestration in news_ingest module
+    const body = (await res.json()) as FetchResult;
+    expect(body.method).toBe('module');
   });
 
   it('invokes fallback when RSS error != null', async () => {
@@ -182,10 +185,12 @@ describe('1899a-routes — POST /reuters/headlines fallback: RSS error', () => {
 });
 
 describe('1899a-routes — POST /reuters/headlines fallback: RSS empty', () => {
-  it('returns fallback FetchResult when RSS articles.length === 0', async () => {
+  it('returns 200 when RSS articles.length === 0 (fallback invoked)', async () => {
     const app = createRouter(rssStub(REUTERS_EMPTY), fallbackStub(REUTERS_FALLBACK_SUCCESS), bloombergRssStub(), bloombergStealthStub());
-    const body = (await (await post(app, '/reuters/headlines', { maxItems: 5 })).json()) as FetchResult;
-    expect(body.method).toBe('playwright-stealth');
+    const res = await post(app, '/reuters/headlines', { maxItems: 5 });
+    // method is 'module' since P1-C — fallback orchestration in news_ingest module
+    const body = (await res.json()) as FetchResult;
+    expect(body.method).toBe('module');
   });
 
   it('invokes fallback when RSS articles.length === 0', async () => {

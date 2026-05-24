@@ -3,50 +3,59 @@
  *
  * Routes:
  *   GET  /health                    → liveness probe
- *   POST /reuters/headlines         → Reuters RSS primary + Playwright fallback
+ *   POST /reuters/headlines         → Reuters news ingest (via NewsIngestPort)
  *   GET  /reuters/headlines         → convenience GET alias
- *   POST /bloomberg/headlines       → Bloomberg RSS primary + Playwright stealth fallback
+ *   POST /bloomberg/headlines       → Bloomberg news ingest (via NewsIngestPort)
  *   GET  /bloomberg/headlines       → convenience GET alias
  *
- * DDD: interface layer — imports from application/ (use cases) only.
- * Scrapers are injected via createRouter() to enable unit testing without
- * launching real browsers.
+ * DDD: interface layer — imports from module/ (NewsIngestPort) and domain/ only.
+ * Fallback orchestration logic is in news_ingest module, not here.
  *
- * Fallback logic (Reuters + Bloomberg):
- *   1. RSS primary  → if error != null OR articles.length === 0
- *   2. Playwright fallback  → return fallback result regardless
- *
- * Bloomberg anti-bot history:
- *   - bloomberg.com returns HTTP 403 on direct fetch
- *   - Playwright + [data-component="headline"] returns articles:[] (PerimeterX blocks DOM)
- *   - Fix (2026-05-17): Google News RSS as primary (same technique as Reuters)
- *   - Stealth scraper kept as fallback in case RSS goes empty
+ * Router accepts either:
+ *   (a) A pre-built NewsIngestPort per source (new composition root pattern)
+ *   (b) 4 raw scraper ports for backward compatibility (tests + legacy wiring)
  */
 
 import { Hono } from 'hono';
 import type { ReutersNewsPort, BloombergNewsPort } from '../domain/repositories.js';
-import { FetchReutersHeadlinesUseCase } from '../application/use-cases.js';
-import { FetchBloombergHeadlinesUseCase } from '../application/use-cases.js';
-import type { FetchResult } from '../domain/models.js';
+import type { NewsIngestPort } from '../module/news_ingest/ports.js';
+import { composeNewsIngest } from '../module/news_ingest/index.js';
+import { NewsSource } from '../domain/models.js';
 
 // ---------------------------------------------------------------------------
-// Router factory — accepts injected ports for testability
+// Router factory — primary signature: two NewsIngestPort
 // ---------------------------------------------------------------------------
 
 /**
- * Build and return a Hono router with all 5 news-fetch routes wired.
+ * Build and return a Hono router.
  *
- * @param rssPort              Primary Reuters adapter (ReutersRssScraper in production)
- * @param fallbackPort         Fallback Reuters adapter (ReutersStealthFallback in production)
- * @param bloombergRssPort     Primary Bloomberg adapter (BloombergRssScraper in production)
- * @param bloombergStealthPort Fallback Bloomberg adapter (BloombergStealth in production)
+ * Primary usage (new composition root):
+ *   createRouter(reutersIngestPort, bloombergIngestPort)
+ *
+ * Legacy usage (backward compat for existing tests):
+ *   createRouter(rssPort, fallbackPort, bloombergRssPort, bloombergStealthPort)
  */
 export function createRouter(
-  rssPort: ReutersNewsPort,
-  fallbackPort: ReutersNewsPort,
-  bloombergRssPort: BloombergNewsPort,
-  bloombergStealthPort: BloombergNewsPort,
+  reutersPortOrRss: NewsIngestPort | ReutersNewsPort,
+  bloombergPortOrFallback: NewsIngestPort | ReutersNewsPort,
+  bloombergRssPort?: BloombergNewsPort,
+  bloombergStealthPort?: BloombergNewsPort,
 ): Hono {
+  let reutersIngest: NewsIngestPort;
+  let bloombergIngest: NewsIngestPort;
+
+  if (bloombergRssPort !== undefined && bloombergStealthPort !== undefined) {
+    // Legacy 4-param path: build NewsIngestPort from raw scrapers
+    const rssPort = reutersPortOrRss as ReutersNewsPort;
+    const fallbackPort = bloombergPortOrFallback as ReutersNewsPort;
+    reutersIngest = composeNewsIngest(rssPort, fallbackPort);
+    bloombergIngest = composeNewsIngest(bloombergRssPort, bloombergStealthPort);
+  } else {
+    // New 2-param path: ports already wrapped
+    reutersIngest = reutersPortOrRss as NewsIngestPort;
+    bloombergIngest = bloombergPortOrFallback as NewsIngestPort;
+  }
+
   const app = new Hono();
 
   // ── GET /health ────────────────────────────────────────────────────────────
@@ -55,42 +64,20 @@ export function createRouter(
     c.json({ status: 'ok', service: 'news-fetch', port: 5008 }),
   );
 
-  // ── Reuters shared logic ───────────────────────────────────────────────────
-
-  async function fetchReuters(maxItems: number): Promise<FetchResult> {
-    const rssUseCase = new FetchReutersHeadlinesUseCase(rssPort);
-    const rssResult = await rssUseCase.execute(maxItems);
-
-    // Fallback: RSS error or empty feed → try Playwright stealth
-    if (rssResult.error != null || rssResult.articles.length === 0) {
-      if (rssResult.error != null) {
-        console.warn('[reuters/headlines] RSS primary failed, invoking stealth fallback', {
-          rssError: rssResult.error,
-        });
-      } else {
-        console.warn('[reuters/headlines] RSS primary returned 0 articles, invoking stealth fallback');
-      }
-      const fallbackUseCase = new FetchReutersHeadlinesUseCase(fallbackPort);
-      const fallbackResult = await fallbackUseCase.execute(maxItems);
-      if (fallbackResult.articles.length === 0) {
-        console.warn('[reuters/headlines] stealth fallback also returned 0 articles', {
-          fallbackError: fallbackResult.error ?? 'none',
-        });
-      }
-      return fallbackResult;
-    }
-
-    return rssResult;
-  }
-
   // ── POST /reuters/headlines ────────────────────────────────────────────────
 
   app.post('/reuters/headlines', async (c) => {
     try {
       const body = (await c.req.json<{ maxItems?: number }>().catch(() => ({} as { maxItems?: number })));
       const maxItems = typeof body.maxItems === 'number' ? body.maxItems : 15;
-      const result = await fetchReuters(maxItems);
-      return c.json(result);
+      const articles = await reutersIngest.ingestHeadlines(NewsSource.REUTERS, maxItems);
+      return c.json({
+        source: NewsSource.REUTERS,
+        articles,
+        fetchedAt: new Date().toISOString(),
+        method: 'module',
+        error: null,
+      });
     } catch (err) {
       console.error('[reuters/headlines] unexpected error:', err);
       return c.json(
@@ -106,8 +93,14 @@ export function createRouter(
     try {
       const raw = c.req.query('maxItems');
       const maxItems = raw !== undefined ? parseInt(raw, 10) : 15;
-      const result = await fetchReuters(isNaN(maxItems) ? 15 : maxItems);
-      return c.json(result);
+      const articles = await reutersIngest.ingestHeadlines(NewsSource.REUTERS, isNaN(maxItems) ? 15 : maxItems);
+      return c.json({
+        source: NewsSource.REUTERS,
+        articles,
+        fetchedAt: new Date().toISOString(),
+        method: 'module',
+        error: null,
+      });
     } catch (err) {
       console.error('[reuters/headlines] unexpected error:', err);
       return c.json(
@@ -117,42 +110,20 @@ export function createRouter(
     }
   });
 
-  // ── Bloomberg shared logic ─────────────────────────────────────────────────
-
-  async function fetchBloomberg(maxItems: number): Promise<FetchResult> {
-    const rssUseCase = new FetchBloombergHeadlinesUseCase(bloombergRssPort);
-    const rssResult = await rssUseCase.execute(maxItems);
-
-    // Fallback: RSS error or empty feed → try Playwright stealth
-    if (rssResult.error != null || rssResult.articles.length === 0) {
-      if (rssResult.error != null) {
-        console.warn('[bloomberg/headlines] RSS primary failed, invoking stealth fallback', {
-          rssError: rssResult.error,
-        });
-      } else {
-        console.warn('[bloomberg/headlines] RSS primary returned 0 articles, invoking stealth fallback');
-      }
-      const fallbackUseCase = new FetchBloombergHeadlinesUseCase(bloombergStealthPort);
-      const fallbackResult = await fallbackUseCase.execute(maxItems);
-      if (fallbackResult.articles.length === 0) {
-        console.warn('[bloomberg/headlines] stealth fallback also returned 0 articles', {
-          fallbackError: fallbackResult.error ?? 'none',
-        });
-      }
-      return fallbackResult;
-    }
-
-    return rssResult;
-  }
-
   // ── POST /bloomberg/headlines ─────────────────────────────────────────────
 
   app.post('/bloomberg/headlines', async (c) => {
     try {
       const body = (await c.req.json<{ maxItems?: number }>().catch(() => ({} as { maxItems?: number })));
       const maxItems = typeof body.maxItems === 'number' ? body.maxItems : 10;
-      const result = await fetchBloomberg(maxItems);
-      return c.json(result);
+      const articles = await bloombergIngest.ingestHeadlines(NewsSource.BLOOMBERG, maxItems);
+      return c.json({
+        source: NewsSource.BLOOMBERG,
+        articles,
+        fetchedAt: new Date().toISOString(),
+        method: 'module',
+        error: null,
+      });
     } catch (err) {
       console.error('[bloomberg/headlines] unexpected error:', err);
       return c.json(
@@ -168,8 +139,14 @@ export function createRouter(
     try {
       const raw = c.req.query('maxItems');
       const maxItems = raw !== undefined ? parseInt(raw, 10) : 10;
-      const result = await fetchBloomberg(isNaN(maxItems) ? 10 : maxItems);
-      return c.json(result);
+      const articles = await bloombergIngest.ingestHeadlines(NewsSource.BLOOMBERG, isNaN(maxItems) ? 10 : maxItems);
+      return c.json({
+        source: NewsSource.BLOOMBERG,
+        articles,
+        fetchedAt: new Date().toISOString(),
+        method: 'module',
+        error: null,
+      });
     } catch (err) {
       console.error('[bloomberg/headlines] unexpected error:', err);
       return c.json(
