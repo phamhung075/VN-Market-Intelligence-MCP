@@ -185,3 +185,42 @@ Zone health: P2-X3 DONE; real handlers live; 501 resolved; 20/20 sandbox GREEN; 
 **Unblocks:** QA P2-X4 verify → PM cycle-53 close → PO re-runs P2-C1 Playwright → G9 flip YES.
 
 Zone health: P2-X4 DONE; dashboard 6/6 primitives + module + microservice panel populated; sandbox 20/20 GREEN; G8 regression PROVEN; G9 unblocked | HEALTHY
+
+### Session 2026-05-24 — category chip relabeling (Plain meaning scheme)
+
+**Task:** Relabel scenario category chips on macro-indicators Scenario Trust Dashboard to match fleet-wide convention already applied to technical-analysis pilot dashboard.
+
+**Language mode:** HTML/JS display layer only. Zero Go changes.
+
+**Scope:** `apps/macro-indicators/dashboard/index.html` only.
+
+**Changes made:**
+1. `catLabel()` function — replaced raw returns with a `CATEGORY_LABELS` lookup map (display layer only, JSON SSOT unchanged):
+   - `golden`  → `"Valid Input"`
+   - `edge`    → `"Edge Case"`
+   - `failure` → `"Bad Input → Error"`
+2. Legend block HTML — updated 3 chip labels to match new map. Added `"(test PASSES)"` clarifier to the Bad Input → Error legend entry.
+3. JSON `category` field values (golden/edge/failure) in embedded PRIMITIVES_DATA and MODULE_DATA are UNCHANGED — data SSOT preserved.
+
+**Render gate (Playwright headless):**
+- JS errors: NONE
+- Valid Input chips: 7 (6 primitive + 1 module golden)
+- Edge Case chips: 7 (6 primitive + 1 module edge)
+- Bad Input → Error chips: 6 (6 primitive failure, module has no failure scenario)
+- Bare "failure" chips: 0
+- prim-total-chip: "18 scenarios" (unchanged)
+- prim-notrun-chip: "NOT-RUN" (unchanged)
+- Legend "(test PASSES)": present
+
+**G12 DoD gate (both tiers green pre-commit):**
+- primitive-tier: total=18 pass=18 fail=0 status=OK exit 0
+- module-tier: total=2 pass=2 fail=0 status=OK exit 0
+
+**Security audit:** env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD|FRED_API_KEY" → empty (CTX_ADVISOR vars only, not credentials)
+
+**Fence compliance:** No Go files modified — fence checks N/A.
+
+**Commit:** f0a8760c
+**Files changed:** 1 (apps/macro-indicators/dashboard/index.html, +13/-6)
+
+Zone health: category chip relabeling DONE; render gate PASS (0 bare failure chips, 7+7+6 labelled chips correct); G12 20/20 GREEN; fleet convention aligned with TA dashboard | HEALTHY
