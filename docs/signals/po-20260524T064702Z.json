@@ -1,0 +1,33 @@
+{
+  "id": "po-20260524T064702Z",
+  "from": "po",
+  "to": "agent-father",
+  "ts": "2026-05-24T06:47:02Z",
+  "type": "agent-config-change-request",
+  "title": "Flip dev-kinh-dich + system-map kinh-dich-service language TS/Bun -> Go",
+  "summary": "Ratify kinh-dich Go pivot in agent system. PO cannot edit agent files or system-map.json; two file edits required.",
+  "rationale_ref": "docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md",
+  "charter_ref": "docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-service-charter.md",
+  "precedent_ref": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md",
+  "action_required": [
+    {
+      "file": ".claude/agents/dev-kinh-dich.md",
+      "alt_file_if_flow_shaped": ".claude/flows/dev-kinh-dich/main.md",
+      "change": "Flip the dev-kinh-dich specialist language from TypeScript/Bun to Go. Replace TS toolchain references (bun test, bun tsc --noEmit, eslint/bunfig) with Go toolchain: `go test ./...`, `go vet`, `golangci-lint run`, and the Go sandbox harness `go run ./cmd/sandbox`. Mirror the dev-technical-analysis Go reboot flow shape. Confirm whether the language lives in the agent .md frontmatter, the flow main.md, or both — edit wherever it appears.",
+      "note": "PO does NOT edit agent/flow files per global rules — agent-father owns this."
+    },
+    {
+      "file": "docs/data/system-map.json",
+      "jq_target": ".project.microservices[] | select(.name==\"kinh-dich-service\") | .language",
+      "change": "Flip kinh-dich-service.language from \"ts\" to \"go\". Currently `project.microservices[].language == \"ts\"` for the kinh-dich-service entry. After edit it must read \"go\". Verify with: jq -r '.project.microservices[] | select(.name==\"kinh-dich-service\") | .language' docs/data/system-map.json  -> expect \"go\".",
+      "note": "Edit only the kinh-dich-service entry. Do not touch other services. (Aside: technical-analysis + macro-indicators also still read \"ts\" in system-map per their own Go pivots — NOT part of this signal; flag to PO/architect separately if you want them reconciled.)"
+    }
+  ],
+  "guardrails": [
+    "Doc/config + agent-file edits only. No production code.",
+    "Stay on main. Explicit-add only the files you change.",
+    "This signal ratifies the language pivot already decided in the PO decision doc; agent-father executes the agent-system mechanics."
+  ],
+  "context": "SCALE rollout pre-step. TA pilot DONE (verdict=scale). kinh-dich-service pivots TS/Bun -> Go mirroring the TA Option-B pivot, for consistency with the Go services (api-gateway/stock-price/alert-engine/macro/TA) and a single sandbox toolchain. Existing kinh-dich TS code is the behavioral oracle; final service ships Go only (TS->Go reboot).",
+  "status": "NEW"
+}

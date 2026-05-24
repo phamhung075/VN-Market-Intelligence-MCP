@@ -1,3 +1,4 @@
+<!-- size-justification: 227L — telemetry extracted to chef-telemetry.md (S1 split); remaining content is the 6-layer TNB recipe protocol (Steps 0–7) which is a single atomic responsibility; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle and cannot be factored without breaking recipe coherence -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -22,26 +23,9 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
 
 ---
 
-## ENTRY Telemetry
-
-Immediately after Bootstrap, before any GATHER reads:
-
-1. Construct `cycle_id = chef-{$DISH_TYPE}-{YYYYMMDDTHHmmZ}` from `$DISH_TYPE` and slot fire time (not wall-clock). Example: `chef-morning-20260519T0523Z`.
-2. Emit:
-   ```
-   send_telegram(channel="work", message="[chef] START {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id}")
-   ```
-3. Store `cycle_id` and `slot_utc` in session state — reused verbatim in CLOSE and FAILED messages.
+→ Telemetry spec (ENTRY / CLOSE / FAILED / SILENT / try-catch boundary): `.claude/flows/unified-agent/chef-telemetry.md`
 
 > Error boundary → skill: `.claude/skills/cowork-boundary/SKILL.md`
->
-> **try block begins here — wraps Steps 0 through 7 inclusive.**
-> Any unhandled exception exits the try block: emit FAILED (see FAILED Telemetry section below), then EXIT non-zero. No MARKET dish. No Step 8.
->
-> **Failure modes that must produce FAILED telemetry (not silent exit):**
-> - `tool-error` — MCP tool raised an exception after 1 retry
-> - `signal-read-fail` — docs/signals/ unreadable or empty when signals expected
-> - `self-abort-no-exception` — agent chose to stop mid-flow without an exception (e.g. English self-refusal prose). Emit `FAILED` with `reason="self-abort-no-exception"`. This is a PO-defined violation; it must be observable on WORK channel.
 
 ---
 
@@ -78,12 +62,8 @@ Group signals by ticker, then by sector.
 | Extreme individual signal | Any signal with `severity=CRITICAL` OR any TA reading outside 2-sigma (RSI < 15 or > 85) |
 
 **Intraday gate:** if `$DISH_TYPE == intraday` AND 0 clusters qualify →
-```
-send_telegram(channel="work", message="[chef] SILENT intraday | slot={slot_utc} | cycle={cycle_id} | clusters=0")
-```
+emit SILENT Telemetry per `.claude/flows/unified-agent/chef-telemetry.md § SILENT Telemetry`
 → return `DONE: intraday-silent | PIPELINE: complete` and EXIT. No MARKET message.
-
-> Note: this is the CLOSE (silent) telemetry. `slot_utc` and `cycle_id` are from ENTRY session state. The try block ends here for the silent path — EXIT after this send.
 
 **Gate-fired contract:** When ≥1 cluster qualifies (or `$DISH_TYPE` is `morning` / `eod` / `evening`), Steps 2–8 are MANDATORY. The agent MUST proceed through all steps and publish. Self-refusal — any English prose such as "I cannot complete the full end-to-end execution here" or "these require sequential MCP calls" — is a flow violation. If an unrecoverable blocker is hit, emit `FAILED` telemetry with `reason="<actual error>"` and EXIT non-zero. There is no third path between SENT and FAILED.
 
@@ -228,38 +208,8 @@ No atom lists. No bullet-point ticker dumps. Every MARKET message is a narrative
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-> **try block ends at end of Step 7 (WRITE DISH / send_telegram market).** Step 8 runs outside the try block — its errors fall through to cowork-boundary default rule (1 retry → BUG Telegram → EXIT).
-
-## CLOSE Telemetry (success)
-
-After notebook append above, emit:
-
-```
-send_telegram(channel="work", message="[chef] SENT {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id} | clusters={N} | convergence={true|false}")
-```
-
-Fields:
-- `cycle_id` and `slot_utc` — from ENTRY session state (verbatim, no reconstruction)
-- `N` — count of clusters that qualified in Step 1
-- `convergence` — `true` if ≥1 cluster qualified in Step 1, `false` if 0 clusters (Morning/EOD/Evening publish with 0 clusters is still a SENT, not SILENT)
-
----
-
-## FAILED Telemetry
-
-Catch block (handles any unhandled exception from Steps 0–7):
-
-1. ```
-   send_telegram(channel="work", message="[chef] FAILED {$DISH_TYPE} | slot={slot_utc} | cycle={cycle_id} | reason={failure_reason}")
-   ```
-   `failure_reason` = exception message or tool name that raised, one line, no newlines.
-2. ```
-   send_telegram(channel="bug", message="[chef] {failure_reason}")
-   ```
-   Per cowork-boundary on_error rule.
-3. EXIT non-zero. No partial MARKET dish. Do NOT proceed to Step 8.
-
----
+→ After notebook append: emit CLOSE Telemetry per `.claude/flows/unified-agent/chef-telemetry.md § CLOSE Telemetry`
+→ On exception (Steps 0–7): emit FAILED Telemetry per `.claude/flows/unified-agent/chef-telemetry.md § FAILED Telemetry`
 
 ## RETURN
 

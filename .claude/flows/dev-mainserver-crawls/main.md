@@ -1,3 +1,4 @@
+<!-- size-justification: 202L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) which is atomic sequential flow with no further factoring seam -->
 # dev-mainserver-crawls — Main Flow
 
 **Tools:** `.claude/tools/package/developer.md`
@@ -64,16 +65,7 @@ Match `anti_bot_type` to technique using decision tree in `docs/agents/dev-mains
 5. Botasaurus / hrequests — if Akamai Bot or advanced fingerprint detection
 
 If technique doc already exists in `docs/mainserver-crawl-techniques/`: read it.
-If new technique needed: proceed to Step 3b (research).
-
-### Step 3b — Research (if new technique)
-
-1. WebSearch: `"<anti_bot_type> python bypass 2025 <library>"` — PoC code, library docs, GitHub issues.
-2. WebFetch: Read 2-3 highest-signal results.
-3. Synthesize approach: library + code pattern + known limits + RAM cost.
-4. Write `docs/mainserver-crawl-techniques/<technique-name>.md` using template from `docs/agents/dev-mainserver-crawls/knowledge.md § Headless Technique Doc Template`.
-
-**Always include RAM cost estimate** in the technique doc — mandatory for all techniques, especially headless.
+If new technique needed: → run sub-flow: `.claude/flows/dev-mainserver-crawls/technique-research.md`
 
 ---
 
@@ -96,33 +88,11 @@ Scraper must:
 - Handle errors gracefully (return `{"status": "error", "reason": "..."}`)
 - For headless scrapers: close browser context after each fetch to free RAM
 
-**Lightweight (no headless):**
-```python
-# Use requests / httpx / curl_cffi / cloudscraper as appropriate
-```
-
-**Headless (playwright-stealth example):**
-```python
-from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
-
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    context = browser.new_context(...)
-    page = context.new_page()
-    stealth_sync(page)
-    page.goto(url, wait_until="networkidle")
-    data = page.evaluate("() => window.__NEXT_DATA__")  # or page.content()
-    browser.close()  # always close — RAM release
-```
+Code patterns → `.claude/flows/dev-mainserver-crawls/technique-research.md § Code Pattern`
 
 ### 4c — Install Dependencies (if new)
 
-```bash
-pip install <library>==<version>
-# For Playwright (first time):
-playwright install chromium
-```
+Install commands → `.claude/flows/dev-mainserver-crawls/technique-research.md § Install Dependencies`
 
 ### 4d — Verify Scraper Runs
 
@@ -133,9 +103,7 @@ Must return `{"status": "ok", ...}`. If error — debug, iterate.
 
 ### 4e — RAM Profiling (headless only)
 
-```bash
-/usr/bin/time -v python apps/<service>/src/infrastructure/scrapers/<source-name>.py 2>&1 | grep "Maximum resident"
-```
+RAM profiling command → `.claude/flows/dev-mainserver-crawls/technique-research.md § RAM Profiling`
 Record in technique doc and notebook. Check container budget rule from knowledge.md.
 
 ---
