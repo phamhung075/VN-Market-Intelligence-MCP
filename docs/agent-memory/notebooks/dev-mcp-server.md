@@ -1,5 +1,34 @@
 # dev-mcp-server -- Notebook
 
+## c290 · 2026-05-24 (BCTC inspector page-sync)
+
+### BCTC inspector — synchronized PDF + OCR page navigation (IMPL_DONE)
+
+**Commit:** `641915a6`
+
+**Change:** `apps/mcp-server/src/interface/bctc-inspector.html` (1 file, +68/-12 lines)
+
+**Deliverables:**
+1. `renderWithPdfJs()` — each canvas tagged `id="pdf-page-{n}"` + `data-page="{n}"`. `pdfNumPages` stored in module state after render.
+2. `renderOcr()` — after text loads, calls `document.getElementById('pdf-page-'+currentPage)?.scrollIntoView({behavior:'smooth',block:'start'})` to scroll left pane.
+3. Nav bound = `pdfNumPages` (PDF page count) when pdf.js rendered; falls back to OCR `total_pages` for OCR-only docs.
+4. Sync note injected (`#ocr-sync-note`) when PDF and OCR page counts differ — honest, not silent.
+5. `usingIframeFallback` state var — skips scroll-sync in iframe mode; shows note explaining why.
+6. `resetPanes()` resets `pdfNumPages=0`, `usingIframeFallback=false`, removes sync note.
+7. `btnNext` click uses `getNavBound()` helper consistent with `renderOcr()` bound logic.
+
+**Verification (live, real data):**
+- DHG Q1 2026: 14 docs loaded, canvases tagged `id="pdf-page-1"..pdf-page-36`, indicator `1 / 36` → `2 / 36` on next click, OCR text updated page 1→2, sync note "PDF has 36 page(s), OCR text has 29 page(s)".
+- Screenshots: `/tmp/bctc-inspector-with-doc.png`, `/tmp/bctc-inspector-page2.png`.
+
+**Tests:** 64/64 PI3 + REOPEN-2 GREEN (0 regressions). tsc 0 errors.
+
+**5 degrade states preserved:** has_pdf=false / pdf-not-on-disk 404 / pdf.js CDN fail (iframe+note) / no OCR rows / bad UUID 400.
+
+Zone health: BCTC inspector now syncs PDF pane scroll to OCR page on every nav click; honest note when PDF/OCR page counts diverge; iframe fallback degrades without crash | HEALTHY
+
+---
+
 ## c289 · 2026-05-24 (NF-LD-4 QA round 1 fix)
 
 ### NF-LD-4-dev-A FIX — QA round 1 remediation (DRY/anti-drift) — DONE
