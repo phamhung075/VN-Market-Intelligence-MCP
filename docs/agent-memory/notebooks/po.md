@@ -1,58 +1,31 @@
 # PO Notebook
 
-**Cycle:** rag-service SCALE DEFECT-REOPEN (cycle-78) + news-fetch NF-LD dispatch in-flight.
-**Last update:** 2026-05-24T17:05Z
-**Status:** rag-service pilot REOPENED (ACTIVE, 10/12, G6+G9 NO, phase2 OPEN, P3 plan authored, commit b43c3d97). news-fetch NF-LD enhancement chain still in-flight (separate concurrent cycle, pilot stays DONE). next_actor=dev-team (rag-service P3-A) + architect (NF-LD-1).
+**Cycle:** pdf-extractor SCALE pilot REOPEN→RE-CLOSE — dashboard file:// false-green honestly remediated.
+**Last update:** 2026-05-24T17:07:04Z
+**Status:** RE-CLOSED. pdf-extractor stays 12/12 YES verdict=scale DONE. Reopen→fix→reverify→reclose trail recorded. User "i dont see finish" CLOSED. (NOTE: concurrent po crons also active this window — rag-service REOPEN @b43c3d97 + news-fetch NF-LD @f4af3a22; their carry-over preserved below.)
 
 ---
 
-## 2026-05-24T17:05Z — rag-service DEFECT-REOPEN (user pilot-review rejected 12/12)
+## 2026-05-24T17:07Z — pdf-extractor dashboard FALSE-GREEN: caught, fixed, re-closed honestly
 
-### What happened
-- User rejected the rag-service SCALE 12/12 terminal close (po cycle-77, verdict=scale).
-- Defect (router-verified): dashboard Microservice tier permanently NOT-RUN with dishonest hint
-  "no trace — not implemented / Phase 2" (index.html L439) while main.py comp-root IS implemented
-  (74L). Stale "Phase 1" footer (L223) + "NOT-RUN until live HTTP wiring verified" note (L228).
-  Tier-3 ZERO scenario evidence — sandbox/__main__.py --tier = [primitive, module] only (L245),
-  NO --tier=service. Gold std: TA L105 "L3: 3 service scenarios (httptest.NewServer)".
+### What happened (recorded honestly, not papered over):
+Prior close (3e840688 + closure signal po-pdf-extractor-pilot-DONE-...114403Z) recorded G6/G7/G9 dashboard-honest-green as DONE. FALSE-GREEN: dashboard loaded traces via fetch(), which Chrome blocks under file:// (null origin → CORS). Old G9 Playwright contract (3e7f476c) passed ONLY because it served over http://localhost:9999 — never tested the user's double-click path. User double-clicked index.html, saw ALL cards NOT-RUN, correctly rejected ("i dont see finish").
 
-### Reopen actions (atomic, PO-only goal authority) — commit b43c3d97
-- status DONE->ACTIVE; verdict scale->pending; goalsEarned 12->10; closedAt/By/Signal->null
-  (prior close VOIDED -> reopen.priorClose). phase2 CLOSED->OPEN. decisionMatrix all->pending.
-- G9 YES->NO: canonical arbiter = USER verbal (charter L192-194); Path B Playwright PROXY passed
-  by asserting microservice_not_run=true = validated the defect.
-- G6 YES->NO (my call): canonical G6 (charter L164) = click a card in EACH panel -> detail view;
-  Microservice card is traceId:null + static hint (no clickable toggle) -> not met.
-- P3 "service-tier completion" authored (phase2.p3, 5 tasks): P3-A TestClient+fake adapters >=3
-  service traces (create_app(embedder,vector_store) seam, main.py <=80L) / P3-B wire panel GREEN
-  + delete hint + fix stale footer / P3-C dash-check detail-view assert / P3-D G12 all-3-tier
-  evidence / P3-E QA re-verify G6+G8+G9 + PO re-close (G9 final = USER verbal, not auto-proxy).
-- Signal: docs/signals/po-rag-service-pilot-REOPEN-20260524T170511Z.json. JSON valid + zero-dup.
+### Remediation (landed + QA-approved BEFORE my cycle; I touched NO apps/ code):
+- a9fdf056 (dev): traces via <script src=traces.js> read synchronously from window.__TRACES; no fetch(); double-click renders green, zero network.
+- 9ff5dba3 (qa): trust-contract.spec.js hardened — file:// now PRIMARY path. QA also caught a SECOND false-green (old honest-red injected into a JSON file the page no longer reads → fixed via new AC-6 targeting the traces.js literal).
+- QA verdict APPROVED (notebook cycle-104 + handoff TASK_dashboard-fileslash-fix.md; QA emitted NO qa-*.json — verdict in notebook+handoff). pytest 114/114, playwright 7/7, security clean.
 
-### CONCURRENT-COMMIT-RACE hit ([[feedback_concurrent_commit_race]])
-- First commit conflated: concurrent po/news-fetch cron grabbed shared index, committed ITS files
-  as f4af3a22; my 2 files NOT captured. Local commit-mutex unreachable (coordination.db 0 bytes,
-  lives in MCP container). Recovered WITHOUT rewrite: re-staged in a tight one-shot critical
-  section (index.lock + foreign-path guard right before commit) -> b43c3d97 = exactly my 2 files.
-  f4af3a22 preserved as ancestor.
+### My outputs (zone: pilot-status + signals + lesson only):
+- pilot-status-pdf-extractor.json: added top-level dashboard_trust_remediation block (RE-CLOSED, full reopen→reclose trail + corrected file:// DONE condition + QA AC results); amended G6/G9 evidence; recorded L9; updated closureSignal note + decisionMatrix.outcome. STILL 12/12 YES verdict=scale, zero dup root keys, jq parses.
+- docs/signals/po-pdf-extractor-dashboard-fileslash-reclose-20260524T170704Z.json — re-close signal (supersedes original §final_done_conditions.b).
+- L9: dashboard honest-green MUST be verified under USER's file:// double-click, NEVER http-only (http = false-green generator). Fleet mandate for future scale pilots.
 
-## news-fetch NF-LD live-data view (separate concurrent cycle 17:05:33Z — pilot stays DONE 12/12)
-- User want: show actual fetched article rows per source from DB on news-fetch dashboard.
-- KEY: news-fetch (5008) is STATELESS (no DB). Rows live in mcp-server rag_analyses. Live view
-  MUST be a read-only SELECT endpoint on mcp-server (3000), NOT on the stateless scraper (creds =
-  Security-Clause regression). Sources reuters+bloomberg, N=20 ORDER BY created_at DESC, no cache.
-- Outputs (commit f4af3a22): docs/TASKS.md NF-LD block, docs/handoffs/TASK_NF-LD.md,
-  docs/signals/po-news-fetch-livedata-20260524T170518Z.json.
+### Commits (atomic, explicit-file staging, no foreign files, no push):
+- dbaa69c9 — RE-CLOSE (SSOT + signal, 2 files). a0e2e017 — back-fill SHA dbaa69c9 into both (2 files).
 
 ## Carry-over
-- rag-service: REOPENED (ACTIVE, 10/12). dev-team dispatch dev-rag-service P3-A FIRST (WIP=1,
-  P3-A->B->C->D->E chain). Re-close = G6+G8+G9 re-verified by qa + PO atomic 12/12; G9 final flip
-  needs USER verbal sign-off (NOT auto-proxy) — do NOT let a Playwright proxy alone re-close G9.
-- news-fetch NF-LD: main terminal spawns architect NF-LD-1 (design endpoint + live section), then
-  developer NF-LD-2, qa NF-LD-3, PO NF-LD-EXIT. HARD: never touch sandbox runner/data.js/3 sandbox
-  panels; never touch pilot-status-news-fetch.json (frozen 12/12); endpoint SELECT-only on mcp-server.
-- LESSON: manual commit-mutex critical section is UNSAFE while the fleet is active (multiple
-  po/pm/dev crons share the git index). When MCP task_claim unreachable, only safe pattern =
-  tight one-shot stage+verify(foreign-path guard)+commit, and ACCEPT a race may steal the slot —
-  then re-commit (NEVER rewrite the contender's commit).
-- pdf-extractor pilot DONE (prior cycle). BCTC VPS staleness B-08/1972 stays OPEN as INFRA-only.
+- pdf-extractor: DONE 12/12 verdict=scale, dashboard now green on double-click — user report CLOSED. Corrected DONE condition (double-click → green, file:// PRIMARY) is recorded + regression-guarded (9ff5dba3). NEVER let a dashboard pilot close on http-only verification again (L9).
+- rag-service (concurrent cron): REOPENED ACTIVE 10/12 @b43c3d97; dev-team dispatch dev-rag-service P3-A FIRST (WIP=1, P3-A→B→C→D→E). Re-close = G6+G8+G9 re-verified by qa + PO atomic 12/12; G9 final flip needs USER verbal (NOT auto-proxy).
+- news-fetch NF-LD (concurrent cron): architect NF-LD-1 → dev NF-LD-2 → qa NF-LD-3 → PO NF-LD-EXIT. HARD: never touch sandbox runner/data.js/3 sandbox panels; pilot-status-news-fetch.json frozen 12/12; endpoint SELECT-only on mcp-server.
+- LESSON (concurrent fleet): notebook + git index are shared across po/pm/dev crons. Manual commit-mutex critical section is UNSAFE while fleet active — use tight one-shot stage+foreign-path-guard+commit, accept a race may steal the slot, re-commit (NEVER rewrite contender). BCTC VPS staleness B-08/1972 = INFRA-only, not a code freeze.
