@@ -1,0 +1,37 @@
+{
+  "agent": "po",
+  "ts": "2026-05-24T07:34:03Z",
+  "type": "phase-close",
+  "pilot": "api-gateway",
+  "payload": {
+    "event": "phase0-exit-gate-closed",
+    "phase_closed": "0",
+    "phase_opened": "1",
+    "ssot": "docs/data/pilot-status-api-gateway.json",
+    "verification_commit_sha_architect": "b3ae056840010c6e704fd1b11db788fa24898ae5",
+    "deliverables_landed": {
+      "brownfield_inventory": "b3ae0568",
+      "bug_inventory_entry": "d5e6ea22",
+      "phase_1_task_plan": "d9a0b84e",
+      "dev_agent_file": "c9cac80b",
+      "dev_agent_flow_file": "c9cac80b"
+    },
+    "g12_rule_effective_after": "c9cac80b 2026-05-24",
+    "exit_gate": {
+      "all_deliverables_landed": true,
+      "pilot_status_phase_0_fields_populated": true,
+      "no_code_in_service_pkg_yet": true,
+      "exit_gate_status": "CLOSED"
+    },
+    "phase1": {
+      "status": "ACTIVE",
+      "wip_limit": 1,
+      "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/api-gateway-phase-1-task-plan.md",
+      "first_task": "P1-AG-B1",
+      "goals_in_progress": ["G1", "G2", "G6", "G7", "G8", "G11", "G12"],
+      "goals_tbd_verify_or_later": ["G3", "G4", "G5", "G9", "G10"]
+    },
+    "goalsEarned": 0,
+    "anti_scope_creep": "apps/api-gateway/ ONLY — no other pilot-status touched"
+  }
+}
