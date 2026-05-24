@@ -1,7 +1,14 @@
 """
-financial_reports — mock port implementations (P1-C).
+financial_reports — mock port implementations (P1-C, extended P2-C).
 
-Provides test doubles for DecimalNormalizerPort and FinancialValidatorPort.
+Provides test doubles for all 6 Protocol ports:
+    - MockDecimalNormalizerPort     (DecimalNormalizerPort)
+    - MockFinancialValidatorPort    (FinancialValidatorPort)
+    - MockConfidenceScorerPort      (ConfidenceScorerPort)
+    - MockLowConfidenceGatePort     (LowConfidenceGatePort)
+    - MockRatioComputerPort         (RatioComputerPort)
+    - MockFieldExtractorPort        (FieldExtractorPort)
+
 Used ONLY in unit tests — never imported in production paths.
 
 These mocks satisfy the Protocol contracts defined in ports.py without
@@ -15,7 +22,7 @@ Domain layer rules:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict, Literal, Optional
 
 
 class MockDecimalNormalizerPort:
@@ -76,3 +83,105 @@ class MockFinancialValidatorPort:
         self.call_count += 1
         self.last_args = (total_assets, total_equity, total_liabilities, operating_margin, net_revenue)
         return self._return_confidence
+
+
+class MockConfidenceScorerPort:
+    """
+    Test mock for ConfidenceScorerPort.
+
+    Satisfies the ConfidenceScorerPort Protocol. Returns a pre-configured
+    quality result dict regardless of input.
+
+    Args:
+        return_pass:          The bool to return for the "pass" key.
+        return_quality_score: The float to return for the "quality_score" key.
+    """
+
+    def __init__(self, return_pass: bool = True, return_quality_score: float = 1.0) -> None:
+        self._return_pass = return_pass
+        self._return_quality_score = return_quality_score
+        self.call_count = 0
+        self.last_args: tuple[float, int] = (0.0, 0)
+
+    def score(self, ocr_confidence: float, table_count: int) -> Dict[str, object]:
+        """Return the configured quality result. Records call for assertion in tests."""
+        self.call_count += 1
+        self.last_args = (ocr_confidence, table_count)
+        return {
+            "pass": self._return_pass,
+            "quality_score": self._return_quality_score,
+        }
+
+
+class MockLowConfidenceGatePort:
+    """
+    Test mock for LowConfidenceGatePort.
+
+    Satisfies the LowConfidenceGatePort Protocol. Returns a pre-configured
+    disposition literal regardless of input.
+
+    Args:
+        return_disposition: One of "skip" | "low_confidence" | "normal".
+    """
+
+    def __init__(self, return_disposition: Literal["skip", "low_confidence", "normal"] = "normal") -> None:
+        self._return_disposition = return_disposition
+        self.call_count = 0
+        self.last_confidence: float = 0.0
+
+    def gate(self, confidence: float) -> Literal["skip", "low_confidence", "normal"]:
+        """Return the configured disposition. Records call for assertion in tests."""
+        self.call_count += 1
+        self.last_confidence = confidence
+        return self._return_disposition
+
+
+class MockRatioComputerPort:
+    """
+    Test mock for RatioComputerPort.
+
+    Satisfies the RatioComputerPort Protocol. Returns a pre-configured
+    ratio value regardless of input.
+
+    Args:
+        return_ratio: The float to return, or None to simulate divide-by-zero / invalid.
+    """
+
+    def __init__(self, return_ratio: Optional[float] = 0.3) -> None:
+        self._return_ratio = return_ratio
+        self.call_count = 0
+        self.last_args: tuple[float, float, str] = (0.0, 0.0, "")
+
+    def compute(
+        self,
+        numerator: float,
+        denominator: float,
+        ratio_type: str,
+    ) -> Optional[float]:
+        """Return the configured ratio. Records call for assertion in tests."""
+        self.call_count += 1
+        self.last_args = (numerator, denominator, ratio_type)
+        return self._return_ratio
+
+
+class MockFieldExtractorPort:
+    """
+    Test mock for FieldExtractorPort.
+
+    Satisfies the FieldExtractorPort Protocol. Returns a pre-configured
+    extracted string regardless of input.
+
+    Args:
+        return_value: The raw string to return, or None when field is not found.
+    """
+
+    def __init__(self, return_value: Optional[str] = None) -> None:
+        self._return_value = return_value
+        self.call_count = 0
+        self.last_args: tuple[str, str] = ("", "")
+
+    def extract(self, text: str, field_name: str) -> Optional[str]:
+        """Return the configured extracted value. Records call for assertion in tests."""
+        self.call_count += 1
+        self.last_args = (text, field_name)
+        return self._return_value

@@ -1,16 +1,28 @@
 {
   "module": "financial_reports",
-  "description": "Multi-primitive story: raw OCR strings → decimal_normalizer (P1-B2) → validate_financial_figures (P1-B1) → composite confidence. All values are synthetic fixtures.",
-  "primitives_exercised": ["decimal_normalizer", "validate_financial_figures"],
+  "description": "Multi-primitive story (P2-C): raw OCR strings → field_extractor → decimal_normalizer → validate_financial_figures → confidence_scorer → low_confidence_gate → ratio_computer. All 6 primitives exercised. Inputs are synthetic fixtures.",
+  "primitives_exercised": [
+    "decimal_normalizer",
+    "validate_financial_figures",
+    "confidence_scorer",
+    "low_confidence_gate",
+    "ratio_computer",
+    "field_extractor"
+  ],
   "inputs": {
     "raw_assets": "10000.0",
     "raw_equity": "4000.0",
     "raw_liabilities": "6000.0",
     "raw_margin": "0.15",
     "raw_revenue": "5000.0",
-    "unit_hint": "billion_vnd"
+    "unit_hint": "billion_vnd",
+    "ocr_confidence": 0.85,
+    "table_count": 2,
+    "ocr_text": "Doanh thu thuan: 5000.0"
   },
   "expected": {
-    "confidence": 1.0
+    "confidence": 1.0,
+    "ocr_quality_pass": true,
+    "disposition": "normal"
   }
 }

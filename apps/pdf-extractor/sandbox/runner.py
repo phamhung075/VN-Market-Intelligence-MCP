@@ -213,12 +213,24 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
     """
     Wire FinancialReportsModule with real primitive adapters and call process_report().
 
-    Adapters wrap the pure primitive functions behind the Protocol ports.
-    No infrastructure is imported — both primitives are pure stdlib functions.
+    Adapters wrap all 6 pure primitive functions behind the Protocol ports (P2-C).
+    No infrastructure is imported — all primitives are pure stdlib functions.
+
+    Primitives wired:
+        1. decimal_normalizer      → _DecimalNormalizerAdapter
+        2. validate_financial_figures → _FinancialValidatorAdapter
+        3. confidence_scorer       → _ConfidenceScorerAdapter
+        4. low_confidence_gate     → _LowConfidenceGateAdapter
+        5. ratio_computer          → _RatioComputerAdapter
+        6. field_extractor         → _FieldExtractorAdapter
     """
     from domain.modules.financial_reports import FinancialReportsModule
     from domain.primitives.decimal_normalizer import normalize_decimal
     from domain.primitives.validate_financial_figures import validate_financial_figures
+    from domain.primitives.confidence_scorer import score_confidence
+    from domain.primitives.low_confidence_gate import gate_confidence
+    from domain.primitives.ratio_computer import compute_ratio
+    from domain.primitives.field_extractor import extract_field
 
     class _DecimalNormalizerAdapter:
         def normalize(self, raw_string: str, unit_hint: str = "billion_vnd") -> Any:
@@ -241,9 +253,29 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
                 net_revenue=net_revenue,
             )
 
+    class _ConfidenceScorerAdapter:
+        def score(self, ocr_confidence: float, table_count: int) -> dict:
+            return score_confidence(ocr_confidence, table_count)
+
+    class _LowConfidenceGateAdapter:
+        def gate(self, confidence: float) -> str:
+            return gate_confidence(confidence)
+
+    class _RatioComputerAdapter:
+        def compute(self, numerator: float, denominator: float, ratio_type: str) -> Any:
+            return compute_ratio(numerator, denominator, ratio_type)
+
+    class _FieldExtractorAdapter:
+        def extract(self, text: str, field_name: str) -> Any:
+            return extract_field(text, field_name)
+
     module = FinancialReportsModule(
         normalizer=_DecimalNormalizerAdapter(),
         validator=_FinancialValidatorAdapter(),
+        confidence_scorer=_ConfidenceScorerAdapter(),
+        low_confidence_gate=_LowConfidenceGateAdapter(),
+        ratio_computer=_RatioComputerAdapter(),
+        field_extractor=_FieldExtractorAdapter(),
     )
 
     return module.process_report(**inputs)
