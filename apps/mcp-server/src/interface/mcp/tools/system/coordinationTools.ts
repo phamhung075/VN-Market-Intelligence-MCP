@@ -68,7 +68,8 @@ export function registerCoordinationTools(server: McpServer): void {
     "Claim a coordination lock before starting exclusive work. Returns whether " +
       "the claim succeeded and, on failure, who currently holds the lock. " +
       "Use before any work that must not run concurrently across multiple Claude Code sessions: " +
-      "cowork-slot (15-min scheduler slots), sprint-task (TASKS.md rows), dashboard-row (DASHBOARD.md rows). " +
+      "cowork-slot (15-min scheduler slots), sprint-task (TASKS.md rows), dashboard-row (DASHBOARD.md rows), " +
+      "commit-mutex (fleet-wide git index critical section — task_id must be 'commit-mutex:main', ttl_seconds=60). " +
       "Call task_release when work completes. Call task_heartbeat every 5 min for long tasks.",
     {
       task_id: z
@@ -79,8 +80,8 @@ export function registerCoordinationTools(server: McpServer): void {
             "task:<task_id>, dash:<recipient>:<row_id>",
         ),
       task_kind: z
-        .enum(["cowork-slot", "sprint-task", "dashboard-row"])
-        .describe("Lock category. One of: cowork-slot | sprint-task | dashboard-row"),
+        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex"])
+        .describe("Lock category. One of: cowork-slot | sprint-task | dashboard-row | commit-mutex"),
       owner_agent: z
         .string()
         .min(1)
@@ -185,7 +186,7 @@ export function registerCoordinationTools(server: McpServer): void {
       "Does not modify any locks. Use to inspect which sessions are active and what work is claimed.",
     {
       kind: z
-        .enum(["cowork-slot", "sprint-task", "dashboard-row"])
+        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex"])
         .optional()
         .describe("Filter by task_kind. Omit to return all kinds."),
       owner_agent: z

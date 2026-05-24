@@ -1,0 +1,34 @@
+{
+  "signal": "qa-pdf-extractor-P2-J2-injected",
+  "emittedAt": "2026-05-24T14:00:00Z",
+  "emittedBy": "qa",
+  "task": "P2-J2",
+  "pilot": "pdf-extractor",
+  "goal": "G10",
+  "message": "G10 bug injected. Dashboard/sandbox shows RED on the primitive tier (low-confidence-gate card).",
+  "blind_safe_symptom": {
+    "dashboard_card_red": "low-confidence-gate",
+    "failing_scenario": "apps/pdf-extractor/scenarios/primitives/low_confidence_gate/edge_low_confidence_flag.json",
+    "sandbox_exit": 1,
+    "sandbox_pass": false,
+    "symptom": "edge_low_confidence_flag scenario: actual output does not match expected. The low-confidence-gate primitive is returning an incorrect disposition for a mid-range confidence input.",
+    "how_to_reproduce": "PYTHONPATH=apps/pdf-extractor python3 apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=apps/pdf-extractor/scenarios/primitives/low_confidence_gate/edge_low_confidence_flag.json"
+  },
+  "instructions_for_dev_pdf_extractor": {
+    "task": "P2-J3 — diagnose from the failing sandbox scenario + dashboard, fix to GREEN in ≤2 cycles.",
+    "do_not_read": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-j1-bug-injection-spec.md",
+    "allowed_tools": "sandbox runner, dashboard, git diff, git log, read primitive source, write primitive source — NO access to p2-j1-bug-injection-spec.md",
+    "done_when": "PYTHONPATH=apps/pdf-extractor python3 apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=apps/pdf-extractor/scenarios/primitives/low_confidence_gate/edge_low_confidence_flag.json returns pass=true AND all other non-known_bad scenarios remain GREEN",
+    "g12_dod": "Sandbox green evidence (all 3 non-known_bad scenarios PASS) must be pasted in handoff before RETURN"
+  },
+  "cycle_budget": {
+    "baselineCycleCount": 1.5,
+    "g10_target": "≤2 cycles",
+    "note": "Each dispatch of dev-pdf-extractor that ends in a commit+sandbox-read counts as 1 cycle. Fix must land within 2 cycles."
+  },
+  "inject_commit_sha": "e15cdde8",
+  "pre_inject_tag": "pdf-extractor-pre-inject",
+  "pre_inject_tag_sha": "4f254c8e",
+  "sealed_spec_path": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-j1-bug-injection-spec.md",
+  "note": "Bug location and literal are NOT in this signal. Dev must diagnose from sandbox symptom only."
+}

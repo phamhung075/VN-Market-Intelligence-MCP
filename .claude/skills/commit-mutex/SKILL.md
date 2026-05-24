@@ -40,7 +40,16 @@ If `task_claim` returns a tool-not-found error, db_unavailable, or any exception
 - send_telegram(channel="bug", "[<agent>] commit-mutex: task_claim UNAVAILABLE — skipping commit, retry next tick")
 - EXIT the commit step immediately. Return to caller.
 
-**On claimed = false (another agent holds the lock):** proceed to Step 2 (backoff).
+**C-2b FAIL-CLOSED — mechanism broken (schema/enum drift guard):**
+If `task_claim` returns `{claimed: false}` WITH NO `current_holder` field AND NO `error` field:
+- This is NOT contention — it means the server rejected the lock kind (schema mismatch, zod enum gap,
+  or silently swallowed INSERT OR IGNORE due to CHECK constraint failure).
+- DO NOT proceed to backoff. DO NOT stage or commit.
+- send_telegram(channel="bug", "[<agent>] commit-mutex: claimed=false with no holder — mechanism broken (schema/enum drift?). Skipping commit, retry next tick.")
+- EXIT the commit step immediately. Return to caller.
+- (Distinguishable from contention: a genuinely contended lock ALWAYS returns `current_holder` with the owner info.)
+
+**On claimed = false WITH current_holder populated (genuine contention):** proceed to Step 2 (backoff).
 
 **On claimed = true:** proceed to Step 3 (critical section).
 
@@ -175,8 +184,9 @@ call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "commit-m
 
 Protocol:
 1. task_claim("commit-mutex:main", kind="commit-mutex", ttl=60)
-   - MCP error → bug-telegram → SKIP commit → EXIT
-   - claimed=false → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
+   - MCP error / db_unavailable → bug-telegram → SKIP commit → EXIT   [C-2]
+   - claimed=false, NO current_holder, NO error → mechanism broken → bug-telegram → SKIP → EXIT   [C-2b]
+   - claimed=false WITH current_holder → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
 2. git add <exact own_paths only>
 3. git diff --cached --name-only → if foreign: git restore --staged <foreign> only → re-check
 4. git commit -m heredoc

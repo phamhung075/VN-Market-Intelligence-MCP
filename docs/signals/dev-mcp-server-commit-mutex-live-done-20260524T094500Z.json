@@ -1,0 +1,42 @@
+{
+  "signal_id": "dev-mcp-server-commit-mutex-live-done-20260524T094500Z",
+  "timestamp": "2026-05-24T09:45:00Z",
+  "from": "dev-mcp-server",
+  "to": "po",
+  "type": "impl_done",
+  "task": "commit-mutex-live",
+  "subject": "commit-mutex lock kind LIVE — Deployment-verified Ritual PASS",
+  "status": "IMPL_DONE",
+  "summary": "Fixed the 3-point gap identified in PO smoke-test hold (docs/po-decisions/2026-05-24-commit-mutex-smoke-test-hold.md): 1) SQLite migration adds 'commit-mutex' to CHECK constraint without losing existing rows; 2) Both zod enums in coordinationTools.ts updated; 3) Skill hardened with C-2b fail-closed guard.",
+  "migration_approach": "SQLite recreate-pattern inside a transaction: CREATE task_locks_v2 with updated CHECK → INSERT SELECT from old → DROP old → RENAME → rebuild indexes. Idempotent detection via sqlite_master. Runs automatically on server startup via migrateCoordinationTable() called from ensureCoordinationTable().",
+  "deployment_verified_ritual": {
+    "schema_migrated": "CHECK now contains 'commit-mutex' — confirmed via sqlite_master",
+    "existing_rows_preserved": "9 pre-existing rows intact after migration (6 cowork-slot, 3 sprint-task)",
+    "claim_A": "{\"claimed\":true}",
+    "claim_B_concurrent": "{\"claimed\":false,\"current_holder\":{\"owner_session\":\"ritual-session-A\",\"owner_agent\":\"dev-mcp-server-ritual\",...}}",
+    "release_A": "{\"ok\":true}",
+    "reclaim_B": "{\"claimed\":true}",
+    "stale_steal_C": "{\"claimed\":true,\"stolen\":true}",
+    "cleanup": "1 test row deleted, 9 original rows intact",
+    "container_status": "Up (healthy) post-rebuild"
+  },
+  "test_results": {
+    "new_tests": "10/10 GREEN (commit-mutex-coordination.test.ts — AC-1..AC-7)",
+    "existing_coordination_tests": "29/29 GREEN (no regression)",
+    "total_coordination": "39/39 GREEN",
+    "tsc": "0 errors",
+    "full_suite": "exit=0 (Bun v1.3.13 C++ panic at suite end is known upstream bug, not test failure)"
+  },
+  "files_changed": [
+    "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
+    "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+    "apps/mcp-server/src/infrastructure/db/migrations/20260524-coordination-add-commit-mutex.sql",
+    "apps/mcp-server/src/__tests__/commit-mutex-coordination.test.ts",
+    ".claude/skills/commit-mutex/SKILL.md",
+    "docs/agent-memory/notebooks/dev-mcp-server.md"
+  ],
+  "skill_hardening": "C-2b added: claimed=false with no current_holder AND no error = mechanism broken (schema/enum drift) → FAIL-CLOSED (skip commit, bug-telegram, EXIT). NOT backoff. Distinguishes contended (has holder) from broken (no holder).",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc verified ancestor of HEAD",
+  "next_actor": "po",
+  "next_action": "Re-run singleton+reclaim smoke-test against live container (claim via task_claim MCP tool, not direct DB). If PASS → lift interim serialization decision."
+}

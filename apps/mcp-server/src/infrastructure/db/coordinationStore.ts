@@ -118,14 +118,15 @@ export function _resetCoordinationDbState(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Create the task_locks table and indexes if they don't exist.
+ * Create the task_locks table and indexes if they don't exist,
+ * then run any pending in-place migrations.
  * Idempotent — safe to call on every startup.
  */
 export function ensureCoordinationTable(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS task_locks (
       task_id          TEXT    NOT NULL,
-      task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row')),
+      task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex')),
       owner_session    TEXT    NOT NULL,
       owner_agent      TEXT    NOT NULL,
       claimed_at       INTEGER NOT NULL,
@@ -138,13 +139,77 @@ export function ensureCoordinationTable(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
+
+  // Run in-place migrations for already-created tables with older schemas.
+  migrateCoordinationTable(db);
+}
+
+/**
+ * Migrate an existing task_locks table to add the 'commit-mutex' task_kind.
+ *
+ * SQLite cannot ALTER a CHECK constraint in-place.  We use the canonical
+ * SQLite approach:
+ *   1. CREATE new table with updated CHECK → copy existing rows → DROP old → RENAME.
+ *   All inside a single transaction so zero rows are lost on failure.
+ *
+ * Detection: read the existing CREATE statement from sqlite_master.
+ * If it already contains 'commit-mutex' in the CHECK clause → no-op (idempotent).
+ * This function is safe to call on every startup.
+ */
+export function migrateCoordinationTable(db: Database): void {
+  const schemaRow = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='task_locks'")
+    .get() as { sql: string } | null;
+
+  if (!schemaRow) return; // table does not exist yet (brand-new DB) — ensureCoordinationTable will create it
+
+  if (schemaRow.sql.includes("'commit-mutex'")) {
+    return; // already migrated — idempotent no-op
+  }
+
+  // Migration needed: recreate table with updated CHECK constraint.
+  // Wrapped in a transaction so existing rows are preserved on any failure.
+  db.exec("BEGIN");
+  try {
+    db.exec(`
+      CREATE TABLE task_locks_v2 (
+        task_id          TEXT    NOT NULL,
+        task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex')),
+        owner_session    TEXT    NOT NULL,
+        owner_agent      TEXT    NOT NULL,
+        claimed_at       INTEGER NOT NULL,
+        expires_at       INTEGER NOT NULL,
+        heartbeat_at     INTEGER NOT NULL,
+        ttl_seconds      INTEGER NOT NULL DEFAULT 3600,
+        payload          TEXT,
+        PRIMARY KEY (task_id)
+      )
+    `);
+    db.exec(`
+      INSERT INTO task_locks_v2
+        SELECT task_id, task_kind, owner_session, owner_agent,
+               claimed_at, expires_at, heartbeat_at, ttl_seconds, payload
+        FROM task_locks
+    `);
+    db.exec("DROP TABLE task_locks");
+    db.exec("ALTER TABLE task_locks_v2 RENAME TO task_locks");
+    // Recreate indexes (dropped with the original table)
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
+    db.exec("COMMIT");
+    console.info("[coordinationStore] Migrated task_locks CHECK constraint: added 'commit-mutex' kind.");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    console.error("[coordinationStore] Migration failed — rolled back. Existing rows preserved.", err);
+    throw err; // propagate so callers can enter refuse-all mode
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type TaskKind = "cowork-slot" | "sprint-task" | "dashboard-row";
+export type TaskKind = "cowork-slot" | "sprint-task" | "dashboard-row" | "commit-mutex";
 
 export interface ClaimInput {
   task_id: string;

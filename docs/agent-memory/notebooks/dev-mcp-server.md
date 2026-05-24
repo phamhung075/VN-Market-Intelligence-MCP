@@ -1,5 +1,34 @@
 # dev-mcp-server -- Notebook
 
+## c283 · 2026-05-24T09:45Z
+
+### Task commit-mutex-live — commit-mutex lock kind deployed (2026-05-24, IMPL_DONE)
+
+**PO hold reason:** `task_claim("commit-mutex:main")` returned `{claimed:false}` with no holder — CHECK constraint on `task_locks` excluded `commit-mutex`, and zod enum in coordinationTools.ts also excluded it.
+
+**Changes:**
+- `coordinationStore.ts` — `ensureCoordinationTable()` CHECK updated to include `'commit-mutex'`. Added `migrateCoordinationTable()`: SQLite recreate-pattern (v2 table → INSERT SELECT → DROP → RENAME → indexes), inside transaction, idempotent via sqlite_master. `TaskKind` union: added `"commit-mutex"`.
+- `coordinationTools.ts` — Both zod enums (`task_claim` task_kind ~L82, `task_list_held` kind ~L188) updated with `"commit-mutex"`. Tool description updated.
+- `migrations/20260524-coordination-add-commit-mutex.sql` — Reference SQL for the migration.
+- `commit-mutex-coordination.test.ts` — 10 tests: AC-1..AC-7. 10/10 GREEN.
+- `.claude/skills/commit-mutex/SKILL.md` — Added C-2b: `claimed=false` with NO `current_holder` AND NO `error` = mechanism broken → FAIL-CLOSED (skip commit, bug-telegram, EXIT). NOT backoff.
+
+**Deployment-verified Ritual (live container post-rebuild):**
+- Schema: CHECK now contains `'commit-mutex'` — CONFIRMED.
+- 9 pre-existing rows preserved — CONFIRMED.
+- CLAIM_A → `{"claimed":true}` PASS.
+- CLAIM_B (concurrent) → `{"claimed":false,"current_holder":{owner_agent:dev-mcp-server-ritual,...}}` PASS.
+- RELEASE_A → `{"ok":true}` PASS.
+- RECLAIM_B → `{"claimed":true}` PASS.
+- STALE_STEAL_C → `{"claimed":true,"stolen":true}` PASS.
+- Container: `Up (healthy)` post-rebuild.
+
+**Tests:** 39/39 coordination tests GREEN. tsc 0 errors. Full suite exit=0.
+
+**Signal:** `docs/signals/dev-mcp-server-commit-mutex-live-done-20260524T094500Z.json` → po
+
+---
+
 ## c2026-05-24 · P2-F G5a/G5b/G5c — RAG HTTP Rewire (DONE)
 
 **Task:** P2-F — G5 delete+rewire for rag-service SCALE pilot
