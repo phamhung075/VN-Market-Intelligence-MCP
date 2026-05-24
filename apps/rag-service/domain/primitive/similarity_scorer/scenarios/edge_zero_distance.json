@@ -1,0 +1,5 @@
+{
+  "primitive": "similarity_scorer",
+  "input": {"distance": 0.0},
+  "expected_output": {"similarity": 1.0}
+}
