@@ -1,0 +1,35 @@
+{
+  "signal": "dev-mcp-server-PI3-reopen2-done",
+  "timestamp": "2026-05-24T21:00:00Z",
+  "agent": "dev-mcp-server",
+  "sprint": "PDF-INSPECT",
+  "task": "PI3-REOPEN-2",
+  "commit": "69da9d01",
+  "files_changed": [
+    "apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts",
+    "apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts",
+    "apps/mcp-server/src/interface/mcp/server.ts",
+    "apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts",
+    "apps/mcp-server/src/__tests__/PI3-bctc-inspect-reopen2.test.ts"
+  ],
+  "tests": {
+    "pi3_original": { "pass": 39, "fail": 0 },
+    "pi3_reopen2": { "pass": 25, "fail": 0 },
+    "total": { "pass": 64, "fail": 0 },
+    "reference_nf_ld2": { "pass": 9, "fail": 0 },
+    "tsc": "0 errors"
+  },
+  "deliverables": {
+    "backfillBctcPdfPaths": "idempotent two-pass token matcher; links pdf_path for NULL rows at startup",
+    "bctcInspectHandler": "LIST returns all 14 rows; has_pdf serve-time; secondary OCR join for NULL-path rows",
+    "server_startup": "backfillBctcPdfPaths called once after getDb(); pdfDir=resolve(cwd,'data','pdfs'); non-fatal"
+  },
+  "deploy_required": true,
+  "deploy_note": "docker compose up -d --build mcp-server required; backfill runs at next startup",
+  "expected_after_deploy": {
+    "GET /api/bctc-inspect/docs count": ">= 10 (out of 14 real rows)",
+    "has_ocr": ">= 1 doc with OCR text from pdf_extracted_text (819 rows / 18 filenames)",
+    "db_writes": "financial_reports.pdf_path only (pdf_path column); no other writes"
+  },
+  "next": "qa — real container deploy + verify count >= 10, OCR text visible, anomaly flag active"
+}
