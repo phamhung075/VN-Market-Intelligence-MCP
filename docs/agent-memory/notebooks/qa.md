@@ -1,5 +1,50 @@
 # QA — Notebook
 
+## cycle-97 · 2026-05-24 · pdf-extractor P2-G — G9 Playwright headless trust contract — PASS
+
+**Task:** P2-G (G9 Playwright headless Path B) | **Verdict:** G9 VERIFIED — EARNED-PENDING
+
+```
+date: 2026-05-24T11:39:00Z
+outcome: G9 VERIFIED — Playwright 3/3 exit 0
+type: pilot-task-qa (trust contract headless automation)
+signal: docs/signals/qa-pdf-extractor-P2-G-g9-20260524T113900Z.json
+ship_record: docs/handoffs/TASK_pdf-extractor-P2-G.md
+commit: 3e7f476c
+ssot_not_mutated: true (PO-only §4.5)
+goal_flips: NONE
+
+method: Playwright headless Path B (@playwright/test 1.53.x + Chromium + http-server)
+traces_fresh: 6/6 primitive pass=True + 1/1 module pass=True
+playwright_tests: 3/3 PASS exit 0
+
+panels_rendered: [primitives, module, service]
+primitive_cards: 6 (all PASS)
+honest_red_proven: true (decimal_normalizer pass=false → FAIL badge; isolated; restored PASS)
+console_errors: 0
+external_network_calls: 0
+screenshot: apps/pdf-extractor/dashboard/g9-trust-contract.png
+
+dashboard_fix_applied: pass=null → NOT-RUN badge (service-tier honest placeholder)
+service_trace_placeholder: dashboard/traces/service/pdf_extractor.json pass=null (gitignored, runtime-only)
+traces_gitignored: true (apps/pdf-extractor/.gitignore: dashboard/traces/)
+```
+
+| Check | Verdict |
+|-------|---------|
+| AC-1: playwright exit 0 | PASS |
+| AC-2: 3 panels visible | PASS |
+| AC-3: 6 primitive cards | PASS |
+| AC-4: honest RED (decimal_normalizer pass=false → FAIL) | PASS |
+| AC-5: 0 console errors | PASS |
+| AC-6: 0 external HTTP requests | PASS |
+| AC-7: verdict JSON committed | PASS |
+
+**G9 verdict: VERIFIED. EARNED-PENDING.**
+**NEXT:** qa — P2-J0 (G10 preflight: bug-inventory baseline confirmation).
+
+---
+
 ## cycle-96 · 2026-05-24 · pdf-extractor P2-A3 + P2-A4 + G6 + G8 — G4/G6/G8 VERIFIED
 
 **Task:** P2-A3 (CI verify) + P2-A4 (deliberate-violation proof) + G6 re-verify + G8 card-level | **Verdict:** G4 VERIFIED, G6 VERIFIED, G8 VERIFIED
