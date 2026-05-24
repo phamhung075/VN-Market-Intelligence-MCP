@@ -852,15 +852,16 @@ footer {
       <span class="level-badge badge-primitives">Level 1</span>
       <h2>Primitives</h2>
       <p class="panel-desc">
-        3 pure TypeScript functions: <strong>hao-encoder</strong>,
+        4 pure TypeScript functions: <strong>hao-encoder</strong>,
         <strong>hexagram-resolver</strong>,
-        <strong>ngu-hanh-classifier</strong>.
+        <strong>ngu-hanh-classifier</strong>,
+        <strong>reading-scorer</strong>.
         Each is a stdlib-only pure function (Fence-A: zero infra imports).
-        3 scenarios each = 9 total. Click any scenario to inspect input &harr; expectedOutput.
+        3 scenarios each = 12 total. Click any scenario to inspect input &harr; expectedOutput.
       </p>
       <div class="panel-summary">
-        <span class="summary-chip chip-total">9 scenarios</span>
-        <span class="summary-chip chip-notrun" id="prim-notrun-chip">9 NOT-RUN</span>
+        <span class="summary-chip chip-total">12 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">12 NOT-RUN</span>
         <span class="summary-chip chip-green" id="prim-green-chip" style="display:none">0 passed</span>
         <span class="summary-chip chip-red"   id="prim-red-chip"   style="display:none">0 failed</span>
       </div>
@@ -1197,6 +1198,64 @@ window.__PRIMITIVES_DATA__ = [
       "dynamic": "NEUTRAL",
       "score": 0.0,
       "error": null
+    },
+    "status": "not-run"
+  },
+  /* ── reading-scorer ──────────────────────────────────────────────────────── */
+  {
+    "primitive": "reading-scorer",
+    "category": "golden",
+    "scenario": "reading-scorer-golden",
+    "description": "Happy path: well-known outcome strings, trend strings, action texts, and a majority vote with clear winner.",
+    "input": {
+      "outcomeTexts": ["Đại CÁT — Hanh thông", "HUNG — Hung hãn", "VÔ CỬU"],
+      "trendTexts": ["Thuận Lợi — Thị trường tăng", "BẤT LỢI — Thị trường giảm"],
+      "actionTexts": ["Tiến — Mua vào", "Lui — Bán ra", "Giữ vững"],
+      "voteInput": ["MUA", "MUA", "GIU", "BAN"]
+    },
+    "expectedOutput": {
+      "outcomeScores": [0.3, -0.3, 0.0],
+      "trendScores": [0.5, -0.5],
+      "actions": ["MUA", "BAN", "GIU"],
+      "majorityAction": "MUA"
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "reading-scorer",
+    "category": "edge",
+    "scenario": "reading-scorer-edge",
+    "description": "Edge cases: mixed diacritic/ASCII forms, tie in majority vote, unrecognised trend keyword, empty action text.",
+    "input": {
+      "outcomeTexts": ["HOI — Nhỏ hối", "LE", "CAT"],
+      "trendTexts": ["TRUNG TINH — Không rõ", "UNKNOWN TREND"],
+      "actionTexts": ["", "CHỜ — chờ đợi"],
+      "voteInput": ["GIU", "CHO"]
+    },
+    "expectedOutput": {
+      "outcomeScores": [-0.15, -0.1, 0.3],
+      "trendScores": [0.0, 0.0],
+      "actions": ["GIU", "CHO"],
+      "majorityAction": "GIU"
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "reading-scorer",
+    "category": "failure",
+    "scenario": "reading-scorer-failure",
+    "description": "Failure / boundary inputs: empty arrays, all-unknown keywords, and majority vote on empty list — all resolve to safe defaults (Option A: no exceptions thrown).",
+    "input": {
+      "outcomeTexts": ["", "UNKNOWN_OUTCOME_XYZ_999"],
+      "trendTexts": ["", "GIBBERISH TREND TEXT 9999"],
+      "actionTexts": ["GIBBERISH_ACTION_TEXT_999"],
+      "voteInput": []
+    },
+    "expectedOutput": {
+      "outcomeScores": [0.0, 0.0],
+      "trendScores": [0.0, 0.0],
+      "actions": ["GIU"],
+      "majorityAction": "GIU"
     },
     "status": "not-run"
   }
