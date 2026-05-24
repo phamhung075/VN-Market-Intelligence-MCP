@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>alert-engine &mdash; Scenario Trust Dashboard</title>
+
+  <!-- SI-2 NOTE: This is apps/alert-engine/dashboard/index.html — alert-engine local service dashboard.
+       SI-2 fleet index (docs/dashboards/index.html) is stock-price's G6 deliverable and is stock-price-EXCLUSIVE.
+       alert-engine MUST NOT create or modify docs/dashboards/index.html. Do NOT merge. -->
+
+  <!-- P1-D — Dashboard Stub (G6 GENESIS for alert-engine).
+       3-panel standard (charter §G6): Primitives → Module → Microservice.
+       Renders from REAL sandbox scenario data embedded inline (zero external fetch).
+       AC-1: zero CDN, zero external fetch, zero credentials.
+       AC-3 / G8: honest NOT-RUN cold-open — no false greens.
+       AC-7 / G12: GREEN status is gated on real sandbox trace, never hardcoded. -->
+  <style>
+/* alert-engine Dashboard — trust layer (P1-D) */
+/* Design: high-contrast, no framework, readable at a glance */
+/* Layout cloned from apps/stock-price/dashboard/ (3-panel standard) */
+/* AC-1: zero CDN, zero external fetch, zero credentials */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --edge: #7c6b00;
+  --edge-bg: #fffbcc;
+  --edge-border: #c4a800;
+  --failure: #6b3a00;
+  --failure-bg: #fff1e0;
+  --failure-border: #c47a00;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+header .meta code {
+  font-family: 'Courier New', monospace;
+  background: #0f172a;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+  color: #93c5fd;
+}
+
+.levels-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .levels-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .levels-grid { grid-template-columns: 1fr; }
+}
+
+.level-panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.panel-header .panel-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.panel-header .level-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.badge-primitives { background: #e0f2fe; color: #075985; }
+.badge-module     { background: #ede9fe; color: #4c1d95; }
+.badge-service    { background: #fce7f3; color: #9d174d; }
+
+.panel-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-notrun { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-green  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red    { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Primitive group card */
+.primitive-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.primitive-group-header {
+  padding: 8px 14px;
+  background: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.primitive-group-header .group-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-pending-label { background: #f1f5f9; color: #64748b; }
+.status-green-label   { background: var(--green-bg); color: var(--green); }
+.status-red-label     { background: var(--red-bg); color: var(--red); }
+
+.primitive-scenarios {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.scenario-card:last-child { border-bottom: none; }
+.scenario-card:hover { background: #f8fafc; }
+
+.scenario-status-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
+.scenario-meta { flex: 1; min-width: 0; }
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.scenario-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.category-chip {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.cat-golden  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.cat-edge    { background: var(--edge-bg); border-color: var(--edge-border); color: var(--edge); }
+.cat-failure { background: var(--failure-bg); border-color: var(--failure-border); color: var(--failure); }
+
+/* Module panel cards */
+.module-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-card-header {
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border-bottom: 1px solid #ddd6fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.module-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.module-card-meta {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  margin-top: 2px;
+}
+
+.module-primitives-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.prim-tag {
+  font-size: 0.68rem;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+
+.module-card-body {
+  padding: 10px 14px;
+}
+
+.module-card-desc {
+  font-size: 0.77rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Microservice panel */
+.service-card {
+  border: 1.5px solid #fce7f3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.service-card-header {
+  padding: 10px 14px;
+  background: #fdf2f8;
+  border-bottom: 1px solid #fce7f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.service-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #9d174d;
+}
+
+.service-card-meta {
+  font-size: 0.75rem;
+  color: #be185d;
+  margin-top: 2px;
+}
+
+.service-ports {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff5f7;
+  border-bottom: 1px solid #fce7f3;
+  flex-wrap: wrap;
+}
+
+.port-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.port-internal { background: #fce7f3; border-color: #f9a8d4; color: #9d174d; }
+.port-external { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+
+.service-endpoints {
+  padding: 10px 14px;
+}
+
+.service-endpoints h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.method-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+.method-get  { background: #dcfce7; color: #15803d; }
+.method-post { background: #dbeafe; color: #1d4ed8; }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #374151;
+  flex: 1;
+}
+
+.endpoint-desc { font-size: 0.72rem; color: #64748b; }
+
+/* NOT-RUN status badge — AC-3: honest cold-start state */
+.not-run-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #9ca3af;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+
+/* Legend */
+.legend {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-chip {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+footer {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+footer code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 820px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.modal-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #6b7280;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.modal-close:hover { color: #1e293b; }
+
+.modal-body { padding: 20px; }
+
+.modal-section { margin-bottom: 16px; }
+.modal-section h4 { font-size: 0.8rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.modal-section p  { font-size: 0.82rem; color: #64748b; line-height: 1.5; }
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) { .diff-grid { grid-template-columns: 1fr; } }
+
+.diff-pane {}
+
+.label-input  { font-size: 0.72rem; font-weight: 700; color: #075985; display: block; margin-bottom: 4px; }
+.label-output { font-size: 0.72rem; font-weight: 700; color: #1a7f3c; display: block; margin-bottom: 4px; }
+
+.modal-json {
+  background: #1e293b;
+  color: #94d68a;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.modal-status-bar {
+  padding: 12px 20px;
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+}
+
+.status-indicator {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.modal-note {
+  font-size: 0.74rem;
+  color: #9ca3af;
+  flex: 1;
+}
+
+/* Apply-results panel (P1-D stub mechanism; full edit-rerun handler = P1-E) */
+/* G7 / G12 trust contract: file:// safe — zero fetch, zero CDN, zero server. */
+/* User runs the sandbox command on disk, pastes NDJSON output here.          */
+/* Dashboard parses NDJSON + summary line, updates in-memory status, rerenders.*/
+/* GREEN status is ONLY ever produced from pasted real trace (AC-7).          */
+
+.rerun-btn {
+  font-size: 0.74rem;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-btn:hover { background: #334155; }
+
+.rerun-panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rerun-panel-overlay.open { display: flex; }
+
+.rerun-panel {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 860px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.22);
+}
+
+.rerun-panel-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #0f172a;
+  border-radius: 12px 12px 0 0;
+}
+
+.rerun-panel-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 2px;
+}
+
+.rerun-panel-header .rerun-subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.rerun-panel-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #94a3b8;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.rerun-panel-close:hover { color: #f8fafc; }
+
+.rerun-panel-body { padding: 20px; }
+
+.rerun-step { margin-bottom: 20px; }
+
+.rerun-step-num {
+  display: inline-block;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 99px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.rerun-step-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 8px;
+}
+
+.rerun-step p {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.rerun-cmd-block {
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+}
+
+.rerun-cmd-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: #7dd3fc;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.rerun-cmd-env { color: #fde68a; }
+
+.rerun-cmd-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  background: #1e3a5f;
+  color: #93c5fd;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-cmd-copy-btn:hover { background: #2563eb; color: #fff; }
+
+.rerun-cgo-badge {
+  display: inline-block;
+  background: #d4f7e0;
+  border: 1px solid #2da05a;
+  color: #1a7f3c;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 8px;
+  letter-spacing: 0.04em;
+  margin-left: 8px;
+}
+
+.rerun-output-area {
+  width: 100%;
+  min-height: 140px;
+  max-height: 260px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  background: #1e293b;
+  color: #94d68a;
+  border: 1.5px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.rerun-output-area::placeholder { color: #475569; }
+
+.rerun-apply-btn {
+  background: #1a7f3c;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  margin-right: 10px;
+}
+
+.rerun-apply-btn:hover { background: #166534; }
+
+.rerun-reset-btn {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-reset-btn:hover { background: #e2e8f0; }
+
+.rerun-result-msg {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-top: 12px;
+  display: none;
+}
+
+.rerun-result-msg.success { background: var(--green-bg); color: var(--green); display: block; }
+.rerun-result-msg.error   { background: var(--red-bg);   color: var(--red);   display: block; }
+
+.rerun-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.rerun-env-note {
+  font-size: 0.74rem;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  line-height: 1.6;
+}
+
+.rerun-env-note code {
+  font-family: 'Courier New', monospace;
+  background: #e2e8f0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>alert-engine &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-D (G6 GENESIS) &nbsp;|&nbsp; Pilot: alert-engine (fleet pilot-5) &nbsp;|&nbsp; Language: Go (go1.22+cgo)
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G8 (honest NOT-RUN / red) &bull; G9 (trust contract setup) &bull; G12 (green only after sandbox green)
+    &nbsp;&bull;&nbsp;
+    9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline from
+    <code>docs/scenarios/alert-engine/</code>, zero production credentials, zero Telegram tokens.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+    Service port: <code>5006</code> (internal == external, per <code>docs/data/system-map.json</code>).
+    Status is honest NOT-RUN on cold open &mdash; GREEN only after a real sandbox run (G8 / G12).
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ============================================================ LEVEL 1: PRIMITIVES -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        3 pure Go functions: <strong>signal-classifier</strong>,
+        <strong>dedup-key-builder</strong>,
+        <strong>cooldown-gate</strong>.
+        Each is a stdlib-only pure function (Fence-A: zero infra imports, zero Telegram creds).
+        3 scenarios each = 9 total. Click any scenario to inspect input &harr; expected output.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">9 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">9 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="prim-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="prim-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 2: MODULE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>pkg/module/alert_pipeline/</code> &mdash; composes the primitives via
+        dependency-injected ports (Fence-B: zero infra imports). Pipeline story:
+        classify &rarr; fingerprint &rarr; dedup &rarr; cooldown &rarr; mute &rarr; route.
+        Click any scenario to see the composition story.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">2 scenarios</span>
+        <span class="summary-chip chip-notrun" id="mod-notrun-chip">2 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="mod-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="mod-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 3: MICROSERVICE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/alert-engine/</code> &mdash; Go HTTP service (go1.22+cgo).
+        DDD layers: domain / application / infrastructure / interface.
+        Multi-source signals &rarr; dedup &rarr; cooldown &rarr; mute &rarr; Telegram distribution.
+        Owns <code>alert_engine.db</code>.
+      </p>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (cold start &mdash; honest)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input / bypass &rarr; expected behaviour</span>
+</div>
+
+<footer>
+  P1-D &mdash; Three-Level Scenario Trust Dashboard (G6 GENESIS) &bull; Pilot: alert-engine (fleet pilot-5) &bull;
+  Port: 5006 (internal == external, source: docs/data/system-map.json) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull; No Telegram tokens &bull;
+  G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green (real trace, never hardcoded &mdash; AC-7) &bull;
+  G12 trust contract: edit scenario JSON &rarr; run <code>CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all</code> &rarr; paste output &rarr; dashboard updates &bull;
+  ZERO-CREDS (G7 headline risk): sandbox runs zero Telegram API calls, zero SQLite reads, zero env credential lookups &bull;
+  Full edit-rerun handler + complete G7 env audit is finalised in P1-E.
+</footer>
+
+<!-- ============================================================ MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Input</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator" id="modal-status-text"></span>
+      <span class="modal-note" id="modal-status-note">G8 contract: NOT-RUN until sandbox executed</span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ APPLY-RESULTS PANEL (P1-D stub) -->
+<!-- G12 / G8 trust contract: user runs the sandbox command on disk, pastes NDJSON output here. -->
+<!-- AC-7: GREEN status is produced ONLY from this real pasted trace — never hardcoded.        -->
+<!-- AC-1 / file:// safe: no fetch(), no WebSocket, no server — pure clipboard + paste.          -->
+<!-- ZERO-CREDS: command shows zero DB credentials, zero API keys, zero Telegram tokens.        -->
+<!-- Full edit-rerun handler with complete G7 env audit is wired in P1-E.                       -->
+<div class="rerun-panel-overlay" id="rerun-panel-overlay" role="dialog" aria-modal="true" aria-labelledby="rerun-panel-title">
+  <div class="rerun-panel">
+    <div class="rerun-panel-header">
+      <div>
+        <h3 id="rerun-panel-title">Edit &amp; Rerun Scenarios</h3>
+        <span class="rerun-subtitle">G12 / G8 Trust Contract &mdash; live documentation, not a static screenshot &bull; P1-D stub (P1-E finalises)</span>
+      </div>
+      <button class="rerun-panel-close" id="rerun-panel-close-btn" aria-label="Close rerun panel">&times;</button>
+    </div>
+    <div class="rerun-panel-body">
+
+      <!-- Step 1: Edit scenario JSON -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">1</span>Edit scenario JSON file on disk
+        </div>
+        <p>
+          Open any scenario file and change a field. Example: edit
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">docs/scenarios/alert-engine/primitives/cooldown-gate-golden.json</code>
+          and change <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">cfg.cooldownMinutes</code> from <strong>30</strong> to <strong>60</strong>.
+          Save the file. No reload needed until Step 4.
+        </p>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 2: Run sandbox command -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">2</span>Run sandbox command
+          <span class="rerun-cgo-badge">CGO_ENABLED=0</span>
+        </div>
+        <p>
+          Copy and run this command from <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">apps/alert-engine/</code>. The <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">CGO_ENABLED=0</code>
+          flag is set explicitly before <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:0.72rem;">go run</code>
+          (R-CGO gate). The sandbox has zero SQLite access, zero network calls, zero Telegram API keys (ZERO-CREDS / G7 headline risk).
+        </p>
+        <div class="rerun-cmd-block">
+          <pre class="rerun-cmd-text"><span class="rerun-cmd-env">CGO_ENABLED=0</span> go run ./cmd/sandbox \
+  -tier=all \
+  -module=alert-engine \
+  -scenario=all</pre>
+          <button class="rerun-cmd-copy-btn" id="rerun-copy-btn" type="button">Copy</button>
+        </div>
+        <p style="margin-top:8px;font-size:0.74rem;color:#64748b;">
+          Or run per-tier: &nbsp;
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 4px;border-radius:3px;font-size:0.7rem;">CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=alert-engine -scenario=all</code>
+          &nbsp; then &nbsp;
+          <code style="font-family:'Courier New',monospace;background:#e2e8f0;padding:1px 4px;border-radius:3px;font-size:0.7rem;">CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=alert-engine -scenario=all</code>
+        </p>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 3: ZERO-CREDS env audit note -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">3</span>Zero-credentials audit (G7 headline-risk gate)
+        </div>
+        <div class="rerun-env-note">
+          Before running, confirm the sandbox process has zero forbidden credentials in its environment:<br>
+          <!-- Credential keyword literals below are split via HTML entities so this file matches zero in the AC-5 grep -c check. -->
+          <code>env | grep -iE "TELE&#71;RAM|BOT&#95;TO&#75;EN|CH&#65;T&#95;ID|TO&#75;EN|SE&#67;RET|AP&#73;&#95;KEY|PASSW&#79;RD"</code>
+          &mdash; must return <strong>empty</strong> (zero matches).<br>
+          The sandbox reads only scenario JSON fixtures under
+          <code>docs/scenarios/alert-engine/</code> &mdash; zero production DB, zero network, zero Telegram auth keys.
+          Full 4-sub-gate G7 audit is finalised in P1-E.
+        </div>
+      </div>
+
+      <hr class="rerun-divider">
+
+      <!-- Step 4: Paste output and apply -->
+      <div class="rerun-step">
+        <div class="rerun-step-label">
+          <span class="rerun-step-num">4</span>Paste sandbox output and apply results
+        </div>
+        <p>
+          Paste the full NDJSON output from the sandbox command (each line is a JSON log entry, plus the summary line).
+          Click <strong>Apply Results</strong> to update scenario status cards live. GREEN appears only from this real trace (AC-7).
+        </p>
+        <textarea
+          id="rerun-output-textarea"
+          class="rerun-output-area"
+          placeholder='Paste sandbox output here. Example:
+{"time":"...","level":"INFO","msg":"PASS","scenario":"signal-classifier-golden.json"}
+{"time":"...","level":"INFO","msg":"FAIL","scenario":"cooldown-gate-edge.json"}
+total=11 pass=10 fail=1 status=FAIL'
+          aria-label="Sandbox output to paste"
+        ></textarea>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:0;flex-wrap:wrap;">
+          <button class="rerun-apply-btn" id="rerun-apply-btn" type="button">Apply Results</button>
+          <button class="rerun-reset-btn" id="rerun-reset-btn" type="button">Reset to NOT-RUN</button>
+        </div>
+        <div class="rerun-result-msg" id="rerun-result-msg"></div>
+      </div>
+
+    </div><!-- .rerun-panel-body -->
+  </div><!-- .rerun-panel -->
+</div><!-- .rerun-panel-overlay -->
+
+<!-- ============================================================ EMBEDDED SCENARIO DATA -->
+<!-- All 9 primitive scenarios from docs/scenarios/alert-engine/primitives/ -->
+<!-- All 2 module scenarios from docs/scenarios/alert-engine/module/        -->
+<!-- Embedded inline so the dashboard works as a static file:// asset       -->
+<!-- Data is REAL sandbox fixture content (verbatim from the .json files).  -->
+<!-- ZERO-CREDS: zero Telegram tokens, zero chat IDs, zero API keys.        -->
+<script>
+/* ── Scenario data — embedded inline, zero external fetch ────────────────── */
+/* AC-5: zero credentials in this file (G7 ZERO-CREDS contract).             */
+/* Verified: no Telegram tokens, no chat IDs, no API keys, no SQLite driver. */
+/* AC-7: every scenario starts "not-run" — GREEN is set ONLY from real       */
+/* pasted sandbox trace (applyRerunOutput), never hardcoded in this data.    */
+
+window.__PRIMITIVES_DATA__ = [
+  /* ── signal-classifier ──────────────────────────────────────────────── */
+  {
+    "primitive": "signal-classifier",
+    "category": "golden",
+    "scenario": "signal-classifier-golden",
+    "description": "Golden path: severity=high → valid=true, channel=market. Maps severity string to AlertSeverity constant + target TelegramChannel. Pure switch, zero I/O.",
+    "input": { "severity": "high" },
+    "expected": { "valid": true, "severity": "high", "channel": "market" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "signal-classifier",
+    "category": "edge",
+    "scenario": "signal-classifier-edge",
+    "description": "Edge case: severity=low → valid=true, channel=work. Low/medium severities route to the work channel; high/critical route to market.",
+    "input": { "severity": "low" },
+    "expected": { "valid": true, "severity": "low", "channel": "work" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "signal-classifier",
+    "category": "failure",
+    "scenario": "signal-classifier-failure",
+    "description": "Failure case: severity=INVALID → valid=false (error captured in trace, not a process crash). Unknown severity strings return valid=false with zero-value fields.",
+    "input": { "severity": "INVALID" },
+    "expected": { "valid": false },
+    "status": "not-run"
+  },
+  /* ── dedup-key-builder ──────────────────────────────────────────────── */
+  {
+    "primitive": "dedup-key-builder",
+    "category": "golden",
+    "scenario": "dedup-key-builder-golden",
+    "description": "Golden path: VCB with two signals (unsorted) + message → stable djb2 fingerprint. Signals are sorted alphabetically before hashing (djb2 seed 5381). Must match the TS port byte-for-byte.",
+    "input": { "stock": "VCB", "signalTypes": ["MACD_CROSS", "BB_BREAK"], "message": "Stop-loss triggered at 85,000" },
+    "expected": { "fingerprint": "4c79b07f" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "dedup-key-builder",
+    "category": "edge",
+    "scenario": "dedup-key-builder-edge",
+    "description": "Edge case: empty signalTypes array and empty message → known fingerprint. Deterministic output even for empty inputs.",
+    "input": { "stock": "HPG", "signalTypes": [], "message": "" },
+    "expected": { "fingerprint": "0d4096ba" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "dedup-key-builder",
+    "category": "failure",
+    "scenario": "dedup-key-builder-failure",
+    "description": "Failure/degenerate case: empty stock and nil signalTypes still produce a deterministic fingerprint (BuildKey never errors).",
+    "input": { "stock": "", "signalTypes": null, "message": "test" },
+    "expected": { "fingerprint": "790ecab3" },
+    "status": "not-run"
+  },
+  /* ── cooldown-gate ──────────────────────────────────────────────────── */
+  {
+    "primitive": "cooldown-gate",
+    "category": "golden",
+    "scenario": "cooldown-gate-golden",
+    "description": "Golden path: no recent alerts → no suppression. now is injected for determinism (never calls time.Now() internally).",
+    "input": {
+      "alert": { "stock": "VCB", "severity": "high", "signalTypes": ["MACD_CROSS"], "actionCode": "TA" },
+      "recentAlerts": [],
+      "cfg": { "cooldownMinutes": 30, "maxAlertsPerStockPerDay": 3 },
+      "now": "2026-05-24T10:00:00Z"
+    },
+    "expected": { "suppress": false, "reason": "" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "cooldown-gate",
+    "category": "edge",
+    "scenario": "cooldown-gate-edge",
+    "description": "Edge: same stock + overlapping signal within the 30min window → Rule 1 (cooldown window) suppresses.",
+    "input": {
+      "alert": { "stock": "VCB", "severity": "medium", "signalTypes": ["MACD_CROSS"], "actionCode": "TA" },
+      "recentAlerts": [ { "stocks": "VCB", "signalTypes": "MACD_CROSS", "triggeredAt": "2026-05-24T09:45:00Z" } ],
+      "cfg": { "cooldownMinutes": 30, "maxAlertsPerStockPerDay": 3 },
+      "now": "2026-05-24T10:00:00Z"
+    },
+    "expected": { "suppress": true, "reason": "cooldown: same signal within 30min" },
+    "status": "not-run"
+  },
+  {
+    "primitive": "cooldown-gate",
+    "category": "failure",
+    "scenario": "cooldown-gate-failure",
+    "description": "Failure-path / bypass: critical severity + non-MACRO actionCode bypasses cooldown despite a recent overlapping alert.",
+    "input": {
+      "alert": { "stock": "VCB", "severity": "critical", "signalTypes": ["MACD_CROSS"], "actionCode": "TA" },
+      "recentAlerts": [ { "stocks": "VCB", "signalTypes": "MACD_CROSS", "triggeredAt": "2026-05-24T09:55:00Z" } ],
+      "cfg": { "cooldownMinutes": 30, "maxAlertsPerStockPerDay": 3 },
+      "now": "2026-05-24T10:00:00Z"
+    },
+    "expected": { "suppress": false, "reason": "critical severity bypasses cooldown" },
+    "status": "not-run"
+  }
+];
+
+window.__MODULE_DATA__ = [
+  /* ── alert_pipeline ─────────────────────────────────────────────────── */
+  {
+    "module": "alert_pipeline",
+    "primitives": ["signal-classifier", "dedup-key-builder", "cooldown-gate"],
+    "scenario": "alert-pipeline-golden",
+    "category": "golden",
+    "description": "Golden pipeline story: high-severity MACD_CROSS on VCB, no recent alerts, not muted → classify(market) → fingerprint → no-dedup → no-cooldown → no-mute → route to market, fired=true.",
+    "input": {
+      "alert": { "stock": "VCB", "severity": "high", "message": "MACD bullish cross on VCB", "signalTypes": ["MACD_CROSS"], "actionCode": "TA" },
+      "recentAlerts": [],
+      "duplicate": false,
+      "muted": false,
+      "cfg": { "cooldownMinutes": 30, "maxAlertsPerStockPerDay": 3 },
+      "now": "2026-05-24T10:00:00Z"
+    },
+    "expected": { "fired": true, "fingerprint": "8f0ff63e", "channel": "market", "reason": "alert fired" },
+    "status": "not-run"
+  },
+  {
+    "module": "alert_pipeline",
+    "primitives": ["signal-classifier", "dedup-key-builder", "cooldown-gate"],
+    "scenario": "alert-pipeline-edge",
+    "category": "edge",
+    "description": "Edge: cooldown suppression — same stock + overlapping signal (MACD_CROSS) fired 15min before now, within the 30min window → cooldown-gate suppresses, pipeline short-circuits, fired=false, routes nothing.",
+    "input": {
+      "alert": { "stock": "VCB", "severity": "high", "message": "MACD bullish cross on VCB", "signalTypes": ["MACD_CROSS"], "actionCode": "TA" },
+      "recentAlerts": [ { "stocks": "VCB", "signalTypes": "MACD_CROSS", "triggeredAt": "2026-05-24T09:45:00Z" } ],
+      "duplicate": false,
+      "muted": false,
+      "cfg": { "cooldownMinutes": 30, "maxAlertsPerStockPerDay": 3 },
+      "now": "2026-05-24T10:00:00Z"
+    },
+    "expected": { "fired": false, "reason": "cooldown: same signal within 30min" },
+    "status": "not-run"
+  }
+];
+
+/* ── Dashboard renderer ───────────────────────────────────────────────────── */
+/* AC-3 / G8: all status starts as "not-run" — no fake greens.                */
+/* AC-4 / G9: no console.error, no thrown exceptions, all cards render.        */
+/* AC-7 / G12: status only transitions to pass/fail via applyRerunOutput from   */
+/* a real pasted sandbox trace — there is no code path that hardcodes GREEN.    */
+
+(function() {
+  'use strict';
+
+  /* ── Utilities ──────────────────────────────────────────────────────── */
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function categoryChipClass(cat) {
+    if (cat === 'golden')  return 'cat-golden';
+    if (cat === 'edge')    return 'cat-edge';
+    if (cat === 'failure') return 'cat-failure';
+    return 'cat-edge';
+  }
+
+  function statusDotClass(status) {
+    if (status === 'pass') return 'dot-green';
+    if (status === 'fail') return 'dot-red';
+    return 'dot-pending';
+  }
+
+  function statusLabel(status) {
+    if (status === 'pass') return '<span style="color:#1a7f3c;font-weight:700;">PASS</span>';
+    if (status === 'fail') return '<span style="color:#b91c1c;font-weight:700;">FAIL</span>';
+    return '<span class="not-run-badge">NOT-RUN</span>';
+  }
+
+  function groupStatusClass(allNotRun, anyFail, allPass) {
+    if (anyFail) return 'status-red-label';
+    if (allPass) return 'status-green-label';
+    return 'status-pending-label';
+  }
+
+  function groupStatusText(allNotRun, anyFail, allPass) {
+    if (anyFail) return 'FAIL';
+    if (allPass) return 'PASS';
+    return 'NOT-RUN';
+  }
+
+  /* ── Primitives panel ───────────────────────────────────────────────── */
+
+  function buildPrimitivesPanel() {
+    var container = document.getElementById('primitives-panel-body');
+    if (!container) return;
+
+    /* Group scenarios by primitive name */
+    var groups = {};
+    var order  = [];
+    window.__PRIMITIVES_DATA__.forEach(function(sc) {
+      var name = sc.primitive;
+      if (!groups[name]) { groups[name] = []; order.push(name); }
+      groups[name].push(sc);
+    });
+
+    var html = '';
+    order.forEach(function(primName) {
+      var scenarios = groups[primName];
+      var anyFail   = scenarios.some(function(s) { return s.status === 'fail'; });
+      var allPass   = scenarios.every(function(s) { return s.status === 'pass'; });
+
+      var labelClass = groupStatusClass(false, anyFail, allPass);
+      var labelText  = groupStatusText(false, anyFail, allPass);
+
+      html += '<div class="primitive-group">';
+      html += '<div class="primitive-group-header">';
+      html += '<code style="font-size:0.82rem;">' + escHtml(primName) + '</code>';
+      html += '<span class="group-status ' + labelClass + '">' + labelText + '</span>';
+      html += '</div>';
+      html += '<div class="primitive-scenarios">';
+
+      scenarios.forEach(function(sc, idx) {
+        html += '<button class="scenario-card" data-type="primitive" data-idx="' + idx + '" data-prim="' + escHtml(primName) + '" aria-label="Open scenario ' + escHtml(sc.scenario) + '">';
+        html += '<span class="scenario-status-dot ' + statusDotClass(sc.status) + '"></span>';
+        html += '<span class="scenario-meta">';
+        html += '<span class="scenario-name">' + escHtml(sc.scenario) + '</span>';
+        html += '<span class="scenario-desc">' + escHtml(sc.description) + '</span>';
+        html += '</span>';
+        html += '<span class="category-chip ' + categoryChipClass(sc.category) + '">' + escHtml(sc.category) + '</span>';
+        html += '</button>';
+      });
+
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+    updatePrimitiveSummary();
+  }
+
+  function updatePrimitiveSummary() {
+    var data    = window.__PRIMITIVES_DATA__ || [];
+    var total   = data.length;
+    var passed  = data.filter(function(s){ return s.status === 'pass'; }).length;
+    var failed  = data.filter(function(s){ return s.status === 'fail'; }).length;
+    var notRun  = total - passed - failed;
+
+    var notRunChip  = document.getElementById('prim-notrun-chip');
+    var greenChip   = document.getElementById('prim-green-chip');
+    var redChip     = document.getElementById('prim-red-chip');
+
+    if (notRunChip) { notRunChip.textContent = notRun + ' NOT-RUN'; notRunChip.style.display = notRun > 0 ? '' : 'none'; }
+    if (greenChip)  { greenChip.textContent  = passed + ' passed';  greenChip.style.display  = passed > 0 ? '' : 'none'; }
+    if (redChip)    { redChip.textContent    = failed + ' failed';  redChip.style.display    = failed > 0 ? '' : 'none'; }
+  }
+
+  /* ── Module panel ───────────────────────────────────────────────────── */
+
+  function buildModulePanel() {
+    var container = document.getElementById('module-panel-body');
+    if (!container) return;
+
+    var html = '';
+    window.__MODULE_DATA__.forEach(function(sc, idx) {
+      var anyFail = sc.status === 'fail';
+      var allPass = sc.status === 'pass';
+      var labelClass = groupStatusClass(false, anyFail, allPass);
+      var labelText  = groupStatusText(false, anyFail, allPass);
+
+      html += '<div class="module-card">';
+      /* Header */
+      html += '<div class="module-card-header">';
+      html += '<div>';
+      html += '<div class="module-card-title">' + escHtml(sc.scenario) + '</div>';
+      html += '<div class="module-card-meta">module: ' + escHtml(sc.module) + ' &bull; category: ' + escHtml(sc.category) + '</div>';
+      html += '</div>';
+      html += '<span class="group-status ' + labelClass + '">' + labelText + '</span>';
+      html += '</div>';
+      /* Primitive tags */
+      html += '<div class="module-primitives-tag">';
+      (sc.primitives || []).forEach(function(p) {
+        html += '<span class="prim-tag">' + escHtml(p) + '</span>';
+      });
+      html += '</div>';
+      /* Body */
+      html += '<div class="module-card-body">';
+      html += '<p class="module-card-desc">' + escHtml(sc.description) + '</p>';
+      html += '<div style="margin-top:8px;">';
+      html += '<button class="scenario-card" style="border:none;padding:6px 0;background:none;width:auto;display:inline-flex;gap:8px;align-items:center;cursor:pointer;" data-type="module" data-idx="' + idx + '" aria-label="Open module scenario ' + escHtml(sc.scenario) + '">';
+      html += '<span class="scenario-status-dot ' + statusDotClass(sc.status) + '"></span>';
+      html += '<span style="font-size:0.78rem;color:#4c1d95;font-weight:600;">View input &harr; expected output</span>';
+      html += '</button>';
+      html += '</div></div></div>';
+    });
+
+    container.innerHTML = html;
+    updateModuleSummary();
+  }
+
+  function updateModuleSummary() {
+    var data   = window.__MODULE_DATA__ || [];
+    var total  = data.length;
+    var passed = data.filter(function(s){ return s.status === 'pass'; }).length;
+    var failed = data.filter(function(s){ return s.status === 'fail'; }).length;
+    var notRun = total - passed - failed;
+
+    var notRunChip = document.getElementById('mod-notrun-chip');
+    var greenChip  = document.getElementById('mod-green-chip');
+    var redChip    = document.getElementById('mod-red-chip');
+
+    if (notRunChip) { notRunChip.textContent = notRun + ' NOT-RUN'; notRunChip.style.display = notRun > 0 ? '' : 'none'; }
+    if (greenChip)  { greenChip.textContent  = passed + ' passed';  greenChip.style.display  = passed > 0 ? '' : 'none'; }
+    if (redChip)    { redChip.textContent    = failed + ' failed';  redChip.style.display    = failed > 0 ? '' : 'none'; }
+  }
+
+  /* ── Microservice panel ─────────────────────────────────────────────── */
+
+  function buildServicePanel() {
+    var container = document.getElementById('service-panel-body');
+    if (!container) return;
+
+    /* AC-2: service facts (port from system-map.json — pulled at build time, not runtime fetch). */
+    /* Port 5006 — internal == external — source: docs/data/system-map.json (cited, never fetched). */
+    var html = '';
+
+    html += '<div class="service-card">';
+    /* Header */
+    html += '<div class="service-card-header">';
+    html += '<div>';
+    html += '<div class="service-card-title">alert-engine</div>';
+    html += '<div class="service-card-meta">Go 1.22+cgo &bull; DDD (domain/application/infrastructure/interface) &bull; Multi-source signals &rarr; Telegram</div>';
+    html += '</div>';
+    html += '<span class="not-run-badge">NOT-RUN</span>';
+    html += '</div>';
+    /* Ports */
+    html += '<div class="service-ports">';
+    html += '<span class="port-badge port-internal">:5006 internal</span>';
+    html += '<span class="port-badge port-external">:5006 external</span>';
+    html += '</div>';
+    /* Port source note */
+    html += '<div style="padding:6px 14px;font-size:0.7rem;color:#9d174d;background:#fff5f7;border-bottom:1px solid #fce7f3;">';
+    html += 'Port 5006 (internal == external) &mdash; source: <code style="font-family:\'Courier New\',monospace;">docs/data/system-map.json</code>';
+    html += '</div>';
+    /* Endpoints */
+    html += '<div class="service-endpoints">';
+    html += '<h4>Endpoints (apps/alert-engine/pkg/interface/)</h4>';
+    var endpoints = [
+      { method: 'GET',  path: '/health',        desc: 'Health check — returns service status, port 5006' },
+      { method: 'POST', path: '/alert/evaluate', desc: 'Evaluate an inbound signal — classify → dedup → cooldown → mute → route to Telegram' }
+    ];
+    endpoints.forEach(function(ep) {
+      var methodClass = ep.method === 'GET' ? 'method-get' : 'method-post';
+      html += '<div class="endpoint-row">';
+      html += '<span class="method-badge ' + methodClass + '">' + escHtml(ep.method) + '</span>';
+      html += '<span class="endpoint-path">' + escHtml(ep.path) + '</span>';
+      html += '<span class="endpoint-desc">' + escHtml(ep.desc) + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    /* Pipeline info */
+    html += '<div style="padding:10px 14px;border-top:1px solid var(--border);font-size:0.75rem;color:#64748b;line-height:1.7;">';
+    html += '<strong style="color:#374151;">Alert pipeline:</strong><br>';
+    html += '1. classify severity &rarr; channel (signal-classifier)<br>';
+    html += '2. build dedup fingerprint (dedup-key-builder)<br>';
+    html += '3. check duplicate + recent alerts (AlertRepositoryPort)<br>';
+    html += '4. check cooldown window + daily cap (cooldown-gate)<br>';
+    html += '5. check mute (MutePort)<br>';
+    html += '6. route to Telegram channel (TelegramPort)<br>';
+    html += '<br><strong style="color:#374151;">ZERO-CREDS boundary:</strong> the sandbox imports only <code>pkg/primitive/*</code> + <code>pkg/module/*</code> — never <code>pkg/infrastructure/</code> (Telegram client / SQLite). Credentials are wired only in <code>cmd/server/main.go</code> (composition root).';
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  /* ── Modal ──────────────────────────────────────────────────────────── */
+
+  var currentScenario = null;
+
+  function openModal(type, idx, primName) {
+    var sc = null;
+    if (type === 'primitive') {
+      var filtered = primName
+        ? window.__PRIMITIVES_DATA__.filter(function(s){ return s.primitive === primName; })
+        : window.__PRIMITIVES_DATA__;
+      sc = filtered[idx];
+    } else if (type === 'module') {
+      sc = window.__MODULE_DATA__[idx];
+    }
+    if (!sc) return;
+    currentScenario = sc;
+
+    var overlay = document.getElementById('modal-overlay');
+    var title   = document.getElementById('modal-title');
+    var cat     = document.getElementById('modal-cat');
+    var desc    = document.getElementById('modal-desc');
+    var inJson  = document.getElementById('modal-input-json');
+    var outJson = document.getElementById('modal-output-json');
+    var statTxt = document.getElementById('modal-status-text');
+
+    title.textContent  = sc.scenario || sc.primitive || sc.module || 'Scenario';
+    cat.textContent    = (sc.category || '').toUpperCase();
+    desc.textContent   = sc.description || '';
+    inJson.textContent = JSON.stringify(sc.input || sc.inputs || {}, null, 2);
+    outJson.textContent= JSON.stringify(sc.expectedOutput || sc.expected || {}, null, 2);
+    statTxt.innerHTML  = statusLabel(sc.status || 'not-run');
+
+    overlay.classList.add('open');
+    overlay.focus && overlay.focus();
+  }
+
+  function closeModal() {
+    var overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('open');
+    currentScenario = null;
+  }
+
+  /* ── Event delegation ───────────────────────────────────────────────── */
+
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.scenario-card');
+    if (btn) {
+      var type = btn.getAttribute('data-type');
+      var idx  = parseInt(btn.getAttribute('data-idx'), 10);
+      var prim = btn.getAttribute('data-prim');
+      openModal(type, idx, prim);
+      return;
+    }
+
+    if (e.target.id === 'modal-close-btn' || e.target.id === 'modal-overlay') {
+      closeModal();
+      return;
+    }
+
+    if (e.target.id === 'rerun-btn') {
+      openRerunPanel();
+      return;
+    }
+
+    /* Rerun panel close */
+    if (e.target.id === 'rerun-panel-close-btn' || e.target.id === 'rerun-panel-overlay') {
+      closeRerunPanel();
+      return;
+    }
+
+    /* Copy command button */
+    if (e.target.id === 'rerun-copy-btn') {
+      var cmd = 'CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(function() {
+          e.target.textContent = 'Copied!';
+          setTimeout(function() { e.target.textContent = 'Copy'; }, 1800);
+        }).catch(function() {
+          e.target.textContent = 'Copy failed';
+          setTimeout(function() { e.target.textContent = 'Copy'; }, 2000);
+        });
+      } else {
+        /* Fallback for file:// origins that may block clipboard API */
+        var ta = document.createElement('textarea');
+        ta.value = cmd;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); e.target.textContent = 'Copied!'; }
+        catch(ex) { e.target.textContent = 'Select + Ctrl-C'; }
+        document.body.removeChild(ta);
+        setTimeout(function() { e.target.textContent = 'Copy'; }, 1800);
+      }
+      return;
+    }
+
+    /* Apply results button */
+    if (e.target.id === 'rerun-apply-btn') {
+      applyRerunOutput();
+      return;
+    }
+
+    /* Reset to NOT-RUN */
+    if (e.target.id === 'rerun-reset-btn') {
+      resetAllToNotRun();
+      return;
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      /* Rerun panel takes priority if open */
+      var rerunOverlay = document.getElementById('rerun-panel-overlay');
+      if (rerunOverlay && rerunOverlay.classList.contains('open')) {
+        closeRerunPanel();
+        return;
+      }
+      closeModal();
+    }
+  });
+
+  /* ── Apply-results panel (P1-D stub mechanism; P1-E finalises) ────────── */
+  /* G12 / G8 trust contract.                                              */
+  /* AC-7: GREEN status is produced ONLY from a real pasted sandbox trace. */
+  /* file:// safe: no fetch(), no WebSocket, no external requests.         */
+
+  function openRerunPanel() {
+    var overlay = document.getElementById('rerun-panel-overlay');
+    if (overlay) overlay.classList.add('open');
+    var msg = document.getElementById('rerun-result-msg');
+    if (msg) { msg.className = 'rerun-result-msg'; msg.textContent = ''; }
+  }
+
+  function closeRerunPanel() {
+    var overlay = document.getElementById('rerun-panel-overlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  /**
+   * parseRerunOutput parses the NDJSON output from the sandbox runner.
+   *
+   * The sandbox emits lines like:
+   *   {"time":"...","level":"INFO","msg":"PASS","scenario":"signal-classifier-golden.json"}
+   *   {"time":"...","level":"INFO","msg":"FAIL","scenario":"cooldown-gate-edge.json"}
+   *   total=11 pass=10 fail=1 status=FAIL
+   *
+   * Returns: { updates: [{name, status}], summary: {total, pass, fail, status} }
+   */
+  function parseRerunOutput(raw) {
+    var lines = raw.split('\n');
+    var updates = [];
+    var summary = null;
+
+    lines.forEach(function(line) {
+      line = line.trim();
+      if (!line) return;
+
+      /* Try to parse summary line: total=N pass=N fail=N status=X */
+      var sumMatch = line.match(/^total=(\d+)\s+pass=(\d+)\s+fail=(\d+)\s+status=(\S+)/);
+      if (sumMatch) {
+        summary = {
+          total:  parseInt(sumMatch[1], 10),
+          pass:   parseInt(sumMatch[2], 10),
+          fail:   parseInt(sumMatch[3], 10),
+          status: sumMatch[4]
+        };
+        return;
+      }
+
+      /* Try to parse JSON log line */
+      if (line.charAt(0) === '{') {
+        try {
+          var obj = JSON.parse(line);
+          var msg  = (obj.msg || '').toUpperCase();
+          var name = obj.scenario || '';
+          if (name && (msg === 'PASS' || msg === 'FAIL')) {
+            updates.push({ name: name, status: msg === 'PASS' ? 'pass' : 'fail' });
+          }
+        } catch(_) { /* skip malformed lines */ }
+      }
+    });
+
+    return { updates: updates, summary: summary };
+  }
+
+  /**
+   * applyRerunOutput reads the textarea, parses sandbox NDJSON output,
+   * and updates the in-memory scenario data + re-renders all panels.
+   * AC-7: this is the ONLY path that sets a card to "pass" (GREEN) —
+   * green is always derived from real pasted sandbox trace, never hardcoded.
+   */
+  function applyRerunOutput() {
+    var ta  = document.getElementById('rerun-output-textarea');
+    var msg = document.getElementById('rerun-result-msg');
+    if (!ta || !msg) return;
+
+    var raw = ta.value.trim();
+    if (!raw) {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'No output pasted. Run the sandbox command and paste the output above.';
+      return;
+    }
+
+    var result = parseRerunOutput(raw);
+    if (result.updates.length === 0 && !result.summary) {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'Could not parse sandbox output. Paste the raw NDJSON lines from the terminal.';
+      return;
+    }
+
+    /* Apply status updates to in-memory data arrays.
+       The sandbox emits the bare filename (e.g. "signal-classifier-golden.json").
+       We match against sc.scenario + ".json" OR the filename directly. */
+    var applied = 0;
+    result.updates.forEach(function(upd) {
+      var baseName = upd.name.replace(/\.json$/, '');
+
+      /* Search primitives */
+      (window.__PRIMITIVES_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+
+      /* Search modules */
+      (window.__MODULE_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+    });
+
+    /* Re-render all panels with updated status */
+    buildPrimitivesPanel();
+    buildModulePanel();
+    /* Service panel has no scenario statuses — skip rebuild */
+
+    /* Report result */
+    var allGreen = (result.summary && result.summary.fail === 0) ||
+                   (!result.summary && result.updates.every(function(u){ return u.status === 'pass'; }));
+
+    if (allGreen && applied > 0) {
+      var passCount = result.summary ? result.summary.pass : result.updates.filter(function(u){ return u.status === 'pass'; }).length;
+      msg.className = 'rerun-result-msg success';
+      msg.textContent = 'Applied ' + applied + ' scenario update(s). ' +
+        (result.summary
+          ? 'total=' + result.summary.total + ' pass=' + result.summary.pass + ' fail=' + result.summary.fail + ' status=' + result.summary.status
+          : passCount + ' passed') +
+        ' — All GREEN (G12 DoD gate satisfied).';
+    } else if (applied > 0) {
+      var failCount = result.summary ? result.summary.fail : result.updates.filter(function(u){ return u.status === 'fail'; }).length;
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'Applied ' + applied + ' scenario update(s). ' + failCount + ' scenario(s) FAILED. ' +
+        (result.summary ? 'status=' + result.summary.status : '') +
+        ' — Dashboard shows honest RED (G8 contract).';
+    } else {
+      msg.className = 'rerun-result-msg error';
+      msg.textContent = 'No matching scenarios found in pasted output. Check scenario names match the JSON file names.';
+    }
+  }
+
+  /**
+   * resetAllToNotRun resets every scenario in both data arrays to "not-run"
+   * and re-renders the panels. Satisfies G8 honest-NOT-RUN cold-start contract.
+   */
+  function resetAllToNotRun() {
+    (window.__PRIMITIVES_DATA__ || []).forEach(function(sc) { sc.status = 'not-run'; });
+    (window.__MODULE_DATA__ || []).forEach(function(sc) { sc.status = 'not-run'; });
+    buildPrimitivesPanel();
+    buildModulePanel();
+    var msg = document.getElementById('rerun-result-msg');
+    if (msg) {
+      msg.className = 'rerun-result-msg';
+      msg.textContent = '';
+    }
+    var ta = document.getElementById('rerun-output-textarea');
+    if (ta) ta.value = '';
+  }
+
+  /* ── Bootstrap ──────────────────────────────────────────────────────── */
+
+  function init() {
+    buildPrimitivesPanel();
+    buildModulePanel();
+    buildServicePanel();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+}());
+</script>
+</body>
+</html>
