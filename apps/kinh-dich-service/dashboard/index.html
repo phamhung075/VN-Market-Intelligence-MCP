@@ -918,9 +918,9 @@ footer {
   <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (cold start &mdash; honest)</span>
-  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
-  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
-  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">Valid Input</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">Edge Case</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">Bad Input &rarr; Error</span> Invalid input &rarr; expected error (test PASSES)</span>
 </div>
 
 <!-- ============================================================ RERUN COMMAND BLOCK (AC-2) -->
@@ -1394,6 +1394,23 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// ---------------------------------------------------------------------------
+// Category display label map — maps internal category keys to human-readable
+// labels shown on chips. The underlying JSON `category` field values
+// (golden/edge/failure) are the data SSOT and are NOT changed.
+// ---------------------------------------------------------------------------
+const CATEGORY_LABELS = {
+  golden: "Valid Input",
+  edge: "Edge Case",
+  failure: "Bad Input → Error",
+};
+
+/** Returns human-readable category label for display */
+function catLabel(cat) {
+  if (cat && CATEGORY_LABELS[cat]) return CATEGORY_LABELS[cat];
+  return CATEGORY_LABELS["failure"];
+}
+
 function dotClass(status) {
   if (status === 'pass') return 'dot-green';
   if (status === 'fail') return 'dot-red';
@@ -1457,7 +1474,7 @@ function renderPrimitives() {
             <span class="scenario-name">${escHtml(s.scenario)}</span>
             <span class="scenario-desc">${escHtml(s.description)}</span>
           </span>
-          <span class="category-chip ${catClass}">${escHtml(s.category)}</span>
+          <span class="category-chip ${catClass}">${escHtml(catLabel(s.category))}</span>
         </button>
       `;
     });
@@ -1516,7 +1533,7 @@ function renderModules() {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <span class="scenario-status-dot ${dotClass(s.status)}" id="mod-dot-${idx}" style="width:12px;height:12px;border-radius:50%;"></span>
-            <span class="category-chip ${catClass}">${escHtml(s.category)}</span>
+            <span class="category-chip ${catClass}">${escHtml(catLabel(s.category))}</span>
           </div>
         </div>
         <div class="module-primitives-tag">
@@ -1677,7 +1694,7 @@ function openModal(type, idx) {
   const catEl = document.getElementById('modal-cat');
   const catClass = 'cat-' + scenario.category;
   catEl.className = 'modal-category category-chip ' + catClass;
-  catEl.textContent = scenario.category.toUpperCase();
+  catEl.textContent = catLabel(scenario.category);
 
   document.getElementById('modal-desc').textContent = scenario.description;
 
