@@ -6,6 +6,29 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-C — G4 Fence-A Deliberate Violation Proof DONE
+
+**Task:** P2-C — inject Fence-A violation, prove non-zero exit, revert, confirm clean.
+
+**Outcome:** All 4 dev-owned ACs PASS (AC-4 = QA step). Signal emitted. Evidence committed.
+
+**Key facts:**
+- Injected: `import _ "github.com/mattn/go-sqlite3"` into `pkg/primitive/signal-classifier/classifier.go`
+- golangci-lint exit 1; output: `fence-a` rule named, file named, import named — proof the fence is live.
+- Reverted with `git checkout -- <exact-file>` (no `git checkout .` — background agents' dirty files untouched).
+- Post-revert lint: exit 0, 0 issues.
+- git status --short | grep pkg/primitive → empty (violation never staged/committed).
+- Sandbox: total=11 pass=11 fail=0 status=OK exit 0.
+- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc intact.
+- goalsEarned / decisionMatrix not touched.
+- Background files NOT touched: apps/alert-engine/dashboard/index.html (other agent), apps/stock-price/dashboard/index.html (other agent).
+
+**Commit:** evidence commit (handoff + signal + notebook). No source code committed.
+**Signal:** docs/signals/dev-ae-P2-C-done-20260524T085936Z.json
+**Next:** qa for AC-4 (dedup-key-builder independent reproduction) → P2-D freeze anchor.
+
+---
+
 ### 2026-05-24 Dashboard category chip relabel — "Plain meaning" convention applied
 
 **Task:** Relabel category chips on alert-engine Scenario Trust Dashboard to fleet-wide Plain Meaning convention.

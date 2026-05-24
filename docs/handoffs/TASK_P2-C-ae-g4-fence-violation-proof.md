@@ -6,7 +6,7 @@ phase: "2"
 owner: "dev-alert-engine (violation creator) + qa (independent reproduction)"
 blocked_by: "P2-B DONE (.golangci.yml exists + golangci-lint exits 0 on clean source)"
 blocks: "P2-D"
-status: "READY"
+status: "DONE"
 sequenced_at: "2026-05-24T085000Z"
 ac_count: 5
 goal_advanced: "G4 (full enforcement proof)"
@@ -213,19 +213,39 @@ Paste sandbox output summary (≥11 scenarios PASS, exit 0).
 This section will be populated by dev-alert-engine during task execution:
 
 ### §Evidence — AC-1 Violation Run
+
+Injected file: `apps/alert-engine/pkg/primitive/signal-classifier/classifier.go`
+Layer: `pkg/primitive/` (Fence-A)
+Violation import: `import _ "github.com/mattn/go-sqlite3"`
+
 ```
-[Paste full golangci-lint output from Step 2 — non-zero exit, fence-a name, file path]
+pkg/primitive/signal-classifier/classifier.go:13:8: import 'github.com/mattn/go-sqlite3' is not allowed from list 'fence-a': Fence-A: primitive must not import mattn/go-sqlite3 (CGO) (depguard)
+import _ "github.com/mattn/go-sqlite3" // DELIBERATE FENCE-A VIOLATION — P2-C proof, revert immediately
+       ^
+1 issues:
+* depguard: 1
+EXIT_CODE=1
 ```
 
+Fence-A fired. Non-zero exit confirmed. Rule name `fence-a` present in output. Violating file named.
+
 ### §Evidence — AC-2 Clean Run
+
+After `git checkout -- apps/alert-engine/pkg/primitive/signal-classifier/classifier.go`:
+
 ```
-[Paste full golangci-lint output from Step 4 — exit 0]
+0 issues.
+EXIT_CODE=0
 ```
 
 ### §Evidence — AC-3 Status Check
+
 ```
-[Paste git status --short output — should be clean/empty]
+git status --short | grep "pkg/primitive"  →  (empty — clean)
+git diff --stat HEAD apps/alert-engine/pkg/primitive/signal-classifier/classifier.go  →  (empty — no change)
 ```
+
+Violation was NEVER staged or committed. Tree is byte-identical to pre-injection state.
 
 ### §Evidence — QA Reproduction
 ```
@@ -233,8 +253,21 @@ This section will be populated by dev-alert-engine during task execution:
 ```
 
 ### §Evidence — AC-5 Sandbox
+
 ```
-[Paste sandbox output — 11/11 PASS, exit 0]
+{"time":"2026-05-24T08:59:36.003513+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-edge.json"}
+{"time":"2026-05-24T08:59:36.004156+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-failure.json"}
+{"time":"2026-05-24T08:59:36.004804+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-golden.json"}
+{"time":"2026-05-24T08:59:36.005216+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-edge.json"}
+{"time":"2026-05-24T08:59:36.005456+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-failure.json"}
+{"time":"2026-05-24T08:59:36.005885+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-golden.json"}
+{"time":"2026-05-24T08:59:36.006318+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-edge.json"}
+{"time":"2026-05-24T08:59:36.006719+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-failure.json"}
+{"time":"2026-05-24T08:59:36.007099+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-golden.json"}
+{"time":"2026-05-24T08:59:36.007879+02:00","level":"INFO","msg":"PASS","scenario":"alert-pipeline-edge.json"}
+{"time":"2026-05-24T08:59:36.008365+02:00","level":"INFO","msg":"PASS","scenario":"alert-pipeline-golden.json"}
+total=11 pass=11 fail=0 status=OK
+EXIT_CODE=0
 ```
 
 ---
