@@ -1,0 +1,11 @@
+{
+  "primitive": "validate_financial_figures",
+  "inputs": {
+    "total_assets": -100.0,
+    "total_equity": 4000.0,
+    "total_liabilities": 6000.0,
+    "operating_margin": 0.10,
+    "net_revenue": 2000.0
+  },
+  "expected": 0.0
+}
