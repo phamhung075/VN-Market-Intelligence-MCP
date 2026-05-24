@@ -1,6 +1,7 @@
-// cmd/server — alert-engine entry point.
+// cmd/server — alert-engine composition root.
 // Port 5006 (NFR-4). Graceful shutdown on SIGINT/SIGTERM (NFR-6).
-// CGO required (mattn/go-sqlite3).
+// CGO required (mattn/go-sqlite3). Fence-C: only this file may import
+// pkg/infrastructure or mattn/go-sqlite3.
 package main
 
 import (
@@ -14,8 +15,10 @@ import (
 	"time"
 
 	"github.com/vn-market-intelligence/alert-engine/pkg/application"
+	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
 	"github.com/vn-market-intelligence/alert-engine/pkg/infrastructure"
 	httphandler "github.com/vn-market-intelligence/alert-engine/pkg/interface/http"
+	alertpipeline "github.com/vn-market-intelligence/alert-engine/pkg/module/alert_pipeline"
 )
 
 func main() {
@@ -48,12 +51,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Build ports
+	// Wire infra adapters — Fence-C: only the composition root injects these.
 	alertRepo := infrastructure.NewSQLiteAlertRepository(db)
 	muteRepo := infrastructure.NewSQLiteMuteRepository(db)
 	telegram := infrastructure.NewTelegramClient(cfg)
 
-	// Build use case
+	// Wire alert_pipeline module — G3: primary orchestrator, injected ports.
+	_ = alertpipeline.New(alertRepo, muteRepo, telegram, domain.DefaultCooldownConfig)
+
+	// Wire use case (HTTP handler delegates here; shares infra adapters).
 	uc := application.NewEvaluateAlertUseCase(alertRepo, muteRepo, telegram)
 
 	// Build HTTP router

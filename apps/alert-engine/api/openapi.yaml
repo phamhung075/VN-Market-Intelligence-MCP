@@ -1,0 +1,151 @@
+openapi: "3.0.0"
+info:
+  title: alert-engine
+  version: "1.0.0"
+  description: "Alert pipeline microservice (port 5006). Evaluates multi-source signals with deduplication, cooldown, and Telegram routing."
+servers:
+  - url: http://localhost:5006
+    description: "Local alert-engine server"
+paths:
+  /health:
+    get:
+      summary: "Health check"
+      description: "Returns service liveness status. Used by Docker healthcheck and load balancers."
+      responses:
+        "200":
+          description: "Service is healthy"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - service
+                  - port
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  service:
+                    type: string
+                    example: "alert-engine"
+                  port:
+                    type: integer
+                    example: 5006
+  /evaluate:
+    post:
+      summary: "Evaluate alert pipeline"
+      description: "Runs the full alert pipeline: classify severity, fingerprint, dedup check, cooldown gate, mute check, Telegram routing."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluateAlertRequest"
+      responses:
+        "200":
+          description: "Alert evaluation result (fired or suppressed)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluateAlertResponse"
+        "400":
+          description: "Invalid request body — malformed JSON or missing required fields"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal error during evaluation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    EvaluateAlertRequest:
+      type: object
+      required:
+        - stock
+        - severity
+        - message
+      properties:
+        stock:
+          type: string
+          description: "Stock ticker symbol (trimmed and uppercased server-side)"
+          example: "VCB"
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+          description: "Alert severity level"
+          example: "high"
+        message:
+          type: string
+          description: "Human-readable alert message"
+          example: "Price broke 30-day support"
+        signalTypes:
+          type: array
+          items:
+            type: string
+          description: "Signal sources that triggered this alert (e.g. ta, bb, macro, news)"
+          example:
+            - "ta"
+            - "bb"
+        actionCode:
+          type: string
+          description: "Optional action code for cooldown grouping"
+          example: "SELL_SIGNAL"
+        sendTelegram:
+          type: boolean
+          description: "Whether to route alert to Telegram channel"
+          default: false
+    EvaluateAlertResponse:
+      type: object
+      required:
+        - fired
+        - cooldown_sec
+        - reason
+        - fingerprint
+        - alert_id
+        - code
+        - telegram_sent
+      properties:
+        fired:
+          type: boolean
+          description: "True if the alert passed all gates and was recorded"
+        cooldown_sec:
+          type: integer
+          description: "Cooldown window in seconds applied to this stock"
+          example: 1800
+        reason:
+          type: string
+          description: "Human-readable reason for the evaluation outcome"
+          example: "alert fired"
+        fingerprint:
+          type: string
+          description: "Deduplication fingerprint computed from stock + signalTypes + message"
+          example: "a1b2c3d4"
+        alert_id:
+          type: string
+          description: "Persisted alert row ID (empty string when not fired)"
+          example: "42"
+        code:
+          type: string
+          description: "Echo of the normalised stock code"
+          example: "VCB"
+        telegram_sent:
+          type: boolean
+          description: "True if the alert was dispatched to Telegram"
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: "Error description"
+          example: "stock is required"
