@@ -4,6 +4,30 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-05-24 — TASK P2-K2 (G9 Playwright headless trust contract — LAST Phase 2 task)
+
+**Spec:** `apps/rag-service/dashboard/trust-contract.spec.mjs` (standalone Playwright .mjs, mirrors kinh-dich dash-check.mjs pattern)
+**Result:** `apps/rag-service/dashboard/trust-contract-result.json` — PASS
+**Screenshot:** `apps/rag-service/dashboard/trust-contract-screenshot.png`
+
+**VERDICT (LIVE Playwright run, Chromium 147.0.7727.15, playwright-core from apps/mcp-server/node_modules):**
+- panels_ok: true (3/3 panels rendered)
+- primitive_cards_count: 5/5 all GREEN (similarity-scorer, relevance-threshold-gate, temporal-decay-scorer, top-k-selector, context-window-packer)
+- module_ok: true (retrieval GREEN)
+- microservice_not_run: true (honest NOT-RUN)
+- colors_match_traces: true — proved via page.route() DOM patch: similarity-scorer trace patched to passed=false in-memory → card showed FAIL (RED). File on disk NOT modified. Transient, never committed.
+- console_errors: 0
+- network_calls: 0
+- verdict: PASS
+
+**G12 DoD (final):** 16/16 primitive sandbox GREEN, 2/2 module sandbox GREEN, 81/81 pytest, env audit empty.
+
+**Commits:** `fa1b7773` (spec + result, via concurrent pdf-extractor agent pick-up), `4c0c0edb` (screenshot + commitSHA fix)
+
+**P2-K2 status:** DONE. All Phase 2 tasks complete (P2-B1 through P2-K2). G9 PASS verdict live. NEXT: PO does G9 Path-B sign-off + terminal 12/12 atomic close + decisionMatrix.
+
+---
+
 ### [ARCHIVED] 2026-05-20 — watchdog-3/watchdog-10 (model pre-bake + mkdir cleanup)
 
 Pre-baked `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` into Dockerfile at `/opt/model-cache`. HF_HUB_OFFLINE=1 enforced. Removed dead `/app/data/models` mkdir. Cold-start <20s. 41/41 tests GREEN. Commits: watchdog-3 + watchdog-10.
@@ -118,3 +142,24 @@ Pre-baked `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` into Doc
 - Commit: `8a410685` | sandbox: 16/16+2/2 GREEN | pytest: 81/81 | env audit: empty
 
 **Final zone health (P2-G7+P2-A cycle):** 81/81 tests GREEN, 16/16+2/2 sandbox GREEN, 25/25 dash-check PASS, env audit empty. Fence: 3 contracts KEPT. Next: QA does P2-A violation proof + P2-G8 deliberate-break proof.
+
+---
+
+### 2026-05-24 — TASK P2-J (G10 AI-fixability blind fix — SCALE pilot)
+
+**Bug injected at commit `12d2381c`:** `results[k:]` (tail slice) in `top_k_selector.py` line 30. Should be `results[:k]` (head slice). Returning items AFTER first k instead of first k items.
+
+**Diagnosis path:** sandbox primitive tier immediately showed 3 `top_k_selector` failures. All 3 scenarios returned empty or tail-only results. Single source read confirmed the inversion.
+
+**Fix:** `results[k:]` → `results[:k]` in `domain/primitive/top_k_selector/top_k_selector.py` line 30.
+
+**Coupled repair:** Dashboard inline traces in `index.html` and `.json` trace files were captured from the bugged run — regenerated both `top_k_selector_golden.json` and `module_full_golden.json` via `--output` flag, then updated inline `<script type="application/json">` blocks in `index.html`.
+
+**Commit:** `695947d6` | Cycle count: **1** (single commit, full GREEN)
+
+**G12 DoD (P2-J):**
+- primitive tier: 16/16 GREEN
+- module tier: 2/2 GREEN (coupled scenario also GREEN — root cause fixed)
+- pytest: 81/81 (unchanged count)
+- dash-check: 24/24 PASS, exit 0
+- env-audit: empty
