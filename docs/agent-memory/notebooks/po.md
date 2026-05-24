@@ -1,49 +1,40 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-67 (FLEET-ROLLOUT decision post stock-price terminal)
-**Last update:** 2026-05-24T02:35:38Z
-**Status:** 4 fleet-rollout rulings DECIDED. 3 architect workstreams dispatched (ordered). Interim single-committer serialization RATIFIED. Anchor debba8ea intact.
+**Cycle:** c282 cycle-68 (kinh-dich Phase-3 TERMINAL 12/12 atomic close)
+**Last update:** 2026-05-24T05:00:08Z
+**Status:** kinh-dich (pilot-4) CLOSED DONE verdict=scale — SECOND terminal pilot this session (after stock-price). Anchor debba8ea intact. Frozen tags untouched.
 
 ---
 
-## This cycle (cycle-67) — fleet-rollout sprint-plan after pilot-3 (stock-price) DONE 12/12
+## This cycle (cycle-68) — kinh-dich Phase-3 atomic close
 
-**Decision doc:** `docs/po-decisions/2026-05-24-fleet-rollout-post-pilot3-terminal.md`
-**Signals:** 4 (all next_actor mostly architect):
-- `po-20260524T023538Z-kinh-dich-phase2-authorize.json` (order 1, architect)
-- `po-20260524T023538Z-alert-engine-pilot5-charter.json` (order 2, architect)
-- `po-20260524T023538Z-commit-mutex-structural-fix-commission.json` (order 3, architect, design-only/no-WIP)
-- `po-20260524T023538Z-fleet-rollout-record.json` (main-router record)
-**Commit:** see carry-over (this notebook + decision doc + 4 signals).
+**Commit:** `4b48f3b0` (atomic, 3 files: SSOT + decision doc + signal).
+**SSOT:** `docs/data/pilot-status-kinh-dich.json` → status=DONE, phase=3, goalsEarned=12, all 12 YES, decisionMatrix=scale.
+**Decision doc:** `docs/po-decisions/2026-05-24-kinh-dich-phase3-terminal-12of12-close.md`
+**Signal:** `docs/signals/po-kinh-dich-phase3-terminal-close-20260524T050008Z.json` (next_actor: main-router).
 
-### The 4 rulings
-1. **WIP=2:** kinh-dich (advance Phase-2, keeps slot) + alert-engine (charter pilot-5 into freed slot) = 2 ACTIVE at cap.
-2. **kinh-dich Phase-2 AUTHORIZED.** SI-3 gate RESOLVED — it was a STALE charter-time prereq (SI-3 done 2026-05-23T22:03 commit 388703b7, BEFORE pilot-4 opened 22:37; G4 AC already transcribed in SSOT). Phase-2's actual gate = Phase-1 close-gate, which PASSED (phase1.status=APPROVED, QA 34205c87). → architect drafts phase-2-task-plan-ts.md.
-3. **alert-engine pilot-5 CHARTER NOW.** HOLD unblocked by stock-price terminal. Go, port 5006, depguard (zero new tooling), G7 zero-creds (no Telegram creds) is THE hard gate. → architect authors charter + SSOT.
-4. **Index-race:** RATIFY interim single-committer serialization (proven safe). COMMISSION commit-mutex-on-main structural fix; REJECT worktrees (need branches = hard-constraint violation). → architect 00-design.md.
+### Honest 12/12 audit (NOT rubber-stamped)
+Re-ran sandbox live (17/17 GREEN exit 0) + git/fs verified independent of handoff claims. All 12 genuinely earned. Two honest caveats preserved inline (not papered over):
+- **G4:** P2-KD-B `267446e6` was a FALSE-GREEN (3 silent bugs); genuinely enforcing only at P2-KD-C `205aa5cf`; frozen P2-KD-D.
+- **G11:** module-tier scenarios are structural-fallback PASS in runner.ts L533 (no live invocation) → cross-tier cascade did NOT fire. Proven alarm = primitive-tier coupling. Graded YES at SAME bar TA cycle-17 + macro cycle-57 closed verdict=scale. Fleet recommendation logged: make module scenarios live-invoke in future pilots.
 
-### Infra rows OUT of factory scope
-api-gateway (routing, no domain), frontend (dashboard consumer), mcp-server (separate megabarrel track). In-scope pilots = function-bearing domain services.
+### decisionMatrix (mechanical)
+speed=YES (G10∧G11) · trust=YES (G9 PASS∧G8) · scale=YES (12 YES ∧ sprintCount=3≤6) → 3×YES = **scale**.
+sprintCount=3 honest (Phase0=1, Phase1=2, Phase2=3; all in 2026-05-24 window; ≤6 budget).
+
+### Integrity gate
+`OK — 12/12 YES, dm populated` (run twice — after edits + after populatedInCommit backfill). No dup keys.
 
 ### Discipline
-Authored NO pilot SSOT (no goal flip, no decisionMatrix — §4.5 terminal-only). No closed app source touched. PO can't spawn — signals name next_actor. L84 explicit-path stage; index clean pre-stage; NEVER git reset HEAD foreign paths. No --force/--no-verify/push. Anchor debba8ea ancestor (exit 0). All on main.
+PO-authored PM SSOT per Charter §4.5 terminal exception (the one sanctioned PO-write). Atomic ONE commit, no --amend. L84 explicit-path stage; index clean pre-stage; never git reset HEAD foreign. No --force/--no-verify/--no-gpg-sign/push. All on main. Anchor debba8ea ancestor (exit 0). Tags pre-ci/-delete/-inject unchanged. Note: docs/data is .gitignore'd but SSOT already tracked → plain git add staged it as modification (force not needed).
 
 ---
 
-## cycle-68 — P2-KD-L G9 dashboard-trust EVIDENCE (kinh-dich pilot-4, Path B Playwright)
-- **Path B headless chromium run = clean.** console=0, pageerror=0, requestfailed=0.
-- Selectors: dashboard has **NO data-testid** (handoff examples stale). Used real classes: `.scenario-card` (15), `.module-card` (2), `.service-card` (1); `h2:has-text` panels (3=1 each); `.scenario-status-dot.dot-green/.dot-red/.dot-pending`; `#prim/mod-notrun-chip`; `.group-status`.
-- 17 status dots (15 prim + 2 module = SSOT) ALL `dot-pending`. green=0 red=0 → **zero false greens**. 5 group labels all NOT-RUN. Chips "15/2 NOT-RUN".
-- **4 ACs all PASS** → G9 overall **PASS (no RED findings)**.
-- npx-module gotcha: `0b9ff77…` expects chromium rev 1179 (absent) → fail; `e41f203…` aligns w/ cached 1217/1223 → works. NODE_PATH+PLAYWRIGHT_BROWSERS_PATH set; `.cjs` require.
-- §4.5: G9 evidence ONLY, NOT flipped. Did NOT edit PM SSOT pilot-status-kinh-dich.json. /tmp runner deleted. Committed ONLY decision doc + signal. Anchor debba8ea ancestor.
-- Decision: `docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md`. Signal: `po-kinh-dich-P2-KD-L-g9-done-20260524T043545Z.json` (next_actor pm → P2-KD-M).
-
----
-
-## Carry-over (NEXT actor = main-router → architect ×3, ordered)
-- **Order 1:** architect → `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-ts.md` (mirror stock-price phase-2-task-plan-go.md).
-- **Order 2:** architect → `docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md` + `docs/data/pilot-status-alert-engine.json` (git add -f; gitignored).
-- **Order 3 (concurrent, no WIP slot):** architect → `docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md`. Interim serialization stays until this lands AND PO ratifies.
-- Next PO gates: kinh-dich Phase-2 close-gate; alert-engine Phase-0 exit gate; commit-mutex brief ratification. P2-F record = evidence addendum (no re-grade).
-- WIP=2 at cap → pilot-6 (news-fetch, needs SI-5) and pilots 7/8 (Python, need SI-4) stay HELD until kinh-dich OR alert-engine reaches terminal.
+## Carry-over (next cycle)
+- **Fleet state:** stock-price (pilot-3) DONE + kinh-dich (pilot-4) DONE = 2 terminal this session, both verdict=scale. WIP=2 cap now has freed slots.
+- **next_actor: main-router** — remaining fleet:
+  1. **alert-engine (pilot-5, Go):** needs Phase-1 plan + execution (charter was commissioned cycle-67 via architect). G7 zero-creds (no Telegram creds) = hard gate.
+  2. **commit-mutex structural-fix brief:** interim single-committer serialization is a stopgap (ratified cycle-67); architect 00-design.md owed. Worktrees rejected (need branches).
+  3. **pilots 6-8:** news-fetch / pdf-extractor / rag-service — sequenced behind alert-engine.
+- Infra OUT of factory scope: api-gateway, frontend, mcp-server.
+- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must stay ancestor. Frozen pilot SSOTs (TA, macro, stock-price, now kinh-dich) = historical records, do NOT mutate.
