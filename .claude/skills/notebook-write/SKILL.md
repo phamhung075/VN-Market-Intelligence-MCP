@@ -53,11 +53,29 @@ Write(path=<notebook_path>, content="# <Agent> — Notebook\n\n## c<NNN> · <ISO
 ```
 This handles first-deploy and pre-existing plain-text notebooks gracefully (forward-only, no retro-write).
 
-### ≤200L bound (AC-5)
+### ≤200L bound (AC-5) — hard gate, non-optional
 
-If file would exceed 200L after write: prune one additional prior section.
-A notebook exceeding 200L after pruning signals a section-content discipline violation — trim the current section to ≤60L.
-Note: 200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L) is the primary enforcement lever.
+After every write (AC-3 Step 2), run the line-count gate before any commit:
+
+```bash
+NB_LINES=$(wc -l < "$NOTEBOOK_PATH" | tr -d ' ')
+if [ "$NB_LINES" -gt 200 ]; then
+  echo "[notebook-write] GUARD: $NB_LINES L > 200 — prune additional section now"
+  # Prune the next-oldest section (c<N-3> or whichever is oldest remaining):
+  #   Edit(file=<notebook_path>, old_string=<full ## c(oldest) block>, new_string="")
+  # Then re-check:
+  NB_LINES=$(wc -l < "$NOTEBOOK_PATH" | tr -d ' ')
+  if [ "$NB_LINES" -gt 200 ]; then
+    echo "[notebook-write] GUARD: still $NB_LINES L — trim current section to ≤60L"
+    # Shorten the current-cycle section content until file ≤200L.
+    # Do NOT skip this step. Do NOT commit until guard passes.
+  fi
+fi
+```
+
+**This gate is MANDATORY.** A notebook at >200 L after AC-3 = a blocking violation.
+Do NOT commit the notebook until `wc -l` returns ≤200.
+200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L) is the primary enforcement lever.
 
 ### Commit — retry on lock collision (F4)
 

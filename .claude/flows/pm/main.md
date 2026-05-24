@@ -33,7 +33,21 @@ WIP > 2 → hold and return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`.
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `pm`)
 
 **1. Read context**
-docs/TASKS.md (task numbering) | Architect proposal | recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
+
+```bash
+# TASKS.md line-count gate — run before any planning work
+TASKS_LINES=$(wc -l < "$PROJECT_ROOT/docs/TASKS.md" | tr -d ' ')
+if [ "$TASKS_LINES" -gt 80 ]; then
+  echo "[pm] TASKS.md at $TASKS_LINES L > 80 — invoking task-archive sub-flow before continuing"
+  # → Run sub-flow: .claude/flows/pm/task-archive.md, then resume here
+fi
+```
+
+docs/TASKS.md (task numbering) | Architect proposal | pm.md notebook (already read in Step 0b)
+
+**Notebooks:** Read `docs/agent-memory/notebooks/pm.md` only (done via Step 0b).
+If the architect handoff explicitly names another agent's notebook, read that one file only.
+**Do NOT glob `docs/agent-memory/notebooks/*.md`** — unbounded glob pulls all notebooks (~7k+ L).
 
 **2. Atomic tasks** — each must be: single file/fn group | clear AC | ~2h agent work | deps explicit
 
