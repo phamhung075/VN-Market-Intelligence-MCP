@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN Market Intelligence &mdash; Fleet Dashboard Index (SI-2)</title>
+  <!--
+    SI-2 Fleet Dashboard Index
+    Created by: dev-stock-price (P2-I — G6 finalization, Decision 3 exclusive ownership)
+    Created at: 2026-05-24
+    Source of truth for service list: docs/data/system-map.json
+    Port facts: queried from docs/data/system-map.json (not hardcoded in prose)
+    AC guarantees:
+      - Zero external CDN, zero network calls, zero fetch()
+      - Zero credentials, zero API keys, zero tokens
+      - Self-contained file:// accessible
+      - All 8+ service rows present (ACTIVE | ARCHIVED-CLOSED | NOT-YET-ACTIVE)
+  -->
+  <style>
+/* SI-2 Fleet Dashboard Index — dev-stock-price exclusive (Decision 3) */
+/* Design: zero framework, zero CDN, file:// safe, high-contrast          */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --amber: #92400e;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --muted: #6b7280;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1100px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.fleet-table-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.fleet-table-header {
+  padding: 16px 24px 12px;
+  background: #f8fafc;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fleet-table-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fleet-meta-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fleet-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+}
+
+.chip-active   { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-archived { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+.chip-pending  { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-ssot     { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+
+/* Fleet table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: #f1f5f9;
+}
+
+thead th {
+  padding: 10px 16px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  border-bottom: 1.5px solid var(--border);
+  text-align: left;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+tbody tr:last-child { border-bottom: none; }
+
+tbody tr:hover { background: #f8fafc; }
+
+td {
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  vertical-align: top;
+}
+
+.td-service {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.td-zone {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.td-port {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.td-dashboard a {
+  font-size: 0.76rem;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-family: 'Courier New', monospace;
+}
+
+.td-dashboard a:hover { text-decoration: underline; }
+
+.td-dashboard .no-dashboard {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.badge-active {
+  background: var(--green-bg);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+
+.badge-archived {
+  background: var(--amber-bg);
+  border-color: var(--amber-border);
+  color: var(--amber);
+}
+
+.badge-pending {
+  background: #f1f5f9;
+  border-color: #9ca3af;
+  color: #6b7280;
+}
+
+/* Legend */
+.legend {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #64748b;
+  align-items: center;
+}
+
+.legend strong { color: #374151; }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Source note */
+.source-note {
+  max-width: 1100px;
+  margin: 16px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+.source-note code {
+  font-family: 'Courier New', monospace;
+  background: #e2e8f0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.72rem;
+}
+
+footer {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>VN Market Intelligence &mdash; Fleet Dashboard Index</h1>
+  <p class="subtitle">
+    SI-2 Genesis &nbsp;&bull;&nbsp; One row per microservice in the fleet &nbsp;&bull;&nbsp; Status: ACTIVE | ARCHIVED-CLOSED | NOT-YET-ACTIVE
+  </p>
+  <p class="meta">
+    Created by: dev-stock-price (P2-I &mdash; G6 finalization, Decision 3 exclusive) &nbsp;&bull;&nbsp;
+    Service list sourced from: <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.72rem;">docs/data/system-map.json</code> &nbsp;&bull;&nbsp;
+    Open with <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.72rem;">file://</code> in any browser &mdash; no server required &nbsp;&bull;&nbsp;
+    Zero credentials &nbsp;&bull;&nbsp; Zero external fetch &nbsp;&bull;&nbsp; Zero CDN
+  </p>
+</header>
+
+<div class="fleet-table-wrapper">
+  <div class="fleet-table-header">
+    <h2>Microservices Fleet</h2>
+    <div class="fleet-meta-chips">
+      <span class="fleet-chip chip-active">1 ACTIVE</span>
+      <span class="fleet-chip chip-archived">2 ARCHIVED-CLOSED</span>
+      <span class="fleet-chip chip-pending">8 NOT-YET-ACTIVE</span>
+      <span class="fleet-chip chip-ssot">SSOT: system-map.json</span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Zone Path</th>
+        <th>Port (int / ext)</th>
+        <th>Dashboard</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- ================================================================ -->
+      <!-- ACTIVE: stock-price — the only pilot that has reached G6          -->
+      <!-- Per Decision 3: dev-stock-price is first to hit G6, owns SI-2.   -->
+      <!-- Dashboard: apps/stock-price/dashboard/index.html (exists on disk) -->
+      <!-- Port facts: port 5000 (internal) / 5010 (external) per system-map.json -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">stock-price</td>
+        <td class="td-zone">apps/stock-price</td>
+        <td class="td-port">5000&nbsp;/&nbsp;5010</td>
+        <td class="td-dashboard">
+          <!-- Relative path: docs/dashboards/ → apps/stock-price/dashboard/ -->
+          <a href="../../apps/stock-price/dashboard/index.html">apps/stock-price/dashboard/index.html</a>
+        </td>
+        <td><span class="status-badge badge-active">ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- ARCHIVED-CLOSED: technical-analysis                               -->
+      <!-- Pilot DONE + FROZEN (Phase 2 complete). Dashboard exists on disk. -->
+      <!-- Port facts: port 5003 / 5003 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">technical-analysis</td>
+        <td class="td-zone">apps/technical-analysis</td>
+        <td class="td-port">5003&nbsp;/&nbsp;5003</td>
+        <td class="td-dashboard">
+          <!-- Dashboard exists on disk — pilot is FROZEN, dashboard is read-only reference -->
+          <a href="../../apps/technical-analysis/dashboard/index.html">apps/technical-analysis/dashboard/index.html</a>
+        </td>
+        <td><span class="status-badge badge-archived">ARCHIVED-CLOSED</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- ARCHIVED-CLOSED: macro-indicators                                 -->
+      <!-- Pilot DONE + FROZEN (Phase 2 complete). Dashboard exists on disk. -->
+      <!-- Port facts: port 5004 / 5004 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">macro-indicators</td>
+        <td class="td-zone">apps/macro-indicators</td>
+        <td class="td-port">5004&nbsp;/&nbsp;5004</td>
+        <td class="td-dashboard">
+          <!-- Dashboard exists on disk — pilot is FROZEN, dashboard is read-only reference -->
+          <a href="../../apps/macro-indicators/dashboard/index.html">apps/macro-indicators/dashboard/index.html</a>
+        </td>
+        <td><span class="status-badge badge-archived">ARCHIVED-CLOSED</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: kinh-dich-service                                -->
+      <!-- Pilot is ACTIVE (Phase 0) but has not reached G6 yet.            -->
+      <!-- Dashboard artifact exists on disk but G6 not yet earned.         -->
+      <!-- Port facts: port 5005 / 5005 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">kinh-dich-service</td>
+        <td class="td-zone">apps/kinh-dich-service</td>
+        <td class="td-port">5005&nbsp;/&nbsp;5005</td>
+        <td class="td-dashboard">
+          <!-- G6 not yet earned — no link to dashboard until pilot reaches G6 -->
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: alert-engine                                      -->
+      <!-- Port facts: port 5006 / 5006 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">alert-engine</td>
+        <td class="td-zone">apps/alert-engine</td>
+        <td class="td-port">5006&nbsp;/&nbsp;5006</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: pdf-extractor                                     -->
+      <!-- Port facts: port 5001 / 5001 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">pdf-extractor</td>
+        <td class="td-zone">apps/pdf-extractor</td>
+        <td class="td-port">5001&nbsp;/&nbsp;5001</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: rag-service                                       -->
+      <!-- Port facts: port 5002 / 5002 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">rag-service</td>
+        <td class="td-zone">apps/rag-service</td>
+        <td class="td-port">5002&nbsp;/&nbsp;5002</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: news-fetch                                        -->
+      <!-- Port facts: port 5008 / 5008 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">news-fetch</td>
+        <td class="td-zone">apps/news-fetch</td>
+        <td class="td-port">5008&nbsp;/&nbsp;5008</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: mcp-server                                        -->
+      <!-- Port facts: port 3000 / 3000 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">mcp-server</td>
+        <td class="td-zone">apps/mcp-server</td>
+        <td class="td-port">3000&nbsp;/&nbsp;3000</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: api-gateway                                       -->
+      <!-- Port facts: port 4000 / 4000 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">api-gateway</td>
+        <td class="td-zone">apps/api-gateway</td>
+        <td class="td-port">4000&nbsp;/&nbsp;4000</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+      <!-- ================================================================ -->
+      <!-- NOT-YET-ACTIVE: frontend                                          -->
+      <!-- Port facts: port 3001 / 3001 per system-map.json                 -->
+      <!-- ================================================================ -->
+      <tr>
+        <td class="td-service">frontend</td>
+        <td class="td-zone">apps/frontend</td>
+        <td class="td-port">3001&nbsp;/&nbsp;3001</td>
+        <td class="td-dashboard">
+          <span class="no-dashboard">pending / not yet built</span>
+        </td>
+        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+      </tr>
+
+    </tbody>
+  </table>
+</div><!-- .fleet-table-wrapper -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item">
+    <span class="status-badge badge-active" style="font-size:0.65rem;padding:2px 7px;">ACTIVE</span>
+    Pilot complete (G6 earned) — dashboard available
+  </span>
+  <span class="legend-item">
+    <span class="status-badge badge-archived" style="font-size:0.65rem;padding:2px 7px;">ARCHIVED-CLOSED</span>
+    Pilot DONE + FROZEN — dashboard is read-only reference
+  </span>
+  <span class="legend-item">
+    <span class="status-badge badge-pending" style="font-size:0.65rem;padding:2px 7px;">NOT-YET-ACTIVE</span>
+    Service not yet at G6 — no dashboard link yet (honest: no fake greens)
+  </span>
+</div>
+
+<div class="source-note">
+  <strong>Source of truth:</strong>
+  Service list, zone paths, and port facts are queried from
+  <code>docs/data/system-map.json</code> (SSOT — do not hardcode in prose).
+  <br>
+  <strong>Status semantics:</strong>
+  ACTIVE = pilot has earned G6 (three-level dashboard with sandbox evidence) per pilot charter.
+  ARCHIVED-CLOSED = pilot window DONE + FROZEN (all goals YES, decisionMatrix terminal).
+  NOT-YET-ACTIVE = service has not yet started or completed its G6 dashboard milestone.
+  <br>
+  <strong>Ownership:</strong>
+  This file is EXCLUSIVELY owned by dev-stock-price (P2-I, Decision 3 ratification).
+  No other pilot may create or modify <code>docs/dashboards/index.html</code>.
+  SI-2 fleet index expands as each subsequent pilot hits G6.
+</div>
+
+<footer>
+  SI-2 Fleet Dashboard Index &bull; VN Market Intelligence MCP &bull;
+  Created: dev-stock-price P2-I (2026-05-24) &bull; Decision 3 exclusive &bull;
+  11 microservices tracked (source: docs/data/system-map.json) &bull;
+  1 ACTIVE &bull; 2 ARCHIVED-CLOSED &bull; 8 NOT-YET-ACTIVE &bull;
+  No server required (file:// URL) &bull; Zero credentials &bull; Zero CDN &bull; Zero external fetch
+</footer>
+
+</body>
+</html>
