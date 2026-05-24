@@ -1,5 +1,59 @@
 # QA — Notebook
 
+## c282 cycle-75 · 2026-05-24 · kinh-dich-service Phase-1 Close-Gate — CONDITIONAL-GO
+
+**Task:** Phase-1 close-gate (Go reboot) — G1/G2/G3/G6/G7/G8/G9/G12 evidence | **Verdict:** CONDITIONAL-GO
+
+```
+date: 2026-05-24
+outcome: CONDITIONAL-GO
+type: pilot-phase-gate (kinh-dich-service Phase-1 Go reboot terminal gate)
+go_build: CGO_ENABLED=0 go build ./... EXIT:0
+go_vet: EXIT:0
+go_test: 39/39 PASS EXIT:0 (5 primitive packages + 1 module package)
+sandbox_primitive: 15/15 PASS EXIT:0
+sandbox_module: 2/2 PASS EXIT:0
+sandbox_combined: 17/17 PASS EXIT:0 CGO_ENABLED=0
+env_audit: EMPTY — zero forbidden keys (DB_/API_KEY/SECRET/TOKEN/PASSWORD)
+g8_honest_red: CONFIRMED — hexagram-resolver-golden corrupted (expected 1->99) → EXIT:1, 14/15 RED; revert → 17/17 GREEN EXIT:0; zero residue in git status
+scenario_correction: LEGITIMATE — (11,55,19) → (30,28,56) is mathematically correct for input [0.8,-0.3,0.6,0.1,-0.7,0.4] with THIEU_DUONG_THRESHOLD=0.10; TS src confirms 0.10; traced manually
+stale_labels: TWO CSS/JS comments contain 'language=ts, runtime=bun' (lines 13, 1578) — inside code comments only, NOT rendered content; service card body correctly says 'Go 1.22 (CGO_ENABLED=0)' — non-blocking
+dash_check: WARN (cold-start honest NOT-RUN: 17 pending, 0 green, 0 red, 0 jsErrors)
+git_status: only render-check.png untracked — no uncommitted Go substance
+commit_race: Go files on main via races 2ac5e096/fec4a0e0 (wrong commit subject) — files correct, cosmetic, non-blocking per standing policy
+ssot_not_mutated: all 12 goals TBD (G9 IN-PROGRESS from hold), goalsEarned=0, status=ACTIVE — PO flips at close
+ddd_fence_A: pkg/primitive/ has ZERO infrastructure/application/interface/module/domain code imports; nuclear_hexagram imports sister primitives (hao_encoder, hexagram_resolver) — Fence-A exempt per OQ-6, documented in source
+ddd_fence_B: grep pkg/infrastructure in pkg/module/reading_composer/ = 0 (comments only) — PASS
+g3_main_go: 46 lines (≤80 gate PASS); domain-op grep = 0; PORT from os.Getenv("PORT") default "5005"
+api_openapi_yaml: PRESENT at api/openapi.yaml
+g12_gate_baked: CONFIRMED in .claude/flows/dev-kinh-dich/main.md (explicit "Do not mark task DONE until sandbox dashboard shows all kinh-dich scenarios GREEN")
+goals_with_complete_phase1_evidence: G1(5 prims/15 scenarios/5 failure), G2(module/Fence-B), G3(scaffold/main.go/openapi), G6(3-panel dashboard), G7(env-audit), G8(honest-red proven), G12(gate baked)
+goals_needing_phase2: G4(depguard fence), G5(TS deletion+HTTP rewire), G9(re-confirm on Go dashboard — path B PO Playwright), G10(AI-fix bug injection), G11(regression alarm)
+```
+
+| Check | Command | Result |
+|-------|---------|--------|
+| go build CGO=0 | `CGO_ENABLED=0 go build ./...` | EXIT:0 PASS |
+| go vet | `go vet ./...` | EXIT:0 PASS |
+| go test | `go test ./...` | 39/39 PASS EXIT:0 |
+| sandbox primitive | `go run ./cmd/sandbox -tier=primitive -scenario=all` | 15/15 GREEN EXIT:0 |
+| sandbox module | `go run ./cmd/sandbox -tier=module -scenario=all` | 2/2 GREEN EXIT:0 |
+| env audit | `env \| grep -E 'DB_\|...'` | EMPTY PASS |
+| G8 corrupt | flip expected hexagram 1→99 → sandbox | EXIT:1 RED 14/15 PASS |
+| G8 revert | restore → sandbox | EXIT:0 15/15 GREEN PASS |
+| git residue | `git status --short docs/scenarios/kinh-dich/` | CLEAN PASS |
+| Fence-A | grep pkg/infra/app/interface/module in pkg/primitive/ | 0 matches (comments only) PASS |
+| Fence-B | grep pkg/infrastructure in pkg/module/ | 0 matches (comments only) PASS |
+| G3 line count | wc -l cmd/server/main.go | 46 lines PASS |
+| G3 domain-op grep | grep domain ops in main.go | 0 PASS |
+| G6 dash-check | node dashboard/dash-check.mjs | WARN/HONEST — 0 jsErrors, 17 pending PASS |
+| SSOT | pilot-status-kinh-dich.json goals | all TBD/IN-PROGRESS, goalsEarned=0 PASS |
+
+**Phase-1 close-gate: CONDITIONAL-GO**
+**NEXT:** po — Phase-1 close authorization (flip goals to YES/EARNED-PENDING as appropriate) + Phase-2 plan kickoff (G4 depguard fence, G5 TS deletion, G9 Go dashboard re-confirm, G10/G11 AI-fixability)
+
+---
+
 ## c282 cycle-74 · 2026-05-24 · rag-service Phase 1 Gate — G12 streak verification — PASS
 
 **Task:** Phase 1 gate verification (P1-B + P1-C + P1-E G12 streak) | **Verdict:** PASS

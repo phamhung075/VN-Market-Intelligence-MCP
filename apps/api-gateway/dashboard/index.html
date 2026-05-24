@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>api-gateway &mdash; Scenario Trust Dashboard</title>
+  <style>
+/* api-gateway Dashboard — trust layer (P1-AG-E1) */
+/* Design: high-contrast, no framework, readable at a glance */
+/* Layout cloned from apps/macro-indicators/dashboard/ (SCALE pilot anchor) */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --edge: #7c6b00;
+  --edge-bg: #fffbcc;
+  --edge-border: #c4a800;
+  --failure: #6b3a00;
+  --failure-bg: #fff1e0;
+  --failure-border: #c47a00;
+  --fixture: #4c1d95;
+  --fixture-bg: #ede9fe;
+  --fixture-border: #7c3aed;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.levels-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .levels-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .levels-grid { grid-template-columns: 1fr; }
+}
+
+.level-panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.panel-header .panel-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.panel-header .level-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.badge-primitives { background: #e0f2fe; color: #075985; }
+.badge-module     { background: #ede9fe; color: #4c1d95; }
+.badge-service    { background: #fce7f3; color: #9d174d; }
+
+.panel-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total    { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-notrun   { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-green    { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red      { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Primitive group */
+.primitive-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.primitive-group-header {
+  padding: 8px 14px;
+  background: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.primitive-group-header .group-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-pending-label { background: #f1f5f9; color: #64748b; }
+.status-green-label   { background: var(--green-bg); color: var(--green); }
+.status-red-label     { background: var(--red-bg); color: var(--red); }
+
+.primitive-scenarios {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.scenario-card:last-child { border-bottom: none; }
+.scenario-card:hover { background: #f8fafc; }
+
+.scenario-status-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
+.scenario-meta { flex: 1; min-width: 0; }
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.scenario-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.category-chip {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.cat-golden  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.cat-edge    { background: var(--edge-bg); border-color: var(--edge-border); color: var(--edge); }
+.cat-failure { background: var(--failure-bg); border-color: var(--failure-border); color: var(--failure); }
+.cat-fixture { background: var(--fixture-bg); border-color: var(--fixture-border); color: var(--fixture); }
+
+/* Module panel cards */
+.module-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-card-header {
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border-bottom: 1px solid #ddd6fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.12s;
+  width: 100%;
+  font-family: var(--font);
+  text-align: left;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.module-card-header:hover { background: #ede9fe; }
+
+.module-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.module-card-meta {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  margin-top: 2px;
+}
+
+.module-primitives-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.prim-tag {
+  font-size: 0.68rem;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+
+.module-card-body {
+  padding: 10px 14px;
+}
+
+.module-card-desc {
+  font-size: 0.77rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Service panel */
+.service-tree {
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  color: #64748b;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  line-height: 1.8;
+}
+
+.service-tree .dir { color: #2563eb; font-weight: 600; }
+.service-tree .file-go { color: #16a34a; }
+.service-tree .file-yaml { color: #d97706; }
+.service-tree .ddd-layer { color: #7c3aed; }
+
+.service-endpoints { margin-top: 12px; }
+
+.service-endpoints h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.method-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+.method-get  { background: #dcfce7; color: #15803d; }
+.method-post { background: #dbeafe; color: #1d4ed8; }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #374151;
+  flex: 1;
+}
+
+.endpoint-desc { font-size: 0.72rem; color: #64748b; }
+
+/* Modal overlay */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  background: #1e293b;
+  color: #f8fafc;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 { font-size: 1rem; font-weight: 700; }
+.modal-header .modal-category { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.modal-close:hover { color: #f8fafc; }
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.modal-section { margin-bottom: 20px; }
+
+.modal-section h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.modal-section p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.modal-json {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 240px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+
+.modal-status-bar {
+  padding: 12px 20px;
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.status-indicator.pending { color: #64748b; }
+
+.status-dot-lg {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.modal-note {
+  flex: 1;
+  font-size: 0.76rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .diff-grid { grid-template-columns: 1fr; }
+}
+
+.diff-pane label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.diff-pane .label-input  { color: #1d4ed8; }
+.diff-pane .label-output { color: #15803d; }
+
+.legend {
+  max-width: 1400px;
+  margin: 28px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.76rem;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-chip {
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+footer {
+  max-width: 1400px;
+  margin: 20px auto 0;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  text-align: center;
+  padding-bottom: 32px;
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>api-gateway &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-AG-E1 &nbsp;|&nbsp; Pilot: api-gateway &nbsp;|&nbsp; Language: Go (NO-CGO)
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G8 (honest red/green from trace status) &bull; G9 (trust contract) &bull; G12 (green before done)
+    &nbsp;&bull;&nbsp;
+    3 routing primitives (11 scenarios) + 1 gateway module (1 scenario) &mdash; all loaded from trace JSON, zero production credentials.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+    &nbsp;&bull;&nbsp; Intentional-failure fixtures labeled clearly (FIXTURE chip) &mdash; they PASS because expected matches actual.
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ================================================== LEVEL 1: PRIMITIVES -->
+  <div class="level-panel" id="primitives-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        3 pure Go routing primitives: <code>overall-status-computer</code>,
+        <code>proxy-path-resolver</code>, <code>route-service-matcher</code>.
+        11 scenarios total (golden, edge/failure, g11-canary, failure-fixture).
+        Click any scenario to inspect inputs / expected / actual.
+        Intentional-failure fixtures are labeled FIXTURE &mdash; they pass because the
+        implementation correctly handles the documented edge condition.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="prim-total-chip">11 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-status-chip">loading&hellip;</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+      <!-- Rendered by renderPrimitivesPanel() on DOMContentLoaded -->
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 2: MODULE -->
+  <div class="level-panel" id="module-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>pkg/module/gateway/</code> &mdash; composes all 3 primitives via
+        ports (Go interfaces). Scenario: <em>module-route-story</em> verifies end-to-end
+        routing: a request to <code>/macro/indicators</code> resolves service=macro,
+        downstreamPath=/indicators, targetURL=http://macro-service:8081, overall=ok.
+        Click to inspect input &harr; expected &harr; actual.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="mod-total-chip">1 scenario</span>
+        <span class="summary-chip chip-notrun" id="mod-status-chip">loading&hellip;</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+      <!-- Rendered by renderModulePanel() on DOMContentLoaded -->
+    </div>
+  </div>
+
+  <!-- ================================================== LEVEL 3: MICROSERVICE -->
+  <div class="level-panel" id="microservice-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/api-gateway/</code> &mdash; Go NO-CGO HTTP routing layer.
+        Wires DDD layers (primitive / module / infrastructure / interface / cmd/server).
+        Port 8080. Routes all downstream microservice traffic, aggregates /health/*.
+        Composition root enforces Depguard fences A/B/C.
+      </p>
+      <div class="panel-summary" id="svc-summary">
+        <!-- Rendered by renderServicePanel() -->
+      </div>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+      <!-- Rendered by renderServicePanel() on DOMContentLoaded -->
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: PASS (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: FAIL (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: pending (not yet run)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">Valid Input</span> Happy path &mdash; known good routing input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">Edge Case</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">Failure Scenario</span> Expected error/guard condition &mdash; test PASSES</span>
+  <span class="legend-item"><span class="legend-chip cat-fixture">Fixture</span> Intentional-failure fixture &mdash; doc/G11 evidence; passes because expected matches actual</span>
+</div>
+
+<footer>
+  P1-AG-E1 &mdash; api-gateway trust dashboard &bull;
+  Pilot: api-gateway &bull; Port: 8080 &bull; Language: Go (CGO_ENABLED=0) &bull;
+  Primitives: overall-status-computer + proxy-path-resolver + route-service-matcher &bull;
+  Module: gateway (composes 3 primitives via ports) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  Sandbox runner: <code>go run ./cmd/sandbox -tier=&lt;tier&gt; -module=api-gateway -scenario=all</code> &bull;
+  Trace data embedded from <code>sandbox/traces/*.json</code> (11 primitive + 1 module) &bull;
+  Red/green driven by trace <code>status</code> field (honest &mdash; not hardcoded)
+</footer>
+
+<!-- ================================================== MODAL -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Inputs</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h4>Actual Output (from trace)</h4>
+        <pre class="modal-json" id="modal-actual-json" aria-label="Actual output JSON"></pre>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator" id="modal-status-text">
+        <span class="status-dot-lg dot-pending"></span> &mdash;
+      </span>
+      <span class="modal-note" id="modal-status-note">Status driven by sandbox trace result. Rerun sandbox to refresh traces, then reload this page.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================== EMBEDDED TRACE DATA -->
+<!--
+  All trace data embedded inline at build time from apps/api-gateway/sandbox/traces/*.json.
+  Status field ("PASS"/"FAIL") is the truth source for red/green cards.
+  intentional_failure_fixture: true  → labeled FIXTURE; renders PASS/green (implementation correct).
+  doc_only: true                     → fixture with null inputs/expected; shown as informational.
+  Security: zero DB credentials, zero API keys — pure routing scenario data only.
+  P1-AG-E1: 11 primitive traces + 1 module trace.
+-->
+<script>
+// ---------------------------------------------------------------------------
+// PRIMITIVES_DATA — 11 primitive traces (3 primitives x 3-4 scenarios each)
+// Source: apps/api-gateway/sandbox/traces/*-trace.json
+// status: "PASS" | "FAIL" — driven by sandbox runner (honest, not hardcoded)
+// ---------------------------------------------------------------------------
+var PRIMITIVES_DATA = [
+  // ---- overall-status-computer (3 scenarios) ----
+  {
+    "scenario": "golden-all-ok",
+    "primitive": "overall-status-computer",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path: all services ok ({mcp:ok, stock:ok, ta:ok}) → overall=ok. Verifies the primary all-healthy path through the status computer.",
+    "inputs": { "statuses": { "mcp": "ok", "stock": "ok", "ta": "ok" } },
+    "expected": { "overall": "ok" },
+    "actual": { "overall": "ok" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "golden-degraded",
+    "primitive": "overall-status-computer",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path: one service down ({mcp:ok, stock:down, ta:ok}) → overall=degraded. Verifies any-down guard produces degraded status.",
+    "inputs": { "statuses": { "mcp": "ok", "stock": "down", "ta": "ok" } },
+    "expected": { "overall": "degraded" },
+    "actual": { "overall": "degraded" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "failure-reversed-guard",
+    "primitive": "overall-status-computer",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": true,
+    "doc_only": false,
+    "category": "fixture",
+    "description": "Intentional-failure fixture: proves the guard is not reversed (i.e. implementation does NOT emit ok when a service is down). Input {mcp:ok, stock:down, ta:ok} expected=degraded; a reversed guard would emit ok. Passes because implementation is correct.",
+    "inputs": { "statuses": { "mcp": "ok", "stock": "down", "ta": "ok" } },
+    "expected": { "overall": "degraded" },
+    "actual": { "overall": "degraded" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "g11-canary-cascade",
+    "primitive": "overall-status-computer",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": true,
+    "doc_only": false,
+    "category": "fixture",
+    "description": "G11 canary-cascade fixture: documents that degraded propagates correctly under the cascade scenario. Input {mcp:ok, stock:down, ta:ok} expected=degraded. Fixture evidence for G11 regression protection.",
+    "inputs": { "statuses": { "mcp": "ok", "stock": "down", "ta": "ok" } },
+    "expected": { "overall": "degraded" },
+    "actual": { "overall": "degraded" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  // ---- proxy-path-resolver (3 scenarios) ----
+  {
+    "scenario": "golden-normal-proxy",
+    "primitive": "proxy-path-resolver",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path: /stock/health with noProbe=false resolves to downstream path /health. Strips the service prefix segment, leaving the remainder as the forwarded path.",
+    "inputs": { "reqPath": "/stock/health", "noProbe": false },
+    "expected": { "resolvedPath": "/health" },
+    "actual": { "resolvedPath": "/health" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "golden-virtual-alias",
+    "primitive": "proxy-path-resolver",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path (virtual alias): /api/push-news with noProbe=true resolves to /api/push-news (full path preserved — virtual alias passthrough). noProbe flag suppresses prefix stripping.",
+    "inputs": { "reqPath": "/api/push-news", "noProbe": true },
+    "expected": { "resolvedPath": "/api/push-news" },
+    "actual": { "resolvedPath": "/api/push-news" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "failure-no-trailing-segment",
+    "primitive": "proxy-path-resolver",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": true,
+    "doc_only": false,
+    "category": "fixture",
+    "description": "Intentional-failure fixture: path /stock has no trailing segment after the service prefix. Resolver returns / (root fallback). Fixture documents graceful degradation — not a bug, intentional guard. Passes because expected matches actual.",
+    "inputs": { "reqPath": "/stock", "noProbe": false },
+    "expected": { "resolvedPath": "/" },
+    "actual": { "resolvedPath": "/" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  // ---- route-service-matcher (4 scenarios) ----
+  {
+    "scenario": "golden-health-prefix",
+    "primitive": "route-service-matcher",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path (/health/* prefix): path=/health/macro with prefix=/health/ extracts serviceName=macro. Verifies health-check routing extracts service name correctly from the path suffix.",
+    "inputs": { "path": "/health/macro", "prefixToStrip": "/health/" },
+    "expected": { "serviceName": "macro" },
+    "actual": { "serviceName": "macro" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "golden-proxy-prefix",
+    "primitive": "route-service-matcher",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Golden path (proxy prefix /): path=/stock/health with prefix=/ extracts serviceName=stock. Verifies the root-proxy prefix routing rule extracts the first path segment as service name.",
+    "inputs": { "path": "/stock/health", "prefixToStrip": "/" },
+    "expected": { "serviceName": "stock" },
+    "actual": { "serviceName": "stock" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "failure-empty-service",
+    "primitive": "route-service-matcher",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": true,
+    "doc_only": false,
+    "category": "fixture",
+    "description": "Intentional-failure fixture: path=/health/ (trailing slash, no service name after prefix) yields serviceName=\"\" (empty). Documents the empty-service guard — gateway must handle missing service name without panic. Passes because expected=\"\" matches actual=\"\".",
+    "inputs": { "path": "/health/", "prefixToStrip": "/health/" },
+    "expected": { "serviceName": "" },
+    "actual": { "serviceName": "" },
+    "run_at": "2026-05-24T08:09:54Z"
+  },
+  {
+    "scenario": "g11-canary-cascade",
+    "primitive": "route-service-matcher",
+    "tier": "primitive",
+    "status": "PASS",
+    "intentional_failure_fixture": true,
+    "doc_only": true,
+    "category": "fixture",
+    "description": "G11 canary-cascade fixture (doc-only): documents that route-service-matcher participates in the G11 regression cascade. No inputs/expected — informational evidence only. Fixture passes trivially (doc_only=true, null inputs/expected are expected).",
+    "inputs": null,
+    "expected": null,
+    "actual": null,
+    "run_at": "2026-05-24T08:09:54Z"
+  }
+];
+
+// ---------------------------------------------------------------------------
+// MODULE_DATA — 1 module trace (gateway module)
+// Source: apps/api-gateway/sandbox/traces/gateway-module-route-story-trace.json
+// ---------------------------------------------------------------------------
+var MODULE_DATA = [
+  {
+    "scenario": "module-route-story",
+    "module": "gateway",
+    "tier": "module",
+    "status": "PASS",
+    "intentional_failure_fixture": false,
+    "doc_only": false,
+    "category": "golden",
+    "description": "Multi-primitive route story: request /macro/indicators with prefix=/ and services {macro:ok, stock:ok, ta:ok}. Gateway module composes route-service-matcher (serviceName=macro), proxy-path-resolver (downstreamPath=/indicators), and overall-status-computer (overall=ok) to produce targetURL=http://macro-service:8081, found=true, overall=ok.",
+    "primitives": [
+      "route-service-matcher",
+      "proxy-path-resolver",
+      "overall-status-computer"
+    ],
+    "inputs": {
+      "prefixToStrip": "/",
+      "reqPath": "/macro/indicators",
+      "statuses": { "macro": "ok", "stock": "ok", "ta": "ok" }
+    },
+    "expected": {
+      "serviceName": "macro",
+      "downstreamPath": "/indicators",
+      "targetURL": "http://macro-service:8081",
+      "found": true,
+      "overall": "ok"
+    },
+    "actual": {
+      "serviceName": "macro",
+      "downstreamPath": "/indicators",
+      "targetURL": "http://macro-service:8081",
+      "found": true,
+      "overall": "ok"
+    },
+    "run_at": "2026-05-24T08:09:54Z"
+  }
+];
+</script>
+
+<script>
+(function() {
+  "use strict";
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  // Map trace category (inferred from scenario name or explicit field) to CSS class.
+  function catClass(cat) {
+    if (cat === "golden")  return "cat-golden";
+    if (cat === "edge")    return "cat-edge";
+    if (cat === "fixture") return "cat-fixture";
+    return "cat-failure";
+  }
+
+  var CATEGORY_LABELS = {
+    golden:  "Valid Input",
+    edge:    "Edge Case",
+    failure: "Failure Scenario",
+    fixture: "Fixture"
+  };
+
+  function catLabel(cat) {
+    return CATEGORY_LABELS[cat] || "Fixture";
+  }
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "(null)";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatJSON(obj) {
+    if (obj === null || obj === undefined) return "null";
+    return JSON.stringify(obj, null, 2);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Status helpers — driven by trace status field ("PASS"/"FAIL")
+  // Honest: never hardcoded green. If a trace shows FAIL, card is red.
+  // ---------------------------------------------------------------------------
+
+  function traceStatusToCardStatus(traceStatus) {
+    // Trace runner emits "PASS" or "FAIL" (uppercase).
+    if (typeof traceStatus === "string") {
+      var u = traceStatus.toUpperCase();
+      if (u === "PASS") return "green";
+      if (u === "FAIL") return "red";
+    }
+    return "pending";
+  }
+
+  function dotClass(cardStatus) {
+    if (cardStatus === "green")   return "dot-green";
+    if (cardStatus === "red")     return "dot-red";
+    return "dot-pending";
+  }
+
+  function statusLabel(cardStatus) {
+    if (cardStatus === "green") return "PASS";
+    if (cardStatus === "red")   return "FAIL";
+    return "pending";
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modal
+  // ---------------------------------------------------------------------------
+
+  var currentScenario = null;
+
+  function openModal(s) {
+    currentScenario = s;
+    var overlay   = document.getElementById("modal-overlay");
+    var titleEl   = document.getElementById("modal-title");
+    var catEl     = document.getElementById("modal-cat");
+    var descEl    = document.getElementById("modal-desc");
+    var inputEl   = document.getElementById("modal-input-json");
+    var outputEl  = document.getElementById("modal-output-json");
+    var actualEl  = document.getElementById("modal-actual-json");
+    var statusTxt = document.getElementById("modal-status-text");
+    var statusNote= document.getElementById("modal-status-note");
+
+    var label = s.primitive
+      ? (s.primitive + " — " + s.scenario)
+      : ("Module: " + (s.module || "") + " — " + s.scenario);
+    titleEl.textContent = label;
+
+    catEl.className = "modal-category category-chip " + catClass(s.category);
+    catEl.textContent = catLabel(s.category);
+
+    var desc = s.description || "(no description)";
+    if (s.intentional_failure_fixture) {
+      desc = "[INTENTIONAL-FAILURE FIXTURE] " + desc;
+    }
+    if (s.doc_only) {
+      desc = "[DOC-ONLY] " + desc;
+    }
+    descEl.textContent = desc;
+
+    inputEl.textContent  = formatJSON(s.inputs);
+    outputEl.textContent = formatJSON(s.expected);
+    actualEl.textContent = formatJSON(s.actual);
+
+    var cardStatus = traceStatusToCardStatus(s.status);
+    if (cardStatus === "green") {
+      statusTxt.className = "status-indicator";
+      statusTxt.innerHTML = '<span class="status-dot-lg dot-green"></span> PASS';
+      statusNote.textContent = "Sandbox trace: PASS. Expected matches actual.";
+    } else if (cardStatus === "red") {
+      statusTxt.className = "status-indicator";
+      statusTxt.innerHTML = '<span class="status-dot-lg" style="background:#b91c1c;"></span> FAIL';
+      statusNote.textContent = "Sandbox trace: FAIL. Expected does not match actual. Rerun sandbox to debug.";
+    } else {
+      statusTxt.className = "status-indicator pending";
+      statusTxt.innerHTML = '<span class="status-dot-lg dot-pending"></span> pending';
+      statusNote.textContent = "Trace status unknown. Rerun sandbox: go run ./cmd/sandbox -tier=<tier> -module=api-gateway -scenario=all";
+    }
+
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    document.getElementById("modal-overlay").classList.remove("open");
+    document.body.style.overflow = "";
+    currentScenario = null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render Primitives panel
+  // Groups scenarios by primitive name, shows PASS/FAIL per group.
+  // ---------------------------------------------------------------------------
+
+  function renderPrimitivesPanel() {
+    var panelBody = document.getElementById("primitives-panel-body");
+    panelBody.innerHTML = "";
+
+    // Group by primitive name.
+    var groups = {};
+    var groupOrder = [];
+    PRIMITIVES_DATA.forEach(function(s) {
+      var key = s.primitive || "unknown";
+      if (!groups[key]) {
+        groups[key] = [];
+        groupOrder.push(key);
+      }
+      groups[key].push(s);
+    });
+
+    // Compute aggregate for summary chip.
+    var primTotal = PRIMITIVES_DATA.length;
+    var primGreen = 0;
+    var primRed   = 0;
+    PRIMITIVES_DATA.forEach(function(s) {
+      var cs = traceStatusToCardStatus(s.status);
+      if (cs === "green") primGreen++;
+      else if (cs === "red") primRed++;
+    });
+
+    var statusChip = document.getElementById("prim-status-chip");
+    if (statusChip) {
+      if (primRed > 0) {
+        statusChip.className = "summary-chip chip-red";
+        statusChip.textContent = primRed + " FAIL";
+      } else if (primGreen === primTotal) {
+        statusChip.className = "summary-chip chip-green";
+        statusChip.textContent = "ALL PASS";
+      } else {
+        statusChip.className = "summary-chip chip-notrun";
+        statusChip.textContent = primGreen + " / " + primTotal + " PASS";
+      }
+    }
+
+    var PRIM_LABELS = {
+      "overall-status-computer": "Overall Status Computer",
+      "proxy-path-resolver":     "Proxy Path Resolver",
+      "route-service-matcher":   "Route Service Matcher"
+    };
+
+    groupOrder.forEach(function(primKey) {
+      var scenarios = groups[primKey];
+      var allGreen = scenarios.every(function(s) { return traceStatusToCardStatus(s.status) === "green"; });
+      var anyRed   = scenarios.some(function(s) { return traceStatusToCardStatus(s.status) === "red"; });
+      var groupStatusClass = anyRed ? "status-red-label" : (allGreen ? "status-green-label" : "status-pending-label");
+      var groupStatusLbl   = anyRed ? "FAIL" : (allGreen ? "PASS" : "partial");
+
+      var group = document.createElement("div");
+      group.className = "primitive-group";
+
+      var header = document.createElement("div");
+      header.className = "primitive-group-header";
+      header.style.borderLeft = "4px solid #075985";
+      var primLabel = PRIM_LABELS[primKey] || primKey;
+      header.innerHTML =
+        '<span>' + escapeHtml(primKey) + ' &mdash; ' + escapeHtml(primLabel) + '</span>' +
+        '<span class="group-status ' + groupStatusClass + '">' + groupStatusLbl + '</span>';
+
+      var scenarioList = document.createElement("div");
+      scenarioList.className = "primitive-scenarios";
+
+      scenarios.forEach(function(s) {
+        var cardStatus = traceStatusToCardStatus(s.status);
+        var card = document.createElement("button");
+        card.className = "scenario-card";
+        card.type = "button";
+        card.setAttribute("aria-label", "View scenario: " + escapeHtml(s.scenario));
+
+        var inputSummary = s.inputs ? JSON.stringify(s.inputs).slice(0, 80) : "(null)";
+        if (s.doc_only) inputSummary = "(doc-only — no inputs)";
+
+        var fixtureNote = s.intentional_failure_fixture
+          ? '<span style="font-size:0.7rem;color:#6b21a8;font-weight:600;margin-top:2px;display:block;">Intentional-failure fixture &mdash; passes because implementation is correct</span>'
+          : "";
+
+        card.innerHTML =
+          '<span class="scenario-status-dot ' + dotClass(cardStatus) + '" aria-hidden="true"></span>' +
+          '<span class="scenario-meta">' +
+            '<span class="scenario-name">' + escapeHtml(s.scenario) + '</span>' +
+            '<span class="scenario-desc">' + escapeHtml((s.description || "").slice(0, 120)) + '</span>' +
+            '<span style="font-size:0.72rem;color:#6b7280;margin-top:3px;display:block;">' +
+              'In: ' + escapeHtml(inputSummary) +
+              ' &nbsp;|&nbsp; Status: <strong>' + statusLabel(cardStatus) + '</strong>' +
+            '</span>' +
+            fixtureNote +
+          '</span>' +
+          '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
+
+        card.addEventListener("click", function() { openModal(s); });
+        scenarioList.appendChild(card);
+      });
+
+      group.appendChild(header);
+      group.appendChild(scenarioList);
+      panelBody.appendChild(group);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render Module panel
+  // ---------------------------------------------------------------------------
+
+  function renderModulePanel() {
+    var panelBody = document.getElementById("module-panel-body");
+    panelBody.innerHTML = "";
+
+    var modTotal = MODULE_DATA.length;
+    var modGreen = 0;
+    var modRed   = 0;
+    MODULE_DATA.forEach(function(s) {
+      var cs = traceStatusToCardStatus(s.status);
+      if (cs === "green") modGreen++;
+      else if (cs === "red") modRed++;
+    });
+
+    var modStatusChip = document.getElementById("mod-status-chip");
+    if (modStatusChip) {
+      if (modRed > 0) {
+        modStatusChip.className = "summary-chip chip-red";
+        modStatusChip.textContent = modRed + " FAIL";
+      } else if (modGreen === modTotal) {
+        modStatusChip.className = "summary-chip chip-green";
+        modStatusChip.textContent = "ALL PASS";
+      } else {
+        modStatusChip.className = "summary-chip chip-notrun";
+        modStatusChip.textContent = modGreen + " / " + modTotal + " PASS";
+      }
+    }
+
+    MODULE_DATA.forEach(function(s) {
+      var cardStatus = traceStatusToCardStatus(s.status);
+      var card = document.createElement("div");
+      card.className = "module-card";
+
+      var headerBtn = document.createElement("button");
+      headerBtn.className = "module-card-header";
+      headerBtn.type = "button";
+      headerBtn.setAttribute("aria-label", "View module scenario: " + escapeHtml(s.scenario));
+
+      var inputSummary;
+      if (s.inputs) {
+        var keys = Object.keys(s.inputs);
+        inputSummary = keys.length + " fields: " + keys.join(", ");
+      } else {
+        inputSummary = "(null)";
+      }
+
+      headerBtn.innerHTML =
+        '<span>' +
+          '<span class="scenario-status-dot ' + dotClass(cardStatus) + '" style="display:inline-block;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span>' +
+          '<span class="module-card-title">' + escapeHtml(s.scenario) + '</span>' +
+          '<span class="module-card-meta" style="display:block;margin-top:2px;">' +
+            'In: ' + escapeHtml(inputSummary) +
+            ' &nbsp;|&nbsp; Status: <strong>' + statusLabel(cardStatus) + '</strong>' +
+          '</span>' +
+        '</span>' +
+        '<span class="category-chip ' + catClass(s.category) + '" aria-hidden="true">' + catLabel(s.category) + '</span>';
+
+      headerBtn.addEventListener("click", function() { openModal(s); });
+
+      var primTags = document.createElement("div");
+      primTags.className = "module-primitives-tag";
+      (s.primitives || []).forEach(function(p) {
+        var tag = document.createElement("span");
+        tag.className = "prim-tag";
+        tag.textContent = p;
+        primTags.appendChild(tag);
+      });
+
+      var body = document.createElement("div");
+      body.className = "module-card-body";
+      body.innerHTML = '<p class="module-card-desc">' + escapeHtml((s.description || "").slice(0, 300)) + '</p>';
+
+      card.appendChild(headerBtn);
+      card.appendChild(primTags);
+      card.appendChild(body);
+      panelBody.appendChild(card);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render Microservice panel
+  // Shows the composition root / DDD layer overview + live endpoint contracts.
+  // ---------------------------------------------------------------------------
+
+  function renderServicePanel() {
+    var panelBody = document.getElementById("service-panel-body");
+
+    // Aggregate across all scenarios for a summary badge.
+    var allScenarios = PRIMITIVES_DATA.concat(MODULE_DATA);
+    var totalGreen = 0;
+    var totalRed   = 0;
+    allScenarios.forEach(function(s) {
+      var cs = traceStatusToCardStatus(s.status);
+      if (cs === "green") totalGreen++;
+      else if (cs === "red")   totalRed++;
+    });
+    var total = allScenarios.length;
+
+    var summaryDiv = document.getElementById("svc-summary");
+    if (summaryDiv) {
+      if (totalRed > 0) {
+        summaryDiv.innerHTML =
+          '<span class="summary-chip chip-red">' + totalRed + ' scenario(s) FAIL</span>' +
+          '<span class="summary-chip chip-total">' + total + ' scenarios total</span>';
+      } else if (totalGreen === total) {
+        summaryDiv.innerHTML =
+          '<span class="summary-chip chip-green">ALL ' + total + ' PASS</span>';
+      } else {
+        summaryDiv.innerHTML =
+          '<span class="summary-chip chip-total">' + totalGreen + ' / ' + total + ' PASS</span>';
+      }
+    }
+
+    panelBody.innerHTML =
+      '<div>' +
+        '<div style="border:1.5px solid var(--border);border-radius:8px;padding:14px 16px;background:#f8fafc;margin-bottom:12px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+            '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' +
+              (totalRed > 0 ? '#b91c1c' : (totalGreen === total ? '#1a7f3c' : '#9ca3af')) +
+              ';flex-shrink:0;"></span>' +
+            '<strong style="font-size:0.92rem;">api-gateway</strong>' +
+            '<span style="font-size:0.75rem;color:#6b7280;margin-left:auto;">' +
+              (totalRed > 0 ? totalRed + ' FAIL' : (totalGreen === total ? 'ALL PASS' : totalGreen + '/' + total + ' PASS')) +
+            '</span>' +
+          '</div>' +
+          '<p style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Go NO-CGO HTTP routing layer &bull; Port 8080 &bull; Sandbox trace only (no live data)</p>' +
+          '<p style="font-size:0.8rem;color:#6b7280;margin-bottom:4px;">Endpoints: <code style="font-size:0.78rem;">/health</code> &bull; <code style="font-size:0.78rem;">/health/{service}</code> &bull; <code style="font-size:0.78rem;">/{service}/{path...}</code></p>' +
+          '<p style="font-size:0.78rem;color:#9ca3af;">DDD: primitive &rarr; module &rarr; infrastructure &rarr; interface/http &rarr; cmd/server &bull; Depguard fences A/B/C enforced</p>' +
+        '</div>' +
+
+        '<div class="service-tree">' +
+          '<span class="dir">apps/api-gateway/</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">cmd/server/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">main.go</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; composition root (zero domain logic; &le;80L)</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">cmd/sandbox/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">main.go</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; scenario runner CLI (CGO_ENABLED=0)</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">pkg/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">primitive/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">overall-status-computer/</span>&nbsp;<span style="color:#9ca3af;">&larr; Compute() &mdash; {ok,degraded,down}</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">proxy-path-resolver/</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; Resolve() &mdash; strip prefix, return downstream path</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">route-service-matcher/</span>&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; Match() &mdash; extract service name from path</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">module/gateway/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-go">gateway.go</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; Route() composes 3 primitives via ports</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">domain/</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; models.go, ports.go (Go interfaces)</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">infrastructure/</span>&nbsp;<span style="color:#9ca3af;">&larr; service registry, config adapters</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="ddd-layer">interface/http/</span>&nbsp;<span style="color:#9ca3af;">&larr; router.go (net/http mux, reverse proxy)</span><br>' +
+          '&nbsp;&nbsp;<span class="dir">sandbox/traces/</span><br>' +
+          '&nbsp;&nbsp;&nbsp;&nbsp;<span class="file-yaml">*-trace.json</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#9ca3af;">&larr; 11 primitive + 1 module traces (this dashboard reads these)</span>' +
+        '</div>' +
+
+        '<div class="service-endpoints">' +
+          '<h4>HTTP Endpoints (routing contract)</h4>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/health</span>' +
+            '<span class="endpoint-desc">Gateway liveness &rarr; {status:ok, overall:ok|degraded|down, services:{...}}</span>' +
+          '</div>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/health/{service}</span>' +
+            '<span class="endpoint-desc">Proxy health check to named downstream service (route-service-matcher + proxy)</span>' +
+          '</div>' +
+          '<div class="endpoint-row">' +
+            '<span class="method-badge method-get">GET</span>' +
+            '<span class="endpoint-path">/{service}/{path...}</span>' +
+            '<span class="endpoint-desc">Transparent proxy: match service &rarr; resolve downstream path &rarr; forward via httputil.ReverseProxy</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="margin-top:16px;background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:12px 14px;text-align:left;">' +
+          '<p style="font-size:0.78rem;font-weight:700;color:#065f46;margin-bottom:4px;">P1-AG-E1 &mdash; Trust Dashboard Wired</p>' +
+          '<p style="font-size:0.75rem;color:#14532d;line-height:1.5;">' +
+            'Sandbox runner: <code style="background:#bbf7d0;padding:2px 6px;border-radius:4px;font-family:monospace;">CGO_ENABLED=0 go run ./cmd/sandbox -tier=&lt;tier&gt; -module=api-gateway -scenario=all</code><br>' +
+            'After rerun: traces in <code>sandbox/traces/</code> update &rarr; rebuild dashboard (or reload) to see new red/green.<br>' +
+            'Security: ZERO DB credentials, ZERO API keys. api-gateway is pure routing compute. CGO_ENABLED=0 enforced.' +
+          '</p>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bootstrap
+  // ---------------------------------------------------------------------------
+
+  document.addEventListener("DOMContentLoaded", function() {
+    renderPrimitivesPanel();
+    renderModulePanel();
+    renderServicePanel();
+
+    // Close modal on overlay click.
+    document.getElementById("modal-overlay").addEventListener("click", function(e) {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // Close modal on Escape key.
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Close button.
+    document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+  });
+
+})();
+</script>
+
+</body>
+</html>
