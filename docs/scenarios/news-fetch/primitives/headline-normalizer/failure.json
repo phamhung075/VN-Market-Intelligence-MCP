@@ -1,0 +1,7 @@
+{
+  "primitive": "headline-normalizer",
+  "function": "normalizeHeadline",
+  "input": { "raw": "" },
+  "expectedOutput": "",
+  "scenarioType": "failure"
+}

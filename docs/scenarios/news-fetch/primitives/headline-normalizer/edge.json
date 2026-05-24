@@ -1,0 +1,7 @@
+{
+  "primitive": "headline-normalizer",
+  "function": "normalizeHeadline",
+  "input": { "raw": "  Vietnam  GDP  grows  6.8%  in  Q1  " },
+  "expectedOutput": "Vietnam GDP grows 6.8% in Q1",
+  "scenarioType": "edge"
+}

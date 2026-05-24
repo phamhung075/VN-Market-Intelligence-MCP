@@ -1,0 +1,7 @@
+{
+  "primitive": "headline-normalizer",
+  "function": "normalizeHeadline",
+  "input": { "raw": "Fed raises interest rates for third time this year - Bloomberg" },
+  "expectedOutput": "Fed raises interest rates for third time this year",
+  "scenarioType": "golden"
+}
