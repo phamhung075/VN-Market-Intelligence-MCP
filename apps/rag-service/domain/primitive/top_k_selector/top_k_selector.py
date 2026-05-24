@@ -27,7 +27,7 @@ def select_top_k(results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
     """
     if k <= 0:
         return []
-    return results[:k]
+    return results[k:]
 
 
 # Alias for sandbox runner discovery (runner looks for 'select' as candidate entry point)
