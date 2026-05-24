@@ -1,8 +1,59 @@
 # PO Notebook
 
-**Cycle:** c291 (TWO concurrent PO cycles — news-fetch + api-gateway pilots, both Phase 0→1)
-**Last update:** 2026-05-24T07:36:25Z
-**Status:** news-fetch P0-NF-EXIT PASS (Phase 0 CLOSED, Phase 1 OPEN, P1-A first). api-gateway also closed Phase 0 same cycle (P1-AG-B1 first). Both sections preserved below — concurrent-cycle race on this notebook file.
+**Cycle:** c291 (THREE concurrent PO cycles — pdf-extractor + news-fetch + api-gateway pilots, all Phase 0→1)
+**Last update:** 2026-05-24T09:30:00Z
+**Status:** pdf-extractor Phase-0 EXIT GATE CLOSED + Phase-1 OPEN (P1-A1 first via PM). news-fetch + api-gateway closed same cycle. All sections preserved — concurrent-cycle race on this notebook file.
+
+---
+
+## Cycle — alert-engine P2-K G9 PO Playwright (Path B) — 2026-05-24T08:09Z
+
+Single focused Phase-2 task (NOT a sprint plan). PO = G9 dashboard-trust gate, pilot-5 alert-engine.
+
+### Real Playwright render (NOT static grep)
+- Harness: /tmp/g9-ae-verify.mjs (kept out of pilot tree); reused TA/kinh-dich verify-render.mjs pattern; borrowed playwright-core@1.60.0 from apps/technical-analysis/node_modules; chromium_headless_shell-1223. file:// load of apps/alert-engine/dashboard/index.html via headless chromium.
+- AC-1 PASS: 3 panels in DOM — primitives(#primitives-panel-body/<h2>Primitives</h2>), module(#module-panel-body/Module), microservice(#service-panel-body/Microservice).
+- AC-2 PASS: console=0, pageerror=0, requestfailed=0. requestfailed listener proves G6 zero-network (file:// w/ no net calls). Static precheck also confirmed: no fetch/XHR/CDN in HTML (only file://-safe comments).
+- AC-3 PASS: 5 cards visible — signal-classifier, dedup-key-builder, cooldown-gate (9 scenario cards/3 groups) + alert_pipeline module (2 cards) + alert-engine microservice. HONEST: dots green=0 red=0 pending=11; all 5 group-statuses NOT-RUN; service badge NOT-RUN; underlying __PRIMITIVES_DATA__(9)+__MODULE_DATA__(2) all status:not-run; falseGreen=false. Cold-start honest display = correct trust contract.
+- AC-4 PASS: verdict doc docs/po-decisions/2026-05-24-g9-alert-engine-user-confirmation.md + signal docs/signals/po-ae-P2-K-g9-done-20260524T080917Z.json.
+
+### Discipline (held)
+- NO goal flip. G9 = EARNED-PENDING. Did NOT write goalsEarned/decisionMatrix. Did NOT touch docs/data/pilot-status-alert-engine.json (PM-owned; flips only at Phase-3 12/12 terminal per charter §4.5).
+- Anchor debba8ea verified ancestor of HEAD (pre-commit).
+- Staged ONLY my 3 authored paths (verdict doc + signal + this notebook). Verified git diff --cached --name-only = zero foreign before commit. NO -A/./dir.
+
+### Verdict: PASS. next_actor=pm (P2-L pre-inject tag + G10 bug injection).
+
+---
+
+## This cycle (c291) — pdf-extractor Phase-0 EXIT GATE close + Phase-1 open
+
+Deliberate user /goal. PO opened Phase 0 earlier this session (c288); this cycle closes the exit gate + opens Phase 1.
+
+### Verified BEFORE close (not assumed)
+- Commits exist: 31483c8c (brownfield+charter+phase-1-plan+bug-inventory), e7541786 (G12 DoD gate in dev-pdf-extractor flow), dc7f6b96 (architect done-signal).
+- Files present: p0-brownfield-inventory.md, phase-1-task-plan-python.md, .claude/flows/dev-pdf-extractor/main.md (G12 gate grep=2), bug-inventory pdf_extractor_baseline=present.
+- Signal architect-pdf-extractor-phase0-done-20260524T091000Z.json: 6 primitives, module=financial-reports, G4=import-linter, sandbox runner GAP (P1-A1 blocker), Phase-1 all BCTC-CLEAR, Phase-2 G5b HARD FROZEN, baselineCycleCount=1.5.
+
+### pilot-status writes (PO-only)
+- phase0 OPEN→CLOSED (closedBy po c291), deliverables all DONE (dev_agent_file=N/A generic developer). exit_gate: landed=true, status=CLOSED, sha=31483c8c, signal=path.
+- phase 0→1. phase1 NOT-STARTED→ACTIVE (skeleton_in + task_plan = phase-1-task-plan-python.md; headline_risk + task_order + g12_streak_tasks).
+- Calibration LOCKED: G1=6 primitives; G2 module=financial-reports via Protocol ports; G4 fence=import-linter (SI-4 settled, lint-imports, pyproject [tool.importlinter], CI working-dir=apps/pdf-extractor); G12 ruleEffectiveAfter="e7541786 / 2026-05-24", tasks=[P1-B1,P1-C,P1-E1].
+- phase2.bctc_freeze_gate added (frozen, anchor 1953-G-FAIL/1954c, 2 G5b rewire tasks, lift_precondition=PO explicit 1954c lift, phase1_impact=NONE) — survives across cycles.
+
+### COMMIT RACE (handled per lesson)
+- Staged explicit-file. Concurrent committer 9482958a swept my staged file into ITS commit. My commit found nothing staged. VERIFIED HEAD:pilot-status-pdf-extractor.json has my FULL correct content (13 jq assertions PASS, zero dup keys). Did NOT rewrite history. SSOT commit = 9482958a.
+
+### Dispatch (RETURN)
+- Signal docs/signals/po-20260524T093000Z.json (po→dev-team). First = P1-A1 (sandbox runner scaffold ≤80L + zero-creds runner + scenario dir), owner dev-pdf-extractor, routed via PM. WIP=1.
+- HARD precondition: P1-B1 blocked-until P1-A1 AC-5 (env audit empty) + AC-6 (scenario grep 0). PM holds P1-B1 until evidence pasted.
+
+### Carry-over (pdf-extractor)
+- Next: dev-pdf-extractor P1-A1 done-signal w/ AC-5/AC-6 zero-creds PASS. Then P1-A2/A3; P1-B1 only after zero-creds gate confirmed.
+- G12 streak: P1-B1(#1)→P1-C(#2)→P1-E1(#3). goalsEarned stays 0 in Phase 1 (PO-only flip at 12/12 terminal, §4.5).
+- Phase-2 G5b: do NOT dispatch fetch_ssc_reports / bctc_batch_sweep rewire until I emit explicit 1954c freeze-LIFT. Watch 1954c consolidation landing.
+- G4 SI-4 gate CLEARED (import-linter) — lock G4 AC when fence-CI lands (Phase 2).
+- Active commit-race environment + heavy fleet WIP — keep explicit-file staging + post-commit HEAD verification.
 
 ---
 
