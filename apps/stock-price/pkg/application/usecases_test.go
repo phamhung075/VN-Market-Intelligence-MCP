@@ -11,27 +11,33 @@ import (
 
 	"github.com/vn-market-intelligence/stock-price/pkg/application"
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
+	priceresolution "github.com/vn-market-intelligence/stock-price/pkg/module/price_resolution"
 )
 
 // ── mock helpers ──────────────────────────────────────────────────────────────
 
-type mockFetcher struct {
+// mockResolver implements application.PriceResolverPort for test injection.
+// It wraps a domain.PriceQuote (or nil) and returns it as a ResolvedQuote.
+type mockResolver struct {
 	quote *domain.PriceQuote
 	err   error
-	// captureCode records the last code passed to FetchPrice
+	// captureCode records the last code passed to Resolve
 	captureCode *string
 }
 
-func (m *mockFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
+func (m *mockResolver) Resolve(code string) (*priceresolution.ResolvedQuote, error) {
 	if m.captureCode != nil {
 		*m.captureCode = code
 	}
-	if m.quote != nil {
-		q := *m.quote
-		q.Code = code
-		return &q, m.err
+	if m.err != nil {
+		return nil, m.err
 	}
-	return nil, m.err
+	if m.quote == nil {
+		return nil, &domain.PriceNotAvailableError{Code: code}
+	}
+	q := *m.quote
+	q.Code = code
+	return &priceresolution.ResolvedQuote{PriceQuote: q, Staleness: "FRESH"}, nil
 }
 
 type mockHistory struct {
@@ -72,14 +78,11 @@ func makeHistoryRows(days int) []domain.DailyOHLCV {
 	return rows
 }
 
-func nilFetcher() *mockFetcher { return &mockFetcher{quote: nil} }
-
 // ── FetchPriceUseCase tests ────────────────────────────────────────────────────
 
 func TestFetchPriceUseCase_CorrectShape(t *testing.T) {
-	tier1 := &mockFetcher{quote: makeVCBQuote()}
-	svc := domain.NewResolvePriceService(tier1, nilFetcher(), nilFetcher(), &mockHistory{})
-	uc := application.NewFetchPriceUseCase(svc)
+	resolver := &mockResolver{quote: makeVCBQuote()}
+	uc := application.NewFetchPriceUseCase(resolver)
 
 	result, err := uc.Execute(application.FetchPriceRequest{Code: "VCB"})
 	if err != nil {
@@ -104,9 +107,8 @@ func TestFetchPriceUseCase_CorrectShape(t *testing.T) {
 
 func TestFetchPriceUseCase_CodeUppercased(t *testing.T) {
 	var captured string
-	tier1 := &mockFetcher{quote: makeVCBQuote(), captureCode: &captured}
-	svc := domain.NewResolvePriceService(tier1, nilFetcher(), nilFetcher(), &mockHistory{})
-	uc := application.NewFetchPriceUseCase(svc)
+	resolver := &mockResolver{quote: makeVCBQuote(), captureCode: &captured}
+	uc := application.NewFetchPriceUseCase(resolver)
 
 	_, err := uc.Execute(application.FetchPriceRequest{Code: "vcb"})
 	if err != nil {
@@ -118,8 +120,8 @@ func TestFetchPriceUseCase_CodeUppercased(t *testing.T) {
 }
 
 func TestFetchPriceUseCase_PriceNotAvailablePropagated(t *testing.T) {
-	svc := domain.NewResolvePriceService(nilFetcher(), nilFetcher(), nilFetcher(), &mockHistory{})
-	uc := application.NewFetchPriceUseCase(svc)
+	resolver := &mockResolver{quote: nil}
+	uc := application.NewFetchPriceUseCase(resolver)
 
 	_, err := uc.Execute(application.FetchPriceRequest{Code: "UNKNOWN"})
 	if err == nil {

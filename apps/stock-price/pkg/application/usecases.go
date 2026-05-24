@@ -5,7 +5,15 @@ import (
 	"strings"
 
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
+	priceresolution "github.com/vn-market-intelligence/stock-price/pkg/module/price_resolution"
 )
+
+// PriceResolverPort is the port the FetchPriceUseCase depends on.
+// pkg/module/price_resolution.PriceResolutionModule satisfies this interface.
+// Defined here (application layer) so the use case never imports infrastructure.
+type PriceResolverPort interface {
+	Resolve(code string) (*priceresolution.ResolvedQuote, error)
+}
 
 // FetchPriceRequest is the inbound DTO for price fetch.
 type FetchPriceRequest struct {
@@ -32,36 +40,37 @@ type PriceHistoryRequest struct {
 
 // PriceHistoryResponse is the outbound DTO for history.
 type PriceHistoryResponse struct {
-	Code    string             `json:"code"`
+	Code    string              `json:"code"`
 	History []domain.DailyOHLCV `json:"history"`
 }
 
-// FetchPriceUseCase orchestrates price resolution.
+// FetchPriceUseCase orchestrates price resolution via the module tier.
 type FetchPriceUseCase struct {
-	service *domain.ResolvePriceService
+	resolver PriceResolverPort
 }
 
-// NewFetchPriceUseCase constructs the use case.
-func NewFetchPriceUseCase(service *domain.ResolvePriceService) *FetchPriceUseCase {
-	return &FetchPriceUseCase{service: service}
+// NewFetchPriceUseCase constructs the use case with an injected PriceResolverPort.
+// At the composition root (cmd/server/main.go), pass *price_resolution.PriceResolutionModule.
+func NewFetchPriceUseCase(resolver PriceResolverPort) *FetchPriceUseCase {
+	return &FetchPriceUseCase{resolver: resolver}
 }
 
-// Execute uppercases the code then delegates to ResolvePriceService.
+// Execute uppercases the code then delegates to the price_resolution module.
 func (uc *FetchPriceUseCase) Execute(req FetchPriceRequest) (*FetchPriceResponse, error) {
 	code := strings.ToUpper(req.Code)
-	quote, err := uc.service.FetchPrice(code)
+	rq, err := uc.resolver.Resolve(code)
 	if err != nil {
 		return nil, err
 	}
 	return &FetchPriceResponse{
-		Code:          quote.Code,
-		Price:         quote.Price,
-		Volume:        quote.Volume,
-		Change:        quote.Change,
-		ChangePercent: quote.ChangePercent,
-		Source:        quote.Source,
-		LatencyMs:     quote.LatencyMs,
-		FetchedAt:     quote.FetchedAt,
+		Code:          rq.Code,
+		Price:         rq.Price,
+		Volume:        rq.Volume,
+		Change:        rq.Change,
+		ChangePercent: rq.ChangePercent,
+		Source:        rq.Source,
+		LatencyMs:     rq.LatencyMs,
+		FetchedAt:     rq.FetchedAt,
 	}, nil
 }
 

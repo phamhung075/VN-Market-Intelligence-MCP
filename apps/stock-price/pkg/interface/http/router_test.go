@@ -13,22 +13,23 @@ import (
 	"github.com/vn-market-intelligence/stock-price/pkg/application"
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
 	httphandler "github.com/vn-market-intelligence/stock-price/pkg/interface/http"
+	priceresolution "github.com/vn-market-intelligence/stock-price/pkg/module/price_resolution"
 )
 
 // ── mock ports ────────────────────────────────────────────────────────────────
 
-type mockFetcher struct {
+// mockResolver implements application.PriceResolverPort using a pre-built quote.
+type mockResolver struct {
 	quote *domain.PriceQuote
-	err   error
 }
 
-func (m *mockFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
-	if m.quote != nil {
-		q := *m.quote
-		q.Code = code
-		return &q, m.err
+func (m *mockResolver) Resolve(code string) (*priceresolution.ResolvedQuote, error) {
+	if m.quote == nil {
+		return nil, &domain.PriceNotAvailableError{Code: code}
 	}
-	return nil, m.err
+	q := *m.quote
+	q.Code = code
+	return &priceresolution.ResolvedQuote{PriceQuote: q, Staleness: "FRESH"}, nil
 }
 
 type mockHistory struct {
@@ -69,11 +70,10 @@ func makeHistoryRows(n int) []domain.DailyOHLCV {
 
 // buildServer wires up the handler with the provided mocks.
 func buildServer(
-	f *mockFetcher,
+	r *mockResolver,
 	h *mockHistory,
 ) *httptest.Server {
-	svc := domain.NewResolvePriceService(f, &mockFetcher{}, &mockFetcher{}, h)
-	fetchUC := application.NewFetchPriceUseCase(svc)
+	fetchUC := application.NewFetchPriceUseCase(r)
 	historyUC := application.NewPriceHistoryUseCase(h)
 
 	handler := httphandler.NewHandler(fetchUC, historyUC)
@@ -85,7 +85,7 @@ func buildServer(
 // ── GET /health ───────────────────────────────────────────────────────────────
 
 func TestHealth_Returns200(t *testing.T) {
-	srv := buildServer(&mockFetcher{}, &mockHistory{})
+	srv := buildServer(&mockResolver{}, &mockHistory{})
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/health")
@@ -110,7 +110,7 @@ func TestHealth_Returns200(t *testing.T) {
 // ── POST /price/fetch ─────────────────────────────────────────────────────────
 
 func TestPriceFetch_Success_JSONShape(t *testing.T) {
-	srv := buildServer(&mockFetcher{quote: makeVCBQuote()}, &mockHistory{})
+	srv := buildServer(&mockResolver{quote: makeVCBQuote()}, &mockHistory{})
 	defer srv.Close()
 
 	body := `{"code":"VCB"}`
@@ -142,7 +142,7 @@ func TestPriceFetch_Success_JSONShape(t *testing.T) {
 }
 
 func TestPriceFetch_LowercaseCodeUppercased(t *testing.T) {
-	srv := buildServer(&mockFetcher{quote: makeVCBQuote()}, &mockHistory{})
+	srv := buildServer(&mockResolver{quote: makeVCBQuote()}, &mockHistory{})
 	defer srv.Close()
 
 	body := `{"code":"vcb"}`
@@ -160,7 +160,7 @@ func TestPriceFetch_LowercaseCodeUppercased(t *testing.T) {
 }
 
 func TestPriceFetch_MissingCode_400(t *testing.T) {
-	srv := buildServer(&mockFetcher{quote: makeVCBQuote()}, &mockHistory{})
+	srv := buildServer(&mockResolver{quote: makeVCBQuote()}, &mockHistory{})
 	defer srv.Close()
 
 	body := `{}`
@@ -172,7 +172,7 @@ func TestPriceFetch_MissingCode_400(t *testing.T) {
 }
 
 func TestPriceFetch_InvalidJSON_400(t *testing.T) {
-	srv := buildServer(&mockFetcher{quote: makeVCBQuote()}, &mockHistory{})
+	srv := buildServer(&mockResolver{quote: makeVCBQuote()}, &mockHistory{})
 	defer srv.Close()
 
 	resp, _ := http.Post(srv.URL+"/price/fetch", "application/json", bytes.NewBufferString("not-json"))
@@ -183,7 +183,7 @@ func TestPriceFetch_InvalidJSON_400(t *testing.T) {
 }
 
 func TestPriceFetch_NotAvailable_404(t *testing.T) {
-	srv := buildServer(&mockFetcher{quote: nil}, &mockHistory{})
+	srv := buildServer(&mockResolver{quote: nil}, &mockHistory{})
 	defer srv.Close()
 
 	body := `{"code":"UNKNOWN"}`
@@ -198,7 +198,7 @@ func TestPriceFetch_NotAvailable_404(t *testing.T) {
 
 func TestPriceHistory_QueryParam_Success(t *testing.T) {
 	rows := makeHistoryRows(5)
-	srv := buildServer(&mockFetcher{}, &mockHistory{rows: rows})
+	srv := buildServer(&mockResolver{}, &mockHistory{rows: rows})
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/price/history?code=VCB&days=5")
@@ -222,7 +222,7 @@ func TestPriceHistory_QueryParam_Success(t *testing.T) {
 
 func TestPriceHistory_QueryParam_DefaultDays(t *testing.T) {
 	rows := makeHistoryRows(30)
-	srv := buildServer(&mockFetcher{}, &mockHistory{rows: rows})
+	srv := buildServer(&mockResolver{}, &mockHistory{rows: rows})
 	defer srv.Close()
 
 	resp, _ := http.Get(srv.URL + "/price/history?code=VCB")
@@ -233,7 +233,7 @@ func TestPriceHistory_QueryParam_DefaultDays(t *testing.T) {
 }
 
 func TestPriceHistory_QueryParam_MissingCode_400(t *testing.T) {
-	srv := buildServer(&mockFetcher{}, &mockHistory{})
+	srv := buildServer(&mockResolver{}, &mockHistory{})
 	defer srv.Close()
 
 	resp, _ := http.Get(srv.URL + "/price/history?days=5")
@@ -244,7 +244,7 @@ func TestPriceHistory_QueryParam_MissingCode_400(t *testing.T) {
 }
 
 func TestPriceHistory_QueryParam_InvalidDays_400(t *testing.T) {
-	srv := buildServer(&mockFetcher{}, &mockHistory{})
+	srv := buildServer(&mockResolver{}, &mockHistory{})
 	defer srv.Close()
 
 	resp, _ := http.Get(srv.URL + "/price/history?code=VCB&days=0")
@@ -258,7 +258,7 @@ func TestPriceHistory_QueryParam_InvalidDays_400(t *testing.T) {
 
 func TestPriceHistory_PathParam_Success(t *testing.T) {
 	rows := makeHistoryRows(10)
-	srv := buildServer(&mockFetcher{}, &mockHistory{rows: rows})
+	srv := buildServer(&mockResolver{}, &mockHistory{rows: rows})
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URL + "/price/history/VCB?days=10")
