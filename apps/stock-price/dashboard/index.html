@@ -1201,9 +1201,9 @@ footer {
   <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (cold start — honest)</span>
-  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
-  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
-  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">Valid Input</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">Edge Case</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">Bad Input &rarr; Error</span> Invalid input &rarr; expected error (test PASSES)</span>
 </div>
 
 <footer>
@@ -1644,6 +1644,16 @@ window.__MODULE_DATA__ = [
     return 'cat-edge';
   }
 
+  /* Category display labels — maps data SSOT values to user-facing plain-meaning labels.
+     Data SSOT (golden/edge/failure) stays unchanged in scenario JSON; only display is remapped.
+     Fleet-wide convention: matches technical-analysis pilot dashboard labels. */
+  function categoryDisplayLabel(cat) {
+    if (cat === 'golden')  return 'Valid Input';
+    if (cat === 'edge')    return 'Edge Case';
+    if (cat === 'failure') return 'Bad Input → Error';
+    return cat;
+  }
+
   function statusDotClass(status) {
     if (status === 'pass') return 'dot-green';
     if (status === 'fail') return 'dot-red';
@@ -1706,7 +1716,7 @@ window.__MODULE_DATA__ = [
         html += '<span class="scenario-name">' + escHtml(sc.scenario) + '</span>';
         html += '<span class="scenario-desc">' + escHtml(sc.description) + '</span>';
         html += '</span>';
-        html += '<span class="category-chip ' + categoryChipClass(sc.category) + '">' + escHtml(sc.category) + '</span>';
+        html += '<span class="category-chip ' + categoryChipClass(sc.category) + '">' + escHtml(categoryDisplayLabel(sc.category)) + '</span>';
         html += '</button>';
       });
 
@@ -1751,7 +1761,7 @@ window.__MODULE_DATA__ = [
       html += '<div class="module-card-header">';
       html += '<div>';
       html += '<div class="module-card-title">' + escHtml(sc.scenario) + '</div>';
-      html += '<div class="module-card-meta">module: ' + escHtml(sc.module) + ' &bull; category: ' + escHtml(sc.category) + '</div>';
+      html += '<div class="module-card-meta">module: ' + escHtml(sc.module) + ' &bull; category: ' + escHtml(categoryDisplayLabel(sc.category)) + '</div>';
       html += '</div>';
       html += '<span class="group-status ' + labelClass + '">' + labelText + '</span>';
       html += '</div>';
@@ -1873,7 +1883,7 @@ window.__MODULE_DATA__ = [
     var statTxt = document.getElementById('modal-status-text');
 
     title.textContent  = sc.scenario || sc.primitive || sc.module || 'Scenario';
-    cat.textContent    = (sc.category || '').toUpperCase();
+    cat.textContent    = categoryDisplayLabel(sc.category || '').toUpperCase();
     desc.textContent   = sc.description || '';
     inJson.textContent = JSON.stringify(sc.input || sc.inputs || {}, null, 2);
     outJson.textContent= JSON.stringify(sc.expectedOutput || sc.expected || {}, null, 2);
