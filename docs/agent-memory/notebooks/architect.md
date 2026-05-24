@@ -1,6 +1,35 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 00:00 UTC (stock-price Phase-2 task plan, 14 tasks / 66 ACs) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 03:00 UTC (kinh-dich Phase-2 task plan, 14 tasks / 77 ACs) | **Sprint:** fleet-factory-rollout program
+
+## kinh-dich Phase-2 task plan cycle (2026-05-24T03:00Z) — fleet pilot 4 Phase 2 dispatch
+
+**Task:** Author Phase-2 atomic task plan for kinh-dich factory pilot (fleet pilot 4, TS/Bun), per PO
+authorization signal `po-20260524T023538Z-kinh-dich-phase2-authorize.json`. Phase-1 gate = clean full GO
+(QA commit 34205c87, 6/6 dashboard cards, 14/14 sandbox, G12 streak 6/6).
+
+**Key decisions:**
+- 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs total. WIP=1 sequential throughout.
+- G-goal posture: EARNED-PENDING = G1 (carry-forward 4 prim, +1 in J), G2, G6, G7, G12.
+  STILL-UNMET (Phase-2 work) = G3, G4, G5, G8, G9, G10, G11. goalsEarned=0. NO flips in Phase 2.
+- G4 fence: ESLint eslint-plugin-boundaries (SI-3 Option A), NOT Go depguard. 4-task split:
+  P2-KD-A (tag) + P2-KD-B (eslint.config.mjs + devDeps) + P2-KD-C (AC-4b violation proof, NEVER committed)
+  + P2-KD-D (AC-4c freeze anchor). R-FENCE gate = AC-4b on real .js-suffixed ESM imports.
+  R-2 fallback: @typescript-eslint/parser in-Option-A (5-min fix; NOT Option C).
+- G5b scope: WIDE (brownfield §5 HIGH-RISK) — 6 MCP tools in kinhDichTools.ts use DIRECT domain imports
+  from mcp-server parallel copy (apps/mcp-server/src/domain/services/kinhDich/). Full rewire needed:
+  6 tools → HTTP port 5005 + 4 new kinh-dich-service endpoints. Score helpers stay in mcp-server.
+  P2-KD-G is the largest single task (~3h).
+- G6 finalization: kinh-dich dashboard already EXISTS (Phase-1 DONE, 6/6 cards). P2-KD-J adds
+  nuclear-hexagram-computer (5th primitive, deferred from Phase-1 OQ-1) + OpenAPI link + deprecated notice.
+  SI-2 boundary HARD: kinh-dich MUST NOT touch docs/dashboards/index.html (stock-price exclusive).
+- G8: honest-red via bun sandbox (not Go binary). Pattern: non-zero exit on corrupted scenario + zero on revert.
+- G9: PO Playwright Path B Day-0 default (L6; Playwright 1.60.0 + cached chromium confirmed available).
+- G10/G11: bug target = hao-encoder (threshold constant off-by-one). Pre-inject tag = P2-KD-M.
+- Pre-revert tags: kinh-dich-pre-ci (P2-KD-A) → kinh-dich-pre-delete (P2-KD-E) → kinh-dich-pre-inject (P2-KD-M).
+- Commits: 18b04bf5 (plan file) + 481b1bdc (signal). Only kinh-dich-factory dir touched. Anchor intact.
+
+---
 
 ## stock-price Phase-2 task plan cycle (2026-05-24T00:00Z) — fleet pilot 3 Phase 2 dispatch
 
