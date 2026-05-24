@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-J",
-    "current_task_owner": "dev-kinh-dich",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-J.md",
+    "current_task": "P2-KD-K",
+    "current_task_owner": "qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-K.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -557,7 +557,7 @@
         "note": "Wire reading_composer module; ensure MarkovPort injection only in composition root (Fence-C); target ≤80 lines; create OpenAPI YAML contract for all 7 endpoints including 4 new G5b endpoints."
       },
       "P2-KD-J": {
-        "status": "READY",
+        "status": "DONE",
         "owner": "dev-kinh-dich",
         "title": "G6 finalization — dashboard contract-linking + nuclear-hexagram-computer 5th primitive",
         "handoff": "docs/handoffs/TASK_P2-KD-J.md",
@@ -565,8 +565,34 @@
         "blocks": "P2-KD-K",
         "est_hours": 2.0,
         "ac_count": 7,
+        "completedAt": "2026-05-24T04:26:34Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "5db652f3",
         "g_goals_advanced": ["G6", "G1"],
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS",
+          "AC-7": "PASS"
+        },
+        "sandbox_verdict": "17/17 PASS (14 Phase-1 baseline + 3 nuclear-hexagram-computer)",
+        "dashboard_primitives_count": 5,
         "note": "Add 5th primitive card (nuclear-hexagram-computer with 3 scenarios: golden/edge/failure); link OpenAPI contract in microservice panel; add deprecated notice for G5a; update dashboard labels to '5 pure TypeScript functions'; G12 DoD rises to 17/17 scenarios. SI-2 boundary held (no touch to docs/dashboards/)."
+      },
+      "P2-KD-K": {
+        "status": "READY",
+        "owner": "qa",
+        "title": "G8 honest-red deliberate-break proof (bun sandbox RED on corrupted + GREEN on revert)",
+        "handoff": "docs/handoffs/TASK_P2-KD-K.md",
+        "blocked_by": "P2-KD-J",
+        "blocks": "P2-KD-L",
+        "est_hours": 0.5,
+        "ac_count": 5,
+        "g_goals_advanced": ["G8"],
+        "note": "Two tests prove dashboard is honest: Test A = deliberately corrupt a scenario → sandbox RED + dashboard shows non-green for affected card → revert; Test B = golden scenario after revert → sandbox GREEN + dashboard shows green. Both scenarios reverted clean (no commit). Handoff evidence compiled and signal emitted."
       }
     }
   },
