@@ -1,6 +1,26 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-24 | **Cycle:** NF-LD-2b — news-fetch dashboard live panel | **Sprint:** NF-LD
+**Last updated:** 2026-05-24 | **Cycle:** NF-LD-4-dev-B — ENDPOINT relative path | **Sprint:** NF-LD-4
+
+## Session 2026-05-24 — NF-LD-4-dev-B (ENDPOINT relative path)
+
+**Task:** NF-LD-4-dev-B — change ENDPOINT constant in apps/news-fetch/dashboard/index.html from absolute URL to relative path.
+
+**What was done:**
+- Changed line 315: `var ENDPOINT = 'http://localhost:3000/api/news-fetch/live?source=all&limit=20'` → `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'`
+- file:// degrade branch (window.location.protocol === 'file:') kept intact — untouched
+- data.js, sandbox panels, dash-check.mjs — all untouched
+- grep localhost:3000 in ENDPOINT constant → 0 matches (3 remaining hits are in comments/error strings only)
+
+**dash-check result:** PASS — panels=4 (sandbox=3+live=1), cards=6, PASS=6, live_panel_degrade=true, live_panel_fake_rows=false, console_errors=0, external_net=0
+
+**Commit:** `d32398f4` — explicit staging (git add apps/news-fetch/dashboard/index.html only)
+
+**AC count:** AC-1 PASS, AC-2 PASS, AC-3 PASS, AC-4 PASS
+
+**Next:** NF-LD-4-QA → qa
+
+---
 
 ## Session 2026-05-24 — NF-LD-2b (dashboard live panel)
 

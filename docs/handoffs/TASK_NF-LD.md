@@ -869,6 +869,26 @@ The change is made in the **copy** that dev-mcp-server places at `apps/mcp-serve
 
 ---
 
+## NF-LD-4-dev-B — developer (DONE)
+
+### [Developer] Implementation Record — NF-LD-4-dev-B — 2026-05-24
+
+- **Files modified:** `apps/news-fetch/dashboard/index.html:315` — ENDPOINT constant changed from absolute URL to relative path `/api/news-fetch/live?source=all&limit=20`
+- **Tests written:** none (pure HTML/JS; verified via headless dash-check.mjs)
+- **Git commits:** `d32398f4` fix(news-fetch/dashboard): NF-LD-4-dev-B — ENDPOINT relative path (same-origin via mcp-server)
+- **tsc status:** N/A (no TypeScript files modified)
+- **dash-check result:** PASS — panels=4 (sandbox=3+live=1), cards=6, PASS=6, live_panel_degrade=true, live_panel_fake_rows=false, console_errors=0, external_net=0
+- **Docs updated:** this handoff only
+- **Graphify:** skipped (no docs impacted — 1-line constant change)
+
+**AC evidence:**
+- AC-1 PASS: `grep -n "localhost:3000" index.html` → 3 hits in comments/error-strings only, zero in ENDPOINT constant; `grep -n "ENDPOINT" index.html` → line 315: `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'`
+- AC-2 PASS: file:// degrade branch (`window.location.protocol === 'file:'`) at line 320 — untouched; dash-check live_panel_degrade=true
+- AC-3 PASS: `git diff HEAD~1 -- apps/news-fetch/dashboard/data.js` → empty; diff shows ONLY ENDPOINT string change inside `initLivePanel()`
+- AC-4 PASS: `node apps/news-fetch/dashboard/dash-check.mjs` → verdict: PASS (panels=4, sandbox=3, live=1, degrade=true, fake_rows=false, console_errors=0)
+
+---
+
 ## Constraints binding NF-LD-4 (verbatim — every agent in the chain)
 - L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`
 - No `--force`, no `--no-verify`, no `--no-gpg-sign`
