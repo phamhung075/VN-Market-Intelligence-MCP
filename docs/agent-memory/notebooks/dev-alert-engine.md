@@ -6,6 +6,23 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-A — alert-engine-pre-ci Tag Created (Phase 2 Start)
+
+**Task:** P2-A — pre-revert anchor tag before G4 .golangci.yml work
+
+**Outcome:** All 3 ACs PASS. Tag created, signal emitted, evidence committed.
+
+**AC evidence:**
+- AC-1: PASS — tag points to 4d5b2f75 (HEAD, after Phase-1 anchor d6eab5bf); no --force, no push
+- AC-2: PASS — `git tag | grep alert-engine-pre-ci` returns `alert-engine-pre-ci`
+- AC-3: PASS — anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc still ancestor of HEAD (tail returns df7d3d7a)
+
+**Signal:** docs/signals/dev-ae-P2-A-done-20260524T063946Z.json
+**Evidence commit:** 604a71f1
+**Next:** PM dispatches P2-B (.golangci.yml Fence-A/B/C)
+
+---
+
 ### 2026-05-24 P1-E — Edit-Rerun Handler + G7 ZERO-CREDS All 4 Sub-Gates DONE
 
 **Task:** P1-AE-E — finalize edit-rerun handler in dashboard + full G7 env audit
