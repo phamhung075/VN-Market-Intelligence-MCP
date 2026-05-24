@@ -37,7 +37,7 @@ from typing import Literal
 # THESE ARE G10/G11 INJECTION TARGETS — single-literal mutations here
 # will flip boundary scenarios RED on the dashboard.
 _SKIP_THRESHOLD: float = 0.0     # exact zero → skip
-_LOW_CONF_THRESHOLD: float = 0.2  # strictly less than → low_confidence; ≥ → normal
+_LOW_CONF_THRESHOLD: float = 0.1  # strictly less than → low_confidence; ≥ → normal
 
 
 def gate_confidence(confidence: float) -> Literal["skip", "low_confidence", "normal"]:
