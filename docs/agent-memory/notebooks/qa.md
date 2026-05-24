@@ -1,5 +1,73 @@
 # QA — Notebook
 
+## cycle-103 · 2026-05-24 · 1954c/G5b BCTC consolidation gate — PASS
+
+**Task:** Task 7 — QA gate for 1954c+G5b BCTC consolidation | **Verdict:** PASS — APPROVED
+
+```
+date: 2026-05-24T11:35:16Z
+outcome: PASS — gateVerdict APPROVED
+type: consolidation-qa-gate (1954c + G5b BCTC write-path consolidation)
+handoff: docs/handoffs/TASK_1954c-g5b-consolidation-impl-done.md
+signal: docs/signals/qa-bctc-1954c-g5b-gate-20260524T113516Z.json
+ssot_not_mutated: true (no pilot-status flips — PO-only §4.5)
+goal_flips: NONE
+
+full_suite: 9306 pass / 356 fail / 35 skip (9697 total, 292s)
+new_regressions: 0
+consolidation_path_tests: 70 pass / 0 fail (8 files)
+offline_integration: 3/3 PASS (bctc-consolidation.test.ts — Bun mock HTTP, no live VPS)
+tsc: EXIT:0 0 errors
+ddd_scan: PASS (0 domain->infra imports)
+security_scan: PASS (0 process.env, 0 hardcoded creds)
+
+g5b_ownership: YES
+  - pdf.ts downloadAndExtractPdf: service-first (Step 1 = microservice, Step 2 = pdf-parse fallback)
+  - bctcPdfPullJob: extractViaMicroservice() direct call (line 143)
+  - pushBctcExtraction: extractViaService wired to extractViaMicroservice (line 75)
+  - bctcReparseJob: extractViaService Tier 1 = service (line 279), makeProductionDeps wires extractViaMicroservice
+  - checkSscReports: disabled by enableLocalBctcFetch=false; if re-enabled routes via service-first inversion
+
+ocr_spawner_live_callers: 0
+  - fetchParseAndStoreBctc.ts retains legacy import (dead-path: all 4 callers pass pdfTextOverride — OCR branch unreachable)
+  - pdfOcrWorker.ts: @deprecated JSDoc, no non-deprecated callers
+  - pdf.ts ocrPdfBuffer: @deprecated JSDoc
+
+untouched_files:
+  fetchParseAndStoreBctc.ts: last_commit=d29da3a8 (pre-consolidation) — CONFIRMED
+  pdfExtractorClient.ts: last_commit=c34ab25f (pre-consolidation) — CONFIRMED
+
+recurring_bug:
+  failure_a_backfill_column: FIXED (commit 2a5cc2a7)
+  failure_b_ocr_cache_race: STRUCTURALLY_RESOLVED (single-owner, no 4-path race)
+  1953_g_fail_code_component: STRUCTURALLY_RESOLVED
+  residual_staleness: INFRA/VPS only — out of scope (vpsProxyWatchdogJob owns this)
+
+recommendation: APPROVED — architect flip G5b-clearance + PO lift bctc_freeze_gate + 12/12 close
+```
+
+| Check | Verdict |
+|-------|---------|
+| bun test full suite 0 new regressions | PASS |
+| offline integration 3/3 | PASS |
+| tsc 0 errors | PASS |
+| DDD scan PASS | PASS |
+| security scan PASS | PASS |
+| pdf.ts service-first confirmed | PASS |
+| bctcPdfPullJob -> extractViaMicroservice | PASS |
+| pushBctcExtraction -> extractViaService | PASS |
+| bctcReparseJob Tier1 -> extractViaService | PASS |
+| checkSscReports disabled (flag=false) | PASS |
+| 0 live OCR spawner callers | PASS |
+| fetchParseAndStoreBctc.ts UNTOUCHED | PASS |
+| pdfExtractorClient.ts UNTOUCHED | PASS |
+| 1953-G-FAIL code component resolved | PASS |
+
+**G5b ownership: SERVICE IS EXTRACTION OWNER — YES.**
+**Gate: PASS — APPROVED for architect G5b-clearance + PO freeze-lift + 12/12 close.**
+
+---
+
 ## cycle-102 · 2026-05-24 · pdf-extractor P2-G5c — zero TODO.*migrat grep — PASS
 
 **Task:** P2-G5c (zero migration-leftover comment grep) | **Verdict:** PASS
