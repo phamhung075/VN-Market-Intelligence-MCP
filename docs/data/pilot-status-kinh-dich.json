@@ -335,7 +335,7 @@
   },
 
   "phase2": {
-    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-L (G9 PO Playwright Path B). P2-KD-K DONE (f70d98af, G8 honest-red). G5 complete (G5a+b+c all PASS). 10/14 dev/qa tasks DONE; 1/1 po task READY for dispatch.",
+    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-M (G10 bug injection + tag). P2-KD-L DONE (a2a1002f, G9 Playwright PASS). P2-KD-K DONE (f70d98af, G8 honest-red). G5 complete (G5a+b+c all PASS). 11/14 dev/qa tasks DONE; 1/1 po task DONE.",
     "status": "OPEN",
     "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
     "openedAt": "2026-05-24T00:00:00Z",
@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-L",
-    "current_task_owner": "po",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-L.md",
+    "current_task": "P2-KD-M",
+    "current_task_owner": "qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-M.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -606,7 +606,10 @@
         "note": "Two tests prove dashboard is honest: Test A = deliberately corrupt a scenario → sandbox RED + dashboard shows non-green for affected card → revert; Test B = golden scenario after revert → sandbox GREEN + dashboard shows green. Both scenarios reverted clean (no commit). Handoff evidence compiled and signal emitted. Router verified: 3 primitives corrupted → each sandbox exit 1 with named FAIL, golden revert → 17/17 GREEN, scenario tree clean (no residue)."
       },
       "P2-KD-L": {
-        "status": "READY",
+        "status": "DONE",
+        "completedAt": "2026-05-24T04:35:45Z",
+        "completedBy": "po",
+        "commit_sha": "a2a1002f",
         "owner": "po",
         "title": "G9 PO Playwright Path B (chromium-headless-shell, TCC-staged via Terminal.app)",
         "handoff": "docs/handoffs/TASK_P2-KD-L.md",
@@ -615,7 +618,25 @@
         "est_hours": 0.5,
         "ac_count": 4,
         "g_goals_advanced": ["G9"],
-        "note": "G9 dashboard trust contract via Path B (PO Playwright headless chromium — Day-0 default per L6). Open file://apps/kinh-dich-service/dashboard/index.html in headless browser. Verify: zero console/page/request errors, all 3 panels render (7 cards), honest NOT-RUN status. Path B is fully autonomous — no user delegation required; Playwright 1.60.0 + cached chromium ARE available."
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS"
+        },
+        "note": "G9 dashboard trust contract via Path B (PO Playwright headless chromium — Day-0 default per L6). Opened file://apps/kinh-dich-service/dashboard/index.html via headless chromium. Verified: zero console/page/request errors (consoleErrors=0, pageErrors=0, requestFailed=0), all 3 panels render (3 panels, 15 primitive + 2 module + 1 service = 17 status dots), honest NOT-RUN status (green=0, red=0, pending=17). Path B fully autonomous — no user delegation required; Playwright 1.60.0 + cached chromium confirmed available. Evidence: docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md (PO decision doc, not code-touching)."
+      },
+      "P2-KD-M": {
+        "status": "READY",
+        "owner": "qa",
+        "title": "Create kinh-dich-pre-inject tag + G10 deliberate bug injection",
+        "handoff": "docs/handoffs/TASK_P2-KD-M.md",
+        "blocked_by": "P2-KD-L",
+        "blocks": "P2-KD-N",
+        "est_hours": 0.33,
+        "ac_count": 4,
+        "g_goals_advanced": ["G10 setup"],
+        "note": "Tag created FIRST (Step 0, before injection), bug injected SECOND. Single-literal defect in hao-encoder (e.g., threshold off-by-one, comparison flip, or mapping value flip). Bug compiles (tsc exit 0) but fails at runtime (hao-encoder golden scenario FAIL). Committed as real defect. G12 DoD EXCEPTION: RED sandbox after P2-KD-M is CORRECT and required (G10 baseline for fix cycle). P2-KD-N fixer stays BLIND to literal, must rediscover from RED dashboard."
       }
     }
   },
