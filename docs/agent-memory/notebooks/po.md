@@ -1,36 +1,35 @@
 # PO Notebook
 
-**Cycle:** c289 (user /goal — rag-service SCALE pilot Phase 0 kickoff)
-**Last update:** 2026-05-24T07:18:44Z
-**Status:** Opened Phase 0 for rag-service. status PENDING→ACTIVE, phase pre-0→0, phase0 PENDING→OPEN. All 12 goals calibrated for Python/rag-service. Returned kickoff BATCH (architect ×3 + agent-father ×2) to dev-team dispatcher.
+**Cycle:** c291 (dev-team — api-gateway SCALE pilot Phase 0 CLOSE → Phase 1 OPEN)
+**Last update:** 2026-05-24T07:34:03Z
+**Status:** api-gateway Phase 0 exit gate CLOSED, Phase 1 ACTIVE WIP=1. First dispatch = P1-AG-B1. goalsEarned=0. Commit f15b897e.
 
 ---
 
-## This cycle (c289) — rag-service Phase 0 open + kickoff BATCH
+## This cycle (c291) — api-gateway Phase 0 close + Phase 1 open
 
-Deliberate user /goal directive (NOT cron). Scope-locked `apps/rag-service/` ONLY. Inherits macro v2.0 L1–L7. SCALE model = thin charter only (NO factory dir — unlike macro pilot-2).
+Scope-locked `apps/api-gateway/` ONLY (anti-scope-creep). Did NOT touch any other pilot-status.
 
-### Ground truth verified (NOT assumed)
-- SSOT pilot-status-rag-service.json was status=PENDING/phase=pre-0. Flipped: ACTIVE / phase 0 / phase0 OPEN, kickoff 2026-05-24, deadline 2026-07-05 (+6 sprints). activatedBy cycle-71.
-- All 12 calibration fields populated (jq-confirmed: none still hold `<SERVICE` placeholder). JSON valid, NO dup keys. decisionMatrix UNTOUCHED (PO-only, atomic w/ 12/12 — correct).
-- Language LOCKED Python (sentence-transformers/LanceDB ML constraint). Port 5002 (system-map). DB rag_service.db, vector table rag_vectors.
-- apps/rag-service/ = CLEAN Python DDD (domain/application/infrastructure/interface/main.py/__tests__/pyproject.toml/requirements.txt). NO primitive/module subfolders → rewire+extract, NOT rebuild. Shares Python sandbox-runner gap with pdf-extractor (G1 prereq).
-- Flow .claude/flows/dev-rag-service/main.md = thin 19L pointer → developer/microservice-main.md, NO G12 DoD gate → agent-father deliverable. Agent file dev-rag-service.md = 7084B (~7KB, as stated) → agent-father verify-calibrate.
-- bug-inventory.json: NO rag entry yet → architect baseline (expect ~1.3-1.5 system-wide fallback) for G10.
+### Verification (all 5 phase0 deliverables landed on disk + git)
+- brownfield_inventory DONE — api-gateway-brownfield.md (13686B) [architect b3ae0568]. HONEST 3 primitives: overall-status-computer, proxy-path-resolver, route-service-matcher. go test ./... PASS 45.
+- bug_inventory_entry DONE — bug-inventory.json api_gateway_baseline (line 436) [d5e6ea22].
+- phase_1_task_plan DONE — api-gateway-phase-1-task-plan.md (24363B); 6 tasks B/C/E, WIP=1, G11 blast-radius FIRST [d9a0b84e].
+- dev_agent_file + dev_agent_flow_file DONE [agent-father c9cac80b]. G12 DoD gate baked at flow line 57 ("Do not mark DONE / do not RETURN until sandbox dashboard GREEN").
 
-### Primitives calibrated
-5 candidates: chunk-splitter, similarity-scorer, top-k-selector, context-window-packer, relevance-threshold-gate. Module: retrieval.
+### Actions
+- G12 g12Streak.ruleEffectiveAfter = "c9cac80b 2026-05-24" (DERIVED, PO-only §4.5).
+- phase0.exit_gate: all_deliverables_landed=true, exit_gate_status=CLOSED, verification_commit_sha_architect=b3ae0568..., verification_signal=docs/signals/po-20260524T073403Z.json. phase0.status=CLOSED, closedAt/closedBy set.
+- phase=1; phase1.status ACTIVE; task_plan + skeleton_in → api-gateway-phase-1-task-plan.md; wip_limit=1; progress_note logged.
+- Goals → IN-PROGRESS: G1,G2,G6,G7,G8,G11,G12 (per dispatcher Phase 1-active set). G3/G5 Phase 2 verify-only; G4 advanced only at P1-AG-E2 (stays TBD until then); G9/G10 later. ALL stay TBD.
+- decisionMatrix UNTOUCHED (PO-only atomic @ 12/12). goalsEarned=0 (nothing YES).
+- Signal po-20260524T073403Z.json written. Commit f15b897e (explicit-file stage ×2, NO -A).
 
-### Critical boundaries flagged in calibration
-- Embedding model + LanceDB = IMPURE adapters → stay infrastructure/, NEVER primitives. DI at composition root (main.py).
-- DETERMINISM (key risk): sandbox feeds PRE-COMPUTED fixed vectors + pinned ranking. ZERO model load, ZERO LanceDB/ANN — else false-reds from float/ANN jitter. Keep HF_HUB_OFFLINE=1 / pre-baked-model cold-start hardening (do NOT regress).
-- G7/G8 env audit forbidden incl LANCEDB_|HF_|HUGGINGFACE|OPENAI_API_KEY (+ standard). GOAL DONE criterion = sandbox env audit empty.
-- G4 = Python fence per SI-4 (import-linter/ruff analog; NOT depguard/ESLint). SI-4 must settle before G4 AC locked.
-- G5 mostly G5b/G5c (clean standalone service, not legacy-TS-in-mcp) — brownfield confirms MCP tools route HTTP to 5002, no direct-import bypass.
+### Handoff to dev-team dispatcher
+- FIRST Phase 1 dispatch: P1-AG-B1 — extract overall-status-computer primitive + G11 coupled-cascade design. Owner dev-api-gateway, run .claude/flows/dev-api-gateway/main.md. Goals G1/G7/G11/G12. WIP=1.
+- G11 (HIGH PRIORITY, highest blast radius): a path/status regression must cascade across BOTH a proxy scenario AND a health-route scenario. Two-trial coupling plan documented in task plan §G11; Trial-1 designed in B1.
 
-### Decision
-RETURN BATCH: architect owns brownfield + bug-inventory baseline + Phase-1 task plan (B/C/E bucket for G12 streak) [+ SI-4 Python-fence design note]; agent-father owns dev-agent verify + G12 DoD flow bake. agent-father/architect = maintenance/core, main terminal spawns directly (NOT dev-team execute-tier). WIP=1 (SSOT one active dispatch).
-
-### Carry-over
-- Next: await architect brownfield (G5 scope, candidate primitives confirm) + agent-father flow commit (G12 ruleEffectiveAfter SHA) → then Phase 0 exit gate close → Phase 1 dispatch.
-- pdf-extractor pilot (sibling Python, c288) opened too — SAME Python sandbox-runner gap. Coordinate: one Python runner serves both. Watch WIP across both Python pilots.
+### Carry-over (next cycle)
+- B1 close → dispatch B2 (proxy-path-resolver) → B3 (route-service-matcher) → C1 (gateway module) → E1 (dashboard) → E2 (sandbox+G4 fence+G12 streak proof). Critical path serial, WIP=1.
+- G4 AC for api-gateway: Go depguard via golangci-lint (NO SI-3/SI-4 dependency — unlike TS/Python pilots). Lockable at E2. Freeze anchor .golangci.yml SHA recorded by QA.
+- G12 streak tasks = B1 + C1 + E1 (sandbox-green evidence in handoff each). EARNED-PENDING after streak; PO flips YES only at 12/12 terminal.
+- Fleet WIP watch: TA Phase 2, stock-price pilot-3 Ph0, kinh-dich pilot-4, alert-engine pilot-5 (WIP-hold), news-fetch Ph0 (c290), rag-service Ph1 (c72), api-gateway Ph1 (c291).
