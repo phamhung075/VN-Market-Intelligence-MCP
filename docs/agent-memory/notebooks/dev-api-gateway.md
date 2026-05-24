@@ -4,38 +4,32 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 
 ## Working Memory
 
-**Last task:** 1912a-gateway-go-migration (2026-05-14) — Sprint c99
+**Last task:** P1-AG-B1 overall-status-computer extraction (2026-05-24) — SCALE pilot Phase 1
 
-**Status:** IMPL COMPLETE — awaiting QA gate + 24h smoke window
+**Status:** P1-AG-B1 DONE — commit ab534044
 
-**What changed:**
-- Created `apps/api-gateway-go/` — full Go 1.22 rewrite, stdlib only (net/http, log/slog)
-- DDD layout: pkg/domain/, pkg/application/, pkg/infrastructure/, pkg/interface/http/, cmd/server/
-- 37 Go tests — all GREEN (`go test ./...` passes), covers all 5 Vitest scenario files
-- multi-stage Dockerfile: golang:1.22-alpine builder → alpine:3.19 runtime, CGO_ENABLED=0
-- README-log-schema.md: documents log/slog JSON field schema (AC-7)
-- docker-compose.yml: added `api-gateway-go` service on host port 4001 (TS gateway stays on 4000 during Phase 1)
-- TS gateway untouched: tsc 0 errors, no regression
+**What changed (P1-AG-B1):**
+- NEW: `pkg/primitive/overall-status-computer/compute.go` — exported `ComputeOverallStatus(map[string]string) string`; pure function, zero external imports, stdlib only. No import cycle (primitive does NOT import pkg/domain; uses string constants).
+- NEW: `pkg/primitive/overall-status-computer/compute_test.go` — 7 table-driven sub-tests: all-ok, all-down, mixed→degraded, empty→down, single-ok, single-down, degraded-present.
+- NEW: 4 scenario JSONs in `pkg/primitive/overall-status-computer/scenarios/`: golden-all-ok, golden-degraded, failure-reversed-guard (genuine failure fixture), g11-canary-cascade (G11 proof).
+- MODIFIED: `pkg/domain/services.go` — imports primitive via alias `osc`, converts `map[string]HealthStatus` to `map[string]string`, calls `osc.ComputeOverallStatus`, casts result back to `HealthStatus`. Inline `computeOverallStatus` removed.
+- NEW: `docs/g11-coupling-design.md` — two-trial cascade plan; Trial-1 proves overall-status-computer flip corrupts /health JSON AND dashboard badge class simultaneously; Trial-2 (B3) covers route-service-matcher.
 
-**AC status:**
-- AC-1 (Dockerfile): PASS — golang:1.22-alpine, no CGO
-- AC-2 (JSON parity): PASS — exact field names/types in Go structs + json tags
-- AC-3 (Proxy parity): PASS — verbatim path for api (noProbe=true), strip-prefix for real services, 404/502 envelopes
-- AC-4 (Dashboard): PASS — 200, text/html, 9 services, status-up/down CSS classes, meta refresh 60, no CDN
-- AC-5 (Go tests): PASS — 37 tests, all GREEN
-- AC-6 (MCP-server 8804 Vitest): DEFERRED — requires compose deploy; QA validates at gate
-- AC-7 (log/slog schema): PASS — middleware + README-log-schema.md
-- AC-8 (Rollback): PASS — docker-compose.yml has TS gateway on 4000, Go on 4001; revert = remove api-gateway-go block + restart
-- AC-9 (DDD layout): PASS — 4 DDD layers in pkg/, cmd/server/
-- AC-10 (24h smoke): DEFERRED — starts after QA merges + deploys
-- AC-11 (healthz alias): PASS — GET /healthz registered in router.go → same handler as /health
+**Test count:** 47 top-level PASS + 13 sub-tests (60 total entries). Was 45. go vet clean.
 
-**Branch:** task/1912a-gateway-go-migration
-**Final commit:** a16f3bdb
+**Import cycle resolution note:** Primitive uses `string` (not `domain.HealthStatus`) to avoid domain→primitive→domain cycle. services.go converts to/from string inline. This is correct three-tier architecture: primitives are the base tier, domain depends on primitives (not vice versa).
 
-**Pattern note (Go gateway):**
-- Service name added to registry → 4 touch points: infrastructure/registry.go (buildServiceConfigs), cmd/server/main.go (serviceURLs), interface/http/handlers.go (dashboardServices), docker-compose.yml (api-gateway-go env)
-- Tests that count services: infrastructure/registry_test.go (expects 9), application/aggregate_test.go
-- No go.sum needed — stdlib only, no external deps
+**AC status (P1-AG-B1):**
+- AC-1: ComputeOverallStatus exported, pure, zero net/http/httputil imports in pkg/primitive/. PASS.
+- AC-2: 4 scenarios present; failure-reversed-guard is genuine failure scenario. PASS.
+- AC-3: services.go calls primitive, inline duplicate removed. PASS.
+- AC-4: go test ./... 47 PASS, go vet ./... clean. PASS.
+- AC-5: g11-coupling-design.md authored, two-trial plan documented. PASS.
+- AC-6: smoke output in RETURN block. PASS.
 
-**Next:** QA gate on branch task/1912a-gateway-go-migration. After APPROVED merge: start 24h smoke window (AC-10). If clean, PM dispatches 1912b-alert-engine.
+**Next tasks (Phase 1):**
+- B2: Extract proxy-path-resolver primitive from pkg/interface/http/handlers.go ProxyPath
+- B3: Extract route-service-matcher primitive + Trial-2 G11 evidence
+- B4: pkg/module/gateway/ composition module
+- B5: cmd/sandbox runner + scenario execution
+- B6: Trust dashboard HTML
