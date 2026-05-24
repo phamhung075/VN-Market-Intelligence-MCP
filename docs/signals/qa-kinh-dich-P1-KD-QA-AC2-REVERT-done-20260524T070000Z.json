@@ -1,0 +1,37 @@
+{
+  "signal": "qa-kinh-dich-P1-KD-QA-AC2-REVERT-done",
+  "task": "P1-KD-QA-AC2-REVERT",
+  "title": "AC-2 spot re-verify — kinh-dich Phase-1 close-gate (fix-then-clean-GO loop)",
+  "timestamp": "2026-05-24T07:00:00Z",
+  "verdict": "AC-2 PASS",
+  "phase1_verdict": "clean full GO",
+  "ac2_result": {
+    "card_groups": "6/6 (100% >= 90% threshold)",
+    "primitives": ["hao-encoder", "hexagram-resolver", "ngu-hanh-classifier", "reading-scorer"],
+    "modules": ["reading_composer"],
+    "microservice_panel": "present",
+    "reading_scorer_in_primitives_data": true,
+    "reading_scorer_scenarios": 3,
+    "reading_scorer_has_real_data": true,
+    "reading_scorer_status_all_not_run": true,
+    "cold_open_honesty": "PASS — 14 not-run statuses, zero false greens",
+    "self_contained": "PASS — zero fetch/XHR/external network calls",
+    "browser_only_deferred": ["zero console errors at runtime", "post-sandbox GREEN update"]
+  },
+  "g12_dod": {
+    "command": "cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all",
+    "result": "[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)",
+    "total": 14,
+    "pass": 14,
+    "fail": 0,
+    "status": "PASS"
+  },
+  "dev_fix_commit_verified": "b7cb55bc",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc — exit 0 (HELD)",
+  "ssot_touched": false,
+  "goal_states_flipped": false,
+  "foreign_pilots_touched": false,
+  "evidence_file": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md",
+  "next_actor": "pm",
+  "next_action": "on AC-2 PASS, flip phase1 → APPROVED (clean full GO) in SSOT docs/data/pilot-status-kinh-dich.json"
+}

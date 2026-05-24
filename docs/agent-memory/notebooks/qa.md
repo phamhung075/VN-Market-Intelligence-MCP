@@ -1,5 +1,42 @@
 # QA — Notebook
 
+## c282 cycle-62 · 2026-05-24 · kinh-dich P1-KD-QA-AC2-REVERT AC-2 spot re-verify — PASS (clean full GO)
+
+**Task:** P1-KD-QA-AC2-REVERT — AC-2 only spot re-verify (fix-then-clean-GO loop) | **Verdict:** AC-2 PASS | **Phase 1:** clean full GO
+
+```
+date: 2026-05-24
+outcome: AC-2 PASS — Phase-1 clean full GO
+type: pilot-task-qa (AC-2-only spot re-verify — read-only, no production code mutation)
+dev_fix_commit_verified: b7cb55bc
+evidence: docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md
+signal: docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json
+```
+
+| AC-2 Sub-check | Result | Evidence |
+|----------------|--------|----------|
+| reading-scorer occurrences in HTML | 8 | grep -c → 8 |
+| Distinct primitives in __PRIMITIVES_DATA__ | 4 | hao-encoder, hexagram-resolver, ngu-hanh-classifier, reading-scorer |
+| reading-scorer scenarios | 3 real (golden/edge/failure) | input+expectedOutput confirmed, no placeholders |
+| reading-scorer status values | not-run x3 (lines 1222, 1241, 1260) | HONESTY INTACT |
+| Total not-run entries | 14 | all 14 = "not-run", zero false greens |
+| Card group count | 6/6 (100% ≥ 90%) | 4 primitives + 1 module + 1 microservice panel |
+| Panel label | "4 pure TypeScript functions: hao-encoder, hexagram-resolver, ngu-hanh-classifier, reading-scorer" (line 855) | CONFIRMED |
+| Self-contained (zero external fetch/XHR) | PASS | 0 fetch(), 0 XHR, 0 external src/href/url/CDN |
+| Browser-only deferred | console errors + post-sandbox GREEN | Deferred to G9 PO Playwright (unchanged) |
+| G12 DoD sandbox 14/14 | PASS | [sandbox] PASS 14/14 scenarios (0 failed, 0 skipped) |
+| Frozen anchor debba8eaff0 | INTACT | git merge-base --is-ancestor → exit 0 |
+| SSOT untouched | CONFIRMED | docs/data/pilot-status-kinh-dich.json not touched |
+| Goal states untouched | CONFIRMED | Charter §4.5 honored |
+| Foreign pilots untouched | CONFIRMED | TA/macro/stock-price not touched |
+
+**Phase-1 exit criteria:** 4/4 met (Criterion 3 upgraded from FAIL 83% → PASS 100%)
+**AC-2 verdict:** PASS
+**Phase-1 verdict:** clean full GO
+**NEXT:** pm — flip phase1 → APPROVED (clean full GO) in SSOT docs/data/pilot-status-kinh-dich.json
+
+---
+
 ## c282 cycle-61 · 2026-05-24 · kinh-dich P1-G Phase 1 close-gate — CONDITIONAL-GO
 
 **Task:** P1-G — Phase 1 Close-Gate Verification (kinh-dich pilot-4) | **Verdict:** CONDITIONAL-GO | **Phase 1:** 3/4 exit criteria met
