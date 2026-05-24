@@ -1,5 +1,77 @@
 # QA — Notebook
 
+## cycle-96 · 2026-05-24 · pdf-extractor P2-A3 + P2-A4 + G6 + G8 — G4/G6/G8 VERIFIED
+
+**Task:** P2-A3 (CI verify) + P2-A4 (deliberate-violation proof) + G6 re-verify + G8 card-level | **Verdict:** G4 VERIFIED, G6 VERIFIED, G8 VERIFIED
+
+```
+date: 2026-05-24T12:00:00Z
+outcome: G4+G6+G8 all VERIFIED — EARNED-PENDING
+type: pilot-task-qa (CI config verify + deliberate-break proofs + 6-card dashboard verify)
+signal: docs/signals/qa-pdf-extractor-P2-A-G6-G8-20260524T120000Z.json
+ship_record: docs/handoffs/TASK_pdf-extractor-P2-A4.md
+ssot_not_mutated: true (PO-only §4.5)
+goal_flips: NONE
+
+pytest: 114/114 PASS exit 0
+primitive_traces: 6/6 pass=True
+module_trace: 1/1 pass=True
+service_panel: NOT-RUN honest
+
+p2_a3_ci_well_formed: true
+p2_a3_py_lint_job: working-directory apps/pdf-extractor; runs lint-imports; fails on non-zero
+p2_a3_lint_clean_exit: 0 (58 files, 2 contracts KEPT, 0 broken)
+
+p2_a4_violation_file: apps/pdf-extractor/domain/primitives/validate_financial_figures/primitive.py
+p2_a4_violation: from infrastructure.startup import ensure_dirs (l.19)
+p2_a4_lint_violation_exit: 1
+p2_a4_fence_output: "Fence-A: primitives must not import infrastructure, application, or interface BROKEN"
+p2_a4_broken_line: "domain.primitives.validate_financial_figures.primitive -> infrastructure.startup (l.19)"
+p2_a4_violation_staged: false
+p2_a4_violation_committed: false
+p2_a4_revert: domain/ CLEAN, git diff EMPTY
+p2_a4_post_revert_exit: 0 (2 KEPT, 0 broken)
+
+g6_6_card_ids: PRESENT (validate-financial-figures, decimal-normalizer, confidence-scorer, low-confidence-gate, ratio-computer, field-extractor)
+g6_module_panel: card-financial-reports PRESENT
+g6_service_panel: card-pdf-extractor PRESENT (NOT-RUN honest)
+g6_trace_paths_entries: 8
+g6_zero_network: true (file:// relative fetch only)
+g6_not_run_honest: true (before traces written)
+
+g8_broken_primitive: confidence_scorer (hardcoded pass=False, quality_score=-99.0)
+g8_card_red: card-confidence-scorer trace pass=False → FAIL badge
+g8_5_known_bad: all 5 pass=False
+g8_reverted: domain/ CLEAN post-revert
+g8_post_revert_traces: all 6 pass=True
+g8_never_committed: true
+```
+
+| Check | Verdict |
+|-------|---------|
+| P2-A3: CI yml py-lint job well-formed | PASS |
+| P2-A3: lint-imports exit 0 (2 KEPT) | PASS |
+| P2-A4: violation exit 1 | PASS |
+| P2-A4: Fence-A BROKEN + file:line | PASS |
+| P2-A4: never staged/committed | PASS |
+| P2-A4: revert → domain/ CLEAN | PASS |
+| P2-A4: post-revert exit 0 | PASS |
+| G6: all 6 primitive card IDs present | PASS |
+| G6: module + service panels present | PASS |
+| G6: traces generated honest-green | PASS |
+| G6: NOT-RUN honest before traces | PASS |
+| G8: broken primitive → confidence-scorer card RED | PASS |
+| G8: 5 known-bad all pass=False | PASS |
+| G8: revert → domain/ CLEAN, traces honest-green | PASS |
+| pytest: 114 passed | PASS |
+
+**G4 verdict: VERIFIED. EARNED-PENDING.**
+**G6 verdict: VERIFIED (6-card render). EARNED-PENDING.**
+**G8 verdict: VERIFIED (card-level RED demonstrable). EARNED-PENDING.**
+**NEXT:** qa — P2-G (G9 Playwright headless Path B).
+
+---
+
 ## cycle-95 · 2026-05-24 · kinh-dich P2-K (G10+G11) + P2-Z (Phase-2 close-gate) — READY-FOR-PHASE-3
 
 **Task:** P2-K (G10 cycle count + G11 coupling) + P2-Z Phase-2 close-gate | **Verdict:** READY-FOR-PHASE-3

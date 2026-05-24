@@ -1,0 +1,108 @@
+{
+  "signal": "qa-pdf-extractor-P2-A-G6-G8",
+  "emitted_at": "2026-05-24T12:00:00Z",
+  "pilot": "pdf-extractor",
+  "phase": "2",
+  "actor": "qa",
+  "tasks_covered": ["P2-A3", "P2-A4", "G6-re-verify", "G8-card-level"],
+
+  "G4": {
+    "verdict": "VERIFIED",
+    "goal_status": "EARNED-PENDING",
+    "p2_a3_ci_yml_well_formed": true,
+    "p2_a3_ci_job_name": "py-lint",
+    "p2_a3_ci_working_directory": "apps/pdf-extractor",
+    "p2_a3_ci_runs_lint_imports": true,
+    "p2_a3_ci_fails_on_non_zero": true,
+    "p2_a3_lint_imports_clean_exit": 0,
+    "p2_a3_contracts_kept": 2,
+    "p2_a3_contracts_broken": 0,
+    "p2_a3_files_analyzed": 58,
+    "p2_a4_violation_file": "apps/pdf-extractor/domain/primitives/validate_financial_figures/primitive.py",
+    "p2_a4_violation_import": "from infrastructure.startup import ensure_dirs",
+    "p2_a4_violation_line": 19,
+    "p2_a4_lint_exit_with_violation": 1,
+    "p2_a4_fence_output_literal": "Fence-A: primitives must not import infrastructure, application, or interface BROKEN",
+    "p2_a4_broken_contract_line": "domain.primitives.validate_financial_figures.primitive -> infrastructure.startup (l.19)",
+    "p2_a4_violation_staged": false,
+    "p2_a4_violation_committed": false,
+    "p2_a4_revert_exit": 0,
+    "p2_a4_git_status_post_revert": "CLEAN",
+    "p2_a4_post_revert_lint_exit": 0,
+    "p2_a4_post_revert_contracts_kept": 2,
+    "p2_a4_post_revert_contracts_broken": 0,
+    "g4_fence_bites": true,
+    "g4_ready_to_grade": true
+  },
+
+  "G6": {
+    "verdict": "PASS",
+    "goal_status": "EARNED-PENDING",
+    "primitive_card_ids": [
+      "card-validate-financial-figures",
+      "card-decimal-normalizer",
+      "card-confidence-scorer",
+      "card-low-confidence-gate",
+      "card-ratio-computer",
+      "card-field-extractor"
+    ],
+    "module_panel": "card-financial-reports",
+    "service_panel": "card-pdf-extractor",
+    "trace_paths_entries": 8,
+    "traces_generated": {
+      "primitive/validate_financial_figures": "pass=True",
+      "primitive/decimal_normalizer": "pass=True",
+      "primitive/confidence_scorer": "pass=True",
+      "primitive/low_confidence_gate": "pass=True",
+      "primitive/ratio_computer": "pass=True",
+      "primitive/field_extractor": "pass=True",
+      "module/financial_reports": "pass=True",
+      "service": "NOT-RUN-honest"
+    },
+    "file_slash_slash_zero_network": true,
+    "zero_console_error_sources": true,
+    "not_run_honest_before_traces": true,
+    "runner_command": "PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py"
+  },
+
+  "G8": {
+    "verdict": "PASS",
+    "goal_status": "EARNED-PENDING",
+    "broken_primitive_file": "apps/pdf-extractor/domain/primitives/confidence_scorer/primitive.py",
+    "broken_primitive_change": "hardcoded return {pass: False, quality_score: -99.0}",
+    "broken_primitive_scenarios_failed": [
+      "confidence_scorer/happy_high_conf: pass=False",
+      "confidence_scorer/edge_low_conf_with_tables: pass=False",
+      "confidence_scorer/failure_zero_conf_no_tables: pass=False"
+    ],
+    "card_level_red": "card-confidence-scorer trace pass=False → FAIL badge rendered",
+    "broken_primitive_committed": false,
+    "known_bad_5_scenarios": [
+      "decimal_normalizer/known_bad_expected_wrong.json: pass=False",
+      "validate_financial_figures/known_bad_threshold_wrong.json: pass=False",
+      "confidence_scorer/known_bad_score_wrong.json: pass=False",
+      "low_confidence_gate/known_bad_disposition_wrong.json: pass=False",
+      "ratio_computer/known_bad_ratio_wrong.json: pass=False"
+    ],
+    "all_5_known_bad_pass_false": true,
+    "broken_primitive_reverted": true,
+    "git_status_post_revert": "CLEAN",
+    "post_revert_confidence_scorer_trace": "pass=True",
+    "final_honest_state": "6 primitive traces pass=True, module pass=True, service NOT-RUN"
+  },
+
+  "pytest_final": {
+    "passed": 114,
+    "failed": 0,
+    "exit_code": 0
+  },
+
+  "ssot_not_mutated": true,
+  "goal_flips": "NONE",
+  "goals_earned_pending": ["G4", "G6", "G8"],
+  "ship_record": "docs/handoffs/TASK_pdf-extractor-P2-A4.md",
+
+  "overall_verdict": "APPROVED — G4 + G6 + G8 all VERIFIED",
+  "next_actor": "qa",
+  "next_action": "P2-G (G9 Playwright headless Path B)"
+}
