@@ -1216,6 +1216,33 @@ WORK-channel `send_telegram` is NOT in this PO agent's tool surface (only Read/E
 
 ---
 
+## NF-LD-5-dev-B — developer (canonical source) — DONE
+
+### [Developer] Implementation Record — NF-LD-5-dev-B — 2026-05-24
+
+- **Files modified:**
+  - `apps/news-fetch/dashboard/index.html` (+172/-93) — added CSS for button/selector controls; added `#live-refresh-btn` button + `#live-source-select` selector to `#panel-live-data` title row; refactored one-shot `initLivePanel()` IIFE → `loadLiveData()` callable function; wired to button click + source selector change + page load (initial fetch preserved). Button disables during in-flight fetch; re-enables in `.finally()`. Source selector passes `source=` param to `BASE_ENDPOINT`. file:// degrade fires BEFORE any fetch, sets btn+select disabled — no network call under file://.
+- **Tests written:** none (pure HTML/JS dashboard — verified via headless Chromium dash-check.mjs)
+- **Git commits:** `12600a1f` feat(news-fetch/dashboard): NF-LD-5-dev-B — Refresh button + source selector on live panel
+- **tsc status:** N/A (no TypeScript files modified)
+- **dash-check result:** PASS — panels=4 (sandbox=3, live=1), cards=6, PASS=6, live_panel_degrade=true, live_panel_fake_rows=false, console_errors=0, page_errors=0, external_network_calls=0
+- **Docs updated:** this handoff only
+- **Graphify:** skipped (no docs impacted — HTML/JS UI change only)
+
+**AC evidence:**
+- AC-1 PASS: `id="live-refresh-btn"` button present in `#panel-live-data` (line 231); label "Refresh / Load latest"; placed in `.live-panel-controls` div above `#live-data-content`; does not displace sandbox panels
+- AC-2 PASS: `loadLiveData()` is a named function called (a) on page load (`loadLiveData()` at line 502) and (b) on button click event listener (line 493); no duplicated render logic
+- AC-3 PASS: button click calls `loadLiveData()` which calls `fetch(endpoint)` and replaces `#live-data-content` innerHTML; no `location.reload()`, no full page reload
+- AC-4 PASS: FILE_DEGRADE fires at `window.location.protocol === 'file:'` check (line 369) BEFORE any fetch attempt; LOADING renders `#live-state-loading`; EMPTY renders `#live-state-empty` on count=0; ERROR renders `#live-state-error` on non-2xx/fetch failure; dash-check live_panel_degrade=true, live_panel_fake_rows=false
+- AC-5 PASS: source selector (`#live-source-select`) with options all/reuters/bloomberg implemented; `loadLiveData()` reads selector value and appends `&source=<value>` to `BASE_ENDPOINT`; selector change event re-calls `loadLiveData()` immediately
+- AC-6 PASS: `git diff HEAD -- apps/news-fetch/dashboard/data.js` → empty; sandbox panel markup and card logic untouched (no edits to `panel-primitives`/`panel-module`/`panel-microservice`)
+- AC-7 PASS: `grep -n "VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer|process.env|Bun.env" index.html` → 0 matches
+- AC-8 PASS: `node apps/news-fetch/dashboard/dash-check.mjs` → verdict: PASS (panels=4, sandbox=3, live=1, cards=6, degrade=true, fake_rows=false, console_errors=0, external_net=0)
+
+**NEXT:** NF-LD-5-dev-A → dev-mcp-server (run `bash apps/mcp-server/sync-news-fetch-dashboard.sh` to regenerate served copy).
+
+---
+
 ## NF-LD-5-dev-A — dev-mcp-server (regenerate served copy) — Blocked on NF-LD-5-dev-B
 
 **Zone:** `apps/mcp-server/` only (SOLE committer). NO hand-edits to the served copy.
