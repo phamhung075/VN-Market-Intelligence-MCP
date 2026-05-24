@@ -1,0 +1,16 @@
+{
+  "primitive": "top_k_selector",
+  "input": {
+    "results": [
+      {"id": "doc-1", "score": 0.9},
+      {"id": "doc-2", "score": 0.7}
+    ],
+    "k": 2
+  },
+  "expected_output": {
+    "result": [
+      {"id": "doc-1", "score": 0.9},
+      {"id": "doc-2", "score": 0.7}
+    ]
+  }
+}
