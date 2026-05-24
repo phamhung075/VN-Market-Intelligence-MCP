@@ -58,6 +58,23 @@
 
     .reload-btn:hover { background: #3182ce; }
 
+    .inspector-btn {
+      display: inline-block;
+      margin-top: 12px;
+      margin-left: 8px;
+      padding: 6px 14px;
+      background: #276749;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    .inspector-btn:hover { background: #38a169; }
+
     /* ---- Edit-rerun panel ---- */
     .rerun-panel {
       background: #1a202c;
@@ -226,6 +243,7 @@
   <h1>PDF Extractor — Sandbox Dashboard</h1>
   <p>Zone: <code style="color:#68d391">apps/pdf-extractor/</code> | Stack: Python | Pilot: Phase 2</p>
   <button class="reload-btn" onclick="loadAllTraces()">Reload Traces</button>
+  <a class="inspector-btn" href="http://localhost:3000/api/bctc-inspect" target="_blank" rel="noopener">Open BCTC Inspector</a>
 </header>
 
 <!-- Edit-rerun instructions panel -->
