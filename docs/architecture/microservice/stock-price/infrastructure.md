@@ -66,7 +66,16 @@ DB_PATH               → ./data/market.db  (Tier3 read source + GetHistory)
 STOCK_PRICE_DB_PATH   → ./data/stock_price.db  (SaveQuote write target)
 ```
 
+## CGO Driver Registration (Fence-C)
+
+`_ "github.com/mattn/go-sqlite3"` (blank import — driver registration) lives exclusively in
+`cmd/server/main.go` (composition root). `pkg/infrastructure/fetchers.go` uses only
+`database/sql` with the driver name string `"sqlite3"` — it does NOT import mattn directly.
+This satisfies Fence-C (depguard rule in `apps/stock-price/.golangci.yml`): CGO is confined to
+the composition root; test files (`*_test.go`) are exempt.
+
 ## Build Requirements
 - CGO_ENABLED=1 (mattn/go-sqlite3 requires CGO)
 - Docker: `golang:1.22-alpine` + `apk add gcc musl-dev` in builder stage
 - Runtime: `alpine:3.19` + `ca-certificates tzdata`
+- Sandbox (`cmd/sandbox/main.go`) MUST build with `CGO_ENABLED=0` — no mattn import anywhere in primitive/module/sandbox

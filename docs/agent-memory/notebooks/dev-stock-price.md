@@ -2,6 +2,33 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-24 — P2-B Depguard Fence-A/B/C + CI job DONE
+
+### What shipped (P2-B)
+
+Created `apps/stock-price/.golangci.yml` with THREE named depguard rules (fence-a/b/c), `run.timeout: 120s`, 73 lines. Added CI job `stock-price-go-lint` to `.github/workflows/ci.yml`.
+
+**Key fix:** Fence-C requires `mattn/go-sqlite3` blank import only in `cmd/server/main.go`. Moved `_ "github.com/mattn/go-sqlite3"` from `pkg/infrastructure/fetchers.go` → `cmd/server/main.go` (composition root). Infrastructure package now uses `database/sql` with driver name string only — no direct mattn import.
+
+**All 5 ACs PASS:**
+- AC-1: `.golangci.yml` created, 73 lines, 3 named fence rules, `run.timeout: 120s`
+- AC-2: `golangci-lint run` exits 0, 0 issues
+- AC-3: CI job `stock-price-go-lint` wired (golangci-lint-action@v6.1.1, working-directory: apps/stock-price)
+- AC-4: `d5ce886e` is most recent commit on `.golangci.yml` (freeze anchor established)
+- AC-5: sandbox total=11 pass=11 fail=0 status=OK exit 0
+
+**Commit:** `d5ce886e` — `feat(stock-price): P2-B golangci depguard fence (Fence-A/B/C) + CI stock-price-go-lint job`
+
+**Signal:** `docs/signals/dev-sp-P2-B-done-20260524T000539Z.json`
+
+**Files modified:**
+- CREATE: `apps/stock-price/.golangci.yml`
+- MODIFY: `.github/workflows/ci.yml` (added stock-price-go-lint job)
+- MODIFY: `apps/stock-price/cmd/server/main.go` (added blank import for Fence-C)
+- MODIFY: `apps/stock-price/pkg/infrastructure/fetchers.go` (removed blank import from infra)
+
+**State for P2-C (QA):** Fence-A/B/C are live, lint is GREEN. QA will deliberately introduce a Fence-A violation in a temp branch to prove the linter catches it (reverted-never-committed).
+
 ## Session 2026-05-24 — P1-E Edit-Rerun Handler + Env Audit DONE
 
 ### What shipped (P1-E)
