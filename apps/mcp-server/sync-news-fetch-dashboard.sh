@@ -78,12 +78,14 @@ sed -i '' \
   "s|var ENDPOINT = 'http://localhost:3000/api/news-fetch/live|var ENDPOINT = '/api/news-fetch/live|g" \
   "${INDEX_DST}"
 
-# Also rewrite the absolute error-message references (cosmetic — user-visible text only)
-sed -i '' \
-  "s|check that mcp-server is running at localhost:3000\.|the live endpoint returned an error.|g" \
-  "${INDEX_DST}"
+# Also rewrite the absolute error-message references (cosmetic — user-visible text only).
+# IMPORTANT: run the more-specific (longer) pattern FIRST so it is matched and replaced
+# before the shorter generic pattern consumes the same substring.
 sed -i '' \
   "s|Could not reach the server — check that mcp-server is running at localhost:3000\.|Could not reach the live endpoint — check that mcp-server is running.|g" \
+  "${INDEX_DST}"
+sed -i '' \
+  "s|check that mcp-server is running at localhost:3000\.|the live endpoint returned an error.|g" \
   "${INDEX_DST}"
 
 # Inject GENERATED header comment at the top of the file (after DOCTYPE)

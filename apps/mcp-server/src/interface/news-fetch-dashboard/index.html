@@ -5,7 +5,7 @@
      Served: /dashboards/news-fetch/ (via mcp-server port 3000)
      KEY DIFFERENCE from source: ENDPOINT is a RELATIVE path (/api/news-fetch/live...)
      so this copy works same-origin when served by mcp-server on port 3000.
-     To re-sync: cd <repo-root> && bash apps/mcp-server/scripts/sync-news-fetch-dashboard.sh
+     To re-sync: cd <repo-root> && bash apps/mcp-server/sync-news-fetch-dashboard.sh
 -->
 <!-- news-fetch pilot dashboard — SI-2 BOUNDARY: this file is news-fetch ONLY, never shared with docs/dashboards/index.html (stock-price exclusive) -->
 <html lang="en">
@@ -305,14 +305,9 @@ if (typeof window.__NEWS_FETCH_DATA__ !== 'undefined') {
 
 <script>
 /**
- * Live Data panel — NF-LD-2b / NF-LD-4-dev-A (served copy)
+ * Live Data panel — NF-LD-2b
  *
- * IMPORTANT: This is the SERVED COPY (mcp-server:3000 same-origin).
- * ENDPOINT uses a RELATIVE path — no scheme/host.
- * Source file: apps/news-fetch/dashboard/index.html
- * Sync script: apps/mcp-server/scripts/sync-news-fetch-dashboard.sh
- *
- * Fetches GET /api/news-fetch/live?source=all&limit=20 (relative — same-origin)
+ * Fetches GET http://localhost:3000/api/news-fetch/live?source=all&limit=20
  * Renders recent rag_analyses rows per source (reuters / bloomberg).
  *
  * 4 explicit states — NEVER fabricates rows:
