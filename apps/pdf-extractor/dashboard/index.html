@@ -285,7 +285,7 @@
 </div>
 
 <div class="footer">
-  Dashboard reads trace JSON from <code>sandbox/traces/</code> on reload (populated by runner.py --save-trace).
+  Dashboard reads trace JSON from <code>dashboard/traces/&lt;tier&gt;/</code> on reload (populated by sandbox/rerun.sh).
   Zero network calls — all data is local file:// only.
   &nbsp;|&nbsp; SI-2 boundary enforced: pdf-extractor zone only.
 </div>
@@ -298,12 +298,13 @@
    * local traces relative to this HTML file. When opened via file://, fetch() of
    * relative paths resolves against the HTML file's directory.
    *
-   * Trace convention (populated by sandbox/runner.py when --save-trace is used,
-   * or by sandbox/rerun.sh):
+   * Trace convention (populated by sandbox/rerun.sh, written by runner.py).
+   * rerun.sh writes to: dashboard/traces/<tier>/<scenario-dir-name>.json
+   * where <tier> is the literal --tier arg ("primitive", "module", "service").
    *
-   *   dashboard/traces/primitives/validate_financial_figures.json
-   *   dashboard/traces/primitives/decimal_normalizer.json
-   *   dashboard/traces/modules/financial_reports.json
+   *   dashboard/traces/primitive/validate_financial_figures.json
+   *   dashboard/traces/primitive/decimal_normalizer.json
+   *   dashboard/traces/module/financial_reports.json
    *   dashboard/traces/service/pdf_extractor.json
    *
    * Each trace file is the JSON object emitted to stdout by runner.py for the LAST run.
@@ -314,17 +315,17 @@
   const TRACE_PATHS = [
     {
       id: "validate-financial-figures",
-      path: "traces/primitives/validate_financial_figures.json",
+      path: "traces/primitive/validate_financial_figures.json",
       tier: "primitive",
     },
     {
       id: "decimal-normalizer",
-      path: "traces/primitives/decimal_normalizer.json",
+      path: "traces/primitive/decimal_normalizer.json",
       tier: "primitive",
     },
     {
       id: "financial-reports",
-      path: "traces/modules/financial_reports.json",
+      path: "traces/module/financial_reports.json",
       tier: "module",
     },
     {

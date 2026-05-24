@@ -1,3 +1,5 @@
+// @ts-nocheck — deprecated test file; relative imports no longer resolve from _deprecated/ location.
+// Retained for rollback reference only. See _deprecated/fetchers/README.md.
 /**
  * Task 023 — International Finance News RSS Fetcher (Google News)
  *

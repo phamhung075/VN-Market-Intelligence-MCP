@@ -22,7 +22,9 @@ import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { appendKinhDich } from "../../../../domain/services/kinhDich/kinhDichWrapper.js";
 import { fetchCafeF } from "../../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../../infrastructure/fetchers/vnexpress.js";
-import { fetchReuters } from "../../../../infrastructure/fetchers/reuters.js";
+// fetchReuters removed — rewired to news-fetch microservice HTTP (G5b, Phase 1)
+// See: apps/mcp-server/src/_deprecated/fetchers/reuters.ts for rollback reference
+import type { RssItem } from "../../../../infrastructure/fetchers/rss.js";
 import { fetchVnEconomy } from "../../../../infrastructure/fetchers/vneconomy.js";
 import { normalizeNews } from "../../../../domain/services/newsNormalizer.js";
 import { runImpactChain } from "../../../../application/usecases/runImpactChain.js";
@@ -112,7 +114,34 @@ export function registerAnalysisTools(server: McpServer): void {
         const fetchPromises: Promise<Awaited<ReturnType<typeof fetchCafeF>>>[] = [];
         if (sources.includes("cafef")) fetchPromises.push(fetchCafeF());
         if (sources.includes("vnexpress")) fetchPromises.push(fetchVnExpress());
-        if (sources.includes("reuters")) fetchPromises.push(fetchReuters());
+        if (sources.includes("reuters")) {
+          // G5b HTTP rewire: delegate to news-fetch microservice
+          const NEWS_FETCH_BASE = Bun.env['NEWS_FETCH_URL'] ?? 'http://news-fetch:5008';
+          fetchPromises.push(
+            fetch(`${NEWS_FETCH_BASE}/reuters/headlines`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ maxItems: limit }),
+              signal: AbortSignal.timeout(30_000),
+            })
+              .then((res) => res.json() as Promise<{ articles: Array<{ headline: string; url: string | null; publishedAt: string | null; source: string }> }>)
+              .then((data): RssItem[] =>
+                (data.articles ?? []).map((a) => ({
+                  title: a.headline,
+                  url: a.url ?? '',
+                  publishedAt: a.publishedAt ?? '',
+                  content: '',
+                  source: 'reuters',
+                }))
+              )
+              .catch((err): RssItem[] => {
+                logger.warn('[fetch_and_analyze] news-fetch reuters HTTP call failed', {
+                  error: err instanceof Error ? err.message : String(err),
+                });
+                return [];
+              })
+          );
+        }
         if (sources.includes("vneconomy")) fetchPromises.push(fetchVnEconomy());
 
         const results = await Promise.all(fetchPromises);

@@ -1,3 +1,5 @@
+// @ts-nocheck — deprecated file; relative imports no longer resolve from _deprecated/ location.
+// Retained for rollback reference only. See _deprecated/fetchers/README.md.
 /**
  * Infrastructure — International Finance News RSS Fetcher
  *

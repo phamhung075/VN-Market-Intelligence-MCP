@@ -1,0 +1,164 @@
+openapi: "3.1.0"
+info:
+  title: news-fetch
+  version: "1.0.0"
+  description: News fetch microservice — Reuters/Bloomberg headlines (DDD, port 5008)
+servers:
+  - url: http://news-fetch:5008
+    description: Docker internal
+  - url: http://localhost:5008
+    description: Local development
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness probe
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service, port]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  service:
+                    type: string
+                    enum: [news-fetch]
+                  port:
+                    type: integer
+                    example: 5008
+
+  /reuters/headlines:
+    get:
+      operationId: getReutersHeadlines
+      summary: Fetch Reuters headlines (GET alias)
+      parameters:
+        - name: maxItems
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlinesResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+    post:
+      operationId: postReutersHeadlines
+      summary: Fetch Reuters headlines
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxItems:
+                  type: integer
+                  default: 15
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlinesResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /bloomberg/headlines:
+    get:
+      operationId: getBloombergHeadlines
+      summary: Fetch Bloomberg headlines (GET alias)
+      parameters:
+        - name: maxItems
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlinesResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+    post:
+      operationId: postBloombergHeadlines
+      summary: Fetch Bloomberg headlines
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxItems:
+                  type: integer
+                  default: 10
+      responses:
+        "200":
+          $ref: "#/components/responses/HeadlinesResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+
+components:
+  responses:
+    HeadlinesResponse:
+      description: Headlines response
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [source, articles, fetchedAt, method, error]
+            properties:
+              source:
+                type: string
+                enum: [reuters, bloomberg]
+              articles:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Article"
+              fetchedAt:
+                type: string
+                format: date-time
+              method:
+                type: string
+                enum: [rss, playwright-stealth, module]
+              error:
+                type: string
+                nullable: true
+    ErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, fetchedAt]
+            properties:
+              error:
+                type: string
+              fetchedAt:
+                type: string
+                format: date-time
+
+  schemas:
+    Article:
+      type: object
+      required: [source, headline, url, publishedAt, fetchedAt, confidence]
+      properties:
+        source:
+          type: string
+          enum: [reuters, bloomberg]
+        headline:
+          type: string
+        url:
+          type: string
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        fetchedAt:
+          type: string
+          format: date-time
+        confidence:
+          type: string
+          enum: [HIGH, LOW]

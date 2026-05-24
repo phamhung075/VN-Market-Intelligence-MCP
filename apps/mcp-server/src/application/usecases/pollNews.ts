@@ -372,11 +372,9 @@ async function defaultVnExpressFetcher(): Promise<RssItem[]> {
   return breakers.vnexpress.execute(() => fetchVnExpress());
 }
 
-async function defaultReutersFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchReuters } = await import("../../infrastructure/fetchers/reuters.js");
-  return breakers.reuters.execute(() => fetchReuters());
-}
+// defaultReutersFetcher removed — reuters.ts deprecated (G5, Phase 1).
+// Reuters coverage now via news-fetch microservice (port 5008).
+// Sprint 1833g had already disabled this from resolvedFetchers.
 
 async function defaultVnEconomyFetcher(): Promise<RssItem[]> {
   const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");

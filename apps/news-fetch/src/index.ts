@@ -1,52 +1,18 @@
 /**
  * News Fetch Microservice — Entry Point
  *
- * DDD wiring: domain/ ← application/ ← infrastructure/ ← interface/
- * Port: 5008 (configurable via $PORT)
- *
- * Routes owned by: src/interface/handlers.ts (1899a-routes)
- *   GET  /health
- *   POST /news/reuters/headlines   (RSS primary + Playwright fallback)
- *   GET  /news/reuters/headlines   (alias)
- *   POST /news/bloomberg/headlines (RSS primary + Playwright stealth fallback)
- *   GET  /news/bloomberg/headlines (alias)
- *
- * Bloomberg fix (2026-05-17):
- *   Previous: BloombergStealth only — [data-component="headline"] selector stale,
- *   PerimeterX blocks Playwright DOM extraction → articles: [] always.
- *   Fix: BloombergRssScraper (Google News RSS) as primary — same technique as
- *   Reuters. BloombergStealth demoted to fallback.
+ * Thin server entry: imports app from composition-root, binds port.
+ * All wiring lives in composition-root.ts (G3).
  */
 
-import { createRouter } from './interface/handlers.js';
-import { ReutersRssScraper } from './infrastructure/scrapers/reuters-rss.js';
-import { ReutersStealthFallback } from './infrastructure/scrapers/reuters-stealth.js';
-import { BloombergRssScraper } from './infrastructure/scrapers/bloomberg-rss.js';
-import { BloombergStealth } from './infrastructure/scrapers/bloomberg-stealth.js';
+import { app } from '../composition-root.js';
 
-// ── Composition root — wire scrapers into router ──────────────────────────────
-export const app = createRouter(
-  new ReutersRssScraper(),
-  new ReutersStealthFallback(),
-  new BloombergRssScraper(),
-  new BloombergStealth(),
-);
-
-// ── Server binding (skipped when imported in tests) ───────────────────────────
 const PORT = parseInt(Bun.env.PORT ?? '5008', 10);
 
+export { app };
+
 /**
- * idleTimeout: 0 = no idle timeout.
- *
- * Bloomberg and Reuters stealth scrapers use Playwright with a 30-second page
- * navigation timeout. Bun's default idleTimeout is 10 seconds, which causes the
- * server to close the connection before Playwright returns — producing an empty
- * reply that the api-gateway surfaces as 502 Bad Gateway.
- *
- * Setting idleTimeout to 0 disables the idle timeout entirely. The Playwright
- * scrapers have their own timeouts (PAGE_TIMEOUT_MS = 25–30 s) plus an outer
- * try/catch, so requests will always resolve without relying on the server-level
- * idle timeout for termination.
+ * idleTimeout: 0 — disable idle timeout to prevent 502 from Playwright (25-30s).
  */
 export default {
   port: PORT,
