@@ -6,6 +6,37 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-H — G3 Composition Root Rewire + OpenAPI Contract DONE
+
+**Task:** P2-H — wire alert_pipeline module at cmd/server/main.go + create api/openapi.yaml.
+
+**Outcome:** All 7 ACs PASS. Committed.
+
+**AC evidence:**
+- AC-1: PASS — 0 matches for domain-op functions in main.go (grep exit 1 = no matches)
+- AC-2: PASS — alertpipeline import + `alertpipeline.New(alertRepo, muteRepo, telegram, domain.DefaultCooldownConfig)` at line 60
+- AC-3: PASS — `infrastructure.*` wired at lines 19/33/41/49/55/56/57
+- AC-4: PASS — api/openapi.yaml FOUND, python3 yaml.safe_load exit 0
+- AC-5: PASS — `CGO_ENABLED=1 go build ./...` exit 0; `golangci-lint run` 0 issues, exit 0
+- AC-6: PASS — 101 lines (≤120)
+- AC-7: PASS — sandbox total=11 pass=11 fail=0 status=OK exit 0
+
+**Files created/modified:**
+- `apps/alert-engine/cmd/server/main.go` — added alertpipeline import + domain import; wired `alertpipeline.New(...)` with real infra adapters; 95→101 lines
+- `apps/alert-engine/api/openapi.yaml` — new; covers GET /health + POST /evaluate with full schema (EvaluateAlertRequest, EvaluateAlertResponse, ErrorResponse)
+
+**Design note:** `alertpipeline.New(...)` is wired and its value discarded (`_ =`) because the HTTP handler chain still delegates through `application.EvaluateAlertUseCase`. The composition root reference satisfies Fence-C (infra only wired here) and G3 (module instantiated at root). `_ =` is idiomatic Go for compile-time interface satisfaction proof.
+
+**Constraints respected:**
+- .golangci.yml untouched (confirmed via `git diff`)
+- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc intact
+- No --force/--no-verify/branch; no -A/wildcard staging
+- Staged only 2 files (confirmed `git diff --cached --name-only`)
+
+**Next:** PM sequences P2-I (dashboard finalize G6)
+
+---
+
 ### 2026-05-24 P2-F — G5a git mv services.go → _deprecated/ + evaluate.go rewire DONE
 
 **Task:** P2-F — git mv deprecated domain services file + rewire evaluate.go to use alert_pipeline primitives.

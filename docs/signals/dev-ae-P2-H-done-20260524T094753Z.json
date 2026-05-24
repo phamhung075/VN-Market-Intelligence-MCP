@@ -1,0 +1,51 @@
+{
+  "signal": "dev-ae-P2-H-done",
+  "task": "P2-H",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "agent": "dev-alert-engine",
+  "timestamp": "2026-05-24T09:47:53Z",
+  "commit_sha": "7ecb6f34d9dedfaa98759ea2eb952a8a332abec3",
+  "files_created_or_modified": [
+    "apps/alert-engine/cmd/server/main.go",
+    "apps/alert-engine/api/openapi.yaml"
+  ],
+  "ac_verdicts": {
+    "AC-1": {
+      "verdict": "PASS",
+      "evidence": "grep -nE 'ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes|isToday|djb2Hash' apps/alert-engine/cmd/server/main.go → exit 1 (0 matches)"
+    },
+    "AC-2": {
+      "verdict": "PASS",
+      "evidence": "grep found alertpipeline import at line 21 + alertpipeline.New(...) at line 60"
+    },
+    "AC-3": {
+      "verdict": "PASS",
+      "evidence": "infrastructure.* wired at lines 19/33/41/49/55/56/57 in main.go; SQLite + Telegram adapters all present"
+    },
+    "AC-4": {
+      "verdict": "PASS",
+      "evidence": "apps/alert-engine/api/openapi.yaml FOUND; python3 yaml.safe_load exit 0"
+    },
+    "AC-5": {
+      "verdict": "PASS",
+      "build_output": "CGO_ENABLED=1 go build ./... → BUILD_EXIT: 0",
+      "lint_output": "golangci-lint run --config .golangci.yml → 0 issues. LINT_EXIT: 0"
+    },
+    "AC-6": {
+      "verdict": "PASS",
+      "line_count": 101,
+      "limit": 120
+    },
+    "AC-7": {
+      "verdict": "PASS",
+      "sandbox_output": "total=11 pass=11 fail=0 status=OK exit 0"
+    }
+  },
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "golangci_yml_untouched": true,
+  "scope_confirm": "Only apps/alert-engine/cmd/server/main.go and apps/alert-engine/api/openapi.yaml committed",
+  "next_actor": "pm",
+  "next_task": "P2-I — dashboard finalize G6"
+}

@@ -72,3 +72,29 @@ Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 test
 **Commit:** `c8e29f08` — 41/41 tests PASS, mypy CLEAN.
 
 **Status:** DONE. Next: P1-B similarity-scorer primitive (G12 streak #1). WIP=1 now free.
+
+---
+
+### 2026-05-24 — TASK P1-B (similarity-scorer primitive — G12 streak #1)
+
+**Task:** Build `similarity_scorer` primitive: pure function `score(distance: float) -> float` formula `1.0 / (1.0 + distance)`. Raises `ValueError` on negative distance. 3 scenario JSONs: golden / edge_zero_distance / failure_negative_distance.
+
+**Files created:**
+- `apps/rag-service/domain/primitive/similarity_scorer/__init__.py`
+- `apps/rag-service/domain/primitive/similarity_scorer/similarity_scorer.py`
+- `apps/rag-service/domain/primitive/similarity_scorer/scenarios/golden.json`
+- `apps/rag-service/domain/primitive/similarity_scorer/scenarios/edge_zero_distance.json`
+- `apps/rag-service/domain/primitive/similarity_scorer/scenarios/failure_negative_distance.json`
+
+**Sandbox GREEN traces:**
+- golden: `{"passed": true, "primitive": "similarity_scorer", "actual": {"similarity": 0.6666666666666666}, "expected": {"similarity": 0.6667}, "diff": [], "elapsed_ms": 0}`
+- edge_zero: `{"passed": true, "primitive": "similarity_scorer", "actual": {"similarity": 1.0}, "expected": {"similarity": 1.0}, "diff": [], "elapsed_ms": 0}`
+- failure_negative: `{"passed": true, "primitive": "similarity_scorer", "actual": {"error": "ValueError"}, "expected": {"error": "ValueError"}, "diff": [], "elapsed_ms": 0}`
+
+**AC-1 grep:** 0 non-stdlib imports in similarity_scorer.py.
+**Env audit:** empty.
+**pytest:** 41/41 PASS.
+
+**Commit note:** Files committed in `cfd38a3b` (concurrent index contamination — api-gateway agent picked up staged rag-service files). Files are correct and green. P1-B notebook commit: see next commit SHA.
+
+**Status:** DONE. Next: P1-C retrieval module stub (G12 streak #2). WIP=1 now free.
