@@ -1,0 +1,44 @@
+{
+  "signal": "po-sp-P2-K-g9-done",
+  "task": "P2-K",
+  "pilot": "stock-price",
+  "fleet": "pilot-3",
+  "phase": "2",
+  "emitted_by": "po",
+  "emitted_at": "2026-05-24T01:56:55Z",
+  "g9_path": "B (PO Playwright headless chromium 1.60.0, cached chromium-1223)",
+  "g9_verdict": "PASS",
+  "playwright_run": {
+    "target": "file://.../apps/stock-price/dashboard/index.html",
+    "exit_code": 0,
+    "console_errors": 0,
+    "console_warnings": 0,
+    "pageerrors": 0,
+    "requestfailed": 0,
+    "total_issues": 0,
+    "panels_rendered": { "primitives": true, "module": true, "microservice": true },
+    "cold_open_status": {
+      "dotGreen": 0,
+      "dotRed": 0,
+      "dotPending": 11,
+      "labelGreen": 0,
+      "groupStatusTexts": ["NOT-RUN", "NOT-RUN", "NOT-RUN", "NOT-RUN", "NOT-RUN"],
+      "notRunBadges": 1,
+      "greenChipsVisible": 0,
+      "false_greens": 0
+    }
+  },
+  "ac_verdicts": {
+    "AC-1": "PASS (all 3 panels rendered: primitives 3 groups/9 cards, module 2 cards, microservice 1 card)",
+    "AC-2": "PASS (zero console errors, zero pageerrors, zero requestfailed — self-contained file://)",
+    "AC-3": "PASS (honest cold-open: 0 false greens, all 5 groups NOT-RUN, 11 pending dots, microservice NOT-RUN)",
+    "AC-4": "PASS (verdict recorded in po-decisions + this signal emitted)"
+  },
+  "decision_doc": "docs/po-decisions/2026-05-24-g9-stock-price-user-confirmation.md",
+  "g_goal_flips": "NONE (Charter §4.5 — G9 stays TBD; goalsEarned stays 0; decisionMatrix stays all-TBD; PO flips all 12 atomically at terminal 12/12 Phase-3 close)",
+  "ssot_touched": false,
+  "ssot_owner_note": "PM owns docs/data/pilot-status-stock-price.json; PM marks P2-K DONE on this signal. PO did NOT edit SSOT.",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc is ancestor of HEAD",
+  "next_actor": "pm",
+  "next_action": "verify P2-K (G9 Playwright trust evidence), then sequence P2-L (pre-inject tag + G10 bug injection)"
+}
