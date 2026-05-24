@@ -55,7 +55,7 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). Current task: P1-B3 (cooldown-gate primitive + 3 scenarios — completes G12 streak #3).",
+    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13, G1 + G12 streak #2; sandbox total=6 pass=6 fail=0; ZERO-CREDS clean; djb2 seed=5381 byte-identical to brownfield). P1-B3 DONE 2026-05-24T054219Z (commit 251071bd, G1 core-3 band complete + G12 streak #3 COMPLETE; cooldown-gate, now time.Time injected, byte-identical to brownfield ShouldSuppressAlert; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean incl. time.Now=0; CGO0 build+tests pass). P1-B4 (optional flex 4th primitive) SKIPPED per plan §P1-B4 — core-3 band satisfies G1 minimum; defers to Phase 2. Current task: P1-C (alert_pipeline module stub — composes 3 primitives via injected ports; Fence-B; G2 + G12).",
     "status": "ACTIVE",
     "openedAt": "2026-05-24T053000Z",
     "openedBy": "pm (PM_ALERT_ENGINE_PHASE1_OPEN)",
@@ -70,9 +70,9 @@
     "task_count": 9,
     "ac_count": 59,
     "wip_limit": 1,
-    "current_task": "P1-B3",
+    "current_task": "P1-C",
     "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P1-AE-B3.md",
+    "current_task_handoff": "docs/handoffs/TASK_P1-AE-C.md",
     "sequential_plan": [
       "P1-A: cmd/sandbox/main.go + ZERO-CREDS gate (1h, 7 ACs)",
       "P1-B1: signal-classifier primitive + 3 scenarios (1.5h, 8 ACs)",
@@ -88,7 +88,9 @@
       "P1-A DONE 2026-05-24T052327Z — cmd/sandbox scaffold, CGO_ENABLED=0 + ZERO-CREDS hard gate passed.",
       "P1-B1 DONE 2026-05-24T053017Z — signal-classifier primitive + 3 scenarios; G1; G12 streak #1.",
       "P1-B2 DONE 2026-05-24T053539Z (commit 6c31ca13) — dedup-key-builder primitive (djb2 seed=5381, byte-identical to brownfield) + 3 scenarios; sandbox total=6 pass=6 fail=0 status=OK; ZERO-CREDS clean; CGO0 build+tests pass; Fence-A clean; G1; G12 streak #2. Router-verified.",
-      "P1-B3 SEQUENCED 2026-05-24T053651Z — cooldown-gate primitive (ShouldSuppressAlert, now time.Time injected) + 3 scenarios; 7 ACs; owner dev-alert-engine; G1 + G12 streak #3 (COMPLETES Phase-1 G12 streak requirement). Handoff docs/handoffs/TASK_P1-AE-B3.md."
+      "P1-B3 SEQUENCED 2026-05-24T053651Z — cooldown-gate primitive (ShouldSuppressAlert, now time.Time injected) + 3 scenarios; 7 ACs; owner dev-alert-engine; G1 + G12 streak #3 (COMPLETES Phase-1 G12 streak requirement). Handoff docs/handoffs/TASK_P1-AE-B3.md.",
+      "P1-B3 DONE 2026-05-24T054219Z (commit 251071bd) — cooldown-gate primitive; now time.Time injected (Fence-A grep incl. time.Now = 0), byte-identical to brownfield ShouldSuppressAlert; 3 scenarios (golden/edge/failure incl. critical-bypass); 10 unit-test cases pass; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS clean (scenario JSON creds grep=0); CGO0 build+tests pass; no SSOT/SI-2/other-pilot touch; anchor intact. Router-verified. G1 core-3 band COMPLETE + G12 streak #3 COMPLETE (Phase-1 streak requirement met). P1-B4 (optional flex) SKIPPED — core-3 satisfies G1 minimum per plan §P1-B4; defers to Phase 2.",
+      "P1-C SEQUENCED 2026-05-24T054219Z — module stub alert_pipeline: ports.go (AlertRepositoryPort/MutePort/TelegramPort, re-export or slim local) + pipeline.go (compose 3 primitives) + pipeline_test.go (mock ports) + 2 module scenarios (golden/edge). Fence-B (module imports primitives + domain + stdlib only; zero infrastructure/application/interface/mattn/go-sqlite3; zero cross-module imports; zero creds). 7 ACs; owner dev-alert-engine; G2 + G12. Handoff docs/handoffs/TASK_P1-AE-C.md."
     ],
     "tasks": {}
   },
