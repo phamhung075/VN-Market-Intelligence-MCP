@@ -2,11 +2,14 @@
 Python sandbox runner — scenario JSON -> trace JSON.
 Zero ML/DB framework imports. stdlib only.
 Invoke: python -m sandbox --service=rag-service --tier=primitive --scenario=<path>
+        python -m sandbox --service=rag-service --tier=module   --scenario=<path>
 """
 from __future__ import annotations
 
 import argparse
+import asyncio
 import importlib
+import inspect
 import json
 import os
 import sys
@@ -149,10 +152,16 @@ def _run_scenario(scenario: dict[str, Any], service: str, tier: str) -> dict[str
     actual: dict[str, Any] = {}
     error_info: Optional[str] = None
     try:
-        result = fn(**inputs)
+        # Support both sync and async entry points (module-tier functions may be async)
+        if inspect.iscoroutinefunction(fn):
+            result = asyncio.run(fn(**inputs))
+        else:
+            result = fn(**inputs)
         # Normalise result: if not dict wrap it
         if isinstance(result, dict):
             actual = result
+        elif isinstance(result, list):
+            actual = {"result": result}
         else:
             # Single return value — wrap using first expected key as name
             if len(expected) == 1:
@@ -206,7 +215,8 @@ def _collect_scenario_files(scenario_arg: str, service: str, tier: str) -> list[
         paths: list[str] = []
         for root, _dirs, files in os.walk(base):
             for f in files:
-                if f.endswith(".json") and "scenarios" in root:
+                # Skip scaffold/draft files (prefixed with _) — they are not regression targets
+                if f.endswith(".json") and "scenarios" in root and not f.startswith("_"):
                     paths.append(os.path.join(root, f))
         return sorted(paths)
     else:
