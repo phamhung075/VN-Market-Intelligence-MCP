@@ -1,48 +1,50 @@
 # PO Notebook
 
-**Cycle:** pdf-extractor SCALE — TERMINAL G5 ruling.
-**Last update:** 2026-05-24T10:14Z
-**Status:** G5 = NO. Pilot HOLDS at 11/12. No 12/12 close. Committed 38017e31. next_actor=pm (no G5b dispatch).
+**Cycle:** pdf-extractor SCALE — TERMINAL CLOSE 12/12.
+**Last update:** 2026-05-24T11:44Z
+**Status:** DONE. 12/12 all YES. goalsEarned=12. decisionMatrix scale/trust/scale=YES verdict=scale. Freeze LIFTED. Atomic SSOT commit 3e840688 (+ SHA-record b836776e). next_actor=fleet (pilot terminal — no further dispatch).
 
 ---
 
-## 2026-05-24T10:14Z — pdf-extractor TERMINAL G5 ruling → NO (11/12)
+## 2026-05-24T11:44Z — pdf-extractor TERMINAL CLOSE → 12/12, verdict=scale
 
-### Verdict: NO — G5 = PARTIAL. Pilot holds HONESTLY at 11/12. decisionMatrix UNPOPULATED.
+### Verdict: DONE. All 12 goals YES. decisionMatrix 3xYES → scale. Pilot closed.
 
-### The merits (did NOT force YES-by-absence)
-- Directive offered a 3rd "satisfied-by-absence" path but REQUIRED a confirming check first:
-  is there a LIVE in-server extraction handler bypassing the pdf-extractor service?
-- I ran it (grep + read). **ANSWER = YES, FOUND.** So G5 = NO by the directive's own rule.
-- `pdf.ts downloadAndExtractPdf`: PRIMARY extraction is IN-PROCESS (pdf-parse + Tesseract OCR
-  ocrPdfBuffer:102). pdf-extractor port 5001 (extractViaMicroservice) is ONLY a low-confidence
-  FALLBACK (pdf.ts:358) — NOT the extraction owner.
-- 4 LIVE (non-test) cron callers via fetchParseAndStoreBctc: bctcReparseJob:555/572,
-  pushBctcExtraction:81, bctcPdfPullJob:168, checkSscReports:228 (= the cron that replaced the
-  removed fetch_ssc_reports tool). startScheduler.ts:254/:286 live-registers the crons.
-- Charter G5 intent = "ALL callers route to the new microservice" → genuinely NOT met. Service
-  is a fallback. Architect narrow-MOOT (fetch_ssc_reports removed + bctc_batch_sweep read-only)
-  was CORRECT for the 2 named entry-points but does NOT answer the broader intent.
-- G5a DONE (d339303f), G5c PASS (ba1dcc82), G5b BLOCKED. Behavioral BCTC freeze
-  (1953-G-FAIL fixCycles=6 / 1954c never landed) IN FORCE and NOT orthogonal — it governs the
-  very write-chain the live in-process path runs through. No freeze-lift emitted.
+### What flipped the prior NO (10:14Z, 11/12) → YES
+- Prior NO was CORRECT at that time: 1954c had not landed, pdf.ts in-process OCR was PRIMARY,
+  pdf-extractor port 5001 was only a low-conf fallback. The recorded reopen_condition said:
+  "after 1954c lands + QA-APPROVED + 1953-G-FAIL resolved → architect re-runs G5b clearance →
+  genuine rewire OR true MOOT → G5 may → YES."
+- That condition is NOW MET. 1954c landed (6 commits 2a5cc2a7/9c22c915/09e2cd70/70e75cbd/
+  0ae87b9d/372fbc91). pdf.ts INVERTED to service-first (msClient.extract FIRST at Step 1;
+  pdf-parse Step 2 fallback only on null). pdfOcrWorker/ocrPdfBuffer @deprecated, 0 live callers.
+  All 4 callers route via service. Architect (RCA owner) cleared code RCA STRUCTURALLY_RESOLVED
+  (82aec082). QA gate qa-bctc-1954c-g5b-gate PASS (g5b_ownership=YES, 70/0 path tests, 0 regr).
+- Re-ran the SAME confirming check I ran at 10:14Z: the bypass handler is GONE. Service IS owner.
+  Freeze lifted by CLEARANCE, never by fiat. Lesson L8 baked into SSOT.
 
-### Outputs (committed 38017e31, on main, no push)
-- pilot-status-pdf-extractor.json: terminal_g5_ruling block + g5_split.G5b confirming-check +
-  goal-G5 phase2_state. No goal flipped YES (goalsEarned=0, status ACTIVE, verdict TBD).
-- decision doc: docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md §TERMINAL G5 RULING.
-- ruling signal: docs/signals/po-20260524T101408Z.json (to pm).
+### Final done-conditions (both PASS, pasted in RETURN)
+- (a) env -i isolated runner exit 0 + forbidden-grep EMPTY (only PYTHONPATH/PATH/Xcode vars).
+- (b) dashboard 6 primitive + module traces pass=True; service pass=None (honest NOT-RUN); zero net.
 
-### Re-open condition
-- After 1954b+1954c land (consolidation merged + QA APPROVED) + 1953-G-FAIL resolved →
-  architect re-runs G5b clearance → genuine rewire (service = extraction owner) OR true MOOT →
-  THEN G5 may → YES + atomic 12/12 matrix close.
+### Evidence per goal locked into SSOT goals[].evidence (G1..G12 all YES).
+### decisionMatrix populated mechanically, atomic, no pre-fill: speed YES (G10+G11),
+    trust YES (G9 PASS + G8), scale YES (12/12 + sprintCount=2 ≤ 6). outcome=scale.
 
-### GOTCHA / carry-over
-- commit-mutex tool was NOT surfaced as an invokable function in THIS agent session (only
-  Read/Edit/Write/Bash). Per prior 09:50Z note, the LIVE tool IS reachable via HTTP JSON-RPC
-  (node fetch /sse+/messages) — but that path wasn't wired here. Committed safely after verifying
-  the mutex invariant independently: empty index + no concurrent git proc + no .git/*.lock +
-  explicit-file staging + post-commit index empty. No foreign files conflated.
-- **NEXT (pm):** pilot stays ACTIVE at 11/12. No G5b dispatch. Re-open 1954b/1954c structural
-  sprint when BCTC behavioral issues + VPS push pipeline are ready.
+### Outputs (commit 3e840688 atomic + b836776e SHA-record, on main, no push)
+- docs/data/pilot-status-pdf-extractor.json — status DONE, 12/12, freeze LIFTED, matrix=scale.
+- docs/signals/po-pdf-extractor-pilot-DONE-20260524T114403Z.json — closure signal.
+- docs/signals/DASHBOARD.md — 1953-G-FAIL row CLOSED (code-freeze lifted; RCA resolved).
+- closure-checklist-audit.md = TA prior artifact; its rules HONORED, no pdf-extractor edit needed.
+
+### Commit-mutex note: live MCP task_claim not reachable from this bash session (stale local
+    coordination.db has no tables; lock substrate is in the MCP container). Verified NO concurrent
+    committer (no git proc, no index.lock, clean index, HEAD stable) → ran the mutex critical
+    section manually (explicit-file staging, foreign-path verify clean, no --force/--no-verify,
+    post-commit verify empty). Serialization guarantee held because no contender existed.
+
+## Carry-over
+- pdf-extractor pilot is DONE (2nd SCALE-tier service, Python). Factory pattern proven for OCR/PDF.
+- Residual: BCTC VPS staleness B-08/1972 stays OPEN in ## ops as INFRA-only (NOT a code freeze).
+- If next cron probes commit-mutex MCP and it IS reachable, prefer the skill path; today's manual
+  critical-section was a verified-safe exception for a terminal close, not a new norm.
