@@ -126,6 +126,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
+├── docs/standards/microservice-build-standard.md (size-gated build standard: FULL/LEAN profiles, §1 gate, three-tier pointer, G1-G12 DoD pointer, sandbox clause, dashboard req, role relay, pilot-status SSOT — child of ARCHITECTURE subtree)
+│
 ├── docs/ARCHITECTURE.md (architecture SSOT: 9-service overview, Docker topology, two-team arch, data flow, module boundaries + mcp.config.json section map, conflict resolutions — maintained by Architect)
 │   ├── docs/architecture/1838a-repository-pattern.md (task reference: repository pattern architecture)
 │   ├── docs/architecture/1842a-backtesting-engine.md (task reference: backtesting engine design)
@@ -381,6 +383,7 @@ Workflow-map autonomy fixes — extract reusable sub-flows so multiple callers d
 | `docs/standards/dockerfile-volume-policy.md` | Architect | After new named-volume pattern or shadow failure mode discovered |
 | `docs/{policies,protocols,standards,references}/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 | `docs/guides/guide-*.md` | Agent Father / Architect | Guide section update |
+| `docs/standards/microservice-build-standard.md` | Architect | Methodology rule change or new closed pilot lesson |
 | `docs/ARCHITECTURE.md` | Architect | After service topology or conflict resolution change |
 | `docs/architecture/microservice/<service>.md` | dev-<service> (sole committer) | After code change alters behavior, API, schema, or config — Architect routes doc subtask to dev-* via signal, never writes directly |
 
