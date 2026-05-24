@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## c287 · 2026-05-24T21:00Z
+
+### PI3-REOPEN-2 — backfill + all-rows inspector + secondary OCR join (2026-05-24, IMPL_DONE)
+
+**Commit:** `69da9d01`
+
+**Trigger:** QA CHANGES_REQUESTED — `GET /api/bctc-inspect/docs` returned count:0 against real market.db. Root cause: all 14 real financial_reports rows have `pdf_path IS NULL` (inserted via tryNewsChainFallback), so LIST_SQL filter `WHERE pdf_path IS NOT NULL` excluded all of them.
+
+**3 deliverables per architect REOPEN-2:**
+
+1. `backfillBctcPdfPaths.ts` (NEW, application layer) — idempotent two-pass token matcher. Normalises messy VN filenames (canonical, dated, Quy-N, month→quarter). VCB Q1 vs Q4 disambiguation: exact (ticker, year, quarter) match only. Ambiguous → no-link, no guess. UPDATEs only `pdf_path` column, never other columns. Called once at startup.
+
+2. `bctcInspectHandler.ts` (MODIFIED) — removed `WHERE pdf_path IS NOT NULL` from LIST_SQL; added `pdf_path` to SELECT; has_pdf computed at serve time via `existsSync`; secondary OCR join via `parsePdfFilenameTokens` for rows where pdf_path IS NULL; all 5 honest-degrade states per architect table.
+
+3. `server.ts` (MODIFIED) — calls `backfillBctcPdfPaths(db, pdfDir)` once after DB init, before routes are live. pdfDir = `resolve(cwd, 'data', 'pdfs')` (same convention as bctcPdfPullJob). Non-fatal (logs warn, continues serving).
+
+**Tests:** 39 PI3 (updated AC-2 for REOPEN-2 behavior) + 25 new REOPEN-2 = 64 pass / 0 fail. tsc 0 errors. NF-LD-2 reference 9/9.
+
+**Gate:** `git show --stat HEAD` 5 files, all apps/mcp-server/. No foreign files.
+
+**Next:** qa — REAL container redeploy + verify count >=10, OCR text in right pane, anomaly flag on real data.
+
+Zone health: BCTC inspector now shows all 14 real rows; backfill links up to 17 PDFs at startup; secondary OCR join shows OCR for news-inference rows; 5 honest-degrade states | HEALTHY
+
+---
+
 ## c286 · 2026-05-24T20:14Z
 
 ### PI-3-redo — BCTC Inspector over real market.db (2026-05-24, IMPL_DONE)

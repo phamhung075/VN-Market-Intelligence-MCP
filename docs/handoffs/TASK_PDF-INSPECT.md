@@ -966,3 +966,56 @@ This applies to every architect design that reads from an existing table: before
 ---
 
 **NEXT: dev-mcp-server** — implement REOPEN-2 per this design. Then QA re-runs against REAL container with REAL `market.db`, confirming `count >= 10` in list and at least one doc renders OCR text in the right pane.
+
+---
+
+## [Developer] REOPEN-2 Implementation — 2026-05-24T21:00Z
+
+**Commit:** `69da9d01`
+**Zone:** `apps/mcp-server/` (5 files, all within zone; 0 foreign files in `git show --stat`)
+
+### Files delivered
+
+| File | Action | Notes |
+|------|--------|-------|
+| `apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts` | Created | Idempotent two-pass token matcher; `parsePdfFilenameTokens()` exported for reuse; `backfillBctcPdfPaths(db, pdfDir)` writes only `pdf_path`; `BackfillResult` returned |
+| `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` | Modified | Removed `WHERE pdf_path IS NOT NULL` from LIST_SQL; added `pdf_path` to SELECT; `has_pdf` = `existsSync(pdf_path)` at serve time; secondary OCR join via `parsePdfFilenameTokens` for NULL-path rows; imports `parsePdfFilenameTokens` from application layer |
+| `apps/mcp-server/src/interface/mcp/server.ts` | Modified | Added `import { backfillBctcPdfPaths }` + startup call after `getDb()`; pdfDir = `resolve(cwd, 'data', 'pdfs')`; non-fatal try/catch |
+| `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts` | Modified | Updated AC-2 assertions to match REOPEN-2 behavior (NULL-path rows ARE included, `has_pdf=false`); comment clarifies the intent change |
+| `apps/mcp-server/src/__tests__/PI3-bctc-inspect-reopen2.test.ts` | Created | 25 tests: AC-R1..R18 covering token parser (VCB Q1/Q4, dated form, FPT Q4, VNM month→Q4), backfill (link/ambiguous/no-match/idempotent/pdfDir-missing), LIST all-rows, secondary OCR join, structural write-safety |
+
+### Design decisions
+
+- **Two-pass token matcher:** Pass 1 extracts Q1..Q4 tokens directly (canonical form). Pass 1b/1c handles QUY-N and QUY N variants. Pass 2 maps month → quarter for date-in-filename forms (e.g. `31.12.2025` → month=12 → Q4). Ticker extracted as first 2-5 uppercase alpha token not in keyword set (QUY, NAM, HOP, NHAT, etc.).
+- **VCB Q1 vs Q4:** `VCB_2025_Q1.pdf` extracts quarter=1; `VCB_2025_Q4.pdf` extracts quarter=4 — they match only the correct `financial_reports` row. Test AC-R5 locks this.
+- **Ambiguity guard:** When `VCB_2025_Q1.pdf` AND `20250429-VCB-...-Quy-1-nam-2025.pdf` both parse to (VCB, 2025, 1) → 2 matches → no update, log "ambiguous". Test AC-R7 locks this.
+- **Secondary OCR join:** When `pdf_path IS NULL`, `handleBctcInspectOcr` scans `pdf_extracted_text.filename` via `parsePdfFilenameTokens` for a match on `(action_code, period_year, period_quarter)`. First match wins (no ambiguity concern for OCR join — serving OCR text for close-but-not-exact match is still better than "no OCR"). The LIST `has_ocr` flag uses the same logic.
+- **5 honest-degrade states:** (1) pdf_path set + file on disk + OCR → full panel. (2) pdf_path set + file NOT on disk → amber "PDF not available". (3) pdf_path NULL + OCR found → figures + OCR, amber "PDF not linked". (4) pdf_path NULL + no OCR → figures only, "news-inference report". (5) all-zero news-inference → values shown honestly (they are the data quality signal).
+- **Write safety:** `backfillBctcPdfPaths` issues only `UPDATE financial_reports SET pdf_path = ? WHERE id = ? AND pdf_path IS NULL`. No INSERT, no DELETE. Structural test AC-R structural confirms this.
+
+### DoD gate
+
+| Gate | Result |
+|------|--------|
+| `bun tsc --noEmit` | 0 errors |
+| PI3 + REOPEN-2 tests | 64 pass / 0 fail |
+| Reference test (NF-LD-2) | 9 pass / 0 fail |
+| `git show --stat HEAD` foreign files | 0 (5 files, all apps/mcp-server/) |
+| Explicit-file staging | Yes — 5 files named explicitly |
+| No `--no-verify`/`--force` | Confirmed |
+| SI-2 boundary comment | Present (existing in handler + HTML) |
+| Reads/writes only market.db | Yes — financial_reports.pdf_path + pdf_extracted_text (read) |
+| pdf_path column only modified | Yes — `SET pdf_path = ?` only in UPDATE |
+| tryNewsChainFallback() untouched | Confirmed (separate flagged task) |
+| pilot-status-pdf-extractor.json | Not in diff (not touched) |
+| Frozen pdf-extractor dashboard | Not in diff (not touched) |
+
+### Deploy requirement
+
+**Container rebuild IS required** — `backfillBctcPdfPaths` runs at startup; the new startup call is only in the rebuilt image. `docker compose up -d --build mcp-server` needed for backfill to run against real data.
+
+**After rebuild:** startup logs will show `[backfillBctcPdfPaths] done: updated=N ...`. Expected N >= 10 for the 14 real rows (some may be ambiguous or unmatched if real filenames don't parse).
+
+---
+
+**NEXT: qa** — redeploy real container, verify `GET /api/bctc-inspect/docs` returns `count >= 10`, select a doc, confirm OCR text in right pane, anomaly flag visible for any decimal-shift row.
