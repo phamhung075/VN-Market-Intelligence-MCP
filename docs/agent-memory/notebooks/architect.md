@@ -1,8 +1,50 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 08:45 UTC (rag-service pilot Phase 0 — P0-RAG-1 + P0-RAG-2) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 09:10 UTC (pdf-extractor Phase-0 P0-PDF-1+2+3) | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor Phase-0 cycle (2026-05-24T09:10Z) — fleet pilot Phase 0 deliverables P0-PDF-1/2/3
+
+**Task:** Author 3 Phase-0 deliverables for pdf-extractor factory pilot (Python). Authorization: pilot-status-pdf-extractor.json activatedAt=2026-05-24T07:18:11Z.
+
+**Key decisions:**
+- 6 primitives (added validate-financial-figures as #1 — already pure function in domain/services.py, already tested). Module name LOCKED: `financial-reports`.
+- G4 fence tool: `import-linter` (Python analog of depguard/ESLint). Fence-A: primitives zero infra imports. Fence-B: module zero cross-module/infra.
+- Sandbox tooling gap HEADLINE RISK: P1-A1 (sandbox runner) BLOCKER before P1-B1. ZERO-CREDS gate baked in.
+- OCR/IO boundary CONFIRMED CLEAN: domain/ zero infra imports (golden rule PASS).
+- G5b HTTP scope: existing `/extract` path already wired (pdfExtractorClient.ts). Phase-2 G5b = rewire BCTC domain-calling tools — ALL BCTC-freeze-gated.
+- BCTC freeze: ALL 10 Phase-1 tasks CLEAR. Phase-2 G5b HARD FROZEN until PO 1954c lift signal.
+- main.py 101 LOC (target ≤80): P1-A3 partial fix; full G3 in Phase 2.
+- bug-inventory `pdf_extractor_baseline`: 2 bug classes (decimal-shift + confidence-threshold); baselineCycleCount=1.5; ZERO root dup-keys (python3 verified).
+- 10 Phase-1 tasks, WIP=1, est 9.3h.
+
+**Files authored this cycle (5):**
+1. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p0-brownfield-inventory.md` (NEW — PHASE0-D1)
+2. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/pilot-charter.md` (NEW — PHASE0-D2a)
+3. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md` (NEW — PHASE0-D3)
+4. `docs/data/bug-inventory.json` (MODIFIED — pdf_extractor_baseline added, PHASE0-D2b)
+5. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+---
+
+## news-fetch Phase-0 deliverables cycle (2026-05-24T07:30Z) — fleet pilot 6 Phase 0
+
+**Task:** Author P0-NF-1 (brownfield), P0-NF-2 (bug-inventory baseline), P0-NF-5 (phase-1 plan) for news-fetch pilot (fleet pilot 6, TS/Bun). Authorization: INTENT from main terminal; PO opened Phase 0 at 2026-05-24T07:19Z.
+
+**Charter DDD-drift reconcile (BINDING):** Charter §Deltas "flat src/" is STALE. All 4 DDD layers already exist. Work = rewire + light extract, not greenfield.
+
+**Primitive set (4 confirmed):** published-at-parser, headline-normalizer, source-dedup-key, article-relevance-filter. Module: news_ingest. G5 active caller: analysis.ts in mcp-server.
+
+**Bug baseline:** B-10 excluded (I/O adapter). baselineCycleCount=1.5 system-wide fallback. Consistent with fleet pattern.
+
+**Phase-1 plan:** 10 tasks, 68 ACs, WIP=1. G12 streak: P1-B1+P1-C+P1-D. All scenario JSONs explicit in plan body.
+
+**Files authored: brownfield.md, phase-1-task-plan.md, bug-inventory.json news_fetch_baseline, pilot-status SSOT, 3 handoff [Architect] sections, signal to pm.**
+
+**Next actor:** pm (anchor + dispatch Phase 1)
+
+---
 
 ## rag-service Phase-0 cycle (2026-05-24T08:45Z) — P0-RAG-1 + P0-RAG-2
 
