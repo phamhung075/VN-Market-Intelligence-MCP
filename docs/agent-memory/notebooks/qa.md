@@ -1,5 +1,88 @@
 # QA — Notebook
 
+## cycle-107 · 2026-05-24 · PDF-INSPECT PI-3-redo (mcp-server real-data verify) — CHANGES_REQUESTED
+
+**Task:** PI-3-redo QA gate (mcp-server BCTC inspector against real market.db) | **Verdict:** CHANGES_REQUESTED — blocking defect
+
+```
+date: 2026-05-24T20:19Z
+outcome: CHANGES_REQUESTED — 1 blocking defect (AC-2 FAIL: docs endpoint returns count=0 on real data)
+type: sprint-qa (PDF-INSPECT PI-3-redo — real market.db acceptance)
+handoff: docs/handoffs/TASK_PDF-INSPECT.md
+input_commit: 1b5799fb (dev-mcp-server PI-3-redo)
+ssot_not_mutated: true (pilot-status-pdf-extractor.json PO-only — untouched)
+goal_flips: NONE
+
+deploy:
+  command: docker compose up -d --build mcp-server
+  result: image rebuilt + container recreated (healthy)
+  routes_live: true (4 /api/bctc-inspect/* routes wired and responding)
+
+code_quality:
+  bun_tsc: 0 errors
+  PI3_tests: 39 pass / 0 fail
+  full_suite: 9365 pass / 345 fail / 35 skip (345 are pre-existing, 0 PI-3 regressions)
+  ddd_scan: PASS (no domain/infra/app imports in bctcInspectHandler.ts)
+  security_scan: PASS (0 process.env, 0 hardcoded creds, 0 sql write verbs)
+  si2_boundary: PRESENT in handler + HTML
+  pdf_extractor_db_refs: ZERO (no pdf_extractor.db / pdf_documents in new code)
+  commit_1b5799fb: 6 files, 0 foreign files
+  frozen_files_untouched: true (no diff on pdf-extractor dashboard/)
+
+real_data_state:
+  financial_reports_total: 14 (real tickers: ACB, BSR, DGC, DHG, DIG, EIB, FPT×2, HPG, SHB, VCB×2, VEA, VNM)
+  financial_reports_with_pdf_path: 0 (ALL 14 have pdf_path=NULL)
+  pdfs_on_disk: 17 files in /app/data/pdfs/ (matching real tickers)
+  pdf_extracted_text_rows: 819 (real Vietnamese BCTC OCR text, 18 distinct filenames)
+  root_cause: 14 rows inserted via tryNewsChainFallback() which hardcodes pdfPath:null (line 645)
+    fetchParseAndStoreBctc.ts:645 → fallbackReport.source.pdfPath = null
+    These records never went through the PDF download path (lines 283-300) that writes the path.
+
+blocking_defect:
+  ac2_fail: GET /api/bctc-inspect/docs returns {"ok":true,"count":0,"items":[]}
+  reason: WHERE pdf_path IS NOT NULL AND pdf_path != '' matches 0 of 14 rows
+  evidence: docker exec bun query → financial_reports_with_pdf_path=0
+  fix_required: fetchParseAndStoreBctc.ts must write pdf_path when PDF is downloaded (line 404
+    sets report.source.pdfPath but this path is only reached for primary OCR extraction, not
+    fallback — and the UPSERT path for primary reports must also persist pdf_path)
+    OR: the bctcInspectHandler.ts LIST_SQL must be loosened to show docs without pdf_path
+    but with matching pdf_extracted_text rows (join by action_code+period heuristic),
+    providing OCR text + figures even when no PDF on disk.
+
+non_blocking:
+  path_traversal_live: 400 for invalid UUID on both /pdf/ and /ocr/ (PASS)
+  unknown_uuid: 404 doc_not_found (PASS)
+  viewer_html: 200 text/html with SI-2 boundary comment (PASS)
+  honest_degrade_code: correctly returns {"ok":true,"count":0} not 500 (PASS)
+  pdf_extractor_deprecated: DEPRECATED comments present in inspection_store.py + handlers.py (PASS)
+```
+
+| Check | Verdict |
+|-------|---------|
+| bun tsc 0 errors | PASS |
+| PI-3 tests 39/39 pass | PASS |
+| Full suite 0 new regressions | PASS |
+| DDD scan PASS | PASS |
+| Security scan PASS | PASS |
+| SI-2 boundary comment in all new files | PASS |
+| No pdf_extractor.db / pdf_documents refs | PASS |
+| Commit 1b5799fb: 6 files, 0 foreign | PASS |
+| Frozen files untouched | PASS |
+| Deploy: container rebuilt + healthy | PASS |
+| Routes live (/api/bctc-inspect/* → 200/400/404) | PASS |
+| Path traversal: invalid UUID → 400 | PASS |
+| Unknown UUID → 404 (not 500) | PASS |
+| Viewer HTML 200 with SI-2 comment | PASS |
+| **AC-2 PRIMARY: docs endpoint returns real docs** | **FAIL — count=0 (all pdf_path=NULL)** |
+| Anomaly flag fires on real data | CANNOT TEST (no docs returned) |
+| Honest degrade: doc with no OCR text | CANNOT TEST (no docs returned) |
+
+**PI-3-redo verdict: CHANGES_REQUESTED.**
+**Blocking: `apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts:645` — pdf_path=null on fallback path; all 14 real financial_reports rows have pdf_path=NULL; docs endpoint returns empty list on real data.**
+**NEXT: dev-mcp-server — fix pdf_path population so real docs appear in the inspector.**
+
+---
+
 ## cycle-106 · 2026-05-24 · NF-LD-3 news-fetch live-data panel — APPROVED
 
 **Task:** NF-LD-3 QA gate (news-fetch live-data inspection view) | **Verdict:** APPROVED

@@ -675,3 +675,122 @@ If mcp-server container predates commit `1b5799fb`, a `docker compose up -d --bu
 **Deploy note:** The new HTML file is served from the container's file system at build time (baked into the image). A container rebuild IS required for the HTML to be present in the container.
 
 ---
+
+## [QA] PI-3-redo Review Record — 2026-05-24T20:25Z
+
+**Verdict: CHANGES_REQUESTED**
+
+**Reviewer:** qa agent | **Sprint:** PDF-INSPECT (REOPEN) | **Input commit:** `1b5799fb`
+
+---
+
+### Binding mandate compliance
+
+The architect's mandate: verify against the REAL `market.db` with real `financial_reports` + real `pdf_extracted_text` rows and real on-disk PDFs. This QA cycle deployed to the real container and queried real data. Fixtures were NOT used for acceptance.
+
+---
+
+### Deploy evidence
+
+Container rebuilt: `docker compose up -d --build mcp-server` — image built successfully, container recreated, status healthy.
+
+Routes live (confirmed against container on port 3000):
+- `GET /api/bctc-inspect` → 200 text/html (SI-2 boundary comment present)
+- `GET /api/bctc-inspect/docs` → 200 application/json `{"ok":true,"count":0,"items":[]}`
+- `GET /api/bctc-inspect/pdf/not-a-uuid` → 400 `{"error":"invalid_doc_id"}`
+- `GET /api/bctc-inspect/ocr/00000000-0000-4000-8000-000000000001` → 404 `{"error":"doc_not_found"}`
+
+---
+
+### AC-1: Code quality (tsc + tests + DDD + security) — PASS
+
+| Check | Result |
+|-------|--------|
+| `bun tsc --noEmit` | 0 errors |
+| `bun test PI3-bctc-inspect.test.ts` | 39 pass / 0 fail |
+| Full suite (9745 tests) | 9365 pass / 345 fail / 35 skip — 345 pre-existing, 0 PI-3 regressions |
+| DDD scan: domain→infra/app imports in new handler | NONE (PASS) |
+| `process.env` in handler + HTML | NONE (PASS) |
+| Hardcoded creds / secrets | NONE (PASS) |
+| SQL write verbs (INSERT/UPDATE/DELETE) in handler | NONE (PASS) |
+| References to `pdf_extractor.db` / `pdf_documents` | NONE (PASS) |
+| SI-2 boundary comment in handler + HTML | PRESENT (PASS) |
+| `git show --stat 1b5799fb` foreign files | 0 (PASS) |
+| `pilot-status-pdf-extractor.json` in diff | ABSENT (PASS) |
+| Frozen pdf-extractor dashboard files in diff | ABSENT (PASS) |
+| DEPRECATED comment in inspection_store.py + handlers.py | PRESENT (PASS) |
+
+---
+
+### AC-2 PRIMARY: Real-data docs endpoint — FAIL (BLOCKING)
+
+**`GET /api/bctc-inspect/docs` against real `market.db` returns `{"ok":true,"count":0,"items":[]}`**
+
+Real data state (verified via `docker exec bun -e "..."` against `/app/data/market.db`):
+
+| Fact | Value |
+|------|-------|
+| `financial_reports` total rows | 14 |
+| Real tickers present | ACB, BSR, DGC, DHG, DIG, EIB, FPT (×2), HPG, SHB, VCB (×2), VEA, VNM |
+| `financial_reports` rows with `pdf_path IS NOT NULL AND pdf_path != ''` | **0** |
+| PDFs on disk (`/app/data/pdfs/`) | 17 files (matching real tickers) |
+| `pdf_extracted_text` total rows | 819 (real Vietnamese BCTC text confirmed) |
+| `pdf_extracted_text` distinct filenames | 18 |
+
+**Root cause (file:line):** `apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts:645` — the `tryNewsChainFallback()` function hardcodes `pdfPath: null` in the fallback report construction:
+```
+source: { pdfPath: null, ... }   // line 645
+```
+All 14 current `financial_reports` rows were inserted via the news-inference fallback path. The PDF download path (lines 283-300) correctly writes files to disk AND sets `report.source.pdfPath` (line 404), but these 14 records never went through that path. The `bctcInspectHandler.ts` `LIST_SQL` correctly filters `WHERE pdf_path IS NOT NULL AND pdf_path != ''` (by architect design), resulting in an empty list.
+
+**Fix options for dev-mcp-server (choose one):**
+1. **Option A (preferred per architect design):** When the PDF download succeeds (line 297 `writeFileSync(pdfPath, ...)`) OR when `report.source.pdfPath` is set (line 404), ensure the UPSERT into `financial_reports` also persists the `pdf_path`. The existing INSERT code at line 760 already has `$pdfPath` bound to `fallbackReport.source.pdfPath` — the issue is only that fallback records have `pdfPath: null`. For primary-path records, verify the store UPSERT writes the non-null `report.source.pdfPath`.
+2. **Option B (broader fix):** The `LIST_SQL` is changed to also include docs with `pdf_path IS NULL` but with matching `pdf_extracted_text` rows (join by `action_code + period_type + period_year`), showing figures from `financial_reports` + OCR text from `pdf_extracted_text`, with `has_pdf: false`. This makes the viewer useful immediately for the 14 existing docs.
+
+**OCR text is real and ready** — 819 rows of Vietnamese BCTC text confirmed (sample: `"NGAN HANG TMCP NGOAI THUONG VIET NAM ... Báo cáo tài chính hợp nhất giữa niên độ ..."`). The OCR join strategy (`basename(pdf_path) = pdf_extracted_text.filename`) cannot be tested with `pdf_path = NULL`. The OCR data exists and is real; the join key is broken.
+
+---
+
+### AC-3: Safety / path traversal — PASS
+
+All verified against live container:
+
+| Test | Result |
+|------|--------|
+| `GET /api/bctc-inspect/pdf/not-a-uuid` → 400 `invalid_doc_id` | PASS |
+| `GET /api/bctc-inspect/pdf/../../etc/passwd` → 404 (router rejects before handler) | PASS — not 500, no file content |
+| `GET /api/bctc-inspect/ocr/not-a-uuid` → 400 `invalid_doc_id` | PASS |
+| `GET /api/bctc-inspect/pdf/00000000-0000-4000-8000-000000000001` → 404 `doc_not_found` | PASS |
+| `GET /api/bctc-inspect/ocr/00000000-0000-4000-8000-000000000001` → 404 `doc_not_found` | PASS |
+
+UUID regex guard at `bctcInspectHandler.ts:37-41` confirmed in code review. Path construction uses `pdf_path` from DB (server-side), never from user input.
+
+---
+
+### AC-4: Regression — PASS
+
+- pdf-extractor frozen surfaces: zero diff confirmed (dashboard/index.html, traces.js, trust-contract.spec.js)
+- `pilot-status-pdf-extractor.json`: not in diff (PO-only, frozen)
+- 39 PI-3 unit/handler tests: all pass with in-memory DB fixtures (valid for edge-case coverage)
+- Pre-existing 345 failures: all pre-date this commit; none in PI-3 or bctcInspect namespace
+
+---
+
+### Cannot-test items (consequence of AC-2 FAIL)
+
+- Anomaly flag on real data: no real doc visible in list to click
+- Honest-degrade "OCR text not available": no doc to select
+- Real PDF LEFT pane render: no doc to select
+- Real OCR text RIGHT pane: no doc to select
+
+These items are tested via the 39 unit/handler tests with in-memory fixtures, but the architect's mandate requires real-data verification. Cannot fulfill until the `pdf_path` data gap is fixed.
+
+---
+
+**CHANGES_REQUESTED — 1 blocking issue:**
+
+`apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts:645` — `pdfPath: null` hardcoded in fallback path + primary-path UPSERT not persisting `pdf_path` for the 14 current records. Result: `GET /api/bctc-inspect/docs` returns `count:0` against real `market.db`. Architect mandate (real data acceptance) cannot be satisfied with empty list.
+
+**NEXT: dev-mcp-server.** Fix `pdf_path` population so docs appear. Options: (A) fix the pipeline write-back so pdf_path is persisted on primary path + backfill existing 14 rows, OR (B) extend LIST_SQL to include docs with `pdf_path IS NULL` but with matching OCR text (action_code+period join). After fix, re-deploy and QA re-runs check 2 only (real-data served verification).
+
+---
