@@ -2,6 +2,43 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-05-24 — P2-F G5a git mv _deprecated + FetchPriceUseCase rewire DONE
+
+### What shipped (P2-F)
+
+`git mv` pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go (history preserved).
+`git mv` pkg/domain/services_test.go → pkg/domain/_deprecated/services_v1_test.go.
+Both deprecated files annotated with `//go:build ignore` (circular-import prevention).
+
+Rewired `FetchPriceUseCase`: removed `*domain.ResolvePriceService` dependency; now depends on
+`PriceResolverPort` interface (defined in pkg/application/) satisfied by `*PriceResolutionModule`.
+`cmd/server/main.go` composition root wires `priceresolution.New()` directly.
+`usecases_test.go` + `router_test.go` updated to use `mockResolver` (no deprecated service).
+
+**All 6 ACs PASS:**
+- AC-1: git mv confirmed; originals gone; FOUND in _deprecated/
+- AC-2: grep → 0 matches for ResolvePriceService in usecases.go
+- AC-3: go build ./... exit 0
+- AC-4: golangci-lint run: 0 issues, all fences intact
+- AC-5: sandbox total=11 pass=11 fail=0 status=OK
+- AC-6: _deprecated/ directory confirmed with both files
+
+**Commit:** `6225f926` — `chore(stock-price): P2-F — git mv ResolvePriceService → _deprecated/ + FetchPriceUseCase rewire (G5a)`
+
+**Signal:** `docs/signals/dev-sp-P2-F-git-mv-done-20260524T003755Z.json`
+
+**Files staged (L84 explicit):**
+- CREATE: `apps/stock-price/pkg/domain/_deprecated/services_v1.go` (moved + build-ignored)
+- CREATE: `apps/stock-price/pkg/domain/_deprecated/services_v1_test.go` (moved + build-ignored)
+- MODIFY: `apps/stock-price/pkg/application/usecases.go` (PriceResolverPort + rewire)
+- MODIFY: `apps/stock-price/pkg/application/usecases_test.go` (mockResolver)
+- MODIFY: `apps/stock-price/pkg/interface/http/router_test.go` (mockResolver)
+- MODIFY: `apps/stock-price/cmd/server/main.go` (priceresolution.New() wiring)
+
+**Anchor:** `debba8eaff0724d1fb32fc9d28640201cc32d1cc` remains ancestor (merge-base exit 0).
+
+**State for P2-G:** FetchPriceUseCase is now fully wired to the module tier. Next: QA G5b/G5c audit.
+
 ## Session 2026-05-24 — P2-B Depguard Fence-A/B/C + CI job DONE
 
 ### What shipped (P2-B)
