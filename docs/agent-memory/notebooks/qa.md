@@ -1,5 +1,52 @@
 # QA — Notebook
 
+## cycle-99 · 2026-05-24 · rag-service P2-J — G10 bug injection — DONE
+
+**Task:** P2-J (G10 AI-fixability bug injection for rag-service) | **Verdict:** INJECTION DONE — RED confirmed
+
+```
+date: 2026-05-24
+outcome: DONE — rag-pre-inject tag created, bug committed, sandbox 3 FAIL, dash RED
+type: pilot-task-qa (bug-injection, pre-inject tag creation)
+sealed_record: docs/handoffs/TASK_P2-J-rag-service-injection-SEALED.md
+injection_commit: 12d2381c
+pre_inject_tag: rag-pre-inject → 8b2dbf30 (FROZEN — ancestor:YES confirmed)
+
+inject_file: apps/rag-service/domain/primitive/top_k_selector/top_k_selector.py
+inject_line: 30
+original_literal: results[:k]
+injected_literal: results[k:]
+bug_class: off-by-one slice direction (tail vs head)
+
+sandbox_primitive_exit: 1 (13 PASS / 3 FAIL — all 3 top_k_selector scenarios RED)
+sandbox_module_exit: 1 (1 PASS / 1 FAIL — module golden coupled RED)
+dash_check_exit: 1 (22 PASS / 2 FAIL)
+dash_red_cards: trace-top-k-selector-golden + trace-module-full-golden
+
+g11_trial1_coupling: module golden RED during injection window (top_k_selector coupling confirmed)
+baseline_cycles: 1.5 (bug-inventory.json rag_service_baseline)
+max_cycles_allowed: 2
+ssot_not_mutated: true (PO-only §4.5)
+goal_flips: NONE
+```
+
+| Check | Verdict |
+|-------|---------|
+| rag-pre-inject tag at HEAD before injection | PASS (8b2dbf30) |
+| Injection staged explicitly — no -A | PASS (4 files only) |
+| Injection committed neutral message | PASS (12d2381c) |
+| rag-pre-inject ANCESTOR of HEAD | PASS (merge-base exit 0) |
+| Sandbox primitive: 3 top_k_selector FAIL | PASS (exit 1) |
+| Sandbox module: module golden FAIL (coupling) | PASS (exit 1) |
+| Dash-check: 2 RED cards | PASS (exit 1) |
+| Sealed record written | PASS |
+| SSOT not mutated | PASS |
+
+**Injection verdict: DONE.**
+**NEXT:** dispatch dev-rag-service BLIND (sandbox RED, dashboard RED — find + fix ≤2 cycles). Then QA verifies cycle_count ≤2.
+
+---
+
 ## cycle-98 · 2026-05-24 · pdf-extractor P2-J0/J1/J2 — G10 bug injection — DONE
 
 **Task:** P2-J0 (preflight) + P2-J1 (sealed spec) + P2-J2 (tag + inject + RED confirm) | **Verdict:** INJECTION DONE — G10 RED baseline committed
