@@ -146,8 +146,10 @@ Pass 9b Doc-Heal:  OK | N auto-fixes | K escalated
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**Commit notebook**:
+**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/claude-manager-helper.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/claude-manager-helper.md
 git commit -m "chore(memory/claude-manager-helper): notebook YYYY-MM-DD"
 ```

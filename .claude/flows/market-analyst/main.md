@@ -108,7 +108,10 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 Recurring pattern found → add a one-line `## Carry-over` entry; everything else is wiped on overwrite (target ≤50L).
 
 Then:
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/market-analyst.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/market-analyst.md
 git commit -m "chore(memory/market-analyst): notebook YYYY-MM-DD"
 ```
