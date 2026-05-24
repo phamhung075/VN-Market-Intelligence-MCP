@@ -1,5 +1,56 @@
 # QA — Notebook
 
+## c283 cycle-85 · 2026-05-24 · kinh-dich P2-C/P2-D — G4 R-FENCE reproduction + freeze anchor — PASS
+
+**Task:** P2-C (AC-4 QA independent reproduction) + P2-D (G4 freeze anchor — read-only) | **Verdict:** PASS
+
+```
+date: 2026-05-24T12:00:00Z
+outcome: PASS — P2-C fence reproduction PASS + P2-D freeze anchor PASS
+type: pilot-task-qa (fence reproduction + freeze anchor — inject+revert discipline + read-only audit)
+signal: docs/signals/qa-kd-P2-D-g4-evidence-done-20260524T120000Z.json
+evidence_p2c: docs/handoffs/TASK_P2-C-kd-g4-fence-violation-proof.md
+evidence_p2d: docs/handoffs/TASK_P2-D-kd-g4-evidence.md
+
+p2_c_qa_file: apps/kinh-dich-service/pkg/primitive/hao_encoder/hao_encoder.go (different from dev hexagram_resolver)
+p2_c_injection: pkg/infrastructure (Fence-A forbidden higher-layer import)
+p2_c_lint_violation_exit: 1
+p2_c_verbatim_line: "pkg/primitive/hao_encoder/hao_encoder.go:19:2: import '...pkg/infrastructure' is not allowed from list 'fence-a': Fence-A: primitive must not import infrastructure layer (depguard)"
+p2_c_revert_exit: 0
+p2_c_git_status_clean: true (never staged, never committed)
+p2_c_sister_primitive_nonleak: nuclear_hexagram golangci-lint exit 0 (allowlist correct)
+p2_c_fence_false_green_cross_check: PASS (verbose: config loaded, depguard active [1 linter], loader 332ms real files)
+
+p2_d_freeze_sha: 696572b3b573e2551e910b3c96018d34a359c57d (ONLY commit on .golangci.yml)
+p2_d_tag_sha: 90dcc68af3848da9bf40504a17defe878146f03e (kinh-dich-pre-ci-go)
+p2_d_tag_ancestor_exit: 0 (IS ancestor of HEAD)
+p2_d_ts_era_intact: kinh-dich-pre-ci = 2d245200 (unchanged)
+p2_d_no_post_anchor_tampering: true
+
+g4_evidence_complete: YES
+g4_ready_to_grade: YES
+g4_goal_status: EARNED-PENDING (PO flips at Phase-3 terminal)
+ssot_not_mutated: pilot-status-kinh-dich.json not touched
+goal_flips: NONE (Charter §4.5 honored)
+```
+
+| Check | Verdict |
+|-------|---------|
+| P2-C: fence fires on hao_encoder (different file) | PASS |
+| P2-C: fence-a + Fence-A desc in output | PASS |
+| P2-C: file:line named | PASS |
+| P2-C: revert exit 0 | PASS |
+| P2-C: git clean (never staged) | PASS |
+| P2-C: nuclear_hexagram exit 0 (non-leak) | PASS |
+| P2-C: fence-false-green cross-check | PASS |
+| P2-D: freeze single commit | PASS |
+| P2-D: tag ancestor exit 0 | PASS |
+| P2-D: TS tag intact | PASS |
+
+**NEXT:** dev-kinh-dich — P2-E (kinh-dich-pre-delete-go tag) → P2-F → P2-G → P2-H
+
+---
+
 ## c283 cycle-84 · 2026-05-24 · api-gateway SCALE pilot — Consolidated End-State Verification
 
 **Task:** Final QA verification pass for api-gateway SCALE pilot before PO terminal close | **Verdict:** READY-FOR-PO-CLOSE (G1–G8, G10, G11, G12 PASS; G9 pending PO; G4 pre-ci tag gap noted as non-blocking)
