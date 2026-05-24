@@ -422,5 +422,37 @@ Security Clause: viewer code has zero references to `sandbox/runner.py`. `inspec
 
 ---
 
+## [PO] PI-EXIT Sign-off — 2026-05-24T17:47Z
+
+**Verdict: RATIFIED — Sprint PDF-INSPECT DONE + CLOSED.**
+
+### User acceptance condition — MET
+"Select a PDF from a list → original PDF LEFT, extracted text RIGHT, side-by-side, to view and compare."
+QA verified under the user's REAL served path (L9, Playwright headless against `http://localhost:15001/inspect` = the actual served route shape, NOT a bespoke test server): `#doc-select` lists docs → select `DOC_FULL` → LEFT `<canvas>` PDF render via pdf.js CDN, RIGHT confidence pills + `text_content` + `Tables(1)` with the VNM `net_profit / 0.000051` decimal-shift bug visible beside the rendered page. That last point IS the literal user goal — spot a bad extraction by eye. Condition genuinely met, not merely asserted.
+
+### PI-3 ACs — all PASS (ratified against QA Review Record + signal `qa-pdf-inspect-pi3-done-20260524T200000Z.json`)
+- AC-1 served-URL acceptance (L9): PASS — list→select→PDF-left/text-right; 4 REST checks 200/correct content-type.
+- AC-2 honest-degrade: PASS — DOC_NO_PDF amber "PDF not available", DOC_NO_EXT "Extraction not available", unknown-UUID 404s; no fabricated content.
+- AC-3 regression+fences: PASS — 186 pytest, Fence-A/B KEPT, frozen-file diffs EMPTY, `pilot-status-pdf-extractor.json` EMPTY in diff.
+- AC-4 path-traversal/safety: PASS — non-UUID→400, traversal→404 (never 500/leak), `_is_valid_uuid()` guard confirmed, Security-Clause sandbox clean of credentials.
+
+### Commit-chain integrity (PO independent check)
+- PI-1 design + PI-2 impl: `4651c080` (8 files, all `apps/pdf-extractor/`).
+- PI-3 acceptance: `0d10f310` (4 files: test + qa notebook + handoff append + signal) — `git show --stat` zero foreign files.
+- Deliverable files spot-confirmed on disk: `interface/viewer.html` (17KB), `infrastructure/inspection_store.py` (11.6KB), `interface/handlers.py` carries 4 `/inspect*` routes + SI-2 boundary comment, `__tests__/integration/test_pi3_served_url_acceptance.py` (11.8KB).
+
+### Classification + freeze held
+POST-PILOT NEW SURFACE. pdf-extractor SCALE pilot stays DONE 12/12 (verdict=scale) and FROZEN. `pilot-status-pdf-extractor.json` NOT edited. Sandbox trace dashboard surface (`dashboard/index.html`, `traces.js`, `trust-contract.spec.js`, sandbox runner) untouched — this `/inspect` viewer is a distinct served surface (SI-2 boundary honored).
+
+### Deployment note (surfaced to user)
+This is a SERVED surface, NOT a double-click `file://` page. To use it: the pdf-extractor service must be running, then open `http://localhost:5001/inspect`. The new `/inspect*` routes ship inside the code committed at `4651c080`; if the currently-running container predates that commit, a `docker compose up -d --build pdf-extractor` is required for the routes to go live — ops should be dispatched to deploy (do not ask the user to run it). On the next clean `docker compose up` the routes are live automatically.
+
+### Signal
+`docs/signals/po-20260524T174710Z.json` (payload: PDF-INSPECT PI-EXIT signoff).
+
+**PIPELINE: complete.**
+
+---
+
 ## Commit discipline (every committer)
 Explicit `git add <path>` per file; never `-A`/`.`. No `--force`/`--no-verify`/`--no-gpg-sign`. No `git push`. After commit, `git show --stat HEAD` MUST show only your files (heavy fleet commit-race active — if a foreign file appears, you conflated a commit; do NOT rewrite history, re-stage your own and re-commit). Commit-mutex enum defect known: claim key under `sprint-task` kind if mutex needed (per notebook carry-over).

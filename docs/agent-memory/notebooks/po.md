@@ -1,32 +1,30 @@
 # PO Notebook
 
-**Cycle:** KD-QREF-EXIT — final PO sign-off on the kinh-dich 64-Quẻ trading-reference dashboard enhancement.
-**Last update:** 2026-05-24T17:39:47Z
-**Status:** KD-QREF CLOSED (DoD met). Commit manifest handed to main terminal. PDF-INSPECT chain still WIP=1 (carry-over).
+**Cycle:** PI-EXIT — final PO sign-off on Sprint PDF-INSPECT (served side-by-side PDF/extraction inspector).
+**Last update:** 2026-05-24T17:47:10Z
+**Status:** PDF-INSPECT CLOSED (RATIFIED). PILOT frozen 12/12 untouched. Pipeline complete.
 
 ---
 
-## 2026-05-24T17:39Z — KD-QREF-EXIT: SIGNED OFF
+## 2026-05-24T17:47Z — PI-EXIT: RATIFIED, Sprint PDF-INSPECT DONE + CLOSED
 
-Chain complete: po(scope)→architect(design)→dev-kinh-dich(implement)→qa(APPROVED)→po(EXIT). I validated the deliverable vs the decision doc (`2026-05-24-kinh-dich-que-reference-dashboard.md`) + spec ACs, not just the QA word.
+Chain: po(scope)→architect(PI-1 design)→dev-pdf-extractor(PI-2 impl)→qa(PI-3 PASS)→po(PI-EXIT). I validated against the USER acceptance condition + PI-3 ACs, not just the QA word.
 
-DoD MET — all 4 decision-doc clauses + 5 dev/qa ACs + 8 QA checks PASS:
-- A1 bilingual EN-primary, VN name/glyph verbatim, trend label bilingual → PASS.
-- A2 one fixed shape ×64 (summary row + detail w/ 6-phase) → PASS.
-- A3 Go SSOT `hexagram_reference.go` → emitted `que-reference.js` (generated/DO-NOT-EDIT), never hand-typed HTML; shape future-proof for `/hexagram/{n}/explain` → PASS.
-- A4 additive panel, honest-green: dash-check.mjs exit-0, 17 green / 0 red / 0 JS errors; 3 trust panels + sandbox-traces.js + modal + edit-rerun FROZEN → PASS.
+USER ACCEPTANCE MET: select PDF → LEFT rendered original + RIGHT extracted text/tables/confidence, side-by-side, under the REAL served URL (Playwright headless `:15001/inspect` = actual route shape, L9). The VNM `net_profit 0.000051` decimal-shift bug shows beside the rendered page — the literal user goal (spot bad extraction by eye). Honest-degrade fires (amber PDF/ext-missing, 404s, UUID-400, traversal rejected).
 
-PO spot-confirm (in-tree, pre-commit): hexagram_reference.go (55KB, ??), que-reference.js (108KB, ??, 64 `"id":`, header present). cmd/sandbox/main.go + index.html = M. hexagram_data.go NOT in git status → scoring SSOT stayed frozen. Trend-trap (11/14/34/50 "THUAN LOI —…") HasPrefix→favorable, correct.
+PO INDEPENDENT CHECK (disk + git, pre-trust): viewer.html(17KB), inspection_store.py(11.6KB), handlers.py has 4 `/inspect*` routes + SI-2 comment, PI-3 test(11.8KB). QA commit `0d10f310` = 4 own files, zero foreign. PI-1/PI-2 = `4651c080`, 8 files all apps/pdf-extractor/. 186 pytest, Fence-A/B KEPT.
 
-CLASSIFICATION HELD: POST-PILOT ENHANCEMENT. pilot-status-kinh-dich.json NOT edited; pilot stays DONE 12/12 frozen. Traced via TASKS.md + handoff + decision doc only — never the pilot goal ledger.
+CLASSIFICATION HELD: POST-PILOT NEW SURFACE. pilot-status-pdf-extractor.json NOT edited; SCALE pilot stays DONE 12/12 frozen. Sandbox dashboard surface (index.html/traces.js/trust-contract.spec.js/runner) untouched — distinct surface, SI-2 honored. (One stray untracked artifact `dashboard/trust-contract-result.json` = test-run output, NOT a frozen-source mod, left alone — not my zone.)
 
-COMMIT: left in-tree; MAIN TERMINAL commits (commit-mutex enum defect — dev agents can't acquire). Manifest = the 4 deliverable files + dev-kinh-dich/qa notebooks + TASK_KD-QREF.md + TASKS.md + po notebook. NOTE: architect notebook NOT modified this chain (git status clean) → exclude from manifest despite handoff listing it. Single conventional commit, scope kinh-dich/dashboard.
+DEPLOY (surfaced to user): SERVED surface, NOT file:// double-click. URL `http://localhost:5001/inspect`. Routes live on next `docker compose up`; if running container predates 4651c080 → `docker compose up -d --build pdf-extractor` (dispatch OPS, never ask user).
 
-OUTPUTS: TASK_KD-QREF.md `[PO]` sign-off section; TASKS.md KD-QREF rows → DONE + CLOSED note; this notebook.
+LESSON recorded (carry-over): served-viewer = correct model when data lives in a Docker named volume — the deliberate counterpoint to the file:// sandbox dashboard. L9 (verify-under-real-served-path) was baked into the QA gate from PI-1, not bolted on; that's why acceptance was provable, not asserted.
+
+OUTPUTS: TASK_PDF-INSPECT.md `[PO]` sign-off section; TASKS.md PI-* rows → DONE + sprint DONE+CLOSED; SPRINT_GOAL.md → DONE+CLOSED; signal `po-20260524T174710Z.json`; this notebook. Commit left to main terminal (commit-mutex enum defect — claim under 'sprint-task' kind if needed; re-commit never rewrite under fleet race).
 
 ## Carry-over
-- KD-QREF: CLOSED. Pilot frozen 12/12. Main terminal commits in-tree work, then KD-QREF chain fully done.
-- PDF-INSPECT (concurrent): WIP=1 sequential, zone apps/pdf-extractor/. Architect must resolve doc-id→PDF-file mapping. QA gate = L9 served-URL-in-browser. Sandbox + pilot-status frozen.
-- news-fetch NF-LD (concurrent): served-read-route + new-panel pattern (PDF-INSPECT precedent). pilot-status-news-fetch frozen 12/12; endpoint SELECT-only.
-- rag-service (concurrent cron): REOPENED 10/12 @b43c3d97; dev-rag-service P3-A first; G9 needs USER verbal.
-- LESSON (fleet): notebook + git index shared across crons — tight one-shot stage+commit; race may steal slot, re-commit (never rewrite). commit-mutex enum defect: claim under 'sprint-task' kind. Sign-off pattern for in-tree work: VERIFY files on disk (ls + git status + grep count) before trusting the upstream APPROVED.
+- PDF-INSPECT: CLOSED RATIFIED. Pilot frozen 12/12. OPS may need `docker compose up -d --build pdf-extractor` for /inspect routes to go live (container predating 4651c080).
+- PATTERN (reuse): Docker-volume data → SERVE it (FastAPI read routes + pdf.js CDN render); file:// only when data is co-located with the page. NF-LD (news-fetch) followed same served-read-route precedent.
+- LESSON (fleet): sign-off discipline = VERIFY files on disk (ls + git status + grep route count) + `git show --stat <commit>` zero-foreign BEFORE trusting upstream APPROVED. Held this cycle.
+- commit-mutex enum defect persists: dev agents can't acquire 'commit-mutex' kind → claim under 'sprint-task'. Main terminal commits in-tree PO docs.
+- Concurrent (other crons): rag-service REOPENED 10/12 (P3-A); news-fetch NF-LD served-route; kinh-dich KD-QREF CLOSED.

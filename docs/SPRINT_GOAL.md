@@ -1,6 +1,6 @@
 # Sprint PDF-INSPECT Goal — Side-by-Side PDF / Extracted-Text Inspector
 
-**Status:** OPEN 2026-05-24T17:19Z (PO self-initiated from explicit user feature request, routed via main terminal). **Severity:** MEDIUM (product surface — extraction-quality QA tooling for the human user; no incident). **Owner chain:** architect (PI-1 design) → dev-pdf-extractor (PI-2 served viewer) → qa (PI-3 verify) → PO (PI-EXIT sign-off). **Zone:** `apps/pdf-extractor/` ONLY (single zone; dev-frontend NOT in scope — see § dev-frontend ruling). **WIP:** 1 strictly sequential.
+**Status:** DONE + CLOSED 2026-05-24T17:47Z (PO PI-EXIT sign-off — user acceptance MET under real served URL, L9 honored from PI-1). Opened 2026-05-24T17:19Z (PO self-initiated from explicit user feature request, routed via main terminal). **Severity:** MEDIUM (product surface — extraction-quality QA tooling for the human user; no incident). **Owner chain:** architect (PI-1 design) → dev-pdf-extractor (PI-2 served viewer) → qa (PI-3 verify) → PO (PI-EXIT sign-off). **Zone:** `apps/pdf-extractor/` ONLY (single zone; dev-frontend NOT in scope — see § dev-frontend ruling). **WIP:** 1 strictly sequential.
 
 > POST-PILOT FEATURE. The pdf-extractor SCALE pilot is DONE 12/12 (verdict=scale) and STAYS DONE + frozen. This inspector is a NEW product surface; it does NOT reopen, alter, or touch any pilot goal, `decisionMatrix`, or `pilot-status-pdf-extractor.json` (frozen). The sandbox trace dashboard (`apps/pdf-extractor/dashboard/index.html`) is a SEPARATE surface and is NOT modified by this sprint.
 
