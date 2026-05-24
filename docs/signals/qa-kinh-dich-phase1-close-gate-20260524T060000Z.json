@@ -1,0 +1,75 @@
+{
+  "task_id": "P1-G",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "status": "COMPLETE",
+  "gate_verdict": "CONDITIONAL-GO",
+  "emitted_by": "qa",
+  "emitted_at": "2026-05-24T06:00:00Z",
+
+  "sandbox_all_green": true,
+  "sandbox_verdict": "[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped) — all tiers (QA-independent run)",
+  "sandbox_breakdown": {
+    "primitive_tier": "[sandbox] PASS 12/12 scenarios (0 failed, 0 skipped)",
+    "module_tier": "[sandbox] PASS 2/2 scenarios (0 failed, 0 skipped)",
+    "all_tiers": "[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)"
+  },
+
+  "full_test_suite": "100 pass, 0 fail, 446 expect() calls — bun test exit 0",
+  "tsc": "bun tsc --noEmit exit 0 (zero type errors)",
+  "ddd_scan": "PASS — 0 cross-layer imports in primitive/module/sandbox layers",
+  "security_scan": "PASS — 0 credentials, 0 process.env in sandbox-reachable code",
+
+  "ac_verdicts": {
+    "AC-1": "PASS — sandbox all three tiers: primitive 12/12, module 2/2, all 14/14, exit 0",
+    "AC-2": "honest-RED — dashboard renders 5/6 expected card groups (83% < 90% threshold). reading-scorer 4th primitive absent from window.__PRIMITIVES_DATA__. P1-F did not include dashboard update. Browser-only checks (zero console errors, post-sandbox GREEN) deferred to G9 PO Playwright.",
+    "AC-3": "PASS — G12 streak 6/6 confirmed via completion signals: B1 (G12 DoD #1, R-FENCE recorded), B2 (6/6 green, g12_streak.sandbox_all_green=true), B3 (9/9 green, streak_complete=true), D (11/11 via PM verification), E (11/11 g12_sandbox confirmed), F (14/14 all-tiers AC-6 PASS)",
+    "AC-4": "PASS — docs/handoffs/TASK_P1-KD-B1.md contains §R-FENCE Discovery: .js-suffixed ESM style confirmed, deliberate-violation pair calibrated for Phase 2 G4, status RECORDED",
+    "AC-5": "PASS — 14/14 PASS, 0 failed, 0 skipped, exit 0 (derived from AC-1 QA-independent run)",
+    "AC-6": "PASS (structural) — all 11 embedded scenarios have status=not-run; JS renderPrimitives/renderModules show NOT-RUN badge on cold load; G8 deliberate-break proven in P1-E (signals[5] 1→0 → FAIL, reverted → 11/11 green). Browser live-transition deferred to G9 PO Playwright."
+  },
+
+  "exit_criteria": {
+    "criterion_1_time_to_first_primitive": "PASS (~4 agent-hours — same-day sequential commits P1-A→P1-B1)",
+    "criterion_2_sandbox_all_green": "PASS (14/14 PASS, exit 0, QA-independent run)",
+    "criterion_3_dashboard_render": "FAIL (83% < 90% — reading-scorer missing; 5/6 card groups rendered)",
+    "criterion_4_g12_earned": "PASS (6/6 streak vs required 3/3 — bonus 3 extra streak tasks)"
+  },
+
+  "dashboard_render_pct": 83,
+  "dashboard_render_summary": "5/6 card groups rendered (3 primitive + 1 module + 1 microservice); reading-scorer 4th primitive missing",
+  "dashboard_card_count_actual": 5,
+  "dashboard_card_count_expected": 6,
+
+  "g12_streak": "6/6 CONFIRMED (B1+B2+B3+D+E+F all DoD-gated)",
+  "r_fence_discovery": "RECORDED in docs/handoffs/TASK_P1-KD-B1.md §R-FENCE Discovery",
+
+  "p1f_shipped": true,
+  "p1f_bonus_note": "reading-scorer 4th primitive shipped (43158e5c); G12 streak expanded to 6/6 (vs required 3/3); dashboard update was NOT in P1-F scope",
+
+  "blocking_issue": {
+    "file": "apps/kinh-dich-service/dashboard/index.html",
+    "issue": "reading-scorer 4th primitive absent from window.__PRIMITIVES_DATA__ and panel description. 5/6 card groups = 83% < 90% threshold.",
+    "severity": "CONDITIONAL (not blocking Phase 2 fully — CONDITIONAL-GO permits 1 task/sprint)",
+    "fix": "Add reading-scorer 3 scenarios to __PRIMITIVES_DATA__, update panel description '3 pure TypeScript functions' to '4 pure TypeScript functions'. ~15 min effort.",
+    "owner": "dev-kinh-dich or pm for scheduling"
+  },
+
+  "honest_red_flags": [
+    "AC-2: dashboard 83% < 90% threshold (reading-scorer not in dashboard)",
+    "AC-2 browser-only checks deferred to G9 PO Playwright (zero console errors, live GREEN transition)"
+  ],
+
+  "si2_boundary": "HELD — docs/dashboards/index.html not touched by any kinh-dich Phase 1 task",
+  "ssot_mutated": false,
+  "goal_states_mutated": false,
+  "foreign_pilot_files_touched": false,
+  "production_code_mutated": false,
+
+  "phase1_exit_gate": "CONDITIONAL-GO",
+  "next_phase": "Phase 2 can proceed at 1 task/sprint (CONDITIONAL-GO cap). Recommended: dispatch dashboard fix as P2-X1 (or P1-G1 if PM prefers to close Phase 1 fully before Phase 2).",
+  "next_actor": "po",
+  "next_actor_action": "PO reads close-gate signal, decides Phase 2 dispatch. CONDITIONAL-GO means Phase 2 entry is permitted at 1 task/sprint cap until dashboard fix is resolved.",
+
+  "evidence_file": "docs/handoffs/TASK_P1-KD-G-evidence.md"
+}

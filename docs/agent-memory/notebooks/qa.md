@@ -1,5 +1,44 @@
 # QA — Notebook
 
+## c282 cycle-61 · 2026-05-24 · kinh-dich P1-G Phase 1 close-gate — CONDITIONAL-GO
+
+**Task:** P1-G — Phase 1 Close-Gate Verification (kinh-dich pilot-4) | **Verdict:** CONDITIONAL-GO | **Phase 1:** 3/4 exit criteria met
+
+```
+date: 2026-05-24
+outcome: CONDITIONAL-GO
+type: pilot-task-qa (Phase 1 exit gate — read-only verification + sandbox run, no production code mutation)
+signal: docs/signals/qa-kinh-dich-phase1-close-gate-20260524T060000Z.json
+evidence: docs/handoffs/TASK_P1-KD-G-evidence.md
+```
+
+| AC | Check | Result | Evidence |
+|----|-------|--------|----------|
+| AC-1: sandbox primitive tier | PASS | QA-independent run: 12/12, exit 0 |
+| AC-1: sandbox module tier | PASS | QA-independent run: 2/2, exit 0 |
+| AC-1: sandbox all tiers | PASS | QA-independent run: 14/14, exit 0 — `[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)` |
+| AC-2: dashboard card count | honest-RED | 5/6 groups (83% < 90%). reading-scorer 4th primitive absent from `window.__PRIMITIVES_DATA__`. P1-F did not include dashboard update task. |
+| AC-2: NOT-RUN cold-open (structural) | PASS | 11 `"status": "not-run"` entries in embedded data; JS renderPrimitives/renderModules confirmed |
+| AC-2: zero console errors | deferred | Browser-only — deferred to G9 PO Playwright |
+| AC-2: post-sandbox GREEN | deferred | Browser-only — deferred to G9 PO Playwright |
+| AC-3: G12 streak 6/6 | PASS | B1 (DoD #1) + B2 (6/6) + B3 (9/9, streak_complete=true) + D (11/11 PM-verified) + E (11/11) + F (14/14) — all 6 signals confirmed |
+| AC-4: R-FENCE recorded | PASS | docs/handoffs/TASK_P1-KD-B1.md §R-FENCE Discovery: .js-suffixed ESM, deliberate-violation pair, status RECORDED |
+| AC-5: zero FAIL/SKIP | PASS | 14/14 PASS, 0 failed, 0 skipped (from AC-1 QA run) |
+| AC-6: honesty contract | PASS (structural) | Cold-open NOT-RUN confirmed; G8 deliberate-break in P1-E signals; browser transition deferred to G9 |
+| bun test (full suite) | PASS | 100 pass, 0 fail, 446 expect() calls — exit 0 |
+| bun tsc --noEmit | PASS | exit 0, zero type errors |
+| DDD scan (Fence-A) | PASS | 0 cross-layer imports in primitive/module/sandbox layers |
+| Security scan | PASS | 0 credentials, 0 process.env in sandbox-reachable code |
+| SI-2 boundary | HELD | docs/dashboards/index.html not touched |
+| SSOT untouched | CONFIRMED | docs/data/pilot-status-kinh-dich.json not mutated (read-only) |
+| Goal states untouched | CONFIRMED | No G-goal flips (Charter §4.5) |
+
+**Exit criteria:** Criterion 1 PASS, Criterion 2 PASS, Criterion 3 FAIL (83%<90%), Criterion 4 PASS — 3/4 met → CONDITIONAL-GO
+**Blocking issue:** `apps/kinh-dich-service/dashboard/index.html` — reading-scorer scenarios missing (file:line reference: window.__PRIMITIVES_DATA__ after line 1059; panel desc at line 855). Fix: ~15 min. Severity: CONDITIONAL.
+**NEXT:** po — reads close-gate signal, decides Phase 2 dispatch at CONDITIONAL-GO cap (1 task/sprint until dashboard fix).
+
+---
+
 ## c282 cycle-60 · 2026-05-24 · stock-price P2-G G5b/G5c MCP HTTP audit — PASS
 
 **Task:** P2-G — G5b/G5c MCP Handler HTTP-Port Audit + Zero TODO.*migrat | **Verdict:** PASS | **G5:** g5_ready_to_grade=YES
