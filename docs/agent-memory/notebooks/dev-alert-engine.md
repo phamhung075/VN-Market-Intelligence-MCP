@@ -6,6 +6,23 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-E — alert-engine-pre-delete Tag Created
+
+**Task:** P2-E — create lightweight git tag `alert-engine-pre-delete` at HEAD before G5a `git mv` work.
+
+**Outcome:** All 3 ACs PASS. Tag created, signal emitted, committed.
+
+**AC evidence:**
+- AC-1: PASS — tag points to ccef14fa5745bf58f987c3f2190dceb6360c3bd9 (HEAD = P2-D PM verification commit)
+- AC-2: PASS — `git tag | grep alert-engine-pre-delete` returns `alert-engine-pre-delete`
+- AC-3: PASS — `git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD` exits 0
+
+**Constraints respected:** no --force, no push, no branch, no history rewrite. No code/file changes.
+**Signal:** docs/signals/dev-ae-P2-E-done-20260524T093000Z.json
+**Next:** PM sequences P2-F (git mv domain→_deprecated, G5a)
+
+---
+
 ### 2026-05-24 P2-C — G4 Fence-A Deliberate Violation Proof DONE
 
 **Task:** P2-C — inject Fence-A violation, prove non-zero exit, revert, confirm clean.
