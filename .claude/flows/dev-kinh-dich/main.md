@@ -1,7 +1,7 @@
 # dev-kinh-dich — Main (Pointer)
 
 **Zone:** `apps/kinh-dich-service/`
-**Specialist for:** Hexagram readings, trading signals, I-Ching market logic (TypeScript/Bun — Factory v2 pilot 4)
+**Specialist for:** Hexagram readings, trading signals, I-Ching market logic (Go 1.22 — Factory v2 pilot 4, rebooted TS/Bun → Go 2026-05-24)
 
 Thin pointer — shared flow for all dev-* zone agents:
 
@@ -16,15 +16,15 @@ Substitutions:
 
 ## Language Mode
 
-**TypeScript/Bun is the primary and only mode for kinh-dich.** Language locked Day 0 at charter creation (authority: `docs/signals/po-pilot4-kinh-dich-open-20260523T223738Z.json`). No mid-pilot pivot permitted.
+**Go is the primary and only mode for kinh-dich.** Language pivot ratified 2026-05-24 (user override — authority: `docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md`).
 
 | Signal in task spec | Mode |
 |---|---|
-| Files contain `*.ts`, `*.tsx`, `bun`, `package.json`, `eslint.config.mjs` | **TS/Bun** (only mode — natively TypeScript/Bun per system-map.json `runtime: bun`) |
-| Any other | **TS/Bun** (default — no Go for this service) |
+| Files contain `*.go`, `go.mod`, `cmd/`, `pkg/` | **Go** (only mode — rebooted to Go per system-map.json `runtime: go1.22+cgo`) |
+| Any other | **Go** (default — no TS/Bun for this service post-reboot) |
 
-When task assigned, load the brownfield inventory before touching code:
-→ `docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md` (lazy-load: trigger = ts_task_assigned)
+When task assigned, load the reboot charter before touching code:
+→ `docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-charter.md` (lazy-load: trigger = factory_pilot_task_or_g12_gate_or_depguard_fence)
 
 ---
 
@@ -34,12 +34,12 @@ Run all checks before every commit:
 
 | Check | Command |
 |---|---|
-| Unit tests | `cd apps/kinh-dich-service && bun test` |
-| Type check | `cd apps/kinh-dich-service && bun tsc --noEmit` |
-| Lint / fence | `cd apps/kinh-dich-service && bunx eslint src/ --max-warnings 0` |
-| Scenario JSON validity | `find apps/kinh-dich-service/sandbox -name '*.json' -exec bun -e "JSON.parse(require('fs').readFileSync('{}','utf8'))" \; 2>/dev/null` |
-| Sandbox runner (primitive) | `cd apps/kinh-dich-service && bun run sandbox --tier=primitive --module=kinh-dich --scenario=all` |
-| Sandbox runner (module) | `cd apps/kinh-dich-service && bun run sandbox --tier=module --module=kinh-dich --scenario=all` |
+| Unit tests | `cd apps/kinh-dich-service && go test ./...` |
+| Vet | `cd apps/kinh-dich-service && go vet ./...` |
+| Build | `cd apps/kinh-dich-service && go build ./cmd/...` |
+| Lint / fence | `cd apps/kinh-dich-service && golangci-lint run ./...` |
+| Sandbox runner (primitive) | `cd apps/kinh-dich-service && CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=kinh-dich -scenario=all` |
+| Sandbox runner (module) | `cd apps/kinh-dich-service && CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=kinh-dich -scenario=all` |
 
 ---
 
@@ -51,8 +51,8 @@ Run both tiers before declaring complete:
 
 ```bash
 cd apps/kinh-dich-service
-bun run sandbox --tier=primitive --module=kinh-dich --scenario=all
-bun run sandbox --tier=module --module=kinh-dich --scenario=all
+CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=kinh-dich -scenario=all
+CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=kinh-dich -scenario=all
 ```
 
 Both commands must exit 0 with all scenarios GREEN.
@@ -66,7 +66,7 @@ Evidence requirement: paste the sandbox output (pass/fail summary line) into the
 
 This rule is non-negotiable. It applies to every task cycle in the `kinh-dich` pilot (Phase 0 through Phase 3).
 
-Reference: `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` §G12
+Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G12 (canonical G1–G12)
 
 ---
 
@@ -81,44 +81,37 @@ env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"
 # Must return empty when running inside the sandbox process context
 ```
 
-**kinh-dich-specific:** hexagram logic is pure compute. The sandbox runs the extracted primitives + module against scenario JSON fixtures (`input: { stockCode, scores, markovData }` → `output: KinhDichReading`). No SQLite DB connection, no VPS call, no external API key — the domain function requires only in-memory data.
+**kinh-dich-specific:** hexagram logic is pure compute. The sandbox runs the extracted primitives + module against scenario JSON fixtures (`input: { stockCode, scores, markovData }` → `output: KinhDichReading`). No SQLite DB connection, no VPS call, no external API key — `CGO_ENABLED=0` in sandbox path.
 
 If any credential appears in sandbox env, the task is blocked — it does not pass.
 
-Reference: `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` §Security / Zero-Credentials Clause
+Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §Security / Zero-Credentials Clause
 
 ---
 
-## R-FENCE Gate (ESLint boundaries — G4 pre-check before every commit to TS files)
+## Depguard Fence Gate (golangci-lint — G4 pre-check before every commit to Go files)
 
-**Context:** kinh-dich is the first TS/Bun service in the fleet to exercise `eslint-plugin-boundaries` (SI-3 Option A). The fence tool is `eslint-plugin-boundaries` ONLY — no Option C (documented-weaker) fallback permitted.
+**Context:** kinh-dich Go reboot uses `depguard` via golangci-lint for architectural boundary enforcement (same tool as stock-price pilot 3).
 
-Three architectural fences must hold on every commit touching TS files in `apps/kinh-dich-service/`:
+Three architectural fences must hold on every commit touching Go files in `apps/kinh-dich-service/`:
 
-- **Fence-A:** `src/primitive/**` MUST NOT import anything from `src/module/`, `src/application/`, `src/interface/`, or `src/infrastructure/`. Primitives are **stdlib + domain only**.
-  - ESLint error label: `"Fence-A: primitive must not import ${dependency.type} layer"`
+- **Fence-A:** `pkg/primitive/**` MUST NOT import anything from `pkg/module/`, `pkg/application/`, `pkg/interface/`, or `pkg/infrastructure/`. Primitives are **stdlib + domain only**.
 
-- **Fence-B:** `src/module/**` MUST NOT import anything from `src/application/`, `src/interface/`, or `src/infrastructure/`. Module composes via ports (interfaces) only.
-  - ESLint error label: `"Fence-B: module must not import ${dependency.type} layer"`
+- **Fence-B:** `pkg/module/**` MUST NOT import anything from `pkg/application/`, `pkg/interface/`, or `pkg/infrastructure/`. Module composes via ports (Go interfaces) only.
 
-- **Fence-C:** `src/infrastructure/**` may only be imported from `src/index.ts` (composition root). All other files are barred.
-  - ESLint error label: `"Fence-C: infrastructure wiring only allowed in src/index.ts (composition root)"`
+- **Fence-C:** `pkg/infrastructure/**` may only be imported from `cmd/server/main.go` (composition root). All other files are barred.
 
-**Fence check command (run before every TS commit):**
+**Fence check command (run before every Go commit):**
 
 ```bash
 cd apps/kinh-dich-service
-bunx eslint src/ --max-warnings 0
+golangci-lint run ./...
 # Exit 0 = CLEAR. Exit != 0 = FENCE VIOLATION — fix before committing.
 ```
 
-**Fence config location:** `apps/kinh-dich-service/eslint.config.mjs` (authored at G4 and frozen; full template in charter §G4).
+**Fence config location:** `apps/kinh-dich-service/.golangci.yml` (authored at G4; spec in reboot charter §G4 delta).
 
-**R-2 fallback (SI-3 §6.2 — activate ONLY if AC-4b proof fails):** if `.js`-suffixed ESM imports are not matched by `eslint-plugin-boundaries` element patterns, add `@typescript-eslint/parser` to devDependencies and `languageOptions: { parser: tsParser }` to `eslint.config.mjs`. This is the 5-minute Option-A internal fallback. NEVER drop to Option C.
-
-**When to use the R-FENCE lazy-load gate (Phase 1 G4 task):** when a G4-related task lands, focus on the deliberate-violation proof structure (AC-4b). Full fence config template is baked in charter §G4 — do NOT download or fetch it. Reference charter verbatim.
-
-Reference: `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` §G4 + §R-FENCE Boundary Clause; `docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md` (FINAL, chosen_option=A)
+Reference: `docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-charter.md` §Depguard fence delta; `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4
 
 ---
 
@@ -136,7 +129,7 @@ Create with: `git tag kinh-dich-pre-<name> HEAD` — NO `--force`, NO push. No r
 
 **Note:** Do NOT create these tags during Phase 0 or Phase 1 work. Tags are placed at the commit IMMEDIATELY BEFORE the mutation/violation/injection step in their respective Phase 2 tasks.
 
-Reference: `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` §L5 + §G4 + §G5 + §G10
+Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4 + §G5 + §G10
 
 ---
 
@@ -144,11 +137,10 @@ Reference: `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.
 
 | Document | Status | Purpose |
 |---|---|---|
-| `docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md` | **Binding** | G1-G12 goals + R-FENCE clause + constraints + security clause + eslint.config.mjs template |
-| `docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md` | **PRIMARY** | Brownfield scan: primitives selected, DDD assessment, R-FENCE feasibility on .js imports |
-| `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md` | **Active** | TS task ledger Phase 1 with per-task AC |
-| `docs/architecture-briefs/2026-05-23-ts-fence-spike/00-design.md` | **Binding** | SI-3 FINAL — Option A (eslint-plugin-boundaries v6.0.2), R-2 fallback spec |
-| `docs/data/pilot-status-kinh-dich.json` | **Live SSOT** | Goal tracking — PO reads/writes; dev-kinh-dich does not write |
+| `docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-charter.md` | **Binding** | Reboot charter (TS→Go 2026-05-24) — service deltas, reboot scope, domain-fidelity constraints, key risks |
+| `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` | **Canonical** | G1–G12 goals (language-agnostic) + security clause + pre-revert tag protocol |
+| `docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md` | **Authority** | User override decision — TS/Bun → Go reboot ratified |
+| `docs/data/pilot-status-kinh-dich.json` | **Live SSOT** | Goal tracking (reopened DONE→ACTIVE for Go reboot) — PO reads/writes; dev-kinh-dich does not write |
 
 ---
 

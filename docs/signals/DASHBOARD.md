@@ -51,7 +51,7 @@ _Updated: 2026-05-24T06:56:57Z (po USER-DIRECTIVE — agent-father signal po-202
 ## agent-father
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| po-20260524T065657Z | 2026-05-24T06:56Z | po | agent-config-change-request | RATIFY kinh-dich TS→Go reboot (user override): flip dev-kinh-dich agent file + reconcile 3 system-map lang entries (kinh-dich + TA-drift + macro-drift) | NEW | docs/signals/po-20260524T065657Z.json |
+| po-20260524T065657Z | 2026-05-24T06:56Z | po | agent-config-change-request | RATIFY kinh-dich TS→Go reboot (user override): flip dev-kinh-dich agent file + reconcile 3 system-map lang entries (kinh-dich + TA-drift + macro-drift) | CLOSED (agent-father 2026-05-24: A dev-kinh-dich flipped Go + flow updated; B1/B2/B3 system-map reconciled kinh-dich+TA+macro all →go/go1.22+cgo) | docs/signals/po-20260524T065657Z.json |
 <!-- 1968c-P01-DISPATCH + 1968c-P02-DISPATCH pruned 2026-05-21T22:21Z po c242 cron-2207Z — both DONE+QA-APPROVED 21:45Z (96a7f1b8 + 508ae0ef). Wave-1 closed. -->
 <!-- af-1967-03-done + af-1967-05-done pruned 2026-05-21T21:21Z po cron-2107Z — both DONE+QA-APPROVED (commit fc1b9eab); rows already READ; signals drained to processed/. -->
 
