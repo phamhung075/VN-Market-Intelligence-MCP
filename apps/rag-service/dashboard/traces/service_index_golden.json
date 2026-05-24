@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scenario": "index_golden",
+  "endpoint": "/index",
+  "actual_status": 200,
+  "expected_status": 200,
+  "actual_response_subset": {
+    "status": "ok",
+    "indexed": 1,
+    "entry_id": "doc-vcb-001"
+  },
+  "expected_response_subset": {
+    "status": "ok",
+    "indexed": 1,
+    "entry_id": "doc-vcb-001"
+  },
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 52
+}

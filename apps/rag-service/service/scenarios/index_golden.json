@@ -1,0 +1,24 @@
+{
+  "_comment": "Service-tier scenario 2: golden /index — accepts a document, returns ok status.",
+  "tier": "service",
+  "scenario": "index_golden",
+  "endpoint": "/index",
+  "method": "POST",
+  "seed_data": [],
+  "request_body": {
+    "id": "doc-vcb-001",
+    "content": "VCB banking sector credit growth 2026",
+    "title": "VCB Credit Update",
+    "summary": "VCB credit growth accelerated in Q1 2026",
+    "tags": ["vcb", "banking", "credit"],
+    "level": "action",
+    "action_code": "VCB"
+  },
+  "pinned_now_iso": "2026-01-15T12:00:00+00:00",
+  "expected_status": 200,
+  "expected_response_subset": {
+    "status": "ok",
+    "indexed": 1,
+    "entry_id": "doc-vcb-001"
+  }
+}

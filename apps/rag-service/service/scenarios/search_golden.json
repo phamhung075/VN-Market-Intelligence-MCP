@@ -1,0 +1,32 @@
+{
+  "_comment": "Service-tier scenario 1: golden /search — pre-seeded store returns ranked result.",
+  "tier": "service",
+  "scenario": "search_golden",
+  "endpoint": "/search",
+  "method": "POST",
+  "seed_data": [
+    {
+      "id": "doc-vnm-001",
+      "content": "VNM dairy company Q3 earnings growth strong",
+      "title": "VNM Q3 Earnings",
+      "summary": "VNM dairy earnings up 12% in Q3",
+      "tags": ["vnm", "dairy", "earnings"],
+      "level": "action",
+      "action_code": "VNM",
+      "vector_key": "vnm_query"
+    }
+  ],
+  "request_body": {
+    "query": "VNM dairy earnings",
+    "limit": 5,
+    "max_distance": 2.0,
+    "decay_half_life_days": 7.0
+  },
+  "pinned_now_iso": "2026-01-15T12:00:00+00:00",
+  "expected_status": 200,
+  "expected_response_subset": {
+    "total": 1,
+    "results_min_count": 1,
+    "first_result_id": "doc-vnm-001"
+  }
+}

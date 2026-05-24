@@ -1,0 +1,15 @@
+{
+  "_comment": "Service-tier scenario 3: edge — empty query string fails Pydantic validation (min_length=1) -> HTTP 422.",
+  "tier": "service",
+  "scenario": "search_empty_query_422",
+  "endpoint": "/search",
+  "method": "POST",
+  "seed_data": [],
+  "request_body": {
+    "query": "",
+    "limit": 5
+  },
+  "pinned_now_iso": "2026-01-15T12:00:00+00:00",
+  "expected_status": 422,
+  "expected_response_subset": {}
+}

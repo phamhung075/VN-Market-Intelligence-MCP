@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scenario": "search_golden",
+  "endpoint": "/search",
+  "actual_status": 200,
+  "expected_status": 200,
+  "actual_response_subset": {
+    "total": 1,
+    "results_min_count": 1,
+    "first_result_id": "doc-vnm-001"
+  },
+  "expected_response_subset": {
+    "total": 1,
+    "results_min_count": 1,
+    "first_result_id": "doc-vnm-001"
+  },
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 32
+}

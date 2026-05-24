@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "scenario": "search_empty_query_422",
+  "endpoint": "/search",
+  "actual_status": 422,
+  "expected_status": 422,
+  "actual_response_subset": {},
+  "expected_response_subset": {},
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 42
+}
