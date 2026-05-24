@@ -1,0 +1,47 @@
+{
+  "signal": "qa-kinh-dich-P2-KD-D-done",
+  "task": "P2-KD-D",
+  "pilot": "kinh-dich-service",
+  "fleet_pilot": 4,
+  "phase": 2,
+  "timestamp": "2026-05-24T00:00:00Z",
+  "verdict": "APPROVED",
+  "ac_results": {
+    "ac_1_freeze_anchor": {
+      "status": "PASS",
+      "most_recent_commit_on_eslint_config": "205aa5cf",
+      "commit_message": "chore(kinh-dich): P2-KD-C — G4 deliberate-violation proof (R-FENCE gate) handoff complete",
+      "note": "No commit has touched eslint.config.mjs after 205aa5cf. Freeze anchor confirmed."
+    },
+    "ac_2_tag_ancestry": {
+      "status": "PASS",
+      "tag": "kinh-dich-pre-ci",
+      "tag_sha": "2d2452004bf1c7347249113347d46929e8460d16",
+      "is_ancestor_of_head": true,
+      "merge_base_sha": "2d2452004bf1c7347249113347d46929e8460d16",
+      "head_sha": "0da9d4e27088d6c22a55e669fff04c85ea8b4ef7"
+    },
+    "ac_3_evidence_summary": {
+      "status": "PASS",
+      "evidence_file": "docs/handoffs/TASK_P2-KD-D-g4-evidence.md",
+      "eslint_freeze_sha": "205aa5cf",
+      "kinh_dich_pre_ci_tag_sha": "2d245200",
+      "ac_4a_eslint_clean_run": "YES",
+      "ac_4b_violation_proof": "YES",
+      "ac_4c_freeze_sha": "205aa5cf",
+      "r_fence_gate": "PASS",
+      "r2_fallback_applied": "YES",
+      "enforcement_caveat_noted": "YES",
+      "g4_ready_to_grade": "YES"
+    }
+  },
+  "enforcement_caveat": "P2-KD-B (267446e6) created eslint.config.mjs but fence had 3 silent bugs; enforcement only genuine as of P2-KD-C (205aa5cf). P2-KD-B DONE status is truthfully preserved. G4 genuinely earned at 205aa5cf.",
+  "scope_respected": {
+    "eslint_config_mjs_not_modified": true,
+    "ssot_not_modified": true,
+    "no_foreign_paths_staged": true,
+    "read_only_audit": true
+  },
+  "next_actor": "pm",
+  "next_action": "verify P2-KD-D (G4 freeze=205aa5cf), then sequence P2-KD-E (create kinh-dich-pre-delete tag)"
+}
