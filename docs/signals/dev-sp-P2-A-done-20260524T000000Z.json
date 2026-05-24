@@ -1,0 +1,27 @@
+{
+  "from": "dev-stock-price",
+  "to": "pm",
+  "type": "task-done",
+  "priority": "high",
+  "createdAt": "2026-05-24T00:00:00Z",
+  "payload": {
+    "pilot": "stock-price",
+    "phase": "2",
+    "task": "P2-A",
+    "tag": "stock-price-pre-ci",
+    "tagged_sha": "db3ca0974311b101b22b33552f80d8d48ffd411d",
+    "anchor_intact": true,
+    "ac_verdicts": {
+      "AC-1": "PASS — tag points to db3ca097 'chore(pm/stock-price): Phase-2 OPEN + P2-A pre-ci tag handoff (14 tasks / 66 ACs, WIP=1)' (current HEAD, ancestor of Phase-2 kickoff)",
+      "AC-2": "PASS — git tag | grep stock-price-pre-ci returns stock-price-pre-ci",
+      "AC-3": "PASS — anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc is still ancestor of HEAD (ancestry-path tail: 'df7d3d7a chore(pm/stock-price): P0-SP-4 anchor commit + SSOT — Phase 0 complete (5/5 deliverables)')"
+    },
+    "git_log_output": "db3ca097 chore(pm/stock-price): Phase-2 OPEN + P2-A pre-ci tag handoff (14 tasks / 66 ACs, WIP=1)",
+    "g12_sandbox_gate": "N/A — this task creates a git tag only; no sandbox-runnable artifacts touched",
+    "no_source_files_modified": true,
+    "no_force_push": true,
+    "no_goal_flipped": true,
+    "next_actor": "pm",
+    "next_action": "record P2-A DONE, dispatch P2-B"
+  }
+}
