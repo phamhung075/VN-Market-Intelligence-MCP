@@ -438,7 +438,7 @@
     "populatedAt": "2026-05-24T22:40:00Z",
     "populatedBy": "po cycle-79 (atomic with G6+G9 NO->YES flips, single commit)",
     "_reset_note": "[po cycle-79] Prior cycle-77 terminal population (verdict=scale) was VOIDED by user pilot-review rejection (cycle-78). This is a NEW valid 12/12 terminal close — the matrix is re-authored atomically with the G6+G9 flips in this single commit (Charter §4.5). Unlike cycle-77, this close rests on a REAL USER verbal G9 sign-off (Path A), not a Playwright auto-proxy.",
-    "populatedInCommit": "[set in close commit — see closureSignal]",
+    "populatedInCommit": "5018729e",
     "criteriaApplication": {
       "speed_derivation": "speed = G10 AND G11 = YES AND YES = YES",
       "trust_derivation": "trust = G9 AND G8 = YES AND YES = YES",
