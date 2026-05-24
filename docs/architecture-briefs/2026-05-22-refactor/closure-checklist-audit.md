@@ -90,6 +90,8 @@ not assert `apps/technical-analysis/scenarios/` as the authoritative path when f
 > "Scenario files reside at `docs/scenarios/technical-analysis/{primitives,module}/`
 >  (30 files: 25 primitive + 5 module). Confirmed at audit 2026-05-23."
 
+> **SUPERSEDED 2026-05-24 (count + command).** This Q3 verdict was correct at audit time (Phase-1 scope: 25 primitive + 5 module = 30). The **service tier (3 scenarios)** landed after this audit, bringing the real total to **33** (`docs/scenarios/technical-analysis/{primitives,module,service}/`). The `cmd/sandbox` CLI has **no** `-module` flag and **no** `-scenario=all` — those forms above never matched the binary; the real signature is `go run ./cmd/sandbox -tier=<primitive|module|service> -scenario=<name-or-path>` (one scenario per run). All-green is now proven via `node dashboard/verify-render.mjs` (strict, asserts 33 dot-green) + `node dashboard/dash-check.mjs` (AI inspector). The closure checklist §1 carries the authoritative, corrected instruction. This audit record is left intact for traceability.
+
 ---
 
 ## Q4 — Fence linter proof completeness: Does TASK_P2-A4.md define "two CI run URLs"?
