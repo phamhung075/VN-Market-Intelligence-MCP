@@ -1,0 +1,40 @@
+{
+  "signal": "qa-pdf-extractor-P2-G5c",
+  "timestamp": "2026-05-24T10:05:57Z",
+  "agent": "qa",
+  "task": "P2-G5c",
+  "pilot": "pdf-extractor",
+  "phase": 2,
+  "gateVerdict": "PASS",
+  "description": "Zero migration-leftover TODO/FIXME/XXX comment grep across apps/pdf-extractor/ and apps/mcp-server/src/ (read-only)",
+  "grep_results": {
+    "trees_scanned": [
+      "apps/pdf-extractor/",
+      "apps/mcp-server/src/"
+    ],
+    "patterns_checked": [
+      "TODO.*migrat",
+      "FIXME.*migrat",
+      "XXX.*migrat",
+      "migrate.*TODO"
+    ],
+    "matches": 0,
+    "detail": {
+      "TODO_migrat_pdf_extractor": { "exit": 1, "matches": 0 },
+      "TODO_migrat_mcp_server": { "exit": 1, "matches": 0 },
+      "FIXME_migrat_pdf_extractor": { "exit": 1, "matches": 0 },
+      "FIXME_migrat_mcp_server": { "exit": 1, "matches": 0 },
+      "XXX_migrat_pdf_extractor": { "exit": 1, "matches": 0 },
+      "XXX_migrat_mcp_server": { "exit": 1, "matches": 0 },
+      "migrate_TODO_pdf_extractor": { "exit": 1, "matches": 0 },
+      "migrate_TODO_mcp_server": { "exit": 1, "matches": 0 }
+    }
+  },
+  "mcp_server_note": "READ-ONLY verification only — mcp-server/src/ is charter G5c scope; no writes performed",
+  "g5_subset_status": {
+    "G5a": "CLEAR (completed by dev-pdf-extractor — pre-delete tag + _deprecated/ move)",
+    "G5c": "CLEAR — this task (zero TODO.*migrat confirmed)",
+    "G5b": "HARD FROZEN — requires architect 1954c-clearance signal + PO freeze-lift before dispatch"
+  },
+  "next": "P2-G5b-clearance (architect — assess 1954c consolidation status)"
+}

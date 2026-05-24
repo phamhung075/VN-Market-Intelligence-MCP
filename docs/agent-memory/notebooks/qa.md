@@ -1,5 +1,45 @@
 # QA — Notebook
 
+## cycle-102 · 2026-05-24 · pdf-extractor P2-G5c — zero TODO.*migrat grep — PASS
+
+**Task:** P2-G5c (zero migration-leftover comment grep) | **Verdict:** PASS
+
+```
+date: 2026-05-24T10:05:57Z
+outcome: PASS — 0 matches across all 8 patterns × 2 trees
+type: pilot-task-qa (G5c freeze-CLEAR verification)
+signal: docs/signals/qa-pdf-extractor-P2-G5c-20260524T100557Z.json
+ssot_not_mutated: true (read-only grep task)
+goal_flips: NONE
+
+grep_results:
+  trees: [apps/pdf-extractor/, apps/mcp-server/src/]
+  patterns: [TODO.*migrat, FIXME.*migrat, XXX.*migrat, migrate.*TODO]
+  all_exits: 1 (no matches)
+  total_matches: 0
+
+g5_subset:
+  G5a: CLEAR (dev task — pre-delete tag + _deprecated/ move)
+  G5c: CLEAR — this cycle (zero migration comments confirmed)
+  G5b: HARD FROZEN — architect 1954c-clearance + PO freeze-lift required before dispatch
+```
+
+| Pattern | Tree | Exit | Matches |
+|---------|------|------|---------|
+| TODO.*migrat | apps/pdf-extractor/ | 1 | 0 |
+| TODO.*migrat | apps/mcp-server/src/ | 1 | 0 |
+| FIXME.*migrat | apps/pdf-extractor/ | 1 | 0 |
+| FIXME.*migrat | apps/mcp-server/src/ | 1 | 0 |
+| XXX.*migrat | apps/pdf-extractor/ | 1 | 0 |
+| XXX.*migrat | apps/mcp-server/src/ | 1 | 0 |
+| migrate.*TODO | apps/pdf-extractor/ | 1 | 0 |
+| migrate.*TODO | apps/mcp-server/src/ | 1 | 0 |
+
+**G5c verdict: PASS. freeze-CLEAR G5 subset: G5a + G5c DONE. G5b remains HARD FROZEN.**
+**NEXT:** architect — P2-G5b-clearance (1954c consolidation status assessment).
+
+---
+
 ## cycle-101 · 2026-05-24 · rag-service P2-J (G10 close) + P2-K1 (G11) — DONE
 
 **Tasks:** P2-J close + P2-K1 2-trial coupling proof | **Verdict:** G10 VERIFIED + G11 PASS
