@@ -1,0 +1,40 @@
+{
+  "from": "qa",
+  "to": "po",
+  "type": "qa-approved",
+  "createdAt": "2026-05-24T20:00:00Z",
+  "payload": {
+    "task": "NF-LD-3",
+    "verdict": "APPROVED",
+    "commits_verified": ["5a91e12f", "45fd7f74"],
+    "security": {
+      "write_verbs_in_handler": 0,
+      "string_concat_into_sql": false,
+      "source_whitelist_validated": true,
+      "limit_clamped_1_50": true,
+      "getDb_call_in_handler": false,
+      "dashboard_creds": 0
+    },
+    "dash_check": {
+      "verdict": "PASS",
+      "panels_rendered": 4,
+      "sandbox_panels": 3,
+      "live_panel_present": true,
+      "live_panel_degrade": true,
+      "live_panel_fake_rows": false,
+      "cards_total": 6,
+      "badge_counts": { "PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0 },
+      "console_errors": 0,
+      "page_errors": 0,
+      "external_network_calls": 0
+    },
+    "sandbox_runner": "16/16 PASS exit 0",
+    "nf_ld_2_tests": "9/9 pass",
+    "full_suite": "9307 pass / 364 fail / 35 skip (9706 total) — 364 pre-existing, 0 NF-LD regressions",
+    "tsc": "exit 0",
+    "ddd": "PASS — 0 domain/infra/app imports in handler",
+    "pilot_status_frozen": "12/12 YES verdict=scale — untouched",
+    "next": "po — NF-LD-EXIT sign-off",
+    "handoff": "docs/handoffs/TASK_NF-LD.md"
+  }
+}

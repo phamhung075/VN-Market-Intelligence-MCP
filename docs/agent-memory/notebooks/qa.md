@@ -1,5 +1,66 @@
 # QA — Notebook
 
+## cycle-106 · 2026-05-24 · NF-LD-3 news-fetch live-data panel — APPROVED
+
+**Task:** NF-LD-3 QA gate (news-fetch live-data inspection view) | **Verdict:** APPROVED
+
+```
+date: 2026-05-24T20:00:00Z
+outcome: APPROVED — all 6 AC groups PASS
+type: feature-qa-gate (follow-on enhancement, news-fetch pilot stays DONE 12/12)
+handoff: docs/handoffs/TASK_NF-LD.md
+signal: docs/signals/qa-news-fetch-livedata-20260524T200000Z.json
+commits_verified: [5a91e12f (NF-LD-2a dev-mcp-server), 45fd7f74 (NF-LD-2b developer)]
+ssot_not_mutated: true (pilot-status-news-fetch.json frozen 12/12 unchanged)
+
+security_clause:
+  write_verbs: 0 (INSERT/UPDATE/DELETE/CREATE/DROP/ALTER — grep exit 1)
+  sql_injection: CLEAN (source whitelist, limit clamped 1-50, single ? placeholder for limit)
+  getDb_in_handler: false (comment only at line 11)
+  dashboard_creds: 0 (VPS_PUSH_API_KEY/x-api-key/Authorization/Bearer — grep exit 1)
+  process_env: 0 in handler + dashboard
+
+dash_check:
+  verdict: PASS
+  panels: 4 (sandbox=3, live=1)
+  cards: 6 (prim=4, mod=1, svc=1)
+  badge_counts: PASS=6 FAIL=0 ERROR=0 NOT-RUN=0
+  live_panel_degrade: true
+  live_panel_fake_rows: false
+  liveErrorVisible: false
+  console_errors: 0 / page_errors: 0 / external_network: 0
+
+sandbox_runner: 16/16 PASS exit 0
+data_js_untouched: true (last commit cd8d0146, pre NF-LD-2)
+
+nf_ld_2_tests: 9/9 PASS (targeted run, 37 expect() calls, 100% line coverage handler)
+full_suite: 9307 pass / 364 fail / 35 skip — 364 pre-existing (BCTC/fixture), 0 NF-LD regressions
+tsc: exit 0
+ddd: PASS (0 domain/infra/app imports in handler — line 5 is comment only)
+pilot_status_frozen: 12/12 YES verdict=scale (confirmed unchanged)
+```
+
+| Check | Verdict |
+|---|---|
+| Security: 0 write verbs | PASS |
+| Security: parameterized SQL | PASS |
+| Security: source whitelist + limit clamp | PASS |
+| Security: 0 creds in dashboard | PASS |
+| dash-check PASS (4 panels, 6 cards) | PASS |
+| sandbox runner 16/16 | PASS |
+| data.js untouched | PASS |
+| file:// degrade: true, fake_rows: false | PASS |
+| NF-LD-2 tests: 9/9 | PASS |
+| full suite: 0 new regressions | PASS |
+| tsc exit 0 | PASS |
+| DDD PASS | PASS |
+| pilot-status 12/12 frozen | PASS |
+
+**Verdict: APPROVED.**
+**NEXT:** po — NF-LD-EXIT sign-off.
+
+---
+
 ## cycle-105 · 2026-05-24 · PDF-INSPECT PI-3 served-URL acceptance — PASS
 
 **Task:** PI-3 (verify side-by-side PDF viewer) | **Verdict:** PASS — APPROVED

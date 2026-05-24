@@ -345,8 +345,92 @@ Commit: `5a91e12f` | AC pass: 11/11 | Tests: 9/9 pass | tsc: exit 0
 - AC-7 PASS: sandbox runner untouched; data.js untouched; 3 sandbox panels PASS in dash-check
 - AC-8 PASS: `grep -n "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer" index.html` → 0 matches
 
-## NF-LD-3 — QA (BLOCKED on NF-LD-2)
-Verify: (1) endpoint SELECT-only/read-only (grep + behavioral — no write verbs); (2) Security Clause intact — sandbox env audit still empty-of-credentials AND sandbox panels still render honest-green via `data.js` under `file://` (G6/G8/G9 NOT regressed); (3) live section degrades honestly under `file://` and renders real rows when served; (4) full smoke green. Emit `docs/signals/qa-news-fetch-livedata-<UTC>.json` + paste evidence here.
+## NF-LD-3 — QA (DONE)
+
+### [QA] Review Record — NF-LD-3 — 2026-05-24
+
+**Verdict: APPROVED**
+
+**Commits verified:** `5a91e12f` (NF-LD-2a, dev-mcp-server) + `45fd7f74` (NF-LD-2b, developer)
+
+#### AC-1 Security Clause — endpoint SELECT-only
+
+- `grep INSERT|UPDATE|DELETE|CREATE|DROP|ALTER newsFetchLiveHandler.ts` → 0 matches
+- SQL is built in `buildSql()` as a static string with `LIKE '%reuters%'` / `LIKE '%bloomberg%'` filter clauses; only `limit` (integer, clamped 1–50) is bound as `?` placeholder via `db.prepare(sql).all(limit)` — no user input concatenated into SQL string
+- `source` param is validated against `VALID_SOURCES = ["reuters","bloomberg","all"]` whitelist before use; invalid → HTTP 400
+- `grep getDb() newsFetchLiveHandler.ts` → line 11 is a comment only; no `getDb()` call, no `new Database`, no `DB_PATH`, no `process.env`
+- `grep VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer index.html` → 0 matches
+- `grep process.env index.html data.js` → 0 matches
+- **PASS**
+
+#### AC-2 Regression — sandbox panels + sandbox runner
+
+- `node apps/news-fetch/dashboard/dash-check.mjs` → verdict: **PASS**
+  - panels_rendered: 4 (sandbox=3, live=1)
+  - cards_total: 6 (primitives=4, module=1, microservice=1)
+  - badge_counts: PASS=6, FAIL=0, ERROR=0, NOT-RUN=0
+  - green_primitive_count: 4
+  - console_errors: 0 / page_errors: 0
+  - external_network_calls: 0
+- `bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all` → 16 PASS, 0 FAIL, 0 ERROR
+- `data.js` last commit: `cd8d0146` (pre NF-LD-2) — confirmed untouched by NF-LD-2 commits
+- **PASS**
+
+#### AC-3 File:// degrade — honest
+
+- dash-check (file:// load): `live_panel_degrade: true`, `live_panel_fake_rows: false`, `liveErrorVisible: false`
+- `window.location.protocol === 'file:'` check fires BEFORE fetch attempt (line 320 of index.html)
+- `#live-state-degrade` visible with actionable message; `#live-data-rows` absent; `#live-state-error` absent
+- 0 external network calls confirmed
+- **PASS**
+
+#### AC-4 Endpoint correctness — bun test
+
+- `bun test src/__tests__/NF-LD-2-news-fetch-live.test.ts` → **9 pass / 0 fail** / 37 expect() calls
+  - (a) source=reuters correct row shape + no _provider field
+  - (b) source=invalid → HTTP 400 + ok:false + "Invalid source" message
+  - (c) empty table → ok:true, count:0, rows:[]
+  - (d) source=bloomberg filters only bloomberg rows
+  - (e) source=all → both providers + _provider hint
+  - (f) limit=999 clamped to 50
+  - (g) no limit → defaults to 20
+  - (h) ORDER BY created_at DESC confirmed
+  - (i) reuters filter excludes bloomberg rows
+- Full suite (mcp-server): 9307 pass / 364 fail / 35 skip (9706 total) — 364 fails are all pre-existing (BCTC/fixture/timing); zero NF-LD-related failures; +9 net new passing tests vs prior baseline (cycle-103: 9306 pass / 356 fail)
+- `bun tsc --noEmit` → exit 0, 0 errors
+- **PASS**
+
+#### AC-5 DDD
+
+- `grep "from.*infrastructure\|from.*application\|from.*domain" newsFetchLiveHandler.ts` → line 5 is a comment only; zero real imports from domain/application/infrastructure layers
+- Handler imports: `node:http` (stdlib) + `bun:sqlite` (type-only `Database`). DB instance injected by `server.ts`, never opened inside handler.
+- **PASS**
+
+#### AC-6 Pilot-status frozen
+
+- `docs/data/pilot-status-news-fetch.json`: goalsEarned=12, verdict=scale, phase=terminal, goals YES=12
+- Neither NF-LD-2 commit touches this file
+- **PASS**
+
+**Summary:**
+| Check | Verdict |
+|---|---|
+| Security: 0 write verbs in handler | PASS |
+| Security: parameterized SQL, no string concat | PASS |
+| Security: source whitelist validated, limit clamped | PASS |
+| Security: no getDb()/DB_PATH/new Database in handler | PASS |
+| Security: 0 creds in dashboard | PASS |
+| Regression: dash-check PASS (4 panels, 6 cards, 6 green, 0 net) | PASS |
+| Regression: sandbox runner 16/16 PASS | PASS |
+| Regression: data.js untouched | PASS |
+| file:// degrade: live_panel_degrade=true, fake_rows=false, no net call | PASS |
+| bun test NF-LD-2: 9/9 PASS | PASS |
+| bun test full suite: 0 new regressions | PASS |
+| tsc: exit 0 | PASS |
+| DDD: 0 domain/infra/app imports in handler | PASS |
+| pilot-status-news-fetch.json: 12/12 frozen | PASS |
+
+**Signal:** `docs/signals/qa-news-fetch-livedata-20260524T200000Z.json`
 
 ## NF-LD-EXIT — PO sign-off (BLOCKED on NF-LD-3)
 PO validates deliverables against the product shape + Security Clause + anti-regression rules, then signs off.
