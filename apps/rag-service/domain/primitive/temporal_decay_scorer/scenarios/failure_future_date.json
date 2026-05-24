@@ -1,0 +1,12 @@
+{
+  "primitive": "temporal_decay_scorer",
+  "input": {
+    "similarity": 0.6,
+    "created_at_iso": "2026-06-01T00:00:00Z",
+    "half_life_days": 7.0,
+    "now_iso": "2026-05-24T00:00:00Z"
+  },
+  "expected_output": {
+    "score": 0.6
+  }
+}

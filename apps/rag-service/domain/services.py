@@ -7,11 +7,8 @@ Domain layer: no imports from infrastructure/ or interface/.
 All services are pure functions or classes with no I/O side effects.
 """
 
-import math
-from datetime import datetime, timezone
-from typing import Optional
-
 from domain.models import SearchResult
+from domain.primitive.temporal_decay_scorer.temporal_decay_scorer import score as _decay_score
 
 
 # ── Temporal Decay ────────────────────────────────────────────────────────
@@ -26,44 +23,17 @@ def compute_recency_score(
     half_life_days: float = DEFAULT_HALF_LIFE_DAYS,
 ) -> float:
     """
-    Compute recency-weighted similarity score.
+    Compatibility shim: delegates to temporal_decay_scorer primitive (P2-B4 extraction).
 
-    Formula:
-        age_hours       = (now - created_at) / 3600
-        half_life_hours = half_life_days * 24
-        decay_factor    = 0.5 ^ (age_hours / half_life_hours)
-        recency_score   = similarity * decay_factor
-
-    A brand-new entry (age=0) scores: recency_score = similarity * 1.0
-    A 7-day-old entry with 7d half-life: recency_score = similarity * 0.5
-    A very old entry: recency_score approaches 0
-
-    Args:
-        similarity:       cosine similarity in [0.0, 1.0] (1.0 = identical)
-        created_at_iso:   ISO 8601 timestamp string
-        half_life_days:   half-life in days (default: 7)
-
-    Returns:
-        recency_score in [0.0, 1.0]
+    Production code and existing tests call this function.
+    The primitive accepts an optional `now` for deterministic scenario injection;
+    this shim uses the production default (now=None -> datetime.now(tz=utc)).
     """
-    try:
-        created_at = datetime.fromisoformat(created_at_iso.replace("Z", "+00:00"))
-        now = datetime.now(tz=timezone.utc)
-        # Ensure both are timezone-aware for comparison
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        age_hours = max(0.0, (now - created_at).total_seconds() / 3600.0)
-    except (ValueError, TypeError):
-        # Invalid date → treat as very old, minimal score
-        age_hours = float("inf")
-
-    half_life_hours = half_life_days * 24.0
-    if half_life_hours <= 0 or not math.isfinite(age_hours):
-        decay_factor = 0.0
-    else:
-        decay_factor = math.pow(0.5, age_hours / half_life_hours)
-
-    return similarity * decay_factor
+    return _decay_score(
+        similarity=similarity,
+        created_at_iso=created_at_iso,
+        half_life_days=half_life_days,
+    )
 
 
 def apply_temporal_decay(
@@ -73,8 +43,9 @@ def apply_temporal_decay(
     """
     Re-rank search results by recency-weighted score.
 
-    Converts L2 distance to similarity (1 / (1 + distance)), applies decay,
-    sets recency_score on each result, then sorts descending (higher = better).
+    Converts L2 distance to similarity (1 / (1 + distance)), applies decay
+    via temporal_decay_scorer primitive, sets recency_score on each result,
+    then sorts descending (higher = better).
 
     Args:
         results:         Raw SearchResult list from vector store
@@ -89,9 +60,9 @@ def apply_temporal_decay(
     ranked = []
     for r in results:
         # Convert L2 distance to similarity in [0, 1]
-        # Using: similarity = 1 / (1 + distance)
         similarity = 1.0 / (1.0 + r.distance)
-        score = compute_recency_score(
+        # Use primitive (now defaults to datetime.now(tz=utc) in production)
+        recency = _decay_score(
             similarity=similarity,
             created_at_iso=r.created_at,
             half_life_days=half_life_days,
@@ -105,7 +76,7 @@ def apply_temporal_decay(
             action_code=r.action_code,
             created_at=r.created_at,
             distance=r.distance,
-            recency_score=score,
+            recency_score=recency,
         ))
 
     return sorted(ranked, key=lambda x: x.recency_score, reverse=True)
