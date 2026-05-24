@@ -1,0 +1,32 @@
+{
+  "signal": "dev-kd-P1-F-done",
+  "task_id": "P1-F",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "status": "DONE",
+  "timestamp": "2026-05-24T05:10:00Z",
+  "emitted_by": "dev-kinh-dich",
+  "next_actor": "qa",
+  "next_task": "P1-G",
+  "commit_sha": "43158e5c",
+  "sandbox_verdict": "[sandbox] PASS 12/12 scenarios (0 failed, 0 skipped)",
+  "sandbox_all_tiers": "[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)",
+  "pre_commit_index_check": "CLEAN",
+  "ac_verdicts": {
+    "AC-1": "PASS — 4 functions exported + constant tables, zero cross-layer imports",
+    "AC-2": "PASS — Fence-A grep: 0 code imports from cross-layer (1 JSDoc comment only)",
+    "AC-3": "PASS — 26 unit tests, exit 0",
+    "AC-4": "PASS — sandbox primitive tier 12/12",
+    "AC-5": "PASS — 3 scenario JSONs created (golden/edge/failure)",
+    "AC-6": "PASS — G12 DoD gate: sandbox all-tiers 14/14"
+  },
+  "files_committed": [
+    "apps/kinh-dich-service/src/primitive/reading-scorer/index.ts",
+    "apps/kinh-dich-service/src/primitive/reading-scorer/index.test.ts",
+    "apps/kinh-dich-service/src/sandbox/runner.ts",
+    "docs/scenarios/kinh-dich/primitives/reading-scorer-golden.json",
+    "docs/scenarios/kinh-dich/primitives/reading-scorer-edge.json",
+    "docs/scenarios/kinh-dich/primitives/reading-scorer-failure.json"
+  ],
+  "notes": "extractAction domain signature is (actionText: string) not (score: number) — preserved domain contract faithfully. Input Validation: Option A (default on unknown). Phase 1 eslint.config.mjs intentionally absent; Fence-A verified via grep."
+}

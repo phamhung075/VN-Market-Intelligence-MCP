@@ -237,3 +237,28 @@ Zone health: P1-D DONE — G6 three-level trust dashboard shipped, all ACs green
 **Commit:** 6fc9b721 (note: included TASK_P2-C.md + qa signal file from prior agent staging — contamination via pre-existing index state; kinh-dich deliverables unaffected)
 
 Zone health: P1-E DONE — G7 edit-rerun handler + zero-creds proof shipped, G12 streak 4/4, P1-F ready | HEALTHY
+
+### 2026-05-24 — P1-F: reading-scorer optional 4th primitive
+
+**Task:** P1-KD-F — extract 4th primitive (reading-scorer): extractOutcomeScore, extractTrendScore, extractAction, majorityVote + OUTCOME_SCORES/TREND_SCORE_MAP constant tables from domain/services.ts L225-L332.
+
+**Files created:**
+- `apps/kinh-dich-service/src/primitive/reading-scorer/index.ts` — 4 exported functions, 2 embedded constant tables, zero cross-layer imports, Input Validation Option A (default on unknown)
+- `apps/kinh-dich-service/src/primitive/reading-scorer/index.test.ts` — 26 test cases covering all 4 functions + edge cases (empty strings, unknown inputs, tie in majority vote)
+- `docs/scenarios/kinh-dich/primitives/reading-scorer-golden.json` — well-known outcome/trend/action inputs with clear majority
+- `docs/scenarios/kinh-dich/primitives/reading-scorer-edge.json` — mixed diacritic/ASCII, tie in majority, unrecognised trend, empty action
+- `docs/scenarios/kinh-dich/primitives/reading-scorer-failure.json` — all-unknown inputs, empty voteInput → all default to safe values (no throw)
+- `docs/signals/dev-kd-P1-F-done-20260524T051000Z.json`
+
+**Files modified:**
+- `apps/kinh-dich-service/src/sandbox/runner.ts` — added reading-scorer import + runReadingScorerScenario executor (validates outcomeScores, trendScores, actions, majorityAction) + dispatch
+
+**AC results:** All 6 PASS. 26 unit tests (reading-scorer), 100/100 full suite pass. tsc clean. Fence-A grep: 0 actual code imports. Sandbox PASS 12/12 (primitive) / 14/14 (all tiers).
+
+**Key findings:**
+- `extractAction` domain signature is `(actionText: string): string` not `(score: number)` as stated in handoff spec. Preserved domain contract faithfully. Documented in JSDoc.
+- Failure scenario iteration 1 used "COMPLETELY_UNKNOWN_OUTCOME_XYZ" which matched "LE" keyword. Fixed to "UNKNOWN_OUTCOME_XYZ_999" which has no keyword overlap.
+- Pre-commit index check: CLEAN (empty before staging).
+- Commit: 43158e5c
+
+Zone health: P1-F DONE — optional 4th primitive shipped, sandbox 12/12 (primitive) / 14/14 (all), G12 streak #5 satisfied | HEALTHY

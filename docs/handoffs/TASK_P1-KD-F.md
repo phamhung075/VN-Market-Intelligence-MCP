@@ -191,23 +191,35 @@ Before writing RETURN block, confirm:
 
 **IF P1-F DISPATCHED:**
 
-Completion date: [YYYY-MM-DDTHH:MM:SSZ]
+Completion date: 2026-05-24T05:10:00Z
 
-Status: DONE / BLOCKED
+Status: DONE
 
-Exit code: 0 / non-zero
+Exit code: 0
 
-Sandbox verdict: [sandbox] PASS 12/12 scenarios
+Sandbox verdict: [sandbox] PASS 12/12 scenarios (0 failed, 0 skipped) — primitive tier
+Full-tier verdict: [sandbox] PASS 14/14 scenarios (0 failed, 0 skipped) — all tiers
 
-Commit SHA: [if applicable]
+Commit SHA: 43158e5c
 
-**IF P1-F DEFERRED (no dispatch in Phase 1):**
+Pre-commit index check: CLEAN — zero foreign files in staged index before commit.
 
-Status: DEFERRED_TO_PHASE_2
+### AC Verdicts
 
-Reason: Phase 1 time exhausted after P1-E completion; PM deferred P1-F to Phase 2 bucket tasks.
+- [x] AC-1: Four functions exported — `extractOutcomeScore`, `extractTrendScore`, `extractAction`, `majorityVote` — with embedded `OUTCOME_SCORES` + `TREND_SCORE_MAP` constant tables. Zero cross-layer imports in `index.ts`.
+- [x] AC-2: Fence-A grep returns only 1 JSDoc comment line (not a code import). Code imports: zero. R-FENCE clean.
+- [x] AC-3: 26 unit tests pass, exit 0. Covers all four functions + edge cases (empty strings, unknown inputs, tie in majority vote, THAN TRONG keyword).
+- [x] AC-4: `--tier=primitive` → `[sandbox] PASS 12/12 scenarios (0 failed, 0 skipped)`. Exit 0.
+- [x] AC-5: Three scenario JSONs created — `reading-scorer-golden.json`, `reading-scorer-edge.json`, `reading-scorer-failure.json` in `docs/scenarios/kinh-dich/primitives/`.
+- [x] AC-6: G12 DoD gate — `[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)` (all tiers) confirmed before RETURN.
 
-Next actor (Phase 1 close gate): qa
+### Notes
+
+- `extractAction` domain signature is `(actionText: string): string` (not `(score: number)` as the handoff spec stated — the domain caller at L443 passes action text strings, not numeric scores). Primitive preserves the faithful domain contract and documents the discrepancy in JSDoc.
+- Input Validation Strategy: Option A (return default, no exceptions thrown for unknown inputs). Documented in primitive JSDoc and failure scenario JSON.
+- ESLint is intentionally absent in Phase 1 (no `eslint.config.mjs`). Fence-A verified via grep (AC-2) as specified.
+
+Next actor: qa (P1-G close-gate verification)
 
 ---
 
