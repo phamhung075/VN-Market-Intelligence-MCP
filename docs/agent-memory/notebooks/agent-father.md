@@ -1,5 +1,32 @@
 # Agent Father — Notebook
 
+## c261 · 2026-05-24
+
+**Task:** Fleet size-cap remediation — STAGE 1 (JUSTIFY) + STAGE 2 pilot splits
+
+**STAGE 1 — JUSTIFY (15 files, zero behaviour change):**
+Inserted `<!-- size-justification: -->` comments in first 8 lines of 15 files:
+ops-mainserver-fetch/main.md (178L), system-auditor.md (160L), pm.md (156L),
+news-scout/stage-signals.md (154L), system-map-query/SKILL.md (150L),
+ops-vps-fetch/main.md (150L), pm/main.md (149L), signal-dashboard/SKILL.md (147L),
+ba.md (147L), dev-frontend/main.md (142L), developer/main.md (141L),
+dev-macro-indicators/main.md (138L), financial-analyst.md (137L),
+microservice-main.md (135L), news-scout.md (133L), market-watcher.md (132L),
+report-analyzer.md (129L).
+Commit: bundled into 179f7cd1 (concurrent git race with alert-engine signal).
+
+**STAGE 2 — SPLIT pilot (2 files):**
+- chef.md (278L→228L): telemetry scaffolding (ENTRY/CLOSE/FAILED/SILENT/try-catch) extracted to chef-telemetry.md (74L). Pointer at 3 call sites in chef.md. Size-justification added to both files.
+- dev-mainserver-crawls/main.md (235L→203L): Step 3b research protocol + code scaffolding extracted to technique-research.md (96L). Sub-flow pointer replaces inline content at 4 locations. Size-justification added to both files.
+Commit: 6becd6b0
+
+**Verification results:**
+- chef.md: pointer confirmed at 3 locations, chef-telemetry.md exists (74L), no dangling ENTRY/CLOSE/FAILED headers remain in parent.
+- dev-mainserver-crawls/main.md: pointer confirmed at 4 locations, technique-research.md exists (96L), no dangling WebSearch/playwright inline content in parent.
+- Both parents still exceed 120L (228L, 203L) — size-justification comments added per brief guidance.
+
+**HELD:** dev-vps-crawls, dev-stock-price, dev-kinh-dich — await pilot verification.
+
 ## c260 · 2026-05-23T23:04Z
 
 **Task:** P0-KD-3 — dev-kinh-dich agent + flow baking (Factory v2 pilot 4)
