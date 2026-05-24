@@ -212,7 +212,7 @@ Trial-1 outcome: outcome-(a) (coupled REDs from G10 injection + single-edit fix)
   - hao-encoder-golden: FAIL (expected LAO_DUONG but got THIEU_DUONG)
   - hao-encoder-edge: FAIL (same state mismatch)
   - reading-composer-golden: [RED|PASS after coupled verification]
-  - Single-edit revert: LAO_DUONG_THRESHOLD corrected → all REDs GREEN
+  - Single-edit revert: [the corrected primitive constant — fill in AFTER you rediscover+fix it; do NOT pre-assume] → all REDs GREEN
 
 Trial-2 outcome: outcome-(a) (different mutation: ngu-hanh-classifier trigram)
   - ngu-hanh-classifier-golden: FAIL (expected [X] but got [Y])
