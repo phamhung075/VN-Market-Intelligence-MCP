@@ -1,0 +1,43 @@
+{
+  "signal": "qa-ae-P2-M-g11-done",
+  "task": "P2-M",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "goals": ["G10", "G11"],
+  "status": "DONE",
+  "g10_cycle_count": 1,
+  "trial_1_outcome": "outcome-(a) PASS",
+  "trial_1_primitive": "dedup-key-builder",
+  "trial_1_mutation": "djb2 seed 5381→5382 (injected in P2-L commit da6c71d3)",
+  "trial_1_failing_scenarios": [
+    "dedup-key-builder-edge.json",
+    "dedup-key-builder-failure.json",
+    "dedup-key-builder-golden.json",
+    "alert-pipeline-golden.json"
+  ],
+  "trial_1_sandbox_before_fix": "total=11 pass=7 fail=4 status=FAIL exit=1",
+  "trial_1_sandbox_after_fix": "total=11 pass=11 fail=0 status=OK exit=0",
+  "trial_2_outcome": "outcome-(a) PASS",
+  "trial_2_primitive": "signal-classifier",
+  "trial_2_file": "apps/alert-engine/pkg/primitive/signal-classifier/classifier.go",
+  "trial_2_mutation": "ChannelMarket TelegramChannel = \"market\" → \"mkt\" (line 29)",
+  "trial_2_failing_scenarios": [
+    "signal-classifier-golden.json",
+    "alert-pipeline-golden.json"
+  ],
+  "trial_2_coupled_module_scenario": "alert-pipeline-golden.json",
+  "trial_2_sandbox_with_mutation": "total=11 pass=9 fail=2 status=FAIL exit=1",
+  "trial_2_sandbox_after_revert": "total=11 pass=11 fail=0 status=OK exit=0",
+  "trial_2_revert_method": "git checkout -- apps/alert-engine/pkg/primitive/signal-classifier/classifier.go",
+  "git_clean_after_revert": true,
+  "g11_verdict": "PASS",
+  "sandbox_all_green": true,
+  "dashboard_all_green": true,
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "ssot_not_mutated": true,
+  "goal_flips": "NONE",
+  "P2_M_overall_verdict": "DONE — G10 + G11 both PASS",
+  "next_actor": "pm",
+  "next_task": "P2-Z (Phase 2 close-gate verification)"
+}

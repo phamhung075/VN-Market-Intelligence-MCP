@@ -1,5 +1,48 @@
 # QA — Notebook
 
+## c282 cycle-77 · 2026-05-24 · alert-engine P2-M — G11 2-trial coupling proof — PASS
+
+**Task:** P2-M — G11 regression alarm coupling proof (2 trials) | **Verdict:** DONE — AC-5 + AC-6 + AC-7 PASS
+
+```
+date: 2026-05-24T10:29:00Z
+outcome: DONE — G10 + G11 both PASS; P2-M complete
+type: pilot-task-qa (coupling proof — Trial-1 retrospective + Trial-2 fresh inject+revert)
+signal: docs/signals/qa-ae-P2-M-g11-done-20260524T102900Z.json
+evidence: docs/handoffs/TASK_P2-M-ae-g10-g11.md §G11 Evidence
+g10_cycle_count: 1 (dev-alert-engine fixed in 1 dispatch cycle — exceeds baseline)
+g11_verdict: PASS
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (CONFIRMED)
+sandbox_baseline_before_trial2: 11/11 PASS exit 0
+trial_2_mutation_reverted: true (git checkout -- classifier.go; git status CLEAN)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD, G10/G11 stay EARNED-PENDING
+goal_flips: NONE (Charter §4.5 honored)
+```
+
+**Trial-1 (retrospective — dedup-key-builder):**
+- Injection: djb2 seed 5381→5382 (P2-L commit da6c71d3)
+- Failing: dedup-key-builder-{edge,failure,golden}.json + alert-pipeline-golden.json (4 FAILs, exit 1)
+- Fix: seed 5382→5381 → all 4 repaired simultaneously, exit 0, 11/11
+- Outcome: outcome-(a) PASS
+
+**Trial-2 (fresh — signal-classifier):**
+- Mutation: ChannelMarket "market" → "mkt" (classifier.go line 29)
+- Failing: signal-classifier-golden.json + alert-pipeline-golden.json (2 FAILs, exit 1)
+- Coupled module scenario: alert-pipeline-golden.json (pipeline.go calls sc.Classify() → channel flows through)
+- Revert: git checkout -- classifier.go → 11/11, exit 0, git status CLEAN
+- Outcome: outcome-(a) PASS
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-5 (Trial-1 coupling proof) | PASS | 4 scenarios FAIL at injection; single seed fix repairs all; 11/11 post-fix |
+| AC-6 (Trial-2 coupling proof — signal-classifier) | PASS | signal-classifier-golden + alert-pipeline-golden FAIL (exit 1); revert → 11/11 (exit 0); git CLEAN |
+| AC-7 (g11_verdict) | PASS | Both trials outcome-(a); g11_verdict=PASS written to signal + handoff |
+
+**P2-M verdict: DONE — G10 + G11 complete. Sandbox 11/11 green. Trial-2 mutation never committed.**
+**NEXT:** pm — mark P2-M DONE, sequence P2-Z (Phase 2 close-gate).
+
+---
+
 ## c282 cycle-76 · 2026-05-24 · alert-engine P2-L — G10 bug injection (pre-inject tag + sealed spec) — DONE
 
 **Task:** P2-L — Create alert-engine-pre-inject tag + inject G10 bug | **Verdict:** DONE — all 4 ACs PASS

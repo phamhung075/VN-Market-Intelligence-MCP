@@ -163,40 +163,48 @@ The regression alarm bell works: mutations in primitives couple to module-level 
 ### G10 Evidence
 
 **Fix Summary:**
-- Broken primitive: [fill in after diagnosis]
-- Broken file: [fill in]
-- Single-literal change: [describe the one-literal fix you applied — fill in after you diagnose]
+- Broken primitive: dedup-key-builder
+- Broken file: apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go
+- Single-literal change: djb2 seed constant 5381→5382 (off-by-one in initial hash seed — the canonical djb2 seed is 5381, the injection changed it to 5382, making all fingerprints diverge from expected golden values)
 
-**Sandbox Output After Fix:**
+**Sandbox Output After Fix (dev-alert-engine blind fix, cycle 1):**
 ```
-[Paste full CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all output here]
+total=11 pass=11 fail=0 status=OK
+EXIT_CODE:0
 ```
+All 11 scenarios PASS. Exit 0.
 
 **Dashboard State Post-Fix:**
-[Describe: all cards GREEN, previously RED card now GREEN, etc.]
+All cards GREEN. Previously RED dedup-key-builder card now GREEN. Previously RED alert-pipeline card now GREEN. cooldown-gate and signal-classifier remain GREEN throughout.
 
 ---
 
 ### G11 Evidence
 
 **Trial-1 Coupling Summary:**
-- Injected bug: dedup-key-builder (single-literal)
-- Failing scenarios at injection: dedup-key-builder-edge.json, dedup-key-builder-failure.json, dedup-key-builder-golden.json (all 3 FAIL)
-- Coupled failure: alert-pipeline-golden.json also FAILED (module scenario exercises broken primitive)
+- Injected bug: dedup-key-builder (single-literal) — djb2 seed 5381→5382 (injected in P2-L commit da6c71d3)
+- Failing scenarios at injection: dedup-key-builder-edge.json, dedup-key-builder-failure.json, dedup-key-builder-golden.json (all 3 FAIL) + alert-pipeline-golden.json (coupled module scenario FAIL)
+- Sandbox at injection: total=11 pass=7 fail=4 status=FAIL exit 1
+- Coupled failure: alert-pipeline-golden.json FAILED because alert_pipeline module calls sc.Classify() which exercises dkb.BuildKey() → wrong fingerprint returned → golden "fingerprint":"8f0ff63e" mismatch
+- Single-edit fix (seed 5382→5381): all 4 FAILs repaired simultaneously
+- Sandbox post-fix: total=11 pass=11 fail=0 status=OK exit 0
 - Trial-1 outcome: **outcome-(a) PASS**
-  - Single-edit fix (reverting injected literal) repaired all 4 FAILs
-  - Sandbox post-fix: all 11 scenarios PASS
 
-**Trial-2 Coupling Summary:**
-- Injected mutation: [different primitive, e.g., signal-classifier or cooldown-gate] (single-literal, QA choice)
-- Failing scenarios at mutation: [primitive]-golden.json + alert-pipeline-golden.json (coupling detected)
+**Trial-2 Coupling Summary (QA-executed 2026-05-24T10:28Z):**
+- Primitive mutated: signal-classifier (different from Trial-1 target dedup-key-builder)
+- File: apps/alert-engine/pkg/primitive/signal-classifier/classifier.go
+- Single-literal mutation: ChannelMarket TelegramChannel = "market" → "mkt" (line 29)
+- Sandbox with mutation: total=11 pass=9 fail=2 status=FAIL exit 1
+  - signal-classifier-golden.json FAIL: Channel="mkt" want="market" (primitive scenario)
+  - alert-pipeline-golden.json FAIL: Channel="mkt" want="market" (module scenario — COUPLED, because pipeline.go line 55 calls sc.Classify() → channel flows through to Result.Channel)
+- Revert: git checkout -- apps/alert-engine/pkg/primitive/signal-classifier/classifier.go
+- Sandbox post-revert: total=11 pass=11 fail=0 status=OK exit 0
+- git status classifier.go: CLEAN (zero uncommitted changes)
 - Trial-2 outcome: **outcome-(a) PASS**
-  - Single-edit fix repaired all coupled failures
-  - Sandbox post-fix: all 11 scenarios PASS
 
 **G11 Verdict:** PASS
 
-**Cycle Count:** [QA fills: 1, 2, or >2]
+**Cycle Count:** 1 (dev-alert-engine diagnosed and fixed in 1 dispatch cycle — exceeds baseline, very good)
 
 ---
 
