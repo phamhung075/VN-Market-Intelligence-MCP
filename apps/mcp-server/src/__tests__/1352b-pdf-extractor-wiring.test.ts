@@ -210,10 +210,19 @@ describe("Task 1352b — Suite B: extractViaMicroservice", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite C — downloadAndExtractPdf with microservice fallback port
+// Suite C — downloadAndExtractPdf with service-first inversion (1954c G5b)
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// NEW pipeline order (service-first):
+//   1. Call microservice FIRST. On success → return service result.
+//   2. If service returns null/throws → fall back to pdf-parse (http download).
+//
+// NOTE: C1 behavior has changed: previously pdf-parse ran first and service was
+// only called for low confidence. Now service is always primary. C1 now verifies
+// that when service succeeds, its result is returned (regardless of pdf-parse).
+//
 
-describe("Task 1352b — Suite C: downloadAndExtractPdf microservice fallback", () => {
+describe("Task 1352b — Suite C: downloadAndExtractPdf service-first (1954c)", () => {
   /**
    * Mock HttpClient that returns a binary string representing the given buffer.
    */
@@ -223,55 +232,16 @@ describe("Task 1352b — Suite C: downloadAndExtractPdf microservice fallback", 
     };
   }
 
-  it("C1: pdf-parse high confidence → no microservice call, extraction_method absent or 'pdf-parse'", async () => {
-    // pdf-parse returns > PDF_CONFIDENCE_HIGH_THRESHOLD chars → confidence=1.0
-    const pdfBuf = Buffer.alloc(0); // will be overridden by mock pdfParse
-    let microserviceCalled = false;
-
-    const mockMicroserviceClient: PdfMicroserviceClient = {
-      extract: async (_url, _sourceType) => {
-        microserviceCalled = true;
-        return mockExtractorResult(true);
+  it("C1: service succeeds → returns service result, pdf-parse NOT called", async () => {
+    // Service-first: when the microservice succeeds, its result is returned
+    // immediately without triggering an HTTP download or pdf-parse.
+    let httpClientCalled = false;
+    const httpClient = {
+      get: async (_url: string) => {
+        httpClientCalled = true;
+        return Buffer.from("fake-pdf").toString("binary");
       },
     };
-
-    // We need pdf-parse to return high-confidence text. Mock via bun:test mock.module
-    // For simplicity, inject text via a mock HttpClient that returns a buffer
-    // that yields high-confidence text when pdf-parse runs.
-    // Use a real large text buffer approach: we rely on our extractPdfText mock path.
-    // Since we can't easily inject pdf-parse, we use pdfTextOverride concept at the
-    // downloadAndExtractPdf level via an injected extractor function.
-    // This test verifies the port is NOT called when confidence >= threshold.
-
-    // Use a real high-confidence extraction by providing a mock httpClient
-    // that returns a buffer that pdf-parse will decode. pdf-parse needs a
-    // valid PDF - we mock the module instead.
-    mock.module("pdf-parse", () => ({
-      default: async (_buf: Buffer) => ({
-        text: "A".repeat(PDF_CONFIDENCE_HIGH_THRESHOLD + 50),
-        numpages: 1,
-      }),
-    }));
-
-    const httpClient = makeHttpClientReturning(Buffer.from("fake-pdf"));
-
-    const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
-
-    expect(result.confidence).toBe(1.0);
-    expect(microserviceCalled).toBe(false);
-    // High confidence → no microservice call → extraction_method must be absent
-    expect(result.extraction_method).toBeUndefined();
-  });
-
-  it("C2: pdf-parse low confidence + microservice success with tables → extraction_method='pybctc_tables'", async () => {
-    mock.module("pdf-parse", () => ({
-      default: async (_buf: Buffer) => ({
-        text: "tiny",
-        numpages: 1,
-      }),
-    }));
-
-    const httpClient = makeHttpClientReturning(Buffer.from("fake-pdf"));
     const microResult = mockExtractorResult(true);
 
     const mockMicroserviceClient: PdfMicroserviceClient = {
@@ -280,33 +250,15 @@ describe("Task 1352b — Suite C: downloadAndExtractPdf microservice fallback", 
 
     const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
 
+    // Service result returned
     expect(result.extraction_method).toBe("pybctc_tables");
     expect(result.confidence).toBe(microResult.ocrConfidence);
     expect(result.text).toBe(microResult.textContent);
+    // HTTP download NOT triggered (service is primary)
+    expect(httpClientCalled).toBe(false);
   });
 
-  it("C3: pdf-parse low confidence + microservice success text-only (no tables) → extraction_method='pybctc_text'", async () => {
-    mock.module("pdf-parse", () => ({
-      default: async (_buf: Buffer) => ({
-        text: "small",
-        numpages: 1,
-      }),
-    }));
-
-    const httpClient = makeHttpClientReturning(Buffer.from("fake-pdf"));
-    const microResult = mockExtractorResult(false); // no tables
-
-    const mockMicroserviceClient: PdfMicroserviceClient = {
-      extract: async (_url, _sourceType) => microResult,
-    };
-
-    const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
-
-    expect(result.extraction_method).toBe("pybctc_text");
-    expect(result.text).toBe(microResult.textContent);
-  });
-
-  it("C4: pdf-parse low confidence + microservice returns null → original pdf-parse result returned", async () => {
+  it("C2: service returns null → falls back to pdf-parse, extraction_method absent", async () => {
     mock.module("pdf-parse", () => ({
       default: async (_buf: Buffer) => ({
         text: "sparse",
@@ -322,9 +274,52 @@ describe("Task 1352b — Suite C: downloadAndExtractPdf microservice fallback", 
 
     const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
 
-    // Should fall back to pdf-parse result (confidence=0.3 for "sparse" which is < threshold)
+    // pdf-parse fallback result (confidence=0.3 for "sparse")
     expect(result.confidence).toBe(0.3);
     expect(result.text).toBe("sparse");
+    expect(result.extraction_method).toBeUndefined();
+  });
+
+  it("C3: service success text-only (no tables) → extraction_method='pybctc_text'", async () => {
+    const httpClient = makeHttpClientReturning(Buffer.from("fake-pdf"));
+    const microResult = mockExtractorResult(false); // no tables
+
+    const mockMicroserviceClient: PdfMicroserviceClient = {
+      extract: async (_url, _sourceType) => microResult,
+    };
+
+    const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
+
+    expect(result.extraction_method).toBe("pybctc_text");
+    expect(result.text).toBe(microResult.textContent);
+  });
+
+  it("C4: service status='failed' → treated as null, falls back to pdf-parse", async () => {
+    mock.module("pdf-parse", () => ({
+      default: async (_buf: Buffer) => ({
+        text: "fallback text",
+        numpages: 1,
+      }),
+    }));
+
+    const httpClient = makeHttpClientReturning(Buffer.from("fake-pdf"));
+
+    const failedResult: PdfExtractorResult = {
+      documentId: "doc-fail",
+      tables: [],
+      textContent: "",
+      ocrConfidence: 0,
+      status: "failed",
+    };
+
+    const mockMicroserviceClient: PdfMicroserviceClient = {
+      extract: async (_url, _sourceType) => failedResult,
+    };
+
+    const result = await downloadAndExtractPdf("https://example.com/r.pdf", httpClient, undefined, mockMicroserviceClient);
+
+    // status='failed' → treated as null → pdf-parse fallback
+    expect(result.confidence).toBe(0.3);
     expect(result.extraction_method).toBeUndefined();
   });
 });

@@ -95,6 +95,11 @@ export interface PdfMicroserviceClient {
  * Task 292 / FR-2: DPI raised from 150 to 200 for better OCR accuracy
  * on dense Vietnamese number tables.
  *
+ * @deprecated 1954c (G5b) — in-process Tesseract OCR is now owned by the
+ * pdf-extractor microservice (port 5001). This function is kept to avoid
+ * breaking any remaining test imports but is no longer called in production.
+ * Scheduled for removal once all callers have been confirmed migrated.
+ *
  * @param buffer - Raw PDF bytes
  * @param totalPages - Total number of pages in the PDF
  * @returns Extracted text from OCR, or empty string on failure
@@ -298,12 +303,11 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 /**
  * Downloads a PDF from the given URL and extracts its text content.
  *
- * Pipeline:
- *   1. Download via httpClient (default: axios).
- *   2. Extract text via pdf-parse.
- *   3. If confidence < PDF_MICROSERVICE_FALLBACK_THRESHOLD (0.5):
- *      Delegate to pybctc microservice for superior table extraction.
- *      On success stamp extraction_method='pybctc_tables' or 'pybctc_text'.
+ * Pipeline (1954c — service-first inversion):
+ *   1. Attempt extraction via pybctc microservice (port 5001) — PRIMARY path.
+ *      On success: return service result with extraction_method stamped.
+ *   2. If service returns null (unavailable / timeout):
+ *      Download via httpClient (default: axios) + extract via pdf-parse — FALLBACK path.
  *
  * The optional `httpClient` parameter allows tests to inject a mock so no
  * real HTTP requests are made during testing.
@@ -330,6 +334,48 @@ export async function downloadAndExtractPdf(
   logger.debug("[pdf] downloading PDF", { url });
 
   try {
+    // ── Step 1: Service-first extraction (1954c G5b inversion) ───────────────
+    // Try the pybctc microservice FIRST. If it succeeds, return immediately —
+    // no HTTP download or pdf-parse needed.
+    try {
+      const msClient =
+        microserviceClient ?? (await makeDefaultMicroserviceClient());
+      const microResult = await msClient.extract(url, "bctc");
+
+      if (microResult !== null && microResult.status === "success") {
+        const hasTables = microResult.tables.length > 0;
+        const extraction_method = hasTables ? "pybctc_tables" : "pybctc_text";
+
+        logger.info("[pdf] pybctc microservice extraction used (primary)", {
+          url,
+          extraction_method,
+          tables: microResult.tables.length,
+          chars: microResult.textContent.length,
+          confidence: microResult.ocrConfidence,
+        });
+
+        return {
+          text: microResult.textContent,
+          confidence: microResult.ocrConfidence,
+          extraction_method,
+        };
+      }
+
+      logger.debug(
+        "[pdf] pybctc returned null or failed — falling through to pdf-parse",
+        { url },
+      );
+    } catch (msErr) {
+      logger.debug(
+        "[pdf] pybctc call threw — falling through to pdf-parse",
+        {
+          url,
+          error: msErr instanceof Error ? msErr.message : String(msErr),
+        },
+      );
+    }
+
+    // ── Step 2: pdf-parse fallback (service unavailable) ─────────────────────
     const client = httpClient ?? (await makeDefaultHttpClient());
 
     // Task 1019: route the HTTP download through the circuit breaker (when
@@ -344,56 +390,11 @@ export async function downloadAndExtractPdf(
 
     const result = await extractPdfText(buffer);
 
-    logger.info("[pdf] download + extract complete", {
+    logger.info("[pdf] download + extract complete (pdf-parse fallback)", {
       url,
       chars: result.text.length,
       confidence: result.confidence,
     });
-
-    // ── Microservice fallback: pybctc (Task 1352b) ────────────────────────
-    // When pdf-parse returns low confidence (scanned PDF or table-heavy report
-    // that pdf-parse cannot represent as plain text), delegate to the pybctc
-    // microservice for superior table detection.
-    // Skipped when confidence is already high (≥ PDF_MICROSERVICE_FALLBACK_THRESHOLD).
-    if (result.confidence < PDF_MICROSERVICE_FALLBACK_THRESHOLD) {
-      try {
-        const msClient =
-          microserviceClient ?? (await makeDefaultMicroserviceClient());
-        const microResult = await msClient.extract(url, "bctc");
-
-        if (microResult !== null && microResult.status === "success") {
-          const hasTables = microResult.tables.length > 0;
-          const extraction_method = hasTables ? "pybctc_tables" : "pybctc_text";
-
-          logger.info("[pdf] pybctc microservice extraction used", {
-            url,
-            extraction_method,
-            tables: microResult.tables.length,
-            chars: microResult.textContent.length,
-            confidence: microResult.ocrConfidence,
-          });
-
-          return {
-            text: microResult.textContent,
-            confidence: microResult.ocrConfidence,
-            extraction_method,
-          };
-        }
-
-        logger.debug(
-          "[pdf] pybctc returned null or failed — keeping pdf-parse result",
-          { url },
-        );
-      } catch (msErr) {
-        logger.debug(
-          "[pdf] pybctc call threw — keeping pdf-parse result",
-          {
-            url,
-            error: msErr instanceof Error ? msErr.message : String(msErr),
-          },
-        );
-      }
-    }
 
     return result;
   } catch (err) {
