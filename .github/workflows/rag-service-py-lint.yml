@@ -1,0 +1,44 @@
+name: rag-service-py-lint
+
+# Trigger on every push to main and every PR targeting main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rag-service-py-lint:
+    name: rag-service-py-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # All `run` steps execute from apps/rag-service by default.
+    defaults:
+      run:
+        working-directory: apps/rag-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Install import-linter (dev dependency only — not in runtime requirements).
+      # grimp backend is included as a transitive dependency of import-linter.
+      - name: Install import-linter
+        run: pip install "import-linter>=2.11"
+
+      # Run architecture fence contracts defined in apps/rag-service/.importlinter
+      # Fence-C: DDD layered architecture (domain < application < interface)
+      # Fence-A: primitives independence (no cross-primitive imports)
+      # Fence-B: retrieval module cannot import infrastructure
+      # Exit non-zero = architecture violation — PR blocked.
+      - name: Run import-linter fence
+        run: lint-imports
+
+      # Offline-runnable: import-linter uses grimp (pure Python import graph
+      # analysis). No network access required after install. To run locally:
+      #   cd apps/rag-service && lint-imports
+      # Or with Python module: python -m importlinter

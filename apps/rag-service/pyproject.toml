@@ -20,6 +20,7 @@ dev = [
     "pytest>=8.1.1",
     "pytest-asyncio>=0.23.6",
     "mypy>=1.9.0",
+    "import-linter>=2.11",
 ]
 
 [tool.pytest.ini_options]
@@ -31,3 +32,34 @@ python_files = ["test_*.py"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# import-linter (G4 architecture fence — SI-4 decision: grimp backend)
+# Primary config: apps/rag-service/.importlinter (INI format, picked up by
+# `lint-imports` automatically when run from apps/rag-service/).
+# This section mirrors contracts for pyproject.toml-centric tooling.
+# ---------------------------------------------------------------------------
+[tool.importlinter]
+root_packages = ["domain", "application", "infrastructure", "interface"]
+
+[[tool.importlinter.contracts]]
+name = "Fence-C: DDD layered architecture — domain is innermost, interface is outermost"
+type = "layers"
+layers = ["interface", "application", "domain"]
+
+[[tool.importlinter.contracts]]
+name = "Fence-A: primitives are independent — no primitive imports another primitive"
+type = "independence"
+modules = [
+    "domain.primitive.similarity_scorer",
+    "domain.primitive.relevance_threshold_gate",
+    "domain.primitive.temporal_decay_scorer",
+    "domain.primitive.top_k_selector",
+    "domain.primitive.context_window_packer",
+]
+
+[[tool.importlinter.contracts]]
+name = "Fence-B: retrieval module cannot import infrastructure"
+type = "forbidden"
+source_modules = ["domain.module.retrieval"]
+forbidden_modules = ["infrastructure"]

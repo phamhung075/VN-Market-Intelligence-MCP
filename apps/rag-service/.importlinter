@@ -1,0 +1,46 @@
+[importlinter]
+root_packages =
+    domain
+    application
+    infrastructure
+    interface
+
+# ---------------------------------------------------------------------------
+# Fence-C (layered DDD): domain CANNOT import application / infrastructure /
+# interface. Application CANNOT import infrastructure or interface.
+# Interface is the outermost layer (may import all below).
+# ---------------------------------------------------------------------------
+[importlinter:contract:fence-c-layered-ddd]
+name = Fence-C: DDD layered architecture — domain is innermost, interface is outermost
+type = layers
+layers =
+    interface
+    application
+    domain
+
+# ---------------------------------------------------------------------------
+# Fence-A (independence): The 5 domain primitives are independent of each
+# other. No primitive may import any other primitive (direct or indirect).
+# ---------------------------------------------------------------------------
+[importlinter:contract:fence-a-primitive-independence]
+name = Fence-A: primitives are independent — no primitive imports another primitive
+type = independence
+modules =
+    domain.primitive.similarity_scorer
+    domain.primitive.relevance_threshold_gate
+    domain.primitive.temporal_decay_scorer
+    domain.primitive.top_k_selector
+    domain.primitive.context_window_packer
+
+# ---------------------------------------------------------------------------
+# Fence-B (forbidden): domain.module.retrieval CANNOT import infrastructure.
+# The retrieval module must remain infrastructure-free (lancedb / embedder
+# adapters are injected at the composition root, not inside the module).
+# ---------------------------------------------------------------------------
+[importlinter:contract:fence-b-retrieval-no-infra]
+name = Fence-B: retrieval module cannot import infrastructure
+type = forbidden
+source_modules =
+    domain.module.retrieval
+forbidden_modules =
+    infrastructure
