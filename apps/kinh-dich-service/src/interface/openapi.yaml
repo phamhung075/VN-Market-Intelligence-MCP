@@ -1,0 +1,522 @@
+openapi: "3.0.3"
+info:
+  title: Kinh Dich Service API
+  description: |
+    I-Ching (Kinh Dich) hexagram readings, trading signals, and confidence scoring
+    for the Vietnamese market. Port read from system-map.json (kinh-dich-service: 5005).
+  version: "2.0.0"
+  contact:
+    name: dev-kinh-dich agent
+
+servers:
+  - url: "http://localhost:5005"
+    description: Local development (port from system-map.json kinh-dich-service)
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Service health check
+      tags: [health]
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /reading/{code}:
+    get:
+      operationId: getReading
+      summary: Compute hexagram reading for a stock
+      description: |
+        Computes a live I-Ching hexagram reading from price scores.
+        Falls back to stored reading if live data is unavailable.
+      tags: [readings]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Stock ticker code (e.g. VCB, VNM)
+          schema:
+            type: string
+            example: VCB
+        - name: days
+          in: query
+          required: false
+          description: Lookback window in days for price score computation
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+            example: 30
+      responses:
+        "200":
+          description: Hexagram reading result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No reading found for stock code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /market:
+    get:
+      operationId: getMarketHexagram
+      summary: Market-level hexagram reading for VNINDEX
+      tags: [readings]
+      responses:
+        "200":
+          description: Market hexagram reading
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketReadingResponse"
+        "422":
+          description: Insufficient data for VNINDEX
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /readings/{code}/history:
+    get:
+      operationId: getReadingHistory
+      summary: Historical hexagram readings for a stock
+      tags: [history]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Stock ticker code
+          schema:
+            type: string
+            example: VCB
+        - name: days
+          in: query
+          required: false
+          description: Number of days of history to retrieve
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+            example: 30
+      responses:
+        "200":
+          description: Reading history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hexagram/{number}/transitions:
+    get:
+      operationId: getHexagramTransitions
+      summary: Markov transition probabilities from a hexagram
+      tags: [markov]
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Hexagram number (1-64)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 64
+            example: 1
+        - name: stock
+          in: query
+          required: false
+          description: Filter transitions by stock code
+          schema:
+            type: string
+            example: VCB
+        - name: topN
+          in: query
+          required: false
+          description: Maximum number of transitions to return
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+            example: 10
+      responses:
+        "200":
+          description: Hexagram transition probabilities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransitionsResponse"
+        "400":
+          description: Invalid hexagram number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /backtest/{code}:
+    get:
+      operationId: getBacktest
+      summary: Backtest hexagram signal accuracy for a stock
+      tags: [backtest]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Stock ticker code
+          schema:
+            type: string
+            example: VCB
+        - name: days
+          in: query
+          required: false
+          description: Lookback window in days
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+            example: 30
+      responses:
+        "200":
+          description: Backtest result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacktestResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /hexagram/{number}/explain:
+    get:
+      operationId: explainHexagram
+      summary: Explain a hexagram in trading context
+      tags: [explanations]
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Hexagram number (1-64)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 64
+            example: 1
+      responses:
+        "200":
+          description: Hexagram explanation with trading context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExplainResponse"
+        "400":
+          description: Invalid hexagram number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Hexagram not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, port]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: kinh-dich-service
+        port:
+          type: integer
+          example: 5005
+
+    ReadingResponse:
+      type: object
+      required: [stock, hexagram, name, trend, signal, confidence, actionNote, overallReading, timestamp]
+      properties:
+        stock:
+          type: string
+          description: Stock ticker code
+          example: VCB
+        hexagram:
+          type: integer
+          description: Hexagram number (1-64)
+          example: 1
+        name:
+          type: string
+          description: Vietnamese hexagram name
+          example: "Cau Kien"
+        trend:
+          type: string
+          description: Market trend label
+          example: "THUẬN LỢI"
+        signal:
+          type: string
+          description: Trading signal
+          enum: [MUA, BAN, GIU, MUA_MANH, BAN_MANH]
+          example: MUA
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Signal confidence score (0-1)
+          example: 0.72
+        actionNote:
+          type: string
+          description: Action recommendation note
+          example: "Xu hướng tăng mạnh, cân nhắc mua"
+        overallReading:
+          type: string
+          description: Full I-Ching reading narrative
+          example: "Quẻ 1 — xu hướng dương mạnh"
+        timestamp:
+          type: string
+          format: date-time
+          description: Reading timestamp (ISO 8601)
+          example: "2026-05-24T10:00:00.000Z"
+
+    MarketReadingResponse:
+      type: object
+      required: [hexagram, name, trend, signal, confidence, timestamp]
+      properties:
+        hexagram:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Cau Kien"
+        trend:
+          type: string
+          example: "THUẬN LỢI"
+        signal:
+          type: string
+          enum: [MUA, BAN, GIU, MUA_MANH, BAN_MANH]
+          example: GIU
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.6
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-05-24T10:00:00.000Z"
+
+    StoredReadingRow:
+      type: object
+      required: [timestamp, hexagram, name, signal, confidence]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        hexagram:
+          type: integer
+        name:
+          type: string
+        signal:
+          type: string
+        confidence:
+          type: number
+          format: float
+
+    HistoryResponse:
+      type: object
+      required: [stock, days, total, readings, mostFrequent]
+      properties:
+        stock:
+          type: string
+          example: VCB
+        days:
+          type: integer
+          example: 30
+        total:
+          type: integer
+          description: Total number of readings returned
+          example: 12
+        readings:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoredReadingRow"
+        mostFrequent:
+          type: string
+          description: Most frequently appearing hexagram summary
+          example: "Que 1 Cau Kien (5 lan)"
+
+    TransitionEntry:
+      type: object
+      required: [toHexagram, name, probability, count]
+      properties:
+        toHexagram:
+          type: integer
+          description: Destination hexagram number
+          example: 2
+        name:
+          type: string
+          description: Vietnamese name of destination hexagram
+          example: "Thuan Khon"
+        probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Transition probability
+          example: 0.35
+        count:
+          type: integer
+          description: Number of observed transitions
+          example: 7
+
+    TransitionsResponse:
+      type: object
+      required: [hexagram, name, stock, transitions]
+      properties:
+        hexagram:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Cau Kien"
+        stock:
+          type: string
+          example: VCB
+        transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransitionEntry"
+
+    HexagramStats:
+      type: object
+      nullable: true
+      required: [number, name, winRate, count]
+      properties:
+        number:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Cau Kien"
+        winRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.8
+        count:
+          type: integer
+          description: Number of samples
+          example: 5
+
+    BacktestResponse:
+      type: object
+      required: [stock, days, totalReadings, accuracy, avgReturn5d, bestHexagram, worstHexagram]
+      properties:
+        stock:
+          type: string
+          example: VCB
+        days:
+          type: integer
+          example: 30
+        totalReadings:
+          type: integer
+          example: 20
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Directional signal accuracy (0-1)
+          example: 0.65
+        avgReturn5d:
+          type: number
+          format: float
+          description: Average 5-day return across directional signals
+          example: 0.012
+        bestHexagram:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/HexagramStats"
+        worstHexagram:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/HexagramStats"
+
+    ExplainResponse:
+      type: object
+      required: [number, name, chinese, upper, lower, coreMeaning, trend, tradingContext]
+      properties:
+        number:
+          type: integer
+          example: 1
+        name:
+          type: string
+          description: Vietnamese hexagram name
+          example: "Cau Kien"
+        chinese:
+          type: string
+          description: Chinese character(s) for the hexagram
+          example: "乾"
+        upper:
+          type: string
+          description: Upper trigram name
+          example: "Can"
+        lower:
+          type: string
+          description: Lower trigram name
+          example: "Can"
+        coreMeaning:
+          type: string
+          description: Core meaning narrative
+          example: "Que 1 — Cau Kien (乾): Thuong quan Can, Ha quan Can"
+        trend:
+          type: string
+          description: Market trend implication
+          example: "THUẬN LỢI"
+        tradingContext:
+          type: string
+          description: Trading recommendation context
+          example: "Nhan dinh giao dich: Duong que — xu huong tich cuc, xem xet MUA"
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "stock code required"
