@@ -45,3 +45,30 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 - 41 tests GREEN
 
 Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 tests GREEN, HF_HUB_OFFLINE enforced. watchdog-10 dead-mkdir cleanup DONE. Next: ops rebuild. | HEALTHY
+
+---
+
+### 2026-05-24 — TASK P1-A (sandbox runner — SCALE pilot Phase 1)
+
+**Task:** Build Python sandbox runner for rag-service SCALE pilot (G7/G12 prerequisite).
+
+**Files created:**
+- `apps/rag-service/sandbox/__init__.py` (empty)
+- `apps/rag-service/sandbox/__main__.py` (CLI runner, stdlib only)
+- `apps/rag-service/sandbox/README.md` (26L usage doc)
+- `apps/rag-service/domain/primitive/mock_adder/` (AC proof primitives + scenarios)
+- `apps/pdf-extractor/domain/primitive/mock_echo/` (AC-6 proof — --service=pdf-extractor path injection)
+- `docs/signals/rag-service-sandbox-runner-ready-2026-05-24T074324Z.json` (WIP=1 signal, next_actor: pm)
+
+**Green proof:**
+```json
+{"passed": true, "primitive": "mock_adder", "actual": {"sum": 7.0}, "expected": {"sum": 7.0}, "diff": [], "elapsed_ms": 0}
+```
+
+**Env audit:** empty — `env | grep -E 'DB_PATH|LANCEDB|HF_TOKEN|HUGGINGFACE|OPENAI_API_KEY|EMBEDDING_MODEL'` returns nothing.
+
+**AC-4 grep:** exit 1 (no forbidden imports in sandbox/).
+
+**Commit:** `c8e29f08` — 41/41 tests PASS, mypy CLEAN.
+
+**Status:** DONE. Next: P1-B similarity-scorer primitive (G12 streak #1). WIP=1 now free.
