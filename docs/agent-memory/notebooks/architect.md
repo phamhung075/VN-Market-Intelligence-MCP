@@ -1,8 +1,42 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 10:07 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 10:23 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor G5b-consolidation-plan (2026-05-24T10:23Z) — GO verdict, 7-task atomic plan
+
+**Task:** Recurring-bug-escalation rethink for G5b/12-12 unblock. PO commissioned after BLOCKED clearance (signal architect-pdf-extractor-g5b-clearance-20260524T1007Z.json). Root question: is 1953-G-FAIL a CODE issue (consolidation fixes it) or INFRA/VPS issue? And are 1954c + G5b the same refactor?
+
+**Evidence loaded (brownfield):** pdf.ts (in-process pdf-parse + OCR primary; service fallback at confidence<0.5), fetchParseAndStoreBctc.ts (parse+store terminus — UNTOUCHED), bctcPdfPullJob.ts (triggerExtraction: OCR cache pattern), pushBctcExtraction.ts (same pattern), bctcReparseJob.ts (ReparseDeps with extractText + getOcrCache + extractHighDpiRetry), bctcBatchSweepJob.ts (read-only SELECT, does NOT call fetchParseAndStoreBctc — confirmed safe), pdfExtractorClient.ts (HTTP client to port 5001, null-return on unavailable), pdf-extractor main.py + interface/handlers.py + application/usecases.py + domain/services.py (Python service, all clean, DDD layers correct), bctc-write-chain-rca.md (full chain map + 3 failure modes: Failure A column mismatch, Failure B OCR cache race, Failure C scanned PDF quality).
+
+**KEY VERDICTS:**
+
+1. **1953-G-FAIL CODE vs INFRA:** BOTH, SEPARABLE. CODE defects: (A) backfillBctcQ12026.ts column name mismatch (queue never seeded for new seasons), (B) 4 independent callers each implement OCR→cache-read with no retry → race condition. INFRA: VPS pipeline being down cannot be fixed by code (ops path: ssh root@$VINAHOST_IP). Consolidation ELIMINATES the code defects. Residual staleness after fix = VPS/infra only (vpsProxyWatchdogJob escalation path).
+
+2. **Are 1954c and G5b the same refactor? YES.** 1954c "4 paths → 1 owner" + G5b "service is extraction owner" = structurally identical. Single atomic commit set satisfies both. The 4 callers keep independent triggers and queue management; they lose independent OCR implementations; all delegate extraction to ONE service (port 5001) via ONE client (pdfExtractorClient.extractViaMicroservice).
+
+3. **GO verdict.** 7-task plan in plan doc. fetchParseAndStoreBctc.ts UNTOUCHED throughout. pdfExtractorClient.ts UNTOUCHED. pdf-extractor service UNTOUCHED.
+
+**7-task plan summary:**
+- Task 1: backfillBctcQ12026.ts column fix (Failure A, independent, ship first, 2h)
+- Task 2: pdf.ts inversion (service → primary; pdf-parse → fallback)
+- Task 3: bctcPdfPullJob.triggerExtraction → service
+- Task 4: pushBctcExtraction deps → service
+- Task 5: bctcReparseJob ReparseDeps → service as Tier 1
+- Task 6: deprecate pdfOcrWorker.ts + integration test (Bun mock server at localhost:5001, OFFLINE, no live VPS)
+- Task 7: QA gate (bun test + grep counts)
+
+**Route to G5 YES / 12/12:** Tasks 1-7 + QA APPROVED → architect 1954c-clearance signal + G5b-clearance signal (GO) → PO freeze-lift → G5a+G5c+G5b all DONE → G5 → YES → 12/12 matrix close.
+
+**Files authored this cycle (2):**
+1. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-g5b-consolidation-plan.md` (NEW — 7-task plan + offline QA approach + contract design)
+2. `docs/signals/architect-bctc-g5b-consolidation-plan-20260524T102349Z.json` (NEW)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** pm — create TASK_1954c-task1..7 handoffs from plan §5; dispatch Task 1 to dev-mcp-server immediately.
+
+---
 
 ## pdf-extractor P2-G5b-clearance (2026-05-24T10:07Z) — BLOCKED verdict
 
