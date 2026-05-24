@@ -1,8 +1,81 @@
 # PO Notebook
 
-**Cycle:** c291 (THREE concurrent PO cycles — pdf-extractor + news-fetch + api-gateway pilots, all Phase 0→1)
-**Last update:** 2026-05-24T09:30:00Z
-**Status:** pdf-extractor Phase-0 EXIT GATE CLOSED + Phase-1 OPEN (P1-A1 first via PM). news-fetch + api-gateway closed same cycle. All sections preserved — concurrent-cycle race on this notebook file.
+**Cycle:** c292 (kinh-dich Go-reboot) — Phase-1 close gate APPROVED + Phase-2 AWAITING-PLAN.
+**Last update:** 2026-05-24
+**Status:** kinh-dich Go Phase-1 = APPROVED (QA CONDITIONAL-GO). Phase-2 = AWAITING-PLAN. SSOT commit 4a240f63. Next dispatch = architect Go Phase-2 task plan.
+
+---
+
+## c292 · 2026-05-24T08:18Z — kinh-dich Go-reboot Phase-1 close + Phase-2 open
+
+USER-DIRECTIVE (Go reboot FINAL, not re-litigated). PM-substitution (no `pm` agent type). Scope-locked apps/kinh-dich-service/ ONLY.
+
+### Verified BEFORE close (ground truth, not assumed)
+- 25 Go files tracked on main (23 .go + go.mod + go.sum) via git ls-files. Commit-race conflation into 2ac5e096/fec4a0e0 (news-fetch/pdf-extractor-titled) = cosmetic; history NOT rewritten per policy.
+- QA verdict (agent a91b5031f178bde88): CONDITIONAL-GO = Phase-1 SCOPE boundary only, NOT a defect. Build CGO_ENABLED=0 go build/vet exit 0; go test 39 PASS/0 FAIL. Sandbox 17/17 GREEN (15 prim + 2 mod); env audit EMPTY. G8 honest-RED re-verified (corrupt->RED->revert->17/17). Module golden 11,55,19->30,28,56 = LEGITIMATE domain correction (THIEU_DUONG=0.10), not regression mask.
+- NOTE: QA Go close-gate signal not yet on disk; directive is the authoritative verdict summary. Only TS close-gate signal (06:00) present.
+
+### SSOT writes (PO-only) — commit 4a240f63
+- phase1.status ACTIVE->APPROVED; approvedAt/approvedBy + gateVerdict + closeGateEvidence{build,sandbox,7 complete goals (G1,G2,G3,G6,G7,G8,G12), 5 pending Phase-2 (G4,G5,G9,G10,G11), g8 honest-red, scenario correction, go files on main, non-blocking comment cleanup}. Progress note appended.
+- phase2.status NOT-STARTED->AWAITING-PLAN; openedAt/openedBy; phase2_scope block (G4 depguard/golangci, G5a/b/c, G9 Playwright Path B Go re-confirm, G10 inject<=2, G11 2-trial, dashboard comment cleanup, 3 pre-revert tags, earned-pending carry G1/G2/G3/G6/G7/G8/G12); phase2_dispatch_signal ptr.
+- G9 status IN-PROGRESS->TBD (TS-held Playwright does NOT carry to Go rebuild; honors directive 'keep goals=TBD'). Held-evidence note preserved + _g9_reset_note.
+
+### Discipline (held)
+- Goals[] ALL 12 = TBD (verified 0 non-TBD). goalsEarned=0. decisionMatrix.verdict=TBD, populatedAt=null — UNTOUCHED. §4.5 atomic flip reserved for 12/12 terminal.
+- Zero dup root keys (36/36), JSON valid (jq -e). phase1/phase2 sub-key dup-checks clean.
+- Explicit-file stage ×2 (pilot-status + signal). foreign-count=0 verified before commit. git commit -m ... -- <paths> (flag order: -m BEFORE --). Post-commit HEAD verify landed my content. Working tree clean — no race this cycle.
+
+### Dispatch (RETURN)
+- ARCHITECT: author docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md mirroring stock-price/TA Go Phase-2 pattern. Signal docs/signals/po-20260524T081835Z.json (ssotCommit placeholder left as <PENDING-COMMIT>; real SHA=4a240f63 recorded here — architect reads SSOT directly).
+- On plan landing: PO reviews -> repoint phase2.taskPlan + install tasks map -> AWAITING-PLAN->OPEN -> dispatch first Phase-2 task (likely P2-KD-A pre-ci tag, WIP=1).
+
+### Carry-over (kinh-dich Go)
+- NO goal flips until 12/12 terminal. Go fence = depguard via golangci-lint (NOT eslint — that was TS pilot). Port 5005. Pre-revert tags created in gating tasks Step 0.
+- Dashboard stale 'ts/bun' comments (~L13,~L1578) MUST be cleaned in Phase 2 for honest-green.
+- Active fleet commit-race environment — keep explicit-file stage + post-commit HEAD verify.
+
+---
+
+## Cycle c75 — rag-service Phase 1 gate execute + Phase 2 setup (user /goal)
+
+Deliberate user /goal: continue rag-service SCALE pilot, execute QA-passed Phase 1 gate, set up Phase 2.
+
+### Verified BEFORE gate (not assumed)
+- All 5 commits present on main: 1823e716 (QA gate verdict), cfd38a3b (P1-B similarity-scorer — NOTE: this is an api-gateway-titled commit; rag files landed there via concurrent index contamination, QA Check-8 confirmed files correct on main, NO history rewrite), 8be07048 (P1-C retrieval module stub), 7725ca59 (P1-E dashboard stub), 0b5ef802 (G12 DoD flow gate).
+- QA Review Record in docs/handoffs/TASK_P1-E-rag-service-dashboard.md: 8 checks independently re-run, sandbox GREEN both tiers, determinism byte-identical, zero model/DB imports, env-audit empty, dash-check 17/17, 51/51 pytest, Fence-A/B clean. Verdict PASS.
+
+### pilot-status writes (PO-only) — commit f25eb5ae
+- phase1.status ACTIVE→APPROVED; gateVerdict=PASS, gateVerifiedAt=2026-05-24, gateVerifiedBy="qa cycle-74", gateCommit=1823e716, gateDecisionDoc/gateSignal=QA Review Record. approvedBy note added.
+- top.phase 1→2.
+- G12 TBD→EARNED-PENDING (NOT YES — §4.5 atomic at 12/12). g12Streak: completed=3, streakComplete=true, completedAt=2026-05-24, tasks=[P1-B cfd38a3b, P1-C 8be07048, P1-E 7725ca59] w/ evidence + qaVerifiedBy/qaVerifiedCommit. evidence+verifiedAt+verifiedBy populated.
+- G1/G2/G6/G8 TBD→IN-PROGRESS (PARTIAL — Phase 2 completes; status_progress_note each). NO YES, NO evidence-as-earned.
+- decisionMatrix UNTOUCHED (all TBD, populatedAt null). goalsEarned=0. Zero dup keys, JSON valid.
+
+### Phase 2 DECISION: needs dedicated architect plan → AWAITING-PLAN
+- The Phase 1 task plan (rag-service-phase-1-task-plan.md) has NO sequenced Phase 2 task ledger. Only scattered refs: P2-A (CI fence), P2-B (git mv delete), P2-E (env gate), P2-L (bug inject) + brownfield primitive list/R-2 now-injection/SI-4 §6 + Goals-Advanced map. grep confirmed: zero "## Phase 2" / "### P2-" task-AC headers. Directive's "Phase 2 section per QA" does NOT exist as a dispatchable ledger.
+- Phase 2 scope LARGE (4 primitives + module-full + G3 trim + dashboard-full + G4 fence proof + G5 delete/rewire + G7 full gate + G8 break proof + G9 Playwright + G10/G11 bug inject) → mirrors Phase 1 plan rigor requirement. Set AWAITING-PLAN; recorded phase2_scope_inventory + proposed dependency-ordered wipPolicy in pilot-status for architect to ratify.
+
+### Discipline (held)
+- explicit-file stage (git add <path>); verified staged set = exactly pilot-status, foreign-count=0. No -A/./dir. No --force/--no-verify. main only.
+- Post-commit HEAD verify: my content landed (phase=2, APPROVED, AWAITING-PLAN, G12 EARNED-PENDING, goalsEarned=0, dM TBD). Working tree clean — NO commit-race this cycle.
+
+### Phase 2 task SEQUENCE (dependency order, for architect to detail into ACs)
+1. Primitives bucket-B (WIP=1, one at a time): relevance-threshold-gate → top-k-selector → context-window-packer → temporal-decay-scorer (R-2 now-injection). Each ≥3 scenarios.
+2. G2 module-full: wire all 5 primitives into retrieval via ports (Fence-B clean).
+3. G3 composition-root verify: main.py 113L→≤80L, zero business logic, OpenAPI contract, port 5002.
+4. G6 dashboard-full cards (all primitives GREEN as they ship).
+5. G7 P2-E: edit-JSON-rerun + full env-audit pass/fail gate.
+6. G8 deliberate-break proof.
+7. G4 P2-A: import-linter deliberate-violation fence (SI-4 settled=import-linter/grimp, rag-pre-ci tag, CI job rag-service-py-lint). SI-4 gate CLEARED.
+8. G5: retriever.ts→ragHttpClient.ts HTTP rewire (G5b) + git mv {embeddings,vectorstore,retriever}.ts→_deprecated/ (G5a, rag-pre-delete tag) + zero TODO.*migrat (G5c). Needs primitives+module done. R-1 dual-writer resolves here.
+9. G10 single-literal bug injection ≤2 cycles (rag-pre-inject tag, needs primitives stable, baseline 1.5).
+10. G11 2-trial regression alarm (2 different primitive mutations, each flips coupled module scenario RED).
+11. G9 Playwright headless trust contract LAST (Path B Day-0).
+
+### NEXT dispatch (RETURN to dispatcher)
+- ARCHITECT: author docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md (per-task ACs, dependency-ordered per above, WIP=1, mirror Phase 1 plan format). Inputs: brownfield-inventory.md §3/§4/§5/§6, Phase 1 plan Goals-Advanced map, QA Phase 2 deltas, this pilot-status phase2_scope_inventory.
+- On plan landing: PO reviews spec → phase2 AWAITING-PLAN→OPEN (taskPlan ptr + tasks map) → first dev-rag-service Phase 2 task = relevance-threshold-gate primitive (B-bucket, G1/G7, WIP=1).
+- Carry-over: G4 AC lockable once fence-CI lands (SI-4 cleared). G5 needs primitives+module done first. decisionMatrix stays PO-only atomic @ 12/12. Active fleet commit-race — keep explicit-file stage + post-commit HEAD verify.
 
 ---
 
@@ -56,53 +129,3 @@ Deliberate user /goal. PO opened Phase 0 earlier this session (c288); this cycle
 - Active commit-race environment + heavy fleet WIP — keep explicit-file staging + post-commit HEAD verification.
 
 ---
-
-## This cycle (c291) — news-fetch Phase 0 close-out + Phase 1 open
-
-No `pm` agent in harness → PO absorbed P0-NF-4 anchor + exit-gate mechanics.
-
-### Phase 0 deliverables verified DONE (ground truth)
-- P0-NF-1 brownfield + P0-NF-2 bug-inventory (baseline 1.5) + P0-NF-3 flow (bca30508 verified) + P0-NF-5 plan (10 tasks/68 ACs) + architect signal (architect-news-fetch-phase0-done-2026-05-24T073054Z.json). dev_agent_file stays N/A.
-
-### P0-NF-4 anchor — CONCURRENT COMMIT RACE (key carry-over)
-- Tag `news-fetch-pre-refactor` created local-only (NO --force/push). main HEAD moved mid-cycle dba5fdaf→e6750db→7f3ad2c (fleet pilots committing concurrently). Tag landed @ 31483c8c — DID NOT force/retag to chase HEAD. Verified 31483c8c on main ancestry + ZERO Phase-1 scaffolding (no_code_in_service_pkg_yet OK). Rationale in pilot-status exit_gate._anchor_note.
-
-### SSOT flips (validated: no dup keys, valid JSON, top.status stays ACTIVE)
-- phase 0→1; phase0 OPEN→CLOSED; exit_gate CLOSED + anchor + signal. phase1 NOT-STARTED→ACTIVE (07:34:21Z, task_plan ptr, wip=1). goals ALL 12 TBD untouched. decisionMatrix ALL TBD populatedAt null (untouched, PO-only @ 12/12). goalsEarned 0.
-
-### Artifacts: pilot-status-news-fetch.json + TASKS.md (P0-NF→Done, Phase1 Backlog seeded) + pipeline-state.json (news_fetch_pilot block, nextAgent=developer P1-A) + signal po-20260524T073625Z.json.
-
-### MCP UNAVAILABLE — WORK telegram could NOT be sent from PO (gateway not in tool surface). Returned as PENDING dispatcher action. Signal dropped as filesystem JSON.
-
-### Carry-over (news-fetch)
-- WIP=1 STRICT: dispatch ONLY P1-A. Chain A→B1→B2→B3→B4→C→D→E→G5→QA. G12 streak = B1/C/D (sandbox-green evidence in each handoff). G4 (TS ESLint fence) gated on SI-3 — don't lock early. Pre-revert tags are Phase 2. §4.5: dev must NOT touch goals/decisionMatrix. Confirm WORK telegram sent when dispatcher next runs.
-
----
-
-## This cycle (c291) — api-gateway Phase 0 close + Phase 1 open
-
-Scope-locked `apps/api-gateway/` ONLY (anti-scope-creep). Did NOT touch any other pilot-status.
-
-### Verification (all 5 phase0 deliverables landed on disk + git)
-- brownfield_inventory DONE — api-gateway-brownfield.md (13686B) [architect b3ae0568]. HONEST 3 primitives: overall-status-computer, proxy-path-resolver, route-service-matcher. go test ./... PASS 45.
-- bug_inventory_entry DONE — bug-inventory.json api_gateway_baseline (line 436) [d5e6ea22].
-- phase_1_task_plan DONE — api-gateway-phase-1-task-plan.md (24363B); 6 tasks B/C/E, WIP=1, G11 blast-radius FIRST [d9a0b84e].
-- dev_agent_file + dev_agent_flow_file DONE [agent-father c9cac80b]. G12 DoD gate baked at flow line 57 ("Do not mark DONE / do not RETURN until sandbox dashboard GREEN").
-
-### Actions
-- G12 g12Streak.ruleEffectiveAfter = "c9cac80b 2026-05-24" (DERIVED, PO-only §4.5).
-- phase0.exit_gate: all_deliverables_landed=true, exit_gate_status=CLOSED, verification_commit_sha_architect=b3ae0568..., verification_signal=docs/signals/po-20260524T073403Z.json. phase0.status=CLOSED, closedAt/closedBy set.
-- phase=1; phase1.status ACTIVE; task_plan + skeleton_in → api-gateway-phase-1-task-plan.md; wip_limit=1; progress_note logged.
-- Goals → IN-PROGRESS: G1,G2,G6,G7,G8,G11,G12 (per dispatcher Phase 1-active set). G3/G5 Phase 2 verify-only; G4 advanced only at P1-AG-E2 (stays TBD until then); G9/G10 later. ALL stay TBD.
-- decisionMatrix UNTOUCHED (PO-only atomic @ 12/12). goalsEarned=0 (nothing YES).
-- Signal po-20260524T073403Z.json written. Commit f15b897e (explicit-file stage ×2, NO -A).
-
-### Handoff to dev-team dispatcher
-- FIRST Phase 1 dispatch: P1-AG-B1 — extract overall-status-computer primitive + G11 coupled-cascade design. Owner dev-api-gateway, run .claude/flows/dev-api-gateway/main.md. Goals G1/G7/G11/G12. WIP=1.
-- G11 (HIGH PRIORITY, highest blast radius): a path/status regression must cascade across BOTH a proxy scenario AND a health-route scenario. Two-trial coupling plan documented in task plan §G11; Trial-1 designed in B1.
-
-### Carry-over (next cycle)
-- B1 close → dispatch B2 (proxy-path-resolver) → B3 (route-service-matcher) → C1 (gateway module) → E1 (dashboard) → E2 (sandbox+G4 fence+G12 streak proof). Critical path serial, WIP=1.
-- G4 AC for api-gateway: Go depguard via golangci-lint (NO SI-3/SI-4 dependency — unlike TS/Python pilots). Lockable at E2. Freeze anchor .golangci.yml SHA recorded by QA.
-- G12 streak tasks = B1 + C1 + E1 (sandbox-green evidence in handoff each). EARNED-PENDING after streak; PO flips YES only at 12/12 terminal.
-- Fleet WIP watch: TA Phase 2, stock-price pilot-3 Ph0, kinh-dich pilot-4, alert-engine pilot-5 (WIP-hold), news-fetch Ph0 (c290), rag-service Ph1 (c72), api-gateway Ph1 (c291).
