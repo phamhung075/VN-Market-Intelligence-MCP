@@ -1,31 +1,25 @@
 # PO Notebook
 
-**Cycle:** NF-LD-EXIT — final sign-off on news-fetch live-data inspection view.
-**Last update:** 2026-05-24T17:58:27Z
-**Status:** NF-LD chain SIGNED OFF + CLOSED. Pilot frozen 12/12 untouched. Pipeline complete.
+**Cycle:** PDF-INSPECT REOPEN-2 FINAL RE-SIGN — DONE on REAL data after a premature first close + 2 real-data reopens.
+**Last update:** 2026-05-24T19:36:04Z
+**Status:** RATIFIED. User-facing URL `http://localhost:3000/api/bctc-inspect` LIVE NOW. Meta-lesson recorded. PIPELINE complete.
 
 ---
 
-## 2026-05-24T17:58Z — NF-LD-EXIT: SIGNED OFF, chain CLOSED
+## 2026-05-24T19:34Z — PDF-INSPECT: final re-sign on REAL data (3rd close, the honest one)
 
-Chain: po(scope)→architect(NF-LD-1)→dev-mcp-server(NF-LD-2a 5a91e12f)→developer(NF-LD-2b 45fd7f74)→qa(NF-LD-3 59bd79f7 APPROVED)→po(NF-LD-EXIT). Held sign-off discipline: verified disk+git BEFORE trusting QA word.
+QA REOPEN-2 PASS (`3098c69d`) on the REAL deployed container (mcp-server rebuilt from `69da9d01`, port 3000): `/api/bctc-inspect/docs` count=14 real BCTC docs (NOT 0, NOT 15,552 junk), 12 has_pdf, 14 has_ocr, 7 decimal-shift flags. Playwright: select VNM Q4 2025 → LEFT real 4.1MB VNM PDF rendered (signed cover), RIGHT decimal-shift banner (OCR 0.0001 vs API 2,840,370 M VND) + real Vietnamese OCR. Safety/regression/write-safety PASS, 64 tests, tsc 0. PO independent spot-check (disk+git): `69da9d01`/`0245ff4c`/`3098c69d` all zero-foreign; deliverable files on disk.
 
-PO INDEPENDENT SPOT-CHECK (all PASS):
-- 5a91e12f: 3 files ALL apps/mcp-server/ (handler 132L + test 286L + server.ts +7). SELECT-only confirmed (grep -nwiE write verbs → 0 real; earlier hits were `created_at` substrings). 0 creds in handler.
-- 45fd7f74: 2 files ALL apps/news-fetch/dashboard/ (index.html +217 panel-live-data@192 + dash-check.mjs). data.js NOT in commit (last touch cd8d0146 pre-NF-LD). 0 creds in dashboard.
-- 59bd79f7 (qa): 3 own files, zero-foreign.
-- pilot-status-news-fetch.json: goalsEarned=12, verdict=scale, status=DONE — NOT touched. Frozen held.
-- Sandbox honest-green not regressed (QA dash-check: 4 panels =3 sandbox+1 live, 6 cards, PASS:6, 0 console/page errors, 0 external net).
+USER ACCEPTANCE GENUINELY MET: the VNM decimal-shift bug is visible BY EYE beside the rendered real PDF — the literal user intent ("select a PDF → original LEFT, extracted RIGHT, side-by-side, to compare").
 
-DEPLOY GAP (non-blocking, surfaced): mcp-server /health=200 BUT GET /api/news-fetch/live=404 on RUNNING process — route correct in source on main, running process predates 5a91e12f. Same pattern as PI-INSPECT. Fix = ops `docker compose up -d --build mcp-server` (dispatch ops, never ask user). Code is correct + tested; not a defect. Until reloaded, live panel honestly shows EMPTY/ERROR — by design, never fakes.
+HONEST TRAIL (not erased in TASKS.md/SPRINT_GOAL.md): premature first close `97cd5763` (17:47Z) proven on FIXTURES (uvicorn localhost:15001) → empty on deploy → REOPEN-1 (inspector read wrong DB `pdf_extractor.db` 15,570 junk rows; MOVED pdf-extractor→mcp-server, owner dev-pdf-extractor→dev-mcp-server, built `/api/bctc-inspect` `1b5799fb`; QA found all 14 rows pdf_path=NULL, count:0 `127cb347`) → REOPEN-2 (backfill `pdf_path` 14→17 PDFs + all-rows LIST + secondary OCR join `69da9d01`; QA PASS `3098c69d`).
 
-TELEGRAM (fail-loud, honest): send_telegram MCP tool NOT in PO agent tool surface (only Read/Edit/Write/Bash/semble) + no CLI sender. Did NOT fabricate a sent WORK message. Summary text handed to main terminal in RETURN for relay via gateway.
-
-OUTPUTS: TASK_NF-LD.md `## NF-LD-EXIT` sign-off section; TASKS.md NF-LD rows → DONE + sprint DONE+CLOSED; signal po-20260524T175827Z.json; this notebook. Commit = own close-out artifacts ONLY (commit-mutex enum defect → main terminal commits in-tree PO docs; watch fleet race).
+OUTPUTS this cycle: TASKS.md PDF-INSPECT block (corrected done-condition + reopen trail + 11-row task table); SPRINT_GOAL.md "Prior Sprint Closure — PDF-INSPECT" section (KD-QREF-LANG vision kept); handoff `[QA] REOPEN-2 PASS` already on record; sign-off signal `po-pdf-inspect-reopen2-signoff-20260524T193604Z.json` (supersedes `po-20260524T174710Z.json`); this notebook. NO pilot-status edit. NO send_telegram (not PO surface).
 
 ## Carry-over
-- NF-LD: CLOSED SIGNED OFF. Pilot frozen 12/12. OPS needs `docker compose up -d --build mcp-server` for /api/news-fetch/live to go live (running process predates 5a91e12f).
-- PATTERN (recurring, now 2x): new served read-route on a Docker service = 404 until container reloads the image. PI-INSPECT (pdf-extractor) + NF-LD (mcp-server) both hit it. Sign-off can proceed (code correct + tested); surface ops redeploy, never block.
-- LESSON (held this cycle): verify files on disk (ls + grep route + git show --stat zero-foreign) BEFORE trusting upstream APPROVED. Live-smoke the actual route too — caught the 404 deploy gap QA's in-memory tests can't see.
-- commit-mutex enum defect persists: claim under 'sprint-task' kind; main terminal commits in-tree PO docs; never rewrite history under fleet race.
-- Concurrent crons: stock-price Phase-0 backlog READY; TA Phase-2 in flight; rag-service P3 active.
+- LESSON (META — the important one, 3 straight defects same root): for any DATA-BOUND feature, BOTH the DESIGN and the QA gate MUST be validated against a live sample of the REAL store — real row counts AND null-rates of the relied-upon columns AND the ingest path that populated current rows — not schema-existence or seeded fixtures. Premature sign-off happened because acceptance was proven on FIXTURES, not the deployed real-data path. Same FAMILY as file:// L9 (verify under the user's REAL path). Bake into every architect design that reads an existing table: before specifying a `WHERE col IS NOT NULL` filter, `docker exec` the null-rate on REAL data first; if >0, design the degrade path first.
+- PDF-INSPECT out-of-scope follow-ups (surfaced, do NOT block): (i) `fetchParseAndStoreBctc.ts:645 tryNewsChainFallback` inserts pdfPath:null even when a PDF exists → dev-mcp-server pipeline task (findExistingPdf at insert time); (ii) `pdf_extractor.db` 15,570 junk test rows in prod volume → ops/dev cleanup. Both recorded in signal + TASKS.md.
+- PDF-INSPECT live NOW at `http://localhost:3000/api/bctc-inspect` (no further deploy needed; QA already rebuilt mcp-server). Old `localhost:15001`/`5001/inspect` are fixture-only/deprecated.
+- COMMIT: dev agents can't acquire commit-mutex (gateway absent + task_claim enum lacks kind). My docs staged-clean in-tree; MAIN TERMINAL serializes the commit (heavy fleet race — many foreign M/?? in tree). Explicit-file staging only.
+- KD-QREF-LANG: still BLOCKED behind architect KD-QREF-LANG-1 (i18n design). NF-LD-4 OPEN behind architect; stock-price Phase-0 READY; TA Phase-2 in flight; pdf-extractor Phase-1 OPEN.
+- PATTERN: pdf-extractor SCALE pilot stays DONE 12/12 frozen — this inspector is a POST-PILOT dev tool on mcp-server, NOT a pilot task; pilot-status never touched.

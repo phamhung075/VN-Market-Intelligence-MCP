@@ -1,65 +1,61 @@
-# Sprint PDF-INSPECT Goal — Side-by-Side PDF / Extracted-Text Inspector
+# Sprint KD-QREF-LANG Goal — 64-Quẻ Trading Reference EN/VI Language Switch
 
-**Status:** DONE + CLOSED 2026-05-24T17:47Z (PO PI-EXIT sign-off — user acceptance MET under real served URL, L9 honored from PI-1). Opened 2026-05-24T17:19Z (PO self-initiated from explicit user feature request, routed via main terminal). **Severity:** MEDIUM (product surface — extraction-quality QA tooling for the human user; no incident). **Owner chain:** architect (PI-1 design) → dev-pdf-extractor (PI-2 served viewer) → qa (PI-3 verify) → PO (PI-EXIT sign-off). **Zone:** `apps/pdf-extractor/` ONLY (single zone; dev-frontend NOT in scope — see § dev-frontend ruling). **WIP:** 1 strictly sequential.
+**Status:** OPEN 2026-05-24T18:51Z (PO self-initiated from explicit user feature request, routed via main terminal). **Severity:** MEDIUM (product surface — i18n on a shipped reference panel; no incident). **Owner chain:** architect (KD-QREF-LANG-1 i18n design) → dev-kinh-dich (KD-QREF-LANG-2 implement) → qa (KD-QREF-LANG-3 verify) → PO (KD-QREF-LANG-EXIT sign-off). **Zone:** `apps/kinh-dich-service/` ONLY (single zone). **WIP:** sequential within the chain (fleet WIP=2 cap still applies).
 
-> POST-PILOT FEATURE. The pdf-extractor SCALE pilot is DONE 12/12 (verdict=scale) and STAYS DONE + frozen. This inspector is a NEW product surface; it does NOT reopen, alter, or touch any pilot goal, `decisionMatrix`, or `pilot-status-pdf-extractor.json` (frozen). The sandbox trace dashboard (`apps/pdf-extractor/dashboard/index.html`) is a SEPARATE surface and is NOT modified by this sprint.
+> FOLLOW-ON #2 to KD-QREF (the bilingual EN-primary panel shipped `0b401124`, data regenerated `e9608167`). POST-PILOT enhancement on the SAME `.qref-*` panel. The kinh-dich Go-reboot SCALE pilot is DONE 12/12 (verdict=scale) and STAYS DONE + frozen; this does NOT reopen, alter, or touch any pilot goal, `decisionMatrix`, or `pilot-status-kinh-dich.json`.
 
 ---
 
 ## Vision
 
-Give the (non-technical) user a way to eyeball BCTC extraction QUALITY: pick a PDF from a list, then see the ORIGINAL PDF rendered on the LEFT next to the EXTRACTED text/fields on the RIGHT — so bad extractions (e.g. the known decimal-shift bugs like `VNM net_profit=0.000051`) are visible at a glance by comparing source to output.
+The user (France-based, monitors the VN market) shipped the 64-Quẻ Trading Reference panel and now wants to read it in EITHER full English OR full Vietnamese, by their own choice. Today the panel is bilingual EN-primary (English prose + VN names/glyphs verbatim + bilingual trend labels). The user wants a real LANGUAGE SWITCH: a full EN view and a full VI view, toggled in the panel header, with their choice remembered across reloads. The Vietnamese view reuses the authoritative rich VN source (`que_convert/*.md`) — the original market-framed text — not a machine round-trip of the English.
 
 ## Scope
 
 **IN:**
-- A **served viewer** inside the pdf-extractor service (FastAPI), reachable in the user's browser via the service port (`http://localhost:5001/...`). This is the delivery model — see § Delivery Model ruling.
-- **List endpoint** — GET that returns the available PDFs the user can inspect (doc id + a human label: ticker/period/source where available).
-- **PDF-bytes endpoint** — GET that streams the original PDF for a selected doc id (so the browser can render page images on the left).
-- **Extracted-content endpoint** — GET that returns the extracted text/tables/fields for that doc id (the right pane).
-- **Viewer page** — a served HTML page: a PDF picker → on select, LEFT = PDF rendered (pdf.js or equivalent), RIGHT = extracted text/fields. Side-by-side split.
-- An honest-degrade rule: if a PDF has no extraction yet (or vice versa), the page says so explicitly — never fabricates content.
+- An **EN | VI toggle control** in the `.qref-header`, inside the `.qref-*` namespace, trust-gate safe.
+- **Both languages carried in the Go SSOT** (`hexagram_reference.go`) for every textual field — core meaning, market-state interpretation, favorable condition, warning, market-trend label, all 6 per-phase glosses — emitted to `que-reference.js` (never fetched, never hand-typed in HTML).
+- **Localized static chrome:** panel title/description, section headers (Trigrams / Favorable Condition / Market State Interpretation / Six Phases), phase-table column headers, trend legend — all swap with the toggle (a real VI view, not VI prose in English chrome).
+- **localStorage persistence** (`kd-qref-lang`, file:// safe, try/catch guarded → EN fallback).
+- VI text reused/lightly-trimmed from `que_convert/*.md` — verbatim VN, authentic, no machine retranslation.
 
 **OUT:**
-- NO editing/correcting extractions from the viewer (read-only inspector this sprint).
-- NO new cross-service plumbing into mcp-server's BCTC financial DB unless architect proves it is REQUIRED to satisfy the user intent (default: use this service's own extraction store — see § Data-Source ruling). One read-only mcp-server route is permitted ONLY if architect proves the user-meaningful "fields" (parsed financial figures like net_profit) live exclusively there and not in this service's store.
-- NO changes to the sandbox trace dashboard, its `traces.js` sidecar, the 3 sandbox panels, or `trust-contract.spec.js` (SI-2 zone discipline — frozen).
-- NO `file://` double-click delivery (cannot reach container PDF store or DB — proven below).
-- NO dev-frontend (see ruling); dev-pdf-extractor builds a minimal-but-correct viewer page itself.
+- Whole-dashboard i18n — the 3 trust panels, sandbox runner, `sandbox-traces.js`, modal, edit-rerun handler stay FROZEN and English (panel-only scope, D3).
+- Any 3rd language, runtime translation pipeline, or language fetch.
+- Wiring `/hexagram/{number}/explain` to serve the localized data (future; the `{en,vi}` shape must merely not preclude it).
+- Re-deriving any que line-data scoring (`queDataMap` action/outcome stay as-is).
 
-## Success Metric (the acceptance condition the USER will use)
+## Decisions (PO authority — final; full rationale in the decision note)
 
-The user opens the served viewer in a browser (the service is running), sees a **list of available PDFs**, **selects one**, and the page shows the **original PDF rendered on the LEFT** and its **extracted text/fields on the RIGHT, side-by-side**, for that same document. The user can thereby spot a bad extraction by eye (e.g. PDF shows a real net-profit figure while the right pane shows `0.000051`). Verified under the user's ACTUAL access path (served URL in a browser), NOT only via a test-convenience server with a different shape (L9 — bake into QA gate).
+D1 default EN · D2 localStorage persistence (file:// safe, EN fallback) · D3 `.qref-*` panel ONLY · D4 both langs in Go SSOT → emitted JS, nested `{en,vi}` recommended · D5 EN|VI control in `.qref-header`, static labels localize, no `dot-*`/`.category-chip`/"not wired"/fetch/CDN.
+
+## Binding DoD
+
+`node dashboard/dash-check.mjs` stays exit-0 with the toggle present (EN and VI states); 3 trust panels + 17 sandbox dots + modal + `sandbox-traces.js` + edit-rerun handler UNCHANGED; all 64 entries carry BOTH a non-empty EN and a non-empty VI for EVERY textual field (no gap, no placeholder, no "TODO translate", no English in a VI field); proper nouns (name VN + glyph) + action/outcome tokens identical in both views.
+
+## References
+
+- Decision: `docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md`
+- Spec + per-task ACs: `docs/handoffs/TASK_KD-QREF-LANG.md`
+- VI source (read-only, outside repo): `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/kinhdich_logic/que_convert/`
+- Current SSOT extended: `apps/kinh-dich-service/pkg/module/reading_composer/hexagram_reference.go`
+- Render contract: `apps/kinh-dich-service/dashboard/index.html` (`renderQueReference()` @ ~2288, `.qref-*` styles @ ~787) + emit `cmd/sandbox/main.go -emit-reference`
 
 ---
 
-## Grounded reality (PO archaeology this cycle — informs the design; architect confirms exact shape)
+## Prior Sprint Closure — PDF-INSPECT (Side-by-Side PDF / Extracted-Text Inspector) — DONE+CLOSED (RE-SIGNED) 2026-05-24T19:34Z
 
-1. **Delivery model = served viewer (FORK RESOLVED).** `docker-compose.yml` mounts `market_data:/app/data` into the pdf-extractor container. The source PDFs (`/app/data/pdfs/`, pulled from VPS), this service's metadata DB (`/app/data/pdf_extractor.db`), AND its extraction JSONs (`/app/data/extractions/{doc_id}.json`) ALL live inside that one named volume. A `file://` double-click page CANNOT reach a named Docker volume → the existing sandbox-dashboard `file://` pattern is WRONG here. The viewer MUST be served by the FastAPI app (already exists: `apps/pdf-extractor/main.py`, port 5001, CORS `*`, `register_routes()` in `interface/handlers.py`). New GET routes + a served static viewer page is the correct shape. **Architect confirms exact route paths + static-serving mechanism; do NOT default to `file://`.**
+**Verdict: DONE on REAL data, after a premature first close + TWO real-data reopens.** Full task table + reopen trail + corrected done-condition: `docs/TASKS.md` § Sprint PDF-INSPECT. Spec + every agent record: `docs/handoffs/TASK_PDF-INSPECT.md`.
 
-2. **This service's extracted-content store (RIGHT pane source — default).** Extraction output is persisted by `HTTPPDFStorageRepository.store_extraction()` to `/app/data/extractions/{doc_id}.json` with fields: `document_id`, `tables[]` (table_index/headers/rows/page_number), `text_content` (full OCR/extracted text), `ocr_confidence`, `extraction_time_ms`. Document metadata is in SQLite `pdf_documents` (id, url, source_type, status, extracted_at). This is the natural RIGHT-pane source and this service is the extraction owner.
+**Honest history (not erased):**
+- **Premature first close (`97cd5763`, 17:47Z):** signed off against FIXTURE data on a local uvicorn (`localhost:15001`). At deploy the viewer was EMPTY on real data → REOPEN.
+- **REOPEN-1:** inspector read the WRONG store (pdf-extractor `pdf_extractor.db` = 15,570 junk rows). Real BCTC data is in mcp-server's `market.db`. Inspector **MOVED to mcp-server** (impl owner dev-pdf-extractor → **dev-mcp-server**); built `/api/bctc-inspect` (`1b5799fb`). QA found all 14 `financial_reports` rows had `pdf_path=NULL` → list count:0 (`127cb347`).
+- **REOPEN-2:** `backfillBctcPdfPaths` token-matches 14 rows → 17 on-disk PDFs + all-rows LIST + secondary OCR join (`69da9d01`). QA re-verify on REAL `market.db`: count=14, 12 has_pdf, 14 has_ocr, 7 decimal-shift flags; VNM real PDF rendered LEFT + Vietnamese OCR + decimal-shift banner RIGHT (`3098c69d`). PASS.
 
-3. **The one genuine UNKNOWN architect MUST resolve (do NOT let dev guess) — PDF→file mapping.** `pdf_documents.url` stores the VPS SOURCE URL, not a local `/app/data/pdfs/<file>` path. So: how does a registered doc id map to its on-disk PDF for the LEFT pane? Architect picks ONE of: (a) the local PDF file already exists in `/app/data/pdfs/` under a derivable name → list/serve from there; (b) only the JSON extraction exists locally and the PDF must be re-fetched from `url` on demand; (c) the list is the set of `/app/data/pdfs/*.pdf` files joined to extractions by a deterministic id. Architect grounds this in the REAL on-disk layout (read-only inspect of the volume / repositories) and writes it down. The list endpoint, the PDF-bytes endpoint, and the join key all depend on this.
+**Corrected done-condition (supersedes premature close):** "DONE" = the served viewer renders REAL rows from the deployed container's `market.db` (verified row count + non-null-rate of relied-upon columns), NOT fixtures, NOT schema-existence.
 
-4. **"Extracted text/fields" semantics (Data-Source ruling — architect confirms).** Default RIGHT pane = this service's own extraction (`text_content` + `tables`), because this service owns extraction and the user's primary intent (does the extractor read the PDF correctly?) is satisfied by it. The downstream parsed financial figures (the literal `net_profit=0.000051`) live in mcp-server's BCTC DB. Architect decides whether the user-meaningful comparison needs those parsed figures too; if yes, ONE read-only mcp-server SELECT-only route is permitted (precedent: G5 / NF-LD-2 already established exactly-one mcp-server read-route is allowed for an HTTP boundary). If the in-service `text_content`/`tables` already let the user eyeball quality, keep it single-zone.
+**User-facing URL (LIVE NOW):** `http://localhost:3000/api/bctc-inspect` (mcp-server rebuilt from `69da9d01`; container running). The old `localhost:15001/inspect` (and the pdf-extractor `localhost:5001/inspect`) are fixture-only/deprecated.
 
-5. **SI-2 boundary (binding).** This inspector is a DIFFERENT surface from the sandbox trace dashboard. Decide its OWN location/route (e.g. a `viewer/` dir or an `/inspect` route — architect picks), keep an SI-2 boundary comment, and do NOT merge into `docs/dashboards/index.html` (stock-price exclusive) nor the sandbox `dashboard/index.html`.
+**Out-of-scope follow-ups (surfaced, non-blocking):** (i) pipeline defect `fetchParseAndStoreBctc.ts:645 tryNewsChainFallback` inserts `pdfPath:null` even when a PDF exists — dev-mcp-server pipeline task; (ii) `pdf_extractor.db` polluted with 15,570 test rows in the prod volume — ops/dev cleanup.
 
-6. **Security-Clause distinction (binding, must stay explicit).** The zero-credential SANDBOX (Security Clause) is unchanged and untouched. THIS viewer is a REAL served surface that legitimately reads the PDF store + the extraction DB/JSON inside the container — that DB/file access is BY DESIGN and is NOT a Security-Clause violation. Every agent in the chain keeps this distinction explicit so no one confuses the inspector's legitimate read access with the sandbox's zero-credential rule. (The inspector is served by the app process, which already has `/app/data` access; the sandbox is a separate credential-free runner.)
-
-## PO Rulings (binding — propagate to every agent)
-
-- **R1 — Delivery model:** Served FastAPI viewer. NOT `file://`. (Fork resolved per reality #1.)
-- **R2 — dev-frontend NOT in scope.** A minimal correct viewer (pdf.js for the left, a clean text/table render on the right) is well within dev-pdf-extractor's zone and avoids a cross-zone handoff. dev-pdf-extractor builds the viewer page itself. If a richer UI is later wanted, that's a separate follow-on.
-- **R3 — Read-only inspector this sprint.** No edit/correct-from-viewer.
-- **R4 — Single zone default.** `apps/pdf-extractor/` only. A second zone (one mcp-server read-route) is allowed ONLY if architect proves it required by reality #4; if added, it is SELECT-only/read-only and dev must unstage any other mcp-server file.
-- **R5 — Acceptance under user's real path (L9).** QA must verify the served-URL-in-browser path with PDF-left/text-right rendering — NOT only a test convenience server. Bake into PI-3.
-- **R6 — pilot frozen.** Do not touch `pilot-status-pdf-extractor.json`, the sandbox runner, `traces.js`, the 3 sandbox panels, or `trust-contract.spec.js`.
-
-## Binding constraints (Day-0, verbatim — every agent)
-
-- Zone: `apps/pdf-extractor/` (+ at most ONE read-only mcp-server route IF architect proves required per R4).
-- Explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`. No `--force` / `--no-verify` / `--no-gpg-sign`. Do NOT `git push` (user owns push). All work on `main` (NO branches).
-- Heavy fleet commit-race active this session: each committer stages ONLY its explicit files and verifies `git show --stat HEAD` has nothing foreign before/after commit.
-- Never ask the user to run code/deploy — spawn the right agents. PO decides and continues.
-- Honest-degrade: viewer never fabricates a PDF render or extracted content; missing data shows an explicit message.
+**Meta-lesson (3 straight defects, same root):** for any data-bound feature, BOTH the design AND the QA gate must be validated against a live sample of the REAL store — real row counts AND null-rates of the columns relied upon AND the ingest path that populated the current rows — not schema-existence or seeded fixtures. Same family as the file:// L9 lesson (verify under the user's REAL path). Pilot UNTOUCHED — pdf-extractor SCALE pilot stays DONE 12/12 frozen; `pilot-status-pdf-extractor.json` not edited.

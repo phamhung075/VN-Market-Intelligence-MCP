@@ -1,0 +1,59 @@
+{
+  "from": "po",
+  "to": "main-terminal",
+  "type": "sprint-signoff",
+  "priority": "high",
+  "createdAt": "2026-05-24T19:36:04Z",
+  "sprint": "PDF-INSPECT",
+  "verdict": "DONE-RATIFIED-ON-REAL-DATA",
+  "supersedes": {
+    "signal": "docs/signals/po-20260524T174710Z.json",
+    "reason": "premature first close was proven on FIXTURES (local uvicorn localhost:15001), not the deployed real-data path; reopened TWICE on real-data defects"
+  },
+  "correctedDoneCondition": "served viewer renders REAL financial_reports/pdf_extracted_text rows from the deployed container's market.db (verified row count + non-null-rate of relied-upon columns), NOT fixtures, NOT schema-existence",
+  "userAcceptanceMet": "select a real doc -> original PDF LEFT + extracted text/OCR RIGHT side-by-side; VNM decimal-shift bug (OCR net_profit 0.0001 vs API 2,840,370 M VND) visible BY EYE beside the rendered real PDF (the literal user intent)",
+  "userFacingUrl": "http://localhost:3000/api/bctc-inspect",
+  "liveNow": true,
+  "deployNote": "mcp-server rebuilt from commit 69da9d01 (QA this cycle); container running on port 3000",
+  "zoneMigration": "apps/pdf-extractor/ -> apps/mcp-server/ (real BCTC data lives in mcp-server's market.db, not pdf_extractor.db)",
+  "implOwnerMigration": "dev-pdf-extractor -> dev-mcp-server",
+  "commitTrail": {
+    "premature_first_close": "97cd5763 (PI-EXIT, fixture-only) over impl 4651c080 + QA 0d10f310",
+    "reopen1_architect": "8f7b54fa",
+    "reopen1_dev": "1b5799fb",
+    "reopen1_qa_changes_requested": "127cb347",
+    "reopen2_architect": "0245ff4c",
+    "reopen2_dev": "69da9d01",
+    "reopen2_qa_pass": "3098c69d"
+  },
+  "qaRealDataEvidence": {
+    "docs_count": 14,
+    "has_pdf_true": 12,
+    "has_ocr_true": 14,
+    "anomaly_decimal_shift": 7,
+    "vcb_left_null_by_zero_guess_ambiguity": 2,
+    "tests": 64,
+    "tsc": "0 errors",
+    "screenshot": "/tmp/qa-reopen2-verified.png",
+    "safety": "PASS (UUID-400, traversal-404, doc_not_found-404)",
+    "writeSafety": "PASS (UPDATE pdf_path only, idempotent guard, no INSERT/DELETE)",
+    "regression": "PASS (frozen pdf-extractor dashboard + pilot-status-pdf-extractor.json empty diff; 0 PI3 regressions)"
+  },
+  "pilotFreeze": "pdf-extractor SCALE pilot stays DONE 12/12 verdict=scale; pilot-status-pdf-extractor.json NOT edited (PO-only; inspector is a dev tool, not a pilot task)",
+  "metaLesson": "For any data-bound feature, BOTH the design AND the QA gate MUST be validated against a live sample of the REAL store — real row counts AND null-rates of the columns relied upon AND the ingest path that populated the current rows — not schema-existence or seeded fixtures. Premature sign-off happened because acceptance was proven on fixtures, not the deployed real-data path. Same family as file:// lesson L9 (verify under the user's REAL path).",
+  "outOfScopeFollowups": [
+    {
+      "id": "i",
+      "owner": "dev-mcp-server",
+      "type": "pipeline-defect",
+      "detail": "fetchParseAndStoreBctc.ts:645 tryNewsChainFallback() hardcodes pdfPath:null even when a matching PDF exists on disk; new news-inference rows keep entering with pdf_path=NULL until the fallback path scans for an existing on-disk PDF (findExistingPdf) at insert time"
+    },
+    {
+      "id": "ii",
+      "owner": "ops",
+      "type": "prod-data-pollution",
+      "detail": "pdf_extractor.db holds 15,570 status=failed/example.com test rows leaked into the production market_data volume during SCALE-pilot factory runs; truncate/clean (zero impact on inspector, which reads market.db)"
+    }
+  ],
+  "pipeline": "complete"
+}
