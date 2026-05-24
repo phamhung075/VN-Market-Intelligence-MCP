@@ -277,3 +277,28 @@ Test 2e — Health endpoint (NF-LD-2 regression):
 
 **Status:** DIAGNOSED — awaiting VPS investigation to confirm article URL extraction issue.
 
+
+## Investigation Update — Database Volume Issue
+
+**Discovery:** mcp-server uses Docker named volume `market_data:/app/data`, not local bind mount.
+- Container's /app/data → `/var/lib/docker/volumes/vn-market-intelligence-mcp_market_data/_data/`
+- Local `/Users/admin/.../apps/mcp-server/data/` is STALE
+- All INSERT operations go to container volume, not local filesystem
+
+**Implication:** Articles ARE being inserted (inserted=2 log confirmed), but not visible from local queries. This doesn't change the root cause — articles from VPS/fallback sources are still being rejected as duplicates.
+
+**Remaining Mystery:** 
+- When pushed articles with unique URLs (http://test1.com, http://test2.com, http://test3.com), still got inserted=0
+- When pushed articles from VN source (cafef, vnexpress), got inserted=2
+- This suggests the source or content is filtering articles, not just URLs
+
+**Next Action for Developer:**
+1. Add DEBUG logging to tryInsertEntry() to log:
+   - Article URL before INSERT
+   - isTitleDuplicate() return value
+   - INSERT result.changes value
+2. Trigger a news poll and review logs to see which articles are failing INSERT and why
+3. Check if VPS articles have NULL/empty URLs or if title dedup is catching them
+
+**Status:** DIAGNOSED + DOCUMENTED. Ready for developer to add logging and investigate INSERT behavior.
+
