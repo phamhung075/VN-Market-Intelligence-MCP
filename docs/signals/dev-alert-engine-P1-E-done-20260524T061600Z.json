@@ -4,7 +4,7 @@
   "task": "P1-AE-E",
   "title": "Edit-Rerun Handler + G7 ZERO-CREDS All 4 Sub-Gates",
   "status": "DONE",
-  "commit_sha": "PENDING",
+  "commit_sha": "4e756d40",
   "scope_confirm": [
     "apps/alert-engine/dashboard/index.html"
   ],
