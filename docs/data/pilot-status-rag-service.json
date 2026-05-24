@@ -2,10 +2,12 @@
   "pilot": "rag-service",
   "charterRef": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md",
   "charterVersion": "scale-1.0 (thin charter → canonical pilot-charter.md G1–G12)",
-  "status": "PENDING",
+  "status": "ACTIVE",
   "_status_enum": "[FIXED] Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision. No other values.",
   "openedAt": "2026-05-24T06:49:21Z",
   "openedBy": "po cycle-70 (SCALE pre-step — fleet status file instantiated from pilot-status-schema.json; PENDING until architect opens Phase 0 / factory charter)",
+  "activatedAt": "2026-05-24T07:18:44Z",
+  "activatedBy": "po cycle-71 — user /goal directive: deliberate rag-service SCALE pilot kickoff. Phase 0 opened, G1-G12 calibrated for Python/rag-service. DONE criteria (verbatim): pilot-status reads 12/12 YES + dashboard honest-green + sandbox env audit empty.",
   "closedAt": null,
   "_closedAt_note": "[DERIVED] Populated at terminal close (12/12 YES + decisionMatrix). Null during ACTIVE.",
   "closedBy": null,
@@ -14,24 +16,24 @@
   "_closureSignal_note": "[DERIVED] Path to closure signal JSON. Null during ACTIVE.",
   "closureDecisionDoc": null,
   "_closureDecisionDoc_note": "[DERIVED] Path to PO decision doc for closure (if authored). Null during ACTIVE or if inline.",
-  "sprintKickoff": "TBD",
-  "sprintDeadline": "TBD",
+  "sprintKickoff": "2026-05-24",
+  "sprintDeadline": "2026-07-05",
   "deadline": "kickoff + 6 sprints",
   "language": "Python",
   "languageLockSource": "stays Python — sentence-transformers/LanceDB ML ecosystem constraint overrides Go-first default (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "pre-0",
+  "phase": "0",
   "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
   "phase0": {
-    "status": "PENDING",
+    "status": "OPEN",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T07:18:44Z",
+    "openedBy": "po cycle-71 — user /goal directive: rag-service SCALE pilot Phase 0 opened. Phase 0 deliverables dispatched (brownfield+phase-1-plan → architect; dev agent/flow G12-gate → agent-father).",
     "closedAt": null,
     "closedBy": null,
-    "owner": "TBD — architect (factory charter + brownfield) + agent-father (dev agent/flow) at kickoff",
+    "owner": "architect (brownfield inventory + bug-inventory entry + Phase 1 task plan) + agent-father (dev-rag-service agent verify + flow G12-gate bake)",
     "deliverables": {
-      "_note": "PENDING — architect instantiates a per-service factory charter dir (pattern: docs/architecture-briefs/<date>-<svc>-factory/) at kickoff, mirroring alert-engine pilot-5. Thin scale charter at .charterRef captures interim deltas/risks.",
+      "_note": "SCALE MODEL — thin charter only (docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md). NO per-service factory dir spin-up (unlike macro pilot-2). Thin charter captures deltas + Key risks; canonical G1-G12 inherited verbatim from docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md. Brownfield inventory + Phase 1 task plan land as standalone briefs under docs/architecture-briefs/2026-05-22-refactor/scale/ or docs/handoffs/ per architect choice.",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
       "brownfield_inventory": "PENDING",
@@ -97,7 +99,7 @@
       "_verifiedBy_note": "[DERIVED] Agent + cycle that verified. Null until YES.",
       "evidence": null,
       "_evidence_note": "[DERIVED] Evidence chain populated at flip. Links: commit SHAs, signal paths, AC results, sandbox counts.",
-      "calibration": "<SERVICE:service-specific expected primitive count, module name, scenario count structure — e.g. '5-7 Go primitives in pkg/primitive/; each has ≥3 scenarios (golden + edge + failure).'>",
+      "calibration": "Python: 5 candidate primitives as pure functions/modules in apps/rag-service/domain/primitive/ (or pkg-equivalent): chunk-splitter, similarity-scorer, top-k-selector, context-window-packer, relevance-threshold-gate. Each ≥3 scenario JSON (golden + edge + failure). DETERMINISM GATE: scenarios feed PRE-COMPUTED embedding vectors as inputs — ZERO sentence-transformers model load, ZERO LanceDB access. Fixed vectors + pinned ranking (no float/ANN jitter). Sandbox runner: Python (`python -m sandbox --tier=primitive --service=rag-service` or equivalent) — shares Python sandbox-runner tooling gap with pdf-extractor (G1 prerequisite). Min 15 scenario files (3×5), ≥1 failure scenario.",
       "phase2Bucket": null
     },
     {
@@ -108,7 +110,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:module name(s), port/DI pattern, expected primitive wire count, sandbox scenario count>",
+      "calibration": "Python: `retrieval` module composes the 5 primitives via ports/DI (Protocol-based interfaces or constructor injection — Python equivalent of Go ports). Module imports primitives via interface only, never reaches into adapters (embedding model, LanceDB) directly. ≥1 multi-primitive scenario (story exercising ≥2 primitives in sequence, e.g. chunk-split → score → top-k → pack). Fence-B: module does NOT import infrastructure/embedding/db. Embedding + LanceDB are ADAPTERS injected at composition root, NOT wired inside the module. Sandbox: `--tier=module`.",
       "phase2Bucket": null
     },
     {
@@ -119,7 +121,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:cmd/server/main.go ≤80 lines; OpenAPI YAML present; zero domain op grep. Port number = service port from system-map.json.>",
+      "calibration": "Python: apps/rag-service/main.py is the composition root — wires `retrieval` module + adapters (embedding model loader, LanceDB client) via DI. ≤80 lines of wiring (imports + DI bindings + FastAPI/uvicorn startup only). NO business logic: zero chunking/scoring/ranking math in main.py. OpenAPI present (FastAPI auto-generates /openapi.json — capture as the HTTP contract; verify schema for retrieval endpoints). Port 5002 (from system-map.json). Grep: zero domain ops (similarity_score, top_k, chunk_split, pack_context) in main.py.",
       "phase2Bucket": null
     },
     {
@@ -131,7 +133,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:fence tool (depguard for Go / ESLint for TS / per-SI-4 for Python), CI job name, working-directory, pre-revert tag name, deliberate-violation protocol reference (Fence-A violation proven + reverted + never committed)>",
+      "calibration": "Python fence (per SI-4 — Python is FIRST Python pilot to need fence; SI-4 decision is a Phase 0/early-Phase prerequisite, GATE before G4 AC locked): fence tool = import-linter (contracts in pyproject.toml / .importlinter) OR ruff banned-import rules — architect to select in brownfield + SI-4. CI job = rag-service-py-lint, working-directory=apps/rag-service. Fence-A: primitive imports zero application/infrastructure/interface. Fence-B: module imports zero infrastructure (embedding/LanceDB adapters). Pre-revert tag: rag-pre-ci. Deliberate-violation protocol: inject Fence-A violation → CI fails → revert → never committed (proven by QA independent reproduction). GATE NOTE: SI-4 Python-fence design must land before G4 AC can be locked (mirrors SI-3 gate for TS pilots).",
       "phase2Bucket": null
     },
     {
@@ -143,7 +145,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:port number from system-map.json; MCP tools affected (list); pre-delete tag name; _deprecated/ target path in apps/mcp-server/src/>",
+      "calibration": "Port 5002 (system-map.json). NOTE: rag-service is ALREADY a clean standalone Python service (not legacy TS embedded in mcp-server like macro/TA) — G5 here is primarily G5b (verify MCP tool handlers route HTTP to port 5002, zero direct domain imports) + G5c (zero TODO.*migrat). G5a (move legacy → _deprecated/) likely N/A or minimal — architect brownfield MUST confirm: (1) which MCP tools call rag-service (embeddings/semantic-search/RAG retrieval), (2) whether any bypass HTTP via direct Python import or shared-DB access, (3) any dead/duplicate retrieval logic in mcp-server to deprecate. Pre-delete tag: rag-pre-delete (only if G5a applies). _deprecated/ target: apps/mcp-server/src/ if legacy found.",
       "phase2Bucket": null
     },
     {
@@ -155,7 +157,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:dashboard path (apps/<svc>/dashboard/index.html), expected panel count (primitives + module + microservice), file:// works with zero network calls>",
+      "calibration": "Dashboard path: apps/rag-service/dashboard/index.html. 3 panels: Primitives (5 cards: chunk-splitter, similarity-scorer, top-k-selector, context-window-packer, relevance-threshold-gate), Module (retrieval), Microservice (rag-service). Renders from JSON traces via file:// — ZERO network calls, no CDN, no build pipeline. Clone TA/macro/kinh-dich dashboard pattern. file:// open works with zero embedding-model / LanceDB access (pure JSON trace render).",
       "phase2Bucket": null
     },
     {
@@ -166,7 +168,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:env audit forbidden key list (include any service-specific API keys such as FRED_API_KEY, plus standard DB/SECRET/PASSWORD); sandbox runner command pattern; edit-rerun handler type (rerun-handler.js for Go/TS, equivalent for Python)>",
+      "calibration": "CRITICAL for rag-service (Security Clause is the hardest gate here). Env audit forbidden keys: standard DB_/SECRET/TOKEN/PASSWORD/API_KEY PLUS service-specific: LANCEDB_*, HF_TOKEN, HUGGINGFACE_*, OPENAI_API_KEY (any embedding-provider key), DATABASE_URL pointing at rag_service.db. Sandbox MUST run scenario JSON with ZERO model load + ZERO LanceDB access — embeddings are PRE-COMPUTED fixed vectors fed as scenario inputs. Keep HF_HUB_OFFLINE=1 / pre-baked model cold-start hardening intact (do NOT regress). Sandbox runner command: Python `python -m sandbox --tier=primitive --scenario=<file>` (shared Python runner with pdf-extractor). Edit-rerun handler: rerun-handler.js Python equivalent (static dashboard JS reading regenerated trace JSON). Env audit: `env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD|LANCEDB|HF_|HUGGINGFACE'` returns empty in sandbox process — this is the GOAL's explicit DONE criterion (sandbox env audit returns empty).",
       "phase2Bucket": null
     },
     {
@@ -177,7 +179,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:Test A = deliberate corruption of golden scenario → dashboard RED; Test B = known golden → dashboard GREEN. Pattern identical across all pilots.>",
+      "calibration": "Test A = deliberately corrupt a golden scenario (e.g. wrong expected top-k ordering or wrong similarity score) → dashboard card RED. Test B = known-good golden scenario → dashboard GREEN. Plus 5 known-bad scenarios all show RED (no false greens). Determinism note: corruption must be on PINNED expected outputs against FIXED input vectors — no ANN/float jitter allowed to muddy red/green. Pattern identical across all pilots.",
       "phase2Bucket": null
     },
     {
@@ -189,7 +191,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:verification path (Path A or Path B); Playwright headless command if Path B; trust-contract VERDICT fields to capture>",
+      "calibration": "Path B (PO Playwright headless) — Day-0 default per L6 carry-over (TA cycle-19 + macro cycle-53 + kinh-dich precedent). Playwright headless command opens file://apps/rag-service/dashboard/index.html, asserts 3 panels render + 5 primitive cards + correct red/green states from trace JSON. Trust-contract VERDICT fields: panels_rendered, primitive_cards_count, module_card, microservice_card, console_errors=0, network_calls=0. Path A (user verbal) fallback only if user available at pilot review.",
       "phase2Bucket": null
     },
     {
@@ -201,7 +203,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:baseline cycle count from bug-inventory.json entry for this service; max_cycles_allowed=2; inject 1 deliberate single-literal bug in a primitive, measure cycles to GREEN>",
+      "calibration": "Baseline cycle count from docs/data/bug-inventory.json rag_service_baseline entry (Phase 0 deliverable — architect captures; expect system-wide fallback ~1.3-1.5 unless rag-specific bugs found in 60d window). max_cycles_allowed=2. Inject 1 deliberate single-literal bug in a primitive (e.g. off-by-one in top-k-selector, wrong comparator in similarity-scorer, wrong window-size literal in context-window-packer). dev-rag-service must reach dashboard-GREEN in ≤2 cycles. Determinism gate makes this measurable (fixed vectors → deterministic red→green).",
       "cycle_count": null,
       "max_cycles_allowed": 2,
       "phase2Bucket": null
@@ -213,8 +215,8 @@
       "status": "TBD",
       "verifiedAt": null,
       "verifiedBy": null,
+      "calibration": "2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 primitive mutation + fix (e.g. similarity-scorer). Trial-2 = DIFFERENT primitive mutation + fix (e.g. top-k-selector or context-window-packer). Both must show ≥1 COUPLED scenario RED (a module-level retrieval scenario that consumes the mutated primitive flips red) + single-edit fix restores green. Outcome-(a) × 2 = PASS. Coupling candidate: chunk-splitter output feeds similarity-scorer feeds top-k — a single primitive break ripples to module retrieval golden scenario.",
       "evidence": null,
-      "calibration": "<SERVICE:2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix. Trial-2 = DIFFERENT primitive mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS per rubric.>",
       "phase2Bucket": null
     },
     {
@@ -227,7 +229,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:streak tasks = first-primitive task + module stub task + dashboard stub task (Phase 1 B/C/E bucket pattern). Rule effective after Phase 0 agent-father flow commit.>",
+      "calibration": "Streak tasks = first-primitive task (B bucket — e.g. similarity-scorer) + module stub task (C bucket — retrieval module thin composition) + dashboard stub task (E bucket — 3-panel honest NOT-RUN). Phase 1 B/C/E bucket pattern mirroring macro P1-B1/C1/E1. G12 DoD gate (sandbox-green-before-RETURN, env-audit-empty) baked into .claude/flows/dev-rag-service/main.md Day 0 by agent-father. Rule effective after Phase 0 agent-father flow commit (currently flow is thin pointer → developer/microservice-main.md with NO G12 gate; agent-father must add an explicit rag-specific DoD gate or wire it into the shared flow such that dev-rag-service enforces it).",
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
