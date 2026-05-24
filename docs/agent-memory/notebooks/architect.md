@@ -1,8 +1,44 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 05:30 UTC (alert-engine pilot-5 Phase-1 task plan) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 06:26 UTC (alert-engine pilot-5 Phase-2 task plan) | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## alert-engine Phase-2 task plan cycle (2026-05-24T06:26Z) — fleet pilot 5 Phase 2 dispatch
+
+**Task:** Author alert-engine Phase-2 atomic task plan (Go) for fleet pilot 5. Inbound: PM signal `pm-alert-engine-phase1-closed-20260524T082000Z.json` (Phase 1 DONE, all 5 gate criteria PASS, gateCommit 4e756d40). Structural template: stock-price `phase-2-task-plan-go.md` + kinh-dich `phase-2-task-plan-ts.md`.
+
+**Key decisions:**
+- 14 atomic tasks (P2-A through P2-Z), 69 ACs. WIP=1 sequential.
+- G4 fence (4 tasks): P2-A (alert-engine-pre-ci tag) → P2-B (.golangci.yml Fence-A/B/C depguard + CI job) → P2-C (deliberate-violation proof — BLOCKER if linter exits 0 on violation) → P2-D (freeze anchor AC-4c). R-FENCE gate = P2-C: non-zero exit with "fence-a" in output REQUIRED.
+- G5 chain (3 tasks): P2-E (alert-engine-pre-delete tag) → P2-F (git mv domain/services.go → _deprecated/ + evaluate.go rewire) → P2-G (HTTP-port audit + zero-migrat). G5b scope NARROW: alertEngine URL already declared in clients.ts; no direct Go domain imports from TS mcp-server possible.
+- G3 composition root (P2-H): rewire cmd/server/main.go to wire alert_pipeline module ports instead of EvaluateAlertUseCase calling domain functions directly. Add api/openapi.yaml. Root currently 95 lines, target ≤120.
+- G6 finalization (P2-I): add _deprecated/ notice + Phase-2 wired-state to dashboard. SI-2 disavowal comment stays untouched.
+- G8 honest-red proof (P2-J): QA corrupts cooldown-gate-golden.json → non-zero sandbox exit + RED card confirmed → reverted → GREEN confirmed.
+- G9 PO Playwright (P2-K): Path B Day-0 default (L6). chromium-headless-shell against file:// dashboard.
+- G10/G11 blind split: P2-L (QA injection — target redacted from fixer) → P2-M (dev-alert-engine blind fix from symptoms ≤2 cycles + G11 2-trial coupling proof). Recommended injection target: dedup-key-builder djb2 seed 5381→5382.
+- Pre-revert tags: alert-engine-pre-ci (P2-A) → alert-engine-pre-delete (P2-E) → alert-engine-pre-inject (P2-L).
+- §4.5 compliance baked: NO goal flip instructions in any task. goalsEarned stays 0. decisionMatrix all TBD. Explicit §4.5 compliance section in plan.
+
+**G-goal posture:**
+- EARNED-PENDING (carry-forward, no Phase-2 task): G1, G2, G7, G12
+- EARNED-PENDING advancing: G6 (P2-I finalization), G8 (P2-J honest-red proof)
+- STILL-UNMET → Phase-2 work: G3 (P2-H), G4 (P2-A/B/C/D), G5 (P2-E/F/G), G9 (P2-K), G10 (P2-L/M), G11 (P2-M)
+- goalsEarned: stays 0 throughout Phase 2. PO-only at 12/12 terminal Phase 3.
+
+**ZERO-CREDS + CGO baseline (Phase-1 confirmed, Phase-2 carries forward):**
+- env audit empty; sandbox source grep=0; CGO_ENABLED=0 build exit 0; edit→rerun cycle works.
+- G7 EARNED-PENDING. No Phase-2 task re-earns it. P2-Z AC-6 re-confirms.
+
+**Files authored this cycle (L84 — 2 files):**
+1. `docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-2-task-plan-go.md` (NEW)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal to emit after commit:** `docs/signals/architect-alert-engine-phase2-plan-done-<UTC>.json` (next_actor: pm)
+
+**Anchor:** debba8eaff0724d1fb32fc9d28640201cc32d1cc — INTACT (verified before commit)
+
+---
 
 ## alert-engine Phase-1 task plan cycle (2026-05-24T05:30Z) — fleet pilot 5 Phase 0 deliverable D6
 
