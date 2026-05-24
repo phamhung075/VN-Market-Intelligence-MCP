@@ -231,9 +231,10 @@
     "taskSequence": ["P2-A","P2-B","P2-C","P2-D","P2-E","P2-F","P2-G","P2-H","P2-I","P2-J","P2-K","P2-L","P2-M","P2-Z"],
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-G",
+    "current_task": "P2-H",
     "current_task_status": "READY",
-    "current_task_handoff": "docs/handoffs/TASK_P2-G.md",
+    "current_task_owner": "dev-stock-price",
+    "current_task_handoff": "docs/handoffs/TASK_P2-H.md",
     "tasks": {
       "P2-A": {
         "id": "P2-A",
@@ -344,34 +345,59 @@
         "blocked_by": "P2-E (DONE)",
         "blocks": "P2-G",
         "ac_count": 6,
-        "ac_verdicts": "AC-1 PASS (git mv confirmed—services_v1.go + services_v1_test.go in _deprecated/), AC-2 PASS (grep ResolvePriceService in usecases.go=0), AC-3 PASS (go build ./... exit 0), AC-4 PASS (golangci-lint 0 issues, .golangci.yml freeze anchor d5ce886e intact), AC-5 PASS (sandbox 11/11 PASS), AC-6 PASS (both deprecated files present with //go:build ignore)",
+        "ac_verdicts": "AC-1 PASS (git mv completed—services_v1.go + services_v1_test.go in _deprecated/, original paths deleted via remediation 399afe54), AC-2 PASS (grep ResolvePriceService in usecases.go=0), AC-3 PASS (go build ./... exit 0), AC-4 PASS (golangci-lint 0 issues, .golangci.yml freeze anchor d5ce886e intact), AC-5 PASS (sandbox 11/11 PASS), AC-6 PASS (both deprecated files present with //go:build ignore)",
         "commit_sha": "6225f926",
+        "remediation_commit": "399afe54 (committed dangling deletion of services.go/services_test.go stranded by index race during P2-F)",
         "implementation_notes": [
           "Deprecated files carry //go:build ignore to prevent circular imports (standard Go archival pattern)",
           "PriceResolverPort interface defined in pkg/application/ — NOT a fence violation",
           "usecases_test.go + router_test.go updated to use mockResolver (no domain.NewResolvePriceService references)",
-          "cmd/server/main.go composition root wires priceresolution.New(tier1, tier2, tier3) directly"
+          "cmd/server/main.go composition root wires priceresolution.New(tier1, tier2, tier3) directly",
+          "AC-1 truthful at HEAD: git ls-tree -r HEAD -- apps/stock-price/pkg/domain/ shows ONLY _deprecated/services_v1.go, _deprecated/services_v1_test.go, models.go, ports.go (no orphaned services.go/services_test.go)"
         ],
         "anchor_verified": true,
         "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
         "fence_status_post_move": "Fence-A/B CLEAN, Fence-C INTACT (mattn/go-sqlite3 injection point cmd/server/main.go)",
-        "description": "G5a git mv operations: move pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go + services_test.go → services_v1_test.go; rewire FetchPriceUseCase to call price_resolution module instead of ResolvePriceService. Fence-A/B remain clean post-move. Sandbox all-green before DONE.",
+        "description": "G5a git mv operations: move pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go + services_test.go → services_v1_test.go; rewire FetchPriceUseCase to call price_resolution module instead of ResolvePriceService. Fence-A/B remain clean post-move. Sandbox all-green before DONE. AC-1 correction: original paths deletion now committed (399afe54), AC-1 is now truthful against HEAD.",
         "handoff": "docs/handoffs/TASK_P2-F.md",
         "verifiedBy": "pm",
-        "verifiedAt": "2026-05-24T02:40:59Z"
+        "verifiedAt": "2026-05-24T02:40:59Z",
+        "ac1_corrected_at": "2026-05-24T02:50:00Z",
+        "ac1_corrected_by": "pm"
       },
       "P2-G": {
         "id": "P2-G",
         "title": "G5b/G5c — MCP handler HTTP-port audit + zero TODO.*migrat verification",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T02:40:59Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T00:44:37Z",
+        "completedBy": "qa",
         "owner": "qa",
         "blocked_by": "P2-F (DONE 2026-05-24T02:37:46Z)",
         "blocks": "P2-H",
         "ac_count": 5,
+        "ac_verdicts": "AC-1 PASS (zero direct stock-price domain imports in mcp-server market-data tools), AC-2 PASS (HTTP client port 5000 confirmed in clients.ts, 4 matches), AC-3 PASS (zero TODO.*migrat markers in stock-price + mcp-server), AC-4 PASS (zero TODO.*migrat in _deprecated/ archival files), AC-5 PASS (evidence file + signal emitted)",
         "description": "G5b/G5c audit: (1) verify zero direct stock-price domain imports in mcp-server tools, (2) confirm HTTP client at port 5000, (3) zero TODO.*migrat markers, (4) _deprecated/ free of TODO.*migrat, (5) emit G5 evidence signal. Read-only audit + signal emit. No code changes.",
-        "handoff": "docs/handoffs/TASK_P2-G.md"
+        "handoff": "docs/handoffs/TASK_P2-G.md",
+        "evidence_file": "docs/handoffs/TASK_P2-G-sp-g5-evidence.md",
+        "signal": "docs/signals/qa-sp-P2-G-g5-evidence-done-20260524T004437Z.json",
+        "g5_ready_to_grade": "YES",
+        "verifiedBy": "pm",
+        "verifiedAt": "2026-05-24T02:50:00Z"
+      },
+      "P2-H": {
+        "id": "P2-H",
+        "title": "G3 — composition root cleanup + OpenAPI contract",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:50:00Z",
+        "readyBy": "pm",
+        "owner": "dev-stock-price",
+        "blocked_by": "P2-G (DONE 2026-05-24T00:44:37Z)",
+        "blocks": "P2-I",
+        "ac_count": 6,
+        "description": "G3 composition root cleanup: ensure cmd/server/main.go is pure wiring (no business logic), wire price_resolution module, inject CGO SQLite fetcher as TierFetcher infra impl (Fence-C). Create OpenAPI contract documenting all HTTP endpoints.",
+        "handoff": "docs/handoffs/TASK_P2-H.md"
       }
     }
   },
