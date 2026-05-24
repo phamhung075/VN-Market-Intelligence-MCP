@@ -1,0 +1,14 @@
+{
+  "task": "P2-A",
+  "tag": "alert-engine-pre-ci",
+  "tagged_sha": "4d5b2f754aa1782e870acd633abc7f316593a08e",
+  "anchor_intact": true,
+  "next_actor": "pm",
+  "ac_1": "PASS — git log --oneline alert-engine-pre-ci returns 4d5b2f75 (HEAD, a commit after Phase-1 anchor d6eab5bf); no --force, no push",
+  "ac_2": "PASS — git tag | grep alert-engine-pre-ci returns alert-engine-pre-ci",
+  "ac_3": "PASS — git log --oneline --ancestry-path debba8eaff0724d1fb32fc9d28640201cc32d1cc..HEAD | tail -1 returns non-empty (df7d3d7a)",
+  "committed_files": ["docs/signals/dev-ae-P2-A-done-20260524T063946Z.json"],
+  "pushed": false,
+  "forced": false,
+  "emitted_at": "2026-05-24T06:39:46Z"
+}
