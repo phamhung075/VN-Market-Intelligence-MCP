@@ -1,0 +1,103 @@
+{
+  "agent": "pm",
+  "timestamp": "2026-05-24T05:15:00Z",
+  "cycle": "kinh-dich-P1-F-verified-P1-G-dispatch",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "decision": "P1-F VERIFIED DONE, P1-G dispatched",
+
+  "p1_f_verdict": {
+    "task_id": "P1-F",
+    "status": "DONE",
+    "commits": ["43158e5c", "3114adf7"],
+    "completion_time": "2026-05-24T05:10:00Z",
+    "owner": "dev-kinh-dich",
+    "ac_summary": "6/6 ACS PASS",
+    "ac_verdicts": {
+      "AC-1": "Four functions exported (extractOutcomeScore, extractTrendScore, extractAction, majorityVote) with embedded OUTCOME_SCORES + TREND_SCORE_MAP constant tables; zero cross-layer imports",
+      "AC-2": "Fence-A grep returns zero code imports (one JSDoc comment only); R-FENCE clean",
+      "AC-3": "26 unit tests pass, exit 0; covers all four functions + edge cases",
+      "AC-4": "[sandbox] PASS 12/12 scenarios (0 failed, 0 skipped) — all primitive-tier scenarios including the 3 new reading-scorer JSONs",
+      "AC-5": "Three scenario JSONs created — reading-scorer-golden.json, reading-scorer-edge.json, reading-scorer-failure.json in docs/scenarios/kinh-dich/primitives/",
+      "AC-6": "G12 DoD gate — [sandbox] PASS 14/14 scenarios (0 failed, 0 skipped) confirmed before RETURN block (all tiers: 12 primitives + 2 module)"
+    },
+    "sandbox_verdict": "PASS (14/14 all-tiers)",
+    "contract_discrepancy_noted": "extractAction signature is (actionText: string): string per faithful domain contract at L443, NOT (score: number) as handoff spec stated. Dev correctly preserved authentic domain contract + documented in JSDoc. This is the right call (faithful extraction > mis-specified handoff).",
+    "graphify_note": "skipped — zero-creds env unavailable in Phase 1",
+    "g12_streak_update": "Expanded 5/5 → 6/6 (P1-B1+B2+B3+D+E+F all sandbox-gated)",
+    "phase1_wip": "WIP=1 maintained; P1-F was optional flex task",
+    "precommit_index_check": "CLEAN — zero foreign paths detected before staging"
+  },
+
+  "p1_g_dispatch": {
+    "task_id": "P1-G",
+    "title": "Phase 1 Close-Gate Verification (QA)",
+    "handoff": "docs/handoffs/TASK_P1-KD-G.md",
+    "owner": "qa",
+    "blocked_by": ["P1-F"],
+    "blocks": [],
+    "status": "READY",
+    "dispatch_time": "2026-05-24T05:15:00Z",
+    "ac_count": 6,
+    "ac_summary": [
+      "AC-1: Sandbox all-green (all three tiers: primitive 12/12, module 2/2, all 14/14)",
+      "AC-2: Dashboard ≥90% rendered (6/6 expected cards visible, NOT-RUN honest state, zero console errors)",
+      "AC-3: G12 streak confirmed (6/6 tasks verified for sandbox-green evidence before RETURN)",
+      "AC-4: R-FENCE discovery verified (P1-B1 handoff contains §R-FENCE Discovery section, RECORDED)",
+      "AC-5: Sandbox evidence clean (zero FAIL, zero SKIP, 14/14 PASS, exit 0)",
+      "AC-6: Dashboard honesty verified (cold open NOT-RUN, post-sandbox GREEN)"
+    ],
+    "exit_criteria": {
+      "criterion_1": "Time to first primitive ≤ 4 agent-hours — kinh-dich ~4h",
+      "criterion_2": "Sandbox all-green ([sandbox] PASS 14/14 scenarios, exit 0) — READY TO VERIFY",
+      "criterion_3": "Dashboard ≥90% (expect 6/6 = 100%) — READY TO VERIFY",
+      "criterion_4": "G12 earned (6/6 ≥ 3/3 required) — READY TO VERIFY"
+    },
+    "gate_trigger": "All 4 criteria met → GO verdict (PO dispatches Phase 2); 3 met → CONDITIONAL-GO (cap Phase 2); ≤2 met → NO-GO (re-plan)",
+    "bonus_achievements": [
+      "P1-F shipped (optional 4th primitive, reading-scorer extracted)",
+      "G12 DoD streak 6/6 (vs required 3/3 minimum)",
+      "SI-2 boundary held (kinh-dich dashboard only; stock-price owns fleet index)",
+      "SI-3 R-FENCE discovery recorded for Phase 2 G4 calibration",
+      "Contract-faithful extraction (preserves real domain signatures vs handoff spec)"
+    ],
+    "next_actor": "qa"
+  },
+
+  "ssot_updates": {
+    "file": "docs/data/pilot-status-kinh-dich.json",
+    "changes": [
+      "phase1.tasks.P1-F: READY → DONE (commits 43158e5c + 3114adf7, 6/6 ACs PASS, contract-note + graphify-skip recorded)",
+      "phase1.g12Streak.completed: 5 → 6 (added P1-F task to streak array)",
+      "phase1.g12Streak.completedAt: 2026-05-24T04:30:00Z → 2026-05-24T05:10:00Z",
+      "phase1.current_task: P1-F → P1-G",
+      "phase1.current_task_handoff: TASK_P1-KD-F.md → TASK_P1-KD-G.md",
+      "phase1.progress_notes: appended P1-F completion note with contract discrepancy + graphify-skip + G12 streak 6/6"
+    ],
+    "invariants_preserved": [
+      "goalsEarned = 0 (unchanged; no goals flipped in Phase 1 per charter §4.5)",
+      "decisionMatrix = all TBD (unchanged; no goals reached YES yet; matrix stays empty until 12/12 terminal)",
+      "language = TypeScript (locked Day 0, unchanged)",
+      "no Phase-2 tags created in Phase 1 (correct)",
+      "eslint.config.mjs absent in Phase 1 (correct; Phase 2 only)"
+    ]
+  },
+
+  "dispatch_signal_path": "docs/signals/pm-kd-P1-F-verified-P1-G-dispatch-20260524T051500Z.json",
+  "commit_sha": "will-be-set-after-staging",
+  "commit_message_draft": "chore(pm/kinh-dich): P1-F verified DONE (reading-scorer, G12 streak 6) + P1-G QA close-gate handoff",
+  "handoff_files_created": [
+    "docs/handoffs/TASK_P1-KD-G.md (QA close-gate, 6 ACs, exit criteria + signal emit spec)"
+  ],
+  "ssot_modified": [
+    "docs/data/pilot-status-kinh-dich.json (SSOT — +f task DONE, g12 streak 5→6, current_task P1-F→P1-G, progress_notes +1 entry)"
+  ],
+  "wip_status": {
+    "current": 1,
+    "limit": 1,
+    "enforced": true,
+    "note": "WIP=1 maintained throughout Phase 1. P1-G (QA) can overlap with any prior Dev work per charter (QA read-only), but Phase 1 has only P1-A-P1-F dev work + P1-G QA gate. No Phase 2 spawning until P1-G returns."
+  },
+
+  "ready_for_next": "qa to execute P1-G close-gate verification and emit phase1-close-gate signal"
+}
