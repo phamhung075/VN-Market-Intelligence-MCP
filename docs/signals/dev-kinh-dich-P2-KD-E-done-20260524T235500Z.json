@@ -1,0 +1,23 @@
+{
+  "agent": "dev-kinh-dich",
+  "task_id": "P2-KD-E",
+  "task_title": "Create kinh-dich-pre-delete tag",
+  "status": "DONE",
+  "timestamp": "2026-05-24T23:55:00Z",
+  "evidence": {
+    "tag_created": "kinh-dich-pre-delete",
+    "tag_sha": "fdaf4be356ed555ab531be6ea37cb236b643c824",
+    "tag_exists_locally": true,
+    "anchor_intact": true,
+    "anchor_verification_output": "df7d3d7a chore(pm/stock-price): P0-SP-4 anchor commit + SSOT — Phase 0 complete (5/5 deliverables)",
+    "merge_base_is_ancestor_exit": 0,
+    "tag_pre_existed": false
+  },
+  "ac_verdicts": {
+    "AC-1": "PASS",
+    "AC-2": "PASS",
+    "AC-3": "PASS"
+  },
+  "next_actor": "pm",
+  "next_action": "verify P2-KD-E (kinh-dich-pre-delete tag), then sequence P2-KD-F (G5a git mv domain/services.ts -> src/_deprecated/)"
+}
