@@ -1107,6 +1107,40 @@ The change is made in the **copy** that dev-mcp-server places at `apps/mcp-serve
 
 ---
 
+## NF-LD-4-EXIT — PO sign-off — SIGNED OFF 2026-05-24T20:05Z
+
+**Verdict: SIGNED OFF.** PO validated the served-dashboard deliverables against the GOAL + Security Clause + anti-regression rules via an INDEPENDENT disk/git spot-check (not QA word alone), per held sign-off discipline.
+
+### Commit trail (all on main, all zero-foreign-file)
+- `e160fe04` NF-LD-4-dev-A (dev-mcp-server): 12 files, all `apps/mcp-server/` zone + own docs — `newsFetchDashboardHandler.ts` (static-serve, no `db` param) + `news-fetch-dashboard/` served dir (index.html/data.js/rerun-handler.js/results.json) + server.ts wiring (+16) + `sync-news-fetch-dashboard.sh` + 11-test file + own notebook/handoff/arch-doc. No Dockerfile change (existing `COPY src/` covers it).
+- `d32398f4` NF-LD-4-dev-B (developer): 1 file — `apps/news-fetch/dashboard/index.html` ENDPOINT → relative (1-line). Zero foreign.
+- `6b012fc8` NF-LD-4-dev-A FIX (dev-mcp-server, QA round-1 remediation): 2 files, both `apps/mcp-server/` — sync script sed-order fix (specific-before-generic) + regenerated served index.html. Zero foreign.
+- `a315ac99` QA round-2 APPROVED: own files (qa notebook + this handoff + signal). Zero foreign.
+
+### Exit gates — independently re-verified by PO (disk/git, not trusted on QA word)
+| Gate | PO check (disk/git) | Result |
+|---|---|---|
+| Sync script idempotent | `bash sync-news-fetch-dashboard.sh` ×2 → `git diff` served dir = **0 lines run1, 0 lines run2** (committed == generated, idempotent) | PASS |
+| 0 creds in served dir | `grep -rn VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|DB_PATH\|process.env\|Bun.env` served dir → exit 1, **0 matches** | PASS |
+| Handler no DB / no write verbs | `grep -niE INSERT\|UPDATE\|DELETE\|DROP\|ALTER\|getDb\|new Database` handler (comments stripped) → 0 real refs; no `db` param | PASS |
+| ENDPOINT relative (same-origin) | served `index.html:323` = `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'` — no scheme/host | PASS |
+| file:// degrade branch kept | `window.location.protocol === 'file:'` present at served `index.html:328` (graceful fallback, not deleted) | PASS |
+| data.js untouched / byte-identical | `data.js` last commit `cd8d0146` (pre-NF-LD-4); `diff` source vs served copy → **byte-identical** | PASS |
+| Pilot NOT flipped | `pilot-status-news-fetch.json`: `goalsEarned=12 verdict=scale status=DONE`; last commit `b3407530` (terminal close, predates all NF-LD-4 commits) | PASS (12/12 frozen) |
+| Sandbox honest-green | QA round-2 dash-check PASS: 4 panels (sandbox=3 + live=1), 6 cards, PASS:6/FAIL:0, degrade=true, fake_rows=false, 0 console/page errors, 0 external net (trusted on QA evidence — file:// headless flow, consistent across both QA rounds) | PASS (no regression) |
+| Tests + tsc | QA round-2: NF-LD-4 11/11 + NF-LD-2 9/9 = 20/20 PASS; `tsc --noEmit` exit 0 | PASS |
+
+### Sign-off decision
+GOAL met in source (same-origin served dashboard at `http://localhost:3000/dashboards/news-fetch/` with relative live-fetch + preserved file:// fallback), Security Clause intact (static-serve only, 0 creds client+server, handler has no DB access), DRY drift from QA round 1 resolved + proven idempotent, pilot 12/12 untouched, sandbox honest-green not regressed. **APPROVED.** NF-LD-4-design / dev-A / dev-B / QA / EXIT → DONE.
+
+### Terminal gate — NOT fully done until ops PROVES the live URL
+The chain is **NOT complete** until **NF-LD-4-OPS** proves the served URL end-to-end on a REAL deployed container. The source is correct on main, but the running mcp-server container predates `e160fe04`, so the new `/dashboards/news-fetch/` route is not yet loaded (same deployment-currency pattern as PI-INSPECT — a deploy gap, NOT a code defect). Ops must `docker compose up -d --build mcp-server` then PROVE (real http GET): `/dashboards/news-fetch/` → 200, `/dashboards/news-fetch/data.js` → 200, `/api/news-fetch/live` reachable same-origin, all 4 panels render with zero manual serve. This is dispatched to **ops** — never asked of the user.
+
+### Telegram (fail-loud, honest)
+WORK-channel `send_telegram` is NOT in this PO agent's tool surface (only Read/Edit/Write/Bash/semble). Per fail-loud I did NOT fabricate a sent message — the WORK summary text is handed to the main terminal in the RETURN for relay via the gateway.
+
+---
+
 ## Constraints binding NF-LD-4 (verbatim — every agent in the chain)
 - L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`
 - No `--force`, no `--no-verify`, no `--no-gpg-sign`
