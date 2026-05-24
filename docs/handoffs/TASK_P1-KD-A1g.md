@@ -84,3 +84,37 @@ P1-KD-A1g → **P1-KD-A2g** (scaffold `pkg/` DDD layout: domain, application, in
 ## RETURN expectation
 
 On completion, dev-kinh-dich returns: commit SHA, AC-1..AC-4 verdicts, `go mod verify` output, recorded modernc.org/sqlite version. PM-substitute (po) verifies, flips `phase1.tasks["P1-KD-A1g"].status` to DONE, and sequences A2g.
+
+---
+
+## RETURN (dev-kinh-dich 2026-05-24)
+
+### AC Verdicts
+
+| AC | Verdict | Evidence |
+|----|---------|----------|
+| AC-1 | PASS | go.mod: module github.com/vn-market-intelligence/kinh-dich-service, go 1.22, toolchain go1.22.0, chi v5.2.1, modernc.org/sqlite v1.29.9 |
+| AC-2 | PASS | `go mod verify` exit 0: "all modules verified" |
+| AC-3 | PASS | go.sum exists, 31 lines, non-empty |
+| AC-4 | PASS | Only chi + modernc-sqlite as direct deps; all others are transitive (accepted per AC) |
+
+### go mod verify output
+
+```
+all modules verified
+```
+
+### go.sum non-empty check
+
+```
+go.sum non-empty: PASS
+      31 go.sum
+```
+
+### modernc.org/sqlite version
+
+v1.29.9 (as specified in AC-1)
+
+### Commit SHA
+
+(pending commit)
