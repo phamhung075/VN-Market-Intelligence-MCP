@@ -1,0 +1,20 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "sprint-kickoff",
+  "priority": "high",
+  "createdAt": "2026-05-24T17:19:04Z",
+  "payload": {
+    "sprint": "PDF-INSPECT",
+    "title": "Side-by-side PDF / extracted-text inspector (served FastAPI viewer)",
+    "zone": "apps/pdf-extractor/",
+    "wip": 1,
+    "sequence": ["PI-1 architect (design)", "PI-2 dev-pdf-extractor (implement)", "PI-3 qa (verify, L9 real-path)", "PI-EXIT po (sign-off)"],
+    "goal": "docs/SPRINT_GOAL.md",
+    "handoff": "docs/handoffs/TASK_PDF-INSPECT.md",
+    "delivery_model": "served FastAPI viewer on port 5001 (NOT file://) — container PDFs + extraction store live in market_data:/app/data named volume",
+    "next": "main terminal spawns architect to run PI-1",
+    "frozen": "pilot-status-pdf-extractor.json + sandbox runner + dashboard/traces.js + 3 sandbox panels + trust-contract.spec.js — NOT touched",
+    "acceptance": "user opens served viewer in browser -> list of PDFs -> select -> LEFT rendered PDF, RIGHT extracted text/fields side-by-side (verified under real served-URL path, L9)"
+  }
+}

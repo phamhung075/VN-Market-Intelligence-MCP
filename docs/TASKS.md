@@ -4,6 +4,27 @@
 
 ---
 
+## Sprint PDF-INSPECT — Side-by-Side PDF / Extracted-Text Inspector (NEW FEATURE)
+
+**Status:** OPEN 2026-05-24T17:19Z (PO self-initiated from explicit user feature request via main terminal). Goal: `docs/SPRINT_GOAL.md` (Sprint PDF-INSPECT). Spec + ACs: `docs/handoffs/TASK_PDF-INSPECT.md`. Zone: `apps/pdf-extractor/` (single; +≤1 read-only mcp-server route IFF architect proves required, R4). **WIP=1 strictly sequential.** POST-PILOT feature — pdf-extractor SCALE pilot stays DONE 12/12 + frozen; sandbox dashboard surface UNTOUCHED.
+
+**Delivery model (FORK RESOLVED, R1):** SERVED FastAPI viewer (port 5001), NOT `file://` — container PDFs + extraction store live in the `market_data:/app/data` named volume a `file://` page cannot reach. **Acceptance (user's real path, L9):** user opens served viewer in browser → list of PDFs → select one → LEFT = rendered PDF, RIGHT = extracted text/fields, side-by-side.
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| PI-1 | Design served viewer: 3 GET routes + PDF→file mapping (real unknown) + data-source ruling + render approach + DDD placement + SI-2 boundary. DESIGN ONLY. | HIGH | TASK | architect | docs/handoffs/TASK_PDF-INSPECT.md | READY | — |
+| PI-2 | Implement served viewer per PI-1: 3 GET routes (list / pdf-bytes / extracted) + viewer page (LEFT=pdf.js render, RIGHT=text/tables) + honest-degrade. Sandbox surface untouched; fence green; pytest green. | HIGH | TASK | dev-pdf-extractor | docs/handoffs/TASK_PDF-INSPECT.md | BLOCKED | PI-1 |
+| PI-3 | Verify under USER's real served-URL-in-browser path (L9): list→select→PDF-left/text-right side-by-side; honest-degrade; SI-2/pilot freeze not regressed; smoke green. Emit `qa-pdf-inspect-<UTC>.json`. | HIGH | TASK | qa | docs/handoffs/TASK_PDF-INSPECT.md | BLOCKED | PI-2 |
+| PI-EXIT | PO sign-off against user acceptance condition + PI-3 ACs | CRITICAL | GATE | po | docs/handoffs/TASK_PDF-INSPECT.md | BLOCKED | PI-1..3 |
+
+**Notes:**
+- **Binding (Day-0, every agent):** explicit-file staging (`git add <path>`, never `-A`/`.`); no `--force`/`--no-verify`/`--no-gpg-sign`; NO `git push` (user owns); all on `main` (NO branches); `git show --stat HEAD` shows zero foreign files (heavy fleet commit-race). Never ask user to run/deploy — spawn agents.
+- **Frozen (R6):** `pilot-status-pdf-extractor.json`, sandbox runner, `dashboard/traces.js`, the 3 sandbox panels, `trust-contract.spec.js` — NOT touched by this sprint.
+- **Security-Clause distinction:** the viewer is a REAL served surface that legitimately reads `/app/data` PDFs + extraction store via the app process — by design, NOT a sandbox zero-credential violation.
+- **R4 zone-gate:** default single zone. One read-only SELECT-only mcp-server route allowed ONLY if architect proves the user-meaningful parsed fields live exclusively in mcp-server's BCTC DB; if added, zone=`multi`, dev unstages any other mcp-server file.
+
+---
+
 ## Follow-On Enhancement — Kinh-Dich 64-Quẻ Trading Reference (KD-QREF)
 
 **Status:** Opened 2026-05-24 (PO dispatch signal `po-kinh-dich-que-reference-20260524T170814Z.json`). POST-PILOT ENHANCEMENT — kinh-dich pilot stays DONE 12/12 + frozen; does NOT reopen any goal. User request: add a browsable 64-Quẻ reference with market-trading descriptions (translated from `kinhdich_logic/que_convert/`) to `apps/kinh-dich-service/dashboard/index.html`. Decision: `docs/po-decisions/2026-05-24-kinh-dich-que-reference-dashboard.md`. Spec + ACs: `docs/handoffs/TASK_KD-QREF.md`. Zone: `apps/kinh-dich-service/` (single). Binding trust gate: `dash-check.mjs` must stay exit-0 (no red dots / JS errors / category-chip leaks).
