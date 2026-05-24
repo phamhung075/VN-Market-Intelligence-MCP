@@ -1,0 +1,34 @@
+{
+  "signal": "po-kinh-dich-phase3-terminal-close",
+  "emittedBy": "po",
+  "emittedAt": "2026-05-24T05:00:08Z",
+  "pilot": "kinh-dich-service",
+  "fleet_pilot_number": 4,
+  "event": "PHASE-3 TERMINAL 12/12 ATOMIC CLOSE",
+  "ssot": "docs/data/pilot-status-kinh-dich.json",
+  "decisionDoc": "docs/po-decisions/2026-05-24-kinh-dich-phase3-terminal-12of12-close.md",
+  "verdict": "scale",
+  "goalsEarned": 12,
+  "decisionMatrix": {
+    "speed": "YES",
+    "trust": "YES",
+    "scale": "YES",
+    "verdict": "scale"
+  },
+  "sprintCount": 3,
+  "terminalStatus": "DONE",
+  "phase": 3,
+  "goals_all_yes": ["G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12"],
+  "honest_caveats": [
+    "G4: P2-KD-B false-green; genuinely enforcing only at P2-KD-C 205aa5cf (deliberate-violation proof); frozen P2-KD-D.",
+    "G11: module-tier scenarios are structural-fallback PASS (no live invocation); proven alarm is primitive-tier coupling; graded YES at same bar as TA/macro precedent (both verdict=scale)."
+  ],
+  "integrity_gate": "OK — 12/12 YES, dm populated",
+  "atomic": true,
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc remains ancestor of HEAD",
+  "frozen_tags_untouched": ["kinh-dich-pre-ci", "kinh-dich-pre-delete", "kinh-dich-pre-inject"],
+  "second_terminal_pilot_this_session": true,
+  "first_terminal_pilot_this_session": "stock-price",
+  "next_actor": "main-router",
+  "next_action": "kinh-dich is the SECOND terminal pilot this session (after stock-price). Remaining fleet: alert-engine (pilot-5, needs Phase-1 plan + execution) + the commit-mutex structural-fix brief + pilots 6-8 (news-fetch / pdf-extractor / rag-service)."
+}
