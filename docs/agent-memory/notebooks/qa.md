@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-64 · 2026-05-24 · stock-price P2-Z — Phase-2 close-gate — READY-FOR-PHASE-3
+
+**Task:** P2-Z — Phase-2 Close-Gate Verification | **Verdict:** READY-FOR-PHASE-3 | **Commit:** (pending)
+
+```
+date: 2026-05-24T02:20:19Z
+outcome: READY-FOR-PHASE-3
+type: pilot-task-qa (Phase-2 close-gate — read-only verification + sandbox run, no production code mutation)
+signal: docs/signals/qa-sp-phase2-close-gate-20260524T022019Z.json
+evidence: docs/handoffs/TASK_P2-Z-sp-close-gate-evidence.md
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (CONFIRMED — 104 commits since anchor, ancestor of HEAD)
+ssot_not_mutated: docs/data/pilot-status-stock-price.json (read-only — not touched)
+goal_flips: NONE (Charter §4.5 honored — all 12 G-goals TBD)
+phase_field_note: PM omission — top-level phase="1" instead of "2"; §4.5 binding invariants all intact; PM to correct in Phase-3 terminal commit
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (sandbox all-green) | PASS | primitive=9/9, module=2/2, all=11/11 exit 0; go build exit 0; golangci-lint 0 issues exit 0 |
+| AC-2 (goal evidence complete) | PASS | All 6 files present: TASK_P2-H.md (G3), TASK_P2-D-sp-g4-evidence.md (G4), TASK_P2-G-sp-g5-evidence.md (G5), TASK_P2-J-sp-g8-evidence.md (G8), 2026-05-24-g9-stock-price-user-confirmation.md (G9), dev-sp-P2-M-done-20260524T021353Z.json (G10/G11) |
+| AC-3 (G12 streak) | PASS | Phase-1 3/3 complete (P1-B1/B2/B3) + Phase-2 5 tasks (P2-B/F/H/I/M) all sandbox-green-before-DONE |
+| AC-4 (tag ancestry) | PASS | ci<=delete OK; delete<=inject OK — both merge-base --is-ancestor checks exit 0 |
+| AC-5 (anchor + SSOT) | CONDITIONAL-PASS | Anchor ancestor CONFIRMED; goalsEarned=0 CONFIRMED; decisionMatrix all TBD CONFIRMED; no dup keys; top-level phase="1" PM omission (non-blocking) |
+
+**Phase-2 exit criteria:**
+- Criterion 1: All 6 Phase-2 goal evidence files present — PASS
+- Criterion 2: Sandbox all-green (11/11) — PASS
+- Criterion 3: G12 streak carry-forward — PASS
+- Criterion 4: Pre-revert tags ordered — PASS
+- Criterion 5: §4.5 binding invariants intact — PASS (with PM phase field note)
+
+**Verdict: READY-FOR-PHASE-3**
+**NEXT:** pm — record P2-Z DONE + Phase-2 COMPLETE in SSOT (update phase2.status=CLOSED, top-level phase="2"), then authorize Phase-3 PO terminal 12/12 atomic close.
+
+---
+
 ## c282 cycle-63 · 2026-05-24 · stock-price P2-J — G8 honest-red deliberate-break proof — 5/5 ACs PASS
 
 **Task:** P2-J — G8 honest-red deliberate-break proof | **Verdict:** APPROVED — G8 PROVEN | **Commit:** b960bd8f
