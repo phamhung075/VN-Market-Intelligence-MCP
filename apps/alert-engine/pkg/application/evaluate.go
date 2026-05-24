@@ -7,9 +7,14 @@ import (
 	"time"
 
 	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
+	cg "github.com/vn-market-intelligence/alert-engine/pkg/primitive/cooldown-gate"
+	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
 )
 
-// EvaluateAlertUseCase orchestrates domain services + repository ports.
+// EvaluateAlertUseCase orchestrates the alert pipeline primitives + repository ports.
+// Dedup (fingerprint), cooldown, and daily-cap checks are now delegated to the
+// extracted primitives (dedup-key-builder, cooldown-gate) from the alert_pipeline
+// module (G5a rewire — superseded domain service functions removed).
 // No direct I/O — only ports (dependency injection).
 type EvaluateAlertUseCase struct {
 	alertRepo domain.AlertRepositoryPort
@@ -31,7 +36,8 @@ func NewEvaluateAlertUseCase(
 }
 
 // Execute evaluates an alert request, applying mute/dedup/cooldown rules.
-// Mirrors TS EvaluateAlertUseCase.execute exactly.
+// Uses alert_pipeline primitives (dedup-key-builder, cooldown-gate) instead of
+// the deprecated domain service functions (G5a rewire).
 func (uc *EvaluateAlertUseCase) Execute(ctx context.Context, req EvaluateAlertRequest) (EvaluateAlertResponse, error) {
 	stock := req.Stock
 	severity := domain.AlertSeverity(req.Severity)
@@ -44,7 +50,9 @@ func (uc *EvaluateAlertUseCase) Execute(ctx context.Context, req EvaluateAlertRe
 	sendTelegram := req.SendTelegram
 
 	cfg := domain.DefaultCooldownConfig
-	fingerprint := domain.ComputeFingerprint(stock, signalTypes, message)
+
+	// Fingerprint via dedup-key-builder primitive (G5a).
+	fingerprint := dkb.BuildKey(stock, signalTypes, message)
 
 	// 1. Mute check
 	muted, err := uc.mutePort.IsStockMuted(stock)
@@ -61,16 +69,12 @@ func (uc *EvaluateAlertUseCase) Execute(ctx context.Context, req EvaluateAlertRe
 		}, nil
 	}
 
-	// 2. Dedup check (last 60 min)
-	recentAlerts60, err := uc.alertRepo.GetRecentAlerts(stock, 60)
+	// 2. Dedup check (last 60 min) via HasDuplicateFingerprint repo port (G5a).
+	isDup, err := uc.alertRepo.HasDuplicateFingerprint(fingerprint, 60)
 	if err != nil {
-		return EvaluateAlertResponse{}, fmt.Errorf("get recent alerts (60min): %w", err)
+		return EvaluateAlertResponse{}, fmt.Errorf("dedup check: %w", err)
 	}
-	recentFingerprints := make([]string, len(recentAlerts60))
-	for i, a := range recentAlerts60 {
-		recentFingerprints[i] = a.Fingerprint
-	}
-	if domain.IsDuplicate(fingerprint, recentFingerprints) {
+	if isDup {
 		return EvaluateAlertResponse{
 			Fired:       false,
 			CooldownSec: cfg.CooldownMinutes * 60,
@@ -80,21 +84,32 @@ func (uc *EvaluateAlertUseCase) Execute(ctx context.Context, req EvaluateAlertRe
 		}, nil
 	}
 
-	// 3. Cooldown / daily cap check
+	// 3. Cooldown / daily cap check via cooldown-gate primitive (G5a).
 	recentAlerts, err := uc.alertRepo.GetRecentAlerts(stock, cfg.CooldownMinutes)
 	if err != nil {
 		return EvaluateAlertResponse{}, fmt.Errorf("get recent alerts (cooldown): %w", err)
 	}
-	suppressResult := domain.ShouldSuppressAlert(
-		domain.AlertRequest{
+	recentInputs := make([]cg.RecentAlert, len(recentAlerts))
+	for i, r := range recentAlerts {
+		recentInputs[i] = cg.RecentAlert{
+			Stocks:      r.Stocks,
+			SignalTypes: r.SignalTypes,
+			TriggeredAt: r.TriggeredAt,
+		}
+	}
+	suppressResult := cg.Check(
+		cg.AlertInput{
 			Stock:       stock,
-			Severity:    severity,
-			Message:     message,
+			Severity:    string(severity),
 			SignalTypes: signalTypes,
 			ActionCode:  actionCode,
 		},
-		recentAlerts,
-		cfg,
+		recentInputs,
+		cg.CooldownConfig{
+			CooldownMinutes:         cfg.CooldownMinutes,
+			MaxAlertsPerStockPerDay: cfg.MaxAlertsPerStockPerDay,
+		},
+		time.Now(),
 	)
 	if suppressResult.Suppress {
 		return EvaluateAlertResponse{

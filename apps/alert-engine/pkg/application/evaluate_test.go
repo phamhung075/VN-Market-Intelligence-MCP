@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
+	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
 )
 
 // ── fake port implementations ─────────────────────────────────────────────────
@@ -119,10 +120,10 @@ func TestEvaluateUseCase_DoesNotFireWhenMuted(t *testing.T) {
 }
 
 func TestEvaluateUseCase_DoesNotFireWhenDuplicate(t *testing.T) {
-	fp := domain.ComputeFingerprint("VCB", []string{}, "test")
+	fp := dkb.BuildKey("VCB", []string{}, "test")
 	repo := &fakeAlertRepo{
-		getRecentAlertsFunc: func(stock string, withinMinutes int) ([]domain.StoredAlert, error) {
-			return []domain.StoredAlert{{Fingerprint: fp, Stocks: "VCB", TriggeredAt: "2026-01-01T00:00:00Z"}}, nil
+		hasDuplicateFingerprintFunc: func(fingerprint string, withinMinutes int) (bool, error) {
+			return fingerprint == fp, nil
 		},
 	}
 	uc := NewEvaluateAlertUseCase(repo, &fakeMutePort{}, &fakeTelegram{})

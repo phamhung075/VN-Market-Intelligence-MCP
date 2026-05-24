@@ -1,0 +1,40 @@
+{
+  "task": "P2-F",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "title": "G5a — git mv domain/services.go → _deprecated/ + evaluate.go rewire",
+  "status": "DONE",
+  "completed_at": "2026-05-24T09:26:00Z",
+  "owner": "dev-alert-engine",
+  "files_moved": [
+    "apps/alert-engine/pkg/domain/services.go → apps/alert-engine/pkg/domain/_deprecated/services_v1.go",
+    "apps/alert-engine/pkg/domain/services_test.go → apps/alert-engine/pkg/domain/_deprecated/services_v1_test.go"
+  ],
+  "files_rewired": [
+    "apps/alert-engine/pkg/application/evaluate.go",
+    "apps/alert-engine/pkg/application/evaluate_test.go"
+  ],
+  "ac_verdicts": {
+    "AC-1_file_moved": "PASS — _deprecated/services_v1.go FOUND, domain/services.go GONE",
+    "AC-2_zero_direct_calls": "PASS — 0 matches for domain.(ComputeFingerprint|IsDuplicate|ShouldSuppressAlert) in evaluate.go",
+    "AC-3_build_clean": "PASS — CGO_ENABLED=0 go build ./... exit 0",
+    "AC-4_fence_clean": "PASS — golangci-lint 0 issues, LINT_OK",
+    "AC-5_sandbox_green": "PASS — total=11 pass=11 fail=0 status=OK",
+    "AC-6_deprecated_path_exists": "PASS — find includes services_v1.go and services_v1_test.go under _deprecated/",
+    "AC-7_fence_c_holds": "PASS — golangci-lint fence rules exit 0; one pre-existing comment match in module/alert_pipeline/ports.go (not introduced by P2-F, not an actual import)"
+  },
+  "build_exit_code": 0,
+  "lint_exit_code": 0,
+  "sandbox_exit_code": 0,
+  "sandbox_summary": "total=11 pass=11 fail=0 status=OK",
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "scope_confirm": "own files only — moved services_v1.go + services_v1_test.go, rewired evaluate.go + evaluate_test.go, updated notebook, emitted signal. No foreign files staged.",
+  "rewire_detail": {
+    "fingerprint": "dkb.BuildKey() replaces domain.ComputeFingerprint()",
+    "dedup": "alertRepo.HasDuplicateFingerprint() replaces domain.IsDuplicate() + GetRecentAlerts(60min)",
+    "cooldown": "cg.Check() replaces domain.ShouldSuppressAlert()"
+  },
+  "next_actor": "qa",
+  "next_action": "P2-G — MCP HTTP-port audit + zero TODO-migrate"
+}

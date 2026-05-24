@@ -6,6 +6,36 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-F — G5a git mv services.go → _deprecated/ + evaluate.go rewire DONE
+
+**Task:** P2-F — git mv deprecated domain services file + rewire evaluate.go to use alert_pipeline primitives.
+
+**Outcome:** All 7 ACs PASS. Committed.
+
+**AC evidence:**
+- AC-1: PASS — `_deprecated/services_v1.go` FOUND, `domain/services.go` GONE
+- AC-2: PASS — 0 matches for `domain.(ComputeFingerprint|IsDuplicate|ShouldSuppressAlert)` in evaluate.go
+- AC-3: PASS — `CGO_ENABLED=0 go build ./...` exit 0
+- AC-4: PASS — golangci-lint 0 issues, LINT_OK
+- AC-5: PASS — sandbox total=11 pass=11 fail=0 status=OK exit 0
+- AC-6: PASS — `find apps/alert-engine/pkg -path '*_deprecated*'` includes services_v1.go + services_v1_test.go
+- AC-7: PASS (pre-existing comment in ports.go, not introduced by P2-F; golangci-lint fence rule exits 0)
+
+**Files moved (git mv):**
+- `pkg/domain/services.go` → `pkg/domain/_deprecated/services_v1.go`
+- `pkg/domain/services_test.go` → `pkg/domain/_deprecated/services_v1_test.go`
+
+**Files rewired:**
+- `pkg/application/evaluate.go` — replaced `domain.ComputeFingerprint` with `dkb.BuildKey`, `domain.IsDuplicate` with `alertRepo.HasDuplicateFingerprint`, `domain.ShouldSuppressAlert` with `cg.Check`. Imports now: domain + cooldown-gate + dedup-key-builder.
+- `pkg/application/evaluate_test.go` — updated `TestEvaluateUseCase_DoesNotFireWhenDuplicate` to use `dkb.BuildKey` + `hasDuplicateFingerprintFunc` mock (was using `domain.ComputeFingerprint` + `getRecentAlertsFunc`).
+
+**Key note:** `_deprecated/` directory is ignored by Go toolchain (underscore prefix) — deprecated package compiles but is unreferenced and not included in `go build ./...` output.
+
+**Anchor:** debba8eaff0724d1fb32fc9d28640201cc32d1cc intact.
+**Next:** PM sequences P2-G (G5b/G5c audit — MCP HTTP-port audit + zero TODO-migrate).
+
+---
+
 ### 2026-05-24 P2-E — alert-engine-pre-delete Tag Created
 
 **Task:** P2-E — create lightweight git tag `alert-engine-pre-delete` at HEAD before G5a `git mv` work.
