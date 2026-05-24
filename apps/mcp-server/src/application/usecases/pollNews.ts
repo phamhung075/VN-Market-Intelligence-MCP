@@ -126,7 +126,8 @@ export type RagRetriever = (
  * Defaults to the real `insertAnalysis` from retriever.ts when not provided.
  * Task 1840a.
  */
-export type InsertAnalysisFn = (entry: import("../../infrastructure/rag/retriever.js").AnalysisInput) => Promise<void>;
+// G5b (P2-F): AnalysisInput moved to ragHttpClient.ts (canonical HTTP boundary)
+export type InsertAnalysisFn = (entry: import("../../infrastructure/rag/ragHttpClient.js").AnalysisInput) => Promise<void>;
 
 /**
  * Options for pollNews.
@@ -442,9 +443,23 @@ async function defaultRagRetriever(
   query: string,
   options?: { k?: number },
 ): Promise<SearchResult[]> {
+  // G5b (P2-F): route through ragHttpClient → rag-service HTTP (port 5002)
   try {
-    const { searchContext } = await import("../../infrastructure/rag/retriever.js");
-    return searchContext(query, options) as Promise<SearchResult[]>;
+    const { ragSearch } = await import("../../infrastructure/rag/ragHttpClient.js");
+    const response = await ragSearch({
+      query,
+      ...(options?.k !== undefined ? { limit: options.k } : {}),
+    });
+    return response.results.map((r) => ({
+      id: r.id,
+      level: r.level,
+      title: r.title,
+      summary: r.summary,
+      tags: r.tags,
+      actionCode: r.action_code,
+      createdAt: r.created_at,
+      distance: r.distance,
+    }));
   } catch {
     return [];
   }
@@ -581,10 +596,18 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const limit = options.limit ?? 20;
   const db = options.db ?? getDb();
   const retriever: RagRetriever = options.ragRetriever ?? defaultRagRetriever;
-  // Task 1840a: resolve RAG insert function — default is lazy-loaded real implementation
+  // Task 1840a / G5b (P2-F): resolve RAG insert function — default routes via ragHttpClient
   const ragInsertFn: InsertAnalysisFn = options.ragInsert ?? (async (entry) => {
-    const { insertAnalysis } = await import("../../infrastructure/rag/retriever.js");
-    return insertAnalysis(entry);
+    const { ragIndex } = await import("../../infrastructure/rag/ragHttpClient.js");
+    await ragIndex({
+      id: entry.id,
+      content: entry.summary,
+      tags: entry.tags,
+      level: entry.level,
+      title: entry.title,
+      summary: entry.summary,
+      ...(entry.actionCode !== undefined ? { action_code: entry.actionCode } : {}),
+    });
   });
 
   // Resolve watchlist (injected or loaded from DB)

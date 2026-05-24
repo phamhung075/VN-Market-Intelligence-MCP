@@ -7,11 +7,12 @@
  */
 
 import { describe, it, expect } from "bun:test";
+// G5a (P2-F): legacy LanceDB files moved to _deprecated/; tests preserved as regression anchors.
 import {
   applyTemporalDecay,
   type TemporalDecayConfig,
-} from "../infrastructure/rag/retriever.js";
-import type { SearchResult } from "../infrastructure/rag/vectorstore.js";
+} from "../infrastructure/rag/_deprecated/retriever.js";
+import type { SearchResult } from "../infrastructure/rag/_deprecated/vectorstore.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -199,7 +200,7 @@ describe("Task 135 — applyTemporalDecay", () => {
 
 // ── filterByMaxDistance ───────────────────────────────────────────────────
 
-import { filterByMaxDistance } from "../infrastructure/rag/retriever.js";
+import { filterByMaxDistance } from "../infrastructure/rag/_deprecated/retriever.js";
 
 describe("Task 135 — filterByMaxDistance", () => {
   it("removes results with distance > maxDistance", () => {

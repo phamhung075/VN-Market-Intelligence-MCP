@@ -11,11 +11,12 @@
  */
 
 import { describe, it, expect } from "bun:test";
+// G5a (P2-F): legacy TS embeddings moved to _deprecated/; tests preserved as regression anchors.
 import {
   embed,
   embedBatch,
   cosineSimilarity,
-} from "../infrastructure/rag/embeddings.js";
+} from "../infrastructure/rag/_deprecated/embeddings.js";
 
 const DIMS = 384;
 

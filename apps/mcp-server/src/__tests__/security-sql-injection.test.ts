@@ -11,12 +11,13 @@
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
+// G5a (P2-F): legacy LanceDB vectorstore moved to _deprecated/; tests preserved as regression anchors.
 import {
   sanitizeFilterValue,
   validateActionCode,
   validateLevel,
   type SearchFilters,
-} from "../infrastructure/rag/vectorstore.js";
+} from "../infrastructure/rag/_deprecated/vectorstore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // sanitizeFilterValue — SQL standard escaping

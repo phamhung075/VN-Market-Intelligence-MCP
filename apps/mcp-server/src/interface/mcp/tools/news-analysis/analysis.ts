@@ -28,8 +28,11 @@ import type { RssItem } from "../../../../infrastructure/fetchers/rss.js";
 import { fetchVnEconomy } from "../../../../infrastructure/fetchers/vneconomy.js";
 import { normalizeNews } from "../../../../domain/services/newsNormalizer.js";
 import { runImpactChain } from "../../../../application/usecases/runImpactChain.js";
-import { searchContext, insertAnalysis } from "../../../../infrastructure/rag/retriever.js";
-import type { SearchResult } from "../../../../infrastructure/rag/retriever.js";
+// G5b (P2-F): rewired from direct LanceDB retriever.ts → HTTP client ragHttpClient.ts
+// rag-service (port 5002) is now the single LanceDB writer (R-1 resolved).
+import { ragSearch, ragIndex } from "../../../../infrastructure/rag/ragHttpClient.js";
+import type { RagSearchResultDTO } from "../../../../infrastructure/rag/ragHttpClient.js";
+import type { SearchResult } from "../../../../domain/models/shared-types.js";
 import { applyRecencyWeighting } from "../../../../domain/services/recencyWeighter.js";
 import type { WatchlistEntry } from "../../../../domain/services/cascadeEngine.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
@@ -214,14 +217,16 @@ export function registerAnalysisTools(server: McpServer): void {
         await Promise.all(
           entries.map(async (entry) => {
             try {
-              await insertAnalysis({
+              // G5b: ragIndex delegates to rag-service HTTP /index (port 5002)
+              await ragIndex({
                 id: entry.id,
+                content: entry.summary,
+                tags: entry.tags,
                 level: entry.level,
                 title: entry.sourceTitle,
                 summary: entry.summary,
-                tags: entry.tags,
                 ...(entry.affectedActions.length > 0
-                  ? { actionCode: entry.affectedActions[0] }
+                  ? { action_code: entry.affectedActions[0] }
                   : {}),
               });
             } catch (ragErr) {
@@ -433,10 +438,25 @@ export function registerAnalysisTools(server: McpServer): void {
         // has a larger pool to choose from before trimming to the final k.
         // Build options object without undefined keys (exactOptionalPropertyTypes)
         const rawK = Math.min(k * 3, 20);
-        const searchOptions: import("../../../../infrastructure/rag/retriever.js").SearchOptions = { k: rawK };
-        if (level !== undefined) searchOptions.level = level;
-        if (actionCode !== undefined) searchOptions.actionCode = actionCode;
-        const rawResults: SearchResult[] = await searchContext(query, searchOptions);
+        // G5b: call rag-service via HTTP; map response to SearchResult shape
+        const ragResponse = await ragSearch({
+          query,
+          limit: rawK,
+          ...(level !== undefined ? { level } : {}),
+          ...(actionCode !== undefined ? { action_code: actionCode } : {}),
+        });
+        const rawResults: SearchResult[] = ragResponse.results.map(
+          (r: RagSearchResultDTO): SearchResult => ({
+            id: r.id,
+            level: r.level,
+            title: r.title,
+            summary: r.summary,
+            tags: r.tags,
+            actionCode: r.action_code,
+            createdAt: r.created_at,
+            distance: r.distance,
+          }),
+        );
 
         if (rawResults.length === 0) {
           return {

@@ -17,7 +17,8 @@ import {
   computeRecencyWeight,
   applyRecencyWeighting,
 } from "../domain/services/recencyWeighter.js";
-import type { SearchResult } from "../infrastructure/rag/retriever.js";
+// G5a (P2-F): SearchResult type now in shared-types.ts (canonical domain type)
+import type { SearchResult } from "../domain/models/shared-types.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

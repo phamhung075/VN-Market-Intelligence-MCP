@@ -18,9 +18,11 @@ mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
 mock.module("../infrastructure/fetchers/sbv.js", () => ({
   fetchSbvRates: async () => null,
 }));
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
+// G5b (P2-F): mock ragHttpClient.js (HTTP boundary) instead of retriever.js (deprecated)
+mock.module("../infrastructure/rag/ragHttpClient.js", () => ({
+  ragSearch: async () => ({ results: [], total: 0 }),
+  ragIndex: async () => ({ status: "ok", indexed: 1, entry_id: "mock" }),
+  ragHealthCheck: async () => true,
 }));
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

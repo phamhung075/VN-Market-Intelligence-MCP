@@ -60,6 +60,26 @@ export interface RagHealthResponse {
 }
 
 /**
+ * Input shape for inserting a new analysis entry into the RAG service.
+ * Previously defined in retriever.ts; moved here as ragHttpClient is the
+ * canonical HTTP boundary for the rag-service (G5b, P2-F).
+ */
+export interface AnalysisInput {
+  /** Unique identifier for this entry */
+  id: string;
+  /** Hierarchy level: "global" | "country" | "domain" | "action" */
+  level: string;
+  /** Short headline / title */
+  title: string;
+  /** Paragraph-length summary of the analysis */
+  summary: string;
+  /** Semantic tags for improved retrieval (e.g. ["banking", "credit"]) */
+  tags: string[];
+  /** Stock ticker if this is an action-level entry (e.g. "VCB") */
+  actionCode?: string;
+}
+
+/**
  * Search the RAG service for similar entries.
  *
  * @param request Search parameters

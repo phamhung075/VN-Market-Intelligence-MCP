@@ -43,7 +43,8 @@ import { extractBctcHints } from "../../domain/services/signalToBctcMapper.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 
 import type { HttpClient } from "../../infrastructure/fetchers/ssc.js";
-import type { AnalysisInput } from "../../infrastructure/rag/retriever.js";
+// G5b (P2-F): AnalysisInput moved to ragHttpClient.ts (canonical HTTP boundary)
+import type { AnalysisInput } from "../../infrastructure/rag/ragHttpClient.js";
 import type { FinancialReport, FiscalPeriod } from "../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,8 +79,8 @@ export function normaliseFilename(
 }
 
 /**
- * Injectable function signature for inserting an analysis entry into LanceDB.
- * Defaults to the real `insertAnalysis` from the retriever when not provided.
+ * Injectable function signature for inserting an analysis entry via rag-service.
+ * G5b (P2-F): defaults to ragIndex via HTTP (port 5002); no direct LanceDB access.
  */
 export type InsertAnalysisFn = (entry: AnalysisInput) => Promise<void>;
 
@@ -108,7 +109,7 @@ export interface FetchParseAndStoreBctcParams {
   pdfTextOverride?: string;
   /**
    * Optional insertAnalysis implementation.
-   * Defaults to the real LanceDB-backed implementation from retriever.ts.
+   * G5b: defaults to ragIndex via rag-service HTTP (port 5002).
    */
   insertAnalysisFn?: InsertAnalysisFn;
   /**
@@ -454,12 +455,23 @@ export async function fetchParseAndStoreBctc(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Lazily import the real insertAnalysis function.
- * Deferred to avoid loading LanceDB + embeddings when the caller provides a mock.
+ * Lazily build the real insertAnalysis function.
+ * G5b (P2-F): delegates to ragIndex (rag-service HTTP /index at port 5002).
+ * Deferred to avoid network calls when the caller provides a mock.
  */
 async function getDefaultInsertAnalysis(): Promise<InsertAnalysisFn> {
-  const { insertAnalysis } = await import("../../infrastructure/rag/retriever.js");
-  return insertAnalysis;
+  const { ragIndex } = await import("../../infrastructure/rag/ragHttpClient.js");
+  return async (entry: AnalysisInput): Promise<void> => {
+    await ragIndex({
+      id: entry.id,
+      content: entry.summary,
+      tags: entry.tags,
+      level: entry.level,
+      title: entry.title,
+      summary: entry.summary,
+      ...(entry.actionCode !== undefined ? { action_code: entry.actionCode } : {}),
+    });
+  };
 }
 
 /**

@@ -12,7 +12,8 @@ import { Database } from "bun:sqlite";
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { initDatabase } from "../infrastructure/db/schema.js";
 import type { RssItem } from "../infrastructure/fetchers/rss.js";
-import type { AnalysisInput } from "../infrastructure/rag/retriever.js";
+// G5b (P2-F): AnalysisInput moved to ragHttpClient.ts (canonical HTTP boundary)
+import type { AnalysisInput } from "../infrastructure/rag/ragHttpClient.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");

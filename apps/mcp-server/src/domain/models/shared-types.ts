@@ -93,7 +93,7 @@ export interface WeatherEvent {
 }
 
 // ---------------------------------------------------------------------------
-// RAG search result (sourced from infrastructure/rag/vectorstore.ts via retriever.ts)
+// RAG search result (G5b P2-F: canonical domain type; formerly in vectorstore.ts/retriever.ts)
 // ---------------------------------------------------------------------------
 
 export interface SearchResult {

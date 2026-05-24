@@ -282,9 +282,17 @@ async function defaultSendTelegram(text: string): Promise<void> {
   } catch { /* best-effort */ }
 }
 
+// G5b (P2-F): getCount from vectorstore.ts removed — rag-service owns LanceDB (R-1 resolved).
+// W-7 uses ragHealthCheck to probe rag-service liveness; count drift check is N/A
+// (mcp-server no longer holds a direct LanceDB count). Returns 0 as sentinel.
 async function defaultGetCount(): Promise<number> {
-  const { getCount } = await import("../../infrastructure/rag/vectorstore.js");
-  return getCount();
+  try {
+    const { ragHealthCheck } = await import("../../infrastructure/rag/ragHttpClient.js");
+    const healthy = await ragHealthCheck();
+    return healthy ? -1 : 0; // -1 = "rag-service reachable, real count unknown"
+  } catch {
+    return 0;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1262,21 +1270,8 @@ export async function runWeeklyAudit(
 
   const allFindings = [...dailyFindings, ...weeklyFindings];
 
-  // LanceDB compaction — reduce fragmentation (6000+ files → fewer, larger files)
-  try {
-    const { compactVectorStore } = await import("../../infrastructure/rag/vectorstore.js");
-    const result = await compactVectorStore();
-    if (result) {
-      allFindings.push({
-        table: "lancedb",
-        check: "compaction",
-        severity: "info",
-        rowsAffected: result.rowCount,
-        action: "auto_cleaned",
-        detail: `Compacted: ${result.beforeFiles} → ${result.afterFiles} data files, ${result.rowCount} vectors`,
-      });
-    }
-  } catch { /* best-effort — don't block audit on compaction failure */ }
+  // G5b (P2-F): LanceDB compaction removed — rag-service owns its LanceDB lifecycle.
+  // mcp-server no longer holds a direct LanceDB connection (R-1 resolved).
 
   writeSystemLog(database, "weekly", allFindings);
   upsertAuditState(database, "weekly", allFindings);

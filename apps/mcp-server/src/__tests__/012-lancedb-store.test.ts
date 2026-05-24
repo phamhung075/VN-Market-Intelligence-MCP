@@ -13,13 +13,14 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+// G5a (P2-F): legacy LanceDB implementation moved to _deprecated/; tests preserved as regression anchors.
 import {
   initVectorStore,
   insertVector,
   searchSimilar,
   closeVectorStore,
-} from "../infrastructure/rag/vectorstore.js";
-import { embed } from "../infrastructure/rag/embeddings.js";
+} from "../infrastructure/rag/_deprecated/vectorstore.js";
+import { embed } from "../infrastructure/rag/_deprecated/embeddings.js";
 
 const TEST_DB_PATH = path.join(import.meta.dir, "../../data/test-lancedb-012");
 const DIMS = 384;

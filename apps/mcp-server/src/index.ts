@@ -178,9 +178,7 @@ setTimeout(async () => {
 // ── 5. Graceful shutdown ───────────────────────────────────────────────────
 async function shutdown(signal: string) {
   log.info(`[bootstrap] Received ${signal} — shutting down...`);
-  // Close LanceDB vector store
-  const { closeVectorStore } = await import("./infrastructure/rag/vectorstore.js");
-  await closeVectorStore().catch(() => {});
+  // G5b (P2-F): rag-service owns LanceDB lifecycle (R-1 resolved). No vector store to close here.
   // Close SQLite database
   const { closeDb } = await import("./infrastructure/db/schema.js");
   closeDb();

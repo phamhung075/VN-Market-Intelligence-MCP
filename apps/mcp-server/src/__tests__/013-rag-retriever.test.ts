@@ -9,8 +9,9 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { initVectorStore, closeVectorStore } from "../infrastructure/rag/vectorstore.js";
-import { searchContext, insertAnalysis } from "../infrastructure/rag/retriever.js";
+// G5a (P2-F): legacy LanceDB implementation moved to _deprecated/; tests preserved as regression anchors.
+import { initVectorStore, closeVectorStore } from "../infrastructure/rag/_deprecated/vectorstore.js";
+import { searchContext, insertAnalysis } from "../infrastructure/rag/_deprecated/retriever.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

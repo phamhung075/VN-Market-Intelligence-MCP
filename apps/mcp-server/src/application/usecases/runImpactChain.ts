@@ -79,7 +79,7 @@ export interface RunCascadeInput {
   watchlist: WatchlistEntry[];
   /**
    * Optional RAG retriever override.
-   * Defaults to the real `searchContext` from infrastructure/rag/retriever.ts.
+   * Defaults to the real `ragSearch` via ragHttpClient.ts (G5b P2-F).
    * Pass a mock to avoid I/O in tests.
    */
   ragRetriever?: RagRetriever;
@@ -226,7 +226,8 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
 // ── Default RAG retriever (real implementation, loaded lazily) ───────────────
 
 /**
- * Lazy-loaded default retriever that uses the real searchContext from infrastructure.
+ * Lazy-loaded default retriever that uses ragHttpClient → rag-service HTTP (port 5002).
+ * G5b (P2-F): rewired from searchContext (direct LanceDB) to ragSearch (HTTP boundary).
  * Loaded lazily to avoid circular import issues and allow test overrides.
  */
 async function defaultRagRetriever(
@@ -234,12 +235,23 @@ async function defaultRagRetriever(
   options?: { k?: number },
 ): Promise<SearchResult[]> {
   try {
-    // Dynamic import avoids top-level infrastructure import in application layer
-    // while still allowing the default path to work in production.
-    const { searchContext } = await import("../../infrastructure/rag/retriever.js");
-    return searchContext(query, options) as Promise<SearchResult[]>;
+    const { ragSearch } = await import("../../infrastructure/rag/ragHttpClient.js");
+    const response = await ragSearch({
+      query,
+      ...(options?.k !== undefined ? { limit: options.k } : {}),
+    });
+    return response.results.map((r) => ({
+      id: r.id,
+      level: r.level,
+      title: r.title,
+      summary: r.summary,
+      tags: r.tags,
+      actionCode: r.action_code,
+      createdAt: r.created_at,
+      distance: r.distance,
+    }));
   } catch (err) {
-    logger.warn("[runImpactChain] defaultRagRetriever failed to load searchContext", {
+    logger.warn("[runImpactChain] defaultRagRetriever failed to reach rag-service", {
       error: err instanceof Error ? err.message : String(err),
     });
     return [];
