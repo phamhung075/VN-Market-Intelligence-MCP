@@ -26,11 +26,15 @@
   "primitive_cards_count": 5,
   "primitive_cards_all_green": true,
   "module_ok": true,
-  "microservice_not_run": true,
+  "service_cards_count": 3,
+  "service_cards_all_green": true,
+  "service_cards_detail_view_ok": true,
   "colors_match_traces": true,
+  "service_tier_honest_red_ok": true,
   "honest_red_method": "DOM patch via page.route(): trace-similarity-scorer-golden.passed set to false in-memory → card shows \"FAIL\" (expected FAIL). File on disk NOT modified.",
   "console_errors": 0,
   "network_calls": 0,
   "verdict": "PASS",
-  "error": null
+  "error": null,
+  "p3e_note": "P3-E: Microservice panel asserts honest-GREEN (3 service cards), NOT NOT-RUN. Prior NOT-RUN assertion was a defect — it validated the wrong contract."
 }

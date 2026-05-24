@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
  * trust-contract.spec.mjs — G9 Playwright headless trust-contract check
+ * P3-E UPDATE: Microservice panel now asserts honest-GREEN (3 service cards),
+ * NOT the prior NOT-RUN assertion that validated the defect.
  *
  * Path B (Day-0 default): opens dashboard/index.html via file:// in headless
  * Chromium and asserts the TRUST CONTRACT:
@@ -10,11 +12,18 @@
  *          relevance-threshold-gate, top-k-selector, context-window-packer,
  *          temporal-decay-scorer), all showing GREEN
  *   TC-3  retrieval module card GREEN
- *   TC-4  microservice card shows NOT-RUN (honest — not green, not red)
+ *   TC-4  microservice panel has exactly 3 service cards, all GREEN
+ *          (REPLACES prior NOT-RUN assertion which validated the defect).
+ *          Service cards: /search golden, /index golden, /search 422 edge.
  *   TC-5  GREEN/RED state each card shows MATCHES the underlying trace
  *          pass/fail (trust = what you see is true). Proven by injecting a
- *          pass=false patch into the live DOM and asserting that card flips RED.
- *          The index.html file on disk is NEVER modified — patch is DOM-only.
+ *          pass=false patch into the live DOM via page.route() for the
+ *          similarity-scorer trace (primitive honest-red) AND separately for
+ *          the service search-golden trace (service tier honest-red).
+ *          The index.html file on disk is NEVER modified — patch is in-memory only.
+ *   TC-5b Each Microservice card has a clickable detail-view toggle (canonical G6:
+ *          click a card in EACH panel -> detail view renders). Verified by
+ *          clicking the trace-toggle button and confirming trace-detail shows.
  *   TC-6  console_errors === 0
  *   TC-7  network_calls === 0 (file:// only; asserted via request interception)
  *
@@ -98,6 +107,9 @@ const EXPECTED_PRIMITIVES = [
   "temporal-decay-scorer",
 ];
 
+// Expected service cards in the Microservice panel (P3-E: now GREEN, not NOT-RUN)
+const EXPECTED_SERVICE_CARD_COUNT = 3;
+
 async function run() {
   if (!fs.existsSync(INDEX_HTML)) {
     console.error(`[trust-contract] FATAL: index.html not found at ${INDEX_HTML}`);
@@ -136,13 +148,19 @@ async function run() {
     primitive_cards_count: 0,
     primitive_cards_all_green: false,
     module_ok: false,
-    microservice_not_run: false,
+    // P3-E: replaced microservice_not_run with service_cards_green
+    service_cards_count: 0,
+    service_cards_all_green: false,
+    service_cards_detail_view_ok: false,
     colors_match_traces: false,
+    service_tier_honest_red_ok: false,
     honest_red_method: null,
     console_errors: 0,
     network_calls: 0,
     verdict: "FAIL",
     error: null,
+    // Explicitly record that prior defect assertion is gone
+    p3e_note: "P3-E: Microservice panel asserts honest-GREEN (3 service cards), NOT NOT-RUN. Prior NOT-RUN assertion was a defect — it validated the wrong contract.",
   };
 
   try {
@@ -190,11 +208,6 @@ async function run() {
 
     // Check all 5 expected primitives are present and GREEN
     let allGreen = true;
-    const primitivesByName = {};
-    for (const c of primitiveCardData) {
-      primitivesByName[c.name] = c;
-    }
-
     for (const expected of EXPECTED_PRIMITIVES) {
       const card = primitiveCardData.find((c) => c.name === expected);
       if (!card) {
@@ -225,7 +238,9 @@ async function run() {
     }
 
     // -------------------------------------------------------------------------
-    // TC-4: microservice card shows NOT-RUN (honest)
+    // TC-4: Microservice panel has >=3 service cards, ALL GREEN (P3-E — NOT NOT-RUN)
+    // This assertion REPLACES the prior microservice_not_run=true check.
+    // Prior spec asserted NOT-RUN as a PASS condition — that validated the defect.
     // -------------------------------------------------------------------------
     const microserviceCardData = await page.$$eval(
       "#microservice-body .card",
@@ -233,91 +248,170 @@ async function run() {
         cards.map((card) => ({
           name: card.dataset.primitive || card.querySelector(".card-name")?.textContent?.trim() || "?",
           statusLabel: card.querySelector(".status-label")?.textContent?.trim() || "?",
+          hasToggle: !!card.querySelector(".trace-toggle"),
+          hasDetail: !!card.querySelector(".trace-detail"),
         }))
     );
-    const serviceCard = microserviceCardData[0];
-    verdict.microservice_not_run = !!(serviceCard && serviceCard.statusLabel === "NOT-RUN");
-    if (!verdict.microservice_not_run) {
-      console.error(`[trust-contract] FAIL TC-4: microservice card status is "${serviceCard?.statusLabel}" not "NOT-RUN"`);
+
+    verdict.service_cards_count = microserviceCardData.length;
+
+    let allServiceGreen = microserviceCardData.length >= EXPECTED_SERVICE_CARD_COUNT;
+    for (const card of microserviceCardData) {
+      if (card.statusLabel !== "GREEN") {
+        console.error(`[trust-contract] FAIL TC-4: service card "${card.name}" shows "${card.statusLabel}" not "GREEN"`);
+        allServiceGreen = false;
+      }
+    }
+    if (microserviceCardData.length < EXPECTED_SERVICE_CARD_COUNT) {
+      console.error(`[trust-contract] FAIL TC-4: only ${microserviceCardData.length} service cards, expected >= ${EXPECTED_SERVICE_CARD_COUNT}`);
+    }
+    verdict.service_cards_all_green = allServiceGreen;
+
+    // TC-5b: Each service card has a clickable detail-view toggle (canonical G6)
+    // Verify the toggle + detail element are present in DOM for each service card
+    let detailViewOk = microserviceCardData.length >= EXPECTED_SERVICE_CARD_COUNT;
+    for (const card of microserviceCardData) {
+      if (!card.hasToggle || !card.hasDetail) {
+        console.error(`[trust-contract] FAIL TC-5b: service card "${card.name}" missing detail-view toggle (hasToggle=${card.hasToggle}, hasDetail=${card.hasDetail}) — canonical G6 not met`);
+        detailViewOk = false;
+      }
     }
 
+    // Click the first service card toggle and verify detail becomes visible
+    if (microserviceCardData.length > 0 && microserviceCardData[0].hasToggle) {
+      try {
+        const firstToggle = await page.$("#microservice-body .card .trace-toggle");
+        if (firstToggle) {
+          await firstToggle.click();
+          await page.waitForTimeout(200);
+          const detailVisible = await page.$eval(
+            "#microservice-body .card .trace-detail",
+            (el) => el.style.display !== "none"
+          ).catch(() => false);
+          if (!detailVisible) {
+            console.error("[trust-contract] FAIL TC-5b: clicking service card toggle did not show trace-detail");
+            detailViewOk = false;
+          } else {
+            console.log("[trust-contract] TC-5b: service card toggle clicked -> trace-detail visible (canonical G6 CONFIRMED)");
+          }
+          // Hide it again
+          await firstToggle.click();
+          await page.waitForTimeout(100);
+        }
+      } catch (e) {
+        console.error(`[trust-contract] FAIL TC-5b: click toggle error: ${e.message}`);
+        detailViewOk = false;
+      }
+    }
+    verdict.service_cards_detail_view_ok = detailViewOk;
+
     // -------------------------------------------------------------------------
-    // TC-5: Colors match traces — prove honesty by DOM patch
-    //
-    // Strategy: inject a pass=false patch into the inline trace JSON for
-    // "similarity-scorer" using page.evaluate() — this modifies the DOM text
-    // node of the <script type="application/json"> element IN MEMORY only.
-    // The dashboard JS has already read the trace at DOMContentLoaded, so we
-    // must reload the page with a patched version injected BEFORE JS runs.
-    //
-    // Approach: use page.route() to intercept the file:// load and inject a
-    // modified HTML where trace-similarity-scorer-golden has passed=false.
-    // This is the cleanest way to test DOM-driven honesty without touching disk.
+    // TC-5: Honest-red proof via page.route() — TWO proofs:
+    //   (a) Primitive tier: similarity-scorer pass=false -> FAIL badge
+    //   (b) Service tier: service-search-golden pass=false -> FAIL badge
+    // File on disk is NEVER modified. In-memory patch only.
     // -------------------------------------------------------------------------
 
-    // Close original page, set up route interception on fresh page
+    // Read original HTML
+    const originalHtml = fs.readFileSync(INDEX_HTML, "utf-8");
+
+    // --- Proof (a): primitive honest-red ---
+    const patchedHtmlA = originalHtml.replace(
+      /("passed":\s*)(true)(\s*,\s*\n\s*"primitive":\s*"similarity_scorer")/,
+      '$1false$3'
+    );
+    const patchedA = patchedHtmlA !== originalHtml;
+
+    // --- Proof (b): service tier honest-red ---
+    // The service trace block has "passed": true, "scenario": "search_golden"
+    const patchedHtmlB = originalHtml.replace(
+      /("passed":\s*)(true)(\s*,\s*\n\s*"scenario":\s*"search_golden")/,
+      '$1false$3'
+    );
+    const patchedB = patchedHtmlB !== originalHtml;
+
     await page.close();
+
+    // Proof (a): primitive honest-red
+    let colorsMatchTraces = false;
     const page2 = await context.newPage();
     const page2ConsoleErrors = [];
     page2.on("console", (msg) => {
       if (msg.type() === "error") page2ConsoleErrors.push(msg.text());
     });
 
-    // Read original HTML
-    const originalHtml = fs.readFileSync(INDEX_HTML, "utf-8");
-
-    // Patch: change passed:true to passed:false for similarity-scorer trace
-    // The trace block looks like: {"passed": true, "primitive": "similarity_scorer", ...}
-    const patchedHtml = originalHtml.replace(
-      // Match the similarity_scorer trace block's "passed": true
-      /("passed":\s*)(true)(\s*,\s*\n\s*"primitive":\s*"similarity_scorer")/,
-      '$1false$3'
-    );
-
-    const patched = patchedHtml !== originalHtml;
-    if (!patched) {
-      console.warn("[trust-contract] WARN: HTML patch for honesty check did not match — using fallback");
-    }
-
-    // Serve patched HTML via route interception
-    await page2.route(PAGE_URL, (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "text/html",
-        body: patched ? patchedHtml : originalHtml,
+    if (patchedA) {
+      await page2.route(PAGE_URL, (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: "text/html",
+          body: patchedHtmlA,
+        });
       });
-    });
+      await page2.goto(PAGE_URL, { waitUntil: "domcontentloaded" });
+      await page2.waitForTimeout(800);
 
-    await page2.goto(PAGE_URL, { waitUntil: "domcontentloaded" });
-    await page2.waitForTimeout(800);
+      const patchedCard = await page2.$eval(
+        "#primitives-body .card[data-primitive='similarity-scorer'] .status-label",
+        (el) => ({ statusLabel: el.textContent?.trim(), statusClass: el.className })
+      ).catch(() => null);
 
-    // Now similarity-scorer card should show FAIL (RED), not GREEN
-    const patchedCard = await page2.$eval(
-      "#primitives-body .card[data-primitive='similarity-scorer'] .status-label",
-      (el) => ({ statusLabel: el.textContent?.trim(), statusClass: el.className })
-    ).catch(() => null);
-
-    let colorsMatchTraces = false;
-    if (patched && patchedCard) {
-      colorsMatchTraces = patchedCard.statusLabel === "FAIL";
-      verdict.honest_red_method = patched
-        ? `DOM patch via page.route(): trace-similarity-scorer-golden.passed set to false in-memory → card shows "${patchedCard.statusLabel}" (expected FAIL). File on disk NOT modified.`
-        : "Patch did not apply — honesty check skipped";
-      if (!colorsMatchTraces) {
-        console.error(`[trust-contract] FAIL TC-5: after pass=false patch, card shows "${patchedCard.statusLabel}" not "FAIL" — honesty broken`);
+      if (patchedCard) {
+        colorsMatchTraces = patchedCard.statusLabel === "FAIL";
+        verdict.honest_red_method = `DOM patch via page.route(): trace-similarity-scorer-golden.passed set to false in-memory → card shows "${patchedCard.statusLabel}" (expected FAIL). File on disk NOT modified.`;
+        if (!colorsMatchTraces) {
+          console.error(`[trust-contract] FAIL TC-5a: after pass=false patch, similarity-scorer card shows "${patchedCard.statusLabel}" not "FAIL" — honesty broken`);
+        } else {
+          console.log(`[trust-contract] TC-5a: primitive honest-red CONFIRMED (similarity-scorer shows FAIL after patch)`);
+        }
+      } else {
+        verdict.honest_red_method = "Patched HTML served but similarity-scorer card element not found";
+        console.error("[trust-contract] FAIL TC-5a: could not read patched card status");
       }
-    } else if (!patched) {
-      // Fallback: cannot prove via DOM patch, but log it clearly
-      verdict.honest_red_method = "HTML patch regex did not match — honesty check skipped (WARN not FAIL for this reason)";
-      colorsMatchTraces = true; // Conservative: don't fail if we couldn't patch
-      console.warn("[trust-contract] WARN TC-5: could not inject honesty patch — check manually");
     } else {
-      verdict.honest_red_method = "Patched HTML served but similarity-scorer card element not found";
-      console.error("[trust-contract] FAIL TC-5: could not read patched card status");
+      verdict.honest_red_method = "HTML patch regex did not match — honesty check skipped (WARN)";
+      colorsMatchTraces = false;
+      console.warn("[trust-contract] WARN TC-5a: could not inject honesty patch");
     }
     verdict.colors_match_traces = colorsMatchTraces;
-
     await page2.close();
+
+    // Proof (b): service tier honest-red
+    let serviceTierHonestRed = false;
+    const page3 = await context.newPage();
+    if (patchedB) {
+      await page3.route(PAGE_URL, (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: "text/html",
+          body: patchedHtmlB,
+        });
+      });
+      await page3.goto(PAGE_URL, { waitUntil: "domcontentloaded" });
+      await page3.waitForTimeout(800);
+
+      // The first service card (/search golden) should now be FAIL
+      const serviceCardPatched = await page3.$eval(
+        "#microservice-body .card .status-label",
+        (el) => el.textContent?.trim()
+      ).catch(() => null);
+
+      if (serviceCardPatched !== null) {
+        serviceTierHonestRed = serviceCardPatched === "FAIL";
+        if (!serviceTierHonestRed) {
+          console.error(`[trust-contract] FAIL TC-5b-svc: after service pass=false patch, first service card shows "${serviceCardPatched}" not "FAIL" — service tier honesty broken`);
+        } else {
+          console.log(`[trust-contract] TC-5b-svc: service tier honest-red CONFIRMED (/search golden shows FAIL after patch). File on disk NOT modified.`);
+        }
+      } else {
+        console.error("[trust-contract] FAIL TC-5b-svc: could not read patched service card status");
+      }
+    } else {
+      console.warn("[trust-contract] WARN TC-5b-svc: service tier HTML patch regex did not match — skipping service honest-red proof");
+      serviceTierHonestRed = false;
+    }
+    verdict.service_tier_honest_red_ok = serviceTierHonestRed;
+    await page3.close();
 
     // -------------------------------------------------------------------------
     // TC-6 + TC-7: errors and network (captured from original page load)
@@ -335,22 +429,25 @@ async function run() {
     // -------------------------------------------------------------------------
     // Take screenshot of all-green state (reload original)
     // -------------------------------------------------------------------------
-    const page3 = await context.newPage();
-    await page3.goto(PAGE_URL, { waitUntil: "domcontentloaded" });
-    await page3.waitForTimeout(800);
-    await page3.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
-    await page3.close();
+    const page4 = await context.newPage();
+    await page4.goto(PAGE_URL, { waitUntil: "domcontentloaded" });
+    await page4.waitForTimeout(800);
+    await page4.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
+    await page4.close();
 
     // -------------------------------------------------------------------------
-    // Final verdict
+    // Final verdict: all conditions must hold
     // -------------------------------------------------------------------------
     const allOk =
       verdict.panels_ok &&
       verdict.panels_count === 3 &&
       verdict.primitive_cards_all_green &&
       verdict.module_ok &&
-      verdict.microservice_not_run &&
+      verdict.service_cards_count >= EXPECTED_SERVICE_CARD_COUNT &&
+      verdict.service_cards_all_green &&
+      verdict.service_cards_detail_view_ok &&
       verdict.colors_match_traces &&
+      verdict.service_tier_honest_red_ok &&
       verdict.console_errors === 0 &&
       verdict.network_calls === 0;
 
@@ -375,15 +472,21 @@ async function run() {
 
   if (verdict.verdict === "PASS") {
     console.log("[trust-contract] PASS — all trust-contract assertions satisfied");
-    console.log(`  TC-1 panels_ok:               ${verdict.panels_ok} (${verdict.panels_count}/3)`);
-    console.log(`  TC-2 primitive_cards:          ${verdict.primitive_cards_count}/5 all GREEN=${verdict.primitive_cards_all_green}`);
-    console.log(`  TC-3 module_ok:                ${verdict.module_ok}`);
-    console.log(`  TC-4 microservice_not_run:     ${verdict.microservice_not_run}`);
-    console.log(`  TC-5 colors_match_traces:      ${verdict.colors_match_traces}`);
-    console.log(`  TC-6 console_errors:           ${verdict.console_errors}`);
-    console.log(`  TC-7 network_calls:            ${verdict.network_calls}`);
-    console.log(`  Screenshot:                    ${SCREENSHOT_PATH}`);
-    console.log(`  Verdict file:                  ${VERDICT_PATH}`);
+    console.log(`  TC-1 panels_ok:                     ${verdict.panels_ok} (${verdict.panels_count}/3)`);
+    console.log(`  TC-2 primitive_cards:               ${verdict.primitive_cards_count}/5 all GREEN=${verdict.primitive_cards_all_green}`);
+    console.log(`  TC-3 module_ok:                     ${verdict.module_ok}`);
+    console.log(`  TC-4 service_cards:                 ${verdict.service_cards_count} cards, all_green=${verdict.service_cards_all_green}`);
+    console.log(`  TC-5b detail_view_ok:               ${verdict.service_cards_detail_view_ok} (canonical G6 all 3 panels)`);
+    console.log(`  TC-5a colors_match_traces:          ${verdict.colors_match_traces} (primitive honest-red)`);
+    console.log(`  TC-5b-svc service_tier_honest_red:  ${verdict.service_tier_honest_red_ok} (service tier honest-red)`);
+    console.log(`  TC-6 console_errors:                ${verdict.console_errors}`);
+    console.log(`  TC-7 network_calls:                 ${verdict.network_calls}`);
+    console.log(`  Screenshot:                         ${SCREENSHOT_PATH}`);
+    console.log(`  Verdict file:                       ${VERDICT_PATH}`);
+    console.log("");
+    console.log("  NOTE: This is the AUTOMATED PROXY only.");
+    console.log("  FINAL G9 YES requires USER verbal sign-off at pilot review.");
+    console.log("  (pilot-charter.md L192-194 — the canonical G9 arbiter is the USER)");
   } else {
     console.error(`[trust-contract] FAIL — verdict: ${verdict.verdict}`);
     if (verdict.error) console.error(`  error: ${verdict.error}`);
