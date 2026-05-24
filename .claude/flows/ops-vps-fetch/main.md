@@ -1,3 +1,4 @@
+<!-- size-justification: 150L — VPS recon flow; SSH probe commands, anti-bot classification table, recon doc schema pointer, and signal drop spec are all mandatory; mirrors ops-mainserver-fetch intentionally — same structure, different execution environment -->
 # ops-vps-fetch — Main Flow
 
 **Tools:** `.claude/tools/package/ops.md`

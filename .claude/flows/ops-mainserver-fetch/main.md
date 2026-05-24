@@ -1,3 +1,4 @@
+<!-- size-justification: 178L — single fetch-and-recon flow; probe commands, geo-block decision table, anti-bot classification table, and recon doc schema are all mandatory operational content with no factoring seam -->
 # ops-mainserver-fetch — Main Flow
 
 **Tools:** `.claude/tools/package/ops.md`

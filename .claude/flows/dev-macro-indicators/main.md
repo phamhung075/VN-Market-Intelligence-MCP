@@ -1,3 +1,4 @@
+<!-- size-justification: 138L — thin pointer + pilot enforcement content (Language Mode, Smoke Checks, G12 DoD, Security Clause, Fence Rules A/B/C, Pre-Revert Tag Protocol, References); identical structure to dev-stock-price — schedule for split when macro-indicators pilot reaches Phase 2 (same pass as S4) -->
 # dev-macro-indicators — Main (Pointer)
 
 **Zone:** `apps/macro-indicators/`

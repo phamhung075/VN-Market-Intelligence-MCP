@@ -1,3 +1,4 @@
+<!-- size-justification: 142L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, implementation record template, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`

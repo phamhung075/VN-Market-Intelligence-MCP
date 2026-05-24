@@ -1,3 +1,4 @@
+<!-- size-justification: 147L — SSOT protocol skill for DASHBOARD.md; covers WRITE/READ/ACK/CLOSE/PRUNE operations + payload pointer discipline (3 rules) + signal type taxonomy + per-type doc-load table; splitting operations would break the atomicity guarantee agents depend on -->
 ---
 name: signal-dashboard
 description: SSOT protocol for cowork agent signal communication via docs/signals/DASHBOARD.md. Covers write, read, ack, close, and prune operations.

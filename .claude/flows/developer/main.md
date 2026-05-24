@@ -1,3 +1,4 @@
+<!-- size-justification: 141L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, and RETURN schema are all tightly coupled sequential steps that must be read in one pass -->
 # Developer — Main Flow
 
 **Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.

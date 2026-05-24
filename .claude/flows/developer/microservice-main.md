@@ -1,3 +1,4 @@
+<!-- size-justification: 135L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, task-lock claim, doc-review chain, implementation record template, and RETURN schema; splitting would degrade usability for all 9 consumers -->
 # Microservice Developer — Main Flow
 
 **Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.

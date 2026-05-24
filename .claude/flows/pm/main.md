@@ -1,3 +1,4 @@
+<!-- size-justification: 149L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, and commit convention are all non-separable PM responsibilities executed in sequence -->
 # Project Manager — Main Flow
 
 **Tools:** `.claude/tools/package/pm.md`

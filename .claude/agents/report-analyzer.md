@@ -1,3 +1,4 @@
+<!-- size-justification: 129L — single-responsibility agent; signal_output_spec with 4 business-context fields + example JSON block is mandatory chef contract (identical pattern to financial-analyst JUSTIFIED at 137L); all sections are load-bearing identity content -->
 ---
 name: report-analyzer
 color: cyan

@@ -1,3 +1,4 @@
+<!-- size-justification: 137L — agent definition includes signal_output_spec with 4 business-context fields + example JSON block (mandatory chef contract), BCTC deadline table, schedule spec, and always_load knowledge list; all load-bearing identity content -->
 ---
 name: financial-analyst
 color: green

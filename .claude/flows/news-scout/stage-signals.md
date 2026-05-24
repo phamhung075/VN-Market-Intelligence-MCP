@@ -1,3 +1,4 @@
+<!-- size-justification: 154L — stage 3 sub-flow; carries 3 distinct signal schemas (legal_risk / urgent_news / chain_catalyst) each with dedup logic, confidence tables, and exact call_tool payloads; schemas are non-factorizable without breaking the dedup contract -->
 > Parent: [./cycle.md](./cycle.md)
 
 # News Scout — Stage 3: Post Signals

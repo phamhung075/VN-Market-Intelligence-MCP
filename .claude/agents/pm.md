@@ -1,3 +1,4 @@
+<!-- size-justification: 156L — agent definition embeds parallel-dispatch spawn pattern (S7 dispatcher-wrap with task_claim loop), conflict-check matrix, and inter_agent routing table; all are identity-level content that must load atomically with the agent -->
 ---
 name: pm
 color: yellow
