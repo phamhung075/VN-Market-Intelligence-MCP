@@ -1,5 +1,77 @@
 # QA — Notebook
 
+## cycle-95 · 2026-05-24 · kinh-dich P2-K (G10+G11) + P2-Z (Phase-2 close-gate) — READY-FOR-PHASE-3
+
+**Task:** P2-K (G10 cycle count + G11 coupling) + P2-Z Phase-2 close-gate | **Verdict:** READY-FOR-PHASE-3
+
+```
+date: 2026-05-24
+outcome: READY-FOR-PHASE-3 — all 12 goal evidence chains complete
+type: pilot-task-qa (G10+G11 grading + Phase-2 close-gate)
+handoff: docs/handoffs/TASK_P2-K-kd-g10-g11.md
+signal: docs/signals/qa-kd-phase2-close-gate-go-20260524T120000Z.json
+
+## PART A — P2-K Verification
+
+g10_cycle_count: 1 (EXCEEDS baseline 1.5)
+g10_fix_commit: c59089bc
+g10_sandbox: 17/17 GREEN exit 0
+g10_dash_check: dotsGreen=17, dotsRed=0, verdict=PASS
+g10_build_vet_test_lint: all exit 0
+
+byte_identical_restore: PASS-WITH-CAVEAT
+  diff_non_empty: true (comment-only: '(NOT 0.25)' suffix removed from inline comment)
+  value_0.10_correct: true
+  workaround_detected: false
+  ruling: ACCEPT-WITH-CAVEAT (semantic value correct, cosmetic comment cleanup only)
+
+g11_trial_1_coupling:
+  primitive: hao_encoder (THIEU_DUONG_THRESHOLD 0.10→0.25)
+  coupled_modules: reading-composer-golden.json + reading-composer-edge.json (4 RED total)
+  coupling_path: reading_composer calls EncodeHaos() — propagates wrong threshold
+  outcome: outcome-(a) — single-edit fix repaired all 4 coupled REDs simultaneously
+g11_verdict: PASS
+g11_trial_2: DEFERRED-AVAILABLE (Trial-1 sufficient per plan permissive language)
+
+## PART B — P2-Z Phase-2 Close-Gate
+
+sandbox_all: 17/17 GREEN exit 0
+go_build: EXIT:0 | go_vet: EXIT:0 | go_test: EXIT:0 (all packages) | golangci_lint: EXIT:0
+
+ts_era_tags:
+  kinh-dich-pre-ci: 2d245200 INTACT
+  kinh-dich-pre-delete: fdaf4be3 INTACT
+  kinh-dich-pre-inject: b4cdb1db INTACT
+
+go_era_tags:
+  kinh-dich-pre-ci-go: 90dcc68a (ancestor: YES)
+  kinh-dich-pre-delete-go: 893b17ee (ancestor: YES)
+  kinh-dich-pre-inject-go: 10ef7fdd (ancestor: YES)
+  order: pre-ci-go ≤ pre-delete-go ≤ pre-inject-go ≤ HEAD — all exit:0
+
+ssot_integrity:
+  phase: "1" | goalsEarned: 0 | decisionMatrix: all-TBD | verdict: TBD
+  all_goals_TBD: true | dup_keys: NONE | jq_parses: true
+
+dashboard_honest_green: grep -c 'language=ts|runtime=bun' → 0
+g5c_zero_todo_migrat: exit:1 (0 matches)
+golangci_lint_final: 0 issues exit:0
+
+ac_verdicts: AC-1 through AC-14 all PASS (AC-11 PASS-WITH-CAVEAT noted)
+
+caveats:
+  - AC-11: comment-only diff in hao_encoder.go (value correct, no workaround)
+  - G11 Trial-2: deferred (Trial-1 provides 2-module coupling, plan permissive)
+
+p2_k_status: DONE (G10 + G11 evidence complete)
+p2_z_verdict: READY-FOR-PHASE-3
+ssot_not_mutated: true (PO-only §4.5)
+goal_flips: NONE
+next: PO — Phase-3 terminal atomic close (flip 12/12 → YES, decisionMatrix, verdict=scale, status=DONE)
+```
+
+---
+
 ## cycle-94 · 2026-05-24 · news-fetch P2-NF-Z — Phase 2 Close-Gate — APPROVED
 
 **Task:** P2-NF-Z (Phase 2 close-gate final verification) | **Verdict:** APPROVED — all 12 goals evidence-locked
