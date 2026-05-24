@@ -1,5 +1,22 @@
 # Agent Father — Notebook
 
+## c264 · 2026-05-24
+
+**Task:** P0-RAG-3 — Calibrate dev-rag-service agent file + bake G12 DoD gate into flow (SCALE pilot Phase 0 deliverable)
+
+**Sub-task 1 — Agent file calibration (.claude/agents/dev-rag-service.md):**
+Drift found: version stale (2026-05-06), no pilot context, no three-tier refactor mandate, no determinism/env-audit awareness, no G12 DoD constraint. Fixed: version → 2026-05-24; description updated with SCALE pilot + Python lock note; three-tier refactor capabilities added (5 primitives + retrieval module + env-audit); constraints block expanded with pilot_language=Python, g12_dod=binding_day_0, determinism_gate, env_audit_forbidden_keys; two lazy-load entries added (scale charter + pilot charter, both guarded triggers).
+
+**Sub-task 2 — Flow file G12 gate (.claude/flows/dev-rag-service/main.md):**
+Replaced 19L thin pointer with 124L pilot-enforcement flow (explicit size-justification, schedule-for-split note, mirrors macro/TA canonical pattern). Sections: Language Mode (Python fixed Day 0), Smoke Checks (pytest+mypy+JSON+sandbox both tiers), G12 DoD Gate (blocking — sandbox-green AND env-audit-empty BOTH required before RETURN, evidence paste mandatory), Security Rule (LANCEDB_*/HF_TOKEN/HUGGINGFACE_*/OPENAI_API_KEY + standard keys, HF_HUB_OFFLINE hardening retained), Fence Rules (Python import-linter, Fence-A+B, SI-4 gate note), Pre-Revert Tag Protocol (rag-pre-ci/delete/inject), References table.
+
+**Pilot-status updated:** dev_agent_file + dev_agent_flow_file → DONE; g12Streak.ruleEffectiveAfter populated.
+
+**Commit:** 0b5ef802 (agent + flow files); pilot-status in HEAD.
+**Note:** agent-md-factory skill does not exist at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide directly (same note as c263).
+
+---
+
 ## c263 · 2026-05-24
 
 **Task:** P0-PDF-4 — Bake G12 DoD gate into dev-pdf-extractor flow (SCALE pilot Phase 0 deliverable)
@@ -146,23 +163,7 @@ Commit: 6becd6b0
 
 ## c-P0-SP-3 · 2026-05-24T00:23Z
 
-**Task:** P0-SP-3 — Bake G12 DoD Gate + factory disciplines into dev-stock-price agent/flow
-
-**Actions:**
-- `.claude/agents/dev-stock-price.md` CONFIRMED: added `zone` to YAML frontmatter, updated `model` to `claude-opus-4-5`, added `pilot_constraints` block (g12_dod_gate, cgo_boundary, fence_rules, pre_revert_tags, sandbox_security), added factory pilot lazy-load references.
-- `.claude/flows/dev-stock-price/main.md` CONFIRMED: transformed thin pointer into full macro-indicators-pattern flow. Added: Language Mode, Smoke Checks, G12 DoD Gate (blocking), R-CGO Gate (pre-check sequence + escalation), Security Rule, Fence Rules (A/B/C with grep commands), Pre-Revert Tag Protocol (stock-price-pre-ci/-delete/-inject).
-- Signal emitted: docs/signals/pm-p0-sp3-agent-flow-baking-complete-20260523T222357Z.json
-
-**Gates verified (all PASS):**
-- YAML valid: yes (frontmatter has name/color/description/tools/model/zone)
-- G12 DoD present: yes (both sandbox tiers CGO_ENABLED=0 must exit 0 GREEN)
-- R-CGO documented: yes (3-step pre-check + escalation path)
-- Fence-A/B/C baked: yes
-- Pre-revert tags: yes (3 tags documented)
-- Flow loads: yes (valid markdown, head-1 check passed)
-- Commit SHA: 83770aa1 (changes landed in HEAD via P0-SP-5 session)
-
-**AC status:** AC-1 through AC-7 PASS.
+**Task:** P0-SP-3 — Bake G12 DoD Gate + factory disciplines into dev-stock-price agent/flow. Agent frontmatter (zone, model, pilot_constraints), flow transformed to macro-indicators pattern with Language Mode/Smoke Checks/G12 DoD/R-CGO Gate/Security/Fence-A/B/C/Pre-Revert tags. Signal emitted. AC-1..7 PASS. Commit: 83770aa1.
 
 ## c263 · 2026-05-24
 
