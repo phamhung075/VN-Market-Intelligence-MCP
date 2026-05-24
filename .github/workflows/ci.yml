@@ -203,6 +203,30 @@ jobs:
       - name: Run ESLint boundaries fence
         run: cd apps/kinh-dich-service && bunx eslint src/ --max-warnings 0
 
+  py-lint:
+    name: py-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Python 3.11 for pdf-extractor import-linter fence.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Install import-linter. pip cache optional — kept lean for offline evidence model.
+      - name: Install import-linter
+        run: pip install import-linter
+
+      # Run Fence-A/B contracts against apps/pdf-extractor domain layer.
+      # Exit non-zero = architecture violation — build fails.
+      # Config discovered automatically from pyproject.toml when run from package directory.
+      - name: Run lint-imports (Fence-A/B)
+        working-directory: apps/pdf-extractor
+        run: lint-imports --config pyproject.toml
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
