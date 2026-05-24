@@ -13,13 +13,31 @@ Prevent multi-session agent collisions when two Claude Code terminals fire the s
 
 ---
 
-## Three Lock Kinds
+## Four Lock Kinds
 
 | `task_kind` | `task_id` format | Example | Default TTL |
 |-------------|-----------------|---------|-------------|
 | `cowork-slot` | `cowork-slot:<slot_id>:<nominal_tick>` | `cowork-slot:news-scout-pre-market:20260520T140000Z` | 900s (15 min) |
 | `sprint-task` | `task:<task_id>` | `task:1954b` | 3600s (1h) |
 | `dashboard-row` | `dash:<recipient>:<row_id>` | `dash:po:1954-A-29-1` | 1800s (30 min) |
+| `commit-mutex` | `commit-mutex:main` | `commit-mutex:main` (singleton) | 60s |
+
+### commit-mutex
+
+Fleet-wide singleton lock that serializes the `git add → git diff verify → git commit` critical
+section. Eliminates the verify→commit race on the shared git index (design brief:
+`docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md`).
+
+**Rules:**
+- Exactly one row (`commit-mutex:main`) ever exists — singleton per fleet.
+- TTL=60s (commit window is 2–10s; 60s provides 6× headroom + crash recovery).
+- No heartbeat required (too short to need it; TTL is the crash-recovery mechanism).
+- Backoff: exponential + jitter (±20%), 6 retries, ~125s max wait before give-up.
+- **Fail-CLOSED (C-2):** if `task_claim` errors (MCP/DB unavailable), SKIP the commit
+  entirely — NEVER stage without holding the mutex.
+- Give-up action: `send_telegram(channel="bug", ...)` + skip commit + retry next cron tick.
+- Full acquire/release protocol: `.claude/skills/commit-mutex/SKILL.md`
+- PO ratification: `docs/po-decisions/2026-05-24-commit-mutex-ratification.md` (C-1..C-4)
 
 ---
 
@@ -99,6 +117,7 @@ Always call `task_release` in the completion path. If the agent crashes, TTL exp
 | cowork-slot (any cowork agent) | 900s | One 15-min scheduler cycle |
 | sprint-task (dev-* agents) | 3600s | 1h per user request |
 | dashboard-row (dev-team drain) | 1800s | 30 min: drain + PO triage cycle |
+| commit-mutex (fleet-wide singleton) | 60s | Commit window is 2–10s; 60s = 6× headroom; crash recovery via TTL |
 
 ---
 
