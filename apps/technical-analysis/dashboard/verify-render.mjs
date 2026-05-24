@@ -4,11 +4,12 @@
  *
  * Loads dashboard/index.html via file:// URL in headless Chromium, reads the live
  * rendered DOM, and asserts the full-green state:
- *   - 30 dot-green, 0 dot-red, 0 dot-pending
+ *   - 33 dot-green (25 primitive + 5 module + 3 service), 0 dot-red, 0 dot-pending
  *   - All .group-status labels read "PASSED"
- *   - Count chips: "25 passed" (primitives), "5 passed" (module)
+ *   - Count chips: "25 passed" (primitives), "5 passed" (module), "3 passed" (service)
  *   - Zero console.error / pageerror events
  *   - No "NOT RUN" text anywhere in <body>
+ *   - No "not wired" text in <body>
  *
  * Exit 0 on pass. Non-zero + clear message on fail.
  * Writes dashboard/dist/render-check.png as evidence screenshot.
@@ -168,12 +169,21 @@ async function run() {
     const modRedChip = await page.$eval("#mod-red-chip", (el) =>
       el.textContent.trim()
     );
+    const svcGreenChip = await page.$eval("#svc-green-chip", (el) =>
+      el.textContent.trim()
+    );
+    const svcRedChip = await page.$eval("#svc-red-chip", (el) =>
+      el.textContent.trim()
+    );
 
     console.log(
       `[verify-render] Primitives chip: green="${primGreenChip}", red="${primRedChip}"`
     );
     console.log(
       `[verify-render] Module chip:     green="${modGreenChip}", red="${modRedChip}"`
+    );
+    console.log(
+      `[verify-render] Service chip:    green="${svcGreenChip}", red="${svcRedChip}"`
     );
 
     // -----------------------------------------------------------------------
@@ -202,12 +212,14 @@ async function run() {
     );
 
     // -----------------------------------------------------------------------
-    // 4. Check for "NOT RUN" text
+    // 4. Check for stale / stub text
     // -----------------------------------------------------------------------
     const bodyText = await page.$eval("body", (el) => el.innerText);
     const hasNotRun = bodyText.includes("NOT RUN");
+    const hasNotWired = bodyText.toLowerCase().includes("not wired yet");
 
     console.log(`[verify-render] "NOT RUN" in body: ${hasNotRun}`);
+    console.log(`[verify-render] "not wired yet" in body: ${hasNotWired}`);
     console.log(
       `[verify-render] console.error count: ${consoleErrors.length}`
     );
@@ -238,6 +250,14 @@ async function run() {
       modRedChip === "0 failed",
       `Expected module red chip "0 failed", got "${modRedChip}"`
     );
+    assert(
+      svcGreenChip === "3 passed",
+      `Expected service chip "3 passed", got "${svcGreenChip}"`
+    );
+    assert(
+      svcRedChip === "0 failed",
+      `Expected service red chip "0 failed", got "${svcRedChip}"`
+    );
 
     assert(
       groupStatuses.length > 0,
@@ -250,8 +270,8 @@ async function run() {
     );
 
     assert(
-      dotGreenCount === 30,
-      `Expected 30 dot-green, got ${dotGreenCount}`
+      dotGreenCount === 33,
+      `Expected 33 dot-green (25 primitive + 5 module + 3 service), got ${dotGreenCount}`
     );
     assert(
       dotRedCount === 0,
@@ -268,6 +288,11 @@ async function run() {
     );
 
     assert(
+      !hasNotWired,
+      '"not wired yet" text found in body — Level 3 stub text not removed'
+    );
+
+    assert(
       consoleErrors.length === 0,
       `JS console errors detected (${consoleErrors.length}):\n  ${consoleErrors.join("\n  ")}`
     );
@@ -278,8 +303,8 @@ async function run() {
     );
 
     console.log(
-      "\n[verify-render] PASS — 30 dot-green, 0 dot-red, 0 dot-pending, " +
-        "0 JS errors, all groups PASSED, no NOT RUN text."
+      "\n[verify-render] PASS — 33 dot-green (L1:25 + L2:5 + L3:3), 0 dot-red, 0 dot-pending, " +
+        "0 JS errors, all groups PASSED, no NOT RUN text, no 'not wired' text."
     );
   } finally {
     await browser.close();

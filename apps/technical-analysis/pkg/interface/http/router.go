@@ -1,8 +1,10 @@
 // Package http — HTTP interface layer for the technical-analysis service.
-// Routes: GET /health, POST /ta/indicators (501 stubs until P1-B tasks land).
+// Routes: GET /health, POST /ta/indicators.
 package http
 
 import (
+	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -33,8 +35,33 @@ func handleHealth() http.HandlerFunc {
 	}
 }
 
-func handleIndicators(_ *application.ComputeTAUseCase, _ *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "not implemented yet", http.StatusNotImplemented)
+func handleIndicators(useCase *application.ComputeTAUseCase, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req application.ComputeTARequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":"invalid request body"}`))
+			return
+		}
+		if len(req.Closes) == 0 && req.Symbol == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":"closes or symbol required"}`))
+			return
+		}
+		resp, err := useCase.Execute(context.Background(), req)
+		if err != nil {
+			if logger != nil {
+				logger.Error("useCase.Execute failed", "err", err)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte(`{"error":"internal error"}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(resp)
 	}
 }

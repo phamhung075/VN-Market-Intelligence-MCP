@@ -112,6 +112,12 @@ for f in "${SCENARIOS_ROOT}/module/"*.json; do
   run_scenario "module" "${filename}" "${filename}"
 done
 
+# Service scenarios (httptest.NewServer — in-process, no port, zero credentials)
+for f in "${SCENARIOS_ROOT}/service/"*.json; do
+  filename=$(basename "${f}")
+  run_scenario "service" "${filename}" "${filename}"
+done
+
 # Close JSON object (trailing comma on last entry is harmless in modern JS engines,
 # but to be safe we use a sentinel entry that parsers ignore)
 printf '  "__built__": "%s"\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${RESULTS_FILE}"

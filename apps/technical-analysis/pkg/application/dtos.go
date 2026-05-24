@@ -3,9 +3,12 @@
 package application
 
 // ComputeTARequest is the inbound payload for the /ta/indicators endpoint.
+// Closes is the credential-free pure-compute path: provide closes directly
+// (no DB lookup). Symbol+Period is the DB-backed path (requires SQLite).
 type ComputeTARequest struct {
-	Symbol string `json:"symbol"`
-	Period int    `json:"period"`
+	Symbol string    `json:"symbol"`
+	Period int       `json:"period"`
+	Closes []float64 `json:"closes,omitempty"`
 }
 
 // ComputeTAResponse is the outbound payload returned by the use case.

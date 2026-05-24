@@ -1,0 +1,24 @@
+{
+  "service": "technical-analysis",
+  "category": "golden",
+  "description": "POST /ta/indicators with a 50-close linear ramp (10.0+i*0.5, period=14) returns 200 JSON with RSI populated (length >= 36), MACD populated, Bollinger Bands populated. Pure-compute path: closes provided directly in the request body — zero DB credentials, zero SQLite access. httptest.NewServer routes the request through the full DDD stack (interface/http → application → pkg/module).",
+  "input": {
+    "method": "POST",
+    "path": "/ta/indicators",
+    "body": {
+      "closes_count": 50,
+      "closes_pattern": "ramp[0..49]=10.0+i*0.5",
+      "period": 14
+    }
+  },
+  "expectedOutput": {
+    "statusCode": 200,
+    "rsi_populated": true,
+    "rsi_length_min": 36,
+    "macdLine_populated": true,
+    "bollingerUpper_populated": true,
+    "sma_populated": true,
+    "ema_populated": true
+  },
+  "filename": "indicators-happy-path"
+}

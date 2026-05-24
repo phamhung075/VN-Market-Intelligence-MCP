@@ -4,6 +4,7 @@
 //
 //	go run ./cmd/sandbox -tier=primitive -scenario=rsi/rsi-mid-range.json
 //	go run ./cmd/sandbox -tier=module    -scenario=rsi-macd-crossover.json
+//	go run ./cmd/sandbox -tier=service   -scenario=health-ok.json
 //	go run ./cmd/sandbox -audit                    # env audit gate only
 //
 // Emits one JSON result block to stdout.
@@ -13,15 +14,21 @@
 //   - Zero DB access. Zero network calls. Zero API keys.
 //   - Reads scenario JSON from docs/scenarios/technical-analysis/ only.
 //   - All computation via pkg/primitive/* and pkg/module/* (pure functions).
+//   - Service tier uses httptest.NewServer (in-process, no port binding, no creds).
 //
 // P1-E2 — feat(ta-sandbox): credential-free scenario runner
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"log/slog"
 	"math"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +40,9 @@ import (
 	ma "github.com/vn-market-intelligence/technical-analysis/pkg/primitive/moving_average"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi"
 
+	"github.com/vn-market-intelligence/technical-analysis/pkg/application"
+	"github.com/vn-market-intelligence/technical-analysis/pkg/infrastructure"
+	httpinterface "github.com/vn-market-intelligence/technical-analysis/pkg/interface/http"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/module"
 )
 
@@ -281,8 +291,10 @@ func resolveScenarioPath(tier, scenarioArg string) (string, error) {
 		base = filepath.Join(root, "docs", "scenarios", "technical-analysis", "primitives")
 	case "module":
 		base = filepath.Join(root, "docs", "scenarios", "technical-analysis", "module")
+	case "service":
+		base = filepath.Join(root, "docs", "scenarios", "technical-analysis", "service")
 	default:
-		return "", fmt.Errorf("unknown tier %q: must be primitive or module", tier)
+		return "", fmt.Errorf("unknown tier %q: must be primitive, module, or service", tier)
 	}
 
 	// Allow "rsi/rsi-mid-range.json" (strip leading dir component if it matches tier).
@@ -311,6 +323,207 @@ func findRepoRoot(start string) string {
 		dir = parent
 	}
 	return ""
+}
+
+// ---------------------------------------------------------------------------
+// Service tier — httptest.NewServer runner
+// ---------------------------------------------------------------------------
+
+// serviceScenario is the JSON shape for service-tier scenarios.
+type serviceScenario struct {
+	Service  string             `json:"service"`
+	Category string             `json:"category"`
+	Input    serviceInput       `json:"input"`
+	Expected serviceExpected    `json:"expectedOutput"`
+}
+
+type serviceInput struct {
+	Method string          `json:"method"`
+	Path   string          `json:"path"`
+	Body   json.RawMessage `json:"body"` // may be null (GET) or an object (POST)
+}
+
+type serviceExpected struct {
+	StatusCode         int    `json:"statusCode"`
+	RSIPopulated       *bool  `json:"rsi_populated"`
+	RSILengthMin       *int   `json:"rsi_length_min"`
+	MACDLinePopulated  *bool  `json:"macdLine_populated"`
+	BBUpperPopulated   *bool  `json:"bollingerUpper_populated"`
+	SMAPopulated       *bool  `json:"sma_populated"`
+	EMAPopulated       *bool  `json:"ema_populated"`
+	ErrorPresent       *bool  `json:"error_present"`
+	// health-ok body assertion
+	Body map[string]interface{} `json:"body"`
+}
+
+// serviceInputBody is the decoded POST body shape.
+type serviceInputBody struct {
+	Closes        []float64 `json:"closes"`
+	ClosesCount   *int      `json:"closes_count"`
+	ClosesPattern string    `json:"closes_pattern"`
+	Period        int       `json:"period"`
+	Symbol        string    `json:"symbol"`
+}
+
+func newTestServer() (*httptest.Server, func()) {
+	calc := infrastructure.NewTACalculator()
+	useCase := application.NewComputeTAUseCase(calc)
+	router := httpinterface.NewRouter(useCase, slog.Default())
+	srv := httptest.NewServer(router)
+	return srv, srv.Close
+}
+
+func runServiceScenario(scenarioPath string) (actual interface{}, diffs []string, err error) {
+	data, readErr := os.ReadFile(scenarioPath)
+	if readErr != nil {
+		return nil, nil, fmt.Errorf("read service scenario: %w", readErr)
+	}
+	var sc serviceScenario
+	if parseErr := json.Unmarshal(data, &sc); parseErr != nil {
+		return nil, nil, fmt.Errorf("parse service scenario: %w", parseErr)
+	}
+
+	srv, closeSrv := newTestServer()
+	defer closeSrv()
+
+	url := srv.URL + sc.Input.Path
+
+	// Build HTTP request.
+	var bodyReader io.Reader
+	if sc.Input.Method == http.MethodPost && sc.Input.Body != nil && string(sc.Input.Body) != "null" {
+		// Decode the scenario body, resolve closes from pattern if needed.
+		var inputBody serviceInputBody
+		_ = json.Unmarshal(sc.Input.Body, &inputBody)
+		if inputBody.Closes == nil && inputBody.ClosesCount != nil {
+			inputBody.Closes = resolveServiceCloses(inputBody)
+		}
+		// Re-encode as the actual request body.
+		encoded, encErr := json.Marshal(map[string]interface{}{
+			"symbol": inputBody.Symbol,
+			"period": inputBody.Period,
+			"closes": inputBody.Closes,
+		})
+		if encErr != nil {
+			return nil, nil, fmt.Errorf("encode request body: %w", encErr)
+		}
+		bodyReader = bytes.NewReader(encoded)
+	}
+
+	req, reqErr := http.NewRequest(sc.Input.Method, url, bodyReader)
+	if reqErr != nil {
+		return nil, nil, fmt.Errorf("build request: %w", reqErr)
+	}
+	if sc.Input.Method == http.MethodPost {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, doErr := http.DefaultClient.Do(req)
+	if doErr != nil {
+		return nil, nil, fmt.Errorf("http request: %w", doErr)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	// Parse response body as JSON.
+	var respBody map[string]interface{}
+	_ = json.Unmarshal(bodyBytes, &respBody)
+
+	actual = map[string]interface{}{
+		"statusCode": resp.StatusCode,
+		"body":       respBody,
+	}
+
+	// Assertions.
+	if resp.StatusCode != sc.Expected.StatusCode {
+		diffs = append(diffs, fmt.Sprintf("statusCode: got %d, want %d", resp.StatusCode, sc.Expected.StatusCode))
+	}
+
+	// health-ok body match.
+	if sc.Expected.Body != nil {
+		for k, expVal := range sc.Expected.Body {
+			gotVal, ok := respBody[k]
+			if !ok {
+				diffs = append(diffs, fmt.Sprintf("body.%s: missing in response", k))
+				continue
+			}
+			// Loose comparison via JSON round-trip.
+			expStr := fmt.Sprintf("%v", expVal)
+			gotStr := fmt.Sprintf("%v", gotVal)
+			if expStr != gotStr {
+				diffs = append(diffs, fmt.Sprintf("body.%s: got %v, want %v", k, gotVal, expVal))
+			}
+		}
+	}
+
+	// indicators-happy-path assertions.
+	if sc.Expected.RSIPopulated != nil {
+		rsiArr, _ := respBody["rsi"].([]interface{})
+		populated := len(rsiArr) > 0
+		if populated != *sc.Expected.RSIPopulated {
+			diffs = append(diffs, fmt.Sprintf("rsi_populated: got %v, want %v", populated, *sc.Expected.RSIPopulated))
+		}
+		if sc.Expected.RSILengthMin != nil && len(rsiArr) < *sc.Expected.RSILengthMin {
+			diffs = append(diffs, fmt.Sprintf("rsi_length_min: got %d, want >= %d", len(rsiArr), *sc.Expected.RSILengthMin))
+		}
+	}
+	if sc.Expected.MACDLinePopulated != nil {
+		macdArr, _ := respBody["macdLine"].([]interface{})
+		populated := len(macdArr) > 0
+		if populated != *sc.Expected.MACDLinePopulated {
+			diffs = append(diffs, fmt.Sprintf("macdLine_populated: got %v, want %v", populated, *sc.Expected.MACDLinePopulated))
+		}
+	}
+	if sc.Expected.BBUpperPopulated != nil {
+		bbArr, _ := respBody["bollingerUpper"].([]interface{})
+		populated := len(bbArr) > 0
+		if populated != *sc.Expected.BBUpperPopulated {
+			diffs = append(diffs, fmt.Sprintf("bollingerUpper_populated: got %v, want %v", populated, *sc.Expected.BBUpperPopulated))
+		}
+	}
+	if sc.Expected.SMAPopulated != nil {
+		smaArr, _ := respBody["sma"].([]interface{})
+		populated := len(smaArr) > 0
+		if populated != *sc.Expected.SMAPopulated {
+			diffs = append(diffs, fmt.Sprintf("sma_populated: got %v, want %v", populated, *sc.Expected.SMAPopulated))
+		}
+	}
+	if sc.Expected.EMAPopulated != nil {
+		emaArr, _ := respBody["ema"].([]interface{})
+		populated := len(emaArr) > 0
+		if populated != *sc.Expected.EMAPopulated {
+			diffs = append(diffs, fmt.Sprintf("ema_populated: got %v, want %v", populated, *sc.Expected.EMAPopulated))
+		}
+	}
+
+	// indicators-bad-request: check error present.
+	if sc.Expected.ErrorPresent != nil {
+		_, hasError := respBody["error"]
+		if hasError != *sc.Expected.ErrorPresent {
+			diffs = append(diffs, fmt.Sprintf("error_present: got %v, want %v", hasError, *sc.Expected.ErrorPresent))
+		}
+	}
+
+	return actual, diffs, nil
+}
+
+// resolveServiceCloses builds a closes slice for service scenarios that use pattern notation.
+func resolveServiceCloses(inp serviceInputBody) []float64 {
+	n := *inp.ClosesCount
+	// ramp pattern: 10.0 + i*0.5
+	if strings.Contains(inp.ClosesPattern, "ramp") {
+		s := make([]float64, n)
+		for i := range s {
+			s[i] = 10.0 + float64(i)*0.5
+		}
+		return s
+	}
+	// default: linear ramp 10.0 + i
+	s := make([]float64, n)
+	for i := range s {
+		s[i] = 10.0 + float64(i)
+	}
+	return s
 }
 
 // ---------------------------------------------------------------------------
@@ -1437,7 +1650,7 @@ func safeIdx(s []float64, i int) float64 {
 // ---------------------------------------------------------------------------
 
 func main() {
-	tierFlag := flag.String("tier", "primitive", "primitive | module")
+	tierFlag := flag.String("tier", "primitive", "primitive | module | service")
 	scenarioFlag := flag.String("scenario", "", "path or name of the scenario JSON (relative to docs/scenarios/technical-analysis/{primitives|module}/)")
 	auditFlag := flag.Bool("audit", false, "run env audit gate and exit")
 	flag.Parse()
@@ -1483,6 +1696,10 @@ func main() {
 		actual, diffs, err = runPrimitive(&raw)
 	case "module":
 		actual, diffs, err = runModuleScenario(&raw)
+	case "service":
+		// Service tier uses httptest.NewServer — bypass raw RawScenario parsing above.
+		// Re-dispatch directly with the full path.
+		actual, diffs, err = runServiceScenario(scenarioPath)
 	default:
 		emitError(*scenarioFlag, *tierFlag, fmt.Errorf("unknown tier %q", *tierFlag), start)
 		os.Exit(2)

@@ -1,0 +1,15 @@
+{
+  "service": "technical-analysis",
+  "category": "failure",
+  "description": "POST /ta/indicators with an empty JSON body (no closes, no symbol) returns 400 Bad Request with an error field. Verifies the router validates input and rejects requests that provide neither closes nor symbol before reaching the use case. Zero credentials, zero DB access.",
+  "input": {
+    "method": "POST",
+    "path": "/ta/indicators",
+    "body": {}
+  },
+  "expectedOutput": {
+    "statusCode": 400,
+    "error_present": true
+  },
+  "filename": "indicators-bad-request"
+}

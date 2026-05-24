@@ -1,0 +1,19 @@
+{
+  "service": "technical-analysis",
+  "category": "golden",
+  "description": "GET /health returns 200 JSON with status=ok, service=technical-analysis, port=5003. Verifies the chi router liveness endpoint is wired and the server starts correctly via httptest.NewServer (in-process, no port binding, zero credentials).",
+  "input": {
+    "method": "GET",
+    "path": "/health",
+    "body": null
+  },
+  "expectedOutput": {
+    "statusCode": 200,
+    "body": {
+      "status": "ok",
+      "service": "technical-analysis",
+      "port": 5003
+    }
+  },
+  "filename": "health-ok"
+}

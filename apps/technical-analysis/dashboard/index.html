@@ -12,12 +12,12 @@
   <h1>Technical Analysis &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-E1 + P1-E2 &nbsp;|&nbsp; Pilot: technical-analysis &nbsp;|&nbsp; Language: Go
+    Pilot: technical-analysis &nbsp;|&nbsp; Language: Go
   </p>
   <p class="meta">
     Goals: G6 (dashboard renders) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
     &nbsp;&bull;&nbsp;
-    25 primitive scenarios + 5 module scenarios &mdash; all loaded from JSON, zero production credentials.
+    25 primitive scenarios + 5 module scenarios + 3 service scenarios &mdash; all baked at build time, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
   </p>
 </header>
@@ -73,11 +73,15 @@
       <span class="level-badge badge-service">Level 3</span>
       <h2>Microservice</h2>
       <p class="panel-desc">
-        <code>apps/technical-analysis/</code> &mdash; Go HTTP service wiring
-        DDD layers (domain / application / infrastructure / interface) with chi router,
-        OpenAPI 3.0 contract, port 5003.
-        Live HTTP wiring deferred to P1-E2.
+        <code>apps/technical-analysis/</code> &mdash; Go HTTP service wiring all DDD layers
+        (domain / application / infrastructure / interface/http) with chi router and OpenAPI 3.0 contract.
+        Exercised at build time via <code>httptest.NewServer</code> (in-process, no port, zero credentials).
       </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total" id="svc-total-chip">3 scenarios</span>
+        <span class="summary-chip chip-green" id="svc-green-chip">0 passed</span>
+        <span class="summary-chip chip-red"   id="svc-red-chip">0 failed</span>
+      </div>
     </div>
     <div class="panel-body" id="service-panel-body">
       <p style="color:#9ca3af;font-size:0.82rem;padding:8px 0;">Loading&hellip;</p>
@@ -90,17 +94,18 @@
   <strong>Legend:</strong>
   <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
   <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: not yet run (P1-E1 static)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: not yet run (no build result)</span>
   <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
   <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
   <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
 </div>
 
 <footer>
-  P1-E1 &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: technical-analysis &bull;
-  Scenarios committed at c6af6839 (primitives) + 457bbb3d (module) &bull;
+  Three-Level Scenario Trust Dashboard &bull; Pilot: technical-analysis &bull;
+  L1: 25 primitive scenarios &bull; L2: 5 module scenarios &bull; L3: 3 service scenarios (httptest.NewServer) &bull;
+  All verdicts baked at build time by <code>./dashboard/build.sh</code> &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
-  Next: P1-E2 sandbox runner (<code>go run ./cmd/sandbox -tier=&lt;tier&gt; -scenario=&lt;file&gt;</code>)
+  Render gate: <code>node dashboard/verify-render.mjs</code>
 </footer>
 
 <!-- ================================================== MODAL -->
@@ -134,7 +139,7 @@
     <div class="modal-status-bar" id="modal-status-bar">
       <span class="status-indicator" id="modal-status-text"></span>
       <span class="modal-note" id="modal-status-note"></span>
-      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E2)</button>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun</button>
     </div>
   </div>
 </div>
@@ -1719,6 +1724,73 @@ window.__MODULE_DATA__ = [
       "tolerance": 0.001
     },
     "filename": "rsi-macd-crossover",
+    "status": "static"
+  }
+];
+</script>
+
+<!-- Service-tier scenario data (3 scenarios: health-ok, indicators-happy-path, indicators-bad-request) -->
+<script>
+window.__SERVICE_DATA__ = [
+  {
+    "service": "technical-analysis",
+    "category": "golden",
+    "description": "GET /health returns 200 JSON with status=ok, service=technical-analysis, port=5003. Verifies the chi router liveness endpoint is wired and the server starts correctly via httptest.NewServer (in-process, no port binding, zero credentials).",
+    "input": {
+      "method": "GET",
+      "path": "/health",
+      "body": null
+    },
+    "expectedOutput": {
+      "statusCode": 200,
+      "body": {
+        "status": "ok",
+        "service": "technical-analysis",
+        "port": 5003
+      }
+    },
+    "filename": "health-ok",
+    "status": "static"
+  },
+  {
+    "service": "technical-analysis",
+    "category": "golden",
+    "description": "POST /ta/indicators with a 50-close linear ramp (10.0+i*0.5, period=14) returns 200 JSON with RSI populated (length >= 36), MACD populated, Bollinger Bands populated. Pure-compute path: closes provided directly in the request body — zero DB credentials, zero SQLite access.",
+    "input": {
+      "method": "POST",
+      "path": "/ta/indicators",
+      "body": {
+        "closes_count": 50,
+        "closes_pattern": "ramp[0..49]=10.0+i*0.5",
+        "period": 14
+      }
+    },
+    "expectedOutput": {
+      "statusCode": 200,
+      "rsi_populated": true,
+      "rsi_length_min": 36,
+      "macdLine_populated": true,
+      "bollingerUpper_populated": true,
+      "sma_populated": true,
+      "ema_populated": true
+    },
+    "filename": "indicators-happy-path",
+    "status": "static"
+  },
+  {
+    "service": "technical-analysis",
+    "category": "failure",
+    "description": "POST /ta/indicators with an empty JSON body (no closes, no symbol) returns 400 Bad Request with an error field. Verifies the router validates input and rejects requests that provide neither closes nor symbol.",
+    "input": {
+      "method": "POST",
+      "path": "/ta/indicators",
+      "body": {}
+    },
+    "expectedOutput": {
+      "statusCode": 400,
+      "error_present": true
+    },
+    "filename": "indicators-bad-request",
     "status": "static"
   }
 ];
