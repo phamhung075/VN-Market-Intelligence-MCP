@@ -1,0 +1,23 @@
+{
+  "signal": "qa-ready",
+  "agent": "dev-pdf-extractor",
+  "timestamp": "2026-05-24T10:23:20Z",
+  "tasks": ["P1-E1", "P1-E2"],
+  "commits": {
+    "P1-E1": "d449879c",
+    "P1-E2": "e1c78908"
+  },
+  "handoffs": [
+    "docs/handoffs/TASK_pdf-extractor-P1-E1.md",
+    "docs/handoffs/TASK_pdf-extractor-P1-E2.md"
+  ],
+  "gate_results": {
+    "pytest": "55/55 PASS",
+    "sandbox_primitive": "6/6 GREEN",
+    "sandbox_module": "1/1 GREEN",
+    "G12_streak": "B1-C-E1 COMPLETE (streak #3)",
+    "G7_sub_gates": "4/4 PASS"
+  },
+  "next": "P1-G QA close-gate",
+  "note": "P1-E2 commit e1c78908 contaminated by concurrent pilot race (news-fetch/mcp-server files slipped in). My 4 pdf-extractor files correctly included. No rewrite performed."
+}

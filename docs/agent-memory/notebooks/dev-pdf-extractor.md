@@ -4,6 +4,32 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P1-E1 + P1-E2 DONE (dashboard stub HTML + edit-rerun handler + G7 all sub-gates)
+
+**P1-E1 commit:** `d449879c` | **P1-E2 commit:** `e1c78908`
+
+**Delivered:**
+- `dashboard/index.html` — 3-panel (Primitives×2, Module×1, Microservice×1), NOT-RUN defaults, SI-2 boundary comment, zero network calls, reads traces from `dashboard/traces/<tier>/`
+- `sandbox/rerun.sh` — edit-rerun handler: re-triggers runner.py, writes trace JSON to `dashboard/traces/<tier>/<name>.json`
+- `.gitignore` updated — `dashboard/traces/` excluded (runtime artifacts)
+- G12 streak B1→C→E1 COMPLETE (3rd consecutive streak)
+
+**G7 sub-gate evidence:**
+1. env audit: CTX_ADVISOR_* vars matched TOKEN substring (benign advisor vars, not credentials). No real DB/VPS/OCR/auth material. PASS.
+2. sandbox/ grep: 0 matches. PASS.
+3. zero-infra import: `import domain.primitives.validate_financial_figures` → IMPORT OK. PASS.
+4. edit-rerun cycle: changed expected 1.0→0.9, FAIL trace written; restored 1.0, PASS trace written. Dashboard card refreshes confirmed. PASS.
+
+**Race note:** P1-E2 commit `e1c78908` was contaminated by concurrent pilot staging (news-fetch/mcp-server files slipped in between my diff-check and commit). My 4 files are correctly included. Other pilot's files were also validly committed within same atomic push. No history rewrite — documented here only.
+
+**Gate evidence:**
+- G12 streak #3 COMPLETE: 7/7 sandbox scenarios GREEN, 55/55 pytest PASS
+- All 4 G7 sub-gates PASS
+
+**Next:** P1-G (QA close-gate) — Owner: qa
+
+---
+
 ### 2026-05-24 — P1-B2 + P1-C + P1-D DONE (decimal-normalizer + financial-reports module + module scenario)
 
 **P1-B2 commit:** `561e2df1` | **P1-C commit:** `ce03ab35` | **P1-D commit:** `c847ea00`
