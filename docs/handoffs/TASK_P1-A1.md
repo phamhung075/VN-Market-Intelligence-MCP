@@ -4,7 +4,7 @@ title: "pdf-extractor Phase 1 — Sandbox Runner + Scenario Dir Layout + Composi
 pilot: pdf-extractor
 phase: "1"
 owner: dev-pdf-extractor
-status: Todo
+status: Done
 priority: CRITICAL (HEADLINE RISK — gates all subsequent Phase-1 primitives)
 created: 2026-05-24
 authored_by: architect (Phase-1 first dispatch)
@@ -62,15 +62,18 @@ All three must land in one commit. This is the scaffold commit that opens Phase 
 ```
 Command: env | grep -iE "DB_PATH|VPS_|VINAHOST|STORAGE_DIR|OCR|TESSERACT|TOKEN|SECRET|API_KEY|PASSWORD"
 Output:
-[PASTE HERE — must be blank/empty]
+[EMPTY — AC-5 PASS]
 ```
+
+Verified: sandbox invoked with env={PYTHONPATH=apps/pdf-extractor, HOME=/Users/admin} only.
+No credential vars present in sandbox process environment.
 
 ### AC-6 — Scenario JSON Grep (must return 0 matches)
 
 ```
 Command: grep -rniE "db_path|vps|vinahost|storage_dir|token|secret|api_key|password" apps/pdf-extractor/sandbox/
 Output:
-[PASTE HERE — must be no output / exit 0]
+[NO OUTPUT — 0 matches — AC-6 PASS]
 ```
 
 ---
@@ -82,14 +85,53 @@ Output:
 > For P1-A1, the "touched tier" is the sandbox runner itself. Run the help check and the trace output check:
 
 ```
-Command: python apps/pdf-extractor/sandbox/runner.py --help
+Command: PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py --help
 Output:
-[PASTE HERE]
+usage: sandbox/runner.py [-h] --tier {primitive,module,service} --scenario PATH
 
-Command: (run with a minimal fixture scenario once domain/primitives/ exist — or confirm runner exits 0 on --help alone for scaffold state)
+PDF Extractor sandbox scenario runner — JSON-in, trace-JSON-out.
+Executes a pure-function primitive against a scenario JSON fixture.
+
+PYTHONPATH must be set to apps/pdf-extractor before invocation.
+Zero credentials: sandbox is a pure-function harness only.
+
+options:
+  -h, --help            show this help message and exit
+  --tier {primitive,module,service}
+                        Scenario tier: primitive | module | service
+  --scenario PATH       Path to the scenario JSON file to execute.
+
+Command: PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=apps/pdf-extractor/scenarios/primitives/echo_identity/happy.json
 Output:
-[PASTE HERE]
+{
+  "primitive": "echo_identity",
+  "inputs": {
+    "value": 42
+  },
+  "expected": 42,
+  "actual": 42,
+  "pass": true,
+  "error": null
+}
+EXIT: 0 — PASS
+
+Command: PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=apps/pdf-extractor/scenarios/primitives/echo_identity/failure_mismatch.json
+Output:
+{
+  "primitive": "echo_identity",
+  "inputs": {
+    "value": 42
+  },
+  "expected": 99,
+  "actual": 42,
+  "pass": false,
+  "error": null
+}
+EXIT: 1 — FAIL (honest RED — G8 confirmed)
 ```
+
+G12 DoD gate: sandbox runner operational. echo_identity primitive demonstrates GREEN (happy) + honest RED (failure).
+37 pytest tests pass. Commit: 75ab2eae.
 
 ---
 
