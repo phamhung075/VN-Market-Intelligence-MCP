@@ -1,0 +1,26 @@
+{
+  "scenario": "failure-reversed-guard",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "description": "FAILURE scenario — detects reversed guard order bug. Input: {ok, ok, down} must produce degraded. A buggy implementation that evaluates allDown before allOk would see allDown=false, then fall through and return StatusDown instead of StatusDegraded. The expected field documents the CORRECT output; a runner comparing actual vs expected will go RED when the bug is injected.",
+  "injection": {
+    "bug": "reversed-guard-order",
+    "mutated_logic": "if allDown { return StatusDown } evaluated BEFORE if allOk { return StatusOk }",
+    "effect": "mixed input {ok,ok,down} incorrectly produces 'down' instead of 'degraded'"
+  },
+  "input": {
+    "statuses": {
+      "mcp": "ok",
+      "ta": "ok",
+      "stock": "down"
+    }
+  },
+  "expected": {
+    "overall": "degraded"
+  },
+  "wrong_output_when_bug_injected": {
+    "overall": "down"
+  },
+  "verdict": "FAILURE_SCENARIO",
+  "note": "This scenario MUST produce RED when the guard order is reversed. Use it as the G10/G11 injection fixture."
+}

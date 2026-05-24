@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	osc "github.com/vn-market-intelligence/api-gateway/pkg/primitive/overall-status-computer"
 )
 
 // AggregateHealthService is the pure domain service for health aggregation.
@@ -59,7 +61,12 @@ func (s *AggregateHealthService) Aggregate(ctx context.Context) (*AggregatedHeal
 		}
 	}
 
-	overall := computeOverallStatus(statuses)
+	// Convert domain.HealthStatus map to string map for the primitive (breaks import cycle).
+	rawStatuses := make(map[string]string, len(statuses))
+	for k, v := range statuses {
+		rawStatuses[k] = string(v)
+	}
+	overall := HealthStatus(osc.ComputeOverallStatus(rawStatuses))
 
 	return &AggregatedHealth{
 		Status:    overall,
@@ -69,26 +76,3 @@ func (s *AggregateHealthService) Aggregate(ctx context.Context) (*AggregatedHeal
 	}, nil
 }
 
-// computeOverallStatus computes the overall status from individual service statuses.
-func computeOverallStatus(statuses map[string]HealthStatus) HealthStatus {
-	if len(statuses) == 0 {
-		return StatusDown
-	}
-	allOk := true
-	allDown := true
-	for _, s := range statuses {
-		if s != StatusOk {
-			allOk = false
-		}
-		if s != StatusDown {
-			allDown = false
-		}
-	}
-	if allOk {
-		return StatusOk
-	}
-	if allDown {
-		return StatusDown
-	}
-	return StatusDegraded
-}

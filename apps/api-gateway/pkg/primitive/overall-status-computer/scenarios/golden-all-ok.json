@@ -1,0 +1,17 @@
+{
+  "scenario": "golden-all-ok",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "description": "All three services report ok — overall must be ok.",
+  "input": {
+    "statuses": {
+      "mcp": "ok",
+      "ta": "ok",
+      "stock": "ok"
+    }
+  },
+  "expected": {
+    "overall": "ok"
+  },
+  "verdict": "PASS"
+}

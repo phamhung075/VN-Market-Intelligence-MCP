@@ -1,0 +1,59 @@
+{
+  "scenario": "g11-canary-cascade",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "description": "G11 coupled-cascade proof: a flip in overall-status-computer propagates to BOTH the /health JSON response AND the dashboard overall-badge class. This canary documents the two downstream impact surfaces that must go RED when the primitive is mutated.",
+  "injection": {
+    "bug": "wrong-return-on-mixed-input",
+    "mutated_logic": "ComputeOverallStatus({ok, ok, down}) wrongly returns 'ok' instead of 'degraded'",
+    "effect": "Two downstream surfaces are corrupted simultaneously"
+  },
+  "input": {
+    "statuses": {
+      "mcp": "ok",
+      "ta": "ok",
+      "stock": "down"
+    }
+  },
+  "expected": {
+    "overall": "degraded"
+  },
+  "cascade_surfaces": [
+    {
+      "surface": "/health JSON response",
+      "field": "$.status",
+      "correct_value": "degraded",
+      "corrupted_value_when_bug_injected": "ok",
+      "scenario_file": "apps/api-gateway/pkg/primitive/overall-status-computer/scenarios/golden-degraded.json",
+      "evidence": "AggregateHealthService.Aggregate() calls ComputeOverallStatus and writes result.Status into AggregatedHealth.Status, which is serialised verbatim in the /health JSON envelope"
+    },
+    {
+      "surface": "dashboard overall-badge CSS class",
+      "field": "HTML class attribute on overall badge element",
+      "correct_value": "status-degraded",
+      "corrupted_value_when_bug_injected": "status-ok",
+      "evidence": "BuildDashboardHTML reads AggregatedHealth.Status and writes statusClass(overall) into the badge class attribute. A wrong overall status produces the wrong CSS class, making the dashboard badge misleadingly green."
+    }
+  ],
+  "trial_plan": {
+    "trial_1": {
+      "description": "Flip overall-status-computer: inject wrong return on mixed input",
+      "affected_scenarios": [
+        "golden-degraded.json",
+        "failure-reversed-guard.json"
+      ],
+      "expected_outcome": "Both /health JSON surface AND dashboard badge surface go RED",
+      "verification_commands": [
+        "go test ./pkg/primitive/overall-status-computer/... → FAIL on 'mixed ok and down yields degraded'",
+        "go test ./pkg/domain/... → FAIL on TestComputeOverallStatus mixed ok+down",
+        "go test ./pkg/interface/http/... → FAIL on dashboard badge class assertion (if integrated)"
+      ]
+    },
+    "trial_2": {
+      "description": "Flip route-service-matcher (task B3): inject wrong service-name extraction",
+      "affected_scenarios": ["to be authored in B3"],
+      "expected_outcome": "Proxy routing surface AND health-by-service-name surface both go RED"
+    }
+  },
+  "verdict": "G11_CANARY"
+}

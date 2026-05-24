@@ -1,0 +1,17 @@
+{
+  "scenario": "golden-degraded",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "description": "Two services ok, one down — overall must be degraded (not down, not ok).",
+  "input": {
+    "statuses": {
+      "mcp": "ok",
+      "ta": "ok",
+      "stock": "down"
+    }
+  },
+  "expected": {
+    "overall": "degraded"
+  },
+  "verdict": "PASS"
+}
