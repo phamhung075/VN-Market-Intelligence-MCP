@@ -1,0 +1,16 @@
+{
+  "signal": "dev-pdf-extractor-task-done",
+  "task": "P1-D",
+  "pilot": "pdf-extractor",
+  "title": "module scenario JSON — multi_primitive_story.json",
+  "commit": "c847ea00",
+  "timestamp": "2026-05-24T10:20:00Z",
+  "status": "DONE",
+  "module_tier_exit_0": true,
+  "primitives_exercised": ["decimal_normalizer", "validate_financial_figures"],
+  "security": "0 credential strings in scenario JSON",
+  "pytest": "55/55 PASS",
+  "zone": "apps/pdf-extractor/",
+  "next": "P1-E1",
+  "handoff": "docs/handoffs/TASK_pdf-extractor-P1-D.md"
+}
