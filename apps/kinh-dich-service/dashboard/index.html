@@ -830,7 +830,7 @@ footer {
   <h1>kinh-dich-service &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P2-KD-J &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
+    P1-KD-E1 &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: Go 1.22
   </p>
   <p class="meta">
     Goals: G1 (5/5 primitives) &bull; G6 (dashboard finalized) &bull; G7 (zero creds) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
@@ -838,10 +838,10 @@ footer {
     15 primitive scenarios + 2 module scenarios = 17 total &mdash; all data embedded inline, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
     Service ports: internal&nbsp;5005 / external&nbsp;5005 (per <code>docs/data/system-map.json</code>).
-    OpenAPI contract: <code>src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; P2-KD-I).
+    OpenAPI contract: <code>api/openapi.yaml</code> (OpenAPI 3.0.3).
     jq query: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>
     &nbsp;&bull;&nbsp;
-    P1-E: Click <strong>Edit &amp; Rerun (P1-E)</strong> on any scenario card &rarr; copy the terminal command &rarr; paste NDJSON output &rarr; cards update live.
+    P1-KD-E2: Click <strong>Edit &amp; Rerun</strong> on any scenario card &rarr; copy the Go terminal command &rarr; paste output &rarr; cards update live.
   </p>
 </header>
 
@@ -853,12 +853,12 @@ footer {
       <span class="level-badge badge-primitives">Level 1</span>
       <h2>Primitives</h2>
       <p class="panel-desc">
-        5 pure TypeScript functions: <strong>hao-encoder</strong>,
-        <strong>hexagram-resolver</strong>,
-        <strong>ngu-hanh-classifier</strong>,
-        <strong>reading-scorer</strong>,
-        <strong>nuclear-hexagram-computer</strong>.
-        Each is a stdlib-only pure function (Fence-A: zero infra imports).
+        5 pure Go functions: <strong>hao_encoder</strong>,
+        <strong>hexagram_resolver</strong>,
+        <strong>ngu_hanh_classifier</strong>,
+        <strong>reading_scorer</strong>,
+        <strong>nuclear_hexagram</strong>.
+        Each is a stdlib-only pure function in pkg/primitive/ (Fence-A: zero infra imports).
         3 scenarios each = 15 total. Click any scenario to inspect input &harr; expectedOutput.
       </p>
       <div class="panel-summary">
@@ -878,7 +878,7 @@ footer {
       <span class="level-badge badge-module">Level 2</span>
       <h2>Module</h2>
       <p class="panel-desc">
-        <code>src/module/reading_composer/</code> &mdash; composes all 3 primitives via
+        <code>pkg/module/reading_composer/</code> &mdash; composes all 5 Go primitives via
         the Kinh Dich domain pipeline (Fence-B: zero infra imports). Orchestrates
         hao encoding &rarr; hexagram resolution &rarr; ngu hanh classification &rarr; trading signal.
         Click any scenario to see the composition story.
@@ -900,8 +900,8 @@ footer {
       <span class="level-badge badge-service">Level 3</span>
       <h2>Microservice</h2>
       <p class="panel-desc">
-        <code>apps/kinh-dich-service/</code> &mdash; TypeScript/Bun HTTP service.
-        DDD layers: domain / application / infrastructure / interface.
+        <code>apps/kinh-dich-service/</code> &mdash; Go 1.22 HTTP service (CGO_ENABLED=0).
+        DDD layers: pkg/domain / pkg/application / pkg/infrastructure / pkg/interface.
         Pure compute: hexagram readings, trading signals, confidence scoring.
         Serves I-Ching (Kinh Dich) readings for Vietnamese market analysis.
       </p>
@@ -923,35 +923,34 @@ footer {
   <span class="legend-item"><span class="legend-chip cat-failure">Bad Input &rarr; Error</span> Invalid input &rarr; expected error (test PASSES)</span>
 </div>
 
-<!-- ============================================================ RERUN COMMAND BLOCK (AC-2) -->
-<!-- P1-E: Copy-able rerun commands for both primitive and module tiers.                    -->
-<!-- Run in Terminal, then paste NDJSON output into the modal Edit & Rerun panel.           -->
+<!-- ============================================================ RERUN COMMAND BLOCK (P1-KD-E2) -->
+<!-- P1-KD-E2: Copy-able Go rerun commands for both primitive and module tiers.              -->
+<!-- Run in Terminal, then paste output into the modal Edit & Rerun panel.                   -->
 <div class="footer-rerun-block">
-  <div class="footer-rerun-label">Sandbox Rerun Commands (P1-E &mdash; copy &amp; run in Terminal, then paste NDJSON output into scenario modal)</div>
-  <pre class="footer-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</pre>
+  <div class="footer-rerun-label">Go Sandbox Rerun Commands (P1-KD-E2 &mdash; copy &amp; run in Terminal, then paste output into scenario modal)</div>
+  <pre class="footer-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=kinh-dich -scenario=all</pre>
   <button class="footer-rerun-copy-btn" id="footer-copy-btn" type="button" aria-label="Copy all-tier rerun command">Copy</button>
   <div class="footer-rerun-note">
-    <strong>G7 zero-creds:</strong> Zero DB credentials, zero API keys, zero tokens &mdash; kinh-dich is pure compute. Reads only scenario JSON fixtures.<br>
+    <strong>G7 zero-creds:</strong> Zero DB credentials, zero API keys, zero tokens &mdash; kinh-dich is pure compute. Reads only scenario JSON fixtures. CGO_ENABLED=0 enforced.<br>
     Per-tier commands:<br>
     &nbsp;&nbsp;<strong>Primitives:</strong>&nbsp;
-    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</code><br>
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=kinh-dich -scenario=all</code><br>
     &nbsp;&nbsp;<strong>Module:</strong>&nbsp;
-    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=module --module=kinh-dich --scenario=all</code><br>
-    Edit scenario JSON on disk &rarr; run command &rarr; click <strong>Edit &amp; Rerun</strong> on any card &rarr; paste NDJSON output &rarr; cards update live (P1-E handler active).
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=kinh-dich -scenario=all</code><br>
+    Edit scenario JSON on disk &rarr; run command &rarr; click <strong>Edit &amp; Rerun</strong> on any card &rarr; paste output &rarr; cards update live (P1-KD-E2 handler active).
   </div>
 </div>
 
 <!-- ============================================================ FOOTER -->
 <footer>
-  P2-KD-J &mdash; G6 Finalization: 5th primitive (nuclear-hexagram-computer) + OpenAPI link + Deprecated notice &bull; Pilot: kinh-dich &bull;
+  P1-KD-E1 &mdash; Go Reboot Dashboard: 5 Go primitives + reading_composer module + microservice &bull; Pilot: kinh-dich &bull;
   Ports: internal 5005 / external 5005 (source: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>) &bull;
-  OpenAPI contract: <code>src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; P2-KD-I) &bull;
+  OpenAPI contract: <code>api/openapi.yaml</code> (OpenAPI 3.0.3) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
-  G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</code> &rarr; paste NDJSON output into modal &rarr; cards update live &bull;
+  G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=kinh-dich -scenario=all</code> &rarr; paste output into modal &rarr; cards update live &bull;
   G8 contract: NOT-RUN on cold start; honest red on failure; GREEN only after sandbox all-green &bull;
-  G5a deprecated: <code>src/_deprecated/services_v1.ts</code> preserved for audit trail (visible in microservice panel) &bull;
   17 scenarios embedded inline (15 primitive + 2 module), zero external fetch &bull;
-  Next: P2-KD-K (G8 honest-red)
+  Language: Go 1.22 (CGO_ENABLED=0) &bull; Goals: G1, G2, G3, G6, G7, G8, G9, G12 Phase-1 evidence
 </footer>
 
 <!-- ============================================================ MODAL (AC-8) -->
@@ -1011,10 +1010,10 @@ footer {
         3. Copy the NDJSON output lines, paste below, click <strong>Apply</strong> to update card status.
       </div>
 
-      <!-- Copy-able rerun command block (AC-2) -->
+      <!-- Copy-able rerun command block (P1-KD-E2) -->
       <div class="edit-rerun-cmd-block" id="edit-rerun-cmd-block">
-        <div class="edit-rerun-cmd-label">Terminal Command (copy &amp; paste)</div>
-        <div class="edit-rerun-cmd-text" id="edit-rerun-cmd-text">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</div>
+        <div class="edit-rerun-cmd-label">Go Terminal Command (copy &amp; paste)</div>
+        <div class="edit-rerun-cmd-text" id="edit-rerun-cmd-text">cd apps/kinh-dich-service &amp;&amp; CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=kinh-dich -scenario=all</div>
         <button class="edit-rerun-copy-btn" id="edit-rerun-copy-btn" type="button"
                 aria-label="Copy rerun command to clipboard">Copy</button>
       </div>
@@ -1026,8 +1025,8 @@ footer {
       <textarea
         id="ndjson-paste-area"
         class="paste-area"
-        placeholder="Paste output here, e.g.:&#10;[PASS] hexagram-resolver-golden.json&#10;[FAIL] hexagram-resolver-edge.json | Expected hexagram 2 but got 1&#10;&#10;[sandbox] PASS 9/9 scenarios (0 failed, 0 skipped)"
-        aria-label="Paste sandbox NDJSON output to update scenario card statuses"
+        placeholder="Paste Go sandbox output here, e.g.:&#10;  [GREEN] hexagram-resolver-golden.json&#10;  [RED] hexagram-resolver-edge.json&#10;&#10;=== SANDBOX SUMMARY ===&#10;Passed: 15/15&#10;All scenarios GREEN"
+        aria-label="Paste Go sandbox output to update scenario card statuses"
         rows="5"
       ></textarea>
 
@@ -1586,12 +1585,12 @@ function renderService() {
       <div class="service-card-header">
         <div>
           <div class="service-card-title">kinh-dich-service</div>
-          <div class="service-card-meta">TypeScript / Bun &mdash; Pure Compute (I-Ching Hexagram Engine)</div>
+          <div class="service-card-meta">Go 1.22 (CGO_ENABLED=0) &mdash; Pure Compute (I-Ching Hexagram Engine)</div>
         </div>
         <span class="not-run-badge">NOT-RUN</span>
       </div>
 
-      <!-- Ports (AC-6): from docs/data/system-map.json via jq -->
+      <!-- Ports: from docs/data/system-map.json via jq -->
       <!-- jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json -->
       <!-- => port: 5005, external_port: 5005 -->
       <div class="service-ports">
@@ -1599,17 +1598,17 @@ function renderService() {
         <span class="port-badge port-external">external :5005</span>
       </div>
 
-      <!-- DDD layers -->
+      <!-- DDD layers (Go pkg/ layout) -->
       <div class="service-ddd">
-        <span class="ddd-tag">domain</span>
-        <span class="ddd-tag">application</span>
-        <span class="ddd-tag">infrastructure</span>
-        <span class="ddd-tag">interface</span>
+        <span class="ddd-tag">pkg/domain</span>
+        <span class="ddd-tag">pkg/application</span>
+        <span class="ddd-tag">pkg/infrastructure</span>
+        <span class="ddd-tag">pkg/interface</span>
       </div>
 
-      <!-- Endpoints — OpenAPI contract (P2-KD-I: openapi.yaml in place) -->
+      <!-- Endpoints — OpenAPI contract (api/openapi.yaml — Go convention) -->
       <div class="service-endpoints">
-        <h4>HTTP Endpoints &mdash; <a href="../src/interface/openapi.yaml" style="color:#be185d;text-decoration:underline;font-size:0.76rem;" title="OpenAPI contract (src/interface/openapi.yaml)">OpenAPI spec &rarr; src/interface/openapi.yaml</a></h4>
+        <h4>HTTP Endpoints &mdash; <a href="../api/openapi.yaml" style="color:#be185d;text-decoration:underline;font-size:0.76rem;" title="OpenAPI contract (api/openapi.yaml)">OpenAPI spec &rarr; api/openapi.yaml</a></h4>
         <div class="endpoint-row">
           <span class="method-badge method-get">GET</span>
           <span class="endpoint-path">/reading/{code}</span>
@@ -1641,26 +1640,27 @@ function renderService() {
           <span class="endpoint-desc">Backtest signal accuracy (operationId: getBacktest)</span>
         </div>
         <div style="font-size:0.72rem;color:#9ca3af;margin-top:6px;">
-          Full contract: <code style="font-size:0.71rem;background:#fce7f3;border-radius:3px;padding:1px 4px;">src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; created P2-KD-I)
+          Full contract: <code style="font-size:0.71rem;background:#fce7f3;border-radius:3px;padding:1px 4px;">api/openapi.yaml</code> (OpenAPI 3.0.3)
         </div>
       </div>
 
       <!-- Composition note (G7: zero creds) -->
       <div class="service-note">
         <strong>Composition:</strong> Microservice composes <code>reading_composer</code> module via HTTP routes
-        (<code>src/interface/handlers.ts</code>). 5 primitives: <code>hao-encoder</code>, <code>hexagram-resolver</code>, <code>ngu-hanh-classifier</code>, <code>reading-scorer</code>, <code>nuclear-hexagram-computer</code>.<br>
-        Pipeline: <code>hao-encoder</code> &rarr; <code>hexagram-resolver</code> + <code>nuclear-hexagram-computer</code> &rarr; <code>ngu-hanh-classifier</code> &rarr; <code>reading_composer</code> &rarr; <code>KinhDichReading</code>.<br>
+        (<code>pkg/interface/http/router.go</code>). 5 Go primitives: <code>hao_encoder</code>, <code>hexagram_resolver</code>, <code>ngu_hanh_classifier</code>, <code>reading_scorer</code>, <code>nuclear_hexagram</code>.<br>
+        Pipeline: <code>hao_encoder</code> &rarr; <code>hexagram_resolver</code> + <code>nuclear_hexagram</code> &rarr; <code>ngu_hanh_classifier</code> &rarr; <code>reading_composer</code> &rarr; <code>KinhDichReading</code>.<br>
         <strong>G7 zero-creds:</strong> kinh-dich is pure compute &mdash; no DB credentials, no external API keys, no secrets.
-        Reads only in-memory market data (scores, markovData) from caller.<br>
+        Reads only in-memory market data (scores, markovData) from caller. CGO_ENABLED=0 enforced.<br>
         <code>env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"</code> must return empty.
       </div>
 
-      <!-- Deprecated notice (G5a trust-layer visibility) -->
-      <div class="service-note" style="background:#fffbcc;border-top:1px solid #c4a800;">
-        <strong style="color:#7c6b00;">Deprecated (G5a):</strong>
-        <code>src/_deprecated/services_v1.ts</code> &mdash; legacy monolithic domain service moved from <code>src/domain/services.ts</code>.
-        Preserved for audit trail only; no imports from active code. All logic extracted into 5 primitives + <code>reading_composer</code> module.
-        Trust signal: deprecated code visible here so that no ghost import can sneak in unnoticed.
+      <!-- Go reboot note -->
+      <div class="service-note" style="background:#e0f2fe;border-top:1px solid #7dd3fc;">
+        <strong style="color:#075985;">Go Reboot (P1-KD-E1):</strong>
+        Service rebooted from TypeScript/Bun to Go 1.22 per user directive 2026-05-24.
+        All domain logic preserved in 5 Go primitives + reading_composer module.
+        TS source archived in tsCompletionArchive (not deleted, preserved for audit trail).
+        DDD layout: pkg/primitive/, pkg/module/, pkg/domain/, pkg/application/, pkg/infrastructure/, pkg/interface/.
       </div>
     </div>
   `;
@@ -1674,7 +1674,7 @@ function tierForScenario(type) {
 }
 
 function rerunCmdForTier(tier) {
-  return 'cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=' + tier + ' --module=kinh-dich --scenario=all';
+  return 'cd apps/kinh-dich-service && CGO_ENABLED=0 go run ./cmd/sandbox -tier=' + tier + ' -module=kinh-dich -scenario=all';
 }
 
 function scenarioFilePath(type, scenario) {
@@ -1741,7 +1741,7 @@ function closeModal() {
 /* ── Footer copy button (AC-7) ────────────────────────────────────────────── */
 
 document.getElementById('footer-copy-btn').addEventListener('click', function() {
-  const cmd = 'cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all';
+  const cmd = 'cd apps/kinh-dich-service && CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=kinh-dich -scenario=all';
   navigator.clipboard.writeText(cmd).then(() => {
     this.textContent = 'Copied!';
     setTimeout(() => { this.textContent = 'Copy'; }, 2000);
@@ -1803,15 +1803,18 @@ function parseNdjsonOutput(text) {
   const lines = text.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    // Match: [PASS] scenario-name.json or [FAIL] scenario-name.json | error msg
+    // Match Go sandbox output: [GREEN] scenario-name.json or [RED] scenario-name.json | error msg
+    // Also supports legacy TS format: [PASS] / [FAIL]
+    const greenMatch = trimmed.match(/^\[GREEN\]\s+([^\s|]+)/);
+    const redMatch = trimmed.match(/^\[RED\]\s+([^\s|]+)/);
     const passMatch = trimmed.match(/^\[PASS\]\s+([^\s|]+)/);
     const failMatch = trimmed.match(/^\[FAIL\]\s+([^\s|]+)/);
-    if (passMatch) {
-      const fname = passMatch[1].trim();
+    if (greenMatch || passMatch) {
+      const fname = (greenMatch || passMatch)[1].trim();
       const scenName = fname.replace(/\.json$/, '');
       results[scenName] = 'pass';
-    } else if (failMatch) {
-      const fname = failMatch[1].trim();
+    } else if (redMatch || failMatch) {
+      const fname = (redMatch || failMatch)[1].trim();
       const scenName = fname.replace(/\.json$/, '');
       results[scenName] = 'fail';
     }
