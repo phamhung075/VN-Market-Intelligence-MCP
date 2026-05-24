@@ -1,0 +1,57 @@
+{
+  "signal_id": "ops-nf-ld-5-prove-gate-pass-20260524",
+  "timestamp": "2026-05-24T23:39:21Z",
+  "agent": "ops",
+  "action": "NF-LD-5 OPS PROVE GATE",
+  "status": "PASS",
+  "context": {
+    "feature": "Refresh button + source selector on news-fetch live panel",
+    "developer_commit": "12600a1f",
+    "dev_mcp_server_commit": "15d9b034",
+    "qa_approval": "2a02d3e3",
+    "po_signoff": "622775bc"
+  },
+  "rebuild": {
+    "command": "docker compose up -d --build mcp-server",
+    "build_time": "31s",
+    "image_hash": "sha256:1021525cbf604f74c1378cd205efc63e99817637d0bfd065bfe495162cadd13f",
+    "container_status": "healthy"
+  },
+  "proof_tests": {
+    "2a_dashboard_button": {
+      "url": "http://localhost:3000/dashboards/news-fetch/",
+      "http_code": 200,
+      "button_id_count": 9,
+      "verdict": "PASS"
+    },
+    "2b_live_api_all": {
+      "url": "http://localhost:3000/api/news-fetch/live?source=all&limit=5",
+      "http_code": 200,
+      "honest_count": 1,
+      "verdict": "PASS"
+    },
+    "2c1_live_api_reuters": {
+      "url": "http://localhost:3000/api/news-fetch/live?source=reuters&limit=5",
+      "http_code": 200,
+      "verdict": "PASS"
+    },
+    "2c2_live_api_bloomberg": {
+      "url": "http://localhost:3000/api/news-fetch/live?source=bloomberg&limit=5",
+      "http_code": 200,
+      "verdict": "PASS"
+    },
+    "2d_path_traversal": {
+      "url": "http://localhost:3000/dashboards/news-fetch/../../server.ts",
+      "http_code": 404,
+      "verdict": "PASS"
+    },
+    "2e_health_regression": {
+      "url": "http://localhost:3000/health",
+      "http_code": 200,
+      "verdict": "PASS"
+    }
+  },
+  "final_verdict": "ALL GATES PASS",
+  "notebook": "docs/agent-memory/notebooks/ops.md",
+  "notebook_commit": "dd46fd5f"
+}
