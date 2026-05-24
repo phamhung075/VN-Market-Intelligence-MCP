@@ -18,7 +18,7 @@ canonical_goals: "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md 
 The 12 goals are language-agnostic — they gate on scenario JSON pass/fail, dashboard red/green, and AI fix-cycle count, none of which depend on Python vs Go. Apply verbatim, substituting `pdf-extractor` for `technical-analysis` and `dev-pdf-extractor` as goal owner.
 
 → **Phase plan:** `docs/architecture-briefs/2026-05-22-refactor/07-phases.md` · **QA gates:** `qa-gates/`
-→ **Status tracking:** `docs/data/refactor-status-pdf-extractor.json`
+→ **Status tracking (canonical SSOT, schema = docs/data/pilot-status-schema.json):** `docs/data/pilot-status-pdf-extractor.json`
 
 ---
 

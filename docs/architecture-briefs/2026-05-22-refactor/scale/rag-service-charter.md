@@ -18,7 +18,7 @@ canonical_goals: "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md 
 Language-agnostic goals. Apply verbatim, substituting `rag-service` for `technical-analysis` and `dev-rag-service` as goal owner.
 
 → **Phase plan:** `docs/architecture-briefs/2026-05-22-refactor/07-phases.md` · **QA gates:** `qa-gates/`
-→ **Status tracking:** `docs/data/refactor-status-rag-service.json`
+→ **Status tracking (canonical SSOT, schema = docs/data/pilot-status-schema.json):** `docs/data/pilot-status-rag-service.json`
 
 ---
 

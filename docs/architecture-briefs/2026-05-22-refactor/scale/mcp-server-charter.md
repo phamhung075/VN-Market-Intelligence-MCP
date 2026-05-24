@@ -19,7 +19,7 @@ canonical_goals: "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md 
 Apply verbatim, substituting `mcp-server` for `technical-analysis` and `dev-mcp-server` as goal owner.
 
 → **Phase plan:** `docs/architecture-briefs/2026-05-22-refactor/07-phases.md` · **QA gates:** `qa-gates/`
-→ **Status tracking:** `docs/data/refactor-status-mcp-server.json`
+→ **Status tracking (canonical SSOT, schema = docs/data/pilot-status-schema.json):** `docs/data/pilot-status-mcp-server.json`
 
 ---
 
@@ -57,6 +57,6 @@ Cross-cutting + sector/portfolio + system-ops primitives (target-state §Cross-c
 5. **It is the trust-dashboard consumer too.** mcp-server hosts/serves several dashboards — circular-dependency care during the split.
 
 ### Sequencing mandate
-1. macro-indicators FIRST (proves pattern).
-2. The other Go services + Python services + frontend + news-fetch in parallel waves.
-3. **mcp-server LAST, SOLO** — no other scale terminal active. This is non-negotiable given the shared-substrate write surface.
+Pattern already proven (TA + macro + stock-price + kinh-dich DONE). Remaining order:
+1. The fresh Go/Python services + frontend + news-fetch in parallel waves (and alert-engine pilot-5 finishing its ACTIVE track).
+2. **mcp-server LAST, SOLO** — no other scale terminal active. This is non-negotiable given the shared-substrate write surface.

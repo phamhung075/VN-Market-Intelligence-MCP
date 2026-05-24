@@ -71,7 +71,7 @@ agent:
     forbidden_outputs:
       - "NEVER write production code"
       - "NEVER fix critical violations without escalating to architect first"
-      - "NEVER modify other agents' session logs or notebooks"
+      - "NEVER modify other agents' session logs or notebooks — EXCEPT size-driven Pass-5b pruning of agent-notebook class (authorized at line 22)"
     token_rule: "No git changes detected = EXIT immediately."
 
   knowledge:

@@ -18,7 +18,7 @@ canonical_goals: "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md 
 Apply verbatim, substituting `api-gateway` for `technical-analysis` and `dev-api-gateway` as goal owner.
 
 → **Phase plan:** `docs/architecture-briefs/2026-05-22-refactor/07-phases.md` · **QA gates:** `qa-gates/`
-→ **Status tracking:** `docs/data/refactor-status-api-gateway.json`
+→ **Status tracking (canonical SSOT, schema = docs/data/pilot-status-schema.json):** `docs/data/pilot-status-api-gateway.json`
 
 ---
 
@@ -35,7 +35,7 @@ Apply verbatim, substituting `api-gateway` for `technical-analysis` and `dev-api
 `apps/api-gateway/` is clean Go (`go.mod`, `pkg/{domain,application,infrastructure,interface}`, `cmd/server`). **No `pkg/primitive/` and no `pkg/module/`** — by design: a gateway is mostly routing, request fan-out, and response aggregation, not domain computation.
 
 This is the **lowest-domain-logic service** in the rollout. The three-tier metaphor applies thinly:
-- **Primitives (G1)** — few and routing-flavored: e.g. `route-resolver`, `upstream-selector`, `response-merger`, `auth-header-validator`. Expect 3–5 small primitives, not the 5–8 domain-rich set the pilot had. Document in `refactor-status` if a primitive genuinely has no meaningful failure scenario (rare).
+- **Primitives (G1)** — few and routing-flavored: e.g. `route-resolver`, `upstream-selector`, `response-merger`, `auth-header-validator`. Expect 3–5 small primitives, not the 5–8 domain-rich set the pilot had. Document in the service `pilot-status` SSOT if a primitive genuinely has no meaningful failure scenario (rare).
 - **Module (G2)** — likely a single `gateway` module composing the routing primitives, or G2 may be lighter-touch here. Architect to confirm the module boundary during phase expansion.
 - **Composition root (G3)** — gateway is already mostly composition root; the win is making routing rules declarative and the wiring auditable.
 
