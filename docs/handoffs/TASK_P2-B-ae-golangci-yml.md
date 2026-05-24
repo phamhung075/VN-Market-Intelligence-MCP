@@ -198,10 +198,8 @@ This is the freeze anchor for P2-D AC-4c re-confirmation.
 
 ```
 $ git log --oneline apps/alert-engine/.golangci.yml
-<P2-B-commit-sha> feat(alert-engine): P2-B — .golangci.yml Fence-A/B/C + CI go-lint job (G4 partial)
+6c2edc9d feat(alert-engine): P2-B — .golangci.yml Fence-A/B/C + CI go-lint job (G4 partial)
 ```
-
-(SHA filled post-commit)
 
 ---
 
