@@ -174,3 +174,40 @@ Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 test
 **G12 streak COMPLETE:** P1-B (cfd38a3b) + P1-C (8be07048) + P1-E (7725ca59). Three consecutive tasks with sandbox-green evidence in handoffs. Streak ready for QA verification + Phase 1 gate.
 
 **Status:** DONE. WIP=1 now free. Phase 1 complete — QA to verify G12 streak and Phase 1 gate.
+
+---
+
+### 2026-05-24 — TASK P2-B1..B4 (four primitive extractions — SCALE pilot Phase 2)
+
+**Tasks:** P2-B1 relevance-threshold-gate + P2-B2 top-k-selector + P2-B3 context-window-packer + P2-B4 temporal-decay-scorer. All executed sequentially (WIP=1).
+
+**P2-B1 — relevance-threshold-gate:**
+- Files: `domain/primitive/relevance_threshold_gate/` (pkg + 3 scenarios) + `__tests__/unit/test_relevance_threshold_gate.py`
+- `gate(results, max_distance)` pure fn, stdlib only. Inclusive boundary (<=). 7 unit tests.
+- Commit: `37dd6956` | sandbox: 7/7 GREEN | pytest: 58/58
+
+**P2-B2 — top-k-selector:**
+- Files: `domain/primitive/top_k_selector/` (pkg + 3 scenarios) + `__tests__/unit/test_top_k_selector.py`
+- `select_top_k(results, k)` + `select` alias for sandbox runner. k<=0 -> [], k>len -> all.
+- Commit: `dd26b146` | sandbox: 10/10 GREEN | pytest: 65/65
+
+**P2-B3 — context-window-packer:**
+- Files: `domain/primitive/context_window_packer/` (pkg + 3 scenarios) + `__tests__/unit/test_context_window_packer.py` + `application/usecases.py` (migration)
+- `pack(title, content, source, max_chars)` pure fn. `_build_embedding_text` removed from usecases.py, replaced by `_pack_context()` import. Field order preserved for vector compatibility.
+- GOTCHA: changing field order in embedding text shifts FakeEmbedder seed → integration test distance 2.037 vs 2.0 threshold. Fixed by passing ordered_parts as content with title="".
+- Commit: `696572b3` | sandbox: 13/13 GREEN | pytest: 72/72
+
+**P2-B4 — temporal-decay-scorer (R-2 CRITICAL):**
+- Files: `domain/primitive/temporal_decay_scorer/` (pkg + 3 scenarios) + `__tests__/unit/test_temporal_decay_scorer.py` + `domain/services.py` (migration)
+- `score(similarity, created_at_iso, half_life_days, now=None, now_iso=None)` pure fn. `now_iso` param for JSON scenario injection. Future dates -> age=0. Invalid dates -> 0.0.
+- `domain/services.py`: `compute_recency_score` kept as shim (delegates to primitive), `apply_temporal_decay` kept as wrapper. All tests preserved.
+- Commit: `0324ba1b` | sandbox: 16/16 GREEN (5 primitives + mock_adder) | pytest: 79/79
+
+**Final G12 DoD (cumulative):**
+- primitive tier --scenario=all: 16/16 PASS
+- module tier --scenario=all: 1/1 PASS
+- env audit: empty (no forbidden keys)
+- Fence-A: all 4 new primitives stdlib-only (comments only match in grep)
+- pilot-status: P2-B1/B2/B3/B4 all DONE with commit SHAs
+
+**Zone health:** 79/79 tests GREEN, 16/16 primitive scenarios GREEN, module GREEN. 4 primitives extracted, 2 service migrations done (usecases.py, services.py). Next: P2-C (module-full: wire all 5 primitives via ports).
