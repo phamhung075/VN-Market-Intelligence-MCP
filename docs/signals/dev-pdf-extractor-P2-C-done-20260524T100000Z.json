@@ -1,0 +1,11 @@
+{
+  "from": "dev-pdf-extractor",
+  "to": "qa",
+  "type": "task-done",
+  "task": "P2-C",
+  "pilot": "pdf-extractor",
+  "commit": "d3daa33e",
+  "summary": "G2 re-verify DONE: financial_reports module now composes all 6 primitives via Protocol ports. grep-from-infra=0, no self cross-import, module sandbox GREEN, 105 tests pass.",
+  "next": "P2-D",
+  "createdAt": "2026-05-24T10:00:00Z"
+}

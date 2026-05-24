@@ -24,6 +24,14 @@ export function parsePublishedAt(rfcDate: string): string | null {
   try {
     const d = new Date(rfcDate);
     if (isNaN(d.getTime())) return null;
+    // Normalise explicit UTC offset to UTC epoch.
+    const offsetMatch = rfcDate.match(/([+-])(\d{2})(\d{2})\s*$/);
+    if (offsetMatch) {
+      const sign = offsetMatch[1] === '+' ? 1 : -1;
+      const offsetMinutes = sign * (parseInt(offsetMatch[2], 10) * 60 + parseInt(offsetMatch[3], 10));
+      const adjusted = new Date(d.getTime() + offsetMinutes * 60_000);
+      return adjusted.toISOString();
+    }
     return d.toISOString();
   } catch {
     return null;
