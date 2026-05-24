@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c289 · 2026-05-24 (NF-LD-4 QA round 1 fix)
+
+### NF-LD-4-dev-A FIX — QA round 1 remediation (DRY/anti-drift) — DONE
+
+**Commits:** `6b012fc8` (sync script + regen), `efa4bfec` (handoff)
+
+**Root cause:** Two sed substitutions in `sync-news-fetch-dashboard.sh` were ordered generic-first. The short pattern `check that mcp-server is running at localhost:3000.` consumed the long `Could not reach the server — check that mcp-server is running at localhost:3000.` substring before the second sed ran. Result: `git diff` after re-running the script showed 3 diffs (stale header path, hand-added JS comment block, error message third variant).
+
+**Fix:** reversed sed order in the script (specific/longer pattern first). Regenerated `index.html` by running the fixed script. Committed exactly script output — no hand edits.
+
+**Idempotency proof:** two consecutive runs → same md5 (`ace65115a5e4345a31b217eb5dfc5c23`). Second run `git diff` = 0.
+
+**All checks:** ENDPOINT relative, file:// degrade kept, creds 0, NF-LD-4 11/11, NF-LD-2 9/9, tsc exit 0, header no stale `scripts/` path.
+
+**Next:** NF-LD-4-QA round 2.
+
+---
+
 ## c288 · 2026-05-24T22:00Z
 
 ### NF-LD-4-dev-A — Serve news-fetch dashboard from mcp-server (IMPL_DONE)
