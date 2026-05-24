@@ -1,8 +1,30 @@
 # PO Notebook
 
-**Cycle:** c291 (dev-team — api-gateway SCALE pilot Phase 0 CLOSE → Phase 1 OPEN)
-**Last update:** 2026-05-24T07:34:03Z
-**Status:** api-gateway Phase 0 exit gate CLOSED, Phase 1 ACTIVE WIP=1. First dispatch = P1-AG-B1. goalsEarned=0. Commit f15b897e.
+**Cycle:** c291 (TWO concurrent PO cycles — news-fetch + api-gateway pilots, both Phase 0→1)
+**Last update:** 2026-05-24T07:36:25Z
+**Status:** news-fetch P0-NF-EXIT PASS (Phase 0 CLOSED, Phase 1 OPEN, P1-A first). api-gateway also closed Phase 0 same cycle (P1-AG-B1 first). Both sections preserved below — concurrent-cycle race on this notebook file.
+
+---
+
+## This cycle (c291) — news-fetch Phase 0 close-out + Phase 1 open
+
+No `pm` agent in harness → PO absorbed P0-NF-4 anchor + exit-gate mechanics.
+
+### Phase 0 deliverables verified DONE (ground truth)
+- P0-NF-1 brownfield + P0-NF-2 bug-inventory (baseline 1.5) + P0-NF-3 flow (bca30508 verified) + P0-NF-5 plan (10 tasks/68 ACs) + architect signal (architect-news-fetch-phase0-done-2026-05-24T073054Z.json). dev_agent_file stays N/A.
+
+### P0-NF-4 anchor — CONCURRENT COMMIT RACE (key carry-over)
+- Tag `news-fetch-pre-refactor` created local-only (NO --force/push). main HEAD moved mid-cycle dba5fdaf→e6750db→7f3ad2c (fleet pilots committing concurrently). Tag landed @ 31483c8c — DID NOT force/retag to chase HEAD. Verified 31483c8c on main ancestry + ZERO Phase-1 scaffolding (no_code_in_service_pkg_yet OK). Rationale in pilot-status exit_gate._anchor_note.
+
+### SSOT flips (validated: no dup keys, valid JSON, top.status stays ACTIVE)
+- phase 0→1; phase0 OPEN→CLOSED; exit_gate CLOSED + anchor + signal. phase1 NOT-STARTED→ACTIVE (07:34:21Z, task_plan ptr, wip=1). goals ALL 12 TBD untouched. decisionMatrix ALL TBD populatedAt null (untouched, PO-only @ 12/12). goalsEarned 0.
+
+### Artifacts: pilot-status-news-fetch.json + TASKS.md (P0-NF→Done, Phase1 Backlog seeded) + pipeline-state.json (news_fetch_pilot block, nextAgent=developer P1-A) + signal po-20260524T073625Z.json.
+
+### MCP UNAVAILABLE — WORK telegram could NOT be sent from PO (gateway not in tool surface). Returned as PENDING dispatcher action. Signal dropped as filesystem JSON.
+
+### Carry-over (news-fetch)
+- WIP=1 STRICT: dispatch ONLY P1-A. Chain A→B1→B2→B3→B4→C→D→E→G5→QA. G12 streak = B1/C/D (sandbox-green evidence in each handoff). G4 (TS ESLint fence) gated on SI-3 — don't lock early. Pre-revert tags are Phase 2. §4.5: dev must NOT touch goals/decisionMatrix. Confirm WORK telegram sent when dispatcher next runs.
 
 ---
 

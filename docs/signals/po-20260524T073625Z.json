@@ -1,0 +1,48 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "phase-transition-dispatch",
+  "pilot": "news-fetch",
+  "priority": "high",
+  "createdAt": "2026-05-24T07:36:25Z",
+  "payload": "news-fetch P0-NF-EXIT gate PASS. Phase 0 CLOSED, Phase 1 OPEN. All 5 Phase-0 deliverables verified DONE + architect signal. Anchor tag news-fetch-pre-refactor set local-only @ 31483c8c (concurrent fleet commit race observed; not forced/retagged). dev_agent_file stays N/A. goals ALL TBD, decisionMatrix untouched (PO-only @ 12/12).",
+  "phase_transition": {
+    "from_phase": "0",
+    "to_phase": "1",
+    "phase0_status": "CLOSED",
+    "phase1_status": "ACTIVE",
+    "wip_limit": 1
+  },
+  "anchor": {
+    "tag": "news-fetch-pre-refactor",
+    "commit": "31483c8c93af3a7870bd402c3791f08f744b0cdb",
+    "local_only": true,
+    "forced": false,
+    "race_note": "main HEAD moved dba5fdaf->e6750db->7f3ad2c mid-cycle; anchor pinned to a clean pre-refactor main ancestor with zero Phase-1 scaffolding"
+  },
+  "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md",
+  "dispatch_batch": [
+    {
+      "type": "SPRINT-M",
+      "id": "P1-A",
+      "title": "src/sandbox/runner.ts — Bun sandbox harness (--tier/--module/--scenario flags)",
+      "desc": "First Phase 1 task (WIP=1). Sandbox runner: imports ONLY src/primitive/* + src/module/*, zero infra imports. Flags --tier (primitive|module|all), --module=news-fetch, --scenario (all|path). Loads scenario JSONs, deep-equal compares, exits 0 all-pass / non-zero any-fail. Env audit gate + sandbox README. 7 ACs.",
+      "goals_advanced": ["G7", "G12"],
+      "owner": "developer",
+      "flow": ".claude/flows/dev-news-fetch/main.md",
+      "zone": "apps/news-fetch/",
+      "baseline_pass": true,
+      "wip": 1,
+      "first": true
+    }
+  ],
+  "sequencing": "P1-A -> P1-B1 -> P1-B2 -> P1-B3 -> P1-B4 -> P1-C -> P1-D -> P1-E -> P1-G5 -> P1-QA (strict WIP=1; next unblocks only when predecessor DONE with sandbox-green evidence)",
+  "pending_dispatcher_action": "Send WORK telegram (Phase 0 CLOSED / Phase 1 OPEN) — PO could not send (MCP gateway not in PO tool surface this cycle).",
+  "constraints": [
+    "WIP=1 sequential throughout Phase 1",
+    "L84 explicit-file staging (git add <path>)",
+    "no --force/--no-verify; no push of source/CI; all on main",
+    "G12 DoD gate: NO DONE without sandbox-green evidence in handoff (live since bca30508)",
+    "Charter §4.5: developer does NOT touch goals/decisionMatrix; goalsEarned stays 0"
+  ]
+}
