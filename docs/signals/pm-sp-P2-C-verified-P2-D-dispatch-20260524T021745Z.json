@@ -1,0 +1,97 @@
+{
+  "signal_type": "pm-dispatch",
+  "timestamp": "2026-05-24T02:17:45Z",
+  "agent": "pm",
+  "cycle": "stock-price-phase-2-p2c-verify-p2d-dispatch",
+  "pilot": "stock-price",
+  "phase": "2",
+
+  "p2c_verification_table": {
+    "task": "P2-C",
+    "status": "VERIFIED-DONE",
+    "completion_timestamp": "2026-05-24T00:13:26Z",
+    "verification_timestamp": "2026-05-24T02:17:45Z",
+    "verifier": "pm",
+    "commit_sha": "6fc9b721",
+    "ac_verdicts": {
+      "AC-1": {
+        "name": "Linter exits non-zero on violation run",
+        "verdict": "PASS",
+        "evidence": "Fence-A violation (pkg/infrastructure import in price-quote-normalizer/normalizer.go) → golangci-lint exit 1, output named 'fence-a'"
+      },
+      "AC-2": {
+        "name": "Linter exits 0 after revert",
+        "verdict": "PASS",
+        "evidence": "After git checkout --, golangci-lint exit 0, 0 issues"
+      },
+      "AC-3": {
+        "name": "Git status clean (violation never staged/committed)",
+        "verdict": "PASS",
+        "evidence": "git status --short shows no stock-price/pkg files in working tree"
+      },
+      "AC-4": {
+        "name": "QA independently reproduces on different primitive",
+        "verdict": "PASS",
+        "evidence": "Fence-B violation (pkg/infrastructure import in price_resolution.go) → golangci-lint exit 1, output named 'fence-b'; reverted clean, exit 0"
+      },
+      "AC-5": {
+        "name": "G12 DoD gate — sandbox green after exercise",
+        "verdict": "PASS",
+        "evidence": "total=11 pass=11 fail=0 status=OK (exit code 0)"
+      }
+    },
+    "golangci_yml_status": "INTACT (no modification since P2-B)",
+    "anchor_integrity": "VERIFIED (debba8eaff0724d1fb32fc9d28640201cc32d1cc is ancestor of HEAD)",
+    "sandbox_rerun_result": {
+      "timestamp": "2026-05-24T02:17:45Z",
+      "exit_code": 0,
+      "summary": "total=11 pass=11 fail=0 status=OK",
+      "all_scenarios": "PASS"
+    },
+    "commit_conflation_note": "P2-C's evidence file + signal physically landed in commit 6fc9b721, which is also shared with kinh-dich P1-E. Cause: concurrent git index race between qa (stock-price zone) and dev-kinh-dich (kinh-dich zone) during staged commit. Single git commit swept both pilots' staged files under the kinh-dich message. No work was lost — both P2-C and P1-E files are committed on main at 6fc9b721. The conflation is cosmetic only (message mismatch); per rules, no rebase/reset/amend warranted (destructive, no value). Recorded here for honest audit trail."
+  },
+
+  "ssot_update_summary": {
+    "file": "docs/data/pilot-status-stock-price.json",
+    "changes": [
+      "phase2.tasks.P2-C.status: READY → DONE",
+      "phase2.tasks.P2-C.completedAt: +2026-05-24T00:13:26Z",
+      "phase2.tasks.P2-C.completedBy: qa",
+      "phase2.tasks.P2-C.ac_verdicts: +all 5 PASS",
+      "phase2.tasks.P2-C.commit_sha: +6fc9b721",
+      "phase2.tasks.P2-C.verifier: pm",
+      "phase2.tasks.P2-C.verified_at: +2026-05-24T02:17:45Z",
+      "phase2.tasks.P2-C.commit_conflation_note: +recorded",
+      "phase2.tasks.P2-D: +new entry (status=READY, owner=qa, blocked_by=P2-C, ac_count=3)",
+      "phase2.current_task: P2-C → P2-D",
+      "phase2.current_task_status: READY (unchanged)",
+      "phase2.current_task_handoff: TASK_P2-B.md → TASK_P2-D.md"
+    ],
+    "invariants_verified": {
+      "goalsEarned": "UNCHANGED (0) — NO goal flip authorized",
+      "decisionMatrix": "UNCHANGED (all TBD) — §4.5 binding, PO-only at Phase 3 atomic close",
+      "anchor": "INTACT (debba8eaff0724d1fb32fc9d28640201cc32d1cc) — verified as ancestor of HEAD"
+    }
+  },
+
+  "p2d_handoff_info": {
+    "task": "P2-D",
+    "owner": "qa",
+    "title": "G4 Freeze Anchor Confirmation (AC-4c)",
+    "status": "READY",
+    "acceptance_criteria": [
+      "AC-1: Verify .golangci.yml most recent commit is d5ce886e (P2-B); no subsequent commits on file",
+      "AC-2: Verify stock-price-pre-ci tag ancestry (merge-base non-empty); tag is ancestor of HEAD",
+      "AC-3: Compile G4 evidence summary to docs/handoffs/TASK_P2-D-sp-g4-evidence.md; record freeze SHA, tag SHA, verdict"
+    ],
+    "handoff_file": "docs/handoffs/TASK_P2-D.md",
+    "next_blockers": ["P2-D must complete before P2-E (Create stock-price-pre-delete tag)"],
+    "blocked_by": "P2-C (DONE)",
+    "blocks": "P2-E"
+  },
+
+  "next_actor": "qa",
+  "next_action": "Execute P2-D: audit .golangci.yml git history, verify freeze anchor d5ce886e, verify tag ancestry, write G4 evidence summary to TASK_P2-D-sp-g4-evidence.md, commit, emit signal",
+  "dispatch_outcome": "READY",
+  "wip_status": "WIP=1 (P2-D is single next sequential task within Phase 2)"
+}
