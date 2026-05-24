@@ -310,11 +310,21 @@ function catClass(cat: ScenarioCategory | undefined): string {
   return "cat-failure";
 }
 
+// ---------------------------------------------------------------------------
+// Category display label map — maps internal category keys to human-readable
+// labels shown on chips. The underlying JSON `category` field values
+// (golden/edge/failure) are the data SSOT and are NOT changed.
+// ---------------------------------------------------------------------------
+const CATEGORY_LABELS: Record<string, string> = {
+  golden: "Valid Input",
+  edge: "Edge Case",
+  failure: "Bad Input → Error",
+};
+
 /** Returns css category label */
 function catLabel(cat: ScenarioCategory | undefined): string {
-  if (cat === "golden") return "golden";
-  if (cat === "edge") return "edge";
-  return "failure";
+  if (cat && CATEGORY_LABELS[cat]) return CATEGORY_LABELS[cat];
+  return CATEGORY_LABELS["failure"];
 }
 
 // ---------------------------------------------------------------------------
