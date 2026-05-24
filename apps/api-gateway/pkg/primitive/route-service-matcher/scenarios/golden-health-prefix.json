@@ -1,0 +1,14 @@
+{
+  "scenario": "golden-health-prefix",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "description": "Normal health-prefix extraction: /health/macro with prefix \"/health/\" yields \"macro\". Covers the HandleServiceHealth convention where prefix is \"/health/\".",
+  "input": {
+    "path": "/health/macro",
+    "prefixToStrip": "/health/"
+  },
+  "expected": {
+    "serviceName": "macro"
+  },
+  "verdict": "PASS"
+}

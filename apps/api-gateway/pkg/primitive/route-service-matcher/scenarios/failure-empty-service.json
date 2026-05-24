@@ -1,0 +1,23 @@
+{
+  "scenario": "failure-empty-service",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "description": "FAILURE scenario — proves the empty-service guard. Path /health/ with prefix \"/health/\" yields empty string after TrimPrefix. SplitN(\"\", \"/\", 2) yields [\"\"] — parts[0] is \"\". The correct return is \"\". A wrong implementation that returns \"health\" (treating the prefix itself as a service name) would cause misrouting: the caller would look up \"health\" in the registry, which does not exist as a service name. The resulting 404 is correct; \"health\" as a service lookup is not.",
+  "injection": {
+    "bug": "return-prefix-segment-instead-of-empty",
+    "mutated_logic": "return strings.Split(strings.TrimPrefix(path, \"/\"), \"/\")[0] — strips only leading slash, not full prefix",
+    "effect": "path /health/ with prefix /health/ wrongly yields \"health\" instead of \"\""
+  },
+  "input": {
+    "path": "/health/",
+    "prefixToStrip": "/health/"
+  },
+  "expected": {
+    "serviceName": ""
+  },
+  "wrong_output_when_bug_injected": {
+    "wrong_service_name": "health"
+  },
+  "verdict": "FAILURE_SCENARIO",
+  "note": "This scenario MUST produce RED when the prefix-strip is replaced with a bare TrimPrefix(\"/\") call. Use as G10/G11 injection fixture for route-service-matcher."
+}

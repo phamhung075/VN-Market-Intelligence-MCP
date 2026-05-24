@@ -16,6 +16,7 @@ import (
 	"github.com/vn-market-intelligence/api-gateway/pkg/application"
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 	ppr "github.com/vn-market-intelligence/api-gateway/pkg/primitive/proxy-path-resolver"
+	rsm "github.com/vn-market-intelligence/api-gateway/pkg/primitive/route-service-matcher"
 )
 
 // ── JSON helpers ─────────────────────────────────────────────────────────────
@@ -258,8 +259,7 @@ func (h *GatewayHandlers) HandleHealth(w http.ResponseWriter, r *http.Request) {
 // HandleServiceHealth handles GET /health/:service.
 func (h *GatewayHandlers) HandleServiceHealth(w http.ResponseWriter, r *http.Request) {
 	// Extract service name from URL path: /health/<service>
-	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/health/"), "/")
-	serviceName := parts[0]
+	serviceName := rsm.ExtractServiceName(r.URL.Path, "/health/")
 
 	result, err := h.serviceUC.Execute(r.Context(), serviceName)
 	if err != nil {
@@ -293,8 +293,7 @@ func (h *GatewayHandlers) HandleDashboard(w http.ResponseWriter, r *http.Request
 // HandleProxy handles ANY /:service/* reverse proxy requests.
 func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	// Extract service name from path
-	parts := strings.SplitN(strings.TrimPrefix(r.URL.Path, "/"), "/", 2)
-	serviceName := parts[0]
+	serviceName := rsm.ExtractServiceName(r.URL.Path, "/")
 
 	svc := h.registry.GetService(serviceName)
 	if svc == nil {

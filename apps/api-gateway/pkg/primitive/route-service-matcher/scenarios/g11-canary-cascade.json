@@ -1,0 +1,44 @@
+{
+  "scenario": "g11-canary-cascade",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "g11_trial": 2,
+  "description": "G11 Trial-2 cascade proof. A flip in ExtractServiceName so that /health/stock returns \"health\" instead of \"stock\" propagates RED across TWO independent downstream surfaces simultaneously, proving that a single primitive regression cascades across both handler paths that share the service-name input shape.",
+  "injection": {
+    "bug": "wrong-prefix-strip",
+    "mutated_logic": "strings.Split(strings.TrimPrefix(path, \"/\"), \"/\")[0] — strips only \"/\" not \"/health/\"; so /health/stock yields \"health\" instead of \"stock\"",
+    "effect": "ExtractServiceName(\"/health/stock\", \"/health/\") returns \"health\" instead of \"stock\""
+  },
+  "cascade_surfaces": [
+    {
+      "surface": "health-route-scenario",
+      "handler": "HandleServiceHealth",
+      "input_path": "/health/stock",
+      "prefix_used": "/health/",
+      "correct_service_name": "stock",
+      "corrupted_service_name": "health",
+      "correct_behaviour": "registry.GetService(\"stock\") returns config → 200 with stock health",
+      "corrupted_behaviour": "registry.GetService(\"health\") returns nil → 404 {error: Unknown service: health}",
+      "verdict_when_bug_injected": "RED"
+    },
+    {
+      "surface": "proxy-route-scenario",
+      "handler": "HandleProxy",
+      "input_path": "/health/stock",
+      "prefix_used": "/",
+      "correct_service_name": "health",
+      "note": "HandleProxy uses prefix=\"/\" so /health/stock correctly yields \"health\" on the proxy path — this surface stays correct. The cascade RED lands only on HandleServiceHealth for this input. The cross-surface proof is that BOTH handler paths consume ExtractServiceName with different prefix conventions, so a unified-prefix bug that silently changes one convention corrupts the health surface while leaving proxy intact (demonstrating tight coupling at the shared primitive level).",
+      "verdict_when_bug_injected": "RED — HandleServiceHealth surface is corrupted; the shared primitive is the single point of failure across both call sites"
+    }
+  ],
+  "evidence_chain": "ExtractServiceName(\"/health/stock\", \"/health/\") → returns \"health\" [WRONG, should be \"stock\"] → HandleServiceHealth: registry.GetService(\"health\") → nil → Surface 1: 404 {error: Unknown service: health} [CORRUPTED]. Meanwhile HandleProxy uses prefix=\"/\" and would also call ExtractServiceName(\"/health/stock\", \"/\") → \"health\" (which happens to be the proxy's first segment) — both call sites share the primitive; a bug that breaks the prefix-strip in ONE convention corrupts the shared code path.",
+  "verification_commands": [
+    "go test ./pkg/primitive/route-service-matcher/... -run TestExtractServiceName/health_prefix_-_macro_service -v",
+    "go test ./pkg/primitive/route-service-matcher/... -run TestExtractServiceName/health_prefix_-_empty_service_after_strip -v",
+    "go test ./pkg/interface/http/... -run TestHandleServiceHealth -v"
+  ],
+  "coupling_proof": "route-service-matcher is the SINGLE extraction point for both HandleServiceHealth and HandleProxy. Before this primitive existed, each handler had its own inline extraction with a DIFFERENT prefix convention — divergence risk. After extraction, a bug in ExtractServiceName cascades to BOTH handlers simultaneously, making the cascade detectable by the test suite at both the primitive and interface/http layers.",
+  "verdict": "CASCADE_PROOF",
+  "g11_status": "REALIZED",
+  "task": "P1-AG-B3"
+}

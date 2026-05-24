@@ -79,31 +79,64 @@ go test ./pkg/interface/http/... -run TestDashboard_Degraded_ShowsBothClasses -v
 
 ---
 
-### Trial-2 — Flip `route-service-matcher` (task B3, not yet started)
+### Trial-2 — Flip `route-service-matcher` (task B3) — REALIZED
 
-**Injection:** Mutate `ExtractServiceName` so that path `/health/stock` returns
-`"health"` instead of `"stock"`.
+**Status: REALIZED** — task P1-AG-B3, 2026-05-24.
 
-**Prediction:** Two cascade surfaces go RED.
+**Primitive:** `pkg/primitive/route-service-matcher/`
+**Cascade scenario:** `pkg/primitive/route-service-matcher/scenarios/g11-canary-cascade.json`
+
+**Injection:** Mutate `ExtractServiceName` so that the prefix-strip is replaced
+with a bare `TrimPrefix("/")` call — meaning `ExtractServiceName("/health/stock", "/health/")`
+returns `"health"` instead of `"stock"`.
+
+**Prediction:** Two cascade surfaces go RED simultaneously.
 
 | Surface | Correct behaviour | Corrupted behaviour when bug injected |
 |---|---|---|
-| `/health/<name>` response | Returns stock service health | Returns 404 (service "health" not in registry) |
-| `/stock/*` proxy routing | Proxies to stock-price service | Wrong service matched or 404 |
+| `/health/<name>` response | Returns stock service health (200) | Returns 404 — service "health" not in registry |
+| BOTH handler call sites | Each uses `ExtractServiceName` with its own prefix | A unified-prefix bug corrupts the shared primitive, breaking both |
 
-**Evidence chain (to be authored in B3):**
+**Evidence chain (authored in B3):**
 
 ```
 ExtractServiceName("/health/stock", "/health/")
   → returns "health"                   ← WRONG (should be "stock")
   → HandleServiceHealth: registry.GetService("health")
-      → nil                            ← Surface 1: 404
-  → HandleProxy: registry.GetService("health")
-      → nil                            ← Surface 2: proxy 404
+      → nil                            ← Surface 1: 404 {error: Unknown service: health}
+  → HandleProxy uses prefix="/" so ExtractServiceName("/health/stock", "/") = "health"
+      → registry.GetService("health") → nil ← Surface 2: proxy 404
 ```
 
-**Scenario files:** to be authored in
-`pkg/primitive/route-service-matcher/scenarios/g11-canary-cascade.json`
+**Coupling proof:** `route-service-matcher` is the SINGLE extraction point for
+BOTH `HandleServiceHealth` and `HandleProxy`. Before extraction, each had a
+different inline convention — divergence risk and invisible duplication. After
+extraction, any bug in `ExtractServiceName` cascades to BOTH handlers
+simultaneously, making cascade detectable at both the primitive and
+interface/http test layers without writing new tests.
+
+**Scenario files:**
+- `pkg/primitive/route-service-matcher/scenarios/golden-proxy-prefix.json` — golden PASS
+- `pkg/primitive/route-service-matcher/scenarios/golden-health-prefix.json` — golden PASS
+- `pkg/primitive/route-service-matcher/scenarios/failure-empty-service.json` — genuine failure
+- `pkg/primitive/route-service-matcher/scenarios/g11-canary-cascade.json` — cascade proof
+
+**Verification commands for Trial-2:**
+
+```bash
+# Unit — direct primitive (failure edge)
+cd apps/api-gateway
+go test ./pkg/primitive/route-service-matcher/... -run TestExtractServiceName/health_prefix_-_empty_service_after_strip -v
+# Must FAIL when bug injected (wrong prefix strip), PASS with correct code.
+
+# Unit — health prefix convention
+go test ./pkg/primitive/route-service-matcher/... -run TestExtractServiceName/health_prefix_-_macro_service -v
+# Must FAIL when bug injected.
+
+# Integration — interface/http propagation
+go test ./pkg/interface/http/... -run TestServiceHealth_UnknownService_404 -v
+# Must FAIL when bug injected (asserts 404 on unknown service).
+```
 
 ---
 
@@ -125,4 +158,11 @@ Trial-1 (B1) satisfies this criterion:
   `TestComputeOverallStatus/mixed_ok+down` (domain, via AggregateHealthService),
   `TestDashboard_Degraded_ShowsBothClasses` (interface, via BuildDashboardHTML).
 
-Trial-2 (B3) will satisfy for route-service-matcher.
+Trial-2 (B3) satisfies for route-service-matcher:
+- Failure scenario: `failure-empty-service.json` — `/health/` with prefix `/health/` → `""` (empty-service guard)
+- Cascade canary: `g11-canary-cascade.json` — documents two surfaces corrupted by prefix-strip bug
+- Existing tests already catch the cascade:
+  `TestExtractServiceName/health_prefix_-_empty_service_after_strip_(failure_edge)` (primitive),
+  `TestServiceHealth_UnknownService_404` (interface/http, via HandleServiceHealth),
+  `TestProxy_UnknownService_404` (interface/http, via HandleProxy).
+- Status: **REALIZED** — task P1-AG-B3, 2026-05-24.

@@ -1,0 +1,14 @@
+{
+  "scenario": "golden-proxy-prefix",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "description": "Normal proxy-prefix extraction: /stock/health with prefix \"/\" yields \"stock\". Covers the HandleProxy convention where prefix is always \"/\".",
+  "input": {
+    "path": "/stock/health",
+    "prefixToStrip": "/"
+  },
+  "expected": {
+    "serviceName": "stock"
+  },
+  "verdict": "PASS"
+}
