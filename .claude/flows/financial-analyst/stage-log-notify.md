@@ -20,7 +20,10 @@ Append to `docs/agent-memory/notebooks/financial-analyst.md`:
 - Stocks: N | Critical findings: [list] | Chain validations: M
 - Regime: REGIME | Max Deposit Rate: X.XX% | Valuation flags: [TICKER=verdict,...]
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/financial-analyst.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/financial-analyst.md
 git commit -m "chore(memory/financial-analyst): notebook YYYY-MM-DD"
 ```

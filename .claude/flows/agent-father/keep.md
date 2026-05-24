@@ -88,7 +88,10 @@ Output: auto-fix log (mechanical/cosmetic only); escalation list (anything requi
 - Orphans: O
 - Lesson: <any pattern noticed across agents>
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/agent-father.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/agent-father.md
 git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 ```

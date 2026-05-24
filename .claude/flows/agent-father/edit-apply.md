@@ -84,7 +84,10 @@ Produce human-readable summary:
 - Validation: N/5 passed
 - Decision: <why this change was made, guide ref>
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/agent-father.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/agent-father.md
 git commit -m "chore(memory/agent-father): notebook YYYY-MM-DD"
 ```

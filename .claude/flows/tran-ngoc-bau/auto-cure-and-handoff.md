@@ -44,7 +44,10 @@ Append to `docs/agent-memory/notebooks/tran-ngoc-bau.md`:
 - Overall: GOOD|NEEDS_ATTENTION|CRITICAL
 ```
 Then:
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/tran-ngoc-bau.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/tran-ngoc-bau.md
 git commit -m "chore(memory/tran-ngoc-bau): notebook YYYY-MM-DD"
 ```
