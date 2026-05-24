@@ -64,6 +64,7 @@ export interface BctcPdfPullDeps {
   /**
    * Trigger the PDF text extraction pipeline for a successfully saved PDF.
    * Bug 1352a: now awaited before the queue row is marked done.
+   * 1954c: delegates extraction to pdf-extractor service via pdfUrl.
    * Errors are caught by the caller and logged; they are never re-thrown.
    */
   triggerExtraction: (params: {
@@ -71,6 +72,8 @@ export interface BctcPdfPullDeps {
     year: number;
     quarter: string;
     filePath: string;
+    /** VPS source URL — passed to pdfExtractorClient.extractViaMicroservice (1954c). */
+    pdfUrl: string;
   }) => Promise<void>;
 }
 
@@ -121,15 +124,11 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
     },
 
     triggerExtraction: async (params): Promise<void> => {
-      // Bug 1 fix: the previous implementation passed a stub reparseFn that
-      // returned payload.filePath === params.filePath without doing any actual
-      // extraction. runBctcReparseJob marked feedback rows as 'resolved' with
-      // zero work done, causing cross-ticker contamination on the next daily cycle.
-      //
-      // Correct approach: OCR the PDF directly, then call fetchParseAndStoreBctc
-      // with pdfTextOverride so the file:// URL never reaches axios (Bug 2 fix).
-      const { extractAndStorePdfPagesWithRetry, getCachedPdfText } = await import(
-        "../../infrastructure/fetchers/pdfOcrWorker.js"
+      // 1954c (G5b): delegate extraction to pdf-extractor service (port 5001).
+      // Replaces the previous extractAndStorePdfPagesWithRetry + getCachedPdfText
+      // pattern with a single HTTP call to pdfExtractorClient.extractViaMicroservice.
+      const { extractViaMicroservice } = await import(
+        "../../infrastructure/fetchers/pdfExtractorClient.js"
       );
       const { fetchParseAndStoreBctc } = await import(
         "../../application/usecases/fetchParseAndStoreBctc.js"
@@ -139,38 +138,25 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
       const quarter = params.quarter.startsWith("Q")
         ? (params.quarter as "Q1" | "Q2" | "Q3" | "Q4")
         : (`Q${params.quarter}` as "Q1" | "Q2" | "Q3" | "Q4");
-      const filename = `${params.actionCode}_${params.year}_${quarter}.pdf`;
 
-      // Step 1: populate OCR cache for this specific file
-      try {
-        await extractAndStorePdfPagesWithRetry(params.filePath, filename, params.actionCode);
-      } catch (err) {
-        logger.warn("[bctcPdfPull] OCR extraction failed (non-fatal)", {
+      // Step 1: call pdf-extractor service (primary extraction path)
+      const serviceResult = await extractViaMicroservice(params.pdfUrl, "bctc");
+      if (!serviceResult || serviceResult.textContent.trim().length < 100) {
+        logger.warn("[bctcPdfPull] service returned null or too-short text — pipeline skipped", {
           ticker: params.actionCode,
-          filePath: params.filePath,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      // Step 2: read cached text and call pipeline with pdfTextOverride
-      // This avoids passing a file:// URL to fetchParseAndStoreBctc which would
-      // reach axios and silently fail (Bug 2).
-      const cached = getCachedPdfText(filename);
-      if (!cached || cached.text.trim().length < 100) {
-        logger.warn("[bctcPdfPull] OCR cache empty after extraction — pipeline skipped", {
-          ticker: params.actionCode,
-          filename,
-          confidence: cached?.confidence ?? null,
+          pdfUrl: params.pdfUrl,
+          textLength: serviceResult?.textContent.trim().length ?? 0,
         });
         return;
       }
 
+      // Step 2: call pipeline with pdfTextOverride from service result
       await fetchParseAndStoreBctc({
         actionCode: params.actionCode,
         year: params.year,
         quarter,
-        pdfTextOverride: cached.text,
-        pdfUrl: `file://${params.filePath}`,
+        pdfTextOverride: serviceResult.textContent,
+        pdfUrl: params.pdfUrl,
       });
     },
   };
@@ -351,6 +337,7 @@ export async function runBctcPdfPullJob(opts: {
         year: row.period_year,
         quarter: row.period_quarter,
         filePath,
+        pdfUrl: row.source_url, // 1954c: pass VPS URL to service call
       });
     } catch (err) {
       // Extraction failure is non-fatal — PDF is saved, mark done regardless.
