@@ -133,3 +133,44 @@ Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 test
 **Commit:** `8be07048`.
 
 **Status:** DONE. G12 streak #2 complete. Next: P1-E dashboard stub (G12 streak #3). WIP=1 now free.
+
+---
+
+### 2026-05-24 — TASK P1-E (dashboard stub — G12 streak #3)
+
+**Task:** Build 3-panel Scenario Trust Dashboard at `apps/rag-service/dashboard/index.html`. Render similarity-scorer GREEN and retrieval module GREEN from inline-embedded trace JSON. Four un-built primitives NOT-RUN. Microservice card NOT-RUN (Phase 2 pending).
+
+**Files created:**
+- `apps/rag-service/dashboard/index.html` (NEW — 3-panel, file:// compatible, zero CDN, inline traces)
+- `apps/rag-service/dashboard/traces/similarity_scorer_golden.json` (NEW — generated from P1-B sandbox)
+- `apps/rag-service/dashboard/traces/module_golden.json` (NEW — generated from P1-C sandbox)
+- `apps/rag-service/dashboard/dash-check.py` (NEW — AI/CI static DOM inspector, 17/17 PASS)
+
+**dash-check.py output (17/17 PASS):**
+- SI-2 boundary comment: PASS
+- 3 panels (primitives, module, microservice): PASS
+- 5 primitive card names: PASS
+- similarity-scorer trace passed=true: PASS (GREEN is honest)
+- retrieval trace passed=true: PASS (GREEN is honest)
+- 4 NOT-RUN primitives have no trace: PASS (no false-greens)
+- Zero external URLs: PASS (G6 file:// compatible)
+- No port-5002 HTTP call: PASS (microservice honestly NOT-RUN)
+
+**Panel summary:**
+- Primitives: similarity-scorer GREEN | relevance-threshold-gate NOT-RUN | temporal-decay-scorer NOT-RUN | top-k-selector NOT-RUN | context-window-packer NOT-RUN
+- Module: retrieval GREEN
+- Microservice: rag-service (port 5002) NOT-RUN
+
+**Sandbox GREEN (G12 DoD a):**
+- primitive tier --scenario=all: 4/4 PASS (mock_adder golden + 3 similarity_scorer scenarios)
+- module tier --scenario=all: 1/1 PASS (retrieval module_golden)
+
+**Env audit (G12 DoD b):** `env | grep -E 'DB_PATH|LANCEDB|HF_TOKEN|HUGGINGFACE|OPENAI_API_KEY|EMBEDDING_MODEL|DATABASE_URL'` = empty.
+
+**pytest:** 51/51 PASS (no regression from 51 baseline).
+
+**Commit:** `7725ca59`.
+
+**G12 streak COMPLETE:** P1-B (cfd38a3b) + P1-C (8be07048) + P1-E (7725ca59). Three consecutive tasks with sandbox-green evidence in handoffs. Streak ready for QA verification + Phase 1 gate.
+
+**Status:** DONE. WIP=1 now free. Phase 1 complete — QA to verify G12 streak and Phase 1 gate.
