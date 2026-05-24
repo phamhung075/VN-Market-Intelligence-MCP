@@ -59,7 +59,7 @@
     "gateVerdict": "PASS — 12/12 goals YES; sandbox primitive 11/11 OK + module 1/1 OK; dashboard honest-green (dash-check verdict PASS); scrubbed-env audit EMPTY",
     "gateVerifiedAt": "2026-05-24T08:49:07Z",
     "gateVerifiedBy": "po (terminal close cycle — QA evidence chain notebook b779d3ac HEAD a2d4425c)",
-    "gateCommit": "TERMINAL_CLOSE_SHA",
+    "gateCommit": "7caff5b525a5d47b04907ef89b74a72389799ebd",
     "gateDecisionDoc": "docs/po-decisions/2026-05-24-g9-api-gateway-trust-contract.md",
     "gateSignal": "docs/signals/po-20260524T084907Z-api-gateway-close.json",
     "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/api-gateway-phase-1-task-plan.md §Bucket Layout",
@@ -256,7 +256,7 @@
     "_verdict_enum": "[FIXED] TBD until matrix terminal. Then one of: scale | rescope | stop-MVR. Derived mechanically: 3×YES → scale; 2×YES → rescope; 0-1×YES → stop-MVR.",
     "populatedAt": "2026-05-24T08:49:07Z",
     "populatedBy": "po (terminal close — populated ATOMICALLY with the final goal flips in one commit per Charter §4.5)",
-    "populatedInCommit": "TERMINAL_CLOSE_SHA",
+    "populatedInCommit": "7caff5b525a5d47b04907ef89b74a72389799ebd",
     "criteriaApplication": {
       "speed": "YES — G10=YES (cycle_count=1 ≤2) AND G11=YES (2-trial coupling, both outcome-(a), alarm fired). Mechanical: both YES → speed=YES.",
       "trust": "YES — G9=YES (PASS grade via Path B headless dash-check, not PARTIAL) AND G8=YES (red/green honest, no false green). Mechanical: G9 PASS + G8 YES → trust=YES.",
