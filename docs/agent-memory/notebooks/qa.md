@@ -1,5 +1,26 @@
 # QA — Notebook
 
+## c283 cycle-79 · 2026-05-24 · api-gateway SCALE pilot — G1/G2/G3/G5/G6/G7/G8/G11/G12 gate run
+
+```
+date: 2026-05-24T10:28:00Z
+scope: apps/api-gateway/ SCALE pilot Phase 1 gate verification
+outcome: G1 PASS | G2 PASS | G3 PARTIAL | G5 PASS | G6 PASS | G7 PASS | G8 PASS | G11 PASS | G12 PASS
+go_test: 57 tests all PASS (-count=1 uncached)
+sandbox_primitive: total=11 pass=11 fail=0 exit=0
+sandbox_module: total=1 pass=1 fail=0 exit=0
+dashboard: panelCount=3 cardCount=12 dotsGreen=12 dotsRed=0 verdict=PASS
+g3_partial_reason: No OpenAPI YAML or HTTP contract doc in pkg/interface/http/
+g8_injection: hardcoded return StatusOk + 5 bad scenarios → 8 FAILs, 3 RED cards, verdict=FAIL | reverted → 12 green
+g11_trial1: osc wrong-mixed-return → 3 RED; single edit fix → 11/11 green
+g11_trial2: rsm ignore-prefix → 2 RED; single edit fix → 11/11 green
+mutations_reverted: true — git status CLEAN at close
+ssot_not_mutated: pilot-status-api-gateway.json NOT touched (PO-only)
+recommendation: APPROVE G1/G2/G5/G6/G7/G8/G11/G12 | PARTIAL G3 (contract doc missing)
+```
+
+---
+
 ## c282 cycle-78 · 2026-05-24 · pdf-extractor Phase-1 Close-Gate — PASS
 
 **Task:** P1-G — Phase-1 close-gate (5-criterion exit gate) | **Verdict:** PASS
