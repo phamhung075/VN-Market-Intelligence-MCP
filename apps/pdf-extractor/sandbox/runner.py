@@ -1,11 +1,12 @@
 """
-PDF Extractor — Sandbox Scenario Runner (P1-A1).
+PDF Extractor — Sandbox Scenario Runner (P1-A1, extended P1-C).
 
-Runs a single scenario JSON file against a pure-function primitive and emits
-a trace JSON to stdout.
+Runs a single scenario JSON file against a pure-function primitive OR a module,
+and emits a trace JSON to stdout.
 
 CLI:
     python sandbox/runner.py --tier=primitive --scenario=<path-to-scenario.json>
+    python sandbox/runner.py --tier=module    --scenario=<path-to-scenario.json>
     python sandbox/runner.py --help
 
 PYTHONPATH requirement:
@@ -16,6 +17,10 @@ PYTHONPATH requirement:
         PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py \\
             --tier=primitive \\
             --scenario=apps/pdf-extractor/scenarios/primitives/echo_identity/happy.json
+
+        PYTHONPATH=apps/pdf-extractor python apps/pdf-extractor/sandbox/runner.py \\
+            --tier=module \\
+            --scenario=apps/pdf-extractor/scenarios/modules/financial_reports/multi_primitive_story.json
 
 Security clause (G7 / AC-5):
     This process MUST have zero credentials in its environment.
@@ -28,6 +33,7 @@ Import contract (AC-4):
     Runner imports ONLY from:
         - Python stdlib (argparse, importlib, json, sys)
         - domain.primitives.<primitive_name>  (pure functions, no infra)
+        - domain.modules.<module_name>        (module composition, no infra)
     FORBIDDEN imports (checked by G4 import-linter in Phase 2):
         - infrastructure.*
         - application.*
@@ -36,16 +42,24 @@ Import contract (AC-4):
         - pytesseract
         - aiohttp
 
-Scenario JSON schema (input):
+Primitive scenario JSON schema (input):
     {
-        "primitive": "<function_name>",   // must match module name under domain/primitives/
+        "primitive": "<function_name>",   // matches module under domain/primitives/
         "inputs":    { ... },             // keyword args passed to the primitive function
         "expected":  <value>              // expected return value (exact equality check)
     }
 
+Module scenario JSON schema (input):
+    {
+        "module":   "<module_name>",      // matches module under domain/modules/
+        "inputs":   { ... },              // kwargs passed to module.process_report()
+        "expected": { "confidence": <f> } // expected composite result (subset match)
+    }
+
 Trace JSON schema (output to stdout):
     {
-        "primitive": "<function_name>",
+        "primitive": "<function_name>" | null,
+        "module":    "<module_name>" | null,
         "inputs":    { ... },
         "expected":  <value>,
         "actual":    <value> | null,
@@ -66,13 +80,13 @@ from typing import Any
 
 
 # ---------------------------------------------------------------------------
-# Core runner
+# Primitive runner
 # ---------------------------------------------------------------------------
 
 
-def run_scenario(scenario_path: str) -> dict[str, Any]:
+def run_primitive_scenario(scenario_path: str) -> dict[str, Any]:
     """
-    Load a scenario JSON, execute the primitive, return a trace dict.
+    Load a primitive scenario JSON, execute the primitive, return a trace dict.
 
     Never raises — all errors are captured in the trace dict with pass=False.
     """
@@ -98,6 +112,7 @@ def run_scenario(scenario_path: str) -> dict[str, Any]:
 
         return {
             "primitive": primitive_name,
+            "module": None,
             "inputs": inputs,
             "expected": expected,
             "actual": actual,
@@ -108,11 +123,152 @@ def run_scenario(scenario_path: str) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         return {
             "primitive": primitive_name,
+            "module": None,
             "inputs": inputs,
             "expected": expected,
             "actual": None,
             "pass": False,
             "error": str(exc),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Module runner
+# ---------------------------------------------------------------------------
+
+
+def _confidence_match(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
+    """
+    Check that all keys in expected are present in actual with matching values.
+
+    Floats are compared with a tolerance of 1e-9 to handle floating-point
+    representation differences between JSON parsing and Python computation.
+    """
+    for key, exp_val in expected.items():
+        if key not in actual:
+            return False
+        act_val = actual[key]
+        if isinstance(exp_val, float) and isinstance(act_val, float):
+            if abs(act_val - exp_val) > 1e-9:
+                return False
+        elif act_val != exp_val:
+            return False
+    return True
+
+
+def run_module_scenario(scenario_path: str) -> dict[str, Any]:
+    """
+    Load a module scenario JSON, execute the module, return a trace dict.
+
+    Module scenarios use the financial_reports module with real primitive adapters
+    wired at composition time (no infrastructure dependencies — primitives are pure).
+
+    Never raises — all errors captured in trace dict with pass=False.
+    """
+    module_name: str | None = None
+    inputs: dict[str, Any] = {}
+    expected: Any = None
+
+    try:
+        with open(scenario_path, encoding="utf-8") as f:
+            data: dict[str, Any] = json.load(f)
+
+        module_name = data["module"]
+        inputs = data.get("inputs", {})
+        expected = data.get("expected")
+
+        # Wire module with real primitive adapters (no infrastructure).
+        # Both primitives are pure functions — safe in sandbox.
+        actual = _run_financial_reports_module(inputs)
+
+        # For module scenarios, expected is a dict — check subset match.
+        if isinstance(expected, dict) and isinstance(actual, dict):
+            passed = _confidence_match(actual, expected)
+        else:
+            passed = actual == expected
+
+        return {
+            "primitive": None,
+            "module": module_name,
+            "inputs": inputs,
+            "expected": expected,
+            "actual": actual,
+            "pass": passed,
+            "error": None,
+        }
+
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "primitive": None,
+            "module": module_name,
+            "inputs": inputs,
+            "expected": expected,
+            "actual": None,
+            "pass": False,
+            "error": str(exc),
+        }
+
+
+def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
+    """
+    Wire FinancialReportsModule with real primitive adapters and call process_report().
+
+    Adapters wrap the pure primitive functions behind the Protocol ports.
+    No infrastructure is imported — both primitives are pure stdlib functions.
+    """
+    from domain.modules.financial_reports import FinancialReportsModule
+    from domain.primitives.decimal_normalizer import normalize_decimal
+    from domain.primitives.validate_financial_figures import validate_financial_figures
+
+    class _DecimalNormalizerAdapter:
+        def normalize(self, raw_string: str, unit_hint: str = "billion_vnd") -> Any:
+            return normalize_decimal(raw_string, unit_hint)
+
+    class _FinancialValidatorAdapter:
+        def validate(
+            self,
+            total_assets: Any,
+            total_equity: Any,
+            total_liabilities: Any,
+            operating_margin: Any,
+            net_revenue: Any,
+        ) -> float:
+            return validate_financial_figures(
+                total_assets=total_assets,
+                total_equity=total_equity,
+                total_liabilities=total_liabilities,
+                operating_margin=operating_margin,
+                net_revenue=net_revenue,
+            )
+
+    module = FinancialReportsModule(
+        normalizer=_DecimalNormalizerAdapter(),
+        validator=_FinancialValidatorAdapter(),
+    )
+
+    return module.process_report(**inputs)
+
+
+# ---------------------------------------------------------------------------
+# Dispatch
+# ---------------------------------------------------------------------------
+
+
+def run_scenario(scenario_path: str, tier: str) -> dict[str, Any]:
+    """Dispatch to primitive or module runner based on tier."""
+    if tier == "primitive":
+        return run_primitive_scenario(scenario_path)
+    elif tier == "module":
+        return run_module_scenario(scenario_path)
+    else:
+        return {
+            "primitive": None,
+            "module": None,
+            "inputs": {},
+            "expected": None,
+            "actual": None,
+            "pass": False,
+            "error": f"Unsupported tier: {tier}",
         }
 
 
@@ -126,7 +282,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="sandbox/runner.py",
         description=(
             "PDF Extractor sandbox scenario runner — JSON-in, trace-JSON-out.\n"
-            "Executes a pure-function primitive against a scenario JSON fixture.\n"
+            "Executes a pure-function primitive or module against a scenario JSON fixture.\n"
             "\n"
             "PYTHONPATH must be set to apps/pdf-extractor before invocation.\n"
             "Zero credentials: sandbox is a pure-function harness only."
@@ -152,7 +308,7 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    trace = run_scenario(args.scenario)
+    trace = run_scenario(args.scenario, args.tier)
 
     # Emit trace JSON to stdout — one JSON object per invocation.
     print(json.dumps(trace, indent=2, default=str))
